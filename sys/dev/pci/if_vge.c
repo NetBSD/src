@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.1 2005/02/20 18:34:33 jdolecek Exp $ */
+/* $NetBSD: if_vge.c,v 1.2 2005/02/27 00:27:33 perry Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.1 2005/02/20 18:34:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.2 2005/02/27 00:27:33 perry Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -201,7 +201,7 @@ vge_m_defrag(struct mbuf *m0, int flags)
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
 			m = NULL;
-			goto out; 
+			goto out;
 		}
 	}
 
@@ -667,7 +667,7 @@ vge_dma_map_rx_desc(sc, idx)
 	}
 
 	segs = sc->vge_ldata.vge_rx_dmamap[idx]->dm_segs;
-	
+
 	d->vge_buflen = htole16(VGE_BUFLEN(segs[0].ds_len) | VGE_RXDESC_I);
 	d->vge_addrlo = htole32(VGE_ADDR_LO(segs[0].ds_addr));
 	d->vge_addrhi = htole16(VGE_ADDR_HI(segs[0].ds_addr) & 0xFFFF);

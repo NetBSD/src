@@ -1,4 +1,4 @@
-/*	$NetBSD: edcreg.h,v 1.2 2001/04/22 11:32:49 jdolecek Exp $	*/
+/*	$NetBSD: edcreg.h,v 1.3 2005/02/27 00:27:21 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
 #define ISR			3	/* read, Interrupt Status Register */
 #define ISR_DEV_SELECT_MASK	0xE0
 #define ISR_ATTACH_ERR		0x10
-#define ISR_INTR_ID_MASK	0x0F		
+#define ISR_INTR_ID_MASK	0x0F
 #define ISR_COMPLETED		0x01
 #define ISR_COMPLETED_WITH_ECC	0x03
 #define ISR_COMPLETED_RETRIES	0x05

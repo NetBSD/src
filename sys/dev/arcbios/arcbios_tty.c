@@ -1,21 +1,21 @@
-/*	$NetBSD: arcbios_tty.c,v 1.7 2004/10/02 09:53:27 sekiya Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.8 2005/02/27 00:26:58 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -28,11 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.7 2004/10/02 09:53:27 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.8 2005/02/27 00:26:58 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
-#include <sys/uio.h> 
+#include <sys/uio.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
@@ -114,7 +114,7 @@ arcbios_ttyopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	return (error);
 }
- 
+
 int
 arcbios_ttyclose(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -126,7 +126,7 @@ arcbios_ttyclose(dev_t dev, int flag, int mode, struct proc *p)
 	ttyclose(tp);
 	return (0);
 }
- 
+
 int
 arcbios_ttyread(dev_t dev, struct uio *uio, int flag)
 {
@@ -134,12 +134,12 @@ arcbios_ttyread(dev_t dev, struct uio *uio, int flag)
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
- 
+
 int
 arcbios_ttywrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp = arcbios_tty[minor(dev)];
- 
+
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
@@ -147,10 +147,10 @@ int
 arcbios_ttypoll(dev_t dev, int events, struct proc *p)
 {
 	struct tty *tp = arcbios_tty[minor(dev)];
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
- 
+
 int
 arcbios_ttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
@@ -221,7 +221,7 @@ arcbios_tty_getchar(int *cp)
 
 	if (q == 0) {
 		ARCBIOS->Read(ARCBIOS_STDIN, &c, 1, &count);
-		*cp = c;	
+		*cp = c;
 
 		return 1;
 	}

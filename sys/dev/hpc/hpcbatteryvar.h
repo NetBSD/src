@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcbatteryvar.h,v 1.1 2001/07/19 11:39:24 sato Exp $	*/
+/*	$NetBSD: hpcbatteryvar.h,v 1.2 2005/02/27 00:26:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 SATO Kazumi
@@ -38,7 +38,7 @@ struct hpcbattery_values {
 };
 
 #ifdef notdef
-typedef	enum { 
+typedef	enum {
 	hpcbattery_init0,
 	hpcbattery_init1,
 	hpcbattery_unknown,
@@ -47,7 +47,7 @@ typedef	enum {
 	hpcbattery_ac_nocharging
 } hpcbattery_ac_state;
 
-typedef	enum { 
+typedef	enum {
 	hpcbattery_batt_no_system_battery,
 	hpcbattery_batt_unknown,
 	hpcbattery_batt_100p,

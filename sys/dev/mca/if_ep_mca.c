@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.12 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.13 2005/02/27 00:27:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,12 +76,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.12 2005/02/04 02:10:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.13 2005/02/27 00:27:21 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
-#include <sys/socket.h> 
+#include <sys/mbuf.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
@@ -175,21 +175,21 @@ ep_mca_attach(parent, self, aux)
 	 *               \__ enable: 0=adapter disabled, 1=adapter enabled
 	 *
 	 * POS register 3: (adf pos1)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 * \________/
 	 *          \_______ Boot ROM Address Range: 0=disabled
 	 *                     X=0xc2000-0xc3fff + (x * 0x2000)
 	 *
 	 * POS register 4: (adf pos2)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
-	 * \________/  \_/ 
+	 * \________/  \_/
 	 *          \    \__ Transceiver Type: 00=on-board (RJ45), 01=ext(AUI)
 	 *           \______ I/O Address Range: 0x200-0x20f + ((x>>2) * 0x400)
 	 *
 	 * POS register 5: (adf pos3)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 *          \____/
 	 *               \__ Interrupt level

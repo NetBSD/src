@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.177 2005/02/21 00:29:08 thorpej Exp $ */
+/*	$NetBSD: st.c,v 1.178 2005/02/27 00:27:48 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.177 2005/02/21 00:29:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.178 2005/02/27 00:27:48 perry Exp $");
 
 #include "opt_scsi.h"
 
@@ -597,14 +597,14 @@ stopen(dev_t dev, int flags, int mode, struct proc *p)
 #endif
 	} else
 		sflags = 0;
- 
+
 	/*
 	 * If we're already mounted or we aren't configured for
 	 * a mount delay, only try a test unit ready once. Otherwise,
 	 * try up to ST_MOUNT_DELAY times with a rest interval of
 	 * one second between each try.
 	 */
- 
+
 	if ((st->flags & ST_MOUNTED) || ST_MOUNT_DELAY == 0) {
 		ntries = 1;
 	} else {
@@ -658,7 +658,7 @@ stopen(dev_t dev, int flags, int mode, struct proc *p)
 		if (slpintr) {
 			goto bad;
 		}
-	} 
+	}
 
 
 	/*
@@ -679,16 +679,16 @@ stopen(dev_t dev, int flags, int mode, struct proc *p)
 	 * to pass the 'test unit ready' test for the non-controlmode device,
 	 * so we bounce the open.
 	 */
- 
+
 	if (error)
 		return (error);
- 
+
 	/*
 	 * Else, we're now committed to saying we're open.
 	 */
- 
+
 	periph->periph_flags |= PERIPH_OPEN; /* unit attn are now errors */
- 
+
 	/*
 	 * If it's a different mode, or if the media has been
 	 * invalidated, unmount the tape from the previous

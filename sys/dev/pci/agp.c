@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.33 2004/08/30 15:05:19 drochner Exp $	*/
+/*	$NetBSD: agp.c,v 1.34 2005/02/27 00:27:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.33 2004/08/30 15:05:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.34 2005/02/27 00:27:32 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -501,7 +501,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		lockmgr(&sc->as_lock, LK_RELEASE, 0);
 		return EINVAL;
 	}
-	
+
 	if (offset < 0
 	    || (offset & (AGP_PAGE_SIZE - 1)) != 0
 	    || offset + mem->am_size > AGP_GET_APERTURE(sc)) {
@@ -548,7 +548,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		}
 		if (bus_dmamap_load(sc->as_dmat, mem->am_dmamap,
 		    mem->am_virtual, mem->am_size, NULL, BUS_DMA_WAITOK) != 0) {
-			bus_dmamem_unmap(sc->as_dmat, mem->am_virtual,	
+			bus_dmamem_unmap(sc->as_dmat, mem->am_virtual,
 			    mem->am_size);
 			bus_dmamem_free(sc->as_dmat, segs, mem->am_nseg);
 			free(segs, M_AGP);
@@ -574,7 +574,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		/*
 		 * Install entries in the GATT, making sure that if
 		 * AGP_PAGE_SIZE < PAGE_SIZE and mem->am_size is not
-		 * aligned to PAGE_SIZE, we don't modify too many GATT 
+		 * aligned to PAGE_SIZE, we don't modify too many GATT
 		 * entries.
 		 */
 		for (j = 0; j < seg->ds_len && (done + j) < mem->am_size;
@@ -644,7 +644,7 @@ agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	 */
 	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
 		AGP_UNBIND_PAGE(sc, mem->am_offset + i);
-		
+
 	agp_flush_cache();
 	AGP_FLUSH_TLB(sc);
 

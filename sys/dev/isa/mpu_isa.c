@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_isa.c,v 1.12 2005/02/04 02:10:41 perry Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.13 2005/02/27 00:27:17 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.12 2005/02/04 02:10:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.13 2005/02/27 00:27:17 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ mpu_isa_match(parent, match, aux)
 
 	memset(&sc, 0, sizeof sc);
 	sc.sc_mpu.iot = ia->ia_iot;
-	if (bus_space_map(sc.sc_mpu.iot, ia->ia_io[0].ir_addr, MPU401_NPORT, 0, 
+	if (bus_space_map(sc.sc_mpu.iot, ia->ia_io[0].ir_addr, MPU401_NPORT, 0,
 			  &sc.sc_mpu.ioh))
 		return (0);
 	r = mpu_find(&sc.sc_mpu);
@@ -127,7 +127,7 @@ mpu_isa_attach(parent, self, aux)
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_AUDIO, mpu_intr, sc);
-	
+
 	sc->sc_mpu.model = "Roland MPU-401 MIDI UART";
 	mpu_attach(&sc->sc_mpu);
 }

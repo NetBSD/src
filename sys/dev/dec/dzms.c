@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.11 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: dzms.c,v 1.12 2005/02/27 00:26:59 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.11 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.12 2005/02/27 00:26:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ dzms_input(vsc, data)
 			sc->buttons |= WSMS_BUTTON2;
 		if ((data & RIGHT_BUTTON) != 0)
 			sc->buttons |= WSMS_BUTTON3;
-	    
+
 		sc->dx = data & MOUSE_X_SIGN;
 		sc->dy = data & MOUSE_Y_SIGN;
 	} else if (sc->inputstate == 2) {

@@ -15,7 +15,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.15 2003/10/28 17:01:19 pooka Exp $
+ *	$Id: ifpci.c,v 1.16 2005/02/27 00:27:33 perry Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.15 2003/10/28 17:01:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.16 2005/02/27 00:27:33 perry Exp $");
 
 
 #include <sys/param.h>
@@ -258,7 +258,7 @@ CFATTACH_DECL(ifpci, sizeof(struct ifpci_softc),
  * flag in avma1pp_bchannel_setup upon active and cleared upon deactivation.
  * It is set high to allow room for new flags.
  */
-#define HSCX_AVMA1PP_ACTIVE	0x1000 
+#define HSCX_AVMA1PP_ACTIVE	0x1000
 
 static int
 ifpci_match(struct device *parent, struct cfdata *match, void *aux)
@@ -311,11 +311,11 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_AVMA1PCI;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	/* this is no IPAC based card */
@@ -324,7 +324,7 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* setup interrupt mapping */
 	avma1pp_map_int(psc, pa);
-	
+
 	/* init the card */
 	/* the Linux driver does this to clear any pending ISAC interrupts */
 	/* see if it helps any - XXXX */
@@ -360,7 +360,7 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* init the "HSCX" */
 	avma1pp_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
-	
+
 	avma1pp_bchannel_setup(sc, HSCX_CH_B, BPROT_NONE, 0);
 
 	/* can't use the normal B-Channel stuff */
@@ -510,7 +510,7 @@ hscx_write_fifo(int chan, const void *buf, size_t len, struct isic_softc *sc)
 	}
 	if (len != sc->sc_bfifolen)
 		sc->avma1pp_txl = len;
-	
+
 	cnt = 0; /* borrow cnt */
 	AVMA1PPSETCMDLONG(cnt);
 	hscx_write_reg(chan, HSCX_STAT, cnt, sc);
@@ -613,12 +613,12 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 	register l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	int activity = -1;
 	u_int param = 0;
-	
+
 	NDBGL1(L1_H_IRQ, "%#x", stat);
 
 	if((stat & HSCX_INT_XDU) && (chan->bprot != BPROT_NONE))/* xmit data underrun */
 	{
-		chan->stat_XDU++;			
+		chan->stat_XDU++;
 		NDBGL1(L1_H_XFRERR, "xmit data underrun");
 		/* abort the transmission */
 		sc->avma1pp_txl = 0;
@@ -649,7 +649,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 	 *				if ((stat & HSCX_STAT_CRCVFRRAB) != HSCX_STAT_CRCVFR)
 	 *					CRC/framing error
 	 */
-	
+
 	if(stat & HSCX_INT_RPR)
 	{
 		register int fifo_data_len;
@@ -661,7 +661,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 		{
 			chan->stat_RDO++;
 			NDBGL1(L1_H_XFRERR, "receive data overflow");
-			error++;				
+			error++;
 		}
 
 		/*
@@ -684,17 +684,17 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 		 }
 
 		fifo_data_len = ((stat & HSCX_STAT_RML_MASK) >> 8);
-		
+
 		if(fifo_data_len == 0)
 			fifo_data_len = sc->sc_bfifolen;
 
 		/* ALWAYS read data from HSCX fifo */
-	
+
 		HSCX_RDFIFO(h_chan, scrbuf, fifo_data_len);
 		chan->rxcount += fifo_data_len;
 
 		/* all error conditions checked, now decide and take action */
-		
+
 		if(error == 0)
 		{
 			if(chan->in_mbuf == NULL)
@@ -713,7 +713,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 				chan->in_len += fifo_data_len;
 
 				/* setup mbuf data length */
-					
+
 				chan->in_mbuf->m_len = chan->in_len;
 				chan->in_mbuf->m_pkthdr.len = chan->in_len;
 
@@ -732,9 +732,9 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 				  {
 					 (*chan->l4_driver->bch_rx_data_ready)(chan->l4_driver_softc);
 					 activity = ACT_RX;
-				
+
 					 /* mark buffer ptr as unused */
-					
+
 					 chan->in_mbuf = NULL;
 					 chan->in_cbptr = NULL;
 					 chan->in_len = 0;
@@ -758,7 +758,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 				 if(chan->bprot == BPROT_NONE)
 				 {
 					  /* setup mbuf data length */
-				
+
 					  chan->in_mbuf->m_len = chan->in_len;
 					  chan->in_mbuf->m_pkthdr.len = chan->in_len;
 
@@ -773,7 +773,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 
 					  if(!(isdn_bchan_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len)))
 						 activity = ACT_RX;
-				
+
 					  /* move rx'd data to rx queue */
 
 					  if (!(IF_QFULL(&chan->rx_queue)))
@@ -789,14 +789,14 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 					  (*chan->l4_driver->bch_rx_data_ready)(chan->l4_driver_softc);
 
 					  /* alloc new buffer */
-				
+
 					  if((chan->in_mbuf = i4b_Bgetmbuf(BCH_MAX_DATALEN)) == NULL)
 						 panic("L1 avma1pp_hscx_intr: RPF, cannot allocate new mbuf!");
-	
+
 					  /* setup new data ptr */
-				
+
 					  chan->in_cbptr = chan->in_mbuf->m_data;
-	
+
 					  /* OK to copy the data */
 					  memcpy(chan->in_cbptr, scrbuf, fifo_data_len);
 
@@ -835,7 +835,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 
 
 	/* transmit fifo empty, new data can be written to fifo */
-	
+
 	if(stat & HSCX_INT_XPR)
 	{
 		/*
@@ -869,7 +869,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 					hdr.count = ++sc->sc_trace_bcount;
 					isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 				}
-				
+
 				if(chan->bprot == BPROT_NONE)
 				{
 					if(!(isdn_bchan_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
@@ -881,12 +881,12 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 				}
 			}
 		}
-			
+
 		isic_hscx_fifo(chan, sc);
 	}
 
 	/* call timeout handling routine */
-	
+
 	if(activity == ACT_RX || activity == ACT_TX)
 		(*chan->l4_driver->bch_activity)(chan->l4_driver_softc, activity);
 }
@@ -943,7 +943,7 @@ avma1pp_intr(void * parm)
 	if (!(stat & ASL_IRQ_ISAC))
 	{
 	  NDBGL1(L1_H_IRQ, "ISAC");
-		for (;;) {			
+		for (;;) {
 			/* get isac irq status */
 			u_int8_t isac_irq_stat = ISAC_READ(I_ISTA);
 			if (!isac_irq_stat)
@@ -1044,14 +1044,14 @@ avma1pp_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 
 	int s = splnet();
-	
+
 	if(activate == 0)
 	{
 		/* deactivation */
 		chan->state = HSCX_IDLE;
 		avma1pp_hscx_init(sc, h_chan, activate);
 	}
-		
+
 	NDBGL1(L1_BCHAN, "%s: channel=%d, %s",
 		sc->sc_dev.dv_xname, h_chan, activate ? "activate" : "deactivate");
 
@@ -1068,28 +1068,28 @@ avma1pp_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 	chan->rx_queue.ifq_maxlen = IFQ_MAXLEN;
 
 	chan->rxcount = 0;		/* reset rx counter */
-	
+
 	i4b_Bfreembuf(chan->in_mbuf);	/* clean rx mbuf */
 
 	chan->in_mbuf = NULL;		/* reset mbuf ptr */
 	chan->in_cbptr = NULL;		/* reset mbuf curr ptr */
 	chan->in_len = 0;		/* reset mbuf data len */
-	
+
 	/* transmitter part */
 
 	i4b_Bcleanifq(&chan->tx_queue);	/* clean tx queue */
 
 	chan->tx_queue.ifq_maxlen = IFQ_MAXLEN;
-	
+
 	chan->txcount = 0;		/* reset tx counter */
-	
+
 	i4b_Bfreembuf(chan->out_mbuf_head);	/* clean tx mbuf */
 
 	chan->out_mbuf_head = NULL;	/* reset head mbuf ptr */
-	chan->out_mbuf_cur = NULL;	/* reset current mbuf ptr */	
+	chan->out_mbuf_cur = NULL;	/* reset current mbuf ptr */
 	chan->out_mbuf_cur_ptr = NULL;	/* reset current mbuf data ptr */
 	chan->out_mbuf_cur_len = 0;	/* reset current mbuf data cnt */
-	
+
 	if(activate != 0)
 	{
 		/* activation */
@@ -1116,9 +1116,9 @@ avma1pp_bchannel_start(isdn_layer1token t, int h_chan)
 	}
 
 	/* get next mbuf from queue */
-	
+
 	IF_DEQUEUE(&chan->tx_queue, chan->out_mbuf_head);
-	
+
 	if(chan->out_mbuf_head == NULL)		/* queue empty ? */
 	{
 		splx(s);			/* leave critical section */
@@ -1126,11 +1126,11 @@ avma1pp_bchannel_start(isdn_layer1token t, int h_chan)
 	}
 
 	/* init current mbuf values */
-	
+
 	chan->out_mbuf_cur = chan->out_mbuf_head;
 	chan->out_mbuf_cur_len = chan->out_mbuf_cur->m_len;
-	chan->out_mbuf_cur_ptr = chan->out_mbuf_cur->m_data;	
-	
+	chan->out_mbuf_cur_ptr = chan->out_mbuf_cur->m_data;
+
 	/* activity indicator for timeout handling */
 
 	if(chan->bprot == BPROT_NONE)
@@ -1144,7 +1144,7 @@ avma1pp_bchannel_start(isdn_layer1token t, int h_chan)
 	}
 
 	chan->state |= HSCX_TX_ACTIVE;		/* we start transmitting */
-	
+
 	if(sc->sc_trace & TRACE_B_TX)	/* if trace, send mbuf to trace dev */
 	{
 		struct i4b_trace_hdr hdr;
@@ -1152,20 +1152,20 @@ avma1pp_bchannel_start(isdn_layer1token t, int h_chan)
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_trace_bcount;
 		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
-	}			
+	}
 
 	isic_hscx_fifo(chan, sc);
 
 	/* call timeout handling routine */
-	
+
 	if(activity == ACT_RX || activity == ACT_TX)
 		(*chan->l4_driver->bch_activity)(chan->l4_driver_softc, activity);
 
-	splx(s);	
+	splx(s);
 }
 
 /*---------------------------------------------------------------------------*
- *	return the address of isic drivers linktab	
+ *	return the address of isic drivers linktab
  *---------------------------------------------------------------------------*/
 static isdn_link_t *
 avma1pp_ret_linktab(void *token, int channel)
@@ -1177,7 +1177,7 @@ avma1pp_ret_linktab(void *token, int channel)
 
 	return(&chan->isdn_linktab);
 }
- 
+
 /*---------------------------------------------------------------------------*
  *	set the driver linktab in the b channel softc
  *---------------------------------------------------------------------------*/
@@ -1217,9 +1217,9 @@ avma1pp_init_linktab(struct isic_softc *sc)
 	/* used by non-HDLC data transfers, i.e. telephony drivers */
 	lt->rx_queue = &chan->rx_queue;
 
-	/* used by HDLC data transfers, i.e. ipr and isp drivers */	
-	lt->rx_mbuf = &chan->in_mbuf;	
-                                                
+	/* used by HDLC data transfers, i.e. ipr and isp drivers */
+	lt->rx_mbuf = &chan->in_mbuf;
+
 	chan = &sc->sc_chan[HSCX_CH_B];
 	lt = &chan->isdn_linktab;
 
@@ -1231,8 +1231,8 @@ avma1pp_init_linktab(struct isic_softc *sc)
 	/* used by non-HDLC data transfers, i.e. telephony drivers */
 	lt->rx_queue = &chan->rx_queue;
 
-	/* used by HDLC data transfers, i.e. ipr and isp drivers */	
-	lt->rx_mbuf = &chan->in_mbuf;	
+	/* used by HDLC data transfers, i.e. ipr and isp drivers */
+	lt->rx_mbuf = &chan->in_mbuf;
 }
 
 /*
@@ -1246,7 +1246,7 @@ avma1pp_bchannel_stat(isdn_layer1token t, int h_chan, bchan_statistics_t *bsp)
 	int s;
 
 	s = splnet();
-	
+
 	bsp->outbytes = chan->txcount;
 	bsp->inbytes = chan->rxcount;
 
@@ -1281,7 +1281,7 @@ isic_hscx_fifo(l1_bchan_state_t *chan, struct isic_softc *sc)
 	 * is the last mbuf and we tell the HSCX that it has to send
 	 * CRC and closing flag
 	 */
-	 
+
 	while(chan->out_mbuf_cur && len != sc->sc_bfifolen)
 	{
 		nextlen = min(chan->out_mbuf_cur_len, sc->sc_bfifolen - len);
@@ -1289,7 +1289,7 @@ isic_hscx_fifo(l1_bchan_state_t *chan, struct isic_softc *sc)
 #ifdef NOTDEF
 		printf("i:mh=%p, mc=%p, mcp=%p, mcl=%d l=%d nl=%d # ",
 			chan->out_mbuf_head,
-			chan->out_mbuf_cur,			
+			chan->out_mbuf_cur,
 			chan->out_mbuf_cur_ptr,
 			chan->out_mbuf_cur_len,
 			len,
@@ -1303,17 +1303,17 @@ isic_hscx_fifo(l1_bchan_state_t *chan, struct isic_softc *sc)
 
 		len += nextlen;
 		chan->txcount += nextlen;
-	
+
 		chan->out_mbuf_cur_ptr += nextlen;
 		chan->out_mbuf_cur_len -= nextlen;
-			
-		if(chan->out_mbuf_cur_len == 0) 
+
+		if(chan->out_mbuf_cur_len == 0)
 		{
 			if((chan->out_mbuf_cur = chan->out_mbuf_cur->m_next) != NULL)
 			{
 				chan->out_mbuf_cur_ptr = chan->out_mbuf_cur->m_data;
 				chan->out_mbuf_cur_len = chan->out_mbuf_cur->m_len;
-	
+
 				if(sc->sc_trace & TRACE_B_TX)
 				{
 					struct i4b_trace_hdr hdr;

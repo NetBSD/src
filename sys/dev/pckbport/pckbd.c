@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.2 2004/03/18 21:05:19 bjh21 Exp $ */
+/* $NetBSD: pckbd.c,v 1.3 2005/02/27 00:27:42 perry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.2 2004/03/18 21:05:19 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.3 2005/02/27 00:27:42 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,8 +316,8 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	if (isconsole) {
 		sc->id = &pckbd_consdata;
 
-		/* 
-		 * Some keyboards are not enabled after a reset, 
+		/*
+		 * Some keyboards are not enabled after a reset,
 		 * so make sure it is enabled now.
 		 */
 		cmd[0] = KBC_ENABLE;

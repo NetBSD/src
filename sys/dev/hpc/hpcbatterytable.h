@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcbatterytable.h,v 1.4 2003/12/27 07:27:22 shin Exp $	*/
+/*	$NetBSD: hpcbatterytable.h,v 1.5 2005/02/27 00:26:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 SATO Kazumi
@@ -29,7 +29,7 @@
 #ifdef hpcmips
 /*
  * NEC MCR/430, MCR/530 parameters
- */	
+ */
 struct hpcbattery_spec hpcbattery_mcr530_spec =
 {
 	0,	/* guess_charge */
@@ -38,13 +38,13 @@ struct hpcbattery_spec hpcbattery_mcr530_spec =
 	10,	/* drift */
 	20,	/* ac_bias */
 	840,	/* dc_100p (100) */
-	810,	/* dc_80p (80) */		
+	810,	/* dc_80p (80) */
 	780,	/* dc_50p (50) */
 	720,	/* dc_20p (20) */
 	630,	/* dc_critical (0) */
 	875,	/* ac_charge_100p */
 	860,	/* ac_100p */
-	830,	/* ac_80p */	
+	830,	/* ac_80p */
 	800,	/* ac_50p */
 	740,	/* ac_20p */
 	640,	/* ac_critical */
@@ -80,13 +80,13 @@ struct hpcbattery_spec hpcbattery_sigmarion_spec =
 	10,	/* drift */
 	20,	/* ac_bias */
 	840,	/* dc_100p */
-	810,	/* dc_80p */		
+	810,	/* dc_80p */
 	780,	/* dc_50p */
 	720,	/* dc_20p */
 	630,	/* dc_critical */
 	875,	/* ac_charge_100p */
 	860,	/* ac_100p */
-	830,	/* ac_80p */	
+	830,	/* ac_80p */
 	800,	/* ac_50p */
 	740,	/* ac_20p */
 	640,	/* ac_critical */
@@ -155,7 +155,7 @@ struct hpcbattery_spec hpcbattery_z50_spec =
 
 /*
  * NEC MC-R700/730 parameters
- */	
+ */
 struct hpcbattery_spec hpcbattery_mcr700_spec =
 {
 	0,	/* guess_charge */
@@ -164,13 +164,13 @@ struct hpcbattery_spec hpcbattery_mcr700_spec =
 	10,	/* drift */
 	20,	/* ac_bias */
 	840,	/* dc_100p (100) */
-	820,	/* dc_80p (80) */		
+	820,	/* dc_80p (80) */
 	790,	/* dc_50p (50) */
 	770,	/* dc_20p (20) */
 	760,	/* dc_critical (0) */
 	860,	/* ac_charge_100p */
 	850,	/* ac_100p */
-	840,	/* ac_80p */	
+	840,	/* ac_80p */
 	830,	/* ac_50p */
 	810,	/* ac_20p */
 	800,	/* ac_critical */
@@ -208,7 +208,7 @@ struct platid_data hpcbattery_parameters[] = {
 	{ &platid_mask_MACH_NEC_MCR_530A, &hpcbattery_mcr530_spec },
 	{ &platid_mask_MACH_NEC_MCR_SIGMARION, &hpcbattery_sigmarion_spec },
 	{ &platid_mask_MACH_IBM_WORKPAD_Z50, &hpcbattery_z50_spec },
-	{ &platid_mask_MACH_NEC_MCR_700, &hpcbattery_mcr700_spec }, 
+	{ &platid_mask_MACH_NEC_MCR_700, &hpcbattery_mcr700_spec },
 	{ &platid_mask_MACH_NEC_MCR_700A, &hpcbattery_mcr700_spec }, /* XXX */
 	{ &platid_mask_MACH_NEC_MCR_730, &hpcbattery_mcr700_spec }, /* XXX */
 	{ &platid_mask_MACH_NEC_MCR_730A, &hpcbattery_mcr700_spec }, /* XXX */

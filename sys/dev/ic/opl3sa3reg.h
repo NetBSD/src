@@ -1,4 +1,4 @@
-/*	$NetBSD: opl3sa3reg.h,v 1.2 2002/03/10 13:57:10 itohy Exp $	*/
+/*	$NetBSD: opl3sa3reg.h,v 1.3 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -228,7 +228,7 @@
 
 /* [3] */
 #define SA3_APWRDWN		0x13	/* Analog Partial Power Down (R/W) */
-#define   SA3_APWRDWN_FMDAC	0x10	/* FMDAC for OPL3 power down */ 
+#define   SA3_APWRDWN_FMDAC	0x10	/* FMDAC for OPL3 power down */
 #define   SA3_APWRDWN_AD	0x08	/* A/D for WSS recording power down */
 #define   SA3_APWRDWN_DA	0x04	/* D/A for WSS playback power down */
 #define   SA3_APWRDWN_SBDAC	0x02	/* D/A for SB power down */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_eisa.c,v 1.11 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.12 2005/02/27 00:26:59 perry Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.11 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.12 2005/02/27 00:26:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ static const char * const dpt_eisa_boards[] = {
 	"NEC8200",	/* OEM */
 	"ATT2408",	/* OEM */
 	NULL
-}; 
+};
 
 static int
 dpt_eisa_irq(bus_space_tag_t iot, bus_space_handle_t ioh, int *irq)
@@ -128,12 +128,12 @@ dpt_eisa_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot;
 	const char *intrstr;
 	int irq;
-	
+
 	ea = aux;
 	sc = (struct dpt_softc *)self;
 	iot = ea->ea_iot;
 	ec = ea->ea_ec;
-	
+
 	printf(": ");
 
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
@@ -156,7 +156,7 @@ dpt_eisa_attach(struct device *parent, struct device *self, void *aux)
 		printf("can't map interrupt (%d)\n", irq);
 		return;
 	}
-	
+
 	intrstr = eisa_intr_string(ec, ih);
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    dpt_intr, sc);
@@ -170,9 +170,9 @@ dpt_eisa_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Read the EATA configuration. */
 	if (dpt_readcfg(sc)) {
-		printf("%s: readcfg failed - see dpt(4)\n", 
+		printf("%s: readcfg failed - see dpt(4)\n",
 		    sc->sc_dv.dv_xname);
-		return;	
+		return;
 	}
 
 	sc->sc_bustype = SI_EISA_BUS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.47 2005/02/21 02:12:48 thorpej Exp $	*/
+/*	$NetBSD: hme.c,v 1.48 2005/02/27 00:27:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.47 2005/02/21 02:12:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.48 2005/02/27 00:27:01 perry Exp $");
 
 /* #define HMEDEBUG */
 
@@ -610,7 +610,7 @@ hme_init(sc)
 	v |= HME_ERX_CFG_DMAENABLE;
 
 	/* set h/w rx checksum start offset (# of half-words) */
-	v |= (((ETHER_HDR_LEN + sizeof(struct ip) + 
+	v |= (((ETHER_HDR_LEN + sizeof(struct ip) +
 		((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
 		ETHER_VLAN_ENCAP_LEN : 0)) / 2) << HME_ERX_CFG_CSUMSHIFT) &
 		HME_ERX_CFG_CSUMSTART;
@@ -780,7 +780,7 @@ hme_get(sc, ri, flags)
 			goto swcsum;
 
 		hlen = ip->ip_hl << 2;
-		if (hlen < sizeof(struct ip)) 
+		if (hlen < sizeof(struct ip))
 			goto swcsum;
 
 		/* too short, truncated, fragment */
@@ -842,7 +842,7 @@ hme_get(sc, ri, flags)
 		m0->m_pkthdr.csum_flags |= M_CSUM_DATA | M_CSUM_NO_PSEUDOHDR;
 	}
 
-swcsum: 
+swcsum:
 	return (m0);
 
 bad:

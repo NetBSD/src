@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751var.h,v 1.4 2003/11/16 00:22:09 jonathan Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.5 2005/02/27 00:27:32 perry Exp $	*/
 /*	$OpenBSD: hifn7751var.h,v 1.18 2000/06/02 22:36:45 deraadt Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ struct hifn_dma {
 
 	/*
 	 *  Our current positions for insertion and removal from the descriptor
-	 *  rings. 
+	 *  rings.
 	 */
 	int			cmdi, srci, dsti, resi;
 	volatile int		cmdu, srcu, dstu, resu;
@@ -228,7 +228,7 @@ struct hifn_softc {
  *
  *  session_num
  *  -----------
- *  A number between 0 and 2048 (for DRAM models) or a number between 
+ *  A number between 0 and 2048 (for DRAM models) or a number between
  *  0 and 768 (for SRAM models).  Those who don't want to use session
  *  numbers should leave value at zero and send a new crypt key and/or
  *  new MAC key on every command.  If you use session numbers and
@@ -242,7 +242,7 @@ struct hifn_softc {
  *  ----
  *  Either fill in the mbuf pointer and npa=0 or
  *	 fill packp[] and packl[] and set npa to > 0
- * 
+ *
  *  mac_header_skip
  *  ---------------
  *  The number of bytes of the source_buf that are skipped over before
@@ -271,7 +271,7 @@ struct hifn_command {
 		struct uio *src_io;
 	} srcu;
 	bus_dmamap_t src_map;
- 
+
 	union {
 		struct mbuf *dst_m;
 		struct uio *dst_io;
@@ -313,7 +313,7 @@ struct hifn_command {
  *  0 for success, negative values on error
  *
  *  Defines for negative error codes are:
- *  
+ *
  *    HIFN_CRYPTO_BAD_INPUT  :  The passed in command had invalid settings.
  *    HIFN_CRYPTO_RINGS_FULL :  All DMA rings were full and non-blocking
  *                              behaviour was requested.

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.39 2004/10/28 07:07:39 yamt Exp $	*/
+/*	$NetBSD: md.c,v 1.40 2005/02/27 00:26:58 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.39 2004/10/28 07:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.40 2005/02/27 00:26:58 perry Exp $");
 
 #include "opt_md.h"
 
@@ -425,7 +425,7 @@ md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd, struct proc *proc)
 	sc->sc_size = (size_t)size;
 	sc->sc_type = MD_KMEM_ALLOCATED;
 	return 0;
-}	
+}
 
 #if MEMORY_DISK_SERVER
 
@@ -460,7 +460,7 @@ md_ioctl_server(struct md_softc *sc, struct md_conf *umd, struct proc *proc)
 	sc->sc_size = 0;
 
 	return (error);
-}	
+}
 
 static int md_sleep_pri = PWAIT | PCATCH;
 

@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.21 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.22 2005/02/27 00:27:01 perry Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -148,10 +148,10 @@ cardtypename(cardtype)
 	else
 		return "unknown type";
 }
-	
+
 /*---------------------------------------------------------------------------*
- * Probe for presence of device at given io space. 
- * Return the card type (stupid ISA needs to know this in advance, to 
+ * Probe for presence of device at given io space.
+ * Return the card type (stupid ISA needs to know this in advance, to
  * calculate the share memory size).
  *---------------------------------------------------------------------------*/
 int
@@ -232,7 +232,7 @@ daic_handle_intr(sc, port)
 
 	/* maybe an assign answer (positive or negative) */
 	if (rc == DAIC_RC_ASSIGN_OK) {
-		du->du_assign_res = rcid;	
+		du->du_assign_res = rcid;
 		/* assing rc is special, we tell the card it's done */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, DAIC_COM_REQ+off, 0);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, DAIC_COM_RC+off, 0);
@@ -305,7 +305,7 @@ check_ind:
 		} else if (ind == DAIC_IND_INFO) {
 			int i;
 
-			printf("%s: got info indication\n", 
+			printf("%s: got info indication\n",
 				sc->sc_dev.dv_xname);
 
 			for (i = 0; i < 48; i++) {
@@ -315,10 +315,10 @@ check_ind:
 			}
 			printf("\n");
 		} else if (ind == DAIC_IND_HANGUP) {
-			printf("%s: got global HANGUP indication\n", 
+			printf("%s: got global HANGUP indication\n",
 				sc->sc_dev.dv_xname);
 		} else {
-			printf("%s: unknown global indication: 0x%02x\n", 
+			printf("%s: unknown global indication: 0x%02x\n",
 				sc->sc_dev.dv_xname, ind);
 		}
 		goto ind_done;
@@ -543,11 +543,11 @@ daic_reset(bus, io, port, memsize)
 		return -1;
 	}
 	if (bus_space_read_1(bus, io, DAIC_BOOT_EBIT+off)) {
-		if (!quiet) printf(": on board memory test failed at %p\n", 
+		if (!quiet) printf(": on board memory test failed at %p\n",
 			(void*)bus_space_read_2(bus, io, DAIC_BOOT_ELOC+off));
 		return -1;
 	}
-		
+
 	/* fetch info from primary bootstrap code */
 	cardtype = bus_space_read_1(bus, io, DAIC_BOOT_CARD+off);
 	mem = bus_space_read_1(bus, io, DAIC_BOOT_MSIZE+off) << 4;
@@ -576,12 +576,12 @@ daic_diagnostic(token, req)
 
 	/* validate parameters */
 	if (req->cmd < 0 || req->cmd > DAIC_DIAG_MAXCMD) {
-		printf("%s: daic_diagnostic: illegal cmd %d\n", 
+		printf("%s: daic_diagnostic: illegal cmd %d\n",
 			sc->sc_dev.dv_xname, req->cmd);
 		return EIO;
 	}
 	if (req->out_param_len > (DAIC_DIAG_DATA_SIZE+1)) {
-		printf("%s: daic_diagnostic: illegal out_param_len %d\n", 
+		printf("%s: daic_diagnostic: illegal out_param_len %d\n",
 			sc->sc_dev.dv_xname, req->out_param_len);
 		return EIO;
 	}
@@ -721,7 +721,7 @@ daic_register_port(struct daic_softc *sc, int port)
 }
 
 /*---------------------------------------------------------------------------*
- *	return the address of daic drivers linktab	
+ *	return the address of daic drivers linktab
  *---------------------------------------------------------------------------*/
 static isdn_link_t *
 daic_ret_linktab(void *token, int channel)
@@ -819,7 +819,7 @@ daic_assign(
 		   isn't freed, we don't wake up others... */
 		sc->sc_port[port].du_assign &= ~DAIC_ASSIGN_NOGLOBAL;
 		sc->sc_port[port].du_assign |= DAIC_ASSIGN_PENDING|DAIC_ASSIGN_GLOBAL;
-		daic_request(sc, port, DAIC_REQ_ASSIGN, DAIC_GLOBALID_DCHAN, 
+		daic_request(sc, port, DAIC_REQ_ASSIGN, DAIC_GLOBALID_DCHAN,
 			sizeof parm_global_assign, parm_global_assign);
 		splx(x);
 		return id;
@@ -874,7 +874,7 @@ daic_indicate_ind(struct daic_softc *sc, int port)
 	cd = reserve_cd();	/* cdid filled in */
 	cd->bprot = BPROT_NONE;
 	cd->cause_in = 0;
-	cd->cause_out = 0;			
+	cd->cause_out = 0;
 	cd->dst_telno[0] = '\0';
 	cd->src_telno[0] = '\0';
 	cd->channelid = CHAN_NO;
@@ -907,7 +907,7 @@ daic_indicate_ind(struct daic_softc *sc, int port)
 			  		off = 1;
 			  	else
 			  		off = 2;
-			  	bus_space_read_region_1(sc->sc_iot, sc->sc_ioh, 
+			  	bus_space_read_region_1(sc->sc_iot, sc->sc_ioh,
 					DAIC_COM_RBUFFER+offset+i+off, cd->src_telno,
 					ielen - off);
 				cd->src_telno[ielen-off+1] = '\0';
@@ -915,7 +915,7 @@ daic_indicate_ind(struct daic_softc *sc, int port)
 		  	break;
 		  case IEI_CALLEDPN:
 		  	bus_space_read_region_1(sc->sc_iot, sc->sc_ioh,
-		  		DAIC_COM_RBUFFER+offset+i+1, 
+		  		DAIC_COM_RBUFFER+offset+i+1,
 				cd->dst_telno, ielen-1);
 			cd->dst_telno[ielen] = '\0';
 		  	break;

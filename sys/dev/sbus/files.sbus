@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.19 2004/07/24 12:45:00 mrg Exp $
+#	$NetBSD: files.sbus,v 1.20 2005/02/27 00:27:48 perry Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -72,7 +72,7 @@ file	dev/sbus/cs4231_sbus.c		audiocs_sbus
 # Magma Serial/Parallel boards
 #
 device	magma {}
-attach	magma at sbus                                 
+attach	magma at sbus
 device	mtty: tty
 attach	mtty at magma
 device	mbpp

@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.10 2005/02/27 00:27:34 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -35,7 +35,7 @@
 /* driver for the hardware monitoring part of the VIA VT82C686A */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.10 2005/02/27 00:27:34 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,6 +368,6 @@ viaenv_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 
 	/* XXX Not implemented */
 	binfo->validflags = 0;
-	
+
 	return (0);
 }

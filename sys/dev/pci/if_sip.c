@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.100 2005/02/20 15:56:03 jdolecek Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.101 2005/02/27 00:27:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  * SiS 7016 10/100, National Semiconductor DP83815 10/100, and
  * National Semiconductor DP83820 10/100/1000 PCI Ethernet
  * controllers.
- *    
+ *
  * Originally written to support the SiS 900 by Jason R. Thorpe for
  * Network Computer, Inc.
  *
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.100 2005/02/20 15:56:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.101 2005/02/27 00:27:33 perry Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -485,7 +485,7 @@ struct sip_variant {
 	void	(*sipv_mii_writereg)(struct device *, int, int, int);
 	void	(*sipv_mii_statchg)(struct device *);
 	void	(*sipv_set_filter)(struct sip_softc *);
-	void	(*sipv_read_macaddr)(struct sip_softc *, 
+	void	(*sipv_read_macaddr)(struct sip_softc *,
 		    const struct pci_attach_args *, u_int8_t *);
 };
 
@@ -1222,7 +1222,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 				    "DMA segments, dropping...\n",
 				    sc->sc_dev.dv_xname);
 				IFQ_DEQUEUE(&ifp->if_snd, m0);
-				m_freem(m0); 
+				m_freem(m0);
 				continue;
 			}
 			/*
@@ -1572,7 +1572,7 @@ SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, caddr_t data)
 		/* FALLTHROUGH */
 	default:
 		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) { 
+		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
@@ -2683,13 +2683,13 @@ SIP_DECL(read_eeprom)(struct sip_softc *sc, int word, int wordcnt,
 			bus_space_write_4(st, sh, SIP_EROMAR, reg);
 			delay(4);
 		}
-		
+
 		/* Shift in address. */
 		for (x = 6; x > 0; x--) {
 			if ((word + i) & (1 << (x - 1)))
 				reg |= EROMAR_EEDI;
 			else
-				reg &= ~EROMAR_EEDI; 
+				reg &= ~EROMAR_EEDI;
 			bus_space_write_4(st, sh, SIP_EROMAR, reg);
 			bus_space_write_4(st, sh, SIP_EROMAR,
 			    reg | EROMAR_EESK);
@@ -2730,7 +2730,7 @@ SIP_DECL(add_rxbuf)(struct sip_softc *sc, int idx)
 	int error;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)  
+	if (m == NULL)
 		return (ENOBUFS);
 
 	MCLGET(m, M_DONTWAIT);
@@ -2923,10 +2923,10 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	struct ethercom *ec = &sc->sc_ethercom;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if; 
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;
-	u_int8_t *cp;    
-	struct ether_multistep step; 
+	u_int8_t *cp;
+	struct ether_multistep step;
 	u_int32_t crc, hash, slot, bit;
 #ifdef DP83820
 #define	MCHASH_NWORDS	128
@@ -3047,7 +3047,7 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 	 * Re-enable the receiver filter.
 	 */
 	bus_space_write_4(st, sh, SIP_RFCR, sc->sc_rfcr);
-} 
+}
 
 #if defined(DP83820)
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390reg.h,v 1.6 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: dp8390reg.h,v 1.7 2005/02/27 00:27:01 perry Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -357,7 +357,7 @@
  * algorithm to allow prioritization of nodes.
  */
 #define ED_TCR_OFST	0x10
- 
+
 /*
  * bits 5, 6, and 7 are unused/reserved
  */

@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.37 2005/01/02 20:41:20 mhitch Exp $ */
+/* $NetBSD: xcfb.c,v 1.38 2005/02/27 00:27:50 perry Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.37 2005/01/02 20:41:20 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.38 2005/02/27 00:27:50 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ static u_int32_t ims332_read_reg(int);
 extern long ioasic_base;	/* XXX */
 
 /*
- * Compose 2 bit/pixel cursor image.  
+ * Compose 2 bit/pixel cursor image.
  *   M M M M I I I I		M I M I M I M I
  *	[ before ]		   [ after ]
  *   3 2 1 0 3 2 1 0		3 3 2 2 1 1 0 0
@@ -720,7 +720,7 @@ ims332_loadcmap(cm)
 {
 	int i;
 	u_int32_t rgb;
-	
+
 	for (i = 0; i < CMAP_SIZE; i++) {
 		rgb = cm->b[i] << 16 | cm->g[i] << 8 | cm->r[i];
 		ims332_write_reg(IMS332_REG_LUT_BASE + i, rgb);

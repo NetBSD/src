@@ -1,4 +1,4 @@
-/*	$NetBSD: swdmover.c,v 1.7 2003/11/07 22:04:13 briggs Exp $	*/
+/*	$NetBSD: swdmover.c,v 1.8 2005/02/27 00:26:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.7 2003/11/07 22:04:13 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.8 2005/02/27 00:26:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -327,7 +327,7 @@ swdmover_func_xor_process(struct dmover_request *dreq)
 				dst8++;
 			}
 		}
-		
+
 		break;
 
 	case DMOVER_BUF_UIO:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.219 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.220 2005/02/27 00:27:48 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.219 2005/02/21 00:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.220 2005/02/27 00:27:48 perry Exp $");
 
 #include "rnd.h"
 
@@ -346,7 +346,7 @@ cddetach(struct device *self, int flags)
 /*
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
-static int 
+static int
 cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct cd_softc *cd;
@@ -503,7 +503,7 @@ bad4:
  * close the device.. only called if we are the LAST
  * occurence of an open device
  */
-static int 
+static int
 cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
@@ -735,7 +735,7 @@ done:
  * must be called at the correct (highish) spl level
  * cdstart() is called at splbio from cdstrategy, cdrestart and scsipi_done
  */
-static void 
+static void
 cdstart(struct scsipi_periph *periph)
 {
 	struct cd_softc *cd = (void *)periph->periph_dev;
@@ -789,7 +789,7 @@ cdstart(struct scsipi_periph *periph)
 		/*
 		 * We have a buf, now we should make a command.
 		 */
-		
+
 		nblks = howmany(bp->b_bcount, cd->params.blksize);
 
 		/*
@@ -908,7 +908,7 @@ cdbounce(struct buf *bp)
 	}
 	if (obp->b_flags & B_READ) {
 		/* Copy data to the final destination and free the buf. */
-		memcpy(obp->b_data, bp->b_data+obp->b_rawblkno, 
+		memcpy(obp->b_data, bp->b_data+obp->b_rawblkno,
 			obp->b_bcount);
 	} else {
 		/*
@@ -1072,7 +1072,7 @@ cdwrite(dev_t dev, struct uio *uio, int ioflag)
  */
 static void
 lba2msf(u_long lba, u_char *m, u_char *s, u_char *f)
-{   
+{
 	u_long tmp;
 
 	tmp = lba + CD_BLOCK_OFFSET;	/* offset of first logical frame */
@@ -1417,7 +1417,7 @@ bad:
 	case CDIOCSTOP:
 		return (scsipi_start(periph, SSS_STOP, 0));
 	case CDIOCCLOSE:
-		return (scsipi_start(periph, SSS_START|SSS_LOEJ, 
+		return (scsipi_start(periph, SSS_START|SSS_LOEJ,
 		    XS_CTL_IGNORE_NOT_READY | XS_CTL_IGNORE_MEDIA_CHANGE));
 	case DIOCEJECT:
 		if (*(int *)addr == 0) {
@@ -1433,7 +1433,7 @@ bad:
 				if (error)
 					return (error);
 			} else {
-				return (EBUSY); 
+				return (EBUSY);
 			}
 		}
 		/* FALLTHROUGH */
@@ -2424,7 +2424,7 @@ printf("cd_setblksize: trying to change bsize, but no blk_desc\n");
 printf("cd_setblksize: trying to change bsize, but blk_desc is correct\n");
 		return (EINVAL);
 	}
-		
+
 	_lto3b(2048, bdesc->blklen);
 
 	return (cd_mode_select(cd, SMS_PF, &data, sizeof(data.blk_desc), 0,

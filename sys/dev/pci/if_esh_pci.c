@@ -1,14 +1,14 @@
-/*	$NetBSD: if_esh_pci.c,v 1.16 2004/10/28 07:07:41 yamt Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.17 2005/02/27 00:27:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code contributed to The NetBSD Foundation by Kevin M. Lahey
- * of the Numerical Aerospace Simulation Facility, NASA Ames Research 
+ * of the Numerical Aerospace Simulation Facility, NASA Ames Research
  * Center.
  *
- * Partially based on a HIPPI driver written by Essential Communications 
+ * Partially based on a HIPPI driver written by Essential Communications
  * Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,12 +41,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.16 2004/10/28 07:07:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.17 2005/02/27 00:27:32 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
-#include <sys/socket.h> 
+#include <sys/mbuf.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.44 2005/01/19 04:56:42 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.45 2005/02/27 00:27:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.44 2005/01/19 04:56:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.45 2005/02/27 00:27:00 perry Exp $");
 #endif
 
 /*
@@ -58,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.44 2005/01/19 04:56:42 dyoung Exp $");
 #endif /* __NetBSD__ */
 
 #include <sys/param.h>
-#include <sys/systm.h> 
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
-#include <sys/mbuf.h>   
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
 #ifdef __FreeBSD__
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.44 2005/01/19 04:56:42 dyoung Exp $");
 #include <sys/endian.h>
 
 #include <machine/bus.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.44 2005/01/19 04:56:42 dyoung Exp $");
 #endif
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #endif
 
 #include <dev/ic/athcompat.h>
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.44 2005/01/19 04:56:42 dyoung Exp $");
 #include <../contrib/sys/dev/ic/athhal_desc.h>
 #endif
 
-/* unaligned little endian access */     
+/* unaligned little endian access */
 #define LE_READ_2(p)							\
 	((u_int16_t)							\
 	 ((((u_int8_t *)(p))[0]      ) | (((u_int8_t *)(p))[1] <<  8)))
@@ -1423,7 +1423,7 @@ ath_mcastfilter_compute(struct ath_softc *sc, u_int32_t (*mfilt)[2])
 	struct ether_multistep estep;
 
 	ETHER_FIRST_MULTI(estep, &sc->sc_ic.ic_ec, enm);
-	while (enm != NULL) {   
+	while (enm != NULL) {
 		/* XXX Punt on ranges. */
 		if (!IEEE80211_ADDR_EQ(enm->enm_addrlo, enm->enm_addrhi)) {
 			(*mfilt)[0] = (*mfilt)[1] = ~((u_int32_t)0);
@@ -1641,7 +1641,7 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 		/* TODO: TIM */
 		*frm++ = IEEE80211_ELEMID_TIM;
 		*frm++ = 4;	/* length */
-		*frm++ = 0;	/* DTIM count */ 
+		*frm++ = 0;	/* DTIM count */
 		*frm++ = 1;	/* DTIM period */
 		*frm++ = 0;	/* bitmap control */
 		*frm++ = 0;	/* Partial Virtual Bitmap (variable length) */
@@ -1833,7 +1833,7 @@ ath_beacon_config(struct ath_softc *sc)
 		if (bs.bs_sleepduration > bs.bs_dtimperiod)
 			bs.bs_sleepduration = roundup(bs.bs_sleepduration, bs.bs_dtimperiod);
 
-		DPRINTF(ATH_DEBUG_BEACON, 
+		DPRINTF(ATH_DEBUG_BEACON,
 			("%s: intval %u nexttbtt %u dtim %u nextdtim %u bmiss %u sleep %u\n"
 			, __func__
 			, bs.bs_intval
@@ -2341,7 +2341,7 @@ ath_rx_proc(void *arg, int npending)
 				bf->bf_daddr, PA2DESC(sc, ds->ds_link));
 #ifdef AR_DEBUG
 		if (ath_debug & ATH_DEBUG_RECV_DESC)
-			ath_printrxbuf(bf, status == HAL_OK); 
+			ath_printrxbuf(bf, status == HAL_OK);
 #endif
 		if (status == HAL_EINPROGRESS)
 			break;
@@ -3317,7 +3317,7 @@ static uint64_t
 ath_tsf_extend(struct ath_hal *ah, uint32_t rstamp)
 {
 	uint64_t tsf;
-	
+
 	KASSERT((rstamp & 0xffff0000) == 0,
 	    ("rx timestamp > 16 bits wide, %" PRIu32, rstamp));
 
@@ -3545,7 +3545,7 @@ ath_rate_ctl_reset(struct ath_softc *sc, enum ieee80211_state state)
 	}
 }
 
-/* 
+/*
  * Examine and potentially adjust the transmit rate.
  */
 static void

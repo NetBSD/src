@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.20 2005/02/04 02:10:37 perry Exp $ */
+/* $NetBSD: rtwvar.h,v 1.21 2005/02/27 00:27:02 perry Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -90,7 +90,7 @@ enum rtw_rfchipid {
 	RTW_RFCHIPID_PHILIPS = 3,
 	RTW_RFCHIPID_MAXIM = 4,
 	RTW_RFCHIPID_GCT = 5
-}; 
+};
 
 /* sc_flags */
 #define RTW_F_ENABLED		0x00000001	/* chip is enabled */

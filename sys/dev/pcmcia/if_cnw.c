@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.30 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.31 2005/02/27 00:27:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  * John Markus Bjørndalen
  * Department of Computer Science
  * University of Tromsø
- * Norway             
+ * Norway
  * johnm@staff.cs.uit.no, http://www.cs.uit.no/~johnm/
  */
 
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.30 2005/02/04 02:10:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.31 2005/02/27 00:27:43 perry Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -246,9 +246,9 @@ static int wait_WOC(struct cnw_softc *, int);
 static int read16(struct cnw_softc *, int);
 static int cnw_cmd(struct cnw_softc *, int, int, int, int);
 
-/* 
- * Wait until the WOC (Write Operation Complete) bit in the 
- * ASR (Adapter Status Register) is asserted. 
+/*
+ * Wait until the WOC (Write Operation Complete) bit in the
+ * ASR (Adapter Status Register) is asserted.
  */
 static int
 wait_WOC(sc, line)
@@ -276,7 +276,7 @@ wait_WOC(sc, line)
 
 
 /*
- * Read a 16 bit value from the card. 
+ * Read a 16 bit value from the card.
  */
 static int
 read16(sc, offset)
@@ -697,7 +697,7 @@ cnw_start(ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m0);
 #endif
-		
+
 		cnw_transmit(sc, m0);
 		++ifp->if_opackets;
 		ifp->if_timer = 3; /* start watchdog timer */
@@ -1017,7 +1017,7 @@ cnw_intr(arg)
 			/* Continue to send packets from the queue */
 			cnw_start(&sc->sc_ethercom.ec_if);
 		}
-				
+
 	}
 }
 

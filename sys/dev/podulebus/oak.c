@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.13 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: oak.c,v 1.14 2005/02/27 00:27:44 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.13 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.14 2005/02/27 00:27:44 perry Exp $");
 
 #include <sys/param.h>
 
@@ -355,7 +355,7 @@ oak_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen,
 		    (u_int16_t *)data, 4/2);
 		data += 4;
 		resid -= 4;
-		
+
 		for (; resid >= OAK_TSIZE_OUT; resid -= OAK_TSIZE_OUT) {
 			if (oak_ready(ncr_sc) == 0) {
 				resid += 4; /* Overshot */

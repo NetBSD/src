@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.8 2004/04/10 01:59:19 briggs Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.9 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.8 2004/04/10 01:59:19 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.9 2005/02/27 00:27:02 perry Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -352,7 +352,7 @@ mpt_timeout(void *arg)
 	request_t *req = arg;
 	struct scsipi_xfer *xs = req->xfer;
 	struct scsipi_periph *periph = xs->xs_periph;
-	mpt_softc_t *mpt = 
+	mpt_softc_t *mpt =
 	    (void *) periph->periph_channel->chan_adapter->adapt_dev;
 	uint32_t oseq;
 	int s;
@@ -414,7 +414,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		mpt_reply = MPT_REPLY_PTOV(mpt, reply);
 		if (mpt->verbose > 1) {
 			uint32_t *pReply = (uint32_t *) mpt_reply;
-			
+
 			mpt_prt(mpt, "Address Reply (index %u):",
 			    mpt_reply->MsgContext & 0xffff);
 			mpt_prt(mpt, "%08x %08x %08x %08x",
@@ -624,7 +624,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 	}
-		
+
 	if (mpt_reply->SCSIState & MPI_SCSI_STATE_AUTOSENSE_VALID) {
 		memcpy(&xs->sense.scsi_sense, req->sense_vbuf,
 		    sizeof(xs->sense.scsi_sense));
@@ -1258,7 +1258,7 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 		mpt_prt(mpt, "Unknown async event: 0x%x", msg->Event);
 		break;
 	}
-	
+
 	if (msg->AckRequired) {
 		MSG_EVENT_ACK *ackp;
 		request_t *req;

@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.66 2005/02/26 12:51:16 simonb Exp $ */
+/* $NetBSD: sfb.c,v 1.67 2005/02/27 00:27:49 perry Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.66 2005/02/26 12:51:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.67 2005/02/27 00:27:49 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.66 2005/02/26 12:51:16 simonb Exp $");
 #include <dev/wsfont/wsfont.h>
 
 #include <dev/tc/tcvar.h>
-#include <dev/ic/bt459reg.h>	
+#include <dev/ic/bt459reg.h>
 #include <dev/tc/sfbreg.h>
 
 #include <uvm/uvm_extern.h>
@@ -302,7 +302,7 @@ sfbattach(parent, self, aux)
 	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, sfbintr, sc);
 
 	asic = (caddr_t)ri->ri_hw + SFB_ASIC_OFFSET;
-	
+
 	SFBWRITE32(asic, SFB_ASIC_CLEAR_INTR, 0);
 	SFBWRITE32(asic, SFB_ASIC_ENABLE_INTR, 1);
 
@@ -580,7 +580,7 @@ sfbintr(arg)
 	struct sfb_softc *sc = arg;
 	caddr_t base, asic, vdac;
 	int v;
-	
+
 	base = (caddr_t)sc->sc_ri->ri_hw;
 	asic = base + SFB_ASIC_OFFSET;
 	SFBWRITE32(asic, SFB_ASIC_CLEAR_INTR, 0);
@@ -735,9 +735,9 @@ sfbhwinit(base)
 	REGWRITE32(vdac, bt_reg, 0xff);
 	REGWRITE32(vdac, bt_reg, 0xff);
 
-	REGWRITE32(vdac, bt_reg, 0);	
-	REGWRITE32(vdac, bt_reg, 0);	
-	REGWRITE32(vdac, bt_reg, 0);	
+	REGWRITE32(vdac, bt_reg, 0);
+	REGWRITE32(vdac, bt_reg, 0);
+	REGWRITE32(vdac, bt_reg, 0);
 
 	REGWRITE32(vdac, bt_reg, 0xff);
 	REGWRITE32(vdac, bt_reg, 0xff);

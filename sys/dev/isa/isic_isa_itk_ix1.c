@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.9 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.10 2005/02/27 00:27:17 perry Exp $");
 
 #include "opt_isicisa.h"
 
@@ -243,7 +243,7 @@ isic_attach_itkix1(struct isa_device *dev)
 	sc->sc_irq = dev->id_irq;
 
 	dev->id_msize = 0;
-	
+
 	/* check if we got an iobase */
 	sc->sc_port = dev->id_iobase;
 
@@ -254,7 +254,7 @@ isic_attach_itkix1(struct isa_device *dev)
 	sc->readfifo = itkix1_read_fifo;
 	sc->writefifo = itkix1_write_fifo;
 
-	/* setup card type */	
+	/* setup card type */
 	sc->sc_cardtyp = CARD_TYPEP_ITKIX1;
 
 	/* setup IOM bus type */
@@ -280,7 +280,7 @@ isic_attach_itkix1(struct isa_device *dev)
 		printf("isic%d: HSC1: VSTR: %#x\n",
 			dev->id_unit, HSCX_READ(1, H_VSTR));
 		return (0);
-	}                   
+	}
 
 	outb((dev->id_iobase)+ITK_CONFIG, 1);
 	DELAY(SEC_DELAY / 10);
@@ -302,7 +302,7 @@ int isic_attach_itkix1(struct isic_softc *sc)
 	sc->readfifo = itkix1_read_fifo;
 	sc->writefifo = itkix1_write_fifo;
 
-	/* setup card type */	
+	/* setup card type */
 	sc->sc_cardtyp = CARD_TYPEP_ITKIX1;
 
 	/* setup IOM bus type */
@@ -323,7 +323,7 @@ int isic_attach_itkix1(struct isic_softc *sc)
 		printf("%s: HSC1: VSTR: %#x\n",
 			sc->sc_dev.dv_xname, HSCX_READ(1, H_VSTR));
 		return 0;
-	}                   
+	}
 
 	bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, ITK_CONFIG, 1);
 	DELAY(SEC_DELAY / 10);
@@ -335,7 +335,7 @@ int isic_attach_itkix1(struct isic_softc *sc)
 #endif
 
 #ifdef __FreeBSD__
-static void             
+static void
 itkix1_read_fifo(void *buf, const void *base, size_t len)
 {
 	u_int port = (u_int)base & ~0x0003;

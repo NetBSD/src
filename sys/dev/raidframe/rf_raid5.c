@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5.c,v 1.14 2004/03/05 03:58:21 oster Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.15 2005/02/27 00:27:45 perry Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.14 2004/03/05 03:58:21 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.15 2005/02/27 00:27:45 perry Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -54,7 +54,7 @@ typedef struct RF_Raid5ConfigInfo_s {
 					 * by IdentifyStripe */
 }       RF_Raid5ConfigInfo_t;
 
-int 
+int
 rf_ConfigureRAID5(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		  RF_Config_t *cfgPtr)
 {
@@ -94,27 +94,27 @@ rf_ConfigureRAID5(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	return (0);
 }
 
-int 
+int
 rf_GetDefaultNumFloatingReconBuffersRAID5(RF_Raid_t *raidPtr)
 {
 	return (20);
 }
 
-RF_HeadSepLimit_t 
+RF_HeadSepLimit_t
 rf_GetDefaultHeadSepLimitRAID5(RF_Raid_t *raidPtr)
 {
 	return (10);
 }
 #if !defined(__NetBSD__) && !defined(_KERNEL)
 /* not currently used */
-int 
+int
 rf_ShutdownRAID5(RF_Raid_t *raidPtr)
 {
 	return (0);
 }
 #endif
 
-void 
+void
 rf_MapSectorRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
@@ -124,7 +124,7 @@ rf_MapSectorRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 	    (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
 }
 
-void 
+void
 rf_MapParityRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
@@ -135,7 +135,7 @@ rf_MapParityRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 	    (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
 }
 
-void 
+void
 rf_IdentifyStripeRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 		       RF_RowCol_t **diskids)
 {
@@ -145,7 +145,7 @@ rf_IdentifyStripeRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 	*diskids = info->stripeIdentifier[stripeID % raidPtr->numCol];
 }
 
-void 
+void
 rf_MapSIDToPSIDRAID5(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
 		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {
@@ -156,7 +156,7 @@ rf_MapSIDToPSIDRAID5(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
  * one to a function that will return information about the DAG, and
  * another to a function that will create the dag.
  */
-void 
+void
 rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 		     RF_AccessStripeMap_t *asmap,
 		     RF_VoidFuncPtr *createFunc)
@@ -172,7 +172,7 @@ rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 	if ((asmap->numDataFailed + asmap->numParityFailed > 1) ||
 	    (raidPtr->numFailures > 1)){
 #if RF_DEBUG_DAG
-		if (rf_dagDebug) 
+		if (rf_dagDebug)
 			RF_ERRORMSG("Multiple disks failed in a single group!  Aborting I/O operation.\n");
 #endif
 		*createFunc = NULL;
@@ -180,7 +180,7 @@ rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 	}
 
 	if (asmap->numDataFailed + asmap->numParityFailed == 1) {
-		
+
 		/* if under recon & already reconstructed, redirect
 		 * the access to the spare drive and eliminate the
 		 * failure indication */
@@ -195,17 +195,17 @@ rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 #if RF_DEBUG_DAG > 0 || RF_DEBUG_MAP > 0
 			RF_RowCol_t oc = failedPDA->col;
 			RF_SectorNum_t oo = failedPDA->startSector;
-#endif			
+#endif
 #if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 			if (layoutPtr->map->flags & RF_DISTRIBUTE_SPARE) {	/* redirect to dist
 										 * spare space */
-				
+
 				if (failedPDA == asmap->parityInfo) {
-					
+
 					/* parity has failed */
 					(layoutPtr->map->MapParity) (raidPtr, failedPDA->raidAddress,
 								     &failedPDA->col, &failedPDA->startSector, RF_REMAP);
-					
+
 					if (asmap->parityInfo->next) {	/* redir 2nd component,
 									 * if any */
 						RF_PhysDiskAddr_t *p = asmap->parityInfo->next;
@@ -221,19 +221,19 @@ rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 						RF_ASSERT(0);	/* should not ever
 								 * happen */
 					} else {
-						
+
 						/* data has failed */
 						(layoutPtr->map->MapSector) (raidPtr, failedPDA->raidAddress,
 									     &failedPDA->col, &failedPDA->startSector, RF_REMAP);
-						
+
 					}
-				
+
 			} else {
-#endif	
+#endif
 				/* redirect to dedicated spare space */
-				
+
 				failedPDA->col = raidPtr->Disks[fcol].spareCol;
-				
+
 				/* the parity may have two distinct
 				 * components, both of which may need
 				 * to be redirected */
@@ -250,11 +250,11 @@ rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 			}
 #endif
 			RF_ASSERT(failedPDA->col != -1);
-			
+
 #if RF_DEBUG_DAG > 0 || RF_DEBUG_MAP > 0
 			if (rf_dagDebug || rf_mapDebug) {
 				printf("raid%d: Redirected type '%c' c %d o %ld -> c %d o %ld\n",
-				       raidPtr->raidid, type, oc, 
+				       raidPtr->raidid, type, oc,
 				       (long) oo, failedPDA->col,
 				       (long) failedPDA->startSector);
 			}

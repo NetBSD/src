@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.56 2005/02/04 02:10:47 perry Exp $	*/
+/*	$NetBSD: if_se.c,v 1.57 2005/02/27 00:27:48 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.56 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.57 2005/02/27 00:27:48 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -139,7 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.56 2005/02/04 02:10:47 perry Exp $");
 /* 10 full length packets appears to be the max ever returned. 16k is OK */
 #define RBUF_LEN	(16 * 1024)
 
-/* Tuning parameters: 
+/* Tuning parameters:
  * The EA41x only returns a maximum of 10 packets (regardless of size).
  * We will attempt to adapt to polling fast enough to get RDATA_GOAL packets
  * per read

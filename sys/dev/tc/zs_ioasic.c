@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.24 2005/02/04 02:10:48 perry Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.25 2005/02/27 00:27:50 perry Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.24 2005/02/04 02:10:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.25 2005/02/27 00:27:50 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -592,7 +592,7 @@ zs_write_reg(cs, reg, val)
 	u_int reg, val;
 {
 	struct zshan *zc = (void *)cs->cs_reg_csr;
-   
+
 	zc->zc_csr = reg << 8;
 	tc_wmb();
 	DELAY(5);

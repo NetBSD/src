@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpscreg.h,v 1.1 2003/03/05 22:08:21 matt Exp $	*/
+/*	$NetBSD: gtmpscreg.h,v 1.2 2005/02/27 00:27:21 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -260,11 +260,11 @@
 #define GTMPSC_MPCR_UM_NORM	(0 << 10)	/* Normal UART Mode */
 #define GTMPSC_MPCR_UM_MDROP	(1 << 10)	/* Multi-Drop UART Mode */
 						/* other values are resvd. */
-#define GTMPSC_MPCR_CLMASK	BITS(13,12)	/* Character Length mask */	
-#define GTMPSC_MPCR_CL_5	(0 << 12)	/* 5 data bits */	
-#define GTMPSC_MPCR_CL_6	(1 << 12)	/* 6 data bits */	
-#define GTMPSC_MPCR_CL_7	(2 << 12)	/* 7 data bits */	
-#define GTMPSC_MPCR_CL_8	(3 << 12)	/* 8 data bits */	
+#define GTMPSC_MPCR_CLMASK	BITS(13,12)	/* Character Length mask */
+#define GTMPSC_MPCR_CL_5	(0 << 12)	/* 5 data bits */
+#define GTMPSC_MPCR_CL_6	(1 << 12)	/* 6 data bits */
+#define GTMPSC_MPCR_CL_7	(2 << 12)	/* 7 data bits */
+#define GTMPSC_MPCR_CL_8	(3 << 12)	/* 8 data bits */
 #define GTMPSC_MPCR_SBL_1	0x0		/* 1 stop bit */
 #define GTMPSC_MPCR_SBL_2	BIT(14)		/* 2 stop bits */
 #define GTMPSC_MPCR_FLC_NORM	0x0		/* Normal Flow Ctl mode */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.1 2004/12/06 19:22:24 cube Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.2 2005/02/27 00:27:33 perry Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -6,7 +6,7 @@
  *
  *  This code is derived from software contributed to the NetBSD Foundation
  *  by Quentin Garnier.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -22,7 +22,7 @@
  *  4. Neither the name of The NetBSD Foundation nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
- * 
+ *
  *  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  *  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.1 2004/12/06 19:22:24 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.2 2005/02/27 00:27:33 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

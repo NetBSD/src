@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.12 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.13 2005/02/27 00:27:17 perry Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early!! */
 
@@ -21,7 +21,7 @@
  *    must display the following acknowledgement:
  *        This product includes software developed by The NetBSD
  *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.12 2005/02/04 02:10:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.13 2005/02/27 00:27:17 perry Exp $");
 
 #undef TRISADEBUG
 

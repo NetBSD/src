@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbreg.h,v 1.5 2003/11/02 11:07:45 wiz Exp $ */
+/*	$NetBSD: igsfbreg.h,v 1.6 2005/02/27 00:27:01 perry Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -111,7 +111,7 @@
  * Read/write R/G/B in three consecutive accesses to data port.
  * After third access to data the index is autoincremented and you can
  * proceed with reading/writing data port for the next entry.
- * 
+ *
  * When IGS_EXT_SPRITE_DAC_PEL bit in sprite control is set, these
  * registers are used to access sprite (i.e. cursor) 2-color palette.
  * (NB: apparently, in this mode index autoincrement doesn't work).
@@ -311,7 +311,7 @@
 #define   IGS_COP_MAP_32BPP		0x03
 
 
-/* 
+/*
  * Binary operations are defined below.  S - source, D - destination,
  * N - not; a - and, o - or, x - xor.
  *
@@ -394,7 +394,7 @@
 #define   IGS_COP_PPM_TILE		0x20
 #define   IGS_COP_PPM_LINE		0x30
 #define   IGS_COP_PPM_TRANSPARENT	0x40 /* "or" with one of the above */
-		  
+
 #define   IGS_COP_PPM_FIXED_FG		0x80
 #define   IGS_COP_PPM_SRC_COLOR_TILE	0x90
 

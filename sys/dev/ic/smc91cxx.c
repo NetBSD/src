@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.50 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.51 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*      
+/*
  * Copyright (c) 1996 Gardner Buchanan <gbuchanan@shl.com>
  * All rights reserved.
- *      
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -55,7 +55,7 @@
  * 4. The name of Gardner Buchanan may not be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
- *       
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -66,9 +66,9 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *      
+ *
  *   from FreeBSD Id: if_sn.c,v 1.4 1996/03/18 15:47:16 gardner Exp
- */      
+ */
 
 /*
  * Core driver for the SMC 91Cxx family of Ethernet chips.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.50 2005/02/04 02:10:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.51 2005/02/27 00:27:02 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.50 2005/02/04 02:10:37 perry Exp $");
 #include "bpfilter.h"
 #include "rnd.h"
 
-#include <sys/param.h> 
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/syslog.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.50 2005/02/04 02:10:37 perry Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/ioctl.h> 
+#include <sys/ioctl.h>
 #include <sys/errno.h>
 #if NRND > 0
 #include <sys/rnd.h>
@@ -107,10 +107,10 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.50 2005/02/04 02:10:37 perry Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
-#include <net/if_media.h> 
+#include <net/if_media.h>
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>

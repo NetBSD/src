@@ -1,7 +1,7 @@
-/*	$NetBSD: hil_gpib.c,v 1.2 2003/07/14 15:40:04 lukem Exp $	*/
+/*	$NetBSD: hil_gpib.c,v 1.3 2005/02/27 00:26:59 perry Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.2 2003/07/14 15:40:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.3 2005/02/27 00:26:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -32,8 +32,8 @@ struct  hil_softc {
 
 	int	sc_address;		 /* GPIB address */
 	int     sc_flags;
-#define HILF_ALIVE	0x01    
-#define HILF_OPEN	0x02    
+#define HILF_ALIVE	0x01
+#define HILF_OPEN	0x02
 #define HILF_UIO	0x04
 #define HILF_TIMO	0x08
 #define HILF_DELAY	0x10

@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.15 2005/02/15 12:29:33 briggs Exp $	*/
+/*	$NetBSD: aac.c,v 1.16 2005/02/27 00:27:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.15 2005/02/15 12:29:33 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.16 2005/02/27 00:27:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ aac_attach(struct aac_softc *sc)
 		return (rv);
 	aac_startup(sc);
 
-	/* 
+	/*
 	 * Print a little information about the controller.
 	 */
 	aac_describe_controller(sc);
@@ -229,7 +229,7 @@ aac_attach(struct aac_softc *sc)
 
 	for (i = 0, ac = sc->sc_ccbs; i < AAC_NCCBS; i++, ac++) {
 		rv = bus_dmamap_create(sc->sc_dmat, AAC_MAX_XFER,
-		    AAC_MAX_SGENTRIES, AAC_MAX_XFER, 0, 
+		    AAC_MAX_SGENTRIES, AAC_MAX_XFER, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ac->ac_dmamap_xfer);
 		if (rv) {
 			while (--ac >= sc->sc_ccbs)
@@ -614,7 +614,7 @@ aac_init(struct aac_softc *sc)
 	/*
 	 * Give the init structure to the controller.
 	 */
-	if (aac_sync_command(sc, AAC_MONKER_INITSTRUCT, 
+	if (aac_sync_command(sc, AAC_MONKER_INITSTRUCT,
 	    sc->sc_common_seg.ds_addr + offsetof(struct aac_common, ac_init),
 	    0, 0, 0, NULL)) {
 		aprint_error("%s: error establishing init structure\n",
@@ -676,7 +676,7 @@ aac_startup(struct aac_softc *sc)
 			continue;
 		}
 
-		/* 
+		/*
 		 * Check container volume type for validity.  Note that many
 		 * of the possible types may never show up.
 		 */
@@ -707,7 +707,7 @@ aac_shutdown(void *cookie)
 
 		AAC_MASK_INTERRUPTS(sc);
 
-		/* 
+		/*
 		 * Send a Container shutdown followed by a HostShutdown FIB
 		 * to the controller to convince it that we don't want to
 		 * talk to it anymore.  We've been closed and all I/O
@@ -993,7 +993,7 @@ aac_sync_fib(struct aac_softc *sc, u_int32_t command, u_int32_t xferstate,
 	    (caddr_t)fib - (caddr_t)sc->sc_common, sizeof(*fib),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
-	/* 
+	/*
 	 * Copy out the result
 	 */
 	if (result != NULL) {
@@ -1040,7 +1040,7 @@ aac_ccb_free(struct aac_softc *sc, struct aac_ccb *ac)
 	ac->ac_fib->Header.SenderSize = htole16(sizeof(*ac->ac_fib));
 
 #ifdef AAC_DEBUG
-	/* 
+	/*
 	 * These are duplicated in aac_ccb_submit() to cover the case where
 	 * an intermediate stage may have destroyed them.  They're left
 	 * initialised here for debugging purposes only.
@@ -1340,13 +1340,13 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, char *caller)
 		sg = NULL;
 
 		if (le32toh(br->Command) == VM_CtBlockRead) {
-			printf("  BlockRead: container %d  0x%x/%d\n", 
+			printf("  BlockRead: container %d  0x%x/%d\n",
 			    le32toh(br->ContainerId), le32toh(br->BlockNumber),
 			    le32toh(br->ByteCount));
 			sg = &br->SgMap;
 		}
 		if (le32toh(bw->Command) == VM_CtBlockWrite) {
-			printf("  BlockWrite: container %d  0x%x/%d (%s)\n", 
+			printf("  BlockWrite: container %d  0x%x/%d (%s)\n",
 			    le32toh(bw->ContainerId), le32toh(bw->BlockNumber),
 			    le32toh(bw->ByteCount),
 			    le32toh(bw->Stable) == CSTABLE ?

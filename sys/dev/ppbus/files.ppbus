@@ -1,6 +1,6 @@
-# $NetBSD: files.ppbus,v 1.5 2004/01/28 18:54:32 jdolecek Exp $
+# $NetBSD: files.ppbus,v 1.6 2005/02/27 00:27:44 perry Exp $
 #
-# Config file and device description for machine-independent parallel port bus 
+# Config file and device description for machine-independent parallel port bus
 # code.
 
 defflag	opt_ppbus.h		PPBUS_VERBOSE PPBUS_DEBUG

@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.7 2005/02/18 22:39:31 tsutsui Exp $ */
+/* $NetBSD: i82596.c,v 1.8 2005/02/27 00:27:01 perry Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -30,16 +30,16 @@
  */
 
 /*
- * Driver for the Intel i82596 10MBit/s Ethernet chip. 
+ * Driver for the Intel i82596 10MBit/s Ethernet chip.
  * It operates the i82596 in 32-Bit Linear Mode, opposed to the old i82586
- * ie(4) driver (src/sys/dev/ic/i82586.c), that degrades the i82596 to 
+ * ie(4) driver (src/sys/dev/ic/i82586.c), that degrades the i82596 to
  * i82586 compatibility mode.
  * Documentation about this chip can be found on http://www.openpa.net/
  * file names 29021806.pdf and 29021906.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.7 2005/02/18 22:39:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.8 2005/02/27 00:27:01 perry Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -70,9 +70,9 @@ __KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.7 2005/02/18 22:39:31 tsutsui Exp $");
 #include <sys/mbuf.h>
 
 #include "bpfilter.h"
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #include <dev/ic/i82596reg.h>
 #include <dev/ic/i82596var.h>
@@ -108,54 +108,54 @@ The functions via function pointers in the softc:
         void (*sc_mediastatus)(struct ifnet *, struct ifmediareq *);
         int (*sc_mediachange)(struct ifnet *);
 
-sc_iee_cmd(): send a command to the i82596 by writing the cmd parameter 
-	to the SCP cmd word and issuing a Channel Attention. 
-sc_iee_reset(): initiate a reset, supply the address of the SCP to the 
-	chip, wait for the chip to initialize and ACK interrupts that 
-	this may have caused by caling (sc->sc_iee_cmd)(sc, IEE_SCB_ACK); 
+sc_iee_cmd(): send a command to the i82596 by writing the cmd parameter
+	to the SCP cmd word and issuing a Channel Attention.
+sc_iee_reset(): initiate a reset, supply the address of the SCP to the
+	chip, wait for the chip to initialize and ACK interrupts that
+	this may have caused by caling (sc->sc_iee_cmd)(sc, IEE_SCB_ACK);
 This functions must carefully bus_dmamap_sync() all data they have touched!
 
 sc_mediastatus() and  sc_mediachange() are just MD hooks to the according
-MI functions. The MD frontend may set this pointers to NULL when they 
-are not needed. 
+MI functions. The MD frontend may set this pointers to NULL when they
+are not needed.
 
 sc->sc_type has to be set to I82596_UNKNOWN or I82596_DX or I82596_CA.
-This is for printing out the correct chip type at attach time only. The 
+This is for printing out the correct chip type at attach time only. The
 MI backend doesn't distinguish different chip types when programming
-the chip.  
+the chip.
 
-sc->sc_flags has to be set to 0 on litle endian hardware and to 
+sc->sc_flags has to be set to 0 on litle endian hardware and to
 IEE_NEED_SWAP on big endian hardware, when endianes conversion is not
 done by the bus attachment. Usually you need to set IEE_NEED_SWAP
-when IEE_SYSBUS_BE is set in the sysbus byte. 
+when IEE_SYSBUS_BE is set in the sysbus byte.
 
-sc->sc_cl_align bust be set to 1 or to the cache line size. When set to 
-1 no special alignment of DMA descriptors is done. If sc->sc_cl_align != 1 
-it forces alignment of the data structres in the shared memory to a multiple 
-of sc->sc_cl_align. This is needed on archs like hp700 that have non DMA 
-I/O coherent caches and are unable to map the shared memory uncachable. 
+sc->sc_cl_align bust be set to 1 or to the cache line size. When set to
+1 no special alignment of DMA descriptors is done. If sc->sc_cl_align != 1
+it forces alignment of the data structres in the shared memory to a multiple
+of sc->sc_cl_align. This is needed on archs like hp700 that have non DMA
+I/O coherent caches and are unable to map the shared memory uncachable.
 (At least pre PA7100LC CPUs are unable to map memory uncachable.)
 
 sc->sc_cl_align MUST BE INITIALIZED BEFORE THE FOLOWING MACROS ARE USED:
 SC_* IEE_*_SZ IEE_*_OFF IEE_SHMEM_MAX (shell style glob(3) pattern)
 
-The MD frontend has to allocate a piece of DMA memory at least of 
+The MD frontend has to allocate a piece of DMA memory at least of
 IEE_SHMEM_MAX bytes size. All communication with the chip is done via
-this shared memory. If possible map this memory non-cachable on 
+this shared memory. If possible map this memory non-cachable on
 archs with non DMA I/O coherent caches. The base of the memory needs
-to be aligend to an even address if sc->sc_cl_align == 1 and aligend 
+to be aligend to an even address if sc->sc_cl_align == 1 and aligend
 to a cache line if sc->sc_cl_align != 1.
 
 An interrupt with iee_intr() as handler must be established.
 
-Call void iee_attach(struct iee_softc *sc, uint8_t *ether_address, 
-int *media, int nmedia, int defmedia); when everything is set up. First 
+Call void iee_attach(struct iee_softc *sc, uint8_t *ether_address,
+int *media, int nmedia, int defmedia); when everything is set up. First
 parameter is a pointer to the MI softc, ether_address is an array that
-contains the ethernet address. media is an array of the media types 
-provided by the hardware. The members of this array are supplied to 
+contains the ethernet address. media is an array of the media types
+provided by the hardware. The members of this array are supplied to
 ifmedia_add() in sequence. nmedia is the count of elements in media.
-defmedia is the default media that is set via ifmedia_set(). 
-nmedia and defmedia are ignored when media == NULL. 
+defmedia is the default media that is set via ifmedia_set().
+nmedia and defmedia are ignored when media == NULL.
 
 The MD backend may call iee_detach() to detach the device.
 
@@ -166,11 +166,11 @@ See sys/arch/hp700/gsc/if_iee.c for an example.
 /*
 How frame reception is done:
 Each Recieve Frame Descriptor has one associated Recieve Buffer Descriptor.
-Each RBD points to the data area of a mbuf cluster. The RFDs are linked 
-together in a circular list. sc->sc_rx_done is the count of RFDs in the 
-list already processed / the number of the RFD that has to be checked for 
-a new frame first at the next RX interrupt. Upon successful reception of 
-a frame the mbuf cluster is handled to upper protocol layers, a new mbuf 
+Each RBD points to the data area of a mbuf cluster. The RFDs are linked
+together in a circular list. sc->sc_rx_done is the count of RFDs in the
+list already processed / the number of the RFD that has to be checked for
+a new frame first at the next RX interrupt. Upon successful reception of
+a frame the mbuf cluster is handled to upper protocol layers, a new mbuf
 cluster is allocated and the RFD / RBD are reinitialized accordingly.
 
 When a RFD list overrun occured the whole RFD and RBD lists are reinitialized
@@ -214,7 +214,7 @@ iee_intr(void *intarg)
 			rbd->rbd_count = 0;
 			rbd->rbd_size = IEE_RBD_EL | rx_map->dm_segs[0].ds_len;
 			printf("%s: iee_intr: receive error %d, rfd_status="
-			    "0x%.4x, rfd_count=0x%.4x\n", sc->sc_dev.dv_xname, 
+			    "0x%.4x, rfd_count=0x%.4x\n", sc->sc_dev.dv_xname,
 			    ++sc->sc_rx_err, rfd->rfd_status, rbd->rbd_count);
 			sc->sc_rx_done = (sc->sc_rx_done + 1) % IEE_NRFD;
 			continue;
@@ -222,7 +222,7 @@ iee_intr(void *intarg)
 		rfd->rfd_status = 0;
 		bus_dmamap_sync(sc->sc_dmat, rx_map, 0, rx_mbuf->m_ext.ext_size,
 		    BUS_DMASYNC_POSTREAD);
-		rx_mbuf->m_pkthdr.len = rx_mbuf->m_len = 
+		rx_mbuf->m_pkthdr.len = rx_mbuf->m_len =
 		    rbd->rbd_count & IEE_RBD_COUNT;
 		rx_mbuf->m_pkthdr.rcvif = ifp;
 		MGETHDR(new_mbuf, M_DONTWAIT, MT_DATA);
@@ -234,14 +234,14 @@ iee_intr(void *intarg)
 		MCLAIM(new_mbuf, &sc->sc_ethercom.ec_rx_mowner);
 		MCLGET(new_mbuf, M_DONTWAIT);
 		if ((new_mbuf->m_flags & M_EXT) == 0) {
-			printf("%s: iee_intr: can't alloc mbuf cluster\n", 
+			printf("%s: iee_intr: can't alloc mbuf cluster\n",
 			    sc->sc_dev.dv_xname);
 			m_freem(new_mbuf);
 			break;
 		}
 		bus_dmamap_unload(sc->sc_dmat, rx_map);
-		if (bus_dmamap_load(sc->sc_dmat, rx_map, 
-		    new_mbuf->m_ext.ext_buf, new_mbuf->m_ext.ext_size, 
+		if (bus_dmamap_load(sc->sc_dmat, rx_map,
+		    new_mbuf->m_ext.ext_buf, new_mbuf->m_ext.ext_size,
 		    NULL, BUS_DMA_READ | BUS_DMA_NOWAIT) != 0)
 			panic("%s: iee_intr: can't load RX DMA map\n",
 			    sc->sc_dev.dv_xname);
@@ -268,23 +268,23 @@ iee_intr(void *intarg)
 			SC_RFD(n)->rfd_cmd = IEE_RFD_SF;
 			SC_RFD(n)->rfd_link_addr = IEE_PHYS_SHMEM(IEE_RFD_OFF
 			    + IEE_RFD_SZ * ((n + 1) % IEE_NRFD));
-			SC_RBD(n)->rbd_next_rbd = IEE_PHYS_SHMEM(IEE_RBD_OFF 
+			SC_RBD(n)->rbd_next_rbd = IEE_PHYS_SHMEM(IEE_RBD_OFF
 			    + IEE_RBD_SZ * ((n + 1) % IEE_NRFD));
-			SC_RBD(n)->rbd_size = IEE_RBD_EL | 
+			SC_RBD(n)->rbd_size = IEE_RBD_EL |
 			    sc->sc_rx_map[n]->dm_segs[0].ds_len;
-			SC_RBD(n)->rbd_rb_addr = 
+			SC_RBD(n)->rbd_rb_addr =
 			    sc->sc_rx_map[n]->dm_segs[0].ds_addr;
 		}
 		SC_RFD(0)->rfd_rbd_addr = IEE_PHYS_SHMEM(IEE_RBD_OFF);
 		sc->sc_rx_done = 0;
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_RFD_OFF, 
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_RFD_OFF,
 		    IEE_RFD_LIST_SZ + IEE_RBD_LIST_SZ, BUS_DMASYNC_PREWRITE);
 		(sc->sc_iee_cmd)(sc, IEE_SCB_RUC_ST);
-		printf("%s: iee_intr: receive ring buffer overrun\n", 
+		printf("%s: iee_intr: receive ring buffer overrun\n",
 		    sc->sc_dev.dv_xname);
 	}
 
-	if (sc->sc_next_cb != 0 
+	if (sc->sc_next_cb != 0
 	    && (SC_CB(sc->sc_next_cb - 1)->cb_status & IEE_CB_C) != 0) {
 		/* CMD list finished */
 		ifp->if_timer = 0;
@@ -294,11 +294,11 @@ iee_intr(void *intarg)
 				m_freem(sc->sc_tx_mbuf[n]);
 				sc->sc_tx_mbuf[n] = NULL;
 				bus_dmamap_unload(sc->sc_dmat,sc->sc_tx_map[n]);
-				if ((SC_CB(n)->cb_status & IEE_CB_COL) != 0 && 
+				if ((SC_CB(n)->cb_status & IEE_CB_COL) != 0 &&
 				    (SC_CB(n)->cb_status & IEE_CB_MAXCOL) == 0)
 					col = 16;
 				else
-					col = SC_CB(n)->cb_status 
+					col = SC_CB(n)->cb_status
 					    & IEE_CB_MAXCOL;
 				sc->sc_tx_col += col;
 				if ((SC_CB(n)->cb_status & IEE_CB_OK) != 0) {
@@ -313,16 +313,16 @@ iee_intr(void *intarg)
 			/* Check if a CMD failed, but ignore TX errors. */
 			if ((SC_CB(n)->cb_cmd & IEE_CB_CMD) != IEE_CB_CMD_TR
 			    && ((SC_CB(n)->cb_status & IEE_CB_OK) == 0))
-				printf("%s: iee_intr: scb_status=0x%x " 
+				printf("%s: iee_intr: scb_status=0x%x "
 				    "scb_cmd=0x%x failed command %d: "
-				    "cb_status[%d]=0x%.4x cb_cmd[%d]=0x%.4x\n", 
-				    sc->sc_dev.dv_xname, scb_status, scb_cmd, 
+				    "cb_status[%d]=0x%.4x cb_cmd[%d]=0x%.4x\n",
+				    sc->sc_dev.dv_xname, scb_status, scb_cmd,
 				    ++sc->sc_cmd_err, n, SC_CB(n)->cb_status,
 				    n, SC_CB(n)->cb_cmd);
 		}
 		sc->sc_next_cb = 0;
 		if ((sc->sc_flags & IEE_WANT_MCAST) != 0) {
-			iee_cb_setup(sc, IEE_CB_CMD_MCS | IEE_CB_S | IEE_CB_EL 
+			iee_cb_setup(sc, IEE_CB_CMD_MCS | IEE_CB_S | IEE_CB_EL
 			    | IEE_CB_I);
 			(sc->sc_iee_cmd)(sc, IEE_SCB_CUC_EXE);
 		} else
@@ -331,35 +331,35 @@ iee_intr(void *intarg)
 	}
 	if (IEE_SWAP(SC_SCB->scb_crc_err) != sc->sc_crc_err) {
 		sc->sc_crc_err = IEE_SWAP(SC_SCB->scb_crc_err);
-		printf("%s: iee_intr: crc_err=%d\n", sc->sc_dev.dv_xname, 
+		printf("%s: iee_intr: crc_err=%d\n", sc->sc_dev.dv_xname,
 		    sc->sc_crc_err);
 	}
 	if (IEE_SWAP(SC_SCB->scb_align_err) != sc->sc_align_err) {
 		sc->sc_align_err = IEE_SWAP(SC_SCB->scb_align_err);
-		printf("%s: iee_intr: align_err=%d\n", sc->sc_dev.dv_xname, 
+		printf("%s: iee_intr: align_err=%d\n", sc->sc_dev.dv_xname,
 		    sc->sc_align_err);
 	}
 	if (IEE_SWAP(SC_SCB->scb_resource_err) != sc->sc_resource_err) {
 		sc->sc_resource_err = IEE_SWAP(SC_SCB->scb_resource_err);
-		printf("%s: iee_intr: resource_err=%d\n", sc->sc_dev.dv_xname, 
+		printf("%s: iee_intr: resource_err=%d\n", sc->sc_dev.dv_xname,
 		    sc->sc_resource_err);
 	}
 	if (IEE_SWAP(SC_SCB->scb_overrun_err) != sc->sc_overrun_err) {
 		sc->sc_overrun_err = IEE_SWAP(SC_SCB->scb_overrun_err);
-		printf("%s: iee_intr: overrun_err=%d\n", sc->sc_dev.dv_xname, 
+		printf("%s: iee_intr: overrun_err=%d\n", sc->sc_dev.dv_xname,
 		    sc->sc_overrun_err);
 	}
 	if (IEE_SWAP(SC_SCB->scb_rcvcdt_err) != sc->sc_rcvcdt_err) {
 		sc->sc_rcvcdt_err = IEE_SWAP(SC_SCB->scb_rcvcdt_err);
-		printf("%s: iee_intr: rcvcdt_err=%d\n", sc->sc_dev.dv_xname, 
+		printf("%s: iee_intr: rcvcdt_err=%d\n", sc->sc_dev.dv_xname,
 		    sc->sc_rcvcdt_err);
 	}
 	if (IEE_SWAP(SC_SCB->scb_short_fr_err) != sc->sc_short_fr_err) {
 		sc->sc_short_fr_err = IEE_SWAP(SC_SCB->scb_short_fr_err);
-		printf("%s: iee_intr: short_fr_err=%d\n", sc->sc_dev.dv_xname, 
+		printf("%s: iee_intr: short_fr_err=%d\n", sc->sc_dev.dv_xname,
 		    sc->sc_short_fr_err);
 	}
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, IEE_SHMEM_MAX, 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, IEE_SHMEM_MAX,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	(sc->sc_iee_cmd)(sc, IEE_SCB_ACK);
 	return(1);
@@ -370,36 +370,36 @@ iee_intr(void *intarg)
 /*
 How Command Block List Processing is done.
 
-A runing CBL is never manipulated. If there is a CBL already runing, 
-further CMDs are deferd until the current list is done. A new list is 
-setup when the old has finished. 
+A runing CBL is never manipulated. If there is a CBL already runing,
+further CMDs are deferd until the current list is done. A new list is
+setup when the old has finished.
 This eases programming. To manipulate a runing CBL it is neccesary to
 suspend the Command Unit to avoid race conditions. After a suspend
-is sent we have to wait for an interrupt that ACKs the suspend. Then 
-we can manipulate the CBL and resume operation. I am not sure that this 
+is sent we have to wait for an interrupt that ACKs the suspend. Then
+we can manipulate the CBL and resume operation. I am not sure that this
 is more effective then the current, much simpler approach. => KISS
 See i82596CA data sheet page 26.
 
 A CBL is runing or on the way to be set up when (sc->sc_next_cb != 0).
 
 A CBL may consist of TX CMDs, and _only_ TX CMDs.
-A TX CBL is runing or on the way to be set up when 
+A TX CBL is runing or on the way to be set up when
 ((sc->sc_next_cb != 0) && (sc->sc_next_tbd != 0)).
 
-A CBL may consist of other non-TX CMDs like IAS or CONF, and _only_ 
+A CBL may consist of other non-TX CMDs like IAS or CONF, and _only_
 non-TX CMDs.
 
-This comes mostly through the way how an Ethernet driver works and 
-because runing CBLs are not manipulated when they are on the way. If 
-if_start() is called there will be TX CMDs enqueued so we have a runing 
-CBL and other CMDs from e.g. if_ioctl() will be deferd and vice versa. 
+This comes mostly through the way how an Ethernet driver works and
+because runing CBLs are not manipulated when they are on the way. If
+if_start() is called there will be TX CMDs enqueued so we have a runing
+CBL and other CMDs from e.g. if_ioctl() will be deferd and vice versa.
 
 The Multicast Setup Command is special. A MCS needs more space then
 a single CB has. Actual space requiement depends on the length of the
 multicast list. So we allways defer MCS until other CBLs are finished,
-then we setup a CONF CMD in the first CB. The CONF CMD is needed to 
+then we setup a CONF CMD in the first CB. The CONF CMD is needed to
 turn ALLMULTI on the hardware on or off. The MCS is the 2nd CB and may
-use all the remaining space in the CBL and the Transmit Buffer Descriptor 
+use all the remaining space in the CBL and the Transmit Buffer Descriptor
 List. (Therefore CBL and TBDL must be continious in pysical and virtual
 memory. This is guaranteed through the definitions of the list offsets
 in i82596reg.h and because it is only a single DMA segment used for all
@@ -425,7 +425,7 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 		    ETHER_ADDR_LEN);
 		break;
 	case IEE_CB_CMD_CONF:	/* Configure */
-		memcpy((void*)cb->cb_cf, sc->sc_cf, sc->sc_cf[0] 
+		memcpy((void*)cb->cb_cf, sc->sc_cf, sc->sc_cf[0]
 		    & IEE_CF_0_CNT_M);
 		break;
 	case IEE_CB_CMD_MCS:	/* Multicast Setup */
@@ -436,7 +436,7 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 		sc->sc_flags &= ~IEE_WANT_MCAST;
 		if ((sc->sc_cf[8] & IEE_CF_8_PRM) != 0) {
 			/* Need no multicast filter in promisc mode. */
-			iee_cb_setup(sc, IEE_CB_CMD_CONF | IEE_CB_S | IEE_CB_EL 
+			iee_cb_setup(sc, IEE_CB_CMD_CONF | IEE_CB_S | IEE_CB_EL
 			    | IEE_CB_I);
 			return;
 		}
@@ -446,15 +446,15 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 		cb->cb_mcast.mc_size = 0;
 		ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
 		while (enm != NULL) {
-			if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 
-			    ETHER_ADDR_LEN) != 0 || cb->cb_mcast.mc_size 
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN) != 0 || cb->cb_mcast.mc_size
 			    * ETHER_ADDR_LEN + 2 * IEE_CB_SZ
 			    > IEE_CB_LIST_SZ + IEE_TBD_LIST_SZ) {
 				cb->cb_mcast.mc_size = 0;
 				break;
 			}
 			memcpy((void*) &cb->cb_mcast.mc_addrs[
-			    cb->cb_mcast.mc_size * ETHER_ADDR_LEN], 
+			    cb->cb_mcast.mc_size * ETHER_ADDR_LEN],
 			    enm->enm_addrlo, ETHER_ADDR_LEN);
 			ETHER_NEXT_MULTI(step, enm);
 			cb->cb_mcast.mc_size++;
@@ -468,8 +468,8 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 			ifp->if_flags &= ~IFF_ALLMULTI;
 			sc->sc_cf[11] |= IEE_CF_11_MCALL;
 			/* Mcast setup may need more then IEE_CB_SZ bytes. */
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 
-			    IEE_CB_OFF, IEE_CB_LIST_SZ + IEE_TBD_LIST_SZ, 
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map,
+			    IEE_CB_OFF, IEE_CB_LIST_SZ + IEE_TBD_LIST_SZ,
 			    BUS_DMASYNC_PREWRITE);
 		}
 		iee_cb_setup(sc, IEE_CB_CMD_CONF);
@@ -489,9 +489,9 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 		/* can't happen */
 		break;
 	}
-	cb->cb_link_addr = IEE_PHYS_SHMEM(IEE_CB_OFF + IEE_CB_SZ * 
+	cb->cb_link_addr = IEE_PHYS_SHMEM(IEE_CB_OFF + IEE_CB_SZ *
 	    (sc->sc_next_cb + 1));
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_CB_OFF 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_CB_OFF
 	    + IEE_CB_SZ * sc->sc_next_cb, IEE_CB_SZ, BUS_DMASYNC_PREWRITE);
 	sc->sc_next_cb++;
 	ifp->if_timer = 5;
@@ -501,7 +501,7 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 
 
 void
-iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia, 
+iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
     int defmedia)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -580,7 +580,7 @@ int
 iee_mediachange(struct ifnet *ifp)
 {
 	struct iee_softc *sc = ifp->if_softc;
-	
+
 	if (sc->sc_mediachange != NULL)
 		return ((sc->sc_mediachange)(ifp));
 	return(0);
@@ -619,10 +619,10 @@ iee_start(struct ifnet *ifp)
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_tx_map[t],
 		    sc->sc_tx_mbuf[t], BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
 			/*
-			 * The packet needs more TBD then we support. 
-			 * Copy the packet into a mbuf cluster to get it out. 
+			 * The packet needs more TBD then we support.
+			 * Copy the packet into a mbuf cluster to get it out.
 			 */
-			printf("%s: iee_start: failed to load DMA map\n", 
+			printf("%s: iee_start: failed to load DMA map\n",
 			    sc->sc_dev.dv_xname);
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
@@ -642,7 +642,7 @@ iee_start(struct ifnet *ifp)
 				t--;
 				continue;
 			}
-			m_copydata(sc->sc_tx_mbuf[t], 0, 
+			m_copydata(sc->sc_tx_mbuf[t], 0,
 			    sc->sc_tx_mbuf[t]->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = sc->sc_tx_mbuf[t]->m_pkthdr.len;
 			m->m_len = sc->sc_tx_mbuf[t]->m_pkthdr.len;
@@ -663,7 +663,7 @@ iee_start(struct ifnet *ifp)
 			SC_TBD(sc->sc_next_tbd + n)->tbd_size =
 			    sc->sc_tx_map[t]->dm_segs[n].ds_len;
 			SC_TBD(sc->sc_next_tbd + n)->tbd_link_addr =
-			    IEE_PHYS_SHMEM(IEE_TBD_OFF + IEE_TBD_SZ 
+			    IEE_PHYS_SHMEM(IEE_TBD_OFF + IEE_TBD_SZ
 			    * (sc->sc_next_tbd + n + 1));
 		}
 		SC_TBD(sc->sc_next_tbd + n - 1)->tbd_size |= IEE_CB_EL;
@@ -766,12 +766,12 @@ iee_init(struct ifnet *ifp)
 	/* Create Transmit DMA maps. */
 	for (t = 0 ; t < IEE_NCB ; t++) {
 		if (sc->sc_tx_map[t] == NULL && bus_dmamap_create(sc->sc_dmat,
-		    MCLBYTES, IEE_NTBD, MCLBYTES, 0, BUS_DMA_NOWAIT, 
+		    MCLBYTES, IEE_NTBD, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_tx_map[t]) != 0) {
-			printf("%s: iee_init: can't create TX DMA map\n", 
+			printf("%s: iee_init: can't create TX DMA map\n",
 			    sc->sc_dev.dv_xname);
 			for (n = 0 ; n < t ; n++)
-				bus_dmamap_destroy(sc->sc_dmat, 
+				bus_dmamap_destroy(sc->sc_dmat,
 				    sc->sc_tx_map[n]);
 			return(ENOBUFS);
 		}
@@ -785,12 +785,12 @@ iee_init(struct ifnet *ifp)
 		SC_RFD(r)->rfd_link_addr = IEE_PHYS_SHMEM(IEE_RFD_OFF
 		    + IEE_RFD_SZ * ((r + 1) % IEE_NRFD));
 
-		SC_RBD(r)->rbd_next_rbd = IEE_PHYS_SHMEM(IEE_RBD_OFF 
+		SC_RBD(r)->rbd_next_rbd = IEE_PHYS_SHMEM(IEE_RBD_OFF
 		    + IEE_RBD_SZ * ((r + 1) % IEE_NRFD));
 		if (sc->sc_rx_mbuf[r] == NULL) {
 			MGETHDR(sc->sc_rx_mbuf[r], M_DONTWAIT, MT_DATA);
 			if (sc->sc_rx_mbuf[r] == NULL) {
-				printf("%s: iee_init: can't allocate mbuf\n", 
+				printf("%s: iee_init: can't allocate mbuf\n",
 				    sc->sc_dev.dv_xname);
 				err = 1;
 				break;
@@ -806,7 +806,7 @@ iee_init(struct ifnet *ifp)
 			}
 		}
 		if (sc->sc_rx_map[r] == NULL && bus_dmamap_create(sc->sc_dmat,
-		    MCLBYTES, 1, MCLBYTES , 0, BUS_DMA_NOWAIT, 
+		    MCLBYTES, 1, MCLBYTES , 0, BUS_DMA_NOWAIT,
 		    &sc->sc_rx_map[r]) != 0) {
 				printf("%s: iee_init: can't create RX "
 				    "DMA map\n", sc->sc_dev.dv_xname);
@@ -815,7 +815,7 @@ iee_init(struct ifnet *ifp)
 				break;
 			}
 		if (bus_dmamap_load(sc->sc_dmat, sc->sc_rx_map[r],
-		    sc->sc_rx_mbuf[r]->m_ext.ext_buf, 
+		    sc->sc_rx_mbuf[r]->m_ext.ext_buf,
 		    sc->sc_rx_mbuf[r]->m_ext.ext_size, NULL,
 		    BUS_DMA_READ | BUS_DMA_NOWAIT) != 0) {
 			printf("%s: iee_init: can't load RX DMA map\n",
@@ -851,7 +851,7 @@ iee_init(struct ifnet *ifp)
 	sc->sc_cf[0] = IEE_CF_0_DEF | IEE_CF_0_PREF;
 	sc->sc_cf[1] = IEE_CF_1_DEF;
 	sc->sc_cf[2] = IEE_CF_2_DEF;
-	sc->sc_cf[3] = IEE_CF_3_ADDRLEN_DEF | IEE_CF_3_NSAI 
+	sc->sc_cf[3] = IEE_CF_3_ADDRLEN_DEF | IEE_CF_3_NSAI
 	    | IEE_CF_3_PREAMLEN_DEF;
 	sc->sc_cf[4] = IEE_CF_4_DEF;
 	sc->sc_cf[5] = IEE_CF_5_DEF;
@@ -922,10 +922,10 @@ iee_watchdog(struct ifnet *ifp)
 
 	(sc->sc_iee_reset)(sc);
 	if (sc->sc_next_tbd != 0)
-		printf("%s: iee_watchdog: transmit timeout %d\n", 
+		printf("%s: iee_watchdog: transmit timeout %d\n",
 		    sc->sc_dev.dv_xname, ++sc->sc_tx_timeout);
 	else
-		printf("%s: iee_watchdog: setup timeout %d\n", 
+		printf("%s: iee_watchdog: setup timeout %d\n",
 		    sc->sc_dev.dv_xname, ++sc->sc_setup_timeout);
 	iee_init(ifp);
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.9 2003/08/07 16:30:59 agc Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.10 2005/02/27 00:27:01 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.9 2003/08/07 16:30:59 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.10 2005/02/27 00:27:01 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -214,7 +214,7 @@ cd18xx_wait_ccr(sc)
 /*
  * device attach routine, high-end portion
  */
-void 
+void
 cd18xx_attach(sc)
 	struct cd18xx_softc *sc;
 {
@@ -247,7 +247,7 @@ cd18xx_attach(sc)
 	}
 
 	/* full reset of all channels */
-	cd18xx_write(sc, CD18xx_CCR, 
+	cd18xx_write(sc, CD18xx_CCR,
 	    CD18xx_CCR_RESET|CD18xx_CCR_RESET_HARD);
 
 	/* loop until the GSVR is ready */
@@ -290,7 +290,7 @@ cd18xx_attach(sc)
 	printf(", 8 ports ready (chip id %d)\n", sc->sc_chip_id);
 
 	/*
-	 * finally, we loop over all 8 channels initialising them 
+	 * finally, we loop over all 8 channels initialising them
 	 */
 	for (port = 0; port < 8; port++)
 		cdtty_attach(sc, port);
@@ -301,7 +301,7 @@ cd18xx_attach(sc)
 /*
  * tty portion attach routine
  */
-void 
+void
 cdtty_attach(sc, port)
 	struct	cd18xx_softc *sc;
 	int port;
@@ -705,7 +705,7 @@ cdttystart(tp)
 
 		tba = tp->t_outq.c_cf;
 		tbc = ndqb(&tp->t_outq, 0);
-	
+
 		(void)splserial();
 
 		p->p_tba = tba;
@@ -770,7 +770,7 @@ cdtty_loadchannelregs(sc, p)
 	cd18xx_write(sc, CD18xx_COR2, p->p_cor2);
 	cd18xx_write(sc, CD18xx_COR3, p->p_cor3);
 	/*
-	 * COR2 and COR3 change commands are not required here for 
+	 * COR2 and COR3 change commands are not required here for
 	 * the CL-CD1865 but we do them anyway for simplicity.
 	 */
 	cd18xx_write(sc, CD18xx_CCR, CD18xx_CCR_CORCHG |
@@ -1220,7 +1220,7 @@ cd18xx_tint(sc, ns)
 	/* if the current break condition is wrong, fix it */
 	if (p->p_break != p->p_needbreak) {
 		u_char buf[2];
-		
+
 		DPRINTF(CDD_INTR, (", changing break to %d", p->p_needbreak));
 
 		/* turn on ETC processing */
@@ -1478,7 +1478,7 @@ cdtty_rxsoft(sc, p, tp)
 	if (cc != scc) {
 		p->p_rbget = get;
 		s = splserial();
-		
+
 		cc = p->p_rbavail += scc - cc;
 		/* Buffers should be ok again, release possible block. */
 		if (cc >= p->p_r_lowat) {

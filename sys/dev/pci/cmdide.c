@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.17 2004/08/21 00:28:34 thorpej Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.18 2005/02/27 00:27:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -128,7 +128,7 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 	u_int8_t ctrl = pciide_pci_read(sc->sc_pc, sc->sc_tag, CMD_CTRL);
 	int interface, one_channel;
 
-	/* 
+	/*
 	 * The 0648/0649 can be told to identify as a RAID controller.
 	 * In this case, we have to fake interface
 	 */
@@ -202,7 +202,7 @@ cmd_pci_intr(void *arg)
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
 	struct ata_channel *wdc_cp;
-	int i, rv, crv; 
+	int i, rv, crv;
 	u_int32_t priirq, secirq;
 
 	rv = 0;
@@ -266,7 +266,7 @@ cmd_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 static void
 cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
-{	 
+{
 	int channel;
 	pcireg_t rev = PCI_REVISION(pa->pa_class);
 
@@ -394,7 +394,7 @@ cmd0643_9_setup_channel(struct ata_channel *chp)
 					drvp->UDMA_mode = 2;
 				if (drvp->UDMA_mode > 2)
 					udma_reg &= ~CMD_UDMATIM_UDMA33(drive);
-				else if (sc->sc_wdcdev.sc_atac.atac_udma_cap > 2) 
+				else if (sc->sc_wdcdev.sc_atac.atac_udma_cap > 2)
 					udma_reg |= CMD_UDMATIM_UDMA33(drive);
 				udma_reg |= CMD_UDMATIM_UDMA(drive);
 				udma_reg &= ~(CMD_UDMATIM_TIM_MASK <<
@@ -456,7 +456,7 @@ cmd646_9_irqack(struct ata_channel *chp)
 
 static void
 cmd680_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
-{	 
+{
 	int channel;
 
 	if (pciide_chipen(sc, pa) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.11 2004/03/13 17:31:34 bjh21 Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.12 2005/02/27 00:26:59 perry Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,13 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.11 2004/03/13 17:31:34 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.12 2005/02/27 00:26:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <sys/tty.h> 
+#include <sys/tty.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -172,7 +172,7 @@ hpckbd_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_core->hc_keymap == default_keymap)
 		printf(": no keymap.");
-	
+
 	printf("\n");
 
 	/*
@@ -296,7 +296,7 @@ hpckbd_keymap_lookup(struct hpckbd_core *hc)
 			hpckbd_keymapdata.layout = tab->ht_layout;
 #endif
 			if (tab->ht_cmdmap.map) {
-				hpckbd_keymap_setup(hc, tab->ht_cmdmap.map, 
+				hpckbd_keymap_setup(hc, tab->ht_cmdmap.map,
 				    tab->ht_cmdmap.size);
 #if !defined(PCKBD_LAYOUT)
 				hpckbd_keymapdata.layout |= KB_MACHDEP;
@@ -335,11 +335,11 @@ __hpckbd_input(void *arg, int flag, int scancode)
 	int type, key;
 
 	if (flag) {
-		type = WSCONS_EVENT_KEY_DOWN; 
+		type = WSCONS_EVENT_KEY_DOWN;
 	} else {
 		type = WSCONS_EVENT_KEY_UP;
 	}
-	
+
 	if ((key = hc->hc_keymap[scancode]) == UNK) {
 #ifdef DEBUG
 		printf("hpckbd: unknown scan code %#x (%d, %d)\n",
@@ -356,7 +356,7 @@ __hpckbd_input(void *arg, int flag, int scancode)
 	if (key == SPL) {
 		if (!flag)
 			return (0);
-		
+
 		if (scancode == hc->hc_special[KEY_SPECIAL_OFF]) {
 #ifdef DEBUG
 			printf("off button\n"); // XXX notyet -uch
@@ -371,7 +371,7 @@ __hpckbd_input(void *arg, int flag, int scancode)
 			printf("unknown special key %d\n", scancode);
 #endif
 		}
-		
+
 		return (0);
 	}
 
@@ -408,7 +408,7 @@ hpckbd_cnattach(struct hpckbd_ic_if *ic)
 
 	/* attach wskbd */
 	wskbd_cnattach(&hpckbd_consops, hc, &hpckbd_keymapdata);
-	
+
 	return (0);
 }
 

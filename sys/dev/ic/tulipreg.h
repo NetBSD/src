@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.29 2002/11/07 07:55:53 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.30 2005/02/27 00:27:03 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  *		- 128-bit multicast hash table rather than the
  *		  standard 512-bit hash table
  *		- 802.3x flow control
- *		
+ *
  *	- Lite-On 82C168, 82C169 (PNIC):
  *
  *	  Pretty close, with only a few minor differences:
@@ -723,7 +723,7 @@ struct tulip_desc {
 
 /* CSR12 - SIA Status Register. */
 #define	CSR_SIASTAT		TULIP_CSR12
-#define	SIASTAT_PAUI		0x00000001	/* pin AUI/TP indication	
+#define	SIASTAT_PAUI		0x00000001	/* pin AUI/TP indication
 						   (21040) */
 #define	SIASTAT_MRA		0x00000001	/* MII receive activity
 						   (21142) */

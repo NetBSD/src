@@ -1,4 +1,4 @@
-/*	$NetBSD: videomode.h,v 1.2 2002/11/04 08:05:52 junyoung Exp $	*/
+/*	$NetBSD: videomode.h,v 1.3 2005/02/27 00:27:03 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -29,7 +29,7 @@
 
 struct videomode {
 	int dot_clock;		/* Dot clock frequency in kHz. */
-	int hdisplay;		
+	int hdisplay;
 	int hsync_start;
 	int hsync_end;
 	int htotal;
@@ -41,7 +41,7 @@ struct videomode {
 	void *misc_data;	/* Card-specific parameters. */
 };
 
-/* 
+/*
  * Video mode flags.
  */
 

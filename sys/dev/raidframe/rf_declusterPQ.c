@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_declusterPQ.c,v 1.10 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_declusterPQ.c,v 1.11 2005/02/27 00:27:44 perry Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,7 @@
  *--------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.10 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.11 2005/02/27 00:27:44 perry Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.10 2003/12/30 21:59:03 oster Ex
 #if (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0) || (RF_INCLUDE_EVENODD > 0)
 /* configuration code */
 
-int 
+int
 rf_ConfigureDeclusteredPQ(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			  RF_Config_t *cfgPtr)
 {
@@ -265,7 +265,7 @@ rf_ConfigureDeclusteredPQ(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	return (0);
 }
 
-int 
+int
 rf_GetDefaultNumFloatingReconBuffersPQ(RF_Raid_t *raidPtr)
 {
 	int     def_decl;
@@ -274,7 +274,7 @@ rf_GetDefaultNumFloatingReconBuffersPQ(RF_Raid_t *raidPtr)
 	return (RF_MAX(3 * raidPtr->numCol, def_decl));
 }
 
-void 
+void
 rf_MapSectorDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 			  RF_RowCol_t *row, RF_RowCol_t *col,
 			  RF_SectorNum_t *diskSector, int remap)
@@ -342,7 +342,7 @@ rf_MapSectorDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 }
 
 
-void 
+void
 rf_MapParityDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 			  RF_RowCol_t *row, RF_RowCol_t *col,
 			  RF_SectorNum_t *diskSector, int remap)
@@ -394,7 +394,7 @@ rf_MapParityDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 	*diskSector = outSU * layoutPtr->sectorsPerStripeUnit + (raidSector % layoutPtr->sectorsPerStripeUnit);
 }
 
-void 
+void
 rf_MapQDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		     RF_RowCol_t *row, RF_RowCol_t *col,
 		     RF_SectorNum_t *diskSector, int remap)
@@ -449,7 +449,7 @@ rf_MapQDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 /* returns an array of ints identifying the disks that comprise the stripe containing the indicated address.
  * the caller must _never_ attempt to modify this array.
  */
-void 
+void
 rf_IdentifyStripeDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 			       RF_RowCol_t **diskids, RF_RowCol_t *outRow)
 {

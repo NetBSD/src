@@ -1,4 +1,4 @@
-/*	$NetBSD: gtintrreg.h,v 1.2 2004/02/13 11:36:22 wiz Exp $	*/
+/*	$NetBSD: gtintrreg.h,v 1.3 2005/02/27 00:27:21 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
  * (ICR_MIC_LO, ICR_MIC_HI and ICR_CIM_LO, ICR_CIM_HI)
  * as well as 32 bits in GPP registers (see intr.h):
  *
- *      IRQs:                             
+ *      IRQs:
  *	31.............................0  63.............................32
  *                                     |   |                             |
  *      imask_t index:                 |   |                             |
@@ -103,7 +103,7 @@
  *      ^--------- ICR_MIC_LO ---------^   ^------ ICR_MIC_HI -----------^
  *      ^--------- ICR_CIM_LO ---------^   ^------ ICR_CIM_HI -----------^
  *
- *      IRQs:                             
+ *      IRQs:
  *	95............................64  127............................96
  *                                     |   |                             |
  *      imask_t index:                 |   |                             |
@@ -117,7 +117,7 @@
  *      Registers:                     |   |                             |
  *      |                              |   |                             |
  *      ^--- GT_GPP_Interrupt_Cause ---^   ^-------  (none)   -----------^
- *      ^--- GT_GPP_Interrupt_Mask  ---^  
+ *      ^--- GT_GPP_Interrupt_Mask  ---^
  *
  *
  * Note that GPP interrupts are summarized in the Main Cause Register.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.13 2004/08/20 06:39:38 thorpej Exp $	*/
+/*	$NetBSD: cypide.c,v 1.14 2005/02/27 00:27:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -90,7 +90,7 @@ cypide_attach(struct device *parent, struct device *self, void *aux)
 
 static void
 cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
-{	 
+{
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	bus_size_t cmdsize, ctlsize;
@@ -159,7 +159,7 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 	}
 	aprint_normal("%s: primary channel %s to ",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, 
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
 	    (interface & PCIIDE_INTERFACE_SETTABLE(0)) ?
 	    "configured" : "wired");
 	if (interface & PCIIDE_INTERFACE_PCI(0)) {

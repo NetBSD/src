@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.26 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.27 2005/02/27 00:27:32 perry Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.26 2005/02/04 02:10:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.27 2005/02/27 00:27:32 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -210,7 +210,7 @@ mscp_attach(parent, self, aux)
 			return;
 		}
 	}
-	
+
 
 #if NRA
 	if (ma->ma_type & MSCPBUS_DISK) {
@@ -323,7 +323,7 @@ gotit:	/*
 
 
 /*
- * The ctlr gets initialised, normally after boot but may also be 
+ * The ctlr gets initialised, normally after boot but may also be
  * done if the ctlr gets in an unknown state. Returns 1 if init
  * fails, 0 otherwise.
  */
@@ -366,7 +366,7 @@ mscp_init(mi)
 	}
 
 	/* step2 */
-	WRITE_SW(((mi->mi_dmam->dm_segs[0].ds_addr & 0xffff) + 
+	WRITE_SW(((mi->mi_dmam->dm_segs[0].ds_addr & 0xffff) +
 	    offsetof(struct mscp_pack, mp_ca.ca_rspdsc[0])) |
 	    (vax_cputype == VAX_780 || vax_cputype == VAX_8600 ? MP_PI : 0));
 	status = mscp_waitstep(mi, STEP2MASK, STEP2GOOD(mi->mi_ivec >> 2));
@@ -378,7 +378,7 @@ mscp_init(mi)
 	/* step3 */
 	WRITE_SW((mi->mi_dmam->dm_segs[0].ds_addr >> 16));
 	status = mscp_waitstep(mi, STEP3MASK, STEP3GOOD);
-	if (status == 0) { 
+	if (status == 0) {
 		(*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
 		return 1;
 	}
@@ -388,7 +388,7 @@ mscp_init(mi)
 #define BURST 4 /* XXX */
 	if (mi->mi_type & MSCPBUS_UDA) {
 		WRITE_SW(MP_GO | (BURST - 1) << 2);
-		printf("%s: DMA burst size set to %d\n", 
+		printf("%s: DMA burst size set to %d\n",
 		    mi->mi_dev.dv_xname, BURST);
 	}
 	WRITE_SW(MP_GO);
@@ -406,7 +406,7 @@ mscp_init(mi)
 	mi->mi_credits = 0;
 	mp->mscp_opcode = M_OP_SETCTLRC;
 	mp->mscp_unit = mp->mscp_modifier = mp->mscp_flags =
-	    mp->mscp_sccc.sccc_version = mp->mscp_sccc.sccc_hosttimo = 
+	    mp->mscp_sccc.sccc_version = mp->mscp_sccc.sccc_hosttimo =
 	    mp->mscp_sccc.sccc_time = mp->mscp_sccc.sccc_time1 =
 	    mp->mscp_sccc.sccc_errlgfl = 0;
 	mp->mscp_sccc.sccc_ctlrflags = M_CF_ATTN | M_CF_MISC | M_CF_THIS;
@@ -424,7 +424,7 @@ mscp_init(mi)
 	}
 	if (count == DELAYTEN) {
 out:
-		printf("%s: couldn't set ctlr characteristics, sa=%x\n", 
+		printf("%s: couldn't set ctlr characteristics, sa=%x\n",
 		    mi->mi_dev.dv_xname, j);
 		return 1;
 	}
@@ -549,7 +549,7 @@ mscp_kickaway(mi)
 			 */
 			return;
 		}
-	
+
 		if ((next = (ffs(mi->mi_mxiuse) - 1)) < 0)
 			panic("no mxi buffers");
 		mi->mi_mxiuse &= ~(1 << next);
@@ -836,7 +836,7 @@ mscp_decodeerror(name, mp, mi)
 	struct mscp_softc *mi;
 {
 	int issoft;
-	/* 
+	/*
 	 * We will get three sdi errors of type 11 after autoconfig
 	 * is finished; depending of searching for non-existing units.
 	 * How can we avoid this???

@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.41 2004/08/23 06:16:07 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.42 2005/02/27 00:27:31 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.41 2004/08/23 06:16:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.42 2005/02/27 00:27:31 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ static const struct mii_phydesc tlphys[] = {
 static int
 tlphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct mii_attach_args *ma = aux;       
+	struct mii_attach_args *ma = aux;
 
 	if (mii_phy_match(ma, tlphys) != NULL)
 		return (10);
@@ -233,7 +233,7 @@ tlphy_service(struct mii_softc *self, struct mii_data *mii, int cmd)
 			PHY_WRITE(&sc->sc_mii, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
-		
+
 		/*
 		 * If the interface is not up, don't do anything.
 		 */
@@ -315,7 +315,7 @@ tlphy_status(struct mii_softc *physc)
 	bmcr = PHY_READ(&sc->sc_mii, MII_BMCR);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
-		mii->mii_media_status = 0;  
+		mii->mii_media_status = 0;
 		return;
 	}
 
@@ -334,7 +334,7 @@ tlphy_status(struct mii_softc *physc)
 
 	bmsr = PHY_READ(&sc->sc_mii, MII_BMSR) |
 	    PHY_READ(&sc->sc_mii, MII_BMSR);
-	if (bmsr & BMSR_LINK)   
+	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
 	if (bmcr & BMCR_LOOP)

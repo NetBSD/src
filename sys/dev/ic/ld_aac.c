@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.7 2005/02/08 05:16:17 briggs Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.8 2005/02/27 00:27:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.7 2005/02/08 05:16:17 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.8 2005/02/27 00:27:01 perry Exp $");
 
 #include "rnd.h"
 
@@ -110,7 +110,7 @@ ld_aac_attach(struct device *parent, struct device *self, void *aux)
 	ld->sc_start = ld_aac_start;
 	ld->sc_dump = ld_aac_dump;
 
-	aprint_normal(": %s\n", 
+	aprint_normal(": %s\n",
 	    aac_describe_code(aac_container_types, hdr->hd_devtype));
 	ldattach(ld);
 }

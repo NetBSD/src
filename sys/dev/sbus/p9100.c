@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.19 2004/03/17 17:04:58 pk Exp $ */
+/*	$NetBSD: p9100.c,v 1.20 2005/02/27 00:27:48 perry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.19 2004/03/17 17:04:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.20 2005/02/27 00:27:48 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,15 +179,15 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 
 	/* Remember cookies for p9100_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_ctl_paddr = sbus_bus_addr(sa->sa_bustag, 
+	sc->sc_ctl_paddr = sbus_bus_addr(sa->sa_bustag,
 		sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base);
 	sc->sc_ctl_psize = (bus_size_t)sa->sa_reg[0].oa_size;
 
-	sc->sc_cmd_paddr = sbus_bus_addr(sa->sa_bustag, 
+	sc->sc_cmd_paddr = sbus_bus_addr(sa->sa_bustag,
 		sa->sa_reg[1].oa_space, sa->sa_reg[1].oa_base);
 	sc->sc_cmd_psize = (bus_size_t)sa->sa_reg[1].oa_size;
 
-	sc->sc_fb_paddr = sbus_bus_addr(sa->sa_bustag, 
+	sc->sc_fb_paddr = sbus_bus_addr(sa->sa_bustag,
 		sa->sa_reg[2].oa_space, sa->sa_reg[2].oa_base);
 	sc->sc_fb_psize = (bus_size_t)sa->sa_reg[2].oa_size;
 

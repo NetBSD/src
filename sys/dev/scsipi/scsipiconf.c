@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.30 2005/02/01 00:19:34 reinoud Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.31 2005/02/27 00:27:48 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.30 2005/02/01 00:19:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.31 2005/02/27 00:27:48 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
     struct buf *bp, int flags)
 {
 	struct scsipi_xfer *xs;
- 
+
 	xs = scsipi_make_xs(periph, cmd, cmdlen, data_addr, datalen, retries,
 	    timeout, bp, flags);
 	if (!xs)
@@ -103,8 +103,8 @@ scsipi_alloc_periph(int malloc_flag)
 	 * Start with one command opening.  The periph driver
 	 * will grow this if it knows it can take advantage of it.
 	 */
-	periph->periph_openings = 1; 
-	periph->periph_active = 0;   
+	periph->periph_openings = 1;
+	periph->periph_active = 0;
 
 	for (i = 0; i < PERIPH_NTAGWORDS; i++)
 		periph->periph_freetags[i] = 0xffffffff;

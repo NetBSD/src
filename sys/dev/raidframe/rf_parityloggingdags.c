@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.13 2004/01/10 00:56:28 oster Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.14 2005/02/27 00:27:45 perry Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.13 2004/01/10 00:56:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.14 2005/02/27 00:27:45 perry Exp $");
 
 #include "rf_archs.h"
 #include "opt_raid_diagnostic.h"
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.13 2004/01/10 00:56:28 os
  *
  *****************************************************************************/
 
-void 
+void
 rf_CommonCreateParityLoggingLargeWriteDAG(
     RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap,
@@ -99,7 +99,7 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
 
 	/* alloc the Wnd nodes, the xor node, and the Lpo node */
 	nWndNodes = asmap->numStripeUnitsAccessed;
-	RF_MallocAndAdd(nodes, (nWndNodes + 6) * sizeof(RF_DagNode_t), 
+	RF_MallocAndAdd(nodes, (nWndNodes + 6) * sizeof(RF_DagNode_t),
 			(RF_DagNode_t *), allocList);
 	i = 0;
 	wndNodes = &nodes[i];
@@ -123,7 +123,7 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
 
 	rf_MapUnaccessedPortionOfStripe(raidPtr, layoutPtr, asmap, dag_h, new_asm_h, &nRodNodes, &sosBuffer, &eosBuffer, allocList);
 	if (nRodNodes > 0)
-		RF_MallocAndAdd(rodNodes, nRodNodes * sizeof(RF_DagNode_t), 
+		RF_MallocAndAdd(rodNodes, nRodNodes * sizeof(RF_DagNode_t),
 				(RF_DagNode_t *), allocList);
 
 	/* begin node initialization */
@@ -183,7 +183,7 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
 		if (((RF_PhysDiskAddr_t *) rodNodes[i].params[0].p)->numSector == raidPtr->Layout.sectorsPerStripeUnit)
 			break;
 	if (i == nRodNodes) {
-		RF_MallocAndAdd(xorNode->results[0], 
+		RF_MallocAndAdd(xorNode->results[0],
 				rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit), (void *), allocList);
 	} else {
 		xorNode->results[0] = rodNodes[i].params[1].p;
@@ -315,7 +315,7 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
  * A null qfuncs indicates single fault tolerant
  *****************************************************************************/
 
-void 
+void
 rf_CommonCreateParityLoggingSmallWriteDAG(
     RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap,
@@ -368,7 +368,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 	dag_h->numSuccedents = 1;
 
 	/* Step 2. create the nodes */
-	RF_MallocAndAdd(nodes, totalNumNodes * sizeof(RF_DagNode_t), 
+	RF_MallocAndAdd(nodes, totalNumNodes * sizeof(RF_DagNode_t),
 			(RF_DagNode_t *), allocList);
 	i = 0;
 	blockNode = &nodes[i];
@@ -620,7 +620,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 }
 
 
-void 
+void
 rf_CreateParityLoggingSmallWriteDAG(
     RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap,
@@ -636,7 +636,7 @@ rf_CreateParityLoggingSmallWriteDAG(
 }
 
 
-void 
+void
 rf_CreateParityLoggingLargeWriteDAG(
     RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sir.h,v 1.2 2003/07/08 10:06:32 itojun Exp $	*/
+/*	$NetBSD: sir.h,v 1.3 2005/02/27 00:27:17 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,4 +61,4 @@ extern const u_int16_t irda_fcstab[];
 
 static __inline u_int16_t updateFCS(u_int16_t fcs, int c) {
 	return (fcs >> 8) ^ irda_fcstab[(fcs^c) & 0xff];
-} 
+}

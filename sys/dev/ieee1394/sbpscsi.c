@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpscsi.c,v 1.8 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: sbpscsi.c,v 1.9 2005/02/27 00:27:17 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.8 2005/02/21 00:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.9 2005/02/27 00:27:17 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -118,19 +118,19 @@ sbpscsi_attach(struct device *parent, struct device *self, void *aux)
 		sc->sbp2 = sbp2_init(psc, *udirs);
 		found = 1;
 	}
-	
+
 	if (!found) {
 		DPRINTF(("Can't match an SBP capable scsi lun?"));
 		return;
-	}		
-	
+	}
+
 	sc->sc_adapter.adapt_dev = &sc->sc_dev;
 	sc->sc_adapter.adapt_nchannels = 1;
 	sc->sc_adapter.adapt_max_periph = 1;
 	sc->sc_adapter.adapt_request = sbpscsi_scsipi_request;
 	sc->sc_adapter.adapt_minphys = sbpscsi_minphys;
 	sc->sc_adapter.adapt_openings = 8; /*Start with some. Grow as needed.*/
-	
+
 	sc->sc_channel.chan_adapter = &sc->sc_adapter;
 	sc->sc_channel.chan_bustype = &scsi_bustype;
 	sc->sc_channel.chan_defquirks = PQUIRK_ONLYBIG;
@@ -144,7 +144,7 @@ sbpscsi_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	sc->sc_bus = config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
-	
+
 	return;
 }
 
@@ -171,13 +171,13 @@ sbpscsi_scsipi_request(struct scsipi_channel *channel, scsipi_adapter_req_t req,
 	struct sbp2 *sbp2 = sc->sbp2;
 	struct scsipi_xfer *xs = arg;
 	struct sbp2_cmd cmd;
-	
+
 	DPRINTFN(1, ("Called sbpscsi_scsipi_request\n"));
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		DPRINTFN(1, ("Got req_run_xfer\n"));
-		DPRINTFN(1, ("xs control: 0x%08x, timeout: %d\n", 
+		DPRINTFN(1, ("xs control: 0x%08x, timeout: %d\n",
 		    xs->xs_control, xs->timeout));
 		DPRINTFN(1, ("opcode: 0x%02x\n", (int)xs->cmd->opcode));
 		for (i = 0; i < 15; i++)
@@ -245,7 +245,7 @@ sbpscsi_status(struct sbp2_status *status, void *arg)
 {
 	struct scsipi_xfer *xs = arg;
 	u_int8_t smft, vflag, iflag, mflag, eflag;
-	
+
 	callout_stop(&xs->xs_callout);
 
 	DPRINTFN(1, ("status: resp 0x%04x, sbp_status 0x%04x\n", status->resp,
@@ -259,7 +259,7 @@ sbpscsi_status(struct sbp2_status *status, void *arg)
 		xs->error = XS_NOERROR;
 		xs->resid = 0;
 	}
-	
+
 	if (status->datalen) {
 		xs->sense.scsi_sense.response_code =
 		    SBPSCSI_STATUS_GET_STATUS(status->data[0]);
@@ -268,7 +268,7 @@ sbpscsi_status(struct sbp2_status *status, void *arg)
 		eflag = SBPSCSI_STATUS_GET_EFLAG(status->data[0]);
 		iflag = SBPSCSI_STATUS_GET_IFLAG(status->data[0]);
 		smft = SBPSCSI_STATUS_GET_SMFT(status->data[0]);
-		
+
 		if (iflag)
 			xs->sense.scsi_sense.flags |= SSD_ILI;
 		if (eflag)

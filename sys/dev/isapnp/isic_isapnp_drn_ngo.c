@@ -27,14 +27,14 @@
  *	i4b_drn_ngo.c - Dr. Neuhaus Niccy GO@ and SAGEM Cybermod
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_drn_ngo.c,v 1.5 2005/02/04 02:10:43 perry Exp $
+ *	$Id: isic_isapnp_drn_ngo.c,v 1.6 2005/02/27 00:27:21 perry Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.5 2005/02/04 02:10:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.6 2005/02/27 00:27:21 perry Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_DRN_NGO
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.5 2005/02/04 02:10:43 perr
  *
  *	Thanks to Klaus Muehle of Dr. Neuhaus Telekommunikation for giving
  *	out this information!
- *                                                     
+ *
  *---------------------------------------------------------------------------*/
 #define NICCY_PORT_MIN	0x200
 #define NICCY_PORT_MAX	0x3e0
@@ -132,7 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.5 2005/02/04 02:10:43 perr
 /*---------------------------------------------------------------------------*
  *	Dr. Neuhaus Niccy GO@ read fifo routine
  *---------------------------------------------------------------------------*/
-static void		
+static void
 drnngo_read_fifo(void *buf, const void *base, size_t len)
 {
 	register int offset;
@@ -164,7 +164,7 @@ printf("GO/B/frd: base=0x%x, data=0x%x, len=%d\n", base, data, len);
 	{
 		(u_int)data = ((u_int)base + ISAC_DATA);
 		(u_int)base +=  (ADDR_OFF + ISAC_ADDR);
-		offset = 0;		
+		offset = 0;
 #ifdef ISACDEBUG
 printf("GO/I/frd: base=0x%x, data=0x%x, len=%d\n", base, data, len);
 #endif
@@ -189,7 +189,7 @@ drnngo_write_fifo(void *base, const void *buf, size_t len)
 	register u_int data;
 
 	int x = SPLI4B();
-	
+
 	if((u_int)base & HSCX_ABIT)
 	{
 		(u_int)base &= ~HSCX_ABIT;
@@ -212,13 +212,13 @@ printf("GO/B/fwr: base=0x%x, data=0x%x, len=%d\n", base, data, len);
 	}
 	else
 	{
-		(u_int)data = ((u_int)base + ISAC_DATA);		
+		(u_int)data = ((u_int)base + ISAC_DATA);
 		(u_int)base +=  (ADDR_OFF + ISAC_ADDR);
 		offset = 0;
 #ifdef ISACDEBUG
 printf("GO/I/fwr: base=0x%x, data=0x%x, len=%d\n", base, data, len);
 #endif
-	}		
+	}
 
 	for(;len > 0; len--, offset++)
 	{
@@ -246,7 +246,7 @@ printf("GO/A/rwr: base=0x%x, addr=0x%x, offset=0x%x, val=0x%x\n",
 	(int)base + ADDR_OFF + HSCX_ADDR, (int)base + HSCX_DATA,
 	(u_char)offset, (u_char)v);
 #endif
-	}		
+	}
 	else if((u_int)base & HSCX_BBIT)
 	{
 		(u_int)base &= ~HSCX_BBIT;
@@ -261,12 +261,12 @@ printf("GO/B/rwr: base=0x%x, addr=0x%x, offset=0x%x, val=0x%x\n",
 	else
 	{
 		outb((int)base + ADDR_OFF + ISAC_ADDR, (u_char)offset);
-		outb((int)base + ISAC_DATA, (u_char)v);	
+		outb((int)base + ISAC_DATA, (u_char)v);
 #ifdef ISACDEBUG
 printf("GO/I/rwr: base=0x%x, addr=0x%x, offset=0x%x, val=0x%x\n",
 	(int)base + ADDR_OFF + ISAC_ADDR, (int)base + ISAC_DATA,
 	(u_char)offset, (u_char)v);
-#endif	
+#endif
 	}
 	splx(x);
 }
@@ -279,13 +279,13 @@ drnngo_read_reg(u_char *base, u_int offset)
 {
 	u_char val;
 	int x = SPLI4B();
-	
+
 	if((u_int)base & HSCX_ABIT)
 	{
 		(u_int)base &= ~HSCX_ABIT;
 		outb((int)base + ADDR_OFF + HSCX_ADDR, (u_char)offset);
 		val = inb((int)base + HSCX_DATA);
-#ifdef HSCXADEBUG		
+#ifdef HSCXADEBUG
 printf("GO/A/rrd: base=0x%x, addr=0x%x, offset=0x%x, val=0x%x\n",
 	(int)base + ADDR_OFF + HSCX_ADDR, (int)base + HSCX_DATA,
 	(u_char)offset, (u_char)val);
@@ -296,7 +296,7 @@ printf("GO/A/rrd: base=0x%x, addr=0x%x, offset=0x%x, val=0x%x\n",
 		(u_int)base &= ~HSCX_BBIT;
 		outb((int)base + ADDR_OFF + HSCX_ADDR, (u_char)(offset + HSCX_BOFF));
 		val = inb((int)base + HSCX_DATA);
-#ifdef HSCXBDEBUG		
+#ifdef HSCXBDEBUG
 printf("GO/B/rrd: base=0x%x, addr=0x%x, offset=0x%x, val=0x%x\n",
 	(int)base + ADDR_OFF + HSCX_ADDR, (int)base + HSCX_DATA,
 	(u_char)(offset + HSCX_BOFF), (u_char)val);
@@ -306,12 +306,12 @@ printf("GO/B/rrd: base=0x%x, addr=0x%x, offset=0x%x, val=0x%x\n",
 	{
 		outb((int)base + ADDR_OFF + ISAC_ADDR, (u_char)offset);
 		val = inb((int)base + ISAC_DATA);
-#ifdef ISACDEBUG		
+#ifdef ISACDEBUG
 printf("GO/I/rrd: base=0x%x, addr=0x%x, offset=0x%x, val=0x%x\n",
 	(int)base + ADDR_OFF + ISAC_ADDR, (int)base + ISAC_DATA,
 	(u_char)offset, (u_char)val);
 #endif
-	}		
+	}
 	splx(x);
 	return(val);
 }
@@ -323,15 +323,15 @@ int
 isic_probe_drnngo(struct isa_device *dev, unsigned int iobase2)
 {
 	struct isic_softc *sc = &l1_sc[dev->id_unit];
-	
+
 	/* check max unit range */
-	
+
 	if(dev->id_unit >= ISIC_MAXUNIT)
 	{
 		printf("isic%d: Error, unit %d >= ISIC_MAXUNIT for Dr. Neuhaus Niccy GO@!\n",
 				dev->id_unit, dev->id_unit);
-		return(0);	
-	}	
+		return(0);
+	}
 	sc->sc_unit = dev->id_unit;
 
 	/* check IRQ validity */
@@ -347,13 +347,13 @@ isic_probe_drnngo(struct isa_device *dev, unsigned int iobase2)
 		case 12:
 		case 15:
 			break;
-			
+
 		default:
 			printf("isic%d: Error, invalid IRQ [%d] specified for Dr. Neuhaus Niccy GO@!\n",
 				dev->id_unit, ffs(dev->id_irq)-1);
 			return(0);
 			break;
-	}		
+	}
 	sc->sc_irq = dev->id_irq;
 
 	/* check if memory addr specified */
@@ -365,7 +365,7 @@ isic_probe_drnngo(struct isa_device *dev, unsigned int iobase2)
 		return(0);
 	}
 	dev->id_msize = 0;
-	
+
 	/* check if we got an iobase */
 
 	if(dev->id_iobase < NICCY_PORT_MIN || dev->id_iobase > NICCY_PORT_MAX)
@@ -396,7 +396,7 @@ isic_probe_drnngo(struct isa_device *dev, unsigned int iobase2)
 			dev->id_unit);
 		return(0);
 	}
-	
+
 	/* setup ISAC access routines */
 
 	sc->clearirq = NULL;
@@ -411,19 +411,19 @@ isic_probe_drnngo(struct isa_device *dev, unsigned int iobase2)
 	sc->sc_cardtyp = CARD_TYPEP_DRNNGO;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
-	
+
 	/* setup ISAC and HSCX base addr */
-	
+
 	ISAC_BASE   = (caddr_t)dev->id_iobase;
 	HSCX_A_BASE = (caddr_t)(((u_int)dev->id_iobase) | HSCX_ABIT);
 	HSCX_B_BASE = (caddr_t)(((u_int)dev->id_iobase) | HSCX_BBIT);
 
-	/* 
+	/*
 	 * Read HSCX A/B VSTR.  Expected value for Dr. Neuhaus Niccy GO@ based
 	 * boards is 0x05 in the least significant bits.
 	 */
@@ -438,8 +438,8 @@ isic_probe_drnngo(struct isa_device *dev, unsigned int iobase2)
 		printf("isic%d: HSC1: VSTR: %#x\n",
 			dev->id_unit, HSCX_READ(1, H_VSTR));
 		return (0);
-	}		   
-	
+	}
+
 	return (1);
 }
 
@@ -523,15 +523,15 @@ isic_attach_drnngo(struct isic_softc *sc)
 	sc->writefifo = drnngo_write_fifo;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_DRNNGO;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
-	sc->sc_bfifolen = HSCX_FIFO_LEN;	
+	sc->sc_bfifolen = HSCX_FIFO_LEN;
 }
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd1400reg.h,v 1.4 1998/05/20 00:03:11 pk Exp $	*/
+/*	$NetBSD: cd1400reg.h,v 1.5 2005/02/27 00:27:01 perry Exp $	*/
 
 /*-
  * cyclades cyclom-y serial driver
@@ -29,7 +29,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	Id: cd1400.h,v 1.1.4.1 1995/09/14 07:09:41 davidg Exp 
+ *	Id: cd1400.h,v 1.1.4.1 1995/09/14 07:09:41 davidg Exp
  */
 
 /*

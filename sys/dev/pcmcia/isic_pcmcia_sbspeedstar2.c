@@ -35,17 +35,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.7 2004/08/08 23:17:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.8 2005/02/27 00:27:43 perry Exp $");
 
-#include "opt_isicpcmcia.h"  
+#include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_SBSPEEDSTAR2
 
 /*
  * Card format:
- * 
+ *
  * iobase + 0 : reset on (0x03), off (0x0)
  * iobase + 1 : isac read/write
- * iobase + 2 : hscx read/write ( offset 0-0x3f    hscx0 , 
+ * iobase + 2 : hscx read/write ( offset 0-0x3f    hscx0 ,
  *                                offset 0x40-0x7f hscx1 )
  * iobase + 4 : address register
  *
@@ -193,7 +193,7 @@ isic_attach_sbspeedstar2(struct pcmcia_isic_softc *psc, struct pcmcia_config_ent
 	struct isic_softc * sc = &psc->sc_isic;
 	bus_space_tag_t t;
 	bus_space_handle_t h;
-	
+
 	/* Validate config info */
 	if (cfe->num_memspace != 0)
 		printf(": unexpected number of memory spaces %d should be 0\n",
@@ -237,7 +237,7 @@ isic_attach_sbspeedstar2(struct pcmcia_isic_softc *psc, struct pcmcia_config_ent
 	sc->writefifo = sws_write_fifo;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83905var.h,v 1.1 2001/12/16 00:22:44 bjh21 Exp $	*/
+/*	$NetBSD: dp83905var.h,v 1.2 2005/02/27 00:27:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.

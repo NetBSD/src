@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.30 2005/02/12 03:44:41 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.31 2005/02/27 00:27:44 perry Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.30 2005/02/12 03:44:41 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.31 2005/02/27 00:27:44 perry Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -68,7 +68,7 @@ static void rf_CopybackOne(RF_CopybackDesc_t * desc, int typ,
 			   RF_SectorNum_t testOffs);
 static void rf_CopybackComplete(RF_CopybackDesc_t * desc, int status);
 
-int 
+int
 rf_ConfigureCopyback(listp)
 	RF_ShutdownList_t **listp;
 {
@@ -84,7 +84,7 @@ rf_ConfigureCopyback(listp)
 #include <sys/vnode.h>
 
 /* do a complete copyback */
-void 
+void
 rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 {
 	RF_ComponentLabel_t c_label;
@@ -142,7 +142,7 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 
 	if (retcode) {
 		printf("raid%d: copyback: raidlookup on device: %s failed: %d!\n",
-		       raidPtr->raidid, raidPtr->Disks[fcol].devname, 
+		       raidPtr->raidid, raidPtr->Disks[fcol].devname,
 		       retcode);
 
 		/* XXX the component isn't responding properly... must be
@@ -219,7 +219,7 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 	raidread_component_label( raidPtr->raid_cinfo[fcol].ci_dev,
 				  raidPtr->raid_cinfo[fcol].ci_vp,
 				  &c_label);
-	
+
 	raid_init_component_label( raidPtr, &c_label );
 
 	c_label.row = 0;
@@ -237,7 +237,7 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
  * invoked via callback after a copyback I/O has completed to
  * continue on with the next one
  */
-void 
+void
 rf_ContinueCopyback(RF_CopybackDesc_t *desc)
 {
 	RF_SectorNum_t testOffs, stripeAddr;
@@ -314,7 +314,7 @@ rf_ContinueCopyback(RF_CopybackDesc_t *desc)
 
 
 /* copyback one unit */
-static void 
+static void
 rf_CopybackOne(RF_CopybackDesc_t *desc, int typ, RF_RaidAddr_t addr,
 	       RF_RowCol_t testCol, RF_SectorNum_t testOffs)
 {
@@ -369,7 +369,7 @@ rf_CopybackOne(RF_CopybackDesc_t *desc, int typ, RF_RaidAddr_t addr,
 
 
 /* called at interrupt context when the read has completed.  just send out the write */
-static int 
+static int
 rf_CopybackReadDoneProc(RF_CopybackDesc_t *desc, int status)
 {
 	if (status) {		/* invoke the callback with bad status */
@@ -386,7 +386,7 @@ rf_CopybackReadDoneProc(RF_CopybackDesc_t *desc, int status)
  * in the simulator, invoke the next copyback directly.
  * can't free diskqueuedata structs in the kernel b/c we're at interrupt context.
  */
-static int 
+static int
 rf_CopybackWriteDoneProc(RF_CopybackDesc_t *desc, int status)
 {
 	if (status && status != -100) {
@@ -398,7 +398,7 @@ rf_CopybackWriteDoneProc(RF_CopybackDesc_t *desc, int status)
 	return (0);
 }
 /* invoked when the copyback has completed */
-static void 
+static void
 rf_CopybackComplete(RF_CopybackDesc_t *desc, int status)
 {
 	RF_Raid_t *raidPtr = desc->raidPtr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.15 2004/04/21 18:03:13 itojun Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.16 2005/02/27 00:27:00 perry Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.15 2004/04/21 18:03:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.16 2005/02/27 00:27:00 perry Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -78,7 +78,7 @@ ahc_attach(struct ahc_softc *ahc)
 
 	ahc->sc_adapter.adapt_dev = &ahc->sc_dev;
 	ahc->sc_adapter.adapt_nchannels = (ahc->features & AHC_TWIN) ? 2 : 1;
-	
+
 	ahc->sc_adapter.adapt_openings = AHC_MAX_QUEUE;
 	ahc->sc_adapter.adapt_max_periph = 16;
 
@@ -135,7 +135,7 @@ ahc_platform_intr(void *arg)
 {
 	struct	ahc_softc *ahc;
 
-	ahc = (struct ahc_softc *)arg; 
+	ahc = (struct ahc_softc *)arg;
 	ahc_intr(ahc);
 }
 
@@ -197,7 +197,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 			if (!(xs->xs_control & XS_CTL_POLL)) {
 				callout_reset(&list_scb->xs->xs_callout,
 				    (list_scb->xs->timeout > 1000000) ?
-				    (list_scb->xs->timeout / 1000) * hz : 
+				    (list_scb->xs->timeout / 1000) * hz :
 				    (list_scb->xs->timeout * hz) / 1000,
 				    ahc_timeout, list_scb);
 			}
@@ -207,7 +207,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		 || ahc_get_transaction_status(scb) == CAM_REQ_ABORTED)
 			ahc_set_transaction_status(scb, CAM_CMD_TIMEOUT);
 		scsipi_printaddr(xs->xs_periph);
-		printf("%s: no longer in timeout, status = %x\n", 
+		printf("%s: no longer in timeout, status = %x\n",
 		       ahc_name(ahc), xs->status);
 	}
 
@@ -236,9 +236,9 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		scb->flags &= ~SCB_FREEZE_QUEUE;
 	}
 
-        ahc_lock(ahc, &s);       
+        ahc_lock(ahc, &s);
 	ahc_free_scb(ahc, scb);
-        ahc_unlock(ahc, &s);       
+        ahc_unlock(ahc, &s);
 
 	scsipi_done(xs);
 }
@@ -299,16 +299,16 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		 * get an scb to use.
 		 */
 		ahc_lock(ahc, &s);
-		if ((scb = ahc_get_scb(ahc)) == NULL) {	
+		if ((scb = ahc_get_scb(ahc)) == NULL) {
 			xs->error = XS_RESOURCE_SHORTAGE;
 			ahc_unlock(ahc, &s);
 			scsipi_done(xs);
 			return;
 		}
 		ahc_unlock(ahc, &s);
-		
+
 		hscb = scb->hscb;
-		
+
 		SC_DEBUG(periph, SCSIPI_DB3, ("start scb(%p)\n", scb));
 		scb->xs = xs;
 
@@ -324,7 +324,7 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 			hscb->control |= MK_MESSAGE;
 			ahc_execute_scb(scb, NULL, 0);
 		}
-			
+
 		ahc_setup_data(ahc, xs, scb);
 
 		break;
@@ -344,7 +344,7 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		struct ahc_syncrate *syncrate;
 		uint16_t old_autoneg;
 
-		target_id = xm->xm_target;	
+		target_id = xm->xm_target;
 		our_id = chan->chan_id;
 		channel = (chan->chan_channel == 1) ? 'B' : 'A';
 		s = splbio();
@@ -477,7 +477,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 		struct	  ahc_dma_seg *sg;
 		bus_dma_segment_t *end_seg;
 		int op;
-		
+
 		end_seg = dm_segs + nsegments;
 
 		/* Copy the segments into our SG list */
@@ -495,7 +495,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 
 		/*
 		 * Note where to find the SG entries in bus space.
-		 * We also set the full residual flag which the 
+		 * We also set the full residual flag which the
 		 * sequencer will clear as soon as a data transfer
 		 * occurs.
 		 */
@@ -511,7 +511,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 
 		sg--;
 		sg->len |= ahc_htole32(AHC_DMA_LAST_SEG);
-	
+
 		/* Copy the first SG into the "current" data pointer area */
 		scb->hscb->dataptr = scb->sg_list->addr;
 		scb->hscb->datacnt = scb->sg_list->len;
@@ -561,7 +561,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	     && tinfo->goal.offset == 0
 	     && tinfo->goal.ppr_options == 0)) {
 		scb->flags |= SCB_NEGOTIATE;
-		scb->hscb->control |= MK_MESSAGE;	
+		scb->hscb->control |= MK_MESSAGE;
 	} else
 #endif
 	if ((tstate->auto_negotiate & mask) != 0) {
@@ -656,10 +656,10 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 	       struct scb *scb)
 {
 	struct hardware_scb *hscb;
-	
+
 	hscb = scb->hscb;
 	xs->resid = xs->status = 0;
-	
+
 	hscb->cdb_len = xs->cmdlen;
 	if (hscb->cdb_len > sizeof(hscb->cdb32)) {
 		u_long s;
@@ -678,7 +678,7 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 	} else {
 		memcpy(hscb->shared_data.cdb, xs->cmd, hscb->cdb_len);
 	}
-		
+
 	/* Only use S/G if there is a transfer */
 	if (xs->datalen) {
 		int error;
@@ -750,7 +750,7 @@ ahc_timeout(void *arg)
 	int	i;
 	char	channel;
 
-	scb = (struct scb *)arg; 
+	scb = (struct scb *)arg;
 	ahc = (struct ahc_softc *)scb->ahc_softc;
 
 	ahc_lock(ahc, &s);
@@ -796,7 +796,7 @@ bus_reset:
 		/*
 		 * If we are a target, transition to bus free and report
 		 * the timeout.
-		 * 
+		 *
 		 * The target/initiator that is holding up the bus may not
 		 * be the same as the one that triggered this timeout
 		 * (different commands have different timeout lengths).
@@ -830,7 +830,7 @@ bus_reset:
 			 * the active SCB has a longer timeout than
 			 * the timedout SCB, and wait for the active
 			 * SCB to timeout.
-			 */ 
+			 */
 			active_scb = ahc_lookup_scb(ahc, active_scb_index);
 			if (active_scb != scb) {
 				uint64_t newtimeout;
@@ -850,7 +850,7 @@ bus_reset:
 				ahc_unpause(ahc);
 				ahc_unlock(ahc, &s);
 				return;
-			} 
+			}
 
 			/* It's us */
 			if ((scb->flags & SCB_TARGET_SCB) != 0) {
@@ -1081,7 +1081,7 @@ ahc_send_async(struct ahc_softc *ahc, char channel, u_int target, u_int lun,
 		xm.xm_mode = 0;
 		xm.xm_period = tinfo->curr.period;
 		xm.xm_offset = tinfo->curr.offset;
-		if (tinfo->curr.width == MSG_EXT_WDTR_BUS_16_BIT) 
+		if (tinfo->curr.width == MSG_EXT_WDTR_BUS_16_BIT)
 			xm.xm_mode |= PERIPH_CAP_WIDE16;
 		if (tinfo->curr.period)
 			xm.xm_mode |= PERIPH_CAP_SYNC;

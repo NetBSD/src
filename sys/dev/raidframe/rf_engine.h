@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.h,v 1.4 2004/03/04 02:26:50 oster Exp $	*/
+/*	$NetBSD: rf_engine.h,v 1.5 2005/02/27 00:27:44 perry Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
 
 int rf_ConfigureEngine(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
 int rf_FinishNode(RF_DagNode_t *, int);	/* return finished node to engine */
-int rf_DispatchDAG(RF_DagHeader_t *, 
+int rf_DispatchDAG(RF_DagHeader_t *,
 		   void (*cbFunc) (void *), void *);	/* execute dag */
 
 #endif				/* !_RF__RF_ENGINE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.36 2005/02/21 02:12:48 thorpej Exp $ */
+/*	$NetBSD: gem.c,v 1.37 2005/02/27 00:27:01 perry Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.36 2005/02/21 02:12:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.37 2005/02/27 00:27:01 perry Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1150,9 +1150,9 @@ gem_start(ifp)
 					case ETHERTYPE_VLAN:
 						start = ETHER_HDR_LEN +
 							ETHER_VLAN_ENCAP_LEN;
-						break; 
+						break;
 					default:
-						/* unsupported, drop it */ 
+						/* unsupported, drop it */
 						m_free(m0);
 						continue;
 					}

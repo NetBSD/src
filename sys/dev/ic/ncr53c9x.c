@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.113 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.114 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.113 2005/02/21 00:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.114 2005/02/27 00:27:02 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -552,7 +552,7 @@ ncr53c9x_readregs(sc)
 	/* Only the stepo bits are of interest */
 	sc->sc_espstep = NCR_READ_REG(sc, NCR_STEP) & NCRSTEP_MASK;
 
-	if (sc->sc_rev == NCR_VARIANT_FAS366) 
+	if (sc->sc_rev == NCR_VARIANT_FAS366)
 		sc->sc_espstat2 = NCR_READ_REG(sc, NCR_STAT2);
 
 	sc->sc_espintr = NCR_READ_REG(sc, NCR_INTR);
@@ -1284,11 +1284,11 @@ ncr53c9x_dequeue(sc, ecb)
 	struct ncr53c9x_softc *sc;
 	struct ncr53c9x_ecb *ecb;
 {
-	struct ncr53c9x_tinfo *ti = 
+	struct ncr53c9x_tinfo *ti =
 	    &sc->sc_tinfo[ecb->xs->xs_periph->periph_target];
 	struct ncr53c9x_linfo *li;
 	int64_t lun = ecb->xs->xs_periph->periph_lun;
-	
+
 	li = TINFO_LUN(ti, lun);
 #ifdef DIAGNOSTIC
 	if (li == NULL || li->lun != lun)
@@ -1663,7 +1663,7 @@ gotit:
 				 */
 				printf("%s: tagged queuing rejected: "
 				    "target %d\n",
-				    sc->sc_dev.dv_xname, 
+				    sc->sc_dev.dv_xname,
 				    ecb->xs->xs_periph->periph_target);
 
 				NCR_MSGS(("(rejected sent tag)"));
@@ -1685,7 +1685,7 @@ gotit:
 			case SEND_SDTR:
 				printf("%s: sync transfer rejected: "
 				    "target %d\n",
-				    sc->sc_dev.dv_xname, 
+				    sc->sc_dev.dv_xname,
 				    ecb->xs->xs_periph->periph_target);
 
 				sc->sc_flags &= ~NCR_SYNCHNEGO;
@@ -1698,7 +1698,7 @@ gotit:
 			case SEND_WDTR:
 				printf("%s: wide transfer rejected: "
 				    "target %d\n",
-				    sc->sc_dev.dv_xname, 
+				    sc->sc_dev.dv_xname,
 				    ecb->xs->xs_periph->periph_target);
 				ti->flags &= ~(T_WIDE | T_WDTRSENT);
 				ti->width = 0;
@@ -1844,7 +1844,7 @@ gotit:
 	case NCR_IDENTIFIED:
 		/*
 		 * IDENTIFY message was received and queue tag is expected now
-		 */ 
+		 */
 		if ((sc->sc_imess[0] != MSG_SIMPLE_Q_TAG) ||
 		    (sc->sc_msgify == 0)) {
 			printf("%s: TAG reselect without IDENTIFY;"
@@ -2034,15 +2034,15 @@ ncr53c9x_msgout(sc)
 #ifdef DEBUG
 	if (ncr53c9x_debug & NCR_SHOWMSGS) {
 		int i;
-		
+
 		NCR_MSGS(("<msgout:"));
-		for (i = 0; i < sc->sc_omlen; i++) 
+		for (i = 0; i < sc->sc_omlen; i++)
 			NCR_MSGS((" %02x", sc->sc_omess[i]));
 		NCR_MSGS(("> "));
 	}
 #endif
 	if (sc->sc_rev == NCR_VARIANT_FAS366) {
-		/*	
+		/*
 		 * XXX fifo size
 		 */
 		ncr53c9x_flushfifo(sc);
@@ -2636,7 +2636,7 @@ again:
 			}
 			ncr53c9x_rdfifo(sc, NCR_RDFIFO_START);
 			if (sc->sc_imlen < 2)
-				printf("%s: can't get status, only %d bytes\n", 
+				printf("%s: can't get status, only %d bytes\n",
 				    sc->sc_dev.dv_xname, (int)sc->sc_imlen);
 			ecb->stat = sc->sc_imess[sc->sc_imlen - 2];
 			msg = sc->sc_imess[sc->sc_imlen - 1];
@@ -2698,7 +2698,7 @@ msgin:
 			}
 			sc->sc_flags &= ~NCR_WAITI;
 			ncr53c9x_rdfifo(sc,
-			    (sc->sc_prevphase == sc->sc_phase) ? 
+			    (sc->sc_prevphase == sc->sc_phase) ?
 			    NCR_RDFIFO_CONTINUE : NCR_RDFIFO_START);
 			ncr53c9x_msgin(sc);
 		} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.15 2004/10/28 07:07:40 yamt Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.16 2005/02/27 00:27:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.15 2004/10/28 07:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.16 2005/02/27 00:27:00 perry Exp $");
 
 #include "opt_i2o.h"
 #include "rnd.h"
@@ -97,9 +97,9 @@ CFATTACH_DECL(ld_iop, sizeof(struct ld_iop_softc),
     ld_iop_match, ld_iop_attach, ld_iop_detach, NULL);
 
 #ifdef I2OVERBOSE
-static const char * const ld_iop_errors[] = { 
-	"success", 
-	"media error", 
+static const char * const ld_iop_errors[] = {
+	"success",
+	"media error",
 	"access error",
 	"device failure",
 	"device not ready",
@@ -168,7 +168,7 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	iop_initiator_register(iop, &sc->sc_eventii);
 
 	rv = iop_util_eventreg(iop, &sc->sc_eventii,
-	    I2O_EVENT_GEN_EVENT_MASK_MODIFIED | 
+	    I2O_EVENT_GEN_EVENT_MASK_MODIFIED |
 	    I2O_EVENT_GEN_DEVICE_RESET |
 	    I2O_EVENT_GEN_STATE_CHANGE |
 	    I2O_EVENT_GEN_GENERAL_WARNING);
@@ -265,8 +265,8 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	 * Configure the DDM's timeout functions to time out all commands
 	 * after 30 seconds.
 	 */
-	timeoutbase = htole32(LD_IOP_TIMEOUT * 1000); 
-	rwvtimeoutbase = htole32(LD_IOP_TIMEOUT * 1000); 
+	timeoutbase = htole32(LD_IOP_TIMEOUT * 1000);
+	rwvtimeoutbase = htole32(LD_IOP_TIMEOUT * 1000);
 	rwvtimeout = 0;
 
 	iop_field_set(iop, ia->ia_tid, I2O_PARAM_RBS_OPERATION,
@@ -305,7 +305,7 @@ ld_iop_unconfig(struct ld_iop_softc *sc, int evreg)
 
 	if (evreg) {
 		/*
-		 * Mask off events, and wait up to 5 seconds for a reply. 
+		 * Mask off events, and wait up to 5 seconds for a reply.
 		 * Note that some adapters won't reply to this (XXX We
 		 * should check the event capabilities).
 		 */

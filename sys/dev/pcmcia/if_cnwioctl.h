@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnwioctl.h,v 1.2 1999/11/29 12:54:00 itojun Exp $	*/
+/*	$NetBSD: if_cnwioctl.h,v 1.3 2005/02/27 00:27:43 perry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc.
@@ -51,7 +51,7 @@
  * John Markus Bj,Ax(Brndalen
  * Department of Computer Science
  * University of Troms,Ax(B
- * Norway             
+ * Norway
  * johnm@staff.cs.uit.no, http://www.cs.uit.no/~johnm/
  */
 

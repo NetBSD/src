@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.10 2004/09/13 12:55:47 drochner Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.11 2005/02/27 00:27:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ struct cac_softc {
 	void			*sc_ih;
 	caddr_t			sc_ccbs;
 	paddr_t			sc_ccbs_paddr;
-	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_free;	
+	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_free;
 	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_queue;
 	struct cac_linkage	sc_cl;
 };
@@ -123,7 +123,7 @@ struct cac_attach_args {
 	int		caca_unit;
 };
 
-int	cac_cmd(struct cac_softc *, int, void *, int, int, int, int, 
+int	cac_cmd(struct cac_softc *, int, void *, int, int, int, int,
 		struct cac_context *);
 int	cac_init(struct cac_softc *, const char *, int);
 int	cac_intr(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid0.c,v 1.11 2004/08/27 15:55:51 oster Exp $	*/
+/*	$NetBSD: rf_raid0.c,v 1.12 2005/02/27 00:27:45 perry Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid0.c,v 1.11 2004/08/27 15:55:51 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid0.c,v 1.12 2005/02/27 00:27:45 perry Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -51,7 +51,7 @@ typedef struct RF_Raid0ConfigInfo_s {
 	RF_RowCol_t *stripeIdentifier;
 }       RF_Raid0ConfigInfo_t;
 
-int 
+int
 rf_ConfigureRAID0(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		  RF_Config_t *cfgPtr)
 {
@@ -79,7 +79,7 @@ rf_ConfigureRAID0(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	return (0);
 }
 
-void 
+void
 rf_MapSectorRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
@@ -89,7 +89,7 @@ rf_MapSectorRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 	    (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
 }
 
-void 
+void
 rf_MapParityRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
@@ -97,7 +97,7 @@ rf_MapParityRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 	*diskSector = 0;
 }
 
-void 
+void
 rf_IdentifyStripeRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 		       RF_RowCol_t **diskids)
 {
@@ -107,7 +107,7 @@ rf_IdentifyStripeRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 	*diskids = info->stripeIdentifier;
 }
 
-void 
+void
 rf_MapSIDToPSIDRAID0(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
 		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {
@@ -115,7 +115,7 @@ rf_MapSIDToPSIDRAID0(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
 	*psID = stripeID;
 }
 
-void 
+void
 rf_RAID0DagSelect(
     RF_Raid_t * raidPtr,
     RF_IoType_t type,
@@ -130,7 +130,7 @@ rf_RAID0DagSelect(
 	    (RF_VoidFuncPtr) rf_CreateFaultFreeReadDAG : (RF_VoidFuncPtr) rf_CreateRAID0WriteDAG);
 }
 
-int 
+int
 rf_VerifyParityRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		     RF_PhysDiskAddr_t *parityPDA, int correct_it,
 		     RF_RaidAccessFlags_t flags)

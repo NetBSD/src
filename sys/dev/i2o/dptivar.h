@@ -1,4 +1,4 @@
-/*	$NetBSD: dptivar.h,v 1.3 2002/12/07 19:48:31 ad Exp $	*/
+/*	$NetBSD: dptivar.h,v 1.4 2005/02/27 00:27:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct dpti_ptbuf {
 /*
  * Constants used by the `signature'.
  */
- 
+
 /* I2O */
 #define	DPTI_VERSION		1
 #define	DPTI_REVISION		0

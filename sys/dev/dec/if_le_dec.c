@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_dec.c,v 1.14 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.15 2005/02/27 00:26:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_dec.c,v 1.14 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_dec.c,v 1.15 2005/02/27 00:26:59 perry Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -122,7 +122,7 @@ void le_dec_writereg(volatile u_short *regptr, u_short val);
 #endif
 
 hide void le_dec_wrcsr(struct lance_softc *, u_int16_t, u_int16_t);
-hide u_int16_t le_dec_rdcsr(struct lance_softc *, u_int16_t);  
+hide u_int16_t le_dec_rdcsr(struct lance_softc *, u_int16_t);
 
 void
 dec_le_common_attach(sc, eap)

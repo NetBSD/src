@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.18 2005/02/25 16:03:09 martin Exp $ */
+/*	$NetBSD: cgsix.c,v 1.19 2005/02/27 00:27:49 perry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.18 2005/02/25 16:03:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.19 2005/02/27 00:27:49 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -556,8 +556,8 @@ cg6attach(sc, name, isconsole)
 
 	if (isconsole) {
 		printf(" (console)");
-		
-/* this is the old console attachment stuff - we shouldn't need it anymore */		
+
+/* this is the old console attachment stuff - we shouldn't need it anymore */
 #ifdef RASTERCONSOLE
 		if (cgsix_use_rasterconsole) {
 			fbrcons_init(&sc->sc_fb);
@@ -573,7 +573,7 @@ cg6attach(sc, name, isconsole)
 	}
 
 	fb_attach(&sc->sc_fb, isconsole);
-	
+
 /* setup rasops and so on for wsdisplay */
 	wsfont_init();
 	/* fill in rasops_info */
@@ -599,25 +599,25 @@ cg6attach(sc, name, isconsole)
 		(*ri->ri_ops.allocattr)(ri, 0,0,0, &defattr);
 		wsdisplay_cnattach(&cgsix_defaultscreen, ri, 0, 0, defattr);
 	}
-	
-/* set up a colour map matching the terminal emulation in use */	
+
+/* set up a colour map matching the terminal emulation in use */
 #ifdef WSEMUL_SUN
-	sc->sc_cmap.cm_map[0][0]=255;	
-	sc->sc_cmap.cm_map[0][1]=255;	
-	sc->sc_cmap.cm_map[0][2]=255;	
-	sc->sc_cmap.cm_map[254][0]=255;	
-	sc->sc_cmap.cm_map[254][1]=255;	
-	sc->sc_cmap.cm_map[254][2]=255;	
-	sc->sc_cmap.cm_map[1][0]=0;	
-	sc->sc_cmap.cm_map[1][1]=0;	
-	sc->sc_cmap.cm_map[1][2]=0;	
-	sc->sc_cmap.cm_map[255][0]=0;	
-	sc->sc_cmap.cm_map[255][1]=0;	
-	sc->sc_cmap.cm_map[255][2]=0;	
+	sc->sc_cmap.cm_map[0][0]=255;
+	sc->sc_cmap.cm_map[0][1]=255;
+	sc->sc_cmap.cm_map[0][2]=255;
+	sc->sc_cmap.cm_map[254][0]=255;
+	sc->sc_cmap.cm_map[254][1]=255;
+	sc->sc_cmap.cm_map[254][2]=255;
+	sc->sc_cmap.cm_map[1][0]=0;
+	sc->sc_cmap.cm_map[1][1]=0;
+	sc->sc_cmap.cm_map[1][2]=0;
+	sc->sc_cmap.cm_map[255][0]=0;
+	sc->sc_cmap.cm_map[255][1]=0;
+	sc->sc_cmap.cm_map[255][2]=0;
 	cg6_loadcmap(sc,0,256);
 #elif defined(WSEMUL_VT100)
 	/* here we should steal the VT100 colour map from rasops */
-#endif	
+#endif
 
 	aa.console = isconsole;
 	aa.scrdata = &cgsix_screenlist;
@@ -1123,12 +1123,12 @@ cgsix_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			wdf->depth = ri->ri_depth;
 			wdf->cmsize = 256;
 			return 0;
-			
+
 		case WSDISPLAYIO_GETCMAP:
 			return cgsix_getcmap(sc, (struct wsdisplay_cmap *)data);
 		case WSDISPLAYIO_PUTCMAP:
 			return cgsix_putcmap(sc, (struct wsdisplay_cmap *)data);
-			
+
 #ifdef notyet
 		case WSDISPLAYIO_SMODE:
 			{
@@ -1138,8 +1138,8 @@ cgsix_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 					sc->sc_mode=new_mode;
 					if(new_mode==WSDISPLAYIO_MODE_EMUL)
 					{
-						/* we'll probably want to reset the console into a known state here 
-						   just in case the Xserver crashed or didn't properly clean up after 
+						/* we'll probably want to reset the console into a known state here
+						   just in case the Xserver crashed or didn't properly clean up after
 						   itself for whetever reason */
 					}
 				}
@@ -1154,7 +1154,7 @@ cgsix_mmap(void *v, off_t offset, int prot)
 {
 	struct cgsix_softc *sc = v;
 	/* how do I get the real RAM size? */
-	int ramsize=sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes; 	
+	int ramsize=sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes;
 	if(offset<ramsize) {
 		return bus_space_mmap(sc->sc_bustag,sc->sc_paddr,CGSIX_RAM_OFFSET+offset,prot,BUS_SPACE_MAP_LINEAR);
 	}
@@ -1162,7 +1162,7 @@ cgsix_mmap(void *v, off_t offset, int prot)
 	return cgsixmmap(0,offset,prot); /* assume we're minor dev 0 for now */
 }
 
-int 
+int
 cgsix_putcmap(struct cgsix_softc *sc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
@@ -1185,7 +1185,7 @@ cgsix_putcmap(struct cgsix_softc *sc, struct wsdisplay_cmap *cm)
 			return error;
 	}
 	cg6_loadcmap(sc,index,count);
-	
+
 	return 0;
 }
 
@@ -1210,6 +1210,6 @@ int cgsix_getcmap(struct cgsix_softc *sc, struct wsdisplay_cmap *cm)
 		if (error)
 			return error;
 	}
-	
+
 	return 0;
 }

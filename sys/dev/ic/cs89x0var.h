@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.7 2004/07/04 13:09:12 chris Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.8 2005/02/27 00:27:01 perry Exp $	*/
 
 /*
  * Copyright 1997
@@ -62,7 +62,7 @@
  *
  * Each interface is referenced by a network interface structure,
  * arpcom.ac_if, which the routing code uses to locate the interface.
- * This structure contains the output queue for the interface, 
+ * This structure contains the output queue for the interface,
  * its address, ...
  */
 struct cs_softc {
@@ -263,7 +263,7 @@ do {									\
 /* Return Status */
 #define	CS_ERROR   -1
 #define CS_OK       1
-		
+
 
 /* Media Type in cs_softc */
 

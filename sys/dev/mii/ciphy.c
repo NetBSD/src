@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.1 2005/02/20 16:35:56 jdolecek Exp $ */
+/* $NetBSD: ciphy.c,v 1.2 2005/02/27 00:27:31 perry Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.1 2005/02/20 16:35:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.2 2005/02/27 00:27:31 perry Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -193,7 +193,7 @@ setit:
 			PHY_WRITE(sc, CIPHY_MII_BMCR, speed);
 			PHY_WRITE(sc, CIPHY_MII_ANAR, CIPHY_SEL_TYPE);
 
-			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T) 
+			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)
 				break;
 
 			PHY_WRITE(sc, CIPHY_MII_1000CTL, gig);
@@ -258,7 +258,7 @@ setit:
 		 */
 		if (++sc->mii_ticks <= 5/*10*/)
 			break;
-		
+
 		sc->mii_ticks = 0;
 		mii_phy_auto(sc, 0);
 		return (0);
@@ -271,7 +271,7 @@ setit:
 	 * Callback if something changed. Note that we need to poke
 	 * apply fixups for certain PHY revs.
 	 */
-	if (sc->mii_media_active != mii->mii_media_active || 
+	if (sc->mii_media_active != mii->mii_media_active ||
 	    sc->mii_media_status != mii->mii_media_status ||
 	    cmd == MII_MEDIACHG) {
 		ciphy_fixup(sc);

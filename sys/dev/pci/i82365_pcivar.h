@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pcivar.h,v 1.3 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: i82365_pcivar.h,v 1.4 2005/02/27 00:27:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@ struct pcic_pci_softc {
 	void *intr_est;			/* XXX */
 };
 
-/* 
+/*
  * Establish/disestablish interrupts for PCMCIA functions.
  */
 

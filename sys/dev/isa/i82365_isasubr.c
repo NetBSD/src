@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.35 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.36 2005/02/27 00:27:17 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.35 2005/02/04 02:10:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.36 2005/02/27 00:27:17 perry Exp $");
 
 #define	PCICISADEBUG
 
@@ -428,7 +428,7 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 	 * apparently missing a bit or more of address lines. (e.g.
 	 * CIRRUS_PD672X with Linksys EthernetCard ne2000 clone in TI
 	 * TravelMate 5000--not clear which is at fault)
-	 * 
+	 *
 	 * Add a kludge to detect 10 bit wide buses and deal with them,
 	 * and also a config file option to override the probe.
 	 */
@@ -507,7 +507,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	return (ih);
 }
 
-void 
+void
 pcic_isa_chip_intr_disestablish(pch, ih)
 	pcmcia_chipset_handle_t pch;
 	void *ih;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.h,v 1.7 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: rbus.h,v 1.8 2005/02/27 00:26:59 perry Exp $	*/
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -38,7 +38,7 @@
  * This file defines the rbus (pseudo) class
  *
  * What is rbus?
- * 
+ *
  *  The rbus is a recursive bus-space administrator.  This means a
  *  parent bus-space administrator, which usually belongs to a bus
  *  bridge, makes some child bus-space administrators and gives

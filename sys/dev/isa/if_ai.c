@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.20 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.21 2005/02/27 00:27:17 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.20 2005/02/04 02:10:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.21 2005/02/27 00:27:17 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,7 @@ ai_attach(parent, self, aux)
 	bus_space_set_region_1(sc->bt, sc->bh, 0, 0, sc->sc_msize);
 
 	/* set card to 16-bit bus mode */
-	bus_space_write_1(sc->bt, sc->bh, IE_SCP_BUS_USE((u_long)sc->scp), 
+	bus_space_write_1(sc->bt, sc->bh, IE_SCP_BUS_USE((u_long)sc->scp),
 			  IE_SYSBUS_16BIT);
 
 	/* set up pointers to key structures */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.16 2004/01/10 00:56:28 oster Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.17 2005/02/27 00:27:45 perry Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.16 2004/01/10 00:56:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.17 2005/02/27 00:27:45 perry Exp $");
 
 #include "rf_archs.h"
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.16 2004/01/10 00:56:28 ost
 
 static caddr_t AcquireReintBuffer(RF_RegionBufferQueue_t *);
 
-static caddr_t 
+static caddr_t
 AcquireReintBuffer(pool)
 	RF_RegionBufferQueue_t *pool;
 {
@@ -84,7 +84,7 @@ AcquireReintBuffer(pool)
 	return (bufPtr);
 }
 
-static void 
+static void
 ReleaseReintBuffer(
     RF_RegionBufferQueue_t * pool,
     caddr_t bufPtr)
@@ -105,7 +105,7 @@ ReleaseReintBuffer(
 
 
 
-static void 
+static void
 ReadRegionLog(
     RF_RegionId_t regionID,
     RF_MCPair_t * rrd_mcpair,
@@ -117,7 +117,7 @@ ReadRegionLog(
 {
 	/* Initiate the read a region log from disk.  Once initiated, return
 	 * to the calling routine.
-	 * 
+	 *
 	 * NON-BLOCKING */
 
 	RF_AccTraceEntry_t *tracerec;
@@ -125,10 +125,10 @@ ReadRegionLog(
 
 	/* create DAG to read region log from disk */
 	rf_MakeAllocList(*rrd_alloclist);
-	*rrd_dag_h = rf_MakeSimpleDAG(raidPtr, 1, 0, regionBuffer, 
+	*rrd_dag_h = rf_MakeSimpleDAG(raidPtr, 1, 0, regionBuffer,
 				      rf_DiskReadFunc, rf_DiskReadUndoFunc,
-				      "Rrl", *rrd_alloclist, 
-				      RF_DAG_FLAGS_NONE, 
+				      "Rrl", *rrd_alloclist,
+				      RF_DAG_FLAGS_NONE,
 				      RF_IO_NORMAL_PRIORITY);
 
 	/* create and initialize PDA for the core log */
@@ -160,7 +160,7 @@ ReadRegionLog(
 
 
 
-static void 
+static void
 WriteCoreLog(
     RF_ParityLog_t * log,
     RF_MCPair_t * fwr_mcpair,
@@ -176,12 +176,12 @@ WriteCoreLog(
 
 	/* Initiate the write of a core log to a region log disk. Once
 	 * initiated, return to the calling routine.
-	 * 
+	 *
 	 * NON-BLOCKING */
 
 	/* create DAG to write a core log to a region log disk */
 	rf_MakeAllocList(*fwr_alloclist);
-	*fwr_dag_h = rf_MakeSimpleDAG(raidPtr, 1, 0, log->bufPtr, 
+	*fwr_dag_h = rf_MakeSimpleDAG(raidPtr, 1, 0, log->bufPtr,
 				      rf_DiskWriteFunc, rf_DiskWriteUndoFunc,
 	    "Wcl", *fwr_alloclist, RF_DAG_FLAGS_NONE, RF_IO_NORMAL_PRIORITY);
 
@@ -190,8 +190,8 @@ WriteCoreLog(
 	 * *)); */
 	*fwr_pda = rf_AllocPDAList(1);
 	regionOffset = log->diskOffset;
-	rf_MapLogParityLogging(raidPtr, regionID, regionOffset, 
-			       &((*fwr_pda)->col), 
+	rf_MapLogParityLogging(raidPtr, regionID, regionOffset,
+			       &((*fwr_pda)->col),
 			       &((*fwr_pda)->startSector));
 	(*fwr_pda)->numSector = raidPtr->numSectorsPerLog;
 
@@ -211,7 +211,7 @@ WriteCoreLog(
 }
 
 
-static void 
+static void
 ReadRegionParity(
     RF_RegionId_t regionID,
     RF_MCPair_t * prd_mcpair,
@@ -223,7 +223,7 @@ ReadRegionParity(
 {
 	/* Initiate the read region parity from disk. Once initiated, return
 	 * to the calling routine.
-	 * 
+	 *
 	 * NON-BLOCKING */
 
 	RF_AccTraceEntry_t *tracerec;
@@ -231,9 +231,9 @@ ReadRegionParity(
 
 	/* create DAG to read region parity from disk */
 	rf_MakeAllocList(*prd_alloclist);
-	*prd_dag_h = rf_MakeSimpleDAG(raidPtr, 1, 0, NULL, rf_DiskReadFunc, 
-				      rf_DiskReadUndoFunc, "Rrp", 
-				      *prd_alloclist, RF_DAG_FLAGS_NONE, 
+	*prd_dag_h = rf_MakeSimpleDAG(raidPtr, 1, 0, NULL, rf_DiskReadFunc,
+				      rf_DiskReadUndoFunc, "Rrp",
+				      *prd_alloclist, RF_DAG_FLAGS_NONE,
 				      RF_IO_NORMAL_PRIORITY);
 
 	/* create and initialize PDA for region parity */
@@ -241,7 +241,7 @@ ReadRegionParity(
 	 * *)); */
 	*prd_pda = rf_AllocPDAList(1);
 	rf_MapRegionParity(raidPtr, regionID,
-			   &((*prd_pda)->col), &((*prd_pda)->startSector), 
+			   &((*prd_pda)->col), &((*prd_pda)->startSector),
 			   &((*prd_pda)->numSector));
 	if (rf_parityLogDebug)
 		printf("[reading %d sectors of parity from region %d]\n",
@@ -268,7 +268,7 @@ ReadRegionParity(
 	    (void *) prd_mcpair);
 }
 
-static void 
+static void
 WriteRegionParity(
     RF_RegionId_t regionID,
     RF_MCPair_t * pwr_mcpair,
@@ -280,7 +280,7 @@ WriteRegionParity(
 {
 	/* Initiate the write of region parity to disk. Once initiated, return
 	 * to the calling routine.
-	 * 
+	 *
 	 * NON-BLOCKING */
 
 	RF_AccTraceEntry_t *tracerec;
@@ -288,10 +288,10 @@ WriteRegionParity(
 
 	/* create DAG to write region log from disk */
 	rf_MakeAllocList(*pwr_alloclist);
-	*pwr_dag_h = rf_MakeSimpleDAG(raidPtr, 1, 0, parityBuffer, 
+	*pwr_dag_h = rf_MakeSimpleDAG(raidPtr, 1, 0, parityBuffer,
 				      rf_DiskWriteFunc, rf_DiskWriteUndoFunc,
-				      "Wrp", *pwr_alloclist, 
-				      RF_DAG_FLAGS_NONE, 
+				      "Wrp", *pwr_alloclist,
+				      RF_DAG_FLAGS_NONE,
 				      RF_IO_NORMAL_PRIORITY);
 
 	/* create and initialize PDA for region parity */
@@ -299,7 +299,7 @@ WriteRegionParity(
 	 * *)); */
 	*pwr_pda = rf_AllocPDAList(1);
 	rf_MapRegionParity(raidPtr, regionID,
-			   &((*pwr_pda)->col), &((*pwr_pda)->startSector), 
+			   &((*pwr_pda)->col), &((*pwr_pda)->startSector),
 			   &((*pwr_pda)->numSector));
 
 	/* initialize DAG parameters */
@@ -317,7 +317,7 @@ WriteRegionParity(
 	    (void *) pwr_mcpair);
 }
 
-static void 
+static void
 FlushLogsToDisk(
     RF_Raid_t * raidPtr,
     RF_ParityLog_t * logList)
@@ -325,10 +325,10 @@ FlushLogsToDisk(
 	/* Flush a linked list of core logs to the log disk. Logs contain the
 	 * disk location where they should be written.  Logs were written in
 	 * FIFO order and that order must be preserved.
-	 * 
+	 *
 	 * Recommended optimizations: 1) allow multiple flushes to occur
 	 * simultaneously 2) coalesce contiguous flush operations
-	 * 
+	 *
 	 * BLOCKING */
 
 	RF_ParityLog_t *log;
@@ -350,7 +350,7 @@ FlushLogsToDisk(
 		if (rf_parityLogDebug)
 			printf("[initiating write of core log for region %d]\n", regionID);
 		fwr_mcpair->flag = RF_FALSE;
-		WriteCoreLog(log, fwr_mcpair, raidPtr, &fwr_dag_h, 
+		WriteCoreLog(log, fwr_mcpair, raidPtr, &fwr_dag_h,
 			     &fwr_alloclist, &fwr_pda);
 
 		/* wait for the DAG to complete */
@@ -372,7 +372,7 @@ FlushLogsToDisk(
 	rf_ReleaseParityLogs(raidPtr, logList);
 }
 
-static void 
+static void
 ReintegrateRegion(
     RF_Raid_t * raidPtr,
     RF_RegionId_t regionID,
@@ -384,15 +384,15 @@ ReintegrateRegion(
 	RF_PhysDiskAddr_t *rrd_pda, *prd_pda, *pwr_pda;
 	caddr_t parityBuffer, regionBuffer = NULL;
 
-	/* Reintegrate a region (regionID). 
+	/* Reintegrate a region (regionID).
 	 *
-	 * 1. acquire region and parity buffers 
-	 * 2. read log from disk 
-	 * 3. read parity from disk 
-	 * 4. apply log to parity 
-	 * 5. apply core log to parity 
+	 * 1. acquire region and parity buffers
+	 * 2. read log from disk
+	 * 3. read parity from disk
+	 * 4. apply log to parity
+	 * 5. apply core log to parity
 	 * 6. write new parity to disk
-	 * 
+	 *
 	 * BLOCKING */
 
 	if (rf_parityLogDebug)
@@ -405,7 +405,7 @@ ReintegrateRegion(
 	prd_mcpair = rf_AllocMCPair();
 	RF_LOCK_MUTEX(prd_mcpair->mutex);
 	prd_mcpair->flag = RF_FALSE;
-	ReadRegionParity(regionID, prd_mcpair, parityBuffer, raidPtr, 
+	ReadRegionParity(regionID, prd_mcpair, parityBuffer, raidPtr,
 			 &prd_dag_h, &prd_alloclist, &prd_pda);
 
 	/* if region log nonempty, initiate read */
@@ -417,7 +417,7 @@ ReintegrateRegion(
 		rrd_mcpair = rf_AllocMCPair();
 		RF_LOCK_MUTEX(rrd_mcpair->mutex);
 		rrd_mcpair->flag = RF_FALSE;
-		ReadRegionLog(regionID, rrd_mcpair, regionBuffer, raidPtr, 
+		ReadRegionLog(regionID, rrd_mcpair, regionBuffer, raidPtr,
 			      &rrd_dag_h, &rrd_alloclist, &rrd_pda);
 	}
 	/* wait on read of region parity to complete */
@@ -460,7 +460,7 @@ ReintegrateRegion(
 	pwr_mcpair = rf_AllocMCPair();
 	RF_LOCK_MUTEX(pwr_mcpair->mutex);
 	pwr_mcpair->flag = RF_FALSE;
-	WriteRegionParity(regionID, pwr_mcpair, parityBuffer, raidPtr, 
+	WriteRegionParity(regionID, pwr_mcpair, parityBuffer, raidPtr,
 			  &pwr_dag_h, &pwr_alloclist, &pwr_pda);
 	while (!pwr_mcpair->flag)
 		RF_WAIT_COND(pwr_mcpair->cond, pwr_mcpair->mutex);
@@ -491,7 +491,7 @@ ReintegrateRegion(
 
 
 
-static void 
+static void
 ReintegrateLogs(
     RF_Raid_t * raidPtr,
     RF_ParityLog_t * logList)
@@ -512,16 +512,16 @@ ReintegrateLogs(
 		/* remove all items which are blocked on reintegration of this
 		 * region */
 		RF_LOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
-		logData = rf_SearchAndDequeueParityLogData(raidPtr, regionID, 
-			   &raidPtr->parityLogDiskQueue.reintBlockHead, 
-			   &raidPtr->parityLogDiskQueue.reintBlockTail, 
+		logData = rf_SearchAndDequeueParityLogData(raidPtr, regionID,
+			   &raidPtr->parityLogDiskQueue.reintBlockHead,
+			   &raidPtr->parityLogDiskQueue.reintBlockTail,
 							   RF_TRUE);
 		logDataList = logData;
 		while (logData) {
 			logData->next = rf_SearchAndDequeueParityLogData(
-					 raidPtr, regionID, 
-					 &raidPtr->parityLogDiskQueue.reintBlockHead, 
-					 &raidPtr->parityLogDiskQueue.reintBlockTail, 
+					 raidPtr, regionID,
+					 &raidPtr->parityLogDiskQueue.reintBlockHead,
+					 &raidPtr->parityLogDiskQueue.reintBlockTail,
 					 RF_TRUE);
 			logData = logData->next;
 		}
@@ -556,7 +556,7 @@ ReintegrateLogs(
 		rf_ReleaseParityLogs(raidPtr, freeLogList);
 }
 
-int 
+int
 rf_ShutdownLogging(RF_Raid_t * raidPtr)
 {
 	/* shutdown parity logging 1) disable parity logging in all regions 2)
@@ -573,7 +573,7 @@ rf_ShutdownLogging(RF_Raid_t * raidPtr)
 	if (rf_forceParityLogReint) {
 		for (regionID = 0; regionID < rf_numParityRegions; regionID++) {
 			RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
-			raidPtr->regionInfo[regionID].loggingEnabled = 
+			raidPtr->regionInfo[regionID].loggingEnabled =
 				RF_FALSE;
 			log = raidPtr->regionInfo[regionID].coreLog;
 			raidPtr->regionInfo[regionID].coreLog = NULL;
@@ -592,7 +592,7 @@ rf_ShutdownLogging(RF_Raid_t * raidPtr)
 	return (0);
 }
 
-int 
+int
 rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 {
 	RF_ParityLog_t *reintQueue, *flushQueue;
@@ -603,7 +603,7 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 	 * for work to appear in either the flush or reintegration queues and
 	 * is responsible for flushing core logs to the log disk as well as
 	 * reintegrating parity regions.
-	 * 
+	 *
 	 * BLOCKING */
 
 	s = splbio();
@@ -631,7 +631,7 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 			 * buffers Second, reintegrate all regions which are
 			 * reported as full. Third, append queued log data
 			 * until blocked.
-			 * 
+			 *
 			 * Note: Incoming appends (ParityLogAppend) can block on
 			 * either 1. empty buffer pool 2. region under
 			 * reintegration To preserve a global FIFO ordering of
@@ -671,7 +671,7 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 			/* thread enabled, no work needed, so sleep */
 			if (rf_parityLogDebug)
 				printf("[parity logging disk manager sleeping]\n");
-			RF_WAIT_COND(raidPtr->parityLogDiskQueue.cond, 
+			RF_WAIT_COND(raidPtr->parityLogDiskQueue.cond,
 				     raidPtr->parityLogDiskQueue.mutex);
 			if (rf_parityLogDebug)
 				printf("[parity logging disk manager just woke up]\n");

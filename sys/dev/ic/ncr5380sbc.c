@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.54 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.55 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.54 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.55 2005/02/27 00:27:02 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -1218,7 +1218,7 @@ ncr5380_reselect(sc)
 		goto abort;
 	}
 	lun = msg & 7;
-	
+
 	/* We now know target/LUN.  Do we have the request? */
 	sr = sc->sc_matrix[target][lun];
 	if (sr) {
@@ -1859,7 +1859,7 @@ nextmsg:
 			goto noop;
 		}
 		/*
-		 * The identify message we send determines whether 
+		 * The identify message we send determines whether
 		 * disconnect/reselect is allowed for this command.
 		 * 0xC0+LUN: allows it, 0x80+LUN disallows it.
 		 */

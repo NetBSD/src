@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.8 2004/08/30 15:05:20 drochner Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.9 2005/02/27 00:27:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -41,7 +41,7 @@ struct agpbus_attach_args {
 
 /*
  * The AGP chipset can be acquired by user or kernel code. If the
- * chipset has already been acquired, it cannot be acquired by another 
+ * chipset has already been acquired, it cannot be acquired by another
  * user until the previous user has released it.
  */
 enum agp_acquire_state {
@@ -218,7 +218,7 @@ void agp_get_info(void *, struct agp_info *);
 
 /*
  * Acquire the AGP chipset for use by the kernel. Returns EBUSY if the
- * AGP chipset is already acquired by another user. 
+ * AGP chipset is already acquired by another user.
  */
 int agp_acquire(void *);
 

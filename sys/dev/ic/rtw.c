@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.43 2005/01/31 02:56:49 thorpej Exp $ */
+/* $NetBSD: rtw.c,v 1.44 2005/02/27 00:27:02 perry Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,15 +34,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.43 2005/01/31 02:56:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.44 2005/02/27 00:27:02 perry Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#include <sys/systm.h> 
+#include <sys/systm.h>
 #include <sys/callout.h>
-#include <sys/mbuf.h>   
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.43 2005/01/31 02:56:49 thorpej Exp $");
 #include <machine/intr.h>	/* splnet */
 
 #include <uvm/uvm_extern.h>
- 
+
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
@@ -62,9 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.43 2005/01/31 02:56:49 thorpej Exp $");
 #include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_radiotap.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #include <dev/ic/rtwreg.h>
 #include <dev/ic/rtwvar.h>
@@ -846,7 +846,7 @@ rtw_srom_read(struct rtw_regs *regs, uint32_t flags, struct rtw_srom *sr,
 	sd.sd_CS = RTW_9346CR_EECS;
 	sd.sd_DI = RTW_9346CR_EEDO;
 	sd.sd_DO = RTW_9346CR_EEDI;
-	/* make read_seeprom enter EEPROM read/write mode */ 
+	/* make read_seeprom enter EEPROM read/write mode */
 	sd.sd_MS = ecr;
 	sd.sd_RDY = 0;
 
@@ -858,7 +858,7 @@ rtw_srom_read(struct rtw_regs *regs, uint32_t flags, struct rtw_srom *sr,
 		return -1;	/* XXX */
 	}
 
-	/* end EEPROM read/write mode */ 
+	/* end EEPROM read/write mode */
 	RTW_WRITE8(regs, RTW_9346CR,
 	    (ecr & ~RTW_9346CR_EEM_MASK) | RTW_9346CR_EEM_NORMAL);
 	RTW_WBRW(regs, RTW_9346CR, RTW_9346CR);
@@ -1136,11 +1136,11 @@ rtw_rxsoft_alloc(bus_dma_tag_t dmat, struct rtw_rxsoft *rs)
 	int rc;
 	struct mbuf *m;
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA); 
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOBUFS;
 
-	MCLGET(m, M_DONTWAIT); 
+	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
 		return ENOBUFS;
@@ -1571,7 +1571,7 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		if ((tdb->tdb_desc[ts->ts_last].td_stat &
-		    htole32(RTW_TXSTAT_OWN)) != 0) 
+		    htole32(RTW_TXSTAT_OWN)) != 0)
 			break;
 
 		rtw_collect_txpkt(sc, tdb, ts, ndesc);
@@ -1695,7 +1695,7 @@ rtw_swring_setup(struct rtw_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return rc;
 	}
-	
+
 	rdb = &sc->sc_rxdesc_blk;
 	rtw_rxdescs_sync(rdb, 0, rdb->rdb_ndesc,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1760,9 +1760,9 @@ rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
 
 	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 0);
 
-	/* Collect rx'd packets.  Refresh rx buffers. */ 
+	/* Collect rx'd packets.  Refresh rx buffers. */
 	rtw_intr_rx(sc, 0);
-	/* Collect tx'd packets. */ 
+	/* Collect tx'd packets. */
 	rtw_intr_tx(sc, 0);
 
 	RTW_WRITE16(regs, RTW_IMR, 0);
@@ -2008,7 +2008,7 @@ rtw_maxim_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
 }
 
 /* XXX I am using the RFMD settings gleaned from the reference
- * driver.  They agree 
+ * driver.  They agree
  */
 static void
 rtw_rfmd_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
@@ -2155,7 +2155,7 @@ rtw_tune(struct rtw_softc *sc)
 
 	if (chan == sc->sc_cur_chan) {
 		RTW_DPRINTF(RTW_DEBUG_TUNE,
-		    ("%s: already tuned chan #%d\n", __func__, chan)); 
+		    ("%s: already tuned chan #%d\n", __func__, chan));
 		return 0;
 	}
 
@@ -2507,7 +2507,7 @@ rtw_beacon_alloc(struct rtw_softc *sc, struct ieee80211_node *ni)
 		/* TODO: TIM */
 		*frm++ = IEEE80211_ELEMID_TIM;
 		*frm++ = 4;	/* length */
-		*frm++ = 0;	/* DTIM count */ 
+		*frm++ = 0;	/* DTIM count */
 		*frm++ = 1;	/* DTIM period */
 		*frm++ = 0;	/* bitmap control */
 		*frm++ = 0;	/* Partial Virtual Bitmap (variable length) */
@@ -2629,7 +2629,7 @@ rtw_led_init(struct rtw_regs *regs)
 	rtw_set_access(regs, RTW_ACCESS_NONE);
 }
 
-/* 
+/*
  * IEEE80211_S_INIT: 		LED1 off
  *
  * IEEE80211_S_AUTH,

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmavar.h,v 1.2 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: gtidmavar.h,v 1.3 2005/02/27 00:27:21 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -56,7 +56,7 @@
  *
  *		... time passes ...
  *
- *	On completion the callback is made, passing the opaque "arg" 
+ *	On completion the callback is made, passing the opaque "arg"
  *	(e.g. a softc), a descriptor handle, and completion status
  *	The driver callback completes the transaction and frees
  *	or recycles the descriptor.
@@ -72,7 +72,7 @@
  *	descriptor handles control descriptor use.  They are separate
  *	to allow efficient packing of descriptors in DMA mapped memory.
  */
- 
+
 /*
  * NOTE:
  *	interrupt priority IPL_IDMA is determined by worst case client driver

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.21 2004/03/07 22:15:19 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.22 2005/02/27 00:27:44 perry Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.21 2004/03/07 22:15:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.22 2005/02/27 00:27:44 perry Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -62,7 +62,7 @@ static void rf_ShutdownAllocList(void *ignored)
 	pool_destroy(&rf_pools.alloclist);
 }
 
-int 
+int
 rf_ConfigureAllocList(RF_ShutdownList_t **listp)
 {
 
@@ -78,7 +78,7 @@ rf_ConfigureAllocList(RF_ShutdownList_t **listp)
  * to search for the end.  If you ever observe the lists growing longer,
  * increase POINTERS_PER_ALLOC_LIST_ELEMENT.
  */
-void 
+void
 rf_real_AddToAllocList(RF_AllocListElem_t *l, void *p, int size)
 {
 	RF_AllocListElem_t *newelem;
@@ -98,14 +98,14 @@ rf_real_AddToAllocList(RF_AllocListElem_t *l, void *p, int size)
 
 }
 
-void 
+void
 rf_FreeAllocList(RF_AllocListElem_t *l)
 {
 	int     i;
 	RF_AllocListElem_t *temp, *p;
 
 	for (p = l; p; p = p->next) {
-		RF_ASSERT(p->numPointers >= 0 && 
+		RF_ASSERT(p->numPointers >= 0 &&
 			  p->numPointers <= RF_POINTERS_PER_ALLOC_LIST_ELEMENT);
 		for (i = 0; i < p->numPointers; i++) {
 			RF_ASSERT(p->pointers[i]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.14 2003/12/09 19:43:53 ad Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.15 2005/02/27 00:27:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.14 2003/12/09 19:43:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.15 2005/02/27 00:27:33 perry Exp $");
 
 #include "opt_i2o.h"
 
@@ -81,7 +81,7 @@ iop_pci_match(struct device *parent, struct cfdata *match, void *aux)
 
 	pa = aux;
 
-	/* 
+	/*
 	 * Look for an "intelligent I/O processor" that adheres to the I2O
 	 * specification.  Ignore the device if it doesn't support interrupt
 	 * driven operation.
@@ -97,7 +97,7 @@ iop_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	vendor = PCI_VENDOR(pa->pa_id);
 	product = PCI_PRODUCT(pa->pa_id);
 
-	if (vendor == PCI_VENDOR_DPT && 
+	if (vendor == PCI_VENDOR_DPT &&
 	    (product == PCI_PRODUCT_DPT_RAID_I2O ||
 	    product == PCI_PRODUCT_DPT_RAID_2005S))
 		return (1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.35 2004/08/23 06:16:07 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.36 2005/02/27 00:27:31 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
  *
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.35 2004/08/23 06:16:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.36 2005/02/27 00:27:31 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

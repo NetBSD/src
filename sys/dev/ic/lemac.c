@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.26 2004/10/30 18:08:37 thorpej Exp $ */
+/* $NetBSD: lemac.c,v 1.27 2005/02/27 00:27:01 perry Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.26 2004/10/30 18:08:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.27 2005/02/27 00:27:01 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -346,7 +346,7 @@ lemac_rne_intr(
     while (rxcount--) {
 	unsigned rxpg = LEMAC_INB(sc, LEMAC_REG_RQ);
 	u_int32_t rxlen;
-	
+
 	sc->sc_if.if_ipackets++;
 	if (LEMAC_USE_PIO_MODE(sc)) {
 	    LEMAC_OUTB(sc, LEMAC_REG_IOP, rxpg);
@@ -369,7 +369,7 @@ lemac_rne_intr(
 	}
 	LEMAC_OUTB(sc, LEMAC_REG_FMQ, rxpg);  /* Return this page to Free Memory Queue */
     }  /* end while (recv_count--) */
-    
+
     return;
 }
 
@@ -387,15 +387,15 @@ lemac_read_macaddr(
 {
     int cksum, rom_cksum;
     unsigned char addrbuf[6];
-    
+
     if (!skippat) {
 	int idx, idx2, found, octet;
 	static u_char testpat[] = { 0xFF, 0, 0x55, 0xAA, 0xFF, 0, 0x55, 0xAA };
 	idx2 = found = 0;
-    
+
 	for (idx = 0; idx < 32; idx++) {
 	    octet = bus_space_read_1(iot, ioh, ioreg);
-	    
+
 	    if (octet == testpat[idx2]) {
 		if (++idx2 == sizeof(testpat)) {
 		    ++found;
@@ -405,7 +405,7 @@ lemac_read_macaddr(
 		idx2 = 0;
 	    }
 	}
-	
+
 	if (!found)
 	    return -1;
     }
@@ -443,7 +443,7 @@ lemac_read_macaddr(
 
     rom_cksum = bus_space_read_1(iot, ioh, ioreg);
     rom_cksum |= bus_space_read_1(iot, ioh, ioreg) << 8;
-	
+
     if (cksum != rom_cksum)
 	return -1;
     return 0;
@@ -461,7 +461,7 @@ lemac_multicast_op(
 
     /*
      * The following two lines convert the N bit index into a longword index
-     * and a longword mask.  
+     * and a longword mask.
      */
 #if LEMAC_MCTBL_BITS < 0
     crc >>= (32 + LEMAC_MCTBL_BITS);
@@ -507,7 +507,7 @@ lemac_multicast_filter(
     sc->sc_if.if_flags &= ~IFF_ALLMULTI;
 }
 
-/* 
+/*
  * Do a hard reset of the board;
  */
 static void
@@ -531,7 +531,7 @@ lemac_reset(
      * is important because functions hereafter may rely on information
      * read from the EEPROM.
      */
-    if ((data = lemac_read_eeprom(sc)) != LEMAC_EEP_CKSUM) { 
+    if ((data = lemac_read_eeprom(sc)) != LEMAC_EEP_CKSUM) {
 	printf("%s: reset: EEPROM checksum failed (0x%x)\n",
 	       sc->sc_if.if_xname, data);
 	return;
@@ -631,7 +631,7 @@ lemac_init(
     }
 }
 
-static void 
+static void
 lemac_ifstart(
     struct ifnet *ifp)
 {
@@ -1023,7 +1023,7 @@ lemac_ifattach(
 
     (void) lemac_read_macaddr(sc->sc_enaddr, sc->sc_iot, sc->sc_ioh,
 			      LEMAC_REG_APD, 0);
-	
+
     printf(": %s\n", sc->sc_prodname);
 
     printf("%s: address %s, %dKB RAM, %s\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.35 2004/09/01 21:09:09 drochner Exp $	*/
+/*	$NetBSD: eisa.c,v 1.36 2005/02/27 00:26:59 perry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.35 2004/09/01 21:09:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.36 2005/02/27 00:26:59 perry Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -78,7 +78,7 @@ static int
 eisaprint(void *aux, const char *pnp)
 {
 	struct eisa_attach_args *ea = aux;
-	char devinfo[256]; 
+	char devinfo[256];
 
 	if (pnp) {
 		eisa_devinfo(ea->ea_idstring, devinfo, sizeof(devinfo));

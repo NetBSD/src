@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.4 2003/07/14 15:47:04 lukem Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.5 2005/02/27 00:26:58 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.4 2003/07/14 15:47:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.5 2005/02/27 00:26:58 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ add_veriexec_inode(struct veriexec_dev_list *list, unsigned long inode,
 				ip->type = type;
 			return;
 		}
-	
+
 
 	MALLOC(ip, struct veriexec_inode_list *, sizeof(struct veriexec_inode_list),
 	       M_TEMP, M_WAITOK);
@@ -199,7 +199,7 @@ verifiedexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 #ifdef VERIFIED_EXEC_DEBUG
 	printf("veriexec_ioctl: got cmd 0x%lx for file %s\n", cmd, params->file);
 #endif
-	
+
 	switch (cmd) {
 	  case VERIEXECLOAD:
 		if (securelevel > 0) {
@@ -240,7 +240,7 @@ verifiedexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 				dlp = find_veriexec_dev(vattr.va_fsid,
 						     &veriexec_dev_head);
 			}
-			
+
 			add_veriexec_inode(dlp, vattr.va_fileid,
 					params->fingerprint, params->type,
 					params->fp_type);

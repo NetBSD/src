@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.13 2005/02/04 02:10:37 perry Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.14 2005/02/27 00:27:02 perry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #define LMD_SENSORBASE	0x20	/* Sensors occupy 0x20 -- 0x2a */
 
-#define LMD_CONFIG	0x40	/* Configuration */ 
+#define LMD_CONFIG	0x40	/* Configuration */
 #define LMD_ISR1	0x41	/* Interrupt Status 1 */
 #define LMD_ISR2	0x42	/* Interrupt Status 2 */
 #define LMD_SMI1	0x43	/* SMI Mask 1 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.91 2005/02/01 00:19:34 reinoud Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.92 2005/02/27 00:27:48 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.91 2005/02/01 00:19:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.92 2005/02/27 00:27:48 perry Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -222,20 +222,20 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		ATADEBUG_PRINT(("wdc_atapi_get_params: ATAPI_SOFT_RESET "
 		    "failed for drive %s:%d:%d: error 0x%x\n",
-		    atac->atac_dev.dv_xname, chp->ch_channel, drive, 
+		    atac->atac_dev.dv_xname, chp->ch_channel, drive,
 		    ata_c.r_error), DEBUG_PROBE);
 		return -1;
 	}
 	chp->ch_drive[drive].state = 0;
 
 	bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_status], 0);
-	
+
 	/* Some ATAPI devices need a bit more time after software reset. */
 	delay(5000);
 	if (ata_get_params(&chp->ch_drive[drive], AT_WAIT, id) != 0) {
 		ATADEBUG_PRINT(("wdc_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
 		    "failed for drive %s:%d:%d: error 0x%x\n",
-		    atac->atac_dev.dv_xname, chp->ch_channel, drive, 
+		    atac->atac_dev.dv_xname, chp->ch_channel, drive,
 		    ata_c.r_error), DEBUG_PROBE);
 		return -1;
 	}
@@ -550,13 +550,13 @@ ready:
 	 * data is necessary, multiple data transfer phases will be done.
 	 */
 
-	wdccommand(chp, xfer->c_drive, ATAPI_PKT_CMD, 
+	wdccommand(chp, xfer->c_drive, ATAPI_PKT_CMD,
 	    xfer->c_bcount <= 0xffff ? xfer->c_bcount : 0xffff,
-	    0, 0, 0, 
+	    0, 0, 0,
 	    (xfer->c_flags & C_DMA) ? ATAPI_PKT_CMD_FTRE_DMA : 0);
-	
+
 	/*
-	 * If there is no interrupt for CMD input, busy-wait for it (done in 
+	 * If there is no interrupt for CMD input, busy-wait for it (done in
 	 * the interrupt routine. If it is a polled command, call the interrupt
 	 * routine until command is done.
 	 */
@@ -634,7 +634,7 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		sc_xfer->error = XS_TIMEOUT;
 		wdc_atapi_reset(chp, xfer);
 		return 1;
-	} 
+	}
 
 	/* Ack interrupt done in wdc_wait_for_unbusy */
 	if (wdc->select)
@@ -669,7 +669,7 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		wdc_atapi_reset(chp, xfer);
 		return (1);
 	}
-	/* 
+	/*
 	 * if the request sense command was aborted, report the short sense
 	 * previously recorded, else continue normal processing
 	 */
@@ -755,7 +755,7 @@ again:
 	case PHASE_DATAIN:
 		/* Read data */
 		ATADEBUG_PRINT(("PHASE_DATAIN\n"), DEBUG_INTR);
-		if ((sc_xfer->xs_control & XS_CTL_DATA_IN) == 0 || 
+		if ((sc_xfer->xs_control & XS_CTL_DATA_IN) == 0 ||
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAIN\n");
 			if (xfer->c_flags & C_DMA) {
@@ -847,7 +847,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 		if (wdcwait(chp, WDCS_DSC, WDCS_DSC, 10,
 		    AT_POLL) == WDCWAIT_TOUT) {
 			/* 10ms not enough, try again in 1 tick */
-			if (xfer->c_dscpoll++ > 
+			if (xfer->c_dscpoll++ >
 			    mstohz(sc_xfer->timeout)) {
 				printf("%s:%d:%d: wait_for_dsc "
 				    "failed\n",
@@ -864,7 +864,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 	}
 
 	/*
-	 * Some drive occasionally set WDCS_ERR with 
+	 * Some drive occasionally set WDCS_ERR with
 	 * "ATA illegal length indication" in the error
 	 * register. If we read some data the sense is valid
 	 * anyway, so don't report the error.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.31 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.32 2005/02/27 00:26:59 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -67,7 +67,7 @@ typedef int cardbus_intr_handle_t;
  *
  * cardbus_space_alloc and cardbus_space_free allocates and
  * disallocate bus space for the requesters.
- *      
+ *
  *	void *(*cardbus_intr_establish)(cardbus_chipset_tag_t ct, int irq,
  *	     int level, int (*ih)(void *), void *sc);
  *
@@ -164,7 +164,7 @@ struct cardbus_softc {
 	int sc_bus;			/* cardbus bus number */
 	int sc_device;			/* cardbus device number */
 	int sc_intrline;		/* CardBus intrline */
-  
+
 	bus_space_tag_t sc_iot;		/* CardBus I/O space tag */
 	bus_space_tag_t sc_memt;	/* CardBus MEM space tag */
 	bus_dma_tag_t sc_dmat;		/* DMA tag */

@@ -1,21 +1,21 @@
-/* $NetBSD: pcppi.c,v 1.12 2005/02/04 02:10:41 perry Exp $ */
+/* $NetBSD: pcppi.c,v 1.13 2005/02/27 00:27:17 perry Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.12 2005/02/04 02:10:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.13 2005/02/27 00:27:17 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ pcppi_match(parent, match, aux)
 		return (0);
 
 	/* If values are hardwired to something that they can't be, punt. */
-	if (ia->ia_nio < 1 ||  
+	if (ia->ia_nio < 1 ||
 	    (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT &&
 	    ia->ia_io[0].ir_addr != IO_PPI))
 		return (0);

@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.15 2005/02/04 02:10:36 perry Exp $        */
+/*      $NetBSD: advlib.h,v 1.16 2005/02/27 00:27:00 perry Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -42,10 +42,10 @@
  */
 /*
  * advansys.c - Linux Host Driver for AdvanSys SCSI Adapters
- *     
+ *
  * Copyright (c) 1995-1996 Advanced System Products, Inc.
  * All Rights Reserved.
- *   
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that redistributions of source
  * code retain the above copyright notice and this comment without

@@ -15,7 +15,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -33,7 +33,7 @@
  *	isdn4bsd layer1 driver for Dynalink IS64PH isdn TA
  *	==================================================
  *
- *	$Id: isic_isapnp_dynalink.c,v 1.4 2002/03/24 20:35:51 martin Exp $
+ *	$Id: isic_isapnp_dynalink.c,v 1.5 2005/02/27 00:27:21 perry Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -47,35 +47,35 @@
  *---------------------------------------------------------------------------*/
 
 /*	NOTES:
-	
-	This driver was written for the Dynalink IS64PH ISDN TA, based on two 
+
+	This driver was written for the Dynalink IS64PH ISDN TA, based on two
 	Siemens chips (HSCX 21525 and ISAC 2186). It is sold in the Netherlands.
-	
+
 	model numbers found on (my) card:
 		IS64PH, TAS100H-N, P/N:89590555, TA200S100045521
-	
-	chips: 	
+
+	chips:
 		Siemens PSB 21525N, HSCX TE V2.1
 		Siemens PSB 2186N, ISAC-S TE V1.1
 		95MS14, PNP
-	
-	plug-and-play info: 
-		device id 	"ASU1688" 
-		vendor id 	0x88167506 
+
+	plug-and-play info:
+		device id 	"ASU1688"
+		vendor id 	0x88167506
 		serial 		0x00000044
-		i/o port	4 byte alignment, 4 bytes requested, 
+		i/o port	4 byte alignment, 4 bytes requested,
 				10 bit i/o decoding, 0x100-0x3f8 (?)
 		irq		3,4,5,9,10,11,12,15, high true, edge sensitive
-			
-	At the moment I'm writing this Dynalink is replacing this card with 
-	one based on a single Siemens chip (IPAC). It will apparently be sold 
+
+	At the moment I'm writing this Dynalink is replacing this card with
+	one based on a single Siemens chip (IPAC). It will apparently be sold
 	under the same model name.
 
 	This driver might also work for Asuscom cards.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.4 2002/03/24 20:35:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.5 2005/02/27 00:27:21 perry Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_DYNALINK
@@ -175,7 +175,7 @@ void isic_attach_Dyn(struct isic_softc *sc);
 */
 
 int
-isic_probe_Dyn(struct isa_device *dev, unsigned int iobase2) 
+isic_probe_Dyn(struct isa_device *dev, unsigned int iobase2)
 {
 
 	struct isic_softc *sc = &l1_sc[dev->id_unit];
@@ -184,8 +184,8 @@ isic_probe_Dyn(struct isa_device *dev, unsigned int iobase2)
 	{
 		printf("isic%d: Error, unit %d >= ISIC_MAXUNIT for Dynalink IS64PH.\n",
 				dev->id_unit, dev->id_unit);
-		return(0);	
-	}	
+		return(0);
+	}
 	sc->sc_unit = dev->id_unit;
 
 	/* check IRQ validity */
@@ -201,7 +201,7 @@ isic_probe_Dyn(struct isa_device *dev, unsigned int iobase2)
 		case 12:
 		case 15:
 			break;
-			
+
 		default:
 			printf("isic%d: Error, invalid IRQ [%d] specified for Dynalink IS64PH.\n",
 				dev->id_unit, ffs(dev->id_irq)-1);
@@ -219,11 +219,11 @@ isic_probe_Dyn(struct isa_device *dev, unsigned int iobase2)
 		return (0);
 	}
 	dev->id_msize = 0;
-	
+
 	/* check if we got an iobase */
-	if ( (dev->id_iobase < 0x100) || 
-	     (dev->id_iobase > 0x3f8) || 
-	     (dev->id_iobase & 3) ) 
+	if ( (dev->id_iobase < 0x100) ||
+	     (dev->id_iobase > 0x3f8) ||
+	     (dev->id_iobase & 3) )
 	{
 			printf("isic%d: Error, invalid iobase 0x%x specified for Dynalink!\n", dev->id_unit, dev->id_iobase);
 			return(0);
@@ -237,7 +237,7 @@ isic_probe_Dyn(struct isa_device *dev, unsigned int iobase2)
 	sc->readfifo = dynalink_read_fifo;
 	sc->writefifo = dynalink_write_fifo;
 
-	/* setup card type */	
+	/* setup card type */
 	sc->sc_cardtyp = CARD_TYPEP_DYNALINK;
 
 	/* setup IOM bus type */
@@ -252,7 +252,7 @@ isic_probe_Dyn(struct isa_device *dev, unsigned int iobase2)
 	HSCX_B_BASE = (caddr_t) sc->sc_port + 1 + HSCXB_HACK;
 
 	/* Read HSCX A/B VSTR.  Expected value is 0x05 (V2.1). */
-	if( ((HSCX_READ(0, H_VSTR) & 0xf) != 0x5) || 
+	if( ((HSCX_READ(0, H_VSTR) & 0xf) != 0x5) ||
 	    ((HSCX_READ(1, H_VSTR) & 0xf) != 0x5) )
 	{
 		printf("isic%d: HSCX VSTR test failed for Dynalink\n",
@@ -264,7 +264,7 @@ isic_probe_Dyn(struct isa_device *dev, unsigned int iobase2)
 		return (0);
 	}
 
-	return (1);                
+	return (1);
 }
 
 int
@@ -299,7 +299,7 @@ set_softc(struct isic_softc *sc, struct isa_attach_args *ia, int unit)
 		case 12:
 		case 15:
 			break;
-			
+
 		default:
 			printf("isic%d: Error, invalid IRQ [%d] specified for Dynalink IS64PH.\n",
 				unit, ffs(ia->ia_irq)-1);
@@ -316,11 +316,11 @@ set_softc(struct isic_softc *sc, struct isa_attach_args *ia, int unit)
 			unit, (u_long)ia->ia_maddr);
 		return (0);
 	}
-	
+
 	/* check if we got an iobase */
-	if ( (ia->ia_iobase < 0x100) || 
-	     (ia->ia_iobase > 0x3f8) || 
-	     (ia->ia_iobase & 3) ) 
+	if ( (ia->ia_iobase < 0x100) ||
+	     (ia->ia_iobase > 0x3f8) ||
+	     (ia->ia_iobase & 3) )
 	{
 			printf("isic%d: Error, invalid iobase 0x%x specified for Dynalink!\n", unit, ia->ia_iobase);
 			return(0);
@@ -334,7 +334,7 @@ set_softc(struct isic_softc *sc, struct isa_attach_args *ia, int unit)
 	sc->readfifo = dynalink_read_fifo;
 	sc->writefifo = dynalink_write_fifo;
 
-	/* setup card type */	
+	/* setup card type */
 	sc->sc_cardtyp = CARD_TYPEP_DYNALINK;
 
 	/* setup IOM bus type */
@@ -373,7 +373,7 @@ isapnp_match_dynalink(struct device *parent, struct cfdata *cf,
 		return 0;
 
 	/* Read HSCX A/B VSTR.  Expected value is 0x05 (V2.1). */
-	if( ((HSCX_READ(0, H_VSTR) & 0xf) != 0x5) || 
+	if( ((HSCX_READ(0, H_VSTR) & 0xf) != 0x5) ||
 	    ((HSCX_READ(1, H_VSTR) & 0xf) != 0x5) )
 	{
 		printf("isic%d: HSCX VSTR test failed for Dynalink\n",
@@ -418,7 +418,7 @@ void isic_attach_Dyn(struct isic_softc *sc)
 	sc->readfifo = dynalink_read_fifo;
 	sc->writefifo = dynalink_write_fifo;
 
-	/* setup card type */	
+	/* setup card type */
 	sc->sc_cardtyp = CARD_TYPEP_DYNALINK;
 
 	/* setup IOM bus type */
@@ -437,7 +437,7 @@ void isic_attach_Dyn(struct isic_softc *sc)
 		printf("%s: HSC1: VSTR: %#x\n",
 			sc->sc_dev.dv_xname, HSCX_READ(1, H_VSTR));
 		return;
-	}                   
+	}
 
 	bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, ADDR, RESET);
 	DELAY(SEC_DELAY / 10);
@@ -449,18 +449,18 @@ void isic_attach_Dyn(struct isic_softc *sc)
 
 /*	LOW-LEVEL DEVICE ACCESS
 
-	NOTE:	The isdn4bsd code expects the two HSCX channels at different 
-	base addresses. I'm faking this, and remap them to the same address 
+	NOTE:	The isdn4bsd code expects the two HSCX channels at different
+	base addresses. I'm faking this, and remap them to the same address
 	in the low-level routines. Search for HSCXB_HACK and IS_HSCXB_HACK.
 
 	REM: this is only true for the FreeBSD version of I4B!
 */
 
 #if defined(__FreeBSD__) || defined(__bsdi__)
-static void             
+static void
 dynalink_read_fifo(void *buf, const void *base, size_t len)
 {
-	outb(IOBASE(base)+ADDR, 0+IS_HSCXB_HACK(base)); 
+	outb(IOBASE(base)+ADDR, 0+IS_HSCXB_HACK(base));
 	insb(IOADDR(base), (u_char *)buf, (u_int)len);
 }
 #else

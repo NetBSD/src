@@ -27,14 +27,14 @@
  *	i4b - Siemens HSCX chip (B-channel) handling
  *	--------------------------------------------
  *
- *	$Id: hscx.c,v 1.9 2002/09/27 15:37:16 provos Exp $ 
+ *	$Id: hscx.c,v 1.10 2005/02/27 00:27:01 perry Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.9 2002/09/27 15:37:16 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.10 2005/02/27 00:27:01 perry Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 300001
@@ -93,7 +93,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 	u_char exir = 0;
 	int activity = -1;
 	u_char cmd = 0;
-	
+
 	NDBGL1(L1_H_IRQ, "%#x", ista);
 
 	if(ex_irq)
@@ -110,7 +110,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 
 		if((exir & HSCX_EXIR_XDU) && (chan->bprot != BPROT_NONE))/* xmit data underrun */
 		{
-			chan->stat_XDU++;			
+			chan->stat_XDU++;
 			NDBGL1(L1_H_XFRERR, "ex_irq: xmit data underrun");
 			isic_hscx_cmd(sc, h_chan, HSCX_CMDR_XRES);
 
@@ -124,11 +124,11 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 	}
 
 	/* rx message end, end of frame */
-	
+
 	if(ista & HSCX_ISTA_RME)
 	{
 		register int fifo_data_len;
-		u_char rsta;		
+		u_char rsta;
 		int error = 0;
 
 		rsta = HSCX_READ(h_chan, H_RSTA);
@@ -142,14 +142,14 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 				NDBGL1(L1_H_XFRERR, "received invalid Frame");
 				error++;
 			}
-	
+
 			if(rsta & HSCX_RSTA_RDO)
 			{
 				chan->stat_RDO++;
 				NDBGL1(L1_H_XFRERR, "receive data overflow");
-				error++;				
+				error++;
 			}
-			
+
 			if((rsta & HSCX_RSTA_CRC) == 0)
 			{
 				chan->stat_CRC++;
@@ -157,10 +157,10 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 				NDBGL1(L1_H_XFRERR, "CRC check failed");
 				error++;
 			}
-			
+
 			if(rsta & HSCX_RSTA_RAB)
 			{
-				chan->stat_RAB++;				
+				chan->stat_RAB++;
 				NDBGL1(L1_H_XFRERR, "Receive message aborted");
 				error++;
 			}
@@ -168,12 +168,12 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 
 		fifo_data_len = ((HSCX_READ(h_chan, H_RBCL)) &
 						((sc->sc_bfifolen)-1));
-		
+
 		if(fifo_data_len == 0)
 			fifo_data_len = sc->sc_bfifolen;
 
 		/* all error conditions checked, now decide and take action */
-		
+
 		if(error == 0)
 		{
 			if(chan->in_mbuf == NULL)
@@ -185,25 +185,25 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 			}
 
 			fifo_data_len -= 1; /* last byte in fifo is RSTA ! */
-			
+
 			if((chan->in_len + fifo_data_len) <= BCH_MAX_DATALEN)
 			{
 				/* read data from HSCX fifo */
-	
+
 				HSCX_RDFIFO(h_chan, chan->in_cbptr, fifo_data_len);
 
 				cmd |= (HSCX_CMDR_RMC);
 				isic_hscx_cmd(sc, h_chan, cmd);
 				cmd = 0;
-				
+
 		                chan->in_len += fifo_data_len;
 				chan->rxcount += fifo_data_len;
 
 				/* setup mbuf data length */
-					
+
 				chan->in_mbuf->m_len = chan->in_len;
 				chan->in_mbuf->m_pkthdr.len = chan->in_len;
-		
+
 				if(sc->sc_trace & TRACE_B_RX)
 				{
 					i4b_trace_hdr hdr;
@@ -216,9 +216,9 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 				(*chan->l4_driver->bch_rx_data_ready)(chan->l4_driver_softc);
 
 				activity = ACT_RX;
-				
+
 				/* mark buffer ptr as unused */
-					
+
 				chan->in_mbuf = NULL;
 				chan->in_cbptr = NULL;
 				chan->in_len = 0;
@@ -228,7 +228,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 				NDBGL1(L1_H_XFRERR, "RAWHDLC rx buffer overflow in RME, in_len=%d, fifolen=%d", chan->in_len, fifo_data_len);
 				chan->in_cbptr = chan->in_mbuf->m_data;
 				chan->in_len = 0;
-				cmd |= (HSCX_CMDR_RHR | HSCX_CMDR_RMC);	
+				cmd |= (HSCX_CMDR_RHR | HSCX_CMDR_RMC);
 			}
 		}
 		else
@@ -257,7 +257,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 		}
 
 		chan->rxcount += sc->sc_bfifolen;
-		
+
 		if((chan->in_len + sc->sc_bfifolen) <= BCH_MAX_DATALEN)
 		{
 			/* read data from HSCX fifo */
@@ -272,7 +272,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 			if(chan->bprot == BPROT_NONE)
 			{
 				/* setup mbuf data length */
-				
+
 				chan->in_mbuf->m_len = chan->in_len;
 				chan->in_mbuf->m_pkthdr.len = chan->in_len;
 
@@ -286,7 +286,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 				}
 
 				/* silence detection */
-				
+
 				if(!(isdn_bchan_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len)))
 					activity = ACT_RX;
 
@@ -302,18 +302,18 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 				/* signal upper driver that data is available */
 
 				(*chan->l4_driver->bch_rx_data_ready)(chan->l4_driver_softc);
-				
+
 				/* alloc new buffer */
-				
+
 				if((chan->in_mbuf = i4b_Bgetmbuf(BCH_MAX_DATALEN)) == NULL)
 					panic("L1 isic_hscx_irq: RPF, cannot allocate new mbuf!");
-	
+
 				/* setup new data ptr */
-				
+
 				chan->in_cbptr = chan->in_mbuf->m_data;
-	
+
 				/* read data from HSCX fifo */
-	
+
 				HSCX_RDFIFO(h_chan, chan->in_cbptr, sc->sc_bfifolen);
 
 				chan->in_cbptr += sc->sc_bfifolen;
@@ -329,21 +329,21 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 				cmd |= (HSCX_CMDR_RHR);
 			}
 		}
-		
+
 		/* command to release fifo space */
-		
+
 		cmd |= HSCX_CMDR_RMC;
 	}
 
 	/* transmit fifo empty, new data can be written to fifo */
-	
+
 	if(ista & HSCX_ISTA_XPR)
 	{
 		/*
 		 * for a description what is going on here, please have
 		 * a look at isic_bchannel_start() in i4b_bchan.c !
 		 */
-		 
+
 		int activity = -1;
 		int len;
 		int nextlen;
@@ -374,7 +374,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 					hdr.count = ++sc->sc_trace_bcount;
 					isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 				}
-				
+
 				if(chan->bprot == BPROT_NONE)
 				{
 					if(!(isdn_bchan_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
@@ -386,17 +386,17 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 				}
 			}
 		}
-			
+
 		len = 0;
 
 		while(chan->out_mbuf_cur && len != sc->sc_bfifolen)
 		{
 			nextlen = min(chan->out_mbuf_cur_len, sc->sc_bfifolen - len);
 
-#ifdef NOTDEF			
+#ifdef NOTDEF
 			printf("i:mh=%x, mc=%x, mcp=%x, mcl=%d l=%d nl=%d # ",
 				chan->out_mbuf_head,
-				chan->out_mbuf_cur,			
+				chan->out_mbuf_cur,
 				chan->out_mbuf_cur_ptr,
 				chan->out_mbuf_cur_len,
 				len,
@@ -404,23 +404,23 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 #endif
 
 			isic_hscx_waitxfw(sc, h_chan);	/* necessary !!! */
-			
+
 			HSCX_WRFIFO(h_chan, chan->out_mbuf_cur_ptr, nextlen);
 			cmd |= HSCX_CMDR_XTF;
-	
+
 			len += nextlen;
 			chan->txcount += nextlen;
-	
+
 			chan->out_mbuf_cur_ptr += nextlen;
 			chan->out_mbuf_cur_len -= nextlen;
-			
-			if(chan->out_mbuf_cur_len == 0) 
+
+			if(chan->out_mbuf_cur_len == 0)
 			{
 				if((chan->out_mbuf_cur = chan->out_mbuf_cur->m_next) != NULL)
 				{
 					chan->out_mbuf_cur_ptr = chan->out_mbuf_cur->m_data;
 					chan->out_mbuf_cur_len = chan->out_mbuf_cur->m_len;
-	
+
 					if(sc->sc_trace & TRACE_B_TX)
 					{
 						i4b_trace_hdr hdr;
@@ -448,7 +448,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 	}
 
 	/* call timeout handling routine */
-	
+
 	if(activity == ACT_RX || activity == ACT_TX)
 		(*chan->l4_driver->bch_activity)(chan->l4_driver_softc, activity);
 }
@@ -461,7 +461,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
  *---------------------------------------------------------------------------*/
 void
 isic_hscx_init(struct isic_softc *sc, int h_chan, int activate)
-{	
+{
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 
 	HSCX_WRITE(h_chan, H_MASK, 0xff);		/* mask irq's */
@@ -479,22 +479,22 @@ isic_hscx_init(struct isic_softc *sc, int h_chan, int activate)
 			      HSCX_CCR1_CM2 |	/* HSCX clock mode 5 */
 			      HSCX_CCR1_CM0);
 	}
-		
+
 	/* XAD1: Transmit Address Byte 1 */
 	HSCX_WRITE(h_chan, H_XAD1, 0xff);
-	
+
 	/* XAD2: Transmit Address Byte 2 */
 	HSCX_WRITE(h_chan, H_XAD2, 0xff);
 
 	/* RAH2: Receive Address Byte High Reg. 2 */
 	HSCX_WRITE(h_chan, H_RAH2, 0xff);
-	
+
 	/* XBCH: reset Transmit Byte Count High */
 	HSCX_WRITE(h_chan, H_XBCH, 0x00);
-	
+
 	/* RLCR: reset Receive Length Check Register */
 	HSCX_WRITE(h_chan, H_RLCR, 0x00);
-	
+
 	/* CCR2: set tx/rx clock shift bit 0	*/
 	/*       disable CTS irq, disable RIE irq*/
 	HSCX_WRITE(h_chan, H_CCR2, HSCX_CCR2_XCS0|HSCX_CCR2_RCS0);
@@ -504,10 +504,10 @@ isic_hscx_init(struct isic_softc *sc, int h_chan, int activate)
 
 	/* RCCR: rx bit count per time slot */
 	HSCX_WRITE(h_chan, H_RCCR, 0x07);
-	
+
 	if(sc->sc_bustyp == BUS_TYPE_IOM2)
 	{
-		switch(h_chan) 
+		switch(h_chan)
 		{
 			case HSCX_CH_A:	/* Prepare HSCX channel A */
 				/* TSAX: tx clock shift bits 1 & 2	*/
@@ -571,7 +571,7 @@ isic_hscx_init(struct isic_softc *sc, int h_chan, int activate)
 		   HSCX_MODE_MDS1|HSCX_MODE_MDS0|HSCX_MODE_ADM|HSCX_MODE_RTS);
 	}
 
- 	/* don't touch ICA, EXA and EXB bits, this could be HSCX_CH_B */	
+ 	/* don't touch ICA, EXA and EXB bits, this could be HSCX_CH_B */
 	/* always disable RSC and TIN */
 
 	chan->hscx_mask |= HSCX_MASK_RSC | HSCX_MASK_TIN;
@@ -591,7 +591,7 @@ isic_hscx_init(struct isic_softc *sc, int h_chan, int activate)
 
 	if (h_chan == HSCX_CH_A)
 	{
-		if (activate) 
+		if (activate)
 			HSCX_B_IMASK &= ~(HSCX_MASK_EXA | HSCX_MASK_ICA);
 		else
 			HSCX_B_IMASK |= HSCX_MASK_EXA | HSCX_MASK_ICA;
@@ -628,7 +628,7 @@ isic_hscx_init(struct isic_softc *sc, int h_chan, int activate)
  *---------------------------------------------------------------------------*/
 void
 isic_hscx_cmd(struct isic_softc *sc, int h_chan, unsigned char cmd)
-{	
+{
 	int timeout = 20;
 
 	while(((HSCX_READ(h_chan, H_STAR)) & HSCX_STAR_CEC) && timeout)
@@ -642,7 +642,7 @@ isic_hscx_cmd(struct isic_softc *sc, int h_chan, unsigned char cmd)
 		NDBGL1(L1_H_ERR, "HSCX wait for CEC timeout!");
 	}
 
-	HSCX_WRITE(h_chan, H_CMDR, cmd);	
+	HSCX_WRITE(h_chan, H_CMDR, cmd);
 }
 
 /*---------------------------------------------------------------------------*
@@ -650,7 +650,7 @@ isic_hscx_cmd(struct isic_softc *sc, int h_chan, unsigned char cmd)
  *---------------------------------------------------------------------------*/
 void
 isic_hscx_waitxfw(struct isic_softc *sc, int h_chan)
-{	
+{
 #define WAITVAL 50
 #define WAITTO	200
 

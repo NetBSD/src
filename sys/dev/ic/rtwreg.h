@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.12 2005/01/16 11:50:43 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.13 2005/02/27 00:27:02 perry Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -232,7 +232,7 @@
 					 */
 
 /* Loopback Test: disables TXI/TXQ outputs. */
-#define RTW_TCR_LBK_MASK	BITS(18,17)	
+#define RTW_TCR_LBK_MASK	BITS(18,17)
 #define RTW_TCR_LBK_NORMAL	LSHIFT(0, RTW_TCR_LBK_MASK) /* normal ops */
 #define RTW_TCR_LBK_MAC		LSHIFT(1, RTW_TCR_LBK_MASK) /* MAC loopback */
 #define RTW_TCR_LBK_BBP		LSHIFT(2, RTW_TCR_LBK_MASK) /* baseband loop. */
@@ -522,7 +522,7 @@
 					 * allow RTW_ANAPARM writes.
 					 */
 #define RTW_CONFIG3_MAGIC	BIT(5)	/* Valid when RTW_CONFIG1_PMEN is
-					 * set. If set, RTL8180 wakes up 
+					 * set. If set, RTL8180 wakes up
 					 * OS when Magic Packet is Rx'd.
 					 */
 #define RTW_CONFIG3_CARDBEN	BIT(3)	/* Cardbus-related registers
@@ -596,11 +596,11 @@
 #define RTW_SCR_KM_WEP40	LSHIFT(0, RTW_SCR_KM_MASK)
 #define RTW_SCR_TXSECON		BIT(1)	/* Enable Tx WEP. Invalid if
 					 * neither RTW_CONFIG0_WEP40 nor
-					 * RTW_CONFIG0_WEP104 is set. 
+					 * RTW_CONFIG0_WEP104 is set.
 					 */
 #define RTW_SCR_RXSECON		BIT(0)	/* Enable Rx WEP. Invalid if
 					 * neither RTW_CONFIG0_WEP40 nor
-					 * RTW_CONFIG0_WEP104 is set. 
+					 * RTW_CONFIG0_WEP104 is set.
 					 */
 
 #define	RTW_BCNITV	0x70	/* Beacon Interval Register, 16b */
@@ -858,9 +858,9 @@
 #define RTW_SR_TXPOWER13	0x2c
 #define RTW_SR_TXPOWER14	0x2d
 #define RTW_SR_CHANNELPLAN	0x2e	/* bitmap of channels to scan */
-#define RTW_SR_ENERGYDETTHR	0x2f	/* energy-detect threshold */ 
-#define RTW_SR_ENERGYDETTHR_DEFAULT	0x0c	/* use this if old SROM */ 
-#define RTW_SR_CISPOINTER	0x30	/* 16b */ 
+#define RTW_SR_ENERGYDETTHR	0x2f	/* energy-detect threshold */
+#define RTW_SR_ENERGYDETTHR_DEFAULT	0x0c	/* use this if old SROM */
+#define RTW_SR_CISPOINTER	0x30	/* 16b */
 #define RTW_SR_RFPARM		0x32	/* RF-specific parameter */
 #define RTW_SR_RFPARM_DIGPHY	BIT(0)		/* 1: digital PHY */
 #define RTW_SR_RFPARM_DFLANTB	BIT(1)		/* 1: antenna B is default */
@@ -877,7 +877,7 @@
 /* the first descriptor in each ring must be on a 256-byte boundary */
 #define RTW_DESC_ALIGNMENT 256
 
-/* Tx descriptor */ 
+/* Tx descriptor */
 struct rtw_txdesc {
 	uint32_t	td_ctl0;
 	uint32_t	td_ctl1;
@@ -922,7 +922,7 @@ struct rtw_txdesc {
 #define RTW_TXSTAT_OWN		RTW_TXCTL0_OWN
 #define RTW_TXSTAT_RSVD0	RTW_TXCTL0_RSVD0
 #define RTW_TXSTAT_FS		RTW_TXCTL0_FS
-#define RTW_TXSTAT_LS		RTW_TXCTL0_LS		
+#define RTW_TXSTAT_LS		RTW_TXCTL0_LS
 #define RTW_TXSTAT_RSVD1_MASK	BITS(27,16)
 #define RTW_TXSTAT_TOK		BIT(15)
 #define RTW_TXSTAT_RTSRETRY_MASK	BITS(14,8)	/* RTS retry count */
@@ -939,7 +939,7 @@ struct rtw_txdesc {
 
 #define RTW_TXLEN_LENGTH_MASK	BITS(11,0)	/* Tx buffer length in bytes */
 
-/* Rx descriptor */ 
+/* Rx descriptor */
 struct rtw_rxdesc {
     uint32_t	rd_ctl;
     uint32_t	rd_rsvd0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.195 2005/02/13 07:33:06 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.196 2005/02/27 00:27:03 perry Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  * without an NDA (if at all). What they do release is an API library
  * called the HCF (Hardware Control Functions) which is supposed to
  * do the device-specific operations of a device driver for you. The
- * publically available version of the HCF library (the 'HCF Light') is 
+ * publically available version of the HCF library (the 'HCF Light') is
  * a) extremely gross, b) lacks certain features, particularly support
  * for 802.11 frames, and c) is contaminated by the GNU Public License.
  *
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.195 2005/02/13 07:33:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.196 2005/02/27 00:27:03 perry Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -994,7 +994,7 @@ wi_choose_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 * accidentally send a packet on the MAC's queue
 		 * too fast. TBD find out if the MAC labels Tx
 		 * packets w/ rate when enqueued or dequeued.
-		 */   
+		 */
 		for (i = 0; i < rateidx && sc->sc_txpending[i] == 0; i++);
 		rateidx = i;
 	}
@@ -1076,7 +1076,7 @@ wi_start(struct ifnet *ifp)
 		else if (!IF_IS_EMPTY(&ic->ic_pwrsaveq)) {
 			struct llc *llc;
 
-			/* 
+			/*
 			 * Should these packets be processed after the
 			 * regular packets or before?  Since they are being
 			 * probed for, they are probably less time critical
@@ -1100,7 +1100,7 @@ wi_start(struct ifnet *ifp)
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			ifp->if_opackets++;
-			m_copydata(m0, 0, ETHER_HDR_LEN, 
+			m_copydata(m0, 0, ETHER_HDR_LEN,
 			    (caddr_t)&frmhdr.wi_ehdr);
 #if NBPFILTER > 0
 			if (ifp->if_bpf)

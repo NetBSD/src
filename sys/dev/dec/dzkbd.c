@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.13 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.14 2005/02/27 00:26:59 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.13 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.14 2005/02/27 00:26:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.13 2005/02/04 02:10:36 perry Exp $");
 #include <dev/wscons/wsksymvar.h>
 #include <dev/dec/wskbdmap_lk201.h>
 
-#include <machine/bus.h> 
+#include <machine/bus.h>
 
 #include <dev/dec/dzreg.h>
 #include <dev/dec/dzvar.h>
@@ -84,7 +84,7 @@ struct dzkbd_softc {
 
 	int sc_enabled;
 	int kbd_type;
-    
+
 	struct device *sc_wskbddev;
 };
 

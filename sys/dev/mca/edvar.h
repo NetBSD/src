@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.8 2004/09/25 04:47:02 thorpej Exp $	*/
+/*	$NetBSD: edvar.h,v 1.9 2005/02/27 00:27:21 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ struct ed_softc {
 
 	struct edc_mca_softc *edc_softc;   /* pointer to our controller */
 
-	int sc_flags;	  
+	int sc_flags;
 #define WDF_WLABEL	0x001 /* label is writable */
 #define WDF_LABELLING   0x002 /* writing label */
 #define WDF_LOADED	0x004 /* parameters loaded */
@@ -55,7 +55,7 @@ struct ed_softc {
 	/* actual drive parameters */
 	int sc_capacity;
 	int sc_devno;
-	u_int16_t sense_data[4];	/* sensed drive parameters */ 
+	u_int16_t sense_data[4];	/* sensed drive parameters */
 	u_int16_t cyl;
 	u_int8_t heads;
 	u_int8_t sectors;

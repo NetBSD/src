@@ -1,4 +1,4 @@
-/*	$NetBSD: gtethreg.h,v 1.2 2003/03/17 16:41:16 matt Exp $	*/
+/*	$NetBSD: gtethreg.h,v 1.3 2005/02/27 00:27:21 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -218,7 +218,7 @@ struct gt_eth_desc {
 #define	ETH_ESMIR_ReadValid		ETH__BIT(27)
 #define	ETH_ESMIR_Busy			ETH__BIT(28)
 
-/* 
+/*
  * Table 597: Port Configuration Register (PCR)
  * 00:00 PM			Promiscuous mode
  *				0: Normal mode (Frames are only received if the
@@ -302,7 +302,7 @@ struct gt_eth_desc {
 
 
 
-/* 
+/*
  * Table 598: Port Configuration Extend Register (PCXR)
  * 00:00 IGMP			IGMP Packets Capture Enable
  *				0: IGMP packets are treated as normal Multicast
@@ -399,7 +399,7 @@ struct gt_eth_desc {
 
 
 
-/* 
+/*
  * Table 599: Port Command Register (PCMR)
  * 14:00 Reserved
  * 15:15 FJ			Force Jam / Flow Control
@@ -421,7 +421,7 @@ struct gt_eth_desc {
 #define	ETH_EPCMR_FJ		ETH__BIT(15)
 
 
-/* 
+/*
  * Table 600: Port Status Register (PSR) -- Read Only
  * 00:00 Speed			Indicates Port Speed (0: 10Mbs, 1: 100Mbs)
  * 01:01 Duplex			Indicates Port Duplex Mode (0: Half, 1: Full)
@@ -456,7 +456,7 @@ struct gt_eth_desc {
 #define	ETH_EPSR_TXinProg	ETH__BIT(7)
 
 
-/* 
+/*
  * Table 601: Serial Parameters Register (SPR)
  * 01:00 JAM_LENGTH		Two bits to determine the JAM Length
  *				(in Backpressure) as follows:
@@ -504,13 +504,13 @@ struct gt_eth_desc {
 #define	ETH_ESPR_Data_Bilnd_GET(v)	ETH__EXT(v, 17, 5)
 #define	ETH_ESPR_Limit4(v)		ETH__BIT(22)
 
-/* 
+/*
  * Table 602: Hash Table Pointer Register (HTPR)
  * 31:00 HTP			32-bit pointer to the address table.
  *				Bits [2:0] must be set to zero.
  */
 
-/* 
+/*
  * Table 603: Flow Control Source Address Low (FCSAL)
  * 15:0 SA[15:0]		Source Address
  *				The least significant bits of the source
@@ -519,7 +519,7 @@ struct gt_eth_desc {
  * 31:16 Reserved
  */
 
-/* 
+/*
  * Table 604: Flow Control Source Address High (FCSAH)
  * 31:0 SA[47:16]		Source Address
  *				The most significant bits of the source address
@@ -528,7 +528,7 @@ struct gt_eth_desc {
  */
 
 
-/* 
+/*
  * Table 605: SDMA Configuration Register (SDCR)
  * 01:00 Reserved
  * 05:02 RC			Retransmit Count
@@ -586,7 +586,7 @@ struct gt_eth_desc {
 #define	ETH_ESDCR_BSZ_Strings		{ "1 64-bit word", "2 64-bit words", \
 					  "4 64-bit words", "8 64-bit words" }
 
-/* 
+/*
  * Table 606: SDMA Command Register (SDCMR)
  * 06:00 Reserved
  * 07:07 ERD			Enable RX DMA.
@@ -647,7 +647,7 @@ struct gt_eth_desc {
 #define	ETH_ESDCMR_TXDL			ETH__BIT(24)
 #define	ETH_ESDCMR_AT			ETH__BIT(31)
 
-/* 
+/*
  * Table 607: Interrupt Cause Register (ICR)
  * 00:00 RxBuffer		Rx Buffer Return
  *				Indicates an Rx buffer returned to CPU ownership
@@ -791,32 +791,32 @@ struct gt_eth_desc {
 #define	ETH_IR_EtherIntSum	ETH__BIT(31)
 #define	ETH_IR_Summary		ETH__BIT(31)
 
-/* 
+/*
  * Table 608: Interrupt Mask Register (IMR)
  * 31:00 Various		Mask bits for the Interrupt Cause register.
  */
 
-/* 
+/*
  * Table 609: IP Differentiated Services CodePoint to Priority0 low (DSCP2P0L),
  * 31:00 Priority0_low		The LSB priority bits for DSCP[31:0] entries.
  */
 
-/* 
+/*
  * Table 610: IP Differentiated Services CodePoint to Priority0 high (DSCP2P0H)
  * 31:00 Priority0_high		The LSB priority bits for DSCP[63:32] entries.
  */
 
-/* 
+/*
  * Table 611: IP Differentiated Services CodePoint to Priority1 low (DSCP2P1L)
  * 31:00 Priority1_low		The MSB priority bits for DSCP[31:0] entries.
  */
 
-/* 
+/*
  * Table 612: IP Differentiated Services CodePoint to Priority1 high (DSCP2P1H)
  * 31:00 Priority1_high		The MSB priority bit for DSCP[63:32] entries.
  */
 
-/* 
+/*
  * Table 613: VLAN Priority Tag to Priority (VPT2P)
  * 07:00 Priority0		The LSB priority bits for VLAN Priority[7:0]
  *				entries.

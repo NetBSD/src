@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.68 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.69 2005/02/27 00:27:48 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.68 2005/02/21 00:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.69 2005/02/27 00:27:48 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.68 2005/02/21 00:29:07 thorpej Exp $");
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/chio.h> 
+#include <sys/chio.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>

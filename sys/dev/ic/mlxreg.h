@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxreg.h,v 1.4 2002/08/31 05:18:03 ad Exp $	*/
+/*	$NetBSD: mlxreg.h,v 1.5 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -408,7 +408,7 @@ struct mlx_config {
 	u_int8_t	cf_scsi_param_3;
 	u_int8_t	cf_scsi_param_4;
 	u_int8_t	cf_scsi_param_5;
-	u_int8_t	cf_scsi_initiator_id;	
+	u_int8_t	cf_scsi_initiator_id;
 	u_int8_t	cf_res2;
 	u_int8_t	cf_startup_mode;
 	u_int8_t	cf_simultaneous_spinup_devices;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.15 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.16 2005/02/27 00:26:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.15 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.16 2005/02/27 00:26:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.15 2005/02/04 02:10:36 perry Exp $
 #include <sys/queue.h>
 #include <sys/device.h>
 
-#include <machine/bus.h> 
+#include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/scsipi/scsi_all.h> 
+#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 

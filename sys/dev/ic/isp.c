@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.105 2003/12/04 13:57:30 keihan Exp $ */
+/* $NetBSD: isp.c,v 1.106 2005/02/27 00:27:01 perry Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.105 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.106 2005/02/27 00:27:01 perry Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -747,7 +747,7 @@ again:
 			isp->isp_fwrev[1] = 37;
 #endif
 			isp->isp_fwrev[2] = 0;
-		} 
+		}
 	} else {
 		isp->isp_fwrev[0] = mbs.param[1];
 		isp->isp_fwrev[1] = mbs.param[2];
@@ -1283,7 +1283,7 @@ isp_fibre_init(struct ispsoftc *isp)
 	/*
 	 * Right now we just set extended options to prefer point-to-point
 	 * over loop based upon some soft config options.
-	 * 
+	 *
 	 * NB: for the 2300, ICBOPT_EXTENDED is required.
 	 */
 	if (IS_2200(isp) || IS_23XX(isp)) {
@@ -2748,7 +2748,7 @@ isp_scan_fabric(struct ispsoftc *isp, int ftype)
 			}
 			continue;
 		}
-		lcl.port_wwn = 
+		lcl.port_wwn =
 		    (((u_int64_t)gs1->snscb_wwn[0]) << 56) |
 		    (((u_int64_t)gs1->snscb_wwn[1]) << 48) |
 		    (((u_int64_t)gs1->snscb_wwn[2]) << 40) |
@@ -2803,7 +2803,7 @@ isp_scan_fabric(struct ispsoftc *isp, int ftype)
 			}
 			continue;
 		}
-		lcl.node_wwn = 
+		lcl.node_wwn =
 		    (((u_int64_t)gs1->snscb_wwn[0]) << 56) |
 		    (((u_int64_t)gs1->snscb_wwn[1]) << 48) |
 		    (((u_int64_t)gs1->snscb_wwn[2]) << 40) |
@@ -4116,7 +4116,7 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 	{
 #ifdef	ISP_TARGET_MODE
 		int handle =
-		    (ISP_READ(isp, OUTMAILBOX2) << 16) | 
+		    (ISP_READ(isp, OUTMAILBOX2) << 16) |
 		    (ISP_READ(isp, OUTMAILBOX1));
 		if (isp_target_async(isp, handle, mbox))
 			rval = -1;
@@ -5140,7 +5140,7 @@ static const u_int16_t mbpfc[] = {
 /*
  * Footnotes
  *
- * (1): this sets bits 21..16 in mailbox register #8, which we nominally 
+ * (1): this sets bits 21..16 in mailbox register #8, which we nominally
  *	do not access at this time in the core driver. The caller is
  *	responsible for setting this register first (Gross!).
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.34 2005/02/08 05:16:17 briggs Exp $	*/
+/*	$NetBSD: ld.c,v 1.35 2005/02/27 00:26:58 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.34 2005/02/08 05:16:17 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.35 2005/02/27 00:26:58 perry Exp $");
 
 #include "rnd.h"
 
@@ -134,7 +134,7 @@ ldattach(struct ld_softc *sc)
 
 		sc->sc_nsectors = 63;
 		sc->sc_ncylinders = INT_MAX;
-		ncyl = sc->sc_secperunit / 
+		ncyl = sc->sc_secperunit /
 		    (sc->sc_nheads * sc->sc_nsectors);
 		if (ncyl < INT_MAX)
 			sc->sc_ncylinders = (int)ncyl;
@@ -445,8 +445,8 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 #endif
 		    ))
 			error = writedisklabel(
-			    MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART), 
-			    ldstrategy, sc->sc_dk.dk_label, 
+			    MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART),
+			    ldstrategy, sc->sc_dk.dk_label,
 			    sc->sc_dk.dk_cpulabel);
 
 		sc->sc_flags &= ~LDF_LABELLING;
@@ -508,7 +508,7 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 		strcpy(dkw->dkw_parent, sc->sc_dv.dv_xname);
 		return (dkwedge_add(dkw));
 	    }
-	
+
 	case DIOCDWEDGE:
 	    {
 	    	struct dkwedge_info *dkw = (void *) addr;
@@ -520,7 +520,7 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 		strcpy(dkw->dkw_parent, sc->sc_dv.dv_xname);
 		return (dkwedge_del(dkw));
 	    }
-	
+
 	case DIOCLWEDGES:
 	    {
 	    	struct dkwedge_list *dkwl = (void *) addr;

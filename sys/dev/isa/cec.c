@@ -1,4 +1,4 @@
-/*	$NetBSD: cec.c,v 1.2 2004/09/14 20:20:46 drochner Exp $	*/
+/*	$NetBSD: cec.c,v 1.3 2005/02/27 00:27:17 perry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.2 2004/09/14 20:20:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.3 2005/02/27 00:27:17 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ void	cecattach(struct device *, struct device *, void *);
 CFATTACH_DECL(cec, sizeof(struct cec_softc),
 	cecprobe, cecattach, NULL, NULL);
 
-void	cecreset(void *); 
+void	cecreset(void *);
 int	cecpptest(void *, int);
 void	cecppwatch(void *, int);
 void	cecppclear(void *);
@@ -363,7 +363,7 @@ cecsenddata(void *v, void *ptr, int origcnt)
 				return (origcnt - cnt - 1);
 		}
 		bus_space_write_1(iot, ioh, NEC7210_AUXMR, AUXCMD_SEOI);
-		bus_space_write_1(iot, ioh, NEC7210_CDOR, *addr);	
+		bus_space_write_1(iot, ioh, NEC7210_CDOR, *addr);
 		(void) cecwait(sc, ISR1_DO, 0);
 	}
 	return (origcnt);

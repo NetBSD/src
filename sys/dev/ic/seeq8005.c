@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.36 2004/10/30 18:08:38 thorpej Exp $ */
+/* $NetBSD: seeq8005.c,v 1.37 2005/02/27 00:27:02 perry Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.36 2004/10/30 18:08:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.37 2005/02/27 00:27:02 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	printf(", %d-bit", sc->sc_flags & SF_8BIT ? 8 : 16);
 
 	/* Get the product ID */
-	
+
 	ea_select_buffer(sc, SEEQ_BUFCODE_PRODUCTID);
 	id = SEEQ_READ16(sc, sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN);
 
@@ -245,7 +245,7 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 
 	printf("%s: %dKB packet memory, txbuf=%dKB (%d buffers), rxbuf=%dKB",
 	    sc->sc_dev.dv_xname, sc->sc_buffersize >> 10,
-	    sc->sc_tx_bufsize >> 10, sc->sc_tx_bufs, sc->sc_rx_bufsize >> 10); 
+	    sc->sc_tx_bufsize >> 10, sc->sc_tx_bufs, sc->sc_rx_bufsize >> 10);
 
 	if (padbuf == NULL) {
 		padbuf = malloc(ETHER_MIN_LEN - ETHER_CRC_LEN, M_DEVBUF,
@@ -478,7 +478,7 @@ ea_stop(struct ifnet *ifp, int disable)
 	struct seeq8005_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	
+
 	DPRINTF(SEEQ_DEBUG_MISC, ("ea_stop()\n"));
 
 	/* Stop all IO */
@@ -552,7 +552,7 @@ ea_await_fifo_empty(struct seeq8005_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int timeout;
-	
+
 	timeout = 20000;
 	if ((SEEQ_READ16(sc, iot, ioh, SEEQ_STATUS) &
 	     SEEQ_STATUS_FIFO_DIR) != 0)
@@ -810,7 +810,7 @@ ea_init(struct ifnet *ifp)
 
 	/* Place a NULL header at the beginning of the receive area */
 	ea_writebuf(sc, NULL, sc->sc_rx_ptr, 0);
-		
+
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_BUFWIN, 0x0000);
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_BUFWIN, 0x0000);
 
@@ -830,7 +830,7 @@ ea_init(struct ifnet *ifp)
 
 	/* Place a NULL header at the beginning of the transmit area */
 	ea_writebuf(sc, NULL, 0x0000, 0);
-		
+
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_BUFWIN, 0x0000);
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_BUFWIN, 0x0000);
 
@@ -881,7 +881,7 @@ ea_start(struct ifnet *ifp)
 		return;
 
 	/* Mark interface as output active */
-	
+
 	ifp->if_flags |= IFF_OACTIVE;
 
 	/* tx packets */
@@ -896,7 +896,7 @@ ea_start(struct ifnet *ifp)
  *
  * Called at splnet()
  */
- 
+
 void
 eatxpacket(struct seeq8005_softc *sc)
 {
@@ -1092,7 +1092,7 @@ ea_txint(struct seeq8005_softc *sc)
 /*			ifp->if_collisions +=
 			    (txstatus >> SEEQ_TXSTAT_COLLISIONS_SHIFT)
 			    & SEEQ_TXSTAT_COLLISION_MASK;*/
-				    
+
 			/* Use the TX Collision register */
 			ea_select_buffer(sc, SEEQ_BUFCODE_TX_COLLS);
 			colls = bus_space_read_1(iot, ioh, SEEQ_BUFWIN);
@@ -1149,7 +1149,7 @@ ea_rxint(struct seeq8005_softc *sc)
 	do {
 		/* Read rx header */
 		ea_readbuf(sc, rxhdr, addr, 4);
-		
+
 		/* Split the packet header */
 		ptr = (rxhdr[0] << 8) | rxhdr[1];
 		ctrl = rxhdr[2];

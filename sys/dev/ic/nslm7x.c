@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.20 2005/02/04 02:10:36 perry Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.21 2005/02/27 00:27:02 perry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.20 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.21 2005/02/27 00:27:02 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1037,8 +1037,8 @@ itec_svolt(sc, sensors, infos)
 		 * for detecting those cases but since rfact is an u_int this
 		 * isn't possible.
 		 */
-		if (i == 5) 
-			sensors[i].cur.data_s -= 
+		if (i == 5)
+			sensors[i].cur.data_s -=
 			    (infos[i].rfact - 10000) * ITEC_VREF;
 		/* division by 10 gets us back to uVDC */
 		sensors[i].cur.data_s /= 10;

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.77 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: siop.c,v 1.78 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.77 2005/02/04 02:10:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.78 2005/02/27 00:27:02 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ static int siop_stat_intr_qfull = 0;
 void siop_printstats(void);
 #define INCSTAT(x) x++
 #else
-#define INCSTAT(x) 
+#define INCSTAT(x)
 #endif
 
 static __inline__ void siop_script_sync(struct siop_softc *, int);
@@ -351,7 +351,7 @@ siop_intr(v)
 			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 			break;
 		}
-	} 
+	}
 	if (siop_cmd) {
 		xs = siop_cmd->cmd_c.xs;
 		siop_target = (struct siop_target *)siop_cmd->cmd_c.siop_target;
@@ -431,7 +431,7 @@ siop_intr(v)
 			printf("last msg_in=0x%x status=0x%x\n",
 			    siop_cmd->cmd_tables->msg_in[0],
 			    le32toh(siop_cmd->cmd_tables->status));
-		else 
+		else
 			printf("%s: current DSA invalid\n",
 			    sc->sc_c.sc_dev.dv_xname);
 		need_reset = 1;
@@ -472,7 +472,7 @@ siop_intr(v)
 			goto reset;
 		}
 		if ((sist & SIST0_MA) && need_reset == 0) {
-			if (siop_cmd) { 
+			if (siop_cmd) {
 				int scratcha0;
 				dstat = bus_space_read_1(sc->sc_c.sc_rt,
 				    sc->sc_c.sc_rh, SIOP_DSTAT);
@@ -648,7 +648,7 @@ scintr:
 			printf("%s: reselect with invalid target\n",
 				    sc->sc_c.sc_dev.dv_xname);
 			goto reset;
-		case A_int_resellun: 
+		case A_int_resellun:
 			INCSTAT(siop_stat_intr_lunresel);
 			target = bus_space_read_1(sc->sc_c.sc_rt,
 			    sc->sc_c.sc_rh, SIOP_SCRATCHA) & 0xf;
@@ -754,7 +754,7 @@ scintr:
 					/* no table to flush here */
 					CALL_SCRIPT(Ent_msgin_ack);
 					return 1;
-				} else if (msg == MSG_SIMPLE_Q_TAG || 
+				} else if (msg == MSG_SIMPLE_Q_TAG ||
 				    msg == MSG_HEAD_OF_Q_TAG ||
 				    msg == MSG_ORDERED_Q_TAG) {
 					if (siop_handle_qtag_reject(
@@ -804,7 +804,7 @@ scintr:
 		case A_int_extmsgin:
 #ifdef SIOP_DEBUG_INTR
 			printf("extended message: msg 0x%x len %d\n",
-			    siop_cmd->cmd_tables->msg_in[2], 
+			    siop_cmd->cmd_tables->msg_in[2],
 			    siop_cmd->cmd_tables->msg_in[1]);
 #endif
 			if (siop_cmd->cmd_tables->msg_in[1] >
@@ -977,7 +977,7 @@ end:
 		sc->sc_flags &= ~SCF_CHAN_NOSLOT;
 		scsipi_channel_thaw(&sc->sc_c.sc_chan, 1);
 	}
-		
+
 	return 1;
 }
 
@@ -1062,7 +1062,7 @@ siop_unqueue(sc, target, lun)
 
 	for (tag = 1; tag < SIOP_NTAG; tag++) {
 		/* look for commands in the scheduler, not yet started */
-		if (siop_lun->siop_tag[tag].active == NULL) 
+		if (siop_lun->siop_tag[tag].active == NULL)
 			continue;
 		siop_cmd = siop_lun->siop_tag[tag].active;
 		for (slot = 0; slot <= sc->sc_currschedslot; slot++) {
@@ -1172,7 +1172,7 @@ siop_handle_reset(sc)
 		if (sc->sc_c.targets[target] == NULL)
 			continue;
 		for (lun = 0; lun < 8; lun++) {
-			struct siop_target *siop_target = 
+			struct siop_target *siop_target =
 			    (struct siop_target *)sc->sc_c.targets[target];
 			siop_lun = siop_target->siop_lun[lun];
 			if (siop_lun == NULL)
@@ -1418,7 +1418,7 @@ siop_start(sc, siop_cmd)
 
 	/*
 	 * The queue management here is a bit tricky: the script always looks
-	 * at the slot from first to last, so if we always use the first 
+	 * at the slot from first to last, so if we always use the first
 	 * free slot commands can stay at the tail of the queue ~forever.
 	 * The algorithm used here is to restart from the head when we know
 	 * that the queue is empty, and only add commands after the last one.
@@ -1503,7 +1503,7 @@ siop_start(sc, siop_cmd)
 		    Ent_ldsa_reload_dsa);
 	/* CMD script: MOVE MEMORY addr */
 	siop_xfer = (struct siop_xfer*)siop_cmd->cmd_tables;
-	siop_xfer->resel[E_ldsa_abs_slot_Used[0]] = 
+	siop_xfer->resel[E_ldsa_abs_slot_Used[0]] =
 	   htole32(sc->sc_c.sc_scriptaddr + Ent_script_sched_slot0 + slot * 8);
 		siop_table_sync(siop_cmd, BUS_DMASYNC_PREWRITE);
 	/* scheduler slot: JUMP ldsa_select */
@@ -1778,7 +1778,7 @@ siop_get_lunsw(sc)
 			sc->sc_c.sc_script[sc->script_free_lo + i] =
 			    htole32(lun_switch[i]);
 		sc->sc_c.sc_script[
-		    sc->script_free_lo + E_abs_lunsw_return_Used[0]] = 
+		    sc->script_free_lo + E_abs_lunsw_return_Used[0]] =
 		    htole32(sc->sc_c.sc_scriptaddr + Ent_lunsw_return);
 	}
 	lunsw->lunsw_off = sc->script_free_lo;
@@ -1933,11 +1933,11 @@ siop_add_dev(sc, target, lun)
 			for(i = 0;
 			    i < sizeof(tag_switch) / sizeof(tag_switch[0]);
 			    i++) {
-				sc->sc_c.sc_script[sc->script_free_hi + i] = 
+				sc->sc_c.sc_script[sc->script_free_hi + i] =
 				    htole32(tag_switch[i]);
 			}
 		}
-		siop_script_write(sc, 
+		siop_script_write(sc,
 		    siop_lun->reseloff + 1,
 		    sc->sc_c.sc_scriptaddr + sc->script_free_hi * 4 +
 		    Ent_tag_switch_entry);
@@ -1948,7 +1948,7 @@ siop_add_dev(sc, target, lun)
 		}
 	} else {
 		/* non-tag case; just work with the lun switch */
-		siop_lun->siop_tag[0].reseloff = 
+		siop_lun->siop_tag[0].reseloff =
 		    siop_target->siop_lun[lun]->reseloff;
 	}
 	siop_script_sync(sc, BUS_DMASYNC_PREWRITE);

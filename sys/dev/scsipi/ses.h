@@ -1,4 +1,4 @@
-/* $NetBSD: ses.h,v 1.1 2000/01/20 17:07:41 mjacob Exp $ */
+/* $NetBSD: ses.h,v 1.2 2005/02/27 00:27:48 perry Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -62,7 +62,7 @@
  * performs a SESIOC_GETOBJMAP to get the map that contains the
  * object identifiers for all objects (see ses_object below).
  * This information is static.
- * 
+ *
  * The application may perform SESIOC_GETOBJSTAT operations to retrieve
  * status on an object (see the ses_objstat structure below), SESIOC_SETOBJSTAT
  * operations to set status for an object.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.31 2004/10/28 07:07:40 yamt Exp $	*/
+/*	$NetBSD: mlx.c,v 1.32 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.31 2004/10/28 07:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.32 2005/02/27 00:27:02 perry Exp $");
 
 #include "ld.h"
 
@@ -148,7 +148,7 @@ const struct cdevsw mlx_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-extern struct	cfdriver mlx_cd; 
+extern struct	cfdriver mlx_cd;
 static struct	proc *mlx_periodic_proc;
 static void	*mlx_sdh;
 
@@ -307,7 +307,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		return;
 	}
 
-	if ((rv = bus_dmamem_map(mlx->mlx_dmat, &seg, rseg, size, 
+	if ((rv = bus_dmamem_map(mlx->mlx_dmat, &seg, rseg, size,
 	    (caddr_t *)&mlx->mlx_sgls,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map sglists, rv = %d\n",
@@ -315,7 +315,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		return;
 	}
 
-	if ((rv = bus_dmamap_create(mlx->mlx_dmat, size, 1, size, 0, 
+	if ((rv = bus_dmamap_create(mlx->mlx_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mlx->mlx_dmamap)) != 0) {
 		printf("%s: unable to create sglist DMA map, rv = %d\n",
 		    mlx->mlx_dv.dv_xname, rv);
@@ -365,7 +365,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		}
 	}
 
-	/* 
+	/*
 	 * Wait for the controller to come ready, handshaking with the
 	 * firmware if required.  This is typically only necessary on
 	 * platforms where the controller BIOS does not run.
@@ -859,7 +859,7 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case 0x10000:
 			rv = ENOMEM;	/* Couldn't set up the command. */
 			break;
-		case 0x0002:		
+		case 0x0002:
 			rv = EBUSY;
 			break;
 		case 0x0104:
@@ -929,7 +929,7 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case MLXD_DETACH:
 		/*
-		 * Disconnect from the specified drive; it may be about to go 
+		 * Disconnect from the specified drive; it may be about to go
 		 * away.
 		 */
 		return (config_detach(ms->ms_dv, 0));
@@ -957,7 +957,7 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case 0x10000:
 			rv = ENOMEM;	/* Couldn't set up the command. */
 			break;
-		case 0x0002:		
+		case 0x0002:
 			rv = EIO;
 			break;
 		case 0x0105:
@@ -1040,12 +1040,12 @@ mlx_periodic(struct mlx_softc *mlx)
 			mlx->mlx_pause.mp_which = 0;
 		}
 	} else if (ct > (mlx->mlx_lastpoll + 10)) {
-		/* 
+		/*
 		 * Run normal periodic activities...
 		 */
 		mlx->mlx_lastpoll = ct;
 
-		/* 
+		/*
 		 * Check controller status.
 		 */
 		if ((mlx->mlx_flags & MLXF_PERIODIC_CTLR) == 0) {
@@ -1094,7 +1094,7 @@ mlx_periodic(struct mlx_softc *mlx)
 			 */
 			break;
 		}
-		TAILQ_REMOVE(&mlx->mlx_ccb_worklist, mc, mc_chain.tailq); 
+		TAILQ_REMOVE(&mlx->mlx_ccb_worklist, mc, mc_chain.tailq);
 		mc->mc_status = MLX_STATUS_LOST;
 		if (mc->mc_mx.mx_handler != NULL)
 			(*mc->mc_mx.mx_handler)(mc);
@@ -1204,7 +1204,7 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 
 	case MLX_CMD_ENQSYSDRIVE:
 		/*
-		 * Perform drive status comparison to see if something 
+		 * Perform drive status comparison to see if something
 		 * has failed.  Don't perform the comparison if we're
 		 * reconfiguring, since the system drive table will be
 		 * changing.
@@ -1230,7 +1230,7 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 				case MLX_SYSD_CRITICAL:
 					statestr = "critical";
 					break;
-				
+
 				default:
 					statestr = "unknown";
 					break;
@@ -1388,7 +1388,7 @@ mlx_periodic_eventlog_respond(struct mlx_ccb *mc)
 			}
 
 			break;
-			
+
 		default:
 			printf("%s: unknown log message type 0x%x\n",
 			    mlx->mlx_dv.dv_xname, el->el_type);
@@ -1508,9 +1508,9 @@ mlx_pause_action(struct mlx_softc *mlx)
 	} else {
 		cmd = MLX_CMD_STOPCHANNEL;
 
-		/* 
+		/*
 		 * Channels will always start again after the failsafe
-		 * period, which is specified in multiples of 30 seconds. 
+		 * period, which is specified in multiples of 30 seconds.
 		 * This constrains us to a maximum pause of 450 seconds.
 		 */
 		failsafe = ((mlx->mlx_pause.mp_howlong - ct) + 5) / 30;
@@ -1827,8 +1827,8 @@ mlx_user_command(struct mlx_softc *mlx, struct mlx_usercommand *mu)
 		mapped = 1;
 	}
 
-	/* 
-	 * If this is a passthrough SCSI command, the DCDB is packed at the 
+	/*
+	 * If this is a passthrough SCSI command, the DCDB is packed at the
 	 * beginning of the data area.  Fix up the DCDB to point to the correct physical
 	 * address and override any bufptr supplied by the caller since we know
 	 * what it's meant to be.
@@ -1839,7 +1839,7 @@ mlx_user_command(struct mlx_softc *mlx, struct mlx_usercommand *mu)
 		mu->mu_bufptr = 8;
 	}
 
-	/* 
+	/*
 	 * If there's a data buffer, fix up the command's buffer pointer.
 	 */
 	if (mu->mu_datasize > 0) {
@@ -2041,7 +2041,7 @@ mlx_ccb_poll(struct mlx_softc *mlx, struct mlx_ccb *mc, int timo)
 
 	if ((rv = mlx_ccb_submit(mlx, mc)) != 0)
 		return (rv);
-	TAILQ_INSERT_TAIL(&mlx->mlx_ccb_worklist, mc, mc_chain.tailq); 
+	TAILQ_INSERT_TAIL(&mlx->mlx_ccb_worklist, mc, mc_chain.tailq);
 
 	for (timo *= 10; timo != 0; timo--) {
 		mlx_intr(mlx);
@@ -2181,7 +2181,7 @@ mlx_intr(void *cookie)
 			continue;
 		}
 
-		TAILQ_REMOVE(&mlx->mlx_ccb_worklist, mc, mc_chain.tailq); 
+		TAILQ_REMOVE(&mlx->mlx_ccb_worklist, mc, mc_chain.tailq);
 
 		/* Record status and notify the initiator, if requested. */
 		mc->mc_status = status;

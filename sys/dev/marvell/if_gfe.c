@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.15 2005/02/01 20:47:02 matt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.16 2005/02/27 00:27:21 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.15 2005/02/01 20:47:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.16 2005/02/27 00:27:21 perry Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -215,7 +215,7 @@ gfe_match(struct device *parent, struct cfdata *cf, void *aux)
 		return 0;
 
 	return 1;
-}       
+}
 
 /*
  * Attach this instance, and then all the sub-devices
@@ -1111,7 +1111,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 		return 0;
 	}
 
-	/* 
+	/*
 	 * The end-of-list descriptor we put on last time is the starting point
 	 * for this packet.  The GT is supposed to terminate list processing on
 	 * a NULL nxtptr but that currently is broken so a CPU-owned descriptor
@@ -1725,7 +1725,7 @@ gfe_hash_entry_op(struct gfe_softc *sc, enum gfe_hash_op op,
 	for (limit = HSH_LIMIT; limit > 0 ; --limit) {
 		/*
 		 * Does the GT wrap at the end, stop at the, or overrun the
-		 * end?  Assume it wraps for now.  Stash a copy of the 
+		 * end?  Assume it wraps for now.  Stash a copy of the
 		 * current hash entry.
 		 */
 		uint64_t *he_p = &sc->sc_hashtable[hash];
@@ -1768,7 +1768,7 @@ gfe_hash_entry_op(struct gfe_softc *sc, enum gfe_hash_op op,
 			maybe_he_p = he_p;
 			maybe_hash = hash;
 		}
-		
+
 		hash = (hash + 1) & (sc->sc_hashmask / sizeof(he));
 	}
 

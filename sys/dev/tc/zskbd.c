@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.10 2005/02/04 02:10:48 perry Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.11 2005/02/27 00:27:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.10 2005/02/04 02:10:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.11 2005/02/27 00:27:50 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ struct zskbd_softc {
 
 	int sc_enabled;
 	int kbd_type;
-    
+
 	struct device *sc_wskbddev;
 };
 

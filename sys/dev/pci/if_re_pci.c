@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.7 2005/02/23 09:18:46 yamt Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.8 2005/02/27 00:27:33 perry Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -280,7 +280,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * mark the card enabled now.
 	 */
 	sc->sc_flags |= RTK_ENABLED;
-	
+
 	/* Hook interrupt last to avoid having to lock softc */
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
@@ -303,7 +303,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	re_attach(sc);
 
 	/*
-	 * Perform hardware diagnostic. 
+	 * Perform hardware diagnostic.
 	 * XXX: this diagnostic only makes sense for attachemnts with 64-bit
 	 * busses: PCI, but not CardBus.
 	 */
@@ -314,7 +314,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 
 		re_detach(sc);
-		
+
 		if (psc->sc_ih != NULL) {
 			pci_intr_disestablish(pc, psc->sc_ih);
 			psc->sc_ih = NULL;

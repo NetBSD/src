@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.4 2003/08/28 19:00:52 thorpej Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.5 2005/02/27 00:27:34 perry Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -6,7 +6,7 @@
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
  * Copyright (c) 2000 Theo de Raadt (deraadt@openbsd.org)
  * Copyright (c) 2001 Patrik Lindergren (patrik@ipunplugged.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -157,7 +157,7 @@ static	void	ubsec_dump_ctx2(volatile struct ubsec_ctx_keyop *);
 struct ubsec_stats ubsecstats;
 
 /*
- * ubsec_maxbatch controls the number of crypto ops to voluntarily 
+ * ubsec_maxbatch controls the number of crypto ops to voluntarily
  * collect into one submission to the hardware.  This batching happens
  * when ops are dispatched from the crypto subsystem with a hint that
  * more are to follow immediately.  These ops must also not be marked
@@ -451,7 +451,7 @@ ubsec_attach(parent, self, aux)
 #else
 		callout_init(&sc->sc_rngto);
 		callout_reset(&sc->sc_rngto, sc->sc_rnghz, ubsec_rng, sc);
-#endif	
+#endif
  skip_rng:
 		if (sc->sc_rnghz)
 			aprint_normal("%s: random number generator enabled\n",
@@ -626,7 +626,7 @@ ubsec_feed(struct ubsec_softc *sc)
 	 * of slots defined in the data structure.  Otherwise we clamp
 	 * based on the tunable parameter ubsec_maxaggr.  Note that
 	 * aggregation can happen in two ways: either by batching ops
-	 * from above or because the h/w backs up and throttles us. 
+	 * from above or because the h/w backs up and throttles us.
 	 * Aggregating ops reduces the number of interrupts to the host
 	 * but also (potentially) increases the latency for processing
 	 * completed ops as we only get an interrupt when all aggregated
@@ -919,7 +919,7 @@ ubsec_op_cb(void *arg, bus_dma_segment_t *seg, int nsegs, bus_size_t mapsize, in
 {
 	struct ubsec_operand *op = arg;
 
-	KASSERT(nsegs <= UBS_MAX_SCATTER 
+	KASSERT(nsegs <= UBS_MAX_SCATTER
 		/*, ("Too many DMA segments returned when mapping operand")*/);
 #ifdef UBSEC_DEBUG
 	if (ubsec_debug)
@@ -1430,7 +1430,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 
 		ctxl = (struct ubsec_pktctx_long *)(dmap->d_alloc.dma_vaddr +
 		    offsetof(struct ubsec_dmachunk, d_ctx));
-		
+
 		/* transform small context into long context */
 		ctxl->pc_len = htole16(sizeof(struct ubsec_pktctx_long));
 		ctxl->pc_type = htole16(UBS_PKTCTX_TYPE_IPSEC);
@@ -1441,7 +1441,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 		for (i = 0; i < 5; i++)
 			ctxl->pc_hminner[i] = ctx.pc_hminner[i];
 		for (i = 0; i < 5; i++)
-			ctxl->pc_hmouter[i] = ctx.pc_hmouter[i];   
+			ctxl->pc_hmouter[i] = ctx.pc_hmouter[i];
 		ctxl->pc_iv[0] = ctx.pc_iv[0];
 		ctxl->pc_iv[1] = ctx.pc_iv[1];
 	} else
@@ -1482,7 +1482,7 @@ errout:
 		ubsecstats.hst_invalid++;
 	else
 		ubsecstats.hst_nomem++;
-#endif 
+#endif
 	if (err != ERESTART) {
 		crp->crp_etype = err;
 		crypto_done(crp);
@@ -1951,13 +1951,13 @@ ubsec_free_q(struct ubsec_softc *sc, struct ubsec_q *q)
 		if(q->q_stacked_mcr[i]) {
 			q2 = q->q_stacked_mcr[i];
 
-			if ((q2->q_dst_m != NULL) && (q2->q_src_m != q2->q_dst_m)) 
+			if ((q2->q_dst_m != NULL) && (q2->q_src_m != q2->q_dst_m))
 				m_freem(q2->q_dst_m);
 
 			crp = (struct cryptop *)q2->q_crp;
-			
+
 			SIMPLEQ_INSERT_TAIL(&sc->sc_freequeue, q2, q_next);
-			
+
 			crp->crp_etype = EFAULT;
 			crypto_done(crp);
 		} else {
@@ -1972,9 +1972,9 @@ ubsec_free_q(struct ubsec_softc *sc, struct ubsec_q *q)
 		m_freem(q->q_dst_m);
 
 	crp = (struct cryptop *)q->q_crp;
-	
+
 	SIMPLEQ_INSERT_TAIL(&sc->sc_freequeue, q, q_next);
-	
+
 	crp->crp_etype = EFAULT;
 	crypto_done(crp);
 	return(0);

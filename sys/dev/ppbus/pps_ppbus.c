@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.1 2004/01/28 17:27:06 drochner Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.2 2005/02/27 00:27:44 perry Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.1 2004/01/28 17:27:06 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.2 2005/02/27 00:27:44 perry Exp $");
 
 #include "opt_ntp.h"
 
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.1 2004/01/28 17:27:06 drochner Exp $
 #include <dev/ppbus/ppbus_var.h>
 
 struct pps_softc {
-	struct ppbus_device_softc pps_dev;	
+	struct ppbus_device_softc pps_dev;
 	struct device *ppbus;
 	int busy;
 	pps_info_t ppsinfo;
@@ -56,7 +56,7 @@ struct pps_softc {
 
 static int pps_probe(struct device *, struct cfdata *, void *);
 static void pps_attach(struct device *, struct device *, void *);
-CFATTACH_DECL(pps, sizeof(struct pps_softc), pps_probe, pps_attach, 
+CFATTACH_DECL(pps, sizeof(struct pps_softc), pps_probe, pps_attach,
 	NULL, NULL);
 extern struct cfdriver pps_cd;
 
@@ -65,7 +65,7 @@ static dev_type_close(ppsclose);
 static dev_type_ioctl(ppsioctl);
 const struct cdevsw pps_cdevsw = {
 	ppsopen, ppsclose, noread, nowrite, ppsioctl,
-	nostop, notty, nopoll, nommap, nokqfilter 
+	nostop, notty, nopoll, nommap, nokqfilter
 };
 
 static void ppsintr(void *arg);
@@ -77,7 +77,7 @@ pps_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ppbus_attach_args *args = aux;
 
-	/* we need an interrupt */ 
+	/* we need an interrupt */
 	if (!(args->capabilities & PPBUS_HAS_INTR))
 		return 0;
 
