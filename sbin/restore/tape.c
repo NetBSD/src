@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.24 1996/12/26 17:35:35 cjs Exp $	*/
+/*	$NetBSD: tape.c,v 1.25 1997/03/19 08:42:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: tape.c,v 1.24 1996/12/26 17:35:35 cjs Exp $";
+static char rcsid[] = "$NetBSD: tape.c,v 1.25 1997/03/19 08:42:55 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -659,7 +659,7 @@ getfile(fill, skip)
 	void	(*fill) __P((char *, long));
 	void	(*skip) __P((char *, long));
 {
-	register int i;
+	int i;
 	int curblk = 0;
 	long size = spcl.c_dinode.di_size;
 	static char clearedbuf[MAXBSIZE];
@@ -949,7 +949,7 @@ getmore:
 static void
 findtapeblksize()
 {
-	register long i;
+	long i;
 
 	for (i = 0; i < ntrec; i++)
 		((struct s_spcl *)&tapebuf[i * TP_BSIZE])->c_magic = 0;
@@ -1261,9 +1261,9 @@ findinode(header)
 
 static int
 checksum(buf)
-	register int *buf;
+	int *buf;
 {
-	register int i, j;
+	int i, j;
 
 	j = sizeof(union u_spcl) / sizeof(int);
 	i = 0;
@@ -1316,8 +1316,8 @@ msg(fmt, va_alist)
 
 static u_char *
 swabshort(sp, n)
-	register u_char *sp;
-	register int n;
+	u_char *sp;
+	int n;
 {
 	char c;
 
@@ -1330,8 +1330,8 @@ swabshort(sp, n)
 
 static u_char *
 swablong(sp, n)
-	register u_char *sp;
-	register int n;
+	u_char *sp;
+	int n;
 {
 	char c;
 
@@ -1345,7 +1345,7 @@ swablong(sp, n)
 
 void
 swabst(cp, sp)
-	register u_char *cp, *sp;
+	u_char *cp, *sp;
 {
 	int n = 0;
 
