@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.63 2002/04/04 23:15:43 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.64 2002/04/05 19:51:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.63 2002/04/04 23:15:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.64 2002/04/05 19:51:04 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -113,6 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.63 2002/04/04 23:15:43 thorpej Exp $");
 
 #include <dev/ic/i82557reg.h>
 #include <dev/ic/i82557var.h>
+
+#include <dev/microcode/i8255x/rcvbundl.h>
 
 /*
  * NOTE!  On the Alpha, we have an alignment constraint.  The
@@ -200,11 +202,18 @@ void	fxp_eeprom_update_cksum(struct fxp_softc *);
 void	fxp_get_info(struct fxp_softc *, u_int8_t *);
 void	fxp_tick(void *);
 void	fxp_mc_setup(struct fxp_softc *);
+void	fxp_load_ucode(struct fxp_softc *);
 
 void	fxp_shutdown(void *);
 void	fxp_power(int, void *);
 
 int	fxp_copy_small = 0;
+
+/*
+ * Variables for interrupt mitigating microcode.
+ */
+int	fxp_int_delay = 1000;		/* usec */
+int	fxp_bundle_max = 6;		/* packets */
 
 struct fxp_phytype {
 	int	fp_phy;		/* type of PHY, -1 for MII at the end. */
@@ -1386,10 +1395,12 @@ fxp_stop(struct ifnet *ifp, int disable)
 	}
 
 	/*
-	 * Issue software reset
+	 * Issue software reset.  This unloads any microcode that
+	 * might already be loaded.
 	 */
-	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SELECTIVE_RESET);
-	DELAY(10);
+	sc->sc_flags &= ~FXPF_UCODE_LOADED;
+	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SOFTWARE_RESET);
+	DELAY(50);
 
 	/*
 	 * Release any xmit buffers.
@@ -1505,6 +1516,11 @@ fxp_init(struct ifnet *ifp)
 
 	cbp = &sc->sc_control_data->fcd_configcb;
 	memset(cbp, 0, sizeof(struct fxp_cb_config));
+
+	/*
+	 * Load microcode for this controller.
+	 */
+	fxp_load_ucode(sc);
 
 	/*
 	 * This copy is kind of disgusting, but there are a bunch of must be
@@ -2036,6 +2052,121 @@ fxp_mc_setup(struct fxp_softc *sc)
 		    sc->sc_dev.dv_xname, __LINE__);
 		return;
 	}
+}
+
+static const uint32_t fxp_ucode_d101a[] = D101_A_RCVBUNDLE_UCODE;
+static const uint32_t fxp_ucode_d101b0[] = D101_B0_RCVBUNDLE_UCODE;
+static const uint32_t fxp_ucode_d101ma[] = D101M_B_RCVBUNDLE_UCODE;
+static const uint32_t fxp_ucode_d101s[] = D101S_RCVBUNDLE_UCODE;
+static const uint32_t fxp_ucode_d102[] = D102_B_RCVBUNDLE_UCODE;
+static const uint32_t fxp_ucode_d102c[] = D102_C_RCVBUNDLE_UCODE;
+
+#define	UCODE(x)	x, sizeof(x)
+
+static const struct ucode {
+	uint32_t	revision;
+	const uint32_t	*ucode;
+	size_t		length;
+	uint16_t	int_delay_offset;
+	uint16_t	bundle_max_offset;
+} ucode_table[] = {
+	{ FXP_REV_82558_A4, UCODE(fxp_ucode_d101a),
+	  D101_CPUSAVER_DWORD, 0 },
+
+	{ FXP_REV_82558_B0, UCODE(fxp_ucode_d101b0),
+	  D101_CPUSAVER_DWORD, 0 },
+
+	{ FXP_REV_82559_A0, UCODE(fxp_ucode_d101ma),
+	  D101M_CPUSAVER_DWORD, D101M_CPUSAVER_BUNDLE_MAX_DWORD },
+
+	{ FXP_REV_82559S_A, UCODE(fxp_ucode_d101s),
+	  D101S_CPUSAVER_DWORD, D101S_CPUSAVER_BUNDLE_MAX_DWORD },
+
+	{ FXP_REV_82550, UCODE(fxp_ucode_d102),
+	  D102_B_CPUSAVER_DWORD, D102_B_CPUSAVER_BUNDLE_MAX_DWORD },
+
+	{ FXP_REV_82550_C, UCODE(fxp_ucode_d102c),
+	  D102_C_CPUSAVER_DWORD, D102_C_CPUSAVER_BUNDLE_MAX_DWORD },
+
+	{ 0, NULL, 0, 0, 0 }
+};
+
+void
+fxp_load_ucode(struct fxp_softc *sc)
+{
+	const struct ucode *uc;
+	struct fxp_cb_ucode *cbp = &sc->sc_control_data->fcd_ucode;
+	int count;
+
+	if (sc->sc_flags & FXPF_UCODE_LOADED)
+		return;
+
+	/*
+	 * Only load the uCode if the user has requested that
+	 * we do so.
+	 */
+	if ((sc->sc_ethercom.ec_if.if_flags & IFF_LINK0) == 0) {
+		sc->sc_int_delay = 0;
+		sc->sc_bundle_max = 0;
+		return;
+	}
+
+	for (uc = ucode_table; uc->ucode != NULL; uc++) {
+		if (sc->sc_rev == uc->revision)
+			break;
+	}
+	if (uc->ucode == NULL)
+		return;
+
+	/* BIG ENDIAN: no need to swap to store 0 */
+	cbp->cb_status = 0;
+	cbp->cb_command = htole16(FXP_CB_COMMAND_UCODE | FXP_CB_COMMAND_EL);
+	cbp->link_addr = 0xffffffff;		/* (no) next command */
+	memcpy((void *) cbp->ucode, uc->ucode, uc->length);
+
+	if (uc->int_delay_offset)
+		*(uint16_t *) &cbp->ucode[uc->int_delay_offset] =
+		    htole16(fxp_int_delay + (fxp_int_delay / 2));
+
+	if (uc->bundle_max_offset)
+		*(uint16_t *) &cbp->ucode[uc->bundle_max_offset] =
+		    htole16(fxp_bundle_max);
+	
+	FXP_CDUCODESYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+	/*
+	 * Download the uCode to the chip.
+	 */
+	fxp_scb_wait(sc);
+	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDUCODEOFF);
+	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
+
+	/* ...and wait for it to complete. */
+	count = 10000;
+	do {
+		FXP_CDUCODESYNC(sc,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		DELAY(2);
+	} while ((le16toh(cbp->cb_status) & FXP_CB_STATUS_C) == 0 && --count);
+	if (count == 0) {
+		sc->sc_int_delay = 0;
+		sc->sc_bundle_max = 0;
+		printf("%s: timeout loading microcode\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	if (sc->sc_int_delay != fxp_int_delay ||
+	    sc->sc_bundle_max != fxp_bundle_max) {
+		sc->sc_int_delay = fxp_int_delay;
+		sc->sc_bundle_max = fxp_bundle_max;
+		printf("%s: Microcode loaded: int delay: %d usec, "
+		    "max bundle: %d\n", sc->sc_dev.dv_xname,
+		    sc->sc_int_delay,
+		    uc->bundle_max_offset == 0 ? 0 : sc->sc_bundle_max);
+	}
+
+	sc->sc_flags |= FXPF_UCODE_LOADED;
 }
 
 int
