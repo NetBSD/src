@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12 1998/10/01 04:36:05 erh Exp $
+#	$NetBSD: genassym.cf,v 1.13 1998/10/03 23:38:32 fvdl Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,8 +108,8 @@ include <compat/svr4/svr4_ucontext.h>
 endif
 
 ifdef COMPAT_LINUX
-include <compat/linux/linux_signal.h>
-include <compat/linux/linux_machdep.h>
+include <compat/linux/common/linux_signal.h>
+include <compat/linux/common/linux_machdep.h>
 endif
 
 ifdef COMPAT_FREEBSD
