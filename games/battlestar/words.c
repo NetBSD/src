@@ -1,4 +1,4 @@
-/*	$NetBSD: words.c,v 1.4 1997/01/07 11:56:51 tls Exp $	*/
+/*	$NetBSD: words.c,v 1.5 1997/10/10 11:40:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)words.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: words.c,v 1.4 1997/01/07 11:56:51 tls Exp $";
+__RCSID("$NetBSD: words.c,v 1.5 1997/10/10 11:40:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,5 +209,5 @@ struct wlist wlist[] = {
 	{ "move",	0,		ADJS },
 	{ "make",	0,		ADJS },
 	{ "to",		0,		ADJS },
-	0
+	{ 0 }
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.4 1997/01/07 11:56:44 tls Exp $	*/
+/*	$NetBSD: globals.c,v 1.5 1997/10/10 11:39:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: globals.c,v 1.4 1997/01/07 11:56:44 tls Exp $";
+__RCSID("$NetBSD: globals.c,v 1.5 1997/10/10 11:39:56 lukem Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: com4.c,v 1.4 1997/01/07 11:56:36 tls Exp $	*/
+/*	$NetBSD: com4.c,v 1.5 1997/10/10 11:39:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,21 +33,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)com4.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: com4.c,v 1.4 1997/01/07 11:56:36 tls Exp $";
+__RCSID("$NetBSD: com4.c,v 1.5 1997/10/10 11:39:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
+int
 take(from)
-unsigned int from[];
+	unsigned int from[];
 {
 	int firstnumber, heavy, bulky, value;
-	register int n;
+	int n;
 
 	firstnumber = wordnumber;
 	if (wordnumber < wordcount && wordvalue[wordnumber+1] == OFF){
@@ -67,7 +69,7 @@ unsigned int from[];
 				setbit(inven,value);
 				carrying += objwt[value];
 				encumber += objcumber[value];
-				time++;
+				ourtime++;
 				if (testbit(from,value))
 					printf("Taken.\n");
 				else
@@ -171,7 +173,7 @@ unsigned int from[];
 					puts("ties it at the waist.  Around her neck hangs a golden amulet.");
 					puts("She bids you to follow her.");
 					pleasure++;
-					followgod = time;
+					followgod = ourtime;
 					clearbit(location[position].objects,BATHGOD);
 				} else if (!testbit(location[position].objects,BATHGOD))
 					puts("You're in no position to take her.");
@@ -187,6 +189,7 @@ unsigned int from[];
 	return(firstnumber);
 }
 
+int
 throw(name)
 	char *name;
 {
@@ -267,8 +270,9 @@ throw(name)
 	return(first);
 }
 
+int
 drop(name)
-char *name;
+	char *name;
 {
 	
 	int firstnumber, value;
@@ -291,7 +295,7 @@ char *name;
 				setbit(location[position].objects,value);
 			else
 				tempwiz = 0;
-			time++;
+			ourtime++;
 			if (*name == 'K')
 				puts("Drop kicked.");
 			else
@@ -318,18 +322,21 @@ char *name;
 	return(-1);
 }
 
+int
 takeoff()
 {
 	wordnumber = take(wear);
 	return(drop("Dropped"));
 }
 
+int
 puton()
 {
 	wordnumber = take(location[position].objects);
 	return(wearit());
 }
 
+int
 eat()
 {
 	int firstnumber, value;
@@ -360,16 +367,18 @@ eat()
 			case MANGO:
 
 				printf("%s:\n",objsht[value]);
-				if (testbit(inven,value) && time > ate - CYCLE && testbit(inven,KNIFE)){
+				if (testbit(inven,value) &&
+				    ourtime > ate - CYCLE &&
+				    testbit(inven,KNIFE)){
 					clearbit(inven,value);
 					carrying -= objwt[value];
 					encumber -= objcumber[value];
-					ate = max(time,ate) + CYCLE/3;
+					ate = max(ourtime,ate) + CYCLE/3;
 					snooze += CYCLE/10;
-					time++;
+					ourtime++;
 					puts("Eaten.  You can explore a little longer now.");
 				}
-				else if (time < ate - CYCLE)
+				else if (ourtime < ate - CYCLE)
 					puts("You're stuffed.");
 				else if (!testbit(inven,KNIFE))
 					puts("You need a knife.");

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1997/01/07 12:41:18 tls Exp $ */
+/*	$NetBSD: extern.h,v 1.5 1997/10/10 11:39:47 lukem Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,9 +35,13 @@
  *	@(#)externs.h	8.1 (Berkeley) 5/31/93
  */
 
+#include <ctype.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define BITS (8 * sizeof (int))
 
@@ -247,15 +251,12 @@ int wordvalue[NWORD];
 int wordtype[NWORD];
 int wordcount, wordnumber;
 
-char *truedirec(), *rate();
-char *getcom(), *getword();
-
 	/* state of the game */
-int time;
+int ourtime;
 int position;
 int direction;
 int left, right, ahead, back;
-int clock, fuel, torps;
+int ourclock, fuel, torps;
 int carrying, encumber;
 int rythmn;
 int followfight;
@@ -298,3 +299,71 @@ struct objs {
 };
 struct objs dayobjs[];
 struct objs nightobjs[];
+
+void	blast __P((void));
+void	bury __P((void));
+int	card __P((char *, int));
+int	checkout __P((char *));
+void	chime __P((void));
+void	convert __P((int));
+void	crash __P((void));
+int	cypher __P((void));
+void	die __P((void));
+void	diesig __P((int));
+void	dig __P((void));
+int	draw __P((void));
+void	drink __P((void));
+int	drive __P((void));
+int	drop __P((char *));
+int	eat __P((void));
+void	endfly __P((void));
+int	fight __P((int, int));
+int	follow __P((void));
+void	getutmp __P((char *));
+int	give __P((void));
+int	hash __P((char *));
+void	initialize __P((char));
+void	install __P((struct wlist *));
+int	jump __P((void));
+void	kiss __P((void));
+int	land __P((void));
+int	launch __P((void));
+void	light __P((void));
+void	live __P((void));
+void	love __P((void));
+int	move __P((int, int));
+void	moveenemy __P((int));
+void	murder __P((void));
+void	news __P((void));
+void	newway __P((int));
+void	notarget __P((void));
+void	parse __P((void));
+void	post __P((char));
+void	printobjs __P((void));
+int	put __P((void));
+int	puton __P((void));
+void	ravage __P((void));
+void	restore __P((void));
+int	ride __P((void));
+void	save __P((void));
+void	screen __P((void));
+int	shoot __P((void));
+void	succumb __P((int));
+int	take __P((unsigned int []));
+int	takeoff __P((void));
+void	target __P((void));
+int	throw __P((char *));
+int	ucard __P((unsigned int *));
+int	use __P((void));
+int	visual __P((void));
+int	wearit __P((void));
+void	whichway __P((struct room));
+int	wizard __P((char *));
+void	wordinit __P((void));
+void	writedes __P((void));
+int	zzz __P((void));
+char   *getcom __P((char *, int, char *, char *));
+char   *getword __P((char *, char *, int));
+char   *rate __P((void));
+char   *truedirec __P((int, char));
+struct wlist *lookup __P((char *));
