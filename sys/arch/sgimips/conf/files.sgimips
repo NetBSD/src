@@ -1,8 +1,10 @@
-#	$NetBSD: files.sgimips,v 1.8 2001/01/17 00:07:36 fvdl Exp $
+#	$NetBSD: files.sgimips,v 1.9 2001/05/11 05:04:34 thorpej Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
+
+defopt	opt_machtypes.h IP20 IP22 IP32
 
 device mainbus {[addr = -1]}
 attach mainbus at root
@@ -51,8 +53,13 @@ file arch/sgimips/pci/macepci.c		macepci
 device	zsc {[channel = -1]}
 device	zstty: tty
 attach	zstty at zsc
-file	dev/ic/z8530tty.c		zstty needs-count       
+file 	dev/ic/z8530tty.c			zstty needs-flag
+file	arch/sgimips/dev/zs_kgdb.c		kgdb
+file 	arch/sgimips/dev/zs.c			zsc needs-count
+file 	dev/ic/z8530sc.c			zsc
 
+file arch/sgimips/sgimips/ip22.c
+file arch/sgimips/sgimips/ip32.c
 file arch/sgimips/sgimips/arcs.c
 file arch/sgimips/sgimips/autoconf.c
 file arch/sgimips/sgimips/bus.c
@@ -61,6 +68,7 @@ file arch/sgimips/sgimips/conf.c
 file arch/sgimips/sgimips/console.c
 file arch/sgimips/sgimips/disksubr.c
 file arch/sgimips/sgimips/machdep.c
+file arch/sgimips/sgimips/softintr.c
 file arch/sgimips/sgimips/procfs_machdep.c	procfs
 
 file dev/md_root.c			memory_disk_hooks
@@ -73,7 +81,6 @@ file dev/clock_subr.c
 file dev/cons.c
 
 include "arch/sgimips/gio/files.gio"
-#include "arch/sgimips/hpc/files.hpc"
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
@@ -81,8 +88,10 @@ include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
 file	arch/sgimips/pci/pci_machdep.c	pci
 
-include "dev/vme/files.vme"
 include "dev/eisa/files.eisa"
+file	arch/sgimips/eisa/eisa_machdep.c	eisa
+
+include "dev/vme/files.vme"
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 include "dev/pckbc/files.pckbc"
