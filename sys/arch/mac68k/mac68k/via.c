@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.43 1996/05/21 02:46:02 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.43.2.1 1996/05/31 03:37:02 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -217,13 +217,14 @@ via2_intr(fp)
 	if (intbits == 0)
 		return;
 
+	via2_reg(vIFR) = intbits;
+
 	mask = (unsigned char) 1;
 
 	bitnum = 0;
 	do {
 		if (intbits & mask) {
 			via2itab[bitnum](via2iarg[bitnum]);
-			via2_reg(vIFR) = mask;
 		}
 		mask <<= 1;
 	} while (intbits >= mask && ++bitnum < 7);
@@ -242,16 +243,14 @@ rbv_intr(fp)
 	if (intbits == 0)
 		return;
 
+	via2_reg(rIFR) = intbits;
+
 	mask = (unsigned char) 1;
 
 	bitnum = 0;
 	do {
 		if (intbits & mask) {
 			via2itab[bitnum](via2iarg[bitnum]);
-			/*
-			 * High bit must be set to actually clear interrupt.
-			 */
-			via2_reg(rIFR) = 0x80 | mask;
 		}
 		mask <<= 1;
 	} while (intbits >= mask && ++bitnum < 7);
@@ -345,7 +344,7 @@ rbv_nubus_intr(bitarg)
 	register int	i, mask, ints;
 
 try_again:
-	via2_reg(rIFR) = V2IF_SLOTINT;
+	via2_reg(rIFR) = 0x80 | V2IF_SLOTINT;
 	if ((ints = ((~via2_reg(rBufA)) & via2_reg(rSlotInt))) != 0) {
 		mask = (1 << 6);
 		i = 7;
