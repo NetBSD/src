@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.11 1998/07/13 12:04:30 hpeyerl Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.12 1998/08/05 16:29:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -149,6 +149,8 @@ cd_scsibus_attach(parent, self, aux)
 	struct scsipi_link *sc_link = sa->sa_sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cd_scsibus_attach: "));
+
+	scsipi_strvis(cd->name, 16, sa->sa_inqbuf.product, 16);
 
 	cdattach(parent, cd, sc_link, &cd_scsibus_ops);
 

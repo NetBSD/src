@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.113 1998/07/13 12:04:29 hpeyerl Exp $	*/
+/*	$NetBSD: cd.c,v 1.114 1998/08/05 16:29:04 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -916,8 +916,19 @@ cdgetdefaultlabel(cd, lp)
 	lp->d_ncylinders = (cd->params.disksize / 100) + 1;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	strncpy(lp->d_typename, "SCSI CD-ROM", 16);
-	lp->d_type = DTYPE_SCSI;
+	switch (cd->sc_link->type) {
+#if NCD_SCSIBUS > 0
+	    case BUS_SCSI:
+		lp->d_type = DTYPE_SCSI;
+		break;
+#endif
+#if NCD_ATAPIBUS > 0
+	    case BUS_ATAPI:
+		lp->d_type = DTYPE_ATAPI;
+		break;
+#endif
+	}
+	strncpy(lp->d_typename, cd->name, 16);
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = cd->params.disksize;
 	lp->d_rpm = 300;

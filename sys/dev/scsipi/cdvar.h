@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.8 1998/07/13 12:04:30 hpeyerl Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.9 1998/08/05 16:29:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -49,6 +49,7 @@ struct cd_softc {
 		u_long disksize;	/* total number sectors */
 	} params;
 	struct buf buf_queue;
+	char name[16]; /* product name, for default disklabel */
 	const struct cd_ops *sc_ops;	/* our bus-dependent ops vector */
 
 #if NRND > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.4 1998/06/10 22:17:40 thorpej Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.5 1998/08/05 16:29:06 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -71,6 +71,7 @@ struct sd_softc {
 	} params;
 	struct buf buf_queue;
 	u_int8_t type;
+	char name[16]; /* product name, for default disklabel */
 	const struct sd_ops *sc_ops;	/* our bus-dependent ops vector */
 
 	void *sc_sdhook;		/* our shutdown hook */
