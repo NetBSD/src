@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.12 1996/07/15 22:52:16 cgd Exp 
+ *	NetBSD: pcidevs,v 1.13 1996/08/23 04:35:41 cgd Exp 
  */
 
 /*
@@ -491,6 +491,7 @@
 
 /* FORE products */
 #define	PCI_PRODUCT_FORE_PCA200	0x0210		/* ATM PCA-200 */
+#define	PCI_PRODUCT_FORE_PCA200E	0x0300		/* ATM PCA-200e */
 
 /* Future Domain products */
 #define	PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30	0x0000		/* TMC-18C30 (36C70) */
