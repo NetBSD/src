@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciachip.h,v 1.4 1999/10/15 06:07:32 haya Exp $	*/
+/*	$NetBSD: pcmciachip.h,v 1.5 2000/01/13 08:58:51 joda Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -46,6 +46,11 @@ typedef int pcmcia_mem_handle_t;
 
 #define	PCMCIA_MEM_ATTR		1
 #define	PCMCIA_MEM_COMMON	2
+
+#define	PCMCIA_WIDTH_MEM8	8
+#define	PCMCIA_WIDTH_MEM16	16
+
+#define	PCMCIA_WIDTH_MEM_MASK	24
 
 #define	PCMCIA_WIDTH_AUTO	0
 #define	PCMCIA_WIDTH_IO8	1
