@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.2 2000/06/02 21:47:02 matt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.3 2000/06/02 22:14:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -152,10 +152,8 @@ static __inline void
 softintr_schedule(void *arg)
 {
 	struct softintr_handler * const sh = arg;
-	int s = _splraise(sh->sh_head->shd_ipl);	/* movl @(r0), ... */
 	sh->sh_pending = 1;
 	_setsirr(sh->sh_head->shd_ipl);
-	splx(s);
 }
 #endif /* _LOCORE */
 #endif /* _KERNEL */
