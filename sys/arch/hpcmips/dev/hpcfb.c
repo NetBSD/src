@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.8 2000/06/29 08:17:59 mrg Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.9 2000/07/22 03:46:53 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.8 2000/06/29 08:17:59 mrg Exp $";
+    "$Id: hpcfb.c,v 1.9 2000/07/22 03:46:53 takemura Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,6 +470,12 @@ hpcfb_init(fbconf, dc)
 	if (rasops_init(ri, 200, 200)) {
 		panic("%s(%d): rasops_init() failed!", __FILE__, __LINE__);
 	}
+
+	/* over write color map of rasops */
+	ri->ri_devcmap[0] = bg;
+	for (i = 1; i < 16; i++)
+		ri->ri_devcmap[i] = fg;
+
 #ifdef HPCFB_TVRAM
 	dc->dc_curx = -1;
 	dc->dc_cury = -1;
