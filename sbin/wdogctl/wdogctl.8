@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdogctl.8,v 1.6 2002/07/29 21:08:30 wiz Exp $
+.\"	$NetBSD: wdogctl.8,v 1.7 2002/10/03 15:41:48 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -53,40 +53,43 @@
 .Fl d
 .Sh DESCRIPTION
 .Nm
-is used to manipulate watchdog timers.  Watchdog timers provide a
-means of ensuring that a system continues to make progress.  This
-is accomplished by use of a timer, provided by either hardware or
+is used to manipulate watchdog timers.
+Watchdog timers provide a means of ensuring that a system
+continues to make progress.
+This is accomplished by use of a timer, provided by either hardware or
 software; when the timer expires, the watchdog resets the system.
 In this case of a hardware watchdog timer, this is accomplished by
-asserting the system's hardware reset signal.  In the case of a
-software watchdog timer, this is accomplished by calling the kernel's
-normal reboot path.  In order to prevent the system from rebooting,
+asserting the system's hardware reset signal.
+In the case of a software watchdog timer,
+this is accomplished by calling the kernel's normal reboot path.
+In order to prevent the system from rebooting,
 something must refresh the timer to prevent it from expiring.
 .Pp
 The
 .Nx
 kernel provides two basic modes in which watchdog timers may
-operate: kernel tickle mode and user tickle mode.  In kernel
-tickle mode, a timer in the kernel refreshes the watchdog timer.
+operate: kernel tickle mode and user tickle mode.
+In kernel tickle mode, a timer in the kernel refreshes the watchdog timer.
 In user tickle mode,
 .Nm
-runs in the background and refreshes the watchdog timer.  In
-kernel tickle mode, progress of the kernel is ensured.  In user
-tickle mode, the ability for user programs to run within a known
-period of time is ensured.  Note that user tickle mode must be
-used with caution; on a heavily loaded system, the timer may
+runs in the background and refreshes the watchdog timer.
+In kernel tickle mode, progress of the kernel is ensured.
+In user tickle mode, the ability for user programs to run within a known
+period of time is ensured.
+Note that user tickle mode must be used with caution;
+on a heavily loaded system, the timer may
 expire accidentally, even though user programs may be making
 (very slow) progress.
 .Pp
 In both modes, an attempt is made to refresh the watchdog timer
-in one half the timer's configured period.  That is, if the
-watchdog timer has a period of 30 seconds, a refresh attempt
+in one half the timer's configured period.
+That is, if the watchdog timer has a period of 30 seconds, a refresh attempt
 is made every 15 seconds.
 .Pp
 If called without arguments,
 .Nm
-will list the timers available on the system.  When arming a
-watchdog timer, the
+will list the timers available on the system.
+When arming a watchdog timer, the
 .Ar timer
 argument is the name of the timer to arm.
 .Pp
@@ -112,13 +115,14 @@ option will be silently ignored.
 .It Fl p Ar period
 When arming a timer, this flag configures the timer period to
 .Ar period
-seconds.  If the specified period it outside the timer's
-range, an error message will be displayed and no action will
-be taken.
+seconds.
+If the specified period it outside the timer's range,
+an error message will be displayed and no action will be taken.
 .It Fl d
-This flag disarms the currently active timer.  Note that not all
-watchdog timers can be disabled once armed.  If the selected timer
-can not be disabled, an error message will be displayed and the
+This flag disarms the currently active timer.
+Note that not all watchdog timers can be disabled once armed.
+If the selected timer can not be disabled,
+an error message will be displayed and the
 timer will remain armed.
 .El
 .Sh FILES

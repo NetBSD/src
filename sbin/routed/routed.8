@@ -1,4 +1,4 @@
-.\"	$NetBSD: routed.8,v 1.37 2002/05/12 15:48:37 wiz Exp $
+.\"	$NetBSD: routed.8,v 1.38 2002/10/03 15:41:46 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -206,10 +206,10 @@ It continues listening to RIP while using Router Discovery
 if multi-homed to ensure all interfaces are used.
 .Pp
 The Router Discovery standard requires that advertisements
-have a default "lifetime" of 30 minutes.  That means should
-something happen, a client can be without a good route for
-30 minutes.  It is a good idea to reduce the default to 45
-seconds using
+have a default "lifetime" of 30 minutes.
+That means should something happen,
+a client can be without a good route for 30 minutes.
+It is a good idea to reduce the default to 45 seconds using
 .Fl P Cm rdisc_interval=45
 on the command line or
 .Cm rdisc_interval=45
@@ -280,8 +280,8 @@ default route.
 This is typically used on a gateway to the Internet,
 or on a gateway that uses another routing protocol whose routes
 are not reported to other local routers.
-Notice that because a metric of 1 is used, this feature is
-dangerous.  It is more commonly accidentally used to create chaos with a
+Notice that because a metric of 1 is used, this feature is dangerous.
+It is more commonly accidentally used to create chaos with a
 routing loop than to solve problems.
 .It Fl h
 cause host or point-to-point routes to not be advertised,
@@ -528,7 +528,8 @@ This parameter must appear by itself on a line.
 The network number must specify a full, 32-bit value, as in 192.0.2.0
 instead of 192.0.2.
 .Pp
-Do not use this feature unless necessary.  It is dangerous.
+Do not use this feature unless necessary.
+It is dangerous.
 .It Cm ripv1_mask Ns \&= Ns Ar nname/mask1,mask2
 specifies that netmask of the network of which
 .Cm nname/mask1

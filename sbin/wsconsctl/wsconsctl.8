@@ -1,4 +1,4 @@
-.\" $NetBSD: wsconsctl.8,v 1.8 2002/08/19 18:27:31 wiz Exp $
+.\" $NetBSD: wsconsctl.8,v 1.9 2002/10/03 15:41:48 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,7 +81,8 @@ The value can be specified as either an absolute value, by using the
 symbol
 or as a relative value, by using the
 .Ql +=
-symbol. See the
+symbol.
+See the
 .Ar EXAMPLES
 section for more details.
 .It Fl f Ar file
@@ -125,7 +126,8 @@ The keyboard types, and the height, width,
 depth (bits per pixel), color map size, and colormap
 are defined in the
 .Pa /usr/include/dev/wscons/wsconsio.h
-file. There are also definitions relating to video
+file.
+There are also definitions relating to video
 control and cursor control, which are not applicable to
 all display types, and to text emulation and graphics
 (mapped) modes.
@@ -169,7 +171,8 @@ sets a US keyboard encoding, with the
 .Ar Caps Lock
 and
 .Ar Left Control
-keys swapped. The
+keys swapped.
+The
 .Ar .swapctrlcaps
 encoding does not work for all national keyboard encodings.
 For most purposes, the ability to set the value returned

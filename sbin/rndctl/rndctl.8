@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndctl.8,v 1.13 2002/10/01 14:39:51 wiz Exp $
+.\"	$NetBSD: rndctl.8,v 1.14 2002/10/03 15:41:45 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -67,9 +67,10 @@ See also
 .Fl t .
 .It Fl E
 Disable entropy estimation from the collected timing information for
-the given device name or device type.  If collection is still enabled,
-timing information is still collected and mixed into the internal
-entropy pool, but no entropy is assumed to be present.
+the given device name or device type.
+If collection is still enabled, timing information is still
+collected and mixed into the internal entropy pool,
+but no entropy is assumed to be present.
 .It Fl e
 Enable entropy estimation using the collected timing information
 for the given device name or device type.
@@ -113,7 +114,7 @@ program was first made available in
 The
 .Nm
 program was written by
-.An Michael Graff 
+.An Michael Graff
 .Aq explorer@flame.org .
 .Sh BUGS
 Turning on entropy estimation from unsafe or predictable sources will
