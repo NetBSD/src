@@ -3,7 +3,7 @@
    OMAPI object interfaces for the DHCP server. */
 
 /*
- * Copyright (c) 1999-2000 Internet Software Consortium.
+ * Copyright (c) 1999-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: comapi.c,v 1.7 2001/05/26 00:37:45 christos Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: comapi.c,v 1.8 2001/06/18 19:01:53 drochner Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -60,10 +60,48 @@ omapi_object_type_t *dhcp_type_interface;
 omapi_object_type_t *dhcp_type_group;
 omapi_object_type_t *dhcp_type_shared_network;
 omapi_object_type_t *dhcp_type_subnet;
+omapi_object_type_t *dhcp_type_control;
+dhcp_control_object_t *dhcp_control_object;
 
 void dhcp_common_objects_setup ()
 {
 	isc_result_t status;
+
+	status = omapi_object_type_register (&dhcp_type_control,
+					     "control",
+					     dhcp_control_set_value,
+					     dhcp_control_get_value,
+					     dhcp_control_destroy,
+					     dhcp_control_signal_handler,
+					     dhcp_control_stuff_values,
+					     dhcp_control_lookup, 
+					     dhcp_control_create,
+					     dhcp_control_remove, 0, 0, 0,
+					     sizeof (dhcp_control_object_t),
+					     0);
+	if (status != ISC_R_SUCCESS)
+		log_fatal ("Can't register control object type: %s",
+			   isc_result_totext (status));
+	status = dhcp_control_allocate (&dhcp_control_object, MDL);
+	if (status != ISC_R_SUCCESS)
+		log_fatal ("Can't make initial control object: %s",
+			   isc_result_totext (status));
+	dhcp_control_object -> state = server_startup;
+
+	status = omapi_object_type_register (&dhcp_type_group,
+					     "group",
+					     dhcp_group_set_value,
+					     dhcp_group_get_value,
+					     dhcp_group_destroy,
+					     dhcp_group_signal_handler,
+					     dhcp_group_stuff_values,
+					     dhcp_group_lookup, 
+					     dhcp_group_create,
+					     dhcp_group_remove, 0, 0, 0,
+					     sizeof (struct group_object), 0);
+	if (status != ISC_R_SUCCESS)
+		log_fatal ("Can't register group object type: %s",
+			   isc_result_totext (status));
 
 	status = omapi_object_type_register (&dhcp_type_group,
 					     "group",
@@ -162,7 +200,7 @@ isc_result_t dhcp_group_set_value  (omapi_object_t *h,
 			status = new_parse (&parse, -1,
 					    (char *)value -> u.buffer.value,
 					    value -> u.buffer.len,
-					    "network client");
+					    "network client", 0);
 			if (status != ISC_R_SUCCESS)
 				return status;
 			if (!(parse_executable_statements
@@ -331,6 +369,9 @@ isc_result_t dhcp_group_lookup (omapi_object_t **lp,
 	isc_result_t status;
 	struct group_object *group;
 
+	if (!ref)
+		return ISC_R_NOKEYS;
+
 	/* First see if we were sent a handle. */
 	status = omapi_get_value_str (ref, id, "handle", &tv);
 	if (status == ISC_R_SUCCESS) {
@@ -420,6 +461,182 @@ isc_result_t dhcp_group_remove (omapi_object_t *lp,
 	status = dhcp_group_destroy ((omapi_object_t *)group, MDL);
 
 	return ISC_R_SUCCESS;
+}
+
+isc_result_t dhcp_control_set_value  (omapi_object_t *h,
+				      omapi_object_t *id,
+				      omapi_data_string_t *name,
+				      omapi_typed_data_t *value)
+{
+	dhcp_control_object_t *control;
+	isc_result_t status;
+	int foo;
+	unsigned long newstate;
+
+	if (h -> type != dhcp_type_control)
+		return ISC_R_INVALIDARG;
+	control = (dhcp_control_object_t *)h;
+
+	if (!omapi_ds_strcmp (name, "state")) {
+		status = omapi_get_int_value (&newstate, value);
+		if (status != ISC_R_SUCCESS)
+			return status;
+		status = dhcp_set_control_state (control -> state, newstate);
+		if (status == ISC_R_SUCCESS)
+			control -> state = value -> u.integer;
+		return status;
+	}
+
+	/* Try to find some inner object that can take the value. */
+	if (h -> inner && h -> inner -> type -> set_value) {
+		status = ((*(h -> inner -> type -> set_value))
+			  (h -> inner, id, name, value));
+		if (status == ISC_R_SUCCESS || status == ISC_R_UNCHANGED)
+			return status;
+	}
+			  
+	return ISC_R_NOTFOUND;
+}
+
+
+isc_result_t dhcp_control_get_value (omapi_object_t *h, omapi_object_t *id,
+				   omapi_data_string_t *name,
+				   omapi_value_t **value)
+{
+	dhcp_control_object_t *control;
+	isc_result_t status;
+	struct data_string ip_addrs;
+
+	if (h -> type != dhcp_type_control)
+		return ISC_R_INVALIDARG;
+	control = (dhcp_control_object_t *)h;
+
+	if (!omapi_ds_strcmp (name, "state"))
+		return omapi_make_int_value (value,
+					     name, (int)control -> state, MDL);
+
+	/* Try to find some inner object that can take the value. */
+	if (h -> inner && h -> inner -> type -> get_value) {
+		status = ((*(h -> inner -> type -> get_value))
+			  (h -> inner, id, name, value));
+		if (status == ISC_R_SUCCESS)
+			return status;
+	}
+	return ISC_R_NOTFOUND;
+}
+
+isc_result_t dhcp_control_destroy (omapi_object_t *h,
+				   const char *file, int line)
+{
+	dhcp_control_object_t *control, *t;
+	isc_result_t status;
+
+	if (h -> type != dhcp_type_control)
+		return ISC_R_INVALIDARG;
+
+	/* Can't destroy the control object. */
+	return ISC_R_NOPERM;
+}
+
+isc_result_t dhcp_control_signal_handler (omapi_object_t *h,
+					const char *name, va_list ap)
+{
+	dhcp_control_object_t *control, *t;
+	isc_result_t status;
+	int updatep = 0;
+
+	if (h -> type != dhcp_type_control)
+		return ISC_R_INVALIDARG;
+	control = (dhcp_control_object_t *)h;
+
+	/* Try to find some inner object that can take the value. */
+	if (h -> inner && h -> inner -> type -> get_value) {
+		status = ((*(h -> inner -> type -> signal_handler))
+			  (h -> inner, name, ap));
+		if (status == ISC_R_SUCCESS)
+			return status;
+	}
+	return ISC_R_NOTFOUND;
+}
+
+isc_result_t dhcp_control_stuff_values (omapi_object_t *c,
+					omapi_object_t *id,
+					omapi_object_t *h)
+{
+	dhcp_control_object_t *control;
+	isc_result_t status;
+
+	if (h -> type != dhcp_type_control)
+		return ISC_R_INVALIDARG;
+	control = (dhcp_control_object_t *)h;
+
+	/* Write out all the values. */
+	status = omapi_connection_put_name (c, "state");
+	if (status != ISC_R_SUCCESS)
+		return status;
+	status = omapi_connection_put_uint32 (c, sizeof (u_int32_t));
+	if (status != ISC_R_SUCCESS)
+		return status;
+	status = omapi_connection_put_uint32 (c, control -> state);
+	if (status != ISC_R_SUCCESS)
+		return status;
+
+	/* Write out the inner object, if any. */
+	if (h -> inner && h -> inner -> type -> stuff_values) {
+		status = ((*(h -> inner -> type -> stuff_values))
+			  (c, id, h -> inner));
+		if (status == ISC_R_SUCCESS)
+			return status;
+	}
+
+	return ISC_R_SUCCESS;
+}
+
+isc_result_t dhcp_control_lookup (omapi_object_t **lp,
+				  omapi_object_t *id, omapi_object_t *ref)
+{
+	omapi_value_t *tv = (omapi_value_t *)0;
+	isc_result_t status;
+	dhcp_control_object_t *control;
+
+	/* First see if we were sent a handle. */
+	if (ref) {
+		status = omapi_get_value_str (ref, id, "handle", &tv);
+		if (status == ISC_R_SUCCESS) {
+			status = omapi_handle_td_lookup (lp, tv -> value);
+			
+			omapi_value_dereference (&tv, MDL);
+			if (status != ISC_R_SUCCESS)
+				return status;
+			
+			/* Don't return the object if the type is wrong. */
+			if ((*lp) -> type != dhcp_type_control) {
+				omapi_object_dereference (lp, MDL);
+				return ISC_R_INVALIDARG;
+			}
+		}
+	}
+
+	/* Otherwise, stop playing coy - there's only one control object,
+	   so we can just return it. */
+	dhcp_control_reference ((dhcp_control_object_t **)lp,
+				dhcp_control_object, MDL);
+	return ISC_R_SUCCESS;
+}
+
+isc_result_t dhcp_control_create (omapi_object_t **lp,
+				  omapi_object_t *id)
+{
+	/* Can't create a control object - there can be only one. */
+	return ISC_R_NOPERM;
+}
+
+isc_result_t dhcp_control_remove (omapi_object_t *lp,
+				omapi_object_t *id)
+{
+	/* Form is emptiness; emptiness form.   The control object
+	   cannot go out of existance. */
+	return ISC_R_NOPERM;
 }
 
 isc_result_t dhcp_subnet_set_value  (omapi_object_t *h,

@@ -83,12 +83,19 @@ Unsigned 8-bit integers are also sometimes referred to as octets.
 The
 .B text
 data type specifies an NVT ASCII string, which must be
-enclosed in double quotes - for example, to specify a domain-name
+enclosed in double quotes - for example, to specify a root-path
 option, the syntax would be
 .nf
 .sp 1
-option domain-name "isc.org";
+option root-path "10.0.1.4:/var/tmp/rootfs";
 .fi
+.PP
+The
+.B domain-name
+data type specifies a domain name, which must not
+enclosed in double quotes.   This data type is not used for any
+existing DHCP options.   The domain name is stored just as if it were
+a text option.
 .PP
 The
 .B flag
@@ -204,6 +211,18 @@ sending TCP segments.  The minimum value is 1.
 This option can be used to specify the a DHCP client identifier in a
 host declaration, so that dhcpd can find the host record by matching
 against the client identifier.
+.PP
+Please be aware that some DHCP clients, when configured with client
+identifiers that are ASCII text, will prepend a zero to the ASCII
+text.   So you may need to write:
+.nf
+
+	option dhcp-client-identifier "\\0foo";
+
+rather than:
+
+	option dhcp-client-identifier "foo";
+.fi
 .RE
 .PP
 .B option \fBdhcp-max-message-size\fR \fIuint16\fR\fB;\fR

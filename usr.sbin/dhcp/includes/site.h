@@ -52,6 +52,10 @@
 
 /* #define DEBUG_MALLOC_POOL */
 
+/* Define this if you want to see a message every time a lease's state
+   changes. */
+/* #define DEBUG_LEASE_STATE_TRANSITIONS */
+
 /* Define this if you want to maintain a history of the last N operations
    that changed reference counts on objects.   This can be used to debug
    cases where an object is dereferenced too often, or not often enough. */

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.8 2001/04/06 17:08:55 mellon Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.9 2001/06/18 19:01:58 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -167,9 +167,9 @@ isc_result_t read_conf_file (const char *filename, struct group *group,
 	/* If we're recording, write out the filename and file contents. */
 	if (trace_record ())
 		trace_write_packet (ttype, ulen + tflen + 1, dbuf, MDL);
-	new_parse (&cfile, -1, fbuf, ulen, filename); /* XXX */
+	new_parse (&cfile, -1, fbuf, ulen, filename, 0); /* XXX */
 #else
-	new_parse (&cfile, file, (char *)0, 0, filename);
+	new_parse (&cfile, file, (char *)0, 0, filename, 0);
 #endif
 	if (leasep)
 		status = lease_file_subparse (cfile);
@@ -202,7 +202,7 @@ void trace_conf_input (trace_type_t *ttype, unsigned len, char *data)
 	/* If we're recording, write out the filename and file contents. */
 	if (trace_record ())
 		trace_write_packet (ttype, len, data, MDL);
-	new_parse (&cfile, -1, fbuf, flen, data);
+	new_parse (&cfile, -1, fbuf, flen, data, 0);
 	if (ttype == trace_readleases_type)
 		lease_file_subparse (cfile);
 	else
@@ -807,12 +807,6 @@ void parse_failover_peer (cfile, group, type)
 	/* Save the name. */
 	peer -> name = name;
 
-	/* Set the initial state. */
-	peer -> me.state = potential_conflict;
-	peer -> me.stos = cur_time;
-	peer -> partner.state = unknown_state;
-	peer -> partner.stos = cur_time;
-
 	do {
 		cp = &peer -> me;
 	      peer:
@@ -981,6 +975,20 @@ void parse_failover_peer (cfile, group, type)
 	if (type == SHARED_NET_DECL) {
 		group -> shared_network -> failover_peer = peer;
 	}
+
+	/* Set the initial state. */
+	if (peer -> i_am == primary) {
+		peer -> me.state = recover;
+		peer -> me.stos = cur_time;
+		peer -> partner.state = unknown_state;
+		peer -> partner.stos = cur_time;
+	} else {
+		peer -> me.state = recover;
+		peer -> me.stos = cur_time;
+		peer -> partner.state = unknown_state;
+		peer -> partner.stos = cur_time;
+	}
+
 	status = enter_failover_peer (peer);
 	if (status != ISC_R_SUCCESS)
 		parse_warn (cfile, "failover peer %s: %s",
@@ -1118,6 +1126,10 @@ void parse_failover_state (cfile, state, stos)
 		state_in = recover;
 		break;
 		
+	      case RECOVER_WAIT:
+		state_in = recover_wait;
+		break;
+		
 	      case RECOVER_DONE:
 		state_in = recover_done;
 		break;
@@ -1141,19 +1153,23 @@ void parse_failover_state (cfile, state, stos)
 	}
 
 	token = next_token (&val, (unsigned *)0, cfile);
-	if (token != AT) {
-		parse_warn (cfile, "expecting \"at\"");
-		skip_to_semi (cfile);
-		return;
+	if (token == SEMI) {
+		stos_in = cur_time;
+	} else {
+		if (token != AT) {
+			parse_warn (cfile, "expecting \"at\"");
+			skip_to_semi (cfile);
+			return;
+		}
+		
+		stos_in = parse_date (cfile);
+		if (!stos_in)
+			return;
 	}
 
-	stos_in = parse_date (cfile);
-	if (!stos_in)
-		return;
-
-	/* Now that we've apparently gotten a clean parse, we can trust
-	   that this is a state that was fully committed to disk, so
-	   we can install it. */
+	/* Now that we've apparently gotten a clean parse, we
+	   can trust that this is a state that was fully committed to
+	   disk, so we can install it. */
 	*stos = stos_in;
 	*state = state_in;
 }
@@ -2369,6 +2385,7 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 	pair *p;
 	binding_state_t new_state;
 	unsigned buflen = 0;
+	struct class *class;
 
 	lease = (struct lease *)0;
 	status = lease_allocate (&lease, MDL);
@@ -2624,6 +2641,7 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 			
 		      case BILLING:
 			seenbit = 2048;
+			class = (struct class *)0;
 			token = next_token (&val, (unsigned *)0, cfile);
 			if (token == CLASS) {
 				token = next_token (&val,
@@ -2636,24 +2654,29 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 					break;
 				}
 				if (lease -> billing_class)
-					unbill_class (lease,
-						      lease -> billing_class);
-				find_class (&lease -> billing_class, val, MDL);
-				if (!lease -> billing_class)
+				    class_dereference (&lease -> billing_class,
+						       MDL);
+				find_class (&class, val, MDL);
+				if (!class)
 					parse_warn (cfile,
 						    "unknown class %s", val);
 				parse_semi (cfile);
 			} else if (token == SUBCLASS) {
 				if (lease -> billing_class)
-					unbill_class (lease,
-						      lease -> billing_class);
+				    class_dereference (&lease -> billing_class,
+						       MDL);
 				parse_class_declaration
-					(&lease -> billing_class,
+					(&class,
 					 cfile, (struct group *)0, 3);
 			} else {
 				parse_warn (cfile, "expecting \"class\"");
 				if (token != SEMI)
 					skip_to_semi (cfile);
+			}
+			if (class) {
+				class_reference (&lease -> billing_class,
+						 class, MDL);
+				class_dereference (&class, MDL);
 			}
 			break;
 
@@ -2897,6 +2920,9 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 		} else
 			lease -> next_binding_state = lease -> binding_state;
 	}
+
+	if (!(seenmask & 65536))
+		lease -> tstp = lease -> ends;
 
 	lease_reference (lp, lease, MDL);
 	lease_dereference (&lease, MDL);
