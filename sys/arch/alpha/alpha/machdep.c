@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.167.2.4.2.2 1999/07/01 23:00:55 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.167.2.4.2.3 1999/08/11 05:47:03 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167.2.4.2.2 1999/07/01 23:00:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167.2.4.2.3 1999/08/11 05:47:03 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,13 +460,13 @@ nobootinfo:
 	 * bit of space before the beginning for the bootstrap
 	 * stack).
 	 */
-	kernstart = trunc_page(kernel_text) - 2 * PAGE_SIZE;
+	kernstart = trunc_page((vaddr_t)kernel_text) - 2 * PAGE_SIZE;
 #ifdef DDB
 	ksym_start = (void *)bootinfo.ssym;
 	ksym_end   = (void *)bootinfo.esym;
-	kernend = (vaddr_t)round_page(ksym_end);
+	kernend = (vaddr_t)round_page((vaddr_t)ksym_end);
 #else
-	kernend = (vaddr_t)round_page(_end);
+	kernend = (vaddr_t)round_page((vaddr_t)_end);
 #endif
 
 	kernstartpfn = atop(ALPHA_K0SEG_TO_PHYS(kernstart));
@@ -723,7 +723,7 @@ nobootinfo:
 		/* warn if the message buffer had to be shrunk */
 		if (sz != round_page(MSGBUFSIZE))
 			printf("WARNING: %ld bytes not available for msgbuf in last cluster (%ld used)\n",
-			    round_page(MSGBUFSIZE), sz);
+			    round_page((vaddr_t)MSGBUFSIZE), sz);
 
 	}
 
