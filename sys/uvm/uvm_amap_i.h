@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.4 1998/02/08 16:16:39 mrg Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.5 1998/02/10 02:34:23 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -37,6 +37,9 @@
  *
  * from: Id: uvm_amap_i.h,v 1.1.2.4 1998/01/05 18:12:57 chuck Exp
  */
+
+#ifndef _UVM_UVM_AMAP_I_H_
+#define _UVM_UVM_AMAP_I_H_
 
 /*
  * uvm_amap_i.h
@@ -281,3 +284,5 @@ amap_unref(entry, all)
 }
 
 #endif /* defined(UVM_AMAP_INLINE) || defined(UVM_AMAP) */
+
+#endif /* _UVM_UVM_AMAP_I_H_ */

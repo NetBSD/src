@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.4 1998/02/07 11:09:01 mrg Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.5 1998/02/10 02:34:46 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -69,6 +69,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#ifndef _UVM_UVM_MAP_H_
+#define _UVM_UVM_MAP_H_
 
 /*
  * uvm_map.h
@@ -163,3 +166,5 @@ int		uvm_unmap_remove __P((vm_map_t, vm_offset_t, vm_offset_t,
 				      boolean_t, vm_map_entry_t *));
 
 struct vmspace *uvmspace_fork __P((struct vmspace *));
+
+#endif /* _UVM_UVM_MAP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.3 1998/02/07 11:08:30 mrg Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.4 1998/02/10 02:34:35 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -37,6 +37,9 @@
  *
  * from: Id: uvm_fault_i.h,v 1.1.6.1 1997/12/08 16:07:12 chuck Exp
  */
+
+#ifndef _UVM_UVM_FAULT_I_H_
+#define _UVM_UVM_FAULT_I_H_
 
 /*
  * uvm_fault_i.h: fault inline functions
@@ -237,3 +240,5 @@ struct uvm_faultinfo *ufi;
   uvmexp.fltrelckok++;
   return(TRUE);		/* got it! */
 }
+
+#endif /* _UVM_UVM_FAULT_I_H_ */

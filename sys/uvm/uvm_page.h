@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.3 1998/02/07 11:09:22 mrg Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.4 1998/02/10 02:34:52 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -70,6 +70,9 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _UVM_UVM_PAGE_H_
+#define _UVM_UVM_PAGE_H_
+
 /*
  * uvm_page.h
  */
@@ -122,3 +125,4 @@ PAGE_INLINE void uvm_pagewake __P((struct vm_page *));
 PAGE_INLINE void uvm_pagewire __P((struct vm_page *, boolean_t));
 PAGE_INLINE void uvm_pagezero __P((struct vm_page *));
 
+#endif /* _UVM_UVM_PAGE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.3 1998/02/07 11:07:58 mrg Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.4 1998/02/10 02:34:20 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -37,6 +37,9 @@
  *
  * from: Id: uvm_amap.h,v 1.1.2.7 1998/01/05 18:12:56 chuck Exp
  */
+
+#ifndef _UVM_UVM_AMAP_H_
+#define _UVM_UVM_AMAP_H_
 
 /*
  * uvm_amap.h
@@ -135,3 +138,5 @@ void uvm_anfree __P((struct vm_anon *));
 void uvm_anon_init __P((void));
 void uvm_anon_add __P((int));
 struct vm_page *uvm_anon_lockloanpg __P((struct vm_anon *));
+
+#endif /* _UVM_UVM_AMAP_H_ */

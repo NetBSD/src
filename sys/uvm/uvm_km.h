@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.h,v 1.3 1998/02/07 11:08:49 mrg Exp $	*/
+/*	$NetBSD: uvm_km.h,v 1.4 1998/02/10 02:34:41 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -38,6 +38,9 @@
  * from: Id: uvm_km.h,v 1.1.2.2 1997/12/30 12:03:15 mrg Exp
  */
 
+#ifndef _UVM_UVM_KM_H_
+#define _UVM_UVM_KM_H_
+
 /*
  * uvm_km.h
  */
@@ -50,3 +53,5 @@ UVMHIST_DECL(maphist);
 
 void uvm_km_init __P((vm_offset_t, vm_offset_t));
 void uvm_km_pgremove __P((struct uvm_object *, vm_offset_t, vm_offset_t));
+
+#endif /* _UVM_UVM_KM_H_ */
