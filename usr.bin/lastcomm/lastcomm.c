@@ -1,4 +1,4 @@
-/*	$NetBSD: lastcomm.c,v 1.11 1997/10/19 03:47:53 lukem Exp $	*/
+/*	$NetBSD: lastcomm.c,v 1.12 1997/10/19 03:55:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: lastcomm.c,v 1.11 1997/10/19 03:47:53 lukem Exp $");
+__RCSID("$NetBSD: lastcomm.c,v 1.12 1997/10/19 03:55:13 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ main(argc, argv)
 	char *acctfile;
 
 	acctfile = _PATH_ACCT;
-	while ((ch = getopt(argc, argv, "f:")) != EOF)
+	while ((ch = getopt(argc, argv, "f:")) != -1)
 		switch((char)ch) {
 		case 'f':
 			acctfile = optarg;
