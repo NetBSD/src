@@ -1,10 +1,26 @@
 %{
-/*	$NetBSD: cfparse.y,v 1.6 2000/10/11 20:23:53 is Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.7 2001/08/02 03:41:42 itojun Exp $	*/
 
 /*
  * Configuration file parser for mrouted.
  *
  * Written by Bill Fenner, NRL, 1994
+ * Copyright (c) 1994
+ * Naval Research Laboratory (NRL/CCS)
+ *                    and the
+ * Defense Advanced Research Projects Agency (DARPA)
+ *
+ * All Rights Reserved.
+ *
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright notice and
+ * this permission notice appear in all copies of the software, derivative
+ * works or modified versions, and any portions thereof, and that both notices
+ * appear in supporting documentation.
+ *
+ * NRL AND DARPA ALLOW FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION AND
+ * DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * THE USE OF THIS SOFTWARE.
  */
 #include <stdio.h>
 #ifdef __STDC__
