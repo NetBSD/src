@@ -25,11 +25,11 @@ provided "as is" without express or implied warranty.
  *              keeping the a specified number of backup files around.
  *
  *      $Source: /cvsroot/src/usr.bin/newsyslog/newsyslog.c,v $
- *      $Author: pk $
+ *      $Author: thorpej $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: newsyslog.c,v 1.10 1996/01/07 00:48:24 pk Exp $";
+static char rcsid[] = "$Id: newsyslog.c,v 1.11 1996/09/27 01:55:26 thorpej Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -380,6 +380,7 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
         char    zfile1[128], zfile2[128];
         int     fd;
         struct  stat st;
+        int     ngen = numdays;
 
 #ifdef _IBMR2
 /* AIX 3.1 has a broken fchown- if the owner_uid is -1, it will actually */
@@ -427,11 +428,18 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
         if (!noaction && !(flags & CE_BINARY))
                 (void) log_trim(log);  /* Report the trimming to the old log */
 
-        if (noaction) 
-                printf("mv %s to %s\n",log,file1);
-        else
-                (void) rename(log,file1);
-        if (noaction) 
+	if (ngen == 0)
+		if (noaction)
+			printf("rm %s\n",log);
+		else
+			(void) unlink(log);
+	else
+		if (noaction)
+			printf("mv %s to %s\n",log,file1);
+		else
+			(void) rename(log,file1);
+
+        if (noaction)
                 printf("Start new log...");
         else {
                 fd = creat(log,perm);
