@@ -462,7 +462,8 @@ output_function_prologue (stream, size)
 				  -cfa_store_offset + n_regs++ * 4);
 	}
     }
-  if (flag_pic && current_function_uses_pic_offset_table)
+  if (flag_pic && current_function_uses_pic_offset_table &&
+      regs_ever_live[PIC_OFFSET_TABLE_REGNUM])
     {
 #ifdef MOTOROLA
       asm_fprintf (stream, "\t%Olea (%Rpc, %U_GLOBAL_OFFSET_TABLE_@GOTPC), %s\n",
