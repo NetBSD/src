@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.39 2004/04/06 03:57:46 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.40 2004/04/06 03:58:46 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -445,3 +445,8 @@ distrib/sets/lists/xserver/md.sgimips		1.5
 
 	Add mmapw - mmapr is already there.
 	[hubertf, ticket #67]
+
+usr.bin/lex/gen.c				1.18
+
+	Typo in debugging output. PR#25065
+	[christos, ticket #68]
