@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.41 2003/01/07 08:41:55 tron Exp $
+# $NetBSD: network,v 1.42 2003/01/09 15:12:47 christos Exp $
 #
 
 # PROVIDE: network
@@ -51,7 +51,7 @@ network_start()
 
 	# Flush all routes just to make sure it is clean
 	if checkyesno flushroutes; then
-		route -n flush
+		route -qn flush
 	fi
 
 	# Set the address for the first loopback interface, so that the
@@ -315,6 +315,22 @@ network_start()
 		fi
 	fi
 
+	if [ -s /etc/route.conf ]; then
+		while read args; do
+			[ -z "$args" ] && continue
+			case "$args" in
+			"#"*)
+				;;
+			"!"*)
+				eval ${args#*!}
+				;;
+			*)
+				route -q add -$args
+				;;
+			esac
+		done < /etc/route.conf
+	fi
+
 	# XXX this must die
 	if [ -s /etc/netstart.local ]; then
 		sh /etc/netstart.local start
@@ -374,7 +390,7 @@ network_stop()
 
 	# flush routes
 	#
-	route -n flush
+	route -qn flush
 
 }
 
