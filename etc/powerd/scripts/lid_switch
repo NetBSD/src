@@ -1,10 +1,8 @@
 #!/bin/sh -
 #
-#	$NetBSD: lid_switch,v 1.1 2003/10/30 17:34:45 mycroft Exp $
+#	$NetBSD: lid_switch,v 1.2 2003/10/30 17:42:23 mycroft Exp $
 #
-# Generic script for power button events.  We simply attempt to
-# shut the system down gracefully, and let the kernel handle
-# the poweroff.
+# Generic script for lid switch events.  We do nothing for now.
 #
 # Arguments passed by powerd(8):
 #
