@@ -1,4 +1,4 @@
-/*	$NetBSD: wire.c,v 1.2 2000/02/21 02:04:12 itojun Exp $	*/
+/*	$NetBSD: wire.c,v 1.3 2000/02/22 17:30:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -368,7 +368,7 @@ void
 getwire(char **name1, char **number1)
 {
   struct ifconf ifc;
-  struct ifreq *ifr;
+  struct ifreq *ifr, ifrpool;
   caddr_t cp, cplim;
   int fd = -1;
   u_long address;
@@ -423,7 +423,8 @@ getwire(char **name1, char **number1)
    * Scan the list looking for a suitable interface
    */
   for (cp = buf; cp < cplim; cp += SIZE(ifr)) {
-    memcpy(&ifr, cp, sizeof(ifr));
+    memcpy(&ifrpool, cp, sizeof(ifrpool));
+    ifr = &ifrpool;
 
     if (ifr->ifr_addr.sa_family != AF_INET)
       continue;
