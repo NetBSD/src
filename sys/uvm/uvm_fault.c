@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.28 1999/04/11 04:04:11 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.29 1999/05/19 06:14:15 chs Exp $	*/
 
 /*
  *
@@ -1214,11 +1214,19 @@ ReFault:
 
 	if (fault_type == VM_FAULT_WIRE) {
 		uvm_pagewire(pg);
+
+		/*
+		 * since the now-wired page cannot be paged out,
+		 * release its swap resources for others to use.
+		 * since an anon with no swap cannot be PG_CLEAN,
+		 * clear its clean flag now.
+		 */
+
+		pg->flags &= ~(PG_CLEAN);
 		uvm_anon_dropswap(anon);
 	} else {
 		/* activate it */
 		uvm_pageactivate(pg);
-
 	}
 
 	uvm_unlock_pageq();
@@ -1638,13 +1646,20 @@ Case2:
 	if (fault_type == VM_FAULT_WIRE) {
 		uvm_pagewire(pg);
 		if (pg->pqflags & PQ_AOBJ) {
+
+			/*
+			 * since the now-wired page cannot be paged out,
+			 * release its swap resources for others to use.
+			 * since an aobj page with no swap cannot be PG_CLEAN,
+			 * clear its clean flag now.
+			 */
+
+			pg->flags &= ~(PG_CLEAN);
 			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
 		}
 	} else {
-		
 		/* activate it */
 		uvm_pageactivate(pg);
-
 	}
 
 	uvm_unlock_pageq();
