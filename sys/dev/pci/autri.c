@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.14 2003/02/01 06:23:38 thorpej Exp $	*/
+/*	$NetBSD: autri.c,v 1.15 2003/04/04 01:04:37 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -665,7 +665,7 @@ autri_init(void *sc_)
 		delay(100);
 		/* reset Digital Controller */
 		reg = pci_conf_read(pc, pt, AUTRI_PCI_LEGACY_IOBASE);
-		pci_conf_write(pc, pt, AUTRI_PCI_LEGACY_IOBASE, reg | 0x00040000);
+		pci_conf_write(pc, pt, AUTRI_PCI_LEGACY_IOBASE, reg | 0x000c0000);
 		delay(100);
 		/* release reset */
 		reg = pci_conf_read(pc, pt, AUTRI_PCI_LEGACY_IOBASE);
