@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.58.4.1 1999/10/19 12:50:54 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.58.4.2 1999/10/27 12:38:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1204,7 +1204,7 @@ ufs_mkdir(v)
 		softdep_increase_linkcnt(ip);
 	if (cnp->cn_flags & ISWHITEOUT)
 		ip->i_ffs_flags |= UF_OPAQUE;
-	error = VOP_UPDATE(tvp, NULL, NULL, 1);
+	error = VOP_UPDATE(tvp, NULL, NULL, !DOINGSOFTDEP(tvp));
 
 	/*
 	 * Bump link count in parent directory to reflect work done below.
