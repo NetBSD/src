@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.12 2004/11/17 01:27:26 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.13 2004/11/17 01:29:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.12 2004/11/17 01:27:26 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.13 2004/11/17 01:29:48 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1489,7 +1489,7 @@ init(void)
 				p = LocalHostName;
 			for (i = 1; i < MAXHOSTNAMELEN - 1; i++) {
 				if (!isalnum((unsigned char)*p) &&
-				    *p != '.' && *p != '-')
+				    *p != '.' && *p != '-' && *p != ',')
 					break;
 				host[i] = *p++;
 			}
