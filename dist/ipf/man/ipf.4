@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.4,v 1.1.1.1 1999/12/11 22:24:10 veego Exp $
+.\"	$NetBSD: ipf.4,v 1.1.1.1.8.1 2002/02/09 16:55:58 he Exp $
 .\"
 .TH IPF 4
 .SH NAME
@@ -13,33 +13,33 @@ To add and delete rules to the filter list, three 'basic' ioctls are provided
 for use.  The ioctl's are called as:
 .LP
 .nf
-	ioctl(fd, SIOCADDFR, struct frentry *)
-	ioctl(fd, SIOCDELFR, struct frentry *)
+	ioctl(fd, SIOCADDFR, struct frentry **)
+	ioctl(fd, SIOCDELFR, struct frentry **)
 	ioctl(fd, SIOCIPFFL, int *)
 .fi
 .PP
 However, the full complement is as follows:
 .LP
 .nf
-	ioctl(fd, SIOCADAFR, struct frentry *) (same as SUICADDFR)
-	ioctl(fd, SIOCRMAFR, struct frentry *) (same as SUICDELFR)
-	ioctl(fd, SIOCADIFR, struct frentry *)
-	ioctl(fd, SIOCRMIFR, struct frentry *)
-	ioctl(fd, SIOCINAFR, struct frentry *)
-	ioctl(fd, SIOCINIFR, struct frentry *)
+	ioctl(fd, SIOCADAFR, struct frentry **) (same as SIOCADDFR)
+	ioctl(fd, SIOCRMAFR, struct frentry **) (same as SIOCDELFR)
+	ioctl(fd, SIOCADIFR, struct frentry **)
+	ioctl(fd, SIOCRMIFR, struct frentry **)
+	ioctl(fd, SIOCINAFR, struct frentry **)
+	ioctl(fd, SIOCINIFR, struct frentry **)
 	ioctl(fd, SIOCSETFF, u_int *)
 	ioctl(fd, SIOGGETFF, u_int *)
-	ioctl(fd, SIOCGETFS, struct friostat *)
+	ioctl(fd, SIOCGETFS, struct friostat **)
 	ioctl(fd, SIOCIPFFL, int *)
 	ioctl(fd, SIOCIPFFB, int *)
 	ioctl(fd, SIOCSWAPA, u_int *)
 	ioctl(fd, SIOCFRENB, u_int *)
 	ioctl(fd, SIOCFRSYN, u_int *)
-	ioctl(fd, SIOCFRZST, struct friostat *)
-	ioctl(fd, SIOCZRLST, struct frentry *)
-	ioctl(fd, SIOCAUTHW, struct fr_info *)
-	ioctl(fd, SIOCAUTHR, struct fr_info *)
-	ioctl(fd, SIOCATHST, struct fr_authstat *)
+	ioctl(fd, SIOCFRZST, struct friostat **)
+	ioctl(fd, SIOCZRLST, struct frentry **)
+	ioctl(fd, SIOCAUTHW, struct frauth_t **)
+	ioctl(fd, SIOCAUTHR, struct frauth_t **)
+	ioctl(fd, SIOCATHST, struct fr_authstat **)
 .fi
 .PP
 The variations, SIOCADAFR vs. SIOCADIFR, allow operation on the two lists,
@@ -109,7 +109,7 @@ filter list, the number of the rule which it is to be inserted before must
 be put in the "fr_hits" field (the first rule is number 0).
 .LP
 .PP
-Flags which are recognised in fr_pass:
+Flags which are recognised in fr_flags:
 .nf
 
      FR_BLOCK        0x000001   /* do not allow packet to pass */
@@ -124,7 +124,7 @@ Flags which are recognised in fr_pass:
      FR_RETRST       0x000080   /* return a TCP RST packet if blocked */
      FR_RETICMP      0x000100   /* return an ICMP packet if blocked */
      FR_FAKEICMP     0x00180    /* Return ICMP unreachable with fake source */
-     FR_NOMATCH      0x000200   /* no match occured */
+     FR_NOMATCH      0x000200   /* no match occurred */
      FR_ACCOUNT      0x000400   /* count packet bytes */
      FR_KEEPFRAG     0x000800   /* keep fragment information */
      FR_KEEPSTATE    0x001000   /* keep `connection' state information */
@@ -255,3 +255,14 @@ value returned is that of the list which is now inactive.
 /dev/ipstate
 .SH SEE ALSO
 ipl(4), ipnat(4), ipf(5), ipf(8), ipfstat(8)
+.SH BUGS
+When a packet encapsulated by ipsec(4) tunnel comes in, ipf(4) looks at
+wire-format packet on inbound and outbound.
+ipf(4) will not look at decapsulated packets on inbound,
+nor packets prior to encapsulation on outbound.
+.PP
+When tunneled packets arrive at the node and are handled by a
+tunnelling pseudo interface like gif(4) or ipip(4),
+the packets may go through ipf(4) twice, before and after decapsulation.
+In some cases it may be necessary to check, in the ipf(4) rules,
+if the inbound interface is a tunnelling pseudo interface or not.
