@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.5 2002/01/14 13:46:53 wiz Exp $
+.\"	$NetBSD: pppoe.4,v 1.6 2002/02/03 22:22:45 kleink Exp $
 .\"
 .\" Copyright (c) 2001 Martin Husemann. All rights reserved.
 .\"
@@ -90,7 +90,7 @@ If you are using a
 interface, you will have an unusual low MTU for todays internet.
 Combined with a lot of misconfigured sites (host using path MTU discovery
 behind a router blocking all ICMP traffic) this will often cause problems.
-Connections to this servers will only work, if your system advertizes the
+Connections to this servers will only work, if your system advertises the
 right MSS in the tcp three way handshake. To get the right MSS, you need
 to set
 .Bd -literal
@@ -102,11 +102,11 @@ in your
 .Pa /etc/sysctl.conf
 file.
 This causes the calculated MSS to be based on the MTU of the interface
-via which the packet is send. This is always the right value if you are
+via which the packet is sent. This is always the right value if you are
 sure the answer to this packet will be received on the same interface
 (I.e. you only have one interface connected to the internet.)
 .Pp
-Unfortunately this sysctl does not fix the MSS advertized by hosts in
+Unfortunately this sysctl does not fix the MSS advertised by hosts in
 the network behind a
 .Nm
 connected router.
