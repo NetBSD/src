@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.9 1994/12/14 22:17:18 deraadt Exp $ */
+/*	$NetBSD: if_ie.c,v 1.10 1994/12/16 22:01:09 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -105,6 +105,7 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -147,6 +148,7 @@
 #include <sparc/dev/i82586.h>
 
 static struct mbuf *last_not_for_us;
+vm_map_t ie_map; /* for obio */
 
 /*
  * IED: ie debug flags
@@ -405,8 +407,11 @@ iematch(parent, cf, aux)
 		 * XXX need better probe here so we can figure out what we've got
 		 */
 		ra->ra_len = NBPG;
-		if (ca->ca_bustype == BUS_OBIO && probeget(ra->ra_vaddr, 1) == -1)
-			return (0);
+		if (ca->ca_bustype == BUS_OBIO) {
+			if (probeget(ra->ra_vaddr, 1) == -1)
+				return (0);
+			return(1);
+		}
 		if (probeget(ra->ra_vaddr, 2) == -1)
 			return (0);
 
@@ -499,21 +504,78 @@ ieattach(parent, self, aux)
 
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
-		printf("unsupported (for now)\n");
+	    {
+		volatile struct ieob *ieo;
+		vm_offset_t pa;
+
 		sc->hard_type = IE_OBIO;
+		sc->reset_586 = ie_obreset;
+		sc->chan_attn = ie_obattend;
+		sc->run_586 = ie_obrun;
 		sc->memcopy = bcopy;
 		sc->memzero = bzero;
-		return;
+		sc->sc_msize = 65536; /* XXX */
+		sc->sc_reg = mapiodev(ca->ca_ra.ra_paddr, sizeof(struct ieob),
+		    ca->ca_bustype);
+		ieo = (volatile struct ieob *) sc->sc_reg;
+
+		/*
+		 * the rest of the IE_OBIO case needs to be cleaned up
+		 * XXX
+		 */
+
+		ie_map = vm_map_create(kernel_pmap, (vm_offset_t)IEOB_ADBASE, 
+			(vm_offset_t)IEOB_ADBASE + sc->sc_msize, 1);
+		if (ie_map == NULL) panic("ie_map");
+		sc->sc_maddr = (caddr_t) kmem_alloc(ie_map, sc->sc_msize);
+		if (sc->sc_maddr == NULL) panic("ie kmem_alloc");
+		kvm_uncache(sc->sc_maddr, sc->sc_msize >> PGSHIFT);
+		if (((u_long)sc->sc_maddr & ~(NBPG-1)) != (u_long)sc->sc_maddr) 
+			panic("unaligned dvmamalloc breaks");
+		sc->sc_iobase = (caddr_t)IEOB_ADBASE; /* 24 bit base addr */
+		(sc->memzero)(sc->sc_maddr, sc->sc_msize);
+		sc->iscp = (volatile struct ie_int_sys_conf_ptr *)
+			sc->sc_maddr; /* @ location zero */
+		sc->scb = (volatile struct ie_sys_ctl_block *)
+		    sc->sc_maddr + sizeof(struct ie_int_sys_conf_ptr);
+		/* scb follows iscp */
+
+		/*
+		 * SCP: the scp must appear at KVA IEOB_ADBASE.  The
+		 * ROM seems to have page up there, but I'm not sure all
+		 * ROMs will have it there.  Also, I'm not sure if that
+		 * page is on some free list somewhere or not.   Let's
+		 * map the first page of the buffer we just allocated
+		 * to IEOB_ADBASE to be safe.
+		 */
+
+		pa = pmap_extract(kernel_pmap, (vm_offset_t)sc->sc_maddr);
+		if (pa == 0) panic("ie pmap_extract");
+		pmap_enter(kernel_pmap, trunc_page(IEOB_ADBASE+IE_SCP_ADDR),
+                    (vm_offset_t)pa | PMAP_NC,
+                    VM_PROT_READ | VM_PROT_WRITE, 1);
+
+		sc->scp = (volatile struct ie_sys_conf_ptr *)
+			(IEOB_ADBASE + IE_SCP_ADDR);
+
+		/*
+		 * rest of first page is unused (wasted!), rest of ram
+		 * for buffers
+		 */
+		sc->buf_area = sc->sc_maddr + NBPG;
+		sc->buf_area_sz = sc->sc_msize - NBPG;
+		break;
+	    }
 	case BUS_VME16:
 	    {
 		volatile struct ievme *iev;
 		u_long  rampaddr;
 		int     lcv;
 
+		sc->hard_type = IE_VME;
 		sc->reset_586 = ie_vmereset;
 		sc->chan_attn = ie_vmeattend;
 		sc->run_586 = ie_vmerun;
-		sc->hard_type = IE_VME;
 		sc->memcopy = wcopy;
 		sc->memzero = wzero;
 		sc->sc_msize = 65536;	/* XXX */
@@ -586,7 +648,7 @@ ieattach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	printf(" address %s, type %s\n",
+	printf(" pri %d address %s, type %s\n", pri,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
 	    ie_hardware_names[sc->hard_type]);
 
@@ -600,7 +662,10 @@ ieattach(parent, self, aux)
 		panic("ie configured on the sbus?");	/* XXX */
 		break;		/* shouldn't happen, no sbus ie's XXX */
 #ifdef SUN4
-	case BUS_OBIO:		/* XXX */
+	case BUS_OBIO:
+		sc->sc_ih.ih_fun = ieintr;
+		sc->sc_ih.ih_arg = sc;
+		intr_establish(pri, &sc->sc_ih);
 		break;
 	case BUS_VME16:
 	case BUS_VME32:
