@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.92 1997/09/12 09:53:08 drochner Exp $
+#	$NetBSD: rc,v 1.93 1997/09/12 10:36:04 drochner Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -89,7 +89,7 @@ ttyflags -a
 
 # load kernel modules specified in /etc/lkm.conf if the /usr filesystem
 # is already present with "/" or can be mounted now
-if [ "$lkm_init" != NO ] && [ -f /etc/rc.lkm ]; then
+if checkyesno lkm && [ -f /etc/rc.lkm ]; then
 	mount /usr >/dev/null 2>&1
 	if [ -x /usr/bin/ld ]; then
 		lkmstage=BEFORENET
