@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.18 2004/05/25 04:44:44 atatat Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.19 2004/05/29 23:48:08 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.18 2004/05/25 04:44:44 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.19 2004/05/29 23:48:08 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -269,6 +269,25 @@ layerfs_vptofh(vp, fhp)
 {
 
 	return (VFS_VPTOFH(LAYERVPTOLOWERVP(vp), fhp));
+}
+
+/*
+ * layerfs_snapshot - handle a snapshot through a layered file system
+ *
+ * At present, we do NOT support snapshotting through a layered file
+ * system as the ffs implementation changes v_vnlock of the snapshot
+ * vnodes to point to one common lock. As there is no way for us to
+ * absolutely pass this change up the stack, a layered file system
+ * would end up referencing the wrong lock.
+ *
+ * This routine serves as a central resource for this behavior; all
+ * layered file systems don't need to worry about the above. Also, if
+ * things get fixed, all layers get the benefit.
+ */
+int
+layerfs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ts)
+{
+	return (EOPNOTSUPP);
 }
 
 SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
