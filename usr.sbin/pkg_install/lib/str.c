@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.23.2.3 2001/05/01 11:01:09 he Exp $	*/
+/*	$NetBSD: str.c,v 1.23.2.4 2002/02/23 18:15:48 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.23.2.3 2001/05/01 11:01:09 he Exp $");
+__RCSID("$NetBSD: str.c,v 1.23.2.4 2002/02/23 18:15:48 he Exp $");
 #endif
 #endif
 
@@ -91,74 +91,203 @@ str_lowercase(char *s)
 	}
 }
 
-typedef enum deweyop_t {
-	GT,
-	GE,
+/* pull in definitions and macros for resizing arrays as we go */
+#include "defs.h"
+
+/* do not modify these values, or things will NOT work */
+enum {
+        RC = -1,
+        Dot = 0,
+        Patch = 1
+};
+
+/* this struct defines a version number */
+typedef struct arr_t {
+	unsigned	c;              /* # of version numbers */
+	unsigned	size;           /* size of array */
+	int64_t        *v;              /* array of decimal numbers */
+	int64_t		netbsd;         /* any "nb" suffix */
+} arr_t;
+
+/* this struct describes a test */
+typedef struct test_t {
+	const char     *s;              /* string representation */
+	unsigned	len;            /* length of string */
+	int		t;              /* enumerated type of test */
+} test_t;
+
+enum {
 	LT,
-	LE
-}       deweyop_t;
+	LE,
+	EQ,
+	GE,
+	GT,
+	NE
+};
+
+/* the tests that are recognised. */
+static test_t   tests[] = {
+        {	"<=",	2,	LE	},
+        {	"<",	1,	LT	},
+        {	">=",	2,	GE	},
+        {	">",	1,	GT	},
+        {	"==",	2,	EQ	},
+        {	"!=",	2,	NE	},
+        {	NULL,	0,	0	}
+};
+
+
+/* locate the test in the tests array */
+static int
+mktest(int *op, char *test)
+{
+	test_t  *tp;
+
+	for (tp = tests ; tp->s ; tp++) {
+		if (strncasecmp(test, tp->s, tp->len) == 0) {
+			*op = tp->t;
+			return tp->len;
+		}
+	}
+	warnx("relational test not found `%.10s'", test);
+	return -1;
+}
+
+/*
+ * make a component of a version number.
+ * '.' encodes as Dot which is '0'
+ * '_' encodes as 'patch level', or 'Dot', which is 0.
+ * 'pl' encodes as 'patch level', or 'Dot', which is 0.
+ * 'rc' encodes as 'release candidate', or RC, which is -1.
+ * 'nb' encodes as 'netbsd version', which is used after all other tests
+ */
+static int
+mkcomponent(arr_t *ap, char *num)
+{
+	static const char       alphas[] = "abcdefghijklmnopqrstuvwxyz";
+	int64_t                 n;
+	char                   *cp;
+
+	if (*num == 0) {
+		return 0;
+	}
+	ALLOC(int64_t, ap->v, ap->size, ap->c, 62, "mkver", exit(EXIT_FAILURE));
+	if (*num == '_') {
+		num += 1;
+		if (isdigit(*(num + 1))) {
+			ap->v[ap->c++] = Dot;
+			return 1;
+		}
+	}
+	if (isdigit(*num)) {
+		for (cp = num, n = 0 ; isdigit(*num) ; num++) {
+			n = (n * 10) + (*num - '0');
+		}
+		ap->v[ap->c++] = n;
+		return (int)(num - cp);
+	}
+	if (strncasecmp(num, "rc", 2) == 0) {
+		ap->v[ap->c++] = RC;
+		return 2;
+	}
+	if (strncasecmp(num, "pl", 2) == 0) {
+		ap->v[ap->c++] = Dot;
+		return 2;
+	}
+	if (strncasecmp(num, "nb", 2) == 0) {
+		for (cp = num, num += 2, n = 0 ; isdigit(*num) ; num++) {
+			n = (n * 10) + (*num - '0');
+		}
+		ap->netbsd = n;
+		return (int)(num - cp);
+	}
+	if (*num == '.') {
+		ap->v[ap->c++] = Dot;
+		return 1;
+	}
+	if (isalpha(*num)) {
+		ap->v[ap->c++] = Dot;
+		cp = strchr(alphas, tolower(*num));
+		ALLOC(int64_t, ap->v, ap->size, ap->c, 62, "mkver", exit(EXIT_FAILURE));
+		ap->v[ap->c++] = (int64_t)(cp - alphas) + 1;
+		return 1;
+	}
+	warnx("`%c' not recognised", *num);
+	return 1;
+}
+
+/* make a version number string into an array of comparable 64bit ints */
+static int
+mkversion(arr_t *ap, char *num)
+{
+	(void) memset(ap, 0, sizeof(arr_t));
+	while (*num) {
+		num += mkcomponent(ap, num);
+	}
+	return 1;
+}
+
+#define DIGIT(v, c, n) (((n) < (c)) ? v[n] : 0)
+
+/* compare the result against the test we were expecting */
+static int
+result(int64_t cmp, int tst)
+{
+	switch(tst) {
+	case LT:
+		return cmp < 0;
+	case LE:
+		return cmp <= 0;
+	case GT:
+		return cmp > 0;
+	case GE:
+		return cmp >= 0;
+	case EQ:
+		return cmp == 0;
+	case NE:
+		return cmp != 0;
+	default:
+		warnx("result: unknown test %d", tst);
+		return 0;
+	}
+}
+
+/* do the test on the 2 vectors */
+static int
+vtest(arr_t *lhs, int tst, arr_t *rhs)
+{
+	int64_t cmp;
+	int     c;
+	int     i;
+
+	for (i = 0, c = MAX(lhs->c, rhs->c) ; i < c ; i++) {
+		if ((cmp = DIGIT(lhs->v, lhs->c, i) - DIGIT(rhs->v, rhs->c, i)) != 0) {
+			return result(cmp, tst);
+		}
+	}
+	return result(lhs->netbsd - rhs->netbsd, tst);
+}
 
 /*
  * Compare two dewey decimal numbers
  */
 static int
-deweycmp(char *a, deweyop_t op, char *b)
+deweycmp(char *lhs, int op, char *rhs)
 {
-	int     ad;
-	int     bd;
-	char	*a_nb;
-	char	*b_nb;
-	int	in_nb = 0;
-	int     cmp;
+	arr_t	right;
+	arr_t	left;
 
-	assert(a != NULL);
-	assert(b != NULL);
-
-	/* Null out 'n' in any "nb" suffixes for initial pass */
-	if ((a_nb = strstr(a, "nb")))
-	    *a_nb = 0;
-	if ((b_nb = strstr(b, "nb")))
-	    *b_nb = 0;
-
-	for (;;) {
-		if (*a == 0 && *b == 0) {
-			if (!in_nb && (a_nb || b_nb)) {
-				/*
-				 * If exact match on first pass, test
-				 * "nb<X>" suffixes in second pass
-				 */
-				in_nb = 1;
-				if (a_nb)
-				    a = a_nb + 2;	/* Skip "nb" suffix */
-				if (b_nb)
-				    b = b_nb + 2;	/* Skip "nb" suffix */
-			} else {
-				cmp = 0;
-				break;
-			}
-		}
-
-		ad = bd = 0;
-		for (; *a && *a != '.'; a++) {
-			ad = (ad * 10) + (*a - '0');
-		}
-		for (; *b && *b != '.'; b++) {
-			bd = (bd * 10) + (*b - '0');
-		}
-		if ((cmp = ad - bd) != 0) {
-			break;
-		}
-		if (*a == '.')
-			++a;
-		if (*b == '.')
-			++b;
+	(void) memset(&left, 0, sizeof(left));
+	if (!mkversion(&left, lhs)) {
+		warnx("Bad lhs version `%s'", lhs);
+		return 0;
 	}
-	/* Replace any nulled 'n' */
-	if (a_nb)
-		*a_nb = 'n';
-	if (b_nb)
-		*b_nb = 'n';
-	return (op == GE) ? cmp >= 0 : (op == GT) ? cmp > 0 : (op == LE) ? cmp <= 0 : cmp < 0;
+	(void) memset(&right, 0, sizeof(right));
+	if (!mkversion(&right, rhs)) {
+		warnx("Bad rhs version `%s'", rhs);
+		return 0;
+	}
+        return vtest(&left, op, &right);
 }
 
 /*
@@ -216,22 +345,26 @@ alternate_match(const char *pattern, const char *pkg)
 static int
 dewey_match(const char *pattern, const char *pkg)
 {
-	deweyop_t op;
 	char   *cp;
 	char   *sep;
 	char   *ver;
 	char    name[FILENAME_MAX];
+	int	op;
 	int     n;
 
 	if ((sep = strpbrk(pattern, "<>")) == NULL) {
 		errx(1, "dewey_match(): '<' or '>' expected in `%s'", pattern);
 	}
 	(void) snprintf(name, sizeof(name), "%.*s", (int) (sep - pattern), pattern);
-	op = (*sep == '>') ? (*(sep + 1) == '=') ? GE : GT : (*(sep + 1) == '=') ? LE : LT;
-	ver = (op == GE || op == LE) ? sep + 2 : sep + 1;
+        if ((n = mktest(&op, sep)) < 0) {
+                warnx("Bad comparison `%s'", sep);
+		return 0;
+        }
+	ver = sep + n;
 	n = (int) (sep - pattern);
 	if ((cp = strrchr(pkg, '-')) != (char *) NULL) {
-		if (strncmp(pkg, name, (size_t) (cp - pkg)) == 0 && n == cp - pkg) {
+		if (strncmp(pkg, name, (size_t) (cp - pkg)) == 0 &&
+		    n == (int)(cp - pkg)) {
 			if (deweycmp(cp + 1, op, ver)) {
 				return 1;
 			}
@@ -294,9 +427,6 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, char *data
 	char tmp_pattern[256];
 	DIR    *dirp;
 	int     found;
-	char *pat_tgz, *file_tgz;		/* ptr to .tgz */
-	char *pat_tbz, *file_tbz;		/* ptr to .tbz */
-	char *pat_tbgz, *file_tbgz;		/* ptr to .t[bg]z */
 	char pat_sfx[256], file_sfx[256];	/* suffixes */
 
 	found = 0;
@@ -308,27 +438,7 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, char *data
 	/* chop any possible suffix off of 'pattern' and
 	 * store it in pat_sfx
 	 */
-	strcpy(tmp_pattern, pattern);
-	pat_sfx[0] = '\0';
-	pat_tgz = strstr(tmp_pattern, ".tgz");
-	if (pat_tgz) {
-		/* strip off any ".tgz" */
-		strcpy(pat_sfx, pat_tgz);
-		*pat_tgz = '\0';
-	}
-	pat_tbz = strstr(tmp_pattern, ".tbz");
-	if (pat_tbz) {
-		/* strip off any ".tbz" */
-		strcpy(pat_sfx, pat_tbz);
-		*pat_tbz = '\0';
-	}
-	pat_tbgz = strstr(tmp_pattern, ".t[bg]z");
-	if (pat_tbgz) {
-		/* strip off any ".t[bg]z" */
-		strcpy(pat_sfx, pat_tbgz);
-		*pat_tbgz = '\0';
-	}
-
+	strip_txz(tmp_pattern, pat_sfx, pattern);
 	
 	while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
 		char    tmp_file[FILENAME_MAX];
@@ -340,27 +450,8 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, char *data
 		/* chop any possible suffix off of 'tmp_file' and
 		 * store it in file_sfx
 		 */
-		strcpy(tmp_file, dp->d_name);
-		file_sfx[0] = '\0';
-		file_tgz = strstr(tmp_file, ".tgz");
-		if (file_tgz) {
-			/* strip off any ".tgz" */
-			strcpy(file_sfx, file_tgz);
-			*file_tgz = '\0';
-		}
-		file_tbz = strstr(tmp_file, ".tbz");
-		if (file_tbz) {
-			/* strip off any ".tbz" */
-			strcpy(file_sfx, file_tbz);
-			*file_tbz = '\0';
-		}
-		file_tbgz = strstr(tmp_file, ".t[bg]z");
-		if (file_tbgz) {
-			/* strip off any ".t[bg]z" */
-			strcpy(file_sfx, file_tbgz);
-			*file_tbgz = '\0';
-		}
-
+		strip_txz(tmp_file, file_sfx, dp->d_name);
+		
 		/* we need to match pattern and suffix separately, in case
 		 * each is a different pattern class (e.g. dewey and
 		 * character class (.t[bg]z)) */
@@ -395,9 +486,6 @@ int
 findbestmatchingname_fn(const char *found, char *best)
 {
 	char *found_version, *best_version;
-	char *found_tgz, *best_tgz;
-	char *found_tbz, *best_tbz;
-	char *found_tbgz, *best_tbgz;
 	char found_no_sfx[255];
 	char best_no_sfx[255];
 
@@ -409,28 +497,9 @@ findbestmatchingname_fn(const char *found, char *best)
 		/* skip '-', if any version found */
 		found_version++;
 	}
-	found_tgz = strstr(found, ".tgz");
-	if (found_tgz) {
-		/* strip off any ".tgz" */
-		strncpy(found_no_sfx, found_version, found_tgz-found_version);
-		found_no_sfx[found_tgz-found_version] = '\0';
-		found_version = found_no_sfx;
-	}
-	found_tbz = strstr(found, ".tbz");
-	if (found_tbz) {
-		/* strip off any ".tbz" */
-		strncpy(found_no_sfx, found_version, found_tbz-found_version);
-		found_no_sfx[found_tbz-found_version] = '\0';
-		found_version = found_no_sfx;
-	}
-	found_tbgz = strstr(found, ".t[bg]z");
-	if (found_tbgz) {
-		/* strip off any ".t[bg]z" */
-		strncpy(found_no_sfx, found_version, found_tbgz-found_version);
-		found_no_sfx[found_tbgz-found_version] = '\0';
-		found_version = found_no_sfx;
-	}
-
+	strip_txz(found_no_sfx, NULL, found_version);
+	found_version = found_no_sfx;
+	
 	best_version=NULL;
 	if (best && best[0] != '\0') {
 		best_version = strrchr(best, '-');
@@ -438,27 +507,8 @@ findbestmatchingname_fn(const char *found, char *best)
 			/* skip '-' if any version found */
 			best_version++;
 		}
-		best_tgz = strstr(best, ".tgz");
-		if (best_tgz) {
-			/* strip off any ".tgz" */
-			strncpy(best_no_sfx, best_version, best_tgz-best_version);
-			best_no_sfx[best_tgz-best_version] = '\0';
-			best_version = best_no_sfx;
-		}
-		best_tbz = strstr(best, ".tbz");
-		if (best_tbz) {
-			/* strip off any ".tbz" */
-			strncpy(best_no_sfx, best_version, best_tbz-best_version);
-			best_no_sfx[best_tbz-best_version] = '\0';
-			best_version = best_no_sfx;
-		}
-		best_tbgz = strstr(best, ".t[bg]z");
-		if (best_tbgz) {
-			/* strip off any ".t[bg]z" */
-			strncpy(best_no_sfx, best_version, best_tbgz-best_version);
-			best_no_sfx[best_tbgz-best_version] = '\0';
-			best_version = best_no_sfx;
-		}
+		strip_txz(best_no_sfx, NULL, best_version);
+		best_version = best_no_sfx;
 	}
 
 	if (found_version == NULL) {
@@ -514,21 +564,33 @@ strnncpy(char *to, size_t tosize, char *from, size_t cc)
 
 /*
  * Strip off any .tgz, .tbz or .t[bg]z suffix from fname,
- * and copy into buffer "buf"
+ * and copy into buffer "buf", the suffix is stored in "sfx"
+ * if "sfx" is not NULL. If no suffix is found, "sfx" is set
+ * to an empty string. 
  */
 void
-strip_txz(char *buf, char *fname)
+strip_txz(char *buf, char *sfx, const char *fname)
 {
 	char *s;
 
 	strcpy(buf, fname);
+	if (sfx) sfx[0] = '\0';
 	
 	s = strstr(buf, ".tgz");
-	if (s) { *s = '\0'; }		/* strip off any ".tgz" */
+	if (s) {
+		*s = '\0'; 		/* strip off any ".tgz" */
+		if (sfx) strcpy(sfx, s - buf + fname);
+	}
 	
 	s = strstr(buf, ".tbz");
-	if (s) { *s = '\0'; }		/* strip off any ".tbz" */
+	if (s) {
+		*s = '\0'; 		/* strip off any ".tbz" */
+		if (sfx) strcpy(sfx, s - buf + fname);
+	}
 	
 	s = strstr(buf, ".t[bg]z");
-	if (s) { *s = '\0'; }		/* strip off any ".t[bg]z" */
+	if (s) {
+		*s = '\0'; 		/* strip off any ".t[bg]z" */
+		if (sfx) strcpy(sfx, s - buf + fname);
+	}
 }
