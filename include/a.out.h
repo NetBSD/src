@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)a.out.h	5.6 (Berkeley) 4/30/91
- *	$Id: a.out.h,v 1.8 1993/09/12 02:37:05 glass Exp $
+ *	$Id: a.out.h,v 1.9 1993/10/02 20:14:19 pk Exp $
  */
 
 #ifndef	_AOUT_H_
@@ -105,7 +105,10 @@ struct relocation_info {
 			 r_pcrel :  1,	/* 1 if value should be pc-relative */
 			r_length :  2,	/* log base 2 of value's width */
 			r_extern :  1,	/* 1 if need to add symbol to value */
-				 :  4;	/* reserved */
+		       r_baserel :  1,	/* linkage table relative */
+		      r_jmptable :  1,	/* relocate to jump table */
+		      r_relative :  1,	/* load address relative */
+			  r_copy :  1;	/* run time copy */
 };
 
 #define _AOUT_INCLUDE_
