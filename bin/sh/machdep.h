@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.9 2002/10/04 13:15:51 christos Exp $	*/
+/*	$NetBSD: machdep.h,v 1.10 2002/10/07 14:26:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,4 +44,8 @@
  */
 
 #define SHELL_SIZE (sizeof(union {int i; char *cp; double d; }) - 1)
+/*
+ * It appears that grabstackstr() will barf with such alignments
+ * because stalloc() will return a string allocated in a new stackblock.
+ */
 #define SHELL_ALIGN(nbytes) (((nbytes) + SHELL_SIZE) & ~SHELL_SIZE)
