@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.13 1996/10/11 00:45:08 christos Exp $	*/
+/*	$NetBSD: promio.c,v 1.14 1996/10/13 03:39:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -301,7 +301,7 @@ consinit()
 			return;
 	    } else
 #endif
-		kprintf("No crt console device in slot %d\n", crt);
+		printf("No crt console device in slot %d\n", crt);
 	}
 
 
@@ -339,7 +339,7 @@ remcons:
 	 * is configured normally.
 	 */
 	pending_remcons = 1;
-	kprintf("Using PROM serial output until serial drivers initialized\n");
+	printf("Using PROM serial output until serial drivers initialized\n");
 
 	/* We never changed output; go back to using PROM input */
 	cd.cn_dev = makedev (0, 0);
@@ -381,7 +381,7 @@ xconsinit()
 		break;
 	};
 	if (cd.cn_dev == NODEV)
-		kprintf("Can't configure console!\n");
+		printf("Can't configure console!\n");
 }
 
 

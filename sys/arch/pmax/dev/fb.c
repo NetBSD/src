@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.14 1996/10/12 16:00:21 mhitch Exp $	*/
+/*	$NetBSD: fb.c,v 1.15 1996/10/13 03:39:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -220,7 +220,7 @@ fbconnect (name, info, silent)
 			goto got_it;
 			
 	if (fbcd.cd_ndevs >= NFB) {
-		kprintf ("fb: more frame buffers probed than configured!\n");
+		printf ("fb: more frame buffers probed than configured!\n");
 		return;
 	}
 
@@ -245,7 +245,7 @@ fbconnect (name, info, silent)
 
 got_it:
 	if (!silent)
-		kprintf (" (%dx%dx%d)%s",
+		printf (" (%dx%dx%d)%s",
 			info -> fi_type.fb_width,
 			info -> fi_type.fb_height,
 			info -> fi_type.fb_depth,
@@ -270,7 +270,7 @@ tb_kbdmouseconfig(fi)
 
 	if (fi == NULL || fi->fi_glasstty == NULL) {
 #if defined(DEBUG) || defined(DIAGNOSTIC)
-		kprintf("tb_kbdmouseconfig: given non-console framebuffer\n");
+		printf("tb_kbdmouseconfig: given non-console framebuffer\n");
 #endif
 		return 1;
 	}
@@ -301,7 +301,7 @@ tb_kbdmouseconfig(fi)
 #endif	/* NDTOP */
 
 	default:
-		kprintf("Can't configure keyboard/mouse\n");
+		printf("Can't configure keyboard/mouse\n");
 		return (1);
 	};
 
