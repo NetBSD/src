@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.21 2004/02/24 18:31:46 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.22 2004/03/14 01:08:48 cl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.21 2004/02/24 18:31:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22 2004/03/14 01:08:48 cl Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -193,8 +193,7 @@ trap(struct trapframe *frame)
 			} else {
 				map = &p->p_vmspace->vm_map;
 				if (l->l_flag & L_SA) {
-					KDASSERT(p != NULL && p->p_sa != NULL);
-					p->p_sa->sa_vp_faultaddr = va;
+					l->l_savp->savp_faultaddr = va;
 					l->l_flag |= L_SA_PAGEFAULT;
 				}
 			}
@@ -242,8 +241,7 @@ trap(struct trapframe *frame)
 		    frame->dar, frame->tf_xtra[TF_ESR]));
 		KASSERT(l == curlwp && (l->l_stat == LSONPROC));
 		if (l->l_flag & L_SA) {
-			KDASSERT(p != NULL && p->p_sa != NULL);
-			p->p_sa->sa_vp_faultaddr = (vaddr_t)frame->dar;
+			l->l_savp->savp_faultaddr = (vaddr_t)frame->dar;
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
@@ -274,8 +272,7 @@ trap(struct trapframe *frame)
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(l);
 		if (l->l_flag & L_SA) {
-			KDASSERT(p != NULL && p->p_sa != NULL);
-			p->p_sa->sa_vp_faultaddr = (vaddr_t)frame->srr0;
+			l->l_savp->savp_faultaddr = (vaddr_t)frame->srr0;
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
 		ftype = VM_PROT_EXECUTE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.74 2004/02/27 02:43:25 junyoung Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.75 2004/03/14 01:08:47 cl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.74 2004/02/27 02:43:25 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.75 2004/03/14 01:08:47 cl Exp $");
 
 #include "opt_kstack.h"
 
@@ -178,6 +178,7 @@ struct pool ras_pool;
 struct pool sadata_pool;
 struct pool saupcall_pool;
 struct pool sastack_pool;
+struct pool savp_pool;
 struct pool ptimer_pool;
 
 MALLOC_DEFINE(M_EMULDATA, "emuldata", "Per-process emulation data");
@@ -259,6 +260,8 @@ procinit(void)
 	pool_init(&saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0,
 	    "saupcpl", &pool_allocator_nointr);
 	pool_init(&sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
+	    &pool_allocator_nointr);
+	pool_init(&savp_pool, sizeof(struct sadata_vp), 0, 0, 0, "savppl",
 	    &pool_allocator_nointr);
 	pool_init(&ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
 	    &pool_allocator_nointr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.152 2004/02/13 11:36:18 wiz Exp $ */
+/*	$NetBSD: trap.c,v 1.153 2004/03/14 01:08:48 cl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.152 2004/02/13 11:36:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.153 2004/03/14 01:08:48 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -976,8 +976,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	} else {
 		l->l_md.md_tf = tf;
 		if (l->l_flag & L_SA) {
-			KDASSERT(p != NULL && p->p_sa != NULL);
-			p->p_sa->sa_vp_faultaddr = (vaddr_t)v;
+			l->l_savp->savp_faultaddr = (vaddr_t)v;
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
 	}
@@ -1295,8 +1294,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	} else {
 		l->l_md.md_tf = tf;
 		if (l->l_flag & L_SA) {
-			KDASSERT(p != NULL && p->p_sa != NULL);
-			p->p_sa->sa_vp_faultaddr = (vaddr_t)sfva;
+			l->l_savp->savp_faultaddr = (vaddr_t)sfva;
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
 	}

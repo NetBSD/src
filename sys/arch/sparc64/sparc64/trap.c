@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.115 2004/03/12 13:27:03 drochner Exp $ */
+/*	$NetBSD: trap.c,v 1.116 2004/03/14 01:08:48 cl Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.115 2004/03/12 13:27:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2004/03/14 01:08:48 cl Exp $");
 
 #define NEW_FPSTATE
 
@@ -1184,8 +1184,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	} else {
 		l->l_md.md_tf = tf;
 		if (l->l_flag & L_SA) {
-			KDASSERT(p != NULL && p->p_sa != NULL);
-			p->p_sa->sa_vp_faultaddr = addr;
+			l->l_savp->savp_faultaddr = addr;
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
 	}

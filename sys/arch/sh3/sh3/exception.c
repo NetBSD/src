@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.17 2003/11/24 03:11:16 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.18 2004/03/14 01:08:48 cl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.17 2003/11/24 03:11:16 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.18 2004/03/14 01:08:48 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -508,8 +508,7 @@ do {									\
 	}
 
 	if ((map != kernel_map) && (l->l_flag & L_SA)) {
-		KDASSERT(l->l_proc != NULL && l->l_proc->p_sa != NULL);
-		l->l_proc->p_sa->sa_vp_faultaddr = (vaddr_t)va;
+		l->l_savp->savp_faultaddr = (vaddr_t)va;
 		l->l_flag |= L_SA_PAGEFAULT;
 	}
 
