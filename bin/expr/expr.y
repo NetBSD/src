@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.27 2001/05/06 06:20:39 jmc Exp $ */
+/* $NetBSD: expr.y,v 1.28 2001/09/16 13:42:10 wiz Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,10 +38,11 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.27 2001/05/06 06:20:39 jmc Exp $");
+__RCSID("$NetBSD: expr.y,v 1.28 2001/09/16 13:42:10 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
+
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
@@ -423,10 +424,12 @@ yyerror(const char *fmt, ...)
 int
 main(int argc, const char * const *argv)
 {
-	(void) setlocale(LC_ALL, "");
+	setprogname(argv[0]);
+	(void)setlocale(LC_ALL, "");
 
 	if (argc == 1) {
-		(void) fprintf(stderr, "usage: expr expression\n");
+		(void)fprintf(stderr, "usage: %s expression\n",
+		    getprogname());
 		exit(2);
 	}
 
