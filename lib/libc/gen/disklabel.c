@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.8 1995/02/25 17:17:42 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.9 1995/02/27 15:47:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -33,13 +33,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.8 1995/02/25 17:17:42 cgd Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.9 1995/02/27 15:47:03 cgd Exp $";
 #endif
-#endif /* not lint */
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #define DKTYPENAMES
