@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.51 2002/11/19 01:45:29 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.52 2003/02/09 10:04:34 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.51 2002/11/19 01:45:29 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.52 2003/02/09 10:04:34 jdolecek Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -260,7 +260,7 @@ rf_ReconstructFailedDisk(raidPtr, row, col)
 	RF_RowCol_t row;
 	RF_RowCol_t col;
 {
-	RF_LayoutSW_t *lp;
+	const RF_LayoutSW_t *lp;
 	int     rc;
 
 	lp = raidPtr->Layout.map;
@@ -403,7 +403,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 {
 	RF_RaidDisk_t *spareDiskPtr = NULL;
 	RF_RaidReconDesc_t *reconDesc;
-	RF_LayoutSW_t *lp;
+	const RF_LayoutSW_t *lp;
 	RF_ComponentLabel_t c_label;
 	int     numDisksDone = 0, rc;
 	struct partinfo dpart;
