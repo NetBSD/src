@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.76 2000/07/05 18:58:41 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.77 2000/07/05 19:05:31 bouyer Exp $	*/
 
 
 /*
@@ -1713,46 +1713,21 @@ amd756_chip_map(sc, pa)
 	struct pci_attach_args *pa;
 {
 	struct pciide_channel *cp;
-	pcireg_t classreg, interface;
-	int channel, dmacap;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	int channel;
 	pcireg_t chanenable;
 	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
-
-	classreg = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG);
-	interface = PCI_INTERFACE(classreg);
-
-
-#ifndef PCIIDE_AMD756_ENABLEDMA
-	/*
-	 * The AMD756 chip revision D2 has a bug affecting DMA (but
-	 * not UDMA) modes.  The workaround documented by AMD is to
-	 * not use DMA on any drive which does not support UDMA modes,
-	 * but this does not appear to be necessary on all drives.
-	 * The bug, if triggered, will cause a total system hang.
-	 *
-	 * http://www.amd.com/products/cpg/athlon/techdocs/pdf/22591.pdf
-	 */
-	if (AMD756_CHIPREV_DISABLEDMA(PCI_REVISION(classreg))) {
-		printf("%s: multi-word DMA disabled due to chip revision\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
-		dmacap = 0;
-	} else
-#endif /* PCIIDE_AMD756_ENABLEDMA */
-	{
-		dmacap = WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-		printf("%s: bus-master DMA support present",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
-		pciide_mapreg_dma(sc, pa);
-		printf("\n");
-	}
-
+	printf("%s: bus-master DMA support present",
+	    sc->sc_wdcdev.sc_dev.dv_xname);
+	pciide_mapreg_dma(sc, pa);
+	printf("\n");
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= dmacap;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
