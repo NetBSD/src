@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 1996/03/15 00:01:21 christos Exp $ */
+/*	$NetBSD: cpu.h,v 1.21 1996/03/31 22:17:14 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@
 #define _CPU_H_
 
 /*
- * CTL_MACHDEP definitinos.
+ * CTL_MACHDEP definitions.
  */
 #define	CPU_MAXID	1	/* no valid machdep ids */
 
@@ -105,7 +105,17 @@ union sir {
 #define SIR_NET		0
 #define SIR_CLOCK	1
 
-#define	setsoftint()	ienab_bis(IE_L1)
+#if defined(SUN4M)
+extern void	raise __P((int, int));
+#if !(defined(SUN4) || defined(SUN4C))
+#define setsoftint()	raise(0,1)
+#else /* both defined */
+#define setsoftint()	(cputyp == CPU_SUN4M ? raise(0,1) : ienab_bis(IE_L1))
+#endif /* !4,!4c */
+#else	/* 4m not defined */
+#define setsoftint()	ienab_bis(IE_L1)
+#endif /* SUN4M */
+
 #define setsoftnet()	(sir.sir_which[SIR_NET] = 1, setsoftint())
 #define setsoftclock()	(sir.sir_which[SIR_CLOCK] = 1, setsoftint())
 
@@ -120,7 +130,7 @@ int	want_resched;		/* resched() was called */
 
 /*
  * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid.  On the sparc, request an ast to send us 
+ * buffer pages are invalid.  On the sparc, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, want_ast = 1)
@@ -208,11 +218,6 @@ void zs_kgdb_init __P((void));
 void	fb_unblank __P((void));
 /* cache.c */
 void cache_flush __P((caddr_t, u_int));
-/* obio.c */
-#if defined(SUN4)
-void *		bus_tmp __P((void *, int));
-void		bus_untmp __P((void));
-#endif
 /* kgdb_stub.c */
 #ifdef KGDB
 void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
@@ -221,6 +226,9 @@ void kgdb_panic __P((void));
 #endif
 /* vm_machdep.c */
 void cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
+/* iommu.c */
+void	iommu_enter __P((u_int, u_int));
+void	iommu_remove __P((u_int, u_int));
 
 /*
  *
@@ -239,7 +247,7 @@ void cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 struct trapvec {
 	int	tv_instr[4];		/* the four instructions */
 };
-extern struct trapvec trapbase[256];	/* the 256 vectors */
+extern struct trapvec *trapbase;	/* the 256 vectors */
 
 extern void wzero __P((void *, u_int));
 extern void wcopy __P((const void *, void *, u_int));
