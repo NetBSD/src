@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.44 2001/05/23 15:50:32 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.45 2001/06/13 18:17:42 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1821,6 +1821,10 @@ scsipi_execute_xs(xs)
 			panic("scsipi_execute_xs");
 		}
 	}
+
+	/* If the adaptor wants us to poll, poll. */
+	if (chan->chan_adapter->adapt_flags & SCSIPI_ADAPT_POLL_ONLY)
+		xs->xs_control |= XS_CTL_POLL;
 
 	/*
 	 * If we don't yet have a completion thread, or we are to poll for

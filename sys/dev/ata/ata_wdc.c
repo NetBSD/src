@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.29 2001/04/18 05:40:03 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.30 2001/06/13 18:17:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -141,6 +141,8 @@ wdc_ata_bio(drvp, ata_bio)
 	xfer = wdc_get_xfer(WDC_NOSLEEP);
 	if (xfer == NULL)
 		return WDC_TRY_AGAIN;
+	if (chp->wdc->cap & WDC_CAPABILITY_NOIRQ)
+		ata_bio->flags |= ATA_POLL;
 	if (ata_bio->flags & ATA_POLL)
 		xfer->c_flags |= C_POLL;
 	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
@@ -592,10 +594,8 @@ wdc_ata_bio_kill_xfer(chp, xfer)
 	ata_bio->flags |= ATA_ITSDONE;
 	ata_bio->error = ERR_NODEV;
 	ata_bio->r_error = WDCE_ABRT;
-	if ((ata_bio->flags & ATA_POLL) == 0) {
-		WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
-		wddone(chp->ch_drive[drive].drv_softc);
-	}
+	WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
+	wddone(chp->ch_drive[drive].drv_softc);
 }
 
 void
@@ -620,10 +620,8 @@ wdc_ata_bio_done(chp, xfer)
 	wdc_free_xfer(chp, xfer);
 
 	ata_bio->flags |= ATA_ITSDONE;
-	if ((ata_bio->flags & ATA_POLL) == 0) {
-		WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
-		wddone(chp->ch_drive[drive].drv_softc);
-	}
+	WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
+	wddone(chp->ch_drive[drive].drv_softc);
 	WDCDEBUG_PRINT(("wdcstart from wdc_ata_done, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	wdcstart(chp);

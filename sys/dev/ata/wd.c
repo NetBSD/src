@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.213 2001/05/06 18:30:57 drochner Exp $ */
+/*	$NetBSD: wd.c,v 1.214 2001/06/13 18:17:40 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -573,6 +573,8 @@ wddone(v)
 	WDCDEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 
+	if (bp == NULL)
+		return;
 	bp->b_resid = wd->sc_wdc_bio.bcount;
 	errbuf[0] = '\0';
 	switch (wd->sc_wdc_bio.error) {
@@ -1219,6 +1221,7 @@ wddump(dev, blkno, va, size)
   
 	while (nblks > 0) {
 again:
+		wd->sc_bp = NULL;
 		wd->sc_wdc_bio.blkno = blkno;
 		wd->sc_wdc_bio.flags = ATA_POLL;
 		if (wddumpmulti == 1)

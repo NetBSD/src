@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.41 2001/05/15 13:53:20 lukem Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.42 2001/06/13 18:17:41 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -121,6 +121,8 @@ wdc_atapibus_attach(chp)
 	adapt->adapt_nchannels = wdc->nchannels;
 	adapt->adapt_request = wdc_atapi_scsipi_request;
 	adapt->adapt_minphys = wdc_atapi_minphys;
+	if (wdc->cap & WDC_CAPABILITY_NOIRQ)
+		adapt->adapt_flags |= SCSIPI_ADAPT_POLL_ONLY;
 	wdc->sc_atapi_adapter.atapi_probe_device = wdc_atapi_probe_device;
 
 	/*
