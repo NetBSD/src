@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 1997/04/01 16:31:14 matthias Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25 1998/04/24 20:05:39 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -113,16 +113,17 @@ void	save_fpu_context __P((struct pcb *));
 
 /* machdep.c */
 void	dumpconf __P((void));
+void	do_softclock __P((void *));
 void	softnet __P((void *));
 
 /* mainbus.c */
 void	icu_init __P((u_char *));
 
 /* trap.c */
-void	child_return __P((struct proc *, struct syscframe frame));
+void	child_return __P((struct proc *));
 
 /* vm_machdep.c */
-int kvtop __P((caddr_t));
+int	kvtop __P((caddr_t));
 
 #endif /* _KERNEL */
 
