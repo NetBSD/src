@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.12 2002/05/12 15:04:27 jdolecek Exp $  
+	$NetBSD: syscalls.master,v 1.13 2002/05/19 17:55:42 jdolecek Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -353,8 +353,10 @@
 			    struct rlimit *rlp); }
 191	UNIMPL		/* unused */
 192	UNIMPL		mmap2
-193	UNIMPL		truncate64
-194	UNIMPL		ftruncate64
+193	STD		{ int linux_sys_truncate64(const char *path, \
+			    off_t length); }
+194	NOARGS		linux_ftruncate64 { int sys_ftruncate(int fd, \
+			    off_t length); }
 195	STD		{ int linux_sys_stat64(const char *path, \
 			    struct linux_stat64 *sp); }
 196	STD		{ int linux_sys_lstat64(const char *path, \
