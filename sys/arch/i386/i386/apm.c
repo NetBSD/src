@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.81 2003/10/27 14:11:46 junyoung Exp $ */
+/*	$NetBSD: apm.c,v 1.82 2003/10/28 14:49:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.81 2003/10/27 14:11:46 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.82 2003/10/28 14:49:53 yamt Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -337,7 +337,8 @@ apmcall_debug(func, regs, line)
 	int rv;
 	int print = (apmdebug & APMDEBUG_APMCALLS) != 0;
 	char *name;
-	int inf, outf;
+	int inf;
+	int outf = 0; /* XXX: gcc */
 		
 	if (print) {
 		if (func >= sizeof(aci) / sizeof(aci[0])) {
