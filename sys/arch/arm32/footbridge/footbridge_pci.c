@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.2 1998/10/05 01:09:38 mark Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.3 2000/03/06 03:15:48 mark Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -33,6 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include "opt_ebsa285.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.7 1998/09/06 03:11:38 mark Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.8 2000/03/06 03:15:48 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,6 +41,8 @@
  *
  * Based on kate/boot/bootconfig.h
  */
+
+#include "opt_footbridge.h"
 
 typedef struct _PhysMem {
 	u_int address;
@@ -89,7 +91,7 @@ typedef struct _BootConfig {
 extern BootConfig bootconfig;
 #endif	/* _KERNEL && (RISCPC || RC7500) */
 
-#if defined(_KERNEL) && defined(EBSA285)
+#if defined(_KERNEL) && defined(FOOTBRIDGE)
 
 #define	DRAM_BLOCKS	1
 
@@ -100,7 +102,7 @@ typedef struct _BootConfig {
 
 extern BootConfig bootconfig;
 #define MAX_BOOT_STRING 255
-#endif	/* _KERNEL && EBSA285 */
+#endif	/* _KERNEL && FOOTBRIDGE */
 
 #if defined(_KERNEL) && defined(OFW)
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.41 2000/01/25 08:31:59 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.42 2000/03/06 03:15:46 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,6 +43,8 @@
  *
  * Created      : 17/09/94
  */
+
+#include "opt_footbridge.h"
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,20 +254,11 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 47: reserved */
 	cdev_lkm_dummy(),		/* 48: reserved */
 	cdev_mm_init(NOFROM, ofrom),	/* 49: ofrom */
-#ifdef SHARK /* XXX */
-	cdev_tty_init(NSCR,scr),        /*  50: Smart card reader  */
-#else
-	cdev_lkm_dummy(),		/* 50: reserved */
-#endif
+	cdev_tty_init(NSCR,scr),        /* 50: Smart card reader  */
 	cdev_notdef(),			/* 51: reserved */
 	cdev_rnd_init(NRND,rnd),	/* 52: random source pseudo-device */
 	cdev_prof_init(NPROFILER, prof), /* 53: fiq Profiler*/
-#if defined(FOOTBRIDGE)
 	cdev_tty_init(NFCOM, fcom),	/* 54: FOOTBRIDGE console */
-#else
-	/* FOOTBRIDGE */
-	cdev_lkm_dummy(),		/* 54: */	
-#endif	/* FOOTBRIDGE */
 	cdev_lkm_dummy(),		/* 55: Reserved for bypass device */	
 	cdev_joy_init(NJOY,joy),	/* 56: ISA joystick */
 	cdev_midi_init(NMIDI,midi),	/* 57: MIDI I/O */
