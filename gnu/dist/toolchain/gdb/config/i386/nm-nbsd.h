@@ -21,7 +21,10 @@
 #ifndef NM_NBSD_H
 #define NM_NBSD_H
 
+#ifdef __ELF__
 #define	SVR4_SHARED_LIBS
+#endif
+
 /* Get generic NetBSD native definitions. */
 #include "nm-nbsd.h"
 
