@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.99 1997/04/04 20:56:34 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.100 1997/05/26 14:54:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -1247,7 +1247,6 @@ commsrint(sc, tp)
 			(*linesw[tp->t_line].l_start)(tp);
 		} else {
 			sc->sc_tx_stopped = 1;
-			comstop(tp, 0);
 		}
 	}
 
