@@ -1,4 +1,5 @@
-.\" $FreeBSD: src/usr.bin/mklocale/mklocale.1,v 1.6 1999/09/20 09:15:21 phantom Exp $
+.\" $NetBSD: mklocale.1,v 1.4 2001/04/04 11:51:43 wiz Exp $
+.\" FreeBSD: src/usr.bin/mklocale/mklocale.1,v 1.6 1999/09/20 09:15:21 phantom Exp
 .\"
 .\" Copyright (c) 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,7 +61,7 @@ utility reads a
 source file from standard input and produces a
 .Dv LC_CTYPE
 binary file on standard output suitable for placement in
-.Dv /usr/share/locale/\fIlanguage\fP/LC_CTYPE.
+.Pa /usr/share/locale/\fIlanguage\fP/LC_CTYPE .
 .Pp
 The format of
 .Ar src-file
@@ -144,7 +145,6 @@ No translation and the default.
 .Dv "Universal character set Transformation Format"
 adopted from
 .Nm "Plan 9 from Bell Labs" .
-This is the preferred encoding.
 .It Dv EUC
 .Dv EUC
 encoding as used by several
@@ -155,10 +155,10 @@ systems.
 .It Dv VARIABLE
 This keyword must be followed by a single tab or space character,
 after which encoding specific data is placed.
-Currently only the 
+Currently only the
 .Dv "EUC"
 encoding requires variable data.
-See 
+See
 .Xr euc 4
 for further details.
 .It Dv INVALID
@@ -192,12 +192,12 @@ through
 Defines the tolower mappings.
 .Dv RUNE2
 is the lower case representation of
-.Dv RUNE1.
+.Dv RUNE1 .
 .It Dv MAPUPPER
 Defines the toupper mappings.
 .Dv RUNE2
 is the upper case representation of
-.Dv RUNE1.
+.Dv RUNE1 .
 .It Dv TODIGIT
 Defines a map from runes to their digit value.
 .Dv RUNE2
@@ -267,11 +267,8 @@ locale definitions.
 .El
 .Sh SEE ALSO
 .Xr colldef 1 ,
-.Xr mbrune 3 ,
-.Xr rune 3 ,
 .Xr setlocale 3 ,
 .Xr euc 4 ,
-.Xr utf2 4 ,
 .Xr utf8 4
 .Sh BUGS
 The
