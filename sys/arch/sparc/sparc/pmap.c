@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.195 2001/07/07 21:23:53 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.196 2001/07/08 15:58:42 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -429,9 +429,13 @@ void		setpgt4m __P((int *ptep, int pte));
 void		setpte4m __P((vaddr_t va, int pte));
 
 #ifdef MULTIPROCESSOR
-void		setpgt4m_va __P((vaddr_t va, int *ptep, int pte));
+void		setpgt4m_va __P((vaddr_t, int *, int, int));
 #else
-#define		setpgt4m_va(va, ptep, pte)	setpgt4m((ptep), (pte))
+#define		setpgt4m_va(va, ptep, pte, pageflush) do { \
+	if ((pageflush)) \
+		tlb_flush_page((va)); \
+	setpgt4m((ptep), (pte)); \
+} while (0)
 #endif
 
 #endif
@@ -834,10 +838,11 @@ setpgt4m(ptep, pte)
 
 #ifdef MULTIPROCESSOR
 __inline void
-setpgt4m_va(va, ptep, pte)
+setpgt4m_va(va, ptep, pte, pageflush)
 	vaddr_t va;
 	int *ptep;
 	int pte;
+	int pageflush;	/* ignored */
 {
 
 	updatepte4m(va, ptep, 0xffffffff, pte);
@@ -2582,8 +2587,7 @@ pv_syncflags4m(pv0)
 			 */
 
 			doflush = pm->pm_ctx && (tpte & SRMMU_PG_M);
-			tpte &= ~(SRMMU_PG_M | SRMMU_PG_R);
-			setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], tpte);
+			updatepte4m(va, &sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_PG_M | SRMMU_PG_R, 0);
 			if (doflush) {
 
 				/* Only do this for write-back caches? */
@@ -4311,10 +4315,8 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 				pv_unlink4m(pv, pm, va);
 			}
 		}
-#if !defined(MULTIPROCESSOR)
-		tlb_flush_page(va);
-#endif
-		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
+		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
+		    SRMMU_TEINVALID, 1);
 		nleft--;
 #ifdef DIAGNOSTIC
 		if (nleft < 0)
@@ -4567,12 +4569,8 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 			panic("pmap_rmu: too many PTEs in segment; "
 			      "va 0x%lx; endva 0x%lx", va, endva);
 #endif
-#if !defined(MULTIPROCESSOR)
-		if (pm->pm_ctx)
-			tlb_flush_page(va);
-#endif
-
-		setpgt4m_va(va, &pte0[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
+		setpgt4m_va(va, &pte0[VA_SUN4M_VPG(va)], SRMMU_TEINVALID,
+		    pm->pm_ctx != NULL);
 	}
 
 	/*
@@ -4584,7 +4582,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 
 		if (pm->pm_ctx)
 			tlb_flush_segment(vr, vs); 	/* Paranoia? */
-		setpgt4m_va(va, &rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
+		setpgt4m_va(va, &rp->rg_seg_ptps[vs], SRMMU_TEINVALID, 0);
 		sp->sg_pte = NULL;
 		pool_put(&L23_pool, pte0);
 
@@ -5051,11 +5049,11 @@ pmap_page_protect4m(pg, prot)
 		if (pm->pm_ctx) {
 			setcontext4m(pm->pm_ctxnum);
 			cache_flush_page(va);
-			tlb_flush_page(va);
 		}
 
 		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
-		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
+		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID,
+		    pm->pm_ctx != NULL);
 
 		if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
 			panic("pmap_page_protect !PG_V");
@@ -5068,7 +5066,7 @@ pmap_page_protect4m(pg, prot)
 			 */
 			if (pm->pm_ctx)
 				tlb_flush_segment(vr, vs);
-			setpgt4m_va(va, &rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
+			setpgt4m_va(va, &rp->rg_seg_ptps[vs], SRMMU_TEINVALID, 0);
 			pool_put(&L23_pool, sp->sg_pte);
 			sp->sg_pte = NULL;
 
@@ -5266,14 +5264,11 @@ pmap_changeprot4m(pm, va, prot, wired)
 		if ((pte & (SRMMU_PG_C|SRMMU_PGTYPE)) ==
 		    (SRMMU_PG_C|PG_SUN4M_OBMEM))
 			cache_flush_page(va);
-
-#if !defined(MULTIPROCESSOR)
-		tlb_flush_page(va);
-#endif
 	}
 
 	setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
-		 (pte & ~SRMMU_PROT_MASK) | newprot);
+		 (pte & ~SRMMU_PROT_MASK) | newprot,
+		 pm->pm_ctx != NULL);
 
 	if (pm->pm_ctx)
 		setcontext4m(ctx);
@@ -6024,10 +6019,7 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 		panic("pmap_enk4m: missing segment table for va 0x%lx",va);
 #endif
 
-#if !defined(MULTIPROCESSOR)
-	tlb_flush_page(va);
-#endif
-	setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+	setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], pteproto, 1);
 
 	splx(s);
 	return (0);
@@ -6215,13 +6207,10 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 	/*
 	 * Update PTEs, flush TLB as necessary.
 	 */
-	if (pm->pm_ctx) {
+	if (pm->pm_ctx)
 		setcontext4m(pm->pm_ctxnum);
-#if !defined(MULTIPROCESSOR)
-		tlb_flush_page(va);
-#endif
-	}
-	setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+	setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], pteproto,
+	    pm->pm_ctx != NULL);
 
 out:
 	splx(s);
@@ -6257,8 +6246,7 @@ pmap_kenter_pa4m(va, pa, prot)
 	KASSERT((tpte & SRMMU_TETYPE) != SRMMU_TEPTE);
 
 	sp->sg_npte++;
-	tlb_flush_page(va);
-	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+	setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], pteproto, 1);
 }
 
 void
@@ -6325,9 +6313,8 @@ pmap_kremove4m(va, len)
 				if (perpage && (tpte & SRMMU_PG_C))
 					cache_flush_page(va);
 			}
-			tlb_flush_page(va);
-			setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)],
-				 SRMMU_TEINVALID);
+			setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
+				 SRMMU_TEINVALID, 1);
 			nleft--;
 		}
 		sp->sg_npte = nleft;
