@@ -32,10 +32,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)ls.1	6.18 (Berkeley) 6/27/91
-.\"	$Id: ls.1,v 1.4 1993/08/01 07:48:28 mycroft Exp $
+.\"	from: @(#)ls.1	6.25 (Berkeley) 7/27/92
+.\"	$Id: ls.1,v 1.5 1993/08/07 03:56:55 mycroft Exp $
 .\"
-.Dd June 27, 1991
+.Dd July 27, 1992
 .Dt LS 1
 .Os
 .Sh NAME
@@ -83,9 +83,8 @@ Display a slash (/) immediately after each pathname
 that is a directory, an asterisk (*) after each that is
 executable,
 and an at sign (@) after each symbolic link.
-.\"and a vertical bar (|) after
-.\"each that is a
-.\".Tn FIFO . 
+.\" and a vertical bar (|) after each that is a
+.\" .Tn FIFO . 
 .It Fl L
 If argument is a symbolic link, list the file or directory the link references
 rather than the link itself.
@@ -100,16 +99,10 @@ dot (.).
 .It Fl c
 Use time when file status was last changed for sorting or printing.
 .It Fl d
-Directories are listed as plain files (not searched recursively).
+Directories are listed as plain files (not searched recursively) and
+symbolic links in the argument list are not indirected through.
 .It Fl f
 Output is not sorted.
-.It Fl g
-Include the group ownership of the file in a long
-.Pq Fl l
-output
-.Pq Fl lg .
-If the group is not a known group name, the numeric ID
-is printed.
 .It Fl i
 For each file, print the file's file serial number (inode number).
 .It Fl k
@@ -120,6 +113,10 @@ option, causing the sizes to be reported in kilobytes.
 (The lowercase letter ``ell.'')  List in long format. (See below.)
 If the output is to a terminal, a total sum for all the file
 sizes is output on a line before the long listing.
+.It Fl o
+Include the file flags in a long
+.Pq Fl l
+output
 .It Fl q
 Force printing of non-graphic characters in file names as
 the character `?'; this is the default when output is to a terminal.
@@ -127,9 +124,8 @@ the character `?'; this is the default when output is to a terminal.
 Reverse the order of the sort to get reverse
 lexicographical order or the oldest entries first.
 .It Fl s
-Display the number of file system bytes actually
-used by each file, in units of 512, where partial
-units are rounded up to the next integer value.
+Display the number of file system blocks actually used by each file, in units
+of 512 bytes, where partial units are rounded up to the next integer value.
 If the output is to a terminal, a total sum for all the file
 sizes is output on a line before the listing.
 .It Fl t
@@ -183,17 +179,20 @@ options.
 If the
 .Fl l
 option is given, the following information
-is be displayed:
+is displayed for each file:
 file mode,
-number of links, owner name,
-.\" group name,
+number of links, owner name, group name,
 number of bytes in the file, abbreviated
 month, day-of-month file was last modified,
 hour file last modified, minute file last
 modified, and the pathname.
+In addition, for each directory whose contents are displayed, the total
+number of 512-byte blocks used by the files in the directory is displayed
+on a line by itself immediately before the information for the files in the
+directory.
 .Pp
-If the owner name is not a known user name
-the numeric ID is displayed.
+If the owner or group names are not a known user or group name
+the numeric ID's are displayed.
 .Pp
 If the file is a character special or block special file,
 the major and minor device numbers for the file are displayed
@@ -288,10 +287,19 @@ or
 The
 .Nm ls
 utility exits 0 on success, and >0 if an error occurs.
-.Sh ENVIRONMENT
+.Sh ENVIRONMENTAL VARIABLES
 The following environment variables affect the execution of
 .Nm ls :
-.Bl -tag -width COLUMNS
+.Bl -tag -width BLOCKSIZE
+.It Ev BLOCKSIZE
+If the environmental variable
+.Ev BLOCKSIZE
+is set, and the
+.Fl k
+option is not specified, the block counts
+(see
+.Fl s )
+will be displayed in units of that size block.
 .It COLUMNS
 If this variable contains a string representing a
 decimal integer, it is used as the
@@ -305,17 +313,23 @@ based on the width provided.
 (See
 .Fl C . )
 .El
+.Sh COMPATIBILITY
+The group field is now automatically included in the long listing for
+files in order to be compatible with the
+.St -p1003.2
+specification.
 .Sh SEE ALSO
 .Xr chmod 1 ,
+.Xr symlink 7 ,
 .Xr sticky 8
 .Sh HISTORY
 A
 .Nm ls
 command appeared in
 .At v6 .
-.\" .Sh STANDARDS
-.\" .The
-.\" .Nm ls
-.\" function is expected to be
-.\" .Tn POSIX
-.\" 1003.2 compatible.
+.Sh STANDARDS
+The
+.Nm ls
+command is expected to be a superset of the
+.St -p1003.2
+specification.

@@ -35,14 +35,22 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)util.c	5.8 (Berkeley) 7/22/90";*/
-static char rcsid[] = "$Id: util.c,v 1.4 1993/08/01 18:59:27 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)util.c	5.12 (Berkeley) 3/9/92";*/
+static char rcsid[] = "$Id: util.c,v 1.5 1993/08/07 03:57:05 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
+#include <fts.h>
+#include <errno.h>
+#include <string.h>
+#include "ls.h"
+#include "extern.h"
 
+void
 prcopy(src, dest, len)
 	register char *src, *dest;
 	register int len;
@@ -55,25 +63,39 @@ prcopy(src, dest, len)
 	}
 }
 
-char
-*emalloc(size)
-	u_int size;
-{
-	char *retval, *malloc();
-
-	if (!(retval = malloc(size)))
-		nomem();
-	return(retval);
-}
-
-nomem()
-{
-	(void)fprintf(stderr, "ls: out of memory.\n");
-	exit(1);
-}
-
+void
 usage()
 {
-	(void)fprintf(stderr, "usage: ls [-1ACFLRTacdfgiklqrstu] [file ...]\n");
+	(void)fprintf(stderr, "usage: ls [-1ACFLRTacdfiklqrstu] [file ...]\n");
 	exit(1);
+}
+
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+void
+#if __STDC__
+err(int fatal, const char *fmt, ...)
+#else
+err(fatal, fmt, va_alist)
+	int fatal;
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	(void)fprintf(stderr, "ls: ");
+	(void)vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "\n");
+	if (fatal)
+		exit(1);
 }
