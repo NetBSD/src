@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.10 2002/03/23 09:38:02 jdolecek Exp $	*/
+/*	$NetBSD: do_command.c,v 1.10.2.1 2002/08/03 16:02:30 lukem Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.10 2002/03/23 09:38:02 jdolecek Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.10.2.1 2002/08/03 16:02:30 lukem Exp $");
 #endif
 #endif
 
@@ -198,6 +198,8 @@ child_process(e, u)
 #ifdef SYSLOG
 		closelog();
 #endif
+		if (setlogin(usernm) < 0)
+			syslog(LOG_ERR, "setlogin() failure: %m");
 
 		/* get new pgrp, void tty, etc.
 		 */
