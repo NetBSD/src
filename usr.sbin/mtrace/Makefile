@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.3 1995/10/04 03:47:51 thorpej Exp $
 #	from: Id: Makefile,v 1.5 1993/06/24 05:11:16 deering Exp
-#	$Id: Makefile,v 1.2 1995/06/01 23:38:51 thorpej Exp $
 
 .PATH: ${.CURDIR}/../mrouted
 CFLAGS+= -I${.CURDIR}/../mrouted
