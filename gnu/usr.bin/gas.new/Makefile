@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2001/01/08 08:30:00 itojun Exp $
+#	$NetBSD: Makefile,v 1.17 2001/01/09 08:52:58 enami Exp $
 #
 
 .include <bsd.own.mk>
@@ -40,7 +40,7 @@ TEXINFO=	as.texi
 INFOFLAGS=	-I${DIST}/gas/doc
 
 DIST=		${.CURDIR}/../../dist
-BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${MAKE} print-objdir
+BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${PRINTOBJDIR}
 
 .PATH:		${DIST}/gas/config ${DIST}/gas ${DIST}/gas/doc
 

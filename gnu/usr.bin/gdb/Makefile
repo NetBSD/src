@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2001/01/05 21:17:11 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.45 2001/01/09 08:52:57 enami Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -13,6 +13,7 @@ SRCS=		main.c ${COMMON_SRCS} annotate.c inflow.c gnu-regex.c
 OBJS=		init.o
 DPSRCS=		nm.h tm.h
 CLEANFILES=	init.c
+PARALLEL=	yes
 
 CPPFLAGS+=	-I. -I${.CURDIR} -I${DIST}/gdb/config -I${DIST}/gdb \
 		-I${BFDOBJ} -I${DIST}/bfd -I${DIST}/include \
@@ -103,7 +104,7 @@ NATDEPFILES.vax=	vaxnbsd-nat.c
 TDEPFILES.vax=		vax-tdep.c
 
 DIST=		${.CURDIR}/../../dist
-BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${MAKE} -s print-objdir
+BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${PRINTOBJDIR}
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/doc
 
