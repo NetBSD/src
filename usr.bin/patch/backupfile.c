@@ -12,17 +12,16 @@
    Some algorithms adapted from GNU Emacs. */
 
 #ifndef lint
-static char rcsid[] = "$Id: backupfile.c,v 1.2 1993/08/02 17:55:13 mycroft Exp $";
+static char rcsid[] = "$Id: backupfile.c,v 1.3 1994/12/24 17:30:13 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include "backupfile.h"
 #include "config.h"
-char *index ();
-char *rindex ();
-char *malloc ();
 
 #ifdef DIRENT
 #include <dirent.h>
