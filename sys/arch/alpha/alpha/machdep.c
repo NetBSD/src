@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.158 1999/01/09 22:10:13 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.159 1999/01/10 03:16:21 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158 1999/01/09 22:10:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.159 1999/01/10 03:16:21 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -901,7 +901,8 @@ nobootinfo:
 	 */
 #ifdef DDB
 	db_machine_init();
-	ddb_init((int)(ksym_end - ksym_start), ksym_start, ksym_end);
+	ddb_init((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
+	    ksym_start, ksym_end);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
