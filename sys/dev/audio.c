@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.46 1997/05/10 19:01:53 jtk Exp $	*/
+/*	$NetBSD: audio.c,v 1.47 1997/05/11 00:41:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -836,7 +836,7 @@ audio_calc_blksize(sc)
 	bs *= sc->sc_pparams.precision / NBBY;
 	if (bs > AU_RING_SIZE/2)
 		bs = AU_RING_SIZE/2;
-	bs =  hw->round_blocksize(sc->hw_hdl, bs);
+	bs = hw->round_blocksize(sc->hw_hdl, bs);
 	if (bs > AU_RING_SIZE)
 		bs = AU_RING_SIZE;
 
@@ -849,7 +849,7 @@ audio_fill_silence(params, p, n)
         u_char *p;
         int n;
 {
-	u_char auzero[4];
+	u_char auzero[2];
 	int nfill = 1;
     
 	switch (params->encoding) {
@@ -895,45 +895,24 @@ audio_fill_silence(params, p, n)
 	}
 }
 
-#define NSILENCE 128 /* An arbitrary even constant >= 2 */
 int
 audio_silence_copyout(sc, n, uio)
 	struct audio_softc *sc;
 	int n;
 	struct uio *uio;
 {
-	struct iovec *iov;
-	int error = 0;
-	u_char zerobuf[NSILENCE];
+	int error;
 	int k;
+	u_char zerobuf[128];
 
-	audio_fill_silence(&sc->sc_rparams, zerobuf, NSILENCE);
+	audio_fill_silence(&sc->sc_rparams, zerobuf, sizeof zerobuf);
 
-        while (n > 0 && uio->uio_resid) {
-                iov = uio->uio_iov;
-                if (iov->iov_len == 0) {
-                        uio->uio_iov++;
-                        uio->uio_iovcnt--;
-                        continue;
-                }
-		k = min(min(n, iov->iov_len), NSILENCE);
-                switch (uio->uio_segflg) {
-                case UIO_USERSPACE:
-			error = copyout(zerobuf, iov->iov_base, k);
-			if (error)
-				return (error);
-			break;
-
-                case UIO_SYSSPACE:
-                        bcopy(zerobuf, iov->iov_base, k);
-                        break;
-                }
-                iov->iov_base += k;
-                iov->iov_len -= k;
-                uio->uio_resid -= k;
-                uio->uio_offset += k;
-                n -= k;
-        }
+	error = 0;
+        while (n > 0 && uio->uio_resid > 0 && !error) {
+		k = min(n, min(uio->uio_resid, sizeof zerobuf));
+		error = uiomove(zerobuf, k, uio);
+		n -= k;
+	}
         return (error);
 }
 
