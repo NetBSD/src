@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 1997/03/12 15:16:35 christos Exp $
+#	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
 
 #
 # Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -91,9 +91,9 @@ define	P_VMSPACE	offsetof(struct proc, p_vmspace)
 define	SRUN		SRUN
 
 # VM structure fields
-define	VM_PMAP		offsetof(struct vmspace, vm_pmap)
-define	VM_PMAP_CTX	offsetof(struct vmspace, vm_pmap.pm_ctx)
-define	VM_PMAP_CTXNUM	offsetof(struct vmspace, vm_pmap.pm_ctxnum)
+define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
+define	PMAP_CTX	offsetof(struct pmap, pm_ctx)
+define	PMAP_CTXNUM	offsetof(struct pmap, pm_ctxnum)
 
 # interrupt/fault metering
 define	V_SWTCH		offsetof(struct vmmeter, v_swtch)

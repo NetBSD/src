@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53 1997/03/15 20:31:33 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.54 1997/06/28 19:59:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -709,7 +709,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	 * that got bumped out via LRU replacement.
 	 */
 	vm = p->p_vmspace;
-	rv = mmu_pagein(&vm->vm_pmap, va,
+	rv = mmu_pagein(vm->vm_pmap.pmap, va,
 			ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ);
 	if (rv < 0)
 		goto fault;
@@ -741,7 +741,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		 * entries for `wired' pages).  Instead, we call
 		 * mmu_pagein here to make sure the new PTE gets installed.
 		 */
-		(void) mmu_pagein(&vm->vm_pmap, va, VM_PROT_NONE);
+		(void) mmu_pagein(vm->vm_pmap.pmap, va, VM_PROT_NONE);
 	} else {
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
