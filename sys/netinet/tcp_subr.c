@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.20 1995/11/21 01:07:41 cgd Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.21 1996/01/31 03:49:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -66,7 +66,10 @@ int 	tcp_mssdflt = TCP_MSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 int	tcp_do_rfc1323 = 1;
 
-extern	struct inpcb *tcp_last_inpcb;
+#ifndef TCBHASHSIZE
+#define	TCBHASHSIZE	128
+#endif
+int	tcbhashsize = TCBHASHSIZE;
 
 /*
  * Tcp initialization
@@ -76,7 +79,7 @@ tcp_init()
 {
 
 	tcp_iss = 1;		/* wrong */
-	in_pcbinit(&tcbtable);
+	in_pcbinit(&tcbtable, tcbhashsize);
 	if (max_protohdr < sizeof(struct tcpiphdr))
 		max_protohdr = sizeof(struct tcpiphdr);
 	if (max_linkhdr + sizeof(struct tcpiphdr) > MHLEN)
@@ -354,9 +357,6 @@ tcp_close(tp)
 	free(tp, M_PCB);
 	inp->inp_ppcb = 0;
 	soisdisconnected(so);
-	/* clobber input pcb cache if we're closing the cached connection */
-	if (inp == tcp_last_inpcb)
-		tcp_last_inpcb = 0;
 	in_pcbdetach(inp);
 	tcpstat.tcps_closed++;
 	return ((struct tcpcb *)0);
