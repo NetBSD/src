@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.37.2.13 2001/05/28 12:31:57 he Exp $
+# $NetBSD: mi,v 1.37.2.14 2002/02/09 17:03:02 he Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -338,6 +338,9 @@
 ./usr/share/examples/ipf/BASIC_2.FW
 ./usr/share/examples/ipf/example.1
 ./usr/share/examples/ipf/example.10
+./usr/share/examples/ipf/example.11
+./usr/share/examples/ipf/example.12
+./usr/share/examples/ipf/example.13
 ./usr/share/examples/ipf/example.2
 ./usr/share/examples/ipf/example.3
 ./usr/share/examples/ipf/example.4
