@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_pcb.c	7.14 (Berkeley) 4/20/91
- *	$Id: in_pcb.c,v 1.3 1993/05/22 11:42:32 cgd Exp $
+ *	$Id: in_pcb.c,v 1.4 1993/06/10 05:17:53 deraadt Exp $
  */
 
 #include "param.h"
@@ -80,11 +80,18 @@ in_pcbbind(inp, nam)
 	register struct inpcb *head = inp->inp_head;
 	register struct sockaddr_in *sin;
 	u_short lport = 0;
+	int wild = 0;
 
 	if (in_ifaddr == 0)
 		return (EADDRNOTAVAIL);
 	if (inp->inp_lport || inp->inp_laddr.s_addr != INADDR_ANY)
 		return (EINVAL);
+	
+	if ((so->so_options & SO_REUSEADDR) == 0 &&
+	    ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
+	     (so->so_options & SO_ACCEPTCONN) == 0))
+		wild = INPLOOKUP_WILDCARD;
+
 	if (nam == 0)
 		goto noname;
 	sin = mtod(nam, struct sockaddr_in *);
@@ -101,16 +108,10 @@ in_pcbbind(inp, nam)
 	lport = sin->sin_port;
 	if (lport) {
 		u_short aport = ntohs(lport);
-		int wild = 0;
 
 		/* GROSS */
 		if (aport < IPPORT_RESERVED && (so->so_state & SS_PRIV) == 0)
 			return (EACCES);
-		/* even GROSSER, but this is the Internet */
-		if ((so->so_options & SO_REUSEADDR) == 0 &&
-		    ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
-		     (so->so_options & SO_ACCEPTCONN) == 0))
-			wild = INPLOOKUP_WILDCARD;
 		if (in_pcblookup(head,
 		    zeroin_addr, 0, sin->sin_addr, lport, wild))
 			return (EADDRINUSE);
@@ -124,7 +125,7 @@ noname:
 				head->inp_lport = IPPORT_RESERVED;
 			lport = htons(head->inp_lport);
 		} while (in_pcblookup(head,
-			    zeroin_addr, 0, inp->inp_laddr, lport, 0));
+			    zeroin_addr, 0, inp->inp_laddr, lport, wild));
 	inp->inp_lport = lport;
 	return (0);
 }
@@ -435,6 +436,12 @@ in_pcblookup(head, faddr, fport, laddr, lport, flags)
 			match = inp;
 			matchwild = wildcard;
 			if (matchwild == 0)
+				break;
+		}
+	}
+	return (match);
+}
+ld == 0)
 				break;
 		}
 	}
