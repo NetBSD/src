@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.57 2004/04/22 01:01:41 matt Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.58 2005/01/23 18:41:57 matt Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.57 2004/04/22 01:01:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.58 2005/01/23 18:41:57 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -127,7 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.57 2004/04/22 01:01:41 matt Exp $");
  * TCP/IP protocol family: IP6, ICMP6, UDP, TCP.
  */
 
-extern	struct domain inet6domain;
+DOMAIN_DEFINE(inet6domain);	/* forward declare and add to link set */
 
 const struct ip6protosw inet6sw[] = {
 { 0,		&inet6domain,	IPPROTO_IPV6,	0,
@@ -235,7 +235,7 @@ const struct ip6protosw inet6sw[] = {
 struct domain inet6domain =
     { AF_INET6, "internet6", 0, 0, 0,
       (struct protosw *)inet6sw,
-      (struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])], 0,
+      (struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])],
       rn_inithead,
       offsetof(struct sockaddr_in6, sin6_addr) << 3,
       sizeof(struct sockaddr_in6),

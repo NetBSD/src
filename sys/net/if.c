@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.151 2005/01/09 12:18:46 yamt Exp $	*/
+/*	$NetBSD: if.c,v 1.152 2005/01/23 18:41:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.151 2005/01/09 12:18:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.152 2005/01/23 18:41:56 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -480,7 +480,7 @@ if_attach(ifp)
 	    (struct mbuf **)PFIL_IFNET_ATTACH, ifp, PFIL_IFNET);
 #endif
 
-	if (domains)
+	if (!STAILQ_EMPTY(&domains))
 		if_attachdomain1(ifp);
 
 	/* Announce the interface. */
@@ -510,7 +510,7 @@ if_attachdomain1(ifp)
 
 	/* address family dependent data region */
 	memset(ifp->if_afdata, 0, sizeof(ifp->if_afdata));
-	for (dp = domains; dp; dp = dp->dom_next) {
+	DOMAIN_FOREACH(dp) {
 		if (dp->dom_ifattach)
 			ifp->if_afdata[dp->dom_family] =
 			    (*dp->dom_ifattach)(ifp);
@@ -647,7 +647,7 @@ if_detach(ifp)
 			(void) (*rnh->rnh_walktree)(rnh, if_rt_walktree, ifp);
 	}
 
-	for (dp = domains; dp; dp = dp->dom_next) {
+	DOMAIN_FOREACH(dp) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
 			(*dp->dom_ifdetach)(ifp,
 			    ifp->if_afdata[dp->dom_family]);
