@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.115 2001/01/28 07:15:07 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.116 2001/01/29 11:23:43 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.116 2001/01/28 07:14:47 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.117 2001/01/29 11:23:13 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -402,6 +402,9 @@
 #define	PCMCIA_CIS_CONTEC_CNETPC	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_CONTEC_CNETPC	0x0000
 #define	PCMCIA_STR_CONTEC_CNETPC	"Contec C-NET(PC)C"
+#define	PCMCIA_CIS_CONTEC_FX_DS110_PCC	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_CONTEC_FX_DS110_PCC	0x0008
+#define	PCMCIA_STR_CONTEC_FX_DS110_PCC	"Contec FLEXLAN/FX-DS110-PCC"
 
 /* Roland */
 #define	PCMCIA_CIS_ROLAND_SCP55	{ NULL, NULL, NULL, NULL }
