@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.307 2002/02/13 07:55:20 yamt Exp $
+# $NetBSD: mi,v 1.308 2002/03/01 11:26:48 ad Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -319,6 +319,8 @@
 ./usr/bin/paste		base-util-bin
 ./usr/bin/patch		base-util-bin
 ./usr/bin/pawd		base-amd-bin
+./usr/bin/pgrep		base-util-bin
+./usr/bin/pkill		base-util-bin
 ./usr/bin/pr		base-util-bin
 ./usr/bin/printenv	base-util-bin
 ./usr/bin/printf	base-util-bin
