@@ -1,4 +1,4 @@
-#	$NetBSD: A7INST,v 1.15 1998/08/14 03:56:21 mark Exp $
+#	$NetBSD: A7INST,v 1.16 1998/08/25 22:07:46 mark Exp $
 #
 #	A7INST - A7000 install configuration
 #
@@ -13,7 +13,7 @@ maxusers	32
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
-#options 	UVM		# Use UVM instead of Mach VM.
+options 	UVM		# Use UVM instead of Mach VM.
 
 # CPU options
 

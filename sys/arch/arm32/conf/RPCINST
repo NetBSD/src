@@ -1,4 +1,4 @@
-#	$NetBSD: RPCINST,v 1.14 1998/08/14 03:56:22 mark Exp $
+#	$NetBSD: RPCINST,v 1.15 1998/08/25 22:07:47 mark Exp $
 #
 #	RPCINST -- RiscPC install configuration
 #
@@ -13,7 +13,7 @@ maxusers	32
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
-#options 	UVM		# Use UVM instead of Mach VM.
+options 	UVM		# Use UVM instead of Mach VM.
 
 # CPU options
 
