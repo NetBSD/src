@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.9 2003/01/01 00:10:17 thorpej Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.10 2003/11/24 06:11:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.9 2003/01/01 00:10:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.10 2003/11/24 06:11:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -704,6 +704,7 @@ ppb_cardbus_attach(parent, self, aux)
 
 	busdata = cardbus_conf_read(cc, cf, ca->ca_tag, PPB_REG_BUSINFO);
 	minbus = pcibios_max_bus;
+	maxbus = minbus;		/* XXX; gcc */
 
 	if (PPB_BUSINFO_SECONDARY(busdata) == 0) {
 	  printf("%s: not configured by system firmware calling pci_bus_fixup(%d)\n",
