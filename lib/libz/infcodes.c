@@ -1,4 +1,4 @@
-/* $NetBSD: infcodes.c,v 1.7 2003/03/08 07:42:35 lukem Exp $ */
+/* $NetBSD: infcodes.c,v 1.8 2003/03/18 19:53:15 mycroft Exp $ */
 
 /* infcodes.c -- process literals and length/distance pairs
  * Copyright (C) 1995-2002 Mark Adler
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infcodes.c,v 1.7 2003/03/08 07:42:35 lukem Exp $");
+__RCSID("$NetBSD: infcodes.c,v 1.8 2003/03/18 19:53:15 mycroft Exp $");
 
 #include "zutil.h"
 #include "inftrees.h"
@@ -42,7 +42,7 @@ struct inflate_codes_state {
   uInt len;
   union {
     struct {
-      inflate_huft *tree;       /* pointer into tree */
+      const inflate_huft *tree; /* pointer into tree */
       uInt need;                /* bits needed */
     } code;             /* if LEN or DIST, where in tree */
     uInt lit;           /* if LIT, literal */
@@ -55,16 +55,16 @@ struct inflate_codes_state {
   /* mode independent information */
   Byte lbits;           /* ltree bits decoded per branch */
   Byte dbits;           /* dtree bits decoder per branch */
-  inflate_huft *ltree;          /* literal/length/eob tree */
-  inflate_huft *dtree;          /* distance tree */
+  const inflate_huft *ltree;    /* literal/length/eob tree */
+  const inflate_huft *dtree;    /* distance tree */
 
 };
 
 
 inflate_codes_statef *inflate_codes_new(bl, bd, tl, td, z)
 uInt bl, bd;
-inflate_huft *tl;
-inflate_huft *td; /* need separate declaration for Borland C++ */
+const inflate_huft *tl;
+const inflate_huft *td; /* need separate declaration for Borland C++ */
 z_streamp z;
 {
   inflate_codes_statef *c;
@@ -89,7 +89,7 @@ z_streamp z;
 int r;
 {
   uInt j;               /* temporary storage */
-  inflate_huft *t;      /* temporary pointer */
+  const inflate_huft *t;/* temporary pointer */
   uInt e;               /* extra bits or operation */
   uLong b;              /* bit buffer */
   uInt k;               /* bits in bit buffer */

@@ -1,4 +1,4 @@
-/* $NetBSD: inftrees.h,v 1.7 2002/03/11 23:40:21 fvdl Exp $ */
+/* $NetBSD: inftrees.h,v 1.8 2003/03/18 19:53:16 mycroft Exp $ */
 
 /* inftrees.h -- header to use inftrees.c
  * Copyright (C) 1995-2002 Mark Adler
@@ -55,6 +55,6 @@ extern int inflate_trees_dynamic __P((
 extern int inflate_trees_fixed __P((
     uIntf *,                    /* literal desired/actual bit depth */
     uIntf *,                    /* distance desired/actual bit depth */
-    inflate_huft * FAR *,       /* literal/length tree result */
-    inflate_huft * FAR *,       /* distance tree result */
+    const inflate_huft * FAR *, /* literal/length tree result */
+    const inflate_huft * FAR *, /* distance tree result */
     z_streamp));                /* for memory allocation */

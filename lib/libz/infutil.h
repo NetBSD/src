@@ -1,4 +1,4 @@
-/* $NetBSD: infutil.h,v 1.7 2002/03/11 23:40:21 fvdl Exp $ */
+/* $NetBSD: infutil.h,v 1.8 2003/03/18 19:53:16 mycroft Exp $ */
 
 /* infutil.h -- types and macros common to blocks and codes
  * Copyright (C) 1995-2002 Mark Adler
@@ -87,7 +87,7 @@ struct inflate_blocks_state {
 #define LOAD {LOADIN LOADOUT}
 
 /* masks for lower bits (size given to avoid silly warnings with Visual C++) */
-extern uInt inflate_mask[17];
+extern const uInt inflate_mask[17];
 
 /* copy as much as possible from the sliding window to the output area */
 extern int inflate_flush __P((
