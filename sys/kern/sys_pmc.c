@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pmc.c,v 1.3 2003/01/18 10:06:34 thorpej Exp $	*/
+/*	$NetBSD: sys_pmc.c,v 1.4 2003/01/20 01:40:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_perfctrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.3 2003/01/18 10:06:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.4 2003/01/20 01:40:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -67,7 +67,6 @@ sys_pmc_control(struct lwp *l, void *v, register_t *rv)
 		syscallarg(int) op;
 		syscallarg(void *) args;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct pmc_counter_cfg cfg;
 	void *args;
 	int ctr, operation, error=0;
@@ -77,33 +76,33 @@ sys_pmc_control(struct lwp *l, void *v, register_t *rv)
 
 	switch (operation) {
 	case PMC_OP_START:
-		if (!pmc_counter_isconfigured(p, ctr)) {
+		if (!pmc_counter_isconfigured(l->l_proc, ctr)) {
 			return ENXIO;
 		}
-		if (pmc_counter_isrunning(p, ctr)) {
+		if (pmc_counter_isrunning(l->l_proc, ctr)) {
 			return EINPROGRESS;
 		}
-		pmc_enable_counter(p, ctr);
+		pmc_enable_counter(l->l_proc, ctr);
 		break;
 	case PMC_OP_STOP:
-		if (!pmc_counter_isconfigured(p, ctr)) {
+		if (!pmc_counter_isconfigured(l->l_proc, ctr)) {
 			return ENXIO;
 		}
-		if (!pmc_counter_isrunning(p, ctr)) {
+		if (!pmc_counter_isrunning(l->l_proc, ctr)) {
 			/* Nothing to do */
 			return 0;
 		}
-		pmc_disable_counter(p, ctr);
+		pmc_disable_counter(l->l_proc, ctr);
 		break;
 	case PMC_OP_CONFIGURE:
 		args = SCARG(uap, args);
 
-		if (pmc_counter_isrunning(p, ctr)) {
-			pmc_disable_counter(p, ctr);
+		if (pmc_counter_isrunning(l->l_proc, ctr)) {
+			pmc_disable_counter(l->l_proc, ctr);
 		}
 		error = copyin(args, &cfg, sizeof(struct pmc_counter_cfg));
 		if (error == 0) {
-			error = pmc_configure_counter(p, ctr, &cfg);
+			error = pmc_configure_counter(l->l_proc, ctr, &cfg);
 		}
 		break;
 	case PMC_OP_PROFSTART:
@@ -137,7 +136,6 @@ sys_pmc_get_info(struct lwp *l, void *v, register_t *rv)
 		syscallarg(void *) args;
 	} */ *uap = v;
 	uint64_t val;
-	struct proc *p = l->l_proc;
 	void *args;
 	int nctrs, ctr, ctrt, request, error=0, flags=0;
 
@@ -164,7 +162,7 @@ sys_pmc_get_info(struct lwp *l, void *v, register_t *rv)
 		if (ctr < 0 || ctr >= nctrs) {
 			return EINVAL;
 		}
-		error = pmc_get_counter_value(p, ctr, flags, &val);
+		error = pmc_get_counter_value(l->l_proc, ctr, flags, &val);
 		if (error == 0) {
 			error = copyout(&val, args, sizeof(uint64_t));
 		}
