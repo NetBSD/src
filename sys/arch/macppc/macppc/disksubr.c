@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 2002/03/23 01:29:35 wrstuden Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19 2002/03/23 13:43:04 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -113,6 +113,7 @@
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
+#define	FSTYPENAMES
 #include <sys/disklabel.h>
 #include <sys/disklabel_mbr.h>
 #include <sys/syslog.h>
