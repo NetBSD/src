@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.21 1998/06/30 18:13:21 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.22 1998/07/02 17:32:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -139,9 +139,6 @@ int	zs_cons_canabort = 0;
 dev_t	mac68k_zsdev;
 /* Mac stuff */
 volatile unsigned char *sccA = 0;
-int	nzsc_attached = 0;	/* needed as long as we have spurious
-				 * interupt problems.
-				 */
 
 int	zs_cn_check_speed __P((int bps));
 
@@ -292,9 +289,6 @@ zsc_attach(parent, self, aux)
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
-		if (channel == 0) /* Double check interupts are off */
-			zs_write_reg(cs, 9, 0);
-
 		bcopy(zs_init_reg, cs->cs_creg, 16);
 		bcopy(zs_init_reg, cs->cs_preg, 16);
 
@@ -399,7 +393,7 @@ zsc_attach(parent, self, aux)
 		}
 	}
 
-	/* XXX - Now safe to install interrupt handlers. */
+	/* Now safe to enable interrupts. */
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.
@@ -411,7 +405,6 @@ zsc_attach(parent, self, aux)
 	zs_write_reg(cs, 2, zs_init_reg[2]);
 	/* master interrupt control (enable) */
 	zs_write_reg(cs, 9, zs_init_reg[9]);
-	nzsc_attached++;
 	splx(s);
 }
 
@@ -474,7 +467,7 @@ zshard(arg)
 	int unit, rval;
 
 	rval = 0;
-	for (unit = 0; unit < nzsc_attached; unit++) {
+	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
 		zsc = zsc_cd.cd_devs[unit];
 		if (zsc == NULL)
 			continue;
@@ -979,8 +972,8 @@ zscnprobe(struct consdev * cp)
 	 * unit zs_consunit. So if we are (or think we are) going to use the
 	 * chip for console I/O, we just set up the internal addresses for it.
 	 *
-	 * Now turn off interrupts for the chip. Note: this code piece is the
-	 * only vestage of the NetBSD 1.0 ser driver. :-)
+	 * Now turn off interrupts for the chip. Note: using sccA to get at
+	 * the chip is the only vestage of the NetBSD 1.0 ser driver. :-)
 	 */
 	unit = sccA[2];			/* reset reg. access */
 	unit = sccA[0];
