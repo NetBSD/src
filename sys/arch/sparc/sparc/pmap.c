@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.254 2003/06/18 09:34:22 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.255 2003/06/18 14:24:55 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3337,18 +3337,19 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 
 	/*
 	 * write protect & encache kernel text;
-	 * set red zone at kernel base; enable cache on message buffer.
+	 * set red zone at kernel base;
+	 * enable cache on message buffer and cpuinfo.
 	 */
 	{
 		extern char etext[];
-#ifdef KGDB
-		int mask = ~PG_NC;	/* XXX chgkprot is busted */
-#else
-		int mask = ~(PG_W | PG_NC);
-#endif
 
+		/* Enable cache on message buffer and cpuinfo */
+		for (p = (caddr_t)KERNBASE; p < (caddr_t)trapbase; p += NBPG)
+			setpte4(p, getpte4(p) & ~PG_NC);
+
+		/* Enable cache and write protext kernel text */
 		for (p = (caddr_t)trapbase; p < etext; p += NBPG)
-			setpte4(p, getpte4(p) & mask);
+			setpte4(p, getpte4(p) & ~(PG_NC|PG_W));
 
 		/*
 		 * Unmap the `etext gap'; it'll be made available
