@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.10 2003/08/07 11:13:50 agc Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.11 2004/10/30 17:27:28 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -318,7 +318,7 @@ lname(s, l)
 	/*  copy to buffer and converting to lower case */
 	p = ptr;
 	while (*p && p <= &buf[71] ) {
-	   *iptr = isupper((unsigned char)*p) ? tolower(*p) : *p;
+	   *iptr = tolower((unsigned char)*p);
 	   iptr++;
 	   p++;
 	}
