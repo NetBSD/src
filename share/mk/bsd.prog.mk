@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.102 1999/08/21 06:17:46 simonb Exp $
+#	$NetBSD: bsd.prog.mk,v 1.103 1999/09/04 21:48:33 fredb Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -137,7 +137,7 @@ proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${BINDIR}/${PROGNAME}
 .endif
-.if !defined(BUILD)
+.if !defined(BUILD) && !make(all) && !make(${PROG})
 ${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
 .endif
 
@@ -171,7 +171,7 @@ scriptsinstall:: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
 .endif
-.if !defined(BUILD)
+.if !defined(BUILD) && !make(all) && !make(${S})
 ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: .MADE
 .endif
 
