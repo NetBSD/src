@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.73 2002/01/06 01:27:25 mrg Exp $
+#	$NetBSD: bsd.man.mk,v 1.74 2002/02/03 21:40:14 christos Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -104,6 +104,7 @@ CATPAGES=	${MAN:C/\.([1-9])$/.cat\1${MANSUFFIX}/}
 realall:	${CATPAGES}
 .NOPATH:	${CATPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.cat$N${MANSUFFIX}@}
+.NOSUFF:	${CATDEPS}
 
 ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 .if defined(USETBL)
