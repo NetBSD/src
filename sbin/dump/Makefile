@@ -1,39 +1,26 @@
-#	from: @(#)Makefile	5.12 (Berkeley) 3/7/91
-#	$Id: Makefile,v 1.12 1993/11/14 15:35:48 cgd Exp $
-#
+#	from: @(#)Makefile	5.16 (Berkeley) 7/15/92
+#	$Id: Makefile,v 1.13 1993/12/22 10:24:34 cgd Exp $
+
 #	dump.h			header file
-#	dumpitime.c		reads /etc/dumpdates
-#	dumpmain.c		driver
-#	dumpoptr.c		operator interface
-#	dumptape.c		handles the mag tape and opening/closing
-#	dumptraverse.c		traverses the file system
+#	itime.c			reads /etc/dumpdates
+#	main.c			driver
+#	optr.c			operator interface
+#	dumprmt.c		handles remote tape via rmt(8)
+#	tape.c			handles the mag tape and opening/closing
+#	traverse.c		traverses the file system
 #	unctime.c		undo ctime
 #
 #	DEBUG			use local directory to find ddate and dumpdates
 #	TDEBUG			trace out the process forking
 
 PROG=	dump
-SRCS=	dumpitime.c dumpmain.c dumpoptr.c dumptape.c dumptraverse.c \
-	unctime.c
-ROBJS=	dumpitime.o dumprmain.o dumpoptr.o dumprmt.o dumprtape.o \
-	dumptraverse.o unctime.o
+LINKS=	${BINDIR}/dump ${BINDIR}/rdump
+CFLAGS+=-DRDUMP
+SRCS=	itime.c main.c optr.c dumprmt.c tape.c traverse.c unctime.c
+BINOWN=	root
 BINGRP=	tty
-MAN8=	dump.0 rdump.0
-CLEANFILES=dumprmain.o dumprtape.o dumprmt.o rdump
-
-all: rdump
-
-dumprmain.o: dumpmain.o
-	${CC} -c -DRDUMP ${CFLAGS} ${.CURDIR}/dumpmain.c -o ${.TARGET}
-
-dumprtape.o: dumptape.o
-	${CC} -c -DRDUMP ${CFLAGS} ${.CURDIR}/dumptape.c -o ${.TARGET}
-
-afterinstall:
-	install ${COPY} ${STRIP} -o root -g ${BINGRP} -m 6555 rdump \
-	    ${DESTDIR}${BINDIR}
+BINMODE=6555
+MAN8=	dump.0
+MLINKS+=dump.8 rdump.8
 
 .include <bsd.prog.mk>
-
-rdump: ${LIBCRT0} ${ROBJS} ${LIBC} ${DPADD}
-	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${ROBJS} ${LDADD}
