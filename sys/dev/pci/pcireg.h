@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.43 2003/10/21 16:22:48 thorpej Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.44 2003/12/02 16:31:06 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -330,6 +330,13 @@ typedef u_int8_t pci_revision_t;
 	     (((multi)?0x80:0) << PCI_HDRTYPE_SHIFT) |			\
 	     (((latency) & PCI_LATTIMER_MASK) << PCI_LATTIMER_SHIFT) |	\
 	     (((cacheline) & PCI_CACHELINE_MASK) << PCI_CACHELINE_SHIFT))
+
+/*
+ * PCI header type
+ */
+#define PCI_HDRTYPE_DEVICE	0
+#define PCI_HDRTYPE_PPB		1
+#define PCI_HDRTYPE_PCB		2
 
 /*
  * Mapping registers
