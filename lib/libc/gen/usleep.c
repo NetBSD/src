@@ -1,4 +1,4 @@
-/*	$NetBSD: usleep.c,v 1.14 1997/07/21 14:07:45 jtc Exp $	*/
+/*	$NetBSD: usleep.c,v 1.15 1997/08/19 04:34:15 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: usleep.c,v 1.14 1997/07/21 14:07:45 jtc Exp $");
+__RCSID("$NetBSD: usleep.c,v 1.15 1997/08/19 04:34:15 mikel Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,8 +55,8 @@ usleep(useconds)
 {
 	struct timespec ts;
 
-	ts.tv_sec  = 0;
-	ts.tv_nsec = useconds * 1000;
+	ts.tv_sec  = useconds / 1000000;
+	ts.tv_nsec = (useconds % 1000000) * 1000;
 
 	nanosleep(&ts, NULL);
 }
