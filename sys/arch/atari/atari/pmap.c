@@ -1495,23 +1495,13 @@ void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 
 /*
  *	Require that all active physical maps contain no
- *	incorrect entries NOW.  [This update includes
- *	forcing updates of any address map caching.]
+ *	incorrect entries NOW.
  *
  *	Generally used to insure that a thread about
  *	to run will see a semantically correct world.
  */
 void pmap_update()
 {
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_update()\n");
-#endif
-#if defined(M68060)
-	if (cputype == CPU_68060)
-		DCIA();
-#endif
-	TBIA();
 }
 
 /*

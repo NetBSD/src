@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.12 2000/09/08 18:46:39 msaitoh Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.13 2001/04/21 17:32:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -252,7 +252,7 @@ pagemove(from, to, size)
 		to += NBPG;
 		size -= NBPG;
 	}
-	pmap_update();
+	TLBFLUSH();
 }
 
 extern vm_map_t phys_map;
