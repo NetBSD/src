@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.19 1998/07/08 00:39:02 mjacob Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.20 1998/07/08 16:46:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -233,7 +233,7 @@ struct mchkinfo {
 
 #define	ALPHA_PTE_WRITE			(ALPHA_PTE_KW | ALPHA_PTE_UW)
 
-#define	ALPHA_PTE_SOFTWARE		0xffff0000
+#define	ALPHA_PTE_SOFTWARE		0x00000000ffff0000
 
 #define	ALPHA_PTE_PFN			0xffffffff00000000
 
