@@ -8,7 +8,7 @@
 #include "abi.h"
 
 
-RCSID("$NetBSD: e_fmod.S,v 1.5 2001/06/19 00:26:30 fvdl Exp $")
+RCSID("$NetBSD: e_fmod.S,v 1.6 2001/06/25 16:44:34 fvdl Exp $")
 
 ENTRY(__ieee754_fmod)
 	XMM_TWO_ARG_DOUBLE_PROLOGUE
@@ -16,7 +16,7 @@ ENTRY(__ieee754_fmod)
 	fldl	ARG_DOUBLE_ONE
 1:	fprem
 	fstsw	%ax
-	btw	$2,%ax
+	btw	$10,%ax
 	jc	1b
 	fstp	%st(1)
 	XMM_DOUBLE_EPILOGUE
