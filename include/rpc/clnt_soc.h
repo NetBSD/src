@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_soc.h,v 1.2 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: clnt_soc.h,v 1.3 2005/02/06 04:40:51 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -57,7 +57,7 @@
  *	struct sockaddr_in *raddr;
  *	u_long prog;
  *	u_long version;
- *	register int *sockp;
+ *	int *sockp;
  *	u_int sendsz;
  *	u_int recvsz;
  */
