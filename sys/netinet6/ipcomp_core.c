@@ -1,5 +1,5 @@
-/*	$NetBSD: ipcomp_core.c,v 1.13 2000/09/20 23:35:16 itojun Exp $	*/
-/*	$KAME: ipcomp_core.c,v 1.16 2000/09/20 23:12:31 itojun Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.14 2000/09/21 06:08:26 itojun Exp $	*/
+/*	$KAME: ipcomp_core.c,v 1.17 2000/09/21 06:03:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -166,6 +166,7 @@ deflate_common(m, md, lenp, mode)
 		if (p && zs.avail_in == 0) {
 			zs.next_in = mtod(p, u_int8_t *);
 			zs.avail_in = p->m_len;
+			p = p->m_next;
 			while (p && p->m_len == 0)
 				p = p->m_next;
 			if (!p) {
