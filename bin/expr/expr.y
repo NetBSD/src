@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.17 2000/09/19 17:20:00 jdolecek Exp $ */
+/* $NetBSD: expr.y,v 1.18 2000/09/21 20:32:24 jdolecek Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.17 2000/09/19 17:20:00 jdolecek Exp $");
+__RCSID("$NetBSD: expr.y,v 1.18 2000/09/21 20:32:24 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -104,11 +104,11 @@ expr:	item	{ $$ = $1; }
 		 */
 		regex_t rp;
 		regmatch_t rm[2];
-		char errbuf[256];
 		int eval;
 
 		/* compile regular expression */
 		if ((eval = regcomp(&rp, $3, 0)) != 0) {
+			char errbuf[256];
 			(void)regerror(eval, &rp, errbuf, sizeof(errbuf));
 			yyerror("%s", errbuf);
 			/* NOT REACHED */
@@ -119,8 +119,9 @@ expr:	item	{ $$ = $1; }
 		if (regexec(&rp, $1, 2, rm, 0) == 0 && rm[0].rm_so == 0) {
 			char *val;
 			if (rm[1].rm_so >= 0) {
-				val = strdup($1);
-				*(val + (size_t)rm[1].rm_eo) = '\0';
+				(void) asprintf(&val, "%*s",
+					(int) (rm[1].rm_eo - rm[1].rm_so),
+					$1 + rm[1].rm_so);
 			} else {
 				(void) asprintf(&val, "%d",
 					(int)(rm[0].rm_eo - rm[0].rm_so));
