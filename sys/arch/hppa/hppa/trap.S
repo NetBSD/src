@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.9 2004/06/15 16:29:01 chs Exp $	*/
+/*	$NetBSD: trap.S,v 1.10 2004/07/14 07:23:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1146,7 +1146,6 @@ $fpu_swap_in:
 	fldds,ma -8(%arg1), %fr1
 	fldds     0(%arg1), %fr0	/* fr0 must be restored last */
 
-	ldo	-248(%arg1), %arg1
 	ldil	L%dcache_stride, %r1
 	ldw	R%dcache_stride(%r1), %r1
 	fdc,m	%r1(%arg1)
