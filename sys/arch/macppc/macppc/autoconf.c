@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2000/02/02 16:41:56 danw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 2000/02/03 19:27:45 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -137,7 +137,7 @@ device_register(dev, aux)
 
 	/* Skip over devices not represented in the OF tree. */
 	if (DEVICE_IS(dev, "mainbus") || DEVICE_IS(dev, "scsibus") ||
-	    DEVICE_IS(dev, "atapibus") || DEVICE_IS(parent, "ppb")) {
+	    DEVICE_IS(dev, "atapibus") || DEVICE_IS(dev, "pci")) {
 		parent = dev;
 		return;
 	}
@@ -160,17 +160,11 @@ device_register(dev, aux)
 	} else
 		addr = strtoul(p + 1, &p, 16);
 
-	if (DEVICE_IS(parent, "mainbus") && DEVICE_IS(dev, "pci")) {
-		struct pcibus_attach_args *pba = aux;
-		int n, size = sizeof(pci_bridges) / sizeof(struct pci_bridge);
+	if (DEVICE_IS(dev, "bandit") || DEVICE_IS(dev, "grackle") ||
+	    DEVICE_IS(dev, "uninorth")) {
+		struct confargs *ca = aux;
 
-		for (n = 0; n < size; n++) {
-			if (pci_bridges[n].present &&
-			    pci_bridges[n].bus == pba->pba_bus &&
-			    pci_bridges[n].reg[0] == addr)
-				break;
-		}
-		if (n == size)
+		if (addr != ca->ca_reg[0])
 			return;
 	} else if (DEVICE_IS(parent, "pci")) {
 		struct pci_attach_args *pa = aux;
