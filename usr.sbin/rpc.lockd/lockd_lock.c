@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.2.2.2 2000/12/26 03:38:53 jhawk Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.2.2.3 2001/11/13 22:05:38 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -638,6 +638,7 @@ do_unlock(rfl)
 		}
 		break;
 	}
+	lfree(rfl);
 	return error;
 }
 
