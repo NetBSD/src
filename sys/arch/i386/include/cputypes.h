@@ -1,4 +1,5 @@
-/*	$NetBSD: cputypes.h,v 1.8 1996/12/03 23:54:55 fvdl Exp $	*/
+
+/*	$NetBSD: cputypes.h,v 1.9 1997/10/17 18:05:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -38,7 +39,7 @@
 #define	CPUCLASS_686	3
 
 /*
- * Kinds of Processor. Only the first 6 are used, as they are processors
+ * Kinds of Processor. Only the first 7 are used, as they are processors
  * that might not have a cpuid instruction.
  */
 
@@ -47,13 +48,13 @@
 #define	CPU_486SX	2	/* Intel 80486SX */
 #define	CPU_486		3	/* Intel 80486DX */
 #define	CPU_486DLC	4	/* Cyrix 486DLC */
-#define CPU_NX586	5	/* NexGen 586 */
-#define	CPU_586		6	/* Intel P.....m (I hate lawyers; it's TM) */
-#define CPU_AM586	7	/* AMD Am486 and Am5x86 */
-#define CPU_K5		8	/* AMD K5 */
-#define CPU_K6		9	/* NexGen 686 aka AMD K6 */
-#define CPU_686		10	/* Intel Pentium Pro */
-#define CPU_6x686	11	/* Cyrix/IBM 6x86 */
+#define CPU_6x86	5	/* Cyrix/IBM 6x86 */
+#define CPU_NX586	6	/* NexGen 586 */
+#define	CPU_586		7	/* Intel P.....m (I hate lawyers; it's TM) */
+#define CPU_AM586	8	/* AMD Am486 and Am5x86 */
+#define CPU_K5		9	/* AMD K5 */
+#define CPU_K6		10	/* NexGen 686 aka AMD K6 */
+#define CPU_686		11	/* Intel Pentium Pro */
 
 /*
  * CPU vendors
