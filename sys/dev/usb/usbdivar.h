@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.8 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.9 1998/12/02 22:57:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -192,8 +192,12 @@ extern	int usbd_use_polling;
 
 #include "locators.h"
 
-#define	uhubcf_port	cf_loc[UHUBCF_PORT]
-#define	UHUB_UNK_PORT	UHUBCF_PORT_DEFAULT /* wildcarded 'port' */
+#define	uhubcf_port		cf_loc[UHUBCF_PORT]
+#define	uhubcf_configuration	cf_loc[UHUBCF_CONFIGURATION]
+#define	uhubcf_interface	cf_loc[UHUBCF_INTERFACE]
+#define	UHUB_UNK_PORT		UHUBCF_PORT_DEFAULT /* wildcarded 'port' */
+#define	UHUB_UNK_CONFIGURATION	UHUBCF_CONFIGURATION_DEFAULT /* wildcarded 'configuration' */
+#define	UHUB_UNK_INTERFACE	UHUBCF_INTERFACE_DEFAULT /* wildcarded 'interface' */
 
 /* Junk. */
 
