@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.571 2003/09/13 12:17:19 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.572 2003/09/15 19:51:10 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.574 2003/09/13 12:13:29 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.575 2003/09/15 19:50:45 bouyer Exp 
  */
 
 /*
@@ -9052,10 +9052,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "VT8233A PCI-ISA Bridge",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_RAID,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_SATA,
 	    0,
 	    "VIA Technologies",
-	    "VT8237 Integrated RAID Controller",
+	    "VT8237 Integrated SATA Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235,

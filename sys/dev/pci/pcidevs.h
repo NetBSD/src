@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.573 2003/09/13 12:17:18 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.574 2003/09/15 19:51:09 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.574 2003/09/13 12:13:29 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.575 2003/09/15 19:50:45 bouyer Exp 
  */
 
 /*
@@ -2510,7 +2510,7 @@
 #define	PCI_PRODUCT_VIATECH_VT8237_EHCI	0x3104		/* VT8237 EHCI USB Controller */
 #define	PCI_PRODUCT_VIATECH_VT6105	0x3106		/* VT6105 (Rhine III) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT8233A	0x3147		/* VT8233A PCI-ISA Bridge */
-#define	PCI_PRODUCT_VIATECH_VT8237_RAID	0x3149		/* VT8237 Integrated RAID Controller */
+#define	PCI_PRODUCT_VIATECH_VT8237_SATA	0x3149		/* VT8237 Integrated SATA Controller */
 #define	PCI_PRODUCT_VIATECH_VT8235	0x3177		/* VT8235 (Apollo KT400) PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8377	0x3189		/* VT8377 Apollo KT400 CPU to PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8237	0x3227		/* VT8237 (Apollo KT600) PCI-ISA Bridge */
