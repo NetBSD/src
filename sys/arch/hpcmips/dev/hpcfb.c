@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.27 2000/12/27 07:52:00 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.28 2000/12/30 01:55:24 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.27 2000/12/27 07:52:00 sato Exp $";
+    "$Id: hpcfb.c,v 1.28 2000/12/30 01:55:24 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,8 @@ int	hpcfb_debug = 0;
 /*
  * currently experimental
 #define HPCFB_JUMP
-#define HPCFB_MULTI
 */
+#define HPCFB_MULTI
 
 struct hpcfb_vchar {
 	u_int c;
@@ -192,9 +192,7 @@ static int	hpcfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 static void	hpcfb_free_screen __P((void *, void *));
 static int	hpcfb_show_screen __P((void *, void *, int,
 				    void (*) (void *, int, int), void *));
-#ifdef notyet
 static void     hpcfb_pollc __P((void *, int));
-#endif /* notyet */
 static void	hpcfb_power __P((int, void *));
 static void	hpcfb_cmap_reorder __P((struct hpcfb_fbconf *,
 					struct hpcfb_devconfig *));
@@ -263,9 +261,7 @@ struct wsdisplay_accessops hpcfb_accessops = {
 	hpcfb_free_screen,
 	hpcfb_show_screen,
 	0 /* load_font */,
-#ifdef notyet
 	hpcfb_pollc
-#endif /* not yet */
 };
 
 void    hpcfb_tv_putchar __P((struct hpcfb_devconfig *, int, int, u_int, long));
@@ -419,7 +415,7 @@ hpcfb_thread(arg)
 	for (;;) {
 		/* HPCFB_LOCK(sc); */
 		sc->sc_dc->dc_state |= HPCFB_DC_SCRTHREAD;	
-		if (!sc->sc_mapping)
+		if (!sc->sc_mapping) /* draw only EMUL mode */
 			hpcfb_scroll_update(sc->sc_dc);
 		sc->sc_dc->dc_state &= ~HPCFB_DC_SCRTHREAD;	
 		/* APM_UNLOCK(sc); */
@@ -615,10 +611,11 @@ hpcfb_ioctl(v, cmd, data, flag, p)
 		return 0;		
 	
 	case WSDISPLAYIO_SMODE:
-		if (*(int *)data == WSDISPLAYIO_MODE_EMUL){
+		if (*(int *)data == WSDISPLAYIO_MODE_EMUL){ 
 			if (sc->sc_mapping)
 				hpcfb_refresh_screen(sc);
 			sc->sc_mapping = 0;
+		} else {
 #ifdef HPCFB_JUMP
 			if (!sc->sc_mapping)
 				hpcfb_check_scroll(dc);
@@ -873,7 +870,6 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 	return (0);
 }
 
-#ifdef notyet
 static void
 hpcfb_pollc(v, on)
 	void *v;
@@ -887,7 +883,7 @@ hpcfb_pollc(v, on)
 
 	return;
 }
-#endif /* notyet */
+
 /*
  * cursor
  */
@@ -1269,6 +1265,9 @@ hpcfb_redraw(cookie, row, num, all)
 		return;
 	}
 #endif /* HPCFB_JUMP */
+	if (dc->dc_sc->sc_mapping)
+		return;
+
 	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
 		return;
 	if (vscn == 0)
@@ -1333,7 +1332,7 @@ hpcfb_do_scroll(v)
 		dc->dc_state |= HPCFB_DC_SCRDELAY;
 	else if (dc->dc_sc->sc_thread)
 		wakeup(dc->dc_sc);
-	else if (!dc->dc_sc->sc_mapping)
+	else if (!dc->dc_sc->sc_mapping) /* draw only EMUL mode */
 		hpcfb_scroll_update(v);
 	dc->dc_state &= ~HPCFB_DC_SCRTHREAD;	
 }
