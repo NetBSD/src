@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.93 2003/01/20 05:30:05 simonb Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.94 2003/01/28 22:35:18 wiz Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.93 2003/01/20 05:30:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.94 2003/01/28 22:35:18 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"
@@ -2362,7 +2362,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 		/*
 		 * Although the driver does not care about the
 		 * 'Selection in Progress' status bit, the busy
-		 * LED does.  SELINGO is only cleared by a sucessful
+		 * LED does.  SELINGO is only cleared by a successful
 		 * selection, so we must manually clear it to ensure
 		 * the LED turns off just incase no future successful
 		 * selections occur (e.g. no devices on the bus).

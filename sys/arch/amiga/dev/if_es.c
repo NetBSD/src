@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.33 2002/10/02 04:55:51 thorpej Exp $ */
+/*	$NetBSD: if_es.c,v 1.34 2003/01/28 22:35:04 wiz Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.33 2002/10/02 04:55:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.34 2003/01/28 22:35:04 wiz Exp $");
 
 #include "bpfilter.h"
 
@@ -487,8 +487,8 @@ zzzz:
 			 * This shouldn't have happened:  IST_TX indicates
 			 * the TX completion FIFO is not empty, but the
 			 * status for the packet on the completion FIFO
-			 * shows that the transmit was sucessful.  Since
-			 * AutoRelease is being used, a sucessful transmit
+			 * shows that the transmit was successful.  Since
+			 * AutoRelease is being used, a successful transmit
 			 * should not result in a packet on the completion
 			 * FIFO.  Also, that packet doesn't seem to want
 			 * to be acknowledged.  If this occurs, just reset

@@ -1,4 +1,4 @@
-/* $NetBSD: gzio.c,v 1.12 2002/03/11 23:40:17 fvdl Exp $ */
+/* $NetBSD: gzio.c,v 1.13 2003/01/28 22:35:02 wiz Exp $ */
 
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -7,7 +7,7 @@
  * Compile this file with -DNO_DEFLATE to avoid the compression code.
  */
 
-/* @(#) $Id: gzio.c,v 1.12 2002/03/11 23:40:17 fvdl Exp $ */
+/* @(#) $Id: gzio.c,v 1.13 2003/01/28 22:35:02 wiz Exp $ */
 
 #include <stdio.h>
 
@@ -233,7 +233,7 @@ int ZEXPORT gzsetparams (file, level, strategy)
 /* ===========================================================================
      Read a byte from a gz_stream; update next_in and avail_in. Return EOF
    for end of file.
-   IN assertion: the stream s has been sucessfully opened for reading.
+   IN assertion: the stream s has been successfully opened for reading.
 */
 local int get_byte(s)
     gz_stream *s;
@@ -258,7 +258,7 @@ local int get_byte(s)
     mode to transparent if the gzip magic header is not present; set s->err
     to Z_DATA_ERROR if the magic header is present but the rest of the header
     is incorrect.
-    IN assertion: the stream s has already been created sucessfully;
+    IN assertion: the stream s has already been created successfully;
        s->stream.avail_in is zero for the first time, but may be non-zero
        for concatenated .gz files.
 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lstSucc.c,v 1.8 2002/06/15 18:25:00 wiz Exp $	*/
+/*	$NetBSD: lstSucc.c,v 1.9 2003/01/28 22:35:22 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstSucc.c,v 1.8 2002/06/15 18:25:00 wiz Exp $";
+static char rcsid[] = "$NetBSD: lstSucc.c,v 1.9 2003/01/28 22:35:22 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstSucc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstSucc.c,v 1.8 2002/06/15 18:25:00 wiz Exp $");
+__RCSID("$NetBSD: lstSucc.c,v 1.9 2003/01/28 22:35:22 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: lstSucc.c,v 1.8 2002/06/15 18:25:00 wiz Exp $");
 /*-
  *-----------------------------------------------------------------------
  * Lst_Succ --
- *	Return the sucessor to the given node on its list.
+ *	Return the successor to the given node on its list.
  *
  * Results:
  *	The successor of the node, if it exists (note that on a circular

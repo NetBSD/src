@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.64 2003/01/17 22:34:23 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.65 2003/01/28 22:35:05 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -222,7 +222,7 @@ again:
 	 * If any writeback fails, go back and attempt signal delivery.
 	 * unless we have already been here and attempted the writeback
 	 * (e.g. bad address with user ignoring SIGSEGV).  In that case
-	 * we just return to the user without sucessfully completing
+	 * we just return to the user without successfully completing
 	 * the writebacks.  Maybe we should just drop the sucker?
 	 */
 	if (cputype == CPU_68040 && fp->f_format == FMT7) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_netgroup.c,v 1.3 2002/07/06 01:00:15 wiz Exp $ */
+/*	$NetBSD: parse_netgroup.c,v 1.4 2003/01/28 22:35:24 wiz Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parse_netgroup.c,v 1.3 2002/07/06 01:00:15 wiz Exp $");
+__RCSID("$NetBSD: parse_netgroup.c,v 1.4 2003/01/28 22:35:24 wiz Exp $");
 #endif
 
 /*
@@ -207,7 +207,7 @@ parse_netgrp(const char *group)
 #ifdef DEBUG
 		/*
 		 * This error message is largely superflous since the
-		 * code handles the error condition sucessfully, and
+		 * code handles the error condition successfully, and
 		 * spewing it out from inside libc can actually hose
 		 * certain programs.
 		 */

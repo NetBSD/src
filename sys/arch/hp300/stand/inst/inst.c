@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.9 2003/01/28 22:19:25 wiz Exp $	*/
+/*	$NetBSD: inst.c,v 1.10 2003/01/28 22:35:09 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ dsklabel()
 		return;
 	}
 
-	printf("Sucessfully read %d bytes from %s\n", xfersize, diskname);
+	printf("Successfully read %d bytes from %s\n", xfersize, diskname);
 
 	lp = (struct disklabel *)((void *)(&block[LABELOFFSET]));
 
@@ -237,7 +237,7 @@ dsklabel()
 		if (disklabel_write(block, sizeof(block), disk_ofp))
 			goto out;
 		else
-			printf("Sucessfully wrote label to %s\n", diskname);
+			printf("Successfully wrote label to %s\n", diskname);
 		break;
 
 	case 'd':

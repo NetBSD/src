@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.8 2002/11/26 19:50:29 christos Exp $        */
+/*      $NetBSD: opms.c,v 1.9 2003/01/28 22:35:14 wiz Exp $        */
 
 /*
  * Copyright 1997
@@ -243,7 +243,7 @@ int opmsdebug = KERN_DEBUG_WARNING | KERN_DEBUG_ERROR;
 **  FUNCTION VALUE:
 **
 **     0 - Probe failed to find the requested device.
-**     1 - Probe sucessfully talked to the device. 
+**     1 - Probe successfully talked to the device. 
 **
 **  SIDE EFFECTS:
 **

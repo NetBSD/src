@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 2003/01/18 07:03:37 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77 2003/01/28 22:35:16 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1529,8 +1529,8 @@ pv_not_found:
 /* pmap_stroll			INTERNAL
  **
  * Retrieve the addresses of all table managers involved in the mapping of
- * the given virtual address.  If the table walk completed sucessfully,
- * return TRUE.  If it was only partially sucessful, return FALSE.
+ * the given virtual address.  If the table walk completed successfully,
+ * return TRUE.  If it was only partially successful, return FALSE.
  * The table walk performed by this function is important to many other
  * functions in this module.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.63 2003/01/17 23:42:05 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.64 2003/01/28 22:35:11 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -237,7 +237,7 @@ again:
 	 * If any writeback fails, go back and attempt signal delivery.
 	 * unless we have already been here and attempted the writeback
 	 * (e.g. bad address with user ignoring SIGSEGV).  In that case
-	 * we just return to the user without sucessfully completing
+	 * we just return to the user without successfully completing
 	 * the writebacks.  Maybe we should just drop the sucker?
 	 */
 	if (
