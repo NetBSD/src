@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.7 1998/10/06 19:05:26 kleink Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.8 1998/12/02 19:29:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)Ovfork.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: Ovfork.S,v 1.7 1998/10/06 19:05:26 kleink Exp $")
+	RCSID("$NetBSD: Ovfork.S,v 1.8 1998/12/02 19:29:57 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,9 @@
  * @(#)vfork.s	4.1 (Berkeley) 12/21/80
  * C library -- vfork
  */
+
+WARN_REFERENCES(vfork, \
+    "warning: reference to compatibility vfork(); include <unistd.h> for correct reference")
 
 /*
  * pid = vfork();

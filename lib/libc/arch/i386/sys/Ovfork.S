@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.11 1998/10/01 19:25:05 kleink Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.12 1998/12/02 19:29:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: Ovfork.S,v 1.11 1998/10/01 19:25:05 kleink Exp $")
+	RCSID("$NetBSD: Ovfork.S,v 1.12 1998/12/02 19:29:56 thorpej Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -50,6 +50,9 @@
 #else
 	.globl	_C_LABEL(errno)
 #endif
+
+WARN_REFERENCES(vfork, \
+    "warning: reference to compatibility vfork(); include <unistd.h> for correct reference")
 
 /*
  * pid = vfork();

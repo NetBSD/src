@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.2 1998/05/25 15:28:02 ws Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.3 1998/12/02 19:29:57 thorpej Exp $	*/
 
 /*
  * pid = vfork();
@@ -8,6 +8,9 @@
  */
 
 #include "SYS.h"
+
+WARN_REFERENCES(vfork, \
+    "warning: reference to compatibility vfork(); include <unistd.h> for correct reference")
 
 SYSCALL(vfork)
 	addi	4,4,-1		# from 1 to 0 in child, 0 to -1 in parent
