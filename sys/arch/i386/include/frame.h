@@ -70,7 +70,6 @@ struct trapframe {
 
 /* Interrupt stack frame */
 struct intrframe {
-	int	if_vec;
 	int	if_ppl;
 	int	if_edi;
 	int	if_esi;
