@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.22 1999/11/04 01:20:55 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.21 1999/10/28 23:32:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -519,16 +519,6 @@ tlp_pci_attach(parent, self, aux)
 	 */
 	sc->sc_cacheline = PCI_CACHELINE(pci_conf_read(pc, pa->pa_tag,
 	    PCI_BHLC_REG));
-
-	/*
-	 * Get PCI data moving command info.
-	 */
-	if (pa->pa_flags & PCI_FLAGS_MRL_OKAY)
-		sc->sc_flags |= TULIPF_MRL;
-	if (pa->pa_flags & PCI_FLAGS_MRM_OKAY)
-		sc->sc_flags |= TULIPF_MRM;
-	if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
-		sc->sc_flags |= TULIPF_MWI;
 
 	/*
 	 * Read the contents of the Ethernet Address ROM/SROM.

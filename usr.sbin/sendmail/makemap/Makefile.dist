@@ -5,7 +5,7 @@
 #  old make program (I recommend that you get and port the new make if you
 #  are going to be doing any signficant work on sendmail).
 #
-#	@(#)Makefile.dist	8.4 (Berkeley) 9/1/95
+#	@(#)Makefile.dist	8.2 (Berkeley) 11/27/93
 #
 
 # use O=-O (usual) or O=-g (debugging)
@@ -27,7 +27,7 @@ ENVDEF=
 # see also conf.h for additional compilation flags
 
 # include directories
-INCDIRS=-I${SRCDIR} -I/usr/sww/include
+INCDIRS=-I${SRCDIR} -I/usr/sww/include/db
 
 # loader options
 LDOPTS=
@@ -62,12 +62,8 @@ all: ${ALL}
 makemap: ${BEFORE} ${OBJS}
 	${CC} -o makemap ${LDOPTS} ${OBJS} ${LIBDIRS} ${LIBS}
 
-#NROFF= nroff -h
-NROFF=  groff -Tascii
-MANDOC= -mandoc
-
 makemap.0: makemap.8
-	${NROFF} ${MANDOC} makemap.8 > makemap.0
+	nroff -h -mandoc makemap.8 > makemap.0
 
 install: install-makemap install-docs
 

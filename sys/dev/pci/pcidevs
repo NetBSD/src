@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.165 1999/11/04 16:02:20 tsarna Exp $
+$NetBSD: pcidevs,v 1.162 1999/11/01 20:43:12 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -510,7 +510,6 @@ vendor ALTEON		0x12ae	Alteon
 vendor RISCOM		0x12aa	RISCom
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
-vendor AUREAL		0x12eb	Aureal Semiconductor
 vendor ADMTEK		0x1317	ADMtek
 vendor FORTEMEDIA	0x1319	Forte Media
 vendor LMC		0x1376	LAN Media Corporation
@@ -705,9 +704,6 @@ product ATI MACH64_LG	0x4c47	Mach64 LG
 product ATI MACH64_LI	0x4c49	Mach64 LI
 product ATI MACH64_LP	0x4c50	Mach64 LP
 
-/* Aureal Semiconductor */
-product AUREAL AU8820		0x0001  AU8820 Vortex Digital Audio Processor
-
 /* Applied Micro Circuts products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
 product AMCIRCUITS LANAI	0x8043	Myrinet LANai Interface
@@ -818,9 +814,6 @@ product CONTAQ 82C693		0xc693	82C693 PCI-ISA Bridge
 
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	\"C-Bus II\"-PCI Bridge
-
-/* Creative Labs products */
-product CREATIVELABS SBLIVE	0x0002	SBLive! EMU 10000
 
 /* Cyclades products */
 product CYCLADES CYCLOMY_1	0x0100	Cyclom-Y below 1M
@@ -1390,13 +1383,6 @@ product WD 90C		0xC24A	90C
 product WINBOND W83769F	0x0001	W83769F
 product WINBOND W89C840F 0x0840	W89C840F 10/100 Ethernet
 product WINBOND W89C940F 0x0940	W89C940F Ethernet
-
-/* Xircom products */
-/* is the `-3' here just indicating revision 3, or is it really part
-   of the device name? */
-product XIRCOM X3201_3		0x0002	X3201-3 Fast Ethernet Controller
-/* this is the device id `indicating 21143 driver compatibility' */
-product XIRCOM X3201_3_21143	0x0003	X3201-3 Fast Ethernet Controller (21143)
 
 /* Yamaha products */
 product YAMAHA YMF724E_V 0x0004	724 Audio
