@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70 2003/07/25 16:26:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.71 2003/10/18 16:33:58 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -84,6 +84,7 @@ realall realdepend:
 	@echo "*** PREVIOUSTOOLDIR '${PREVIOUSTOOLDIR}'"
 	@echo "***     !=  TOOLDIR '${TOOLDIR}'"
 	@echo "*** Cleaning mis-matched tools"
+	${_MKCMD}\
 	rm -f PREVIOUSTOOLDIR
 	${MAKE} cleandir
 .endif
@@ -136,4 +137,5 @@ _prev:=		${d}
 .endfor
 
 cleandir:
+	${_MKCMD}\
 	rm -f ${CLEANFILES}
