@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.11 1998/03/21 21:30:29 mark Exp $ */
+/* $NetBSD: podulebus.h,v 1.12 2001/03/17 23:58:43 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -143,6 +143,9 @@ int matchpodule __P((struct podule_attach_args *pa,
     int manufacturer, int product, int required_slot));
 
 void netslot_ea	__P((u_int8_t *buffer));
+
+extern void *podulebus_irq_establish __P((struct device *, int, int,
+    int (*)(void *), void *, struct evcnt *));
 
 #endif
 
