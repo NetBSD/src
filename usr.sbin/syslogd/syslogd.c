@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.50 2002/01/18 10:27:50 lukem Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.51 2002/05/02 13:53:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.50 2002/01/18 10:27:50 lukem Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.51 2002/05/02 13:53:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -608,7 +608,6 @@ logpath_fileadd(lp, szp, maxszp, file)
 
 	while ((line = fgetln(fp, &len))) {
 		line[len - 1] = 0;
-//printf("got line as |%s|\n", line);
 		logpath_add(lp, szp, maxszp, line);
 	}
 	fclose(fp);
