@@ -659,6 +659,3 @@ do {									 \
   else									\
     readonly_data_section ();						\
 }
-
-/* Use sjlj exceptions. */
-#define DWARF2_UNWIND_INFO 0
