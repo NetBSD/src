@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isa.h,v 1.11.2.6 1993/10/15 03:06:53 mycroft Exp $
+ *	$Id: isa.h,v 1.11.2.7 1993/10/16 03:48:21 mycroft Exp $
  */
 
 /*
@@ -45,6 +45,10 @@
 #include <sys/cdefs.h>
 
 void sysbeep __P((int, int));
+int isa_portcheck __P((u_int, u_int));
+int isa_memcheck __P((u_int, u_int));
+void isa_portalloc __P((u_int, u_int));
+void isa_memalloc __P((u_int, u_int));
 #endif
 
 
