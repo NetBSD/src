@@ -2,7 +2,7 @@
 /* Written by Pace Willisson (pace@blitz.com) 
  * and placed in the public domain
  *
- * $Header: /cvsroot/src/bin/expr/expr.y,v 1.9 1993/07/20 01:10:55 jtc Exp $
+ * $Header: /cvsroot/src/bin/expr/expr.y,v 1.10 1993/08/16 23:20:22 jtc Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -292,7 +292,7 @@ struct val *a, *b;
 	if (isstring (a) || isstring (b)) {
 		to_string (a);
 		to_string (b);	
-		r = make_integer (strcmp (a->u.s, b->u.s) == 0);
+		r = make_integer (strcoll (a->u.s, b->u.s) == 0);
 	} else {
 		r = make_integer (a->u.i == b->u.i);
 	}
@@ -311,7 +311,7 @@ struct val *a, *b;
 	if (isstring (a) || isstring (b)) {
 		to_string (a);
 		to_string (b);
-		r = make_integer (strcmp (a->u.s, b->u.s) > 0);
+		r = make_integer (strcoll (a->u.s, b->u.s) > 0);
 	} else {
 		r= make_integer (a->u.i > b->u.i);
 	}
@@ -330,7 +330,7 @@ struct val *a, *b;
 	if (isstring (a) || isstring (b)) {
 		to_string (a);
 		to_string (b);
-		r = make_integer (strcmp (a->u.s, b->u.s) < 0);
+		r = make_integer (strcoll (a->u.s, b->u.s) < 0);
 	} else {
 		r = make_integer (a->u.i < b->u.i);
 	}
@@ -349,7 +349,7 @@ struct val *a, *b;
 	if (isstring (a) || isstring (b)) {
 		to_string (a);
 		to_string (b);
-		r = make_integer (strcmp (a->u.s, b->u.s) >= 0);
+		r = make_integer (strcoll (a->u.s, b->u.s) >= 0);
 	} else {
 		r = make_integer (a->u.i >= b->u.i);
 	}
@@ -368,7 +368,7 @@ struct val *a, *b;
 	if (isstring (a) || isstring (b)) {
 		to_string (a);
 		to_string (b);
-		r = make_integer (strcmp (a->u.s, b->u.s) <= 0);
+		r = make_integer (strcoll (a->u.s, b->u.s) <= 0);
 	} else {
 		r = make_integer (a->u.i <= b->u.i);
 	}
@@ -387,7 +387,7 @@ struct val *a, *b;
 	if (isstring (a) || isstring (b)) {
 		to_string (a);
 		to_string (b);
-		r = make_integer (strcmp (a->u.s, b->u.s) != 0);
+		r = make_integer (strcoll (a->u.s, b->u.s) != 0);
 	} else {
 		r = make_integer (a->u.i != b->u.i);
 	}
