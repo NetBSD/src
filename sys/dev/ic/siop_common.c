@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.9 2000/10/18 17:06:52 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.10 2000/10/23 14:56:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -120,6 +120,54 @@ siop_common_reset(sc)
 	sc->sc_reset(sc);
 }
 
+/* prepare tables before sending a cmd */
+void
+siop_setuptables(siop_cmd)
+	struct siop_cmd *siop_cmd;
+{
+	int i;
+	struct siop_softc *sc = siop_cmd->siop_sc;
+	struct scsipi_xfer *xs = siop_cmd->xs;
+	int target = xs->sc_link->scsipi_scsi.target;
+	int lun = xs->sc_link->scsipi_scsi.lun;
+
+	siop_cmd->siop_tables.id = htole32(sc->targets[target]->id);
+	memset(siop_cmd->siop_tables.msg_out, 0, 8);
+	siop_cmd->siop_tables.msg_out[0] = MSG_IDENTIFY(lun, 1);
+	siop_cmd->siop_tables.t_msgout.count= htole32(1);
+	if (sc->targets[target]->status == TARST_ASYNC) {
+		if (sc->targets[target]->flags & TARF_WIDE) {
+			sc->targets[target]->status = TARST_WIDE_NEG;
+			siop_wdtr_msg(siop_cmd, 1, MSG_EXT_WDTR_BUS_16_BIT);
+		} else if (sc->targets[target]->flags & TARF_SYNC) {
+			sc->targets[target]->status = TARST_SYNC_NEG;
+			siop_sdtr_msg(siop_cmd, 1, sc->minsync, sc->maxoff);
+		} else {
+			sc->targets[target]->status = TARST_OK;
+		}
+	} else if (sc->targets[target]->status == TARST_OK &&
+	    (sc->targets[target]->flags & TARF_TAG) &&
+	    (siop_cmd->status == CMDST_SENSE) == 0) {
+		siop_cmd->flags |= CMDFL_TAG;
+	}
+	siop_cmd->siop_tables.status = htole32(0xff); /* set invalid status */
+
+	siop_cmd->siop_tables.cmd.count =
+	    htole32(siop_cmd->dmamap_cmd->dm_segs[0].ds_len);
+	siop_cmd->siop_tables.cmd.addr =
+	    htole32(siop_cmd->dmamap_cmd->dm_segs[0].ds_addr);
+	if ((xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) ||
+	    siop_cmd->status == CMDST_SENSE) {
+		for (i = 0; i < siop_cmd->dmamap_data->dm_nsegs; i++) {
+			siop_cmd->siop_tables.data[i].count =
+			    htole32(siop_cmd->dmamap_data->dm_segs[i].ds_len);
+			siop_cmd->siop_tables.data[i].addr =
+			    htole32(siop_cmd->dmamap_data->dm_segs[i].ds_addr);
+		}
+	}
+	siop_table_sync(siop_cmd, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+}
+
 int
 siop_wdtr_neg(siop_cmd)
 	struct siop_cmd *siop_cmd;
@@ -158,7 +206,6 @@ siop_wdtr_neg(siop_cmd)
 			    "target %d (%d)\n", sc->sc_dev.dv_xname, target,
 			    tables->msg_in[3]);
 			tables->t_msgout.count= htole32(1);
-			tables->t_msgout.addr = htole32(siop_cmd->dsa);
 			tables->msg_out[0] = MSG_MESSAGE_REJECT;
 			return SIOP_NEG_MSGOUT;
 		}
@@ -169,13 +216,7 @@ siop_wdtr_neg(siop_cmd)
 		/* we now need to do sync */
 		if (siop_target->flags & TARF_SYNC) {
 			siop_target->status = TARST_SYNC_NEG;
-			tables->msg_out[0] = MSG_EXTENDED;
-			tables->msg_out[1] = MSG_EXT_SDTR_LEN;
-			tables->msg_out[2] = MSG_EXT_SDTR;
-			tables->msg_out[3] = sc->minsync;
-			tables->msg_out[4] = sc->maxoff;
-			tables->t_msgout.count = htole32(MSG_EXT_SDTR_LEN + 2);
-			tables->t_msgout.addr = htole32(siop_cmd->dsa);
+			siop_sdtr_msg(siop_cmd, 0, sc->minsync, sc->maxoff);
 			return SIOP_NEG_MSGOUT;
 		} else {
 			siop_target->status = TARST_OK;
@@ -189,13 +230,11 @@ siop_wdtr_neg(siop_cmd)
 			    sc->sc_dev.dv_xname, target);
 			siop_target->flags |= TARF_ISWIDE;
 			sc->targets[target]->id |= SCNTL3_EWS << 24;
-			tables->msg_out[3] = MSG_EXT_WDTR_BUS_16_BIT;
 		} else {
 			printf("%s: target %d using 8bit transfers\n",
 			    sc->sc_dev.dv_xname, target);
 			siop_target->flags &= ~TARF_ISWIDE;
 			sc->targets[target]->id &= ~(SCNTL3_EWS << 24);
-			tables->msg_out[3] = MSG_EXT_WDTR_BUS_8_BIT;
 		}
 		tables->id = htole32(sc->targets[target]->id);
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL3,
@@ -205,12 +244,8 @@ siop_wdtr_neg(siop_cmd)
 		 * but don't schedule a sync neg, target should initiate it
 		 */
 		siop_target->status = TARST_OK;
-		tables->msg_out[0] = MSG_EXTENDED;
-		tables->msg_out[1] = MSG_EXT_WDTR_LEN;
-		tables->msg_out[2] = MSG_EXT_WDTR;
-		tables->t_msgout.count=
-		    htole32(MSG_EXT_WDTR_LEN + 2);
-		tables->t_msgout.addr = htole32(siop_cmd->dsa);
+		siop_wdtr_msg(siop_cmd, 0, (siop_target->flags & TARF_ISWIDE) ?
+		    MSG_EXT_WDTR_BUS_16_BIT : MSG_EXT_WDTR_BUS_8_BIT);
 		return SIOP_NEG_MSGOUT;
 	}
 }
@@ -312,13 +347,7 @@ reject:
 				    ~(SXFER_MO_MASK << 8);
 				sc->targets[target]->id |=
 				    (offset & SXFER_MO_MASK) << 8;
-				tables->msg_out[0] = MSG_EXTENDED;
-				tables->msg_out[1] = MSG_EXT_SDTR_LEN;
-				tables->msg_out[2] = MSG_EXT_SDTR;
-				tables->msg_out[3] = sync;
-				tables->msg_out[4] = offset;
-				tables->t_msgout.count=
-				    htole32(MSG_EXT_SDTR_LEN + 2);
+				siop_sdtr_msg(siop_cmd, 0, sync, offset);
 				send_msgout = 1;
 				goto end;
 			}
@@ -329,13 +358,7 @@ async:
 		sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
 		sc->targets[target]->id &= ~(SCNTL3_ULTRA << 24);
 		sc->targets[target]->id &= ~(SXFER_MO_MASK << 8);
-		tables->msg_out[0] = MSG_EXTENDED;
-		tables->msg_out[1] = MSG_EXT_SDTR_LEN;
-		tables->msg_out[2] = MSG_EXT_SDTR;
-		tables->msg_out[3] = 0;
-		tables->msg_out[4] = 0;
-		tables->t_msgout.count=
-		    htole32(MSG_EXT_SDTR_LEN + 2);
+		siop_sdtr_msg(siop_cmd, 0, 0, 0);
 		send_msgout = 1;
 	}
 end:
@@ -348,11 +371,38 @@ end:
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SXFER,
 	    (sc->targets[target]->id >> 8) & 0xff);
 	if (send_msgout) {
-		tables->t_msgout.addr = htole32(siop_cmd->dsa);
 		return SIOP_NEG_MSGOUT;
 	} else {
 		return SIOP_NEG_ACK;
 	}
+}
+
+void
+siop_sdtr_msg(siop_cmd, offset, ssync, soff)
+	struct siop_cmd *siop_cmd;
+	int offset;
+	int ssync, soff;
+{
+	siop_cmd->siop_tables.msg_out[offset + 0] = MSG_EXTENDED;
+	siop_cmd->siop_tables.msg_out[offset + 1] = MSG_EXT_SDTR_LEN;
+	siop_cmd->siop_tables.msg_out[offset + 2] = MSG_EXT_SDTR;
+	siop_cmd->siop_tables.msg_out[offset + 3] = ssync;
+	siop_cmd->siop_tables.msg_out[offset + 4] = soff;
+	siop_cmd->siop_tables.t_msgout.count =
+	    htole32(offset + MSG_EXT_SDTR_LEN + 2);
+}
+
+void
+siop_wdtr_msg(siop_cmd, offset, wide)
+	struct siop_cmd *siop_cmd;
+	int offset;
+{
+	siop_cmd->siop_tables.msg_out[offset + 0] = MSG_EXTENDED;
+	siop_cmd->siop_tables.msg_out[offset + 1] = MSG_EXT_WDTR_LEN;
+	siop_cmd->siop_tables.msg_out[offset + 2] = MSG_EXT_WDTR;
+	siop_cmd->siop_tables.msg_out[offset + 3] = wide;
+	siop_cmd->siop_tables.t_msgout.count =
+	    htole32(offset + MSG_EXT_WDTR_LEN + 2);
 }
 
 void
@@ -380,23 +430,30 @@ siop_ioctl(link, cmd, arg, flag, p)
 		struct scbusaccel_args *sp = (struct scbusaccel_args *)arg;
 		s = splbio();
 		if (sp->sa_lun == 0) {
-#if 0
 			if (sp->sa_flags & SC_ACCEL_TAGS) {
 				sc->targets[sp->sa_target]->flags |= TARF_TAG;
 				printf("%s: target %d using tagged queuing\n",
-				    sc->sc_dev.dv_xname, sp->sa_target);
+			 	   sc->sc_dev.dv_xname, sp->sa_target);
 			}
-#endif
 			if ((sp->sa_flags & SC_ACCEL_WIDE) &&
 			    (sc->features & SF_BUS_WIDE))
 				sc->targets[sp->sa_target]->flags |= TARF_WIDE;
 			if (sp->sa_flags & SC_ACCEL_SYNC)
 				sc->targets[sp->sa_target]->flags |= TARF_SYNC;
-			if (sp->sa_flags & (SC_ACCEL_SYNC | SC_ACCEL_WIDE) &&
-			    sc->targets[sp->sa_target]->status > TARST_ASYNC)
+			if ((sp->sa_flags & (SC_ACCEL_SYNC | SC_ACCEL_WIDE)) ||
+			    sc->targets[sp->sa_target]->status == TARST_PROBING)
 				sc->targets[sp->sa_target]->status =
 				    TARST_ASYNC;
 		}
+
+		/* allocate a lun sw entry for this device */
+		siop_add_dev(sc, sp->sa_target, sp->sa_lun);
+		/*
+		 * if we can to tagged queueing, inform upper layer
+		 * we can have NIOP_NTAG concurent commands
+		 */
+		if (sc->targets[sp->sa_target]->flags & TARF_TAG)
+			link->openings = SIOP_NTAG;
 		splx(s);
 		return 0;
 	}
