@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.38 2002/09/16 02:35:17 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.39 2002/09/16 02:48:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.38 2002/09/16 02:35:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.39 2002/09/16 02:48:34 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -493,11 +493,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			return (EINVAL);
 		}			
 
-		/* XXX need goop here to see if the disk is alive,
-		   and, if not, make it so...  */
-		
-
-
 		badDisk = &raidPtr->Disks[row][col];
 
 		proc = raidPtr->engine_thread;
@@ -530,7 +525,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			printf("raid%d: rebuilding: raidlookup on device: %s failed: %d!\n",raidPtr->raidid,
 			       raidPtr->Disks[row][col].devname, retcode);
 
-			/* XXX the component isn't responding properly... 
+			/* the component isn't responding properly... 
 			   must be still dead :-( */
 			raidPtr->reconInProgress--;
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
