@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.34 1999/06/01 03:00:40 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.35 1999/07/17 01:08:30 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -171,12 +171,15 @@ lfs_mountroot()
 		printf("lfs_mountroot: can't setup bdevvp's");
 		return (error);
 	}
-	if ((error = vfs_rootmountalloc(MOUNT_LFS, "root_device", &mp)))
+	if ((error = vfs_rootmountalloc(MOUNT_LFS, "root_device", &mp))) {
+		vrele(rootvp);
 		return (error);
+	}
 	if ((error = lfs_mountfs(rootvp, mp, p))) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
+		vrele(rootvp);
 		return (error);
 	}
 	simple_lock(&mountlist_slock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.50 1999/07/08 01:06:05 wrstuden Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.51 1999/07/17 01:08:29 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -133,12 +133,15 @@ ffs_mountroot()
 	if (bdevvp(rootdev, &rootvp))
 		panic("ffs_mountroot: can't setup bdevvp's");
 
-	if ((error = vfs_rootmountalloc(MOUNT_FFS, "root_device", &mp)))
+	if ((error = vfs_rootmountalloc(MOUNT_FFS, "root_device", &mp))) {
+		vrele(rootvp);
 		return (error);
+	}
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
+		vrele(rootvp);
 		return (error);
 	}
 	simple_lock(&mountlist_slock);

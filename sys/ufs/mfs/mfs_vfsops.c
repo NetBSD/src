@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.20 1999/04/04 18:15:58 mycroft Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.21 1999/07/17 01:08:30 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -130,8 +130,10 @@ mfs_mountroot()
 		return (error);
 	}
 
-	if ((error = vfs_rootmountalloc(MOUNT_MFS, "mfs_root", &mp)))
+	if ((error = vfs_rootmountalloc(MOUNT_MFS, "mfs_root", &mp))) {
+		vrele(rootvp);
 		return (error);
+	}
 
 	mfsp = malloc(sizeof *mfsp, M_MFSNODE, M_WAITOK);
 	rootvp->v_data = mfsp;
@@ -147,6 +149,7 @@ mfs_mountroot()
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
 		free(mfsp, M_MFSNODE);
+		vrele(rootvp);
 		return (error);
 	}	
 	simple_lock(&mountlist_slock);

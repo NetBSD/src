@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.26 1999/07/08 01:06:04 wrstuden Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.27 1999/07/17 01:08:29 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -149,13 +149,16 @@ ext2fs_mountroot()
 	if (bdevvp(rootdev, &rootvp))
 		panic("ext2fs_mountroot: can't setup bdevvp's");
 
-	if ((error = vfs_rootmountalloc(MOUNT_EXT2FS, "root_device", &mp)))
+	if ((error = vfs_rootmountalloc(MOUNT_EXT2FS, "root_device", &mp))) {
+		vrele(rootvp);
 		return (error);
+	}
 
 	if ((error = ext2fs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
+		vrele(rootvp);
 		return (error);
 	}
 	simple_lock(&mountlist_slock);
