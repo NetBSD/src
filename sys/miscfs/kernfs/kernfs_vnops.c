@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.79 2001/12/06 04:27:42 chs Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.79.10.1 2002/07/21 00:52:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.79 2001/12/06 04:27:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.79.10.1 2002/07/21 00:52:37 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,8 +145,8 @@ int	kernfs_pathconf	__P((void *));
 #define	kernfs_bwrite	genfs_eopnotsupp
 #define	kernfs_putpages	genfs_putpages
 
-int	kernfs_xread __P((const struct kern_target *, int, char **, int));
-int	kernfs_xwrite __P((const struct kern_target *, char *, int));
+static int	kernfs_xread __P((const struct kern_target *, int, char **, size_t, size_t *));
+static int	kernfs_xwrite __P((const struct kern_target *, char *, size_t));
 
 int (**kernfs_vnodeop_p) __P((void *));
 const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
@@ -198,12 +198,13 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 const struct vnodeopv_desc kernfs_vnodeop_opv_desc =
 	{ &kernfs_vnodeop_p, kernfs_vnodeop_entries };
 
-int
-kernfs_xread(kt, off, bufp, len)
+static int
+kernfs_xread(kt, off, bufp, len, wrlen)
 	const struct kern_target *kt;
 	int off;
 	char **bufp;
-	int len;
+	size_t len;
+	size_t *wrlen;
 {
 
 	switch (kt->kt_tag) {
@@ -250,14 +251,17 @@ kernfs_xread(kt, off, bufp, len)
 		 * message buffer header are corrupted, but that'll cause
 		 * the system to die anyway.
 		 */
-		if (off >= msgbufp->msg_bufs)
+		if (off >= msgbufp->msg_bufs) {
+			*wrlen = 0;
 			return (0);
+		}
 		n = msgbufp->msg_bufx + off;
 		if (n >= msgbufp->msg_bufs)
 			n -= msgbufp->msg_bufs;
 		len = min(msgbufp->msg_bufs - n, msgbufp->msg_bufs - off);
 		*bufp = msgbufp->msg_bufc + n;
-		return (len);
+		*wrlen = len;
+		return (0);
 	}
 
 	case KTT_HOSTNAME: {
@@ -281,21 +285,25 @@ kernfs_xread(kt, off, bufp, len)
 		break;
 
 	default:
+		*wrlen = 0;
 		return (0);
 	}
 
 	len = strlen(*bufp);
 	if (len <= off)
-		return (0);
-	*bufp += off;
-	return (len - off);
+		*wrlen = 0;
+	else {
+		*bufp += off;
+		*wrlen = len - off;
+	}
+	return (0);
 }
 
-int
+static int
 kernfs_xwrite(kt, buf, len)
 	const struct kern_target *kt;
 	char *buf;
-	int len;
+	size_t len;
 {
 
 	switch (kt->kt_tag) {
@@ -304,7 +312,7 @@ kernfs_xwrite(kt, buf, len)
 			--len;
 		memcpy(hostname, buf, len);
 		hostname[len] = '\0';
-		hostnamelen = len;
+		hostnamelen = (size_t) len;
 		return (0);
 
 	default:
@@ -489,7 +497,7 @@ kernfs_getattr(v)
 		vap->va_size = DEV_BSIZE;
 	} else {
 		const struct kern_target *kt = VTOKERN(vp)->kf_kt;
-		int nbytes, total;
+		size_t total;
 #ifdef KERNFS_DIAGNOSTIC
 		printf("kernfs_getattr: stat target %s\n", kt->kt_name);
 #endif
@@ -497,11 +505,10 @@ kernfs_getattr(v)
 		vap->va_mode = kt->kt_mode;
 		vap->va_nlink = 1;
 		vap->va_fileid = 1 + (kt - kern_targets);
-		total = 0;
-		while (buf = strbuf,
-		       nbytes = kernfs_xread(kt, total, &buf, sizeof(strbuf)))
-			total += nbytes;
-		vap->va_size = total;
+		buf = strbuf;
+		if (0 == (error = kernfs_xread(kt, 0, &buf,
+				sizeof(strbuf), &total)))
+			vap->va_size = total;
 	}
 
 #ifdef KERNFS_DIAGNOSTIC
@@ -538,7 +545,8 @@ kernfs_read(v)
 	struct uio *uio = ap->a_uio;
 	const struct kern_target *kt;
 	char strbuf[KSTRING], *buf;
-	int off, len;
+	off_t off;
+	size_t len;
 	int error;
 
 	if (vp->v_type == VDIR)
@@ -551,17 +559,10 @@ kernfs_read(v)
 #endif
 
 	off = uio->uio_offset;
-#if 0
-	while (buf = strbuf,
-#else
-	if (buf = strbuf,
-#endif
-	    len = kernfs_xread(kt, off, &buf, sizeof(strbuf))) {
-		if ((error = uiomove(buf, len, uio)) != 0)
-			return (error);
-		off += len;
-	}
-	return (0);
+	buf = strbuf;
+	if ((error = kernfs_xread(kt, off, &buf, sizeof(strbuf), &len)) == 0)
+		error = uiomove(buf, len, uio);
+	return (error);
 }
 
 int
