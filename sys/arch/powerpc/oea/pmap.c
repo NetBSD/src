@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 2003/11/21 18:09:27 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 2003/11/21 22:57:14 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,8 +67,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2003/11/21 18:09:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2003/11/21 22:57:14 matt Exp $");
 
+#include "opt_ppcarch.h"
 #include "opt_altivec.h"
 #include "opt_pmap.h"
 #include <sys/param.h>
@@ -92,11 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2003/11/21 18:09:27 matt Exp $");
 #include <machine/powerpc.h>
 #include <powerpc/spr.h>
 #include <powerpc/oea/sr_601.h>
-#if __NetBSD_Version__ > 105010000
-#include <powerpc/oea/bat.h>
-#else
 #include <powerpc/bat.h>
-#endif
 
 #if defined(DEBUG) || defined(PMAPCHECK)
 #define	STATIC
@@ -415,6 +412,7 @@ extern struct evcnt pmap_evcnt_idlezeroed_pages;
 #define	MFSRIN(va)	mfsrin(va)
 #define	MFTB()		mfrtcltbl()
 
+#ifndef PPC_OEA64
 static __inline register_t
 mfsrin(vaddr_t va)
 {
@@ -422,6 +420,7 @@ mfsrin(vaddr_t va)
 	__asm __volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(va));
 	return sr;
 }
+#endif	/* PPC_OEA64 */
 
 static __inline register_t
 pmap_interrupts_off(void)
@@ -478,7 +477,45 @@ tlbia(void)
 static __inline register_t
 va_to_vsid(const struct pmap *pm, vaddr_t addr)
 {
-	return (pm->pm_sr[addr >> ADDR_SR_SHFT] & SR_VSID);
+#ifdef PPC_OEA64
+#if 0
+	const struct ste *ste;
+	register_t hash;
+	int i;
+
+	hash = (addr >> ADDR_ESID_SHFT) & ADDR_ESID_HASH;
+
+	/*
+	 * Try the primary group first
+	 */
+	ste = pm->pm_stes[hash].stes;
+	for (i = 0; i < 8; i++, ste++) {
+		if (ste->ste_hi & STE_V) &&
+		   (addr & ~(ADDR_POFF|ADDR_PIDX)) == (ste->ste_hi & STE_ESID))
+			return ste;
+	}
+
+	/*
+	 * Then the secondary group.
+	 */
+	ste = pm->pm_stes[hash ^ ADDR_ESID_HASH].stes;
+	for (i = 0; i < 8; i++, ste++) {
+		if (ste->ste_hi & STE_V) &&
+		   (addr & ~(ADDR_POFF|ADDR_PIDX)) == (ste->ste_hi & STE_ESID))
+			return addr;
+	}
+		
+	return NULL;
+#else
+	/*
+	 * Rather than searching the STE groups for the VSID, we know
+	 * how we generate that from the ESID and so do that.
+	 */
+	return VSID_MAKE(addr >> ADDR_SR_SHFT, pm->pm_vsid) >> SR_VSID_SHFT;
+#endif
+#else
+	return (pm->pm_sr[addr >> ADDR_SR_SHFT] & SR_VSID) >> SR_VSID_SHFT;
+#endif
 }
 
 static __inline register_t
@@ -506,15 +543,21 @@ pmap_pte_to_va(volatile const struct pte *pt)
 	if (pt->pte_hi & PTE_HID)
 		ptaddr ^= (pmap_pteg_mask * sizeof(struct pteg));
 
-	/* PPC Bits 10-19 */
+	/* PPC Bits 10-19  PPC64 Bits 42-51 */
 	va = ((pt->pte_hi >> PTE_VSID_SHFT) ^ (ptaddr / sizeof(struct pteg))) & 0x3ff;
 	va <<= ADDR_PIDX_SHFT;
 
-	/* PPC Bits 4-9 */
+	/* PPC Bits 4-9  PPC64 Bits 36-41 */
 	va |= (pt->pte_hi & PTE_API) << ADDR_API_SHFT;
 
+#ifdef PPC_OEA64
+	/* PPC63 Bits 0-35 */
+	/* va |= VSID_TO_SR(pt->pte_hi >> PTE_VSID_SHFT) << ADDR_SR_SHFT; */
+#endif
+#ifdef PPC_OEA
 	/* PPC Bits 0-3 */
 	va |= VSID_TO_SR(pt->pte_hi >> PTE_VSID_SHFT) << ADDR_SR_SHFT;
+#endif
 
 	return va;
 }
@@ -726,7 +769,7 @@ pmap_pte_insert(int ptegidx, struct pte *pvo_pt)
 	int i;
 	
 #if defined(DEBUG)
-	DPRINTFN(PTE, ("pmap_pte_insert: idx 0x%x, pte 0x%lx 0x%lx\n",
+	DPRINTFN(PTE, ("pmap_pte_insert: idx 0x%x, pte 0x%x 0x%x\n",
 		ptegidx, pvo_pt->pte_hi, pvo_pt->pte_lo));
 #endif
 	/*
@@ -1082,8 +1125,8 @@ pmap_create(void)
 	pmap_pinit(pm);
 	
 	DPRINTFN(CREATE,("pmap_create: pm %p:\n"
-	    "\t%06lx %06lx %06lx %06lx    %06lx %06lx %06lx %06lx\n"
-	    "\t%06lx %06lx %06lx %06lx    %06lx %06lx %06lx %06lx\n", pm,
+	    "\t%06x %06x %06x %06x    %06x %06x %06x %06x\n"
+	    "\t%06x %06x %06x %06x    %06x %06x %06x %06x\n", pm,
 	    pm->pm_sr[0], pm->pm_sr[1], pm->pm_sr[2], pm->pm_sr[3], 
 	    pm->pm_sr[4], pm->pm_sr[5], pm->pm_sr[6], pm->pm_sr[7],
 	    pm->pm_sr[8], pm->pm_sr[9], pm->pm_sr[10], pm->pm_sr[11], 
@@ -1134,15 +1177,14 @@ pmap_pinit(pmap_t pm)
 			hash &= ~(VSID_NBPW-1);
 			hash |= i;
 		}
-		/*
-		 * Make sure clear out SR_KEY_LEN bits because we put our
-		 * our data in those bits (to identify the segment).
-		 */
-		hash &= PTE_VSID >> (PTE_VSID_SHFT + SR_KEY_LEN);
+		hash &= PTE_VSID >> PTE_VSID_SHFT;
 		pmap_vsid_bitmap[n] |= mask;
+		pm->pm_vsid = hash;
+#ifndef PPC_OEA64
 		for (i = 0; i < 16; i++)
 			pm->pm_sr[i] = VSID_MAKE(i, hash) | SR_PRKEY |
 			    SR_NOEXEC;
+#endif
 		return;
 	}
 	panic("pmap_pinit: out of segments");
@@ -1181,7 +1223,7 @@ pmap_release(pmap_t pm)
 	
 	if (pm->pm_sr[0] == 0)
 		panic("pmap_release");
-	idx = VSID_TO_HASH(pm->pm_sr[0]) & (NPMAPS-1);
+	idx = VSID_TO_HASH(pm->pm_vsid) & (NPMAPS-1);
 	mask = 1 << (idx % VSID_NBPW);
 	idx /= VSID_NBPW;
 	pmap_vsid_bitmap[idx] &= ~mask;
@@ -1408,13 +1450,13 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 		}
 		if (pvo->pvo_pte.pte_hi != pt->pte_hi) {
 			printf("pmap_pvo_check: pvo %p: pte_hi differ: "
-			    "%#lx/%#lx\n", pvo, pvo->pvo_pte.pte_hi, pt->pte_hi);
+			    "%#x/%#x\n", pvo, pvo->pvo_pte.pte_hi, pt->pte_hi);
 			failed = 1;
 		}
 		if (((pvo->pvo_pte.pte_lo ^ pt->pte_lo) &
 		    (PTE_PP|PTE_WIMG|PTE_RPGN)) != 0) {
 			printf("pmap_pvo_check: pvo %p: pte_lo differ: "
-			    "%#lx/%#lx\n", pvo,
+			    "%#x/%#x\n", pvo,
 			    pvo->pvo_pte.pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN),
 			    pt->pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN));
 			failed = 1;
@@ -1473,9 +1515,9 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 			    ((pvo->pvo_pte.pte_lo ^ (pa|pte_lo)) &
 			    ~(PTE_REF|PTE_CHG)) == 0 &&
 			   va < VM_MIN_KERNEL_ADDRESS) {
-				printf("pmap_pvo_enter: pvo %p: dup %#lx/%#lx\n",
+				printf("pmap_pvo_enter: pvo %p: dup %#x/%#lx\n",
 				    pvo, pvo->pvo_pte.pte_lo, pte_lo|pa);
-				printf("pmap_pvo_enter: pte_hi=%#lx sr=%#lx\n",
+				printf("pmap_pvo_enter: pte_hi=%#x sr=%#x\n",
 				    pvo->pvo_pte.pte_hi,
 				    pm->pm_sr[va >> ADDR_SR_SHFT]);
 				pmap_pte_print(pmap_pvo_to_pte(pvo, -1));
@@ -1659,16 +1701,19 @@ STATIC void
 pvo_set_exec(struct pvo_entry *pvo)
 {
 	struct pmap *pm = pvo->pvo_pmap;
-	int sr;
 
 	if (pm == pmap_kernel() || PVO_ISEXECUTABLE(pvo)) {
 		return;
 	}
 	pvo->pvo_vaddr |= PVO_EXECUTABLE;
-	sr = PVO_VADDR(pvo) >> ADDR_SR_SHFT;
-	if (pm->pm_exec[sr]++ == 0) {
-		pm->pm_sr[sr] &= ~SR_NOEXEC;
+#ifdef PPC_OEA
+	{
+		int sr = PVO_VADDR(pvo) >> ADDR_SR_SHFT;
+		if (pm->pm_exec[sr]++ == 0) {
+			pm->pm_sr[sr] &= ~SR_NOEXEC;
+		}
 	}
+#endif
 }
 
 /*
@@ -1680,16 +1725,19 @@ STATIC void
 pvo_clear_exec(struct pvo_entry *pvo)
 {
 	struct pmap *pm = pvo->pvo_pmap;
-	int sr;
 
 	if (pm == pmap_kernel() || !PVO_ISEXECUTABLE(pvo)) {
 		return;
 	}
 	pvo->pvo_vaddr &= ~PVO_EXECUTABLE;
-	sr = PVO_VADDR(pvo) >> ADDR_SR_SHFT;
-	if (--pm->pm_exec[sr] == 0) {
-		pm->pm_sr[sr] |= SR_NOEXEC;
+#ifdef PPC_OEA
+	{
+		int sr = PVO_VADDR(pvo) >> ADDR_SR_SHFT;
+		if (--pm->pm_exec[sr] == 0) {
+			pm->pm_sr[sr] |= SR_NOEXEC;
+		}
 	}
+#endif
 }
 
 /*
@@ -2340,8 +2388,10 @@ pmap_print_mmuregs(void)
 {
 	int i;
 	u_int cpuvers;
+#ifndef PPC_OEA64
 	vaddr_t addr;
 	register_t soft_sr[16];
+#endif
 	struct bat soft_ibat[4];
 	struct bat soft_dbat[4];
 	register_t sdr1;
@@ -2349,12 +2399,13 @@ pmap_print_mmuregs(void)
 	cpuvers = MFPVR() >> 16;
 
 	__asm __volatile ("mfsdr1 %0" : "=r"(sdr1));
-
+#ifndef PPC_OEA64
 	addr = 0;
 	for (i=0; i<16; i++) {
 		soft_sr[i] = MFSRIN(addr);
 		addr += (1 << ADDR_SR_SHFT);
 	}
+#endif
 
 	/* read iBAT (601: uBAT) registers */
 	__asm __volatile ("mfibatu %0,0" : "=r"(soft_ibat[0].batu));
@@ -2379,7 +2430,8 @@ pmap_print_mmuregs(void)
 		__asm __volatile ("mfdbatl %0,3" : "=r"(soft_dbat[3].batl));
 	}
 
-	printf("SDR1:\t%#lx\n", sdr1);
+	printf("SDR1:\t0x%lx\n", (long) sdr1);
+#ifndef PPC_OEA64
 	printf("SR[]:\t");
 	for (i=0; i<4; i++)
 		printf("0x%08lx,   ", soft_sr[i]);
@@ -2393,6 +2445,7 @@ pmap_print_mmuregs(void)
 	for ( ; i<16; i++)
 		printf("0x%08lx,   ", soft_sr[i]);
 	printf("\n");
+#endif
 
 	printf("%cBAT[]:\t", cpuvers == MPC601 ? 'u' : 'i');
 	for (i=0; i<4; i++) {
@@ -3012,6 +3065,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	/*
 	 * Initialize kernel pmap and hardware.
 	 */
+#ifndef PPC_OEA64
 	for (i = 0; i < 16; i++) {
 		pmap_kernel()->pm_sr[i] = EMPTY_SEGMENT;
 		__asm __volatile ("mtsrin %0,%1"
@@ -3033,7 +3087,8 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 			    :: "r"(iosrtable[i]), "r"(i << ADDR_SR_SHFT));
 		}
 	}
-		
+#endif /* !PPC_OEA64 */
+
 	__asm __volatile ("sync; mtsdr1 %0; isync"
 		      :: "r"((uintptr_t)pmap_pteg_table | (pmap_pteg_mask >> 10)));
 	tlbia();

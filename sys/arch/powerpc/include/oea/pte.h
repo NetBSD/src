@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4 2003/11/21 17:40:48 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.5 2003/11/21 22:57:14 matt Exp $	*/
 
 /*-
  * Copyright (C) 2003 Matt Thomas
@@ -133,6 +133,10 @@ struct steg {
 /* Low Word */
 #define	STE_VSID	(~0xfffL)	/* Virtual Segment ID */
 #define	STE_VSID_SHFT	12
+#defien	STE_VSID_WIDTH	52
+
+#define	SR_VSID_SHFT	STE_VSID_SHFT	/* compatibility with PPC_OEA */
+#define	SR_VSID_WIDTH	STE_VSID_WIDTH	/* compatibility with PPC_OEA */
 
 #define	SR_KEY_LEN	9		/* 64 groups of 8 segment entries */
 #else	/* !defined(PPC_OEA64) */
@@ -145,8 +149,12 @@ struct steg {
 #define	SR_SUKEY	0x40000000	/* Supervisor protection key */
 #define	SR_PRKEY	0x20000000	/* User protection key */
 #define	SR_NOEXEC	0x10000000	/* No-execute protection bit */
-#define	SR_VSID		0x00ffffff	/* Virtual segment ID */
+#define	SR_VSID_SHFT	0		/* Starts at LSB */
+#define	SR_VSID_WIDTH	24		/* Goes for 24 bits */
 
 #endif	/* PPC_OEA64 */
+
+					/* Virtual segment ID */
+#define	SR_VSID		(((1L << SR_VSID_WIDTH) - 1) << SR_VSID_SHFT)
 
 #endif	/* _POWERPC_OEA_PTE_H_ */
