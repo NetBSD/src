@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2005/01/10 02:58:58 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2005/03/09 03:11:21 christos Exp $
 
 WARNS?=	0
 
@@ -19,8 +19,8 @@ CPPFLAGS+=	-DNIS
 
 .if ${MKCRYPTO} != "no"
 CPPFLAGS+=	-DSTARTTLS
-LDADD+=	-lssl -lcrypto
-DPADD+=	${LIBSSL} ${LIBCRYPTO}
+LDADD+=	-lssl -lcrypto -lcrypt
+DPADD+=	${LIBSSL} ${LIBCRYPTO} ${LIBCRYPT}
 .endif
 
 .if exists(${.CURDIR}/../../Makefile.inc)

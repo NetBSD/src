@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2004/05/20 15:08:30 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2005/03/09 03:11:21 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -29,8 +29,8 @@ LDADD+= -lkrb -ldes
 .endif
 
 CPPFLAGS+= -DHAVE_GSSAPI -I${DESTDIR}/usr/include/krb5
-DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBASN1} ${LIBCRYPTO}
-LDADD+= -lgssapi -lkrb5 -lasn1 -lcrypto
+DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBASN1} ${LIBCRYPTO} ${LIBCRYPT}
+LDADD+= -lgssapi -lkrb5 -lasn1 -lcrypto -lcrypt
 
 CPPFLAGS+= -DENCRYPTION
 DPADD+= ${LIBCOM_ERR} ${LIBROKEN} ${LIBCRYPT}
