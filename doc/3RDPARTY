@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.156 2003/11/02 16:06:47 kochi Exp $
+#	$NetBSD: 3RDPARTY,v 1.157 2003/11/05 00:02:16 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -523,8 +523,8 @@ official openssh releases dropped kerberosIV support already, therefore
 if we need to keep it we need to maintain it ourselves.
 
 Package:	OpenSSL
-Version:	0.9.7b
-Current Vers:	0.9.7b
+Version:	0.9.6g + security fix/0.9.7c
+Current Vers:	0.9.6l/0.9.7c
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Mailing List:	openssl-announce@openssl.org
