@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.20 2003/08/07 09:46:38 agc Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.21 2004/03/26 01:26:59 fair Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fingerd.c,v 1.20 2003/08/07 09:46:38 agc Exp $");
+__RCSID("$NetBSD: fingerd.c,v 1.21 2004/03/26 01:26:59 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			err("illegal option -- %c", ch);
+			err("illegal option -- %c", optopt);
 		}
 
 
