@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.93 1997/10/03 13:29:20 enami Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.94 1997/10/03 13:32:06 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -850,7 +850,8 @@ sys_mknod(p, v, retval)
 		error = EEXIST;
 	else {
 		VATTR_NULL(&vattr);
-		vattr.va_mode = (SCARG(uap, mode) & ALLPERMS) &~ p->p_fd->fd_cmask;
+		vattr.va_mode =
+		    (SCARG(uap, mode) & ALLPERMS) &~ p->p_fd->fd_cmask;
 		vattr.va_rdev = SCARG(uap, dev);
 		whiteout = 0;
 
