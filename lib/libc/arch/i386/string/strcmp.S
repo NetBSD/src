@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strcmp.S,v 1.6 1994/02/07 20:57:06 jtc Exp $
+ *	$Id: strcmp.S,v 1.7 1994/02/14 17:45:17 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: strcmp.S,v 1.6 1994/02/07 20:57:06 jtc Exp $"
+	.asciz "$Id: strcmp.S,v 1.7 1994/02/14 17:45:17 jtc Exp $"
 #endif
 
 #include "DEFS.h"
@@ -53,7 +53,7 @@
 /*
  * I've unrolled the loop eight times: large enough to make a
  * significant difference, and small enough not to totally trash the
- * cashe.
+ * cache.
  */
 
 ENTRY(strcmp)
