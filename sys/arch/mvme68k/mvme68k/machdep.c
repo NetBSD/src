@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 1998/07/04 22:18:33 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 1998/07/08 04:40:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -230,10 +230,15 @@ mvme68k_init()
 			continue;
 		}
 #if defined(UVM)
+		/*
+		 * Note the index of the mem cluster is the free
+		 * list we want to put the memory on (0 == default,
+		 * 1 == VME).  There can only be two.
+		 */
 		uvm_page_physload(atop(phys_seg_list[i].ps_start),
 				 atop(phys_seg_list[i].ps_end),
 				 atop(phys_seg_list[i].ps_start),
-				 atop(phys_seg_list[i].ps_end));
+				 atop(phys_seg_list[i].ps_end), i);
 #else
 		vm_page_physload(atop(phys_seg_list[i].ps_start),
 				 atop(phys_seg_list[i].ps_end),
