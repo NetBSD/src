@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 2002/03/17 01:56:07 tsutsui Exp $
+#	$NetBSD: list,v 1.6 2002/03/18 15:30:56 tsutsui Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin sys/arch/${MACHINE}/stand
 
@@ -82,10 +82,6 @@ COPY	${_SRC_TOP_}/etc/master.passwd	etc/master.passwd
 COPY	${_SRC_TOP_}/etc/netconfig	etc/netconfig
 COPY	${_SRC_TOP_}/etc/protocols	etc/protocols
 COPY	${_SRC_TOP_}/etc/services	etc/services
-# generate Version 7 style etc/passwd
-CMD	${PWD_MKDB} -B -p -d . etc/master.passwd
-# ..but db files are not needed for libhack's getpwent.c
-CMD	rm etc/spwd.db etc/pwd.db
 
 # and the common installation tools
 COPY	${CURDIR}/termcap.src		usr/share/misc/termcap
