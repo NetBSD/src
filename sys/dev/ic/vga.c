@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.37 2001/09/03 17:34:07 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.38 2001/09/04 15:32:22 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -71,6 +71,10 @@ static struct egavga_font vga_builtinfont = {
 	&_vga_builtinfont,
 	0, 0
 };
+
+#ifdef VGA_CONSOLE_SCREENTYPE
+static struct egavga_font vga_consolefont;
+#endif
 
 struct vgascreen {
 	struct pcdisplayscreen pcs;
@@ -379,7 +383,7 @@ egavga_getfont(vc, scr, name, primary)
 #ifdef VGAFONTDEBUG
 			if (scr != &vga_console_screen || vga_console_attached)
 				printf("vga_getfont: %s already present\n",
-				       name ? name : <default>);
+				       name ? name : "<default>");
 #endif
 			goto found;
 		}
@@ -398,6 +402,11 @@ egavga_getfont(vc, scr, name, primary)
 	if (wsfont_lock(cookie, &wf, WSDISPLAY_FONTORDER_L2R, 0) < 0)
 		return (0);
 
+#ifdef VGA_CONSOLE_SCREENTYPE
+	if (scr == &vga_console_screen)
+		f = &vga_consolefont;
+	else
+#endif
 	f = malloc(sizeof(struct egavga_font), M_DEVBUF, M_NOWAIT);
 	if (!f) {
 		wsfont_unlock(cookie);
@@ -428,10 +437,12 @@ egavga_unreffont(vc, f)
 #ifdef VGAFONTDEBUG
 	printf("vga_unreffont: usecount=%d\n", f->usecount);
 #endif
-	if (f->usecount == 0) {
-		/* XXX not for builtin font */
+	if (f->usecount == 0 && f != &vga_builtinfont) {
 		TAILQ_REMOVE(&vc->vc_fontlist, f, next);
 		wsfont_unlock(f->cookie);
+#ifdef VGA_CONSOLE_SCREENTYPE
+		if (f != &vga_consolefont)
+#endif
 		free(f, M_DEVBUF);
 	}
 }
@@ -652,8 +663,6 @@ vga_cnattach(iot, memt, type, check)
 	       &vga_screenlist_mono : &vga_screenlist, VGA_CONSOLE_SCREENTYPE);
 	if (!scr)
 		panic("vga_cnattach: invalid screen type");
-	if (scr->fontheight != 16)
-		panic("vga_cnattach: console screen type w/o font");
 	if (scr != vga_console_vc.currenttype) {
 		vga_setscreentype(&vga_console_vc.hdl, scr);
 		vga_console_vc.currenttype = scr;
@@ -662,6 +671,9 @@ vga_cnattach(iot, memt, type, check)
 	scr = vga_console_vc.currenttype;
 #endif
 	vga_init_screen(&vga_console_vc, &vga_console_screen, scr, 1, &defattr);
+#ifdef VGA_CONSOLE_SCREENTYPE
+	vga_setfont(&vga_console_vc, &vga_console_screen);
+#endif
 
 	vga_console_screen.pcs.active = 1;
 	vga_console_vc.active = &vga_console_screen;
@@ -757,13 +769,15 @@ vga_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 	struct vgascreen *scr;
 
 	if (vc->nscreens == 1) {
+		struct vgascreen *scr1 = vc->screens.lh_first;
 		/*
 		 * When allocating the second screen, get backing store
 		 * for the first one too.
 		 * XXX We could be more clever and use video RAM.
 		 */
-		vc->screens.lh_first->pcs.mem =
-		  malloc(type->ncols * type->nrows * 2, M_DEVBUF, M_WAITOK);
+		scr1->pcs.mem =
+		  malloc(scr1->pcs.type->ncols * scr1->pcs.type->nrows * 2,
+			 M_DEVBUF, M_WAITOK);
 	}
 
 	scr = malloc(sizeof(struct vgascreen), M_DEVBUF, M_WAITOK);
@@ -795,6 +809,11 @@ vga_free_screen(v, cookie)
 	struct vga_config *vc = vs->cfg;
 
 	LIST_REMOVE(vs, next);
+	if (vs->fontset1)
+		egavga_unreffont(vc, vs->fontset1);
+	if (vs->fontset2)
+		egavga_unreffont(vc, vs->fontset2);
+
 	if (vs != &vga_console_screen)
 		free(vs, M_DEVBUF);
 	else
