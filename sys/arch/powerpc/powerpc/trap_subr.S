@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.14 2002/03/02 15:19:56 kleink Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.15 2002/03/27 15:40:46 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -150,6 +150,53 @@ _C_LABEL(dsitrap):
 _C_LABEL(dsisize) = .-_C_LABEL(dsitrap)
 
 /*
+ * Dedicated MPC601 version of the above.
+ * Considers different BAT format and combined implementation
+ * (being addressed as I-BAT).
+ */
+	.globl	_C_LABEL(dsitrap601),_C_LABEL(dsi601size)
+_C_LABEL(dsitrap601):
+	stmw	28,disisave(0)		/* free r28-r31 */
+	mfcr	29			/* save CR */
+	mfxer	30			/* save XER */
+	mtsprg	2,30			/* in SPRG2 */
+	mfsrr1	31			/* test kernel mode */
+	mtcr	31
+	bc	12,17,1f		/* branch if PSL_PR is set */
+	mfdar	31			/* get fault address */
+	rlwinm	31,31,12,20,28		/* get "segment" battable offset */
+
+	/* get batl */
+	addis	31,31,_C_LABEL(battable)@ha
+	lwz	30,_C_LABEL(battable)+4@l(31)
+	mtcr	30
+	bc	4,25,1f			/* branch if Valid is is false,
+					   presently assumes supervisor only */
+
+	/* get batu */
+	lwz	31,_C_LABEL(battable)@l(31)
+/* We randomly use the highest two bat registers here */
+	mfspr	28,SPR_RTCL_R
+	andi.	28,28,128
+	bne	2f
+	mtibatu	2,31
+	mtibatl	2,30
+	b	3f
+2:
+	mtibatu	3,31
+	mtibatl	3,30
+3:
+	mfsprg	30,2			/* restore XER */
+	mtxer	30
+	mtcr	29			/* restore CR */
+	lmw	28,disisave(0)		/* restore r28-r31 */
+	rfi				/* return to trapped code */
+1:
+	mflr	28			/* save LR */
+	bla	s_dsitrap
+_C_LABEL(dsi601size) = .-_C_LABEL(dsitrap601)
+
+/*
  * Similar to the above for ISI
  */
 	.globl	_C_LABEL(isitrap),_C_LABEL(isisize)
@@ -181,6 +228,48 @@ _C_LABEL(isitrap):
 1:
 	bla	s_isitrap
 _C_LABEL(isisize)= .-_C_LABEL(isitrap)
+
+/*
+ * Dedicated MPC601 version of the above.
+ * Considers different BAT format.
+ */
+	.globl	_C_LABEL(isitrap601),_C_LABEL(isi601size)
+_C_LABEL(isitrap601):
+	stmw	28,disisave(0)		/* free r28-r31 */
+	mflr	28			/* save LR */
+	mfcr	29			/* save CR */
+	mfsrr1	31			/* test kernel mode */
+	mtcr	31
+	bc	12,17,1f		/* branch if PSL_PR is set */
+	mfsrr0	31			/* get fault address */
+	rlwinm	31,31,12,20,28		/* get "segment" battable offset */
+
+	/* get batl */
+	addis	31,31,_C_LABEL(battable)@ha
+	lwz	30,_C_LABEL(battable)+4@l(31)
+	mtcr	30
+	bc	4,25,1f			/* branch if Valid is is false,
+					   presently assumes supervisor only */
+
+	/* get batu */
+	lwz	31,_C_LABEL(battable)@l(31)
+/* We randomly use the highest two bat registers here */
+	mfspr	28,SPR_RTCL_R
+	andi.	28,28,128
+	bne	2f
+	mtibatu	2,31
+	mtibatl	2,30
+	b	3f
+2:
+	mtibatu	3,31
+	mtibatl	3,30
+3:
+	mtcr	29			/* restore CR */
+	lmw	28,disisave(0)		/* restore r28-r31 */
+	rfi				/* return to trapped code */
+1:
+	bla	s_isitrap
+_C_LABEL(isi601size)= .-_C_LABEL(isitrap601)
 
 /*
  * This one for the external interrupt handler.
