@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_subr.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_subr.c,v 1.6 1994/01/09 19:44:07 ws Exp $
+ *	$Id: procfs_subr.c,v 1.7 1994/01/10 04:58:14 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -136,11 +136,12 @@ loop:
 			vp->v_type = VDIR;
 			vp->v_flag = VROOT;
 			break;
-		case 1:		/* /proc/curdir = lr--r--r-- */
+		case 1:		/* /proc/curproc = lr--r--r-- */
 			pfs->pfs_mode = VREAD |
 					VREAD >> 3 |
 					VREAD >> 6;
 			vp->v_type = VLNK;
+			break;
 		default:
 			panic("procfs_allocvp root");
 		}
