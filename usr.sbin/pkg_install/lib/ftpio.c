@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.11.2.10 2000/07/31 19:00:35 he Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.11.2.11 2000/10/12 21:26:24 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.11.2.10 2000/07/31 19:00:35 he Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.11.2.11 2000/10/12 21:26:24 he Exp $");
 #endif
 
 /*
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: ftpio.c,v 1.11.2.10 2000/07/31 19:00:35 he Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/signal.h>
+#include <signal.h>
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
@@ -48,7 +48,9 @@ __RCSID("$NetBSD: ftpio.c,v 1.11.2.10 2000/07/31 19:00:35 he Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifdef EXPECT_DEBUG
 #include <vis.h>
+#endif
 
 #include "../lib/lib.h"
 
@@ -80,7 +82,7 @@ int		Verbose=1;
 static int	 needclose=0;
 static int	 ftp_started=0;
 static fds	 ftpio;
-
+static int	 ftp_pid;
 
 /*
  * expect "str" (a regular expression) on file descriptor "fd", storing
@@ -122,7 +124,7 @@ expect(int fd, const char *str, int *ftprc)
 
     memset(buf, '\n', sizeof(buf));
 
-    timeout.tv_sec=10*60;	/* seconds until next message from tar */
+    timeout.tv_sec=10*60;    /* seconds until next message from tar */
     timeout.tv_usec=0;
     done=0;
     retval=0;
@@ -140,6 +142,22 @@ expect(int fd, const char *str, int *ftprc)
 	    break;
 	case 0:
 	    warnx("expect: select() timeout");
+	    /* need to send ftp coprocess SIGINT to make it stop
+	     * downloading into dir that we'll blow away in a second */
+	    kill(ftp_pid, SIGINT);
+
+	    /* Wait until ftp coprocess is responsive again 
+	     * XXX Entering recursion here!
+	     */
+	    rc = ftp_cmd("cd .\n", "\n(550|250).*\n");
+	    if (rc != 250) {
+		    /* now we have a really good reason to bail out ;) */
+	    }
+	    /* ftp is at command prompt again, and will wait for our
+	     * next command. If we were downloading, we can now safely
+	     * continue and remove the dir that the tar command was
+	     * expanding to */
+		    
 	    done = 1;	/* hope that's ok */
 	    retval = -1;
 	    break;
@@ -193,7 +211,7 @@ expect(int fd, const char *str, int *ftprc)
  * "expectstr" to be returned. Return numeric FTP return code or -1
  * in case of an error (usually expect() timeout) 
  */
-static int
+int
 ftp_cmd(const char *cmd, const char *expectstr)
 {
     int rc=0, verbose_ftp=0;
@@ -241,7 +259,7 @@ setupCoproc(const char *base)
 	return -1;
     }
 
-    rc1=fork();
+    rc1 = fork();
     switch (rc1) {
     case -1:
 	    /* Error */
@@ -281,6 +299,7 @@ setupCoproc(const char *base)
 	    
 	    ftpio.command = command_pipe[1];
 	    ftpio.answer  = answer_pipe[0];
+	    ftp_pid = rc1;			/* to ^C transfers */
 	    
 	    fcntl(ftpio.command, F_SETFL, O_NONBLOCK);
 	    fcntl(ftpio.answer , F_SETFL, O_NONBLOCK);
@@ -289,6 +308,17 @@ setupCoproc(const char *base)
     }
 
     return 0;
+}
+
+
+/*
+ * Dummy signal handler to detect if the ftp(1) coprocess or
+ * and of the processes of the tar/gzip pipeline dies. 
+ */
+static void
+sigchld_handler (int n)
+{
+	/* Make select(2) return EINTR */
 }
 
 
@@ -328,7 +358,7 @@ ftp_stop(void)
 	/* (Only) the last one closes the link */
 	if (tmp1 != NULL && tmp2 != NULL) {
 		if (needclose)
-			ftp_cmd("close\n", "\n(221 Goodbye.|Not connected.)\n");
+			ftp_cmd("close\n", "\n(221 .*|Not connected.)\n");
 		
 		(void) close(ftpio.command);
 		(void) close(ftpio.answer);
@@ -351,7 +381,7 @@ ftp_stop(void)
  * If the requested host/dir is different than the one that the
  * coprocess is currently at, close first. 
  */
-static int
+int
 ftp_start(char *base)
 {
 	char *tmp1, *tmp2;
@@ -397,18 +427,26 @@ ftp_start(char *base)
 		
 		needclose=1;
 		signal(SIGPIPE, sigpipe_handler);
-		
+		signal(SIGCHLD, sigchld_handler);
+
 		if ((expect(ftpio.answer, "\n(221|250|221|550).*\n", &rc) != 0)
 		    || rc != 250) {
 			warnx("expect1 failed, rc=%d", rc);
 			return -1;
 		}
 		
+		/* lukemftp now issues a CWD for each part of the path
+		 * and will return a code for each of them. No idea how to
+		 * deal with that other than to issue a 'prompt off' to
+		 * get something that we can wait for and that does NOT
+		 * look like a CWD command's output */
 		rc = ftp_cmd("prompt off\n", "\n(Interactive mode off|221).*\n");
 		if ((rc == 221) || (rc == -1)) {
 			/* something is wrong */
 			ftp_started=1; /* not really, but for ftp_stop() */
 			ftp_stop();
+			warnx("prompt failed - wrong dir?");
+			return -1;
 		}
 		
 		ftp_started=1;
@@ -605,7 +643,7 @@ unpackURL(const char *url, const char *dir)
 			printf("unpackURL '%s' to '%s'\n", url, dir);
 
 		/* yes, this is gross, but needed for borken ftp(1) */
-		(void) snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s ; gunzip 2>/dev/null | tar -%sx -f - )\"\n", pkg, dir, Verbose?"vv":"");
+		(void) snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s ; gunzip 2>/dev/null | tar -%sx >&2 -f - )\"\n", pkg, dir, Verbose?"vv":"");
 		rc = ftp_cmd(cmd, "\n(226|550).*\n");
 		if (rc != 226) {
 			warnx("Cannot fetch file (%d!=226)!", rc);
