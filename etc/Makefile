@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.76 1997/09/12 17:42:08 mycroft Exp $
+#	$NetBSD: Makefile,v 1.77 1997/10/08 10:47:42 mycroft Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -17,7 +17,7 @@ BINOWN= root
 BINGRP= wheel
 BIN1=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
 	daily.conf dm.conf floppytab ftpchroot ftpusers ftpwelcome \
-	gettytab group hosts hosts.equiv hosts.lpd inetd.conf lkm.conf \
+	gettytab group hosts hosts.lpd inetd.conf lkm.conf \
 	man.conf monthly monthly.conf mrouted.conf netstart networks \
 	newsyslog.conf phones printcap profile protocols rbootd.conf rc \
 	rc.conf rc.lkm rc.local rc.subr remote rpc security security.conf \
@@ -26,6 +26,9 @@ BIN1=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
 
 # -rw-rw-r--
 BIN2=	motd
+
+# -rw-------
+BIN3=	hosts.equiv
 
 NAMEDB=	localhost.rev named.boot root.cache
 PCS=	pcs750.bin
@@ -42,6 +45,7 @@ distribution: distrib-dirs
 	(cd ..; ${MAKE} install)
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 600 ${BIN3} ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 crontab \
 	    ${DESTDIR}/var/cron/tabs/root
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
