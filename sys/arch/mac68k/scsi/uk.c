@@ -3,7 +3,7 @@
  * Dummy driver for a device we can't identify.
  * by Julian Elischer (julian@tfs.com)
  *
- *      $Id: uk.c,v 1.3 1994/01/30 01:21:57 briggs Exp $
+ *      $Id: uk.c,v 1.4 1994/02/22 00:57:39 briggs Exp $
  */
 
 
@@ -12,8 +12,8 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <arch/mac68k/scsi/scsi_all.h>
+#include <arch/mac68k/scsi/scsiconf.h>
 
 #define NUK 16
 

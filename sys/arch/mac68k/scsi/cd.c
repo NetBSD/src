@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: cd.c,v 1.5 1994/02/08 03:54:08 briggs Exp $
+ *      $Id: cd.c,v 1.6 1994/02/22 00:57:23 briggs Exp $
  */
 
 #include <sys/types.h>
@@ -34,10 +34,10 @@
 #include <sys/disk.h>
 #include <sys/cdio.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_cd.h>
-#include <scsi/scsi_disk.h>	/* rw_big and start_stop come from there */
-#include <scsi/scsiconf.h>
+#include <arch/mac68k/scsi/scsi_all.h>
+#include <arch/mac68k/scsi/scsi_cd.h>
+#include <arch/mac68k/scsi/scsi_disk.h>	/* rw_big and start_stop come from there */
+#include <arch/mac68k/scsi/scsiconf.h>
 
 #ifdef	DDB
 int	Debugger();
