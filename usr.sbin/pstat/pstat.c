@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.40 1998/03/21 04:40:24 mycroft Exp $	*/
+/*	$NetBSD: pstat.c,v 1.41 1998/03/29 12:24:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.40 1998/03/21 04:40:24 mycroft Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.41 1998/03/29 12:24:44 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -702,6 +702,7 @@ struct {
 	char val;
 } ttystates[] = {
 	{ TS_ISOPEN,	'O'},
+	{ TS_DIALOUT,	'>'},
 	{ TS_CARR_ON,	'C'},
 	{ TS_TIMEOUT,	'T'},
 	{ TS_FLUSH,	'F'},
