@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.10 1997/08/29 02:27:31 cjs Exp $
+.\"	$NetBSD: rc.conf.5,v 1.11 1997/09/02 03:03:49 mikel Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -50,14 +50,13 @@ The
 .Nm
 file is a shell script that is sourced by
 .Pa /etc/rc
-if it exists, meaning
-that
+if it exists, meaning that
 .Nm
 must contain valid shell commands.
 .Pp
 Listed below are the
 .Nm
-variables that may be set, the values that each may be set to,
+variables that may be set, the values to which each may be set,
 a brief description of what each variable does, and a reference to
 relevant manual pages.
 .Pp
@@ -76,7 +75,7 @@ expects to be set is not set, or the value is not one of the allowed
 values, a warning will be printed.
 .Pp
 Basic network configuration:
-.Bl -tag -width bootparamd_flags
+.Bl -tag -width net_interfaces
 .It Sy hostname
 Name of host.
 If empty or not set, then the contents of
@@ -94,14 +93,15 @@ If empty or not set, then the contents of
 (if it exists) are used.
 .El
 .Pp
-One time actions to perform or programs to run on boot-up:
-.Bl -tag -width bootparamd_flags
+One-time actions to perform or programs to run on boot-up:
+.Bl -tag -width net_interfaces
 .It Sy lkm
-YES or NO.  Runs /etc/rc.lkm.
+YES or NO.  Runs
+.Pa /etc/rc.lkm .
 .It Sy savecore
 YES or NO.  Runs the
 .Xr savecore 8
-program.  Passes
+utility.  Passes
 .Sy savecore_flags .
 .It Sy update_motd
 YES or NO.  Updates the
@@ -113,11 +113,11 @@ file to reflect the version of the running kernel.  See
 .El
 .Pp
 Networking startup:
-.Bl -tag -width bootparamd_flags
+.Bl -tag -width net_interfaces
 .It Sy ipfilter
 YES or NO.  Runs
 .Xr ipf 8
-to load in a packet filter specifications from
+to load in packet filter specifications from
 .Pa /etc/ipf.conf
 at network boot time, before any interfaces are configured.  See
 .Xr ipf 5 .
@@ -127,7 +127,7 @@ YES or NO.  Sets the
 variable (see below) to the output of
 .Xr ifconfig 8
 with the
-.Sy -l
+.Ar -l
 flag and suppresses warnings about interfaces in this list that
 do not have an ifconfig file or variable.
 .It Sy net_interfaces
@@ -136,7 +136,7 @@ For each interface "xxn", the system first looks for ifconfig
 parameters in
 .Pa /etc/ifconfig.xxn
 and then in the variable
-.Sy ifconfig_xnn .
+.Sy ifconfig_xxn .
 The contents of the file or the variable are handed to ifconfig
 after the interface name.  If
 .Sy auto_ifconfig
@@ -171,11 +171,11 @@ is empty, it will attempt to find a list of hosts in
 .El
 .Pp 
 Daemons required by other daemons:
-.Bl -tag -width bootparamd_flags
+.Bl -tag -width net_interfaces
 .It Sy inetd
 YES or NO.  Runs the
 .Xr inetd 8
-daemon to start other internet programs (as listed in
+daemon to start network server processes (as listed in
 .Pa /etc/inetd.conf )
 as necessary.  Passes
 .Sy inetd_flags .
@@ -196,7 +196,7 @@ and
 .El
 .Pp
 Commonly used daemons:
-.Bl -tag -width bootparamd_flags
+.Bl -tag -width net_interfaces
 .It Sy update
 YES or NO.  Runs
 .Xr update 8
@@ -234,8 +234,8 @@ and passes
 .Sy xntpd_flags .
 .It Sy sendmail
 YES or NO.  Runs
-.Xr sendmail 8 .
-and passes it
+.Xr sendmail 8
+and passes
 .Sy sendmail_flags .
 .It Sy lpd
 YES or NO.  Runs
@@ -248,7 +248,7 @@ flag will turn on extra logging.
 .El
 .Pp
 Routing daemons:
-.Bl -tag -width bootparamd_flags
+.Bl -tag -width net_interfaces
 .It Sy routed
 YES or NO.  Runs
 .Xr routed 8 ,
@@ -265,7 +265,7 @@ the multiprotocol routing daemon.  Passes
 This should be NO if
 .Sy routed
 is YES.
-.Xr gated 8
+.Xr Gated 8
 is not included with
 .Nx .
 .It Sy mrouted
@@ -276,7 +276,7 @@ the DVMRP multicast routing protocol daemon. Passes
 .El
 .Pp
 Daemons used to boot other hosts over a network:
-.Bl -tag -width bootparamd_flags
+.Bl -tag -width net_interfaces
 .It Sy rarpd
 YES or NO.  Runs
 .Xr rarpd 8 ,
@@ -288,7 +288,7 @@ and Sun workstations.  Passes
 YES or NO.  Runs
 .Xr bootparamd 8 ,
 the boot parameter server, with
-.Sy bootpramd_flags
+.Sy bootparamd_flags
 as options. Used to boot
 .Nx
 and SunOS 4.x systems.
@@ -312,7 +312,7 @@ Passes
 .El
 .Pp
 YP (NIS) daemons:
-.Bl -tag -width bootparamd_flags
+.Bl -tag -width net_interfaces
 .It Sy ypbind
 YES or NO.  Runs
 .Xr ypbind 8 ,
@@ -338,7 +338,7 @@ which allows remote YP users to update password on master server.  Passes
 .El
 .Pp
 NFS daemons and parameters:
-.Bl -tag -width bootparamd_flags
+.Bl -tag -width net_interfaces
 .It Sy nfs_client
 YES or NO.  Runs 
 .Xr nfsiod 8
@@ -396,12 +396,17 @@ is set to YES.
 .El
 .Pp
 Other daemons:
-.Bl -tag -width bootparamd_flags
+.Bl -tag -width net_interfaces
+.It Sy apmd
+YES or NO.  Runs
+.Xr apmd 8
+and passes
+.Sy apmd_flags .
 .It Sy rwhod
 YES or NO.  Runs
-.Xr rwhod 8 .
+.Xr rwhod 8
 to support the
-.Xr rwho 8
+.Xr rwho 1
 command.
 .It Sy kerberos
 YES or NO.  Runs the kerberos server
