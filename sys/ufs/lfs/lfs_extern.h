@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.50 2003/06/29 22:32:38 fvdl Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.51 2003/07/02 13:40:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -190,6 +190,8 @@ void *lfs_malloc(struct lfs *, size_t, int);
 void lfs_free(struct lfs *, void *, int);
 int lfs_seglock(struct lfs *, unsigned long);
 void lfs_segunlock(struct lfs *);
+int lfs_writer_enter(struct lfs *, const char *);
+void lfs_writer_leave(struct lfs *);
 
 /* lfs_syscalls.c */
 int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct ufs1_dinode *);

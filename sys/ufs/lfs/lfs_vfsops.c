@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.121 2003/06/29 22:32:41 fvdl Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.122 2003/07/02 13:40:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121 2003/06/29 22:32:41 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.122 2003/07/02 13:40:53 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -852,10 +852,9 @@ check_segsum(struct lfs *fs, daddr_t offset,
 		/* Don't clog the buffer queue */
 		if (locked_queue_count > LFS_MAX_BUFS ||
 		    locked_queue_bytes > LFS_MAX_BYTES) {
-			++fs->lfs_writer;
+			lfs_writer_enter(fs, "cssdirop");
 			lfs_flush(fs, SEGM_CKP);
-			if (--fs->lfs_writer == 0)
-				wakeup(&fs->lfs_dirops);
+			lfs_writer_leave(fs);
 		}
 	}
 
@@ -1477,14 +1476,11 @@ lfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 	fs = ((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs;
 	if (fs->lfs_ronly)
 		return 0;
-	while (fs->lfs_dirops)
-		error = tsleep(&fs->lfs_writer, PRIBIO + 1, "lfs_dirops", 0);
-	fs->lfs_writer++;
+	lfs_writer_enter(fs, "lfs_dirops");
 
 	/* All syncs must be checkpoints until roll-forward is implemented. */
 	error = lfs_segwrite(mp, SEGM_CKP | (waitfor ? SEGM_SYNC : 0));
-	if (--fs->lfs_writer == 0)
-		wakeup(&fs->lfs_dirops);
+	lfs_writer_leave(fs);
 #ifdef QUOTA
 	qsync(mp);
 #endif
