@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.32 1996/09/07 12:41:19 mycroft Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.33 1996/10/10 22:54:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -620,8 +620,8 @@ spec_print(v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 
-	printf("tag VT_NON, dev %d, %d\n", major(ap->a_vp->v_rdev),
-		minor(ap->a_vp->v_rdev));
+	kprintf("tag VT_NON, dev %d, %d\n", major(ap->a_vp->v_rdev),
+	    minor(ap->a_vp->v_rdev));
 	return 0;
 }
 

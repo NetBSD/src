@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.14 1996/09/30 23:18:44 cgd Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.15 1996/10/10 22:46:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -213,7 +213,7 @@ check_shell:
 #endif
 #ifdef FDSCRIPTS
 	} else
-		sprintf(*tmpsap++, "/dev/fd/%d", epp->ep_fd);
+		ksprintf(*tmpsap++, "/dev/fd/%d", epp->ep_fd);
 #endif
 	*tmpsap = NULL;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.8 1996/09/26 23:22:01 cgd Exp $	*/
+/*	$NetBSD: bootp.c,v 1.9 1996/10/10 22:46:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -81,18 +81,18 @@ bootp(sock)
 
 #ifdef BOOTP_DEBUG
  	if (debug)
-		printf("bootp: socket=%d\n", sock);
+		kprintf("bootp: socket=%d\n", sock);
 #endif
 	if (!bot)
 		bot = getsecs();
 	
 	if (!(d = socktodesc(sock))) {
-		printf("bootp: bad socket. %d\n", sock);
+		kprintf("bootp: bad socket. %d\n", sock);
 		return;
 	}
 #ifdef BOOTP_DEBUG
  	if (debug)
-		printf("bootp: d=%x\n", (u_int)d);
+		kprintf("bootp: d=%x\n", (u_int)d);
 #endif
 
 	bp = &wbuf.wbootp;
@@ -130,7 +130,7 @@ bootpsend(d, pkt, len)
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("bootpsend: d=%x called.\n", (u_int)d);
+		kprintf("bootpsend: d=%x called.\n", (u_int)d);
 #endif
 
 	bp = pkt;
@@ -138,7 +138,7 @@ bootpsend(d, pkt, len)
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("bootpsend: calling sendudp\n");
+		kprintf("bootpsend: calling sendudp\n");
 #endif
 
 	return (sendudp(d, pkt, len));
@@ -157,7 +157,7 @@ bootprecv(d, pkt, len, tleft)
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("bootprecv: called\n");
+		kprintf("bootprecv: called\n");
 #endif
 
 	n = readudp(d, pkt, len, tleft);
@@ -168,13 +168,13 @@ bootprecv(d, pkt, len, tleft)
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("bootprecv: checked.  bp = 0x%x, n = %d\n",
+		kprintf("bootprecv: checked.  bp = 0x%x, n = %d\n",
 		    (unsigned)bp, n);
 #endif
 	if (bp->bp_xid != htonl(d->xid)) {
 #ifdef BOOTP_DEBUG
 		if (debug) {
-			printf("bootprecv: expected xid 0x%x, got 0x%x\n",
+			kprintf("bootprecv: expected xid 0x%x, got 0x%x\n",
 			    d->xid, ntohl(bp->bp_xid));
 		}
 #endif
@@ -183,14 +183,14 @@ bootprecv(d, pkt, len, tleft)
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("bootprecv: got one!\n");
+		kprintf("bootprecv: got one!\n");
 #endif
 
 	/* Pick up our ip address (and natural netmask) */
 	myip = d->myip = bp->bp_yiaddr;
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("our ip address is %s\n", inet_ntoa(d->myip));
+		kprintf("our ip address is %s\n", inet_ntoa(d->myip));
 #endif
 	if (IN_CLASSA(d->myip.s_addr))
 		nmask = IN_CLASSA_NET;
@@ -200,7 +200,7 @@ bootprecv(d, pkt, len, tleft)
 		nmask = IN_CLASSC_NET;
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("'native netmask' is %s\n", intoa(nmask));
+		kprintf("'native netmask' is %s\n", intoa(nmask));
 #endif
 
 	/* Pick up root or swap server address and file spec. */
@@ -217,13 +217,13 @@ bootprecv(d, pkt, len, tleft)
 	else if (bcmp(vm_rfc1048, bp->bp_vend, sizeof(vm_rfc1048)) == 0)
 		vend_rfc1048(bp->bp_vend, sizeof(bp->bp_vend));
 	else
-		printf("bootprecv: unknown vendor 0x%lx\n", (long)bp->bp_vend);
+		kprintf("bootprecv: unknown vendor 0x%lx\n", (long)bp->bp_vend);
 
 	/* Check subnet mask against net mask; toss if bogus */
 	if ((nmask & smask) != nmask) {
 #ifdef BOOTP_DEBUG
 		if (debug)
-			printf("subnet mask (%s) bad\n", intoa(smask));
+			kprintf("subnet mask (%s) bad\n", intoa(smask));
 #endif
 		smask = 0;
 	}
@@ -234,21 +234,21 @@ bootprecv(d, pkt, len, tleft)
 		netmask = smask;
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("mask: %s\n", intoa(netmask));
+		kprintf("mask: %s\n", intoa(netmask));
 #endif
 
 	/* We need a gateway if root or swap is on a different net */
 	if (!SAMENET(d->myip, rootip, netmask)) {
 #ifdef BOOTP_DEBUG
 		if (debug)
-			printf("need gateway for root ip\n");
+			kprintf("need gateway for root ip\n");
 #endif
 	}
 
 	if (!SAMENET(d->myip, swapip, netmask)) {
 #ifdef BOOTP_DEBUG
 		if (debug)
-			printf("need gateway for swap ip\n");
+			kprintf("need gateway for swap ip\n");
 #endif
 	}
 
@@ -256,7 +256,7 @@ bootprecv(d, pkt, len, tleft)
 	if (!SAMENET(d->myip, gateip, netmask)) {
 #ifdef BOOTP_DEBUG
 		if (debug)
-			printf("gateway ip (%s) bad\n", inet_ntoa(gateip));
+			kprintf("gateway ip (%s) bad\n", inet_ntoa(gateip));
 #endif
 		gateip.s_addr = 0;
 	}
@@ -276,7 +276,7 @@ vend_cmu(cp)
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("vend_cmu bootp info.\n");
+		kprintf("vend_cmu bootp info.\n");
 #endif
 	vp = (struct cmu_vend *)cp;
 
@@ -299,7 +299,7 @@ vend_rfc1048(cp, len)
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("vend_rfc1048 bootp info. len=%d\n", len);
+		kprintf("vend_rfc1048 bootp info. len=%d\n", len);
 #endif
 	ep = cp + len;
 

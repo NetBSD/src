@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.35 1996/09/07 12:41:09 mycroft Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.36 1996/10/10 22:54:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -729,7 +729,7 @@ fdesc_readdir(v)
 				if (fdp->fd_ofiles[i - 2] == NULL)
 					continue;
 				d.d_fileno = i - 2 + FD_STDIN;
-				d.d_namlen = sprintf(d.d_name, "%d", i - 2);
+				d.d_namlen = ksprintf(d.d_name, "%d", i - 2);
 				d.d_type = DT_UNKNOWN;
 				break;
 			}
@@ -952,7 +952,7 @@ int
 fdesc_print(v)
 	void *v;
 {
-	printf("tag VT_NON, fdesc vnode\n");
+	kprintf("tag VT_NON, fdesc vnode\n");
 	return (0);
 }
 

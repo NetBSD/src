@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.20 1996/09/07 12:41:11 mycroft Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.21 1996/10/10 22:54:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -454,9 +454,9 @@ fifo_print(v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 
-	printf("tag VT_NON");
+	kprintf("tag VT_NON");
 	fifo_printinfo(ap->a_vp);
-	printf("\n");
+	kprintf("\n");
 	return 0;
 }
 
@@ -469,8 +469,8 @@ fifo_printinfo(vp)
 {
 	register struct fifoinfo *fip = vp->v_fifoinfo;
 
-	printf(", fifo with %ld readers and %ld writers",
-		fip->fi_readers, fip->fi_writers);
+	kprintf(", fifo with %ld readers and %ld writers",
+	    fip->fi_readers, fip->fi_writers);
 }
 
 /*

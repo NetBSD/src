@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.22 1996/02/09 19:13:45 christos Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.23 1996/10/10 22:54:00 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -332,8 +332,8 @@ updatefats(pmp, bp, fatbn)
 	struct buf *bpn;
 
 #ifdef MSDOSFS_DEBUG
-	printf("updatefats(pmp %08x, bp %08x, fatbn %d)\n",
-	       pmp, bp, fatbn);
+	kprintf("updatefats(pmp %08x, bp %08x, fatbn %d)\n",
+	    pmp, bp, fatbn);
 #endif
 
 	/*
@@ -459,17 +459,17 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	u_long bn, bo, bsize, byteoffset;
 	struct buf *bp;
 
-	/*
-	 * printf("fatentry(func %d, pmp %08x, clust %d, oldcon %08x, newcon %d)\n",
-	 *	  function, pmp, cluster, oldcontents, newcontents);
-	 */
+#if 0
+	kprintf("fatentry(func %d, pmp %08x, clust %d, oldcon %08x, newcon %d)\n",
+	     function, pmp, cluster, oldcontents, newcontents);
+#endif
 
 #ifdef DIAGNOSTIC
 	/*
 	 * Be sure they asked us to do something.
 	 */
 	if ((function & (FAT_SET | FAT_GET)) == 0) {
-		printf("fatentry(): function code doesn't specify get or set\n");
+		kprintf("fatentry(): function code doesn't specify get or set\n");
 		return (EINVAL);
 	}
 
@@ -478,7 +478,7 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	 * where to put it, give them an error.
 	 */
 	if ((function & FAT_GET) && oldcontents == NULL) {
-		printf("fatentry(): get function with no place to put result\n");
+		kprintf("fatentry(): get function with no place to put result\n");
 		return (EINVAL);
 	}
 #endif
@@ -550,8 +550,8 @@ fatchain(pmp, start, count, fillwith)
 	struct buf *bp;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("fatchain(pmp %08x, start %d, count %d, fillwith %d)\n",
-	       pmp, start, count, fillwith);
+	kprintf("fatchain(pmp %08x, start %d, count %d, fillwith %d)\n",
+	    pmp, start, count, fillwith);
 #endif
 	/*
 	 * Be sure the clusters are in the filesystem.
@@ -662,8 +662,8 @@ chainalloc(pmp, start, count, fillwith, retcluster, got)
 	if ((error = fatchain(pmp, start, count, fillwith)) != 0)
 		return (error);
 #ifdef MSDOSFS_DEBUG
-	printf("clusteralloc(): allocated cluster chain at %d (%d clusters)\n",
-	       start, count);
+	kprintf("clusteralloc(): allocated cluster chain at %d (%d clusters)\n",
+	    start, count);
 #endif
 	if (retcluster)
 		*retcluster = start;
@@ -700,7 +700,7 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 	u_int map;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("clusteralloc(): find %d clusters\n",count);
+	kprintf("clusteralloc(): find %d clusters\n",count);
 #endif
 	if (start) {
 		if ((len = chainlength(pmp, start, count)) >= count)
@@ -913,7 +913,7 @@ extendfile(dep, count, bpp, ncp, flags)
 	 * Don't try to extend the root directory
 	 */
 	if (DETOV(dep)->v_flag & VROOT) {
-		printf("extendfile(): attempt to extend root directory\n");
+		kprintf("extendfile(): attempt to extend root directory\n");
 		return (ENOSPC);
 	}
 

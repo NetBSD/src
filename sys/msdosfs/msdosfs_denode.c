@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.20 1996/09/01 23:48:50 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.21 1996/10/10 22:53:58 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -167,8 +167,8 @@ deget(pmp, dirclust, diroffset, depp)
 	struct buf *bp;
 
 #ifdef MSDOSFS_DEBUG
-	printf("deget(pmp %08x, dirclust %d, diroffset %x, depp %08x)\n",
-	       pmp, dirclust, diroffset, depp);
+	kprintf("deget(pmp %08x, dirclust %d, diroffset %x, depp %08x)\n",
+	    pmp, dirclust, diroffset, depp);
 #endif
 
 	/*
@@ -281,7 +281,7 @@ deget(pmp, dirclust, diroffset, depp)
 				ldep->de_FileSize = de_cn2off(pmp, size);
 				error = 0;
 			} else
-				printf("deget(): pcbmap returned %d\n", error);
+				kprintf("deget(): pcbmap returned %d\n", error);
 		}
 	} else
 		nvp->v_type = VREG;
@@ -324,7 +324,7 @@ detrunc(dep, length, flags, cred, p)
 	struct msdosfsmount *pmp = dep->de_pmp;
 
 #ifdef MSDOSFS_DEBUG
-	printf("detrunc(): file %s, length %ld, flags %d\n", dep->de_Name, length, flags);
+	kprintf("detrunc(): file %s, length %ld, flags %d\n", dep->de_Name, length, flags);
 #endif
 
 	/*
@@ -336,7 +336,7 @@ detrunc(dep, length, flags, cred, p)
 	 * directory's life.
 	 */
 	if (DETOV(dep)->v_flag & VROOT) {
-		printf("detrunc(): can't truncate root directory, clust %ld, offset %ld\n",
+		kprintf("detrunc(): can't truncate root directory, clust %ld, offset %ld\n",
 		    dep->de_dirclust, dep->de_diroffset);
 		return (EINVAL);
 	}
@@ -364,7 +364,7 @@ detrunc(dep, length, flags, cred, p)
 			       &eofentry, 0);
 		if (error) {
 #ifdef MSDOSFS_DEBUG
-			printf("detrunc(): pcbmap fails %d\n", error);
+			kprintf("detrunc(): pcbmap fails %d\n", error);
 #endif
 			return (error);
 		}
@@ -390,7 +390,7 @@ detrunc(dep, length, flags, cred, p)
 		if (error) {
 			brelse(bp);
 #ifdef MSDOSFS_DEBUG
-			printf("detrunc(): bread fails %d\n", error);
+			kprintf("detrunc(): bread fails %d\n", error);
 #endif
 			return (error);
 		}
@@ -416,7 +416,7 @@ detrunc(dep, length, flags, cred, p)
 	vinvalbuf(DETOV(dep), vflags, cred, p, 0, 0);
 	allerror = deupdat(dep, 1);
 #ifdef MSDOSFS_DEBUG
-	printf("detrunc(): allerror %d, eofentry %d\n",
+	kprintf("detrunc(): allerror %d, eofentry %d\n",
 	       allerror, eofentry);
 #endif
 
@@ -429,7 +429,7 @@ detrunc(dep, length, flags, cred, p)
 				 &chaintofree, CLUST_EOFE);
 		if (error) {
 #ifdef MSDOSFS_DEBUG
-			printf("detrunc(): fatentry errors %d\n", error);
+			kprintf("detrunc(): fatentry errors %d\n", error);
 #endif
 			return (error);
 		}
@@ -529,7 +529,7 @@ msdosfs_reclaim(v)
 	extern int prtactive;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_reclaim(): dep %08x, file %s, refcnt %d\n",
+	kprintf("msdosfs_reclaim(): dep %08x, file %s, refcnt %d\n",
 	    dep, dep->de_Name, dep->de_refcnt);
 #endif
 
@@ -568,7 +568,7 @@ msdosfs_inactive(v)
 	extern int prtactive;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): dep %08x, de_Name[0] %x\n", dep, dep->de_Name[0]);
+	kprintf("msdosfs_inactive(): dep %08x, de_Name[0] %x\n", dep, dep->de_Name[0]);
 #endif
 
 	if (prtactive && vp->v_usecount != 0)
@@ -599,7 +599,7 @@ msdosfs_inactive(v)
 	 * as empty.  (This may not be necessary for the dos filesystem.)
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): dep %08x, refcnt %d, mntflag %x, MNT_RDONLY %x\n",
+	kprintf("msdosfs_inactive(): dep %08x, refcnt %d, mntflag %x, MNT_RDONLY %x\n",
 	       dep, dep->de_refcnt, vp->v_mount->mnt_flag, MNT_RDONLY);
 #endif
 	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
@@ -613,7 +613,7 @@ msdosfs_inactive(v)
 	 * so that it can be reused immediately.
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): v_usecount %d, de_Name[0] %x\n", vp->v_usecount,
+	kprintf("msdosfs_inactive(): v_usecount %d, de_Name[0] %x\n", vp->v_usecount,
 	       dep->de_Name[0]);
 #endif
 	if (vp->v_usecount == 0 && dep->de_Name[0] == SLOT_DELETED)

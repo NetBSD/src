@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.13 1996/10/10 22:46:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -69,7 +69,7 @@ kmstartup()
 	p->lowpc = ROUNDDOWN(KERNBASE, HISTFRACTION * sizeof(HISTCOUNTER));
 	p->highpc = ROUNDUP((u_long)etext, HISTFRACTION * sizeof(HISTCOUNTER));
 	p->textsize = p->highpc - p->lowpc;
-	printf("Profiling kernel, textsize=%ld [%lx..%lx]\n",
+	kprintf("Profiling kernel, textsize=%ld [%lx..%lx]\n",
 	       p->textsize, p->lowpc, p->highpc);
 	p->kcountsize = p->textsize / HISTFRACTION;
 	p->hashfraction = HASHFRACTION;
@@ -83,7 +83,7 @@ kmstartup()
 	cp = (char *)malloc(p->kcountsize + p->fromssize + p->tossize,
 	    M_GPROF, M_NOWAIT);
 	if (cp == 0) {
-		printf("No memory for profiling.\n");
+		kprintf("No memory for profiling.\n");
 		return;
 	}
 	bzero(cp, p->kcountsize + p->tossize + p->fromssize);

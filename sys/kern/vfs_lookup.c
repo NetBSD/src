@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.18 1996/10/10 22:46:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -297,7 +297,7 @@ dirloop:
 #ifdef NAMEI_DIAGNOSTIC
 	{ char c = *cp;
 	*cp = '\0';
-	printf("{%s}: ", cnp->cn_nameptr);
+	kprintf("{%s}: ", cnp->cn_nameptr);
 	*cp = c; }
 #endif
 	ndp->ni_pathlen -= cnp->cn_namelen;
@@ -382,7 +382,7 @@ unionlookup:
 			panic("leaf should be empty");
 #endif
 #ifdef NAMEI_DIAGNOSTIC
-		printf("not found\n");
+		kprintf("not found\n");
 #endif
 		if ((error == ENOENT) &&
 		    (dp->v_flag & VROOT) &&
@@ -417,7 +417,7 @@ unionlookup:
 		return (0);
 	}
 #ifdef NAMEI_DIAGNOSTIC
-	printf("found\n");
+	kprintf("found\n");
 #endif
 
 	/*
@@ -557,7 +557,7 @@ relookup(dvp, vpp, cnp)
 		panic ("relookup: bad len");
 	if (*cp != 0)
 		panic("relookup: not last component");
-	printf("{%s}: ", cnp->cn_nameptr);
+	kprintf("{%s}: ", cnp->cn_nameptr);
 #endif
 
 	/*

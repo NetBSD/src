@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.20 1996/08/27 20:01:42 cgd Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.21 1996/10/10 22:46:15 christos Exp $	*/
 
 /*
  * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
@@ -210,10 +210,11 @@ malloc(size, type, flags)
 		memname[freep->type] : "???";
 	if (kbp->kb_next &&
 	    !kernacc(kbp->kb_next, sizeof(struct freelist), 0)) {
-		printf("%s %ld of object %p size %ld %s %s (invalid addr %p)\n",
-			"Data modified on freelist: word", 
-			(long)((int32_t *)&kbp->kb_next - (int32_t *)kbp),
-			va, size, "previous type", savedtype, kbp->kb_next);
+		kprintf(
+		    "%s %ld of object %p size %ld %s %s (invalid addr %p)\n",
+		    "Data modified on freelist: word", 
+		    (long)((int32_t *)&kbp->kb_next - (int32_t *)kbp),
+		    va, size, "previous type", savedtype, kbp->kb_next);
 		kbp->kb_next = NULL;
 	}
 
@@ -234,10 +235,10 @@ malloc(size, type, flags)
 	for (lp = (int32_t *)va; lp < end; lp++) {
 		if (*lp == WEIRD_ADDR)
 			continue;
-		printf("%s %ld of object %p size %ld %s %s (0x%x != 0x%x)\n",
-			"Data modified on freelist: word",
-			(long)(lp - (int32_t *)va), va, size, "previous type",
-			savedtype, *lp, WEIRD_ADDR);
+		kprintf("%s %ld of object %p size %ld %s %s (0x%x != 0x%x)\n",
+		    "Data modified on freelist: word",
+		    (long)(lp - (int32_t *)va), va, size, "previous type",
+		    savedtype, *lp, WEIRD_ADDR);
 		break;
 	}
 
@@ -331,7 +332,7 @@ free(addr, type)
 		    cp = ((struct freelist *)cp)->next) {
 			if (addr != cp)
 				continue;
-			printf("multiply freed item %p\n", addr);
+			kprintf("multiply freed item %p\n", addr);
 			panic("free: duplicated free");
 		}
 	}

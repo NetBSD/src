@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.26 1996/04/22 01:42:27 christos Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.27 1996/10/10 22:54:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,7 +99,7 @@ kernfs_get_rrootdev()
 			return;
 	}
 	rrootdev = NODEV;
-	printf("kernfs_get_rrootdev: no raw root device\n");
+	kprintf("kernfs_get_rrootdev: no raw root device\n");
 }
 
 /*
@@ -119,7 +119,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	struct vnode *rvp;
 
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_mount(mp = %x)\n", mp);
+	kprintf("kernfs_mount(mp = %x)\n", mp);
 #endif
 
 	/*
@@ -137,7 +137,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_mount: root vp = %x\n", rvp);
+	kprintf("kernfs_mount: root vp = %x\n", rvp);
 #endif
 	fmp->kf_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
@@ -149,7 +149,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy("kernfs", mp->mnt_stat.f_mntfromname, sizeof("kernfs"));
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_mount: at %s\n", mp->mnt_stat.f_mntonname);
+	kprintf("kernfs_mount: at %s\n", mp->mnt_stat.f_mntonname);
 #endif
 
 	kernfs_get_rrootdev();
@@ -178,7 +178,7 @@ kernfs_unmount(mp, mntflags, p)
 	struct vnode *rootvp = VFSTOKERNFS(mp)->kf_root;
 
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_unmount(mp = %x)\n", mp);
+	kprintf("kernfs_unmount(mp = %x)\n", mp);
 #endif
 
 	if (mntflags & MNT_FORCE) {
@@ -196,7 +196,7 @@ kernfs_unmount(mp, mntflags, p)
 	if (rootvp->v_usecount > 1)
 		return (EBUSY);
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_unmount: calling vflush\n");
+	kprintf("kernfs_unmount: calling vflush\n");
 #endif
 	if ((error = vflush(mp, rootvp, flags)) != 0)
 		return (error);
@@ -225,7 +225,7 @@ kernfs_root(mp, vpp)
 	struct vnode *vp;
 
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_root(mp = %x)\n", mp);
+	kprintf("kernfs_root(mp = %x)\n", mp);
 #endif
 
 	/*
@@ -258,7 +258,7 @@ kernfs_statfs(mp, sbp, p)
 {
 
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_statfs(mp = %x)\n", mp);
+	kprintf("kernfs_statfs(mp = %x)\n", mp);
 #endif
 
 #ifdef COMPAT_09

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.14 1996/09/26 23:22:02 cgd Exp $	*/
+/*	$NetBSD: rpc.c,v 1.15 1996/10/10 22:46:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -128,8 +128,8 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 
 #ifdef RPC_DEBUG
 	if (debug)
-		printf("rpc_call: prog=0x%x vers=%d proc=%d\n",
-			prog, vers, proc);
+		kprintf("rpc_call: prog=0x%x vers=%d proc=%d\n",
+		    prog, vers, proc);
 #endif
 
 	port = rpc_getport(d, prog, vers);
@@ -189,7 +189,7 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 
 #ifdef RPC_DEBUG
 	if (debug)
-		printf("callrpc: cc=%d rlen=%d\n", cc, rlen);
+		kprintf("callrpc: cc=%d rlen=%d\n", cc, rlen);
 #endif
 	if (cc == -1)
 		return (-1);
@@ -211,14 +211,14 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	if (x != 0) {
 #ifdef RPC_DEBUG
 		if (debug)
-			printf("callrpc: reply auth != NULL\n");
+			kprintf("callrpc: reply auth != NULL\n");
 #endif
 		errno = EBADRPC;
 		return(-1);
 	}
 	x = ntohl(reply->rp_u.rpu_rok.rok_status);
 	if (x != 0) {
-		printf("callrpc: error = %d\n", x);
+		kprintf("callrpc: error = %d\n", x);
 		errno = EBADRPC;
 		return(-1);
 	}
@@ -246,7 +246,7 @@ recvrpc(d, pkt, len, tleft)
 	errno = 0;
 #ifdef RPC_DEBUG
 	if (debug)
-		printf("recvrpc: called len=%d\n", len);
+		kprintf("recvrpc: called len=%d\n", len);
 #endif
 
 	n = readudp(d, pkt, len, tleft);
@@ -259,7 +259,7 @@ recvrpc(d, pkt, len, tleft)
 	if (x != rpc_xid) {
 #ifdef RPC_DEBUG
 		if (debug)
-			printf("recvrpc: rp_xid %d != xid %d\n", x, rpc_xid);
+			kprintf("recvrpc: rp_xid %d != xid %d\n", x, rpc_xid);
 #endif
 		return -1;
 	}
@@ -268,7 +268,7 @@ recvrpc(d, pkt, len, tleft)
 	if (x != RPC_REPLY) {
 #ifdef RPC_DEBUG
 		if (debug)
-			printf("recvrpc: rp_direction %d != REPLY\n", x);
+			kprintf("recvrpc: rp_direction %d != REPLY\n", x);
 #endif
 		return -1;
 	}
@@ -276,7 +276,7 @@ recvrpc(d, pkt, len, tleft)
 	x = ntohl(reply->rp_astatus);
 	if (x != RPC_MSGACCEPTED) {
 		errno = ntohl(reply->rp_u.rpu_errno);
-		printf("recvrpc: reject, astat=%d, errno=%d\n", x, errno);
+		kprintf("recvrpc: reject, astat=%d, errno=%d\n", x, errno);
 		return -1;
 	}
 
@@ -358,7 +358,7 @@ rpc_pmap_putcache(addr, prog, vers, port)
 		/* ... just re-use the last entry. */
 		rpc_pmap_num = PMAP_NUM - 1;
 #ifdef	RPC_DEBUG
-		printf("rpc_pmap_putcache: cache overflow\n");
+		kprintf("rpc_pmap_putcache: cache overflow\n");
 #endif
 	}
 
@@ -406,7 +406,7 @@ rpc_getport(d, prog, vers)
 
 #ifdef RPC_DEBUG
 	if (debug)
-		printf("getport: prog=0x%x vers=%d\n", prog, vers);
+		kprintf("getport: prog=0x%x vers=%d\n", prog, vers);
 #endif
 
 	/* This one is fixed forever. */
@@ -428,7 +428,7 @@ rpc_getport(d, prog, vers)
 	cc = rpc_call(d, PMAPPROG, PMAPVERS, PMAPPROC_GETPORT,
 		args, sizeof(*args), res, sizeof(*res));
 	if (cc < sizeof(*res)) {
-		printf("getport: %s", strerror(errno));
+		kprintf("getport: %s", strerror(errno));
 		errno = EBADRPC;
 		return (-1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.6 1995/09/14 23:45:25 pk Exp $	*/
+/*	$NetBSD: ether.c,v 1.7 1996/10/10 22:46:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -68,7 +68,7 @@ sendether(d, pkt, len, dea, etype)
 
 #ifdef ETHER_DEBUG
  	if (debug)
-		printf("sendether: called\n");
+		kprintf("sendether: called\n");
 #endif
 
 	eh = (struct ether_header *)pkt - 1;
@@ -104,7 +104,7 @@ readether(d, pkt, len, tleft, etype)
 
 #ifdef ETHER_DEBUG
  	if (debug)
-		printf("readether: called\n");
+		kprintf("readether: called\n");
 #endif
 
 	eh = (struct ether_header *)pkt - 1;
@@ -119,8 +119,8 @@ readether(d, pkt, len, tleft, etype)
 	    bcmp(bcea, eh->ether_dhost, 6) != 0) {
 #ifdef ETHER_DEBUG
 		if (debug)
-			printf("readether: not ours (ea=%s)\n",
-				ether_sprintf(eh->ether_dhost));
+			kprintf("readether: not ours (ea=%s)\n",
+			    ether_sprintf(eh->ether_dhost));
 #endif
 		return (-1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.13 1995/12/08 04:12:53 gwr Exp $	*/
+/*	$NetBSD: arp.c,v 1.14 1996/10/10 22:46:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -100,12 +100,12 @@ arpwhohas(d, addr)
 	/* Don't overflow cache */
 	if (arp_num > ARP_NUM - 1) {
 		arp_num = 1;	/* recycle */
-		printf("arpwhohas: overflowed arp_list!\n");
+		kprintf("arpwhohas: overflowed arp_list!\n");
 	}
 
 #ifdef ARP_DEBUG
  	if (debug)
- 	    printf("arpwhohas: send request for %s\n", inet_ntoa(addr));
+ 	    kprintf("arpwhohas: send request for %s\n", inet_ntoa(addr));
 #endif
 
 	bzero((char*)&wbuf.data, sizeof(wbuf.data));
@@ -135,11 +135,10 @@ arpwhohas(d, addr)
 	ah = &rbuf.data.arp;
 #ifdef ARP_DEBUG
  	if (debug) {
-		printf("arp: response from %s\n",
-			   ether_sprintf(rbuf.eh.ether_shost));
-		printf("arp: cacheing %s --> %s\n",
-			   inet_ntoa(addr),
-			   ether_sprintf(ah->arp_sha));
+		kprintf("arp: response from %s\n",
+		    ether_sprintf(rbuf.eh.ether_shost));
+		kprintf("arp: cacheing %s --> %s\n",
+		    inet_ntoa(addr), ether_sprintf(ah->arp_sha));
 	}
 #endif
 	MACPY(ah->arp_sha, al->ea);
@@ -157,7 +156,7 @@ arpsend(d, pkt, len)
 
 #ifdef ARP_DEBUG
  	if (debug)
-		printf("arpsend: called\n");
+		kprintf("arpsend: called\n");
 #endif
 
 	return (sendether(d, pkt, len, bcea, ETHERTYPE_ARP));
@@ -180,7 +179,7 @@ arprecv(d, pkt, len, tleft)
 
 #ifdef ARP_DEBUG
  	if (debug)
-		printf("arprecv: ");
+		kprintf("arprecv: ");
 #endif
 
 	n = readether(d, pkt, len, tleft, &etype);
@@ -188,7 +187,7 @@ arprecv(d, pkt, len, tleft)
 	if (n == -1 || n < sizeof(struct ether_arp)) {
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("bad len=%d\n", n);
+			kprintf("bad len=%d\n", n);
 #endif
 		return (-1);
 	}
@@ -196,7 +195,7 @@ arprecv(d, pkt, len, tleft)
 	if (etype != ETHERTYPE_ARP) {
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("not arp type=%d\n", etype);
+			kprintf("not arp type=%d\n", etype);
 #endif
 		return (-1);
 	}
@@ -211,7 +210,7 @@ arprecv(d, pkt, len, tleft)
 	{
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("bad hrd/pro/hln/pln\n");
+			kprintf("bad hrd/pro/hln/pln\n");
 #endif
 		return (-1);
 	}
@@ -219,7 +218,7 @@ arprecv(d, pkt, len, tleft)
 	if (ah->arp_op == htons(ARPOP_REQUEST)) {
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("is request\n");
+			kprintf("is request\n");
 #endif
 		arp_reply(d, ah);
 		return (-1);
@@ -228,7 +227,7 @@ arprecv(d, pkt, len, tleft)
 	if (ah->arp_op != htons(ARPOP_REPLY)) {
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("not ARP reply\n");
+			kprintf("not ARP reply\n");
 #endif
 		return (-1);
 	}
@@ -239,7 +238,7 @@ arprecv(d, pkt, len, tleft)
 	{
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("unwanted address\n");
+			kprintf("unwanted address\n");
 #endif
 		return (-1);
 	}
@@ -248,7 +247,7 @@ arprecv(d, pkt, len, tleft)
 	/* We have our answer. */
 #ifdef ARP_DEBUG
  	if (debug)
-		printf("got it\n");
+		kprintf("got it\n");
 #endif
 	return (n);
 }
@@ -271,7 +270,7 @@ arp_reply(d, pkt)
 	{
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("arp_reply: bad hrd/pro/hln/pln\n");
+			kprintf("arp_reply: bad hrd/pro/hln/pln\n");
 #endif
 		return;
 	}
@@ -279,7 +278,7 @@ arp_reply(d, pkt)
 	if (arp->arp_op != htons(ARPOP_REQUEST)) {
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("arp_reply: not request!\n");
+			kprintf("arp_reply: not request!\n");
 #endif
 		return;
 	}
@@ -290,8 +289,7 @@ arp_reply(d, pkt)
 
 #ifdef ARP_DEBUG
 	if (debug) {
-		printf("arp_reply: to %s\n",
-		       ether_sprintf(arp->arp_sha));
+		kprintf("arp_reply: to %s\n", ether_sprintf(arp->arp_sha));
 	}
 #endif
 

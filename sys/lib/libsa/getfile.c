@@ -1,4 +1,4 @@
-/*	$NetBSD: getfile.c,v 1.3 1994/10/26 05:44:45 cgd Exp $	*/
+/*	$NetBSD: getfile.c,v 1.4 1996/10/10 22:46:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -45,7 +45,7 @@ getfile(prompt, mode)
 	char buf[100];
 
 	do {
-		printf("%s: ", prompt);
+		kprintf("%s: ", prompt);
 		gets(buf);
 	} while ((fd = open(buf, mode)) < 0);
 

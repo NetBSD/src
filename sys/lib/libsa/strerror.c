@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.9 1996/01/13 22:25:43 leo Exp $	*/
+/*	$NetBSD: strerror.c,v 1.10 1996/10/10 22:46:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -72,7 +72,7 @@ static	char ebuf[64];
 		return "Input/output error";
 
 	default:
-		sprintf(ebuf, "Unknown error: code %d", err);
+		ksprintf(ebuf, "Unknown error: code %d", err);
 		return ebuf;
 	}
 }
