@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.h,v 1.3 1997/05/28 00:17:23 thorpej Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.4 1997/05/28 04:59:34 thorpej Exp $	*/
 
 /*
  * (C)opyright 1997 by Darren Reed.
@@ -49,7 +49,7 @@ typedef	struct ap_session {
 	u_int	aps_flags;
 	QUAD_T	aps_bytes;	/* bytes sent */
 	QUAD_T	aps_pkts;	/* packets sent */
-	time_t	aps_tout;	/* time left before expiring */
+	u_long	aps_tout;	/* time left before expiring */
 	void	*aps_data;	/* private data */
 	int	aps_psiz;	/* size of private data */
 	struct	ap_session	*aps_next;
