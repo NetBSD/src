@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.52 2004/08/20 22:17:06 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.53 2004/08/20 22:19:00 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.52 2004/08/20 22:17:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.53 2004/08/20 22:19:00 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.52 2004/08/20 22:17:06 thorpej Exp $");
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
-#include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 
 #include "locators.h"
