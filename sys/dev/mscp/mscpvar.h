@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.8 2000/01/21 23:39:59 thorpej Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.9 2002/07/22 21:48:40 hannken Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -191,7 +191,7 @@ struct mscp_softc {
 	bus_space_handle_t mi_iph;	/* initialisation and polling */
 	bus_space_handle_t mi_sah;	/* status & address (read part) */
 	bus_space_handle_t mi_swh;	/* status & address (write part) */
-	struct buf_queue mi_resq;	/* While waiting for packets */
+	struct bufq_state mi_resq;	/* While waiting for packets */
 };
 
 /* mi_flags */
