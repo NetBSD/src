@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.12 2003/02/21 01:53:35 igy Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.13 2003/02/22 05:32:00 igy Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -244,9 +244,7 @@ ixpcom_attach_subr(sc)
 
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
-		delay(10000); /* XXX */
-		printf("%s: console\n", sc->sc_dev.dv_xname);
-		delay(10000); /* XXX */
+		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}
 
 	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, ixpcomsoft, sc);
@@ -855,9 +853,10 @@ ixpcom_set_cr(struct ixpcom_softc *sc)
 }
 
 int
-ixpcomcnattach(iot, iobase, ospeed, cflag)
+ixpcomcnattach(iot, iobase, ioh, ospeed, cflag)
 	bus_space_tag_t iot;
 	bus_addr_t iobase;
+	bus_space_handle_t ioh;
 	int ospeed;
 	tcflag_t cflag;
 {
@@ -882,7 +881,8 @@ ixpcomcnattach(iot, iobase, ospeed, cflag)
 	cn_set_magic("\047\001\047\001");
 
 	ixpcomcn_sc.sc_iot = iot;
-	ixpcomcn_sc.sc_ioh = ixpcomcn_sc.sc_baseaddr = iobase;
+	ixpcomcn_sc.sc_ioh = ioh;
+	ixpcomcn_sc.sc_baseaddr = iobase;
 	ixpcomcn_sc.sc_ospeed = ospeed;
 	ixpcomcn_sc.sc_cflag = cflag;
 
