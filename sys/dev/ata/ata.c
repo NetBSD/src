@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.34 2004/08/04 22:44:04 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.35 2004/08/10 23:09:38 mycroft Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.34 2004/08/04 22:44:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.35 2004/08/10 23:09:38 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -236,6 +236,9 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal("\n");
 	aprint_naive("\n");
+
+        if (wdc_addref(chp))
+                return;
 
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
 	initq->atabus_sc = sc;

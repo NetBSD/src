@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.188 2004/08/10 02:40:51 mycroft Exp $ */
+/*	$NetBSD: wdc.c,v 1.189 2004/08/10 23:09:39 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.188 2004/08/10 02:40:51 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.189 2004/08/10 23:09:39 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -361,15 +361,8 @@ atabusconfig(struct atabus_softc *atabus_sc)
 {
 	struct wdc_channel *chp = atabus_sc->sc_chan;
 	struct wdc_softc *wdc = chp->ch_wdc;
-	int i, error, need_delref = 0;
+	int i;
 	struct atabus_initq *atabus_initq = NULL;
-
-	if ((error = wdc_addref(chp)) != 0) {
-		aprint_error("%s: unable to enable controller\n",
-		    wdc->sc_dev.dv_xname);
-		goto out;
-	}
-	need_delref = 1;
 
 	/* Probe for the drives. */
 	(*wdc->drv_probe)(chp);
@@ -480,8 +473,8 @@ atabusconfig(struct atabus_softc *atabus_sc)
         wakeup(&atabus_initq_head);
 
 	config_pending_decr();
-	if (need_delref)
-		wdc_delref(chp);
+
+	wdc_delref(chp);
 }
 
 int
