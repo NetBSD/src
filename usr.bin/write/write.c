@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.21 2002/08/16 20:21:49 itojun Exp $	*/
+/*	$NetBSD: write.c,v 1.22 2003/04/20 23:53:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: write.c,v 1.21 2002/08/16 20:21:49 itojun Exp $");
+__RCSID("$NetBSD: write.c,v 1.22 2003/04/20 23:53:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,57 +67,36 @@ __RCSID("$NetBSD: write.c,v 1.21 2002/08/16 20:21:49 itojun Exp $");
 #include <errno.h>
 
 #include "utmpentry.h"
+#include "term_chk.h"
 
 void done(int);
 void do_write(int, const char *, const uid_t);
 void wr_fputs(char *);
-int search_utmp(char *, char *, uid_t);
-int term_chk(uid_t, const char *, int *, time_t *, int);
+int search_utmp(char *, char *, uid_t, gid_t);
 int utmp_chk(const char *, const char *);
 int main(int, char **);
 
-static	gid_t	saved_egid;
 
 int
 main(int argc, char **argv)
 {
-	char *cp;
 	time_t atime;
 	uid_t myuid, uid;
-	int msgsok, myttyfd, ttyfd;
+	int msgsok, ttyfd;
 	char *mytty;
+	gid_t saved_egid = getegid();
 
-	saved_egid = getegid();
 	if (setegid(getgid()) == -1)
 		err(1, "setegid");
 	myuid = getuid();
 	ttyfd = -1;
 
-	/* check that sender has write enabled */
-	if (isatty(fileno(stdin)))
-		myttyfd = fileno(stdin);
-	else if (isatty(fileno(stdout)))
-		myttyfd = fileno(stdout);
-	else if (isatty(fileno(stderr)))
-		myttyfd = fileno(stderr);
-	else
-		errx(1, "can't find your tty");
-	if (!(mytty = ttyname(myttyfd)))
-		errx(1, "can't find your tty's name");
-	if ((cp = strrchr(mytty, '/')) != NULL)
-		mytty = cp + 1;
-	if (term_chk(myuid, mytty, &msgsok, &atime, 1) == -1)
-		err(1, "%s%s", _PATH_DEV, mytty);
-	if (!msgsok) {
-		(void)fprintf(stderr,
-		    "warning: you have write permission turned off; "
-		    "no reply possible\n");
-	}
+	mytty = check_sender(&atime, myuid, saved_egid);
 
 	/* check args */
 	switch (argc) {
 	case 2:
-		ttyfd = search_utmp(argv[1], mytty, myuid);
+		ttyfd = search_utmp(argv[1], mytty, myuid, saved_egid);
 		break;
 	case 3:
 		if (!strncmp(argv[2], _PATH_DEV, strlen(_PATH_DEV)))
@@ -127,7 +106,7 @@ main(int argc, char **argv)
 		if (utmp_chk(argv[1], argv[2]))
 			errx(1, "%s is not logged in on %s",
 			    argv[1], argv[2]);
-		ttyfd = term_chk(uid, argv[2], &msgsok, &atime, 0);
+		ttyfd = term_chk(uid, argv[2], &msgsok, &atime, 0, saved_egid);
 		if (ttyfd == -1)
 			err(1, "%s%s", _PATH_DEV, argv[2]);
 		if (myuid && !msgsok)
@@ -177,7 +156,7 @@ utmp_chk(const char *user, const char *tty)
  * writing from, unless that's the only terminal with messages enabled.
  */
 int
-search_utmp(char *user, char *mytty, uid_t myuid)
+search_utmp(char *user, char *mytty, uid_t myuid, gid_t saved_egid)
 {
 	char tty[MAXPATHLEN];
 	time_t bestatime, atime;
@@ -198,7 +177,8 @@ search_utmp(char *user, char *mytty, uid_t myuid)
 	for (; ep; ep = ep->next)
 		if (strcmp(user, ep->name) == 0) {
 			++nloggedttys;
-			nfd = term_chk(uid, ep->line, &msgsok, &atime, 0);
+			nfd = term_chk(uid, ep->line, &msgsok, &atime, 0,
+			    saved_egid);
 			if (nfd == -1)
 				continue;	/* bad term? skip */
 			if (myuid && !msgsok) {
@@ -233,51 +213,6 @@ search_utmp(char *user, char *mytty, uid_t myuid)
 		warnx("%s is logged in more than once; writing to %s",
 		    user, tty);
 	return fd;
-}
-
-/*
- * term_chk - check that a terminal exists, and get the message bit
- *     and the access time
- */
-int
-term_chk(uid_t uid, const char *tty, int *msgsokP, time_t *atimeP, int ismytty)
-{
-	char path[MAXPATHLEN];
-	struct stat s;
-	int i, fd, serrno;
-
-	if (strcspn(tty, "./") != strlen(tty)) {
-		errno = EINVAL; return(-1);
-	}
-	i = snprintf(path, sizeof path, _PATH_DEV "%s", tty);
-	if (i < 0 || i >= sizeof(path)) {
-		errno = ENOMEM; return(-1);
-	}
-
-	(void)setegid(saved_egid);
-	fd = open(path, O_WRONLY, 0);
-	serrno = errno;
-	(void)setegid(getgid());
-	errno = serrno;
-
-	if (fd == -1)
-		return(-1);
-	if (fstat(fd, &s) == -1)
-		goto error;
-	if (!isatty(fd) || s.st_uid != uid)
-		goto error;
-	*msgsokP = (s.st_mode & S_IWGRP) != 0;	/* group write bit */
-	*atimeP = s.st_atime;
-	if (ismytty)
-		(void) close(fd);
-	return(ismytty? 0: fd);
-error:
-	if (fd != -1) {
-		serrno = errno;
-		close(fd);
-		errno = serrno;
-	}
-	return(-1);
 }
 
 /*
