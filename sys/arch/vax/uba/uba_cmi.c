@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_cmi.c,v 1.4 2000/06/04 06:16:57 matt Exp $	   */
+/*	$NetBSD: uba_cmi.c,v 1.5 2000/06/04 17:59:50 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -52,6 +52,8 @@
 
 #include <vax/uba/uba_common.h>
 
+#include "locators.h"
+
 /* Some CMI-specific defines */
 #define	UBASIZE		((UBAPAGES + UBAIOPAGES) * VAX_NBPG)
 #define UMEM750(i)     	(0xfc0000 - (i) * UBASIZE)
@@ -63,11 +65,11 @@
  * and bus status/command registers, the latter are (partly) IPR's
  * on 750.
  */
-static	int	dw750_match __P((struct device *, struct cfdata *, void *));
-static	void	dw750_attach __P((struct device *, struct device *, void *));
-static	void	dw750_init __P((struct uba_softc*));
+static	int	dw750_match(struct device *, struct cfdata *, void *);
+static	void	dw750_attach(struct device *, struct device *, void *);
+static	void	dw750_init(struct uba_softc*);
 #ifdef notyet
-static	void	dw750_purge __P((struct uba_softc *, int));
+static	void	dw750_purge(struct uba_softc *, int);
 #endif
 
 struct	cfattach uba_cmi_ca = {
@@ -77,29 +79,25 @@ struct	cfattach uba_cmi_ca = {
 extern	struct vax_bus_space vax_mem_bus_space;
 
 int
-dw750_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+dw750_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 
-	if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1 ))
+	if (cf->cf_loc[CMICF_TR] != sa->sa_nexnum &&
+	    cf->cf_loc[CMICF_TR] != CMICF_TR_DEFAULT)
 		return 0;
 	/*
 	 * The uba type is actually only telling where the uba
 	 * space is in nexus space.
 	 */
-	if ((sa->type & ~3) != NEX_UBA0)
+	if ((sa->sa_type & ~3) != NEX_UBA0)
 		return 0;
 
 	return 1;
 }
 
 void
-dw750_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dw750_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uba_vsoftc *sc = (void *)self;
 	struct sbi_attach_args *sa = aux;
@@ -119,15 +117,14 @@ dw750_attach(parent, self, aux)
 	 * Fill in variables used by the sgmap system.
 	 */
 	sc->uv_size = UBAPAGES * VAX_NBPG;
-	sc->uv_uba = (void *)sa->nexaddr; /* Map registers is in adaptor */
+	sc->uv_uba = (void *)sa->sa_ioh; /* Map registers is in adaptor */
 
 	uba_dma_init(sc);
-	uba_attach(&sc->uv_sc, UIOPAGE(sa->type == NEX_UBA1));
+	uba_attach(&sc->uv_sc, UIOPAGE(sa->sa_type == NEX_UBA1));
 }
 
 void
-dw750_init(sc)
-	struct uba_softc *sc;
+dw750_init(struct uba_softc *sc)
 {
 	mtpr(0, PR_IUR);
 	DELAY(500000);
@@ -135,9 +132,7 @@ dw750_init(sc)
 
 #ifdef notyet
 void
-dw750_purge(sc, bdp)
-	struct uba_softc *sc;
-	int bdp;
+dw750_purge(struct uba_softc sc, int bdp)
 {
 	sc->uh_uba->uba_dpr[bdp] |= UBADPR_PURGE | UBADPR_NXM | UBADPR_UCE;
 }
