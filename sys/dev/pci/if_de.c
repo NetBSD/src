@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.38 1997/03/26 01:33:32 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.39 1997/04/13 19:56:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -4574,9 +4574,9 @@ tulip_pci_attach(
     tulip_softc_t * const sc = (tulip_softc_t *) self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
     const int unit = sc->tulip_dev.dv_unit;
-    bus_addr_t regbase;
-    bus_size_t regsize;
-    int cacheable;
+    bus_space_tag_t iot, memt;
+    bus_space_handle_t ioh, memh;
+    int ioh_valid, memh_valid;
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
 #define	PCI_GETBUSDEVINFO(sc)	do { \
@@ -4739,18 +4739,35 @@ tulip_pci_attach(
 
 #if defined(__NetBSD__)
     csr_base = 0;
+
+    ioh_valid = (pci_map_register(pa, PCI_CBIO,
+	    PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, NULL, NULL) == 0);
+    memh_valid = (pci_map_register(pa, PCI_CBMA,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+            &memt, &memh, NULL, NULL) == 0);
+
 #if defined(TULIP_IOMAPPED)
-    sc->tulip_bustag = pa->pa_iot;
-    cacheable = 0;
-    if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO, &regbase, &regsize))
+    if (ioh_valid) {
+	sc->tulip_bustag = iot;
+	sc->tulip_bushandle = ioh;
+    } else if (memh_valid) {
+	sc->tulip_bustag = memt;
+	sc->tulip_bushandle = memh;
+    }
+#else /* defined(TULIP_IOMAPPED) */
+    if (memh_valid) {
+	sc->tulip_bustag = memt;
+	sc->tulip_bushandle = memh;
+    } else if (ioh_valid) {
+	sc->tulip_bustag = iot;
+	sc->tulip_bushandle = ioh;
+    }
+#endif /* defined(TULIP_IOMAPPED) */
+    else {
+	printf(": unable to map device registers\n");
 	return;
-#else
-    sc->tulip_bustag = pa->pa_memt;
-    if (pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_CBMA, &regbase, &regsize, &cacheable))
-        return;
-#endif
-    if (bus_space_map(sc->tulip_bustag, regbase, regsize, cacheable, &sc->tulip_bushandle))
-	return;
+    }
 #endif /* __NetBSD__ */
 
     tulip_initcsrs(sc, csr_base + csroffset, csrsize);
