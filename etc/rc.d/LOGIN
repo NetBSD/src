@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# $NetBSD: login,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+# $NetBSD: LOGIN,v 1.1 2000/03/13 04:03:53 lukem Exp $
 #
 
-# PROVIDE: login
+# PROVIDE: LOGIN
 # REQUIRE: gated routed mrouted timed xntpd dhcpd dhcrelay rwho lpd bootparams
 # REQUIRE: xfs rarpd rbootd mopd apmd screenblank motd local
 # REQUIRE: route6d rtadvd rtsold wscons yppasswdd
