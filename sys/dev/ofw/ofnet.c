@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.15 1998/07/05 00:51:22 jonathan Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.16 1999/05/04 23:56:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -86,7 +86,7 @@ struct cfattach ofnet_ca = {
 };
 
 static void ofnet_read __P((struct ofnet_softc *));
-static void ofnet_timer __P((struct ofnet_softc *));
+static void ofnet_timer __P((void *));
 static void ofnet_init __P((struct ofnet_softc *));
 static void ofnet_stop __P((struct ofnet_softc *));
 
@@ -269,9 +269,11 @@ ofnet_read(of)
 }
 
 static void
-ofnet_timer(of)
-	struct ofnet_softc *of;
+ofnet_timer(arg)
+	void *arg;
 {
+	struct ofnet_softc *of = arg;
+
 	ofnet_read(of);
 	timeout(ofnet_timer, of, 1);
 }
