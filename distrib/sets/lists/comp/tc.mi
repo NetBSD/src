@@ -1,4 +1,4 @@
-#	$NetBSD: tc.mi,v 1.5 2002/05/05 01:24:24 thorpej Exp $
+#	$NetBSD: tc.mi,v 1.6 2003/01/28 14:43:18 jdolecek Exp $
 ./usr/bin/readelf				comp-util-bin
 ./usr/bin/protoize				comp-c-bin
 ./usr/bin/unprotoize				comp-c-bin
@@ -56,12 +56,10 @@
 ./usr/include/g++/iosfwd			comp-cxx-include
 ./usr/include/g++/iostream			comp-cxx-include
 ./usr/include/g++/iostream.h			comp-cxx-include
-./usr/include/g++/iostreamP.h			comp-cxx-include
 ./usr/include/g++/istream.h			comp-cxx-include
 ./usr/include/g++/iterator			comp-cxx-include
 ./usr/include/g++/iterator.h			comp-cxx-include
 ./usr/include/g++/libio.h			comp-cxx-include
-./usr/include/g++/libioP.h			comp-cxx-include
 ./usr/include/g++/list				comp-cxx-include
 ./usr/include/g++/list.h			comp-cxx-include
 ./usr/include/g++/map				comp-cxx-include
