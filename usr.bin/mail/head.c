@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.7 1997/10/19 05:03:26 lukem Exp $	*/
+/*	$NetBSD: head.c,v 1.8 1998/12/19 16:32:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.7 1997/10/19 05:03:26 lukem Exp $");
+__RCSID("$NetBSD: head.c,v 1.8 1998/12/19 16:32:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,11 +196,11 @@ cmatch(cp, tp)
 	while (*cp && *tp)
 		switch (*tp++) {
 		case 'a':
-			if (!islower(*cp++))
+			if (!islower((unsigned char)*cp++))
 				return 0;
 			break;
 		case 'A':
-			if (!isupper(*cp++))
+			if (!isupper((unsigned char)*cp++))
 				return 0;
 			break;
 		case ' ':
@@ -208,11 +208,11 @@ cmatch(cp, tp)
 				return 0;
 			break;
 		case '0':
-			if (!isdigit(*cp++))
+			if (!isdigit((unsigned char)*cp++))
 				return 0;
 			break;
 		case 'O':
-			if (*cp != ' ' && !isdigit(*cp))
+			if (*cp != ' ' && !isdigit((unsigned char)*cp))
 				return 0;
 			cp++;
 			break;
