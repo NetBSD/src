@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.8 2002/03/26 22:59:32 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.9 2002/03/31 22:22:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.8 2002/03/26 22:59:32 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.9 2002/03/31 22:22:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.8 2002/03/26 22:59:32 manu Exp $")
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_syscallargs.h>
 
-extern const int native_to_svr4_sig[];
-extern const int svr4_to_native_sig[];
+extern const int native_to_svr4_signo[];
+extern const int svr4_to_native_signo[];
 
 static int irix_setinfo __P((struct proc *, int, irix_irix5_siginfo_t *));
 
@@ -111,7 +111,7 @@ irix_setinfo(p, st, s)
 	} else if (WIFSTOPPED(st)) {
 		sig = WSTOPSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			i.isi_status = native_to_svr4_sig[sig];
+			i.isi_status = native_to_svr4_signo[sig];
 
 		if (i.isi_status == SVR4_SIGCONT)
 			i.isi_code = SVR4_CLD_CONTINUED;
@@ -120,7 +120,7 @@ irix_setinfo(p, st, s)
 	} else {
 		sig = WTERMSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			i.isi_status = native_to_svr4_sig[sig];
+			i.isi_status = native_to_svr4_signo[sig];
 
 		if (WCOREDUMP(st))
 			i.isi_code = SVR4_CLD_DUMPED;
@@ -142,7 +142,7 @@ native_to_irix_sigset(bss, sss)
 	 irix_sigemptyset(sss);
 	 for (i = 1; i < NSIG; i++) {
 		 if (sigismember(bss, i)) {
-			 newsig = native_to_svr4_sig[i];
+			 newsig = native_to_svr4_signo[i];
 			 if (newsig)
 			 	irix_sigaddset(sss, newsig);
 		 }
@@ -159,7 +159,7 @@ irix_to_native_sigset(sss, bss)
 	sigemptyset(bss);
 	for (i = 1; i < SVR4_NSIG; i++) {
 		if (irix_sigismember(sss, i)) {
-			newsig = svr4_to_native_sig[i];
+			newsig = svr4_to_native_signo[i];
 			if (newsig)
 				sigaddset(bss, newsig);
 		}
@@ -252,7 +252,7 @@ irix_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	}
 
 	/* Set up the registers to return to sigcode. */
-	f->f_regs[A0] = native_to_svr4_sig[sig];
+	f->f_regs[A0] = native_to_svr4_signo[sig];
 	f->f_regs[A1] = 0;
 	f->f_regs[A2] = (unsigned long)fp;
 
