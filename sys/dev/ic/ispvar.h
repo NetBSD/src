@@ -1,4 +1,4 @@
-/*	$NetBSD: ispvar.h,v 1.7 1997/08/27 11:24:56 bouyer Exp $	*/
+/*	$NetBSD: ispvar.h,v 1.8 1998/05/05 22:10:37 mjacob Exp $	*/
 
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
@@ -205,8 +205,9 @@ struct ispsoftc {
 #define	ISP_HA_SCSI		0xf
 #define	ISP_HA_SCSI_UNKNOWN	0x0
 #define	ISP_HA_SCSI_1020	0x1
-#define	ISP_HA_SCSI_1040A	0x2
-#define	ISP_HA_SCSI_1040B	0x3
+#define	ISP_HA_SCSI_1020A	0x2
+#define	ISP_HA_SCSI_1040A	0x3
+#define	ISP_HA_SCSI_1040B	0x4
 #define	ISP_HA_FC		0xf0
 #define	ISP_HA_FC_2100		0x10
 
