@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.39 2000/03/23 06:43:01 thorpej Exp $	*/
+/*	$NetBSD: rcons.c,v 1.40 2000/03/30 14:45:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -346,7 +346,8 @@ struct tty *
 rconstty(dev)
         dev_t dev;
 {
-        register struct tty *tp = &rcons_tty [0];
+        struct tty *tp = &rcons_tty[0];
+
         return (tp);
 }
 
