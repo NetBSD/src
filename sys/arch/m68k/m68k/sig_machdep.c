@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.9 1998/09/30 21:04:48 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.10 1998/09/30 21:55:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,28 +41,19 @@
  *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
 
-#include "opt_uvm.h"
+#include "opt_compat_netbsd.h"
+
+#define __M68K_SIGNAL_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/exec.h>
-#include <sys/ioctl.h>
-#include <sys/mount.h>
-#define __M68K_SIGNAL_PRIVATE
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/malloc.h>
-#include <sys/buf.h>
 
-#include <vm/vm.h>
-
-#if defined(UVM)
-#include <uvm/uvm_extern.h>
-#endif
-
+#include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -87,76 +78,65 @@ int sigpid = 0;
 void
 sendsig(catcher, sig, mask, code)
 	sig_t catcher;
-	int sig, mask;
+	int sig;
+	sigset_t *mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct sigframe *fp, *kfp;
-	register struct frame *frame;
-	register struct sigacts *psp = p->p_sigacts;
-	register short ft;
-	int oonstack, fsize;
-	extern char sigcode[], esigcode[];
+	struct proc *p = curproc;
+	struct sigframe *fp, kf;
+	struct frame *frame;
+	struct sigacts *psp = p->p_sigacts;
+	short ft;
+	int onstack, fsize;
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
-	/*
-	 * Allocate and validate space for the signal handler
-	 * context. Note that if the stack is in P0 space, the
-	 * call to grow() is a nop, and the useracc() check
-	 * will fail if the process has not already allocated
-	 * the space with a `brk'.
-	 */
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
 	fsize = sizeof(struct sigframe);
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	if (onstack)
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - fsize);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else
-		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
-#if defined(UVM)
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
-		(void)uvm_grow(p, (unsigned)fp);
-#else
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
-		(void)grow(p, (unsigned)fp);
-#endif
+						  psp->ps_sigstk.ss_size);
+	else
+		fp = (struct sigframe *)(frame->f_regs[SP]);
+	fp--;
+
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
-		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
+		       p->p_pid, sig, &onstack, fp, &fp->sf_sc, ft);
 #endif
-	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
-	/*
-	 * Build the argument list for the signal handler.
-	 */
-	kfp->sf_signum = sig;
-	kfp->sf_code = code;
-	kfp->sf_scp = &fp->sf_sc;
-	kfp->sf_handler = catcher;
+
+	/* Build stack frame for signal trampiline. */
+	kf.sf_signum = sig;
+	kf.sf_code = code;
+	kf.sf_scp = &fp->sf_sc;
+	kf.sf_handler = catcher;
+
 	/*
 	 * Save necessary hardware state.  Currently this includes:
 	 *	- general registers
 	 *	- original exception frame (if not a "normal" frame)
 	 *	- FP coprocessor state
 	 */
-	kfp->sf_state.ss_flags = SS_USERREGS;
-	bcopy((caddr_t)frame->f_regs,
-	      (caddr_t)kfp->sf_state.ss_frame.f_regs, sizeof frame->f_regs);
+	kf.sf_state.ss_flags = SS_USERREGS;
+	bcopy(frame->f_regs, kf.sf_state.ss_frame.f_regs,
+	    sizeof(frame->f_regs));
 	if (ft >= FMT4) {
 #ifdef DEBUG
 		if (ft > 15 || exframesize[ft] < 0)
 			panic("sendsig: bogus frame type");
 #endif
-		kfp->sf_state.ss_flags |= SS_RTEFRAME;
-		kfp->sf_state.ss_frame.f_format = frame->f_format;
-		kfp->sf_state.ss_frame.f_vector = frame->f_vector;
-		bcopy((caddr_t)&frame->F_u,
-		      (caddr_t)&kfp->sf_state.ss_frame.F_u,
-			  (size_t) exframesize[ft]);
+		kf.sf_state.ss_flags |= SS_RTEFRAME;
+		kf.sf_state.ss_frame.f_format = frame->f_format;
+		kf.sf_state.ss_frame.f_vector = frame->f_vector;
+		bcopy(&frame->F_u, &kf.sf_state.ss_frame.F_u,
+		    (size_t) exframesize[ft]);
 		/*
 		 * Leave an indicator that we need to clean up the kernel
 		 * stack.  We do this by setting the "pad word" above the
@@ -177,28 +157,40 @@ sendsig(catcher, sig, mask, code)
 	}
 
 	if (fputype) {
-		kfp->sf_state.ss_flags |= SS_FPSTATE;
-		m68881_save(&kfp->sf_state.ss_fpstate);
+		kf.sf_state.ss_flags |= SS_FPSTATE;
+		m68881_save(&kf.sf_state.ss_fpstate);
 	}
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
 		printf("sendsig(%d): copy out FP state (%x) to %p\n",
-		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
-		       &kfp->sf_state.ss_fpstate);
+		       p->p_pid, *(u_int *)&kf.sf_state.ss_fpstate,
+		       &kf.sf_state.ss_fpstate);
 #endif
 
+	/* Build the signal context to be used by sigreturn. */
+	kf.sf_sc.sc_sp = frame->f_regs[SP];
+	kf.sf_sc.sc_fp = frame->f_regs[A6];
+	kf.sf_sc.sc_ap = (int)&fp->sf_state;
+	kf.sf_sc.sc_pc = frame->f_pc;
+	kf.sf_sc.sc_ps = frame->f_sr;
+
+	/* Save signal stack. */
+	kf.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/* Save signal mask. */
+	kf.sf_sc.sc_mask = *mask;
+
+#ifdef COMPAT_13
 	/*
-	 * Build the signal context to be used by sigreturn.
+	 * XXX We always have to save an old style signal mask because
+	 * XXX we might be delivering a signal to a process which will
+	 * XXX escape from the signal in a non-standard way and invoke
+	 * XXX sigreturn() directly.
 	 */
-	kfp->sf_sc.sc_onstack = oonstack;
-	kfp->sf_sc.sc_mask = mask;
-	kfp->sf_sc.sc_sp = frame->f_regs[SP];
-	kfp->sf_sc.sc_fp = frame->f_regs[A6];
-	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
-	kfp->sf_sc.sc_pc = frame->f_pc;
-	kfp->sf_sc.sc_ps = frame->f_sr;
-	if (copyout((caddr_t)kfp, (caddr_t)fp, fsize)) {
-		free((caddr_t)kfp, M_TEMP);
+	native_sigset_to_sigset13(mask, &kf.sf_sc.__sc_mask13);
+#endif
+
+	if (copyout(&kf, fp, fsize)) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sendsig(%d): copyout failed on sig %d\n",
@@ -211,23 +203,26 @@ sendsig(catcher, sig, mask, code)
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
-	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sendsig(%d): sig %d scp %p fp %p sc_sp %x sc_ap %x\n",
-		       p->p_pid, sig, kfp->sf_scp, fp,
-		       kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
+		       p->p_pid, sig, kf.sf_scp, fp,
+		       kf.sf_sc.sc_sp, kf.sf_sc.sc_ap);
 #endif
-	/*
-	 * Signal trampoline code is at base of user stack.
-	 */
-	frame->f_pc = (int)PS_STRINGS - (esigcode - sigcode);
+
+	/* Set up the registers to return to sigcode. */
+	frame->f_regs[SP] = (int)fp;
+	frame->f_pc = (int)psp->ps_sigcode;
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d returns\n",
 		       p->p_pid, sig);
 #endif
-	free((caddr_t)kfp, M_TEMP);
 }
 
 /*
@@ -241,19 +236,25 @@ sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 int
-sys_sigreturn(p, v, retval)
+sys___sigreturn14(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_sigreturn_args *uap = v;
-	register struct sigcontext *scp;
-	register struct frame *frame;
-	register int rf;
+	struct sys___sigreturn14_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap = v;
+	struct sigcontext *scp;
+	struct frame *frame;
 	struct sigcontext tsigc;
 	struct sigstate tstate;
-	int flags;
+	int rf, flags;
 
+	/*
+	 * The trampoline code hands us the context.
+	 * It is unsafe to keep track of it ourselves, in the event that a
+	 * program jumps out of a signal handler.
+	 */
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -262,19 +263,15 @@ sys_sigreturn(p, v, retval)
 	if ((int)scp & 1)
 		return (EINVAL);
 
-	/*
-	 * Test and fetch the context structure.
-	 * We grab it all at once for speed.
-	 */
-	if (copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
-		return (EINVAL);
+	if (copyin(scp, &tsigc, sizeof(tsigc)) != 0)
+		return (EFAULT);
 	scp = &tsigc;
+
+	/* Make sure the user isn't pulling a fast one on us! */
 	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
 		return (EINVAL);
 
-	/*
-	 * We'll restore infomation in this structure.
-	 */
+	/* Restore register context. */
 	frame = (struct frame *) p->p_md.md_regs;
 
 	/*
@@ -283,6 +280,7 @@ sys_sigreturn(p, v, retval)
 	 */
 	if ((rf = scp->sc_ap) == 0)
 		goto restore;
+
 	/*
 	 * See if there is anything to do before we go to the
 	 * expense of copying in close to 1/2K of data
@@ -293,18 +291,17 @@ sys_sigreturn(p, v, retval)
 		printf("sigreturn(%d): sc_ap %x flags %x\n",
 		       p->p_pid, rf, flags);
 #endif
-	/*
-	 * fuword failed (bogus sc_ap value).
-	 */
+	/* fuword failed (bogus sc_ap value). */
 	if (flags == -1)
 		return (EINVAL);
-	if (flags == 0 || copyin((caddr_t)rf, (caddr_t)&tstate, sizeof tstate))
+
+	if (flags == 0 || copyin((caddr_t)rf, &tstate, sizeof(tstate)) != 0)
 		goto restore;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n",
 		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
-		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
+		       (flags & SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
 	/*
 	 * Restore long stack frames.  Note that we do not copy
@@ -322,7 +319,7 @@ sys_sigreturn(p, v, retval)
 		frame->f_stackadj -= sz;
 		frame->f_format = tstate.ss_frame.f_format;
 		frame->f_vector = tstate.ss_frame.f_vector;
-		bcopy((caddr_t)&tstate.ss_frame.F_u, (caddr_t)&frame->F_u, sz);
+		bcopy(&tstate.ss_frame.F_u, &frame->F_u, sz);
 #ifdef DEBUG
 		if (sigdebug & SDB_FOLLOW)
 			printf("sigreturn(%d): copy in %d of frame type %d\n",
@@ -335,30 +332,36 @@ sys_sigreturn(p, v, retval)
 	 * which will be handled below.
 	 */
 	if (flags & SS_USERREGS)
-		bcopy((caddr_t)tstate.ss_frame.f_regs,
-		      (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*NBPW);
+		bcopy(tstate.ss_frame.f_regs,
+		    frame->f_regs, sizeof(frame->f_regs) - (2 * NBPW));
+
 	/*
 	 * Restore the original FP context
 	 */
 	if (fputype && (flags & SS_FPSTATE))
 		m68881_restore(&tstate.ss_fpstate);
 
+ restore:
 	/*
 	 * Restore the user supplied information.
 	 * This should be at the last so that the error (EINVAL)
 	 * is reported to the sigreturn caller, not to the
 	 * jump destination.
 	 */
-restore:
-	if (scp->sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = scp->sc_mask &~ sigcantmask;
+
 	frame->f_regs[SP] = scp->sc_sp;
 	frame->f_regs[A6] = scp->sc_fp;
 	frame->f_pc = scp->sc_pc;
 	frame->f_sr = scp->sc_ps;
+
+	/* Restore signal stack. */
+	if (scp->sc_onstack & SS_ONSTACK)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	/* Restore signal mask. */
+	(void) sigprocmask1(p, SIG_SETMASK, &scp->sc_mask, 0);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
