@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.3 2002/12/20 15:24:57 thorpej Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.4 2003/01/17 03:26:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -53,6 +53,21 @@ pthread__sp(void)
 #define	pthread__uc_pc(ucp)	((ucp)->uc_mcontext.__gregs[_REG_PC])
 
 /*
+ * Set initial, sane values for registers whose values aren't just
+ * "don't care".
+ */
+#ifdef __APCS_26__
+#define _INITCONTEXT_U_MD(ucp)						\
+/* Set R15_MODE_USR in the PC */
+	(ucp)->uc_mcontext.__gregs[_REG_PC] =				\
+	 ((ucp)->uc_mcontext.__gregs[_REG_PC] & 0x3fffffc) | 0x0;
+#else
+/* Set CPSR to PSR_USE32_MODE (0x10) from arm/armreg.h */
+#define _INITCONTEXT_U_MD(ucp)						\
+	(ucp)->uc_mcontext.__gregs[_REG_CPSR] = 0x10;
+#endif
+
+/*
  * Usable stack space below the ucontext_t.
  *    For a good time, see comments in pthread_switch.S and
  *    ../i386/pthread_switch.S about STACK_SWITCH.
@@ -64,7 +79,7 @@ pthread__sp(void)
  * libpthread_dbg.
  */
 
-#define	PTHREAD_UCONTEXT_TO_REG(reg, uc)				\
+#define	PTHREAD_ARM_UCONTEXT_TO_REG(reg, uc)				\
 do {									\
 	int _reg_;							\
 									\
@@ -76,6 +91,19 @@ do {									\
 	(reg)->r_pc = (uc)->uc_mcontext.__gregs[_REG_PC];		\
 	(reg)->r_cpsr = (uc)->uc_mcontext.__gregs[_REG_CPSR];		\
 } while (/*CONSTCOND*/0)
+
+#ifdef __APCS_26__
+#define PTHREAD_UCONTEXT_TO_REG(reg, uc) PTHREAD_ARM_UCONTEXT_TO_REG((reg), (uc))
+#else
+/* Need to signal in the CPSR that this is 32-bit ARM */
+#define PTHREAD_UCONTEXT_TO_REG(reg, uc)				\
+do {									\
+	PTHREAD_ARM_UCONTEXT_TO_REG((reg), (uc));			\
+	if ((uc)->uc_flags & _UC_USER)					\
+		(reg)->r_cpsr = 0x10;					\
+} while (/*CONSTCOND*/0)
+#endif
+
 
 #define	PTHREAD_REG_TO_UCONTEXT(uc, reg)				\
 do {									\
