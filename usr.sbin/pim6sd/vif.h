@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.h,v 1.1 2000/01/28 19:32:53 itojun Exp $	*/
+/*	$NetBSD: vif.h,v 1.2 2000/05/19 10:43:51 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -227,6 +227,7 @@ struct uvif {
 	/* occurrences of timeouts */
 	u_quad_t uv_pim6_nbr_timo;
 	u_quad_t uv_listener_timo;
+	u_quad_t uv_querier_timo;
 	u_quad_t uv_outif_timo;	/* outgoing interfaces timers */
 };
 

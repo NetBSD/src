@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.4 1999/12/10 06:13:31 itojun Exp $	*/
+/*	$NetBSD: defs.h,v 1.5 2000/05/19 10:43:37 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -35,7 +35,7 @@
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
  *
- *  KAME Id: defs.h,v 1.5 1999/10/27 11:40:29 jinmei Exp
+ *  KAME Id: defs.h,v 1.7 2000/04/30 13:01:36 itojun Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
@@ -324,6 +324,7 @@ extern void config_vifs_from_file   __P((void));
 extern char     *packet_kind __P((u_int proto, u_int type, u_int code));
 extern int      debug_kind   __P((u_int proto, u_int type, u_int code));
 extern void     log          __P((int, int, char *, ...));
+extern void	dump_mldqueriers __P((FILE *));
 extern int      log_level    __P((u_int proto, u_int type, u_int code));
 extern void     dump         __P((int i));
 extern void     fdump        __P((int i));

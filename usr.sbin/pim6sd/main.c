@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2000/01/28 19:32:48 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2000/05/19 10:43:48 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -585,7 +585,7 @@ usage:
 	    IF_DEBUG(DEBUG_TIMEOUT)
 		log(LOG_DEBUG, 0, "TIMEOUT: secs %d, diff secs %d, diff usecs %d", secs, difftime.tv_sec, difftime.tv_usec);
 #endif
-	    while (difftime.tv_usec > 1000000)
+	    while (difftime.tv_usec >= 1000000)
 	    {
 		difftime.tv_sec++;
 		difftime.tv_usec -= 1000000;
