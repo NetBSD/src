@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.22 2000/11/23 21:44:52 chs Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.23 2000/12/02 19:34:54 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -1101,7 +1101,7 @@ db_disasm(loc, altfmt)
 		pte = kvtopte((vaddr_t)loc);
 	else
 		pte = vtopte((vaddr_t)loc);
-	pde = vtopte((vaddr_t)pte);
+	pde = kvtopte((vaddr_t)pte);
 	if ((*pde & PG_V) == 0 || (*pte & PG_V) == 0) {
 		db_printf("invalid address\n");
 		return (loc);
