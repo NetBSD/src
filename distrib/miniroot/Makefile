@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2000/08/29 11:31:18 leo Exp $
+#	$NetBSD: Makefile,v 1.34 2000/08/29 11:41:24 leo Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
@@ -20,7 +20,7 @@ VND_GEOM?=
 IMAGE?=		miniroot.fs
 IMAGESIZE?=	14336 # 7MB in 512 byte blocks
 NEWFSOPTS?=
-MOUNT_POINT?=	/mnt1
+MOUNT_POINT?=	/mnt
 BOOTINSTALL?=	true
 PRELABEL?=	true
 
