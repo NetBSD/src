@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_new.c,v 1.11 2003/05/08 18:13:14 thorpej Exp $	*/
+/*	$NetBSD: pmap_new.c,v 1.12 2003/05/10 21:10:28 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -210,7 +210,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.11 2003/05/08 18:13:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.12 2003/05/10 21:10:28 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -527,6 +527,8 @@ extern void bcopy_page(vaddr_t, vaddr_t);
 /*
  * Misc variables
  */
+vaddr_t virtual_avail;
+vaddr_t virtual_end;
 vaddr_t pmap_curmaxkvaddr;
 
 vaddr_t avail_start;
@@ -3443,6 +3445,20 @@ pmap_copy_page_xscale(paddr_t src, paddr_t dst)
 #endif /* ARM_MMU_XSCALE == 1 */
 
 /*
+ * void pmap_virtual_space(vaddr_t *start, vaddr_t *end)
+ *
+ * Return the start and end addresses of the kernel's virtual space.
+ * These values are setup in pmap_bootstrap and are updated as pages
+ * are allocated.
+ */
+void
+pmap_virtual_space(vaddr_t *start, vaddr_t *end)
+{
+	*start = virtual_avail;
+	*end = virtual_end;
+}
+
+/*
  * Helper function for pmap_grow_l2_bucket()
  */
 static __inline int
@@ -3897,9 +3913,6 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	 * virtual_avail (note that there are no pages mapped at these VAs).
 	 *
 	 * Managed KVM space start from wherever initarm() tells us.
-	 *
-	 * Note that virtual_avail and virtual_end define the boundaries
-	 * of the managed kernel virtual address space.
 	 */
 	virtual_avail = vstart;
 	virtual_end = vend;

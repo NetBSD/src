@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 2003/05/08 18:13:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 2003/05/10 21:10:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -235,7 +235,7 @@ int pmapdebug = 0
 #endif
 #define PMAP_PRINTF(v,x) PMAP_PRINTF_MASK(v,v,x)
 
-vaddr_t	virtual_steal;
+vaddr_t	virtual_steal, virtual_start, virtual_end;
 
 /* These two virtual pages are available for copying and zeroing. */
 static vaddr_t tmp_vpages[2];
@@ -1054,7 +1054,7 @@ pmap_bootstrap(vstart, vend)
 	 * virtual space.
 	 */
 	*vstart = btlb_entry_start[btlb_j - 1] + btlb_entry_size[btlb_j - 1];
-	virtual_avail = *vstart;
+	virtual_start = *vstart;
 
 	/*
 	 * Finally, load physical pages into UVM.  There are
@@ -1106,19 +1106,27 @@ pmap_bootstrap(vstart, vend)
  *	directly mapped cannot be grown dynamically once allocated.
  */
 vaddr_t
-pmap_steal_memory(size)
+pmap_steal_memory(size, startp, endp)
 	vsize_t size;
+	vaddr_t *startp;
+	vaddr_t *endp;
 {
 	vaddr_t va;
 	int lcv;
 
 	PMAP_PRINTF(PDB_STEAL, ("(%lx, %p, %p)\n", size, startp, endp));
 
+	/* Remind the caller of the start and end of virtual space. */
+	if (startp)
+		*startp = virtual_start;
+	if (endp)
+		*endp = virtual_end;
+
 	/* Round the allocation up to a page. */
 	size = hppa_round_page(size);
 
 	/* We must panic if we cannot steal the memory. */
-	if (size > virtual_avail - virtual_steal)
+	if (size > virtual_start - virtual_steal)
 		panic("pmap_steal_memory: out of memory");
 
 	/* Steal the memory. */
@@ -1135,6 +1143,17 @@ pmap_steal_memory(size)
 		panic("pmap_steal_memory inconsistency");
 
 	return va;
+}
+
+/* 
+ * How much virtual space does this kernel have?
+ * (After mapping kernel text, data, etc.)
+ */
+void
+pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
+{
+	*vstartp = virtual_start;
+	*vendp = virtual_end;
 }
 
 /*
