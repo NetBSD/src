@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2004/10/13 23:28:34 gavan Exp $
+# $NetBSD: Makefile,v 1.23 2004/12/31 08:34:13 jmc Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -214,6 +214,12 @@ BASE_PORTS.${image}:=	${bports:O:u}
 MKISOFS_ARGS.${image}+=	-b ${BOOTFILE.i386} -c boot.catalog
 .endif
 
+# amd64
+
+.if !empty(ports:Mamd64)
+MKISOFS_ARGS.${image}+= -b ${BOOTFILE.amd64} -c boot.catalog
+.endif
+        
 # Mac (mac68k, macppc)
 
 .if !empty(ports:Mmacppc)
