@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.6 1995/10/07 06:27:22 mycroft Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.7 1995/10/07 06:53:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -915,21 +915,23 @@ osf1_sys_getsid(p, v, retval)
 }
 
 int
-osf1_getrusage(p, v, retval)	/* XXX */
+osf1_sys_getrusage(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 
+	/* XXX */
 	return EINVAL;
 }
 
 int
-osf1_madvise(p, v, retval)	/* XXX */
+osf1_sys_madvise(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 
+	/* XXX */
 	return EINVAL;
 }
