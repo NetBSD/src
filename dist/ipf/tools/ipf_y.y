@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.1.1.1.2.3 2004/05/30 11:21:36 tron Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.1.1.1.2.4 2004/05/30 11:26:52 tron Exp $	*/
 
 %{
 #include "ipf.h"
@@ -313,6 +313,9 @@ tos:	| settos YY_NUMBER	{ DOALL(fr->fr_tos = $2; fr->fr_mtos = 0xff;) }
 	;
 
 settos:	IPFY_TOS			{ setipftype(); }
+	;
+
+seticmptype: IPFY_ICMPTYPE		{ setipftype(); }
 	;
 
 toslist:
@@ -897,9 +900,9 @@ portrange:
 icmp:	| itype icode
 	;
 
-itype:	IPFY_ICMPTYPE icmptype
+itype:	seticmptype icmptype
 	{ DOALL(fr->fr_icmp = htons($2 << 8); fr->fr_icmpm = htons(0xff00);) }
-	| IPFY_ICMPTYPE lstart typelist lend
+	| seticmptype lstart typelist lend
 	;
 
 icode:	| IPFY_ICMPCODE icmpcode
