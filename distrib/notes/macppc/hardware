@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.3.4.1 2000/11/01 03:48:17 tv Exp $
+.\"$NetBSD: hardware,v 1.3.4.2 2000/11/01 23:18:45 tv Exp $
 .
 Currently,
 .Nx*M
@@ -271,8 +271,22 @@ Serial ports
 On-board serial ports (the modem and printer ports)
 .Pq Em ttya No and Em ttyb
 .(Note
-The on-board serial ports can be used for console, although many users have
+The on-board serial ports can be used for console (38400 bps, 8 bits, no
+parity, 1 stop bit, no handshaking), although many users have
 reported problems trying to run ppp or other high speed serial applications
+.Note)
+.Pp
+.It
+The Gee Three Stealth Serial Port, possibly the Griffin Technology gPort
+.(Note
+These serial ports can be used for console (57600 bps, 8 bits, no parity,
+1 stop bit, no handshaking).  Use 
+.Pq Em scca
+for the Open Firmware
+.Sq input-device
+and
+.Sq output-device
+variables.
 .Note)
 .Pp
 .It
