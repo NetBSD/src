@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.3 2003/09/18 05:26:43 skd Exp $ */
+/* $NetBSD: ptrace.h,v 1.4 2003/09/21 15:14:55 skd Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -32,10 +32,9 @@
 
 /*
  * Alpha-dependent ptrace definitions.
- * Note that PT_STEP is now supported.
+ * Note that PT_STEP is _not_ supported.
  */
 #define PT_GETREGS      (PT_FIRSTMACH + 0)
 #define PT_SETREGS      (PT_FIRSTMACH + 1)
 #define PT_GETFPREGS    (PT_FIRSTMACH + 2)
 #define PT_SETFPREGS    (PT_FIRSTMACH + 3)
-#define PT_STEP		(PT_FIRSTMACH + 4)

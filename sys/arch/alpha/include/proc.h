@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.13 2003/09/18 05:26:43 skd Exp $ */
+/* $NetBSD: proc.h,v 1.14 2003/09/21 15:14:54 skd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,20 +32,13 @@
 
 #include <machine/frame.h>
 
-/* breakpoints for single stepping */
-struct mdbpt {
-	vaddr_t addr;
-	u_int32_t contents;
-};
-
 /*
  * Machine-dependent part of the lwp struct for the Alpha.
  */
 struct mdlwp {
-	u_long md_flags;
-	struct trapframe *md_tf;	/* trap/syscall registers */
+	u_long	md_flags;
+	struct	trapframe *md_tf;	/* trap/syscall registers */
 	struct pcb *md_pcbpaddr;	/* phys addr of the pcb */
-	struct mdbpt md_sstep[2];   /* two single step breakpoints */
 };
 /*
  * md_flags usage
@@ -64,20 +57,10 @@ struct mdlwp {
  * 	standard useless.  Because of overlapping AARM, OSF/1, NetBSD, and
  * 	C99 API's, the use of the MDP_FP_C bits is defined variously in
  * 	ieeefp.h and fpu.h.
- *
- * MDP_STEP1 Single stepping (emulation) is set and the target
- *	instruction is not a branch.  md_step[0] contains the destination.
- *
- * MDP_STEP2 Single stepping (emulation) is set and the target
- *	instruction is a branch.  The two breakpoints in the md_step
- *	array represent the possible destinations, and both must be
- *	cleaned up when the breakpoint trap is taken.
- *
  */
 #define	MDP_FPUSED	0x00000001	/* Process used the FPU */
 #define	MDP_FP_C	0x007ffffe	/* Extended FP_C Quadword bits */
-#define MDP_STEP1       0x80000000	/* Single step normal instruction */
-#define MDP_STEP2       0x40000000      /* Single step branch instruction */
+
 /*
  * Machine-dependent part of the proc struct for the Alpha.
  */
