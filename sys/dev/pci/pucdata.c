@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.2 1998/07/12 02:21:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -88,7 +88,17 @@ const struct puc_device_description puc_devices[] = {
 
 	/*
 	 * XXX no entry because I have no data:
+	 * XXX Dolphin 4078 (dual serial and single parallel)
+	 */
+
+	/*
+	 * XXX no entry because I have no data:
 	 * XXX SIIG CyberParallel PCI (single parallel)
+	 */
+
+	/*
+	 * XXX no entry because I have no data:
+	 * XXX SIIG CyberParallel Dual PCI (dual parallel)
 	 */
 
 	/*
@@ -104,6 +114,11 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x18 },
 	    },
 	},
+
+	/*
+	 * XXX no entry because I have no data:
+	 * XXX SIIG Cyber 2S1P PCI (dual serial and single parallel)
+	 */
 
 	{ 0 }
 };
