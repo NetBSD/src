@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunnervar.h,v 1.3 1998/06/08 07:06:41 thorpej Exp $	*/
+/*	$NetBSD: rrunnervar.h,v 1.4 1998/06/08 07:11:51 thorpej Exp $	*/
 
 /* Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -95,7 +95,7 @@ struct esh_softc {
 	struct ifnet		sc_if;
 	struct ifmedia		sc_media;
 
-	int			sc_flags;
+	volatile int		sc_flags;
 #define ESH_FL_INITIALIZED	0x01
 #define ESH_FL_RUNCODE_UP	0x02
 #define ESH_FL_LINK_UP		0x04
