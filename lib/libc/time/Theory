@@ -1,5 +1,5 @@
-#	$NetBSD: Theory,v 1.4 1999/11/10 20:32:31 kleink Exp $
-@(#)Theory	7.9
+#	$NetBSD: Theory,v 1.5 2000/12/12 15:25:41 kleink Exp $
+@(#)Theory	7.11
 
 
 ----- Outline -----
@@ -199,7 +199,8 @@ in decreasing order of importance:
 		`-' and `_'.  Do not exceed 14 characters or start with `-'.
 		E.g. prefer `Brunei' to `Bandar_Seri_Begawan'.
 	Include at least one location per time zone rule set per country.
-		One such location is enough.
+		One such location is enough.  Use ISO 3166 (see the file
+		iso3166.tab) to help decide whether something is a country.
 	If all the clocks in a country's region have agreed since 1970,
 		don't bother to include more than one location
 		even if subregions' clocks disagreed before 1970.
@@ -227,13 +228,19 @@ in decreasing order of importance:
 	Use `_' to represent a space.
 	Omit `.' from abbreviations in names, e.g. prefer `St_Helena'
 		to `St._Helena'.
+	Do not change established names if they only marginally
+		violate the above rules.  For example, don't change
+		the existing name `Rome' to `Milan' merely because
+		Milan's population has grown to be somewhat greater
+		than Rome's.
+	If a name is changed, put its old spelling in the `backward' file.
 
 The file `zone.tab' lists the geographical locations used to name
 time zone rule files.
 
 Older versions of this package used a different naming scheme,
 and these older names are still supported.
-See the file `backwards' for most of these older names
+See the file `backward' for most of these older names
 (e.g. `US/Eastern' instead of `America/New_York').
 The other old-fashioned names still supported are
 `WET', `CET', `MET', `EET' (see the file `europe'),
