@@ -4,12 +4,16 @@
  * All rights reserved.  The CMU software License Agreement specifies
  * the terms and conditions for use and redistribution.
  *
- *	$Id: pio.h,v 1.2 1993/05/22 08:00:27 cgd Exp $
+ *	$Id: pio.h,v 1.3 1993/06/06 04:16:22 cgd Exp $
  */
 /* 
  * HISTORY
  * $Log: pio.h,v $
- * Revision 1.2  1993/05/22 08:00:27  cgd
+ * Revision 1.3  1993/06/06 04:16:22  cgd
+ * incorporate Bruce Evans' interrupt changes, as hacked by Rod grimes,
+ * for patchkit patch 158.  it appears to work well.
+ *
+ * Revision 1.2  1993/05/22  08:00:27  cgd
  * add rcsids to everything and clean up headers
  *
  * Revision 1.1  1993/03/21  18:09:48  cgd
@@ -46,10 +50,18 @@
 	asm volatile(".byte 0x66; inl %1, %0" : "=a" (_tmp__) : "d" ((unsigned short)(y))); \
 	_tmp__; })
 
+/*
+ * only do this if it has not already be defined.. this is a crock for the
+ * patch kit for right now.  Need to clean up all the inx, outx stuff for
+ * 0.1.5 to use 1 common header file, that has Bruces fast mode inb/outb
+ * stuff in it.  Rgrimes 5/27/93
+ */
+#ifndef inb
 #define inb(y) \
 ({ unsigned char _tmp__; \
 	asm volatile("inb %1, %0" : "=a" (_tmp__) : "d" ((unsigned short)(y))); \
 	_tmp__; })
+#endif
 
 
 #define outl(x, y) \

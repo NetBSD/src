@@ -1,7 +1,7 @@
 #
 # GENERICISA -- Generic ISA machine -- distribution floppy
 #
-#	$Id: GENERICAHA,v 1.17 1993/06/03 01:30:29 cgd Exp $
+#	$Id: GENERICAHA,v 1.18 1993/06/06 04:15:35 cgd Exp $
 #
 
 machine		"i386"
@@ -56,15 +56,15 @@ device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 device		com2	at isa? port "IO_COM3" tty irq 5 vector comintr
-device		com3	at isa? port "IO_COM4" tty irq 2 vector comintr
+device		com3	at isa? port "IO_COM4" tty irq 9 vector comintr
 
 device		lpt0	at isa? port "IO_LPT3" tty irq 7 vector lptintr
 device		lpa0	at isa? port "IO_LPT1" tty
 device		lpa1	at isa? port "IO_LPT2" tty
 
-device we0 at isa? port 0x280 net irq 2 iomem 0xd0000 iosiz 8192 vector weintr
-device ne0 at isa? port 0x300 net irq 2 vector neintr
-device ec0 at isa? port 0x250 net irq 2 iomem 0xd8000 iosiz 8192 vector ecintr
+device we0 at isa? port 0x280 net irq 9 iomem 0xd0000 iosiz 8192 vector weintr
+device ne0 at isa? port 0x300 net irq 9 vector neintr
+device ec0 at isa? port 0x250 net irq 9 iomem 0xd8000 iosiz 8192 vector ecintr
 device is0 at isa? port 0x320 net irq 10 drq 7 vector isintr
 
 device		wt0	at isa? port 0x300 bio irq 5 drq 1 vector wtintr

@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.9 1993/06/03 01:30:22 cgd Exp $
+#	$Id: ALL,v 1.10 1993/06/06 04:15:29 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -62,8 +62,8 @@ device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 
 #scsi
 controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
-controller	ahb0	at isa? bio irq 12  vector ahbintr
-controller	bt0	at isa? port "IO_BT0" bio irq 12  vector btintr
+controller	ahb0	at isa? bio irq 11  vector ahbintr
+controller	bt0	at isa? port "IO_BT0" bio irq 11  vector btintr
 controller	uha0	at isa? port "IO_UHA0" bio irq 11 drq 5 vector uhaintr
 controller	scbus0
 
@@ -86,9 +86,9 @@ device	        ch1
 
 #ether
 device we0 at isa? port 0x300 net irq 10 iomem 0xd0000 iosiz 8192 vector weintr
-device ne0 at isa? port 0x300 net irq 2 vector neintr
+device ne0 at isa? port 0x300 net irq 9 vector neintr
 device is0 at isa? port 0x280 net irq 10 drq 7 vector isintr
-device ec0 at isa? port 0x250 net irq 2 iomem 0xd8000 iosiz 8192 vector ecintr
+device ec0 at isa? port 0x250 net irq 9 iomem 0xd8000 iosiz 8192 vector ecintr
 
 #pseudo-devices
 pseudo-device pty8
