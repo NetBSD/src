@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.5 1998/03/21 20:23:09 pk Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.6 1998/04/07 20:11:54 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Paul Kranenburg.  All rights reserved.
@@ -52,22 +52,6 @@
 int	lebufprint	__P((void *, const char *));
 int	lebufmatch	__P((struct device *, struct cfdata *, void *));
 void	lebufattach	__P((struct device *, struct device *, void *));
-
-int	lebuf_bus_map __P((
-		void *,			/*cookie*/
-		bus_type_t,		/*slot*/
-		bus_addr_t,		/*offset*/
-		bus_size_t,		/*size*/
-		int,			/*flags*/
-		vm_offset_t,		/*preferred virtual address */
-		bus_space_handle_t *));
-
-void	*lebuf_intr_establish __P((
-		void *,			/*cookie*/
-		int,			/*level*/
-		int,			/*flags*/
-		int (*) __P((void *)),	/*handler*/
-		void *));		/*handler arg*/
 
 struct cfattach lebuffer_ca = {
 	sizeof(struct lebuf_softc), lebufmatch, lebufattach
@@ -172,8 +156,7 @@ lebufattach(parent, self, aux)
 
 	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
-	sbt->sparc_bus_map = lebuf_bus_map;
-	sbt->sparc_intr_establish = lebuf_intr_establish;
+	sbt->parent = sc->sc_bustag;
 
 	/* search through children */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
@@ -183,36 +166,4 @@ lebufattach(parent, self, aux)
 		(void)config_found(&sc->sc_dev, (void *)&sa, lebufprint);
 	}
 #endif /* SUN4C || SUN4M */
-}
-
-/*
- * Pass-through bus map & interrupt establish routines.
- */
-int
-lebuf_bus_map(cookie, slot, offset, size, flags, vaddr, hp)
-        void *cookie;
-	bus_type_t slot;
-	bus_addr_t offset;
-	bus_size_t size;
-	int flags;
-	vm_offset_t vaddr;
-	bus_space_handle_t *hp;
-{
-	struct lebuf_softc *sc = cookie;
-
-	return (sbus_bus_map(sc->sc_bustag, slot, offset, size,
-			     flags, vaddr, hp));
-}
-
-void *
-lebuf_intr_establish(cookie, level, flags, handler, arg)
-        void *cookie;
-	int level;
-	int flags;
-	int (*handler) __P((void *));
-	void *arg;
-{
-	struct lebuf_softc *sc = cookie;
-
-	return (bus_intr_establish(sc->sc_bustag, level, flags, handler, arg));
 }
