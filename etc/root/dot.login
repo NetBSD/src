@@ -1,6 +1,6 @@
-#	$NetBSD: dot.login,v 1.7 2000/02/19 18:39:01 mycroft Exp $
+#	$NetBSD: dot.login,v 1.8 2000/02/19 19:00:13 mycroft Exp $
 
-tset -Qrm 'unknown:?unknown'
+eval `tset -sQrm 'unknown:?unknown'`
 
 # Do not display in 'su -' case
 if ( ! $?SU_FROM ) then
