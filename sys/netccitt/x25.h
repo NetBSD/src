@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)x25.h	7.8 (Berkeley) 5/29/91
+ *	from: @(#)x25.h	7.8 (Berkeley) 5/29/91
+ *	$Id: x25.h,v 1.3 1993/05/20 04:12:26 cgd Exp $
  */
 
 #ifndef _NETCCITT_X25_H_

@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pk_acct.c	7.6 (Berkeley) 6/26/91
+ *	from: @(#)pk_acct.c	7.6 (Berkeley) 6/26/91
+ *	$Id: pk_acct.c,v 1.2 1993/05/20 04:12:15 cgd Exp $
  */
 
 #include "param.h"
