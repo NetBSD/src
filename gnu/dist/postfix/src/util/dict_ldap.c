@@ -151,6 +151,10 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
     void    (*saved_alarm) (int);
     int     rc = 0;
 
+#ifdef LDAP_API_FEATURE_X_MEMCACHE
+    LDAPMemCache *dircache;
+#endif
+
 #ifdef LDAP_OPT_NETWORK_TIMEOUT
     struct timeval mytimeval;
 
@@ -162,7 +166,7 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
 	msg_info("%s: Connecting to server %s", myname,
 		 dict_ldap->server_host);
 
-#ifdef UNTESTED_LDAP_OPT_NETWORK_TIMEOUT
+#ifdef LDAP_OPT_NETWORK_TIMEOUT
     dict_ldap->ld = ldap_init(dict_ldap->server_host,
 			      (int) dict_ldap->server_port);
     if (dict_ldap->ld == NULL) {
@@ -247,6 +251,27 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
 		 myname, dict_ldap->cache_size, dict_ldap->ldapsource,
 		 dict_ldap->cache_expiry);
 
+#ifdef LDAP_API_FEATURE_X_MEMCACHE
+	rc = ldap_memcache_init(dict_ldap->cache_expiry, dict_ldap->cache_size,
+				NULL, NULL, &dircache);
+	if (rc != LDAP_SUCCESS) {
+	    msg_warn
+		("%s: Unable to configure cache for %s: %d (%s) -- continuing",
+		 myname, dict_ldap->ldapsource, rc, ldap_err2string(rc));
+	} else {
+	    rc = ldap_memcache_set(dict_ldap->ld, dircache);
+	    if (rc != LDAP_SUCCESS) {
+		msg_warn
+		    ("%s: Unable to configure cache for %s: %d (%s) -- continuing",
+		     myname, dict_ldap->ldapsource, rc, ldap_err2string(rc));
+	    } else {
+		if (msg_verbose)
+		    msg_info("%s: Caching enabled for %s",
+			      myname, dict_ldap->ldapsource);
+	    }
+	}
+#else
+
 	rc = ldap_enable_cache(dict_ldap->ld, dict_ldap->cache_expiry,
 			       dict_ldap->cache_size);
 	if (rc != LDAP_SUCCESS) {
@@ -258,6 +283,8 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
 		msg_info("%s: Caching enabled for %s",
 			 myname, dict_ldap->ldapsource);
 	}
+
+#endif
     }
     if (msg_verbose)
 	msg_info("%s: Cached connection handle for LDAP source %s",
@@ -315,7 +342,7 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage * res,
 		if (strcasecmp(dict_ldap->result_attributes->argv[i],
 			       attr) == 0) {
 		    if (msg_verbose)
-			msg_info("%s: search returned value(s) for requested result attribute %s", myname, attr);
+			msg_info("%s: search returned %d value(s) for requested result attribute %s", myname, i, attr);
 		    break;
 		}
 	    }
@@ -390,7 +417,7 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
      * load on the LDAP server.
      */
     if (dict_ldap->domain) {
-	char *p=strrchr(name,'@');
+	const char *p=strrchr(name,'@');
 	if (p != 0)
 	    p=p+1;
 	else
@@ -482,7 +509,7 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
     /*
      * Does the supplied query_filter even include a substitution?
      */
-    if ((char *) strstr(dict_ldap->query_filter, "%s") == NULL) {
+    if ((char *) strchr(dict_ldap->query_filter, '%') == NULL) {
 
 	/*
 	 * No, log the fact and continue.
@@ -494,21 +521,40 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
 
 	/*
 	 * Yes, replace all instances of %s with the address to look up.
+	 * Replace %u with the user portion, and %d with the domain portion.
 	 */
 	sub = dict_ldap->query_filter;
 	end = sub + strlen(dict_ldap->query_filter);
 	while (sub < end) {
 
 	    /*
-	     * Make sure it's %s and not something else, though it wouldn't
-	     * really matter; the token could be any single character.
+	     * Make sure it's %[sud] and not something else.  For backward
+	     * compatibilty, treat anything other than %u or %d as %s, with
+	     * a warning.
 	     */
 	    if (*(sub) == '%') {
-		if ((sub + 1) != end && *(sub + 1) != 's')
-		    msg_warn
-			("%s: Invalid lookup substitution format '%%%c'!",
-			 myname, *(sub + 1));
-		vstring_strcat(filter_buf, vstring_str(escaped_name));
+		char *u=vstring_str(escaped_name);
+		char *p=strchr(u,'@');
+		switch (*(sub+1)) { 
+		    case 'd':
+			if (p)
+			    vstring_strcat(filter_buf, p+1);
+			break;
+		    case 'u':
+			if (p)
+			    vstring_strncat(filter_buf, u, p-u);
+			else
+			    vstring_strcat(filter_buf, u);
+			break;
+		    default:
+			msg_warn
+			    ("%s: Invalid lookup substitution format '%%%c'!",
+			     myname, *(sub + 1));
+			/* fall through */
+		    case 's':
+			vstring_strcat(filter_buf, u);
+			break;
+		}
 		sub++;
 	    } else
 		vstring_strncat(filter_buf, sub, 1);
@@ -607,7 +653,8 @@ static void dict_ldap_close(DICT *dict)
     myfree(dict_ldap->ldapsource);
     myfree(dict_ldap->server_host);
     myfree(dict_ldap->search_base);
-    match_list_free(dict_ldap->domain);
+    if (dict_ldap->domain)
+	match_list_free(dict_ldap->domain);
     myfree(dict_ldap->query_filter);
     argv_free(dict_ldap->result_attributes);
     myfree(dict_ldap->bind_dn);
@@ -626,14 +673,14 @@ DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
     char   *scope;
     char   *attr;
 
+    if (msg_verbose)
+	msg_info("%s: Using LDAP source %s", myname, ldapsource);
+
     dict_ldap = (DICT_LDAP *) dict_alloc(DICT_TYPE_LDAP, ldapsource,
 					 sizeof(*dict_ldap));
     dict_ldap->dict.lookup = dict_ldap_lookup;
     dict_ldap->dict.close = dict_ldap_close;
     dict_ldap->dict.flags = dict_flags | DICT_FLAG_FIXED;
-
-    if (msg_verbose)
-	msg_info("%s: Using LDAP source %s", myname, ldapsource);
 
     dict_ldap->ldapsource = mystrdup(ldapsource);
 
