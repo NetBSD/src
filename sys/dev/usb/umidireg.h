@@ -1,4 +1,4 @@
-/*	$NetBSD: umidireg.h,v 1.1 2001/01/30 23:26:48 tshiozak Exp $	*/
+/*	$NetBSD: umidireg.h,v 1.2 2001/05/28 20:52:06 tshiozak Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,6 +36,7 @@
  */
 
 /* Jack Descriptor */
+#define UMIDI_MS_HEADER	0x01
 #define UMIDI_IN_JACK	0x02
 #define UMIDI_OUT_JACK	0x03
 

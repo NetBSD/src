@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.7 2001/05/25 19:33:36 tshiozak Exp $	*/
+/*	$NetBSD: umidi.c,v 1.8 2001/05/28 20:52:06 tshiozak Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -402,7 +402,7 @@ alloc_all_endpoints(struct umidi_softc *sc)
 		return err;
 
 	ep = sc->sc_endpoints;
-	for (i=sc->sc_out_num_jacks+sc->sc_in_num_jacks; i>0; i--) {
+	for (i=sc->sc_out_num_endpoints+sc->sc_in_num_endpoints; i>0; i--) {
 		err = alloc_pipe(ep++);
 		if (err!=USBD_NORMAL_COMPLETION) {
 			for (; ep!=sc->sc_endpoints; ep--)
@@ -419,7 +419,7 @@ static void
 free_all_endpoints(struct umidi_softc *sc)
 {
 	int i;
-	for (i=0; i<sc->sc_in_num_jacks+sc->sc_out_num_jacks; i++)
+	for (i=0; i<sc->sc_in_num_endpoints+sc->sc_out_num_endpoints; i++)
 	    free_pipe(&sc->sc_endpoints[i]);
 	free(sc->sc_endpoints, M_USBDEV);
 	sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
@@ -518,19 +518,35 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 {
 	/* This driver currently supports max 1in/1out bulk endpoints */
 	usb_descriptor_t *desc;
-	int out_ep, in_ep, out_addr, in_addr;
+	usb_endpoint_descriptor_t *epd;
+	int out_addr, in_addr, i;
+	int dir;
 	size_t remain, descsize;
 
-	/* count jacks */
+	sc->sc_out_num_jacks = sc->sc_in_num_jacks = 0;
+	out_addr = in_addr = 0;
+
+	/* detect endpoints */
 	desc = TO_D(usbd_get_interface_descriptor(sc->sc_iface));
-	desc = NEXT_D(desc); /* ifd -> csifd */
-	remain = ((size_t)UGETW(TO_CSIFD(desc)->wTotalLength) -
-		  (size_t)desc->bLength);
+	for (i=(int)TO_IFD(desc)->bNumEndpoints-1; i>=0; i--) {
+		epd = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
+		if (UE_GET_XFERTYPE(epd->bmAttributes) == UE_BULK) {
+			dir = UE_GET_DIR(epd->bEndpointAddress);
+			if (dir==UE_DIR_OUT && !out_addr)
+				out_addr = epd->bEndpointAddress;
+			else if (dir==UE_DIR_IN && !in_addr)
+				in_addr = epd->bEndpointAddress;
+		}
+	}
 	desc = NEXT_D(desc);
 
-	sc->sc_out_num_jacks = sc->sc_in_num_jacks = 0;
-	out_ep = in_ep = -1;
-	out_addr = in_addr = -1;
+	/* count jacks */
+	if (!(desc->bDescriptorType==UDESC_CS_INTERFACE &&
+	      desc->bDescriptorSubtype==UMIDI_MS_HEADER))
+		return USBD_INVAL;
+	remain = (size_t)UGETW(TO_CSIFD(desc)->wTotalLength) -
+		(size_t)desc->bLength;
+	desc = NEXT_D(desc);
 
 	while (remain>=sizeof(usb_descriptor_t)) {
 		descsize = desc->bLength;
@@ -542,36 +558,23 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 				sc->sc_out_num_jacks++;
 			else if (desc->bDescriptorSubtype==UMIDI_IN_JACK)
 				sc->sc_in_num_jacks++;
-		} else if (desc->bDescriptorType==UDESC_ENDPOINT &&
-			   remain>=USB_ENDPOINT_DESCRIPTOR_SIZE &&
-			   (UE_GET_XFERTYPE(TO_EPD(desc)->bmAttributes)
-			    == UE_BULK)) {
-			if ((UE_GET_DIR(TO_EPD(desc)->bEndpointAddress)
-			     ==UE_DIR_OUT) &&
-			    out_addr==-1)
-				out_addr = TO_EPD(desc)->bEndpointAddress;
-			else if ((UE_GET_DIR(TO_EPD(desc)->bEndpointAddress)
-			     ==UE_DIR_IN) &&
-			    in_addr==-1)
-				in_addr = TO_EPD(desc)->bEndpointAddress;
 		}
-			   
 		desc = NEXT_D(desc);
 		remain-=descsize;
 	}
 
-	/* validate some parameter */
+	/* validate some parameters */
 	if (sc->sc_out_num_jacks>UMIDI_MAX_EPJACKS)
 		sc->sc_out_num_jacks = UMIDI_MAX_EPJACKS;
 	if (sc->sc_in_num_jacks>UMIDI_MAX_EPJACKS)
 		sc->sc_in_num_jacks = UMIDI_MAX_EPJACKS;
-	if (sc->sc_out_num_jacks && out_addr!=-1) {
+	if (sc->sc_out_num_jacks && out_addr) {
 		sc->sc_out_num_endpoints = 1;
 	} else {
 		sc->sc_out_num_endpoints = 0;
 		sc->sc_out_num_jacks = 0;
 	}
-	if (sc->sc_in_num_jacks && in_addr!=-1) {
+	if (sc->sc_in_num_jacks && in_addr) {
 		sc->sc_in_num_endpoints = 1;
 	} else {
 		sc->sc_in_num_endpoints = 0;
@@ -786,7 +789,7 @@ bind_jacks_to_mididev(struct umidi_softc *sc,
 		      struct umidi_jack *in_jack,
 		      struct umidi_mididev *mididev)
 {
-	if (out_jack->binded || in_jack->binded)
+	if ((out_jack && out_jack->binded) || (in_jack && in_jack->binded))
 		return USBD_IN_USE;
 	if (mididev->out_jack || mididev->in_jack)
 		return USBD_IN_USE;
