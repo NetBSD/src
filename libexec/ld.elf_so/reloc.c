@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.36 2001/06/19 01:11:03 fvdl Exp $	 */
+/*	$NetBSD: reloc.c,v 1.37 2001/07/15 01:44:10 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@ _rtld_do_copy_relocation(dstobj, rela, dodebug)
 	unsigned long   hash = _rtld_elf_hash(name);
 	size_t          size = dstsym->st_size;
 	const void     *srcaddr;
-	const Elf_Sym  *srcsym;
+	const Elf_Sym  *srcsym = NULL;
 	Obj_Entry      *srcobj;
 
 	for (srcobj = dstobj->next; srcobj != NULL; srcobj = srcobj->next)
@@ -163,8 +163,8 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym   *def;
 	const Obj_Entry *defobj;
-#if defined(__alpha__) || defined(__i386__) || defined(__m68k__) || \
-    defined(__powerpc__) || defined(__vax__)
+#if defined(__alpha__) || defined(__arm__) || defined(__i386__) || \
+    defined(__m68k__) || defined(__powerpc__) || defined(__vax__)
 	Elf_Addr         tmp;
 #endif
 
@@ -416,6 +416,76 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    (void *)*where));
 		break;
 #endif /* __powerpc__ */
+
+#if defined(__arm__)
+	case R_TYPE(GLOB_DAT):	/* word32 B + S */
+		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
+		    &defobj, false);
+		if (def == NULL)
+			return -1;
+		*where = (Elf_Addr)(defobj->relocbase + def->st_value);
+		rdbg(dodebug, ("GLOB_DAT %s in %s --> %p in %s",
+		    defobj->strtab + def->st_name, obj->path,
+		    (void *)*where, defobj->path));
+		break;
+
+	case R_TYPE(COPY):
+		rdbg(dodebug, ("COPY"));
+		break;
+
+	case R_TYPE(JUMP_SLOT):
+		rdbg(dodebug, ("JUMP_SLOT"));
+		break;
+
+	case R_TYPE(ABS32):	/* word32 B + S + A */
+		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
+		    &defobj, false);
+		if (def == NULL)
+			return -1;
+		*where += (Elf_Addr)obj->relocbase + def->st_value;
+		rdbg(dodebug, ("ABS32 %s in %s --> %p in %s",
+		    defobj->strtab + def->st_name, obj->path,
+		    (void *)*where, defobj->path));
+		break;
+
+	case R_TYPE(RELATIVE):	/* word32 B + A */
+		*where += (Elf_Addr)obj->relocbase;
+		rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
+		    (void *)*where));
+		break;
+
+	case R_TYPE(PC24): {	/* word32 S - P + A */
+		Elf32_Sword addend;
+
+		/*
+		 * Extract addend and sign-extend if needed.
+		 */
+		addend = *where;
+		if (addend & 0x00800000)
+			addend |= 0xff000000;
+
+		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
+		    &defobj, false);
+		if (def == NULL)
+			return -1;
+		tmp = (Elf_Addr)obj->relocbase + def->st_value
+		    - (Elf_Addr)where + (addend << 2);
+		if ((tmp & 0xfe000000) != 0xfe000000 && (tmp & 0xfe000000) != 0) {
+			_rtld_error(
+			"%s: R_ARM_PC24 relocation @ %p to %s failed "
+			"(displacement %ld (%#lx) out of range)",
+			    obj->path, where, defobj->strtab + def->st_name,
+			    (long) tmp, (long) tmp);
+			return -1;
+		}
+		tmp >>= 2;
+		*where = (*where & 0xff000000) | (tmp & 0x00ffffff);
+		rdbg(dodebug, ("PC24 %s in %s --> %p in %s",
+		    defobj->strtab + def->st_name, obj->path,
+		    (void *)*where, defobj->path));
+		break;
+	}
+#endif
 
 	default:
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
