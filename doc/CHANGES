@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.94 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.95 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -270,6 +270,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		(NEC-R96).  [tsutsui 20030131]
 	Add extensible kernel malloc types, adapted from FreeBSD.
 		[thorpej 20030131]
+	kernel: Added a sysctl(8) flag to control whether the kernel dumps
+		to the dump device on panic.  [atatat 20030210]
 	inetd(8): Use kqueue(2) for enhanced performance and scalability.
 		[tron 20030212]
 	/etc/security, security.conf(5): Allow more flexibility in warnings
