@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.29 2000/03/25 15:08:26 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.30 2000/05/02 17:50:52 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -212,7 +212,7 @@ device tx39clock
 attach tx39clock at txsim
 file arch/hpcmips/tx/tx39clock.c	tx39clock
 
-device tx3912video: mainbus	# XXX crazy XXX
+device tx3912video: hpcfbif
 attach tx3912video at txsim
 file arch/hpcmips/tx/tx3912video.c	tx3912video
 
@@ -298,7 +298,7 @@ device plumpower
 attach plumpower at plumif
 file arch/hpcmips/dev/plumpower.c	plumpower
 
-device plumvideo: mainbus	# XXX crazy XXX
+device plumvideo: hpcfbif
 attach plumvideo at plumif
 file arch/hpcmips/dev/plumvideo.c	plumvideo
 
