@@ -1,4 +1,4 @@
-/*	$NetBSD: ul.c,v 1.5 1997/10/14 01:40:26 lukem Exp $	*/
+/*	$NetBSD: ul.c,v 1.6 1997/10/20 02:08:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ul.c,v 1.5 1997/10/14 01:40:26 lukem Exp $");
+__RCSID("$NetBSD: ul.c,v 1.6 1997/10/20 02:08:29 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -115,7 +115,7 @@ main(argc, argv)
 	termtype = getenv("TERM");
 	if (termtype == NULL || (argv[0][0] == 'c' && !isatty(1)))
 		termtype = "lpr";
-	while ((c=getopt(argc, argv, "it:T:")) != EOF)
+	while ((c=getopt(argc, argv, "it:T:")) != -1)
 		switch(c) {
 
 		case 't':
@@ -387,7 +387,7 @@ void
 initbuf()
 {
 
-	bzero((char *)obuf, sizeof (obuf));	/* depends on NORMAL == 0 */
+	memset((char *)obuf, 0, sizeof (obuf));	/* depends on NORMAL == 0 */
 	col = 0;
 	maxcol = 0;
 	mode &= ALTSET;
