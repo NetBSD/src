@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.18 1999/07/01 08:12:49 itojun Exp $	*/
+/*	$NetBSD: route.h,v 1.19 1999/07/30 10:35:39 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -297,9 +297,6 @@ void	 rt_timer_remove_all __P((struct rtentry *));
 void	 rt_timer_timer __P((void *));
 void	 rtable_init __P((void **));
 void	 rtalloc __P((struct route *));
-#if 1 /*for INET6*/
-void	 rtcalloc __P((struct route *));
-#endif
 struct rtentry *
 	 rtalloc1 __P((struct sockaddr *, int));
 void	 rtfree __P((struct rtentry *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.c,v 1.4 1999/07/06 12:23:20 itojun Exp $	*/
+/*	$NetBSD: ip_ecn.c,v 1.5 1999/07/30 10:35:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -55,7 +55,6 @@
 #ifndef INET
 #include <netinet/in.h>
 #endif
-#include <netinet6/in6_systm.h>
 #include <netinet/ip6.h>
 #endif
 

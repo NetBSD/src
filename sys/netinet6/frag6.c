@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.4 1999/07/04 02:01:15 itojun Exp $	*/
+/*	$NetBSD: frag6.c,v 1.5 1999/07/30 10:35:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,7 +46,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <netinet6/in6_pcb.h>

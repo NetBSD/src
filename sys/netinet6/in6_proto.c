@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.6 1999/07/27 06:23:57 explorer Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.7 1999/07/30 10:35:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -83,7 +83,6 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
-#include <netinet6/in6_systm.h>
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || (defined(__NetBSD__) && !defined(TCP6))
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
