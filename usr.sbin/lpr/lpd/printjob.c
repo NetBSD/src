@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.12 1997/03/22 03:20:38 lukem Exp $	*/
+/*	$NetBSD: printjob.c,v 1.13 1997/07/10 06:28:58 mikel Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
+#else
+static char rcsid[] = "$NetBSD";
+#endif
 #endif /* not lint */
 
 
@@ -311,7 +315,7 @@ printit(file)
 	 */
 	for (i = 0; i < 4; i++)
 		strncpy(fonts[i], ifonts[i], FONTLEN);
-	(void)snprintf(&width[2], sizeof(width) - 2, "%d", PW);
+	(void)snprintf(&width[2], sizeof(width) - 2, "%ld", PW);
 	indent[2] = '0';
 	indent[3] = '\0';
 
@@ -678,7 +682,7 @@ start:
 	tof = 0;
 
 	/* Copy filter output to "lf" logfile */
-	if (fp = fopen(tempfile, "r")) {
+	if ((fp = fopen(tempfile, "r")) != NULL) {
 		while (fgets(buf, sizeof(buf), fp))
 			fputs(buf, stderr);
 		fclose(fp);
@@ -752,7 +756,7 @@ sendit(file)
 		}
 		if (line[0] >= 'a' && line[0] <= 'z') {
 			strncpy(last, line, sizeof(last) - 1);
-			while (i = getline(cfp))
+			while ((i = getline(cfp)) != 0)
 				if (strcmp(last, line))
 					break;
 			switch (sendfile('\3', last+1)) {
@@ -957,8 +961,10 @@ scan_out(scfd, scsp, dlm)
 				for (j = WIDTH; --j;)
 					*strp++ = BACKGND;
 			else
-				strp = scnline(scnkey[c][scnhgt-1-d], strp, cc);
-			if (*sp == dlm || *sp == '\0' || nchrs++ >= PW/(WIDTH+1)-1)
+				strp = scnline(scnkey[(int)c][scnhgt-1-d],
+				    strp, cc);
+			if (*sp == dlm || *sp == '\0' ||
+			    nchrs++ >= PW/(WIDTH+1)-1)
 				break;
 			*strp++ = BACKGND;
 			*strp++ = BACKGND;
@@ -1081,7 +1087,7 @@ dofork(action)
 		if (pid == 0) {
 			pw = getpwuid(DU);
 			if (pw == 0) {
-				syslog(LOG_ERR, "uid %d not in password file",
+				syslog(LOG_ERR, "uid %ld not in password file",
 				    DU);
 				break;
 			}
@@ -1154,18 +1160,18 @@ init()
 		FF = DEFFF;
 	if (cgetnum(bp, "pw", &PW) < 0)
 		PW = DEFWIDTH;
-	(void)snprintf(&width[2], sizeof(width) - 2, "%d", PW);
+	(void)snprintf(&width[2], sizeof(width) - 2, "%ld", PW);
 	if (cgetnum(bp, "pl", &PL) < 0)
 		PL = DEFLENGTH;
-	(void)snprintf(&length[2], sizeof(length) - 2, "%d", PL);
+	(void)snprintf(&length[2], sizeof(length) - 2, "%ld", PL);
 	if (cgetnum(bp,"px", &PX) < 0)
 		PX = 0;
-	(void)snprintf(&pxwidth[2], sizeof(pxwidth) - 2, "%d", PX);
+	(void)snprintf(&pxwidth[2], sizeof(pxwidth) - 2, "%ld", PX);
 	if (cgetnum(bp, "py", &PY) < 0)
 		PY = 0;
-	(void)snprintf(&pxlength[2], sizeof(pxlength) - 2, "%d", PY);
+	(void)snprintf(&pxlength[2], sizeof(pxlength) - 2, "%ld", PY);
 	cgetstr(bp, "rm", &RM);
-	if (s = checkremote())
+	if ((s = checkremote()) != NULL)
 		syslog(LOG_WARNING, s);
 
 	cgetstr(bp, "af", &AF);
