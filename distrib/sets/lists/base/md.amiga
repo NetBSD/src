@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.47 2001/12/17 05:54:25 mhitch Exp $
+# $NetBSD: md.amiga,v 1.48 2002/04/06 02:03:23 heinz Exp $
 ./boot.amiga				base-sysutil-bin
 ./sbin/binpatch				base-sysutil-root
 ./usr/mdec/boot.amiga			base-sysutil-bin
@@ -12,5 +12,7 @@
 ./usr/share/keymaps/amiga/din.map	base-sys-share
 ./usr/share/keymaps/amiga/es.map	base-sys-share
 ./usr/share/keymaps/amiga/fr.map	base-sys-share
+./usr/share/keymaps/amiga/pl_din.map	base-sys-share
+./usr/share/keymaps/amiga/pl_us.map	base-sys-share
 ./usr/share/keymaps/amiga/sw.map	base-sys-share
 ./usr/share/keymaps/amiga/us.map	base-sys-share
