@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.1 1998/04/15 00:50:14 mjacob Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.2 1998/04/15 01:18:17 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.1 1998/04/15 00:50:14 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.2 1998/04/15 01:18:17 mjacob Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,7 +137,7 @@ pci_kn300_pickintr(ccp, first)
 		if (mcpcia_eisaccp) {
 			printf("Huh? There's only supposed to be one eisa!\n");
 		}
-		sio_intr_setup(iot);
+		sio_intr_setup(pc, iot);
 		kn300_enable_intr(ccp, KN300_PCEB_IRQ);
 		mcpcia_eisaccp = ccp;
 		dec_kn300_cons_init();	/* XXXXXXXXXXXXXXXXXXX */
