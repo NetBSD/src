@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.h,v 1.7.4.4 1999/07/02 00:24:41 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.h,v 1.7.4.5 1999/07/02 18:32:19 thorpej Exp $	*/
 
 /*
  *
@@ -65,7 +65,6 @@ struct uvm_vnode {
 /*
  * u_flags values
  */
-#ifdef UBC
 #define UVM_VNODE_RELKILL	VXLOCK
 #define UVM_VNODE_WANTED	VXWANT
 #define UVM_VNODE_IOSYNCWANTED	VBWAIT
@@ -74,31 +73,5 @@ struct uvm_vnode {
 #define UVM_VNODE_BLOCKED	VXLOCK
 
 #define UVM_VNODE_ALOCK		VXLOCK
-
-#else
-#define UVM_VNODE_VALID		0x001	/* we are attached to the vnode */
-#define UVM_VNODE_CANPERSIST	0x002	/* we can persist after ref == 0 */
-#define UVM_VNODE_ALOCK		0x004	/* uvn_attach is locked out */
-#define UVM_VNODE_DYING		0x008	/* final detach/terminate in 
-					   progress */
-#define UVM_VNODE_RELKILL	0x010	/* uvn should be killed by releasepg
-					   when final i/o is done */
-#define UVM_VNODE_WANTED	0x020	/* someone is waiting for alock,
-					   dying, or relkill to clear */
-#define UVM_VNODE_VNISLOCKED	0x040	/* underlying vnode struct is locked
-					   (valid when DYING is true) */
-#define UVM_VNODE_IOSYNC	0x080	/* I/O sync in progress ... setter
-					   sleeps on &uvn->u_nio */
-#define UVM_VNODE_IOSYNCWANTED	0x100	/* a process is waiting for the
-					   i/o sync to clear so it can do
-					   i/o */
-#define UVM_VNODE_WRITEABLE	0x200	/* uvn has pages that are writeable */
-
-/*
- * UVM_VNODE_BLOCKED: any condition that should new processes from
- * touching the vnode [set WANTED and sleep to wait for it to clear]
- */
-#define UVM_VNODE_BLOCKED (UVM_VNODE_ALOCK|UVM_VNODE_DYING|UVM_VNODE_RELKILL)
-#endif /* UBC */
 
 #endif /* _UVM_UVM_VNODE_H_ */
