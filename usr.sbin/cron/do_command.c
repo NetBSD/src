@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.9 2001/08/13 06:54:58 yamt Exp $	*/
+/*	$NetBSD: do_command.c,v 1.10 2002/03/23 09:38:02 jdolecek Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.9 2001/08/13 06:54:58 yamt Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.10 2002/03/23 09:38:02 jdolecek Exp $");
 #endif
 #endif
 
@@ -158,6 +158,11 @@ child_process(e, u)
 			if (!(escaped = (ch == '\\'))) {
 				*p++ = ch;
 			}
+		}
+		if (ch == '\0') {
+			/* move pointer back, so that code below
+			 * won't think we encountered % sequence */
+			input_data--;
 		}
 		if (escaped)
 			*p++ = '\\';
