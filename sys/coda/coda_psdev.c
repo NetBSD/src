@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.6 1998/09/26 15:24:46 tv Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.7 1998/09/28 17:55:22 rvb Exp $	*/
 
 /*
  * 
@@ -52,6 +52,11 @@
 /*
  * HISTORY
  * $Log: coda_psdev.c,v $
+ * Revision 1.7  1998/09/28 17:55:22  rvb
+ * I want to distinguish from DEBUG printouts and CODA_VERBOSE printouts.
+ * The latter are normal informational messages that are sometimes
+ * interesting to view.
+ *
  * Revision 1.6  1998/09/26 15:24:46  tv
  * DIAGNOSTIC -> DEBUG for all non-panic messages.  DIAGNOSTIC is only for
  * sanity checks and should not turn on any messages not already printed
@@ -637,12 +642,12 @@ coda_call(mntinfo, inSize, outSize, buffer)
 	    if (error == 0)
 	    	break;
 	    else if (error == EWOULDBLOCK) {
-#ifdef	DEBUG
+#ifdef	CODA_VERBOSE
 		    printf("coda_call: tsleep TIMEOUT %d sec\n", 2+2*i);
 #endif
     	    } else if (sigismember(&p->p_siglist, SIGIO)) {
 		    sigaddset(&p->p_sigmask, SIGIO);
-#ifdef	DEBUG
+#ifdef	CODA_VERBOSE
 		    printf("coda_call: tsleep returns %d SIGIO, cnt %d\n", error, i);
 #endif
 	    } else {
@@ -650,7 +655,7 @@ coda_call(mntinfo, inSize, outSize, buffer)
 		    tmp = p->p_siglist;		/* array assignment */
 		    sigminusset(&p->p_sigmask, &tmp);
 
-#ifdef	DEBUG
+#ifdef	CODA_VERBOSE
 		    printf("coda_call: tsleep returns %d, cnt %d\n", error, i);
 		    printf("coda_call: siglist = %x.%x.%x.%x, sigmask = %x.%x.%x.%x, mask %x.%x.%x.%x\n",
 			    p->p_siglist.__bits[0], p->p_siglist.__bits[1],
@@ -683,7 +688,9 @@ coda_call(mntinfo, inSize, outSize, buffer)
 
 	    else if (!(vmp->vm_flags & VM_READ)) { 
 		/* Interrupted before venus read it. */
-#ifndef	DEBUG
+#ifdef	CODA_VERBOSE
+		if (1)
+#else
 		if (codadebug)
 #endif
 		    myprintf(("interrupted before read: op = %d.%d, flags = %x\n",
@@ -699,7 +706,9 @@ coda_call(mntinfo, inSize, outSize, buffer)
 		struct coda_in_hdr *dog;
 		struct vmsg *svmp;
 		
-#ifndef	DEBUG
+#ifdef	CODA_VERBOSE
+		if (1)
+#else
 		if (codadebug)
 #endif
 		    myprintf(("Sending Venus a signal: op = %d.%d, flags = %x\n",
