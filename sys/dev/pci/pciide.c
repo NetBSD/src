@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.68.2.28 2001/11/13 21:52:44 he Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68.2.29 2002/01/05 18:05:58 he Exp $	*/
 
 
 /*
@@ -2343,6 +2343,10 @@ cmd0643_9_chip_map(sc, pa)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		switch (sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_CMDTECH_649:
+			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+			sc->sc_wdcdev.UDMA_cap = 5;
+			sc->sc_wdcdev.irqack = cmd646_9_irqack;
+			break;
 		case PCI_PRODUCT_CMDTECH_648:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 			sc->sc_wdcdev.UDMA_cap = 4;
