@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.26 2000/12/25 10:27:28 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.27 2000/12/27 07:52:00 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.26 2000/12/25 10:27:28 sato Exp $";
+    "$Id: hpcfb.c,v 1.27 2000/12/27 07:52:00 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -882,7 +882,7 @@ hpcfb_pollc(v, on)
 	struct hpcfb_softc *sc = v;
 
 	sc->sc_polling = on;
-	if (sc && sc->sc_accessops->iodone 
+	if (sc && sc->sc_accessops->iodone)
 		(*sc->sc_accessops->iodone)(sc->sc_accessctx);
 
 	return;
