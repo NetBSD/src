@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.1 1996/01/31 23:17:16 mark Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.2 1996/03/27 22:42:31 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -38,9 +38,6 @@
  * Machine dependant syscalls
  *
  * Created      : 10/01/96
- * Last updated : 10/01/96
- *
- *    $Id: sys_machdep.c,v 1.1 1996/01/31 23:17:16 mark Exp $
  */
 
 #include <sys/types.h>

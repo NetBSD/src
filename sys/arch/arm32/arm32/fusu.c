@@ -1,4 +1,4 @@
-/* $NetBSD: fusu.c,v 1.1 1996/01/31 23:15:59 mark Exp $ */
+/* $NetBSD: fusu.c,v 1.2 1996/03/27 22:42:08 mark Exp $ */
 
 /*
  * Copyright (C) 1993 Wolfgang Solfrank.
@@ -29,8 +29,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: fusu.c,v 1.1 1996/01/31 23:15:59 mark Exp $
  */
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.1 1996/01/31 23:16:45 mark Exp $ */
+/* $NetBSD: process_machdep.c,v 1.2 1996/03/27 22:42:26 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -41,8 +41,6 @@
  *
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
- *
- *	$Id: process_machdep.c,v 1.1 1996/01/31 23:16:45 mark Exp $
  */
 
 /*

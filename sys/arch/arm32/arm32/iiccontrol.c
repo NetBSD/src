@@ -1,4 +1,4 @@
-/* $NetBSD: iiccontrol.c,v 1.1 1996/01/31 23:16:04 mark Exp $ */
+/* $NetBSD: iiccontrol.c,v 1.2 1996/03/27 22:42:14 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,11 +41,8 @@
  * Routines to communicate with IIC bus devices
  *
  * Created      : 13/10/94
- * Last updated : 28/08/95
  *
  * Based of kate/display/iiccontrol.c
- *
- *    $Id: iiccontrol.c,v 1.1 1996/01/31 23:16:04 mark Exp $
  */
 
 #include <sys/types.h>

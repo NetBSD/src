@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_glue.c,v 1.1 1996/01/31 23:16:15 mark Exp $	*/
+/*	$NetBSD: kgdb_glue.c,v 1.2 1996/03/27 22:42:16 mark Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -29,8 +29,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: kgdb_glue.c,v 1.1 1996/01/31 23:16:15 mark Exp $
  */
 
 #include <sys/param.h>
