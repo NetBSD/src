@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.118.2.8 2000/02/10 21:45:50 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.118.2.9 2000/05/22 21:29:28 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2614,6 +2614,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C598 (Apollo MVP3) Host-PCI",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_ISA,
+	    0,
+	    "VIA Technologies",
+	    "VT82C686A (Apollo KX133) PCI-ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C691,
 	    0,
 	    "VIA Technologies",
@@ -2672,6 +2678,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT3043 (Rhine) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
+	    0,
+	    "VIA Technologies",
+	    "VT82C686A (Apollo KX133) SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AUD,
+	    0,
+	    "VIA Technologies",
+	    "VT82C686A (Apollo KX133) AC-97 Audio Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
