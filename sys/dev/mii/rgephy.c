@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.3 2005/02/04 15:17:31 kanaoka Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.4 2005/02/08 05:52:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.3 2005/02/04 15:17:31 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.4 2005/02/08 05:52:31 yamt Exp $");
 
 
 /*
@@ -436,8 +436,6 @@ rgephy_load_dspcode(struct mii_softc *sc)
 {
 	int val;
 
-
-	  
 #if 1
 	PHY_WRITE(sc, 31, 0x0001);
 	PHY_WRITE(sc, 21, 0x1000);
@@ -525,10 +523,6 @@ rgephy_load_dspcode(struct mii_softc *sc)
 #endif
 	
 	DELAY(40);
-
-	printf(" complete\n");
-	
-
 }
 
 static void
