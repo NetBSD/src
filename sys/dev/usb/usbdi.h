@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.12 1998/12/26 12:53:04 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.13 1998/12/29 03:09:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -216,6 +216,9 @@ usbd_status usbd_do_request
 	__P((usbd_device_handle pipe, usb_device_request_t *req, void *data));
 usbd_status usbd_do_request_async
 	__P((usbd_device_handle pipe, usb_device_request_t *req, void *data));
+usbd_status usbd_do_request_flags
+	__P((usbd_device_handle pipe, usb_device_request_t *req, 
+	     void *data, u_int16_t flags));
 usb_interface_descriptor_t *usbd_get_interface_descriptor
 	__P((usbd_interface_handle iface));
 usb_config_descriptor_t *usbd_get_config_descriptor
@@ -246,9 +249,11 @@ struct usb_attach_arg {
 	int			port;
 	int			configno;
 	int			ifaceno;
-	struct usbd_device     *device;
-	struct usbd_interface  *iface;
+	usbd_device_handle	device;	/* current device */
+	usbd_interface_handle	iface; /* current interface */
 	int			usegeneric;
+	usbd_interface_handle  *ifaces;	/* all interfaces */
+	int			nifaces; /* number of interfaces */
 };
 
 #if defined(__NetBSD__)
