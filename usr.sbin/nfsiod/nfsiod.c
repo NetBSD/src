@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsiod.c,v 1.14 1997/10/17 11:54:37 lukem Exp $	*/
+/*	$NetBSD: nfsiod.c,v 1.15 1998/07/13 05:43:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)nfsiod.c	8.4 (Berkeley) 5/3/95"
 #else
-__RCSID("$NetBSD: nfsiod.c,v 1.14 1997/10/17 11:54:37 lukem Exp $");
+__RCSID("$NetBSD: nfsiod.c,v 1.15 1998/07/13 05:43:50 mrg Exp $");
 #endif
 #endif not lint
 
@@ -159,6 +159,7 @@ void
 nonfs(signo)
 	int signo;
 {
+
 	syslog(LOG_ERR, "missing system call: NFS not available.");
 }
 
@@ -167,12 +168,14 @@ reapchild(signo)
 	int signo;
 {
 
-	while (wait3(NULL, WNOHANG, NULL) > 0);
+	while (wait3(NULL, WNOHANG, NULL) > 0)
+		;
 }
 
 void
 usage()
 {
+
 	(void)fprintf(stderr, "usage: nfsiod [-n num_servers]\n");
 	exit(1);
 }
