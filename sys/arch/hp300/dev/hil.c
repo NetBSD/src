@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.62 2004/04/09 11:55:27 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.63 2004/04/10 04:06:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.62 2004/04/09 11:55:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.63 2004/04/10 04:06:48 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"
@@ -1370,7 +1370,7 @@ static struct ite_kbdops hilkbd_cn_ops = {
 	NULL,
 };
 
-extern char *us_keymap, *us_shiftmap, *us_ctrlmap;
+extern char us_keymap[], us_shiftmap[], us_ctrlmap[];
 
 /*
  * XXX: read keyboard directly and return code.
