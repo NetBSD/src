@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.1 1997/01/16 22:01:05 christos Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.2 1997/01/24 21:58:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -127,7 +127,8 @@ struct isapnp_attach_args {
 
 	isa_chipset_tag_t ipa_ic;
 
-	struct isapnp_attach_args *ipa_next;
+	struct isapnp_attach_args *ipa_sibling;
+	struct isapnp_attach_args *ipa_child;
 
 	char	ipa_devident[ISAPNP_MAX_IDENT];
 	char	ipa_devlogic[ISAPNP_MAX_DEVCLASS];
