@@ -64,11 +64,7 @@ int use_kerberos = 1;
 #define	ARGSTR	"-flm"
 #endif
 
-#ifdef DES
 extern char *crypt();
-#else
-# define crypt(a,b) (a)
-#endif
 
 main(argc, argv)
 	int argc;
