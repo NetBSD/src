@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_eb164.c,v 1.1 1996/11/11 21:08:10 cgd Exp $	*/
+/*	$NetBSD: dec_eb164.c,v 1.2 1996/11/12 05:14:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,6 +35,7 @@
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
+#include <machine/cpuconf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
@@ -45,13 +46,13 @@
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
 
-#include <alpha/alpha/dec_eb164.h>
-
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-char *
-dec_eb164_modelname()
+cpu_decl(dec_eb164);
+
+const char *
+dec_eb164_model_name()
 {
 
 	switch (hwrpb->rpb_variation & SV_ST_MASK) {
@@ -63,7 +64,7 @@ dec_eb164_modelname()
 }
 
 void
-dec_eb164_consinit()
+dec_eb164_cons_init()
 {
 	struct ctb *ctb;
 	struct cia_config *ccp;
@@ -118,6 +119,13 @@ dec_eb164_consinit()
 		panic("consinit: unknown console type %d\n",
 		    ctb->ctb_term_type);
 	}
+}
+
+const char *
+dec_eb164_iobus_name()
+{
+
+	return ("cia");
 }
 
 void
