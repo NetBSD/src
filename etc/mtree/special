@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.80 2004/04/18 04:02:27 dbj Exp $
+#	$NetBSD: special,v 1.81 2004/11/25 01:33:31 perry Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -302,6 +302,24 @@
 ./var/account/acct		type=file mode=0644 optional tags=exclude
 ./var/at			type=dir  mode=0755 ignore
 ./var/backups			type=dir  mode=0755 ignore
+./var/chroot			type=dir  mode=0755
+./var/chroot/named		type=dir  mode=0755
+./var/chroot/named/dev		type=dir  mode=0755
+./var/chroot/named/etc		type=dir  mode=0755
+./var/chroot/named/etc/namedb	type=dir  mode=0755
+./var/chroot/named/etc/namedb/cache	type=dir mode=0775 uname=named gname=named
+./var/chroot/named/usr		type=dir  mode=0755
+./var/chroot/named/usr/libexec	type=dir  mode=0755
+./var/chroot/named/var		type=dir  mode=0755
+./var/chroot/named/var/run	type=dir  mode=0775 gname=named
+./var/chroot/named/var/tmp	type=dir  mode=01775 gname=named
+./var/chroot/ntpd		type=dir  mode=0755
+./var/chroot/ntpd/dev		type=dir  mode=0755
+./var/chroot/ntpd/var		type=dir  mode=0755
+./var/chroot/ntpd/var/db	type=dir  mode=0775 gname=ntpd
+./var/chroot/ntpd/var/run	type=dir  mode=0775 gname=ntpd
+./var/chroot/spamd		type=dir  mode=0755
+./var/chroot/sshd		type=dir  mode=0755
 ./var/cron			type=dir  mode=0755
 ./var/cron/tabs			type=dir  mode=0700
 ./var/cron/tabs/root		type=file mode=0600
