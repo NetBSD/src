@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.37 1998/04/26 16:47:40 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.38 1998/05/07 23:41:51 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -64,6 +64,7 @@
 #define    NUBUS_DRHW_MICRON	0x0146
 #define    NUBUS_DRHW_SPECTRM8	0x017b	/* SuperMac Spectrum/8  Series III */
 #define    NUBUS_DRHW_SPECTRUM	0x017c	/* SuperMac Spectrum/24 Series III */
+#define    NUBUS_DRHW_VIMAGE	0x026E	/* Interware Co., Ltd. Vimage */
 #define    NUBUS_DRHW_CB364	0x026F	/* RasterOps ColorBoard 364 */
 #define	   NUBUS_DRHW_RPC8	0x0291	/* Radius PrecisionColor 8 */
 #define	   NUBUS_DRHW_LAPIS	0x0292	/* SE/30 Lapis ProColorServer 8 PDS */
@@ -107,6 +108,11 @@
 #define  NUBUS_TYPE_68020	0x0003
 #define  NUBUS_TYPE_68030	0x0004
 #define  NUBUS_TYPE_68040	0x0005
+
+#define NUBUS_CATEGORY_INTBUS	0x000C
+#define  NUBUS_TYPE_SCSI	0x0008
+#define   NUBUS_DRSW_PLI	0x0108
+#define    NUBUS_DRHW_PLI	0x0100
 
 /*
  * This is the same as Apple's Format Block for a card, with the
