@@ -1,4 +1,5 @@
-#	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
+#	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
+#	$Id: bsd.lib.mk,v 1.23 1993/08/15 19:37:06 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -10,7 +11,7 @@ LIBGRP?=	bin
 LIBOWN?=	bin
 LIBMODE?=	444
 
-STRIP?=	-s
+STRIP?=		-s
 
 BINGRP?=	bin
 BINOWN?=	bin
@@ -96,30 +97,15 @@ clean:
 .endif
 
 .if !target(cleandir)
-cleandir:
-	rm -f a.out Errs errs mklog core ${CLEANFILES}
-	rm -f ${OBJS}
-	rm -f ${POBJS} profiled/*.o
-	rm -f lib${LIB}.a lib${LIB}_p.a llib-l${LIB}.ln
+cleandir: clean
 	rm -f ${MANALL} ${.CURDIR}/tags .depend
 .endif
 
-.if !target(depend)
-depend: .depend
-.depend: ${SRCS}
-	rm -f .depend
-	files="${.ALLSRC:M*.c}"; \
-	if [ "$$files" != "" ]; then \
-	  mkdep -a ${MKDEP} ${CFLAGS:M-[ID]*} $$files; \
-	fi
-	files="${.ALLSRC:M*.cc} ${.ALLSRC:M*.C} ${.ALLSRC:M*.cxx}"; \
-	if [ "$$files" != "  " ]; then \
-	  mkdep -a ${MKDEP} -+ ${CXXFLAGS:M-[ID]*} $$files; \
-	fi
+.include <bsd.dep.mk>
+afterdepend:
 	@(TMP=/tmp/_depend$$$$; \
 	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po:/' < .depend > $$TMP; \
 	    mv $$TMP .depend)
-.endif
 
 .if !target(install)
 .if !target(beforeinstall)

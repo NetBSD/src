@@ -1,4 +1,5 @@
-#	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
+#	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
+#	$Id: bsd.prog.mk,v 1.25 1993/08/15 19:37:10 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -9,7 +10,7 @@
 .8.0 .7.0 .6.0 .5.0 .4.0 .3.0 .2.0 .1.0:
 	nroff -mandoc ${.IMPSRC} > ${.TARGET}
 
-CFLAGS+=${COPTS}
+CFLAGS+=	${COPTS}
 
 STRIP?=		-s
 
@@ -124,21 +125,8 @@ cleandir: _PROGSUBDIR
 .endif
 
 # some of the rules involve .h sources, so remove them from mkdep line
-.if !target(depend)
-depend: .depend _PROGSUBDIR
-.depend: ${SRCS}
-.if defined(PROG)
-	rm -f .depend
-	files="${.ALLSRC:M*.c}"; \
-	if [ "$$files" != "" ]; then \
-	  mkdep -a ${MKDEP} ${CFLAGS:M-[ID]*} $$files; \
-	fi
-	files="${.ALLSRC:M*.cc} ${.ALLSRC:M*.C} ${.ALLSRC:M*.cxx}"; \
-	if [ "$$files" != "  " ]; then \
-	  mkdep -a ${MKDEP} -+ ${CXXFLAGS:M-[ID]*} $$files; \
-	fi
-.endif
-.endif
+.include <bsd.dep.mk>
+depend: _PROGSUBDIR
 
 .if !target(install)
 .if !target(beforeinstall)
