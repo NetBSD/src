@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.15 1997/05/11 06:15:09 jeremy Exp $	*/
+/*	$NetBSD: locore2.c,v 1.16 1997/05/14 16:13:31 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -248,9 +248,6 @@ _bootstrap(keh)
 	 * Done after _vm_init so the PROM can debug that.
 	 */
 	setvbr((void **)vector_table);
-
-	/* Illuminate the diagnostic LED(s) */
-	leds_init();
 
 	/* Interrupts are enabled later, after autoconfig. */
 }
