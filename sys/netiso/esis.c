@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.22 2000/01/08 20:39:45 chopps Exp $	*/
+/*	$NetBSD: esis.c,v 1.23 2000/02/26 16:10:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -1197,6 +1197,9 @@ esis_ctlinput(req, siso, dummy)
 {
 	register struct iso_ifaddr *ia;	/* scan through interface addresses */
 
+	/*XXX correct? */
+	if (siso->sa_family != AF_ISO)
+		return NULL;
 	if (req == PRC_IFDOWN)
 		for (ia = iso_ifaddr.tqh_first; ia != 0;
 		     ia = ia->ia_list.tqe_next) {
