@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.200 1998/09/09 00:07:52 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.201 1998/09/12 00:47:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -749,7 +749,7 @@ NENTRY(sigcode)
 	movl	%dx,%gs
 1:	pushl	%eax
 	pushl	%eax			# junk to fake return address
-	movl	$SYS_sigreturn,%eax
+	movl	$SYS___sigreturn14,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
@@ -844,7 +844,7 @@ NENTRY(ibcs2_sigcode)
 	pushl   %eax                    # junk to fake return address
 	movl    $IBCS2_SYS_sigreturn,%eax
 	int     $0x80                   # enter kernel with args on stack
-	movl    $SYS_exit,%eax
+	movl    $IBCS2_SYS_exit,%eax
 	int     $0x80                   # exit if sigreturn fails
 	.globl  _ibcs2_esigcode
 _ibcs2_esigcode:
