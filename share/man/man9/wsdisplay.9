@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsdisplay.9,v 1.14 2004/07/30 15:17:26 jmmv Exp $
+.\"     $NetBSD: wsdisplay.9,v 1.15 2004/07/30 17:14:52 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -123,7 +123,7 @@ It has the following members:
 	void	(*pollc)(void *, int);
 	int	(*getwschar)(void *, struct wsdisplay_char *);
 	int	(*putwschar)(void *, struct wsdisplay_char *);
-	void	(*scroll) __P((void *, void *, int));
+	void	(*scroll)(void *, void *, int);
 	u_int	(*getborder)(void *);
 	int	(*setborder)(void *, u_int);
 .Ed
@@ -238,7 +238,7 @@ member defines a function for changing the character mapped at a given
 position in the character table.
 The
 .Fa putchar
-member defines a function for writting a character on the screen, given
+member defines a function for writing a character on the screen, given
 its position and attribute.
 The
 .Fa copycols
