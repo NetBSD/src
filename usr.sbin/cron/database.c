@@ -1,4 +1,4 @@
-/*	$NetBSD: database.c,v 1.4 1998/01/31 14:40:26 christos Exp $	*/
+/*	$NetBSD: database.c,v 1.4.12.1 2002/08/03 16:02:41 lukem Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: database.c,v 2.8 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: database.c,v 1.4 1998/01/31 14:40:26 christos Exp $");
+__RCSID("$NetBSD: database.c,v 1.4.12.1 2002/08/03 16:02:41 lukem Exp $");
 #endif
 #endif
 
@@ -93,9 +93,8 @@ load_database(old_db)
 	new_db.head = new_db.tail = NULL;
 
 	if (syscron_stat.st_mtime) {
-		process_crontab("root", "*system*",
-				SYSCRONTAB, &syscron_stat,
-				&new_db, old_db);
+		process_crontab("root", NULL, SYSCRONTAB, &syscron_stat,
+		    &new_db, old_db);
 	}
 
 	/* we used to keep this dir open all the time, for the sake of
@@ -210,7 +209,11 @@ process_crontab(uname, fname, tabname, statbuf, new_db, old_db)
 	int		crontab_fd = OK - 1;
 	user		*u;
 
-	if (strcmp(fname, "*system*") && !(pw = getpwnam(uname))) {
+	if (fname == NULL) {
+		/* must be set to something.
+		 */
+		fname = "*system*";
+	} else if ((pw = getpwnam(uname)) == NULL) {
 		/* file doesn't have a user in passwd file.
 		 */
 		log_it(fname, getpid(), "ORPHAN", "no passwd entry");
