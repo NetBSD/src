@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.4 1998/02/04 11:08:43 christos Exp $	*/
+/*	$NetBSD: command.c,v 1.5 1998/02/09 07:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)command.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: command.c,v 1.4 1998/02/04 11:08:43 christos Exp $");
+__RCSID("$NetBSD: command.c,v 1.5 1998/02/09 07:40:15 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,11 +193,12 @@ prompt()
 			putstr(pbuf);
 		}
 		if ((pos = position(BOTTOM)) != NULL_POSITION) {
-			(void)sprintf(pbuf, " byte %qd", pos);
+			(void)sprintf(pbuf, " byte %qd", (long long)pos);
 			putstr(pbuf);
 			if (!ispipe && (len = ch_length())) {
 				(void)sprintf(pbuf, "/%qd pct %qd%%",
-				    len, ((100 * pos) / len));
+				    (long long)len,
+				    (long long)((100 * pos) / len));
 				putstr(pbuf);
 			}
 		}
@@ -218,7 +219,8 @@ prompt()
 		else if (!ispipe &&
 		    (pos = position(BOTTOM)) != NULL_POSITION &&
 		    (len = ch_length())) {
-			(void)sprintf(pbuf, " (%qd%%)", ((100 * pos) / len));
+			(void)sprintf(pbuf, " (%qd%%)",
+			    (long long)((100 * pos) / len));
 			putstr(pbuf);
 		}
 		so_exit();
