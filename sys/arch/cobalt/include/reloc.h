@@ -1,5 +1,3 @@
-/*	$NetBSD: reloc.h,v 1.1 2000/03/19 23:07:47 soren Exp $	*/
+/*	$NetBSD: reloc.h,v 1.2 2001/09/09 04:20:26 simonb Exp $	*/
 
 #include <mips/reloc.h>
-
-#define relocation_info_cobalt reloc_info_mips
