@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.38 2003/01/18 01:17:46 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.39 2003/01/21 06:47:26 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -89,7 +89,7 @@ Current Vers:	4.9.11/8.3.4/9.2.1
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind/
 Mailing List:
-Responsible:	vixie, itojun
+Responsible:	vixie
 Notes:
 Mostly imported with cvs import.  Makefile's, etc, are not.
 Upgrade to BIND8 resolver can only happen with libc major bump (otherwise
