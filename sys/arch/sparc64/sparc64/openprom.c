@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.5 2002/01/10 16:04:43 briggs Exp $ */
+/*	$NetBSD: openprom.c,v 1.6 2002/01/10 20:38:11 briggs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -257,6 +257,20 @@ openpromioctl(dev, cmd, data, flags, p)
 		node = firstchild(node);
 		splx(s);
 		*(int *)data = lastnode = node;
+		break;
+
+	case OPIOCFINDDEVICE:
+		if ((flags & FREAD) == 0)
+			return (EBADF);
+		error = openpromgetstr(op->op_namelen, op->op_name, &name);
+		if (error)
+			break;
+		node = OF_finddevice(name);
+		if (node == 0 || node == -1) {
+			error = ENOENT;
+			break;
+		}
+		op->op_nodeid = lastnode = node;
 		break;
 
 	default:
