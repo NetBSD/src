@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)nfsd.c	5.10 (Berkeley) 4/24/91";
-static char rcsid[] = "$Header: /cvsroot/src/usr.sbin/nfsd/nfsd.c,v 1.3 1993/03/23 00:29:32 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/usr.sbin/nfsd/nfsd.c,v 1.4 1993/04/10 20:16:04 glass Exp $";
 #endif not lint
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ struct hadr {
 struct	hadr hphead;
 char	**Argv = NULL;		/* pointer to argument vector */
 char	*LastArg = NULL;	/* end of argv */
-void	reapchild();
+void	reapchild(),not_nfsserver();;
 
 /*
  * Nfs server daemon mostly just a user context for nfssvc()
@@ -200,7 +200,7 @@ main(argc, argv, envp)
 		signal(SIGHUP, SIG_IGN);
 	}
 	signal(SIGCHLD, reapchild);
-
+	signal(SIGSYS, not_nfsserver);
 	if (reregister) {
 		if (udpflag && !pmap_set(RPCPROG_NFS, NFS_VER2, IPPROTO_UDP,
 		    NFS_PORT)) {
@@ -360,4 +360,10 @@ setproctitle(a, sin)
 	cp += strlen(cp);
 	while (cp < LastArg)
 		*cp++ = ' ';
+}
+
+void not_nfsserver()
+{
+    (void) fprintf(stderr, "nfsd: not configured as NFS server\n");
+    exit(1);
 }
