@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.19 1996/12/22 23:00:03 fvdl Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.20 1997/03/15 00:00:09 christos Exp $	 */
 /*
  * Copyright (c) 1994, 1996 Christos Zoulas.  All rights reserved.
  *
@@ -33,7 +33,6 @@
  * Yes, this is gross.
  *
  * ToDo: The state machine for getmsg needs re-thinking
- *       We really need I_FDINSERT and it is going to be a pain.
  */
 #include <sys/param.h>
 #include <sys/kernel.h>
