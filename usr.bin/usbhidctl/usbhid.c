@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.8 1999/04/21 17:41:08 augustss Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.9 1999/05/11 21:02:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,13 +43,10 @@
 #include <unistd.h>
 #include <err.h>
 #include <ctype.h>
+#include <errno.h>
+#include <usb.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
-#include <errno.h>
-
-#include "hidsubr.h"
-
-#define HIDTABLE "/usr/share/misc/usb_hid_usages"
 
 #define USBDEV "/dev/uhid0"
 
@@ -63,11 +60,10 @@ int nnames;
 void prbits(int bits, char **strs, int n);
 void usage(void);
 void dumpitem(char *label, struct hid_item *h);
-void dumpitems(u_char *buf, int len);
+void dumpitems(report_desc_t r);
 void rev(struct hid_item **p);
-u_long getdata(u_char *buf, int hpos, int hsize, int sign);
 void prdata(u_char *buf, struct hid_item *h);
-void dumpdata(int f, u_char *buf, int len, int loop);
+void dumpdata(int f, report_desc_t r, int loop);
 int gotname(char *n);
 
 int
@@ -122,13 +118,13 @@ dumpitem(char *label, struct hid_item *h)
 }
 
 void
-dumpitems(u_char *buf, int len)
+dumpitems(report_desc_t r)
 {
 	struct hid_data *d;
 	struct hid_item h;
 	int report_id, size;
 
-	for (d = hid_start_parse(buf, len, ~0); hid_get_item(d, &h); ) {
+	for (d = hid_start_parse(r, ~0); hid_get_item(d, &h); ) {
 		switch (h.kind) {
 		case hid_collection:
 			printf("Collection page=%s usage=%s\n",
@@ -150,17 +146,17 @@ dumpitems(u_char *buf, int len)
 		}
 	}
 	hid_end_parse(d);
-	size = hid_report_size(buf, len, hid_input, &report_id);
+	size = hid_report_size(r, hid_input, &report_id);
 	size -= report_id != 0;
 	printf("Total   input size %s%d bytes\n", 
 	       report_id && size ? "1+" : "", size);
 	       
-	size = hid_report_size(buf, len, hid_output, &report_id);
+	size = hid_report_size(r, hid_output, &report_id);
 	size -= report_id != 0;
 	printf("Total  output size %s%d bytes\n",
 	       report_id && size ? "1+" : "", size);
 
-	size = hid_report_size(buf, len, hid_feature, &report_id);
+	size = hid_report_size(r, hid_feature, &report_id);
 	size -= report_id != 0;
 	printf("Total feature size %s%d bytes\n",
 	       report_id && size ? "1+" : "", size);
@@ -182,25 +178,6 @@ rev(struct hid_item **p)
 	*p = prev;
 }
 
-u_long
-getdata(u_char *buf, int hpos, int hsize, int sign)
-{
-	u_long data;
-	int i, size, s;
-
-	data = 0;
-	s = hpos/8; 
-	for (i = hpos; i < hpos+hsize; i += 8)
-		data |= buf[i / 8] << ((i/8-s) * 8);
-	data >>= (hpos % 8);
-	data &= (1 << hsize) - 1;
-	size = 32 - hsize;
-	if (sign)
-		/* Need to sign extend */
-		data = ((long)data << size) >> size;
-	return data;
-}
-
 void
 prdata(u_char *buf, struct hid_item *h)
 {
@@ -209,8 +186,7 @@ prdata(u_char *buf, struct hid_item *h)
 
 	pos = h->pos;
 	for (i = 0; i < h->report_count; i++) {
-		data = getdata(buf, pos, h->report_size, 
-			       h->logical_minimum < 0);
+		data = getdata(buf, h);
 		if (h->logical_minimum < 0)
 			printf("%ld", (long)data);
 		else
@@ -220,7 +196,7 @@ prdata(u_char *buf, struct hid_item *h)
 }
 
 void
-dumpdata(int f, u_char *buf, int len, int loop)
+dumpdata(int f, report_desc_t rd, int loop)
 {
 	struct hid_data *d;
 	struct hid_item h, *hids, *n;
@@ -233,7 +209,7 @@ dumpdata(int f, u_char *buf, int len, int loop)
 	char namebuf[10000], *namep;
 
 	hids = 0;
-	for (d = hid_start_parse(buf, len, 1<<hid_input); 
+	for (d = hid_start_parse(rd, 1<<hid_input); 
 	     hid_get_item(d, &h); ) {
 		if (h.kind == hid_collection)
 			colls[++sp] = h.usage;
@@ -248,7 +224,7 @@ dumpdata(int f, u_char *buf, int len, int loop)
 	}
 	hid_end_parse(d);
 	rev(&hids);
-	dlen = hid_report_size(buf, len, hid_input, &report_id);
+	dlen = hid_report_size(rd, hid_input, &report_id);
 	dbuf = malloc(dlen);
 	if (!loop)
 		if (ioctl(f, USB_SET_IMMED, &one) < 0) {
@@ -286,15 +262,15 @@ dumpdata(int f, u_char *buf, int len, int loop)
 int
 main(int argc, char **argv)
 {
-	int f, r;
+	int f;
+	report_desc_t r;
 	char devname[100], *dev = 0;
 	int ch;
 	extern char *optarg;
 	extern int optind;
-	struct usb_ctl_report_desc rep;
 	int repdump = 0;
 	int loop = 0;
-	char *table = HIDTABLE;
+	char *table = 0;
 
 	while ((ch = getopt(argc, argv, "af:lnrt:v")) != -1) {
 		switch(ch) {
@@ -348,17 +324,17 @@ main(int argc, char **argv)
 	if (f < 0)
 		err(1, "%s", dev);
 
-	rep.size = 0;
-	r = ioctl(f, USB_GET_REPORT_DESC, &rep);
-	if (r) 
+	r = get_report_desc(f);
+	if (r == 0) 
 		errx(1, "USB_GET_REPORT_DESC");
 	       
 	if (repdump) {
-		printf("Report descriptor\n");
-		dumpitems(rep.data, rep.size);
+		printf("Report descriptor:\n");
+		dumpitems(r);
 	}
 	if (nnames != 0 || all)
-		dumpdata(f, rep.data, rep.size, loop);
+		dumpdata(f, r, loop);
 
+	dispose_report_desc(r);
 	exit(0);
 }

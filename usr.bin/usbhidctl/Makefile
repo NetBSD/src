@@ -1,13 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 1999/05/11 21:02:25 augustss Exp $
 
 .include <bsd.own.mk>
 
 PROG=	usbhidctl
-SRCS=	usbhid.c hidsubr.c
-.if ${MKSHARE} != "no"
-FILES=  usb_hid_usages
-FILESDIR=/usr/share/misc
-.endif
+SRCS=	usbhid.c
+
+LDADD+=	-lusb
+DPADD+=	${LIBUSB}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
