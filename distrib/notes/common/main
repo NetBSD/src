@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.187 2002/06/21 02:36:00 bsh Exp $
+.\"	$NetBSD: main,v 1.188 2002/06/25 14:51:12 keihan Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1603,6 +1603,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Takahiro Kambe Ta Mt taca@netbsd.org
 .It Ta Antti Kantee Ta Mt pooka@netbsd.org
 .It Ta Masanori Kanaoka Ta Mt kanaoka@netbsd.org
+.It Ta Mattias Karlsson Ta Mt keihan@netbsd.org
 .It Ta KAWAMOTO Yosihisa Ta Mt kawamoto@netbsd.org
 .It Ta Mario Kemper Ta Mt magick@netbsd.org
 .It Ta Lawrence Kesteloot Ta Mt kesteloo@cs.unc.edu
