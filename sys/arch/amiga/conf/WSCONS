@@ -1,9 +1,9 @@
-# $NetBSD: WSCONS,v 1.2 2002/04/12 08:10:50 gmcgarry Exp $
+# $NetBSD: WSCONS,v 1.3 2002/04/19 16:14:02 heinz Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.176 2002/03/04 13:24:08 sommerfeld Exp $
+# Created from: #NetBSD: GENERIC,v 1.178 2002/04/19 16:11:26 heinz Exp $
 
 #GENERIC machine description file
 
@@ -24,7 +24,7 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.2 $"
+#ident  		"GENERIC-$Revision: 1.3 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -144,9 +144,9 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USERCONF	# userconf(4) support
 
 options 	NTP		# NTP phase/frequency locked loop
-#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #Misc. debugging options
@@ -198,6 +198,11 @@ options 	GRF_SUPER72	# AGA Super-72
 
 #options 	KFONT_8X11	# 8x11 font
 
+#select a font for the console according to the character set and keymap
+#you want to use
+options        KFONT_CONS_ISO8859_1
+#options         KFONT_CONS_ISO8859_2
+
 #This is how you would tell the kernel the A2410 oscillator frequencies:
 #The used frequencies are the defaults, and do not need option setting
 #options 	ULOWELL_OSC1=36000000
@@ -230,7 +235,7 @@ options	FONT_VT220L8x10
 
 #grfrh0		at zbus0		# retina III
 
-#grfcl*		at zbus0		# Picasso II/Piccalo/Spectrum
+#grfcl*		at zbus0		# Picasso II/Piccolo/Spectrum
 #grful0		at zbus0		# A2410
 #grfcv0		at zbus0		# CyberVision 64
 #grfet*		at zbus0		# Tseng (oMniBus, Domino, Merlin)
