@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.2 2001/07/27 00:37:38 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.3 2001/07/27 20:49:09 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -50,6 +50,8 @@
 #define XOS_GetEnv		0x020010
 #define OS_Exit			0x000011
 #define XOS_Exit		0x020011
+#define OS_ReadVduVariables	0x000031
+#define XOS_ReadVduVariables	0x020031
 #define OS_ReadMemMapInfo	0x000051
 #define XOS_ReadMemMapInfo	0x020051
 #define OS_ReadMemMapEntries	0x000052
@@ -123,6 +125,16 @@ extern os_error *xosfind_open(int, char const *, char const *, int *);
 extern char *os_get_env(caddr_t *, void **);
 
 extern void os_exit(os_error const *, int) __attribute__((noreturn));
+#endif
+
+#define os_MODEVAR_LOG2_BPP		9
+#define os_MODEVAR_XWIND_LIMIT		11
+#define os_MODEVAR_YWIND_LIMIT		12
+#define os_VDUVAR_DISPLAY_START		149
+#define os_VDUVAR_TOTAL_SCREEN_SIZE	150
+
+#ifndef __ASSEMBLER__
+extern void os_read_vdu_variables(const int *, int *);
 
 extern void os_read_mem_map_info(int *, int *);
 

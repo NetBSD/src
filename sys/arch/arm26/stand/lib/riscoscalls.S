@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.4 2001/07/27 01:02:44 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.5 2001/07/27 20:49:09 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -145,6 +145,13 @@ ENTRY(os_exit)
 	ldmdb	fp, {fp, sp, pc}
 Labex:
 	.ascii	"ABEX"
+
+ENTRY(os_read_vdu_variables)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	swi	OS_ReadVduVariables
+	ldmdb	fp, {fp, sp, pc}	
 
 ENTRY(os_read_mem_map_info)
 	mov	ip, sp
