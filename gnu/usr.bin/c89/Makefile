@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/01/05 15:42:35 tv Exp $
+#	$NetBSD: Makefile,v 1.1 2001/08/19 14:21:03 mrg Exp $
 
 FILES=		c89.sh
 FILESNAME=	c89
