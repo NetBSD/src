@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.62 2004/09/22 12:20:24 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.63 2004/10/12 14:34:41 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.62 2004/09/22 12:20:24 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.63 2004/10/12 14:34:41 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,6 @@ static void	ac97_ad198x_init(struct ac97_softc *);
 static void	ac97_alc650_init(struct ac97_softc *);
 static void	ac97_vt1616_init(struct ac97_softc *);
 
-#define Ac97Ntone	"tone"
 #define Ac97Nphone	"phone"
 
 static const struct audio_mixer_enum
@@ -218,9 +217,14 @@ static const struct ac97_source_info {
 	  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),
 	  AC97_REG_CENTER_LFE_MASTER, 0x8080, 1, 15, 0, 0, CHECK_LFE
 	},
-	/* Tone */
-	{ AudioCoutputs,	Ac97Ntone,	NULL,
-	  AUDIO_MIXER_VALUE, WRAP(ac97_volume_stereo),
+	/* Tone - bass */
+	{ AudioCoutputs,	AudioNbass,	NULL,
+	  AUDIO_MIXER_VALUE, WRAP(ac97_volume_mono),
+	  AC97_REG_MASTER_TONE, 0x0f0f, 4, 8, 0, 0, CHECK_TONE
+	},
+	/* Tone - treble */
+	{ AudioCoutputs,	AudioNtreble,	NULL,
+	  AUDIO_MIXER_VALUE, WRAP(ac97_volume_mono),
 	  AC97_REG_MASTER_TONE, 0x0f0f, 4, 0, 0, 0, CHECK_TONE
 	},
 	/* PC Beep Volume */
@@ -778,6 +782,7 @@ ac97_restore_shadow(struct ac97_codec_if *self)
 		DELAY(1);
 	}
 #undef AC97_POWER_ALL
+	printf("%s: power counter: %d\n", __func__, idx);
 
 	for (idx = 0; idx < SOURCE_INFO_SIZE; idx++) {
 		si = &source_info[idx];
@@ -961,8 +966,8 @@ ac97_attach(struct ac97_host_if *host_if)
 		return error;
 	}
 
-	host_if->write(host_if->arg, AC97_REG_POWER, 0);
 	host_if->write(host_if->arg, AC97_REG_RESET, 0);
+	host_if->write(host_if->arg, AC97_REG_POWER, 0);
 
 	if (host_if->flags)
 		as->host_flags = host_if->flags(host_if->arg);
