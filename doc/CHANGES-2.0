@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.428 2004/09/01 18:22:21 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.429 2004/09/05 10:51:58 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7102,4 +7102,13 @@ sys/arch/arc/conf/Makefile.arc.inc		1.12
 	on converting kernels into ECOFF.
 	ARC BIOS may be confused by these sections without valid address.
 	[tsutsui, ticket #809]
+
+sys/compat/linux/common/linux_misc.c		1.128
+
+	Handle mmap() request with MAP_GROWSDOWN flag (request for stack-like
+	grow-down auto extend segment) by allocating segment sized at
+	current stack size limit, and offsetting requested/returned address
+	as required. This fixes Thomas Klausner's Heroes3 crash, and might
+	also fix PR 26687 by Jan Schaumann
+	[jdolecek, ticket #810]
 
