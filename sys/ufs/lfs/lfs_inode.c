@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.86 2004/08/15 16:17:37 mycroft Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.87 2004/08/15 17:37:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.86 2004/08/15 16:17:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.87 2004/08/15 17:37:07 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -242,7 +242,6 @@ lfs_truncate(void *v)
 	int i;
 	int aflags, error, allerror = 0;
 	off_t osize;
-	voff_t eoz;
 	long lastseg;
 	size_t bc;
 	int obufsize, odb;
@@ -401,23 +400,31 @@ lfs_truncate(void *v)
 		 * So there is a window where another thread could see a whole
 		 * zeroed page past EOF, but that's life.
 		 */
+		daddr_t lbn;
+		voff_t eoz;
+
 		aflags = ap->a_flags & IO_SYNC ? B_SYNC : 0;
 		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
-					 aflags);
+		    aflags);
 		if (error) {
 			lfs_reserve(fs, ovp, NULL,
 				    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
 			goto errout;
 		}
-		eoz = blkroundup(fs, length);
+		lbn = lblkno(fs, length);
+		size = blksize(fs, oip, lbn);
+		eoz = MIN(lblktosize(fs, lbn) + size, osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
-		simple_lock(&ovp->v_interlock);
-		error = VOP_PUTPAGES(ovp, trunc_page(length), round_page(eoz),
-		    PGO_CLEANIT | PGO_DEACTIVATE | (aflags ? PGO_SYNCIO : 0));
-		if (error) {
-			lfs_reserve(fs, ovp, NULL,
-				    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
-			goto errout;
+		if (round_page(eoz) > round_page(length)) {
+			simple_lock(&ovp->v_interlock);
+			error = VOP_PUTPAGES(ovp, round_page(length),
+			    round_page(eoz),
+			    PGO_CLEANIT | PGO_DEACTIVATE | PGO_SYNCIO);
+			if (error) {
+				lfs_reserve(fs, ovp, NULL,
+					    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
+				goto errout;
+			}
 		}
 	}
 
