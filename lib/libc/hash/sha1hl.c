@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1hl.c,v 1.7 2002/03/31 12:58:55 bjh21 Exp $	*/
+/*	$NetBSD: sha1hl.c,v 1.8 2002/03/31 14:17:19 bjh21 Exp $	*/
 
 /* sha1hl.c
  * ----------------------------------------------------------------------------
@@ -15,10 +15,10 @@
 #include <sys/file.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-#include <sys/sha1.h>
 
 #include <assert.h>
 #include <errno.h>
+#include <sha1.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -30,7 +30,7 @@
 #if !HAVE_SHA1_H
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha1hl.c,v 1.7 2002/03/31 12:58:55 bjh21 Exp $");
+__RCSID("$NetBSD: sha1hl.c,v 1.8 2002/03/31 14:17:19 bjh21 Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__weak_alias)
