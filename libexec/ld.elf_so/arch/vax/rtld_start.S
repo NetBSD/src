@@ -1,7 +1,8 @@
-/*	$NetBSD: rtld_start.S,v 1.8 2002/09/12 17:43:30 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.9 2002/09/26 22:26:27 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
+ * Portions copyright 2002 Charles M. Hannum.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,11 +45,16 @@ ENTRY(_rtld_start, 0)
 	clrl	%fp
 	subl2	$8,%sp
 
-	movab	_GLOBAL_OFFSET_TABLE_,%r0
-	subl2	.L1,%r0
-	movl	%sp,%r1
-	pushl	%r0		/* relocbase */
-	pushl	%r1		/* sp */
+	movab	_DYNAMIC,%r0
+	movab	_GLOBAL_OFFSET_TABLE_,%r1
+	subl2	.L1,%r1
+	pushl	%r1		/* relocbase */
+	pushl	%r0		/* &_DYNAMIC */
+	calls	$2,_rtld_relocate_nonplt_self
+
+	movl	%sp,%r0
+	pushl	%r1		/* relocbase */
+	pushl	%r0		/* sp */
 	calls	$2,_rtld	/* entry = _rtld(sp, relocbase) */
 
 	movq	(%sp)+,%r7	/* grab cleanup and obj_main into %r7/%r8 */
