@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxreg.h,v 1.3 1997/04/07 01:59:56 cgd Exp $ */
+/* $NetBSD: dwlpxreg.h,v 1.4 1997/04/16 22:20:52 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -46,7 +46,8 @@
 
 /*
  * There are (potentially) 4 I/O hoses, and there are three
- * (physical) PCI busses per DWLPX.
+ * (electrically distinct) PCI busses per DWLPX (which appear
+ * as one logical PCI bus).
  *
  * A CPU to PCI Address Mapping looks (roughly) like this:
  *
