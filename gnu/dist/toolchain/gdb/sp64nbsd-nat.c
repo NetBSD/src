@@ -85,7 +85,7 @@ supply_regs64 (regs)
         {
           /* fprintf_unfiltered so user can still use gdb */
           fprintf_unfiltered (gdb_stderr,
-              "Couldn't read input and local registers from core file\n");
+              "Couldn't read input and local registers from stack\n");
         }
       else
 	{
@@ -101,7 +101,7 @@ supply_regs64 (regs)
         {
           /* fprintf_unfiltered so user can still use gdb */
           fprintf_unfiltered (gdb_stderr,
-              "Couldn't read input and local registers from core file\n");
+              "Couldn't read input and local registers from stack\n");
 	}
       else
         {
