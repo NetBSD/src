@@ -1,4 +1,4 @@
-/*	$NetBSD: sio_pic.c,v 1.7.4.1 1996/06/05 03:42:29 cgd Exp $	*/
+/*	$NetBSD: sio_pic.c,v 1.7.4.2 1996/06/05 22:30:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -123,7 +123,7 @@ sio_setirqstat(irq, enabled, type)
 	int icu, bit;
 
 #if 0
-	printf("sio_setirqstat: irq %d, %s, %s\n", irq,
+	printf("sio_setirqstat: irq %d: %s, %s\n", irq,
 	    enabled ? "enabled" : "disabled", isa_intr_typename(type));
 #endif
 
@@ -170,10 +170,10 @@ sio_setirqstat(irq, enabled, type)
 	    (ocw1[1] & ~initial_ocw1[1]) != 0 ||
 	    (elcr[0] & initial_elcr[0]) != initial_elcr[0] ||
 	    (elcr[1] & initial_elcr[1]) != initial_elcr[1]) {
-		printf("sio_sis: initial: ocw = (%2x,%2x), elcr = (%2x,%2X)\n",
+		printf("sio_sis: initial: ocw = (%2x,%2x), elcr = (%2x,%2x)\n",
 		    initial_ocw1[0], initial_ocw1[1],
 		    initial_elcr[0], initial_elcr[1]);
-		printf("         current: ocw = (%2x,%2x), elcr = (%2x,%2X)\n",
+		printf("         current: ocw = (%2x,%2x), elcr = (%2x,%2x)\n",
 		    ocw1[0], ocw1[1], elcr[0], elcr[1]);
 		panic("sio_setirqstat: hosed");
 	}
@@ -297,13 +297,9 @@ sio_intr_establish(v, irq, type, level, ih_fun, ih_arg)
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE)
-#if 0 /* XXX */
-			panic("intr_establish: can't share %s with %s",
-			    isa_intrsharetype_name(sio_intrsharetype[irq]),
-			    isa_intrsharetype_name(type));
-#else /* XXX */
-/* XXX */		panic("foo XXX");
-#endif /* XXX */
+			panic("intr_establish: irq %d: can't share %s with %s",
+			    irq, isa_intr_typename(type),
+			    isa_intr_typename(sio_intrsharetype[irq]));
 		break;
         }
 
