@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.2 2000/01/14 02:39:22 nisimura Exp $ */
+/* $NetBSD: locore.s,v 1.3 2000/01/15 10:06:21 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1329,54 +1329,6 @@ Lbootcommon:
 	movc	d0,msp			| set initial stack pointer
 	movl	a0@(4),a0		| *((int (*)(void))base[1])
 	jmp	a0@			| go cold boot!
-
-#if 0
-/*
- * int romcngetc(dev_t)
- */
-ENTRY_NOPROFILE(romcngetc)
-	moveq	#0,d1
-	movw	sr,d1			| get old SR for return
-	movel	d1,a6@(-4)
-	movw	#PSL_HIGHIPL,sr		| splhigh()
-	movc	vbr,d1
-	movel	d1,a6@(-8)
-	movl	#0,d1
-	movc	d1,vbr
-	movel	#0x41000000,a0		| base = (int **)0x41000000
-	movel	a0@(16),a0		| getc = (int (*)(void))base[4]
-	jbsr	a0@			| d0 = (*getc)()
-	movl	a6@(-8),d1		| restore previous VBR
-	movc	d1,vbr
-	movel	a6@(-4),d1
-	movew	d1,sr			| splx()
-	unlk	a6
-	rts
-
-/*
- * void romcnputc(dev_t, cc)
- */
-ENTRY_NOPROFILE(romcnputc)
-	moveq	#0,d1
-	movw	sr,d1			| get old SR for return
-	movel	d1,a6@(-8)
-	movw	#PSL_HIGHIPL,sr		| splhigh()
-	movc	vbr,d1
-	movel	d1,a6@(-8)
-	movl	#0,d1
-	movc	d1,vbr			| switch to monitor VBR
-	movel	a6@(12),sp@-
-	movel	#0x41000000,a0		| base = (int **)0x41000000
-	movl	a0@(20),a0		| putc = (void (*)(int))base[5]
-	jbsr	a0@			| (*putc)(cc)
-	addql	#4,sp			| pop args
-	movl	a6@(-8),d1		| restore previous VBR
-	movc	d1,vbr
-	movel	a6@(-4),d1
-	movew	d1,sr			| splx()
-	unlk	a6
-	rts
-#endif
 
 	.data
 GLOBAL(cputype)
