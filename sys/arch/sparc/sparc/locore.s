@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.109 1999/02/14 12:33:55 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.110 1999/02/14 14:37:15 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1816,7 +1816,7 @@ memfault_sun4:
 	clr	%o4
 	call	_memerr4_4c		! memerr(0, ser, sva, 0, 0)
 	 clr	%o0
-	call	_callrom
+	call	_prom_halt
 	 nop
 
 0:
