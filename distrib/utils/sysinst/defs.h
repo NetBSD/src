@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.36.2.5 2000/01/23 12:52:49 he Exp $	*/
+/*	$NetBSD: defs.h,v 1.36.2.6 2000/01/23 12:56:43 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,9 @@
 #include <sys/types.h>
 #define FSTYPENAMES
 #include <sys/disklabel.h>
+
+#define	min(a,b)	(a < b ? a : b)
+#define	max(a,b)	(a > b ? a : b)
 
 /* Define for external varible use */ 
 #ifdef MAIN
