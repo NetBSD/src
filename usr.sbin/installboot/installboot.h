@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.9 2002/05/14 06:18:51 lukem Exp $	*/
+/*	$NetBSD: installboot.h,v 1.10 2002/05/14 06:40:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
 
 #if HAVE_CONFIG_H
 #include "config.h"
+#include "../../sys/sys/bootblock.h"
+#else
+#include <sys/bootblock.h>
 #endif
 
 typedef enum {
