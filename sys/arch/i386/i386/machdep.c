@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.427 2001/01/09 03:45:49 enami Exp $	*/
+/*	$NetBSD: machdep.c,v 1.428 2001/01/17 00:07:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -193,7 +193,9 @@ int	dumpmem_low;
 int	dumpmem_high;
 int	boothowto;
 int	cpu_class;
-int	i386_fpu_present = 0;
+int	i386_fpu_present;
+int	i386_fpu_exception;
+int	i386_fpu_fdivbug;
 
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
 

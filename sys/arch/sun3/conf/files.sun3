@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.58 2000/11/03 05:52:42 tsutsui Exp $
+#	$NetBSD: files.sun3,v 1.59 2001/01/17 00:07:38 fvdl Exp $
 
 #
 # sun3-specific configuration info
@@ -40,6 +40,7 @@ file arch/sun3/sun3/fpu.c
 file arch/sun3/sun3/isr.c
 file arch/sun3/sun3/kgdb_machdep.c 		kgdb
 file arch/sun3/sun3/leds.c
+file arch/sun3/sun3/procfs_machdep.c		procfs
 file arch/sun3/sun3/stub.c
 file arch/sun3/sun3/sunmon.c
 file arch/sun3/sun3/sys_machdep.c

@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.9 2000/10/04 16:35:43 tsutsui Exp $
+#	$NetBSD: files.news68k,v 1.10 2001/01/17 00:07:30 fvdl Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -24,6 +24,7 @@ file	arch/news68k/news68k/mainbus.c
 file	arch/news68k/news68k/mem.c
 file	arch/news68k/news68k/pmap.c
 file	arch/news68k/news68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
+file	arch/news68k/news68k/procfs_machdep.c	procfs
 file	arch/news68k/news68k/sys_machdep.c
 file	arch/news68k/news68k/trap.c
 file	arch/news68k/news68k/vm_machdep.c

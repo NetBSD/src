@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbsh3,v 1.4 2000/03/25 02:51:57 msaitoh Exp $
+#	$NetBSD: files.evbsh3,v 1.5 2001/01/17 00:07:24 fvdl Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -7,6 +7,7 @@ include "arch/evbsh3/conf/files.shbus"
 
 file	arch/evbsh3/evbsh3/conf.c
 file	arch/evbsh3/evbsh3/machdep.c
+file	arch/evbsh3/evbsh3/procfs_machdep.c	procfs
 
 defopt	opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
 defopt  opt_led_addr.h	LED_ADDR

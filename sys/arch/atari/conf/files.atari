@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.70 2000/11/21 13:34:57 tsutsui Exp $
+#	$NetBSD: files.atari,v 1.71 2001/01/17 00:07:22 fvdl Exp $
 
 maxpartitions 16
 
@@ -186,6 +186,7 @@ file	arch/atari/atari/machdep.c
 file	arch/atari/atari/mainbus.c
 file	arch/atari/atari/mem.c
 file	arch/atari/atari/pmap.c
+file	arch/atari/atari/procfs_machdep.c	procfs
 file	arch/atari/atari/sys_machdep.c
 file	arch/atari/atari/trap.c
 file	arch/atari/atari/stalloc.c

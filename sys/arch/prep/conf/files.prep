@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.13 2001/01/05 17:49:43 tsutsui Exp $
+#	$NetBSD: files.prep,v 1.14 2001/01/17 00:07:36 fvdl Exp $
 #
 # prep-specific configuration info
 #
@@ -14,6 +14,7 @@ file	arch/prep/prep/conf.c
 file	arch/prep/prep/disksubr.c		disk
 file	arch/prep/prep/extintr.c
 file	arch/prep/prep/machdep.c
+file	arch/prep/prep/procfs_machdep.c		procfs
 file	dev/clock_subr.c
 file	dev/cons.c
 
