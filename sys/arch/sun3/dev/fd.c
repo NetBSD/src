@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.34 2003/01/01 02:26:13 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.35 2003/05/21 22:28:01 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -1259,7 +1259,8 @@ loop:
 		{int block;
 		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
 		 if (block != fd->sc_blkno) {
-			 printf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
+			 printf("fdcintr: block %d != blkno %" PRIu64 "\n",
+				block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
 #endif
