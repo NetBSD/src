@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.10 1997/01/13 14:04:44 oki Exp $
+#	$NetBSD: Makefile.x68k,v 1.11 1997/01/30 16:03:55 oki Exp $
 
 # Makefile for NetBSD
 #
@@ -136,7 +136,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean::
+clean:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
@@ -159,7 +159,7 @@ links:
 
 SRCS=	${X68K}/x68k/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend:: .depend
+depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${X68K}/x68k/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
