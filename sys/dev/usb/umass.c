@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.95 2003/02/16 23:14:06 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.96 2003/04/26 12:46:59 dsainty Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.95 2003/02/16 23:14:06 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.96 2003/04/26 12:46:59 dsainty Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -557,7 +557,7 @@ USB_ATTACH(umass)
 #if NSCSIBUS > 0
 		error = umass_scsi_attach(sc);
 #else
-		printf("%s: atapibus not configured\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: scsibus not configured\n", USBDEVNAME(sc->sc_dev));
 #endif
 		break;
 
@@ -566,7 +566,8 @@ USB_ATTACH(umass)
 #if NATAPIBUS > 0
 		error = umass_atapi_attach(sc);
 #else
-		printf("%s: scsibus not configured\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: atapibus not configured\n",
+		       USBDEVNAME(sc->sc_dev));
 #endif
 		break;
 
