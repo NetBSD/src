@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2000/06/17 16:11:25 assar Exp $	*/
+/*	$NetBSD: extern.h,v 1.11.2.1 2000/06/26 07:27:44 assar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,7 +48,7 @@ int	 revsizecmp __P((const FTSENT *, const FTSENT *));
 
 int	 ls_main __P((int, char *[]));
 
-void	 printescaped __P((const char *));
+int	 printescaped __P((const char *));
 void	 printacol __P((DISPLAY *));
 void	 printcol __P((DISPLAY *));
 void	 printlong __P((DISPLAY *));
