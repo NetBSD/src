@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.11 1994/07/13 07:08:18 phil Exp $
+ *	$Id: conf.c,v 1.12 1994/08/02 23:39:59 phil Exp $
  */
 
 #include <sys/param.h>
@@ -229,13 +229,6 @@ cdev_decl(vn);
 #include "scn.h"	/* Serial driver. */
 cdev_decl(scn);
 
-/* open, read, write, ioctl -- XXX should be a disk */
-#define	cdev_vn_init(c,n) { \
-	dev_init(c,n,open), (dev_type_close((*))) nullop, rawread, rawwrite, \
-	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, seltrue, (dev_type_map((*))) enodev, \
-	0 }
-
 dev_type_open(fdopen);
 /* open */
 #define	cdev_fd_init(c,n) { \
@@ -269,7 +262,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NST,st),		/* 10: scsi tape */
 	cdev_fd_init(1,fd),		/* 11: file descriptor pseudo-dev */
 	cdev_disk_init(NCD,cd),		/* 12: concatenated disk */
-	cdev_vn_init(NVN,vn),		/* 13: vnode disk */
+	cdev_disk_init(NVN,vn),		/* 13: vnode disk */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 14: berkeley packet filter */
 	cdev_notdef(),			/* 15 */
 	cdev_notdef(),			/* 16 */
