@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.31 2000/05/02 12:46:06 simonb Exp $
+# $NetBSD: mi,v 1.32 2000/05/03 10:57:30 itojun Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -233,8 +233,6 @@
 ./usr/share/doc/smm/07.lpd/Makefile
 ./usr/share/doc/smm/08.sendmailop/Makefile
 ./usr/share/doc/smm/08.sendmailop/op.me
-./usr/share/doc/smm/09.sendmail/Makefile
-./usr/share/doc/smm/09.sendmail/intro.me
 ./usr/share/doc/smm/10.named/00macs.me
 ./usr/share/doc/smm/10.named/00title.me
 ./usr/share/doc/smm/10.named/Makefile
@@ -380,6 +378,7 @@
 ./usr/share/examples/usermgmt/.cshrc
 ./usr/share/examples/usermgmt/.login
 ./usr/share/examples/usermgmt/.profile
+./usr/share/sendmail/LICENSE
 ./usr/share/sendmail/README
 ./usr/share/sendmail/cf/Makefile
 ./usr/share/sendmail/cf/boat-anchor.mc
@@ -458,13 +457,16 @@
 ./usr/share/sendmail/ostype/aux.m4
 ./usr/share/sendmail/ostype/bsd4.3.m4
 ./usr/share/sendmail/ostype/bsd4.4.m4
+./usr/share/sendmail/ostype/bsdi.m4
 ./usr/share/sendmail/ostype/bsdi1.0.m4
 ./usr/share/sendmail/ostype/bsdi2.0.m4
 ./usr/share/sendmail/ostype/dgux.m4
 ./usr/share/sendmail/ostype/domainos.m4
 ./usr/share/sendmail/ostype/dynix3.2.m4
+./usr/share/sendmail/ostype/gnu.m4
 ./usr/share/sendmail/ostype/gnuhurd.m4
 ./usr/share/sendmail/ostype/hpux10.m4
+./usr/share/sendmail/ostype/hpux11.m4
 ./usr/share/sendmail/ostype/hpux9.m4
 ./usr/share/sendmail/ostype/irix4.m4
 ./usr/share/sendmail/ostype/irix5.m4
@@ -474,6 +476,7 @@
 ./usr/share/sendmail/ostype/maxion.m4
 ./usr/share/sendmail/ostype/mklinux.m4
 ./usr/share/sendmail/ostype/nextstep.m4
+./usr/share/sendmail/ostype/openbsd.m4
 ./usr/share/sendmail/ostype/osf1.m4
 ./usr/share/sendmail/ostype/powerux.m4
 ./usr/share/sendmail/ostype/ptx2.m4
@@ -484,6 +487,7 @@
 ./usr/share/sendmail/ostype/sinix.m4
 ./usr/share/sendmail/ostype/solaris2.m4
 ./usr/share/sendmail/ostype/solaris2.ml.m4
+./usr/share/sendmail/ostype/solaris2.pre5.m4
 ./usr/share/sendmail/ostype/sunos3.5.m4
 ./usr/share/sendmail/ostype/sunos4.1.m4
 ./usr/share/sendmail/ostype/svr4.m4
