@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_irq.S,v 1.5 1996/05/06 00:25:43 mark Exp $ */
+/* $NetBSD: iomd_irq.S,v 1.6 1996/06/12 20:19:35 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -143,8 +143,18 @@ irq_entry:
 /*	strb	r8, [r10, #(IOMD_IRQRQA - IOMD_BASE)]*/
 	ldrb	r9, [r10, #(IOMD_IRQRQB - IOMD_BASE)]	/* Get IRQ request B */
 	orr	r8, r8, r9, lsl #8
+#ifdef RC7500
+	ldrb	r9, [r10, #(IOMD_IRQRQC - IOMD_BASE)]	/* Get IRQ request C */
+	orr	r8, r8, r9, lsl #16
+	ldrb	r9, [r10, #(IOMD_IRQRQD - IOMD_BASE)]	/* Get IRQ request D */
+	orr	r8, r8, r9, lsl #24
+	ldrb	r9, [r10, #(IOMD_DMARQ - IOMD_BASE)]	/* Get DMA Request */
+	tst	r9, #0x10
+	orrne	r8, r8, r9, lsl #27
+#else
 	ldrb	r9, [r10, #(IOMD_DMARQ - IOMD_BASE)]	/* Get DMA Request */
 	orr	r8, r8, r9, lsl #16
+#endif
 
 /*#if 0*/
 	mov	r0, #0x7d		/* Clear IOMD IRQ bits */
@@ -191,6 +201,11 @@ irqloop:
 irqchainloop:
 	add	lr, pc, #nextinchain - . - 8	/* return address */
 
+/*
+ * XXX: Should stats be accumlated for every interrupt routine called
+ * or for every physical interrupt that is serviced.
+ */
+
 #ifdef IRQSTATS
         ldr	r0, Lintrcnt
 	ldr	r1, [r6, #(IH_NUM)]
@@ -218,20 +233,25 @@ nextinchain:
 
 	ldr	r6, [r6, #(IH_NEXT)]
 	teq	r6, #0x00000000
-/*	bne	irqchainloop*/
+	bne	irqchainloop
 
 nextirq:
 	add	r7, r7, #0x00000004	/* update pointer to handlers */
 	mov	r9, r9, lsl #1		/* move on to next bit */
+#ifdef RC7500
+	teq	r9, #0			/* done the last bit ? */
+#else
 	teq	r9, #(1 << 24)		/* done the last bit ? */
+#endif
 	bne	irqloop			/* no - loop back. */
 
 	ldmfd	sp!, {r8}
 
 
+
 #if 0
         mrs     r0, cpsr_all		/* Enable IRQ's */
-	orr	r0, r0, #I32_bit
+	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 #endif
 
@@ -240,7 +260,7 @@ nextirq:
 /* Disable interrupts and lower the spl level */
 
 #if 0
-        mrs     r0, cpsr_all		/* Enable IRQ's */
+        mrs     r0, cpsr_all		/* Disable IRQ's */
 	orr	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 #endif
@@ -274,13 +294,9 @@ _irqast:
 /* Punch into SVC32 mode (R0 points to the irqframe) */
 /* We can trash all the registers we like :-) */
 
-/* Debug message */
+/* Make sure interrupts are disabled */
 
-/*	stmfd	sp!, {r0-r3}
-	add	r0, pc, #Lirqtext0 - . - 8
-	bl	_printf
-	ldmfd	sp!, {r0-r3}*/
-
+#ifdef DIAGNOSTIC
         mrs     r2, cpsr_all
 	tst	r2, #(I32_bit)
 	bne	Lis
@@ -293,6 +309,7 @@ _irqast:
 	bl	_printf
 	ldmfd	sp!, {r0-r3, lr}
 Lis:
+#endif
 	add	sp, sp, #72	/* Correct IRQ32 sp */
 
 /*
@@ -322,37 +339,18 @@ Lis:
 
 /* Ok the IRQ trapframe is now the SVC trapframe */
 
-/* IRQ's could be enabled here */
+/* IRQ's can be enabled here */
 
-/* Debug message */
+        mrs     r0, cpsr_all
+        bic     r0, r0, #(I32_bit)
+        msr     cpsr_all, r0
 
-/*	stmfd	sp!, {r0-r3}
-	add	r0, pc, #Lirqtext1 - . - 8
-	bl	_printf
-	ldmfd	sp!, {r0-r3}
-*/
 /* r0 points to trap frame on entry to ast() */
 
 	mov	r0, sp
-	stmfd	sp!, {lr}	/* Is this needed ? */
+	bl	_ast			/* Lets go do an ast */
 
-	bl	_ast
-
-	ldmfd	sp!, {lr}	/* Is this needed ? */
-
-/* Remember the address of the trap frame */
-
-/*	stmfd	sp!, {r0-r3}
-	add	r0, pc, #Lirqtext2 - . - 8
-	bl	_printf
-	ldmfd	sp!, {r0-r3}
-*/
-
-/* Pull the frame from the SVC stack and return */
-
-/*	mov	lr, #0*/
-
-/* Kill IRQ's incase ast as somehow re-enabled them ... */
+/* Kill IRQ's in preparation for exit */
 
         mrs     r0, cpsr_all
         orr     r0, r0, #(I32_bit)
@@ -360,19 +358,8 @@ Lis:
 
 	PULLFRAMEANDEXIT
 
-	mov	r4, #0x000000A0
-	mov	pc, #0x00000000
-
 Lirqtext0:
 	.asciz	"irqs enabled during ast\n"
-	.align	0
-
-Lirqtext1:
-	.asciz	"irqframe copied to SVC stack\n"
-	.align	0
-
-Lirqtext2:
-	.asciz	"irqframe restored from SVC stack\n"
 	.align	0
 
 Lspl_mask:
@@ -384,6 +371,10 @@ Lcurrent_mask:
 	.global	_irq_setmasks
 
 _irq_setmasks:
+	mrs	r3, cpsr_all
+	orr	r1, r3,  #(I32_bit)
+	msr	cpsr_all, r1
+	
 	ldr	r1, Lcurrent_mask
 	ldr	r1, [r1]
 	ldr	r2, Lspl_mask
@@ -398,7 +389,19 @@ _irq_setmasks:
 	mov	r1, r1, lsr #8
 	strb	r1, [r0, #(IOMD_IRQMSKB - IOMD_BASE)]	/* Set IRQ mask B */
 	mov	r1, r1, lsr #8
+#ifdef RC7500
+	strb	r1, [r0, #(IOMD_IRQMSKC - IOMD_BASE)]
+	mov	r1, r1, lsr #8
+	and	r2, r1, #0xef
+	strb	r2, [r0, #(IOMD_IRQMSKD - IOMD_BASE)]
+	mov	r1, r1, lsr #3
+	and	r2, r1, #0x10
+	strb	r2, [r0, #(IOMD_DMAMSK - IOMD_BASE)]	/* Set DMA mask */
+#else
 	strb	r1, [r0, #(IOMD_DMAMSK - IOMD_BASE)]	/* Set DMA mask */
+#endif
+
+	msr	cpsr_all, r3
 	mov	pc, r14
 
 
@@ -435,7 +438,7 @@ _intrnames:
 	.asciz	"interrupt  5 "
 	.asciz	"interrupt  6 "
 	.asciz	"softclock    "	/* reserved1 */
-	.asciz	"reserved 2   "
+	.asciz	"softplip     " /* reserved2 */
 	.asciz	"interrupt  9 "
 	.asciz	"interrupt 10 "
 	.asciz	"interrupt 11 "
@@ -464,7 +467,7 @@ _eintrnames:
 	.bss
 	.align	0
 _intrcnt:
-	.space	32*4
+	.space	32*4	/* XXX Should be linked to number of interrupts */
 _eintrcnt:
 
 #else
