@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.5 2003/09/12 14:59:11 tsutsui Exp $	*/
+/*	$NetBSD: console.c,v 1.6 2003/10/17 18:20:10 cdi Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.5 2003/09/12 14:59:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.6 2003/10/17 18:20:10 cdi Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -40,21 +40,62 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.5 2003/09/12 14:59:11 tsutsui Exp $");
 #include <sys/termios.h>
 
 #include <machine/bus.h>
+#include <machine/nvram.h>
 
 #include <dev/cons.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+#include "com.h"
+#include "nullcons.h"
+
+dev_type_cnprobe(comcnprobe);
+dev_type_cninit(comcninit);
+
+int	console_present = 0;	/* Do we have a console? */
+
+struct	consdev	constab[] = {
+#if NCOM > 0
+	{ comcnprobe, comcninit, },
+#endif
+#if NNULLCONS > 0
+	{ nullcnprobe, nullcninit },
+#endif
+	{ 0 }
+};
+
+#if NCOM > 0
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+
+void
+comcnprobe(cn)
+	struct consdev *cn;
+{
+
+	/*
+	 * Linux code has a comment that serial console must be probed
+	 * early, otherwise the value which allows to detect serial port
+	 * could be overwritten. Okay, probe here and record the result
+	 * for the future use.
+	 */
+	console_present = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x0020001c);
+	cn->cn_pri = (console_present != 0) ? CN_NORMAL : CN_DEAD;
+}
+
+void
+comcninit(cn)
+	struct consdev *cn;
+{
+
+	comcnattach(0, 0x1c800000, 115200, COM_FREQ * 10, COM_TYPE_NORMAL,
+	    CONMODE);
+}
+#endif
 
 void
 consinit()
 {
-	/* XXX Check NVRAM to see if we should enable the console at all. */
 
-	comcnattach(0, 0x1c800000, 115200, COM_FREQ * 10, COM_TYPE_NORMAL,
-	    CONMODE);
-
-	return;
+	cninit();
 }
