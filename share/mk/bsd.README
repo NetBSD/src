@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.124 2003/07/22 04:23:28 lukem Exp $
+#	$NetBSD: bsd.README,v 1.125 2003/07/22 06:53:21 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -700,10 +700,20 @@ CLEANFILES	Additional files to remove for the clean and cleandir targets.
 
 COPTS		Additional flags to the compiler when creating C objects.
 
+COPTS.<fn>	Additional flags to the compiler when creating the
+		C objects for <fn>.
+		For <fn>.[ly], "<fn>.c" must be used.
+
 CPUFLAGS	Additional flags to the compiler/assembler to select
 		CPU instruction set options, CPU tuning options, etc.
 
+CPUFLAGS.<fn>	Additional flags to the compiler/assembler for <fn>.
+		For <fn>.[ly], "<fn>.c" must be used.
+
 CPPFLAGS	Additional flags to the C pre-processor.
+
+CPPFLAGS.<fn>	Additional flags to the C pre-processor for <fn>.
+		For <fn>.[ly], "<fn>.c" must be used.
 
 GDBINIT		List of GDB initialization files to add to "source"
 		directives in the .gdbinit file that is created in the
