@@ -1,3 +1,4 @@
-$NetBSD: version,v 1.1 1997/02/04 03:52:58 thorpej Exp $
+$NetBSD: version,v 1.2 1997/02/04 03:54:56 thorpej Exp $
 
 1.1:		Initial version
+1.2:		Added support for HP-IB cartridge tapes
