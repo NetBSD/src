@@ -1,7 +1,7 @@
-/*	$NetBSD: nsdispatch.c,v 1.1.4.3 1998/11/02 03:29:36 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.1.4.4 1999/01/14 06:57:37 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,6 +43,7 @@
 #include <err.h>
 #include <fcntl.h>
 #define _NS_PRIVATE
+#define _PATH_NS_CONF "/tmp/nsswitch.conf"
 #include <nsswitch.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,138 +51,113 @@
 #include <unistd.h>
 
 
-static int	  _nsmapsize = 0;
-static ns_DBT	 *_nsmap = NULL;
+static	int			 _nsmapsize = 0;
+static	ns_dbt			*_nsmap = NULL;
+
 /*
- * number of ns_DBT per chunk in _nsmap. calculated along the lines of
- *	NSELEMSPERCHUNK * sizeof(ns_DBT) < (1024 - some slop)
- * this is to help power of 2 mallocs which are really wasteful if the
- * amount just overflows a power of 2 boundary.
+ * size of dynamic array chunk for _nsmap and _nsmap[x].srclist
  */
-#define NSELEMSPERCHUNK		10
+#define NSELEMSPERCHUNK		8
+
 
 int	_nscmp __P((const void *, const void *));
+
 
 int
 _nscmp(a, b)
 	const void *a;
 	const void *b;
 {
-	return strncmp(((ns_DBT*)a)->name, ((ns_DBT *)b)->name, NS_MAXDBLEN);
+	return strcasecmp(((ns_dbt *)a)->name, ((ns_dbt *)b)->name);
 }
 
+
 void
-__nsdbput(dbt)
-	const ns_DBT *dbt;
+_nsdbtaddsrc(dbt, src)
+	ns_dbt		*dbt;
+	const ns_src	*src;
 {
-	int	i;
-
-	for (i = 0; i < _nsmapsize; i++) {
-		if (_nscmp(dbt, &_nsmap[i]) == 0) {
-			memmove((void *)&_nsmap[i], (void *)dbt,
-				sizeof(ns_DBT));
-			return;
-		}
+	if ((dbt->srclistsize % NSELEMSPERCHUNK) == 0) {
+		dbt->srclist = (ns_src *)realloc(dbt->srclist,
+		    (dbt->srclistsize + NSELEMSPERCHUNK) * sizeof(ns_src));
+		if (dbt->srclist == NULL)
+			err(1, "nsdispatch: memory allocation failure");
 	}
-
-	if ((_nsmapsize % NSELEMSPERCHUNK) == 0) {
-		_nsmap = realloc(_nsmap,
-			    (_nsmapsize + NSELEMSPERCHUNK) * sizeof(ns_DBT));
-		if (_nsmap == NULL)
-			err(1, "nsdispatch: %m");
-
-	}
-	memmove((void *)&_nsmap[_nsmapsize++], (void *)dbt, sizeof(ns_DBT));
-}
-
-
-/*
- * __nsdbget --
- *	args: ns_DBT *dbt
- *	modifies: dbt
- *	looks for the element in dbt->name and finds from there
- *
- */
-void
-__nsdbget(dbt)
-	ns_DBT *dbt;
-{
-#ifdef _NS_LINEAR		/* XXX: just to compare linear vs bsearch */
-	int	i;
-	for (i = 0; i < _nsmapsize; i++) {
-		if (_nscmp(dbt, &_nsmap[i]) == 0) {
-			memmove((void *)dbt, (void *)&_nsmap[i],
-				sizeof(ns_DBT));
-			return;
-		}
-	}
-#else
-	ns_DBT *e;
-	e = bsearch(dbt, _nsmap, _nsmapsize, sizeof(ns_DBT), _nscmp);
-	if (e != NULL)
-		memmove((void *)dbt, (void *)e, sizeof(ns_DBT));
-#endif
+	memmove((void *)&dbt->srclist[dbt->srclistsize++], (void *)src,
+	    sizeof(ns_src));
 }
 
 
 void
-_nsdumpdbt(dbt)
-	const ns_DBT *dbt;
+_nsdbtdump(dbt)
+	const ns_dbt *dbt;
 {
 	int i;
-	printf("%s:\n", dbt->name);
-	for (i = 0; i < dbt->size; i++) {
-		int source = (dbt->map[i] & NS_SOURCEMASK);
-		int status = (dbt->map[i] & NS_STATUSMASK);
 
-		printf("  %2d: [%x] ", i, dbt->map[i]);
-		if (!dbt->map[i]) {
-		    printf(" (empty)\n");
-		    continue;
-		}
-		switch(source) {
-		case NS_FILES:		printf(" files"); break;
-		case NS_DNS:		printf(" dns"); break;
-		case NS_NIS:		printf(" nis"); break;
-		case NS_NISPLUS:	printf(" nisplus"); break;
-		case NS_COMPAT:		printf(" compat"); break;
-		default:		printf(" BADSOURCE(%x)", source); break;
-		}
-
-		if (!(status & NS_SUCCESS))
+	printf("%s (%d source%s):", dbt->name, dbt->srclistsize,
+	    dbt->srclistsize == 1 ? "" : "s");
+	for (i = 0; i < dbt->srclistsize; i++) {
+		printf(" %s", dbt->srclist[i].name);
+		if (!(dbt->srclist[i].flags &
+		    (NS_UNAVAIL|NS_NOTFOUND|NS_TRYAGAIN)) &&
+		    (dbt->srclist[i].flags & NS_SUCCESS))
+			continue;
+		printf(" [");
+		if (!(dbt->srclist[i].flags & NS_SUCCESS))
 			printf(" SUCCESS=continue");
-		if (status & NS_UNAVAIL)
+		if (dbt->srclist[i].flags & NS_UNAVAIL)
 			printf(" UNAVAIL=return");
-		if (status & NS_NOTFOUND)
+		if (dbt->srclist[i].flags & NS_NOTFOUND)
 			printf(" NOTFOUND=return");
-		if (status & NS_TRYAGAIN)
+		if (dbt->srclist[i].flags & NS_TRYAGAIN)
 			printf(" TRYAGAIN=return");
-		printf("\n");
+		printf(" ]");
 	}
+	printf("\n");
 }
 
 
-void
-_nsgetdbt(src, dbt)
-	const char	*src;
-	ns_DBT		*dbt;
+const ns_dbt *
+_nsdbtget(name)
+	const char	*name;
 {
-	static time_t	 confmod;
+	static	time_t	 confmod;
+	static	ns_dbt	 dbt;
+
 	struct stat	 statbuf;
+	ns_dbt		*ndbt;
 
-	extern FILE 	*_nsyyin;
-	extern int	_nsyyparse __P((void));
+	extern	FILE 	*_nsyyin;
+	extern	int	 _nsyyparse __P((void));
 
-	strncpy(dbt->name, src, NS_MAXDBLEN);
-	dbt->name[NS_MAXDBLEN - 1] = '\0';
-	dbt->size = 1;
-	dbt->map[0] = NS_DEFAULTMAP;		/* default to 'files' */
+	if (dbt.name == NULL) {		/* construct dummy `files' entry */
+		ns_src	src;
+
+		src.name = NSSRC_FILES;
+		src.flags = NS_SUCCESS;
+		dbt.name = name;
+		_nsdbtaddsrc(&dbt, &src);
+	}
 
 	if (confmod) {
 		if (stat(_PATH_NS_CONF, &statbuf) == -1)
-			return;
+			return (&dbt);
 		if (confmod < statbuf.st_mtime) {
-			free(_nsmap);
+			int i, j;
+
+			for (i = 0; i < _nsmapsize; i++) {
+				for (j = 0; j < _nsmap[i].srclistsize; j++) {
+					if (_nsmap[i].srclist[j].name != NULL)
+						free((char *)
+						    _nsmap[i].srclist[j].name);
+				}
+				if (_nsmap[i].srclist)
+					free(_nsmap[i].srclist);
+				if (_nsmap[i].name)
+					free((char *)_nsmap[i].name);
+			}
+			if (_nsmap)
+				free(_nsmap);
 			_nsmap = NULL;
 			_nsmapsize = 0;
 			confmod = 0;
@@ -189,65 +165,94 @@ _nsgetdbt(src, dbt)
 	}
 	if (!confmod) {
 		if (stat(_PATH_NS_CONF, &statbuf) == -1)
-			return;
+			return (&dbt);
 		_nsyyin = fopen(_PATH_NS_CONF, "r");
 		if (_nsyyin == NULL)
-			return;
+			return (&dbt);
 		_nsyyparse();
-#ifndef _NS_LINEAR
-		qsort(_nsmap, _nsmapsize, sizeof(ns_DBT), _nscmp);
-#endif
 		(void)fclose(_nsyyin);
+		qsort(_nsmap, _nsmapsize, sizeof(ns_dbt), _nscmp);
 		confmod = statbuf.st_mtime;
 	}
-	__nsdbget(dbt);
+	ndbt = bsearch(&dbt, _nsmap, _nsmapsize, sizeof(ns_dbt), _nscmp);
+	if (ndbt != NULL)
+		return (ndbt);
+	return (&dbt);
+}
+
+
+void
+_nsdbtput(dbt)
+	const ns_dbt *dbt;
+{
+	int	i;
+
+	for (i = 0; i < _nsmapsize; i++) {
+		if (_nscmp(dbt, &_nsmap[i]) == 0) {
+					/* overwrite existing entry */
+			if (_nsmap[i].srclist != NULL)
+				free(_nsmap[i].srclist);
+			memmove((void *)&_nsmap[i], (void *)dbt,
+				sizeof(ns_dbt));
+			return;
+		}
+	}
+
+	if ((_nsmapsize % NSELEMSPERCHUNK) == 0) {
+		_nsmap = (ns_dbt *)realloc(_nsmap,
+		    (_nsmapsize + NSELEMSPERCHUNK) * sizeof(ns_dbt));
+		if (_nsmap == NULL)
+			err(1, "nsdispatch: memory allocation failure");
+	}
+	memmove((void *)&_nsmap[_nsmapsize++], (void *)dbt, sizeof(ns_dbt));
 }
 
 
 int
 #if __STDC__
-nsdispatch(void *retval, ns_dtab disp_tab, const char *database, ...)
+nsdispatch(void *retval, const ns_dtab disp_tab[], const char *database, ...)
 #else
 nsdispatch(retval, disp_tab, database, va_alist)
 	void		*retval;
-	ns_dtab		 disp_tab;
+	const ns_dtab	 disp_tab[];
 	const char	*database;
 	va_dcl
 #endif
 {
-	va_list	ap;
-	int	curdisp, result = 0;
-	ns_DBT	dbt;
+	va_list		 ap;
+	int		 i, curdisp, result;
+	const ns_dbt	*dbt;
 
-	_nsgetdbt(database, &dbt);
+	dbt = _nsdbtget(database);
+	result = 0;
 
 #if _NS_DEBUG
-	_nsdumpdbt(&dbt);
+	_nsdumpdbt(dbt);
 	fprintf(stderr, "nsdispatch: %s\n", database);
 #endif
-	for (curdisp = 0; curdisp < dbt.size; curdisp++) {
-		int source = (dbt.map[curdisp] & NS_SOURCEMASK);
+	for (i = 0; i < dbt->srclistsize; i++) {
 #if _NS_DEBUG
-		fprintf(stderr, "    %2d: source=%d", curdisp, source);
+		fprintf(stderr, "    source=%s", dbt->srclist[i]->source);
 #endif
-		if (source < 0 || source >= NS_MAXSOURCE)
-			continue;
-
+		for (curdisp = 0; disp_tab[curdisp].src != NULL; curdisp++)
+			if (strcasecmp(disp_tab[curdisp].src,
+			    dbt->srclist[i].name) == 0)
+				break;
 		result = 0;
-		if (disp_tab[source].cb) {
+		if (disp_tab[curdisp].callback) {
 #if __STDC__
 			va_start(ap, database);
 #else
 			va_start(ap);
 #endif
-			result = disp_tab[source].cb(retval,
-						disp_tab[source].cb_data, ap);
+			result = disp_tab[curdisp].callback(retval,
+			    disp_tab[curdisp].cb_data, ap);
 			va_end(ap);
 #if _NS_DEBUG
 			fprintf(stderr, " result=%d (%d)", result,
-			    (result & (dbt.map[curdisp] & NS_STATUSMASK)));
+			    (result & dbt->srclist[i].flags));
 #endif
-			if (result & (dbt.map[curdisp] & NS_STATUSMASK)) {
+			if (result & dbt->srclist[i].flags) {
 #if _NS_DEBUG
 				fprintf(stderr, " MATCH!\n");
 #endif
