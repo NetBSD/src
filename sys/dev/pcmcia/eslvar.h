@@ -1,4 +1,4 @@
-/*	$NetBSD: eslvar.h,v 1.3.18.1 2004/08/03 10:50:15 skrll Exp $	*/
+/*	$NetBSD: eslvar.h,v 1.3.18.2 2004/08/12 11:41:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -75,8 +75,8 @@ struct esl_softc
 
 struct esl_pcmcia_softc {
         struct esl_softc sc_esl;
-	struct pcmcia_io_handle sc_pcioh;
-	int sc_io_window;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
 	struct pcmcia_function *sc_pf;
 	void *sc_ih;
 	struct device *sc_audiodev;
@@ -84,6 +84,9 @@ struct esl_pcmcia_softc {
 
 	int (*sc_enable)(struct esl_pcmcia_softc *);
 	void (*sc_disable)(struct esl_pcmcia_softc *);
+
+	int sc_state;
+#define	ESL_PCMCIA_ATTACHED	3
 };
 
 int     esl_init(struct esl_pcmcia_softc *sc);

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.25.2.2 2004/08/03 10:52:11 skrll Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.25.2.3 2004/08/12 11:42:19 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -199,24 +199,6 @@ int wsdisplay_stat_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 
 int wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 			int flag, struct lwp *l);
-
-#ifdef WSDISPLAY_SCROLLSUPPORT
-void wsdisplay_scroll (void *v, int op);
-#endif
-
-#define WSDISPLAY_SCROLL_BACKWARD	1
-#define WSDISPLAY_SCROLL_FORWARD	(1 << 1)
-#define WSDISPLAY_SCROLL_RESET		(1 << 2)
-#define WSDISPLAY_SCROLL_LOW		(1 << 3)
-
-#ifdef WSDISPLAY_SCROLLSUPPORT
-void wsdisplay_scroll (void *v, int op);
-#endif
-
-#define WSDISPLAY_SCROLL_BACKWARD	1
-#define WSDISPLAY_SCROLL_FORWARD	(1 << 1)
-#define WSDISPLAY_SCROLL_RESET		(1 << 2)
-#define WSDISPLAY_SCROLL_LOW		(1 << 3)
 
 #ifdef WSDISPLAY_SCROLLSUPPORT
 void wsdisplay_scroll (void *v, int op);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.26.2.1 2004/08/03 10:49:06 skrll Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.26.2.2 2004/08/12 11:41:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.26.2.1 2004/08/03 10:49:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.26.2.2 2004/08/12 11:41:44 skrll Exp $");
 
 #include "midi.h"
 
@@ -420,23 +420,30 @@ cs4280_intr(p)
 			break;
 		case CF_16BIT_MONO:
 			for (i = 0; i < 512; i++) {
-				rdata  = *((int16_t *)empty_dma)++>>1;
-				rdata += *((int16_t *)empty_dma)++>>1;
-				*((int16_t *)sc->sc_rn)++ = rdata;
+				rdata  = *((int16_t *)empty_dma)>>1;
+				empty_dma += 2;
+				rdata += *((int16_t *)empty_dma)>>1;
+				empty_dma += 2;
+				*((int16_t *)sc->sc_rn) = rdata;
+				sc->sc_rn += 2;
 			}
 			break;
 		case CF_8BIT_STEREO:
 			for (i = 0; i < 512; i++) {
-				rdata = *((int16_t*)empty_dma)++;
+				rdata = *((int16_t*)empty_dma);
+				empty_dma += 2;
 				*sc->sc_rn++ = rdata >> 8;
-				rdata = *((int16_t*)empty_dma)++;
+				rdata = *((int16_t*)empty_dma);
+				empty_dma += 2;
 				*sc->sc_rn++ = rdata >> 8;
 			}
 			break;
 		case CF_8BIT_MONO:
 			for (i = 0; i < 512; i++) {
-				rdata =	 *((int16_t*)empty_dma)++ >>1;
-				rdata += *((int16_t*)empty_dma)++ >>1;
+				rdata =	 *((int16_t*)empty_dma) >>1;
+				empty_dma += 2;
+				rdata += *((int16_t*)empty_dma) >>1;
+				empty_dma += 2;
 				*sc->sc_rn++ = rdata >>8;
 			}
 			break;

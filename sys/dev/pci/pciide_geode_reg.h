@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_geode_reg.h,v 1.2.2.2 2004/08/03 10:49:11 skrll Exp $	*/
+/*	$NetBSD: pciide_geode_reg.h,v 1.2.2.3 2004/08/12 11:41:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -30,21 +30,33 @@
  *
  */
 
-#define PIO_REG(chan, drv)	(0x20 + (chan) * 0x10 + (drv) * 0x8)
-#define DMA_REG(chan, drv)	(0x24 + (chan) * 0x10 + (drv) * 0x8)
-#define 	DMA_REG_PIO_FORMAT	0x80000000 /* select PIO format 1 */
-#define		DMA_REG_UDMA		0x00100000 /* enable Ultra-DMA */
+#define CS5530_PIO_REG(chan, drv)	(0x20 + (chan) * 0x10 + (drv) * 0x8)
+#define CS5530_DMA_REG(chan, drv)	(0x24 + (chan) * 0x10 + (drv) * 0x8)
+#define CS5530_DMA_REG_PIO_FORMAT	0x80000000 /* select PIO format 1 */
+#define CS5530_DMA_REG_UDMA		0x00100000 /* enable Ultra-DMA */
 
 /*
- * Recommeded values from the cs5530 data sheet.
- * Note that the udma values include DMA_REG_UDMA.
+ * Recommended values from the cs5530 data sheet.
+ * Note that the udma values include CS5530_DMA_REG_UDMA.
  * However, from the datasheet bits 30-21 should be reserved, yet 
  * geode_udma sets bit 23 to 1. I don't know if it's the definition of
  * DMA_REG_UDMA which is wrong (bit 23 instead of 20) or these values.
  */
-static const int32_t geode_pio[] __attribute__((__unused__)) =
+static const int32_t geode_cs5530_pio[] __attribute__((__unused__)) =
     {0x9172d132, 0x21717121, 0x00803020, 0x20102010, 0x00100010};
-static const int32_t geode_dma[] __attribute__((__unused__)) =
+static const int32_t geode_cs5530_dma[] __attribute__((__unused__)) =
     {0x00077771, 0x00012121, 0x00002020};
-static const int32_t geode_udma[] __attribute__((__unused__)) =
+static const int32_t geode_cs5530_udma[] __attribute__((__unused__)) =
     {0x00921250, 0x00911140, 0x00911030};
+
+#define SC1100_PIO_REG(chan, drv)	(0x40 + (chan) * 0x10 + (drv) * 0x8)
+#define SC1100_DMA_REG(chan, drv)	(0x44 + (chan) * 0x10 + (drv) * 0x8)
+
+/* Timings from FreeBSD */
+static const int32_t geode_sc1100_pio[] __attribute__((__unused__)) =
+    {0x9172d132, 0x21717121, 0x00803020, 0x20102010, 0x00100010, 0x00803020,
+     0x20102010, 0x00100010, 0x00100010, 0x00100010, 0x00100010};
+static const int32_t geode_sc1100_dma[] __attribute__((__unused__)) =
+    {0x80077771, 0x80012121, 0x80002020};
+static const int32_t geode_sc1100_udma[] __attribute__((__unused__)) =
+    {0x80921250, 0x80911140, 0x80911030};

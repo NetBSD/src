@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.4.2.2 2004/08/03 10:45:47 skrll Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.4.2.3 2004/08/12 11:41:22 skrll Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.4.2.2 2004/08/03 10:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.4.2.3 2004/08/12 11:41:22 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.4.2.2 2004/08/03 10:45:47 skrll
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 /*
  * PCI configuration space registers
@@ -315,13 +315,13 @@ ath_cardbus_setup(struct ath_cardbus_softc *csc)
 	(void)cardbus_setpowerstate(sc->sc_dev.dv_xname, ct, csc->sc_tag,
 	    PCI_PWR_D0);
 
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
 	/* Program the BAR. */
 	cardbus_conf_write(cc, cf, csc->sc_tag, ATH_PCI_MMBA,
 	    csc->sc_bar_val);
+
+	/* Make sure the right access type is on the CardBus bridge. */
+	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
+	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag,

@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.cpp,v 1.5 2002/02/04 17:32:02 uch Exp $	*/
+/*	$NetBSD: memory.cpp,v 1.5.16.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ MemoryManager::MemoryManager(Console *&cons, size_t pagesize)
 {
 	_debug = FALSE;
 	_page_size = pagesize;
-  
+
 	int mask = _page_size;
 	for (_page_shift = 0; !(mask & 1); _page_shift++)
 		mask >>= 1;
@@ -80,7 +80,7 @@ MemoryManager::reservePage(vsize_t size, BOOL page_commit)
 	vsize_t vsize;
 
 	int i, npage;
-    
+
 	if (size == 0)
 		return FALSE;
 
@@ -186,20 +186,20 @@ MemoryManager::getTaggedPage(vaddr_t &vaddr, paddr_t &paddr)
 		return FALSE;
 	}
 	AddressTranslationTable *tab =
-	    &_addr_table[_addr_table_idx++];  
+	    &_addr_table[_addr_table_idx++];
 	vaddr = tab->vaddr;
 	paddr = tab->paddr;
-  
+
 	return TRUE;
 }
 
-BOOL 
+BOOL
 MemoryManager::getTaggedPage(vaddr_t &v, paddr_t &p,
     struct PageTag **pvec, paddr_t &pvec_paddr)
 {
 	if (!getTaggedPage(v, p))
 		return FALSE;
-    
+
 	*pvec =(struct PageTag *)v;
 	memset(*pvec, 0, sizeof(struct PageTag));
 	v += sizeof(struct PageTag);
@@ -227,9 +227,7 @@ MemoryManager::mapPhysicalPage(paddr_t paddr, psize_t size, u_int32_t flags)
 #if 0
 	DPRINTF((TEXT("start=0x%08x end=0x%08x size=0x%08x return=0x%08x\n"),
 	    pstart, pend, psize, vaddr_t(p) + vaddr_t(paddr - pstart)));
-	    
 #endif
-  
 	return vaddr_t(p) + vaddr_t(paddr - pstart);
 }
 
@@ -274,13 +272,13 @@ MemoryManager_LockPages::searchPage(vaddr_t vaddr)
 {
 	paddr_t paddr = ~0;
 
-	if (!_lock_pages(LPVOID(vaddr), _page_size, PDWORD(&paddr), 1))  
+	if (!_lock_pages(LPVOID(vaddr), _page_size, PDWORD(&paddr), 1))
 		return paddr;
 
 	if (!_unlock_pages(LPVOID(vaddr), _page_size)) {
 		DPRINTF((TEXT("can't unlock pages\n")));
 	}
-  
+
 	return(paddr >>(_page_shift - _shift)) << _page_shift;
 }
 
@@ -288,7 +286,7 @@ MemoryManager_LockPages::searchPage(vaddr_t vaddr)
 //	Use VirtualCopy()
 //
 MemoryManager_VirtualCopy::MemoryManager_VirtualCopy(Console *&cons,
-    size_t pagesize) 
+    size_t pagesize)
 	: MemoryManager(cons, pagesize)
 {
 	_search_guess = 0;
@@ -355,7 +353,7 @@ MemoryManager_VirtualCopy::searchBank(int banknum)
 			goto release;
 		}
 
-		// search magic in this region. 
+		// search magic in this region.
 		ofs = checkMagicRegion(vaddr_t(ref), BLOCK_SIZE, _page_size);
 
 		// decommit reference region.

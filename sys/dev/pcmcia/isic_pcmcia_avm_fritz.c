@@ -33,7 +33,7 @@
  *	Fritz!Card pcmcia specific routines for isic driver
  *	---------------------------------------------------
  *
- *	$Id: isic_pcmcia_avm_fritz.c,v 1.5 2002/03/29 11:10:38 martin Exp $ 
+ *	$Id: isic_pcmcia_avm_fritz.c,v 1.5.10.1 2004/08/12 11:42:01 skrll Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.5 2002/03/29 11:10:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.5.10.1 2004/08/12 11:42:01 skrll Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_AVM_A1
@@ -440,8 +440,8 @@ isic_attach_fritzpcmcia(struct pcmcia_isic_softc *psc, struct pcmcia_config_entr
 
 	/* map the selected space */
 	if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16) ?
-	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), 0,
-	    cfe->iospace[i].length, &psc->sc_pcioh, &psc->sc_io_window)) {
+	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), &psc->sc_pcioh,
+	    &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
 		return 0;
 	}

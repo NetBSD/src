@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7.2.1 2004/08/03 10:35:29 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.7.2.2 2004/08/12 11:41:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.7.2.1 2004/08/03 10:35:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.7.2.2 2004/08/12 11:41:11 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -169,6 +169,17 @@ const char *trap_type[] = {
 	"unaligned data ref",
 };
 int trap_types = sizeof(trap_type)/sizeof(trap_type[0]);
+
+uint8_t fpopmap[] = {
+	0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x0c, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x26, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
 
 int want_resched;
 volatile int astpending;
@@ -497,6 +508,9 @@ trap(int type, struct trapframe *frame)
 	l = curlwp;
 	p = l ? l->l_proc : NULL;
 
+	tts = (type & ~T_USER) > trap_types ? "reserved" :
+		trap_type[type & ~T_USER];
+
 #ifdef DIAGNOSTIC
 	/*
 	 * If we are on the emergency stack, then we either got
@@ -540,11 +554,6 @@ trap(int type, struct trapframe *frame)
 
 	if (frame->tf_flags & TFF_LAST)
 		l->l_md.md_regs = frame;
-
-	if ((type & ~T_USER) > trap_types)
-		tts = "reserved";
-	else
-		tts = trap_type[type & ~T_USER];
 
 #ifdef TRAPDEBUG
 	if (type_raw != T_INTERRUPT && type_raw != T_IBREAK)
@@ -665,40 +674,23 @@ trap(int type, struct trapframe *frame)
 
 	case T_EXCEPTION | T_USER: {	/* co-proc assist trap */
 		uint64_t *fpp;
-		uint32_t *pex;
-		uint32_t ex, inst, stat;
-		int i, flt;
+		uint32_t *pex, ex, inst;
+		int i;
 
 		hppa_fpu_flush(l);
 		fpp = l->l_addr->u_pcb.pcb_fpregs;
-		pex = (uint32_t *)&fpp[0];
-		for (i = 0, pex++; i < 7 && !*pex; i++, pex++)
+		pex = (uint32_t *)&fpp[1];
+		for (i = 1; i < 8 && !*pex; i++, pex++)
 			;
-		flt = 0;
-		if (i < 7) {
-			ex = *pex;
-			stat = HPPA_FPU_OP(ex);
+		KASSERT(i < 8);
+		ex = *pex;
+		*pex = 0;
 
-			if (stat & HPPA_FPU_UNMPL)
-				flt = FPE_FLTINV;
-			else if (stat & (HPPA_FPU_V << 1))
-				flt = FPE_FLTINV;
-			else if (stat & (HPPA_FPU_Z << 1))
-				flt = FPE_FLTDIV;
-			else if (stat & (HPPA_FPU_I << 1))
-				flt = FPE_FLTRES;
-			else if (stat & (HPPA_FPU_O << 1))
-				flt = FPE_FLTOVF;
-			else if (stat & (HPPA_FPU_U << 1))
-				flt = FPE_FLTUND;
-			/* still left: under/over-flow w/ inexact */
-			*pex = 0;
-		}
 		/* reset the trap flag, as if there was none */
 		fpp[0] &= ~(((uint64_t)HPPA_FPU_T) << 32);
 
-		/* XXX assume it's opcode 0C */
-		inst = (0x0c << 26) | (ex & 0x03ffffff);
+		/* emulate the instruction */
+		inst = ((uint32_t)fpopmap[ex >> 26] << 26) | (ex & 0x03ffffff);
 		hppa_fpu_emulate(frame, l, inst);
 		}
 		break;
@@ -713,6 +705,12 @@ trap(int type, struct trapframe *frame)
 		break;
 		
 	case T_CONDITION | T_USER:
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_code = FPE_INTDIV;
+		ksi.ksi_trap = type;
+		ksi.ksi_addr = (void *)va;
+		trapsignal(l, &ksi);
 		break;
 
 	case T_ILLEGAL | T_USER:

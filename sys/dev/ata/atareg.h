@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.9.6.1 2004/08/03 10:45:46 skrll Exp $	*/
+/*	$NetBSD: atareg.h,v 1.9.6.2 2004/08/12 11:41:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -140,6 +140,10 @@
 
 #define	WDCC_READDMA_EXT	0x25	/* read 48-bit addressing with DMA */
 #define	WDCC_WRITEDMA_EXT	0x35	/* write 48-bit addressing with DMA */
+
+/* Native SATA command queueing */
+#define	WDCC_READ_FPDMA_QUEUED	0x60	/* SATA native queued read (48bit) */
+#define	WDCC_WRITE_FPDMA_QUEUED	0x61	/* SATA native queued write (48bit) */
 
 /* Subcommands for SET_FEATURES (features register) */
 #define	WDSF_WRITE_CACHE_EN	0x02

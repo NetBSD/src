@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_boot.cpp,v 1.5 2001/06/18 11:31:04 uch Exp $	*/
+/*	$NetBSD: arm_boot.cpp,v 1.5.24.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ ARMBoot::create()
 	} else {
 		_cons = Console::Instance();
 	}
-  
+
 	// File Manager, Loader
 	return super::create();
 }

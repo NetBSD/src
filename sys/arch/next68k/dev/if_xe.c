@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.13.2.1 2004/08/03 10:38:35 skrll Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.13.2.2 2004/08/12 11:41:14 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.13.2.1 2004/08/03 10:38:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.13.2.2 2004/08/12 11:41:14 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -560,8 +560,12 @@ xe_dma_tx_completed(map, arg)
 	bus_dmamap_t map;
 	void *arg;
 {
+#if defined (XE_DEBUG) || defined (DIAGNOSTIC)
 	struct mb8795_softc *sc = arg;
+#endif
+#ifdef DIAGNOSTIC
 	struct xe_softc *xsc = (struct xe_softc *)sc;
+#endif
 
 	DPRINTF(("%s: xe_dma_tx_completed()\n",sc->sc_dev.dv_xname));
 

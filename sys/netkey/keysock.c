@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.23.2.2 2004/08/03 10:56:04 skrll Exp $	*/
+/*	$NetBSD: keysock.c,v 1.23.2.3 2004/08/12 11:42:22 skrll Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.23.2.2 2004/08/03 10:56:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.23.2.3 2004/08/12 11:42:22 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -248,28 +248,27 @@ key_sendup0(rp, m, promisc, canwait)
 	struct mbuf *n;
 	int error = 0;
 
-			pfkeystat.in_msgtype[pmsg->sadb_msg_type]++;
-		}
+	if (promisc) {
+		struct sadb_msg *pmsg;
 
-		if (canwait &&
-		    sbspace(&rp->rcb_socket->so_rcv) < m->m_pkthdr.len) {
-			error = EAGAIN;
-			goto recovery;
-		}
-
-		m->m_nextpkt = NULL;
-
-		if (!sbappendaddr(&rp->rcb_socket->so_rcv,
-		    (struct sockaddr *)&key_src, m, NULL)) {
+		M_PREPEND(m, sizeof(struct sadb_msg), M_NOWAIT);
+		if (m && m->m_len < sizeof(struct sadb_msg))
+			m = m_pullup(m, sizeof(struct sadb_msg));
+		if (!m) {
 			pfkeystat.in_nomem++;
-			error = ENOBUFS;
-			goto recovery;
-		} else {
-			sorwakeup(rp->rcb_socket);
-			error = 0;
+			return ENOBUFS;
 		}
+		m->m_pkthdr.len += sizeof(*pmsg);
+
+		pmsg = mtod(m, struct sadb_msg *);
+		bzero(pmsg, sizeof(*pmsg));
+		pmsg->sadb_msg_version = PF_KEY_V2;
+		pmsg->sadb_msg_type = SADB_X_PROMISC;
+		pmsg->sadb_msg_len = PFKEY_UNIT64(m->m_pkthdr.len);
+		/* pid and seq? */
+
+		pfkeystat.in_msgtype[pmsg->sadb_msg_type]++;
 	}
-	return (error);
 
 	if (canwait) {
 		if (kp->kp_queue) {

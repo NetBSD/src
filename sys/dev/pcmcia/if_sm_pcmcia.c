@@ -1,12 +1,12 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.30 2002/10/02 16:52:15 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.30.6.1 2004/08/12 11:42:01 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.30 2002/10/02 16:52:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.30.6.1 2004/08/12 11:42:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,17 +69,18 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.30 2002/10/02 16:52:15 thorpej Ex
 #include <dev/pcmcia/pcmciadevs.h>
 
 int	sm_pcmcia_match __P((struct device *, struct cfdata *, void *));
+int	sm_pcmcia_validate_config __P((struct pcmcia_config_entry *));
 void	sm_pcmcia_attach __P((struct device *, struct device *, void *));
 int	sm_pcmcia_detach __P((struct device *, int));
 
 struct sm_pcmcia_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */
 
-	/* PCMCIA-specific goo. */
-	struct	pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
-	int	sc_io_window;			/* our i/o window */
-	void	*sc_ih;				/* interrupt cookie */
 	struct	pcmcia_function *sc_pf;		/* our PCMCIA function */
+	void	*sc_ih;				/* interrupt cookie */
+
+	int	sc_state;
+#define	SM_PCMCIA_ATTACHED	3
 };
 
 CFATTACH_DECL(sm_pcmcia, sizeof(struct sm_pcmcia_softc),
@@ -89,26 +90,26 @@ int	sm_pcmcia_enable __P((struct smc91cxx_softc *));
 void	sm_pcmcia_disable __P((struct smc91cxx_softc *));
 
 int	sm_pcmcia_ascii_enaddr __P((const char *, u_int8_t *));
-int	sm_pcmcia_funce_enaddr __P((struct device *, u_int8_t *));
-
-int	sm_pcmcia_lannid_ciscallback __P((struct pcmcia_tuple *, void *));
 
 const struct pcmcia_product sm_pcmcia_products[] = {
-	{ PCMCIA_STR_MEGAHERTZ2_XJACK,		PCMCIA_VENDOR_MEGAHERTZ2,
-	  PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,	 0, },
+	{ PCMCIA_VENDOR_MEGAHERTZ2, PCMCIA_PRODUCT_MEGAHERTZ2_EM1144,
+	  PCMCIA_CIS_INVALID },
 
-	{ PCMCIA_STR_NEWMEDIA_BASICS,		PCMCIA_VENDOR_NEWMEDIA,
-	  PCMCIA_PRODUCT_NEWMEDIA_BASICS,	0, },
+	{ PCMCIA_VENDOR_MEGAHERTZ2, PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,
+	  PCMCIA_CIS_INVALID },
+
+	{ PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_BASICS,
+	  PCMCIA_CIS_INVALID },
 
 #if 0
-	{ PCMCIA_STR_SMC_8020BT,		PCMCIA_VENDOR_SMC,
-	  PCMCIA_PRODUCT_SMC_8020BT,		0, },
+	{ PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_8020BT,
+	  PCMCIA_CIS_INVALID },
 #endif
-	{ PCMCIA_STR_PSION_GOLDCARD,		PCMCIA_VENDOR_PSION,
-	  PCMCIA_PRODUCT_PSION_GOLDCARD,	0, },
-
-	{ NULL }
+	{ PCMCIA_VENDOR_PSION, PCMCIA_PRODUCT_PSION_GOLDCARD,
+	  PCMCIA_CIS_INVALID },
 };
+const size_t sm_pcmcia_nproducts =
+    sizeof(sm_pcmcia_products) / sizeof(sm_pcmcia_products[0]);
 
 int
 sm_pcmcia_match(parent, match, aux)
@@ -118,9 +119,25 @@ sm_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pcmcia_product_lookup(pa, sm_pcmcia_products,
-	    sizeof sm_pcmcia_products[0], NULL) != NULL)
+	/* This is to differentiate the serial function of some cards. */
+	if (pa->pf->function != PCMCIA_FUNCTION_NETWORK)
+		return (0);
+
+	if (pcmcia_product_lookup(pa, sm_pcmcia_products, sm_pcmcia_nproducts,
+	    sizeof(sm_pcmcia_products[0]), NULL))
 		return (1);
+	return (0);
+}
+
+int
+sm_pcmcia_validate_config(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_memspace != 0 ||
+	    cfe->num_iospace != 1 ||
+	    cfe->iospace[0].length < SMC_IOSIZE)
+		return (EINVAL);
 	return (0);
 }
 
@@ -133,95 +150,51 @@ sm_pcmcia_attach(parent, self, aux)
 	struct smc91cxx_softc *sc = &psc->sc_smc;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	u_int8_t myla[ETHER_ADDR_LEN], *enaddr = NULL;
-	const struct pcmcia_product *pp;
+	u_int8_t enaddr[ETHER_ADDR_LEN];
+	int error;
 
 	psc->sc_pf = pa->pf;
-	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 
-	/* Enable the card. */
-	pcmcia_function_init(pa->pf, cfe);
-	if (pcmcia_function_enable(pa->pf)) {
-		printf(": function enable failed\n");
-		goto enable_failed;
+	error = pcmcia_function_configure(pa->pf, sm_pcmcia_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
 	}
 
-	/* XXX sanity check number of mem and i/o spaces */
+	cfe = pa->pf->cfe;
+	sc->sc_bst = cfe->iospace[0].handle.iot;
+	sc->sc_bsh = cfe->iospace[0].handle.ioh;
 
-	/* Allocate and map i/o space for the card. */
-	if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
-	    cfe->iospace[0].length, &psc->sc_pcioh)) {
-		printf(": can't allocate i/o space\n");
-		goto ioalloc_failed;
-	}
-
-	sc->sc_bst = psc->sc_pcioh.iot;
-	sc->sc_bsh = psc->sc_pcioh.ioh;
+	error = sm_pcmcia_enable(sc);
+	if (error)
+		goto fail;
 
 	sc->sc_enable = sm_pcmcia_enable;
 	sc->sc_disable = sm_pcmcia_disable;
 
-	if (pcmcia_io_map(pa->pf, (cfe->flags & PCMCIA_CFE_IO16) ?
-	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8, 0, cfe->iospace[0].length,
-	    &psc->sc_pcioh, &psc->sc_io_window)) {
-		printf(": can't map i/o space\n");
-		goto iomap_failed;
-	}
-
-	pp = pcmcia_product_lookup(pa, sm_pcmcia_products,
-	    sizeof sm_pcmcia_products[0], NULL);
-	if (pp == NULL)
-		panic("sm_pcmcia_attach: impossible");
-
-	printf(": %s\n", pp->pp_name);
-
 	/*
 	 * First try to get the Ethernet address from FUNCE/LANNID tuple.
+	 * If that fails, try one of the CIS info strings.
 	 */
-	if (sm_pcmcia_funce_enaddr(parent, myla))
-		enaddr = myla;
-
-	/*
-	 * If that failed, try one of the CIS info strings.
-	 */
-	if (enaddr == NULL) {
-		char *cisstr = NULL;
-
-		switch (pa->manufacturer) {
-		case PCMCIA_VENDOR_MEGAHERTZ:
-		case PCMCIA_VENDOR_MEGAHERTZ2:
-			cisstr = pa->pf->sc->card.cis1_info[3];
-			break;
-
-		case PCMCIA_VENDOR_SMC:
-			cisstr = pa->pf->sc->card.cis1_info[2];
-			break;
-		}
-
-		if (cisstr != NULL && sm_pcmcia_ascii_enaddr(cisstr, myla))
-			enaddr = myla;
+	if (pa->pf->pf_funce_lan_nidlen == ETHER_ADDR_LEN) {
+		memcpy(enaddr, pa->pf->pf_funce_lan_nid, ETHER_ADDR_LEN);
+	} else {
+		if (!sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[3], enaddr) &&
+		    !sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[2], enaddr))
+			aprint_error("%s: unable to get Ethernet address\n",
+			    self->dv_xname);
 	}
-
-	if (enaddr == NULL)
-		printf("%s: unable to get Ethernet address\n",
-		    sc->sc_dev.dv_xname);
 
 	/* Perform generic intialization. */
 	smc91cxx_attach(sc, enaddr);
 
-	pcmcia_function_disable(pa->pf);
+	psc->sc_state = SM_PCMCIA_ATTACHED;
+	sm_pcmcia_disable(sc);
 	return;
 
- iomap_failed:
-	/* Free our i/o space. */
-	pcmcia_io_free(pa->pf, &psc->sc_pcioh);
-
- ioalloc_failed:
-	/* Disable the device */
-	pcmcia_function_disable(pa->pf);
-
- enable_failed:
-	psc->sc_io_window = -1;
+fail:
+	pcmcia_function_unconfigure(pa->pf);
 }
 
 int
@@ -230,21 +203,17 @@ sm_pcmcia_detach(self, flags)
 	int flags;
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)self;
-	int rv;
+	int error;
 
-	if (psc->sc_io_window == -1)
-		/* Nothing to detach. */
+	if (psc->sc_state != SM_PCMCIA_ATTACHED)
 		return (0);
 
-	rv = smc91cxx_detach((struct device *)&psc->sc_smc, flags);
-	if (rv != 0)
-		return (rv);
+	error = smc91cxx_detach((struct device *)&psc->sc_smc, flags);
+	if (error)
+		return (error);
 
-	/* Unmap our i/o window. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+	pcmcia_function_unconfigure(psc->sc_pf);
 
-	/* Free our i/o space. */
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 	return (0);
 }
 
@@ -255,6 +224,10 @@ sm_pcmcia_ascii_enaddr(cisstr, myla)
 {
 	u_int8_t digit;
 	int i;
+
+	/* No CIS string. */
+	if (cisstr == 0)
+		return (0);
 
 	memset(myla, 0, ETHER_ADDR_LEN);
 
@@ -282,60 +255,25 @@ sm_pcmcia_ascii_enaddr(cisstr, myla)
 }
 
 int
-sm_pcmcia_funce_enaddr(parent, myla)
-	struct device *parent;
-	u_int8_t *myla;
-{
-
-	return (pcmcia_scan_cis(parent, sm_pcmcia_lannid_ciscallback, myla));
-}
-
-int
-sm_pcmcia_lannid_ciscallback(tuple, arg)
-	struct pcmcia_tuple *tuple;
-	void *arg;
-{
-	u_int8_t *myla = arg;
-	int i;
-
-	if (tuple->code == PCMCIA_CISTPL_FUNCE
-	    || tuple->code == PCMCIA_CISTPL_SPCL) {
-		/* subcode, length */
-		if (tuple->length < 2)
-			return (0);
-
-		if ((pcmcia_tuple_read_1(tuple, 0) !=
-		     PCMCIA_TPLFE_TYPE_LAN_NID) ||
-		    (pcmcia_tuple_read_1(tuple, 1) != ETHER_ADDR_LEN))
-			return (0);
-
-		for (i = 0; i < ETHER_ADDR_LEN; i++)
-			myla[i] = pcmcia_tuple_read_1(tuple, i + 2);
-		return (1);
-	}
-	return (0);
-}
-
-int
 sm_pcmcia_enable(sc)
 	struct smc91cxx_softc *sc;
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
-	int rv;
-
-	rv = pcmcia_function_enable(psc->sc_pf);
-	if (rv != 0)
-		return (rv);
+	int error;
 
 	/* Establish the interrupt handler. */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, smc91cxx_intr,
 	    sc);
-	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
-		return (1);
+	if (!psc->sc_ih)
+		return (EIO);
+
+	error = pcmcia_function_enable(psc->sc_pf);
+	if (error) {
+		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+		psc->sc_ih = 0;
 	}
-	return (0);
+
+	return (error);
 }
 
 void
@@ -344,6 +282,7 @@ sm_pcmcia_disable(sc)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
 
-	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 	pcmcia_function_disable(psc->sc_pf);
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	psc->sc_ih = 0;
 }

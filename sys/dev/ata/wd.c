@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.257.2.2 2004/08/03 10:45:46 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.257.2.3 2004/08/12 11:41:22 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.2 2004/08/03 10:45:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.3 2004/08/12 11:41:22 skrll Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -188,6 +188,7 @@ void  __wdstart(struct wd_softc*, struct buf *);
 void  wdrestart(void *);
 void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
+int   wd_standby(struct wd_softc *, int);
 int   wd_flushcache(struct wd_softc *, int);
 void  wd_shutdown(void *);
 
@@ -415,19 +416,16 @@ wddetach(struct device *self, int flags)
 	struct buf *bp;
 	int s, bmaj, cmaj, i, mn;
 
-	lockmgr(&sc->sc_lock, LK_DRAIN, NULL);
-
-	/* Clean out the bad sector list */
-	while (!SLIST_EMPTY(&sc->sc_bslist)) {
-		void *head = SLIST_FIRST(&sc->sc_bslist);
-		SLIST_REMOVE_HEAD(&sc->sc_bslist, dbs_next);
-		free(head, M_TEMP);
-	}
-	sc->sc_bscount = 0;
-
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&wd_bdevsw);
 	cmaj = cdevsw_lookup_major(&wd_cdevsw);
+
+	/* Nuke the vnodes for any open instances. */
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = WDMINOR(self->dv_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		vdevgone(cmaj, mn, mn, VCHR);
+	}
 
 	s = splbio();
 
@@ -440,18 +438,20 @@ wddetach(struct device *self, int flags)
 	}
 
 	bufq_free(&sc->sc_q);
+	sc->atabus->ata_killpending(sc->drvp);
 
 	splx(s);
 
-	/* Nuke the vnodes for any open instances. */
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = WDMINOR(self->dv_unit, i);
-		vdevgone(bmaj, mn, mn, VBLK);
-		vdevgone(cmaj, mn, mn, VCHR);
-	}
-
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
+
+	/* Clean out the bad sector list */
+	while (!SLIST_EMPTY(&sc->sc_bslist)) {
+		void *head = SLIST_FIRST(&sc->sc_bslist);
+		SLIST_REMOVE_HEAD(&sc->sc_bslist, dbs_next);
+		free(head, M_TEMP);
+	}
+	sc->sc_bscount = 0;
 
 	/* Get rid of the shutdown hook. */
 	if (sc->sc_sdhook != NULL)
@@ -461,6 +461,9 @@ wddetach(struct device *self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
+
+	lockmgr(&sc->sc_lock, LK_DRAIN, NULL);
+	sc->drvp->drive_flags = 0; /* no drive any more here */
 
 	return (0);
 }
@@ -708,11 +711,11 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 	/* Instrumentation. */
 	disk_busy(&wd->sc_dk);
 	switch (wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
-	case WDC_TRY_AGAIN:
+	case ATACMD_TRY_AGAIN:
 		callout_reset(&wd->sc_restart_ch, hz, wdrestart, wd);
 		break;
-	case WDC_QUEUED:
-	case WDC_COMPLETE:
+	case ATACMD_QUEUED:
+	case ATACMD_COMPLETE:
 		break;
 	default:
 		panic("__wdstart: bad return code from ata_bio()");
@@ -858,6 +861,9 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (wd == NULL)
 		return (ENXIO);
 
+	if ((wd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENODEV);
+
 	/*
 	 * If this is the first open of this device, add a reference
 	 * to the adapter.
@@ -951,7 +957,6 @@ wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	if (wd->sc_dk.dk_openmask == 0) {
 		wd_flushcache(wd, AT_WAIT);
-		/* XXXX Must wait for I/O to complete! */
 
 		if (! (wd->sc_flags & WDF_KLABEL))
 			wd->sc_flags &= ~WDF_LOADED;
@@ -1470,13 +1475,13 @@ wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		wd->sc_wdc_bio.databuf = va;
 #ifndef WD_DUMP_NOT_TRUSTED
 		switch (wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
-		case WDC_TRY_AGAIN:
+		case ATACMD_TRY_AGAIN:
 			panic("wddump: try again");
 			break;
-		case WDC_QUEUED:
+		case ATACMD_QUEUED:
 			panic("wddump: polled command has been queued");
 			break;
-		case WDC_COMPLETE:
+		case ATACMD_COMPLETE:
 			break;
 		}
 		switch(wd->sc_wdc_bio.error) {
@@ -1600,11 +1605,13 @@ wd_getcache(struct wd_softc *wd, int *bitsp)
 	return 0;
 }
 
+const char at_errbits[] = "\20\10ERROR\11TIMEOU\12DF";
+
 int
 wd_setcache(struct wd_softc *wd, int bits)
 {
 	struct ataparams params;
-	struct wdc_command wdc_c;
+	struct ata_command ata_c;
 
 	if (wd_get_params(wd, AT_WAIT, &params) != 0)
 		return EIO;
@@ -1618,70 +1625,92 @@ wd_setcache(struct wd_softc *wd, int bits)
 	    (bits & DKCACHE_SAVE) != 0)
 		return EOPNOTSUPP;
 
-	memset(&wdc_c, 0, sizeof(struct wdc_command));
-	wdc_c.r_command = SET_FEATURES;
-	wdc_c.r_st_bmask = 0;
-	wdc_c.r_st_pmask = 0;
-	wdc_c.timeout = 30000; /* 30s timeout */
-	wdc_c.flags = AT_WAIT;
+	memset(&ata_c, 0, sizeof(struct ata_command));
+	ata_c.r_command = SET_FEATURES;
+	ata_c.r_st_bmask = 0;
+	ata_c.r_st_pmask = 0;
+	ata_c.timeout = 30000; /* 30s timeout */
+	ata_c.flags = AT_WAIT;
 	if (bits & DKCACHE_WRITE)
-		wdc_c.r_features = WDSF_WRITE_CACHE_EN;
+		ata_c.r_features = WDSF_WRITE_CACHE_EN;
 	else
-		wdc_c.r_features = WDSF_WRITE_CACHE_DS;
-	if (wd->atabus->ata_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
+		ata_c.r_features = WDSF_WRITE_CACHE_DS;
+	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
 		printf("%s: wd_setcache command not complete\n",
 		    wd->sc_dev.dv_xname);
 		return EIO;
 	}
-	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		printf("%s: wd_setcache command error 0x%x\n",
-		    wd->sc_dev.dv_xname, wdc_c.flags);
+	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		char sbuf[sizeof(at_errbits) + 64];
+		bitmask_snprintf(ata_c.flags, at_errbits, sbuf, sizeof(sbuf));
+		printf("%s: wd_setcache: status=%s\n", wd->sc_dev.dv_xname,
+		    sbuf);
 		return EIO;
 	}
-	if (wdc_c.flags & ERR_NODEV)
-		return ENODEV;
+	return 0;
+}
+
+int
+wd_standby(struct wd_softc *wd, int flags)
+{
+	struct ata_command ata_c;
+
+	memset(&ata_c, 0, sizeof(struct ata_command));
+	ata_c.r_command = WDCC_STANDBY_IMMED;
+	ata_c.r_st_bmask = WDCS_DRDY;
+	ata_c.r_st_pmask = WDCS_DRDY;
+	ata_c.flags = flags;
+	ata_c.timeout = 30000; /* 30s timeout */
+	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
+		printf("%s: standby immediate command didn't complete\n",
+		    wd->sc_dev.dv_xname);
+		return EIO;
+	}
+	if (ata_c.flags & AT_ERROR) {
+		if (ata_c.r_error == WDCE_ABRT) /* command not supported */
+			return ENODEV;
+	}
+	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		char sbuf[sizeof(at_errbits) + 64];
+		bitmask_snprintf(ata_c.flags, at_errbits, sbuf, sizeof(sbuf));
+		printf("%s: wd_standby: status=%s\n", wd->sc_dev.dv_xname,
+		    sbuf);
+		return EIO;
+	}
 	return 0;
 }
 
 int
 wd_flushcache(struct wd_softc *wd, int flags)
 {
-	struct wdc_command wdc_c;
+	struct ata_command ata_c;
 
 	if (wd->drvp->ata_vers < 4) /* WDCC_FLUSHCACHE is here since ATA-4 */
 		return ENODEV;
-	memset(&wdc_c, 0, sizeof(struct wdc_command));
+	memset(&ata_c, 0, sizeof(struct ata_command));
 	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0 &&
 	    (wd->sc_params.atap_cmd2_en & ATA_CMD2_FCE) != 0)
-		wdc_c.r_command = WDCC_FLUSHCACHE_EXT;
+		ata_c.r_command = WDCC_FLUSHCACHE_EXT;
 	else
-		wdc_c.r_command = WDCC_FLUSHCACHE;
-	wdc_c.r_st_bmask = WDCS_DRDY;
-	wdc_c.r_st_pmask = WDCS_DRDY;
-	wdc_c.flags = flags;
-	wdc_c.timeout = 30000; /* 30s timeout */
-	if (wd->atabus->ata_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
+		ata_c.r_command = WDCC_FLUSHCACHE;
+	ata_c.r_st_bmask = WDCS_DRDY;
+	ata_c.r_st_pmask = WDCS_DRDY;
+	ata_c.flags = flags;
+	ata_c.timeout = 30000; /* 30s timeout */
+	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
 		printf("%s: flush cache command didn't complete\n",
 		    wd->sc_dev.dv_xname);
 		return EIO;
 	}
-	if (wdc_c.flags & ERR_NODEV)
-		return ENODEV;
-	if (wdc_c.flags & AT_TIMEOU) {
-		printf("%s: flush cache command timeout\n",
-		    wd->sc_dev.dv_xname);
-		return EIO;
-	}
-	if (wdc_c.flags & AT_ERROR) {
-		if (wdc_c.r_error == WDCE_ABRT) /* command not supported */
+	if (ata_c.flags & AT_ERROR) {
+		if (ata_c.r_error == WDCE_ABRT) /* command not supported */
 			return ENODEV;
-		printf("%s: flush cache command: error 0x%x\n",
-		    wd->sc_dev.dv_xname, wdc_c.r_error);
-		return EIO;
 	}
-	if (wdc_c.flags & AT_DF) {
-		printf("%s: flush cache command: drive fault\n",
-		    wd->sc_dev.dv_xname);
+	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		char sbuf[sizeof(at_errbits) + 64];
+		bitmask_snprintf(ata_c.flags, at_errbits, sbuf, sizeof(sbuf));
+		printf("%s: wd_flushcache: status=%s\n", wd->sc_dev.dv_xname,
+		    sbuf);
 		return EIO;
 	}
 	return 0;
@@ -1771,7 +1800,7 @@ void
 wdioctlstrategy(struct buf *bp)
 {
 	struct wd_ioctl *wi;
-	struct wdc_command wdc_c;
+	struct ata_command ata_c;
 	int error = 0;
 
 	wi = wi_find(bp);
@@ -1781,7 +1810,7 @@ wdioctlstrategy(struct buf *bp)
 		goto bad;
 	}
 
-	memset(&wdc_c, 0, sizeof(wdc_c));
+	memset(&ata_c, 0, sizeof(ata_c));
 
 	/*
 	 * Abort if physio broke up the transfer
@@ -1815,50 +1844,50 @@ wdioctlstrategy(struct buf *bp)
 	}
 
 	if (wi->wi_atareq.flags & ATACMD_READ)
-		wdc_c.flags |= AT_READ;
+		ata_c.flags |= AT_READ;
 	else if (wi->wi_atareq.flags & ATACMD_WRITE)
-		wdc_c.flags |= AT_WRITE;
+		ata_c.flags |= AT_WRITE;
 
 	if (wi->wi_atareq.flags & ATACMD_READREG)
-		wdc_c.flags |= AT_READREG;
+		ata_c.flags |= AT_READREG;
 
-	wdc_c.flags |= AT_WAIT;
+	ata_c.flags |= AT_WAIT;
 
-	wdc_c.timeout = wi->wi_atareq.timeout;
-	wdc_c.r_command = wi->wi_atareq.command;
-	wdc_c.r_head = wi->wi_atareq.head & 0x0f;
-	wdc_c.r_cyl = wi->wi_atareq.cylinder;
-	wdc_c.r_sector = wi->wi_atareq.sec_num;
-	wdc_c.r_count = wi->wi_atareq.sec_count;
-	wdc_c.r_features = wi->wi_atareq.features;
-	wdc_c.r_st_bmask = WDCS_DRDY;
-	wdc_c.r_st_pmask = WDCS_DRDY;
-	wdc_c.data = wi->wi_bp.b_data;
-	wdc_c.bcount = wi->wi_bp.b_bcount;
+	ata_c.timeout = wi->wi_atareq.timeout;
+	ata_c.r_command = wi->wi_atareq.command;
+	ata_c.r_head = wi->wi_atareq.head & 0x0f;
+	ata_c.r_cyl = wi->wi_atareq.cylinder;
+	ata_c.r_sector = wi->wi_atareq.sec_num;
+	ata_c.r_count = wi->wi_atareq.sec_count;
+	ata_c.r_features = wi->wi_atareq.features;
+	ata_c.r_st_bmask = WDCS_DRDY;
+	ata_c.r_st_pmask = WDCS_DRDY;
+	ata_c.data = wi->wi_bp.b_data;
+	ata_c.bcount = wi->wi_bp.b_bcount;
 
-	if (wi->wi_softc->atabus->ata_exec_command(wi->wi_softc->drvp, &wdc_c)
-	    != WDC_COMPLETE) {
+	if (wi->wi_softc->atabus->ata_exec_command(wi->wi_softc->drvp, &ata_c)
+	    != ATACMD_COMPLETE) {
 		wi->wi_atareq.retsts = ATACMD_ERROR;
 		goto bad;
 	}
 
-	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		if (wdc_c.flags & AT_ERROR) {
+	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		if (ata_c.flags & AT_ERROR) {
 			wi->wi_atareq.retsts = ATACMD_ERROR;
-			wi->wi_atareq.error = wdc_c.r_error;
-		} else if (wdc_c.flags & AT_DF)
+			wi->wi_atareq.error = ata_c.r_error;
+		} else if (ata_c.flags & AT_DF)
 			wi->wi_atareq.retsts = ATACMD_DF;
 		else
 			wi->wi_atareq.retsts = ATACMD_TIMEOUT;
 	} else {
 		wi->wi_atareq.retsts = ATACMD_OK;
 		if (wi->wi_atareq.flags & ATACMD_READREG) {
-			wi->wi_atareq.head = wdc_c.r_head ;
-			wi->wi_atareq.cylinder = wdc_c.r_cyl;
-			wi->wi_atareq.sec_num = wdc_c.r_sector;
-			wi->wi_atareq.sec_count = wdc_c.r_count;
-			wi->wi_atareq.features = wdc_c.r_features;
-			wi->wi_atareq.error = wdc_c.r_error;
+			wi->wi_atareq.head = ata_c.r_head ;
+			wi->wi_atareq.cylinder = ata_c.r_cyl;
+			wi->wi_atareq.sec_num = ata_c.r_sector;
+			wi->wi_atareq.sec_count = ata_c.r_count;
+			wi->wi_atareq.features = ata_c.r_features;
+			wi->wi_atareq.error = ata_c.r_error;
 		}
 	}
 

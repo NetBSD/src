@@ -1,7 +1,7 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.15.2.1 2004/08/03 10:50:15 skrll Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.15.2.2 2004/08/12 11:41:59 skrll Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.15.2.1 2004/08/03 10:50:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.15.2.2 2004/08/12 11:41:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.15.2.1 2004/08/03 10:50:15 skrll 
 #include <dev/pcmcia/pcmciadevs.h>
 
 static int an_pcmcia_match __P((struct device *, struct cfdata *, void *));
+static int an_pcmcia_validate_config __P((struct pcmcia_config_entry *));
 static void an_pcmcia_attach __P((struct device *, struct device *, void *));
 static int an_pcmcia_detach __P((struct device *, int));
 static int an_pcmcia_enable __P((struct an_softc *));
@@ -84,16 +85,15 @@ struct an_pcmcia_softc {
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handle */
 	void *sc_powerhook;			/* power hook descriptor */
+
+	int sc_state;
+#define	AN_PCMCIA_ATTACHED	3
 };
 
 CFATTACH_DECL(an_pcmcia, sizeof(struct an_pcmcia_softc),
     an_pcmcia_match, an_pcmcia_attach, an_pcmcia_detach, an_activate);
 
-static struct an_pcmcia_product {
-	u_int32_t	app_vendor;	/* vendor ID */
-	u_int32_t	app_product;	/* product ID */
-	const char	*app_cisinfo[4]; /* CIS information */
-} an_pcmcia_products[] = {
+static const struct pcmcia_product an_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_AIRONET,	PCMCIA_PRODUCT_AIRONET_PC4800,
 	  PCMCIA_CIS_AIRONET_PC4800 },
 	{ PCMCIA_VENDOR_AIRONET,	PCMCIA_PRODUCT_AIRONET_PC4500,
@@ -101,41 +101,8 @@ static struct an_pcmcia_product {
 	{ PCMCIA_VENDOR_AIRONET,	PCMCIA_PRODUCT_AIRONET_350,
 	  PCMCIA_CIS_AIRONET_350 },
 };
-
-static int
-an_pcmcia_enable(sc)
-	struct an_softc *sc;
-{
-	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)sc;
-	struct pcmcia_function *pf = psc->sc_pf;
-
-	/* establish the interrupt. */
-	psc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, an_intr, sc);
-	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return (1);
-	}
-
-	if (pcmcia_function_enable(pf)) {
-		pcmcia_intr_disestablish(pf, psc->sc_ih);
-		return (1);
-	}
-	DELAY(1000);
-
-	return (0);
-}
-
-static void
-an_pcmcia_disable(sc)
-	struct an_softc *sc;
-{
-	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)sc;
-	struct pcmcia_function *pf = psc->sc_pf;
-
-	pcmcia_function_disable(pf);
-	pcmcia_intr_disestablish(pf, psc->sc_ih);
-}
+static const size_t an_pcmcia_nproducts =
+    sizeof(an_pcmcia_products) / sizeof(an_pcmcia_products[0]);
 
 static int
 an_pcmcia_match(parent, match, aux)
@@ -144,29 +111,21 @@ an_pcmcia_match(parent, match, aux)
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;
-	struct an_pcmcia_product *app;
-	int n;
 
-	for (app = an_pcmcia_products,
-	    n = sizeof(an_pcmcia_products) / sizeof(an_pcmcia_products[0]);
-	    n; app++, n--) {
-		/* match by CIS information */
-		if (pa->card->cis1_info[0] != NULL &&
-		    app->app_cisinfo[0] != NULL &&
-		    strcmp(pa->card->cis1_info[0], app->app_cisinfo[0]) == 0 &&
-		    pa->card->cis1_info[1] != NULL &&
-		    app->app_cisinfo[1] != NULL &&
-		    strcmp(pa->card->cis1_info[1], app->app_cisinfo[1]) == 0)
-			return 1;
+	if (pcmcia_product_lookup(pa, an_pcmcia_products, an_pcmcia_nproducts,
+	    sizeof(an_pcmcia_products[0]), NULL))
+		return (1);
+	return (0);
+}
 
-		/* match by vendor/product id */
-		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
-		    pa->manufacturer == app->app_vendor &&
-		    pa->product != PCMCIA_PRODUCT_INVALID &&
-		    pa->product == app->app_product)
-			return 1;
-	}
-	return 0;
+static int
+an_pcmcia_validate_config(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_iospace < 1)
+		return (EINVAL);
+	return (0);
 }
 
 static void
@@ -178,70 +137,48 @@ an_pcmcia_attach(parent, self, aux)
 	struct an_softc *sc = &psc->sc_an;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-
-	aprint_normal("\n");
+	int error;
 
 	psc->sc_pf = pa->pf;
-	if ((cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head)) == NULL) {
-		printf("%s: no suitable CIS info found\n", sc->sc_dev.dv_xname);
-		goto fail1;
+
+	error = pcmcia_function_configure(pa->pf, an_pcmcia_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
 	}
 
-	if (pcmcia_io_alloc(psc->sc_pf, cfe->iospace[0].start,
-	    cfe->iospace[0].length, AN_IOSIZ, &psc->sc_pcioh) != 0) {
-		printf("%s: failed to allocate io space\n",
-		    sc->sc_dev.dv_xname);
-		goto fail1;
-	}
+	cfe = pa->pf->cfe;
+	sc->sc_iot = cfe->iospace[0].handle.iot;
+	sc->sc_ioh = cfe->iospace[0].handle.ioh;
 
-	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
-	    &psc->sc_pcioh, &psc->sc_io_window) != 0) {
-		printf("%s: failed to map io space\n", sc->sc_dev.dv_xname);
-		goto fail2;
-	}
+	error = an_pcmcia_enable(sc);
+	if (error)
+		goto fail;
 
-	pcmcia_function_init(psc->sc_pf, cfe);
-
-	if (pcmcia_function_enable(psc->sc_pf)) {
-		printf("%s: failed to enable pcmcia\n", sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-
-	if ((psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, an_intr,
-	    sc)) == NULL) {
-		printf("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		goto fail4;
-	}
-
-	sc->sc_iot = psc->sc_pcioh.iot;
-	sc->sc_ioh = psc->sc_pcioh.ioh;
 	sc->sc_enabled = 1;
 	sc->sc_enable = an_pcmcia_enable;
 	sc->sc_disable = an_pcmcia_disable;
 
-	if (an_attach(sc) != 0) {
-		printf("%s: failed to attach controller\n",
-		    sc->sc_dev.dv_xname);
-		goto fail5;
+	error = an_attach(sc);
+	if (error) {
+		aprint_error("%s: failed to attach controller\n",
+		    self->dv_xname);
+		goto fail2;
 	}
-	psc->sc_powerhook = powerhook_establish(an_power, sc);
-	sc->sc_enabled = 0;
 
-	/* disable device and disestablish the interrupt */
+	psc->sc_powerhook = powerhook_establish(an_power, sc);
+
 	an_pcmcia_disable(sc);
+	sc->sc_enabled = 0;
+	psc->sc_state = AN_PCMCIA_ATTACHED;
 	return;
 
-  fail5:
-	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
-  fail4:
-	pcmcia_function_disable(psc->sc_pf);
-  fail3:
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
-  fail2:
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-  fail1:
-	psc->sc_io_window = -1;
+fail2:
+	an_pcmcia_disable(sc);
+	sc->sc_enabled = 0;
+fail:
+	pcmcia_function_unconfigure(pa->pf);
 }
 
 
@@ -250,24 +187,52 @@ an_pcmcia_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)self;
+	struct an_pcmcia_softc *psc = (void *)self;
 	int error;
 
-	if (psc->sc_io_window == -1)
-		/* Nothing to detach. */
+	if (psc->sc_state != AN_PCMCIA_ATTACHED)
 		return (0);
 
-	if (psc->sc_powerhook != NULL)
+	if (psc->sc_powerhook)
 		powerhook_disestablish(psc->sc_powerhook);
 
 	error = an_detach(&psc->sc_an);
-	if (error != 0)
+	if (error)
 		return (error);
 
-	/* Unmap our i/o window. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+	pcmcia_function_unconfigure(psc->sc_pf);
 
-	/* Free our i/o space. */
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 	return (0);
+}
+
+static int
+an_pcmcia_enable(sc)
+	struct an_softc *sc;
+{
+	struct an_pcmcia_softc *psc = (void *)sc;
+	int error;
+
+	/* establish the interrupt. */
+	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, an_intr, sc);
+	if (!psc->sc_ih)
+		return (EIO);
+
+	error = pcmcia_function_enable(psc->sc_pf);
+	if (error) {
+		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+		psc->sc_ih = 0;
+	}
+
+	return (error);
+}
+
+static void
+an_pcmcia_disable(sc)
+	struct an_softc *sc;
+{
+	struct an_pcmcia_softc *psc = (void *)sc;
+
+	pcmcia_function_disable(psc->sc_pf);
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	psc->sc_ih = 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: load_coff.cpp,v 1.3 2002/02/11 17:05:45 uch Exp $	*/
+/*	$NetBSD: load_coff.cpp,v 1.3.16.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ CoffLoader::load()
 	size_t memsz;
 	vaddr_t kv;
 	off_t fileofs;
-  
+
 	/* start tag chain */
 	_load_segment_start();
 

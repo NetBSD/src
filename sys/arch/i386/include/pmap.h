@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.73.2.1 2004/08/03 10:36:04 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.73.2.2 2004/08/12 11:41:13 skrll Exp $	*/
 
 /*
  *
@@ -173,9 +173,9 @@
  */
 
 #ifndef NKPTP
-#define NKPTP		4	/* 16MB to start */
+#define NKPTP		0	/* 16MB to start */
 #endif
-#define NKPTP_MIN	4	/* smallest value we allow */
+#define NKPTP_MIN	2	/* smallest value we allow */
 #define NKPTP_MAX	(1024 - (KERNBASE/NBPD) - 1)
 				/* largest value (-1 for APTP space) */
 

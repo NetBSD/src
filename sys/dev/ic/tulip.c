@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.122.2.1 2004/08/03 10:46:20 skrll Exp $	*/
+/*	$NetBSD: tulip.c,v 1.122.2.2 2004/08/12 11:41:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.1 2004/08/03 10:46:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.2 2004/08/12 11:41:25 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -4618,6 +4618,12 @@ tlp_2114x_isv_tmsw_init(sc)
 
 	/* Get the media count. */
 	m_cnt = *cp++;
+
+	if (m_cnt == 0) {
+		sc->sc_mediasw = &tlp_sio_mii_mediasw;
+		(*sc->sc_mediasw->tmsw_init)(sc);
+		return;
+	}
 
 	for (; m_cnt != 0; cp = ncp, m_cnt--) {
 		/*

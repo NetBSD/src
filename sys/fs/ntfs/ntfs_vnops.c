@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.12.2.2 2004/08/03 10:52:42 skrll Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.12.2.3 2004/08/12 11:42:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,13 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.2 2004/08/03 10:52:42 skrll Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_quota.h"
-#endif
-
-#undef	QUOTA	/* XXX - quota support for ntfs does not compile */
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.3 2004/08/12 11:42:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

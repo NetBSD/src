@@ -1,4 +1,4 @@
-/*	$NetBSD: file_http.cpp,v 1.7 2002/03/02 22:01:57 uch Exp $	*/
+/*	$NetBSD: file_http.cpp,v 1.7.14.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -39,13 +39,11 @@
 #include <file.h>
 #include <file_http.h>
 #include <console.h>
+#include <libsa_string.h>
 
-// for WCE210 or earlier
-_CRTIMP int __cdecl tolower(int);
-#define wcsicmp		_wcsicmp
+#define	wcsicmp		_wcsicmp
 static int WCE210_WSAStartup(WORD, LPWSADATA);
 static int WCE210_WSACleanup(void);
-static int __stricmp(const char *, const char *);
 
 HttpFile::HttpFile(Console *&cons)
 	: File(cons),
@@ -74,7 +72,11 @@ HttpFile::HttpFile(Console *&cons)
 	_buffer = 0;
 	_reset_state();
 	DPRINTF((TEXT("FileManager: HTTP\n")));
-	
+
+#if _WIN32_WCE <= 200
+	_wsa_startup = WCE210_WSAStartup;
+	_wsa_cleanup = WCE210_WSACleanup;
+#else
 	if (WinCEVersion.dwMajorVersion > 3 ||
 	    (WinCEVersion.dwMajorVersion > 2) &&
 	    (WinCEVersion.dwMinorVersion >= 11)) {
@@ -84,6 +86,7 @@ HttpFile::HttpFile(Console *&cons)
 		_wsa_startup = WCE210_WSAStartup;
 		_wsa_cleanup = WCE210_WSACleanup;
 	}
+#endif
 }
 
 int
@@ -196,7 +199,7 @@ HttpFile::setRoot(TCHAR *server)
 			u_int8_t *b = &_sockaddr.sin_addr.S_un.S_un_b.s_b1;
 			for (int i = 0; i < 4; i++)
 				b[i] = addr_list[0][i];
-      
+
 			DPRINTF((TEXT("%d.%d.%d.%d "), b[0], b[1], b[2],b[3]));
 			if (connect(h,(const struct sockaddr *)&_sockaddr,
 			    sizeof(struct sockaddr_in)) == 0)
@@ -205,7 +208,7 @@ HttpFile::setRoot(TCHAR *server)
 	}
 	DPRINTF((TEXT("can't connect server.\n")));
 	return FALSE;
-  
+
  connected:
 	DPRINTF((TEXT("(%S) connected.\n"), _server_name));
 	closesocket(h);
@@ -291,13 +294,13 @@ HttpFile::read(void *buf, size_t bytes, off_t offset)
 	} else {
 		int i, n = ofs / bytes;
 		b = static_cast <char *>(buf);
-      
+
 		for (readed = 0, i = 0; i < n; i++)
 			readed += _recv_buffer(h, b, bytes);
 		if ((n =(ofs % bytes)))
 			readed += _recv_buffer(h, b, n);
 		DPRINTF((TEXT("skip contents %d byte.\n"), readed));
-      
+
 		readed = _recv_buffer(h, b, bytes);
 	}
 	return readed;
@@ -306,41 +309,58 @@ HttpFile::read(void *buf, size_t bytes, off_t offset)
 size_t
 HttpFile::_parse_header(size_t &header_size)
 {
+	int cnt, ret;
+	char *buf;
 	size_t sz = 0;
+
 	// reconnect.
 	Socket sock(_sockaddr);
 	SOCKET h;
-	if ((h = sock) == INVALID_SOCKET)
+	if ((h = sock) == INVALID_SOCKET) {
+		DPRINTF((TEXT("can't open socket.\n")));
 		return 0;
+	}
 
 	// HEAD request
 	strcpy(_request, _req_head);
 	_set_request();
 	send(h, _request, strlen(_request), 0);
-  
-	// receive.
-	char __buf[TMP_BUFFER_SIZE];
-	int cnt, ret;
 
-	for (cnt = 0;
-	    ret = _recv_buffer(h, __buf, TMP_BUFFER_SIZE); cnt += ret) {
+	// Receive and search Content-Length: field.
+	if ((buf = static_cast<char *>(malloc(TMP_BUFFER_SIZE))) == 0) {
+		DPRINTF((TEXT("can't allocate receive buffer.\n")));
+		return 0;
+	}
+
+	BOOL found = FALSE;
+	for (cnt = 0; ret = _recv_buffer(h, buf, TMP_BUFFER_SIZE - 1);
+	    cnt += ret) {
+		buf[ret] = '\0';
 		char sep[] = " :\r\n";
-		char *token = strtok(__buf, sep);
+		char *token = libsa::strtok(buf, sep);
 		while (token) {
-			if (__stricmp(token, "content-length") == 0) {
-				DPRINTFN(1, (TEXT("*token: %S\n"), token));
-				token = strtok(0, sep);
+			DPRINTFN(2, (TEXT("+token: %S\n"), token));
+			if (libsa::stricmp(token, "content-length") == 0) {
+				DPRINTFN(2, (TEXT("*token: %S\n"), token));
+				token = libsa::strtok(0, sep);
 				sz = atoi(token);
-				DPRINTFN(1, (TEXT("*content-length=%d\n"), sz));
-			} else
-				token = strtok(0, sep);
+				found = TRUE;
+				DPRINTFN(2, (TEXT("*content-length=%d\n"), sz));
+			} else {
+				token = libsa::strtok(0, sep);
+			}
 		}
 	}
 	header_size = cnt;
 
-	DPRINTF((TEXT
-	    ("open file http://%S%S - header %d byte contents %d byte\n"),
-	    _server_name, _ascii_filename, header_size, sz));
+	if (!found) {
+		DPRINTF((TEXT("No Content-Length.\n")));
+	} else {
+		DPRINTF((TEXT
+		    ("open http://%S%S - header %d byte contents %d byte\n"),
+		    _server_name, _ascii_filename, header_size, sz));
+	}
+	free(buf);
 
 	return sz;
 }
@@ -356,7 +376,6 @@ HttpFile::_recv_buffer(SOCKET h, char *buf, size_t size)
 		DPRINTFN(2,(TEXT("size %d readed %d byte(+%d)\n"),
 		    size, total, cnt));
 	} while (total < size && cnt > 0);
-  
 
 	DPRINTFN(1,(TEXT("total read %d byte\n"), total));
 	return total;
@@ -372,16 +391,6 @@ HttpFile::_set_request(void)
 	strcat(_request, _req_ua);
 }
 
-static int
-__stricmp(const char *s1, const char *s2)
-{
-
-	while (tolower(*s1) == tolower(*s2++))
-		if (*s1++ == '\0')
-			return (0);
-	return (tolower(*s1) - tolower(*--s2));
-}
-
 Socket::Socket(struct sockaddr_in &sock)
 	: _sockaddr(sock)
 {
@@ -394,7 +403,7 @@ Socket::Socket(struct sockaddr_in &sock)
 }
 
 Socket::~Socket(void)
-{ 
+{
 
 	if (_socket != INVALID_SOCKET)
 		closesocket(_socket);

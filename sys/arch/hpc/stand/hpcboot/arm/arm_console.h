@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_console.h,v 1.3 2001/05/08 18:51:24 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_console.h,v 1.3.24.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_ARM_CONSOLE_H_
-#define _HPCBOOT_ARM_CONSOLE_H_
+#define	_HPCBOOT_ARM_CONSOLE_H_
 
 #include <hpcboot.h>
 #include <console.h>
@@ -55,7 +55,7 @@ private:
 
 private:
 	ARMConsole(MemoryManager *& mem) : _mem(mem) { /* NO-OP */ }
-	
+
 	virtual ~ARMConsole() {
 		_mem->unmapPhysicalPage(_uart_base);
 	}
@@ -69,7 +69,7 @@ private:
 
 	void __putc(const char s) {
 		__tx_busy(); // wait until previous transmit done.
-		VOLATILE_REF8(_uart_transmit) = 
+		VOLATILE_REF8(_uart_transmit) =
 		    static_cast <u_int8_t>(0xff & s);
 	}
 

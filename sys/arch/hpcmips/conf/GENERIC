@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.138.2.1 2004/08/03 10:35:04 skrll Exp $
+# $NetBSD: GENERIC,v 1.138.2.2 2004/08/12 11:41:11 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138.2.1 $"
+#ident 		"GENERIC-$Revision: 1.138.2.2 $"
 
 maxusers	16
 
@@ -40,6 +40,7 @@ options 	KLOADER
 # Standard system options
 options 	DDB			# in-kernel debugger
 #options 	DDB_ONPANIC=0		# don't enter debugger on panic
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB			# remote debugger
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
@@ -54,6 +55,8 @@ options 	MSGBUFSIZE=8192		# dmesg buffer size
 
 #options 	SCSIVERBOSE		# human readable SCSI error messages
 #options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
+#options 	PCMCIADEBUG
+#options 	PCMCIACISDEBUG
 
 #options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	RTC_OFFSET=-540		# JST-9
@@ -503,9 +506,14 @@ ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
-xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+com*	at xirc?
+xi*	at xirc?
 awi*	at pcmcia? function ?		# WLI-PCM
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
+mhzc*	at pcmcia? function ?
+com*	at mhzc?
+sm*	at mhzc?
 
 # PCMCIA Serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
@@ -513,6 +521,7 @@ com*	at pcmcia? function ?		# Modems and serial cards
 # PCMCIA SCSI interfaces
 aic*	at pcmcia? function ?
 esp*	at pcmcia? function ?		# NCR53c406 SCSI
+spc*	at pcmcia? function ?
 
 # ATAPI bus support
 atapibus* at atapi?
@@ -522,6 +531,7 @@ sd*	at atapibus? drive ? flags 0x0000 # ATAPI disk drives
 # SCSI bus support
 scsibus* at aic?
 scsibus* at esp?
+scsibus* at spc?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 

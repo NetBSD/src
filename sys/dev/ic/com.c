@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.216.2.2 2004/08/03 10:46:12 skrll Exp $	*/
+/*	$NetBSD: com.c,v 1.216.2.3 2004/08/12 11:41:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.216.2.2 2004/08/03 10:46:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.216.2.3 2004/08/12 11:41:23 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -629,6 +629,7 @@ com_config(struct com_softc *sc)
 #endif
 		sc->sc_ier = 0;
 	bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
+	(void) bus_space_read_1(iot, ioh, com_iir);
 
 #ifdef COM_HAYESP
 	/* Look for a Hayes ESP board. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.16.2.2 2004/08/03 10:43:29 skrll Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.16.2.3 2004/08/12 11:41:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.2 2004/08/03 10:43:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.3 2004/08/12 11:41:14 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.2 2004/08/03 10:43:29 skrll E
 extern const struct cdevsw wsdisplay_cdevsw;
 
 static void darwin_e_proc_exec(struct proc *, struct exec_package *);
-static void darwin_e_proc_fork(struct proc *, struct proc *);
+static void darwin_e_proc_fork(struct proc *, struct proc *, int);
 static void darwin_e_proc_exit(struct proc *);
 static void darwin_e_proc_init(struct proc *, struct vmspace *);
 
@@ -248,9 +248,10 @@ darwin_e_proc_exec(p, epp)
 }
 
 static void 
-darwin_e_proc_fork(p, parent)
+darwin_e_proc_fork(p, parent, forkflags)
 	struct proc *p;
 	struct proc *parent;
+	int forkflags;
 {
 	struct darwin_emuldata *ded1;
 	struct darwin_emuldata *ded2;
@@ -340,8 +341,6 @@ darwin_e_proc_exit(p)
 	if (ded->ded_fakepid == 2)
 		mach_bootstrap_port = mach_saved_bootstrap_port;
 
-	l = proc_representative_lwp(p);
-
 	/*
 	 * Terminate the iohidsystem kernel thread.
 	 * We need to post a fake event in case
@@ -349,7 +348,7 @@ darwin_e_proc_exit(p)
 	 */
 	if (ded->ded_hidsystem_finished != NULL) {
 		*ded->ded_hidsystem_finished = 1;
-		darwin_iohidsystem_postfake(l);
+		darwin_iohidsystem_postfake(p);
 		wakeup(ded->ded_hidsystem_finished);
 	}
 
@@ -359,7 +358,7 @@ darwin_e_proc_exit(p)
 	if (ded->ded_wsdev != NODEV) {
 		mode = WSDISPLAYIO_MODE_EMUL;
 		error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
-		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, l);
+		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, p);
 #ifdef DEBUG_DARWIN
 		if (error != 0)
 			printf("Unable to switch back to text mode\n");

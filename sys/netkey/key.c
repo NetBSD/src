@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.82.2.1 2004/08/03 10:56:04 skrll Exp $	*/
+/*	$NetBSD: key.c,v 1.82.2.2 2004/08/12 11:42:21 skrll Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.82.2.1 2004/08/03 10:56:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.82.2.2 2004/08/12 11:42:21 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1226,6 +1226,8 @@ key_msg2sp(xpl0, len, error)
 			case IPPROTO_ESP:
 			case IPPROTO_AH:
 			case IPPROTO_IPCOMP:
+			case IPPROTO_IPV4:
+			case IPPROTO_IPV6:
 				break;
 			default:
 				ipseclog((LOG_DEBUG,
@@ -3247,6 +3249,16 @@ key_mature(sav)
 			return EINVAL;
 		}
 		break;
+	case IPPROTO_TCP:
+		if (ntohl(sav->spi) != 0x1000) {	/*TCP_SIG_SPI*/
+			ipseclog((LOG_DEBUG,
+			    "key_mature: SPI must be 0x1000 for TCPMD5.\n"));
+			return (EINVAL);
+		}
+		break;
+	case IPPROTO_IPV4:
+	case IPPROTO_IPV6:
+		break;
 	}
 
 	/* check satype */
@@ -3300,20 +3312,18 @@ key_mature(sav)
 	case IPPROTO_TCP:
 		if (sav->alg_enc != SADB_EALG_NONE) {
 			ipseclog((LOG_DEBUG, "key_mature: "
-			    "protocol and algorithm mismated.\n"));
+			    "encryption algorithm must be null for TCPMD5.\n"));
 			return (EINVAL);
 		}
 		if (sav->alg_auth != SADB_X_AALG_TCP_MD5) {
 			ipseclog((LOG_DEBUG, "key_mature: "
-			    "protocol and algorithm mismated.\n"));
-			return (EINVAL);
-		}
-		if (ntohl(sav->spi) != 0x1000) {	/*TCP_SIG_SPI*/
-			ipseclog((LOG_DEBUG,
-			    "key_mature: SPI must be 0x1000.\n"));
+			    "auth algorithm must be tcp-md5 for TCPMD5.\n"));
 			return (EINVAL);
 		}
 		checkmask = 0;
+		break;
+	case IPPROTO_IPV4:
+	case IPPROTO_IPV6:
 		break;
 	default:
 		ipseclog((LOG_DEBUG, "key_mature: Invalid satype.\n"));
@@ -5086,9 +5096,9 @@ key_update(so, m, mhp)
 	}
 
 	/* check SA values to be mature. */
-	if ((mhp->msg->sadb_msg_errno = key_mature(sav)) != 0) {
+	if ((error = key_mature(sav)) != 0) {
 		key_freesav(sav);
-		return key_senderror(so, m, 0);
+		return key_senderror(so, m, error);
 	}
 
     {

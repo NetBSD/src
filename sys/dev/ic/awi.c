@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.52.2.1 2004/08/03 10:46:11 skrll Exp $	*/
+/*	$NetBSD: awi.c,v 1.52.2.2 2004/08/12 11:41:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.52.2.1 2004/08/03 10:46:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.52.2.2 2004/08/12 11:41:23 skrll Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -799,8 +799,8 @@ awi_start(struct ifnet *ifp)
 				ifp->if_oerrors++;
 				continue;
 			}
-			if (ni != NULL && ni != ic->ic_bss)
-				ieee80211_free_node(ic, ni);
+			if (ni != NULL)
+				ieee80211_release_node(ic, ni);
 			wh = mtod(m0, struct ieee80211_frame *);
 			if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 			    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
@@ -1217,30 +1217,16 @@ awi_rx_int(struct awi_softc *sc)
 					goto rx_next;
 				}
 				wh = mtod(m, struct ieee80211_frame *);
-#ifdef __NetBSD__
 				ni = ieee80211_find_rxnode(ic, wh);
-#else
-				if (ic->ic_opmode != IEEE80211_M_STA) {
-					ni = ieee80211_find_node(ic,
-					    wh->i_addr2);
-					if (ni == NULL)
-						ni = ieee80211_ref_node(
-						    ic->ic_bss);
-				} else
-					ni = ieee80211_ref_node(ic->ic_bss);
-#endif
 				ieee80211_input(ifp, m, ni, rssi, rstamp);
 				/*
 				 * The frame may have caused the
 				 * node to be marked for reclamation
 				 * (e.g. in response to a DEAUTH
-				 * message) so use free_node here
+				 * message) so use release_node here
 				 * instead of unref_node.
 				 */
-				if (ni == ic->ic_bss)
-					ieee80211_unref_node(&ni);
-				else
-					ieee80211_free_node(ic, ni);
+				ieee80211_release_node(ic, ni);
 			} else
 				sc->sc_rxpend = m;
   rx_next:

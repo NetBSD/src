@@ -1,4 +1,4 @@
-/*	$NetBSD: endian_machdep.h,v 1.1 2001/02/09 18:35:27 uch Exp $	*/
+/*	$NetBSD: endian_machdep.h,v 1.1.26.1 2004/08/12 11:41:11 skrll Exp $	*/
 
 /* Windows CE architecture */
 
@@ -9,4 +9,4 @@
 #define	LITTLE_ENDIAN	1234
 #endif
 
-#define _BYTE_ORDER _LITTLE_ENDIAN
+#define	_BYTE_ORDER _LITTLE_ENDIAN

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.10.2.1 2004/08/03 10:30:47 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.10.2.2 2004/08/12 11:41:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.2.1 2004/08/03 10:30:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.2.2 2004/08/12 11:41:02 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -98,7 +98,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("ARM2");
 #ifdef CPU_ARM2
 		supported = 1;
-		install_coproc_handler(0, arm2_undef_handler);
+		install_coproc_handler(CORE_UNKNOWN_HANDLER,
+		    arm2_undef_handler);
 #endif
 		break;
 	case CPU_ID_ARM250:
@@ -150,10 +151,11 @@ cpu_identify()
 {
 	register_t dummy;
 	volatile register_t id;
-	void *cp0, *cp15;
+	void *cp_core, *cp15;
 
-	cp0 = install_coproc_handler(0, cpu_undef_handler);
-	cp15 = install_coproc_handler(15, cpu_undef_handler);
+	cp_core = install_coproc_handler(CORE_UNKNOWN_HANDLER,
+	    cpu_undef_handler);
+	cp15 = install_coproc_handler(SYSTEM_COPROC, cpu_undef_handler);
 	if (setjmp(&undef_jmp) == 0) {
 		id = CPU_ID_ARM2;
 		/* ARM250 and ARM3 support SWP. */
@@ -162,7 +164,7 @@ cpu_identify()
 		/* ARM3 has an internal coprocessor 15 with an ID register. */
 		__asm __volatile ("mrc 15, 0, %0, cr0, cr0" : "=r" (id));
 	}
-	remove_coproc_handler(cp0);
+	remove_coproc_handler(cp_core);
 	remove_coproc_handler(cp15);
 	return id;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.42.2.1 2004/08/03 10:46:17 skrll Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.42.2.2 2004/08/12 11:41:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ struct ncr53c9x_softc {
 	struct device *sc_child;		/* attached scsibus, if any */
 	struct callout sc_watchdog;		/* periodic timer */
 
-	struct ncr53c9x_glue *sc_glue;		/* glue to MD code */
+	const struct ncr53c9x_glue *sc_glue;	/* glue to MD code */
 
 	int	sc_cfflags;			/* Copy of config flags */
 

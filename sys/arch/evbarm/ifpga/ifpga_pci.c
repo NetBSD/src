@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.5.6.1 2004/08/03 10:33:55 skrll Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.5.6.2 2004/08/12 11:41:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.5.6.1 2004/08/03 10:33:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.5.6.2 2004/08/12 11:41:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,7 @@ ifpga_pci_conf_write(void *pcv, pcitag_t tag, int reg, pcireg_t data)
 		bus_space_write_2(sc->sc_memt, sc->sc_reg_ioh, V360_LB_MAP1,
 		    IFPGA_PCI_APP1_CONF_T0_MAP | ((address >> 16) & 0xff00));
 
-		/* Read the value from the bus...  */
+		/* Write the value to the bus...  */
 		bus_space_write_4(sc->sc_iot, sc->sc_conf_ioh,
 		    address & 0x00ffffff, data);
 
@@ -281,7 +281,7 @@ ifpga_pci_conf_write(void *pcv, pcitag_t tag, int reg, pcireg_t data)
 		bus_space_write_2(sc->sc_memt, sc->sc_reg_ioh, V360_LB_MAP1,
 		    IFPGA_PCI_APP1_CONF_T1_MAP);
 
-		/* Read the value from the bus... */
+		/* Write the value to the bus... */
 		bus_space_write_4(sc->sc_iot, sc->sc_conf_ioh, tag | reg,
 		    data);
 	}

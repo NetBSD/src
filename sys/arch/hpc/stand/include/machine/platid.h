@@ -1,12 +1,12 @@
-/*	$NetBSD: platid.h,v 1.2 2002/02/01 18:16:05 uch Exp $	*/
+/*	$NetBSD: platid.h,v 1.2.16.1 2004/08/12 11:41:11 skrll Exp $	*/
 
 #ifdef MIPS
-#define hpcmips
+#define	hpcmips
 #endif
 #ifdef SHx
-#define hpcsh
+#define	hpcsh
 #endif
 #ifdef ARM
-#define hpcarm
+#define	hpcarm
 #endif
 #include "../../../include/platid.h"

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: load_elf.h,v 1.4.24.1 2004/08/03 10:34:59 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: load_elf.h,v 1.4.24.2 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_LOAD_ELF_H_
-#define _HPCBOOT_LOAD_ELF_H_
+#define	_HPCBOOT_LOAD_ELF_H_
 
 #include <exec_elf.h>
 
@@ -68,11 +68,11 @@ private:
 	struct PageTag *load_page(vaddr_t, off_t, size_t, struct PageTag *);
 	size_t symbol_block_size(void);
 	void load_symbol_block(vaddr_t);
-			     
+
 public:
 	ElfLoader(Console *&, MemoryManager *&);
 	virtual ~ElfLoader(void);
-  
+
 	BOOL setFile(File *&);
 	size_t memorySize(void);
 	BOOL load(void);

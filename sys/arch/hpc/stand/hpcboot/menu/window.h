@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: window.h,v 1.1 2001/02/09 18:35:04 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: window.h,v 1.1.26.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_WINDOW_H_
-#define _HPCBOOT_WINDOW_H_
+#define	_HPCBOOT_WINDOW_H_
 
 class Window {
 public:

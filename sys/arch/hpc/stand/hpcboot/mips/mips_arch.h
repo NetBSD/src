@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_arch.h,v 1.2 2001/04/24 19:28:00 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_arch.h,v 1.2.24.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_MIPS_ARCH_H_
-#define _HPCBOOT_MIPS_ARCH_H_
+#define	_HPCBOOT_MIPS_ARCH_H_
 
 #include <hpcboot.h>
 #include <arch.h>
@@ -62,20 +62,20 @@ public:
 	void jump(paddr_t info, paddr_t pvce);
 };
 
-#define DI()								\
+#define	DI()								\
   __asm(".set noreorder;"						\
 	 "nop;"								\
 	 "mtc0	zero, $12;"						\
 	 "nop;nop;nop;" /* CP0 hazard for R4000 */			\
 	 ".set reorder")
 
-#define GET_SR(x)							\
+#define	GET_SR(x)							\
   __asm(".set noreorder;"						\
 	 "mfc0	t0, $12;"						\
 	 "sw	t0,(%0);"						\
 	 ".set reorder", &(x));
 
-#define SET_SR(x)							\
+#define	SET_SR(x)							\
   __asm(".set noreorder;"						\
 	 "lw	t0,(%0);"						\
 	 "nop;"								\
@@ -83,14 +83,14 @@ public:
 	 "nop;nop;nop;" /* CP0 hazard for R4000 */			\
 	 ".set reorder", &(x));
 
-/* 
+/*
  * 2nd-bootloader.  make sure that PIC and its size is lower than page size.
  * and can't call subroutine.
  * naked funciton can't use stack. if you want to use, remove its declare.
  * interrupts are disabled. but if access kuseg,(should not occur)
  * it causes TLB exception and then Windows CE enable interrupts again.
  */
-#define BOOT_FUNC_(x)							\
+#define	BOOT_FUNC_(x)							\
 __declspec(naked) void							\
 x##::boot_func(struct BootArgs *bi, struct PageTag *p)			\
 {									\

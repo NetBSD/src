@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.32.2.2 2004/08/03 10:44:06 skrll Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.32.2.3 2004/08/12 11:41:14 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.32.2.2 2004/08/03 10:44:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.32.2.3 2004/08/12 11:41:14 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -206,9 +206,10 @@ mach_e_proc_exec(p, epp)
 }
 
 void
-mach_e_proc_fork(p, parent)
+mach_e_proc_fork(p, parent, forkflags)
 	struct proc *p;
 	struct proc *parent;
+	int forkflags;
 {
 	mach_e_proc_fork1(p, parent, 1);	
 	return;

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: load.h,v 1.3 2002/02/11 17:05:45 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: load.h,v 1.3.16.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_LOAD_H_
-#define _HPCBOOT_LOAD_H_
+#define	_HPCBOOT_LOAD_H_
 
 #include <hpcboot.h>
 #include <machine/endian_machdep.h>

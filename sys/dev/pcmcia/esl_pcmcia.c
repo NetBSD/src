@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.8 2002/10/02 16:52:06 thorpej Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.8.6.1 2004/08/12 11:41:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.8 2002/10/02 16:52:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.8.6.1 2004/08/12 11:41:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,21 +54,15 @@ __KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.8 2002/10/02 16:52:06 thorpej Exp $
 #include <dev/isa/essreg.h>
 #include <dev/pcmcia/eslvar.h>
 
-static const struct esl_pcmcia_product {
-	char *name;
-	int32_t manufacturer;
-	int32_t product;
-	char *cis_info[4];
-	int function;
-} esl_pcmcia_products[] = {
-	{ PCMCIA_STR_EIGERLABS_EPX_AA2000,
-	  PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-	  PCMCIA_CIS_EIGERLABS_EPX_AA2000, 0 },
-
-	{ NULL }
+static const struct pcmcia_product esl_pcmcia_products[] = {
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  PCMCIA_CIS_EIGERLABS_EPX_AA2000 },
 };
+static const size_t esl_pcmcia_nproducts =
+    sizeof(esl_pcmcia_products) / sizeof(esl_pcmcia_products[0]);
 
 int	esl_pcmcia_match(struct device *, struct cfdata *, void *); 
+int	esl_pcmcia_validate_config(struct pcmcia_config_entry *);
 void	esl_pcmcia_attach(struct device *, struct device *, void *);  
 int	esl_pcmcia_detach(struct device *, int);
 
@@ -78,30 +72,24 @@ void	esl_pcmcia_disable(struct esl_pcmcia_softc *);
 CFATTACH_DECL(esl_pcmcia, sizeof(struct esl_pcmcia_softc),
     esl_pcmcia_match, esl_pcmcia_attach, esl_pcmcia_detach, NULL);
 
-#define ESL_NDEVS (sizeof(esl_pcmcia_products) / sizeof(esl_pcmcia_products[0]))
-
-#define esl_pcmcia_product_lookup(card, fct, n) \
-	(((card)->manufacturer != PCMCIA_VENDOR_INVALID) && \
-	 ((card)->product != PCMCIA_PRODUCT_INVALID) && \
-	 (esl_pcmcia_products[(n)].cis_info[0]) && \
-	 (esl_pcmcia_products[(n)].cis_info[1]) && \
-	 (strcmp((card)->cis1_info[0], esl_pcmcia_products[(n)].cis_info[0]) \
-	    == 0) && \
-	 (strcmp((card)->cis1_info[1], esl_pcmcia_products[(n)].cis_info[1]) \
-	    == 0) && \
-	 ((fct) == esl_pcmcia_products[(n)].function) ? \
-	 &esl_pcmcia_products[(n)] : NULL)
-
 int
 esl_pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
-	int i;
 
-	for (i = 0; i < ESL_NDEVS; i++)
-		if (esl_pcmcia_product_lookup(pa->card, pa->pf->number, i))
-			return (2); 
+	if (pcmcia_product_lookup(pa, esl_pcmcia_products, esl_pcmcia_nproducts,
+	    sizeof(esl_pcmcia_products[0]), NULL))
+		return (2); 
+	return (0);
+}
 
+int
+esl_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_memspace != 0 ||
+	    cfe->num_iospace != 1)
+		return (EINVAL);
 	return (0);
 }
 
@@ -112,128 +100,82 @@ esl_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
-	const struct esl_pcmcia_product *pp;
-	int i;
+	int error;
 
 	esc->sc_pf = pf;
 
-	SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
-		if (cfe->num_memspace != 0 ||
-		    cfe->num_iospace != 1)
-			continue;
-
-		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-		    cfe->iospace[0].length, 0, &esc->sc_pcioh) == 0)
-			break;
+	error = pcmcia_function_configure(pf, esl_pcmcia_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
 	}
 
-	if (cfe == 0) {
-		printf(": can't alloc i/o space\n");
-		goto no_config_entry;
-	}
+	cfe = pf->cfe;
+	esc->sc_iot = cfe->iospace[0].handle.iot;
+	esc->sc_ioh = cfe->iospace[0].handle.ioh;
+
+	error = esl_pcmcia_enable(esc);
+	if (error)
+		goto fail;
 
 	/* Setup power management hooks */
 	esc->sc_enable = esl_pcmcia_enable;
 	esc->sc_disable = esl_pcmcia_disable;
 
-	/* Enable the card. */
-	pcmcia_function_init(pf, cfe);
-	if (pcmcia_function_enable(pf)) {
-		printf(": function enable failed\n");
-		goto enable_failed;
-	}
+	if (!esl_init(esc))
+		aprint_error("%s: initialization failed\n", self->dv_xname);
 
-	/* Map in the I/O space */
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0, esc->sc_pcioh.size,
-	    &esc->sc_pcioh, &esc->sc_io_window)) {
-		printf(": can't map i/o space\n");
-		goto iomap_failed;
-	}
-
-	pp = NULL;
-	for (i = 0; i < ESL_NDEVS; i++) {
-		pp = esl_pcmcia_product_lookup(pa->card, pa->pf->number, i);
-		if (pp != NULL)
-			break;
-	}
-
-	if (pp == NULL) {
-		printf("\n");
-		panic("esl_pcmcia_attach: impossible");
-	}
-
-	printf(": %s\n", pp->name);
-
-	if (esl_init(esc)) {
-		printf("esl_init: failed\n");
-		goto init_failed;
-	}
-
-	pcmcia_function_disable(esc->sc_pf);
+	esl_pcmcia_disable(esc);
+	esc->sc_state = ESL_PCMCIA_ATTACHED;
 	return;
 
-init_failed:
-	/* Unmap I/O space */
-	pcmcia_io_unmap(esc->sc_pf, esc->sc_io_window);
-
-iomap_failed:
-	/* Disable the device. */
-	pcmcia_function_disable(esc->sc_pf);
-
-enable_failed:
-	/* Free our I/O space. */
-	pcmcia_io_free(esc->sc_pf, &esc->sc_pcioh);
-
-no_config_entry:
-	return;
+fail:
+	pcmcia_function_unconfigure(pf);
 }
 
 int
 esl_pcmcia_detach(struct device *self, int flags)
 {
 	struct esl_pcmcia_softc *esc = (void *)self;
-	int rv = 0;
+	int rv;
 
-	if (esc->sc_io_window == -1)
-		/* Nothing to detach */
+	if (esc->sc_state != ESL_PCMCIA_ATTACHED)
 		return (0);
 
-	if (esc->sc_opldev != NULL)
-		config_detach(esc->sc_opldev, flags);
-	if (esc->sc_audiodev != NULL)
+	if (esc->sc_opldev) {
+		rv = config_detach(esc->sc_opldev, flags);
+		if (rv)
+			return (rv);
+	}
+	if (esc->sc_audiodev) {
 		rv = config_detach(esc->sc_audiodev, flags);
-	if (rv)
-		return (rv);
+		if (rv)
+			return (rv);
+	}
 
-	/* unmap i/o window and i/o space */
-	pcmcia_io_unmap(esc->sc_pf, esc->sc_io_window);
-	pcmcia_io_free(esc->sc_pf, &esc->sc_pcioh);
+	pcmcia_function_unconfigure(esc->sc_pf);
 
-	return (rv);
+	return (0);
 }
 
 int
 esl_pcmcia_enable(struct esl_pcmcia_softc *sc)
 {
+	int error;
 
-	/* Establish an interrupt */
 	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_AUDIO, esl_intr,
 	    sc);
-	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_esl.sc_dev.dv_xname);
-		goto fail_1;
+	if (!sc->sc_ih)
+		return (EIO);
+
+	error = pcmcia_function_enable(sc->sc_pf);
+	if (error) {
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = 0;
 	}
 
-	if (pcmcia_function_enable(sc->sc_pf))
-		goto fail_2;
-
-	return (0);
-
-fail_2:
-	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-fail_1:
-	return (1);
+	return (error);
 }
 
 void
@@ -242,4 +184,5 @@ esl_pcmcia_disable(struct esl_pcmcia_softc *sc)
 
 	pcmcia_function_disable(sc->sc_pf);
 	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+	sc->sc_ih = 0;
 }

@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ray.c,v 1.37.2.1 2004/08/03 10:50:15 skrll Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.37.2.2 2004/08/12 11:42:01 skrll Exp $	*/
+
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.37.2.1 2004/08/03 10:50:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.37.2.2 2004/08/12 11:42:01 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -156,14 +157,13 @@ struct ray_softc {
 	struct ifmedia	sc_media;
 
 	struct pcmcia_function		*sc_pf;
-	struct pcmcia_mem_handle	sc_mem;
-	int				sc_window;
 	void				*sc_ih;
 	void				*sc_sdhook;
 	void				*sc_pwrhook;
+	int				sc_attached;
+
 	int				sc_flags;	/*. misc flags */
 #define RAY_FLAGS_RESUMEINIT	0x0001
-#define RAY_FLAGS_ATTACHED	0x0002	/* attach has succeeded */
 	int				sc_resetloop;
 
 	struct callout			sc_check_ccs_ch;
@@ -215,12 +215,13 @@ struct ray_softc {
 	struct ray_param_req	*sc_repreq;
 	struct ray_param_req	*sc_updreq;
 
+	bus_space_tag_t	sc_memt;
+	bus_space_handle_t sc_memh;
+
 #ifdef RAY_DO_SIGLEV
 	struct ray_siglev	sc_siglevs[RAY_NSIGLEVRECS];
 #endif
 };
-#define	sc_memt	sc_mem.memt
-#define	sc_memh	sc_mem.memh
 #define	sc_ccrt	sc_pf->pf_ccrt
 #define	sc_ccrh	sc_pf->pf_ccrh
 #define	sc_ccroff sc_pf->pf_ccr_offset
@@ -281,6 +282,7 @@ typedef	void (*ray_cmd_func_t)(struct ray_softc *);
 static int ray_alloc_ccs __P((struct ray_softc *, bus_size_t *, u_int, u_int));
 static bus_size_t ray_fill_in_tx_ccs __P((struct ray_softc *, size_t,
     u_int, u_int));
+static int ray_validate_config __P((struct pcmcia_config_entry *));
 static void ray_attach __P((struct device *, struct device *, void *));
 static ray_cmd_func_t ray_ccs_done __P((struct ray_softc *, bus_size_t));
 static void ray_check_ccs __P((void *));
@@ -492,48 +494,51 @@ ray_match(parent, match, aux)
 	    && pa->product == PCMCIA_PRODUCT_RAYTHEON_WLAN);
 }
 
+static int
+ray_validate_config(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_memspace != 1 ||
+	    cfe->num_iospace != 0 ||
+	    cfe->memspace[0].length != RAY_SRAM_MEM_SIZE)
+		return (EINVAL);
+	return (0);
+}
 
 static void
 ray_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct ray_softc *sc = (void *)self;
+	struct pcmcia_attach_args *pa = aux;
+	struct ifnet *ifp = &sc->sc_if;
+	struct pcmcia_config_entry *cfe;
 	struct ray_ecf_startup *ep;
-	struct pcmcia_attach_args *pa;
-	struct ray_softc *sc;
-	struct ifnet *ifp;
-	bus_size_t memoff;
+	int error;
 
-	pa = aux;
-	sc = (struct ray_softc *)self;
 	sc->sc_pf = pa->pf;
-	ifp = &sc->sc_if;
-	sc->sc_window = -1;
 
-	aprint_normal("\n");
-
-	/* enable the card */
-	pcmcia_function_init(sc->sc_pf, SIMPLEQ_FIRST(&sc->sc_pf->cfe_head));
-	if (pcmcia_function_enable(sc->sc_pf)) {
-		printf(": failed to enable the card");
+	/*XXXmem8|common*/
+	error = pcmcia_function_configure(pa->pf, ray_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
 		return;
 	}
 
-	/*
-	 * map in the memory
-	 */
-	if (pcmcia_mem_alloc(sc->sc_pf, RAY_SRAM_MEM_SIZE, &sc->sc_mem)) {
-		printf(": can\'t alloc shared memory\n");
-		goto fail;
-	}
+	cfe = pa->pf->cfe;
+	sc->sc_memt = cfe->memspace[0].handle.memt;
+	sc->sc_memh = cfe->memspace[0].handle.memh;
 
-	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_WIDTH_MEM8|PCMCIA_MEM_COMMON,
-	    RAY_SRAM_MEM_BASE, RAY_SRAM_MEM_SIZE, &sc->sc_mem, &memoff,
-	    &sc->sc_window)) {
-		printf(": can\'t map shared memory\n");
-		pcmcia_mem_free(sc->sc_pf, &sc->sc_mem);
+	callout_init(&sc->sc_reset_resetloop_ch);
+	callout_init(&sc->sc_disable_ch);
+	callout_init(&sc->sc_start_join_timo_ch);
+
+	error = ray_enable(sc);
+	if (error)
 		goto fail;
-	}
 
 	/* get startup results */
 	ep = &sc->sc_ecf_startup;
@@ -542,16 +547,16 @@ ray_attach(parent, self, aux)
 
 	/* check to see that card initialized properly */
 	if (ep->e_status != RAY_ECFS_CARD_OK) {
-		printf(": card failed self test: status %d\n",
-		    sc->sc_ecf_startup.e_status);
-		goto fail;
+		aprint_error("%s: card failed self test: status %d\n",
+		    self->dv_xname, sc->sc_ecf_startup.e_status);
+		goto fail2;
 	}
 
 	/* check firmware version */
 	if (sc->sc_version != SC_BUILD_4 && sc->sc_version != SC_BUILD_5) {
-		printf(": unsupported firmware version %d\n",
-		    ep->e_fw_build_string);
-		goto fail;
+		aprint_error("%s: unsupported firmware version %d\n",
+		    self->dv_xname, ep->e_fw_build_string);
+		goto fail2;
 	}
 
 	/* clear any interrupt if present */
@@ -572,27 +577,21 @@ ray_attach(parent, self, aux)
 	    RAY_PID_COUNTRY_CODE_DEFAULT;
 	sc->sc_flags &= ~RAY_FLAGS_RESUMEINIT;
 
-	callout_init(&sc->sc_check_ccs_ch);
-	callout_init(&sc->sc_check_scheduled_ch);
-	callout_init(&sc->sc_reset_resetloop_ch);
-	callout_init(&sc->sc_disable_ch);
-	callout_init(&sc->sc_start_join_timo_ch);
-
 	/*
 	 * attach the interface
 	 */
 	/* The version isn't the most accurate way, but it's easy. */
-	printf("%s: firmware version %d\n", sc->sc_dev.dv_xname,
+	aprint_normal("%s: firmware version %d\n", self->dv_xname,
 	    sc->sc_version);
 	if (sc->sc_version != SC_BUILD_4)
-		printf("%s: supported rates %0x:%0x:%0x:%0x:%0x:%0x:%0x:%0x\n",
-		    sc->sc_xname, ep->e_rates[0], ep->e_rates[1],
+		aprint_normal("%s: supported rates %0x:%0x:%0x:%0x:%0x:%0x:%0x:%0x\n",
+		    self->dv_xname, ep->e_rates[0], ep->e_rates[1],
 		    ep->e_rates[2], ep->e_rates[3], ep->e_rates[4],
 		    ep->e_rates[5], ep->e_rates[6], ep->e_rates[7]);
-	printf("%s: 802.11 address %s\n", sc->sc_xname,
+	aprint_normal("%s: 802.11 address %s\n", self->dv_xname,
 	    ether_sprintf(ep->e_station_addr));
 
-	memcpy(ifp->if_xname, sc->sc_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, self->dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ray_if_start;
 	ifp->if_ioctl = ray_ioctl;
@@ -614,24 +613,18 @@ ray_attach(parent, self, aux)
 	else
 		ifmedia_set(&sc->sc_media, IFM_INFRA);
 
-	/* disable the card */
-	pcmcia_function_disable(sc->sc_pf);
-
 	sc->sc_sdhook = shutdownhook_establish(ray_shutdown, sc);
 	sc->sc_pwrhook = powerhook_establish(ray_power, sc);
 
 	/* The attach is successful. */
-	sc->sc_flags |= RAY_FLAGS_ATTACHED;
+	sc->sc_attached = 1;
+	ray_disable(sc);
 	return;
-fail:
-	/* disable the card */
-	pcmcia_function_disable(sc->sc_pf);
 
-	/* free the alloc/map */
-	if (sc->sc_window != -1) {
-		pcmcia_mem_unmap(sc->sc_pf, sc->sc_window);
-		pcmcia_mem_free(sc->sc_pf, &sc->sc_mem);
-	}
+fail2:
+	ray_disable(sc);
+fail:
+	pcmcia_function_unconfigure(pa->pf);
 }
 
 static int
@@ -653,7 +646,6 @@ ray_activate(dev, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		ray_disable(sc);
 		if_deactivate(ifp);
 		break;
 	}
@@ -673,25 +665,22 @@ ray_detach(self, flags)
 	ifp = &sc->sc_if;
 	RAY_DPRINTF(("%s: detach\n", sc->sc_xname));
 
-	/* Succeed now if there is no work to do. */
-	if ((sc->sc_flags & RAY_FLAGS_ATTACHED) == 0)
-	    return (0);
+	if (!sc->sc_attached)
+                return (0);
 
-	if (ifp->if_flags & IFF_RUNNING)
+	if (sc->sc_pwrhook)
+		powerhook_disestablish(sc->sc_pwrhook);
+	if (sc->sc_sdhook)
+		shutdownhook_disestablish(sc->sc_sdhook);
+
+	if (sc->sc_if.if_flags & IFF_UP)
 		ray_disable(sc);
 
-	/* give back the memory */
-	if (sc->sc_window != -1) {
-		pcmcia_mem_unmap(sc->sc_pf, sc->sc_window);
-		pcmcia_mem_free(sc->sc_pf, &sc->sc_mem);
-	}
-
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	powerhook_disestablish(sc->sc_pwrhook);
-	shutdownhook_disestablish(sc->sc_sdhook);
+
+	pcmcia_function_unconfigure(sc->sc_pf);
 
 	return (0);
 }
@@ -707,14 +696,17 @@ ray_enable(sc)
 
 	RAY_DPRINTF(("%s: enable\n", sc->sc_xname));
 
-	if ((error = ray_init(sc)) == 0) {
-		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
-		    ray_intr, sc);
-		if (sc->sc_ih == NULL) {
-			ray_stop(sc);
-			return (EIO);
-		}
+	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
+	    ray_intr, sc);
+	if (!sc->sc_ih)
+		return (EIO);
+
+	error = ray_init(sc);
+	if (error) {
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = 0;
 	}
+
 	return (error);
 }
 
@@ -727,8 +719,7 @@ ray_disable(sc)
 {
 	RAY_DPRINTF(("%s: disable\n", sc->sc_xname));
 
-	if ((sc->sc_if.if_flags & IFF_RUNNING))
-		ray_stop(sc);
+	ray_stop(sc);
 
 	sc->sc_resetloop = 0;
 	sc->sc_rxoverflow = 0;
@@ -736,9 +727,10 @@ ray_disable(sc)
 	sc->sc_rxhcksum = 0;
 	sc->sc_rxnoise = 0;
 
-	if (sc->sc_ih)
+	if (sc->sc_ih) {
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-	sc->sc_ih = 0;
+		sc->sc_ih = 0;
+	}
 }
 
 /*
@@ -803,6 +795,9 @@ ray_init(sc)
 
 	/* clear the interrupt if present */
 	REG_WRITE(sc, RAY_HCSIR, 0);
+
+	callout_init(&sc->sc_check_ccs_ch);
+	callout_init(&sc->sc_check_scheduled_ch);
 
 	/* we are now up and running -- and are busy until download is cplt */
 	sc->sc_if.if_flags |= IFF_RUNNING | IFF_OACTIVE;

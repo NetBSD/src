@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.26.6.1 2004/08/03 10:45:46 skrll Exp $	*/
+/*	$NetBSD: atavar.h,v 1.26.6.2 2004/08/12 11:41:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -73,8 +73,9 @@ struct ata_xfer {
 
 /* Per-channel queue of ata_xfers.  May be shared by multiple channels. */
 struct ata_queue {
-	TAILQ_HEAD(, ata_xfer) queue_xfer;
-	int queue_freeze;
+	TAILQ_HEAD(, ata_xfer) queue_xfer; /* queue of pending commands */
+	int queue_freeze; /* freeze count for the queue */
+	struct ata_xfer *active_xfer; /* active command */
 };
 
 /* ATA bus instance state information. */
@@ -118,7 +119,9 @@ struct ata_drive_datas {
 #define	DRIVE_UDMA	0x0020
 #define	DRIVE_MODE	0x0040	/* the drive reported its mode */
 #define	DRIVE_RESET	0x0080	/* reset the drive state at next xfer */
+#define	DRIVE_WAITDRAIN	0x0100	/* device is waiting for the queue to drain */
 #define	DRIVE_ATAPIST	0x0200	/* device is an ATAPI tape drive */
+#define	DRIVE_NOSTREAM	0x0400	/* no stream methods on this drive */
 
 	/*
 	 * Current setting of drive's PIO, DMA and UDMA modes.
@@ -217,7 +220,7 @@ struct ata_bio {
  * A separate interface is needed for read/write or ATAPI packet commands
  * (which need multiple interrupts per commands).
  */
-struct wdc_command {
+struct ata_command {
 	u_int8_t r_command;	/* Parameters to upload to registers */
 	u_int8_t r_head;
 	u_int16_t r_cyl;
@@ -264,11 +267,11 @@ struct ata_bustype {
 #define	AT_RST_NOCMD 0x20000 /* XXX has to go - temporary until we have tagged queuing */
 
 	int	(*ata_exec_command)(struct ata_drive_datas *,
-				    struct wdc_command *);
+				    struct ata_command *);
 
-#define	WDC_COMPLETE	0x01
-#define	WDC_QUEUED	0x02
-#define	WDC_TRY_AGAIN	0x03
+#define	ATACMD_COMPLETE		0x01
+#define	ATACMD_QUEUED		0x02
+#define	ATACMD_TRY_AGAIN	0x03
 
 	int	(*ata_get_params)(struct ata_drive_datas *, u_int8_t,
 				  struct ataparams *);

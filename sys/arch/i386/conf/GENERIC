@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.564.2.3 2004/08/05 20:23:05 skrll Exp $
+# $NetBSD: GENERIC,v 1.564.2.4 2004/08/12 11:41:11 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.564.2.3 $"
+#ident 		"GENERIC-$Revision: 1.564.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -782,6 +782,7 @@ tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
 awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
+cs*	at pcmcia? function ?		# CS89xx Ethernet
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
@@ -790,8 +791,9 @@ sm*	at pcmcia? function ?		# Megahertz Ethernet
 # tr at pcmcia has problems with Cardbus bridges
 #tr*	at pcmcia? function ?		# TROPIC based Token-Ring
 wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
-xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
-
+xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+com*	at xirc?
+xi*	at xirc?
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 com*	at mhzc?
 sm*	at mhzc?

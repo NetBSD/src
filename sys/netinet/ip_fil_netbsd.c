@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.12.2.3 2004/08/05 21:01:24 skrll Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.12.2.4 2004/08/12 11:42:21 skrll Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -864,8 +864,6 @@ int dst;
 	xtra = 0;
 	hlen = 0;
 	ohlen = 0;
-	avail = 0;
-	m = NULL;
 	ifp = fin->fin_ifp;
 	if (fin->fin_v == 4) {
 		if ((fin->fin_p == IPPROTO_ICMP) &&

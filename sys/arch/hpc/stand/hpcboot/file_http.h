@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file_http.h,v 1.2 2002/03/02 22:01:57 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: file_http.h,v 1.2.14.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_FILE_HTTP_H_
-#define _HPCBOOT_FILE_HTTP_H_
+#define	_HPCBOOT_FILE_HTTP_H_
 
 #include <file.h>
 #include <winsock.h>

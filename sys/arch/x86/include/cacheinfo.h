@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.1 2003/04/25 21:54:30 fvdl Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.1.2.1 2004/08/12 11:41:14 skrll Exp $	*/
 
 #ifndef _X86_CACHEINFO_H
 #define _X86_CACHEINFO_H
@@ -27,6 +27,7 @@ struct cpu_info;
 const struct x86_cache_info *cache_info_lookup(const struct x86_cache_info *,
 					       u_int8_t);
 void amd_cpu_cacheinfo(struct cpu_info *);
+void via_cpu_cacheinfo(struct cpu_info *);
 void x86_print_cacheinfo(struct cpu_info *);
 
 /*
@@ -106,5 +107,47 @@ void x86_print_cacheinfo(struct cpu_info *);
 #define	AMD_L2_ECX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
 #define	AMD_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
 #define	AMD_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
+
+/*
+ * VIA Cache Info:
+ *
+ *	Nehemiah (at least)
+ *
+ *		Function 8000.0005 L1 TLB/Cache Information
+ *		EAX -- reserved
+ *		EBX -- L1 TLB 4K pages
+ *		ECX -- L1 D-cache
+ *		EDX -- L1 I-cache
+ *
+ *		Function 8000.0006 L2 Cache Information
+ *		EAX -- reserved
+ *		EBX -- reserved
+ *		ECX -- L2 Unified cache
+ *		EDX -- reserved
+ */
+
+/* L1 TLB 4K pages */
+#define	VIA_L1_EBX_DTLB_ASSOC(x)	(((x) >> 24) & 0xff)
+#define	VIA_L1_EBX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xff)
+#define	VIA_L1_EBX_ITLB_ASSOC(x)	(((x) >> 8)  & 0xff)
+#define	VIA_L1_EBX_ITLB_ENTRIES(x)	( (x)        & 0xff)
+
+/* L1 Data Cache */
+#define	VIA_L1_ECX_DC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
+#define	VIA_L1_ECX_DC_ASSOC(x)		 (((x) >> 16) & 0xff)
+#define	VIA_L1_ECX_DC_LPT(x)		 (((x) >> 8)  & 0xff)
+#define	VIA_L1_ECX_DC_LS(x)		 ( (x)        & 0xff)
+
+/* L1 Instruction Cache */
+#define	VIA_L1_EDX_IC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
+#define	VIA_L1_EDX_IC_ASSOC(x)		 (((x) >> 16) & 0xff)
+#define	VIA_L1_EDX_IC_LPT(x)		 (((x) >> 8)  & 0xff)
+#define	VIA_L1_EDX_IC_LS(x)		 ( (x)        & 0xff)
+
+/* L2 Cache */
+#define	VIA_L2_ECX_C_SIZE(x)		((((x) >> 16) & 0xffff) * 1024)
+#define	VIA_L2_ECX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
+#define	VIA_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
+#define	VIA_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
 
 #endif /* _X86_CACHEINFO_H */

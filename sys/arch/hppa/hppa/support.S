@@ -1,4 +1,4 @@
-/*	$NetBSD: support.S,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $	*/
+/*	$NetBSD: support.S,v 1.1.10.2 2004/08/12 11:41:11 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -82,7 +82,7 @@ LEAF_ENTRY(fdcache)
 	ldil	L%dcache_stride,%t1
 	ldw	R%dcache_stride(%t1), %arg3
 
-	comb,=	%arg2, %r0, fdc_none	/* no bytes, no flush */
+	comb,=,n %arg2, %r0, fdc_none	/* no bytes, no flush */
 
 	mtsp	%arg0, %sr1		/* move the space register to sr1 */
 	add	%arg1, %arg2, %arg0	/* get the last byte to flush in arg0 */
@@ -123,7 +123,7 @@ fdc_short:				/* flush one line at a time */
 fdc_none:
 	sync
 	syncdma
-	bv	%r0(%r2)
+	bv	%r0(%rp)
 	sync
 EXIT(fdcache)
 
@@ -176,7 +176,7 @@ pdc_short:				/* flush one line at a time */
 pdc_none:
 	sync
 	syncdma
-	bv	%r0(%r2)
+	bv	%r0(%rp)
 	sync
 EXIT(pdcache)
 
@@ -229,7 +229,7 @@ fic_short:				/* flush one line at a time */
 fic_none:
 	sync
 	syncdma
-	bv	%r0(%r2)
+	bv	%r0(%rp)
 	sync
 EXIT(ficache)
 
@@ -261,7 +261,7 @@ LEAF_ENTRY(setjmp)
 	stwm	%rp,4(%arg0)	/* Save the return pointer */
 	stwm	%sp,4(%arg0)	/* Save the original stack pointer */
 
-	bv	0(%rp)
+	bv	%r0(%rp)
 	copy	%r0, %ret0
 EXIT(setjmp)
 
@@ -289,7 +289,7 @@ LEAF_ENTRY(longjmp)
 	ldwm	4(%arg0),%rp	/* Restore return address pointer, */
 	ldwm	4(%arg0),%sp	/* stack pointer, */
 
-	bv	0(%rp)
+	bv	%r0(%rp)
 	copy	%arg1,%ret0	/* Move return value to where it belongs. */
 EXIT(longjmp)
 

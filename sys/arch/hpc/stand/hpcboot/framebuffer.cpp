@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.8 2001/06/20 17:36:00 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.8.24.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ FrameBufferInfo::type()
 {
 	BOOL reverse = HPC_PREFERENCE.reverse_video;
 	int type;
-	
+
 	switch(_fb->bpp) {
 	default:
 		// FALLTHROUGH

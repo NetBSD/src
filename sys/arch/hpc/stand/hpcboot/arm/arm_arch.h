@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_arch.h,v 1.1 2001/02/09 18:34:50 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_arch.h,v 1.1.26.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_ARM_ARCH_H_
-#define _HPCBOOT_ARM_ARCH_H_
+#define	_HPCBOOT_ARM_ARCH_H_
 
 #include <hpcboot.h>
 #include <arch.h>
@@ -72,7 +72,7 @@ u_int32_t GetCop15Reg6(void);
 u_int32_t GetCop15Reg13(void);	void SetCop15Reg13(u_int32_t);
 u_int32_t GetCop15Reg14(void);
 
-// Interrupt 
+// Interrupt
 void EI(void);
 void DI(void);
 
@@ -96,8 +96,8 @@ void SetSystemMode(void);
 // 2nd bootloader
 void boot_func(kaddr_t, kaddr_t, kaddr_t, kaddr_t);
 extern char boot_func_end[];
-#define BOOT_FUNC_START		reinterpret_cast <vaddr_t>(boot_func)
-#define BOOT_FUNC_END		reinterpret_cast <vaddr_t>(boot_func_end)
+#define	BOOT_FUNC_START		reinterpret_cast <vaddr_t>(boot_func)
+#define	BOOT_FUNC_END		reinterpret_cast <vaddr_t>(boot_func_end)
 
 /* jump to 2nd loader */
 void FlatJump(kaddr_t, kaddr_t, kaddr_t, kaddr_t);

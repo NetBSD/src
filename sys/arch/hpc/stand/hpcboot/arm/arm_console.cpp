@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_console.cpp,v 1.2 2001/04/24 19:28:00 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_console.cpp,v 1.2.24.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,21 +43,25 @@ ARMConsole *ARMConsole::_instance = 0;
 ARMConsole *
 ARMConsole::Instance(MemoryManager *&mem)
 {
+
 	if (!_instance)
 		_instance = new ARMConsole(mem);
+
 	return _instance;
 }
 
 void
 ARMConsole::Destroy(void)
 {
+
 	if (_instance)
 		delete _instance;
 }
 
 BOOL
 ARMConsole::init(void)
-{  
+{
+
 	if (!super::init())
 		return FALSE;
 
@@ -66,7 +70,7 @@ ARMConsole::init(void)
 		return FALSE;
 	_uart_busy = _uart_base + 0x20;
 	_uart_transmit = _uart_base + 0x14;
-	
+
 	return TRUE;
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: nca_pcmcia.c,v 1.9 2002/10/02 16:52:19 thorpej Exp $	*/
+/*	$NetBSD: nca_pcmcia.c,v 1.9.6.1 2004/08/12 11:42:01 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.9 2002/10/02 16:52:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.9.6.1 2004/08/12 11:42:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,16 +63,15 @@ struct nca_pcmcia_softc {
 	struct ncr5380_softc	sc_ncr5380;	/* glue to MI code */
 
 	/* PCMCIA-specific goo. */
-	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
-	int sc_io_window;			/* our i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handler */
-	int sc_flags;
-#define	NCA_PCMCIA_ATTACHED	1		/* attach completed */
-#define NCA_PCMCIA_ATTACHING	2		/* attach in progress */
+
+	int sc_state;
+#define NCA_PCMCIA_ATTACHED	3
 };
 
 int	nca_pcmcia_match __P((struct device *, struct cfdata *, void *)); 
+int	nca_pcmcia_validate_config __P((struct pcmcia_config_entry *));
 void	nca_pcmcia_attach __P((struct device *, struct device *, void *));  
 int	nca_pcmcia_detach __P((struct device *, int));
 int	nca_pcmcia_enable __P((struct device *, int));
@@ -87,9 +86,11 @@ CFATTACH_DECL(nca_pcmcia, sizeof(struct nca_pcmcia_softc),
 #define NCA_NO_PARITY_CHK	0xff00
 
 const struct pcmcia_product nca_pcmcia_products[] = {
-
-	{ NULL }
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  PCMCIA_CIS_INVALID },
 };
+const size_t nca_pcmcia_nproducts =
+    sizeof(nca_pcmcia_products) / sizeof(nca_pcmcia_products[0]);
 
 int
 nca_pcmcia_match(parent, match, aux)
@@ -99,9 +100,20 @@ nca_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pcmcia_product_lookup(pa, nca_pcmcia_products,
-	    sizeof nca_pcmcia_products[0], NULL) != NULL)
+	if (pcmcia_product_lookup(pa, nca_pcmcia_products, nca_pcmcia_nproducts,
+	    sizeof(nca_pcmcia_products[0]), NULL))
 		return (1);
+	return (0);
+}
+
+int
+nca_pcmcia_validate_config(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_memspace != 0 ||
+	    cfe->num_iospace != 1)
+		return (EINVAL);
 	return (0);
 }
 
@@ -115,55 +127,21 @@ nca_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
-	const struct pcmcia_product *pp;
 	int flags;
+	int error;
 
 	esc->sc_pf = pf;
 
-	SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
-		if (cfe->num_memspace != 0 ||
-		    cfe->num_iospace != 1)
-			continue;
-
-		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-		    cfe->iospace[0].length, 0, &esc->sc_pcioh) == 0)
-			break;
+	error = pcmcia_function_configure(pf, nca_pcmcia_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
 	}
 
-	if (cfe == 0) {
-		printf(": can't alloc i/o space\n");
-		goto no_config_entry;
-	}
-
-	/* Enable the card. */
-	pcmcia_function_init(pf, cfe);
-	if (pcmcia_function_enable(pf)) {
-		printf(": function enable failed\n");
-		goto enable_failed;
-	}
-
-	/* Map in the I/O space */
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0, esc->sc_pcioh.size,
-	    &esc->sc_pcioh, &esc->sc_io_window)) {
-		printf(": can't map i/o space\n");
-		goto iomap_failed;
-	}
-
-	pp = pcmcia_product_lookup(pa, nca_pcmcia_products,
-	    sizeof nca_pcmcia_products[0], NULL);
-	if (pp == NULL) {
-		printf("\n");
-		panic("nca_pcmcia_attach: impossible");
-	}
-
-	printf(": %s\n", pp->pp_name);
-
-	/* We can enable and disable the controller. */
-	sc->sc_adapter.adapt_enable = nca_pcmcia_enable;
-
-	/* Reset into 5380-compat. mode */
-	bus_space_write_1(esc->sc_pcioh.iot, esc->sc_pcioh.ioh, C400_CSR,
-	    C400_CSR_5380_ENABLE);
+	cfe = pf->cfe;
+	sc->sc_regt = cfe->iospace[0].handle.iot;
+	sc->sc_regh = cfe->iospace[0].handle.ioh;
 
 	/* Initialize 5380 compatible register offsets. */
 	sc->sci_r0 = C400_5380_REG_OFFSET + 0;
@@ -192,7 +170,6 @@ nca_pcmcia_attach(parent, self, aux)
 	sc->sc_intr_on   = NULL;
 	sc->sc_intr_off  = NULL;
 
-
 	/*
 	 * Support the "options" (config file flags).
 	 * Disconnect/reselect is a per-target mask.
@@ -208,31 +185,20 @@ nca_pcmcia_attach(parent, self, aux)
 	sc->sc_parity_disable = (flags & NCA_NO_PARITY_CHK) >> 8;
 	sc->sc_min_dma_len = MIN_DMA_LEN;
 
-	/*
-	 * Initialize fields used by the MI code
-	 */
-	sc->sc_regt = esc->sc_pcioh.iot;
-	sc->sc_regh = esc->sc_pcioh.ioh;
+	error = nca_pcmcia_enable(self, 1);
+	if (error)
+		goto fail;
 
-	/*
-	 *  Initialize nca board itself.
-	 */
-	esc->sc_flags |= NCA_PCMCIA_ATTACHING;
+	sc->sc_adapter.adapt_enable = nca_pcmcia_enable;
+	sc->sc_adapter.adapt_refcnt = 1;
+
 	ncr5380_attach(sc);
-	esc->sc_flags &= ~NCA_PCMCIA_ATTACHING;
-	esc->sc_flags |= NCA_PCMCIA_ATTACHED;
+	scsipi_adapter_delref(&sc->sc_adapter);
+	esc->sc_state = NCA_PCMCIA_ATTACHED;
 	return;
 
-iomap_failed:
-	/* Disable the device. */
-	pcmcia_function_disable(esc->sc_pf);
-
-enable_failed:
-	/* Unmap our I/O space. */
-	pcmcia_io_free(esc->sc_pf, &esc->sc_pcioh);
-
-no_config_entry:
-	return;
+fail:
+	pcmcia_function_unconfigure(pf);
 }
 
 int
@@ -240,20 +206,17 @@ nca_pcmcia_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct nca_pcmcia_softc *esc = (void *)self;
+	struct nca_pcmcia_softc *sc = (void *)self;
 	int error;
 
-	if ((esc->sc_flags & NCA_PCMCIA_ATTACHED) == 0) {
-		/* Nothing to detach. */
+	if (sc->sc_state != NCA_PCMCIA_ATTACHED)
 		return (0);
-	}
 
-	if ((error = ncr5380_detach(&esc->sc_ncr5380, flags)) != 0)
+	error = ncr5380_detach(&sc->sc_ncr5380, flags);
+	if (error)
 		return (error);
 
-	/* Unmap our i/o window and i/o space. */
-	pcmcia_io_unmap(esc->sc_pf, esc->sc_io_window);
-	pcmcia_io_free(esc->sc_pf, &esc->sc_pcioh);
+	pcmcia_function_unconfigure(sc->sc_pf);
 
 	return (0);
 }
@@ -263,38 +226,29 @@ nca_pcmcia_enable(arg, onoff)
 	struct device *arg;
 	int onoff;
 {
-	struct nca_pcmcia_softc *esc = (struct nca_pcmcia_softc*)arg;
+	struct nca_pcmcia_softc *sc = (struct nca_pcmcia_softc*)arg;
+	int error;
 
 	if (onoff) {
 		/* Establish the interrupt handler. */
-		esc->sc_ih = pcmcia_intr_establish(esc->sc_pf, IPL_BIO,
-		    ncr5380_intr, &esc->sc_ncr5380);
-		if (esc->sc_ih == NULL) {
-			printf("%s: couldn't establish interrupt handler\n",
-			    esc->sc_ncr5380.sc_dev.dv_xname);
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
+		    ncr5380_intr, &sc->sc_ncr5380);
+		if (!sc->sc_ih)
 			return (EIO);
+
+		error = pcmcia_function_enable(sc->sc_pf);
+		if (error) {
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			sc->sc_ih = 0;
+			return (error);
 		}
 
-		/*
-		 * If attach is in progress, we know that card power is
-		 * enabled and chip will be initialized later.
-		 * Otherwise, enable and reset now.
-		 */
-		if ((esc->sc_flags & NCA_PCMCIA_ATTACHING) == 0) {
-			if (pcmcia_function_enable(esc->sc_pf)) {
-				printf("%s: couldn't enable PCMCIA function\n",
-				    esc->sc_ncr5380.sc_dev.dv_xname);
-				pcmcia_intr_disestablish(esc->sc_pf,
-				    esc->sc_ih);
-				return (EIO);
-			}
-
-			/* Initialize only chip.  */
-			ncr5380_init(&esc->sc_ncr5380);
-		}
+		/* Initialize only chip.  */
+		ncr5380_init(&sc->sc_ncr5380);
 	} else {
-		pcmcia_function_disable(esc->sc_pf);
-		pcmcia_intr_disestablish(esc->sc_pf, esc->sc_ih);
+		pcmcia_function_disable(sc->sc_pf);
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = 0;
 	}
 
 	return (0);

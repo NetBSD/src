@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.220.2.1 2004/08/03 10:35:47 skrll Exp $
+#	$NetBSD: INSTALL,v 1.220.2.2 2004/08/12 11:41:12 skrll Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -545,14 +545,16 @@ tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
 awi*	at pcmcia? function ?		# BayStack 650 (802.11FH)
 cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
+cs*	at pcmcia? function ?		# CS89xx Ethernet
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray* 	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
-xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
-
+xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+com*	at xirc?
+xi*	at xirc?
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 com*	at mhzc?
 sm*	at mhzc?

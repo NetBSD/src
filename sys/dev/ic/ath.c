@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.32.2.2 2004/08/03 10:46:10 skrll Exp $	*/
+/*	$NetBSD: ath.c,v 1.32.2.3 2004/08/12 11:41:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.32.2.2 2004/08/03 10:46:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.32.2.3 2004/08/12 11:41:23 skrll Exp $");
 #endif
 
 /*
@@ -142,7 +142,7 @@ static void	ath_bmiss_proc(void *, int);
 static void	ath_initkeytable(struct ath_softc *);
 static void	ath_mode_init(struct ath_softc *);
 static int	ath_beacon_alloc(struct ath_softc *, struct ieee80211_node *);
-static void	ath_beacon_proc(void *, int);
+static void	ath_beacon_proc(struct ath_softc *, int);
 static void	ath_beacon_free(struct ath_softc *);
 static void	ath_beacon_config(struct ath_softc *);
 static int	ath_desc_alloc(struct ath_softc *);
@@ -174,6 +174,8 @@ static int	ath_rate_setup(struct ath_softc *sc, u_int mode);
 static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
 static void	ath_rate_ctl_reset(struct ath_softc *, enum ieee80211_state);
 static void	ath_rate_ctl(void *, struct ieee80211_node *);
+static void	ath_recv_mgmt(struct ieee80211com *, struct mbuf *,
+			struct ieee80211_node *, int, int, u_int32_t);
 
 #ifdef __NetBSD__
 int	ath_enable(struct ath_softc *);
@@ -579,6 +581,9 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ic->ic_node_getrssi = ath_node_getrssi;
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = ath_newstate;
+	sc->sc_recv_mgmt = ic->ic_recv_mgmt;
+	ic->ic_recv_mgmt = ath_recv_mgmt;
+
 	/* complete initialization */
 	ieee80211_media_init(ifp, ath_media_change, ieee80211_media_status);
 
@@ -944,7 +949,7 @@ ath_init1(struct ath_softc *sc)
 	if (!ath_hal_reset(ah, ic->ic_opmode, &hchan, AH_FALSE, &status)) {
 		if_printf(ifp, "unable to reset hardware; hal status %u\n",
 			status);
-		error = -1;
+		error = EIO;
 		goto done;
 	}
 
@@ -1200,8 +1205,8 @@ ath_start(struct ifnet *ifp)
 			TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
 			ath_txbuf_critsect_end(sc, s);
 			ifp->if_oerrors++;
-			if (ni && ni != ic->ic_bss)
-				ieee80211_free_node(ic, ni);
+			if (ni != NULL)
+				ieee80211_release_node(ic, ni);
 			continue;
 		}
 
@@ -1361,14 +1366,21 @@ ath_initkeytable(struct ath_softc *sc)
 	struct ath_hal *ah = sc->sc_ah;
 	int i;
 
+	/* XXX maybe should reset all keys when !WEPON */
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 		struct ieee80211_wepkey *k = &ic->ic_nw_keys[i];
 		if (k->wk_len == 0)
 			ath_hal_keyreset(ah, i);
-		else
+		else {
+			HAL_KEYVAL hk;
+
+			memset(&hk, 0, sizeof(hk));
+			hk.kv_type = HAL_CIPHER_WEP;
+			hk.kv_len = k->wk_len;
+			memcpy(hk.kv_val, k->wk_key, k->wk_len);
 			/* XXX return value */
-			/* NB: this uses HAL_KEYVAL == ieee80211_wepkey */
-			ath_hal_keyset(ah, i, (const HAL_KEYVAL *) k);
+			ath_hal_keyset(ah, i, &hk);
+		}
 	}
 }
 
@@ -1542,6 +1554,7 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 	u_int16_t capinfo;
 	struct ieee80211_rateset *rs;
 	const HAL_RATE_TABLE *rt;
+	u_int flags;
 
 	bf = sc->sc_bcbuf;
 	if (bf->bf_m != NULL) {
@@ -1647,7 +1660,10 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 	/* setup descriptors */
 	ds = bf->bf_desc;
 
-	ds->ds_link = 0;
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
+		ds->ds_link = bf->bf_daddr;	/* link to self */
+	else
+		ds->ds_link = 0;
 	ds->ds_data = bf->bf_segs[0].ds_addr;
 
 	DPRINTF(ATH_DEBUG_ANY, ("%s: segaddr %p seglen %u\n", __func__,
@@ -1663,6 +1679,11 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 		rate = rt->info[0].rateCode | rt->info[0].shortPreamble;
 	else
 		rate = rt->info[0].rateCode;
+
+	flags = HAL_TXDESC_NOACK;
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
+		flags |= HAL_TXDESC_VEOL;
+
 	if (!ath_hal_setuptxdesc(ah, ds
 		, m->m_pkthdr.len + IEEE80211_CRC_LEN	/* packet length */
 		, sizeof(struct ieee80211_frame)	/* header length */
@@ -1671,7 +1692,7 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 		, rate, 1			/* series 0 rate/tries */
 		, HAL_TXKEYIX_INVALID		/* no encryption */
 		, 0				/* antenna mode */
-		, HAL_TXDESC_NOACK		/* no ack for beacons */
+		, flags				/* no ack for beacons */
 		, 0				/* rts/cts rate */
 		, 0				/* rts/cts duration */
 	)) {
@@ -1695,9 +1716,8 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 }
 
 static void
-ath_beacon_proc(void *arg, int pending)
+ath_beacon_proc(struct ath_softc *sc, int pending)
 {
-	struct ath_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ath_buf *bf = sc->sc_bcbuf;
 	struct ath_hal *ah = sc->sc_ah;
@@ -1823,13 +1843,35 @@ ath_beacon_config(struct ath_softc *sc)
 		sc->sc_imask |= HAL_INT_BMISS;
 		ath_hal_intrset(ah, sc->sc_imask);
 	} else {
+		ath_hal_intrset(ah, 0);
+		sc->sc_imask |= HAL_INT_SWBA;	/* beacon prepare */
+		intval |= HAL_BEACON_ENA;
+		switch (ic->ic_opmode) {
+		/* No beacons in monitor, ad hoc-demo modes. */
+		case IEEE80211_M_MONITOR:
+		case IEEE80211_M_AHDEMO:
+			intval &= ~HAL_BEACON_ENA;
+			/*FALLTHROUGH*/
+		/* In IBSS mode, I am uncertain how SWBA interrupts
+		 * work, so I just turn them off and use a self-linked
+		 * descriptor.
+		 */
+		case IEEE80211_M_IBSS:
+			sc->sc_imask &= ~HAL_INT_SWBA;
+			nexttbtt = ni->ni_intval;
+			/*FALLTHROUGH*/
+		case IEEE80211_M_HOSTAP:
+		default:
+			if (nexttbtt == ni->ni_intval)
+				intval |= HAL_BEACON_RESET_TSF;
+			break;
+		}
 		DPRINTF(ATH_DEBUG_BEACON, ("%s: intval %u nexttbtt %u\n",
 			__func__, ni->ni_intval, nexttbtt));
-		ath_hal_intrset(ah, 0);
-		ath_hal_beaconinit(ah, nexttbtt, ni->ni_intval);
-		if (ic->ic_opmode != IEEE80211_M_MONITOR)
-			sc->sc_imask |= HAL_INT_SWBA;	/* beacon prepare */
+		ath_hal_beaconinit(ah, nexttbtt, intval);
 		ath_hal_intrset(ah, sc->sc_imask);
+		if (ic->ic_opmode == IEEE80211_M_IBSS)
+			ath_beacon_proc(sc, 0);
 	}
 }
 
@@ -2299,7 +2341,25 @@ ath_rx_proc(void *arg, int npending)
 		if (status == HAL_EINPROGRESS)
 			break;
 		TAILQ_REMOVE(&sc->sc_rxbuf, bf, bf_list);
-		if (ds->ds_rxstat.rs_status != 0) {
+
+		if (ds->ds_rxstat.rs_more) {
+			/*
+			 * Frame spans multiple descriptors; this
+			 * cannot happen yet as we don't support
+			 * jumbograms.  If not in monitor mode,
+			 * discard the frame.
+			 */
+
+			/* enable this if you want to see error frames in Monitor mode */
+#ifdef ERROR_FRAMES
+			if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+				/* XXX statistic */
+				goto rx_next;
+			}
+#endif
+			/* fall thru for monitor mode handling... */
+
+		} else if (ds->ds_rxstat.rs_status != 0) {
 			if (ds->ds_rxstat.rs_status & HAL_RXERR_CRC)
 				sc->sc_stats.ast_rx_crcerr++;
 			if (ds->ds_rxstat.rs_status & HAL_RXERR_FIFO)
@@ -2310,17 +2370,23 @@ ath_rx_proc(void *arg, int npending)
 				sc->sc_stats.ast_rx_phyerr++;
 				phyerr = ds->ds_rxstat.rs_phyerr & 0x1f;
 				sc->sc_stats.ast_rx_phy[phyerr]++;
-			} else {
-				/*
-				 * NB: don't count PHY errors as input errors;
-				 * we enable them on the 5212 to collect info
-				 * about environmental noise and, in that
-				 * setting, they don't really reflect tx/rx
-				 * errors.
-				 */
-				ifp->if_ierrors++;
 			}
-			goto rx_next;
+
+			/*
+			 * reject error frames, we normally don't want
+			 * to see them in monitor mode.
+			 */
+			if ((ds->ds_rxstat.rs_status & HAL_RXERR_DECRYPT ) ||
+			    (ds->ds_rxstat.rs_status & HAL_RXERR_PHY))
+			    goto rx_next;
+
+			/*
+			 * In monitor mode, allow through packets that
+			 * cannot be decrypted
+			 */
+			if ((ds->ds_rxstat.rs_status & ~HAL_RXERR_DECRYPT) ||
+			    sc->sc_ic.ic_opmode != IEEE80211_M_MONITOR)
+				goto rx_next;
 		}
 
 		len = ds->ds_rxstat.rs_datalen;
@@ -2375,9 +2441,7 @@ ath_rx_proc(void *arg, int npending)
 		/*
 		 * Locate the node for sender, track state, and
 		 * then pass this node (referenced) up to the 802.11
-		 * layer for its use.  We are required to pass
-		 * something so we fall back to ic_bss when this frame
-		 * is from an unknown sender.
+		 * layer for its use.
 		 */
 		ni = ieee80211_find_rxnode(ic, wh);
 
@@ -2401,12 +2465,9 @@ ath_rx_proc(void *arg, int npending)
 		/*
 		 * The frame may have caused the node to be marked for
 		 * reclamation (e.g. in response to a DEAUTH message)
-		 * so use free_node here instead of unref_node.
+		 * so use release_node here instead of unref_node.
 		 */
-		if (ni == ic->ic_bss)
-			ieee80211_unref_node(&ni);
-		else
-			ieee80211_free_node(ic, ni);
+		ieee80211_release_node(ic, ni);
   rx_next:
 		TAILQ_INSERT_TAIL(&sc->sc_rxbuf, bf, bf_list);
 	} while (ath_rxbuf_init(sc, bf) == 0);
@@ -2468,24 +2529,43 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		 * XXX
 		 * IV must not duplicate during the lifetime of the key.
 		 * But no mechanism to renew keys is defined in IEEE 802.11
-		 * WEP.  And IV may be duplicated between other stations
-		 * because of the session key itself is shared.
-		 * So we use pseudo random IV for now, though it is not the
-		 * right way.
+		 * for WEP.  And the IV may be duplicated at other stations
+		 * because the session key itself is shared.  So we use a
+		 * pseudo random IV for now, though it is not the right way.
+		 *
+		 * NB: Rather than use a strictly random IV we select a
+		 * random one to start and then increment the value for
+		 * each frame.  This is an explicit tradeoff between
+		 * overhead and security.  Given the basic insecurity of
+		 * WEP this seems worthwhile.
 		 */
-                iv = ic->ic_iv;
+
 		/*
 		 * Skip 'bad' IVs from Fluhrer/Mantin/Shamir:
-		 * (B, 255, N) with 3 <= B < 8
+		 * (B, 255, N) with 3 <= B < 16 and 0 <= N <= 255
 		 */
-		if (iv >= 0x03ff00 && (iv & 0xf8ff00) == 0x00ff00)
-			iv += 0x000100;
-		ic->ic_iv = iv + 1;
-		for (i = 0; i < IEEE80211_WEP_IVLEN; i++) {
-			ivp[i] = iv;
-			iv >>= 8;
+		iv = ic->ic_iv;
+		if ((iv & 0xff00) == 0xff00) {
+			int B = (iv & 0xff0000) >> 16;
+			if (3 <= B && B < 16)
+				iv = (B+1) << 16;
 		}
-		ivp[i] = sc->sc_ic.ic_wep_txkey << 6;	/* Key ID and pad */
+		ic->ic_iv = iv + 1;
+
+		/*
+		 * NB: Preserve byte order of IV for packet
+		 *     sniffers; it doesn't matter otherwise.
+		 */
+#if AH_BYTE_ORDER == AH_BIG_ENDIAN
+		ivp[0] = iv >> 0;
+		ivp[1] = iv >> 8;
+		ivp[2] = iv >> 16;
+#else
+		ivp[2] = iv >> 0;
+		ivp[1] = iv >> 8;
+		ivp[0] = iv >> 16;
+#endif
+		ivp[3] = ic->ic_wep_txkey << 6; /* Key ID and pad */
 		memcpy(mtod(m0, caddr_t), hdrbuf, sizeof(hdrbuf));
 		/*
 		 * The ICV length must be included into hdrlen and pktlen.
@@ -2834,8 +2914,7 @@ ath_tx_proc(void *arg, int npending)
 			 *     this is a DEAUTH message that was sent and the
 			 *     node was timed out due to inactivity.
 			 */
-			if (ni != ic->ic_bss)
-				ieee80211_free_node(ic, ni);
+			ieee80211_release_node(ic, ni);
 		}
 		ath_buf_dmamap_sync(sc->sc_dmat, bf, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, bf->bf_dmamap);
@@ -2901,11 +2980,11 @@ ath_draintxq(struct ath_softc *sc)
 		ni = bf->bf_node;
 		bf->bf_node = NULL;
 		ath_txbuf_critsect_begin(sc, s2);
-		if (ni != NULL && ni != ic->ic_bss) {
+		if (ni != NULL) {
 			/*
 			 * Reclaim node reference.
 			 */
-			ieee80211_free_node(ic, ni);
+			ieee80211_release_node(ic, ni);
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
 		ath_txbuf_critsect_end(sc, s2);
@@ -3227,6 +3306,31 @@ bad:
 	callout_stop(&sc->sc_cal_ch);
 	/* NB: do not invoke the parent */
 	return error;
+}
+
+static void
+ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
+    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+{
+	struct ath_softc *sc = (struct ath_softc*)ic->ic_softc;
+	struct ath_hal *ah = sc->sc_ah;
+
+	(*sc->sc_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
+
+	switch (subtype) {
+	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
+	case IEEE80211_FC0_SUBTYPE_BEACON:
+		if (ic->ic_opmode != IEEE80211_M_IBSS ||
+		    ic->ic_state != IEEE80211_S_RUN)
+			break;
+		if (ieee80211_ibss_merge(ic, ni, ath_hal_gettsf64(ah)) ==
+		    ENETRESET)
+			ath_hal_setassocid(ah, ic->ic_bss->ni_bssid, 0);
+		break;
+	default:
+		break;
+	}
+	return;
 }
 
 /*

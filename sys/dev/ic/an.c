@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.24.2.1 2004/08/03 10:46:10 skrll Exp $	*/
+/*	$NetBSD: an.c,v 1.24.2.2 2004/08/12 11:41:23 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.24.2.1 2004/08/03 10:46:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.24.2.2 2004/08/12 11:41:23 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -649,6 +649,8 @@ an_start(struct ifnet *ifp)
 			ifp->if_oerrors++;
 			continue;
 		}
+		if (ni != NULL)
+			ieee80211_release_node(ic, ni);
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf)
 			bpf_mtap(ic->ic_rawbpf, m);
@@ -1332,6 +1334,7 @@ an_rx_intr(struct an_softc *sc)
 	ni = ieee80211_find_rxnode(ic, wh);
 	ieee80211_input(ifp, m, ni, frmhdr.an_rx_signal_strength,
 	    le32toh(frmhdr.an_rx_time));
+	ieee80211_release_node(ic, ni);
 }
 
 static void

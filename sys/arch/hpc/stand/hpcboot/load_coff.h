@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: load_coff.h,v 1.1 2001/02/09 18:34:46 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: load_coff.h,v 1.1.26.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #ifndef _HPCBOOT_LOAD_COFF_H_
-#define _HPCBOOT_LOAD_COFF_H_
+#define	_HPCBOOT_LOAD_COFF_H_
 
 #include <exec_coff.h>
 
-#define FILHSZ	(sizeof(struct coff_filehdr))
-#define SCNHSZ	(sizeof(struct coff_scnhdr))
+#define	FILHSZ	(sizeof(struct coff_filehdr))
+#define	SCNHSZ	(sizeof(struct coff_scnhdr))
 
-#define N_TXTOFF(f, a)							\
+#define	N_TXTOFF(f, a)							\
 	((a)->a_vstamp < 23 ?						\
 	((FILHSZ +(f)->f_opthdr +(f)->f_nscns * SCNHSZ + 7) & ~7) :	\
 	((FILHSZ +(f)->f_opthdr +(f)->f_nscns * SCNHSZ + 15) & ~15))
@@ -57,11 +57,11 @@ private:
 
 	BOOL read_header(void);
 	struct PageTag *load_page(vaddr_t, off_t, size_t, struct PageTag *);
-			     
+
 public:
 	CoffLoader(Console *&, MemoryManager *&);
 	virtual ~CoffLoader(void);
-  
+
 	BOOL setFile(File *&);
 	size_t memorySize(void);
 	BOOL load(void);

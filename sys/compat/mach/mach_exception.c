@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.4.2.3 2004/08/06 10:14:01 skrll Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.4.2.4 2004/08/12 11:41:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.4.2.3 2004/08/06 10:14:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.4.2.4 2004/08/12 11:41:14 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
@@ -158,22 +158,22 @@ mach_exception(exc_l, exc, code)
 #endif
 
 	/*
-	 * It's extremely useful to have the ability of catching
+	 * It's extremely useful to have the ability of catching 
 	 * the process at the time it dies.
 	 */
 	if (mach_exception_hang) {
 		int s;
-		sruct proc *p = exc_l->l_proc;
-
+		struct proc *p = exc_l->l_proc;
+		
 		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
 		SCHED_LOCK(s);
-		p->p_pptr->p_nstopchild++;
+		p->p_pptr->p_nstopchild++; 
 		p->p_stat = SSTOP;
 		exc_l->l_stat = LSSTOP;
 		p->p_nrlwps--;
 		mi_switch(exc_l, NULL);
 		SCHED_ASSERT_UNLOCKED();
-		splx(s);
+		splx(s);	
 	}
 
 	/* 

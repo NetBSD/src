@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.31.6.1 2004/08/03 10:50:15 skrll Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.31.6.2 2004/08/12 11:42:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.31.6.1 2004/08/03 10:50:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.31.6.2 2004/08/12 11:42:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,6 +192,8 @@ pcmcia_scan_cis(dev, fct, arg)
 	DPRINTF(("%s: CIS tuple chain:\n", sc->dev.dv_xname));
 
 	while (1) {
+		DELAY(1000);
+
 		while (1) {
 			/*
 			 * Perform boundary check for insane cards.
@@ -208,17 +210,16 @@ pcmcia_scan_cis(dev, fct, arg)
 
 			/* get the tuple code */
 
-			DELAY(1000);
 			tuple.code = pcmcia_cis_read_1(&tuple, tuple.ptr);
 
 			/* two special-case tuples */
 
 			if (tuple.code == PCMCIA_CISTPL_NULL) {
-				DPRINTF(("CISTPL_NONE\n 00\n"));
+				DPRINTF((" 00\nCISTPL_NONE\n"));
 				tuple.ptr++;
 				continue;
 			} else if (tuple.code == PCMCIA_CISTPL_END) {
-				DPRINTF(("CISTPL_END\n ff\n"));
+				DPRINTF((" ff\nCISTPL_END\n"));
 			cis_end:
 				/* Call the function for the END tuple, since
 				   the CIS semantics depend on it */
@@ -231,10 +232,28 @@ pcmcia_scan_cis(dev, fct, arg)
 				tuple.ptr++;
 				break;
 			}
+
 			/* now all the normal tuples */
 
-			DELAY(1250);
 			tuple.length = pcmcia_cis_read_1(&tuple, tuple.ptr + 1);
+#ifdef PCMCIACISDEBUG
+			/* print the tuple */
+			{
+				int i;
+
+				DPRINTF((" %02x %02x", tuple.code,
+				    tuple.length));
+
+				for (i = 0; i < tuple.length; i++) {
+					DPRINTF((" %02x",
+					    pcmcia_tuple_read_1(&tuple, i)));
+					if ((i % 16) == 13)
+						DPRINTF(("\n"));
+				}
+				if ((i % 16) != 14)
+					DPRINTF(("\n"));
+			}
+#endif
 			switch (tuple.code) {
 			case PCMCIA_CISTPL_LONGLINK_A:
 			case PCMCIA_CISTPL_LONGLINK_C:
@@ -270,9 +289,7 @@ pcmcia_scan_cis(dev, fct, arg)
 
 					*((u_int16_t *) & offset) =
 					    pcmcia_tuple_read_2(&tuple, 0);
-					DELAY(500);
 					length = pcmcia_tuple_read_2(&tuple, 2);
-					DELAY(500);
 					cksum = pcmcia_tuple_read_1(&tuple, 4);
 
 					addr = tuple.ptr + offset;
@@ -401,24 +418,6 @@ pcmcia_scan_cis(dev, fct, arg)
 				}
 				break;
 			}	/* switch */
-#ifdef PCMCIACISDEBUG
-			/* print the tuple */
-			{
-				int i;
-
-				DPRINTF((" %02x %02x", tuple.code,
-				    tuple.length));
-
-				for (i = 0; i < tuple.length; i++) {
-					DPRINTF((" %02x",
-					    pcmcia_tuple_read_1(&tuple, i)));
-					if ((i % 16) == 13)
-						DPRINTF(("\n"));
-				}
-				if ((i % 16) != 14)
-					DPRINTF(("\n"));
-			}
-#endif
 			/* skip to the next tuple */
 			tuple.ptr += 2 + tuple.length;
 		}
@@ -707,7 +706,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 	void *arg;
 {
 	/* most of these are educated guesses */
-	static struct pcmcia_config_entry init_cfe = {
+	static const struct pcmcia_config_entry init_cfe = {
 		-1, PCMCIA_CFE_RDYBSY_ACTIVE | PCMCIA_CFE_WP_ACTIVE |
 		PCMCIA_CFE_BVD_ACTIVE, PCMCIA_IFTYPE_MEMORY,
 	};
