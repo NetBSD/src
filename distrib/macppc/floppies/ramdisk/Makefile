@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1999/07/08 16:36:15 tsubai Exp $
+#	$NetBSD: Makefile,v 1.7 1999/08/29 08:45:27 tsubai Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -8,27 +8,23 @@ IMAGE=		ramdisk.fs
 CBIN=		ramdiskbin
 
 MOUNT_POINT?=	/mnt
-# DEV/RDEV file system device, CDEV/RDEV vnconfig device
 VND?=		vnd1
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
-VND_CDEV=	/dev/${VND}c
-VND_CRDEV=	/dev/r${VND}c
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-SIZE=		1536k
-GEOM=		512/16/2/96
+SIZE=		2048k
 DISKTYPE=	floppyinstfs
 
 all: ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -B be -m 0 -o space -i 6144 -c 96 ${VND_RDEV}
+	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
+	disklabel -rw ${VND} ${DISKTYPE}
+	newfs -B be -m 0 -o space -i 6144 -c 128 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -37,25 +33,25 @@ all: ${CBIN}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_CDEV}
-	-/bin/rm -f ${IMAGE}
+	-vnconfig -u ${VND}
+	-rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c #libhack.o
 	make -f ${CBIN}.mk all
 
-HACKSRC=${TOP}/../../utils/libhack
-.include "${HACKSRC}/Makefile.inc"
+#HACKSRC=${TOP}/../../utils/libhack
+#.include "${HACKSRC}/Makefile.inc"
 
 clean cleandir distclean:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
+	rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
+	rm -f *.core *.o *.cro *.c
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
-
