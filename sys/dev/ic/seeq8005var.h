@@ -1,6 +1,7 @@
-/* $NetBSD: if_eareg.h,v 1.5 2000/09/18 20:51:16 bjh21 Exp $ */
+/* $NetBSD: seeq8005var.h,v 1.1 2000/09/18 20:51:15 bjh21 Exp $ */
 
 /*
+ * Copyright (c) 2000 Ben Harris
  * Copyright (c) 1995 Mark Brinicombe
  * All rights reserved.
  *
@@ -31,18 +32,27 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/*
- * if_eareg.h - Ether3 device driver
- */
+
+#ifndef _SEEQ8005VAR_H_
+#define _SEEQ8005VAR_H_
 
 /*
- * SEEQ 8005 Register Definitions
+ * per-line info and status
  */
 
-#define EA_8005_BASE	0x000
-#define EA_8005_SHIFT	5
+struct seeq8005_softc {
+	struct device sc_dev;
+	bus_space_tag_t sc_iot;		/* I/O base addr */
+	bus_space_handle_t sc_ioh;
+	struct ethercom sc_ethercom;	/* Ethernet common */
+	int sc_config1;			/* Current config1 bits */
+	int sc_config2;			/* Current config2 bits */
+	int sc_command;			/* Current command bits */
+	u_int sc_rx_ptr;		/* Receive buffer pointer */
+	u_int sc_tx_ptr;		/* Transmit buffer pointer */
+};
 
-#define EA_TX_BUFFER_SIZE	0x4000
-#define EA_RX_BUFFER_SIZE	0xC000
+extern void seeq8005_attach(struct seeq8005_softc *, const u_int8_t *);
+extern int seeq8005intr(void *);
 
-/* End of if_eareg.h */
+#endif

@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.5 2000/09/18 20:08:43 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.6 2000/09/18 20:51:15 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -167,7 +167,7 @@ attach	ei at podulebus
 file	arch/arm26/podulebus/if_ei.c		ei
 
 # Acorn/Atomwide Ether3
-device	ea: ether, ifnet, arp
+device	ea: ether, ifnet, arp, seeq8005
 attach	ea at podulebus
 file	arch/arm26/podulebus/if_ea.c		ea
 
