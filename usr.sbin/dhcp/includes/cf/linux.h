@@ -119,6 +119,7 @@ extern int h_errno;
 #  define LINUX_SLASHPROC_DISCOVERY
 #  define PROCDEV_DEVICE "/proc/net/dev"
 #  define HAVE_ARPHRD_TUNNEL
+#  define HAVE_TR_SUPPORT
 # endif
 # define HAVE_ARPHRD_METRICOM
 # define HAVE_ARPHRD_IEEE802

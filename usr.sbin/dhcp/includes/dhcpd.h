@@ -106,6 +106,8 @@ struct packet {
 					   of local sender (maybe gateway). */
 	struct shared_network *shared_network;
 	struct option_data options [256];
+	int got_requested_address;	/* True if client sent the
+					   dhcp-requested-address option. */
 };
 
 struct hardware {
@@ -163,6 +165,12 @@ struct lease_state {
 	int max_message_size;
 	u_int8_t *prl;
 	int prl_len;
+	int got_requested_address;	/* True if client sent the
+					   dhcp-requested-address option. */
+	int got_server_identifier;	/* True if client sent the
+					   dhcp-server-identifier option. */
+	struct shared_network *shared_network;	/* Shared network of interface
+						   on which request arrived. */
 
 	u_int32_t xid;
 	u_int16_t secs;
@@ -348,9 +356,6 @@ struct client_state {
 	struct iaddr requested_address;	    /* Address we would like to get. */
 
 	struct client_config *config;	    /* Information from config file. */
-
-	struct string_list *env;	       /* Client script environment. */
-	int envc;			/* Number of entries in environment. */
 };
 
 /* Information about each network interface. */
@@ -655,7 +660,7 @@ void hash_dump PROTO ((struct hash_table *));
 int if_register_socket PROTO ((struct interface_info *));
 #endif
 
-#ifdef USE_SOCKET_FALLBACK
+#if defined (USE_SOCKET_FALLBACK) && !defined (USE_SOCKET_SEND)
 void if_reinitialize_fallback PROTO ((struct interface_info *));
 void if_register_fallback PROTO ((struct interface_info *));
 ssize_t send_fallback PROTO ((struct interface_info *,
@@ -682,7 +687,7 @@ ssize_t receive_packet PROTO ((struct interface_info *,
 			       unsigned char *, size_t,
 			       struct sockaddr_in *, struct hardware *));
 #endif
-#if defined (USE_SOCKET_SEND) && !defined (USE_SOCKET_FALLBACK)
+#if defined (USE_SOCKET_SEND)
 int can_unicast_without_arp PROTO ((void));
 int can_receive_unicast_unconfigured PROTO ((struct interface_info *));
 void maybe_setup_fallback PROTO ((void));
@@ -890,15 +895,13 @@ void free_client_lease PROTO ((struct client_lease *));
 void rewrite_client_leases PROTO ((void));
 void write_client_lease PROTO ((struct interface_info *,
 				 struct client_lease *, int));
+char *dhcp_option_ev_name PROTO ((struct option *));
 
 void script_init PROTO ((struct interface_info *, char *,
 			 struct string_list *));
 void script_write_params PROTO ((struct interface_info *,
 				 char *, struct client_lease *));
 int script_go PROTO ((struct interface_info *));
-void client_envadd PROTO ((struct client_state *,
-			   const char *, const char *, const char *, ...));
-int dhcp_option_ev_name (char *, size_t, struct option *);
 
 struct client_lease *packet_to_lease PROTO ((struct packet *));
 void go_daemon PROTO ((void));
@@ -925,6 +928,20 @@ ssize_t decode_hw_header PROTO ((struct interface_info *, unsigned char *,
 ssize_t decode_udp_ip_header PROTO ((struct interface_info *, unsigned char *,
 				     int, struct sockaddr_in *,
 				     unsigned char *, int));
+
+/* ethernet.c */
+void assemble_ethernet_header PROTO ((struct interface_info *, unsigned char *,
+				      int *, struct hardware *));
+ssize_t decode_ethernet_header PROTO ((struct interface_info *,
+				       unsigned char *,
+				       int, struct hardware *));
+
+/* tr.c */
+void assemble_tr_header PROTO ((struct interface_info *, unsigned char *,
+				int *, struct hardware *));
+ssize_t decode_tr_header PROTO ((struct interface_info *,
+				 unsigned char *,
+				 int, struct hardware *));
 
 /* dhxpxlt.c */
 void convert_statement PROTO ((FILE *));

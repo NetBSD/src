@@ -107,7 +107,7 @@
 #  include "cf/sco.h"
 #endif
 
-#ifdef hpux
+#if defined (hpux) || defined (__hpux)
 #  include "cf/hpux.h"
 #endif
 
@@ -119,12 +119,16 @@
 #  include "cf/cygwin32.h"
 #endif
 
-#ifdef NeXT
-# ifdef __APPLE__
-#  include "cf/rhapsody.h"
-# else
+#ifdef __APPLE__
+# include "cf/rhapsody.h"
+#else
+# if defined (NeXT)
 #  include "cf/nextstep.h"
 # endif
+#endif
+
+#if defined(IRIX) || defined(__sgi)
+# include "cf/irix.h"
 #endif
 
 #if !defined (TIME_MAX)
@@ -206,7 +210,9 @@
 
 #if defined (USE_RAW_RECEIVE) || defined (USE_BPF_SEND) || \
 		defined (USE_NIT_RECEIVE) || defined (USE_UPF_RECEIVE) || \
-		defined (USE_DLPI_RECEIVE) || defined (USE_LPF_RECEIVE)
+		defined (USE_DLPI_RECEIVE) || \
+    defined (USE_LPF_SEND) || \
+    (defined (USE_SOCKET_SEND) && defined (SO_BINDTODEVICE))
 #  define PACKET_DECODING
 #endif
 
@@ -286,4 +292,3 @@
 #if defined (AF_LINK) && !defined (HAVE_AF_LINK)
 # define HAVE_AF_LINK
 #endif
-

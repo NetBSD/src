@@ -51,8 +51,6 @@
 #include <setjmp.h>
 #include <limits.h>
 
-extern int h_errno;
-
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
