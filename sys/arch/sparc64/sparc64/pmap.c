@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113.4.13 2002/11/11 22:04:57 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113.4.14 2002/11/20 21:56:06 petrov Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1312,7 +1312,7 @@ remap_data:
 		/* Initialize our cpu_info structure */
 		bzero((void *)intstk, 8*NBPG);
 		cpus->ci_next = NULL; /* Redundant, I know. */
-		cpus->ci_curlwp = &proc0;
+		cpus->ci_curlwp = &lwp0;
 		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
 		cpus->ci_upaid = CPU_UPAID;
 		cpus->ci_number = cpus->ci_upaid; /* How do we figure this out? */
@@ -2578,6 +2578,7 @@ boolean_t
 pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t pv;
 	int i, changed = 0;
 #ifdef DEBUG
@@ -2639,6 +2640,7 @@ pmap_clear_modify(pg)
 			pv->pv_va &= ~(PV_MOD);
 			simple_unlock(&pmap->pm_lock);
 		}
+	dcache_flush_page(pa);
 	pv_check();
 #ifdef DEBUG
 	if (pmap_is_modified(pg)) {
