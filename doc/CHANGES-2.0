@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.415 2004/08/25 03:17:10 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.416 2004/08/25 22:12:03 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6831,3 +6831,27 @@ share/man/man5/wscons.conf.5			1.13
 
 	Adjust copyright
 	[hubertf, ticket #786]
+
+sys/compat/mach/mach_port.c			1.54
+sys/compat/mach/mach_port.h			1.36
+
+	Fix copyright notice, as OK'd by the copyright holder.
+	[hubertf, ticket #787]
+
+distrib/notes/common/xfer			1.42-1.45
+distrib/notes/common/contents			1.98,1.103-1.105
+distrib/notes/common/sysinst			1.70
+distrib/notes/common/donations			1.25
+distrib/notes/common/legal.common		1.35-1.36
+distrib/notes/common/extract-contrib-string.pl	1.1 (new)
+distrib/notes/common/macros			1.27-1.28
+distrib/notes/common/upgrade			1.22
+distrib/notes/common/postinstall		1.58
+distrib/notes/common/list-portmasters.pl	1.1-1.3 (new)
+distrib/notes/common/main			1.254-1.256,1.260-1.263
+distrib/notes/common/netboot			1.23
+distrib/notes/common/list-setsizes.sh		1.1 (new)
+
+	Updates to installation notes and some tools for handling
+	certain sections, to better describe the netbsd-2-0 state.
+	[hubertf, ticket #788]
