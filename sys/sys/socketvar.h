@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.78 2004/06/05 07:14:05 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.79 2004/07/01 12:42:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -61,8 +61,8 @@ struct sockbuf {
 	struct mbuf *sb_mbtail;		/* the last mbuf in the chain */
 	struct mbuf *sb_lastrecord;	/* first mbuf of last record in
 					   socket buffer */
-	short	sb_flags;		/* flags, see below */
-	short	sb_timeo;		/* timeout for read/write */
+	int	sb_flags;		/* flags, see below */
+	int	sb_timeo;		/* timeout for read/write */
 };
 
 #ifndef SB_MAX
