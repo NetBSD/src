@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.28 2004/03/25 15:06:37 pooka Exp $	*/
+/*	$NetBSD: bus.c,v 1.29 2004/04/12 14:30:47 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.28 2004/03/25 15:06:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.29 2004/04/12 14:30:47 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -850,7 +850,7 @@ _bus_dmamap_sync_mips3(t, map, offset, len, ops)
 	int ops;
 {
 	bus_size_t minlen;
-	bus_addr_t addr, start, end, preboundary, firstboundary, lastboundary;
+	bus_addr_t addr;
 	int i, useindex;
 
 	/*
@@ -914,7 +914,8 @@ _bus_dmamap_sync_mips3(t, map, offset, len, ops)
 	 *
 	 * This should be true the vast majority of the time.
 	 */
-	if (__predict_true(map->_dm_proc == NULL || map->_dm_proc == curproc))
+	if (__predict_true(map->_dm_proc == NULL ||
+		map->_dm_proc == curlwp->l_proc))
 		useindex = 0;
 	else
 		useindex = 1;
@@ -956,31 +957,21 @@ _bus_dmamap_sync_mips3(t, map, offset, len, ops)
 			continue;
  		}
 
-		start = addr + offset;
 		switch (ops) {
 		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-			mips_dcache_wbinv_range(start, minlen);
+			mips_dcache_wbinv_range(addr + offset, minlen);
 			break;
 
 		case BUS_DMASYNC_PREREAD:
-			end = start + minlen;
-			preboundary = start & ~mips_dcache_align_mask;
-			firstboundary = (start + mips_dcache_align_mask)
-			    & ~mips_dcache_align_mask;
-			lastboundary = end & ~mips_dcache_align_mask;
-			if (preboundary < start && preboundary < lastboundary)
-				mips_dcache_wbinv_range(preboundary,
-				    mips_dcache_align);
-			if (firstboundary < lastboundary)
-				mips_dcache_inv_range(firstboundary,
-				    lastboundary - firstboundary);
-			if (lastboundary < end)
-				mips_dcache_wbinv_range(lastboundary,
-				    mips_dcache_align);
+#if 1           
+			mips_dcache_wbinv_range(addr + offset, minlen);
+#else            
+			mips_dcache_inv_range(addr + offset, minlen);
+#endif           
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
-			mips_dcache_wb_range(start, minlen);
+			mips_dcache_wb_range(addr + offset, minlen);
 			break;
 		}
 #ifdef BUS_DMA_DEBUG
