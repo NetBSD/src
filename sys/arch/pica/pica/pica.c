@@ -1,4 +1,4 @@
-/*	$NetBSD: pica.c,v 1.6 1997/06/23 02:56:49 jonathan Exp $	*/
+/*	$NetBSD: pica.c,v 1.7 1998/01/12 20:04:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -53,9 +53,7 @@ struct cfattach pica_ca = {
 	sizeof (struct pica_softc), picamatch, picaattach
 };
 
-struct cfdriver pica_cd = {
-	NULL, "pica", DV_DULL
-};
+extern struct cfdriver pica_cd;
 
 void	pica_intr_establish __P((struct confargs *, int (*)(void *), void *));
 void	pica_intr_disestablish __P((struct confargs *));

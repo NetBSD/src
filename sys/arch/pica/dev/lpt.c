@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.4 1996/10/13 03:31:26 christos Exp $	*/
+/*	$NetBSD: lpt.c,v 1.5 1998/01/12 20:04:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -111,9 +111,7 @@ struct cfattach lpt_ca = {
 	sizeof(struct lpt_softc), lptprobe, lptattach
 };
 
-struct cfdriver lpt_cd = {
-	NULL, "lpt", DV_TTY
-};
+extern struct cfdriver lpt_cd;
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
 #define	LPTFLAGS(s)	(minor(s) & 0xe0)

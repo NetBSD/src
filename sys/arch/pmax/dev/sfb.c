@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.22 1997/07/21 05:39:22 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.23 1998/01/12 20:12:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -132,10 +132,6 @@ int sfb_intr __P((void *sc));
 
 struct cfattach sfb_ca = {
 	sizeof(struct fbinfo), sfbmatch, sfbattach
-};
-
-struct cfdriver sfb_cd = {
-	NULL, "sfb", DV_DULL
 };
 
 struct fbdriver sfb_driver = {

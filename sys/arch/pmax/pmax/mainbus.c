@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20 1997/07/21 05:39:38 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21 1998/01/12 20:12:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -59,9 +59,9 @@ struct cfattach mainbus_ca = {
 	sizeof (struct mainbus_softc), mbmatch, mbattach
 };
 
-struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL
-};
+extern struct cfdriver mainbus_cd;		/* XXX XXX XXX */
+extern struct cfdriver tc_cd;			/* XXX XXX XXX */
+extern struct cfdriver ioasic_cd;		/* XXX XXX XXX */
 
 void	mb_intr_establish __P((struct confargs *ca,
 			       int (*handler)(intr_arg_t),
@@ -300,8 +300,6 @@ generic_intr_establish(parent, cookie, level, handler, arg)
 	struct device *dev = arg;
 
 #if NTC>0
-	extern struct cfdriver ioasic_cd, tc_cd;
-
 	if (dev->dv_parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		/*XXX*/ printf("ioasic interrupt for %d\n", (u_int)cookie);
 		ioasic_intr_establish(parent, cookie, level, handler, arg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.51 1997/10/17 09:34:43 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.52 1998/01/12 20:12:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmax_trap.c,v 1.51 1997/10/17 09:34:43 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmax_trap.c,v 1.52 1998/01/12 20:12:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,13 +201,12 @@ kn01_intr(mask, pc, statusReg, causeReg)
 	unsigned statusReg;
 	unsigned causeReg;
 {
+	extern struct cfdriver sii_cd;		/* XXX XXX XXX */
+	extern struct cfdriver dc_cd;		/* XXX XXX XXX */
 	register volatile struct chiptime *c = 
 	    (volatile struct chiptime *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 	struct clockframe cf;
 	int temp;
-	extern struct cfdriver sii_cd;
-	extern struct cfdriver le_cd;
-	extern struct cfdriver dc_cd;
 
 	/* handle clock interrupts ASAP */
 	if (mask & MIPS_INT_MASK_3) {

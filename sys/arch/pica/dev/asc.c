@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.12 1997/08/27 11:24:07 bouyer Exp $	*/
+/*	$NetBSD: asc.c,v 1.13 1998/01/12 20:04:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -446,11 +446,6 @@ int	asc_doprobe __P((void *, int, int, struct device *));
 
 struct cfattach asc_ca = {
 	sizeof(struct asc_softc), ascmatch, ascattach
-};
-
-extern struct cfdriver asc_cd;
-struct cfdriver asc_cd = {
-	NULL, "asc", DV_DULL, 0
 };
 
 /*

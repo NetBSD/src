@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.31 1997/12/22 02:39:28 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.32 1998/01/12 20:12:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.31 1997/12/22 02:39:28 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.32 1998/01/12 20:12:32 thorpej Exp $");
 
 #include "fb.h"
 #include "mfb.h"
@@ -210,10 +210,6 @@ int mfb_intr __P((void *sc));
 
 struct cfattach mfb_ca = {
 	sizeof(struct fbinfo), mfbmatch, mfbattach
-};
-
-struct cfdriver mfb_cd = {
-	NULL, "mfb", DV_DULL
 };
 
 int
