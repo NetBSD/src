@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.4 1994/06/29 06:44:43 cgd Exp $	*/
+/*	$NetBSD: msg.h,v 1.5 1994/10/20 04:28:58 cgd Exp $	*/
 
 /*
  * SVID compatible msg.h file
@@ -149,7 +149,6 @@ struct msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int msgsys __P((int, ...));
 int msgctl __P((int, int, struct msqid_ds *));
 int msgget __P((key_t, int));
 int msgsnd __P((int, void *, size_t, int));
