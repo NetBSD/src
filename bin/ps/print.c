@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.57 2000/10/23 05:54:06 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.58 2001/01/08 13:20:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.57 2000/10/23 05:54:06 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.58 2001/01/08 13:20:30 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -930,11 +930,22 @@ printval(bp, v, mode)
 			vok = VUNSIGN;
 			break;
 		case KPTR:
-			uval = GET(u_long);
+			if (sizeof(void *) == sizeof(u_int32_t))
+				uval = GET(u_int32_t);
+			else if (sizeof(void *) == sizeof(u_int64_t))
+				uval = GET(u_int64_t);
+			else
+				errx(1, "assumption failed");
 			vok = VPTR;
 			break;
 		case KPTR24:
-			uval = GET(u_long) & 0xffffff;
+			if (sizeof(void *) == sizeof(u_int32_t))
+				uval = GET(u_int32_t);
+			else if (sizeof(void *) == sizeof(u_int64_t))
+				uval = GET(u_int64_t);
+			else
+				errx(1, "assumption failed");
+			uval &= 0xffffff;
 			vok = VPTR;
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.25 2000/06/07 04:57:59 simonb Exp $	*/
+/*	$NetBSD: keyword.c,v 1.26 2001/01/08 13:20:29 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.25 2000/06/07 04:57:59 simonb Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.26 2001/01/08 13:20:29 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ VAR var[] = {
 	{"jobc", "JOBC", NULL, 0, pvar, 0, POFF(p_jobc), SHORT, "d"},
 	{"ktrace", "KTRACE", NULL, 0, pvar, 0, POFF(p_traceflag), INT, "x"},
 	/* XXX */
-	{"ktracep", "KTRACEP", NULL, 0, pvar, 0, POFF(p_tracep), KPTR, "x"},
+	{"ktracep", "KTRACEP", NULL, 0, pvar, 0, POFF(p_tracep), KPTR, "llx"},
 	{"lim", "LIM", NULL, 0, maxrss},
 	{"login", "LOGIN", NULL, LJUST, logname},
 	{"logname", "", "login"},
@@ -119,13 +119,13 @@ VAR var[] = {
 	{"nswap", "NSWAP", NULL, 0, pvar, 0, POFF(p_uru_nswap), ULONG, "d"},
 	{"nvcsw", "NVCSW", NULL, 0, pvar, 0, POFF(p_uru_nvcsw), ULONG, "d"},
 	/* XXX */
-	{"nwchan", "WCHAN", NULL, 0, pvar, 0, POFF(p_wchan), KPTR, "x"},
+	{"nwchan", "WCHAN", NULL, 0, pvar, 0, POFF(p_wchan), KPTR, "llx"},
 	{"oublk", "OUBLK", NULL, 0, pvar, 0, POFF(p_uru_oublock), ULONG, "d"},
 	{"oublock", "", "oublk"},
 	/* XXX */
-	{"p_ru", "P_RU", NULL, 0, pvar, 0, POFF(p_ru), KPTR, "x"},
+	{"p_ru", "P_RU", NULL, 0, pvar, 0, POFF(p_ru), KPTR, "llx"},
 	/* XXX */
-	{"paddr", "PADDR", NULL, 0, pvar, 0, POFF(p_paddr), KPTR, "x"},
+	{"paddr", "PADDR", NULL, 0, pvar, 0, POFF(p_paddr), KPTR, "llx"},
 	{"pagein", "PAGEIN", NULL, 0, pagein},
 	{"pcpu", "", "%cpu"},
 	{"pending", "", "sig"},
@@ -137,13 +137,13 @@ VAR var[] = {
 	{"re", "RE", NULL, INF127, pvar, 0, POFF(p_swtime), UINT, "d"},
 	GID("rgid", "RGID", pvar, POFF(p_rgid)),
 	/* XXX */
-	{"rlink", "RLINK", NULL, 0, pvar, 0, POFF(p_back), KPTR, "x"},
+	{"rlink", "RLINK", NULL, 0, pvar, 0, POFF(p_back), KPTR, "llx"},
 	{"rss", "RSS", NULL, 0, p_rssize},
 	{"rssize", "", "rsz"},
 	{"rsz", "RSZ", NULL, 0, rssize},
 	UID("ruid", "RUID", pvar, POFF(p_ruid)),
 	{"ruser", "RUSER", NULL, LJUST, runame},
-	{"sess", "SESS", NULL, 0, pvar, 0, POFF(p_sess), KPTR24, "x"},
+	{"sess", "SESS", NULL, 0, pvar, 0, POFF(p_sess), KPTR24, "llx"},
 	PID("sid", "SID", pvar, POFF(p_sid)),
 	{"sig", "PENDING",
 	    NULL, 0, pvar, 0, POFF(p_siglist), SIGLIST, "s"},
@@ -162,7 +162,7 @@ VAR var[] = {
 	{"tdev", "TDEV", NULL, 0, tdev},
 	{"time", "TIME", NULL, 0, cputime},
 	PID("tpgid", "TGPID", pvar, POFF(p_tpgid)),
-	{"tsess", "TSESS", NULL, 0, pvar, 0, POFF(p_tsess), KPTR, "x"},
+	{"tsess", "TSESS", NULL, 0, pvar, 0, POFF(p_tsess), KPTR, "llx"},
 	{"tsiz", "TSIZ", NULL, 0, tsize},
 	{"tt", "TT", NULL, LJUST, tname},
 	{"tty", "TTY", NULL, LJUST, longtname},
