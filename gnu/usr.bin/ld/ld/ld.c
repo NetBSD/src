@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.29 1994/06/24 13:33:43 pk Exp $
+ *	$Id: ld.c,v 1.30 1994/06/29 11:18:45 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -1766,7 +1766,7 @@ digest_pass1()
 					sp->mult_defs = 1;
 					multiple_def_count++;
 				}
-				sp->def_nlist = p;
+				sp->def_lsp = lsp;
 				lsp->entry->flags |= E_SYMBOLS_USED;
 				sp->defined = type;
 				sp->aux = N_AUX(p);
@@ -1814,10 +1814,12 @@ digest_pass1()
 			if ((type & N_EXT) && type != (N_UNDF | N_EXT) &&
 			    (type & N_TYPE) != N_FN) {
 				/* non-common definition */
-				sp->def_nlist = p;
-				lsp->entry->flags |= E_SYMBOLS_USED;
+				sp->def_lsp = lsp;
 				sp->so_defined = type;
 				sp->aux = N_AUX(p);
+				if (lsp->entry->flags & E_SECONDCLASS)
+					continue;
+				lsp->entry->flags |= E_SYMBOLS_USED;
 				if (sp->flags & GS_REFERENCED)
 					undefined_global_sym_count--;
 				else
@@ -2237,10 +2239,13 @@ digest_pass2()
 			continue;
 		}
 
-
-		if (sp->defined && sp->def_nlist &&
-		    ((sp->defined & ~N_EXT) != N_SETV))
-			sp->value = sp->def_nlist->n_value;
+		if (sp->def_lsp) {
+			if (sp->defined && (sp->defined & ~N_EXT) != N_SETV)
+				sp->value = sp->def_lsp->nzlist.nz_value;
+			if (sp->so_defined &&
+			    (sp->def_lsp->entry->flags & E_SECONDCLASS))
+				undefined_global_sym_count++;
+		}
 
 		/*
 		 * If not -r'ing, allocate common symbols in the BSS section.

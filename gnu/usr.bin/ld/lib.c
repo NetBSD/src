@@ -1,5 +1,5 @@
 /*
- * $Id: lib.c,v 1.13 1994/06/10 15:16:12 pk Exp $	- library routines
+ * $Id: lib.c,v 1.14 1994/06/29 11:18:53 pk Exp $	- library routines
  */
 
 #include <sys/param.h>
@@ -696,6 +696,7 @@ read_shared_object(fd, entry)
 				xmalloc(sizeof(struct file_entry));
 			bzero(subentry, sizeof(struct file_entry));
 			subentry->superfile = entry;
+			subentry->flags = E_SECONDCLASS;
 
 			if (lseek(fd,
 			    offset - (TEXT_START(entry->header) -
