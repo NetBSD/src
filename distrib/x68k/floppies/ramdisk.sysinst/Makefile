@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/06/22 14:24:09 minoura Exp $
+#	$NetBSD: Makefile,v 1.7 2000/07/05 16:13:28 minoura Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -26,7 +26,7 @@ CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
 RAMDISKSPT=	15
-RAMDISKCYLS=	80
+RAMDISKCYLS=	70
 RAMDISKSIZE!=	expr ${RAMDISKSPT} \* ${RAMDISKCYLS} \* 2
 
 realall: ${IMAGE}
