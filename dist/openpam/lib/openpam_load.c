@@ -173,8 +173,10 @@ openpam_clear_chains(pam_chain_t *policy[])
 {
 	int i;
 
-	for (i = 0; i < PAM_NUM_FACILITIES; ++i)
+	for (i = 0; i < PAM_NUM_FACILITIES; ++i) {
 		openpam_destroy_chain(policy[i]);
+		policy[i] = NULL;
+	}
 }
 
 /*
