@@ -1,8 +1,12 @@
-#	$Id: Makefile,v 1.4 1995/02/24 02:07:59 mycroft Exp $
+#	$Id: Makefile,v 1.5 1996/09/04 08:04:12 thorpej Exp $
 
 # Define FSYNC_ALL to get slower but safer writes in case of crashes in
 # the middle of CVS/RCS changes
 CFLAGS+=-DFSYNC_ALL
+
+# If you wish to use a different Id token in addition to $Id: Makefile,v 1.5 1996/09/04 08:04:12 thorpej Exp $,
+# uncomment the following line and edit to taste.
+#CFLAGS+=-DLOCALID=\"Foo\"
 
 LIB=	rcs
 SRCS=	maketime.c merger.c partime.c rcsedit.c rcsfcmp.c rcsfnms.c rcsgen.c \
