@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.29 2002/02/20 02:32:58 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.30 2002/02/20 20:41:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -177,7 +177,6 @@ extern vaddr_t sa11x0_idle_mem;
 void physcon_display_base	__P((u_int addr));
 void consinit		__P((void));
 
-void map_pagetable	__P((vaddr_t pt, vaddr_t va, vaddr_t pa));
 vm_size_t map_chunk	__P((vaddr_t pd, vaddr_t pt, vaddr_t va,
 			     vaddr_t pa, vm_size_t size, u_int acc,
 			     u_int flg));
@@ -501,17 +500,17 @@ initarm(argc, argv, bi)
 	l1pagetable = kernel_l1pt.pv_pa;
 
 	/* Map the L2 pages tables in the L1 page table */
-	map_pagetable(l1pagetable, 0x00000000,
+	pmap_link_l2pt(l1pagetable, 0x00000000,
 	    kernel_pt_table[KERNEL_PT_SYS]);
-	map_pagetable(l1pagetable, KERNEL_SPACE_START,
+	pmap_link_l2pt(l1pagetable, KERNEL_SPACE_START,
 	    kernel_pt_table[KERNEL_PT_KERNEL]);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
-		map_pagetable(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
+		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-	map_pagetable(l1pagetable, PROCESS_PAGE_TBLS_BASE,
+	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE,
 	    kernel_ptpt.pv_pa);
 #define SAIPIO_BASE		0xd0000000		/* XXX XXX */
-	map_pagetable(l1pagetable, SAIPIO_BASE,
+	pmap_link_l2pt(l1pagetable, SAIPIO_BASE,
 	    kernel_pt_table[KERNEL_PT_IO]);
 
 

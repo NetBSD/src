@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.10 2002/02/20 02:32:58 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.11 2002/02/20 20:41:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -165,7 +165,6 @@ struct user *proc0paddr;
 
 void consinit		__P((void));
 
-void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
 			     vm_offset_t pa, vm_size_t size, u_int acc,
 			     u_int flg));
@@ -617,14 +616,14 @@ initarm(bootinfo)
 	l1pagetable = kernel_l1pt.pv_pa;
 
 	/* Map the L2 pages tables in the L1 page table */
-	map_pagetable(l1pagetable, 0x00000000,
+	pmap_link_l2pt(l1pagetable, 0x00000000,
 	    kernel_pt_table[KERNEL_PT_SYS]);
-	map_pagetable(l1pagetable, KERNEL_BASE,
+	pmap_link_l2pt(l1pagetable, KERNEL_BASE,
 	    kernel_pt_table[KERNEL_PT_KERNEL]);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
-		map_pagetable(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
+		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-	map_pagetable(l1pagetable, PROCESS_PAGE_TBLS_BASE,
+	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE,
 	    kernel_ptpt.pv_pa);
 
 #ifdef VERBOSE_INIT_ARM

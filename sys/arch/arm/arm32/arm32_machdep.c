@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.14 2002/02/20 02:32:57 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.15 2002/02/20 20:41:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -154,27 +154,6 @@ bootsync(void)
  * A few functions that are used to help construct the page tables
  * during the bootstrap process.
  */
-
-void
-map_pagetable(pagetable, va, pa)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-{
-#ifdef	DIAGNOSTIC
-	if ((pa & 0xc00) != 0)
-		panic("pagetables should be group allocated on pageboundry");
-#endif	/* DIAGNOSTIC */
-
-	((u_int *)pagetable)[(va >> PDSHIFT) + 0] =
-	     L1_PTE((pa & PG_FRAME) + 0x000);
-	((u_int *)pagetable)[(va >> PDSHIFT) + 1] =
-	     L1_PTE((pa & PG_FRAME) + 0x400);
-	((u_int *)pagetable)[(va >> PDSHIFT) + 2] =
-	     L1_PTE((pa & PG_FRAME) + 0x800);
-	((u_int *)pagetable)[(va >> PDSHIFT) + 3] =
-	     L1_PTE((pa & PG_FRAME) + 0xc00);
-}
 
 /* cats kernels have a 2nd l2 pt, so the range is bigger hence the 0x7ff etc */
 vsize_t
