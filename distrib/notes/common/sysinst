@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.41 2002/06/16 00:38:34 wiz Exp $
+.\"	$NetBSD: sysinst,v 1.42 2002/06/28 15:26:38 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -286,7 +286,7 @@ The distribution sets (in this example, they are on CD).
 .It
 .ie r_alpha Two floppy disks.
 .el .ie r_i386 Two 1.44 MB 3.5" floppy disks.
-.el .ie \n[acorn26]:\n[macppc]:\n[sparc]:\n[walnut] \{\
+.el .ie \n[acorn26]:\n[cats]:\n[macppc]:\n[sparc]:\n[walnut] \{\
 Some form of bootable media, described above.
 .\}
 .el .ie r_atari \{\
@@ -300,12 +300,13 @@ A PC with a 386 or newer processor.
 .\} \" r_i386
 .It
 A CD-ROM drive
-.ie \n[acorn26]:\n[atari]:\n[alpha]:\n[i386]:\n[macppc]:\n[walnut] (SCSI or ATAPI),
+.ie \n[acorn26]:\n[atari]:\n[alpha]:\n[cats]:\n[i386]:\n[macppc]:\n[walnut] (SCSI or ATAPI),
 .el (SCSI),
 a harddisk and a minimum of
 .if r_acorn26 8 MB
 .if r_alpha 32 MB
 .if r_atari 4 MB (TT030/Falcon) or 16 Mb (Hades/Milan)
+.if r_cats 8 MB
 .if r_i386 4 MB
 .if r_macppc 8 MB
 .if r_mvme68k 4 MB
@@ -320,6 +321,7 @@ The harddisk should have at least
 .if r_acorn26 200
 .if r_alpha 200
 .if r_atari 120
+.if r_cats 200
 .if r_i386 70
 .if r_macppc 200
 .if r_mvme68k 100
@@ -382,7 +384,7 @@ system, you would type something like:
 .It
 The Quick Installation
 .(bullet
-.ie \n[acorn26]:\n[atari]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut] \{\
+.ie \n[acorn26]:\n[atari]:\n[cats]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut] \{\
 Boot the system as described above.  You
 should be at the
 .Ic sysinst
@@ -518,15 +520,15 @@ Further information can be found on
 .To 2 "Booting NetBSD"
 .Em Booting NetBSD
 .
-.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[cats]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
 .(pcmcia
 Unplug your
 .Tn PCMCIA
 devices, so that they won't be found by
 .Nx .
 .pcmcia)
-.\} \" !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
-.ie \n[acorn26]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut] \{\
+.\} \" !\n[acorn26]:\n[atari]:\n[cats]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
+.ie \n[acorn26]:\n[cats]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut] \{\
 .Pp
 Boot the system as described in the previous section.
 .Pp
@@ -534,7 +536,7 @@ You may want to read the
 boot messages, to notice your disk's name and capacity. Its name
 will be something like
 .Li sd0
-.if \n[acorn26]:\n[macppc]:\n[walnut] \{\
+.if \n[acorn26]:\n[cats]:\n[macppc]:\n[walnut] \{\
 or
 .Li wd0
 .\}
@@ -548,7 +550,7 @@ You will also need to know the name, to tell
 on which disk
 to install.
 The most important thing to know is that
-.if \n[acorn26]:\n[macppc]:\n[walnut] \{\
+.if \n[acorn26]:\n[cats]:\n[macppc]:\n[walnut] \{\
 .Li wd0
 is
 .Nx 's
@@ -649,12 +651,12 @@ It will also include instructions for using the menus.
 .It
 .To 2 "Network configuration"
 .Em Network configuration
-.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[cats]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k] \{\
 .(pcmcia
 You can skip this section, as you will only get data
 from floppy in the first part of the install.
 .pcmcia)
-.\} \" !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k]
+.\} \" !\n[acorn26]:\n[atari]:\n[cats]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k]
 .Pp
 If you will not use network operation during the installation,
 but you do want your machine to be configured for networking once
@@ -840,7 +842,7 @@ or
 .Li rz1
 .\}
 .el \{\
-.if \n[acorn26]:\n[alpha]:\n[i386]:\n[macppc] \{\
+.if \n[acorn26]:\n[alpha]:\n[cats]:\n[i386]:\n[macppc] \{\
 .Li wd0 ,
 .Li wd1 ,
 .\}
