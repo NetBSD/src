@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.68 1996/03/18 01:26:10 jtk Exp $
+#	$NetBSD: files.i386,v 1.69 1996/03/25 18:44:29 perry Exp $
 #
 # new style config file for i386 architecture
 #
@@ -39,6 +39,12 @@ include "../../../scsi/files.scsi"
 major	{sd = 4}
 major	{st = 5}
 major	{cd = 6}
+
+# RAM Disk for install floppy
+pseudo-device rd
+file dev/ramdisk.c			rd needs-flag
+file arch/i386/i386/rd_root.c		ramdisk_hooks
+major	{rd = 17}
 
 #
 # System bus types
