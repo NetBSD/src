@@ -1,4 +1,4 @@
-# $NetBSD: std.sun3,v 1.23 1998/02/08 05:10:56 gwr Exp $
+# $NetBSD: std.sun3,v 1.24 1998/12/23 06:00:03 mrg Exp $
 
 # Standard information for Sun3 machines.
 machine	sun3 m68k
@@ -14,5 +14,7 @@ mainbus0 at root
 
 # Standard defines
 options 	EXEC_AOUT, EXEC_SCRIPT
-options 	SWAPPAGER, VNODEPAGER, DEVPAGER
 
+# UVM defines
+options 	UVM
+#options 	PMAP_NEW
