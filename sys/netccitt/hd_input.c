@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)hd_input.c	7.7 (Berkeley) 5/29/91
+ *	from: @(#)hd_input.c	7.7 (Berkeley) 5/29/91
+ *	$Id: hd_input.c,v 1.3 1993/05/20 04:12:06 cgd Exp $
  */
 
 #include "param.h"

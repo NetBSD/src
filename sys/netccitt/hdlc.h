@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)hdlc.h	7.4 (Berkeley) 5/6/91
+ *	from: @(#)hdlc.h	7.4 (Berkeley) 5/6/91
+ *	$Id: hdlc.h,v 1.3 1993/05/20 04:12:11 cgd Exp $
  */
 
 #ifndef _NETCCITT_HDLC_H_
