@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_trace.c,v 1.12 1994/10/09 14:51:17 mycroft Exp $
+ *	$Id: db_trace.c,v 1.13 1994/10/09 15:40:51 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -160,8 +160,6 @@ db_nextframe(fp, ip, argp, is_trap)
 			db_printf("--- interrupt ---\n");
 			break;
 		}
-		db_printsym(tf->tf_eip, DB_STGY_XTRN);
-		db_printf(":\n");
 		*fp = (struct i386_frame *)tf->tf_ebp;
 		*ip = (db_addr_t)tf->tf_eip;
 		break;
@@ -326,5 +324,10 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				break;
 			}
 		}
+	}
+
+	if (count && is_trap != NONE) {
+		db_printsym(callpc, DB_STGY_XTRN);
+		db_printf(":\n");
 	}
 }
