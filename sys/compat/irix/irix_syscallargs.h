@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscallargs.h,v 1.45 2002/05/28 21:15:42 manu Exp $ */
+/* $NetBSD: irix_syscallargs.h,v 1.46 2002/06/05 17:27:12 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -97,6 +97,12 @@ struct irix_sys_sproc_args {
 struct irix_sys_prctl_args {
 	syscallarg(unsigned int) option;
 	syscallarg(void *) arg1;
+};
+
+struct irix_sys_procblk_args {
+	syscallarg(int) cmd;
+	syscallarg(pid_t) pid;
+	syscallarg(int) count;
 };
 
 struct irix_sys_sprocsp_args {
@@ -332,6 +338,7 @@ int	sys_adjtime(struct proc *, void *, register_t *);
 int	svr4_sys_gettimeofday(struct proc *, void *, register_t *);
 int	irix_sys_sproc(struct proc *, void *, register_t *);
 int	irix_sys_prctl(struct proc *, void *, register_t *);
+int	irix_sys_procblk(struct proc *, void *, register_t *);
 int	irix_sys_sprocsp(struct proc *, void *, register_t *);
 int	irix_sys_mmap(struct proc *, void *, register_t *);
 int	sys_munmap(struct proc *, void *, register_t *);
