@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.54 2000/03/09 20:26:31 soren Exp $	*/
+/*	$NetBSD: pciide.c,v 1.55 2000/03/10 21:21:48 bouyer Exp $	*/
 
 
 /*
@@ -2160,7 +2160,6 @@ cy693_chip_map(sc, pa)
 	} else {
 		printf("%s: unexpected PCI function %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, pa->pa_function);
-		cp->hw_ok = 0;
 		return;
 	}
 	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
@@ -2187,7 +2186,7 @@ cy693_chip_map(sc, pa)
 
 	/* Only one channel for this chip; if we are here it's enabled */
 	cp = &sc->pciide_channels[0];
-		sc->wdc_chanarray[0] = &cp->wdc_channel;
+	sc->wdc_chanarray[0] = &cp->wdc_channel;
 	cp->name = PCIIDE_CHANNEL_NAME(0);
 	cp->wdc_channel.channel = 0;
 	cp->wdc_channel.wdc = &sc->sc_wdcdev;
