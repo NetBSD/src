@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.200 1996/05/03 19:42:15 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.201 1996/05/12 19:02:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -1441,7 +1441,12 @@ bus_mem_map(t, bpa, size, cacheable, mhp)
 	vm_offset_t va;
 
 	pa = i386_trunc_page(bpa);
-	endpa = i386_round_page(bpa + size);
+	endpa = i386_round_page((bpa + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endpa <= pa)
+		panic("bus_mem_map: overflow");
+#endif
 
 	va = kmem_alloc_pageable(kernel_map, endpa - pa);
 	if (va == 0)
@@ -1469,6 +1474,12 @@ bus_mem_unmap(t, memh, size)
 	vm_offset_t va, endva;
 
 	va = i386_trunc_page(memh);
-	endva = i386_round_page(memh);
-	kmem_free(kmem_map, va, endva - va);
+	endva = i386_round_page((memh + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endva <= va)
+		panic("bus_mem_unmap: overflow");
+#endif
+
+	kmem_free(kernel_map, va, endva - va);
 }
