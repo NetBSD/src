@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.19.2.2 2002/01/08 17:26:01 nathanw Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.19.2.3 2002/01/09 02:51:22 nathanw Exp $	*/
 
 /*
  * TODO
@@ -48,6 +48,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
@@ -201,7 +202,7 @@ irframettyattach(int n)
 int
 irframetopen(dev_t dev, struct tty *tp)
 {
-	struct proc *p = curproc;		/* XXX */
+	struct proc *p = curproc->l_proc;		/* XXX */
 	struct irframet_softc *sc;
 	int error, s;
 
@@ -741,7 +742,7 @@ irt_ioctl(struct tty *tp, u_long cmd, void *arg)
 	dev_t dev;
 
 	dev = tp->t_dev;
-	error = cdevsw[major(dev)].d_ioctl(dev, cmd, arg, 0, curproc);
+	error = cdevsw[major(dev)].d_ioctl(dev, cmd, arg, 0, curproc->l_proc);
 #ifdef DIAGNOSTIC
 	if (error)
 		printf("irt_ioctl: cmd=0x%08lx error=%d\n", cmd, error);
