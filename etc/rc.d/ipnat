@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: ipnat,v 1.9 2003/02/16 22:18:46 grant Exp $
+# $NetBSD: ipnat,v 1.10 2003/08/22 08:43:26 mrg Exp $
 #
 
 # PROVIDE: ipnat
 # REQUIRE: ipfilter mountcritremote
-# BEFORE:  DAEMON
+# BEFORE:  SERVERS
 
 . /etc/rc.subr
 
