@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.12 2002/11/22 12:21:05 wiz Exp $
+#	$NetBSD: GENERIC,v 1.13 2002/12/23 19:18:34 pooka Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/sgimips/conf/std.sgimips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.12 $"
+#ident		"GENERIC-$Revision: 1.13 $"
 
 maxusers	32
 
@@ -175,9 +175,19 @@ mcclock0	at mace0 offset 0x3a0000
 # PCI network devices
 #tlp* 		at pci? dev ? function ?
 ne* 		at pci? dev ? function ?
-#fxp* 		at pci? dev ? function ?
-#inphy*		at mii? phy ?
-#nsphy*		at mii? phy ?
+rtk* 		at pci? dev ? function ?
+ex* 		at pci? dev ? function ?
+ti*		at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
+wm*		at pci? dev ? function ?	# Intel gigabit Ethernet
+fxp* 		at pci? dev ? function ?
+inphy*		at mii? phy ?
+nsphy*		at mii? phy ?
+ukphy*		at mii? phy ?
+exphy*		at mii? phy ?
+bmtphy*		at mii? phy ?
+glxtphy* 	at mii? phy ?			# Level One LXT-1000 PHYs
+gphyter* 	at mii? phy ?			# NS83861 Gig-E PHY
+makphy*		at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 
 # O2 SCSI
 ahc0 		at pci0 dev 1 function ?
