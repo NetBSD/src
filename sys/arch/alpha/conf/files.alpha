@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.125 2000/11/05 22:48:27 matt Exp $
+# $NetBSD: files.alpha,v 1.126 2000/11/08 19:48:51 ad Exp $
 #
 # alpha-specific configuration info
 
@@ -64,6 +64,12 @@ file	arch/alpha/alpha/cpu.c		cpu
 #
 
 include "dev/mii/files.mii"
+
+#
+# Machine-independent I2O drivers.
+#
+
+include "dev/i2o/files.i2o"
 
 #
 # Machine-independent SCSI drivers
