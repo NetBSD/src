@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: bootconf.sh,v 1.5 2002/03/25 03:22:10 wiz Exp $
+# $NetBSD: bootconf.sh,v 1.5.2.1 2003/06/15 13:07:57 tron Exp $
 #
 
 # PROVIDE: bootconf
@@ -47,7 +47,7 @@ bootconf_start()
 	_DUMMY=/etc/passwd
 	conf=${_DUMMY}
 	while [ ! -d /etc/etc.$conf/. ]; do
-		trap "conf=$default; echo; echo Using default of $conf" ALRM
+		trap "conf=$default; echo; echo Using default of $default" ALRM
 		echo -n "Which configuration [$default] ? "
 		(sleep 30 && kill -ALRM $master) >/dev/null 2>&1 &
 		read conf
