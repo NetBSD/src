@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.46 1997/12/13 00:23:45 gwr Exp $
+# $NetBSD: GENERIC,v 1.47 1998/01/22 23:00:25 gwr Exp $
 
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # Supports root on: ie0, le0, sd*, ...
@@ -110,11 +110,9 @@ le0 at obio0 addr   0x120000 level 3
 #
 # For example: "flags 0x1000f" would disable DMA interrupts,
 # and disable disconnect/reselect for targets 0-3
-# XXX: Disable disconnect/reselect on disks for now...
-# XXX: Disable DMA interrupts for now on the obio...
-si0 at obio0 addr   0x140000 level 2 flags 0x1000f
-si0 at vmes0 addr 0xff200000 level 2 vect 0x40 flags 0xf
-si1 at vmes0 addr 0xff204000 level 2 vect 0x41 flags 0xf
+si0 at obio0 addr   0x140000 level 2
+si0 at vmes0 addr 0xff200000 level 2 vect 0x40
+si1 at vmes0 addr 0xff204000 level 2 vect 0x41
 
 # Xylogics 450/451 controllers
 xyc0 at vmes0 addr 0xffffee40 level 2 vect 0x48
