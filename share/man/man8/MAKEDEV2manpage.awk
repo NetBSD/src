@@ -1,4 +1,4 @@
-#       $NetBSD: MAKEDEV2manpage.awk,v 1.6 2003/05/06 10:46:43 jmmv Exp $
+#       $NetBSD: MAKEDEV2manpage.awk,v 1.7 2003/10/24 20:26:57 jdolecek Exp $
 #
 # Copyright (c) 2002
 #	Dieter Baron <dillo@NetBSD.org>.  All rights reserved.
@@ -48,10 +48,10 @@
 # XXX: uses non-standard AWK functions toupper() and gensub()
 
 BEGIN {
-	MAKEDEV = "../../../etc/etc." ARCH "/MAKEDEV";
+	MAKEDEV = "../../../etc/MAKEDEV.tmpl";
     print ".\\\" *** ------------------------------------------------------------------";
     print ".\\\" *** This file was generated automatically";
-    print ".\\\" *** from src/etc/etc." ARCH "/MAKEDEV and";
+    print ".\\\" *** from src/etc/MAKEDEV.tmpl and";
     print ".\\\" *** src/share/man/man8/MAKEDEV.8.template";
     print ".\\\" ***";
     print ".\\\" *** DO NOT EDIT - any changes will be lost!!!";
