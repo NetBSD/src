@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.3 2001/11/18 05:14:39 thorpej Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.4 2001/11/18 08:16:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -84,8 +84,6 @@ struct cfattach wdsc_ca = {
 	sizeof(struct wdsc_softc), wdsc_match, wdsc_attach
 };
 
-extern struct cfdriver wdsc_cd;
-
 int     wdsc_dmasetup   __P((struct sbic_softc *, caddr_t *,size_t *,
 				int, size_t *));
 int     wdsc_dmago      __P((struct sbic_softc *));
@@ -110,9 +108,10 @@ wdsc_match(pdp, cf, auxp)
 {
 	struct hpc_attach_args *haa = auxp;
 
-	if (strcmp(haa->ha_name, wdsc_cd.cd_name))
-		return (0);
-	return (1);
+	if (strcmp(haa->ha_name, cf->cf_driver->cd_name) == 0)
+		return (1);
+
+	return (0);
 }
 
 /*
@@ -128,11 +127,11 @@ wdsc_attach(pdp, dp, auxp)
 	struct hpc_attach_args *haa = auxp;
 	int err;
 
-	sc->sc_regt = haa->ha_iot;
+	sc->sc_regt = haa->ha_st;
 	wsc->sc_dmat = haa->ha_dmat;
 
-	if ((err = bus_space_subregion(haa->ha_iot, haa->ha_ioh,
-					HPC_SCSI0_DEVREGS,
+	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
+					haa->ha_devoff,
 	     				HPC_SCSI0_DEVREGS_SIZE,
 	     				&sc->sc_regh)) != 0) {
 		printf(": unable to map regs, err=%d\n", err);
@@ -161,8 +160,8 @@ wdsc_attach(pdp, dp, auxp)
 	evcnt_attach_dynamic(&wsc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 			     sc->sc_dev.dv_xname, "intr");
 
-	/* XXX: 1 = IRQ_LOCAL0 + 1 */
-	if ((cpu_intr_establish(1, IPL_BIO, wdsc_scsiintr, sc)) == NULL) {
+	if ((cpu_intr_establish(haa->ha_irq, IPL_BIO,
+	     wdsc_scsiintr, sc)) == NULL) {
 		printf(": unable to establish interrupt!\n");
 		return;
 	}
