@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.45 1998/08/26 01:32:41 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.46 1998/08/28 18:16:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -560,6 +560,10 @@ ep_509_probemedia(sc)
 
 	for (epm = ep_509_media; epm->epm_name != NULL; epm++) {
 		if (ep_w0_config & epm->epm_mpbit) {
+			/*
+			 * This simple test works because 509 chipsets
+			 * don't do full-duplex.
+			 */
 			if (epm->epm_epmedia == port || defmedia == 0) {
 				defmedia = epm->epm_ifmedia;
 				defmedianame = epm->epm_name;
@@ -622,8 +626,19 @@ ep_vortex_probemedia(sc)
 
 	for (epm = ep_vortex_media; epm->epm_name != NULL; epm++) {
 		if (reset_options & epm->epm_mpbit) {
-			if (epm->epm_epmedia == default_media ||
-			    defmedia == 0) {
+			/*
+			 * Default media is a little more complicated
+			 * on the Vortex.  We support full-duplex which
+			 * uses the same reset options bit.
+			 *
+			 * XXX Check EEPROM for default to FDX?
+			 */
+			if (epm->epm_epmedia == default_media) {
+				if ((epm->epm_ifmedia & IFM_FDX) == 0) {
+					defmedia = epm->epm_ifmedia;
+					defmedianame = epm->epm_name;
+				}
+			} else if (defmedia == 0) {
 				defmedia = epm->epm_ifmedia;
 				defmedianame = epm->epm_name;
 			}
