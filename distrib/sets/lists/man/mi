@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.664 2004/03/13 19:51:11 bjh21 Exp $
+# $NetBSD: mi,v 1.665 2004/03/17 20:34:47 scw Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -15,8 +15,8 @@
 ./usr/share/info/g++FAQ.info			man-obsolete		obsolete
 ./usr/share/info/g77.info			man-fortran-info	info
 ./usr/share/info/gcc.info			man-c-info		info
-./usr/share/info/gdb.info			man-debug-info		info
-./usr/share/info/gdbint.info			man-debug-info		info
+./usr/share/info/gdb.info			man-debug-info		gdb,info
+./usr/share/info/gdbint.info			man-debug-info		gdb,info
 ./usr/share/info/gettext.info			man-sys-info		info
 ./usr/share/info/gprof.info			man-debug-info		bfd,info
 ./usr/share/info/grep.info			man-util-info		info
@@ -28,7 +28,7 @@
 ./usr/share/info/kth-krb.info			man-krb4-info		kerberos4,info
 ./usr/share/info/ld.info			man-computil-info	bfd,info
 ./usr/share/info/send-pr.info			man-gnats-info		info
-./usr/share/info/stabs.info			man-debug-info		info
+./usr/share/info/stabs.info			man-debug-info		gdb,info
 ./usr/share/info/tar.info			man-obsolete		obsolete
 ./usr/share/info/texinfo.info			man-texinfo-info	info
 ./usr/share/info/uucp.info			man-uucp-info		info,uucp
