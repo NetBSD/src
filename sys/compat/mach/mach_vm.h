@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.7 2002/12/05 22:48:53 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.8 2002/12/07 19:06:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -127,11 +127,32 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_deallocate_reply_t;
 
+/* vm_wire */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_port_descriptor_t req_task;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_address;
+	mach_vm_size_t req_size;
+	mach_vm_prot_t req_access;
+} mach_vm_wire_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_wire_reply_t;
+
 int mach_vm_map(struct proc *, mach_msg_header_t *,
     size_t, mach_msg_header_t *);
 int mach_vm_allocate(struct proc *, mach_msg_header_t *,
     size_t, mach_msg_header_t *);
 int mach_vm_deallocate(struct proc *, mach_msg_header_t *,
+    size_t, mach_msg_header_t *);
+int mach_vm_wire(struct proc *, mach_msg_header_t *,
     size_t, mach_msg_header_t *);
 
 #endif /* _MACH_VM_H_ */
