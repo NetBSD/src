@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.2 1996/09/01 00:20:23 mycroft Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.3 1996/10/10 21:26:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
@@ -68,7 +69,6 @@ bha_isa_probe(parent, match, aux)
 	struct bha_softc sc;
 	bus_chipset_tag_t bc = ia->ia_bc;
 	bus_io_handle_t ioh;
-	isa_chipset_tag_t ic = ia->ia_ic;
 	int rv;
 
 	if (bus_io_map(bc, ia->ia_iobase, BHA_ISA_IOSIZE, &ioh))
@@ -105,7 +105,7 @@ bha_isa_attach(parent, self, aux)
 	bus_io_handle_t ioh;
 	isa_chipset_tag_t ic = ia->ia_ic;
 
-	printf("\n");
+	kprintf("\n");
 
 	if (bus_io_map(bc, ia->ia_iobase, BHA_ISA_IOSIZE, &ioh))
 		panic("bha_attach: bus_io_map failed!");
@@ -121,7 +121,7 @@ bha_isa_attach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ic, sc->sc_irq, IST_EDGE, IPL_BIO,
 	    bha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
+		kprintf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
