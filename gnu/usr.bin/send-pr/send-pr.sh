@@ -465,7 +465,7 @@ while [ -z "$REQUEST_ID" ]; do
       $ECHON1 "a)bort, e)dit or s)end? $ECHON2"
       read input
     else
-      if [ $CNT -eq 5 ]; then
+      if [ $CNT -eq 6 ]; then
         input=s
       else
         input=a
