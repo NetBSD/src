@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2000/01/15 02:46:30 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2000/01/17 21:54:32 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -161,14 +161,14 @@ microtime(tvp)
 #endif
 
 	tvp->tv_usec += ticks;
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		tvp->tv_sec++;
 	}
 #endif
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
@@ -269,7 +269,7 @@ findcpuspeed()
 	unsigned int remainder;
 
 	/* using clock = Internal RTC */
-	SHREG_TOCR = 0x01;
+	SHREG_TOCR = TOCR_TCOE;
 
 	/* disable Under Flow int,up rising edge, 1/4 Cys */
 	SHREG_TCR0 = 0;
@@ -279,8 +279,8 @@ findcpuspeed()
 	/* set counter */
 	SHREG_TCNT0 = 0xffffffff;
 
-	/* start counter */
-	SHREG_TSTR = 0x01;
+	/* start counter 0 */
+	SHREG_TSTR |= TSTR_STR0;
 
 	/* Timer counter is decremented at every 0.5 uSec */
 	for (i = FIRST_GUESS; i; i--)
@@ -300,18 +300,18 @@ cpu_initclocks()
 #ifdef USE_RTCCLK
         /* enable under flow interrupt, up rising edge, RTCCLK */
 	/* RTCCLK == 16kHz */
-        SHREG_TCR1 = 0x0024;
-	SHREG_TCOR1 = 16000 / hz; /* about 1/HZ Sec */
-	SHREG_TCNT1 = 16000 / hz; /* about 1/HZ Sec */
+	SHREG_TCR1 = TCR_UNIE | TCR_TPSC_RTC;
+	SHREG_TCOR1 = 16000 / hz - 1; /* about 1/HZ Sec */
+	SHREG_TCNT1 = 16000 / hz - 1; /* about 1/HZ Sec */
 #else
         /* enable under flow interrupt, up rising edge, 1/16 Pcyc */
-        SHREG_TCR1 = 0x0021;
-	SHREG_TCOR1 = PCLOCK / 16 / hz; /* about 1/HZ Sec */
-	SHREG_TCNT1 = PCLOCK / 16 / hz; /* about 1/HZ Sec */
+	SHREG_TCR1 = TCR_UNIE | TCR_TPSC_P16;
+	SHREG_TCOR1 = PCLOCK / 16 / hz - 1; /* about 1/HZ Sec */
+	SHREG_TCNT1 = PCLOCK / 16 / hz - 1; /* about 1/HZ Sec */
 #endif
 
 	/* start timer counter 1 */
-	SHREG_TSTR |= 0x02;
+	SHREG_TSTR |= TSTR_STR1;
 
 	(void)shb_intr_establish(TMU1_IRQ, IST_EDGE, IPL_CLOCK, clockintr, 0);
 }
