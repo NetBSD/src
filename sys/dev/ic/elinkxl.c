@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.68 2003/01/31 00:26:29 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.69 2003/05/09 20:54:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.68 2003/01/31 00:26:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.69 2003/05/09 20:54:18 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -94,6 +94,7 @@ void ex_media_stat __P((struct ifnet *ifp, struct ifmediareq *req));
 void ex_probe_media __P((struct ex_softc *));
 void ex_set_filter __P((struct ex_softc *));
 void ex_set_media __P((struct ex_softc *));
+void ex_set_xcvr __P((struct ex_softc *, u_int16_t));
 struct mbuf *ex_get __P((struct ex_softc *, int));
 u_int16_t ex_read_eeprom __P((struct ex_softc *, int));
 int ex_init __P((struct ifnet *));
@@ -398,19 +399,7 @@ ex_config(sc)
 		 * Find PHY, extract media information from it.
 		 * First, select the right transceiver.
 		 */
-		u_int32_t icfg;
-
-		GO_WINDOW(3);
-		icfg = bus_space_read_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG);
-		icfg &= ~(CONFIG_XCVR_SEL << 16);
-		if (val & (ELINK_MEDIACAP_MII | ELINK_MEDIACAP_100BASET4))
-			icfg |= ELINKMEDIA_MII << (CONFIG_XCVR_SEL_SHIFT + 16);
-		if (val & ELINK_MEDIACAP_100BASETX)
-			icfg |= ELINKMEDIA_AUTO << (CONFIG_XCVR_SEL_SHIFT + 16);
-		if (val & ELINK_MEDIACAP_100BASEFX)
-			icfg |= ELINKMEDIA_100BASE_FX 
-				<< (CONFIG_XCVR_SEL_SHIFT + 16);
-		bus_space_write_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG, icfg);
+		ex_set_xcvr(sc, val);
 
 		mii_attach(&sc->sc_dev, &sc->ex_mii, 0xffffffff,
 		    MII_PHY_ANY, MII_OFFSET_ANY, 0);
@@ -834,6 +823,30 @@ ex_media_chg(ifp)
 }
 
 void
+ex_set_xcvr(sc, media)
+	struct ex_softc *sc;
+	const u_int16_t media;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int32_t icfg;
+
+	/*
+	 * We're already in Window 3
+	 */
+	icfg = bus_space_read_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG);
+	icfg &= ~(CONFIG_XCVR_SEL << 16);
+	if (media & (ELINK_MEDIACAP_MII | ELINK_MEDIACAP_100BASET4))
+		icfg |= ELINKMEDIA_MII << (CONFIG_XCVR_SEL_SHIFT + 16);
+	if (media & ELINK_MEDIACAP_100BASETX)
+		icfg |= ELINKMEDIA_AUTO << (CONFIG_XCVR_SEL_SHIFT + 16);
+	if (media & ELINK_MEDIACAP_100BASEFX)
+		icfg |= ELINKMEDIA_100BASE_FX 
+			<< (CONFIG_XCVR_SEL_SHIFT + 16);
+	bus_space_write_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG, icfg);
+}
+
+void
 ex_set_media(sc)
 	struct ex_softc *sc;
 {
@@ -856,14 +869,11 @@ ex_set_media(sc)
 	 * PHY which media to use.
 	 */
 	if (sc->ex_conf & EX_CONF_MII) {
+		u_int16_t val;
+
 		GO_WINDOW(3);
-
-		configreg = bus_space_read_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG);
-
-		configreg &= ~(CONFIG_MEDIAMASK << 16);
-		configreg |= (ELINKMEDIA_MII << (CONFIG_MEDIAMASK_SHIFT + 16));
-
-		bus_space_write_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG, configreg);
+		val = bus_space_read_2(iot, ioh, ELINK_W3_RESET_OPTIONS);
+		ex_set_xcvr(sc, val);
 		mii_mediachg(&sc->ex_mii);
 		return;
 	}
