@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.32 1999/08/27 19:23:19 is Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.33 1999/09/25 20:43:43 is Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  * compatibility mode) boards
  */
 
-#define BAHSOFTCOPY /**/
+/* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
 
 #include "opt_inet.h"
@@ -407,14 +407,19 @@ bah_start(ifp)
 #endif
 
 #ifdef BAH_DEBUG
-	m = m_pullup(m, 3);	/* gcc does structure padding */
+	if (m->m_len < ARC_HDRLEN)
+		m = m_pullup(m, ARC_HDRLEN);/* gcc does structure padding */
 	printf("%s: start: filling %ld from %ld to %ld type %ld\n",
 	    sc->sc_dev.dv_xname, buffer, mtod(m, u_char *)[0],
 	    mtod(m, u_char *)[1], mtod(m, u_char *)[2]);
 #else
-	m = m_pullup(m, 2);
+	if (m->m_len < 2)
+		m = m_pullup(m, 2);
 #endif
 	bah_ram_ptr = buffer*512;
+
+	if (m == 0)
+		return;
 
 	/* write the addresses to RAM and throw them away */
 
@@ -558,6 +563,14 @@ bah_srint(vsc)
 		offset = GETMEM(bah_ram_ptr + 3);
 		len = 512 - offset;
 	}
+	if (len+2 >= MINCLSIZE)
+		MCLGET(m, M_DONTWAIT);
+	
+	if (m == 0) {
+		ifp->if_ierrors++;
+		goto cleanup;
+	}
+
 	type = GETMEM(bah_ram_ptr + offset);
 	m->m_data += 1 + arc_isphds(type);
 
@@ -948,10 +961,15 @@ bah_ioctl(ifp, command, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (ifr->ifr_addr.sa_family == AF_INET)
+		switch (ifr->ifr_addr.sa_family) {
+		case AF_INET:
+		case AF_INET6:
 			error = 0;
-		else
+			break;
+		default:
 			error = EAFNOSUPPORT;
+			break;
+		}
 		break;
 
 	default:
