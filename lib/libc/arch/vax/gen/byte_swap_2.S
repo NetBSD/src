@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)htons.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: byte_swap_2.S,v 1.1 1999/01/15 13:31:21 bouyer Exp $"
+	.asciz "$NetBSD: byte_swap_2.S,v 1.2 2002/02/24 01:06:19 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
@@ -41,7 +41,7 @@
 ALTENTRY(ntohs)
 ALTENTRY(htons)
 ENTRY(__bswap16, 0)
-	rotl	$8,4(ap),r0
-	movb	5(ap),r0
-	movzwl	r0,r0
+	rotl	$8,4(%ap),%r0
+	movb	5(%ap),%r0
+	movzwl	%r0,%r0
 	ret
