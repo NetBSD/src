@@ -45,6 +45,7 @@ options 	COMPAT_44	# compatibility with 4.4BSD binaries
 options 	COMPAT_10	# compatibility with NetBSD 1.0 binaries
 options 	COMPAT_11	# compatibility with NetBSD 1.1 binaries
 options 	COMPAT_12	# compatibility with NetBSD 1.2 binaries
+options 	COMPAT_13	# compatibility with NetBSD 1.3 binaries
 #options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
 options 	SYSVSHM		# System V shared memory
