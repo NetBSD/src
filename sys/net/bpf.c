@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.83 2003/08/07 16:32:47 agc Exp $	*/
+/*	$NetBSD: bpf.c,v 1.84 2003/08/13 19:44:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.83 2003/08/07 16:32:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.84 2003/08/13 19:44:12 wrstuden Exp $");
 
 #include "bpfilter.h"
 
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.83 2003/08/07 16:32:47 agc Exp $");
 #include <netinet/if_inarp.h>
 
 #if defined(_KERNEL_OPT)
-#include "bpf.h"
+#include "opt_bpf.h"
 #endif
 
 #ifndef BPF_BUFSIZE
