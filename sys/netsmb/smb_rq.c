@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.11 2003/02/26 19:30:52 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.12 2003/03/23 08:30:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.11 2003/02/26 19:30:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.12 2003/03/23 08:30:37 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,6 @@ smb_rq_alloc(struct smb_connobj *layer, u_char cmd, struct smb_cred *scred,
 	return 0;
 }
 
-static char tzero[12];
-
 int
 smb_rq_init(struct smb_rq *rqp, struct smb_connobj *layer, u_char cmd,
 	struct smb_cred *scred)
@@ -131,7 +129,7 @@ smb_rq_new(struct smb_rq *rqp, u_char cmd)
 	mb_put_uint32le(mbp, 0);		/* DosError */
 	mb_put_uint8(mbp, vcp->vc_hflags);
 	mb_put_uint16le(mbp, vcp->vc_hflags2);
-	mb_put_mem(mbp, tzero, 12, MB_MSYSTEM);
+	mb_put_mem(mbp, NULL, 12, MB_MZERO);
 	rqp->sr_rqtid = mb_reserve(mbp, sizeof(u_int16_t));
 	mb_put_uint16le(mbp, 1 /*scred->sc_p->p_pid & 0xffff*/);
 	rqp->sr_rquid = mb_reserve(mbp, sizeof(u_int16_t));
