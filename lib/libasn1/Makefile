@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:45 thorpej Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2001/04/05 23:25:13 he Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1
 
@@ -7,7 +10,7 @@ MKLINT= no
 
 LIB=	asn1
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && make print-objdir
+COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
 
 asn1_err.h asn1_err.c: asn1_err.et
 	${COMPILEET}/compile_et ${DIST}/heimdal/lib/asn1/asn1_err.et
@@ -19,12 +22,11 @@ INCS=	asn1.h asn1_err.h
 INCSDIR= /usr/include/krb5
 
 BUILT_SOURCES =			\
-	$(gen_files:.x=.c)	\
+	${gen_files:.x=.c}	\
 	asn1_err.h		\
 	asn1_err.c
 
 gen_files =				\
-	asn1_UNSIGNED.x			\
 	asn1_APOptions.x		\
 	asn1_AP_REP.x			\
 	asn1_AP_REQ.x			\
@@ -32,7 +34,10 @@ gen_files =				\
 	asn1_AS_REQ.x			\
 	asn1_Authenticator.x		\
 	asn1_AuthorizationData.x	\
+	asn1_CKSUMTYPE.x		\
 	asn1_Checksum.x			\
+	asn1_ETYPE_INFO.x		\
+	asn1_ETYPE_INFO_ENTRY.x		\
 	asn1_EncAPRepPart.x		\
 	asn1_EncASRepPart.x		\
 	asn1_EncKDCRepPart.x		\
@@ -42,8 +47,6 @@ gen_files =				\
 	asn1_EncTicketPart.x		\
 	asn1_EncryptedData.x		\
 	asn1_EncryptionKey.x		\
-	asn1_ETYPE_INFO.x		\
-	asn1_ETYPE_INFO_ENTRY.x		\
 	asn1_HostAddress.x		\
 	asn1_HostAddresses.x		\
 	asn1_KDCOptions.x		\
@@ -58,7 +61,10 @@ gen_files =				\
 	asn1_KerberosTime.x		\
 	asn1_KrbCredInfo.x		\
 	asn1_LastReq.x			\
+	asn1_MESSAGE_TYPE.x		\
 	asn1_METHOD_DATA.x		\
+	asn1_NAME_TYPE.x		\
+	asn1_PADATA_TYPE.x		\
 	asn1_PA_DATA.x			\
 	asn1_PA_ENC_TS_ENC.x		\
 	asn1_Principal.x		\
@@ -68,7 +74,8 @@ gen_files =				\
 	asn1_TGS_REQ.x			\
 	asn1_Ticket.x			\
 	asn1_TicketFlags.x		\
-	asn1_TransitedEncoding.x
+	asn1_TransitedEncoding.x	\
+	asn1_UNSIGNED.x
 
 SRCS=	der_get.c \
 	der_put.c \
@@ -76,7 +83,7 @@ SRCS=	der_get.c \
 	der_length.c \
 	der_copy.c \
 	timegm.c \
-	$(BUILT_SOURCES)
+	${BUILT_SOURCES}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/asn1		\
@@ -86,17 +93,17 @@ CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/com_err		\
 	 -DHAVE_CONFIG_H
 
-$(gen_files) asn1.hx: asn1_files
+${gen_files} asn1.hx: asn1_files
 
-ASN1COMPILE!=	cd ${.CURDIR}/asn1_compile && ${MAKE} print-objdir
+ASN1COMPILE!=	cd ${.CURDIR}/asn1_compile && ${PRINTOBJDIR}
+ASN1_COMPILE=	${ASN1COMPILE}/asn1_compile
 
 asn1_files: k5.asn1 all-asn1_compile
-	${ASN1COMPILE}/asn1_compile ${DIST}/heimdal/lib/asn1/k5.asn1
+	${ASN1_COMPILE} ${DIST}/heimdal/lib/asn1/k5.asn1
 
-asn1.h:	asn1.hx
 ${SRCS}: asn1.h
 
-CLEANFILES = $(BUILT_SOURCES) $(gen_files) asn1_files asn1.h asn1.hx
+CLEANFILES = ${BUILT_SOURCES} ${gen_files} asn1_files asn1.h asn1.hx
 
 SUBDIR=	asn1_compile
 
