@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.48 1994/04/04 01:56:54 mycroft Exp $
+ *	$Id: locore.s,v 1.49 1994/04/04 03:47:20 mycroft Exp $
  */
 
 
@@ -1370,26 +1370,26 @@ ENTRY(remrq)
  * When no processes are on the runq, Swtch branches to idle
  * to wait for something to come ready.
  */
-	.globl	Idle
-	ALIGN_TEXT
-Idle:
-sti_for_idle:
+ENTRY(idle)
 	sti
+	call	_spl0			# process pending interrupts
 
 	ALIGN_TEXT
-idle:
-	call	_spl0			# process pending interrupts
-	cmpl	$0,_whichqs
-	jne	sw1
-	hlt				# wait for interrupt
-	jmp	idle
+1:	cli
+	movl	_whichqs,%edi
+	testl	%edi,%edi
+	jnz	sw1
+	sti
+	jmp	1b
 
+#ifdef DIAGNOSTIC
 	ALIGN_TEXT
 badsw:
 	pushl	$1f
 	call	_panic
 	/*NOTREACHED*/
 1:	.asciz	"swtch"
+#endif
 
 /*
  * Swtch()
@@ -1403,7 +1403,7 @@ ENTRY(swtch)
 
 	/* if no process to save, don't bother */
 	testl	%ecx,%ecx
-	je	sw1
+	jz	sw0
 
 	movl	P_ADDR(%ecx),%ecx
 
@@ -1435,46 +1435,37 @@ ENTRY(swtch)
 	movl	$-1,_cpl
 	movl	%eax,PCB_IML(%ecx)	# save ipl
 
-	/* save is done, now choose a new process or idle */
-sw1:
-	cli				# splhigh doesn't do a cli
+sw0:	cli				# splhigh doesn't do a cli
 	movl	_whichqs,%edi
-2:
-	bsfl	%edi,%eax		# find a full q
-	jz	sti_for_idle		# if none, idle
-	# XXX update whichqs?
-	btrl	%eax,%edi		# clear q full status
-	jnb	2b			# if it was clear, look for another
-	movl	%eax,%ebx		# save which one we are using
 
-	shll	$3,%eax
-	addl	$_qs,%eax		# select q
-	movl	%eax,%esi
+sw1:	bsfl	%edi,%ebx		# find a full q
+	jz	_idle			# if none, idle
 
+	lea	_qs(,%ebx,8),%esi	# select q
+
+	movl	P_LINK(%esi),%ecx	# unlink from front of process q
 #ifdef	DIAGNOSTIC
-	cmpl	P_LINK(%eax),%eax # linked to self? (e.g. not on list)
+	cmpl	%ecx,%esi		# linked to self? (e.g. not on list)
 	je	badsw			# not possible
 #endif
-
-	movl	P_LINK(%eax),%ecx	# unlink from front of process q
 	movl	P_LINK(%ecx),%edx
-	movl	%edx,P_LINK(%eax)
+	movl	%edx,P_LINK(%esi)
 	movl	P_RLINK(%ecx),%eax
 	movl	%eax,P_RLINK(%edx)
 
 	cmpl	P_LINK(%ecx),%esi	# q empty
-	je	3f
-	btsl	%ebx,%edi		# nope, set to indicate full
-3:
-	movl	%edi,_whichqs		# update q status
+	jne	3f
+	btrl	%ebx,%edi		# yes, clear to indicate empty
 
-	movl	$0,%eax
+3:	movl	%edi,_whichqs		# update q status
+
+	xorl	%eax,%eax
 	movl	%eax,_want_resched
 
 #ifdef	DIAGNOSTIC
 	cmpl	%eax,P_WCHAN(%ecx)
 	jne	badsw
-	cmpb	$(SRUN),P_STAT(%ecx)
+	cmpb	$SRUN,P_STAT(%ecx)
 	jne	badsw
 #endif
 
