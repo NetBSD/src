@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.13 2000/05/08 22:48:42 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.13.4.1 2000/12/15 04:06:05 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.13 2000/05/08 22:48:42 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.13.4.1 2000/12/15 04:06:05 he Exp $");
 #endif
 
 /*
@@ -427,7 +427,7 @@ main(int argc, char *argv[])
 
 			dir = dirname_of(*argv);
 			basep = basename_of(*argv);
-			snprintf(base, sizeof(base), "%s.tgz", basep);
+			snprintf(base, sizeof(base), "%s.t[bg]z", basep);
 
 			fchdir(saved_wd);
 			rc = chdir(dir);
@@ -466,7 +466,7 @@ main(int argc, char *argv[])
 
 			dir = dirname_of(*argv);
 			basep = basename_of(*argv);
-			snprintf(base, sizeof(base), "%s.tgz", basep);
+			snprintf(base, sizeof(base), "%s.t[bg]z", basep);
 
 			fchdir(saved_wd);
 			rc = chdir(dir);
