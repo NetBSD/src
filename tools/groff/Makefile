@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2003/10/20 08:25:36 wiz Exp $
+#	$NetBSD: Makefile,v 1.26 2003/10/28 07:46:16 lukem Exp $
 
 MODULE=		groff
 
@@ -55,6 +55,7 @@ afterinstall:	${SITETMACDIR}/${F}
 .PHONY:		${SITETMACDIR}/${F}
 ${SITETMACDIR}/${F}: ${F}-s _installtmac
 .ORDER: realinstall ${SITETMACDIR}/${F}
+CLEANFILES+=${F}-s
 ${F}-s: ${F}
 	sed -f ${.CURDIR}/../../gnu/dist/groff/tmac/strip.sed ${.ALLSRC} > ${.TARGET}
 .endfor
