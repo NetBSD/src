@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 2001/01/03 18:14:46 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.7 2001/01/04 07:03:23 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,9 +53,14 @@
 #endif
 #endif
 
-/* will be changed to sh3eb/el */
-#define	_MACHINE_ARCH	sh3
-#define	MACHINE_ARCH	"sh3"
+/* XXX relying upon gcc symbol here... */
+#ifdef __LITTLE_ENDIAN__
+#define	_MACHINE_ARCH	sh3el
+#define	MACHINE_ARCH	"sh3el"
+#else
+#define	_MACHINE_ARCH	sh3eb
+#define	MACHINE_ARCH	"sh3eb"
+#endif
 
 #define	_MACHINE	evbsh3
 #define	MACHINE		"evbsh3"
