@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.266 2004/06/14 04:08:03 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.267 2004/06/14 04:08:48 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3683,3 +3683,8 @@ lib/libc/net/byteorder.3			1.12
 
 	Update for use of uint{16,32}_t.
 	[kleink, ticket #465]
+
+sys/nfs/nfs_syscalls.c				1.76
+
+	nfsrv_zapsock: fix an inverted condition in nfs_syscall.c rev.1.74.
+	[yamt, ticket #466]
