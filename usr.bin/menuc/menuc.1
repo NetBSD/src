@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.19 2003/07/27 07:21:58 dsl Exp $
+.\"	$NetBSD: menuc.1,v 1.20 2003/10/18 18:26:53 dsl Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -373,6 +373,8 @@ struct menudesc {
 #define MC_SCROLL 4
 #define MC_NOSHORTCUT 8
 #define MC_NOCLEAR 16
+#define MC_DFLTEXIT 32
+#define MC_ALWAYS_SCROLL 64
 
 int new_menu(const char *title, menu_ent *opts, int numopts,
         int x, int y, int h, int w, int mopt,
