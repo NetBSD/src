@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostnamadr.c,v 1.18 1997/01/23 14:02:04 mrg Exp $	*/
+/*	$NetBSD: gethostnamadr.c,v 1.19 1997/01/31 00:05:59 abrown Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: gethnamaddr.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
 #else
-static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.18 1997/01/23 14:02:04 mrg Exp $";
+static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.19 1997/01/31 00:05:59 abrown Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -130,6 +130,7 @@ getanswer(answer, anslen, iquery)
 	char *bp, **ap;
 	int type, class, buflen, ancount, qdcount;
 	int haveanswer, getclass = C_ANY;
+	int toobig;
 	char **hap;
 
 	eom = answer->buf + anslen;
@@ -175,6 +176,7 @@ getanswer(answer, anslen, iquery)
 	*hap = NULL;
 	host.h_addr_list = h_addr_ptrs;
 	haveanswer = 0;
+	toobig = 0;
 	while (--ancount >= 0 && cp < eom) {
 		if ((n = dn_expand((u_char *)answer->buf, (u_char *)eom,
 		    (u_char *)cp, (u_char *)bp, buflen)) < 0)
@@ -249,6 +251,13 @@ getanswer(answer, anslen, iquery)
 #endif
 			break;
 		}
+		if (hap >= &h_addr_ptrs[MAXADDRS-1]) {
+			if (!toobig++ && (_res.options & RES_DEBUG))
+				printf("Too many addresses (%d)\n",
+				       MAXADDRS);
+			cp += n;
+			continue;
+		}				
 		bcopy(cp, *hap++ = bp, n);
 		bp +=n;
 		cp += n;
