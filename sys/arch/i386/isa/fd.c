@@ -34,10 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.5 1993/10/01 00:38:39 mycroft Exp $
- *
- * Largely rewritten to handle multiple controllers and drives
- * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
+ *	$Id: fd.c,v 1.20.2.6 1993/10/06 12:08:50 mycroft Exp $
  */
 
 #include "param.h"
@@ -147,7 +144,8 @@ static struct fd_type fd_types[] = {
 	{ 15,2,0xFF,0x1B,80,2400,1,0,2, "1.2MB" },
 	{  9,2,0xFF,0x23,40, 720,2,1,2, "360KB" }, /* in 1.2MB drive */
 	{  9,2,0xFF,0x2A,40, 720,1,1,2, "360KB" }, /* in 360KB drive */
-	{  9,2,0xFF,0x2A,80,1440,1,0,2, "720KB" },
+	{  9,2,0xFF,0x2A,80,1440,1,2,2, "720KB" }, /* in 1.44MB drive */
+	{  9,2,0xFF,0x2A,80,1440,1,0,2, "720KB" }, /* in 720KB drive */
 };
 
 /* software state, per disk (with up to 2 disks per ctlr) */
@@ -285,7 +283,7 @@ fdcattach(parent, self, aux)
 	fdc->sc_iobase = ia->ia_iobase;
 	fdc->sc_drq = ia->ia_drq;
 	fdc->sc_state = DEVIDLE;
-	printf(": NEC 765\n");
+	printf(": nec765\n");
 	isa_establish(&fdc->sc_id, &fdc->sc_dev);
 
 	fdc->sc_ih.ih_fun = fdcintr;
