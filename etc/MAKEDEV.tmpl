@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.31 2004/10/22 14:08:22 peter Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.32 2004/12/01 23:06:57 christos Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -219,7 +219,7 @@
 #	audio*	audio devices
 #	bell*	OPM bell device (x68k)
 #	bktr	Brooktree 848/849/878/879 based TV cards
-#	bpf*	packet filter
+#	bpf	packet filter
 #	cfs*	Coda file system device
 #	ch*	SCSI media changer
 #	cir*	Consumer IR
@@ -428,7 +428,7 @@ all)
 	makedev md0 md1
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev vnd0 vnd1 vnd2 vnd3
-	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	makedev bpf
 	makedev tun0 tun1 tun2 tun3
 	makedev ipl crypto random systrace
 	makedev lkm clockctl
@@ -858,7 +858,11 @@ lpt*|lpa*)
 	mkdev lpt${unit}ctl c $chr $(($unit + 256))
 	;;
 
-bpf*|tun*)
+bpf)
+	mkdev bpf	c %bpf_chr% 0
+	;;
+
+tun*)
 	case $i in
 	bpf*) name=bpf;	unit=${i#bpf};	chr=%bpf_chr%;;
 	tun*) name=tun;	unit=${i#tun};	chr=%tun_chr%;;
