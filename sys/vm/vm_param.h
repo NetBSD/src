@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.16 1998/03/01 02:24:02 fvdl Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.17 1998/03/25 00:45:51 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -90,6 +90,7 @@ typedef int	boolean_t;
  */
 #define	DEFAULT_PAGE_SIZE	4096
 
+#if defined(_KERNEL)
 /*
  *	All references to the size of a page should be done with PAGE_SIZE
  *	or PAGE_SHIFT.  The fact they are variables is hidden here so that
@@ -103,7 +104,8 @@ typedef int	boolean_t;
 #define	PAGE_SIZE	cnt.v_page_size		/* size of page */
 #define	PAGE_MASK	page_mask		/* size of page - 1 */
 #define	PAGE_SHIFT	page_shift		/* bits to shift for pages */
-#endif
+#endif /* UVM */
+#endif /* _KERNEL */
 
 #if defined(_KERNEL) && !defined(UVM)
 extern vm_size_t	page_mask;
