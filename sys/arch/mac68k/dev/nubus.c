@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.38 1997/05/13 13:22:56 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.39 1997/07/14 23:05:35 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -128,7 +128,7 @@ nubus_attach(parent, self, aux)
 		if (bus_space_map(bst,
 		    NUBUS_SLOT2PA(na_args.slot), NBMEMSIZE, 0, &bsh)) {
 #ifdef DIAGNOSTIC
-			printf("%s: failed to map slot %d, address %p\n",
+			printf("%s: failed to map slot %x, address %p\n",
 			    self->dv_xname, i, (void *)NUBUS_SLOT2PA(i));
 #endif
 			continue;
@@ -261,7 +261,7 @@ nubus_print(aux, name)
 		if (bus_space_map(bst,
 		    NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &bsh)) {
 #ifdef DIAGNOSTIC
-			printf("%s: failed to map slot %d", name, na->slot);
+			printf("%s: failed to map slot %x", name, na->slot);
 #endif
 		} else {
 			printf("%s: slot %x: %s", name, na->slot,
