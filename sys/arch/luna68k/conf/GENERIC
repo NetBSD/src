@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.12 2000/10/18 08:27:19 nisimura Exp $
+#	$NetBSD: GENERIC,v 1.13 2000/10/19 10:36:32 nisimura Exp $
 #
 #	GENERIC LUNA68K
 #
 include		"arch/luna68k/conf/std.luna68k"
 
-#ident 		"GENERIC-$Revision: 1.12 $"
+#ident 		"GENERIC-$Revision: 1.13 $"
 
 maxusers	8
 
@@ -107,7 +107,7 @@ fb0	at mainbus0		# 16 or 256 pseudo color
 # Workstation Console attachments
 wsdisplay*	at fb?
 wskbd*		at ws? console ?
-#wsmouse*	at ws?		# not supported, yet...
+wsmouse*	at ws?
 
 # SCSI bus support
 scsibus* at spc?
