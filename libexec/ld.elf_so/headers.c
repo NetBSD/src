@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.12 2002/09/12 22:56:28 mycroft Exp $	 */
+/*	$NetBSD: headers.c,v 1.13 2002/09/13 13:28:43 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -65,7 +65,7 @@ _rtld_digest_dynamic(obj)
 	const Elf_Dyn  *dyn_rpath = NULL;
 	Elf_Sword	plttype = DT_REL;
 	Elf_Addr        relsz = 0, relasz = 0;
-	Elf_Addr	pltrelsz = 0;
+	Elf_Addr	pltrel = 0, pltrelsz = 0;
 	Elf_Addr	init = 0, fini = 0;
 
 	for (dynp = obj->dynamic; dynp->d_tag != DT_NULL; ++dynp) {
@@ -85,13 +85,7 @@ _rtld_digest_dynamic(obj)
 			break;
 
 		case DT_JMPREL:
-			if (plttype == DT_REL) {
-				obj->pltrel = (const Elf_Rel *)
-				    (obj->relocbase + dynp->d_un.d_ptr);
-			} else {
-				obj->pltrela = (const Elf_Rela *)
-				    (obj->relocbase + dynp->d_un.d_ptr);
-			}
+			pltrel = dynp->d_un.d_ptr;
 			break;
 
 		case DT_PLTRELSZ:
@@ -113,19 +107,7 @@ _rtld_digest_dynamic(obj)
 
 		case DT_PLTREL:
 			plttype = dynp->d_un.d_val;
-			assert(plttype == DT_REL ||
-			    plttype == DT_RELA);
-#if !defined(__sparc__) && !defined(__archv9__) && !defined(__sparc_v9__)
-			/* 
-			 * sparc v9 has both DT_PLTREL and DT_JMPREL.
-			 * But they point to different things.
-			 * We want the DT_JMPREL which points to our jump table.
-			 */
-			if (plttype == DT_RELA) {
-				obj->pltrela = (const Elf_Rela *) obj->pltrel;
-				obj->pltrel = NULL;
-			}
-#endif
+			assert(plttype == DT_REL || plttype == DT_RELA);
 			break;
 
 		case DT_SYMTAB:
@@ -238,17 +220,25 @@ _rtld_digest_dynamic(obj)
 	obj->rellim = (const Elf_Rel *)((caddr_t)obj->rel + relsz);
 	obj->relalim = (const Elf_Rela *)((caddr_t)obj->rela + relasz);
 	if (plttype == DT_REL) {
-		/* On PPC and SPARC, at least, REL(A)SZ may include PLTREL. */
-		if (obj->rellim && obj->pltrel && obj->rellim > obj->pltrel)
-			obj->rellim = obj->pltrel;
-		obj->pltrellim = (const Elf_Rel *)((caddr_t)obj->pltrel + pltrelsz);
+		obj->pltrel = (const Elf_Rel *)(obj->relocbase + pltrel);
+		obj->pltrellim = (const Elf_Rel *)(obj->relocbase + pltrel + pltrelsz);
 		obj->pltrelalim = 0;
+		/* On PPC and SPARC, at least, REL(A)SZ may include JMPREL.
+		   Trim rel(a)lim to save time later. */
+		if (obj->rellim && obj->pltrel &&
+		    obj->rellim > obj->pltrel &&
+		    obj->rellim <= obj->pltrellim)
+			obj->rellim = obj->pltrel;
 	} else {
-		/* On PPC and SPARC, at least, REL(A)SZ may include PLTREL. */
-		if (obj->relalim && obj->pltrela && obj->relalim > obj->pltrela)
-			obj->relalim = obj->pltrela;
+		obj->pltrela = (const Elf_Rela *)(obj->relocbase + pltrel);
 		obj->pltrellim = 0;
-		obj->pltrelalim = (const Elf_Rela *)((caddr_t)obj->pltrela + pltrelsz);
+		obj->pltrelalim = (const Elf_Rela *)(obj->relocbase + pltrel + pltrelsz);
+		/* On PPC and SPARC, at least, REL(A)SZ may include JMPREL.
+		   Trim rel(a)lim to save time later. */
+		if (obj->relalim && obj->pltrela &&
+		    obj->relalim > obj->pltrela &&
+		    obj->relalim <= obj->pltrelalim)
+			obj->relalim = obj->pltrela;
 	}
 
 #if defined(RTLD_LOADER) && defined(__HAVE_FUNCTION_DESCRIPTORS)
