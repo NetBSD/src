@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.11 2002/05/02 18:02:31 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.12 2002/05/03 15:22:57 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -23,11 +23,11 @@
 #
 #	MDSET.${FILENAME}.post		For each kernel named ${FILENAME},
 #					execute this after ${NM} / ${STRIP}.
-#					Kernel is available as netbsd.tmp.
+#					Kernel is available as "${.TARGET:R}"
 #					If MDSET.${FILENAME}.suffixes uses
 #					this to build extra kernels, the
-#					resultant file must be gzipped as
-#					"netbsd.${suffix}.gz"
+#					resultant file must be gzipped by this
+#					as "${.TARGET:R}.${suffix}.gz"
 #
 #	MDSET.${FILENAME}.suffixes	List of extra install kernel suffixes.
 #					The extra kernels are usually created
@@ -35,7 +35,6 @@
 #
 # Variables modified by this:
 #	KERNELS			List of kernel .gz files to build
-#	KERNELDEPS		Dependency version of ${KERNELS} (with .WAIT)
 #	KERNELSYMS		List of kernel .symbol files to build
 #	_KERNEL.${KERNEL}	Target filename for ${KERNEL}
 #
@@ -51,11 +50,9 @@ _KERNEL.${_K}:=	${_F}
 .endif
 
 KERNELS+=	${_KERNEL.${_K}}.gz
-KERNELDEPS+=	${_KERNEL.${_K}}.gz .WAIT
 .for suf in ${MDSET.${_FILENAME}.suffixes}
 KERNELS+=	${_KERNEL.${_K}}.${suf}.gz
-KERNELDEPS+=	${_KERNEL.${_K}}.${suf}.gz .WAIT
-CLEANFILES+=	netbsd.${suf} netbsd.${suf}.gz
+CLEANFILES+=	${_KERNEL.${_K}}.${suf}
 .endfor
 KERNELSYMS+=	${_KERNEL.${_K}}.symbols.gz
 
@@ -67,30 +64,26 @@ ${_KERNEL.${_K}}.gz: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
 	@echo "mdsetimage: ${KERNOBJDIR}/${_K}/netbsd"
 	@echo "      with: ${_I}"
 	@echo "      into: ${.TARGET}"
-	@rm -f netbsd.tmp ${_KERNEL.${_K}}.symbols.gz
-	@cp ${KERNOBJDIR}/${_K}/netbsd netbsd.tmp
-	${MDSETIMAGE} -v netbsd.tmp ${_I}
-	${NM} netbsd.tmp | gzip -9 > ${_KERNEL.${_K}}.symbols.gz
-	${STRIP} netbsd.tmp
-.if defined(_POST.${_KERNEL.${_K}})
-	${_POST.${_KERNEL.${_K}}}
+	@rm -f ${.TARGET:R} ${.TARGET:R}.symbols.gz
+	@cp ${KERNOBJDIR}/${_K}/netbsd ${.TARGET:R}
+	${MDSETIMAGE} -v ${.TARGET:R} ${_I}
+	${NM} ${.TARGET:R} | gzip -9 > ${.TARGET:R}.symbols.gz
+	${STRIP} ${.TARGET:R}
+.if defined(_POST.${.TARGET:R})
+	${_POST.${.TARGET:R}}
 .endif
-	@gzip -9f netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
+	gzip -9f ${.TARGET:R}
 
-.for suf in ${MDSET.${_FILENAME}.suffixes}
-${_KERNEL.${_K}}.${suf}.gz: .NOTMAIN ${_KERNEL.${_K}}.gz
-	mv netbsd.${suf}.gz ${.TARGET}
-.endfor
+CLEANFILES+=	${_KERNEL.${_K}} 
 
 .endfor							# }
 
-CLEANFILES+=	netbsd.tmp netbsd.tmp.gz ${KERNELS} ${KERNELSYMS}
+CLEANFILES+=	${KERNELS} ${KERNELSYMS}
 
-realall: ${KERNELDEPS}
+realall: ${KERNELS}
 
 .if defined(MDSET_RELEASEDIR)
-release: check_RELEASEDIR .WAIT ${KERNELDEPS}
+release: check_RELEASEDIR .WAIT ${KERNELS}
 	${RELEASE_INSTALL} ${KERNELS} ${KERNELSYMS} \
 	    ${RELEASEDIR}/${MDSET_RELEASEDIR}
 .endif
