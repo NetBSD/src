@@ -1,6 +1,6 @@
-/*	$NetBSD: ossaudio.c,v 1.6 1998/05/25 17:13:14 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.7 1999/04/13 20:45:25 augustss Exp $	*/
 
-/*
+/*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
