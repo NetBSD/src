@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.210 2002/12/16 16:59:12 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.211 2003/01/03 11:57:47 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1996,5 +1996,15 @@ struct sparc_bus_space_tag mainbus_space_tag = {
 	sparc_bus_subregion,		/* bus_space_subregion */
 	sparc_bus_barrier,		/* bus_space_barrier */
 	sparc_bus_mmap,			/* bus_space_mmap */
-	sparc_mainbus_intr_establish	/* bus_intr_establish */
+	sparc_mainbus_intr_establish,	/* bus_intr_establish */
+#if __FULL_SPARC_BUS_SPACE
+	NULL,				/* read_1 */
+	NULL,				/* read_2 */
+	NULL,				/* read_4 */
+	NULL,				/* read_8 */
+	NULL,				/* write_1 */
+	NULL,				/* write_2 */
+	NULL,				/* write_4 */
+	NULL				/* write_8 */
+#endif
 };
