@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.36 2004/03/26 23:18:42 petrov Exp $
+#	$NetBSD: genassym.cf,v 1.37 2004/12/03 02:04:00 chs Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -116,7 +116,6 @@ endif
 # general constants
 define	BSD		BSD
 define	USRSTACK	USRSTACK
-define	PADDRT		sizeof(paddr_t)
 define	PAGE_SIZE	PAGE_SIZE
 
 # Important offsets into the lwp and proc structs & associated constants

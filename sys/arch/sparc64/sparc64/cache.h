@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.6 2002/09/29 04:12:03 chs Exp $ */
+/*	$NetBSD: cache.h,v 1.7 2004/12/03 02:04:00 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -79,7 +79,6 @@ void 	blast_dcache __P((void));		/* Clear entire D$ */
 void 	blast_icache __P((void));		/* Clear entire I$ */
 
 /* The following flush a range from the D$ and I$ but not E$. */
-void	cache_flush_virt __P((vaddr_t, vsize_t));
 void	cache_flush_phys __P((paddr_t, psize_t, int));
 
 /*
