@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.34 2002/07/11 21:14:29 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.35 2002/09/29 21:13:03 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -161,7 +161,10 @@ typedef struct uhci_softc {
 	u_int8_t sc_saved_sof;
 	u_int16_t sc_saved_frnum;
 
+#ifdef USB_USE_SOFTINTR
 	char sc_softwake;
+#endif /* USB_USE_SOFTINTR */
+
 	char sc_isreset;
 	char sc_suspend;
 	char sc_dying;
