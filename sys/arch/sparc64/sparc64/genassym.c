@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.19 2000/08/01 00:31:15 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.20 2001/08/08 00:09:30 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -236,6 +236,11 @@ main()
 
 	off("NO_NEXTNODE", struct nodeops, no_nextnode);
 	off("NO_GETPROP", struct nodeops, no_getprop);
+
+	/* mbuf fields of import */
+	off("M_NEXT", struct mbuf, m_next);
+	off("M_DATA", struct mbuf, m_data);
+	off("M_LEN", struct mbuf, m_len);
 
 	/* floppy trap handler fields */
 	off("FDC_REG_MSR", struct fdcio, fdcio_reg_msr);
