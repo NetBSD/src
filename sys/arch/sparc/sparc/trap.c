@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.128 2003/01/12 16:29:00 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.129 2003/01/13 20:00:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -321,10 +321,11 @@ trap(type, psr, pc, tf)
 			 * from kernel space. For now, just flush the
 			 * entire I-cache.
 			 */
-			(*cpuinfo.pure_vcache_flush)();
 #if defined(MULTIPROCESSOR)
-			/* Broadcast to other CPUs */
-			/* e.g. XCALL0(cpuinfo.pure_vcache_flush, CPUSET_ALL);*/
+			/* Broadcast to all CPUs */
+			XCALL0(*cpuinfo.pure_vcache_flush, CPUSET_ALL);
+#else
+			(*cpuinfo.pure_vcache_flush)();
 #endif
 			ADVANCE;
 			return;
