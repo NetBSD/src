@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.39.2.1 2004/04/07 06:58:00 jmc Exp $	*/
+/*	$NetBSD: options.c,v 1.39.2.2 2004/06/16 01:27:38 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <sys/cdefs.h>
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.39.2.1 2004/04/07 06:58:00 jmc Exp $");
+__RCSID("$NetBSD: options.c,v 1.39.2.2 2004/06/16 01:27:38 jmc Exp $");
 #endif
 #endif /* not lint */
 
