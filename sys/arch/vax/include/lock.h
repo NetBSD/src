@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.7 2001/06/04 15:37:05 ragge Exp $	*/
+/*	$NetBSD: lock.h,v 1.8 2001/06/04 21:37:12 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -70,6 +70,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	return ret;
 }
 
+#define	VAX_LOCK_CHECKS ((1 << IPI_SEND_CNCHAR) | (1 << IPI_DDB))
 #define	__cpu_simple_lock(alp)						\
 {									\
 	struct cpu_info *__ci = curcpu();				\
@@ -77,7 +78,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	while (__cpu_simple_lock_try(alp) == 0) {			\
 		int __s;						\
 									\
-		if (__ci->ci_ipimsgs & (1 << IPI_SEND_CNCHAR)) {	\
+		if (__ci->ci_ipimsgs & VAX_LOCK_CHECKS) {		\
 			__s = splipi();					\
 			cpu_handle_ipi();				\
 			splx(__s);					\

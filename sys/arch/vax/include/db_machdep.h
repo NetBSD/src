@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.9 2001/05/02 15:59:38 matt Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.10 2001/06/04 21:37:12 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -70,6 +70,8 @@ db_regs_t	ddb_regs;	/* register state */
 
 #define inst_load(ins)		0
 #define inst_store(ins)		0
+
+#define DB_MACHINE_COMMANDS
 
 /* Prototypes */
 void	kdb_trap __P((struct trapframe *));
