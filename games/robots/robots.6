@@ -30,28 +30,27 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)robots.6	6.2 (Berkeley) 4/8/91
-.\"	$Id: robots.6,v 1.2 1993/08/01 07:46:21 mycroft Exp $
+.\"	$Id: robots.6,v 1.3 1993/08/05 02:29:28 jtc Exp $
 .\"
-.TH ROBOTS 6 "April 8, 1991"
-.UC 6
-.SH NAME
-robots \- fight off villainous robots
-.SH SYNOPSIS
-.B robots
-[
-.B \-sjta
-] [
-.B scorefile
-]
-.SH DESCRIPTION
-.I Robots
+.Dd April 8, 1991
+.Dt ROBOTS 6
+.Os
+.Sh NAME
+.Nm robots 
+.Nd fight off villainous robots
+.Sh SYNOPSIS
+.Nm robots
+.Op Fl sjta
+.Op Ar scorefile
+.Sh DESCRIPTION
+.Nm Robots
 pits you against evil robots, who are trying to kill you (which is why
 they are evil).
 Fortunately for you, even though they are evil, they are not very bright
 and have a habit of bumping into each other, thus destroying themselves.
 In order to survive, you must get them to kill each other off, since you
 have no offensive weaponry.
-.PP
+.Pp
 Since you are stuck without offensive weaponry, you are endowed with one
 piece of defensive weaponry: a teleportation device.
 When two robots run into each other or a junk pile, they die.
@@ -59,84 +58,95 @@ If a robot runs into you, you die.
 When a robot dies, you get 10 points, and when all the robots die,
 you start on the next field.
 This keeps up until they finally get you.
-.PP
+.Pp
 Robots are represented on the screen by a
-.RB ` + ',
+.Sq \+ ,
 the junk heaps from their collisions by a
-.RB ` \(** ',
+.Sq \(** ,
 and you
 (the good guy)
 by a
-.RB ` @ '.
-.PP
+.Sq \@ .
+.Pp
 The commands are:
-.sp
-.nf
-.ta
-.ta \w'\fBHJKLBNYU\fP\ \ 'u
-\fBh\fP	move one square left
-\fBl\fP	move one square right
-\fBk\fP	move one square up
-\fBj\fP	move one square down
-\fBy\fP	move one square up and left
-\fBu\fP	move one square up and right
-\fBb\fP	move one square down and left
-\fBn\fP	move one square down and right
-\fB\&.\fP	(also space) do nothing for one turn
-\fBHJKLBNYU\fP	run as far as possible in the given direction
-\fB>\fP	do nothing for as long as possible
-\fBt\fP	teleport to a random location
-\fBw\fP	wait until you die or they all do
-\fBq\fP	quit
-\fB^L\fP	redraw the screen
-.sp
-.fi
+.Bl -tag -width indent -compact
+.It Ic h
+move one square left
+.It Ic l
+move one square right
+.It Ic k
+move one square up
+.It Ic j
+move one square down
+.It Ic y
+move one square up and left
+.It Ic u
+move one square up and right
+.It Ic b
+move one square down and left
+.It Ic n
+move one square down and right
+.It Ic \&.
+(also space) do nothing for one turn
+.It Ic HJKLBNYU
+run as far as possible in the given direction
+.It Ic \>
+do nothing for as long as possible
+.It Ic t
+teleport to a random location
+.It Ic w
+wait until you die or they all do
+.It Ic q
+quit
+.It Ic ^L
+redraw the screen
+.El
+.Pp
 All commands can be preceded by a count.
-.PP
+.Pp
 If you use the
-.RB ` w '
+.Sq Ic w 
 command and survive to the next level, you will get a bonus of 10%
 for each robot which died after you decided to wait.
 If you die, however, you get nothing.
 For all other commands, the program will save you from typos
 by stopping short of being eaten.
 However, with
-.RB ` w '
+.Sq Ic w
 you take the risk of dying by miscalculation.
-.PP
+.Pp
 Only five scores are allowed per user on the score file.
 If you make it into the score file, you will be shown the list at the end
 of the game.
 If an alternate score file is specified, that will be used instead of the
 standard file for scores.
-.PP
+.Pp
 The options are
-.TP
-.B \-s
+.Bl -tag -width indent
+.It Fl s
 Don't play, just show the score file.
-.TP
-.B \-j
+.It Fl j
 Jump,
-.IR i.e. ,
+.Em i.e. ,
 when you run, don't show any intermediate positions; only show things at
 the end.
 This is useful on slow terminals.
-.TP
-.B \-t
+.It Fl t
 Teleport automatically when you have no other option.
 This is a little disconcerting until you get used to it, and then it is
 very nice.
-.TP
-.B \-a
+.It Fl a
 Advance into the higher levels directly, skipping the lower, easier levels.
-.SH AUTHOR
+.El
+.Sh AUTHOR
 Ken Arnold
-.SH FILES
-.ta
-.ta \w'/usr/games/lib/robots_roll\ \ \ \ 'u
-/usr/games/lib/robots_roll	the score file
-.SH BUGS
+.Sh FILES
+.Bl -tag -width /var/games/robots_roll -compact
+.It Pa /var/games/robots_roll
+the score file
+.El
+.Sh BUGS
 Bugs?
 You
-.IR crazy ,
+.Em crazy ,
 man?!?
