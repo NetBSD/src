@@ -519,12 +519,12 @@ get_addr(hostname, af, res, pai, port0)
 	struct addrinfo *pai;
 	int port0;
 {
-	int i, error;
-	struct addrinfo *cur;
-
 #ifdef USE_GETIPNODEBY
 	return get_addr0(hostname, af, res, pai, port0);
 #else
+	int i, error;
+	struct addrinfo *cur;
+
 	for (i = 0; afdl[i].a_af; i++) {
 		if (af == AF_UNSPEC || af == afdl[i].a_af) 
 			;
