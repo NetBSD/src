@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.2 1999/09/09 23:24:29 thorpej Exp $	*/
+/* $NetBSD: pathnames.h,v 1.3 2001/09/13 10:00:44 wiz Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,4 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _PATHNAMES_H_
+#define _PATHNAMES_H_
+
 #define _PATH_CH	"/dev/ch0"
+
+#endif /* !_PATHNAMES_H_ */
