@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.11 1998/07/27 13:50:47 mycroft Exp $	*/
+/*	$NetBSD: err.c,v 1.12 2000/07/06 01:09:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -36,12 +36,8 @@
 __RCSID("$NetBSD");
 #endif
 
-/* number of errors found */
-int	nerr;
-
-/* number of syntax errors */
-int	sytxerr;
-
+#define FD_SETSIZE 512
+#include <sys/types.h>
 #include <stdlib.h>
 #ifdef __STDC__
 #include <stdarg.h>
@@ -50,6 +46,15 @@ int	sytxerr;
 #endif
 
 #include "lint1.h"
+
+/* number of errors found */
+int	nerr;
+
+/* number of syntax errors */
+int	sytxerr;
+
+extern fd_set msgset;
+
 
 static	const	char *basename __P((const char *));
 static	void	verror __P((int, va_list));
@@ -372,6 +377,18 @@ const	char *msgs[] = {
 };
 
 /*
+ * print a list of the messages with their ids
+ */
+void
+msglist()
+{
+	int i;
+
+	for (i = 0; i < sizeof(msgs) / sizeof(msgs[0]); i++)
+		printf("%d\t%s\n", i, msgs[i]);
+}
+
+/*
  * If Fflag is not set basename() returns a pointer to the last
  * component of the path, otherwise it returns the argument.
  */
@@ -401,10 +418,13 @@ verror(n, ap)
 {
 	const	char *fn;
 
+	if (FD_ISSET(n, &msgset))
+		return;
+
 	fn = basename(curr_pos.p_file);
 	(void)printf("%s(%d): ", fn, curr_pos.p_line);
 	(void)vprintf(msgs[n], ap);
-	(void)printf("\n");
+	(void)printf(" [%d]\n", n);
 	nerr++;
 }
 
@@ -415,6 +435,9 @@ vwarning(n, ap)
 {
 	const	char *fn;
 
+	if (FD_ISSET(n, &msgset))
+		return;
+
 	if (nowarn)
 		/* this warning is suppressed by a LINTED comment */
 		return;
@@ -422,7 +445,9 @@ vwarning(n, ap)
 	fn = basename(curr_pos.p_file);
 	(void)printf("%s(%d): warning: ", fn, curr_pos.p_line);
 	(void)vprintf(msgs[n], ap);
-	(void)printf("\n");
+	(void)printf(" [%d]\n", n);
+	if (wflag)
+		nerr++;
 }
 
 void
@@ -502,6 +527,9 @@ message(n, va_alist)
 	va_list	ap;
 	const	char *fn;
 
+	if (FD_ISSET(n, &msgset))
+		return;
+
 #ifdef __STDC__
 	va_start(ap, n);
 #else
@@ -510,7 +538,7 @@ message(n, va_alist)
 	fn = basename(curr_pos.p_file);
 	(void)printf("%s(%d): ", fn, curr_pos.p_line);
 	(void)vprintf(msgs[n], ap);
-	(void)printf("\n");
+	(void)printf(" [%d]\n", n);
 	va_end(ap);
 }
 
