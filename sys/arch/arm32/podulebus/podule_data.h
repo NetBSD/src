@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.1 1996/10/14 23:16:08 mark Exp 
+ *	NetBSD: podules,v 1.2 1996/11/23 03:23:49 mark Exp 
  */
 
 /*
@@ -39,7 +39,18 @@
 static struct podule_description podules_acorn[] = {
 	{ PODULE_ACORN_SCSI,	"SCSI 1 interface" },
 	{ PODULE_ACORN_ETHER1,	"ether 1 interface" },
+	{ PODULE_ACORN_RAMROM,	"RAM/ROM podule" },
+	{ PODULE_ACORN_BBCIO,	"BBC IO interface" },
+	{ PODULE_ACORN_MIDI,	"MIDI interface" },
 	{ PODULE_ACORN_ETHER2,	"ether 2 interface" },
+	{ 0x0000, NULL }
+};
+
+static struct podule_description podules_olivetti[] = {
+	{ 0x0000, NULL }
+};
+
+static struct podule_description podules_watford[] = {
 	{ 0x0000, NULL }
 };
 
@@ -48,12 +59,17 @@ static struct podule_description podules_cconcepts[] = {
 	{ 0x0000, NULL }
 };
 
+static struct podule_description podules_armadillo[] = {
+	{ PODULE_ARMADILLO_A448,	"A447 sound sampler" },
+	{ 0x0000, NULL }
+};
+
 static struct podule_description podules_wildvision[] = {
-	{ PODULE_WILDVISION_HAWKV9,	"hawk V9 mark2" },
-	{ PODULE_WILDVISION_SCANLIGHTV256,	"scanlight Video 256" },
+	{ PODULE_WILDVISION_HAWKV9,	"hawk v9 mark2" },
+	{ PODULE_WILDVISION_SCANLIGHTV256,	"scanlight video 256" },
 	{ PODULE_WILDVISION_EAGLEM2,	"eagle M2" },
 	{ PODULE_WILDVISION_LARKA16,	"lark A16" },
-	{ PODULE_WILDVISION_MIDIMAX,	"MIDI Max" },
+	{ PODULE_WILDVISION_MIDIMAX,	"MIDI max" },
 	{ 0x0000, NULL }
 };
 
@@ -84,7 +100,13 @@ static struct podule_description podules_morley[] = {
 
 static struct podule_description podules_cumana[] = {
 	{ PODULE_CUMANA_SCSI2,	"SCSI II interface" },
+	{ PODULE_CUMANA_SCSI1,	"SCSI I interface" },
 	{ PODULE_CUMANA_SLCD,	"CDFS & SLCD expansion card" },
+	{ 0x0000, NULL }
+};
+
+static struct podule_description podules_ics[] = {
+	{ PODULE_ICS_IDE,	"IDE Interface" },
 	{ 0x0000, NULL }
 };
 
@@ -100,6 +122,7 @@ static struct podule_description podules_aleph1[] = {
 
 static struct podule_description podules_icubed[] = {
 	{ PODULE_ICUBED_ETHERH,	"etherlan 600 network slot interface" },
+	{ PODULE_ICUBED_ETHERHFLASH,	"etherlan 600 network slot interface" },
 	{ 0x0000, NULL }
 };
 
@@ -116,19 +139,22 @@ static struct podule_description podules_ant[] = {
 };
 
 static struct podule_description podules_alsystems[] = {
-	{ PODULE_ALSYSTEMS_SCSI,	"SCSI 1 / SCSI 2 host adapter" },
+	{ PODULE_ALSYSTEMS_SCSI,	"SCSI II host adapter" },
 	{ 0x0000, NULL }
 };
 
 static struct podule_description podules_mcs[] = {
-	{ PODULE_MCS_SCSI,	"Connect32 SCSI interface" },
+	{ PODULE_MCS_SCSI,	"Connect32 SCSI II interface" },
 	{ 0x0000, NULL }
 };
 
 
 struct podule_list known_podules[] = {
 	{ MANUFACTURER_ACORN, 		"Acorn Computers", 	podules_acorn },
+	{ MANUFACTURER_OLIVETTI, 	"Olivetti", 	podules_olivetti },
+	{ MANUFACTURER_WATFORD, 	"Watford", 	podules_watford },
 	{ MANUFACTURER_CCONCEPTS, 	"Computer Concepts", 	podules_cconcepts },
+	{ MANUFACTURER_ARMADILLO, 	"Armadillo Systems", 	podules_armadillo },
 	{ MANUFACTURER_WILDVISION, 	"Wild Vision", 	podules_wildvision },
 	{ MANUFACTURER_ATOMWIDE, 	"Atomwide", 	podules_atomwide },
 	{ MANUFACTURER_LINGENUITY, 	"Lingenuity", 	podules_lingenuity },
@@ -136,6 +162,7 @@ struct podule_list known_podules[] = {
 	{ MANUFACTURER_OAK, 		"Oak Solutions", 	podules_oak },
 	{ MANUFACTURER_MORLEY, 		"Morley", 	podules_morley },
 	{ MANUFACTURER_CUMANA, 		"Cumana", 	podules_cumana },
+	{ MANUFACTURER_ICS, 		"ICS", 	podules_ics },
 	{ MANUFACTURER_ARXE, 		"ARXE", 	podules_arxe },
 	{ MANUFACTURER_ALEPH1, 		"Aleph 1", 	podules_aleph1 },
 	{ MANUFACTURER_ICUBED, 		"I-Cubed", 	podules_icubed },
