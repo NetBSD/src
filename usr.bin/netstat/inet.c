@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.19 1996/12/09 12:48:37 neil Exp $	*/
+/*	$NetBSD: inet.c,v 1.20 1997/04/03 04:46:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$NetBSD: inet.c,v 1.19 1996/12/09 12:48:37 neil Exp $";
+static char *rcsid = "$NetBSD: inet.c,v 1.20 1997/04/03 04:46:46 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,10 +140,10 @@ protopr(off, name)
 		}
 		if (Aflag)
 			if (istcp)
-				printf("%8x ", inpcb.inp_ppcb);
+				printf("%8lp ", (u_long) inpcb.inp_ppcb);
 			else
-				printf("%8x ", prev);
-		printf("%-5.5s %6d %6d ", name, sockb.so_rcv.sb_cc,
+				printf("%8lp ", (u_long) prev);
+		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
 		inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport, name);
 		inetprint(&inpcb.inp_faddr, (int)inpcb.inp_fport, name);
@@ -172,10 +172,14 @@ tcp_stats(off, name)
 	printf ("%s:\n", name);
 	kread(off, (char *)&tcpstat, sizeof (tcpstat));
 
+#define	ps(f, m) if (tcpstat.f || sflag <= 1) \
+    printf(m, tcpstat.f)
 #define	p(f, m) if (tcpstat.f || sflag <= 1) \
     printf(m, tcpstat.f, plural(tcpstat.f))
 #define	p2(f1, f2, m) if (tcpstat.f1 || tcpstat.f2 || sflag <= 1) \
     printf(m, tcpstat.f1, plural(tcpstat.f1), tcpstat.f2, plural(tcpstat.f2))
+#define	p2s(f1, f2, m) if (tcpstat.f1 || tcpstat.f2 || sflag <= 1) \
+    printf(m, tcpstat.f1, plural(tcpstat.f1), tcpstat.f2)
 #define	p3(f, m) if (tcpstat.f || sflag <= 1) \
     printf(m, tcpstat.f, plurales(tcpstat.f))
 
@@ -184,7 +188,7 @@ tcp_stats(off, name)
 		"\t\t%lu data packet%s (%lu byte%s)\n");
 	p2(tcps_sndrexmitpack, tcps_sndrexmitbyte,
 		"\t\t%lu data packet%s (%lu byte%s) retransmitted\n");
-	p2(tcps_sndacks, tcps_delack,
+	p2s(tcps_sndacks, tcps_delack,
 		"\t\t%lu ack-only packet%s (%lu delayed)\n");
 	p(tcps_sndurg, "\t\t%lu URG only packet%s\n");
 	p(tcps_sndprobe, "\t\t%lu window probe packet%s\n");
@@ -210,7 +214,7 @@ tcp_stats(off, name)
 	p(tcps_rcvafterclose, "\t\t%lu packet%s received after close\n");
 	p(tcps_rcvbadsum, "\t\t%lu discarded for bad checksum%s\n");
 	p(tcps_rcvbadoff, "\t\t%lu discarded for bad header offset field%s\n");
-	p(tcps_rcvshort, "\t\t%lu discarded because packet too short\n");
+	ps(tcps_rcvshort, "\t\t%lu discarded because packet too short\n");
 	p(tcps_connattempt, "\t%lu connection request%s\n");
 	p(tcps_accepts, "\t%lu connection accept%s\n");
 	p(tcps_connects, "\t%lu connection%s established (including accepts)\n");
@@ -228,10 +232,12 @@ tcp_stats(off, name)
 	p(tcps_predack, "\t%lu correct ACK header prediction%s\n");
 	p(tcps_preddat, "\t%lu correct data packet header prediction%s\n");
 	p3(tcps_pcbhashmiss, "\t%lu PCB hash miss%s\n");
-	p(tcps_noport, "\t%lu dropped due to no socket\n");
+	ps(tcps_noport, "\t%lu dropped due to no socket\n");
 
 #undef p
+#undef ps
 #undef p2
+#undef p2s
 #undef p3
 }
 
@@ -251,18 +257,20 @@ udp_stats(off, name)
 	printf("%s:\n", name);
 	kread(off, (char *)&udpstat, sizeof (udpstat));
 
+#define	ps(f, m) if (udpstat.f || sflag <= 1) \
+    printf(m, udpstat.f)
 #define	p(f, m) if (udpstat.f || sflag <= 1) \
     printf(m, udpstat.f, plural(udpstat.f))
 #define	p3(f, m) if (udpstat.f || sflag <= 1) \
     printf(m, udpstat.f, plurales(udpstat.f))
 
 	p(udps_ipackets, "\t%lu datagram%s received\n");
-	p(udps_hdrops, "\t%lu with incomplete header\n");
-	p(udps_badlen, "\t%lu with bad data length field\n");
-	p(udps_badsum, "\t%lu with bad checksum\n");
-	p(udps_noport, "\t%lu dropped due to no socket\n");
+	ps(udps_hdrops, "\t%lu with incomplete header\n");
+	ps(udps_badlen, "\t%lu with bad data length field\n");
+	ps(udps_badsum, "\t%lu with bad checksum\n");
+	ps(udps_noport, "\t%lu dropped due to no socket\n");
 	p(udps_noportbcast, "\t%lu broadcast/multicast datagram%s dropped due to no socket\n");
-	p(udps_fullsock, "\t%lu dropped due to full socket buffers\n");
+	ps(udps_fullsock, "\t%lu dropped due to full socket buffers\n");
 	delivered = udpstat.udps_ipackets -
 		    udpstat.udps_hdrops -
 		    udpstat.udps_badlen -
@@ -275,6 +283,7 @@ udp_stats(off, name)
 	p3(udps_pcbhashmiss, "\t%lu PCB hash miss%s\n");
 	p(udps_opackets, "\t%lu datagram%s output\n");
 
+#undef ps
 #undef p
 #undef p3
 }
@@ -294,18 +303,20 @@ ip_stats(off, name)
 	kread(off, (char *)&ipstat, sizeof (ipstat));
 	printf("%s:\n", name);
 
+#define	ps(f, m) if (ipstat.f || sflag <= 1) \
+    printf(m, ipstat.f)
 #define	p(f, m) if (ipstat.f || sflag <= 1) \
     printf(m, ipstat.f, plural(ipstat.f))
 
 	p(ips_total, "\t%lu total packet%s received\n");
 	p(ips_badsum, "\t%lu bad header checksum%s\n");
-	p(ips_toosmall, "\t%lu with size smaller than minimum\n");
-	p(ips_tooshort, "\t%lu with data size < data length\n");
-	p(ips_toolong, "\t%lu with length > max ip packet size\n");
-	p(ips_badhlen, "\t%lu with header length < data size\n");
-	p(ips_badlen, "\t%lu with data length < header length\n");
-	p(ips_badoptions, "\t%lu with bad options\n");
-	p(ips_badvers, "\t%lu with incorrect version number\n");
+	ps(ips_toosmall, "\t%lu with size smaller than minimum\n");
+	ps(ips_tooshort, "\t%lu with data size < data length\n");
+	ps(ips_toolong, "\t%lu with length > max ip packet size\n");
+	ps(ips_badhlen, "\t%lu with header length < data size\n");
+	ps(ips_badlen, "\t%lu with data length < header length\n");
+	ps(ips_badoptions, "\t%lu with bad options\n");
+	ps(ips_badvers, "\t%lu with incorrect version number\n");
 	p(ips_fragments, "\t%lu fragment%s received\n");
 	p(ips_fragdropped, "\t%lu fragment%s dropped (dup or out of space)\n");
 	p(ips_badfrags, "\t%lu malformed fragment%s dropped\n");
@@ -323,6 +334,7 @@ ip_stats(off, name)
 	p(ips_fragmented, "\t%lu output datagram%s fragmented\n");
 	p(ips_ofragments, "\t%lu fragment%s created\n");
 	p(ips_cantfrag, "\t%lu datagram%s that can't be fragmented\n");
+#undef ps
 #undef p
 }
 

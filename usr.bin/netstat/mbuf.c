@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.10 1997/02/28 00:14:22 jonathan Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.11 1997/04/03 04:46:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: mbuf.c,v 1.10 1997/02/28 00:14:22 jonathan Exp $";
+static char *rcsid = "$NetBSD: mbuf.c,v 1.11 1997/04/03 04:46:49 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,13 +125,13 @@ mbpr(mbaddr, msizeaddr, mclbaddr)
 			printf("\t%u mbufs allocated to <mbuf type %d>\n",
 			    mbstat.m_mtypes[i], i);
 		}
-	printf("%u/%u mapped pages in use\n",
+	printf("%lu/%lu mapped pages in use\n",
 		mbstat.m_clusters - mbstat.m_clfree, mbstat.m_clusters);
 	totmem = totmbufs * msize + mbstat.m_clusters * mclbytes;
 	totfree = mbstat.m_clfree * mclbytes;
 	printf("%u Kbytes allocated to network (%d%% in use)\n",
 		totmem / 1024, (totmem - totfree) * 100 / totmem);
-	printf("%u requests for memory denied\n", mbstat.m_drops);
-	printf("%u requests for memory delayed\n", mbstat.m_wait);
-	printf("%u calls to protocol drain routines\n", mbstat.m_drain);
+	printf("%lu requests for memory denied\n", mbstat.m_drops);
+	printf("%lu requests for memory delayed\n", mbstat.m_wait);
+	printf("%lu calls to protocol drain routines\n", mbstat.m_drain);
 }
