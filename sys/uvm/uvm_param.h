@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.15 2003/03/14 08:35:05 matt Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.16 2003/04/09 16:34:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -89,21 +89,80 @@ typedef int	boolean_t;
 #define	FALSE	0
 #endif
 
-/*
- *	The machine independent pages are refered to as PAGES.  A page
- *	is some number of hardware pages, depending on the target machine.
- */
-#define	DEFAULT_PAGE_SIZE	4096
+#if defined(_KERNEL)
 
-#if defined(_KERNEL) && !defined(PAGE_SIZE)
+#if defined(PAGE_SIZE)
+
 /*
- *	All references to the size of a page should be done with PAGE_SIZE
- *	or PAGE_SHIFT.  The fact they are variables is hidden here so that
- *	we can easily make them constant if we so desire.
+ * If PAGE_SIZE is defined at this stage, it must be a constant.
  */
+
+#if PAGE_SIZE == 0
+#error Invalid PAGE_SIZE definition
+#endif
+
+/*
+ * If the platform does not need to support a variable PAGE_SIZE,
+ * then provide default values for MIN_PAGE_SIZE and MAX_PAGE_SIZE.
+ */
+
+#if !defined(MIN_PAGE_SIZE)
+#define	MIN_PAGE_SIZE	PAGE_SIZE
+#endif /* ! MIN_PAGE_SIZE */
+
+#if !defined(MAX_PAGE_SIZE)
+#define	MAX_PAGE_SIZE	PAGE_SIZE
+#endif /* ! MAX_PAGE_SIZE */
+
+#else /* ! PAGE_SIZE */
+
+/*
+ * PAGE_SIZE is not a constant; MIN_PAGE_SIZE and MAX_PAGE_SIZE must
+ * be defined.
+ */
+
+#if !defined(MIN_PAGE_SIZE)
+#error MIN_PAGE_SIZE not defined
+#endif
+
+#if !defined(MAX_PAGE_SIZE)
+#error MAX_PAGE_SIZE not defined
+#endif
+
+#endif /* PAGE_SIZE */
+
+/*
+ * MIN_PAGE_SIZE and MAX_PAGE_SIZE must be constants.
+ */
+
+#if MIN_PAGE_SIZE == 0
+#error Invalid MIN_PAGE_SIZE definition
+#endif
+
+#if MAX_PAGE_SIZE == 0
+#error Invalid MAX_PAGE_SIZE definition
+#endif
+
+/*
+ * If MIN_PAGE_SIZE and MAX_PAGE_SIZE are not equal, then we must use
+ * non-constant PAGE_SIZE, et al for LKMs.
+ */
+#if (MIN_PAGE_SIZE != MAX_PAGE_SIZE) && defined(_LKM)
+#undef PAGE_SIZE
+#undef PAGE_MASK
+#undef PAGE_SHIFT
+#endif
+
+/*
+ * Now provide PAGE_SIZE, PAGE_MASK, and PAGE_SHIFT if we do not
+ * have ones that are compile-time constants.
+ */
+#if !defined(PAGE_SIZE)
 #define	PAGE_SIZE	uvmexp.pagesize		/* size of page */
 #define	PAGE_MASK	uvmexp.pagemask		/* size of page - 1 */
 #define	PAGE_SHIFT	uvmexp.pageshift	/* bits to shift for pages */
+#endif /* PAGE_SIZE */
+
 #endif /* _KERNEL */
 
 /*
