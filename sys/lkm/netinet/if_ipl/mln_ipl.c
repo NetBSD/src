@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.18 1998/03/01 02:25:22 fvdl Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.19 1998/07/12 15:11:50 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -53,7 +53,6 @@
 #if !defined(__NetBSD_Version__) || __NetBSD_Version__ < 103050000
 #define vn_lock(v,f) VOP_LOCK(v)
 #endif
-
 
 #if !defined(VOP_LEASE) && defined(LEASE_CHECK)
 #define	VOP_LEASE	LEASE_CHECK
