@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.32 1995/12/11 12:43:22 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.33 1995/12/18 23:58:33 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -68,7 +68,7 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 
 /*static*/ void	espattach	__P((struct device *, struct device *, void *));
 /*static*/ int	espmatch	__P((struct device *, void *, void *));
-/*static*/ int  espprint	__P((void *, char *));
+/*static*/ int	espprint	__P((void *, char *));
 /*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
 /*static*/ void	espreadregs	__P((struct esp_softc *));
 /*static*/ void	espselect	__P((struct esp_softc *,
@@ -163,9 +163,9 @@ espattach(parent, self, aux)
 	 * address space.
 	 */
 	if (ca->ca_ra.ra_vaddr)
-		sc->sc_reg = (volatile caddr_t) ca->ca_ra.ra_vaddr;
+		sc->sc_reg = (volatile u_char *) ca->ca_ra.ra_vaddr;
 	else {
-		sc->sc_reg = (volatile caddr_t)
+		sc->sc_reg = (volatile u_char *)
 		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len, ca->ca_bustype);
 	}
 
@@ -217,24 +217,24 @@ espattach(parent, self, aux)
 	sc->sc_cfg1 = sc->sc_id | ESPCFG1_PARENB;
 	sc->sc_cfg2 = ESPCFG2_SCSI2 | ESPCFG2_RPE;
 	sc->sc_cfg3 = ESPCFG3_CDB;
-	sc->sc_reg[ESP_CFG2] = sc->sc_cfg2;
+	ESP_WRITE_REG(sc, ESP_CFG2, sc->sc_cfg2);
 
-	if ((sc->sc_reg[ESP_CFG2] & ~ESPCFG2_RSVD) != (ESPCFG2_SCSI2 | ESPCFG2_RPE)) {
+	if ((ESP_READ_REG(sc, ESP_CFG2) & ~ESPCFG2_RSVD) != (ESPCFG2_SCSI2 | ESPCFG2_RPE)) {
 		printf(": ESP100");
 		sc->sc_rev = ESP100;
 	} else {
 		sc->sc_cfg2 = ESPCFG2_SCSI2 | ESPCFG2_FE;
-		sc->sc_reg[ESP_CFG2] = sc->sc_cfg2;
+		ESP_WRITE_REG(sc, ESP_CFG2, sc->sc_cfg2);
 		sc->sc_cfg3 = 0;
-		sc->sc_reg[ESP_CFG3] = sc->sc_cfg3;
+		ESP_WRITE_REG(sc, ESP_CFG3, sc->sc_cfg3);
 		sc->sc_cfg3 = (ESPCFG3_CDB | ESPCFG3_FCLK);
-		sc->sc_reg[ESP_CFG3] = sc->sc_cfg3;
-		if (sc->sc_reg[ESP_CFG3] != (ESPCFG3_CDB | ESPCFG3_FCLK)) {
+		ESP_WRITE_REG(sc, ESP_CFG3, sc->sc_cfg3);
+		if (ESP_READ_REG(sc, ESP_CFG3) != (ESPCFG3_CDB | ESPCFG3_FCLK)) {
 			printf(": ESP100A");
 			sc->sc_rev = ESP100A;
 		} else {
 			sc->sc_cfg3 = 0;
-			sc->sc_reg[ESP_CFG3] = sc->sc_cfg3;
+			ESP_WRITE_REG(sc, ESP_CFG3, sc->sc_cfg3);
 			printf(": ESP200");
 			sc->sc_rev = ESP200;
 		}
@@ -360,7 +360,6 @@ void
 esp_reset(sc)
 	struct esp_softc *sc;
 {
-	volatile u_char *esp = sc->sc_reg; 
 
 	/* reset DMA first */
 	DMA_RESET(sc->sc_dma);
@@ -373,22 +372,22 @@ esp_reset(sc)
 	/* do these backwards, and fall through */
 	switch (sc->sc_rev) {
 	case ESP200:
-		esp[ESP_CFG3] = sc->sc_cfg3;
+		ESP_WRITE_REG(sc, ESP_CFG3, sc->sc_cfg3);
 	case ESP100A:
-		esp[ESP_CFG2] = sc->sc_cfg2;
+		ESP_WRITE_REG(sc, ESP_CFG2, sc->sc_cfg2);
 	case ESP100:
-		esp[ESP_CFG1] = sc->sc_cfg1;
-		esp[ESP_CCF] = sc->sc_ccf;
-		esp[ESP_SYNCOFF] = 0;
-		esp[ESP_TIMEOUT] = sc->sc_timeout;
+		ESP_WRITE_REG(sc, ESP_CFG1, sc->sc_cfg1);
+		ESP_WRITE_REG(sc, ESP_CCF, sc->sc_ccf);
+		ESP_WRITE_REG(sc, ESP_SYNCOFF, 0);
+		ESP_WRITE_REG(sc, ESP_TIMEOUT, sc->sc_timeout);
 		break;
 	default:
 		printf("%s: unknown revision code, assuming ESP100\n",
 		    sc->sc_dev.dv_xname);
-		esp[ESP_CFG1] = sc->sc_cfg1;
-		esp[ESP_CCF] = sc->sc_ccf;
-		esp[ESP_SYNCOFF] = 0;
-		esp[ESP_TIMEOUT] = sc->sc_timeout;
+		ESP_WRITE_REG(sc, ESP_CFG1, sc->sc_cfg1);
+		ESP_WRITE_REG(sc, ESP_CCF, sc->sc_ccf);
+		ESP_WRITE_REG(sc, ESP_SYNCOFF, 0);
+		ESP_WRITE_REG(sc, ESP_TIMEOUT, sc->sc_timeout);
 	}
 }
 
@@ -486,12 +485,11 @@ void
 espreadregs(sc)
 	struct esp_softc *sc;
 {
-	volatile u_char *esp = sc->sc_reg;
 
-	sc->sc_espstat = esp[ESP_STAT];
+	sc->sc_espstat = ESP_READ_REG(sc, ESP_STAT);
 	/* Only the stepo bits are of interest */
-	sc->sc_espstep = esp[ESP_STEP] & ESPSTEP_MASK;
-	sc->sc_espintr = esp[ESP_INTR];
+	sc->sc_espstep = ESP_READ_REG(sc, ESP_STEP) & ESPSTEP_MASK;
+	sc->sc_espintr = ESP_READ_REG(sc, ESP_INTR);
 
 	/*
 	 * Determine the SCSI bus phase, return either a real SCSI bus phase
@@ -544,7 +542,6 @@ espselect(sc, target, lun, cmd, clen)
 	u_char *cmd;
 	u_char clen;
 {
-	volatile u_char *esp = sc->sc_reg;
 	struct esp_tinfo *ti = &sc->sc_tinfo[target];
 	int i;
 
@@ -557,20 +554,20 @@ espselect(sc, target, lun, cmd, clen)
 	 * The docs say the target register is never reset, and I
 	 * can't think of a better place to set it
 	 */
-	esp[ESP_SELID] = target;
+	ESP_WRITE_REG(sc, ESP_SELID, target);
 	if (ti->flags & T_SYNCMODE) {
-		esp[ESP_SYNCOFF] = ti->offset;
-		esp[ESP_SYNCTP] = esp_stp2cpb(sc, ti->period);
+		ESP_WRITE_REG(sc, ESP_SYNCOFF, ti->offset);
+		ESP_WRITE_REG(sc, ESP_SYNCTP, esp_stp2cpb(sc, ti->period));
 	} else {
-		esp[ESP_SYNCOFF] = 0;
-		esp[ESP_SYNCTP] = 0;
+		ESP_WRITE_REG(sc, ESP_SYNCOFF, 0);
+		ESP_WRITE_REG(sc, ESP_SYNCTP, 0);
 	}
 
 	/*
 	 * Who am I. This is where we tell the target that we are
 	 * happy for it to disconnect etc.
 	 */
-	esp[ESP_FIFO] = MSG_IDENTIFY(lun, 1);
+	ESP_WRITE_REG(sc, ESP_FIFO, MSG_IDENTIFY(lun, 1));
 
 	if (ti->flags & T_NEGOTIATE) {
 		/* Arbitrate, select and stop after IDENTIFY message */
@@ -580,7 +577,7 @@ espselect(sc, target, lun, cmd, clen)
 
 	/* Now the command into the FIFO */
 	for (i = 0; i < clen; i++)
-		esp[ESP_FIFO] = *cmd++;
+		ESP_WRITE_REG(sc, ESP_FIFO, *cmd++);
 
 	/* And get the targets attention */
 	ESPCMD(sc, ESPCMD_SELATN);
@@ -670,7 +667,7 @@ esp_poll(sc, ecb)
 			espintr(sc);
 		}
 #if alternatively
-		if (sc->sc_reg[ESP_STAT] & ESPSTAT_INT)
+		if (ESP_READ_REG(sc, ESP_STAT) & ESPSTAT_INT)
 			espintr(sc);
 #endif
 		if (xs->flags & ITSDONE)
@@ -892,12 +889,11 @@ void
 esp_msgin(sc)
 	register struct esp_softc *sc;
 {
-	volatile u_char *esp = sc->sc_reg;
 	register int v;
 	
 	ESP_TRACE(("[esp_msgin(curmsglen:%d)] ", sc->sc_imlen));
 
-	if ((esp[ESP_FFLAG] & ESPFIFO_FF) == 0) {
+	if ((ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) == 0) {
 		printf("%s: msgin: no msg byte available\n",
 			sc->sc_dev.dv_xname);
 		return;
@@ -914,7 +910,7 @@ esp_msgin(sc)
 		sc->sc_imlen = 0;
 	}
 
-	v = esp[ESP_FIFO];
+	v = ESP_READ_REG(sc, ESP_FIFO);
 	ESP_MISC(("<msgbyte:0x%02x>", v));
 
 #if 0
@@ -1085,13 +1081,16 @@ printf("<<esp:target%d: MSG_PARITY_ERROR>>", ecb->xs->sc_link->target);
 #endif
 						}
 						ti->flags &= ~T_SYNCMODE;
-						esp[ESP_SYNCOFF] = 0;
+						ESP_WRITE_REG(sc,
+						    ESP_SYNCOFF, 0);
 						esp_sched_msgout(SEND_SDTR);
 					} else {
 						/* we are sync */
 						sc->sc_flags &= ~ESP_SYNCHNEGO;
-						esp[ESP_SYNCOFF] = ti->offset;
-						esp[ESP_SYNCTP] = p;
+						ESP_WRITE_REG(sc,
+						    ESP_SYNCOFF, ti->offset);
+						ESP_WRITE_REG(sc,
+						    ESP_SYNCTP, p);
 						ti->flags |= T_SYNCMODE;
 						sc_print_addr(ecb->xs->sc_link);
 #ifdef ESP_DEBUG
@@ -1160,8 +1159,9 @@ printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
 				sc->sc_dleft = ecb->dleft;
 				sc->sc_tinfo[sc_link->target].lubusy
 					|= (1<<sc_link->lun);
-				esp[ESP_SYNCOFF] = ti->offset;
-				esp[ESP_SYNCTP] = esp_stp2cpb(sc, ti->period);
+				ESP_WRITE_REG(sc, ESP_SYNCOFF, ti->offset);
+				ESP_WRITE_REG(sc, ESP_SYNCTP,
+				    esp_stp2cpb(sc, ti->period));
 				ESP_MISC(("... found ecb"));
 				sc->sc_state = ESP_HASNEXUS;
 			}
@@ -1192,7 +1192,6 @@ void
 esp_msgout(sc)
 	register struct esp_softc *sc;
 {
-	volatile u_char *esp = sc->sc_reg;
 	struct esp_tinfo *ti;
 	struct ecb *ecb;
 
@@ -1256,7 +1255,7 @@ esp_msgout(sc)
 	{	int i;
 		ESPCMD(sc, ESPCMD_FLUSH);
 		for (i = 0; i < sc->sc_omlen; i++)
-			esp[FIFO] = sc->sc_omess[i];
+			ESP_WRITE_REG(sc, FIFO, sc->sc_omess[i]);
 		ESPCMD(sc, ESPCMD_TRANS);
 #if test_stuck_on_msgout
 printf("<<XXXmsgoutdoneXXX>>");
@@ -1280,7 +1279,6 @@ espintr(sc)
 {
 	register struct ecb *ecb;
 	register struct scsi_link *sc_link;
-	volatile u_char *esp = sc->sc_reg;
 	struct esp_tinfo *ti;
 	int loop;
 
@@ -1338,7 +1336,7 @@ espintr(sc)
 
 		/* SCSI Reset */
 		if (sc->sc_espintr & ESPINTR_SBR) {
-			if (esp[ESP_FFLAG] & ESPFIFO_FF) {
+			if (ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) {
 				ESPCMD(sc, ESPCMD_FLUSH);
 				DELAY(1);
 			}
@@ -1370,7 +1368,7 @@ espintr(sc)
 
 			if (sc->sc_espstat & ESPSTAT_GE) {
 				/* no target ? */
-				if (esp[ESP_FFLAG] & ESPFIFO_FF) {
+				if (ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) {
 					ESPCMD(sc, ESPCMD_FLUSH);
 					DELAY(1);
 				}
@@ -1388,7 +1386,7 @@ espintr(sc)
 					sc->sc_dev.dv_xname, sc->sc_lastcmd,
 					sc->sc_state, sc->sc_phase,	
 					sc->sc_prevphase);
-				if (esp[ESP_FFLAG] & ESPFIFO_FF) {
+				if (ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) {
 					ESPCMD(sc, ESPCMD_FLUSH);
 					DELAY(1);
 				}
@@ -1427,7 +1425,7 @@ espintr(sc)
 
 		if (sc->sc_espintr & ESPINTR_DIS) {
 			ESP_MISC(("<DISC [intr %x, stat %x, step %d]>", sc->sc_espintr, sc->sc_espstat, sc->sc_espstep));
-			if (esp[ESP_FFLAG] & ESPFIFO_FF) {
+			if (ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) {
 				ESPCMD(sc, ESPCMD_FLUSH);
 				DELAY(1);
 			}
@@ -1531,10 +1529,10 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 					esp_init(sc, 1);
 					return 1;
 				}
-				if ((esp[ESP_FFLAG] & ESPFIFO_FF) != 2) {
-printf("<RESELECT: %d bytes in FIFO>", esp[ESP_FFLAG] & ESPFIFO_FF);
+				if ((ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) != 2) {
+printf("<RESELECT: %d bytes in FIFO>", ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF);
 				}
-				sc->sc_selid = esp[ESP_FIFO];
+				sc->sc_selid = ESP_READ_REG(sc, ESP_FIFO);
 				sc->sc_selid &= ~(1<<sc->sc_id);
 				ESP_MISC(("selid=0x%2x ", sc->sc_selid));
 				esp_msgin(sc);	/* Handle identify message */
@@ -1591,7 +1589,7 @@ printf("<RESELECT: %d bytes in FIFO>", esp[ESP_FFLAG] & ESPFIFO_FF);
 					 * went out.
 					 * (Timing problems?)
 					 */
-					if ((esp[ESP_FFLAG]&ESPFIFO_FF) == 0) {
+					if ((ESP_READ_REG(sc, ESP_FFLAG)&ESPFIFO_FF) == 0) {
 						/* Hope for the best.. */
 						break;
 					}
@@ -1601,7 +1599,7 @@ printf("<RESELECT: %d bytes in FIFO>", esp[ESP_FFLAG] & ESPFIFO_FF);
 						sc->sc_dev.dv_xname,
 						sc_link->target,
 						sc_link->lun,
-						esp[ESP_FFLAG] & ESPFIFO_FF,
+						ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF,
 						sc->sc_espintr, sc->sc_espstat,
 						sc->sc_espstep);
 					sc->sc_flags |= ESP_ABORTING;
@@ -1661,19 +1659,19 @@ printf("<RESELECT: %d bytes in FIFO>", esp[ESP_FFLAG] & ESPFIFO_FF);
 						sc->sc_espintr, sc->sc_espstat,
 						sc->sc_espstep);
 				}
-				if ((esp[ESP_FFLAG] & ESPFIFO_FF) != 2) {
+				if ((ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) != 2) {
 					printf("%s: ICCS: expected 2, got %d "
 					      ": [intr %x, stat %x, step %x]\n",
 						sc->sc_dev.dv_xname,
-						esp[ESP_FFLAG] & ESPFIFO_FF,
+						ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF,
 						sc->sc_espintr, sc->sc_espstat,
 						sc->sc_espstep);
 					ESPCMD(sc, ESPCMD_FLUSH);
 					esp_abort(sc, ecb);
 					return 1;
 				}
-				ecb->stat = esp[ESP_FIFO];
-				msg = esp[ESP_FIFO];
+				ecb->stat = ESP_READ_REG(sc, ESP_FIFO);
+				msg = ESP_READ_REG(sc, ESP_FIFO);
 				ESP_PHASE(("<stat:(%x,%x)>", ecb->stat, msg));
 				if (msg == MSG_CMDCOMPLETE) {
 					sc->sc_flags |= ESP_BUSFREE_OK;
@@ -1737,13 +1735,13 @@ printf("<RESELECT: %d bytes in FIFO>", esp[ESP_FFLAG] & ESPFIFO_FF);
 
 			ESP_PHASE(("COMMAND_PHASE 0x%02x (%d) ",
 				ecb->cmd.opcode, ecb->clen));
-			if (esp[ESP_FFLAG] & ESPFIFO_FF) {
+			if (ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) {
 				ESPCMD(sc, ESPCMD_FLUSH);
 				DELAY(1);
 			}
 			/* Now the command into the FIFO */
 			for (i = 0; i < ecb->clen; i++)
-				esp[ESP_FIFO] = *cmd++;
+				ESP_WRITE_REG(sc, ESP_FIFO, *cmd++);
 			ESPCMD(sc, ESPCMD_TRANS);
 			sc->sc_prevphase = COMMAND_PHASE;
 			}
@@ -1759,12 +1757,12 @@ printf("<RESELECT: %d bytes in FIFO>", esp[ESP_FFLAG] & ESPFIFO_FF);
 			if (sc->sc_rev == ESP100)
 				ESPCMD(sc, ESPCMD_FLUSH);
 #if 0 /* Why is the fifo sometimes full after re-connect? */
-			if (esp[ESP_FFLAG] & ESPFIFO_FF) {
+			if (ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) {
 				static int xxx;
 				if (xxx <= 3) {
 					printf("%s: lost %d bytes from FIFO ",
 						sc->sc_dev.dv_xname,
-						esp[ESP_FFLAG] & ESPFIFO_FF);
+						ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF);
 					printf(" previous phase %x\n",
 						sc->sc_prevphase);
 					if (xxx == 3)

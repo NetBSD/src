@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.14 1995/12/11 12:43:20 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.15 1995/12/18 23:58:31 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -242,7 +242,6 @@ dma_start(sc, addr, len, datain)
 	int datain;
 {
 	/* we do the loading of the transfer counter */
-	volatile unsigned char *esp = sc->sc_esp->sc_reg;
 	size_t size;
 	u_long csr;
 
@@ -275,10 +274,10 @@ dma_start(sc, addr, len, datain)
 	DMADDR(sc) = *sc->sc_dmaaddr;
 
 	/* Program the SCSI counter */
-	esp[ESP_TCL] = size;
-	esp[ESP_TCM] = size >> 8;
+	ESP_WRITE_REG(sc->sc_esp, ESP_TCL, size);
+	ESP_WRITE_REG(sc->sc_esp, ESP_TCM, size >> 8);
 	if (sc->sc_esp->sc_rev > ESP100A) {
-		esp[ESP_TCH] = size >> 16;
+		ESP_WRITE_REG(sc->sc_esp, ESP_TCH, size >> 16);
 	}  
 	/* load the count in */
 	ESPCMD(sc->sc_esp, ESPCMD_NOP|ESPCMD_DMA);
@@ -311,7 +310,6 @@ int
 dmaintr(sc)
 	struct dma_softc *sc;
 {
-	volatile unsigned char *esp = sc->sc_esp->sc_reg;
 	int trans = 0, resid = 0;
 
 	 ESP_DMA(("%s: intr: addr %x, csr %b\n", sc->sc_dev.dv_xname,
@@ -343,20 +341,24 @@ dmaintr(sc)
 	if (sc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
 		ESP_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
-			esp[ESP_TCL] | (esp[ESP_TCM] << 8),
-			esp[ESP_TCL], esp[ESP_TCM]));
+			ESP_READ_REG(sc->sc_esp, ESP_TCL) |
+				(ESP_READ_REG(sc->sc_esp, ESP_TCM) << 8),
+			ESP_READ_REG(sc->sc_esp, ESP_TCL),
+			ESP_READ_REG(sc->sc_esp, ESP_TCM)));
 		return 0;
 	}
 
 	if (!(DMACSR(sc) & D_WRITE) &&
-	    (resid = (esp[ESP_FFLAG] & ESPFIFO_FF)) != 0) {
+	    (resid = (ESP_READ_REG(sc->sc_esp, ESP_FFLAG) & ESPFIFO_FF)) != 0) {
 		printf("empty FIFO of %d ", resid);
 		ESPCMD(sc->sc_esp, ESPCMD_FLUSH);
 		DELAY(1);
 	}
 
-	resid += esp[ESP_TCL] | (esp[ESP_TCM] << 8) |
-	    (sc->sc_esp->sc_rev > ESP100A ? (esp[ESP_TCH] << 16) : 0);
+	resid += ESP_READ_REG(sc->sc_esp, ESP_TCL) |
+		 (ESP_READ_REG(sc->sc_esp, ESP_TCM) << 8) |
+		 (sc->sc_esp->sc_rev > ESP100A
+			? (ESP_READ_REG(sc->sc_esp, ESP_TCH) << 16) : 0);
 
 	if (resid == 0 && (sc->sc_esp->sc_rev <= ESP100A) &&
 	    (sc->sc_esp->sc_espstat & ESPSTAT_TC) == 0)
@@ -370,8 +372,11 @@ dmaintr(sc)
 	}
 
 	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
-		esp[ESP_TCL],esp[ESP_TCM],
-		sc->sc_esp->sc_rev > ESP100A ? esp[ESP_TCH] : 0, trans, resid));
+		ESP_READ_REG(sc->sc_esp, ESP_TCL),
+		ESP_READ_REG(sc->sc_esp, ESP_TCM),
+		sc->sc_esp->sc_rev > ESP100A
+			? ESP_READ_REG(sc->sc_esp, ESP_TCH) : 0,
+		trans, resid));
 
 	if (DMACSR(sc) & D_WRITE)
 		cache_flush(*sc->sc_dmaaddr, trans);
