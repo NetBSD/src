@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.22 2004/06/11 06:29:36 mbw Exp $
+.\"	$NetBSD: install,v 1.23 2004/06/12 06:59:17 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,7 +89,7 @@ necessary to install
 on a local disk.
 It is distributed as a plain
 file designed to be transferred to a raw disk partition from which it can
-be booted using the appropriate OpenBoot PROM command.
+be booted using the appropriate OpenFirmware command.
 Usually, the miniroot will be loaded into the swap partition of a disk.
 If needed, you can use any other unused partition,
 but remember that the partition will then not
@@ -131,7 +131,8 @@ After transferring the miniroot to disk, bring the system down by:
 .(disp
 .No # Ic halt
 .disp)
-Then boot the miniroot by typing the appropriate command at the OpenBoot PROM:
+Then boot the miniroot by typing the appropriate command at the 
+OpenFirmware prompt:
 .(disp
 .No ok Ic "boot disk:b netbsd"
 .disp)
@@ -210,40 +211,6 @@ asked to start the install or upgrade procedure.
 Proceed to the section
 .Sx "Running the sysinst installation program"
 below.
-.
-.Ss2 Sample disklabel screen
-.(disp
-netbsd# disklabel sd2
-# /dev/rsd2c:
-type: SCSI
-disk: SCSI disk
-label: Hold Your Breath
-flags:
-bytes/sector: 512
-sectors/track: 64
-tracks/cylinder: 7
-sectors/cylinder: 448
-cylinders: 1429
-rpm: 3600
-interleave: 1
-trackskew: 0
-cylinderskew: 0
-headswitch: 0           # milliseconds
-track-to-track seek: 0  # milliseconds
-drivedata: 0
-
-8 partitions:
-#        size   offset    fstype [fsz bsz cpg]
-  a:    50176        0    4.2BSD   0   0   0   # (Cyl.    0 - 111)
-  b:    64512    50176      swap               # (Cyl.  112 - 255)
-  c:   640192        0   unknown               # (Cyl.    0 - 1428)
-  d:   525504   114688    4.2BSD   0   0   0   # (Cyl.  256 - 1428)
-.disp)
-.Pp
-To begin installation or the upgrade procedure, run
-.Ic sysinst :
-.Pp
-.Dl netbsd# Ic sysinst
 .
 .so ../common/sysinst
 .Pp
