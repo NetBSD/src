@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/10/26 04:53:56 garbled Exp $
+#	$NetBSD: Makefile,v 1.10 2000/11/07 17:41:51 matt Exp $
 
 .include <bsd.own.mk>		# Use /etc/mk.conf.
 
@@ -20,7 +20,7 @@ GENERICOBJ != cd ${.CURDIR}/floppy-GENERIC; ${MAKE} print-objdir
 
 release:
 .for i in floppy diskimage instkernel tapeimage
-	${IINST} README.files ${ITARGET}/$i/.
+	${IINST} ${.CURDIR}/README.files ${ITARGET}/$i/.
 .endfor
 	${IINST} ${CDHDTAPEOBJ}/cdhdtape ${ITARGET}/diskimage/.
 	${IINST} ${FDSETOBJ}/disk1of2 ${ITARGET}/floppy/.
