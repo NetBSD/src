@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.41 2001/09/26 05:25:03 chs Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.42 2001/09/26 06:20:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -269,7 +269,7 @@ ffs_fsync(v)
 	 * First, flush all pages in range.
 	 */
 
-	if (vp->v_uobj.uo_npages != 0) {
+	if (vp->v_type == VREG) {
 		simple_lock(&vp->v_uobj.vmobjlock);
 		error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
 		    trunc_page(ap->a_offlo), round_page(ap->a_offhi),
@@ -286,8 +286,10 @@ ffs_fsync(v)
 	s = splbio();
 	if (!(ap->a_flags & FSYNC_DATAONLY) && blk_high >= NDADDR) {
 		error = ufs_getlbns(vp, blk_high, ia, &num);
-		if (error)
+		if (error) {
+			splx(s);
 			return error;
+		}
 		for (i = 0; i < num; i++) {
 			bp = incore(vp, ia[i].in_lbn);
 			if (bp != NULL && !(bp->b_flags & B_BUSY) &&
@@ -342,7 +344,7 @@ ffs_full_fsync(v)
 	 * Flush all dirty data associated with a vnode.
 	 */
 
-	if (vp->v_uobj.uo_npages != 0) {
+	if (vp->v_type == VREG) {
 		uobj = &vp->v_uobj;
 		simple_lock(&uobj->vmobjlock);
 		error = (uobj->pgops->pgo_put)(uobj, 0, 0,
