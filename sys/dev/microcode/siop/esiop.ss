@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.1 2002/04/21 22:52:06 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.2 2002/04/22 15:53:40 bouyer Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -78,8 +78,9 @@ ABSOLUTE f_c_sdp	= 0x10 ; got save data pointer message
 ABSOLUTE ncmd_slots	= 64 ; number of slots in CMD ring
 ; flags in a cmd slot
 ABSOLUTE f_cmd_free	= 0x01 ; this slot is free
+ABSOLUTE f_cmd_ignore	= 0x02 ; this slot is not free but don't start it
 ; offsets in a cmd slot
-ABSOLUTE o_cmd_dsa	= 0; also holds f_cmd_free
+ABSOLUTE o_cmd_dsa	= 0; also holds f_cmd_*
 ABSOLUTE o_cmd_id	= 4;
 
 ; SCRATCHE1: last status
@@ -150,7 +151,29 @@ nextisn:
 	MOVE DSA1 + 0x0 TO DSA1 with carry;
 	MOVE DSA2 + 0x0 TO DSA2 with carry;
 	MOVE DSA3 + 0x0 TO DSA3 with carry;
-	LOAD DSA0, 4, from target_luntbl; load DSA for ths LUN
+	LOAD DSA0, 4, from target_luntbl; load DSA for this LUN
+	JUMP REL(waitphase), WHEN NOT MSG_IN;
+	MOVE 1, abs_msgin2, WHEN MSG_IN;
+	CLEAR ACK;
+	INT int_msgin, IF NOT 0x20; not a simple tag message, let host handle it
+	MOVE 1, abs_msgin2, WHEN MSG_IN; get tag
+	CLEAR ACK;
+	MOVE SFBR to SCRATCHC3;
+	MOVE SCRATCHC0 | f_c_tag to SCRATCHC0; save TAG
+	MOVE 0x0 to SCRATCHA3;
+	CLEAR CARRY;
+	MOVE SCRATCHC3 SHL SFBR;
+	MOVE SCRATCHA3 SHL SCRATCHA3;
+	MOVE SFBR SHL SCRATCHA2;
+	MOVE SCRATCHA3 SHL SCRATCHA3; TAG * 4 to SCRACHA(2,3)
+	CLEAR CARRY;
+	MOVE SCRATCHA2 TO SFBR;
+	MOVE DSA0 + SFBR TO DSA0;
+	MOVE SCRATCHA3 TO SFBR;
+	MOVE DSA1 + SFBR TO DSA1 with CARRY;
+	MOVE DSA2 + 0x00 TO DSA2 with CARRY;
+	MOVE DSA3 + 0x00 TO DSA3 with CARRY; SCRACHA(2,3) + DSA to DSA
+	LOAD DSA0, 4, from 0; load DSA for this tag
 	JUMP REL(waitphase);
 
 reselect_fail:
@@ -170,11 +193,14 @@ script_sched:
 	LOAD SCRATCHA0,4, from o_cmd_dsa; /* get flags */
 	MOVE SCRATCHA0 & f_cmd_free to SFBR;
 	JUMP REL(no_cmd), IF NOT 0x0;
+	MOVE SCRATCHA0 & f_cmd_ignore to SFBR;
+	JUMP REL(ignore_cmd), IF NOT 0x0;
 ; this slot is busy, attempt to exec command
 	SELECT ATN FROM o_cmd_id, REL(reselect);
 ; select either succeeded or timed out. In either case update ring pointer.
 ; if timed out the STO interrupt will be posted at the first SCSI bus access
 ; waiting for a valid phase.
+ignore_cmd:
 	MOVE SCRATCHE0 + 1 to SFBR;
 	MOVE SFBR to SCRATCHE0;
 	JUMP REL(ring_reset), IF ncmd_slots;
@@ -194,14 +220,17 @@ cmdr3:
 	MOVE 0xff to SCRATCHD3;
 	MOVE 0x00 to SCRATCHE0;
 handle_cmd:
+	MOVE SCRATCHA0 | f_cmd_free to SCRATCHA0;
+	STORE noflush SCRATCHA0, 4, FROM o_cmd_dsa;
+	MOVE SCRATCHA0 & f_cmd_ignore to SFBR;
+	JUMP REL(script_sched), IF NOT 0x00; /* next command if ignore */
+
 ; a NOP by default; patched with MOVE GPREG & 0xfe to GPREG on compile-time
 ; option "SIOP_SYMLED"
 led_on1:
 	NOP;
-	MOVE SCRATCHA0 | f_cmd_free to SCRATCHA0;
-	STORE noflush SCRATCHA0, 4, FROM o_cmd_dsa;
 	LOAD DSA0, 4, FROM o_cmd_dsa; /* load new DSA */
-	MOVE DSA0 & 0xfc to DSA0; /* clear flags */
+	MOVE DSA0 & 0xfe to DSA0; /* clear f_cmd_free */
 	MOVE 0x00 TO SCRATCHA1;
 	MOVE 0xff TO SCRATCHE1;
 	LOAD SCRATCHC0, 4, FROM tlq_offset;
