@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.7 2003/01/17 23:10:30 thorpej Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.8 2003/01/22 17:48:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.7 2003/01/17 23:10:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.8 2003/01/22 17:48:18 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.7 2003/01/17 23:10:30 thorpej Exp
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
+#include <sys/savar.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -99,15 +100,15 @@ void
 mach_syscall_plain(frame)
 	struct trapframe frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
-	register struct proc *p;
+	caddr_t params;
+	const struct sysent *callp;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
-	p = curlwp;
 
 	code = frame.tf_eax;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
@@ -153,12 +154,12 @@ mach_syscall_plain(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif /* SYSCALL_DEBUG */
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -184,24 +185,24 @@ mach_syscall_plain(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p);
+	userret(l);
 }
 
 void
 mach_syscall_fancy(frame)
 	struct trapframe frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
-	register struct proc *p;
+	caddr_t params;
+	const struct sysent *callp;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	int error;
 	size_t argsize;
 	register_t code, realcode, args[8], rval[2];
 
 	uvmexp.syscalls++;
-	p = curlwp;
 
 	code = frame.tf_eax;
 	realcode = code;
@@ -246,13 +247,13 @@ mach_syscall_fancy(frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(p, code, realcode, 
+	if ((error = trace_enter(l, code, realcode, 
 	    callp - code, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -277,7 +278,7 @@ mach_syscall_fancy(frame)
 		break;
 	}
 
-	trace_exit(p, code, args, rval, error);
+	trace_exit(l, code, args, rval, error);
 
-	userret(p);
+	userret(l);
 }
