@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.2 1999/01/03 16:22:04 eeh Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.2.10.1 2000/09/04 21:28:09 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: __setjmp14.S,v 1.2 1999/01/03 16:22:04 eeh Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.2.10.1 2000/09/04 21:28:09 eeh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,10 +77,9 @@ ENTRY(__setjmp14)
 	clr	%o1			/* sigprocmask(SIG_BLOCK, (sigset_t *)NULL, (sigset_t *)a) */
 	t	ST_SYSCALL
 	
-	st	%o0, [%o3 + 0x04]	/* sc.sc_mask = current mask; */
 	mov	SYS___sigaltstack14, %g1
 	clr	%o0			/* sigstack(NULL, &foo) */
-	add	%o2, 8, %o1		/* (foo being at the bottom of the stack) */
+	add	%o3, 8, %o1		/* (foo being part of the sigcontext we're overwriting) */
 	t	ST_SYSCALL
 	
 	lduw	[%o3 + 8 + 0x10], %o0	/* foo.ss_flags */
