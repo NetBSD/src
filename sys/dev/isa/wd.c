@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.154 1996/11/07 05:23:07 mikel Exp $	*/
+/*	$NetBSD: wd.c,v 1.155 1996/11/27 10:50:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -331,15 +331,15 @@ wdattach(parent, self, aux)
 	}
 	*q++ = '\0';
 
-	printf(": %dMB, %d cyl, %d head, %d sec, %d bytes/sec <%s>\n",
+	printf(": <%s>\n%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+	    buf, wd->sc_dev.dv_xname,
 	    wd->sc_params.wdp_cylinders *
-	    (wd->sc_params.wdp_heads * wd->sc_params.wdp_sectors) /
-	    (1048576 / DEV_BSIZE),
+	      (wd->sc_params.wdp_heads * wd->sc_params.wdp_sectors) /
+	      (1048576 / DEV_BSIZE),
 	    wd->sc_params.wdp_cylinders,
 	    wd->sc_params.wdp_heads,
 	    wd->sc_params.wdp_sectors,
-	    DEV_BSIZE,
-	    buf);
+	    DEV_BSIZE);
 
 	if ((wd->sc_params.wdp_capabilities & WD_CAP_DMA) != 0 &&
 	    wdc->sc_drq != DRQUNK) {
