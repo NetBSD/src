@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.26 2000/07/01 01:01:35 itojun Exp $	*/
-/*	$KAME: key.c,v 1.137 2000/06/24 00:47:07 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.27 2000/07/18 14:56:43 itojun Exp $	*/
+/*	$KAME: key.c,v 1.142 2000/07/17 01:42:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2678,7 +2678,7 @@ key_setsaval(sav, m, mhp)
 		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
 			if (len == PFKEY_ALIGN8(sizeof(struct sadb_key)) &&
-			    sav->alg_auth != SADB_AALG_NULL)
+			    sav->alg_auth != SADB_X_AALG_NULL)
 				error = EINVAL;
 			break;
 		case SADB_X_SATYPE_IPCOMP:
@@ -2750,7 +2750,7 @@ key_setsaval(sav, m, mhp)
 	switch (mhp->msg->sadb_msg_satype) {
 	case SADB_SATYPE_ESP:
 #ifdef IPSEC_ESP
-		algo = &esp_algorithms[sav->alg_enc];
+		algo = esp_algorithm_lookup(sav->alg_enc);
 		if (algo && algo->ivlen)
 			sav->ivlen = (*algo->ivlen)(sav);
 		if (sav->ivlen == 0)
@@ -2946,7 +2946,10 @@ key_mature(sav)
 #endif
 			return EINVAL;
 		}
-		checkmask = 3;
+		if (sav->alg_auth == SADB_AALG_NONE)
+			checkmask = 1;
+		else
+			checkmask = 3;
 		mustmask = 1;
 		break;
 	case IPPROTO_AH:
@@ -2997,19 +3000,11 @@ key_mature(sav)
 
 	/* check authentication algorithm */
 	if ((checkmask & 2) != 0) {
-		struct ah_algorithm *algo;
+		const struct ah_algorithm *algo;
 		int keylen;
 
-		/* XXX: should use algorithm map to check. */
-		switch (sav->alg_auth) {
-		case SADB_AALG_NONE:
-		case SADB_AALG_MD5HMAC:
-		case SADB_AALG_SHA1HMAC:
-		case SADB_AALG_MD5:
-		case SADB_AALG_SHA:
-		case SADB_AALG_NULL:
-			break;
-		default:
+		algo = ah_algorithm_lookup(sav->alg_auth);
+		if (!algo) {
 #ifdef IPSEC_DEBUG
 			printf("key_mature: "
 				"unknown authentication algorithm.\n");
@@ -3018,8 +3013,6 @@ key_mature(sav)
 		}
 
 		/* algorithm-dependent check */
-		algo = &ah_algorithms[sav->alg_auth];
-
 		if (sav->key_auth)
 			keylen = sav->key_auth->sadb_key_bits;
 		else
@@ -3052,21 +3045,11 @@ key_mature(sav)
 	/* check encryption algorithm */
 	if ((checkmask & 1) != 0) {
 #ifdef IPSEC_ESP
-		struct esp_algorithm *algo;
+		const struct esp_algorithm *algo;
 		int keylen;
 
-		switch (sav->alg_enc) {
-		case SADB_EALG_NONE:
-		case SADB_EALG_DESCBC:
-		case SADB_EALG_3DESCBC:
-		case SADB_EALG_NULL:
-		case SADB_EALG_BLOWFISHCBC:
-		case SADB_EALG_CAST128CBC:
-#ifdef SADB_EALG_RC5CBC
-		case SADB_EALG_RC5CBC:
-#endif
-			break;
-		default:
+		algo = esp_algorithm_lookup(sav->alg_enc);
+		if (!algo) {
 #ifdef IPSEC_DEBUG
 			printf("key_mature: unknown encryption algorithm.\n");
 #endif
@@ -3074,8 +3057,6 @@ key_mature(sav)
 		}
 
 		/* algorithm-dependent check */
-		algo = &esp_algorithms[sav->alg_enc];
-
 		if (sav->key_enc)
 			keylen = sav->key_enc->sadb_key_bits;
 		else
@@ -5293,7 +5274,7 @@ static struct mbuf *
 key_getcomb_esp()
 {
 	struct sadb_comb *comb;
-	struct esp_algorithm *algo;
+	const struct esp_algorithm *algo;
 	struct mbuf *result = NULL, *m, *n;
 	int encmin;
 	int i, off, o;
@@ -5301,8 +5282,10 @@ key_getcomb_esp()
 	const int l = PFKEY_ALIGN8(sizeof(struct sadb_comb));
 
 	m = NULL;
-	for (i = 1; i < SADB_EALG_MAX; i++) {
-		algo = &esp_algorithms[i];
+	for (i = 1; i <= SADB_EALG_MAX; i++) {
+		algo = esp_algorithm_lookup(i);
+		if (!algo)
+			continue;
 
 		if (algo->keymax < ipsec_esp_keymin)
 			continue;
@@ -5372,20 +5355,22 @@ static struct mbuf *
 key_getcomb_ah()
 {
 	struct sadb_comb *comb;
-	struct ah_algorithm *algo;
+	const struct ah_algorithm *algo;
 	struct mbuf *m;
 	int min;
 	int i;
 	const int l = PFKEY_ALIGN8(sizeof(struct sadb_comb));
 
 	m = NULL;
-	for (i = 1; i < SADB_AALG_MAX; i++) {
+	for (i = 1; i <= SADB_AALG_MAX; i++) {
 #if 1
 		/* we prefer HMAC algorithms, not old algorithms */
 		if (i != SADB_AALG_SHA1HMAC && i != SADB_AALG_MD5HMAC)
 			continue;
 #endif
-		algo = &ah_algorithms[i];
+		algo = ah_algorithm_lookup(i);
+		if (!algo)
+			continue;
 
 		if (algo->keymax < ipsec_ah_keymin)
 			continue;
@@ -5758,7 +5743,7 @@ key_getspacq(spidx)
  *   <base, address(SD), (address(P),) (identity(SD),) (sensitivity,) proposal>
  * to the socket.
  *
- * m will always e freed.
+ * m will always be freed.
  */
 static int
 key_acquire2(so, m, mhp)
@@ -5945,13 +5930,21 @@ key_register(so, m, mhp)
 	struct sadb_alg *alg;
 
 	/* create new sadb_msg to reply. */
-	alen = sizeof(struct sadb_supported)
-		+ ((SADB_AALG_MAX - 1) * sizeof(struct sadb_alg));
-#ifdef IPSEC_ESP
-	elen = sizeof(struct sadb_supported)
-		+ ((SADB_EALG_MAX - 1) * sizeof(struct sadb_alg));
-#else
+	alen = 0;
+	for (i = 1; i <= SADB_AALG_MAX; i++) {
+		if (ah_algorithm_lookup(i))
+			alen += sizeof(struct sadb_alg);
+	}
+	if (alen)
+		alen += sizeof(struct sadb_supported);
 	elen = 0;
+#ifdef IPSEC_ESP
+	for (i = 1; i <= SADB_EALG_MAX; i++) {
+		if (esp_algorithm_lookup(i))
+			elen += sizeof(struct sadb_alg);
+	}
+	if (elen)
+		elen += sizeof(struct sadb_supported);
 #endif
 
 	len = sizeof(struct sadb_msg) + alen + elen;
@@ -5987,10 +5980,12 @@ key_register(so, m, mhp)
 		sup->sadb_supported_exttype = SADB_EXT_SUPPORTED_AUTH;
 		off += PFKEY_ALIGN8(sizeof(*sup));
 
-		for (i = 1; i < SADB_AALG_MAX; i++) {
-			struct ah_algorithm *aalgo;
+		for (i = 1; i <= SADB_AALG_MAX; i++) {
+			const struct ah_algorithm *aalgo;
 
-			aalgo = &ah_algorithms[i];
+			aalgo = ah_algorithm_lookup(i);
+			if (!aalgo)
+				continue;
 			alg = (struct sadb_alg *)(mtod(n, caddr_t) + off);
 			alg->sadb_alg_id = i;
 			alg->sadb_alg_ivlen = 0;
@@ -6008,10 +6003,12 @@ key_register(so, m, mhp)
 		sup->sadb_supported_exttype = SADB_EXT_SUPPORTED_ENCRYPT;
 		off += PFKEY_ALIGN8(sizeof(*sup));
 
-		for (i = 1; i < SADB_EALG_MAX; i++) {
-			struct esp_algorithm *ealgo;
+		for (i = 1; i <= SADB_EALG_MAX; i++) {
+			const struct esp_algorithm *ealgo;
 
-			ealgo = &esp_algorithms[i];
+			ealgo = esp_algorithm_lookup(i);
+			if (!ealgo)
+				continue;
 			alg = (struct sadb_alg *)(mtod(n, caddr_t) + off);
 			alg->sadb_alg_id = i;
 			if (ealgo && ealgo->ivlen) {
@@ -6170,13 +6167,17 @@ key_expire(sav)
 	}
 	m_cat(result, m);
 
-	if ((result->m_flags & M_PKTHDR) == 0)
+	if ((result->m_flags & M_PKTHDR) == 0) {
+		error = EINVAL;
 		goto fail;
+	}
 
 	if (result->m_len < sizeof(struct sadb_msg)) {
 		result = m_pullup(result, sizeof(struct sadb_msg));
-		if (result == NULL)
+		if (result == NULL) {
+			error = ENOBUFS;
 			goto fail;
+		}
 	}
 
 	result->m_pkthdr.len = 0;

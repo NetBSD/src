@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_input.c,v 1.15 2000/06/02 18:20:16 itojun Exp $	*/
-/*	$KAME: ah_input.c,v 1.29 2000/05/29 08:33:53 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.16 2000/07/18 14:56:42 itojun Exp $	*/
+/*	$KAME: ah_input.c,v 1.30 2000/07/15 16:07:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@ ah4_input(m, va_alist)
 	struct ip *ip;
 	struct ah *ah;
 	u_int32_t spi;
-	struct ah_algorithm *algo;
+	const struct ah_algorithm *algo;
 	size_t siz;
 	size_t siz1;
 	u_char *cksum;
@@ -159,15 +159,15 @@ ah4_input(m, va_alist)
 		ipsecstat.in_badspi++;
 		goto fail;
 	}
-	if (sav->alg_auth == SADB_AALG_NONE) {
+
+	algo = ah_algorithm_lookup(sav->alg_auth);
+	if (!algo) {
 		ipseclog((LOG_DEBUG, "IPv4 AH input: "
-		    "unspecified authentication algorithm for spi %u\n",
+		    "unsupported authentication algorithm for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
 		ipsecstat.in_badspi++;
 		goto fail;
 	}
-
-	algo = &ah_algorithms[sav->alg_auth];
 
 	siz = (*algo->sumsiz)(sav);
 	siz1 = ((siz + 3) & ~(4 - 1));
@@ -573,7 +573,7 @@ ah6_input(mp, offp, proto)
 	struct ip6_hdr *ip6;
 	struct ah *ah;
 	u_int32_t spi;
-	struct ah_algorithm *algo;
+	const struct ah_algorithm *algo;
 	size_t siz;
 	size_t siz1;
 	u_char *cksum;
@@ -624,15 +624,15 @@ ah6_input(mp, offp, proto)
 		ipsec6stat.in_badspi++;
 		goto fail;
 	}
-	if (sav->alg_auth == SADB_AALG_NONE) {
+
+	algo = ah_algorithm_lookup(sav->alg_auth);
+	if (!algo) {
 		ipseclog((LOG_DEBUG, "IPv6 AH input: "
-		    "unspecified authentication algorithm for spi %u\n",
+		    "unsupported authentication algorithm for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
 		ipsec6stat.in_badspi++;
 		goto fail;
 	}
-
-	algo = &ah_algorithms[sav->alg_auth];
 
 	siz = (*algo->sumsiz)(sav);
 	siz1 = ((siz + 3) & ~(4 - 1));
