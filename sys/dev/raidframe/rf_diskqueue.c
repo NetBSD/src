@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.18 2002/09/14 17:53:57 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.19 2002/09/15 21:19:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.18 2002/09/14 17:53:57 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.19 2002/09/15 21:19:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -529,7 +529,6 @@ rf_CreateDiskQueueData(
 	p->next = next;
 	p->tracerec = tracerec;
 	p->priority = RF_IO_NORMAL_PRIORITY;
-	p->buf2 = NULL;
 	p->raidPtr = raidPtr;
 	p->flags = flags;
 	p->b_proc = kb_proc;
