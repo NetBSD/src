@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.13 1995/06/12 00:09:45 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.14 1995/07/23 19:45:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -487,12 +487,12 @@ egstart(ifp)
 
 	/* Don't transmit if interface is busy or not running */
 	if ((sc->sc_arpcom.ac_if.if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
-		return 0;
+		return;
 
 	/* Dequeue the next datagram. */
 	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m0);
 	if (m0 == NULL)
-		return 0;
+		return;
 	
 	sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
 
@@ -506,7 +506,7 @@ egstart(ifp)
 			m_freem(m0);
 			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 			sc->sc_arpcom.ac_if.if_oerrors++;
-			return 0;
+			return;
 		}
 		bcopy(mtod(m, caddr_t), sc->eg_outbuf + len, m->m_len);
 		len += m->m_len;
@@ -545,8 +545,6 @@ egstart(ifp)
 	
 	/* Set direction bit : Adapter -> host */
 	outb(sc->eg_ctl, inb(sc->eg_ctl) | EG_CTL_DIR); 
-
-	return 0;
 }
 
 int
