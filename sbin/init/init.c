@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Header: /cvsroot/src/sbin/init/init.c,v 1.4 1993/03/23 00:28:37 cgd Exp $ */
+/* $Header: /cvsroot/src/sbin/init/init.c,v 1.5 1993/04/06 19:33:33 cgd Exp $ */
 
 
 #include <sys/types.h>
@@ -41,6 +41,10 @@
 #include <setjmp.h>
 #include <ttyent.h>
 #include <unistd.h>
+
+#ifdef SECURE_CONSOLE
+#include <pwd.h>
+#endif
 
 #define NTTY 32			/* max ttys */
 #define NARG 16			/* max args to login/getty */
@@ -208,6 +212,14 @@ top:
 
 	/* do single user shell on console */
 	if (setjmp(single) || status) {
+#ifdef SECURE_CONSOLE
+		struct ttyent *ttyp;
+		struct passwd *passp;
+		char *pass;
+		static const char banner[] =
+			"Enter root password, or Control-D to go multi-user\n";
+#endif
+
 		if((pid = fork()) < 0)
 			fatal("fork");
 		else if(!pid) {
@@ -219,6 +231,29 @@ top:
 
 			/* do open and configuration of console */
 			login_tty(open("/dev/console", 2));
+#ifdef SECURE_CONSOLE
+			/* if the console isn't secure, check the root PW */
+			ttyp = getttynam("console");
+			if (!ttyp) {
+				/* don't have an entry for "console", probably
+				 * have one for /dev/vga
+				 */
+				ttyp = getttynam("vga");
+			}
+			passp = getpwnam("root");
+			if (ttyp && ((ttyp->ty_status & TTY_SECURE) == 0) &&
+			    passp) {
+				write(2, banner, sizeof(banner) - 1);
+				do {
+					pass = getpass("Password:");
+					if ((pass == 0) || (*pass == '\0'))
+						_exit(0); /* got control-d */
+#ifdef DES
+					pass = crypt(pass, passp->pw_passwd);
+#endif
+				} while (strcmp(pass, passp->pw_passwd) != 0);
+			}
+#endif
 			execl("/bin/sh", "-", (char *)0);
 			_exit(127);
 		}
