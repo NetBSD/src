@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.13 2002/07/06 00:18:48 wiz Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.14 2002/07/06 00:42:27 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.13 2002/07/06 00:18:48 wiz Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.14 2002/07/06 00:42:27 wiz Exp $");
 #endif
 
 /*
@@ -110,7 +110,7 @@ int	lookup_host(int, int, DBM *, char *, struct ypresp_val *);
  * ypdb_init: init the queues and lists
  */
 void
-ypdb_init()
+ypdb_init(void)
 {
 
 	LIST_INIT(&doms);
@@ -123,9 +123,7 @@ ypdb_init()
  * ypprivate is FALSE.
  */
 int
-yp_private(key, ypprivate)
-	datum key;
-	int ypprivate;
+yp_private(datum key, int ypprivate)
 {
 
 	if (ypprivate)
@@ -169,8 +167,7 @@ yp_private(key, ypprivate)
  * Close specified map.
  */
 void
-ypdb_close_map(map)
-	struct opt_map *map;
+ypdb_close_map(struct opt_map *map)
 {
 	CIRCLEQ_REMOVE(&maps, map, mapsq);	/* remove from LRU circleq */
 	LIST_REMOVE(map, mapsl);		/* remove from domain list */
@@ -191,7 +188,7 @@ ypdb_close_map(map)
  * no more file descriptors free, or we want to close all maps.
  */
 void
-ypdb_close_last()
+ypdb_close_last(void)
 {
 	struct opt_map *last = maps.cqh_last;
 
@@ -207,7 +204,7 @@ ypdb_close_last()
  * Close all open maps.
  */
 void
-ypdb_close_all()
+ypdb_close_all(void)
 {
 
 #ifdef DEBUG
@@ -226,8 +223,7 @@ ypdb_close_all()
  * Close Database if Open/Close Optimization isn't turned on.
  */
 void
-ypdb_close_db(db)
-	DBM            *db;
+ypdb_close_db(DBM *db)
 {
 
 #ifdef DEBUG
@@ -243,11 +239,8 @@ ypdb_close_db(db)
  * ypdb_open_db
  */
 DBM *
-ypdb_open_db(domain, map, status, map_info)
-	const char *domain;
-	const char *map;
-	int *status;
-	struct opt_map **map_info;
+ypdb_open_db(const char *domain, const char *map, int *status,
+	     struct opt_map **map_info)
 {
 	static char *domain_key = YP_INTERDOMAIN_KEY;
 	static char *secure_key = YP_SECURE_KEY;
@@ -475,11 +468,8 @@ retryopen:
  * lookup host
  */
 int
-lookup_host(nametable, host_lookup, db, keystr, result)
-	int nametable, host_lookup;
-	DBM *db;
-	char *keystr;
-	struct ypresp_val *result;
+lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
+	    struct ypresp_val *result)
 {
 	struct hostent *host;
 	struct in_addr *addr_name;
@@ -562,11 +552,7 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 }
 
 struct ypresp_val
-ypdb_get_record(domain, map, key, ypprivate)
-	const char *domain;
-	const char *map;
-	datum key;
-	int ypprivate;
+ypdb_get_record(const char *domain, const char *map, datum key, int ypprivate)
 {
 	static struct ypresp_val res;
 	static char keystr[YPMAXRECORD + 1];
@@ -617,10 +603,7 @@ ypdb_get_record(domain, map, key, ypprivate)
 }
 
 struct ypresp_key_val
-ypdb_get_first(domain, map, ypprivate)
-	const char *domain;
-	const char *map;
-	int ypprivate;
+ypdb_get_first(const char *domain, const char *map, int ypprivate)
 {
 	static struct ypresp_key_val res;
 	DBM *db;
@@ -658,11 +641,7 @@ ypdb_get_first(domain, map, ypprivate)
 }
 
 struct ypresp_key_val
-ypdb_get_next(domain, map, key, ypprivate)
-	const char *domain;
-	const char *map;
-	datum key;
-	int ypprivate;
+ypdb_get_next(const char *domain, const char *map, datum key, int ypprivate)
 {
 	static struct ypresp_key_val res;
 	DBM *db;
@@ -713,9 +692,7 @@ ypdb_get_next(domain, map, key, ypprivate)
 }
 
 struct ypresp_order
-ypdb_get_order(domain, map)
-	const char *domain;
-	const char *map;
+ypdb_get_order(const char *domain, const char *map)
 {
 	static struct ypresp_order res;
 	static char *order_key = YP_LAST_KEY;
@@ -748,9 +725,7 @@ ypdb_get_order(domain, map)
 }
 
 struct ypresp_master
-ypdb_get_master(domain, map)
-	const char *domain;
-	const char *map;
+ypdb_get_master(const char *domain, const char *map)
 {
 	static struct ypresp_master res;
 	static char *master_key = YP_MASTER_KEY;
@@ -783,9 +758,7 @@ ypdb_get_master(domain, map)
 }
 
 bool_t
-ypdb_xdr_get_all(xdrs, req)
-	XDR *xdrs;
-	struct ypreq_nokey *req;
+ypdb_xdr_get_all(XDR *xdrs, struct ypreq_nokey *req)
 {
 	static struct ypresp_all resp;
 	DBM *db;
@@ -855,9 +828,7 @@ ypdb_xdr_get_all(xdrs, req)
 }
 
 int
-ypdb_secure(domain, map)
-	const char *domain;
-	const char *map;
+ypdb_secure(const char *domain, const char *map)
 {
 	DBM *db;
 	int secure, status;

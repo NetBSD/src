@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.17 2002/07/06 00:31:07 wiz Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.18 2002/07/06 00:42:27 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.17 2002/07/06 00:31:07 wiz Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.18 2002/07/06 00:42:27 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -268,9 +268,7 @@ ypprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	SVCXPRT *udptransp, *tcptransp, *udp6transp, *tcp6transp;
 	struct netconfig *udpconf, *tcpconf, *udp6conf, *tcp6conf;
@@ -451,8 +449,7 @@ main(argc, argv)
 }
 
 void
-sighandler(sig)
-	int sig;
+sighandler(int sig)
 {
 
 	/* SIGCHLD */
@@ -460,7 +457,7 @@ sighandler(sig)
 }
 
 void
-usage()
+usage(void)
 {
 
 #ifdef LIBWRAP
@@ -482,8 +479,7 @@ usage()
  * XXX: this probably should be in libc/yp/yplib.c
  */
 int
-_yp_invalid_map(map)
-	const char *map;
+_yp_invalid_map(const char *map)
 {
 	if (map == NULL || *map == '\0')
 		return 1;
