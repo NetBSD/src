@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.20 1997/03/19 19:38:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -67,6 +67,7 @@ struct pci_class pci_subclass_mass_storage[] = {
 	{ "IDE",		PCI_SUBCLASS_MASS_STORAGE_IDE,		},
 	{ "floppy",		PCI_SUBCLASS_MASS_STORAGE_FLOPPY,	},
 	{ "IPI",		PCI_SUBCLASS_MASS_STORAGE_IPI,		},
+	{ "RAID",		PCI_SUBCLASS_MASS_STORAGE_RAID,		},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,		},
 	{ 0 },
 };
@@ -75,6 +76,7 @@ struct pci_class pci_subclass_network[] = {
 	{ "ethernet",		PCI_SUBCLASS_NETWORK_ETHERNET,		},
 	{ "token ring",		PCI_SUBCLASS_NETWORK_TOKENRING,		},
 	{ "FDDI",		PCI_SUBCLASS_NETWORK_FDDI,		},
+	{ "ATM",		PCI_SUBCLASS_NETWORK_ATM,		},
 	{ "miscellaneous",	PCI_SUBCLASS_NETWORK_MISC,		},
 	{ 0 },
 };
@@ -107,7 +109,58 @@ struct pci_class pci_subclass_bridge[] = {
 	{ "MicroChannel",	PCI_SUBCLASS_BRIDGE_MC,			},
 	{ "PCI",		PCI_SUBCLASS_BRIDGE_PCI,		},
 	{ "PCMCIA",		PCI_SUBCLASS_BRIDGE_PCMCIA,		},
+	{ "NuBus",		PCI_SUBCLASS_BRIDGE_NUBUS,		},
+	{ "CardBus",		PCI_SUBCLASS_BRIDGE_CARDBUS,		},
 	{ "miscellaneous",	PCI_SUBCLASS_BRIDGE_MISC,		},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_communications[] = {
+	{ "serial",		PCI_SUBCLASS_COMMUNICATIONS_SERIAL,	},
+	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_COMMUNICATIONS_MISC,	},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_system[] = {
+	{ "8259 PIC",		PCI_SUBCLASS_SYSTEM_PIC,		},
+	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,		},
+	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,		},
+	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,		},
+	{ "miscellaneous",	PCI_SUBCLASS_SYSTEM_MISC,		},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_input[] = {
+	{ "keyboard",		PCI_SUBCLASS_INPUT_KEYBOARD,		},
+	{ "digitizer",		PCI_SUBCLASS_INPUT_DIGITIZER,		},
+	{ "mouse",		PCI_SUBCLASS_INPUT_MOUSE,		},
+	{ "miscellaneous",	PCI_SUBCLASS_INPUT_MISC,		},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_dock[] = {
+	{ "generic",		PCI_SUBCLASS_DOCK_GENERIC,		},
+	{ "miscellaneous",	PCI_SUBCLASS_DOCK_MISC,			},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_processor[] = {
+	{ "386",		PCI_SUBCLASS_PROCESSOR_386,		},
+	{ "486",		PCI_SUBCLASS_PROCESSOR_486,		},
+	{ "Pentium",		PCI_SUBCLASS_PROCESSOR_PENTIUM,		},
+	{ "Alpha",		PCI_SUBCLASS_PROCESSOR_ALPHA,		},
+	{ "PowerPC",		PCI_SUBCLASS_PROCESSOR_POWERPC,		},
+	{ "Co-processor",	PCI_SUBCLASS_PROCESSOR_COPROC,		},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_serialbus[] = {
+	{ "Firewire",		PCI_SUBCLASS_SERIALBUS_FIREWIRE,	},
+	{ "ACCESS.bus",		PCI_SUBCLASS_SERIALBUS_ACCESS,		},
+	{ "SSA",		PCI_SUBCLASS_SERIALBUS_SSA,		},
+	{ "USB",		PCI_SUBCLASS_SERIALBUS_USB,		},
+	{ "Fiber Channel",	PCI_SUBCLASS_SERIALBUS_FIBER,		},
 	{ 0 },
 };
 
@@ -126,6 +179,18 @@ struct pci_class pci_class[] = {
 	    pci_subclass_memory,				},
 	{ "bridge",		PCI_CLASS_BRIDGE,
 	    pci_subclass_bridge,				},
+	{ "communications",	PCI_CLASS_COMMUNICATIONS,
+	    pci_subclass_communications,			},
+	{ "system",		PCI_CLASS_SYSTEM,
+	    pci_subclass_system,				},
+	{ "input",		PCI_CLASS_INPUT,
+	    pci_subclass_input,					},
+	{ "dock",		PCI_CLASS_DOCK,
+	    pci_subclass_dock,					},
+	{ "processor",		PCI_CLASS_PROCESSOR,
+	    pci_subclass_processor,				},
+	{ "serial bus",		PCI_CLASS_SERIALBUS,
+	    pci_subclass_serialbus,				},
 	{ "undefined",		PCI_CLASS_UNDEFINED,
 	    0,							},
 	{ 0 },
@@ -214,26 +279,26 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 	else if (product_namep != NULL)
 		cp += sprintf(cp, "%s %s", vendor_namep, product_namep);
 	else
-		cp += sprintf(cp, "vendor %s, unknown product 0x%x",
+		cp += sprintf(cp, "%s product 0x%04x",
 		    vendor_namep, product);
 	if (showclass) {
 		cp += sprintf(cp, " (");
 		if (classp->name == NULL)
-			cp += sprintf(cp,
-			    "unknown class 0x%2x, subclass 0x%02x",
+			cp += sprintf(cp, "class 0x%02x, subclass 0x%02x",
 			    class, subclass);
 		else {
-			cp += sprintf(cp, "class %s, ", classp->name);
 			if (subclassp == NULL || subclassp->name == NULL)
-				cp += sprintf(cp, "unknown subclass 0x%02x",
-				    subclass);
+				cp += sprintf(cp,
+				    "%s subclass 0x%02x",
+				    classp->name, subclass);
 			else
-				cp += sprintf(cp, "subclass %s",
-				    subclassp->name);
+				cp += sprintf(cp, "%s %s",
+				    subclassp->name, classp->name);
 		}
-#if 0 /* not very useful */
-		cp += sprintf(cp, ", interface 0x%02x", interface);
-#endif
-		cp += sprintf(cp, ", revision 0x%02x)", revision);
+		if (interface != 0)
+			cp += sprintf(cp, ", interface 0x%02x", interface);
+		if (revision != 0)
+			cp += sprintf(cp, ", revision 0x%02x", revision);
+		cp += sprintf(cp, ")");
 	}
 }
