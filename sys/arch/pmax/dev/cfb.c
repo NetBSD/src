@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.5 1995/04/10 07:31:25 mycroft Exp $	*/
+/*	$NetBSD: cfb.c,v 1.6 1995/07/22 05:04:46 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -941,6 +941,7 @@ cfbConfigMouse()
 #endif
 #if NSCC > 1
 	case DS_3MIN:
+	case DS_3MAXPLUS:
 		sccDivertXInput = cfbKbdEvent;
 		sccMouseEvent = cfbMouseEvent;
 		sccMouseButtons = cfbMouseButtons;
@@ -978,6 +979,7 @@ cfbDeconfigMouse()
 #endif
 #if NSCC > 1
 	case DS_3MIN:
+	case DS_3MAXPLUS:
 		sccDivertXInput = (void (*)())0;
 		sccMouseEvent = (void (*)())0;
 		sccMouseButtons = (void (*)())0;
