@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.79 1997/06/12 19:18:15 mrg Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.80 1997/06/13 19:08:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1252,21 +1252,4 @@ sunos_sys_sigvec(p, v, retval)
 		setsigvec(p, signum, (struct sigaction *)sv);
 	}
 	return (0);
-}
-
-int
-sunos_sys_swapon(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sys_swapctl_args ua;
-	struct sunos_sys_swapon_args /* {
-		syscallarg(const char *) name;
-	} */ *uap = v;
-
-	SCARG(&ua, cmd) = SWAP_ON;
-	SCARG(&ua, arg) = (void *)SCARG(uap, name);
-	SCARG(&ua, misc) = 0;	/* priority */
-	return (sys_swapctl(p, &ua, retval));
 }
