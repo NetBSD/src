@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.47 2001/07/19 16:25:26 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.48 2001/07/23 17:20:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -986,7 +986,8 @@ epic_init(ifp)
 				epic_rxdrain(sc);
 				goto out;
 			}
-		}
+		} else
+			EPIC_INIT_RXDESC(sc, i);
 	}
 	sc->sc_rxptr = 0;
 
