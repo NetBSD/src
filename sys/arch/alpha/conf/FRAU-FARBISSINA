@@ -1,4 +1,4 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.31 2004/10/23 14:00:50 augustss Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.32 2004/11/10 17:54:02 christos Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
@@ -7,7 +7,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.31 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.32 $"
 
 maxusers 64
 
@@ -76,6 +76,7 @@ options 	COMPAT_14
 
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # System V-like message queues
 options 	SYSVMSG

@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.23 2004/07/15 03:53:50 atatat Exp $
+# 	$NetBSD: WAPIKO,v 1.24 2004/11/10 17:54:06 christos Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -36,6 +36,7 @@ options 	COMPAT_14		# NetBSD 1.4 binary compatibility
 options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 #options 	EXEC_AOUT		# exec a.out binaries
 #options 	EXEC_ECOFF		# exec ecoff binaries
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Filesystem options
 file-system	FFS		# Berkeley Fast Filesystem
