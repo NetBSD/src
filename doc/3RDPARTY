@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.65 2003/03/03 19:44:34 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.66 2003/03/03 20:10:17 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -657,7 +657,7 @@ Current Vers:	8.12.8
 Maintainer:	Eric P. Allman
 Archive Site:	ftp://ftp.sendmail.org/pub/sendmail/
 Mailing List:
-Responsible:
+Responsible:	atatat@netbsd.org
 Notes:
 use gnu/dist/sendmail/sendmail2netbsd to strip off RCS tags.
 local changes:
