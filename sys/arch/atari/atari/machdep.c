@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2002/03/20 17:59:22 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115 2002/04/09 13:04:43 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,6 +67,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <sys/exec.h>
 #if defined(DDB) && defined(__ELF__)
 #include <sys/exec_elf.h>
 #endif
