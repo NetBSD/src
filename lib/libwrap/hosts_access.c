@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.16 2002/06/22 11:52:40 itojun Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.17 2002/12/26 12:53:59 lukem Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.16 2002/06/22 11:52:40 itojun Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.17 2002/12/26 12:53:59 lukem Exp $");
 #endif
 #endif
 
@@ -202,7 +202,8 @@ char   *list;
 struct request_info *request;
 int   (*match_fn) __P((char *, struct request_info *));
 {
-    char   *tok, *last;
+    char   *tok;
+    static char *last;
     int l;
 
     /*
