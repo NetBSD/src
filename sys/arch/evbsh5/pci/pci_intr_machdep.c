@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.3 2002/10/22 15:19:09 scw Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.4 2002/10/31 14:54:37 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -188,7 +188,7 @@ cayman_intr_conf(void *arg, int bus, int dev, int pin, int swiz, int *line)
 	 * Use the defaults for primary bus.
 	 */
 	if (bus == 0) {
-		*line = ((swiz + (pin - 1)) & 3);
+		*line = ((swiz + (dev + pin - 1)) & 3);
 		return;
 	}
 
@@ -217,18 +217,17 @@ cayman_intr_ihead(void *arg, pci_intr_handle_t handle)
 {
 	struct cayman_intr_softc *sc = arg;
 	struct sh5pci_ihead *ih, **ihp;
-	int pin, evt;
+	int line, pin, evt;
 
+	line = SH5PCI_IH_LINE(handle) & 3;
 	pin = SH5PCI_IH_PIN(handle);
 
 	if (pin == PCI_INTERRUPT_PIN_NONE || pin > PCI_INTERRUPT_PIN_MAX)
 		return (NULL);
 
-	pin -= 1;
-
 	if (CAYMAN_INTR_IS_PRIMARY(handle)) {
-		ihp = &sc->sc_primary[pin];
-		switch (pin) {
+		ihp = &sc->sc_primary[line];
+		switch (line) {
 		case 0:	evt = INTC_INTEVT_PCI_INTA;
 			break;
 		case 1:	evt = INTC_INTEVT_PCI_INTB;
@@ -240,11 +239,11 @@ cayman_intr_ihead(void *arg, pci_intr_handle_t handle)
 		}
 	} else
 	if (CAYMAN_INTR_IS_P1(handle)) {
-		ihp = &sc->sc_p1[pin];
+		ihp = &sc->sc_p1[line];
 		evt = INTC_INTEVT_IRL2;
 	} else
 	if (CAYMAN_INTR_IS_P2(handle)) {
-		ihp = &sc->sc_p2[pin];
+		ihp = &sc->sc_p2[line];
 		evt = INTC_INTEVT_IRL3;
 	} else
 		return (NULL);
