@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.12 2002/09/11 17:23:25 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.13 2002/09/12 20:21:00 mycroft Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "rtld.h"
 
+void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 
 void
