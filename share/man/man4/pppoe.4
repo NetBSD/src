@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.9.2.3 2003/02/07 20:23:48 tron Exp $
+.\"	$NetBSD: pppoe.4,v 1.9.2.4 2003/02/07 20:24:23 tron Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -253,7 +253,7 @@ Note that this will break all userland
 .Nm PPPoE
 implementations using the same ethernet interface!
 .Pp
-This option is only usefull if you have a static IP address assigned and
+This option is only useful if you have a static IP address assigned and
 your ISP does not use LCP echo requests to monitor the link status. After
 a crash or power failure the peer device still tries to send data to the no
 longer active session on your computer, and might refuse to reestablish a
@@ -262,7 +262,7 @@ packets the
 .Nm
 driver with this option set will send a
 .Nm PADT
-packet (request to terminate the session). The peer will imediately disconnect
+packet (request to terminate the session). The peer will immediately disconnect
 the orphaned session and allow a new one to be established.
 .Sh SEE ALSO
 .Xr ifwatchd 8 ,
