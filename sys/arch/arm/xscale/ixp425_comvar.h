@@ -1,4 +1,4 @@
-/*      $NetBSD: ixp425_comvar.h,v 1.1 2003/05/23 00:57:25 ichiro Exp $        */
+/*      $NetBSD: ixp425_comvar.h,v 1.2 2003/05/31 23:57:45 ichiro Exp $        */
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
  *
@@ -106,6 +106,6 @@ void	ixp4xx_com_attach_subr(struct ixp4xx_com_softc *);
 
 int	ixp4xxcomintr(void* arg);
 
-int	ixp4xx_comcnattach(bus_space_tag_t, bus_addr_t, bus_space_handle_t, int, int, tcflag_t);
+int	ixp4xx_comcnattach(bus_space_tag_t, bus_addr_t, bus_space_handle_t, int, int, tcflag_t, char*);
 
 #endif /* _IXP425_COMVAR_H_ */
