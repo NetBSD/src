@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subs.c,v 1.9 2001/09/24 13:22:25 wiz Exp $	*/
+/*	$NetBSD: tty_subs.c,v 1.10 2001/10/25 05:33:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tty_subs.c,v 1.9 2001/09/24 13:22:25 wiz Exp $");
+__RCSID("$NetBSD: tty_subs.c,v 1.10 2001/10/25 05:33:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,11 +59,7 @@ __RCSID("$NetBSD: tty_subs.c,v 1.9 2001/09/24 13:22:25 wiz Exp $");
 #include <string.h>
 #include "pax.h"
 #include "extern.h"
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 /*
  * routines that deal with I/O to and from the user
@@ -79,13 +75,8 @@ static FILE *ttyinf = NULL;		/* input pointing at control tty */
  *	open fails, future ops that require user input will get an EOF
  */
 
-#if __STDC__
 int
 tty_init(void)
-#else
-int
-tty_init()
-#endif
 {
 	int ttyfd;
 
@@ -111,24 +102,13 @@ tty_init()
  *	if there is no controlling terminal, just return.
  */
 
-#if __STDC__
 void
-tty_prnt(char *fmt, ...)
-#else
-void
-tty_prnt(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
+tty_prnt(const char *fmt, ...)
 {
 	va_list ap;
 	if (ttyoutf == NULL)
 		return;
-#	if __STDC__
 	va_start(ap, fmt);
-#	else
-	va_start(ap);
-#	endif
 	(void)vfprintf(ttyoutf, fmt, ap);
 	va_end(ap);
 	(void)fflush(ttyoutf);
@@ -142,15 +122,8 @@ tty_prnt(fmt, va_alist)
  *	0 if data was read, -1 otherwise.
  */
 
-#if __STDC__
 int
 tty_read(char *str, int len)
-#else
-int
-tty_read(str, len)
-	char *str;
-	int len;
-#endif
 {
 	char *pt;
 
@@ -172,23 +145,11 @@ tty_read(str, len)
  *	will be non-zero.
  */
 
-#if __STDC__
 void
-tty_warn(int set, char *fmt, ...)
-#else
-void
-tty_warn(set, fmt, va_alist)
-	int set;
-	char *fmt;
-	va_dcl
-#endif
+tty_warn(int set, const char *fmt, ...)
 {
 	va_list ap;
-#	if __STDC__
 	va_start(ap, fmt);
-#	else
-	va_start(ap);
-#	endif
 	if (set)
 		exit_val = 1;
 	/*
@@ -211,24 +172,11 @@ tty_warn(set, fmt, va_alist)
  *	will be non-zero.
  */
 
-#if __STDC__
 void
-syswarn(int set, int errnum, char *fmt, ...)
-#else
-void
-syswarn(set, errnum, fmt, va_alist)
-	int set;
-	int errnum;
-	char *fmt;
-	va_dcl
-#endif
+syswarn(int set, int errnum, const char *fmt, ...)
 {
 	va_list ap;
-#	if __STDC__
 	va_start(ap, fmt);
-#	else
-	va_start(ap);
-#	endif
 	if (set)
 		exit_val = 1;
 	/*

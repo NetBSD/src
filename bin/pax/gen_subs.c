@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.20 2001/01/04 15:39:51 lukem Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.21 2001/10/25 05:33:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.20 2001/01/04 15:39:51 lukem Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.21 2001/10/25 05:33:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,15 +87,8 @@ __RCSID("$NetBSD: gen_subs.c,v 1.20 2001/01/04 15:39:51 lukem Exp $");
  *	list the members of an archive in ls format
  */
 
-#if __STDC__
 void
 ls_list(ARCHD *arcn, time_t now)
-#else
-void
-ls_list(arcn, now)
-	ARCHD *arcn;
-	time_t now;
-#endif
 {
 	struct stat *sbp;
 	char f_mode[MODELEN];
@@ -139,19 +132,10 @@ ls_list(arcn, now)
 	 * print device id's for devices, or sizes for other nodes
 	 */
 	if ((arcn->type == PAX_CHR) || (arcn->type == PAX_BLK))
-#		ifdef NET2_STAT
-		(void)printf("%4u,%4u ", MAJOR(sbp->st_rdev),
-		    MINOR(sbp->st_rdev));
-#		else
 		(void)printf("%4lu,%4lu ", (long) MAJOR(sbp->st_rdev),
 		    (long) MINOR(sbp->st_rdev));
-#		endif
 	else {
-#		ifdef NET2_STAT
-		(void)printf("%9lu ", sbp->st_size);
-#		else
-		(void)printf("%9llu ", (long long)sbp->st_size);
-#		endif
+		(void)printf(OFFT_FP("9") " ", (OFFT_T)sbp->st_size);
 	}
 
 	/*
@@ -173,14 +157,8 @@ ls_list(arcn, now)
  *	print a short summary of file to tty.
  */
 
-#if __STDC__
 void
 ls_tty(ARCHD *arcn)
-#else
-void
-ls_tty(arcn)
-	ARCHD *arcn;
-#endif
 {
 	char f_date[DATELEN];
 	char f_mode[MODELEN];
@@ -210,16 +188,8 @@ ls_tty(arcn)
  *	memset(). (or doing the memset() first).
  */
 
-#if __STDC__
 void
 zf_strncpy(char *dest, const char *src, int len)
-#else
-void
-zf_strncpy(dest, src, len)
-	char *dest;
-	char *src;
-	int len;
-#endif
 {
 	char *stop;
 
@@ -239,16 +209,8 @@ zf_strncpy(dest, src, len)
  *	doing a strncpy() then a strlen()
  */
 
-#if __STDC__
 int
 l_strncpy(char *dest, const char *src, int len)
-#else
-int
-l_strncpy(dest, src, len)
-	char *dest;
-	char *src;
-	int len;
-#endif
 {
 	char *stop;
 	char *start;
@@ -272,16 +234,8 @@ l_strncpy(dest, src, len)
  *	unsigned long value
  */
 
-#if __STDC__
 u_long
 asc_ul(char *str, int len, int base)
-#else
-u_long
-asc_ul(str, len, base)
-	char *str;
-	int len;
-	int base;
-#endif
 {
 	char *stop;
 	u_long tval = 0;
@@ -323,17 +277,8 @@ asc_ul(str, len, base)
  *	NOTE: the string created is NOT TERMINATED.
  */
 
-#if __STDC__
 int
 ul_asc(u_long val, char *str, int len, int base)
-#else
-int
-ul_asc(val, str, len, base)
-	u_long val;
-	char *str;
-	int len;
-	int base;
-#endif
 {
 	char *pt;
 	u_long digit;
@@ -377,28 +322,20 @@ ul_asc(val, str, len, base)
 
 #ifndef NET2_STAT
 /*
- * asc_uqd()
- *	convert hex/octal character string into a u_quad_t. We do not have to
- *	check for overflow! (the headers in all supported formats are not large
- *	enough to create an overflow).
+ * asc_ull()
+ *	convert hex/octal character string into a u_longlong_t. We do not have
+ *	to to check for overflow! (the headers in all supported formats are
+ *	not large enough to create an overflow).
  *	NOTE: strings passed to us are NOT TERMINATED.
  * Return:
- *	u_quad_t value
+ *	u_longlong_t value
  */
 
-#if __STDC__
-u_quad_t
-asc_uqd(char *str, int len, int base)
-#else
-u_quad_t
-asc_uqd(str, len, base)
-	char *str;
-	int len;
-	int base;
-#endif
+u_longlong_t
+asc_ull(char *str, int len, int base)
 {
 	char *stop;
-	u_quad_t tval = 0;
+	u_longlong_t tval = 0;
 
 	stop = str + len;
 
@@ -431,26 +368,17 @@ asc_uqd(str, len, base)
 }
 
 /*
- * uqd_asc()
- *	convert an u_quad_t into a hex/oct ascii string. pads with LEADING
+ * ull_asc()
+ *	convert an u_longlong_t into a hex/oct ascii string. pads with LEADING
  *	ascii 0's to fill string completely
  *	NOTE: the string created is NOT TERMINATED.
  */
 
-#if __STDC__
 int
-uqd_asc(u_quad_t val, char *str, int len, int base)
-#else
-int
-uqd_asc(val, str, len, base)
-	u_quad_t val;
-	char *str;
-	int len;
-	int base;
-#endif
+ull_asc(u_longlong_t val, char *str, int len, int base)
 {
 	char *pt;
-	u_quad_t digit;
+	u_longlong_t digit;
 
 	/*
 	 * WARNING str is not '\0' terminated by this routine
@@ -468,13 +396,13 @@ uqd_asc(val, str, len, base)
 				*pt-- = '0' + (char)digit;
 			else
 				*pt-- = 'a' + (char)(digit - 10);
-			if ((val = (val >> 4)) == (u_quad_t)0)
+			if ((val = (val >> 4)) == (u_longlong_t)0)
 				break;
 		}
 	} else {
 		while (pt >= str) {
 			*pt-- = '0' + (char)(val & 0x7);
-			if ((val = (val >> 3)) == (u_quad_t)0)
+			if ((val = (val >> 3)) == (u_longlong_t)0)
 				break;
 		}
 	}
@@ -484,7 +412,7 @@ uqd_asc(val, str, len, base)
 	 */
 	while (pt >= str)
 		*pt-- = '0';
-	if (val != (u_quad_t)0)
+	if (val != (u_longlong_t)0)
 		return(-1);
 	return(0);
 }
@@ -498,7 +426,8 @@ check_Aflag(void)
 		return 1;
 	if (Aflag == 0) {
 		Aflag = -1;
-		tty_warn(0, "Removing leading / from absolute path names in the archive");
+		tty_warn(0,
+		 "Removing leading / from absolute path names in the archive");
 	}
 	return 0;
 }
