@@ -249,7 +249,7 @@ test -d "$config_directory" || {
 }
 
 test -f $config_directory/postfix-files || {
-    $0: Error: $config_directory/postfix-files is not a file. 1>&2
+    echo $0: Error: $config_directory/postfix-files is not a file. 1>&2
     exit 1
 }
 
