@@ -1,8 +1,8 @@
-/*	$NetBSD: hwaddr.c,v 1.6 2002/07/14 00:26:17 wiz Exp $	*/
+/*	$NetBSD: hwaddr.c,v 1.7 2002/07/14 00:30:02 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hwaddr.c,v 1.6 2002/07/14 00:26:17 wiz Exp $");
+__RCSID("$NetBSD: hwaddr.c,v 1.7 2002/07/14 00:30:02 wiz Exp $");
 #endif
 
 /*
@@ -231,7 +231,7 @@ static u_char conv802table[256] =
 };
 
 void
-haddr_conv802(register u_char *addr_in, register u_char *addr_out, int len)
+haddr_conv802(u_char *addr_in, u_char *addr_out, int len)
 {
 	u_char *lim;
 
