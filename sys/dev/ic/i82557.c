@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.11 1999/11/04 00:24:01 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.12 1999/11/12 18:14:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1124,6 +1124,10 @@ fxp_stop(sc, drain)
 	 * Cancel stats updater.
 	 */
 	untimeout(fxp_tick, sc);
+	if (sc->sc_flags & FXPF_MII) {
+		/* Down the MII. */
+		mii_down(&sc->sc_mii);
+	}
 
 	/*
 	 * Issue software reset

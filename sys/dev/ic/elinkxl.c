@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.16 1999/11/04 00:24:01 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.17 1999/11/12 18:14:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1502,6 +1502,8 @@ ex_stop(sc)
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, C_INTR_LATCH);
 
 	untimeout(ex_tick, sc);
+	if (sc->ex_conf & EX_CONF_MII)
+		mii_down(&sc->ex_mii);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;

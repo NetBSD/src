@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.22 1999/11/04 00:24:01 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.23 1999/11/12 18:14:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1135,6 +1135,9 @@ epic_stop(sc, drain)
 	 * Stop the one second clock.
 	 */
 	untimeout(epic_tick, sc);
+
+	/* Down the MII. */
+	mii_down(&sc->sc_mii);
 
 	/* Paranoia... */
 	epic_fixup_clock_source(sc);

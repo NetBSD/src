@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl.c,v 1.3 1999/11/04 00:24:32 thorpej Exp $ */
+/* $NetBSD: if_rl.c,v 1.4 1999/11/12 18:14:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1647,6 +1647,8 @@ static void rl_stop(sc)
 	ifp->if_timer = 0;
 
 	untimeout(rl_tick, sc);
+
+	mii_down(&sc->mii);
 
 	CSR_WRITE_1(sc, RL_COMMAND, 0x00);
 	CSR_WRITE_2(sc, RL_IMR, 0x0000);
