@@ -1,4 +1,4 @@
-/*	$NetBSD: vt100if.c,v 1.3 1999/02/15 04:36:35 hubertf Exp $	*/
+/*	$NetBSD: vt100if.c,v 1.4 2000/08/25 01:04:10 thorpej Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -79,9 +79,12 @@ extern int *gcpu_semadr;
 
 #include <machine/keyboard.h>
 
+/*
+ * XXX SHOULD USE yield().
+ */
 #ifdef CPU_SINGLE
 #include <machine/cpu.h>
-#define PRE_EMPT	need_resched()
+#define PRE_EMPT	need_resched(curcpu())
 #endif
 
 extern int kbd_read();

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.86 2000/08/24 06:14:34 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.87 2000/08/25 01:04:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ roundrobin(void *arg)
 		splx(s);
 	}
 	/* XXXSMP: should need_resched() on all CPUs */
-	need_resched();
+	need_resched(curcpu());
 	callout_reset(&roundrobin_ch, hz / 10, roundrobin, NULL);
 }
 
@@ -615,7 +615,8 @@ awaken(struct proc *p)
 	 */
 	if (p->p_flag & P_INMEM) {
 		setrunqueue(p);
-		need_resched();
+		KASSERT(p->p_cpu != NULL);
+		need_resched(p->p_cpu);
 	} else
 		sched_wakeup(&proc0);
 }
@@ -976,22 +977,13 @@ setrunnable(struct proc *p)
 	else if (p->p_priority < curcpu()->ci_schedstate.spc_curpriority) {
 		/*
 		 * XXXSMP
-		 * This is wrong.  It will work, but what really
-		 * needs to happen is:
-		 *
-		 *	- Need to check if p is higher priority
-		 *	  than the process currently running on
-		 *	  the CPU p last ran on (let p_cpu persist
-		 *	  after a context switch?), and preempt
-		 *	  that one (or, if there is no process
-		 *	  there, simply need_resched() that CPU.
-		 *
-		 *	- Failing that, traverse a list of
-		 *	  available CPUs and need_resched() the
-		 *	  CPU with the lowest priority that's
-		 *	  lower than p's.
+		 * This is not exactly right.  Since p->p_cpu persists
+		 * across a context switch, this gives us some sort
+		 * of processor affinity.  But we need to figure out
+		 * at what point it's better to reschedule on a different
+		 * CPU than the last one.
 		 */
-		need_resched();
+		need_resched((p->p_cpu != NULL) ? p->p_cpu : curcpu());
 	}
 }
 
@@ -1015,7 +1007,7 @@ resetpriority(struct proc *p)
 		 * XXXSMP
 		 * Same applies as in setrunnable() above.
 		 */
-		need_resched();
+		need_resched((p->p_cpu != NULL) ? p->p_cpu : curcpu());
 	}
 }
 

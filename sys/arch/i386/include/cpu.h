@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.64 2000/06/04 21:27:38 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.65 2000/08/25 01:04:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@ extern struct cpu_info cpu_info_store;
  * or after the current trap/syscall if in system mode.
  */
 int	want_resched;		/* resched() was called */
-#define	need_resched()		(want_resched = 1, setsoftast())
+#define	need_resched(ci)	(want_resched = 1, setsoftast())
 
 /*
  * Give a profiling tick to the current process when the user profiling
