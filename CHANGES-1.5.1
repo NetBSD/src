@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.65 2001/05/06 22:50:32 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.66 2001/05/09 00:10:55 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -4669,3 +4669,30 @@ distrib/notes/common/donations			1.20
 
   Update copyright year, and use .Bc/.Ec macros for two-coloumn
   output.
+
+share/man/man4/ex.4				1.6-1.7
+
+  Update to show the card/chip variants this driver currently supports.
+
+distrib/notes/common/main			patch
+
+  Fix some wording, use literally 1.5 when NetBSD 1.5 is talked
+  about as opposed to 1.5.1.  Update source set sizes.
+
+distrib/notes/common/postinstall		patch
+
+  Fix markup problem; wrap too long line, and minor wording fix.
+
+distrib/notes/i386/hardware			patch
+
+  A few fixes:
+   o Cycalades Y cards not enabled in GENERIC
+   o Note Byte Runner serial cards
+   o Expand list of 3COM cards supported by ex(4)
+   o Add a couple of wireless cards; mark as ``in'', as they
+     are in the _LAPTOP kernels.
+   o Add new audio cards/devices
+
+distrib/notes/i386/whatis			patch
+
+  Use ``1.5'' when talking about NetBSD 1.5.
