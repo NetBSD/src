@@ -17,7 +17,7 @@
    License along with GAS; see the file COPYING.  If not, write
    to the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-   $Id: obj-aout.h,v 1.4 1994/06/24 13:35:22 pk Exp $
+   $Id: obj-aout.h,v 1.4.2.1 1994/08/14 07:52:31 mycroft Exp $
  */
 
 
@@ -153,7 +153,12 @@ typedef struct nlist obj_symbol_type; /* Symbol table entry */
 		: 0						\
 	)
 
-#define H_GET_DYNAMIC(h)		(H_GET_FLAGS(h) & 0x20)
+#define EX_DYNAMIC			0x20
+#define EX_PIC				0x10
+#undef AOUT_FLAGS
+#define AOUT_FLAGS			(flagseen['k'] ? EX_PIC : 0)
+
+#define H_GET_DYNAMIC(h)		(H_GET_FLAGS(h) & EX_DYNAMIC)
 
 #define H_GET_VERSION(h)		(0)
 
@@ -165,7 +170,7 @@ typedef struct nlist obj_symbol_type; /* Symbol table entry */
 
 #define H_GET_MAGIC_NUMBER(h)					\
 	( (((h)->header.a_info)&0xffff0000)			\
-		? (ntohl(((h)->header.a_info))&0xffff)	\
+		? (ntohl(((h)->header.a_info))&0xffff)		\
 		: ((h)->header.a_info & 0xffff)			\
 	)
 
