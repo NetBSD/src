@@ -1,4 +1,4 @@
-.\"	$NetBSD: printcap.5,v 1.12 2001/09/11 01:01:58 wiz Exp $
+.\"	$NetBSD: printcap.5,v 1.13 2003/03/04 16:10:04 fredb Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,6 +113,10 @@ blocks), zero = unlimited
 style text files
 .It "rg	str" Ta Dv NULL Ta No "restricted group. Only members of group allowed access"
 .It "rm	str" Ta Dv NULL Ta No "machine name for remote printer"
+.Po
+also suppress the burst page, see
+.Sx NOTES
+.Pc
 .It "rp	str	``lp''	remote printer name argument"
 .It "rs	bool	false	restrict remote users to those with local accounts"
 .It "rw	bool	false	open the printer device for reading and writing"
@@ -121,6 +125,10 @@ style text files
 .It "sd	str" Ta Pa /var/spool/output/lpd Ta No "spool directory"
 .It "sf	bool	false	suppress form feeds"
 .It "sh	bool	false	suppress printing of burst page header"
+.Po
+local only, see
+.Sx NOTES
+.Pc
 .It "st	str" Ta Pa status Ta No "status file name"
 .It "tf	str" Ta Dv NULL Ta No "troff data filter (cat phototypesetter)"
 .It "tr	str" Ta Dv NULL Ta No "trailer string to print when queue empties"
@@ -285,6 +293,16 @@ feed appended to them, rather than just a line feed.
 .Rs
 .%T "4.3 BSD Line Printer Spooler Manual"
 .Re
+.Sh NOTES
+The
+.Sy sh
+flag is a function of the spooler with the locally attached printer,
+and so has no effect when used with
+.Sy rm .
+.Nx
+never adds a burst page when used as a remote spooler.
+To suppress the burst page for other systems or dedicated devices,
+refer to the documentation for those systems or devices.
 .Sh HISTORY
 The
 .Nm
