@@ -1,7 +1,7 @@
 #	fs: /usr
 #
 #	@(#)BSD.usr.dist	5.5 (Berkeley) 5/9/91
-#	$Id: BSD.usr.dist,v 1.7 1994/01/31 23:38:19 jtc Exp $
+#	$Id: BSD.usr.dist,v 1.8 1994/02/06 06:49:41 cgd Exp $
 #
 
 .	type=dir
@@ -84,6 +84,8 @@ local	type=dir uname=bin gname=bin mode=0755
 		..
 		man8	type=dir uname=bin gname=bin  mode=0755
 		..
+	..
+	src	type=dir uname=bin gname=bin  mode=0755
 	..
 ..
 
@@ -404,11 +406,15 @@ src
 	..
 	games
 	..
+	gnu
+	..
 	include
 	..
 	lib
 	..
 	libexec
+	..
+	regress
 	..
 	sbin
 	..
