@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231var.h,v 1.1 1999/06/05 14:29:10 mrg Exp $	*/
+/*	$NetBSD: cs4231var.h,v 1.2 2002/03/12 04:48:28 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,36 +36,88 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_IC_CS4231VAR_H_
+#define _DEV_IC_CS4231VAR_H_
+
+#define AUDIOCS_PROM_NAME	"SUNW,CS4231"
+
+/*
+ * List of device memory allocations (see cs4231_malloc/cs4231_free).
+ */
+struct cs_dma {
+	struct	cs_dma	*next;
+	caddr_t		addr;
+	bus_dmamap_t	dmamap;
+	bus_dma_segment_t segs[1];
+	int		nsegs;
+	size_t		size;
+};
+
+
+/*
+ * DMA transfer to/from CS4231.
+ */
+struct cs_transfer {
+	int t_active;		/* this transfer is currently active */
+	struct cs_dma *t_dma;	/* dma memory to transfer from/to */
+	vsize_t t_segsz;	/* size of the segment */
+	vsize_t t_blksz;	/* call audio(9) after this many bytes */
+	vsize_t t_cnt;		/* how far are we into the segment */
+
+	void (*t_intr)(void*);	/* audio(9) callback */
+	void *t_arg;
+
+	const char *t_name;	/* for error/debug messages */
+
+	struct evcnt t_intrcnt;
+	struct evcnt t_ierrcnt;
+};
+
+
 /*
  * Software state, per CS4231 audio chip.
  */
 struct cs4231_softc {
 	struct ad1848_softc sc_ad1848;	/* base device */
-	/* XXX */
-	struct sbusdev	sc_sd;		/* sbus device */
+
 	bus_space_tag_t	sc_bustag;
-	bus_dma_tag_t	sc_dmatag;
-	struct evcnt	sc_intrcnt;	/* statistics */
+	bus_dma_tag_t sc_dmatag;
 
-	struct cs_dma	*sc_dmas;
-	struct cs_dma	*sc_nowplaying;	/*XXX*/
-	u_long		sc_playsegsz;	/*XXX*/
-	u_long		sc_playcnt;
-	u_long		sc_blksz;
+	int sc_open;			/* single use device */
+	struct cs_dma *sc_dmas;		/* allocated dma resources */
 
-	int	sc_open;		/* single use device */
-	int	sc_locked;		/* true when transfering data */
-	struct	apc_dma	*sc_dmareg;	/* DMA registers */
+	struct evcnt sc_intrcnt;	/* parent counter */
 
-	/* interfacing with the interrupt handlers */
-	void	(*sc_rintr)(void*);	/* input completion intr handler */
-	void	*sc_rarg;		/* arg for sc_rintr() */
-	void	(*sc_pintr)(void*);	/* output completion intr handler */
-	void	*sc_parg;		/* arg for sc_pintr() */
+	struct cs_transfer sc_playback;
+	struct cs_transfer sc_capture;
 };
 
-void	cs4231_init __P((struct cs4231_softc *));
-int	cs4231_read __P((struct ad1848_softc *, int));
-void	cs4231_write __P((struct ad1848_softc *, int, int));
-int	cs4231_intr __P((void *));
-extern	struct audio_hw_if audiocs_hw_if;
+
+/*
+ * Bus independent code shared by sbus and ebus attachments.
+ */
+void	cs4231_common_attach(struct cs4231_softc *, bus_space_handle_t);
+int	cs4231_transfer_init(struct cs4231_softc *, struct cs_transfer *,
+			     bus_addr_t *, bus_size_t *,
+			     void *, void *, int, void (*)(void *), void *);
+void	cs4231_transfer_advance(struct cs_transfer *,
+				bus_addr_t *, bus_size_t *);
+
+
+/*
+ * Bus independent audio(9) methods.
+ */
+int	cs4231_open(void *, int);
+void	cs4231_close(void *);
+size_t	cs4231_round_buffersize(void *, int, size_t);
+int	cs4231_round_blocksize(void *, int);
+int	cs4231_getdev(void *, struct audio_device *);
+int	cs4231_set_port(void *, mixer_ctrl_t *);
+int	cs4231_get_port(void *, mixer_ctrl_t *);
+int	cs4231_query_devinfo(void *, mixer_devinfo_t *);
+int	cs4231_get_props(void *);
+
+void	*cs4231_malloc(void *, int, size_t, int, int);
+void	cs4231_free(void *, void *, int);
+
+#endif /* _DEV_IC_CS4231VAR_H_ */
