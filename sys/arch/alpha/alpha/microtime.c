@@ -1,4 +1,4 @@
-/* $NetBSD: microtime.c,v 1.2 2001/04/29 17:04:41 sommerfeld Exp $ */
+/* $NetBSD: microtime.c,v 1.3 2001/05/27 13:53:24 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: microtime.c,v 1.2 2001/04/29 17:04:41 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: microtime.c,v 1.3 2001/05/27 13:53:24 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: microtime.c,v 1.2 2001/04/29 17:04:41 sommerfeld Exp
 
 #include <machine/cpu.h>
 #include <machine/rpb.h>
+
+struct timeval microset_time;
 
 /*
  * Return the best possible estimate of the time in the timeval to which
@@ -165,7 +167,7 @@ microset(struct cpu_info *ci, struct trapframe *framep)
 	/* XXX BLOCK MACHINE CHECKS? */
 
 	denom = ci->ci_pcc_pcc;
-	t = time;			/* XXXSMP: not atomic */
+	t = microset_time;
 	ci->ci_pcc_pcc = alpha_rpcc() & 0xffffffffUL;
 
 	/* XXX UNBLOCK MACHINE CHECKS? */
@@ -194,7 +196,7 @@ microset(struct cpu_info *ci, struct trapframe *framep)
 	 * the time is probably be frobbed with by the timekeeper
 	 * or the human.
 	 */
-	if (delta > 500000 && delta < 15000000) {
+	if (delta > 500000 && delta < 1500000) {
 		ci->ci_pcc_ms_delta = delta;
 		ci->ci_pcc_denom = denom;
 	} else {
