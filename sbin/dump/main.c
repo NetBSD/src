@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1997/02/27 06:17:23 mikel Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1997/04/10 05:36:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.9 1997/02/27 06:17:23 mikel Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.10 1997/04/10 05:36:24 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ static char rcsid[] = "$NetBSD: main.c,v 1.9 1997/02/27 06:17:23 mikel Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "dump.h"
@@ -108,6 +109,7 @@ main(argc, argv)
 	register int ch;
 	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;
 	ino_t maxino;
+	time_t tnow;
 
 	uid = getuid();
 	euid = geteuid();
@@ -396,6 +398,7 @@ main(argc, argv)
 
 	startnewtape(1);
 	(void)time((time_t *)&(tstart_writing));
+	xferrate = 0;
 	dumpmap(usedinomap, TS_CLRI, maxino - 1);
 
 	msg("dumping (Pass III) [directories]\n");
@@ -442,8 +445,14 @@ main(argc, argv)
 	if (pipeout)
 		msg("DUMP: %ld tape blocks\n",spcl.c_tapea);
 	else
-		msg("DUMP: %ld tape blocks on %d volumes(s)\n",
-		    spcl.c_tapea, spcl.c_volume);
+		msg("DUMP: %ld tape blocks on %d volume%s\n",
+		    spcl.c_tapea, spcl.c_volume,
+		    (spcl.c_volume == 1) ? "" : "s");
+	tnow = do_stats();
+	msg("Date of this level %c dump: %s", level,
+		spcl.c_date == 0 ? "the epoch\n" : ctime(&spcl.c_date));
+	msg("Date this dump completed:  %s", ctime(&tnow));
+	msg("Average transfer rate: %ldK/s\n", xferrate / tapeno);
 	putdumptime();
 	trewind();
 	broadcast("DUMP IS DONE!\7\7\n");
