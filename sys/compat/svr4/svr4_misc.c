@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.23 1995/07/01 23:42:54 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.24 1995/07/02 06:16:09 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -58,6 +58,8 @@
 #include <sys/utsname.h>
 #include <sys/unistd.h>
 #include <sys/times.h>
+#include <sys/sem.h>
+#include <sys/msg.h>
 
 #include <netinet/in.h>
 #include <sys/syscallargs.h>
@@ -74,6 +76,7 @@
 #include <compat/svr4/svr4_hrt.h>
 #include <compat/svr4/svr4_wait.h>
 #include <compat/svr4/svr4_statvfs.h>
+#include <compat/svr4/svr4_sysconfig.h>
 
 #include <vm/vm.h>
 /* XXX */ extern struct proc *pfind();
@@ -392,15 +395,6 @@ svr4_vhangup(p, uap, retval)
 	return 0;
 }
 
-#define SVR4_CONFIG_UNUSED	1
-#define SVR4_CONFIG_NGROUPS	2
-#define SVR4_CONFIG_CHILD_MAX	3
-#define SVR4_CONFIG_OPEN_FILES	4
-#define SVR4_CONFIG_POSIX_VER	5
-#define SVR4_CONFIG_PAGESIZE	6
-#define SVR4_CONFIG_CLK_TCK	7
-#define SVR4_CONFIG_XOPEN_VER	8
-#define SVR4_CONFIG_PROF_TCK	10
 
 int
 svr4_sysconfig(p, uap, retval)
@@ -437,6 +431,51 @@ svr4_sysconfig(p, uap, retval)
 		break;
 	case SVR4_CONFIG_PROF_TCK:
 		*retval = 60;	/* XXX: What should that be? */
+		break;
+	case SVR4_CONFIG_NPROC_CONF:
+		*retval = 1;	/* Only one processor for now */
+		break;
+	case SVR4_CONFIG_NPROC_ONLN:
+		*retval = 1;	/* And it better be online */
+		break;
+	case SVR4_CONFIG_AIO_LISTIO_MAX:
+	case SVR4_CONFIG_AIO_MAX:
+	case SVR4_CONFIG_AIO_PRIO_DELTA_MAX:
+		*retval = 0;	/* No aio support */
+		break;
+	case SVR4_CONFIG_DELAYTIMER_MAX:
+		*retval = 0;	/* No delaytimer support */
+		break;
+	case SVR4_CONFIG_MQ_OPEN_MAX:
+		*retval = msginfo.msgmni;
+		break;
+	case SVR4_CONFIG_MQ_PRIO_MAX:
+		*retval = 0;	/* XXX: Don't know */
+		break;
+	case SVR4_CONFIG_RTSIG_MAX:
+		*retval = 0;
+		break;
+	case SVR4_CONFIG_SEM_NSEMS_MAX:
+		*retval = seminfo.semmni;
+		break;
+	case SVR4_CONFIG_SEM_VALUE_MAX:
+		*retval = seminfo.semvmx;
+		break;
+	case SVR4_CONFIG_SIGQUEUE_MAX:
+		*retval = 0;	/* XXX: Don't know */
+		break;
+	case SVR4_CONFIG_SIGRT_MIN:
+	case SVR4_CONFIG_SIGRT_MAX:
+		*retval = 0;	/* No real time signals */
+		break;
+	case SVR4_CONFIG_TIMER_MAX:
+		*retval = 3;	/* XXX: real, virtual, profiling */
+		break;
+	case SVR4_CONFIG_PHYS_PAGES:
+		*retval = cnt.v_free_count;	/* XXX: free instead of total */
+		break;
+	case SVR4_CONFIG_AVPHYS_PAGES:
+		*retval = cnt.v_active_count;	/* XXX: active instead of avg */
 		break;
 	default:
 		return EINVAL;
@@ -511,14 +550,14 @@ svr4_break(p, uap, retval)
 
 	DPRINTF(("break(1): old %x new %x diff %x\n", old, new, diff));
 
-	if ((int) diff > p->p_rlimit[RLIMIT_DATA].rlim_cur)
+	if (diff > p->p_rlimit[RLIMIT_DATA].rlim_cur)
 		return ENOMEM;
 
 	old = round_page(old + ctob(vm->vm_dsize));
 	DPRINTF(("break(2): dsize = %x ctob %x\n",
 		 vm->vm_dsize, ctob(vm->vm_dsize)));
 
-	new = old + diff;
+	diff = new - old;
 	DPRINTF(("break(3): old %x new %x diff %x\n", old, new, diff));
 
 	if (diff > 0) {
