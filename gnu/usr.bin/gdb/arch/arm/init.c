@@ -144,4 +144,5 @@ initialize_all_files (void)
   _initialize_os9kread ();
   _initialize_annotate ();
   _initialize_inflow ();
+  _initialize_nbsd_thread ();
 }
