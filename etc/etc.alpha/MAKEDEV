@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.67 2001/01/08 06:21:19 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.68 2001/02/04 17:05:14 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -114,6 +114,7 @@
 #	ss*	SCSI scanner
 #	tun*	network tunnel driver
 #	uk*	SCSI unknown
+#	mlx*	Mylex DAC960 control interface
 
 dialin=0
 dialout=524288
@@ -500,6 +501,13 @@ lkm)
 	mknod lkm c 16 0
 	chown root.kmem lkm
 	chmod 640 lkm
+	;;
+
+mlx*)
+	unit=${i#mlx};
+	rm -f mlx$unit
+	mknod mlx$unit c 65 $unit
+	chmod 600 mlx$unit
 	;;
 
 wskbd*)

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.398 2001/02/02 10:53:48 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.399 2001/02/04 17:05:15 ad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.398 $"
+#ident 		"GENERIC-$Revision: 1.399 $"
 
 maxusers	32		# estimated number of users
 
@@ -473,10 +473,12 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 cac*	at eisa?			# Compaq EISA array controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
-ld*	at cac? unit ?			# Compaq array disk devices
-ld*	at twe? unit ?			# 3ware array disk devices
 
+ld*	at cac? unit ?			# logical disk devices
+ld*	at twe? unit ?
+ld*	at mlx? unit ?
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
