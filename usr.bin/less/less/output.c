@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.5 2001/07/26 13:43:46 mrg Exp $	*/
+/*	$NetBSD: output.c,v 1.6 2001/07/26 14:20:48 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -32,7 +32,6 @@ extern int any_display;
 extern int is_tty;
 
 static int iprintnum __P((int, int));
-static int iprintf __P((char *, PARG *));
 
 /*
  * Display the line which is in the line buffer.
