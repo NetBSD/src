@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.1 2000/05/09 21:55:56 bjh21 Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.2 2000/11/20 08:24:11 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -171,7 +171,7 @@ filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 
 	bp->b_blkno = FILECORE_BOOT_SECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -226,7 +226,8 @@ filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 		    bp->b_blkno);*/
 		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
+		bp->b_flags &= ~(B_DONE);
+		bp->b_flags |= B_READ;
 		(*strat)(bp);
 
 		/*
@@ -272,7 +273,6 @@ filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 	*netbsd_label_offp = netbsdpartoff;
 	*msgp = NULL;
 out:
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
         brelse(bp);
 	return (rv);
 }
@@ -303,7 +303,7 @@ filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 
 	bp->b_blkno = FILECORE_BOOT_SECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -353,7 +353,6 @@ filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	*cylp = cyl;
 	*netbsd_label_offp = netbsdpartoff;
 out:
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
         brelse(bp);
 	return (rv);
 }

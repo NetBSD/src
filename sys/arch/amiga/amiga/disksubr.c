@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.35 2000/05/19 18:54:24 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.36 2000/11/20 08:24:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -134,7 +134,7 @@ readdisklabel(dev, strat, lp, clp)
 	lp->d_partitions[RAW_PART].p_offset = 0;
 
 	/* obtain buffer to probe drive with */
-	bp = (void *)geteblk((int)lp->d_secsize);
+	bp = geteblk((int)lp->d_secsize);
 
 	/*
 	 * request no partition relocation by driver on I/O operations
@@ -154,7 +154,8 @@ readdisklabel(dev, strat, lp, clp)
 		bp->b_blkno = nextb;
 		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
+		bp->b_flags &= ~(B_DONE);
+		bp->b_flags |= B_READ;
 #ifdef SD_C_ADJUSTS_NR
 		bp->b_blkno *= (lp->d_secsize / DEV_BSIZE);
 #endif
@@ -248,7 +249,8 @@ readdisklabel(dev, strat, lp, clp)
 		bp->b_blkno = nextb;
 		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
+		bp->b_flags &= ~(B_DONE);
+		bp->b_flags |= B_READ;
 #ifdef SD_C_ADJUSTS_NR
 		bp->b_blkno *= (lp->d_secsize / DEV_BSIZE);
 #endif
@@ -429,7 +431,6 @@ readdisklabel(dev, strat, lp, clp)
 done:
 	if (clp->valid == 0)
 		clp->rdblock = RDBNULL;
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 	return(msg);
 }
