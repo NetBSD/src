@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ps.c	5.43 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: ps.c,v 1.9 1993/10/07 00:46:02 cgd Exp $";
+static char rcsid[] = "$Id: ps.c,v 1.10 1994/05/05 02:04:31 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,7 +60,7 @@ static char rcsid[] = "$Id: ps.c,v 1.9 1993/10/07 00:46:02 cgd Exp $";
 #include <paths.h>
 #include "ps.h"
 
-#ifdef SPPWAIT
+#ifdef P_PPWAIT
 #define NEWVM
 #endif
 
@@ -311,7 +311,7 @@ main(argc, argv)
 	 */
 	for (i = lineno = 0; i < nentries; i++) {
 		if (xflg == 0 && (kinfo[i].ki_e->e_tdev == NODEV ||
-		    (kinfo[i].ki_p->p_flag & SCTTY ) == 0))
+		    (kinfo[i].ki_p->p_flag & P_CONTROLT) == 0))
 			continue;
 		for (vent = vhead; vent; vent = vent->next) {
 			(*vent->var->oproc)(&kinfo[i], vent->var, vent->next);

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nlist.c	5.5 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: nlist.c,v 1.5 1993/08/01 18:59:08 mycroft Exp $";
+static char rcsid[] = "$Id: nlist.c,v 1.6 1994/05/05 02:04:28 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -44,7 +44,7 @@ static char rcsid[] = "$Id: nlist.c,v 1.5 1993/08/01 18:59:08 mycroft Exp $";
 #include <stdio.h>
 #include <string.h>
 
-#ifdef SPPWAIT
+#ifdef P_PPWAIT
 #define NEWVM
 #endif
 

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)proc_compare.c	5.4 (Berkeley) 2/7/91";*/
-static char rcsid[] = "$Id: proc_compare.c,v 1.2 1993/08/01 18:03:16 mycroft Exp $";
+static char rcsid[] = "$Id: proc_compare.c,v 1.3 1994/05/05 02:08:57 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -117,9 +117,9 @@ proc_compare(p1, p2)
 	/*
 	 * favor one sleeping in a non-interruptible sleep
 	 */
-	 if (p1->p_flag&SSINTR && (p2->p_flag&SSINTR) == 0)
+	 if (p1->p_flag&P_SINTR && (p2->p_flag&P_SINTR) == 0)
 		 return (1);
-	 if (p2->p_flag&SSINTR && (p1->p_flag&SSINTR) == 0)
+	 if (p2->p_flag&P_SINTR && (p1->p_flag&P_SINTR) == 0)
 		 return (0);
 	return(p2->p_pid > p1->p_pid);		/* tie - return highest pid */
 }
