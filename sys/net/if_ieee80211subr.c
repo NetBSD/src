@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.23 2003/01/19 23:17:21 simonb Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.24 2003/02/25 01:57:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.23 2003/01/19 23:17:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.24 2003/02/25 01:57:36 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -288,6 +288,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 				ni = &ic->ic_bss;	/* XXX allocate? */
 			}
 			break;
+		case IEEE80211_M_MONITOR:
+			goto out;
 		}
 		ni->ni_rssi = rssi;
 		ni->ni_rstamp = rstamp;
@@ -353,6 +355,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 				    IEEE80211_REASON_NOT_ASSOCED);
 				goto err;
 			}
+			break;
+		case IEEE80211_M_MONITOR:
+			/* Should never get here */
 			break;
 		}
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
@@ -601,6 +606,10 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m)
 		IEEE80211_ADDR_COPY(wh->i_addr2, ni->ni_bssid);
 		IEEE80211_ADDR_COPY(wh->i_addr3, eh.ether_shost);
 		break;
+	case IEEE80211_M_MONITOR:
+		/* Should never get here! */
+		m_freem(m);
+		return NULL;
 	}
 	return m;
 }
@@ -1884,6 +1893,7 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		break;
 
 	case IEEE80211_M_AHDEMO:
+	case IEEE80211_M_MONITOR:
 		/* should not come here */
 		break;
 
