@@ -1,4 +1,4 @@
-/*	$Id: vrc4172pwm.c,v 1.11 2001/03/24 15:53:37 sato Exp $	*/
+/*	$NetBSD: vrc4172pwm.c,v 1.12 2001/04/13 08:09:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
