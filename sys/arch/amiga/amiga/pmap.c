@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 1994/10/26 02:02:04 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 1994/12/28 08:56:01 chopps Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -86,6 +86,7 @@
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/vmparam.h>
+#include <amiga/amiga/memlist.h>
 /*
  * Allocate various and sundry SYSMAPs used in the days of old VM
  * and not yet converted.  XXX.
@@ -221,9 +222,27 @@ boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
 char		*pmap_attributes;	/* reference and modify bits */
 static int	pmap_ishift;	/* segment table index shift */
 
+#ifdef MACHINE_NONCONTIG
+struct physeg {
+	vm_offset_t start;
+	vm_offset_t end;
+	int first_page;
+} phys_segs[16];
+
+static	vm_offset_t avail_next;
+static	vm_size_t avail_remaining;
+u_long	noncontig_enable;
+#endif
+
 boolean_t	pmap_testbit();
 void		pmap_enter_ptpage();
 
+#ifdef MACHINE_NONCONTIG
+#define pmap_valid_page(pa)	(pmap_initialized && pmap_page_index(pa) >= 0)
+#else
+#define pmap_valid_page(pa)	(pmap_initialized && pa >= vm_first_phys && \
+				pa < vm_last_phys)
+#endif
 
 /*
  * All those kernel PT submaps that BSD is so fond of
@@ -251,12 +270,47 @@ pmap_bootstrap(firstaddr, loadaddr)
 	extern vm_offset_t maxmem, physmem;
 	vm_offset_t va;
 	u_int *pte;
+#ifdef MACHINE_NONCONTIG
+	int i;
+	struct boot_memseg *sp, *esp;
+#endif
 
 	avail_start = firstaddr;
 	avail_end = maxmem << PGSHIFT;
 
 	/* XXX: allow for msgbuf */
 	avail_end -= amiga_round_page(sizeof(struct msgbuf));
+#ifdef MACHINE_NONCONTIG
+	avail_next = avail_start;
+	avail_remaining = (avail_end - avail_start) >> PGSHIFT;
+	phys_segs[0].start = avail_start;
+	phys_segs[0].end = avail_end;
+	sp = memlist->m_seg;
+	esp = sp + memlist->m_nseg;
+	i = 1;
+	for (; noncontig_enable && sp < esp; sp++) {
+		if ((sp->ms_attrib & MEMF_FAST) == 0)
+			continue;
+		if (avail_start >= sp->ms_start && avail_start <
+		    sp->ms_start + sp->ms_size)
+			continue;
+		phys_segs[i].start = sp->ms_start;
+		phys_segs[i].end = sp->ms_start + sp->ms_size;
+#ifdef DEBUG_A4000
+		if (phys_segs[i].end == 0x08000000)
+			continue;	/* skip A4000 motherboard mem */
+#endif
+		/* deal with Zorro II memory stolen for DMA bounce buffers */
+		if (phys_segs[i].start == 0x00200000)
+			phys_segs[i].end -= MAXPHYS;
+		phys_segs[i].first_page = phys_segs[i - 1].first_page +
+		    (phys_segs[i - 1].end - phys_segs[i - 1].start) / NBPG;
+		avail_remaining += (phys_segs[i].end - phys_segs[i].start) / NBPG;
+		physmem += (phys_segs[i].end - phys_segs[i].start) / NBPG;
+		++i;
+		break;		/* XXX only two segments for now */
+	}
+#endif
 
 	mem_size = physmem << PGSHIFT;
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + (firstaddr - loadaddr);
@@ -346,8 +400,12 @@ pmap_bootstrap_alloc(size)
  *	system needs to map virtual memory.
  */
 void
+#ifdef MACHINE_NONCONTIG
+pmap_init()
+#else
 pmap_init(phys_start, phys_end)
 	vm_offset_t	phys_start, phys_end;
+#endif
 {
 	extern vm_offset_t amigahwaddr;
 	extern u_int namigahwpg;
@@ -358,7 +416,11 @@ pmap_init(phys_start, phys_end)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
+#ifdef MACHINE_NONCONTIG
+		printf("pmap_init(%x, %x)\n", avail_start, avail_end);
+#else
 		printf("pmap_init(%x, %x)\n", phys_start, phys_end);
+#endif
 #endif
 	/*
 	 * Now that kernel map has been allocated, we can mark as
@@ -402,7 +464,19 @@ bogons:
 	 * Allocate memory for random pmap data structures.  Includes the
 	 * initial segment table, pv_head_table and pmap_attributes.
 	 */
+#ifdef MACHINE_NONCONTIG
+	{
+		int i;
+		for (npg = 0, i = 0; phys_segs[i].start; ++i)
+			npg += atop(phys_segs[i].end - phys_segs[i].start);
+	}
+#ifdef DEBUG
+	printf ("pmap_init: avail_start %08x phys_segs[0].start %08x npg %d\n",
+		avail_start, phys_segs[0].start, npg);
+#endif
+#else
 	npg = atop(phys_end - phys_start);
+#endif
 #ifdef M68040
 	if (cpu040)
 		s = (vm_size_t)AMIGA_040STSIZE * 128 + 
@@ -497,10 +571,74 @@ bogons:
 	/*
 	 * Now it is safe to enable pv_table recording.
 	 */
+#ifdef MACHINE_NONCONTIG
+	vm_first_phys = avail_start;
+	vm_last_phys = avail_end;
+#else
 	vm_first_phys = phys_start;
 	vm_last_phys = phys_end;
+#endif
 	pmap_initialized = TRUE;
 }
+
+#ifdef MACHINE_NONCONTIG
+unsigned int
+pmap_free_pages()
+{
+
+	return avail_remaining;
+}
+
+int
+pmap_next_page(addrp)
+	vm_offset_t *addrp;
+{
+	static int cur_seg = 0;
+
+	if (phys_segs[cur_seg].start == 0)
+		return FALSE;
+	if (avail_next == phys_segs[cur_seg].end) {
+		avail_next = phys_segs[++cur_seg].start;
+#ifdef DEBUG
+		printf ("pmap_next_page: next %08x remain %d\n",
+		    avail_next, avail_remaining);
+#endif
+	}
+
+	if (avail_next == 0)
+		return FALSE;
+	*addrp = avail_next;
+	avail_next += NBPG;
+	avail_remaining--;
+	return TRUE;
+}
+
+int
+pmap_page_index(pa)
+	vm_offset_t pa;
+{
+
+	struct physeg *sep = &phys_segs[0];
+
+	while (sep->start) {
+		if (pa >= sep->start && pa < sep->end)
+			return (amiga_btop(pa - sep->start) + sep->first_page);
+		++sep;
+	}
+	return -1;
+}
+
+void
+pmap_virtual_space(startp, endp)
+	vm_offset_t	*startp;
+	vm_offset_t	*endp;
+{
+	*startp = virtual_avail;
+	*endp = virtual_end;
+}
+#else
+#define pmap_page_index(pa) (pa_index(pa))
+#endif	/* MACHINE_NONCONTIG */
 
 /*
  *	Used to map a range of physical addresses into kernel
@@ -768,7 +906,7 @@ pmap_remove(pmap, sva, eva)
 		 * Remove from the PV table (raise IPL since we
 		 * may be called at interrupt time).
 		 */
-		if (pa < vm_first_phys || pa >= vm_last_phys)
+		if (!pmap_valid_page(pa))
 			continue;
 		pv = pa_to_pvh(pa);
 		ste = (int *)0;
@@ -801,8 +939,10 @@ pmap_remove(pmap, sva, eva)
 				pv = npv;
 			}
 #ifdef DEBUG
-			if (npv == NULL)
+			if (npv == NULL) {
+printf ("pmap_remove: PA %08x index %d\n", pa, pa_index(pa));
 				panic("pmap_remove: PA not in pv_tab");
+			}
 #endif
 			ste = (int *)npv->pv_ptste;
 			ptpmap = npv->pv_ptpmap;
@@ -939,7 +1079,7 @@ pmap_page_protect(pa, prot)
 	    prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE))
 		printf("pmap_page_protect(%x, %x)\n", pa, prot);
 #endif
-	if (pa < vm_first_phys || pa >= vm_last_phys)
+	if (!pmap_valid_page(pa))
 		return;
 
 	switch (prot) {
@@ -958,7 +1098,13 @@ pmap_page_protect(pa, prot)
 #ifdef DEBUG
 			if (!pmap_ste_v(pmap_ste(pv->pv_pmap,pv->pv_va)) ||
 			    pmap_pte_pa(pmap_pte(pv->pv_pmap,pv->pv_va)) != pa)
+{
+  printf ("pmap_page_protect: va %08x, pmap_ste_v %d pmap_pte_pa %08x/%08x\n",
+    pv->pv_va, pmap_ste_v(pmap_ste(pv->pv_pmap,pv->pv_va)),
+    pmap_pte_pa(pmap_pte(pv->pv_pmap,pv->pv_va)),pa);
+  printf (" pvh %08x pv %08x pv_next %08x\n", pa_to_pvh(pa), pv, pv->pv_next);
 				panic("pmap_page_protect: bad mapping");
+}
 #endif
 			pmap_remove(pv->pv_pmap, pv->pv_va,
 				    pv->pv_va + PAGE_SIZE);
@@ -1165,7 +1311,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * Note that we raise IPL while manipulating pv_table
 	 * since pmap_enter can be called at interrupt time.
 	 */
-	if (pa >= vm_first_phys && pa < vm_last_phys) {
+	if (pmap_valid_page(pa)) {
 		register pv_entry_t pv, npv;
 		int s;
 
@@ -1623,7 +1769,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 		if (!pmap_ste_v(pmap_ste(pmap, sva)))
 			return;
 		pa = pmap_pte_pa(pmap_pte(pmap, sva));
-		if (pa < vm_first_phys || pa >= vm_last_phys)
+		if (!pmap_valid_page(pa))
 			return;
 		pv = pa_to_pvh(pa);
 		if (pv->pv_ptste == NULL)
@@ -1769,7 +1915,7 @@ pmap_testbit(pa, bit)
 	register int *pte;
 	int s;
 
-	if (pa < vm_first_phys || pa >= vm_last_phys)
+	if (!pmap_valid_page(pa))
 		return(FALSE);
 
 	pv = pa_to_pvh(pa);
@@ -1817,7 +1963,7 @@ pmap_changebit(pa, bit, setem)
 		printf("pmap_changebit(%x, %x, %s)\n",
 		       pa, bit, setem ? "set" : "clear");
 #endif
-	if (pa < vm_first_phys || pa >= vm_last_phys)
+	if (!pmap_valid_page(pa))
 		return;
 
 	pv = pa_to_pvh(pa);
