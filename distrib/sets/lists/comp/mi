@@ -99,6 +99,8 @@
 ./usr/include/dev/ic/dc21040reg.h
 ./usr/include/dev/ic/dp8390reg.h
 ./usr/include/dev/ic/dp8390var.h
+./usr/include/dev/ic/dptreg.h
+./usr/include/dev/ic/dptvar.h
 ./usr/include/dev/ic/ds.h
 ./usr/include/dev/ic/elink3reg.h
 ./usr/include/dev/ic/elink3var.h
