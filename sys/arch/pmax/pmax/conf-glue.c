@@ -1,4 +1,4 @@
-/*	$NetBSD: conf-glue.c,v 1.15 1997/07/28 19:56:36 mhitch Exp $	*/
+/*	$NetBSD: conf-glue.c,v 1.15.6.1 1998/05/08 06:33:56 mycroft Exp $	*/
 
 /*
  * conf-glue.c:
@@ -78,6 +78,9 @@ struct pmax_scsi_device scsi_dinit[] = {
 { &rzdriver,	&siidriver,	2,	0,	2,	0,	1,	0x0 },
 { &rzdriver,	&siidriver,	3,	0,	3,	0,	1,	0x0 },
 { &rzdriver,	&siidriver,	4,	0,	4,	0,	1,	0x0 },
+{ &rzdriver,	&siidriver,	5,	0,	5,	0,	1,	0x0 },
+{ &rzdriver,	&siidriver,	6,	0,	6,	0,	1,	0x0 },
+{ &rzdriver,	&siidriver,	7,	0,	7,	0,	1,	0x0 },
 # endif /* NTZ */
 
 # if NTZ > 0
@@ -94,6 +97,8 @@ struct pmax_scsi_device scsi_dinit[] = {
 { &rzdriver,	&ascdriver,	2,	0,	2,	0,	1,	0x0 },
 { &rzdriver,	&ascdriver,	3,	0,	3,	0,	1,	0x0 },
 { &rzdriver,	&ascdriver,	4,	0,	4,	0,	1,	0x0 },
+{ &rzdriver,	&ascdriver,	5,	0,	5,	0,	1,	0x0 },
+{ &rzdriver,	&ascdriver,	6,	0,	6,	0,	1,	0x0 },
 
 # if NRZ > 7
 { &rzdriver,	&ascdriver,	8,	1,	0,	0,	1,	0x0 },
@@ -101,6 +106,8 @@ struct pmax_scsi_device scsi_dinit[] = {
 { &rzdriver,	&ascdriver,	10,	1,	2,	0,	1,	0x0 },
 { &rzdriver,	&ascdriver,	11,	1,	3,	0,	1,	0x0 },
 { &rzdriver,	&ascdriver,	12,	1,	4,	0,	1,	0x0 },
+{ &rzdriver,	&ascdriver,	13,	1,	5,	0,	1,	0x0 },
+{ &rzdriver,	&ascdriver,	14,	1,	6,	0,	1,	0x0 },
 # endif /* NRZ > 7 */
 # endif /* NRZ */
 
