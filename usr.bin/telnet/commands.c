@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.17 1998/03/03 07:32:46 thorpej Exp $	*/
+/*	$NetBSD: commands.c,v 1.18 1998/03/04 13:51:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.17 1998/03/03 07:32:46 thorpej Exp $");
+__RCSID("$NetBSD: commands.c,v 1.18 1998/03/04 13:51:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1459,8 +1459,6 @@ shell(argc, argv)
     }
     return 1;
 }
-#else	/* !defined(TN3270) */
-extern int shell();
 #endif	/* !defined(TN3270) */
 
     /*VARARGS*/

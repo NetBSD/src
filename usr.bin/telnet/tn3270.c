@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.7 1998/02/27 10:44:15 christos Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.8 1998/03/04 13:51:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,13 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.7 1998/02/27 10:44:15 christos Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.8 1998/03/04 13:51:57 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <arpa/telnet.h>
+#ifdef __STDC__
+#include <unistd.h>
+#endif
 
 #include "general.h"
 
@@ -56,10 +59,13 @@ __RCSID("$NetBSD: tn3270.c,v 1.7 1998/02/27 10:44:15 christos Exp $");
 #if	defined(TN3270)
 
 #include "../ctlr/screen.h"
+#include "../ctlr/declare.h"
+
+#include "../ascii/state.h"
+
 #include "../general/globals.h"
 
 #include "../sys_curses/telextrn.h"
-#include "../ctlr/externs.h"
 
 #if	defined(unix)
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.6 1998/02/27 10:44:15 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.7 1998/03/04 13:51:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.6 1998/02/27 10:44:15 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.7 1998/03/04 13:51:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,10 @@ __RCSID("$NetBSD: utilities.c,v 1.6 1998/02/27 10:44:15 christos Exp $");
 #include "defines.h"
 
 #include "externs.h"
+
+#if defined(TN3270)
+#include "../sys_curses/telextrn.h"
+#endif
 
 FILE	*NetTrace = 0;		/* Not in bss, since needs to stay */
 int	prettydump;

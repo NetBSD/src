@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.9 1998/02/27 10:44:13 christos Exp $	*/
+/*	$NetBSD: externs.h,v 1.10 1998/03/04 13:51:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -517,14 +517,6 @@ extern cc_t termAytChar;
 #endif
 
 
-/* Ring buffer structures which are shared */
-
-extern Ring
-    netoring,
-    netiring,
-    ttyoring,
-    ttyiring;
-
 /* Tn3270 section */
 #if	defined(TN3270)
 
@@ -555,5 +547,10 @@ void _putchar P((int));
 void SetIn3270 P((void));
 int tn3270_ttype P((void));
 int settranscom P((int, char *[]));
+int shell_continue P((void));
+int DataFromTerminal __P((char *, int));
+int DataFromNetwork __P((char *, int, int));
+void ConnectScreen __P((void));
+int DoTerminalOutput __P((void));
 
 #endif	/* defined(TN3270) */
