@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.22 2003/01/17 22:19:05 thorpej Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.23 2003/04/27 17:05:55 tsutsui Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ arc_hardware_intr(status, cause, pc, ipending)
 	u_int32_t pc;
 	u_int32_t ipending;
 {
-	register int i;
+	int i;
 	struct clockframe cf;
 
 	cf.pc = pc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.34 2003/03/21 04:35:02 tsutsui Exp $	*/
+/*	$NetBSD: pccons.c,v 1.35 2003/04/27 17:05:57 tsutsui Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -341,7 +341,7 @@ kbd_cmd(val, polling)
 	u_char polling;
 {
 	u_int retries = 3;
-	register u_int i;
+	u_int i;
 
 	if(!polling) {
 		i = spltty();
@@ -359,7 +359,7 @@ kbd_cmd(val, polling)
 		kbd_data_write_1(val);
 		for (i = 100000; i; i--) {
 			if (kbd_cmd_read_1() & KBS_DIB) {
-				register u_char c;
+				u_char c;
 
 				KBD_DELAY;
 				c = kbd_data_read_1();
@@ -675,7 +675,7 @@ pcintr(arg)
 	void *arg;
 {
 	struct pc_softc *sc = arg;
-	register struct tty *tp = sc->sc_tty;
+	struct tty *tp = sc->sc_tty;
 	u_char *cp;
 
 	if ((kbd_cmd_read_1() & KBS_DIB) == 0)
@@ -865,7 +865,7 @@ int
 pccngetc(dev)
 	dev_t dev;
 {
-	register char *cp;
+	char *cp;
 
 	if (pc_xmode > 0)
 		return 0;

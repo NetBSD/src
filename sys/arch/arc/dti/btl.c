@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.11 2003/01/19 10:06:14 tsutsui Exp $	*/
+/*	$NetBSD: btl.c,v 1.12 2003/04/27 17:05:57 tsutsui Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -197,7 +197,7 @@ bt_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	u_char *ibuf, *obuf;
 {
 	const char *name;
-	register int i;
+	int i;
 	int wait;
 	u_char sts;
 	u_char opcode = ibuf[0];
@@ -320,7 +320,7 @@ btprobe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	register struct isa_attach_args *ia = aux;
+	struct isa_attach_args *ia = aux;
 
 #ifdef NEWCONFIG
 	if (ia->ia_iobase == IOBASEUNK)

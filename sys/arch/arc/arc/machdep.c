@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2003/04/26 11:05:07 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2003/04/27 17:05:56 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -605,7 +605,7 @@ struct user dumppcb;	/* Actually, struct pcb would do. */
 
 void
 cpu_reboot(howto, bootstr)
-	register int howto;
+	int howto;
 	char *bootstr;
 {
 
@@ -689,7 +689,7 @@ arc_sysreset(addr, cmd_offset)
  */
 void
 microtime(tvp)
-	register struct timeval *tvp;
+	struct timeval *tvp;
 {
 	int s = splclock();
 	static struct timeval lasttime;
