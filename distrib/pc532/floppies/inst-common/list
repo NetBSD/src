@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2000/06/07 20:42:19 thorpej Exp $
+#	$NetBSD: list,v 1.14 2000/11/16 07:16:23 phil Exp $
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
@@ -67,7 +67,7 @@ LINK	instbin			sbin/restore
 LINK	instbin			sbin/route
 LINK	instbin			sbin/rrestore
 LINK	instbin			sbin/slattach
-LINK	instbin			sbin/sysinst
+#LINK	instbin			sbin/sysinst
 LINK	instbin			sbin/swapon
 LINK	instbin			sbin/umount
 SYMLINK	/instbin		usr/bin/basename
