@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.694 2004/05/18 00:36:04 christos Exp $
+# $NetBSD: mi,v 1.695 2004/05/18 05:38:18 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -104,8 +104,8 @@
 ./usr/share/man/cat1/dig.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/dirname.0			man-util-catman		.cat
 ./usr/share/man/cat1/dirs.0			man-util-catman		.cat
-./usr/share/man/cat1/dnskeygen.0		man-bind-catman		.cat
-./usr/share/man/cat1/dnsquery.0			man-util-catman		.cat
+./usr/share/man/cat1/dnskeygen.0		man-bind-catman		obsolete
+./usr/share/man/cat1/dnsquery.0			man-util-catman		obsolete
 ./usr/share/man/cat1/domainname.0		man-nis-catman		.cat
 ./usr/share/man/cat1/dtmfdecode.0		man-isdn-catman		.cat
 ./usr/share/man/cat1/du.0			man-util-catman		.cat
@@ -1455,6 +1455,7 @@
 ./usr/share/man/cat5/remote.0			man-uucp-catman		.cat
 ./usr/share/man/cat5/resolv.conf.0		man-net-catman		.cat
 ./usr/share/man/cat5/rhosts.0			man-netutil-catman	.cat
+./usr/share/man/cat5/rndc.conf.0		man-bind-catman		.cat
 ./usr/share/man/cat5/rpc.0			man-net-catman		.cat
 ./usr/share/man/cat5/rtadvd.conf.0		man-router-catman	.cat
 ./usr/share/man/cat5/securenet.0		man-obsolete		obsolete
@@ -2205,8 +2206,8 @@
 ./usr/share/man/man1/dig.1			man-netutil-man		.man
 ./usr/share/man/man1/dirname.1			man-util-man		.man
 ./usr/share/man/man1/dirs.1			man-util-man		.man
-./usr/share/man/man1/dnskeygen.1		man-bind-man		.man
-./usr/share/man/man1/dnsquery.1			man-util-man		.man
+./usr/share/man/man1/dnskeygen.1		man-bind-man		obsolete
+./usr/share/man/man1/dnsquery.1			man-util-man		obsolete
 ./usr/share/man/man1/domainname.1		man-nis-man		.man
 ./usr/share/man/man1/dtmfdecode.1		man-isdn-man		.man
 ./usr/share/man/man1/du.1			man-util-man		.man
@@ -3557,6 +3558,7 @@
 ./usr/share/man/man5/remote.5			man-uucp-man		.man
 ./usr/share/man/man5/resolv.conf.5		man-net-man		.man
 ./usr/share/man/man5/rhosts.5			man-netutil-man		.man
+./usr/share/man/man5/rndc.conf.5		man-bind-man		.man
 ./usr/share/man/man5/rpc.5			man-net-man		.man
 ./usr/share/man/man5/rtadvd.conf.5		man-router-man		.man
 ./usr/share/man/man5/securenet.5		man-obsolete		obsolete
@@ -3946,7 +3948,7 @@
 ./usr/share/man/man8/named.reload.8		man-bind-man		obsolete
 ./usr/share/man/man8/named.restart.8		man-bind-man		obsolete
 ./usr/share/man/man8/ndbootd.8			man-bootserver-man	.man
-./usr/share/man/man8/ndc.8			man-bind-man		.man
+./usr/share/man/man8/ndc.8			man-bind-man		obsolete
 ./usr/share/man/man8/ndp.8			man-netutil-man		.man
 ./usr/share/man/man8/netbsd32.8			man-sys-man		.man
 ./usr/share/man/man8/netgroup_mkdb.8		man-nis-man		.man
