@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.7 1999/11/02 16:54:27 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.8 1999/11/09 16:52:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -136,6 +136,8 @@ struct chan {
 		u_int16_t           sizes[UAUDIO_NFRAMES];
 		u_int16_t	    size;
 	} chanbufs[UAUDIO_NCHANBUFS];
+
+	struct uaudio_softc *sc; /* our softc */
 };
 
 struct uaudio_softc {
@@ -365,6 +367,8 @@ USB_ATTACH(uaudio)
 	       USBDEVNAME(sc->sc_dev), sc->sc_as_iface,
 	       sc->sc_audio_rev >> 8, sc->sc_audio_rev & 0xff);
 
+	sc->sc_chan.sc = sc;
+
 	DPRINTF(("uaudio_attach: doing audio_attach_mi\n"));
 	sc->sc_audiodev = audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
 
@@ -400,6 +404,9 @@ uaudio_detach(self, flags)
 {
 	struct uaudio_softc *sc = (struct uaudio_softc *)self;
 	int rv = 0;
+
+	/* Wait for outstanding requests to complete. */
+	usbd_delay_ms(sc->sc_udev, UAUDIO_NCHANBUFS * UAUDIO_NFRAMES);
 
 	if (sc->sc_audiodev)
 		rv = config_detach(sc->sc_audiodev, flags);
@@ -1849,6 +1856,9 @@ uaudio_chan_ptransfer(ch)
 	struct chanbuf *cb;
 	int i, n, size, residue, total;
 
+	if (ch->sc->sc_dying)
+		return;
+
 	/* Pick the next channel buffer. */
 	cb = &ch->chanbufs[ch->curchanbuf];
 	if (++ch->curchanbuf >= UAUDIO_NCHANBUFS)
@@ -1951,6 +1961,9 @@ uaudio_chan_rtransfer(ch)
 {
 	struct chanbuf *cb;
 	int i, size, residue, total;
+
+	if (ch->sc->sc_dying)
+		return;
 
 	/* Pick the next channel buffer. */
 	cb = &ch->chanbufs[ch->curchanbuf];
