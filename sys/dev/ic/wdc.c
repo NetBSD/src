@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.139 2003/10/09 18:40:19 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.140 2003/10/12 19:28:50 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.139 2003/10/09 18:40:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.140 2003/10/12 19:28:50 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1737,11 +1737,6 @@ __wdccommand_start(chp, xfer)
 		return;
 	case WDCWAIT_THR:
 		return;
-	}
-	if (wdc_c->flags & AT_POLL) {
-		/* polled command, disable interrupts */
-		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-		    WDCTL_4BIT | WDCTL_IDS);
 	}
 	if (wdc_c->flags & AT_POLL) {
 		/* polled command, disable interrupts */
