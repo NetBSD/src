@@ -1,4 +1,4 @@
-/*	$NetBSD: va-ppc.h,v 1.3 1998/01/05 07:03:19 perry Exp $	*/
+/*	$NetBSD: va-ppc.h,v 1.4 1998/12/02 14:23:03 tsubai Exp $	*/
 
 /* GNU C varargs support for the PowerPC with V.4 calling sequence */
 
@@ -6,6 +6,10 @@
 
 #ifndef __GNUC_VA_LIST
 #define __GNUC_VA_LIST
+
+#ifdef __lint__
+#define __extension__(x) (0)
+#endif
 
 /* Note that the names in this structure are in the user's namespace, but
    that the V.4 abi explicitly states that these names should be used.  */
@@ -95,9 +99,11 @@ __extension__ ({							\
 
 #define __va_aggregate_p(TYPE)	(__builtin_classify_type(*(TYPE *)0) >= 12)
 #define __va_size(TYPE)		((sizeof(TYPE) + sizeof (long) - 1) / sizeof (long))
+#define __va_longlong_p(TYPE) \
+  ((__builtin_classify_type(*(TYPE *)0) == 1) && (sizeof(TYPE) == 8))
 
 #define va_arg(AP,TYPE)							\
-__extension__ (*({							\
+((TYPE) __extension__ (*({						\
   register TYPE *__ptr;							\
 									\
   if (__va_float_p (TYPE) && (AP)->fpr < 8)				\
@@ -113,8 +119,13 @@ __extension__ (*({							\
     }									\
 									\
   else if (!__va_float_p (TYPE) && !__va_aggregate_p (TYPE)		\
-	   && (AP)->gpr + __va_size(TYPE) <= 8)				\
+	   && (AP)->gpr + __va_size(TYPE) <= 8				\
+	   && (!__va_longlong_p(TYPE)					\
+	       || (AP)->gpr + __va_size(TYPE) <= 8))			\
     {									\
+      if (__va_longlong_p(TYPE) && ((AP)->gpr & 1) != 0)		\
+	(AP)->gpr++;							\
+									\
       __ptr = __VA_GP_REGSAVE (AP, TYPE);				\
       (AP)->gpr += __va_size (TYPE);					\
     }									\
@@ -139,7 +150,7 @@ __extension__ (*({							\
     }									\
 									\
   __ptr;								\
-}))
+})))
 
 #define va_end(AP)	((void)0)
 
