@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.62 2004/03/29 04:59:03 atatat Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.63 2004/04/25 16:42:42 simonb Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.62 2004/03/29 04:59:03 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.63 2004/04/25 16:42:42 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -123,20 +123,13 @@ int ip6_anonportmax = IPV6PORT_ANONMAX;
 int ip6_lowportmin  = IPV6PORT_RESERVEDMIN;
 int ip6_lowportmax  = IPV6PORT_RESERVEDMAX;
 
-struct pool in6pcb_pool;
+POOL_INIT(in6pcb_pool, sizeof(struct in6pcb), 0, 0, 0, "in6pcbpl", NULL);
 
 void
 in6_pcbinit(table, bindhashsize, connecthashsize)
 	struct inpcbtable *table;
 	int bindhashsize, connecthashsize;
 {
-	static int in6pcb_pool_initialized;
-
-	if (in6pcb_pool_initialized == 0) {
-		pool_init(&in6pcb_pool, sizeof(struct in6pcb), 0, 0, 0,
-		    "in6pcbpl", NULL);
-		in6pcb_pool_initialized = 1;
-	}
 
 	in_pcbinit(table, bindhashsize, connecthashsize);
 	table->inpt_lastport = (u_int16_t)ip6_anonportmax;

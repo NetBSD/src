@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.42 2004/01/09 19:00:16 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.43 2004/04/25 16:42:43 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -215,6 +215,24 @@ struct pool {
  */
 extern struct pool_allocator pool_allocator_kmem;
 extern struct pool_allocator pool_allocator_nointr;
+
+struct link_pool_init {	/* same as args to pool_init() */
+	struct pool *pp;
+	size_t size;
+	u_int align;
+	u_int align_offset;
+	int flags;
+	const char *wchan;
+	struct pool_allocator *palloc;
+};
+#define	POOL_INIT(pp, size, align, align_offset, flags, wchan, palloc)	\
+struct pool pp;								\
+static const struct link_pool_init _link_ ## pp[1] = {			\
+	{ &pp, size, align, align_offset, flags, wchan, palloc }	\
+};									\
+__link_set_add_rodata(pools, _link_ ## pp)
+
+void		link_pool_init(void);
 
 void		pool_init(struct pool *, size_t, u_int, u_int,
 		    int, const char *, struct pool_allocator *);

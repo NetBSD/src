@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.12 2004/02/22 17:45:26 jdolecek Exp $	*/
+/*	$NetBSD: event.h,v 1.13 2004/04/25 16:42:43 simonb Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -199,8 +199,6 @@ struct knote {
 };
 
 struct proc;
-
-void		kqueue_init(void);
 
 void	knote(struct klist *, long);
 void	knote_remove(struct proc *, struct klist *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.55 2004/04/05 10:20:52 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.56 2004/04/25 16:42:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.55 2004/04/05 10:20:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.56 2004/04/25 16:42:41 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -85,7 +85,8 @@ u_long	ncvhash;			/* size of hash table - 1 */
 TAILQ_HEAD(, namecache) nclruhead;		/* LRU chain */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
 
-struct pool namecache_pool;
+POOL_INIT(namecache_pool, sizeof(struct namecache), 0, 0, 0, "ncachepl",
+    &pool_allocator_nointr);
 
 MALLOC_DEFINE(M_CACHE, "namecache", "Dynamically allocated cache entries");
 
@@ -486,8 +487,6 @@ nchinit(void)
 #else
 	    hashinit(desiredvnodes/8, HASH_LIST, M_CACHE, M_WAITOK, &ncvhash);
 #endif
-	pool_init(&namecache_pool, sizeof(struct namecache), 0, 0, 0,
-	    "ncachepl", &pool_allocator_nointr);
 }
 
 /*

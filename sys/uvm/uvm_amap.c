@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.53 2004/03/24 07:50:48 junyoung Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.54 2004/04/25 16:42:44 simonb Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.53 2004/03/24 07:50:48 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.54 2004/04/25 16:42:44 simonb Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.53 2004/03/24 07:50:48 junyoung Exp $
  * memory from an amap (it currently goes through the kernel uobj, so
  * we are ok).
  */
-
-struct pool uvm_amap_pool;
+POOL_INIT(uvm_amap_pool, sizeof(struct vm_amap), 0, 0, 0, "amappl",
+    &pool_allocator_nointr);
 
 MALLOC_DEFINE(M_UVMAMAP, "UVM amap", "UVM amap and related structures");
 
@@ -152,22 +152,6 @@ pp_setreflen(ppref, offset, ref, len)
 	}
 }
 #endif
-
-/*
- * amap_init: called at boot time to init global amap data structures
- */
-
-void
-amap_init(void)
-{
-
-	/*
-	 * Initialize the vm_amap pool.
-	 */
-
-	pool_init(&uvm_amap_pool, sizeof(struct vm_amap), 0, 0, 0,
-	    "amappl", &pool_allocator_nointr);
-}
 
 /*
  * amap_alloc1: internal function that allocates an amap, but does not

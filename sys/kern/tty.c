@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.166 2004/04/25 06:13:38 matt Exp $	*/
+/*	$NetBSD: tty.c,v 1.167 2004/04/25 16:42:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.166 2004/04/25 06:13:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.167 2004/04/25 16:42:41 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,8 @@ struct simplelock ttylist_slock = SIMPLELOCK_INITIALIZER;
 struct ttylist_head ttylist;	/* TAILQ_HEAD */
 int tty_count;
 
-struct pool tty_pool;
+POOL_INIT(tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
+    &pool_allocator_nointr);
 
 u_int64_t tk_cancc;
 u_int64_t tk_nin;
@@ -2499,9 +2500,6 @@ tty_init(void)
 
 	TAILQ_INIT(&ttylist);
 	tty_count = 0;
-
-	pool_init(&tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
-	    &pool_allocator_nointr);
 }
 
 /*

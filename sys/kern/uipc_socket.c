@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.99 2004/04/22 01:01:40 matt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.100 2004/04/25 16:42:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.99 2004/04/22 01:01:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.100 2004/04/25 16:42:41 simonb Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.99 2004/04/22 01:01:40 matt Exp $"
 
 #include <uvm/uvm.h>
 
-struct pool	socket_pool;
+POOL_INIT(socket_pool, sizeof(struct socket), 0, 0, 0, "sockpl", NULL);
 
 MALLOC_DEFINE(M_SOOPTS, "soopts", "socket options");
 MALLOC_DEFINE(M_SONAME, "soname", "socket name");
@@ -129,9 +129,6 @@ soinit(void)
 	/* Set the initial adjusted socket buffer size. */
 	if (sb_max_set(sb_max))
 		panic("bad initial sb_max value: %lu\n", sb_max);
-
-	pool_init(&socket_pool, sizeof(struct socket), 0, 0, 0,
-	    "sockpl", NULL);
 
 #ifdef SOSEND_COUNTERS
 	evcnt_attach_static(&sosend_loan_big);

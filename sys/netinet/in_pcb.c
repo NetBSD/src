@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.94 2004/03/02 02:26:28 thorpej Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.95 2004/04/25 16:42:42 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.94 2004/03/02 02:26:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.95 2004/04/25 16:42:42 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -157,20 +157,13 @@ int	anonportmax = IPPORT_ANONMAX;
 int	lowportmin  = IPPORT_RESERVEDMIN;
 int	lowportmax  = IPPORT_RESERVEDMAX;
 
-struct pool inpcb_pool;
+POOL_INIT(inpcb_pool, sizeof(struct inpcb), 0, 0, 0, "inpcbpl", NULL);
 
 void
 in_pcbinit(table, bindhashsize, connecthashsize)
 	struct inpcbtable *table;
 	int bindhashsize, connecthashsize;
 {
-	static int inpcb_pool_initialized;
-
-	if (inpcb_pool_initialized == 0) {
-		pool_init(&inpcb_pool, sizeof(struct inpcb), 0, 0, 0,
-		    "inpcbpl", NULL);
-		inpcb_pool_initialized = 1;
-	}
 
 	CIRCLEQ_INIT(&table->inpt_queue);
 	table->inpt_porthashtbl = hashinit(bindhashsize, HASH_LIST, M_PCB,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.56 2004/04/08 06:20:30 atatat Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.57 2004/04/25 16:42:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.56 2004/04/08 06:20:30 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.57 2004/04/25 16:42:41 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,8 @@ static int pipe_loan_alloc(struct pipe *, int);
 static void pipe_loan_free(struct pipe *);
 #endif /* PIPE_NODIRECT */
 
-static struct pool pipe_pool;
+static POOL_INIT(pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
+    &pool_allocator_nointr);
 
 /*
  * The pipe system call for the DTYPE_PIPE type of pipes
@@ -1514,15 +1515,4 @@ SYSCTL_SETUP(sysctl_kern_pipe_setup, "sysctl kern.pipe subtree setup")
 				    "buffers"),
 		       NULL, 0, &amountpipekva, 0,
 		       CTL_KERN, KERN_PIPE, KERN_PIPE_KVASIZE, CTL_EOL);
-}
-
-/*
- * Initialize pipe structs.
- */
-void
-pipe_init(void)
-{
-
-	pool_init(&pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
-	    &pool_allocator_nointr);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.164 2004/04/22 02:19:39 tls Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.165 2004/04/25 16:42:42 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.164 2004/04/22 02:19:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.165 2004/04/25 16:42:42 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -226,7 +226,7 @@ void	tcp_mtudisc __P((struct inpcb *, int));
 void	tcp6_mtudisc __P((struct in6pcb *, int));
 #endif
 
-struct pool tcpcb_pool;
+POOL_INIT(tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl", NULL);
 
 #ifdef TCP_CSUM_COUNTERS
 #include <sys/device.h>
@@ -315,8 +315,6 @@ tcp_init()
 	/* Initialize the TCPCB template. */
 	tcp_tcpcb_template();
 
-	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
-	    NULL);
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
 
 	hlen = sizeof(struct ip) + sizeof(struct tcphdr);

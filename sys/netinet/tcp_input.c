@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.199 2004/04/25 03:29:11 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.200 2004/04/25 16:42:42 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.199 2004/04/25 03:29:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.200 2004/04/25 16:42:42 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2887,7 +2887,7 @@ do {									\
 		pool_put(&syn_cache_pool, (sc));			\
 } while (/*CONSTCOND*/0)
 
-struct pool syn_cache_pool;
+POOL_INIT(syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0, "synpl", NULL);
 
 /*
  * We don't estimate RTT with SYNs, so each packet starts with the default
@@ -2912,10 +2912,6 @@ syn_cache_init()
 	/* Initialize the hash buckets. */
 	for (i = 0; i < tcp_syn_cache_size; i++)
 		TAILQ_INIT(&tcp_syn_cache[i].sch_bucket);
-
-	/* Initialize the syn cache pool. */
-	pool_init(&syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0,
-	    "synpl", NULL);
 }
 
 void

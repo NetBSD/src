@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.76 2004/04/17 15:15:29 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.77 2004/04/25 16:42:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.76 2004/04/17 15:15:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.77 2004/04/25 16:42:41 simonb Exp $");
 
 #include "opt_kstack.h"
 
@@ -154,24 +154,39 @@ static uint pid_alloc_cnt;	/* number of allocated pids */
 static uint next_free_pt, last_free_pt;
 static pid_t pid_max = PID_MAX;		/* largest value we allocate */
 
-struct pool proc_pool;
-struct pool lwp_pool;
-struct pool lwp_uc_pool;
-struct pool pcred_pool;
-struct pool plimit_pool;
-struct pool pstats_pool;
-struct pool pgrp_pool;
-struct pool rusage_pool;
-struct pool ras_pool;
-struct pool sadata_pool;
-struct pool saupcall_pool;
-struct pool sastack_pool;
-struct pool savp_pool;
-struct pool ptimer_pool;
+POOL_INIT(proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
+    &pool_allocator_nointr);
+POOL_INIT(lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
+    &pool_allocator_nointr);
+POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
+    &pool_allocator_nointr);
+POOL_INIT(pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
+    &pool_allocator_nointr);
+POOL_INIT(pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
+    &pool_allocator_nointr);
+POOL_INIT(plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
+    &pool_allocator_nointr);
+POOL_INIT(pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
+    &pool_allocator_nointr);
+POOL_INIT(rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
+    &pool_allocator_nointr);
+POOL_INIT(ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
+    &pool_allocator_nointr);
+POOL_INIT(sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
+    &pool_allocator_nointr);
+POOL_INIT(saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0, "saupcpl",
+    &pool_allocator_nointr);
+POOL_INIT(sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
+    &pool_allocator_nointr);
+POOL_INIT(savp_pool, sizeof(struct sadata_vp), 0, 0, 0, "savppl",
+    &pool_allocator_nointr);
+POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
+    &pool_allocator_nointr);
+POOL_INIT(session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
+    &pool_allocator_nointr);
 
 MALLOC_DEFINE(M_EMULDATA, "emuldata", "Per-process emulation data");
 MALLOC_DEFINE(M_PROC, "proc", "Proc structures");
-MALLOC_DEFINE(M_SESSION, "session", "session header");
 MALLOC_DEFINE(M_SUBPROC, "subproc", "Proc sub-structures");
 
 /*
@@ -224,35 +239,6 @@ procinit(void)
 
 	uihashtbl =
 	    hashinit(maxproc / 16, HASH_LIST, M_PROC, M_WAITOK, &uihash);
-
-	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
-	    &pool_allocator_nointr);
-	pool_init(&lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
-	    &pool_allocator_nointr);
-	pool_init(&lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
-	    &pool_allocator_nointr);
-	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
-	    &pool_allocator_nointr);
-	pool_init(&pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
-	    &pool_allocator_nointr);
-	pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
-	    &pool_allocator_nointr);
-	pool_init(&pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
-	    &pool_allocator_nointr);
-	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
-	    &pool_allocator_nointr);
-	pool_init(&ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
-	    &pool_allocator_nointr);
-	pool_init(&sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
-	    &pool_allocator_nointr);
-	pool_init(&saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0,
-	    "saupcpl", &pool_allocator_nointr);
-	pool_init(&sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
-	    &pool_allocator_nointr);
-	pool_init(&savp_pool, sizeof(struct sadata_vp), 0, 0, 0, "savppl",
-	    &pool_allocator_nointr);
-	pool_init(&ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
-	    &pool_allocator_nointr);
 }
 
 /*
@@ -629,8 +615,7 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
 		new_pgrp = NULL;
 	}
 	if (mksess)
-		MALLOC(sess, struct session *, sizeof(struct session),
-			    M_SESSION, M_WAITOK);
+		sess = pool_get(&session_pool, M_WAITOK);
 	else
 		sess = NULL;
 
@@ -747,7 +732,7 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
     done:
 	proclist_unlock_write(s);
 	if (sess != NULL)
-		free(sess, M_SESSION);
+		pool_put(&session_pool, sess);
 	if (new_pgrp != NULL)
 		pool_put(&pgrp_pool, new_pgrp);
 	if (pg_id != NO_PGID)
@@ -877,7 +862,7 @@ sessdelete(struct session *ss)
 
 	pg_free(ss->s_sid);
 
-	FREE(ss, M_SESSION);
+	pool_put(&session_pool, ss);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.124 2004/04/05 10:10:29 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.125 2004/04/25 16:42:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.124 2004/04/05 10:10:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.125 2004/04/25 16:42:41 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +69,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.124 2004/04/05 10:10:29 yamt Exp 
  */
 struct filelist	filehead;	/* head of list of open files */
 int		nfiles;		/* actual number of open files */
-struct pool	file_pool;	/* memory pool for file structures */
-struct pool	cwdi_pool;	/* memory pool for cwdinfo structures */
-struct pool	filedesc0_pool;	/* memory pool for filedesc0 structures */
+POOL_INIT(file_pool, sizeof(struct file), 0, 0, 0, "filepl",
+    &pool_allocator_nointr);
+POOL_INIT(cwdi_pool, sizeof(struct cwdinfo), 0, 0, 0, "cwdipl",
+    &pool_allocator_nointr);
+POOL_INIT(filedesc0_pool, sizeof(struct filedesc0), 0, 0, 0, "fdescpl",
+    &pool_allocator_nointr);
 
 /* Global file list lock */
 static struct simplelock filelist_slock = SIMPLELOCK_INITIALIZER;
@@ -868,21 +871,6 @@ fdavail(struct proc *p, int n)
 		if (*fpp == NULL && --n <= 0)
 			return (1);
 	return (0);
-}
-
-/*
- * Initialize the data structures necessary for managing files.
- */
-void
-finit(void)
-{
-
-	pool_init(&file_pool, sizeof(struct file), 0, 0, 0, "filepl",
-	    &pool_allocator_nointr);
-	pool_init(&cwdi_pool, sizeof(struct cwdinfo), 0, 0, 0, "cwdipl",
-	    &pool_allocator_nointr);
-	pool_init(&filedesc0_pool, sizeof(struct filedesc0), 0, 0, 0, "fdescpl",
-	    &pool_allocator_nointr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.23 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.24 2004/04/25 16:42:44 simonb Exp $	*/
 
 /*
  *
@@ -97,8 +97,6 @@ int		amap_flags	/* get amap's flags */
 			(struct vm_amap *);
 void		amap_free	/* free amap */
 			(struct vm_amap *);
-void		amap_init	/* init amap module (at boot time) */
-			(void);
 void		amap_lock	/* lock amap */
 			(struct vm_amap *);
 AMAP_INLINE

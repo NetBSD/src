@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.76 2004/04/20 11:51:28 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.77 2004/04/25 16:42:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.76 2004/04/20 11:51:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.77 2004/04/25 16:42:42 simonb Exp $");
 
 #include "opt_nfs.h"
 
@@ -63,8 +63,10 @@ struct nfsnodehashhead *nfsnodehashtbl;
 u_long nfsnodehash;
 struct lock nfs_hashlock;
 
-struct pool nfs_node_pool;		/* memory pool for nfs nodes */
-struct pool nfs_vattr_pool;		/* memory pool for nfs vattrs */
+POOL_INIT(nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
+    &pool_allocator_nointr);
+POOL_INIT(nfs_vattr_pool, sizeof(struct vattr), 0, 0, 0, "nfsvapl",
+    &pool_allocator_nointr);
 
 MALLOC_DEFINE(M_NFSBIGFH, "NFS bigfh", "NFS big filehandle");
 MALLOC_DEFINE(M_NFSNODE, "NFS node", "NFS vnode private part");
@@ -94,11 +96,6 @@ nfs_nhinit()
 	nfsnodehashtbl = hashinit(desiredvnodes, HASH_LIST, M_NFSNODE,
 	    M_WAITOK, &nfsnodehash);
 	lockinit(&nfs_hashlock, PINOD, "nfs_hashlock", 0, 0);
-
-	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
-	    &pool_allocator_nointr);
-	pool_init(&nfs_vattr_pool, sizeof(struct vattr), 0, 0, 0, "nfsvapl",
-	    &pool_allocator_nointr);
 }
 
 /*

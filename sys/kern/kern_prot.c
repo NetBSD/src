@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.81 2004/04/17 15:15:29 christos Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.82 2004/04/25 16:42:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.81 2004/04/17 15:15:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.82 2004/04/25 16:42:41 simonb Exp $");
 
 #include "opt_compat_43.h"
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.81 2004/04/17 15:15:29 christos Exp 
 #include <sys/proc.h>
 #include <sys/timeb.h>
 #include <sys/times.h>
-#include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/syslog.h>
 #include <sys/resourcevar.h>
 
@@ -60,7 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.81 2004/04/17 15:15:29 christos Exp 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
-MALLOC_DEFINE(M_CRED, "cred", "credentials");
+POOL_INIT(cred_pool, sizeof(struct ucred), 0, 0, 0, "credpl",
+    &pool_allocator_nointr);
 
 int	sys_getpid(struct lwp *, void *, register_t *);
 int	sys_getpid_with_ppid(struct lwp *, void *, register_t *);
@@ -617,8 +618,8 @@ crget(void)
 {
 	struct ucred *cr;
 
-	MALLOC(cr, struct ucred *, sizeof(*cr), M_CRED, M_WAITOK);
-	memset((caddr_t)cr, 0, sizeof(*cr));
+	cr = pool_get(&cred_pool, PR_WAITOK);
+	memset(cr, 0, sizeof(*cr));
 	cr->cr_ref = 1;
 	return (cr);
 }
@@ -632,7 +633,7 @@ crfree(struct ucred *cr)
 {
 
 	if (--cr->cr_ref == 0)
-		FREE((caddr_t)cr, M_CRED);
+		pool_put(&cred_pool, cr);
 }
 
 /*
