@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.310 2001/03/05 01:32:54 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.311 2001/03/07 01:44:52 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.306 2001/03/05 01:29:26 matt Exp 
+ *	NetBSD: pcidevs,v 1.307 2001/03/07 01:42:37 matt Exp 
  */
 
 /*
@@ -2228,6 +2228,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Galileo Technology",
 	    "GT-64130 System Controller",
+	},
+	{
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64260,
+	    0,
+	    "Galileo Technology",
+	    "GT-64260 System Controller",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
