@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.2 2004/04/10 11:48:11 kochi Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.3 2004/04/11 09:38:19 kochi Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.2 2004/04/10 11:48:11 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.3 2004/04/11 09:38:19 kochi Exp $");
 
 #include "opt_atppc.h"
 
@@ -124,8 +124,8 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	printf(": AT Parallel Port\n");
 
 	/* parse resources */
-	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node, &res,
-	    &acpi_resource_parse_ops_default);
+	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
+				 &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
 
