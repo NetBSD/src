@@ -1,4 +1,4 @@
-.\"	$NetBSD: du.1,v 1.18 2004/05/17 01:56:19 simonb Exp $
+.\"	$NetBSD: du.1,v 1.19 2004/05/17 15:36:17 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -92,7 +92,11 @@ If the
 flag is specified, the number displayed is the number of megabyte
 (1024*1024 bytes) blocks.
 .It Fl n
-Ignore files and directories with user "nodump" flag (UF_NODUMP) set.
+Ignore files and directories with user
+.Qq nodump
+flag
+.Pq Dv UF_NODUMP
+set.
 .It Fl r
 Generate warning messages about directories that cannot be read.
 This is the default behaviour.
