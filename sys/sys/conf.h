@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.25 1995/06/26 05:09:37 cgd Exp $	*/
+/*	$NetBSD: conf.h,v 1.26 1995/06/26 05:14:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -82,12 +82,12 @@ struct bdevsw {
 	void	(*d_strategy)	__P((struct buf *bp));
 	int	(*d_ioctl)	__P((dev_t dev, u_long cmd, caddr_t data,
 				     int fflag, struct proc *p));
-#ifndef __BDEVSW_DUMP_OLD_FORMAT
+#ifndef __BDEVSW_DUMP_OLD_TYPE
 	int	(*d_dump)	__P((dev_t dev, daddr_t blkno, caddr_t va,
 				    size_t size));
-#else /* not __BDEVSW_DUMP_OLD_FORMAT */
+#else /* not __BDEVSW_DUMP_OLD_TYPE */
 	int	(*d_dump)	();	/* parameters vary by architecture */
-#endif /* __BDEVSW_DUMP_OLD_FORMAT */
+#endif /* __BDEVSW_DUMP_OLD_TYPE */
 	int	(*d_psize)	__P((dev_t dev));
 	int	d_type;
 };
