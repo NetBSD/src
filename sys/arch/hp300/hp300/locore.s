@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.125 2002/11/02 20:03:05 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.126 2002/12/22 00:11:10 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1365,11 +1365,11 @@ Lswnofpsave:
 	 * Done mucking with the run queues, release the
 	 * scheduler lock, but keep interrupts out.
 	 */
-	movl	%a0,sp@-		| not args...
-	movl	%a1,sp@-		| ...just saving
+	movl	%a0,%sp@-		| not args...
+	movl	%a1,%sp@-		| ...just saving
 	jbsr	_C_LABEL(sched_unlock_idle)
-	movl	sp@+,%a1
-	movl	sp@+,%a0
+	movl	%sp@+,%a1
+	movl	%sp@+,%a0
 #endif
 
 	/*
