@@ -28,7 +28,8 @@ REQUIREMENTS
      host system to create a build toolchain for the target architecture.  The
      host system must have at least C and C++ compilers in order to create the
      toolchain (make is not required); all other tools are created as part of
-     the NetBSD build process.
+     the NetBSD build process.  (See the environment variables section below
+     if you need to override or manually select your compilers.)
 
 FILES
    Source tree layout
@@ -92,6 +93,10 @@ FILES
 CONFIGURATION
    Environment variables
      Several environment variables control the behaviour of NetBSD builds.
+
+     HOST_CC           Path name to C compiler used to create the toolchain.
+
+     HOST_CXX          Path name to C++ compiler used to create the toolchain.
 
      MACHINE           Machine type.
 
