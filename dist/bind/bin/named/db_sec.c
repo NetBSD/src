@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sec.c,v 1.3 2002/06/20 11:42:56 itojun Exp $	*/
+/*	$NetBSD: db_sec.c,v 1.4 2002/11/14 02:04:28 itojun Exp $	*/
 
 
 #if !defined(lint) && !defined(SABER)
@@ -481,7 +481,9 @@ verify_set(struct db_rrset *rrset) {
 	struct sig_record *sigdata;
 	struct dnode *sigdn;
 	struct databuf *sigdp;
-	time_t now;
+	u_int32_t now;
+	u_int32_t exptime;
+	u_int32_t signtime;
 	char *signer;
 	u_char name_n[MAXDNAME];
 	u_char *sig, *eom;
@@ -494,6 +496,7 @@ verify_set(struct db_rrset *rrset) {
 	int dnssec_failed = 0, dnssec_succeeded = 0;
 	int return_value;
 	int i;
+	int expired = 0;
 
 	if (rrset == NULL || rrset->rr_name == NULL) {
 		ns_warning (ns_log_default, "verify_set: missing rrset/name");
@@ -529,11 +532,14 @@ verify_set(struct db_rrset *rrset) {
 		 * Don't verify a set if the SIG inception time is in
 		 * the future.  This should be fixed before 2038 (BEW)
 		 */
-		if ((time_t)ntohl(sigdata->sig_time_n) > now)
+		signtime = ntohl(sigdata->sig_time_n);
+		if (SEQ_GT(signtime, now))
 			continue;
 
 		/* An expired set is dropped, but the data is not. */
-		if ((time_t)ntohl(sigdata->sig_exp_n) < now) {
+		exptime = ntohl(sigdata->sig_exp_n);
+		if (SEQ_GT(now, exptime)) {
+			expired++;
 			db_detach(&sigdn->dp);
 			sigdp = NULL;
 			continue;
@@ -725,7 +731,7 @@ verify_set(struct db_rrset *rrset) {
 	}
 
 end:
-	if (dnssec_failed > 0)
+	if (dnssec_failed > 0 || expired > 0)
 		rrset_trim_sigs(rrset);
 	if (trustedkey == 0 && key != NULL)
 		dst_free_key(key);
