@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *      $Id: bt742a.c,v 1.8.4.3 1993/11/28 11:21:33 mycroft Exp $
+ *      $Id: bt742a.c,v 1.8.4.4 1993/11/28 23:35:35 mycroft Exp $
  */
 
 /*
@@ -1201,12 +1201,9 @@ bt_scsi_cmd(xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	struct bt_data *bt = sc_link->adapter_softc;
-	struct scsi_sense_data *s1, *s2;
 	struct bt_ccb *ccb;
 	struct bt_scat_gath *sg;
 	int seg;		/* scatter gather seg being worked on */
-	int i = 0;
-	int rc = 0;
 	int thiskv;
 	physaddr thisphys, nextphys;
 	int bytes_this_seg, bytes_this_page, datalen, flags;
