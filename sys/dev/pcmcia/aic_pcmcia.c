@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.10 1999/06/19 18:50:28 mjl Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.11 1999/09/07 19:30:10 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -73,10 +73,10 @@ struct aic_pcmcia_product {
 	int		app_expfunc;		/* expected function number */
 	const char	*app_name;		/* device name */
 } aic_pcmcia_products[] = {
-	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460_1,
-	  0,				PCMCIA_STR_ADAPTEC_APA1460_1 },
-	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460_2,
-	  0,				PCMCIA_STR_ADAPTEC_APA1460_2 },
+	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460,
+	  0,				PCMCIA_STR_ADAPTEC_APA1460 },
+	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460A,
+	  0,				PCMCIA_STR_ADAPTEC_APA1460A },
 	{ PCMCIA_VENDOR_NEWMEDIA,	PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER,
 	  0,				PCMCIA_STR_NEWMEDIA_BUSTOASTER },
 
