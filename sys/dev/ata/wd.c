@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.207 2000/07/05 23:31:13 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.208 2000/07/06 00:43:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -713,16 +713,12 @@ wdopen(dev, flag, fmt, p)
 	struct proc *p;
 {
 	struct wd_softc *wd;
-	int unit, part;
-	int error;
+	int part, error;
 
 	WDCDEBUG_PRINT(("wdopen\n"), DEBUG_FUNCS);
-	unit = WDUNIT(dev);
-	if (unit >= wd_cd.cd_ndevs)
-		return ENXIO;
-	wd = wd_cd.cd_devs[unit];
+	wd = device_lookup(&wd_cd, WDUNIT(dev));
 	if (wd == NULL)
-		return ENXIO;
+		return (ENXIO);
 
 	/*
 	 * If this is the first open of this device, add a reference
@@ -1098,15 +1094,12 @@ wdsize(dev)
 	dev_t dev;
 {
 	struct wd_softc *wd;
-	int part, unit, omask;
+	int part, omask;
 	int size;
 
 	WDCDEBUG_PRINT(("wdsize\n"), DEBUG_FUNCS);
 
-	unit = WDUNIT(dev);
-	if (unit >= wd_cd.cd_ndevs)
-		return (-1);
-	wd = wd_cd.cd_devs[unit];
+	wd = device_lookup(&wd_cd, WDUNIT(dev));
 	if (wd == NULL)
 		return (-1);
 
@@ -1142,9 +1135,8 @@ wddump(dev, blkno, va, size)
 {
 	struct wd_softc *wd;	/* disk unit to do the I/O */
 	struct disklabel *lp;   /* disk's disklabel */
-	int unit, part;
+	int part, err;
 	int nblks;	/* total number of sectors left to write */
-	int err;
 	char errbuf[256];
 
 	/* Check if recursive dump; if so, punt. */
@@ -1152,12 +1144,9 @@ wddump(dev, blkno, va, size)
 		return EFAULT;
 	wddoingadump = 1;
 
-	unit = WDUNIT(dev);
-	if (unit >= wd_cd.cd_ndevs)
-		return ENXIO;
-	wd = wd_cd.cd_devs[unit];
-	if (wd == (struct wd_softc *)0)
-		return ENXIO;
+	wd = device_lookup(&wd_cd, WDUNIT(dev));
+	if (wd == NULL)
+		return (ENXIO);
 
 	part = WDPART(dev);
 

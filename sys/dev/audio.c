@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.129 2000/06/27 21:25:02 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.130 2000/07/06 00:43:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -555,12 +555,11 @@ audioopen(dev, flags, ifmt, p)
 	int flags, ifmt;
 	struct proc *p;
 {
-	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc;
 	int error;
 
-	if (unit >= audio_cd.cd_ndevs ||
-	    (sc = audio_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup(&audio_cd, AUDIOUNIT(dev));
+	if (sc == NULL)
 		return (ENXIO);
 
 	if (sc->sc_dying)
@@ -621,13 +620,12 @@ audioread(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc;
 	int error;
 
-	if (unit >= audio_cd.cd_ndevs ||
-	    (sc = audio_cd.cd_devs[unit]) == NULL)
-		return ENXIO;
+	sc = device_lookup(&audio_cd, AUDIOUNIT(dev));
+	if (sc == NULL)
+		return (ENXIO);
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -657,13 +655,12 @@ audiowrite(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc;
 	int error;
 
-	if (unit >= audio_cd.cd_ndevs ||
-	    (sc = audio_cd.cd_devs[unit]) == NULL)
-		return ENXIO;
+	sc = device_lookup(&audio_cd, AUDIOUNIT(dev));
+	if (sc == NULL)
+		return (ENXIO);
 
 	if (sc->sc_dying)
 		return (EIO);
