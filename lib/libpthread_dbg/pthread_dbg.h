@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.h,v 1.1.2.4 2002/12/06 20:58:10 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.h,v 1.1.2.5 2003/01/17 03:28:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -67,6 +67,7 @@ typedef struct td_thread_info_st {
 	int	thread_errno;
 	sigset_t thread_sigmask;
 	sigset_t thread_sigpending;
+	long	pad[32];
 } td_thread_info_t;
 
 #define	TD_STATE_UNKNOWN	0
@@ -101,7 +102,7 @@ typedef struct {
 			int	readlocks;
 			td_thread_t *writeowner;
 		} rwlock;
-		int pad[8];
+		long pad[8];
 	} sync_data;
 } td_sync_info_t;
 
