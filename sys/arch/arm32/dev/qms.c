@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.19 1998/07/06 00:43:28 mark Exp $	*/
+/*	$NetBSD: qms.c,v 1.20 1998/09/05 01:09:42 mark Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the RiscBSD team.
+ *	This product includes software developed for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -86,14 +86,12 @@ qmsattach(sc)
 	struct qms_softc *sc;
 {
 	/* Set up origin and multipliers */
-
 	sc->origx = 0;
 	sc->origy = 0;
 	sc->xmult = 2;
 	sc->ymult = 2;
 
 	/* Set up bounding box */
-
 	sc->boundx = -4095;
 	sc->boundy = -4095;
 	sc->bounda = 4096;
@@ -102,7 +100,6 @@ qmsattach(sc)
 	sc->sc_state = 0;
 
 	/* Set the mouse X & Y registers to a known state */
-
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX, sc->origx);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX, sc->origx);
 }
@@ -256,14 +253,14 @@ qmsioctl(dev, cmd, data, flag, p)
 		return 0;
 	case MOUSEIOC_SETSTATE:
 	{
-		register struct mouse_state *co = (void *)data;
+		struct mouse_state *co = (void *)data;
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX, co->x);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY, co->y);
 		return 0;
 	}
 	case MOUSEIOC_SETBOUNDS:
 	{
-		register struct mouse_boundingbox *bo = (void *)data;
+		struct mouse_boundingbox *bo = (void *)data;
 		struct mousebufrec buffer;
 #ifdef MOUSE_IOC_ACK
 		int s;
@@ -312,7 +309,7 @@ qmsioctl(dev, cmd, data, flag, p)
 	}
 	case MOUSEIOC_SETORIGIN:
 	{
-		register struct mouse_origin *oo = (void *)data;
+		struct mouse_origin *oo = (void *)data;
 		struct mousebufrec buffer;
 #ifdef MOUSE_IOC_ACK
 		int s;
@@ -337,7 +334,7 @@ qmsioctl(dev, cmd, data, flag, p)
 	}
 	case MOUSEIOC_GETSTATE:
 	{
-		register struct mouse_state *co = (void *)data;
+		struct mouse_state *co = (void *)data;
 		FMT_START
 		co->x = x;
 		co->y = y;
@@ -347,7 +344,7 @@ qmsioctl(dev, cmd, data, flag, p)
 	}
 	case MOUSEIOC_GETBOUNDS:
 	{
-		register struct mouse_boundingbox *bo = (void *)data;
+		struct mouse_boundingbox *bo = (void *)data;
 		bo->x = sc->boundx;
 		bo->y = sc->boundy;
 		bo->a = sc->bounda;
@@ -356,7 +353,7 @@ qmsioctl(dev, cmd, data, flag, p)
 	}
 	case MOUSEIOC_GETORIGIN:
 	{
-		register struct mouse_origin *oo = (void *)data;
+		struct mouse_origin *oo = (void *)data;
 		oo->x = sc->origx;
 		oo->y = sc->origy;
 		return 0;
