@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.21 2000/11/30 15:51:57 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.22 2000/12/03 14:24:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -958,8 +958,7 @@ rtk_power(why, arg)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  *
- * You know there's something wrong with a PCI bus-master chip design
- * when you have to use m_devget().
+ * You know there's something wrong with a PCI bus-master chip design.
  *
  * The receive operation is badly documented in the datasheet, so I'll
  * attempt to document it here. The driver provides a buffer area and
@@ -972,25 +971,18 @@ rtk_power(why, arg)
  * the 'rx status register' mentioned in the datasheet.
  *
  * Note: to make the Alpha happy, the frame payload needs to be aligned
- * on a 32-bit boundary. To achieve this, we cheat a bit by copying from
- * the ring buffer starting at an address two bytes before the actual
- * data location. We can then shave off the first two bytes using m_adj().
- * The reason we do this is because m_devget() doesn't let us specify an
- * offset into the mbuf storage space, so we have to artificially create
- * one. The ring is allocated in such a way that there are a few unused
- * bytes of space preceecing it so that it will be safe for us to do the
- * 2-byte backstep even if reading from the ring at offset 0.
+ * on a 32-bit boundary. To achieve this, we copy the data to mbuf
+ * shifted forward 2 bytes.
  */
 STATIC void rtk_rxeof(sc)
 	struct rtk_softc	*sc;
 {
         struct mbuf		*m;
         struct ifnet		*ifp;
-	int			total_len = 0;
+	caddr_t			rxbufpos, dst;
+	int			total_len, wrap = 0;
 	u_int32_t		rxstat;
-	caddr_t			rxbufpos;
-	int			wrap = 0;
-	u_int16_t		cur_rx;
+	u_int16_t		cur_rx, new_rx;
 	u_int16_t		limit;
 	u_int16_t		rx_bytes = 0, max_bytes;
 
@@ -1022,10 +1014,11 @@ STATIC void rtk_rxeof(sc)
 		 * datasheet makes absolutely no mention of this and
 		 * RealTek should be shot for this.
 		 */
-		if ((u_int16_t)(rxstat >> 16) == RTK_RXSTAT_UNFINISHED)
+		total_len = rxstat >> 16;
+		if (total_len == RTK_RXSTAT_UNFINISHED)
 			break;
-	
-		if (!(rxstat & RTK_RXSTAT_RXOK)) {
+
+		if ((rxstat & RTK_RXSTAT_RXOK) == 0) {
 			ifp->if_ierrors++;
 
 			/*
@@ -1056,7 +1049,6 @@ STATIC void rtk_rxeof(sc)
 		}
 
 		/* No errors; receive the packet. */	
-		total_len = rxstat >> 16;
 		rx_bytes += total_len + RTK_RXSTAT_LEN;
 
 		/*
@@ -1066,49 +1058,84 @@ STATIC void rtk_rxeof(sc)
 		if (rx_bytes > max_bytes)
 			break;
 
-		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
-		    cur_rx + RTK_RXSTAT_LEN, total_len, BUS_DMASYNC_POSTREAD);
+		/*
+		 * Skip the status word, wrapping around to the beginning
+		 * of the Rx area, if necessary.
+		 */
+		cur_rx += RTK_RXSTAT_LEN;
+		rxbufpos = sc->rtk_cdata.rtk_rx_buf + (cur_rx % RTK_RXBUFLEN);
 
-		rxbufpos = sc->rtk_cdata.rtk_rx_buf +
-			((cur_rx + RTK_RXSTAT_LEN) % RTK_RXBUFLEN);
+		/*
+		 * Compute the number of bytes at which the packet
+		 * will wrap to the beginning of the ring buffer.
+		 */
+		wrap = RTK_RXBUFLEN - (cur_rx % RTK_RXBUFLEN);
 
-		if (rxbufpos == (sc->rtk_cdata.rtk_rx_buf + RTK_RXBUFLEN))
-			rxbufpos = sc->rtk_cdata.rtk_rx_buf;
+		/*
+		 * Compute where the next pending packet is.
+		 */
+		if (total_len > wrap)
+			new_rx = total_len - wrap;
+		else
+			new_rx = cur_rx + total_len;
+		/* Round up to 32-bit boundary. */
+		new_rx = (new_rx + 3) & ~3;
 
-		wrap = (sc->rtk_cdata.rtk_rx_buf + RTK_RXBUFLEN) - rxbufpos;
-
-		if (total_len > wrap) {
-			m = m_devget(rxbufpos - RTK_ETHER_ALIGN,
-			   wrap + RTK_ETHER_ALIGN, 0, ifp, NULL);
-			if (m == NULL) {
+		/*
+		 * Now allocate an mbuf (and possibly a cluster) to hold
+		 * the packet. Note we offset the packet 2 bytes so that
+		 * data after the Ethernet header will be 4-byte aligned.
+		 */
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+			printf("%s: unable to allocate Rx mbuf\n",
+			    sc->sc_dev.dv_xname);
+			ifp->if_ierrors++;
+			goto next_packet;
+		}
+		if (total_len > (MHLEN - RTK_ETHER_ALIGN)) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				printf("%s: unable to allocate Rx cluster\n",
+				    sc->sc_dev.dv_xname);
 				ifp->if_ierrors++;
-				printf("%s: out of mbufs, tried to "
-				    "copy %d bytes\n", sc->sc_dev.dv_xname,
-				    wrap);
-			} else {
-				m_adj(m, RTK_ETHER_ALIGN);
-				m_copyback(m, wrap, total_len - wrap,
-					sc->rtk_cdata.rtk_rx_buf);
+				m_freem(m);
+				m = NULL;
+				goto next_packet;
 			}
-			cur_rx = total_len - wrap;
-		} else {
-			m = m_devget(rxbufpos - RTK_ETHER_ALIGN,
-			    total_len + RTK_ETHER_ALIGN, 0, ifp, NULL);
-			if (m == NULL) {
-				ifp->if_ierrors++;
-				printf("%s: out of mbufs, tried to "
-				    "copy %d bytes\n", sc->sc_dev.dv_xname,
-				    total_len);
-			} else
-				m_adj(m, RTK_ETHER_ALIGN);
-			cur_rx += total_len + RTK_RXSTAT_LEN;
+		}
+		m->m_data += RTK_ETHER_ALIGN;	/* for alignment */
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = m->m_len = total_len;
+		dst = mtod(m, caddr_t);
+
+		/*
+		 * If the packet wraps, copy up to the wrapping point.
+		 */
+		if (total_len > wrap) {
+			bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
+			    cur_rx, wrap, BUS_DMASYNC_POSTREAD);
+			memcpy(dst, rxbufpos, wrap);
+			bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
+			    cur_rx, wrap, BUS_DMASYNC_PREREAD);
+			cur_rx = 0;
+			rxbufpos = sc->rtk_cdata.rtk_rx_buf;
+			total_len -= wrap;
+			dst += wrap;
 		}
 
 		/*
-		 * Round up to 32-bit boundary.
+		 * ...and now the rest.
 		 */
-		cur_rx = (cur_rx + 3) & ~3;
-		CSR_WRITE_2(sc, RTK_CURRXADDR, cur_rx - 16);
+		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
+		    cur_rx, total_len, BUS_DMASYNC_POSTREAD);
+		memcpy(dst, rxbufpos, total_len);
+		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
+		    cur_rx, total_len, BUS_DMASYNC_PREREAD);
+
+next_packet:
+		CSR_WRITE_2(sc, RTK_CURRXADDR, new_rx - 16);
+		cur_rx = new_rx;
 
 		if (m == NULL)
 			continue;
@@ -1122,23 +1149,12 @@ STATIC void rtk_rxeof(sc)
 		ifp->if_ipackets++;
 
 #if NBPFILTER > 0
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet, but
-		 * don't pass it up to the ether_input() layer unless it's
-		 * a broadcast packet, multicast packet, matches our ethernet
-		 * address or the interface is in promiscuous mode.
-		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 		/* pass it on. */
 		(*ifp->if_input)(ifp, m);
-
-		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
-		    cur_rx + RTK_RXSTAT_LEN, total_len, BUS_DMASYNC_PREREAD);
 	}
-
-	return;
 }
 
 /*
