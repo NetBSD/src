@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.9 2003/10/13 06:08:28 lukem Exp $	*/
+/*	$NetBSD: pbr.S,v 1.10 2003/12/21 20:56:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -207,6 +207,7 @@ no_netbsd_ptn:
 	set_err(ERR_PTN)
 	jz	error
 	xorl	%esi, %esi
+	movl	%esi, lba_sector
 	jmp	start
 
 /*
