@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.9 1998/10/31 09:04:29 matt Exp $	*/
+/*	$NetBSD: md.h,v 1.10 1999/03/13 22:15:25 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,9 @@
 #define TEXT_START(ex)		(N_TXTADDR(ex) + N_ADJUST(ex))
 #define DATA_START(ex)		(N_DATADDR(ex) + N_ADJUST(ex))
 
+int md_convert_textreloc(struct relocation_info *);
+
+
 #define RELOC_STATICS_THROUGH_GOT_P(r)		(1)
 #define	RELOC_SYMBOLICS_THROUGH_JMPSLOT		(0)
 #define	RELOC_EXTERNAL_DATA_THROUGH_GOT_P(r)	(md_convert_textreloc(r))
@@ -104,7 +107,7 @@
 
 /* Width of a Global Offset Table entry */
 #define GOT_ENTRY_SIZE			4
-typedef int32_t	got_t;
+typedef long	got_t;
 
 /*
  *	.word	^M<reg-mask>
