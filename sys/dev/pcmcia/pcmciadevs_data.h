@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.163 2002/03/10 15:13:53 martin Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.164 2002/04/10 02:08:59 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.163 2002/03/04 16:41:50 martin Exp 
+ *	NetBSD: pcmciadevs,v 1.164 2002/04/10 02:07:45 ichiro Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -531,6 +531,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "The Linksys Group",
 	    "Instant Wireless Network PC Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_LINKSYS2, PCMCIA_PRODUCT_LINKSYS2_IWN3,
+	    PCMCIA_CIS_LINKSYS2_IWN3,
+	    0,
+	    "The Linksys Group",
+	    "Instant Wireless Network PC Card, Versin 3",	}
 	,
 	{
 	    PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
