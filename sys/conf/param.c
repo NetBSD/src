@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.27 1999/04/25 02:56:30 simonb Exp $	*/
+/*	$NetBSD: param.c,v 1.28 1999/04/25 04:51:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -191,5 +191,5 @@ int autoniceval = 4;		/* default + 4 */
 /*
  * Actual network mbuf sizes (read-only), for netstat.
  */
-int	msize = MSIZE;
-int	mclbytes = MCLBYTES;
+const	int msize = MSIZE;
+const	int mclbytes = MCLBYTES;
