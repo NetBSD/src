@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.19 2002/02/19 23:56:08 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.20 2002/03/01 01:23:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -216,6 +216,11 @@ void	pthread__alarm_del(pthread_t, void *);
 int	pthread__alarm_fired(void *);
 void	pthread__alarm_process(pthread_t self, void *arg);
 
+/* Internal locking primitives */
+void	pthread_lockinit(pthread_spin_t *lock);
+void	pthread_spinlock(pthread_t thread, pthread_spin_t *lock);
+int	pthread_spintrylock(pthread_t thread, pthread_spin_t *lock);
+void	pthread_spinunlock(pthread_t thread, pthread_spin_t *lock);
 
 #include "pthread_md.h"
 

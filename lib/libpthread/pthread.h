@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.8 2002/01/28 19:05:49 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.9 2002/03/01 01:23:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -116,10 +116,11 @@ struct pthread_cleanup_store {
 void	pthread__cleanup_push(void (*routine)(void *), void *arg, void *store);
 void	pthread__cleanup_pop(int execute, void *store);
 
-void	pthread_lockinit(pthread_spin_t *lock);
-void	pthread_spinlock(pthread_t thread, pthread_spin_t *lock);
-int	pthread_spintrylock(pthread_t thread, pthread_spin_t *lock);
-void	pthread_spinunlock(pthread_t thread, pthread_spin_t *lock);
+int	pthread_spin_init(pthread_spinlock_t *lock, int pshared);
+int	pthread_spin_destroy(pthread_spinlock_t *lock);
+int	pthread_spin_lock(pthread_spinlock_t *lock);
+int	pthread_spin_trylock(pthread_spinlock_t *lock);
+int	pthread_spin_unlock(pthread_spinlock_t *lock);
 
 int 	*pthread__errno(void);
 
