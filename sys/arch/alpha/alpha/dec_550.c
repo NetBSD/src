@@ -1,4 +1,4 @@
-/* $NetBSD: dec_550.c,v 1.3.2.3 2000/02/12 20:29:28 he Exp $ */
+/* $NetBSD: dec_550.c,v 1.3.2.4 2000/02/13 23:12:41 he Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.3.2.3 2000/02/12 20:29:28 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.3.2.4 2000/02/13 23:12:41 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ dec_550_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, PCKBC_KBD_SLOT);
+		(void) pckbc_cnattach(&ccp->cc_iot, PCKBC_KBD_SLOT);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
