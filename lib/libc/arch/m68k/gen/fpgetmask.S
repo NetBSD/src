@@ -1,5 +1,5 @@
 /*
- * Written by J.T. Conklin, Apr 5, 1995
+ * Written by Charles M. Hannum, Apr 9, 1995
  * Public domain.
  */
 
@@ -7,5 +7,6 @@
 
 ENTRY(fpgetmask)
 	fmovel fpcr,d0
-	bfextu d0{#16:#8},d0
+	lsrl #6,d0
+	andl #248,d0
 	rts

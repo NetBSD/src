@@ -1,5 +1,5 @@
 /*
- * Written by J.T. Conklin, Apr 6, 1995
+ * Written by Charles M. Hannum, Apr 9, 1995
  * Public domain.
  */
 
@@ -15,7 +15,8 @@ _map:
 
 ENTRY(__flt_rounds)
 	fmovel fpcr,d0
-	bfextu d0{#26:#2},d0
+	lsrl #4,d0
+	andl #3,d0
 	lea _map,a0
 	moveb a0@(d0:l:1),d0
 	rts
