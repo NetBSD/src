@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.17 2002/06/11 22:24:35 kleink Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.18 2002/06/17 21:28:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -424,6 +424,7 @@ cpu_config_l2cr(int vers)
 				printf(", %cMB L3 backside cache",
 				   l3cr & L3CR_L3SIZ ? '2' : '1');
 			printf("\n");
+			return;
 		}
 		switch (l2cr & L2CR_L2SIZ) {
 		case L2SIZ_256K:
