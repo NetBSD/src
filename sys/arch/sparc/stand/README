@@ -1,0 +1,11 @@
+Openboot Interface.
+
+	<later perhaps>
+
+
+INSTALL.
+
+In short: stick the the bootblocks into a partition with
+
+	dd if=boot of=/dev/r<dev> bs=512 seek=1 conv=sync
+
