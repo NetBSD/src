@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.147 2004/04/15 14:58:30 tv Exp $
+# $NetBSD: GENERIC,v 1.148 2004/06/16 15:07:40 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.147 $"
+#ident 		"GENERIC-$Revision: 1.148 $"
 
 maxusers	16
 
@@ -605,6 +605,7 @@ pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	ptm			# pseudo-terminal multiplexor
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 
