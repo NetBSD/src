@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.51 1994/08/30 03:06:07 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.52 1994/09/18 18:32:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1674,7 +1674,7 @@ ttyrub(c, tp)
 				SET(tp->t_state, TS_CNTTB);
 				SET(tp->t_lflag, FLUSHO);
 				tp->t_column = tp->t_rocol;
-				for (cp = firstc(&tp->t_rawq, &c); cp;
+				for (cp = firstc(&tp->t_rawq, &tabc); cp;
 				    cp = nextc(&tp->t_rawq, cp, &tabc))
 					ttyecho(tabc, tp);
 				CLR(tp->t_lflag, FLUSHO);
