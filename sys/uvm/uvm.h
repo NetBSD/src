@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.15.4.2 1999/07/01 23:55:13 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.15.4.3 1999/07/02 00:30:19 thorpej Exp $	*/
 
 /*
  *
@@ -162,8 +162,6 @@ UVMHIST_DECL(ubchist);
 /*
  * macros
  */
-
-#ifdef _KERNEL
 
 /*
  * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... front end for the 
