@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.7.2.3 1999/11/09 01:44:10 scottr Exp $	*/
+/*	$NetBSD: aed.c,v 1.7.2.4 1999/11/15 23:33:41 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -132,11 +132,12 @@ aedattach(parent, self, aux)
  * button emulation handler first.  Pass mouse events directly to
  * the handoff function.
  */
-void
+int
 aed_input(event)
         adb_event_t *event;
 {
         adb_event_t new_event = *event;
+	int rv = aed_sc->sc_open;
 
 	switch (event->def_addr) {
 	case ADBADDR_KBD:
@@ -153,9 +154,11 @@ aed_input(event)
 #ifdef DIAGNOSTIC
 		panic("aed: received event from unsupported device!\n");
 #endif
+		rv = 0;
 		break;
 	}
 
+	return (rv);
 }
 
 /*
