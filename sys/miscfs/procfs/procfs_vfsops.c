@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.30 1998/08/09 20:51:10 perry Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.31 1999/02/26 23:44:46 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -70,8 +70,9 @@ int	procfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
 int	procfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int	procfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	procfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	procfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-			   struct vnode **, int *, struct ucred **));
+int	procfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+int	procfs_checkexp __P((struct mount *, struct mbuf *, int *,
+			   struct ucred **));
 int	procfs_vptofh __P((struct vnode *, struct fid *));
 int	procfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 			   struct proc *));
@@ -220,11 +221,20 @@ procfs_vget(mp, ino, vpp)
 
 /*ARGSUSED*/
 int
-procfs_fhtovp(mp, fhp, mb, vpp, what, anon)
+procfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *mb;
 	struct vnode **vpp;
+{
+
+	return (EINVAL);
+}
+
+/*ARGSUSED*/
+int
+procfs_checkexp(mp, mb, what, anon)
+	struct mount *mp;
+	struct mbuf *mb;
 	int *what;
 	struct ucred **anon;
 {
@@ -282,5 +292,6 @@ struct vfsops procfs_vfsops = {
 	procfs_init,
 	procfs_sysctl,
 	NULL,				/* vfs_mountroot */
+	procfs_checkexp,
 	procfs_vnodeopv_descs,
 };

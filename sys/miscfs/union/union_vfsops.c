@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.20 1998/08/09 20:51:11 perry Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.21 1999/02/26 23:44:46 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -67,8 +67,9 @@ int union_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
 int union_statfs __P((struct mount *, struct statfs *, struct proc *));
 int union_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int union_vget __P((struct mount *, ino_t, struct vnode **));
-int union_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-		      struct vnode **, int *, struct ucred **));
+int union_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+int union_checkexp __P((struct mount *, struct mbuf *, int *,
+		      struct ucred **));
 int union_vptofh __P((struct vnode *, struct fid *));
 int union_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		      struct proc *));
@@ -511,11 +512,20 @@ union_vget(mp, ino, vpp)
 
 /*ARGSUSED*/
 int
-union_fhtovp(mp, fidp, nam, vpp, exflagsp, credanonp)
+union_fhtovp(mp, fidp, vpp)
 	struct mount *mp;
 	struct fid *fidp;
-	struct mbuf *nam;
 	struct vnode **vpp;
+{
+
+	return (EOPNOTSUPP);
+}
+
+/*ARGSUSED*/
+int
+union_checkexp(mp, nam, exflagsp, credanonp)
+	struct mount *mp;
+	struct mbuf *nam;
 	int *exflagsp;
 	struct ucred **credanonp;
 {
@@ -568,5 +578,6 @@ struct vfsops union_vfsops = {
 	union_init,
 	union_sysctl,
 	NULL,				/* vfs_mountroot */
+	union_checkexp,
 	union_vnodeopv_descs,
 };

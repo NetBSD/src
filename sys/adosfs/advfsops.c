@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.34 1999/02/11 09:49:46 bouyer Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.35 1999/02/26 23:44:43 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -62,8 +62,9 @@ int adosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
 int adosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int adosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
-int adosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-		       struct vnode **, int *, struct ucred **));
+int adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+int adosfs_checkexp __P((struct mount *, struct mbuf *, int *,
+		       struct ucred **));
 int adosfs_vptofh __P((struct vnode *, struct fid *));
 
 int adosfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
@@ -675,20 +676,15 @@ struct ifid {
 };
 
 int
-adosfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
+adosfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
 {
 	struct ifid *ifhp = (struct ifid *)fhp;
-	struct adosfsmount *amp = VFSTOADOSFS(mp);
 #if 0
 	struct anode *ap;
 #endif
-	struct netcred *np;
 	struct vnode *nvp;
 	int error;
 
@@ -696,13 +692,6 @@ adosfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	printf("adfhtovp(%x, %x, %x)\n", mp, fhp, vpp);
 #endif
 	
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &amp->export, nam);
-	if (np == NULL)
-		return (EACCES);
-
 	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
@@ -716,6 +705,33 @@ adosfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	}
 #endif
 	*vpp = nvp;
+	return(0);
+}
+
+int
+adosfs_checkexp(mp, nam, exflagsp, credanonp)
+	struct mount *mp;
+	struct mbuf *nam;
+	int *exflagsp;
+	struct ucred **credanonp;
+{
+	struct adosfsmount *amp = VFSTOADOSFS(mp);
+#if 0
+	struct anode *ap;
+#endif
+	struct netcred *np;
+
+#ifdef ADOSFS_DIAGNOSTIC
+	printf("adcheckexp(%x, %x, %x)\n", mp, nam, exflagsp);
+#endif
+	
+	/*
+	 * Get the export permission structure for this <mp, client> tuple.
+	 */
+	np = vfs_export_lookup(mp, &amp->export, nam);
+	if (np == NULL)
+		return (EACCES);
+
 	*exflagsp = np->netc_exflags;
 	*credanonp = &np->netc_anon;
 	return(0);
@@ -814,5 +830,6 @@ struct vfsops adosfs_vfsops = {
 	adosfs_init,                    
 	adosfs_sysctl,
 	NULL,				/* vfs_mountroot */
+	adosfs_checkexp,
 	adosfs_vnodeopv_descs,
 };
