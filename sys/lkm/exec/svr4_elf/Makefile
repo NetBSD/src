@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 11:49:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2002/05/30 18:53:25 thorpej Exp $
 
 .include "../Makefile.inc"
 
@@ -10,7 +10,7 @@ ELFSIZE=32
 
 .PATH:	$S/compat/svr4
 
-CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_ELF${ELFSIZE} \
+CPPFLAGS+=	-nostdinc -D_KERNEL -DEXEC_ELF${ELFSIZE} \
 		-DELFSIZE=${ELFSIZE}
 
 KMOD=	exec_svr4_elf
