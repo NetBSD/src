@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 2002/03/16 16:55:54 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.18 2002/04/18 15:44:21 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,8 +150,6 @@ cdev_decl(spkr);
 cdev_decl(mms);
 #include "lms.h"
 cdev_decl(lms);
-#include "pms.h"
-cdev_decl(pms);
 #include "cy.h"
 cdev_decl(cy);
 cdev_decl(mcd);
@@ -226,7 +224,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 34 */
 	cdev_mouse_init(NMMS,mms),	/* 35: Microsoft mouse */
 	cdev_mouse_init(NLMS,lms),	/* 36: Logitech mouse */
-	cdev_mouse_init(NPMS,pms),	/* 37: PS/2 mouse */
+	cdev_notdef(),			/* 37: was: opms (PS/2 mouse) */
 	cdev_tty_init(NCY,cy),		/* 38: Cyclom serial port */
 	cdev_disk_init(NMCD,mcd),	/* 39: Mitsumi CD-ROM */
 	cdev_bpftun_init(NTUN,tun),	/* 40: network tunnel */

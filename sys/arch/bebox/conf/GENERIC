@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.53 2002/04/12 08:10:53 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.54 2002/04/18 15:44:22 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.53 $"
+#ident 		"GENERIC-$Revision: 1.54 $"
 
 maxusers	32
 
@@ -143,7 +143,6 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #lms1	at isa? port 0x238 irq 5
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
-#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 pckbc0	at isa?
 pckbd*	at pckbc?
