@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.2 2004/11/15 00:17:00 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.3 2004/11/15 00:21:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.2 2004/11/15 00:17:00 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.3 2004/11/15 00:21:41 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,7 +217,8 @@ int	daemonized = 0;		/* we are not daemonized yet */
 char	LocalHostName[MAXHOSTNAMELEN+1];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
 int	*finet = NULL;		/* Internet datagram sockets */
-int	Initialized = 0;	/* set when we have initialized ourselves */
+int	Initialized;		/* set when we have initialized ourselves */
+int	ShuttingDown;		/* set when we die() */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
 int	SecureMode = 0;		/* listen only on unix domain socks */
@@ -1120,8 +1121,11 @@ reapchild(int signo)
 	dq_t q;
 
 	while ((pid = wait3(&status, WNOHANG, NULL)) > 0) {
-		if (!Initialized) {
-			/* Don't tell while we are initializing. */
+		if (!Initialized || ShuttingDown) {
+			/*
+			 * Be silent while we are initializing or
+			 * shutting down.
+			 */
 			continue;
 		}
 
@@ -1294,7 +1298,7 @@ die(int signo)
 	struct filed *f;
 	char **p;
 
-	Initialized = 0;	/* Don't log SIGCHLDs. */
+	ShuttingDown = 1;	/* Don't log SIGCHLDs. */
 	for (f = Files; f != NULL; f = f->f_next) {
 		/* flush any pending output */
 		if (f->f_prevcount)
