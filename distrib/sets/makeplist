@@ -4,7 +4,8 @@
 # Usage: makeplist [-a arch] [-m machine] [-s setsdir] [-p prefix] setname pkgname
 #
 
-. ./sets.subr
+rundir=${0%/*}
+. ${rundir}/sets.subr
 prefix=/
 
 usage()
