@@ -1,4 +1,4 @@
-/*	$NetBSD: talk.c,v 1.3 1994/12/09 02:14:25 jtc Exp $	*/
+/*	$NetBSD: talk.c,v 1.4 1997/04/21 16:15:34 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,9 +43,10 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)talk.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: talk.c,v 1.3 1994/12/09 02:14:25 jtc Exp $";
+static char rcsid[] = "$NetBSD: talk.c,v 1.4 1997/04/21 16:15:34 is Exp $";
 #endif /* not lint */
 
+#include <locale.h>
 #include "talk.h"
 
 /*
@@ -66,6 +67,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	setlocale(LC_ALL, "");
+
 	get_names(argc, argv);
 	init_display();
 	open_ctl();
