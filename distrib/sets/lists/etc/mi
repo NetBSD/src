@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.95 2002/04/22 10:08:41 minoura Exp $
+# $NetBSD: mi,v 1.96 2002/04/26 15:46:13 lukem Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -62,6 +62,7 @@
 ./etc/postfix/post-install		etc-postfix-etc
 ./etc/postfix/postfix-files		etc-postfix-etc
 ./etc/postfix/postfix-script		etc-postfix-etc
+./etc/postinstall			etc-sys-etc
 ./etc/printcap				etc-lpr-etc
 ./etc/profile				etc-util-etc
 ./etc/protocols				etc-net-etc
