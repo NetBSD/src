@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.190 2002/04/14 01:42:53 mycroft Exp $
+#	$NetBSD: INSTALL,v 1.191 2002/04/15 15:00:18 mycroft Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -478,6 +478,7 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #options 	TLP_MATCH_21142
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
+wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
