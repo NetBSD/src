@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.61 2001/09/24 03:19:43 lukem Exp $
+#	$NetBSD: security,v 1.62 2001/10/01 02:21:20 atatat Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -44,9 +44,12 @@ MPBYPATH=secure5.$$
 LIST=secure6.$$
 OUTPUT=secure7.$$
 LABELS=secure8.$$
+PKGS=secure9.$$
 
 # Handle backup_dir not being set in .conf file
 backup_dir=${backup_dir:-/var/backups}
+CHANGELIST=""
+pkg_dbdir=${pkg_dbdir:-/var/db/pkg}
 
 MP=/etc/master.passwd
 
@@ -645,8 +648,6 @@ if checkyesno check_mtree; then
 	fi
 fi
 
-CHANGELIST=""
-
 # Backup disklabels of available disks
 #
 if checkyesno check_disklabels; then
@@ -665,7 +666,21 @@ if checkyesno check_disklabels; then
 	ls -1d $backup_dir/disklabel.* 2>/dev/null |
 	    egrep -v '\.(backup|current)(,v)?$' >> $LABELS
 	sort -u -o $LABELS $LABELS
-	CHANGELIST=$LABELS
+	CHANGELIST="$LABELS $CHANGELIST"
+fi
+
+# Check for changes in the list of installed pkgs
+#
+if checkyesno check_pkgs && [ -d $pkg_dbdir ]; then
+	pkgs=$backup_dir/pkgs
+	(	cd $pkg_dbdir
+		pkg_info | sort
+		echo ""
+		find . \( -name +REQUIRED_BY -o -name +CONTENTS \) -print0 |
+			xargs -0 ls -l | sort -t. +1 | sed -e 's, \./, ,'
+	 ) > $pkgs
+	echo $pkgs > $PKGS
+	CHANGELIST="$PKGS $CHANGELIST"
 fi
 
 # List of files that get backed up and checked for any modifications.  Each
