@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.2 2002/02/14 15:25:02 reinoud Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.3 2002/02/14 15:28:31 reinoud Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,7 +60,7 @@ menu md_distcustom, x=26, y=5, exit, title "Sélection des composants";
 	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };
 	option	"Kernel (RPC_WSCONS)",	 action { toggle_getit (1); };
 	option	"Kernel (NC)",		 action { toggle_getit (2); };
-	option	"Kernel (NC-WSCONS)",	 action { toggle_getit (3); };
+	option	"Kernel (NC_WSCONS)",	 action { toggle_getit (3); };
 	option	"Base",			 action { toggle_getit (4); };
 	option	"System (/etc)",	 action { toggle_getit (5); };
 	option  "Outils de développement", 	 action { toggle_getit (6); };
