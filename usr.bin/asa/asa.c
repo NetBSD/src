@@ -1,4 +1,4 @@
-/*	$NetBSD: asa.c,v 1.11 1997/09/20 14:55:00 lukem Exp $	*/
+/*	$NetBSD: asa.c,v 1.12 2002/05/02 13:40:50 wiz Exp $	*/
 
 /*
  * Copyright (c) 1993,94 Winning Strategies, Inc.
@@ -32,59 +32,56 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: asa.c,v 1.11 1997/09/20 14:55:00 lukem Exp $");
+__RCSID("$NetBSD: asa.c,v 1.12 2002/05/02 13:40:50 wiz Exp $");
 #endif
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <err.h>
 
-static void asa __P((FILE *));
-int main __P((int, char *[]));
+static void asa(FILE *);
+int main(int, char *[]);
 
 int
-main (argc, argv)
-	int argc;
-	char **argv;
+main (int argc, char *argv[])
 {
 	FILE *fp;
 
 	/* skip progname */
 	argv++;
 
-        fp = stdin;
-        do {
-                if (*argv) {
-                        if (!(fp = fopen(*argv, "r"))) {
+	fp = stdin;
+	do {
+		if (*argv) {
+			if (!(fp = fopen(*argv, "r"))) {
 				warn ("%s", *argv);
 				continue;
-                        }
-                }
-                asa (fp);
-                if (fp != stdin)
-                        (void)fclose(fp);
-        } while (*argv++);
+			}
+		}
+		asa(fp);
+		if (fp != stdin)
+			(void)fclose(fp);
+	} while (*argv++);
 
-	exit (0);
+	exit(0);
 }
 
 static void
-asa(f)
-	FILE *f;
+asa(FILE *f)
 {
 	char *buf;
 	size_t len;
 
-	if ((buf = fgetln (f, &len)) != NULL) {
+	if ((buf = fgetln(f, &len)) != NULL) {
 		if (buf[len - 1] == '\n')
 			buf[--len] = '\0';
-		/* special case the first line  */
+		/* special case the first line */
 		switch (buf[0]) {
 		case '0':
-			putchar ('\n');
+			putchar('\n');
 			break;
 		case '1':
-			putchar ('\f');
+			putchar('\f');
 			break;
 		}
 
@@ -98,17 +95,17 @@ asa(f)
 			switch (buf[0]) {
 			default:
 			case ' ':
-				putchar ('\n');
+				putchar('\n');
 				break;
 			case '0':
-				putchar ('\n');
-				putchar ('\n');
+				putchar('\n');
+				putchar('\n');
 				break;
 			case '1':
-				putchar ('\f');
+				putchar('\f');
 				break;
 			case '+':
-				putchar ('\r');
+				putchar('\r');
 				break;
 			}
 
@@ -117,6 +114,6 @@ asa(f)
 			}
 		}
 
-		putchar ('\n');
+		putchar('\n');
 	}
 }
