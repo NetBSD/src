@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 1994/10/26 08:25:19 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.10 1995/03/26 08:04:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -442,7 +442,7 @@ if (code == -1 && p->p_pid == 1) {
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p->p_tracep, code, callp->sy_narg, i, &args);
+			ktrsyscall(p->p_tracep, code, i, &args);
 #endif
 		goto done;
 	}
@@ -451,7 +451,7 @@ if (code == -1 && p->p_pid == 1) {
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, i, &args);
+		ktrsyscall(p->p_tracep, code, i, &args);
 #endif
 	rval[0] = 0;
 	rval[1] = 0;

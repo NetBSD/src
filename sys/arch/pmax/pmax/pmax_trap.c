@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.9 1995/01/18 06:51:46 mellon Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.10 1995/03/26 08:04:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -508,7 +508,6 @@ trap(statusReg, causeReg, vadr, pc, args)
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
 						ktrsyscall(p->p_tracep, code,
-							callp->sy_narg, 
 							callp->sy_argsize,
 							args.i);
 #endif
@@ -553,7 +552,6 @@ trap(statusReg, causeReg, vadr, pc, args)
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
 						ktrsyscall(p->p_tracep, code,
-							callp->sy_narg,
 							callp->sy_argsize,
 							args.i);
 #endif
@@ -595,7 +593,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
 						ktrsyscall(p->p_tracep, code,
-							callp->sy_narg, args.i);
+							callp->sy_argsize,
+							args.i);
 #endif
 					goto done;
 				}
@@ -611,7 +610,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p->p_tracep, code, callp->sy_narg, args.i);
+			ktrsyscall(p->p_tracep, code, callp->sy_argsize, args.i);
 #endif
 		rval[0] = 0;
 		rval[1] = locr0[V1];

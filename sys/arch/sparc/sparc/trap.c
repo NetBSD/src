@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.25 1994/12/06 00:27:46 deraadt Exp $ */
+/*	$NetBSD: trap.c,v 1.26 1995/03/26 08:04:18 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -751,8 +751,7 @@ syscall(code, tf, pc)
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
 					ktrsyscall(p->p_tracep, code,
-					    callp->sy_narg, callp->sy_argsize,
-					    args.i);
+					    callp->sy_argsize, args.i);
 #endif
 				goto bad;
 			}
@@ -762,8 +761,7 @@ syscall(code, tf, pc)
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg,
-		    callp->sy_argsize, args.i);
+		ktrsyscall(p->p_tracep, code, callp->sy_argsize, args.i);
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
