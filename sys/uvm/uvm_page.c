@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.15.2.2 1999/02/25 04:17:00 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.15.2.3 1999/04/09 04:38:15 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -327,10 +327,11 @@ uvm_page_init(kvm_startp, kvm_endp)
 	*kvm_endp = trunc_page(virtual_space_end);
 
 	/*
-	 * step 6: init pagedaemon lock
+	 * step 6: init locks for kernel threads
 	 */
 
 	simple_lock_init(&uvm.pagedaemon_lock);
+	simple_lock_init(&uvm.aiodoned_lock);
 
 	/*
 	 * step 7: init reserve thresholds
@@ -1147,7 +1148,8 @@ show_all_pages()
 	     pg != NULL;
 	     pg = TAILQ_NEXT(pg, pageq))
 	{
-		printf("0x%08x  0x%08x\n", (int)pg->uobject, (int)pg->offset);
+		printf("0x%08lx  0x%08lx\n",
+		       (long)pg->uobject, (long)pg->offset);
 	}
 
 	printf("inactive pages:\n");
@@ -1156,6 +1158,7 @@ show_all_pages()
 	     pg != NULL;
 	     pg = TAILQ_NEXT(pg, pageq))
 	{
-		printf("0x%08x  0x%08x\n", (int)pg->uobject, (int)pg->offset);
+		printf("0x%08lx  0x%08lx\n",
+		       (long)pg->uobject, (long)pg->offset);
 	}
 }
