@@ -1,4 +1,4 @@
-.\"	$NetBSD: kgmon.8,v 1.16 2003/08/07 11:25:22 agc Exp $
+.\"	$NetBSD: kgmon.8,v 1.17 2005/01/27 18:43:51 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,9 +46,9 @@ is a tool used when profiling the operating system.
 When no arguments are supplied,
 .Nm
 indicates the state of operating system profiling as running,
-off, or not configured.
+off, or not configured
 (see
-.Xr config 8 )
+.Xr config 8 ) .
 If the
 .Fl p
 flag is specified,
@@ -66,6 +66,14 @@ Resume the collection of profile data.
 Enable debug output.
 .It Fl h
 Stop the collection of profile data.
+.It Fl M
+Extract values associated with the name list from the specified core
+instead of the default
+.Pa /dev/kmem .
+.It Fl N
+Extract the name list from the specified system instead of the
+default
+.Pa /netbsd .
 .It Fl p
 Dump the contents of the profile buffers into a
 .Pa gmon.out
@@ -77,14 +85,6 @@ If the
 flag is also specified, the
 .Pa gmon.out
 file is generated before the buffers are reset.
-.It Fl M
-Extract values associated with the name list from the specified core
-instead of the default
-.Pa /dev/kmem .
-.It Fl N
-Extract the name list from the specified system instead of the
-default
-.Pa /netbsd .
 .El
 .Pp
 If neither
@@ -108,8 +108,7 @@ the default memory
 .Sh DIAGNOSTICS
 Users with only read permission on
 .Pa /dev/kmem
-cannot change the state
-of profiling collection.
+cannot change the state of profiling collection.
 They can get a
 .Pa gmon.out
 file with the warning that the data may be
