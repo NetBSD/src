@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.52 2001/05/26 16:32:47 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.53 2001/08/26 00:43:53 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1118,7 +1118,6 @@ swstrategy(bp)
 		bp->b_blkno = bn;		/* swapdev block number */
 		vp = sdp->swd_vp;		/* swapdev vnode pointer */
 		bp->b_dev = sdp->swd_dev;	/* swapdev dev_t */
-		VHOLD(vp);			/* "hold" swapdev vp for i/o */
 
 		/*
 		 * if we are doing a write, we have to redirect the i/o on
@@ -1128,13 +1127,6 @@ swstrategy(bp)
 			vwakeup(bp);	/* kills one 'v_numoutput' on drum */
 			vp->v_numoutput++;	/* put it on swapdev */
 		}
-
-		/*
-		 * dissassocate buffer with /dev/drum vnode
-		 * [could be null if buf was from physio]
-		 */
-		if (bp->b_vp != NULL)
-			brelvp(bp);
 
 		/*
 		 * finally plug in swapdev vnode and start I/O
@@ -1260,7 +1252,10 @@ sw_reg_strategy(sdp, bp, bn)
 		nbp->vb_buf.b_blkno    = nbn + btodb(off);
 		nbp->vb_buf.b_rawblkno = nbp->vb_buf.b_blkno;
 		nbp->vb_buf.b_iodone   = sw_reg_iodone;
-		nbp->vb_buf.b_vp       = NULL;
+		nbp->vb_buf.b_vp       = vp;
+		if (vp->v_type == VBLK) {
+			nbp->vb_buf.b_dev = vp->v_rdev;
+		}
 		LIST_INIT(&nbp->vb_buf.b_dep);
 
 		nbp->vb_xfer = vnx;	/* patch it back in to vnx */
@@ -1274,9 +1269,6 @@ sw_reg_strategy(sdp, bp, bn)
 			goto out;
 		}
 		vnx->vx_pending++;
-
-		/* assoc new buffer with underlying vnode */
-		bgetvp(vp, &nbp->vb_buf);
 
 		/* sort it in and start I/O if we are not over our limit */
 		disksort_blkno(&sdp->swd_tab, &nbp->vb_buf);
@@ -1378,11 +1370,6 @@ sw_reg_iodone(bp)
 		/* pass error upward */
 		vnx->vx_error = vbp->vb_buf.b_error;
 	}
-
-	/*
-	 * disassociate this buffer from the vnode.
-	 */
-	brelvp(&vbp->vb_buf);
 
 	/*
 	 * kill vbp structure
@@ -1697,14 +1684,8 @@ uvm_swap_io(pps, startslot, npages, flags)
 	bp->b_vnbufs.le_next = NOLIST;
 	bp->b_data = (caddr_t)kva;
 	bp->b_blkno = startblk;
-	s = splbio();
-	VHOLD(swapdev_vp);
 	bp->b_vp = swapdev_vp;
-	splx(s);
-	/* XXXCDC: isn't swapdev_vp always a VCHR? */
-	/* XXXMRG: probably -- this is obviously something inherited... */
-	if (swapdev_vp->v_type == VBLK)
-		bp->b_dev = swapdev_vp->v_rdev;
+	bp->b_dev = swapdev_vp->v_rdev;
 	bp->b_bufsize = bp->b_bcount = npages << PAGE_SHIFT;
 	LIST_INIT(&bp->b_dep);
 
@@ -1752,8 +1733,6 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * now dispose of the buf
 	 */
 	s = splbio();
-	if (bp->b_vp)
-		brelvp(bp);
 	if (write)
 		vwakeup(bp);
 	pool_put(&bufpool, bp);
