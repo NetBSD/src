@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105 1998/07/08 04:43:22 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.106 1998/07/19 20:45:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -86,7 +86,6 @@
  * the MMU H/W (and this pmap) is fixed for all time.
  */
 
-#include "opt_ddb.h"
 #include "opt_ddb.h"
 #include "opt_uvm.h"
 
