@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.320 2001/03/20 13:04:54 ad Exp $
+#	$NetBSD: mi,v 1.321 2001/03/24 09:32:48 jdolecek Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -267,7 +267,6 @@
 ./usr/include/dev/isa/if_fereg.h	comp-c-include
 ./usr/include/dev/isa/if_ixreg.h	comp-c-include
 ./usr/include/dev/isa/if_levar.h	comp-c-include
-./usr/include/dev/isa/if_wereg.h	comp-c-include
 ./usr/include/dev/isa/isadmareg.h	comp-c-include
 ./usr/include/dev/isa/isadmavar.h	comp-c-include
 ./usr/include/dev/isa/isareg.h		comp-c-include
