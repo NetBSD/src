@@ -1,0 +1,67 @@
+#
+# DISKLESS -- config file for a diskless Sun3/50 or Sun3/60
+# $Id: DISKLESS,v 1.1 1994/07/29 04:19:59 gwr Exp $
+#
+
+include "std.sun3"
+
+# Machines to be supported by this kernel
+options		"SUN3_50"
+options		"SUN3_60"
+
+# Needs to be set per system.  i.e change these as you see fit
+maxusers	4
+options		TIMEZONE=300		# minutes west of GMT (for param.c)
+options 	DST=2			# daylight savings rules (for param.c)
+
+# Standard system options
+options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+options		KTRACE				# system call tracing support
+#makeoptions	DEBUG="-g"			# symbols for kgdb + nm
+# I use DDB by copying in the symbols with dbsym.
+options		DDB
+options		SYMTAB_SPACE=88000
+
+# Filesystem options
+options 	NFSSERVER			# nfs server support
+options 	NFSCLIENT			# nfs client support
+options 	FFS				# ufs file system
+
+# Networking options
+options		INET				# IP prototol stack support
+
+# Sun3-specific options
+options		COMPAT_SUNOS
+options		COMPAT_09
+
+# Sun3-specific debugging options
+options 	CONTEXT_DEBUG
+options 	PMAP_DEBUG
+#options 	VMFAULT_TRACE
+#options 	SYSCALL_DEBUG
+options 	EXEC_DEBUG
+options 	DIAGNOSTIC
+options 	SCSIDEBUG
+
+config		netbsd swap nfs
+#config		netbsd root on nfs swap on nfs
+
+le0 at obio? addr ? level 3
+
+zs0 at obio? addr  0x20000 level 2
+zs1 at obio? addr  0x00000 level 2
+kd0 at mainbus0
+
+si0 at obio? addr ? level ?
+scsibus* at scsi?
+sd* at scsibus? target ? lun ?
+st* at scsibus? target ? lun ?
+cd* at scsibus? target ? lun ?
+#ch* at scsibus? target ? lun ?
+
+idprom0 at obctl? addr ? size ?
+
+#prom0 at mainbus0
+
+pseudo-device	loop
+pseudo-device	pty
