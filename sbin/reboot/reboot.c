@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.21 1998/07/06 05:21:07 is Exp $	*/
+/*	$NetBSD: reboot.c,v 1.22 1998/07/26 20:05:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.21 1998/07/06 05:21:07 is Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.22 1998/07/26 20:05:26 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,8 @@ main(argc, argv)
 	int i;
 	struct passwd *pw;
 	int ch, howto, lflag, nflag, qflag, sverrno, len;
-	char *user, *bootstr, **av;
+	const char *user;
+	char *bootstr, **av;
 
 	if (!strcmp(__progname, "halt") || !strcmp(__progname, "-halt")) {
 		dohalt = 1;
