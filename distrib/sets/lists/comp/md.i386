@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.49 2000/06/26 15:49:51 kleink Exp $
+# $NetBSD: md.i386,v 1.50 2000/11/05 22:29:03 thorpej Exp $
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
@@ -41,6 +41,7 @@
 ./usr/include/i386/pccons.h		comp-c-include
 ./usr/include/i386/pio.h		comp-c-include
 ./usr/include/i386/pmap.h		comp-c-include
+./usr/include/i386/pmc.h		comp-c-include
 ./usr/include/i386/proc.h		comp-c-include
 ./usr/include/i386/profile.h		comp-c-include
 ./usr/include/i386/psl.h		comp-c-include
