@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.27 1999/09/12 08:23:42 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.28 1999/09/13 19:18:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,6 +52,8 @@
 #include <sys/bus.h>
 #endif
 #include <sys/proc.h>
+
+#include <machine/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

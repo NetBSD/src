@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.49 1999/09/11 08:19:26 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.50 1999/09/13 19:18:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -345,7 +345,7 @@ uhci_init(sc)
 	uhci_busreset(sc);
 
 	/* Allocate and initialize real frame array. */
-	r = usb_allocmem(sc->sc_dmatag, 
+	r = usb_allocmem(&sc->sc_bus, 
 			 UHCI_FRAMELIST_COUNT * sizeof(uhci_physaddr_t),
 			 UHCI_FRAMELIST_ALIGN, &sc->sc_dma);
 	if (r != USBD_NORMAL_COMPLETION)
@@ -424,7 +424,7 @@ uhci_allocm(bus, dma, size)
 {
 	struct uhci_softc *sc = (struct uhci_softc *)bus;
 
-	return (usb_allocmem(sc->sc_dmatag, size, 0, dma));
+	return (usb_allocmem(&sc->sc_bus, size, 0, dma));
 }
 
 void
@@ -434,7 +434,7 @@ uhci_freem(bus, dma)
 {
 	struct uhci_softc *sc = (struct uhci_softc *)bus;
 
-	usb_freemem(sc->sc_dmatag, dma);
+	usb_freemem(&sc->sc_bus, dma);
 }
 
 #if !defined(__OpenBSD__)
@@ -564,7 +564,7 @@ uhci_dump()
 	uhci_softc_t *sc = uhci;
 
 	uhci_dumpregs(sc);
-	printf("intrs=%d\n", sc->sc_intrs);
+	printf("intrs=%d\n", sc->sc_bus.no_intrs);
 	printf("framelist[i].link = %08x\n", sc->sc_framelist[0].link);
 	uhci_dump_qh(sc->sc_ctl_start->qh.hlink);
 }
@@ -766,8 +766,6 @@ uhci_intr(arg)
 	int ack;
 	uhci_intr_info_t *ii;
 
-	sc->sc_intrs++;
-
 #if defined(USB_DEBUG)
 	if (uhcidebug > 15) {
 		DPRINTF(("%s: uhci_intr\n", USBDEVNAME(sc->sc_bus.bdev)));
@@ -810,6 +808,9 @@ uhci_intr(arg)
 	else	/* nothing to acknowledge */
 		return (0);
 
+	sc->sc_bus.intr_context = 1;
+	sc->sc_bus.no_intrs++;
+
 	/*
 	 * Interrupts on UHCI really suck.  When the host controller
 	 * interrupts because a transfer is completed there is no
@@ -825,6 +826,8 @@ uhci_intr(arg)
 		uhci_check_intr(sc, ii);
 
 	DPRINTFN(10, ("uhci_intr: exit\n"));
+
+	sc->sc_bus.intr_context = 0;
 
 	return (1);
 }
@@ -1113,7 +1116,7 @@ uhci_alloc_std(sc)
 
 	if (!sc->sc_freetds) {
 		DPRINTFN(2,("uhci_alloc_std: allocating chunk\n"));
-		r = usb_allocmem(sc->sc_dmatag, UHCI_STD_SIZE * UHCI_STD_CHUNK,
+		r = usb_allocmem(&sc->sc_bus, UHCI_STD_SIZE * UHCI_STD_CHUNK,
 				 UHCI_TD_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (0);
@@ -1159,7 +1162,7 @@ uhci_alloc_sqh(sc)
 
 	if (!sc->sc_freeqhs) {
 		DPRINTFN(2, ("uhci_alloc_sqh: allocating chunk\n"));
-		r = usb_allocmem(sc->sc_dmatag, UHCI_SQH_SIZE * UHCI_SQH_CHUNK,
+		r = usb_allocmem(&sc->sc_bus, UHCI_SQH_SIZE * UHCI_SQH_CHUNK,
 				 UHCI_QH_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION)
 			return 0;
@@ -1425,13 +1428,13 @@ uhci_abort_req(reqh, status)
 	reqh->hcpriv = ii;
 
 	/* make sure hardware has completed, */
-	if (curproc) {
+	if (reqh->device->bus->intr_context) {
+		/* We have no process context, so we can't use tsleep(). */
+		timeout(uhci_abort_req_end, reqh, hz / USB_FRAMES_PER_SECOND);
+	} else {
 		usb_delay_ms(reqh->pipe->device->bus, 1);
 		/* and call final part of interrupt handler. */
 		uhci_abort_req_end(reqh);
-	} else {
-		/* We have no process context, so we can't use tsleep(). */
-		timeout(uhci_abort_req_end, reqh, hz / USB_FRAMES_PER_SECOND);
 	}
 }
 
@@ -1922,13 +1925,13 @@ uhci_device_isoc_abort(reqh)
 	reqh->hcpriv = ii;
 
 	/* make sure hardware has completed, */
-	if (curproc) {
+	if (reqh->device->bus->intr_context) {
+		/* We have no process context, so we can't use tsleep(). */
+		timeout(uhci_abort_req_end, reqh, hz / USB_FRAMES_PER_SECOND);
+	} else {
 		usb_delay_ms(reqh->pipe->device->bus, 1);
 		/* and call final part of interrupt handler. */
 		uhci_abort_req_end(reqh);
-	} else {
-		/* We have no process context, so we can't use tsleep(). */
-		timeout(uhci_abort_req_end, reqh, hz / USB_FRAMES_PER_SECOND);
 	}
 }
 
@@ -2300,7 +2303,7 @@ uhci_open(pipe)
 				uhci_free_std(sc, upipe->u.ctl.setup);
 				goto bad;
 			}
-			r = usb_allocmem(sc->sc_dmatag, 
+			r = usb_allocmem(&sc->sc_bus, 
 					 sizeof(usb_device_request_t), 
 					 0, &upipe->u.ctl.reqdma);
 			if (r != USBD_NORMAL_COMPLETION) {
