@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.36 2003/09/26 18:10:01 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.37 2003/09/28 10:16:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.36 2003/09/26 18:10:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.37 2003/09/28 10:16:41 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.36 2003/09/26 18:10:01 christ
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_ioctl.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+#include <compat/netbsd32/netbsd32_exec.h>
 
 #include <machine/frame.h>
 #include <machine/reg.h>
@@ -92,10 +93,7 @@ void netbsd32_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upc
  */
 /* ARGSUSED */
 void
-netbsd32_setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack; /* XXX */
+netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct proc *p = l->l_proc;
 	register struct trapframe64 *tf = l->l_md.md_tf;
@@ -165,10 +163,7 @@ extern int sigdebug;
 #endif
 
 void
-netbsd32_sendsig(sig, mask, code)
-	int sig;
-	const sigset_t *mask;
-	u_long code;
+netbsd32_sendsig(int sig, const sigset_t *mask, u_long code)
 {
 	register struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
