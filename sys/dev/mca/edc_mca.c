@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.1 2001/04/19 17:17:29 jdolecek Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.2 2001/04/22 11:32:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -121,7 +121,6 @@ static void	edc_dump_status_block __P((struct edc_mca_softc *, int, int,
 static int	edc_setup_dma __P((struct edc_mca_softc *, struct buf *,
 			bus_addr_t, bus_size_t));
 static int	edc_do_attn __P((struct edc_mca_softc *, int, int, int));
-static int	edc_cmd_wait __P((struct edc_mca_softc *, int, int, int));
 
 int
 edc_mca_probe(parent, match, aux)
@@ -343,7 +342,7 @@ edc_intr(arg)
 	struct edc_mca_softc *sc = arg;
 	u_int8_t isr, intr_id;
 	u_int16_t sifr;
-	int cmd, devno, bioerror;
+	int cmd=-1, devno, bioerror=0;
 	struct ed_softc *ed=NULL;
 
 	/*
@@ -417,7 +416,9 @@ edc_intr(arg)
 		if (!edc_setup_dma(sc, ed->sc_bp,
 			ed->dmamap_xfer->dm_segs[0].ds_addr,
 			ed->dmamap_xfer->dm_segs[0].ds_len)) {
-			/* error XXX bail out? */
+			/* XXX bail out? */
+			printf("%s: edc_setup_dma() failed\n",
+				ed->sc_dev.dv_xname);
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh, BCR,
 				BCR_INT_ENABLE);
 		} else {
@@ -458,6 +459,7 @@ edc_intr(arg)
 	if (intr_id != ISR_DATA_TRANSFER_RDY
 	    && (cmd == CMD_READ_DATA || cmd == CMD_WRITE_DATA)) {
 		sc->sc_ed[devno]->sc_error = bioerror;
+		sc->sc_ed[devno]->sc_flags |= EDF_IODONE;
 		wakeup_one(&sc->sc_ed[devno]->edc_softc);
 	}
 
@@ -515,10 +517,10 @@ edc_do_attn(sc, attn_type, devno, intr_id)
  * We use mono_time, since we don't need actual RTC, just time
  * interval.
  */
-static int
-edc_cmd_wait(sc, devno, cmd, secs)
+int
+edc_cmd_wait(sc, devno, secs)
 	struct edc_mca_softc *sc;
-	int devno, cmd, secs;
+	int devno, secs;
 {
 	struct timeval start, now;
 	int s;
@@ -539,8 +541,8 @@ edc_cmd_wait(sc, devno, cmd, secs)
 
 	if (now.tv_sec - start.tv_sec >= secs &&
 	    bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR) & BSR_CMD_INPROGRESS){
-		printf("%s: timed out waiting for previous cmd to finish, command %d not executed\n",
-			sc->sc_ed[devno]->sc_dev.dv_xname, cmd);
+		printf("%s: timed out waiting for previous cmd to finish\n",
+			sc->sc_ed[devno]->sc_dev.dv_xname);
 		return (EAGAIN);
 	}
 
@@ -565,7 +567,7 @@ edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, async)
 	 */
 	if (sc->sc_cmd_async) {
 		/* Wait maximum 15s */
-		if (edc_cmd_wait(sc, devno, cmd, 15))
+		if (edc_cmd_wait(sc, devno, 15))
 			return (EAGAIN);	/* Busy */
 
 		sc->sc_cmd_async = 0;
@@ -617,7 +619,7 @@ edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, async)
 	}
 
 	/* Wait for command to complete, but maximum 15 seconds. */
-	if (edc_cmd_wait(sc, devno, cmd, 15))
+	if (edc_cmd_wait(sc, devno, 15))
 		return (EAGAIN);
 
 	/* Check if the command completed successfully; if not, return error */
@@ -794,6 +796,10 @@ edc_dump_status_block(sc, devno, cmd, intr_id)
 		);
 	printf("%s: IntrId: %s\n", ed->sc_dev.dv_xname,
 		edc_cmd_status[intr_id]);
+	printf("%s: # left blocks: %d, last processed RBA: %d\n",
+		ed->sc_dev.dv_xname,
+		ed->sc_status_block[SB_RESBLKCNT_IDX],
+		(ed->sc_status_block[4] << 16) | ed->sc_status_block[5]);
 
 	if (cmd == ISR_COMPLETED_WARNING) {
 		printf("%s: Command Error Code: %s\n",
