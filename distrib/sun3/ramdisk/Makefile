@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/06/09 15:03:34 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.13 2000/06/10 03:01:14 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -49,7 +49,7 @@ ${IMAGE}.fs: ${TREE} ${LISTS} ${CBIN}
 	newfs ${NEWFSARGS} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${TREE} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} \
+	TOPDIR=${TOP} CURDIR=${.CURDIR} DESTDIR=${DESTDIR} \
 	  OBJDIR=${.OBJDIR} TARGDIR=${MOUNT_POINT} \
 	  sh ${TOP}/common/RunList.sh ${LISTS}
 	sync
@@ -73,11 +73,8 @@ HACKSRC=${TOP}/../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
 clean cleandir distclean:
-	-rm -f a.out core *.core *.o
+	-rm -f a.out core *.core *.o *.cro *.c
 	-rm -f ${CLEANFILES}
-
-# Standard rules needed by the above...
-.include <bsd.obj.mk>
 
 .if !defined(RELEASEDIR)
 release:
@@ -90,3 +87,7 @@ release: $(KERNELS)
 	 ${RELEASEDIR}/binary/kernel/${x}.gz
 .endfor # KERNELS
 .endif	# RELEASEDIR
+
+# Standard rules needed by the above...
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
