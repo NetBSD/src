@@ -1,4 +1,4 @@
-#	$NetBSD: PS2,v 1.25 2001/07/21 13:15:00 jdolecek Exp $
+#	$NetBSD: PS2,v 1.26 2001/07/21 16:12:16 jdolecek Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
@@ -13,46 +13,130 @@
 
 include "arch/i386/conf/std.i386"
 
-makeoptions	COPTS="-Os"	# generates smaller code than -O2, -O1
+maxusers	16		# estimated number of users
 
-maxusers	8		# estimated number of users
-
+# CPU support.  At least one is REQUIRED.
 options 	I386_CPU
 options 	I486_CPU
+options 	I586_CPU
+#options 	I686_CPU
 
-options 	MATH_EMULATE    # floating point emulation
-#options 	XSERVER         # X server support in console drivers
+# CPU-related options.
+options 	MATH_EMULATE	# floating point emulation
+options 	VM86		# virtual 8086 emulation
+options 	USER_LDT	# user-settable LDT; used by WINE
+# eliminate delay no-ops in I/O; recommended on all but very old machines
+#options 	DUMMY_NOPS
 
-#options 	UCONSOLE        # users can use TIOCCONS (for xconsole)
+# delay between "rebooting ..." message and hardware reset, in milliseconds
+#options 	CPURESET_DELAY=2000
+
+# This option allows you to force a serial console at the specified
+# I/O address.   see console(4) for details.
+#options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
+#	you don't want the option below ON iff you are using the
+#	serial console option of the new boot strap code.
+#options 	CONS_OVERRIDE	# Always use above! independent of boot info
+
+# The following options override the memory sizes passed in from the boot
+# block.  Use them *only* if the boot block is unable to determine the correct
+# values.  Note that the BIOS may *correctly* report less than 640k of base
+# memory if the extended BIOS data area is located at the top of base memory
+# (as is the case on most recent systems).
+#options 	REALBASEMEM=639		# size of base memory (in KB)
+#options 	REALEXTMEM=15360	# size of extended memory (in KB)
+
+# Standard system options
+
+options 	UCONSOLE        # users can use TIOCCONS (for xconsole)
 options 	INSECURE        # disable kernel security levels
 
 options	RTC_OFFSET=-600 # hardware clock is this many mins. west of GMT
+options 	NTP		# NTP phase/frequency locked loop
+
 #options 	KTRACE          # system call tracing via ktrace(1)
 
-#options 	SYSVMSG         # System V-like message queues
-#options 	SYSVSEM         # System V-like semaphores
-#options 	SYSVSHM         # System V-like memory sharing
-#options 	SHMMAXPGS=1024  # 1024 pages is the default
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
+options 	SYSVSHM		# System V-like memory sharing
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
+options 	LKM		# loadable kernel modules
+
+# Diagnostic/debugging support options
 #options 	DIAGNOSTIC      # expensive kernel consistency checks
 #options 	DEBUG           # expensive debugging checks/support
 #options 	KMEMSTATS       # kernel memory statistics (vmstat -m)
 options 	DDB             # in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	KGDB		# remote debugger
+#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
+#makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPTS="-Os"	# generates smaller code than -O2, -O1
 
-file-system 	FFS             # UFS
-file-system 	NFS             # Network File System client
-file-system 	MSDOSFS         # MS-DOS file system
-#file-system 	FDESC           # /dev/fd
-file-system 	KERNFS          # /kern
-#file-system	MFS		# memory file system
+# File systems
+file-system 	FFS		# UFS
+#file-system 	EXT2FS		# second extended file system (linux)
+#file-system 	LFS		# log-structured file system
+#file-system 	MFS		# memory file system
+file-system 	NFS		# Network File System client
+#file-system 	NTFS		# Windows/NT file system (experimental)
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
+#file-system 	FDESC		# /dev/fd
+#file-system 	KERNFS		# /kern
+#file-system 	NULLFS		# loopback file system
+#file-system 	OVERLAY		# overlay file system
+#file-system 	PORTAL		# portal filesystem (still experimental)
+#file-system 	PROCFS		# /proc
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+#file-system 	UNION		# union file system
+#file-system	CODA		# Coda File System; also needs vcoda (below)
 
-#options 	QUOTA           # UFS quotas
-#options 	NFSSERVER       # Network File System server
-options 	FIFO            # FIFOs; RECOMMENDED
+# File system options
+options 	QUOTA		# UFS quotas
+#options 	FFS_EI		# FFS Endian Independent support
+options 	SOFTDEP         # FFS soft updates support.
+#options 	NFSSERVER	# Network File System server
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-options 	INET            # IP + ICMP + TCP + UDP
-
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+#options 	EISAVERBOSE	# verbose EISA device autoconfig messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+#options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+#options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
+#options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
+#options 	I2OVERBOSE	# verbose I2O driver messages
 options 	MCAVERBOSE      # verbose MCA device autoconfig messages
 
 options		NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
