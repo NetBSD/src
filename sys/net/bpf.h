@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.25 2000/01/31 23:06:12 thorpej Exp $	*/
+/*	$NetBSD: bpf.h,v 1.25.4.1 2000/11/03 19:24:08 tv Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -161,8 +161,8 @@ struct bpf_hdr {
  */
 #ifdef _KERNEL
 #if defined(__arm32__) || defined(__i386__) || defined(__m68k__) || \
-    defined(__mips__) || defined(__ns32k__) || defined(__sparc__) || \
-    defined(__vax__) || defined(__sh3__)
+    defined(__mips__) || defined(__ns32k__) || defined(__vax__) || \
+    defined(__sh3__) || (defined(__sparc__) && !defined(__sparc64__))
 #define SIZEOF_BPF_HDR 18
 #else
 #define SIZEOF_BPF_HDR sizeof(struct bpf_hdr)
