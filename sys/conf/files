@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.221 1998/07/05 22:48:05 jonathan Exp $
+#	$NetBSD: files,v 1.222 1998/07/12 19:51:57 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -287,6 +287,17 @@ define	isabus { }			# ISA attachment
 define	eisabus { }			# EISA attachment
 define	pcibus {[bus = -1]}		# PCI attachment
 define	tcbus { }			# TurboChannel attachment
+define	usbus { }			# USB attachment
+
+# We need the USB bus controllers here so different busses can
+# use them in an 'attach-with'.
+# UHCI USB controller
+device	uhci: usbus
+file	dev/usb/uhci.c			uhci
+
+# OHCI USB controller
+device	ohci: usbus
+file	dev/usb/ohci.c			ohci
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk

@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.38 1998/04/30 06:26:04 thorpej Exp $	*/
+/*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -136,7 +136,9 @@
 #define	M_TEMP		84	/* misc temporary data buffers */
 #define	M_DMAMAP	85	/* bus_dma(9) structures */
 #define	M_IPFLOW	86	/* IP flow entries */
-#define	M_LAST		87	/* Must be last type + 1 */
+#define	M_USB		87	/* USB general */
+#define	M_USBDEV	88	/* USB permanent */
+#define	M_LAST		89	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -226,7 +228,9 @@
 	"temp",		/* 84 M_TEMP */ \
 	"DMA map",	/* 85 M_DMAMAP */ \
 	"IP flow",	/* 86 M_IPFLOW */ \
-	NULL,		/* 87 */ \
+	"USB",		/* 87 M_USB */ \
+	"USB device",	/* 88 M_USBDEV */ \
+	NULL,		/* 89 */ \
 }
 
 struct kmemstats {

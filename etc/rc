@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.104 1998/06/21 16:38:38 tron Exp $
+#	$NetBSD: rc,v 1.105 1998/07/12 19:51:55 augustss Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -468,6 +468,10 @@ if checkyesno inetd; then
 		logger -s "WARNING: /etc/inetd.conf not readable; " \
 		    "inetd not started."
 	fi
+fi
+
+if checkyesno usbd; then
+	echo -n ' usbd';		usbd $usbd_flags
 fi
 
 if checkyesno xdm; then
