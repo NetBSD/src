@@ -95,7 +95,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: mpbios.c,v 1.1.2.8 2000/09/21 13:24:08 sommerfeld Exp $
+ *	$Id: mpbios.c,v 1.1.2.9 2000/09/23 17:25:33 sommerfeld Exp $
  */
 
 /*
@@ -592,14 +592,14 @@ mpbios_scan(self)
 			mp_conf[type].count++;
 			/*
 			 * Count actual interrupt instances.
-			 * APIC id 0xff means "wired to all apics of this
-			 * type".
+			 * dst_apic_id of MPS_ALL_APICS means "wired to all
+			 * apics of this type".
 			 */
 			if ((type == MPS_MCT_IOINT) ||
 			    (type == MPS_MCT_LINT)) {
 				const struct mpbios_int *ie =
 				    (const struct mpbios_int *)position;
-				if (ie->dst_apic_id != 0xff)
+				if (ie->dst_apic_id != MPS_ALL_APICS)
 					intr_cnt++;
 				else if (type == MPS_MCT_IOINT)
 					intr_cnt += mp_conf[MPS_MCT_IOAPIC].count;
@@ -1043,7 +1043,7 @@ mpbios_int(ent, enttype, mpi)
 			sc->sc_pins[pin].ip_map = mpi;
 		}
 	} else {
-		if (id != 0xff)
+		if (id != MPS_ALL_APICS)
 			panic("can't deal with not-all-lapics interrupt yet!");
 		if (pin >= 2)
 			printf("pin %d of local apic doesn't exist!\n", pin);
