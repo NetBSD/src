@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.27 2004/01/29 00:02:04 lukem Exp $
+#	$NetBSD: bsd.x11.mk,v 1.28 2004/01/29 00:21:31 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -111,8 +111,8 @@ cleancppscripts: .PHONY
 # APPDEFS (app defaults) handling
 #
 .if defined(APPDEFS)						# {
-appdefsinstall:: .PHONY .PRECIOUS \
-		${APPDEFS:@S@${DESTDIR}${X11LIBDIR}/app-defaults/${S:T:R}@}
+appdefsinstall:: .PHONY ${APPDEFS:@S@${DESTDIR}${X11LIBDIR}/app-defaults/${S:T:R}@}
+.PRECIOUS:	${APPDEFS:@S@${DESTDIR}${X11LIBDIR}/app-defaults/${S:T:R}@}
 
 __appdefinstall: .USE
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
