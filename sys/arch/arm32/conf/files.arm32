@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.64 1998/09/22 00:37:51 mark Exp $
+#	$NetBSD: files.arm32,v 1.65 1998/09/22 00:43:18 mark Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -340,7 +340,6 @@ file	arch/arm32/podulebus/csa.c		csa
 device	icside {}
 attach	icside at podulebus
 file	arch/arm32/podulebus/icside.c		icside
-file	arch/arm32/podulebus/icside_io.c	icside
 file	arch/arm32/podulebus/icside_io_asm.S	icside
 
 attach	wdc at icside with wdc_ics
