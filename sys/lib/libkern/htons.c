@@ -1,4 +1,4 @@
-/*	$NetBSD: htons.c,v 1.7 1996/05/29 23:39:37 cgd Exp $	*/
+/*	$NetBSD: htons.c,v 1.8 1996/10/17 01:41:37 cgd Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -6,21 +6,20 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: htons.c,v 1.7 1996/05/29 23:39:37 cgd Exp $";
+static char *rcsid = "$NetBSD: htons.c,v 1.8 1996/10/17 01:41:37 cgd Exp $";
 #endif
 
 #include <sys/types.h>
-#include <machine/endian.h>
 
 #undef htons
 
-unsigned short
+in_port_t
 htons(x)
-	unsigned short x;
+	in_port_t x;
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
 	u_char *s = (u_char *) &x;
-	return (u_int16_t)(s[0] << 8 | s[1]);
+	return (in_port_t)(s[0] << 8 | s[1]);
 #else
 	return x;
 #endif
