@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdiskbyname.3,v 1.8 2002/02/07 07:00:12 ross Exp $
+.\"	$NetBSD: getdiskbyname.3,v 1.9 2002/10/01 16:48:34 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,8 +58,8 @@ takes a disk name (e.g.
 .Ql rm03 )
 and returns a prototype disk label
 describing its geometry information and the standard
-disk partition tables.  All information is obtained from
-the
+disk partition tables.
+All information is obtained from the
 .Xr disktab 5
 file.
 .Pp
@@ -105,4 +105,5 @@ function appeared in
 The
 .Fn getdiskbyname
 function leaves its results in an internal static object and returns a
-pointer to that object.  Subsequent calls will modify the same object.
+pointer to that object.
+Subsequent calls will modify the same object.
