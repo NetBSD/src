@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.23.2.3 1997/05/28 20:05:20 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.23.2.4 1997/05/29 22:34:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@ static int dmapageport[2][4] = {
 static u_int8_t dmamode[4] = {
 	DMA37MD_READ | DMA37MD_SINGLE,
 	DMA37MD_WRITE | DMA37MD_SINGLE,
-	DMA37MD_READ | DMA37MD_LOOP,
-	DMA37MD_WRITE | DMA37MD_LOOP
+	DMA37MD_READ | DMA37MD_SINGLE | DMA37MD_LOOP,
+	DMA37MD_WRITE | DMA37MD_SINGLE | DMA37MD_LOOP
 };
 
 static inline void isa_dmaunmask __P((struct isa_softc *, int));
@@ -307,14 +307,14 @@ isa_dmastart(isadev, chan, addr, nbytes, p, flags, busdmaflags)
 		    (dmaaddr >> 8) & 0xff);
 
 		/* send count */
-		bus_space_write_1(sc->sc_iot, sc->sc_dma1h,
-		    waport + 1, (--nbytes) & 0xff);
-		bus_space_write_1(sc->sc_iot, sc->sc_dma1h,
-		    waport + 1, (nbytes >> 8) & 0xff);
+		bus_space_write_1(sc->sc_iot, sc->sc_dma1h, waport + 1,
+		    (--nbytes) & 0xff);
+		bus_space_write_1(sc->sc_iot, sc->sc_dma1h, waport + 1,
+		    (nbytes >> 8) & 0xff);
 	} else {
 		/* set dma channel mode */
-		bus_space_write_1(sc->sc_iot, sc->sc_dma2h,
-		    DMA2_MODE, ochan | dmamode[flags]);
+		bus_space_write_1(sc->sc_iot, sc->sc_dma2h, DMA2_MODE,
+		    ochan | dmamode[flags]);
 
 		/* send start address */
 		waport = DMA2_CHN(ochan);
