@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_proc.c	8.4 (Berkeley) 1/4/94
- *	$Id: kern_proc.c,v 1.7 1994/05/19 05:57:50 cgd Exp $
+ *	$Id: kern_proc.c,v 1.8 1994/06/08 11:28:40 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -43,7 +43,7 @@
 #include <sys/acct.h>
 #include <sys/wait.h>
 #include <sys/file.h>
-#include <ufs/quota.h>	/* XXX */
+#include <ufs/ufs/quota.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
