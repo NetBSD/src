@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.20 2004/02/05 16:07:51 jmmv Exp $ */
+/* $NetBSD: wsmoused.c,v 1.21 2004/02/05 16:11:31 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\n"
 "The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: wsmoused.c,v 1.20 2004/02/05 16:07:51 jmmv Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.21 2004/02/05 16:11:31 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -408,7 +408,7 @@ attach_modes(char *list)
 	int count;
 
 	/* Attach all requested modes */
-	(void)memset(&Modes, 0, sizeof(struct mode_bootstrap) * MAX_MODES);
+	(void)memset(&Modes, 0, sizeof(struct mode_bootstrap *) * MAX_MODES);
 	for (count = 0, (p = strtok_r(list, " ", &last)); p;
 	    (p = strtok_r(NULL, " ", &last))) {
 		if (attach_mode(p))
