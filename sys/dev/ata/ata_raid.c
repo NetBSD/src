@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.6 2003/09/29 23:31:04 grant Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.7 2003/12/14 05:37:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.6 2003/09/29 23:31:04 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.7 2003/12/14 05:37:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.6 2003/09/29 23:31:04 grant Exp $");
 #include <sys/vnode.h>
 
 #include <miscfs/specfs/specdev.h>
-
-#define	__ATA_DISK_PRIVATE
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
