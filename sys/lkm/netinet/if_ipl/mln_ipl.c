@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.5 1997/03/29 01:42:35 thorpej Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.6 1997/03/29 03:03:09 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -14,15 +14,6 @@
 
 
 #include <sys/param.h>
-
-/*
- * Post NetBSD 1.2 has the PFIL interface for packet filters.  This turns
- * on those hooks.  We don't need any special mods with this!
- */
-#if (defined(NetBSD) && (NetBSD > 199609) && (NetBSD <= 1991011)) || \
-    (defined(NetBSD1_2) && NetBSD1_2 > 1)
-#  define NETBSD_PF
-#endif
 
 #if defined(__FreeBSD__) && (__FreeBSD__ > 1)
 # include <osreldate.h>
@@ -78,16 +69,13 @@ extern	int	lkmenodev __P((void));
 #ifdef NETBSD_PF
 #include <net/pfil.h>
 #endif
+
 #ifndef IPFILTER_LOG
 # ifdef NETBSD_PF
 # define iplread enodev
 # else
 # define	iplread	nodev
 # endif
-#endif
-
-#ifdef NETBSD_PF
-int        (*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **)) = NULL;
 #endif
 
 static	int	ipl_unload __P((void));
@@ -151,7 +139,7 @@ int cmd;
 			return EEXIST;
 
 		for (i = 0; i < nchrdev; i++)
-			if (cdevsw[i].d_open == lkmenodev ||
+			if (cdevsw[i].d_open == (void *)lkmenodev ||
 			    cdevsw[i].d_open == iplopen)
 				break;
 		if (i == nchrdev) {
@@ -211,10 +199,12 @@ static int ipl_unload()
 {
 	int error;
 
-	error = ipfilterdetach();
-#ifdef NETBSD_PF
-	pfil_remove_hook(fr_check, PFIL_IN|PFIL_OUT);
-#endif
+	/*
+	 * Unloading - remove the filter rule check from the IP
+	 * input/output stream.
+	 */
+	error = ipl_detach();
+
 	if (!error)
 		error = ipl_remove();
 	return error;
@@ -227,12 +217,6 @@ static int ipl_load()
 	struct vattr vattr;
 	int error, fmode = S_IFCHR|0600;
 
-	error = ipfilterattach();
-	if (error)
-		return error;
-#ifdef NETBSD_PF
-	pfil_add_hook(fr_check, PFIL_IN|PFIL_OUT);
-#endif
 	(void) ipl_remove();
 	error = 0;
 
