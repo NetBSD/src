@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.35 2003/01/22 12:58:24 rafal Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.36 2003/02/28 02:12:55 cgd Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.35 2003/01/22 12:58:24 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.36 2003/02/28 02:12:55 cgd Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -411,6 +411,10 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	FILE_USE(fp);
 	vp = (struct vnode *)fp->f_data;
 
+        error = vn_marktext(vp);
+        if (error)
+                goto bad_unuse;
+
 	/* 
 	 * Load the sections 
 	 */
@@ -441,14 +445,15 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 			}
 			IRIX_VM_SYNC(p, error = (*vcp->ev_proc)(p, vcp));
 			if (error)
-				goto bad;
+				goto bad_unuse;
 		}
 		pht++;
 	}
 
-	FILE_UNUSE(fp, p);
-	
 	*retval = (register_t)kph->p_vaddr;
+
+bad_unuse:	
+	FILE_UNUSE(fp, p);
 bad:
 	free(kph, M_TEMP);
 	return error;
