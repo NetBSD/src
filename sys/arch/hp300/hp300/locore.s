@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.54 1996/06/23 05:48:12 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.55 1996/09/11 00:29:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -764,6 +764,8 @@ start:
 	jeq	Lnot68030		| yes, we have 68020/68040
 	RELOC(_mmutype, a0)		| no, we have 68030
 	movl	#MMU_68030,a0@		| set to reflect 68030 PMMU
+	RELOC(_cputype, a0)
+	movl	#CPU_68030,a0@		| and 68030 CPU
 	RELOC(_machineid, a0)
 	movl	#0x80,a1@(MMUCMD)	| set magic cookie
 	movl	a1@(MMUCMD),d0		| read it back
@@ -799,6 +801,8 @@ Lnot68030:
 	movec	d0,cacr			|   before we access any data
 	RELOC(_mmutype, a0)
 	movl	#MMU_68040,a0@		| with a 68040 MMU
+	RELOC(_cputype, a0)
+	movl	#CPU_68040,a0@		| and a 68040 CPU
 	RELOC(_ectype, a0)
 	movl	#EC_NONE,a0@		| and no cache (for now XXX)
 	RELOC(_machineid, a0)
@@ -1973,17 +1977,17 @@ LhpmmuB:
 Lebootcode:
 
 	.data
-	.globl	_machineid
+	.globl	_machineid,_mmutype,_cputype,_ectype,_protorp
 _machineid:
-	.long	0		| default to 320
-	.globl	_mmutype,_protorp
+	.long	HP_320		| default to 320
 _mmutype:
-	.long	0		| default to HP MMU
+	.long	MMU_HP		| default to HP MMU
+_cputype:
+	.long	CPU_68020	| default to 68020 CPU
+_ectype:
+	.long	EC_NONE		| external cache type, default to none
 _protorp:
 	.long	0,0		| prototype root pointer
-	.globl	_ectype
-_ectype:
-	.long	0		| external cache type, default to none
 	.globl	_internalhpib
 _internalhpib:
 	.long	1		| has internal HP-IB, default to yes
