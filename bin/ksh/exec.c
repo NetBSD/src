@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.8 2003/06/23 11:38:56 agc Exp $	*/
+/*	$NetBSD: exec.c,v 1.9 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * execute command tree
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.8 2003/06/23 11:38:56 agc Exp $");
+__RCSID("$NetBSD: exec.c,v 1.9 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -84,7 +84,6 @@ execute(t, flags)
 {
 	int i;
 	volatile int rv = 0;
-	volatile int rv_prop = 0; /* rv being propogated or newly generated? */
 	int pv[2];
 	char ** volatile ap;
 	char *s, *cp;
@@ -108,7 +107,7 @@ execute(t, flags)
 	newenv(E_EXEC);
 	if (trap)
 		runtraps(0);
- 
+
 	if (t->type == TCOM) {
 		/* Clear subst_exstat before argument expansion.  Used by
 		 * null commands (see comexec() and c_eval()) and by c_set().
@@ -166,7 +165,6 @@ execute(t, flags)
 
 	  case TPAREN:
 		rv = execute(t->left, flags|XFORK);
-		rv_prop = 1;
 		break;
 
 	  case TPIPE:
@@ -238,8 +236,10 @@ execute(t, flags)
 		e->savefd[1] = savefd(1, 0);
 
 		openpipe(pv);
-		ksh_dup2(pv[0], 0, FALSE);
-		close(pv[0]);
+		if (pv[0] != 0) {
+			ksh_dup2(pv[0], 0, FALSE);
+			close(pv[0]);
+		}
 		coproc.write = pv[1];
 		coproc.job = (void *) 0;
 
@@ -285,7 +285,6 @@ execute(t, flags)
 			rv = execute(t->right, flags & XERROK);
 		else
 			flags |= XERROK;
-		rv_prop = 1;
 		break;
 
 	  case TBANG:
@@ -334,7 +333,6 @@ execute(t, flags)
 			}
 		}
 		rv = 0; /* in case of a continue */
-		rv_prop = 1;
 		if (t->type == TFOR) {
 			while (*ap != NULL) {
 				setstr(global(t->str), *ap++, KSH_UNWIND_ERROR);
@@ -346,7 +344,6 @@ execute(t, flags)
 			for (;;) {
 				if (!(cp = do_selectargs(ap, is_first))) {
 					rv = 1;
-					rv_prop = 0;
 					break;
 				}
 				is_first = FALSE;
@@ -378,7 +375,6 @@ execute(t, flags)
 		rv = 0; /* in case of a continue */
 		while ((execute(t->left, XERROK) == 0) == (t->type == TWHILE))
 			rv = execute(t->right, flags & XERROK);
-		rv_prop = 1;
 		break;
 
 	  case TIF:
@@ -388,7 +384,6 @@ execute(t, flags)
 		rv = execute(t->left, XERROK) == 0 ?
 			execute(t->right->left, flags & XERROK) :
 			execute(t->right->right, flags & XERROK);
-		rv_prop = 1;
 		break;
 
 	  case TCASE:
@@ -401,12 +396,10 @@ execute(t, flags)
 		break;
 	  Found:
 		rv = execute(t->left, flags & XERROK);
-		rv_prop = 1;
 		break;
 
 	  case TBRACE:
 		rv = execute(t->left, flags & XERROK);
-		rv_prop = 1;
 		break;
 
 	  case TFUNCT:
@@ -418,7 +411,6 @@ execute(t, flags)
 		 * (allows "ls -l | time grep foo").
 		 */
 		rv = timex(t, flags & ~XEXEC);
-		rv_prop = 1;
 		break;
 
 	  case TEXEC:		/* an eval'd TCOM */
@@ -444,11 +436,9 @@ execute(t, flags)
 	exstat = rv;
 
 	quitenv();		/* restores IO */
-	if ((flags&XEXEC)) {
+	if ((flags&XEXEC))
 		unwind(LEXIT);	/* exit child */
-		/* NOTREACHED */
-	}
-	if (rv != 0 && !rv_prop && !(flags & XERROK)) {
+	if (rv != 0 && !(flags & XERROK)) {
 		if (Flag(FERREXIT))
 			unwind(LERROR);
 		trapsig(SIGERR_);
@@ -468,21 +458,19 @@ comexec(t, tp, ap, flags)
 	int volatile flags;
 {
 	int i;
-	int rv = 0;
+	volatile int rv = 0;
 	register char *cp;
 	register char **lastp;
 	static struct op texec; /* Must be static (XXX but why?) */
 	int type_flags;
 	int keepasn_ok;
 	int fcflags = FC_BI|FC_FUNC|FC_PATH;
-#ifdef __GNUC__
-	(void) &rv;
-#endif
+	int bourne_function_call = 0;
 
 #ifdef KSH
 	/* snag the last argument for $_ XXX not the same as at&t ksh,
 	 * which only seems to set $_ after a newline (but not in
-	 * functions/dot scripts, but in interactive and scipt) -
+	 * functions/dot scripts, but in interactive and script) -
 	 * perhaps save last arg here and set it in shell()?.
 	 */
 	if (Flag(FTALKING) && *(lastp = ap)) {
@@ -567,9 +555,10 @@ comexec(t, tp, ap, flags)
 		newblock();
 		/* ksh functions don't keep assignments, POSIX functions do. */
 		if (keepasn_ok && tp && tp->type == CFUNC
-		    && !(tp->flag & FKSH))
+		    && !(tp->flag & FKSH)) {
+			bourne_function_call = 1;
 			type_flags = 0;
-		else
+		} else
 			type_flags = LOCAL|LOCAL_COPY|EXPORT;
 	}
 	if (Flag(FEXPORT))
@@ -586,6 +575,8 @@ comexec(t, tp, ap, flags)
 				shf_flush(shl_out);
 		}
 		typeset(cp, type_flags, 0, 0, 0);
+		if (bourne_function_call && !(type_flags & EXPORT))
+			typeset(cp, LOCAL|LOCAL_COPY|EXPORT, 0, 0, 0);
 	}
 
 	if ((cp = *ap) == NULL) {
@@ -735,8 +726,8 @@ comexec(t, tp, ap, flags)
 #ifdef KSH
 		/* set $_ to program's full path */
 		/* setstr() can't fail here */
-		setstr(typeset("_", LOCAL|EXPORT, 0, INTEGER, 0), tp->val.s,
-		       KSH_RETURN_ERROR);
+		setstr(typeset("_", LOCAL|EXPORT, 0, INTEGER, 0),
+		       tp->val.s, KSH_RETURN_ERROR);
 #endif /* KSH */
 
 		if (flags&XEXEC) {
@@ -851,7 +842,7 @@ scriptexec(tp, ap)
 		} else {
 		        /* Use ksh documented shell default if present
 			 * else use OS2_SHELL which is assumed to need
-			 * the /c option and '\' as dir separater.
+			 * the /c option and '\' as dir separator.
 			 */
 		         char *p = shell;
 
@@ -1157,14 +1148,14 @@ search_access(path, mode, errnop)
 	char *tp = mpath + strlen(mpath);
 	char *p;
 	char **sfx;
- 
+
 	/* If a suffix has been specified, check if it is one of the
 	 * suffixes that indicate the file is executable - if so, change
 	 * the access test to R_OK...
 	 * This code assumes OS/2 files can have only one suffix...
 	 */
 	if ((p = strrchr((p = ksh_strrchr_dirsep(mpath)) ? p : mpath, '.'))) {
-		if (mode == X_OK) 
+		if (mode == X_OK)
 			mode = R_OK;
 		return search_access1(mpath, mode, errnop);
 	}
@@ -1240,7 +1231,7 @@ search(name, path, mode, errnop)
 	}
 
 	/* Look in current context always. (os2 style) */
-	if (search_access(Xstring(xs, xp), mode, errnop) == 0) 
+	if (search_access(Xstring(xs, xp), mode, errnop) == 0)
 		return Xstring(xs, xp); /* not Xclose() - xp may be wrong */
 #else /* OS2 */
 	if (ksh_strchr_dirsep(name)) {
@@ -1374,6 +1365,8 @@ iosetup(iop, tp)
 				snptreef((char *) 0, 32, "%R", &iotmp), emsg);
 			return -1;
 		}
+		if (u == iop->unit)
+			return 0;		/* "dup from" == "dup to" */
 		break;
 	  }
 	}
@@ -1398,13 +1391,19 @@ iosetup(iop, tp)
 		return -1;
 	}
 	/* Do not save if it has already been redirected (i.e. "cat >x >y"). */
-	if (e->savefd[iop->unit] == 0)
-		/* c_exec() assumes e->savefd[fd] set for any redirections.
-		 * Ask savefd() not to close iop->unit - allows error messages
-		 * to be seen if iop->unit is 2; also means we can't lose
-		 * the fd (eg, both dup2 below and dup2 in restfd() failing).
-		 */
-		e->savefd[iop->unit] = savefd(iop->unit, 1);
+	if (e->savefd[iop->unit] == 0) {
+		/* If these are the same, it means unit was previously closed */
+		if (u == iop->unit)
+			e->savefd[iop->unit] = -1;
+		else
+			/* c_exec() assumes e->savefd[fd] set for any
+			 * redirections.  Ask savefd() not to close iop->unit;
+			 * this allows error messages to be seen if iop->unit
+			 * is 2; also means we can't lose the fd (eg, both
+			 * dup2 below and dup2 in restfd() failing).
+			 */
+			e->savefd[iop->unit] = savefd(iop->unit, 1);
+	}
 
 	if (do_close)
 		close(iop->unit);

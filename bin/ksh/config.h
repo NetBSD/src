@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.6 2002/11/11 19:03:57 jdolecek Exp $	*/
+/*	$NetBSD: config.h,v 1.7 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -10,7 +10,6 @@
 
 #ifndef CONFIG_H
 #define CONFIG_H
-
 
 /* Define if on AIX 3.
    System headers sometimes define this.
@@ -24,7 +23,6 @@
 
 /* Define to empty if the keyword does not work.  */
 /* #undef const */
-
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef gid_t */
@@ -40,9 +38,6 @@
 
 /* Define if you have <unistd.h>.  */
 #define HAVE_UNISTD_H 1
-
-/* Define if you have dup2.  */
-#define HAVE_DUP2 1
 
 /* Define if on MINIX.  */
 /* #undef _MINIX */
@@ -81,7 +76,7 @@
 /* Define if the closedir function returns void instead of int.  */
 /* #undef VOID_CLOSEDIR */
 
-/* Define if your kernal doesn't handle scripts starting with #! */
+/* Define if your kernel doesn't handle scripts starting with #! */
 /* #undef SHARPBANG */
 
 /* Define if dup2() preserves the close-on-exec flag (ultrix does this) */
@@ -163,7 +158,7 @@
 #define HAVE_MEMMOVE 1
 
 /* Define if you have a bcopy() function in your C library */
-/* #undef HAVE_BCOPY */
+#define HAVE_BCOPY
 
 /* Define if you have a lstat() function in your C library */
 #define HAVE_LSTAT 1
@@ -177,6 +172,9 @@
 /* Define if opendir() will open non-directory files */
 /* #undef OPENDIR_DOES_NONDIR */
 
+/* Define if you have a dup2() function in your C library */
+#define	HAVE_DUP2 1
+
 /* Define if the pgrp of setpgrp() can't be the pid of a zombie process */
 /* #undef NEED_PGRP_SYNC */
 
@@ -189,46 +187,50 @@
 /* Define if you arg running OS2 with the EMX library */
 /* #undef OS2 */
 
-/* Define if you have a POSIX.1 compatiable <sys/wait.h> */
+/* Define if you have a POSIX.1 compatible <sys/wait.h> */
 #define POSIX_SYS_WAIT 1
 
 /* Define if your OS maps references to /dev/fd/n to file descriptor n */
 #define HAVE_DEV_FD 1
 
-/* Default PATH (see comments in configure.in for more details) */
-#define DEFAULT_PATH "/bin:/usr/bin:/usr/ucb"
+/* Default PATH */
+#define DEFAULT_PATH "/bin:/usr/bin:/sbin:/usr/sbin"
 
-/* Include ksh features? (see comments in configure.in for more details) */
+/* Define if your C library's getwd/getcwd function dumps core in unreadable
+ * directories.  */
+/* #undef HPUX_GETWD_BUG */
+
+/* Include ksh features? */
 #define KSH 1
 
-/* Include emacs editing? (see comments in configure.in for more details) */
+/* Include emacs editing? */
 #define EMACS 1
 
-/* Include vi editing? (see comments in configure.in for more details) */
+/* Include vi editing? */
 #define VI 1
 
-/* Include job control? (see comments in configure.in for more details) */
+/* Include job control? */
 #define JOBS 1
 
-/* Include brace-expansion? (see comments in configure.in for more details) */
+/* Include brace-expansion? */
 #define BRACE_EXPAND 1
 
-/* Include any history? (see comments in configure.in for more details) */
+/* Include any history? */
 #define HISTORY 1
 
-/* Include complex history? (see comments in configure.in for more details) */
+/* Include complex history? */
 /* #undef COMPLEX_HISTORY */
 
-/* Strict POSIX behaviour? (see comments in configure.in for more details) */
+/* Strict POSIX behaviour? */
 #define POSIXLY_CORRECT 1
 
-/* Specify default $ENV? (see comments in configure.in for more details) */
+/* Specify default $ENV? */
 #define DEFAULT_ENV	"$HOME/.kshrc"
 
-/* Include shl(1) support? (see comments in configure.in for more details) */
+/* Include shl(1) support? */
 /* #undef SWTCH */
 
-/* Include game-of-life? (see comments in configure.in for more details) */
+/* Include game-of-life? */
 /* #undef SILLY */
 
 /* The number of bytes in a int.  */
@@ -238,7 +240,7 @@
 #define SIZEOF_LONG 4
 
 /* Define if you have the _setjmp function.  */
-/* #undef HAVE__SETJMP */
+#define HAVE__SETJMP
 
 /* Define if you have the confstr function.  */
 #define HAVE_CONFSTR 1
@@ -246,14 +248,17 @@
 /* Define if you have the flock function.  */
 #define HAVE_FLOCK 1
 
+/* Define if you have the getcwd function.  */
+#define HAVE_GETCWD 1
+
 /* Define if you have the getgroups function.  */
-/* #undef HAVE_GETGROUPS */
+#define HAVE_GETGROUPS
 
 /* Define if you have the getpagesize function.  */
 #define HAVE_GETPAGESIZE 1
 
 /* Define if you have the getrusage function.  */
-/* #undef HAVE_GETRUSAGE */
+#define HAVE_GETRUSAGE
 
 /* Define if you have the getwd function.  */
 #define HAVE_GETWD 1
@@ -286,7 +291,7 @@
 #define HAVE_TCSETPGRP 1
 
 /* Define if you have the ulimit function.  */
-/* #undef HAVE_ULIMIT */
+#define HAVE_ULIMIT
 
 /* Define if you have the valloc function.  */
 #define HAVE_VALLOC 1
@@ -325,7 +330,7 @@
 #define HAVE_STRING_H 1
 
 /* Define if you have the <sys/dir.h> header file.  */
-/* #undef HAVE_SYS_DIR_H */
+#define HAVE_SYS_DIR_H
 
 /* Define if you have the <sys/ndir.h> header file.  */
 /* #undef HAVE_SYS_NDIR_H */
@@ -343,7 +348,7 @@
 #define HAVE_SYS_WAIT_H 1
 
 /* Define if you have the <ulimit.h> header file.  */
-/* #undef HAVE_ULIMIT_H */
+#define HAVE_ULIMIT_H
 
 /* Define if you have the <values.h> header file.  */
 /* #undef HAVE_VALUES_H */

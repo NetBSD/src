@@ -1,10 +1,10 @@
-/*	$NetBSD: lex.h,v 1.5 2004/02/26 08:24:03 jdolecek Exp $	*/
+/*	$NetBSD: lex.h,v 1.6 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * Source input, lexer and parser
  */
 
-/* $Id: lex.h,v 1.5 2004/02/26 08:24:03 jdolecek Exp $ */
+/* $Id: lex.h,v 1.6 2004/07/07 19:20:09 mycroft Exp $ */
 
 #define	IDENT	64
 
@@ -37,7 +37,7 @@ struct source {
 #define	SSTRING		3	/* string */
 #define	SWSTR		4	/* string without \n */
 #define	SWORDS		5	/* string[] */
-#define	SWORDSEP	6	/* string[] seperator */
+#define	SWORDSEP	6	/* string[] separator */
 #define	SALIAS		7	/* alias expansion */
 #define SREREAD		8	/* read ahead to be re-scanned */
 

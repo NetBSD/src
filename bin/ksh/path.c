@@ -1,8 +1,8 @@
-/*	$NetBSD: path.c,v 1.5 2003/06/23 11:39:02 agc Exp $	*/
+/*	$NetBSD: path.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $	*/
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: path.c,v 1.5 2003/06/23 11:39:02 agc Exp $");
+__RCSID("$NetBSD: path.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -11,7 +11,7 @@ __RCSID("$NetBSD: path.c,v 1.5 2003/06/23 11:39:02 agc Exp $");
 
 /*
  *	Contains a routine to search a : separated list of
- *	paths (a la CDPATH) and make appropiate file names.
+ *	paths (a la CDPATH) and make appropriate file names.
  *	Also contains a routine to simplify .'s and ..'s out of
  *	a path name.
  *
@@ -35,7 +35,7 @@ static char	*do_phys_path ARGS((XString *xsp, char *xp, const char *path));
  *	- cdpathp is set to the start of the next element in cdpathp (or NULL
  *	  if there are no more elements.
  *	The return value indicates whether a non-null element from cdpathp
- *	was appened to result.
+ *	was appended to result.
  */
 int
 make_path(cwd, file, cdpathp, xsp, phys_pathp)

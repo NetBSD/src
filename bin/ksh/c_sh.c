@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.8 2004/02/13 11:36:08 wiz Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.9 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_sh.c,v 1.8 2004/02/13 11:36:08 wiz Exp $");
+__RCSID("$NetBSD: c_sh.c,v 1.9 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -16,7 +16,6 @@ __RCSID("$NetBSD: c_sh.c,v 1.8 2004/02/13 11:36:08 wiz Exp $");
 #include "ksh_times.h"
 
 static	char *clocktos ARGS((clock_t t));
-extern clock_t j_usrtime, j_systime; /* computed by j_wait */
 
 
 /* :, false and true */
@@ -312,11 +311,11 @@ c_read(wp)
 	 * make sure the other side of the pipe is closed first.  This allows
 	 * the detection of eof.
 	 *
-	 * This is not compatiable with at&t ksh... the fd is kept so another
+	 * This is not compatible with at&t ksh... the fd is kept so another
 	 * coproc can be started with same output, however, this means eof
 	 * can't be detected...  This is why it is closed here.
 	 * If this call is removed, remove the eof check below, too.
-	* coproc_readw_close(fd);
+	 * coproc_readw_close(fd);
 	 */
 #endif /* KSH */
 
@@ -610,7 +609,7 @@ c_brkcont(wp)
 		 */
 		if (n == quit) {
 			warningf(TRUE, "%s: cannot %s", wp[0], wp[0]);
-			return 0; 
+			return 0;
 		}
 		/* POSIX says if n is too big, the last enclosing loop
 		 * shall be used.  Doesn't say to print an error but we
@@ -729,15 +728,16 @@ timex(t, f)
 	struct tms t0, t1, tms;
 	clock_t t0t, t1t = 0;
 	int tf = 0;
+	extern clock_t j_usrtime, j_systime; /* computed by j_wait */
 	char opts[1];
 
 	t0t = ksh_times(&t0);
 	if (t->left) {
 		/*
-		 * Two ways of getting CPU usage of a command: just use t0
-		 * and t1 (which will get CPU usage from other jobs that
+		 * Two ways of getting cpu usage of a command: just use t0
+		 * and t1 (which will get cpu usage from other jobs that
 		 * finish while we are executing t->left), or get the
-		 * CPU usage of t->left. at&t ksh does the former, while
+		 * cpu usage of t->left. at&t ksh does the former, while
 		 * pdksh tries to do the later (the j_usrtime hack doesn't
 		 * really work as it only counts the last job).
 		 */
@@ -856,7 +856,7 @@ c_exec(wp)
 				fd_clexec(i);
 #endif /* KSH */
 		}
-		e->savefd = NULL; 
+		e->savefd = NULL;
 	}
 	return 0;
 }
@@ -868,6 +868,9 @@ c_builtin(wp)
 {
 	return 0;
 }
+
+extern	int c_test ARGS((char **wp));		/* in c_test.c */
+extern	int c_ulimit ARGS((char **wp));		/* in c_ulimit.c */
 
 /* A leading = means assignments before command are kept;
  * a leading * means a POSIX special builtin;
@@ -888,7 +891,7 @@ const struct builtin shbuiltins [] = {
 	{"*=return", c_exitreturn},
 	{"*=set", c_set},
 	{"*=shift", c_shift},
-	{"*=times", c_times},
+	{"=times", c_times},
 	{"*=trap", c_trap},
 	{"+=wait", c_wait},
 	{"+read", c_read},

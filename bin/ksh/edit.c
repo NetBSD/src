@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.13 2003/09/11 10:24:57 jmmv Exp $	*/
+/*	$NetBSD: edit.c,v 1.14 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.13 2003/09/11 10:24:57 jmmv Exp $");
+__RCSID("$NetBSD: edit.c,v 1.14 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -23,8 +23,8 @@ __RCSID("$NetBSD: edit.c,v 1.13 2003/09/11 10:24:57 jmmv Exp $");
 # include <sys/stream.h>	/* needed for <sys/ptem.h> */
 # include <sys/ptem.h>		/* needed for struct winsize */
 #endif /* OS_SCO */
-#include <ctype.h>
 #include <sys/ioctl.h>
+#include <ctype.h>
 #include "ksh_stat.h"
 
 
@@ -40,7 +40,6 @@ static int	x_command_glob ARGS((int flags, const char *str, int slen,
 				     char ***wordsp));
 static int	x_locate_word ARGS((const char *buf, int buflen, int pos,
 				    int *startp, int *is_command));
-static int 	path_order_cmp ARGS((const void *, const void *));
 
 static char vdisable_c;
 
@@ -330,7 +329,7 @@ x_mode(onoff)
  *
  * DESCRIPTION:
  *      This function is based on a fix from guy@demon.co.uk
- *      It fixes a bug in that if PS1 contains '!', the length 
+ *      It fixes a bug in that if PS1 contains '!', the length
  *      given by strlen() is probably wrong.
  *
  * RETURN VALUE:
@@ -392,7 +391,7 @@ set_editmode(ed)
 		    };
 	char *rcp;
 	int i;
-  
+
 	if ((rcp = ksh_strrchr_dirsep(ed)))
 		ed = ++rcp;
 	for (i = 0; i < NELEM(edit_flags); i++)
@@ -637,6 +636,8 @@ struct path_order_info {
 	int path_order;
 };
 
+static int path_order_cmp(const void *aa, const void *bb);
+
 /* Compare routine used in x_command_glob() */
 static int
 path_order_cmp(aa, bb)
@@ -847,40 +848,6 @@ x_cf_glob(flags, buf, buflen, pos, startp, endp, wordsp, is_commandp)
 	return nwords;
 }
 
-
-static char *
-find_match(const char *s, int have)
-{
-	int     want = 0;
-	int     nest = 1;
-	int     c;
-	
-	switch (have) {
-	case '(':	want = ')'; break;
-	case '{':	want = '}'; break;
-	case '[':	want = ']'; break;
-	case '\'':	
-	case '"':	want = have; break;
-	}
-	if (want == 0 || s == NULL)
-		return NULL;
-
-	while (nest > 0 && (c = *s)) {
-		if (c == '\\') {
-			s++;
-			s++;
-			continue;
-		}
-		if (c == want)
-			nest--;
-		else if (c == have)
-			nest++;
-		if (nest > 0)
-			s++;
-	}
-	return (nest == 0) ? (char *) s : NULL;
-}
-
 /* Given a string, copy it and possibly add a '*' to the end.  The
  * new string is returned.
  */
@@ -900,33 +867,19 @@ add_glob(str, slen)
 	toglob[slen] = '\0';
 
 	/*
-	 * If the pathname contains a wildcard (an unquoted '*', '?',
-	 * or '[') or parameter expansion ('$') with nothing following
-	 * it, or a ~username with no trailing slash, then it is
-	 * globbed based on that value (i.e., without the appended
-	 * '*').
+	 * If the pathname contains a wildcard (an unquoted '*',
+	 * '?', or '[') or parameter expansion ('$'), or a ~username
+	 * with no trailing slash, then it is globbed based on that
+	 * value (i.e., without the appended '*').
 	 */
 	for (s = toglob; *s; s++) {
 		if (*s == '\\' && s[1])
 			s++;
-		else if (*s == '*' || *s == '[' || *s == '?'
+		else if (*s == '*' || *s == '[' || *s == '?' || *s == '$'
 			 || (s[1] == '(' /*)*/ && strchr("*+?@!", *s)))
 			break;
 		else if (ISDIRSEP(*s))
 			saw_slash = TRUE;
-		else if (*s == '$') {
-			if (*++s == '{') {
-				char *cp;
-				
-				if ((cp = find_match(&s[1], '{')))
-					s = ++cp;
-			}
-			if (*s)
-				s += strcspn(s,
-					".,/?-<>[]{}()'\";:\\|=+*&^%$#@!`~");
-			if (!*s)
-				return toglob;
-		}
 	}
 	if (!*s && (*toglob != '~' || saw_slash)) {
 		toglob[slen] = '*';
@@ -1113,7 +1066,7 @@ x_escape(s, len, putbuf_func)
 	int rval=0;
 
 	for (add = 0, wlen = len; wlen - add > 0; add++) {
-		if (strchr("\\$(){}*&;|<>\"'`#:", s[add]) || strchr(ifs, s[add])) {
+		if (strchr("\\$(){}*&;#|<>\"'`", s[add]) || strchr(ifs, s[add])) {
 			if (putbuf_func(s, add) != 0) {
 				rval = -1;
 				break;
