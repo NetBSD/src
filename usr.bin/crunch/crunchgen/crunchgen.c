@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.27 2001/11/07 04:48:07 christos Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.28 2001/11/07 18:22:39 drochner Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.27 2001/11/07 04:48:07 christos Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.28 2001/11/07 18:22:39 drochner Exp $");
 #endif
 
 #include <stdlib.h>
@@ -854,7 +854,7 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	fprintf(outmk, "%s_OBJS=", p->ident);
 	output_strlst(outmk, p->objs);
 	fprintf(outmk, "%s_make: ${%s_OBJPATHS}\n", p->ident, p->ident);
-	fprintf(outmk, "${%s_OBJPATHS}: \n", p->ident, p->ident);
+	fprintf(outmk, "${%s_OBJPATHS}: \n", p->ident);
 	fprintf(outmk, "\tif [ \\! -d %s ]; then mkdir %s; fi; cd %s; \\\n",
 	    p->ident, p->ident, p->ident);
 	fprintf(outmk, "\tprintf \".PATH: ${%s_SRCDIR}\\n.CURDIR:= ${%s_SRCDIR}\\n"
@@ -874,7 +874,7 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	    p->ident, p->name);
     if (useobjs)
 	    fprintf(outmk, "%s.cro: %s_stub.o\n",
-		p->name, p->name, p->ident);
+		p->name, p->name);
     else
 	    fprintf(outmk, "%s.cro: %s_stub.o ${%s_OBJPATHS}\n",
 		p->name, p->name, p->ident);
