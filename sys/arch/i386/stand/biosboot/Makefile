@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/07/26 01:50:41 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 1997/08/14 15:38:30 drochner Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -11,6 +11,8 @@ SRCS= main.c devopen.c conf.c
 CLEANFILES+= ${BSSTART} ${PROG}.sym ${PROG}.list
 
 CPPFLAGS+= -DCOMPAT_OLDBOOT
+#uncomment to enable extended memory detection
+#CPPFLAGS+= -DEXTENDED_MEMDETECT
 #increase MAXFLENTRIES if "installboot" complains about
 # "not enough fragment space in bootcode" (default: 5)
 #CPPFLAGS+= -DMAXFLENTRIES=10
