@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.17 1999/04/06 04:54:20 cgd Exp $
+.\"	$NetBSD: diskless.8,v 1.18 1999/04/11 23:15:26 gwr Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -226,7 +226,8 @@ is installed in the directory
 Add myclient to the bootparams database
 .Pa /etc/bootparams :
 .Bd -literal -offset indent -compact
-myclient  root=server:/export/myclient/root
+myclient  root=server:/export/myclient/root \\
+	gateway=mygw:255.255.255.0
 .Ed
 .Pp
 .It 6.
