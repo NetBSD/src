@@ -1,4 +1,6 @@
-/* $Id: crypto_openssl.c,v 1.1.1.1 2005/02/12 11:11:49 manu Exp $ */
+/*	$NetBSD: crypto_openssl.c,v 1.1.1.2 2005/02/23 14:54:12 manu Exp $	*/
+
+/* Id: crypto_openssl.c,v 1.40.4.1 2005/02/22 23:56:08 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,6 +66,12 @@
 #include <openssl/blowfish.h>
 #include <openssl/cast.h>
 #include <openssl/err.h>
+#ifdef HAVE_OPENSSL_RC5_H
+#include <openssl/rc5.h>
+#endif
+#ifdef HAVE_OPENSSL_IDEA_H
+#include <openssl/idea.h>
+#endif
 #if defined(HAVE_OPENSSL_AES_H)
 #include <openssl/aes.h>
 #elif defined(HAVE_OPENSSL_RIJNDAEL_H)
@@ -1220,6 +1228,68 @@ eay_des_keylen(len)
 	return evp_keylen(len, EVP_des_cbc());
 }
 
+#ifdef HAVE_OPENSSL_IDEA_H
+/*
+ * IDEA-CBC
+ */
+vchar_t *
+eay_idea_encrypt(data, key, iv)
+	vchar_t *data, *key, *iv;
+{
+	vchar_t *res;
+	IDEA_KEY_SCHEDULE ks;
+
+	idea_set_encrypt_key(key->v, &ks);
+
+	/* allocate buffer for result */
+	if ((res = vmalloc(data->l)) == NULL)
+		return NULL;
+
+	/* decryption data */
+	idea_cbc_encrypt(data->v, res->v, data->l,
+			&ks, iv->v, IDEA_ENCRYPT);
+
+	return res;
+}
+
+vchar_t *
+eay_idea_decrypt(data, key, iv)
+	vchar_t *data, *key, *iv;
+{
+	vchar_t *res;
+	IDEA_KEY_SCHEDULE ks, dks;
+
+	idea_set_encrypt_key(key->v, &ks);
+	idea_set_decrypt_key(&ks, &dks);
+
+	/* allocate buffer for result */
+	if ((res = vmalloc(data->l)) == NULL)
+		return NULL;
+
+	/* decryption data */
+	idea_cbc_encrypt(data->v, res->v, data->l,
+			&dks, iv->v, IDEA_DECRYPT);
+
+	return res;
+}
+
+int
+eay_idea_weakkey(key)
+	vchar_t *key;
+{
+	return 0;       /* XXX */
+}
+
+int
+eay_idea_keylen(len)
+	int len;
+{
+	if (len != 0 && len != 128)
+		return -1;
+	return 128;
+}
+#endif
+
 /*
  * BLOWFISH-CBC
  */
@@ -1254,6 +1324,72 @@ eay_bf_keylen(len)
 		return -1;
 	return len;
 }
+
+#ifdef HAVE_OPENSSL_RC5_H
+/*
+ * RC5-CBC
+ */
+vchar_t *
+eay_rc5_encrypt(data, key, iv)
+	vchar_t *data, *key, *iv;
+{
+	vchar_t *res;
+	RC5_32_KEY ks;
+
+	/* in RFC 2451, there is information about the number of round. */
+	RC5_32_set_key(&ks, key->l, key->v, 16);
+
+	/* allocate buffer for result */
+	if ((res = vmalloc(data->l)) == NULL)
+		return NULL;
+
+	/* decryption data */
+	RC5_32_cbc_encrypt(data->v, res->v, data->l,
+		&ks, iv->v, RC5_ENCRYPT);
+
+	return res;
+}
+
+vchar_t *
+eay_rc5_decrypt(data, key, iv)
+	vchar_t *data, *key, *iv;
+{
+	vchar_t *res;
+	RC5_32_KEY ks;
+
+	/* in RFC 2451, there is information about the number of round. */
+	RC5_32_set_key(&ks, key->l, key->v, 16);
+
+	/* allocate buffer for result */
+	if ((res = vmalloc(data->l)) == NULL)
+		return NULL;
+
+	/* decryption data */
+	RC5_32_cbc_encrypt(data->v, res->v, data->l,
+		&ks, iv->v, RC5_DECRYPT);
+
+	return res;
+}
+
+int
+eay_rc5_weakkey(key)
+	vchar_t *key;
+{
+	return 0;       /* No known weak keys when used with 16 rounds. */
+
+}
+
+int
+eay_rc5_keylen(len)
+	int len;
+{
+	if (len == 0)
+		return 128;
+	if (len < 40 || len > 2040)
+		return -1;
+	return len;
+}
+#endif
 
 /*
  * 3DES-CBC

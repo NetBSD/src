@@ -1,3 +1,5 @@
+/*	$NetBSD: debugrm.c,v 1.1.1.2 2005/02/23 14:54:13 manu Exp $	*/
+
 /*	$KAME: debugrm.c,v 1.6 2001/12/13 16:07:46 sakane Exp $	*/
 
 /*

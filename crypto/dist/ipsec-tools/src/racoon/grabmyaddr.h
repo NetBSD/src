@@ -1,4 +1,6 @@
-/* $Id: grabmyaddr.h,v 1.1.1.1 2005/02/12 11:11:59 manu Exp $ */
+/*	$NetBSD: grabmyaddr.h,v 1.1.1.2 2005/02/23 14:54:14 manu Exp $	*/
+
+/* Id: grabmyaddr.h,v 1.5 2004/06/11 16:00:16 ludvigm Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
