@@ -1,6 +1,10 @@
-/*	$NetBSD: elf_machdep.h,v 1.3 2001/12/09 23:05:57 thorpej Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.4 2003/09/29 09:08:20 scw Exp $	*/
 
+#if defined(__ARMEB__)
+#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#else
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
+#endif
 
 /* Processor specific flags for the ELF header e_flags field.  */
 #define EF_ARM_RELEXEC		0x00000001
