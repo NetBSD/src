@@ -24,7 +24,7 @@
 #define	SVR4_SYS_chown	16
 #define	SVR4_SYS_svr4_break	17
 #define	SVR4_SYS_svr4_stat	18
-#define	SVR4_SYS_lseek	19
+#define	SVR4_SYS_compat_43_lseek	19
 #define	SVR4_SYS_getpid	20
 #define	SVR4_SYS_setuid	23
 #define	SVR4_SYS_getuid	24
@@ -32,6 +32,7 @@
 #define	SVR4_SYS_svr4_access	33
 #define	SVR4_SYS_sync	36
 #define	SVR4_SYS_kill	37
+#define	SVR4_SYS_svr4_pgrpsys	39
 #define	SVR4_SYS_dup	41
 #define	SVR4_SYS_pipe	42
 #define	SVR4_SYS_svr4_times	43
@@ -45,6 +46,7 @@
 #define	SVR4_SYS_umask	60
 #define	SVR4_SYS_chroot	61
 #define	SVR4_SYS_svr4_fcntl	62
+#define	SVR4_SYS_svr4_ulimit	63
 				/* 70 is obsolete svr4_advfs */
 				/* 71 is obsolete svr4_unadvfs */
 				/* 72 is obsolete svr4_rmount */
@@ -58,6 +60,9 @@
 #define	SVR4_SYS_svr4_getdents	81
 				/* 82 is obsolete svr4_libattach */
 				/* 83 is obsolete svr4_libdetach */
+#define	SVR4_SYS_svr4_getmsg	85
+#define	SVR4_SYS_svr4_putmsg	86
+#define	SVR4_SYS_svr4_poll	87
 #define	SVR4_SYS_svr4_lstat	88
 #define	SVR4_SYS_symlink	89
 #define	SVR4_SYS_readlink	90
@@ -88,6 +93,7 @@
 #define	SVR4_SYS_setegid	136
 #define	SVR4_SYS_svr4_sysconfig	137
 #define	SVR4_SYS_adjtime	138
+#define	SVR4_SYS_svr4_systeminfo	139
 #define	SVR4_SYS_seteuid	141
 #define	SVR4_SYS_svr4_fchroot	153
 #define	SVR4_SYS_svr4_vhangup	155

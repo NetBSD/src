@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_util.h,v 1.3 1994/10/29 00:43:32 christos Exp $	 */
+/*	$NetBSD: svr4_util.h,v 1.4 1994/11/14 06:10:48 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -60,6 +60,7 @@ stackgap_alloc(sgp, sz)
 #endif
 
 extern const char svr4_emul_path[];
+extern int svr4_error[];
 
 int svr4_emul_find __P((struct proc *, caddr_t *, 
 			const char *, char *, char **));

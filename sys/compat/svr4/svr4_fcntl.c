@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.4 1994/10/29 00:43:18 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.5 1994/11/14 06:10:37 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -45,6 +45,7 @@
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_fcntl.h>
+#include <compat/svr4/svr4_poll.h>
 
 
 static int
@@ -308,4 +309,135 @@ svr4_fcntl(p, uap, retval)
 	default:
 		return ENOSYS;
 	}
+}
+
+
+static void
+svr4_pollscan(p, pl, nfd, retval)
+	struct proc *p;
+	struct svr4_pollfd *pl;
+	int nfd;
+	register_t *retval;
+{
+	register struct filedesc *fdp = p->p_fd;
+	register int msk, i;
+	struct file *fp;
+	int n = 0;
+	static int flag[3] = { FREAD, FWRITE, 0 };
+	static int pflag[3] = { SVR4_POLLIN|SVR4_POLLRDNORM, 
+				SVR4_POLLOUT, SVR4_POLLERR };
+
+	/* 
+	 * XXX: We need to implement the rest of the flags.
+	 */
+	for (i = 0; i < nfd; i++) {
+		fp = fdp->fd_ofiles[pl[i].fd];
+		if (fp == NULL) {
+			if (pl[i].events & SVR4_POLLNVAL) {
+			    pl[i].revents |= SVR4_POLLNVAL;
+			    n++;
+			}
+			continue;
+		}
+		for (msk = 0; msk < 3; msk++) {
+			if (pl[i].events & pflag[msk]) {
+				if ((*fp->f_ops->fo_select)(fp, flag[msk], p)) {
+					pl[i].revents |= 
+						pflag[msk] & pl[i].events;
+					n++;
+				}
+			}
+		}
+	}
+	*retval = n;
+}
+
+
+/*
+ * We are using the same mechanism as select only we encode/decode args
+ * differently.
+ */
+int
+svr4_poll(p, uap, retval)
+	register struct proc		*p;
+	register struct svr4_poll_args	*uap;
+	register_t			*retval;
+{
+	int i, s;
+	int error, error2;
+	size_t sz = sizeof(struct svr4_pollfd) * SCARG(uap, nfds);
+	struct svr4_pollfd *pl;
+	int usec = SCARG(uap, timeout);
+	struct timeval atv;
+	int timo;
+	u_int ni;
+	int ncoll;
+	extern int nselcoll, selwait;
+
+	pl = (struct svr4_pollfd *) malloc(sz, M_TEMP, M_WAITOK);
+
+	if (error = copyin(SCARG(uap, fds), pl, sz))
+		goto bad;
+
+	for (i = 0; i < SCARG(uap, nfds); i++) {
+		DPRINTF(("pollfd %d, %x\n", pl[i].fd, pl[i].events));
+		pl[i].revents = 0;
+	}
+
+	if (usec != -1) {
+		atv.tv_sec = usec / 1000000;
+		atv.tv_usec = usec - atv.tv_sec;
+
+		if (itimerfix(&atv)) {
+			error = EINVAL;
+			goto done;
+		}
+		s = splclock();
+		timevaladd(&atv, (struct timeval *)&time);
+		timo = hzto(&atv);
+		/*
+		 * Avoid inadvertently sleeping forever.
+		 */
+		if (timo == 0)
+			timo = 1;
+		splx(s);
+	} else
+		timo = 0;
+
+retry:
+	ncoll = nselcoll;
+	p->p_flag |= P_SELECT;
+	svr4_pollscan(p, pl, SCARG(uap, nfds), retval);
+	if (*retval)
+		goto done;
+	s = splhigh();
+	if (timo && timercmp(&time, &atv, >=)) {
+		splx(s);
+		goto done;
+	}
+	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
+		splx(s);
+		goto retry;
+	}
+	p->p_flag &= ~P_SELECT;
+	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "svr4_poll", timo);
+	splx(s);
+	if (error == 0)
+		goto retry;
+
+done:
+	p->p_flag &= ~P_SELECT;
+	/* poll is not restarted after signals... */
+	if (error == ERESTART)
+		error = EINTR;
+	if (error == EWOULDBLOCK)
+		error = 0;
+
+	if (error2 = copyout(pl, SCARG(uap, fds), sz))
+		error = error2;
+
+bad:
+	free((char *) pl, M_TEMP);
+
+	return (error);
 }

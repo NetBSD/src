@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.4 1994/10/29 00:43:26 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.5 1994/11/14 06:10:42 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -39,6 +39,11 @@
 #include <sys/mount.h>
 #include <sys/malloc.h>
 
+#include <sys/time.h>
+#include <sys/ucred.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
+
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
@@ -48,6 +53,7 @@
 #include <compat/svr4/svr4_ustat.h>
 #include <compat/svr4/svr4_fuser.h>
 #include <compat/svr4/svr4_utsname.h>
+#include <compat/svr4/svr4_systeminfo.h>
 
 #define syscallarg(x)	union { x datum; register_t pad; }
 
@@ -329,6 +335,80 @@ svr4_uname(p, uap, retval)
 
 	return copyout((caddr_t) & sut, (caddr_t) SCARG(uap, name),
 		       sizeof(struct svr4_utsname));
+}
+
+int
+svr4_systeminfo(p, uap, retval)
+	register struct proc			*p;
+	register struct svr4_systeminfo_args	*uap;
+	register_t				*retval;
+{
+	extern struct utsname	utsname;
+	char *str;
+	int name;
+	int error;
+	long len;
+	u_int rlen = SCARG(uap, len);
+
+	switch (SCARG(uap, what)) {
+	case SVR4_SI_SYSNAME:
+		str = utsname.sysname;
+		break;
+
+	case SVR4_SI_HOSTNAME:
+		name = KERN_HOSTNAME;
+		return kern_sysctl(&name, 1, SCARG(uap, buf), &rlen, 0, 0);
+
+	case SVR4_SI_RELEASE:
+		str = utsname.release;
+		break;
+
+	case SVR4_SI_VERSION:
+		str = utsname.version;
+		break;
+
+	case SVR4_SI_MACHINE:
+		str = utsname.machine;
+		break;
+
+	case SVR4_SI_ARCHITECTURE:
+		str = utsname.machine;
+		break;
+
+	case SVR4_SI_HW_SERIAL:
+		str = "0";
+		break;
+
+	case SVR4_SI_HW_PROVIDER:
+		str = utsname.sysname;
+		break;
+
+	case SVR4_SI_SRPC_DOMAIN:
+		name = KERN_DOMAINNAME;
+		return kern_sysctl(&name, 1, SCARG(uap, buf), &rlen, 0, 0);
+
+	case SVR4_SI_SET_HOSTNAME:
+		if (error = suser(p->p_ucred, &p->p_acflag))
+			return error;
+		name = KERN_HOSTNAME;
+		return kern_sysctl(&name, 1, 0, 0, SCARG(uap, buf), rlen);
+
+	case SVR4_SI_SET_SRPC_DOMAIN:
+		if (error = suser(p->p_ucred, &p->p_acflag))
+			return error;
+		name = KERN_DOMAINNAME;
+		return kern_sysctl(&name, 1, 0, 0, SCARG(uap, buf), rlen);
+
+	default:
+		DPRINTF(("Bad systeminfo command %d\n", SCARG(uap, what)));
+		return ENOSYS;
+	}
+
+	len = strlen(str) + 1;
+	if (len > SCARG(uap, len))
+		len = SCARG(uap, len);
+
+	return copyout(str, SCARG(uap, buf), len);
 }
 
 #ifdef notyet

@@ -24,7 +24,7 @@ struct svr4_creat_args {
 
 struct svr4_execv_args {
 	syscallarg(char *) path;
-	syscallarg(char * *) argp;
+	syscallarg(char **) argp;
 };
 
 struct svr4_time_args {
@@ -56,6 +56,12 @@ struct svr4_access_args {
 	syscallarg(int) flags;
 };
 
+struct svr4_pgrpsys_args {
+	syscallarg(int) cmd;
+	syscallarg(int) pid;
+	syscallarg(int) pgid;
+};
+
 struct svr4_times_args {
 	syscallarg(struct tms *) tp;
 };
@@ -81,8 +87,8 @@ struct svr4_utssys_args {
 
 struct svr4_execve_args {
 	syscallarg(char *) path;
-	syscallarg(char * *) argp;
-	syscallarg(char * *) envp;
+	syscallarg(char **) argp;
+	syscallarg(char **) envp;
 };
 
 struct svr4_fcntl_args {
@@ -91,10 +97,35 @@ struct svr4_fcntl_args {
 	syscallarg(char *) arg;
 };
 
+struct svr4_ulimit_args {
+	syscallarg(int) cmd;
+	syscallarg(long) newlimit;
+};
+
 struct svr4_getdents_args {
 	syscallarg(int) fd;
 	syscallarg(char *) buf;
 	syscallarg(int) nbytes;
+};
+
+struct svr4_getmsg_args {
+	syscallarg(int) fd;
+	syscallarg(struct svr4_stropts *) ctl;
+	syscallarg(struct svr4_stropts *) dat;
+	syscallarg(int *) flags;
+};
+
+struct svr4_putmsg_args {
+	syscallarg(int) fd;
+	syscallarg(struct svr4_stropts *) ctl;
+	syscallarg(struct svr4_stropts *) dat;
+	syscallarg(int) flags;
+};
+
+struct svr4_poll_args {
+	syscallarg(struct svr4_pollfd *) fds;
+	syscallarg(long) nfds;
+	syscallarg(int) timeout;
 };
 
 struct svr4_lstat_args {
@@ -150,6 +181,12 @@ struct svr4_uname_args {
 
 struct svr4_sysconfig_args {
 	syscallarg(int) name;
+};
+
+struct svr4_systeminfo_args {
+	syscallarg(int) what;
+	syscallarg(char *) buf;
+	syscallarg(long) len;
 };
 
 struct svr4_fchroot_args {
