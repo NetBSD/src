@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.3 1997/04/12 23:51:04 mrg Exp $
 #
 # Copyright (c) 1996 Matthew R. Green
 # All rights reserved.
@@ -60,7 +60,7 @@ esac
 echo preparing directory $d
 rm -rf $d
 mkdir -p $d; cd $d
-mkdir -p src/sbin/ipf src/sys/netinet src/usr.sbin/ipf/ipfstat src/usr.sbin/ipf/ipftest src/usr.sbin/ipf/ipmon src/usr.sbin/ipf/ipnat src/usr.sbin/ipf/ipresend src/usr.sbin/ipf/ipsend src/usr.sbin/ipf/iptest src/sys/lkm/netinet/if_ipl
+mkdir -p src/usr.sbin/ipf/ipf src/sys/netinet src/usr.sbin/ipf/ipfstat src/usr.sbin/ipf/ipftest src/usr.sbin/ipf/ipmon src/usr.sbin/ipf/ipnat src/usr.sbin/ipf/ipresend src/usr.sbin/ipf/ipsend src/usr.sbin/ipf/iptest src/sys/lkm/netinet/if_ipl
 
 ### start ipf ###############################
 cd $r
@@ -68,15 +68,15 @@ echo ipf:
 src='ipf.c parse.c opt.c ipf.h'
 man='ipf.1 ipf.4 ipf.5 ipl.4'
 
-pax -rvw $src $d/src/sbin/ipf
-cd man; pax -rvw $man $d/src/sbin/ipf; cd ..
+pax -rvw $src $d/src/usr.sbin/ipf/ipf
+cd man; pax -rvw $man $d/src/usr.sbin/ipf/ipf; cd ..
 
-cd $d/src/sbin/ipf
+cd $d/src/usr.sbin/ipf/ipf
 mv ipf.1 ipf.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.3 1997/04/12 23:51:04 mrg Exp $
 
 PROG=	ipf
 SRCS=	ipf.c parse.c opt.c
@@ -100,7 +100,7 @@ cd $d/src/usr.sbin/ipf/ipfstat
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.3 1997/04/12 23:51:04 mrg Exp $
 
 PROG=	ipfstat
 SRCS=	kmem.c fils.c opt.c parse.c
@@ -124,7 +124,7 @@ cd $d/src/usr.sbin/ipf/ipftest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.3 1997/04/12 23:51:04 mrg Exp $
 
 PROG=	ipftest
 SRCS=	ipt.c ipft_sn.c ipft_ef.c ipft_td.c ipft_pc.c opt.c ipft_tx.c misc.c ip_frag.c ip_state.c ip_nat.c ipft_hx.c ip_fil.c fil.c parse.c
@@ -149,7 +149,7 @@ cd $d/src/usr.sbin/ipf/ipmon
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.3 1997/04/12 23:51:04 mrg Exp $
 
 PROG=	ipmon
 MAN=	ipmon.8
@@ -174,7 +174,7 @@ mv ipnat.1 ipnat.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.3 1997/04/12 23:51:04 mrg Exp $
 
 PROG=	ipnat
 SRCS=	kmem.c ipnat.c
@@ -197,7 +197,7 @@ cd $d/src/usr.sbin/ipf/ipresend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.3 1997/04/12 23:51:04 mrg Exp $
 
 PROG=	ipresend
 SRCS=	ipresend.c ip.c resend.c opt.c ipft_ef.c ipft_hx.c ipft_sn.c ipft_td.c ipft_tx.c sbpf.c 44arp.c
@@ -220,7 +220,7 @@ cd $d/src/usr.sbin/ipf/ipsend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.3 1997/04/12 23:51:04 mrg Exp $
 
 PROG=	ipsend
 SRCS=	ipsend.c ip.c ipsopt.c 44arp.c sbpf.c
@@ -243,7 +243,7 @@ cd $d/src/usr.sbin/ipf/iptest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.3 1997/04/12 23:51:04 mrg Exp $
 
 PROG=	iptest
 SRCS=	iptest.c iptests.c ip.c sbpf.c 44arp.c sock.c
@@ -274,7 +274,7 @@ cd $d/src/sys/lkm/netinet/if_ipl
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.3 1997/04/12 23:51:04 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -298,7 +298,7 @@ find $d -name '*.[ch]' -print | while read c; do
 	< $c > /tmp/ipf2n$$ && mv /tmp/ipf2n$$ $c && echo transformed $c
 	sed 1q < $c | grep '\$NetBSD' || (
 cat <<'__eof_header'
-/*	$NetBSD: ipfilter2netbsd,v 1.2 1997/03/29 20:28:17 thorpej Exp $	*/
+/*	$NetBSD: ipfilter2netbsd,v 1.3 1997/04/12 23:51:04 mrg Exp $	*/
 
 __eof_header
 cat $c
