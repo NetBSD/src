@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.10 2001/05/14 14:55:29 jdolecek Exp $
+.\"	$NetBSD: login.conf.5,v 1.11 2001/09/08 01:29:06 wiz Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@ which need to set up a user environment.
 The class to be used is normally determined by the
 .Li class
 field in the password file (see
-.Xr passwd 5 ).
+.Xr passwd 5 ) .
 The class is used to look up a corresponding entry in the
 .Pa login.conf
 file.
@@ -225,7 +225,7 @@ The resource limit entries
 and
 .Sy openfiles )
 actually specify both the maximum and current limits (see
-.Xr getrlimit 2 ).
+.Xr getrlimit 2 ) .
 The current limit is the one normally used,
 although the user is permitted to increase the current limit to the
 maximum limit.
@@ -237,7 +237,7 @@ or
 to the capability name (e.g.,
 .Sy openfiles-max
 and
-.Sy openfiles-cur Ns No ).
+.Sy openfiles-cur Ns No ) .
 .Pp
 .Nx
 will never define capabilities which start with

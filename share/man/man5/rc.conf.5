@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.48 2001/08/18 19:50:20 ad Exp $
+.\"	$NetBSD: rc.conf.5,v 1.49 2001/09/08 01:29:07 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -78,7 +78,7 @@ If a variable that
 .Pa /etc/rc
 expects to be set is not set, or the value is not one of the allowed
 values, a warning will be printed.
-.Ss Overall control:
+.Ss Overall control
 .Bl -tag -width net_interfaces
 .It Sy rc_configured
 If this is not set to
@@ -96,7 +96,7 @@ which will terminate
 .Pa /etc/rc.shutdown
 if the timer expires before the shutdown script completes.
 .El
-.Ss Basic network configuration:
+.Ss Basic network configuration
 .Bl -tag -width net_interfaces
 .It Sy hostname
 Name of host.
@@ -115,7 +115,7 @@ If empty or not set, then the contents of
 .Pa /etc/mygate
 (if it exists) are used.
 .El
-.Ss Boottime file-system and swap configuration:
+.Ss Boottime file-system and swap configuration
 .Bl -tag -width net_interfaces
 .It Sy critical_filesystems_beforenet
 File systems mounted very early in the system boot before networking
@@ -141,7 +141,7 @@ If not set, or set to anything other than
 and no swap devices
 are configured, the system will warn you.
 .El
-.Ss One-time actions to perform or programs to run on boot-up:
+.Ss One-time actions to perform or programs to run on boot-up
 .Bl -tag -width net_interfaces
 .It Sy lkm
 .Sq YES
@@ -201,7 +201,7 @@ Run
 .Nm newsyslog
 to trim logfiles before syslogd starts.  Intended for laptop users.
 .El
-.Ss System security setting:
+.Ss System security setting
 .Bl -tag -width net_interfaces
 .It Sy securelevel
 A number.
@@ -212,7 +212,7 @@ If set to nothing, the default action is taken, as described in
 .Xr init 8 ,
 which contains definitive information about the system securelevel.
 .El
-.Ss Networking startup:
+.Ss Networking startup
 .Bl -tag -width net_interfaces
 .It Sy ipfilter
 .Sq YES
@@ -427,7 +427,7 @@ This is only for autoconfigured IPv6 host, so set
 .Sy ip6mode
 to autohost if you use it.
 .El
-.Ss Daemons required by other daemons:
+.Ss Daemons required by other daemons
 .Bl -tag -width net_interfaces
 .It Sy inetd
 .Sq YES
@@ -460,7 +460,7 @@ These include NFS,
 and
 .Xr rwalld 8 .
 .El
-.Ss Commonly used daemons:
+.Ss Commonly used daemons
 .Bl -tag -width net_interfaces
 .It Sy syslogd
 .Sq YES
@@ -546,7 +546,7 @@ Runs
 and passes
 .Sy sshd_flags .
 .El
-.Ss Routing daemons:
+.Ss Routing daemons
 .Bl -tag -width net_interfaces
 .It Sy routed
 .Sq YES
@@ -601,7 +601,7 @@ This is only for autoconfigured IPv6 host, so set
 .Sy ip6mode
 to autohost if you use it.
 .El
-.Ss Daemons used to boot other hosts over a network:
+.Ss Daemons used to boot other hosts over a network
 .Bl -tag -width net_interfaces
 .It Sy rarpd
 .Sq YES
@@ -691,7 +691,7 @@ to
 .Sq YES
 if you use it.
 .El
-.Ss X Window System daemons:
+.Ss X Window System daemons
 .Bl -tag -width net_interfaces
 .It Sy xfs
 .Sq YES
@@ -710,7 +710,7 @@ X display manager.
 These X daemons are available only with the optional X distribution of
 .Nx .
 .El
-.Ss NIS (YP) daemons:
+.Ss NIS (YP) daemons
 .Bl -tag -width net_interfaces
 .It Sy ypbind
 .Sq YES
@@ -754,7 +754,7 @@ users to update password on master server.
 Passes
 .Sy yppasswdd_flags .
 .El
-.Ss NFS daemons and parameters:
+.Ss NFS daemons and parameters
 .Bl -tag -width net_interfaces
 .It Sy mountd
 .Sq YES
@@ -827,7 +827,7 @@ Used only if
 is set to
 .Sq YES .
 .El
-.Ss Other daemons:
+.Ss Other daemons
 .Bl -tag -width net_interfaces
 .It Sy rwhod
 .Sq YES
@@ -849,7 +849,7 @@ Runs the
 Kerberos v4 and v5 server.
 This should be run on Kerberos master and slave servers.
 .El
-.Ss Hardware daemons:
+.Ss Hardware daemons
 .Bl -tag -width net_interfaces
 .It Sy apmd
 .Sq YES
