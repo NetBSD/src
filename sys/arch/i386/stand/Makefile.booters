@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.47 2003/05/03 17:54:21 fvdl Exp $
+#	$NetBSD: Makefile.booters,v 1.48 2003/05/04 06:25:10 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -65,12 +65,11 @@ SRCS+=	vers.c
 realdepend realall: machine x86
 CLEANFILES+= machine x86
 
-machine::
-	ln -sf $S/arch/i386/include $@
-	ln -sf $S/arch/x86/include x86
+machine:: x86
+	rm -f $@ && ln -s $S/arch/i386/include $@
 
 x86::
-	ln -sf $S/arch/x86/include $@
+	rm -f $@ && ln -s $S/arch/x86/include $@
 
 ${OBJS} ${BSSTART} ${ROMSTART} ${DOSSTART} ${PXESTART}: machine x86
 
