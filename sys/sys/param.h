@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.28 1996/12/02 07:30:29 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.29 1996/12/03 06:14:40 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -121,7 +121,7 @@
 /*
  * Clustering of hardware pages on machines with ridiculously small
  * page sizes is done here.  The paging subsystem deals with units of
- * CLSIZE pte's describing NBPG (from machine/machparam.h) pages each.
+ * CLSIZE pte's describing NBPG (from machine/param.h) pages each.
  */
 #define	CLBYTES		(CLSIZE*NBPG)
 #define	CLOFSET		(CLSIZE*NBPG-1)	/* for clusters, like PGOFSET */
@@ -152,13 +152,13 @@
  * smaller units (fragments) only in the last direct block.  MAXBSIZE
  * primarily determines the size of buffers in the buffer pool.  It may be
  * made larger without any effect on existing file systems; however making
- * it smaller make make some file systems unmountable.
+ * it smaller may make some file systems unmountable.
  */
 #define	MAXBSIZE	MAXPHYS
 #define MAXFRAG 	8
 
 /*
- * MAXPATHLEN defines the longest permissable path length after expanding
+ * MAXPATHLEN defines the longest permissible path length after expanding
  * symbolic links. It is used to allocate a temporary buffer from the buffer
  * pool in which to do the name expansion, hence should be a power of two,
  * and must be less than or equal to MAXBSIZE.  MAXSYMLINKS defines the
