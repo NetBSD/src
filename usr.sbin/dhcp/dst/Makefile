@@ -30,7 +30,7 @@
 #
 
 LIB    = dst
-SRC    = dst_support.c dst_api.c hmac_link.c md5_dgst.c base64.c prandom.c
+SRCS    = dst_support.c dst_api.c hmac_link.c md5_dgst.c base64.c prandom.c
 
 MKLINT=	no
 MKPIC=	no
