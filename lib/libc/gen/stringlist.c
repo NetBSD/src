@@ -1,4 +1,4 @@
-/*	$NetBSD: stringlist.c,v 1.4 1997/07/21 14:07:35 jtc Exp $	*/
+/*	$NetBSD: stringlist.c,v 1.5 1997/09/29 06:52:40 enami Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: stringlist.c,v 1.4 1997/07/21 14:07:35 jtc Exp $");
+__RCSID("$NetBSD: stringlist.c,v 1.5 1997/09/29 06:52:40 enami Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -60,13 +60,13 @@ sl_init()
 {
 	StringList *sl = malloc(sizeof(StringList));
 	if (sl == NULL)
-		err(1, "stringlist: %m");
+		err(1, "stringlist");
 
 	sl->sl_cur = 0;
 	sl->sl_max = _SL_CHUNKSIZE;
 	sl->sl_str = malloc(sl->sl_max * sizeof(char *));
 	if (sl->sl_str == NULL)
-		err(1, "stringlist: %m");
+		err(1, "stringlist");
 	return sl;
 }
 
@@ -83,7 +83,7 @@ sl_add(sl, name)
 		sl->sl_max += _SL_CHUNKSIZE;
 		sl->sl_str = realloc(sl->sl_str, sl->sl_max * sizeof(char *));
 		if (sl->sl_str == NULL)
-			err(1, "stringlist: %m");
+			err(1, "stringlist");
 	}
 	sl->sl_str[sl->sl_cur++] = name;
 }
