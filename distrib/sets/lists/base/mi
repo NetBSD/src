@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.178 2000/08/06 19:32:13 thorpej Exp $
+# $NetBSD: mi,v 1.179 2000/08/06 20:44:54 thorpej Exp $
 .
 ./altroot
 ./bin
@@ -470,7 +470,6 @@
 ./usr/libexec/ftpd
 ./usr/libexec/getNAME
 ./usr/libexec/getty
-./usr/libexec/hprop
 ./usr/libexec/hpropd
 ./usr/libexec/identd
 ./usr/libexec/kadmind
@@ -587,6 +586,7 @@
 ./usr/sbin/groupinfo
 ./usr/sbin/groupmod
 ./usr/sbin/hlfsd
+./usr/sbin/hprop
 ./usr/sbin/ifmcstat
 ./usr/sbin/inetd
 ./usr/sbin/iostat
