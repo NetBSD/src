@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 1996/09/18 20:03:06 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 1996/10/02 21:18:45 cgd Exp $	*/
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -18,8 +18,8 @@ struct devsw devsw[] = {
 int	ndevs = 1;
 
 extern struct netif_driver prom_netif_driver;
- 
+
 struct netif_driver *netif_drivers[] = {
-        &prom_netif_driver,
-};    
-int     n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
+	&prom_netif_driver,
+};
+int	n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));

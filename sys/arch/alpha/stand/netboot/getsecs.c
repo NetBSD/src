@@ -10,7 +10,7 @@ getsecs()
 	long curpcc, pccdiff;
 
 	if (tnsec == 0) {
-		tnsec = 1;	
+		tnsec = 1;
 		lastpcc = alpha_rpcc() & 0xffffffff;
 		wrapsecs = (0xffffffff /
 		    ((struct rpb *)HWRPB_ADDR)->rpb_cc_freq) + 1;
