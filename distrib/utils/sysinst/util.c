@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.67.2.7 2002/10/13 23:57:01 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.67.2.8 2003/01/27 06:37:47 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -463,7 +463,7 @@ extract_file(path)
 
 	/* now extract set files files into "./". */
 	tarexit = run_prog(RUN_DISPLAY, NULL,
-	    "pax -zr%spe -f %s", verbose ? "v" : "", path);
+	    "pax -zr%spe -O -f %s", verbose ? "v" : "", path);
 
 	/* Check tarexit for errors and give warning. */
 	if (tarexit) {
