@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/09/13 20:18:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/09/14 07:06:32 lukem Exp $
 
 NOLINT=		1	# XTODO: 3dnow.ln barfs on src/math/m_vertices.h
 
@@ -8,7 +8,6 @@ LIB=		OSMesa
 
 .PATH:		${X11SRCDIR.xc}/extras/Mesa/src
 .PATH:		${X11SRCDIR.xc}/extras/Mesa/src/OSmesa
-.PATH:		${X11SRCDIR.xc}/extras/Mesa/src/X86
 .PATH:		${X11SRCDIR.xc}/extras/Mesa/src/array_cache
 .PATH:		${X11SRCDIR.xc}/extras/Mesa/src/math
 .PATH:		${X11SRCDIR.xc}/extras/Mesa/src/swrast
@@ -43,23 +42,35 @@ SRCS=		osmesa.c accum.c api_arrayelt.c api_eval.c \
 		t_imm_elt.c t_imm_eval.c t_imm_exec.c t_imm_fixup.c \
 		t_pipeline.c t_vb_fog.c t_vb_light.c t_vb_normals.c \
 		t_vb_points.c t_vb_render.c t_vb_texgen.c t_vb_texmat.c \
-		t_vb_vertex.c common_x86.c common_x86_asm.S x86.c \
-		x86_cliptest.S x86_vertex.S x86_xform2.S x86_xform3.S \
-		x86_xform4.S mmx_blend.S 3dnow.c 3dnow_normal.S \
-		3dnow_vertex.S 3dnow_xform1.S 3dnow_xform2.S \
-		3dnow_xform3.S 3dnow_xform4.S sse.c sse_normal.S \
-		sse_vertex.S sse_xform1.S sse_xform2.S sse_xform3.S \
-		sse_xform4.S
+		t_vb_vertex.c
 
 CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/lib/GL/include \
 		-I${X11SRCDIR.xc}/extras/Mesa/src \
 		${X11FLAGS.THREADLIB} \
-		-DGLXEXT -DGLX_USE_MESA \
-		-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM
+		-DGLXEXT -DGLX_USE_MESA
 
+.if ${MACHINE_ARCH} == "i386"
+.PATH:		${X11SRCDIR.xc}/extras/Mesa/src/X86
+SRCS+=		common_x86.c common_x86_asm.S x86.c x86_cliptest.S \
+		x86_vertex.S x86_xform2.S x86_xform3.S x86_xform4.S \
+		mmx_blend.S \
+		3dnow.c 3dnow_normal.S 3dnow_vertex.S 3dnow_xform1.S \
+		3dnow_xform2.S 3dnow_xform3.S 3dnow_xform4.S \
+		sse.c sse_normal.S sse_vertex.S sse_xform1.S \
+		sse_xform2.S sse_xform3.S sse_xform4.S
+CPPFLAGS+=	-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM
 COMPILE.S=	${COMPILE.s}		# XXX don't want -traditional-cpp
 AFLAGS+=	-DUSE_GAS -I. -I${X11SRCDIR.xc}/extras/Mesa/src/X86
+.endif
+
+.if ${MACHINE_ARCH} == "sparc"
+.PATH:		${X11SRCDIR.xc}/extras/Mesa/src/SPARC
+SRCS+=		sparc.c xform.S clip.S norm.S
+CPPFLAGS+=	-DUSE_SPARC_ASM
+COMPILE.S=	${COMPILE.s}		# XXX don't want -traditional-cpp
+AFLAGS+=	-DUSE_GAS -I. -I${X11SRCDIR.xc}/extras/Mesa/src/SPARC
+.endif
 
 
 GENMATYPESDIR!=	cd ${.CURDIR}/gen_matypes && ${PRINTOBJDIR}
