@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.18 1996/12/05 01:06:47 cgd Exp $	*/
+/*	$NetBSD: uk.c,v 1.19 1997/08/27 11:27:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -43,15 +43,16 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #define	UKUNIT(z)	(minor(z))
 
 struct uk_softc {
 	struct device sc_dev;
 
-	struct scsi_link *sc_link;	/* all the inter level info */
+	struct scsipi_link *sc_link;	/* all the inter level info */
 };
 
 #ifdef __BROKEN_INDIRECT_CONFIG
@@ -72,7 +73,7 @@ struct cfdriver uk_cd = {
 /*
  * This driver is so simple it uses all the default services
  */
-struct scsi_device uk_switch = {
+struct scsipi_device uk_switch = {
 	NULL,
 	NULL,
 	NULL,
@@ -105,8 +106,8 @@ ukattach(parent, self, aux)
 	void *aux;
 {
 	struct uk_softc *uk = (void *)self;
-	struct scsibus_attach_args *sa = aux;
-	struct scsi_link *sc_link = sa->sa_sc_link;
+	struct scsipibus_attach_args *sa = aux;
+	struct scsipi_link *sc_link = sa->sa_sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ukattach: "));
 
@@ -133,7 +134,7 @@ ukopen(dev, flag, fmt, p)
 {
 	int unit;
 	struct uk_softc *uk;
-	struct scsi_link *sc_link;
+	struct scsipi_link *sc_link;
 
 	unit = UKUNIT(dev);
 	if (unit >= uk_cd.cd_ndevs)
@@ -193,5 +194,5 @@ ukioctl(dev, cmd, addr, flag, p)
 {
 	register struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
-	return scsi_do_ioctl(uk->sc_link, dev, cmd, addr, flag, p);
+	return scsipi_do_ioctl(uk->sc_link, dev, cmd, addr, flag, p);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.60 1997/07/01 00:41:43 cjs Exp $	*/
+/*	$NetBSD: ncr.c,v 1.61 1997/08/27 11:25:26 bouyer Exp $	*/
 
 /**************************************************************************
 **
@@ -218,8 +218,9 @@
 #endif
 #endif /* __NetBSD__ */
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #if defined(__NetBSD__) && defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
@@ -456,7 +457,7 @@
 **==========================================================
 */
 
-#define PRINT_ADDR(xp) sc_print_addr(xp->sc_link)
+#define PRINT_ADDR(xp) scsi_print_addr(xp->sc_link)
 
 /*==========================================================
 **
@@ -911,7 +912,7 @@ struct ccb {
 	**	pointer to a control block.
 	*/
 
-	struct scsi_xfer	*xfer;
+	struct scsipi_xfer	*xfer;
 
 	/*
 	**	We prepare a message to be sent after selection,
@@ -1063,8 +1064,11 @@ struct ncb {
 	**	Link to the generic SCSI driver
 	**-----------------------------------------------
 	*/
-
+#ifdef __NetBSD__
+	struct scsipi_link	sc_link;
+#else
 	struct scsi_link	sc_link;
+#endif
 
 	/*-----------------------------------------------
 	**	Job control
@@ -1283,7 +1287,7 @@ static	void	ncr_min_phys	(struct buf *bp);
 static	void	ncr_minphys	(struct buf *bp);
 #endif
 static	void	ncr_negotiate	(struct ncb* np, struct tcb* tp);
-static	void	ncr_opennings	(ncb_p np, lcb_p lp, struct scsi_xfer * xp);
+static	void	ncr_opennings	(ncb_p np, lcb_p lp, struct scsipi_xfer * xp);
 static	void	ncb_profile	(ncb_p np, ccb_p cp);
 static	void	ncr_script_copy_and_bind
 				(struct script * script, ncb_p np);
@@ -1296,7 +1300,7 @@ static	void	ncr_settags     (tcb_p tp, lcb_p lp);
 static	void	ncr_setwide	(ncb_p np, ccb_p cp, u_char wide);
 static	int	ncr_show_msg	(u_char * msg);
 static	int	ncr_snooptest	(ncb_p np);
-static	INT32	ncr_start       (struct scsi_xfer *xp);
+static	INT32	ncr_start       (struct scsipi_xfer *xp);
 static	void	ncr_timeout	(ncb_p np);
 static	void	ncr_usercmd	(ncb_p np);
 static  void    ncr_wakeup      (ncb_p np, u_long code);
@@ -1327,7 +1331,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.60 1997/07/01 00:41:43 cjs Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.61 1997/08/27 11:25:26 bouyer Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -1391,7 +1395,7 @@ DATA_SET (pcidevice_set, ncr_device);
 
 #endif /* !__NetBSD__ */
 
-static struct scsi_adapter ncr_switch =
+static struct scsipi_adapter ncr_switch =
 {
 	ncr_start,
 #ifndef __NetBSD__
@@ -1407,7 +1411,7 @@ static struct scsi_adapter ncr_switch =
 #endif /* !__NetBSD__ */
 };
 
-static struct scsi_device ncr_dev =
+static struct scsipi_device ncr_dev =
 {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
@@ -3663,10 +3667,11 @@ static	void ncr_attach (pcici_t config_id, int unit)
 
 #ifdef __NetBSD__
 	np->sc_link.adapter_softc = np;
-	np->sc_link.adapter_target = np->myaddr;
+	np->sc_link.scsipi_scsi.adapter_target = np->myaddr;
 	np->sc_link.openings = 1;
-	np->sc_link.channel      = SCSI_CHANNEL_ONLY_ONE;
-	np->sc_link.max_target   = wide ? 15 : 7;
+	np->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
+	np->sc_link.scsipi_scsi.max_target   = wide ? 15 : 7;
+	np->sc_link.type = BUS_SCSI;
 #else /* !__NetBSD__ */
 	np->sc_link.adapter_unit = unit;
 	np->sc_link.adapter_softc = np;
@@ -3787,14 +3792,14 @@ ncr_intr(vnp)
 **==========================================================
 */
 
-static INT32 ncr_start (struct scsi_xfer * xp)
+static INT32 ncr_start (struct scsipi_xfer * xp)
 {
 	ncb_p np  = (ncb_p) xp->sc_link->adapter_softc;
 
-	struct scsi_generic * cmd = xp->cmd;
+	struct scsi_generic * cmd = (struct scsi_generic *)xp->cmd;
 	ccb_p cp;
 	lcb_p lp;
-	tcb_p tp = &np->target[xp->sc_link->target];
+	tcb_p tp = &np->target[xp->sc_link->scsipi_scsi.target];
 
 	int	i, oldspl, segments, flags = xp->flags;
 	u_char	qidx, nego, idmsg, *msgptr;
@@ -3822,9 +3827,9 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	**---------------------------------------------
 	*/
 
-	if ((xp->sc_link->target == np->myaddr	  ) ||
-		(xp->sc_link->target >= MAX_TARGET) ||
-		(xp->sc_link->lun    >= MAX_LUN   ) ||
+	if ((xp->sc_link->scsipi_scsi.target == np->myaddr	  ) ||
+		(xp->sc_link->scsipi_scsi.target >= MAX_TARGET) ||
+		(xp->sc_link->scsipi_scsi.lun    >= MAX_LUN   ) ||
 		(flags    & SCSI_DATA_UIO)) {
 		xp->error = XS_DRIVER_STUFFUP;
 		return(COMPLETE);
@@ -3902,7 +3907,8 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 
 	oldspl = splbio();
 
-	if (!(cp=ncr_get_ccb (np, flags, xp->sc_link->target, xp->sc_link->lun))) {
+	if (!(cp=ncr_get_ccb (np, flags, xp->sc_link->scsipi_scsi.target,
+		xp->sc_link->scsipi_scsi.lun))) {
 		printf ("%s: no ccb.\n", ncr_name (np));
 		xp->error = XS_DRIVER_STUFFUP;
 		splx(oldspl);
@@ -3991,7 +3997,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	**----------------------------------------------------
 	*/
 
-	if ((lp = tp->lp[xp->sc_link->lun]) && (lp->usetags)) {
+	if ((lp = tp->lp[xp->sc_link->scsipi_scsi.lun]) && (lp->usetags)) {
 		/*
 		**	assign a tag to this ccb!
 		*/
@@ -4018,7 +4024,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	**----------------------------------------------------
 	*/
 
-	idmsg = M_IDENTIFY | xp->sc_link->lun;
+	idmsg = M_IDENTIFY | xp->sc_link->scsipi_scsi.lun;
 	if ((cp!=&np->ccb) && (np->disc))
 		idmsg |= 0x40;
 
@@ -4142,7 +4148,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	/*
 	**	select
 	*/
-	cp->phys.select.sel_id		= xp->sc_link->target;
+	cp->phys.select.sel_id		= xp->sc_link->scsipi_scsi.target;
 	cp->phys.select.sel_scntl3	= tp->wval;
 	cp->phys.select.sel_sxfer	= tp->sval;
 	/*
@@ -4167,15 +4173,15 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	**	patch requested size into sense command
 	*/
 	cp->sensecmd[0]			= 0x03;
-	cp->sensecmd[1]			= xp->sc_link->lun << 5;
-	cp->sensecmd[4]			= sizeof(struct scsi_sense_data);
+	cp->sensecmd[1]			= xp->sc_link->scsipi_scsi.lun << 5;
+	cp->sensecmd[4]			= sizeof(struct scsipi_sense_data);
 	if (xp->req_sense_length)
 		cp->sensecmd[4]		= xp->req_sense_length;
 	/*
 	**	sense data
 	*/
 	cp->phys.sense.addr		= vtophys (&cp->xfer->sense);
-	cp->phys.sense.size		= sizeof(struct scsi_sense_data);
+	cp->phys.sense.size		= sizeof(struct scsipi_sense_data);
 	/*
 	**	status
 	*/
@@ -4314,7 +4320,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 
 void ncr_complete (ncb_p np, ccb_p cp)
 {
-	struct scsi_xfer * xp;
+	struct scsipi_xfer * xp;
 	tcb_p tp;
 	lcb_p lp;
 
@@ -4347,8 +4353,8 @@ void ncr_complete (ncb_p np, ccb_p cp)
 
 	xp = cp->xfer;
 	cp->xfer = NULL;
-	tp = &np->target[xp->sc_link->target];
-	lp = tp->lp[xp->sc_link->lun];
+	tp = &np->target[xp->sc_link->scsipi_scsi.target];
+	lp = tp->lp[xp->sc_link->scsipi_scsi.lun];
 
 	/*
 	**	Check for parity errors.
@@ -4418,12 +4424,13 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		/*
 		**	Try to assign a ccb to this nexus
 		*/
-		ncr_alloc_ccb (np, xp->sc_link->target, xp->sc_link->lun);
+		ncr_alloc_ccb (np, xp->sc_link->scsipi_scsi.target,
+			xp->sc_link->scsipi_scsi.lun);
 
 		/*
 		**	On inquire cmd (0x12) save some data.
 		*/
-		if (xp->cmd->opcode == 0x12 && xp->sc_link->lun == 0) {
+		if (xp->cmd->opcode == 0x12 && xp->sc_link->scsipi_scsi.lun == 0) {
 			bcopy (	xp->data,
 				&tp->inqdata,
 				sizeof (tp->inqdata));
@@ -4472,7 +4479,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		xp->error = XS_SENSE;
 
 		if (DEBUG_FLAGS & (DEBUG_RESULT|DEBUG_TINY)) {
-			u_char * p = (u_char*) & xp->sense;
+			u_char * p = (u_char*) & xp->sense.scsi_sense;
 			int i;
 			printf ("\n%s: sense data:", ncr_name (np));
 			for (i=0; i<14; i++) printf (" %x", *p++);
@@ -4533,7 +4540,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 				break;
 			case S_CHECK_COND:
 				printf ("  SENSE:");
-				p = (u_char*) &xp->sense;
+				p = (u_char*) &xp->sense.scsi_sense;
 				for (i=0; i<xp->req_sense_length; i++)
 					printf (" %x", *p++);
 				break;
@@ -4553,7 +4560,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	/*
 	**	signal completion to generic driver.
 	*/
-	scsi_done (xp);
+	scsipi_done (xp);
 }
 
 /*==========================================================
@@ -4809,7 +4816,7 @@ static void ncr_negotiate (struct ncb* np, struct tcb* tp)
 
 static void ncr_setsync (ncb_p np, ccb_p cp, u_char sxfer)
 {
-	struct scsi_xfer *xp;
+	struct scsipi_xfer *xp;
 	tcb_p tp;
 	u_char target = INB (nc_ctest0) & 0x0f;
 
@@ -4819,7 +4826,7 @@ static void ncr_setsync (ncb_p np, ccb_p cp, u_char sxfer)
 	xp = cp->xfer;
 	assert (xp);
 	if (!xp) return;
-	assert (target == (xp->sc_link->target & 0x0f));
+	assert (target == (xp->sc_link->scsipi_scsi.target & 0x0f));
 
 	tp = &np->target[target];
 	tp->period= sxfer&0x1f ? ((sxfer>>5)+4) * np->ns_sync : 0xffff;
@@ -4853,7 +4860,7 @@ static void ncr_setsync (ncb_p np, ccb_p cp, u_char sxfer)
 	*/
 	for (cp = &np->ccb; cp; cp = cp->link_ccb) {
 		if (!cp->xfer) continue;
-		if (cp->xfer->sc_link->target != target) continue;
+		if (cp->xfer->sc_link->scsipi_scsi.target != target) continue;
 		cp->sync_status = sxfer;
 	};
 }
@@ -4867,7 +4874,7 @@ static void ncr_setsync (ncb_p np, ccb_p cp, u_char sxfer)
 
 static void ncr_setwide (ncb_p np, ccb_p cp, u_char wide)
 {
-	struct scsi_xfer *xp;
+	struct scsipi_xfer *xp;
 	u_short target = INB (nc_ctest0) & 0x0f;
 	tcb_p tp;
 	u_char	scntl3 = np->rv_scntl3 | (wide ? EWS : 0);
@@ -4878,7 +4885,7 @@ static void ncr_setwide (ncb_p np, ccb_p cp, u_char wide)
 	xp = cp->xfer;
 	assert (xp);
 	if (!xp) return;
-	assert (target == (xp->sc_link->target & 0x0f));
+	assert (target == (xp->sc_link->scsipi_scsi.target & 0x0f));
 
 	tp = &np->target[target];
 	tp->widedone  =  wide+1;
@@ -4903,7 +4910,7 @@ static void ncr_setwide (ncb_p np, ccb_p cp, u_char wide)
 	*/
 	for (cp = &np->ccb; cp; cp = cp->link_ccb) {
 		if (!cp->xfer) continue;
-		if (cp->xfer->sc_link->target != target) continue;
+		if (cp->xfer->sc_link->scsipi_scsi.target != target) continue;
 		cp->wide_status = scntl3;
 	};
 }
@@ -5863,7 +5870,7 @@ void ncr_int_sir (ncb_p np)
 		*/
 		cp->host_status = HS_BUSY;
 		cp->scsi_status = S_CHECK_COND;
-		np->target[cp->xfer->sc_link->target].hold_cp = cp;
+		np->target[cp->xfer->sc_link->scsipi_scsi.target].hold_cp = cp;
 
 		/*
 		**	And patch code to restart it.
@@ -6585,7 +6592,7 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 **==========================================================
 */
 
-static void ncr_opennings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
+static void ncr_opennings (ncb_p np, lcb_p lp, struct scsipi_xfer * xp)
 {
 	/*
 	**	want to reduce the number ...
