@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.135 2001/08/21 16:13:03 pooka Exp $
+$NetBSD: pcmciadevs,v 1.136 2001/09/17 07:44:33 ichiro Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -76,6 +76,7 @@ vendor FARALLON			0x0200  Farallon Communications
 vendor TELECOMDEVICE		0x021b  Telecom Device
 vendor NOKIA			0x023d	Nokia Communications
 vendor SAMSUNG			0x0250	Samsung
+vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor IODATA2			0x028a	I-O DATA
 vendor LASAT			0x3401	Lasat Communications A/S
@@ -284,6 +285,9 @@ product RATOC REX_R280		0x1	RATOC REX-R280
 
 /* Samsung */
 product	SAMSUNG SWL_2000N	0x02	Samsung MagicLAN SWL-2000N
+
+/* Samsung */
+product	SYMBOL LA4100		0x0001	Symbol Spectrum24 LA4100 Series WLAN
 
 /* Telecom Device */
 product TELECOMDEVICE TCD_HPC100	0x0202 Telecom Device TCD-HPC100
