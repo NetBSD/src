@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 2001/02/04 18:32:16 briggs Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2 2001/02/07 05:49:17 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -290,7 +290,29 @@ pci_intr_disestablish(pc, cookie)
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int func, int *iline)
+pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int func, int swiz,
+    int *iline)
 {
-	*iline = dev;
+	if (bus == 0) {
+		*iline = dev;
+	} else {
+		/*
+		 * If we are not on bus zero, we're behind a bridge, so we
+		 * swizzle.
+		 *
+		 * The documentation lies about this.  In slot 3 (numbering
+		 * from 0) aka device 16, INTD# becomes an interrupt for
+		 * slot 2.  INTC# becomes an interrupt for slot 1, etc.
+		 * In slot 2 aka device 16, INTD# becomes an interrupt for
+		 * slot 1, etc.
+		 *
+		 * Verified for INTD# on device 16, INTC# on device 16,
+		 * INTD# on device 15, INTD# on device 13, and INTC# on
+		 * device 14.  I presume that the rest follow the same
+		 * pattern.
+		 *
+		 * Slot 0 is device 13, and is the base for the rest.
+		 */
+		*iline = 13 + ((swiz + dev + 3) & 3);
+	}
 }
