@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.41 2003/11/24 17:20:58 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.42 2003/11/24 20:30:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.41 2003/11/24 17:20:58 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.42 2003/11/24 20:30:19 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -217,10 +217,13 @@ mach_task_set_special_port(args)
 	struct mach_right *mr;
 	struct mach_port *mp;
 	struct mach_emuldata *med;
+	struct proc *tp;
+	int error;
 
-	/* 
-	 * XXX is it possible to set the special ports of another process?
-	 */
+	/* Get the target process from the remote port. */
+	mn = req->req_msgh.msgh_remote_port;
+	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
+		return mach_msg_error(args, error);
 
 	mn = req->req_special_port.name;
 
@@ -235,7 +238,7 @@ mach_task_set_special_port(args)
 	if (mr->mr_type == MACH_PORT_TYPE_DEAD_NAME)
 		return mach_msg_error(args, EINVAL);
 
-	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
+	med = (struct mach_emuldata *)tp->p_emuldata;
 
 	switch (req->req_which_port) {
 	case MACH_TASK_KERNEL_PORT:
@@ -267,7 +270,7 @@ mach_task_set_special_port(args)
 		{
 			struct darwin_emuldata *ded;
 
-			ded = l->l_proc->p_emuldata;
+			ded = tp->p_emuldata;
 			if (ded->ded_fakepid == 1) {
 				mach_bootstrap_port = med->med_bootstrap;
 #ifdef DEBUG_DARWIN
@@ -438,10 +441,13 @@ mach_task_set_exception_ports(args)
 	mach_port_name_t mn;
 	struct mach_right *mr;
 	struct mach_port *mp;
+	struct proc *tp;
+	int error;
 
-	/*
-	 * XXX Is it possible to set the exception port of a remote process?
-	 */
+	/* Get the target lwp from the remote port. */
+	mn = req->req_msgh.msgh_remote_port;
+	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
+		return mach_msg_error(args, error);
 
 	mn = req->req_new_port.name;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_SEND)) == 0)
@@ -456,7 +462,7 @@ mach_task_set_exception_ports(args)
 	mp->mp_datatype = MACH_MP_EXC_FLAGS;
 	mp->mp_data = (void *)((req->req_behavior << 16) | req->req_flavor);
 
-	med = l->l_proc->p_emuldata;
+	med = tp->p_emuldata;
 	if (req->req_mask & MACH_EXC_MASK_BAD_ACCESS)
 		med->med_exc[MACH_EXC_BAD_ACCESS] = mp;
 	if (req->req_mask & MACH_EXC_MASK_BAD_INSTRUCTION)
