@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: inst.sh,v 1.1 1997/10/18 04:05:32 mark Exp $
+#	$NetBSD: inst.sh,v 1.1.2.1 1997/11/09 19:57:44 mellon Exp $
 #
 # Copyright (c) 1995-1997 Mark Brinicombe
 # All rights reserved.
@@ -40,7 +40,7 @@ VERSION="1.9"
 
 Load_tape()
 {
-	Tmp_dir
+	Set_Distrib_Dir
 	echo -n	"Which tape drive will you be using? [rst0] "
 	read which
 	if [ "X$which" = "X" ]; then
@@ -139,7 +139,7 @@ Load_Tar_Fd()
 	       	echo -n "Insert floppy (type s to stop, enter to load): "
 		read foo
 		if [ "X$foo" = "X" ]; then
-			tar xf /dev/fd${which}a
+			tar xf /dev/rfd${which}a
 		fi
 	done	
 }
@@ -164,7 +164,7 @@ Load_Tar_Fd1()
 	       	echo -n "Insert floppy (type s to stop, enter to load): "
 		read foo
 		if [ "X$foo" = "X" ]; then
-			tar xfM /dev/fd${which}a
+			tar xfM /dev/rfd${which}a
 		fi
 	done	
 }
@@ -209,7 +209,7 @@ Load_Sets()
 }
 
 
-Mount_SCSI_CDROM()
+Mount_CDROM()
 {
 	which=
 	while [ "$which" != "0" -a "$which" != "1" ]; do
@@ -220,11 +220,19 @@ Mount_SCSI_CDROM()
 		fi
 	done
 
+	if [ ! -d /cdrom ]; then
+		mkdir /cdrom
+	fi
+	if [ ! -d /cdrom ]; then
+		echo "No /cdrom directory, read only root filesystem ?"
+		exit 1
+	fi
+
 	mount -r -t cd9660 /dev/cd${which}a /cdrom
 	if [ ! $? = 0 ]; then
 		echo "Mount failed"
 	else
-		distribdir="/cdrom/usr/distrib"
+		distribdir="/cdrom/distrib"
 	fi
 	
 }
@@ -235,28 +243,19 @@ Mount_DEV_CDROM()
 	echo -n	"Mount which device as CDROM ? [sd0a] "
 	read which
 
+	if [ ! -d /cdrom ]; then
+		mkdir /cdrom
+	fi
+	if [ ! -d /cdrom ]; then
+		echo "No /cdrom directory, read only root filesystem ?"
+		exit 1
+	fi
+
 	mount -r -t cd9660 /dev/${which} /cdrom
 	if [ ! $? = 0 ]; then
 		echo "Mount failed"
 	else
-		distribdir="/cdrom/usr/distrib"
-	fi
-	
-}
-
-
-Mount_ATAPI_CDROM()
-{
-	mount -r -t cd9660 /dev/acd0a /cdrom
-	if [ ! $? = 0 ]; then
-		mount -r -t cd9660 /dev/acd0a /cdrom
-		if [ ! $? = 0 ]; then
-			echo "Mount failed"
-		else
-			distribdir="/cdrom/usr/distrib"
-		fi
-	else
-		distribdir="/cdrom/usr/distrib"
+		distribdir="/cdrom/distrib"
 	fi
 	
 }
@@ -272,14 +271,8 @@ CDROM_Sets() {
 		else
 			echo ")"
 		fi
-		echo -n "2. Mount SCSI CDROM "
+		echo -n "2. Mount CDROM "
 		if [ ! -b /dev/cd0a ]; then
-			echo "- Not available"
-		else
-			echo ""
-		fi
-		echo -n "3. Mount ATAPI CDROM "
-		if [ ! -b /dev/acd0a ]; then
 			echo "- Not available"
 		else
 			echo ""
@@ -296,10 +289,7 @@ CDROM_Sets() {
 			Get_Distrib_Dir
 			;;
 		2)
-			Mount_SCSI_CDROM
-			;;
-		3)
-			Mount_ATAPI_CDROM
+			Mount_CDROM
 			;;
 		d|D)
 			Mount_DEV_CDROM
@@ -314,7 +304,7 @@ CDROM_Sets() {
 Show_Sets()
 {
 	Set_Distrib_Dir
-	sets=`ls *.[sS][eE][tT] 2>/dev/null | sed -e 's/.[sS][eE][tT]//'`
+	sets=`ls *.[sS][eE][tT] 2>/dev/null | sed -e 's/\.[sS][eE][tT]//'`
 
 	echo "Loaded sets in $distribdir :"
 	for set in $sets; do
@@ -333,7 +323,7 @@ Show_Installed_Sets()
 	if [ ! $? = 0 ]; then
 		return
 	fi
-	sets=`ls *.[sS][eE][tT] 2>/dev/null | sed -e 's/.[sS][eE][tT]//'`
+	sets=`ls *.[sS][eE][tT] 2>/dev/null | sed -e 's/\.[sS][eE][tT]//'`
 
 	echo "Installed sets:"
 	for set in $sets; do
@@ -348,7 +338,7 @@ Show_Installed_Sets()
 Validate_Sets()
 {
 	Set_Distrib_Dir
-	sets=`ls *.[sS][eE][tT] 2>/dev/null | sed -e 's/.[sS][eE][tT]//'`
+	sets=`ls *.[sS][eE][tT] 2>/dev/null | sed -e 's/\.[sS][eE][tT]//'`
 	list=""
 
 	echo "Loaded sets in $distribdir :"
@@ -367,46 +357,79 @@ Validate_Sets()
 	sets="$res2"
 
 	echo "Validating in $distribdir :"
-	fail=""
 	for set in $sets; do
+		fail=""
 		setname="set"
 		if [ ! -f "$set"."$setname" ]; then
 			setname="SET"
 			set=`echo $set | tr [a-z] [A-Z]`
 		fi
 		p1=`cat $set.$setname 2>/dev/null | grep 'parts:' | cut -f2`
-		if [ "$p1" = "" ]; then
-			continue
-		fi
-		p2=`ls "$set".[0-9a-z][0-9a-z] 2>/dev/null | wc | awk '{print $1}'`
-		printf "$set\t:"
-#		echo "$p1 , $p2"
-		if [ ! "$p1" = "$p2" ]; then
-			echo -n " Failed parts check (need $p1, got $p2)"
-		else
-			echo -n " Passed parts check"
-		fi
-		loop=0
-		while [ $loop -lt $p1 ]; do
-			if [ $loop -lt 10 ]; then
-				file="0$loop"
+		if [ ! "X$p1" = "X0" -a ! "X$p1" = "X" ]; then
+			# Set contains many parts
+			if [ -f "$set".00 ]; then
+				numext=1
+				p2=`ls "$set".[0-9][0-9] 2>/dev/null | wc | awk '{print $1}'`
 			else
-				file=$loop
+				numext=0
+				if [ $setname = "set" ]; then
+					p2=`ls "$set".[a-z][a-z] 2>/dev/null | wc | awk '{print $1}'`
+				else
+					p2=`ls "$set".[A-Z][A-Z] 2>/dev/null | wc | awk '{print $1}'`
+				fi
 			fi
-			echo -n " [$file]"
-			cksum=`cat $set.$setname | grep "cksum.$file:" | cut -f2`
-			cksum1=`cat "$set".$file 2>&1 | cksum | cut "-d " -f1`
-			#echo "#$cksum, $cksum1#"
+			printf "$set\t:"
+#			echo "$p1 , $p2"
+			if [ ! "$p1" = "$p2" ]; then
+				echo -n " Failed parts check (need $p1, got $p2)"
+			else
+				echo -n " Passed parts check"
+			fi
+			if [ $numext -eq 1 ]; then
+				forline="0 1 2 3 4 5 6 7 8 9"
+			else
+				if [ $setname = "set" ]; then
+					forline="a b c d e f g h i j k l m n o p q r s t u v w x y z"
+				else
+					forline="A B C D E F G H I J K L M N O P Q R S T U V W X Y Z"
+				fi
+			fi
+			loop=0
+			for a in $forline; do
+				if [ $loop -ge $p1 ]; then
+					break
+				fi
+				for b in $forline; do
+					if [ $loop -ge $p1 ]; then
+						break
+					fi
+					echo -n " [$a$b]"
+					file=`echo $a$b | tr '[A-Z]' '[a-z]'`
+					cksum=`cat $set.$setname | grep "cksum.$file:" | cut -f2`
+					cksum1=`cat "$set".$a$b 2>&1 | cksum | cut "-d " -f1`
+					#echo "#$cksum, $cksum1#"
+					if [ ! "$cksum" = "$cksum1" ]; then
+						echo -n " part $a$b failed checksum"
+						fail="yes"
+					fi
+					loop=$(($loop+1))
+				done
+			done
+			if [ "$fail" = "" ]; then
+				echo " Passed checksum"
+			else
+				echo ""
+			fi
+		fi
+		if [ -f $set.tar.gz ]; then
+			printf "$set\t: [tar.gz]"
+			cksum=`cat $set.$setname | grep "cksum.tar.gz:" | cut -f2`
+			cksum1=`cat $set.tar.gz 2>&1 | cksum | cut -d" " -f1`
 			if [ ! "$cksum" = "$cksum1" ]; then
-				echo -n " part $file failed checksum"
-				fail="yes"
+				echo " failed checksum"
+			else
+				echo " Passed checksum"
 			fi
-			loop=$(($loop+1))
-		done
-		if [ "$fail" = "" ]; then
-			echo " Passed checksum"
-		else
-			echo ""
 		fi
 	done
 }
@@ -440,12 +463,32 @@ Verify_Sets()
 			setname="SET"
 			set=`echo $set | tr [a-z] [A-Z]`
 		fi
-		printf "$set\t:"
-		cat "$set".[0-9a-z][0-9a-z] 2>/dev/null | $GUNZIP -t 2>/dev/null 1>/dev/null
-		if [ ! $? = 0 ]; then
-			echo " Failed archive integrity"
-		else
-			echo " Passed"
+		p1=`cat $set.$setname 2>/dev/null | grep 'parts:' | cut -f2`
+		if [ ! "X$p1" = "X0" -a ! "X$p1" = "X" ]; then
+			printf "$set\t(parts):"
+			if [ -f $set.00 ]; then
+				cat "$set".[0-9][0-9] 2>/dev/null | $GUNZIP -t 2>/dev/null 1>/dev/null
+			else
+				if [ $setname = "set" ]; then
+					cat "$set".[a-z][a-z] 2>/dev/null | $GUNZIP -t 2>/dev/null 1>/dev/null
+				else
+					cat "$set".[A-Z][A-Z] 2>/dev/null | $GUNZIP -t 2>/dev/null 1>/dev/null
+				fi
+			fi
+			if [ ! $? = 0 ]; then
+				echo " Failed archive integrity"
+			else
+				echo " Passed"
+			fi
+		fi
+		if [ -f $set.tar.gz ]; then
+			printf "$set\t(tar.gz):"
+			$GUNZIP -t $set.tar.gz 2>/dev/null 1>/dev/null
+			if [ ! $? = 0 ]; then
+				echo " Failed archive integrity"
+			else
+				echo " Passed"
+			fi
 		fi
 	done
 }
@@ -481,7 +524,7 @@ Verify_Checksums()
 	TMPFILE1="/tmp/inst.cksum1"
 	TMPFILE2="/tmp/inst.cksum2"
 
-	echo "Verifing checksums for sets in $distribdir :"
+	echo "Comparing checksums for sets in $distribdir :"
 	for set in $sets; do
 		setname="set"
 		if [ ! -f "$set"."$setname" ]; then
@@ -509,7 +552,7 @@ Check_Sets() {
 		echo ""
 		echo "1. Validate distribution sets (confirm checksums)"
 		echo "2. Verify distribution sets (integrity check)"
-		echo "3. Verify checksums (confirm set checksums)"
+		echo "3. Validate checksums (confirm set checksums)"
 		echo "Q. Return to previous menu"
 		echo ""
 		echo -n "Choice : "
@@ -562,7 +605,17 @@ List_Sets()
 			set=`echo $set | tr [a-z] [A-Z]`
 		fi
 		echo "$set:"
-		cat "$set".[0-9a-z][0-9a-z] | $GUNZIP | $TAR -tpvf -
+		if [ -f $set.tar.gz ]; then
+			$TAR -ztvf $set.tar.gz
+		elif [ -f $set.00 ]; then
+			cat "$set".[0-9][0-9] | $GUNZIP | $TAR -tpvf -
+		else
+			if [ $setname = "set" ]; then
+				cat "$set".[a-z][a-z] | $GUNZIP | $TAR -tpvf -
+			else
+				cat "$set".[A-Z][A-Z] | $GUNZIP | $TAR -tpvf -
+			fi
+		fi
 	done
 }
 
@@ -705,7 +758,7 @@ Install_Sets()
 			continue
 		fi
 
-		if [ -f "$set".00 ]; then
+		if [ -f "$set".00 -o -f "$set".aa -o -f "$set".AA -o -f $set.tar.gz ]; then
 			upgrade="no"
 			if [ -x "$INSTALLDIR/scripts/$set" ]; then
 				echo "Running pre-upgrade script for $set"
@@ -717,10 +770,30 @@ Install_Sets()
 			echo "Installing $set"
 			case $verbose in
 			y*|Y*)
-				cat "$set".[0-9a-z][0-9a-z] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - | tee $filelist)
+				if [ -f $set.tar.gz ]; then
+					cat "$set".tar.gz | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - | tee $filelist)
+				elif [ -f $set.00 ]; then
+					cat "$set".[0-9][0-9] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - | tee $filelist)
+				else
+					if [ $setname = "set" ]; then
+						cat "$set".[a-z][a-z] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - | tee $filelist)
+					else
+						cat "$set".[A-Z][A-Z] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - | tee $filelist)
+					fi
+				fi
 				;;
 			*)
-				cat "$set".[0-9a-z][0-9a-z] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - >$filelist)
+				if [ -f $set.tar.gz ]; then
+					cat "$set".tar.gz | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - > $filelist)
+				elif [ -f $set.00 ]; then
+					cat "$set".[0-9][0-9] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - > $filelist)
+				else
+					if [ $setname = "set" ]; then
+						cat "$set".[a-z][a-z] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - > $filelist)
+					else
+						cat "$set".[A-Z][A-Z] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - > $filelist)
+					fi
+				fi
 				;;
 			esac
 			echo "Generating installation information"

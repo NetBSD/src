@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.tmpl,v 1.1 1997/10/18 04:05:34 mark Exp $
+#	$NetBSD: install.tmpl,v 1.1.2.1 1997/11/09 19:58:07 mellon Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -316,6 +316,8 @@ echo -n	"	:nc#${cyls_per_disk}:ns#${sects_per_track}" >> $DT
 echo	":nt#${tracks_per_cyl}:\\" >> $DT
 echo	"	:se#${bytes_per_sect}:${sect_fwd}\\" >> $DT
 _size=$(( $root * $sizemult ))
+echo $root_offset >/dev/null
+echo $sizemult >/dev/null
 _offset=$(( $root_offset * $sizemult ))
 echo -n	"	:pa#${_size}:oa#${_offset}" >> $DT
 echo	":ta=4.2BSD:ba#${blocksize}:fa#${fragsize}:\\" >> $DT
@@ -467,8 +469,6 @@ echo    "Populating filesystems with bootstrapping binaries and config files"
 cd /
 $DONTDOIT tar --one-file-system -cf - . | (cd /mnt ; tar --unlink -xpf - )
 $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
-echo	"Installing kernel"
-$DONTDOIT gunzip /mnt/netbsd.gz
 
 #
 # Fix up a few things
@@ -513,5 +513,7 @@ echo	""
 echo	"GOOD LUCK!"
 echo	""
 echo	"Type 'inst' at the prompt to start the set installer ..."
+echo	""
+echo	"Remember: You MUST install the base, etc, misc and kernel sets."
 echo	""
 #/usr/local/sbin/inst
