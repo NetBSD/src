@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.4 2001/10/18 03:55:07 thorpej Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.5 2001/10/18 06:14:33 thorpej Exp $ */
 
 /*
  * 
@@ -75,8 +75,6 @@
 
 struct gem_pci_softc {
 	struct	gem_softc	gsc_gem;	/* GEM device */
-	bus_space_tag_t		gsc_memt;
-	bus_space_handle_t	gsc_memh;
 	void			*gsc_ih;
 };
 
@@ -137,15 +135,12 @@ gem_attach_pci(parent, self, aux)
 	/* XXX Need to check for a 64-bit mem BAR? */
 	if (pci_mapreg_map(pa, PCI_GEM_BASEADDR,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &gsc->gsc_memt, &gsc->gsc_memh, NULL, NULL) != 0)
+	    &sc->sc_bustag, &sc->sc_h, NULL, NULL) != 0)
 	{
 		printf("%s: could not map gem registers\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-
-	sc->sc_bustag = gsc->gsc_memt;
-	sc->sc_h = gsc->gsc_memh;
 
 	/*
 	 * XXX This should be done with properties, when those are
