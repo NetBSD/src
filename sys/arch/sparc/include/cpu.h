@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 1996/03/14 19:49:08 christos Exp $ */
+/*	$NetBSD: cpu.h,v 1.20 1996/03/15 00:01:21 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -181,6 +181,7 @@ void	loadfpstate __P((struct fpstate *));
 int	probeget __P((caddr_t, int));
 void	write_all_windows __P((void));
 void	write_user_windows __P((void));
+void 	proc_trampoline __P((void));
 struct pcb;
 void	snapshot __P((struct pcb *));
 struct frame *getfp __P((void));
@@ -193,6 +194,7 @@ void	remrq __P((struct proc *));
 /* trap.c */
 void	kill_user_windows __P((struct proc *));
 int	rwindow_save __P((struct proc *));
+void	child_return __P((struct proc *));
 /* amd7930intr.s */
 void	amd7930_trap __P((void));
 /* cons.c */
@@ -217,8 +219,8 @@ void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
 void kgdb_connect __P((int));
 void kgdb_panic __P((void));
 #endif
-
-
+/* vm_machdep.c */
+void cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 
 /*
  *
