@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.25 2000/01/22 22:19:22 mycroft Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.26 2003/05/29 18:15:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: xdryp.c,v 1.25 2000/01/22 22:19:22 mycroft Exp $");
+__RCSID("$NetBSD: xdryp.c,v 1.26 2003/05/29 18:15:25 christos Exp $");
 #endif
 
 /*
@@ -271,7 +271,7 @@ xdr_ypbind_resptype(xdrs, objp)
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
 
-	return xdr_enum(xdrs, (enum_t *)objp);
+	return xdr_enum(xdrs, (enum_t *)(void *)objp);
 }
 
 static bool_t
@@ -283,7 +283,7 @@ xdr_ypstat(xdrs, objp)
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
 
-	return xdr_enum(xdrs, (enum_t *)objp);
+	return xdr_enum(xdrs, (enum_t *)(void *)objp);
 }
 
 bool_t
@@ -322,7 +322,7 @@ xdr_ypresp_val(xdrs, objp)
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
 
-	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
+	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)(void *)&objp->status))
 		return FALSE;
 
 	if (!xdr_datum(xdrs, &objp->valdat))
@@ -364,7 +364,7 @@ xdr_ypresp_key_val(xdrs, objp)
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
 
-	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
+	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)(void *)&objp->status))
 		return FALSE;
 
 	if (!xdr_datum(xdrs, &objp->valdat))
@@ -434,7 +434,7 @@ xdr_ypresp_master(xdrs, objp)
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
 
-	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
+	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)(void *)&objp->status))
 		return FALSE;
 
 	if (!xdr_string(xdrs, &objp->master, YPMAXPEER))
@@ -483,7 +483,7 @@ xdr_ypresp_maplist(xdrs, objp)
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
 
-	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
+	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)(void *)&objp->status))
 		return FALSE;
 
 	if (!xdr_pointer(xdrs, (caddr_t *)&objp->list,
@@ -502,7 +502,7 @@ xdr_ypresp_order(xdrs, objp)
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(objp != NULL);
 
-	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
+	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)(void *)&objp->status))
 		return FALSE;
 
 	if (!xdr_u_int(xdrs, &objp->ordernum))
