@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 2002/06/24 06:11:12 itojun Exp $
+#	$NetBSD: Makefile,v 1.13 2002/08/02 04:05:13 simonb Exp $
 
 .include <bsd.own.mk>
 
 PROG=	ssh
-
-BINOWN=	root
 
 LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
 MAN=	ssh.1 ssh_config.5
