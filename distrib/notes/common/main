@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.248 2003/11/17 17:47:42 sketch Exp $
+.\"	$NetBSD: main,v 1.249 2003/11/25 22:29:34 ben Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1725,6 +1725,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta James Chacon Ta Mt jmc@NetBSD.org
 .It Ta Bill Coldwell Ta Mt billc@NetBSD.org
 .It Ta Julian Coleman Ta Mt jdc@NetBSD.org
+.It Ta Ben Collver Ta Mt ben@NetBSD.org
 .It Ta Jeremy Cooper Ta Mt jeremy@NetBSD.org
 .It Ta Chuck Cranor Ta Mt chuck@NetBSD.org
 .It Ta Alistair Crooks Ta Mt agc@NetBSD.org
