@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.14 1997/05/02 14:24:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.14 1997/05/02 14:24:32 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,6 +152,12 @@ typedef struct {
     Lst            l;
     Src            *s;
 } LstSrc;
+
+typedef struct {
+    GNode	  **gn;
+    Suff	   *s;
+    Boolean	    r;
+} GNodeSuff;
 
 static Suff 	    *suffNull;	/* The NULL suffix for this run */
 static Suff 	    *emptySuff;	/* The empty suffix required for POSIX
@@ -779,6 +785,68 @@ SuffRebuildGraph(transformp, sp)
 
 /*-
  *-----------------------------------------------------------------------
+ * SuffScanTargets --
+ *	Called from Suff_AddSuffix via Lst_ForEach to search through the
+ *	list of existing targets and find if any of the existing targets
+ *	can be turned into a transformation rule.
+ *
+ * Results:
+ *	1 if a new main target has been selected, 0 otherwise.
+ *
+ * Side Effects:
+ *	If such a target is found and the target is the current main
+ *	target, the main target is set to NULL and the next target
+ *	examined (if that exists) becomes the main target.
+ *
+ *-----------------------------------------------------------------------
+ */
+static int
+SuffScanTargets(targetp, gsp)
+    ClientData  targetp;
+    ClientData  gsp;	    
+{
+    GNode   	*target = (GNode *) targetp;
+    GNodeSuff	*gs = (GNodeSuff *) gsp;
+    Suff	*s, *t;
+    char 	*ptr;
+
+    if (*gs->gn == NILGNODE && gs->r && (target->type & OP_NOTARGET) == 0) {
+	*gs->gn = target;
+	Targ_SetMain(target);
+	return 1;
+    }
+
+    if (target->type == OP_TRANSFORM)
+	return 0;
+
+    if ((ptr = strstr(target->name, gs->s->name)) == NULL ||
+	ptr == target->name)
+	return 0;
+
+    if (SuffParseTransform(target->name, &s, &t)) {
+	if (*gs->gn == target) {
+	    gs->r = TRUE;
+	    *gs->gn = NILGNODE;
+	    Targ_SetMain(NILGNODE);
+	}
+	Lst_Destroy (target->children, NOFREE);
+	target->children = Lst_Init (FALSE);
+	target->type = OP_TRANSFORM;
+	/*
+	 * link the two together in the proper relationship and order
+	 */
+	if (DEBUG(SUFF)) {
+	    printf("defining transformation from `%s' to `%s'\n",
+		s->name, t->name);
+	}
+	SuffInsert (t->children, s);
+	SuffInsert (s->parents, t);
+    }
+    return 0;
+}
+
+/*-
+ *-----------------------------------------------------------------------
  * Suff_AddSuffix --
  *	Add the suffix in string to the end of the list of known suffixes.
  *	Should we restructure the suffix graph? Make doesn't...
@@ -789,14 +857,18 @@ SuffRebuildGraph(transformp, sp)
  * Side Effects:
  *	A GNode is created for the suffix and a Suff structure is created and
  *	added to the suffixes list unless the suffix was already known.
+ *	The mainNode passed can be modified if a target mutated into a
+ *	transform and that target happened to be the main target.
  *-----------------------------------------------------------------------
  */
 void
-Suff_AddSuffix (str)
-    char          *str;	    /* the name of the suffix to add */
+Suff_AddSuffix (str, gn)
+    char       *str;	    /* the name of the suffix to add */
+    GNode      **gn;
 {
     Suff          *s;	    /* new suffix descriptor */
     LstNode 	  ln;
+    GNodeSuff	  gs;
 
     ln = Lst_Find (sufflist, (ClientData)str, SuffSuffHasNameP);
     if (ln == NILLNODE) {
@@ -814,10 +886,20 @@ Suff_AddSuffix (str)
 
 	(void)Lst_AtEnd (sufflist, (ClientData)s);
 	/*
+	 * We also look at our existing targets list to see if adding
+	 * this suffix will make one of our current targets mutate into
+	 * a suffix rule. This is ugly, but other makes treat all targets
+	 * that start with a . as suffix rules.
+	 */
+	gs.gn = gn;
+	gs.s  = s;
+	gs.r  = FALSE;
+	Lst_ForEach (Targ_List(), SuffScanTargets, (ClientData) &gs);
+	/*
 	 * Look for any existing transformations from or to this suffix.
 	 * XXX: Only do this after a Suff_ClearSuffixes?
 	 */
-	Lst_ForEach (transforms, SuffRebuildGraph, (ClientData)s);
+	Lst_ForEach (transforms, SuffRebuildGraph, (ClientData) s);
     }
 }
 
@@ -1960,13 +2042,7 @@ SuffFindNormalDeps(gn, slst)
 	    continue;
     }
 
-    /*
-     * The .TARGET variable we always set to be the name at this point,
-     * since it's only set to the path if the thing is only a source and
-     * if it's only a source, it doesn't matter what we put here as far
-     * as expanding sources is concerned, since it has none...
-     */
-    Var_Set(TARGET, gn->name, gn);
+    Var_Set(TARGET, gn->path ? gn->path : gn->name, gn);
 
     pref = (targ != NULL) ? targ->pref : gn->name;
     Var_Set(PREFIX, pref, gn);
@@ -1984,75 +2060,58 @@ SuffFindNormalDeps(gn, slst)
 
 sfnd_abort:
 	/*
-	 * Deal with finding the thing on the default search path if the
-	 * node is only a source (not on the lhs of a dependency operator
-	 * or [XXX] it has neither children or commands).
+	 * Deal with finding the thing on the default search path. We
+	 * always do that, not only if the node is only a source (not
+	 * on the lhs of a dependency operator or [XXX] it has neither
+	 * children or commands) as the old pmake did.
 	 */
-	if (OP_NOP(gn->type) ||
-	    (Lst_IsEmpty(gn->children) && Lst_IsEmpty(gn->commands)))
-	{
-	    gn->path = Dir_FindFile(gn->name,
-				    (targ == NULL ? dirSearchPath :
-				     targ->suff->searchPath));
-	    if (gn->path != NULL) {
-		char *ptr;
-		Var_Set(TARGET, gn->path, gn);
+	gn->path = Dir_FindFile(gn->name,
+				(targ == NULL ? dirSearchPath :
+				 targ->suff->searchPath));
+	if (gn->path != NULL) {
+	    char *ptr;
+	    Var_Set(TARGET, gn->path, gn);
 
-		if (targ != NULL) {
-		    /*
-		     * Suffix known for the thing -- trim the suffix off
-		     * the path to form the proper .PREFIX variable.
-		     */
-		    int		savep = strlen(gn->path) - targ->suff->nameLen;
-		    char	savec;
+	    if (targ != NULL) {
+		/*
+		 * Suffix known for the thing -- trim the suffix off
+		 * the path to form the proper .PREFIX variable.
+		 */
+		int	savep = strlen(gn->path) - targ->suff->nameLen;
+		char	savec;
 
-		    if (gn->suffix)
-			gn->suffix->refCount--;
-		    gn->suffix = targ->suff;
-		    gn->suffix->refCount++;
-
-		    savec = gn->path[savep];
-		    gn->path[savep] = '\0';
-
-		    if ((ptr = strrchr(gn->path, '/')) != NULL)
-			ptr++;
-		    else
-			ptr = gn->path;
-
-		    Var_Set(PREFIX, ptr, gn);
-
-		    gn->path[savep] = savec;
-		} else {
-		    /*
-		     * The .PREFIX gets the full path if the target has
-		     * no known suffix.
-		     */
-		    if (gn->suffix)
-			gn->suffix->refCount--;
-		    gn->suffix = NULL;
-
-		    if ((ptr = strrchr(gn->path, '/')) != NULL)
-			ptr++;
-		    else
-			ptr = gn->path;
-
-		    Var_Set(PREFIX, ptr, gn);
-		}
-	    }
-	} else {
-	    /*
-	     * Not appropriate to search for the thing -- set the
-	     * path to be the name so Dir_MTime won't go grovelling for
-	     * it.
-	     */
-	    if (gn->suffix)
-		gn->suffix->refCount--;
-	    gn->suffix = (targ == NULL) ? NULL : targ->suff;
-	    if (gn->suffix)
+		if (gn->suffix)
+		    gn->suffix->refCount--;
+		gn->suffix = targ->suff;
 		gn->suffix->refCount++;
-	    if (gn->path != NULL)
-		free(gn->path);
-	    gn->path = estrdup(gn->name);
+
+		savec = gn->path[savep];
+		gn->path[savep] = '\0';
+
+		if ((ptr = strrchr(gn->path, '/')) != NULL)
+		    ptr++;
+		else
+		    ptr = gn->path;
+
+		Var_Set(PREFIX, ptr, gn);
+
+		gn->path[savep] = savec;
+	    } else {
+		/*
+		 * The .PREFIX gets the full path if the target has
+		 * no known suffix.
+		 */
+		if (gn->suffix)
+		    gn->suffix->refCount--;
+		gn->suffix = NULL;
+
+		if ((ptr = strrchr(gn->path, '/')) != NULL)
+		    ptr++;
+		else
+		    ptr = gn->path;
+
+		Var_Set(PREFIX, ptr, gn);
+	    }
 	}
 
 	goto sfnd_return;
@@ -2147,13 +2206,6 @@ sfnd_abort:
 	gn->suffix->refCount--;
     gn->suffix = src->suff;
     gn->suffix->refCount++;
-
-    /*
-     * So Dir_MTime doesn't go questing for it...
-     */
-    if (gn->path)
-	free(gn->path);
-    gn->path = estrdup(gn->name);
 
     /*
      * Nuke the transformation path and the Src structures left over in the
