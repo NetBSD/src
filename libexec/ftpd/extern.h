@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.45 2002/11/29 14:39:59 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.46 2003/02/19 23:12:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -306,7 +306,7 @@ GLOBAL	jmp_buf		errcatch;
 GLOBAL	char		*emailaddr;
 GLOBAL	int		form;
 GLOBAL	int		gidcount;	/* number of entries in gidlist[] */
-GLOBAL	gid_t		gidlist[NGROUPS_MAX];
+GLOBAL	gid_t		*gidlist;
 GLOBAL	int		hasyyerrored;
 GLOBAL	char		hostname[MAXHOSTNAMELEN+1];
 GLOBAL	char		homedir[MAXPATHLEN];
