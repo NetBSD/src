@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.25 2003/02/26 22:31:11 thorpej Exp $
+# $NetBSD: md.vax,v 1.26 2003/10/27 21:54:24 kleink Exp $
 ./usr/include/vax	comp-c-include
 ./usr/include/vax/_G_config.h	comp-c-include
 ./usr/include/vax/ansi.h	comp-c-include
@@ -66,5 +66,6 @@
 ./usr/include/vax/types.h	comp-c-include
 ./usr/include/vax/uvax.h	comp-c-include
 ./usr/include/vax/varargs.h	comp-c-include
+./usr/include/vax/vaxfp.h	comp-c-include
 ./usr/include/vax/vmparam.h	comp-c-include
 ./usr/include/vax/vsbus.h	comp-c-include
