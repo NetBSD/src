@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.2 2000/06/14 22:02:20 veego Exp $
+# $NetBSD: GENERIC,v 1.2.2.1 2000/06/23 14:36:07 fvdl Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -46,7 +46,7 @@ file-system	FDESC		# /dev/fd
 #options 	QUOTA		# UFS quotas
 #options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS endianness-independence support
-#options 	SOFTDEP		# FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 # Executable format options
 #options 	EXEC_AOUT

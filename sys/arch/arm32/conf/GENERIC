@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.67 2000/06/14 22:02:21 veego Exp $
+#	$NetBSD: GENERIC,v 1.67.2.1 2000/06/23 14:36:07 fvdl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident 		"GENERIC-$Revision: 1.67 $"
+#ident 		"GENERIC-$Revision: 1.67.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -60,7 +60,7 @@ file-system	UNION		# union file system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER
 
 # Networking options

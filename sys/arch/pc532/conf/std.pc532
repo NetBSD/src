@@ -1,12 +1,8 @@
-#	$NetBSD: std.pc532,v 1.12 2000/01/10 04:47:08 jonb Exp $
+#	$NetBSD: std.pc532,v 1.12.4.1 2000/06/23 14:36:13 fvdl Exp $
 #
 # Standard configuration info for NetBSD/pc532.
 
 machine pc532
-
-prefix ../gnu/sys
-cinclude "conf/files.softdep"
-prefix
 
 mainbus0 	at root
 clock0 		at mainbus0		# system timer

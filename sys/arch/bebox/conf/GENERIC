@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.28 2000/06/14 22:02:23 veego Exp $
+#	$NetBSD: GENERIC,v 1.28.2.1 2000/06/23 14:36:08 fvdl Exp $
 #
 # First try for BEBOX config file
 #
 
 include "arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.28.2.1 $"
 
 maxusers	32
 
@@ -47,7 +47,7 @@ file-system 	UMAPFS
 file-system 	UNION
 
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 #options 	NFSSERVER
 
 options 	INET

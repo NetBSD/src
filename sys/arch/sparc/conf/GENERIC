@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.107 2000/06/14 22:02:36 veego Exp $
+# 	$NetBSD: GENERIC,v 1.107.2.1 2000/06/23 14:36:14 fvdl Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.107 $"
+#ident 		"GENERIC-$Revision: 1.107.2.1 $"
 
 maxusers	32
 
@@ -15,7 +15,7 @@ options 	SUN4		# sun4/100, sun4/200, sun4/300
 options 	SUN4C		# sun4c - SS1, 1+, 2, ELC, SLC, IPC, IPX, etc.
 options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
-#options 	SUN4_MMU3L	# 3-level MMU on sun4/400; (incomplete)
+options 	SUN4_MMU3L	# sun4/400 3-level MMU
 
 ## System options specific to the sparc machine type
 
@@ -157,7 +157,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -428,10 +428,12 @@ le*		at lebuffer?				# SBus
 ## or on a Multibus/VME card.
 ie0	at obio0 addr 0xf6000000 level 6		# sun4/200 on-board
 ie0	at obio0 addr 0x06000000 level 6		# sun4/100 on-board
-ie1	at vme0 addr 0xe88000 irq 3 vect 0x75		# VME
-ie2	at vme0 addr 0x31ff02 irq 3 vect 0x76		# VME
-ie3	at vme0 addr 0x35ff02 irq 3 vect 0x77		# VME
-ie4	at vme0 addr 0x2dff02 irq 3 vect 0x7c		# VME
+## VME: the first [addr,len] pair specifies the device registers;
+##	the second pair specifies the on-board memory buffer
+ie1	at vme0 addr 0xe88000,0xe00000 len -1,0x40000 irq 3 vect 0x75
+ie2	at vme0 addr 0x31ff02,0x300000 len -1,0x40000 irq 3 vect 0x76
+ie3	at vme0 addr 0x35ff02,0x300000 len -1,0x40000 irq 3 vect 0x77
+ie4	at vme0 addr 0x2dff02,0x200000 len -1,0x40000 irq 3 vect 0x7c
 
 ## Quad Ethernet Controller with BigMac (be, 10/100MBd) and Mace Ethernet
 ## (qe, 10MBd) attached.

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.14 2000/06/14 22:02:31 veego Exp $
+#	$NetBSD: GENERIC,v 1.14.2.1 2000/06/23 14:36:11 fvdl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.14 $"
+#ident 		"GENERIC-$Revision: 1.14.2.1 $"
 
 maxusers	16		# estimated number of users
 
@@ -70,7 +70,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.

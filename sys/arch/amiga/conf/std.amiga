@@ -1,12 +1,8 @@
-#	$NetBSD: std.amiga,v 1.17 1999/11/15 19:00:26 fvdl Exp $
+#	$NetBSD: std.amiga,v 1.17.4.1 2000/06/23 14:36:06 fvdl Exp $
 
 # standard amiga information
 
 machine amiga m68k
-
-prefix ../gnu/sys
-cinclude "conf/files.softdep"
-prefix
 
 mainbus0	at root
 
