@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.2 1996/01/24 22:40:48 gwr Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.3 1996/01/30 22:35:04 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -48,16 +48,21 @@
 #include <dev/ic/z8530sc.h>
 
 /*
- * Macros to read and write individual registers (except 0) in a channel.
- * The ZS chip requires a 1.6 uSec. recovery time between accesses, and
- * the Sun3 hardware does NOT take care of this for you.
+ * Functions to read and write individual registers in a channel.
+ * The ZS chip requires a 1.6 uSec. recovery time between accesses,
+ * and the Sun3 hardware does NOT take care of this for you.
+ * The delay is now handled inside the chip access functions.
+ * These could be inlines, but with the delay, speed is moot.
  */
-#define	ZS_READ(c, r)		zs_read_reg(c, r)
-#define	ZS_WRITE(c, r, v)	zs_write_reg(c, r, v)
-#define ZS_DELAY()			delay2us()
 
-u_char zs_read_reg __P((struct zs_chanstate *zc, u_char reg));
-void  zs_write_reg __P((struct zs_chanstate *zc, u_char reg, u_char val));
+u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
+u_char zs_read_csr __P((struct zs_chanstate *cs));
+u_char zs_read_data __P((struct zs_chanstate *cs));
+
+void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
+void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+
 
 /*
  * How to request a "soft" interrupt.
