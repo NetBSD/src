@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/03/13 16:31:29 uch Exp $
+#	$NetBSD: Makefile,v 1.5 2001/04/23 18:07:57 uch Exp $
 #
 
 PROJECT_DIRS	= hpcboot libz libsa
@@ -10,7 +10,11 @@ all:
 #
 # generates project/work files for Embeded Visual C++ 3.0
 #
-evc3:
+make_option:
+	echo "/* option \`SPEC_PLATFORM' not defined */" >		\
+	hpcboot/opt_spec_platform.h
+
+evc3: make_option
 	cd dspgen && ${MAKE} evc3 || exit 1;
 	for d in ${PROJECT_DIRS}; do					\
 		sh dspgen/config.sh evc3 $$d;				\
@@ -20,7 +24,7 @@ evc3:
 #
 # generates project/work files for Visual C++ 6.0 + Windows CE tool kit.
 #
-vc6:
+vc6: make_option
 	cd dspgen && ${MAKE} vc6 || exit 1;
 	for d in ${PROJECT_DIRS}; do					\
 		sh dspgen/config.sh vc6 $$d;				\
@@ -32,7 +36,7 @@ vc6:
 # generates project/work files for Visual C++ 5.0 Windows CE Embeded tool kit.
 # (WCE100/101/200 binary for MIPS, SH3)
 #
-vc5:
+vc5: make_option
 	cd dspgen && ${MAKE} vc5 || exit 1;
 	for d in ${PROJECT_DIRS}; do					\
 		sh dspgen/config.sh vc5 $$d;				\
@@ -41,6 +45,7 @@ vc5:
 	sh dspgen/gen_workspace.sh vc5 hpc_stand.dsw $(PROJECT_DIRS)
 
 clean:
+	rm -f hpcboot/opt_spec_platform.h
 # evc3 temporary files
 	rm -f hpc_stand.vcb hpc_stand.vcw hpc_stand.vco
 	find . -name "*.vcp" -print |xargs rm -f
