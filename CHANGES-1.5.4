@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.52 2002/09/18 16:04:51 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.53 2002/09/19 15:05:45 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1506,3 +1506,9 @@ sys/kern/uipc_socket.c				1.53
   is disconnected by RST right before accept(2).  Fixes PR#10698/12027.
   Checked with SUSv2, XNET 5.2, and Stevens (Unix Network Programming
   vol 1 2nd ed) section 5.11.
+
+libexec/talkd/extern.h				1.3
+libexec/talkd/process.c				1.8 via patch
+libexec/talkd/talkd.c				1.13-1.14 via patch
+
+  Fix buffer overrun.
