@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.89 2000/04/10 01:53:11 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.90 2000/04/10 05:34:27 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2000/04/10 01:53:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2000/04/10 05:34:27 nisimura Exp $");
 
 /*
  *	Manages physical address maps.
@@ -190,6 +190,8 @@ unsigned pmap_max_asid;			/* max ASID supported by the system */
 unsigned pmap_next_asid;		/* next free ASID to use */
 unsigned pmap_asid_generation;		/* current ASID generation */
 #define PMAP_ASID_RESERVED 0
+#define	MIPS_TBIAP MachTLBFlush		/* XXX */
+#define	MIPS_TBIS  MachTLBFlushAddr	/* XXX */
 
 boolean_t	pmap_initialized = FALSE;
 
@@ -217,7 +219,7 @@ boolean_t	pmap_initialized = FALSE;
 
 /* Forward function declarations */
 void pmap_remove_pv __P((pmap_t pmap, vaddr_t va, paddr_t pa));
-int pmap_alloc_asid __P((struct proc *p));
+void pmap_asid_alloc __P((pmap_t pmap));
 void pmap_enter_pv __P((pmap_t, vaddr_t, paddr_t, u_int *));
 pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
 
@@ -308,14 +310,14 @@ pmap_bootstrap()
 	 */
 	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
-	pmap_kernel()->pm_asid = 1;
+	pmap_kernel()->pm_asid = PMAP_ASID_RESERVED;
 	pmap_kernel()->pm_asidgen = 0;
 
 	pmap_max_asid = MIPS_TLB_NUM_PIDS;
-	pmap_next_asid = 2;
+	pmap_next_asid = 1;
 	pmap_asid_generation = 0;
 
-	MachSetPID(1);
+	MachSetPID(0);
 
 #ifdef MIPS3
 	/*
@@ -650,19 +652,16 @@ void
 pmap_activate(p)
 	struct proc *p;
 {
-	pmap_t pmap;
-	unsigned asid;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
-	pmap = p->p_vmspace->vm_map.pmap;
-
-	asid = pmap_alloc_asid(p);
+	pmap_asid_alloc(pmap);
 	if (p == curproc) {
-		MachSetPID(asid);
 #ifdef	MIPS3
 		if (CPUISMIPS3) {
 			mips3_write_xcontext_upper((u_int32_t)pmap->pm_segtab);
 		}
 #endif
+		MachSetPID(pmap->pm_asid);
 	}
 	p->p_addr->u_pcb.pcb_segtab = pmap->pm_segtab; /* XXX */
 }
@@ -728,7 +727,7 @@ pmap_remove(pmap, sva, eva)
 			/*
 			 * Flush the TLB for the given address.
 			 */
-			MachTLBFlushAddr(sva);
+			MIPS_TBIS(sva);
 #ifdef DEBUG
 			remove_stats.flushes++;
 
@@ -782,7 +781,7 @@ pmap_remove(pmap, sva, eva)
 			 * Flush the TLB for the given address.
 			 */
 			if (needflush) {
-				MachTLBFlushAddr(sva | asid);
+				MIPS_TBIS(sva | asid);
 #ifdef DEBUG
 				remove_stats.flushes++;
 #endif
@@ -1834,19 +1833,16 @@ pmap_phys_address(ppn)
  * we run out of numbers, we flush the TLB, increment the generation count
  * and start over. ASID zero is reserved for kernel use.
  */
-int
-pmap_alloc_asid(p)
-	struct proc *p;
-{
+void
+pmap_asid_alloc(pmap)
 	pmap_t pmap;
-
-	pmap = p->p_vmspace->vm_map.pmap;
+{
 	if (pmap->pm_asid != PMAP_ASID_RESERVED &&
 	    pmap->pm_asidgen == pmap_asid_generation)
 		;
 	else {
 		if (pmap_next_asid == pmap_max_asid) {
-			MachTLBFlush();		/* MIPS_TBIAP */
+			MIPS_TBIAP();
 			pmap_asid_generation++; /* ok to wrap to 0 */
 			pmap_next_asid = 1;	/* 0 means invalid */
 		}
@@ -1857,15 +1853,14 @@ pmap_alloc_asid(p)
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_TLBPID)) {
 		if (curproc)
-			printf("pmap_alloc_asid: curproc %d '%s' ",
+			printf("pmap_asid_alloc: curproc %d '%s' ",
 				curproc->p_pid, curproc->p_comm);
 		else
-			printf("pmap_alloc_asid: curproc <none> ");
+			printf("pmap_asid_alloc: curproc <none> ");
 		printf("segtab %p asid %d pid %d '%s'\n",
 			pmap->pm_segtab, pmap->pm_asid, p->p_pid, p->p_comm);
 	}
 #endif
-	return (pmap->pm_asid);
 }
 
 /*
