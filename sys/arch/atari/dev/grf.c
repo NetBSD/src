@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.25 2000/06/29 08:28:24 mrg Exp $	*/
+/*	$NetBSD: grf.c,v 1.25.4.1 2001/09/12 19:04:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -276,6 +276,14 @@ grfpoll(dev, events, p)
 	if (events & (POLLOUT | POLLWRNORM))
 		revents |= events & (POLLOUT | POLLWRNORM);
 	return (revents);
+}
+
+int
+grfkqfilter(dev_t dev, struct knote *kn)
+{
+
+	/* XXXLUKEM (thorpej): not supported -- why is poll? */
+	return (1);
 }
 
 /*

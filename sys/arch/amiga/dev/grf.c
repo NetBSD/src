@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.37 2000/06/29 08:44:05 mrg Exp $	*/
+/*	$NetBSD: grf.c,v 1.37.4.1 2001/09/12 19:04:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -309,6 +309,14 @@ grfpoll(dev, events, p)
 	struct proc *p;
 {
 	return(events & (POLLOUT | POLLWRNORM));
+}
+
+int
+grfkqfilter(dev_t dev, struct knote *kn)
+{
+
+	/* XXXLUKEM (thorpej): not supported -- why is poll? */
+	return (1);
 }
 
 /*
