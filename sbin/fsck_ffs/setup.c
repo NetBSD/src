@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.62 2003/08/07 10:04:21 agc Exp $	*/
+/*	$NetBSD: setup.c,v 1.63 2003/10/20 12:04:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.62 2003/08/07 10:04:21 agc Exp $");
+__RCSID("$NetBSD: setup.c,v 1.63 2003/10/20 12:04:38 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,16 +107,15 @@ setup(dev)
 		printf("Can't open %s: %s\n", dev, strerror(errno));
 		return (0);
 	}
-	if (preen == 0)
-		printf("** %s", dev);
 	if (nflag || (fswritefd = open(dev, O_WRONLY)) < 0) {
 		fswritefd = -1;
 		if (preen)
 			pfatal("NO WRITE ACCESS");
-		printf(" (NO WRITE)");
-	}
-	if (preen == 0)
-		printf("\n");
+		printf("** %s (NO WRITE)\n", dev);
+		quiet = 0;
+	} else
+		if (!preen && !quiet)
+			printf("** %s\n", dev);
 	fsmodified = 0;
 	lfdir = 0;
 	initbarea(&sblk);
@@ -170,8 +169,9 @@ setup(dev)
 	}
 	if (sblock->fs_clean & FS_ISCLEAN) {
 		if (doskipclean) {
-			pwarn("%sile system is clean; not checking\n",
-			    preen ? "f" : "** F");
+			if (!quiet)
+				pwarn("%sile system is clean; not checking\n",
+				    preen ? "f" : "** F");
 			return (-1);
 		}
 		if (!preen && !doswap)
@@ -381,14 +381,14 @@ setup(dev)
 	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));
 	blockmap = calloc((unsigned)bmapsize, sizeof (char));
 	if (blockmap == NULL) {
-		printf("cannot alloc %u bytes for blockmap\n",
+		pwarn("cannot alloc %u bytes for blockmap\n",
 		    (unsigned)bmapsize);
 		goto badsblabel;
 	}
 	inostathead = calloc((unsigned)(sblock->fs_ncg),
 	    sizeof(struct inostatlist));
 	if (inostathead == NULL) {
-		printf("cannot alloc %u bytes for inostathead\n",
+		pwarn("cannot alloc %u bytes for inostathead\n",
 		    (unsigned)(sizeof(struct inostatlist) * (sblock->fs_ncg)));
 		goto badsblabel;
 	}
@@ -411,13 +411,13 @@ setup(dev)
 	inphead = (struct inoinfo **)calloc((unsigned)numdirs,
 	    sizeof(struct inoinfo *));
 	if (inpsort == NULL || inphead == NULL) {
-		printf("cannot alloc %u bytes for inphead\n", 
+		pwarn("cannot alloc %u bytes for inphead\n", 
 		    (unsigned)(numdirs * sizeof(struct inoinfo *)));
 		goto badsblabel;
 	}
 	cgrp = malloc(sblock->fs_cgsize);
 	if (cgrp == NULL) {
-		printf("cannot alloc %u bytes for cylinder group\n",
+		pwarn("cannot alloc %u bytes for cylinder group\n",
 		    sblock->fs_cgsize);
 		goto badsblabel;
 	}
@@ -641,7 +641,7 @@ readsb(listerr)
 			pfatal("INTERNAL ERROR: unknown endian");
 	}
 	if (needswap)
-		printf("** Swapped byte order\n");
+		pwarn("** Swapped byte order\n");
 	/* swap SB byte order if asked */
 	if (doswap)
 		ffs_sb_swap(sblk.b_un.b_fs, sblk.b_un.b_fs);

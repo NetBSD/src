@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2002/05/25 23:45:13 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2003/10/20 12:04:38 dsl Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.13 2002/05/25 23:45:13 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2003/10/20 12:04:38 dsl Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -71,7 +71,7 @@ main(argc, argv)
 	int ret = 0, erg;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "pynf")) != -1) {
+	while ((ch = getopt(argc, argv, "pqynf")) != -1) {
 		switch (ch) {
 		case 'f':
 			/*
@@ -91,6 +91,9 @@ main(argc, argv)
 		case 'p':
 			preen = 1;
 			alwaysyes = alwaysno = 0;
+			break;
+
+		case 'q':		/* quite not implemented */
 			break;
 
 		default:

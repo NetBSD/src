@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.30 2003/08/07 10:04:15 agc Exp $	*/
+/*	$NetBSD: fsck.c,v 1.31 2003/10/20 12:04:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.30 2003/08/07 10:04:15 agc Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.31 2003/10/20 12:04:38 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -139,37 +139,34 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&selhead);
 	TAILQ_INIT(&opthead);
 
-	while ((i = getopt(argc, argv, "dvpfnyl:t:T:")) != -1)
+	while ((i = getopt(argc, argv, "dfl:npqT:t:vy")) != -1) {
 		switch (i) {
 		case 'd':
 			flags |= CHECK_DEBUG;
+			continue;
+
+		case 'f':
+			flags |= CHECK_FORCE;
 			break;
 
-		case 'v':
-			flags |= CHECK_VERBOSE;
+		case 'n':
 			break;
 
 		case 'p':
-		case 'f':
-			if (i == 'p')
-				flags |= CHECK_PREEN;
-			else
-				flags |= CHECK_FORCE;
-			/*FALLTHROUGH*/
-		case 'n':
-		case 'y':
-			globopt[1] = i;
-			catopt(&options, globopt);
+			flags |= CHECK_PREEN;
+			break;
+
+		case 'q':
 			break;
 
 		case 'l':
 			maxrun = atoi(optarg);
-			break;
+			continue;
 
 		case 'T':
 			if (*optarg)
 				addoption(optarg);
-			break;
+			continue;
 
 		case 't':
 			if (TAILQ_FIRST(&selhead) != NULL)
@@ -177,6 +174,13 @@ main(int argc, char *argv[])
 
 			maketypelist(optarg);
 			vfstype = optarg;
+			continue;
+
+		case 'v':
+			flags |= CHECK_VERBOSE;
+			continue;
+
+		case 'y':
 			break;
 
 		case '?':
@@ -184,6 +188,11 @@ main(int argc, char *argv[])
 			usage();
 			/* NOTREACHED */
 		}
+
+		/* Pass option to fsck_xxxfs */
+		globopt[1] = i;
+		catopt(&options, globopt);
+	}
 
 	argc -= optind;
 	argv += optind;
@@ -556,7 +565,7 @@ static void
 usage(void)
 {
 	static const char common[] =
-	    "[-dfnpvy] [-T fstype:fsoptions] [-t fstype]";
+	    "[-dfnpqvy] [-T fstype:fsoptions] [-t fstype]";
 
 	(void)fprintf(stderr, "Usage: %s %s [special|node]...\n",
 	    getprogname(), common);
