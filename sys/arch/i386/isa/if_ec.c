@@ -239,7 +239,7 @@ struct isa_device *is;
 /*
  * Weeee.. We get to tell people we exist...
  */
-	printf("ec%d: ethernet address %s\n", unit,
+	printf("ec%d: ethernet address %s\n", is->id_unit,
 	       ether_sprintf(sc->ec_addr));
 }
 
