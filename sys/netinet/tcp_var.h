@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.105 2003/09/04 09:17:02 itojun Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.106 2003/10/22 02:45:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -727,6 +727,7 @@ int	 tcp6_input __P((struct mbuf **, int *, int));
 void	 tcp_input __P((struct mbuf *, ...));
 u_long	 tcp_mss_to_advertise __P((const struct ifnet *, int));
 void	 tcp_mss_from_peer __P((struct tcpcb *, int));
+void	 tcp_tcpcb_template __P((void));
 struct tcpcb *
 	 tcp_newtcpcb __P((int, void *));
 void	 tcp_notify __P((struct inpcb *, int));
