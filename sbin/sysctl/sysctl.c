@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.51 2002/01/27 12:47:37 simonb Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.52 2002/01/27 23:50:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.51 2002/01/27 12:47:37 simonb Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.52 2002/01/27 23:50:36 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1130,7 +1130,7 @@ sysctl_mbuf(string, bufpp, mib, flags, typep)
 struct ctlname pipenames[] = CTL_PIPE_NAMES;
 struct list pipevars = { pipenames, KERN_PIPE_MAXID };
 /*
- * handle kern.mbuf requests
+ * handle kern.pipe requests
  */
 static int
 sysctl_pipe(string, bufpp, mib, flags, typep)
