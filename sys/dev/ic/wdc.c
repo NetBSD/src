@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.172.2.2 2004/05/29 14:08:18 tron Exp $ */
+/*	$NetBSD: wdc.c,v 1.172.2.3 2004/05/29 14:10:40 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.2 2004/05/29 14:08:18 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.3 2004/05/29 14:10:40 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -689,6 +689,8 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_command], 0,
 		    ATAPI_SOFT_RESET);
 	}
+
+	delay(5000);
 
 	if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
 		wdc->select(chp,0);
