@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36.4.2 2001/11/05 19:46:19 briggs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36.4.3 2001/11/21 03:20:57 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -136,7 +136,14 @@ cpu_fork(l1, l2, stack, stacksize, func, arg)
 		tf->fixreg[1] = (register_t)stack + stacksize;
 	}
 
-	stktop2 = (caddr_t)((u_long)stktop2 & ~15);	/* Align stack pointer */
+	/*
+	 * Align stack pointer
+	 * Since sizeof(struct trapframe) is 41 words, this will
+	 * give us 12 bytes on the stack, which pad us somewhat
+	 * for an extra call frame (or at least space for callee
+	 * to store LR).
+	 */
+	stktop2 = (caddr_t)((u_long)stktop2 & ~15);
 
 	/*
 	 * There happens to be a callframe, too.
@@ -180,7 +187,7 @@ cpu_setfunc(l, func, arg)
 	caddr_t vaddr;
 
 	tf = trapframe(l);
-	cf = (struct callframe *) tf;
+	cf = (struct callframe *) ((u_long)tf & ~15);
 	cf->lr = (register_t) fork_trampoline;
 	cf--;
 	cf->r31 = (register_t) func;
