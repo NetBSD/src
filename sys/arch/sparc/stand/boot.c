@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 1994/11/25 23:09:09 deraadt Exp $ */
+/*	$NetBSD: boot.c,v 1.8 1994/12/06 10:39:40 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -130,7 +130,7 @@ copyunix(io, addr)
 	if (x.a_syms != 0) {
 		bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 		addr += sizeof(x.a_syms);
-		printf(" [%d+", x.a_syms);
+		printf("+[%d+", x.a_syms);
 		if (read(io, addr, x.a_syms) != x.a_syms)
 			goto shread;
 		addr += x.a_syms;
@@ -153,6 +153,7 @@ copyunix(io, addr)
 		esym = KERNBASE +
 			(((int)addr + sizeof(int) - 1) & ~(sizeof(int) - 1));
 	}
+	printf("=0x%x\n", addr);
 
 #define DDB_MAGIC ( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('0') )
 	(*entry)(promvec, esym, DDB_MAGIC);
