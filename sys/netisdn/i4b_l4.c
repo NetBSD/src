@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.3 2001/03/24 12:40:32 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.4 2001/07/08 10:33:59 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -87,10 +87,6 @@
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_l3.h>
 #include <netisdn/i4b_l4.h>
-
-#if !defined(__FreeBSD__) && !defined(__NetBSD__)
-#define memcpy(dst, src, len)	bcopy((src), (dst), (len))
-#endif
 
 unsigned int i4b_l4_debug = L4_DEBUG_DEFAULT;
 
@@ -247,7 +243,7 @@ i4b_l4_dialoutnumber(int driver, int driver_unit, int cmdlen, char *cmd)
 			cmdlen = TELNO_MAX;
 
 		md->cmdlen = cmdlen;
-		bcopy(cmd, md->cmd, cmdlen);
+		memcpy(md->cmd, cmd, cmdlen);
 		i4bputqueue(m);
 	}
 }

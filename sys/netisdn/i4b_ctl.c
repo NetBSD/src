@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.3 2001/04/21 07:23:41 martin Exp $
+ *	$Id: i4b_ctl.c,v 1.4 2001/07/08 10:33:58 martin Exp $
  *
  * $FreeBSD$
  *
@@ -323,7 +323,7 @@ i4bctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				break;
 			}
 			  
-			bcopy(&sc->stat, &l2s->lapdstat, sizeof(lapdstat_t));
+			memcpy(&l2s->lapdstat, &sc->stat, sizeof(lapdstat_t));
                         break;
                 }
 
