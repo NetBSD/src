@@ -1,6 +1,7 @@
-/*	$NetBSD: nlist.c,v 1.7 1996/05/16 20:49:20 cgd Exp $	*/
+/*	$NetBSD: nlist.c,v 1.8 1996/09/27 22:23:04 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -37,19 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: nlist.c,v 1.7 1996/05/16 20:49:20 cgd Exp $";
+static char rcsid[] = "$NetBSD: nlist.c,v 1.8 1996/09/27 22:23:04 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
-
-#ifdef __alpha__
-#define		DO_ECOFF
-#else
-#define		DO_AOUT
-#endif
-
-#if defined(DO_AOUT) + defined(DO_ECOFF) != 1
-	ERROR: NOT PROPERLY CONFIGURED
-#endif
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -57,14 +48,31 @@ static char rcsid[] = "$NetBSD: nlist.c,v 1.7 1996/05/16 20:49:20 cgd Exp $";
 #include <sys/file.h>
 
 #include <errno.h>
-#include <a.out.h>
-#ifdef DO_ECOFF
-#include <sys/exec_ecoff.h>
-#endif
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <a.out.h>			/* for 'struct nlist' declaration */
 
+#include "nlist_private.h"
+
+static struct {
+	int	(*check) __P((int));
+	int	(*fdnlist) __P((int, struct nlist *));
+} fdnlist_fmts[] = {
+#ifdef NLIST_AOUT
+	{	__fdnlist_is_aout,	__fdnlist_aout		},
+#endif
+#ifdef NLIST_ECOFF
+	{	__fdnlist_is_ecoff,	__fdnlist_ecoff		},
+#endif
+#ifdef NLIST_ELF32
+	{	__fdnlist_is_elf32,	__fdnlist_elf32		},
+#endif
+#ifdef NLIST_ELF64
+	{	__fdnlist_is_elf64,	__fdnlist_elf64		},
+#endif
+};
+	
 int
 nlist(name, list)
 	const char *name;
@@ -80,194 +88,15 @@ nlist(name, list)
 	return (n);
 }
 
-#define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
-
-#ifdef DO_AOUT
 int
 __fdnlist(fd, list)
-	register int fd;
-	register struct nlist *list;
+	int fd;
+	struct nlist *list;
 {
-	register struct nlist *p, *s;
-	register caddr_t strtab;
-	register off_t stroff, symoff;
-	register u_long symsize;
-	register int nent, cc;
-	size_t strsize;
-	struct nlist nbuf[1024];
-	struct exec exec;
-	struct stat st;
+	int i;
 
-	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
-	    read(fd, &exec, sizeof(exec)) != sizeof(exec) ||
-	    N_BADMAG(exec) || fstat(fd, &st) < 0)
-		return (-1);
-
-	symoff = N_SYMOFF(exec);
-	symsize = exec.a_syms;
-	stroff = symoff + symsize;
-
-	/* Check for files too large to mmap. */
-	if (st.st_size - stroff > SIZE_T_MAX) {
-		errno = EFBIG;
-		return (-1);
-	}
-	/*
-	 * Map string table into our address space.  This gives us
-	 * an easy way to randomly access all the strings, without
-	 * making the memory allocation permanent as with malloc/free
-	 * (i.e., munmap will return it to the system).
-	 */
-	strsize = st.st_size - stroff;
-	strtab = mmap(NULL, (size_t)strsize, PROT_READ, 0, fd, stroff);
-	if (strtab == (char *)-1)
-		return (-1);
-	/*
-	 * clean out any left-over information for all valid entries.
-	 * Type and value defined to be 0 if not found; historical
-	 * versions cleared other and desc as well.  Also figure out
-	 * the largest string length so don't read any more of the
-	 * string table than we have to.
-	 *
-	 * XXX clearing anything other than n_type and n_value violates
-	 * the semantics given in the man page.
-	 */
-	nent = 0;
-	for (p = list; !ISLAST(p); ++p) {
-		p->n_type = 0;
-		p->n_other = 0;
-		p->n_desc = 0;
-		p->n_value = 0;
-		++nent;
-	}
-	if (lseek(fd, symoff, SEEK_SET) == -1)
-		return (-1);
-
-	while (symsize > 0) {
-		cc = MIN(symsize, sizeof(nbuf));
-		if (read(fd, nbuf, cc) != cc)
-			break;
-		symsize -= cc;
-		for (s = nbuf; cc > 0; ++s, cc -= sizeof(*s)) {
-			register int soff = s->n_un.n_strx;
-
-			if (soff == 0 || (s->n_type & N_STAB) != 0)
-				continue;
-			for (p = list; !ISLAST(p); p++)
-				if (!strcmp(&strtab[soff], p->n_un.n_name)) {
-					p->n_value = s->n_value;
-					p->n_type = s->n_type;
-					p->n_desc = s->n_desc;
-					p->n_other = s->n_other;
-					if (--nent <= 0)
-						break;
-				}
-		}
-	}
-	munmap(strtab, strsize);
-	return (nent);
+	for (i = 0; i < sizeof(fdnlist_fmts) / sizeof(fdnlist_fmts[0]); i++)
+		if ((*fdnlist_fmts[i].check)(fd) != -1)
+			return ((*fdnlist_fmts[i].fdnlist)(fd, list));
+	return -1;
 }
-#endif /* DO_AOUT */
-
-#ifdef DO_ECOFF
-#define check(off, size)	((off < 0) || (off + size > mappedsize))
-#define	BAD			do { rv = -1; goto out; } while (0)
-#define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
-
-int
-__fdnlist(fd, list)
-	register int fd;
-	register struct nlist *list;
-{
-	struct nlist *p;
-	struct ecoff_exechdr *exechdrp;
-	struct ecoff_symhdr *symhdrp;
-	struct ecoff_extsym *esyms;
-	struct stat st;
-	char *mappedfile;
-	size_t mappedsize;
-	u_long symhdroff, extstroff;
-	u_int symhdrsize;
-	int rv, nent;
-	long i, nesyms;
-
-	rv = -3;
-
-	if (fstat(fd, &st) < 0)
-		BAD;
-	if (st.st_size > SIZE_T_MAX) {
-		errno = EFBIG;
-		BAD;
-	}
-	mappedsize = st.st_size;
-	mappedfile = mmap(NULL, mappedsize, PROT_READ, 0, fd, 0);
-	if (mappedfile == (char *)-1)
-		BAD;
-
-	if (check(0, sizeof *exechdrp))
-		BADUNMAP;
-	exechdrp = (struct ecoff_exechdr *)&mappedfile[0];
-
-	if (ECOFF_BADMAG(exechdrp))
-		BADUNMAP;
-
-	symhdroff = exechdrp->f.f_symptr;
-	symhdrsize = exechdrp->f.f_nsyms;
-
-	if (check(symhdroff, sizeof *symhdrp) ||
-	    sizeof *symhdrp != symhdrsize)
-		BADUNMAP;
-	symhdrp = (struct ecoff_symhdr *)&mappedfile[symhdroff];
-
-	nesyms = symhdrp->esymMax;
-	if (check(symhdrp->cbExtOffset, nesyms * sizeof *esyms))
-		BADUNMAP;
-	esyms = (struct ecoff_extsym *)&mappedfile[symhdrp->cbExtOffset];
-	extstroff = symhdrp->cbSsExtOffset;
-
-	/*
-	 * clean out any left-over information for all valid entries.
-	 * Type and value defined to be 0 if not found; historical
-	 * versions cleared other and desc as well.
-	 *
-	 * XXX clearing anything other than n_type and n_value violates
-	 * the semantics given in the man page.
-	 */
-	nent = 0;
-	for (p = list; !ISLAST(p); ++p) {
-		p->n_type = 0;
-		p->n_other = 0;
-		p->n_desc = 0;
-		p->n_value = 0;
-		++nent;
-	}
-
-	for (i = 0; i < nesyms; i++) {
-		for (p = list; !ISLAST(p); p++) {
-			char *nlistname;
-			char *symtabname;
-
-			nlistname = p->n_un.n_name;
-			if (*nlistname == '_')
-				nlistname++;
-			symtabname =
-			    &mappedfile[extstroff + esyms[i].es_strindex];
-
-			if (!strcmp(symtabname, nlistname)) {
-				p->n_value = esyms[i].es_value;
-				p->n_type = N_EXT;		/* XXX */
-				p->n_desc = 0;			/* XXX */
-				p->n_other = 0;			/* XXX */
-				if (--nent <= 0)
-					break;
-			}
-		}
-	}
-	rv = nent;
-
-unmap:
-	munmap(mappedfile, mappedsize);
-out:
-	return (rv);
-}
-#endif /* DO_ECOFF */
