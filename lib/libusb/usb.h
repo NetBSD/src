@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.6 2000/02/22 12:39:22 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.7 2000/04/02 11:10:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -84,10 +84,10 @@ int hid_report_size __P((report_desc_t d, enum hid_kind k, int *idp));
 int hid_locate __P((report_desc_t d, unsigned int usage, enum hid_kind k, hid_item_t *h));
 
 /* Conversion to/from usage names, usage.c: */
-char *hid_usage_page __P((int i));
-char *hid_usage_in_page __P((unsigned int u));
-void hid_init __P((char *file));
+const char *hid_usage_page __P((int i));
+const char *hid_usage_in_page __P((unsigned int u));
+void hid_init __P((const char *file));
 
 /* Extracting/insertion of data, data.c: */
-int hid_get_data __P((void *p, hid_item_t *h));
-void hid_set_data __P((void *p, hid_item_t *h, int data));
+int hid_get_data __P((const void *p, const hid_item_t *h));
+void hid_set_data __P((void *p, const hid_item_t *h, int data));
