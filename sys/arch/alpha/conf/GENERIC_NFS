@@ -1,6 +1,6 @@
-#	$NetBSD: ALPHA,v 1.5 1995/06/27 00:54:55 cgd Exp $
+#	$NetBSD: GENERIC_NFS,v 1.1 1995/06/27 00:59:25 cgd Exp $
 #
-# Alpha kernel with all the options you'd want, and more.
+# Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
 machine		alpha
 
@@ -9,14 +9,11 @@ makeoptions	DEBUG="-g"
 
 maxusers 8
 
-# does not really do anything anymore, but this replaces "ident GENERIC"
-options		GENERIC
-
 # CPU Support
 options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 options		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 options		DEC_3000_300	# Pelican etc:	3000/300*
-options		DEC_2100_A50	# "Avanti":	AlphaStation 400 4/233
+options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 
 # needs to be set per system
 options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
@@ -30,50 +27,17 @@ options		KTRACE			# System call tracing support
 # File system options
 options		FIFO		# POSIX fifo support (in all file systems)
 options		FFS		# Fast file system
-options		QUOTA		# User and group quotas for the FFS
 options		MFS		# Memory-based file system
-options		LFS		# Log-structured file system
-options		CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
-options		MSDOSFS		# MS-DOS-compatible file system
-options		ADOSFS		# AmigaDOS-compatible file system
-options		NFSSERVER	# Sun NFS-compatible file system server
 options		NFSCLIENT	# Sun NFS-compatible file system client
-options		NULLFS		# Null file system layer
-options		KERNFS		# Kernel variable file system (/kern)
-options		FDESC		# File descriptor file system (/dev/fd)
-options		PORTAL		# Portal file system
-options		UMAP		# User-mapping file system layer
-options		PROCFS		# Process file system (/proc)
 
 # Networking options
 options		INET		# Internet protocol suite
-options		NS		# Xerox NS protocol suite
-options		ISO,TPIP,EON	# ISO protocol suite
-options		CCITT,LLC,HDLC	# CCITT protocol suite
-options		GATEWAY		# packet forwarding and more mbuf space
-
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
-#options	TCP_COMPAT_42
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options		COMPAT_43
 
-# NetBSD compatibility.  Mostly meaningless on the Alpha.
-#options	COMPAT_09
-#options	COMPAT_10
-
 # OSF/1 binary compatibility
 options		COMPAT_OSF1
-
-# System V-like message queues
-options		SYSVMSG
-
-# System V-like semaphores
-options		SYSVSEM
-
-# System V-like shared memory
-options		SYSVSHM
-#options	SHMMAXPGS=1024		# 1024 pages is the default
 
 # Loadable Kernel Modules
 options		LKM
@@ -84,9 +48,7 @@ options		LKM
 # Misc. options
 options		PCIVERBOSE		# recognize "unknown" PCI devices
 
-config		netbsd	swap generic
-#config		netbsd	root on sd0 swap on sd0
-#config		netbsd	root nfs swap nfs
+config		netbsd_nfs	root on nfs swap on nfs
 
 mainbus0 at	root
 
@@ -111,16 +73,18 @@ pci*	at	apecs?
 
 de*	at	pci?
 sio*	at	pci?
-#ncr*	at	pci?
+ncr*	at	pci?
+#tga*	at	pci?
 
 isa0	at	sio?
 clock0	at	isa? port 0x70
 #com0	at	isa? port 0x3f8 irq 4		# standard serial ports
 com1	at	isa? port 0x2f8 irq 3
 lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
+wss0	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 
 scsibus* at	esp?
-#scsibus* at	ncr?
+scsibus* at	ncr?
 
 sd*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?
@@ -128,8 +92,6 @@ cd*	at	scsibus? target ? lun ?
 
 pseudo-device	bpfilter
 pseudo-device	loop
-pseudo-device	ppp
 pseudo-device	pty
 pseudo-device	sl
-pseudo-device	tun
 pseudo-device	vnd
