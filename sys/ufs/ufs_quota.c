@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_quota.c	7.11 (Berkeley) 6/21/91
- *	$Id: ufs_quota.c,v 1.5 1994/04/21 07:49:28 cgd Exp $
+ *	$Id: ufs_quota.c,v 1.6 1994/04/25 03:50:50 cgd Exp $
  */
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -405,7 +405,7 @@ again:
 		nextvp = vp->v_mntvnodes.le_next;
 		if (vp->v_writecount == 0)
 			continue;
-		if (vget(vp))
+		if (vget(vp, 1))
 			goto again;
 		if (error = getinoquota(VTOI(vp))) {
 			vput(vp);
@@ -449,7 +449,7 @@ quotaoff(p, mp, type)
 again:
 	for (vp = mp->mnt_vnodelist.lh_first; vp; vp = nextvp) {
 		nextvp = vp->v_mntvnodes.le_next;
-		if (vget(vp))
+		if (vget(vp, 1))
 			goto again;
 		ip = VTOI(vp);
 		dq = ip->i_dquot[type];
@@ -627,7 +627,7 @@ again:
 		nextvp = vp->v_mntvnodes.le_next;
 		if (VOP_ISLOCKED(vp))
 			continue;
-		if (vget(vp))
+		if (vget(vp, 1))
 			goto again;
 		for (i = 0; i < MAXQUOTAS; i++) {
 			dq = VTOI(vp)->i_dquot[i];

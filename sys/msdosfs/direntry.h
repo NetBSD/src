@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: direntry.h,v 1.2 1994/03/03 00:51:32 paulus Exp $
+ *	$Id: direntry.h,v 1.3 1994/04/25 03:50:04 cgd Exp $
  */
 
 /*
@@ -74,8 +74,8 @@ struct direntry {
 #define	msdosfs_cluster	ufs_ino
 
 #if defined(KERNEL)
-void unix2dostime __P((struct timeval * tvp, u_short * ddp, u_short * dtp));
-void dos2unixtime __P((u_short dd, u_short dt, struct timeval * tvp));
+void unix2dostime __P((struct timespec * tsp, u_short * ddp, u_short * dtp));
+void dos2unixtime __P((u_short dd, u_short dt, struct timespec * tsp));
 int dos2unixfn __P((u_char dn[11], u_char * un));
 void unix2dosfn __P((u_char * un, u_char dn[11], int unlen));
 #endif				/* defined(KERNEL) */

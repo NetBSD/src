@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.13 1994/04/23 07:55:07 cgd Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.14 1994/04/25 03:50:12 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -621,7 +621,7 @@ loop:
 		if ((dep->de_flag & DEUPD) == 0 &&
 		    vp->v_dirtyblkhd.lh_first == NULL)
 			continue;
-		if (vget(vp))	/* not there anymore?	 */
+		if (vget(vp, 1))	/* not there anymore?	 */
 			goto loop;
 		/* flush dirty file blocks */
 		if (vp->v_dirtyblkhd.lh_first != NULL)

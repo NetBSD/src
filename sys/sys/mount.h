@@ -31,14 +31,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.28 1994/04/23 07:55:23 cgd Exp $
+ *	$Id: mount.h,v 1.29 1994/04/25 03:50:33 cgd Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
 #define _SYS_MOUNT_H_
 #include <sys/queue.h>
 
-typedef quad fsid_t;			/* file system id type */
+typedef struct { long val[2]; } fsid_t;		/* file system id type */
 
 /*
  * File identifier.
@@ -115,6 +115,8 @@ struct mount {
 
 /*
  * Mount flags.
+ *
+ * Unmount uses MNT_FORCE flag.
  */
 #define	MNT_RDONLY	0x00000001	/* read only filesystem */
 #define	MNT_SYNCHRONOUS	0x00000002	/* file system written synchronously */

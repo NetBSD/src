@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_node.c	7.34 (Berkeley) 5/15/91
- *	$Id: nfs_node.c,v 1.7 1994/04/21 23:23:29 cgd Exp $
+ *	$Id: nfs_node.c,v 1.8 1994/04/25 03:50:19 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -131,7 +131,7 @@ loop:
 		    bcmp((caddr_t)fhp, (caddr_t)&np->n_fh, NFSX_FH))
 			continue;
 		vp = NFSTOV(np);
-		if (vget(vp))
+		if (vget(vp, 1))
 			goto loop;
 		*npp = np;
 		return(0);
@@ -156,8 +156,10 @@ loop:
 	np->n_size = 0;
 	np->n_mtime = 0;
 	np->n_lockf = 0;
-	np->n_delayed_mtime.tv_sec = VNOVAL;
-	np->n_delayed_atime.tv_sec = VNOVAL;
+	np->n_delayed_mtime.ts_sec = VNOVAL;
+	np->n_delayed_mtime.ts_nsec = 0;		/* XXX */
+	np->n_delayed_atime.ts_sec = VNOVAL;
+	np->n_delayed_atime.ts_nsec = 0;		/* XXX */
 	*npp = np;
 	return (0);
 }

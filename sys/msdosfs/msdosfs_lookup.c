@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_lookup.c,v 1.8 1994/03/03 00:51:35 paulus Exp $
+ *	$Id: msdosfs_lookup.c,v 1.9 1994/04/25 03:50:10 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -120,12 +120,12 @@ msdosfs_lookup(vdp, ndp, p)
 		}
 		else if (ndp->ni_isdotdot) {
 			DEUNLOCK(pdp);
-			error = vget(vdp);
+			error = vget(vdp, 1);
 			if (!error && lockparent && *ndp->ni_next == '\0')
 				DELOCK(pdp);
 		}
 		else {
-			error = vget(vdp);
+			error = vget(vdp, 1);
 			if (!lockparent || error || *ndp->ni_next != '\0')
 				DEUNLOCK(pdp);
 		}

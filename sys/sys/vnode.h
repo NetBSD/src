@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.17 1994/04/21 07:49:24 cgd Exp $
+ *	$Id: vnode.h,v 1.18 1994/04/25 03:50:38 cgd Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -125,29 +125,18 @@ struct vattr {
 	gid_t		va_gid;		/* owner group id */
 	long		va_fsid;	/* file system id (dev for now) */
 	long		va_fileid;	/* file id */
-	u_quad		va_qsize;	/* file size in bytes */
+	u_quad_t	va_size;	/* file size in bytes */
 	long		va_blocksize;	/* blocksize preferred for i/o */
-	struct timeval	va_atime;	/* time of last access */
-	struct timeval	va_mtime;	/* time of last modification */
-	struct timeval	va_ctime;	/* time file changed */
+	struct timespec va_atime;	/* time of last access */
+	struct timespec va_mtime;	/* time of last modification */
+	struct timespec va_ctime;	/* time file changed */
 	u_long		va_gen;		/* generation number of file */
 	u_long		va_flags;	/* flags defined for file */
 	/* XXX should be a dev_t */
 	u_long		va_rdev;	/* device the special file represents */
-	u_quad		va_qbytes;	/* bytes of disk space held by file */
+	u_quad_t	va_bytes;	/* bytes of disk space held by file */
 	u_int		va_vaflags;	/* operations flags, see below */
 };
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define	va_size		va_qsize.val[0]
-#define	va_size_rsv	va_qsize.val[1]
-#define	va_bytes	va_qbytes.val[0]
-#define	va_bytes_rsv	va_qbytes.val[1]
-#else
-#define	va_size		va_qsize.val[1]
-#define	va_size_rsv	va_qsize.val[0]
-#define	va_bytes	va_qbytes.val[1]
-#define	va_bytes_rsv	va_qbytes.val[0]
-#endif
 
 /*
  * Flags for va_vaflags.
@@ -286,38 +275,6 @@ struct vnodeops {
 
 #ifdef KERNEL
 /*
- * public vnode manipulation functions
- */
-int 	vn_open __P((struct nameidata *ndp, struct proc *p, int fmode,
-	    int cmode));
-int 	vn_close __P((struct vnode *vp, int flags, struct ucred *cred,
-	    struct proc *p));
-int 	vn_rdwr __P((enum uio_rw rw, struct vnode *vp, caddr_t base,
-	    int len, off_t offset, enum uio_seg segflg, int ioflg,
-	    struct ucred *cred, int *aresid, struct proc *p));
-int	vn_read __P((struct file *fp, struct uio *uio, struct ucred *cred));
-int	vn_write __P((struct file *fp, struct uio *uio, struct ucred *cred));
-int	vn_ioctl __P((struct file *fp, int com, caddr_t data, struct proc *p));
-int	vn_select __P((struct file *fp, int which, struct proc *p));
-int 	vn_closefile __P((struct file *fp, struct proc *p));
-int 	getnewvnode __P((enum vtagtype tag, struct mount *mp,
-	    struct vnodeops *vops, struct vnode **vpp));
-int 	bdevvp __P((int dev, struct vnode **vpp));
-int 	cdevvp __P((int dev, struct vnode **vpp));
-	/* check for special device aliases */
-	/* XXX nvp_rdev should be type dev_t, not int */
-struct 	vnode *checkalias __P((struct vnode *vp, int nvp_rdev,
-	    struct mount *mp));
-void 	vattr_null __P((struct vattr *vap));
-int 	vcount __P((struct vnode *vp));	/* total references to a device */
-int 	vget __P((struct vnode *vp));	/* get first reference to a vnode */
-void 	vref __P((struct vnode *vp));	/* increase reference to a vnode */
-void 	vput __P((struct vnode *vp));	/* unlock and release vnode */
-void 	vrele __P((struct vnode *vp));	/* release vnode */
-void 	vgone __P((struct vnode *vp));	/* completely recycle vnode */
-void 	vgoneall __P((struct vnode *vp));/* recycle vnode and all its aliases */
-
-/*
  * Flags to various vnode functions.
  */
 #define	SKIPSYSTEM	0x0001		/* vflush: skip vnodes marked VSYSTEM */
@@ -344,6 +301,33 @@ void 	vgoneall __P((struct vnode *vp));/* recycle vnode and all its aliases */
 extern	struct vnode *rootdir;		/* root (i.e. "/") vnode */
 extern	long desiredvnodes;		/* number of vnodes desired */
 extern	struct vattr va_null;		/* predefined null vattr structure */
+
+int 	bdevvp __P((int dev, struct vnode **vpp));
+int 	cdevvp __P((int dev, struct vnode **vpp));
+int 	getnewvnode __P((enum vtagtype tag, struct mount *mp,
+	    struct vnodeops *vops, struct vnode **vpp));
+void 	vattr_null __P((struct vattr *vap));
+int 	vcount __P((struct vnode *vp));
+int 	vget __P((struct vnode *vp, int lockflag));
+void 	vgone __P((struct vnode *vp));
+void 	vgoneall __P((struct vnode *vp));
+int 	vn_close __P((struct vnode *vp, int flags, struct ucred *cred,
+	    struct proc *p));
+int 	vn_closefile __P((struct file *fp, struct proc *p));
+int	vn_ioctl __P((struct file *fp, int com, caddr_t data, struct proc *p));
+int 	vn_open __P((struct nameidata *ndp, struct proc *p, int fmode,
+	    int cmode));
+int 	vn_rdwr __P((enum uio_rw rw, struct vnode *vp, caddr_t base,
+	    int len, off_t offset, enum uio_seg segflg, int ioflg,
+	    struct ucred *cred, int *aresid, struct proc *p));
+int	vn_read __P((struct file *fp, struct uio *uio, struct ucred *cred));
+int	vn_select __P((struct file *fp, int which, struct proc *p));
+int	vn_write __P((struct file *fp, struct uio *uio, struct ucred *cred));
+struct 	vnode *checkalias __P((struct vnode *vp, int nvp_rdev,
+	    struct mount *mp));
+void 	vput __P((struct vnode *vp));
+void 	vref __P((struct vnode *vp));
+void 	vrele __P((struct vnode *vp));
 #endif
 
 #endif /* !_SYS_VNODE_H_ */

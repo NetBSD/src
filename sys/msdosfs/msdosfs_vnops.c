@@ -69,6 +69,7 @@ msdosfs_create(ndp, vap, p)
 	struct denode ndirent;
 	struct denode *dep;
 	struct denode *pdep = VTODE(ndp->ni_dvp);
+	struct timespec ts;
 	int error;
 
 #if defined(MSDOSFSDEBUG)
@@ -82,7 +83,8 @@ msdosfs_create(ndp, vap, p)
 	 * readonly.
 	 */
 	bzero(&ndirent, sizeof(ndirent));
-	unix2dostime(&time, &ndirent.de_Date, &ndirent.de_Time);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	unix2dostime(&ts, &ndirent.de_Date, &ndirent.de_Time);
 	unix2dosfn((u_char *) ndp->ni_ptr, ndirent.de_Name, ndp->ni_namelen);
 	ndirent.de_Attributes = (vap->va_mode & VWRITE) ? 0 : ATTR_READONLY;
 	ndirent.de_StartCluster = 0;
@@ -150,9 +152,12 @@ msdosfs_close(vp, fflag, cred, p)
 	struct proc *p;
 {
 	struct denode *dep = VTODE(vp);
+	struct timespec ts;
 
-	if (vp->v_usecount > 1 && !(dep->de_flag & DELOCKED))
-		DETIMES(dep, &time);
+	if (vp->v_usecount > 1 && !(dep->de_flag & DELOCKED)) {
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		DETIMES(dep, &ts);
+	}
 	return 0;
 }
 
@@ -196,8 +201,10 @@ msdosfs_getattr(vp, vap, cred, p)
 {
 	u_int cn;
 	struct denode *dep = VTODE(vp);
+	struct timespec ts;
 
-	DETIMES(dep, &time);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	DETIMES(dep, &ts);
 	vap->va_fsid = dep->de_dev;
 	/*
 	 * The following computation of the fileid must be the same as that
@@ -222,25 +229,18 @@ msdosfs_getattr(vp, vap, cred, p)
 	vap->va_uid = dep->de_pmp->pm_uid;
 	vap->va_rdev = 0;
 	vap->va_size = dep->de_FileSize;
-	vap->va_size_rsv = 0;
 	dos2unixtime(dep->de_Date, dep->de_Time, &vap->va_atime);
-	vap->va_atime.tv_usec = 0;
-	vap->va_mtime.tv_sec = vap->va_atime.tv_sec;
-	vap->va_mtime.tv_usec = 0;
+	vap->va_mtime = vap->va_atime;
 #ifndef MSDOSFS_NODIRMOD
-	if (vap->va_mode & S_IFDIR) {
-		vap->va_mtime.tv_sec = time.tv_sec;
-		vap->va_mtime.tv_usec = time.tv_usec;
-	}
+	if (vap->va_mode & S_IFDIR)
+		TIMEVAL_TO_TIMESPEC(&time, &vap->va_mtime);
 #endif
-	vap->va_ctime.tv_sec = vap->va_atime.tv_sec;
-	vap->va_ctime.tv_usec = 0;
+	vap->va_ctime = vap->va_atime;
 	vap->va_flags = dep->de_flag;
 	vap->va_gen = 0;
 	vap->va_blocksize = dep->de_pmp->pm_bpcluster;
 	vap->va_bytes = (dep->de_FileSize + dep->de_pmp->pm_crbomask) &
 	    			~(dep->de_pmp->pm_crbomask);
-	vap->va_bytes_rsv = 0;
 	vap->va_type = vp->v_type;
 	return 0;
 }
@@ -269,15 +269,15 @@ msdosfs_setattr(vp, vap, cred, p)
 	    (vap->va_gen != VNOVAL) ||
 	    (vap->va_uid != (u_short) VNOVAL) ||
 	    (vap->va_gid != (u_short) VNOVAL) ||
-	    (vap->va_atime.tv_sec != VNOVAL)) {
+	    (vap->va_atime.ts_sec != VNOVAL)) {
 #if defined(MSDOSFSDEBUG)
 		printf("msdosfs_setattr(): returning EINVAL\n");
 		printf("    va_type %d, va_nlink %x, va_fsid %x, va_fileid %x\n",
 		    vap->va_type, vap->va_nlink, vap->va_fsid, vap->va_fileid);
 		printf("    va_blocksize %x, va_rdev %x, va_bytes %x, va_gen %x\n",
 		    vap->va_blocksize, vap->va_rdev, vap->va_bytes, vap->va_gen);
-		printf("    va_uid %x, va_gid %x, va_atime.tv_sec %x\n",
-		    vap->va_uid, vap->va_gid, vap->va_atime.tv_sec);
+		printf("    va_uid %x, va_gid %x, va_atime.ts_sec %x\n",
+		    vap->va_uid, vap->va_gid, vap->va_atime.ts_sec);
 #endif				/* defined(MSDOSFSDEBUG) */
 		return EINVAL;
 	}
@@ -288,7 +288,7 @@ msdosfs_setattr(vp, vap, cred, p)
 		if (error = detrunc(dep, vap->va_size, 0))
 			return error;
 	}
-	if (vap->va_mtime.tv_sec != VNOVAL) {
+	if (vap->va_mtime.ts_sec != VNOVAL) {
 		dep->de_flag |= DEUPD;
 		if (error = deupdat(dep, &vap->va_mtime, 1))
 			return error;
@@ -1077,6 +1077,7 @@ msdosfs_mkdir(ndp, vap, p)
 	struct denode ndirent;
 	struct msdosfsmount *pmp;
 	struct buf *bp;
+	struct timespec ts;
 	u_short dDate, dTime;
 
 	pvp = ndp->ni_dvp;
@@ -1116,7 +1117,8 @@ msdosfs_mkdir(ndp, vap, p)
 	bcopy(&dosdirtemplate, bp->b_un.b_addr, sizeof dosdirtemplate);
 	denp = (struct direntry *) bp->b_un.b_addr;
 	putushort(denp->deStartCluster, newcluster);
-	unix2dostime(&time, &dDate, &dTime);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	unix2dostime(&ts, &dDate, &dTime);
 	putushort(denp->deDate, dDate);
 	putushort(denp->deTime, dTime);
 	denp++;
@@ -1138,7 +1140,8 @@ msdosfs_mkdir(ndp, vap, p)
 	ndep = &ndirent;
 	bzero(ndep, sizeof(*ndep));
 	unix2dosfn((u_char *) ndp->ni_ptr, ndep->de_Name, ndp->ni_namelen);
-	unix2dostime(&time, &ndep->de_Date, &ndep->de_Time);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	unix2dostime(&ts, &ndep->de_Date, &ndep->de_Time);
 	ndep->de_StartCluster = newcluster;
 	ndep->de_Attributes = ATTR_DIRECTORY;
 	ndep->de_pmp = pmp;	/* createde() needs this	 */
