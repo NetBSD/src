@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.28 2002/09/11 03:45:44 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.29 2003/04/22 10:08:33 itojun Exp $	*/
 /*	$KAME: ah_core.c,v 1.45 2001/07/26 06:53:14 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.28 2002/09/11 03:45:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.29 2003/04/22 10:08:33 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1106,8 +1106,8 @@ ah6_calccksum(m, ahdat, len, algo, sav)
 		break;
 	    }
 
-	 case IPPROTO_HOPOPTS:
-	 case IPPROTO_DSTOPTS:
+	case IPPROTO_HOPOPTS:
+	case IPPROTO_DSTOPTS:
 	 {
 		struct ip6_ext *ip6e;
 		int hdrlen, optlen;
@@ -1182,7 +1182,7 @@ ah6_calccksum(m, ahdat, len, algo, sav)
 		break;
 	 }
 
-	 case IPPROTO_ROUTING:
+	case IPPROTO_ROUTING:
 		/*
 		 * For an input packet, we can just calculate `as is'.
 		 * For an output packet, we assume ip6_output have already
