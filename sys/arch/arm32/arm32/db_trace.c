@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.4 1996/10/15 01:33:50 mark Exp $ */
+/* $NetBSD: db_trace.c,v 1.5 1996/10/17 02:46:49 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -91,15 +91,15 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			name = "?";
 
 		db_printf("%s(", name);
+		db_printsym(pc, DB_STGY_PROC);
+		db_printf(")");
+		db_printf("\n");
 
 		/*
 		 * Switch to next frame up
 		 */
 		frame = (struct frame *)(frame->fr_fp - (sizeof(struct frame) - sizeof(u_int)));
 
-		db_printsym(pc, DB_STGY_PROC);
-		db_printf(")");
-		db_printf("\n");
 		if (frame == NULL)
 			break;
 	}
