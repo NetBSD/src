@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.121 2004/02/13 11:36:24 wiz Exp $ */
+/* $NetBSD: vmstat.c,v 1.122 2004/02/28 05:14:55 junyoung Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.121 2004/02/13 11:36:24 wiz Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.122 2004/02/28 05:14:55 junyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,33 +188,24 @@ struct nlist hashnl[] =
 	{ "_bufhash" },
 #define	X_BUFHASHTBL	5
 	{ "_bufhashtbl" },
-#define	X_PIDHASH	6
-	{ "_pidhash" },
-#define	X_PIDHASHTBL	7
-	{ "_pidhashtbl" },
-#define	X_PGRPHASH	8
-	{ "_pgrphash" },
-#define	X_PGRPHASHTBL	9
-	{ "_pgrphashtbl" },
-#define	X_UIHASH	10
+#define	X_UIHASH	6
 	{ "_uihash" },
-#define	X_UIHASHTBL	11
+#define	X_UIHASHTBL	7
 	{ "_uihashtbl" },
-#define	X_IFADDRHASH	12
+#define	X_IFADDRHASH	8
 	{ "_in_ifaddrhash" },
-#define	X_IFADDRHASHTBL	13
+#define	X_IFADDRHASHTBL	9
 	{ "_in_ifaddrhashtbl" },
-#define	X_NCHASH	14
+#define	X_NCHASH	10
 	{ "_nchash" },
-#define	X_NCHASHTBL	15
+#define	X_NCHASHTBL	11
 	{ "_nchashtbl" },
-#define	X_NCVHASH	16
+#define	X_NCVHASH	12
 	{ "_ncvhash" },
-#define	X_NCVHASHTBL	17
+#define	X_NCVHASHTBL	13
 	{ "_ncvhashtbl" },
-#define X_HASHNL_SIZE	18	/* must be last */
+#define X_HASHNL_SIZE	14	/* must be last */
 	{ NULL },
-
 };
 
 /*
