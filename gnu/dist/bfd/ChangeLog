@@ -1,3 +1,36 @@
+Fri May 16 12:10:52 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* elflink.h (elf_link_add_object_symbols): Don't decrease the
+ 	alignment of a common symbol.  If two symbols that look like
+ 	common symbols are found in two shared libraries, and the size is
+ 	different, use the larger size, and warn if --warn-common.  If a
+	common symbol overrides a definition in a shared library, set the
+	size to the larger size, and warn if --warn-common.
+
+Thu May 15 16:40:20 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* elflink.h (elf_link_add_object_symbols): Force ELF symbol size
+	to common symbol size.  Consistently treat uninitialized symbols
+	in shared objects as common symbols.
+
+Tue May 13 10:42:41 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* VERSION: Set to 2.8.1.
+
+Fri May  9 17:40:02 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config.bfd: Change #if 0 around uses of host_aout_vec to #if
+	HAVE_host_aout_vec.
+
+Mon May  5 18:18:45 1997  Philip Blundell  <pjb27@cam.ac.uk>
+
+	* config.bfd: cope with '*-*-linux-gnuaout' targets.
+
+Thu May  1 11:31:12 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* targmatch.sed: Add explicit \n characters to work around bug in
+	HP/UX 10.20 sed program.
+
 Wed Apr 30 12:27:03 1997  Ian Lance Taylor  <ian@cygnus.com>
 
 	* elf.c (copy_private_bfd_data): Cast csecs to avoid sign

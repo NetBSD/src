@@ -697,7 +697,7 @@ main (argc, argv)
 
   perform_an_assembly_pass (argc, argv);	/* Assemble it. */
 
-  cond_finish_check ();
+  cond_finish_check (-1);
 
 #ifdef md_end
   md_end ();
