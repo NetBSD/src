@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.9 2002/04/19 10:55:46 drochner Exp $ */
+/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.10 2002/05/03 14:12:59 drochner Exp $ */
 
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
@@ -32,7 +32,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.9 2002/04/19 10:55:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.10 2002/05/03 14:12:59 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -267,6 +267,7 @@ isic_attach_Eqs1pp(psc, pa)
 	IPAC_WRITE(IPAC_AOE,		/* aux 5..2 are inputs, 7, 6 outputs */
 		(IPAC_AOE_OE5 | IPAC_AOE_OE4 | IPAC_AOE_OE3 | IPAC_AOE_OE2));
 	IPAC_WRITE(IPAC_ATX, ELSA_NO_LED);	/* set all output lines high */
+	callout_init(&((struct pci_isic_softc *)sc)->ledcallout);
 
 	/* disable any interrupts */
 	IPAC_WRITE(IPAC_MASK, 0xff);
@@ -298,8 +299,8 @@ isic_intr_qs1p(vsc)
 static void
 elsa_cmd_req(struct isic_softc *sc, int cmd, void *data)
 {
-	int s, v, blink = 0;
-	u_int8_t led_val;
+	int s, v;
+	struct pci_isic_softc *psc = (struct pci_isic_softc *)sc;
 
 	switch (cmd) {
 	case CMR_DOPEN:
@@ -312,38 +313,36 @@ elsa_cmd_req(struct isic_softc *sc, int cmd, void *data)
 		break;
 	case CMR_DCLOSE:
 		s = splnet();
-		callout_stop(&sc->sc_driver_callout);
+		callout_stop(&psc->ledcallout);
 		IPAC_WRITE(IPAC_ATX, ELSA_NO_LED);
 		IPAC_WRITE(IPAC_MASK, 0xff);
 	        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, 0x4c, 0x01);
 		splx(s);
 		break;
 	case CMR_SETLEDS:
+		v = (int)data;
+		callout_stop(&psc->ledcallout);
+
 		/* the magic value and keep reset off */
-		led_val = ELSA_NO_LED;
+		psc->ledstat = ELSA_NO_LED;
+		psc->ledblinkmask = 0;
+		psc->ledblinkfreq = 0;
 
 		/* now see what LEDs we want to add */
-		v = (int)data;
 		if (v & CMRLEDS_TEI)
-			led_val &= ~ELSA_GREEN_LED;
-		blink = 0;
+			psc->ledstat &= ~ELSA_GREEN_LED;
+
 		if (v & (CMRLEDS_B0|CMRLEDS_B1)) {
-			led_val &= ~ELSA_YELLOW_LED;
-			if ((v & (CMRLEDS_B0|CMRLEDS_B1)) == (CMRLEDS_B0|CMRLEDS_B1))
-				blink = hz/4;
+			psc->ledstat &= ~ELSA_YELLOW_LED;
+			psc->ledblinkmask |= ELSA_YELLOW_LED;
+			if ((v & (CMRLEDS_B0|CMRLEDS_B1))
+			    == (CMRLEDS_B0|CMRLEDS_B1))
+				psc->ledblinkfreq = hz/4;
 			else
-				blink = hz;
-			sc->sc_driver_specific = v;
+				psc->ledblinkfreq = hz;
 		}
 
-		s = splnet();
-		IPAC_WRITE(IPAC_ATX, led_val);
-		callout_stop(&sc->sc_driver_callout);
-		if (blink)
-			callout_reset(&sc->sc_driver_callout, blink,
-			    elsa_led_handler, sc);
-		splx(s);
-
+		elsa_led_handler(psc);
 		break;
 	}
 }
@@ -351,35 +350,16 @@ elsa_cmd_req(struct isic_softc *sc, int cmd, void *data)
 static void
 elsa_led_handler(void *token)
 {
-	struct isic_softc *sc = token;
-	int v, s, blink, off = 0;
-	u_int8_t led_val = ELSA_NO_LED;
+	struct pci_isic_softc *psc = token;
+	struct isic_softc *sc = token; /* XXX */
+	int s;
 
 	s = splnet();
-	v = sc->sc_driver_specific;
-	if (v > 0) {
-		/* turn blinking LED off */
-		v = -sc->sc_driver_specific;
-		sc->sc_driver_specific = v;
-		off = 1;
-	} else {
-		sc->sc_driver_specific = -v;
-	}
-	if (v & CMRLEDS_TEI)
-		led_val &= ~ELSA_GREEN_LED;
-	blink = 0;
-	if (off == 0) {
-		if (v & (CMRLEDS_B0|CMRLEDS_B1))
-			led_val &= ~ELSA_YELLOW_LED;
-	}
-	if ((v & (CMRLEDS_B0|CMRLEDS_B1)) == (CMRLEDS_B0|CMRLEDS_B1))
-		blink = hz/4;
-	else
-		blink = hz;
-
-	IPAC_WRITE(IPAC_ATX, led_val);
-	if (blink)
-		callout_reset(&sc->sc_driver_callout, blink,
-		    elsa_led_handler, sc);
+	IPAC_WRITE(IPAC_ATX, psc->ledstat);
 	splx(s);
+	if (psc->ledblinkfreq) {
+		psc->ledstat ^= psc->ledblinkmask;
+		callout_reset(&psc->ledcallout, psc->ledblinkfreq,
+		    elsa_led_handler, psc);
+	}
 }
