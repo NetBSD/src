@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2002/09/27 15:02:26 wiz Exp $
+#	$NetBSD: Makefile,v 1.39 2002/09/27 20:42:46 jdolecek Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -8,7 +8,8 @@ USE_SHLIBDIR=	yes
 LIB=	util
 CPPFLAGS+=-DLIBC_SCCS
 SRCS=	fparseln.c getbootfile.c getmaxpartitions.c getrawpartition.c \
-	login.c login_cap.c login_tty.c logout.c logwtmp.c opendisk.c \
+	login.c loginx.c login_cap.c login_tty.c logout.c logoutx.c \
+	logwtmp.c logwtmpx.c opendisk.c \
 	passwd.c pw_scan.c pidfile.c pidlock.c pty.c secure_path.c \
 	snprintb.c ttyaction.c ttymsg.c
 
