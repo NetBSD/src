@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 1995/02/13 00:41:05 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.2 1995/03/29 21:35:16 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,11 +38,19 @@
 #include "../include/sid.h"
 #include "vaxstand.h"
 
-int	nmba=0, nuba=0, nbi=0,nsbi=0;
+int	nmba=0, nuba=0, nbi=0,nsbi=0,nuda=0;
 int	*mbaaddr, *ubaaddr;
+int	*udaaddr,*uioaddr;
 
 static int mba750[]={0xf28000,0xf2a000,0xf2c000};
 static int uba750[]={0xf30000,0xf32000};
+static int uio750[]={0xfc0000,0xf80000};
+static int uda750[]={0772150};
+
+static int uba630[]={0x20087800};
+static int uio630[]={0x30000000};
+#define qbdev(csr) (((csr) & 017777)-0x10000000)
+static int uda630[]={qbdev(0772150),qbdev(0760334)};
 /*
  * Autoconf routine is really stupid; but it actually don't
  * need any intelligence. We just assume that all possible
@@ -62,8 +70,19 @@ autoconf()
 	case VAX_750:
 		nmba=3;
 		nuba=2;
+		nuda=1;
 		mbaaddr=mba750;
 		ubaaddr=uba750;
+		udaaddr=uda750;
+		uioaddr=uio750;
+		break;
+
+	case VAX_78032:
+		nuba=1;
+		nuda=2;
+		ubaaddr=uba630;
+		udaaddr=uda630;
+		uioaddr=uio630;
 		break;
 	}
 }
