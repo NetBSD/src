@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.11 2003/01/21 04:06:08 matt Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.12 2003/03/03 22:07:40 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,6 +59,9 @@ typedef int mach_thread_state_flavor_t;
 typedef unsigned int mach_natural_t;
 typedef unsigned long mach_vm_size_t;
 typedef unsigned long mach_vm_offset_t;
+typedef int mach_vm_region_flavor_t;
+typedef int mach_vm_behavior_t;
+typedef int mach_vm_sync_t;
 
 /* 
  * This is called cproc_t in Mach (cthread_t in Darwin). It is a pointer to 
