@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24 1999/03/30 10:10:57 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.25 1999/09/13 06:17:27 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -163,10 +163,9 @@ syscall(frame, code)
 		for (loop = frame->tf_pc - 32; loop < frame->tf_pc; loop += 4)
 			disassemble(loop);
 
-		dumpframe(frame);
 		printf("CPU ID=%08x\n", cpu_id());
 		printf("MMU Fault address=%08x status=%08x\n", cpu_faultaddress(), cpu_faultstatus());
-		printf("Page table entry for 0x%08x at 0x%08x = 0x%08x\n",
+		printf("Page table entry for 0x%08x at %p = 0x%08x\n",
 		    frame->tf_pc - INSN_SIZE, vtopte(frame->tf_pc - INSN_SIZE),
 		    *vtopte(frame->tf_pc - INSN_SIZE));
 #endif	/* ARM700BUGTRACK */
