@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.111 2000/09/14 00:02:56 hubertf Exp $
+$NetBSD: usbdevs,v 1.112 2000/09/14 03:11:23 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ vendor THRUST		0x044f	Thrustmaster
 vendor TI		0x0451	Texas Instruments
 vendor ANALOGDEVICES	0x0456	Analog Devices, Inc.
 vendor KYE		0x0458	KYE Systems Corp.
-vendor SUPRA		0x045a	Supra
+vendor DIAMOND2		0x045a	Diamond (Supra)
 vendor MICROSOFT	0x045e	Microsoft
 vendor PRIMAX		0x0461	Primax Electronics
 vendor AMP		0x0464	AMP, Inc.
@@ -403,6 +403,7 @@ product ENTREGA CENTRONICS	0x0006	Centronics connector
 product ENTREGA 1S9		0x0093	1S9 serial connector
 product ENTREGA EZUSB		0x8000	EZ-USB
 /*product ENTREGA SERIAL	0x8001	DB25 Serial connector*/
+product ENTREGA 2U4S		0x8004  2U4S serial connector/usb hub
 /*product ENTREGA SERIAL_DB9	0x8093	DB9 Serial connector*/
 
 /* Epson products */
@@ -672,7 +673,9 @@ product SUN KEYBOARD		0x0005	Type 6 USB
 /* XXX The above is a North American PC style keyboard possibly */
 
 /* Supra products */
-product SUPRA SUPRAEXPRESS56K	0x07da	Supra Express 56K modem
+product DIAMOND2 SUPRAEXPRESS56K 0x07da	Supra Express 56K modem
+product DIAMOND2 SUPRA2890	0x0b4a	SupraMax 2890 56K Modem
+product DIAMOND2 RIO600USB	0x5001	Rio 600 USB
  
 /* TEAC products */
 product TEAC FD05PUB		0x0000	FD-05PUB floppy
@@ -687,7 +690,7 @@ product TI UTUSB41		0x1446	UT-USB41 hub
 product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
 
 /* Trek Technology products */
-product TREK THUMBDRIVE		0x1111	ThumbDrive	/* 128MB */
+product TREK THUMBDRIVE		0x1111	ThumbDrive (128MB)
 
 /* UMAX products */
 product UMAX ASTRA1236U		0x0002	Astra 1236U Scanner
