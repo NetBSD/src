@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.8 1997/08/25 22:20:31 lukem Exp $	*/
+/*	$NetBSD: rpc.h,v 1.9 1998/02/10 00:44:41 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -38,8 +38,8 @@
  *
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
-#ifndef _RPC_RPC_H
-#define _RPC_RPC_H
+#ifndef _RPC_RPC_H_
+#define _RPC_RPC_H_
 
 #include <rpc/types.h>		/* some typedefs */
 #include <netinet/in.h>
@@ -100,4 +100,4 @@ extern int callrpc __P((char *, int, int, int, xdrproc_t, char *,
 extern int getrpcport __P((char *, int, int, int));
 __END_DECLS
 
-#endif /* !_RPC_RPC_H */
+#endif /* !_RPC_RPC_H_ */

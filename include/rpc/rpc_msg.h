@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_msg.h,v 1.6 1997/07/13 18:16:43 christos Exp $	*/
+/*	$NetBSD: rpc_msg.h,v 1.7 1998/02/10 00:44:44 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,8 +39,8 @@
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
-#ifndef _RPC_RPCMSG_H
-#define _RPC_RPCMSG_H
+#ifndef _RPC_RPC_MSG_H_
+#define _RPC_RPC_MSG_H_
 
 #define RPC_MSG_VERSION		((u_long) 2)
 #define RPC_SERVICE_PORT	((u_short) 2048)
@@ -210,4 +210,4 @@ extern bool_t	xdr_rejected_reply	__P((XDR *, struct rejected_reply *));
 extern void	_seterr_reply	__P((struct rpc_msg *, struct rpc_err *));
 __END_DECLS
 
-#endif /* !_RPC_RPCMSG_H */
+#endif /* !_RPC_RPC_MSG_H_ */
