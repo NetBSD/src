@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.48 2000/06/19 15:15:03 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.49 2000/07/08 18:24:28 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.48 2000/06/19 15:15:03 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.49 2000/07/08 18:24:28 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -225,7 +225,7 @@ cmd
 	| QUIT CRLF
 		{
 			if (logged_in) {
-				reply(-221, "");
+				reply(-221, "%s", "");
 				reply(0,
 	    "Data traffic for this session was %qd byte%s in %qd file%s.",
 				    (qdfmt_t)total_data, PLURAL(total_data),
@@ -1867,7 +1867,7 @@ help(struct tab *ctab, const char *s)
 		int i, j, w;
 		int columns, lines;
 
-		reply(-214, "");
+		reply(-214, "%s", "");
 		reply(0, "The following %scommands are recognized.", type);
 		reply(0, "(`-' = not implemented, `+' = supports options)");
 		columns = 76 / width;
