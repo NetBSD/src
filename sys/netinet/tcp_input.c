@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.59 1998/05/07 01:37:27 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.60 1998/05/11 19:57:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,6 @@
  *	connections.
  */
 
-#ifndef TUBA_INCLUDE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -116,7 +115,6 @@ struct	tcpiphdr tcp_saveti;
 
 extern u_long sb_max;
 
-#endif /* TUBA_INCLUDE */
 #define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
 
 /* for modulo comparisons of timestamps */
@@ -164,7 +162,6 @@ do { \
 		tp->t_flags |= TF_ACKNOW; \
 	} \
 }
-#ifndef TUBA_INCLUDE
 
 int
 tcp_reass(tp, ti, m)
@@ -488,7 +485,6 @@ tcp_input(m, va_alist)
 		tcpstat.tcps_rcvbadsum++;
 		goto drop;
 	}
-#endif /* TUBA_INCLUDE */
 
 	/*
 	 * Check that TCP offset makes sense,
@@ -1540,7 +1536,6 @@ drop:
 		tcp_trace(TA_DROP, ostate, tp, &tcp_saveti, 0);
 	m_freem(m);
 	return;
-#ifndef TUBA_INCLUDE
 }
 
 void
@@ -2380,4 +2375,3 @@ syn_cache_respond(sc, m, ti, win, ts)
 	return (tcp_respond(NULL, ti, m, sc->sc_irs + 1, sc->sc_iss,
 	    TH_SYN|TH_ACK));
 }
-#endif /* TUBA_INCLUDE */

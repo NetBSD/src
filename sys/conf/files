@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.183 1998/04/29 21:37:52 matt Exp $
+#	$NetBSD: files,v 1.184 1998/05/11 19:59:36 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -506,9 +506,6 @@ file netiso/tp_subr2.c			iso | tpip
 file netiso/tp_timer.c			iso | tpip
 file netiso/tp_trace.c			iso | tpip
 file netiso/tp_usrreq.c			iso | tpip
-file netiso/tuba_subr.c			iso | tuba
-file netiso/tuba_table.c		iso | tuba
-file netiso/tuba_usrreq.c		iso | tuba
 file netnatm/natm.c			natm
 file netnatm/natm_pcb.c			natm
 file netnatm/natm_proto.c		natm

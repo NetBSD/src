@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.38 1998/05/06 01:21:21 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.39 1998/05/11 19:57:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -97,11 +97,6 @@
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
-
-#ifdef TUBA
-#include <netiso/iso.h>
-#include <netiso/tuba_table.h>
-#endif
 
 #ifdef notyet
 extern struct mbuf *m_copypack();
@@ -664,11 +659,6 @@ send:
 	 * the template, but need a way to checksum without them.
 	 */
 	m->m_pkthdr.len = hdrlen + len;
-#ifdef TUBA
-	if (tp->t_tuba_pcb)
-		error = tuba_output(m, tp);
-	else
-#endif
     {
 	struct rtentry *rt;
 
