@@ -1,6 +1,6 @@
+/*	$NetBSD: error.h,v 1.4 1997/10/08 07:07:46 mrg Exp $	*/
+
 /*
-**	$NetBSD: error.h,v 1.3 1996/08/30 17:41:31 thorpej Exp $
-**
 ** error.h                                               Error handling macros
 **
 ** This program is in the public domain and may be used freely by anyone
