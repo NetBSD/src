@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)crypt.c	5.11 (Berkeley) 6/25/91";*/
-static char rcsid[] = "$Id: crypt.c,v 1.3 1994/10/19 03:01:18 cgd Exp $";
+static char rcsid[] = "$Id: crypt.c,v 1.4 1994/12/20 16:00:32 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
@@ -74,14 +74,6 @@ static char rcsid[] = "$Id: crypt.c,v 1.3 1994/10/19 03:01:18 cgd Exp $";
 #if CHAR_BITS != 8
 	#error C_block structure assumes 8 bit characters
 #endif
-#endif
-
-/*
- * define "LONG_IS_32_BITS" only if sizeof(long)==4.
- * This avoids use of bit fields (your compiler may be sloppy with them).
- */
-#if !defined(cray)
-#define	LONG_IS_32_BITS
 #endif
 
 /*
@@ -232,14 +224,8 @@ STATIC prtab();
 typedef union {
 	unsigned char b[8];
 	struct {
-#if defined(LONG_IS_32_BITS)
-		/* long is often faster than a 32-bit bit field */
-		long	i0;
-		long	i1;
-#else
-		long	i0: 32;
-		long	i1: 32;
-#endif
+		int32_t	i0;
+		int32_t	i1;
 	} b32;
 #if defined(B64)
 	B64	b64;
@@ -267,7 +253,7 @@ typedef union {
 #define	LOADREG(d,d0,d1,s,s0,s1)	d0 = s0, d1 = s1
 #define	OR(d,d0,d1,bl)			d0 |= (bl).b32.i0, d1 |= (bl).b32.i1
 #define	STORE(s,s0,s1,bl)		(bl).b32.i0 = s0, (bl).b32.i1 = s1
-#define	DCL_BLOCK(d,d0,d1)		long d0, d1
+#define	DCL_BLOCK(d,d0,d1)		int32_t d0, d1
 
 #if defined(LARGEDATA)
 	/* Waste memory like crazy.  Also, do permutations in line */
@@ -458,7 +444,7 @@ static C_block	PC2ROT[2][64/CHUNKBITS][1<<CHUNKBITS];
 static C_block	IE3264[32/CHUNKBITS][1<<CHUNKBITS];
 
 /* Table that combines the S, P, and E operations.  */
-static long SPE[2][8][64];
+static int32_t SPE[2][8][64];
 
 /* compressed/interleaved => final permutation table */
 static C_block	CF6464[64/CHUNKBITS][1<<CHUNKBITS];
@@ -480,9 +466,9 @@ crypt(key, setting)
 	register const char *setting;
 {
 	register char *encp;
-	register long i;
+	register int32_t i;
 	register int t;
-	long salt;
+	int32_t salt;
 	int num_iter, salt_size;
 	C_block keyblock, rsltblock;
 
@@ -547,17 +533,19 @@ crypt(key, setting)
 	/*
 	 * Encode the 64 cipher bits as 11 ascii characters.
 	 */
-	i = ((long)((rsltblock.b[0]<<8) | rsltblock.b[1])<<8) | rsltblock.b[2];
+	i = ((int32_t)((rsltblock.b[0]<<8) | rsltblock.b[1])<<8) |
+	    rsltblock.b[2];
 	encp[3] = itoa64[i&0x3f];	i >>= 6;
 	encp[2] = itoa64[i&0x3f];	i >>= 6;
 	encp[1] = itoa64[i&0x3f];	i >>= 6;
 	encp[0] = itoa64[i];		encp += 4;
-	i = ((long)((rsltblock.b[3]<<8) | rsltblock.b[4])<<8) | rsltblock.b[5];
+	i = ((int32_t)((rsltblock.b[3]<<8) | rsltblock.b[4])<<8) |
+	    rsltblock.b[5];
 	encp[3] = itoa64[i&0x3f];	i >>= 6;
 	encp[2] = itoa64[i&0x3f];	i >>= 6;
 	encp[1] = itoa64[i&0x3f];	i >>= 6;
 	encp[0] = itoa64[i];		encp += 4;
-	i = ((long)((rsltblock.b[6])<<8) | rsltblock.b[7])<<2;
+	i = ((int32_t)((rsltblock.b[6])<<8) | rsltblock.b[7])<<2;
 	encp[2] = itoa64[i&0x3f];	i >>= 6;
 	encp[1] = itoa64[i&0x3f];	i >>= 6;
 	encp[0] = itoa64[i];
@@ -621,7 +609,7 @@ des_cipher(in, out, salt, num_iter)
 #if defined(pdp11)
 	register int j;
 #endif
-	register long L0, L1, R0, R1, k;
+	register int32_t L0, L1, R0, R1, k;
 	register C_block *kp;
 	register int ks_inc, loop_count;
 	C_block B;
@@ -670,7 +658,8 @@ des_cipher(in, out, salt, num_iter)
 		loop_count = 8;
 		do {
 
-#define	SPTAB(t, i)	(*(long *)((unsigned char *)t + i*(sizeof(long)/4)))
+#define	SPTAB(t, i) \
+	    (*(int32_t*)((unsigned char *)t + i*(sizeof(int32_t)/4)))
 #if defined(gould)
 			/* use this if B.b[i] is evaluated just once ... */
 #define	DOXOR(x,y,i)	x^=SPTAB(SPE[0][i],B.b[i]); y^=SPTAB(SPE[1][i],B.b[i]);
@@ -735,7 +724,7 @@ STATIC
 init_des()
 {
 	register int i, j;
-	register long k;
+	register int32_t k;
 	register int tableno;
 	static unsigned char perm[64], tmp32[32];	/* "static" for speed */
 
