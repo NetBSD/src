@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.10 2002/01/28 19:02:35 nathanw Exp $
+#	$NetBSD: Makefile,v 1.8.2.11 2002/04/04 00:39:41 nathanw Exp $
 #
 
 WARNS=	2
@@ -16,10 +16,9 @@ ARCHSUBDIR=	${MACHINE_CPU}
 .endif
 
 ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
-AINC=		-I${ARCHDIR}
 .PATH:	${ARCHDIR}
 
-CPPFLAGS+=	${AINC} -I${.CURDIR} -I${.OBJDIR}
+CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR}
 
 DPSRCS+=	assym.h
 
