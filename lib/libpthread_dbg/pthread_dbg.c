@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.27 2004/07/01 18:59:52 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.28 2004/07/06 19:33:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.27 2004/07/01 18:59:52 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.28 2004/07/06 19:33:53 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -821,7 +821,8 @@ td_map_addr2sync(td_proc_t *proc, caddr_t addr, td_sync_t **syncp)
 	if ((magic != _PT_MUTEX_MAGIC) &&
 	    (magic != _PT_COND_MAGIC) &&
 	    (magic != _PT_SPINLOCK_MAGIC) &&
-	    (magic != _PT_RWLOCK_MAGIC))
+	    (magic != _PT_RWLOCK_MAGIC) &&
+	    (magic != PT_MAGIC))
 		return TD_ERR_NOOBJ;
 
 	val = td__getsync(proc, addr, syncp);
