@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.36 2000/09/23 17:17:12 sommerfeld Exp $	*/
+/*	$NetBSD: comvar.h,v 1.37 2000/10/06 21:12:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,7 +44,7 @@
 int comcnattach __P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t));
 
 #ifdef KGDB
-int com_kgdb_attach __P((bus_space_tag_t, int, int, int, tcflag_t));
+int com_kgdb_attach __P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t));
 #endif
 
 int com_is_console __P((bus_space_tag_t, bus_addr_t, bus_space_handle_t *));
