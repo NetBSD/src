@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 2004/05/17 15:38:20 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2004/07/06 16:43:18 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
 	    "The Regents of the University of California."
 	    "  All rights reserved.\n");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: main.c,v 1.38 2004/05/17 15:38:20 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 2004/07/06 16:43:18 wiz Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -245,7 +245,7 @@ main(int argc,
 	if (argc != 0) {
 usage:
 		logbad(0, "usage: routed [-sqdghmAtv] [-T tracefile]"
-		       " [-F net[,metric]] [-P parms]");
+		       " [-F net[/mask[,metric]]] [-P parms]");
 	}
 	if (geteuid() != 0) {
 		if (verbose)
