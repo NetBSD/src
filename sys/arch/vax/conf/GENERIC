@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.34 1998/06/26 01:54:13 lukem Exp $
+#	$NetBSD: GENERIC,v 1.35 1998/07/18 20:35:14 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -48,6 +48,7 @@ options 	NFSSERVER
 options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
 
 options 	UVM
+options 	PMAP_NEW
 
 # WS console uses SUN terminal emulation
 options 	WSEMUL_SUN

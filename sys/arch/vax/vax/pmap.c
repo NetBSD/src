@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 1998/07/08 04:43:23 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.52 1998/07/18 20:35:14 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -306,7 +306,6 @@ pmap_init(start, end)
 	vm_offset_t start, end;
 #endif
 {
-
 	/* reserve place on SPT for UPT */
 #if !defined(UVM)
 	pte_map = kmem_suballoc(kernel_map, &ptemapstart, &ptemapend, 
@@ -377,9 +376,9 @@ pmap_pinit(pmap)
 	pmap->pm_p1lr = (0x200000 - btoc(MAXSSIZ));
 
 #ifdef PMAPDEBUG
-if(startpmapdebug)
-    printf("pmap_pinit(%p): p0br=%p p0lr=0x%lx p1br=%p p1lr=0x%lx\n",
-    pmap, pmap->pm_p0br, pmap->pm_p0lr, pmap->pm_p1br, pmap->pm_p1lr);
+if (startpmapdebug)
+	printf("pmap_pinit(%p): p0br=%p p0lr=0x%lx p1br=%p p1lr=0x%lx\n",
+	pmap, pmap->pm_p0br, pmap->pm_p0lr, pmap->pm_p1br, pmap->pm_p1lr);
 #endif
 
 	pmap->ref_count = 1;
@@ -438,6 +437,36 @@ if(startpmapdebug)printf("pmap_destroy: pmap %p\n",pmap);
 	}
 }
 
+/*
+ * Rensa is a help routine to remove a pv_entry from the pv list.
+ * Arguments are physical clustering page and page table entry pointer.
+ */
+static inline void
+rensa(clp, ptp)
+	int clp;
+	struct pte *ptp;
+{
+	struct	pv_entry *pf, *pv = pv_table + clp;
+	int	s;
+
+	s = splimp();
+	if (pv->pv_pte == ptp) {
+		pv->pv_pte = 0;
+		splx(s);
+		return;
+	}
+	for (; pv->pv_next; pv = pv->pv_next) {
+		if (pv->pv_next->pv_pte == ptp) {
+			pf = pv->pv_next;
+			pv->pv_next = pv->pv_next->pv_next;
+			FREE(pf, M_VMPVENT);
+			splx(s);
+			return;
+		}
+	}
+	panic("rensa");
+}
+
 #ifdef PMAP_NEW
 /*
  * New (real nice!) function that allocates memory in kernel space
@@ -448,6 +477,9 @@ pmap_kenter_pa(va, pa, prot)
 	vm_offset_t va, pa;
 	vm_prot_t prot;
 {
+#if 0
+	pmap_enter(pmap_kernel(), va, pa, prot, 0);
+#endif
 	int *ptp;
 
 	ptp = (int *)kvtopte(va);
@@ -467,21 +499,32 @@ pmap_kremove(va, len)
 	vm_offset_t va;
 	vm_size_t len;
 {
+	struct pte *pte;
+	int i;
+
 #ifdef PMAPDEBUG
 if(startpmapdebug)
 printf("pmap_kremove: va: %lx, len %lx, ptp %p\n", va, len, kvtopte(va));
 #endif
 
 	/*
-	 * Unfortunately we must check if any page may be on the
-	 * pv list. Call the slow routine.
+	 * Unfortunately we must check if any page may be on the pv list. 
 	 */
-#ifdef notyet
-	bzero((caddr_t)ptp, ptecount * sizeof(struct pte));
-	mtpr(0, PR_TBIA);
-#else
-	pmap_protect(pmap_kernel(), va, va + len, 0);
+	pte = kvtopte(va);
+	len >>= CLSHIFT;
+
+	for (i = 0; i < len; i++) {
+		if (pte->pg_pfn == 0)
+			continue;
+		if (pte->pg_sref == 0)
+			rensa(pte->pg_pfn >> CLSIZELOG2, pte);
+		*(long long *)pte = 0;
+#ifdef notdef
+		bzero(pte, CLSIZE * sizeof(struct pte));
 #endif
+		pte += CLSIZE;
+	}
+	mtpr(0, PR_TBIA);
 }
 
 void
@@ -491,16 +534,25 @@ pmap_kenter_pgs(va, pgs, npgs)
 	int npgs;
 {
 	int i;
+	int *ptp;
+
 #ifdef PMAPDEBUG
 if(startpmapdebug)
 printf("pmap_kenter_pgs: va: %lx, pgs %p, npgs %x\n", va, pgs, npgs);
 #endif
 
+	/*
+	 * May this routine affect page tables? 
+	 * We assume that, and uses TBIA.
+	 */
+	ptp = (int *)kvtopte(va);
 	for (i = 0 ; i < npgs ; i++) {
-		pmap_kenter_pa(va + CLBYTES * i,
-		    (VM_PAGE_TO_PHYS(pgs[i])) + CLBYTES * i,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		ptp[0] = PG_V | PG_KW |
+		    PG_PFNUM(VM_PAGE_TO_PHYS(pgs[i])) | PG_SREF;
+		ptp[1] = ptp[0] + 1;
+		ptp += 2;
 	}
+	mtpr(0, PR_TBIA);
 }
 #endif
 
@@ -552,8 +604,8 @@ printf("pmap_enter: pmap: %p,virt %lx, phys %lx, prot %x w %x\n",
 	    ((patch[i] & PG_FRAME) != (nypte & PG_FRAME)))
 #if defined(UVM)
 #ifdef PMAP_NEW
-		pmap_page_protect(&vm_physmem[0].pgs[(patch[i] & PG_FRAME) << 
-		    (CLSHIFT - PGSHIFT)], 0);
+		pmap_page_protect(PHYS_TO_VM_PAGE((patch[i] & PG_FRAME)
+		    << PGSHIFT), 0);
 #else
 		pmap_page_protect((patch[i] & PG_FRAME) << PGSHIFT, 0);
 #endif
@@ -671,36 +723,6 @@ if(startpmapdebug)printf("pmap_extract: pmap %p, va %lx\n",pmap, va);
 }
 
 /*
- * Rensa is a help routine to remove a pv_entry from the pv list.
- * Arguments are physical clustering page and page table entry pointer.
- */
-static inline void
-rensa(clp, ptp)
-	int clp;
-	struct pte *ptp;
-{
-	struct	pv_entry *pf, *pv = pv_table + clp;
-	int	s;
-
-	s = splimp();
-	if (pv->pv_pte == ptp) {
-		pv->pv_pte = 0;
-		splx(s);
-		return;
-	}
-	for (; pv->pv_next; pv = pv->pv_next) {
-		if (pv->pv_next->pv_pte == ptp) {
-			pf = pv->pv_next;
-			pv->pv_next = pv->pv_next->pv_next;
-			FREE(pf, M_VMPVENT);
-			splx(s);
-			return;
-		}
-	}
-	panic("rensa");
-}
-
-/*
  * Sets protection for a given region to prot. If prot == none then
  * unmap region. pmap_remove is implemented as pmap_protect with
  * protection none.
@@ -794,7 +816,7 @@ boolean_t
 pmap_is_referenced(pg)
 	struct vm_page *pg;
 {
-	vm_offset_t pa = pg->phys_addr;
+	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
 #else
 boolean_t
 pmap_is_referenced(pa)
@@ -824,7 +846,7 @@ boolean_t
 pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
-	vm_offset_t pa = pg->phys_addr;
+	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
 #else
 void 
 pmap_clear_reference(pa)
@@ -853,7 +875,7 @@ boolean_t
 pmap_is_modified(pg)
 	struct vm_page *pg;
 {
-	vm_offset_t pa = pg->phys_addr;
+	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
 #else
 boolean_t
 pmap_is_modified(pa)
@@ -863,6 +885,10 @@ pmap_is_modified(pa)
 	struct	pv_entry *pv;
 
 	pv = pv_table + (pa >> CLSHIFT);
+#ifdef PMAPDEBUG
+	if (startpmapdebug)
+		printf("pmap_is_modified: pa %lx pv_entry %p\n", pa, pv);
+#endif
 
 	if (pv->pv_pte)
 		if ((pv->pv_pte[0].pg_m | pv->pv_pte[1].pg_m))
@@ -883,7 +909,7 @@ boolean_t
 pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
-	vm_offset_t pa = pg->phys_addr;
+	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
 #else
 void 
 pmap_clear_modify(pa)
@@ -894,6 +920,10 @@ pmap_clear_modify(pa)
 
 	pv = pv_table + (pa >> CLSHIFT);
 
+#ifdef PMAPDEBUG
+	if (startpmapdebug)
+		printf("pmap_clear_modify: pa %lx pv_entry %p\n", pa, pv);
+#endif
 	if (pv->pv_pte)
 		pv->pv_pte[0].pg_m = pv->pv_pte[1].pg_m = 0;
 
@@ -915,7 +945,7 @@ pmap_page_protect(pg, prot)
 	struct vm_page *pg;
 	vm_prot_t       prot;
 {
-	vm_offset_t pa = pg->phys_addr;
+	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
 #else
 void
 pmap_page_protect(pa, prot)
