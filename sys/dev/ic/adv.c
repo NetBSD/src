@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.12 1999/06/06 17:33:18 dante Exp $	*/
+/*	$NetBSD: adv.c,v 1.13 1999/08/07 07:20:15 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -73,7 +73,7 @@
 /******************************************************************************/
 
 
-static int adv_alloc_ccbs __P((ASC_SOFTC *));
+static int adv_alloc_control_data __P((ASC_SOFTC *));
 static int adv_create_ccbs __P((ASC_SOFTC *, ADV_CCB *, int));
 static void adv_free_ccb __P((ASC_SOFTC *, ADV_CCB *));
 static void adv_reset_ccb __P((ADV_CCB *));
@@ -82,7 +82,6 @@ static ADV_CCB *adv_get_ccb __P((ASC_SOFTC *, int));
 static void adv_queue_ccb __P((ASC_SOFTC *, ADV_CCB *));
 static void adv_start_ccbs __P((ASC_SOFTC *));
 
-static u_int8_t *adv_alloc_overrunbuf __P((char *dvname, bus_dma_tag_t));
 
 static int adv_scsi_cmd __P((struct scsipi_xfer *));
 static void advminphys __P((struct buf *));
@@ -116,7 +115,7 @@ struct scsipi_device adv_dev =
 
 
 static int
-adv_alloc_ccbs(sc)
+adv_alloc_control_data(sc)
 	ASC_SOFTC      *sc;
 {
 	bus_dma_segment_t seg;
@@ -155,6 +154,13 @@ adv_alloc_ccbs(sc)
 		       sc->sc_dev.dv_xname, error);
 		return (error);
 	}
+
+	/*
+	 * Initialize the overrun_buf address.
+	 */
+	sc->overrun_buf = sc->sc_dmamap_control->dm_segs[0].ds_addr +
+	    offsetof(struct adv_control, overrun_buf);
+
 	return (0);
 }
 
@@ -356,72 +362,6 @@ adv_start_ccbs(sc)
 
 
 /******************************************************************************/
-/*                      DMA able memory allocation routines                   */
-/******************************************************************************/
-
-
-/*
- * Allocate a DMA able memory for overrun_buffer.
- * This memory can be safely shared among all the AdvanSys boards.
- */
-u_int8_t       *
-adv_alloc_overrunbuf(dvname, dmat)
-	char           *dvname;
-	bus_dma_tag_t   dmat;
-{
-	static u_int8_t *overrunbuf = NULL;
-
-	bus_dmamap_t    ovrbuf_dmamap;
-	bus_dma_segment_t seg;
-	int             rseg, error;
-
-
-	/*
-         * if an overrun buffer has been already allocated don't allocate it
-         * again. Instead return the address of the allocated buffer.
-         */
-	if (overrunbuf)
-		return (overrunbuf);
-
-
-	if ((error = bus_dmamem_alloc(dmat, ASC_OVERRUN_BSIZE,
-			   NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate overrun buffer, error = %d\n",
-		       dvname, error);
-		return (0);
-	}
-	if ((error = bus_dmamem_map(dmat, &seg, rseg, ASC_OVERRUN_BSIZE,
-	(caddr_t *) & overrunbuf, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map overrun buffer, error = %d\n",
-		       dvname, error);
-
-		bus_dmamem_free(dmat, &seg, 1);
-		return (0);
-	}
-	if ((error = bus_dmamap_create(dmat, ASC_OVERRUN_BSIZE, 1,
-	      ASC_OVERRUN_BSIZE, 0, BUS_DMA_NOWAIT, &ovrbuf_dmamap)) != 0) {
-		printf("%s: unable to create overrun buffer DMA map,"
-		       " error = %d\n", dvname, error);
-
-		bus_dmamem_unmap(dmat, overrunbuf, ASC_OVERRUN_BSIZE);
-		bus_dmamem_free(dmat, &seg, 1);
-		return (0);
-	}
-	if ((error = bus_dmamap_load(dmat, ovrbuf_dmamap, overrunbuf,
-			   ASC_OVERRUN_BSIZE, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load overrun buffer DMA map,"
-		       " error = %d\n", dvname, error);
-
-		bus_dmamap_destroy(dmat, ovrbuf_dmamap);
-		bus_dmamem_unmap(dmat, overrunbuf, ASC_OVERRUN_BSIZE);
-		bus_dmamem_free(dmat, &seg, 1);
-		return (0);
-	}
-	return (overrunbuf);
-}
-
-
-/******************************************************************************/
 /*                         SCSI layer interfacing routines                    */
 /******************************************************************************/
 
@@ -502,11 +442,6 @@ adv_init(sc)
 	}
 	sc->isr_callback = (ASC_CALLBACK) adv_narrow_isr_callback;
 
-	if (!(sc->overrun_buf = adv_alloc_overrunbuf(sc->sc_dev.dv_xname,
-						     sc->sc_dmat))) {
-		panic("adv_init: adv_alloc_overrunbuf failed");
-	}
-
 	return (0);
 }
 
@@ -570,9 +505,9 @@ adv_attach(sc)
 
 
 	/*
-         * Allocate the Control Blocks.
+         * Allocate the Control Blocks and the overrun buffer.
          */
-	error = adv_alloc_ccbs(sc);
+	error = adv_alloc_control_data(sc);
 	if (error)
 		return; /* (error) */
 
