@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.4 2001/04/24 04:30:56 thorpej Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.5 2001/05/26 21:27:06 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -496,7 +496,7 @@ gaps_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	struct pglist mlist;
 	paddr_t curaddr, lastaddr;
-	vm_page_t m;
+	struct vm_page *m;
 	int curseg, error;
 
 	/* Always round the size. */
@@ -542,7 +542,7 @@ void
 gaps_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 	struct pglist mlist;
-	vm_page_t m;
+	struct vm_page *m;
 	bus_addr_t addr;
 	int curseg;
 

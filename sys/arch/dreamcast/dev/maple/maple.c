@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.7 2001/05/26 19:04:39 marcus Exp $	*/
+/*	$NetBSD: maple.c,v 1.8 2001/05/26 21:27:06 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -437,7 +437,7 @@ maple_alloc_dma(size, vap, pap)
 	extern paddr_t avail_start, avail_end;	/* from pmap.c */
 
 	struct pglist mlist;
-	vm_page_t m;
+	struct vm_page *m;
 	int error;
 
 	size = round_page(size);
@@ -461,7 +461,7 @@ maple_free_dma(paddr, size)
 	size_t size;
 {
 	struct pglist mlist;
-	vm_page_t m;
+	struct vm_page *m;
 	bus_addr_t addr;
 
 	TAILQ_INIT(&mlist);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.125 2001/04/24 04:31:03 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.126 2001/05/26 21:27:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.125 2001/04/24 04:31:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.126 2001/05/26 21:27:09 chs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -513,7 +513,7 @@ pmap_pinit(pmap)
 		splx(s);
 	} else {
 		struct segtab *stp;
-		vm_page_t mem;
+		struct vm_page *mem;
 
 		do {
 			mem = uvm_pagealloc(NULL, 0, NULL,
@@ -1108,7 +1108,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	int need_enter_pv;
 	pt_entry_t *pte;
 	u_int npte;
-	vm_page_t mem;
+	struct vm_page *mem;
 	unsigned asid;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 

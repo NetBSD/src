@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75 2001/04/24 04:31:02 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.76 2001/05/26 21:27:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2404,7 +2404,7 @@ void
 pmap_ptpage_addref(ptpva)
 	vaddr_t ptpva;
 {
-	vm_page_t m;
+	struct vm_page *m;
 
 	simple_lock(&uvm.kernel_object->vmobjlock);
 	m = uvm_pagelookup(uvm.kernel_object, ptpva - vm_map_min(kernel_map));
@@ -2421,7 +2421,7 @@ int
 pmap_ptpage_delref(ptpva)
 	vaddr_t ptpva;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	int rv;
 
 	simple_lock(&uvm.kernel_object->vmobjlock);
@@ -2467,7 +2467,7 @@ pmap_check_wiring(str, va)
 {
 	pt_entry_t *pte;
 	paddr_t pa;
-	vm_page_t m;
+	struct vm_page *m;
 	int count;
 
 	if (!pmap_ste_v(pmap_kernel(), va) ||
