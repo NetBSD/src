@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cftoken.l,v 1.12 2003/08/26 03:31:51 itojun Exp $");
+__RCSID("$NetBSD: cftoken.l,v 1.13 2003/10/21 03:06:55 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -301,7 +301,7 @@ off		{ YYD; yylval.num = FALSE; return(SWITCH); }
 			char *p = yytext;
 			YYD;
 			while (*++p != ']') ;
-			*p = NULL;
+			*p = 0;
 			yytext++;
 			yylval.num = atoi(yytext);
 			return(PORT);
