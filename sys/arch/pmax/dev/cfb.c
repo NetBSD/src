@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.25 1997/06/22 07:42:26 jonathan Exp $	*/
+/*	$NetBSD: cfb.c,v 1.26 1997/06/30 22:08:58 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -222,17 +222,12 @@ cfbattach(parent, self, aux)
 		return;
 
 	/*
-	 * The only interrupt on the CFB proper is the vertical-blank
-	 * interrupt, which cannot be disabled. The CFB always requests
-	 * an interrupt during every vertical-retrace period.
-	 * We never enable interrupts from CFB cards, except on the
-	 * 3MIN, where TC options interrupt at spl0 through spl2, and
-	 * disabling of TC option interrupts doesn't work.
+	 * 3MIN does not mask un-established TC option interrupts,
+	 * so establish a handler.
+	 * XXX Should store cmap updates in softc and apply in the
+	 * interrupt handler, which interrupts during vertical-retrace.
 	 */
-	if (pmax_boardtype == DS_3MIN) {
-		tc_intr_establish(parent, (void*)ta->ta_cookie, TC_IPL_NONE,
-				  cfb_intr, fi);
-	}
+	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, cfb_intr, fi);
 	printf("\n");
 }
 
@@ -363,8 +358,7 @@ int
 cfb_intr(sc)
 	void *sc;
 {
-	struct fbinfo *fi = /* XXX (struct fbinfo *)sc */ &cfbfi;
-	
+	struct fbinfo *fi = (struct fbinfo *)sc;
 	char *slot_addr = (((char *)fi->fi_base) - CFB_OFFSET_VRAM);
 	
 	/* reset vertical-retrace interrupt by writing a dont-care */
