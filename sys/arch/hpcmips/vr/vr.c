@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.22 2001/04/18 11:07:28 sato Exp $	*/
+/*	$NetBSD: vr.c,v 1.23 2001/05/17 06:00:22 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -313,22 +313,19 @@ vr_cons_init()
 #if NCOM > 0
 #ifdef KGDB
 	/* if KGDB is defined, always use the serial port for KGDB */
-	/* Serial console */
-	if(com_vrip_cndb_attach(
-		system_bus_iot, 0x0c000000, 9600, VRCOM_FREQ,
-		(TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 1))
-	{
+	if (com_vrip_cndb_attach(system_bus_iot, VRIP_SIU_ADDR, 9600,
+	    VRCOM_FREQ, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 1)) {
 		printf("%s(%d): can't init kgdb's serial port",
-		       __FILE__, __LINE__);
+		    __FILE__, __LINE__);
 	}
 #else
 	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
 		/* Serial console */
-		if(com_vrip_cndb_attach(
-			system_bus_iot, 0x0c000000, CONSPEED, VRCOM_FREQ,
-			(TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 0))
-		{
-			printf("%s(%d): can't init serial console", __FILE__, __LINE__);
+		if (com_vrip_cndb_attach(system_bus_iot,
+		    VRIP_SIU_ADDR, CONSPEED, VRCOM_FREQ,
+		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 0)) {
+			printf("%s(%d): can't init serial console",
+			    __FILE__, __LINE__);
 		} else {
 			return;
 		}
