@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2002/05/20 21:50:11 eeh Exp $
+#	$NetBSD: list,v 1.1.2.1 2002/06/10 16:30:28 tv Exp $
 
 COPY	${DESTDIR}/usr/mdec/ofwboot		ofwboot
-COPY	${OBJDIR}/../instfs/netbsd.INSTALL.gz	netbsd
+COPY	${RAMDISKDIR}/netbsd.INSTALL.gz		netbsd
