@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35.2.3 2000/08/07 01:09:05 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35.2.4 2000/08/26 15:31:49 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
 
 int pci_mode = -1;
 
-struct simplelock pci_conf_slock;
+struct simplelock pci_conf_slock = SIMPLELOCK_INITIALIZER;
 
 #define	PCI_CONF_LOCK(s)						\
 do {									\
@@ -396,8 +396,6 @@ pci_mode_detect()
 	u_int32_t sav, val;
 	int i;
 	pcireg_t idreg;
-
-	simple_lock_init(&pci_conf_slock);
 
 	if (pci_mode != -1)
 		return pci_mode;
