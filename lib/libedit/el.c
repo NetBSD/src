@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.13 1999/07/02 15:21:23 simonb Exp $	*/
+/*	$NetBSD: el.c,v 1.14 1999/09/21 00:55:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.13 1999/07/02 15:21:23 simonb Exp $");
+__RCSID("$NetBSD: el.c,v 1.14 1999/09/21 00:55:55 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -402,17 +402,22 @@ el_source(el, fname)
     size_t len;
     char *ptr, path[MAXPATHLEN];
 
+    fp = NULL;
     if (fname == NULL) {
 	fname = &elpath[1];
 	if ((fp = fopen(fname, "r")) == NULL) {
 	    if ((ptr = getenv("HOME")) == NULL)
 		return -1;
-	    (void)snprintf(path, sizeof(path), "%s%s", ptr, elpath);
+	    if (strlcpy(path, ptr,    sizeof(path)) >= sizeof(path))
+		return -1;
+	    if (strlcat(path, elpath, sizeof(path)) >= sizeof(path))
+		return -1;
 	    fname = path;
 	}
     }
-
-    if ((fp = fopen(fname, "r")) == NULL)
+    if (fp == NULL)
+	fp = fopen(fname, "r");
+    if (fp == NULL)
 	return -1;
 
     while ((ptr = fgetln(fp, &len)) != NULL) {
@@ -449,6 +454,7 @@ el_resize(el)
 
     (void) sigprocmask(SIG_SETMASK, &oset, NULL);
 }
+
 
 /* el_beep():
  *	Called from the program to beep
