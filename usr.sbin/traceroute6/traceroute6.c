@@ -1,5 +1,5 @@
-/*	$NetBSD: traceroute6.c,v 1.24 2002/08/09 02:57:10 itojun Exp $	*/
-/*	$KAME: traceroute6.c,v 1.53 2002/06/09 02:45:52 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.25 2002/08/27 00:34:52 itojun Exp $	*/
+/*	$KAME: traceroute6.c,v 1.58 2002/08/27 00:33:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.24 2002/08/09 02:57:10 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.25 2002/08/27 00:34:52 itojun Exp $");
 #endif
 #endif
 
@@ -581,6 +581,13 @@ main(argc, argv)
 	if (!hostname) {
 		fprintf(stderr, "traceroute6: not enough core\n");
 		exit(1);
+	}
+	if (res->ai_next) {
+		if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
+		    sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
+			strlcpy(hbuf, "?", sizeof(hbuf));
+		fprintf(stderr, "traceroute6: Warning: %s has multiple "
+		    "addresses; using %s\n", hostname, hbuf);
 	}
 
 	if (*++argv) {
