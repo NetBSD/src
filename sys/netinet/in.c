@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.28 1996/05/22 14:42:27 mycroft Exp $	*/
+/*	$NetBSD: in.c,v 1.29 1996/06/23 12:12:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -307,7 +307,7 @@ in_control(so, cmd, data, ifp, p)
 #ifdef MROUTING
 	case SIOCGETVIFCNT:
 	case SIOCGETSGCNT:
-		return (mrt_ioctl(cmd, data));
+		return (mrt_ioctl(so, cmd, data));
 #endif /* MROUTING */
 
 	default:
