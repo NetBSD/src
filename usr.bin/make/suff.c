@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.21 1998/09/18 20:20:52 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.22 1998/11/01 03:05:03 itohy Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.21 1998/09/18 20:20:52 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.22 1998/11/01 03:05:03 itohy Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.21 1998/09/18 20:20:52 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.22 1998/11/01 03:05:03 itohy Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -134,6 +134,14 @@ typedef struct _Suff {
 } Suff;
 
 /*
+ * for SuffSuffIsSuffix
+ */
+typedef struct {
+    char	*ename;		/* The end of the name */
+    int		 len;		/* Length of the name */
+} SuffixCmpData;
+
+/*
  * Structure used in the search for implied sources.
  */
 typedef struct _Src {
@@ -170,7 +178,7 @@ static Suff 	    *emptySuff;	/* The empty suffix required for POSIX
 
 
 static char *SuffStrIsPrefix __P((char *, char *));
-static char *SuffSuffIsSuffix __P((Suff *, char *));
+static char *SuffSuffIsSuffix __P((Suff *, SuffixCmpData *));
 static int SuffSuffIsSuffixP __P((ClientData, ClientData));
 static int SuffSuffHasNameP __P((ClientData, ClientData));
 static int SuffSuffIsPrefix __P((ClientData, ClientData));
@@ -225,8 +233,8 @@ SuffStrIsPrefix (pref, str)
 /*-
  *-----------------------------------------------------------------------
  * SuffSuffIsSuffix  --
- *	See if suff is a suffix of str. Str should point to THE END of the
- *	string to check. (THE END == the null byte)
+ *	See if suff is a suffix of str. sd->ename should point to THE END
+ *	of the string to check. (THE END == the null byte)
  *
  * Results:
  *	NULL if it ain't, pointer to character in str before suffix if
@@ -237,15 +245,18 @@ SuffStrIsPrefix (pref, str)
  *-----------------------------------------------------------------------
  */
 static char *
-SuffSuffIsSuffix (s, str)
+SuffSuffIsSuffix (s, sd)
     register Suff  *s;		/* possible suffix */
-    char           *str;	/* string to examine */
+    SuffixCmpData  *sd;		/* string to examine */
 {
     register char  *p1;	    	/* Pointer into suffix name */
     register char  *p2;	    	/* Pointer into string being examined */
 
+    if (sd->len < s->nameLen)
+	return NULL;		/* this string is shorter than the suffix */
+
     p1 = s->name + s->nameLen;
-    p2 = str;
+    p2 = sd->ename;
 
     while (p1 >= s->name && *p1 == *p2) {
 	p1--;
@@ -270,11 +281,11 @@ SuffSuffIsSuffix (s, str)
  *-----------------------------------------------------------------------
  */
 static int
-SuffSuffIsSuffixP(s, str)
+SuffSuffIsSuffixP(s, sd)
     ClientData   s;
-    ClientData   str;
+    ClientData   sd;
 {
-    return(!SuffSuffIsSuffix((Suff *) s, (char *) str));
+    return(!SuffSuffIsSuffix((Suff *) s, (SuffixCmpData *) sd));
 }
 
 /*-
@@ -759,6 +770,7 @@ SuffRebuildGraph(transformp, sp)
     char 	*cp;
     LstNode	ln;
     Suff  	*s2;
+    SuffixCmpData sd;
 
     /*
      * First see if it is a transformation from this suffix.
@@ -781,7 +793,9 @@ SuffRebuildGraph(transformp, sp)
     /*
      * Not from, maybe to?
      */
-    cp = SuffSuffIsSuffix(s, transform->name + strlen(transform->name));
+    sd.len = strlen(transform->name);
+    sd.ename = transform->name + sd.len;
+    cp = SuffSuffIsSuffix(s, &sd);
     if (cp != (char *)NULL) {
 	/*
 	 * Null-terminate the source suffix in order to find it.
@@ -1562,6 +1576,7 @@ SuffExpandChildren(cgnp, pgnp)
     } else if (Dir_HasWildcards(cgn->name)) {
 	Lst 	exp;	    /* List of expansions */
 	Lst 	path;	    /* Search path along which to expand */
+	SuffixCmpData sd;   /* Search string data */
 
 	/*
 	 * Find a path along which to expand the word.
@@ -1571,8 +1586,9 @@ SuffExpandChildren(cgnp, pgnp)
 	 *   suffix, use its path.
 	 * Else use the default system search path.
 	 */
-	cp = cgn->name + strlen(cgn->name);
-	ln = Lst_Find(sufflist, (ClientData)cp, SuffSuffIsSuffixP);
+	sd.len = strlen(cgn->name);
+	sd.ename = cgn->name + sd.len;
+	ln = Lst_Find(sufflist, (ClientData)&sd, SuffSuffIsSuffixP);
 
 	if (DEBUG(SUFF)) {
 	    printf("Wildcard expanding \"%s\"...", cgn->name);
@@ -1848,12 +1864,15 @@ SuffFindArchiveDeps(gn, slst)
 	 * through the entire list, we just look at suffixes to which the
 	 * member's suffix may be transformed...
 	 */
-	LstNode	    ln;
+	LstNode		ln;
+	SuffixCmpData	sd;		/* Search string data */
 
 	/*
 	 * Use first matching suffix...
 	 */
-	ln = Lst_Find(ms->parents, eoarch, SuffSuffIsSuffixP);
+	sd.len = eoarch - gn->name;
+	sd.ename = eoarch;
+	ln = Lst_Find(ms->parents, &sd, SuffSuffIsSuffixP);
 
 	if (ln != NILLNODE) {
 	    /*
@@ -1919,9 +1938,11 @@ SuffFindNormalDeps(gn, slst)
     Src 	*src;	    /* General Src pointer */
     char    	*pref;	    /* Prefix to use */
     Src	    	*targ;	    /* General Src target pointer */
+    SuffixCmpData sd;	    /* Search string data */
 
 
-    eoname = gn->name + strlen(gn->name);
+    sd.len = strlen(gn->name);
+    sd.ename = eoname = gn->name + sd.len;
 
     sopref = gn->name;
 
@@ -1955,7 +1976,7 @@ SuffFindNormalDeps(gn, slst)
 	/*
 	 * Look for next possible suffix...
 	 */
-	ln = Lst_FindFrom(sufflist, ln, eoname, SuffSuffIsSuffixP);
+	ln = Lst_FindFrom(sufflist, ln, &sd, SuffSuffIsSuffixP);
 
 	if (ln != NILLNODE) {
 	    int	    prefLen;	    /* Length of the prefix */
