@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.28 1997/03/17 17:47:59 is Exp $ */
+/*	$NetBSD: if_bah.c,v 1.29 1997/03/23 15:59:41 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -278,8 +278,7 @@ bah_zbus_attach(parent, self, aux)
 	ifp->if_timer = 0;
 	ifp->if_watchdog  = bah_watchdog;
 
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX |
-	    IFF_NOTRAILERS | IFF_NOARP;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 
 	ifp->if_mtu = ARCMTU;
 
