@@ -1,4 +1,4 @@
-/*	$NetBSD: regdump.c,v 1.6 2003/08/07 16:28:18 agc Exp $	*/
+/*	$NetBSD: regdump.c,v 1.7 2003/09/27 19:34:17 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: regdump.c,v 1.6 2003/08/07 16:28:18 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: regdump.c,v 1.7 2003/09/27 19:34:17 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +126,8 @@ regdump(tf, sbytes)
 	if (sbytes > 0) {
 		if (tf->tf_sr & PSL_S) {
 			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&tf)-1), 8));
-			dumpmem(((int *)&tf)-1, sbytes, 0);
+			       hexstr((int)(((int *)(void *)&tf)-1), 8));
+			dumpmem(((int *)(void *)&tf)-1, sbytes, 0);
 		} else {
 			printf("\n\nUser stack (%s):", hexstr(tf->tf_regs[SP], 8));
 			dumpmem((int *)tf->tf_regs[SP], sbytes, 1);
