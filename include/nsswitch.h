@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.14 2004/09/29 02:47:32 lukem Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.15 2004/10/04 04:02:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -58,13 +58,19 @@
 #define	NS_CONTINUE	0
 #define	NS_RETURN	1
 
+/*
+ * layout of
+ *	uint32_t ns_src.flags
+ */ 
+	/* nsswitch.conf status codes and nsdispatch(3) return values */
 #define	NS_SUCCESS	(1<<0)		/* entry was found */
 #define	NS_UNAVAIL	(1<<1)		/* source not responding, or corrupt */
 #define	NS_NOTFOUND	(1<<2)		/* source responded 'no such entry' */
 #define	NS_TRYAGAIN	(1<<3)		/* source busy, may respond to retrys */
-#define	NS_FORCEALL	(1<<7)		/* force all methods to be invoked; */
-					/* this can't be set in nsswitch.conf */
 #define	NS_STATUSMASK	0x000000ff	/* bitmask to get the status flags */
+
+	/* internal nsdispatch(3) flags; not settable in nsswitch.conf(5)  */
+#define	NS_FORCEALL	(1<<8)		/* force all methods to be invoked; */
 
 /*
  * currently implemented sources
@@ -146,7 +152,7 @@ typedef struct {
  */
 typedef struct {
 	const char	*name;
-	u_int32_t	 flags;
+	uint32_t	 flags;
 } ns_src;
 
 
