@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 2001/11/22 04:50:04 soren Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 2002/01/12 15:05:02 manu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,6 +95,9 @@ cdev_decl(i4brbch);
 cdev_decl(i4btel);
 
 cdev_decl(arcbios_tty);
+
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 struct bdevsw bdevsw[] =
 {
@@ -195,6 +198,7 @@ struct cdevsw cdevsw[] =
 	cdev_notdef(),			/* 57: */
 	cdev_notdef(),			/* 58: */
 	cdev_notdef(),			/* 59: */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 60: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -276,6 +280,7 @@ static int chrtoblktbl[] =  {
 	/* 57 */	NODEV,
 	/* 58 */	NODEV,
 	/* 59 */	NODEV,
+	/* 60 */	NODEV,
 };
 
 dev_t
