@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/03/12 12:44:19 reinoud Exp $
+#	$NetBSD: Makefile,v 1.8 2002/03/14 22:26:08 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -14,7 +14,7 @@ LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	le
 MAKEDEVTARGETS=	ramdisk
-POPULATEENV=	PWD_MKDB=${PWD_MKDB:Q}
+PARSELISTENV=	PWD_MKDB=${PWD_MKDB:Q}
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.hdprofile dot.profile termcap.vt100 \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
