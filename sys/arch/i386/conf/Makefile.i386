@@ -1,6 +1,6 @@
 # Copyright 1990 W. Jolitz
 # 	from: @(#)Makefile.i386	7.1 5/10/91
-#	$Id: Makefile.i386,v 1.29 1993/09/11 00:14:13 jtc Exp $
+#	$Id: Makefile.i386,v 1.30 1993/09/13 15:28:23 brezak Exp $
 #
 # Makefile for NetBSD
 #
@@ -34,6 +34,7 @@ INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Di386
 ASFLAGS=
 CFLAGS=	-O ${DEBUG} ${COPTS}
+LOAD_ADDRESS ?= FE100000
 
 NORMAL_C= ${CC} -c ${CFLAGS} ${PROF} $<
 NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
@@ -81,6 +82,9 @@ locore.o: assym.s ${I386}/i386/locore.s machine/trap.h machine/psl.h \
 	${I386}/isa/icu.h ${I386}/isa/isa.h vector.h $S/net/netisr.h
 	${CPP} -I. -DLOCORE ${COPTS} ${I386}/i386/locore.s | \
 		${AS} ${ASFLAGS} -o locore.o
+
+machdep.o: ${I386}/i386/machdep.c Makefile
+	${CC} -c ${CFLAGS} -DLOAD_ADDRESS=0x${LOAD_ADDRESS} ${PROF} $<
 
 # the following is necessary because autoconf.o depends on #if GENERIC
 autoconf.o: Makefile
