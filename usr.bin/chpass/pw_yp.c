@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_yp.c,v 1.18 2000/10/27 16:16:03 phil Exp $	*/
+/*	$NetBSD: pw_yp.c,v 1.19 2002/11/16 15:59:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-__RCSID("$NetBSD: pw_yp.c,v 1.18 2000/10/27 16:16:03 phil Exp $");
+__RCSID("$NetBSD: pw_yp.c,v 1.19 2002/11/16 15:59:27 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,12 +166,32 @@ pw_yp(pw, uid)
 
 	/* tell rpc.yppasswdd */
 	yppasswd.newpw.pw_name	 = strdup(pw->pw_name);
+	if (!yppasswd.newpw.pw_name) {
+		err(1, "strdup");
+		/*NOTREACHED*/
+	}
 	yppasswd.newpw.pw_passwd = strdup(pw->pw_passwd);
+	if (!yppasswd.newpw.pw_passwd) {
+		err(1, "strdup");
+		/*NOTREACHED*/
+	}
 	yppasswd.newpw.pw_uid 	 = pw->pw_uid;
 	yppasswd.newpw.pw_gid	 = pw->pw_gid;
 	yppasswd.newpw.pw_gecos  = strdup(pw->pw_gecos);
+	if (!yppasswd.newpw.pw_gecos) {
+		err(1, "strdup");
+		/*NOTREACHED*/
+	}
 	yppasswd.newpw.pw_dir	 = strdup(pw->pw_dir);
+	if (!yppasswd.newpw.pw_dir) {
+		err(1, "strdup");
+		/*NOTREACHED*/
+	}
 	yppasswd.newpw.pw_shell	 = strdup(pw->pw_shell);
+	if (!yppasswd.newpw.pw_shell) {
+		err(1, "strdup");
+		/*NOTREACHED*/
+	}
 	
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
 	if (client == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.50 2002/11/16 13:45:10 itojun Exp $	*/
+/*	$NetBSD: su.c,v 1.51 2002/11/16 15:59:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.50 2002/11/16 13:45:10 itojun Exp $");
+__RCSID("$NetBSD: su.c,v 1.51 2002/11/16 15:59:31 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -715,7 +715,10 @@ check_ingroup (gid, gname, user, ifempty)
 	 */
 	gr_mem = malloc((n + 1) * sizeof (char *));
 	for  (g = gr->gr_mem, i = 0; *g; ++g) {
-		gr_mem[i++] = strdup(*g);
+		gr_mem[i] = strdup(*g);
+		if (!gr_mem[i])
+			err(1, "strdup");
+		i++;
 	}
 	gr_mem[i++] = NULL;
     
