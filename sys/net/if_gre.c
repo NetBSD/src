@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.9.6.3 2001/12/09 18:13:00 he Exp $ */
+/*	$NetBSD: if_gre.c,v 1.9.6.4 2002/02/26 20:57:57 he Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@
 #define LINK_MASK (IFF_LINK0|IFF_LINK1|IFF_LINK2)
 
 struct gre_softc gre_softc[NGRE];
+int ip_gre_ttl = GRE_TTL;
 
 
 int gre_compute_route(struct gre_softc *sc);
@@ -173,7 +174,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct gre_softc *sc = (struct gre_softc *)(ifp->if_softc);
 	struct greip *gh;
 	struct ip *inp;
-	u_char ttl, osrc;
+	u_char osrc;
 	u_short etype = 0;
 	
 	if ((ifp->if_flags & IFF_UP) == 0)
@@ -198,7 +199,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	}
 #endif
 
-	ttl = 255;
+	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 	if (sc->g_proto == IPPROTO_MOBILE) {
 		if (dst->sa_family == AF_INET) {
@@ -265,7 +266,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		switch(dst->sa_family) {
 		case AF_INET:
 			inp = mtod(m, struct ip *);
-			ttl = inp->ip_ttl;
 			etype = ETHERTYPE_IP;
 			break;
 #ifdef NETATALK
@@ -310,7 +310,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		gh->gi_src = sc->g_src;
 		gh->gi_dst = sc->g_dst;
 		((struct ip*)gh)->ip_hl = (sizeof(struct ip)) >> 2; 
-		((struct ip*)gh)->ip_ttl = ttl;
+		((struct ip*)gh)->ip_ttl = ip_gre_ttl;
 		((struct ip*)gh)->ip_tos = inp->ip_tos;
 	    gh->gi_len = m->m_pkthdr.len;
 	}
