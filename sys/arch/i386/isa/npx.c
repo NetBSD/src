@@ -33,7 +33,7 @@
  *
  *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/npx.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/npx.c,v 1.2 1993/04/03 02:18:02 cgd Exp $";
 #include "npx.h"
 #if NNPX > 0
 
@@ -126,7 +126,11 @@ npxinit(control) {
 	asm ("	fninit");
 	asm("	fldcw %0" : : "g" (wd));
 	if (curpcb) {
+#if __GNUC__ >= 2
+		asm("	fnsave 0(%0) " : : "a" (&curpcb->pcb_savefpu) );
+#else
 		asm("	fnsave %0 " : : "g" (curpcb->pcb_savefpu) );
+#endif
 		curpcb->pcb_flags |= FP_NEEDSRESTORE;
 	}
 	load_cr0(rcr0() | CR0_EM);	/* start emulating */
@@ -141,7 +145,11 @@ npxload() {
 	if (npxproc) panic ("npxload");
 	npxproc = curproc;
 	npxpcb = curpcb;
+#if __GNUC__ >= 2
+	asm("	frstor 0(%0) " : : "a" (&curpcb->pcb_savefpu) );
+#else
 	asm("	frstor %0 " : : "g" (curpcb->pcb_savefpu) );
+#endif
 }
 
 /*
@@ -150,7 +158,11 @@ npxload() {
 npxunload() {
 
 	if (npxproc == 0) panic ("npxunload");
+#if __GNUC__ >= 2
+	asm("	fsave 0(%0) " : : "a" (&npxpcb->pcb_savefpu) );
+#else
 	asm("	fsave %0 " : : "g" (npxpcb->pcb_savefpu) );
+#endif
 	npxproc = 0 ;
 }
 
@@ -167,7 +179,11 @@ static status;
 	asm ("	fnstsw	%0 " : "=m" (status) : "m" (status) );
 	/* sync state in process context structure, in advance of debugger/process looking for it */
 	if (npxproc == 0 || npxexists == 0) panic ("npxintr");
+#if __GNUC__ >= 2
+	asm ("	fnsave 0(%0) " : : "a" (&npxpcb->pcb_savefpu) );
+#else
 	asm ("	fnsave %0 " : : "g" (npxpcb->pcb_savefpu) );
+#endif
 
 #ifdef notyet
 	/* encode the appropriate code for detailed information on this exception */
@@ -206,7 +222,11 @@ npxdna() {
 	if (npxexists == 0) return(0);
 	load_cr0(rcr0() & ~CR0_EM);	/* stop emulating */
     	if (curpcb->pcb_flags & FP_NEEDSRESTORE)
+#if __GNUC__ >= 2
+		asm("	frstor 0(%0) " : : "a" (&curpcb->pcb_savefpu));
+#else
 		asm("	frstor %0 " : : "g" (curpcb->pcb_savefpu));
+#endif
 	curpcb->pcb_flags |= FP_WASUSED | FP_NEEDSSAVE;
 	curpcb->pcb_flags &= ~FP_NEEDSRESTORE;
 	npxproc = curproc;
