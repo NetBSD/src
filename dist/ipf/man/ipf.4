@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.4,v 1.7 2002/01/24 08:24:14 martti Exp $
+.\"	$NetBSD: ipf.4,v 1.8 2002/03/04 15:15:39 sommerfeld Exp $
 .\"
 .TH IPF 4
 .SH NAME
@@ -262,7 +262,7 @@ ipf(4) will not look at decapsulated packets on inbound,
 nor packets prior to encapsulation on outbound.
 .PP
 When tunneled packets arrive at the node and are handled by a
-tunnelling pseudo interface like gif(4) or ipip(4),
+tunnelling pseudo interface like gif(4),
 the packets may go through ipf(4) twice, before and after decapsulation.
 In some cases it may be necessary to check, in the ipf(4) rules,
 if the inbound interface is a tunnelling pseudo interface or not.

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.34 2001/11/15 04:49:01 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.35 2002/03/04 15:16:31 sommerfeld Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.34 2001/11/15 04:49:01 itojun Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.35 2002/03/04 15:16:31 sommerfeld Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -127,7 +127,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	default:
 		return EAI_FAMILY;
 	}
-}	
+}
 
 
 /*
@@ -217,7 +217,7 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 			flags |= NI_NUMERICHOST;
 		v4a >>= IN_CLASSA_NSHIFT;
 		if (v4a == 0)
-			flags |= NI_NUMERICHOST;			
+			flags |= NI_NUMERICHOST;
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -387,7 +387,7 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 
 	_DIAGASSERT(sa6 != NULL);
 	_DIAGASSERT(buf != NULL);
-	
+
 	ifindex = (unsigned int)sa6->sin6_scope_id;
 	a6 = &sa6->sin6_addr;
 
@@ -485,7 +485,6 @@ getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
 	/*
 	 * The following use IPv4 addresses as link-layer addresses:
 	 * IFT_OTHER	(net/if_gre.c)
-	 * IFT_OTHER	(netinet/ip_ipip.c)
 	 */
 	case IFT_ARCNET: /* default below is believed correct for all these. */
 	case IFT_ETHER:
