@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.62 2004/08/22 15:40:41 jdolecek Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.63 2004/08/24 17:41:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.62 2004/08/22 15:40:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.63 2004/08/24 17:41:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ linux_sys_old_mmap(l, v, retval)
 	SCARG(&nlmap,flags) = lmap.lm_flags;
 	SCARG(&nlmap,fd) = lmap.lm_fd;
 	SCARG(&nlmap,offset) = lmap.lm_offset;
-	DPRINTF(("old_mmap(%p, %u, %u, %u, %d, %u)\n",
+	DPRINTF(("old_mmap(%#x, %u, %u, %u, %d, %u)\n",
 	    lmap.lm_addr, lmap.lm_len, lmap.lm_prot, lmap.lm_flags,
 	    lmap.lm_fd, lmap.lm_offset));
 	return linux_sys_mmap(l, &nlmap, retval);
