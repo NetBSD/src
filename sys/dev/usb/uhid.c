@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.8 1998/12/02 22:54:52 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.9 1998/12/03 20:43:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -455,9 +455,15 @@ uhidioctl(dev, cmd, addr, flag, p)
 		break;
 
 	case USB_SET_IMMED:
-		if (*(int *)addr)
+		if (*(int *)addr) {
+			/* XXX should read into ibuf, but does it matter */
+			r = usbd_get_report(sc->sc_iface, UHID_INPUT_REPORT,
+					    sc->sc_iid, sc->sc_ibuf, 
+					    sc->sc_isize);
+			if (r != USBD_NORMAL_COMPLETION)
+				return (EOPNOTSUPP);
 			sc->sc_state |=  UHID_IMMED;
-		else
+		} else
 			sc->sc_state &= ~UHID_IMMED;
 		break;
 
