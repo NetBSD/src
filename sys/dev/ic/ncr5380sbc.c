@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.15 1996/12/15 10:02:30 scottr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.16 1997/02/26 20:31:16 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -257,7 +257,10 @@ ncr5380_pio_out(sc, phase, count, data)
 			break;
 
 		/* Put the data on the bus. */
-		*sc->sci_odata = *data++;
+		if (data)
+			*sc->sci_odata = *data++;
+		else
+			*sc->sci_odata = 0;
 
 		/* Tell the target it's there. */
 		icmd |= SCI_ICMD_ACK;
@@ -313,7 +316,10 @@ ncr5380_pio_in(sc, phase, count, data)
 			break;
 
 		/* Read the data bus. */
-		*data++ = *sc->sci_data;
+		if (data)
+			*data++ = *sc->sci_data;
+		else
+			(void) *sc->sci_data;
 
 		/* Tell target we got it. */
 		icmd |= SCI_ICMD_ACK;
@@ -2077,9 +2083,19 @@ ncr5380_data_xfer(sc, phase)
 
 	/* Make sure we have some data to move. */
 	if (sc->sc_datalen <= 0) {
-		printf("%s: can not transfer more data\n",
-		    sc->sc_dev.dv_xname);
-		goto abort;
+		/* Device needs padding. */
+		if (phase == PHASE_DATA_IN)
+			ncr5380_pio_in(sc, phase, 4096, NULL);
+		else
+			ncr5380_pio_out(sc, phase, 4096, NULL);
+		/* Make sure that caused a phase change. */
+		if (SCI_BUS_PHASE(*sc->sci_bus_csr) == phase) {
+			/* More than 4k is just too much! */
+			printf("%s: too much data padding\n",
+				sc->sc_dev.dv_xname);
+			goto abort;
+		}
+		return ACT_CONTINUE;
 	}
 
 	/*
