@@ -1,10 +1,11 @@
-/*	$NetBSD: float.h,v 1.4 2003/10/23 23:26:06 kleink Exp $	*/
+/*	$NetBSD: float.h,v 1.5 2003/10/30 22:46:17 kleink Exp $	*/
 
 #ifndef _HPPA_FLOAT_H_
 #define _HPPA_FLOAT_H_
 
 #define	FLT_ROUNDS	1
 
+#ifdef _LP64
 #define	LDBL_MANT_DIG	113
 #define	LDBL_EPSILON	1.925929944387235853055977942584927319E-34L
 #define	LDBL_DIG	33
@@ -14,9 +15,11 @@
 #define	LDBL_MAX_EXP	16384
 #define	LDBL_MAX	1.1897314953572317650857593266280070162E4932L
 #define	LDBL_MAX_10_EXP	4932
+#endif
 
 #include <sys/float_ieee754.h>
 
+#ifdef _LP64
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE) || \
     ((__STDC_VERSION__ - 0) >= 199901L) || \
@@ -25,5 +28,6 @@
     defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
 #define	DECIMAL_DIG	36
 #endif /* !defined(_ANSI_SOURCE) && ... */
+#endif /* _LP64 */
 
 #endif /* _HPPA_FLOAT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.6 2003/10/27 01:11:47 kleink Exp $	*/
+/*	$NetBSD: ieee.h,v 1.7 2003/10/30 22:46:17 kleink Exp $	*/
 
 /*	$OpenBSD: ieee.h,v 1.1 1999/04/20 19:44:04 mickey Exp $	*/
 
@@ -50,6 +50,7 @@
 
 #include <sys/ieee754.h>
 
+#ifdef _LP64
 #define	EXT_EXPBITS	15
 #define	EXT_FRACBITS	112
 
@@ -89,3 +90,4 @@ union ieee_ext_u {
 	long double		extu_ld;
 	struct ieee_ext		extu_ext;
 };
+#endif /* _LP64 */
