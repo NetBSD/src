@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1 2001/06/19 00:20:10 fvdl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2 2002/05/28 23:06:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ enable_intr(void)
 }
 
 static __inline u_long
-read_eflags(void)
+read_rflags(void)
 {
 	u_long	ef;
 
@@ -172,7 +172,7 @@ read_eflags(void)
 }
 
 static __inline void
-write_eflags(u_long ef)
+write_rflags(u_long ef)
 {
 	__asm __volatile("pushq %0; popfq" : : "r" (ef));
 }
@@ -180,16 +180,16 @@ write_eflags(u_long ef)
 static __inline u_int64_t
 rdmsr(u_int msr)
 {
-	u_int64_t rv;
-
-	__asm __volatile("rdmsr" : "=A" (rv) : "c" (msr));
-	return (rv);
+	uint32_t hi, lo;
+	__asm __volatile("rdmsr" : "=d" (hi), "=a" (lo) : "c" (msr));
+	return (((uint64_t)hi << 32) | (uint64_t) lo);
 }
 
 static __inline void
 wrmsr(u_int msr, u_int64_t newval)
 {
-	__asm __volatile("wrmsr" : : "A" (newval), "c" (msr));
+	__asm __volatile("wrmsr" :
+	    : "a" (newval & 0xffffffff), "d" (newval >> 32), "c" (msr));
 }
 
 static __inline void
