@@ -4,8 +4,6 @@ Some things that need to be done in no particular order:
 Before 1.5:
 -----------
 
-New abort code for UHCI.
-
 Add isoc to OHCI driver.
 
 Port FreeBSD umass driver.
@@ -60,4 +58,7 @@ Add threads to the Ethernet drivers.
 
 Change what's done at watchdog timeout inb if_{a,c,k}ue.c; what we have
 now doesn't work because it's done in an interrupt context.
+
+Rewrite HID driver to handle report IDs properly.  Perhaps there should
+be a hiddev to which hid with different IDs can attach?
 
