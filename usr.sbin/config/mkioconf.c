@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.69 2002/10/09 03:10:19 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.70 2003/03/16 08:09:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -490,7 +490,7 @@ emitroots(FILE *fp)
 {
 	struct devi **p, *i;
 
-	if (fputs("\nshort cfroots[] = {\n", fp) < 0)
+	if (fputs("\nconst short cfroots[] = {\n", fp) < 0)
 		return (1);
 	for (p = packed; (i = *p) != NULL; p++) {
 		if (i->i_at != NULL)
