@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.10 1997/10/10 01:53:28 fvdl Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.11 1997/10/19 01:46:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -231,9 +231,10 @@ int nfsm_disct __P((struct mbuf **, caddr_t *, int, int, caddr_t *));
 int nfs_adv __P((struct mbuf **, caddr_t *, int, int));
 int nfsm_strtmbuf __P((struct mbuf **, char **, const char *, long));
 u_long nfs_dirhash __P((off_t));
-struct nfsdircache *nfs_lookdircache __P((struct vnode *, off_t, int, daddr_t,
-					  int));
-void nfs_invaldircache __P((struct vnode *));
+void nfs_initdircache __P((struct vnode *));
+struct nfsdircache *nfs_searchdircache __P((struct vnode *, off_t, int, int *));
+struct nfsdircache *nfs_enterdircache __P((struct vnode *, off_t, off_t,						   daddr_t, int));
+void nfs_invaldircache __P((struct vnode *, int));
 void nfs_init __P((void));
 int nfsm_loadattrcache __P((struct vnode **, struct mbuf **, caddr_t *,
 			   struct vattr *));
@@ -256,7 +257,6 @@ int nfsrv_setpublicfs __P((struct mount *, struct netexport *,
 			   struct export_args *));
 int nfs_ispublicfh __P((fhandle_t *));
 int netaddr_match __P((int, union nethostaddr *, struct mbuf *));
-void nfs_invaldircache __P((struct vnode *));
 void nfs_clearcommit __P((struct mount *));
 int nfsrv_errmap __P((struct nfsrv_descript *, int));
 void nfsrvw_sort __P((gid_t *, int));

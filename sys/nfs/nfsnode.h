@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsnode.h,v 1.23 1997/10/16 23:59:34 christos Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.24 1997/10/19 01:46:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -78,11 +78,13 @@ LIST_HEAD(nfsdirhashhead, nfsdircache);
 TAILQ_HEAD(nfsdirchainhead, nfsdircache);
 
 struct nfsdircache {
-	LIST_ENTRY(nfsdircache) dc_hash;
-	TAILQ_ENTRY(nfsdircache) dc_chain;
-	off_t	dc_cookie;
-	daddr_t	dc_blkno;
-	int	dc_entry;
+	off_t		dc_cookie;		/* Own offset (key) */
+	off_t		dc_blkcookie;		/* Offset of block we're in */
+	LIST_ENTRY(nfsdircache) dc_hash;	/* Hash chain */
+	TAILQ_ENTRY(nfsdircache) dc_chain;	/* Least recently entered chn */
+	u_int32_t	dc_cookie32;		/* Key for 64<->32 xlate case */
+	daddr_t		dc_blkno;		/* Number of block we're in */
+	int		dc_entry;		/* Entry number within block */
 };
 
 
@@ -100,39 +102,40 @@ struct nfsdircache {
  *     be well aligned and, therefore, tightly packed.
  */
 struct nfsnode {
-	LIST_ENTRY(nfsnode)	n_hash;		/* Hash chain */
-	CIRCLEQ_ENTRY(nfsnode)	n_timer;	/* Nqnfs timer chain */
 	u_quad_t		n_size;		/* Current size of file */
 	u_quad_t		n_brev;		/* Modify rev when cached */
 	u_quad_t		n_lrev;		/* Modify rev for lease */
-	struct vattr		n_vattr;	/* Vnode attribute cache */
-	time_t			n_attrstamp;	/* Attr. cache timestamp */
-	time_t			n_mtime;	/* Prev modify time. */
-	time_t			n_ctime;	/* Prev create time. */
-	time_t			n_nctime;	/* Last neg cache entry (dir) */
-	time_t			n_expiry;	/* Lease expiry time */
-	nfsfh_t			*n_fhp;		/* NFS File Handle */
-	struct vnode		*n_vnode;	/* associated vnode */
-	struct lockf		*n_lockf;	/* Locking record of file */
-	int			n_error;	/* Save write error value */
-	union {
-		struct timespec	nf_atim;	/* Special file times */
-		nfsuint64	nd_cookieverf;	/* Cookie verifier (dir only) */
-	} n_un1;
 	union {
 		struct timespec	nf_mtim;
 		off_t		nd_direof;	/* Dir. EOF offset cache */
 	} n_un2;
 	union {
+		struct timespec	nf_atim;	/* Special file times */
+		nfsuint64	nd_cookieverf;	/* Cookie verifier (dir only) */
+	} n_un1;
+	union {
 		struct sillyrename *nf_silly;	/* Ptr to silly rename struct */
 		struct nfsdirhashhead *nd_dircache;
 	} n_un3;
+	LIST_ENTRY(nfsnode)	n_hash;		/* Hash chain */
+	CIRCLEQ_ENTRY(nfsnode)	n_timer;	/* Nqnfs timer chain */
+	struct nfsdirchainhead	n_dirchain;	/* Chain of dir cookies */
+	nfsfh_t			*n_fhp;		/* NFS File Handle */
+	struct vattr		*n_vattr;	/* Vnode attribute cache */
+	struct vnode		*n_vnode;	/* associated vnode */
+	struct lockf		*n_lockf;	/* Locking record of file */
+	unsigned		*n_dirgens;	/* 32<->64bit xlate gen. no. */
+	time_t			n_attrstamp;	/* Attr. cache timestamp */
+	time_t			n_mtime;	/* Prev modify time. */
+	time_t			n_ctime;	/* Prev create time. */
+	time_t			n_nctime;	/* Last neg cache entry (dir) */
+	time_t			n_expiry;	/* Lease expiry time */
+	daddr_t			n_dblkno;	/* To keep faked dir blkno */
+	unsigned		n_dircachesize;	/* Size of dir cookie cache */
+	int			n_error;	/* Save write error value */
 	short			n_fhsize;	/* size in bytes, of fh */
 	short			n_flag;		/* Flag for locking.. */
 	nfsfh_t			n_fh;		/* Small File Handle */
-	daddr_t			n_dblkno;	/* To keep faked dir blkno */
-	unsigned		n_dircachesize;	/* Size of dir cookie cache */
-	struct nfsdirchainhead	n_dirchain;	/* Chain of dir cookies */
 };
 
 #define n_atim		n_un1.nf_atim

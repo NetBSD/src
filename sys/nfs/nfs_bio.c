@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.34 1997/10/10 01:53:18 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.35 1997/10/19 01:46:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -82,7 +82,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	struct vattr vattr;
 	struct proc *p;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	struct nfsdircache *ndp = NULL;
+	struct nfsdircache *ndp = NULL, *nndp = NULL;
 	daddr_t lbn, bn, rabn;
 	caddr_t baddr, ep, edp;
 	int got_buf = 0, nra, error = 0, n = 0, on = 0, not_readin, en, enn;
@@ -128,7 +128,8 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			if (vp->v_type != VREG) {
 				if (vp->v_type != VDIR)
 					panic("nfs: bioread, not dir");
-				nfs_invaldircache(vp);
+				nfs_invaldircache(vp, 0);
+				np->n_direofoffset = 0;
 				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 				if (error)
 					return (error);
@@ -143,8 +144,10 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			if (error)
 				return (error);
 			if (np->n_mtime != vattr.va_mtime.tv_sec) {
-				if (vp->v_type == VDIR)
-					nfs_invaldircache(vp);
+				if (vp->v_type == VDIR) {
+					nfs_invaldircache(vp, 0);
+					np->n_direofoffset = 0;
+				}
 				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 				if (error)
 					return (error);
@@ -167,16 +170,19 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		    if (np->n_lrev != np->n_brev ||
 			(np->n_flag & NQNFSNONCACHE) ||
 			((np->n_flag & NMODIFIED) && vp->v_type == VDIR)) {
-			if (vp->v_type == VDIR)
-				nfs_invaldircache(vp);
+			if (vp->v_type == VDIR) {
+				nfs_invaldircache(vp, 0);
+				np->n_direofoffset = 0;
+			}
 			error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 			if (error)
 			    return (error);
 			np->n_brev = np->n_lrev;
 		    }
 		} else if (vp->v_type == VDIR && (np->n_flag & NMODIFIED)) {
-		    nfs_invaldircache(vp);
+		    nfs_invaldircache(vp, 0);
 		    error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
+		    np->n_direofoffset = 0;
 		    if (error)
 			return (error);
 		}
@@ -304,20 +310,37 @@ again:
 	    case VDIR:
 diragain:
 		nfsstats.biocache_readdirs++;
+		ndp = nfs_searchdircache(vp, uio->uio_offset,
+			(nmp->nm_flag & NFSMNT_XLATECOOKIE), 0);
+		if (!ndp) {
+			/*
+			 * We've been handed a cookie that is not
+			 * in the cache. If we're not translating
+			 * 32 <-> 64, it may be a value that was
+			 * flushed out of the cache because it grew
+			 * too big. Let the server judge if it's
+			 * valid or not. In the translation case,
+			 * we have no way of validating this value,
+			 * so punt.
+			 */
+			if (nmp->nm_flag & NFSMNT_XLATECOOKIE)
+				return (EINVAL);
+			ndp = nfs_enterdircache(vp, uio->uio_offset, 
+				uio->uio_offset, 0, 0);
+		}
+
 		if (uio->uio_offset != 0 &&
-		    uio->uio_offset == np->n_direofoffset)
+		    ndp->dc_cookie == np->n_direofoffset) {
+			nfsstats.direofcache_hits++;
 			return (0);
-		ndp = nfs_lookdircache(vp, uio->uio_offset, 0, 0, 1);
-#ifdef DIAGNOSTIC
-		if (!ndp)
-			panic("nfs_bioread: bad dir cache");
-#endif
+		}
+
 		bp = nfs_getcacheblk(vp, ndp->dc_blkno, NFS_DIRBLKSIZ, p);
 		if (!bp)
 		    return (EINTR);
 		if ((bp->b_flags & B_DONE) == 0) {
 		    bp->b_flags |= B_READ;
-		    bp->b_dcookie = ndp->dc_cookie;
+		    bp->b_dcookie = ndp->dc_blkcookie;
 		    error = nfs_doio(bp, cred, p);
 		    if (error) {
 			/*
@@ -327,7 +350,7 @@ diragain:
 			 */
 			brelse(bp);
 			if (error == NFSERR_BAD_COOKIE) {
-			    nfs_invaldircache(vp);
+			    nfs_invaldircache(vp, 0);
 			    nfs_vinvalbuf(vp, 0, cred, p, 1);
 			    error = EINVAL;
 			}
@@ -358,7 +381,7 @@ diragain:
 		 * the server).
 		 */
 		if ((caddr_t)dp >= edp || (caddr_t)dp + dp->d_reclen > edp ||
-		    (en > 0 && NFS_GETCOOKIE(pdp) != uio->uio_offset)) {
+		    (en > 0 && NFS_GETCOOKIE(pdp) != ndp->dc_cookie)) {
 #ifdef DEBUG
 		    	printf("invalid cache: %p %p %p len %u off %lx %lx\n",
 				pdp, dp, edp, dp->d_reclen,
@@ -366,7 +389,7 @@ diragain:
 				(unsigned long)NFS_GETCOOKIE(pdp));
 #endif
 			brelse(bp);
-			nfs_invaldircache(vp);
+			nfs_invaldircache(vp, 0);
 			nfs_vinvalbuf(vp, 0, cred, p, 0);
 			goto diragain;
 		}
@@ -400,9 +423,14 @@ diragain:
 		 */
 
 		while ((caddr_t)dp < ep && (caddr_t)dp + dp->d_reclen <= ep) {	
-			if (cflag & NFSBIO_CACHECOOKIES)
-				nfs_lookdircache(vp, NFS_GETCOOKIE(pdp), enn,
-				    bp->b_lblkno, 1);
+			if (cflag & NFSBIO_CACHECOOKIES) {
+				nndp = nfs_enterdircache(vp, NFS_GETCOOKIE(pdp),
+				    ndp->dc_blkcookie, enn, bp->b_lblkno);
+				if (nmp->nm_flag & NFSMNT_XLATECOOKIE) {
+					NFS_STASHCOOKIE32(pdp,
+					    nndp->dc_cookie32);
+				}
+			}
 			pdp = dp;
 			dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);
 			enn++;
@@ -417,9 +445,26 @@ diragain:
 
 		if ((on + n) < bp->b_validend) {
 			curoff = NFS_GETCOOKIE(pdp);
-			nfs_lookdircache(vp, curoff, enn, bp->b_lblkno, 1);
+			nndp = nfs_enterdircache(vp, curoff, ndp->dc_blkcookie,
+			    enn, bp->b_lblkno);
+			if (nmp->nm_flag & NFSMNT_XLATECOOKIE) {
+				NFS_STASHCOOKIE32(pdp, nndp->dc_cookie32);
+				curoff = nndp->dc_cookie32;
+			}
 		} else
 			curoff = bp->b_dcookie;
+
+		/*
+		 * Always cache the entry for the next block,
+		 * so that readaheads can use it.
+		 */
+		nndp = nfs_enterdircache(vp, bp->b_dcookie, bp->b_dcookie, 0,0);
+		if (nmp->nm_flag & NFSMNT_XLATECOOKIE) {
+			if (curoff == bp->b_dcookie) {
+				NFS_STASHCOOKIE32(pdp, nndp->dc_cookie32);
+				curoff = nndp->dc_cookie32;
+			}
+		}
 
 		n = ((caddr_t)pdp + pdp->d_reclen) - (bp->b_data + on);
 
@@ -430,12 +475,11 @@ diragain:
 		 */
 		if (nfs_numasync > 0 && nmp->nm_readahead > 0 &&
 		    np->n_direofoffset == 0 && !(np->n_flag & NQNFSNONCACHE)) {
-			ndp = nfs_lookdircache(vp, bp->b_dcookie, 0, 0, 1);
-			rabp = nfs_getcacheblk(vp, ndp->dc_blkno,
+			rabp = nfs_getcacheblk(vp, nndp->dc_blkno,
 						NFS_DIRBLKSIZ, p);
 			if (rabp) {
 			    if ((rabp->b_flags & (B_DONE | B_DELWRI)) == 0) {
-				rabp->b_dcookie = ndp->dc_cookie;
+				rabp->b_dcookie = nndp->dc_cookie;
 				rabp->b_flags |= (B_READ | B_ASYNC);
 				if (nfs_asyncio(rabp, cred)) {
 				    rabp->b_flags |= B_INVAL;
@@ -973,7 +1017,7 @@ nfs_doio(bp, cr, p)
 			  NQNFS_CKINVALID(vp, np, ND_READ) &&
 			  np->n_lrev != np->n_brev) ||
 			 (!(nmp->nm_flag & NFSMNT_NQNFS) &&
-			  np->n_mtime != np->n_vattr.va_mtime.tv_sec))) {
+			  np->n_mtime != np->n_vattr->va_mtime.tv_sec))) {
 			uprintf("Process killed due to text file modification\n");
 			psignal(p, SIGKILL);
 			p->p_holdcnt++;
