@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.38 2005/01/03 03:07:12 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.39 2005/01/03 03:25:06 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.38 2005/01/03 03:07:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.39 2005/01/03 03:25:06 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2404,13 +2404,9 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				rtw_pktfilt_load(sc);
 			} else
 				rc = rtw_init(ifp);
-#ifdef RTW_DEBUG
-			rtw_print_regs(&sc->sc_regs, ifp->if_xname, __func__);
-#endif /* RTW_DEBUG */
+			RTW_PRINT_REGS(&sc->sc_regs, ifp->if_xname, __func__);
 		} else if ((sc->sc_flags & RTW_F_ENABLED) != 0) {
-#ifdef RTW_DEBUG
-			rtw_print_regs(&sc->sc_regs, ifp->if_xname, __func__);
-#endif /* RTW_DEBUG */
+			RTW_PRINT_REGS(&sc->sc_regs, ifp->if_xname, __func__);
 			rtw_stop(ifp, 1);
 		}
 		break;
@@ -2420,19 +2416,19 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			rc = ether_addmulti(ifr, &sc->sc_ic.ic_ec);
 		else
 			rc = ether_delmulti(ifr, &sc->sc_ic.ic_ec);
-		if (rc == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				rtw_pktfilt_load(sc);
-			rc = 0;
-		}
+		if (rc != ENETRESET)
+			break;
+		if (ifp->if_flags & IFF_RUNNING)
+			rtw_pktfilt_load(sc);
+		rc = 0;
 		break;
 	default:
-		if ((rc = ieee80211_ioctl(ifp, cmd, data)) == ENETRESET) {
-			if ((sc->sc_flags & RTW_F_ENABLED) != 0)
-				rc = rtw_init(ifp);
-			else
-				rc = 0;
-		}
+		if ((rc = ieee80211_ioctl(ifp, cmd, data)) != ENETRESET)
+			break;
+		if ((sc->sc_flags & RTW_F_ENABLED) != 0)
+			rc = rtw_init(ifp);
+		else
+			rc = 0;
 		break;
 	}
 	splx(s);
