@@ -1,4 +1,4 @@
-.\"	$NetBSD: calendar.1,v 1.17 2004/11/29 20:22:31 wiz Exp $
+.\"	$NetBSD: calendar.1,v 1.18 2004/11/30 01:54:17 jwise Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,6 +42,7 @@
 .Op Fl l Ar days
 .Op Fl w Ar days
 .Op Fl d Ar MMDD[[YY]YY]
+.OP Fl x
 .Sh DESCRIPTION
 The
 .Nm
@@ -90,6 +91,21 @@ ahead'' number if and only if the day specified is a Friday.
 The default value is two, which causes
 .Nm
 to print entries through the weekend on Fridays.
+.It Fl x
+Causes
+.Nm
+not to set the CPP_RESTRICTED environment variable.  Passing this flag
+allows users the (somewhat obscure) option of including a named pipe
+via
+.Xr cpp 1 's
+.Pq Li #include
+syntax, but opens up the possibility of
+.Nm
+hanging indefinitely if users do so incorrectly.  For this reason, the
+.Fl x
+flag should never be used with
+.Nm
+.Fl a .
 .El
 .Pp
 Lines should begin with a month and day.

@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.32 2004/11/29 18:25:14 jwise Exp $	*/
+/*	$NetBSD: calendar.c,v 1.33 2004/11/30 01:54:17 jwise Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.32 2004/11/29 18:25:14 jwise Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.33 2004/11/30 01:54:17 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -75,6 +75,7 @@ static char *defaultnames[] = {"calendar", ".calendar", "/etc/calendar", NULL};
 static struct passwd *pw;
 static int doall;
 static char path[MAXPATHLEN + 1];
+static int cpp_restricted = 0;
 
 /* 1-based month, 0-based days, cumulative */
 static int daytab[][14] = {
@@ -148,6 +149,8 @@ main(argc, argv)
 		case 'w':
 			atodays(ch, optarg, &weekend);
 			break;
+		case 'x':
+			cpp_restricted = 1;
 		case '?':
 		default:
 			usage();
@@ -365,6 +368,11 @@ opencal(void)
 			(void)close(pdes[1]);
 		}
 		(void)close(pdes[0]);
+		/* tell CPP to only open regular files */
+		if(!cpp_restricted && setenv("CPP_RESTRICTED", "", 1))
+			err(1, "Cannot restrict cpp");
+		cpp_restricted = 1;
+
 		(void)execl(_PATH_CPP, "cpp", "-traditional", "-P", "-I.",
 		    "-I" _PATH_CALENDARS, NULL);
 		err(1, "Cannot exec `%s'", _PATH_CPP);
