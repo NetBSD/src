@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.7 2001/11/23 21:18:33 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.8 2002/01/07 22:58:08 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -64,7 +64,8 @@
 #include <machine/frame.h>
 #include <machine/intr.h>
 #include <arm/undefined.h>
-
+#include <arm/arm32/machdep.h>
+ 
 #include <machine/cyclone_boot.h>
 #include <arm/footbridge/dc21285mem.h>
 #include <arm/footbridge/dc21285reg.h>
@@ -77,7 +78,6 @@
 #include <dev/isa/isavar.h>
 #endif
 
-#define VERBOSE_INIT_ARM
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -152,8 +152,6 @@ void consinit		__P((void));
 
 int fcomcnattach __P((u_int iobase, int rate,tcflag_t cflag));
 int fcomcndetach __P((void));
-
-void isa_cats_init __P((u_int iobase, u_int membase));
 
 void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
 			     int cacheable));
@@ -331,9 +329,10 @@ struct l1_sec_map {
  */
 
 u_int
-initarm(bootinfo)
-	struct ebsaboot *bootinfo;
+initarm(bootargs)
+	void *bootargs;
 {
+	struct ebsaboot *bootinfo = bootargs;
 	int loop;
 	int loop1;
 	u_int logical;

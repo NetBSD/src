@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.2 2002/01/07 21:46:58 thorpej Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.3 2002/01/07 22:58:08 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -63,6 +63,9 @@ int ds1687_read __P((struct dsrtc_softc *sc, int addr));
 void ds1687_write __P((struct dsrtc_softc *sc, int addr, int data));
 int ds1687_ram_read __P((struct dsrtc_softc *sc, int addr));
 void ds1687_ram_write __P((struct dsrtc_softc *sc, int addr, int data));
+static void ds1687_bank_select __P((struct dsrtc_softc *, int));
+static int dsrtc_write __P((void *, rtc_t *));
+static int dsrtc_read __P((void *, rtc_t *));
 
 int
 ds1687_read(sc, addr)
@@ -85,7 +88,7 @@ ds1687_write(sc, addr, data)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_DATA_REG, data);
 }
 
-void
+static void
 ds1687_bank_select(sc, bank)
 	struct dsrtc_softc *sc;
 	int bank;
