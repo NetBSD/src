@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.24 2002/09/18 22:59:36 lha Exp $	*/
+/*	$NetBSD: lkm.h,v 1.25 2002/11/05 01:24:38 thorpej Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -295,6 +295,9 @@ extern int	lkmdispatch __P((struct lkm_table *, int));
 		break;							\
 	}								\
 	return lkmdispatch(lkmtp, cmd);
+
+extern struct vm_map *lkm_map;
+void lkm_init(void);
 
 #endif /* _KERNEL */
 
