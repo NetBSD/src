@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.9 2003/03/10 10:02:58 lukem Exp $
+.\"	$NetBSD: makefs.8,v 1.10 2003/03/29 00:12:12 thorpej Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -74,6 +74,7 @@
 .Bk -words
 .Op Fl F Ar specfile
 .Ek
+.Op Fl x
 .Bk -words
 .Op Fl N Ar userdb-dir
 .Ek
@@ -200,6 +201,8 @@ If
 .Sy flags
 isn't provided, the current file flags will be used.
 Missing regular file entries will be created as zero-length files.
+.It Fl x
+Exclude file system nodes not explcitly listed in the specfile.
 .It Fl N Ar dbdir
 Use the user database text file
 .Pa master.passwd
