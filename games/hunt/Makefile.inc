@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2002/09/20 20:54:15 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/09/20 21:00:01 mycroft Exp $
 #
 #  Hunt
 #  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -38,7 +38,6 @@ GAME_PARAM=	-DRANDOM -DREFLECT -DMONITOR -DOOZE -DFLY -DVOLCANO -DBOOTS \
 #	SIGNAL_TYPE	void or int
 #	HPUX		do special HPUX only hacks
 #
-DEFS_NETBSD=	-DINTERNET -DLOG -DBROADCAST -DSYSLOG_43 -DSIGNAL_TYPE=void -DUSE_CURSES
 DEFS_BSD43=	-DINTERNET -DLOG -DBSD_RELEASE=43 -DSIGNAL_TYPE=int
 DEFS_BSD44=	-DINTERNET -DLOG -DBSD_RELEASE=44 -DSIGNAL_TYPE=void -DUSE_CURSES
 DEFS_SUN=	-DINTERNET -DLOG -DBSD_RELEASE=42 -DBROADCAST -DSIGNAL_TYPE=int
@@ -62,7 +61,7 @@ SYSLIBS=
 #
 # Generic definitions
 #
-DEFS=		$(GAME_PARAM) $(DEFS_NETBSD)
+DEFS=		$(GAME_PARAM) $(DEFS_BSD44)
 CPPFLAGS+=	$(SYSCFLAGS) $(DEFS) -DHUNTD=\"/usr/games/huntd\"
 
 .include "../Makefile.inc"
