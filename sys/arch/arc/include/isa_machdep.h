@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.7 2003/05/09 23:51:26 fvdl Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.8 2003/06/14 19:11:40 tsutsui Exp $	*/
 /*      $OpenBSD: isa_machdep.h,v 1.5 1997/04/19 17:20:00 pefo Exp $  */
 
 /*
@@ -118,6 +118,8 @@ struct arc_isa_bus {
 	_isa_free((a), (p))
 #define	isa_mappage(m, o, p)						\
 	_isa_mappage((m), (o), (p))
+
+int isa_intr_alloc(isa_chipset_tag_t, int, int, int *);
 
 void sysbeepstop(void *);
 void sysbeep(int, int);

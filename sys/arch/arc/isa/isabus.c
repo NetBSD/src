@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.20 2003/05/25 14:00:15 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.21 2003/06/14 19:11:41 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -487,4 +487,41 @@ sysbeep(pitch, period)
 	last_pitch = pitch;
 	beeping = last_period = period;
 	callout_reset(&sysbeep_ch, period, sysbeepstop, NULL);
+}
+
+int
+isa_intr_alloc(isa_chipset_tag_t c, int mask, int type, int *irq_p)
+{
+	int irq;
+	int maybe_irq = -1;
+	int shared_depth = 0;
+	mask &= 0x8b28; /* choose from 3, 5, 8, 9, 11, 15 XXX */
+	for (irq = 0; mask != 0; mask >>= 1, irq++) {
+		if ((mask & 1) == 0)
+			continue;
+		if (intrtype[irq] == IST_NONE) {
+			*irq_p = irq;
+			return 0;
+		}
+		/* Level interrupts can be shared */
+		if (type == IST_LEVEL && intrtype[irq] == IST_LEVEL) {
+			struct intrhand *ih = intrhand[irq];
+			int depth;
+			if (maybe_irq == -1) {
+ 				maybe_irq = irq;
+				continue;
+			}
+			for (depth = 0; ih != NULL; ih = ih->ih_next)
+				depth++;
+			if (depth < shared_depth) {
+				maybe_irq = irq;
+				shared_depth = depth;
+			}
+		}
+	}
+	if (maybe_irq != -1) {
+		*irq_p = maybe_irq;
+		return 0;
+	}
+	return 1;
 }
