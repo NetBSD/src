@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.105 2004/08/23 00:49:19 hubertf Exp $
+.\"	$NetBSD: contents,v 1.106 2004/09/10 11:49:28 hubertf Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -886,7 +886,7 @@ This set also contains an a.out kernel named
 .Pa /netbsd.aout
 that your system may need to boot.
 .\}
-tsize 2 3
+.if \n[acorn26] .setsize 2 3
 .if \n[acorn32] .setsize 2 3
 .if \n[alpha] .setsize 4 8
 .if \n[amd64] .setsize 3 8
@@ -920,7 +920,7 @@ tsize 2 3
 .if \n[sparc64] .setsize 3 6
 .if \n[sun3] .setsize 1 2
 .if \n[vax] .setsize 1 3
-.if \n[x68k] .setsiz
+.if \n[x68k] .setsize 1 2
 .showsize
 .\} \" !\n[xen]
 .\} \" !\n[evbppc]
