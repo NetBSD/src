@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.22 1997/03/19 08:42:51 lukem Exp $	*/
+/*	$NetBSD: dirs.c,v 1.23 1997/04/15 07:12:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$NetBSD: dirs.c,v 1.22 1997/03/19 08:42:51 lukem Exp $";
+static char rcsid[] = "$NetBSD: dirs.c,v 1.23 1997/04/15 07:12:19 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ static char rcsid[] = "$NetBSD: dirs.c,v 1.22 1997/03/19 08:42:51 lukem Exp $";
 #include <protocols/dumprestore.h>
 
 #include <errno.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,7 +65,6 @@ static char rcsid[] = "$NetBSD: dirs.c,v 1.22 1997/03/19 08:42:51 lukem Exp $";
 
 #include <machine/endian.h>
 
-#include "pathnames.h"
 #include "restore.h"
 #include "extern.h"
 
