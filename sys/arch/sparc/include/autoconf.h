@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.20 1997/05/24 20:03:03 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.21 1998/01/25 16:51:16 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -124,9 +124,9 @@ void	*mapdev __P((struct rom_reg *pa, int va,
 #define REG2PHYS(rr, offset) \
 	(((u_int)(rr)->rr_paddr + (offset)) | PMAP_IOENC((rr)->rr_iospace) )
 
-/* For VME and sun4/obio busses */
-void	*bus_map __P((struct rom_reg *, int));
-void	bus_untmp __P((void));
+/* For sun4/obio busses */
+void	*obio_bus_map __P((struct rom_reg *, int));
+void	obio_bus_untmp __P((void));
 
 /*
  * The various getprop* functions obtain `properties' from the ROMs.
