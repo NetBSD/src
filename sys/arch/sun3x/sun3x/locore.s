@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.7 1997/02/11 19:06:08 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.8 1997/02/12 23:06:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1052,16 +1052,40 @@ Lswnofpsave:
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb
 
-	/* Our pmap does not need pmap_activate() */
+	/*
+	 * Load the new VM context (new MMU root pointer)
+	 */
+	movl	a0@(P_VMSPACE),a2	| vm = p->p_vmspace
+#ifdef DIAGNOSTIC
+	tstl	a2			| map == VM_MAP_NULL?
+	jeq	Lbadsw			| panic
+#endif
+#ifdef PMAP_DEBUG
+	/*
+	 * Just call pmap_activate() for now.  Later on,
+	 * use the in-line version below (for speed).
+	 */
+	lea	a2@(VM_PMAP),a2 	| pmap = &vmspace.vm_pmap
+	pea	a2@			| push pmap
+	jbsr	_pmap_activate		| pmap_activate(pmap)
+	addql	#4,sp
+	movl	_curpcb,a1		| restore p_addr
+#else
+	/* XXX - Later, use this inline version. */
 	/* Just load the new CPU Root Pointer (MMU) */
-	/* XXX - Skip if oldproc has same pm_a_tbl? */
-	movl	a0@(P_VMSPACE),a0	| a0 = vm = p->p_vmspace
-	lea	a0@(VM_PMAP_MMUCRP),a0	| a0 = &vm->vm_pmap.pm_mmucrp
-
+	lea	_kernel_crp, a3		| our CPU Root Ptr. (CRP)
+	lea	a2@(VM_PMAP),a2 	| pmap = &vmspace.vm_pmap
+	movl	a2@(PM_A_PHYS),d0	| phys = pmap->pm_a_phys
+	cmpl	a3(4),d0		|  == kernel_crp.rp_addr ?
+	jeq	Lsame_mmuctx		| skip loadcrp/flush
+	/* OK, it is a new MMU context.  Load it up. */
+	movl	d0,a3(4)
 	movl	#CACHE_CLR,d0
 	movc	d0,cacr			| invalidate cache(s)
 	pflusha				| flush entire TLB
-	pmove	a0@,crp			| load new user root pointer
+	pmove	a3@,crp			| load new user root pointer
+Lsame_mmuctx:
+#endif
 
 	/*
 	 * Reload the registers for the new process.
