@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.52 2000/05/27 00:40:47 sommerfeld Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.53 2000/06/27 17:41:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -69,7 +69,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.67 2000/04/12 11:33:43 fvdl Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.68 2000/06/27 17:41:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -58,8 +58,6 @@
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
-
-#include <vm/vm.h>
 
 #include <miscfs/specfs/specdev.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.19 2000/06/21 05:41:07 matt Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.20 2000/06/27 17:41:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -38,8 +38,6 @@
 #include <sys/filedesc.h>
 #include <sys/exec.h>
 #include <sys/mman.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.46 2000/06/26 14:21:15 mrg Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.47 2000/06/27 17:41:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,8 +86,6 @@
 #include <sys/pool.h>
 #include <sys/socket.h>
 #include <net/if.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
