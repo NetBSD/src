@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 1995/04/10 05:44:08 mycroft Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 1995/06/27 14:44:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -92,7 +92,13 @@ void mainbusattach(parent, self, args)
 int nmi_intr(arg)
 	int arg;
 {
-	printf("nmi interrupt received\n");
+	static int nmi_cnt;
+	if (!nmi_cnt++) {
+		printf("nmi interrupt received\n");
+#ifdef	DDB
+		Debugger();
+#endif
+	}
 	return 1;
 }
 
@@ -238,6 +244,7 @@ int bus_peek(bustype, paddr, sz)
 	pgva = tmp_vpages[0];
 	va = (caddr_t)pgva + off;
 
+	/* All mappings in tmp_vpages are non-cached, so no flush. */
 	set_pte(pgva, pte);
 
 	/*
@@ -256,6 +263,7 @@ int bus_peek(bustype, paddr, sz)
 		rv = -1;
 	}
 
+	/* All mappings in tmp_vpages are non-cached, so no flush. */
 	set_pte(pgva, PG_INVAL);
 
 	return rv;
