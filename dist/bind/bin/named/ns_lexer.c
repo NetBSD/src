@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_lexer.c,v 1.1.1.1.2.2 1999/12/04 16:54:58 he Exp $	*/
+/*	$NetBSD: ns_lexer.c,v 1.1.1.1.2.3 2000/10/10 21:12:46 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: ns_lexer.c,v 8.19 1999/10/13 16:39:08 vixie Exp";
@@ -139,6 +139,11 @@ token_to_text(int token, YYSTYPE lval) {
 	return (buffer);
 }
 
+static void
+parser_complain(int is_warning, int print_last_token, const char *format,
+		va_list args)
+     __attribute__((__format__(__printf__, 3, 0)));
+
 static char where[MAXPATHLEN + 100];
 static char message[20480];
 
@@ -201,7 +206,7 @@ parser_error(int print_last_token, const char *format, ...) {
 
 void
 yyerror(const char *message) {
-	parser_error(1, message);
+	parser_error(1, "%s", message);
 }
 
 /*
