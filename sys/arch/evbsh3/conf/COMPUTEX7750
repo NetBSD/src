@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.3 2000/07/31 20:57:45 msaitoh Exp $
+#	$NetBSD: COMPUTEX7750,v 1.4 2000/08/03 11:30:30 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -79,6 +79,7 @@ options 	PMAP_NEW	# new pmap interface
 
 # Compatibility options
 options 	COMPAT_13	# NetBSD 1.3
+options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
 
 # Executable format options
