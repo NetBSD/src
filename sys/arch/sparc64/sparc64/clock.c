@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 1998/08/30 15:32:18 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.4 1998/09/02 05:51:38 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -270,7 +270,7 @@ timerattach(parent, self, aux)
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
 	struct upa_reg *ur = NULL;
-	int64_t *va = NULL;
+	int *va = NULL;
 	int nreg;
 	volatile int64_t *cnt = NULL, *lim = NULL;
 	/* XXX: must init to NULL to avoid stupid gcc -Wall warning */
@@ -327,7 +327,7 @@ timerattach(parent, self, aux)
 	intr_establish(10, &level10);
 	level14.ih_number = ma->ma_interrupts[1];
 	intr_establish(14, &level14);
-	printf(" irq vectors %x and %x\n", level10.ih_number, level14.ih_number);
+	printf(" irq vectors %x and %x\n", (int)level10.ih_number, (int)level14.ih_number);
 
 	timerok = 1;
 
@@ -461,6 +461,8 @@ cpu_initclocks()
 	while (statvar > minint)
 		statvar >>= 1;
 
+	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr) 
+		panic("cpu_initclocks(): Timer not attached!\n");
 	/* 
 	 * Enable timers 
 	 *

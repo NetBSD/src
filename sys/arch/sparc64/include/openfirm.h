@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.4 1998/08/27 06:23:31 eeh Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.5 1998/09/02 05:51:38 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,3 +53,6 @@ int OF_getproplen __P((int handle, char* prop));
 int OF_stdin __P((void));
 int OF_stdout __P((void));
 void OF_poweroff __P((void)) __attribute__((__noreturn__));
+void OF_set_symbol_lookup __P((void (*s2v)(void *), void (*v2s)(void *)));
+void OF_sym2val __P((void *));
+void OF_val2sym __P((void *));
