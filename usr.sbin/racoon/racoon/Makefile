@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/01/03 08:43:05 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2001/01/03 15:57:00 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -27,7 +27,7 @@ CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
 #LDADD+=-L/usr/pkg/lib -lefence
 #.endif
 
-LIBPFKEYDIR!=	cd ${.CURDIR}/../libpfkey; ${MAKE} print-objdir
+LIBPFKEYDIR!=	cd ${.CURDIR}/../libpfkey; ${PRINTOBJDIR}
 LDADD+=	-L${LIBPFKEYDIR} -lpfkey
 DPADD+=	${LIBPFKEYDIR}/libpfkey.a
 .if (${MKKERBEROS} != "no")
