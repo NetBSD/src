@@ -1,4 +1,4 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.7 1999/03/27 07:04:37 explorer Exp $
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.8 1999/03/27 11:42:13 kleink Exp $
 #	From: GENERIC,v 1.220 1999/02/16 17:46:17 abs Exp
 #
 #	GENERIC -- everything that's currently supported
@@ -353,7 +353,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 
 # IDE and related devices
-# PCI IDE controllers - see pciide(4) for suppored hardware.
+# PCI IDE controllers - see pciide(4) for supported hardware.
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.

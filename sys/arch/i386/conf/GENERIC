@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.227 1999/03/27 07:04:36 explorer Exp $
+#	$NetBSD: GENERIC,v 1.228 1999/03/27 11:42:12 kleink Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -361,7 +361,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
 # IDE and related devices
-# PCI IDE controllers - see pciide(4) for suppored hardware.
+# PCI IDE controllers - see pciide(4) for supported hardware.
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
