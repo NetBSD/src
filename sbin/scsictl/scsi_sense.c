@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_sense.c,v 1.2 1999/02/24 18:51:39 jwise Exp $	*/
+/*	$NetBSD: scsi_sense.c,v 1.3 1999/03/15 23:20:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -346,7 +346,7 @@ scsi_print_sense_data(s, slen, verbosity)
 	 */
 	info = _4btol(&s[3]);
 	if (info)
-		printf("\n   INFO FIELD:  %d", info);
+		printf("\n   INFO FIELD: %d", info);
 
 	/*
 	 * Now we check additional length to see whether there is
@@ -360,7 +360,7 @@ scsi_print_sense_data(s, slen, verbosity)
 	}
 	info = _4btol(&s[8]);
 	if (info)
-		printf("\n COMMAND INFO:  %d (0x%x)", info, info);
+		printf("\n COMMAND INFO: %d (0x%x)", info, info);
 
 	/*
 	 * Decode ASC && ASCQ info, plus FRU, plus the rest...
@@ -368,12 +368,12 @@ scsi_print_sense_data(s, slen, verbosity)
 
 	cp = scsi_decode_sense(s, 1, sbs, sizeof(sbs));
 	if (cp)
-		printf("\n     ASC/ASCQ:  %s", cp);
+		printf("\n     ASC/ASCQ: %s", cp);
 	if (s[14] != 0)
-		printf("\n     FRU CODE:  0x%x", s[14] & 0xff);
+		printf("\n     FRU CODE: 0x%x", s[14] & 0xff);
 	cp = scsi_decode_sense(s, 3, sbs, sizeof(sbs));
 	if (cp)
-		printf("\n         SKSV:  %s", cp);
+		printf("\n         SKSV: %s", cp);
 	printf("\n");
 	if (verbosity == 0) {
 		printf("\n");
