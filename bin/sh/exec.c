@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)exec.c	5.2 (Berkeley) 3/13/91";*/
-static char rcsid[] = "$Id: exec.c,v 1.5 1993/08/01 18:58:17 mycroft Exp $";
+static char rcsid[] = "$Id: exec.c,v 1.6 1993/09/23 23:32:19 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -485,7 +485,10 @@ loop:
 			stunalloc(fullname);
 			goto success;
 		}
-		if (statb.st_uid == geteuid()) {
+		if (geteuid() == 0) {
+			if ((statb.st_mode & 0111) == 0)
+				goto loop;
+		} else if (statb.st_uid == geteuid()) {
 			if ((statb.st_mode & 0100) == 0)
 				goto loop;
 		} else if (statb.st_gid == getegid()) {
