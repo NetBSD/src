@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.4 2000/12/13 18:13:07 jdolecek Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.4.8.1 2001/11/18 18:10:21 scw Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4 2000/12/13 18:13:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4.8.1 2001/11/18 18:10:21 scw Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4 2000/12/13 18:13:07 jdolecek Exp
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/time.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
@@ -239,8 +240,8 @@ dma_cachectl(addr, len)
 }
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
+sys_sysarch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
