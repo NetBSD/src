@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.73 1999/04/26 04:25:38 ad Exp $
+#	$NetBSD: files.sparc,v 1.74 1999/05/12 12:48:27 mrg Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -260,6 +260,9 @@ file	arch/sparc/sparc/svr4_machdep.c	compat_svr4
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
 file	arch/sparc/sparc/sunos_machdep.c compat_sunos
+
+# NetBSD a.out Binary Compatibility (COMPAT_AOUT)
+include "compat/aout/files.aout"
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/sparc/sparc/compat_13_machdep.c	compat_13
