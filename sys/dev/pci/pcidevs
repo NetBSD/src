@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.252 2000/09/02 00:32:15 cgd Exp $
+$NetBSD: pcidevs,v 1.253 2000/09/04 13:13:14 itojun Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -779,6 +779,7 @@ product	BROOKTREE BT848		0x0350	Bt848 Video Capture
 product	BROOKTREE BT849		0x0351	Bt849 Video Capture
 product	BROOKTREE BT878		0x036e	Bt878 Video Capture
 product	BROOKTREE BT879		0x036f	Bt879 Video Capture
+product	BROOKTREE BT8474	0x8474	Bt8474 Multichannel HDLC Controller
 
 /* BusLogic products */
 product BUSLOGIC MULTIMASTER_NC	0x0140	MultiMaster NC
