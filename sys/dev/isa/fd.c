@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.55 2004/10/28 07:07:40 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.56 2005/02/01 20:33:58 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.55 2004/10/28 07:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56 2005/02/01 20:33:58 drochner Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -311,7 +311,7 @@ fdcattach(fdc)
 
 	config_interrupts(&fdc->sc_dev, fdcfinishattach);
 }
- 
+
 void
 fdcfinishattach(self)
 	struct device *self;
@@ -324,7 +324,7 @@ fdcfinishattach(self)
 	int type;
 #endif
 
-	/* 
+	/*
 	 * Reset the controller to get it into a known state. Not all
 	 * probes necessarily need do this to discover the controller up
 	 * front, so don't assume anything.
@@ -333,7 +333,7 @@ fdcfinishattach(self)
 	bus_space_write_1(iot, ioh, fdout, 0);
 	delay(100);
 	bus_space_write_1(iot, ioh, fdout, FDO_FRST);
- 
+
 	/* see if it can handle a command */
 	if (out_fdc(iot, ioh, NE7CMD_SPECIFY) < 0) {
 		printf ("%s: can't reset controller\n", fdc->sc_dev.dv_xname);
@@ -1467,7 +1467,7 @@ fdioctl(dev, cmd, addr, flag, p)
 			return EINVAL;
 		}
 
-		fd_formb = malloc(sizeof(struct ne7_fd_formb), 
+		fd_formb = malloc(sizeof(struct ne7_fd_formb),
 		    M_TEMP, M_NOWAIT);
 		if (fd_formb == 0)
 			return ENOMEM;
