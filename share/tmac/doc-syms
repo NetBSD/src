@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-syms,v 1.40 1999/01/11 19:09:30 garbled Exp $
+.\"	$NetBSD: doc-syms,v 1.41 1999/01/13 07:08:39 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -465,3 +465,7 @@
 .if "\\$1"libutil" \&System Utilities Library (libutil, -lutil)
 .if "\\$1"libz" \&Compression Library (libz, -lz)
 ..
+.ds < <
+.ds > >
+.ds & &
+.ds _ \~
