@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.67 1998/08/25 18:21:17 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.68 1998/08/25 23:09:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 1998/08/25 18:21:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 1998/08/25 23:09:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,6 +432,10 @@ boolean_t pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *,
 void	pmap_changebit __P((paddr_t, pt_entry_t, pt_entry_t));
 void	pmap_pinit __P((pmap_t));
 void	pmap_release __P((pmap_t));
+#ifndef PMAP_NEW
+/* It's an interface function if PMAP_NEW. */
+void	pmap_kremove __P((vaddr_t, vsize_t));
+#endif
 
 /*
  * PT page management functions.
@@ -1221,6 +1225,20 @@ pmap_remove(pmap, sva, eva)
 	if (pmap == NULL)
 		return;
 
+	/*
+	 * If this is the kernel pmap, use a faster routine that
+	 * can make some assumptions.
+	 */
+	if (pmap == pmap_kernel()) {
+		pmap_kremove(sva, eva - sva);
+		return;
+	}
+
+#ifdef DIAGNOSTIC
+	if (sva >= VM_MAXUSER_ADDRESS || eva >= VM_MAXUSER_ADDRESS)
+		panic("pmap_remove: user pmap, kernel address range");
+#endif
+
 	PMAP_MAP_TO_HEAD_LOCK();
 	simple_lock(&pmap->pm_slock);
 
@@ -1793,12 +1811,15 @@ pmap_kenter_pgs(va, pgs, npgs)
 		    VM_PAGE_TO_PHYS(pgs[i]),
 		    VM_PROT_READ|VM_PROT_WRITE);
 }
+#endif /* PMAP_NEW */
 
 /*
  * pmap_kremove:		[ INTERFACE ]
  *
  *	Remove a mapping entered with pmap_kenter_pa() or pmap_kenter_pgs()
  *	starting at va, for size bytes (assumed to be page rounded).
+ *
+ *	NOTE: THIS IS AN INTERNAL FUNCTION IF NOT PMAP_NEW.
  */
 void
 pmap_kremove(va, size)
@@ -1812,6 +1833,11 @@ pmap_kremove(va, size)
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
 		printf("pmap_kremove(%lx, %lx)\n",
 		    va, size);
+#endif
+
+#ifdef DIAGNOSTIC
+	if (va < VM_MIN_KERNEL_ADDRESS)
+		panic("pmap_kremove: user address");
 #endif
 
 	PMAP_MAP_TO_HEAD_LOCK();
@@ -1830,7 +1856,6 @@ pmap_kremove(va, size)
 	simple_unlock(&pmap_kernel()->pm_slock);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 }
-#endif /* PMAP_NEW */
 
 /*
  * pmap_change_wiring:		[ INTERFACE ]
