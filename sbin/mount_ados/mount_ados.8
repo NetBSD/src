@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_ados.8,v 1.13 2001/11/16 10:25:46 wiz Exp $
+.\" $NetBSD: mount_ados.8,v 1.14 2001/11/16 11:26:55 wiz Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -101,7 +101,12 @@ directory on which the file system is being mounted.
 .Xr unmount 2 ,
 .Xr fstab 5 ,
 .Xr mount 8
-.Sh CAVEATS
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 1.0 .
+.Sh BUGS
 The
 .Sq ados
 filesystem currently supports the Amiga fast file system.
@@ -115,8 +120,3 @@ utility silently retries the mount read-only, as if the
 option was specified, when it encounters the
 .Bq Er EROFS
 error.
-.Sh HISTORY
-The
-.Nm
-utility first appeared in
-.Nx 1.0 .

@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_cd9660.8,v 1.15 2001/06/05 11:22:47 wiz Exp $
+.\" $NetBSD: mount_cd9660.8,v 1.16 2001/11/16 11:26:55 wiz Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -106,7 +106,7 @@ Makes all lookups case-insensitive even for CD-ROMs with Rock-Ridge
 extensions (for Rock-Ridge, default is case-sensitive lookup).
 .El
 .El
-
+.Pp
 For compatibility with previous releases, following obsolete flags are
 still recognized:
 .Bl -tag -width indent
@@ -132,25 +132,6 @@ Same as
 .Xr unmount 2 ,
 .Xr fstab 5 ,
 .Xr mount 8
-.Sh CAVEATS
-For some cdroms the information in the Rock Ridge extension is wrong
-and the cdrom needs to be mounted with "norrip".  A sign that something
-is wrong is that the
-.Xr stat 2
-system call returns
-.Er EBADF
-causing, e.g., "ls -l" to fail with "Bad file descriptor".
-.Sh BUGS
-The cd9660 filesystem does not support the original "High Sierra"
-("CDROM001") format.
-.Pp
-POSIX device node mapping is currently not supported.
-.Pp
-Version numbers are not stripped if Rockridge extensions are in use.
-In this case, you have to use the original name of the file as recorded
-on disk, i.e. use uppercase and append the version number to the file.
-.Pp
-There is no ECMA support.
 .Sh HISTORY
 The
 .Nm
@@ -164,3 +145,22 @@ and
 .Cm rrcaseins
 were added in
 .Nx 1.5 .
+.Sh BUGS
+For some cdroms the information in the Rock Ridge extension is wrong
+and the cdrom needs to be mounted with "norrip".  A sign that something
+is wrong is that the
+.Xr stat 2
+system call returns
+.Er EBADF
+causing, e.g., "ls -l" to fail with "Bad file descriptor".
+.Pp
+The cd9660 filesystem does not support the original "High Sierra"
+("CDROM001") format.
+.Pp
+POSIX device node mapping is currently not supported.
+.Pp
+Version numbers are not stripped if Rockridge extensions are in use.
+In this case, you have to use the original name of the file as recorded
+on disk, i.e. use uppercase and append the version number to the file.
+.Pp
+There is no ECMA support.

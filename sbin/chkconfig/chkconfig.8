@@ -1,4 +1,4 @@
-.\"	$NetBSD: chkconfig.8,v 1.3 2001/06/05 11:22:42 wiz Exp $
+.\"	$NetBSD: chkconfig.8,v 1.4 2001/11/16 11:26:54 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -112,20 +112,20 @@ keyword to the service's script.
 .Sh SEE ALSO
 .Xr rc 8 ,
 .Xr rcorder 8
-.Sh BUGS
+.Sh HISTORY
 The
 .Nm
-program currently does not support configuring the options
-to be passed to services upon startup.
-.Sh AUTHOR
+command first appeared in
+.Nx 1.6 .
+.Sh AUTHORS
 The
 .Nm
 program was written by
 .An Dan Mercer
 .Aq dmercer@zembu.com
 of Zembu Labs, Inc.
-.Sh HISTORY
+.Sh BUGS
 The
 .Nm
-command first appeared in
-.Nx 1.6 .
+program currently does not support configuring the options
+to be passed to services upon startup.
