@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: auth.c,v 1.2 1993/11/10 01:33:56 paulus Exp $";
+static char rcsid[] = "$Id: auth.c,v 1.3 1993/12/02 17:37:07 pk Exp $";
 #endif
 
 #include <stdio.h>
@@ -57,13 +57,13 @@ static char rcsid[] = "$Id: auth.c,v 1.2 1993/11/10 01:33:56 paulus Exp $";
 #include "ipcp.h"
 #include "pathnames.h"
 
-#ifdef sparc
+#if defined(sun) && defined(sparc)
 #include <alloca.h>
 #ifndef __GNUC__
 /* why alloca.h doesn't define what alloca() returns is a mystery */
 char *alloca __ARGS((int));
 #endif /*__GNUC__*/
-#endif /*sparc*/
+#endif /*sun&sparc*/
 
 /* Used for storing a sequence of words.  Usually malloced. */
 struct wordlist {
