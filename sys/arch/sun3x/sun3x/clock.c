@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.1.1 1997/01/14 20:57:08 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 1997/01/23 04:13:39 jeremy Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -448,7 +448,7 @@ static void clk_set_dt(struct date_time *dt)
 #define	POSIX_BASE_YEAR	1970
 #define FEBRUARY	2
 
-#define	leapyear(year)		((year) % 4 == 0)
+#define	leapyear(year)  ((((year)%4==0) && ((year)%100!=0)) || ((year)%400==0))
 #define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
 #define	days_in_month(a) 	(month_days[(a) - 1])
 
