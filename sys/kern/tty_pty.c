@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.59 2002/02/17 19:34:42 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.60 2002/03/02 12:30:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.59 2002/02/17 19:34:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.60 2002/03/02 12:30:43 mrg Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -767,19 +767,6 @@ ptyioctl(dev, cmd, data, flag, p)
 		switch (cmd) {
 
 		case TIOCGPGRP:
-#ifdef COMPAT_SUNOS
-			{
-			/*
-			 * I'm not sure about SunOS TIOCGPGRP semantics
-			 * on PTYs, but it's something like this:
-			 */
-			extern struct emul emul_sunos;
-			if (p->p_emul == &emul_sunos && tp->t_pgrp == 0)
-				return (EIO);
-			*(int *)data = tp->t_pgrp->pg_id;
-			return (0);
-			}
-#endif
 			/*
 			 * We avoid calling ttioctl on the controller since,
 			 * in that case, tp must be the controlling terminal.
