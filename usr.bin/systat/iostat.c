@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.11 1998/07/19 17:47:07 drochner Exp $	*/
+/*	$NetBSD: iostat.c,v 1.12 1999/06/29 18:14:15 mjl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.11 1998/07/19 17:47:07 drochner Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.12 1999/06/29 18:14:15 mjl Exp $");
 #endif not lint
 
 #include <sys/param.h>
@@ -106,7 +106,7 @@ fetchiostat()
 	dkreadstats();
 }
 
-#define	INSET	10
+#define	INSET	14
 
 void
 labeliostat()
@@ -121,11 +121,11 @@ labeliostat()
 	wmove(wnd, row, 0); wclrtobot(wnd);
 	mvwaddstr(wnd, row++, INSET,
 	    "/0   /10  /20  /30  /40  /50  /60  /70  /80  /90  /100");
-	mvwaddstr(wnd, row++, 0, "cpu  user|");
-	mvwaddstr(wnd, row++, 0, "     nice|");
-	mvwaddstr(wnd, row++, 0, "   system|");
-	mvwaddstr(wnd, row++, 0, "interrupt|");
-	mvwaddstr(wnd, row++, 0, "     idle|");
+	mvwaddstr(wnd, row++, 0, "    cpu  user|");
+	mvwaddstr(wnd, row++, 0, "         nice|");
+	mvwaddstr(wnd, row++, 0, "       system|");
+	mvwaddstr(wnd, row++, 0, "    interrupt|");
+	mvwaddstr(wnd, row++, 0, "         idle|");
 	if (numbers)
 		row = numlabels(row + 1);
 	else
@@ -184,10 +184,10 @@ barlabels(row)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
 			if (row > getmaxy(wnd) - linesperregion)
 				break;
-			mvwprintw(wnd, row++, 0, "%3.3s  KBps|", cur.dk_name[i]);
-			mvwaddstr(wnd, row++, 0, "      tps|");
+			mvwprintw(wnd, row++, 0, "%7.7s  KBps|", cur.dk_name[i]);
+			mvwaddstr(wnd, row++, 0, "          tps|");
 			if (secs)
-				mvwaddstr(wnd, row++, 0, "     msec|");
+				mvwaddstr(wnd, row++, 0, "         msec|");
 		}
 	return (row);
 }
