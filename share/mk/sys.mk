@@ -50,10 +50,7 @@ YFLAGS=-d
 .c.o:
 	${CC} ${CFLAGS} -c ${.IMPSRC}
 
-.cc.o:
-	${CXX} ${CXXFLAGS} -c ${.IMPSRC}
-
-.C.o:
+.cc.o .C.o:
 	${CXX} ${CXXFLAGS} -c ${.IMPSRC}
 
 .p.o:

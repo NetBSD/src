@@ -35,22 +35,12 @@ BINMODE?=	555
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
-.cc.o:
+.cc.o .C.o:
 	${CXX} ${CXXFLAGS} -c ${.IMPSRC} 
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
-.cc.po:
-	${CXX} -p ${CXXFLAGS} -c ${.IMPSRC} -o ${.TARGET}
-	@${LD} -X -r ${.TARGET}
-	@mv a.out ${.TARGET}
-
-.C.o:
-	${CXX} ${CXXFLAGS} -c ${.IMPSRC} 
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
-
-.C.po:
+.cc.po .C.po:
 	${CXX} -p ${CXXFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
