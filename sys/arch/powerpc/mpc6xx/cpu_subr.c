@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.14.4.2 2002/06/20 02:53:03 lukem Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.14.4.3 2002/06/21 05:33:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -79,6 +79,7 @@ cpu_probe_cache(void)
 
 	switch (vers) {
 #define	K	*1024
+	case IBM750FX:
 	case MPC601:
 	case MPC750:
 	case MPC7450:
@@ -195,6 +196,7 @@ cpu_attach_common(struct device *self, int id)
 	case MPC603ev:
 	case MPC604ev:
 	case MPC750:
+	case IBM750FX:
 	case MPC7400:
 	case MPC7410:
 	case MPC8240:
@@ -340,6 +342,7 @@ static const struct cputab models[] = {
 	{ MPC604,     "604" },
 	{ MPC604ev,   "604ev" },
 	{ MPC620,     "620" },
+	{ IBM750FX,   "750FX" },
 	{ MPC750,     "750" },
 	{ MPC7400,   "7400" },
 	{ MPC7410,   "7410" },
@@ -364,8 +367,8 @@ cpu_identify(char *str, size_t len)
 		maj = min <= 4 ? 1 : 2;
 		break;
 	default:
-		maj = (pvr >>  8) & 0xff;
-		min = (pvr >>  0) & 0xff;
+		maj = (pvr >>  8) & 0xf;
+		min = (pvr >>  0) & 0xf;
 	}
 
 	for (cp = models; cp->name != NULL; cp++) {
@@ -434,6 +437,10 @@ cpu_config_l2cr(int vers)
 				printf(", %cMB L3 backside cache",
 				   l3cr & L3CR_L3SIZ ? '2' : '1');
 			printf("\n");
+			return;
+		}
+		if (vers == IBM750FX) {
+			printf(": 512KB L2 cache\n");
 			return;
 		}
 		switch (l2cr & L2CR_L2SIZ) {
