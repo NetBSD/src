@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.9 2003/04/26 18:50:19 tsutsui Exp $	*/
+/*	$NetBSD: news5000.c,v 1.10 2003/05/10 10:20:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -161,7 +161,7 @@ news5000_level1_intr(void)
 	int1stat = *(volatile u_int *)NEWS5000_INTST1;
 
 	if (int1stat) {
-		if (apbus_intr_call(1, int1stat) == 0)
+		if (apbus_intr_dispatch(1, int1stat) == 0)
 			printf("level1_intr: no handler (mask 0x%04x)\n",
 			       int1stat);
 	} else
@@ -176,7 +176,7 @@ news5000_level0_intr(void)
 	int0stat = *(volatile u_int *)NEWS5000_INTST0;
 
 	if (int0stat) {
-		if (apbus_intr_call(0, int0stat) == 0)
+		if (apbus_intr_dispatch(0, int0stat) == 0)
 			printf("level0_intr: no handler (mask 0x%04x)\n",
 			       int0stat);
 	} else
