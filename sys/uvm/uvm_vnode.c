@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.38 2000/11/30 11:04:44 simonb Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.39 2000/12/06 03:37:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -947,7 +947,6 @@ uvn_findpage(uobj, offset, pgp, flags)
 				pg = NULL;
 			} else {
 				pg = uvm_pagealloc(uobj, offset, NULL, 0);
-				uvmexp.vnodepages++;
 			}
 			if (pg == NULL) {
 				if (flags & UFP_NOWAIT) {
@@ -959,6 +958,7 @@ uvn_findpage(uobj, offset, pgp, flags)
 				simple_lock(&uobj->vmobjlock);
 				continue;
 			}
+			uvmexp.vnodepages++;
 			UVMHIST_LOG(ubchist, "alloced",0,0,0,0);
 			break;
 		} else if (flags & UFP_NOCACHE) {
