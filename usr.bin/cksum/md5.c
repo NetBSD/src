@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.c,v 1.6 2005/01/12 17:04:35 xtraeme Exp $	*/
+/*	$NetBSD: md5.c,v 1.7 2005/01/12 17:10:05 xtraeme Exp $	*/
 
 /*
  * MDDRIVER.C - test driver for MD2, MD4 and MD5
@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: md5.c,v 1.6 2005/01/12 17:04:35 xtraeme Exp $");
+__RCSID("$NetBSD: md5.c,v 1.7 2005/01/12 17:10:05 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -136,8 +136,7 @@ MD5TestSuite(void)
  * Digests the standard input and prints the result.
  */
 void
-MD5Filter(pipe)
-	int pipe;
+MD5Filter(int pipe)
 {
 	MD5_CTX context;
 	int len;
