@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.53 1999/10/19 23:19:38 dan Exp $
+#	$NetBSD: MAKEDEV,v 1.54 1999/12/18 03:09:44 tsutsui Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -57,7 +57,7 @@
 # Disks:
 #	ccd*	concatenated disk driver
 #	cd*	SCSI CD-ROM
-#	md*	memory pseudo-disks
+#	md*	memory pseudo-disk devices
 #	raid*	RAIDframe disk driver
 #	sd*	ATAPI and SCSI disks
 #	vnd*	file pseudo-disks
@@ -242,13 +242,21 @@ fd)
 	chmod 666 fd/*
 	;;
 
-ccd*|cd*|fd*|md*|raid*|sd*|vnd*|wd*)
+md*)
+	unit=${i#md}; blk=6; chr=28;
+	rm -f md${unit} md${unit}c rmd${unit}
+	mknod md${unit}  b $blk $((($unit +  0) * 8))
+	mknod md${unit}c b $blk $((($unit + 16) * 8))
+#	mknod rmd${unit} c $chr $((($unit + 16) * 8))
+	chgrp operator md${unit} md${unit}c #rmd${unit}
+	chmod 640 md${unit} md${unit}c #rmd${unit}
+	;;      
+
+ccd*|cd*|fd*|raid*|sd*|vnd*|wd*)
 	case $i in
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=7; chr=27;;
 	cd*)	name=cd;	unit=${i#cd};	blk=3; chr=13;;
 	fd*)	name=fd;	unit=${i#fd};	blk=0; chr=34;;
-	md*)	name=md;	unit=${i#md};	blk=6; chr=28;;
-	raid*)	name=raid;	unit=${i#raid};	blk=16; chr=43;;
 	sd*)	name=sd;	unit=${i#sd};	blk=8; chr=8;;
 	vnd*)	name=vnd;	unit=${i#vnd};	blk=9; chr=9;;
 	wd*)	name=wd;	unit=${i#wd};	blk=4; chr=36;;
