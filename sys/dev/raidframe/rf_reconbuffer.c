@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.6 2001/11/13 07:11:16 lukem Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.7 2002/01/09 03:10:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.6 2001/11/13 07:11:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.7 2002/01/09 03:10:20 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -45,11 +45,23 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.6 2001/11/13 07:11:16 lukem Exp
 #include "rf_reconutil.h"
 #include "rf_nwayxor.h"
 
+#ifdef DEBUG
+
 #define Dprintf1(s,a) if (rf_reconbufferDebug) printf(s,a)
 #define Dprintf2(s,a,b) if (rf_reconbufferDebug) printf(s,a,b)
 #define Dprintf3(s,a,b,c) if (rf_reconbufferDebug) printf(s,a,b,c)
 #define Dprintf4(s,a,b,c,d) if (rf_reconbufferDebug) printf(s,a,b,c,d)
 #define Dprintf5(s,a,b,c,d,e) if (rf_reconbufferDebug) printf(s,a,b,c,d,e)
+
+#else /* DEBUG */
+
+#define Dprintf1(s,a) {}
+#define Dprintf2(s,a,b) {}
+#define Dprintf3(s,a,b,c) {}
+#define Dprintf4(s,a,b,c,d) {}
+#define Dprintf5(s,a,b,c,d,e) {}
+
+#endif
 
 /*****************************************************************************
  *
