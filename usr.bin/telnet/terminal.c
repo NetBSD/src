@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.14 2004/03/20 23:26:05 heas Exp $	*/
+/*	$NetBSD: terminal.c,v 1.15 2005/02/19 23:28:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)terminal.c	8.2 (Berkeley) 2/16/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.14 2004/03/20 23:26:05 heas Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.15 2005/02/19 23:28:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: terminal.c,v 1.14 2004/03/20 23:26:05 heas Exp $");
 
 Ring		ttyoring, ttyiring;
 unsigned char	ttyobuf[2*BUFSIZ], ttyibuf[BUFSIZ];
+char line[] = { '\0' };
 
 int termdata;			/* Debugging flag */
 
