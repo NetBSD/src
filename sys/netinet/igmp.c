@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.28.4.1 2003/06/30 02:16:24 grant Exp $	*/
+/*	$NetBSD: igmp.c,v 1.28.4.2 2003/07/02 14:02:43 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.28.4.1 2003/06/30 02:16:24 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.28.4.2 2003/07/02 14:02:43 tron Exp $");
 
 #include "opt_mrouting.h"
 
@@ -132,14 +132,17 @@ static void
 rti_delete(ifp)
 	struct ifnet *ifp;
 {
-	struct router_info *rti;
+	struct router_info *rti, *next, **rtip;
 
-	LIST_FOREACH(rti, &rti_head, rti_link) {
+	rtip = &rti_head;
+	for (rti = *rtip; rti != 0; rti = next) {
+		next = rti->rti_next;
 		if (rti->rti_ifp == ifp) {
-			LIST_REMOVE(rti, rti_link);
-			pool_put(&igmp_rti_pool, rti);
+			*rtip = next;
+			free(rti, M_MRTABLE);
 			return;
-		}
+		} else
+			rtip = &rti->rti_next;
 	}
 }
 
