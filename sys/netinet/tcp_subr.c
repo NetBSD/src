@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.160 2004/01/07 19:15:43 matt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.160.2.1 2004/04/06 03:59:43 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.160 2004/01/07 19:15:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.160.2.1 2004/04/06 03:59:43 jmc Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1066,9 +1066,9 @@ tcp_drop(tp, errno)
  * be taken, as we are about to release this tcpcb.  The release
  * of the storage will be done if this is the last timer running.
  *
- * This is typically called from the callout handler function before
- * callout_ack() is done, therefore we need to test the number of
- * running timer functions against 1 below, not 0.
+ * This should be called from the callout handler function after
+ * callout_ack() is done, so that the number of invoking timer
+ * functions is 0.
  */
 int
 tcp_isdead(tp)
@@ -1077,7 +1077,7 @@ tcp_isdead(tp)
 	int dead = (tp->t_flags & TF_DEAD);
 
 	if (__predict_false(dead)) {
-		if (tcp_timers_invoking(tp) > 1)
+		if (tcp_timers_invoking(tp) > 0)
 				/* not quite there yet -- count separately? */
 			return dead;
 		tcpstat.tcps_delayed_free++;
