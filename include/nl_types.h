@@ -1,4 +1,4 @@
-/*	$NetBSD: nl_types.h,v 1.3 1994/12/20 16:18:59 cgd Exp $	*/
+/*	$NetBSD: nl_types.h,v 1.4 1994/12/23 13:02:09 cgd Exp $	*/
 
 /***********************************************************
 Copyright 1990, by Alfalfa Software Incorporated, Cambridge, Massachusetts.
@@ -42,7 +42,7 @@ typedef	long	nl_catd;
 typedef long	nl_item;
 
 extern nl_catd 	catopen __P((__const char *, int));
-extern char    *catgets __P((nl_catd, int, int, __const char *));
+extern char    *catgets __P((nl_catd, int, int, char *));
 extern void	catclose __P((nl_catd));
 
 #endif	/* _NL_TYPES_H_ */
