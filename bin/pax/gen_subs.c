@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.13 1998/07/28 17:44:24 mycroft Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.14 1998/11/04 19:37:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.13 1998/07/28 17:44:24 mycroft Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.14 1998/11/04 19:37:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ ls_list(arcn, now)
 		f_date[0] = '\0';
 	user = user_from_uid(sbp->st_uid, 0);
 	group = group_from_gid(sbp->st_gid, 0);
-	(void)printf("%s%2u %-*s %-*s ", f_mode, sbp->st_nlink,
+	(void)printf("%s%2lu %-*s %-*s ", f_mode, (unsigned long)sbp->st_nlink,
 	    UT_NAMESIZE, user ? user : "", UT_GRPSIZE, group ? group : "");
 
 	/*
