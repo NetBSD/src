@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.110.4.5 2001/06/16 20:19:30 he Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.110.4.6 2002/01/12 01:02:48 he Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -231,6 +231,15 @@ sys_execve(p, v, retval)
 	int szsigcode;
 	struct exec_vmcmd *base_vcp = NULL;
 	extern struct emul emul_netbsd;
+
+	/*
+	 * Lock the process and set the P_INEXEC flag to indicate that
+	 * it should be left alone until we're done here.  This is
+	 * necessary to avoid race conditions - e.g. in ptrace() -
+	 * that might allow a local user to illicitly obtain elevated
+	 * privileges.
+	 */
+	p->p_flag |= P_INEXEC;
 
 	/*
 	 * figure out the maximum size of an exec header, if necessary.
@@ -548,9 +557,11 @@ sys_execve(p, v, retval)
 		ktremul(p);
 #endif
 
+	p->p_flag &= ~P_INEXEC;
 	return (EJUSTRETURN);
 
 bad:
+	p->p_flag &= ~P_INEXEC;
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
 	/* kill any opened file descriptor, if necessary */
