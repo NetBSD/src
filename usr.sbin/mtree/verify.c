@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.12 1997/07/11 07:05:31 mikel Exp $	*/
+/*	$NetBSD: verify.c,v 1.13 1997/10/17 11:46:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: verify.c,v 1.12 1997/07/11 07:05:31 mikel Exp $";
+__RCSID("$NetBSD: verify.c,v 1.13 1997/10/17 11:46:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,9 +77,9 @@ verify()
 static int
 vwalk()
 {
-	register FTS *t;
-	register FTSENT *p;
-	register NODE *ep, *level;
+	FTS *t;
+	FTSENT *p;
+	NODE *ep, *level;
 	int ftsdepth, specdepth, rval;
 	char *argv[2];
 
@@ -153,11 +154,11 @@ vwalk()
 
 static void
 miss(p, tail)
-	register NODE *p;
-	register char *tail;
+	NODE *p;
+	char *tail;
 {
-	register int create;
-	register char *tp;
+	int create;
+	char *tp;
 
 	for (; p; p = p->next) {
 		if (p->flags & F_OPT && !(p->flags & F_VISIT))

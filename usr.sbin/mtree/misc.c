@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 1995/03/07 21:26:23 cgd Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 1997/10/17 11:46:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,6 +35,11 @@
  *	@(#)misc.c	8.1 (Berkeley) 6/6/93
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: misc.c,v 1.5 1997/10/17 11:46:40 lukem Exp $");
+#endif /* not lint */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fts.h>
@@ -54,20 +59,22 @@ typedef struct _key {
 
 /* NB: the following table must be sorted lexically. */
 static KEY keylist[] = {
-	"cksum",	F_CKSUM,	NEEDVALUE,
-	"gid",		F_GID,		NEEDVALUE,
-	"gname",	F_GNAME,	NEEDVALUE,
-	"ignore",	F_IGN,		0,
-	"link",		F_SLINK,	NEEDVALUE,
-	"mode",		F_MODE,		NEEDVALUE,
-	"nlink",	F_NLINK,	NEEDVALUE,
-	"optional",	F_OPT,		0,
-	"size",		F_SIZE,		NEEDVALUE,
-	"time",		F_TIME,		NEEDVALUE,
-	"type",		F_TYPE,		NEEDVALUE,
-	"uid",		F_UID,		NEEDVALUE,
-	"uname",	F_UNAME,	NEEDVALUE,
+	{"cksum",	F_CKSUM,	NEEDVALUE},
+	{"gid",		F_GID,		NEEDVALUE},
+	{"gname",	F_GNAME,	NEEDVALUE},
+	{"ignore",	F_IGN,		0},
+	{"link",	F_SLINK,	NEEDVALUE},
+	{"mode",	F_MODE,		NEEDVALUE},
+	{"nlink",	F_NLINK,	NEEDVALUE},
+	{"optional",	F_OPT,		0},
+	{"size",	F_SIZE,		NEEDVALUE},
+	{"time",	F_TIME,		NEEDVALUE},
+	{"type",	F_TYPE,		NEEDVALUE},
+	{"uid",		F_UID,		NEEDVALUE},
+	{"uname",	F_UNAME,	NEEDVALUE}
 };
+
+int keycompare __P((const void *, const void *));
 
 u_int
 parsekey(name, needvaluep)
@@ -75,7 +82,6 @@ parsekey(name, needvaluep)
 	int *needvaluep;
 {
 	KEY *k, tmp;
-	int keycompare __P((const void *, const void *));
 
 	tmp.name = name;
 	k = (KEY *)bsearch(&tmp, keylist, sizeof(keylist) / sizeof(KEY),

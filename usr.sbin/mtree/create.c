@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.12 1997/07/11 07:05:30 mikel Exp $	*/
+/*	$NetBSD: create.c,v 1.13 1997/10/17 11:46:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -33,25 +33,27 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: create.c,v 1.12 1997/07/11 07:05:30 mikel Exp $";
+__RCSID("$NetBSD: create.c,v 1.13 1997/10/17 11:46:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <time.h>
+#include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
-#include <dirent.h>
 #include <grp.h>
 #include <pwd.h>
-#include <errno.h>
-#include <unistd.h>
 #include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 #include "mtree.h"
 #include "extern.h"
 
@@ -75,8 +77,8 @@ static void	statf __P((FTSENT *));
 void
 cwalk()
 {
-	register FTS *t;
-	register FTSENT *p;
+	FTS *t;
+	FTSENT *p;
 	time_t clock;
 	char *argv[2], host[MAXHOSTNAMELEN];
 
@@ -185,10 +187,10 @@ statd(t, parent, puid, pgid, pmode)
 	gid_t *pgid;
 	mode_t *pmode;
 {
-	register FTSENT *p;
-	register gid_t sgid;
-	register uid_t suid;
-	register mode_t smode;
+	FTSENT *p;
+	gid_t sgid;
+	uid_t suid;
+	mode_t smode;
 	struct group *gr;
 	struct passwd *pw;
 	gid_t savegid;
@@ -196,15 +198,18 @@ statd(t, parent, puid, pgid, pmode)
 	mode_t savemode;
 	u_short maxgid, maxuid, maxmode, g[MAXGID], u[MAXUID], m[MAXMODE];
 
+	savegid = 0;
+	saveuid = 0;
+	savemode = 0;
 	if ((p = fts_children(t, 0)) == NULL) {
 		if (errno)
 			err("%s: %s", RP(parent), strerror(errno));
 		return (1);
 	}
 
-	bzero(g, sizeof(g));
-	bzero(u, sizeof(u));
-	bzero(m, sizeof(m));
+	memset(g, 0, sizeof(g));
+	memset(u, 0, sizeof(u));
+	memset(m, 0, sizeof(m));
 
 	maxuid = maxgid = maxmode = 0;
 	for (; p; p = p->fts_link) {

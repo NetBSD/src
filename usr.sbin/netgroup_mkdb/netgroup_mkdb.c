@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup_mkdb.c,v 1.7 1997/06/16 23:18:50 christos Exp $	*/
+/*	$NetBSD: netgroup_mkdb.c,v 1.8 1997/10/17 11:49:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -30,8 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
 #ifndef lint
-static char *rcsid = "$NetBSD: netgroup_mkdb.c,v 1.7 1997/06/16 23:18:50 christos Exp $";
+__RCSID("$NetBSD: netgroup_mkdb.c,v 1.8 1997/10/17 11:49:05 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -71,23 +72,24 @@ struct nentry {
 };
 
 
-static DB       *ng_insert __P((DB *, const char *));
-static void	 ng_reventry __P((DB *, DB *, struct nentry *, char *,
+static	void	 cleanup __P((void));
+	int	 main __P((int, char **));
+static	DB      *ng_insert __P((DB *, const char *));
+static	void	 ng_reventry __P((DB *, DB *, struct nentry *, char *,
 				  size_t, StringList *));
 
-static void	 ng_print __P((struct nentry *, struct string *));
-static void	 ng_rprint __P((DB *, struct string *));
-static DB	*ng_reverse __P((DB *, size_t));
-static DB	*ng_load __P((const char *));
-static void	 ng_write __P((DB *, DB *, int));
-static void	 ng_rwrite __P((DB *, DB *, int));
-static void	 usage __P((void));
-static void	 cleanup __P((void));
+static	void	 ng_print __P((struct nentry *, struct string *));
+static	void	 ng_rprint __P((DB *, struct string *));
+static	DB	*ng_reverse __P((DB *, size_t));
+static	DB	*ng_load __P((const char *));
+static	void	 ng_write __P((DB *, DB *, int));
+static	void	 ng_rwrite __P((DB *, DB *, int));
+static	void	 usage __P((void));
 
 #ifdef DEBUG_NG
-static int 	 debug = 0;
-static void	 ng_dump __P((DB *));
-static void	 ng_rdump __P((DB *));
+static	int 	 debug = 0;
+static	void	 ng_dump __P((DB *));
+static	void	 ng_rdump __P((DB *));
 #endif /* DEBUG_NG */
 
 
@@ -107,7 +109,7 @@ main(argc, argv)
 	char		 *fname = _PATH_NETGROUP;
 
 
-	while ((ch = getopt(argc, argv, "do:")) != EOF)
+	while ((ch = getopt(argc, argv, "do:")) != -1)
 		switch (ch) {
 #ifdef DEBUG_NG
 		case 'd':
