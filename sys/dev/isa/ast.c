@@ -3,7 +3,7 @@
  * Roland McGrath 3/20/94
  * Charles Hannum 3/22/94
  *
- *	$Id: ast.c,v 1.2 1994/03/23 03:01:50 mycroft Exp $
+ *	$Id: ast.c,v 1.3 1994/03/23 03:04:32 mycroft Exp $
  */
 
 #include "ast.h"
@@ -66,7 +66,8 @@ astattach(dev)
 	 *
 	 * It's also not clear that it would be correct to rely on this, since
 	 * there might be an interrupt pending on one of the ports, and thus
-	 * its bit wouldn't be set.  - mycroft
+	 * its bit wouldn't be set.  I think the AST protocol simply does not
+	 * support more than 4 ports.  - mycroft
 	 */
 	printf("%s: 0x%x\n", sc->sc_dev.dv_xname, x);
 }
@@ -102,10 +103,12 @@ astintr(unit)
 		TRY(1);
 		TRY(2);
 		TRY(3);
+#ifdef notdef
 		TRY(4);
 		TRY(5);
 		TRY(6);
 		TRY(7);
+#endif
 		bits = inb(iobase | 0x1f) & alive;
  	} while (bits != alive);
 
