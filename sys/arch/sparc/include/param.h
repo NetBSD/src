@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 1995/06/28 02:43:50 cgd Exp $ */
+/*	$NetBSD: param.h,v 1.17 1995/12/06 22:35:54 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -169,16 +169,19 @@ extern int nbpg, pgofset, pgshift;
  */
 #ifdef _KERNEL
 #ifndef LOCORE
-extern vm_offset_t	dvmabase;
+extern vm_offset_t	dvma_base;
+extern vm_offset_t	dvma_end;
 extern struct map	*dvmamap;
-#endif
 #endif
 /*
  * The dvma resource map is defined in page units, which are numbered 1 to N.
  * Use these macros to convert to/from virtual addresses.
  */
-#define rctov(n)		(ctob(((n)-1))+dvmabase)
-#define vtorc(v)		((btoc((v)-dvmabase))+1)
+#define rctov(n)		(ctob(((n)-1))+dvma_base)
+#define vtorc(v)		((btoc((v)-dvma_base))+1)
+
+extern caddr_t	kdvma_mapin __P((caddr_t, int, int));
+#endif
 
 
 #ifdef _KERNEL
@@ -188,8 +191,10 @@ extern struct map	*dvmamap;
 #endif
 
 #ifdef _KERNEL
+#ifndef LOCORE
 extern int cputyp;
 extern int cpumod;
+#endif
 #endif
 /*
  * Values for the cputyp variable.
