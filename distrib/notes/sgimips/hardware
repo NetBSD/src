@@ -1,10 +1,12 @@
-.\"	$NetBSD: hardware,v 1.8 2004/05/01 12:41:34 pooka Exp $
+.\"	$NetBSD: hardware,v 1.9 2004/05/01 14:06:02 pooka Exp $
 .
 .Nx*M
 is aimed to run on MIPS-based computers manufactured by 
 .Tn SGI.
 .Ss2 Supported machines
 .(bullet -offset indent
+IP12 R3000 - Indigo
+.It
 IP20 R4000 - Indigo
 .It
 IP22 R4000/R4400/R4600 \- Challenge M, Challenge S, Indigo 2 and Indy
@@ -39,7 +41,7 @@ IP35 R12000A - Origin 3000 / Onyx 3000
 .(bullet -offset indent
 Serial ports
 .(bullet -compact
-On-board Zilog Z8530 Dual Uart (IP2x class)
+On-board Zilog Z8530 Dual Uart (IP12, IP20, IP22/24)
 .Pq Em ttyz ,
 .bullet)
 .(bullet -compact
@@ -49,7 +51,7 @@ On-board 16C550 Serial ports (IP32).
 .It
 Ethernet
 .(bullet -compact
-On-board SGI Seeq 80c03 ethernet controller (IP2x class)
+On-board SGI Seeq 80c03 ethernet controller (IP12, IP20, IP22/24)
 .Pq Em sq ,
 .bullet)
 .(bullet -compact
@@ -60,7 +62,7 @@ SCSI
 .(bullet -compact
 On-board
 .Tn Western Digital
-WD33C93 SCSI controller(s) (IP2x class)
+WD33C93 SCSI controller(s) (IP12, IP20, IP22/24)
 .Pq Em wdsc ,
 .bullet)
 .(bullet -compact
@@ -73,16 +75,35 @@ AIC-7889 SCSI controller (IP32)
 Audio
 .(bullet -compact
 On-board HAL2 controller (IP22/24)
+.Pq Em haltwo
+.bullet)
+.It
+Graphics adapters
+.(bullet -compact
+SGI NG1 "newport" (IP22/24)
+.Pq Em newport ,
+.bullet)
+.(bullet -compact
+SGI GR2 (IP20)
+.Pq Em grtwo
+.bullet)
+.It
+Keyboard and mouse devices
+.(bullet -compact
+PC keyboard controller (IP22/24)
+.Pq Em pckbc
 .bullet)
 .bullet)
 .
 .Ss2 Unsupported devices
 .(bullet -offset indent
-Keyboard and mouse devices
-.It
-Graphics adapters
+Some graphics adapters
 .It
 Video hardware
 .It
 Parallel ports
+.It
+zs keyboard/mouse
+.It
+Mace Ethernet controller (IP32)
 .bullet)
