@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.16 1999/03/25 21:39:18 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.17 1999/03/25 21:54:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -872,6 +872,9 @@ lfs_updatemeta(sp)
 		lbn = *sp->start_lbp++;
 
 		(*sp->start_bpp)->b_blkno = off = fs->lfs_offset;
+		if((*sp->start_bpp)->b_blkno == (*sp->start_bpp)->b_lblkno) {
+			printf("lfs_updatemeta: ino %d blk %d has same lbn and daddr\n", VTOI(vp)->i_number, off);
+		}
 		fs->lfs_offset +=
 			fragstodb(fs, numfrags(fs, (*sp->start_bpp)->b_bcount));
 
@@ -1159,6 +1162,12 @@ lfs_writeseg(fs, sp)
 		cbp->b_dev = i_dev;
 		cbp->b_flags |= B_ASYNC | B_BUSY;
 		cbp->b_bcount = 0;
+
+#ifdef DIAGNOSTIC
+		if(datosn(fs,(*bpp)->b_blkno + ((*bpp)->b_bcount - 1)/DEV_BSIZE) != datosn(fs,cbp->b_blkno)) {
+			panic("lfs_writeseg: Segment overwrite");
+		}
+#endif
 
 		if(fs->lfs_iocount >= LFS_THROTTLE) {
 			tsleep(&fs->lfs_iocount, PRIBIO+1, "lfs throttle", 0);
@@ -1460,7 +1469,6 @@ lfs_vref(vp)
 	 */
 	if (vp->v_flag & VXLOCK) {
 		if(IS_FLUSHING(VTOI(vp)->i_lfs,vp)) {
-			vp->v_usecount++;
 			return 0;
 		}
 		return(1);
@@ -1476,22 +1484,23 @@ void
 lfs_vunref(vp)
 	register struct vnode *vp;
 {
+	/*
+	 * Analogous to lfs_vref, if the node is flushing, fake it.
+	 */
+	if((vp->v_flag & VXLOCK) && IS_FLUSHING(VTOI(vp)->i_lfs,vp)) {
+		return;
+	}
+
 	simple_lock(&vp->v_interlock);
 #ifdef DIAGNOSTIC
-	if(vp->v_usecount==0) {
+	if(vp->v_usecount<=0) {
+		printf("lfs_vunref: flags are 0x%lx\n", vp->v_flag);
+		printf("lfs_vunref: usecount = %d\n", vp->v_usecount);
 		panic("lfs_vunref: v_usecount<0");
 	}
 #endif
 	vp->v_usecount--;
 	if (vp->v_usecount > 0) {
-		simple_unlock(&vp->v_interlock);
-		return;
-	}
-	/*
-	 * We also don't want to vrele() here during a flush, since
-	 * that will be done again later, causing us serious problems.
-	 */
-	if(IS_FLUSHING(VTOI(vp)->i_lfs,vp)) {
 		simple_unlock(&vp->v_interlock);
 		return;
 	}
