@@ -1,4 +1,4 @@
-/*	$NetBSD: sysasic.c,v 1.7 2004/05/17 20:47:17 thorpej Exp $	*/
+/*	$NetBSD: sysasic.c,v 1.8 2004/06/14 12:47:36 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.7 2004/05/17 20:47:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.8 2004/06/14 12:47:36 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.7 2004/05/17 20:47:17 thorpej Exp $");
 struct sysasic_intrhand {
 	/* for quick check on interrupt */
 #define SYSASIC_EVENT_NMAP	((SYSASIC_EVENT_MAX + 1 + (32 - 1)) / 32)
-	unsigned	syh_events[SYSASIC_EVENT_NMAP];
 #define SYSASIC_EVENT_INTR_MAP(ev)	((ev) >> 5)
 #define SYSASIC_EVENT_INTR_BIT(ev)	((unsigned) 1 << ((ev) & 31))
+	unsigned	syh_events[SYSASIC_EVENT_NMAP];	/* enabled */
+	unsigned	syh_hndmap[SYSASIC_EVENT_NMAP];	/* handler installed */
 
 	void	*syh_intc;
 	int	syh_idx;
@@ -152,11 +153,15 @@ sysasic_intr_establish(int event, int ipl, int (*ih_fun)(void *), void *ih_arg)
 #ifdef DEBUG
 	/* check if the event handler is already installed */
 	for (i = 0; i <= SYSASIC_IRQ_LEVEL_MAX; i++)
-		if ((sysasic_intrhand[i].syh_events[SYSASIC_EVENT_INTR_MAP(event)] &
+		if ((sysasic_intrhand[i].syh_hndmap[SYSASIC_EVENT_INTR_MAP(event)] &
 		    SYSASIC_EVENT_INTR_BIT(event)) != 0)
 			panic("sysasic_intr_establish: event %d already installed irq %d",
 			    event, SYSASIC_IRQ_INDEX_TO_IRQ(i));
 #endif
+
+	/* mark this event is established */
+	syh->syh_hndmap[SYSASIC_EVENT_INTR_MAP(event)] |=
+	    SYSASIC_EVENT_INTR_BIT(event);
 
 	hnd = &sysasic_eventhand[event];
 	hnd->hnd_fn = ih_fun;
@@ -183,7 +188,7 @@ sysasic_intr_disestablish(void *arg)
 	syh = hnd->hnd_syh;
 
 #ifdef DIAGNOSTIC
-	if ((syh->syh_events[SYSASIC_EVENT_INTR_MAP(event)] &
+	if ((syh->syh_hndmap[SYSASIC_EVENT_INTR_MAP(event)] &
 	    SYSASIC_EVENT_INTR_BIT(event)) == 0)
 		panic("sysasic_intr_disestablish: event %d not installed for irq %d",
 		    event, SYSASIC_IRQ_INDEX_TO_IRQ(syh->syh_idx));
@@ -194,9 +199,12 @@ sysasic_intr_disestablish(void *arg)
 	hnd->hnd_arg = 0;
 	hnd->hnd_syh = 0;
 
+	syh->syh_hndmap[SYSASIC_EVENT_INTR_MAP(event)] &=
+	    ~SYSASIC_EVENT_INTR_BIT(event);
+
 	/* deinstall intrc if no event exists */
 	for (i = 0; i < SYSASIC_EVENT_NMAP; i++)
-		if (syh->syh_events[i])
+		if (syh->syh_hndmap[i])
 			return;
 	intc_intr_disestablish(syh->syh_intc);
 	syh->syh_intc = 0;
@@ -217,7 +225,7 @@ sysasic_intr_enable(void *arg, int on)
 	syh = hnd->hnd_syh;
 
 #ifdef DIAGNOSTIC
-	if ((syh->syh_events[SYSASIC_EVENT_INTR_MAP(event)] &
+	if ((syh->syh_hndmap[SYSASIC_EVENT_INTR_MAP(event)] &
 	    SYSASIC_EVENT_INTR_BIT(event)) == 0)
 		panic("sysasic_intr_enable: event %d not installed for irq %d",
 		    event, SYSASIC_IRQ_INDEX_TO_IRQ(syh->syh_idx));
