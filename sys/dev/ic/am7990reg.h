@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990reg.h,v 1.3 1997/03/15 18:11:26 is Exp $	*/
+/*	$NetBSD: am7990reg.h,v 1.4 1997/03/27 21:01:49 veego Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -130,6 +130,16 @@ struct leinit {
 /* Initialzation block (mode) */
 #define	LE_MODE_PROM	0x8000		/* promiscuous mode */
 /*			0x7f80		   reserved, must be zero */
+/* 0x4000 - 0x0080 are not available on LANCE 7990 */
+#define	LE_MODE_DRCVBC	0x4000		/* disable receive brodcast */
+#define	LE_MODE_DRCVPA	0x2000		/* disable physical address detection */
+#define	LE_MODE_DLNKTST	0x1000		/* disable link status */
+#define	LE_MODE_DAPC	0x0800		/* disable automatic polarity correction */
+#define	LE_MODE_MENDECL	0x0400		/* MENDEC loopback mode */
+#define	LE_MODE_LRTTSEL	0x0200		/* lower receice threshold /
+					   transmit mode selection */
+#define	LE_MODE_PSEL1	0x0100		/* port selection bit1 */
+#define	LE_MODE_PSEL0	0x0080		/* port selection bit0 */
 #define	LE_MODE_INTL	0x0040		/* internal loopback */
 #define	LE_MODE_DRTY	0x0020		/* disable retry */
 #define	LE_MODE_COLL	0x0010		/* force a collision */
@@ -176,3 +186,30 @@ struct leinit {
 
 #define	LE_T3_BITS \
     "\20\20BUFF\17UFLO\16RES\15LCOL\14LCAR\13RTRY"
+
+/*
+ * PCnet-ISA defines which are not available on LANCE 7990
+ */
+
+/* (ISA) Bus Configuration Registers */
+#define	LE_BCR_MSRDA	0x0000
+#define	LE_BCR_MSWRA	0x0001
+#define	LE_BCR_MC	0x0002
+#define	LE_BCR_LED1	0x0005
+#define	LE_BCR_LED2	0x0006
+#define	LE_BCR_LED3	0x0007
+
+/* Bus configurations bits (MC) */
+#define	LE_MC_EADISEL	0x0008		/* EADI selection */
+#define	LE_MC_AWAKE	0x0004		/* auto-wake */
+#define	LE_MC_ASEL	0x0002		/* auto selection */
+#define	LE_MC_XMAUSEL	0x0001		/* external MAU selection */
+
+/* LED bis (LED[123]) */
+#define	LE_LED_LEDOUT	0x8000
+#define	LE_LED_PSE	0x0080
+#define	LE_LED_XMTE	0x0010
+#define	LE_LED_PVPE	0x0008
+#define	LE_LED_PCVE	0x0004
+#define	LE_LED_JABE	0x0002
+#define	LE_LED_COLE	0x0001
