@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.6 1997/07/09 06:25:45 phil Exp $	*/
+/*	$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: crib.c,v 1.6 1997/07/09 06:25:45 phil Exp $";
+static char rcsid[] = "$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ main(argc, argv)
 		playing = (getuchar() == 'Y');
 	} while (playing);
 
-	if (f = fopen(_PATH_LOG, "a")) {
+	if ((f = fopen(_PATH_LOG, "a")) != NULL) {
 		(void)fprintf(f, "%s: won %5.5d, lost %5.5d\n",
 		    getlogin(), cgames, pgames);
 		(void) fclose(f);
