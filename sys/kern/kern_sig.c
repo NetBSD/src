@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.24 2002/08/27 23:47:26 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.25 2002/08/29 16:58:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.24 2002/08/27 23:47:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.25 2002/08/29 16:58:55 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1352,9 +1352,9 @@ proc_unstop(p)
 
 	SCHED_ASSERT_LOCKED();
 
-	/* Our caller will want to invoke setrunnable() on whatever we return.
-	 * XXX what if everyone was asleep when the process was stopped? 
-	 * Yuck.
+	/*
+	 * Our caller will want to invoke setrunnable() on whatever we return,
+	 * provided that it isn't NULL.
 	 */
 
 	p->p_stat = SACTIVE;
@@ -1529,7 +1529,7 @@ sigexit(struct lwp *l, int signum)
 	 * in the same process.
 	 */
 	if (p->p_flag & P_WEXIT)
-		lwp_exit(l);
+		lwp_coredump_hook(l);
 	p->p_flag |= P_WEXIT;
 	/* Make other LWPs stick around long enough to be dumped */
 	p->p_userret = lwp_coredump_hook;
