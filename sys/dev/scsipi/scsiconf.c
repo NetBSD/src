@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.99 1998/05/04 05:54:09 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.100 1998/05/04 05:56:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -387,6 +387,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "Chinon  ", "CD-ROM CDS-525  ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "CHINON  ", "CD-ROM CDS-535  ", ""},     SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "DEC     ", "RRD42   (C) DEC ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "DENON   ", "DRD-25X         ", "V"},    SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
