@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.130 2000/11/03 10:22:02 pk Exp $ */
+/*	$NetBSD: st.c,v 1.131 2000/11/03 10:46:18 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{0, 0, 0}				/* minor 12-15 */
 	}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "STK",      "9490",             ""},    
+	 "STK",      "9490",             ""},
 				{ST_Q_FORCE_BLKSIZE, 0, {
 		{0, 0, 0},				/* minor 0-3 */
 		{0, 0, 0},				/* minor 4-7 */
@@ -700,7 +700,7 @@ stopen(dev, flags, mode, p)
 		if (slpintr) {
 			goto bad;
 		}
-	} 
+	}
 
 
 	/*
@@ -825,7 +825,7 @@ stclose(dev, flags, mode, p)
 			 *	operation a write?
 			 *
 			 *	Are there supposed to be 2FM at EOD?
-			 *	
+			 *
 			 * If both statements are true, then we backspace
 			 * one filemark.
 			 */
@@ -969,6 +969,23 @@ st_unmount(st, eject)
 	SC_DEBUG(sc_link, SDEV_DB1, ("unmounting\n"));
 	st_check_eod(st, FALSE, &nmarks, XS_CTL_IGNORE_NOT_READY);
 	st_rewind(st, 0, XS_CTL_IGNORE_NOT_READY);
+
+	/*
+	 * Section 9.3.3 of the SCSI specs states that a device shall return
+	 * the density value specified in the last succesfull MODE SELECT
+	 * after an unload operation, in case it is not able to
+	 * automatically determine the density of the new medium.
+	 *
+	 * So we instruct the device to use the default density, which will
+	 * prevent the use of stale density values (in particular,
+	 * in st_touch_tape().
+	 */
+	st->density = 0;
+	if (st_mode_select(st, 0) != 0) {
+		printf("%s: WARNING: cannot revert to default density\n",
+			st->sc_dev.dv_xname);
+	}
+
 	scsipi_prevent(sc_link, PR_ALLOW,
 	    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
 	if (eject)
@@ -1253,7 +1270,7 @@ ststart(v)
 		}
 		/*
 		 * If we are at EOM but have not reported it
-		 * yet then we should report it now. 
+		 * yet then we should report it now.
 		 */
 		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
 			bp->b_resid = bp->b_bcount;
@@ -1833,7 +1850,7 @@ st_cmprss(st, onoff)
 again:
 	bzero(&scsi_pdata, scsi_dlen);
 	error = scsipi_command(sc_link,
-	    (struct scsipi_generic *)&scmd, sizeof(scmd), 
+	    (struct scsipi_generic *)&scmd, sizeof(scmd),
 	    (u_char *)&scsi_pdata, scsi_dlen,
 	    ST_RETRIES, ST_CTL_TIME, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
@@ -2484,7 +2501,7 @@ st_interpret_sense(xs)
 		xs->sc_link->sc_print_addr(xs->sc_link);
 		printf("Sense Key 0x%02x", key);
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
-			switch (key) { 
+			switch (key) {
 			case SKEY_NOT_READY:
 			case SKEY_ILLEGAL_REQUEST:
 			case SKEY_UNIT_ATTENTION:
@@ -2492,7 +2509,7 @@ st_interpret_sense(xs)
 				break;
 			case SKEY_BLANK_CHECK:
 				printf(", requested size: %d (decimal)", info);
-				break; 
+				break;
 			case SKEY_ABORTED_COMMAND:
 				if (xs->retries)
 					printf(", retrying");
@@ -2502,13 +2519,13 @@ st_interpret_sense(xs)
 			default:
 				printf(", info = %d (decimal)", info);
 			}
-		} 
+		}
 		if (sense->extra_len != 0) {
-			int n; 
-			printf(", data ="); 
+			int n;
+			printf(", data =");
 			for (n = 0; n < sense->extra_len; n++)
 				printf(" %02x", sense->cmd_spec_info[n]);
-		} 
+		}
 		printf("\n");
 #endif
 	}
@@ -2545,7 +2562,16 @@ st_touch_tape(st)
 
 	if ((error = st_mode_sense(st, 0)) != 0)
 		goto bad;
-	st->blksize = 1024;
+
+	/*
+	 * If the block size is already known from the
+	 * sense data, use it. Else start probing at 1024.
+	 */
+	if (st->media_blksize > 0)
+		st->blksize = st->media_blksize;
+	else
+		st->blksize = 1024;
+
 	do {
 		switch (st->blksize) {
 		case 512:
