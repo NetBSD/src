@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.5 2002/07/18 16:02:42 rafal Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.6 2003/10/26 03:30:26 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -310,7 +310,7 @@ read_file(void)
 		printf("Reading file %s\n", vfilename);
 	for (i = 0; i < 15; ++i) {
 		if (strncmp(vfilename, volhdr->voldir[i].name,
-		    sizeof(volhdr->voldir[i].name)) == NULL)
+		    sizeof(volhdr->voldir[i].name)) == 0)
 			break;
 	}
 	if (i >= 15) {
@@ -433,7 +433,7 @@ delete_file(void)
 	int i;
 
 	for (i = 0; i < 15; ++i) {
-		if (strcmp(vfilename, volhdr->voldir[i].name) == NULL) {
+		if (strcmp(vfilename, volhdr->voldir[i].name) == 0) {
 			break;
 		}
 	}
