@@ -40,7 +40,6 @@
 ./usr/include/pmax/setjmp.h
 ./usr/include/pmax/signal.h
 ./usr/include/pmax/stdarg.h
-./usr/include/pmax/tc_machdep.h
 ./usr/include/pmax/trap.h
 ./usr/include/pmax/types.h
 ./usr/include/pmax/varargs.h
