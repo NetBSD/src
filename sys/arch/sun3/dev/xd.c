@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.18 1998/01/12 20:32:27 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.19 1998/01/26 21:03:44 gwr Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.18 1998/01/12 20:32:27 thorpej Exp $
+ * id: &Id: xd.c,v 1.9 1995/09/25 20:12:44 chuck Exp &
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -385,8 +385,9 @@ xdcattach(parent, self, aux)
 
 	xdc->xdc = (struct xdc *) 
 		bus_mapin(ca->ca_bustype, ca->ca_paddr, sizeof(struct xdc));
-	xdc->ipl = ca->ca_intpri;
-	xdc->vector = ca->ca_intvec;
+	xdc->bustype = ca->ca_bustype;
+	xdc->ipl     = ca->ca_intpri;
+	xdc->vector  = ca->ca_intvec;
 
 	for (lcv = 0; lcv < XDC_MAXDEV; lcv++)
 		xdc->sc_drives[lcv] = (struct xd_softc *) 0;
@@ -401,7 +402,7 @@ xdcattach(parent, self, aux)
 	    dvma_malloc(XDC_MAXIOPB * sizeof(struct xd_iopb));	/* KVA */
 	bzero(xdc->iopbase, XDC_MAXIOPB * sizeof(struct xd_iopb));
 	xdc->dvmaiopb = (struct xd_iopb *)
-		dvma_kvtopa(xdc->iopbase, BUS_VME32);
+		dvma_kvtopa(xdc->iopbase, xdc->bustype);
 	xdc->reqs = (struct xd_iorq *)
 	    malloc(XDC_MAXIOPB * sizeof(struct xd_iorq), M_DEVBUF, M_NOWAIT);
 	if (xdc->reqs == NULL)
@@ -1272,7 +1273,7 @@ xdc_rqtopb(iorq, iopb, cmd, subfun)
 			iopb->cylno = block;
 		}
 		iopb->daddr = dp = (iorq->dbuf == NULL) ? 0 :
-			dvma_kvtopa(iorq->dbuf, BUS_VME32);
+			dvma_kvtopa(iorq->dbuf, iorq->xdc->bustype);
 		iopb->addrmod = XDC_ADDRMOD;
 	}
 }
@@ -1525,7 +1526,7 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 #endif				/* XDC_DEBUG */
 
 	/* controller not busy, start command */
-	iopbaddr = dvma_kvtopa(iorq->iopb, BUS_VME32);
+	iopbaddr = dvma_kvtopa(iorq->iopb, xdcsc->bustype);
 	XDC_GO(xdcsc->xdc, iopbaddr);	/* go! */
 	xdcsc->nrun++;
 	/* command now running, wrap it up */
@@ -1901,7 +1902,7 @@ xdc_remove_iorq(xdcsc)
 						iorq->xd->nhead;
 				iopb->sectno = iorq->blockno % XDFM_BPS;
 				iopb->daddr =
-					dvma_kvtopa(iorq->dbuf, BUS_VME32);
+					dvma_kvtopa(iorq->dbuf, xdcsc->bustype);
 				XDC_HWAIT(xdcsc, rqno);
 				xdc_start(xdcsc, 1);	/* resubmit */
 				continue;
