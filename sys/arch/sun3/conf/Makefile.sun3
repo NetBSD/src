@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.40 1996/02/09 02:21:36 mycroft Exp $
+#	$NetBSD: Makefile.sun3,v 1.41 1996/02/20 22:03:56 gwr Exp $
 
 # Makefile for NetBSD
 #
@@ -95,7 +95,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} $@; ${STRIP} $@
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S
 .endif
 
 %LOAD
