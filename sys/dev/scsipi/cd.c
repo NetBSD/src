@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.208 2004/09/17 23:43:17 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.209 2004/09/18 00:08:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.208 2004/09/17 23:43:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.209 2004/09/18 00:08:16 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -1573,8 +1573,8 @@ error:
 static u_long
 cd_size(struct cd_softc *cd, int flags)
 {
-	struct scsipi_read_cd_cap_data rdcap;
-	struct scsipi_read_cd_capacity scsipi_cmd;
+	struct scsipi_read_cd_capacity cmd;
+	struct scsipi_read_cd_cap_data data;
 	int blksize;
 	u_long size;
 
@@ -1593,20 +1593,19 @@ cd_size(struct cd_softc *cd, int flags)
 	 * make up a scsi command and ask the scsi driver to do
 	 * it for you.
 	 */
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = READ_CD_CAPACITY;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = READ_CD_CAPACITY;
 
 	/*
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks and a blocksize
 	 */
-	if (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    (u_char *)&rdcap, sizeof(rdcap), CDRETRIES, 30000, NULL,
+	if (scsipi_command(cd->sc_periph, (void *)&cmd, sizeof(cmd),
+	    (void *)&data, sizeof(data), CDRETRIES, 30000, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK) != 0)
 		return (0);
 
-	blksize = _4btol(rdcap.length);
+	blksize = _4btol(data.length);
 	if ((blksize < 512) || ((blksize & 511) != 0))
 		blksize = 2048;	/* some drives lie ! */
 	if (blksize != 2048) {
@@ -1615,7 +1614,7 @@ cd_size(struct cd_softc *cd, int flags)
 	}
 	cd->params.blksize = blksize;
 
-	size = _4btol(rdcap.addr) + 1;
+	size = _4btol(data.addr) + 1;
 	if (size < 100)
 		size = 400000;	/* ditto */
 	cd->params.disksize = size;
@@ -1632,15 +1631,15 @@ cd_size(struct cd_softc *cd, int flags)
 static int
 cd_play(struct cd_softc *cd, int blkno, int nblks)
 {
-	struct scsipi_play scsipi_cmd;
+	struct scsipi_play cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = PLAY;
-	_lto4b(blkno, scsipi_cmd.blk_addr);
-	_lto2b(nblks, scsipi_cmd.xfer_len);
-	return (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, CDRETRIES, 30000, NULL, 0));
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = PLAY;
+	_lto4b(blkno, cmd.blk_addr);
+	_lto2b(nblks, cmd.xfer_len);
+
+	return (scsipi_command(cd->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    CDRETRIES, 30000, NULL, 0));
 }
 
 /*
@@ -1684,19 +1683,19 @@ static int
 cd_play_msf(struct cd_softc *cd, int startm, int starts, int startf, int endm,
     int ends, int endf)
 {
-	struct scsipi_play_msf scsipi_cmd;
+	struct scsipi_play_msf cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = PLAY_MSF;
-	scsipi_cmd.start_m = startm;
-	scsipi_cmd.start_s = starts;
-	scsipi_cmd.start_f = startf;
-	scsipi_cmd.end_m = endm;
-	scsipi_cmd.end_s = ends;
-	scsipi_cmd.end_f = endf;
-	return (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, CDRETRIES, 30000, NULL, 0));
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = PLAY_MSF;
+	cmd.start_m = startm;
+	cmd.start_s = starts;
+	cmd.start_f = startf;
+	cmd.end_m = endm;
+	cmd.end_s = ends;
+	cmd.end_f = endf;
+
+	return (scsipi_command(cd->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    CDRETRIES, 30000, NULL, 0));
 }
 
 /*
@@ -1705,14 +1704,14 @@ cd_play_msf(struct cd_softc *cd, int startm, int starts, int startf, int endm,
 static int
 cd_pause(struct cd_softc *cd, int go)
 {
-	struct scsipi_pause scsipi_cmd;
+	struct scsipi_pause cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = PAUSE;
-	scsipi_cmd.resume = go & 0xff;
-	return (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, CDRETRIES, 30000, NULL, 0));
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = PAUSE;
+	cmd.resume = go & 0xff;
+
+	return (scsipi_command(cd->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    CDRETRIES, 30000, NULL, 0));
 }
 
 /*
@@ -1733,19 +1732,20 @@ static int
 cd_read_subchannel(struct cd_softc *cd, int mode, int format, int track,
     struct cd_sub_channel_info *data, int len, int flags)
 {
-	struct scsipi_read_subchannel scsipi_cmd;
+	struct scsipi_read_subchannel cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = READ_SUBCHANNEL;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = READ_SUBCHANNEL;
 	if (mode == CD_MSF_FORMAT)
-		scsipi_cmd.byte2 |= CD_MSF;
-	scsipi_cmd.byte3 = SRS_SUBQ;
-	scsipi_cmd.subchan_format = format;
-	scsipi_cmd.track = track;
-	_lto2b(len, scsipi_cmd.data_len);
+		cmd.byte2 |= CD_MSF;
+	cmd.byte3 = SRS_SUBQ;
+	cmd.subchan_format = format;
+	cmd.track = track;
+	_lto2b(len, cmd.data_len);
+
 	return (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(struct scsipi_read_subchannel), (u_char *)data, len,
+	    (void *)&cmd, sizeof(struct scsipi_read_subchannel),
+	    (void *)data, len,
 	    CDRETRIES, 30000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_SILENT));
 }
 
@@ -1756,10 +1756,10 @@ static int
 cd_read_toc(struct cd_softc *cd, int mode, int start, void *data, int len,
     int flags, int control)
 {
-	struct scsipi_read_toc scsipi_cmd;
+	struct scsipi_read_toc cmd;
 	int ntoc;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
+	memset(&cmd, 0, sizeof(cmd));
 #if 0
 	if (len != sizeof(struct ioc_toc_header))
 		ntoc = ((len) - sizeof(struct ioc_toc_header)) /
@@ -1767,15 +1767,15 @@ cd_read_toc(struct cd_softc *cd, int mode, int start, void *data, int len,
 	else
 #endif
 	ntoc = len;
-	scsipi_cmd.opcode = READ_TOC;
+	cmd.opcode = READ_TOC;
 	if (mode == CD_MSF_FORMAT)
-		scsipi_cmd.byte2 |= CD_MSF;
-	scsipi_cmd.from_track = start;
-	_lto2b(ntoc, scsipi_cmd.data_len);
-	scsipi_cmd.control = control;
+		cmd.byte2 |= CD_MSF;
+	cmd.from_track = start;
+	_lto2b(ntoc, cmd.data_len);
+	cmd.control = control;
+
 	return (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(struct scsipi_read_toc), (u_char *)data, len, CDRETRIES,
+	    (void *)&cmd, sizeof(cmd), (void *)data, len, CDRETRIES,
 	    30000, NULL, flags | XS_CTL_DATA_IN));
 }
 
@@ -2376,16 +2376,15 @@ try_again:
 static int
 cd_load_unload(struct cd_softc *cd, struct ioc_load_unload *args)
 {
-	struct scsipi_load_unload scsipi_cmd;
+	struct scsipi_load_unload cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = LOAD_UNLOAD;
-	scsipi_cmd.options = args->options;    /* ioctl uses MMC values */
-	scsipi_cmd.slot = args->slot;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = LOAD_UNLOAD;
+	cmd.options = args->options;    /* ioctl uses MMC values */
+	cmd.slot = args->slot;
 
-	return (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, CDRETRIES, 200000, NULL, 0));
+	return (scsipi_command(cd->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    CDRETRIES, 200000, NULL, 0));
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.34 2004/09/17 23:43:17 mycroft Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.35 2004/09/18 00:08:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.34 2004/09/17 23:43:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.35 2004/09/18 00:08:16 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,9 +326,9 @@ scanjet_ctl_write(struct ss_softc *ss, char *buf, u_int size)
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = WRITE;
 	_lto3b(size, cmd.len);
+
 	return (scsipi_command(ss->sc_periph,
-	    (struct scsipi_generic *) &cmd,
-	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
+	    (void *)&cmd, sizeof(cmd), (void *)buf, size, 0, 100000, NULL,
 	    flags | XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK));
 }
 
@@ -349,9 +349,9 @@ scanjet_ctl_read(struct ss_softc *ss, char *buf, u_int size)
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ;
 	_lto3b(size, cmd.len);
+
 	return (scsipi_command(ss->sc_periph,
-	    (struct scsipi_generic *) &cmd,
-	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
+	    (void *)&cmd, sizeof(cmd), (void *)buf, size, 0, 100000, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK));
 }
 

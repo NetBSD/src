@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.49 2004/09/17 23:43:17 mycroft Exp $	*/
+/*	$NetBSD: if_se.c,v 1.50 2004/09/18 00:08:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.49 2004/09/17 23:43:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.50 2004/09/18 00:08:16 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -372,10 +372,10 @@ seattach(parent, self, aux)
 
 
 static __inline int
-se_scsipi_cmd(periph, scsipi_cmd, cmdlen, data_addr, datalen,
+se_scsipi_cmd(periph, cmd, cmdlen, data_addr, datalen,
 		       retries, timeout, bp, flags)
 	struct scsipi_periph *periph;
-	struct scsipi_generic *scsipi_cmd;
+	struct scsipi_generic *cmd;
 	int cmdlen;
 	u_char *data_addr;
 	int datalen;
@@ -387,7 +387,7 @@ se_scsipi_cmd(periph, scsipi_cmd, cmdlen, data_addr, datalen,
 	int error;
 	int s = splbio();
 
-	error = scsipi_command(periph, scsipi_cmd, cmdlen, data_addr,
+	error = scsipi_command(periph, cmd, cmdlen, data_addr,
 	    datalen, retries, timeout, bp, flags);
 	splx(s);
 	return (error);
@@ -483,7 +483,7 @@ se_ifstart(ifp)
 
 	/* Send command to device. */
 	error = se_scsipi_cmd(sc->sc_periph,
-	    (struct scsipi_generic *)&send_cmd, sizeof(send_cmd),
+	    (void *)&send_cmd, sizeof(send_cmd),
 	    sc->sc_tbuf, len, SERETRIES,
 	    SETIMEOUT, NULL, XS_CTL_NOSLEEP|XS_CTL_ASYNC|XS_CTL_DATA_OUT);
 	if (error) {
@@ -580,7 +580,7 @@ se_recv(v)
 	PROTOCMD(ctron_ether_recv, recv_cmd);
 
 	error = se_scsipi_cmd(sc->sc_periph,
-	    (struct scsipi_generic *)&recv_cmd, sizeof(recv_cmd),
+	    (void *)&recv_cmd, sizeof(recv_cmd),
 	    sc->sc_rbuf, RBUF_LEN, SERETRIES, SETIMEOUT, NULL,
 	    XS_CTL_NOSLEEP|XS_CTL_ASYNC|XS_CTL_DATA_IN);
 	if (error)
@@ -768,7 +768,7 @@ se_add_proto(sc, proto)
 	PROTOCMD(ctron_ether_add_proto, add_proto_cmd);
 	_lto2b(sizeof(data), add_proto_cmd.length);
 	error = se_scsipi_cmd(sc->sc_periph,
-	    (struct scsipi_generic *) &add_proto_cmd, sizeof(add_proto_cmd),
+	    (void *)&add_proto_cmd, sizeof(add_proto_cmd),
 	    data, sizeof(data), SERETRIES, SETIMEOUT, NULL,
 	    XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK);
 	return (error);
@@ -785,7 +785,7 @@ se_get_addr(sc, myaddr)
 	PROTOCMD(ctron_ether_get_addr, get_addr_cmd);
 	_lto2b(ETHER_ADDR_LEN, get_addr_cmd.length);
 	error = se_scsipi_cmd(sc->sc_periph,
-	    (struct scsipi_generic *) &get_addr_cmd, sizeof(get_addr_cmd),
+	    (void *)&get_addr_cmd, sizeof(get_addr_cmd),
 	    myaddr, ETHER_ADDR_LEN, SERETRIES, SETIMEOUT, NULL,
 	    XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	printf("%s: ethernet address %s\n", sc->sc_dev.dv_xname,
@@ -805,7 +805,7 @@ se_set_media(sc, type)
 	PROTOCMD(ctron_ether_set_media, set_media_cmd);
 	set_media_cmd.byte3 = type;
 	error = se_scsipi_cmd(sc->sc_periph,
-	    (struct scsipi_generic *) &set_media_cmd, sizeof(set_media_cmd),
+	    (void *)&set_media_cmd, sizeof(set_media_cmd),
 	    0, 0, SERETRIES, SETIMEOUT, NULL, 0);
 	return (error);
 }
@@ -823,7 +823,7 @@ se_set_mode(sc, len, mode)
 	set_mode_cmd.mode = mode;
 	_lto2b(len, set_mode_cmd.length);
 	error = se_scsipi_cmd(sc->sc_periph,
-	    (struct scsipi_generic *) &set_mode_cmd, sizeof(set_mode_cmd),
+	    (void *)&set_mode_cmd, sizeof(set_mode_cmd),
 	    0, 0, SERETRIES, SETIMEOUT, NULL, 0);
 	return (error);
 }
@@ -851,7 +851,7 @@ se_init(sc)
 	PROTOCMD(ctron_ether_set_addr, set_addr_cmd);
 	_lto2b(ETHER_ADDR_LEN, set_addr_cmd.length);
 	error = se_scsipi_cmd(sc->sc_periph,
-	    (struct scsipi_generic *) &set_addr_cmd, sizeof(set_addr_cmd),
+	    (void *)&set_addr_cmd, sizeof(set_addr_cmd),
 	    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN, SERETRIES, SETIMEOUT, NULL,
 	    XS_CTL_DATA_OUT);
 	if (error != 0)
@@ -899,7 +899,7 @@ se_set_multi(sc, addr)
 	PROTOCMD(ctron_ether_set_multi, set_multi_cmd);
 	_lto2b(sizeof(addr), set_multi_cmd.length);
 	error = se_scsipi_cmd(sc->sc_periph,
-	    (struct scsipi_generic *) &set_multi_cmd, sizeof(set_multi_cmd),
+	    (void *)&set_multi_cmd, sizeof(set_multi_cmd),
 	    addr, sizeof(addr), SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_OUT);
 	return (error);
 }
@@ -919,8 +919,7 @@ se_remove_multi(sc, addr)
 	PROTOCMD(ctron_ether_remove_multi, remove_multi_cmd);
 	_lto2b(sizeof(addr), remove_multi_cmd.length);
 	error = se_scsipi_cmd(sc->sc_periph,
-	    (struct scsipi_generic *) &remove_multi_cmd,
-	    sizeof(remove_multi_cmd),
+	    (void *)&remove_multi_cmd, sizeof(remove_multi_cmd),
 	    addr, sizeof(addr), SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_OUT);
 	return (error);
 }
