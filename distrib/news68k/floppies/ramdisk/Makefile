@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/05/02 16:06:52 sjg Exp $
+#	$NetBSD: Makefile,v 1.4 2000/06/08 23:39:07 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -52,6 +52,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
 	make -f ${CBIN}.mk all
 
 HACKSRC=${TOP}/../../utils/libhack
+COPTS=	-Os
 .include "${HACKSRC}/Makefile.inc"
 
 # turn off small gethostby* temporarily
@@ -64,4 +65,4 @@ clean cleandir distclean:
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
-.include <bsd.sys.mk>
+.include <bsd.prog.mk>
