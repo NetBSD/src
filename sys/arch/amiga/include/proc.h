@@ -47,6 +47,9 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_AST		0x0001	/* async trap pending */
+#define MDP_STACKADJ	0x0002	/* frame SP adjusted, might have to
+				   undo when system call returns
+				   ERESTART. */
 
 /* currently defined (not necessarily supported yet...) OS-emulators.
    These are *NOT* flags, they're values (you can't have a simulatanous
