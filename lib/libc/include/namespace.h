@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.86 2004/04/21 00:02:26 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.87 2004/04/27 20:03:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -153,16 +153,6 @@
 #define ctermid			_ctermid
 #define ctime_r			_ctime_r
 #define daemon			_daemon
-#define dbm_clearerr		_dbm_clearerr
-#define dbm_close		_dbm_close
-#define dbm_delete		_dbm_delete
-#define dbm_dirfno		_dbm_dirfno
-#define dbm_error		_dbm_error
-#define dbm_fetch		_dbm_fetch
-#define dbm_firstkey		_dbm_firstkey
-#define dbm_nextkey		_dbm_nextkey
-#define dbm_open		_dbm_open
-#define dbm_store		_dbm_store
 #define dbopen			_dbopen
 #define devname			_devname
 #define dirname			_dirname
