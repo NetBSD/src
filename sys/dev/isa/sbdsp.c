@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.99 1999/08/02 17:37:42 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.100 1999/08/04 10:50:52 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
  */
 
 #include "midi.h"
+#include "mpu.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1535,7 +1536,7 @@ sbdsp_intr(arg)
 		if (sc->sc_intr16)
 			sc->sc_intr16(arg);
 	}
-#if NMIDI > 0
+#if NMPU > 0
 	if ((irq & SBP_IRQ_MPU401) && sc->sc_mpudev) {
 		mpu_intr(sc->sc_mpudev);
 	}
