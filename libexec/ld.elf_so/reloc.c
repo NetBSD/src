@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.56 2002/09/05 17:01:13 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.57 2002/09/05 17:06:11 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -158,9 +158,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym   *def;
 	const Obj_Entry *defobj;
-#if defined(__alpha__) || defined(__arm__) || defined(__hppa__) || \
-    defined(__i386__) || defined(__m68k__) || defined(__powerpc__) || \
-    defined(__sh__) || defined(__vax__)
+#if !defined(__mips__)
 	Elf_Addr         tmp;
 #endif
 
@@ -653,8 +651,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 
 	/* Fully resolve procedure addresses now */
 
-#if defined(__alpha__) || defined(__arm__) || defined(__i386__) || \
-    defined(__m68k__) || defined(__sh__) || defined(__vax__)
+#if !defined(__mips__)
 	if (bind_now || obj->pltgot == NULL) {
 		const Elf_Sym  *def;
 		const Obj_Entry *defobj;
@@ -678,7 +675,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 		    defobj->strtab + def->st_name,
 		    (void *)*where, (void *)new_value));
 	} else
-#endif /* __alpha__ || __i386__ || __m68k__ || __sh__ || __vax__ */
+#endif /* !__mips__ */
 	if (!obj->mainprog) {
 		/* Just relocate the GOT slots pointing into the PLT */
 		new_value = *where + (Elf_Addr)(obj->relocbase);
