@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.45 1994/03/12 03:29:20 mycroft Exp $
+ *	$Id: isa.c,v 1.46 1994/03/29 04:34:18 mycroft Exp $
  */
 
 /*
@@ -57,6 +57,7 @@
 #include <sys/uio.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/device.h>
 
 #include <vm/vm.h>
 
@@ -64,8 +65,9 @@
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
-#include <i386/isa/isa_device.h>
 #include <i386/isa/isa.h>
+#include <i386/isa/isa_device.h>
+#include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/ic/i8237.h>
 #include <i386/isa/ic/i8042.h>
@@ -94,25 +96,224 @@ u_short *Crtat = (u_short *)MONO_BUF;
 #define	DMA2_MODE	(IO_DMA2 + 2*11)	/* mode register */
 #define	DMA2_FFC	(IO_DMA2 + 2*12)	/* clear first/last FF */
 
-int config_isadev(struct isa_device *);
 static void sysbeepstop(int);
 
 /*
  * Configure all ISA devices
+ *
+ * XXX This code is a hack.  It wants to be new config, but can't be until the
+ * interrupt system is redone.  For now, we do some gross hacks to make it look
+ * 99% like new config.
  */
+static char *msgs[3] = { "", " not configured\n", " unsupported\n" };
+
+struct cfdata *
+config_search(fn, parent, aux)
+	cfmatch_t fn;
+	struct device *parent;
+	void *aux;
+{
+	struct cfdata *cf = 0;
+	struct device *dv = 0;
+	size_t devsize;
+	struct cfdriver *cd;
+	struct isa_device *id,
+	    *idp =  parent ? (void *)parent->dv_cfdata->cf_loc : 0;
+
+	for (id = isa_devtab; id->id_driver; id++) {
+		if (id->id_state == FSTATE_FOUND)
+			continue;
+		if (id->id_parent != idp)
+			continue;
+		cd = id->id_driver;
+		if (id->id_unit < cd->cd_ndevs) {
+			if (cd->cd_devs[id->id_unit] != 0)
+				continue;
+		} else {
+			int old = cd->cd_ndevs, new;
+			void **nsp;
+
+			if (old == 0) {
+				nsp = malloc(MINALLOCSIZE, M_DEVBUF, M_NOWAIT);
+				if (!nsp)
+					panic("config_search: creating dev array");
+				bzero(nsp, MINALLOCSIZE);
+				cd->cd_ndevs = MINALLOCSIZE / sizeof(void *);
+			} else {
+				new = old;
+				do {
+					new *= 2;
+				} while (new <= id->id_unit);
+				cd->cd_ndevs = new;
+				nsp = malloc(new * sizeof(void *), M_DEVBUF,
+				    M_NOWAIT);
+				if (!nsp)
+					panic("config_search: expanding dev array");
+				bzero(nsp, new * sizeof(void *));
+				bcopy(cd->cd_devs, nsp, old * sizeof(void *));
+				free(cd->cd_devs, M_DEVBUF);
+			}
+			cd->cd_devs = nsp;
+		}
+		if (!cf) {
+			cf = malloc(sizeof(struct cfdata), M_DEVBUF, M_NOWAIT);				if (!cf)
+				panic("config_search: creating cfdata");
+		}
+		cf->cf_driver = cd;
+		cf->cf_unit = id->id_unit;
+		cf->cf_fstate = 0;
+		cf->cf_loc = (void *)id;
+		cf->cf_flags = id->id_flags;
+		cf->cf_parents = 0;
+		cf->cf_ivstubs = 0;
+		if (dv && devsize != cd->cd_devsize) {
+			free(dv, M_DEVBUF);
+			dv = 0;
+		}
+		if (!dv) {
+			devsize = cd->cd_devsize;
+			dv = malloc(devsize, M_DEVBUF, M_NOWAIT);
+			if (!dv)
+				panic("config_search: creating softc");
+		}
+		bzero(dv, cd->cd_devsize);
+		dv->dv_class = cd->cd_class;
+		dv->dv_cfdata = cf;
+		dv->dv_unit = id->id_unit;
+		sprintf(dv->dv_xname, "%s%d", cd->cd_name, id->id_unit);
+		dv->dv_parent = parent;
+		cd->cd_devs[id->id_unit] = dv;
+		if (fn) {
+			if ((*fn)(parent, dv, aux))
+				return cf;
+		} else {
+			if ((*cd->cd_match)(parent, dv, aux))
+				return cf;
+		}
+		if (id->id_state == FSTATE_FOUND) {
+			cf = 0;
+			dv = 0;
+		} else
+			cd->cd_devs[id->id_unit] = 0;
+	}
+	if (cf)
+		free(cf, M_DEVBUF);
+	if (dv)
+		free(dv, M_DEVBUF);
+	return 0;
+}
+
+void
+config_attach(parent, cf, aux, print)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+	cfprint_t print;
+{
+	struct isa_device *id = (void *)cf->cf_loc;
+	struct cfdriver *cd = cf->cf_driver;
+	struct device *dv = cd->cd_devs[id->id_unit];
+
+	cf->cf_fstate = id->id_state = FSTATE_FOUND;
+	printf("%s at %s", dv->dv_xname, parent ? parent->dv_xname : "isa0");
+	if (print)
+		(void) (*print)(aux, (char *)0);
+	(*cd->cd_attach)(parent, dv, aux);
+}
+
+int
+config_found(parent, aux, print)
+	struct device *parent;
+	void *aux;
+	cfprint_t print;
+{
+	struct cfdata *cf;
+
+	if ((cf = config_search((cfmatch_t)NULL, parent, aux)) != NULL) {
+		config_attach(parent, cf, aux, print);
+		return 1;
+	}
+	if (print)
+		printf(msgs[(*print)(aux, parent->dv_xname)]);
+	return 0;
+}
+
+int
+isaprint(aux, isa)
+	void *aux;
+	char *isa;
+{
+	struct isa_attach_args *ia = aux;
+
+	if (ia->ia_iosize)
+		printf(" port 0x%x", ia->ia_iobase);
+	if (ia->ia_iosize > 1)
+		printf("-0x%x", ia->ia_iobase + ia->ia_iosize - 1);
+	if (ia->ia_msize)
+		printf(" iomem 0x%x", ia->ia_maddr - atdevbase + 0xa0000);
+	if (ia->ia_msize > 1)
+		printf("-0x%x",
+		    ia->ia_maddr - atdevbase + 0xa0000 + ia->ia_msize - 1);
+	if (ia->ia_irq)
+		printf(" irq %d", ffs(ia->ia_irq) - 1);
+	if (ia->ia_drq != (u_short)-1)
+		printf(" drq %d", ia->ia_drq);
+	/* XXXX print flags */
+	return QUIET;
+}
+
+int
+isasubmatch(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct isa_device *id = (void *)self->dv_cfdata->cf_loc;
+	struct isa_attach_args ia;
+
+	ia.ia_iobase = id->id_iobase;
+	ia.ia_iosize = 0x666;
+	ia.ia_irq = id->id_irq;
+	ia.ia_drq = id->id_drq;
+	ia.ia_maddr = id->id_maddr - 0xa0000 + atdevbase;
+	ia.ia_msize = id->id_msize;
+
+	if (!(*id->id_driver->cd_match)(parent, self, &ia)) {
+		/*
+		 * If we don't do this, isa_configure() will repeatedly try to
+		 * probe devices that weren't found.  But we need to be careful
+		 * to do it only for the ISA bus, or we would cause things like
+		 * `com0 at ast? slave ?' to not probe on the second ast.
+		 */
+		if (!parent)
+			id->id_state = FSTATE_FOUND;
+
+		return 0;
+	}
+
+	config_attach(parent, self->dv_cfdata, &ia, isaprint);
+
+	if (id->id_irq) {
+		int intrno;
+
+		intrno = ffs(id->id_irq) - 1;
+		setidt(ICU_OFFSET+intrno, id->id_intr, SDT_SYS386IGT, SEL_KPL);
+		if (id->id_mask)
+			INTRMASK(*id->id_mask, id->id_irq);
+		INTREN(id->id_irq);
+	}
+
+	return 1;
+}
+
 void
 isa_configure()
 {
-	struct isa_device *dvp;
-	struct isa_driver *dp;
 
 	splhigh();
 	INTREN(IRQ_SLAVE);
 	enable_intr();
 
-	for (dvp = isa_devtab; dvp->id_driver; dvp++)
-		if (!dvp->id_parent || dvp->id_parent->id_alive)
-			config_isadev(dvp);
+	while (config_search(isasubmatch, NULL, NULL));
 
 	printf("biomask %x ttymask %x netmask %x\n",
 	       biomask, ttymask, netmask);
@@ -125,78 +326,6 @@ isa_configure()
 
 	spl0();
 }
-
-/*
- * Configure an ISA device.
- */
-config_isadev(isdp)
-	struct isa_device *isdp;
-{
-	struct isa_driver *dp = isdp->id_driver;
- 
-	if (isdp->id_parent) {
-		/* Not really an ISA device; just call the probe and attach. */
-		isdp->id_alive = (*dp->probe)(isdp);
-		if (isdp->id_alive)
-			(void)(*dp->attach)(isdp);
-		return;
-	}
-
-	if (isdp->id_maddr) {
-		extern u_int atdevbase;
-
-		isdp->id_maddr -= 0xa0000; /* XXX should be a define */
-		isdp->id_maddr += atdevbase;
-	}
-	isdp->id_alive = (*dp->probe)(isdp);
-	if (isdp->id_irq == (u_short)-1)
-		isdp->id_alive = 0;
-	/*
-	 * Only print the I/O address range if id_alive != -1
-	 * Right now this is a temporary fix just for the new
-	 * NPX code so that if it finds a 486 that can use trap
-	 * 16 it will not report I/O addresses.
-	 * Rod Grimes 04/26/94
-	 *
-	 * XXX -- cgd
-	 */
-	if (isdp->id_alive) {
-		printf("%s%d", dp->name, isdp->id_unit);
-		if (isdp->id_iobase) {
-			printf(" at 0x%x", isdp->id_iobase);
-			if ((isdp->id_iobase + isdp->id_alive - 1) !=
-			    isdp->id_iobase)
-				printf("-0x%x", isdp->id_iobase +
-				    isdp->id_alive - 1);
-		}
-		if (isdp->id_irq != 0)
-			printf(" irq %d", ffs(isdp->id_irq)-1);
-		if (isdp->id_drq != -1)
-			printf(" drq %d", isdp->id_drq);
-		if (isdp->id_maddr != 0)
-			printf(" maddr 0x%x", kvtop(isdp->id_maddr));
-		if (isdp->id_msize != 0)
-			printf("-0x%x", kvtop(isdp->id_maddr) +
-				isdp->id_msize - 1);
-		if (isdp->id_flags != 0)
-			printf(" flags 0x%x", isdp->id_flags);
-		printf(" on isa\n");
-
-		(void)(*dp->attach)(isdp);
-
-		if (isdp->id_irq) {
-			int intrno;
-
-			intrno = ffs(isdp->id_irq)-1;
-			setidt(ICU_OFFSET+intrno, isdp->id_intr,
-				 SDT_SYS386IGT, SEL_KPL);
-			if (isdp->id_mask)
-				INTRMASK(*isdp->id_mask, isdp->id_irq);
-			INTREN(isdp->id_irq);
-		}
-	}
-}
-
 
 #define	IDTVEC(name)	__CONCAT(X,name)
 /* default interrupt vector table entries */
@@ -549,85 +678,6 @@ isa_strayintr(d) {
 		log(LOG_CRIT,"Too many ISA strayintr not logging any more\n");
 }
 
-/*
- * Wait "n" microseconds.
- * Relies on timer 1 counting down from (TIMER_FREQ / hz) at TIMER_FREQ Hz.
- * Note: timer had better have been programmed before this is first used!
- * (Note that we use `rate generator' mode, which counts at 1:1; `square
- * wave' mode counts at 2:1).
- */
-void
-delay(n)
-	int n;
-{
-	int limit, tick, otick;
-
-	/*
-	 * Read the counter first, so that the rest of the setup overhead is
-	 * counted.
-	 */
-	otick = gettick();
-
-#ifdef __GNUC__
-	/*
-	 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler code so
-	 * we can take advantage of the intermediate 64-bit quantity to prevent
-	 * loss of significance.
-	 */
-	n -= 5;
-	if (n < 0)
-		return;
-	{register int m;
-	__asm __volatile("mul %3"
-			 : "=a" (n), "=d" (m)
-			 : "0" (n), "r" (TIMER_FREQ));
-	__asm __volatile("div %3"
-			 : "=a" (n)
-			 : "0" (n), "d" (m), "r" (1000000)
-			 : "%edx");}
-#else
-	/*
-	 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating point and
-	 * without any avoidable overflows.
-	 */
-	n -= 20;
-	{
-		int sec = n / 1000000,
-		    usec = n % 1000000;
-		n = sec * TIMER_FREQ +
-		    usec * (TIMER_FREQ / 1000000) +
-		    usec * ((TIMER_FREQ % 1000000) / 1000) / 1000 +
-		    usec * (TIMER_FREQ % 1000) / 1000000;
-	}
-#endif
-
-	limit = TIMER_FREQ / hz;
-
-	while (n > 0) {
-		tick = gettick();
-		if (tick > otick)
-			n -= limit - (tick - otick);
-		else
-			n -= otick - tick;
-		otick = tick;
-	}
-}
-
-int
-gettick()
-{
-	u_char lo, hi;
-
-	/* Don't want someone screwing with the counter while we're here. */
-	disable_intr();
-	/* Select counter 0 and latch it. */
-	outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-	lo = inb(TIMER_CNTR0);
-	hi = inb(TIMER_CNTR0);
-	enable_intr();
-	return ((hi << 8) | lo);
-}
-
 static beeping;
 static void
 sysbeepstop(int f)
@@ -672,34 +722,6 @@ sysbeep(int pitch, int period)
 	timeout((timeout_t)sysbeepstop, (caddr_t)(period/2), period);
 
 	splx(s);
-}
-
-/*
- * find an ISA device in a given isa_devtab_* table, given
- * the table to search, the expected id_driver entry, and the unit number.
- *
- * this function is defined in isa_device.h, and this location is debatable;
- * i put it there because it's useless w/o, and directly operates on
- * the other stuff in that file.
- *
- */
-
-struct isa_device *find_isadev(table, driverp, unit)
-	struct isa_device *table;
-	struct isa_driver *driverp;
-	int unit;
-{
-	if (driverp == NULL) /* sanity check */
-		return NULL;
-
-	while ((table->id_driver != driverp) || (table->id_unit != unit)) {
-		if (table->id_driver == 0)
-			return NULL;
-    
-		table++;
-	}
-
-	return table;
 }
 
 /*
