@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.1 2001/09/28 02:30:13 thorpej Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.2 2001/09/29 05:36:49 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -46,8 +46,6 @@
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-
-#define	ACPI_LID_DEBUG
 
 struct acpilid_softc {
 	struct device sc_dev;		/* base device glue */
@@ -110,10 +108,8 @@ acpilid_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-#ifdef ACPI_LID_DEBUG
 	/* Display the current state when it changes. */
 	sc->sc_flags = ACPILID_F_VERBOSE;
-#endif
 }
 
 /*
