@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.25 1997/02/04 19:13:15 ragge Exp $
+#       $NetBSD: files.vax,v 1.25.4.1 1997/03/10 15:23:36 is Exp $
 #
 # new style config file for vax architecture
 #
@@ -73,17 +73,17 @@ device	uda: mscp
 attach	uda at uba
 file    arch/vax/uba/uda.c		uda | mtc
 
-device	de:ifnet, ether
+device	de:ifnet, ether, arp
 attach	de at uba
 file	arch/vax/if/if_de.c		de
 
 # DEQNA/DELQA used on Qbus
-device	qe:ifnet, ether
+device	qe:ifnet, ether, arp
 attach	qe at uba
 file	arch/vax/if/if_qe.c		qe
 
 # DEBNA/DEBNT Ethernet Adapter
-device	ni:ifnet, ether
+device	ni:ifnet, ether, arp
 attach	ni at bi
 file	arch/vax/bi/ni.c		ni
 
