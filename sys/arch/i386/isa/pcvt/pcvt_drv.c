@@ -263,9 +263,6 @@ pcattach(struct isa_device *dev)
 #if PCVT_EMU_MOUSE
 #if PCVT_NETBSD
 	pc_tty[totalscreens] = ttymalloc(); /* the mouse emulator tty */
-#if PCVT_NETBSD > 120
-	tty_attach(pc_tty[totalscreens]);
-#endif /* PCVT_NETBSD > 120 */
 #else /* !PCVT_NETBSD */
 	/* the mouse emulator tty */
 	pc_tty[totalscreens] = ttymalloc(pccons[totalscreens]);
