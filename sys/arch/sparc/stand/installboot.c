@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.9 1995/09/27 09:03:15 pk Exp $ */
+/*	$NetBSD: installboot.c,v 1.9.2.1 1995/11/08 09:14:29 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -133,7 +133,7 @@ main(argc, argv)
 	if (sysctl(mib, 2, cpumodel, &size, NULL, 0) == -1)
 		err(1, "sysctl");
 
-	if (size < 5 || strncmp(cpumodel, "SUN/4", 5) != 0) /*XXX*/ 
+	if (size < 5 || strncmp(cpumodel, "SUN-4", 5) != 0) /*XXX*/ 
 		/* Assume a sun4c/sun4m */
 		hflag = 1;
 
@@ -310,8 +310,10 @@ int	devfd;
 	if (fstatfs(fd, &statfsbuf) != 0)
 		err(1, "statfs: %s", boot);
 
-	if (strncmp(statfsbuf.f_fstypename, "ufs", MFSNAMELEN))
-		errx(1, "%s: must be on a UFS filesystem", boot);
+	if (strncmp(statfsbuf.f_fstypename, "ffs", MFSNAMELEN) &&
+	    strncmp(statfsbuf.f_fstypename, "ufs", MFSNAMELEN)) {
+		errx(1, "%s: must be on an FFS filesystem", boot);
+	}
 
 	if (fsync(fd) != 0)
 		err(1, "fsync: %s", boot);
