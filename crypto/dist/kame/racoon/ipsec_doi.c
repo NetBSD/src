@@ -1,4 +1,4 @@
-/*	$KAME: ipsec_doi.c,v 1.122 2000/12/15 13:43:55 sakane Exp $	*/
+/*	$KAME: ipsec_doi.c,v 1.124 2001/01/24 02:33:44 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -278,7 +278,8 @@ saok:
 		if (tsa.gssid != NULL) {
 			iph1->gi_r = vdup(tsa.gssid);
 			if (iph1->rmconf->proposal->gssid != NULL)
-				iph1->gi_i = iph1->rmconf->proposal->gssid;
+				iph1->gi_i =
+				    vdup(iph1->rmconf->proposal->gssid);
 			else
 				iph1->gi_i = gssapi_get_default_id(iph1);
 		}
@@ -3092,7 +3093,7 @@ ipsecdoi_setid1(iph1)
 			if (oakley_getmycert(iph1) < 0) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"failed to get own CERT.\n");
-				return NULL;
+				return 0;
 			}
 			ident = eay_get_x509asn1subjectname(&iph1->cert->cert);
 		}
@@ -3130,7 +3131,7 @@ ipsecdoi_setid1(iph1)
 		if (!ident) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"failed to get ID buffer.\n");
-			return NULL;
+			return 0;
 		}
 		memcpy(ident->v, p, ident->l);
 	    }
@@ -3138,7 +3139,7 @@ ipsecdoi_setid1(iph1)
 	if (!ident) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get ID buffer.\n");
-		return NULL;
+		return 0;
 	}
 
 	ret = vmalloc(sizeof(id_b) + ident->l);

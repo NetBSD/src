@@ -1,4 +1,4 @@
-/*	$KAME: handler.h,v 1.34 2000/12/12 16:59:37 thorpej Exp $	*/
+/*	$KAME: handler.h,v 1.35 2001/01/10 16:24:57 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -233,6 +233,12 @@ struct ph2handle {
 			 * socket based SA is required.  So we set a identifier
 			 * number to "seq", and sent kernel by pfkey.
 			 */
+	u_int8_t satype;		/* satype in PF_KEY */
+			/*
+			 * saved satype in the original PF_KEY request from
+			 * the kernel in order to reply a error.
+			 */
+
 	u_int8_t flags;			/* Flags for phase 2 */
 	u_int32_t msgid;		/* msgid for phase 2 */
 

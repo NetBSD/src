@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.y,v 1.80 2000/12/22 03:12:55 sakane Exp $	*/
+/*	$KAME: cfparse.y,v 1.83 2001/01/10 02:58:58 sakane Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -276,17 +276,20 @@ logging_statement
 log_level
 	:	HEXSTRING
 		{
+			/*
+			 * XXX ignore it because this specification
+			 * will be obsoleted.
+			 */
 			yywarn("see racoon.conf(5), such a log specification will be obsoleted.");
 			vfree($1);
-
-			/* command line option has a priority than it. */
-			if (!f_debugcmd)
-				loglevel++;
 		}
 	|	LOGLEV
 		{
-			/* command line option has a priority than it. */
-			if (!f_debugcmd)
+			/*
+			 * set the loglevel by configuration file only when
+			 * the command line did not specify any loglevel.
+			 */
+			if (loglevel <= LLV_BASE)
 				loglevel += $1;
 		}
 	;
@@ -330,7 +333,7 @@ listen_stmt
 			if (p->addr == NULL) {
 				yyerror("failed to copy sockaddr ");
 				delmyaddr(p);
-				return NULL;
+				return -1;
 			}
 
 			insmyaddr(p, &lcconf->myaddrs);
