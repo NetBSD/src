@@ -225,12 +225,12 @@ process again from scratch.
 
                 Run the "Extract" command once for each distribution
                 set you wish to install.  For instance, if you wish to
-                install the "kern12G" distribution set, followed by the
-                "base12G" distribution set, and finally the "etc12G"
+                install the "kern13" distribution set, followed by the
+                "base13" distribution set, and finally the "etc13"
                 distribution set, use the commands:
-			Extract kern12G
-			Extract base12G
-			Extract etc12G
+			Extract kern13
+			Extract base13
+			Extract etc13
 
 		For each extraction, it will ask you if the extraction
 		should be verbose.  If you reply affirmatively, it
@@ -285,9 +285,9 @@ process again from scratch.
 		hitting return at the prompt.
 
 		Use the "Extract" command to extract the distribution
-		set.  For instance, if you're extracting the "base12G"
+		set.  For instance, if you're extracting the "base13"
 		set, use the command:
-			Extract base12G
+			Extract base13
 		You will be asked if you wish the extraction to be
 		verbose.  If you reply affirmatively, the name of each
 		file being extracted will be printed.
@@ -406,8 +406,8 @@ Completing your installation:
         Once you have finished extracting all of the distribution sets
         that you wish to install, and are back at the "#" prompt, you
         are ready to configure your system.  The configuration utility
-        expects that you have installed the "kern12G", "base12G" and
-        "etc12G" distribution sets.  If you have not, you will not be
+        expects that you have installed the "kern13", "base13" and
+        "etc13" distribution sets.  If you have not, you will not be
         able to run it successfully (nor will you have a functional
         system, in any case).  To configure your newly-installed
         NetBSD system, run the command "Configure".  It will ask you

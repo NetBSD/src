@@ -5,8 +5,8 @@ allowed them to do so.  Because of the many changes to the system, it
 is difficult and impractical to upgrade by recompiling from the sources
 and installing.
 
-To do the upgrade, you must have the boot floppy image (boot-12G.fs)
-available.  You must also have at least the "base12G" and "kern12G"
+To do the upgrade, you must have the boot floppy image (boot-13.fs)
+available.  You must also have at least the "base13" and "kern13"
 binary distribution sets available, so that you can upgrade with it,
 using one of the upgrade methods described above.  Finally, you must
 have sufficient disk space available to install the new binaries.
@@ -89,13 +89,13 @@ To upgrade your system, follow the following instructions:
 
 	After the software has been transferred to the machine (or
 	mounted, in the case of upgrading via NFS), change into the
-	directory containing the "base12G" distribution set.  Once you
+	directory containing the "base13" distribution set.  Once you
 	are there, run the "Set_tmp_dir" command, and hit return at
 	the prompt to select the default answer for the temporary
 	directory's path name.  (It should be the path name of the
 	directory that you're in.)
 
-	Run the command "Extract base12G" to upgrade the base
+	Run the command "Extract base13" to upgrade the base
 	distribution.
 
 	Repeat the above two steps for all of the sets you wish to
@@ -103,7 +103,7 @@ To upgrade your system, follow the following instructions:
 	set, run "Set_tmp_dir" and accept the default path name, then
 	run the "Extract <setname>" command.)
 
-        NOTE: YOU MUST INSTALL THE "kern12G" DISTRIBUTION, AS IT
+        NOTE: YOU MUST INSTALL THE "kern13" DISTRIBUTION, AS IT
         CONTAINS THE NEW NetBSD _VER KERNEL! This step is different
         from previous netbsd upgrade procedures, which installed the
         kernel from a boot floppy using a special procedure.
@@ -134,7 +134,7 @@ Your system has now been upgraded to NetBSD _VER.
         with "fsck -c 2".  If you are unsure about the process, it's
         suggested that you read the fsck(8) manual page.
 
-	Second, you will probably want to get the etc12G distribution,
+	Second, you will probably want to get the etc13 distribution,
 	extract it, and compare its contents with those in your /etc/
 	directory.  You will probably want to replace some of your
 	system configuration files, or incorporate some of the changes
