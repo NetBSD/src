@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.9 2003/12/23 16:43:20 martin Exp $
+.\"	$NetBSD: whatis,v 1.10 2003/12/23 17:12:26 martin Exp $
 .
 .Nx \*V
 is the second major release for the \*M!
@@ -17,4 +17,7 @@ Support for SBUS based audio
 .It
 New generic cycle counter based microtime implementation greatly improves
 microtime(9) for \*M
+.It
+Get rid of all \*M-specific hacks, since the new GNU C/C++ compiler
+now included with \*Nx has all this bugs fixed
 .bullet)
