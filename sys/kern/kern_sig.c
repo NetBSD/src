@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.37 1994/12/13 21:52:37 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.38 1994/12/14 19:07:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1172,7 +1172,7 @@ coredump(p)
 	sprintf(name, "%s.core", p->p_comm);
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, name, p);
 	if (error = vn_open(&nd,
-	    O_CREAT | FWRITE, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, NULL))
+	    O_CREAT | FWRITE, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH))
 		return (error);
 	vp = nd.ni_vp;
 
