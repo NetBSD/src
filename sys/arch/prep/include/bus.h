@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2000/02/29 15:21:27 nonaka Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2000/03/27 16:45:41 nonaka Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -152,8 +152,11 @@ typedef	u_int32_t bus_space_tag_t;
  * Map a region of bus space.
  */
 
-#define bus_space_map(t, addr, size, flags, bshp)			      \
-    ((*(bshp) = (t) + (addr)), 0)
+int	prep_memio_map __P((bus_space_tag_t t, bus_addr_t addr,
+	    bus_size_t size, int flags, bus_space_handle_t *bshp));
+
+#define bus_space_map(t, a, s, f, hp)					\
+    prep_memio_map((t), (a), (s), (f), (hp))
 
 /*
  *	int bus_space_unmap __P((bus_space_tag_t t,
@@ -162,7 +165,11 @@ typedef	u_int32_t bus_space_tag_t;
  * Unmap a region of bus space.
  */
 
-#define bus_space_unmap(t, bsh, size)
+void	prep_memio_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
+	    bus_size_t size));
+
+#define bus_space_unmap(t, h, s)					\
+    prep_memio_unmap((t), (h), (s))
 
 /*
  *	int bus_space_subregion __P((bus_space_tag_t t,
@@ -172,19 +179,25 @@ typedef	u_int32_t bus_space_tag_t;
  * Get a new handle for a subregion of an already-mapped area of bus space.
  */
 
-#define	bus_space_subregion(t, bsh, offset, size, bshp)			      \
-    ((*(bshp) = (bsh) + (offset)), 0)
+#define bus_space_subregion(t, h, o, s, hp)				\
+    ((*(hp) = (h) + (o)), 0)
 
 /*
  *	int bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
  *	    bus_addr_t rend, bus_size_t size, bus_size_t align,
- *	    bus_size_t boundary, int flags, bus_addr_t *addrp,
+ *	    bus_size_t boundary, int flags, bus_addr_t *bpap,
  *	    bus_space_handle_t *bshp));
  *
  * Allocate a region of bus space.
  */
 
-#define	bus_space_alloc	!!! bus_space_alloc not implemented !!!
+int	prep_memio_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
+	    bus_addr_t rend, bus_size_t size, bus_size_t align,
+	    bus_size_t boundary, int flags, bus_addr_t *bpap,
+	    bus_space_handle_t *bshp));
+
+#define bus_space_alloc(t, rs, re, s, a, b, f, ap, hp)			\
+    prep_memio_alloc((t), (rs), (re), (s), (a), (b), (f), (ap), (hp))
 
 /*
  *	int bus_space_free __P((bus_space_tag_t t,
@@ -193,7 +206,11 @@ typedef	u_int32_t bus_space_tag_t;
  * Free a region of bus space.
  */
 
-#define	bus_space_free	!!! bus_space_free not implemented !!!
+void	prep_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
+	    bus_size_t size));
+
+#define	bus_space_free(t, h, s)						\
+    prep_memio_free((t), (h), (s))
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
