@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.196 2004/06/04 12:23:50 skrll Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.197 2004/06/08 19:35:30 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.196 2004/06/04 12:23:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.197 2004/06/08 19:35:30 he Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -112,7 +112,7 @@ sigacts_poolpage_free(struct pool *pp, void *v)
 }
 
 static struct pool_allocator sigactspool_allocator = {
-        sigacts_poolpage_alloc, sigacts_poolpage_free, (PAGE_SIZE)*2,
+        sigacts_poolpage_alloc, sigacts_poolpage_free,
 };
 
 POOL_INIT(siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
@@ -229,6 +229,8 @@ ksiginfo_exithook(struct proc *p, void *v)
 void
 signal_init(void)
 {
+
+	sigactspool_allocator.pa_pagesz = (PAGE_SIZE)*2;
 
 	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
 	    sizeof(struct sigacts) > PAGE_SIZE ?
