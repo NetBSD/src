@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2000/10/12 05:34:29 onoe Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 2002/01/16 16:10:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -158,7 +158,7 @@ boot(a0, a1, a2, a3, a4, a5)
 		if (fd != -1)
 			break;
 	}
-	if (fd == -1)
+	if (kernels[i] == NULL)
 		_rtt();
 
 	DPRINTF("entry = 0x%x\n", (int)marks[MARK_ENTRY]);
