@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.15 2000/02/09 14:42:34 enami Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.16 2000/02/09 15:40:24 enami Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -41,6 +41,7 @@ struct dp8390_softc {
 	int	is790;		/* NIC is a 790 */
 
 	u_int8_t cr_proto;	/* values always set in CR */
+	u_int8_t rcr_proto;	/* values always set in RCR */
 	u_int8_t dcr_reg;	/* override DCR iff LS is set */
 
 	int	mem_start;	/* offset of NIC memory */
@@ -125,6 +126,11 @@ struct dp8390_softc {
  * not via shared memory).
  */
 #define DP8390_FORCE_PIO		0x0010
+
+/*
+ * The chip is ASIX AX88190 and needs work around.
+ */
+#define	DP8390_DO_AX88190_WORKAROUND	0x0020
 
 /*
  * NIC register access macros
