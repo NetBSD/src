@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.299 2005/01/06 00:47:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.300 2005/01/10 01:17:25 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -310,7 +310,7 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV
 	${ETC_INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} \
 	    	/dev/null ${DESTDIR}${file}
 .endfor
-.for subdir in . defaults mtree namedb powerd rc.d root skel ssh
+.for subdir in . defaults mtree namedb pam.d powerd rc.d root skel ssh
 	${MAKEDIRTARGET} ${subdir} configinstall
 .endfor
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/mail configinstall
