@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2002/04/24 08:18:47 lukem Exp $
+# $NetBSD: Makefile,v 1.29 2002/06/02 18:37:45 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ FILES=	DAEMON LOGIN NETWORKING SERVERS \
 	dhclient dhcpd dhcrelay dmesg downinterfaces fsck \
 	ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec isdnd kdc \
 	ldconfig lkm1 lkm2 lkm3 local lpd \
-	mopd motd mountall mountcritlocal mountcritremote mountd \
+	mixerctl mopd motd mountall mountcritlocal mountcritremote mountd \
 	moused mrouted \
 	named ndbootd network newsyslog nfsd nfslocking ntpd ntpdate \
 	poffd postfix ppp pwcheck quota \
