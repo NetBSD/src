@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.24 1996/10/21 22:41:11 thorpej Exp $	*/
+/*	$NetBSD: isavar.h,v 1.25 1996/12/05 01:25:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Chris G. Demetriou
@@ -151,7 +151,6 @@ struct isa_softc {
  */
 
 /* ISA interrupt sharing types */
-void	isascan __P((struct device *parent, void *match));
 char	*isa_intr_typename __P((int type));
 
 #ifdef NEWCONFIG

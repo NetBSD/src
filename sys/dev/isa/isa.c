@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.90 1996/11/23 21:36:44 cgd Exp $	*/
+/*	$NetBSD: isa.c,v 1.91 1996/12/05 01:25:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -41,7 +41,11 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int isamatch __P((struct device *, void *, void *));
+#else
+int isamatch __P((struct device *, struct cfdata *, void *));
+#endif
 void isaattach __P((struct device *, struct device *, void *));
 int isaprint __P((void *, const char *));
 
@@ -50,15 +54,36 @@ struct cfattach isa_ca = {
 };
 
 struct cfdriver isa_cd = {
+#ifdef __BROKEN_INDIRECT_CONFIG
 	NULL, "isa", DV_DULL, 1
+#else
+	NULL, "isa", DV_DULL
+#endif
 };
 
+#ifdef __BROKEN_INDIRECT_CONFIG
+void	isascan __P((struct device *, void *));
+#else
+int	isasearch __P((struct device *, struct cfdata *, void *));
+#endif
+
 int
+#ifdef __BROKEN_INDIRECT_CONFIG
 isamatch(parent, match, aux)
+#else
+isamatch(parent, cf, aux)
+#endif
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *cf;
+#endif
+	void *aux;
 {
+#ifdef __BROKEN_INDIRECT_CONFIG
 	struct cfdata *cf = match;
+#endif
 	struct isabus_attach_args *iba = aux;
 
 	if (strcmp(iba->iba_busname, cf->cf_driver->cd_name))
@@ -92,7 +117,11 @@ isaattach(parent, self, aux)
 		panic("isaattach: can't map `delay port'");	/* XXX */
 
 	TAILQ_INIT(&sc->sc_subdevs);
+#ifdef __BROKEN_INDIRECT_CONFIG
 	config_scan(isascan, self);
+#else
+	config_search(isasearch, self, NULL);
+#endif
 }
 
 int
@@ -117,17 +146,27 @@ isaprint(aux, isa)
 	return (UNCONF);
 }
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 void
 isascan(parent, match)
 	struct device *parent;
 	void *match;
+#else
+int
+isasearch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+#endif
 {
 	struct isa_softc *sc = (struct isa_softc *)parent;
+#ifdef __BROKEN_INDIRECT_CONFIG
 	struct device *dev = match;
 	struct cfdata *cf = dev->dv_cfdata;
+#endif
 	struct isa_attach_args ia;
 
-#ifdef __i386__
+#if defined(__BROKEN_INDIRECT_CONFIG) && defined(__i386__)
 	if (cf->cf_fstate == FSTATE_STAR)
 		panic("clone devices not supported on ISA bus");
 #endif
@@ -143,10 +182,14 @@ isascan(parent, match)
 	ia.ia_drq = cf->cf_loc[5];
 	ia.ia_delaybah = sc->sc_delaybah;
 
-	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0)
-		config_attach(parent, dev, &ia, isaprint);
+	if ((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0)
+		config_attach(parent, cf, &ia, isaprint);
+#ifdef __BROKEN_INDIRECT_CONFIG
 	else
 		free(dev, M_DEVBUF);
+#else
+	return (0);
+#endif
 }
 
 char *

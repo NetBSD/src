@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.15 1996/10/21 22:56:40 thorpej Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.16 1996/12/05 01:25:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -362,7 +362,11 @@ struct cfdriver fpacd = {
 static int
 pdq_pci_match(
     struct device *parent,
+#ifdef __BROKEN_INDIRECT_CONFIG
     void *match,
+#else
+    struct cfdata *match,
+#endif
     void *aux)
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;
