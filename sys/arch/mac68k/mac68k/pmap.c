@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 1999/07/08 18:05:29 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62 1999/07/08 21:10:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1371,7 +1371,7 @@ pmap_unwire(pmap, va)
  *	Extract the physical address associated with the given
  *	pmap/virtual address pair.
  */
-paddr_t
+boolean_t
 pmap_extract(pmap, va, pap)
 	pmap_t	pmap;
 	vaddr_t va;
@@ -1384,7 +1384,7 @@ pmap_extract(pmap, va, pap)
 	PMAP_DPRINTF(PDB_FOLLOW,
 	    ("pmap_extract(%p, %lx) -> ", pmap, va));
 
-	if (pmap && pamp_ste_v(pmap, va)) {
+	if (pmap && pmap_ste_v(pmap, va)) {
 		pte = *(u_int *)pmap_pte(pmap, va);
 		if (pte) {
 			pa = (pte & PG_FRAME) | (va & ~PG_FRAME);
