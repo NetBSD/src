@@ -190,7 +190,7 @@ s_client -verify 10 -CApath . -reconnect
 	verify return:1
 	drop the connection and reconnect with the same session id
 	CIPHER is CBC3-DES-MD5
-This has done a full connection and then re-estabished it with the
+This has done a full connection and then re-established it with the
 same session id but a new socket.  No RSA stuff occures on the second
 connection.  Note that we said we would prefer to use CBC3-DES-MD5
 encryption and so, since the server supports it, we are.
@@ -4362,7 +4362,7 @@ follows:
 	2nd line with 76 chars
 	...
 	(n-2)th line with 76 chars
-	(n-1)th line contains a multiple of 4 chars less then 76 (possible 
+	(n-1)th line contains a multiple of 4 chars less than 76 (possible 
 empty)
 	(n)th line has zero or 4 chars (then with 1 or 2 equal signs - the 
 		original text's lenght wasn'T a multiple of 3) 
@@ -4647,7 +4647,7 @@ SSLeay supports it with 0.8.0). Furthermore MSIE is told to only supports a
 kind of automatic selection of certs (I personally wasn't able to test it 
 myself). But there is a requirement that the issuer of the server cert and 
 the issuer of the client cert needs to be the same (according to a developer 
-from MS). Which means: you need may more then one cert to talk to all 
+from MS). Which means: you need may more than one cert to talk to all 
 servers...
 
 I'm sure we will get a bit more experience after ApacheSSL is available for 
