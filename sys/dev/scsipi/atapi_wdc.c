@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.36 2000/06/12 21:10:40 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.37 2000/06/28 16:39:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -46,8 +46,6 @@
 #include <sys/device.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
-
-#include <vm/vm.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
