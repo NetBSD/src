@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.45 1999/07/01 08:12:47 itojun Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.46 1999/10/27 11:54:56 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -244,22 +244,31 @@ sys_accept(p, v, retval)
 	fp->f_data = (caddr_t)so;
 	FILE_UNUSE(fp, p);
 	nam = m_get(M_WAIT, MT_SONAME);
-	(void) soaccept(so, nam);
+	if ((error = soaccept(so, nam)))
+		goto freeit;
 	if (SCARG(uap, name)) {
 		if (namelen > nam->m_len)
 			namelen = nam->m_len;
 		/* SHOULD COPY OUT A CHAIN HERE */
 		if ((error = copyout(mtod(nam, caddr_t),
-		    (caddr_t)SCARG(uap, name), namelen)) == 0)
-			error = copyout((caddr_t)&namelen,
-			    (caddr_t)SCARG(uap, anamelen),
-			    sizeof(*SCARG(uap, anamelen)));
-		if (error != 0)
-			(void) closef(fp, p);
+				     (caddr_t)SCARG(uap, name),
+				     namelen)))
+			goto freeit;
+		if ((error = copyout((caddr_t)&namelen,
+				     (caddr_t)SCARG(uap, anamelen),
+				     sizeof(*SCARG(uap, anamelen)))))
+			goto freeit;
 	}
 	m_freem(nam);
 	splx(s);
 	return (error);
+
+ freeit:
+	ffree(fp);
+	m_freem(nam);
+	splx(s);
+	return (error);
+
 }
 
 /* ARGSUSED */
