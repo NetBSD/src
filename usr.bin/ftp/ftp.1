@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.63 2000/05/01 10:35:18 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.64 2000/05/28 07:53:30 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd May 1, 2000
+.Dd May 28, 2000
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -401,8 +401,6 @@ chooses to include; for example, most
 systems will produce
 output from the command
 .Ql ls \-l .
-(See also
-.Ic ls . )
 If
 .Ar remote-directory
 is left unspecified, the current working directory is used.
@@ -574,22 +572,8 @@ option.
 .It Ic lpwd
 Print the working directory on the local machine.
 .It Ic \&ls Op Ar remote-directory Op Ar local-file
-Print a list of the files in a
-directory on the remote machine.
-If
-.Ar remote-directory
-is left unspecified, the current working directory is used.
-If interactive prompting is on,
-.Nm
-will prompt the user to verify that the last argument is indeed the
-target local file for receiving
-.Ic ls
-output.
-If no local file is specified, or if
-.Ar local-file
-is
-.Fl  ,
-the output is sent to the terminal.
+A synonym for
+.Ic dir .
 .It Ic macdef Ar macro-name
 Define a macro.
 Subsequent lines are stored as the macro
@@ -861,14 +845,14 @@ command by RFC 1123, some do not.)
 Perform
 .Ic dir
 .Op Ar remote-directory ,
-and display it with the program specified by the
+and display the result with the program specified by the
 .Ic "set pager"
 option.
 .It Ic pls Op Ar remote-directory
 Perform
 .Ic ls
 .Op Ar remote-directory ,
-and display it with the program specified by the
+and display the result with the program specified by the
 .Ic "set pager"
 option.
 .It Ic preserve
