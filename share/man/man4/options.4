@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.10 1997/02/26 03:19:20 jonathan Exp $
+.\"	$NetBSD: options.4,v 1.11 1997/02/26 07:07:15 leo Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -440,6 +440,13 @@ requiring a suid root program to do it.
 This option changes part of the VM/pmap interface, to allow for
 non-contiguous memory.  On some ports it is not an option.  These
 ports typically only use one of the interfaces.
+.It Cd options MEMORY_DISK_HOOKS
+This option allows for some machine dependent functions to be called when
+the ramdisk driver is configured. This can result in automatically loading
+a ramdisk from floppy on open (among other things).
+.It Cd options MEMORY_DISK_IS_ROOT
+Forces the ramdisk to be the root device. This can only be overridden when
+the kernel is booted in the 'ask-for-root' mode.
 .It Cd options NTP
 Turns on in-kernel precision timekeeping support used by software
 implementing
