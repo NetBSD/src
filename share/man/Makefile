@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2003/10/14 14:59:03 wiz Exp $
+#	$NetBSD: Makefile,v 1.28 2004/02/09 06:52:34 lukem Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/16/94
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ SUBDIR=	man0 man1 man2 man3 man4 man5 man6 man7 man8 man9
 makedb:
 	${TOOL_MAKEWHATIS} ${DESTDIR}/usr/share/man
 .if ${MKUNPRIVED} != "no"
-	echo "./usr/share/man/whatis.db type=file mode=0444 uname=root gname=wheel" \
+	echo "./usr/share/man/whatis.db type=file mode=0444 uname=${BINOWN} gname=${BINGRP}" \
 	    | ${METALOG.add}
 .endif
 .else
