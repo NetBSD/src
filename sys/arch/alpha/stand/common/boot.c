@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.11 1998/10/15 01:00:07 ross Exp $ */
+/* $NetBSD: boot.c,v 1.12 1999/03/27 09:01:28 ross Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,6 +121,7 @@ main(fd)
 		    namep++)
 			win = (loadfile(name = *namep, &entry) == 0);
 
+	close_primary_device(fd);
 	printf("\n");
 	if (win) {
 		/*
