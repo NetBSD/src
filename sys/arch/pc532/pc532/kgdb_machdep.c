@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.6 1998/04/21 20:12:17 matthias Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.7 1998/09/02 19:17:14 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -46,10 +46,10 @@
  */
 int
 kgdb_acc(va, len)
-	vm_offset_t va;
+	vaddr_t va;
 	size_t len;
 {
-	vm_offset_t last_va;
+	vaddr_t last_va;
 	pt_entry_t *pte;
 
 	last_va = va + len;

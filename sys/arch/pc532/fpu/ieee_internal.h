@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_internal.h,v 1.3 1996/10/13 03:30:26 christos Exp $	*/
+/*	$NetBSD: ieee_internal.h,v 1.4 1998/09/02 19:17:13 matthias Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -122,7 +122,7 @@ struct operand {
   enum op_class class;
   struct {
     enum op_where_tag tag;
-    vm_offset_t addr;
+    vaddr_t addr;
   } where;
   char size;
   union t_conv data;
