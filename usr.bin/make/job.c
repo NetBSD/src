@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.74 2002/11/26 05:30:01 enami Exp $	*/
+/*	$NetBSD: job.c,v 1.75 2002/12/09 01:23:53 gson Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.74 2002/11/26 05:30:01 enami Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.75 2002/12/09 01:23:53 gson Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.74 2002/11/26 05:30:01 enami Exp $");
+__RCSID("$NetBSD: job.c,v 1.75 2002/12/09 01:23:53 gson Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1371,6 +1371,7 @@ JobExec(Job *job, char **argv)
 	JobSigReset();
 
 	/* Now unblock signals */
+	sigemptyset(&mask);
 	JobSigUnlock(&mask);
 
 	/*
