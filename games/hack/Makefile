@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.10 (Berkeley) 12/8/90
-#	$Id: Makefile,v 1.12 1994/01/04 21:41:07 pk Exp $
+#	$Id: Makefile,v 1.13 1994/02/10 02:31:35 cgd Exp $
 
 PROG=	hack
 CFLAGS+=-I.
@@ -30,8 +30,6 @@ makedefs: makedefs.c
 	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c ${LDADD}
 
 beforeinstall: 
-	install -d -m 755 -o games -g games ${DESTDIR}/var/games/hackdir
-	install -d -m 700 -o games -g games ${DESTDIR}/var/games/hackdir/save
 	install -c -o games -g games -m 600 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/perm
 	install -c -o games -g games -m 600 /dev/null \
