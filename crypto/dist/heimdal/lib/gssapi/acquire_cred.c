@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: acquire_cred.c,v 1.3 2000/11/20 14:08:12 fvdl Exp $");
+RCSID("$Id: acquire_cred.c,v 1.4 2001/02/11 14:13:11 assar Exp $");
 
 OM_uint32 gss_acquire_cred
            (OM_uint32 * minor_status,

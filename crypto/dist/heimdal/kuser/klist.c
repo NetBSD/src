@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "kuser_locl.h"
 #include "rtbl.h"
 
-RCSID("$Id: klist.c,v 1.2 2000/12/19 21:31:12 nathanw Exp $");
+RCSID("$Id: klist.c,v 1.3 2001/02/11 14:13:10 assar Exp $");
 
 static char*
 printable_time(time_t t)
@@ -54,10 +54,11 @@ printable_time_long(time_t t)
     return s;
 }
 
-#define COL_ISSUED	"  Issued"
-#define COL_EXPIRES	"  Expires"
-#define COL_FLAGS	"Flags"
-#define COL_PRINCIPAL	"  Principal"
+#define COL_ISSUED		"  Issued"
+#define COL_EXPIRES		"  Expires"
+#define COL_FLAGS		"Flags"
+#define COL_PRINCIPAL		"  Principal"
+#define COL_PRINCIPAL_KVNO	"  Principal (kvno)"
 
 static void
 print_cred(krb5_context context, krb5_creds *cred, rtbl_t ct, int do_flags)
@@ -221,7 +222,7 @@ print_tickets (krb5_context context,
     krb5_cc_cursor cursor;
     krb5_creds creds;
 
-    rtbl_t ct;
+    rtbl_t ct = NULL;
 
     ret = krb5_unparse_name (context, principal, &str);
     if (ret)
@@ -412,13 +413,18 @@ display_v4_tickets (int do_verbose)
     ct = rtbl_create();
     rtbl_add_column(ct, COL_ISSUED, 0);
     rtbl_add_column(ct, COL_EXPIRES, 0);
-    rtbl_add_column(ct, COL_PRINCIPAL, 0);
+    if (do_verbose)
+	rtbl_add_column(ct, COL_PRINCIPAL_KVNO, 0);
+    else
+	rtbl_add_column(ct, COL_PRINCIPAL, 0);
     rtbl_set_prefix(ct, "  ");
     rtbl_set_column_prefix(ct, COL_ISSUED, "");
 
     while ((ret = tf_get_cred(&cred)) == KSUCCESS) {
 	struct timeval tv;
 	char buf1[20], buf2[20];
+	const char *pp;
+
 	found++;
 
 	strlcpy(buf1,
@@ -436,10 +442,18 @@ display_v4_tickets (int do_verbose)
 		    sizeof(buf2));
 	rtbl_add_column_entry(ct, COL_ISSUED, buf1);
 	rtbl_add_column_entry(ct, COL_EXPIRES, buf2);
-	rtbl_add_column_entry(ct, COL_PRINCIPAL, 
-			     krb_unparse_name_long(cred.service,
-						   cred.instance,
-						   cred.realm));
+	pp = krb_unparse_name_long(cred.service,
+				   cred.instance,
+				   cred.realm);
+	if (do_verbose) {
+	    char *tmp;
+
+	    asprintf(&tmp, "%s (%d)", pp, cred.kvno);
+	    rtbl_add_column_entry(ct, COL_PRINCIPAL_KVNO, tmp);
+	    free(tmp);
+	} else {
+	    rtbl_add_column_entry(ct, COL_PRINCIPAL, pp);
+	}
     }
     rtbl_format(ct, stdout);
     rtbl_destroy(ct);
@@ -526,7 +540,7 @@ display_v5_ccache (const char *cred_cache, int do_test, int do_verbose,
 
     ret = krb5_init_context (&context);
     if (ret)
-	errx(1, "krb5_init_context failed: %u", ret);
+	errx (1, "krb5_init_context failed: %d", ret);
 
     if(cred_cache) {
 	ret = krb5_cc_resolve(context, cred_cache, &ccache);
