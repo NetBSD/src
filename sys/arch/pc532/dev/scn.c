@@ -1,6 +1,6 @@
-/*	$NetBSD: scn.c,v 1.18 1995/06/09 04:36:30 phil Exp $ */
+/*	$NetBSD: scn.c,v 1.19 1995/08/25 07:30:42 phil Exp $ */
 
-/*-
+/*
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -400,7 +400,7 @@ scnattach(parent, self, aux)
 
   /* Set up the interrupts. */
   rs->uart->imr_int_bits
-     |= (/*IMR_RX_INT | IMR_TX_INT |*/ IMR_BRK_INT) << (4*rs->a_or_b) | IMR_IP_INT;
+     |= (/*IMR_RX_INT | IMR_TX_INT |*/ unit?IMR_BRK_INT:0) << (4*rs->a_or_b) | IMR_IP_INT;
   WR_ADR (u_char, rs->uart->imr_port, rs->uart->imr_int_bits);
 
   splx(x);
@@ -640,7 +640,7 @@ scnintr(int line1)
   u_char   rs_stat;
   u_char   rs_ipcr;
   u_char   ch;
-  
+
   while (rs_work) {
 	/* Loop to pick up ALL pending interrupts for device.
 	 */
@@ -663,11 +663,22 @@ scnintr(int line1)
 		rs0->lstatus = RD_ADR(u_char, rs0->stat_port);
 		if (rs0->lstatus & SR_BREAK) {
 		  	++rs0->break_interrupts;
+			RD_ADR(u_char, rs0->recv_port);	/* Toss zero character. */
+			rs_stat &= ~IMR_RX_INT;
 		}
-		RD_ADR(u_char, rs0->recv_port);	/* Toss zero character. */
-		rs_stat &= ~IMR_RX_INT;
 		WR_ADR (u_char, rs0->cmd_port, CMD_RESET_BRK);
 		rs_work = TRUE;
+		if (line1 == 1 && (rs0->lstatus & SR_BREAK)) {
+			char c;
+			printf("\r\nDo you wont a dump (y/n)? ");
+			do
+				c = cngetc();
+			while (c != 'y' && c != 'n');
+			printf("%c\r\n", c);
+			if (c == 'y') {
+				panic("Panic Button");
+			}
+		}
 	}
 	if (rs_stat & IMR_RX_INT && (tp0 != NULL)) {
 		ch = RD_ADR(u_char, rs0->recv_port);
@@ -691,10 +702,10 @@ scnintr(int line1)
 		rs1->lstatus = RD_ADR(u_char, rs1->stat_port);
 		if (rs1->lstatus & SR_BREAK) {
 		  	++rs1->break_interrupts;
+			RD_ADR(u_char, rs1->recv_port);	/* Toss zero character. */
+			rs_stat &= ~IMR_RXB_INT;
 		}
-		RD_ADR(u_char, rs1->recv_port);	/* Toss zero character. */
 		WR_ADR (u_char, rs1->cmd_port, CMD_RESET_BRK);
-		rs_stat &= ~IMR_RXB_INT;
 		rs_work = TRUE;
 	}
 	if (rs_stat & IMR_RXB_INT && (tp1 != NULL)) {
@@ -1039,7 +1050,8 @@ char
 scncngetc(dev_t dev)
 {
    char c;
-   int x=splhigh();
+   int x = spltty();
+   WR_ADR (u_char, SCN_FIRST_MAP_ADR + 14, (RTS_BIT | DTR_BIT));
    while (0 == (RD_ADR (u_char, SCN_CON_MAP_STAT) & SR_RX_RDY));
    c = RD_ADR(u_char, SCN_CON_MAP_DATA);
    splx(x);
@@ -1064,7 +1076,7 @@ int ___lines = 0;
 
 scncnputc (dev_t dev, char c)
 {
-  int x = splhigh();
+  int x = spltty();
 
   if (c == '\n') scncnputc(dev,'\r');
   if (_mapped) {
