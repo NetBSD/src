@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.h,v 1.3 2000/04/02 22:03:29 christos Exp $	*/
+/*	$NetBSD: getopt.h,v 1.4 2000/07/07 10:43:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,10 +35,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _GETOPT_H_
 #define _GETOPT_H_
 
+#include <sys/cdefs.h>
 #include <unistd.h>
+
 /*
  * Gnu like getopt_long() and BSD4.4 getsubopt()/optreset extensions
  */
