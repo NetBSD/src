@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.25 1999/11/04 00:24:33 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.26 1999/11/12 18:14:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -515,6 +515,9 @@ static void tl_shutdown(v)
 	/* stop statistics reading loop, read stats */ 
 	untimeout(tl_ticks, sc);
 	tl_read_stats(sc);
+
+	/* Down the MII. */
+	mii_down(&sc->tl_mii);
 
 	/* deallocate memory allocations */
 	for (i=0; i< TL_NBUF; i++) {
