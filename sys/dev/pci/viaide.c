@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.10 2004/02/20 16:36:29 fvdl Exp $	*/
+/*	$NetBSD: viaide.c,v 1.11 2004/03/10 22:16:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -265,9 +265,11 @@ unknown:
 		break;
 	case PCI_VENDOR_AMD:
 		switch (sc->sc_pp->ide_product) {
+		case PCI_PRODUCT_AMD_PBC8111_IDE:
+			sc->sc_wdcdev.UDMA_cap = 6;
+			break;
 		case PCI_PRODUCT_AMD_PBC766_IDE:
 		case PCI_PRODUCT_AMD_PBC768_IDE:
-		case PCI_PRODUCT_AMD_PBC8111_IDE:
 			sc->sc_wdcdev.UDMA_cap = 5;
 			break;
 		default:
