@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.15 2001/03/28 14:14:57 drochner Exp $
+$NetBSD: miidevs,v 1.16 2001/04/09 09:39:24 drochner Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,6 +125,8 @@ model ICS 1890			0x0002 ICS1890 10/100 media interface
 /* Intel PHYs */
 model xxINTEL I82553		0x0000 i82553 10/100 media interface
 model yyINTEL I82555		0x0015 i82555 10/100 media interface
+model yyINTEL I82562EH		0x0017 i82562EH HomePNA interface
+model yyINTEL I82562EM		0x0032 i82562EM 10/100 media interface
 model yyINTEL I82553		0x0035 i82553 10/100 media interface
 
 /* Level 1 PHYs */
