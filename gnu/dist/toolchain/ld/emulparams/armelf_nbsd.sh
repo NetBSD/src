@@ -1,8 +1,8 @@
 ARCH=arm
 SCRIPT_NAME=elf
-OUTPUT_FORMAT="elf32-littlearm"
-BIG_OUTPUT_FORMAT="elf32-bigarm"
-LITTLE_OUTPUT_FORMAT="elf32-littlearm"
+OUTPUT_FORMAT="elf32-littlearm-nbsd"
+BIG_OUTPUT_FORMAT="elf32-bigarm-nbsd"
+LITTLE_OUTPUT_FORMAT="elf32-littlearm-nbsd"
 MAXPAGESIZE=0x8000
 TEMPLATE_NAME=elf32
 EXTRA_EM_FILE=armelf
