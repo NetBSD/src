@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.12 2001/09/22 01:05:04 eeh Exp $ */
+/*	$NetBSD: fpu.c,v 1.13 2001/09/22 19:58:28 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -319,7 +319,8 @@ fpu_execute(fe, instr)
 	rd = (rd & ~mask) | ((rd & mask & 0x1) << 5);
 #ifdef DIAGNOSTIC
 	if ((rs1 | rs2 | rd) & mask)
-		return (BADREG);
+		/* This may be an FPU insn but it is illegal. */
+		return (NOTFPU);
 #endif
 	fs = fe->fe_fpstate;
 	fe->fe_fsr = fs->fs_fsr & ~FSR_CX;
