@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd-bpf.c,v 1.3 2001/05/23 02:59:36 fredette Exp $	*/
+/*	$NetBSD: ndbootd-bpf.c,v 1.4 2002/04/09 02:39:15 thorpej Exp $	*/
 
 /* ndbootd-bpf.c - the Sun Network Disk (nd) daemon BPF component: */
 
@@ -44,7 +44,12 @@
  *
  */
 
+#include <sys/cdefs.h>
+#if o
 static const char _ndbootd_bpf_c_rcsid[] = "<<Id: ndbootd-bpf.c,v 1.4 2001/05/23 02:35:49 fredette Exp >>";
+#else
+__RCSID("$NetBSD: ndbootd-bpf.c,v 1.4 2002/04/09 02:39:15 thorpej Exp $");
+#endif
 
 /* includes: */
 #include <net/bpf.h>

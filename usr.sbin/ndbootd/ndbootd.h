@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd.h,v 1.2 2001/05/22 14:41:59 fredette Exp $	*/
+/*	$NetBSD: ndbootd.h,v 1.3 2002/04/09 02:39:14 thorpej Exp $	*/
 
 /* ndbootd.h - header file for the Sun Network Disk (nd) daemon: */
 
@@ -43,7 +43,9 @@
 #ifndef _NDBOOTD_H
 #define _NDBOOTD_H
 
+#if 0
 static const char _ndbootd_h_rcsid[] = "<<Id: ndbootd.h,v 1.3 2001/05/22 13:13:20 fredette Exp >>";
+#endif
 
 /* includes: */
 #ifdef HAVE_CONFIG_H
