@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.1 2001/02/11 00:39:37 eeh Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.2 2001/05/08 19:30:05 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ svr4_32_getmcontext(p, mc, flags)
 	/*
 	 * Get the general purpose registers
 	 */
-	r[SVR4_SPARC_PSR] = tf->tf_tstate;
+	r[SVR4_SPARC_PSR] = TSTATECCR_TO_PSR(tf->tf_tstate);
 	r[SVR4_SPARC_PC] = tf->tf_pc;
 	r[SVR4_SPARC_nPC] = tf->tf_npc;
 	r[SVR4_SPARC_Y] = tf->tf_y;
@@ -270,8 +270,8 @@ svr4_32_setmcontext(p, mc, flags)
 		}
 
 		/* take only psr ICC field */
-		tf->tf_tstate = (tf->tf_tstate & ~PSR_ICC) |
-		    (r[SVR4_SPARC_PSR] & PSR_ICC);
+		tf->tf_tstate = (tf->tf_tstate & ~TSTATE_CCR) |
+		    PSRCC_TO_TSTATE(r[SVR4_SPARC_PSR]);
 		tf->tf_pc = r[SVR4_SPARC_PC];
 		tf->tf_npc = r[SVR4_SPARC_nPC];
 		tf->tf_y = r[SVR4_SPARC_Y];
