@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.55 2001/09/10 21:19:24 chris Exp $ */
+/*	$NetBSD: iommu.c,v 1.56 2001/09/26 15:05:49 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -559,7 +559,7 @@ iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
 	bus_size_t *sgsizep;
 {
 	bus_size_t sgsize;
-	u_long align, voff;
+	u_long align, voff, dvaddr;
 	int s, error;
 	int pagesz = PAGE_SIZE;
 
@@ -583,9 +583,9 @@ iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
 					map->_dm_boundary,
 					(flags & BUS_DMA_NOWAIT) == 0
 						? EX_WAITOK : EX_NOWAIT,
-					(u_long *)dvap);
+					&dvaddr);
 	splx(s);
-
+	*dvap = (bus_addr_t)dvaddr;
 	*sgsizep = sgsize;
 	return (error);
 }
