@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.8 1996/06/03 21:36:14 mark Exp $ */
+/* $NetBSD: conf.c,v 1.9 1996/08/29 22:05:50 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -314,6 +314,16 @@ int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
 int mem_no = 0; 	/* major device number of memory special file */
 
+/*
+ * Swapdev is a fake device implemented
+ * in sw.c used only internally to get to swstrategy.
+ * It cannot be provided to the users, because the
+ * swstrategy routine munches the b_dev and b_blkno entries
+ * before calling the appropriate driver.  This would horribly
+ * confuse, e.g. the hashing routines. Instead, /dev/drum is
+ * provided as a character (raw) device.
+ */
+dev_t	swapdev = makedev(1, 0);
 
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
