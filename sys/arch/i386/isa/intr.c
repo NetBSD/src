@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.11 1993/10/31 20:11:31 mycroft Exp $
+ *	$Id: intr.c,v 1.12 1993/10/31 20:21:11 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -194,7 +194,7 @@ isa_defaultirq()
 	outb(IO_ICU1+1, 1);		/* 8086 mode */
 #endif
 	outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU1, 0x6b);		/* special mask mode, IRR on read */ 
+	outb(IO_ICU1, 0x68);		/* special mask mode */ 
 #ifdef REORDER_IRQ
 	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
 #endif
@@ -208,7 +208,7 @@ isa_defaultirq()
 	outb(IO_ICU2+1, 1);		/* 8086 mode */
 #endif
 	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU1, 0x6b);		/* special mask mode, IRR on read */ 
+	outb(IO_ICU1, 0x68);		/* special mask mode */ 
 
 	/* enable interrupts, but all masked */
 	splhigh();
@@ -225,11 +225,11 @@ isa_flushintrs()
 	extern unsigned ipending;
 
 	/* clear any pending interrupts */
-	for (i = 0; i < 8; i++) {
-		outb(IO_ICU1, ICU_EOI);
-		outb(IO_ICU2, ICU_EOI);
-	}
 	disable_intr();
+	for (i = 0; i < 8; i++) {
+		outb(IO_ICU1 + 1, ICU_EOI);
+		outb(IO_ICU2 + 1, ICU_EOI);
+	}
 	intr_enable(ipending);
 	ipending = 0;
 	enable_intr();
@@ -256,8 +256,6 @@ isa_discoverintr(force, aux)
 		outb(IO_ICU1, 0x0a);
 		outb(IO_ICU2, 0x0a);
 		irr = inb(IO_ICU1) | (inb(IO_ICU2) << 8) | ipending;
-		outb(IO_ICU1, 0x0b);
-		outb(IO_ICU2, 0x0b);
 		enable_intr();
 		irr &= ~(IRQ_SLAVE | IRQ0);
 		if (irr)
