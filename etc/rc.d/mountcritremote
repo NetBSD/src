@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mountcritremote,v 1.6 2002/03/27 08:53:42 lukem Exp $
+# $NetBSD: mountcritremote,v 1.7 2002/04/29 12:29:53 lukem Exp $
 #
 
 # PROVIDE: mountcritremote
@@ -14,15 +14,6 @@ stop_cmd=":"
 
 mountcritremote_start()
 {
-	#	If obsolete $critical_filesystems is set,
-	#	use that instead of $critical_filesystems_remote.
-	#
-	if [ -n "$critical_filesystems" -o \
-	    "${critical_filesystems-unset}" != "unset" ]; then
-		warn 'Overriding $critical_filesystems_remote with obsolete $critical_filesystems'
-		critical_filesystems_remote=$critical_filesystems
-	fi
-
 	#	Mount critical filesystems that may be `remote'.
 	#	(as specified in $critical_filesystems_remote)
 	#	This usually includes /usr.
