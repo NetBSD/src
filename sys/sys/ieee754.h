@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.1 2003/10/26 20:48:17 kleink Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.2 2003/10/26 21:46:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,3 +136,16 @@ struct ieee_double {
  */
 #define	SNG_EXP_BIAS	127
 #define	DBL_EXP_BIAS	1023
+
+/*
+ * Convenience data structures.
+ */
+union ieee_single_u {
+	float			sngu_f;
+	struct ieee_single	sngu_flt;
+};
+
+union ieee_double_u {
+	double			dblu_d;
+	struct ieee_double	dblu_dbl;
+};
