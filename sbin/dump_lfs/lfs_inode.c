@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.2.10.1 2001/07/02 17:48:11 perseant Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.2.10.2 2001/07/10 02:08:33 perseant Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.2.10.1 2001/07/02 17:48:11 perseant Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.2.10.2 2001/07/10 02:08:33 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,19 +82,58 @@ struct lfs *sblock;
 int
 fs_read_sblock(char *sblock_buf)
 {
+	char tbuf[LFS_SBPAD];
 	int needswap = 0;
+	off_t sboff = LFS_LABELPAD;
 
 	sblock = (struct lfs *)sblock_buf;
-	rawread(LFS_LABELPAD, (char *) sblock, LFS_SBPAD);
-	if (sblock->lfs_magic != LFS_MAGIC) {
+	while(1) {
+		rawread(sboff, (char *) sblock, LFS_SBPAD);
+		if (sblock->lfs_magic != LFS_MAGIC) {
 #ifdef notyet
-		if (sblock->lfs_magic == bswap32(LFS_MAGIC)) {
-			lfs_sb_swap(sblock, sblock, 0);
-			needswap = 1;
-		} else
+			if (sblock->lfs_magic == bswap32(LFS_MAGIC)) {
+				lfs_sb_swap(sblock, sblock, 0);
+				needswap = 1;
+			} else
 #endif
-			quit("bad sblock magic number\n");
+				quit("bad sblock magic number\n");
+		}
+		if (fsbtob(sblock, sblock->lfs_sboffs[0]) != sboff) {
+			sboff = fsbtob(sblock, sblock->lfs_sboffs[0]);
+			continue;
+		}
+		break;
 	}
+
+	/*
+	 * Read the secondary and take the older of the two
+	 */
+	rawread(fsbtob(sblock, sblock->lfs_sboffs[1]), tbuf, LFS_SBPAD);
+#ifdef notyet
+	if (needswap)
+		lfs_sb_swap(tbuf, tbuf, 0);
+#endif
+	if (((struct lfs *)tbuf)->lfs_magic != LFS_MAGIC) {
+		msg("Warning: secondary superblock at 0x%x bad magic\n",
+			fsbtodb(sblock, sblock->lfs_sboffs[1]));
+	} else {
+		if (sblock->lfs_version > 1) {
+			if (((struct lfs *)tbuf)->lfs_serial < sblock->lfs_serial) {
+				memcpy(sblock, tbuf, LFS_SBPAD);
+				sboff = fsbtob(sblock, sblock->lfs_sboffs[1]);
+			}
+		} else {
+			if (((struct lfs *)tbuf)->lfs_otstamp < sblock->lfs_otstamp) {
+				memcpy(sblock, tbuf, LFS_SBPAD);
+				sboff = fsbtob(sblock, sblock->lfs_sboffs[1]);
+			}
+		}
+	}
+	if (sboff != LFS_SBPAD) {
+		msg("Using superblock at alternate location 0x%lx\n",
+		    (unsigned long)(btodb(sboff)));
+	}
+
 	return needswap;
 }
 
