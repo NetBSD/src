@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_meter.c,v 1.16 1994/08/30 03:07:19 mycroft Exp $	*/
+/*	$NetBSD: vm_meter.c,v 1.17 1995/07/08 03:12:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -83,7 +83,7 @@ loadav(avg)
 	for (nrun = 0, p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		switch (p->p_stat) {
 		case SSLEEP:
-			if (p->p_priority > PZERO || p->p_slptime != 0)
+			if (p->p_priority > PZERO || p->p_slptime > 1)
 				continue;
 			/* fall through */
 		case SRUN:
