@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.69 1999/01/01 19:02:54 msaitoh Exp $
+.\"	$NetBSD: options.4,v 1.70 1999/02/12 17:44:28 cjs Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -861,11 +861,16 @@ such as
 .Tn CLNP
 or
 .Tn XNS ) .
-.It Cd options IPFORWARDING
-Enables IP routing behavior.
-With this option enabled, the machine
-will forward IP datagrams between its interfaces that are destined for
-other machines.
+.It Cd options IPFORWARDING=value
+If
+.Em value
+is 1 this enables IP routing behavior. If
+.Em value
+is 0 (the default), it disables it. The
+.Em GATEWAY
+option sets this to 1 automatically.
+With this option enabled, the machine will forward IP datagrams destined
+for other machines between its interfaces.
 Note that even without this option, the kernel will
 still forward some packets (such as source routed packets) -- removing
 .Em GATEWAY
