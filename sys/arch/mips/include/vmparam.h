@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.17 1999/12/04 21:20:49 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18 2000/01/09 20:08:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -146,7 +146,7 @@
 
 /* VM_PHYSSEG_MAX defined by platform-dependent code. */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define	VM_PHYSSEG_NOADD			/* no more after vm_mem_init */
+#define	VM_PHYSSEG_NOADD	/* can add RAM after vm_mem_init */
 
 /*
  * pmap-specific data stored in the vm_physmem[] array.
