@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.31 2000/12/28 11:56:22 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.32 2000/12/29 01:14:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
  */
 
 /*
- * USB audio specs: http://www.teleport.com/~usb/data/Audio10.pdf
- *                  http://www.teleport.com/~usb/data/Frmts10.pdf
- *                  http://www.teleport.com/~usb/data/Termt10.pdf
+ * USB audio specs: http://www.usb.org/developers/data/devclass/audio10.pdf
+ *                  http://www.usb.org/developers/data/devclass/frmts10.pdf
+ *                  http://www.usb.org/developers/data/devclass/termt10.pdf
  */
 
 #include <sys/param.h>
@@ -1070,7 +1070,7 @@ uaudio_process_as(struct uaudio_softc *sc, char *buf, int *offsp,
 		printf("%s: ignored %sput endpoint of type %s\n",
 		       USBDEVNAME(sc->sc_dev),
 		       dir == UE_DIR_IN ? "in" : "out",
-		       dir == UE_DIR_IN ? "adapt" : "async");
+		       dir == UE_DIR_IN ? "adaptive" : "async");
 		return (USBD_NORMAL_COMPLETION);
 	}
 	
