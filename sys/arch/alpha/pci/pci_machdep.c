@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 1995/06/28 01:25:56 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2 1995/08/03 00:33:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -45,7 +45,11 @@
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 #include <alpha/pci/pci_chipset.h>
+
+#include "pcivga.h"
+#include "tga.h"
 
 int pcimatch __P((struct device *, void *, void *));
 void pciattach __P((struct device *, struct device *, void *));
@@ -108,11 +112,7 @@ pci_map_io(tag, reg, iobasep)
 	int *iobasep;
 {
 
-	/*
-	 * XXX should be a chipset-dependent function, but...
-	 * what would it do, and what would use it?
-	 */
-	panic("pci_map_io: not implemented");
+	return (*pci_cs_fcns->cs_map_io)(tag, reg, iobasep);
 }
 
 int
@@ -197,4 +197,52 @@ pcilevel_to_isa(level)
 	default:
 		panic("pcilevel_to_isa: unknown level %d\n", level);
 	}
+}
+
+void
+pci_display_console(bus, device, function)
+	int bus, device, function;
+{
+	pcitag_t tag;
+	pcireg_t id, class;
+
+	/* XXX */
+	tag = pci_make_tag(bus, device, function);
+
+	id = pci_conf_read(tag, PCI_ID_REG);
+	if (id == 0 || id == 0xffffffff)
+		panic("pci_display_console: no device at %d/%d/%d",
+		    bus, device, function);
+	class = pci_conf_read(tag, PCI_CLASS_REG);
+
+	if (PCI_CLASS(class) != PCI_CLASS_DISPLAY &&
+	    !(PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&
+	     PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA))
+		panic("pci_display_console: device at %d/%d/%d not a display",
+		    bus, device, function);
+
+	if ((PCI_CLASS(class) == PCI_CLASS_DISPLAY &&
+	     PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_VGA) ||
+	    (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&
+	     PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA)) {
+#if NPCIVGA
+		pcivga_console(bus, device, function);
+#else
+		panic("pci_display_console: pcivga is console, not configured");
+#endif
+		return;
+	}
+
+	if (PCI_VENDOR(id) == PCI_VENDOR_DEC &&
+	    PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21030) {
+#if NTGA
+		tga_console(bus, device, function);
+#else
+		panic("pci_display_console: tga is console, not configured");
+#endif
+		return;
+	}
+
+	panic("pci_display_console: unsupported device at %d/%d/%d",
+		    bus, device, function);
 }
