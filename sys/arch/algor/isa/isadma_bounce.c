@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_bounce.c,v 1.1 2001/05/28 16:22:20 thorpej Exp $	*/
+/*	$NetBSD: isadma_bounce.c,v 1.1.6.1 2001/10/24 17:27:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
+
+#include <mips/cache.h>
 
 #define _ALGOR_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -531,8 +533,9 @@ isadma_bounce_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	/* Drain the write buffer. */
 	wbflush();
 
+	/* XXXJRT */
 	if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE))
-		mips3_HitFlushDCache((vaddr_t)cookie->id_bouncebuf + offset,
+		mips_dcache_wbinv_range((vaddr_t)cookie->id_bouncebuf + offset,
 		    len);
 }
 

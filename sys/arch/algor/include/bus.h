@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2001/09/04 16:32:42 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.4.4.1 2001/10/24 17:27:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -627,6 +627,7 @@ struct algor_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
+	struct proc	*_dm_proc;	/* proc that owns the mapping */
 
 	/*
 	 * Private cookie to be used by the DMA back-end.
