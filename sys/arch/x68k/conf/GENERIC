@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.15 1997/11/17 01:58:40 lukem Exp $
+#	$NetBSD: GENERIC,v 1.16 1997/11/20 08:11:26 fair Exp $
 
 #
 #	GENERIC
@@ -147,3 +147,5 @@ pseudo-device	pow		2	# software power switch
 pseudo-device	loop			# loopback; recommended
 #pseudo-device	vnd		10	# vn virtual filesystem device
 #pseudo-device	ccd		4	# concatenating disk driver
+# rnd is EXPERIMENTAL
+#pseudo-device	rnd			# /dev/random and in-kernel generator
