@@ -202,7 +202,7 @@ backupsa_from_file()
         struct sockaddr *src, *dst;
         u_int32_t spi, reqid;
         caddr_t keymat;
-	int keymatlen;
+	size_t keymatlen;
         u_int wsize, e_type, e_keylen, a_type, a_keylen, flags;
         u_int32_t l_alloc;
         u_int64_t l_bytes, l_addtime, l_usetime;
