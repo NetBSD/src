@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.39 2000/10/01 06:04:43 lukem Exp $
+.\"	$NetBSD: rc.conf.5,v 1.40 2000/11/17 10:14:20 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -250,7 +250,7 @@ Sets the
 variable (see below) to the output of
 .Xr ifconfig 8
 with the
-.Ar -l
+.Dq Li -l
 flag and suppresses warnings about interfaces in this list that
 do not have an ifconfig file or variable.
 .It Sy net_interfaces
@@ -268,14 +268,14 @@ is set to "NO" and neither the file nor the variable is found,
 a warning is printed.
 .It Sy ifaliases_*
 List of
-.Sq Ar "address netmask"
+.Sq Em "address netmask"
 pairs to configure additional network addresses for the given
 configured interface
 .Dq *
 (e.g.
 .Sy ifaliases_le0 ) .
 If
-.Ar netmask
+.Em netmask
 is
 .Dq - ,
 then use the default netmask for the interface.
@@ -386,7 +386,7 @@ You may want to check
 and
 .Sy rtsold
 as well, if you set the variable to
-.Li autohost .
+.Dq Li autohost .
 .It Sy rtsol
 .Sq YES
 or
@@ -417,7 +417,7 @@ as necessary.
 Passes
 .Sy inetd_flags .
 The
-.Ar -l
+.Dq Li -l
 flag turns on libwrap connection logging.
 .It Sy rpcbind
 .Sq YES
@@ -469,14 +469,14 @@ Runs
 and passes
 .Sy timed_flags .
 The
-.Ar -M
+.Dq Li -M
 option allows
 .Xr timed 8
 to be a master time source as well as a slave.
 If you are also running
 .Xr ntpd 8 ,
 only one machine running both should have the
-.Ar -M
+.Dq Li -M
 flag given to
 .Xr timed 8 .
 .It Sy ntpd
@@ -511,7 +511,7 @@ Runs
 and passes
 .Sy lpd_flags .
 The
-.Ar -l
+.Dq Li -l
 flag will turn on extra logging.
 .It Sy sshd
 .Sq YES
@@ -741,7 +741,7 @@ the
 Passes
 .Sy ypserv_flags .
 The
-.Ar -d
+.Dq Li -d
 flag causes it to use DNS for lookups in
 .Pa /etc/hosts
 that fail.
