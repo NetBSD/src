@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1998/08/29 16:09:56 tv Exp $
+#	$NetBSD: Makefile,v 1.21 1998/12/28 20:38:50 tv Exp $
 
 LIB=		bfd
 
@@ -49,4 +49,4 @@ elf64-target.h: elfxx-target.h
 .include <bsd.lib.mk>
 
 ${OBJS}: bfd.h elf32-target.h elf64-target.h
-targets.o targets.so targets.po: targmatch.h
+targets.o targets.so targets.po: targmatch.h _${MACHINE_ARCH:S/^mips$/mipsel/}.mk
