@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.14 2000/11/04 08:07:14 thorpej Exp $ */
+/*      $NetBSD: ac97.c,v 1.15 2000/11/05 05:41:25 thorpej Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -580,9 +580,9 @@ ac97_attach(host_if)
 		as->host_flags = host_if->flags(host_if->arg);
 
 	ac97_setup_defaults(as);
-	ac97_read(host_if->arg, AC97_REG_VENDOR_ID1, &id1);
-	ac97_read(host_if->arg, AC97_REG_VENDOR_ID2, &id2);
-	ac97_read(host_if->arg, AC97_REG_RESET, &caps);
+	ac97_read(as, AC97_REG_VENDOR_ID1, &id1);
+	ac97_read(as, AC97_REG_VENDOR_ID2, &id2);
+	ac97_read(as, AC97_REG_RESET, &caps);
 
 	id = (id1 << 16) | id2;
 
@@ -699,7 +699,7 @@ ac97_mixer_set_port(codec_if, cp)
 	if (cp->type != si->type)
 		return (EINVAL);
 
-	ac97_read(as->host_if->arg, si->reg, &val);
+	ac97_read(as, si->reg, &val);
 
 	DPRINTFN(5, ("read(%x) = %x\n", si->reg, val));
 
@@ -753,7 +753,7 @@ ac97_mixer_set_port(codec_if, cp)
 	}
 
 	mask = mask << si->ofs;
-	error = ac97_write(as->host_if->arg, si->reg, (val & ~mask) | newval);
+	error = ac97_write(as, si->reg, (val & ~mask) | newval);
 	if (error)
 		return (error);
 
@@ -795,7 +795,7 @@ ac97_mixer_get_port(codec_if, cp)
 	if (cp->type != si->type)
 		return (EINVAL);
 
-	ac97_read(as->host_if->arg, si->reg, &val);
+	ac97_read(as, si->reg, &val);
 
 	DPRINTFN(5, ("read(%x) = %x\n", si->reg, val));
 
