@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2000/05/02 12:01:10 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2000/06/12 13:57:38 simonb Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=1
@@ -19,6 +19,12 @@ CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/include -DHAVE_CONFIG_H
 LIBNTP!=	cd ${.CURDIR}/../libntp; make print-objdir
 LDADD+=		-L${LIBNTP} -lntp
 DPADD+=		${LIBNTP}/libntp.a
+
+SRCS+=	version.c
+CLEANFILES+=version.c version.o .version
+.version:
+	sh ${.CURDIR}/../scripts/mkver ${PROG} > /dev/null
+version.c: .version ${LIBNTP}/libntp.a
 .endif
 
 NTPSRCDIR?= ${PROG}
