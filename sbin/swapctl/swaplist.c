@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.2 1997/06/25 07:44:12 mikel Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.3 1997/07/21 05:05:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -58,7 +58,7 @@ list_swap(pri, kflag, pflag, tflag, dolong)
 	int	tflag;
 	int	dolong;
 {
-	struct	swapent *sep;
+	struct	swapent *sep, *fsep;
 	long	blocksize;
 	char	*header;
 	int	hlen, totalsize, size, totalinuse, inuse, ncounted;
@@ -69,7 +69,7 @@ list_swap(pri, kflag, pflag, tflag, dolong)
 		exit(0);
 	}
 
-	sep = (struct swapent *)malloc(nswap * sizeof(*sep));
+	fsep = sep = (struct swapent *)malloc(nswap * sizeof(*sep));
 	if (sep == NULL)
 		err(1, "malloc");
 	rnswap = swapctl(SWAP_STATS, (void *)sep, nswap);
@@ -127,4 +127,6 @@ list_swap(pri, kflag, pflag, tflag, dolong)
 		    dbtob(totalinuse) / blocksize,
 		    dbtob(totalsize - totalinuse) / blocksize,
 		    (double)(totalinuse) / (double)totalsize * 100.0);
+	if (fsep)
+		(void)free(fsep);
 }
