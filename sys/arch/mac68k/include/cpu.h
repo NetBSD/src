@@ -57,7 +57,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.14 1994/07/21 00:33:54 briggs Exp $
+ *	$Id: cpu.h,v 1.15 1994/07/31 14:03:58 briggs Exp $
  */
 
 /*
@@ -240,6 +240,7 @@ struct mac68k_machine_S {
 	 */
 	int			do_graybars;
 	int			serial_boot_echo;
+	int			serial_console;
 	/*
 	 * Misc. hardware info.
 	 */
