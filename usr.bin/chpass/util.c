@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.8 1998/02/04 15:21:53 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.9 1998/07/26 15:08:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: util.c,v 1.8 1998/02/04 15:21:53 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.9 1998/07/26 15:08:02 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,8 @@ char *
 ok_shell(name)
 	char *name;
 {
-	char *p, *sh;
+	char *p;
+	const char *sh;
 
 	setusershell();
 	while ((sh = getusershell()) != NULL) {

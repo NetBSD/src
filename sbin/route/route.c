@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.28 1998/04/01 15:14:25 kleink Exp $	*/
+/*	$NetBSD: route.c,v 1.29 1998/07/26 15:03:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.28 1998/04/01 15:14:25 kleink Exp $");
+__RCSID("$NetBSD: route.c,v 1.29 1998/07/26 15:03:51 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -554,7 +554,8 @@ newroute(argc, argv)
 	int argc;
 	char **argv;
 {
-	char *cmd, *dest = "", *gateway = "", *err;
+	char *cmd, *dest = "", *gateway = "";
+	const char *err;
 	int ishost = 0, ret, attempts, oerrno, flags = RTF_STATIC;
 	int key;
 	struct hostent *hp = 0;
