@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.29.2.3 1994/08/15 15:20:12 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.29.2.4 1994/08/15 22:25:10 mycroft Exp $
  */
 
 /*
@@ -84,6 +84,7 @@ cpu_fork(p1, p2)
 	/* Copy the pcb. */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	p2->p_md.md_regs = p1->p_md.md_regs;
+	p2->p_md.ibcs_sigflags = p1->p_md.ibcs_sigflags;
 
 	/*
 	 * Wire top of address space of child to it's kstack.
