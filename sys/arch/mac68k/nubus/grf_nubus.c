@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.56 2000/02/14 07:01:49 scottr Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.57 2000/03/18 20:53:24 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -309,6 +309,7 @@ bad:
 		break;
 	case NUBUS_DRHW_ROPS24LXI:
 	case NUBUS_DRHW_ROPS24XLTV:
+	case NUBUS_DRHW_ROPS24MXTV:
 		sc->cli_offset = 0xfb0010;
 		sc->cli_value = 0x00;
 		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc);
