@@ -1,4 +1,4 @@
-.\"	$NetBSD: pr.1,v 1.5 1997/06/26 20:23:47 kleink Exp $
+.\"	$NetBSD: pr.1,v 1.6 1997/10/19 12:42:05 lukem Exp $
 .\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
@@ -36,7 +36,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)pr.1	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: pr.1,v 1.5 1997/06/26 20:23:47 kleink Exp $
+.\"	$NetBSD: pr.1,v 1.6 1997/10/19 12:42:05 lukem Exp $
 .\"
 .Dd June 6, 1993
 .Dt PR 1
@@ -45,7 +45,7 @@
 .Nm pr
 .Nd print files
 .Sh SYNOPSIS
-.Nm pr
+.Nm
 .Bk -words
 .Op Ar \&+page
 .Ek
@@ -96,7 +96,7 @@
 .Op Ar file ...
 .Sh DESCRIPTION
 The
-.Nm pr
+.Nm
 utility is a printing and pagination filter for text files.
 When multiple input files are specified, each is read, formatted,
 and written to standard output.
@@ -113,7 +113,7 @@ the pathname of the file.
 .Pp
 If standard output is associated with a terminal,
 diagnostic messages are suppressed until the
-.Nm pr
+.Nm
 utility has completed processing.
 .Pp
 When multiple column output is specified,
@@ -217,7 +217,7 @@ If
 .Ar lines
 is not greater than the sum of both the header and trailer
 depths (in lines), the 
-.Nm pr
+.Nm
 utility suppresses output of both the header and trailer, as if the
 .Fl t
 option were in effect.
@@ -326,13 +326,13 @@ letter.
 .Sh ERRORS
 .Pp
 If
-.Nm pr
+.Nm
 receives an interrupt while printing to a terminal, it
 flushes all accumulated error messages to the screen before
 terminating.
 .Pp
 The
-.Nm pr
+.Nm
 utility exits 0 on success, and 1 if an error occurs.
 .Pp
 Error messages are written to standard error during the printing
@@ -343,7 +343,7 @@ file printing is complete (when printing to a terminal).
 .Xr more 1
 .Sh STANDARDS
 The
-.Nm pr
+.Nm
 utility is
 .St -p1003.2
 compatible.
