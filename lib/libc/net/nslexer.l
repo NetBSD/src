@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: nslexer.l,v 1.5 2002/03/19 00:04:09 lukem Exp $	*/
+/*	$NetBSD: nslexer.l,v 1.5.2.1 2004/03/15 04:42:17 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,15 +39,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nslexer.l,v 1.5 2002/03/19 00:04:09 lukem Exp $");
+__RCSID("$NetBSD: nslexer.l,v 1.5.2.1 2004/03/15 04:42:17 jmc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <ctype.h>
-#include <err.h>
 #define _NS_PRIVATE
 #include <nsswitch.h>
 #include <string.h>
+#include <syslog.h>
 
 #include "nsparser.h"
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: nslexer.l,v 1.5 2002/03/19 00:04:09 lukem Exp $");
 %}
 
 %option yylineno
+%option never-interactive
 
 BLANK		[ \t]
 CR		\n
@@ -83,8 +84,10 @@ STRING		[a-zA-Z][a-zA-Z0-9_]*
 			char *p;
 			int i;
 
-			if ((p = strdup(yytext)) == NULL)
-				err(1, "nsdispatch: memory allocation failure");
+			if ((p = strdup(yytext)) == NULL) {
+				syslog(LOG_ERR, "libc nsdispatch: %m");
+				return NL;
+			}
 
 			for (i = 0; i < strlen(p); i++) {
 				if (isupper((unsigned char)p[i]))
@@ -110,5 +113,6 @@ _nsyyerror(msg)
 	const char *msg;
 {
 
-	 warnx("%s line %d: %s at '%s'", _PATH_NS_CONF, yylineno, msg, yytext);
+	 syslog(LOG_WARNING, "libc nsdispatch: %s line %d: %s at '%s'",
+	    _PATH_NS_CONF, yylineno, msg, yytext);
 } /* _nsyyerror */
