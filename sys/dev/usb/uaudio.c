@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.26 2000/06/01 14:28:58 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.27 2000/06/19 11:43:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1463,7 +1463,7 @@ uaudio_get_props(void *addr)
 }
 
 int
-uaudio_get(struct uaudio_softc *sc, int type, int which, int wValue,
+uaudio_get(struct uaudio_softc *sc, int which, int type, int wValue,
 	   int wIndex, int len)
 {
 	usb_device_request_t req;
@@ -1503,7 +1503,7 @@ uaudio_get(struct uaudio_softc *sc, int type, int which, int wValue,
 }
 
 void
-uaudio_set(struct uaudio_softc *sc, int type, int which, int wValue,
+uaudio_set(struct uaudio_softc *sc, int which, int type, int wValue,
 	   int wIndex, int len, int val)
 {
 	usb_device_request_t req;
