@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.7 2003/02/15 04:38:33 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.8 2003/03/08 08:03:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <errno.h>
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: pthread_cond.c,v 1.8 2003/03/08 08:03:35 lukem Exp $");
+
+#include <errno.h>
 #include <sys/time.h>
 #include <sys/types.h>
 
