@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.1 1999/04/07 06:51:27 cgd Exp $
+#	$NetBSD: Makefile,v 1.2.2.2 2000/02/29 23:57:22 he Exp $
 
 IMAGE1=		disk1of2
 IMAGE2=		disk2of2
@@ -60,6 +60,8 @@ unconfig:
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES}
+
+depend:
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
