@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.131 2003/01/26 13:20:12 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.132 2003/04/08 21:56:31 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -138,7 +138,8 @@ const char *trap_type[] = {
 	"fp exception",		/* 8 */
 	"data fault",		/* 9 */
 	"tag overflow",		/* 0a */
-	T, T, T, T, T, T,	/* 0b..10 */
+	"watchpoint",		/* 0b */
+	T, T, T, T, T,		/* 0c..10 */
 	"level 1 int",		/* 11 */
 	"level 2 int",		/* 12 */
 	"level 3 int",		/* 13 */
@@ -154,14 +155,23 @@ const char *trap_type[] = {
 	"level 13 int",		/* 1d */
 	"level 14 int",		/* 1e */
 	"level 15 int",		/* 1f */
-	T, T, T, T, T, T, T, T,	/* 20..27 */
-	T, T, T, T, T, T, T, T,	/* 28..2f */
-	T, T, T, T, T, T,	/* 30..35 */
-	"cp disabled",		/* 36 */
-	T,			/* 37 */
-	T, T, T, T, T, T, T, T,	/* 38..3f */
-	"cp exception",		/* 40 */
-	T, T, T, T, T, T, T,	/* 41..47 */
+	"register access error",/* 20 */
+	"instruction access error",/* 21 */
+	T, T,			/* 22..23 */
+	"cp disabled",		/* 24 */
+	"unimplemented flush",	/* 25 */
+	T, T,			/* 26..27 */
+	"cp exception",		/* 28 */
+	"data access error",	/* 29 */
+	"hw zero divide",	/* 2a */
+	"data store error",	/* 2b */
+	"data access MMU miss",	/* 2c */
+	T, T, T,		/* 2d..2f */
+	T, T, T, T, T, T, T, T,	/* 30..37 */
+	T, T, T, T,		/* 38..3b */
+	"insn access MMU miss",	/* 3c */
+	T, T, T,		/* 3d..3f */
+	T, T, T, T, T, T, T, T,	/* 40..47 */
 	T, T, T, T, T, T, T, T,	/* 48..4f */
 	T, T, T, T, T, T, T, T,	/* 50..57 */
 	T, T, T, T, T, T, T, T,	/* 58..5f */
