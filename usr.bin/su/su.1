@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.24 2002/10/05 14:07:04 hubertf Exp $
+.\"	$NetBSD: su.1,v 1.25 2002/10/13 00:55:17 wiz Exp $
 .\"
 .Dd March 7, 2001
 .Dt SU 1
@@ -53,8 +53,7 @@ if no login is provided), and switches to
 that user and group ID after obtaining a Kerberos ticket granting ticket.
 A shell is then executed, and any additional
 .Ar "shell arguments"
-after the login name
-are passed to the shell.
+after the login name are passed to the shell.
 .Nm
 will resort to the local password file to find the password for
 .Ar login
@@ -229,13 +228,14 @@ name it is not a
 .Nm
 option, because any arguments after the
 .Ar login
-are passed to the shell. (See
+are passed to the shell.
+(See
 .Xr csh 1 ,
 .Xr ksh 1
 or
 .Xr sh 1
 for details.)
-To execute arbitrary command with privileges of user 
+To execute arbitrary command with privileges of user
 .Em username ,
 execute:
 .Bd -literal -offset indent
