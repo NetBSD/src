@@ -27,6 +27,13 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define NETBSD_ELF
 #include "vax/netbsd.h"
 
+#undef REGISTER_PREFIX
+#define REGISTER_PREFIX "%"
+
+/* Redefine this with register prefixes.  */
+#undef VAX_ISTREAM_SYNC
+#define	VAX_ISTREAM_SYNC	"movpsl -(%sp)\n\tpushal 1(%pc)\n\trei"
+
 #undef SIZE_TYPE
 #define SIZE_TYPE "long unsigned int"
 
@@ -63,7 +70,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Profiling routines */
 
-/* Redefine this to use %eax instead of %edx.  */
 #undef  FUNCTION_PROFILER
 #define FUNCTION_PROFILER(FILE, LABELNO)  \
   fprintf (FILE, "\tmovab .LP%d,r0\n\tjsb __mcount+2\n", (LABELNO))
