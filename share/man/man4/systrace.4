@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.4,v 1.8 2003/01/19 20:12:33 jdolecek Exp $
+.\"	$NetBSD: systrace.4,v 1.9 2003/07/14 20:39:52 lha Exp $
 .\"	$OpenBSD: systrace.4,v 1.2 2002/06/03 15:44:17 mpech Exp $
 .\"
 .\" Copyright (c) 2002 CubeSoft Communications, Inc.
@@ -113,13 +113,6 @@ facility supports the following
 .Xr ioctl 2
 operations:
 .Bl -tag -width "XXXXXX"
-.It Dv SYSTR_CLONE Fa "int"
-Return a
-.Nm
-file descriptor for
-further
-.Xr ioctl 2
-operations.
 .It Dv STRIOCATTACH Fa "pid_t"
 Attach to the process with the specified process ID.  This operation
 will fail under the following conditions:
