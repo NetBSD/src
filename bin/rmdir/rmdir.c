@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmdir.c	5.3 (Berkeley) 5/31/90";*/
-static char rcsid[] = "$Id: rmdir.c,v 1.6 1993/08/01 18:58:47 mycroft Exp $";
+static char rcsid[] = "$Id: rmdir.c,v 1.7 1993/09/10 18:57:44 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -48,8 +48,14 @@ static char rcsid[] = "$Id: rmdir.c,v 1.6 1993/08/01 18:58:47 mycroft Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <errno.h>
+#include <err.h>
 
+static int rmdirp __P((char *));
+static void usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -58,7 +64,7 @@ main(argc, argv)
 	int ch;
 	int delete_parent_directories = 0;
 
-	while ((ch = getopt (argc, argv, "p")) != EOF) {
+	while ((ch = getopt (argc, argv, "p")) != -1) {
 		switch (ch) {
 		case 'p':
 			delete_parent_directories = 1;
@@ -78,8 +84,7 @@ main(argc, argv)
 	for (errors = 0; *argv; argv++) {
 		if (!delete_parent_directories) {
 			if (rmdir(*argv) < 0) {
-				fprintf(stderr, "rmdir: %s: %s\n", 
-					*argv, strerror(errno));
+				warn ("%s", *argv);
 				errors = 1;
 			} 
 		} else {
@@ -92,8 +97,9 @@ main(argc, argv)
 	exit(errors);
 }
 
-int
-rmdirp (char *path)
+static int
+rmdirp (path)
+	char *path;
 {
 	char *slash;
 
@@ -102,8 +108,7 @@ rmdirp (char *path)
 
 	while (slash != NULL) {
 		if (rmdir (path) < 0) {
-			fprintf(stderr, "rmdir: %s: %s\n", 
-				path, strerror(errno));
+			warn ("%s", path);
 			return -1;
 		}
 
@@ -116,13 +121,14 @@ rmdirp (char *path)
 	}
 
 	if (rmdir (path) < 0) {
-		fprintf(stderr, "rmdir: %s: %s\n", path, strerror(errno));
+		warn ("%s", path);
 		return -1;
 	}
 
 	return 0;
 }
 
+static void
 usage()
 {
 	fprintf(stderr, "usage: rmdir [-p] directory ...\n");
