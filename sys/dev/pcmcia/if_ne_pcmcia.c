@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.71 2001/05/14 01:44:42 ichiro Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.72 2001/05/18 06:05:52 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -329,6 +329,11 @@ static const struct ne2000dev {
       PCMCIA_CIS_SMC_EZCARD,
       0, 0x01c0, { 0x00, 0xe0, 0x29 } },
 
+    { PCMCIA_STR_SOCKET_EA_ETHER,
+      PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_EA_ETHER,
+      PCMCIA_CIS_SOCKET_EA_ETHER,
+      0, -1, { 0x00, 0xc0, 0x1b } },
+
     { PCMCIA_STR_SOCKET_LP_ETHER_CF,
       PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF,
       PCMCIA_CIS_SOCKET_LP_ETHER_CF,
@@ -448,9 +453,6 @@ static const struct ne2000dev {
     { "SCM Ethernet",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0ff0, { 0x00, 0x20, 0xcb } },
-    { "Socket EA",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x4000, { 0x00, 0xc0, 0x1b } },
     { "Volktek NPL-402CT",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0060, { 0x00, 0x40, 0x05 } },
