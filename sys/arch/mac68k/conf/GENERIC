@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.35 1996/05/05 06:15:56 briggs Exp $
+#	$NetBSD: GENERIC,v 1.36 1996/05/06 03:33:06 briggs Exp $
 #
 # GENERIC
 
@@ -66,10 +66,11 @@ options		MACHINE_NONCONTIG
 config		netbsd	swap generic
 options		GENERIC
 
+grf0		at obio?	# Graphics devices might be internal or NuBUS
+
 nubus0		at mainbus?
 
 ae*		at nubus?
-grf0		at nubus?
 grf*		at nubus?
 
 ncrscsi0	at obio?		# SCSI NCR 5380
