@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.4 2000/05/03 11:40:16 veego Exp $	*/
+/*	$NetBSD: fils.c,v 1.5 2000/05/04 19:55:44 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -451,13 +451,13 @@ frentry_t *fp;
 			fp->fr_flags |= FR_OUTQUE;
 		if (opts & (OPT_HITS|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%qd ", fp->fr_hits);
+			PRINTF("%qd ", (long long)fp->fr_hits);
 #else
 			PRINTF("%ld ", fp->fr_hits);
 #endif
 		if (opts & (OPT_ACCNT|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%qd ", fp->fr_bytes);
+			PRINTF("%qd ", (long long)fp->fr_bytes);
 #else
 			PRINTF("%ld ", fp->fr_bytes);
 #endif
@@ -559,7 +559,8 @@ ips_stat_t *ipsp;
 			ips.is_age, ips.is_pass, ips.is_p,
 			ips.is_state[0], ips.is_state[1]);
 #ifdef	USE_QUAD_T
-		PRINTF("\tpkts %qd bytes %qd", ips.is_pkts, ips.is_bytes);
+		PRINTF("\tpkts %qd bytes %qd",
+			(long long)ips.is_pkts, (long long)ips.is_bytes);
 #else
 		PRINTF("\tpkts %ld bytes %ld", ips.is_pkts, ips.is_bytes);
 #endif
@@ -902,7 +903,8 @@ int topclosed;
 			printw(" %4s", str1);
 				/* print #pkt/#bytes */
 #ifdef	USE_QUAD_T
-			printw(" %7qu %9qu", tp->st_pkts, tp->st_bytes);
+			printw(" %7qu %9qu", (unsigned long long)tp->st_pkts,
+				(unsigned long long)tp->st_bytes);
 #else
 			printw(" %7ld %9ld", tp->st_pkts, tp->st_bytes);
 #endif
@@ -998,8 +1000,8 @@ fr_authstat_t *asp;
 	frauthent_t *frap, fra;
 
 #ifdef	USE_QUAD_T
-	printf("Authorisation hits: %qd\tmisses %qd\n", asp->fas_hits,
-		asp->fas_miss);
+	printf("Authorisation hits: %qd\tmisses %qd\n",
+		(long long)asp->fas_hits, (long long)asp->fas_miss);
 #else
 	printf("Authorisation hits: %ld\tmisses %ld\n", asp->fas_hits,
 		asp->fas_miss);
