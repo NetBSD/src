@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.50 2001/11/29 21:23:13 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.51 2002/05/12 23:04:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.50 2001/11/29 21:23:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.51 2002/05/12 23:04:36 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -93,12 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.50 2001/11/29 21:23:13 christos E
 extern int32_t (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
 						struct nfssvc_sock *,
 						struct proc *, struct mbuf **));
-extern int nfs_numasync;
 extern time_t nqnfsstarttime;
-extern int nqsrv_writeslack;
-extern int nfsrtton;
-extern struct nfsstats nfsstats;
 extern int nfsrvw_procrastinate;
+
 struct nfssvc_sock *nfs_udpsock;
 #ifdef ISO
 struct nfssvc_sock *nfs_cltpsock;
@@ -114,6 +111,12 @@ static int notstarted = 1;
 static int modify_flag = 0;
 static struct nfsdrt nfsdrt;
 #endif
+
+struct nfssvc_sockhead nfssvc_sockhead;
+struct nfsdhead nfsd_head;
+
+int nfssvc_sockhead_flag;
+int nfsd_head_flag;
 
 #define	TRUE	1
 #define	FALSE	0
