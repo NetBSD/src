@@ -1,5 +1,6 @@
-# $NetBSD: md.arm26,v 1.25 2001/11/25 23:34:41 thorpej Exp $
+# $NetBSD: md.arm26,v 1.26 2001/11/26 01:00:49 thorpej Exp $
 ./usr/include/arm26			comp-c-include
+./usr/include/arm26/_G_config.h		comp-c-include
 ./usr/include/arm26/ansi.h		comp-c-include
 ./usr/include/arm26/aout_machdep.h	comp-c-include
 ./usr/include/arm26/asm.h		comp-c-include
@@ -18,6 +19,10 @@
 ./usr/include/arm26/frame.h		comp-c-include
 ./usr/include/arm26/ieee.h		comp-c-include
 ./usr/include/arm26/ieeefp.h		comp-c-include
+./usr/include/arm26/int_const.h		comp-c-include
+./usr/include/arm26/int_fmtio.h		comp-c-include
+./usr/include/arm26/int_limits.h	comp-c-include
+./usr/include/arm26/int_mwgwtypes.h	comp-c-include
 ./usr/include/arm26/int_types.h		comp-c-include
 ./usr/include/arm26/intr.h		comp-c-include
 ./usr/include/arm26/ipkdb.h		comp-c-include
