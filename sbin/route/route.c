@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.38.4.1 2000/10/17 20:44:14 tv Exp $	*/
+/*	$NetBSD: route.c,v 1.38.4.2 2001/04/05 12:23:12 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.38.4.1 2000/10/17 20:44:14 tv Exp $");
+__RCSID("$NetBSD: route.c,v 1.38.4.2 2001/04/05 12:23:12 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,6 @@ static int keyword __P((char *));
 static void sodump __P((sup, char *));
 static void sockaddr __P((char *, struct sockaddr *));
 
-struct	ortentry route;
 union	sockunion {
 	struct	sockaddr sa;
 	struct	sockaddr_in sin;
@@ -877,8 +876,7 @@ newroute(argc, argv)
 			(void) printf(": gateway %s", gateway);
 			if (attempts > 1 && ret == 0 && af == AF_INET)
 			    (void) printf(" (%s)",
-				inet_ntoa(((struct sockaddr_in *)
-					   &route.rt_gateway)->sin_addr));
+			        inet_ntoa(so_gate.sin.sin_addr));
 		}
 		if (ret == 0)
 			(void) printf("\n");
