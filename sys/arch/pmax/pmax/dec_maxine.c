@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.22 2000/01/08 01:02:39 simonb Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.23 2000/01/09 03:56:00 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.22 2000/01/08 01:02:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.23 2000/01/09 03:56:00 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -101,13 +101,16 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.22 2000/01/08 01:02:39 simonb Exp $
 /*
  * Forward declarations
  */
-void		dec_maxine_init __P((void));
-void		dec_maxine_bus_reset __P((void));
-void		dec_maxine_enable_intr __P((unsigned slotno,
+void		dec_maxine_init __P((void));		/* XXX */
+static void	dec_maxine_bus_reset __P((void));
+static void	dec_maxine_enable_intr __P((unsigned slotno,
 		    int (*handler)(void *), void *sc, int onoff));
-int		dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
-void		dec_maxine_device_register __P((struct device *, void *));
-void		dec_maxine_cons_init __P((void));
+static int	dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_maxine_device_register __P((struct device *, void *));
+static void	dec_maxine_cons_init __P((void));
+
+static void	kn02ca_wbflush __P((void));
+static unsigned	kn02ca_clkread __P((void));
 
 /*
  * local declarations
@@ -115,14 +118,10 @@ void		dec_maxine_cons_init __P((void));
 static u_int32_t xine_tc3_imask;
 static unsigned latched_cycle_cnt;
 
-void kn02ca_wbflush __P((void));
-unsigned kn02ca_clkread __P((void));
 
 void
 dec_maxine_init()
 {
-	extern char cpu_model[];
-
 	platform.iobus = "tcbus";
 	platform.bus_reset = dec_maxine_bus_reset;
 	platform.cons_init = dec_maxine_cons_init;
@@ -157,12 +156,12 @@ dec_maxine_init()
 
 	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
 	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
-#if 0	
+#if 0
 	*(u_int32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
 	*(u_int32_t *)(ioasic_base + IOASIC_DTOP_DECODE) = 10;
 	*(u_int32_t *)(ioasic_base + IOASIC_FLOPPY_DECODE) = 13;
 	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00001fc1;
-#endif	
+#endif
   
 	/* sanitize interrupt mask */
 	xine_tc3_imask = 0;
@@ -176,7 +175,7 @@ dec_maxine_init()
 /*
  * Initalize the memory system and I/O buses.
  */
-void
+static void
 dec_maxine_bus_reset()
 {
 	/*
@@ -191,12 +190,12 @@ dec_maxine_bus_reset()
 }
 
 
-void
+static void
 dec_maxine_cons_init()
 {
 }
 
-void
+static void
 dec_maxine_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
@@ -214,7 +213,7 @@ dec_maxine_device_register(dev, aux)
  *	 (see pmax/tc/ds-asic-conf.c).
  *	Note that all these interrupts come in via the IMR.
  */
-void
+static void
 dec_maxine_enable_intr(slotno, handler, sc, on)
 	unsigned int slotno;
 	int (*handler) __P((void *));
@@ -274,7 +273,7 @@ dec_maxine_enable_intr(slotno, handler, sc, on)
 /*
  * Maxine hardware interrupts. (Personal DECstation 5000/xx)
  */
-int
+static int
 dec_maxine_intr(cpumask, pc, status, cause)
 	unsigned cpumask;
 	unsigned pc;
@@ -405,7 +404,7 @@ dec_maxine_intr(cpumask, pc, status, cause)
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
-void	
+static void
 kn02ca_wbflush()
 {
 	/* read once IOASIC_IMSK */
@@ -413,7 +412,7 @@ kn02ca_wbflush()
 	    "i"(MIPS_PHYS_TO_KSEG1(XINE_REG_IMSK)));
 }
 
-unsigned
+static unsigned
 kn02ca_clkread()
 {
 	u_int32_t cycles;

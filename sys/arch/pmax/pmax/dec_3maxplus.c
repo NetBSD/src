@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.31 2000/01/08 01:02:39 simonb Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.32 2000/01/09 03:55:58 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.31 2000/01/08 01:02:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.32 2000/01/09 03:55:58 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -101,15 +101,17 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.31 2000/01/08 01:02:39 simonb Exp
 /*
  * Forward declarations
  */
-void		dec_3maxplus_init __P((void));
-void		dec_3maxplus_bus_reset __P((void));
-void		dec_3maxplus_enable_intr __P((unsigned slotno,
+void		dec_3maxplus_init __P((void));		/* XXX */
+static void	dec_3maxplus_bus_reset __P((void));
+static void	dec_3maxplus_enable_intr __P((unsigned slotno,
 		    int (*handler)(void *), void *sc, int onoff));
-int		dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
-void		dec_3maxplus_cons_init __P((void));
-void		dec_3maxplus_device_register __P((struct device *, void *));
+static int	dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3maxplus_cons_init __P((void));
+static void	dec_3maxplus_device_register __P((struct device *, void *));
 static void 	dec_3maxplus_errintr __P((void));
 
+static void	kn03_wbflush __P((void));
+static unsigned	kn03_clkread __P((void));
 
 /*
  * Local declarations
@@ -117,14 +119,10 @@ static void 	dec_3maxplus_errintr __P((void));
 static u_int32_t kn03_tc3_imask;
 static unsigned latched_cycle_cnt;
 
-void kn03_wbflush __P((void));
-unsigned kn03_clkread __P((void));
-
 void
 dec_3maxplus_init()
 {
 	u_int32_t prodtype;
-	extern char cpu_model[];
 
 	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3maxplus_bus_reset;
@@ -189,7 +187,7 @@ dec_3maxplus_init()
 /*
  * Initalize the memory system and I/O buses.
  */
-void
+static void
 dec_3maxplus_bus_reset()
 {
 	/*
@@ -205,13 +203,13 @@ dec_3maxplus_bus_reset()
 }
 
 
-void
+static void
 dec_3maxplus_cons_init()
 {
 }
 
 
-void
+static void
 dec_3maxplus_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
@@ -226,7 +224,7 @@ dec_3maxplus_device_register(dev, aux)
  *	only 4: TCslots 0-2 maps to slots 0-2, TCslot3 maps to
  *	slots 3-7 (see pmax/tc/ds-asic-conf.c).
  */
-void
+static void
 dec_3maxplus_enable_intr(slotno, handler, sc, on)
 	unsigned int slotno;
 	int (*handler) __P((void *));
@@ -292,7 +290,7 @@ done:
 /*
  * 3Max+ hardware interrupts. (DECstation 5000/240)
  */
-int
+static int
 dec_3maxplus_intr(mask, pc, status, cause)
 	unsigned mask;
 	unsigned pc;
@@ -334,7 +332,7 @@ dec_3maxplus_intr(mask, pc, status, cause)
 	 */
 #ifdef notdef
 	if ((mask & MIPS_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
-		extern int msgbufmapped;
+		/* XXX need to include <sys/msgbug.h> for msgbufmapped */
   		if(msgbufmapped && 0)
 			 addlog("kn03: clock intr %d usec late\n",
 				 old_buscycle/25);
@@ -479,7 +477,7 @@ dec_3maxplus_errintr()
 	dec_mtasic_err(erradr, errsyn, csr & KN03_CSR_BNK32M);
 }
 
-void
+static void
 kn03_wbflush()
 {
 	/* read once IOASIC SLOT 0 */
@@ -492,7 +490,7 @@ kn03_wbflush()
  * interpolation base is the copy of the bus cycle-counter taken by
  * the RTC interrupt handler.
  */
-unsigned
+static unsigned
 kn03_clkread()
 {
 	u_int32_t usec, cycles;

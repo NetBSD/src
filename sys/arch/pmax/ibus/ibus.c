@@ -1,4 +1,4 @@
-/* $NetBSD: ibus.c,v 1.4 1999/11/24 00:04:06 thorpej Exp $ */
+/* $NetBSD: ibus.c,v 1.5 2000/01/09 03:55:51 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.4 1999/11/24 00:04:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.5 2000/01/09 03:55:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.4 1999/11/24 00:04:06 thorpej Exp $");
 
 extern struct cfdriver ibus_cd;
 
-int	ibussubmatch __P((struct device *, struct cfdata *, void *));
+static int	ibussubmatch __P((struct device *, struct cfdata *, void *));
 
 void
 ibusattach(parent, self, aux)
@@ -75,7 +75,7 @@ ibusattach(parent, self, aux)
 	}
 }
 
-int
+static int
 ibussubmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.32 2000/01/08 01:02:35 simonb Exp $	*/
+/*	$NetBSD: fb.c,v 1.33 2000/01/09 03:55:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -113,9 +113,6 @@
 /* qvss/pm compatible and old 4.4bsd/pmax driver functions */
 
 
-void	fbScreenInit __P(( struct fbinfo *fi));
-
-
 #if NDC > 0
 #include <machine/dc7085cons.h>
 #include <pmax/dev/dcvar.h>
@@ -156,8 +153,6 @@ struct fbdev {
 static u_int	fbndevs;		/* number of devices */
 static u_char	cmap_bits[768];		/* colormap for console */
 
-void	fbattach __P((int n));
-
 /*
  * attach routine: required for pseudo-device
  */
@@ -185,8 +180,6 @@ fbconnect (name, info, console)
 	 * If this is the first frame buffer we've seen, pass it to rcons.
 	 */
 	if (console) {
-		extern dev_t cn_in_dev;	/* XXX rcons hackery */
-
 		/* Only the first fb gets 4.4bsd/pmax style event ringbuffer */
 		firstfi = info;
 #if NRASTERCONSOLE > 0
