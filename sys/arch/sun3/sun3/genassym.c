@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.24 1995/01/24 06:01:56 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.25 1995/02/11 21:08:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -91,9 +91,7 @@ main()
 
 	/* bus error stuff */
 	def1(BUSERR_REG);
-	def1(BUSERR_PROTERR);
-	def1(BUSERR_TIMEOUT);
-	def1(BUSERR_INVALID);
+	def1(BUSERR_MMU);
 
 	/* 68k isms */
 	def1(PSL_LOWIPL);
