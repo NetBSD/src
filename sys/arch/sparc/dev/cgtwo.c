@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.5 1995/10/08 01:39:15 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.5.2.1 1995/10/28 23:18:27 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -427,5 +427,5 @@ cgtwommap(dev, off, prot)
 	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 
-	return ((int)sc->sc_phys + off + PMAP_VME16 + PMAP_NC);
+	return ((int)sc->sc_phys + off + PMAP_VME32 + PMAP_NC);
 }
