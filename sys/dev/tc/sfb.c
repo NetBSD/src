@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.26 1999/11/09 08:25:31 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.27 1999/11/29 07:50:54 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.26 1999/11/09 08:25:31 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.27 1999/11/29 07:50:54 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,27 +152,27 @@ struct sfb_softc {
 #define	HX_MAGIC_X 368
 #define	HX_MAGIC_Y 38
 
-int  sfbmatch __P((struct device *, struct cfdata *, void *));
-void sfbattach __P((struct device *, struct device *, void *));
+static int  sfbmatch __P((struct device *, struct cfdata *, void *));
+static void sfbattach __P((struct device *, struct device *, void *));
 
-struct cfattach sfb_ca = {
+const struct cfattach sfb_ca = {
 	sizeof(struct sfb_softc), sfbmatch, sfbattach,
 };
 
-void sfb_getdevconfig __P((tc_addr_t, struct fb_devconfig *));
-struct fb_devconfig sfb_console_dc;
-tc_addr_t sfb_consaddr;
+static void sfb_getdevconfig __P((tc_addr_t, struct fb_devconfig *));
+static struct fb_devconfig sfb_console_dc;
+static tc_addr_t sfb_consaddr;
 
-void	sfb_cursor __P((void *, int, int, int));
-int	sfb_mapchar __P((void *, int, unsigned int *));
-void	sfb_putchar __P((void *, int, int, u_int, long));
-void	sfb_copycols __P((void *, int, int, int, int));
-void	sfb_erasecols __P((void *, int, int, int, long));
-void	sfb_copyrows __P((void *, int, int, int));
-void	sfb_eraserows __P((void *, int, int, long));
-int	sfb_alloc_attr __P((void *, int, int, int, long *));
+static void sfb_cursor __P((void *, int, int, int));
+static int  sfb_mapchar __P((void *, int, unsigned int *));
+static void sfb_putchar __P((void *, int, int, u_int, long));
+static void sfb_copycols __P((void *, int, int, int, int));
+static void sfb_erasecols __P((void *, int, int, int, long));
+static void sfb_copyrows __P((void *, int, int, int));
+static void sfb_eraserows __P((void *, int, int, long));
+static int  sfb_alloc_attr __P((void *, int, int, int, long *));
 
-struct wsdisplay_emulops sfb_emulops = {
+static const struct wsdisplay_emulops sfb_emulops = {
 	sfb_cursor,			/* could use hardware cursor; punt */
 	sfb_mapchar,
 	sfb_putchar,
@@ -183,30 +183,30 @@ struct wsdisplay_emulops sfb_emulops = {
 	sfb_alloc_attr
 };
 
-struct wsscreen_descr sfb_stdscreen = {
+static struct wsscreen_descr sfb_stdscreen = {
 	"std", 0, 0,
 	&sfb_emulops,
 	0, 0,
 	WSSCREEN_REVERSE
 };
 
-const struct wsscreen_descr *_sfb_scrlist[] = {
+static const struct wsscreen_descr *_sfb_scrlist[] = {
 	&sfb_stdscreen,
 };
 
-struct wsscreen_list sfb_screenlist = {
+static const struct wsscreen_list sfb_screenlist = {
 	sizeof(_sfb_scrlist) / sizeof(struct wsscreen_descr *), _sfb_scrlist
 };
 
-int	sfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	sfbmmap __P((void *, off_t, int));
+static int  sfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static int  sfbmmap __P((void *, off_t, int));
 
-int	sfb_alloc_screen __P((void *, const struct wsscreen_descr *,
+static int  sfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
-void	sfb_free_screen __P((void *, void *));
-void	sfb_show_screen __P((void *, void *));
+static void sfb_free_screen __P((void *, void *));
+static void sfb_show_screen __P((void *, void *));
 
-struct wsdisplay_accessops sfb_accessops = {
+static const struct wsdisplay_accessops sfb_accessops = {
 	sfbioctl,
 	sfbmmap,
 	sfb_alloc_screen,
@@ -216,8 +216,8 @@ struct wsdisplay_accessops sfb_accessops = {
 };
 
 int  sfb_cnattach __P((tc_addr_t));
-int  sfbintr __P((void *));
-void sfbinit __P((struct fb_devconfig *));
+static int  sfbintr __P((void *));
+static void sfbinit __P((struct fb_devconfig *));
 
 static int  get_cmap __P((struct sfb_softc *, struct wsdisplay_cmap *));
 static int  set_cmap __P((struct sfb_softc *, struct wsdisplay_cmap *));
@@ -234,7 +234,7 @@ static void bt459_set_curpos __P((struct sfb_softc *));
  *   3 2 1 0 3 2 1 0		0 0 1 1 2 2 3 3
  *   7 6 5 4 7 6 5 4		4 4 5 5 6 6 7 7
  */
-const static u_int8_t shuffle[256] = {
+static const u_int8_t shuffle[256] = {
 	0x00, 0x40, 0x10, 0x50, 0x04, 0x44, 0x14, 0x54,
 	0x01, 0x41, 0x11, 0x51, 0x05, 0x45, 0x15, 0x55,
 	0x80, 0xc0, 0x90, 0xd0, 0x84, 0xc4, 0x94, 0xd4,
@@ -269,7 +269,7 @@ const static u_int8_t shuffle[256] = {
 	0xab, 0xeb, 0xbb, 0xfb, 0xaf, 0xef, 0xbf, 0xff,
 };
 
-int
+static int
 sfbmatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -282,7 +282,7 @@ sfbmatch(parent, match, aux)
 	return (1);
 }
 
-void
+static void
 sfb_getdevconfig(dense_addr, dc)
 	tc_addr_t dense_addr;
 	struct fb_devconfig *dc;
@@ -314,8 +314,6 @@ sfb_getdevconfig(dense_addr, dc)
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
 		*(u_int32_t *)(dc->dc_videobase + i) = 0x0;
 
-	*(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_VALID) = 1;
-
 	/* initialize the raster */
 	rap = &dc->dc_raster;
 	rap->width = dc->dc_wid;
@@ -337,7 +335,7 @@ sfb_getdevconfig(dense_addr, dc)
 	sfb_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
 }
 
-void
+static void
 sfbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -369,7 +367,7 @@ sfbattach(parent, self, aux)
 	sc->sc_cursor.cc_magic.x = HX_MAGIC_X;
 	sc->sc_cursor.cc_magic.y = HX_MAGIC_Y;
 
-        tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, sfbintr, sc);
+        tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, sfbintr, sc);
 
 	sfbasic = (caddr_t)(sc->sc_dc->dc_vaddr + SFB_ASIC_OFFSET);
 	*(u_int32_t *)(sfbasic + SFB_ASIC_CLEAR_INTR) = 0;
@@ -383,7 +381,7 @@ sfbattach(parent, self, aux)
 	config_found(self, &waa, wsemuldisplaydevprint);
 }
 
-int
+static int
 sfbioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
@@ -453,7 +451,7 @@ sfbioctl(v, cmd, data, flag, p)
 	return ENOTTY;
 }
 
-int
+static int
 sfbmmap(v, offset, prot)
 	void *v;
 	off_t offset;
@@ -466,7 +464,7 @@ sfbmmap(v, offset, prot)
 	return machine_btop(sc->sc_dc->dc_paddr + offset);
 }
 
-int
+static int
 sfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	void *v;
 	const struct wsscreen_descr *type;
@@ -489,7 +487,7 @@ sfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	return (0);
 }
 
-void
+static void
 sfb_free_screen(v, cookie)
 	void *v;
 	void *cookie;
@@ -502,14 +500,14 @@ sfb_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-void
+static void
 sfb_show_screen(v, cookie)
 	void *v;
 	void *cookie;
 {
 }
 
-int
+/* EXPORT */ int
 sfb_cnattach(addr)
         tc_addr_t addr;
 {
@@ -526,7 +524,7 @@ sfb_cnattach(addr)
         return(0);
 }
 
-int
+static int
 sfbintr(arg)
 	void *arg;
 {
@@ -611,7 +609,7 @@ sfbintr(arg)
 	return (1);
 }
 
-void
+static void
 sfbinit(dc)
 	struct fb_devconfig *dc;
 {
@@ -619,7 +617,6 @@ sfbinit(dc)
 	caddr_t vdac = (void *)(dc->dc_vaddr + SFB_RAMDAC_OFFSET);
 	int i;
 
-	*(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_VALID) = 0;
 	*(u_int32_t *)(sfbasic + SFB_ASIC_PLANEMASK) = ~0;
 	*(u_int32_t *)(sfbasic + SFB_ASIC_PIXELMASK) = ~0;
 	*(u_int32_t *)(sfbasic + SFB_ASIC_MODE) = 0; /* MODE_SIMPLE */
@@ -827,8 +824,7 @@ static void
 bt459_set_curpos(sc)
 	struct sfb_softc *sc;
 {
-	caddr_t sfbbase = (caddr_t)sc->sc_dc->dc_vaddr;
-	caddr_t vdac = (void *)(sfbbase + SFB_RAMDAC_OFFSET);
+	caddr_t vdac = (caddr_t)sc->sc_dc->dc_vaddr + SFB_RAMDAC_OFFSET;
 	int x, y, s;
 
 	x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
@@ -899,7 +895,7 @@ bt459_set_curpos(sc)
 /*
  * Paint (or unpaint) the cursor.
  */
-void
+static void
 sfb_cursor(id, on, row, col)
 	void *id;
 	int on, row, col;
@@ -972,7 +968,7 @@ WRITE_MB();
 /*
  * Actually write a string to the frame buffer.
  */
-int
+static int
 sfb_mapchar(id, uni, index)
 	void *id;
 	int uni;
@@ -989,7 +985,7 @@ sfb_mapchar(id, uni, index)
 /*
  * Actually write a string to the frame buffer.
  */
-void
+static void
 sfb_putchar(id, row, col, uc, attr)
 	void *id;
 	int row, col;
@@ -1062,7 +1058,7 @@ WRITE_MB();
 /*
  * Copy characters in a line.
  */
-void
+static void
 sfb_copycols(id, row, srccol, dstcol, ncols)
 	void *id;
 	int row, srccol, dstcol, ncols;
@@ -1216,7 +1212,7 @@ WRITE_MB();
 /*
  * Clear characters in a line.
  */
-void
+static void
 sfb_erasecols(id, row, startcol, ncols, attr)
 	void *id;
 	int row, startcol, ncols;
@@ -1281,7 +1277,7 @@ WRITE_MB();
 /*
  * Copy lines.
  */
-void
+static void
 sfb_copyrows(id, srcrow, dstrow, nrows)
 	void *id;
 	int srcrow, dstrow, nrows;
@@ -1398,7 +1394,7 @@ WRITE_MB();
 	SFBMODE(sfb, MODE_SIMPLE);
 }
 
-int
+static int
 sfb_alloc_attr(id, fg, bg, flags, attrp)
 	void *id;
 	int fg, bg, flags;
