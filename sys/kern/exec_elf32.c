@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.20 1996/11/11 20:33:10 jonathan Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.21 1996/11/23 11:46:34 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -413,7 +413,11 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 			/* If entry is within this section it must be text */
 			if (eh.e_entry >= ph[i].p_vaddr &&
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
-				*entry = addr + eh.e_entry - ph[i].p_vaddr;
+				/* XXX */
+				*entry = addr + eh.e_entry;
+#ifdef mips
+				*entry -= ph[i].p_vaddr;
+#endif
 				ap->arg_interp = addr;
 			}
 			addr += size;
@@ -619,8 +623,7 @@ ELFNAME2(exec,makecmds)(p, epp)
 	 * function, pick the same address that a non-fixed mmap(0, ..)
 	 * would (i.e. something safely out of the way).
 	 */
-	if (pos == ELFDEFNNAME(NO_ADDR) &&
-	    epp->ep_emul == &ELFNAMEEND(emul_netbsd))
+	if (pos == ELFDEFNNAME(NO_ADDR))
 		pos = round_page(epp->ep_daddr + MAXDSIZ);
 #endif	/* !ELF_INTERP_NON_RELOCATABLE */
 
