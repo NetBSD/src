@@ -1,5 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.1 2003/10/08 11:51:59 bouyer Exp $	*/
-
+/*	$NetBSD: pdcide.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -28,9 +27,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
-
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,21 +38,21 @@
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_pdc202xx_reg.h>
 
-void pdc202xx_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void pdc202xx_setup_channel __P((struct channel_softc*));
-void pdc20268_setup_channel __P((struct channel_softc*));
-int  pdc202xx_pci_intr __P((void *));
-int  pdc20265_pci_intr __P((void *));
-static void pdc20262_dma_start __P((void*, int, int));
-static int  pdc20262_dma_finish __P((void*, int, int, int));
+static void pdc202xx_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static void pdc202xx_setup_channel(struct channel_softc *);
+static void pdc20268_setup_channel(struct channel_softc *);
+static int  pdc202xx_pci_intr(void *);
+static int  pdc20265_pci_intr(void *);
+static void pdc20262_dma_start(void *, int, int);
+static int  pdc20262_dma_finish(void *, int, int, int);
 
-int	pdcide_match __P((struct device *, struct cfdata *, void *));
-void	pdcide_attach __P((struct device *, struct device *, void *));
+static int  pdcide_match(struct device *, struct cfdata *, void *);
+static void pdcide_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pdcide, sizeof(struct pciide_softc),
     pdcide_match, pdcide_attach, NULL, NULL);
 
-const struct pciide_product_desc pciide_promise_products[] =  {
+static const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_ULTRA33,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  "Promise Ultra33/ATA Bus Master IDE Accelerator",
@@ -123,11 +120,8 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	}
 };
 
-int
-pdcide_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+pdcide_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -138,10 +132,8 @@ pdcide_match(parent, match, aux)
 	return (0);
 }
 
-void
-pdcide_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+pdcide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -188,10 +180,8 @@ pdcide_attach(parent, self, aux)
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2v2 || \
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_FASTTRAK133LITE)
 
-void
-pdc202xx_chip_map(sc, pa)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
+static void
+pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;
@@ -335,9 +325,8 @@ pdc202xx_chip_map(sc, pa)
 	return;
 }
 
-void
-pdc202xx_setup_channel(chp)
-	struct channel_softc *chp;
+static void
+pdc202xx_setup_channel(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
@@ -452,9 +441,8 @@ pdc202xx_setup_channel(chp)
 	}
 }
 
-void
-pdc20268_setup_channel(chp)
-	struct channel_softc *chp;
+static void
+pdc20268_setup_channel(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
@@ -503,9 +491,8 @@ pdc20268_setup_channel(chp)
 	}
 }
 
-int
-pdc202xx_pci_intr(arg)
-	void *arg;
+static int
+pdc202xx_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
@@ -533,9 +520,8 @@ pdc202xx_pci_intr(arg)
 	return rv;
 }
 
-int
-pdc20265_pci_intr(arg)
-	void *arg;
+static int
+pdc20265_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
@@ -576,9 +562,7 @@ pdc20265_pci_intr(arg)
 }
 
 static void
-pdc20262_dma_start(v, channel, drive)
-	void *v;
-	int channel, drive;
+pdc20262_dma_start(void *v, int channel, int drive)
 {
 	struct pciide_softc *sc = v;
 	struct pciide_dma_maps *dma_maps =
@@ -596,11 +580,8 @@ pdc20262_dma_start(v, channel, drive)
 	pciide_dma_start(v, channel, drive);
 }
 
-int
-pdc20262_dma_finish(v, channel, drive, force)
-	void *v;
-	int channel, drive;
-	int force;
+static int
+pdc20262_dma_finish(void *v, int channel, int drive, int force)
 {
 	struct pciide_softc *sc = v;
 	struct pciide_dma_maps *dma_maps =

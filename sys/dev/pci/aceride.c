@@ -1,5 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.1 2003/10/08 11:51:59 bouyer Exp $	*/
-
+/*	$NetBSD: aceride.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -28,9 +27,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
-
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,17 +38,17 @@
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_acer_reg.h>
 
-void acer_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void acer_setup_channel __P((struct channel_softc*));
-int  acer_pci_intr __P((void *));
+static void acer_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void acer_setup_channel(struct channel_softc*);
+static int  acer_pci_intr(void *);
 
-int	aceride_match __P((struct device *, struct cfdata *, void *));
-void	aceride_attach __P((struct device *, struct device *, void *));
+static int  aceride_match(struct device *, struct cfdata *, void *);
+static void aceride_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(aceride, sizeof(struct pciide_softc),
     aceride_match, aceride_attach, NULL, NULL);
 
-const struct pciide_product_desc pciide_acer_products[] =  {
+static const struct pciide_product_desc pciide_acer_products[] =  {
 	{ PCI_PRODUCT_ALI_M5229,
 	  0,
 	  "Acer Labs M5229 UDMA IDE Controller",
@@ -64,11 +61,8 @@ const struct pciide_product_desc pciide_acer_products[] =  {
 	}
 };
 
-int
-aceride_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+aceride_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -79,10 +73,8 @@ aceride_match(parent, match, aux)
 	return (0);
 }
 
-void
-aceride_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+aceride_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -92,10 +84,8 @@ aceride_attach(parent, self, aux)
 
 }
 
-void
-acer_chip_map(sc, pa)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
+static void
+acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;
@@ -176,9 +166,8 @@ acer_chip_map(sc, pa)
 	}
 }
 
-void
-acer_setup_channel(chp)
-	struct channel_softc *chp;
+static void
+acer_setup_channel(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
@@ -272,9 +261,8 @@ pio:		pciide_pci_write(sc->sc_pc, sc->sc_tag,
 	}
 }
 
-int
-acer_pci_intr(arg)
-	void *arg;
+static int
+acer_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;

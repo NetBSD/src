@@ -1,5 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.1 2003/10/08 11:51:59 bouyer Exp $	*/
-
+/*	$NetBSD: hptide.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -28,9 +27,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
-
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,17 +38,17 @@
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_hpt_reg.h>
 
-void hpt_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void hpt_setup_channel __P((struct channel_softc*));
-int  hpt_pci_intr __P((void *));
+static void hpt_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void hpt_setup_channel(struct channel_softc*);
+static int  hpt_pci_intr(void *);
 
-int	hptide_match __P((struct device *, struct cfdata *, void *));
-void	hptide_attach __P((struct device *, struct device *, void *));
+static int  hptide_match(struct device *, struct cfdata *, void *);
+static void hptide_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(hptide, sizeof(struct pciide_softc),
     hptide_match, hptide_attach, NULL, NULL);
 
-const struct pciide_product_desc pciide_triones_products[] =  {
+static const struct pciide_product_desc pciide_triones_products[] =  {
 	{ PCI_PRODUCT_TRIONES_HPT366,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  NULL,
@@ -74,11 +71,8 @@ const struct pciide_product_desc pciide_triones_products[] =  {
 	}
 };
 
-int
-hptide_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+hptide_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -89,10 +83,8 @@ hptide_match(parent, match, aux)
 	return (0);
 }
 
-void
-hptide_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+hptide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -102,10 +94,8 @@ hptide_attach(parent, self, aux)
 
 }
 
-void
-hpt_chip_map(sc, pa)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
+static void
+hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int i, compatchan, revision;
@@ -247,9 +237,8 @@ hpt_chip_map(sc, pa)
 	return;
 }
 
-void
-hpt_setup_channel(chp)
-	struct channel_softc *chp;
+static void
+hpt_setup_channel(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
@@ -382,9 +371,8 @@ hpt_setup_channel(chp)
 	}
 }
 
-int
-hpt_pci_intr(arg)
-	void *arg;
+static int
+hpt_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
