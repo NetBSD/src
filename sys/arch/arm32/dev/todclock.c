@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.3 1998/02/21 03:19:02 mark Exp $	*/
+/*	$NetBSD: todclock.c,v 1.4 1998/04/19 03:54:24 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -67,8 +67,9 @@
 
 struct todclock_softc {
 	struct device	sc_dev;			/* device node */
-	int	(*sc_rtc_write)	__P((rtc_t *));	/* rtc write function */
-	int	(*sc_rtc_read)	__P((rtc_t *));	/* rtc read function */
+	void	*sc_rtc_arg;			/* arg to read/write */
+	int	(*sc_rtc_write)	__P((void *, rtc_t *));	/* rtc write function */
+	int	(*sc_rtc_read)	__P((void *, rtc_t *));	/* rtc read function */
 };
 
 /* prototypes for functions */
@@ -136,6 +137,7 @@ todclockattach(parent, self, aux)
 
 	/* set up our softc */
 	todclock_sc = sc;
+	todclock_sc->sc_rtc_arg = ta->ta_rtc_arg;
 	todclock_sc->sc_rtc_write = ta->ta_rtc_write;
 	todclock_sc->sc_rtc_read = ta->ta_rtc_read;
 
@@ -241,14 +243,12 @@ resettodr()
 	rtc.rtc_centi =
 	rtc.rtc_micro = 0;
 
-/*
 	printf("resettod: %d/%d/%d%d %d:%d:%d\n", rtc.rtc_day,
 	    rtc.rtc_mon, rtc.rtc_cen, rtc.rtc_year, rtc.rtc_hour,
 	    rtc.rtc_min, rtc.rtc_sec);
-*/
 
 	s = splclock();
-	todclock_sc->sc_rtc_write(&rtc);
+	todclock_sc->sc_rtc_write(todclock_sc->sc_rtc_arg, &rtc);
 	(void)splx(s);
 }
 
@@ -283,7 +283,7 @@ inittodr(base)
 	/* Can we read an RTC ? */
 	if (todclock_sc->sc_rtc_read) {
 		s = splclock();
-		if (todclock_sc->sc_rtc_read(&rtc) == 0) {
+		if (todclock_sc->sc_rtc_read(todclock_sc->sc_rtc_arg, &rtc) == 0) {
 			(void)splx(s);
 			return;
 		}
