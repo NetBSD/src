@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.534 2002/06/17 16:24:57 christos Exp $
+#	$NetBSD: files,v 1.535 2002/06/18 00:33:57 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1018,7 +1018,7 @@ file	kern/kern_exit.c
 file	kern/kern_fork.c
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c
-file	kern/kern_systrace.c
+file	kern/kern_systrace.c		systrace
 file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
 file	kern/kern_malloc.c
