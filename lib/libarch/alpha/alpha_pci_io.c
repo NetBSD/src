@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_pci_io.c,v 1.1 2000/02/26 18:59:36 thorpej Exp $	*/
+/*	$NetBSD: alpha_pci_io.c,v 1.2 2001/07/17 17:46:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,15 +54,12 @@
 struct alpha_bus_window *alpha_pci_io_windows;
 int alpha_pci_io_window_count;
 
-__inline struct alpha_bus_window *alpha_pci_io_findwindow __P((bus_addr_t));
-__inline u_int32_t *alpha_pci_io_swiz __P((bus_addr_t, int));
-
-u_int8_t	alpha_pci_io_swiz_inb __P((bus_addr_t));
-u_int16_t	alpha_pci_io_swiz_inw __P((bus_addr_t));
-u_int32_t	alpha_pci_io_swiz_inl __P((bus_addr_t));
-void		alpha_pci_io_swiz_outb __P((bus_addr_t, u_int8_t));
-void		alpha_pci_io_swiz_outw __P((bus_addr_t, u_int16_t));
-void		alpha_pci_io_swiz_outl __P((bus_addr_t, u_int32_t));
+uint8_t		alpha_pci_io_swiz_inb(bus_addr_t);
+uint16_t	alpha_pci_io_swiz_inw(bus_addr_t);
+uint32_t	alpha_pci_io_swiz_inl(bus_addr_t);
+void		alpha_pci_io_swiz_outb(bus_addr_t, uint8_t);
+void		alpha_pci_io_swiz_outw(bus_addr_t, uint16_t);
+void		alpha_pci_io_swiz_outl(bus_addr_t, uint32_t);
 
 const struct alpha_pci_io_ops alpha_pci_io_swiz_ops = {
 	alpha_pci_io_swiz_inb,
@@ -73,12 +70,12 @@ const struct alpha_pci_io_ops alpha_pci_io_swiz_ops = {
 	alpha_pci_io_swiz_outl,
 };
 
-u_int8_t	alpha_pci_io_bwx_inb __P((bus_addr_t));
-u_int16_t	alpha_pci_io_bwx_inw __P((bus_addr_t));
-u_int32_t	alpha_pci_io_bwx_inl __P((bus_addr_t));
-void		alpha_pci_io_bwx_outb __P((bus_addr_t, u_int8_t));
-void		alpha_pci_io_bwx_outw __P((bus_addr_t, u_int16_t));
-void		alpha_pci_io_bwx_outl __P((bus_addr_t, u_int32_t));
+uint8_t		alpha_pci_io_bwx_inb(bus_addr_t);
+uint16_t	alpha_pci_io_bwx_inw(bus_addr_t);
+uint32_t	alpha_pci_io_bwx_inl(bus_addr_t);
+void		alpha_pci_io_bwx_outb(bus_addr_t, uint8_t);
+void		alpha_pci_io_bwx_outw(bus_addr_t, uint16_t);
+void		alpha_pci_io_bwx_outl(bus_addr_t, uint32_t);
 
 const struct alpha_pci_io_ops alpha_pci_io_bwx_ops = {
 	alpha_pci_io_bwx_inb,
@@ -92,8 +89,7 @@ const struct alpha_pci_io_ops alpha_pci_io_bwx_ops = {
 const struct alpha_pci_io_ops *alpha_pci_io_switch;
 
 int
-alpha_pci_io_enable(onoff)
-	int onoff;
+alpha_pci_io_enable(int onoff)
 {
 	struct alpha_bus_window *abw;
 	int i, count;
@@ -133,9 +129,8 @@ alpha_pci_io_enable(onoff)
 	return (0);
 }
 
-__inline struct alpha_bus_window *
-alpha_pci_io_findwindow(ioaddr)
-	bus_addr_t ioaddr;
+static __inline struct alpha_bus_window *
+alpha_pci_io_findwindow(bus_addr_t ioaddr)
 {
 	struct alpha_bus_window *abw;
 	int i;
@@ -152,17 +147,17 @@ alpha_pci_io_findwindow(ioaddr)
 	warnx("alpha_pci_io_findwindow: no window for 0x%lx, ABORTING!",
 	    (u_long) ioaddr);
 	abort();
+	/* NOTREACHED */
 }
 
-__inline u_int32_t *
-alpha_pci_io_swiz(ioaddr, size)
-	bus_addr_t ioaddr;
-	int size;
+static __inline uint32_t *
+alpha_pci_io_swiz(bus_addr_t ioaddr, int size)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);
-	u_int32_t *port;
+	uint32_t *port;
 
-	port = (u_int32_t *) (abw->abw_addr +
+	/* LINTED */
+	port = (uint32_t *) (abw->abw_addr +
 	    (((ioaddr - abw->abw_abst.abst_bus_start) <<
 	      abw->abw_abst.abst_addr_shift) |
 	     (size << abw->abw_abst.abst_size_shift)));
@@ -170,35 +165,32 @@ alpha_pci_io_swiz(ioaddr, size)
 	return (port);
 }
 
-u_int8_t
-alpha_pci_io_swiz_inb(ioaddr)
-	bus_addr_t ioaddr;
+uint8_t
+alpha_pci_io_swiz_inb(bus_addr_t ioaddr)
 {
-	u_int32_t *port = alpha_pci_io_swiz(ioaddr, 0);
-	int offset = ioaddr & 3;
+	uint32_t *port = alpha_pci_io_swiz(ioaddr, 0);
+	bus_addr_t offset = ioaddr & 3;
 
 	alpha_mb();
 
 	return ((*port >> (8 * offset)) & 0xff);
 }
 
-u_int16_t
-alpha_pci_io_swiz_inw(ioaddr)
-	bus_addr_t ioaddr;
+uint16_t
+alpha_pci_io_swiz_inw(bus_addr_t ioaddr)
 {
-	u_int32_t *port = alpha_pci_io_swiz(ioaddr, 1);
-	int offset = ioaddr & 3;
+	uint32_t *port = alpha_pci_io_swiz(ioaddr, 1);
+	bus_addr_t offset = ioaddr & 3;
 
 	alpha_mb();
 
 	return ((*port >> (8 * offset)) & 0xffff);
 }
 
-u_int32_t
-alpha_pci_io_swiz_inl(ioaddr)
-	bus_addr_t ioaddr;
+uint32_t
+alpha_pci_io_swiz_inl(bus_addr_t ioaddr)
 {
-	u_int32_t *port = alpha_pci_io_swiz(ioaddr, 3);
+	uint32_t *port = alpha_pci_io_swiz(ioaddr, 3);
 
 	alpha_mb();
 
@@ -206,37 +198,31 @@ alpha_pci_io_swiz_inl(ioaddr)
 }
 
 void
-alpha_pci_io_swiz_outb(ioaddr, val)
-	bus_addr_t ioaddr;
-	u_int8_t val;
+alpha_pci_io_swiz_outb(bus_addr_t ioaddr, uint8_t val)
 {
-	u_int32_t *port = alpha_pci_io_swiz(ioaddr, 0);
-	int offset = ioaddr & 3;
-	u_int32_t nval = val << (8 * offset);
+	uint32_t *port = alpha_pci_io_swiz(ioaddr, 0);
+	bus_addr_t offset = ioaddr & 3;
+	uint32_t nval = ((uint32_t)val) << (8 * offset);
 
 	*port = nval;
 	alpha_mb();
 }
 
 void
-alpha_pci_io_swiz_outw(ioaddr, val)
-	bus_addr_t ioaddr;
-	u_int16_t val;
+alpha_pci_io_swiz_outw(bus_addr_t ioaddr, uint16_t val)
 {
-	u_int32_t *port = alpha_pci_io_swiz(ioaddr, 1);
-	int offset = ioaddr & 3;
-	u_int32_t nval = val << (8 * offset);
+	uint32_t *port = alpha_pci_io_swiz(ioaddr, 1);
+	bus_addr_t offset = ioaddr & 3;
+	uint32_t nval = ((uint32_t)val) << (8 * offset);
 
 	*port = nval;
 	alpha_mb();
 }
 
 void
-alpha_pci_io_swiz_outl(ioaddr, val)
-	bus_addr_t ioaddr;
-	u_int32_t val;
+alpha_pci_io_swiz_outl(bus_addr_t ioaddr, uint32_t val)
 {
-	u_int32_t *port = alpha_pci_io_swiz(ioaddr, 3);
+	uint32_t *port = alpha_pci_io_swiz(ioaddr, 3);
 
 	*port = val;
 	alpha_mb();
@@ -249,12 +235,11 @@ alpha_pci_io_swiz_outl(ioaddr, val)
  */
 __asm(".arch ev56");
 
-u_int8_t
-alpha_pci_io_bwx_inb(ioaddr)
-	bus_addr_t ioaddr;
+uint8_t
+alpha_pci_io_bwx_inb(bus_addr_t ioaddr)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);
-	u_int8_t *port = (u_int8_t *) (abw->abw_addr +
+	uint8_t *port = (uint8_t *) (abw->abw_addr +
 	    (ioaddr - abw->abw_abst.abst_bus_start));
 
 	alpha_mb();
@@ -262,12 +247,12 @@ alpha_pci_io_bwx_inb(ioaddr)
 	return (alpha_ldbu(port));
 }
 
-u_int16_t
-alpha_pci_io_bwx_inw(ioaddr)
-	bus_addr_t ioaddr;
+uint16_t
+alpha_pci_io_bwx_inw(bus_addr_t ioaddr)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);
-	u_int16_t *port = (u_int16_t *) (abw->abw_addr +
+	/* LINTED */
+	uint16_t *port = (uint16_t *) (abw->abw_addr +
 	    (ioaddr - abw->abw_abst.abst_bus_start));
 
 	alpha_mb();
@@ -275,12 +260,12 @@ alpha_pci_io_bwx_inw(ioaddr)
 	return (alpha_ldwu(port));
 }
 
-u_int32_t
-alpha_pci_io_bwx_inl(ioaddr)
-	bus_addr_t ioaddr;
+uint32_t
+alpha_pci_io_bwx_inl(bus_addr_t ioaddr)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);
-	u_int32_t *port = (u_int32_t *) (abw->abw_addr +
+	/* LINTED */
+	uint32_t *port = (uint32_t *) (abw->abw_addr +
 	    (ioaddr - abw->abw_abst.abst_bus_start));
 
 	alpha_mb();
@@ -289,12 +274,10 @@ alpha_pci_io_bwx_inl(ioaddr)
 }
 
 void
-alpha_pci_io_bwx_outb(ioaddr, val)
-	bus_addr_t ioaddr;
-	u_int8_t val;
+alpha_pci_io_bwx_outb(bus_addr_t ioaddr, uint8_t val)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);
-	u_int8_t *port = (u_int8_t *) (abw->abw_addr +
+	uint8_t *port = (uint8_t *) (abw->abw_addr +
 	    (ioaddr - abw->abw_abst.abst_bus_start));
 
 	alpha_stb(port, val);
@@ -302,12 +285,11 @@ alpha_pci_io_bwx_outb(ioaddr, val)
 }
 
 void
-alpha_pci_io_bwx_outw(ioaddr, val)
-	bus_addr_t ioaddr;
-	u_int16_t val;
+alpha_pci_io_bwx_outw(bus_addr_t ioaddr, uint16_t val)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);
-	u_int16_t *port = (u_int16_t *) (abw->abw_addr +
+	/* LINTED */
+	uint16_t *port = (uint16_t *) (abw->abw_addr +
 	    (ioaddr - abw->abw_abst.abst_bus_start));
 
 	alpha_stw(port, val);
@@ -315,12 +297,11 @@ alpha_pci_io_bwx_outw(ioaddr, val)
 }
 
 void
-alpha_pci_io_bwx_outl(ioaddr, val)
-	bus_addr_t ioaddr;
-	u_int32_t val;
+alpha_pci_io_bwx_outl(bus_addr_t ioaddr, uint32_t val)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);
-	u_int32_t *port = (u_int32_t *) (abw->abw_addr +
+	/* LINTED */
+	uint32_t *port = (uint32_t *) (abw->abw_addr +
 	    (ioaddr - abw->abw_abst.abst_bus_start));
 
 	*port = val;

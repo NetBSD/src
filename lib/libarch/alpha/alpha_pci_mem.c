@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_pci_mem.c,v 1.2 2000/06/30 18:19:28 simonb Exp $	*/
+/*	$NetBSD: alpha_pci_mem.c,v 1.3 2001/07/17 17:46:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,11 +57,8 @@ struct alpha_bus_window *alpha_pci_mem_windows;
 int alpha_pci_mem_window_count;
 
 void *
-alpha_pci_mem_map(memaddr, memsize, flags, rabst)
-	bus_addr_t memaddr;
-	bus_size_t memsize;
-	int flags;
-	struct alpha_bus_space_translation *rabst;
+alpha_pci_mem_map(bus_addr_t memaddr, bus_size_t memsize, int flags,
+    struct alpha_bus_space_translation *rabst)
 {
 	struct alpha_bus_window *abw;
 	void *addr;
@@ -124,10 +121,8 @@ alpha_pci_mem_map(memaddr, memsize, flags, rabst)
 }
 
 void
-alpha_pci_mem_unmap(abst, addr, size)
-	struct alpha_bus_space_translation *abst;
-	void *addr;
-	bus_size_t size;
+alpha_pci_mem_unmap(struct alpha_bus_space_translation *abst, void *addr,
+    bus_size_t size)
 {
 
 	(void) munmap(addr, size << abst->abst_addr_shift);
