@@ -1,4 +1,4 @@
-/*	$NetBSD: scnreg.h,v 1.9 1997/03/13 10:24:15 matthias Exp $	*/
+/*	$NetBSD: scnreg.h,v 1.10 2000/05/26 23:03:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	scnreg.h: definitions for 2681/2692/68881 duart
+ *	scnreg.h: definitions for 2681/2692/68681 duart
  */
 
 /*
