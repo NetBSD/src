@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.33 2004/08/07 01:06:38 mycroft Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.34 2004/08/07 01:52:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.33 2004/08/07 01:06:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.34 2004/08/07 01:52:42 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,11 +215,11 @@ pcmcia_scan_cis(dev, fct, arg)
 			/* two special-case tuples */
 
 			if (tuple.code == PCMCIA_CISTPL_NULL) {
-				DPRINTF(("CISTPL_NONE\n 00\n"));
+				DPRINTF((" 00\nCISTPL_NONE\n"));
 				tuple.ptr++;
 				continue;
 			} else if (tuple.code == PCMCIA_CISTPL_END) {
-				DPRINTF(("CISTPL_END\n ff\n"));
+				DPRINTF((" ff\nCISTPL_END\n"));
 			cis_end:
 				/* Call the function for the END tuple, since
 				   the CIS semantics depend on it */
@@ -232,9 +232,9 @@ pcmcia_scan_cis(dev, fct, arg)
 				tuple.ptr++;
 				break;
 			}
+
 			/* now all the normal tuples */
 
-			DELAY(1250);
 			tuple.length = pcmcia_cis_read_1(&tuple, tuple.ptr + 1);
 #ifdef PCMCIACISDEBUG
 			/* print the tuple */
@@ -289,9 +289,7 @@ pcmcia_scan_cis(dev, fct, arg)
 
 					*((u_int16_t *) & offset) =
 					    pcmcia_tuple_read_2(&tuple, 0);
-					DELAY(500);
 					length = pcmcia_tuple_read_2(&tuple, 2);
-					DELAY(500);
 					cksum = pcmcia_tuple_read_1(&tuple, 4);
 
 					addr = tuple.ptr + offset;
