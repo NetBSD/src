@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.57 2003/02/23 14:37:34 pk Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.58 2003/02/25 09:56:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.57 2003/02/23 14:37:34 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.58 2003/02/25 09:56:15 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -935,8 +935,9 @@ unp_internalize(control, p)
 	fdp = (int *)CMSG_DATA(cm);
 	for (i = 0; i < nfds; i++) {
 		fd = *fdp++;
-		if (fd_getfile(fdescp, fd) == NULL)
+		if ((fp = fd_getfile(fdescp, fd)) == NULL)
 			return (EBADF);
+		simple_unlock(&fp->f_slock);
 	}
 
 	/* Make sure we have room for the struct file pointers */
