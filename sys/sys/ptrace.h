@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ptrace.h	7.4 (Berkeley) 2/22/91
- *	$Id: ptrace.h,v 1.9 1994/01/09 23:58:45 cgd Exp $
+ *	$Id: ptrace.h,v 1.10 1994/01/20 21:23:18 ws Exp $
  */
 
 #ifndef _SYS_PTRACE_H_
@@ -63,7 +63,7 @@ int	process_read_regs __P((struct proc *p, struct reg *regs));
 #ifdef PT_SETREGS
 int	process_write_regs __P((struct proc *p, struct reg *regs));
 #endif
-int	process_sstep __P((struct proc *p));
+int	process_sstep __P((struct proc *p, int sstep));
 int	process_fix_sstep __P((struct proc *p));
 int	process_set_pc __P((struct proc *p, u_int addr));
 
@@ -71,9 +71,9 @@ int	process_set_pc __P((struct proc *p, u_int addr));
 
 /* do a single-stepping fixup, if needed */
 #define FIX_SSTEP(p) { \
-	if ((p)->p_stat & SSSTEP) { \
+	if ((p)->p_flag & SSSTEP) { \
 		process_fix_sstep(p); \
-		(p)->p_stat &= ~SSSTEP; \
+		(p)->p_flag &= ~SSSTEP; \
 	} \
 }        
 #else /* KERNEL */
