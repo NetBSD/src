@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.31 2004/09/09 04:55:53 thorpej Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.32 2004/11/10 02:38:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -234,6 +234,7 @@
 #define	MBR_PTYPE_APPLEUFS 	0xa8	/* Apple UFS */
 #define	MBR_PTYPE_NETBSD	0xa9	/* NetBSD partition type */
 #define	MBR_PTYPE_OPENBSD	0xa6	/* OpenBSD partition type */
+#define	MBR_PTYPE_SOLARIS	0xbf	/* Solaris partition type */
 #define	MBR_PTYPE_PMBR		0xee	/* GPT Protective MBR */
 #define	MBR_PTYPE_EFI		0xef	/* EFI system partition */
 
