@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.6 1999/07/03 12:30:41 simonb Exp $	*/
+/*	$NetBSD: options.c,v 1.7 2000/04/02 03:53:15 billc Exp $	*/
 
  /*
   * General skeleton for adding options to the access control language. The
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#) options.c 1.17 96/02/11 17:01:31";
 #else
-__RCSID("$NetBSD: options.c,v 1.6 1999/07/03 12:30:41 simonb Exp $");
+__RCSID("$NetBSD: options.c,v 1.7 2000/04/02 03:53:15 billc Exp $");
 #endif
 #endif
 
@@ -116,7 +116,7 @@ static void banners_option		/* execute "banners path" option */
 
 /* Structure of the options table. */
 
-struct option {
+struct libwrap_option {
     char   *name;			/* keyword name, case is ignored */
     void  (*func)			/* function that does the real work */
 		__P((char *, struct request_info *));
@@ -136,7 +136,7 @@ struct option {
 
 /* List of known keywords. Add yours here. */
 
-static struct option option_table[] = {
+static struct libwrap_option option_table[] = {
     { "user", user_option, NEED_ARG },
     { "group", group_option, NEED_ARG },
     { "umask", umask_option, NEED_ARG },
@@ -164,7 +164,7 @@ struct request_info *request;
     char   *value;
     char   *curr_opt;
     char   *next_opt;
-    struct option *op;
+    struct libwrap_option *op;
     char    bf[BUFSIZ];
 
     for (curr_opt = get_field(options); curr_opt; curr_opt = next_opt) {
