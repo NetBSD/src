@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.21 1993/12/17 00:11:46 mycroft Exp $
+ *	$Id: icu.s,v 1.22 1994/02/01 01:53:39 deraadt Exp $
  */
 
 /*
@@ -205,10 +205,11 @@ test_clock:
 	btrl	$SIR_CLOCK,_sir
 	jnc	test_ast
 	FASTSPL_VARMASK(_astmask)
-	pushl   $0	# XXX previous cpl (probably not used)
-	pushl   $0x7f	# XXX dummy unit number
+	pushl   $0		# XXX previous cpl (probably not used)
+	pushl   $0x7f		# XXX dummy unit number
+	pushl	%esp
 	call	_softclock
-	addl	$8,%esp	# XXX discard dummies
+	addl	$12,%esp	# XXX discard dummies
 	FASTSPL($0)
 test_ast:
 	btrl	$SIR_AST,_sir		# signal handling, rescheduling, ...
