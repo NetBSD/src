@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.10 2003/11/02 02:05:15 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.11 2003/11/02 02:14:33 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.10 2003/11/02 02:05:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.11 2003/11/02 02:14:33 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2460,7 +2460,7 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 	}
 
-	if (ostate == IEEE80211_S_SCAN && nstate != IEEE80211_S_SCAN)
+	if (nstate != IEEE80211_S_SCAN)
 		callout_stop(&sc->sc_scan_ch);
 
 	if (nstate == IEEE80211_S_RUN &&
