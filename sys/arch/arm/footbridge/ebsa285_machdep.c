@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.14 2001/03/04 19:05:57 matt Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -66,9 +66,9 @@
 #include <machine/pte.h>
 #include <machine/undefined.h>
 
-#include <arm32/footbridge/cyclone_boot.h>
-#include <arm32/footbridge/dc21285mem.h>
-#include <arm32/footbridge/dc21285reg.h>
+#include <arm/footbridge/cyclone_boot.h>
+#include <arm/footbridge/dc21285mem.h>
+#include <arm/footbridge/dc21285reg.h>
 
 #include "opt_ipkdb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.7 2001/04/20 16:52:04 matt Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.1 2001/06/09 10:29:13 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -50,8 +50,8 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#include <arm32/footbridge/dc21285reg.h>
-#include <arm32/footbridge/dc21285mem.h>
+#include <arm/footbridge/dc21285reg.h>
+#include <arm/footbridge/dc21285mem.h>
 
 #include "isa.h"
 #if NISA > 0
