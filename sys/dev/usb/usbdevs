@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.359 2003/12/28 17:11:14 augustss Exp $
+$NetBSD: usbdevs,v 1.360 2003/12/31 14:33:20 hamajima Exp $
 
 /*
  * Copyright (c) 1998-2003 The NetBSD Foundation, Inc.
@@ -1001,6 +1001,8 @@ product LOGITECH QUICKCAMEXP	0x0840	QuickCam Express
 product LOGITECH QUICKCAM	0x0850	QuickCam
 product LOGITECH QUICKCAMEXP2	0x0870	QuickCam Express
 product LOGITECH QUICKCAMPRO3k	0x08b0	QuickCam Pro 3000
+product LOGITECH QUICKCAMPRONB	0x08b1	QuickCam for Notebook Pro
+product LOGITECH QUICKCAMPRO4K	0x08b2	QuickCam Pro 4000
 product LOGITECH N43		0xc000	N43
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
