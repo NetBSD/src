@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.25 2003/08/07 16:30:37 agc Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.26 2003/11/19 15:48:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.25 2003/08/07 16:30:37 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.26 2003/11/19 15:48:21 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.25 2003/08/07 16:30:37 agc Exp
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_exec.c,v 1.10 2003/08/08 18:57:01 christos Exp $	*/
+/*	$NetBSD: compat_exec.c,v 1.11 2003/11/19 15:48:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,12 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.10 2003/08/08 18:57:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.11 2003/11/19 15:48:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>

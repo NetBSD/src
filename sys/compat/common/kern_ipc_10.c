@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.16 2003/01/18 07:28:34 thorpej Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.17 2003/11/19 15:48:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.16 2003/01/18 07:28:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.17 2003/11/19 15:48:21 christos Exp $");
 
 #include "opt_sysv.h"
 
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.16 2003/01/18 07:28:34 thorpej Exp
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/sem.h>
-#include <sys/malloc.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
