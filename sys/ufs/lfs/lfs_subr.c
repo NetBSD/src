@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.43 2003/08/07 16:34:38 agc Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.44 2003/09/07 11:44:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.43 2003/08/07 16:34:38 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.44 2003/09/07 11:44:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,11 +473,8 @@ lfs_segunlock(struct lfs *fs)
 		 * At the moment, the user's process hangs around so we can
 		 * sleep.
 		 */
-		if (--fs->lfs_iocount == 0) {
-			lfs_countlocked(&locked_queue_count,
-					&locked_queue_bytes, "lfs_segunlock");
-			wakeup(&locked_queue_count);
-		}
+		if (--fs->lfs_iocount == 0)
+			LFS_DEBUG_COUNTLOCKED("lfs_segunlock");
 		if (fs->lfs_iocount <= 1)
 			wakeup(&fs->lfs_iocount);
 		/*
