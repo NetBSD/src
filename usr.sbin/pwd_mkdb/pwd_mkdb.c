@@ -32,15 +32,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";*/
-static char *rcsid = "$Id: pwd_mkdb.c,v 1.9 1996/11/24 21:13:27 thorpej Exp $";
+#if 0
+static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
+#else
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.10 1997/10/17 12:18:22 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -83,6 +86,7 @@ static char prefix[MAXPATHLEN];
 
 void	cleanup __P((void));
 void	error __P((char *));
+int	main __P((int, char **));
 void	mv __P((char *, char *));
 int	scan __P((FILE *, struct passwd *, int *));
 void	usage __P((void));
@@ -102,9 +106,10 @@ main(argc, argv)
 	int hasyp = 0;
 	DBT ypdata, ypkey;
 
+	oldfp = NULL;
 	strcpy(prefix, "/");
 	makeold = 0;
-	while ((ch = getopt(argc, argv, "d:pv")) != EOF)
+	while ((ch = getopt(argc, argv, "d:pv")) != -1)
 		switch(ch) {
 		case 'd':
 			strncpy(prefix, optarg, sizeof(prefix));
