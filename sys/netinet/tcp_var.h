@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.98 2003/06/23 11:02:16 martin Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.99 2003/06/26 17:32:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -625,13 +625,6 @@ struct	tcpstat {
 	{ "init_win_local", CTLTYPE_INT }, \
 	{ "ident", CTLTYPE_STRUCT }, \
 }
-
-struct sysctl_tcp_ident_args {
-	struct in_addr raddr;
-	u_int rport;
-	struct in_addr laddr;
-	u_int lport;
-};
 
 #ifdef _KERNEL
 extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
