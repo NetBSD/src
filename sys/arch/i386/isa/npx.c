@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.39 1995/05/03 23:09:37 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.40 1995/05/04 00:00:25 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -470,12 +470,6 @@ npxintr(arg)
  * This routine is always called at spl0.  If it might called with the NPX
  * interrupt masked, it would be necessary to forcibly unmask the NPX interrupt
  * so that it could succeed.
- *
- * The FNSAVE instruction clears the FPU state.  Rather than reloading the FPU
- * immediately, we clear npxproc and turn on CR0_TS to force a DNA and a reload
- * of the FPU state the next time we try to use it.  Since this routine is only
- * called when forking, so this algorithm at worst forces us to trap once per
- * fork(), and at best saves us a reload once per fork().
  */
 static inline void
 npxsave1()
@@ -543,6 +537,15 @@ npxdna()
 	return (1);
 }
 
+/*
+ * Save npxproc's FPU state.
+ *
+ * The FNSAVE instruction clears the FPU state.  Rather than reloading the FPU
+ * immediately, we clear npxproc and turn on CR0_TS to force a DNA and a reload
+ * of the FPU state the next time we try to use it.  This routine is only
+ * called when forking or core dump, so this algorithm at worst forces us to
+ * trap once per fork(), and at best saves us a reload once per fork().
+ */
 void
 npxsave()
 {
