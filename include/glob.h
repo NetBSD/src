@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.8 1997/11/04 23:36:22 thorpej Exp $	*/
+/*	$NetBSD: glob.h,v 1.9 1998/03/31 20:32:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -88,7 +88,7 @@ typedef struct {
 #endif
 
 #define	GLOB_NOSPACE	(-1)	/* Malloc call failed. */
-#define	GLOB_ABEND	(-2)	/* Unignored error. */
+#define	GLOB_ABORTED	(-2)	/* Unignored error. */
 
 __BEGIN_DECLS
 #ifdef __LIBC12_SOURCE__
