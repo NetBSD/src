@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.19 1996/05/19 16:25:29 ragge Exp $
+#       $NetBSD: files.vax,v 1.20 1996/07/01 21:07:26 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -13,12 +13,14 @@ attach	backplane at root
 
 device	sbi { tr=-1 }
 attach	sbi at backplane
+
 device	bi { node=-1 }
 attach	bi at backplane
 
 device	cpu
 attach	cpu at backplane with cpu_backplane
 attach	cpu at bi with cpu_bi
+
 device	mem
 attach	mem at backplane with mem_backplane
 attach	mem at bi with mem_bi
@@ -40,29 +42,26 @@ device	ht
 attach	ht at mba
 file	arch/vax/mba/ht.c		ht needs-flag
 
+# MSCP device drivers
+include "../mscp/files.mscp"
+major	{ra = 9}
+major	{mt = 16}
+
 device	uba { csr }
 attach	uba at sbi, bi
 file	arch/vax/uba/uba.c		uba
 
-device	uda { drive=-1 }
+device	uda: mscp
 attach	uda at uba
-file    arch/vax/uba/uda.c		uda needs-count
+file    arch/vax/uba/uda.c		uda
+
+device	mtc: mscp
+attach	mtc at uba
+file	arch/vax/uba/mtc.c		mtc
 
 device	de:ifnet, ether
 attach	de at uba
 file	arch/vax/if/if_de.c		de
-
-device	ra: disk
-attach	ra at uda	
-file	arch/vax/vax/mscp.c		ra needs-count
-major	{ra = 9}
-
-# TK50/TU81 at UBA
-device	tmscp {drive = -1}
-attach	tmscp at uba
-device	tms
-attach	tms at tmscp
-file	arch/vax/uba/tmscp.c		tmscp needs-count
 
 # DEQNA/DELQA used on Qbus
 device	qe:ifnet, ether
@@ -88,6 +87,11 @@ file	arch/vax/uba/dz.c		dz needs-count
 # They are just included here to make some files happy ;)
 #
 
+# KDB50 on BI
+device	kdb: mscp
+attach	kdb at bi
+file	arch/vax/bi/kdb.c		kdb
+
 # Ikonas framebuffer
 device	ik
 attach	ik at uba
@@ -111,12 +115,6 @@ file	arch/vax/uba/tm.c		te needs-count
 device	mu
 attach	mu at mba
 file	arch/vax/mba/mt.c		mu needs-count
-
-# KDB50 on BI
-device	kdb { drive=-1 }
-attach	kdb at bi
-file	arch/vax/bi/kdb.c		kdb needs-count
-
 
 # DMF32 on UBA
 device	dmf

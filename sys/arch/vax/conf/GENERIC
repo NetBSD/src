@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.13 1996/05/19 16:25:23 ragge Exp $
+#	$NetBSD: GENERIC,v 1.14 1996/07/01 21:07:29 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -79,26 +79,24 @@ mba*		at sbi? tr?	# Massbus adapters
 hp*		at mba? drive?	# RM/RP disk drives
 
 # Disk controllers at Unibus
-uda0		at uba?	csr 0172150
-ra0		at uda0 drive 0
-ra1		at uda0 drive 1
-ra2		at uda0 drive 2
-ra3		at uda0 drive 3
-
+uda0		at uba?	csr 0172150	# UDA50/RQDX?
 uda1		at uba?	csr 0160334
-ra4		at uda1 drive 0
-ra5		at uda1 drive 1
-ra6		at uda1 drive 2
-ra7		at uda1 drive 3
+mscpbus*	at uda?
+
+# Tape drivers
+#mtc0		at uba? csr 0174500	# TMSCP ctlr
+#mscpbus*	at mtc?
+
+# MSCP devices
+ra*		at mscpbus? drive?	# MSCP disk
+#mt*		at mscpbus? drive?	# MSCP tape
+
+# Unibus tapes
+#ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 
 # Ethernet cards
 de0		at uba? csr 0174510	# DELUA/DEUNA
 qe0		at uba? csr 0174440	# DEQNA/DELQA
-
-# Tape drivers
-tmscp0		at uba? csr 0174500	# TMSCP ctlr
-tms0		at tmscp0 drive ?	# TMSCP tape
-ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 
 # Terminal lines
 dhu0		at uba? csr 0160440	# DHU-11
@@ -106,7 +104,7 @@ dz0		at uba? csr 0160100	# DZ-11
 
 pseudo-device   loop	1
 pseudo-device   pty	48
-pseudo-device	bpfilter 8
+pseudo-device	bpfilter 8	# Not supported by de or qe yet.
 pseudo-device	sl	2
 pseudo-device	ppp	2
 pseudo-device	tun	2
