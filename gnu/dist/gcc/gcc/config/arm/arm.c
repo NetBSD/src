@@ -262,6 +262,9 @@ int arm_fast_multiply = 0;
 /* Nonzero if this chip supports the ARM Architecture 4 extensions.  */
 int arm_arch4 = 0;
 
+/* Nonzero if this chip supports the ARM Architecture 4t extensions.  */
+int arm_arch4t = 0;
+
 /* Nonzero if this chip supports the ARM Architecture 5 extensions.  */
 int arm_arch5 = 0;
 
@@ -682,6 +685,7 @@ arm_override_options ()
   /* Initialize boolean versions of the flags, for use in the arm.md file.  */
   arm_fast_multiply = (insn_flags & FL_FAST_MULT) != 0;
   arm_arch4         = (insn_flags & FL_ARCH4) != 0;
+  arm_arch4t	    = arm_arch4 & ((insn_flags & FL_THUMB) != 0);
   arm_arch5         = (insn_flags & FL_ARCH5) != 0;
   arm_arch5e        = (insn_flags & FL_ARCH5E) != 0;
   arm_is_xscale     = (insn_flags & FL_XSCALE) != 0;
@@ -691,6 +695,11 @@ arm_override_options ()
   thumb_code	    = (TARGET_ARM == 0);
   arm_is_6_or_7     = (((tune_flags & (FL_MODE26 | FL_MODE32))
 		       && !(tune_flags & FL_ARCH4))) != 0;
+
+  /* V5 code we generate is completely interworking capable, so we turn off
+     TARGET_INTERWORK here to avoid many tests later on.  */
+  if (arm_arch5)
+    target_flags &= ~ARM_FLAG_INTERWORK;
 
   /* Default value for floating point code... if no co-processor
      bus, then schedule for emulated floating point.  Otherwise,
@@ -6411,8 +6420,10 @@ const char *
 output_call (operands)
      rtx * operands;
 {
-  /* Handle calls to lr using ip (which may be clobbered in subr anyway).  */
+  if (arm_arch5)
+    abort ();		/* Patterns should call blx <reg> directly.  */
 
+  /* Handle calls to lr using ip (which may be clobbered in subr anyway).  */
   if (REGNO (operands[0]) == LR_REGNUM)
     {
       operands[0] = gen_rtx_REG (SImode, IP_REGNUM);
@@ -6421,7 +6432,7 @@ output_call (operands)
   
   output_asm_insn ("mov%?\t%|lr, %|pc", operands);
   
-  if (TARGET_INTERWORK)
+  if (TARGET_INTERWORK || arm_arch4t)
     output_asm_insn ("bx%?\t%0", operands);
   else
     output_asm_insn ("mov%?\t%|pc, %0", operands);
@@ -6435,7 +6446,7 @@ const char *
 output_call_mem (operands)
      rtx * operands;
 {
-  if (TARGET_INTERWORK)
+  if (TARGET_INTERWORK && !arm_arch5)
     {
       output_asm_insn ("ldr%?\t%|ip, %0", operands);
       output_asm_insn ("mov%?\t%|lr, %|pc", operands);
@@ -6447,8 +6458,16 @@ output_call_mem (operands)
 	 first instruction.  It's safe to use IP as the target of the
 	 load since the call will kill it anyway.  */
       output_asm_insn ("ldr%?\t%|ip, %0", operands);
-      output_asm_insn ("mov%?\t%|lr, %|pc", operands);
-      output_asm_insn ("mov%?\t%|pc, %|ip", operands);
+      if (arm_arch5)
+	output_asm_insn ("blx%?%|ip", operands);
+      else
+	{
+	  output_asm_insn ("mov%?\t%|lr, %|pc", operands);
+	  if (arm_arch4t)
+	    output_asm_insn ("bx%?\t%|ip", operands);
+	  else
+	    output_asm_insn ("mov%?\t%|pc, %|ip", operands);
+	}
     }
   else
     {
@@ -7431,7 +7450,7 @@ output_return_instruction (operand, really_return, reverse)
 	default:
 	  /* ARMv5 implementations always provide BX, so interworking
 	     is the default unless APCS-26 is in use.  */
-	  if ((insn_flags & FL_ARCH5) != 0 && TARGET_APCS_32)
+	  if ((arm_arch5 || arm_arch4t) && TARGET_APCS_32)
 	    sprintf (instr, "bx%s\t%%|lr", conditional);	    
 	  else
 	    sprintf (instr, "mov%s%s\t%%|pc, %%|lr",
@@ -7831,6 +7850,8 @@ arm_output_epilogue (really_return)
 	/* Similarly we may have been able to load LR into the PC
 	   even if we did not create a stack frame.  */
 	;
+      else if (TARGET_APCS_32 && (arm_arch5 || arm_arch4t))
+	asm_fprintf (f, "\tbx\t%r\n", LR_REGNUM);
       else if (TARGET_APCS_32)
 	asm_fprintf (f, "\tmov\t%r, %r\n", PC_REGNUM, LR_REGNUM);
       else
@@ -9169,6 +9190,16 @@ arm_final_prescan_insn (insn)
 	      break;
 
 	    case CALL_INSN:
+	      /* The AAPCS says that conditional calls should not be
+		 used since they make interworking inefficient (the
+		 linker can't transform BL<cond> into BLX).  That's
+		 only a problem if the machine has BLX.  */
+	      if (arm_arch5)
+		{
+		  fail = TRUE;
+		  break;
+		}
+
 	      /* If using 32-bit addresses the cc is not preserved over
 		 calls.  */
 	      if (TARGET_APCS_32)
