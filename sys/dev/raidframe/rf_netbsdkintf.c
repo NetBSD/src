@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.138 2002/09/23 03:28:41 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.139 2002/09/23 03:31:51 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.138 2002/09/23 03:28:41 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.139 2002/09/23 03:31:51 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2513,14 +2513,11 @@ rf_UnconfigureVnodes(raidPtr)
 	RF_Raid_t *raidPtr;
 {
 	int r,c; 
-	struct proc *p;
 	struct vnode *vp;
 	int acd;
 
 
 	/* We take this opportunity to close the vnodes like we should.. */
-
-	p = raidPtr->engine_thread;
 
 	for (r = 0; r < raidPtr->numRow; r++) {
 		for (c = 0; c < raidPtr->numCol; c++) {
