@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.52 2002/01/17 12:31:37 tron Exp $
+#	$NetBSD: services,v 1.53 2002/04/30 13:10:43 martti Exp $
 #
 # Network services, Internet style
 #
@@ -60,6 +60,7 @@ hostnames	101/tcp		hostname	# usually from sri-nic
 iso-tsap	102/tcp		tsap		# part of ISODE.
 csnet-ns	105/tcp		cso-ns	# also used by CSO name server
 csnet-ns	105/udp		cso-ns
+poppass		106/tcp		poppassd
 rtelnet		107/tcp		# Remote Telnet
 rtelnet		107/udp
 pop2		109/tcp		postoffice	# POP version 2
