@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.44 2001/04/25 17:53:39 bouyer Exp $	*/
+/*	$NetBSD: ch.c,v 1.45 2001/05/14 20:35:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1140,9 +1140,8 @@ ch_get_params(sc, scsiflags)
 	struct ch_softc *sc;
 	int scsiflags;
 {
-	struct scsi_mode_sense cmd;
 	struct scsi_mode_sense_data {
-		struct scsi_mode_header header;
+		struct scsipi_mode_header header;
 		union {
 			struct page_element_address_assignment ea;
 			struct page_transport_geometry_parameters tg;
@@ -1155,16 +1154,10 @@ ch_get_params(sc, scsiflags)
 	/*
 	 * Grab info from the element address assignment page.
 	 */
-	bzero(&cmd, sizeof(cmd));
 	bzero(&sense_data, sizeof(sense_data));
-	cmd.opcode = SCSI_MODE_SENSE;
-	cmd.byte2 |= 0x08;	/* disable block descriptors */
-	cmd.page = 0x1d;
-	cmd.length = (sizeof(sense_data) & 0xff);
-	error = scsipi_command(sc->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
-	    sizeof(sense_data), CHRETRIES, 6000, NULL,
-	    scsiflags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
+	error = scsipi_mode_sense(sc->sc_periph, SMS_DBD, 0x1d,
+	    &sense_data.header, sizeof(sense_data),
+	    scsiflags | XS_CTL_DATA_ONSTACK, CHRETRIES, 6000);
 	if (error) {
 		printf("%s: could not sense element address page\n",
 		    sc->sc_dev.dv_xname);
@@ -1185,19 +1178,13 @@ ch_get_params(sc, scsiflags)
 	/*
 	 * Grab info from the capabilities page.
 	 */
-	bzero(&cmd, sizeof(cmd));
 	bzero(&sense_data, sizeof(sense_data));
-	cmd.opcode = SCSI_MODE_SENSE;
 	/*
 	 * XXX: Note: not all changers can deal with disabled block descriptors
 	 */
-	cmd.byte2 = 0x08;	/* disable block descriptors */
-	cmd.page = 0x1f;
-	cmd.length = (sizeof(sense_data) & 0xff);
-	error = scsipi_command(sc->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
-	    sizeof(sense_data), CHRETRIES, 6000, NULL,
-	    scsiflags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
+	error = scsipi_mode_sense(sc->sc_periph, SMS_DBD, 0x1f,
+	    &sense_data.header, sizeof(sense_data),
+	    scsiflags | XS_CTL_DATA_ONSTACK, CHRETRIES, 6000);
 	if (error) {
 		printf("%s: could not sense capabilities page\n",
 		    sc->sc_dev.dv_xname);
