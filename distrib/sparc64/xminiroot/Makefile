@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/08/23 17:14:40 eeh Exp $
+#	$NetBSD: Makefile,v 1.5 2001/08/23 17:19:49 mrg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -130,7 +130,6 @@ release: $(IMAGE) netbsd.INSTALL
 	gzip -c -9 < $(.OBJDIR)/miniroot.fs \
 		> $(RELEASEDIR)/installation/miniroot/miniroot.fs.gz
 	@mkdir -p $(RELEASEDIR)/binary/kernels
-	cp netbsd.INSTALL $(RELEASEDIR)/binary/kernels
 .endif	# RELEASEDIR check
 
 .include <bsd.own.mk>
