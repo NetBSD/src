@@ -6,13 +6,13 @@
 int
 getchar()
 {
-	return ( (*romp->getChar)() );
+	return ( (*romVectorPtr->getChar)() );
 }
 
 int
 peekchar()
 {
-	return ( (*romp->mayGet)() );
+	return ( (*romVectorPtr->mayGet)() );
 }
 
 void
@@ -20,7 +20,7 @@ putchar(c)
 	int c;
 {
 	if (c == '\n')
-		(*romp->putChar)('\r');
-	(*romp->putChar)(c);
+		(*romVectorPtr->putChar)('\r');
+	(*romVectorPtr->putChar)(c);
 }
 

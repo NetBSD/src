@@ -21,17 +21,17 @@ int debug = 0;
 void
 prom_get_boot_info()
 {
-	MachMonBootParam *bpp;
+	struct bootparam *bp;
 	char	c, *src, *dst;
 
 #ifdef	DEBUG
 	printf("prom_get_boot_info\n");
 #endif
 
-	bpp = *romp->bootParam;
+	bp = *romVectorPtr->bootParam;
 
 	/* Get device and file names. */
-	src = bpp->argPtr[0];
+	src = bp->argPtr[0];
 	dst = prom_bootdev;
 	*dst++ = *src++;
 	*dst++ = *src++;
@@ -47,7 +47,7 @@ prom_get_boot_info()
 	prom_bootfile = src;
 
 	/* Get boothowto flags. */
-	src = bpp->argPtr[1];
+	src = bp->argPtr[1];
 	if (src && (*src == '-')) {
 		while (*src) {
 			switch (*src++) {

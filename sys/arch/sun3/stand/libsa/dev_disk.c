@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_disk.c,v 1.4 1996/04/10 18:31:14 gwr Exp $ */
+/*	$NetBSD: dev_disk.c,v 1.5 1997/02/05 17:39:24 gwr Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -75,7 +75,7 @@ disk_open(f, devname)
 		 * Setup our part of the saioreq.
 		 * (determines what gets opened)
 		 */
-		bp = *romp->bootParam;
+		bp = *romVectorPtr->bootParam;
 		si->si_boottab = bp->bootDevice;
 		si->si_ctlr = bp->ctlrNum;
 		si->si_unit = bp->unitNum;
