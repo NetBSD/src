@@ -1,4 +1,4 @@
-/*	$NetBSD: sscanf.c,v 1.12 2001/12/07 11:47:44 yamt Exp $	*/
+/*	$NetBSD: sscanf.c,v 1.13 2002/05/26 14:44:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,19 +41,16 @@
 #if 0
 static char sccsid[] = "@(#)sscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sscanf.c,v 1.12 2001/12/07 11:47:44 yamt Exp $");
+__RCSID("$NetBSD: sscanf.c,v 1.13 2002/05/26 14:44:00 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
+
 #include "local.h"
 
 static int eofread __P((void *, char *, int));
@@ -70,14 +67,7 @@ eofread(cookie, buf, len)
 }
 
 int
-#if __STDC__
 sscanf(const char *str, char const *fmt, ...)
-#else
-sscanf(str, fmt, va_alist)
-	const char *str;
-	char *fmt;
-	va_dcl
-#endif
 {
 	int ret;
 	va_list ap;
@@ -95,11 +85,7 @@ sscanf(str, fmt, va_alist)
 	f._read = eofread;
 	_UB(&f)._base = NULL;
 	f._lb._base = NULL;
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = __svfscanf(&f, fmt, ap);
 	va_end(ap);
 	return (ret);
