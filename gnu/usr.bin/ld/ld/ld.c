@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
+/*	$NetBSD: ld.c,v 1.53 1998/07/25 11:58:49 ross Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -662,6 +662,11 @@ decode_option(swt, arg)
 	if (!strcmp(swt + 1, "assert"))
 		return;
 #ifdef GNU_BINUTIL_COMPAT
+	if (strcmp(swt + 1, "-export-dynamic") == 0) {
+		if (warn_forwards_compatible_inexact)
+			warnx("%s ignored", swt + 1);
+		return;
+	}
 	if (strcmp(swt + 1, "-whole-archive") == 0) {
 		/* XXX incomplete emulation */
 		link_mode |= FORCEARCHIVE;
