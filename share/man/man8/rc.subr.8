@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.subr.8,v 1.12 2004/01/06 00:52:24 lukem Exp $
+.\" 	$NetBSD: rc.subr.8,v 1.13 2004/04/02 13:13:48 jmmv Exp $
 .\"
 .\" Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 6, 2004
+.Dd April 2, 2004
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -171,6 +171,13 @@ Otherwise, warn that
 .Ar var
 is not set correctly.
 The values are case insensitive.
+.Pp
+Note that the warning message shown by this function when
+.Ar var
+is not set references a manual page where the user can find more information.
+Its name is picked up from the
+.Sy rcvar_manpage
+variable.
 .It Xo
 .Ic check_pidfile
 .Ar pidfile
@@ -347,6 +354,14 @@ The value of
 is checked with
 .Ic checkyesno
 to determine if this method should be run.
+.It Sy rcvar_manpage
+The manual page where the user can look at for information about
+.Sy rcvar .
+It will be part of the warning message shown when
+.Sy rcvar
+is undefined.
+Defaults to
+.Xr rc.conf 5 .
 .It Sy command
 Full path to the command.
 Not required if

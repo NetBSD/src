@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.58 2004/03/29 02:17:26 mrg Exp $
+#	$NetBSD: daily,v 1.59 2004/04/02 13:13:47 jmmv Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -13,6 +13,7 @@ fi
 
 host=`hostname`
 date=`date`
+rcvar_manpage='daily.conf(5)'
 
 echo "To: ${MAILTO:-root}"
 echo "Subject: $host daily output for $date"
