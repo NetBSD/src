@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.24 2003/08/07 16:42:38 agc Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.25 2004/01/02 21:49:35 itojun Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -212,7 +212,7 @@ _FUNCNAME(mbtowc_priv)(_ENCODING_INFO * __restrict ei,
 		*nresult = -1;
 		return (err);
 	}
-	if (nr==(size_t)-2) {
+	if (nr == (size_t)-2) {
 		*psenc = state;
 		*nresult = -1;
 		return (EILSEQ);

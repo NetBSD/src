@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_pivot_factory.c,v 1.3 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: citrus_pivot_factory.c,v 1.4 2004/01/02 21:49:35 itojun Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_pivot_factory.c,v 1.3 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: citrus_pivot_factory.c,v 1.4 2004/01/02 21:49:35 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -97,7 +97,7 @@ free_src(struct src_head *sh)
 {
 	struct src_entry *se;
 
-	while((se = SIMPLEQ_FIRST(sh)) != NULL) {
+	while ((se = SIMPLEQ_FIRST(sh)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(sh, se_entry);
 		_db_factory_free(se->se_df);
 		free(se->se_name);

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_bcs.c,v 1.3 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: citrus_bcs.c,v 1.4 2004/01/02 21:49:35 itojun Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_bcs.c,v 1.3 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: citrus_bcs.c,v 1.4 2004/01/02 21:49:35 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef HOSTPROG
@@ -48,29 +48,29 @@ int
 _citrus_bcs_strcasecmp(const char * __restrict str1,
 		       const char * __restrict str2)
 {
-	int c1=1, c2=1;
+	int c1 = 1, c2 = 1;
 
-	while (c1 && c2 && c1==c2) {
+	while (c1 && c2 && c1 == c2) {
 		c1 = _bcs_toupper(*str1++);
 		c2 = _bcs_toupper(*str2++);
 	}
 
-	return ((c1==c2) ? 0 : ((c1>c2) ? 1:-1));
+	return ((c1 == c2) ? 0 : ((c1 > c2) ? 1 : -1));
 }
 
 int
 _citrus_bcs_strncasecmp(const char * __restrict str1,
 			const char * __restrict str2, size_t sz)
 {
-	int c1=1, c2=1;
+	int c1 = 1, c2 = 1;
 
-	while (c1 && c2 && c1==c2 && sz!=0) {
+	while (c1 && c2 && c1 == c2 && sz != 0) {
 		c1 = _bcs_toupper(*str1++);
 		c2 = _bcs_toupper(*str2++);
 		sz--;
 	}
 
-	return ((c1==c2) ? 0 : ((c1>c2) ? 1:-1));
+	return ((c1 == c2) ? 0 : ((c1 > c2) ? 1 : -1));
 }
 
 const char *
@@ -97,7 +97,7 @@ const char *
 _citrus_bcs_skip_ws_len(const char * __restrict p, size_t * __restrict len)
 {
 
-	while (*p && *len>0 && _bcs_isspace(*p)) {
+	while (*p && *len > 0 && _bcs_isspace(*p)) {
 		p++;
 		(*len)--;
 	}
@@ -109,7 +109,7 @@ const char *
 _citrus_bcs_skip_nonws_len(const char * __restrict p, size_t * __restrict len)
 {
 
-	while (*p && *len>0 && !_bcs_isspace(*p)) {
+	while (*p && *len > 0 && !_bcs_isspace(*p)) {
 		p++;
 		(*len)--;
 	}
@@ -121,7 +121,7 @@ void
 _citrus_bcs_trunc_rws_len(const char * __restrict p, size_t * __restrict len)
 {
 
-	while (*len>0 && _bcs_isspace(p[*len-1]))
+	while (*len > 0 && _bcs_isspace(p[*len - 1]))
 		(*len)--;
 }
 
