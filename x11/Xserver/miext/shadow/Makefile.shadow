@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shadow,v 1.1 2004/10/07 13:49:24 rtr Exp $
+#	$NetBSD: Makefile.shadow,v 1.1.4.1 2005/01/13 16:33:59 he Exp $
 
 LIB=	shadow
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/miext/${LIB}
