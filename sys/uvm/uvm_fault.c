@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.55 2001/01/28 23:30:43 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.56 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
  *
@@ -1870,10 +1870,7 @@ uvm_fault_unwire_locked(map, start, end)
 	/*
 	 * find the beginning map entry for the region.
 	 */
-#ifdef DIAGNOSTIC
-	if (start < vm_map_min(map) || end > vm_map_max(map))
-		panic("uvm_fault_unwire_locked: address out of range");
-#endif
+	KASSERT(start >= vm_map_min(map) && end <= vm_map_max(map));
 	if (uvm_map_lookup_entry(map, start, &entry) == FALSE)
 		panic("uvm_fault_unwire_locked: address not in map");
 
@@ -1886,16 +1883,11 @@ uvm_fault_unwire_locked(map, start, end)
 		 * make sure the current entry is for the address we're
 		 * dealing with.  if not, grab the next entry.
 		 */
-#ifdef DIAGNOSTIC
-		if (va < entry->start)
-			panic("uvm_fault_unwire_locked: hole 1");
-#endif
+
+		KASSERT(va >= entry->start);
 		if (va >= entry->end) {
-#ifdef DIAGNOSTIC
-			if (entry->next == &map->header ||
-			    entry->next->start > entry->end)
-				panic("uvm_fault_unwire_locked: hole 2");
-#endif
+			KASSERT(entry->next != &map->header &&
+				entry->next->start <= entry->end);
 			entry = entry->next;
 		}
 
