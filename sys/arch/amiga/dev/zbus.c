@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.26 1996/10/13 03:07:38 christos Exp $	*/
+/*	$NetBSD: zbus.c,v 1.27 1996/10/17 15:49:39 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -56,14 +56,14 @@ struct preconfdata {
  */
 static struct aconfdata aconftab[] = {
 	/* Commodore Amiga */
-	{ "atfsc",	514,	84 },
 	{ "atzee",	513,	1 },
 	{ "atzsc",	514,	2 },
 	{ "atzsc",	514,	3 },
 	{ "bah",	514,	9 },	/* A2060 */
-	{ "le",		514,	112 },
 	{ "ql",		514,	69 },
 	{ "ql",		514,	70 },
+	{ "atfsc",	514,	84 },
+	{ "le",		514,	112 },
 	/* Ameristar */
 	{ "le",		1053,	1 },
 	{ "bah",	1053,	9 },	/* A2060 */
@@ -125,11 +125,9 @@ static struct aconfdata aconftab[] = {
 	/* phase 5 digital products */
 	{ "flmem",	8512,	10},	/* FastlaneZ3 memory */
 	{ "flsc",	8512,	11},	/* FastlaneZ3 */
-	{ "bl4sc",	8512,	17},	/* Blizzard IV SCSI */
-	{ "bl2060sc", 8512,	24},	/* Blizzard 2060 SCSI */
+	{ "bznsc",	8512,	17},	/* Blizzard IV SCSI */
+	{ "bznsc", 	8512,	24},	/* Blizzard 2060 SCSI */
 	{ "grfcv",	8512,	34},	/* CyberVison 64 */
-	/* Commodore Amiga */
-	{ "afsc",	514,	84},	/* A4091 SCSI HD Controller */
 	/* Hacker Inc. */
 	{ "mlhsc",	2011,	1 },
 	/* Resource Management Force */
@@ -144,9 +142,9 @@ static struct aconfdata aconftab[] = {
 	{ "grfet",	2117,	3 },	/* Merlin mem */
 	{ "grfet",	2117,	4 },	/* Merlin regs */
 	/* Advanced Systems */
-	{ "nxsc",   2102,   1 },    /* Nexus SCSI board */
+	{ "nxsc",	2102,	1 },	/* Nexus SCSI board */
 	/* Masoboshi */
-	{ "mcsc",   8535,   4 }		/* Masoboshi Mastercard 702 */
+	{ "mcsc",	8535,	4 }	/* Masoboshi Mastercard 702 */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
