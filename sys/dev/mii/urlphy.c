@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.6 2002/10/02 16:34:23 thorpej Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.7 2003/04/04 22:21:39 kristerw Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.6 2002/10/02 16:34:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.7 2003/04/04 22:21:39 kristerw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.6 2002/10/02 16:34:23 thorpej Exp $");
 #include <dev/mii/miidevs.h>
 #include <dev/mii/urlphyreg.h>
 
-#define	URLPHY_DEBUG	0
 #ifdef URLPHY_DEBUG
 #define DPRINTF(x)	if (urlphydebug) printf x
 #define DPRINTFN(n,x)	if (urlphydebug>(n)) printf x
