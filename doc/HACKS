@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.30 2004/02/22 01:31:16 uwe Exp $
+# $NetBSD: HACKS,v 1.31 2004/03/21 13:17:14 martin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -361,4 +361,15 @@ port	sun2, m68k
 	descr
 		ra-colorize.c causes a whole spew of unreferenced .L* local
 		symbols.  using -O0 (or even -O2 reportedly) avoids the problem.
+	kcah
+
+port	sparc64
+
+	hack	disable optimzations for uvm_bio.c on 32 bit kernels
+	cdate	Sun Mar 21 14:14:04 MET 2004
+	who	martin
+	file	sys/arch/sparc64/conf/Makefile.sparc64 : 1.53
+	descr
+		The sparc compiler miscompiles uvm_bio.c when using
+		any optimization. This results in ubc_release panics.
 	kcah
