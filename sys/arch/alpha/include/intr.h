@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.23 1999/12/02 01:09:13 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.24 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -119,6 +119,7 @@ void	alpha_broadcast_ipi __P((unsigned long));
 struct alpha_shared_intrhand {
 	TAILQ_ENTRY(alpha_shared_intrhand)
 		ih_q;
+	struct alpha_shared_intr *ih_intrhead;
 	int	(*ih_fn) __P((void *));
 	void	*ih_arg;
 	int	ih_level;
