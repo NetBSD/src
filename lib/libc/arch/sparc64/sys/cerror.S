@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.3 2000/07/18 22:39:25 eeh Exp $	*/
+/*	$NetBSD: cerror.S,v 1.4 2000/07/26 00:53:50 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)cerror.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: cerror.S,v 1.3 2000/07/18 22:39:25 eeh Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.4 2000/07/26 00:53:50 eeh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,7 @@
 
 #ifdef _REENTRANT
 FUNC(__cerror)
-	save	%sp, -96, %sp
+	save	%sp, -CC64FSZ, %sp
 	call	_C_LABEL(__errno)
 	 nop
 	st	%i0, [%o0]
