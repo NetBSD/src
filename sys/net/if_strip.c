@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.37 2001/04/13 23:30:17 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.38 2001/05/07 10:15:46 lukem Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -1953,7 +1953,7 @@ RecvErr(msg, sc)
 	char *msg;
 	struct strip_softc *sc;
 {
-	static const int MAX_RecErr = 80;
+#define MAX_RecErr	80
 	u_char *ptr = sc->sc_pktstart;
 	u_char *end = sc->sc_mp;
 	u_char pkt_text[MAX_RecErr], *p = pkt_text;
