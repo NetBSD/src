@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.11 1994/07/19 15:14:09 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.12 1994/07/19 23:34:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -858,21 +858,6 @@ cd9660_unlock(ap)
 }
 
 /*
- * Check for a locked inode.
- */
-int
-cd9660_islocked(ap)
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap;
-{
-
-	if (VTOI(ap->a_vp)->i_flag & IN_LOCKED)
-		return (1);
-	return (0);
-}
-
-/*
  * Calculate the logical to physical mapping if not done already,
  * then call the device strategy routine.
  */
@@ -920,8 +905,64 @@ cd9660_print(ap)
 		struct vnode *a_vp;
 	} */ *ap;
 {
+
 	printf("tag VT_ISOFS, isofs vnode\n");
 	return (0);
+}
+
+/*
+ * Check for a locked inode.
+ */
+int
+cd9660_islocked(ap)
+	struct vop_islocked_args /* {
+		struct vnode *a_vp;
+	} */ *ap;
+{
+
+	if (VTOI(ap->a_vp)->i_flag & IN_LOCKED)
+		return (1);
+	return (0);
+}
+
+/*
+ * Return POSIX pathconf information applicable to cd9660 filesystems.
+ */
+int
+cd9660_pathconf(ap)
+	struct vop_pathconf_args /* {
+		struct vnode *a_vp;
+		int a_name;
+		int *a_retval;
+	} */ *ap;
+{
+
+	switch (ap->a_name) {
+	case _PC_LINK_MAX:
+		*ap->a_retval = 1;
+		return (0);
+	case _PC_NAME_MAX:
+		if (VTOI(ap->a_vp)->i_mnt->iso_ftype == ISO_FTYPE_RRIP)
+			*ap->a_retval = NAME_MAX;
+		else
+			*ap->a_retval = 23;	/* XXX 8.8;5 */
+		return (0);
+	case _PC_PATH_MAX:
+		*ap->a_retval = PATH_MAX;
+		return (0);
+	case _PC_PIPE_BUF:
+		*ap->a_retval = PIPE_BUF;
+		return (0);
+	case _PC_CHOWN_RESTRICTED:
+		*ap->a_retval = 1;
+		return (0);
+	case _PC_NO_TRUNC:
+		*ap->a_retval = 1;
+		return (0);
+	default:
+		return (EINVAL);
+	}
+	/* NOTREACHED */
 }
 
 /*
@@ -953,8 +994,6 @@ cd9660_enotsupp()
 #define cd9660_rmdir ((int (*) __P((struct  vop_rmdir_args *)))cd9660_enotsupp)
 #define cd9660_symlink \
 	((int (*) __P((struct vop_symlink_args *)))cd9660_enotsupp)
-#define cd9660_pathconf \
-	((int (*) __P((struct vop_pathconf_args *)))cd9660_enotsupp)
 #define cd9660_advlock \
 	((int (*) __P((struct vop_advlock_args *)))cd9660_enotsupp)
 #define cd9660_valloc ((int(*) __P(( \

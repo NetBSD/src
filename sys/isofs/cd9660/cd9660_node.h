@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.5 1994/07/19 14:14:13 mycroft Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.6 1994/07/19 23:33:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -129,6 +129,7 @@ int cd9660_unlock __P((struct vop_unlock_args *));
 int cd9660_strategy __P((struct vop_strategy_args *));
 int cd9660_print __P((struct vop_print_args *));
 int cd9660_islocked __P((struct vop_islocked_args *));
+int cd9660_pathconf __P((struct vop_pathconf_args *));
 int cd9660_blkatoff __P((struct vop_blkatoff_args *));
 void cd9660_defattr __P((struct iso_directory_record *,
 			struct iso_node *, struct buf *));
