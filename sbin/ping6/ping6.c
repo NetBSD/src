@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.15.2.6 2001/05/09 20:24:54 he Exp $	*/
+/*	$NetBSD: ping6.c,v 1.15.2.7 2002/12/15 16:13:07 he Exp $	*/
 /*	$KAME: ping6.c,v 1.125 2001/05/09 11:17:33 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.15.2.6 2001/05/09 20:24:54 he Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.15.2.7 2002/12/15 16:13:07 he Exp $");
 #endif
 #endif
 
@@ -314,8 +314,8 @@ main(argc, argv)
 	size_t rthlen;
 
 	/* just to be sure */
-	memset(&smsghdr, 0, sizeof(&smsghdr));
-	memset(&smsgiov, 0, sizeof(&smsgiov));
+	memset(&smsghdr, 0, sizeof(smsghdr));
+	memset(&smsgiov, 0, sizeof(smsgiov));
 
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
