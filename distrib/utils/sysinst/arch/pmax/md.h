@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.14.4.1 2000/08/31 15:16:46 minoura Exp $	*/
+/*	$NetBSD: md.h,v 1.14.4.2 2000/09/28 14:56:50 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,7 +50,7 @@
 #define PART_FIRST_FREE	E
 
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
-#define DEFROOTSIZE	32	/* Default root size */
+#define DEFROOTSIZE	64	/* Default root size */
 #define STDNEEDMB	140	/* Min space for non X install */
 #define XNEEDMB		100	/* Extra megs for full X installation */
 
