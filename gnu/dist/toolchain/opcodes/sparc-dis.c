@@ -680,12 +680,14 @@ print_insn_sparc (memaddr, info)
 	  if (imm_ored_to_rs1 || imm_added_to_rs1)
 	    {
 	      unsigned long prev_insn;
-	      int errcode;
+	      int errcode = 1;
 
-	      errcode =
-		(*info->read_memory_func)
-		  (memaddr - 4, buffer, sizeof (buffer), info);
-	      prev_insn = getword (buffer);
+	      if (memaddr >= 4) {
+	        errcode =
+		  (*info->read_memory_func)
+		    (memaddr - 4, buffer, sizeof (buffer), info);
+	        prev_insn = getword (buffer);
+	      }
 
 	      if (errcode == 0)
 		{
