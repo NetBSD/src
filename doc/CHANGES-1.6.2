@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.13 2003/06/16 12:49:41 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.14 2003/06/16 12:51:14 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -277,3 +277,11 @@ sys/dev/pci/agp.c				1.26
 	Don't match a PCI graphics card in a system which supports an AGP.
 	Patch supplied by Quentin Garnier in PR kern/19256.
 	[tron, ticket #1181]
+
+sys/sys/agpio.h
+
+	From FreeBSD: Fix an off-by-bit error in the AGP_MODE_[GS]ET_RATE()
+	macros.
+
+	This fixes PR kern/20480 by Quentin Garnier.
+	[tron, ticket #1182]
