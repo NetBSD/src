@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.30 1996/11/17 02:05:29 cgd Exp $
+#	$NetBSD: files.alpha,v 1.31 1996/11/19 04:40:26 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -7,10 +7,17 @@ maxpartitions 8
 
 maxusers 2 8 64
 
+# a wscons output device; used later, but needs to be near the top for
+# common file (e.g. vga) definitions.
+define  wsconsdev {[console = -1]}
+
 # this loses, but there's no way to define attributes which have attributes
 define	alpha_shared_intr
-file	arch/alpha/alpha/shared_intr.c	alpha_shared_intr | dec_eb164 |
+file	arch/alpha/common/shared_intr.c	alpha_shared_intr | dec_eb164 |
 					dec_kn20aa
+
+device	vga: wsconsdev
+file	arch/alpha/common/vga.c		vga
 
 #
 # Bus-independent devices
@@ -52,7 +59,6 @@ file	arch/alpha/wscons/wscons_rops.c		raster
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & kbd.
 #
-define  wsconsdev {[console = -1]}
 device	wscons
 attach	wscons at wsconsdev
 file	arch/alpha/wscons/wscons.c	wscons		needs-flag
@@ -61,7 +67,6 @@ file	arch/alpha/wscons/wscons_emul.c	wscons
 file	arch/alpha/wscons/event.c	wscons
 file	arch/alpha/wscons/kbd.c		wscons
 file	arch/alpha/wscons/ms.c		wscons
-
 
 #
 # TurboChannel Devices
@@ -132,6 +137,8 @@ include "dev/isa/files.isa"
 #device	jcombo at ibus: isabus
 #device	jeisa at ibus: eisabus
 
+file	arch/alpha/isa/isa_machdep.c	isa
+
 device  pckbd
 attach  pckbd at isa
 file    arch/alpha/isa/pckbd.c           pckbd needs-flag
@@ -139,6 +146,8 @@ device  pms
 attach  pms at isa
 file    arch/alpha/isa/pms.c             pms needs-flag
 
+attach	vga at isa with vga_isa
+file	arch/alpha/isa/vga_isa.c	vga_isa		needs-flag
 
 #
 # EISA Bus support
@@ -200,9 +209,8 @@ file	arch/alpha/pci/tga_bt463.c	tga
 file	arch/alpha/pci/tga_bt485.c	tga
 
 
-device	pcivga: wsconsdev
-attach	pcivga at pci
-file	arch/alpha/pci/pcivga.c		pcivga		needs-flag
+attach	vga at pci with vga_pci
+file	arch/alpha/pci/vga_pci.c	vga_pci		needs-flag
 
 
 #
