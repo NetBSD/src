@@ -1,7 +1,7 @@
-/* $NetBSD: pmap.c,v 1.79 1999/02/12 06:30:09 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.80 1999/02/24 19:22:16 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -104,6 +104,8 @@
  *	The locking protocol was written by Jason R. Thorpe,
  *	using Chuck Cranor's i386 pmap for UVM as a model.
  *
+ *	TLB shootdown code was written by Jason R. Thorpe.
+ *
  * Notes:
  *
  *	All page table access is done via K0SEG.  The one exception
@@ -123,9 +125,7 @@
  *
  * Bugs/misfeatures:
  *
- *	Does not currently support multiple processors.  Problems:
- *
- *		- TLB shootdown code needs to be written.
+ *	- Some things could be optimized.
  */
 
 /*
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 1999/02/12 06:30:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 1999/02/24 19:22:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,8 +177,12 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 1999/02/12 06:30:09 thorpej Exp $");
 #endif
 
 #include <machine/cpu.h>
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-#include <machine/rpb.h>			/* XXX */
+#if defined(_PMAP_MAY_USE_PROM_CONSOLE) || defined(MULTIPROCESSOR)
+#include <machine/rpb.h>
+#endif
+
+#if defined(MULTIPROCESSOR)
+#include <alpha/alpha/cpuvar.h>
 #endif
 
 #ifdef DEBUG
@@ -416,6 +420,48 @@ struct simplelock pmap_all_pmaps_slock;
 #define	PMAP_HEAD_TO_MAP_LOCK()		/* nothing */
 #define	PMAP_HEAD_TO_MAP_UNLOCK()	/* nothing */
 #endif /* MULTIPROCESSOR || LOCKDEBUG */
+
+#if defined(MULTIPROCESSOR)
+/*
+ * TLB Shootdown:
+ *
+ * When a mapping is changed in a pmap, the TLB entry corresponding to
+ * the virtual address must be invalidated on all processors.  In order
+ * to accomplish this on systems with multiple processors, messages are
+ * sent from the processor which performs the mapping change to all
+ * processors on which the pmap is active.  For other processors, the
+ * ASN generation numbers for that processor is invalidated, so that
+ * the next time the pmap is activated on that processor, a new ASN
+ * will be allocated (which implicitly invalidates all TLB entries).
+ *
+ * Note, we can use the pool allocator to allocate job entries
+ * since pool pages are mapped with K0SEG, not with the TLB.
+ */
+struct pmap_tlb_shootdown_job {
+	TAILQ_ENTRY(pmap_tlb_shootdown_job) pj_list;
+	vaddr_t pj_va;			/* virtual address */
+	pmap_t pj_pmap;			/* the pmap which maps the address */
+	pt_entry_t pj_pte;		/* the PTE bits */
+};
+
+struct pmap_tlb_shootdown_q {
+	TAILQ_HEAD(, pmap_tlb_shootdown_job) pq_head;
+	int pq_pte;			/* aggregate PTE bits */
+	int pq_count;			/* number of pending requests */
+	struct simplelock pq_slock;	/* spin lock on queue */
+} pmap_tlb_shootdown_q[ALPHA_MAXPROCS];
+
+/* If we have more pending jobs than this, we just nail the while TLB. */
+#define	PMAP_TLB_SHOOTDOWN_MAXJOBS	6
+
+struct pool pmap_tlb_shootdown_job_pool;
+
+void	pmap_tlb_shootdown_q_drain __P((struct pmap_tlb_shootdown_q *));
+struct pmap_tlb_shootdown_job *pmap_tlb_shootdown_job_get
+	    __P((struct pmap_tlb_shootdown_q *));
+void	pmap_tlb_shootdown_job_put __P((struct pmap_tlb_shootdown_q *,
+	    struct pmap_tlb_shootdown_job *));
+#endif /* MULTIPROCESSOR */
 
 #define	PAGE_IS_MANAGED(pa)	(vm_physseg_find(atop(pa), NULL) != -1)
 
@@ -863,6 +909,19 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 	}
 	simple_lock_init(&pmap_kernel()->pm_slock);
 	LIST_INSERT_HEAD(&pmap_all_pmaps, pmap_kernel(), pm_list);
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Initialize the TLB shootdown queues.
+	 */
+	pool_init(&pmap_tlb_shootdown_job_pool,
+	    sizeof(struct pmap_tlb_shootdown_job), 0, 0, 0, "pmaptlbpl",
+	    0, NULL, NULL, M_VMPMAP);
+	for (i = 0; i < ALPHA_MAXPROCS; i++) {
+		TAILQ_INIT(&pmap_tlb_shootdown_q[i].pq_head);
+		simple_lock_init(&pmap_tlb_shootdown_q[i].pq_slock);
+	}
+#endif
 
 	/*
 	 * Set up proc0's PCB such that the ptbr points to the right place
@@ -1446,6 +1505,11 @@ pmap_protect(pmap, sva, eva, prot)
 							PMAP_INVALIDATE_TLB(
 							   pmap, sva, hadasm,
 							   isactive, cpu_id);
+#if defined(MULTIPROCESSOR) && 0
+							pmap_tlb_shootdown(
+							   pmap, sva,
+							   hadasm ? PG_ASM : 0);
+#endif
 						}
 					}
 				}
@@ -1453,8 +1517,14 @@ pmap_protect(pmap, sva, eva, prot)
 		}
 	}
 
-	if (isactive && (prot & VM_PROT_EXECUTE) != 0)
-		alpha_pal_imb();
+	if (prot & VM_PROT_EXECUTE) {
+		if (isactive)
+			alpha_pal_imb();
+#if defined(MULTIPROCESSOR) && 0
+		if (pmap->pm_cpus & ~(1UL << cpu_id))
+			alpha_broadcast_ipi(ALPHA_IPI_IMB);
+#endif
+	}
 
 	simple_unlock(&pmap->pm_slock);
 }
@@ -1715,10 +1785,18 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * Invalidate the TLB entry for this VA and any appropriate
 	 * caches.
 	 */
-	if (tflush)
+	if (tflush) {
 		PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive, cpu_id);
-	if (needisync)
+#if defined(MULTIPROCESSOR) && 0
+		pmap_tlb_shootdown(pmap, va, hadasm ? PG_ASM : 0);
+#endif
+	}
+	if (needisync) {
 		alpha_pal_imb();
+#if defined(MULTIPROCESSOR) && 0
+		alpha_broadcast_ipi(ALPHA_IPI_IMB);
+#endif
+	}
 
 	simple_unlock(&pmap->pm_slock);
 	PMAP_MAP_TO_HEAD_UNLOCK();
@@ -1741,6 +1819,7 @@ pmap_kenter_pa(va, pa, prot)
 {
 	pt_entry_t *pte, npte;
 	long cpu_id = alpha_pal_whami();
+	boolean_t needisync = FALSE;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1758,6 +1837,9 @@ pmap_kenter_pa(va, pa, prot)
 
 	pte = PMAP_KERNEL_PTE(va);
 
+	if ((prot & VM_PROT_EXECUTE) != 0 || pmap_pte_exec(pte))
+		needisync = TRUE;
+
 	/*
 	 * Build the new PTE.
 	 */
@@ -1774,8 +1856,15 @@ pmap_kenter_pa(va, pa, prot)
 	 * caches.
 	 */
 	PMAP_INVALIDATE_TLB(pmap_kernel(), va, TRUE, TRUE, cpu_id);
-	if (prot & VM_PROT_EXECUTE)
+#if defined(MULTIPROCESSOR) && 0
+	pmap_tlb_shootdown(pmap_kernel(), va, PG_ASM);
+#endif
+	if (needisync) {
 		alpha_pal_imb();
+#if defined(MULTIPROCESSOR) && 0
+		alpha_broadcast_ipi(ALPHA_IPI_IMB);
+#endif
+	}
 }
 
 /*
@@ -2060,17 +2149,17 @@ pmap_activate(p)
 		printf("pmap_activate(%p)\n", p);
 #endif
 
+	/*
+	 * Mark the pmap in use by this processor.
+	 */
+	alpha_atomic_setbits_q(&pmap->pm_cpus, (1UL << cpu_id));
+
 	simple_lock(&pmap->pm_slock);
 
 	/*
 	 * Allocate an ASN.
 	 */
 	pmap_asn_alloc(pmap, cpu_id);
-
-	/*
-	 * Mark the pmap in use by this processor.
-	 */
-	alpha_atomic_setbits_q(&pmap->pm_cpus, (1UL << cpu_id));
 
 	PMAP_ACTIVATE(pmap, p, cpu_id);
 
@@ -2553,6 +2642,9 @@ pmap_remove_mapping(pmap, va, pte, dolock, cpu_id)
 	*pte = PG_NV;
 
 	PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive, cpu_id);
+#if defined(MULTIPROCESSOR) && 0
+	pmap_tlb_shootdown(pmap, va, hadasm ? PG_ASM : 0);
+#endif
 
 	/*
 	 * If we're removing a user mapping, check to see if we
@@ -2656,13 +2748,21 @@ pmap_changebit(pa, set, mask, cpu_id)
 			*pte = npte;
 			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive,
 			    cpu_id);
+#if defined(MULTIPROCESSOR) && 0
+			pmap_tlb_shootdown(pv->pv_pmap, va,
+			    hadasm ? PG_ASM : 0);
+#endif
 		}
 		simple_unlock(&pv->pv_pmap->pm_slock);
 	}
 	splx(s);
 
-	if (needisync)
+	if (needisync) {
 		alpha_pal_imb();
+#if defined(MULTIPROCESSOR) && 0
+		alpha_broadcast_ipi(ALPHA_IPI_IMB);
+#endif
+	}
 }
 
 /*
@@ -3563,6 +3663,10 @@ pmap_l3pt_delref(pmap, va, l1pte, l2pte, l3pte, cpu_id)
 		PMAP_INVALIDATE_TLB(pmap,
 		    (vaddr_t)(&VPT[VPT_INDEX(va)]), FALSE,
 		    PMAP_ISACTIVE(pmap), cpu_id);
+#if defined(MULTIPROCESSOR) && 0
+		pmap_tlb_shootdown(pmap,
+		    (vaddr_t)(&VPT[VPT_INDEX(va)]), 0);
+#endif
 
 		/*
 		 * We've freed a level 3 table, so delete the reference
@@ -3773,3 +3877,163 @@ pmap_asn_alloc(pmap, cpu_id)
 		    pmap->pm_asn[cpu_id], pmap);
 #endif
 }
+
+#if defined(MULTIPROCESSOR)
+/******************** TLB shootdown code ********************/
+
+/*
+ * pmap_tlb_shootdown:
+ *
+ *	Cause the TLB entry for pmap/va to be shot down.
+ */
+void
+pmap_tlb_shootdown(pmap, va, pte)
+	pmap_t pmap;
+	vaddr_t va;
+	pt_entry_t pte;
+{
+	u_long i, ipinum, cpu_id = alpha_pal_whami();
+	struct pmap_tlb_shootdown_q *pq;
+	struct pmap_tlb_shootdown_job *pj;
+	int s;
+
+	s = splimp();
+
+	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
+		if (i == cpu_id || cpu_info[i].ci_dev == NULL)
+			continue;
+		pq = &pmap_tlb_shootdown_q[i];
+		simple_lock(&pq->pq_slock);
+		pj = pmap_tlb_shootdown_job_get(pq);
+		pq->pq_pte |= pte;
+		if (pj == NULL) {
+			/*
+			 * Couldn't allocate a job entry.  Just do a
+			 * TBIA[P].
+			 */
+			if (pq->pq_pte & PG_ASM)
+				ipinum = ALPHA_IPI_TBIA;
+			else
+				ipinum = ALPHA_IPI_TBIAP;
+			if (pq->pq_pte & PG_EXEC)
+				ipinum |= ALPHA_IPI_IMB;
+			alpha_send_ipi(i, ipinum);
+
+			/*
+			 * Since we've nailed the whole thing, drain the
+			 * job entries pending for that processor.
+			 */
+			pmap_tlb_shootdown_q_drain(pq);
+		} else {
+			pj->pj_pmap = pmap;
+			pj->pj_va = va;
+			pj->pj_pte = pte;
+			TAILQ_INSERT_TAIL(&pq->pq_head, pj, pj_list);
+			alpha_send_ipi(i, ALPHA_IPI_SHOOTDOWN);
+		}
+		simple_unlock(&pq->pq_slock);
+	}
+
+	splx(s);
+}
+
+/*
+ * pmap_do_tlb_shootdown:
+ *
+ *	Process pending TLB shootdown operations for this processor.
+ */
+void
+pmap_do_tlb_shootdown()
+{
+	u_long cpu_id = alpha_pal_whami();
+	u_long cpu_mask = (1UL << cpu_id);
+	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_id];
+	struct pmap_tlb_shootdown_job *pj;
+	int s;
+
+	s = splimp();
+
+	simple_lock(&pq->pq_slock);
+
+	while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
+		TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
+		PMAP_INVALIDATE_TLB(pj->pj_pmap, pj->pj_va,
+		    pj->pj_pte & PG_ASM, pj->pj_pmap->pm_cpus & cpu_mask,
+		    cpu_id);
+		pmap_tlb_shootdown_job_put(pq, pj);
+	}
+
+	if (pq->pq_pte & PG_EXEC)
+		alpha_pal_imb();
+	pq->pq_pte = 0;
+
+	simple_unlock(&pq->pq_slock);
+
+	splx(s);
+}
+
+/*
+ * pmap_tlb_shootdown_q_drain:
+ *
+ *	Drain a processor's TLB shootdown queue.  We do not perform
+ *	the shootdown operations.  This is merely a convenience
+ *	function.
+ *
+ *	Note: We expect the queue to be locked.
+ */
+void
+pmap_tlb_shootdown_q_drain(pq)
+	struct pmap_tlb_shootdown_q *pq;
+{
+	struct pmap_tlb_shootdown_job *pj;
+
+	while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
+		TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
+		pmap_tlb_shootdown_job_put(pq, pj);
+	}
+	pq->pq_pte = 0;
+}
+
+/*
+ * pmap_tlb_shootdown_job_get:
+ *
+ *	Get a TLB shootdown job queue entry.  This places a limit on
+ *	the number of outstanding jobs a processor may have.
+ *
+ *	Note: We expect the queue to be locked.
+ */
+struct pmap_tlb_shootdown_job *
+pmap_tlb_shootdown_job_get(pq)
+	struct pmap_tlb_shootdown_q *pq;
+{
+	struct pmap_tlb_shootdown_job *pj;
+
+	if (pq->pq_count == PMAP_TLB_SHOOTDOWN_MAXJOBS)
+		return (NULL);
+	pj = pool_get(&pmap_tlb_shootdown_job_pool, PR_NOWAIT);
+	if (pj != NULL)
+		pq->pq_count++;
+	return (pj);
+}
+
+/*
+ * pmap_tlb_shootdown_job_put:
+ *
+ *	Put a TLB shootdown job queue entry onto the free list.
+ *
+ *	Note: We expect the queue to be locked.
+ */
+void
+pmap_tlb_shootdown_job_put(pq, pj)
+	struct pmap_tlb_shootdown_q *pq;
+	struct pmap_tlb_shootdown_job *pj;
+{
+
+#ifdef DIAGNOSTIC
+	if (pq->pq_count == 0)
+		panic("pmap_tlb_shootdown_job_put: queue length inconsistency");
+#endif
+	pool_put(&pmap_tlb_shootdown_job_pool, pj);
+	pq->pq_count--;
+}
+#endif /* MULTIPROCESSOR */
