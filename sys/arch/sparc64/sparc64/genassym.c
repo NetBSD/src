@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.16 2000/07/02 16:13:22 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.17 2000/07/03 17:56:08 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -226,6 +226,7 @@ main()
 	off("IH_ARG", struct intrhand, ih_arg);
 	off("IH_NUMBER", struct intrhand, ih_number);
 	off("IH_PIL", struct intrhand, ih_pil);
+	off("IH_PEND", struct intrhand, ih_pending);
 	off("IH_NEXT", struct intrhand, ih_next);
 	off("IH_MAP", struct intrhand, ih_map);
 	off("IH_CLR", struct intrhand, ih_clr);
