@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.12 2001/05/13 15:24:18 ragge Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.13 2002/06/04 19:04:32 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -105,8 +105,6 @@ struct	cfattach uba_sbi_ca = {
 
 extern	struct vax_bus_space vax_mem_bus_space;
 
-volatile int svec;
-
 int
 dw780_match(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -165,13 +163,12 @@ dw780_attach(struct device *parent, struct device *self, void *aux)
 	sc->uv_size = UBASIZE;		/* Size in bytes of Unibus space */
 
 	uba_dma_init(sc);
-	uba_attach(&sc->uv_sc, (parent->dv_unit ? UMEMB8600(ubaddr) :
+	uba_attach(&sc->uv_sc, (sa->sa_sbinum ? UMEMB8600(ubaddr) :
 	    UMEMA8600(ubaddr)) + (UBAPAGES * VAX_NBPG));
 }
 
 void
-dw780_beforescan(sc)
-	struct uba_softc *sc;
+dw780_beforescan(struct uba_softc *sc)
 {
 	struct uba_vsoftc *vc = (void *)sc;
 	volatile int *hej = &vc->uv_uba->uba_sr;
@@ -181,8 +178,7 @@ dw780_beforescan(sc)
 }
 
 void
-dw780_afterscan(sc)
-	struct uba_softc *sc;
+dw780_afterscan(struct uba_softc *sc)
 {
 	struct uba_vsoftc *vc = (void *)sc;
 
@@ -193,8 +189,7 @@ dw780_afterscan(sc)
 
 
 int
-dw780_errchk(sc)
-	struct uba_softc *sc;
+dw780_errchk(struct uba_softc *sc)
 {
 	struct uba_vsoftc *vc = (void *)sc;
 	volatile int *hej = &vc->uv_uba->uba_sr;
@@ -207,32 +202,29 @@ dw780_errchk(sc)
 }
 
 void
-uba_dw780int(arg)
-	void	*arg;
+uba_dw780int(void *arg)
 {
+	extern	void scb_stray(void *);
 	struct	uba_vsoftc *vc = arg;
 	struct	uba_regs *ur = vc->uv_uba;
-	struct	ivec_dsp *scb_vec;
+	struct	ivec_dsp *ivec;
 	int	br, vec;
 
 	br = mfpr(PR_IPL);
 	vec = ur->uba_brrvr[br - 0x14];
-	if (vec <= 0) {
+	if (vec <= 0)
 		ubaerror(&vc->uv_sc, &br, (int *)&vec);
-		if (svec == 0)
-			return;
-	}
-	if (cold)
+
+	if (cold && scb_vec[(vc->uh_ibase + vec)/4].hoppaddr == scb_stray) {
 		scb_fake(vec + vc->uh_ibase, br);
-	else {
-		scb_vec = (struct ivec_dsp *)((int)scb + 512 + 4 * vec);
-		(*scb_vec->hoppaddr)(scb_vec->pushlarg);
+	} else {
+		ivec = &scb_vec[(vc->uh_ibase + vec)/4];
+		(*ivec->hoppaddr)(ivec->pushlarg);
 	}
 }
 
 void
-dw780_init(sc)
-	struct uba_softc *sc;
+dw780_init(struct uba_softc *sc)
 {
 	struct uba_vsoftc *vc = (void *)sc;
 
@@ -268,9 +260,7 @@ int	ubaerrcnt;
  */
 /*ARGSUSED*/
 void
-ubaerror(uh, ipl, uvec)
-	register struct uba_softc *uh;
-	int *ipl, *uvec;
+ubaerror(struct uba_softc *uh, int *ipl, int *uvec)
 {
 	struct uba_vsoftc *vc = (void *)uh;
 	struct	uba_regs *uba = vc->uv_uba;
