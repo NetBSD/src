@@ -37,7 +37,7 @@
 #endif
 
 __RCSID("$Heimdal: kadm_conn.c,v 1.13 2001/05/16 22:06:44 assar Exp $"
-        "$NetBSD: kadm_conn.c,v 1.9 2002/09/20 22:16:02 mycroft Exp $");
+        "$NetBSD: kadm_conn.c,v 1.10 2003/05/15 20:44:11 lha Exp $");
 
 struct kadm_port {
     char *port;
@@ -63,12 +63,15 @@ add_kadm_port(krb5_context context, const char *service, unsigned int port)
     kadm_ports = p;
 }
 
+extern int do_kerberos4;
+
 static void
 add_standard_ports (krb5_context context)
 {
     add_kadm_port(context, "kerberos-adm", 749);
 #ifdef KRB4
-    add_kadm_port(context, "kerberos-master", 751);
+    if(do_kerberos4)
+	add_kadm_port(context, "kerberos-master", 751);
 #endif
 }
 

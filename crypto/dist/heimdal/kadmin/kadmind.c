@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 
 __RCSID("$Heimdal: kadmind.c,v 1.27 2001/05/14 06:16:41 assar Exp $"
-        "$NetBSD: kadmind.c,v 1.7 2002/09/12 13:18:59 joda Exp $");
+        "$NetBSD: kadmind.c,v 1.8 2003/05/15 20:44:11 lha Exp $");
 
 static char *check_library  = NULL;
 static char *check_function = NULL;
@@ -46,6 +46,9 @@ static int version_flag;
 static int debug_flag;
 static char *port_str;
 char *realm;
+#ifdef KRB4
+int do_kerberos4 = 1;
+#endif
 
 static struct getargs args[] = {
     { 
@@ -72,6 +75,11 @@ static struct getargs args[] = {
     {	"debug",	'd',	arg_flag,   &debug_flag, 
 	"enable debugging" 
     },
+#ifdef KRB4
+    {	"kerberos4", 0, arg_negative_flag, &do_kerberos4,
+	"don't respond to kerberos 4 requests"
+    },
+#endif
     {	"ports",	'p',	arg_string, &port_str, 
 	"ports to listen to", "port" },
     {	"help",		'h',	arg_flag,   &help_flag },

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: print_version.c,v 1.5 2002/08/19 15:57:49 joda Exp $"
-        "$NetBSD: print_version.c,v 1.3 2002/09/12 13:19:23 joda Exp $");
+        "$NetBSD: print_version.c,v 1.4 2003/05/15 20:44:23 lha Exp $");
 #endif
 #include "roken.h"
 
@@ -43,38 +43,16 @@ __RCSID("$Heimdal: print_version.c,v 1.5 2002/08/19 15:57:49 joda Exp $"
 void
 print_version(const char *progname)
 {
-    const char *arg[] = VERSIONLIST;
-    const int num_args = sizeof(arg) / sizeof(arg[0]);
-    char *msg;
-    size_t len = 0;
-    int i;
+    const char *package_list = VERSIONLIST;
     
     if(progname == NULL)
 	progname = getprogname();
     
-    if(num_args == 0)
-	msg = "no version information";
-    else {
-	for(i = 0; i < num_args; i++) {
-	    if(i > 0)
-		len += 2;
-	    len += strlen(arg[i]);
-	}
-	msg = malloc(len + 1);
-	if(msg == NULL) {
-	    fprintf(stderr, "%s: out of memory\n", progname);
-	    return;
-	}
-	msg[0] = '\0';
-	for(i = 0; i < num_args; i++) {
-	    if(i > 0)
-		strcat(msg, ", ");
-	    strcat(msg, arg[i]);
-	}
-    }
-    fprintf(stderr, "%s (%s)\n", progname, msg);
-    fprintf(stderr, "Copyright (c) 1999-2002 Kungliga Tekniska Högskolan\n");
+    if(*package_list == '\0')
+	package_list = "no version information";
+    fprintf(stderr, "%s (%s)\n", progname, package_list);
+    fprintf(stderr, "Copyright 1999-2003 Kungliga Tekniska Högskolan\n");
+#ifdef PACKAGE_BUGREPORT
     fprintf(stderr, "Send bug-reports to %s\n", PACKAGE_BUGREPORT);
-    if(num_args != 0)
-	free(msg);
+#endif
 }

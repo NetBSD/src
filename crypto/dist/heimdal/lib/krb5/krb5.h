@@ -32,7 +32,7 @@
  */
 
 /* $Heimdal: krb5.h,v 1.205 2002/09/03 17:31:47 joda Exp $
-   $NetBSD: krb5.h,v 1.2 2003/01/26 22:06:40 elric Exp $ */
+   $NetBSD: krb5.h,v 1.3 2003/05/15 20:44:20 lha Exp $ */
 
 #ifndef __KRB5_H__
 #define __KRB5_H__
@@ -103,7 +103,7 @@ enum {
     ENCTYPE_DES_CBC_NONE	= ETYPE_DES_CBC_NONE,
     ENCTYPE_DES3_CBC_NONE	= ETYPE_DES3_CBC_NONE,
     ENCTYPE_DES_CFB64_NONE	= ETYPE_DES_CFB64_NONE,
-    ENCTYPE_DES_PCBC_NONE	= ETYPE_DES_PCBC_NONE,
+    ENCTYPE_DES_PCBC_NONE	= ETYPE_DES_PCBC_NONE
 };
 
 typedef PADATA_TYPE krb5_preauthtype;
@@ -224,6 +224,8 @@ typedef enum krb5_keytype {
     KEYTYPE_NULL	= 0,
     KEYTYPE_DES		= 1,
     KEYTYPE_DES3	= 7,
+    KEYTYPE_AES128	= 17,
+    KEYTYPE_AES256	= 18,
     KEYTYPE_ARCFOUR	= 23
 } krb5_keytype;
 
@@ -396,6 +398,7 @@ typedef struct krb5_context_data {
     char *error_string;
     char error_buf[256];
     krb5_addresses *ignore_addresses;
+    char *default_cc_name;
 } krb5_context_data;
 
 typedef struct krb5_ticket {
@@ -440,6 +443,8 @@ typedef struct krb5_kt_cursor {
 struct krb5_keytab_data;
 
 typedef struct krb5_keytab_data *krb5_keytab;
+
+#define KRB5_KT_PREFIX_MAX_LEN	30
 
 struct krb5_keytab_data {
     const char *prefix;
