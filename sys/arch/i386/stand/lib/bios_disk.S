@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.7 1999/03/30 22:35:21 fvdl Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.8 2000/05/21 16:59:28 perry Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -97,12 +97,13 @@ ENTRY(biosread)
 	movb	24(%ebp), %al	# number of sectors
 	int	$0x13
 	setc	%bl
-
+	movb	%ah, %bh	# save error code
+	
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
 
 	xorl	%eax, %eax
-	movb	%bl, %al	# return value in %ax
+	movw	%bx, %ax	# return value in %ax
 
 	pop	%edi
 	pop	%esi
@@ -238,12 +239,13 @@ ENTRY(biosextread)
 	movb	$0x42, %ah	# subfunction
 	int	$0x13
 	setc	%bl
+	movb	%ah, %bh	# save error code
 
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
 
 	xorl	%eax, %eax
-	movb	%bl, %al	# return value in %ax
+	movw	%bx, %ax	# return value in %ax
 
 	pop	%edi
 	pop	%esi
