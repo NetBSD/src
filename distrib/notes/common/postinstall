@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.49 2003/03/15 12:46:49 darcy Exp $
+.\"	$NetBSD: postinstall,v 1.50 2003/03/16 13:10:01 darcy Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -371,7 +371,8 @@ Precompiled binaries can be found at
 usually in the
 .Pa \*V/\*M/All
 subdir.
-You can install them with the following commands under sh(1):
+You can install them with the following commands under
+.Xr sh 1 :
 .Pp
 .Bd -unfilled
 .Ic # PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All
@@ -382,7 +383,9 @@ You can install them with the following commands under sh(1):
 \&...
 .Ed
 .Pp
-If you are using csh(1) then replace the first two lines with the following:
+If you are using
+.Xr csh 1
+then replace the first two lines with the following:
 .Pp
 .Bd -unfilled
 .Ic # setenv PKG_PATH ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All
