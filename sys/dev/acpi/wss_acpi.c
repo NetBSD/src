@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.1 2002/12/28 06:20:15 jmcneill Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.2 2002/12/28 07:37:51 matt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.1 2002/12/28 06:20:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.2 2002/12/28 07:37:51 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ CFATTACH_DECL(wss_acpi, sizeof(struct wss_softc), wss_acpi_match,
  * Supported device IDs
  */
 
-static char *wss_acpi_ids[] = {
+static const char * const wss_acpi_ids[] = {
 	"CSC0100",	/* NeoMagic 256AV with CS4232 codec */
 	NULL
 };
@@ -76,15 +76,14 @@ int
 wss_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
-	char *id;
+	const char *id;
 	int i;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return 0;
 
-	for (id = wss_acpi_ids[0]; id != NULL; id = wss_acpi_ids[++i]) {
-		if (strcmp(aa->aa_node->ad_devinfo.HardwareId,
-		    wss_acpi_ids[i]) == 0)
+	for (i = 0; (id = wss_acpi_ids[i]) != NULL; ++i) {
+		if (strcmp(aa->aa_node->ad_devinfo.HardwareId, id) == 0)
 			return 1;
 	}
 
