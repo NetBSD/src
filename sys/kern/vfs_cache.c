@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.48 2003/07/31 15:13:05 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.49 2003/07/31 15:14:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.48 2003/07/31 15:13:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.49 2003/07/31 15:14:08 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -79,7 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.48 2003/07/31 15:13:05 yamt Exp $");
 LIST_HEAD(nchashhead, namecache) *nchashtbl;
 u_long	nchash;				/* size of hash table - 1 */
 long	numcache;			/* number of cache entries allocated */
-#define	NCHASH(cnp, dvp)	((cnp)->cn_hash & nchash)
+#define	NCHASH(cnp, dvp)	\
+	(((cnp)->cn_hash ^ ((uintptr_t)(dvp) >> 3)) & nchash)
 
 LIST_HEAD(ncvhashhead, namecache) *ncvhashtbl;
 u_long	ncvhash;			/* size of hash table - 1 */
