@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
+.\"	$NetBSD: passwd.5,v 1.5 1997/06/27 16:10:12 lukem Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -133,12 +133,16 @@ The
 .Ar gecos
 field normally contains comma (``,'') separated subfields as follows:
 .Pp
-.Bd -unfilled -offset indent
-name		user's full name
-office		user's office number
-wphone		user's work phone number
-hphone		user's home phone number
-.Ed
+.Bl -tag -width office -offset indent -compact
+.It name
+user's full name
+.It office
+user's office number
+.It wphone
+user's work phone number
+.It hphone
+user's home phone number
+.El
 .Pp
 This information is used by the
 .Xr finger 1
