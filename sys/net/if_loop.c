@@ -31,53 +31,53 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_loop.c	7.13 (Berkeley) 4/26/91
- *	$Id: if_loop.c,v 1.6.4.3 1993/10/16 10:49:26 mycroft Exp $
+ *	$Id: if_loop.c,v 1.6.4.4 1993/11/14 20:19:54 mycroft Exp $
  */
 
 /*
  * Loopback interface driver for protocol testing and timing.
  */
 
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "errno.h"
-#include "ioctl.h"
-#include "protosw.h"
-
+#include "bpfilter.h"
 #include "loop.h"
 
-#include "../net/if.h"
-#include "../net/if_types.h"
-#include "../net/netisr.h"
-#include "../net/route.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/protosw.h>
 
-#include "machine/cpu.h"
+#include <net/if.h>
+#include <net/if_types.h>
+#include <net/netisr.h>
+#include <net/route.h>
 
 #ifdef	INET
-#include "../netinet/in.h"
-#include "../netinet/in_systm.h"
-#include "../netinet/in_var.h"
-#include "../netinet/ip.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
 #endif
 
 #ifdef NS
-#include "../netns/ns.h"
-#include "../netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #ifdef ISO
-#include "../netiso/iso.h"
-#include "../netiso/iso_var.h"
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
 #endif
 
-#include "bpfilter.h"
 #if NBPFILTER > 0
 #include <sys/time.h>
 #include <net/bpf.h>
 static caddr_t lo_bpf;
 #endif
+
+#include <machine/cpu.h>
 
 #define	LOMTU	(1024+512)
 

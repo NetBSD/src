@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.h	7.11 (Berkeley) 3/19/91
- *	$Id: if.h,v 1.3.4.2 1993/11/03 21:17:44 mycroft Exp $
+ *	$Id: if.h,v 1.3.4.3 1993/11/14 20:19:49 mycroft Exp $
  */
 
 #ifndef _NET_IF_H_
@@ -77,9 +77,9 @@
 
 struct ifnet {
 	char	*if_name;		/* name, e.g. ``en'' or ``lo'' */
-	short	if_unit;		/* sub-unit for lower level driver */
-	short	if_mtu;			/* maximum transmission unit */
-	short	if_flags;		/* up/down, broadcast, etc. */
+	u_short	if_unit;		/* sub-unit for lower level driver */
+	u_short	if_mtu;			/* maximum transmission unit */
+	u_short	if_flags;		/* up/down, broadcast, etc. */
 	short	if_timer;		/* time 'til if_watchdog called */
 	int	if_metric;		/* routing metric (external only) */
 	struct	ifaddr *if_addrlist;	/* linked list of addresses per if */
