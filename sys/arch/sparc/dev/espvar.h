@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.4 1995/06/02 15:46:47 pk Exp $ */
+/*	$NetBSD: espvar.h,v 1.5 1995/08/18 10:09:57 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -106,15 +106,17 @@ struct esp_tinfo {
 /* Register a linenumber (for debugging) */
 #define LOGLINE(p)
 
-#define ESP_SHOWECBS 0x01
-#define ESP_SHOWINTS 0x02
-#define ESP_SHOWCMDS 0x04
-#define ESP_SHOWMISC 0x08
-#define ESP_SHOWTRAC 0x10
-#define ESP_SHOWSTART 0x20
-#define ESP_SHOWPHASE 0x40
+#define ESP_SHOWECBS	0x01
+#define ESP_SHOWINTS	0x02
+#define ESP_SHOWCMDS	0x04
+#define ESP_SHOWMISC	0x08
+#define ESP_SHOWTRAC	0x10
+#define ESP_SHOWSTART	0x20
+#define ESP_SHOWPHASE	0x40
+#define ESP_SHOWDMA	0x80
 
-#if ESP_DEBUG
+#ifdef ESP_DEBUG
+extern int esp_debug;
 #define ESP_ECBS(str)  do {if (esp_debug & ESP_SHOWECBS) printf str;} while (0)
 #define ESP_MISC(str)  do {if (esp_debug & ESP_SHOWMISC) printf str;} while (0)
 #define ESP_INTS(str)  do {if (esp_debug & ESP_SHOWINTS) printf str;} while (0)
@@ -122,6 +124,7 @@ struct esp_tinfo {
 #define ESP_CMDS(str)  do {if (esp_debug & ESP_SHOWCMDS) printf str;} while (0)
 #define ESP_START(str) do {if (esp_debug & ESP_SHOWSTART) printf str;}while (0)
 #define ESP_PHASE(str) do {if (esp_debug & ESP_SHOWPHASE) printf str;}while (0)
+#define ESP_DMA(str)   do {if (esp_debug & ESP_SHOWDMA) printf str;}while (0)
 #else
 #define ESP_ECBS(str)
 #define ESP_MISC(str)
@@ -130,6 +133,7 @@ struct esp_tinfo {
 #define ESP_CMDS(str)
 #define ESP_START(str)
 #define ESP_PHASE(str)
+#define ESP_DMA(str)
 #endif
 
 #define ESP_MAX_MSG_LEN 8
@@ -156,9 +160,6 @@ struct esp_softc {
 	u_char	sc_espstep;
 	u_char	sc_espfflags;
 
-	/* the current boot path component */
-	struct bootpath *sc_bp;
-
 	/* Lists of command blocks */
 	TAILQ_HEAD(ecb_list, ecb) free_list,
 				  ready_list,
@@ -170,7 +171,7 @@ struct esp_softc {
 
 	/* Data about the current nexus (updated for every cmd switch) */
 	caddr_t	sc_dp;				/* Current data pointer */
-	size_t	sc_dleft;			/* Data left to transfer */
+	ssize_t	sc_dleft;			/* Data left to transfer */
 
 	/* Adapter state */
 	int	sc_phase;		/* Copy of what bus phase we are in */
