@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.3 1999/03/18 20:55:50 mycroft Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.4 1999/03/18 20:57:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,9 +93,10 @@ ess_isa_probe(parent, match, aux)
 		
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, ESS_NPORT);
 
-	if (ret)
+	if (ret) {
 		DPRINTF(("ess_isa_probe succeeded (score %d)\n", ret));
-	else
+		ia->ia_iosize = ESS_NPORT;
+	} else
 		DPRINTF(("ess_isa_probe failed]n"));
 		
 	return ret;
