@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.6 1999/09/09 21:48:18 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.7 1999/09/14 00:55:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -236,6 +236,12 @@ tlp_attach(sc, name, enaddr)
 		break;
 
 	default:
+		/*
+		 * We may override this if we have special media
+		 * handling requirements (e.g. flipping GPIO pins).
+		 *
+		 * The pure-MII statchg function covers the basics.
+		 */
 		sc->sc_statchg = tlp_mii_statchg;
 		break;
 	}
@@ -1358,6 +1364,16 @@ tlp_init(sc)
 			sc->sc_opmode |= OPMODE_PS;
 			break;
 		}
+	} else {
+		switch (sc->sc_chip) {
+		case TULIP_CHIP_82C168:
+		case TULIP_CHIP_82C169:
+			sc->sc_opmode |= OPMODE_PNIC_TBEN;
+			break;
+
+		default:
+			/* Nothing. */
+		}
 	}
 
 	/*
@@ -1795,10 +1811,95 @@ tlp_srom_crcok(romdata)
 {
 	u_int32_t crc;
 
-	crc = tlp_crc32(romdata, 126);
-	if ((crc ^ 0xffff) == (romdata[126] | (romdata[127] << 8)))
+	crc = tlp_crc32(romdata, TULIP_ROM_CRC32_CHECKSUM);
+	crc = (crc & 0xffff) ^ 0xffff;
+	if (crc == TULIP_ROM_GETW(romdata, TULIP_ROM_CRC32_CHECKSUM))
 		return (1);
 	return (0);
+}
+
+/*
+ * tlp_parse_old_srom:
+ *
+ *	Parse old-format SROMs.
+ *
+ *	This routine is largely lifted from Matt Thomas's `de' driver.
+ */
+int
+tlp_parse_old_srom(sc, enaddr)
+	struct tulip_softc *sc;
+	u_int8_t *enaddr;
+{
+	static const u_int8_t testpat[] =
+	    { 0xff, 0, 0x55, 0xaa, 0xff, 0, 0x55, 0xaa };
+	int i;
+	u_int32_t cksum;
+
+	if (memcmp(&sc->sc_srom[0], &sc->sc_srom[16], 8) != 0) {
+		/*
+		 * Some vendors (e.g. ZNYX) don't use the standard
+		 * DEC Address ROM format, but rather just have an
+		 * Ethernet address in the first 6 bytes, maybe a
+		 * 2 byte checksum, and then all 0xff's.
+		 */
+		for (i = 8; i < 32; i++) {
+			if (sc->sc_srom[i] != 0xff)
+				return (0);
+		}
+
+		/*
+		 * Sanity check the Ethernet address:
+		 *
+		 *	- Make sure it's not multicast or locally
+		 *	  assigned
+		 *	- Make sure it has a non-0 OUI
+		 */
+		if (sc->sc_srom[0] & 3)
+			return (0);
+		if (sc->sc_srom[0] == 0 && sc->sc_srom[1] == 0 &&
+		    sc->sc_srom[2] == 0)
+			return (0);
+
+		memcpy(enaddr, sc->sc_srom, ETHER_ADDR_LEN);
+		return (1);
+	}
+
+	/*
+	 * Standard DEC Address ROM test.
+	 */
+
+	if (memcmp(&sc->sc_srom[24], testpat, 8) != 0)
+		return (0);
+
+	for (i = 0; i < 8; i++) {
+		if (sc->sc_srom[i] != sc->sc_srom[15 - i])
+			return (0);
+	}
+
+	memcpy(enaddr, sc->sc_srom, ETHER_ADDR_LEN);
+
+	cksum = *(u_int16_t *) &enaddr[0];
+
+	cksum <<= 1;
+	if (cksum > 0xffff)
+		cksum -= 0xffff;
+
+	cksum += *(u_int16_t *) &enaddr[2];
+	if (cksum > 0xffff)
+		cksum -= 0xffff;
+
+	cksum <<= 1;
+	if (cksum > 0xffff)
+		cksum -= 0xffff;
+
+	cksum += *(u_int16_t *) &enaddr[4];
+	if (cksum >= 0xffff)
+		cksum -= 0xffff;
+
+	if (cksum != *(u_int16_t *) &sc->sc_srom[6])
+		return (0);
+
+	return (1);
 }
 
 /*
@@ -2241,15 +2342,13 @@ tlp_mii_statchg(self)
 	 * XXX by the PHY?  I hope so...
 	 */
 
+	sc->sc_opmode &= ~(OPMODE_TTM|OPMODE_FD);
+
 	if (IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_10_T)
 		sc->sc_opmode |= OPMODE_TTM;
-	else
-		sc->sc_opmode &= ~OPMODE_TTM;
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
 		sc->sc_opmode |= OPMODE_FD;
-	else
-		sc->sc_opmode &= ~OPMODE_FD;
 
 	/*
 	 * Write new OPMODE bits.  This also restarts the transmit
@@ -2280,15 +2379,13 @@ tlp_winb_mii_statchg(self)
 	 * XXX by the PHY?  I hope so...
 	 */
 
+	sc->sc_opmode &= ~(OPMODE_WINB_FES|OPMODE_FD);
+
 	if (IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_100_TX)
 		sc->sc_opmode |= OPMODE_WINB_FES;
-	else
-		sc->sc_opmode &= ~OPMODE_WINB_FES;
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
 		sc->sc_opmode |= OPMODE_FD;
-	else
-		sc->sc_opmode &= ~OPMODE_FD;
 
 	/*
 	 * Write new OPMODE bits.  This also restarts the transmit
@@ -2520,6 +2617,215 @@ tlp_pnic_mii_writereg(self, phy, reg, val)
  *****************************************************************************/
 
 /*
+ * 21040 and 21041 media switches.
+ */
+void	tlp_21040_tmsw_init __P((struct tulip_softc *));
+void	tlp_21040_tp_tmsw_init __P((struct tulip_softc *));
+void	tlp_21040_auibnc_tmsw_init __P((struct tulip_softc *));
+void	tlp_21040_21041_tmsw_get __P((struct tulip_softc *,
+	    struct ifmediareq *));
+int	tlp_21040_21041_tmsw_set __P((struct tulip_softc *));
+
+const struct tulip_mediasw tlp_21040_mediasw = {
+	tlp_21040_tmsw_init, tlp_21040_21041_tmsw_get, tlp_21040_21041_tmsw_set
+};
+
+const struct tulip_mediasw tlp_21040_tp_mediasw = {
+	tlp_21040_tp_tmsw_init, tlp_21040_21041_tmsw_get,
+	    tlp_21040_21041_tmsw_set
+};
+
+const struct tulip_mediasw tlp_21040_auibnc_mediasw = {
+	tlp_21040_auibnc_tmsw_init, tlp_21040_21041_tmsw_get,
+	    tlp_21040_21041_tmsw_set
+};
+
+#define	ADD(m, t)	ifmedia_add(&sc->sc_mii.mii_media, (m), 0, (t))
+#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+
+void
+tlp_21040_tmsw_init(sc)
+	struct tulip_softc *sc;
+{
+	struct tulip_21040_21041_sia_media *tsm;
+	const char *sep = "";
+
+	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
+	    tlp_mediastatus);
+
+	printf("%s: ", sc->sc_dev.dv_xname);
+
+	tsm = malloc(sizeof(struct tulip_21040_21041_sia_media), M_DEVBUF,
+	    M_WAITOK);
+	tsm->tsm_siaconn = SIACONN_21040_10BASET;
+	tsm->tsm_siatxrx = SIATXRX_21040_10BASET;
+	tsm->tsm_siagen  = SIAGEN_21040_10BASET;
+	ADD(IFM_ETHER|IFM_10_T, tsm);
+	PRINT("10baseT");
+
+	tsm = malloc(sizeof(struct tulip_21040_21041_sia_media), M_DEVBUF,
+	    M_WAITOK);
+	tsm->tsm_siaconn = SIACONN_21040_10BASET_FDX;
+	tsm->tsm_siatxrx = SIATXRX_21040_10BASET_FDX;
+	tsm->tsm_siagen  = SIAGEN_21040_10BASET_FDX;
+	ADD(IFM_ETHER|IFM_10_T|IFM_FDX, tsm);
+	PRINT("10baseT-FDX");
+
+	tsm = malloc(sizeof(struct tulip_21040_21041_sia_media), M_DEVBUF,
+	    M_WAITOK);
+	tsm->tsm_siaconn = SIACONN_21040_AUI;
+	tsm->tsm_siatxrx = SIATXRX_21040_AUI;
+	tsm->tsm_siagen  = SIAGEN_21040_AUI;
+	ADD(IFM_ETHER|IFM_10_5, tsm);
+	PRINT("10base5");
+
+	tsm = malloc(sizeof(struct tulip_21040_21041_sia_media), M_DEVBUF,
+	    M_WAITOK);
+	tsm->tsm_siaconn = SIACONN_21040_EXTSIA;
+	tsm->tsm_siatxrx = SIATXRX_21040_EXTSIA;
+	tsm->tsm_siagen  = SIAGEN_21040_EXTSIA;
+	ADD(IFM_ETHER|IFM_MANUAL, tsm);
+	PRINT("manual");
+
+	/*
+	 * XXX Autosense not yet supported.
+	 */
+
+	/* XXX This should be auto-sense. */
+	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_T);
+	printf(", default 10baseT");
+
+	printf("\n");
+}
+
+void
+tlp_21040_tp_tmsw_init(sc)
+	struct tulip_softc *sc;
+{
+	struct tulip_21040_21041_sia_media *tsm;
+	const char *sep = "";
+
+	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
+	    tlp_mediastatus);
+
+	printf("%s: ", sc->sc_dev.dv_xname);
+
+	tsm = malloc(sizeof(struct tulip_21040_21041_sia_media), M_DEVBUF,
+	    M_WAITOK);
+	tsm->tsm_siaconn = SIACONN_21040_10BASET;
+	tsm->tsm_siatxrx = SIATXRX_21040_10BASET;
+	tsm->tsm_siagen  = SIAGEN_21040_10BASET;
+	ADD(IFM_ETHER|IFM_10_T, tsm);
+	PRINT("10baseT");
+
+	tsm = malloc(sizeof(struct tulip_21040_21041_sia_media), M_DEVBUF,
+	    M_WAITOK);
+	tsm->tsm_siaconn = SIACONN_21040_10BASET_FDX;
+	tsm->tsm_siatxrx = SIATXRX_21040_10BASET_FDX;
+	tsm->tsm_siagen  = SIAGEN_21040_10BASET_FDX;
+	ADD(IFM_ETHER|IFM_10_T|IFM_FDX, tsm);
+	PRINT("10baseT-FDX");
+
+	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_T);
+	printf(", default 10baseT");
+
+	printf("\n");
+}
+
+void
+tlp_21040_auibnc_tmsw_init(sc)
+	struct tulip_softc *sc;
+{
+	struct tulip_21040_21041_sia_media *tsm;
+	const char *sep = "";
+
+	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
+	    tlp_mediastatus);
+
+	printf("%s: ", sc->sc_dev.dv_xname);
+
+	tsm = malloc(sizeof(struct tulip_21040_21041_sia_media), M_DEVBUF,
+	    M_WAITOK);
+	tsm->tsm_siaconn = SIACONN_21040_AUI;
+	tsm->tsm_siatxrx = SIATXRX_21040_AUI;
+	tsm->tsm_siagen  = SIAGEN_21040_AUI;
+	ADD(IFM_ETHER|IFM_10_5, tsm);
+	PRINT("10base5");
+
+	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_5);
+
+	printf("\n");
+}
+
+#undef ADD
+#undef PRINT
+
+void
+tlp_21040_21041_tmsw_get(sc, ifmr)
+	struct tulip_softc *sc;
+	struct ifmediareq *ifmr;
+{
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+
+	ifmr->ifm_status = 0;
+
+	switch (IFM_SUBTYPE(ife->ifm_media)) {
+	case IFM_AUTO:
+		/*
+		 * XXX Implement autosensing case.
+		 */
+		break;
+
+	case IFM_10_T:
+		/*
+		 * We're able to detect link directly on twisted pair.
+		 */
+		ifmr->ifm_status = IFM_AVALID;
+		if (TULIP_ISSET(sc, CSR_SIASTAT, SIASTAT_LKF) == 0)
+			ifmr->ifm_status |= IFM_ACTIVE;
+		/* FALLTHROUGH */
+	default:
+		/*
+		 * If not autosensing, active media is the currently
+		 * selected media.
+		 */
+		ifmr->ifm_active = ife->ifm_media;
+	}
+}
+
+int
+tlp_21040_21041_tmsw_set(sc)
+	struct tulip_softc *sc;
+{
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	struct tulip_21040_21041_sia_media *tsm;
+
+	if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
+		/*
+		 * If not autosensing, just pull the SIA settings out
+		 * of the media entry.
+		 */
+		tsm = ife->ifm_aux;
+		TULIP_WRITE(sc, CSR_SIACONN, SIACONN_SRL);
+		TULIP_WRITE(sc, CSR_SIATXRX, tsm->tsm_siatxrx);
+		TULIP_WRITE(sc, CSR_SIAGEN,  tsm->tsm_siagen);
+		TULIP_WRITE(sc, CSR_SIACONN, tsm->tsm_siaconn);
+
+		tlp_idle(sc, OPMODE_ST|OPMODE_SR);
+		sc->sc_opmode &= ~OPMODE_FD;
+		if (ife->ifm_media & IFM_FDX)
+			sc->sc_opmode |= OPMODE_FD;
+		TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+	} else {
+		/*
+		 * XXX Implement autosensing case.
+		 */
+	}
+
+	return (0);
+}
+
+/*
  * MII-on-SIO media switch.  Handles only MII attached to the SIO.
  */
 void	tlp_sio_mii_tmsw_init __P((struct tulip_softc *));
@@ -2562,6 +2868,7 @@ const struct tulip_mediasw tlp_pnic_mediasw = {
 	tlp_pnic_tmsw_init, tlp_pnic_tmsw_get, tlp_pnic_tmsw_set
 };
 
+void	tlp_pnic_nway_statchg __P((struct device *));
 void	tlp_pnic_nway_tick __P((void *));
 int	tlp_pnic_nway_service __P((struct tulip_softc *, int));
 void	tlp_pnic_nway_reset __P((struct tulip_softc *));
@@ -2616,6 +2923,9 @@ tlp_pnic_tmsw_init(sc)
 		    PNIC_NWAY_CAP100TXFDX|PNIC_NWAY_CAP100TX);
 		PRINT("auto");
 
+		printf("\n");
+
+		sc->sc_statchg = tlp_pnic_nway_statchg;
 		sc->sc_tick = tlp_pnic_nway_tick;
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	} else {
@@ -2663,6 +2973,47 @@ tlp_pnic_tmsw_set(sc)
 	}
 
 	return (0);
+}
+
+void
+tlp_pnic_nway_statchg(self)
+	struct device *self;
+{
+	struct tulip_softc *sc = (struct tulip_softc *)self;
+
+	/* Idle the transmit and receive processes. */
+	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
+
+	/*
+	 * XXX What about Heartbeat Disable?  Is it magically frobbed
+	 * XXX by the PHY?  I hope so...
+	 */
+
+	sc->sc_opmode &= ~(OPMODE_TTM|OPMODE_FD|OPMODE_PS|OPMODE_PCS|
+	    OPMODE_SCR);
+
+	if (IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_10_T) {
+		sc->sc_opmode |= OPMODE_TTM;
+		TULIP_WRITE(sc, CSR_GPP,
+		    GPP_PNIC_OUT(GPP_PNIC_PIN_SPEED_RLY, 0) |
+		    GPP_PNIC_OUT(GPP_PNIC_PIN_100M_LPKB, 1));
+	} else {
+		sc->sc_opmode |= OPMODE_PS|OPMODE_PCS|OPMODE_SCR;
+		TULIP_WRITE(sc, CSR_GPP,
+		    GPP_PNIC_OUT(GPP_PNIC_PIN_SPEED_RLY, 1) |
+		    GPP_PNIC_OUT(GPP_PNIC_PIN_100M_LPKB, 1));
+	}
+
+	if (sc->sc_mii.mii_media_active & IFM_FDX)
+		sc->sc_opmode |= OPMODE_FD;
+
+	/*
+	 * Write new OPMODE bits.  This also restarts the transmit
+	 * and receive processes.
+	 */
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+
+	/* XXX Update ifp->if_baudrate */
 }
 
 void

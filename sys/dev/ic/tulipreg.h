@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.3 1999/09/09 21:48:19 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.4 1999/09/14 00:55:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -205,6 +205,65 @@ struct tulip_desc {
 #define	TULIP_MAX_ROM_SIZE	128
 
 /*
+ * Format of the standard Tulip SROM information:
+ *
+ *	Byte offset	Size	Usage
+ *	0		18	reserved
+ *	18		1	SROM Format Version
+ *	19		1	Chip Count
+ *	20		6	IEEE Network Address
+ *	26		1	Chip 0 Device Number
+ *	27		2	Chip 0 Info Leaf Offset
+ *	29		1	Chip 1 Device Number
+ *	30		2	Chip 1 Info Leaf Offset
+ *	32		1	Chip 2 Device Number
+ *	33		2	Chip 2 Info Leaf Offset
+ *	...		1	Chip n Device Number
+ *	...		2	Chip n Info Leaf Offset
+ *	...		...	...
+ *	Chip Info Leaf Information
+ *	...
+ *	...
+ *	...
+ *	126		2	CRC32 checksum
+ */
+#define	TULIP_ROM_SROM_FORMAT_VERION		18		/* B */
+#define	TULIP_ROM_CHIP_COUNT			19		/* B */
+#define	TULIP_ROM_IEEE_NETWORK_ADDRESS		20
+#define	TULIP_ROM_CHIPn_DEVICE_NUMBER(n)	(26 + ((n) * 3))/* W */
+#define	TULIP_ROM_CHIPn_INFO_LEAF_OFFSET(n)	(27 + ((n) * 3))/* W */
+#define	TULIP_ROM_CRC32_CHECKSUM		126		/* W */
+
+#define	TULIP_ROM_IL_SELECT_CONN_TYPE		0		/* W */
+#define	TULIP_ROM_IL_MEDIA_COUNT		2		/* B */
+#define	TULIP_ROM_IL_MEDIAn_BLOCK_BASE		3
+
+#define	SELECT_CONN_TYPE_TP		0x0000
+#define	SELECT_CONN_TYPE_TP_AUTONEG	0x0100
+#define	SELECT_CONN_TYPE_TP_FDX		0x0204
+#define	SELECT_CONN_TYPE_TP_NOLINKPASS	0x0400
+#define	SELECT_CONN_TYPE_BNC		0x0001
+#define	SELECT_CONN_TYPE_AUI		0x0002
+#define	SELECT_CONN_TYPE_ASENSE		0x0800
+#define	SELECT_CONN_TYPE_ASENSE_AUTONEG	0x0900
+
+#define	TULIP_ROM_MB_MEDIA_CODE		0x3f
+#define	TULIP_ROM_MB_MEDIA_TP		0x00
+#define	TULIP_ROM_MB_MEDIA_BNC		0x01
+#define	TULIP_ROM_MB_MEDIA_AUI		0x02
+#define	TULIP_ROM_MB_MEDIA_TP_FDX	0x04
+
+#define	TULIP_ROM_MB_EXT		0x40
+
+#define	TULIP_ROM_MB_CSR13		1			/* W */
+#define	TULIP_ROM_MB_CSR14		3			/* W */
+#define	TULIP_ROM_MB_CSR15		5			/* W */
+
+#define	TULIP_ROM_MB_SIZE(mc)		(((mc) & TULIP_ROM_MB_EXT) ? 7 : 1)
+
+#define	TULIP_ROM_GETW(data, off) ((data)[(off)] | ((data)[(off) + 1]) << 8)
+
+/*
  * Tulip control registers.
  */
 
@@ -382,7 +441,7 @@ struct tulip_desc {
 #define	OPMODE_WINB_TTH_SHIFT	14
 #define	OPMODE_BP		0x00010000	/* backpressure enable */
 #define	OPMODE_CA		0x00020000	/* capture effect enable */
-#define	OPMODE_PMAC_TBEN	0x00020000	/* Tx backoff offset enable */
+#define	OPMODE_PNIC_TBEN	0x00020000	/* Tx backoff offset enable */
 #define	OPMODE_PS		0x00040000	/* port select:
 						   1 = MII/SYM, 0 = SRL
 						   (21140) */
@@ -598,7 +657,7 @@ struct tulip_desc {
 #define	GPP_PNIC_GPC		0x000000f0	/* general purpose control */
 
 #define	GPP_PNIC_IN(x)		(1 << (x))
-#define	GPP_PNIC_OUT(x)		((1 << (x)) | (1 << ((x) + 4)))
+#define	GPP_PNIC_OUT(x, on)	(((on) << (x)) | (1 << ((x) + 4)))
 
 /*
  * The Lite-On PNIC manual recommends the following for the General Purpose
