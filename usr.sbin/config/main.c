@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.87 2003/11/12 01:24:15 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.88 2003/12/02 05:11:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,6 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #include <sys/mman.h>
 #include <paths.h>
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -152,9 +151,8 @@ main(int argc, char **argv)
 			 * do that for you, but you really should just
 			 * put them in the config file.
 			 */
-			(void)fputs(
-			    "-g is obsolete (use makeoptions DEBUG=\"-g\")\n",
-			    stderr);
+			(void)fprintf(stderr,
+		    "config: -g is obsolete (use makeoptions DEBUG=\"-g\")\n");
 			usage();
 
 		case 'p':
@@ -210,12 +208,13 @@ main(int argc, char **argv)
 		conffile = (argc == 1) ? argv[0] : _PATH_UNIX;
 #else
 		if (argc == 0) {
-			(void)fprintf(stderr, "error: no kernel supplied\n");
+			(void)fprintf(stderr, "config: no kernel supplied\n");
 			exit(1);
 		}
 #endif
 		if (!is_elf(conffile)) {
-			(void)fprintf(stderr, "%s: not a binary kernel\n",
+			(void)fprintf(stderr,
+			    "config: %s: not a binary kernel\n",
 			    conffile);
 			exit(1);
 		}
@@ -1343,7 +1342,8 @@ logconfig_include(FILE *cf, const char *filename)
 	}
 	if (missingeol) {
 		(void)fprintf(cfg, "\\n\"\n");
-		warnx("%s: newline missing at EOF",
+		(void)fprintf(stderr,
+		    "config: %s: newline missing at EOF\n",
 		    filename != NULL ? filename : conffile);
 	}
 	if (filename)
@@ -1378,8 +1378,11 @@ logconfig_end(void)
 	}
 
 	fp = fopen("config_file.h", "w");
-	if(!fp)
-		err(1, "Cannot write to \"config_file.h\"");
+	if(!fp) {
+		(void)fprintf(stderr,
+		    "config: cannot write to \"config_file.h\"");
+		exit(1);
+	}
 
 	while (fgets(line, sizeof(line), cfg) != NULL)
 		fputs(line, fp);
