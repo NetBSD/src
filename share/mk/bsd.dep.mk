@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.55 2003/08/01 17:04:01 lukem Exp $
+#	$NetBSD: bsd.dep.mk,v 1.56 2003/08/06 13:55:11 martin Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -24,11 +24,13 @@ __DPSRCS.notd=	${__DPSRCS.all:O:u:N*.d}
 
 .NOPATH: .depend ${__DPSRCS.d}
 
+.if !empty(__DPSRCS.d)							# {
 ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
+.endif									# }
 
 .depend: ${__DPSRCS.d}
 	@rm -f .depend
-	cat ${__DPSRCS.d} > .depend
+	cat ${__DPSRCS.d} /dev/null > .depend
 
 .SUFFIXES: .d .c .m .s .S .C .cc .cpp .cxx
 
