@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.20 2002/07/20 08:40:16 grant Exp $	*/
+/*	$NetBSD: fgen.l,v 1.21 2003/06/23 13:05:48 agc Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -41,6 +41,12 @@
 	    }
 	    #define TOKEN struct tok
 */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: fgen.l,v 1.21 2003/06/23 13:05:48 agc Exp $");
+#endif
+
 %}
 
 %option yylineno

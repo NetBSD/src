@@ -1,4 +1,4 @@
-/*	$NetBSD: msgscan.l,v 1.2 1998/04/09 00:32:38 tv Exp $	*/
+/*	$NetBSD: msgscan.l,v 1.3 2003/06/23 13:05:50 agc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,6 +38,13 @@
 
 %{
 /* scan.l: scanner description for message compiler. */
+
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: msgscan.l,v 1.3 2003/06/23 13:05:50 agc Exp $");
+#endif
+
 
 #include <stdio.h>
 #include <string.h>
