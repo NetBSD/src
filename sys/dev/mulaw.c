@@ -1,3 +1,5 @@
+/*	$NetBSD: mulaw.c,v 1.6 1997/06/14 22:25:11 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
  * All rights reserved.
