@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.15 1997/07/28 01:31:53 augustss Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.16 1997/07/28 20:56:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -117,14 +117,14 @@ struct audio_hw_if {
 	void	*(*alloc)__P((void *, unsigned long, int, int));
 	void	(*free)__P((void *, void *, int));
 	unsigned long (*round_buffersize)__P((void *, unsigned long));
+	int	(*mappage)__P((void *, void *, int, int));
 
 	int props; /* device properties */
-	int audio_unit;
 };
 
 /* Register / deregister hardware driver */
 extern int	audio_hardware_attach __P((struct audio_hw_if *, void *));
-extern int	audio_hardware_detach __P((struct audio_hw_if *));
+extern int	audio_hardware_detach __P((struct audio_hw_if *, void *));
 
 /* Device identity flags */
 #define SOUND_DEVICE		0

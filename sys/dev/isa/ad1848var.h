@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.16 1997/07/27 01:16:52 augustss Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.17 1997/07/28 20:56:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -155,5 +155,6 @@ void	ad1848_mute_aux2 __P((struct ad1848_softc *, int /* onoff */));
 void   *ad1848_malloc __P((void *, unsigned long, int, int));
 void	ad1848_free __P((void *, void *, int));
 unsigned long ad1848_round __P((void *, unsigned long));
+int	ad1848_mappage __P((void *, void *, int, int));
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.56 1997/07/28 09:28:04 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.57 1997/07/28 20:56:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -288,38 +288,35 @@ audio_hardware_attach(hwp, hdlp)
 	sc->sc_pparams = audio_default;
 	sc->sc_rparams = audio_default;
 
-	/*
-	 * Return the audio unit number
-	 */
-	hwp->audio_unit = n;
-
 #ifdef AUDIO_DEBUG
-	printf("audio: unit %d attached\n", hwp->audio_unit);
+	printf("audio: unit %d attached\n", n);
 #endif
 	
 	return(0);
 }
 
 int
-audio_hardware_detach(hwp)
+audio_hardware_detach(hwp, hdlp)
 	struct audio_hw_if *hwp;
+        void *hdlp;
 {
 	struct audio_softc *sc;
+        int n;
 	
 #ifdef DIAGNOSTIC
 	if (!hwp)
 	    panic("audio_hardware_detach: null hwp");
-	
-	if (hwp->audio_unit > naudio)
-	    panic("audio_hardware_detach: invalid audio unit");
 #endif
+	for(sc = 0, n = 0; n < naudio; n++) {
+        	sc = audio_softc[n];
+        	if (sc && sc->hw_if == hwp && sc->hw_hdl == hdlp)
+                	break;
+        }
 
-	sc = audio_softc[hwp->audio_unit];
-
-	if (hwp != sc->hw_if)
+	if (n >= naudio)
 		return(EINVAL);
 	
-	if (sc->sc_open != 0)
+	if (sc->sc_open)
 		return(EBUSY);
 
 	/* Free audio buffers */
@@ -327,7 +324,7 @@ audio_hardware_detach(hwp)
 	audio_free_ring(sc, &sc->sc_pr);
 
 	free(sc, M_DEVBUF);
-	audio_softc[hwp->audio_unit] = 0;
+	audio_softc[n] = 0;
 
 	return(0);
 }
@@ -453,9 +450,9 @@ audiommap(dev, off, prot)
 	case AUDIO_DEVICE:
 		return (audio_mmap(dev, off, prot));
 	case MIXER_DEVICE:
-		return (ENODEV);
+		return -1;
 	default:
-		return (ENXIO);
+		return -1;
 	}
 }
 
@@ -1277,11 +1274,13 @@ audio_ioctl(dev, cmd, addr, flag, p)
 		error = hw->query_encoding(sc->hw_hdl, (struct audio_encoding *)addr);
 		break;
 
+#ifdef COMPAT_12
+	/* GETPROPS contains the same info (and more) */
 	case AUDIO_GETFD:
 		DPRINTF(("AUDIO_GETFD\n"));
-		*(int *)addr = sc->sc_full_duplex;
+		*(int *)addr = (hw->props & AUDIO_PROP_FULLDUPLEX) != 0;
 		break;
-
+#endif
 	case AUDIO_SETFD:
 		DPRINTF(("AUDIO_SETFD\n"));
 		if (hw->props & AUDIO_PROP_FULLDUPLEX) {
@@ -1357,9 +1356,6 @@ audio_mmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-#ifndef i386
-	return ENXIO;
-#else
 	int s;
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_softc[unit];
@@ -1368,8 +1364,8 @@ audio_mmap(dev, off, prot)
 
 	DPRINTF(("audio_mmap: off=%d, prot=%d\n", off, prot));
 
-	if (!(hw->props & AUDIO_PROP_MMAP))
-		return ENXIO;
+	if (!(hw->props & AUDIO_PROP_MMAP) || !hw->mappage)
+		return -1;
 #if 0
 /* XXX
  * The idea here was to use the protection to determine if
@@ -1389,13 +1385,13 @@ audio_mmap(dev, off, prot)
 	else if (prot == VM_PROT_READ)
 		cb = &sc->sc_rr;
 	else
-		return EINVAL;
+		return -1;
 #else
 	cb = &sc->sc_pr;
 #endif
 
 	if (off >= cb->bufsize)
-		return EINVAL;
+		return -1;
 	if (!cb->mmapped) {
 		cb->mmapped = 1;
 		if (cb == &sc->sc_pr) {
@@ -1412,8 +1408,7 @@ audio_mmap(dev, off, prot)
 		}
 	}
 
-	return i386_btop(vtophys((caddr_t)cb->start + off));
-#endif
+	return hw->mappage(sc->hw_hdl, cb->start, off, prot);
 }
 
 void

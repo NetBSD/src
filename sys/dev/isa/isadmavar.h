@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmavar.h,v 1.8 1997/07/27 01:17:01 augustss Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.9 1997/07/28 20:56:17 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,4 +68,4 @@ int	   isa_dmamem_mmap __P((struct device *, int, bus_addr_t, bus_size_t,
 
 void      *isa_malloc __P((struct device *, int, size_t, int, int));
 void	   isa_free __P((void *, int));
-
+int	   isa_mappage __P((void *, int, int));

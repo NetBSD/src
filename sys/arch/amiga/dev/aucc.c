@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.14 1997/07/28 10:04:35 augustss Exp $	*/
+/*	$NetBSD: aucc.c,v 1.15 1997/07/28 20:56:05 augustss Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -221,7 +221,7 @@ struct audio_hw_if sa_hw_if = {
 	NULL,
 	NULL,
 	NULL,
-	0,
+	NULL,
 	0
 };
 
