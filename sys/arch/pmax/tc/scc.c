@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.29 1997/11/08 21:55:08 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.30 1997/11/14 01:38:57 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.29 1997/11/08 21:55:08 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.30 1997/11/14 01:38:57 jonathan Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -1537,9 +1537,6 @@ sccGetc(dev)
 		if (value & ZSRR0_RX_READY) {
 			SCC_READ_REG(regs, line, SCC_RR1, value);
 			SCC_READ_DATA(regs, line, c);
-#ifdef pmax		/* Alpha handles the 1.6 msec settle time in h/w */
-			DELAY(2);
-#endif
 			if (value & (ZSRR1_PE | ZSRR1_DO | ZSRR1_FE)) {
 				SCC_WRITE_REG(regs, line, SCC_WR0,
 					ZSWR0_RESET_ERRORS);
