@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.33 1996/04/22 01:20:34 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.34 1996/05/07 02:40:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -72,7 +72,6 @@ ifinit()
 
 int if_index = 0;
 struct ifaddr **ifnet_addrs;
-static char *sprint_d __P((u_int, char *, int));
 
 /*
  * Attach an interface to the
@@ -83,8 +82,7 @@ if_attach(ifp)
 	struct ifnet *ifp;
 {
 	unsigned socksize, ifasize;
-	int namelen, unitlen, masklen;
-	char workbuf[12], *unitname;
+	int namelen, masklen;
 	register struct sockaddr_dl *sdl;
 	register struct ifaddr *ifa;
 	static int if_indexlim = 8;
@@ -107,12 +105,9 @@ if_attach(ifp)
 	/*
 	 * create a Link Level name for this device
 	 */
-	unitname = sprint_d((u_int)ifp->if_unit, workbuf, sizeof(workbuf));
-	namelen = strlen(ifp->if_name);
-	unitlen = strlen(unitname);
+	namelen = strlen(ifp->if_xname);
 #define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
-	masklen = _offsetof(struct sockaddr_dl, sdl_data[0]) +
-			       unitlen + namelen;
+	masklen = _offsetof(struct sockaddr_dl, sdl_data[0]) + namelen;
 	socksize = masklen + ifp->if_addrlen;
 #define ROUNDUP(a) (1 + (((a) - 1) | (sizeof(long) - 1)))
 	if (socksize < sizeof(*sdl))
@@ -124,9 +119,8 @@ if_attach(ifp)
 	sdl = (struct sockaddr_dl *)(ifa + 1);
 	sdl->sdl_len = socksize;
 	sdl->sdl_family = AF_LINK;
-	bcopy(ifp->if_name, sdl->sdl_data, namelen);
-	bcopy(unitname, namelen + (caddr_t)sdl->sdl_data, unitlen);
-	sdl->sdl_nlen = (namelen += unitlen);
+	bcopy(ifp->if_xname, sdl->sdl_data, namelen);
+	sdl->sdl_nlen = namelen;
 	sdl->sdl_index = ifp->if_index;
 	sdl->sdl_type = ifp->if_type;
 	ifnet_addrs[if_index - 1] = ifa;
@@ -407,7 +401,7 @@ if_slowtimo(arg)
 		if (ifp->if_timer == 0 || --ifp->if_timer)
 			continue;
 		if (ifp->if_watchdog)
-			(*ifp->if_watchdog)(ifp->if_unit);
+			(*ifp->if_watchdog)(ifp);
 	}
 	splx(s);
 	timeout(if_slowtimo, NULL, hz / IFNET_SLOWHZ);
@@ -421,36 +415,17 @@ struct ifnet *
 ifunit(name)
 	register char *name;
 {
-	register char *cp;
 	register struct ifnet *ifp;
-	int unit;
-	unsigned len;
-	char *ep, c;
+	size_t namelen;
 
-	for (cp = name; cp < name + IFNAMSIZ && *cp; cp++)
-		if (*cp >= '0' && *cp <= '9')
-			break;
-	if (*cp == '\0' || cp == name + IFNAMSIZ)
-		return ((struct ifnet *)0);
-	/*
-	 * Save first char of unit, and pointer to it,
-	 * so we can put a null there to avoid matching
-	 * initial substrings of interface names.
-	 */
-	len = cp - name + 1;
-	c = *cp;
-	ep = cp;
-	for (unit = 0; *cp >= '0' && *cp <= '9'; )
-		unit = unit * 10 + *cp++ - '0';
-	*ep = 0;
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
-		if (bcmp(ifp->if_name, name, len))
-			continue;
-		if (unit == ifp->if_unit)
-			break;
-	}
-	*ep = c;
-	return (ifp);
+	namelen = strlen(name);
+
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
+		if (strlen(ifp->if_xname) == namelen &&
+		    strcmp(ifp->if_xname, name) == 0)
+			return (ifp);
+
+	return (NULL);
 }
 
 /*
@@ -599,21 +574,13 @@ ifconf(cmd, data)
 	register struct ifconf *ifc = (struct ifconf *)data;
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
-	register char *cp, *ep;
 	struct ifreq ifr, *ifrp;
 	int space = ifc->ifc_len, error = 0;
 
 	ifrp = ifc->ifc_req;
-	ep = ifr.ifr_name + sizeof (ifr.ifr_name) - 2;
 	for (ifp = ifnet.tqh_first;
 	    space >= sizeof (ifr) && ifp != 0; ifp = ifp->if_list.tqe_next) {
-		strncpy(ifr.ifr_name, ifp->if_name, sizeof(ifr.ifr_name) - 2);
-		for (cp = ifr.ifr_name; cp < ep && *cp; cp++)
-			continue;
-		if (ifp->if_unit > 9)
-			*cp++ = '0' + ifp->if_unit / 10;
-		*cp++ = '0' + ifp->if_unit % 10;
-		*cp = '\0';
+		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
 		if ((ifa = ifp->if_addrlist.tqh_first) == 0) {
 			bzero((caddr_t)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 			error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
@@ -659,21 +626,4 @@ ifconf(cmd, data)
 	}
 	ifc->ifc_len -= space;
 	return (error);
-}
-
-static char *
-sprint_d(n, buf, buflen)
-	u_int n;
-	char *buf;
-	int buflen;
-{
-	register char *cp = buf + buflen - 1;
-
-	*cp = 0;
-	do {
-		cp--;
-		*cp = "0123456789"[n % 10];
-		n /= 10;
-	} while (n != 0);
-	return (cp);
 }
