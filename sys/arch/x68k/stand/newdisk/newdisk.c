@@ -51,10 +51,9 @@ char *mboot = MBOOT;
 char dev[MAXPATHLEN];
 char buf[4096 + 1];
 
-const char copyright[] = "NetBSD/x68k SCSI Primary Boot. "
-			 "(C) 1999 by The NetBSD Foundation, Inc.";
+const char copyright[] = "NetBSD/x68k SCSI Primary Boot. ";
 
-int verbose = 0, dry_run = 0, force = 0, check_only = 0;
+int verbose = 0, dry_run = 0, force = 0, check_only = 0, mark_only = 0;
 
 volatile void usage __P((void));
 int main __P((int, char *[]));
@@ -80,7 +79,7 @@ main(argc, argv)
     struct disklabel label;
 
     prog = argv[0];
-    while ((ch = getopt(argc, argv, "vnfcm:")) != -1) {
+    while ((ch = getopt(argc, argv, "vnfcm:p")) != -1) {
 	switch (ch) {
 	case 'v':
 	    verbose = 1;
@@ -96,6 +95,9 @@ main(argc, argv)
 	    break;
 	case 'm':
 	    mboot = optarg;
+	    break;
+	case 'p':
+	    mark_only = 1;
 	    break;
 	default:
 	    usage();
@@ -156,17 +158,19 @@ main(argc, argv)
     if (verbose)
 	fprintf(stderr, "done.\n");
 
-    if (verbose)
-	fprintf(stderr, "Creating an empty partition table... ");
+    if (!mark_only) {
+	if (verbose)
+	    fprintf(stderr, "Creating an empty partition table... ");
 #define n (label.d_secperunit/2)
-    sprintf(buf+2048,
-	    "X68K%c%c%c%c%c%c%c%c%c%c%c%c",
-	    0, 0, 0, 32,
-	    (n/16777215)%256, (n/65536)%256, (n/256)%256, n%256,
-	    (n/16777215)%256, (n/65536)%256, (n/256)%256, n%256);
+	sprintf(buf+2048,
+		"X68K%c%c%c%c%c%c%c%c%c%c%c%c",
+		0, 0, 0, 32,
+		(n/16777215)%256, (n/65536)%256, (n/256)%256, n%256,
+		(n/16777215)%256, (n/65536)%256, (n/256)%256, n%256);
 #undef n
-    if (verbose)
-	fprintf(stderr, "done.\n");
+	if (verbose)
+	    fprintf(stderr, "done.\n");
+    }
 
     if (dry_run) {
 	char filename[MAXPATHLEN] = "/tmp/diskmarkXXXXX";
