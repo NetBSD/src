@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.8 1996/10/13 03:34:44 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.9 1997/01/31 02:15:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -523,7 +523,7 @@ fdattach(parent, self, aux)
 	 * Establish a mountroot_hook anyway in case we booted
 	 * with RB_ASKNAME and get selected as the boot device.
 	 */
-	mountroot_hook_establish(fd_mountroot_hook, &fd->sc_dev);
+	mountroothook_establish(fd_mountroot_hook, &fd->sc_dev);
 }
 
 inline struct fd_type *
