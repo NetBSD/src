@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.12 2001/02/13 13:19:52 bjh21 Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.13 2001/02/27 13:58:13 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.12 2001/02/13 13:19:52 bjh21 Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.13 2001/02/27 13:58:13 bjh21 Exp $");
 
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -169,14 +169,6 @@ cpu_exit(struct proc *p)
 	exit2(p); /* I think this is safe on a uniprocessor machine */
 	SCHED_LOCK(s);		/* expected by cpu_switch */
 	cpu_switch(p);
-}
-
-/* ARGSUSED */
-void
-cpu_wait(struct proc *p)
-{
-
-	/* Nothing left for us to free... */
 }
 
 void
