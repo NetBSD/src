@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.65 2000/06/10 04:40:17 itojun Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.66 2000/06/10 07:04:14 itojun Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.65 2000/06/10 04:40:17 itojun Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.66 2000/06/10 07:04:14 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1416,10 +1416,14 @@ netpartcmp(struct sockaddr *s1, struct sockaddr *s2, int bitlen)
 	case AF_INET:
 		src = &((struct sockaddr_in *)s1)->sin_addr;
 		dst = &((struct sockaddr_in *)s2)->sin_addr;
+		if (bitlen > sizeof(((struct sockaddr_in *)s1)->sin_addr) * 8)
+			return 1;
 		break;
 	case AF_INET6:
 		src = &((struct sockaddr_in6 *)s1)->sin6_addr;
 		dst = &((struct sockaddr_in6 *)s2)->sin6_addr;
+		if (bitlen > sizeof(((struct sockaddr_in6 *)s1)->sin6_addr) * 8)
+			return 1;
 		break;
 	default:
 		return 1;
@@ -2107,6 +2111,14 @@ get_net(cp, net, maskflg)
 			sa = (struct sockaddr *)&sin;
 		} else
 			sa = ai->ai_addr;
+	} else if (isxdigit(*cp) || *cp == ':') {
+		memset(&hints, 0, sizeof hints);
+		hints.ai_family = AF_UNSPEC;
+		hints.ai_flags = AI_NUMERICHOST;
+		if (getaddrinfo(cp, NULL, &hints, &ai) == 0)
+			sa = ai->ai_addr;
+		else
+			return 1;
 	} else
 		return 1;
 
