@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.12 1999/06/25 18:58:54 thorpej Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.13 1999/08/28 22:28:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -226,8 +226,16 @@ atapi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 #endif
 
 	if ((xs = scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr,
-	    datalen, retries, timeout, bp, flags)) == NULL)
+	    datalen, retries, timeout, bp, flags)) == NULL) {
+		if (bp != NULL) {
+			s = splbio();
+			bp->b_flags |= B_ERROR;
+			bp->b_error = ENOMEM;
+			biodone(bp);
+			splx(s);
+		}
 		return (ENOMEM);
+	}
 
 	xs->cmdlen = (sc_link->scsipi_atapi.cap & ACAP_LEN) ? 16 : 12;
 
