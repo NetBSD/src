@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.14 2000/11/24 18:54:31 chs Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.15 2000/11/29 09:52:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,6 +71,7 @@ static fixpt_t cexp[3] = {
 
 static void uvm_loadav __P((struct loadavg *));
 static void uvm_total __P((struct vmtotal *));
+static int sysctl_uvmexp __P((void *, size_t *));
 
 /*
  * uvm_meter: calculate load average and wake up the swapper (if needed)
@@ -145,8 +146,12 @@ uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		    sizeof(vmtotals)));
 
 	case VM_UVMEXP:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &uvmexp,
+		return (sysctl_rdminstruct(oldp, oldlenp, newp, &uvmexp,
 		    sizeof(uvmexp)));
+	case VM_UVMEXP2:
+		if (newp)
+			return (EPERM);
+		return (sysctl_uvmexp(oldp, oldlenp));
 
 	case VM_NKMEMPAGES:
 		return (sysctl_rdint(oldp, oldlenp, newp, nkmempages));
@@ -155,6 +160,89 @@ uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
+}
+
+static int
+sysctl_uvmexp(oldp, oldlenp)
+	void *oldp;
+	size_t *oldlenp;
+{
+	struct uvmexp_sysctl u;
+
+	u.pagesize = uvmexp.pagesize;
+	u.pagemask = uvmexp.pagemask;
+	u.pageshift = uvmexp.pageshift;
+	u.npages = uvmexp.npages;
+	u.free = uvmexp.free;
+	u.active = uvmexp.active;
+	u.inactive = uvmexp.inactive;
+	u.paging = uvmexp.paging;
+	u.wired = uvmexp.wired;
+	u.zeropages = uvmexp.zeropages;
+	u.reserve_pagedaemon = uvmexp.reserve_pagedaemon;
+	u.reserve_kernel = uvmexp.reserve_kernel;
+	u.freemin = uvmexp.freemin;
+	u.freetarg = uvmexp.freetarg;
+	u.inactarg = uvmexp.inactarg;
+	u.wiredmax = uvmexp.wiredmax;
+	u.nswapdev = uvmexp.nswapdev;
+	u.swpages = uvmexp.swpages;
+	u.swpguniq = uvmexp.swpguniq;
+	u.swpginuse = uvmexp.swpginuse;
+	u.swpgonly = uvmexp.swpgonly;
+	u.nswget = uvmexp.nswget;
+	u.nanon = uvmexp.nanon;
+	u.nanonneeded = uvmexp.nanonneeded;
+	u.nfreeanon = uvmexp.nfreeanon;
+	u.faults = uvmexp.faults;
+	u.traps = uvmexp.traps;
+	u.intrs = uvmexp.intrs;
+	u.swtch = uvmexp.swtch;
+	u.softs = uvmexp.softs;
+	u.syscalls = uvmexp.syscalls;
+	u.pageins = uvmexp.pageins;
+	u.swapins = uvmexp.swapins;
+	u.swapouts = uvmexp.swapouts;
+	u.pgswapin = uvmexp.pgswapin;
+	u.pgswapout = uvmexp.pgswapout;
+	u.forks = uvmexp.forks;
+	u.forks_ppwait = uvmexp.forks_ppwait;
+	u.forks_sharevm = uvmexp.forks_sharevm;
+	u.pga_zerohit = uvmexp.pga_zerohit;
+	u.pga_zeromiss = uvmexp.pga_zeromiss;
+	u.zeroaborts = uvmexp.zeroaborts;
+	u.fltnoram = uvmexp.fltnoram;
+	u.fltnoanon = uvmexp.fltnoanon;
+	u.fltpgwait = uvmexp.fltpgwait;
+	u.fltpgrele = uvmexp.fltpgrele;
+	u.fltrelck = uvmexp.fltrelck;
+	u.fltrelckok = uvmexp.fltrelckok;
+	u.fltanget = uvmexp.fltanget;
+	u.fltanretry = uvmexp.fltanretry;
+	u.fltamcopy = uvmexp.fltamcopy;
+	u.fltnamap = uvmexp.fltnamap;
+	u.fltnomap = uvmexp.fltnomap;
+	u.fltlget = uvmexp.fltlget;
+	u.fltget = uvmexp.fltget;
+	u.flt_anon = uvmexp.flt_anon;
+	u.flt_acow = uvmexp.flt_acow;
+	u.flt_obj = uvmexp.flt_obj;
+	u.flt_prcopy = uvmexp.flt_prcopy;
+	u.flt_przero = uvmexp.flt_przero;
+	u.pdwoke = uvmexp.pdwoke;
+	u.pdrevs = uvmexp.pdrevs;
+	u.pdswout = uvmexp.pdswout;
+	u.pdfreed = uvmexp.pdfreed;
+	u.pdscans = uvmexp.pdscans;
+	u.pdanscan = uvmexp.pdanscan;
+	u.pdobscan = uvmexp.pdobscan;
+	u.pdreact = uvmexp.pdreact;
+	u.pdbusy = uvmexp.pdbusy;
+	u.pdpageouts = uvmexp.pdpageouts;
+	u.pdpending = uvmexp.pdpending;
+	u.pddeact = uvmexp.pddeact;
+
+	return (sysctl_rdminstruct(oldp, oldlenp, NULL, &u, sizeof(u)));
 }
 
 /*
