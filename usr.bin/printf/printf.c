@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.29 2003/08/07 11:15:33 agc Exp $	*/
+/*	$NetBSD: printf.c,v 1.30 2004/10/30 19:28:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.29 2003/08/07 11:15:33 agc Exp $");
+__RCSID("$NetBSD: printf.c,v 1.30 2004/10/30 19:28:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ static void	 usage(void);
 
 static void	b_count(int);
 static void	b_output(int);
-static int	b_length;
+static size_t	b_length;
 static char	*b_fmt;
 
 static int	rval;
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
 		case '?':
 		default:
 			usage();
-			return (1);
+			return 1;
 		}
 	}
 	argc -= optind;
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
 
 	if (argc < 1) {
 		usage();
-		return (1);
+		return 1;
 	}
 
 	format = *argv;
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 		 */
 
 		/* find next format specification */
-		for (fmt = format; (ch = *fmt++) ;) {
+		for (fmt = format; (ch = *fmt++) != '\0';) {
 			if (ch == '\\') {
 				char c_ch;
 				fmt = conv_escape(fmt, &c_ch);
@@ -277,22 +277,23 @@ int main(int argc, char *argv[])
 			}
 			default:
 				warnx("%s: invalid directive", start);
-				return (1);
+				return 1;
 			}
 			*fmt++ = ch;
 			*fmt = nextch;
 			/* escape if a \c was encountered */
 			if (rval & 0x100)
-				return (rval & ~0x100);
+				return rval & ~0x100;
 		}
 	} while (gargv != argv && *gargv);
 
-	return (rval);
+	return rval;
 }
 
 /* helper functions for conv_escape_str */
 
 static void
+/*ARGSUSED*/
 b_count(int ch)
 {
 	b_length++;
@@ -330,7 +331,7 @@ conv_escape_str(char *str, void (*do_putchar)(int))
 	int ch;
 	char c;
 
-	while ((ch = *str++)) {
+	while ((ch = *str++) != '\0') {
 		if (ch != '\\') {
 			do_putchar(ch);
 			continue;
@@ -349,13 +350,13 @@ conv_escape_str(char *str, void (*do_putchar)(int))
 		 * or 3 octal digits. 
 		 */
 		if (ch == '0') {
-			char octnum[4], *oct_end;
-			octnum[0] = str[0];
-			octnum[1] = str[1];
-			octnum[2] = str[2];
-			octnum[3] = 0;
-			do_putchar(strtoul(octnum, &oct_end, 8));
-			str += oct_end - octnum;
+			int octnum = 0, i;
+			for (i = 0; i < 3; i++) {
+				if (!isdigit((unsigned char)*str) || *str > '7')
+					break;
+				octnum = (octnum << 3) | (*str - '0');
+			}
+			do_putchar(octnum);
 			continue;
 		}
 
@@ -453,6 +454,7 @@ static char *
 conv_expand(const char *str)
 {
 	static char *conv_str;
+	static char no_memory[] = "<no memory>";
 	char *cp;
 	int ch;
 
@@ -461,10 +463,10 @@ conv_expand(const char *str)
 	/* get a buffer that is definitely large enough.... */
 	conv_str = malloc(4 * strlen(str) + 1);
 	if (!conv_str)
-		return "<no memory>";
+		return no_memory;
 	cp = conv_str;
 
-	while ((ch = *(unsigned char *)str++)) {
+	while ((ch = *(const unsigned char *)str++) != '\0') {
 		switch (ch) {
 		/* Use C escapes for expected control characters */
 		case '\\':	ch = '\\';	break;	/* backslash */
@@ -527,23 +529,24 @@ mklong(const char *str, int ch)
 	copy[len - 3] = 'j';
 	copy[len - 2] = ch;
 	copy[len - 1] = '\0';
-	return (copy);	
+	return copy;	
 }
 
 static int
 getchr(void)
 {
 	if (!*gargv)
-		return ('\0');
-	return ((int)**gargv++);
+		return 0;
+	return (int)**gargv++;
 }
 
 static char *
 getstr(void)
 {
+	static char empty[] = "";
 	if (!*gargv)
-		return ("");
-	return (*gargv++);
+		return empty;
+	return *gargv++;
 }
 
 static int
@@ -602,7 +605,7 @@ getuintmax(void)
 	gargv++;
 
 	if (*cp == '\"' || *cp == '\'')
-		return *(cp+1);
+		return *(cp + 1);
 
 	/* strtoumax won't error -ve values */
 	while (isspace(*(unsigned char *)cp))
@@ -655,5 +658,5 @@ check_conversion(const char *s, const char *ep)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: printf format [arg ...]\n");
+	(void)fprintf(stderr, "Usage: %s format [arg ...]\n", getprogname());
 }
