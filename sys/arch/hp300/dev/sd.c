@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.39 2000/02/07 20:16:51 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.40 2000/02/10 23:02:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -958,7 +958,7 @@ sdgo(arg)
 	}
 #ifdef DEBUG
 	if (sddebug & SDB_ERROR)
-		printf("%s: sdstart: %s adr %p blk %ld len %ld ecnt %ld\n",
+		printf("%s: sdstart: %s adr %p blk %ld len %ld ecnt %d\n",
 		       sc->sc_dev.dv_xname,
 		       bp->b_flags & B_READ? "read" : "write",
 		       bp->b_un.b_addr, bp->b_rawblkno, bp->b_bcount,
@@ -996,7 +996,7 @@ sdintr(arg, stat)
 			if (cond < 0 && sc->sc_errcnt++ < SDRETRY) {
 #ifdef DEBUG
 				if (sddebug & SDB_ERROR)
-					printf("%s: retry #%ld\n",
+					printf("%s: retry #%d\n",
 					    sc->sc_dev.dv_xname,
 					    sc->sc_errcnt);
 #endif
