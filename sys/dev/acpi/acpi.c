@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.8 2002/06/15 18:03:41 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.9 2002/06/17 08:18:51 kanaoka Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.8 2002/06/15 18:03:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.9 2002/06/17 08:18:51 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,6 +254,10 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* Our current state is "awake". */
 	sc->sc_sleepstate = ACPI_STATE_S0;
 
+	/* Show SCI interrupt. */
+	if (AcpiGbl_FADT != NULL)
+		printf("%s: SCI interrupting at irq %d\n",
+			sc->sc_dev.dv_xname, AcpiGbl_FADT->SciInt);
 	/*
 	 * Check for fixed-hardware features.
 	 */
@@ -381,7 +385,6 @@ acpi_build_tree(struct acpi_softc *sc)
 			 *
 			 *	- present
 			 *	- enabled
-			 *	- to be shown
 			 *	- functioning properly
 			 *
 			 * However, if enabled, it's decoding resources,
@@ -390,9 +393,9 @@ acpi_build_tree(struct acpi_softc *sc)
 			 */
 			if ((ad->ad_devinfo.CurrentStatus &
 			     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
-			      ACPI_STA_DEV_SHOW|ACPI_STA_DEV_OK)) !=
+			      ACPI_STA_DEV_OK)) !=
 			    (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
-			     ACPI_STA_DEV_SHOW|ACPI_STA_DEV_OK))
+			     ACPI_STA_DEV_OK))
 				continue;
 
 			/*
