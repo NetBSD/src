@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.dev	6.2 (Berkeley) 3/16/91
-#	$NetBSD: Makefile.dev,v 1.25 1999/02/14 13:17:13 lukem Exp $
+#	$NetBSD: Makefile.dev,v 1.26 2000/01/23 22:17:10 mycroft Exp $
 
 # Client Makefiles define DEVICE and FONTFILES and provide rules for
 #	individual font files
@@ -20,9 +20,9 @@ FONTMODE?=	${FILESMODE}
 .MAIN: all
 
 .if ${MKSHARE} != "no"
-all:	$(FONTFILES)
+realall:	$(FONTFILES)
 .else
-all:
+realall:
 .endif
 
 .if !target(clean)
