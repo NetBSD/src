@@ -6,14 +6,17 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-RCSID("$NetBSD: ldiv.S,v 1.5 1995/04/28 22:59:52 jtc Exp $")
+RCSID("$NetBSD: ldiv.S,v 1.6 2001/01/08 14:36:41 fvdl Exp $")
 #endif
 
 ENTRY(ldiv)
-        movl    4(%esp),%eax
-        movl    8(%esp),%ecx
+	pushl	%ebx
+	movl	8(%esp),%ebx
+        movl    12(%esp),%eax
+        movl    16(%esp),%ecx
         cdq
         idiv    %ecx
-        movl    %eax,4(%esp)
-        movl    %edx,8(%esp)
-        ret
+        movl    %eax,(%ebx)
+        movl    %edx,4(%ebx)
+	popl	%ebx
+        ret $4
