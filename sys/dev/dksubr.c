@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.11 2004/03/27 23:23:06 elric Exp $ */
+/* $NetBSD: dksubr.c,v 1.12 2004/04/19 16:04:07 hannken Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.11 2004/03/27 23:23:06 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.12 2004/04/19 16:04:07 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,11 +221,11 @@ dk_start(struct dk_intf *di, struct dk_softc *dksc)
 	DPRINTF_FOLLOW(("dk_start(%s, %p)\n", di->di_dkname, dksc));
 
 	/* Process the work queue */
-	while ((bp = BUFQ_PEEK(&dksc->sc_bufq)) != NULL) {
-		if (di->di_diskstart(dksc, bp) != -1)
-			(void) BUFQ_GET(&dksc->sc_bufq);
-		else
+	while ((bp = BUFQ_GET(&dksc->sc_bufq)) != NULL) {
+		if (di->di_diskstart(dksc, bp) != 0) {
+			BUFQ_PUT(&dksc->sc_bufq, bp);
 			break;
+		}
 	}
 }
 
