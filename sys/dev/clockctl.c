@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.4 2001/12/09 16:10:43 manu Exp $ */
+/*      $NetBSD: clockctl.c,v 1.5 2002/02/25 21:16:36 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.4 2001/12/09 16:10:43 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.5 2002/02/25 21:16:36 manu Exp $");
+
+#include "opt_ntp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +127,7 @@ clockctlioctl(dev, cmd, data, flags, p)
 			struct clockctl_ntp_adjtime_args *args =
 			    (struct clockctl_ntp_adjtime_args *)data;
 
-			(void*)ntp_adjtime1(SCARG(args.uas,tp), &error);
+			(void)ntp_adjtime1(SCARG(args,uas.tp), args, &error);
 			return (error);	
 		}
 #endif /* NTP */
