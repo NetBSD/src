@@ -1,7 +1,7 @@
-/*	$NetBSD: locore.s,v 1.231 2000/12/11 05:28:59 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.232 2000/12/12 20:22:49 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -151,12 +151,12 @@
 	pushl	%ecx		; \
 	pushl	%edx		; \
 	pushl	%ebx		; \
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	pushl	%ebp		; \
 	pushl	%esi		; \
 	pushl	%edi		; \
 	pushl	%ds		; \
 	pushl	%es		; \
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movl	%ax,%ds		; \
 	movl	%ax,%es
 #define	INTRFASTEXIT \
@@ -2357,10 +2357,10 @@ IDTVEC(syscall)
 syscall1:
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
+	movl	_C_LABEL(curproc),%edx	# get pointer to curproc
 #ifdef DIAGNOSTIC
 	movl	_C_LABEL(cpl),%ebx
 #endif /* DIAGNOSTIC */
-	movl	_C_LABEL(curproc),%edx	# get pointer to curproc
 	movl	%esp,P_MD_REGS(%edx)	# save pointer to frame
 	call	P_MD_SYSCALL(%edx)	# get pointer to syscall() function
 2:	/* Check for ASTs on exit to user mode. */
