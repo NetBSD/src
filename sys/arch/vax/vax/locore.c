@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.22 1997/11/02 14:07:25 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.23 1998/01/18 22:07:51 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -117,7 +117,6 @@ start()
 	 * FIRST we must set up kernel stack, directly after end.
 	 * This is the only thing we have to setup here, rest in pmap.
 	 */
-	PAGE_SIZE = NBPG * 2; /* Set logical page size */
 #ifdef DDB
 	if ((boothowto & RB_KDB) != 0)
 		proc0paddr = ROUND_PAGE(esym);
