@@ -1,4 +1,4 @@
-/*	$NetBSD: unifdef.c,v 1.6 1998/10/08 01:31:59 wsanchez Exp $	*/
+/*	$NetBSD: unifdef.c,v 1.7 1998/12/19 23:22:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unifdef.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unifdef.c,v 1.6 1998/10/08 01:31:59 wsanchez Exp $");
+__RCSID("$NetBSD: unifdef.c,v 1.7 1998/12/19 23:22:51 christos Exp $");
 #endif				/* not lint */
 
 /*
@@ -354,7 +354,7 @@ doif(thissym, inif, prevreject, depth)
 		}
 	}
 }
-#define endsym(c) (!isalpha (c) && !isdigit (c) && c != '_')
+#define endsym(c) (!isalpha ((unsigned char)c) && !isdigit ((unsigned char)c) && c != '_')
 
 #define MAXLINE 256
 char    tline[MAXLINE] BSS;
