@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.57 1999/03/12 22:42:31 perry Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.58 1999/03/27 01:24:50 aidan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -127,6 +127,9 @@ ip_output(m0, va_alist)
 	int len, off, error = 0;
 	struct route iproute;
 	struct sockaddr_in *dst;
+#if IFA_STATS
+	struct sockaddr_in src;
+#endif
 	struct in_ifaddr *ia;
 	struct mbuf *opt;
 	struct route *ro;
@@ -482,6 +485,19 @@ done:
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = 0;
 	}
+#if IFA_STATS
+	if (error == 0) {
+		/* search for the source address structure to maintain output
+		 * statistics. */
+		bzero((caddr_t*) &src, sizeof(src));
+		src.sin_family = AF_INET;
+		src.sin_addr.s_addr = ip->ip_src.s_addr;
+		src.sin_len = sizeof(src);
+		ia = ifatoia(ifa_ifwithladdr(sintosa(&src)));
+		if (ia)
+			ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
+	}
+#endif
 	return (error);
 bad:
 	m_freem(m);

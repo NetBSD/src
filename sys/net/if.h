@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.34 1999/03/10 21:05:08 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.35 1999/03/27 01:24:49 aidan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -228,6 +228,15 @@ struct ifnet {				/* and the entries */
 #define	IFNET_SLOWHZ	1		/* granularity is 1 second */
 
 /*
+ * Structure defining statistics and other data kept regarding an address
+ * on a network interface.
+ */
+struct ifaddr_data {
+	int64_t	ifad_inbytes;
+	int64_t	ifad_outbytes;
+};
+
+/*
  * The ifaddr structure contains information about one address
  * of an interface.  They are maintained by the different address families,
  * are allocated and attached when an address is set, and are linked
@@ -240,6 +249,7 @@ struct ifaddr {
 	struct	sockaddr *ifa_netmask;	/* used to determine subnet */
 	struct	ifnet *ifa_ifp;		/* back-pointer to interface */
 	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
+	struct	ifaddr_data	ifa_data;	/* statistics on the address */
 	void	(*ifa_rtrequest)	/* check or clean routes (+ or -)'d */
 		    __P((int, struct rtentry *, struct sockaddr *));
 	u_short	ifa_flags;		/* mostly rt_flags for cloning */
