@@ -32,6 +32,7 @@
 #include "subsegs.h"
 #include "dwarf2dbg.h"
 #include "opcode/i386.h"
+#include "struc-symbol.h"
 
 #ifndef REGISTER_WARNINGS
 #define REGISTER_WARNINGS 1
@@ -3158,7 +3159,16 @@ lex_got (reloc, adjust)
 	      *reloc = gotrel[j].rel[(unsigned int) flag_code];
 
 	      if (GOT_symbol == NULL)
+#if defined(TE_NetBSD) && defined(OBJ_AOUT)
+		/* gcc generates _GLOBAL_OFFSET_TABLE_, but an old
+		   sun ld, that NetBSD by some reason wanted to be compatible
+		   with, expexcted __GLOBAL_OFFSET_TABLE_. The problem
+		   was solved this way in NetBSD's old gas. It should
+		   probably be dealt with in libbfd... */
+		GOT_symbol = symbol_find_or_make (NBSD_GLOBAL_OFFSET_TABLE_NAME);
+#else
 		GOT_symbol = symbol_find_or_make (GLOBAL_OFFSET_TABLE_NAME);
+#endif
 
 	      /* Replace the relocation token with ' ', so that
 		 errors like foo@GOTOFF1 will be detected.  */
@@ -4674,8 +4684,19 @@ md_undefined_symbol (name)
 	{
 	  if (symbol_find (name))
 	    as_bad (_("GOT already in symbol table"));
+#if defined(TE_NetBSD) && defined(OBJ_AOUT)
+	  /* gcc generates _GLOBAL_OFFSET_TABLE_, but an old
+	     sun ld, that NetBSD by some reason wanted to be compatible
+	     with, expexcted __GLOBAL_OFFSET_TABLE_. The problem
+	     was solved this way in NetBSD's old gas. It should
+	     probably be dealt with in libbfd... */
+	  GOT_symbol = symbol_new (NBSD_GLOBAL_OFFSET_TABLE_NAME,
+				   undefined_section, 
+				   (valueT) 0, &zero_address_frag);
+#else
 	  GOT_symbol = symbol_new (name, undefined_section,
 				   (valueT) 0, &zero_address_frag);
+#endif
 	};
       return GOT_symbol;
     }
