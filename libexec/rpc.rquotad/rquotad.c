@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.17 2001/01/10 01:50:05 lukem Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.18 2002/06/05 23:22:38 itojun Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.17 2001/01/10 01:50:05 lukem Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.18 2002/06/05 23:22:38 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -38,7 +38,6 @@ __RCSID("$NetBSD: rquotad.c,v 1.17 2001/01/10 01:50:05 lukem Exp $");
 
 void rquota_service(struct svc_req *request, SVCXPRT *transp);
 void sendquota(struct svc_req *request, SVCXPRT *transp);
-void printerr_reply(SVCXPRT *transp);
 void initfs(void);
 int getfsquota(long id, char *path, struct dqblk *dqblk);
 int hasquota(struct fstab *fs, char **qfnamep);
@@ -188,24 +187,6 @@ sendquota(struct svc_req *request, SVCXPRT *transp)
 		syslog(LOG_ERR, "unable to free arguments");
 		exit(1);
 	}
-}
-
-void 
-printerr_reply(SVCXPRT *transp)	/* when a reply to a request failed */
-{
-	char   *name;
-	struct sockaddr_in *caller;
-	int     save_errno;
-
-	save_errno = errno;
-
-	caller = svc_getcaller(transp);
-	name = (char *)inet_ntoa(caller->sin_addr);
-	errno = save_errno;
-	if (errno == 0)
-		syslog(LOG_WARNING, "couldn't send reply to %s", name);
-	else
-		syslog(LOG_WARNING, "couldn't send reply to %s: %m", name);
 }
 
 /* initialise the fs_tab list from entries in /etc/fstab */
