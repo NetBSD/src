@@ -26,15 +26,17 @@ enum diff_file
     DIFF_SAME
 };
 
-static Dtype diff_dirproc PROTO ((void *callerdat, char *dir,
-				  char *pos_repos, char *update_dir,
-				  List *entries));
+static Dtype diff_dirproc PROTO ((void *callerdat, const char *dir,
+                                  const char *pos_repos,
+                                  const char *update_dir,
+                                  List *entries));
 static int diff_filesdoneproc PROTO ((void *callerdat, int err,
-				      char *repos, char *update_dir,
-				      List *entries));
-static int diff_dirleaveproc PROTO ((void *callerdat, char *dir,
-				     int err, char *update_dir,
-				     List *entries));
+                                      const char *repos,
+                                      const char *update_dir,
+                                      List *entries));
+static int diff_dirleaveproc PROTO ((void *callerdat, const char *dir,
+                                     int err, const char *update_dir,
+                                     List *entries));
 static enum diff_file diff_file_nodiff PROTO(( struct file_info *finfo,
 					       Vers_TS *vers,
 					       enum diff_file, 
@@ -522,13 +524,58 @@ diff_fileproc (callerdat, finfo)
     }
     else if (vers->vn_user[0] == '0' && vers->vn_user[1] == '\0')
     {
-	if (empty_files)
-	    empty_file = DIFF_ADDED;
-	else
+	/* The file was added locally.  */
+	int exists = 0;
+
+	if (vers->srcfile != NULL)
 	{
-	    error (0, 0, "%s is a new entry, no comparison available",
-		   finfo->fullname);
-	    goto out;
+	    /* The file does exist in the repository.  */
+
+	    if ((diff_rev1 != NULL || diff_date1 != NULL))
+	    {
+		/* special handling for TAG_HEAD */
+		if (diff_rev1 && strcmp (diff_rev1, TAG_HEAD) == 0)
+		{
+		    char *head =
+			(vers->vn_rcs == NULL
+			 ? NULL
+			 : RCS_branch_head (vers->srcfile, vers->vn_rcs));
+		    exists = head != NULL && !RCS_isdead(vers->srcfile, head);
+		    if (head != NULL)
+			free (head);
+		}
+		else
+		{
+		    Vers_TS *xvers;
+
+		    xvers = Version_TS (finfo, NULL, diff_rev1, diff_date1,
+					1, 0);
+		    exists = xvers->vn_rcs != NULL
+		             && !RCS_isdead (xvers->srcfile, xvers->vn_rcs);
+		    freevers_ts (&xvers);
+		}
+	    }
+	    else
+	    {
+		/* The file was added locally, but an RCS archive exists.  Our
+		 * base revision must be dead.
+		 */
+		/* No need to set, exists = 0, here.  That's the default.  */
+	    }
+	}
+	if (!exists)
+	{
+	    /* If we got here, then either the RCS archive does not exist or
+	     * the relevant revision is dead.
+	     */
+	    if (empty_files)
+		empty_file = DIFF_ADDED;
+	    else
+	    {
+		error (0, 0, "%s is a new entry, no comparison available",
+		       finfo->fullname);
+		goto out;
+	    }
 	}
     }
     else if (vers->vn_user[0] == '-')
@@ -614,7 +661,8 @@ diff_fileproc (callerdat, finfo)
 		make_file_label (DEVNULL, NULL, NULL);
 	else
 	    label1 =
-		make_file_label (finfo->fullname, use_rev1, vers ? vers->srcfile : NULL);
+                make_file_label (finfo->fullname, use_rev1,
+                                 vers ? vers->srcfile : NULL);
     }
 
     if (!have_rev2_label)
@@ -624,7 +672,8 @@ diff_fileproc (callerdat, finfo)
 		make_file_label (DEVNULL, NULL, NULL);
 	else
 	    label2 =
-		make_file_label (finfo->fullname, use_rev2, vers ? vers->srcfile : NULL);
+                make_file_label (finfo->fullname, use_rev2,
+                                 vers ? vers->srcfile : NULL);
     }
 
     if (empty_file == DIFF_ADDED || empty_file == DIFF_REMOVED)
@@ -647,7 +696,8 @@ RCS file: ", 0);
 	if (empty_file == DIFF_ADDED)
 	{
 	    if (use_rev2 == NULL)
-		status = diff_exec (DEVNULL, finfo->file, label1, label2, opts, RUN_TTY);
+                status = diff_exec (DEVNULL, finfo->file, label1, label2, opts,
+                                    RUN_TTY);
 	    else
 	    {
 		int retcode;
@@ -684,16 +734,16 @@ RCS file: ", 0);
     }
     else
     {
-	status = RCS_exec_rcsdiff( vers->srcfile, opts,
-				   *options ? options : vers->options,
-				   use_rev1, rev1_cache, use_rev2,
-				   label1, label2,
-				   finfo->file );
+	status = RCS_exec_rcsdiff(vers->srcfile, opts,
+                                  *options ? options : vers->options,
+                                  use_rev1, rev1_cache, use_rev2,
+                                  label1, label2,
+                                  finfo->file);
 
     }
 
-    if( label1 ) free( label1 );
-    if( label2 ) free( label2 );
+    if (label1) free (label1);
+    if (label2) free (label2);
 
     switch (status)
     {
@@ -762,9 +812,9 @@ diff_mark_errors (err)
 static Dtype
 diff_dirproc (callerdat, dir, pos_repos, update_dir, entries)
     void *callerdat;
-    char *dir;
-    char *pos_repos;
-    char *update_dir;
+    const char *dir;
+    const char *pos_repos;
+    const char *update_dir;
     List *entries;
 {
     /* XXX - check for dirs we don't want to process??? */
@@ -786,8 +836,8 @@ static int
 diff_filesdoneproc (callerdat, err, repos, update_dir, entries)
     void *callerdat;
     int err;
-    char *repos;
-    char *update_dir;
+    const char *repos;
+    const char *update_dir;
     List *entries;
 {
     return (diff_errors);
@@ -800,9 +850,9 @@ diff_filesdoneproc (callerdat, err, repos, update_dir, entries)
 static int
 diff_dirleaveproc (callerdat, dir, err, update_dir, entries)
     void *callerdat;
-    char *dir;
+    const char *dir;
     int err;
-    char *update_dir;
+    const char *update_dir;
     List *entries;
 {
     return (diff_errors);

@@ -853,7 +853,7 @@ init (argc, argv)
     /* Name of ,v file for this administrative file.  */
     char *info_v;
     /* Exit status.  */
-    int err;
+    int err = 0;
 
     const struct admin_file *fileptr;
 
@@ -985,5 +985,5 @@ init (argc, argv)
     mkmodules (adm);
 
     free (adm);
-    return 0;
+    return err;
 }
