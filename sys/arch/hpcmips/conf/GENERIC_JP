@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC_JP,v 1.1.1.1 1999/09/16 12:23:18 takemura Exp $
+# 	$NetBSD: GENERIC_JP,v 1.2 1999/09/25 00:03:22 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -12,6 +12,8 @@ options 	MIPS3			# R4000/R4400/R4600 CPUs
 
 # Support for specific models of H/PC MIPS
 options 	VR41X1			# NEC VR41x1 series
+options		MIPS3_4100		# VR4100 core
+options		SOFTFLOAT		# No FPU
 options		MIPS3_L2CACHE_ABSENT
 
 # Standard system options
@@ -35,8 +37,8 @@ options 	NTP			# network time protocol
 
 #options		SYSCALL_DEBUG		# for debug
 #options		HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
-#options		HPCMIPS_FLUSHCACHE_XXX
-#options		HPCMIPS_PGSIZE_16K	# page size is 16KB
+#options		HPCMIPS_FLUSHCACHE_XXX	# for debug
+#options		MIPS_16K_PAGE		# page size is 16KB
 
 # Filesystem options
 file-system 	FFS             # fast filesystem with user and group quotas
@@ -74,11 +76,12 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options		NFS_BOOT_DHCP
 
 config		netbsd		root on ? type ?
-#config		netbsd		root on sd0a type ffs
+config		sdnetbsd	root on sd0a type ffs
 config		nfsnetbsd	root on ? type nfs
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
+options		WSDISPLAY_DEFAULTSCREENS=4
 
 # Workstation Console attachments
 fb*	at mainbus0
