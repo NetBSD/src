@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
+/*	$NetBSD: npx.h,v 1.11.20.1 1998/01/29 11:58:28 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,9 +88,21 @@ struct	emcsts {
 	long	em_dl;		/* memory mapped D low register when swtched */
 };
 
-/* Intel prefers long real (53 bit) precision */
-#define	__iBCS_NPXCW__		0x262
+/*
+ * The i387 defaults to Intel extended precision mode and round to nearest,
+ * with all exceptions masked.
+ */
+#define	__INITIAL_NPXCW__	0x037f
+/* NetBSD uses IEEE double precision. */
 #define	__NetBSD_NPXCW__	0x127f
+/* FreeBSD leaves some exceptions unmasked as well. */
+#define	__FreeBSD_NPXCW__	0x1272
+/* iBCS2 goes a bit further and leaves the underflow exception unmasked. */
+#define	__iBCS2_NPXCW__		0x0262
+/* Linux just uses the default control word. */
+#define	__Linux_NPXCW__		0x037f
+/* SVR4 uses the same control word as iBCS2. */
+#define	__SVR4_NPXCW__		0x0262
 
 /*
  * The standard control word from finit is 0x37F, giving:
@@ -114,7 +126,5 @@ struct	emcsts {
  * underflows).  It doesn't make a lot of sense to trap underflow without
  * trapping denormals.
  */
-
-#define	__INITIAL_NPXCW__	__NetBSD_NPXCW__
 
 #endif /* !_I386_NPX_H_ */
