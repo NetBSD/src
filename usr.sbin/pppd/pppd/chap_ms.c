@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.c,v 1.6 1998/05/02 14:19:14 christos Exp $	*/
+/*	$NetBSD: chap_ms.c,v 1.7 1998/06/01 14:00:11 kleink Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -38,13 +38,14 @@
 #if 0
 static char rcsid[] = "Id: chap_ms.c,v 1.8 1998/04/01 00:15:43 paulus Exp ";
 #else
-__RCSID("$NetBSD: chap_ms.c,v 1.6 1998/05/02 14:19:14 christos Exp $");
+__RCSID("$NetBSD: chap_ms.c,v 1.7 1998/06/01 14:00:11 kleink Exp $");
 #endif
 #endif
 
 #ifdef CHAPMS
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
