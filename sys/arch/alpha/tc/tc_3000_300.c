@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_300.c,v 1.20 1999/08/07 12:58:29 drochner Exp $ */
+/* $NetBSD: tc_3000_300.c,v 1.21 2000/02/03 08:13:45 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.20 1999/08/07 12:58:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.21 2000/02/03 08:13:45 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,9 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.20 1999/08/07 12:58:29 drochner Ex
 #endif
 
 #include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicreg.h>
 #include <alpha/tc/tc_conf.h>
 #include <alpha/tc/tc_3000_300.h>
-#include <alpha/tc/ioasicreg.h>
 
 #include "wsdisplay.h"
 #include "sfb.h"
@@ -98,7 +98,7 @@ tc_3000_300_intr_setup()
 	/*
 	 * Disable all interrupts that we can (can't disable builtins).
 	 */
-	imskp = (volatile u_int32_t *)IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
+	imskp = (volatile u_int32_t *)(DEC_3000_300_IOASIC_ADDR + IOASIC_IMSK);
 	*imskp &= ~(IOASIC_INTR_300_OPT0 | IOASIC_INTR_300_OPT1);
 
 	/*
@@ -130,7 +130,7 @@ tc_3000_300_intr_establish(tcadev, cookie, level, func, arg)
 	tc_3000_300_intr[dev].tci_func = func;
 	tc_3000_300_intr[dev].tci_arg = arg;
 
-	imskp = (volatile u_int32_t *)IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
+	imskp = (volatile u_int32_t *)(DEC_3000_300_IOASIC_ADDR + IOASIC_IMSK);
 	switch (dev) {
 	case TC_3000_300_DEV_OPT0:
 		*imskp |= IOASIC_INTR_300_OPT0;
@@ -160,7 +160,7 @@ tc_3000_300_intr_disestablish(tcadev, cookie)
 		panic("tc_3000_300_intr_disestablish: cookie %lu bad intr",
 		    dev);
 
-	imskp = (volatile u_int32_t *)IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
+	imskp = (volatile u_int32_t *)(DEC_3000_300_IOASIC_ADDR + IOASIC_IMSK);
 	switch (dev) {
 	case TC_3000_300_DEV_OPT0:
 		*imskp &= ~IOASIC_INTR_300_OPT0;
@@ -211,9 +211,9 @@ tc_3000_300_iointr(framep, vec)
 		/* find out what interrupts/errors occurred */
 		tcir = *(volatile u_int32_t *)TC_3000_300_IR;
 		ioasicir = *(volatile u_int32_t *)
-		    IOASIC_REG_INTR(DEC_3000_300_IOASIC_ADDR);
+		    (DEC_3000_300_IOASIC_ADDR + IOASIC_INTR);
 		ioasicimr = *(volatile u_int32_t *)
-		    IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
+		    (DEC_3000_300_IOASIC_ADDR + IOASIC_IMSK);
 		tc_mb();
 
 		/* Ignore interrupts that aren't enabled out. */
