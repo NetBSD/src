@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.24 2003/04/05 03:47:18 christos Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.25 2003/04/05 17:02:14 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -277,7 +277,7 @@ universal(rqstp, transp)
 			/* decode arguments into a CLEAN buffer */
 			xdrbuf = pl->p_xdrbuf;
 			/* Zero the arguments: reqd ! */
-			(void) memset(xdrbuf, 0, pl->p_recvsz);
+			(void) memset(xdrbuf, 0, (size_t)pl->p_recvsz);
 			/*
 			 * Assuming that sizeof (xdrbuf) would be enough
 			 * for the arguments; if not then the program
