@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2003/08/01 03:55:59 sjg Exp $
+#	$NetBSD: Makefile,v 1.31 2004/02/15 19:05:45 sjg Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 CPPFLAGS+= -I${.CURDIR}
@@ -33,4 +33,4 @@ COPTS.var.c+= -Wno-cast-qual
 
 # A simple unit-test driver to help catch regressions
 accept test:
-	cd ${.CURDIR}/unit-tests && ${.MAKE} TEST_MAKE=${TEST_MAKE:U${.OBJDIR}/${PROG:T}} ${.TARGET}
+	cd ${.CURDIR}/unit-tests && ${.MAKE:S,^./,${.CURDIR}/,} TEST_MAKE=${TEST_MAKE:U${.OBJDIR}/${PROG:T}} ${.TARGET}
