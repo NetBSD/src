@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.12.4.3 2002/09/04 04:24:58 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.12.4.4 2003/06/17 05:15:50 msaitoh Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.33 2000/10/19 02:23:43 jinmei Exp $	*/
 
 /*
@@ -1369,6 +1369,8 @@ ip6_mdq(m, ifp, rt)
 	 */
 	for (mifp = mif6table, mifi = 0; mifi < nummifs; mifp++, mifi++)
 		if (IF_ISSET(mifi, &rt->mf6c_ifset)) {
+			if (mif6table[mifi].m6_ifp == NULL)
+				continue;
 #ifdef notyet
 			/*
 			 * check if the outgoing packet is going to break
