@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.c,v 1.11 2001/04/06 11:13:52 wiz Exp $	*/
+/*	$NetBSD: mille.c,v 1.12 2001/12/06 12:12:34 blymn Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1982, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: mille.c,v 1.11 2001/04/06 11:13:52 wiz Exp $");
+__RCSID("$NetBSD: mille.c,v 1.12 2001/12/06 12:12:34 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ main(ac, av)
 # else
 	srandom(0);
 # endif
-	crmode();
+	cbreak();
 	noecho();
 	signal(SIGINT, rub);
 	for (;;) {
