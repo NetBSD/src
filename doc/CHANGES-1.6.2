@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.220 2003/10/26 18:28:11 cyber Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.221 2003/10/26 18:39:41 cyber Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2677,4 +2677,15 @@ distrib/sets/lists/xserver/md.atari		1.10
 	"libXxf86dga.a", "libXxf86misc.a" and "libXxf86vm.a" belong into the
 	"xcomp" and not into the "xserver" set.
 	[tron, ticket #1541]
+
+distrib/sets/lists/xbase4/md.cats		1.1
+distrib/sets/lists/xbase4/md.i386		1.4
+distrib/sets/lists/xbase4/md.macppc		1.3
+distrib/sets/lists/xbase4/md.sparc64		1.1
+distrib/sets/lists/xbase4/shl.elf		1.5
+distrib/sets/lists/xbase4/shl.mi		1.5
+
+	Move shared version of "libXxf86dga" into architecture specific sets
+	because it is not build under NetBSD-sparc.
+	[tron, ticket #1542]
 
