@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.7 2002/10/13 11:20:38 bjh21 Exp $	*/
+/*	$NetBSD: copystr.S,v 1.8 2002/10/13 14:54:48 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -43,7 +43,7 @@
 #include "assym.h"
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copystr.S,v 1.7 2002/10/13 11:20:38 bjh21 Exp $")
+RCSID("$NetBSD: copystr.S,v 1.8 2002/10/13 14:54:48 bjh21 Exp $")
 
 #include <sys/errno.h>
 
@@ -132,7 +132,7 @@ ENTRY(copyinstr)
 	beq	.Lcopystrpcbfault
 #endif
 
-	add	r5, pc, #.Lcopystrfault - . - 8
+	adr	r5, .Lcopystrfault
 	str	r5, [r4, #PCB_ONFAULT]
 
 1:	ldrbt	r5, [r0], #0x0001
@@ -189,7 +189,7 @@ ENTRY(copyoutstr)
 	beq	.Lcopystrpcbfault
 #endif
 
-	add	r5, pc, #.Lcopystrfault - . - 8
+	adr	r5, .Lcopystrfault
 	str	r5, [r4, #PCB_ONFAULT]
 
 1:	ldrb	r5, [r0], #0x0001
@@ -223,7 +223,7 @@ ENTRY(copyoutstr)
 .Lcopystrpcbfault:
 	mov	r2, r1
 	mov	r1, r0
-	add	r0, pc, #Lcopystrpcbfaulttext - . - 8
+	adr	r0, Lcopystrpcbfaulttext
 	bic	sp, sp, #7			/* align stack to 8 bytes */
 	b	_C_LABEL(panic)
 
