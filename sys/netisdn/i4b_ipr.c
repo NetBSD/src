@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.3 2001/01/19 12:44:45 martin Exp $
+ *	$Id: i4b_ipr.c,v 1.4 2001/02/03 18:43:45 martin Exp $
  *
  * $FreeBSD$
  *
@@ -325,8 +325,9 @@ i4biprattach()
 		sc->sc_if.if_ioctl = i4biprioctl;
 		sc->sc_if.if_output = i4biproutput;
 
-		sc->sc_if.if_snd.ifq_maxlen = I4BIPRMAXQLEN;
+		IFQ_SET_MAXLEN(&sc->sc_if.if_snd, I4BIPRMAXQLEN);
 		sc->sc_fastq.ifq_maxlen = I4BIPRMAXQLEN;
+		IFQ_SET_READY(&sc->sc_if.if_snd);
 		
 		sc->sc_if.if_ipackets = 0;
 		sc->sc_if.if_ierrors = 0;
@@ -528,6 +529,7 @@ i4biproutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			splx(s);
 			return(ENOBUFS);
 		}
+		IF_ENQUEUE(ifq, m);
 	} else {
 		IFQ_ENQUEUE(&sc->sc_if.if_snd, m, &pktattr, rv);
 		if (rv != 0) {
@@ -537,9 +539,7 @@ i4biproutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		}
 	}
 	
-	NDBGL4(L4_IPRDBG, "ipr%d: add packet to send queue!", unit);
-	
-	IF_ENQUEUE(ifq, m);
+	NDBGL4(L4_IPRDBG, "ipr%d: added packet to send queue!", unit);
 
 	ipr_tx_queue_empty(unit);
 
@@ -683,7 +683,7 @@ iprclearqueues(struct ipr_softc *sc)
 	for(;;)
 	{
 		x = splnet();
-		IF_DEQUEUE(&sc->sc_if.if_snd, m);
+		IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
 		splx(x);
 
 		if(m)
@@ -1131,7 +1131,7 @@ ipr_tx_queue_empty(int unit)
 		}
 		else
 		{
-			IF_DEQUEUE(&sc->sc_if.if_snd, m);
+			IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
 			if(m == NULL)
 				break;
 		}
