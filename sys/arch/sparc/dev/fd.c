@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.85 2000/08/24 20:04:29 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.86 2001/04/19 14:53:36 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -177,10 +177,7 @@ struct fdc_softc {
 #define sc_intrcnt	sc_io.fdcio_intrcnt
 };
 
-#undef FDC_C_HANDLER
-#ifndef FDC_C_HANDLER
-extern	struct fdcio	*fdciop;
-#endif
+extern	struct fdcio	*fdciop;	/* I/O descriptor used in fdintr.s */
 
 /* controller driver configuration */
 int	fdcmatch_mainbus __P((struct device *, struct cfdata *, void *));
@@ -291,11 +288,8 @@ void	fdcstatus __P((struct fdc_softc *fdc, char *s));
 void	fdc_reset __P((struct fdc_softc *fdc));
 void	fdctimeout __P((void *arg));
 void	fdcpseudointr __P((void *arg));
-#ifdef FDC_C_HANDLER
 int	fdc_c_hwintr __P((void *));
-#else
 void	fdchwintr __P((void));
-#endif
 int	fdcswintr __P((void *));
 int	fdcstate __P((struct fdc_softc *));
 void	fdcretry __P((struct fdc_softc *fdc));
@@ -319,7 +313,6 @@ static void establish_chip_type __P((
 #error 4
 #endif
 
-#ifdef FDC_C_HANDLER
 #if defined(SUN4M)
 #define FD_SET_SWINTR do {		\
 	if (CPU_ISSUN4M)		\
@@ -330,7 +323,6 @@ static void establish_chip_type __P((
 #else
 #define FD_SET_SWINTR ienab_bis(IE_FDSOFT)
 #endif /* defined(SUN4M) */
-#endif /* FDC_C_HANDLER */
 
 #define OBP_FDNAME	(CPU_ISSUN4M ? "SUNW,fdtwo" : "fd")
 
@@ -640,18 +632,28 @@ fdcattach(fdc, pri)
 		return (-1);
 	}
 
-#ifdef FDC_C_HANDLER
-	(void)bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO, 0,
-				 fdc_c_hwintr, fdc);
-#else
 	fdciop = &fdc->sc_io;
-	(void)bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO,
-				 BUS_INTR_ESTABLISH_FASTTRAP,
-				 (int (*) __P((void *)))fdchwintr, NULL);
-#endif
-	(void)bus_intr_establish(fdc->sc_bustag, PIL_FDSOFT, IPL_BIO,
-				 BUS_INTR_ESTABLISH_SOFTINTR,
-				 fdcswintr, fdc);
+	if (bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO,
+			 BUS_INTR_ESTABLISH_FASTTRAP,
+			 (int (*) __P((void *)))fdchwintr, NULL) == NULL) {
+
+		printf("%s: notice: no fast trap handler slot available\n",
+			fdc->sc_dev.dv_xname);
+		if (bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO, 0,
+				 fdc_c_hwintr, fdc) == NULL) {
+			printf("%s: cannot register interrupt handler\n",
+				fdc->sc_dev.dv_xname);
+			return (-1);
+		}
+	}
+
+	if (bus_intr_establish(fdc->sc_bustag, PIL_FDSOFT, IPL_BIO,
+			 BUS_INTR_ESTABLISH_SOFTINTR,
+			 fdcswintr, fdc) == NULL) {
+		printf("%s: cannot register interrupt handler\n",
+			fdc->sc_dev.dv_xname);
+		return (-1);
+	}
 
 	evcnt_attach_dynamic(&fdc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    fdc->sc_dev.dv_xname, "intr");
@@ -1291,10 +1293,12 @@ fdcpseudointr(arg)
 }
 
 
-#ifdef FDC_C_HANDLER
 /*
- * hardware interrupt entry point: must be converted to `fast'
- * (in-window) handler.
+ * hardware interrupt entry point: used only if no `fast trap' * (in-window)
+ * handler is available. Unfortunately, we have no reliable way to
+ * determine that the interrupt really came from the floppy controller;
+ * just hope that the other devices that share this interrupt level
+ * can do better..
  */
 int
 fdc_c_hwintr(arg)
@@ -1307,8 +1311,8 @@ fdc_c_hwintr(arg)
 	switch (fdc->sc_itask) {
 	case FDC_ITASK_NONE:
 		return (0);
-	case FDC_ITASK_SENSI:
-		if (fdc_wrfifo(fdc, NE7CMD_SENSEI) != 0 || fdcresult(fdc) != 0)
+	case FDC_ITASK_SENSEI:
+		if (fdc_wrfifo(fdc, NE7CMD_SENSEI) != 0 || fdcresult(fdc) == -1)
 			fdc->sc_istatus = FDC_ISTATUS_ERROR;
 		else
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
@@ -1340,7 +1344,10 @@ fdc_c_hwintr(arg)
 			fdcresult(fdc);
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
 			FD_SET_SWINTR;
-			printf("fdc: overrun: tc = %d\n", fdc->sc_tc);
+#ifdef FD_DEBUG
+			if (fdc_debug > 1)
+				printf("fdc: overrun: tc = %d\n", fdc->sc_tc);
+#endif
 			break;
 		}
 
@@ -1363,7 +1370,6 @@ fdc_c_hwintr(arg)
 	}
 	return (1);
 }
-#endif
 
 int
 fdcswintr(arg)
@@ -1410,8 +1416,13 @@ fdcstate(fdc)
 	struct fd_type *type;
 	struct ne7_fd_formb *finfo = NULL;
 
-	if (fdc->sc_istatus == FDC_ISTATUS_ERROR)
-		fdc->sc_state = DORESET;
+	if (fdc->sc_istatus == FDC_ISTATUS_ERROR) {
+		/* Prevent loop if the reset sequence produces errors */
+		if (fdc->sc_state != RESETCOMPLETE &&
+		    fdc->sc_state != RECALWAIT &&
+		    fdc->sc_state != RECALCOMPLETE)
+			fdc->sc_state = DORESET;
+	}
 
 	/* Clear I task/status field */
 	fdc->sc_istatus = FDC_ISTATUS_NONE;
