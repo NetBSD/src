@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xreg.h,v 1.6 1999/09/22 03:31:23 mhitch Exp $	*/
+/*	$NetBSD: ncr53c9xreg.h,v 1.7 2000/03/20 00:50:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -182,11 +182,6 @@
 #define	 NCRCFG4_CRS1	0x80		/*	Select register set #1	*/
 #define	 NCRCFG4_RSVD	0x7b		/*	reserved		*/
 #define	 NCRCFG4_ACTNEG	0x04		/*	Active negation		*/
-
-#define	NCR_SCSIREGS(sc) do { NCR_WRITE_REG(sc, NCR_CFG4, \
-	~NCRCFG4_CRS1 & NCR_READ_REG(sc, NCR_CFG4)); } while(0)
-#define	NCR_PIOREGS(sc) do { NCR_WRITE_REG(sc, NCR_CFG4, \
-	NCRCFG4_CRS1 | NCR_READ_REG(sc, NCR_CFG4)); } while(0)
 
 /*
    The following registers are only on the ESP406/FAS408.  The
