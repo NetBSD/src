@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.34 2004/08/07 01:52:42 mycroft Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.35 2004/08/10 19:20:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.34 2004/08/07 01:52:42 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.35 2004/08/10 19:20:20 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -706,7 +706,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 	void *arg;
 {
 	/* most of these are educated guesses */
-	static struct pcmcia_config_entry init_cfe = {
+	static const struct pcmcia_config_entry init_cfe = {
 		-1, PCMCIA_CFE_RDYBSY_ACTIVE | PCMCIA_CFE_WP_ACTIVE |
 		PCMCIA_CFE_BVD_ACTIVE, PCMCIA_IFTYPE_MEMORY,
 	};
