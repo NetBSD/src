@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.26 2003/06/16 13:52:27 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.27 2003/06/16 14:01:33 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -386,3 +386,26 @@ sys/arch/amiga/dev/grf_et.c			1.20-1.21
  
 	fix fatal typo
 	[is, ticket #1266]
+
+share/man/man4/scc.4				1.3-1.5
+
+	Add MAKEDEV(8) to the SEE ALSO list.
+	Clean up nroff problems.
+
+	Change the serial port file names in the FILES section to ttyB0,
+	etc. to match current reality, per PR 19572
+
+	Add some paragraph breaks to make the text more readable, and to
+	more clearly separate the topics covered.
+
+	Sprinkle Tn macros liberally. Update the man page date.
+
+	Gaaaaaah! I should have double checked that pmax had been changed
+	to match alpha, and they're different - alpha: ttyB0, pmax: ttya
+
+	So, change the FILES section again to differentiate between alpha
+	and pmax, plus add a clear statement in the first paragraph as to
+	which computers listed are supported by which port.
+
+	Hopefully this will properly answer PR 19752
+	[fair, ticket #1271]
