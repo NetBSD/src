@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.77 2002/10/09 20:22:16 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.78 2003/01/17 08:11:58 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.77 2002/10/09 20:22:16 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.78 2003/01/17 08:11:58 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1856,6 +1856,10 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 
   sendpkt:
 
+#ifdef IPSEC
+	/* clean ipsec history once it goes out of the node */
+	ipsec_delaux(m);
+#endif
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
 		return ((*ifp->if_output)(origifp, m, (struct sockaddr *)dst,
 					 rt));
