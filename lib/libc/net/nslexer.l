@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: nslexer.l,v 1.4 1999/07/02 15:27:08 kleink Exp $	*/
+/*	$NetBSD: nslexer.l,v 1.5 2002/03/19 00:04:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nslexer.l,v 1.4 1999/07/02 15:27:08 kleink Exp $");
+__RCSID("$NetBSD: nslexer.l,v 1.5 2002/03/19 00:04:09 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -94,9 +94,7 @@ STRING		[a-zA-Z][a-zA-Z0-9_]*
 			return STRING;
 		}
 
-[:=\[\]]	return yytext[0];
-
-.		;	/* ignore all else */
+.		return yytext[0];
 
 %%
 
