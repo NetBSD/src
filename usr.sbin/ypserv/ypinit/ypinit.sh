@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: ypinit.sh,v 1.11 2003/11/12 13:31:08 grant Exp $
+#	$NetBSD: ypinit.sh,v 1.11.4.1 2005/01/12 21:24:53 he Exp $
 #
 # ypinit.sh - setup a master or slave YP server
 #
@@ -129,6 +129,7 @@ echo ""
 
 binding_dir=${yp_dir}/binding
 if [ ! -d ${binding_dir} ]; then
+	cat 1>&2 << __no_dir
 $progname: The directory ${binding_dir} does not exist.
 	Restore it from the distribution.
 __no_dir
