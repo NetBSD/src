@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.49 2003/10/25 19:49:13 thorpej Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.50 2003/10/25 20:12:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -63,7 +63,7 @@ struct sigctx {
 	/* This needs to be zeroed on fork */
 	sigset_t ps_siglist;		/* Signals arrived but not delivered. */
 	char	ps_sigcheck;		/* May have deliverable signals. */
-	ksiginfo_t *ps_sigwaited;	/* Delivered signal from wait set */
+	struct ksiginfo *ps_sigwaited;	/* Delivered signal from wait set */
 	const sigset_t *ps_sigwait;	/* Signals being waited for */
 	struct simplelock ps_silock;	/* Lock for ps_siginfo */
 	CIRCLEQ_HEAD(, ksiginfo) ps_siginfo;/* for SA_SIGINFO */
