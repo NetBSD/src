@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.11 2001/11/26 11:14:50 yamt Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.1 2001/11/26 19:17:08 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -54,8 +54,8 @@
 **--
 */
 
-#ifndef _DEV_ISA_CS89X0VAR_H_
-#define	_DEV_ISA_CS89X0VAR_H_
+#ifndef _DEV_IC_CS89X0VAR_H_
+#define	_DEV_IC_CS89X0VAR_H_
 
 /*
  * Ethernet software status per interface.
@@ -78,20 +78,16 @@ struct cs_softc {
 	bus_space_handle_t sc_ioh;	/* bus space handles */
 	bus_space_handle_t sc_memh;
 
+#if 0
 	isa_chipset_tag_t sc_ic;	/* ISA chipset */
+#endif
 
 	int	sc_irq;			/* IRQ line */
-	int	sc_drq;			/* DRQ line */
 
 	int	sc_prodid;		/* saved product ID */
 	int	sc_prodrev;		/* saved product rev */
 
 	bus_addr_t sc_pktpgaddr;	/* PacketPage bus memory address */
-
-	bus_size_t sc_dmasize;		/* DMA size (16k or 64k) */
-	bus_addr_t sc_dmaaddr;		/* DMA address */
-	caddr_t	sc_dmabase;		/* base DMA address (KVA) */
-	caddr_t	sc_dmacur;		/* current DMA address (KVA) */
 
 	int	sc_cfgflags;		/* software configuration flags */
 
@@ -114,6 +110,11 @@ struct cs_softc {
 	int (*sc_enable) __P((struct cs_softc *));
 	void (*sc_disable) __P((struct cs_softc *));
 	void *sc_powerhook;
+
+	/* dma hooks */
+	void (*sc_dma_process_rx) __P((struct cs_softc *));
+	void (*sc_dma_chipinit) __P((struct cs_softc *));
+	void (*sc_dma_attach) __P((struct cs_softc *));
 };
 
 
@@ -240,7 +241,10 @@ int	cs_read_eeprom __P((bus_space_tag_t, bus_space_handle_t, int,
 	    u_int16_t *));
 int	cs_intr __P((void *));
 int cs_activate __P((struct device *, enum devact));
+void	cs_ether_input __P((struct cs_softc *, struct mbuf *));
+void	cs_print_rx_errors __P((struct cs_softc *, u_int16_t));
+int	cs_init __P((struct ifnet *));
 
 #define CS_IS_ENABLED(sc)	((sc)->sc_cfgflags & CFGFLG_ENABLED)
 
-#endif /* _DEV_ISA_CS89X0VAR_H_ */
+#endif /* _DEV_IC_CS89X0VAR_H_ */

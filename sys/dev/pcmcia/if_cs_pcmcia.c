@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.1 2001/11/26 11:17:34 yamt Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.2 2001/11/26 19:17:07 yamt Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.1 2001/11/26 11:17:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.2 2001/11/26 19:17:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.1 2001/11/26 11:17:34 yamt Exp $"
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-#include <dev/isa/isavar.h> /*XXX*/
-
-#include <dev/isa/cs89x0reg.h>
-#include <dev/isa/cs89x0var.h>
+#include <dev/ic/cs89x0reg.h>
+#include <dev/ic/cs89x0var.h>
 
 #define DEVNAME(sc) ((sc)->sc_dev.dv_xname)
 
@@ -145,7 +143,6 @@ cs_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = psc->sc_pcioh.iot;
 	sc->sc_ioh = psc->sc_pcioh.ioh;
-	sc->sc_drq = ISACF_DRQ_DEFAULT;
 	sc->sc_irq = -1;
 #define CS_PCMCIA_HACK_FOR_CARDBUS
 #ifdef CS_PCMCIA_HACK_FOR_CARDBUS

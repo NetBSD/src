@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.117 2001/11/20 14:34:26 lukem Exp $
+#	$NetBSD: files.isa,v 1.118 2001/11/26 19:17:06 yamt Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -202,10 +202,9 @@ attach	ate at isa with ate_isa
 file	dev/isa/if_ate.c		ate_isa
 
 # Crystal Semiconductor CS8900, CS8920, and CS8920M Ethernet
-device	cs: arp, ether, ifnet, isadma
-file	dev/isa/cs89x0.c		cs
-
-attach	cs at isa with cs_isa
+define	cs_isa_common
+file	dev/isa/cs89x0isa.c		cs_isa_common
+attach	cs at isa with cs_isa: cs_isa_common, isadma
 file	dev/isa/if_cs_isa.c		cs_isa
 
 # Fujitsu MB86960-based boards

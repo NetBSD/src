@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0reg.h,v 1.7 2001/11/24 20:18:55 yamt Exp $	*/
+/*	$NetBSD: cs89x0reg.h,v 1.1 2001/11/26 19:17:08 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -54,8 +54,8 @@
 **--
 */
 
-#ifndef _DEV_ISA_CS89X0REG_H_
-#define	_DEV_ISA_CS89X0REG_H_
+#ifndef _DEV_IC_CS89X0REG_H_
+#define	_DEV_IC_CS89X0REG_H_
 
 /*
  * The CS8900 has 8 2-byte registers in I/O space.
@@ -374,4 +374,4 @@
 #define RXBUFCOUNT		16
 #define MC_LOANED		5
 
-#endif /* _DEV_ISA_CS89X0REG_H_ */
+#endif /* _DEV_IC_CS89X0REG_H_ */
