@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.23 2001/09/22 15:58:14 wiz Exp $
+.\" $NetBSD: pcmcia.4,v 1.24 2001/09/29 19:39:52 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,6 +115,11 @@ controllers.
 .It wdc
 Digital Hinote Ultra Mobile Media Adapter
 .El
+.Ss Audio devices
+.Bl -tag -width speaker -offset indent
+.It esl
+Eiger Labs ESS1688 AudioDrive.
+.El
 .Sh SEE ALSO
 .Xr aic 4 ,
 .Xr an 4 ,
@@ -123,6 +128,7 @@ Digital Hinote Ultra Mobile Media Adapter
 .Xr cnw 4 ,
 .Xr com 4 ,
 .Xr ep 4 ,
+.Xr esl 4 ,
 .Xr esp 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
