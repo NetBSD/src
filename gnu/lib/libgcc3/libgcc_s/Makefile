@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/03/22 17:08:23 skrll Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2004/04/29 04:28:55 jmc Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -27,6 +27,25 @@ SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} \
 		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
 
 .include <bsd.lib.mk>
+
+.if ${MACHINE_CPU} == "sh3"
+# make sure the millicode is not externally visible
+
+CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
+
+.S.so .s.so:
+	${_MKTARGET_COMPILE}
+	${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${.IMPSRC} -o ${.TARGET}.tmp1
+	${NM} -pg ${.TARGET}.tmp1 | ${AWK} 'NF == 3 { print "\t.hidden", $$3 }' | \
+	    ${CC} -Wl,-x -r -nostdinc -nostdlib -o ${.TARGET}.tmp2 ${.TARGET}.tmp1 -xassembler -
+.if defined(COPTS) && !empty(COPTS:M*-g*)
+	mv ${.TARGET}.tmp2 ${.TARGET}
+.else
+	${LD} -x -r ${.TARGET}.tmp2 -o ${.TARGET}
+	rm -f ${.TARGET}.tmp2
+.endif
+	rm -f ${.TARGET}.tmp1
+.endif
 
 .else
 .include <bsd.prog.mk> # do nothing
