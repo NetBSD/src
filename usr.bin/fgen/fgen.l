@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.14 2001/10/05 22:36:02 eeh Exp $	*/
+/*	$NetBSD: fgen.l,v 1.15 2001/10/05 22:40:10 eeh Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -297,7 +297,7 @@ int spit __P((long));
 void sspit __P((char *));
 int apply_macros __P((YY_BUFFER_STATE, char *));
 int main __P((int argc, char *argv[]));
-long cvt __P((char *, char **, int base));
+Cell cvt __P((char *, char **, int base));
 
 /*
  * Standard FCode names and numbers.  Includes standard
@@ -1453,8 +1453,7 @@ tokenize(input)
 				spit((value>>16)&0x0ff);
 				spit((value>>8)&0x0ff);
 				spit(value&0x0ff);
-				if ((value>>32) != value && (value>>32) != 0 &&
-					(value>>32) != (-1L>>32)) {
+				if ((value>>32) != value && (value>>32) != 0) {
 					emit("b(lit)");
 					spit((value>>56)&0x0ff);
 					spit((value>>48)&0x0ff);
@@ -1663,8 +1662,7 @@ tokenize(input)
 				spit((value>>16)&0x0ff);
 				spit((value>>8)&0x0ff);
 				spit(value&0x0ff);
-				if ((value>>32) != value && (value>>32) != 0 &&
-					(value>>32) != (-1L>>32)) {
+				if ((value>>32) != value && (value>>32) != 0) {
 					emit("b(lit)");
 					spit((value>>56)&0x0ff);
 					spit((value>>48)&0x0ff);
@@ -1762,8 +1760,7 @@ tokenize(input)
 				spit((value>>16)&0x0ff);
 				spit((value>>8)&0x0ff);
 				spit(value&0x0ff);
-				if ((value>>32) != value && (value>>32) != 0 &&
-					(value>>32) != (-1L>>32)) {
+				if ((value>>32) != value && (value>>32) != 0) {
 					emit("b(lit)");
 					spit((value>>56)&0x0ff);
 					spit((value>>48)&0x0ff);
