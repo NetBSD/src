@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.48 1998/07/23 23:45:24 gwr Exp $
+#	$NetBSD: files.sun3,v 1.49 1998/12/15 19:37:11 itohy Exp $
 
 #
 # sun3-specific configuration info
@@ -254,6 +254,13 @@ file arch/sun3/dev/md_root.c		memory_disk_hooks
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "../../../compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/m68k/files.linux_m68k"
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
 
 # Major numbers for root/swap device configuration
 major	{xy=3}	# Xylogics 450 and 451

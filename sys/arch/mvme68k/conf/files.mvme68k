@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.21 1998/07/21 17:36:02 drochner Exp $
+#	$NetBSD: files.mvme68k,v 1.22 1998/12/15 19:37:06 itohy Exp $
 
 # config file for mvme68k
 
@@ -90,3 +90,10 @@ file dev/cninit.c
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "../../../compat/sunos/files.sunos"
 file    arch/m68k/m68k/sunos_machdep.c  compat_sunos
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/m68k/files.linux_m68k"
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
