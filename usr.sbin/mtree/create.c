@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.39 2002/01/31 19:37:15 tv Exp $	*/
+/*	$NetBSD: create.c,v 1.40 2002/08/08 13:24:15 soren Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.39 2002/01/31 19:37:15 tv Exp $");
+__RCSID("$NetBSD: create.c,v 1.40 2002/08/08 13:24:15 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ cwalk(void)
 	}
 	fts_close(t);
 	if (sflag && keys & F_CKSUM)
-		mtree_err("%s checksum: %u\n", fullpath, crc_total);
+		mtree_err("%s checksum: %u", fullpath, crc_total);
 }
 
 static void

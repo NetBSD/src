@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.10 2002/02/06 14:58:15 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.11 2002/08/08 13:24:15 soren Exp $	*/
 /* From NetBSD: mkfs.c,v 1.59 2001/12/31 07:07:58 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.10 2002/02/06 14:58:15 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.11 2002/08/08 13:24:15 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -908,13 +908,13 @@ ffs_rdfs(daddr_t bno, int size, void *bf, const fsinfo_t *fsopts)
 	offset = bno;
 	offset *= fsopts->sectorsize;
 	if (lseek(fsopts->fd, offset, SEEK_SET) < 0)
-		err(1, "ffs_rdfs: seek error: %d\n", bno);
+		err(1, "ffs_rdfs: seek error: %d", bno);
 	n = read(fsopts->fd, bf, size);
 	if (n == -1)
-		err(1, "ffs_rdfs: read error bno %d size %d\n", bno, size);
+		err(1, "ffs_rdfs: read error bno %d size %d", bno, size);
 	else if (n != size)
 		errx(1,
-		    "ffs_rdfs: read error bno %d size %d: short read of %d\n",
+		    "ffs_rdfs: read error bno %d size %d: short read of %d",
 		    bno, size, n);
 }
 
@@ -930,13 +930,13 @@ ffs_wtfs(daddr_t bno, int size, void *bf, const fsinfo_t *fsopts)
 	offset = bno;
 	offset *= fsopts->sectorsize;
 	if (lseek(fsopts->fd, offset, SEEK_SET) < 0)
-		err(1, "ffs_wtfs: seek error: %d\n", bno);
+		err(1, "ffs_wtfs: seek error: %d", bno);
 	n = write(fsopts->fd, bf, size);
 	if (n == -1)
-		err(1, "ffs_wtfs: write error bno %d size %d\n", bno, size);
+		err(1, "ffs_wtfs: write error bno %d size %d", bno, size);
 	else if (n != size)
 		errx(1,
-		    "ffs_wtfs: write error bno %d size %d: short write of %d\n",
+		    "ffs_wtfs: write error bno %d size %d: short write of %d",
 		    bno, size, n);
 }
 

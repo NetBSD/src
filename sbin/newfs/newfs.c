@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.58 2002/02/20 04:04:39 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.59 2002/08/08 13:24:13 soren Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.58 2002/02/20 04:04:39 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.59 2002/08/08 13:24:13 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -647,7 +647,7 @@ main(int argc, char *argv[])
 	}
 	secpercyl = nsectors * ntracks - cylspares;
 	if (secpercyl != lp->d_secpercyl)
-		warnx("%s (%d) %s (%u)\n",
+		warnx("%s (%d) %s (%u)",
 			"Warning: calculated sectors per cylinder", secpercyl,
 			"disagrees with disk label", lp->d_secpercyl);
 	if (maxbpg == 0)
