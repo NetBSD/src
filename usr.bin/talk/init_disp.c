@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)init_disp.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: init_disp.c,v 1.3 1993/08/10 00:07:05 mycroft Exp $";
+static char rcsid[] = "$Id: init_disp.c,v 1.4 1994/01/24 22:03:04 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -44,6 +44,7 @@ static char rcsid[] = "$Id: init_disp.c,v 1.3 1993/08/10 00:07:05 mycroft Exp $"
 #include "talk.h"
 #include <signal.h>
 #include <termios.h>
+#include <stdio.h>
 
 /* 
  * Set up curses, catch the appropriate signals,
@@ -54,7 +55,10 @@ init_display()
 	void sig_sent();
 	struct sigvec sigv;
 
-	initscr();
+	if (initscr() == NULL) {
+		printf("initscr failed: TERM is unset or unknown terminal type.\n");
+		exit(-1);
+	}
 	(void) sigvec(SIGTSTP, (struct sigvec *)0, &sigv);
 	sigv.sv_mask |= sigmask(SIGALRM);
 	(void) sigvec(SIGTSTP, &sigv, (struct sigvec *)0);
