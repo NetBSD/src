@@ -41,6 +41,7 @@
 #define	SPR_SRR0		0x01a	/* 468 Save/Restore Register 0 */
 #define	SPR_SRR1		0x01b	/* 468 Save/Restore Register 1 */
 #define	SPR_USPRG0		0x100	/* 4.. User SPR General 0 */
+#define SPR_VRSAVE		0x100	/* .6. AltiVec VRSAVE */
 #define	SPR_SPRG0		0x110	/* 468 SPR General 0 */
 #define	SPR_SPRG1		0x111	/* 468 SPR General 1 */
 #define	SPR_SPRG2		0x112	/* 468 SPR General 2 */
