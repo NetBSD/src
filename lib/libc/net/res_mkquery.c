@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.9 1997/07/20 13:33:32 mrg Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.10 1998/01/06 05:01:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -57,9 +57,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp ";
+static char rcsid[] = "Id: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.9 1997/07/20 13:33:32 mrg Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.10 1998/01/06 05:01:28 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
