@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.23 2001/06/06 17:34:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 2001/11/19 04:48:44 perry Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
-
-.include <bsd.own.mk>		# for UNPRIVILEGED
 
 PROG=	phantasia
 SRCS=	fight.c gamesupport.c interplayer.c io.c main.c misc.c phantglobs.c
