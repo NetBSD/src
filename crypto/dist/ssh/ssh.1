@@ -1,6 +1,6 @@
 .\"  -*- nroff -*-
 .\"
-.\" $NetBSD: ssh.1,v 1.1.1.1 2000/09/28 22:10:32 thorpej Exp $
+.\" $NetBSD: ssh.1,v 1.2 2000/10/20 12:40:34 martin Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -530,7 +530,7 @@ obtains configuration data from the following sources (in this order):
 command line options, user's configuration file
 .Pq Pa $HOME/.ssh/config ,
 and system-wide configuration file
-.Pq Pa /etc/ssh_config .
+.Pq Pa /etc/ssh.conf .
 For each parameter, the first obtained value
 will be used.
 The configuration files contain sections bracketed by
@@ -1093,7 +1093,7 @@ to verify the client host when logging in; other names are needed because
 does not convert the user-supplied name to a canonical name before
 checking the key, because someone with access to the name servers
 would then be able to fool host authentication.
-.It Pa /etc/ssh_config
+.It Pa /etc/ssh.conf
 Systemwide configuration file.  This file provides defaults for those
 values that are not specified in the user's configuration file, and
 for those users who do not have a configuration file.  This file must
