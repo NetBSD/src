@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.c,v 1.23 1994/06/29 06:47:47 cgd Exp $	*/
+/*	$NetBSD: swap_pager.c,v 1.24 1994/10/18 06:42:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -687,7 +687,7 @@ swap_pager_io(swp, mlist, npages, flags)
 	s = splbio();
 	while (bswlist.b_actf == NULL) {
 #ifdef DEBUG
-		if (swpagerdebug & SDB_ANOM)
+		if (swpagerdebug & SDB_IO)	/* XXX what should this be? */
 			printf("swap_pager_io: wait on swbuf for %x (%d)\n",
 			       m, flags);
 #endif
