@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.82 2004/04/25 18:40:37 dbj Exp $ */
+/*	$NetBSD: disks.c,v 1.83 2004/04/25 18:50:44 dbj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -583,7 +583,7 @@ fixsb(const char *prog, const char *disk, char ptn)
 	 * sb doesn't match the first alternate.
 	 */
 	run_program(RUN_DISPLAY | RUN_PROGRESS,
-	    "%s -p -b 16 -c 4 /dev/%s%c", prog, disk, ptn);
+	    "%s -p -b 16 -c 4 /dev/r%s%c", prog, disk, ptn);
 	/* Then downgrade to fslevel 3 */
 	run_program(RUN_DISPLAY | RUN_PROGRESS,
 	    "%s -p -c 3 /dev/r%s%c", prog, disk, ptn);
