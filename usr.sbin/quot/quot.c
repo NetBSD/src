@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.10 1996/12/12 00:43:28 mycroft Exp $	*/
+/*	$NetBSD: quot.c,v 1.11 1997/10/17 12:36:36 lukem Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -31,8 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: quot.c,v 1.10 1996/12/12 00:43:28 mycroft Exp $";
+__RCSID("$NetBSD: quot.c,v 1.11 1997/10/17 12:36:36 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -42,18 +43,19 @@ static char rcsid[] = "$NetBSD: quot.c,v 1.10 1996/12/12 00:43:28 mycroft Exp $"
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 
+#include <errno.h>
+#include <fcntl.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <pwd.h>
 #include <unistd.h>
 
 /* some flags of what to do: */
 static char estimate;
 static char count;
 static char unused;
-static void (*func)();
+static void (*func) __P((int, struct fs *, char *));
 static long blocksize;
 static char *header;
 static int headerlen;
@@ -74,6 +76,24 @@ static int headerlen;
 
 #define	INOCNT(fs)	((fs)->fs_ipg)
 #define	INOSZ(fs)	(sizeof(struct dinode) * INOCNT(fs))
+
+static	int		cmpusers __P((const void *, const void *));
+static	void		dofsizes __P((int, struct fs *, char *));
+static	void		donames __P((int, struct fs *, char *));
+static	void		douser __P((int, struct fs *, char *));
+static	struct dinode  *get_inode __P((int, struct fs*, ino_t));
+static	void		ffs_oldfscompat __P((struct fs *));
+static	void		initfsizes __P((void));
+static	void		inituser __P((void));
+static	int		isfree __P((struct dinode *));
+	int		main __P((int, char **));
+	void		quot __P((char *, char *));
+static	void		usage __P((void));
+static	struct user    *user __P((uid_t));
+static	void		uses __P((uid_t, daddr_t, time_t));
+static	void		usrrehash __P((void));
+static	int		virtualblocks __P((struct fs *, struct dinode *));
+
 
 static struct dinode *
 get_inode(fd, super, ino)
@@ -242,11 +262,14 @@ user(uid)
 				usr->uid = uid;
 				
 				if (!(pwd = getpwuid(uid))) {
-					if (usr->name = (char *)malloc(7))
+					if ((usr->name =
+					    (char *)malloc(7)) != NULL)
 						sprintf(usr->name, "#%d", uid);
 				} else {
-					if (usr->name = (char *)
-					    malloc(strlen(pwd->pw_name) + 1))
+					if ((usr->name =
+					    (char *)malloc(
+						strlen(pwd->pw_name) + 1))
+					    != NULL)
 						strcpy(usr->name, pwd->pw_name);
 				}
 				if (!usr->name) {
@@ -266,9 +289,9 @@ user(uid)
 
 static int
 cmpusers(u1, u2)
-	struct user *u1, *u2;
+	const void *u1, *u2;
 {
-	return u2->space - u1->space;
+	return ((struct user *)u2)->space - ((struct user *)u1)->space;
 }
 
 #define	sortusers(users)	(qsort((users), nusers, sizeof(struct user), \
@@ -365,7 +388,8 @@ dofsizes(fd, super, name)
 			}
 #else	/* COMPAT */
 			ksz = SIZE(sz);
-			for (fsp = &fsizes; fp = *fsp; fsp = &fp->fsz_next) {
+			for (fsp = &fsizes; (fp = *fsp) != NULL;
+			    fsp = &fp->fsz_next) {
 				if (ksz < fp->fsz_last)
 					break;
 			}
@@ -396,9 +420,10 @@ dofsizes(fd, super, name)
 	for (fp = fsizes; fp; fp = fp->fsz_next) {
 		for (i = 0; i < FSZCNT; i++) {
 			if (fp->fsz_count[i])
-				printf("%d\t%d\t%d\n",
-				    fp->fsz_first + i, fp->fsz_count[i],
-				    SIZE(sz += fp->fsz_sz[i]));
+				printf("%ld\t%ld\t%ld\n",
+				    (long)(fp->fsz_first + i),
+				    (long)fp->fsz_count[i],
+				    (long)SIZE(sz += fp->fsz_sz[i]));
 		}
 	}
 }
@@ -433,12 +458,12 @@ douser(fd, super, name)
 	bcopy(users, usrs, nusers * sizeof(struct user));
 	sortusers(usrs);
 	for (usr = usrs, n = nusers; --n >= 0 && usr->count; usr++) {
-		printf("%5d", SIZE(usr->space));
+		printf("%5ld", (long)SIZE(usr->space));
 		if (count)
-			printf("\t%5d", usr->count);
+			printf("\t%5ld", (long)usr->count);
 		printf("\t%-8s", usr->name);
 		if (unused)
-			printf("\t%5d\t%5d\t%5d",
+			printf("\t%5ld\t%5ld\t%5ld",
 			    SIZE(usr->spc30), SIZE(usr->spc60),
 			    SIZE(usr->spc90));
 		printf("\n");
@@ -547,7 +572,7 @@ quot(name, mp)
 {
 	int fd;
 	
-	get_inode(-1);		/* flush cache */
+	get_inode(-1, 0, 0);		/* flush cache */
 	inituser();
 	initfsizes();
 	if ((fd = open(name, 0)) < 0
@@ -564,12 +589,12 @@ quot(name, mp)
 		close(fd);
 		return;
 	}
-	ffs_oldfscompat(superblock);
+	ffs_oldfscompat((struct fs *)superblock);
 	printf("%s:", name);
 	if (mp)
 		printf(" (%s)", mp);
 	putchar('\n');
-	(*func)(fd, superblock, name);
+	(*func)(fd, (struct fs *)superblock, name);
 	close(fd);
 }
 
@@ -578,9 +603,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int fd;
 	char all = 0;
-	FILE *fp;
 	struct statfs *mp;
 	char dev[MNAMELEN + 1];
 	char *nm;
@@ -625,7 +648,8 @@ main(argc, argv)
 		cnt = getmntinfo(&mp, MNT_NOWAIT);
 		for (; --cnt >= 0; mp++) {
 			if (!strncmp(mp->f_fstypename, MOUNT_FFS, MFSNAMELEN)) {
-				if (nm = strrchr(mp->f_mntfromname, '/')) {
+				if ((nm =
+				    strrchr(mp->f_mntfromname, '/')) != NULL) {
 					sprintf(dev, "/dev/r%s", nm + 1);
 					nm = dev;
 				} else
