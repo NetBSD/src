@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.40 2002/07/28 07:07:46 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.41 2002/08/10 16:28:49 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -366,7 +366,12 @@ vmapbuf(bp, len)
 	for (; len > 0; len -= NBPG) {
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &pa);
-		pmap_kenter_pa(taddr, pa, VM_PROT_READ|VM_PROT_WRITE);
+		/*
+		 * Use pmap_enter so the referenced and modified bits are
+		 * appropriately set.
+		 */
+		pmap_enter(pmap_kernel(), taddr, pa,
+		    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE);
 		faddr += NBPG;
 		taddr += NBPG;
 	}
@@ -391,7 +396,11 @@ vunmapbuf(bp, len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
-	pmap_kremove(addr, len);
+	/*
+	 * Since the pages were entered by pmap_enter, use pmap_remove
+	 * to remove them.
+	 */
+	pmap_remove(pmap_kernel(), addr, addr + len);
 	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
