@@ -1,3 +1,5 @@
+/*	$NetBSD: ufs.c,v 1.8 1994/10/26 05:45:09 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)ufs.c	8.1 (Berkeley) 6/11/93
  *  
  *
  * Copyright (c) 1990, 1991 Carnegie Mellon University
@@ -60,8 +60,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- * 
- *	$Id: ufs.c,v 1.7 1994/08/22 21:56:15 brezak Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: open.c,v 1.5 1994/10/26 05:44:57 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	From: @(#)open.c	8.1 (Berkeley) 6/11/93
+ *	@(#)open.c	8.1 (Berkeley) 6/11/93
  *  
  *
  * Copyright (c) 1989, 1990, 1991 Carnegie Mellon University
@@ -60,8 +62,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- * 
- * 	$Id: open.c,v 1.4 1994/07/18 18:41:12 pk Exp $
  */
 
 #include "stand.h"
