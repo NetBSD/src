@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.6 1997/08/09 02:02:08 jonathan Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.7 1997/10/18 05:21:44 jonathan Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,10 +36,13 @@
 
 
 #include <mips/asm.h>
+#define _LOCORE		/* XXX not really, just assembly-code source */
+#include <machine/endian.h>
+
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)mips_bcopy.s	2.2 CMU 18/06/93")
-	ASMSTR("$NetBSD: bcopy.S,v 1.6 1997/08/09 02:02:08 jonathan Exp $")
+	ASMSTR("$NetBSD: bcopy.S,v 1.7 1997/10/18 05:21:44 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -162,13 +165,8 @@ destaligned:
 	addu	a3,a0,a3	# stop point
 
 3:
-#if MIPSEL	/* little-endian */
-	lwr	v0,0(a0)
-	lwl	v0,3(a0)
-#else		/* big-endian */
-	lwl	v0,0(a0)
-	lwr	v0,3(a0)
-#endif
+	LWHI	v0,0(a0)
+	LWLO	v0,3(a0)
 	addi	a0,4
 	sw	v0,0(a1)
 	bne	a0,a3,3b
