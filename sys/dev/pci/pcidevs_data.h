@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.177 1999/12/01 15:08:18 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.178 1999/12/04 04:41:40 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.172 1999/12/01 15:07:44 drochner Exp 
+ *	NetBSD: pcidevs,v 1.173 1999/12/04 04:40:57 thorpej Exp 
  */
 
 /*
@@ -1144,6 +1144,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "USB Controller",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMART2P,
+	    0,
+	    "Compaq",
+	    "SMART2P RAID",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N100TX,
 	    0,
 	    "Compaq",
@@ -1162,16 +1168,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Integrated NetFlex 3/P",
 	},
 	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_IntPL100TX,
-	    0,
-	    "Compaq",
-	    "ProLiant Integrated Netelligent 10/100 TX",
-	},
-	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_DPNet100TX,
 	    0,
 	    "Compaq",
 	    "Dual Port Netelligent 10/100 TX",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_IntPL100TX,
+	    0,
+	    "Compaq",
+	    "ProLiant Integrated Netelligent 10/100 TX",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_DP4000,
@@ -1388,6 +1394,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Digital Equipment",
 	    "DECchip 21154 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_CPQ42XX,
+	    0,
+	    "Digital Equipment",
+	    "Compaq SMART RAID 42xx",
 	},
 	{
 	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
@@ -2234,6 +2246,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Symbios Logic",
 	    "53c875",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1510,
+	    0,
+	    "Symbios Logic",
+	    "53c1510",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875J,
