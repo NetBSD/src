@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.14 1996/10/13 02:21:48 christos Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.15 1996/12/22 10:10:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -56,7 +56,7 @@
 #include <sys/queue.h>
 #include <miscfs/union/union.h>
 
-int union_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
+int union_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		     struct proc *));
 int union_start __P((struct mount *, int, struct proc *));
 int union_unmount __P((struct mount *, int, struct proc *));
@@ -75,8 +75,8 @@ int union_vptofh __P((struct vnode *, struct fid *));
 int
 union_mount(mp, path, data, ndp, p)
 	struct mount *mp;
-	char *path;
-	caddr_t data;
+	const char *path;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {

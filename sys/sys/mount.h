@@ -1,5 +1,5 @@
 
-/*	$NetBSD: mount.h,v 1.49 1996/10/23 22:53:09 cgd Exp $	*/
+/*	$NetBSD: mount.h,v 1.50 1996/12/22 10:10:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -183,8 +183,9 @@ struct mbuf;
 
 struct vfsops {
 	char	*vfs_name;
-	int	(*vfs_mount)	__P((struct mount *mp, char *path, caddr_t data,
-				    struct nameidata *ndp, struct proc *p));
+	int	(*vfs_mount)	__P((struct mount *mp, const char *path,
+				    void *data, struct nameidata *ndp,
+				    struct proc *p));
 	int	(*vfs_start)	__P((struct mount *mp, int flags,
 				    struct proc *p));
 	int	(*vfs_unmount)	__P((struct mount *mp, int mntflags,

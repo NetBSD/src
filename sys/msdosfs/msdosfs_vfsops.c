@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.43 1996/10/13 04:16:35 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.44 1996/12/22 10:10:32 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -69,8 +69,8 @@
 #include <msdosfs/msdosfsmount.h>
 #include <msdosfs/fat.h>
 
-int msdosfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
-		       struct proc *));
+int msdosfs_mount __P((struct mount *, const char *, void *,
+		       struct nameidata *, struct proc *));
 int msdosfs_start __P((struct mount *, int, struct proc *));
 int msdosfs_unmount __P((struct mount *, int, struct proc *));
 int msdosfs_root __P((struct mount *, struct vnode **));
@@ -93,8 +93,8 @@ int msdosfs_mountfs __P((struct vnode *, struct mount *, struct proc *,
 int
 msdosfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
-	char *path;
-	caddr_t data;
+	const char *path;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {

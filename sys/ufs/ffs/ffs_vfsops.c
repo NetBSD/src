@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.21 1996/10/12 21:58:47 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.22 1996/12/22 10:10:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -141,8 +141,8 @@ ffs_mountroot()
 int
 ffs_mount(mp, path, data, ndp, p)
 	register struct mount *mp;
-	char *path;
-	caddr_t data;
+	const char *path;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {
