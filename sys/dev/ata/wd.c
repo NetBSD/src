@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.79 1994/04/24 01:30:04 mycroft Exp $
+ *	$Id: wd.c,v 1.80 1994/04/25 03:16:03 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -337,7 +337,6 @@ wdstrategy(bp)
 	struct buf *bp;
 {
 	struct wd_softc *wd;	/* disk unit to do the IO */
-	struct wdc_softc *wdc;
 	int lunit = WDUNIT(bp->b_dev);
 	int s;
     
@@ -378,9 +377,12 @@ wdstrategy(bp)
 	if (!wd->sc_q.b_active)
 		wdstart(wd);		/* Start drive. */
 #ifdef DIAGNOSTIC
-	else if ((wdc->sc_flags & WDCF_ACTIVE) == 0) {
-		printf("wdstrategy: controller inactive\n");
-		wdcstart(wdc);
+	else {
+		struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
+		if ((wdc->sc_flags & WDCF_ACTIVE) == 0) {
+			printf("wdstrategy: controller inactive\n");
+			wdcstart(wdc);
+		}
 	}
 #endif
 	splx(s);
