@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.31 1995/04/17 12:08:32 cgd Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.32 1995/07/24 07:17:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -574,7 +574,7 @@ int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; /**/
 
 int	aicprobe	__P((struct device *, void *, void *));
 void	aicattach	__P((struct device *, struct device *, void *));
-void	aic_minphys	__P((struct buf *));
+u_int	aic_minphys	__P((struct buf *));
 int	aicintr		__P((void *));
 void 	aic_init	__P((struct aic_softc *));
 void	aic_done	__P((struct aic_softc *, struct aic_acb *));
@@ -1011,7 +1011,7 @@ aic_scsi_cmd(xs)
 /*
  * Adjust transfer size in buffer structure
  */
-void 
+u_int 
 aic_minphys(bp)
 	struct buf *bp;
 {
@@ -1019,6 +1019,7 @@ aic_minphys(bp)
 	AIC_TRACE(("aic_minphys  "));
 	if (bp->b_bcount > (AIC_NSEG << PGSHIFT))
 		bp->b_bcount = (AIC_NSEG << PGSHIFT);
+	return (minphys(bp));
 }
 
 /*
