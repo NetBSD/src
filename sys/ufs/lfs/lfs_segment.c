@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.148 2004/01/25 18:06:49 hannken Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.149 2004/01/28 10:53:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.148 2004/01/25 18:06:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.149 2004/01/28 10:53:12 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1636,14 +1636,11 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	struct buf **bpp, *bp, *cbp, *newbp;
 	SEGUSE *sup;
 	SEGSUM *ssp;
-	dev_t i_dev;
 	char *datap, *dp;
 	int i, s;
 	int do_again, nblocks, byteoffset;
 	size_t el_size;
 	struct lfs_cluster *cl;
-	int (*strategy)(void *);
-	struct vop_strategy_args vop_strategy_a;
 	u_short ninos;
 	struct vnode *devvp;
 	char *p = NULL;
@@ -1667,7 +1664,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	if ((nblocks = sp->cbpp - sp->bpp) == 1)
 		return (0);
 	
-	i_dev = VTOI(fs->lfs_ivnode)->i_dev;
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 
 	/* Update the segment usage information. */
@@ -1895,8 +1891,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	fs->lfs_bfree -= (btofsb(fs, ninos * fs->lfs_ibsize) +
 			  btofsb(fs, fs->lfs_sumsize));
 
-	strategy = devvp->v_op[VOFFSET(vop_strategy)];
-
 	/*
 	 * When we simply write the blocks we lose a rotation for every block
 	 * written.  To avoid this problem, we cluster the buffers into a
@@ -1915,7 +1909,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		cbp = lfs_newclusterbuf(fs, devvp, (*bpp)->b_blkno, i);
 		cl = cbp->b_private;
 
-		cbp->b_dev = i_dev;
 		cbp->b_flags |= B_ASYNC | B_BUSY;
 		cbp->b_bcount = 0;
 
@@ -2007,10 +2000,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		s = splbio();
 		V_INCR_NUMOUTPUT(devvp);
 		splx(s);
-		vop_strategy_a.a_desc = VDESC(vop_strategy);
-		vop_strategy_a.a_vp = cbp->b_vp;
-		vop_strategy_a.a_bp = cbp;
-		(strategy)(&vop_strategy_a);
+		VOP_STRATEGY(devvp, cbp);
 		curproc->p_stats->p_ru.ru_oublock++;
 	}
 
@@ -2031,10 +2021,8 @@ void
 lfs_writesuper(struct lfs *fs, daddr_t daddr)
 {
 	struct buf *bp;
-	dev_t i_dev;
-	int (*strategy)(void *);
 	int s;
-	struct vop_strategy_args vop_strategy_a;
+	struct vnode *devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 
 	/*
 	 * If we can write one superblock while another is in
@@ -2047,8 +2035,6 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	}
 	fs->lfs_sbactive = daddr;
 	splx(s);
-	i_dev = VTOI(fs->lfs_ivnode)->i_dev;
-	strategy = VTOI(fs->lfs_ivnode)->i_devvp->v_op[VOFFSET(vop_strategy)];
 
 	/* Set timestamp of this version of the superblock */
 	if (fs->lfs_version == 1)
@@ -2057,13 +2043,12 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 
 	/* Checksum the superblock and copy it into a buffer. */
 	fs->lfs_cksum = lfs_sb_cksum(&(fs->lfs_dlfs));
-	bp = lfs_newbuf(fs, VTOI(fs->lfs_ivnode)->i_devvp,
+	bp = lfs_newbuf(fs, devvp,
 	    fsbtodb(fs, daddr), LFS_SBPAD, LFS_NB_SBLOCK);
 	memset(bp->b_data + sizeof(struct dlfs), 0,
 	    LFS_SBPAD - sizeof(struct dlfs));
 	*(struct dlfs *)bp->b_data = fs->lfs_dlfs;
 	
-	bp->b_dev = i_dev;
 	bp->b_flags |= B_BUSY | B_CALL | B_ASYNC;
 	bp->b_flags &= ~(B_DONE | B_ERROR | B_READ | B_DELWRI);
 	bp->b_iodone = lfs_supercallback;
@@ -2072,15 +2057,12 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 	else
 		BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
-	vop_strategy_a.a_desc = VDESC(vop_strategy);
-	vop_strategy_a.a_vp = bp->b_vp;
-	vop_strategy_a.a_bp = bp;
 	curproc->p_stats->p_ru.ru_oublock++;
 	s = splbio();
 	V_INCR_NUMOUTPUT(bp->b_vp);
 	splx(s);
 	++fs->lfs_iocount;
-	(strategy)(&vop_strategy_a);
+	VOP_STRATEGY(devvp, bp);
 }
 
 /*
