@@ -1,0 +1,3 @@
+# $NetBSD: obsolete.amd64,v 1.1 2003/05/15 19:10:00 wiz Exp $
+./dev/lms0
+./dev/mms0
