@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.38 2000/01/08 02:57:25 takemura Exp $	*/
+/*	$NetBSD: lms.c,v 1.39 2001/11/15 07:03:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -22,6 +22,9 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.39 2001/11/15 07:03:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

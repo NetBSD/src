@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.48 2001/09/16 16:34:30 wiz Exp $	*/
+/*	$NetBSD: pms.c,v 1.49 2001/11/15 07:03:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1997 Charles M. Hannum.
@@ -30,6 +30,9 @@
  * same I/O ports.  Frobbing the mouse and keyboard at the same time
  * may result in dropped characters and/or corrupted mouse events.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.49 2001/11/15 07:03:33 lukem Exp $");
 
 #include "opms.h"
 #if (NOPMS_HACK + NOPMS_PCKBC) > 1

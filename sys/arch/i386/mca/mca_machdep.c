@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.9 2001/05/14 14:14:09 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.10 2001/11/15 07:03:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * Machine-specific functions for MCA autoconfiguration.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.10 2001/11/15 07:03:33 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

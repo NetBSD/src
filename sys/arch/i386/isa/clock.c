@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.68 2001/11/03 11:16:25 jdolecek Exp $	*/
+/*	$NetBSD: clock.c,v 1.69 2001/11/15 07:03:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -85,12 +85,16 @@ NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-/* #define CLOCKDEBUG */
-/* #define CLOCK_PARANOIA */
-
 /*
  * Primitive clock interrupt routines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.69 2001/11/15 07:03:32 lukem Exp $");
+
+/* #define CLOCKDEBUG */
+/* #define CLOCK_PARANOIA */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>

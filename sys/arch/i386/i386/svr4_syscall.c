@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.14 2001/05/30 12:28:44 mrg Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.15 2001/11/15 07:03:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.15 2001/11/15 07:03:31 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"

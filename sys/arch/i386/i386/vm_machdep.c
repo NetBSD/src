@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.101 2001/09/10 21:19:15 chris Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.102 2001/11/15 07:03:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -44,6 +44,9 @@
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102 2001/11/15 07:03:31 lukem Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"

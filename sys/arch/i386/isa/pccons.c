@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.149 2001/07/31 13:15:29 jdolecek Exp $	*/
+/*	$NetBSD: pccons.c,v 1.150 2001/11/15 07:03:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@
  * controller driver, ==0 that we access it directly.
  * XXX Only one of these attachments can be used in one kernel configuration.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.150 2001/11/15 07:03:33 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"

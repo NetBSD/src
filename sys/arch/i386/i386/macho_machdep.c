@@ -1,4 +1,4 @@
-/*	$NetBSD: macho_machdep.c,v 1.1 2001/07/14 02:04:25 christos Exp $	*/
+/*	$NetBSD: macho_machdep.c,v 1.2 2001/11/15 07:03:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: macho_machdep.c,v 1.2 2001/11/15 07:03:30 lukem Exp $");
+
 #include <sys/systm.h>
 #include <sys/exec_macho.h>
 

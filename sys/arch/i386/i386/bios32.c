@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.4 2001/09/26 14:07:51 fvdl Exp $	*/
+/*	$NetBSD: bios32.c,v 1.5 2001/11/15 07:03:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 /*
  * Basic interface to BIOS32 services.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.5 2001/11/15 07:03:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

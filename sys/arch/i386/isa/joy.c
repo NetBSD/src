@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.11 2001/06/13 10:46:01 wiz Exp $	*/
+/*	$NetBSD: joy.c,v 1.12 2001/11/15 07:03:32 lukem Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -35,6 +35,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.12 2001/11/15 07:03:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

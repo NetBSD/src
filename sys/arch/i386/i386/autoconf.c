@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.58 2001/09/20 22:46:04 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.59 2001/11/15 07:03:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,6 +46,9 @@
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2001/11/15 07:03:28 lukem Exp $");
 
 #include "opt_compat_oldboot.h"
 
