@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.6 1994/12/18 22:05:40 jtc Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.7 1994/12/20 01:24:38 jtc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$NetBSD: xinstall.c,v 1.6 1994/12/18 22:05:40 jtc Exp $";
+static char rcsid[] = "$NetBSD: xinstall.c,v 1.7 1994/12/20 01:24:38 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,6 +76,7 @@ char *group, *owner, pathbuf[MAXPATHLEN];
 
 void	copy __P((int, char *, int, char *, off_t));
 void	install __P((char *, char *, u_long, u_int));
+void	install_dir __P((char *));
 u_long	string_to_flags __P((char **, u_long *, u_long *));
 void	strip __P((char *));
 void	usage __P((void));
@@ -341,7 +342,7 @@ strip(to_name)
  * install_dir --
  *	build directory heirarchy
  */
-int
+void
 install_dir(path)
         char *path;
 {
@@ -355,8 +356,8 @@ install_dir(path)
                         *p = '\0';
                         if (stat(path, &sb)) {
                                 if (errno != ENOENT || mkdir(path, 0777) < 0) {
-                                        warn("%s", path);
-                                        return(1);
+					err(1, "%s", path);
+					/* NOTREACHED */
                                 }
                         }
                         if (!(*p = ch))
@@ -368,8 +369,6 @@ install_dir(path)
             chmod(path, mode)) {
                 warn("%s", path);
         }
-
-        return(0);
 }
 
 /*
