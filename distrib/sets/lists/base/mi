@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.262 2001/06/02 00:34:00 itojun Exp $
+# $NetBSD: mi,v 1.263 2001/06/03 06:19:13 itojun Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -665,7 +665,6 @@
 ./usr/sbin/mrinfo		base-router-bin
 ./usr/sbin/mrouted		base-router-bin
 ./usr/sbin/mtrace		base-netutil-bin
-./usr/sbin/mtrace6		base-netutil-bin
 ./usr/sbin/mtree		base-sysutil-bin
 ./usr/sbin/named		base-bind-bin
 ./usr/sbin/named-bootconf	base-bind-bin
