@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.6 1999/02/04 17:05:35 kleink Exp $	*/
+/*	$NetBSD: prompt.c,v 1.7 1999/02/08 23:48:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -115,7 +115,7 @@ setmp()
 ap_pos(pos)
 	POSITION pos;
 {
-	sprintf(mp, "%qd", (quad_t)(POSITION)pos);
+	sprintf(mp, "%qd", (long long)(POSITION)pos);
 	setmp();
 }
 
