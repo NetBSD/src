@@ -1,4 +1,4 @@
-.\"	$NetBSD: dca.4,v 1.7 2003/08/07 10:31:05 agc Exp $
+.\"	$NetBSD: dca.4,v 1.8 2003/11/15 23:06:42 mbw Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -77,6 +77,14 @@ has overflowed and incoming data has been lost.
 .Sh SEE ALSO
 .Xr dio 4 ,
 .Xr tty 4
+.Sh HISTORY
+The
+.Nm
+device driver appeared in
+.Nx 1.0
+and is obsoleted by the
+.Xr com 4
+driver.
 .Sh BUGS
 Data loss is possible on busy systems with baud rates greater than 300.
 The
