@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftpd.c	5.40 (Berkeley) 7/2/91";*/
-static char rcsid[] = "$Id: ftpd.c,v 1.4 1994/03/30 02:50:29 cgd Exp $";
+static char rcsid[] = "$Id: ftpd.c,v 1.5 1994/04/06 20:50:05 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -107,6 +107,7 @@ int	timeout = 900;    /* timeout after 15 minutes of inactivity */
 int	maxtimeout = 7200;/* don't allow idle time to be set beyond 2 hours */
 int	logging;
 int	guest;
+int	dochroot;
 int	type;
 int	form;
 int	stru;			/* avoid C keyword */
@@ -357,13 +358,17 @@ user(name)
 		if (guest) {
 			reply(530, "Can't change user from guest login.");
 			return;
+		} else if (dochroot) {
+			reply(530, "Can't change user from chroot user.");
+			return;
 		}
 		end_login();
 	}
 
 	guest = 0;
 	if (strcmp(name, "ftp") == 0 || strcmp(name, "anonymous") == 0) {
-		if (checkuser("ftp") || checkuser("anonymous"))
+		if (checkuser(_PATH_FTPUSERS, "ftp") ||
+		    checkuser(_PATH_FTPUSERS, "anonymous"))
 			reply(530, "User %s access denied.", name);
 		else if ((pw = sgetpwnam("ftp")) != NULL) {
 			guest = 1;
@@ -380,7 +385,7 @@ user(name)
 			if (strcmp(cp, shell) == 0)
 				break;
 		endusershell();
-		if (cp == NULL || checkuser(name)) {
+		if (cp == NULL || checkuser(_PATH_FTPUSERS, name)) {
 			reply(530, "User %s access denied.", name);
 			if (logging)
 				syslog(LOG_NOTICE,
@@ -401,16 +406,17 @@ user(name)
 }
 
 /*
- * Check if a user is in the file _PATH_FTPUSERS
+ * Check if a user is in the file "fname"
  */
-checkuser(name)
+checkuser(fname, name)
+	char *fname;
 	char *name;
 {
 	register FILE *fd;
 	register char *p;
 	char line[BUFSIZ];
 
-	if ((fd = fopen(_PATH_FTPUSERS, "r")) != NULL) {
+	if ((fd = fopen(fname, "r")) != NULL) {
 		while (fgets(line, sizeof(line), fd) != NULL)
 			if ((p = index(line, '\n')) != NULL) {
 				*p = '\0';
@@ -437,6 +443,7 @@ end_login()
 	pw = NULL;
 	logged_in = 0;
 	guest = 0;
+	dochroot = 0;
 }
 
 pass(passwd)
@@ -490,6 +497,7 @@ pass(passwd)
 	logwtmp(ttyline, pw->pw_name, remotehost);
 	logged_in = 1;
 
+	dochroot = checkuser(_PATH_FTPCHROOT, pw->pw_name);
 	if (guest) {
 		/*
 		 * We MUST do a chdir() after the chroot. Otherwise
@@ -498,6 +506,11 @@ pass(passwd)
 		 */
 		if (chroot(pw->pw_dir) < 0 || chdir("/") < 0) {
 			reply(550, "Can't set guest privileges.");
+			goto bad;
+		}
+	} else if (dochroot) {
+		if (chroot(pw->pw_dir) < 0 || chdir("/") < 0) {
+			reply(550, "Can't change root.");
 			goto bad;
 		}
 	} else if (chdir(pw->pw_dir) < 0) {
