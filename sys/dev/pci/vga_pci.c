@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.15 2002/06/28 22:24:13 drochner Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.16 2002/07/02 18:17:30 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.15 2002/06/28 22:24:13 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.16 2002/07/02 18:17:30 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,12 +89,21 @@ const struct vga_funcs vga_pci_funcs = {
 	vga_pci_mmap,
 };
 
+#if 0 /* caught by the more general rule below */
 static const struct {
 	int id;
 	int quirks;
 } vga_pci_quirks[] = {
 	{PCI_ID_CODE(PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XL_AGP),
 	 VGA_QUIRK_ONEFONT},
+};
+#endif
+
+static const struct {
+	int vid;
+	int quirks;
+} vga_pci_vquirks[] = {
+	{PCI_VENDOR_ATI, VGA_QUIRK_ONEFONT},
 };
 
 static int
@@ -103,10 +112,17 @@ vga_pci_lookup_quirks(pa)
 {
 	int i;
 
+#if 0
 	for (i = 0; i < sizeof(vga_pci_quirks) / sizeof (vga_pci_quirks[0]);
 	     i++) {
 		if (vga_pci_quirks[i].id == pa->pa_id)
 			return (vga_pci_quirks[i].quirks);
+	}
+#endif
+	for (i = 0; i < sizeof(vga_pci_vquirks) / sizeof (vga_pci_vquirks[0]);
+	     i++) {
+		if (vga_pci_vquirks[i].vid == PCI_VENDOR(pa->pa_id))
+			return (vga_pci_vquirks[i].quirks);
 	}
 	return (0);
 }
