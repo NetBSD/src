@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.5 1996/09/28 19:30:35 christos Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.6 1996/10/11 20:22:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsdb.c,v 1.5 1996/09/28 19:30:35 christos Exp $";
+static char rcsid[] = "$NetBSD: fsdb.c,v 1.6 1996/10/11 20:22:43 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -149,6 +149,7 @@ CMDFUNC(rm);				/* remove name */
 CMDFUNC(ln);				/* add name */
 CMDFUNC(newtype);			/* change type */
 CMDFUNC(chmode);			/* change mode */
+CMDFUNC(chlen);				/* change length */
 CMDFUNC(chaflags);			/* change flags */
 CMDFUNC(chgen);				/* change generation */
 CMDFUNC(chowner);			/* change owner */
@@ -182,6 +183,7 @@ static struct cmdtable cmds[] = {
 	{ "chtype", "Change type of current inode to TYPE", 2, 2, newtype },
 	{ "chmod", "Change mode of current inode to MODE", 2, 2, chmode },
 	{ "chown", "Change owner of current inode to OWNER", 2, 2, chowner },
+	{ "chlen", "Change length of current inode to LENGTH", 2, 2, chlen },
 	{ "chgrp", "Change group of current inode to GROUP", 2, 2, chgroup },
 	{ "chflags", "Change flags of current inode to FLAGS", 2, 2, chaflags },
 	{ "chgen", "Change generation number of current inode to GEN", 2, 2, chgen },
@@ -658,6 +660,27 @@ CMDFUNCSTART(chmode)
     
     curinode->di_mode &= ~07777;
     curinode->di_mode |= modebits;
+    inodirty();
+    printactive();
+    return rval;
+}
+
+CMDFUNCSTART(chlen)
+{
+    int rval = 1;
+    long len;
+    char *cp;
+
+    if (!checkactive())
+	return 1;
+
+    len = strtol(argv[1], &cp, 0);
+    if (cp == argv[1] || *cp != '\0' || len < 0) {
+	warnx("bad length '%s'", argv[1]);
+	return 1;
+    }
+
+    curinode->di_size = len;
     inodirty();
     printactive();
     return rval;
