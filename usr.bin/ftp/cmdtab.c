@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.17 1997/08/18 10:20:17 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.17.2.1 1998/11/10 18:48:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.17 1997/08/18 10:20:17 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.17.2.1 1998/11/10 18:48:37 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,13 +94,14 @@ char	pagehelp[] =	"view a remote file through your pager";
 char	passivehelp[] =	"enter passive transfer mode";
 char	porthelp[] =	"toggle use of PORT cmd for each data connection";
 char	preservehelp[] ="toggle preservation of modification time of "
-			"retreived files";
+			"retrieved files";
 char	progresshelp[] ="toggle transfer progress meter";
 char	prompthelp[] =	"force interactive prompting on multiple commands";
 char	proxyhelp[] =	"issue command on alternate connection";
 char	pwdhelp[] =	"print working directory on remote machine";
 char	quithelp[] =	"terminate ftp session and exit";
 char	quotehelp[] =	"send arbitrary ftp command";
+char	rcvbufhelp[] =	"set socket receive buffer size";
 char	receivehelp[] =	"receive file";
 char	regethelp[] =	"get file restarting at end of local file";
 char	remotehelp[] =	"get help from remote server";
@@ -116,6 +117,7 @@ char	sitehelp[] =	"send site specific command to remote server\n"
 			"\t\tTry \"rhelp site\" or \"site help\" "
 			"for more information";
 char	sizecmdhelp[] = "show size of remote file";
+char	sndbufhelp[] =	"set socket send buffer size";
 char	statushelp[] =	"show current status";
 char	structhelp[] =	"set file transfer structure";
 char	suniquehelp[] = "toggle store unique on remote machine";
@@ -197,6 +199,7 @@ struct cmd cmdtab[] = {
 	{ "pwd",	pwdhelp,	0, 1, 1, CMPL0		pwd },
 	{ "quit",	quithelp,	0, 0, 0, CMPL0		quit },
 	{ "quote",	quotehelp,	1, 1, 1, CMPL0		quote },
+	{ "rcvbuf",	rcvbufhelp,	0, 0, 0, CMPL0		rcvbuf },
 	{ "recv",	receivehelp,	1, 1, 1, CMPL(rl)	get },
 	{ "reget",	regethelp,	1, 1, 1, CMPL(rl)	reget },
 	{ "rename",	renamehelp,	0, 1, 1, CMPL(rr)	renamefile },
@@ -210,6 +213,7 @@ struct cmd cmdtab[] = {
 	{ "sendport",	porthelp,	0, 0, 0, CMPL0		setport },
 	{ "site",	sitehelp,	0, 1, 1, CMPL0		site },
 	{ "size",	sizecmdhelp,	1, 1, 1, CMPL(r)	sizecmd },
+	{ "sndbuf",	sndbufhelp,	0, 0, 0, CMPL0		sndbuf },
 	{ "status",	statushelp,	0, 0, 1, CMPL0		status },
 	{ "struct",	structhelp,	0, 1, 1, CMPL0		setstruct },
 	{ "sunique",	suniquehelp,	0, 0, 1, CMPL0		setsunique },
