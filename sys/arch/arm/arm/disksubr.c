@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 2003/08/07 16:26:51 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9.2.1 2004/10/01 02:40:16 jmc Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.9 2003/08/07 16:26:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.9.2.1 2004/10/01 02:40:16 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,13 +144,8 @@ readdisklabel(dev, strat, lp, osdep)
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 
-	lp->d_npartitions = MAXPARTITIONS;
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		if (i == RAW_PART) continue;
-		lp->d_partitions[i].p_offset = 0;
-		lp->d_partitions[i].p_fstype = FS_UNUSED;
-		lp->d_partitions[i].p_size = 0;
-	}
+	if (lp->d_npartitions < RAW_PART + 1)
+	      lp->d_npartitions = RAW_PART + 1;
 
 	if (lp->d_partitions[RAW_PART].p_size == 0) {
 		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED; 
