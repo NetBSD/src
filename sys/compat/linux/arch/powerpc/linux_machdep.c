@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.5.4.9 2002/08/01 02:44:16 nathanw Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.5.4.10 2002/08/02 21:04:23 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.5.4.9 2002/08/01 02:44:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.5.4.10 2002/08/02 21:04:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ linux_sendsig(sig, mask, code)  /* XXX Check me */
 	memset(&frame, 0, sizeof(frame));
 	memcpy(&frame.lgp_regs, &linux_regs, sizeof(linux_regs));
 
-	save_fpu_proc(curlwp);
+	save_fpu_lwp(curlwp);
 	memcpy(&frame.lfp_regs, curpcb->pcb_fpu.fpr, sizeof(frame.lfp_regs));
 
 	/*
@@ -305,7 +305,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	/*
 	 * Make sure, fpu is sync'ed
 	 */
-	save_fpu_proc(curlwp);
+	save_fpu_lwp(curlwp);
 
 	/*
 	 *  Restore register context.
@@ -395,7 +395,7 @@ linux_sys_sigreturn(l, v, retval)
 	/*
 	 * Make sure, fpu is in sync
 	 */
-	save_fpu_proc(curlwp);
+	save_fpu_lwp(curlwp);
 
 	/*
 	 *  Restore register context.
