@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13 1999/02/17 03:54:46 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.14 1999/05/30 07:36:28 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,6 +133,8 @@ strayintr(fp)
 	}
 }
 
+#include "arp.h"
+
 /*
  * Level 1 software interrupt (could also be Sbus level 1 interrupt).
  * Three possible reasons:
@@ -163,8 +165,10 @@ soft01intr(fp)
 			splx(s);
 			sir.sir_which[SIR_NET] = 0;
 #ifdef INET
+#if NARP > 0
 			if (n & (1 << NETISR_ARP))
 				arpintr();
+#endif
 			if (n & (1 << NETISR_IP))
 				ipintr();
 #endif
