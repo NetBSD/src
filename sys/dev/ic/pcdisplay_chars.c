@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_chars.c,v 1.1 1998/06/26 21:00:27 drochner Exp $ */
+/* $NetBSD: pcdisplay_chars.c,v 1.2 1999/02/12 11:32:50 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -44,7 +44,7 @@
 #include <dev/ic/pcdisplayvar.h>
 
 #define CONTROL 1 /* XXX smiley */
-#define NOTPRINTABLE 1 /* XXX smiley */
+#define NOTPRINTABLE 4 /* diamond XXX watch out - not in ISO part! */
 
 static u_char isomappings[128] = {
 	CONTROL, CONTROL, CONTROL, CONTROL, CONTROL, CONTROL, CONTROL, CONTROL,
@@ -261,21 +261,67 @@ static struct {
 	{0x266b, 0x0e}, /* BEAMED EIGHTH NOTES */
 };
 
-unsigned int
-pcdisplay_mapchar(id, uni)
+static struct {
+	u_int16_t uni;
+	u_char ibm;
+	int quality;
+} replacements[] = {
+	{0x00d8, 0xe9, 2}, /* LATIN CAPITAL LETTER O WITH STROKE -> Theta */
+	{0x00f8, 0xed, 2}, /* LATIN SMALL LETTER O WITH STROKE -> phi */
+	{0x00a9, 0x63, 1}, /* COPYRIGHT SIGN -> c */
+	{0x00b3, 0x33, 1}, /* SUPERSCRIPT THREE -> 3 */
+	{0x00b9, 0x39, 1}, /* SUPERSCRIPT ONE -> 1 */
+	{0x00c0, 0x41, 1}, /* LATIN CAPITAL LETTER A WITH GRAVE -> A */
+	{0x00c1, 0x41, 1}, /* LATIN CAPITAL LETTER A WITH ACUTE -> A */
+	{0x00c2, 0x41, 1}, /* LATIN CAPITAL LETTER A WITH CIRCUMFLEX -> A */
+	{0x00c3, 0x41, 1}, /* LATIN CAPITAL LETTER A WITH TILDE -> A */
+	{0x00c8, 0x45, 1}, /* LATIN CAPITAL LETTER E WITH GRAVE -> E */
+	{0x00ca, 0x45, 1}, /* LATIN CAPITAL LETTER E WITH CIRCUMFLEX -> E */
+	{0x00cb, 0x45, 1}, /* LATIN CAPITAL LETTER E WITH DIAERESIS -> E */
+	{0x00cc, 0x49, 1}, /* LATIN CAPITAL LETTER I WITH GRAVE -> I */
+	{0x00cd, 0x49, 1}, /* LATIN CAPITAL LETTER I WITH ACUTE -> I */
+	{0x00ce, 0x49, 1}, /* LATIN CAPITAL LETTER I WITH CIRCUMFLEX -> I */
+	{0x00cf, 0x49, 1}, /* LATIN CAPITAL LETTER I WITH DIAERESIS -> I */
+	{0x00d2, 0x4f, 1}, /* LATIN CAPITAL LETTER O WITH GRAVE -> O */
+	{0x00d3, 0x4f, 1}, /* LATIN CAPITAL LETTER O WITH ACUTE -> O */
+	{0x00d4, 0x4f, 1}, /* LATIN CAPITAL LETTER O WITH CIRCUMFLEX -> O */
+	{0x00d5, 0x4f, 1}, /* LATIN CAPITAL LETTER O WITH TILDE -> O */
+	{0x00d9, 0x55, 1}, /* LATIN CAPITAL LETTER U WITH GRAVE -> U */
+	{0x00da, 0x55, 1}, /* LATIN CAPITAL LETTER U WITH ACUTE -> U */
+	{0x00db, 0x55, 1}, /* LATIN CAPITAL LETTER U WITH CIRCUMFLEX -> U */
+	{0x00dd, 0x59, 1}, /* LATIN CAPITAL LETTER Y WITH ACUTE -> Y */
+	{0x00e3, 0x61, 1}, /* LATIN SMALL LETTER A WITH TILDE -> a */
+	{0x00f5, 0x6f, 1}, /* LATIN SMALL LETTER O WITH TILDE -> o */
+	{0x00fd, 0x79, 1}, /* LATIN SMALL LETTER Y WITH ACUTE -> y */
+};
+
+int
+pcdisplay_mapchar(id, uni, index)
 	void *id;
 	int uni;
+	unsigned int *index;
 {
 	int i;
 
 	if (uni < 128)
 		return (uni);
-	else if (uni < 256)
-		return (isomappings[uni - 128]);
+	else if ((uni < 256) && (isomappings[uni - 128] != NOTPRINTABLE)) {
+		*index = isomappings[uni - 128];
+		return (5);
+	}
 
 	for (i = 0; i < sizeof(unimappings) / sizeof(unimappings[0]); i++)
-		if (uni == unimappings[i].uni)
-			return (unimappings[i].ibm);
+		if (uni == unimappings[i].uni) {
+			*index = unimappings[i].ibm;
+			return (5);
+		}
 
-	return (NOTPRINTABLE);
+	for (i = 0; i < sizeof(replacements) / sizeof(replacements[0]); i++)
+		if (uni == replacements[i].uni) {
+			*index = replacements[i].ibm;
+			return (replacements[i].quality);
+		}
+
+	*index = NOTPRINTABLE;
+	return (0);
 }
