@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.29 2002/03/17 19:40:52 atatat Exp $ */
+/*	$NetBSD: smg.c,v 1.29.6.1 2002/06/11 01:56:56 lukem Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -241,7 +241,8 @@ smg_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	curscr = &smg_conscreen;
-	aa.console = !(vax_confdata & 0x20);
+	aa.console = (vax_confdata & (KA420_CFG_L3CON|KA420_CFG_MULTU)) == 0;
+
 	aa.scrdata = &smg_screenlist;
 	aa.accessops = &smg_accessops;
 	callout_reset(&smg_cursor_ch, hz / 2, smg_crsr_blink, NULL);
