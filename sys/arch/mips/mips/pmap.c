@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.134.2.1 2001/10/24 17:38:10 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.134.2.2 2001/11/04 03:41:24 shin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134.2.1 2001/10/24 17:38:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134.2.2 2001/11/04 03:41:24 shin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -262,7 +262,7 @@ mips_flushcache_allpvh(paddr_t pa)
 
 	/* Only one index is allowed at a time */
 	if (mips_cache_indexof(pa) != mips_cache_indexof(pv->pv_va))
-		MachFlushDCache(pv->pv_va, NBPG);
+		mips_dcache_wbinv_range_index(pv->pv_va, NBPG);
 #else
 	while (pv) {
 		mips_dcache_wbinv_range_index(pv->pv_va, NBPG);
@@ -1575,28 +1575,6 @@ pmap_zero_page(phys)
 }
 
 /*
- *	pmap_zero_page_uncached zeros the specified page
- *	using uncached accesses.  Returns TRUE if the page
- *	was zero'd, FALSE if we aborted.
- */
-boolean_t
-pmap_zero_page_uncached(phys)
-	paddr_t phys;
-{
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_zero_page_uncached(%lx)\n", phys);
-#endif
-#ifdef PARANOIADIAG
-	if (! (phys < MIPS_MAX_MEM_ADDR))
-		printf("pmap_zero_page_uncached(%lx) nonphys\n", phys);
-#endif
-	mips_pagezero((caddr_t)MIPS_PHYS_TO_KSEG1(phys));
-
-	return (TRUE);
-}
-
-/*
  *	pmap_copy_page copies the specified page.
  */
 void
@@ -1747,9 +1725,9 @@ pmap_clear_modify(pg)
 		}
 		if (CPUISMIPS3) {
 			if (PMAP_IS_ACTIVE(pmap)) {
-				MachHitFlushDCache(va, PAGE_SIZE);
+				mips_dcache_wbinv_range(va, PAGE_SIZE);
 			} else {
-				MachFlushDCache(va, PAGE_SIZE);
+				mips_dcache_wbinv_range_index(va, PAGE_SIZE);
 			}
 		}
 		pte->pt_entry &= ~mips_pg_m_bit();
