@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.5 2001/12/13 20:30:48 thorpej Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.6 2001/12/13 21:34:04 thorpej Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -38,15 +38,15 @@
  */
 LEAF_NOPROFILE(_rtld_start, 0)
 	.set	noreorder
-	br	pv, L1
-L1:	LDGP(pv)
+	br	pv, 1f
+1:	LDGP(pv)
 
 	/* XXX Partially relocate ourself. */
 
 	/* Step 1 -- Figure out the displacement */
 
-	br	t2, L2		/* get our PC */
-L2:	ldiq	t3, L2		/* get where the linker thought we were */
+	br	t2, 2f		/* get our PC */
+2:	ldiq	t3, 2b		/* get where the linker thought we were */
 	subq	t2, t3, t8	/* calculate the displacement */
 
 
@@ -66,12 +66,12 @@ L2:	ldiq	t3, L2		/* get where the linker thought we were */
 	 * modified for the displacement before any code will work.
 	 */
 
-L3:	ldq	t1, 0(t9)	/* load the value */
+3:	ldq	t1, 0(t9)	/* load the value */
 	addq	t8, t1, t1	/* add the displacement */
 	stq	t1, 0(t9)	/* save the new value */
 	lda	t9, 8(t9)	/* point to next entry */
 	cmpult	t9, t10, t1	/* are we done? */
-	bne	t1, L3		/* no, do more */
+	bne	t1, 3b		/* no, do more */
 
 	/*
 	 * Ya!  Things are far enough so we can do some dynamic linking!
@@ -143,8 +143,8 @@ NESTED_NOPROFILE(_rtld_bind_start, 0, 168, ra, 0, 0)
 	 * Load our global pointer.  Note, can't use pv, since it is
 	 * already used by the PLT code.
 	 */
-	br	t0, L100
-L100:	LDGP(t0)
+	br	t0, 1f
+1:	LDGP(t0)
 
 	/* Set up the arguments for _rtld_bind. */
 #ifdef NEW_PLT_FORMAT
