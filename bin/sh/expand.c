@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.50 2001/02/04 19:52:06 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.51 2001/03/30 17:45:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.50 2001/02/04 19:52:06 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.51 2001/03/30 17:45:00 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1178,7 +1178,7 @@ expmeta(enddir, name)
 			if (*p == '\0')
 				break;
 		}
-		if (metaflag == 0 || stat(expdir, &statb) >= 0)
+		if (metaflag == 0 || lstat(expdir, &statb) >= 0)
 			addfname(expdir);
 		return;
 	}
