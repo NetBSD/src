@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.89 2001/06/16 12:00:02 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.90 2001/06/21 19:08:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -91,6 +91,10 @@
 
 #if defined(DDB)
 #include <ddb/ddbvar.h>
+#endif
+
+#ifdef NEW_PIPE
+#include <sys/pipe.h>
 #endif
 
 #define PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(foo))

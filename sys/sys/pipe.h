@@ -149,6 +149,7 @@ struct pipe {
 
 #ifdef __NetBSD__
 void pipe_init __P((void));
+int sysctl_dopipe __P((int *, u_int, void *, size_t *, void *, size_t));
 #endif
 
 #endif /* !_SYS_PIPE_H_ */
