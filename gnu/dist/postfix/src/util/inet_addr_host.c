@@ -41,6 +41,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifndef INADDR_NONE
 #define INADDR_NONE 0xffffffff
