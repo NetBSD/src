@@ -38,7 +38,7 @@
  * from: Utah $Hdr: hil.c 1.38 92/01/21$
  *
  *	from: @(#)hil.c	8.2 (Berkeley) 1/12/94
- *	$Id: hil.c,v 1.15 1994/05/25 11:48:11 mycroft Exp $
+ *	$Id: hil.c,v 1.16 1994/05/25 20:22:54 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -315,7 +315,7 @@ hilread(dev, uio)
 	register struct hilloopdev *dptr;
 	register int cc;
 	u_char device = HILUNIT(dev);
-	char buf[HILBUFSIZE];
+	u_char buf[HILBUFSIZE];
 	int error;
 
 #if 0
@@ -969,8 +969,8 @@ hpuxhilevent(hilp, dptr)
 	len = hilp->hl_pollbp - hilp->hl_pollbuf;
 	if (dptr->hd_queue.c_cc <= (HILMAXCLIST - (len+5))) {
 		putc(len+5, &dptr->hd_queue);
-		(void) b_to_q((char *)&tstamp, sizeof tstamp, &dptr->hd_queue);
-		(void) b_to_q((char *)hilp->hl_pollbuf, len, &dptr->hd_queue);
+		(void) b_to_q((u_char *)&tstamp, sizeof tstamp, &dptr->hd_queue);
+		(void) b_to_q((u_char *)hilp->hl_pollbuf, len, &dptr->hd_queue);
 	}
 
 	/*
