@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.17 2002/03/05 21:29:30 wiz Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.18 2002/03/29 15:07:52 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.17 2002/03/05 21:29:30 wiz Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.18 2002/03/29 15:07:52 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,7 +337,7 @@ messize(void *v)
 	for (ip = msgvec; *ip != 0; ip++) {
 		mesg = *ip;
 		mp = &message[mesg-1];
-		printf("%d: %ld/%ld\n", mesg, mp->m_lines, mp->m_size);
+		printf("%d: %ld/%ld\n", mesg, mp->m_blines, mp->m_size);
 	}
 	return(0);
 }
