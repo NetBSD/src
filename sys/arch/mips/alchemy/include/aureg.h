@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.2 2002/11/17 04:57:34 simonb Exp $ */
+/* $NetBSD: aureg.h,v 1.3 2003/04/01 17:30:09 hpeyerl Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -542,3 +542,64 @@
 
 #define	PC_SIZE			0x5c		/* size of register set */
 #define	PC_RATE			32768		/* counter rate is 32.768kHz */
+
+/************************************************************************/
+/*******************   Frequency Generator Registers   ******************/
+/************************************************************************/
+
+#define SYS_FREQCTRL0		(SYS_BASE + 0x20)
+#define SFC_FRDIV2(f)		(f<<22)		/* 29:22. Freq Divider 2 */
+#define SFC_FE2			(1<<21)		/* Freq generator output enable 2 */
+#define SFC_FS2			(1<<20)		/* Freq generator source 2 */
+#define SFC_FRDIV1(f)		(f<<12)		/* 19:12. Freq Divider 1 */
+#define SFC_FE1			(1<<11)		/* Freq generator output enable 1 */
+#define SFC_FS1			(1<<10)		/* Freq generator source 1 */
+#define SFC_FRDIV0(f)		(f<<2)		/* 9:2. Freq Divider 0 */
+#define SFC_FE0			2		/* Freq generator output enable 0 */
+#define SFC_FS0			1		/* Freq generator source 0 */
+
+#define SYS_FREQCTRL1		(SYS_BASE + 0x24)
+#define SFC_FRDIV5(f)		(f<<22)		/* 29:22. Freq Divider 5 */
+#define SFC_FE5			(1<<21)		/* Freq generator output enable 5 */
+#define SFC_FS5			(1<<20)		/* Freq generator source 5 */
+#define SFC_FRDIV4(f)		(f<<12)		/* 19:12. Freq Divider 4 */
+#define SFC_FE4			(1<<11)		/* Freq generator output enable 4 */
+#define SFC_FS4			(1<<10)		/* Freq generator source 4 */
+#define SFC_FRDIV3(f)		(f<<2)		/* 9:2. Freq Divider 3 */
+#define SFC_FE3			2		/* Freq generator output enable 3 */
+#define SFC_FS3			1		/* Freq generator source 3 */
+
+/************************************************************************/
+/******************   Clock Source Control Registers   ******************/
+/************************************************************************/
+
+#define SYS_CLKSRC		(SYS_BASE + 0x28)
+#define  SCS_ME1(n)		(n<<27)		/* EXTCLK1 Clock Mux input select */
+#define  SCS_ME0(n)		(n<<22)		/* EXTCLK0 Clock Mux input select */
+#define  SCS_MPC(n)		(n<<17)		/* PCI clock mux input select */
+#define  SCS_MUH(n)		(n<<12)		/* USB Host clock mux input select */
+#define  SCS_MUD(n)		(n<<7)		/* USB Device clock mux input select */
+#define   SCS_MEx_AUX		0x1		/* Aux clock */
+#define   SCS_MEx_FREQ0		0x2		/* FREQ0 */
+#define   SCS_MEx_FREQ1		0x3		/* FREQ1 */
+#define   SCS_MEx_FREQ2		0x4		/* FREQ2 */
+#define   SCS_MEx_FREQ3		0x5		/* FREQ3 */
+#define   SCS_MEx_FREQ4		0x6		/* FREQ4 */
+#define   SCS_MEx_FREQ5		0x7		/* FREQ5 */
+#define  SCS_DE1		(1<<26)		/* EXTCLK1 clock divider select */
+#define  SCS_CE1		(1<<25)		/* EXTCLK1 clock select */
+#define  SCS_DE0		(1<<21)		/* EXTCLK0 clock divider select */
+#define  SCS_CE0		(1<<20)		/* EXTCLK0 clock select */
+#define  SCS_DPC		(1<<16)		/* PCI clock divider select */
+#define  SCS_CPC		(1<<15)		/* PCI clock select */
+#define  SCS_DUH		(1<<11)		/* USB Host clock divider select */
+#define  SCS_CUH		(1<<10)		/* USB Host clock select */
+#define  SCS_DUD		(1<<6)		/* USB Device clock divider select */
+#define  SCS_CUD		(1<<5)		/* USB Device clock select */
+
+/************************************************************************/
+/***************************   PLL Control  *****************************/
+/************************************************************************/
+
+#define SYS_CPUPLL		(SYS_BASE + 0x60)
+#define SYS_AUXPLL              (SYS_BASE + 0x64)
