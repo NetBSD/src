@@ -1,9 +1,13 @@
-/*	$NetBSD: rpcinfo.c,v 1.5 1997/01/09 20:21:11 tls Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.6 1997/10/19 14:20:47 lukem Exp $	*/
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)rpcinfo.c 1.22 87/08/12 SMI";*/
-/*static char sccsid[] = "from: @(#)rpcinfo.c	2.2 88/08/11 4.0 RPCSRC";*/
-static char rcsid[] = "$NetBSD: rpcinfo.c,v 1.5 1997/01/09 20:21:11 tls Exp $";
+#if 0
+static char sccsid[] = "from: @(#)rpcinfo.c 1.22 87/08/12 SMI";
+static char sccsid[] = "from: @(#)rpcinfo.c	2.2 88/08/11 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: rpcinfo.c,v 1.6 1997/10/19 14:20:47 lukem Exp $");
+#endif
 #endif
 
 /*
@@ -44,32 +48,40 @@ static char rcsid[] = "$NetBSD: rpcinfo.c,v 1.5 1997/01/09 20:21:11 tls Exp $";
  * Mountain View, California  94043
  */
 
-#include <rpc/rpc.h>
-#include <stdio.h>
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <netdb.h>
-#include <rpc/pmap_prot.h>
-#include <rpc/pmap_clnt.h>
-#include <signal.h>
-#include <ctype.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ctype.h>
+#include <err.h>
+#include <netdb.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <rpc/rpc.h>
+#include <rpc/pmap_clnt.h>
+#include <rpc/pmap_prot.h>
+
 
 #define MAXHOSTLEN 256
 
 #define	MIN_VERS	((u_long) 0)
 #define	MAX_VERS	((u_long) 4294967295UL)
 
-static void	udpping(/*u_short portflag, int argc, char **argv*/);
-static void	tcpping(/*u_short portflag, int argc, char **argv*/);
-static int	pstatus(/*CLIENT *client, u_long prognum, u_long vers*/);
-static void	pmapdump(/*int argc, char **argv*/);
-static bool_t	reply_proc(/*void *res, struct sockaddr_in *who*/);
-static void	brdcst(/*int argc, char **argv*/);
-static void	deletereg(/* int argc, char **argv */) ;
-static void	usage(/*void*/);
-static u_long	getprognum(/*char *arg*/);
-static u_long	getvers(/*char *arg*/);
-static void	get_inet_address(/*struct sockaddr_in *addr, char *host*/);
+static	void	brdcst __P((int, char **));
+static	void	deletereg __P((int, char **)) ;
+static	void	get_inet_address __P((struct sockaddr_in *, char *));
+static	u_long	getprognum __P((char *));
+static	u_long	getvers __P((char *));
+	int	main __P((int, char **));
+static	void	pmapdump __P((int, char **));
+static	int	pstatus __P((CLIENT *, u_long, u_long));
+static	bool_t	reply_proc __P((caddr_t, struct sockaddr_in *));
+static	void	tcpping __P((u_short, int, char **));
+static	void	udpping __P((u_short, int, char **));
+static	void	usage __P((void));
 
 /*
  * Functions to be performed.
@@ -86,9 +98,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int c;
-	extern char *optarg;
-	extern int optind;
+	int c;
 	int errflg;
 	int function;
 	u_short portnum;
@@ -96,7 +106,7 @@ main(argc, argv)
 	function = NONE;
 	portnum = 0;
 	errflg = 0;
-	while ((c = getopt(argc, argv, "ptubdn:")) != EOF) {
+	while ((c = getopt(argc, argv, "ptubdn:")) != -1) {
 		switch (c) {
 
 		case 'p':
@@ -452,7 +462,7 @@ tcpping(portnum, argc, argv)
  */
 static int
 pstatus(client, prognum, vers)
-	register CLIENT *client;
+	CLIENT *client;
 	u_long prognum;
 	u_long vers;
 {
@@ -477,11 +487,11 @@ pmapdump(argc, argv)
 	char **argv;
 {
 	struct sockaddr_in server_addr;
-	register struct hostent *hp;
+	struct hostent *hp;
 	struct pmaplist *head = NULL;
 	int socket = RPC_ANYSOCK;
 	struct timeval minutetimeout;
-	register CLIENT *client;
+	CLIENT *client;
 	struct rpcent *rpc;
 	
 	if (argc > 1) {
@@ -491,10 +501,10 @@ pmapdump(argc, argv)
 	if (argc == 1)
 		get_inet_address(&server_addr, argv[0]);
 	else {
-		bzero((char *)&server_addr, sizeof server_addr);
+		memset((char *)&server_addr, 0, sizeof server_addr);
 		server_addr.sin_family = AF_INET;
 		if ((hp = gethostbyname("localhost")) != NULL)
-			bcopy(hp->h_addr, (caddr_t)&server_addr.sin_addr,
+			memmove((caddr_t)&server_addr.sin_addr, hp->h_addr,
 			    hp->h_length);
 		else
 			(void) inet_aton("0.0.0.0", &server_addr.sin_addr);
@@ -543,13 +553,12 @@ pmapdump(argc, argv)
  * be piped through sort(1) and then uniq(1).
  */
 
-/*ARGSUSED*/
 static bool_t
 reply_proc(res, who)
-	void *res;		/* Nothing comes back */
+	caddr_t res;		/* Nothing comes back */
 	struct sockaddr_in *who; /* Who sent us the reply */
 {
-	register struct hostent *hp;
+	struct hostent *hp;
 
 	hp = gethostbyaddr((char *) &who->sin_addr, sizeof who->sin_addr,
 	    AF_INET);
@@ -592,17 +601,13 @@ deletereg(argc, argv)
 		usage() ;
 		exit(1) ;
 	}
-	if (getuid()) { /* This command allowed only to root */
-		fprintf(stderr, "Sorry. You are not root\n") ;
-		exit(1) ;
-	}
+	if (getuid()) /* This command allowed only to root */
+		errx(1, "Sorry. You are not root");
 	prog_num = getprognum(argv[0]);
 	version_num = getvers(argv[1]);
-	if ((pmap_unset(prog_num, version_num)) == 0) {
-		fprintf(stderr, "rpcinfo: Could not delete registration for prog %s version %s\n",
-			argv[0], argv[1]) ;
-		exit(1) ;
-	}
+	if ((pmap_unset(prog_num, version_num)) == 0)
+		errx(1, "Could not delete registration for prog %s version %s",
+		    argv[0], argv[1]);
 }
 
 static void
@@ -619,8 +624,8 @@ static u_long
 getprognum(arg)
 	char *arg;
 {
-	register struct rpcent *rpc;
-	register u_long prognum;
+	struct rpcent *rpc;
+	u_long prognum;
 
 	if (isalpha(*arg)) {
 		rpc = getrpcbyname(arg);
@@ -641,7 +646,7 @@ static u_long
 getvers(arg)
 	char *arg;
 {
-	register u_long vers;
+	u_long vers;
 
 	vers = (int) atoi(arg);
 	return (vers);
@@ -652,15 +657,15 @@ get_inet_address(addr, host)
 	struct sockaddr_in *addr;
 	char *host;
 {
-	register struct hostent *hp;
+	struct hostent *hp;
 
-	bzero((char *)addr, sizeof *addr);
+	memset((char *)addr, 0, sizeof *addr);
 	if (inet_aton(host, &addr->sin_addr) == 0) {
 		if ((hp = gethostbyname(host)) == NULL) {
 			fprintf(stderr, "rpcinfo: %s is unknown host\n", host);
 			exit(1);
 		}
-		bcopy(hp->h_addr, (char *)&addr->sin_addr, hp->h_length);
+		memmove((char *)&addr->sin_addr, hp->h_addr, hp->h_length);
 	}
 	addr->sin_family = AF_INET;
 }
