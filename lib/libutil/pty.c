@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)pty.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: pty.c,v 1.4 1994/05/04 10:56:04 cgd Exp $";
+static char *rcsid = "$Id: pty.c,v 1.5 1995/06/05 19:44:01 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -48,6 +48,11 @@ static char *rcsid = "$Id: pty.c,v 1.4 1994/05/04 10:56:04 cgd Exp $";
 #include <string.h>
 #include <grp.h>
 
+int login_tty __P((int));
+int openpty __P((int *, int *, char *, struct termios *, struct winsize *));
+pid_t forkpty __P((int *, char *, struct termios *, struct winsize *));
+
+int
 openpty(amaster, aslave, name, termp, winp)
 	int *amaster, *aslave;
 	char *name;
@@ -98,13 +103,15 @@ openpty(amaster, aslave, name, termp, winp)
 	return (-1);
 }
 
+pid_t
 forkpty(amaster, name, termp, winp)
 	int *amaster;
 	char *name;
 	struct termios *termp;
 	struct winsize *winp;
 {
-	int master, slave, pid;
+	int master, slave;
+	pid_t pid;
 
 	if (openpty(&master, &slave, name, termp, winp) == -1)
 		return (-1);
