@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 1994/11/28 19:17:09 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 1994/11/30 15:45:19 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -94,14 +94,17 @@
 #endif
 
 /*
- * globals shared between here and sun3_startup
- * XXX - Look at relationship twix pmap and ^
+ * Globals shared between here and sun3_startup:
+ * For simplicity, this interface retains the variables
+ * that were used in the old interface (without NONCONTIG).
  * These are set in pmap_bootstrap() and used
  * in pmap_next_page().
  */
+/* Kernel virtual address space available: */
 extern vm_offset_t virtual_avail, virtual_end;
+/* Physical address space available: */
 extern vm_offset_t avail_start, avail_end;
-/* used to skip the Sun3/50 video RAM */
+/* The "hole" (used to skip the Sun3/50 video RAM) */
 extern vm_offset_t hole_start, hole_size;
 
 /* statistics... */
@@ -110,7 +113,7 @@ struct pmap_stats {
 	int	ps_enter_secondpv;	/* pv nonheads entered */
 	int	ps_unlink_pvfirst;	/* of pv_unlinks on head */
 	int	ps_unlink_pvsearch;	/* of pv_unlink searches */
-	int ps_pmeg_faultin;	/* pmegs reloaded */
+	int	ps_pmeg_faultin;	/* pmegs reloaded */
 	int	ps_changeprots;		/* of calls to changeprot */
 	int	ps_changewire;		/* useless wiring changes */
 	int	ps_npg_prot_all;	/* of active pages protected */
@@ -684,7 +687,13 @@ pmeg_allocate(pmap, va)
 		if (!pmegp) {
 			panic("pmeg_allocate: failed");
 		}
-		/* This will put it on the free list. */
+		/*
+		 * Remove mappings to free-up a pmeg
+		 * (so it will go onto the free list).
+		 * XXX - Should this call up into the VM layer
+		 * to notify it when pages are deactivated?
+		 * See: vm_page.c:vm_page_deactivate(vm_page_t)
+		 */
 		pmap_remove_range(pmegp->pmeg_owner,
 						  pmegp->pmeg_va,
 						  pmegp->pmeg_va + NBSG);
@@ -1474,16 +1483,19 @@ pmap_virtual_space(v_start, v_end)
 }
 
 /*
- * How many physical pages will pmap_next_page() return?
- * One may return a number larger that the actual number of
- * free pages if that is convenient (i.e. physical memory
- * might have some small holes not worth counting here).
- * The return value is used to allocate per-page arrays.
+ * Return the number of page indices in the range of
+ * possible return values for pmap_page_index() for
+ * all addresses provided by pmap_next_page().  This
+ * return value is used to allocate per-page data.
+ *
+ * Note that a machine with a "hole" in physical memory
+ * may include the pages in the hole in this count, and
+ * skip the pages in the hole in pmap_next_page().
  */
 u_int
 pmap_free_pages()
 {
-	int i, bytes;
+	int bytes;
 
 	bytes = avail_end - avail_start;
 	return(sun3_btop(bytes));
@@ -1491,38 +1503,42 @@ pmap_free_pages()
 
 /*
  * If there are still physical pages available, put the address of
- * the next available one at paddr and return non-zero, otherwise
- * return zero to indicate that there are no more free pages.
+ * the next available one at paddr and return TRUE.  Otherwise,
+ * return FALSE to indicate that there are no more free pages.
+ * Note that avail_next is set to avail_start in pmap_bootstrap().
+ *
+ * Imporant:  The page indices of the pages returned here must be
+ * in ascending order.
  */
 int
 pmap_next_page(paddr)
 	vm_offset_t *paddr;
 {
-	/* Used up all ranges? */
-	if (avail_next >= avail_end)
-		return FALSE;
-
-	/* Have memory, will return TRUE */
-	*paddr = avail_next;
-	avail_next += NBPG;
-
 	/* Is it time to skip over the hole? */
 	if (avail_next == hole_start)
 		avail_next += sun3_round_page(hole_size);
 
+	/* Any available memory remaining? */
+	if (avail_next >= avail_end)
+		return FALSE;
+
+	/* Have memory, will travel... */
+	*paddr = avail_next;
+	avail_next += NBPG;
 	return TRUE;
 }
 
 /*
  * pmap_page_index()
  *
- *   Given a physical address, return the page number that it is in
- *   the block of free memory.  Return -1 if not in managed range.
+ * Given a physical address, return a page index.
  *
- *   There can be some values that we never return (i.e. a hole)
- *   as long as the pages in the hole were not given to the VM code
- *   by pmap_next_page() and our return values are less than the
- *   value that was returned by pmap_free_pages().
+ * There can be some values that we never return (i.e. a hole)
+ * as long as the range of indices returned by this function
+ * is smaller than the value returned by pmap_free_pages().
+ * The returned index does NOT need to start at zero.
+ *
+ * XXX - Should make this a macro in pmap.h
  */
 u_long
 pmap_page_index(pa)
@@ -1531,9 +1547,9 @@ pmap_page_index(pa)
 	u_long idx;
 
 	if (pa < avail_start || pa >= avail_end)
-		return -1;
+		panic("pmap_page_index");
 
-	return (sun3_btop(pa - avail_start));
+	return (sun3_btop(pa));
 }
 
 
