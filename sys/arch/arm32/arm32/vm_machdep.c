@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.35 1999/03/24 05:50:55 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36 1999/03/26 22:00:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -239,7 +239,7 @@ cpu_swapin(p)
 
 	/* Map the system page */
 	pmap_enter(p->p_vmspace->vm_map.pmap, 0x00000000,
-	    systempage.pv_pa, VM_PROT_READ, TRUE);
+	    systempage.pv_pa, VM_PROT_READ, TRUE, 0);
 }
 
 
