@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.2 1998/04/07 13:43:17 hannken Exp $ */
+/* $NetBSD: wsconsio.h,v 1.3 1998/06/11 22:15:14 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -142,6 +142,12 @@ struct wskbd_string_data {
 };
 #define WSKBDIO_GETSTRING	_IOR('W', 17, struct wskbd_string_data)
 #define WSKBDIO_SETSTRING	_IOW('W', 18, struct wskbd_string_data)
+
+/* internal use only */
+#define WSKBDIO_SETMODE		_IOW('W', 19, int)
+#define WSKBDIO_GETMODE		_IOR('W', 20, int)
+#define		WSKBD_TRANSLATED	0
+#define		WSKBD_RAW		1
 
 /*
  * Mouse ioctls (32 - 63)
