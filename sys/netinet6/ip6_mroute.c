@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.28.2.1 2002/05/30 13:52:33 gehenna Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.28.2.2 2002/06/20 15:52:45 gehenna Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.28.2.1 2002/05/30 13:52:33 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.28.2.2 2002/06/20 15:52:45 gehenna Exp $");
 
 #include "opt_inet.h"
 
@@ -195,7 +195,7 @@ static int pim6;
 	       switch (xxs) { \
 		      case 2: \
 			  delta += 1000000; \
-			      /* fall through */ \
+			      /* FALLTHROUGH */ \
 		      case 1: \
 			  delta += 1000000; \
 			  break; \
@@ -1569,7 +1569,7 @@ register_send(ip6, mif, m)
 #ifdef MRT6DEBUG
 		if (mrt6debug)
 			log(LOG_WARNING,
-			    "register_send: ip_mrouter socket queue full\n");
+			    "register_send: ip6_mrouter socket queue full\n");
 #endif
 		++mrt6stat.mrt6s_upq_sockfull;
 		return ENOBUFS;
@@ -1795,7 +1795,7 @@ pim6_input(mp, offp, proto)
 		}
 #endif
 
- 		rc = looutput(mif6table[reg_mif_num].m6_ifp, m,
+		rc = looutput(mif6table[reg_mif_num].m6_ifp, m,
 			      (struct sockaddr *) &dst,
 			      (struct rtentry *) NULL);
 

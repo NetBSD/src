@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.6.2.1 2002/05/30 13:52:41 gehenna Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.6.2.2 2002/06/20 15:53:00 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -386,5 +386,16 @@ struct vax_boot_block {
 
 #define	VAX_BOOT_BLOCK_OFFSET		0
 #define	VAX_BOOT_BLOCK_BLOCKSIZE	512
+
+
+/* ------------------------------------------
+ * x68k
+ */
+
+#define X68K_BOOT_BLOCK_OFFSET		0
+#define X68K_BOOT_BLOCK_BLOCKSIZE	512
+#define X68K_BOOT_BLOCK_MAX_SIZE	(512 * 16)
+	/* Magic string -- 32 bytes long (including the NUL) */
+#define X68K_BBINFO_MAGIC		"NetBSD/x68k bootxx     20020601"
 
 #endif	/* !_SYS_BOOTBLOCK_H */

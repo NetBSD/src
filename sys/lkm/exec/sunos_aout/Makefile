@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 11:49:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2002/06/20 16:02:33 gehenna Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/sunos
 
-CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_AOUT
+CPPFLAGS+=	-nostdinc -D_KERNEL -DEXEC_AOUT
 
 KMOD=	exec_sunos_aout
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.11 2001/02/26 16:26:54 lukem Exp $	*/
+/*	$NetBSD: select.h,v 1.11.16.1 2002/06/20 15:53:04 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,6 +37,8 @@
 
 #ifndef _SYS_SELECT_H_
 #define	_SYS_SELECT_H_
+
+#include <sys/types.h>
 
 /*
  * Used to maintain information about processes that wish to be

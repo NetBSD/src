@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.17.4.1 2002/05/30 13:52:30 gehenna Exp $	*/
+/*	$NetBSD: frag6.c,v 1.17.4.2 2002/06/20 15:52:36 gehenna Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.17.4.1 2002/05/30 13:52:30 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.17.4.2 2002/06/20 15:52:36 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ frag6_input(mp, offp, proto)
 
 	ip6stat.ip6s_fragments++;
 	in6_ifstat_inc(dstifp, ifs6_reass_reqd);
-	
+
 	/* offset now points to data portion */
 	offset += sizeof(struct ip6_frag);
 
@@ -585,7 +585,7 @@ insert:
 			plen += t->m_len;
 		m->m_pkthdr.len = plen;
 	}
-	
+
 	ip6stat.ip6s_reassembled++;
 	in6_ifstat_inc(dstifp, ifs6_reass_ok);
 

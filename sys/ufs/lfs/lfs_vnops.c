@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.63.2.1 2002/05/30 13:52:43 gehenna Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.63.2.2 2002/06/20 15:53:13 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.63.2.1 2002/05/30 13:52:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.63.2.2 2002/06/20 15:53:13 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ const struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_create_desc, spec_create },		/* create */
 	{ &vop_mknod_desc, spec_mknod },		/* mknod */
 	{ &vop_open_desc, spec_open },			/* open */
-	{ &vop_close_desc, ufsspec_close },		/* close */
+	{ &vop_close_desc, lfsspec_close },		/* close */
 	{ &vop_access_desc, ufs_access },		/* access */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
@@ -217,7 +217,7 @@ const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_create_desc, fifo_create },		/* create */
 	{ &vop_mknod_desc, fifo_mknod },		/* mknod */
 	{ &vop_open_desc, fifo_open },			/* open */
-	{ &vop_close_desc, ufsfifo_close },		/* close */
+	{ &vop_close_desc, lfsfifo_close },		/* close */
 	{ &vop_access_desc, ufs_access },		/* access */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
@@ -864,13 +864,65 @@ lfs_close(void *v)
 	struct inode *ip = VTOI(vp);
 	struct timespec ts;
 
-	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount > 1) {
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		LFS_ITIMES(ip, &ts, &ts, &ts);
 	}
-	simple_unlock(&vp->v_interlock);
 	return (0);
+}
+
+/*
+ * Close wrapper for special devices.
+ *
+ * Update the times on the inode then do device close.
+ */
+int
+lfsspec_close(void *v)
+{
+	struct vop_close_args /* {
+		struct vnode	*a_vp;
+		int		a_fflag;
+		struct ucred	*a_cred;
+		struct proc	*a_p;
+	} */ *ap = v;
+	struct vnode	*vp;
+	struct inode	*ip;
+	struct timespec	ts;
+
+	vp = ap->a_vp;
+	ip = VTOI(vp);
+	if (vp->v_usecount > 1) {
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		LFS_ITIMES(ip, &ts, &ts, &ts);
+	}
+	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
+}
+
+/*
+ * Close wrapper for fifo's.
+ *
+ * Update the times on the inode then do device close.
+ */
+int
+lfsfifo_close(void *v)
+{
+	struct vop_close_args /* {
+		struct vnode	*a_vp;
+		int		a_fflag;
+		struct ucred	*a_cred;
+		struct proc	*a_p;
+	} */ *ap = v;
+	struct vnode	*vp;
+	struct inode	*ip;
+	struct timespec	ts;
+
+	vp = ap->a_vp;
+	ip = VTOI(vp);
+	if (ap->a_vp->v_usecount > 1) {
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		LFS_ITIMES(ip, &ts, &ts, &ts);
+	}
+	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
 /*

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.167.2.1 2002/05/30 14:46:46 gehenna Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.167.2.2 2002/06/20 16:34:01 gehenna Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.168 2002/05/26 14:35:10 tshiozak Exp 
+ *	NetBSD: pcmciadevs,v 1.173 2002/06/17 07:38:42 martin Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -134,6 +134,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "3Com 3CRWE62092A Wireless LAN",	}
 	,
 	{
+	    PCMCIA_VENDOR_ACTIONTEC, PCMCIA_PRODUCT_ACTIONTEC_PRISM,
+	    PCMCIA_CIS_ACTIONTEC_PRISM,
+	    0,
+	    "ACTIONTEC",
+	    "PRISM Wireless LAN PC Card",	}
+	,
+	{
 	    PCMCIA_VENDOR_ADAPTEC, PCMCIA_PRODUCT_ADAPTEC_APA1460,
 	    PCMCIA_CIS_ADAPTEC_APA1460,
 	    0,
@@ -202,6 +209,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Bay Networks",
 	    "BayStack 660 Wireless LAN",	}
+	,
+	{
+	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_EMOBILITY_11B,
+	    PCMCIA_CIS_BAY_EMOBILITY_11B,
+	    0,
+	    "Bay Networks",
+	    "e-Mobility 11Mb Wireless LAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_BREEZECOM, PCMCIA_PRODUCT_BREEZECOM_BREEZENET,
@@ -335,6 +349,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Elsa",
 	    "XI800 CF Wireless LAN",	}
+	,
+	{
+	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_XI325_IEEE,
+	    PCMCIA_CIS_ELSA_XI325_IEEE,
+	    0,
+	    "Elsa",
+	    "XI325 Wireless LAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_EMTAC, PCMCIA_PRODUCT_EMTAC_WLAN,
@@ -1079,6 +1100,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Corega Ether PCC-TD",	}
 	,
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_TD,
+	    PCMCIA_CIS_COREGA_ETHER_II_PCC_TD,
+	    0,
+	    "Corega K.K.",
+	    "Corega EtherII PCC-TD",	}
+	,
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_T,
 	    PCMCIA_CIS_COREGA_ETHER_II_PCC_T,
 	    0,
@@ -1154,6 +1182,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "D-Link",
 	    "D-Link DE-660+",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DLINK_DFE670TXD,
+	    PCMCIA_CIS_DLINK_DFE670TXD,
+	    0,
+	    "D-Link",
+	    "D-Link DFE-670TXD",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_EIGERLABS_EPX_AA2000,
@@ -1598,6 +1633,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_DLINK_3,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "D-Link",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_LINKSYS,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1787,6 +1830,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "NewMedia",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ACTIONTEC,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "ACTIONTEC",
 	    NULL,
 	},
 	{

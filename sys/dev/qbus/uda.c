@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.42 2001/11/13 07:11:25 lukem Exp $	*/
+/*	$NetBSD: uda.c,v 1.42.8.1 2002/06/20 16:34:05 gehenna Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.42 2001/11/13 07:11:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.42.8.1 2002/06/20 16:34:05 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -283,7 +283,9 @@ udaready(struct uba_unit *uu)
 	int err;
 
 	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_data,
-	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
+	    bp->b_bcount, (bp->b_flags & B_PHYS ? bp->b_proc : 0),
+	    BUS_DMA_NOWAIT);
+
 	if (err)
 		return 0;
 	mscp_dgo(sc->sc_softc, mxi);

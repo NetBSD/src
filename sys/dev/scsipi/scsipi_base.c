@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.73.2.1 2002/05/30 14:47:19 gehenna Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.73.2.2 2002/06/20 16:34:07 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.73.2.1 2002/05/30 14:47:19 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.73.2.2 2002/06/20 16:34:07 gehenna Exp $");
 
 #include "opt_scsi.h"
 
@@ -1540,17 +1540,21 @@ scsipi_complete(xs)
 		error = ERESTART;
 		break;
 
+	case XS_SELTIMEOUT:
 	case XS_TIMEOUT:
-		if (xs->xs_retries != 0) {
+		/*
+		 * If the device hasn't gone away, honor retry counts.
+		 *
+		 * Note that if we're in the middle of probing it,
+		 * it won't be found because it isn't here yet so
+		 * we won't honor the retry count in that case.
+		 */
+		if (scsipi_lookup_periph(chan, periph->periph_target,
+		    periph->periph_lun) && xs->xs_retries != 0) {
 			xs->xs_retries--;
 			error = ERESTART;
 		} else
 			error = EIO;
-		break;
-
-	case XS_SELTIMEOUT:
-		/* XXX Disable device? */
-		error = EIO;
 		break;
 
 	case XS_RESET:
@@ -2452,7 +2456,7 @@ scsipi_async_event_channel_reset(chan)
 		if (target == chan->chan_id)
 			continue;
 		for (lun = 0; lun <  chan->chan_nluns; lun++) {
-			scsipi_lookup_periph(chan, target, lun);
+			periph = scsipi_lookup_periph(chan, target, lun);
 			if (periph) {
 				xs = periph->periph_xscheck;
 				if (xs)

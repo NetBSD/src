@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.70.2.1 2002/05/16 11:29:15 gehenna Exp $	*/
+/*	$NetBSD: usb.c,v 1.70.2.2 2002/06/20 16:34:14 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.70.2.1 2002/05/16 11:29:15 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.70.2.2 2002/06/20 16:34:14 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -640,7 +640,7 @@ usb_get_next_event(struct usb_event *ue)
 	}
 #endif
 	*ue = ueq->ue;
-	SIMPLEQ_REMOVE_HEAD(&usb_events, ueq, next);
+	SIMPLEQ_REMOVE_HEAD(&usb_events, next);
 	free(ueq, M_USBDEV);
 	usb_nevents--;
 	return (1);

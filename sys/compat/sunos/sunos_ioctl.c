@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.40 2002/03/16 20:43:56 christos Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.40.4.1 2002/06/20 16:41:10 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.40 2002/03/16 20:43:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.40.4.1 2002/06/20 16:41:10 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -1064,6 +1064,7 @@ sunos_sys_fcntl(p, v, retval)
 		return (EOPNOTSUPP);
 
 	default:
+		break;
 	}
 
 	ret = sys_fcntl(p, uap, retval);
@@ -1079,6 +1080,7 @@ sunos_sys_fcntl(p, v, retval)
 		}
 		break;
 	default:
+		break;
 	}
 
 	return (ret);

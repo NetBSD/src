@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.1 2002/04/26 02:05:11 ad Exp $	*/
+/*	$NetBSD: aac.c,v 1.1.2.1 2002/06/20 16:33:01 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.1 2002/04/26 02:05:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.1.2.1 2002/06/20 16:33:01 gehenna Exp $");
 
 #include "locators.h"
 
@@ -357,8 +357,7 @@ aac_describe_controller(struct aac_softc *sc)
 	    le32toh(info->ClockSpeed),
 	    le32toh(info->BufferMem) / (1024 * 1024),
 	    aac_describe_code(aac_battery_platform,
-	    le32toh(info->batteryPlatform)),
-	    le32toh(info->batteryPlatform),
+			      le32toh(info->batteryPlatform)),
 	    info->KernelRevision.external.comp.major,
 	    info->KernelRevision.external.comp.minor,
 	    info->KernelRevision.external.comp.dash);
@@ -851,7 +850,7 @@ aac_host_response(struct aac_softc *sc)
 	 * Deal with any completed commands.
 	 */
 	while ((ac = SIMPLEQ_FIRST(&sc->sc_ccb_complete)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_complete, ac, ac_chain);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_complete, ac_chain);
 		ac->ac_flags |= AAC_CCB_COMPLETED;
 
 		if (ac->ac_intr != NULL)
@@ -861,7 +860,7 @@ aac_host_response(struct aac_softc *sc)
 	/*
 	 * Try to submit more commands.
 	 */
-	if (SIMPLEQ_FIRST(&sc->sc_ccb_queue) != NULL)
+	if (! SIMPLEQ_EMPTY(&sc->sc_ccb_queue))
 		aac_ccb_enqueue(sc, NULL);
 }
 
@@ -989,7 +988,7 @@ aac_ccb_alloc(struct aac_softc *sc, int flags)
 	if (ac == NULL)
 		panic("aac_ccb_get: no free CCBS");
 #endif
-	SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_free, ac, ac_chain);
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_free, ac_chain);
 	splx(s);
 
 	ac->ac_flags = flags;
@@ -1095,7 +1094,7 @@ aac_ccb_enqueue(struct aac_softc *sc, struct aac_ccb *ac)
 	while ((ac = SIMPLEQ_FIRST(&sc->sc_ccb_queue)) != NULL) {
 		if (aac_ccb_submit(sc, ac))
 			break;
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ac, ac_chain);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ac_chain);
 	}
 
 	splx(s);

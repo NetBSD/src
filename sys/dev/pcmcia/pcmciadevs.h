@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.167.2.1 2002/05/30 14:46:44 gehenna Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.167.2.2 2002/06/20 16:34:00 gehenna Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.168 2002/05/26 14:35:10 tshiozak Exp 
+ *	NetBSD: pcmciadevs,v 1.173 2002/06/17 07:38:42 martin Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -70,6 +70,7 @@
 #define	PCMCIA_VENDOR_QUATECH	0x0137	/* Quatech */
 #define	PCMCIA_VENDOR_COMPAQ	0x0138	/* Compaq */
 #define	PCMCIA_VENDOR_DLINK_2	0x0143	/* D-Link */
+#define	PCMCIA_VENDOR_DLINK_3	0x0149	/* D-Link */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
 #define	PCMCIA_VENDOR_NETGEAR	0x0149	/* Netgear */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
@@ -94,6 +95,7 @@
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
+#define	PCMCIA_VENDOR_ACTIONTEC	0x1668	/* ACTIONTEC */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
 #define	PCMCIA_VENDOR_ARCHOS	0x5241	/* Archos */
@@ -149,6 +151,11 @@
 #define	PCMCIA_PRODUCT_3COM_3CRWE62092A	0x2092
 #define	PCMCIA_STR_3COM_3CRWE62092A	"3Com 3CRWE62092A Wireless LAN"
 
+/* ACTIONTEC Products */
+#define	PCMCIA_CIS_ACTIONTEC_PRISM	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ACTIONTEC_PRISM	0x0101
+#define	PCMCIA_STR_ACTIONTEC_PRISM	"PRISM Wireless LAN PC Card"
+
 /* Adaptec Products */
 #define	PCMCIA_CIS_ADAPTEC_APA1460	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ADAPTEC_APA1460	0x0001
@@ -188,6 +195,9 @@
 #define	PCMCIA_CIS_BAY_STACK_660	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_BAY_STACK_660	0x0807
 #define	PCMCIA_STR_BAY_STACK_660	"BayStack 660 Wireless LAN"
+#define	PCMCIA_CIS_BAY_EMOBILITY_11B	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_BAY_EMOBILITY_11B	0x080a
+#define	PCMCIA_STR_BAY_EMOBILITY_11B	"e-Mobility 11Mb Wireless LAN"
 
 /* BreezeCOM */
 #define	PCMCIA_CIS_BREEZECOM_BREEZENET	{ NULL, NULL, NULL, NULL }
@@ -267,6 +277,9 @@
 #define	PCMCIA_CIS_ELSA_XI800_IEEE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ELSA_XI800_IEEE	0x0004
 #define	PCMCIA_STR_ELSA_XI800_IEEE	"XI800 CF Wireless LAN"
+#define	PCMCIA_CIS_ELSA_XI325_IEEE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ELSA_XI325_IEEE	0x0005
+#define	PCMCIA_STR_ELSA_XI325_IEEE	"XI325 Wireless LAN"
 
 /* EMTAC */
 #define	PCMCIA_CIS_EMTAC_WLAN	{ NULL, NULL, NULL, NULL }
@@ -693,6 +706,9 @@
 #define	PCMCIA_CIS_COREGA_ETHER_PCC_TD	{ "corega K.K.", "corega Ether PCC-TD", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_ETHER_PCC_TD	-1
 #define	PCMCIA_STR_COREGA_ETHER_PCC_TD	"Corega Ether PCC-TD"
+#define	PCMCIA_CIS_COREGA_ETHER_II_PCC_TD	{ "corega K.K.", "corega EtherII PCC-TD", NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_TD	-1
+#define	PCMCIA_STR_COREGA_ETHER_II_PCC_TD	"Corega EtherII PCC-TD"
 #define	PCMCIA_CIS_COREGA_ETHER_II_PCC_T	{ "corega K.K.", "corega EtherII PCC-T", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_T	-1
 #define	PCMCIA_STR_COREGA_ETHER_II_PCC_T	"Corega EtherII PCC-T"
@@ -727,6 +743,9 @@
 #define	PCMCIA_CIS_DLINK_DE660PLUS	{ "D-Link", "DE-660+", NULL, NULL }
 #define	PCMCIA_PRODUCT_DLINK_DE660PLUS	-1
 #define	PCMCIA_STR_DLINK_DE660PLUS	"D-Link DE-660+"
+#define	PCMCIA_CIS_DLINK_DFE670TXD	{ "D-Link", "DFE-670TXD", NULL, NULL }
+#define	PCMCIA_PRODUCT_DLINK_DFE670TXD	-1
+#define	PCMCIA_STR_DLINK_DFE670TXD	"D-Link DFE-670TXD"
 /*
  * vendor ID of EPX_AA2000 is Fujitsu (0x0004) and product ID is 0x2000, but
  * it conflicts with Fujitsu Towa LA501 Ethernet.

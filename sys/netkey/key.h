@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.9 2002/01/31 07:05:44 itojun Exp $	*/
+/*	$NetBSD: key.h,v 1.9.8.1 2002/06/20 15:52:57 gehenna Exp $	*/
 /*	$KAME: key.h,v 1.19 2000/10/05 04:02:58 itojun Exp $	*/
 
 /*
@@ -52,20 +52,17 @@ extern int key_checkrequest
 extern struct secasvar *key_allocsa __P((u_int, caddr_t, caddr_t,
 					u_int, u_int32_t));
 extern void key_freesp __P((struct secpolicy *));
-extern void key_freeso __P((struct socket *));
 extern void key_freesav __P((struct secasvar *));
 extern struct secpolicy *key_newsp __P((void));
 extern struct secpolicy *key_msg2sp __P((struct sadb_x_policy *,
 	size_t, int *));
 extern struct mbuf *key_sp2msg __P((struct secpolicy *));
-extern int key_ismyaddr __P((struct sockaddr *));
 extern int key_cmpspidx_exactly
 	__P((struct secpolicyindex *, struct secpolicyindex *));
 extern int key_cmpspidx_withmask
 	__P((struct secpolicyindex *, struct secpolicyindex *));
 extern int key_spdacquire __P((struct secpolicy *));
 extern void key_timehandler __P((void *));
-extern u_long key_random __P((void));
 extern void key_randomfill __P((void *, size_t));
 extern void key_freereg __P((struct socket *));
 extern int key_parse __P((struct mbuf *, struct socket *));

@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.18.2.1 2002/05/30 14:46:41 gehenna Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.18.2.2 2002/06/20 16:33:56 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.18.2.1 2002/05/30 14:46:41 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.18.2.2 2002/06/20 16:33:56 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,16 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_CIS_ELSA_XI300_IEEE,
 	  PCMCIA_STR_ELSA_XI300_IEEE },
 
+	{ PCMCIA_VENDOR_ELSA,
+	  PCMCIA_PRODUCT_ELSA_XI325_IEEE,
+	  PCMCIA_CIS_ELSA_XI325_IEEE,
+	  PCMCIA_STR_ELSA_XI325_IEEE },
+
+	{ PCMCIA_VENDOR_ELSA,
+	  PCMCIA_PRODUCT_ELSA_XI800_IEEE,
+	  PCMCIA_CIS_ELSA_XI800_IEEE,
+	  PCMCIA_STR_ELSA_XI800_IEEE },
+
 	{ PCMCIA_VENDOR_COMPAQ,
 	  PCMCIA_PRODUCT_COMPAQ_NC5004,
 	  PCMCIA_CIS_COMPAQ_NC5004,
@@ -222,11 +232,6 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_CIS_GEMTEK_WLAN,
 	  PCMCIA_STR_GEMTEK_WLAN },
 
-	{ PCMCIA_VENDOR_ELSA,
-	  PCMCIA_PRODUCT_ELSA_XI800_IEEE,
-	  PCMCIA_CIS_ELSA_XI800_IEEE,
-	  PCMCIA_STR_ELSA_XI800_IEEE },
-
 	{ PCMCIA_VENDOR_SIMPLETECH,
 	  PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24_ALT,
 	  PCMCIA_CIS_SIMPLETECH_SPECTRUM24_ALT,
@@ -256,6 +261,16 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_PLANEX_GWNS11H,
 	  PCMCIA_CIS_PLANEX_GWNS11H,
 	  PCMCIA_STR_PLANEX_GWNS11H },
+
+	{ PCMCIA_VENDOR_BAY,
+	  PCMCIA_PRODUCT_BAY_EMOBILITY_11B,
+	  PCMCIA_CIS_BAY_EMOBILITY_11B,
+	  PCMCIA_STR_BAY_EMOBILITY_11B },
+
+	{ PCMCIA_VENDOR_ACTIONTEC,
+	  PCMCIA_PRODUCT_ACTIONTEC_PRISM,
+	  PCMCIA_CIS_ACTIONTEC_PRISM,
+	  PCMCIA_STR_ACTIONTEC_PRISM },
 
 	{ 0,
 	  0,
@@ -411,8 +426,7 @@ wi_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pa->pf;
 
-	for (cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head); cfe != NULL;
-	     cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
+	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
 		if (cfe->iftype != PCMCIA_IFTYPE_IO)
 			continue;
 		if (cfe->iospace[0].length < WI_IOSIZE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.46.4.1 2002/05/30 13:52:31 gehenna Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.46.4.2 2002/06/20 15:52:41 gehenna Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.46.4.1 2002/05/30 13:52:31 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.46.4.2 2002/06/20 15:52:41 gehenna Exp $");
 
 #include "opt_ipsec.h"
 
@@ -131,7 +131,7 @@ in6_pcballoc(so, head)
 	in6p->in6p_hops = -1;	/* use kernel default */
 	in6p->in6p_icmp6filt = NULL;
 #ifdef IPSEC
-	error = ipsec_init_policy(so, &in6p->in6p_sp);
+	error = ipsec_init_pcbpolicy(so, &in6p->in6p_sp);
 	if (error != 0) {
 		FREE(in6p, M_PCB);
 		return error;

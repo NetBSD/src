@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.19.8.1 2002/05/30 13:52:45 gehenna Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.19.8.2 2002/06/20 15:53:15 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.19.8.1 2002/05/30 13:52:45 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.19.8.2 2002/06/20 15:53:15 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,11 +322,12 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	 * Our allocations are always page granularity, so our alignment
 	 * must be, too.
 	 */
-
 	if (alignment < PAGE_SIZE)
 		alignment = PAGE_SIZE;
 	size = round_page(size);
 	low = roundup(low, alignment);
+
+	TAILQ_INIT(rlist);
 
 	if ((nsegs < size / PAGE_SIZE) || (alignment != PAGE_SIZE)
 	    || (boundary != 0))

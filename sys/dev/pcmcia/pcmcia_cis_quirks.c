@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.18 2002/01/13 12:28:02 aymeric Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.18.8.1 2002/06/20 16:33:59 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.18 2002/01/13 12:28:02 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.18.8.1 2002/06/20 16:33:59 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,9 +252,9 @@ void pcmcia_check_cis_quirks(sc)
 {
 	int wiped = 0;
 	int i, j;
-	struct pcmcia_function *pf, *pf_next;
+	struct pcmcia_function *pf;
 	const struct pcmcia_function *pf_last;
-	struct pcmcia_config_entry *cfe, *cfe_next;
+	struct pcmcia_config_entry *cfe;
 
 	pf = NULL;
 	pf_last = NULL;
@@ -285,14 +285,12 @@ void pcmcia_check_cis_quirks(sc)
 					printf("\n");
 				}
 
-				for (pf = SIMPLEQ_FIRST(&sc->card.pf_head); pf != NULL;
-				     pf = pf_next) {
-					for (cfe = SIMPLEQ_FIRST(&pf->cfe_head); cfe != NULL;
-					     cfe = cfe_next) {
-						cfe_next = SIMPLEQ_NEXT(cfe, cfe_list);
+				SIMPLEQ_FOREACH(pf, &sc->card.pf_head,
+				    pf_list) {
+					SIMPLEQ_FOREACH(cfe, &pf->cfe_head,
+					    cfe_list) {
 						free(cfe, M_DEVBUF);
 					}
-					pf_next = SIMPLEQ_NEXT(pf, pf_list);
 					free(pf, M_DEVBUF);
 				}
 

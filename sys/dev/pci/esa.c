@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.12.2.1 2002/06/20 16:33:32 gehenna Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -1094,8 +1094,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	 * So, we will swap the left and right mixer channels to compensate
 	 * for this.
 	 */ 
-	sc->codec_flags |= AC97_HOST_SWAPPED_CHANNELS;
-	sc->codec_flags |= AC97_HOST_DONT_READ;
+	sc->codec_flags = AC97_HOST_SWAPPED_CHANNELS;
 
 	/* Attach AC97 host interface */
 	sc->host_if.arg = self;

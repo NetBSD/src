@@ -1,8 +1,7 @@
-
 /******************************************************************************
  *
- * Module Name: exxface - External interpreter interfaces
- *              xRevision: 29 $
+ * Name: acefi.h - OS specific defines, etc.
+ *       $Revision: 1.1.1.1.4.2 $
  *
  *****************************************************************************/
 
@@ -10,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,84 +114,37 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exxface.c,v 1.2 2001/11/13 13:02:00 lukem Exp $");
+#ifndef __ACEFI_H__
+#define __ACEFI_H__
 
-#define __EXXFACE_C__
+#define ACPI_OS_NAME                "AED EFI"
 
-#include "acpi.h"
-#include "acinterp.h"
+#include <efi.h>
+#include <efistdarg.h>
+#include <efilib.h>
 
 
-#define _COMPONENT          ACPI_EXECUTER
-        MODULE_NAME         ("exxface")
+/* _int64 works for both IA32 and IA64 */
 
-#if 0
+#define COMPILER_DEPENDENT_INT64   __int64
+#define COMPILER_DEPENDENT_UINT64  unsigned __int64
 
 /*
- * DEFINE_AML_GLOBALS is tested in amlcode.h
- * to determine whether certain global names should be "defined" or only
- * "declared" in the current compilation.  This enhances maintainability
- * by enabling a single header file to embody all knowledge of the names
- * in question.
+ * Calling conventions:
  *
- * Exactly one module of any executable should #define DEFINE_GLOBALS
- * before #including the header files which use this convention.  The
- * names in question will be defined and initialized in that module,
- * and declared as extern in all other modules which #include those
- * header files.
+ * ACPI_SYSTEM_XFACE        - Interfaces to host OS (handlers, threads)
+ * ACPI_EXTERNAL_XFACE      - External ACPI interfaces 
+ * ACPI_INTERNAL_XFACE      - Internal ACPI interfaces
+ * ACPI_INTERNAL_VAR_XFACE  - Internal variable-parameter list interfaces
  */
+#define ACPI_SYSTEM_XFACE
+#define ACPI_EXTERNAL_XFACE
+#define ACPI_INTERNAL_XFACE
+#define ACPI_INTERNAL_VAR_XFACE
 
-#define DEFINE_AML_GLOBALS
-#include "amlcode.h"
-#include "acparser.h"
-#include "acnamesp.h"
+/* warn C4142: redefinition of type */
 
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiExExecuteMethod
- *
- * PARAMETERS:  Pcode               - Pointer to the pcode stream
- *              PcodeLength         - Length of pcode that comprises the method
- *              **Params            - List of parameters to pass to method,
- *                                    terminated by NULL. Params itself may be
- *                                    NULL if no parameters are being passed.
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Execute a control method
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiExExecuteMethod (
-    ACPI_NAMESPACE_NODE     *MethodNode,
-    ACPI_OPERAND_OBJECT     **Params,
-    ACPI_OPERAND_OBJECT     **ReturnObjDesc)
-{
-    ACPI_STATUS             Status;
+#pragma warning(disable:4142)
 
 
-    FUNCTION_TRACE ("ExExecuteMethod");
-
-
-    /*
-     * The point here is to lock the interpreter and call the low
-     * level execute.
-     */
-    Status = AcpiExEnterInterpreter ();
-    if (ACPI_FAILURE (Status))
-    {
-        return_ACPI_STATUS (Status);
-    }
-
-    Status = AcpiPsxExecute (MethodNode, Params, ReturnObjDesc);
-
-    AcpiExExitInterpreter ();
-
-    return_ACPI_STATUS (Status);
-}
-
-
-#endif
+#endif /* __ACEFI_H__ */

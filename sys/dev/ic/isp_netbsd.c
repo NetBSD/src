@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.53 2002/04/04 23:38:46 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.53.2.1 2002/06/20 16:33:12 gehenna Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.53 2002/04/04 23:38:46 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.53.2.1 2002/06/20 16:33:12 gehenna Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -273,40 +273,6 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 		retval = 0;
 		break;
 #endif
-	case ISP_GET_STATS:
-	{
-		isp_stats_t *sp = (isp_stats_t *) addr;
-
-		MEMZERO(sp, sizeof (*sp));
-		sp->isp_stat_version = ISP_STATS_VERSION;
-		sp->isp_type = isp->isp_type;
-		sp->isp_revision = isp->isp_revision;
-		ISP_LOCK(isp);
-		sp->isp_stats[ISP_INTCNT] = isp->isp_intcnt;
-		sp->isp_stats[ISP_INTBOGUS] = isp->isp_intbogus;
-		sp->isp_stats[ISP_INTMBOXC] = isp->isp_intmboxc;
-		sp->isp_stats[ISP_INGOASYNC] = isp->isp_intoasync;
-		sp->isp_stats[ISP_RSLTCCMPLT] = isp->isp_rsltccmplt;
-		sp->isp_stats[ISP_FPHCCMCPLT] = isp->isp_fphccmplt;
-		sp->isp_stats[ISP_RSCCHIWAT] = isp->isp_rscchiwater;
-		sp->isp_stats[ISP_FPCCHIWAT] = isp->isp_fpcchiwater;
-		ISP_UNLOCK(isp);
-		retval = 0;
-		break;
-	}
-	case ISP_CLR_STATS:
-		ISP_LOCK(isp);
-		isp->isp_intcnt = 0;
-		isp->isp_intbogus = 0;
-		isp->isp_intmboxc = 0;
-		isp->isp_intoasync = 0;
-		isp->isp_rsltccmplt = 0;
-		isp->isp_fphccmplt = 0;
-		isp->isp_rscchiwater = 0;
-		isp->isp_fpcchiwater = 0;
-		ISP_UNLOCK(isp);
-		retval = 0;
-		break;
 	case ISP_SDBLEV:
 	{
 		int olddblev = isp->isp_dblev;
@@ -363,6 +329,54 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 		} else {
 			retval = ENODEV;
 		}
+		ISP_UNLOCK(isp);
+		break;
+	}
+	case ISP_GET_STATS:
+	{
+		isp_stats_t *sp = (isp_stats_t *) addr;
+
+		MEMZERO(sp, sizeof (*sp));
+		sp->isp_stat_version = ISP_STATS_VERSION;
+		sp->isp_type = isp->isp_type;
+		sp->isp_revision = isp->isp_revision;
+		ISP_LOCK(isp);
+		sp->isp_stats[ISP_INTCNT] = isp->isp_intcnt;
+		sp->isp_stats[ISP_INTBOGUS] = isp->isp_intbogus;
+		sp->isp_stats[ISP_INTMBOXC] = isp->isp_intmboxc;
+		sp->isp_stats[ISP_INGOASYNC] = isp->isp_intoasync;
+		sp->isp_stats[ISP_RSLTCCMPLT] = isp->isp_rsltccmplt;
+		sp->isp_stats[ISP_FPHCCMCPLT] = isp->isp_fphccmplt;
+		sp->isp_stats[ISP_RSCCHIWAT] = isp->isp_rscchiwater;
+		sp->isp_stats[ISP_FPCCHIWAT] = isp->isp_fpcchiwater;
+		ISP_UNLOCK(isp);
+		retval = 0;
+		break;
+	}
+	case ISP_CLR_STATS:
+		ISP_LOCK(isp);
+		isp->isp_intcnt = 0;
+		isp->isp_intbogus = 0;
+		isp->isp_intmboxc = 0;
+		isp->isp_intoasync = 0;
+		isp->isp_rsltccmplt = 0;
+		isp->isp_fphccmplt = 0;
+		isp->isp_rscchiwater = 0;
+		isp->isp_fpcchiwater = 0;
+		ISP_UNLOCK(isp);
+		retval = 0;
+		break;
+	case ISP_FC_GETHINFO:
+	{
+		struct isp_hba_device *hba = (struct isp_hba_device *) addr;
+		MEMZERO(hba, sizeof (*hba));
+		ISP_LOCK(isp);
+		hba->fc_speed = FCPARAM(isp)->isp_gbspeed;
+		hba->fc_scsi_supported = 1;
+		hba->fc_topology = FCPARAM(isp)->isp_topo + 1;
+		hba->fc_loopid = FCPARAM(isp)->isp_loopid;
+		hba->active_node_wwn = FCPARAM(isp)->isp_nodewwn;
+		hba->active_port_wwn = FCPARAM(isp)->isp_portwwn;
 		ISP_UNLOCK(isp);
 		break;
 	}
@@ -912,9 +926,9 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		break;
 	case ISPASYNC_PROMENADE:
 	if (IS_FC(isp) && isp->isp_dblev) {
-		const char fmt[] = "Target %d (Loop 0x%x) Port ID 0x%x "
+		static const char fmt[] = "Target %d (Loop 0x%x) Port ID 0x%x "
 		    "(role %s) %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
-		const static char *roles[4] = {
+		const static char *const roles[4] = {
 		    "None", "Target", "Initiator", "Target/Initiator"
 		};
 		fcparam *fcp = isp->isp_param;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.8 2001/11/13 02:09:05 lukem Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.8.8.1 2002/06/20 16:41:09 gehenna Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.8 2001/11/13 02:09:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.8.8.1 2002/06/20 16:41:09 gehenna Exp $");
 
 #define	ELFSIZE		32
 
@@ -54,32 +54,48 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.8 2001/11/13 02:09:05 luke
 #include <machine/frame.h>
 #include <machine/netbsd32_machdep.h>
 
-int netbsd32_copyinargs __P((struct exec_package *, struct ps_strings *, 
-			     void *, size_t, const void *, const void *));
-
-extern int ELFNAME2(netbsd,signature) __P((struct proc *, struct exec_package *,
-    Elf_Ehdr *));
+int netbsd32_copyinargs(struct exec_package *, struct ps_strings *, 
+			void *, size_t, const void *, const void *);
+int ELFNAME2(netbsd32,probe_noteless)(struct proc *, struct exec_package *epp,
+				      void *eh, char *itp, vaddr_t *pos);
+extern int ELFNAME2(netbsd,signature)(struct proc *, struct exec_package *,
+				      Elf_Ehdr *);
 
 int
-ELFNAME2(netbsd32,probe)(p, epp, eh, itp, pos)
-	struct proc *p;
-	struct exec_package *epp;
-	void *eh;
-	char *itp;
-	vaddr_t *pos;
+ELFNAME2(netbsd32,probe)(struct proc *p, struct exec_package *epp,
+			 void *eh, char *itp, vaddr_t *pos)
+{
+	int error;
+
+	if ((error = ELFNAME2(netbsd,signature)(p, epp, eh)) != 0)
+		return error;
+
+	return ELFNAME2(netbsd32,probe_noteless)(p, epp, eh, itp, pos);
+}
+
+int
+ELFNAME2(netbsd32,probe_noteless)(struct proc *p, struct exec_package *epp,
+				  void *eh, char *itp, vaddr_t *pos)
 {
 	int error;
 	size_t i;
 	const char *bp;
 
-	if ((error = ELFNAME2(netbsd,signature)(p, epp, eh)) != 0)
-		return error;
-
 	if (itp[0]) {
+		/* Translate interpreter name if needed */
 		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
-				       itp, &bp, 0)) && 
-		    (error = emul_find(p, NULL, "", itp, &bp, 0)))
-			return error;
+			itp, &bp, 0)) != 0) {
+			/* 
+			 * See if we're chroot-ed.  Since it's the same OS,
+			 * there really shouldn't be any device node issues
+			 * so we might as well support chroot-ing to a 32-bit
+			 * installation.
+			 */
+			if ((error = emul_find(p, NULL, "/", itp, &bp, 0)) 
+				!= 0) {
+				return error;
+			}
+		}
 		if ((error = copystr(bp, itp, MAXPATHLEN, &i)) != 0)
 			return error;
 		free((void *)bp, M_TEMP);
@@ -100,11 +116,8 @@ ELFNAME2(netbsd32,probe)(p, epp, eh, itp, pos)
  * extra information in case of dynamic binding.
  */
 int
-netbsd32_elf32_copyargs(pack, arginfo, stackp, argp)
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
+netbsd32_elf32_copyargs(struct exec_package *pack, struct ps_strings *arginfo,
+		        char **stackp, void *argp)
 {
 	size_t len;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;

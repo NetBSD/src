@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.7.2.2 2002/05/30 14:44:44 gehenna Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.7.2.3 2002/06/20 16:41:01 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.7.2.2 2002/05/30 14:44:44 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.7.2.3 2002/06/20 16:41:01 gehenna Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.7.2.2 2002/05/30 14:44:44 gehenna E
 #include <compat/svr4/svr4_syscallargs.h>
 
 static int fd_truncate __P((struct proc *, int, int, off_t, register_t *));
+static int bsd_to_irix_fcntl_flags __P((int));
+static int irix_to_bsd_fcntl_flags __P((int));
 
 int
 irix_sys_lseek64(p, v, retval)
@@ -155,11 +157,34 @@ irix_sys_fcntl(p, v, retval)
 		cmd = SVR4_F_SETLK;
 		break;
 
+	case IRIX_F_GETFL:
+		SCARG(&cup, fd) = SCARG(uap, fd);
+		SCARG(&cup, cmd) = F_GETFL;
+		SCARG(&cup, arg) = SCARG(uap, arg);
+		if ((error = sys_fcntl(p, &cup, retval)) != 0)
+			return error;
+		*retval = bsd_to_irix_fcntl_flags(*retval);
+		return 0;
+		break;
+		
+	case IRIX_F_SETFL:
+		/* 
+		 * All unsupported flags are silently ignored 
+		 * except FDIRECT taht will return EINVAL
+		 */
+		if ((int)SCARG(uap, arg) & IRIX_FDIRECT)
+			return EINVAL;
+
+		SCARG(&cup, fd) = SCARG(uap, fd);
+		SCARG(&cup, arg) = 
+		    (char *)irix_to_bsd_fcntl_flags((int)SCARG(uap, arg));
+		SCARG(&cup, cmd) = F_SETFL;
+		return sys_fcntl(p, &cup, retval);
+		break;
+
 	case SVR4_F_DUPFD:
 	case SVR4_F_GETFD:
 	case SVR4_F_SETFD:
-	case SVR4_F_GETFL:
-	case SVR4_F_SETFL:
 	case SVR4_F_SETLK:
 	case SVR4_F_SETLKW:
 	case SVR4_F_CHKFL:
@@ -325,4 +350,48 @@ irix_sys_open(p, v, retval)
 	FILE_UNUSE(fp, p);
 
 	return 0;
+}
+
+static int 
+irix_to_bsd_fcntl_flags(flags)
+	int flags;
+{
+	int ret = 0;
+
+	if (flags & IRIX_FNDELAY) ret |= FNDELAY;
+	if (flags & IRIX_FAPPEND) ret |= FAPPEND;
+	if (flags & IRIX_FSYNC) ret |= FFSYNC;
+	if (flags & IRIX_FDSYNC) ret |= FDSYNC;
+	if (flags & IRIX_FASYNC) ret |= FASYNC;
+	if (flags & IRIX_FRSYNC) ret |= FRSYNC;
+	if (flags & IRIX_FNONBLOCK) ret |= FNONBLOCK;
+	if (flags & IRIX_FLARGEFILE)
+		printf("Warning: ignored fcntl IRIX_FLARGEFILE flag");
+	if (flags & IRIX_FDIRECT)
+		printf("Warning: ignored fcntl IRIX_FDIRECT flag");
+	if (flags & IRIX_FBULK)
+		printf("Warning: ignored fcntl IRIX_FBULK flag");
+	if (flags & IRIX_FLCINVAL)
+		printf("Warning: ignored fcntl IRIX_FLCINVAL flag");
+	if (flags & IRIX_FLCFLUSH)
+		printf("Warning: ignored fcntl IRIX_FLCFLUSH flag");
+
+	return ret;
+}
+
+static int 
+bsd_to_irix_fcntl_flags(flags)
+	int flags;
+{
+	int ret = 0;
+
+	if (flags & FNDELAY) ret |= IRIX_FNDELAY;
+	if (flags & FAPPEND) ret |= IRIX_FAPPEND;
+	if (flags & FFSYNC) ret |= IRIX_FSYNC;
+	if (flags & FDSYNC) ret |= IRIX_FDSYNC;
+	if (flags & FRSYNC) ret |= IRIX_FRSYNC;
+	if (flags & FNONBLOCK) ret |= IRIX_FNONBLOCK;
+	if (flags & FASYNC) ret |= IRIX_FASYNC;
+
+	return ret;
 }
