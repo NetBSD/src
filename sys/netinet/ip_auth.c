@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.14 2000/03/30 13:24:57 augustss Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.15 2000/04/16 20:58:52 chs Exp $	*/
 
 /*
  * Copyright (C) 1998 by Darren Reed & Guido van Rooij.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_auth.c,v 1.14 2000/03/30 13:24:57 augustss Exp $";
+static const char rcsid[] = "$NetBSD: ip_auth.c,v 1.15 2000/04/16 20:58:52 chs Exp $";
 #else
 static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.1.2.2 2000/01/16 10:12:14 darrenr Exp";
 #endif
@@ -238,7 +238,7 @@ ip_t *ip;
 	fr_auth[i].fra_pass = 0;
 	fr_auth[i].fra_age = fr_defaultauthage;
 	bcopy((char *)fin, (char *)&fr_auth[i].fra_info, sizeof(*fin));
-#if !defined(sparc) && !defined(m68k)
+
 	/*
 	 * No need to copyback here as we want to undo the changes, not keep
 	 * them.
@@ -258,7 +258,7 @@ ip_t *ip;
 		bo = ip->ip_off;
 		ip->ip_off = htons(bo);
 	}
-#endif
+
 #if SOLARIS && defined(_KERNEL)
 	m->b_rptr -= qif->qf_off;
 	fr_authpkts[i] = *(mblk_t **)fin->fin_mp;
