@@ -1,3 +1,4 @@
+./sbin/binpatch
 ./sbin/edahdi
 ./sbin/edlabel
 ./usr/mdec/bootxx
@@ -25,4 +26,9 @@
 ./usr/lib/libtermlib.so.0.0
 ./usr/lib/libutil.so.3.2
 ./usr/libexec/ld.so
+./usr/share/keymap/atari/de.map
+./usr/share/keymap/atari/fr.map
+./usr/share/keymap/atari/uk.map
+./usr/share/keymap/atari/us.map
 ./usr/sbin/iteconfig
+./usr/sbin/loadkmap
