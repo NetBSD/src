@@ -1,8 +1,8 @@
-/*	$NetBSD: getether.c,v 1.3 1998/03/14 04:39:54 lukem Exp $	*/
+/*	$NetBSD: getether.c,v 1.3.2.1 2000/10/19 17:04:56 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getether.c,v 1.3 1998/03/14 04:39:54 lukem Exp $");
+__RCSID("$NetBSD: getether.c,v 1.3.2.1 2000/10/19 17:04:56 he Exp $");
 #endif
 
 /*
@@ -149,7 +149,7 @@ getether(ifname, eap)
 	ifc.ifc_buf = (caddr_t) ibuf;
 	if (ioctl(fd, SIOCGIFCONF, (char *) &ifc) < 0 ||
 		ifc.ifc_len < sizeof(struct ifreq)) {
-		report(LOG_ERR, "getether: SIOCGIFCONF: %s", get_errmsg);
+		report(LOG_ERR, "getether: SIOCGIFCONF: %s", get_errmsg());
 		goto out;
 	}
 	/* Search interface configuration list for link layer address. */
