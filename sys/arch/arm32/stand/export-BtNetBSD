@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: export-BtNetBSD,v 1.1 2001/02/19 14:09:00 reinoud Exp $
+# $NetBSD: export-BtNetBSD,v 1.2 2001/02/19 14:15:42 reinoud Exp $
 # creates all binary files from the uue files from the source tree
 # to be run in the directory next to the directory NetBSD
 #
@@ -24,7 +24,7 @@ uudecode < unixfs_res,uue && rm unixfs_res,uue
 cd ../src/Banner
 uudecode < sprite,uue && rm sprite,uue
 
-cd ../..
+cd ../../..
 
 # unixfs is copied into the !BtNetBSD dir. at install time
 cp -R pling.BtNetBSD/native unixfs
