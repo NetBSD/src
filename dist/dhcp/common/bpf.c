@@ -47,7 +47,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.7 2004/04/10 17:53:05 darrenr Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.8 2004/10/22 05:22:39 perry Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -415,6 +415,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	int length = 0;
 	int offset = 0;
 	struct bpf_hdr hdr;
+	unsigned paylen;
 
 	/* All this complexity is because BPF doesn't guarantee
 	   that only one packet will be returned at a time.   We're
@@ -507,7 +508,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 					       interface -> rbuf_offset,
 					       from,
 					       (unsigned char *)0,
-					       hdr.bh_caplen);
+					       hdr.bh_caplen, &paylen);
 
 		/* If the IP or UDP checksum was bad, skip the packet... */
 		if (offset < 0) {
@@ -531,11 +532,11 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 
 		/* Copy out the data in the packet... */
 		memcpy (buf, interface -> rbuf + interface -> rbuf_offset,
-			hdr.bh_caplen);
+			paylen);
 		interface -> rbuf_offset =
 			BPF_WORDALIGN (interface -> rbuf_offset +
 				       hdr.bh_caplen);
-		return hdr.bh_caplen;
+		return paylen;
 	} while (!length);
 	return 0;
 }
