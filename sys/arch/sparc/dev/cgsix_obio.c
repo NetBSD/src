@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.5 2000/03/30 13:57:50 pk Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.6 2000/06/29 07:40:06 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,11 +56,8 @@
 #include <sys/syslog.h>
 #endif
 
-#include <vm/vm.h>
-
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/pmap.h>
 #include <machine/fbvar.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>

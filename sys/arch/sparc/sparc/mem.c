@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.24 2000/06/26 04:56:07 simonb Exp $ */
+/*	$NetBSD: mem.c,v 1.25 2000/06/29 07:40:11 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,7 +56,7 @@
 #include <machine/eeprom.h>
 #include <machine/conf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 extern vaddr_t prom_vstart;
 extern vaddr_t prom_vend;
