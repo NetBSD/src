@@ -1,8 +1,8 @@
-/*	$NetBSD: event.h,v 1.2 2003/06/13 04:11:31 itojun Exp $	*/
+/*	$NetBSD: event.h,v 1.3 2004/08/07 21:09:47 provos Exp $	*/
 /*	$OpenBSD: event.h,v 1.4 2002/07/12 18:50:48 provos Exp $	*/
 
 /*
- * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
+ * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,10 +41,11 @@ extern "C" {
 #define EVLIST_INSERTED	0x02
 #define EVLIST_SIGNAL	0x04
 #define EVLIST_ACTIVE	0x08
+#define EVLIST_INTERNAL	0x10
 #define EVLIST_INIT	0x80
 
 /* EVLIST_X_ Private space: 0x1000-0xf000 */
-#define EVLIST_ALL	(0xf000 | 0x8f)
+#define EVLIST_ALL	(0xf000 | 0x9f)
 
 #define EV_TIMEOUT	0x01
 #define EV_READ		0x02
@@ -123,6 +124,7 @@ int event_dispatch(void);
 #define EVLOOP_ONCE	0x01
 #define EVLOOP_NONBLOCK	0x02
 int event_loop(int);
+int event_loopexit(struct timeval *);	/* Causes the loop to exit */
 
 int timeout_next(struct timeval *);
 void timeout_correct(struct timeval *);
@@ -148,6 +150,8 @@ void timeout_process(void);
 #define signal_initialized(ev)		((ev)->ev_flags & EVLIST_INIT)
 
 void event_set(struct event *, int, short, void (*)(int, short, void *), void *);
+int event_once(int, short, void (*)(int, short, void *), void *, struct timeval *);
+
 int event_add(struct event *, struct timeval *);
 int event_del(struct event *);
 void event_active(struct event *, int, short);
@@ -155,6 +159,86 @@ void event_active(struct event *, int, short);
 int event_pending(struct event *, short, struct timeval *);
 
 #define event_initialized(ev)		((ev)->ev_flags & EVLIST_INIT)
+
+/* These functions deal with buffering input and output */
+
+struct evbuffer {
+	u_char *buffer;
+	u_char *orig_buffer;
+
+	size_t misalign;
+	size_t totallen;
+	size_t off;
+
+	void (*cb)(struct evbuffer *, size_t, size_t, void *);
+	void *cbarg;
+};
+
+/* Just for error reporting - use other constants otherwise */
+#define EVBUFFER_READ		0x01
+#define EVBUFFER_WRITE		0x02
+#define EVBUFFER_EOF		0x10
+#define EVBUFFER_ERROR		0x20
+#define EVBUFFER_TIMEOUT	0x40
+
+struct bufferevent;
+typedef void (*evbuffercb)(struct bufferevent *, void *);
+typedef void (*everrorcb)(struct bufferevent *, short what, void *);
+
+struct event_watermark {
+	size_t low;
+	size_t high;
+};
+
+struct bufferevent {
+	struct event ev_read;
+	struct event ev_write;
+
+	struct evbuffer *input;
+	struct evbuffer *output;
+
+	struct event_watermark wm_read;
+	struct event_watermark wm_write;
+
+	evbuffercb readcb;
+	evbuffercb writecb;
+	everrorcb errorcb;
+	void *cbarg;
+
+	int timeout_read;	/* in seconds */
+	int timeout_write;	/* in seconds */
+
+	short enabled;	/* events that are currently enabled */
+};
+
+struct bufferevent *bufferevent_new(int fd,
+    evbuffercb readcb, evbuffercb writecb, everrorcb errorcb, void *cbarg);
+void bufferevent_free(struct bufferevent *bufev);
+int bufferevent_write(struct bufferevent *bufev, void *data, size_t size);
+int bufferevent_write_buffer(struct bufferevent *bufev, struct evbuffer *buf);
+size_t bufferevent_read(struct bufferevent *bufev, void *data, size_t size);
+int bufferevent_enable(struct bufferevent *bufev, short event);
+int bufferevent_disable(struct bufferevent *bufev, short event);
+void bufferevent_settimeout(struct bufferevent *bufev,
+    int timeout_read, int timeout_write);
+
+#define EVBUFFER_LENGTH(x)	(x)->off
+#define EVBUFFER_DATA(x)	(x)->buffer
+#define EVBUFFER_INPUT(x)	(x)->input
+#define EVBUFFER_OUTPUT(x)	(x)->output
+
+struct evbuffer *evbuffer_new(void);
+void evbuffer_free(struct evbuffer *);
+int evbuffer_expand(struct evbuffer *, size_t);
+int evbuffer_add(struct evbuffer *, void *, size_t);
+int evbuffer_remove(struct evbuffer *, void *, size_t);
+int evbuffer_add_buffer(struct evbuffer *, struct evbuffer *);
+int evbuffer_add_printf(struct evbuffer *, char *fmt, ...);
+void evbuffer_drain(struct evbuffer *, size_t);
+int evbuffer_write(struct evbuffer *, int);
+int evbuffer_read(struct evbuffer *, int, int);
+u_char *evbuffer_find(struct evbuffer *, u_char *, size_t);
+void evbuffer_setcb(struct evbuffer *, void (*)(struct evbuffer *, size_t, size_t, void *), void *);
 
 #ifdef __cplusplus
 }
