@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    
-/* $Id: i386.h,v 1.2 1993/10/04 22:53:32 pk Exp $ */
+/* $Id: i386.h,v 1.3 1995/02/05 12:57:30 mycroft Exp $ */
 
 static const template i386_optab[] = {
 
@@ -729,6 +729,9 @@ static const template i386_optab[] = {
 {"wbinvd", 0, 0x0f09, _, NoModrm, 0, 0, 0},
 {"invlpg", 1, 0x0f01, 7, Modrm, Mem, 0, 0},
 
+/* Pentium extensions */
+{"cpuid", 0, 0x0fa2, _, NoModrm, 0, 0, 0},
+
 {"", 0, 0, 0, 0, 0, 0, 0}	/* sentinal */
 };
 #undef _
@@ -757,6 +760,8 @@ static const reg_entry i386_regtab[] = {
   /* debug registers */
   {"db0", Debug, 0},   {"db1", Debug, 1},   {"db2", Debug, 2},
   {"db3", Debug, 3},   {"db6", Debug, 6},   {"db7", Debug, 7},
+  {"dr0", Debug, 0},   {"dr1", Debug, 1},   {"dr2", Debug, 2},
+  {"dr3", Debug, 3},   {"dr6", Debug, 6},   {"dr7", Debug, 7},
   /* test registers */
   {"tr6", Test, 6}, {"tr7", Test, 7},
   /* float registers */
