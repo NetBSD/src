@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.22 2004/02/21 03:27:57 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.23 2004/03/17 10:21:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.22 2004/02/21 03:27:57 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.23 2004/03/17 10:21:59 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -132,7 +132,6 @@ static int sysctl_kern_sbmax(SYSCTLFN_PROTO);
 static int sysctl_kern_urnd(SYSCTLFN_PROTO);
 static int sysctl_kern_lwp(SYSCTLFN_PROTO);
 static int sysctl_kern_forkfsleep(SYSCTLFN_PROTO);
-static int sysctl_kern_somaxkva(SYSCTLFN_PROTO);
 static int sysctl_kern_root_partition(SYSCTLFN_PROTO);
 static int sysctl_kern_drivers(SYSCTLFN_PROTO);
 static int sysctl_doeproc(SYSCTLFN_PROTO);
@@ -516,10 +515,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTLTYPE_INT, "dump_on_panic", NULL,
 		       NULL, 0, &dumponpanic, 0,
 		       CTL_KERN, KERN_DUMP_ON_PANIC, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
-		       CTLTYPE_INT, "somaxkva", NULL,
-		       sysctl_kern_somaxkva, 0, NULL, 0,
-		       CTL_KERN, KERN_SOMAXKVA, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT,
 		       CTLTYPE_INT, "root_partition", NULL,
 		       sysctl_kern_root_partition, 0, NULL, 0,
@@ -1546,31 +1541,6 @@ sysctl_kern_forkfsleep(SYSCTLFN_ARGS)
 		forkfsleep = timo;
 
 	return (0);
-}
-
-/*
- * sysctl helper routine for kern.somaxkva.  ensures that the given
- * value is not too small.
- * (XXX should we maybe make sure it's not too large as well?)
- */
-static int
-sysctl_kern_somaxkva(SYSCTLFN_ARGS)
-{
-	int error, new_somaxkva;
-	struct sysctlnode node;
-
-	new_somaxkva = somaxkva;
-	node = *rnode;
-	node.sysctl_data = &new_somaxkva;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	if (new_somaxkva < (16 * 1024 * 1024)) /* sanity */
-		return (EINVAL);
-	somaxkva = new_somaxkva;
-
-	return (error);
 }
 
 /*
