@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.9,v 1.4 2004/03/24 19:11:41 snj Exp $
+.\"	$NetBSD: sysctl.9,v 1.5 2004/03/24 23:51:18 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -331,20 +331,19 @@ The
 .Fa rnode
 argument must either be
 .Dv NULL
-or a valid pointer to a a reference the root of the tree into which
+or a valid pointer to a reference to the root of the tree into which
 the new node must be placed.
 If it is
 .Dv NULL ,
 the main tree will be used.
-It is an illegal for
+It is illegal for
 .Fa rnode
-to refer to an
+to refer to a
 .Dv NULL
 pointer.
-If
+If the
 .Fa cnode
-argument
-is not
+argument is not
 .Dv NULL ,
 on return it will be adjusted to point to the address of the new node.
 .Pp
