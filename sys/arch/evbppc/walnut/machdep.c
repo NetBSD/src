@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2003/07/04 02:35:38 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2003/07/14 12:59:36 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -520,6 +520,7 @@ softnet(void)
 /*
  * Soft tty interrupts.
  */
+#include "com.h"
 void
 softserial(void)
 {
