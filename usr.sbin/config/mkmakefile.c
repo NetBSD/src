@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.56 2002/11/17 22:10:05 thorpej Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.57 2002/11/19 04:24:16 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -208,6 +208,8 @@ emitdefs(FILE *fp)
 	struct nvlist *nv;
 	char *sp;
 
+	if (fprintf(fp, "KERNEL_BUILD=%s\n", conffile) < 0)
+		return (1);
 	if (fputs("IDENT=", fp) < 0)
 		return (1);
 	sp = "";
