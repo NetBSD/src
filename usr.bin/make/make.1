@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.50 2001/06/09 07:00:37 sjg Exp $
+.\"	$NetBSD: make.1,v 1.51 2001/06/10 02:31:00 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -489,12 +489,18 @@ entered into the environment for all programs which
 .Nm
 executes.
 .It Va .MAKEOVERRIDES
-This variable is used to record command line variable assignments
-so that they may be exported as part of 
+This variable is used to record the names of variables assigned to 
+on the command line, so that they may be exported as part of 
 .Ql Ev MAKEFLAGS .
 This behaviour can be disabled by assigning an empty value to 
 .Ql Va .MAKEOVERRIDES
-within a makefile.
+within a makefile.  Extra variables can be exported from a makefile
+by appending their names to 
+.Ql Va .MAKEOVERRIDES .
+.Ql Ev MAKEFLAGS
+is re-exported whenever 
+.Ql Va .MAKEOVERRIDES
+is modified.
 .It Ev PWD
 Alternate path to the current directory.
 .Nm
