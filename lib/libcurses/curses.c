@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.14 2000/04/17 12:25:45 blymn Exp $	*/
+/*	$NetBSD: curses.c,v 1.15 2000/04/22 13:29:01 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.14 2000/04/17 12:25:45 blymn Exp $");
+__RCSID("$NetBSD: curses.c,v 1.15 2000/04/22 13:29:01 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -59,11 +59,11 @@ int	PA, cO, nc;
 char	*AC, *AE, *AL, *AS, *BC, *BL, *BT, *CD, *CE, *CL, *CM, *CR, *CS,
 	*DC, *DL, *DM, *DO, *Ea, *ED, *EI, *K0, *K1, *K2, *K3, *K4, *K5,
 	*K6, *K7, *K8, *K9, *HO, *IC, *IM, *IP, *KD, *KE, *KH, *KL, *KR,
-	*KS, *KU, *LL, *MA, *MB, *MD, *ME, *MH, *MK, *MP, *MR, *ND, *NL,
-	*OC, *OP, *RC, *SC, *SE, *SF, *SO, *SP, *SR, *TA, *TE, *TI, *UC,
-	*UE, *UP, *US, *VB, *VS, *VE, *ab, *af, *al, *dl, *iC, *iP, *sB,
-	*sF, *sf, *sr, *AL_PARM, *DL_PARM, *UP_PARM, *DOWN_PARM, *LEFT_PARM,
-	*RIGHT_PARM;
+	*KS, *KU, *LL, *MA, *MB, *MD, *ME, *MH, *MK, *MM, *MO, *MP, *MR,
+	*ND, *NL, *OC, *OP, *RC, *SC, *SE, *SF, *SO, *SP, *SR, *TA, *TE,
+	*TI, *UC, *UE, *UP, *US, *VB, *VI, *VS, *VE, *ab, *af, *al, *dl, *iC,
+	*iP, *sB, *sF, *sf, *sr, *AL_PARM, *DL_PARM, *UP_PARM, *DOWN_PARM,
+	*LEFT_PARM, *RIGHT_PARM;
 /*
  * Public.
  *

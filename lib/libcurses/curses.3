@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.19 2000/04/20 13:12:14 blymn Exp $
+.\"	$NetBSD: curses.3,v 1.20 2000/04/22 13:29:01 blymn Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -112,6 +112,8 @@ and applies this rendition to
 to 
 .Em dstwin.
 If overlay is true then copy is nondestructive.
+.It curs_set(vis)	change cursor visibility, 0 is invisible, 1 is
+normal, 2 is high visibility.  Returns previous value on success.
 .It def_prog_mode()	define program (in curses) terminal modes
 .It def_shell_mode()	define shell (not in curses) terminal modes
 .It delch()	delete a character
@@ -162,6 +164,9 @@ relative to
 .Em win
 .It longname(termbuf,name)	get long name from
 .Em termbuf
+.It meta(win,boolf)	turn terminal meta mode on and off.  Note
+.Em win
+is always ignored.
 .It move(y,x)	move to (y,x) on
 .Em stdscr
 .It mvcur(lasty,lastx,newy,newx)	actually move cursor
