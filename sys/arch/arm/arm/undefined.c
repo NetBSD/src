@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.6 2001/03/13 20:22:02 bjh21 Exp $	*/
+/*	$NetBSD: undefined.c,v 1.7 2001/03/13 23:56:48 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -51,7 +51,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.6 2001/03/13 20:22:02 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.7 2001/03/13 23:56:48 bjh21 Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -124,7 +124,6 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 {
 
 	if (insn == GDB_BREAKPOINT && code == FAULT_USER) {
-		frame->tf_pc -= INSN_SIZE;	/* Adjust to point to the BP */
 		trapsignal(curproc, SIGTRAP, 0);
 		return 0;
 	}
@@ -167,10 +166,14 @@ undefinedinstruction(trapframe_t *frame)
 		enable_interrupts(I32_bit);
 #endif
 
-#ifdef arm26
+#ifndef arm26
+	frame->tf_pc -= INSN_SIZE;
+#endif
+
+#ifdef PROG26
 	fault_pc = frame->tf_r15 & R15_PC;
 #else
-	fault_pc = frame->tf_pc - INSN_SIZE;
+	fault_pc = frame->tf_pc;
 #endif
 
 	/*
