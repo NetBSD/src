@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.124 2003/03/02 22:19:04 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.125 2003/04/01 15:22:53 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -67,7 +67,7 @@
 #include "qd.h"
 void	qdearly(void);
 
-#define ISTACK_SIZE (NBPG*2)
+#define ISTACK_SIZE (PAGE_SIZE*2)
 vaddr_t istack;
 /* 
  * This code uses bitfield operators for most page table entries.  
@@ -207,7 +207,7 @@ calc_kvmsize(vsize_t usrptsize)
 	/* Kernel stacks per process */
 	kvmsize += (USPACE * maxproc);
 	/* kernel malloc arena */
-	kvmsize += (NKMEMPAGES_MAX_DEFAULT * NBPG +
+	kvmsize += (NKMEMPAGES_MAX_DEFAULT * PAGE_SIZE +
 	    NKMEMPAGES_MAX_DEFAULT * sizeof(struct kmemusage));
 	/* IO device register space */
 	kvmsize += (IOSPSZ * VAX_NBPG);
@@ -904,12 +904,12 @@ pmap_release(struct pmap *pmap)
 
 	saddr = (vaddr_t)pmap->pm_p0br;
 	eaddr = saddr + pmap->pm_p0lr * PPTESZ;
-	for (; saddr < eaddr; saddr += NBPG)
+	for (; saddr < eaddr; saddr += PAGE_SIZE)
 		if (kvtopte(saddr)->pg_pfn)
 			panic("pmap_release: P0 page mapped");
 	saddr = (vaddr_t)pmap->pm_p1br + pmap->pm_p1lr * PPTESZ;
 	eaddr = KERNBASE;
-	for (; saddr < eaddr; saddr += NBPG)
+	for (; saddr < eaddr; saddr += PAGE_SIZE)
 		if (kvtopte(saddr)->pg_pfn)
 			panic("pmap_release: P1 page mapped");
 #endif
@@ -1746,7 +1746,7 @@ more_pventries()
 	pv = (struct pv_entry *)getpage(NOWAIT);
 	if (pv == NULL)
 		return;
-	count = NBPG/sizeof(struct pv_entry);
+	count = PAGE_SIZE/sizeof(struct pv_entry);
 
 	for (i = 0; i < count; i++)
 		pv[i].pv_next = &pv[i + 1];
