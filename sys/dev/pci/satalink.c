@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.22 2004/08/21 00:28:34 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.23 2004/09/05 05:07:41 skd Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -469,10 +469,10 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if ((reg44 & 0x7) < cls)
 		ba5_write_4(sc, 0x44, (reg44 & ~0x07) | cls);
 
-	sc->sc_wdcdev.cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 		sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 		sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
@@ -712,10 +712,10 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sii3114_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 
-	sc->sc_wdcdev.cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 		sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 		sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
