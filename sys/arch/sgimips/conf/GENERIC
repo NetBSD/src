@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.13 2002/12/23 19:18:34 pooka Exp $
+#	$NetBSD: GENERIC,v 1.14 2002/12/26 18:26:07 pooka Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/sgimips/conf/std.sgimips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.13 $"
+#ident		"GENERIC-$Revision: 1.14 $"
 
 maxusers	32
 
@@ -173,21 +173,23 @@ com1 		at mace0 offset 0x398000 intr 4
 mcclock0	at mace0 offset 0x3a0000
 
 # PCI network devices
-#tlp* 		at pci? dev ? function ?
-ne* 		at pci? dev ? function ?
-rtk* 		at pci? dev ? function ?
-ex* 		at pci? dev ? function ?
-ti*		at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
-wm*		at pci? dev ? function ?	# Intel gigabit Ethernet
-fxp* 		at pci? dev ? function ?
-inphy*		at mii? phy ?
-nsphy*		at mii? phy ?
-ukphy*		at mii? phy ?
-exphy*		at mii? phy ?
-bmtphy*		at mii? phy ?
-glxtphy* 	at mii? phy ?			# Level One LXT-1000 PHYs
-gphyter* 	at mii? phy ?			# NS83861 Gig-E PHY
-makphy*		at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+ex* 	at pci? dev ? function ?	# 3Com 90x[BC]
+fxp* 	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
+rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
+ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
+#tlp* 	at pci? dev ? function ?	# DECchip 21x4x and clones
+wm*	at pci? dev ? function ?	# Intel gigabit Ethernet
+
+# MII/PHY support
+bmtphy*	at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
+exphy*	at mii? phy ?			# 3Com internal PHYs
+glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # O2 SCSI
 ahc0 		at pci0 dev 1 function ?
