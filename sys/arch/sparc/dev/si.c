@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.19 1996/03/14 19:45:17 christos Exp $	*/
+/*	$NetBSD: si.c,v 1.20 1996/03/16 23:28:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -880,14 +880,14 @@ si_vme_dma_start(ncr_sc)
 	 */
 	data_pa = (u_long)(dh->dh_dvma - DVMA_BASE);
 	if (data_pa & 1)
-		panic("si_dma_start: bad pa=%p", data_pa);
+		panic("si_dma_start: bad pa=0x%lx", data_pa);
 	xlen = ncr_sc->sc_datalen;
 	xlen &= ~1;
 	sc->sc_xlen = xlen;	/* XXX: or less... */
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: dh=%p, pa=0x%x, xlen=%d\n",
+		printf("si_dma_start: dh=%p, pa=0x%lx, xlen=%d\n",
 			   dh, data_pa, xlen);
 	}
 #endif
@@ -1181,14 +1181,14 @@ si_obio_dma_start(ncr_sc)
 	 */
 	data_pa = (u_long)(dh->dh_dvma - DVMA_BASE);
 	if (data_pa & 1)
-		panic("si_dma_start: bad pa=%p", data_pa);
+		panic("si_dma_start: bad pa=0x%lx", data_pa);
 	xlen = ncr_sc->sc_datalen;
 	xlen &= ~1;
 	sc->sc_xlen = xlen;	/* XXX: or less... */
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: dh=%p, pa=0x%x, xlen=%d\n",
+		printf("si_dma_start: dh=%p, pa=0x%lx, xlen=%d\n",
 		    dh, data_pa, xlen);
 	}
 #endif
