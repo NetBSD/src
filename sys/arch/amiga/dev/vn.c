@@ -70,7 +70,7 @@
 #include "sys/ioctl.h"
 #include "sys/mount.h"
 #include "sys/vnode.h"
-#include "sys/specdev.h"
+#include "miscfs/specfs/specdev.h"
 #include "sys/file.h"
 #include "sys/uio.h"
 

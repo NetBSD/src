@@ -50,7 +50,7 @@
 #if NSCSI > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.4 1993/10/30 23:41:33 mw Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.5 1994/01/26 21:06:13 mw Exp $";
 #endif
 
 #include "sys/param.h"
@@ -76,7 +76,7 @@ static int ixfer_out (register volatile sbic_padded_regmap_t *regs, int len, reg
 static void ixfer_in (register volatile sbic_padded_regmap_t *regs, int len, register u_char *buf);
 static int scsiicmd (struct scsi_softc *dev, int target, u_char *cbuf, int clen, u_char *buf, int len, u_char xferphase);
 static void finishxfer (struct scsi_softc *dev, register volatile sbic_padded_regmap_t *regs, int target);
-
+static int check_dma_buf (char *buffer, u_long len);
 
 
 /*
@@ -116,6 +116,8 @@ struct driver a2091scsidriver = {
         a2091scsiinit, "a2091scsi", (int (*)())scsistart, scsigo, scsiintr,
 	(int (*)())scsidone,
 };
+
+int a2091_dmabounce = 0;
 #endif
 
 #if NGVP11SCSI > 0
@@ -125,6 +127,8 @@ struct driver gvp11scsidriver = {
         gvp11scsiinit, "GVPIIscsi", (int (*)())scsistart, scsigo, scsiintr,
 	(int (*)())scsidone,
 };
+
+int gvp11_dmabounce = 0;
 #endif
 
 
@@ -182,7 +186,7 @@ scsi_period_to_sbic(dev, regs, p)
 }
 
 /* default to not inhibit sync negotiation on any drive */
-u_char inhibit_sync[NSCSI][8] = { 0, 0, 0, 0, 1, 0, 0 }; /* initialize, so patchable */
+u_char inhibit_sync[NSCSI][8] = { 1, 1, 1, 1, 1, 1, 1 }; /* initialize, so patchable */
 int scsi_no_dma = 0;
 
 #ifdef DEBUG
@@ -390,6 +394,12 @@ a2091scsiinit(ac)
   /* initialize dma */
   a2091dmainit (ac, &dev->dmareq, &dev->dmafree, &dev->dmago,
 		&dev->dmanext, &dev->dmastop);
+  dev->sc_flags |= SCSI_DMA24;	/* can only DMA in ZorroII memory */
+  if (a2091_dmabounce) {
+    /* XXX should do this dynamically when needed? */
+    dev->dmabuffer = (char *) alloc_z2mem (MAXPHYS);
+    printf ("a2091scsi: dma bounce buffer at %08x\n", dev->dmabuffer);
+  }
 
   /* advance ac->amiga_addr to point to the real sbic-registers */
   ac->amiga_addr = (caddr_t) ((int)ac->amiga_addr + 0x91);
@@ -437,6 +447,12 @@ gvp11scsiinit(ac)
   /* initialize dma */
   gvp11dmainit (ac, &dev->dmareq, &dev->dmafree, &dev->dmago,
 		&dev->dmanext, &dev->dmastop);
+  dev->sc_flags |= SCSI_DMA24;	/* can only DMA in ZorroII memory */
+  if (gvp11_dmabounce) {
+    /* XXX should do this dynamically when needed? */
+    dev->dmabuffer = (char *) alloc_z2mem (MAXPHYS);
+    printf ("gvp11scsi: dma bounce buffer at %08x\n", dev->dmabuffer);
+  }
 
   /* advance ac->amiga_addr to point to the real sbic-registers */
   ac->amiga_addr = (caddr_t) ((int)ac->amiga_addr + 0x61);
@@ -642,6 +658,7 @@ wait_for_select(dev, regs)
       QPRINTF (("%02x ", csr));
     }
   while (csr != (SBIC_CSR_MIS_2|MESG_OUT_PHASE)
+         && csr != (SBIC_CSR_MIS_2|CMD_PHASE)
 	 && csr != SBIC_CSR_SEL_TIMEO);
 
   /* Send identify message (SCSI-2 requires an identify msg (?)) */
@@ -707,6 +724,8 @@ wait_for_select(dev, regs)
 
       if (csr != SBIC_CSR_SEL_TIMEO)
 	dev->sc_flags |= SCSI_SELECTED;
+      else if (csr == (SBIC_CSR_MIS_2|CMD_PHASE))
+        dev->sc_flags |= SCSI_SELECTED;   /* device ignored ATN */
     }
   
   QPRINTF(("\n"));
@@ -1394,6 +1413,7 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
 			(sbic_padded_regmap_t *)dev->sc_ac->amiga_addr;
   int i, dmaflags;
   u_char phase, csr, asr, cmd;
+  char *addr;
 
   cdb->cdb[1] |= unit << 5;
 
@@ -1403,7 +1423,9 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
 
 /* XXXX do all with polled I/O */
 
-  if (scsi_no_dma || (((int)bp->b_un.b_addr & 3) || (bp->b_bcount & 1)))
+  if (scsi_no_dma || (((int)bp->b_un.b_addr & 3) || (bp->b_bcount & 1))
+    || (dev->sc_flags & SCSI_DMA24 && check_dma_buf (bp->b_un.b_addr,
+        bp->b_bcount) && dev->dmabuffer == NULL))
     {
       register struct devqueue *dq;
 
@@ -1417,7 +1439,7 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
 		bp->b_flags & B_READ ? DATA_IN_PHASE : DATA_OUT_PHASE);
 
       dq = dev->sc_sq.dq_forw;
-      dev->sc_flags &=~ SCSI_IO;
+      dev->sc_flags &=~ (SCSI_IO | SCSI_READ24);
       (dq->dq_driver->d_intr)(dq->dq_unit, dev->sc_stat[0]);
       return dev->sc_stat[0];
     }
@@ -1487,7 +1509,7 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
           dev->dmafree(&dev->sc_dq);
 	  finishxfer (dev, regs, slave);
           dq = dev->sc_sq.dq_forw;
-	  dev->sc_flags &=~ SCSI_IO;
+	  dev->sc_flags &=~ (SCSI_IO | SCSI_READ24);
           (dq->dq_driver->d_intr)(dq->dq_unit, dev->sc_stat[0]);
           return 0;
 
@@ -1537,9 +1559,23 @@ out:
     panic ("not long-aligned buffer address in scsi_go");
   if (bp->b_bcount & 1)
     panic ("odd transfer count in scsi_go");
+  addr = bp->b_un.b_addr;
+  if (dev->sc_flags & SCSI_DMA24 && check_dma_buf (addr, bp->b_bcount)) {
+    if (bp->b_bcount > MAXPHYS)
+      printf ("dmago: bp->b_bcount > MAXPHYS %08x\n", bp->b_bcount);
+    if (dmaflags & DMAGO_READ) {
+      dev->sc_flags |= SCSI_READ24;	/* need to copy after read */
+      dev->dmausrbuf = addr;		/* save address */
+      dev->dmausrlen = bp->b_bcount;	/* and length */
+    }
+    else {				/* write: copy to dma buffer */
+      bcopy (addr, dev->dmabuffer, bp->b_bcount);
+    }
+    addr = dev->dmabuffer;		/* and use dma buffer */
+  }
 
   /* dmago() also enables interrupts for the sbic */
-  i = dev->dmago(ctlr, bp->b_un.b_addr, bp->b_bcount, dmaflags);
+  i = dev->dmago(ctlr, addr, bp->b_bcount, dmaflags);
 
   SBIC_TC_PUT (regs, (unsigned)i);
   SET_SBIC_cmd (regs, SBIC_CMD_XFER_INFO);
@@ -1593,7 +1629,9 @@ QPRINTF(("[0x%x]", csr));
        */
       dq = dev->sc_sq.dq_forw;
       finishxfer(dev, regs, dq->dq_slave);
-      dev->sc_flags &=~ SCSI_IO;
+      if (dev->sc_flags & SCSI_READ24)
+        bcopy (dev->dmabuffer, dev->dmausrbuf, dev->dmausrlen);
+      dev->sc_flags &=~ (SCSI_IO | SCSI_READ24);
       dev->dmafree (&dev->sc_dq);
       (dq->dq_driver->d_intr)(dq->dq_unit, dev->sc_stat[0]);
     } 
@@ -1615,7 +1653,7 @@ QPRINTF(("[0x%x]", csr));
       scsiabort(dev, regs, "intr");
       if (dev->sc_flags & SCSI_IO) 
 	{
-	  dev->sc_flags &=~ SCSI_IO;
+	  dev->sc_flags &=~ (SCSI_IO| SCSI_READ24);
 	  dev->dmafree (&dev->sc_dq);
 	  dq = dev->sc_sq.dq_forw;
 	  (dq->dq_driver->d_intr)(dq->dq_unit, -1);
@@ -1635,6 +1673,30 @@ scsifree(dq)
 	remque(dq);
 	if ((dq = hq->dq_forw) != hq)
 		(dq->dq_driver->d_start)(dq->dq_unit);
+}
+
+/*
+ * Check if DMA can not be used with specified buffer
+ */
+
+static int
+check_dma_buf (char *buffer, u_long len)
+{
+	u_long phy_buf;
+	u_long phy_len;
+
+	if (len == 0)
+		return (0);
+	while (len) {
+		phy_buf = kvtop(buffer);
+		if (len < (phy_len = NBPG - ((int) buffer & PGOFSET)))
+			phy_len = len;
+		if (phy_buf & 0xff000000)
+			return (1);	/* can't use DMA here */
+		buffer += phy_len;
+		len -= phy_len;
+	}
+	return (0);			/* DMA is ok */
 }
 
 /*

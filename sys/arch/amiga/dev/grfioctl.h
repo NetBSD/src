@@ -71,6 +71,9 @@ struct	grfinfo {
 #define gd_dheight	gd_dyn.gdi_dheight
 #define gd_dx		gd_dyn.gdi_dx
 #define gd_dy		gd_dyn.gdi_dy
+
+	/* new for banked pager support */
+	int	gd_bank_size;		/* size of a bank (or 0) */
 };
 
 
@@ -100,6 +103,7 @@ struct grfvideo_mode {
 /*
  * BSD ioctls
  */
+#define OGRFIOCGINFO	0x40344700		/* to keep compat for a while... */
 #define	GRFIOCGINFO	_IOR('G', 0, struct grfinfo) /* get info on device */
 #define	GRFIOCON	_IO('G', 1)		/* turn graphics on */
 #define	GRFIOCOFF	_IO('G', 2)		/* turn graphics off */
@@ -117,4 +121,92 @@ struct grfvideo_mode {
 #define GRFGETNUMVM	_IOR('G', 43, int)
 
 
+/*
+ * generic framebuffer-related ioctls. These are somewhat
+ * similar to SunOS fb-ioctls since I liked them reading
+ * thru the X11-server code. 
+ */
+
+/*
+ * colormap related information. Every grf has an associated
+ * colormap. Depending on the capabilities of the hardware, more
+ * or less of the information provided may be used.
+ * Maxium value of "index" can be deduced from grfinfo->gd_colors.
+ */
+struct grf_colormap {
+  int	 index;	    /* start at red[index],green[index],blue[index] */
+  int	 count;	    /* till < red[index+count],... */
+  u_char *red;
+  u_char *green;
+  u_char *blue;
+};
+
+/* write the selected slots into the active colormap */
+#define GRFIOCPUTCMAP	_IOW('G', 50, struct grf_colormap)
+
+/* retrieve the selected slots from the active colormap */
+#define GRFIOCGETCMAP	_IOWR('G', 51, struct grf_colormap)
+
+
+/*
+ * support a possibly available hardware sprite. calls just fail
+ * if a given grf doesn't implement hardware sprites.
+ */
+struct grf_position {
+  u_short x, y;		/* 0,0 is upper left corner */
+};
+#define GRFIOCSSPRITEPOS _IOW('G', 52, struct grf_position)
+#define GRFIOCGSPRITEPOS _IOR('G', 53, struct grf_position)
+
+struct grf_spriteinfo {
+  u_short  set;
+#define GRFSPRSET_ENABLE  (1<<0)
+#define GRFSPRSET_POS	  (1<<1)
+#define GRFSPRSET_HOT	  (1<<2)
+#define GRFSPRSET_CMAP	  (1<<3)
+#define GRFSPRSET_SHAPE	  (1<<4)
+#define GRFSPRSET_ALL	  0x1f
+  u_short  enable;	    /* sprite is displayed if == 1 */
+  struct grf_position pos;  /* sprite location */
+  struct grf_position hot;  /* sprite hot spot */
+  struct grf_colormap cmap; /* colormap for the sprite. */
+  struct grf_position size; /* x == width, y == height */
+  u_char *image, *mask;	    /* sprite bitmap and mask */
+};
+
+#define GRFIOCSSPRITEINF _IOW('G', 54, struct grf_spriteinfo)
+#define GRFIOCGSPRITEINF _IOR('G', 55, struct grf_spriteinfo)
+
+/* get maximum sprite size hardware can display */
+#define GRFIOCGSPRITEMAX _IOR('G', 56, struct grf_position)
+
+
+/* support for a BitBlt operation. The op-codes are identical
+   to X11 GCs */
+#define	GRFBBOPclear		0x0	/* 0 */
+#define GRFBBOPand		0x1	/* src AND dst */
+#define GRFBBOPandReverse	0x2	/* src AND NOT dst */
+#define GRFBBOPcopy		0x3	/* src */
+#define GRFBBOPandInverted	0x4	/* NOT src AND dst */
+#define	GRFBBOPnoop		0x5	/* dst */
+#define GRFBBOPxor		0x6	/* src XOR dst */
+#define GRFBBOPor		0x7	/* src OR dst */
+#define GRFBBOPnor		0x8	/* NOT src AND NOT dst */
+#define GRFBBOPequiv		0x9	/* NOT src XOR dst */
+#define GRFBBOPinvert		0xa	/* NOT dst */
+#define GRFBBOPorReverse	0xb	/* src OR NOT dst */
+#define GRFBBOPcopyInverted	0xc	/* NOT src */
+#define GRFBBOPorInverted	0xd	/* NOT src OR dst */
+#define GRFBBOPnand		0xe	/* NOT src OR NOT dst */
+#define GRFBBOPset		0xf	/* 1 */
+
+struct grf_bitblt {
+  u_short op;		/* see above */
+  u_short src_x, src_y;	/* upper left corner of source-region */
+  u_short dst_x, dst_y;	/* upper left corner of dest-region */
+  u_short w, h;		/* width, height of region */
+  u_short mask;		/* bitmask to apply */
+};
+
+#define GRFIOCBITBLT	_IOR('G', 57, struct grf_bitblt)
 

@@ -46,7 +46,7 @@ struct rtclock3000 {
 #define BBC_READ_REG	0xc3
 #define NUM_BBC_REGS	12
 
-#define	leapyear(year)		((year) % 4 == 0)
+#define	leapyear(y)		(((y)%4)==0 && ((y)%100)!=0 || ((y)%400) == 0)
 #define	range_test(n, l, h)	if ((n) < (l) || (n) > (h)) return(0)
 #define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
 #define	days_in_month(a) 	(month_days[(a) - 1])

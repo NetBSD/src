@@ -4,12 +4,13 @@
 /* Graphics routines for the Retina board, 
    using the NCR 77C22E+ VGA controller. */
 
-#include "sys/param.h"
-#include "sys/errno.h"
+#include <sys/param.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
 #include "grfioctl.h"
 #include "grfvar.h"
 #include "grf_rtreg.h"
-#include "../include/cpu.h"
+#include <machine/cpu.h>
 #include "device.h"
 
 extern caddr_t ZORRO2ADDR;
@@ -104,6 +105,10 @@ unsigned char NCRStdPalette[16*3] = {
    /* Depth,           PAL, TX,  TY,    XY,FontX, FontY,    FontData,  FLo,  Fhi */
           4, NCRStdPalette, 80,  64,  5120,    8,     8, kernel_font,   32,  255};      
 
+ struct MonDef MON_640_480_62_G  = { 50000000,   4,  640, 480,  161,171,184,196,195, 481, 484, 492, 502, 502,
+          8, NCRStdPalette,640,480,  5120,    8,     8, kernel_font,   32,  255};      
+/* Enter higher values here ^   ^ for panning! */
+
 /* horizontal 38kHz */
 
    struct MonDef MON_768_600_60  = { 75000000,  28,  768, 600,   97, 99,107,120,117, 601, 615, 625, 638, 638,
@@ -114,13 +119,12 @@ unsigned char NCRStdPalette[16*3] = {
    struct MonDef MON_768_600_80  = { 50000000, 24,  768, 600,   97,104,112,122,119, 601, 606, 616, 628, 628,
           4, NCRStdPalette, 96,  75,  7200,    8,     8, kernel_font,   32,  255};      
 
-#if 0
    struct MonDef MON_1024_768_80 = { 90000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
           4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255};      
-#else
-   struct MonDef MON_1024_768_80 = { 90000000, 0, 1024, 768,  257,258,278,321,320, 769, 770, 783, 804, 804,
-          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255};      
-#endif
+
+/*                                     FQ     FLG    MW   MH   HBS HSS HSE HBE  HT  VBS  VSS  VSE  VBE   VT  */
+ struct MonDef MON_1024_768_80_G = { 90000000, 0,  1024, 768,  257,258,280,344,343, 769, 770, 783, 804, 804,
+          8, NCRStdPalette, 1024, 768, 12288,    8,     8, kernel_font,   32,  255};      
 
    struct MonDef MON_1024_1024_59= { 90000000, 24, 1024,1024,  129,130,141,173,170,1025,1059,1076,1087,1087,
           4, NCRStdPalette,128, 128, 16384,    8,     8, kernel_font,   32,  255};      
@@ -131,6 +135,9 @@ unsigned char NCRStdPalette[16*3] = {
 
    struct MonDef MON_1280_1024_60= {110000000,  24, 1280,1024,  161,162,176,211,208,1025,1026,1043,1073,1073,
           4, NCRStdPalette,160, 128, 20480,    8,     8, kernel_font,   32,  255};      
+
+ struct MonDef MON_1280_1024_60_G= {110000000,   0, 1280,1024,  321,322,349,422,421,1025,1026,1043,1073,1073,
+          8, NCRStdPalette,1280,1024, 20480,    8,     8, kernel_font,   32,  255};      
 
 /* horizontal 75kHz */
 
@@ -154,51 +161,28 @@ struct MonDef monitor_defs[] = {
 
    { 50000000, 24,  768, 600,   97,104,112,122,119, 601, 606, 616, 628, 628,
           4, NCRStdPalette, 96,  75,  7200,    8,     8, kernel_font,   32,  255},
-
-
-
+   
    { 90000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
           4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
 
-   { 100000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
-          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
+   /* GFX modes */
 
-   { 110000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
-          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
+/* horizontal 31.5 kHz */
 
-   { 120000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
-          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
+   { 50000000,   4,  640, 480,  161,171,184,196,195, 481, 484, 492, 502, 502,
+          8, NCRStdPalette,640, 480,  5120,    8,     8, kernel_font,   32,  255},
 
-   { 13000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
-          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
+/* horizontal 64kHz */
 
-   { 72000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
-          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
-
-   { 75000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
-          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
-
-
-
-
-   { 90000000, 24, 1024, 768,  129,130,139,161,160, 769, 770, 783, 804, 804,
-          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
-
-   { 90000000, 24, 1024,1024,  129,130,141,173,170,1025,1059,1076,1087,1087,
-          4, NCRStdPalette,128, 128, 16384,    8,     8, kernel_font,   32,  255},
+   { 90000000, 0,  1024, 768,  257,258,280,344,343, 769, 770, 783, 804, 804,
+          8, NCRStdPalette, 1024, 768, 12288,    8,     8, kernel_font,   32,  255},
 
 /* WARNING: THE FOLLOWING MONITOR MODES EXCEED THE 90-MHz LIMIT THE PROCESSOR
             HAS BEEN SPECIFIED FOR. USE AT YOUR OWN RISK (AND THINK ABOUT
             MOUNTING SOME COOLING DEVICE AT THE PROCESSOR AND RAMDAC)!     */
 
-   {110000000,  24, 1280,1024,  161,162,176,211,208,1025,1026,1043,1073,1073,
-          4, NCRStdPalette,160, 128, 20480,    8,     8, kernel_font,   32,  255},
-
-/* horizontal 75kHz */
-
-   {120000000,  24, 1280,1024,  161,162,175,200,197,1025,1026,1043,1073,1073, 
-          4, NCRStdPalette,160, 128, 20480,    8,     8, kernel_font,   32,  255},
-
+   {110000000,   0, 1280,1024,  321,322,349,422,421,1025,1026,1043,1073,1073,
+          8, NCRStdPalette,1280,1024, 20480,    8,     8, kernel_font,   32,  255},
 };
 
 static const char *monitor_descr[] = {
@@ -206,15 +190,17 @@ static const char *monitor_descr[] = {
   "96x75 (768x600) 38kHz",
   "96x75 (768x600) 64kHz",
   "128x96 (1024x768) 64kHz",
-  "128x128 (1024x1024) 64kHz",
-  "160x128 (1280x1024) 64kHz ***EXCEEDS CHIP LIMIT!!!***",
-  "160x128 (1280x1024) 75kHz ***EXCEEDS CHIP LIMIT!!!***",
+
+  "GFX (640x480) 31.5kHz",
+  "GFX (1024x768) 64kHz",
+  "GFX (1280x1024) 64kHz ***EXCEEDS CHIP LIMIT!!!***", 
 };
 
 int retina_mon_max = sizeof (monitor_defs)/sizeof (monitor_defs[0]);
 
 /* patchable */
 int retina_default_mon = 2;
+int retina_default_gfx = 5;
     
 #endif
 
@@ -253,47 +239,51 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	
 	ba = gp->g_regkva;;
 	fb = gp->g_fbkva;
+
+	FW = 0;
+	if (md->DEP == 4) {
+		switch (md->FX) {
+		case 4:
+			FW = 0;
+			break;
+		case 7:
+			FW = 1;
+			break;
+		case 8:
+			FW = 2;
+			break;
+		case 9:
+			FW = 3;
+			break;
+		case 10:
+			FW = 4;
+			break;
+		case 11:
+			FW = 5;
+			break;
+		case 12:
+			FW = 6;
+			break;
+		case 13:
+			FW = 7;
+			break;
+		case 14:
+			FW = 8;
+			break;
+		case 15:
+			FW = 9;
+			break;
+		case 16:
+			FW = 11;
+			break;
+		default:
+			return 0;
+			break;
+		};
+	}
 	
-	switch (md->FX) {
-	case 4:
-		FW = 0;
-		break;
-	case 7:
-		FW = 1;
-		break;
-	case 8:
-		FW = 2;
-		break;
-	case 9:
-		FW = 3;
-		break;
-	case 10:
-		FW = 4;
-		break;
-	case 11:
-		FW = 5;
-		break;
-	case 12:
-		FW = 6;
-		break;
-	case 13:
-		FW = 7;
-		break;
-	case 14:
-		FW = 8;
-		break;
-	case 15:
-		FW = 9;
-		break;
-	case 16:
-		FW = 11;
-		break;
-	default:
-		return 0;
-		break;
-	};
-	
-	HDE = (md->MW+md->FX-1)/md->FX;
+        if (md->DEP == 4) HDE = (md->MW+md->FX-1)/md->FX;
+        else              HDE = (md->MW+3)/4;
 	VDE = md->MH-1;
 	
 	/* hmm... */
@@ -345,8 +335,8 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 		/* bank0 */
 	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI,	0x00);  
 	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO,	0x00);  
-	WSeq (ba, 0x1a , 0x00);  /* these are reserved, really set them to 0 ??? */
-	WSeq (ba, 0x1b , 0x00);  /* these are reserved, really set them to 0 ??? */
+	WSeq (ba, SEQ_ID_DISP_OFF_HI , 		0x00);
+	WSeq (ba, SEQ_ID_DISP_OFF_LO , 		0x00);
 		/* bank0 */
 	WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI,	0x00);  
 	WSeq (ba, SEQ_ID_SEC_HOST_OFF_LO,	0x00);  
@@ -356,10 +346,17 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 		/* set font width + rest of clocks */
 	WSeq (ba, SEQ_ID_EXT_CLOCK_MODE,	0x30 | (FW & 0x0f) | ((clksel & 4) / 4 * 0x40) );  
 #endif
-		/* no ext-chain4 + no host-addr-bit-16 */
-	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR,	0x00);  
-		/* no packed/nibble + no 256bit gfx format */
-	WSeq (ba, SEQ_ID_EXT_PIXEL_CNTL,	0x00);
+	if (md->DEP == 4) {
+			/* no ext-chain4 + no host-addr-bit-16 */
+		WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR,	0x00);  
+			/* no packed/nibble + no 256bit gfx format */
+		WSeq (ba, SEQ_ID_EXT_PIXEL_CNTL,	0x00);
+	}
+	else {
+		WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR,	0x02);  
+			/* 256bit gfx format */
+		WSeq (ba, SEQ_ID_EXT_PIXEL_CNTL,	0x01);
+	}
 		/* AT-interface */
 	WSeq (ba, SEQ_ID_BUS_WIDTH_FEEDB,	0x06);  
 		/* see fg/bg color expansion */
@@ -396,10 +393,18 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 						 | ((md->VT  & 0x100) / 0x100       )));
 	WCrt (ba, CRT_ID_PRESET_ROW_SCAN,	0x00);
 	
-	WCrt (ba, CRT_ID_MAX_SCAN_LINE, 	((  (md->FLG & MDF_DBL)/ MDF_DBL * 0x80) 
-						 | 				   0x40 
-						 | ((md->VBS & 0x200)/0x200	 * 0x20) 
-						 | ((md->FY-1) 			 & 0x1f)));
+	if (md->DEP == 4) {
+		WCrt (ba, CRT_ID_MAX_SCAN_LINE, 	((  (md->FLG & MDF_DBL)/ MDF_DBL * 0x80) 
+							 | 				   0x40 
+							 | ((md->VBS & 0x200)/0x200	 * 0x20) 
+							 | ((md->FY-1) 			 & 0x1f)));
+	}
+	else {
+		WCrt (ba, CRT_ID_MAX_SCAN_LINE, 	((  (md->FLG & MDF_DBL)/ MDF_DBL * 0x80) 
+							 | 				   0x40 
+							 | ((md->VBS & 0x200)/0x200	 * 0x20) 
+							 | (0	 			 & 0x1f)));
+	}
 	
 	WCrt (ba, CRT_ID_CURSOR_START,		(md->FY & 0x1f) - 2);
 	WCrt (ba, CRT_ID_CURSOR_END,		(md->FY & 0x1f) - 1);
@@ -413,7 +418,11 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	WCrt (ba, CRT_ID_START_VER_RETR,	md->VSS    & 0xff);
 	WCrt (ba, CRT_ID_END_VER_RETR,		(md->VSE   & 0x0f) | 0x80 | 0x20); 
 	WCrt (ba, CRT_ID_VER_DISP_ENA_END,	VDE        & 0xff);
-	WCrt (ba, CRT_ID_OFFSET,		(HDE / 2)  & 0xff);
+	if (md->DEP == 4)
+		WCrt (ba, CRT_ID_OFFSET,	(HDE / 2)  & 0xff);
+	else
+		WCrt (ba, CRT_ID_OFFSET,	(md->TX / 8)  & 0xff);
+
 	WCrt (ba, CRT_ID_UNDERLINE_LOC,		(md->FY-1) & 0x1f);
 	WCrt (ba, CRT_ID_START_VER_BLANK,	md->VBS    & 0xff);
 	WCrt (ba, CRT_ID_END_VER_BLANK,		md->VBE    & 0xff);
@@ -429,7 +438,10 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 						 | ((md->HBS & 0x100) / 0x100 	       * 0x04) 
 						 | ((md->HSS & 0x100) / 0x100 	       * 0x08)));
 	             
-	WCrt (ba, CRT_ID_EXT_START_ADDR,	(((HDE / 2) & 0x100)/0x100 * 16)); 
+	if (md->DEP == 4)
+		WCrt (ba, CRT_ID_EXT_START_ADDR,	(((HDE / 2) & 0x100)/0x100 * 16)); 
+	else
+		WCrt (ba, CRT_ID_EXT_START_ADDR,	(((md->TX / 8) & 0x100)/0x100 * 16)); 
 	
 	WCrt (ba, CRT_ID_EXT_HOR_TIMING2, 	(  ((md->HT  & 0x200)/ 0x200  	       * 0x01) 
 						 | (((HDE-1) & 0x200)/ 0x200 	       * 0x02) 
@@ -451,8 +463,11 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	WGfx (ba, GCT_ID_COLOR_COMPARE,		0x00); 
 	WGfx (ba, GCT_ID_DATA_ROTATE,		0x00); 
 	WGfx (ba, GCT_ID_READ_MAP_SELECT,	0x00); 
-	WGfx (ba, GCT_ID_GRAPHICS_MODE,		0x00); 
-	WGfx (ba, GCT_ID_MISC,			0x04);
+	WGfx (ba, GCT_ID_GRAPHICS_MODE,		0x00);
+	if (md->DEP == 4)
+		WGfx (ba, GCT_ID_MISC,			0x04);
+	else
+		WGfx (ba, GCT_ID_MISC,			0x05);
 	WGfx (ba, GCT_ID_COLOR_XCARE,		0xff); 
 	WGfx (ba, GCT_ID_BITMASK,		0xff); 
 	
@@ -476,7 +491,10 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	WAttr (ba, ACT_ID_PALETTE15,		0x0f);  
 	
 	vgar (ba, GREG_STATUS1_R);
-	WAttr (ba, ACT_ID_ATTR_MODE_CNTL,	0x08);  
+	if (md->DEP == 4)
+		WAttr (ba, ACT_ID_ATTR_MODE_CNTL,	0x08);  
+	else
+		WAttr (ba, ACT_ID_ATTR_MODE_CNTL,	0x09);
 	
 	WAttr (ba, ACT_ID_OVERSCAN_COLOR,	0x00);  
 	WAttr (ba, ACT_ID_COLOR_PLANE_ENA,	0x0f);  
@@ -487,11 +505,17 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 		/* I have *NO* idea what strobing reg-0x20 might do... */
 	vgaw (ba, ACT_ADDRESS_W, 0x20); 
 	
-	WCrt (ba, CRT_ID_MAX_SCAN_LINE,		( ((md->FLG & MDF_DBL)/ MDF_DBL * 0x80) 
+	if (md->DEP == 4)
+		WCrt (ba, CRT_ID_MAX_SCAN_LINE,	( ((md->FLG & MDF_DBL)/ MDF_DBL * 0x80) 
 						|	                          0x40 
 						| ((md->VBS & 0x200)/0x200	* 0x20) 
-						| ((md->FY-1) 			& 0x1f))); 
-	
+						| ((md->FY-1) 			& 0x1f)));
+	else
+		WCrt (ba, CRT_ID_MAX_SCAN_LINE,	( ((md->FLG & MDF_DBL)/ MDF_DBL * 0x80) 
+						|	                          0x40 
+						| ((md->VBS & 0x200)/0x200	* 0x20) 
+						| (0	 			& 0x1f)));
+
 
 	/* not it's time for guessing... */
 
@@ -515,12 +539,24 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 			
 			
 		} while (x--);
-		
+
+		if (md->DEP != 4) {
+			short x = 256-17;
+			unsigned char col = 16;
+			do {
+				
+				vgaw(ba, VDAC_REG_DATA, col);
+				vgaw(ba, VDAC_REG_DATA, col);
+				vgaw(ba, VDAC_REG_DATA, col);
+				col++;
+				
+			} while (x--);
+		}
 	}
 
 
 	/* now load the font into maps 2 (and 3 for fonts wider than 8 pixels) */
-	{
+	if (md->DEP == 4) {
 		
 		/* first set the whole font memory to a test-pattern, so we 
 		   can see if something that shouldn't be drawn IS drawn.. */
@@ -595,8 +631,13 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	
 		/* select map 0 */
 	WGfx (ba, GCT_ID_READ_MAP_SELECT,	0);
-		/* allow writes into maps 0 and 1 */
-	WSeq (ba, SEQ_ID_MAP_MASK,		3);
+	if (md->DEP == 4)
+			/* allow writes into maps 0 and 1 */
+		WSeq (ba, SEQ_ID_MAP_MASK,		3);
+	else
+			/* allow writes into all maps */
+		WSeq (ba, SEQ_ID_MAP_MASK,		0x0f);
+
 		/* select extended chain4 addressing:
 		    !A0/!A1	map 0	character to be displayed
 		    !A1/ A1	map 1	attribute of that character
@@ -604,7 +645,7 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 		     A0/ A1 	map 3	not used (masked out, ignored) */
 	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR,	RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);
 	
-	{
+	if (md->DEP == 4) {
 		/* position in display memory */
 		unsigned short * c = (unsigned short *) fb;
 		
@@ -628,17 +669,23 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 			c += 2;
 	 	  } while (x--);
 	 	}
-		
-		
 	}
-	
+	else if (md->DEP == 8) {
+		/* could clear the gfx screen here, but that's what the X server does anyway */
+	        ;
+	}
 
 	gp->g_data	= (caddr_t) md;
 	gi->gd_regaddr  = (long)ba - (long)ZORRO2ADDR + (long)ZORRO2BASE;;
 	gi->gd_regsize  = 64*1024;
 
 	gi->gd_fbaddr   = (long)fb - (long)ZORRO2ADDR + (long)ZORRO2BASE;
+#ifdef BANKEDDEVPAGER
+	gi->gd_fbsize	= 4*1024*1024;  /* XXX */
+	gi->gd_bank_size = 64*1024;
+#else
 	gi->gd_fbsize   = 64*1024;	/* larger, but that's whats mappable */
+#endif
   
 	gi->gd_colors   = 1 << md->DEP;
 	gi->gd_planes   = md->DEP;
@@ -666,7 +713,8 @@ int rt_init (struct grf_softc *gp, struct amiga_device *ad, struct amiga_hw *ahw
   gp->g_fbkva  = ahw->hw_kva + 64*1024;
   
   /* don't let them patch it out of bounds */
-  if ((unsigned)retina_default_mon >= retina_mon_max)
+  if ((unsigned)retina_default_mon >= retina_mon_max
+      || monitor_defs[retina_default_mon].DEP == 8)
     retina_default_mon = 0;
 
   current_mon = monitor_defs + retina_default_mon;
@@ -710,38 +758,48 @@ rt_getvmode (gp, vm)
 
 
 static int 
-rt_setvmode (gp, mode)
+rt_setvmode (gp, mode, txtonly)
      struct grf_softc *gp;
      unsigned mode;
+     int txtonly;
 {
   struct MonDef *md;
+  int error;
 
   if (!mode || mode > retina_mon_max)
     return EINVAL;
 
+  if (txtonly && monitor_defs[mode-1].DEP == 8)
+    return EINVAL;
+
   current_mon = monitor_defs + (mode - 1);
-  return rt_load_mon (gp, current_mon) ? 0 : EINVAL;
+
+  error = rt_load_mon (gp, current_mon) ? 0 : EINVAL;
+
+  return error;
 }
 
 
 /*
  * Change the mode of the display.
- * Right now all we can do is grfon/grfoff.
  * Return a UNIX error number or 0 for success.
  */
-rt_mode(gp, cmd, arg)
+rt_mode(gp, cmd, arg, a2, a3)
 	register struct grf_softc *gp;
 	int cmd;
 	void *arg;
+	int a2, a3;
 {
   /* implement these later... */
 
   switch (cmd)
     {
     case GM_GRFON:
+      rt_setvmode (gp, retina_default_gfx + 1, 0);
       return 0;
       
     case GM_GRFOFF:
+      rt_setvmode (gp, retina_default_mon + 1, 0);
       return 0;
       
     case GM_GRFCONFIG:
@@ -751,11 +809,26 @@ rt_mode(gp, cmd, arg)
       return rt_getvmode (gp, (struct grfvideo_mode *) arg);
 
     case GM_GRFSETVMODE:
-      return rt_setvmode (gp, *(unsigned *) arg);
+      return rt_setvmode (gp, *(unsigned *) arg, 1);
 
     case GM_GRFGETNUMVM:
       *(int *)arg = retina_mon_max;
       return 0;
+
+#ifdef BANKEDDEVPAGER
+    case GM_GRFGETBANK:
+      *(int *)arg = rt_getbank (gp, a2, a3);
+      return 0;
+
+    case GM_GRFGETCURBANK:
+      *(int *)arg = rt_getcurbank (gp);
+      return 0;
+
+    case GM_GRFSETBANK:
+      return rt_setbank (gp, arg);
+#endif
+    case GM_GRFIOCTL:
+      return rt_ioctl (gp, arg, a2);
 
     default:
       break;
@@ -763,5 +836,419 @@ rt_mode(gp, cmd, arg)
     
   return EINVAL;
 }
+
+int
+rt_ioctl (gp, cmd, data)
+	register struct grf_softc *gp;
+	int cmd;
+	void *data;
+{
+  switch (cmd)
+    {
+    case GRFIOCGSPRITEPOS:
+      return rt_getspritepos (gp, (struct grf_position *) data);
+
+    case GRFIOCSSPRITEPOS:
+      return rt_setspritepos (gp, (struct grf_position *) data);
+
+    case GRFIOCSSPRITEINF:
+      return rt_setspriteinfo (gp, (struct grf_spriteinfo *) data);
+
+    case GRFIOCGSPRITEINF:
+      return rt_getspriteinfo (gp, (struct grf_spriteinfo *) data);
+
+    case GRFIOCGSPRITEMAX:
+      return rt_getspritemax (gp, (struct grf_position *) data);
+
+    case GRFIOCGETCMAP:
+      return rt_getcmap (gp, (struct grf_colormap *) data);
+
+    case GRFIOCPUTCMAP:
+      return rt_putcmap (gp, (struct grf_colormap *) data);
+
+    case GRFIOCBITBLT:
+      return rt_bitblt (gp, (struct grf_bitblt *) data);
+    }
+
+  return EINVAL;
+}     
+
+#ifdef BANKEDDEVPAGER
+
+/* Retina banks can overlap. Don't use this information (yet?), and
+   only switch 64k sized banks. */
+
+int
+rt_getbank (gp, offs, prot)
+     struct grf_softc *gp;
+     off_t offs;
+     int prot;
+{
+  /* XXX */
+  if (offs <  0 || offs >= 4*1024*1024)
+    return -1;
+  else
+    return offs >> 16;
+}
+
+int
+rt_getcurbank (gp)
+     struct grf_softc *gp;
+{
+  struct grfinfo *gi = &gp->g_display;
+  volatile unsigned char *ba;
+  int bank;
+
+  ba = gp->g_regkva;
+  bank = RSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO) | (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI) << 8);
+
+  /* bank register is multiple of 64 byte, make this multiple of 64k */
+  bank >>= 10;
+  return bank;
+}
+
+int
+rt_setbank (gp, bank)
+     struct grf_softc *gp;
+     int bank;
+{
+  volatile unsigned char *ba;
+
+  ba = gp->g_regkva;
+  /* bank register is multiple of 64 byte, make this multiple of 64k */
+  bank <<= 10;
+  WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, (unsigned char) bank);
+  bank >>= 8;
+  WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, (unsigned char) bank);
+
+  return 0;
+}
+
+#endif
+
+int
+rt_getcmap (gfp, cmap)
+     struct grf_softc *gfp;
+     struct grf_colormap *cmap;
+{
+  volatile unsigned char *ba;
+  u_char red[256], green[256], blue[256], *rp, *gp, *bp;
+  short x;
+  int error;
+
+  if (cmap->count == 0 || cmap->index >= 256)
+    return 0;
+
+  if (cmap->index + cmap->count > 256)
+    cmap->count = 256 - cmap->index;
+
+  ba = gfp->g_regkva;
+  /* first read colors out of the chip, then copyout to userspace */
+  vgaw (ba, VDAC_REG_SELECT, cmap->index);
+  x = cmap->count - 1;
+  rp = red + cmap->index; 
+  gp = green + cmap->index; 
+  bp = blue + cmap->index;
+  do
+    {
+      *rp++ = vgar (ba, VDAC_REG_DATA);
+      *gp++ = vgar (ba, VDAC_REG_DATA);
+      *bp++ = vgar (ba, VDAC_REG_DATA);
+    }
+  while (x--);
+
+  if (!(error = copyout (red + cmap->index, cmap->red, cmap->count))
+      && !(error = copyout (green + cmap->index, cmap->green, cmap->count))
+      && !(error = copyout (blue + cmap->index, cmap->blue, cmap->count)))
+    return 0;
+
+  return error;
+}
+
+int
+rt_putcmap (gfp, cmap)
+     struct grf_softc *gfp;
+     struct grf_colormap *cmap;
+{
+  volatile unsigned char *ba;
+  u_char red[256], green[256], blue[256], *rp, *gp, *bp;
+  short x;
+  int error;
+
+  if (cmap->count == 0 || cmap->index >= 256)
+    return 0;
+
+  if (cmap->index + cmap->count > 256)
+    cmap->count = 256 - cmap->index;
+
+  /* first copy the colors into kernelspace */
+  if (!(error = copyin (cmap->red, red + cmap->index, cmap->count))
+      && !(error = copyin (cmap->green, green + cmap->index, cmap->count))
+      && !(error = copyin (cmap->blue, blue + cmap->index, cmap->count)))
+    {
+      ba = gfp->g_regkva;
+      vgaw (ba, VDAC_REG_SELECT, cmap->index);
+      x = cmap->count - 1;
+      rp = red + cmap->index; 
+      gp = green + cmap->index; 
+      bp = blue + cmap->index;
+      do
+	{
+	  vgaw (ba, VDAC_REG_DATA, *rp++);
+	  vgaw (ba, VDAC_REG_DATA, *gp++);
+	  vgaw (ba, VDAC_REG_DATA, *bp++);
+	}
+      while (x--);
+      return 0;
+    }
+  else
+    return error;
+}
+
+int
+rt_getspritepos (gp, pos)
+     struct grf_softc *gp;
+     struct grf_position *pos;
+{
+  volatile unsigned char *ba;
+
+  ba = gp->g_regkva;
+  pos->x = vgar (ba, SEQ_ID_CURSOR_X_LOC_LO) | (vgar (ba, SEQ_ID_CURSOR_X_LOC_HI) << 8);
+  pos->y = vgar (ba, SEQ_ID_CURSOR_Y_LOC_LO) | (vgar (ba, SEQ_ID_CURSOR_Y_LOC_HI) << 8);
+  return 0;
+}
+
+int
+rt_setspritepos (gp, pos)
+     struct grf_softc *gp;
+     struct grf_position *pos;
+{
+  volatile unsigned char *ba;
+
+  ba = gp->g_regkva;
+  vgaw (ba, SEQ_ID_CURSOR_X_LOC_LO, pos->x & 0xff);
+  vgaw (ba, SEQ_ID_CURSOR_X_LOC_HI, (pos->x >> 8) & 0x07);
+  vgaw (ba, SEQ_ID_CURSOR_Y_LOC_LO, pos->y & 0xff);
+  vgaw (ba, SEQ_ID_CURSOR_Y_LOC_HI, (pos->y >> 8) & 0x07);
+  return 0;
+}
+
+/* assume an at least 2M retina (XXX), sprite is last in memory.
+   According to the bogus docs, the cursor can be at most 128 lines
+   in height, and the x-hostspot can be placed at most at pos 31,
+   this gives width of a long */
+#define SPRITE_ADDR (2*1024*1024 - 128*4)
+
+int
+rt_getspriteinfo (gp, info)
+     struct grf_softc *gp;
+     struct grf_spriteinfo *info;
+{
+  volatile unsigned char *ba, *fb;
+
+  ba = gp->g_regkva;
+  fb = gp->g_fbkva;
+  if (info->set & GRFSPRSET_ENABLE)
+    info->enable = vgar (ba, SEQ_ID_CURSOR_CONTROL) & 0x01;
+  if (info->set & GRFSPRSET_POS)
+    rt_getspritepos (gp, &info->pos);
+  if (info->set & GRFSPRSET_HOT)
+    {
+      info->hot.x = vgar (ba, SEQ_ID_CURSOR_X_INDEX) & 0x1f;
+      info->hot.y = vgar (ba, SEQ_ID_CURSOR_Y_INDEX) & 0x7f;
+    }
+  if (info->set & GRFSPRSET_CMAP)
+    {
+      struct grf_colormap cmap;
+      int index;
+      cmap.index = 0;
+      cmap.count = 256;
+      rt_getcmap (gp, &cmap);
+      index = vgar (ba, SEQ_ID_CURSOR_COLOR0);
+      info->cmap.red[0] = cmap.red[index];
+      info->cmap.green[0] = cmap.green[index];
+      info->cmap.blue[0] = cmap.blue[index];
+      index = vgar (ba, SEQ_ID_CURSOR_COLOR1);
+      info->cmap.red[1] = cmap.red[index];
+      info->cmap.green[1] = cmap.green[index];
+      info->cmap.blue[1] = cmap.blue[index];
+    }
+  if (info->set & GRFSPRSET_SHAPE)
+    {
+      int saved_bank_lo = RSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO);
+      int saved_bank_hi = RSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI);
+      int last_bank = SPRITE_ADDR >> 6;
+      int last_bank_lo = last_bank & 0xff;
+      int last_bank_hi = last_bank >> 8;
+      u_char mask;
+      WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, last_bank_lo);
+      WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, last_bank_hi);
+      copyout (fb, info->image, 128*4);
+      mask = RSeq (ba, SEQ_ID_CURSOR_PIXELMASK);
+      WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, saved_bank_lo);
+      WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, saved_bank_hi);
+      copyout (&mask, info->mask, 1);
+      info->size.x = 32; /* ??? */
+      info->size.y = (RSeq (ba, SEQ_ID_CURSOR_CONTROL) & 6) << 4;
+    }
+
+}
+
+int
+rt_setspriteinfo (gp, info)
+     struct grf_softc *gp;
+     struct grf_spriteinfo *info;
+{
+  volatile unsigned char *ba, *fb;
+  u_char control;
+
+  ba = gp->g_regkva;
+  fb = gp->g_fbkva;
+  control = vgar (ba, SEQ_ID_CURSOR_CONTROL);
+  if (info->set & GRFSPRSET_ENABLE)
+    {
+      if (info->enable)
+	control |= 1;
+      else
+	control &= ~1;
+      vgaw (ba, SEQ_ID_CURSOR_CONTROL, control);
+    }
+  if (info->set & GRFSPRSET_POS)
+    rt_setspritepos (gp, &info->pos);
+  if (info->set & GRFSPRSET_HOT)
+    {
+      vgaw (ba, SEQ_ID_CURSOR_X_INDEX, info->hot.x & 0x1f);
+      vgaw (ba, SEQ_ID_CURSOR_Y_INDEX, info->hot.y & 0x7f);
+    }
+  if (info->set & GRFSPRSET_CMAP)
+    {
+      /* hey cheat a bit here.. XXX */
+      vgaw (ba, SEQ_ID_CURSOR_COLOR0, 0);
+      vgaw (ba, SEQ_ID_CURSOR_COLOR1, 1);
+    }
+  if (info->set & GRFSPRSET_SHAPE)
+    {
+      int saved_bank_lo = RSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO);
+      int saved_bank_hi = RSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI);
+      int last_bank = SPRITE_ADDR >> 6;
+      int last_bank_lo = last_bank & 0xff;
+      int last_bank_hi = last_bank >> 8;
+      u_char mask;
+      WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, last_bank_lo);
+      WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, last_bank_hi);
+      copyin (info->image, fb, 128*4);
+      WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, saved_bank_lo);
+      WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, saved_bank_hi);
+      copyin (info->mask, &mask, 1);
+      WSeq (ba, SEQ_ID_CURSOR_PIXELMASK, mask);
+      /* info->size.x = 32; *//* ??? */
+
+      info->size.y = (RSeq (ba, SEQ_ID_CURSOR_CONTROL) & 6) << 4;
+      control = (control & ~6) | ((info->size.y >> 4) & 6);
+      vgaw (ba, SEQ_ID_CURSOR_CONTROL, control);
+
+      /* sick intel bull-addressing.. */
+      WSeq (ba, SEQ_ID_CURSOR_STORE_LO, SPRITE_ADDR & 0x0f);
+      WSeq (ba, SEQ_ID_CURSOR_STORE_HI, 0);
+      WSeq (ba, SEQ_ID_CURSOR_ST_OFF_LO, (SPRITE_ADDR >> 4) & 0xff);
+      WSeq (ba, SEQ_ID_CURSOR_ST_OFF_HI, ((SPRITE_ADDR >> 4) >> 8) & 0xff);
+    }
+  
+  return 0;
+}
+
+int
+rt_getspritemax (gp, pos)
+     struct grf_softc *gp;
+     struct grf_position *pos;
+{
+  pos->x = 32;
+  pos->y = 128;
+
+  return 0;
+}
+
+
+/*
+ * !!! THIS AREA UNDER CONSTRUCTION !!!
+ */
+
+int
+rt_bitblt (gp, bb)
+     struct grf_softc *gp;
+     struct grf_bitblt *bb;
+{
+  return EINVAL;
+
+
+#if 0
+  volatile unsigned char *ba, *fb;
+  u_char control;
+  u_char saved_bank_lo;
+  u_char saved_bank_hi;
+  u_char src_bank_lo, src_bank_hi;
+  u_char dst_bank_lo, dst_bank_hi;
+  u_long src_offset, dst_offset;
+  u_short src_bank, dst_bank;
+  u_char *srcp, *dstp;
+  short x, y;
+  u_long tot;
+
+  ba = gp->g_regkva;
+  fb = gp->g_fbkva;
+
+  saved_bank_lo = RSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO);
+  saved_bank_hi = RSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI);
+
+  /* for now, only GRFBBcopy is supported, and only for depth 8. No
+     clipping is performed, either... */
+
+  if (bb->op != GRFBBcopy && gp->g_display.gd_planes != 8)
+    return EINVAL;
+
+  src_offset = op->src_x + op->src_y * gp->g_display.gd_fbwidth;
+  dst_offset = op->dst_x + op->dst_y * gp->g_display.gd_fbwidth;
+  tot = op->w * op->h;
+
+  /* set write mode 1, "[...] data in the read latches is written
+     to memory during CPU memory write cycles. [...]" */
+  WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1); 
+  /* write to primary, read from secondary */
+  WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA, (RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0 ); 
+
+  if (src_offset < dst_offset)
+    {
+      /* start at end */
+      src_offset += tot;
+      dst_offset += tot;
+    }
+
+  src_bank_lo = (src_offset >> 6) & 0xff;
+  src_bank_hi = (src_offset >> 14) & 0xff;
+  dst_bank_lo = (dst_offset >> 6) & 0xff;
+  dst_bank_hi = (dst_offset >> 14) & 0xff;
+
+  while (tot)
+    {
+      WSeq (ba, SEQ_ID_SEC_HOST_OFF_LO, src_bank_lo);
+      WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI, src_bank_hi);
+      WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, dst_bank_lo);
+      WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, dst_bank_hi);
+      
+      if (src_offset < dst_offset)
+	{
+	  
+	  
+	}
+      else
+	{
+	  
+	}
+    }
+  
+
+#endif
+}
+
 
 #endif	/* NGRF */

@@ -45,6 +45,9 @@ struct	scsi_softc {
 	dmago_t   dmago;
 	dmanext_t dmanext;
 	dmastop_t dmastop;
+	char	  *dmabuffer;
+	char	  *dmausrbuf;
+	u_long	  dmausrlen;
 	u_char	sc_flags;
 	u_long	sc_clock_freq;
 	/* one for each target */
@@ -65,6 +68,10 @@ struct	scsi_softc {
 #endif
 #define SCSI_SELECTED	0x04	/* bus is in selected state. Needed for
 				   correct abort procedure. */
+#define SCSI_DMA24	0x10	/* controller can only DMA to ZorroII
+				   address space */
+#define SCSI_READ24	0x20	/* DMA input needs to be copied from
+				   ZorroII buffer to real buffer */
 
 /* sync states */
 #define SYNC_START	0	/* no sync handshake started */

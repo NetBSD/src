@@ -125,6 +125,13 @@ struct amiga_hw {
 #define PROD_GVP_SERIES_II	11
 #define PROD_GVP_IV24		32
 
+/* Progressive Peripherals Inc. */
+#define MANUF_PPI		2026
+#define PROD_PPI_ZEUS		150
+
+/* CSA */
+#define MANUF_CSA		1058
+#define PROD_CSA_MAGNUM		17
 
 /* bus types */
 #define	B_MASK		0xE000
@@ -151,6 +158,15 @@ struct amiga_hw {
 #define HW_ISFLOPPY(hw)	(((hw)->hw_type & C_MASK) == C_FLOPPY)
 #define HW_ISSCSI(hw)	(((hw)->hw_type & C_MASK) == C_SCSI)
 #define HW_ISDEV(hw,d)	(((hw)->hw_type & D_MASK) == (d))
+
+/* doesn't belong here... */
+/*
+ * Pseudo-device attach information (function + number of pseudo-devs).
+ */
+struct pdevinit {
+	void	(*pdev_attach) __P((int));
+	int	pdev_count;
+};
 
 #ifdef KERNEL
 extern struct amiga_hw sc_table[];

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ppi.c	7.3 (Berkeley) 12/16/90
- *	$Id: par.c,v 1.2 1993/10/30 23:41:28 mw Exp $
+ *	$Id: par.c,v 1.3 1994/01/26 21:06:07 mw Exp $
  */
 
 /*

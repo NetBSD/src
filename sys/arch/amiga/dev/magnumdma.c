@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1982, 1986, 1990 Regents of the University of California.
+ * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,40 +30,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dcareg.h	7.3 (Berkeley) 5/7/91
+ *	@(#)dma.c
  */
-
-struct serdevice {
-	int	dummy;
-};
 
 /*
- * WARNING: Serial console is assumed to be at SC9
- * and CONUNIT must be 0.
+ * dummy CSA Magnum DMA driver
  */
-#define CONUNIT		(0)
 
-/* seems this is nowhere defined in the system headers.. do it here */
-#define SERDATRF_OVRUN	(1<<15)
-#define SERDATRF_RBF	(1<<14)
-#define SERDATRF_TBE	(1<<13)
-#define SERDATRF_TSRE	(1<<12)
-#define SERDATRF_RXD	(1<<11)
-#define SERDATRF_RSVD	(1<<10)
-#define SERDATRF_STP2	(1<<9)
-#define SERDATRF_STP1	(1<<8)
+#include "magnumscsi.h"
 
-#define ADKCONF_SETCLR	(1<<15)
-#define ADKCONF_UARTBRK	(1<<11)
+#if NMAGNUMSCSI > 0
 
+void
+magnumdmainit ()
+{
+}
+#endif
 
-#define SERBRD(val)	((3579545/val-1) < 32768 ? 3579545/val-1 : 0)
-#define SER_VBL_PRIORITY (1)
-
-/* unit is in lower 7 bits (for now, only one unit:-))
-   dialin:    open blocks until carrier present, hangup on carrier drop
-   dialout:   carrier is ignored */
-
-#define SERUNIT(dev)   (minor(dev) & 0x7f)
-#define DIALIN(dev)    ((minor(dev) & 0x80) == 0x80)
-#define DIALOUT(dev)   ((minor(dev) & 0x80) == 0x00)
