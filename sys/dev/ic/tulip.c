@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.36 1999/12/15 12:23:32 tsutsui Exp $	*/
+/*	$NetBSD: tulip.c,v 1.37 2000/01/25 03:14:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -2052,9 +2052,14 @@ tlp_parse_old_srom(sc, enaddr)
 		 * DEC Address ROM format, but rather just have an
 		 * Ethernet address in the first 6 bytes, maybe a
 		 * 2 byte checksum, and then all 0xff's.
+		 *
+		 * On the other hand, Cobalt Networks interfaces
+		 * simply have the address in the first six bytes
+		 * with the rest zeroed out.
 		 */
 		for (i = 8; i < 32; i++) {
-			if (sc->sc_srom[i] != 0xff)
+			if (sc->sc_srom[i] != 0xff &&
+			    sc->sc_srom[i] != 0)
 				return (0);
 		}
 
