@@ -1,8 +1,9 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.4 1999/10/15 06:07:27 haya Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.5 2000/02/01 22:39:52 chopps Exp $	*/
 
 #define	PCICISADEBUG
 
 /*
+ * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
  *
@@ -104,12 +105,241 @@ int	pcic_isa_intr_alloc_mask = PCIC_ISA_INTR_ALLOC_MASK;
  *****************************************************************************/
 
 #ifdef PCICISADEBUG
-int	pcicsubr_debug = 0 /* XXX */ ;
-#define	DPRINTF(arg) if (pcicsubr_debug) printf arg;
+int	pcicsubr_debug = 0;
+#define	DPRINTF(arg) do { if (pcicsubr_debug) printf arg ; } while (0)
 #else
 #define	DPRINTF(arg)
 #endif
 
+#ifndef	PCIC_NO_IRQ_PROBE
+/*
+ * count the interrupt if we have a status set
+ * just use socket 0
+ */
+
+void pcic_isa_probe_interrupts __P((struct pcic_softc *, struct pcic_handle *));
+static int pcic_isa_count_intr __P((void *));
+
+static int
+pcic_isa_count_intr(arg)
+	void *arg;
+{
+	struct pcic_softc *sc;
+	struct pcic_handle *h;
+	int cscreg;
+
+	h = arg;
+	sc = (struct pcic_softc *)h->ph_parent;
+
+	cscreg = pcic_read(h, PCIC_CSC);
+	if (cscreg & PCIC_CSC_CD) {
+		if ((++sc->intr_detect % 20) == 0)
+			printf(".");
+		else
+			DPRINTF(("."));
+		return (1);
+	}
+
+#ifdef PCICISADEBUG
+	if (cscreg)
+		DPRINTF(("o"));
+	else
+		DPRINTF(("X"));
+#endif
+	return (cscreg ? 1 : 0);
+}
+
+/*
+ * use soft interrupt card detect to find out which irqs are available
+ * for this controller
+ */
+void
+pcic_isa_probe_interrupts(sc, h)
+	struct pcic_softc *sc;
+	struct pcic_handle *h;
+{
+	isa_chipset_tag_t ic;
+	int i, j, mask, irq;
+	int cd, cscintr, intr, csc;
+	void *ih;
+
+	ic = sc->intr_est;
+
+	printf("%s: controller %d detecting irqs with mask 0x%04x:",
+	    sc->dev.dv_xname, h->chip, sc->intr_mask[h->chip]);
+	DPRINTF(("\n"));
+
+	/* clear any current interrupt */
+	pcic_read(h, PCIC_CSC);
+
+	/* first disable the status irq, then enable card detect */
+	pcic_write(h, PCIC_CSC_INTR, 0);
+	cscintr = PCIC_CSC_INTR_CD_ENABLE;
+	pcic_write(h, PCIC_CSC_INTR, cscintr);
+
+	/* steer the interrupt to isa and disable ring and interrupt */
+	intr = pcic_read(h, PCIC_INTR);
+	intr &= ~(PCIC_INTR_RI_ENABLE | PCIC_INTR_ENABLE | PCIC_INTR_IRQ_MASK);
+	pcic_write(h, PCIC_INTR, intr);
+
+	/* clear any current interrupt */
+	pcic_read(h, PCIC_CSC);
+
+	cd = pcic_read(h, PCIC_CARD_DETECT);
+	cd |= PCIC_CARD_DETECT_SW_INTR;
+	mask = 0;
+	for (i = 0; i < 16; i++) {
+		/* honor configured limitations */
+		if ((sc->intr_mask[h->chip] & (1 << i)) == 0)
+			continue;
+
+		DPRINTF(("probing irq %d: ", i));
+
+		/* ask for a pulse interrupt so we don't share */
+		if (isa_intr_alloc(ic, (1 << i), IST_PULSE, &irq)) {
+			DPRINTF(("currently allocated\n"));
+			continue;
+		}
+
+		if ((ih = isa_intr_establish(ic, irq, IST_LEVEL, IPL_TTY,
+		    pcic_isa_count_intr, h)) == NULL)
+			panic("cant get interrupt");
+
+		cscintr &= ~PCIC_CSC_INTR_IRQ_MASK;
+		cscintr |= (irq << PCIC_CSC_INTR_IRQ_SHIFT);
+		pcic_write(h, PCIC_CSC_INTR, cscintr);
+
+		/* interrupt 40 times */
+		sc->intr_detect = 0;
+		for (j = 0; j < 40; j++) {
+			pcic_write(h, PCIC_CARD_DETECT, cd);
+			delay(100);
+			csc = pcic_read(h, PCIC_CSC);
+			DPRINTF(("%s", csc ? "-" : ""));
+		}
+		DPRINTF((" total %d\n", sc->intr_detect));
+		/* allow for misses */
+		if (sc->intr_detect > 37 && sc->intr_detect <= 40) {
+			printf("%d", i);
+			DPRINTF((" succeded\n"));
+			mask |= (1 << i);
+		}
+		isa_intr_disestablish(ic, ih);
+	}
+	mask |= 0x8000;
+
+	sc->intr_mask[h->chip] = mask;
+	printf("%s\n", sc->intr_mask ? "" : " none");
+
+	/* disable all status interrupts */
+	pcic_write(h, PCIC_CSC_INTR, 0);
+
+	/* clear any current interrupt */
+	pcic_read(h, PCIC_CSC);
+}
+#endif	/* PCIC_NO_IRQ_PROBE */
+
+/*
+ * called with interrupts enabled, light up the irqs to find out
+ * which irq lines are actually hooked up to our pcic
+ */
+void
+pcic_isa_config_interrupts(self)
+	struct device *self;
+{
+	struct pcic_softc *sc;
+	struct pcic_handle *h;
+	isa_chipset_tag_t ic;
+	int s, i, chipmask, chipuniq;
+
+	sc = (struct pcic_softc *)self;
+	ic = sc->intr_est;
+
+	/* probe each controller */
+	chipmask = 0xffff;
+	for (i = 0; i < PCIC_NSLOTS; i += 2) {
+		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
+			h = &sc->handle[i];
+		else if (sc->handle[i + 1].flags & PCIC_FLAG_SOCKETP)
+			h = &sc->handle[i + 1];
+		else
+			continue;
+
+		sc->intr_mask[h->chip] =
+		    PCIC_INTR_IRQ_VALIDMASK & pcic_isa_intr_alloc_mask;
+
+#ifndef	PCIC_NO_IRQ_PROBE
+		/* the cirrus chips lack support for the soft interrupt */
+		if (h->vendor != PCIC_VENDOR_CIRRUS_PD6710 &&
+		    h->vendor != PCIC_VENDOR_CIRRUS_PD672X)
+			pcic_isa_probe_interrupts(sc, h);
+#endif
+
+		chipmask &= sc->intr_mask[h->chip];
+	}
+	/* now see if there is at least one irq per chip not shared by all */
+	chipuniq = 1;
+	for (i = 0; i < PCIC_NSLOTS; i += 2) {
+		if ((sc->handle[i].flags & PCIC_FLAG_SOCKETP) == 0 &&
+		    (sc->handle[i + 1].flags & PCIC_FLAG_SOCKETP) == 0)
+			continue;
+		if ((sc->intr_mask[i / 2] & ~chipmask) == 0) {
+			chipuniq = 0;
+			break;
+		}
+	}
+	/*
+	 * the rest of the following code used to run at config time with
+	 * no interrupts and gets unhappy if this is violated so...
+	 */
+	s = splhigh();
+
+	/*
+	 * allocate our irq.  it will be used by both controllers.  I could
+	 * use two different interrupts, but interrupts are relatively
+	 * scarce, shareable, and for PCIC controllers, very infrequent.
+	 */
+	if (sc->irq != IRQUNK) {
+		if ((chipmask & (1 << sc->irq)) == 0)
+			printf("%s: warning: configured irq %d not detected as"
+			    " available\n", sc->dev.dv_xname, sc->irq);
+	} else if (chipmask == 0 ||
+	    isa_intr_alloc(ic, chipmask, IST_EDGE, &sc->irq)) {
+		printf("%s: no available irq", sc->dev.dv_xname);
+		sc->irq = -1;
+	} else if ((chipmask & ~(1 << sc->irq)) == 0 && chipuniq == 0) {
+		printf("%s: can\'t share irq with cards", sc->dev.dv_xname);
+		sc->irq = -1;
+	}
+	if (sc->irq != -1) {
+		printf("%s: using irq %d\n", sc->dev.dv_xname, sc->irq);
+		sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
+		    pcic_intr, sc);
+		if (sc->ih == NULL) {
+			printf("%s: can't establish interrupt",
+			    sc->dev.dv_xname);
+			sc->irq = -1;
+		}
+	}
+	if (sc->irq == -1)
+		printf(", will poll for card insertion and removal\n");
+
+	pcic_attach_sockets_finish(sc);
+
+	splx(s);
+}
+
+/*
+ * XXX This routine does not deal with the aliasing issue that its
+ * trying to.
+ *
+ * Any isa device may be decoding only 10 bits of address including
+ * the pcic.  This routine only detects if the pcic is doing 10 bits.
+ *
+ * What should be done is detect the pcic's idea of the bus width,
+ * and then within those limits allocate a sparse map, where the
+ * each sub region is offset by 0x400.
+ */
 void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 	struct pcic_softc *sc;
 	bus_space_tag_t iot;
@@ -207,7 +437,6 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 	}
 }
 
-
 void *
 pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	pcmcia_chipset_handle_t pch;
@@ -230,11 +459,9 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	else
 		ist = IST_EDGE;
 
-	if (isa_intr_alloc(ic,
-	    PCIC_INTR_IRQ_VALIDMASK & pcic_isa_intr_alloc_mask, ist, &irq))
+	if (isa_intr_alloc(ic, sc->intr_mask[h->chip], ist, &irq))
 		return (NULL);
-	if ((ih = isa_intr_establish(ic, irq, ist, ipl,
-	    fct, arg)) == NULL)
+	if ((ih = isa_intr_establish(ic, irq, ist, ipl, fct, arg)) == NULL)
 		return (NULL);
 
 	reg = pcic_read(h, PCIC_INTR);

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.8 1999/10/15 06:07:27 haya Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.9 2000/02/01 22:39:51 chopps Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -48,16 +48,17 @@ struct pcic_event {
 #define	PCIC_EVENT_REMOVAL	1
 
 struct pcic_handle {
-  struct device *ph_parent;
-  bus_space_tag_t ph_bus_t;	/* I/O or MEM?  I don't mind */
-  bus_space_handle_t ph_bus_h;
-  u_int8_t (* ph_read) __P((struct pcic_handle*, int));
-  void (* ph_write) __P((struct pcic_handle *, int, u_int8_t));
+	struct device *ph_parent;
+	bus_space_tag_t ph_bus_t;	/* I/O or MEM?  I don't mind */
+	bus_space_handle_t ph_bus_h;
+	u_int8_t (* ph_read) __P((struct pcic_handle*, int));
+	void (* ph_write) __P((struct pcic_handle *, int, u_int8_t));
 
-	int	vendor;
+	int	vendor;		/* vendor of chip */
+	int	chip;		/* chip index 0 or 1 */
 	int	sock;
 	int	flags;
-	int laststate;
+	int	laststate;
 	int	memalloc;
 	struct {
 		bus_addr_t	addr;
@@ -83,13 +84,19 @@ struct pcic_handle {
 #define	PCIC_FLAG_CARDP		0x0002
 
 #define PCIC_LASTSTATE_PRESENT	0x0002
-#define PCIC_LASTSTATE_HALF		0x0001
+#define PCIC_LASTSTATE_HALF	0x0001
 #define PCIC_LASTSTATE_EMPTY	0x0000
 
-#define	C0SA PCIC_CHIP0_BASE+PCIC_SOCKETA_INDEX
-#define	C0SB PCIC_CHIP0_BASE+PCIC_SOCKETB_INDEX
-#define	C1SA PCIC_CHIP1_BASE+PCIC_SOCKETA_INDEX
-#define	C1SB PCIC_CHIP1_BASE+PCIC_SOCKETB_INDEX
+#define	C0SA	0
+#define	C0SB	PCIC_SOCKET_OFFSET
+#define	C1SA	PCIC_CHIP_OFFSET
+#define	C1SB	PCIC_CHIP_OFFSET + PCIC_SOCKET_OFFSET
+
+#define	PCIC_VENDOR_UNKNOWN		0
+#define	PCIC_VENDOR_I82365SLR0		1
+#define	PCIC_VENDOR_I82365SLR1		2
+#define	PCIC_VENDOR_CIRRUS_PD6710	3
+#define	PCIC_VENDOR_CIRRUS_PD672X	4
 
 /*
  * This is sort of arbitrary.  It merely needs to be "enough". It can be
@@ -135,6 +142,10 @@ struct pcic_softc {
 	void	*ih;
 
 	struct pcic_handle handle[PCIC_NSLOTS];
+
+	/* for use by underlying chip code for discovering irqs */
+	int intr_detect;
+	int intr_mask[PCIC_NSLOTS / 2];	/* probed intterupts if possible */
 };
 
 
@@ -144,6 +155,7 @@ char	*pcic_vendor_to_string __P((int));
 
 void	pcic_attach __P((struct pcic_softc *));
 void	pcic_attach_sockets __P((struct pcic_softc *));
+void	pcic_attach_sockets_finish __P((struct pcic_softc *));
 int	pcic_intr __P((void *arg));
 
 /*
