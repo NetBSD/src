@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.10.4.1 2000/07/19 02:53:07 mrg Exp $	*/
+/*	$NetBSD: qe.c,v 1.10.4.2 2002/01/22 19:53:11 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -635,9 +635,12 @@ qeintr(arg)
 
 	if (qestat & QE_CR_STAT_ALLERRORS) {
 #ifdef QEDEBUG
-		char bits[64];
-		printf("qe%d: eint: qestat=%s\n", sc->sc_channel,
-		bitmask_snprintf(qestat, QE_CR_STAT_BITS, bits, sizeof(bits)));
+		if (sc->sc_debug) {
+			char bits[64];
+			printf("qe%d: eint: qestat=%s\n", sc->sc_channel,
+			    bitmask_snprintf(qestat, QE_CR_STAT_BITS, bits,
+			    sizeof(bits)));
+		}
 #endif
 		r |= qe_eint(sc, qestat);
 		if (r == -1)
@@ -733,7 +736,7 @@ qe_rint(sc)
 			bix = 0;
 	}
 #ifdef QEDEBUG
-	if (npackets == 0)
+	if (npackets == 0 && sc->sc_debug)
 		printf("%s: rint: no packets; rb index %d; status 0x%x\n",
 			sc->sc_dev.dv_xname, bix, len);
 #endif
