@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.7 1996/04/10 21:44:58 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.8 1996/05/17 19:32:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -246,7 +246,7 @@ kbd_attach(parent, self, aux)
 	printf("\n");
 
 	/* Initialize the speed, etc. */
-	tconst = BPS_TO_TCONST(cs->cs_pclk_div16, KBD_BPS);
+	tconst = BPS_TO_TCONST(cs->cs_brg_clk, KBD_BPS);
 	s = splzs();
 	if (k->k_isconsole == 0) {
 		/* Not the console; may need reset. */

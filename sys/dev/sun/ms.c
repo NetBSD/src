@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.5 1996/04/10 21:45:01 gwr Exp $	*/
+/*	$NetBSD: ms.c,v 1.6 1996/05/17 19:32:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -194,7 +194,7 @@ ms_attach(parent, self, aux)
 	printf("\n");
 
 	/* Initialize the speed, etc. */
-	tconst = BPS_TO_TCONST(cs->cs_pclk_div16, MS_BPS);
+	tconst = BPS_TO_TCONST(cs->cs_brg_clk, MS_BPS);
 	s = splzs();
 	/* May need reset... */
 	reset = (channel == 0) ?

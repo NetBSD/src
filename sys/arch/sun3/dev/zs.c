@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.36 1996/04/04 06:26:15 cgd Exp $	*/
+/*	$NetBSD: zs.c,v 1.37 1996/05/17 19:35:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -273,7 +273,7 @@ zsc_attach(parent, self, aux)
 		cs->cs_ops = &zsops_null;
 
 		/* Define BAUD rate clock for the MI code. */
-		cs->cs_pclk_div16 = PCLK / 16;
+		cs->cs_brg_clk = PCLK / 16;
 
 		/* XXX: get defspeed from EEPROM instead? */
 		cs->cs_defspeed = zs_defspeed[zsc_unit][channel];

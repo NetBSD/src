@@ -118,7 +118,7 @@ zs_setparam(cs, iena, rate)
 	}
 
 	/* Initialize the speed, etc. */
-	tconst = BPS_TO_TCONST(cs->cs_pclk_div16, rate);
+	tconst = BPS_TO_TCONST(cs->cs_brg_clk, rate);
 	cs->cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
 	cs->cs_preg[12] = tconst;
 	cs->cs_preg[13] = tconst >> 8;
@@ -153,7 +153,7 @@ zs_kgdb_init()
 	cs.cs_reg_csr  = &zc->zc_csr;
 	cs.cs_reg_data = &zc->zc_data;
 	cs.cs_channel = channel;
-	cs.cs_pclk_div16 = PCLK / 16;
+	cs.cs_brg_clk = PCLK / 16;
 
 	/* Now set parameters. (interrupts disabled) */
 	zs_setparam(&cs, 0, kgdb_rate);
