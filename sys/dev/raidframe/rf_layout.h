@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.9 2002/09/23 02:40:07 oster Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.10 2003/02/09 10:04:33 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -78,8 +78,8 @@ struct RF_RaidLayout_s {
 						 * now */
 	RF_StripeCount_t stripeUnitsPerDisk;
 
-	RF_LayoutSW_t *map;	/* ptr to struct holding mapping fns and
-				 * information */
+	const RF_LayoutSW_t *map;	/* ptr to struct holding mapping fns and
+					 * information */
 	void   *layoutSpecificInfo;	/* ptr to a structure holding
 					 * layout-specific params */
 };
@@ -237,7 +237,7 @@ struct RF_AccessStripeMapHeader_s {
 #define rf_ParityStripeIDToRaidAddress(_layoutPtr_, _psid_) \
   ( (_psid_) * (_layoutPtr_)->SUsPerPU * (_layoutPtr_)->numDataCol * (_layoutPtr_)->sectorsPerStripeUnit )
 
-RF_LayoutSW_t *rf_GetLayout(RF_ParityConfig_t parityConfig);
+const RF_LayoutSW_t *rf_GetLayout(RF_ParityConfig_t parityConfig);
 int 
 rf_ConfigureLayout(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
     RF_Config_t * cfgPtr);
