@@ -338,7 +338,6 @@
 #include <utime.h>
 #include <utmp.h>
 #include <utmpx.h>
-#include <varargs.h>
 #include <vis.h>
 #include <wchar.h>
 #include <wctype.h>
