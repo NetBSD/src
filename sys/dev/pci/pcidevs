@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.163 1999/11/04 09:38:38 joda Exp $
+$NetBSD: pcidevs,v 1.164 1999/11/04 10:34:03 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -814,6 +814,9 @@ product CONTAQ 82C693		0xc693	82C693 PCI-ISA Bridge
 
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	\"C-Bus II\"-PCI Bridge
+
+/* Creative Labs products */
+product CREATIVELABS SBLIVE	0x0002	SBLive! EMU 10000
 
 /* Cyclades products */
 product CYCLADES CYCLOMY_1	0x0100	Cyclom-Y below 1M
