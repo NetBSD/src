@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.3 1998/07/05 08:02:34 mrg Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.4 1998/07/06 07:50:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -190,6 +190,9 @@ dkinit(select)
 	/* Open the kernel. */
         if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
 		errx(1, "kvm_openfiles: %s", errbuf);
+
+	/* we are finished with privs now */
+	(void)setgid(getgid());
 
 	/* Obtain the namelist symbols from the kernel. */
 	if (kvm_nlist(kd, namelist))

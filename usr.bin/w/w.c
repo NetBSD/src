@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.29 1998/07/06 06:56:43 mrg Exp $	*/
+/*	$NetBSD: w.c,v 1.30 1998/07/06 07:50:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.29 1998/07/06 06:56:43 mrg Exp $");
+__RCSID("$NetBSD: w.c,v 1.30 1998/07/06 07:50:20 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,8 +130,11 @@ main(argc, argv)
 	FILE *ut;
 	struct in_addr l;
 	int ch, i, nentries, nusers, wcmd;
+	gid_t egid = getegid();
 	char *memf, *nlistf, *p, *x;
 	char buf[MAXHOSTNAMELEN], errbuf[_POSIX2_LINE_MAX];
+
+	(void)setegid(getgid());
 
 	/* Are we w(1) or uptime(1)? */
 	p = __progname;
@@ -175,14 +178,22 @@ main(argc, argv)
 	argv += optind;
 
 	/*
-	 * Discard setgid privelidges if not the running kernel so that
-	 * bad guys can't print interesting stuff from kernel memory.
+	 * Discard setgid privileges.  If not the running kernel, we toss
+	 * them away totally so that bad guys can't print interesting stuff
+	 * from kernel memory, otherwise switch back to kmem for the
+	 * duration of the kvm_openfiles() call.
 	 */
 	if (nlistf != NULL || memf != NULL)
-		setgid(getgid());
+		(void)setgid(getgid());
+	else
+		(void)setegid(egid);
 
-	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
+	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == NULL)
 		errx(1, "%s", errbuf);
+
+	/* get rid of it now anyway */
+	if (nlistf == NULL && memf == NULL)
+		(void)setgid(getgid());
 
 	(void)time(&now);
 	if ((ut = fopen(_PATH_UTMP, "r")) == NULL)
