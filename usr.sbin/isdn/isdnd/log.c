@@ -27,11 +27,11 @@
  *	i4b daemon - logging routines
  *	-----------------------------
  *
- *	$Id: log.c,v 1.1.1.1 2001/01/06 13:00:18 martin Exp $ 
+ *	$Id: log.c,v 1.2 2001/01/08 07:18:54 martin Exp $ 
  *
  * $FreeBSD$
  *
- *      last edit-date: [Mon Dec 13 21:47:28 1999]
+ *      last edit-date: [Mon Jan  8 08:09:36 2001]
  *
  *---------------------------------------------------------------------------*/
 
@@ -152,6 +152,12 @@ log(int what, const char *fmt, ...)
 	va_end(ap);
 	
 	dp = getlogdatetime();	/* get time string ptr */
+
+	/* put some messages on stderr to, important if in early startup
+	   phase and not yet daemonized */
+	if (what == LL_ERR)
+		if (!do_fullscreen || !curses_ready)
+			fprintf(stderr, "isdnd: %s\n", buffer);
 	
 #ifdef USE_CURSES
 

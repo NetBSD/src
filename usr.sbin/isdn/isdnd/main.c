@@ -27,11 +27,11 @@
  *	i4b daemon - main program entry
  *	-------------------------------
  *
- *	$Id: main.c,v 1.1.1.1 2001/01/06 13:00:18 martin Exp $ 
+ *	$Id: main.c,v 1.2 2001/01/08 07:18:54 martin Exp $ 
  *
  * $FreeBSD$
  *
- *      last edit-date: [Mon Oct  2 22:57:08 2000]
+ *      last edit-date: [Mon Jan  8 07:57:26 2001]
  *
  *---------------------------------------------------------------------------*/
 
@@ -434,7 +434,7 @@ do_exit(int exitval)
 	log(LL_DMN, "daemon terminating, exitval = %d", exitval);
 	
 #ifdef USE_CURSES
-	if(do_fullscreen)
+	if(do_fullscreen && curses_ready)
 		endwin();
 #endif
 
@@ -458,7 +458,7 @@ error_exit(int exitval, const char *fmt, ...)
 	log(LL_DMN, "fatal error, daemon terminating, exitval = %d", exitval);
 	
 #ifdef USE_CURSES
-	if(do_fullscreen)
+	if(do_fullscreen && curses_ready)
 		endwin();
 #endif
 
