@@ -1,4 +1,4 @@
-/*	$NetBSD: strsuftoull.c,v 1.2 2001/11/26 00:13:24 lukem Exp $	*/
+/*	$NetBSD: strsuftoull.c,v 1.3 2001/11/30 00:12:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: strsuftoull.c,v 1.2 2001/11/26 00:13:24 lukem Exp $");
+__RCSID("$NetBSD: strsuftoull.c,v 1.3 2001/11/30 00:12:04 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -212,12 +212,14 @@ strsuftoullx(const char *desc, const char *val, uint64_t min, uint64_t max,
 	}
 	if (num < min) {
 		snprintf(ebuf, ebuflen,
-		    "%s %lld is less than %lld.", desc, num, min);
+		    "%s %lld is less than %lld.", desc, (long long)num,
+		    (long long)min);
 		return (0);
 	}
 	if (num > max) {
 		snprintf(ebuf, ebuflen,
-		    "%s %lld is greater than %lld.", desc, num, max);
+		    "%s %lld is greater than %lld.", desc, (long long)num,
+		    (long long)max);
 		return (0);
 	}
 	*ebuf = '\0';
