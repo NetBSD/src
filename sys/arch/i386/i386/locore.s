@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.108 1995/02/04 15:02:28 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.109 1995/02/05 01:06:50 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1023,7 +1023,6 @@ ENTRY(copyoutstr)
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%edi,%eax
 	cmpl	%edx,%eax
-	setae	%cl
 	jae	1f
 	movl	%eax,%edx
 	movl	%eax,20(%esp)
@@ -1043,13 +1042,9 @@ ENTRY(copyoutstr)
 	xorl	%eax,%eax
 	jmp	copystr_return
 
-2:	/* edx is zero. */
-	testb	%cl,%cl
-	jnz	1f
-	/* edx is zero -- hit end of user space. */
-	movl	$EFAULT,%eax
-	jmp	copystr_return
-1:	/* edx is zero -- return ENAMETOOLONG. */
+2:	/* edx is zero -- return EFAULT or ENAMETOOLONG. */
+	cmpl	$VM_MAXUSER_ADDRESS,%edi
+	jae	_copystr_fault
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 #endif /* I486_CPU || I586_CPU */
@@ -1077,7 +1072,6 @@ ENTRY(copyinstr)
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%esi,%eax
 	cmpl	%edx,%eax
-	setae	%cl
 	jae	1f
 	movl	%eax,%edx
 	movl	%eax,20(%esp)
@@ -1097,13 +1091,9 @@ ENTRY(copyinstr)
 	xorl	%eax,%eax
 	jmp	copystr_return
 
-2:	/* edx is zero. */
-	testb	%cl,%cl
-	jnz	1f
-	/* edx is zero -- hit end of user space. */
-	movl	$EFAULT,%eax
-	jmp	copystr_return
-1:	/* edx is zero -- return ENAMETOOLONG. */
+2:	/* edx is zero -- return EFAULT or ENAMETOOLONG. */
+	cmpl	$VM_MAXUSER_ADDRESS,%esi
+	jae	_copystr_fault
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 
