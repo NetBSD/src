@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.76 2003/02/06 04:25:03 rafal Exp $
+#	$NetBSD: termcap.src,v 1.77 2003/03/16 15:06:25 jdc Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -1850,11 +1850,13 @@ xterm-vb|xterm terminal emulator with visual bell:\
 xterm+sl|access X title line and icon name:\
 	:hs:\
 	:ws#40:\
-	:ds=\E]0;\007:fs=^G:ts=\E]0;:
+	:ds=\E]0;\007:fs=^G:ts=\E]0;:\
+	:tc=xterm:
 xterm+sl-twm|access X title line (pacify twm-descended window managers):\
 	:hs:\
 	:ws#40:\
-	:ds=\E]2;\007:fs=^G:ts=\E]2;:
+	:ds=\E]2;\007:fs=^G:ts=\E]2;:\
+	:tc=xterm:
 
 #
 # The following xterm variants don't depend on your base version
