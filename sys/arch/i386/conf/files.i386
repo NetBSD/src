@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.113.2.10 1998/10/02 19:51:48 bouyer Exp $
+#	$NetBSD: files.i386,v 1.113.2.11 1998/10/04 12:41:25 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -28,6 +28,7 @@ defopt	opt_xserver.h XSERVER XSERVER_DDB
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/conf.c
+file	arch/i386/i386/db_dbgreg.s	ddb
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_memrw.c	ddb | kgdb
@@ -241,7 +242,7 @@ file	arch/i386/i386/ibcs2_machdep.c		compat_ibcs2
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
-include "compat/linux/i386/files.linux_i386"
+include "compat/linux/arch/i386/files.linux_i386"
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include "compat/freebsd/files.freebsd"
