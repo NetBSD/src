@@ -1,12 +1,23 @@
-/*	$NetBSD: zconf.h,v 1.3 1996/09/13 00:30:47 cgd Exp $	*/
+/*	$NetBSD: zconf.h,v 1.4 1997/05/13 22:57:09 gwr Exp $	*/
 
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-1996 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
+/* from: Id: zconf.h,v 1.20 1996/07/02 15:09:28 me Exp */
+
 #ifndef _ZCONF_H
 #define _ZCONF_H
+
+/*
+ * Warning:  This file pollutes the user's namespace with:
+ * 	Byte Bytef EXPORT FAR OF STDC
+ *  charf intf uInt uIntf uLong uLonf
+ * Programs using this library appear to expect those...
+ */
+
+#include <sys/types.h>
 
 /*
  * If you *really* need a unique prefix for all types and library functions,
@@ -59,7 +70,7 @@
 #  define MAXSEG_64K
 #endif
 
-#ifdef MSDOS	/* XXX - Yuck! */
+#if 0
 /* XXX: Are there machines where we should define this?  m68k? */
 #  define UNALIGNED_OK
 #endif
@@ -107,14 +118,16 @@
  for small objects.
 */
 
+/* Warts... */
+#define EXPORT
+#define FAR
+#define OF(args)  __P(args)
+
 /* Type declarations */
 
-#define OF(args)  __P(args)
-#define FAR
-
-typedef u_char  Byte;  /* 8 bits */
-typedef u_int   uInt;  /* 16 bits or more */
-typedef u_long  uLong; /* 32 bits or more */
+typedef unsigned char  Byte;  /* 8 bits */
+typedef unsigned int   uInt;  /* 16 bits or more */
+typedef unsigned long  uLong; /* 32 bits or more */
 
 typedef Byte  FAR Bytef;
 typedef char  FAR charf;
@@ -122,9 +135,13 @@ typedef int   FAR intf;
 typedef uInt  FAR uIntf;
 typedef uLong FAR uLongf;
 
-#define voidpf void *
-#define voidp  void *
+#ifdef STDC
+   typedef void FAR *voidpf;
+   typedef void     *voidp;
+#else
+   typedef Byte FAR *voidpf;
+   typedef Byte     *voidp;
+#endif
 
-#define EXPORT
 
 #endif /* _ZCONF_H */
