@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.2 1993/05/16 02:48:49 deraadt Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.3 1993/09/05 16:10:01 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -636,6 +636,7 @@ int force;
 			return;
 	}
 	flock(fd, LOCK_SH);
+#endif
 
 	/*
 	 * ok, if BINDINGDIR exists, and we can create the binding file,
@@ -648,5 +649,4 @@ int force;
 		ypdb->dom_lockfd = -1;
 		return;
 	}
-#endif
 }
