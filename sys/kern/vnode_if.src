@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.42 2005/01/02 16:08:29 thorpej Exp $
+#	$NetBSD: vnode_if.src,v 1.43 2005/02/26 21:34:56 perry Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -35,14 +35,14 @@
 #
 #
 
-# 
+#
 # Above each of the vop descriptors is a specification of the locking
 # protocol used by each vop call.  The first column is the name of
 # the variable, the remaining three columns are in, out and error
 # respectively.  The "in" column defines the lock state on input,
 # the "out" column defines the state on successful return, and the
 # "error" column defines the locking state on error exit.
-#     
+#
 # The locking value can take the following values:
 # L: locked.
 # U: unlocked.
@@ -53,8 +53,8 @@
 # For operations other than VOP_LOOKUP which require a component name
 # parameter, the flags required for the initial namei() call are listed.
 # Additional flags may be added to the namei() call, but these are required.
-#     
- 
+#
+
 #
 #% lookup     dvp     L ? ?
 #% lookup     vpp     - L -
@@ -80,7 +80,7 @@
 #     On failure, *vpp is NULL, and *dvp is left locked. If there was
 #          an error re-locking dvp (for instance in the ISDOTDOT case),
 #          the error is returned with PDIRUNLOCK set.
-#	
+#
 #     *vpp is always locked on return if the operation succeeds.
 #     typically, if *vpp == dvp, you need to release twice, but unlock once.
 #
@@ -243,7 +243,7 @@ vop_revoke {
 	IN int flags;
 };
 
-#     
+#
 #% mmap      vp      = = =
 #
 vop_mmap {
@@ -322,7 +322,7 @@ vop_rename {
 
 #
 #% mkdir      dvp     L U U
-#% mkdir      vpp     - L - 
+#% mkdir      vpp     - L -
 #
 #! mkdir cnp	CREATE, LOCKPARENT
 #
@@ -360,7 +360,7 @@ vop_symlink {
 };
 
 #
-#% readdir    vp      L L L   
+#% readdir    vp      L L L
 #
 vop_readdir {
 	IN LOCKED=YES struct vnode *vp;
@@ -391,7 +391,7 @@ vop_abortop {
 };
 
 #
-#% inactive   vp      L U U  
+#% inactive   vp      L U U
 #
 vop_inactive {
 	IN LOCKED=YES WILLUNLOCK struct vnode *vp;
@@ -503,7 +503,7 @@ vop_balloc {
 	IN LOCKED=YES struct vnode *vp;
 	IN off_t startoffset;
 	IN int size;
-	IN struct ucred *cred;	
+	IN struct ucred *cred;
 	IN int flags;
 	OUT struct buf **bpp;
 };
@@ -546,9 +546,9 @@ vop_update {
 	IN int flags;
 };
 
-# 
+#
 #% lease      vp      = = =
-# 
+#
 vop_lease {
 	IN struct vnode *vp;
 	IN struct proc *p;
@@ -562,7 +562,7 @@ vop_lease {
 #% whiteout   flag    - - -
 #
 #! whiteout cnp	CREATE, LOCKPARENT
-# 
+#
 vop_whiteout {
 	IN LOCKED=YES struct vnode *dvp;
 	IN struct componentname *cnp;

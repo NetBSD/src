@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.35 2004/09/21 03:10:35 thorpej Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.36 2005/02/26 21:34:56 perry Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -151,7 +151,7 @@ warning="\
  * by the script:
  *	${SCRIPT_ID}
  */
-" 
+"
 
 # This is to satisfy McKusick (get rid of evil spaces 8^)
 anal_retentive='s:\([^/]\*\) :\1:g'

@@ -1,9 +1,9 @@
-/* $NetBSD: subr_autoconf.c,v 1.92 2004/10/15 04:38:37 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.93 2005/02/26 21:34:55 perry Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -30,7 +30,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
  */
 
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.92 2004/10/15 04:38:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.93 2005/02/26 21:34:55 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -220,7 +220,7 @@ config_init(void)
 	TAILQ_INIT(&deferred_config_queue);
 	TAILQ_INIT(&interrupt_config_queue);
 	TAILQ_INIT(&config_finalize_list);
-	TAILQ_INIT(&alldevs); 
+	TAILQ_INIT(&alldevs);
 
 	config_initialized = 1;
 }
@@ -878,7 +878,7 @@ config_makeroom(int n, struct cfdriver *cd)
 		new *= 2;
 	cd->cd_ndevs = new;
 	nsp = malloc(new * sizeof(void *), M_DEVBUF,
-	    cold ? M_NOWAIT : M_WAITOK);	
+	    cold ? M_NOWAIT : M_WAITOK);
 	if (nsp == NULL)
 		panic("config_attach: %sing dev array",
 		    old != 0 ? "expand" : "creat");
