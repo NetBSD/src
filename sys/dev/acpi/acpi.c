@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.34 2003/04/17 01:22:21 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.35 2003/04/18 01:31:34 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.34 2003/04/17 01:22:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.35 2003/04/18 01:31:34 thorpej Exp $");
 
 #include "opt_acpi.h"
 
@@ -224,6 +224,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	if (acpi_softc != NULL)
 		panic("acpi_attach: ACPI has already been attached");
+
+	sysmon_power_settype("acpi");
 
 	printf("%s: X/RSDT: OemId <%6.6s,%8.8s,%08x>, AslId <%4.4s,%08x>\n",
 	    sc->sc_dev.dv_xname,
@@ -653,7 +655,7 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 		printf("%s: fixed-feature power button present\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_smpsw_power.smpsw_name = sc->sc_dev.dv_xname;
-		sc->sc_smpsw_power.smpsw_type = SMPSW_TYPE_POWER;
+		sc->sc_smpsw_power.smpsw_type = PSWITCH_TYPE_POWER;
 		if (sysmon_pswitch_register(&sc->sc_smpsw_power) != 0) {
 			printf("%s: unable to register fixed power button "
 			    "with sysmon\n", sc->sc_dev.dv_xname);
@@ -673,7 +675,7 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 		printf("%s: fixed-feature sleep button present\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_smpsw_sleep.smpsw_name = sc->sc_dev.dv_xname;
-		sc->sc_smpsw_sleep.smpsw_type = SMPSW_TYPE_SLEEP;
+		sc->sc_smpsw_sleep.smpsw_type = PSWITCH_TYPE_SLEEP;
 		if (sysmon_pswitch_register(&sc->sc_smpsw_power) != 0) {
 			printf("%s: unable to register fixed sleep button "
 			    "with sysmon\n", sc->sc_dev.dv_xname);
@@ -729,7 +731,7 @@ acpi_fixed_button_pressed(void *context)
 	    smpsw->smpsw_name);
 #endif
 
-	sysmon_pswitch_event(smpsw, SMPSW_EVENT_PRESSED);
+	sysmon_pswitch_event(smpsw, PSWITCH_EVENT_PRESSED);
 }
 
 /*****************************************************************************

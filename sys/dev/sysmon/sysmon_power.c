@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.1 2003/04/17 01:02:21 thorpej Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.2 2003/04/18 01:31:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,6 +46,9 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/poll.h>
+#include <sys/select.h>
+#include <sys/vnode.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -55,6 +58,300 @@ static struct simplelock sysmon_pswitch_list_slock =
     SIMPLELOCK_INITIALIZER;
 
 static struct proc *sysmon_power_daemon;
+
+#define	SYSMON_MAX_POWER_EVENTS		32
+
+static struct simplelock sysmon_power_event_queue_slock =
+    SIMPLELOCK_INITIALIZER;
+static power_event_t sysmon_power_event_queue[SYSMON_MAX_POWER_EVENTS];
+static int sysmon_power_event_queue_head;
+static int sysmon_power_event_queue_tail;
+static int sysmon_power_event_queue_count;
+static int sysmon_power_event_queue_flags;
+static struct selinfo sysmon_power_event_queue_selinfo;
+
+static char sysmon_power_type[32];
+
+#define	PEVQ_F_WAITING		0x01	/* daemon waiting for event */
+
+#define	SYSMON_NEXT_EVENT(x)		(((x) + 1) / SYSMON_MAX_POWER_EVENTS)
+
+/*
+ * sysmon_queue_power_event:
+ *
+ *	Enqueue a power event for the power mangement daemon.  Returns
+ *	non-zero if we were able to enqueue a power event.
+ */
+static int
+sysmon_queue_power_event(power_event_t *pev)
+{
+
+	LOCK_ASSERT(simple_lock_held(&sysmon_power_event_queue_slock));
+
+	if (sysmon_power_event_queue_count == SYSMON_MAX_POWER_EVENTS)
+		return (0);
+
+	sysmon_power_event_queue[sysmon_power_event_queue_head] = *pev;
+	sysmon_power_event_queue_head =
+	    SYSMON_NEXT_EVENT(sysmon_power_event_queue_head);
+	sysmon_power_event_queue_count++;
+
+	if (sysmon_power_event_queue_flags & PEVQ_F_WAITING) {
+		sysmon_power_event_queue_flags &= ~PEVQ_F_WAITING;
+		wakeup(&sysmon_power_event_queue_count);
+	}
+	selnotify(&sysmon_power_event_queue_selinfo, 0);
+
+	return (1);
+}
+
+/*
+ * sysmon_get_power_event:
+ *
+ *	Get a power event from the queue.  Returns non-zero if there
+ *	is an event available.
+ */
+static int
+sysmon_get_power_event(power_event_t *pev)
+{
+
+	LOCK_ASSERT(simple_lock_held(&sysmon_power_event_queue_slock));
+
+	if (sysmon_power_event_queue_count == 0)
+		return (0);
+
+	*pev = sysmon_power_event_queue[sysmon_power_event_queue_tail];
+	sysmon_power_event_queue_tail =
+	    SYSMON_NEXT_EVENT(sysmon_power_event_queue_tail);
+	sysmon_power_event_queue_count--;
+
+	return (1);
+}
+
+/*
+ * sysmon_power_event_queue_flush:
+ *
+ *	Flush the event queue, and reset all state.
+ */
+static void
+sysmon_power_event_queue_flush(void)
+{
+
+	sysmon_power_event_queue_head = 0;
+	sysmon_power_event_queue_tail = 0;
+	sysmon_power_event_queue_count = 0;
+	sysmon_power_event_queue_flags = 0;
+}
+
+/*
+ * sysmonopen_power:
+ *
+ *	Open the system monitor device.
+ */
+int
+sysmonopen_power(dev_t dev, int flag, int mode, struct proc *p)
+{
+	int error = 0;
+
+	simple_lock(&sysmon_power_event_queue_slock);
+	if (sysmon_power_daemon != NULL)
+		error = EBUSY;
+	else {
+		sysmon_power_daemon = p;
+		sysmon_power_event_queue_flush();
+	}
+	simple_unlock(&sysmon_power_event_queue_slock);
+
+	return (error);
+}
+
+/*
+ * sysmonclose_power:
+ *
+ *	Close the system monitor device.
+ */
+int
+sysmonclose_power(dev_t dev, int flag, int mode, struct proc *p)
+{
+	int count;
+
+	simple_lock(&sysmon_power_event_queue_slock);
+	count = sysmon_power_event_queue_count;
+	sysmon_power_daemon = NULL;
+	sysmon_power_event_queue_flush();
+	simple_unlock(&sysmon_power_event_queue_slock);
+
+	if (count)
+		printf("WARNING: %d power events lost by exiting daemon\n",
+		    count);
+
+	return (0);
+}
+
+/*
+ * sysmonread_power:
+ *
+ *	Read the system monitor device.
+ */
+int
+sysmonread_power(dev_t dev, struct uio *uio, int flags)
+{
+	power_event_t pev;
+	int error;
+
+	/* We only allow one event to be read at a time. */
+	if (uio->uio_resid != POWER_EVENT_MSG_SIZE)
+		return (EINVAL);
+
+	simple_lock(&sysmon_power_event_queue_slock);
+ again:
+	if (sysmon_get_power_event(&pev)) {
+		simple_unlock(&sysmon_power_event_queue_slock);
+		return (uiomove(&pev, POWER_EVENT_MSG_SIZE, uio));
+	}
+
+	if (flags & IO_NDELAY) {
+		simple_unlock(&sysmon_power_event_queue_slock);
+		return (EWOULDBLOCK);
+	}
+
+	sysmon_power_event_queue_flags |= PEVQ_F_WAITING;
+	error = ltsleep(&sysmon_power_event_queue_count,
+	    PRIBIO|PCATCH, "smpower", 0, &sysmon_power_event_queue_slock);
+	if (error) {
+		simple_unlock(&sysmon_power_event_queue_slock);
+		return (error);
+	}
+	goto again;
+}
+
+/*
+ * sysmonpoll_power:
+ *
+ *	Poll the system monitor device.
+ */
+int
+sysmonpoll_power(dev_t dev, int events, struct proc *p)
+{
+	int revents;
+
+	revents = events & (POLLOUT | POLLWRNORM);
+
+	/* Attempt to save some work. */
+	if ((events & (POLLIN | POLLRDNORM)) == 0)
+		return (revents);
+
+	simple_lock(&sysmon_power_event_queue_slock);
+	if (sysmon_power_event_queue_count)
+		revents |= events & (POLLIN | POLLRDNORM);
+	else
+		selrecord(p, &sysmon_power_event_queue_selinfo);
+	simple_unlock(&sysmon_power_event_queue_slock);
+
+	return (revents);
+}
+
+static void
+filt_sysmon_power_rdetach(struct knote *kn)
+{
+
+	simple_lock(&sysmon_power_event_queue_slock);
+	SLIST_REMOVE(&sysmon_power_event_queue_selinfo.sel_klist,
+	    kn, knote, kn_selnext);
+	simple_unlock(&sysmon_power_event_queue_slock);
+}
+
+static int
+filt_sysmon_power_read(struct knote *kn, long hint)
+{
+
+	simple_lock(&sysmon_power_event_queue_slock);
+	kn->kn_data = sysmon_power_event_queue_count;
+	simple_unlock(&sysmon_power_event_queue_slock);
+
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops sysmon_power_read_filtops =
+    { 1, NULL, filt_sysmon_power_rdetach, filt_sysmon_power_read };
+
+static const struct filterops sysmon_power_write_filtops =
+    { 1, NULL, filt_sysmon_power_rdetach, filt_seltrue };
+
+/*
+ * sysmonkqfilter_power:
+ *
+ *	Kqueue filter for the system monitor device.
+ */
+int
+sysmonkqfilter_power(dev_t dev, struct knote *kn)
+{
+	struct klist *klist;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sysmon_power_event_queue_selinfo.sel_klist;
+		kn->kn_fop = &sysmon_power_read_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sysmon_power_event_queue_selinfo.sel_klist;
+		kn->kn_fop = &sysmon_power_write_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	simple_lock(&sysmon_power_event_queue_slock);
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	simple_unlock(&sysmon_power_event_queue_slock);
+
+	return (0);
+}
+
+/*
+ * sysmonioctl_power:
+ *
+ *	Perform a power managmenet control request.
+ */
+int
+sysmonioctl_power(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case POWER_IOC_GET_TYPE:
+	    {
+		struct power_type *power_type = (void *) data;
+
+		strcpy(power_type->power_type, sysmon_power_type);
+		break;
+	    }
+	default:
+		error = ENOTTY;
+	}
+
+	return (error);
+}
+
+/*
+ * sysmon_power_settype:
+ *
+ *	Sets the back-end power management type.  This information can
+ *	be used by the power management daemon.
+ */
+void
+sysmon_power_settype(const char *type)
+{
+
+	/*
+	 * Don't bother locking this; it's going to be set
+	 * during autoconfiguration, and then only read from
+	 * then on.
+	 */
+	strcpy(sysmon_power_type, type);
+}
 
 /*
  * sysmon_pswitch_register:
@@ -100,14 +397,29 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 	 * deliver the event to them.  If not, we need to try to
 	 * do something reasonable ourselves.
 	 */
+	simple_lock(&sysmon_power_event_queue_slock);
 	if (sysmon_power_daemon != NULL) {
-		/* XXX */
+		power_event_t pev;
+		int rv;
+
+		pev.pev_type = POWER_EVENT_SWITCH_STATE_CHANGE;
+		pev.pev_switch.psws_state = event;
+		pev.pev_switch.psws_type = smpsw->smpsw_type;
+		strcpy(pev.pev_switch.psws_name, smpsw->smpsw_name);
+
+		rv = sysmon_queue_power_event(&pev);
+		simple_unlock(&sysmon_power_event_queue_slock);
+		if (rv == 0)
+			printf("%s: WARNING: state change event lost; "
+			    "queue full\n", smpsw->smpsw_name,
+			    pev.pev_type);
 		return;
 	}
+	simple_unlock(&sysmon_power_event_queue_slock);
 
 	switch (smpsw->smpsw_type) {
-	case SMPSW_TYPE_POWER:
-		if (event != SMPSW_EVENT_PRESSED) {
+	case PSWITCH_TYPE_POWER:
+		if (event != PSWITCH_EVENT_PRESSED) {
 			/* just ignore it */
 			return;
 		}
@@ -122,8 +434,8 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		cpu_reboot(RB_POWERDOWN, NULL);
 		break;
 
-	case SMPSW_TYPE_SLEEP:
-		if (event != SMPSW_EVENT_PRESSED) {
+	case PSWITCH_TYPE_SLEEP:
+		if (event != PSWITCH_EVENT_PRESSED) {
 			/* just ignore it */
 			return;
 		}
@@ -135,9 +447,9 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		printf("%s: sleep button pressed.\n", smpsw->smpsw_name);
 		break;
 
-	case SMPSW_TYPE_LID:
+	case PSWITCH_TYPE_LID:
 		switch (event) {
-		case SMPSW_EVENT_PRESSED:
+		case PSWITCH_EVENT_PRESSED:
 			/*
 			 * Try to enter a "standby" state.
 			 */
@@ -145,7 +457,7 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 			printf("%s: lid closed.\n", smpsw->smpsw_name);
 			break;
 
-		case SMPSW_EVENT_RELEASED:
+		case PSWITCH_EVENT_RELEASED:
 			/*
 			 * Come out of "standby" state.
 			 */

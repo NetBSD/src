@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.7 2003/04/17 01:34:14 thorpej Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.8 2003/04/18 01:31:34 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.7 2003/04/17 01:34:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.8 2003/04/18 01:31:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ acpilid_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = aa->aa_node;
 
 	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
-	sc->sc_smpsw.smpsw_type = SMPSW_TYPE_LID;
+	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_LID;
 	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
 		printf("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
@@ -135,7 +135,7 @@ acpilid_status_changed(void *arg)
 		return;
 
 	sysmon_pswitch_event(&sc->sc_smpsw, status == 0 ?
-	    SMPSW_EVENT_PRESSED : SMPSW_EVENT_RELEASED);
+	    PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED);
 }
 
 /*
