@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.54 1999/07/06 06:10:04 cgd Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.55 1999/07/06 06:10:53 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -490,7 +490,7 @@ message net_media
 message netok
 {The following are the values you entered.  Are they OK?
 
-Domain:		%s 
+DNS Domain:	%s 
 Host Name:	%s 
 Host IP:	%s 
 Netmask:	%s 
