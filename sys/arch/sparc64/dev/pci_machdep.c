@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.28 2002/05/15 17:40:11 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.29 2002/05/15 18:37:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -146,62 +146,6 @@ pci_bus_devorder(pc, busno, devs)
 	}
 	if (i < 32)
 		devs[i] = -1;
-
-	return i;
-}
-#endif
-
-#ifdef __PCI_DEV_FUNCORDER
-int
-pci_dev_funcorder(pc, busno, device, funcs)
-	pci_chipset_tag_t pc;
-	int busno;
-	int device;
-	char *funcs;
-{
-	struct ofw_pci_register reg;
-	int node, len, i = 0;
-#ifdef DEBUG
-	char name[80];
-#endif
-
-	node = pc->curnode;
-#ifdef DEBUG
-	if (sparc_pci_debug & SPDB_PROBE) {
-		OF_getprop(node, "name", &name, sizeof(name));
-		printf("pci_bus_funcorder: curnode %x %s\n", node, name);
-	}
-#endif
-	/*
-	 * Initially, curnode is the root of the pci tree.  As we
-	 * attach bridges, curnode should be set to that of the bridge.
-	 *
-	 * Note this search is almost exactly the same as pci_bus_devorder()'s,
-	 * except that we limit the search to only those with a matching
-	 * "device" number.
-	 */
-	for (node = OF_child(node); node; node = OF_peer(node)) {
-		len = OF_getproplen(node, "reg");
-		if (len < sizeof(reg))
-			continue;
-		if (OF_getprop(node, "reg", (void *)&reg, sizeof(reg)) != len)
-			panic("pci_probe_bus: OF_getprop len botch");
-
-		if (device != OFW_PCI_PHYS_HI_DEVICE(reg.phys_hi))
-			continue;
-
-		funcs[i++] = OFW_PCI_PHYS_HI_FUNCTION(reg.phys_hi);
-#ifdef DEBUG
-	if (sparc_pci_debug & SPDB_PROBE) {
-		OF_getprop(node, "name", &name, sizeof(name));
-		printf("pci_bus_funcorder: adding %x %s\n", node, name);
-	}
-#endif
-		if (i == 8)
-			break;
-	}
-	if (i < 8)
-		funcs[i] = -1;
 
 	return i;
 }

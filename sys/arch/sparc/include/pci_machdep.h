@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1 2001/12/11 00:18:22 uwe Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.2 2002/05/15 18:37:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -41,7 +41,6 @@
  * have a PCI-to-PCI bridge)???
  */
 #define		__PCI_BUS_DEVORDER
-#define		__PCI_DEV_FUNCORDER
 #endif /* 0 */
 
 
@@ -91,9 +90,6 @@ void		pci_attach_hook(struct device *, struct device *,
 				struct pcibus_attach_args *);
 #ifdef __PCI_BUS_DEVORDER
 int		pci_bus_devorder(pci_chipset_tag_t, int, char *);
-#endif
-#ifdef __PCI_DEV_FUNCORDER
-int		pci_dev_funcorder(pci_chipset_tag_t, int, int, char *);
 #endif
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
