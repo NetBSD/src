@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2001/06/15 06:27:07 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2001/06/15 08:08:04 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -257,9 +257,13 @@ static vaddr_t
 pte_to_va(volatile const pte_t *pt)
 {
 	vaddr_t va;
+	uintptr_t ptaddr = (uintptr_t) pt;
+
+	if (pt->pte_hi & PTE_HID)
+		ptaddr ^= (pteg_mask << 6);
 
 	/* PPC Bits 10-19 */
-	va = ((pt->pte_hi >> PTE_VSID_SHFT) ^ ((uintptr_t)pt >> 6)) & 0x3ff;
+	va = ((pt->pte_hi >> PTE_VSID_SHFT) ^ (ptaddr >> 6)) & 0x3ff;
 	va <<= ADDR_PIDX_SHFT;
 
 	/* PPC Bits 4-9 */
@@ -1097,6 +1101,11 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 			failed = 1;
 		}
 	} else {
+		if ((uintptr_t) pt < (uintptr_t) &pteg_table ||
+		    (uintptr_t) pt >= (uintptr_t) &pteg_table[pteg_cnt]) {
+			printf("pmap_pvo_check: pvo %p: pte %p not in pteg table\n", pvo, pt);
+			failed = 1;
+		}
 		if (((((uintptr_t) pt) >> 3) & 7) !=
 		    ((pvo->pvo_pte.pte_lo & PTE_GIDX_MASK) >> PTE_GIDX_SHFT)) {
 			printf("pmap_pvo_check: pvo %p: pte_hi VALID but no PTE\n", pvo);
@@ -1125,7 +1134,8 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 			pte_print(pt);
 	}
 	if (failed)
-		panic("pmap_pvo_check: bugcheck!");
+		panic("pmap_pvo_check: pvo %p, pm %p: bugcheck!", pvo,
+		    pvo->pvo_pmap);
 }
 #endif /* DEBUG || PMAPCHECK */
 
