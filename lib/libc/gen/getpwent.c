@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.40.2.1 1999/04/27 14:11:10 perry Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.40.2.2 1999/04/27 22:09:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.40.2.1 1999/04/27 14:11:10 perry Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.40.2.2 1999/04/27 22:09:45 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -728,11 +728,12 @@ _compat_getpwent(rv, cb_data, ap)
 	va_list	 ap;
 {
 	DBT		 key;
+	int		 rval;
 	char		 bf[sizeof(_pw_keynum) + 1];
 #ifdef _PASSWD_COMPAT
 	static char	*name = NULL;
 	const char	*user, *host, *dom;
-	int		 has_compatpw, rval;
+	int		 has_compatpw;
 #endif
 
 	if (!_pw_db && !__initdb())
