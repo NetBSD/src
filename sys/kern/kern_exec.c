@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.61 1995/02/22 01:39:56 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.62 1995/02/28 23:09:01 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -338,6 +338,11 @@ execve(p, uap, retval)
 	len = ((argc + envc + 2 + pack.ep_setup_arglen) * sizeof(char *) +
 	    sizeof(int) + dp + STACKGAPLEN + szsigcode +
 	    sizeof(struct ps_strings)) - argp;
+#ifdef COMPAT_LINUX
+	/* XXXX need this for envp and argv on stack */
+	if (pack.ep_emul == EMUL_LINUX)
+		len += 2 * sizeof (char *);
+#endif
 	len = ALIGN(len);	/* make the stack "safely" aligned */
 
 	if (len > pack.ep_ssize) { /* in effect, compare to initial limit */
@@ -397,6 +402,17 @@ execve(p, uap, retval)
 
 	if (copyout(&argc, cpp++, sizeof(argc)))
 		goto exec_abort;
+#ifdef COMPAT_LINUX
+	/* XXXX Linux puts argv and envp on stack too, store argv now */
+	if (pack.ep_emul == EMUL_LINUX) {
+		char **argv_loc = cpp + 2, **stk = (char **) stack;
+
+		if (copyout(&argv_loc, &stk[1], sizeof (argv_loc)))
+			goto exec_abort;
+		/* leave room for envp and argv */
+		cpp += 2;
+	}
+#endif
 	dp = (char *) (cpp + argc + envc + 2 + pack.ep_setup_arglen);
 	sp = argp;
 	np = 0;
@@ -410,6 +426,16 @@ execve(p, uap, retval)
 	}
 	if (copyout(&np, cpp++, sizeof(np)))
 		goto exec_abort;
+
+#ifdef COMPAT_LINUX
+	/* XXXX Linux puts argv and envp on stack too, store envp now */
+	if (pack.ep_emul == EMUL_LINUX) {
+		char **envp_loc = cpp, **stk = (char **) stack;
+
+		if (copyout(&envp_loc, &stk[2], sizeof (envp_loc)))
+			goto exec_abort;
+	}
+#endif
 
 	arginfo.ps_envstr = dp;	/* remember location of envp for later */
 	for (; --envc >= 0; sp += len, dp += len) {
