@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.12 1997/09/15 12:42:54 lukem Exp $	*/
+/*	$NetBSD: dump.h,v 1.13 1997/09/16 06:41:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dump.h	8.1 (Berkeley) 6/5/93
+ *	@(#)dump.h	8.2 (Berkeley) 4/28/95
  */
 
 #define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))

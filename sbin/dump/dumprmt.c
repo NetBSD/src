@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.18 1997/09/15 07:58:03 lukem Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.19 1997/09/16 06:41:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.18 1997/09/15 07:58:03 lukem Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.19 1997/09/16 06:41:20 lukem Exp $");
 #endif
 #endif /* not lint */
 

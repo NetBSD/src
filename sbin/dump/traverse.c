@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.18 1997/09/15 07:58:09 lukem Exp $	*/
+/*	$NetBSD: traverse.c,v 1.19 1997/09/16 06:41:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
+static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.18 1997/09/15 07:58:09 lukem Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.19 1997/09/16 06:41:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,9 @@ __RCSID("$NetBSD: traverse.c,v 1.18 1997/09/15 07:58:09 lukem Exp $");
 #include <ufs/fsdir.h>
 #include <ufs/inode.h>
 #else
-#include <ufs/ffs/fs.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
 #endif
 
 #include <protocols/dumprestore.h>
@@ -460,7 +460,7 @@ dumpino(dp, ino)
 			spcl.c_addr[0] = 1;
 			spcl.c_count = 1;
 			writeheader(ino);
-			memcpy(buf, dp->di_shortlink, (u_long)dp->di_size);
+			memmove(buf, dp->di_shortlink, (u_long)dp->di_size);
 			buf[dp->di_size] = '\0';
 			writerec(buf, 0);
 			return;

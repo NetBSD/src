@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.13 1997/09/15 12:42:55 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.14 1997/09/16 06:41:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
+static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.13 1997/09/15 12:42:55 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.14 1997/09/16 06:41:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,8 @@ __RCSID("$NetBSD: tape.c,v 1.13 1997/09/15 12:42:55 lukem Exp $");
 #include <ufs/fs.h>
 #include <ufs/inode.h>
 #else
-#include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
 #endif
 
 #include <protocols/dumprestore.h>
