@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.enc,v 1.1.1.1 2003/09/11 18:58:23 lukem Exp $
+#	$NetBSD: Makefile.enc,v 1.2 2003/09/12 19:00:16 lukem Exp $
 
 FILESDIR=	${X11FONTDIR}/${ENCDIR}
 .PATH:  	${X11SRCDIR.xc}/fonts/${ENCDIR}
@@ -26,6 +26,8 @@ afterinstall:
 	    rm -f encodings.dir ; \
 	    ${MKFONTDIR} -n -r -p ${X11FONTDIR}/${ENCDIR}/ -e . ${ENCARGS} . ; \
 	)
+.if ${MKUNPRIVED} != "no"
 	echo ".${FILESDIR}/encodings.dir type=file mode=0644 uname=root gname=wheel" \
 	    | ${METALOG.add}
+.endif
 
