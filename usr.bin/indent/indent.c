@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.8 1998/09/06 20:17:30 mellon Exp $	*/
+/*	$NetBSD: indent.c,v 1.9 1998/10/08 01:30:27 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\n\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.8 1998/09/06 20:17:30 mellon Exp $");
+__RCSID("$NetBSD: indent.c,v 1.9 1998/10/08 01:30:27 wsanchez Exp $");
 #endif
 #endif				/* not lint */
 
@@ -61,7 +61,9 @@ __RCSID("$NetBSD: indent.c,v 1.8 1998/09/06 20:17:30 mellon Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#define EXTERN
 #include "indent_globs.h"
+#undef  EXTERN
 #include "indent_codes.h"
 
 char   *in_name = "Standard Input";	/* will always point to name of input
