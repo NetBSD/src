@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.13 1997/06/08 06:34:52 thorpej Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.14 1997/06/08 22:15:34 thorpej Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -338,7 +338,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	}
 
 	if (rq->req_handle >= RQUEST_QUEUE_LEN) {
-		panic("%s: bad handle (%d) in isp_sbus_dmasetup\n",
+		panic("%s: bad handle (%d) in isp_pci_dmasetup\n",
 		    isp->isp_name, rq->req_handle);
 		/* NOTREACHED */
 	}
