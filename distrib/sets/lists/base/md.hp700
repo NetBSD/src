@@ -1,0 +1,5 @@
+# $NetBSD: md.hp700,v 1.1 2004/07/01 10:19:31 skrll Exp $
+./usr/mdec/boot				base-sysutil-bin
+./usr/mdec/mkboot			base-sysutil-bin
+./usr/mdec/sdboot			base-sysutil-bin
+./usr/mdec/xxboot			base-sysutil-bin
