@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.63 2003/07/02 20:07:46 ragge Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.64 2003/07/08 06:49:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -120,16 +120,15 @@ struct socket {
 	struct sockbuf	so_rcv;		/* receive buffer */
 
 	void		*so_internal;	/* Space for svr4 stream data */
-	void		(*so_upcall) __P((struct socket *so, caddr_t arg,
-					int waitf));
+	void		(*so_upcall) __P((struct socket *, caddr_t, int));
 	caddr_t		so_upcallarg;	/* Arg for above */
-	int		(*so_send) __P((struct socket *so, struct mbuf *addr,
-					struct uio *uio, struct mbuf *top,
-					struct mbuf *control, int flags));
-	int		(*so_receive) __P((struct socket *so,
-					struct mbuf **paddr,
-					struct uio *uio, struct mbuf **mp0,
-					struct mbuf **controlp, int *flagsp));
+	int		(*so_send) __P((struct socket *, struct mbuf *,
+					struct uio *, struct mbuf *,
+					struct mbuf *, int));
+	int		(*so_receive) __P((struct socket *,
+					struct mbuf **,
+					struct uio *, struct mbuf **,
+					struct mbuf **, int *));
 	struct mowner	*so_mowner;	/* who owns mbufs for this socket */
 	uid_t		so_uid;		/* who opened the socket */
 	struct mbuf	*so_pendfree;	/* loaned-page mbufs w/ frees pending */
@@ -273,70 +272,67 @@ struct knote;
 /*
  * File operations on sockets.
  */
-int	soo_read(struct file *fp, off_t *offset, struct uio *uio,
-	    struct ucred *cred, int flags);
-int	soo_write(struct file *fp, off_t *offset, struct uio *uio,
-	    struct ucred *cred, int flags);
-int	soo_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p);
-int	soo_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p);
-int	soo_poll(struct file *fp, int events, struct proc *p);
-int	soo_kqfilter(struct file *fp, struct knote *kn);
-int 	soo_close(struct file *fp, struct proc *p);
-int	soo_stat(struct file *fp, struct stat *ub, struct proc *p);
-int	uipc_usrreq(struct socket *, int , struct mbuf *,
+int	soo_read(struct file *, off_t *, struct uio *, struct ucred *, int);
+int	soo_write(struct file *, off_t *, struct uio *, struct ucred *, int);
+int	soo_fcntl(struct file *, u_int cmd, void *, struct proc *);
+int	soo_ioctl(struct file *, u_long cmd, void *, struct proc *);
+int	soo_poll(struct file *, int, struct proc *);
+int	soo_kqfilter(struct file *, struct knote *);
+int 	soo_close(struct file *, struct proc *);
+int	soo_stat(struct file *, struct stat *, struct proc *);
+int	uipc_usrreq(struct socket *, int, struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct proc *);
 int	uipc_ctloutput(int, struct socket *, int, int, struct mbuf **);
-void	sbappend(struct sockbuf *sb, struct mbuf *m);
-void	sbappendstream(struct sockbuf *sb, struct mbuf *m);
-int	sbappendaddr(struct sockbuf *sb, struct sockaddr *asa,
-	    struct mbuf *m0, struct mbuf *control);
-int	sbappendcontrol(struct sockbuf *sb, struct mbuf *m0,
-	    struct mbuf *control);
-void	sbappendrecord(struct sockbuf *sb, struct mbuf *m0);
-void	sbcheck(struct sockbuf *sb);
-void	sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n);
+void	sbappend(struct sockbuf *, struct mbuf *);
+void	sbappendstream(struct sockbuf *, struct mbuf *);
+int	sbappendaddr(struct sockbuf *, struct sockaddr *, struct mbuf *,
+	    struct mbuf *);
+int	sbappendcontrol(struct sockbuf *, struct mbuf *, struct mbuf *);
+void	sbappendrecord(struct sockbuf *, struct mbuf *);
+void	sbcheck(struct sockbuf *);
+void	sbcompress(struct sockbuf *, struct mbuf *, struct mbuf *);
 struct mbuf *
-	sbcreatecontrol(caddr_t p, int size, int type, int level);
-void	sbdrop(struct sockbuf *sb, int len);
-void	sbdroprecord(struct sockbuf *sb);
-void	sbflush(struct sockbuf *sb);
-void	sbinsertoob(struct sockbuf *sb, struct mbuf *m0);
-void	sbrelease(struct sockbuf *sb);
-int	sbreserve(struct sockbuf *sb, u_long cc);
-int	sbwait(struct sockbuf *sb);
-int	sb_lock(struct sockbuf *sb);
+	sbcreatecontrol(caddr_t, int, int, int);
+void	sbdrop(struct sockbuf *, int);
+void	sbdroprecord(struct sockbuf *);
+void	sbflush(struct sockbuf *);
+void	sbinsertoob(struct sockbuf *, struct mbuf *);
+void	sbrelease(struct sockbuf *);
+int	sbreserve(struct sockbuf *, u_long);
+int	sbwait(struct sockbuf *);
+int	sb_lock(struct sockbuf *);
 void	soinit(void);
-int	soabort(struct socket *so);
-int	soaccept(struct socket *so, struct mbuf *nam);
-int	sobind(struct socket *so, struct mbuf *nam, struct proc *);
-void	socantrcvmore(struct socket *so);
-void	socantsendmore(struct socket *so);
-int	soclose(struct socket *so);
-int	soconnect(struct socket *so, struct mbuf *nam);
-int	soconnect2(struct socket *so1, struct socket *so2);
-int	socreate(int dom, struct socket **aso, int type, int proto);
-int	sodisconnect(struct socket *so);
-void	sofree(struct socket *so);
-int	sogetopt(struct socket *so, int level, int optname, struct mbuf **mp);
-void	sohasoutofband(struct socket *so);
-void	soisconnected(struct socket *so);
-void	soisconnecting(struct socket *so);
-void	soisdisconnected(struct socket *so);
-void	soisdisconnecting(struct socket *so);
-int	solisten(struct socket *so, int backlog);
+int	soabort(struct socket *);
+int	soaccept(struct socket *, struct mbuf *);
+int	sobind(struct socket *, struct mbuf *, struct proc *);
+void	socantrcvmore(struct socket *);
+void	socantsendmore(struct socket *);
+int	soclose(struct socket *);
+int	soconnect(struct socket *, struct mbuf *);
+int	soconnect2(struct socket *, struct socket *);
+int	socreate(int, struct socket **, int, int);
+int	sodisconnect(struct socket *);
+void	sofree(struct socket *);
+int	sogetopt(struct socket *, int, int, struct mbuf **);
+void	sohasoutofband(struct socket *);
+void	soisconnected(struct socket *);
+void	soisconnecting(struct socket *);
+void	soisdisconnected(struct socket *);
+void	soisdisconnecting(struct socket *);
+int	solisten(struct socket *, int);
 struct socket *
-	sonewconn1(struct socket *head, int connstatus);
-void	soqinsque(struct socket *head, struct socket *so, int q);
-int	soqremque(struct socket *so, int q);
-int	soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
-	    struct mbuf **mp0, struct mbuf **controlp, int *flagsp);
-int	soreserve(struct socket *so, u_long sndcc, u_long rcvcc);
-void	sorflush(struct socket *so);
-int	sosend(struct socket *so, struct mbuf *addr, struct uio *uio,
-	    struct mbuf *top, struct mbuf *control, int flags);
-int	sosetopt(struct socket *so, int level, int optname, struct mbuf *m0);
-int	soshutdown(struct socket *so, int how);
-void	sowakeup(struct socket *so, struct sockbuf *sb);
+	sonewconn1(struct socket *, int);
+void	soqinsque(struct socket *, struct socket *, int);
+int	soqremque(struct socket *, int);
+int	soreceive(struct socket *, struct mbuf **, struct uio *,
+	    struct mbuf **, struct mbuf **, int *);
+int	soreserve(struct socket *, u_long, u_long);
+void	sorflush(struct socket *);
+int	sosend(struct socket *, struct mbuf *, struct uio *,
+	    struct mbuf *, struct mbuf *, int);
+int	sosetopt(struct socket *, int, int, struct mbuf *);
+int	soshutdown(struct socket *, int);
+void	sowakeup(struct socket *, struct sockbuf *);
 int	sockargs(struct mbuf **, const void *, size_t, int);
 
 int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
