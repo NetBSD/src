@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.232 2000/06/05 11:34:07 kleink Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.233 2000/06/06 07:55:50 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.226 2000/06/05 11:33:35 kleink Exp 
+ *	NetBSD: pcidevs,v 1.227 2000/06/06 07:55:17 kleink Exp 
  */
 
 /*
@@ -943,6 +943,7 @@
 #define	PCI_PRODUCT_ESSTECH_SOLO1	0x1969		/* Solo-1 PCI AudioDrive */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO2E	0x1978		/* Maestro 2E PCI Audio Accelerator */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO3	0x1998		/* Maestro 3 PCI Audio Accelerator */
+#define	PCI_PRODUCT_ESSTECH_MAESTRO3MODEM	0x1999		/* Maestro 3 Modem */
 
 /* O2 Micro Inc */
 #define	PCI_PRODUCT_O2MICRO_OZ6832	0x6832		/* OZ6832 CardBus Controller */
