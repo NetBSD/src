@@ -1,4 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.7 1998/01/21 22:36:10 thorpej Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.8 1998/06/06 20:12:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,13 @@
 #define	SGMAP_ADDR_PTEIDX_SHIFT	13
 
 /*
- * An Alpha SGMAP's state information.
+ * An Alpha SGMAP's state information.  Nothing in the sgmap requires
+ * locking[*], with the exception of the extent map.  Locking of the
+ * extent map is handled within the extent manager itself.
+ *
+ * [*] While the page table is a `global' resource, access to it is
+ * controlled by the extent map; once a region has been allocated from
+ * the map, that region is effectively `locked'.
  */
 struct alpha_sgmap {
 	struct extent *aps_ex;		/* extent map to manage sgva space */
