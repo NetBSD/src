@@ -49,4 +49,4 @@ struct sysconf_header {
 
 /* Message types... */
 #define	NETWORK_LOCATION_CHANGED	1
-
+#define RELEASE_CURRENT_DHCP_LEASES	2
