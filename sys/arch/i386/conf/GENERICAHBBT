@@ -1,5 +1,5 @@
 #
-# GENERICISA -- Generic ISA machine -- distribution floppy
+# GENERICISA -- Generic ISA machine with aha1742 -- distribution floppy
 #
 
 machine		"i386"
@@ -25,7 +25,7 @@ controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
 disk		fd0	at fdc0 drive 0
 disk		fd1	at fdc0 drive 1
 
-controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
+controller	ahb0	at isa? bio irq 12 vector ahbintr
 controller	bt0	at isa? port "IO_BT0" bio irq 12  vector btintr
 controller	uha0	at isa? port "IO_UHA0" bio irq 11 drq 5 vector uhaintr
 
