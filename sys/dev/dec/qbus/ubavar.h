@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.19 1998/01/12 20:52:52 thorpej Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.20 1998/10/18 18:51:30 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -107,10 +107,6 @@ struct	uba_softc {
 
 #define	UAMSIZ	100
 
-/* given a pointer to uba_regs, find DWBUA registers */
-/* this should be replaced with a union in uba_softc */
-#define	BUA(uba)	((struct dwbua_regs *)(uba))
-
 /*
  * Per-controller structure.
  * The unit struct is common to both the adapter and the controller
@@ -180,12 +176,14 @@ struct ubinfo {
 #define	ubago(ui)	ubaqueue(ui)
 #define b_forw  b_hash.le_next	/* Nice to have when handling uba queues */
 
+void	uba_attach __P((struct uba_softc *, unsigned long));
 void    ubasetvec __P((struct device *, int, void (*) __P((int))));
 int	uballoc __P((struct uba_softc *, caddr_t, int, int));
 void	ubarelse __P((struct uba_softc *, int *));
 int	ubaqueue __P((struct uba_unit *, struct buf *));
 void	ubadone __P((struct uba_unit *));
 void	ubareset __P((int));
+int	ubasetup __P((struct uba_softc *, struct buf *, int));
 
 #endif /* _KERNEL */
 #endif !_LOCORE
