@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.352 2001/06/28 23:04:38 itojun Exp $
+#	$NetBSD: mi,v 1.353 2001/06/30 21:24:06 tron Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -169,6 +169,7 @@
 ./usr/include/dev/sun/disklabel.h		comp-c-include
 ./usr/include/dev/sun/fbio.h		comp-c-include
 ./usr/include/dev/tc			comp-c-include
+./usr/include/dev/tc/sfbreg.h		comp-c-include
 ./usr/include/dev/tc/sticreg.h		comp-c-include
 ./usr/include/dev/tc/sticvar.h		comp-c-include
 ./usr/include/dev/usb			comp-c-include
