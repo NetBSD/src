@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.1.2.2 1998/12/27 14:13:04 minoura Exp $	*/
+/*	$NetBSD: mfp.c,v 1.1.2.3 1998/12/27 15:14:31 minoura Exp $	*/
 
 /*
  *
@@ -95,23 +95,23 @@ mfp_attach(parent, self, aux)
 {
 	struct mfp_softc *sc = (struct mfp_softc *)self;
 	struct intio_attach_args *ia = aux;
-	int r;
-
-	ia->ia_size = 0x30;
-	r = intio_map_allocate_region (parent, ia, INTIO_MAP_ALLOCATE);
-#ifdef DIAGNOSTIC
-	if (r)
-		panic ("IO map for MFP corruption??");
-#endif
 
 	mfp_init ();
 
 	if (sc != NULL) {
 		/* realconfig */
+		int r;
+
 		printf ("\n");
 
 		sc->sc_bst = ia->ia_bst;
 		sc->sc_intr = ia->ia_intr;
+		ia->ia_size = 0x30;
+		r = intio_map_allocate_region (parent, ia, INTIO_MAP_ALLOCATE);
+#ifdef DIAGNOSTIC
+		if (r)
+			panic ("IO map for MFP corruption??");
+#endif
 		bus_space_map(ia->ia_bst, ia->ia_addr, 0x2000, 0, &sc->sc_bht);
 		config_found (self, "kbd", NULL);
 		config_found (self, "clock", NULL);
