@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.91 1999/03/26 23:41:35 mycroft Exp $ */
+/*	$NetBSD: cpu.c,v 1.92 1999/03/31 14:09:09 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -62,6 +62,7 @@
 #include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -255,7 +256,12 @@ static	int cpu_number;
 	int node, mid;
 
 	node = ma->ma_node;
+
+#if defined(MULTIPROCESSOR)
+	mid = (node != 0) ? getpropint(node, "mid", 0) : 0;
+#else
 	mid = 0;
+#endif
 
 	/*
 	 * First, find out if we're attaching the boot CPU.
@@ -272,7 +278,6 @@ static	int cpu_number;
 		/* Note: `curpcb' is set to `proc0' in locore */
 	} else {
 #if defined(MULTIPROCESSOR)
-		mid = getpropint(node, "mid", 0);
 		cpi = sc->sc_cpuinfo = alloc_cpuinfo();
 		cpi->curpcb = cpi->idle_u;
 		/* Note: `idle_u' and `eintstack' are set in alloc_cpuinfo() */
