@@ -1,23 +1,12 @@
-/*-
- * This code is derived from software copyrighted by the Free Software
- * Foundation.
- *
- * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
- */
-
-#ifndef lint
-static char sccsid[] = "@(#)groff.cc	6.5 (Berkeley) 5/8/91";
-#endif /* not lint */
-
 // -*- C++ -*-
-/* Copyright (C) 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -26,140 +15,46 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
-// A C++ implementation of groff.sh.
+// A front end for groff.
 
 #include <stdio.h>
 #include <string.h>
-#include <osfcn.h>
 #include <stdlib.h>
-#ifdef HAVE_SYS_SIGLIST
 #include <signal.h>
-#endif /* HAVE_SYS_SIGLIST */
+#include <errno.h>
 
 #include "lib.h"
 #include "assert.h"
 #include "errarg.h"
 #include "error.h"
 #include "stringclass.h"
+#include "cset.h"
 #include "font.h"
+#include "device.h"
+#include "pipeline.h"
+#include "defs.h"
+
+#define BSHELL "/bin/sh"
+#define GXDITVIEW "gxditview"
+
+// troff will be passed an argument of -rXREG=1 if the -X option is
+// specified
+#define XREG ".X"
+
+#ifndef STDLIB_H_DECLARES_PUTENV
+extern "C" {
+  int putenv(const char *);
+}
+#endif /* not STDLIB_H_DECLARES_PUTENV */
 
 const char *strsignal(int);
 
-// HAVE_UNION_WAIT exists only because Sun's osfcn.h includes sys/wait.h.
-
-extern "C" {
-#ifdef HAVE_UNION_WAIT
-  int wait(union wait *);
-#else /* !HAVE_UNION_WAIT */
-  int wait(int *);
-#endif /* !HAVE_UNION_WAIT */
-}
-
-#ifndef DEVICE
-#define DEVICE "ps"
-#endif
-
-#ifndef PSPRINT
-#define PSPRINT "lpr",
-#endif /* !PSPRINT */
-
-#ifndef DVIPRINT
-#define DVIPRINT "lpr", "-d",
-#endif /* !DVIPRINT */
-
-const char *ps_print[] = { PSPRINT 0 };
-
-const char *dvi_print[] = { DVIPRINT 0 };
-
-const char *grops[] = { "grops", 0 };
-const char *grotty[] = { "grotty", 0 };
-const char *grodvi[] = { "grodvi", 0 };
-const char *gxditview[] = { "gxditview", "-", 0 };
-
-struct {
-  const char *name;	    // Name of the device.
-  const char *description;  // Description of device (used in help message).
-  const char **driver;	    // Driver argument vector.
-  unsigned flags;	    // Bitwise OR of 
-#define EQN_D_OPTION 01	    /* Add -D option to eqn. */
-#define PIC_X_OPTION 02	    /* Add -x option to pic. */
-#define PIC_P_OPTION 04	    /* Add -p option to pic. */
-#define GROFF_OPTIONS 010   /* Driver understands -F and -v options. */
-#define XT_OPTION 020	    /* Driver understands -title and -xrm options. */
-  const char *macro_file;   // -m option to pass to troff
-  const char **spooler;	    // Spooler argument vector.
-} device_table[] = {
-  {
-    "ps",
-    "PostScript",
-    grops,
-    EQN_D_OPTION|PIC_X_OPTION|PIC_P_OPTION|GROFF_OPTIONS,
-    "ps",
-    ps_print,
-    },
-  {
-    "ascii",
-    "ASCII",
-    grotty,
-    GROFF_OPTIONS,
-    "tty",
-    0
-    },
-  {
-    "latin1",
-    "ISO Latin-1",
-    grotty,
-    GROFF_OPTIONS,
-    "tty",
-    0
-    },
-  {
-    "dvi",
-    "TeX dvi format",
-    grodvi,
-    GROFF_OPTIONS|PIC_X_OPTION,
-    "dvi",
-    dvi_print,
-    },
-  {
-    "X100",
-    "X11 previewer at 100dpi",
-    gxditview,
-    EQN_D_OPTION|PIC_X_OPTION|XT_OPTION,
-    "X",
-    0
-    },
-  {
-    "X75",
-    "X11 previewer at 75dpi",
-    gxditview,
-    EQN_D_OPTION|PIC_X_OPTION|XT_OPTION,
-    "X",
-    0
-    },
-  {
-    "X100-12",
-    "X11 previewer at 100dpi (optimized for 12 point text)",
-    gxditview,
-    EQN_D_OPTION|PIC_X_OPTION|XT_OPTION,
-    "X",
-    0
-    },
-  {
-    "X75-12",
-    "X11 previewer at 75dpi (optimized for 12 point text)",
-    gxditview,
-    EQN_D_OPTION|PIC_X_OPTION|XT_OPTION,
-    "X",
-    0
-    },
-};
-
 const int SOELIM_INDEX = 0;
-const int PIC_INDEX = SOELIM_INDEX + 1;
+const int REFER_INDEX = SOELIM_INDEX + 1;
+const int PIC_INDEX = REFER_INDEX + 1;
 const int TBL_INDEX = PIC_INDEX + 1;
 const int EQN_INDEX = TBL_INDEX + 1;
 const int TROFF_INDEX = EQN_INDEX + 1;
@@ -168,55 +63,58 @@ const int SPOOL_INDEX = POST_INDEX + 1;
 
 const int NCOMMANDS = SPOOL_INDEX + 1;
 
-// Children exit with this status if the execvp failed.
-const int EXEC_FAILED_EXIT_STATUS = 0xff;
-
 class possible_command {
   char *name;
   string args;
   char **argv;
-public:
-  int pid;
 
+  void build_argv();
+public:
   possible_command();
   ~possible_command();
   void set_name(const char *);
+  void set_name(const char *, const char *);
   const char *get_name();
   void append_arg(const char *, const char * = 0);
-  void execp();
   void clear_args();
-  void build_argv();
+  char **get_argv();
   void print(int is_last, FILE *fp);
 };
 
 int lflag = 0;
+char *spooler = 0;
+char *driver = 0;
 
 possible_command commands[NCOMMANDS];
 
 int run_commands();
 void print_commands();
+void append_arg_to_string(const char *arg, string &str);
+void handle_unknown_desc_command(const char *command, const char *arg,
+				 const char *filename, int lineno);
+const char *basename(const char *);
 
 void usage();
 void help();
-void devices();
-void sys_fatal(const char *);
 
 int main(int argc, char **argv)
 {
   program_name = argv[0];
   static char stderr_buf[BUFSIZ];
   setbuf(stderr, stderr_buf);
-  string Pargs, Largs;
+  assert(NCOMMANDS <= MAX_COMMANDS);
+  string Pargs, Largs, Fargs;
   int Vflag = 0;
   int zflag = 0;
   int iflag = 0;
+  int Xflag = 0;
   int opt;
-  const char *device = getenv("GROFF_TYPESETTER");
-  if (!device)
-    device = DEVICE;
-  commands[TROFF_INDEX].set_name("troff");
+  const char *command_prefix = getenv("GROFF_COMMAND_PREFIX");
+  if (!command_prefix)
+    command_prefix = PROG_PREFIX;
+  commands[TROFF_INDEX].set_name(command_prefix, "troff");
   while ((opt = getopt(argc, argv,
-		       "itpeszavVhblCENZH:F:m:T:f:w:W:M:d:r:n:o:P:L:"))
+		       "itpeRszavVhblCENXZF:m:T:f:w:W:M:d:r:n:o:P:L:"))
 	 != EOF) {
     char buf[3];
     buf[0] = '-';
@@ -227,16 +125,19 @@ int main(int argc, char **argv)
       iflag = 1;
       break;
     case 't':
-      commands[TBL_INDEX].set_name("tbl");
+      commands[TBL_INDEX].set_name(command_prefix, "tbl");
       break;
     case 'p':
-      commands[PIC_INDEX].set_name("pic");
+      commands[PIC_INDEX].set_name(command_prefix, "pic");
       break;
     case 'e':
-      commands[EQN_INDEX].set_name("eqn");
+      commands[EQN_INDEX].set_name(command_prefix, "eqn");
       break;
     case 's':
-      commands[SOELIM_INDEX].set_name("soelim");
+      commands[SOELIM_INDEX].set_name(command_prefix, "soelim");
+      break;
+    case 'R':
+      commands[REFER_INDEX].set_name(command_prefix, "refer");
       break;
     case 'z':
     case 'a':
@@ -252,8 +153,6 @@ int main(int argc, char **argv)
       Vflag++;
       break;
     case 'v':
-      commands[POST_INDEX].append_arg(buf);
-      // fall through
     case 'C':
       commands[SOELIM_INDEX].append_arg(buf);
       commands[PIC_INDEX].append_arg(buf);
@@ -272,22 +171,35 @@ int main(int argc, char **argv)
       commands[TROFF_INDEX].append_arg(buf);
       break;
     case 'T':
-      device = optarg;
+      if (strcmp(optarg, "Xps") == 0) {
+	warning("-TXps option is obsolete: use -X -Tps instead");
+	device = "ps";
+	Xflag++;
+      }
+      else
+	device = optarg;
       break;
     case 'F':
       font::command_line_font_dir(optarg);
-      commands[POST_INDEX].append_arg(buf, optarg);
-      // fall through
+      if (Fargs.length() > 0) {
+	Fargs += ':';
+	Fargs += optarg;
+      }
+      else
+	Fargs = optarg;
+      break;
     case 'f':
     case 'o':
     case 'm':
     case 'r':
-    case 'M':
-    case 'H':
     case 'd':
     case 'n':
     case 'w':
     case 'W':
+      commands[TROFF_INDEX].append_arg(buf, optarg);
+      break;
+    case 'M':
+      commands[EQN_INDEX].append_arg(buf, optarg);
       commands[TROFF_INDEX].append_arg(buf, optarg);
       break;
     case 'P':
@@ -295,8 +207,10 @@ int main(int argc, char **argv)
       Pargs += '\0';
       break;
     case 'L':
-      Largs += optarg;
-      Largs += '\0';
+      append_arg_to_string(optarg, Largs);
+      break;
+    case 'X':
+      Xflag++;
       break;
     case '?':
       usage();
@@ -306,31 +220,44 @@ int main(int argc, char **argv)
       break;
     }
   }
-  int found = 0;
-  for (int device_index = 0;
-       device_index < sizeof(device_table)/sizeof(device_table[0]);
-       device_index++)
-    if (strcmp(device, device_table[device_index].name) == 0) {
-      found = 1;
-      break;
-    }
-  if (!found) {
-    error("unknown device `%1'", device);
-    devices();
-    exit(1);
+  font::set_unknown_desc_command_handler(handle_unknown_desc_command);
+  if (!font::load_desc())
+    fatal("invalid device `%1'", device);
+  if (!driver)
+    fatal("no `postpro' command in DESC file for device `%1'", device);
+  const char *real_driver = 0;
+  if (Xflag) {
+    real_driver = driver;
+    driver = GXDITVIEW;
+    commands[TROFF_INDEX].append_arg("-r" XREG "=", "1");
   }
-  if (device_table[device_index].macro_file != 0)
-    commands[TROFF_INDEX].append_arg("-m",
-				     device_table[device_index].macro_file);
-  commands[POST_INDEX].set_name(device_table[device_index].driver[0]);
-  if (!(device_table[device_index].flags & GROFF_OPTIONS))
-    commands[POST_INDEX].clear_args();
-  if ((device_table[device_index].flags & XT_OPTION)
-      && argc - optind == 1) {
+  if (driver)
+    commands[POST_INDEX].set_name(driver);
+  int gxditview_flag = driver && strcmp(basename(driver), GXDITVIEW) == 0;
+  if (gxditview_flag && argc - optind == 1) {
     commands[POST_INDEX].append_arg("-title");
     commands[POST_INDEX].append_arg(argv[optind]);
     commands[POST_INDEX].append_arg("-xrm");
     commands[POST_INDEX].append_arg("*iconName:", argv[optind]);
+    string filename_string("|");
+    append_arg_to_string(argv[0], filename_string);
+    append_arg_to_string("-Z", filename_string);
+    for (int i = 1; i < argc; i++)
+      append_arg_to_string(argv[i], filename_string);
+    filename_string += '\0';
+    commands[POST_INDEX].append_arg("-filename");
+    commands[POST_INDEX].append_arg(filename_string.contents());
+  }
+  if (gxditview_flag && Xflag) {
+    string print_string(real_driver);
+    if (spooler) {
+      print_string += " | ";
+      print_string += spooler;
+      print_string += Largs;
+    }
+    print_string += '\0';
+    commands[POST_INDEX].append_arg("-printCommand");
+    commands[POST_INDEX].append_arg(print_string.contents());
   }
   const char *p = Pargs.contents();
   const char *end = p + Pargs.length();
@@ -338,65 +265,86 @@ int main(int argc, char **argv)
     commands[POST_INDEX].append_arg(p);
     p = strchr(p, '\0') + 1;
   }
-  int i;
-  for (i = 1; device_table[device_index].driver[i]; i++)
-    commands[POST_INDEX].append_arg(device_table[device_index].driver[i]);
-  if (device_table[device_index].flags & PIC_X_OPTION)
-    commands[PIC_INDEX].append_arg("-x");
-  if (device_table[device_index].flags & PIC_P_OPTION)
-    commands[PIC_INDEX].append_arg("-p");
-  if (device_table[device_index].flags & EQN_D_OPTION)
-    commands[EQN_INDEX].append_arg("-D");
-  if (lflag && device_table[device_index].spooler) {
-    commands[SPOOL_INDEX].set_name(device_table[device_index].spooler[0]);
-    p = Largs.contents();
-    end = p + Largs.length();
-    while (p < end) {
-      commands[SPOOL_INDEX].append_arg(p);
-      p = strchr(p, '\0') + 1;
-    }
-    for (i = 1; device_table[device_index].spooler[i]; i++)
-      commands[SPOOL_INDEX].append_arg(device_table[device_index].spooler[i]);
+  if (gxditview_flag)
+    commands[POST_INDEX].append_arg("-");
+  if (lflag && !Xflag && spooler) {
+    commands[SPOOL_INDEX].set_name(BSHELL);
+    commands[SPOOL_INDEX].append_arg("-c");
+    Largs += '\0';
+    Largs = spooler + Largs;
+    commands[SPOOL_INDEX].append_arg(Largs.contents());
   }
   if (zflag) {
     commands[POST_INDEX].set_name(0);
     commands[SPOOL_INDEX].set_name(0);
   }
   commands[TROFF_INDEX].append_arg("-T", device);
-  int have_eqnchar = 0;
-  if (commands[EQN_INDEX].get_name() != 0) {
-    commands[EQN_INDEX].append_arg("-T", device);
-    font::set_device_name(device);
-    char *path = 0;
-    FILE *fp = font::open_file("eqnchar", &path);
-    if (fp) {
-      fclose(fp);
-      if (path[0] == '-' && path[1] != '\0')
-	commands[EQN_INDEX].append_arg("--");
-      commands[EQN_INDEX].append_arg(path);
-      delete path;
-      have_eqnchar = 1;
-    }
-  }
+  commands[EQN_INDEX].append_arg("-T", device);
+
   for (int first_index = 0; first_index < TROFF_INDEX; first_index++)
     if (commands[first_index].get_name() != 0)
       break;
   if (optind < argc) {
-    if (argv[optind][0] == '-' && argv[optind][1] != '\0'
-	&& (!have_eqnchar || first_index != EQN_INDEX))
+    if (argv[optind][0] == '-' && argv[optind][1] != '\0')
       commands[first_index].append_arg("--");
-    for (i = optind; i < argc; i++)
+    for (int i = optind; i < argc; i++)
       commands[first_index].append_arg(argv[i]);
     if (iflag)
       commands[first_index].append_arg("-");
   }
-  if (have_eqnchar && (first_index != EQN_INDEX || optind >= argc))
-    commands[EQN_INDEX].append_arg("-");
+  if (Fargs.length() > 0) {
+    string e = "GROFF_FONT_PATH";
+    e += '=';
+    e += Fargs;
+    char *fontpath = getenv("GROFF_FONT_PATH");
+    if (fontpath && *fontpath) {
+      e += ':';
+      e += fontpath;
+    }
+    e += '\0';
+    if (putenv(strsave(e.contents())))
+      fatal("putenv failed");
+  }
   if (Vflag) {
     print_commands();
     exit(0);
   }
   exit(run_commands());
+}
+
+const char *basename(const char *s)
+{
+  if (!s)
+    return 0;
+  const char *p = strrchr(s, '/');
+  return p ? p + 1 : s;
+}
+
+void handle_unknown_desc_command(const char *command, const char *arg,
+				 const char *filename, int lineno)
+{
+  if (strcmp(command, "print") == 0) {
+    if (arg == 0)
+      error_with_file_and_line(filename, lineno,
+			       "`print' command requires an argument");
+    else
+      spooler = strsave(arg);
+  }
+  if (strcmp(command, "postpro") == 0) {
+    if (arg == 0)
+      error_with_file_and_line(filename, lineno,
+			       "`postpro' command requires an argument");
+    else {
+      for (const char *p = arg; *p; p++)
+	if (csspace(*p)) {
+	  error_with_file_and_line(filename, lineno,
+				   "invalid `postpro' argument `%1'"
+				   ": program name required", arg);
+	  return;
+	}
+      driver = strsave(arg);
+    }
+  }
 }
 
 void print_commands()
@@ -413,112 +361,37 @@ void print_commands()
 
 int run_commands()
 {
-  for (int last = SPOOL_INDEX; last >= 0; last--)
-    if (commands[last].get_name() != 0)
-      break;
-  int last_input = 0;
-  int proc_count = 0;
-  for (int i = 0; i <= last; i++)
-    if (commands[i].get_name() != 0) {
-      proc_count++;
-      int pdes[2];
-      if (i != last) {
-	if (pipe(pdes) < 0)
-	  sys_fatal("pipe");
-      }
-#ifdef HAVE_VFORK
-      int pid = vfork();
-      if (pid < 0)
-	sys_fatal("vfork");
-#else /* !HAVE_VFORK */
-      int pid = fork();
-      if (pid < 0)
-	sys_fatal("fork");
-#endif /* !HAVE_VFORK */
-      if (pid == 0) {
-	// child
-	if (last_input != 0) {
-	  if (close(0) < 0)
-	    sys_fatal("close");
-	  if (dup(last_input) < 0)
-	    sys_fatal("dup");
-	  if (close(last_input) < 0)
-	    sys_fatal("close");
-	}
-	if (i != last) {
-	  if (close(1) < 0)
-	    sys_fatal("close");
-	  if (dup(pdes[1]) < 0)
-	    sys_fatal("dup");
-	  if (close(pdes[1]) < 0)
-	    sys_fatal("close");
-	  if (close(pdes[0]))
-	    sys_fatal("close");
-	}
-	commands[i].execp();
-      }
-      // in the parent
-      if (last_input != 0) {
-	if (close(last_input) < 0)
-	  sys_fatal("close");
-      }
-      if (i != last) {
-	if (close(pdes[1]) < 0)
-	  sys_fatal("close");
-	last_input = pdes[0];
-      }
-      commands[i].pid = pid;
-    }
-  int ret = 0;
-  while (proc_count > 0) {
-    int status;
-#ifdef HAVE_UNION_WAIT
-    // union wait is just syntactic sugar: it's really just an int.
-    int pid = wait((union wait *)&status);
-#else /* !HAVE_UNION_WAIT */
-    int pid = wait(&status);
-#endif /* !HAVE_UNION_WAIT */
-    if (pid < 0)
-      sys_fatal("wait");
-    for (i = 0; i < NCOMMANDS; i++)
-      if (commands[i].pid == pid) {
-	--proc_count;
-	if ((status & 0xffff) != 0) {
-	  if ((status & 0xff) != 0) {
-	    error("%1: %2%3",
-		  commands[i].get_name(),
-		  strsignal(status & 0x7f),
-		  (status & 0x80) ? " (core dumped)" : "");
-	    ret |= 2;
-	  }
-	  else {
-	    int exit_status = (status >> 8) & 0xff;
-	    if (exit_status == EXEC_FAILED_EXIT_STATUS)
-	      ret |= 4;
-	    else if (exit_status != 0)
-	      ret |= 1;
-	  }
-	}
-	break;
-      }
-  }
-  return ret;
+  char **v[NCOMMANDS];
+  int j = 0;
+  for (int i = 0; i < NCOMMANDS; i++)
+    if (commands[i].get_name() != 0)
+      v[j++] = commands[i].get_argv();
+  return run_pipeline(j, v);
 }
 
 possible_command::possible_command()
-: pid(-1), name(0), argv(0)
+: name(0), argv(0)
 {
 }
 
 possible_command::~possible_command()
 {
-  delete name;
-  delete argv;
+  a_delete name;
+  a_delete argv;
 }
 
 void possible_command::set_name(const char *s)
 {
+  a_delete name;
   name = strsave(s);
+}
+
+void possible_command::set_name(const char *s1, const char *s2)
+{
+  a_delete name;
+  name = new char[strlen(s1) + strlen(s2) + 1];
+  strcpy(name, s1);
+  strcat(name, s2);
 }
 
 const char *possible_command::get_name()
@@ -541,6 +414,8 @@ void possible_command::append_arg(const char *s, const char *t)
 
 void possible_command::build_argv()
 {
+  if (argv)
+    return;
   // Count the number of arguments.
   int len = args.length();
   int argc = 1;
@@ -564,52 +439,18 @@ void possible_command::build_argv()
 void possible_command::print(int is_last, FILE *fp)
 {
   build_argv();
-  fputs(argv[0], fp);
-  for (int i = 1; argv[i] != 0; i++) {
-    int needs_quoting = 0;
-    int contains_single_quote = 0;
-    for (const char *p = argv[i]; *p != '\0'; p++)
-      switch (*p) {
-      case ';':
-      case '&':
-      case '(':
-      case ')':
-      case '|':
-      case '^':
-      case '<':
-      case '>':
-      case '\n':
-      case ' ':
-      case '\t':
-      case '\\':
-      case '"':
-      case '$':
-	needs_quoting = 1;
-	break;
-      case '\'':
-	contains_single_quote = 1;
-	break;
-      }
-    if (contains_single_quote || argv[i][0] == '\0') {
-      putc(' ', fp);
-      putc('"', fp);
-      for (p = argv[i]; *p != '\0'; p++)
-	switch (*p) {
-	case '"':
-	case '\\':
-	case '$':
-	  putc('\\', fp);
-	  // fall through
-	default:
-	  putc(*p, fp);
-	  break;
-	}
-      putc('"', fp);
+  if (argv[0] != 0 && strcmp(argv[0], BSHELL) == 0
+      && argv[1] != 0 && strcmp(argv[1], "-c") == 0
+      && argv[2] != 0 && argv[3] == 0)
+    fputs(argv[2], fp);
+  else {
+    fputs(argv[0], fp);
+    string str;
+    for (int i = 1; argv[i] != 0; i++) {
+      str.clear();
+      append_arg_to_string(argv[i], str);
+      put_string(str, fp);
     }
-    else if (needs_quoting)
-      fprintf(fp, " '%s'", argv[i]);
-    else
-      fprintf(fp, " %s", argv[i]);
   }
   if (is_last)
     putc('\n', fp);
@@ -617,35 +458,72 @@ void possible_command::print(int is_last, FILE *fp)
     fputs(" | ", fp);
 }
 
-void possible_command::execp()
+void append_arg_to_string(const char *arg, string &str)
+{
+  str += ' ';
+  int needs_quoting = 0;
+  int contains_single_quote = 0;
+  for (const char *p = arg; *p != '\0'; p++)
+    switch (*p) {
+    case ';':
+    case '&':
+    case '(':
+    case ')':
+    case '|':
+    case '^':
+    case '<':
+    case '>':
+    case '\n':
+    case ' ':
+    case '\t':
+    case '\\':
+    case '"':
+    case '$':
+    case '?':
+    case '*':
+      needs_quoting = 1;
+      break;
+    case '\'':
+      contains_single_quote = 1;
+      break;
+    }
+  if (contains_single_quote || arg[0] == '\0') {
+    str += '"';
+    for (p = arg; *p != '\0'; p++)
+      switch (*p) {
+      case '"':
+      case '\\':
+      case '$':
+	str += '\\';
+	// fall through
+      default:
+	str += *p;
+	break;
+      }
+    str += '"';
+  }
+  else if (needs_quoting) {
+    str += '\'';
+    str += arg;
+    str += '\'';
+  }
+  else
+    str += arg;
+}
+
+char **possible_command::get_argv()
 {
   build_argv();
-  execvp(name, argv);
-  error("couldn't exec %1: %2", name, strerror(errno));
-#ifdef HAVE_VFORK
-  // vfork(2) says not to call exit when execve fails after vforking.
-  _exit(EXEC_FAILED_EXIT_STATUS);
-#else
-  exit(EXEC_FAILED_EXIT_STATUS);
-#endif
+  return argv;
 }
 
 void synopsis()
 {
   fprintf(stderr,
-"usage: %s [-abehilpstvzCENVZ] [-Hfile] [-Fdir] [-mname] [-Tdev] [-ffam]\n"
-"       [-wname] [-Wname] [ -Mdir] [-dcs] [-rcn] [-nnum] [-olist] [-Parg]\n"
-"       [-Larg] [files...]\n",
+"usage: %s [-abehilpstvzCENRVXZ] [-Fdir] [-mname] [-Tdev] [-ffam] [-wname]\n"
+"       [-Wname] [ -Mdir] [-dcs] [-rcn] [-nnum] [-olist] [-Parg] [-Larg]\n"
+"       [files...]\n",
 	  program_name);
-}
-
-void devices()
-{
-  fputs("Available devices are:\n", stderr);
-  for (int i = 0; i < sizeof(device_table)/sizeof(device_table[0]); i++)
-    fprintf(stderr, "%s\t%s\n",
-	    device_table[i].name,
-	    device_table[i].description);
 }
 
 void help()
@@ -657,7 +535,9 @@ void help()
 "-p\tpreprocess with pic\n"
 "-e\tpreprocess with eqn\n"
 "-s\tpreprocess with soelim\n"
+"-R\tpreprocess with refer\n"
 "-Tdev\tuse device dev\n"
+"-X\tuse X11 previewer rather than usual postprocessor\n"
 "-mname\tread macros tmac.name\n"
 "-dcs\tdefine a string c as s\n"
 "-rcn\tdefine a number register c as n\n"
@@ -666,7 +546,6 @@ void help()
 "-ffam\tuse fam as the default font family\n"
 "-Fdir\tsearch directory dir for device directories\n"
 "-Mdir\tsearch dir for macro files\n"
-"-Hfile\tread hyphenation patterns from file\n"
 "-v\tprint version number\n"
 "-z\tsuppress formatted output\n"
 "-Z\tdon't postprocess\n"
@@ -684,7 +563,6 @@ void help()
 "-N\tdon't allow newlines within eqn delimiters\n"
 "\n",
 	stderr);
-  devices();
   exit(0);
 }
 
@@ -695,24 +573,18 @@ void usage()
   exit(1);
 }
 
-void sys_fatal(const char *s)
+extern "C" {
+
+void c_error(const char *format, const char *arg1, const char *arg2,
+	     const char *arg3)
 {
-  fatal("%1: %2", s, strerror(errno));
+  error(format, arg1, arg2, arg3);
 }
 
-#ifdef HAVE_SYS_SIGLIST
-extern "C" {
-  extern char *sys_siglist[];
-}
-#endif /* HAVE_SYS_SIGLIST */
-  
-const char *strsignal(int n)
+void c_fatal(const char *format, const char *arg1, const char *arg2,
+	     const char *arg3)
 {
-  static char buf[sizeof("Signal ") + 1 + INT_DIGITS];
-#ifdef HAVE_SYS_SIGLIST
-  if (n >= 0 && n < NSIG && sys_siglist[n] != 0)
-    return sys_siglist[n];
-#endif /* HAVE_SYS_SIGLIST */
-  sprintf(buf, "Signal %d", n);
-  return buf;
+  fatal(format, arg1, arg2, arg3);
+}
+
 }
