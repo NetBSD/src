@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.79 2003/02/01 06:23:47 thorpej Exp $	*/
+/*	$NetBSD: nd6.c,v 1.80 2003/02/25 22:17:47 he Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.79 2003/02/01 06:23:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.80 2003/02/25 22:17:47 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,8 @@ static void nd6_setmtu0 __P((struct ifnet *, struct nd_ifinfo *));
 static void nd6_slowtimo __P((void *));
 static struct llinfo_nd6 *nd6_free __P((struct rtentry *, int));
 
-struct callout nd6_slowtimo_ch;
-struct callout nd6_timer_ch;
+struct callout nd6_slowtimo_ch = CALLOUT_INITIALIZER;
+struct callout nd6_timer_ch = CALLOUT_INITIALIZER;
 
 static int fill_drlist __P((void *, size_t *, size_t));
 static int fill_prlist __P((void *, size_t *, size_t));
