@@ -1,4 +1,4 @@
-.\" $NetBSD: pppoectl.8,v 1.5 2002/01/07 11:10:25 martin Exp $
+.\" $NetBSD: pppoectl.8,v 1.6 2002/01/09 20:20:54 martin Exp $
 .\" Copyright (C) 1997 by Joerg Wunsch, Dresden
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\" From: spppcontrol.1,v 1.1.1.1 1997/10/11 11:30:30 joerg Exp
 .\"
-.\" $Id: pppoectl.8,v 1.5 2002/01/07 11:10:25 martin Exp $
+.\" $Id: pppoectl.8,v 1.6 2002/01/09 20:20:54 martin Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
@@ -282,7 +282,9 @@ ifconfig pppoe0 0.0.0.0 0.0.0.1 up
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr i4bisppp 4 ,
-.Xr ifconfig 8
+.Xr pppoe 4 ,
+.Xr ifconfig 8 ,
+.Xr ifwatchd 8
 .Rs
 .%A B. Lloyd
 .%A W. Simpson
