@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 1999/06/18 08:54:28 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.15 1999/06/19 06:52:22 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -109,7 +109,15 @@ main(argc, argv)
 	
 
 	/* initialize message window */
-	win = newwin(22, 78, 1, 1);	/* XXX BOGUS XXX */
+	if (menu_init()) {
+		__menu_initerror();
+		exit(1);
+	}
+	/*
+	 * XXX the following is bogus.  if screen is too small, message
+	 * XXX window will be overwritten by menus.
+	 */
+	win = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr) - 2, 1, 1);
        	msg_window(win);
 
 	/* Watch for SIGINT and clean up */
