@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.6 2000/05/20 13:36:11 ragge Exp $
+#	$NetBSD: Makefile,v 1.7 2000/05/21 20:17:44 ragge Exp $
 
 S=	${.CURDIR}/../../../../
 
 PROG=	boot
 NOMAN=	1
 WARNS?=	1
-DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c
+DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c
 SRCS=	srt0.s boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.s \
 	urem.s udiv.s consio.c str.s ${DEVS} findcpu.c
 
