@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.11 2003/07/15 02:54:45 lukem Exp $	*/
+/*	$NetBSD: extintr.c,v 1.12 2004/06/01 00:49:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.11 2003/07/15 02:54:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.12 2004/06/01 00:49:41 matt Exp $");
 
 #include "opt_marvell.h"
 #include "opt_kgdb.h"
@@ -155,6 +155,8 @@ struct intrhand {
 #define	IH_ACTIVE	0x01
 
 struct intrsource intr_sources[NIRQ];
+
+struct intrhand *softnet_handlers[32];
 
 const char intr_source_strings[NIRQ][16] = {
 	"unknown 0",	"dev",		"dma",		"cpu",
@@ -269,23 +271,6 @@ cntlzw(int x)
 	return a;
 }
 
-static void
-xsoftnet(void *arg)
-{
-	int pendisr;
-	__asm __volatile(
-		"1:	lwarx   %0,0,%2\n"
-		"	stwcx.  %1,0,%2\n"
-		"	bne-    1b\n"
-		"	sync"
-	   :	"=&r"(pendisr)
-	   :	"r"(0), "r"(&netisr)
-	   :	"cr0");
-	softnet(pendisr);
-}
-
-void *softnet_si;
-
 /*
  * softintr_init - establish softclock, softnet; reserve SIR_HWCLOCK
  */
@@ -294,9 +279,11 @@ softintr_init(void)
 {
 	intr_sources[SIR_HWCLOCK].is_type = IST_CLOCK;	/* exclusive */
 
-	softnet_si = softintr_establish(IPL_SOFTNET, xsoftnet, NULL);
-	if (softnet_si == NULL)
-		panic("softintr_init: cannot softintr_establish IPL_SOFTNET");
+#define DONETISR(n, f) \
+	softnet_handlers[(n)] = \
+	    softintr_establish(IPL_SOFTNET, (void (*)(void *))(f), NULL)
+#include <net/netisr_dispatch.h>
+#undef DONETISR
 }
 
 /*
