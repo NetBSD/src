@@ -1,7 +1,7 @@
-/*	$NetBSD: frodo.c,v 1.4 1998/01/12 18:30:52 thorpej Exp $	*/
+/*	$NetBSD: frodo.c,v 1.5 1999/07/31 21:15:20 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -199,9 +199,18 @@ frodoattach(parent, self, aux)
 	sc->sc_ih = NULL;
 
 	/* ... and attach subdevices. */
-	for (i = 0; frodo_subdevs[i].fa_name != NULL; i++)
+	for (i = 0; frodo_subdevs[i].fa_name != NULL; i++) {
+		/*
+		 * Skip the first serial port if we're not a 425e;
+		 * it's mapped to the DCA at select code 9 on all
+		 * other models.
+		 */
+		if (frodo_subdevs[i].fa_offset == FRODO_APCI_OFFSET(1) &&
+		    mmuid != MMUID_425_E)
+			continue;
 		config_found_sm(self, &frodo_subdevs[i],
 		    frodoprint, frodosubmatch);
+	}
 }
 
 int
