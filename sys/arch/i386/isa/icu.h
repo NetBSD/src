@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.h	5.6 (Berkeley) 5/9/91
- *	$Id: icu.h,v 1.7.2.2 1993/09/24 08:49:06 mycroft Exp $
+ *	$Id: icu.h,v 1.7.2.3 1993/09/30 20:17:40 mycroft Exp $
  */
 
 /*
@@ -56,6 +56,8 @@ extern	unsigned imen;		/* interrupt mask enable */
 /*
  * Interrupt enable bits -- in order of priority
  */
+#define	IRQNONE		0
+#define	IRQUNK		0xffff
 #define	IRQ0		(1<< 0)		/* highest priority - timer */
 #define	IRQ1		(1<< 1)
 #ifndef IRQ_SLAVE
