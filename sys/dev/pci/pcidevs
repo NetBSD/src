@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.167 1999/11/06 13:48:29 rh Exp $
+$NetBSD: pcidevs,v 1.168 1999/11/07 06:59:46 cgd Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -514,7 +514,6 @@ vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
 vendor AUREAL		0x12eb	Aureal Semiconductor
 vendor ADMTEK		0x1317	ADMtek
 vendor FORTEMEDIA	0x1319	Forte Media
-vendor SIIG		0x131f	SIIG Inc
 vendor LMC		0x1376	LAN Media Corporation
 vendor NETGEAR		0x1385	Netgear
 vendor SUNDANCETI	0x13f0	Sundance Technology
@@ -1203,28 +1202,6 @@ product SGSTHOMSON 1764	0x1746	STG 1764X
 
 /* Sigma Designs products */
 product SIGMA HOLLYWOODPLUS	0x8300	REALmagic Hollywood-Plus MPEG-2 Decoder
-
-/* SIIG Inc products */
-product SIIG CYBER_P		0x2020	Cyber Parallel PCI            
-product SIIG CYBER_2P		0x2021	Cyber Parallel Dual PCI       
-product SIIG CYBER_S550		0x2000	Cyber Serial 16550 PCI        
-product SIIG CYBER_S650		0x2001	Cyber Serial 16650 PCI        
-product SIIG CYBER_S850		0x2002	Cyber Serial 16850 PCI        
-product SIIG CYBER_IO550	0x2010	Cyber I/O 16550 PCI           
-product SIIG CYBER_IO650	0x2011	Cyber I/O 16650 PCI           
-product SIIG CYBER_IO850	0x2010	Cyber I/O 16850 PCI           
-product SIIG CYBER_2S550	0x2030	Cyber Serial Dual 16550 PCI   
-product SIIG CYBER_2S650	0x2031	Cyber Serial Dual 16650 PCI   
-product SIIG CYBER_2S850	0x2032	Cyber Serial Dual 16850 PCI   
-product SIIG CYBER_2P1S550	0x2040	Cyber 2P1S 16550 PCI          
-product SIIG CYBER_2P1S650	0x2041	Cyber 2P1S 16650 PCI          
-product SIIG CYBER_2P1S850	0x2042	Cyber 2P1S 16850 PCI          
-product SIIG CYBER_4S550	0x2050	Cyber 4S 16550 PCI            
-product SIIG CYBER_4S650	0x2051	Cyber 4S 16650 PCI            
-product SIIG CYBER_4S850	0x2052	Cyber 4S 16850 PCI            
-product SIIG CYBER_2S1P550	0x2060	Cyber 2S1P 16550 PCI          
-product SIIG CYBER_2S1P650	0x2061	Cyber 2S1P 16650 PCI          
-product SIIG CYBER_2S1P850	0x2062	Cyber 2S1P 16850 PCI          
 
 /* Silicon Integrated System products */
 product SIS 86C201		0x0001	86C201
