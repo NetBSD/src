@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.21.2.4 2001/07/02 17:48:16 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.21.2.5 2001/07/10 01:47:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.21.2.4 2001/07/02 17:48:16 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.21.2.5 2001/07/10 01:47:54 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,6 +166,7 @@ get_superblock (FS_INFO *fsp, struct lfs *sbp)
 {
 	char mntfromname[MNAMELEN+1];
 	char buf[LFS_SBPAD];
+	static off_t sboff = LFS_LABELPAD;
 
 	strcpy(mntfromname, "/dev/r");
 	strcat(mntfromname, fsp->fi_statfsp->f_mntfromname+5);
@@ -178,8 +179,15 @@ get_superblock (FS_INFO *fsp, struct lfs *sbp)
 	} else
 		lseek(dev_fd, 0, SEEK_SET);
 		
-	get(dev_fd, LFS_LABELPAD, buf, LFS_SBPAD);
-	memcpy(&(sbp->lfs_dlfs), buf, sizeof(struct dlfs));
+	do {
+		get(dev_fd, sboff, buf, LFS_SBPAD);
+		memcpy(&(sbp->lfs_dlfs), buf, sizeof(struct dlfs));
+		if (sboff == LFS_LABELPAD && fsbtob(sbp, 1) > LFS_LABELPAD)
+			sboff = fsbtob(sbp, (off_t)sbp->lfs_sboffs[0]);
+		else
+			break;
+	} while (1);
+	
 	/* close (fid); */
 
 	/* Compatibility */
