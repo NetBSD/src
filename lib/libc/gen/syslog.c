@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.17 1998/08/18 23:52:31 thorpej Exp $	*/
+/*	$NetBSD: syslog.c,v 1.18 1998/09/13 16:09:06 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.17 1998/08/18 23:52:31 thorpej Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.18 1998/09/13 16:09:06 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -113,6 +113,7 @@ vsyslog(pri, fmt, ap)
 	int cnt;
 	char ch, *p, *t;
 	time_t now;
+	struct tm tmnow;
 	int fd, saved_errno;
 #define	TBUF_LEN	2048
 #define	FMT_LEN		1024
@@ -164,7 +165,8 @@ vsyslog(pri, fmt, ap)
 	prlen = snprintf(p, tbuf_left, "<%d>", pri);
 	DEC();
 
-	prlen = strftime(p, tbuf_left, "%h %e %T ", localtime(&now));
+	tzset(); /* strftime() implies tzset(), localtime_r() doesn't. */
+	prlen = strftime(p, tbuf_left, "%h %e %T ", localtime_r(&now, &tmnow));
 	DEC();
 
 	if (LogStat & LOG_PERROR)
