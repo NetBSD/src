@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.107 2001/09/21 07:57:35 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.108 2001/09/23 06:35:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -3232,13 +3232,8 @@ uvm_map_printit(map, full, pr)
 	(*pr)("\t#ent=%d, sz=%d, ref=%d, version=%d, flags=0x%x\n",
 	    map->nentries, map->size, map->ref_count, map->timestamp,
 	    map->flags);
-#ifdef pmap_resident_count
 	(*pr)("\tpmap=%p(resident=%d)\n", map->pmap,
 	    pmap_resident_count(map->pmap));
-#else
-	/* XXXCDC: this should be required ... */
-	(*pr)("\tpmap=%p(resident=<<NOT SUPPORTED!!!>>)\n", map->pmap);
-#endif
 	if (!full)
 		return;
 	for (entry = map->header.next; entry != &map->header;
