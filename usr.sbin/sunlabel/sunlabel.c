@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.8 2002/12/21 08:11:28 lukem Exp $ */
+/* $NetBSD: sunlabel.c,v 1.9 2003/01/27 01:29:06 uwe Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sunlabel.c,v 1.8 2002/12/21 08:11:28 lukem Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.9 2003/01/27 01:29:06 uwe Exp $");
 
 #include <stdio.h>
 #include <errno.h>
@@ -263,6 +263,7 @@ setdisk(const char *s)
 	}
 	if (trydisk(s, 0))
 		return;
+#ifndef DISTRIB /* native tool: search in /dev */
 	tmp = malloc(strlen(s) + 7);
 	sprintf(tmp, "/dev/%s", s);
 	if (trydisk(tmp, 0))
@@ -270,6 +271,7 @@ setdisk(const char *s)
 	sprintf(tmp, "/dev/%s%c", s, getrawpartition() + 'a');
 	if (trydisk(tmp, 0))
 		return;
+#endif
 	errx(1, "Can't find device for disk `%s'", s);
 }
 
