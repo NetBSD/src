@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.6 2003/07/01 13:36:59 simonb Exp $
+# $NetBSD: Makefile.boot,v 1.7 2003/08/30 15:24:41 fvdl Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -40,7 +40,7 @@ CPPFLAGS+= -DX86_BOOT_MAGIC_2="('x' << 24 | 0x86b << 12 | 'm' << 4 | 2)"
 COPTS=  -Os
 
 .if ${MACHINE} == "amd64"
-LDFLAGS+=  -m elf_i386
+LD+=  -m elf_i386
 AFLAGS+=   -m32
 COPTS+=    -m32
 LIBKERN_ARCH=i386
