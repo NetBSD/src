@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.48 1998/05/24 22:15:19 ross Exp $ */
+/* $NetBSD: pmap.c,v 1.49 1998/06/11 00:34:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 1998/05/24 22:15:19 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 1998/06/11 00:34:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,9 +576,6 @@ do {									\
  *
  *	This is called only when it is known that a pmap is "active"
  *	on the current processor; the ASN must already be valid.
- *
- *	NOTE: This must be written such that no locking of the pmap
- *	is necessary!  See pmap_activate().
  */
 #define	PMAP_ACTIVATE(pmap, p)						\
 do {									\
