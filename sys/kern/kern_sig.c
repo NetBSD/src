@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.33 2002/11/11 22:13:47 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.34 2002/11/25 21:46:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.33 2002/11/11 22:13:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.34 2002/11/25 21:46:35 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1522,6 +1522,7 @@ lwp_coredump_hook(struct lwp *l, void *arg)
 	 * the userland registers saved in the trapframe are around
 	 * for coredump() to write them out.
 	 */
+	KERNEL_PROC_LOCK(l);
 	l->l_flag &= ~L_DETACHED;
 	SCHED_LOCK(s);
 	l->l_stat = LSSUSPENDED;
