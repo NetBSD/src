@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.19.6.5 2002/04/25 04:01:42 nathanw Exp $	*/
+/*	$NetBSD: vis.c,v 1.19.6.6 2002/06/21 18:18:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.19.6.5 2002/04/25 04:01:42 nathanw Exp $");
+__RCSID("$NetBSD: vis.c,v 1.19.6.6 2002/06/21 18:18:12 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -62,11 +62,7 @@ __weak_alias(vis,_vis)
 #include <string.h>
 
 #undef BELL
-#if defined(__STDC__)
 #define BELL '\a'
-#else
-#define BELL '\007'
-#endif
 
 #define isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
 #define iswhite(c)	(c == ' ' || c == '\t' || c == '\n')

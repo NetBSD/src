@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.35.2.5 2002/05/02 17:04:55 nathanw Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.35.2.6 2002/06/21 18:18:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.35.2.5 2002/05/02 17:04:55 nathanw Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.35.2.6 2002/06/21 18:18:22 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,18 +56,13 @@ __RCSID("$NetBSD: vfprintf.c,v 1.35.2.5 2002/05/02 17:04:55 nathanw Exp $");
 
 #include <assert.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "reentrant.h"
 #include "local.h"

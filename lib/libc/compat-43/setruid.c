@@ -1,4 +1,4 @@
-/*	$NetBSD: setruid.c,v 1.11 1998/02/25 22:57:22 perry Exp $	*/
+/*	$NetBSD: setruid.c,v 1.11.12.1 2002/06/21 18:18:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setruid.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: setruid.c,v 1.11 1998/02/25 22:57:22 perry Exp $");
+__RCSID("$NetBSD: setruid.c,v 1.11.12.1 2002/06/21 18:18:06 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,12 +48,7 @@ __RCSID("$NetBSD: setruid.c,v 1.11 1998/02/25 22:57:22 perry Exp $");
 __warn_references(setruid, "warning: this program uses setruid(), which is deprecated.")
 
 int
-#ifdef __STDC__
 setruid(uid_t ruid)
-#else
-setruid(ruid)
-	int ruid;
-#endif
 {
 	return (setreuid(ruid, (uid_t)-1));
 }

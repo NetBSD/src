@@ -1,4 +1,4 @@
-/*	$NetBSD: creat.c,v 1.8 1999/09/20 04:38:56 lukem Exp $	*/
+/*	$NetBSD: creat.c,v 1.8.10.1 2002/06/21 18:18:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)creat.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: creat.c,v 1.8 1999/09/20 04:38:56 lukem Exp $");
+__RCSID("$NetBSD: creat.c,v 1.8.10.1 2002/06/21 18:18:05 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,13 +47,7 @@ __RCSID("$NetBSD: creat.c,v 1.8 1999/09/20 04:38:56 lukem Exp $");
 #include <fcntl.h>
 
 int
-#if __STDC__
 creat(const char *path, mode_t mode)
-#else
-creat(path, mode)
-	char *path;
-	mode_t mode;
-#endif
 {
 
 	_DIAGASSERT(path != NULL);

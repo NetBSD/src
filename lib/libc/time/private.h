@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.19.2.2 2002/03/22 20:42:46 nathanw Exp $	*/
+/*	$NetBSD: private.h,v 1.19.2.3 2002/06/21 18:18:29 nathanw Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -8,6 +8,11 @@
 #define TM_ZONE		tm_zone
 #define STD_INSPIRED	1
 #define HAVE_LONG_DOUBLE 1
+
+/* For when we build zic as a host tool. */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -140,12 +145,7 @@ static char	privatehid[] = "@(#)private.h	7.52";
 */
 
 #ifndef P
-#ifdef __STDC__
 #define P(x)	x
-#endif /* defined __STDC__ */
-#ifndef __STDC__
-#define P(x)	()
-#endif /* !defined __STDC__ */
 #endif /* !defined P */
 
 /*

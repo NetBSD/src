@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/06/06 08:15:02 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.1.6.1 2002/06/21 18:18:18 nathanw Exp $
 
-.PATH:		${ARCHDIR}/softfloat ${.CURDIR}/softfloat
+SOFTFLOAT_BITS?=64
+.PATH:		${ARCHDIR}/softfloat \
+		${.CURDIR}/softfloat/bits${SOFTFLOAT_BITS} ${.CURDIR}/softfloat
 
 CPPFLAGS+=	-I${ARCHDIR}/softfloat -I${.CURDIR}/softfloat
 CPPFLAGS+=	-DSOFTFLOAT_FOR_GCC

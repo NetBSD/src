@@ -1,3 +1,5 @@
+/*	$NetBSD: SYS.h,v 1.4.2.3 2002/06/21 18:18:02 nathanw Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +39,6 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.4.2.2 2002/01/28 20:50:17 nathanw Exp $
  */
 
 #include <machine/asm.h>
@@ -55,20 +56,23 @@
  * change it to be position independent later, if need be.
  */
 #ifdef PIC
-#define	CALL(name) \
-	PIC_PROLOGUE(%g1,%g2); \
-	sethi %hi(name),%g2; \
-	or %g2,%lo(name),%g2; \
-	ldx [%g1+%g2],%g2; \
-	jmp %g2; \
+#ifdef BIGPIC
+#define	JUMP(name) \
+	PIC_PROLOGUE(%g1,%g5); \
+	sethi %hi(_C_LABEL(name)),%g5; \
+	or %g5,%lo(_C_LABEL(name)),%g5; \
+	ldx [%g1+%g5],%g5; \
+	jmp %g5; \
 	nop
 #else
-#define	CALL(name) \
-	sethi %hi(name),%g1; or %lo(name),%g1,%g1; \
-	jmp %g1; nop
+#define	JUMP(name) \
+	PIC_PROLOGUE(%g1,%g5); \
+	ldx [%g1+_C_LABEL(name)],%g5; jmp %g5; nop
 #endif
-#define	ERROR()	CALL(_C_LABEL(__cerror))
-
+#else
+#define	JUMP(name)	set _C_LABEL(name),%g1; jmp %g1; nop
+#endif
+#define	ERROR()		JUMP(__cerror)
 /*
  * SYSCALL is used when further action must be taken before returning.
  * Note that it adds a `nop' over what we could do, if we only knew what
@@ -82,18 +86,18 @@
 
 /*
  * RSYSCALL is used when the system call should just return.  Here
- * we use the SYSCALL_G2RFLAG to put the `success' return address in %g2
+ * we use the SYSCALL_G7RFLAG to put the `success' return address in %g7
  * and avoid a branch.
  */
 #define	RSYSCALL(x) \
-	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G7RFLAG,%g1; add %o7,8,%g7; \
 	t ST_SYSCALL; ERROR()
 
 /*
  * PSEUDO(x,y) is like RSYSCALL(y) except that the name is x.
  */
 #define	PSEUDO(x,y) \
-	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G7RFLAG,%g1; add %o7,8,%g7; \
 	t ST_SYSCALL; ERROR()
 
 /*
@@ -120,14 +124,16 @@
  * XXX - This should be optimized.
  */
 #define RSYSCALL_NOERROR(x) \
-	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G7RFLAG,%g1; add %o7,8,%g7; \
 	t ST_SYSCALL
 
 /*
  * PSEUDO_NOERROR(x,y) is like RSYSCALL_NOERROR(y) except that the name is x.
  */
 #define PSEUDO_NOERROR(x,y) \
-	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G7RFLAG,%g1; add %o7,8,%g7; \
 	t ST_SYSCALL
+
+	.register	%g7,#scratch
 
 	.globl	_C_LABEL(__cerror)

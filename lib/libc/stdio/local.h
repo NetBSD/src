@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.9.12.1 2002/01/28 20:51:02 nathanw Exp $	*/
+/*	$NetBSD: local.h,v 1.9.12.2 2002/06/21 18:18:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -62,6 +62,12 @@ extern int	_fwalk __P((int (*)(FILE *)));
 extern char	*_mktemp __P((char *));
 extern int	__swsetup __P((FILE *));
 extern int	__sflags __P((const char *, int *));
+extern int	__svfscanf __P((FILE * __restrict, const char * __restrict,
+		    _BSD_VA_LIST_))
+		    __attribute__((__format__(__scanf__, 2, 0)));
+extern int	__svfscanf_unlocked __P((FILE * __restrict, const char * __restrict,
+		    _BSD_VA_LIST_))
+		    __attribute__((__format__(__scanf__, 2, 0)));
 
 extern int	__sdidinit;
 

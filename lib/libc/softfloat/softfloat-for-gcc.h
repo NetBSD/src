@@ -1,10 +1,11 @@
-/* $NetBSD: softfloat-for-gcc.h,v 1.3.2.1 2001/10/08 20:20:42 nathanw Exp $ */
+/* $NetBSD: softfloat-for-gcc.h,v 1.3.2.2 2002/06/21 18:18:18 nathanw Exp $ */
 
 /*
  * Move private identifiers with external linkage into implementation
  * namespace.  -- Klaus Klein <kleink@netbsd.org>, May 5, 1999
  */
 #define float_exception_flags	_softfloat_float_exception_flags
+#define float_exception_mask	_softfloat_float_exception_mask
 #define float_rounding_mode	_softfloat_float_rounding_mode
 #define float_raise		_softfloat_float_raise
 /* The following batch are called by GCC through wrappers */

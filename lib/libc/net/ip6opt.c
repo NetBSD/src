@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6opt.c,v 1.8 2000/07/06 02:58:07 christos Exp $	*/
+/*	$NetBSD: ip6opt.c,v 1.8.2.1 2002/06/21 18:18:16 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ip6opt.c,v 1.8 2000/07/06 02:58:07 christos Exp $");
+__RCSID("$NetBSD: ip6opt.c,v 1.8.2.1 2002/06/21 18:18:16 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -136,8 +136,6 @@ inet6_option_append(cmsg, typep, multx, plusy)
 	if (multx != 1 && multx != 2 && multx != 4 && multx != 8)
 		return(-1);
 	if (plusy < 0 || plusy > 7)
-		return(-1);
-	if (typep[0] > 255)
 		return(-1);
 
 	/*

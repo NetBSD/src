@@ -1,4 +1,4 @@
-/*	$NetBSD: warnx.c,v 1.4.10.2 2002/03/22 20:42:15 nathanw Exp $	*/
+/*	$NetBSD: warnx.c,v 1.4.10.3 2002/06/21 18:18:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: warnx.c,v 1.4.10.2 2002/03/22 20:42:15 nathanw Exp $");
+__RCSID("$NetBSD: warnx.c,v 1.4.10.3 2002/06/21 18:18:13 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,34 +49,18 @@ __RCSID("$NetBSD: warnx.c,v 1.4.10.2 2002/03/22 20:42:15 nathanw Exp $");
 #include "config.h"
 #endif
 #include <err.h>
-
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef __weak_alias
 __weak_alias(warnx, _warnx)
 #endif
 
 void
-#ifdef __STDC__
-_warnx(const char *fmt, ...)
-#else
-_warnx(va_alist)
-	va_dcl
-#endif
+warnx(const char *fmt, ...)
 {
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	const char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#endif
+	va_start(ap, fmt);
 	_vwarnx(fmt, ap);
 	va_end(ap);
 }

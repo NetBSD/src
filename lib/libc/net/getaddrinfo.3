@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.19.2.3 2002/03/22 20:42:20 nathanw Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.19.2.4 2002/06/21 18:18:14 nathanw Exp $
 .\"	$KAME: getaddrinfo.3,v 1.29 2001/02/12 09:24:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     From: @(#)gethostbyname.3	8.4 (Berkeley) 5/25/95
 .\"
-.Dd May 25, 1995
+.Dd May 14, 2002
 .Dt GETADDRINFO 3
 .Os
 .\"
@@ -48,8 +48,6 @@
 .Lb libc
 .\"
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/socket.h\*[Gt]
 .Fd #include \*[Lt]netdb.h\*[Gt]
 .Ft int
 .Fn getaddrinfo "const char *nodename" "const char *servname" \
@@ -75,13 +73,13 @@ structure is defined as a result of including the
 .Aq Pa netdb.h
 header:
 .Bd -literal -offset
-struct addrinfo {                                                  *
-     int     ai_flags;     /* AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST */
-     int     ai_family;    /* PF_xxx */
-     int     ai_socktype;  /* SOCK_xxx */
-     int     ai_protocol;  /* 0 or IPPROTO_xxx for IPv4 and IPv6 */
-     size_t  ai_addrlen;   /* length of ai_addr */
-     char   *ai_canonname; /* canonical name for nodename */
+struct addrinfo {
+     int       ai_flags;     /* AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST */
+     int       ai_family;    /* PF_xxx */
+     int       ai_socktype;  /* SOCK_xxx */
+     int       ai_protocol;  /* 0 or IPPROTO_xxx for IPv4 and IPv6 */
+     socklen_t ai_addrlen;   /* length of ai_addr */
+     char *    ai_canonname; /* canonical name for nodename */
      struct sockaddr  *ai_addr; /* binary address */
      struct addrinfo  *ai_next; /* next structure in linked list */
 };
@@ -421,9 +419,14 @@ int error;
 int s;
 const char *cause = NULL;
 
-memset(\*[Am]hints, 0, sizeof(hints));
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
+hints.ai_flags = 0;
+hints.ai_protocol = 0;
+hints.ai_addrlen = 0;
+hints.ai_canonname = NULL;
+hints.ai_addr = NULL;
+hints.ai_next = NULL;
 error = getaddrinfo("www.kame.net", "http", \*[Am]hints, \*[Am]res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
@@ -464,10 +467,14 @@ int s[MAXSOCK];
 int nsock;
 const char *cause = NULL;
 
-memset(\*[Am]hints, 0, sizeof(hints));
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 hints.ai_flags = AI_PASSIVE;
+hints.ai_protocol = 0;
+hints.ai_addrlen = 0;
+hints.ai_canonname = NULL;
+hints.ai_addr = NULL;
+hints.ai_next = NULL;
 error = getaddrinfo(NULL, "http", \*[Am]hints, \*[Am]res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
@@ -556,6 +563,7 @@ indicate an unknown error.
 .Xr getnameinfo 3 ,
 .Xr getservbyname 3 ,
 .Xr hosts 5 ,
+.Xr nsswitch.conf 5 ,
 .Xr resolv.conf 5 ,
 .Xr services 5 ,
 .Xr hostname 7 ,

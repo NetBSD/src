@@ -1,4 +1,4 @@
-/*	$NetBSD: __semctl13.c,v 1.1.6.1 2002/01/28 20:51:26 nathanw Exp $	*/
+/*	$NetBSD: __semctl13.c,v 1.1.6.2 2002/06/21 18:18:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,43 +37,26 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __semctl13.c,v 1.1.6.1 2002/01/28 20:51:26 nathanw Exp $");
+__RCSID("$NetBSD: __semctl13.c,v 1.1.6.2 2002/06/21 18:18:24 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 
 /* The kernel version [... == union semun *] */
 int ____semctl13 __P((int, int, int, ...));
 /* The userland version [... == union semun] */
 int __semctl13 __P((int, int, int, ...));
 
-#if __STDC__
-int __semctl13(int semid, int semnum, int cmd, ...)
-#else
-int __semctl13(va_alist)
-	va_dcl
-#endif
+int
+__semctl13(int semid, int semnum, int cmd, ...)
 {
 	va_list ap;
 	union __semun semun;
-#if __STDC__
+
 	va_start(ap, cmd);
-#else
-	int semid, semnum;
-	int cmd;
-	va_start(ap);
-	semid = va_arg(ap, int);
-	semnum = va_arg(ap, int);
-	cmd = va_arg(ap, int);
-#endif
 	switch (cmd) {
 	case IPC_SET:
 	case IPC_STAT:

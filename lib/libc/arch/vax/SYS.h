@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.6.2.1 2002/01/28 20:50:20 nathanw Exp $ */
+/*	$NetBSD: SYS.h,v 1.6.2.2 2002/06/21 18:18:04 nathanw Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.

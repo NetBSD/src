@@ -1,4 +1,4 @@
-/*	$NetBSD: asprintf.c,v 1.7.6.4 2002/05/02 17:07:38 nathanw Exp $	*/
+/*	$NetBSD: asprintf.c,v 1.7.6.5 2002/06/21 18:18:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,19 +29,16 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: asprintf.c,v 1.7.6.4 2002/05/02 17:07:38 nathanw Exp $");
+__RCSID("$NetBSD: asprintf.c,v 1.7.6.5 2002/06/21 18:18:20 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
+
 #include "reentrant.h"
 #include "local.h"
 
@@ -50,14 +47,7 @@ __weak_alias(asprintf, _asprintf)
 #endif
 
 int
-#if __STDC__
 asprintf(char **str, char const *fmt, ...)
-#else
-asprintf(str, fmt, va_alist)
-	char **str;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	int ret;
 	va_list ap;
@@ -74,11 +64,7 @@ asprintf(str, fmt, va_alist)
 	if (f._bf._base == NULL)
 		goto err;
 	f._bf._size = f._w = 127;		/* Leave room for the NUL */
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = vfprintf_unlocked(&f, fmt, ap);
 	va_end(ap);
 	if (ret == -1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.25.2.5 2002/03/22 20:42:20 nathanw Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.25.2.6 2002/06/21 18:18:15 nathanw Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.25.2.5 2002/03/22 20:42:20 nathanw Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.25.2.6 2002/06/21 18:18:15 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -93,15 +93,16 @@ struct sockinet {
 };
 
 static int getnameinfo_inet __P((const struct sockaddr *, socklen_t, char *,
-    size_t, char *, size_t, int));
+    socklen_t, char *, socklen_t, int));
 #ifdef INET6
 static int ip6_parsenumeric __P((const struct sockaddr *, const char *, char *,
-				 size_t, int));
-static int ip6_sa2str __P((const struct sockaddr_in6 *, char *, size_t, int));
+				 socklen_t, int));
+static int ip6_sa2str __P((const struct sockaddr_in6 *, char *, size_t,
+				 int));
 #endif
 static int getnameinfo_link __P((const struct sockaddr *, socklen_t, char *,
-    size_t, char *, size_t, int));
-static int hexname __P((const u_int8_t *, size_t, char *, size_t));
+    socklen_t, char *, socklen_t, int));
+static int hexname __P((const u_int8_t *, size_t, char *, socklen_t));
 
 /*
  * Top-level getnameinfo() code.  Look at the address family, and pick an
@@ -112,7 +113,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	const struct sockaddr *sa;
 	socklen_t salen;
 	char *host, *serv;
-	size_t hostlen, servlen;
+	socklen_t hostlen, servlen;
 	int flags;
 {
 
@@ -139,9 +140,9 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 	const struct sockaddr *sa;
 	socklen_t salen;
 	char *host;
-	size_t hostlen;
+	socklen_t hostlen;
 	char *serv;
-	size_t servlen;
+	socklen_t servlen;
 	int flags;
 {
 	const struct afd *afd;
@@ -199,12 +200,12 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 		if (sp) {
 			if (strlen(sp->s_name) + 1 > servlen)
 				return EAI_MEMORY;
-			strcpy(serv, sp->s_name);
+			strlcpy(serv, sp->s_name, servlen);
 		} else {
 			snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
 			if (strlen(numserv) + 1 > servlen)
 				return EAI_MEMORY;
-			strcpy(serv, numserv);
+			strlcpy(serv, numserv, servlen);
 		}
 	}
 
@@ -278,7 +279,7 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 			numaddrlen = strlen(numaddr);
 			if (numaddrlen + 1 > hostlen) /* don't forget terminator */
 				return EAI_MEMORY;
-			strcpy(host, numaddr);
+			strlcpy(host, numaddr, hostlen);
 			break;
 		}
 	} else {
@@ -300,7 +301,7 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 			if (strlen(hp->h_name) + 1 > hostlen) {
 				return EAI_MEMORY;
 			}
-			strcpy(host, hp->h_name);
+			strlcpy(host, hp->h_name, hostlen);
 		} else {
 			if (flags & NI_NAMEREQD)
 				return EAI_NONAME;
@@ -334,7 +335,7 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 	const struct sockaddr *sa;
 	const char *addr;
 	char *host;
-	size_t hostlen;
+	socklen_t hostlen;
 	int flags;
 {
 	int numaddrlen;
@@ -350,7 +351,7 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 	numaddrlen = strlen(numaddr);
 	if (numaddrlen + 1 > hostlen) /* don't forget terminator */
 		return EAI_MEMORY;
-	strcpy(host, numaddr);
+	strlcpy(host, numaddr, hostlen);
 
 	if (((const struct sockaddr_in6 *)(const void *)sa)->sin6_scope_id) {
 		char zonebuf[MAXHOSTNAMELEN];
@@ -428,7 +429,8 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 /* ARGSUSED */
 static int
 getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
-    char *host, size_t hostlen, char *serv, size_t servlen, int flags)
+    char *host, socklen_t hostlen, char *serv, socklen_t servlen,
+    int flags)
 {
 	const struct sockaddr_dl *sdl =
 	    (const struct sockaddr_dl *)(const void *)sa;
@@ -501,7 +503,8 @@ static int
 hexname(cp, len, host, hostlen)
 	const u_int8_t *cp;
 	char *host;
-	size_t len, hostlen;
+	size_t len;
+	socklen_t hostlen;
 {
 	int i, n;
 	char *outp = host;

@@ -1,4 +1,4 @@
-/*	$NetBSD: waitpid.c,v 1.7 2000/01/22 22:19:13 mycroft Exp $	*/
+/*	$NetBSD: waitpid.c,v 1.7.6.1 2002/06/21 18:18:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)waitpid.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: waitpid.c,v 1.7 2000/01/22 22:19:13 mycroft Exp $");
+__RCSID("$NetBSD: waitpid.c,v 1.7.6.1 2002/06/21 18:18:12 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,14 +53,7 @@ __weak_alias(waitpid,_waitpid)
 #endif
 
 pid_t
-#if __STDC__
 waitpid(pid_t pid, int *istat, int options)
-#else
-waitpid(pid, istat, options)
-	pid_t pid;
-	int *istat;
-	int options;
-#endif
 {
 	return (wait4(pid, istat, options, (struct rusage *)0));
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: fpgetmask.c,v 1.1.6.1 2002/01/28 20:50:47 nathanw Exp $ */
+/* $NetBSD: fpgetmask.c,v 1.1.6.2 2002/06/21 18:18:18 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpgetmask.c,v 1.1.6.1 2002/01/28 20:50:47 nathanw Exp $");
+__RCSID("$NetBSD: fpgetmask.c,v 1.1.6.2 2002/06/21 18:18:18 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -58,5 +58,5 @@ fp_except
 fpgetmask(void)
 {
 
-	return 0;
+	return float_exception_mask;
 }

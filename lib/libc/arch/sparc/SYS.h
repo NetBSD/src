@@ -37,7 +37,7 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.10.2.2 2002/01/28 20:50:12 nathanw Exp $
+ *	$NetBSD: SYS.h,v 1.10.2.3 2002/06/21 18:18:02 nathanw Exp $
  */
 
 #include <machine/asm.h>

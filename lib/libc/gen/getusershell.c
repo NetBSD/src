@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.21 2000/07/07 08:03:37 itohy Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.21.2.1 2002/06/21 18:18:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.21 2000/07/07 08:03:37 itohy Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.21.2.1 2002/06/21 18:18:10 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,17 +50,12 @@ __RCSID("$NetBSD: getusershell.c,v 1.21 2000/07/07 08:03:37 itohy Exp $");
 #include <errno.h>
 #include <nsswitch.h>
 #include <paths.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stringlist.h>
 #include <unistd.h>
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef HESIOD
 #include <hesiod.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.36.2.3 2002/01/28 20:51:20 nathanw Exp $	*/
+/*	$NetBSD: strtod.c,v 1.36.2.4 2002/06/21 18:18:23 nathanw Exp $	*/
 
 /****************************************************************
  *
@@ -93,13 +93,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.36.2.3 2002/01/28 20:51:20 nathanw Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.36.2.4 2002/06/21 18:18:23 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define Unsigned_Shifts
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__alpha__) || \
     defined(__powerpc__) || defined(__sh__) || defined(__x86_64__) || \
+    defined(__hppa__) || \
     (defined(__arm__) && defined(__VFP_FP__))
 #include <sys/types.h>
 #if BYTE_ORDER == BIG_ENDIAN
@@ -158,49 +159,8 @@ extern void *MALLOC(size_t);
 
 #include "ctype.h"
 #include "errno.h"
-
-#ifdef Bad_float_h
-#undef __STDC__
-#ifdef IEEE_BIG_ENDIAN
-#define IEEE_ARITHMETIC
-#endif
-#ifdef IEEE_LITTLE_ENDIAN
-#define IEEE_ARITHMETIC
-#endif
-
-#ifdef IEEE_ARITHMETIC
-#define DBL_DIG 15
-#define DBL_MAX_10_EXP 308
-#define DBL_MAX_EXP 1024
-#define FLT_RADIX 2
-#define FLT_ROUNDS 1
-#define DBL_MAX 1.7976931348623157e+308
-#endif
-
-#ifdef IBM
-#define DBL_DIG 16
-#define DBL_MAX_10_EXP 75
-#define DBL_MAX_EXP 63
-#define FLT_RADIX 16
-#define FLT_ROUNDS 0
-#define DBL_MAX 7.2370055773322621e+75
-#endif
-
-#ifdef VAX
-#define DBL_DIG 16
-#define DBL_MAX_10_EXP 38
-#define DBL_MAX_EXP 127
-#define FLT_RADIX 2
-#define FLT_ROUNDS 1
-#define DBL_MAX 1.7014118346046923e+38
-#endif
-
-#ifndef LONG_MAX
-#define LONG_MAX 2147483647
-#endif
-#else
 #include "float.h"
-#endif
+
 #ifndef __MATH_H__
 #include "math.h"
 #endif
@@ -1488,18 +1448,7 @@ strtod
 			if (e1 > DBL_MAX_10_EXP) {
  ovfl:
 				errno = ERANGE;
-#ifdef __STDC__
 				value(rv) = HUGE_VAL;
-#else
-				/* Can't trust HUGE_VAL */
-#ifdef IEEE_Arith
-				word0(rv) = Exp_mask;
-				word1(rv) = 0;
-#else
-				word0(rv) = Big0;
-				word1(rv) = Big1;
-#endif
-#endif
 				if (bd0)
 					goto retfree;
 				goto ret;

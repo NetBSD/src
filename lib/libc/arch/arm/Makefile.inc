@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1.2.1 2001/10/08 20:16:57 nathanw Exp $
+# $NetBSD: Makefile.inc,v 1.1.2.2 2002/06/21 18:17:58 nathanw Exp $
 
 .include <bsd.own.mk>
 
@@ -14,4 +14,5 @@ CPPFLAGS += -DSOFTFLOAT
 CPPFLAGS+=	-DSOFTFLOAT_NEED_FIXUNS
 .endif
 
+SOFTFLOAT_BITS=32
 .include <softfloat/Makefile.inc>
