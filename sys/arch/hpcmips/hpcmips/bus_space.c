@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 1999/11/20 19:44:30 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4 1999/12/02 18:41:56 uch Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  */
-/*	$NetBSD: bus_space.c,v 1.3 1999/11/20 19:44:30 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4 1999/12/02 18:41:56 uch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #include <mips/pte.h>
 #include <machine/bus.h>
 
-#ifdef BUSSPACEDEBUG
+#ifdef BUS_SPACE_DEBUG
 #define	DPRINTF(arg) printf arg
 #else
 #define	DPRINTF(arg)
