@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.5.4.5 2002/12/11 05:51:55 thorpej Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.5.4.6 2002/12/16 17:23:42 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.5.4.5 2002/12/11 05:51:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.5.4.6 2002/12/16 17:23:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ linux_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(l, code, error, rval);
 #endif
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_PROC_UNLOCK(l);
 	userret(l);
 }
 
