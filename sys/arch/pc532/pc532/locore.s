@@ -572,7 +572,7 @@ set1:
 	movd	P_RLINK(r3),r4		/* get addr of last entry. */
 	movd	P_LINK(r4), P_LINK(r2)  /* set p->p_link */
 	movd	r2, P_LINK(r4)		/* update tail's p_link */
-	movd    r5, P_RLINK(r2)		/* set p->p_rlink */
+	movd    r4, P_RLINK(r2)		/* set p->p_rlink */
 	movd	r2, P_RLINK(r3)		/* update qs ph_rlink */
 	exit	[r2,r3,r4]
 	ret	0
@@ -620,12 +620,13 @@ ENTRY(swtch)
 	enter	[r0,r1,r2,r3,r4,r5,r6,r7],0
 /*	addqd	1, _cnt+V_SWTCH(pc) 		*/
 
-	cmpqd	0,_curproc(pc)
+	movd	_curproc(pc), r0
+	cmpqd	0, r0
 	beq	sw1
 
 	/* Save "kernel context" - - user context is saved at trap/svc.
 	   Kernel registers are saved at entry to swtch. */
-	movd	_curproc(pc), r0
+
 	movd	P_ADDR(r0), r0
 	sprd	sp, PCB_KSP(r0)
 	sprd	fp,  PCB_KFP(r0)
@@ -647,6 +648,12 @@ sw1:	/* Get something from a Queue! */
 	movd	0(r1), r2		/* get process pointer! */
 	movd	P_LINK(r2), r3		/* get address of next entry. */
 
+  /* Test code */
+  cmpqd	0, r3
+  bne notzero
+  bsr _dump_qs
+notzero:
+
 	/* unlink the entry. */
 	movd	r3, 0(r1)		/* New head pointer. */
 	movd	r1, P_RLINK(r3) 	/* New reverse pointer. */
@@ -663,12 +670,13 @@ restart:	/* r2 has pointer to new proc.. */
 	movqd	0, _want_resched(pc)	/* We did a resched! */
 	movd	P_ADDR(r2), r3		/* get new pcb pointer */
 
+
 	/* Do we need to reload floating point here? */
 
-	movw	PCB_FLAGS(r3), r4	/* Get the flags. */
-	lprd	fp, PCB_KFP(r3)
-	lprd	sp, PCB_KSP(r3)
 	lmr	ptb0, PCB_PTB(r3)
+	lprd	sp, PCB_KSP(r3)
+	lprd	fp, PCB_KFP(r3)
+	movw	PCB_FLAGS(r3), r4	/* Get the flags. */
 
 	movd	r2, _curproc(pc)
 	movd	r3, _curpcb(pc)
@@ -799,7 +807,7 @@ ENTRY(_trap_svc)
 	beq	svc_no_fpu
 
 	/* Save the FPU registers. */
-	movd	_curpcb(pc), r3		/* R3 is saved by gcc. */
+	movd	_curpcb(pc), r3
 	sfsr	PCB_FSR(r3)
 	movl	f0,PCB_F0(r3)
 	movl	f1,PCB_F1(r3)
@@ -814,6 +822,7 @@ ENTRY(_trap_svc)
 	bsr	_syscall
 
 	/* Restore the FPU registers. */
+	movd	_curpcb(pc), r3
 	lfsr	PCB_FSR(r3)
 	movl	PCB_F0(r3),f0
 	movl	PCB_F1(r3),f1

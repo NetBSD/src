@@ -1078,3 +1078,19 @@ sysarch(p, uap, retval)
 {
 	return ENOSYS;
 }
+
+void dump_qs()
+{  int ix;
+   struct proc *ptr;
+
+   for (ix=0; ix<NQS; ix++) 
+     if (qs[ix].ph_link != qs[ix].ph_rlink)
+       {
+         ptr = qs[ix].ph_link;
+	 do {
+	   printf ("qs[%d]: 0x%x 0x%x\n", ix, ptr->p_link, ptr->p_rlink);
+	   ptr = ptr->p_link;
+	 } while (ptr != (struct proc *)0 && ptr != qs[ix].ph_link);
+       }
+   panic("nil P_RLINK");
+}
