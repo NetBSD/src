@@ -1,4 +1,4 @@
-# $Id: TDR,v 1.7 1994/03/03 13:17:15 deraadt Exp $
+# $Id: TDR,v 1.8 1994/04/12 07:47:21 deraadt Exp $
 # SPARCstation 1, 1+, 2, etc.
 
 include	"std.sparc"
@@ -17,14 +17,14 @@ options		RCONSOLE		# fast rasterop console
 options		MAXFDESCS=1024
 
 # Filesystem options
-#options	FIFO		# POSIX fifo support (in all filesystems)
 options		FFS
-#options	QUOTA	# fast filesystem with user and group quotas
-#options	MFS		# memory-based filesystem
 options		NFSSERVER	# Sun NFS-compatible filesystem
 options		NFSCLIENT	# Sun NFS-compatible filesystem
+options		KERNFS		# kernel data-structure filesystem
+#options	FIFO		# POSIX fifo support (in all filesystems)
+#options	QUOTA		# fast filesystem with user and group quotas
+#options	MFS		# memory-based filesystem
 #options	LOFS		# Loop-back filesystem
-#options	KERNFS		# kernel data-structure filesystem
 #options	FDESC		# user file descriptor filesystem
 #options	UMAPFS		# uid/gid remapping filesystem
 #options	LFS		# Log-based filesystem (still experimental)
@@ -56,14 +56,15 @@ sd1	at tg1 drive 0
 
 bwtwo*	at sbus? slot ? offset ?
 cgthree* at sbus? slot ? offset ?
+cgsix* at sbus? slot ? offset ?
 
 le*	at sbus? slot ? offset ?
 
 pseudo-device	loop
-pseudo-device	tun	4
-pseudo-device	vn	3
 pseudo-device	pty	32
 pseudo-device	sl	2
-pseudo-device	ppp	2
-pseudo-device	bpfilter 16
 pseudo-device	kbd
+pseudo-device	ppp	2
+pseudo-device	tun	4
+pseudo-device	vn	3
+pseudo-device	bpfilter 16
