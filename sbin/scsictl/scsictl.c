@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.24 2004/06/01 02:40:00 fair Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.25 2005/01/07 02:08:34 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.24 2004/06/01 02:40:00 fair Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.25 2005/01/07 02:08:34 ginsbach Exp $");
 #endif
 
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: scsictl.c,v 1.24 2004/06/01 02:40:00 fair Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,6 +83,7 @@ const	char *cmdname;			/* command user issued */
 const	char *argnames;			/* helpstring: expected arguments */
 struct	scsi_addr dvaddr;		/* SCSI device's address */
 
+void	device_defects __P((int, char *[]));
 void	device_format __P((int, char *[]));
 void	device_identify __P((int, char *[]));
 void	device_reassign __P((int, char *[]));
@@ -99,6 +101,8 @@ void	device_setcache __P((int, char *[]));
 void	device_flushcache __P((int, char *[]));
 
 struct command device_commands[] = {
+	{ "defects",	"[primary] [grown] [block|byte|physical]",
+						device_defects },
 	{ "format",	"[blocksize [immediate]]", 	device_format },
 	{ "identify",	"",			device_identify },
 	{ "reassign",	"blkno [blkno [...]]",	device_reassign },
@@ -216,6 +220,239 @@ usage()
 /*
  * DEVICE COMMANDS
  */
+
+/*
+ * device_read_defect:
+ *
+ *	Read primary and/or growth defect list in physical or block
+ *	format from a direct access device.
+ *
+ *	XXX Does not handle very large defect lists. Needs SCSI3 12
+ *	    byte READ DEFECT DATA command.
+ */
+
+void	print_bf_dd __P((union scsi_defect_descriptor *));
+void	print_bfif_dd __P((union scsi_defect_descriptor *));
+void	print_psf_dd __P((union scsi_defect_descriptor *));
+
+void
+device_defects(argc, argv)
+	int argc;
+	char *argv[];
+{
+	struct scsi_read_defect_data cmd;
+	struct scsi_read_defect_data_data *data;
+	size_t dlen;
+	int i, dlfmt = -1;
+	int defects;
+	char msg[256];
+	void (*pfunc) __P((union scsi_defect_descriptor *));
+#define RDD_P_G_MASK	0x18
+#define RDD_DLF_MASK	0x7
+
+	dlen = USHRT_MAX; 		/* XXX - this may not be enough room
+					 * for all of the defects.
+					 */
+	data = malloc(dlen);
+	if (data == NULL)
+		errx(1, "unable to allocate defect list");
+	memset(data, 0, dlen);
+	memset(&cmd, 0, sizeof(cmd));
+
+	/* determine which defect list(s) to read. */
+	for (i = 0; i < argc; i++) {
+		if (strncmp("primary", argv[i], 7) == 0) {
+			cmd.flags |= RDD_PRIMARY;
+			continue;
+		}
+		if (strncmp("grown", argv[i], 5) == 0) {
+			cmd.flags |= RDD_GROWN;
+			continue;
+		}
+		break;
+	}
+
+	/* no defect list sepecified, assume both. */
+	if ((cmd.flags & (RDD_PRIMARY|RDD_GROWN)) == 0)
+		cmd.flags |= (RDD_PRIMARY|RDD_GROWN);
+
+	/* list format option. */
+	if (i < argc) { 
+		if (strncmp("block", argv[i], 5) == 0) {
+			cmd.flags |= RDD_BF;
+			dlfmt = RDD_BF;
+		}
+		else if (strncmp("byte", argv[i], 4) == 0) {
+			cmd.flags |= RDD_BFIF;
+			dlfmt = RDD_BFIF;
+		}
+		else if (strncmp("physical", argv[i], 4) == 0) {
+			cmd.flags |= RDD_PSF;
+			dlfmt = RDD_PSF;
+		}
+		else {
+			usage();
+		}
+	}
+
+	/*
+	 * no list format specified; since block format not
+	 * recommended use physical sector format as default.
+	 */
+	if (dlfmt < 0) {
+		cmd.flags |= RDD_PSF;
+		dlfmt = RDD_PSF;
+	}
+
+	cmd.opcode = SCSI_READ_DEFECT_DATA;
+	_lto2b(dlen, &cmd.length[0]);
+
+	scsi_command(fd, &cmd, sizeof(cmd), data, dlen, 30000, SCCMD_READ);
+
+	msg[0] = '\0';
+
+	/* is the defect list in the format asked for? */
+	if ((data->flags & RDD_DLF_MASK) != dlfmt) {
+		strcpy(msg, "\n\tnotice:"
+		       "requested defect list format not supported by device\n\n");
+		dlfmt = (data->flags & RDD_DLF_MASK);
+	}
+
+	if (data->flags & RDD_PRIMARY)
+		strcat(msg, "primary");
+
+	if (data->flags & RDD_GROWN) {
+		if (data->flags & RDD_PRIMARY)
+			strcat(msg, " and ");
+		strcat(msg, "grown");
+	}
+
+	strcat(msg, " defects");
+
+	if ((data->flags & RDD_P_G_MASK) == 0)
+		strcat(msg, ": none reported\n");
+
+
+	printf("%s: scsibus%d target %d lun %d %s",
+	       dvname, dvaddr.addr.scsi.scbus, dvaddr.addr.scsi.target,
+	       dvaddr.addr.scsi.lun, msg);
+
+	/* device did not return either defect list. */
+	if ((data->flags & RDD_P_G_MASK) == 0)
+		return;
+
+	switch (dlfmt) {
+	case RDD_BF:
+		defects = _2btol(data->length) /
+				sizeof(struct scsi_defect_descriptor_bf);
+		pfunc = print_bf_dd;
+		strcpy(msg, "block address\n"
+			    "-------------\n");
+		break;
+	case RDD_BFIF:
+		defects = _2btol(data->length) /
+				sizeof(struct scsi_defect_descriptor_bfif);
+		pfunc = print_bfif_dd;
+		strcpy(msg, "              bytes from\n"
+			    "cylinder head   index\n"
+			    "-------- ---- ----------\n");
+		break;
+	case RDD_PSF:
+		defects = _2btol(data->length) /
+				sizeof(struct scsi_defect_descriptor_psf);
+		pfunc = print_psf_dd;
+		strcpy(msg, "cylinder head   sector\n"
+			    "-------- ---- ----------\n");
+		break;
+	}
+
+	/* device did not return any defects. */
+	if (defects == 0) {
+		printf(": none\n");
+		return;
+	}
+
+	printf(": %d\n", defects);
+
+	/* print heading. */
+	printf("%s", msg);
+
+	/* print defect list. */
+	for (i = 0 ; i < defects; i++) {
+		pfunc(&data->defect_descriptor[i]);
+	}
+
+	free(data);
+	return;
+}
+
+/*
+ * print_bf_dd:
+ *
+ *	Print a block format defect descriptor.
+ */
+void
+print_bf_dd(dd)
+	union scsi_defect_descriptor *dd;
+{
+	u_int32_t block;
+
+	block = _4btol(dd->bf.block_address);
+
+	printf("%13u\n", block);
+}
+
+#define DEFECTIVE_TRACK	0xffffffff
+
+/*
+ * print_bfif_dd:
+ *
+ *	Print a bytes from index format defect descriptor.
+ */
+void
+print_bfif_dd(dd)
+	union scsi_defect_descriptor *dd;
+{
+	u_int32_t cylinder;
+	u_int32_t head;
+	u_int32_t bytes_from_index;
+
+	cylinder = _3btol(dd->bfif.cylinder);
+	head = dd->bfif.head;
+	bytes_from_index = _4btol(dd->bfif.bytes_from_index);
+
+	printf("%8u %4u ", cylinder, head);
+
+	if (bytes_from_index == DEFECTIVE_TRACK)
+		printf("entire track defective\n");
+	else
+		printf("%10u\n", bytes_from_index);
+}
+
+/*
+ * print_psf_dd:
+ *
+ *	Print a physical sector format defect descriptor.
+ */
+void
+print_psf_dd(dd)
+	union scsi_defect_descriptor *dd;
+{
+	u_int32_t cylinder;
+	u_int32_t head;
+	u_int32_t sector;
+
+	cylinder = _3btol(dd->psf.cylinder);
+	head = dd->psf.head;
+	sector = _4btol(dd->psf.sector);
+
+	printf("%8u %4u ", cylinder, head);
+
+	if (sector == DEFECTIVE_TRACK)
+		printf("entire track defective\n");
+	else
+		printf("%10u\n", sector);
+}
 
 /*
  * device_format:
