@@ -76,11 +76,11 @@
 #define	SPR_SLER		0x3bb	/* 4.. Storage Little Endian Register */
 #define	SPR_SU0R		0x3bc	/* 4.. Storage User-defined 0 Register */
 #define	SPR_DBCR1		0x3bd	/* 4.. Debug Control Register 1 */
-#define	SPR_DMISS		0x3d0	/* ..8 Data TLB Miss Address Register */
-#define	SPR_DCMP		0x3d1	/* ..8 Data TLB Compare Register */
-#define	SPR_HASH1		0x3d2	/* ..8 Primary Hash Address Register */
+#define	SPR_DMISS		0x3d0	/* .68 Data TLB Miss Address Register */
+#define	SPR_DCMP		0x3d1	/* .68 Data TLB Compare Register */
+#define	SPR_HASH1		0x3d2	/* .68 Primary Hash Address Register */
 #define	SPR_ICDBDR		0x3d3	/* 4.. Instruction Cache Debug Data Register */
-#define	SPR_HASH2		0x3d3	/* ..8 Secondary Hash Address Register */
+#define	SPR_HASH2		0x3d3	/* .68 Secondary Hash Address Register */
 #define	SPR_ESR			0x3d4	/* 4.. Exception Syndrome Register */
 #define	  ESR_MCI		  0x80000000 /* Machine check - instruction */
 #define	  ESR_PIL		  0x08000000 /* Program interrupt - illegal */
@@ -89,11 +89,11 @@
 #define	  ESR_DST		  0x00800000 /* Data storage interrupt - store fault */
 #define	  ESR_DIZ		  0x00800000 /* Data/instruction storage interrupt - zone fault */
 #define	  ESR_U0F		  0x00008000 /* Data storage interrupt - U0 fault */
-#define	SPR_IMISS		0x3d4	/* ..8 Instruction TLB Miss Address Register */
+#define	SPR_IMISS		0x3d4	/* .68 Instruction TLB Miss Address Register */
 #define	SPR_DEAR		0x3d5	/* 4.. Data Error Address Register */
-#define	SPR_ICMP		0x3d5	/* ..8 Instruction TLB Compare Register */
+#define	SPR_ICMP		0x3d5	/* .68 Instruction TLB Compare Register */
 #define	SPR_EVPR		0x3d6	/* 4.. Exception Vector Prefix Register */
-#define	SPR_RPA			0x3d6	/* ..8 Required Physical Address Register */
+#define	SPR_RPA			0x3d6	/* .68 Required Physical Address Register */
 #define	SPR_TSR			0x3d8	/* 4.. Timer Status Register */
 #define	  TSR_ENW		  0x80000000 /* Enable Next Watchdog */
 #define	  TSR_WIS		  0x40000000 /* Watchdog Interrupt Status */
