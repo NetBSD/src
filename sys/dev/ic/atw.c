@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.27 2004/05/31 09:05:01 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.28 2004/05/31 10:49:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.27 2004/05/31 09:05:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.28 2004/05/31 10:49:32 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1595,7 +1595,8 @@ atw_rf3000_tune(struct atw_softc *sc, u_int8_t chan)
 	/* from a binary-only driver. */
 	reg = ATW_READ(sc, ATW_PLCPHD);
 	reg &= ~ATW_PLCPHD_SERVICE_MASK;
-	reg |= LSHIFT(txpower << 2, ATW_PLCPHD_SERVICE_MASK);
+	reg |= LSHIFT(LSHIFT(txpower, RF3000_GAINCTL_TXVGC_MASK),
+	    ATW_PLCPHD_SERVICE_MASK);
 	ATW_WRITE(sc, ATW_PLCPHD, reg);
 
 #ifdef ATW_DEBUG
