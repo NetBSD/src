@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.132 1998/04/15 01:38:27 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.133 1998/04/15 02:39:53 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -236,6 +236,14 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
 	    ${SHLIB_LDSTARTFILE} \
 	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD} \
 	    ${SHLIB_LDENDFILE}
+.if (${OBJECT_FMT} == "ELF")
+	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
+	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
+	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so
+	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	    ${DESTDIR}${LIBDIR}/lib${LIB}.so
+.endif
 
 LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 LLIBS?=		-lc
@@ -248,7 +256,7 @@ cleanlib:
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
 	rm -f lib${LIB}.a ${OBJS}
 	rm -f lib${LIB}_p.a ${POBJS}
-	rm -f lib${LIB}_pic.a lib${LIB}.so.*.* ${SOBJS}
+	rm -f lib${LIB}_pic.a lib${LIB}.so.* lib${LIB}.so ${SOBJS}
 	rm -f llib-l${LIB}.ln ${LOBJS}
 
 .if defined(SRCS)
