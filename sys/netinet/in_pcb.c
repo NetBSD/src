@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.64 2000/03/30 13:24:56 augustss Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.65 2000/04/03 03:51:16 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -627,6 +627,8 @@ in_pcbpurgeif(table, ifp)
 	struct ifnet *ifp;
 {
 	struct inpcb *inp, *ninp;
+	struct ip_moptions *imo;
+	int i, gap;
 
 	for (inp = table->inpt_queue.cqh_first;
 	    inp != (struct inpcb *)&table->inpt_queue;
@@ -635,6 +637,30 @@ in_pcbpurgeif(table, ifp)
 		if (inp->inp_route.ro_rt != NULL &&
 		    inp->inp_route.ro_rt->rt_ifp == ifp)
 			in_rtchange(inp, 0);
+		imo = inp->inp_moptions;
+		if (imo != NULL) {
+			/*
+			 * Unselect the outgoing interface if it is being
+			 * detached.
+			 */
+			if (imo->imo_multicast_ifp == ifp)
+				imo->imo_multicast_ifp = NULL;
+
+			/*
+			 * Drop multicast group membership if we joined
+			 * through the interface being detached.
+			 */
+			for (i = 0, gap = 0; i < imo->imo_num_memberships;
+			    i++) {
+				if (imo->imo_membership[i]->inm_ifp == ifp) {
+					in_delmulti(imo->imo_membership[i]);
+					gap++;
+				} else if (gap != 0)
+					imo->imo_membership[i - gap] =
+					    imo->imo_membership[i];
+			}
+			imo->imo_num_memberships -= gap;
+		}
 	}
 }
 
