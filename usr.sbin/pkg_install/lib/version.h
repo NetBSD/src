@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.28 2003/09/02 07:35:05 jlam Exp $	*/
+/*	$NetBSD: version.h,v 1.29 2003/09/03 12:52:30 jlam Exp $	*/
 
 /*
  * Copyright (c) 2001 Thomas Klausner.  All rights reserved.
@@ -33,6 +33,6 @@
 #ifndef _INST_LIB_VERSION_H_
 #define _INST_LIB_VERSION_H_
 
-#define PKGTOOLS_VERSION "20030823"
+#define PKGTOOLS_VERSION "20030824"
 
 #endif /* _INST_LIB_VERSION_H_ */
