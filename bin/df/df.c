@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.66 2004/07/17 00:29:08 enami Exp $	*/
+/*	$NetBSD: df.c,v 1.67 2004/12/31 09:54:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.66 2004/07/17 00:29:08 enami Exp $");
+__RCSID("$NetBSD: df.c,v 1.67 2004/12/31 09:54:28 augustss Exp $");
 #endif
 #endif /* not lint */
 
@@ -357,7 +357,7 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 			headerlen = strlen(header);
 		} else
 			header = getbsize(&headerlen, &blocksize);
-		(void)printf("%-*.*s %s     Used %9s Capacity",
+		(void)printf("%-*.*s %s      Used %9s Capacity",
 		    maxwidth, maxwidth, "Filesystem", header,
 		    Pflag ? "Available" : "Avail");
 		if (iflag)
@@ -371,7 +371,7 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 	if (hflag)
 		prthuman(sfsp, used, bavail);
 	else
-		(void)printf(" %*" PRId64 " %8" PRId64 " %9" PRId64, headerlen,
+		(void)printf(" %*" PRId64 " %9" PRId64 " %9" PRId64, headerlen,
 		    fsbtoblk(sfsp->f_blocks, sfsp->f_frsize, blocksize),
 		    fsbtoblk(used, sfsp->f_frsize, blocksize),
 		    fsbtoblk(bavail, sfsp->f_frsize, blocksize));
