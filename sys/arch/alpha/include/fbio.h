@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.2 1996/05/01 19:44:21 cgd Exp $	*/
+/*	$NetBSD: fbio.h,v 1.3 1996/08/23 00:50:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -56,8 +56,9 @@
 #define	FBTYPE_PCIVGA		7	/* PCI VGA */
 #define	FBTYPE_TGA		8	/* TGA (PCI) */
 #define	FBTYPE_SFBP		9	/* SFB+ (TurboChannel) */
+#define	FBTYPE_TGA2		10	/* TGA2 (PCI) */
 
-#define	FBTYPE_LASTPLUSONE	10
+#define	FBTYPE_LASTPLUSONE	11
 
 /*
  * Frame buffer descriptor as returned by FBIOGTYPE.
