@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.41 2003/06/15 23:09:08 fvdl Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.42 2003/06/30 13:20:21 ragge Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2090,7 +2090,7 @@ bge_attach(parent, self, aux)
 	ifp->if_start = bge_start;
 	ifp->if_init = bge_init;
 	ifp->if_watchdog = bge_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, BGE_TX_RING_CNT - 1);
+	IFQ_SET_MAXLEN(&ifp->if_snd, max(BGE_TX_RING_CNT - 1, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 	DPRINTFN(5, ("bcopy\n"));
 	strcpy(ifp->if_xname, sc->bge_dev.dv_xname);
