@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)ch.c	5.11 (Berkeley) 6/21/92"; */
-static char *rcsid = "$Id: ch.c,v 1.2 1993/11/09 05:07:50 cgd Exp $";
+static char *rcsid = "$Id: ch.c,v 1.3 1994/04/06 17:50:39 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -106,7 +106,7 @@ fch_get()
 	register struct buf *bp;
 	register int n, ch;
 	register char *p, *t;
-	off_t pos, lseek();
+	off_t pos;
 
 	/* look for a buffer holding the desired block. */
 	for (bp = buf_head;  bp != END_OF_CHAIN;  bp = bp->next)
@@ -328,8 +328,6 @@ ch_beg_seek()
 off_t
 ch_length()
 {
-	off_t lseek();
-
 	if (ispipe)
 		return(ch_fsize);
 	return((off_t)(lseek(file, (off_t)0, L_XTND)));
