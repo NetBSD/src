@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2003/04/09 22:30:59 dsl Exp $
+#	$NetBSD: Makefile,v 1.24 2003/05/18 07:57:39 lukem Exp $
 #
 
 .include <bsd.own.mk>
@@ -16,6 +16,4 @@ UFSSRC=		${NETBSDSRCDIR}/sys/ufs
 CPPFLAGS+=	-I${.CURDIR} -I.
 .PATH:		${.CURDIR}/arch ${UFSSRC}/ffs
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
-.endif

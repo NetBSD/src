@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2001/08/14 10:18:28 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2003/05/18 07:57:34 lukem Exp $
 
 PROG=	gencat
 MAN=	gencat.1
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
-.endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/03/31 14:30:20 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.12 2003/05/18 07:57:33 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/28/95
 
 PROG=	cksum
@@ -16,6 +16,4 @@ MLINKS+=cksum.1 md5.1
 MLINKS+=cksum.1 sha1.1
 MLINKS+=cksum.1 rmd160.1
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
-.endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/02/24 01:52:09 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 2003/05/18 07:57:34 lukem Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
 
 .include <bsd.own.mk>
@@ -12,6 +12,4 @@ PROG=	elf2ecoff
 
 MAN=	elf2ecoff.1
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
-.endif
