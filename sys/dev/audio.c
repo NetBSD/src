@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.10 1995/07/07 01:52:30 brezak Exp $	*/
+/*	$NetBSD: audio.c,v 1.11 1995/07/19 19:58:16 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -770,7 +770,7 @@ audio_read(dev, uio, ioflag)
 		}
 		hp = cb->hp;
 		if (hw->sw_decode)
-			hw->sw_decode(sc->sc_rencoding, hp, blocksize);
+			hw->sw_decode(sc->hw_hdl, sc->sc_rencoding, hp, blocksize);
 		error = uiomove(hp, blocksize, uio);
 		if (error)
 			break;
@@ -902,7 +902,7 @@ audio_alloc_auzero(sc, bs)
 		*p++ = silence;
 
 	if (hw->sw_encode)
-		hw->sw_encode(sc->sc_pencoding, auzero_block, bs);
+		hw->sw_encode(sc->hw_hdl, sc->sc_pencoding, auzero_block, bs);
 }
 
     
@@ -1027,7 +1027,7 @@ audio_write(dev, uio, ioflag)
 		}		    
 
 		if (hw->sw_encode) {
-			hw->sw_encode(sc->sc_pencoding, cb->tp, blocksize);
+			hw->sw_encode(sc->hw_hdl, sc->sc_pencoding, cb->tp, blocksize);
 		}
 
 		/* wrap the ring buffer if at end */

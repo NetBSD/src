@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.62 1995/07/04 06:42:19 paulus Exp $
+#	$NetBSD: files,v 1.63 1995/07/19 19:58:09 brezak Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -8,6 +8,7 @@ define	tape
 define	ifnet
 define	tty
 define	audio
+define	mulaw
 
 # net device attributes - we have generic code for ether and arc.
 # we should have imp but right now it is a pseudo-device.
@@ -62,6 +63,7 @@ file ddb/db_variables.c	 	ddb
 file ddb/db_watch.c		ddb
 file ddb/db_write_cmd.c	 	ddb
 file dev/audio.c		audio needs-flag
+file dev/mulaw.c		mulaw
 file dev/vnd.c			vnd needs-flag
 file isofs/cd9660/cd9660_bmap.c		cd9660
 file isofs/cd9660/cd9660_lookup.c	cd9660

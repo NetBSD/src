@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.4 1995/07/07 01:58:04 brezak Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.5 1995/07/19 19:58:23 brezak Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -87,8 +87,8 @@ struct audio_hw_if {
 	u_int	(*get_silence)__P((int));
 
 	/* Software en/decode functions, set if SW coding required by HW */
-	void	(*sw_encode)__P((int, u_char *, int));
-	void	(*sw_decode)__P((int, u_char *, int));
+	void	(*sw_encode)__P((void *, int, u_char *, int));
+	void	(*sw_decode)__P((void *, int, u_char *, int));
 
 	/* Start input/output routines. These usually control DMA. */
 	int	(*start_output)__P((void *, void *, int, void (*)(), void *));
