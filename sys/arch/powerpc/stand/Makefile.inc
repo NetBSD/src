@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/04/16 20:29:02 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1998/05/22 12:56:35 drochner Exp $
 
 BINDIR=		/usr/mdec
 
-CPPFLAGS+=	-DSTANDALONE
+CPPFLAGS+=	-D_STANDALONE
 
 CFLAGS+=	-msoft-float
