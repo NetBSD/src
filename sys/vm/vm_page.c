@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.40 1998/02/06 00:14:54 mrg Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.41 1998/02/08 18:24:52 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -378,8 +378,8 @@ vm_bootstrap_steal_memory(size)
 #else /* ! PMAP_STEAL_MEMORY */
 	vm_offset_t addr, vaddr, paddr;
 
-	/* round the size to an integer multiple */
-	size = (size + 3) &~ 3; /* XXX */
+	/* round to page size */
+	size = round_page(size);
 
 	/*
 	 * on first call to this function init ourselves.   we detect this
@@ -959,10 +959,10 @@ vm_bootstrap_steal_memory(size)
 	vm_offset_t	addr, vaddr, paddr;
 
 	/*
-	 *	We round the size to an integer multiple.
+	 *	We round to page size.
 	 */
 	
-	size = (size + 3) &~ 3; /* XXX */
+	size = round_page(size);
 	
 	/*
 	 *	If this is the first call to vm_bootstrap_steal_memory,
