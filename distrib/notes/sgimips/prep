@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.5 2002/07/26 15:41:56 rafal Exp $
+.\"	$NetBSD: prep,v 1.6 2005/03/01 00:23:59 sekiya Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -19,7 +19,7 @@ displayed by the PROM:
 .Pp
 You can convert the standard ELF
 format kernel into an ECOFF kernel using the
-.Pa elf2ecoff
+.Pa objcopy
 tool.
 .Pp
 .\" Different SGI hardware will require the executable code in the loadable
