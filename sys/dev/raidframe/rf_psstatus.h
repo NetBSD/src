@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.h,v 1.9 2004/03/18 16:54:54 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.h,v 1.10 2004/04/09 17:01:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -69,6 +69,7 @@
 #define RF_UNLOCK_PSS_MUTEX(_raidPtr, _psid)                                                    \
   RF_LOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex);      \
   (_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].lock = 0;                  \
+  wakeup(&(_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].lock);             \
   RF_UNLOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex);
 
 struct RF_ReconParityStripeStatus_s {
