@@ -1,9 +1,17 @@
-$NetBSD: UPDATING,v 1.122 2004/05/31 00:18:58 itojun Exp $
+$NetBSD: UPDATING,v 1.123 2004/06/13 08:08:43 jmc Exp $
 
-This file is intended to be a brief introduction to the build
-process and a reference on what to do if something doesn't work.
+This file (UPDATING) is intended to be a brief reference to recent
+changes that might cause problems in the build process, and a guide for
+what to do if something doesn't work.
 
-For a more detailed description see Makefile.
+For a more detailed description of the recommended way to build NetBSD
+using build.sh, see the BUILDING file.
+
+Note that much of the advice in this UPDATING file was written before
+build.sh existed.  Nevertheless, the advice here may be useful for
+working around specific problems with build.sh.
+
+See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
@@ -587,6 +595,12 @@ Recent changes:
 
 Hints for a more successful build:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    Use build.sh, but do not use its "expert mode":
+	This will will automatically build the tools in the
+	   correct order, and it will keep the tools and the
+	   new build products from interfering with the running
+	   system.  This will allow you to ignore most of the
+	   other advice in this file.
     Build a new kernel first:
 	This makes sure that any new system calls or features
 	   expected by the new userland will be present.  This
@@ -597,7 +611,9 @@ Hints for a more successful build:
 	   about one.  It also makes it easier to clean up after
 	   a build.  It's also necessary if you want to use the
 	   same source tree for multiple machines.
-	   To use object directories:
+	   To use object directories with build.sh:
+	    a) invoke build.sh with the "-M" or "-O" options.
+	   To use object directories without using build.sh:
 	    a) cd /usr/src ; make cleandir
 	    b) Add "OBJMACHINE=yes" to /etc/mk.conf
 	    c) Add "MKOBJDIRS=yes" to /etc/mk.conf
@@ -605,20 +621,21 @@ Hints for a more successful build:
 	   Note that running "make obj" in a directory will create
 	   in obj.$MACHINE directory.
     Build to a DESTDIR:
-	This helps to keep old
-	   installed files (especially libraries) from interfering
-	   with the new build.
-	   To build to a DESTDIR, set the DESTDIR environment
-	   variable before running make build.  It should be set to
-	   the pathname of an initially empty directory.
-	   Problems: you might need to update critical utilities
-		without using DESTDIR since nothing is executed
-		from what is installed in DESTDIR.
-		(See critical utils, below)
+	This helps to keep old installed files (especially libraries)
+	   from interfering with the new build.
+	   To build to a DESTDIR with build.sh, use the "-D" option.
+	   To build to a DESTDIR without using build.sh, set the DESTDIR
+	   environment variable before running make build.  It should be
+	   set to the pathname of an initially empty directory.
+	   Problems: if you do not use build.sh, you might need to
+		update critical utilities without using DESTDIR since
+		nothing is executed from what is installed in DESTDIR.
+		(See critical utils, below.)
     Build often:
 	This keeps critical utilities current enough to not choke
 	on any other part of the source tree that depends on up to
-	date functionality.
+	date functionality.  If you use build.sh, you should not have
+	this problem.
  
 What to do if things don't work:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
