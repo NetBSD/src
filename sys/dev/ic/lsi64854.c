@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.2 1998/09/01 21:04:43 pk Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.3 1998/09/06 21:39:33 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -334,14 +334,14 @@ lsi64854_scsi_intr(arg)
 
 	DPRINTF(("%s: intr: addr 0x%x, csr %s\n", sc->sc_dev.dv_xname,
 		 bus_space_read_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR),
-		 bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits))));
+		 bitmask_snprintf(csr, DDMACSR_BITS, bits, sizeof(bits))));
 
 	if (csr & D_ERR_PEND) {
 		csr &= ~D_EN_DMA;	/* Stop DMA */
 		csr |= D_INVALIDATE;
 		L64854_SCSR(sc, csr);
 		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
-			bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits)));
+			bitmask_snprintf(csr, DDMACSR_BITS, bits,sizeof(bits)));
 		return (-1);
 	}
 
@@ -459,7 +459,7 @@ static int dodrain=0;
 		csr |= E_INVALIDATE;
 		L64854_SCSR(sc, csr);
 		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
-			bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits)));
+			bitmask_snprintf(csr, EDMACSR_BITS, bits,sizeof(bits)));
 		DMA_RESET(sc);
 		dodrain = 1;
 	}
