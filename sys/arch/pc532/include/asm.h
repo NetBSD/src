@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11 1997/11/10 01:50:25 phil Exp $	*/
+/*	$NetBSD: asm.h,v 1.12 1998/04/03 23:01:37 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -93,11 +93,20 @@
 #define PIC_S_ARG3	16(sp)
 #endif
 
-#define _ENTRY(name)						\
+#if defined(_KERNEL) && defined(MRTD)
+#define _SETARGS(args)						\
+		.set	ARGS,args
+#else
+#define _SETARGS(args)						\
+		.set	ARGS,0
+#endif
+
+#define _ENTRY(name, args)					\
 		.text					;	\
 		_ALIGN_TEXT				;	\
 		.globl name				;	\
 		.type name,@function			;	\
+		_SETARGS(args)				;	\
 	name:
 
 #ifdef GPROF
@@ -112,11 +121,12 @@
 # define _PROF_PROLOGUE
 #endif
 
-#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
-#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	ENTRY(y)	_ENTRY(_C_LABEL(y), 0); _PROF_PROLOGUE
+#define	KENTRY(y, n)	_ENTRY(_C_LABEL(y), n); _PROF_PROLOGUE
+#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y), 0); _PROF_PROLOGUE
 
-#define	ENTRY_NOPROFILE(name)	_ENTRY(_C_LABEL(name))
-#define	ASENTRY_NOPROFILE(name)	_ENTRY(_ASM_LABEL(name))
+#define	ENTRY_NOPROFILE(name)	_ENTRY(_C_LABEL(name), 0)
+#define	ASENTRY_NOPROFILE(name)	_ENTRY(_ASM_LABEL(name), 0)
 
 #define ALTENTRY(name, rname)					\
 		.globl _C_LABEL(name)			;	\
