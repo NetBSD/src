@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.54 2002/07/21 09:28:03 lukem Exp $
+.\"	$NetBSD: sysinst,v 1.55 2002/07/21 12:58:02 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -357,7 +357,7 @@ sysinst.fs image.
 See the "prepare" section about obtaining those.
 .\}
 .el One 1.44 MB 3.5" floppy.
-.\}.\}.\}.\}
+.\}\}\}\}
 .\} \" !\n[pmax]:\n[sgimips]
 .if r_i386 \{\
 .It
@@ -1545,7 +1545,7 @@ the disklabel to add this once you have installed
 .\}
 .el \{\
 .ds usrpart d
-.\}.\}.\}
+.\}\}\}
 .\} \" !r_mac68k
 Some partitions in the disklabel have a fixed purpose.
 .(tag 6n -offset indent
