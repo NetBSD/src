@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.14 1999/03/25 21:39:18 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.14.2.1 1999/06/25 20:49:37 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -486,6 +486,7 @@ struct segment {
 	struct buf	**start_bpp;	/* pointer to first bp in this set */
 	struct buf	 *ibp;		/* buffer pointer to inode page */
 	struct finfo	 *fip;		/* current fileinfo pointer */
+	struct dinode    *idp;          /* pointer to ifile dinode */
 	struct vnode	 *vp;		/* vnode being gathered */
 	void	 *segsum;		/* segment summary info */
 	u_int32_t ninodes;		/* number of inodes in this segment */
