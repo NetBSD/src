@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.6 2002/01/05 13:24:40 martin Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.7 2002/04/19 20:45:54 drochner Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -140,7 +140,9 @@ int maxactivefd;
 static	int create_sockets	P((u_int));
 static	int open_socket		P((struct sockaddr_in *, int, int));
 static	void	close_socket	P((int));
+#ifdef REFCLOCK
 static	void	close_file	P((int));
+#endif
 static	char *	fdbits		P((int, fd_set *));
 
 /*
@@ -1084,7 +1086,7 @@ close_socket(
 	}
 }
 
-
+#ifdef REFCLOCK
 /*
  * close_file - close a file and remove from the activefd list
  * added 1/31/1997 Greg Schueman for Windows NT portability
@@ -1108,7 +1110,7 @@ close_file(
 		maxactivefd = newmax;
 	}
 }
-
+#endif
 
 /*
  * findbcastinter - find broadcast interface corresponding to address
