@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12 1996/03/14 21:09:18 christos Exp $ */
+/*	$NetBSD: mem.c,v 1.13 1996/03/30 21:12:16 christos Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,10 +50,11 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <sparc/sparc/vaddrs.h>
-#include <sparc/sparc/sparc_conf.h>
 #include <machine/eeprom.h>
+#include <machine/conf.h>
 
 #include <vm/vm.h>
 
