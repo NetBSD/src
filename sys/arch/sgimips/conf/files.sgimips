@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.12 2001/09/23 19:45:41 manu Exp $
+#	$NetBSD: files.sgimips,v 1.13 2001/11/14 18:15:34 thorpej Exp $
 
 maxpartitions 16
 
@@ -62,6 +62,7 @@ file dev/arcbios/arcbios.c
 file dev/arcbios/arcbios_tty.c
 
 file arch/sgimips/sgimips/ip22.c
+file arch/sgimips/sgimips/ip22_cache.S		ip22
 file arch/sgimips/sgimips/ip32.c
 file arch/sgimips/sgimips/autoconf.c
 file arch/sgimips/sgimips/bus.c
