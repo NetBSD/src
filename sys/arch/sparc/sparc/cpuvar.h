@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.58 2003/01/23 22:33:41 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.59 2004/04/10 19:55:57 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -417,10 +417,11 @@ void mmu_install_tables (struct cpu_info *);
 void pmap_alloc_cpu (struct cpu_info *);
 void pmap_globalize_boot_cpu (struct cpu_info *);
 
+#define	CPUSET_ALL	0xffffffffU	/* xcall to all configured CPUs */
+
 #if defined(MULTIPROCESSOR)
 typedef int (*xcall_func_t)(int, int, int, int);
 void xcall(xcall_func_t, int, int, int, int, u_int);
-#define	CPUSET_ALL	0xffffffffU	/* xcall to all configured CPUs */
 /* Shorthand */
 #define XCALL0(f,cpuset)		\
 	xcall((xcall_func_t)f, 0, 0, 0, 0, cpuset)
