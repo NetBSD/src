@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.7 2000/01/07 03:25:34 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.8 2000/01/08 03:34:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -728,13 +728,6 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 		rf_get_threadid(tid);
 		printf("[%d] Engine thread is running\n", tid);
 	}
-#ifndef __NetBSD__
-	thread = current_thread();
-	thread_swappable(thread, RF_FALSE);
-	thread->priority = thread->sched_pri = BASEPRI_SYSTEM;
-	s = spl0();
-#endif
-	/* XXX what to put here XXX */
 
 	s = splbio();
 
@@ -809,12 +802,7 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 	DO_UNLOCK(raidPtr);
 
 	RF_THREADGROUP_DONE(&raidPtr->engine_tg);
-#ifdef __NetBSD__
+
 	splx(s);
 	kthread_exit(0);
-#else
-	splx(s);
-	thread_terminate(thread);
-	thread_halt_self();
-#endif
 }
