@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.125 2001/12/04 00:05:06 darrenr Exp $ */
+/*	$NetBSD: cpu.c,v 1.126 2002/01/25 17:40:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1055,6 +1055,10 @@ sun4_hotfix(sc)
 		kvm_uncache((caddr_t)trapbase, 1);
 		printf(": cache chip bug; trap page uncached");
 	}
+
+	/* Use the hardware-assisted page flush routine, if present */
+	if (sc->cacheinfo.c_hwflush)
+		sc->vcache_flush_page = sun4_vcache_flush_page_hw;
 }
 
 #if defined(SUN4M)
