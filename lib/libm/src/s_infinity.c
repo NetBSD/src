@@ -3,7 +3,7 @@
  * Public domain.
  */
 
-#include <machine/endian.h>
+#include <sys/types.h>
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 char __infinity[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x7f };
