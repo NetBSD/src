@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.8 2001/10/18 23:47:16 eeh Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -35,7 +35,7 @@
  * We want to contro both device & function probe order.
  */
 #define		__PCI_BUS_DEVORDER
-#define		__PCI_DEV_FUNCORDER
+#undef		__PCI_DEV_FUNCORDER
 
 /*
  * Forward declarations.
