@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_ext.c,v 1.7 1995/04/19 19:12:15 mycroft Exp $	*/
+/*	$NetBSD: pcvt_ext.c,v 1.8 1995/05/01 11:07:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
@@ -2435,7 +2435,7 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case KDENABIO:
 		/* grant the process IO access; only allowed if euid == 0 */
 	{
-		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
+		struct trapframe *fp = p->p_md.md_regs;
 		
 		if(suser(p->p_ucred, &p->p_acflag) != 0)
 			return (EPERM);
@@ -2449,7 +2449,7 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case KDDISABIO:
 		/* abandon IO access permission */
 	{
-		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
+		struct trapframe *fp = p->p_md.md_regs;
 		fp->tf_eflags &= ~PSL_IOPL;
 
 		return 0;
