@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip.c,v 1.8 1999/07/25 04:23:21 explorer Exp $	*/
+/*	$NetBSD: print-ip.c,v 1.9 1999/08/26 14:52:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ip.c,v 1.66 97/05/28 12:51:43 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ip.c,v 1.8 1999/07/25 04:23:21 explorer Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.9 1999/08/26 14:52:04 itojun Exp $");
 #endif
 #endif
 
@@ -343,7 +343,7 @@ void
 ip_print(register const u_char *bp, register u_int length)
 {
 	register const struct ip *ip;
-	register u_int hlen, len, off;
+	register u_int hlen, len, len0, off;
 	register const u_char *cp;
 	u_char nh;
 	int advance;
@@ -390,6 +390,7 @@ ip_print(register const u_char *bp, register u_int length)
 		(void)printf("truncated-ip - %d bytes missing!",
 			len - length);
 	len -= hlen;
+	len0 = len;
 
 	/*
 	 * If this is fragment zero, hand it to the next higher
@@ -571,6 +572,7 @@ again:
 	 * but the last stick a "+".  For unfragmented datagrams, note
 	 * the don't fragment flag.
 	 */
+	len = len0;
 	if (off & 0x3fff) {
 		/*
 		 * if this isn't the first frag, we're missing the
