@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isapnp.c,v 1.2 1999/03/17 22:19:35 mycroft Exp $	*/
+/*	$NetBSD: ess_isapnp.c,v 1.3 1999/03/19 01:21:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -111,8 +111,7 @@ ess_isapnp_attach(parent, self, aux)
 	sc->sc_audio1.irq = ipa->ipa_irq[0].num;
 	sc->sc_audio1.ist = ipa->ipa_irq[0].type;
 	sc->sc_audio1.drq = ipa->ipa_drq[0].num;
-	sc->sc_audio2.irq = ipa->ipa_irq[0].num;
-	sc->sc_audio2.ist = ipa->ipa_irq[0].type;
+	sc->sc_audio2.irq = -1;
 	sc->sc_audio2.drq = ipa->ipa_drq[1].num;
 
 	if (!essmatch(sc)) {
