@@ -1,6 +1,6 @@
-/*	$NetBSD: shl.x,v 1.6 2002/03/02 22:26:25 uch Exp $	*/
+/*	$NetBSD: shl.x,v 1.7 2002/04/25 17:02:41 uch Exp $	*/
 
-OUTPUT_FORMAT("elf32-shl-unx")
+OUTPUT_FORMAT("elf32-shl-nbsd")
 OUTPUT_ARCH(sh)
 ENTRY(start)
 
