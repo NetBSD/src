@@ -1,11 +1,11 @@
-/* 	$NetBSD: pxvar.h,v 1.10 2000/02/03 04:09:17 nisimura Exp $	*/
+/* 	$NetBSD: pxvar.h,v 1.11 2000/06/13 13:39:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
