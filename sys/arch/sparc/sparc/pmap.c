@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.169 2000/06/19 21:06:32 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.170 2000/06/20 12:04:22 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1545,7 +1545,7 @@ region_free(pm, smeg)
 	/* take mmu entry off pmap chain */
 	TAILQ_REMOVE(&pm->pm_reglist, me, me_pmchain);
 	/* ... and remove from segment map */
-	pm->pm_regmap[smeg].rg_smeg = reginval;
+	pm->pm_regmap[me->me_vreg].rg_smeg = reginval;
 
 	/* off LRU or lock chain */
 	if (pm == pmap_kernel()) {
@@ -1593,11 +1593,6 @@ mmu_pagein(pm, va, prot)
 	if (pm == pmap_kernel())
 	printf("mmu_pagein: kernel wants map at va 0x%lx, vr %d, vs %d\n",
 		(u_long)va, vr, vs);
-#endif
-#if 0
-#if defined(SUN4_MMU3L)
-printf("mmu_pagein: pm=%p, va 0x%x, vr %d, vs %d, rp=%p, segmap=%p\n", pm, va, vr, vs, rp, rp->rg_segmap);
-#endif
 #endif
 
 	/* return 0 if we have no PMEGs to load */
@@ -5369,26 +5364,6 @@ printf("pmap_enter: segment filled during sleep\n");	/* can this happen? */
 		rp->rg_nsegmap = 0;
 		for (i = NSEGRG; --i >= 0;)
 			sp++->sg_pmeg = seginval;
-
-#if defined(SUN4_MMU3L)
-/*
- * XXX - preallocate the region MMU cookies.
- * XXX - Doing this keeps the machine running for a while
- * XXX - Remove or alter this after dealing with the bugs...
- */
-		if (HASSUN4_MMU3L) {
-			vaddr_t tva;
-			rp->rg_smeg = region_alloc(&region_lru, pm, vr)->me_cookie;
-			setregmap(va, rp->rg_smeg);
-
-			tva = VA_ROUNDDOWNTOREG(va);
-			for (i = 0; i < NSEGRG; i++) {
-				setsegmap(tva, seginval);
-				tva += NBPSG;
-			};
-		}
-/* XXX  - end of work-around */
-#endif
 	}
 
 	sp = &rp->rg_segmap[vs];
