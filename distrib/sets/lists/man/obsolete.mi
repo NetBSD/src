@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.9 2000/04/25 05:38:00 mellon Exp $
+# $NetBSD: obsolete.mi,v 1.10 2000/04/27 20:55:04 veego Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/ld.so.0
 /usr/share/man/cat1/pstat.0
@@ -18,6 +18,7 @@
 /usr/share/man/cat4/i386/speaker.0
 /usr/share/man/cat4/imp.0
 /usr/share/man/cat4/pmax/le.0
+/usr/share/man/cat4/rl.0
 /usr/share/man/cat4/rtpphy.0
 /usr/share/man/cat4/sparc/le.0
 /usr/share/man/cat4/sun3/le.0
@@ -63,6 +64,7 @@
 /usr/share/man/man4/i386/speaker.4
 /usr/share/man/man4/imp.4
 /usr/share/man/man4/pmax/le.4
+/usr/share/man/man4/rl.4
 /usr/share/man/man4/rtpphy.4
 /usr/share/man/man4/sparc/le.4
 /usr/share/man/man4/sun3/le.4
