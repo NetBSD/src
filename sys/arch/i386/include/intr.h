@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.30 2002/11/22 15:23:47 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.31 2002/11/22 21:21:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -247,7 +247,6 @@ extern char idt_allocmap[];
 
 void intr_default_setup(void);
 int i386_nmi(void);
-void i386_strayintr(int);
 void intr_calculatemasks(struct cpu_info *);
 int intr_allocate_slot_cpu(struct cpu_info *, struct pic *, int, int *);
 int intr_allocate_slot(struct pic *, int, int, int, struct cpu_info **, int *,
