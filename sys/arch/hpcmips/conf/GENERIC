@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.73 2000/12/19 10:42:04 bouyer Exp $
+# 	$NetBSD: GENERIC,v 1.74 2000/12/20 03:23:55 matt Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.73 $"
+#ident 		"GENERIC-$Revision: 1.74 $"
 
 maxusers	8
 
@@ -312,6 +312,7 @@ ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 awi*	at pcmcia? function ?		# WLI-PCM
+an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
 
 # PCMCIA Serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
