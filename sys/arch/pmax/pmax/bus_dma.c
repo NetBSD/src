@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.6 1998/06/03 04:41:30 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.7 1998/06/03 05:10:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -395,6 +395,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	int ops;
 {
 	bus_size_t minlen;
+	bus_addr_t addr;
 	int i;
 
 	/*
@@ -443,67 +444,57 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 * two operations, so no additional tests are necessary.
 	 */
 
-#ifdef MIPS1
-	if (CPUISMIPS3 == 0) {
-		/*
-		 * The R2000 and R3000 have a physically indexed
-		 * cache.  Loop through the DMA segments, looking
-		 * for the appropriate offset, and flush the D-cache
-		 * at that physical address.
-		 */
-		for (i = 0; i < map->dm_nsegs && len != 0; i++) {
-			/* Find the beginning segment. */
-			if (offset >= map->dm_segs[i].ds_len) {
-				offset -= map->dm_segs[i].ds_len;
-				continue;
-			}
-
-			/*
-			 * Now at the first segment to sync; nail
-			 * each segment until we have exhausted the
-			 * length.
-			 */
-			minlen = len < map->dm_segs[i].ds_len - offset ?
-			    len : map->dm_segs[i].ds_len - offset;
-
-#ifdef BUS_DMA_DEBUG
-			printf("bus_dmamap_sync: flushing segment %d "
-			    "(0x%lx..0x%lx) ...", i,
-			    map->dm_segs[i].ds_addr + offset,
-			    map->dm_segs[i].ds_addr + offset + minlen - 1);
-#endif
-			MachFlushDCache(
-			   MIPS_PHYS_TO_KSEG0(map->dm_segs[i].ds_addr + offset),
-			   minlen);
-#ifdef BUS_DMA_DEBUG
-			printf("\n");
-#endif
-			offset = 0;
-			len -= minlen;
+	/*
+	 * The R2000 and R3000 have a physically indexed
+	 * cache.  Loop through the DMA segments, looking
+	 * for the appropriate offset, and flush the D-cache
+	 * at that physical address.
+	 *
+	 * The R4000 has a virtually indexed primary data cache.  We
+	 * do the same loop, instead using the virtual address stashed
+	 * away in the segments when the map was loaded.
+	 */
+	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
+		/* Find the beginning segment. */
+		if (offset >= map->dm_segs[i].ds_len) {
+			offset -= map->dm_segs[i].ds_len;
+			continue;
 		}
-		return;
-	}
-#endif
 
-#ifdef MIPS3
-	if (CPUISMIPS3) {
 		/*
-		 * XXX This is WRONG.  The R4000 has a virtually-indexed
-		 * XXX cache.  What we want to do is store a pointer to
-		 * XXX the original buffer (along with an indication of
-		 * XXX its type) in the map, and traverse it flushing the
-		 * XXX cache with the virtual addresses (we have a problem
-		 * XXX with RAW memory, here!!).  Until that is implemented,
-		 * XXX however, just nail the entire cache.
+		 * Now at the first segment to sync; nail
+		 * each segment until we have exhausted the
+		 * length.
 		 */
-		MachFlushCache();
-		return;
-	}
-#endif
+		minlen = len < map->dm_segs[i].ds_len - offset ?
+		    len : map->dm_segs[i].ds_len - offset;
 
-#ifdef DIAGNOSTIC
-	panic("_bus_dmamap_sync: impossible");
+		if (CPUISMIPS3)
+			addr = map->dm_segs[i]._ds_vaddr;
+		else
+			addr = map->dm_segs[i].ds_addr;
+
+#ifdef BUS_DMA_DEBUG
+		printf("bus_dmamap_sync: flushing segment %d "
+		    "(0x%lx..0x%lx) ...", i, addr + offset,
+		    addr + offset + minlen - 1);
 #endif
+		if (CPUISMIPS3)
+			MachFlushDCache(addr + offset, minlen);
+		else {
+			/*
+			 * We can't have a TLB miss; use KSEG0.
+			 */
+			MachFlushDCache(
+			  MIPS_PHYS_TO_KSEG0(map->dm_segs[i].ds_addr + offset),
+			  minlen);
+		}
+#ifdef BUS_DMA_DEBUG
+		printf("\n");
+#endif
+		offset = 0;
+		len -= minlen;
+	}
 }
 
 /*
