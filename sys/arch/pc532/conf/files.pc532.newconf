@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532.newconf,v 1.8 1995/01/25 20:45:51 cgd Exp $
+#	$NetBSD: files.pc532.newconf,v 1.9 1995/02/12 03:53:47 phil Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -12,6 +12,7 @@ device	membus at root {[iomem = -1], [iosiz = 0]}
 
 device  rd at membus: disk
 major	{rd = 3}
+major	{vnd = 5}
 
 #device	timer at membus
 #device	clock at membus

@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.7 1995/01/25 05:35:02 cgd Exp $
+#	$NetBSD: STEELHEAD,v 1.8 1995/02/12 03:53:45 phil Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -52,7 +52,7 @@ options		"COMDEF_SPEED=B19200"	# default baud on the scn chips
 options		"CONFIG_NEW"		# Use config.new stuff
 options		"DEV_RTC"		# /dev/rtc access to hardware clock
 
-config		"netbsd"	root on sd0 swap on sd0
+config		"netbsd"	root on sd0 swap on sd0 and sd1 and vnd0a
 
 membus0 at root
 
