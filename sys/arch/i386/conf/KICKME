@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.52 1998/08/31 17:58:52 thorpej Exp $
+#	$NetBSD: KICKME,v 1.53 1999/01/14 04:44:23 cgd Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -17,6 +17,7 @@ options 	INSECURE	# insecure; allow /dev/mem writing for X
 
 #options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+#makeoptions	DEBUG="-g"	# compile full symbol table
 options 	DIAGNOSTIC	# internal consistency checks
 options 	KTRACE		# system call tracing, a la ktrace(1)
 
@@ -48,7 +49,16 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	PPP_BSDCOMP
 options 	PPP_DEFLATE
 
-#options	IPFILTER_LOG
+options 	IPFILTER_LOG
+
+# Special PCMCIA configuration
+options 	PCIC_ISA_ALLOC_IOBASE=0x340
+options 	PCIC_ISA_ALLOC_IOSIZE=0x1f
+options 	PCIC_ISA_INTR_ALLOC_MASK=0xf95b
+
+# WaveLAN debugging options
+options 	WL_DEBUG
+options 	WL_CC_DEBUG
 
 config		netbsd	root on ? type ?
 
@@ -77,6 +87,16 @@ fd*	at fdc? drive ?
 
 we0	at isa? port 0x280 iomem 0xd0000 irq 3	# WD/SMC
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
+
+# PCMCIA bus support
+pcmcia*	at pcic? controller ? socket ?
+
+# ISA PCMCIA controllers
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
+pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
+
+# PCMCIA network interfaces
+wl*	at pcmcia? function ?
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter
