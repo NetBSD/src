@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.31 1998/10/06 08:51:14 thorpej Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.32 1999/01/12 00:16:40 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
+#include <sys/wait.h>
 
 #include <sys/syscallargs.h>
 
@@ -558,9 +559,12 @@ svr4_sys_context(p, v, retval)
 
 	case 1: 
 		DPRINTF(("setcontext(%p)\n", SCARG(uap, uc)));
-		if ((error = copyin(SCARG(uap, uc), &uc, sizeof(uc))) != 0)
+		if (SCARG(uap, uc) == NULL)
+			exit1(p, W_EXITCODE(0, 0));
+		else if ((error = copyin(SCARG(uap, uc), &uc, sizeof(uc))) != 0)
 			return error;
-		return svr4_setcontext(p, &uc);
+		else
+			return svr4_setcontext(p, &uc);
 
 	default:
 		DPRINTF(("context(%d, %p)\n", SCARG(uap, func),
