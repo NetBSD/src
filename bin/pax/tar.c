@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.30 2002/10/17 01:08:22 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.31 2002/10/18 15:55:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.30 2002/10/17 01:08:22 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.31 2002/10/18 15:55:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ int is_gnutar;				/* behave like gnu tar; enable gnu
 					 * extensions and skip end-ofvolume
 					 * checks
 					 */
+static int seen_gnu_warning;		/* Have we warned yet? */
 static char *gnu_hack_string;		/* ././@LongLink hackery */
 static int gnu_hack_len;		/* len of gnu_hack_string */
 char *gnu_name_string;			/* ././@LongLink hackery name */
@@ -729,9 +730,12 @@ ustar_id(char *blk, int size)
 	if (strncmp(hd->magic, TMAGIC, TMAGLEN - 1) != 0)
 		return(-1);
 	/* This is GNU tar */
-	if (strncmp(hd->magic, "ustar  ", 8) == 0 && !is_gnutar)
+	if (strncmp(hd->magic, "ustar  ", 8) == 0 && !is_gnutar &&
+	    !seen_gnu_warning) {
+		seen_gnu_warning = 1;
 		tty_warn(1,
 		    "Trying to read GNU tar archive with extensions off");
+	}
 	if (asc_ul(hd->chksum,sizeof(hd->chksum),OCT) != tar_chksm(blk,BLKMULT))
 		return(-1);
 	return(0);
