@@ -1,4 +1,4 @@
-/*	$NetBSD: scnreg.h,v 1.5 1994/10/26 08:24:19 cgd Exp $	*/
+/*	$NetBSD: scnreg.h,v 1.6 1996/02/01 02:38:01 phil Exp $	*/
 
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
@@ -132,7 +132,7 @@
 #define IMR_TXB_INT	0x10
 
 /* If we need a delay.... */
-#define DELAY(x)  {int i; for (i=0; i<x*10000; i++); }
+/* #define DELAY(x)  {int i; for (i=0; i<x*10000; i++); } */
 
 #define istart(rs) \
   (WR_ADR(u_char, rs->opset_port, (RTS_BIT | DTR_BIT) << (rs)->a_or_b))
