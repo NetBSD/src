@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.54 1998/10/05 14:33:14 lukem Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.55 1998/11/13 10:50:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -180,9 +180,7 @@ in_pcbbind(v, nam, p)
 		return (EADDRNOTAVAIL);
 	if (inp->inp_lport || !in_nullhost(inp->inp_laddr))
 		return (EINVAL);
-	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
-	    ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
-	     (so->so_options & SO_ACCEPTCONN) == 0))
+	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0)
 		wild = 1;
 	if (nam == 0)
 		goto noname;
