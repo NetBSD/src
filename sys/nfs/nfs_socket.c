@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.101 2004/03/10 22:36:42 matt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.102 2004/03/17 10:40:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.101 2004/03/10 22:36:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.102 2004/03/17 10:40:34 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1572,7 +1572,7 @@ nfs_sndlock(flagp, rep)
 	} else
 		p = (struct proc *)0;
 	while (*flagp & NFSMNT_SNDLOCK) {
-		if (nfs_sigintr(rep->r_nmp, rep, p))
+		if (rep && nfs_sigintr(rep->r_nmp, rep, p))
 			return (EINTR);
 		*flagp |= NFSMNT_WANTSND;
 		(void) tsleep((caddr_t)flagp, slpflag | (PZERO - 1), "nfsndlck",
