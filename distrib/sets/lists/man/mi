@@ -392,6 +392,7 @@
 ./usr/share/man/cat4/ifmedia.0
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/inphy.0
+./usr/share/man/cat4/ioat.0
 ./usr/share/man/cat4/ip.0
 ./usr/share/man/cat4/ipf.0
 ./usr/share/man/cat4/ipfilter.0
@@ -1517,6 +1518,7 @@
 ./usr/share/man/man4/ifmedia.4
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/inphy.4
+./usr/share/man/man4/ioat.4
 ./usr/share/man/man4/ip.4
 ./usr/share/man/man4/ipf.4
 ./usr/share/man/man4/ipfilter.4
