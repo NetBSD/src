@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.12 2002/09/12 20:20:59 mycroft Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.13 2002/09/12 20:27:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 #endif
 
 void _rtld_bind_start(void);
+void __rtld_setup_hppa_pltgot(const Obj_Entry *, Elf_Addr *);
 
 /*
  * In the runtime architecture (ABI), PLABEL function 
