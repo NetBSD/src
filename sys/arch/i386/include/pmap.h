@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.4 (Berkeley) 5/12/91
- *	$Id: pmap.h,v 1.12 1994/09/09 23:59:36 mycroft Exp $
+ *	$Id: pmap.h,v 1.13 1994/10/09 13:11:18 mycroft Exp $
  */
 
 /*
@@ -156,6 +156,7 @@ struct pv_entry		*pv_table;	/* array of entries, one per page */
 
 #define	kernel_pmap			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_update()			tlbflush()
 
 static __inline void
 pmap_clear_modify(vm_offset_t pa)
@@ -191,12 +192,6 @@ static __inline vm_offset_t
 pmap_phys_address(int ppn)
 {
 	return i386_ptob(ppn);
-}
-
-static __inline void
-pmap_update(void)
-{
-	__asm __volatile("movl %%cr3,%%eax\n\tmovl %%eax,%%cr3" : : : "%eax");
 }
 
 #endif	/* KERNEL */
