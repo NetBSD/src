@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.260 2000/09/19 01:10:48 fvdl Exp $
+$NetBSD: pcidevs,v 1.261 2000/09/20 00:46:10 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1203,6 +1203,7 @@ product NEWBRIDGE CA91CX42		0x0000	Universe VME bridge
 
 /* National Semiconductor products */
 product NS DP83810	0x0001	DP83810 10/100 Ethernet
+product NS DP83815	0x0020	DP83815 10/100 Ethernet
 product NS NS87410	0xd001	NS87410
 
 /* NCR/Symbios Logic products */
