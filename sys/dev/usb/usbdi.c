@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.21 1999/01/10 19:13:16 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.22 1999/05/09 14:36:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -264,15 +264,16 @@ usbd_setup_request(reqh, pipe, priv, buffer, length, flags, timeout, callback)
 			      usbd_status));
 {
 	reqh->pipe = pipe;
-	reqh->isreq = 0;
 	reqh->priv = priv;
 	reqh->buffer = buffer;
 	reqh->length = length;
 	reqh->actlen = 0;
 	reqh->flags = flags;
-	reqh->callback = callback;
+	reqh->timeout = timeout;
 	reqh->status = USBD_NOT_STARTED;
+	reqh->callback = callback;
 	reqh->retries = 1;
+	reqh->isreq = 0;
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -311,8 +312,8 @@ usbd_setup_default_request(reqh, dev, priv, timeout, req, buffer,
 	reqh->status = USBD_NOT_STARTED;
 	reqh->callback = callback;
 	reqh->request = *req;
-	reqh->isreq = 1;
 	reqh->retries = 1;
+	reqh->isreq = 1;
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -484,6 +485,7 @@ usbd_clear_endpoint_stall(pipe)
 	usb_device_request_t req;
 	usbd_status r;
 
+	DPRINTFN(8, ("usbd_clear_endpoint_stall\n"));
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
 	USETW(req.wValue, UF_ENDPOINT_HALT);
@@ -945,6 +947,7 @@ usbd_transfer_cb(reqh)
 {
 	usbd_pipe_handle pipe = reqh->pipe;
 
+	DPRINTFN(10, ("usbd_transfer_cb: reqh=%p\n", reqh));
 	/* Count completed transfers. */
 	++pipe->device->bus->stats.requests
 		[pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE];
@@ -966,6 +969,7 @@ static void
 usbd_sync_transfer_cb(reqh)
 	usbd_request_handle reqh;
 {
+	DPRINTFN(10, ("usbd_sync_transfer_cb: reqh=%p\n", reqh));
 	usbd_transfer_cb(reqh);
 	if (!reqh->pipe->device->bus->use_polling)
 		wakeup(reqh);
