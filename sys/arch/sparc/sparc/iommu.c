@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.16 1998/03/21 12:21:18 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.17 1998/03/30 14:21:39 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -147,10 +147,10 @@ iommu_attach(parent, self, aux)
 	 * XXX struct iommureg is bigger than ra->ra_len; what are the
 	 *     other fields for?
 	 */
-	if (sparc_bus_map(
+	if (bus_space_map2(
 			ma->ma_bustag,
 			ma->ma_iospace,
-			(bus_addr_t)ma->ma_paddr,
+			ma->ma_paddr,
 			sizeof(struct iommureg),
 			0,
 			0,

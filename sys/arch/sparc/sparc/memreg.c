@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.24 1998/03/29 22:13:30 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.25 1998/03/30 14:21:39 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,11 +131,12 @@ memregattach_mainbus(parent, self, aux)
 		return;
 	}
 
-	if (sparc_bus_map(ma->ma_bustag, ma->ma_iospace,
-			 (bus_addr_t)ma->ma_paddr,
-			 sizeof(par_err_reg),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+	if (bus_space_map2(ma->ma_bustag,
+			   ma->ma_iospace,
+			   ma->ma_paddr,
+			   sizeof(par_err_reg),
+			   BUS_SPACE_MAP_LINEAR,
+			   0, &bh) != 0) {
 		printf("memregattach_mainbus: can't map register\n");
 		return;
 	}
