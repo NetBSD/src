@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.143 2003/09/25 18:14:09 pooka Exp $
+#	$NetBSD: 3RDPARTY,v 1.144 2003/09/28 07:22:09 dent Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -117,7 +117,7 @@ Notes:
 Package:	bsd-family-tree
 Version:	1.73
 Current Vers:	1.73
-Maintainer:	
+Maintainer:	n/a
 Archive Site:	http://www.freebsd.org/cgi/cvsweb.cgi/src/share/misc/bsd-family-tree
 Mailing List:
 Responsible:	itojun
@@ -411,7 +411,7 @@ Package:	libcdk
 Version:	4.9.9-20000407-myc3
 Current Vers:	cdk-4.9.10-20000923
 Maintainer:	mike@vexus.ca
-Archive Site:	http://www.vexus.ca/CDK.html
+Archive Site:	http://www.vexus.ca/products/CDK/
 Responsible:	garbled
 Notes:
 Initial port to netbsd curses was done by mycroft.  This is a heavily
@@ -659,8 +659,8 @@ local changes:
 Package:	SoftFloat
 Version:	2a
 Current Vers:	2b
-Maintainer:	John Hauser <jhauser@cs.berkeley.edu>
-Archive Site:	http://HTTP.CS.Berkeley.EDU/~jhauser/arithmetic/SoftFloat.html
+Maintainer:	John Hauser <jhauser@jhauser.us>
+Archive Site:	http://www.jhauser.us/arithmetic/SoftFloat.html
 Mailing List:
 Responsible:	bjh21
 Notes:
@@ -691,8 +691,8 @@ Notes:
 Package:	TestFloat
 Version:	2a
 Current Vers:	2a
-Maintainer:	John Hauser <jhauser@cs.berkeley.edu>
-Archive Site:	http://HTTP.CS.Berkeley.EDU/~jhauser/arithmetic/TestFloat.html
+Maintainer:	John Hauser <jhauser@jhauser.us>
+Archive Site:	http://www.jhauser.us/arithmetic/TestFloat.html
 Mailing List:
 Responsible:	ross
 Notes:
