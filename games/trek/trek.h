@@ -1,4 +1,4 @@
-/*	$NetBSD: trek.h,v 1.4 1997/03/29 20:42:26 thorpej Exp $	*/
+/*	$NetBSD: trek.h,v 1.5 1997/10/12 21:25:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -54,14 +54,6 @@
 */
 
 /* external function definitions */
-extern double	franf();	/* floating random number function */
-extern double	sqrt();		/* square root */
-extern double	sin(), cos();	/* trig functions */
-extern double	atan2();	/* fancy arc tangent function */
-extern double	log();		/* log base e */
-extern double	pow();		/* power function */
-extern double	fabs();		/* absolute value function */
-extern double	exp();		/* exponential function */
 
 /*********************  GALAXY  **************************/
 
@@ -72,7 +64,7 @@ extern double	exp();		/* exponential function */
 
 struct quad		/* definition for each quadrant */
 {
-	char	bases;		/* number of bases in this quadrant */
+	unsigned char	bases;	/* number of bases in this quadrant */
 	char	klings;		/* number of Klingons in this quadrant */
 	char	holes;		/* number of black holes in this quadrant */
 	int	scanned;	/* star chart entry (see below) */
@@ -115,6 +107,7 @@ struct quad	Quad[NQUADS][NQUADS];
 
 /* current sector map */
 char	Sect[NSECTS][NSECTS];
+
 
 
 /************************ DEVICES ******************************/
@@ -167,10 +160,10 @@ struct device	Device[NDEV];
 
 struct event
 {
-	char	x, y;			/* coordinates */
-	double	date;			/* trap stardate */
-	char	evcode;			/* event type */
-	char	systemname;		/* starsystem name */
+	unsigned char 	x, y;		/* coordinates */
+	double		date;		/* trap stardate */
+	char		evcode;		/* event type */
+	unsigned char	systemname;	/* starsystem name */
 };
 /* systemname conventions:
  *	1 -> NINHAB	index into Systemname table for reported distress calls
@@ -190,7 +183,7 @@ struct event	Event[MAXEVENTS];	/* dynamic event list; one entry per pending even
 
 struct kling
 {
-	char	x, y;		/* coordinates */
+	unsigned char	x, y;	/* coordinates */
 	int	power;		/* power left */
 	double	dist;		/* distance to Enterprise */
 	double	avgdist;	/* average over this move */
@@ -218,9 +211,12 @@ struct kling
 
 struct xy
 {
-	char	x, y;		/* coordinates */
+	unsigned char	x, y;		/* coordinates */
 };
 
+
+extern struct cvntab	Skitab[];
+extern struct cvntab	Lentab[];
 
 /*
  *	note that much of the stuff in the following structs CAN NOT
@@ -247,7 +243,7 @@ struct
 	int	quady;		/* quadrant y coord */
 	int	sectx;		/* sector x coord */
 	int	secty;		/* sector y coord */
-	char	cond;		/* condition code */
+	unsigned char	cond;	/* condition code */
 	char	sinsbad;	/* Space Inertial Navigation System condition */
 	char	*shipname;	/* name of current starship */
 	char	ship;		/* current starship */
@@ -289,7 +285,7 @@ struct
 /* parametric information */
 struct
 {
-	char	bases;		/* number of starbases */
+	unsigned char	bases;	/* number of starbases */
 	char	klings;		/* number of klingons */
 	double	date;		/* stardate */
 	double	time;		/* time left */
@@ -325,7 +321,7 @@ struct
 /* other information kept in a snapshot */
 struct
 {
-	char	bases;		/* number of starbases */
+	unsigned char	bases;	/* number of starbases */
 	char	klings;		/* number of klingons */
 	double	date;		/* stardate */
 	double	time;		/* time left */
@@ -380,3 +376,157 @@ struct
 /* Trace info */
 # define	xTRACE		1
 int	Trace;
+
+/* abandon.c */
+void abandon __P((int));
+
+/* attack.c */
+void attack __P((int));
+
+/* autover.c */
+void autover __P((void));
+
+/* capture.c */
+void capture __P((int));
+struct kling *selectklingon __P((void));
+
+/* cgetc.c */
+char cgetc __P((int));
+
+/* check_out.c */
+int check_out __P((int));
+
+/* checkcond.c */
+void checkcond __P((void));
+
+/* compkl.c */
+void compkldist __P((int));
+
+/* computer.c */
+void computer __P((int));
+
+/* damage.c */
+void damage __P((int, double));
+
+/* damaged.c */
+int damaged __P((int));
+
+/* dcrept.c */
+void dcrept __P((int));
+
+/* destruct.c */
+void destruct __P((int));
+
+/* dock.c */
+void dock __P((int));
+void undock __P((int));
+
+/* dumpgame.c */
+void dumpgame __P((int));
+int restartgame __P((void));
+
+/* dumpme.c */
+void dumpme __P((int));
+
+/* dumpssradio.c */
+int dumpssradio __P((void));
+
+/* events.c */
+int events __P((int));
+
+/* externs.c */
+
+/* getcodi.c */
+int getcodi __P((int *, double *));
+
+/* help.c */
+void help __P((int));
+
+/* impulse.c */
+void impulse __P((int));
+
+/* initquad.c */
+void initquad __P((int));
+void sector __P((int *, int *));
+
+/* kill.c */
+void killk __P((int, int ));
+void killb __P((int, int ));
+void kills __P((int, int , int));
+void killd __P((int, int , int));
+
+/* klmove.c */
+void klmove __P((int));
+
+/* lose.c */
+void lose __P((int));
+
+/* lrscan.c */
+void lrscan __P((int));
+
+/* move.c */
+double move __P((int, int, double, double));
+
+/* nova.c */
+void nova __P((int, int ));
+
+/* out.c */
+void out __P((int));
+
+/* phaser.c */
+void phaser __P((int));
+
+/* play.c */
+void myreset __P((int));
+void play __P((void));
+
+/* ram.c */
+void ram __P((int, int ));
+
+/* ranf.c */
+int ranf __P((int));
+double franf __P((void));
+
+/* rest.c */
+void rest __P((int));
+
+/* schedule.c */
+struct event *schedule __P((int, double, int, int , int));
+void reschedule __P((struct event *, double));
+void unschedule __P((struct event *));
+struct event *xsched __P((int, int, int, int , int ));
+void xresched __P((struct event *, int, int));
+
+/* score.c */
+long score __P((void));
+
+/* setup.c */
+void setup __P((void));
+
+/* setwarp.c */
+void setwarp __P((int));
+
+/* shield.c */
+void shield __P((int));
+
+/* snova.c */
+void snova __P((int, int ));
+
+/* srscan.c */
+void srscan __P((int));
+
+/* systemname.c */
+char *systemname __P((struct quad *));
+
+/* torped.c */
+void torped __P((int));
+
+/* visual.c */
+void visual __P((int));
+
+/* warp.c */
+void dowarp __P((int));
+void warp __P((int, int, double));
+
+/* win.c */
+void win __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: damage.c,v 1.3 1995/04/22 10:58:40 cgd Exp $	*/
+/*	$NetBSD: damage.c,v 1.4 1997/10/12 21:24:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)damage.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: damage.c,v 1.3 1995/04/22 10:58:40 cgd Exp $";
+__RCSID("$NetBSD: damage.c,v 1.4 1997/10/12 21:24:36 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include <err.h>
+#include "trek.h"
 
 /*
 **  Schedule Ship.damages to a Device
@@ -55,14 +58,15 @@ static char rcsid[] = "$NetBSD: damage.c,v 1.3 1995/04/22 10:58:40 cgd Exp $";
 **	that the dock() and undock() have to reschedule the event.
 */
 
+void
 damage(dev1, dam)
 int	dev1;		/*  device index */
 double	dam;		/* time to repair */
 {
-	register int		i;
-	register struct event	*e;
-	int			f;
-	register int		dev;
+	int		i;
+	struct event	*e;
+	int		f;
+	int		dev;
 
 	/* ignore zero damages */
 	if (dam <= 0.0)
@@ -93,5 +97,5 @@ double	dam;		/* time to repair */
 		reschedule(e, e->date - Now.date + dam);
 		return;
 	}
-	syserr("Cannot find old damages %d\n", dev);
+	errx(1, "Cannot find old damages %d\n", dev);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: getpar.c,v 1.4 1995/04/24 12:25:57 cgd Exp $	*/
+/*	$NetBSD: getpar.c,v 1.5 1997/10/12 21:24:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,25 +33,31 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: getpar.c,v 1.4 1995/04/24 12:25:57 cgd Exp $";
+__RCSID("$NetBSD: getpar.c,v 1.5 1997/10/12 21:24:50 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	<stdio.h>
-# include	"getpar.h"
+#include <stdio.h>
+#include <string.h>
+#include "getpar.h"
+#include "trek.h"
+
+static int testterm __P((void));
 
 /**
  **	get integer parameter
  **/
 
+int
 getintpar(s)
 char	*s;
 {
-	register int	i;
+	int	i;
 	int		n;
 
 	while (1)
@@ -75,7 +81,7 @@ char	*s;
 double getfltpar(s)
 char	*s;
 {
-	register int		i;
+	int		i;
 	double			d;
 
 	while (1)
@@ -98,18 +104,19 @@ char	*s;
 
 struct cvntab	Yntab[] =
 {
-	"y",	"es",	(int (*)())1,	0,
-	"n",	"o",	(int (*)())0,	0,
-	0
+	{ "y",	"es",	(cmdfun)1,	0 },
+	{ "n",	"o",	(cmdfun)0,	0 },
+	{ NULL,	NULL,	NULL,		0 }
 };
 
+int
 getynpar(s)
 char	*s;
 {
 	struct cvntab		*r;
 
 	r = getcodpar(s, Yntab);
-	return ((long) r->value);
+	return (int) r->value;
 }
 
 
@@ -122,9 +129,9 @@ char		*s;
 struct cvntab	tab[];
 {
 	char				input[100];
-	register struct cvntab		*r;
+	struct cvntab		*r;
 	int				flag;
-	register char			*p, *q;
+	char			*p, *q;
 	int				c;
 	int				f;
 
@@ -149,7 +156,8 @@ struct cvntab	tab[];
 			c = 4;
 			for (r = tab; r->abrev; r++)
 			{
-				concat(r->abrev, r->full, input);
+				strcpy(input, r->abrev);
+				strcat(input, r->full);
 				printf("%14.14s", input);
 				if (--c > 0)
 					continue;
@@ -194,15 +202,16 @@ struct cvntab	tab[];
  **	get string parameter
  **/
 
+void
 getstrpar(s, r, l, t)
 char	*s;
 char	*r;
 int	l;
 char	*t;
 {
-	register int	i;
+	int	i;
 	char		format[20];
-	register int	f;
+	int	f;
 
 	if (t == 0)
 		t = " \t\n;";
@@ -227,9 +236,10 @@ char	*t;
  **	test if newline is next valid character
  **/
 
+int
 testnl()
 {
-	register char		c;
+	char		c;
 
 	while ((c = cgetc(0)) != '\n')
 		if ((c >= '0' && c <= '9') || c == '.' || c == '!' ||
@@ -248,8 +258,9 @@ testnl()
  **	scan for newline
  **/
 
+void
 skiptonl(c)
-char	c;
+int	c;
 {
 	while (c != '\n')
 		if (!(c = cgetc(0)))
@@ -263,9 +274,10 @@ char	c;
  **	test for valid terminator
  **/
 
+static int
 testterm()
 {
-	register char		c;
+	char		c;
 
 	if (!(c = cgetc(0)))
 		return (1);
@@ -285,12 +297,13 @@ testterm()
 **	zero is returned.
 */
 
+int
 readdelim(d)
 char	d;
 {
-	register char	c;
+	char	c;
 
-	while (c = cgetc(0))
+	while ((c = cgetc(0)) != '\0')
 	{
 		if (c == d)
 			return (1);

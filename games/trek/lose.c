@@ -1,4 +1,4 @@
-/*	$NetBSD: lose.c,v 1.3 1995/04/22 10:59:08 cgd Exp $	*/
+/*	$NetBSD: lose.c,v 1.4 1997/10/12 21:24:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,16 +33,20 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lose.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: lose.c,v 1.3 1995/04/22 10:59:08 cgd Exp $";
+__RCSID("$NetBSD: lose.c,v 1.4 1997/10/12 21:24:58 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	<setjmp.h>
+#include <stdio.h>
+#include <setjmp.h>
+#include <unistd.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  PRINT OUT LOSER MESSAGES
@@ -69,6 +73,7 @@ char	*Losemsg[] =
 	"Your last crew member died",
 };
 
+void
 lose(why)
 int	why;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: check_out.c,v 1.3 1995/04/22 10:58:35 cgd Exp $	*/
+/*	$NetBSD: check_out.c,v 1.4 1997/10/12 21:24:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)check_out.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: check_out.c,v 1.3 1995/04/22 10:58:35 cgd Exp $";
+__RCSID("$NetBSD: check_out.c,v 1.4 1997/10/12 21:24:31 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
 
 /*
 **  CHECK IF A DEVICE IS OUT
@@ -54,10 +56,11 @@ static char rcsid[] = "$NetBSD: check_out.c,v 1.3 1995/04/22 10:58:35 cgd Exp $"
 **	It prints appropriate messages too.
 */
 
+int
 check_out(device)
 int	device;
 {
-	register int	dev;
+	int	dev;
 
 	dev = device;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: checkcond.c,v 1.3 1995/04/22 10:58:37 cgd Exp $	*/
+/*	$NetBSD: checkcond.c,v 1.4 1997/10/12 21:24:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,15 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)checkcond.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: checkcond.c,v 1.3 1995/04/22 10:58:37 cgd Exp $";
+__RCSID("$NetBSD: checkcond.c,v 1.4 1997/10/12 21:24:32 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include "trek.h"
 
 /*
 **  Check for Condition After a Move
@@ -68,10 +69,9 @@ static char rcsid[] = "$NetBSD: checkcond.c,v 1.3 1995/04/22 10:58:37 cgd Exp $"
 **	and battle conditions.
 */
 
+void
 checkcond()
 {
-	register int		i, j;
-
 	/* see if we are still alive and well */
 	if (Ship.reserves < 0.0)
 		lose(L_NOLIFE);
