@@ -1,4 +1,4 @@
-/*	$NetBSD: announce.c,v 1.10 1998/07/03 11:54:08 mrg Exp $	*/
+/*	$NetBSD: announce.c,v 1.11 1998/07/04 19:31:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)announce.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: announce.c,v 1.10 1998/07/03 11:54:08 mrg Exp $");
+__RCSID("$NetBSD: announce.c,v 1.11 1998/07/04 19:31:05 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,7 +152,7 @@ print_mesg(tty, request, remote_machine)
 	for (i = 0; i < N_LINES; i++) {
 		/* copy the line into the big buffer */
 		lptr = line_buf[i];
-		while (*lptr != '\0' || lptr < (line_buf[i] + N_CHARS))
+		while (*lptr != '\0' && lptr < (line_buf[i] + N_CHARS))
 			*(bptr++) = *(lptr++);
 		/* pad out the rest of the lines with blanks */
 		for (j = sizes[i]; j < max_size + 2; j++)

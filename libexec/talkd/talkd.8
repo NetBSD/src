@@ -1,4 +1,4 @@
-.\"	$NetBSD: talkd.8,v 1.4 1997/10/20 02:54:32 enami Exp $
+.\"	$NetBSD: talkd.8,v 1.5 1998/07/04 19:31:05 mrg Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)talkd.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd December 11, 1993
+.Dd July 5, 1998
 .Dt TALKD 8
 .Os BSD 4.3
 .Sh NAME
@@ -40,6 +40,7 @@
 .Nd remote user communication server
 .Sh SYNOPSIS
 .Nm
+.Op Fl dl
 .Sh DESCRIPTION
 .Nm
 is the server that notifies a user that someone else wants to
@@ -66,9 +67,28 @@ When the callee responds, the local server uses the
 recorded invitation to respond with the appropriate rendezvous
 address and the caller and callee client programs establish a
 stream connection through which the conversation takes place.
+.Sh OPTIONS
+.Nm
+supports the following options:
+.Bl -tag -width 12345
+.It Fl d
+The
+.Fl d
+option turns on debugging logging.
+.It Fl l
+The
+.Fl l
+option turns on accounting logging for
+.Nm
+via the
+.Xr syslogd 8
+service.
+.El
 .Sh SEE ALSO
 .Xr talk 1 ,
-.Xr write 1
+.Xr write 1 ,
+.Xr syslog 3 ,
+.Xr syslog 8
 .Sh HISTORY
 The
 .Nm

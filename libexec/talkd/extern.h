@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 1997/06/29 19:13:02 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 1998/07/04 19:31:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -48,3 +48,7 @@ CTL_MSG *find_request __P((CTL_MSG *));
 void insert_table __P((CTL_MSG *, CTL_RESPONSE *));
 int new_id __P((void));
 int delete_invite __P((int));
+
+/* talkd.c */
+extern int debug;
+extern int logging;

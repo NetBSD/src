@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.5 1998/07/03 11:54:08 mrg Exp $	*/
+/*	$NetBSD: print.c,v 1.6 1998/07/04 19:31:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,11 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.5 1998/07/03 11:54:08 mrg Exp $");
+__RCSID("$NetBSD: print.c,v 1.6 1998/07/04 19:31:05 mrg Exp $");
 #endif
 #endif /* not lint */
 
-/* debug print routines */
+/* debug/logging print routines */
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -84,7 +84,8 @@ print_request(cp, mp)
 		tp = tbuf;
 	} else
 		tp = types[mp->type];
-	syslog(LOG_DEBUG, "%s: %s: id %d, l_user %s, r_user %s, r_tty %s",
+	syslog(debug ? LOG_DEBUG : LOG_INFO,
+	    "%s: %s: id %d, l_user %s, r_user %s, r_tty %s",
 	    cp, tp, mp->id_num, mp->l_name, mp->r_name, mp->r_tty);
 }
 
@@ -105,5 +106,6 @@ print_response(cp, rp)
 		ap = abuf;
 	} else
 		ap = answers[rp->answer];
-	syslog(LOG_DEBUG, "%s: %s: %s, id %d", cp, tp, ap, ntohl(rp->id_num));
+	syslog(debug ? LOG_DEBUG : LOG_INFO, "%s: %s: %s, id %d",
+	    cp, tp, ap, ntohl(rp->id_num));
 }
