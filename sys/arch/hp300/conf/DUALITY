@@ -1,4 +1,4 @@
-#	$NetBSD: DUALITY,v 1.16 1995/03/05 23:04:25 mycroft Exp $
+#	$NetBSD: DUALITY,v 1.17 1995/03/31 18:27:30 mycroft Exp $
 #
 # DUALITY (mycroft's hp370 test machine)
 #
@@ -50,11 +50,14 @@ options		PROCFS
 #options	UMAPFS
 options		UNION
 
+# GNU uses setuid scripts
+options		SETUIDSCRIPTS
+
 options		GATEWAY
 options		INET
 
-config		netbsd root on rd0 swap on sd0b and sd1b and sd2b and sd3b and rd0b and rd1b and rd2b and rd3b
-config		gennetbsd swap generic
+config		duality root on rd0 swap on sd0b and sd1b and sd2b and sd3b and rd0b and rd1b and rd2b and rd3b
+config		pogo root on rd0 swap on rd0b and rd1b and rd2b and rd3b and sd0b and sd1b and sd2b and sd3b
 
 master		hpib0	at scode7
 master		hpib1	at scode?
