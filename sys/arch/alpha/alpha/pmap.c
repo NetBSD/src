@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.103 1999/06/17 18:21:24 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.104 1999/06/17 19:23:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 1999/06/17 18:21:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 1999/06/17 19:23:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2013,24 +2013,23 @@ pmap_kremove(va, size)
 #endif /* PMAP_NEW */
 
 /*
- * pmap_change_wiring:		[ INTERFACE ]
+ * pmap_unwire:			[ INTERFACE ]
  *
- *	Change the wiring attribute for a map/virtual-address pair.
+ *	Clear the wired attribute for a map/virtual-address pair.
  *
  *	The mapping must already exist in the pmap.
  */
 void
-pmap_change_wiring(pmap, va, wired)
+pmap_unwire(pmap, va)
 	pmap_t		pmap;
 	vaddr_t		va;
-	boolean_t	wired;
 {
 	pt_entry_t *pte;
 	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_change_wiring(%p, %lx, %x)\n", pmap, va, wired);
+		printf("pmap_unwire(%p, %lx)\n", pmap, va);
 #endif
 	if (pmap == NULL)
 		return;
@@ -2038,38 +2037,26 @@ pmap_change_wiring(pmap, va, wired)
 	PMAP_LOCK(pmap, ps);
 
 	pte = pmap_l3pte(pmap, va, NULL);
-#ifdef DEBUG
-	/*
-	 * Page table page is not allocated.
-	 * Should this ever happen?  Ignore it for now,
-	 * we don't want to force allocation of unnecessary PTE pages.
-	 */
-	if (pmap_pte_v(pmap_l2pte(pmap, va, NULL)) == 0) {
-		if (pmapdebug & PDB_PARANOIA)
-			printf("pmap_change_wiring: invalid STE for %lx\n", va);
-		return;
-	}
-	/*
-	 * Page not valid.  Should this ever happen?
-	 * Just continue and change wiring anyway.
-	 */
-	if (!pmap_pte_v(pte)) {
-		if (pmapdebug & PDB_PARANOIA)
-			printf("pmap_change_wiring: invalid PTE for %lx\n", va);
-	}
+#ifdef DIAGNOSTIC
+	if (pte == NULL || pmap_pte_v(pte) == 0)
+		panic("pmap_unwire");
 #endif
+
 	/*
-	 * If wiring actually changed (always?) set the wire bit and
+	 * If wiring actually changed (always?) clear the wire bit and
 	 * update the wire count.  Note that wiring is not a hardware
 	 * characteristic so there is no need to invalidate the TLB.
 	 */
-	if (pmap_pte_w_chg(pte, wired ? PG_WIRED : 0)) {
-		pmap_pte_set_w(pte, wired);
-		if (wired)
-			pmap->pm_stats.wired_count++;
-		else
-			pmap->pm_stats.wired_count--;
+	if (pmap_pte_w_chg(pte, 0)) {
+		pmap_pte_set_w(pte, FALSE);
+		pmap->pm_stats.wired_count--;
 	}
+#ifdef DIAGNOSTIC
+	else {
+		printf("pmap_unwire: wiring for pmap %p va 0x%lx "
+		    "didn't change!\n", pmap, va);
+	}
+#endif
 
 	PMAP_UNLOCK(pmap, ps);
 }

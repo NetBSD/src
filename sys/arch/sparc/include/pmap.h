@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 1999/06/17 18:21:22 thorpej Exp $ */
+/*	$NetBSD: pmap.h,v 1.38 1999/06/17 19:23:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -245,7 +245,7 @@ int		pmap_count_ptes __P((struct pmap *));
 void		pmap_prefer __P((vaddr_t, vaddr_t *));
 int		pmap_pa_exists __P((paddr_t));
 void		*pmap_bootstrap_alloc __P((int));
-void		pmap_change_wiring __P((pmap_t, vaddr_t, boolean_t));
+void		pmap_unwire __P((pmap_t, vaddr_t));
 void		pmap_collect __P((pmap_t));
 void		pmap_copy __P((pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t));
 pmap_t		pmap_create __P((vsize_t));

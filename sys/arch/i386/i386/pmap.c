@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 1999/06/17 18:21:30 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 1999/06/17 19:23:24 thorpej Exp $	*/
 
 /*
  *
@@ -2934,17 +2934,15 @@ vm_prot_t prot;
  */
 
 /*
- * pmap_change_wiring: changing the wiring bit in the PTE
+ * pmap_unwire: clear the wired bit in the PTE
  *
  * => mapping should already be in map
- * => XXX: so, this is really pmap_remove_wiring (pmap_enter sets wiring)
  */
 
-void pmap_change_wiring(pmap, va, wired)
+void pmap_unwire(pmap, va)
 
 struct pmap *pmap;
 vaddr_t va;
-boolean_t wired;
 
 
 {
@@ -2955,18 +2953,26 @@ boolean_t wired;
     ptes = pmap_map_ptes(pmap);		/* locks pmap */
 
     if (!pmap_valid_entry(ptes[i386_btop(va)]))
-      panic("pmap_change_wiring: invalid (unmapped) va");
-    if (!wired && (ptes[i386_btop(va)] & PG_W) != 0) {
+      panic("pmap_unwire: invalid (unmapped) va");
+    if ((ptes[i386_btop(va)] & PG_W) != 0) {
       ptes[i386_btop(va)] &= ~PG_W;
       pmap->pm_stats.wired_count--;
-    } else if (wired && (ptes[i386_btop(va)] & PG_W) == 0) {
-      ptes[i386_btop(va)] |= PG_W;
-      pmap->pm_stats.wired_count++;
     }
+#ifdef DIAGNOSITC
+    else {
+      printf("pmap_unwire: wiring for pmap %p va 0x%lx didn't change!\n",
+             pmap, va);
+    }
+#endif
 
     pmap_unmap_ptes(pmap);		/* unlocks map */
 
   }
+#ifdef DIAGNOSTIC
+  else {
+    panic("pmap_unwire: invalid PDE");
+  }
+#endif
 
 }
 

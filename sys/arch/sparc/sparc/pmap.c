@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.146 1999/06/17 18:21:34 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.147 1999/06/17 19:23:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -5956,14 +5956,13 @@ printf("%s[%d]: pmap_enu: changing existing va 0x%x: pte 0x%x=>0x%x\n",
 #endif /* SUN4M */
 
 /*
- * Change the wiring attribute for a map/virtual-address pair.
+ * Clear the wiring attribute for a map/virtual-address pair.
  */
 /* ARGSUSED */
 void
-pmap_change_wiring(pm, va, wired)
+pmap_unwire(pm, va)
 	struct pmap *pm;
 	vaddr_t va;
-	int wired;
 {
 
 	pmap_stats.ps_useless_changewire++;

@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.34 1999/06/17 18:21:22 thorpej Exp $     */
+/*      $NetBSD: pmap.h,v 1.35 1999/06/17 19:23:21 thorpej Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -110,7 +110,7 @@ extern	struct pmap kernel_pmap_store;
 
 /* Routines that are best to define as macros */
 #define	pmap_phys_address(phys) 	((u_int)(phys) << PGSHIFT)
-#define pmap_change_wiring(pmap, v, w)  /* no need */
+#define pmap_unwire(pmap, v)		/* no need */
 #define	pmap_copy(a,b,c,d,e) 		/* Dont do anything */
 #define	pmap_update()	mtpr(0,PR_TBIA)	/* Update buffes */
 #define	pmap_collect(pmap)		/* No need so far */

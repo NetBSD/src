@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 1999/06/17 18:21:35 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 1999/06/17 19:23:27 thorpej Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF 1
 /* #define BOOT_DEBUG */
@@ -2749,24 +2749,23 @@ pmap_is_referenced(pa)
 
 
 /*
- *	Routine:	pmap_change_wiring
- *	Function:	Change the wiring attribute for a map/virtual-address
+ *	Routine:	pmap_unwire
+ *	Function:	Clear the wired attribute for a map/virtual-address
  *			pair.
  *	In/out conditions:
  *			The mapping must already exist in the pmap.
  */
 void
-pmap_change_wiring(pmap, va, wired)
+pmap_unwire(pmap, va)
 	register pmap_t	pmap;
 	vaddr_t va;
-	boolean_t wired;
 {
 	int64_t data;
 	int s;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_MMU_STEAL)) /* XXXX Need another flag for this */
-		printf("pmap_change_wiring(%p, %lx, %x)\n", pmap, va, wired);
+		printf("pmap_unwire(%p, %lx)\n", pmap, va);
 #endif
 	if (pmap == NULL) {
 		pv_check();
@@ -2777,20 +2776,17 @@ pmap_change_wiring(pmap, va, wired)
 	 * Is this part of the permanent 4MB mapping?
 	 */
 	if( pmap == pmap_kernel() && va >= ksegv && va < ksegv+4*MEG ) {
-		prom_printf("pmap_change_wiring: va=%08x in locked TLB\r\n", va);
+		prom_printf("pmap_unwire: va=%08x in locked TLB\r\n", va);
 		OF_enter();
 		return;
 	}
 	s = splimp();
 	data = pseg_get(pmap, va&PV_VAMASK);
 
-	if (wired) 
-		data |= TLB_TSB_LOCK;
-	else
-		data &= ~TLB_TSB_LOCK;
+	data &= ~TLB_TSB_LOCK;
 
 	if (pseg_set(pmap, va&PV_VAMASK, data, 0)) {
-		printf("pmap_change_wiring: gotten pseg empty!\n");
+		printf("pmap_unwire: gotten pseg empty!\n");
 		Debugger();
 		/* panic? */
 	}

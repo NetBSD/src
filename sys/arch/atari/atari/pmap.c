@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 1999/06/17 18:21:28 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 1999/06/17 19:23:23 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -1315,23 +1315,22 @@ validate:
 }
 
 /*
- *	Routine:	pmap_change_wiring
- *	Function:	Change the wiring attribute for a map/virtual-address
+ *	Routine:	pmap_unwire
+ *	Function:	Clear the wired attribute for a map/virtual-address
  *			pair.
  *	In/out conditions:
  *			The mapping must already exist in the pmap.
  */
 void
-pmap_change_wiring(pmap, va, wired)
+pmap_unwire(pmap, va)
 	register pmap_t	pmap;
 	vaddr_t	va;
-	boolean_t	wired;
 {
 	register u_int *pte;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_change_wiring(%p, %lx, %x)\n", pmap, va, wired);
+		printf("pmap_unwire(%p, %lx)\n", pmap, va);
 #endif
 	if (pmap == NULL)
 		return;
@@ -1345,7 +1344,7 @@ pmap_change_wiring(pmap, va, wired)
 	 */
 	if (!pmap_ste_v(pmap, va)) {
 		if (pmapdebug & PDB_PARANOIA)
-			printf("pmap_change_wiring: invalid STE for %lx\n", va);
+			printf("pmap_unwire: invalid STE for %lx\n", va);
 		return;
 	}
 	/*
@@ -1354,20 +1353,23 @@ pmap_change_wiring(pmap, va, wired)
 	 */
 	if (!pmap_pte_v(pte)) {
 		if (pmapdebug & PDB_PARANOIA)
-			printf("pmap_change_wiring: invalid PTE for %lx\n", va);
+			printf("pmap_unwire: invalid PTE for %lx\n", va);
 	}
 #endif
-	if ((wired && !pmap_pte_w(pte)) || (!wired && pmap_pte_w(pte))) {
-		if (wired)
-			pmap->pm_stats.wired_count++;
-		else
-			pmap->pm_stats.wired_count--;
-	}
 	/*
 	 * Wiring is not a hardware characteristic so there is no need
 	 * to invalidate TLB.
 	 */
-	pmap_pte_set_w(pte, wired);
+	if (pmap_ptw_w(pte)) {
+		pmap->pm_stats.wired_count--;
+		pmap_pte_set_w(pte, FALSE);
+	}
+#ifdef DIAGNOSTIC
+	else {
+		printf("pmap_unwire: wiring for pmap %p va 0x%lx "
+		    "didn't change!\n", pmap, va);
+	}
+#endif
 }
 
 /*

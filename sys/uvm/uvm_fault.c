@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.38 1999/06/17 18:21:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.39 1999/06/17 19:23:21 thorpej Exp $	*/
 
 /*
  *
@@ -1830,7 +1830,7 @@ uvm_fault_unwire_locked(map, start, end)
 		 * if the entry is no longer wired, tell the pmap.
 		 */
 		if (VM_MAPENT_ISWIRED(entry) == 0)
-			pmap_change_wiring(pmap, va, FALSE);
+			pmap_unwire(pmap, va);
 
 		pg = PHYS_TO_VM_PAGE(pa);
 		if (pg)

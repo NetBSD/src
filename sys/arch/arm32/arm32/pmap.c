@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 1999/06/17 18:21:28 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62 1999/06/17 19:23:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2225,18 +2225,17 @@ pmap_page_protect(phys, prot)
 
 
 /*
- * Routine:	pmap_change_wiring
- * Function:	Change the wiring attribute for a map/virtual-address
+ * Routine:	pmap_unwire
+ * Function:	Clear the wired attribute for a map/virtual-address
  *		pair.
  * In/out conditions:
  *		The mapping must already exist in the pmap.
  */
 
 void
-pmap_change_wiring(pmap, va, wired)
+pmap_unwire(pmap, va)
 	pmap_t pmap;
 	vm_offset_t va;
-	boolean_t wired;
 {
 	pt_entry_t *pte;
 	vm_offset_t pa;
@@ -2261,7 +2260,7 @@ pmap_change_wiring(pmap, va, wired)
 		return;
 	pv = &vm_physmem[bank].pmseg.pvent[off];
 	/* Update the wired bit in the pv entry for this page. */
-	(void) pmap_modify_pv(pmap, va, pv, PT_W, wired ? PT_W : 0);
+	(void) pmap_modify_pv(pmap, va, pv, PT_W, 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.9 1999/06/17 18:21:34 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 1999/06/17 19:23:26 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -1101,30 +1101,26 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 }
 
 /*
- *	Routine:	pmap_change_wiring
- *	Function:	Change the wiring attribute for a map/virtual-address
+ *	Routine:	pmap_unwire
+ *	Function:	Clear the wired attribute for a map/virtual-address
  *			pair.
  *	In/out conditions:
  *			The mapping must already exist in the pmap.
  */
 void
-pmap_change_wiring(pmap, va, wired)
+pmap_unwire(pmap, va)
 	register pmap_t	pmap;
 	vm_offset_t va;
-	boolean_t wired;
 {
 	register pt_entry_t *pte;
-	u_int p;
 	register int i;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_WIRING))
-		printf("pmap_change_wiring(%x, %x, %x)\n", pmap, va, wired);
+		printf("pmap_unwire(%x, %x)\n", pmap, va);
 #endif
 	if (pmap == NULL)
 		return;
-
-	p = wired ? PG_WIRED : 0;
 
 	/*
 	 * Don't need to flush the TLB since PG_WIRED is only in software.
@@ -1133,25 +1129,38 @@ pmap_change_wiring(pmap, va, wired)
 		/* change entries in kernel pmap */
 #ifdef DIAGNOSTIC
 		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
-			panic("pmap_change_wiring");
+			panic("pmap_unwire");
 #endif
 		pte = kvtopte(va);
 	} else {
-		if (!(pte = pmap_segmap(pmap, va)))
-			return;
+		pte = pmap_segmap(pmap, va);
+#ifdef DIAGNOSTIC
+		if (pte == NULL)
+			panic("pmap_unwire: pmap %p va 0x%lx invalid STE",
+			    pmap, va);
+#endif
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 	}
 
+#ifdef DIAGNOSTIC
+	if ((pte->pt_entry & PG_V) == 0)
+		panic("pmap_unwire: pmap %p va 0x%lx invalid PTE",
+		    pmap, va);
+#endif
+
 	i = picapagesperpage;
-	if (!(pte->pt_entry & PG_WIRED) && p)
-		pmap->pm_stats.wired_count += i;
-	else if ((pte->pt_entry & PG_WIRED) && !p)
+	if (pte->pt_entry & PG_WIRED) {
 		pmap->pm_stats.wired_count -= i;
-	do {
-		if (pte->pt_entry & PG_V)
-			pte->pt_entry = (pte->pt_entry & ~PG_WIRED) | p;
-		pte++;
-	} while (--i != 0);
+		do {
+			pte->pt_entry &= ~PG_WIRED;
+		} while (--i != 0);
+	}
+#ifdef DIAGNOSTIC
+	else {
+		printf("pmap_unwire: wiring for pmap %p va 0x%lx "
+		    "didn't change!\n", pmap, va);
+	}
+#endif
 }
 
 /*
