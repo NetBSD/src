@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.91 1997/05/17 00:19:02 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.92 1997/05/20 13:11:33 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -675,6 +675,7 @@ ttioctl(tp, cmd, data, flag, p)
 	/* If the ioctl involves modification, hang if in the background. */
 	switch (cmd) {
 	case  TIOCFLUSH:
+	case  TIOCDRAIN:
 	case  TIOCSETA:
 	case  TIOCSETD:
 	case  TIOCSETAF:
