@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.31 2004/08/22 16:46:18 tron Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.32 2004/10/10 22:03:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.31 2004/08/22 16:46:18 tron Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.32 2004/10/10 22:03:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,6 +143,15 @@ list(void)
 				break;
 			if (res == 0)
 				ls_list(arcn, now, stdout);
+			/*
+			 * if there's an error writing to stdout then we must
+			 * stop now -- we're probably writing to a pipe that
+			 * has been closed by the reader.
+			 */
+			if (ferror(stdout)) {
+				syswarn(1, errno, "Listing incomplete.");
+				break;
+			}
 		}
 		/*
 		 * skip to next archive format header using values calculated
