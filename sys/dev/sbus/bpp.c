@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.11 2002/03/11 16:00:55 pk Exp $ */
+/*	$NetBSD: bpp.c,v 1.12 2002/03/20 20:39:15 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.11 2002/03/11 16:00:55 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.12 2002/03/20 20:39:15 eeh Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -157,7 +157,7 @@ bppattach(parent, self, aux)
 	/* Map device registers */
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot, sa->sa_offset, sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR, &sc->sc_regs) != 0) {
+			 0, &sc->sc_regs) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}
