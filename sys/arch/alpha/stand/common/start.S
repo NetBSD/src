@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.4 1996/10/17 02:50:40 cgd Exp $	*/
+/*	$NetBSD: start.S,v 1.1 1997/01/24 01:52:59 cgd Exp $	*/
 
 /*  
  * Mach Operating System

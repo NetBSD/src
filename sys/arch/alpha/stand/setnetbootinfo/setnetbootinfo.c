@@ -1,4 +1,4 @@
-/*	$NetBSD: setnetbootinfo.c,v 1.1 1997/01/18 00:50:30 cgd Exp $	*/
+/*	$NetBSD: setnetbootinfo.c,v 1.2 1997/01/24 01:53:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -42,7 +42,7 @@
 #include <netinet/in.h>						/* XXX */
 #include <netinet/if_ether.h>
 
-#include "../bbinfo.h"
+#include "stand/common/bbinfo.h"
 
 int	verbose, force, unset;
 char	*netboot, *outfile, *addr, *host;

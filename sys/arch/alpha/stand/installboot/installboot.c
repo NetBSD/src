@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.6 1997/01/18 01:56:09 cgd Exp $ */
+/*	$NetBSD: installboot.c,v 1.1 1997/01/24 01:53:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -49,7 +49,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "bbinfo.h"
+#include "stand/common/bbinfo.h"
 
 int	verbose, nowrite, hflag;
 char	*boot, *proto, *dev;

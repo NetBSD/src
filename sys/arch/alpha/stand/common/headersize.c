@@ -1,4 +1,4 @@
-/*	$NetBSD: headersize.c,v 1.5 1996/09/23 04:32:59 cgd Exp $	*/
+/*	$NetBSD: headersize.c,v 1.1 1997/01/24 01:52:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

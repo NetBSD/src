@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.c,v 1.4 1997/01/18 01:58:32 cgd Exp $	*/
+/*	$NetBSD: loadfile.c,v 1.1 1997/01/24 01:52:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 1997/01/23 23:10:40 cgd Exp $
+#	$NetBSD: Makefile,v 1.9 1997/01/24 01:53:03 cgd Exp $
 
 S=	${.CURDIR}/../../../..
 
-.PATH: ${.CURDIR}/.. ${.CURDIR}/../boot
+.PATH: ${.CURDIR}/../common
 
 PROG = netboot
 
