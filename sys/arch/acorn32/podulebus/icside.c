@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.15 2003/10/19 18:49:25 he Exp $	*/
+/*	$NetBSD: icside.c,v 1.16 2003/12/02 23:47:20 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.15 2003/10/19 18:49:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.16 2003/12/02 23:47:20 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.15 2003/10/19 18:49:25 he Exp $");
 #include <acorn32/podulebus/icsidereg.h>
 
 #include <dev/ata/atavar.h>
+#include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 #include <dev/podulebus/podules.h>
 
@@ -174,7 +175,7 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh;
 	const struct ide_version *ide = NULL;
 	u_int iobase;
-	int channel;
+	int channel, i;
 	struct icside_channel *icp;
 	struct channel_softc *cp;
 	int loop;
@@ -277,8 +278,13 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 			iobase = pa->pa_podule->fast_base;
 
 		if (bus_space_map(iot, iobase + ide->ideregs[channel],
-		    IDE_REGISTER_SPACE, 0, &cp->cmd_ioh))
+		    IDE_REGISTER_SPACE, 0, &cp->cmd_baseioh))
 			return;
+		for (i = 0; i < IDE_REGISTER_SPACE; i++) {
+			if (bus_space_subregion(cp->cmd_iot, cp->cmd_baseioh,
+				i, i == 0 ? 4 : 1, &cp->cmd_iohs[i]) != 0)
+				return;
+		}
 		if (bus_space_map(iot, iobase + ide->auxregs[channel],
 		    AUX_REGISTER_SPACE, 0, &cp->ctl_ioh))
 			return;
