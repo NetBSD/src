@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 1999/08/03 21:50:18 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 1999/09/06 21:50:47 is Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -125,6 +125,9 @@
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/vmparam.h>
+
+#include <m68k/cacheops.h>
+
 #include <amiga/amiga/memlist.h>
 /*
  * Allocate various and sundry SYSMAPs used in the days of old VM
