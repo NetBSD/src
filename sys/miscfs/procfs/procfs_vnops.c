@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_vnops.c,v 4.2 1994/01/02 15:28:44 jsp Exp
  *
- *	$Id: procfs_vnops.c,v 1.13 1994/01/20 21:23:10 ws Exp $
+ *	$Id: procfs_vnops.c,v 1.14 1994/01/28 07:03:41 cgd Exp $
  */
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
+#include <sys/ptrace.h>
 #include <miscfs/procfs/procfs.h>
 #include <vm/vm.h>	/* for page_size */
 
@@ -81,6 +82,7 @@ static struct pfsnames {
 	{  N("file"),   Pfile },
 	{  N("mem"),    Pmem },
 	{  N("regs"),   Pregs },
+	{  N("fpregs"), Pfpregs },
 	{  N("ctl"),    Pctl },
 	{  N("status"), Pstatus },
 	{  N("note"),   Pnote },
@@ -379,7 +381,19 @@ procfs_getattr(vp, vap, cred, p)
 		break;
 
 	case Pregs:
+#if defined(PT_GETREGS) || defined(PT_SETREGS)
 		vap->va_bytes = vap->va_size = sizeof(struct reg);
+#else
+		vap->va_bytes = vap->va_size = 0;
+#endif
+		break;
+
+	case Pfpregs:
+#if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
+		vap->va_bytes = vap->va_size = sizeof(struct fpreg);
+#else
+		vap->va_bytes = vap->va_size = 0;
+#endif
 		break;
 
 	case Pstatus:
