@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.h,v 1.8 1994/12/12 19:00:11 gwr Exp $	*/
+/*	$NetBSD: vector.h,v 1.9 1995/08/21 21:37:43 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -31,12 +31,8 @@
  * SUCH DAMAGE.
  */
 
-#define COPY_ENTRY 0
 #define NVECTORS 256
 
-#define AUTO_VECTOR_BASE 0x18
+#define AUTOVEC_BASE 0x18
 
 extern void (*vector_table[])();
-
-void set_vector_entry __P((int, void (*handler)()));
-unsigned int get_vector_entry __P((int));

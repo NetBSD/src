@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.31 1995/06/13 22:16:38 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.32 1995/08/21 21:37:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -546,70 +546,29 @@ Lsigr1:
 #define INTERRUPT_SAVEREG \
 	moveml	#0xC0C0,sp@-
 
-#define INTERRUPT_BODY(num) \
-	pea	num		;\
-	jbsr	_isr_autovec	;\
-	addql	#4,sp
-
 #define INTERRUPT_RESTORE \
 	moveml	sp@+,#0x0303
 
-#define INTERRUPT_HANDLE(num) ;\
-	INTERRUPT_SAVEREG ;\
-	INTERRUPT_BODY(num) ;\
-	INTERRUPT_RESTORE ;\
-	jra rei			/* XXX - Just do rte here? */
-
-.globl _level0intr, _level1intr, _level2intr, _level3intr
-.globl _level4intr, _level5intr, _level6intr, _level7intr
-
 .align 4
 /*
- * These are the auto-vector interrupt handlers,
- * for which the CPU provides the vector=0x18+level
+ * This is the common auto-vector interrupt handler,
+ * for which the CPU provides the vector=0x18+level.
  * These are installed in the interrupt vector table.
  */
-/* spurious interrupt */
-_level0intr:	
-	INTERRUPT_HANDLE(0)
-/* system enable register 1 */
-.align 4
-_level1intr:	
-	INTERRUPT_HANDLE(1)
-/* system enable register 2, SCSI */
-.align 4
-_level2intr:
-	INTERRUPT_HANDLE(2)
+	.globl	__isr_autovec
+__isr_autovec:
+	INTERRUPT_SAVEREG
+	movw	sp@(22),sp@-		| push exception vector info
+	clrw	sp@-
+	jbsr	_isr_autovec		| C dispatcher
+	addql	#4,sp
+	INTERRUPT_RESTORE
+	jra rei			/* XXX - Just do rte here? */
 
-/* system enable register 3, Ethernet */
+/* clock: see clock.c */
+.globl __isr_clock, _interrupt_reg, _clock_intr, _clock_va
 .align 4
-_level3intr:
-	INTERRUPT_HANDLE(3)
-
-/* video */
-.align 4
-_level4intr:
-	INTERRUPT_HANDLE(4)
-
-/* clock (see below) */
-.align 4
-_level5intr:
-	INTERRUPT_HANDLE(5)
-
-/* SCCs */
-.align 4
-_level6intr:
-	INTERRUPT_HANDLE(6)
-
-/* Memory Error/NMI */
-.align 4
-_level7intr:
-	INTERRUPT_HANDLE(7)
-
-/* clock */
-.globl _level5intr_clock, _interrupt_reg, _clock_intr, _clock_va
-.align 4
-_level5intr_clock:
+__isr_clock:
 	INTERRUPT_SAVEREG 	| save a0, a1, d0, d1
 	movl	_clock_va, a0
 	movl	_interrupt_reg, a1
@@ -625,9 +584,10 @@ _level5intr_clock:
 	INTERRUPT_RESTORE
 	jra	rei
 
+| Handler for all vectored interrupts (i.e. VME interrupts)
 	.globl	_isr_vectored
-	.globl	_vect_intr
-_vect_intr:
+	.globl	__isr_vectored
+__isr_vectored:
 	INTERRUPT_SAVEREG
 	movw	sp@(22),sp@-		| push exception vector info
 	clrw	sp@-
@@ -638,9 +598,7 @@ _vect_intr:
 
 
 #undef	INTERRUPT_SAVEREG
-#undef	INTERRUPT_BODY
 #undef	INTERRUPT_RESTORE
-#undef	INTERRUPT_HANDLE
 
 /* interrupt counters (needed by vmstat) */
 	.globl	_intrcnt,_eintrcnt,_intrnames,_eintrnames
