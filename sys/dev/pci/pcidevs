@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.618 2004/04/03 10:49:13 martti Exp $
+$NetBSD: pcidevs,v 1.619 2004/04/17 01:56:10 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -456,7 +456,7 @@ vendor PUREDATA		0x11a6 	Pure Data
 vendor POWERCC		0x11a7	Power Computing
 vendor INNOSYS		0x11a9	InnoSys
 vendor ACTEL		0x11aa	Actel
-vendor GALILEO		0x11ab	Galileo Technology
+vendor GALILEO		0x11ab	Galileo (Marvell) Technology
 vendor CANNON		0x11ac	Cannon IS
 vendor LITEON		0x11ad	Lite-On Communications
 vendor SCITEX		0x11ae	Scitex Corporation
@@ -1425,6 +1425,7 @@ product GALILEO	SKNET		0x4320	SK-NET Gigabit Ethernet
 product GALILEO	GT64120		0x4620	GT-64120 System Controller
 product GALILEO	GT64130		0x6320	GT-64130 System Controller
 product GALILEO	GT64260		0x6430	GT-64260 System Controller
+product GALILEO	GT64360		0x6460	MV6436x System Controller
 
 /* Global Sun Tech products */
 product GLOBALSUN GL24110P	0x1101	GL24110P PCI IEEE 802.11b
