@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstr.c,v 1.8 1997/10/19 14:12:34 mrg Exp $	*/
+/*	$NetBSD: mkstr.c,v 1.8.4.1 2000/10/19 16:31:59 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkstr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mkstr.c,v 1.8 1997/10/19 14:12:34 mrg Exp $");
+__RCSID("$NetBSD: mkstr.c,v 1.8.4.1 2000/10/19 16:31:59 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ __RCSID("$NetBSD: mkstr.c,v 1.8 1997/10/19 14:12:34 mrg Exp $");
 
 FILE	*mesgread, *mesgwrite;
 char	*progname;
-char	usagestr[] =	"usage: %s [ - ] mesgfile prefix file ...\n";
+const char	usagestr[] =	"usage: %s [ - ] mesgfile prefix file ...\n";
 char	name[100], *np;
 
 void process __P((void));
