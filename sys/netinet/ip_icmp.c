@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.25 1997/10/18 21:18:30 kml Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.26 1997/10/29 05:28:44 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -617,7 +617,7 @@ icmp_mtudisc(icp)
 {
 	struct rtentry *rt;
 	struct sockaddr *dst = sintosa(&icmpsrc);
-	u_long mtu = ntohs(icp->icmp_nextmtu);
+	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
 
 	/* Table of common MTUs: */
 
@@ -651,28 +651,37 @@ icmp_mtudisc(icp)
 	if (mtu == 0) {
 		int i = 0;
 
-		mtu = htons(icp->icmp_ip.ip_len);
+		mtu = icp->icmp_ip.ip_len; /* NTOHS happened in deliver: */
 		/* Some 4.2BSD-based routers incorrectly adjust the ip_len */
 		if (mtu > rt->rt_rmx.rmx_mtu && rt->rt_rmx.rmx_mtu != 0)
 			mtu -= (icp->icmp_ip.ip_hl << 2);
 
-		if (mtu == 0)
+		/* If we still can't guess a value, try the route */
+
+		if (mtu == 0) {
 			mtu = rt->rt_rmx.rmx_mtu;
 
-		for (i = 0; i < sizeof(mtu_table) / sizeof(mtu_table[0]); i++)
-			if (mtu > mtu_table[i])
-				break;
+			/* If no route mtu, default to the interface mtu */
 
-		mtu = mtu_table[i];
+			if (mtu == 0)
+				mtu = rt->rt_ifp->if_mtu;
+		}
+
+		for (i = 0; i < sizeof(mtu_table) / sizeof(mtu_table[0]); i++)
+			if (mtu > mtu_table[i]) {
+				mtu = mtu_table[i];
+				break;
+			}
 	}
 
 	if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
-		if (mtu < 296) 
+		if (mtu < 296 || mtu > rt->rt_ifp->if_mtu)
 			rt->rt_rmx.rmx_locks |= RTV_MTU;
 		else if (rt->rt_rmx.rmx_mtu > mtu || 
 			 rt->rt_rmx.rmx_mtu == 0)
 			rt->rt_rmx.rmx_mtu = mtu;
 	}
+
 	if (rt)
 		rtfree(rt);
 }
