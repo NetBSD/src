@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.10 1997/10/20 20:38:24 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.11 1997/10/20 20:41:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -144,10 +144,10 @@ __start(sp, cleanup, obj, ps_strings)
 }
 
 /*
- * NOTE: Leave the RCS ID _after_ __start(), in case it gets places in .text.
+ * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.10 1997/10/20 20:38:24 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.11 1997/10/20 20:41:09 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 static char *
