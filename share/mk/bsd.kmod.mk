@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.69 2003/09/04 08:27:08 lukem Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.70 2003/10/11 07:15:59 jdolecek Exp $
 
 .include <bsd.init.mk>
 
@@ -8,7 +8,15 @@ clean:		cleankmod
 realinstall:	kmodinstall
 
 ##### Default values
-S?=		/sys
+.if !defined(S)
+.if defined(NETBSDSRCDIR)
+S=		${NETBSDSRCDIR}/sys
+.elif defined(BSDSRCDIR)
+S=		${BSDSRCDIR}/sys
+.else
+S=		/sys
+.endif
+.endif
 KERN=		$S/kern
 
 CFLAGS+=	-ffreestanding ${COPTS}
