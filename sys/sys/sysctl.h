@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.32 1998/10/29 21:22:33 jonathan Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.33 1998/11/13 12:07:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -429,7 +429,7 @@ int cpu_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
+int	sysctl __P((int *, u_int, void *, size_t *, const void *, size_t));
 __END_DECLS
 #endif	/* _KERNEL */
 #endif	/* !_SYS_SYSCTL_H_ */
