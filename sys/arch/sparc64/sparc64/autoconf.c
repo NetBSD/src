@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 1999/01/31 09:21:18 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.13 1999/03/18 03:23:53 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -129,6 +129,9 @@ struct intrmap intrmap[] = {
 	{ "scsi",	PIL_SCSI },
 	{ "network",	PIL_NET },
 	{ "display",	PIL_VIDEO },
+	{ "audio",	PIL_AUD },
+/* The following devices don't have device types: */
+	{ "SUNW,CS4231",	PIL_AUD },
 	{ NULL,		0 }
 };
 
@@ -213,7 +216,7 @@ bootstrap(nctx)
 #ifdef DDB
 	db_machine_init();
 #ifdef DB_ELF_SYMBOLS
-	ddb_init((int)(esym - ssym), ssym, esym); /* No symbols as yet */
+	ddb_init((int)((caddr_t)esym - (caddr_t)ssym), ssym, esym); /* No symbols as yet */
 #else
 	ddb_init();
 #endif
@@ -1022,100 +1025,6 @@ getprop(node, name, size, nitem, bufp)
 	return (0);
 }
 
-int
-getprop_reg1(node, rrp)
-	int node;
-	struct sbus_reg *rrp;
-{
-	int error, n;
-	struct sbus_reg *rrp0 = NULL;
-	char buf[32];
-
-	error = getprop(node, "reg", sizeof(struct sbus_reg),
-			 &n, (void **)&rrp0);
-	if (error != 0) {
-		if (error == ENOENT &&
-		    node_has_property(node, "device_type") &&
-		    strcmp(getpropstringA(node, "device_type", buf),
-			   "hierarchical") == 0) {
-			bzero(rrp, sizeof(struct sbus_reg));
-			error = 0;
-		}
-		return (error);
-	}
-
-	*rrp = rrp0[0];
-	free(rrp0, M_DEVBUF);
-	return (0);
-}
-
-int
-getprop_intr1(node, ip)
-	int node;
-	int *ip;
-{
-	int error, n;
-	struct sbus_intr *sip = NULL;
-	int *interrupts;
-	char buf[32];
-
-	if (getprop(node, "interrupts", sizeof(*interrupts), 
-		     &n, (void**)&interrupts) != 0) {
-		/* Now things get ugly.  We need to take this value which is
-		 * the interrupt vector number and encode the IPL into it
-		 * somehow. Luckily, the interrupt vector has lots of free
-		 * space and we can easily stuff the IPL in there for a while.  
-		 */
-		getpropstringA(node, "device_type", buf);
-		for (n=0; intrmap[n].in_class; n++) {
-			if (strcmp(intrmap[n].in_class, buf) == 0) {
-				interrupts[0] |= (intrmap[n].in_lev << 11);
-				break;
-			}
-		}
-		*ip = interrupts[0];
-		free(interrupts, M_DEVBUF);
-		return 0;
-	}
-	/* Go with old-style intr property.  I don't know what to do with
-         * this.  Need to get to the vector.
-	 */
-	error = getprop(node, "intr", sizeof(struct sbus_intr),
-			 &n, (void **)&sip);
-	if (error != 0) {
-		if (error == ENOENT) {
-			*ip = 0;
-			error = 0;
-		}
-		return (error);
-	}
-
-	*ip = sip[0].sbi_pri;
-	free(sip, M_DEVBUF);
-	return (0);
-}
-
-int
-getprop_address1(node, vpp)
-	int node;
-	void **vpp;
-{
-	int error, n;
-	void **vp = NULL;
-
-	error = getprop(node, "address", sizeof(u_int32_t), &n, (void **)&vp);
-	if (error != 0) {
-		*vpp = 0;
-		if (error == ENOENT) {
-			error = 0;
-		}
-		return (error);
-	}
-
-	*vpp = vp[0];
-	free(vp, M_DEVBUF);
-	return (0);
-}
 
 /*
  * Internal form of proplen().  Returns the property length.

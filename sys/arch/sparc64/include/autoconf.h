@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.6 1998/10/06 20:50:18 thorpej Exp $ */
+/*	$NetBSD: autoconf.h,v 1.7 1999/03/18 03:23:53 eeh Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -136,16 +136,6 @@ extern int optionsnode;
 
 	/* new interfaces: */
 char	*getpropstringA __P((int, char *, char *));
-
-/*
- * Helper routines to get some of the more common properties. These
- * only get the first item in case the property value is an array.
- * Drivers that "need to know it all" can call getprop() directly.
- */
-int	getprop_reg1 __P((int, struct sbus_reg *));
-int	getprop_intr1 __P((int, int *));
-int	getprop_address1 __P((int, void **));
-
 
 /*
  * The matchbyname function is useful in drivers that are matched
