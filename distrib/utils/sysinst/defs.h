@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.36.2.2 1999/04/19 15:19:27 perry Exp $	*/
+/*	$NetBSD: defs.h,v 1.36.2.3 1999/06/24 22:58:02 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
@@ -91,6 +91,8 @@ EXTERN char machine[SSTRSIZE] INIT(MACH);
 
 EXTERN int yesno;
 EXTERN int ignorerror;
+EXTERN int ttysig_ignore;
+EXTERN pid_t ttysig_forward;
 EXTERN int layoutkind;
 EXTERN int sizemult INIT(1);
 EXTERN char *multname; 
@@ -173,7 +175,7 @@ EXTERN int  clean_dist_dir INIT(0);
 
 EXTERN char ext_dir[STRSIZE] INIT("");
 EXTERN char ftp_host[STRSIZE] INIT("ftp.netbsd.org");
-EXTERN char ftp_dir[STRSIZE]  INIT("/pub/NetBSD/NetBSD-");
+EXTERN char ftp_dir[STRSIZE]  INIT("pub/NetBSD/NetBSD-");
 EXTERN char ftp_prefix[STRSIZE] INIT("/binary/sets");
 EXTERN char ftp_user[STRSIZE] INIT("ftp");
 EXTERN char ftp_pass[STRSIZE] INIT("");
@@ -286,7 +288,6 @@ int	distribution_sets_exist_p __P((const char *path));
 void	get_ramsize __P((void));
 void	ask_sizemult __P((void));
 void	reask_sizemult __P((void));
-int	ask_ynquestion __P((char *quest, char def, ...));
 void	run_makedev __P((void));
 int	get_via_floppy __P((void));
 int	get_via_cdrom __P((void));
@@ -297,7 +298,7 @@ void	toggle_getit __P((int));
 void	show_cur_distsets __P((void));
 void	make_ramdisk_dir __P((const char *path));
 void	ask_verbose_dist __P((void));
-void 	get_and_unpack_sets(int success_msg, int failure_msg);
+int 	get_and_unpack_sets(int success_msg, int failure_msg);
 int	sanity_check __P((void));
 
 /* from target.c */
