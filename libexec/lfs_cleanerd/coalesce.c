@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.3 2002/06/14 05:21:21 perseant Exp $  */
+/*      $NetBSD: coalesce.c,v 1.4 2002/11/24 08:47:28 yamt Exp $  */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 		return COALESCE_NOINODE;
 
 	/* Compute file block size, set up for lfs_bmapv */
-	onb = nb = btofsb(lfsp, dip->di_size);
+	onb = nb = lblkno(lfsp, dip->di_size);
 
 	/* XXX for now, don't do any file small enough to have fragments */
 	if (nb < NDADDR)
@@ -174,9 +174,10 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 	}
 	noff = toff = 0;
 	for (i = 1; i < nb; i++) {
-		if (bip[i].bi_daddr != bip[i - 1].bi_daddr + 1)
+		if (bip[i].bi_daddr != bip[i - 1].bi_daddr + lfsp->lfs_frag)
 			++noff;
-		toff += abs(bip[i].bi_daddr - bip[i - 1].bi_daddr - 1);
+		toff += abs(bip[i].bi_daddr - bip[i - 1].bi_daddr
+		    - lfsp->lfs_frag) >> lfsp->lfs_fbshift;
 	}
 
 	/*
