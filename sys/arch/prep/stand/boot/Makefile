@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2004/01/05 15:17:54 nonaka Exp $
+#	$NetBSD: Makefile,v 1.14 2004/03/10 15:17:01 nonaka Exp $
 
 NOMAN= # defined
 
@@ -36,7 +36,6 @@ CPPFLAGS+= -DCONS_VGA
 CPPFLAGS+= -DCONS_SERIAL -DCOMSPEED=9600 -DCOMPORT=0x3f8
 .endif
 
-OBJDUMP?= objdump
 STRIPFLAG=
 BINMODE= 444
 
@@ -47,8 +46,6 @@ LIBCRTBEGIN=
 LIBCRTEND=
 
 RELOC= 0x800000
-HEAD_SIZE= `${OBJDUMP} -h ${.OBJDIR}/${PROG} | grep \.text | awk '{print $$6}'`
-KERN_OFFSET= `ls -l ${.OBJDIR}/${PROG} | awk '{print $$5}'`
 
 CLEANFILES+= vers.c machine powerpc
 
@@ -70,10 +67,6 @@ vers.c: ${.CURDIR}/../boot/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/../boot/version "prep" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} machine powerpc
-	${LD} -o ${PROG} -s -N -T ${.CURDIR}/../boot/ld.script \
-		-Ttext ${RELOC} ${OBJS} ${LIBS}
-	${COMPILE.c} -DKERN_OFFSET=${KERN_OFFSET} -DHEAD_SIZE=0x${HEAD_SIZE} \
-		${.CURDIR}/../boot/inkernel.c
 	${LD} -o ${PROG} -s -N -T ${.CURDIR}/../boot/ld.script \
 		-Ttext ${RELOC} ${OBJS} ${LIBS}
 
