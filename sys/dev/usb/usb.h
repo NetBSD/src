@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.4 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.5 1998/12/02 22:47:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -290,6 +290,8 @@ typedef struct {
 #define UCLASS_AUDIO		1
 #define  USUBCLASS_AUDIOCONTROL	1
 #define  USUBCLASS_AUDIOSTREAM	2
+#define UCLASS_CDC		2
+#define  USUBCLASS_MODEM	2
 #define UCLASS_HID		3
 #define  USUBCLASS_BOOT	 	1
 #define UCLASS_PRINTER		7
