@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tm.h,v 1.4 1995/01/26 15:56:31 mycroft Exp $
+	$Id: tm.h,v 1.5 1995/02/03 06:42:31 mycroft Exp $
 */
 #include <machine/vmparam.h>
 
@@ -44,10 +44,11 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
    for the whole u area, since we don't necessarily have hp300bsd
    include files around.  */
 
-/* For 4.4, it is actually right 20 bytes *before* STACK_END_ADDR, so
-   include that in the area we test for.  */
+/* For 4.4, it is actually right 20 bytes before STACK_END_ADDR.  For
+   NetBSD, it is 32 bytes before STACK_END_ADDR.  We include both
+   regions in the area we test for.  */
 
-#define SIGTRAMP_START (STACK_END_ADDR - 20)
+#define SIGTRAMP_START (STACK_END_ADDR - 32)
 #define SIGTRAMP_END (STACK_END_ADDR + TARGET_UPAGES * TARGET_NBPG)
 
 /* Address of end of stack space.  */
