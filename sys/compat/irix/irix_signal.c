@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.10 2002/04/01 13:42:36 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.11 2002/04/01 15:45:16 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.10 2002/04/01 13:42:36 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.11 2002/04/01 15:45:16 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -305,7 +305,6 @@ irix_sys_sigreturn(p, v, retval)
 	sigset_t mask;
 	int i, error;
 
-	irix_debug_hack = 0;
 #ifdef DEBUG_IRIX
 	printf("irix_sys_sigreturn()\n");
 	printf("scp = %p, ucp = %p, sig = %d (%p)\n", 
