@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.25 2000/04/12 10:36:44 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.26 2000/04/13 16:21:25 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.48 2000/04/12 03:51:29 itojun Exp $	*/
 
 /*
@@ -185,7 +185,7 @@ found:
 			in6->s6_addr[9] = addr[1];
 			in6->s6_addr[10] = addr[2];
 			in6->s6_addr[11] = 0xff;
-			in6->s6_addr[12] = 0xff;
+			in6->s6_addr[12] = 0xfe;
 			in6->s6_addr[13] = addr[3];
 			in6->s6_addr[14] = addr[4];
 			in6->s6_addr[15] = addr[5];
