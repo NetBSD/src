@@ -40,6 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef inhibit_libc
 /* fixproto guarantees these system headers exist. */
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #endif
 
