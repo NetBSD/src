@@ -1,4 +1,4 @@
-/*	$NetBSD: nohup.c,v 1.8 1997/12/23 18:21:34 ross Exp $	*/
+/*	$NetBSD: nohup.c,v 1.9 2000/11/04 18:51:40 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
 #endif
-__RCSID("$NetBSD: nohup.c,v 1.8 1997/12/23 18:21:34 ross Exp $");
+__RCSID("$NetBSD: nohup.c,v 1.9 2000/11/04 18:51:40 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -77,7 +77,13 @@ main(argc, argv)
 {
 	int exit_status;
 
-	if (argc < 2)
+	while (getopt(argc, argv, "") != -1) {
+		usage();
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc < 1)
 		usage();
 
 	if (isatty(STDOUT_FILENO))
@@ -92,9 +98,9 @@ main(argc, argv)
 	   except that SIGHUP shall be ignored. */
 	(void)signal(SIGHUP, SIG_IGN);
 
-	execvp(argv[1], &argv[1]);
+	execvp(argv[0], &argv[0]);
 	exit_status = (errno == ENOENT) ? EXIT_NOTFOUND : EXIT_NOEXEC;
-	(void)fprintf(stderr, "nohup: %s: %s\n", argv[1], strerror(errno));
+	(void)fprintf(stderr, "nohup: %s: %s\n", argv[0], strerror(errno));
 	exit(exit_status);
 }
 
@@ -138,6 +144,6 @@ dupit:	(void)lseek(fd, 0L, SEEK_END);
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: nohup command\n");
+	(void)fprintf(stderr, "usage: nohup utility [argument ...]\n");
 	exit(EXIT_MISC);
 }
