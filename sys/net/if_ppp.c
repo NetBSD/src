@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.37 1997/03/12 20:26:50 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.38 1997/04/16 12:54:42 is Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -127,8 +127,6 @@
 #endif
 
 static int	pppsioctl __P((struct ifnet *, u_long, caddr_t));
-static int	pppoutput __P((struct ifnet *, struct mbuf *,
-			       struct sockaddr *, struct rtentry *));
 static void	ppp_requeue __P((struct ppp_softc *));
 static void	ppp_ccp __P((struct ppp_softc *, struct mbuf *m, int rcvd));
 static void	ppp_ccp_closed __P((struct ppp_softc *));
