@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.88 1996/02/02 18:12:24 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89 1996/02/03 22:50:14 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -221,7 +221,8 @@ consinit(void)
 		ddb_init();
 #endif
 		init = 1;
-	}
+	} else
+		mac68k_calibrate_delay();
 }
 
 #define CURRENTBOOTERVER	108
