@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dir.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: dir.c,v 1.12 1994/09/23 23:48:13 mycroft Exp $";
+static char *rcsid = "$Id: dir.c,v 1.13 1994/10/06 14:24:17 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -216,8 +216,15 @@ dircheck(idesc, dp)
 	u_char namlen, type;
 	int spaceleft;
 
-	size = DIRSIZ(!newinofmt, dp);
 	spaceleft = DIRBLKSIZ - (idesc->id_loc % DIRBLKSIZ);
+	if (dp->d_ino >= maxino ||
+	    dp->d_reclen == 0 ||
+	    dp->d_reclen > spaceleft ||
+	    (dp->d_reclen & 0x3) != 0)
+		return (0);
+	if (dp->d_ino == 0)
+		return (1);
+	size = DIRSIZ(!newinofmt, dp);
 #	if (BYTE_ORDER == LITTLE_ENDIAN)
 		if (!newinofmt) {
 			type = dp->d_namlen;
@@ -230,23 +237,17 @@ dircheck(idesc, dp)
 		namlen = dp->d_namlen;
 		type = dp->d_type;
 #	endif
-	if (dp->d_ino < maxino &&
-	    dp->d_reclen != 0 &&
-	    dp->d_reclen <= spaceleft &&
-	    (dp->d_reclen & 0x3) == 0 &&
-	    dp->d_reclen >= size &&
-	    idesc->id_filesize >= size &&
-	    namlen <= MAXNAMLEN &&
-	    type <= 15) {
-		if (dp->d_ino == 0)
-			return (1);
-		for (cp = dp->d_name, size = 0; size < namlen; size++)
-			if (*cp == 0 || (*cp++ == '/'))
-				return (0);
-		if (*cp == 0)
-			return (1);
-	}
-	return (0);
+	if (dp->d_reclen < size ||
+	    idesc->id_filesize < size ||
+	    namlen > MAXNAMLEN ||
+	    type > 15)
+		return (0);
+	for (cp = dp->d_name, size = 0; size < namlen; size++)
+		if (*cp == '\0' || (*cp++ == '/'))
+			return (0);
+	if (*cp != '\0')
+		return (0);
+	return (1);
 }
 
 direrror(ino, errmesg)
