@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_addr.c,v 1.1.1.1 2004/05/20 22:29:02 christos Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.2 2004/05/20 23:12:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,12 +17,18 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static const char rcsid[] = "Id: nsap_addr.c,v 1.2.206.1 2004/03/09 08:33:33 marka Exp";
+#else
+__RCSID("$NetBSD: nsap_addr.c,v 1.2 2004/05/20 23:12:33 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -31,10 +37,16 @@ static const char rcsid[] = "Id: nsap_addr.c,v 1.2.206.1 2004/03/09 08:33:33 mar
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <resolv.h>
 
 #include "port_after.h"
+
+#ifdef __weak_alias
+__weak_alias(inet_nsap_addr,_inet_nsap_addr)
+__weak_alias(inet_nsap_ntoa,_inet_nsap_ntoa)
+#endif
 
 static char
 xtob(int c) {
@@ -45,6 +57,9 @@ u_int
 inet_nsap_addr(const char *ascii, u_char *binary, int maxlen) {
 	u_char c, nib;
 	u_int len = 0;
+
+	_DIAGASSERT(ascii != NULL);
+	_DIAGASSERT(binary != NULL);
 
 	if (ascii[0] != '0' || (ascii[1] != 'x' && ascii[1] != 'X'))
 		return (0);
@@ -84,6 +99,8 @@ inet_nsap_ntoa(int binlen, const u_char *binary, char *ascii) {
 	static char tmpbuf[2+255*3];
 	char *start;
 
+	_DIAGASSERT(binary != NULL);
+
 	if (ascii)
 		start = ascii;
 	else {
@@ -98,7 +115,7 @@ inet_nsap_ntoa(int binlen, const u_char *binary, char *ascii) {
 		binlen = 255;
 
 	for (i = 0; i < binlen; i++) {
-		nib = *binary >> 4;
+		nib = (u_int32_t)*binary >> 4;
 		*ascii++ = nib + (nib < 10 ? '0' : '7');
 		nib = *binary++ & 0x0f;
 		*ascii++ = nib + (nib < 10 ? '0' : '7');
