@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.4,v 1.1 2003/04/22 22:16:29 augustss Exp $
+.\"	$NetBSD: intro.4,v 1.2 2003/04/23 05:43:47 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 4, 2001
+.Dd April 23, 2003
 .Dt INTRO 4 pmppc
 .Os
 .Sh NAME
@@ -39,12 +39,10 @@
 .Nd introduction to pmppc special files and hardware support
 .Sh DESCRIPTION
 This section describes the special files, related driver functions,
-and networking support
-available in the system.
+and networking support available in the system.
 In this part of the manual, the
 .Tn SYNOPSIS
-section of
-each configurable device gives a sample specification
+section of each configurable device gives a sample specification
 for use in constructing a system description for the
 .Xr config 8
 program.
@@ -67,8 +65,8 @@ The networking support is introduced in
 This section describes the hardware supported on the
 .Tn Artesyn PM/PPC
 card.
-Software support for these devices comes in two forms.  A hardware
-device may be supported with a character or block
+Software support for these devices comes in two forms.
+A hardware device may be supported with a character or block
 .Em device driver ,
 or it may be used within the networking subsystem and have a
 .Em network interface driver .
@@ -81,7 +79,8 @@ communication facilities provided by the system; see
 .Pp
 A hardware device is identified to the system at configuration time
 and the appropriate device or network interface driver is then compiled
-into the system.  When the resultant system is booted, the
+into the system.
+When the resultant system is booted, the
 autoconfiguration facilities in the system probe for the device
 and, if found, enable the software support for it.
 If a device does not respond at autoconfiguration
