@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.44 2001/09/24 13:22:39 wiz Exp $ */
+/* $NetBSD: user.c,v 1.45 2001/10/22 11:00:05 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.44 2001/09/24 13:22:39 wiz Exp $");
+__RCSID("$NetBSD: user.c,v 1.45 2001/10/22 11:00:05 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1017,9 +1017,15 @@ adduser(char *login, user_t *up)
 		errx(EXIT_FAILURE, "can't append `%s' to new groups", login);
 	}
 	(void) close(ptmpfd);
+#if PW_MKDB_ARGC == 2
 	if (pw_mkdb(login, 0) < 0) {
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
+#else
+	if (pw_mkdb() < 0) {
+		err(EXIT_FAILURE, "pw_mkdb failed");
+	}
+#endif
 	return 1;
 }
 
@@ -1031,9 +1037,10 @@ moduser(char *login, char *newlogin, user_t *up)
 	struct group	*grp;
 	struct tm	tm;
 	const char	*homedir;
-	char		newdir[MaxFileNameLen];
 	size_t		colonc, len, loginc;
+	size_t		cc;
 	FILE		*master;
+	char		newdir[MaxFileNameLen];
 	char		*buf, *colon, *line;
 	int		masterfd;
 	int		ptmpfd;
@@ -1168,14 +1175,14 @@ moduser(char *login, char *newlogin, user_t *up)
 					(void) pw_abort();
 					err(EXIT_FAILURE, "can't add `%s'", buf);
 				}
+				(void) free(buf);
 			}
-		/* } else if (write(ptmpfd, line, len) != len) { */
-		} else if ((colonc = write(ptmpfd, line, len)) != len) {
+		} else if ((cc = write(ptmpfd, line, len)) != len) {
 			(void) close(masterfd);
 			(void) close(ptmpfd);
 			(void) pw_abort();
 			err(EXIT_FAILURE, "short write to /etc/ptmp (%lld not %lld chars)",
-				(long long)colonc,
+				(long long)cc,
 				(long long)len);
 		}
 	}
@@ -1196,11 +1203,15 @@ moduser(char *login, char *newlogin, user_t *up)
 		}
 	}
 	(void) close(ptmpfd);
+#if PW_MKDB_ARGC == 2
 	if (up != NULL && strcmp(login, newlogin) == 0) {
 		error = pw_mkdb(login, 0);
 	} else {
 		error = pw_mkdb(NULL, 0);
 	}
+#else
+	error = pw_mkdb();
+#endif
 	if (error < 0) {
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
@@ -1596,6 +1607,7 @@ userdel(int argc, char **argv)
 	if (rmhome)
 		(void)removehomedir(pwp->pw_name, pwp->pw_uid, pwp->pw_dir);
 	if (u.u_preserve) {
+		u.u_flags |= F_SHELL;
 		memsave(&u.u_shell, NOLOGIN, strlen(NOLOGIN));
 		(void) memset(password, '*', PasswordLength);
 		password[PasswordLength] = '\0';
