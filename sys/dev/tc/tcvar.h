@@ -1,4 +1,4 @@
-/*	$NetBSD: tcvar.h,v 1.5 1996/05/17 23:38:16 cgd Exp $	*/
+/*	$NetBSD: tcvar.h,v 1.6 1996/09/09 16:39:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -59,7 +59,7 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
  * by the pmax port, and not the new definitions provided by the
  * alpha port.
  */
-#ifdef __alpha_
+#ifdef __alpha__
 /*
  * On the alpha, map the new definitions to the old.
  */
