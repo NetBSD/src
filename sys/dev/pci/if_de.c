@@ -1,4 +1,4 @@
-/*    $NetBSD: if_de.c,v 1.24 1996/07/15 16:40:40 cgd Exp $       */
+/*    $NetBSD: if_de.c,v 1.25 1996/10/10 19:58:18 christos Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -454,12 +454,12 @@ tulip_dc21040_media_select(
     TULIP_WRITE_CSR(sc, csr_sia_connectivity, TULIP_SIACONN_RESET);
     if (sc->tulip_if.if_flags & IFF_ALTPHYS) {
 	if ((sc->tulip_flags & TULIP_ALTPHYS) == 0)
-	    printf("%s: enabling Thinwire/AUI port\n", sc->tulip_xname);
+	    kprintf("%s: enabling Thinwire/AUI port\n", sc->tulip_xname);
 	TULIP_WRITE_CSR(sc, csr_sia_connectivity, TULIP_SIACONN_AUI);
 	sc->tulip_flags |= TULIP_ALTPHYS;
     } else {
 	if (sc->tulip_flags & TULIP_ALTPHYS)
-	    printf("%s: enabling 10baseT/UTP port\n", sc->tulip_xname);
+	    kprintf("%s: enabling 10baseT/UTP port\n", sc->tulip_xname);
 	TULIP_WRITE_CSR(sc, csr_sia_connectivity, TULIP_SIACONN_10BASET);
 	sc->tulip_flags &= ~TULIP_ALTPHYS;
 	sc->tulip_media = TULIP_MEDIA_10BASET;
@@ -490,7 +490,7 @@ tulip_zx314_media_select(
 	|TULIP_CMD_BACKOFFCTR;
     TULIP_WRITE_CSR(sc, csr_sia_connectivity, TULIP_SIACONN_RESET);
     if (sc->tulip_flags & TULIP_ALTPHYS)
-	printf("%s: enabling 10baseT/UTP port\n", sc->tulip_xname);
+	kprintf("%s: enabling 10baseT/UTP port\n", sc->tulip_xname);
     TULIP_WRITE_CSR(sc, csr_sia_connectivity, TULIP_SIACONN_10BASET);
     sc->tulip_flags &= ~TULIP_ALTPHYS;
     sc->tulip_media = TULIP_MEDIA_10BASET;
@@ -536,7 +536,7 @@ tulip_dc21140_evalboard_media_select(
     TULIP_WRITE_CSR(sc, csr_gp, TULIP_GP_EB_INIT);
     if (sc->tulip_if.if_flags & IFF_ALTPHYS) {
 	if ((sc->tulip_flags & TULIP_ALTPHYS) == 0)
-	    printf("%s: enabling 100baseTX UTP port\n", sc->tulip_xname);
+	    kprintf("%s: enabling 100baseTX UTP port\n", sc->tulip_xname);
 	sc->tulip_cmdmode |= TULIP_CMD_PORTSELECT
 	    |TULIP_CMD_PCSFUNCTION|TULIP_CMD_SCRAMBLER;
 	sc->tulip_cmdmode &= ~TULIP_CMD_TXTHRSHLDCTL;
@@ -544,7 +544,7 @@ tulip_dc21140_evalboard_media_select(
 	sc->tulip_media = TULIP_MEDIA_100BASET;
     } else {
 	if (sc->tulip_flags & TULIP_ALTPHYS)
-	    printf("%s: enabling 10baseT UTP port\n", sc->tulip_xname);
+	    kprintf("%s: enabling 10baseT UTP port\n", sc->tulip_xname);
 	sc->tulip_cmdmode &= ~(TULIP_CMD_PORTSELECT
 			       |TULIP_CMD_PCSFUNCTION|TULIP_CMD_SCRAMBLER);
 	sc->tulip_cmdmode |= TULIP_CMD_TXTHRSHLDCTL;
@@ -588,7 +588,7 @@ tulip_dc21140_cogent_em100_media_select(
     TULIP_WRITE_CSR(sc, csr_gp, TULIP_GP_EM100_PINS);
     TULIP_WRITE_CSR(sc, csr_gp, TULIP_GP_EM100_INIT);
     if ((sc->tulip_flags & TULIP_ALTPHYS) == 0)
-	printf("%s: enabling 100baseTX UTP port\n", sc->tulip_xname);
+	kprintf("%s: enabling 100baseTX UTP port\n", sc->tulip_xname);
     sc->tulip_cmdmode |= TULIP_CMD_PORTSELECT
 	|TULIP_CMD_PCSFUNCTION|TULIP_CMD_SCRAMBLER;
     sc->tulip_cmdmode &= ~TULIP_CMD_TXTHRSHLDCTL;
@@ -635,7 +635,7 @@ tulip_dc21140_znyx_zx34x_media_select(
     TULIP_WRITE_CSR(sc, csr_gp, TULIP_GP_ZX34X_INIT);
     if (sc->tulip_if.if_flags & IFF_ALTPHYS) {
 	if ((sc->tulip_flags & TULIP_ALTPHYS) == 0)
-	    printf("%s: enabling 100baseTX UTP port\n", sc->tulip_xname);
+	    kprintf("%s: enabling 100baseTX UTP port\n", sc->tulip_xname);
 	sc->tulip_cmdmode |= TULIP_CMD_PORTSELECT
 	    |TULIP_CMD_PCSFUNCTION|TULIP_CMD_SCRAMBLER;
 	sc->tulip_cmdmode &= ~TULIP_CMD_TXTHRSHLDCTL;
@@ -643,7 +643,7 @@ tulip_dc21140_znyx_zx34x_media_select(
 	sc->tulip_media = TULIP_MEDIA_100BASET;
     } else {
 	if (sc->tulip_flags & TULIP_ALTPHYS)
-	    printf("%s: enabling 10baseT UTP port\n", sc->tulip_xname);
+	    kprintf("%s: enabling 10baseT UTP port\n", sc->tulip_xname);
 	sc->tulip_cmdmode &= ~(TULIP_CMD_PORTSELECT
 			       |TULIP_CMD_PCSFUNCTION|TULIP_CMD_SCRAMBLER);
 	sc->tulip_cmdmode |= TULIP_CMD_TXTHRSHLDCTL;
@@ -695,7 +695,7 @@ tulip_dc21140_de500_media_select(
     TULIP_WRITE_CSR(sc, csr_gp, TULIP_GP_DE500_PINS);
     if (sc->tulip_if.if_flags & IFF_ALTPHYS) {
 	if ((sc->tulip_flags & TULIP_ALTPHYS) == 0)
-	    printf("%s: enabling 100baseTX UTP port\n", sc->tulip_xname);
+	    kprintf("%s: enabling 100baseTX UTP port\n", sc->tulip_xname);
 	sc->tulip_cmdmode |= TULIP_CMD_PORTSELECT
 	    |TULIP_CMD_PCSFUNCTION|TULIP_CMD_SCRAMBLER;
 	sc->tulip_cmdmode &= ~TULIP_CMD_TXTHRSHLDCTL;
@@ -705,7 +705,7 @@ tulip_dc21140_de500_media_select(
 	    TULIP_GP_DE500_HALFDUPLEX|TULIP_GP_DE500_FORCE_100);
     } else {
 	if (sc->tulip_flags & TULIP_ALTPHYS)
-	    printf("%s: enabling 10baseT UTP port\n", sc->tulip_xname);
+	    kprintf("%s: enabling 10baseT UTP port\n", sc->tulip_xname);
 	sc->tulip_cmdmode &= ~(TULIP_CMD_PORTSELECT
 			       |TULIP_CMD_PCSFUNCTION|TULIP_CMD_SCRAMBLER);
 	sc->tulip_cmdmode |= TULIP_CMD_TXTHRSHLDCTL;
@@ -831,7 +831,7 @@ tulip_dc21041_media_select(
 			 && sc->tulip_media != TULIP_MEDIA_AUI)
 			|| (sc->tulip_probe_state == TULIP_PROBE_BNC
 			    && sc->tulip_media != TULIP_MEDIA_AUI)) {
-			printf("%s: enabling %s port\n", sc->tulip_xname,
+			kprintf("%s: enabling %s port\n", sc->tulip_xname,
 			       sc->tulip_probe_state == TULIP_PROBE_BNC
 			           ? "Thinwire/BNC" : "AUI");
 			if (sc->tulip_probe_state == TULIP_PROBE_AUI)
@@ -891,7 +891,7 @@ tulip_dc21041_media_select(
 			sc->tulip_flags &= ~TULIP_WANTRXACT;
 			sc->tulip_gpticks = 4;
 		    } else {
-			printf("%s: autosense failed: cable problem?\n",
+			kprintf("%s: autosense failed: cable problem?\n",
 			       sc->tulip_xname);
 		    }
 		}
@@ -923,7 +923,7 @@ tulip_dc21041_media_select(
 	 * proper media to use.
 	 */
 	if (sc->tulip_media != TULIP_MEDIA_10BASET)
-	    printf("%s: enabling 10baseT/UTP port\n", sc->tulip_xname);
+	    kprintf("%s: enabling 10baseT/UTP port\n", sc->tulip_xname);
 	if (sc->tulip_media != TULIP_MEDIA_10BASET
 		|| (sc->tulip_flags & TULIP_INRESET)) {
 	    sc->tulip_media = TULIP_MEDIA_10BASET;
@@ -1516,7 +1516,7 @@ tulip_intr(
 		}
 	    }
 	    if (csr & TULIP_STS_ABNRMLINTR) {
-		printf("%s: abnormal interrupt: 0x%05x [0x%05x]\n",
+		kprintf("%s: abnormal interrupt: 0x%05x [0x%05x]\n",
 		       sc->tulip_xname, csr, csr & sc->tulip_intrmask);
 		TULIP_WRITE_CSR(sc, csr_command, sc->tulip_cmdmode);
 	    }
@@ -2065,14 +2065,14 @@ tulip_attach(
     ifp->if_start = tulip_start;
   
 #if defined(__FreeBSD__)
-    printf("%s", sc->tulip_xname);
+    kprintf("%s", sc->tulip_xname);
 #elif defined(__bsdi__)
-    printf("\n%s", sc->tulip_xname);
+    kprintf("\n%s", sc->tulip_xname);
 #endif
 #if defined(__NetBSD__)
-    printf(": %s%s pass %d.%d\n%s: Ethernet address %s\n",
+    kprintf(": %s%s pass %d.%d\n%s: Ethernet address %s\n",
 #else
-    printf(": %s%s pass %d.%d Ethernet address %s\n", 
+    kprintf(": %s%s pass %d.%d Ethernet address %s\n", 
 #endif
 	   sc->tulip_boardsw->bd_description,
 	   tulip_chipdescs[sc->tulip_chipid],
@@ -2262,7 +2262,7 @@ tulip_pci_match(
 	return 0;
     irq = pci_inl(pa, PCI_I_LINE) & 0xFF;
     if (irq == 0 || irq >= 16) {
-	printf("de?: invalid IRQ %d; skipping\n", irq);
+	kprintf("de?: invalid IRQ %d; skipping\n", irq);
 	return 0;
     }
     return 1;
@@ -2348,7 +2348,7 @@ tulip_probe(
     ia->ia_drq = DRQNONE;
 
     if (ia->ia_irq != IRQUNK && irq != ia->ia_irq) {
-	printf("de%d: error: desired IRQ of %d does not match device's "
+	kprintf("de%d: error: desired IRQ of %d does not match device's "
 	    "actual IRQ of %d,\n",
 	       cf->cf_unit,
 	       ffs(ia->ia_irq) - 1, ffs(irq) - 1);
@@ -2463,7 +2463,7 @@ tulip_pci_attach(
 
 #if defined(__FreeBSD__)
     if (unit >= NDE) {
-	printf("de%d: not configured; kernel is built for only %d device%s.\n",
+	kprintf("de%d: not configured; kernel is built for only %d device%s.\n",
 	       unit, NDE, NDE == 1 ? "" : "s");
 	return;
     }
@@ -2500,16 +2500,16 @@ tulip_pci_attach(
 
     if ((chipid == TULIP_DC21040 || chipid == TULIP_DE425) && revinfo < 0x20) {
 #ifdef __FreeBSD__
-	printf("de%d", unit);
+	kprintf("de%d", unit);
 #endif
-	printf(": not configured; DC21040 pass 2.0 required (%d.%d found)\n",
+	kprintf(": not configured; DC21040 pass 2.0 required (%d.%d found)\n",
 	       revinfo >> 4, revinfo & 0x0f);
 	return;
     } else if (chipid == TULIP_DC21140 && revinfo < 0x11) {
 #ifdef __FreeBSD__
-	printf("de%d", unit);
+	kprintf("de%d", unit);
 #endif
-	printf(": not configured; DC21140 pass 1.1 required (%d.%d found)\n",
+	kprintf(": not configured; DC21140 pass 1.1 required (%d.%d found)\n",
 	       revinfo >> 4, revinfo & 0x0f);
 	return;
     }
@@ -2552,7 +2552,7 @@ tulip_pci_attach(
 
     /* Set up human-readable name. */
     bzero(sc->tulip_xname, sizeof(sc->tulip_xname));
-    sprintf(sc->tulip_xname, "%s%d", sc->tulip_name, sc->tulip_unit);
+    ksprintf(sc->tulip_xname, "%s%d", sc->tulip_name, sc->tulip_unit);
 
 #if defined(__FreeBSD__)
 #if defined(TULIP_IOMAPPED)
@@ -2603,13 +2603,13 @@ tulip_pci_attach(
     tulip_initring(sc, &sc->tulip_txinfo, txdescs, TULIP_TXDESCS);
     if ((retval = tulip_read_macaddr(sc)) < 0) {
 #ifdef __FreeBSD__
-	printf("%s", sc->tulip_xname);
+	kprintf("%s", sc->tulip_xname);
 #endif
-	printf(": can't read ENET ROM (why=%d) (", retval);
+	kprintf(": can't read ENET ROM (why=%d) (", retval);
 	for (idx = 0; idx < 32; idx++)
-	    printf("%02x", sc->tulip_rombuf[idx]);
-	printf("\n");
-	printf("%s: %s%s pass %d.%d Ethernet address %s\n",
+	    kprintf("%02x", sc->tulip_rombuf[idx]);
+	kprintf("\n");
+	kprintf("%s: %s%s pass %d.%d Ethernet address %s\n",
 	       sc->tulip_xname,
 	       (sc->tulip_boardsw != NULL ? sc->tulip_boardsw->bd_description : ""),
 	       tulip_chipdescs[sc->tulip_chipid],
@@ -2629,29 +2629,29 @@ tulip_pci_attach(
 
 	    if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 		pa->pa_intrline, &intrhandle)) {
-		printf(": couldn't map interrupt\n");
+		kprintf(": couldn't map interrupt\n");
 		return;
 	    }
 	    intrstr = pci_intr_string(pc, intrhandle);
 	    sc->tulip_ih = pci_intr_establish(pc, intrhandle, IPL_NET,
 		tulip_intr, sc);
 	    if (sc->tulip_ih == NULL) {
-		printf(": couldn't establish interrupt");
+		kprintf(": couldn't establish interrupt");
                 if (intrstr != NULL)
-                        printf(" at %s", intrstr);
-                printf("\n");
+                        kprintf(" at %s", intrstr);
+                kprintf("\n");
 		return;
 	    }
 	}
 	sc->tulip_ats = shutdownhook_establish(tulip_pci_shutdown, sc);
 	if (sc->tulip_ats == NULL)
-	    printf("\n%s: warning: couldn't establish shutdown hook",
+	    kprintf("\n%s: warning: couldn't establish shutdown hook",
 		   sc->tulip_xname);
 #endif
 #if defined(__FreeBSD__)
 	if (sc->tulip_boardsw->bd_type != TULIP_DC21040_ZX314_SLAVE) {
 	    if (!pci_map_int (config_id, tulip_intr, (void*) sc, &net_imask)) {
-		printf("%s: couldn't map interrupt\n", sc->tulip_xname);
+		kprintf("%s: couldn't map interrupt\n", sc->tulip_xname);
 		return;
 	    }
 	}
@@ -2673,7 +2673,7 @@ tulip_pci_attach(
 	tulip_attach(sc);
 #if defined(__NetBSD__)
 	if (intrstr != NULL)
-	    printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
+	    kprintf("%s: interrupting at %s\n", self->dv_xname, intrstr);
 #endif
     }
 }
