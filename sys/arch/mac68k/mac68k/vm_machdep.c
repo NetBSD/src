@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26 1998/01/06 07:49:44 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.27 1998/04/13 02:35:21 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,12 +75,12 @@ void savectx __P((struct pcb *));
  */
 void
 cpu_fork(p1, p2)
-	register struct proc *p1, *p2;
+	struct proc *p1, *p2;
 {
 	void child_return __P((struct proc *, struct frame)); /* XXX */
-	register struct pcb *pcb = &p2->p_addr->u_pcb;
-	register struct trapframe *tf;
-	register struct switchframe *sf;
+	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
 	extern struct pcb *curpcb;
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
@@ -123,8 +123,8 @@ cpu_set_kpc(p, pc)
 	struct switchframe *sf;
 
 	pcbp = &p->p_addr->u_pcb;
-	sf = (struct switchframe *) pcbp->pcb_regs[11];
-	sf->sf_pc = (u_int) proc_trampoline;
+	sf = (struct switchframe *)pcbp->pcb_regs[11];
+	sf->sf_pc = (u_int)proc_trampoline;
 	pcbp->pcb_regs[6] = (int)pc;	/* A2 */
 	pcbp->pcb_regs[7] = (int)p;	/* A3 */
 }
@@ -144,7 +144,7 @@ cpu_exit(p)
 {
 	vmspace_free(p->p_vmspace);
 
-	(void) splhigh();
+	(void)splhigh();
 	cnt.v_swtch++;
 	switch_exit(p);
 	for(;;); /* Get rid of a compile warning */
@@ -172,8 +172,8 @@ cpu_coredump(p, vp, cred, chdr)
 	int error;
 	struct md_core md_core;
 	struct coreseg cseg;
-	register struct user *up = p->p_addr;
-	register i;
+	struct user *up = p->p_addr;
+	int i;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
@@ -182,9 +182,9 @@ cpu_coredump(p, vp, cred, chdr)
 
 	/* Save integer registers. */
 	{
-		register struct frame *f;
+		struct frame *f;
 
-		f = (struct frame*) p->p_md.md_regs;
+		f = (struct frame*)p->p_md.md_regs;
 		for (i = 0; i < 16; i++) {
 			md_core.intreg.r_regs[i] = f->f_regs[i];
 		}
@@ -192,7 +192,7 @@ cpu_coredump(p, vp, cred, chdr)
 		md_core.intreg.r_pc = f->f_pc;
 	}
 	if (fputype) {
-		register struct fpframe *f;
+		struct fpframe *f;
 
 		f = &up->u_pcb.pcb_fpregs;
 		m68881_save(f);
@@ -233,10 +233,10 @@ cpu_coredump(p, vp, cred, chdr)
  */
 void
 pagemove(from, to, size)
-	register caddr_t from, to;
+	caddr_t from, to;
 	size_t size;
 {
-	register vm_offset_t	pa;
+	vm_offset_t pa;
 
 #ifdef DEBUG
 	if (size % PAGE_SIZE)
@@ -247,11 +247,11 @@ pagemove(from, to, size)
 #ifdef DEBUG
 		if (pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vm_offset_t) to) != 0)
+		if (pmap_extract(pmap_kernel(), (vm_offset_t)to) != 0)
 			panic("pagemove 3");
 #endif
 		pmap_remove(pmap_kernel(),
-			   (vm_offset_t)from, (vm_offset_t) from + PAGE_SIZE);
+			   (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
 			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
 		from += PAGE_SIZE;
@@ -268,10 +268,10 @@ pagemove(from, to, size)
 void
 physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;
-	register int size, prot;
+	int size, prot;
 {
-	register pt_entry_t *pte;
-	register u_int page;
+	pt_entry_t *pte;
+	u_int page;
 
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
@@ -285,9 +285,9 @@ physaccess(vaddr, paddr, size, prot)
 void
 physunaccess(vaddr, size)
 	caddr_t vaddr;
-	register int size;
+	int size;
 {
-	register pt_entry_t *pte;
+	pt_entry_t *pte;
 
 	pte = kvtopte(vaddr);
 	for (size = btoc(size); size; size--)
@@ -316,14 +316,14 @@ setredzone(pte, vaddr)
 {
 }
 
-int	kvtop __P((register caddr_t addr));
+int	kvtop __P((caddr_t addr));
 
 /*
  * Convert kernel VA to physical address
  */
 int
 kvtop(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
 	vm_offset_t va;
 
