@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 2003/10/01 01:25:06 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25 2003/10/05 22:00:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -278,11 +278,11 @@ void	next68k_calibrate_delay __P((void));
 #define NEXT_P_EVENTC		(NEXT_SLOT_ID_BMAP+0x0201a000)
 #define NEXT_P_BMAP		(NEXT_SLOT_ID+0x020c0000)
 /* All COLOR_FB registers are 1 byte wide */
-#define NEXT_P_C16_DAC_0	(NEXT_SLOT_ID+0x02018100)	/* COLOR_FB - RAMDAC */
-#define NEXT_P_C16_DAC_1	(NEXT_SLOT_ID+0x02018101)
-#define NEXT_P_C16_DAC_2	(NEXT_SLOT_ID+0x02018102)
-#define NEXT_P_C16_DAC_3	(NEXT_SLOT_ID+0x02018103)
-#define NEXT_P_C16_CMD_REG	(NEXT_SLOT_ID+0x02018180)	/* COLOR_FB - CSR */
+#define NEXT_P_C16_DAC_0	(NEXT_SLOT_ID_BMAP+0x02018100)	/* COLOR_FB - RAMDAC */
+#define NEXT_P_C16_DAC_1	(NEXT_SLOT_ID_BMAP+0x02018101)
+#define NEXT_P_C16_DAC_2	(NEXT_SLOT_ID_BMAP+0x02018102)
+#define NEXT_P_C16_DAC_3	(NEXT_SLOT_ID_BMAP+0x02018103)
+#define NEXT_P_C16_CMD_REG	(NEXT_SLOT_ID_BMAP+0x02018180)	/* COLOR_FB - CSR */
 
 /* system control registers */
 #define NEXT_P_MEMTIMING	(NEXT_SLOT_ID_BMAP+0x02006010)

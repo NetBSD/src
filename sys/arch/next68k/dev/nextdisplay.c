@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.14 2003/10/01 01:25:06 mycroft Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.15 2003/10/05 22:00:25 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.14 2003/10/01 01:25:06 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.15 2003/10/05 22:00:25 mycroft Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -303,7 +303,7 @@ nextdisplay_intr(arg)
 	x = *(volatile uint8_t *)IIOV(NEXT_P_C16_CMD_REG);
 	printf("I%02x", x);
 #endif
-	*(volatile uint8_t *)IIOV(NEXT_P_C16_CMD_REG) |= 0x01;
+	*(volatile uint8_t *)IIOV(NEXT_P_C16_CMD_REG) = 0x05;
 	return (1);
 }
 
