@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.8 2000/10/11 18:50:12 thorpej Exp $	*/
+/*	$NetBSD: fetch.c,v 1.9 2000/12/01 02:19:43 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,13 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)fetch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fetch.c,v 1.8 2000/10/11 18:50:12 thorpej Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.9 2000/12/01 02:19:43 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/sched.h>
 #include <sys/sysctl.h>
+
 #include <string.h>
+
 #include "systat.h"
 #include "extern.h"
 
