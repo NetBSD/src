@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 1998/10/06 14:31:58 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $");
+__RCSID("$NetBSD: boot.c,v 1.6 1998/10/06 14:31:58 ws Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -253,5 +253,16 @@ writefsinfo(dosfs, boot)
 		perror("Unable to write FSInfo");
 		return FSFATAL;
 	}
-	return FSBOOTMOD;
+	/*
+	 * Technically, we should return FSBOOTMOD here.
+	 *
+	 * However, since Win95 OSR2 (the first M$ OS that has
+	 * support for FAT32) doesn't maintain the FSINFO block
+	 * correctly, it has to be fixed pretty often.
+	 *
+	 * Therefor, we handle the FSINFO block only informally,
+	 * fixing it if neccessary, but otherwise ignoring the
+	 * fact that it was incorrect.
+	 */
+	return 0;
 }
