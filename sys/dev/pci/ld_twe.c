@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.1 2000/11/26 17:44:06 ad Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.2 2001/01/22 17:38:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -106,8 +106,7 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 	ld->sc_maxxfer = TWE_MAX_XFER;
 	ld->sc_secperunit = twe->sc_dsize[twea->twea_unit];
 	ld->sc_secsize = TWE_SECTOR_SIZE;
-	ld->sc_maxqueuecnt =
-	    min((twe->sc_nccbs - 1) / twe->sc_nunits, TWE_MAX_PU_QUEUECNT);
+	ld->sc_maxqueuecnt = (TWE_MAX_QUEUECNT - 1) / twe->sc_nunits;
 	ld->sc_start = ld_twe_start;
 	ld->sc_dump = ld_twe_dump;
 
