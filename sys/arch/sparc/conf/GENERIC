@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.117 2000/09/24 15:59:37 jdolecek Exp $
+# 	$NetBSD: GENERIC,v 1.118 2000/10/16 01:29:06 mjacob Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.117 $"
+#ident 		"GENERIC-$Revision: 1.118 $"
 
 maxusers	32
 
@@ -358,6 +358,7 @@ st*	at scsibus? target ? lun ?		# SCSI tapes
 cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?		# SCSI changer devices
 ss*	at scsibus? target ? lun ?		# SCSI scanners
+ses*	at scsibus? target ? lun ?		# SCSI SES/SAF-TE
 uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 
