@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.18 2002/07/02 19:52:16 wrstuden Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.19 2002/07/12 17:48:23 wrstuden Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -286,17 +286,7 @@ tags:
 
 EXTRA_CLEAN+= cscope.out
 .if !target(cscope.out)
-#
-# This target is tricky. We want to include source files from the different
-# kernel libraries in the output, but to get them requires calling
-# make in those directories. We'd rather not call make in those directories
-# if we don't have to, so we make cscope.out in two steps.
-# The first step calls make on this makefile to evaluate the second
-# make target. It *also* passes ` ` evaluated variables on the command
-# line to the second make. These ` ` evaluated variables run make in
-# the library directories, and thus provide the sources from the libs.
-#
-cscope.out: Makefile
+cscope.out: Makefile depend
 	@echo Building cscope.out source database
 	@echo ${SRCS} `sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' \
 	lib/kern/.depend lib/compat/.depend | tr ' ' '\n' | \
@@ -318,7 +308,6 @@ EXTRA_CLEAN+= ID
 mkid: ID
 
 ID: Makefile depend
-# Same dance as cscope.out/cscope.out1
 	@echo Building mkid database
 	@${MKID} `sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' lib/kern/.depend \
 	lib/compat/.depend | tr ' ' '\n' | sed "s|^../../||" | sort -u` \
