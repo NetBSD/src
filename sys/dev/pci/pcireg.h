@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.5 1996/03/04 19:30:51 cgd Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.6 1996/03/27 00:13:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -162,6 +162,34 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_BRIDGE_PCI			0x04
 #define	PCI_SUBCLASS_BRIDGE_PCMCIA		0x05
 #define	PCI_SUBCLASS_BRIDGE_MISC		0x80
+
+/*
+ * PCI BIST/Header Type/Latency Timer/Cache Line Size Register.
+ */
+#define	PCI_BHLC_REG			0x0c
+
+#define	PCI_BIST_SHIFT				24
+#define	PCI_BIST_MASK				0xff
+#define	PCI_BIST(bhlcr) \
+	    (((bhlcr) >> PCI_BIST_SHIFT) & PCI_BIST_MASK)
+
+#define	PCI_HDRTYPE_SHIFT			24
+#define	PCI_HDRTYPE_MASK			0xff
+#define	PCI_HDRTYPE(bhlcr) \
+	    (((bhlcr) >> PCI_HDRTYPE_SHIFT) & PCI_HDRTYPE_MASK)
+
+#define	PCI_HDRTYPE_MULTIFN(bhlcr) \
+	    ((PCI_HDRTYPE(bhlcr) & 0x80) != 0)
+
+#define	PCI_LATTIMER_SHIFT			24
+#define	PCI_LATTIMER_MASK			0xff
+#define	PCI_LATTIMER(bhlcr) \
+	    (((bhlcr) >> PCI_LATTIMER_SHIFT) & PCI_LATTIMER_MASK)
+
+#define	PCI_CACHELINE_SHIFT			24
+#define	PCI_CACHELINE_MASK			0xff
+#define	PCI_CACHELINE(bhlcr) \
+	    (((bhlcr) >> PCI_CACHELINE_SHIFT) & PCI_CACHELINE_MASK)
 
 /*
  * Mapping registers

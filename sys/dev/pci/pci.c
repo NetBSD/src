@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.16 1996/03/17 00:55:38 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.17 1996/03/27 00:13:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -96,7 +96,7 @@ pciattach(parent, self, aux)
 
 	for (device = 0; device < PCI_MAX_DEVICE_NUMBER; device++) {
 		pcitag_t tag;
-		pcireg_t id, class;
+		pcireg_t id, class, bhlcr;
 		struct pci_attach_args pa;
 		struct cfdata *cf;
 		int supported;
@@ -106,7 +106,8 @@ pciattach(parent, self, aux)
 		if (id == 0 || id == 0xffffffff)
 			continue;
 
-		nfunctions = 1;				/* XXX */
+		bhlcr = pci_conf_read(tag, PCI_BHLC_REG);
+		nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
 
 		for (function = 0; function < nfunctions; function++) {
 			tag = pci_make_tag(pba->pba_bus, device, function);
