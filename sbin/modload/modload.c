@@ -46,12 +46,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modload.c,v 1.3 1993/11/23 04:43:06 cgd Exp $
+ *	$Id: modload.c,v 1.4 1993/12/03 10:37:14 deraadt Exp $
  */
 
-#define printf I_HATE_ANSI
 #include <stdio.h>
-#undef printf
 #include <stdlib.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
