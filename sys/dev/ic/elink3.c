@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.17 1996/12/30 19:18:31 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.18 1996/12/31 21:36:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -396,12 +396,15 @@ epinit(sc)
 		bus_space_write_1(iot, ioh, EP_W2_RECVMASK_0 + i, 0);
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_RESET);
+	DELAY(100000);	/* need at least 1 ms, but be generous. */
 	bus_space_write_2(iot, ioh, EP_COMMAND, TX_RESET);
+	DELAY(100000);	/* need at least 1 ms, but be generous. */
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
 	for (i = 0; i < 31; i++)
 		bus_space_read_1(iot, ioh, EP_W1_TX_STATUS);
 
+	/* Enable interrupts. */
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_RD_0_MASK | S_CARD_FAILURE | 
 				S_RX_COMPLETE | S_TX_COMPLETE | S_TX_AVAIL);
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_INTR_MASK | S_CARD_FAILURE |
@@ -1201,8 +1204,13 @@ epstop(sc)
 		;
 	bus_space_write_2(iot, ioh, EP_COMMAND, TX_DISABLE);
 	bus_space_write_2(iot, ioh, EP_COMMAND, STOP_TRANSCEIVER);
+
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_RESET);
+	DELAY(100000);	/* need at least 1 ms, but be generous. */
+
 	bus_space_write_2(iot, ioh, EP_COMMAND, TX_RESET);
+	DELAY(100000);	/* need at least 1 ms, but be generous. */
+
 	bus_space_write_2(iot, ioh, EP_COMMAND, C_INTR_LATCH);
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_RD_0_MASK);
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_INTR_MASK);
