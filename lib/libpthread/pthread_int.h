@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.33 2002/10/28 15:41:11 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.34 2002/10/28 16:23:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -243,6 +243,7 @@ int	_setcontext_u(const ucontext_t *);
 int	_swapcontext_u(ucontext_t *, const ucontext_t *);
 
 void	pthread__testcancel(pthread_t self);
+int	pthread__find(pthread_t self, pthread_t target);
 
 #include "pthread_md.h"
 

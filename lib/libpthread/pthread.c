@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.30 2002/10/27 23:35:01 thorpej Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.31 2002/10/28 16:23:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -402,11 +402,14 @@ pthread_join(pthread_t thread, void **valptr)
 {
 	pthread_t self;
 
-	if ((thread == NULL) || (thread->pt_magic != PT_MAGIC))
-		return EINVAL;
-	
 	self = pthread__self();
 
+	if (pthread__find(self, thread) != 0)
+		return ESRCH;
+
+	if (thread->pt_magic != PT_MAGIC)
+		return EINVAL;
+	
 	if (thread == self)
 		return EDEADLK;
 		
@@ -479,10 +482,14 @@ pthread_detach(pthread_t thread)
 {
 	pthread_t self, joiner;
 
-	if ((thread == NULL) || (thread->pt_magic != PT_MAGIC))
+	self = pthread__self();
+
+	if (pthread__find(self, thread) != 0)
+		return ESRCH;
+
+	if (thread->pt_magic != PT_MAGIC)
 		return EINVAL;
 
-	self = pthread__self();
 	pthread_spinlock(self, &thread->pt_join_lock);
 	
 	if (thread->pt_flags & PT_FLAG_DETACHED) {
@@ -743,6 +750,30 @@ pthread_testcancel()
 	self = pthread__self();
 	if (self->pt_cancel)
 		pthread_exit(PTHREAD_CANCELED);
+}
+
+/*
+ * POSIX requires that certain functions return an error rather than
+ * invoking undefined behavior even when handed completely bogus
+ * pthread_t values, e.g. stack garbage or (pthread_t)666. This
+ * utility routine searches the list of threads for the pthread_t
+ * value without dereferencing it.
+ */
+int
+pthread__find(pthread_t self, pthread_t id)
+{
+	pthread_t target;
+
+	pthread_spinlock(self, &allqueue_lock);
+	PTQ_FOREACH(target, &allqueue, pt_allq)
+	    if (target == id)
+		    break;
+	pthread_spinunlock(self, &allqueue_lock);
+
+	if (target == NULL)
+		return ESRCH;
+
+	return 0;
 }
 
 
