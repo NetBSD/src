@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.32 2004/07/28 15:12:07 jmmv Exp $
+# $NetBSD: files.wscons,v 1.33 2004/07/29 22:29:37 jmmv Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -14,6 +14,8 @@
 
 defparam opt_wsemul.h		WSEMUL_DEFAULT
 defflag	opt_wsemul.h		WSEMUL_NO_DUMB WSEMUL_SUN WSEMUL_VT100
+defflag opt_wsdisplay_border.h	WSDISPLAY_CUSTOM_BORDER
+defparam opt_wsdisplay_border.h	WSDISPLAY_BORDER_COLOR
 defflag opt_wsmsgattrs.h	WSDISPLAY_CUSTOM_OUTPUT
 defparam opt_wsmsgattrs.h	WS_DEFAULT_COLATTR WS_DEFAULT_MONOATTR
 				WS_DEFAULT_BG WS_DEFAULT_FG

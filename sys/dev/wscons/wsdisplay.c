@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.80 2004/07/28 12:34:04 jmmv Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.81 2004/07/29 22:29:37 jmmv Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,8 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.80 2004/07/28 12:34:04 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.81 2004/07/29 22:29:37 jmmv Exp $");
 
+#include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
 #include "opt_compat_netbsd.h"
@@ -1177,6 +1178,24 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	case WSDISPLAYIO_SMSGATTRS:
 		return (ENODEV);
 #endif
+
+#ifdef WSDISPLAY_CUSTOM_BORDER
+	case WSDISPLAYIO_GBORDER:
+		if (!sc->sc_accessops->getborder)
+			return (EINVAL);
+		*(u_int *)data = (*sc->sc_accessops->getborder)
+			       (scr->scr_dconf->emulcookie);
+		return (0);
+	case WSDISPLAYIO_SBORDER:
+		if (!sc->sc_accessops->setborder)
+			return (EINVAL);
+		return (*sc->sc_accessops->setborder)
+		    (scr->scr_dconf->emulcookie, (*(u_int *)data));
+#else /* WSDISPLAY_CUSTOM_BORDER */
+	case WSDISPLAYIO_GBORDER:
+	case WSDISPLAYIO_SBORDER:
+		return (ENODEV);
+#endif /* WSDISPLAY_CUSTOM_BORDER */
 
 	}
 

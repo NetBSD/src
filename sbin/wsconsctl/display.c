@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.5 2004/07/28 12:34:05 jmmv Exp $ */
+/*	$NetBSD: display.c,v 1.6 2004/07/29 22:29:37 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 
 #include "wsconsctl.h"
 
+static int border;
 static int dpytype;
 static struct wsdisplay_usefontdata font;
 static struct wsdisplay_scroll_data scroll_l;
@@ -56,6 +57,7 @@ static int msg_default_attrs, msg_default_bg, msg_default_fg;
 static int msg_kernel_attrs, msg_kernel_bg, msg_kernel_fg;
 
 struct field display_field_tab[] = {
+    { "border",			&border,	FMT_COLOR,	FLG_MODIFY },
     { "type",			&dpytype,	FMT_DPYTYPE,	FLG_RDONLY },
     { "font",			&font.name,	FMT_STRING,	FLG_WRONLY },
     { "scroll.fastlines",	&scroll_l.fastlines, FMT_UINT, FLG_MODIFY },
@@ -91,6 +93,10 @@ display_get_values(fd)
 	if (field_by_value(&dpytype)->flags & FLG_GET)
 		if (ioctl(fd, WSDISPLAYIO_GTYPE, &dpytype) < 0)
 			err(1, "WSDISPLAYIO_GTYPE");
+	
+	if (field_by_value(&border)->flags & FLG_GET)
+		if (ioctl(fd, WSDISPLAYIO_GBORDER, &border) < 0)
+			warn("WSDISPLAYIO_GBORDER");
 	
 	if (field_by_value(&msg_default_attrs)->flags & FLG_GET ||
 	    field_by_value(&msg_default_bg)->flags & FLG_GET ||
@@ -146,6 +152,12 @@ display_put_values(fd)
 		if (ioctl(fd, WSDISPLAYIO_SFONT, &font) < 0)
 			err(1, "WSDISPLAYIO_SFONT");
 		pr_field(field_by_value(&font.name), " -> ");
+	}
+
+	if (field_by_value(&border)->flags & FLG_SET) {
+		if (ioctl(fd, WSDISPLAYIO_SBORDER, &border) < 0)
+			err(1, "WSDISPLAYIO_SBORDER");
+		pr_field(field_by_value(&border), " -> ");
 	}
 
 	if (field_by_value(&msg_default_attrs)->flags & FLG_SET ||

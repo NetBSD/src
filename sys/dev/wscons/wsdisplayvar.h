@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.28 2004/07/28 12:34:04 jmmv Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.29 2004/07/29 22:29:37 jmmv Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -113,6 +113,8 @@ struct wsdisplay_accessops {
 	int	(*getwschar)(void *, struct wsdisplay_char *);
 	int	(*putwschar)(void *, struct wsdisplay_char *);
 	void	(*scroll) __P((void *, void *, int));
+	u_int	(*getborder)(void *);
+	int	(*setborder)(void *, u_int);
 };
 
 /*
@@ -220,6 +222,7 @@ const struct wsscreen_descr *
 #if defined(_KERNEL)
 #  if defined(_KERNEL_OPT)
 #    include "opt_wsmsgattrs.h"
+#    include "opt_wsdisplay_border.h"
 #  endif
 #  if !defined(WS_DEFAULT_FG)
 #    define WS_DEFAULT_FG WSCOL_WHITE
@@ -250,5 +253,8 @@ const struct wsscreen_descr *
 #  endif
 #  if !defined(WS_KERNEL_MONOATTR)
 #    define WS_KERNEL_MONOATTR WS_DEFAULT_MONOATTR
+#  endif
+#  if !defined(WSDISPLAY_BORDER_COLOR)
+#    define WSDISPLAY_BORDER_COLOR WSCOL_BLACK
 #  endif
 #endif /* _KERNEL */
