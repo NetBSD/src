@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.50 1999/03/30 12:01:18 mycroft Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.51 1999/05/04 16:01:37 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1570,7 +1570,12 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
 		error = NFSERR_BADTYPE;
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		vput(nd.ni_dvp);
+		if (nd.ni_dvp == nd.ni_vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		if (nd.ni_vp)
+			vput(nd.ni_vp);
 		goto out;
 	}
 	VATTR_NULL(&va);
@@ -1590,7 +1595,11 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
 		error = EEXIST;
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		vput(nd.ni_dvp);
+		if (nd.ni_dvp == nd.ni_vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		vput(nd.ni_vp);
 		goto out;
 	}
 	va.va_type = vtyp;
