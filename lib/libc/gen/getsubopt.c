@@ -1,4 +1,4 @@
-/*	$NetBSD: getsubopt.c,v 1.4 1995/02/27 04:13:12 cgd Exp $	*/
+/*	$NetBSD: getsubopt.c,v 1.5 1995/06/16 07:15:18 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,12 +37,13 @@
 #if 0
 static char *sccsid = "@(#)getsubopt.c	5.2 (Berkeley) 2/24/91";
 #else
-static char rcsid[] = "$NetBSD: getsubopt.c,v 1.4 1995/02/27 04:13:12 cgd Exp $";
+static char rcsid[] = "$NetBSD: getsubopt.c,v 1.5 1995/06/16 07:15:18 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 
 /*
  * The SVID interface to getsubopt provides no way of figuring out which
@@ -52,6 +53,7 @@ static char rcsid[] = "$NetBSD: getsubopt.c,v 1.4 1995/02/27 04:13:12 cgd Exp $"
  */
 char *suboptarg;
 
+int
 getsubopt(optionp, tokens, valuep)
 	register char **optionp, **valuep;
 	register char * const *tokens;
