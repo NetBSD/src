@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.8 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: slide.c,v 1.9 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -190,7 +190,7 @@ sl82c105_setup_channel(struct ata_channel *chp)
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
-	int pxdx_reg, drive;
+	int pxdx_reg, drive, s;
 	pcireg_t pxdx;
 
 	/* Set up DMA if needed. */
@@ -226,14 +226,18 @@ sl82c105_setup_channel(struct ata_channel *chp)
 					 * Can't mix both PIO and DMA.
 					 * Disable DMA.
 					 */
+					s = splbio();
 					drvp->drive_flags &= ~DRIVE_DMA;
+					splx(s);
 				}
 			} else {
 				/*
 				 * Can't mix both PIO and DMA.  Disable
 				 * DMA.
 				 */
+				s = splbio();
 				drvp->drive_flags &= ~DRIVE_DMA;
+				splx(s);
 			}
 		}
 
