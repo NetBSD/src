@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.44.4.2 2000/12/15 06:03:51 he Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.44.4.3 2000/12/15 06:05:48 he Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -123,6 +123,8 @@ grfiv_match(parent, cf, aux)
 			
 			/* Disable interrupts */
 			bus_space_write_1(oa->oa_tag, bsh, 0x18, 0x1);
+
+			bus_space_unmap(oa->oa_tag, bsh, 0x40);
 			break;
 		}
 		/*
