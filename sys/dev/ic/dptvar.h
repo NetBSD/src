@@ -1,4 +1,4 @@
-/*	$NetBSD: dptvar.h,v 1.5 1999/10/23 16:26:32 ad Exp $	*/
+/*	$NetBSD: dptvar.h,v 1.6 2000/02/24 18:47:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -33,14 +33,17 @@
 
 #define	CCB_OFF(sc,m)	((u_long)(m) - (u_long)((sc)->sc_ccbs))
 
-#define CCB_ALLOC	0x01	/* CCB allocated */
-#define CCB_ABORT	0x02	/* abort has been issued on this CCB */
-#define CCB_INTR	0x04	/* HBA interrupted for this CCB */
-#define CCB_PRIVATE	0x08	/* ours; don't talk to scsipi when done */ 
+#define CCB_ABORT	0x01	/* abort has been issued on this CCB */
+#define CCB_INTR	0x02	/* HBA interrupted for this CCB */
+#define CCB_PRIVATE	0x04	/* ours; don't talk to scsipi when done */ 
 
 struct dpt_ccb {
+	/* Data that will be touched by the HBA */
 	struct eata_cp	ccb_eata_cp;		/* EATA command packet */
 	struct eata_sg	ccb_sg[DPT_SG_SIZE];	/* SG element list */
+	struct scsipi_sense_data ccb_sense;	/* SCSI sense data on error */
+
+	/* Data that will not be touched by the HBA */
 	volatile int	ccb_flg;		/* CCB flags */
 	int		ccb_timeout;		/* timeout in ms */
 	u_int32_t	ccb_ccbpa;		/* physical addr of this CCB */
@@ -49,34 +52,33 @@ struct dpt_ccb {
 	int		ccb_scsi_status;	/* from status packet */
 	int		ccb_id;			/* unique ID of this CCB */
 	TAILQ_ENTRY(dpt_ccb) ccb_chain;		/* link to next CCB */
-	struct scsipi_sense_data ccb_sense;	/* SCSI sense data on error */
 	struct scsipi_xfer *ccb_xs;		/* initiating SCSI command */
 };
 
 struct dpt_softc {
-	struct device sc_dv;		/* generic device data */
+	struct device	sc_dv;		/* generic device data */
 	bus_space_handle_t sc_ioh;	/* bus space handle */
 	struct scsipi_adapter sc_adapter;/* scsipi adapter */
 	struct scsipi_link sc_link[3];	/* prototype link for each channel */
-	struct eata_cfg sc_ec;		/* EATA configuration data */
 	bus_space_tag_t	sc_iot;		/* bus space tag */
 	bus_dma_tag_t	sc_dmat;	/* bus DMA tag */
-	bus_dmamap_t	sc_dmamap_ccb;	/* maps the CCBs */
+	bus_dmamap_t	sc_dmamap;	/* maps the CCBs */
+	int		sc_dmamapsize;	/* size of above map in bytes */
 	void	 	*sc_ih;		/* interrupt handler cookie */
-	void		*sc_sdh;	/* shutdown hook */
 	struct dpt_ccb	*sc_ccbs;	/* all our CCBs */
-	struct eata_sp	*sc_statpack;	/* EATA status packet */
-	int		sc_spoff;	/* status packet offset in dmamap */
-	u_int32_t	sc_sppa;	/* status packet physical address */
+	struct eata_sp	*sc_stp;	/* EATA status packet */
+	int		sc_stpoff;	/* status packet offset in dmamap */
+	u_int32_t	sc_stppa;	/* status packet physical address */
 	caddr_t		sc_scr;		/* scratch area */
 	int		sc_scrlen;	/* scratch area length */
 	int		sc_scroff;	/* scratch area offset in dmamap */
 	u_int32_t	sc_scrpa;	/* scratch area physical address */
 	int		sc_hbaid[3];	/* ID of HBA on each channel */
 	int		sc_nccbs;	/* number of CCBs available */
-	int		sc_open;	/* device is open */
 	TAILQ_HEAD(, dpt_ccb) sc_free_ccb;/* free ccb list */
 	TAILQ_HEAD(, scsipi_xfer) sc_queue;/* pending commands */
+	TAILQ_ENTRY(dpt_softc) sc_chain;/* link to next HBA's softc */
+	struct eata_cfg sc_ec;		/* EATA configuration data */
 };
 
 int	dpt_intr __P((void *));
@@ -96,9 +98,6 @@ void	dpt_done_ccb __P((struct dpt_softc *, struct dpt_ccb *));
 int	dpt_init_ccb __P((struct dpt_softc *, struct dpt_ccb *));
 int	dpt_create_ccbs __P((struct dpt_softc *, struct dpt_ccb *, int));
 struct dpt_ccb	*dpt_alloc_ccb __P((struct dpt_softc *, int));
-#ifdef DEBUG
-void	dpt_dump_sp __P((struct eata_sp *));
-#endif
 
 #endif	/* _KERNEL */
 #endif	/* !defined _IC_DPTVAR_H_ */
