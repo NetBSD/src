@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.56 1998/06/05 20:45:39 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.57 1998/06/30 19:46:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,6 +131,10 @@ off_t	 lseek __P((int, off_t, int));
 long	 pathconf __P((const char *, int));
 int	 pause __P((void));
 int	 pipe __P((int *));
+#if !defined(_POSIX_C_SOURCE)
+ssize_t	 pread __P((int, void *, size_t, off_t));
+ssize_t	 pwrite __P((int, const void *, size_t, off_t));
+#endif /* ! _POSIX_C_SOURCE */
 ssize_t	 read __P((int, void *, size_t));
 int	 rmdir __P((const char *));
 int	 setgid __P((gid_t));
