@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.2 1998/11/02 22:31:37 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.3 1998/11/04 22:15:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,14 +101,6 @@ struct cfattach lxtphy_ca = {
 	sizeof(struct lxtphy_softc), lxtphymatch, lxtphyattach
 };
 
-#define	LXTPHY_READ(sc, reg) \
-    (*(sc)->sc_mii.mii_pdata->mii_readreg)((sc)->sc_mii.mii_dev.dv_parent, \
-	(sc)->sc_mii.mii_phy, (reg))
-
-#define	LXTPHY_WRITE(sc, reg, val) \
-    (*(sc)->sc_mii.mii_pdata->mii_writereg)((sc)->sc_mii.mii_dev.dv_parent, \
-	(sc)->sc_mii.mii_phy, (reg), (val))
-
 int	lxtphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	lxtphy_reset __P((struct lxtphy_softc *));
 void	lxtphy_auto __P((struct lxtphy_softc *));
@@ -155,7 +147,7 @@ lxtphyattach(parent, self, aux)
 
 	lxtphy_reset(sc);
 
-	sc->sc_capabilities = LXTPHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	sc->sc_capabilities = PHY_READ(&sc->sc_mii, MII_BMSR) & ma->mii_capmask;
 	printf("%s: ", sc->sc_mii.mii_dev.dv_xname);
 	if ((sc->sc_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
@@ -190,8 +182,8 @@ lxtphy_service(self, mii, cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst) {
-			reg = LXTPHY_READ(sc, MII_BMCR);
-			LXTPHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
+			reg = PHY_READ(&sc->sc_mii, MII_BMCR);
+			PHY_WRITE(&sc->sc_mii, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
 
@@ -206,7 +198,7 @@ lxtphy_service(self, mii, cmd)
 			/*
 			 * If we're already in auto mode, just return.
 			 */
-			if (LXTPHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
+			if (PHY_READ(&sc->sc_mii, MII_BMCR) & BMCR_AUTOEN)
 				return (0);
 			lxtphy_auto(sc);
 			break;
@@ -219,8 +211,9 @@ lxtphy_service(self, mii, cmd)
 			/*
 			 * BMCR data is stored in the ifmedia entry.
 			 */
-			LXTPHY_WRITE(sc, MII_ANAR, mii_anar(ife->ifm_media));
-			LXTPHY_WRITE(sc, MII_BMCR, ife->ifm_data);
+			PHY_WRITE(&sc->sc_mii, MII_ANAR,
+			    mii_anar(ife->ifm_media));
+			PHY_WRITE(&sc->sc_mii, MII_BMCR, ife->ifm_data);
 		}
 		break;
 
@@ -250,7 +243,7 @@ lxtphy_service(self, mii, cmd)
 		 * link indication is dynamic, not latched, so only
 		 * one register read is required.
 		 */
-		reg = LXTPHY_READ(sc, MII_LXTPHY_CSR);
+		reg = PHY_READ(&sc->sc_mii, MII_LXTPHY_CSR);
 		if (reg & CSR_LINK)
 			return (0);
 
@@ -292,11 +285,11 @@ lxtphy_status(sc)
 	 * for media type anyhow, and the link status in the CSR
 	 * doens't latch, so fewer register reads are required.
 	 */
-	csr = LXTPHY_READ(sc, MII_LXTPHY_CSR);
+	csr = PHY_READ(&sc->sc_mii, MII_LXTPHY_CSR);
 	if (csr & CSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = LXTPHY_READ(sc, MII_BMCR);
+	bmcr = PHY_READ(&sc->sc_mii, MII_BMCR);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -326,9 +319,9 @@ lxtphy_auto(sc)
 {
 	int csr, i;
 
-	LXTPHY_WRITE(sc, MII_ANAR,
+	PHY_WRITE(&sc->sc_mii, MII_ANAR,
 	    BMSR_MEDIA_TO_ANAR(sc->sc_capabilities) | ANAR_CSMA);
-	LXTPHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
+	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 
 	/* Wait 500ms for it to complete. */
 	for (i = 0; i < 500; i++) {
@@ -336,7 +329,7 @@ lxtphy_auto(sc)
 		 * Again, use the LXT CSR rather than BMSR, since it
 		 * doesn't latch.
 		 */
-		if ((csr = LXTPHY_READ(sc, MII_LXTPHY_CSR)) & CSR_ACOMP)
+		if ((csr = PHY_READ(&sc->sc_mii, MII_LXTPHY_CSR)) & CSR_ACOMP)
 			return;
 		delay(1000);
 	}
@@ -353,11 +346,11 @@ lxtphy_reset(sc)
 {
 	int reg, i;
 
-	LXTPHY_WRITE(sc, MII_BMCR, BMCR_RESET|BMCR_ISO);
+	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_RESET|BMCR_ISO);
 
 	/* Wait 100ms for it to complete. */
 	for (i = 0; i < 100; i++) {
-		reg = LXTPHY_READ(sc, MII_BMCR);
+		reg = PHY_READ(&sc->sc_mii, MII_BMCR);
 		if ((reg & BMCR_RESET) == 0)
 			break;
 		delay(1000);
@@ -365,5 +358,5 @@ lxtphy_reset(sc)
 
 	/* Make sure the PHY is isolated. */
 	if (sc->sc_mii.mii_inst != 0)
-		LXTPHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
+		PHY_WRITE(&sc->sc_mii, MII_BMCR, reg | BMCR_ISO);
 }
