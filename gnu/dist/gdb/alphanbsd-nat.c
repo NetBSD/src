@@ -17,7 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-This file is based on alpha-nat.c  */
+This file was developed by Gordon W. Ross <gwr@netbsd.org>
+as a derivation from alpha-nat.c and m68knbsd-nat.c.  */
 
 #include "defs.h"
 #include "inferior.h"
@@ -123,8 +124,8 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
   *(long *) &registers[REGISTER_BYTE (ZERO_REGNUM)] = 0;
 
   /* Floating point registers */
-  memcpy(&registers[REGISTER_BYTE (FP0_REGNUM)],
-	 &fs->fpr_regs[0], sizeof(struct fpreg));
+  memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)],
+	  &fs->fpr_regs[0], sizeof(fs->fpr_regs));
 
   /* Special registers (PC, VFP) */
   *(long *) &registers[REGISTER_BYTE (PC_REGNUM)] = tf->tf_regs[FRAME_PC];
@@ -140,15 +141,23 @@ fetch_inferior_registers (regno)
   struct reg inferior_registers;
   struct fpreg inferior_fp_registers;
 
+  /* Integer registers */
   ptrace (PT_GETREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
-  memcpy (&registers[REGISTER_BYTE (0)], &inferior_registers,
-	  sizeof(inferior_registers));
+  /* The PC travels in the R_ZERO slot. */
+  *(long *) &registers[REGISTER_BYTE (PC_REGNUM)] =
+    inferior_registers.r_regs[R_ZERO];
+  inferior_registers.r_regs[R_ZERO] = 0;
+  memcpy (&registers[REGISTER_BYTE (0)],
+	  &inferior_registers.r_regs[0],
+	  sizeof(inferior_registers.r_regs));
 
+  /* Floating point registers */
   ptrace (PT_GETFPREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
-  memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)], &inferior_fp_registers,
-	  sizeof(inferior_fp_registers));
+  memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)],
+	  &inferior_fp_registers.fpr_regs[0],
+	  sizeof(inferior_fp_registers.fpr_regs));
 
   registers_fetched ();
 }
@@ -160,13 +169,21 @@ store_inferior_registers (regno)
   struct reg inferior_registers;
   struct fpreg inferior_fp_registers;
 
-  memcpy (&inferior_registers, &registers[REGISTER_BYTE (0)],
-	  sizeof(inferior_registers));
+  /* Integer registers */
+  memcpy (&inferior_registers.r_regs[0],
+	  &registers[REGISTER_BYTE (0)],
+	  sizeof(inferior_registers.r_regs));
+  /* The PC travels in the R_ZERO slot. */
+  inferior_registers.r_regs[R_ZERO] =
+    *(long *) &registers[REGISTER_BYTE (PC_REGNUM)];    
   ptrace (PT_SETREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
 
-  memcpy (&inferior_fp_registers, &registers[REGISTER_BYTE (FP0_REGNUM)],
-	  sizeof(inferior_fp_registers));
+  /* Floating point registers */
+  memcpy (&inferior_fp_registers.fpr_regs[0],
+	  &registers[REGISTER_BYTE (FP0_REGNUM)],
+	  sizeof(inferior_fp_registers.fpr_regs));
+  inferior_fp_registers.fpr_cr = 0;
   ptrace (PT_SETFPREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
 
