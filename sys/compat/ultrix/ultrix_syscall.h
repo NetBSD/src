@@ -396,6 +396,9 @@
 /* syscall: "uname" ret: "int" args: "struct ultrix_utsname *" */
 #define	ULTRIX_SYS_uname	179
 
+/* syscall: "shmsys" ret: "int" args: "u_int" "u_int" "u_int" "u_int" */
+#define	ULTRIX_SYS_shmsys	180
+
 /* syscall: "ustat" ret: "int" args: "int" "struct ultrix_ustat *" */
 #define	ULTRIX_SYS_ustat	183
 

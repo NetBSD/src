@@ -405,8 +405,8 @@ struct sysent ultrix_sysent[] = {
 	    sys_nosys },			/* 178 = unimplemented semop */
 	{ 1, s(struct ultrix_sys_uname_args),
 	    ultrix_sys_uname },			/* 179 = uname */
-	{ 0, 0,
-	    sys_nosys },			/* 180 = unimplemented shmsys */
+	{ 4, s(struct ultrix_sys_shmsys_args),
+	    ultrix_sys_shmsys },		/* 180 = shmsys */
 	{ 0, 0,
 	    sys_nosys },			/* 181 = unimplemented 0 plock */
 	{ 0, 0,
