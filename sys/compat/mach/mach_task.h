@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.h,v 1.12 2003/11/27 23:44:49 manu Exp $ */
+/*	$NetBSD: mach_task.h,v 1.13 2003/11/30 20:42:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -217,5 +217,18 @@ typedef struct {
 	mach_kern_return_t rep_retval;
 	mach_msg_trailer_t rep_trailer;
 } mach_task_resume_reply_t;
+
+/* task_terminate */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+} mach_task_terminate_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_task_terminate_reply_t;
 
 #endif /* _MACH_TASK_H_ */
