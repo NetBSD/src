@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.16 1996/02/05 01:56:53 christos Exp $	*/
+/*	$NetBSD: db_command.c,v 1.17 1996/02/13 17:39:01 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -47,13 +47,11 @@
 
 #include <vm/vm.h>
 
-#include <setjmp.h>
-
 /*
  * Exported global variables
  */
 boolean_t	db_cmd_loop_done;
-jmp_buf		*db_recover;
+label_t		*db_recover;
 
 /*
  * if 'ed' style: 'dot' is set at start of last item printed,
@@ -399,8 +397,8 @@ db_help_cmd()
 void
 db_command_loop()
 {
-	jmp_buf		db_jmpbuf;
-	jmp_buf		*savejmp = db_recover;
+	label_t		db_jmpbuf;
+	label_t		*savejmp;
 	extern int	db_output_line;
 
 	/*
@@ -410,7 +408,10 @@ db_command_loop()
 	db_next = db_dot;
 
 	db_cmd_loop_done = 0;
-	(void) setjmp(*(db_recover = &db_jmpbuf));
+
+	savejmp = db_recover;
+	db_recover = &db_jmpbuf;
+	(void) setjmp(&db_jmpbuf);
 
 	while (!db_cmd_loop_done) {
 		if (db_print_position() != 0)
@@ -433,7 +434,7 @@ db_error(s)
 	if (s)
 	    db_printf(s);
 	db_flush_lex();
-	longjmp(*db_recover, 1);
+	longjmp(db_recover, 1);
 }
 
 
