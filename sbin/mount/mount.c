@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount.c	5.44 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: mount.c,v 1.7 1993/12/05 13:34:51 deraadt Exp $";
+static char rcsid[] = "$Id: mount.c,v 1.8 1994/01/05 08:32:18 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -428,6 +428,8 @@ prmount(spec, name, flags)
 			PR("NFS exported read-only");
 		else
 			PR("NFS exported");
+	if (flags & MNT_UNION)
+		PR("union");
 	(void)printf(")\n");
 }
 
@@ -524,6 +526,13 @@ getstdopts(options, flagp)
 				*flagp &= ~MNT_SYNCHRONOUS;
 			continue;
 		}
+		if (!strcasecmp(opt, "union")) {
+			if (!negative)
+				*flagp |= MNT_UNION;
+			else  
+				*flagp &= ~MNT_UNION;
+			continue;
+		} 
 	}
 }
 
