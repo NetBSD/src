@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.7 2003/01/19 16:33:54 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.8 2003/04/08 22:57:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -67,7 +67,7 @@ GLOBAL(kernel_text)
  * our text segment.
  */
 	.data
-	.space	NBPG
+	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
 
 #include <cesfic/cesfic/vectors.s>
@@ -216,7 +216,7 @@ Lmemok:
 #endif
 	movl	#_C_LABEL(end),%d5	| end of static kernel text/data
 Lstart2:
-	addl	#NBPG-1,%d5
+	addl	#PAGE_SIZE-1,%d5
 	andl	#PG_FRAME,%d5		| round to a page
 	movl	%d5,%a4
 	addl	%a5,%a4			| convert to PA
