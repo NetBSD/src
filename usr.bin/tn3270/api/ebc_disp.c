@@ -1,4 +1,4 @@
-/*	$NetBSD: ebc_disp.c,v 1.5 2002/01/31 19:36:50 tv Exp $	*/
+/*	$NetBSD: ebc_disp.c,v 1.6 2002/09/15 01:27:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,14 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#ifndef HOST_TOOL
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ebc_disp.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: ebc_disp.c,v 1.5 2002/01/31 19:36:50 tv Exp $");
+__RCSID("$NetBSD: ebc_disp.c,v 1.6 2002/09/15 01:27:44 thorpej Exp $");
 #endif
 #endif /* not lint */
+#endif /* ! HOST_TOOL */
 
 /*
  * Translate table to map EBCDIC into 3270 display codes.
