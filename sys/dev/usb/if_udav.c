@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.2 2003/09/04 15:17:38 tsutsui Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.2.4.1 2005/01/24 21:37:45 he Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.2 2003/09/04 15:17:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.2.4.1 2005/01/24 21:37:45 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1234,7 +1234,8 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
-			udav_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				udav_setmulti(sc);
 			error = 0;
 		}
 		break;
