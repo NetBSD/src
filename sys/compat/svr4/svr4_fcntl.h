@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.h,v 1.6 1998/09/04 19:54:38 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.h,v 1.7 1998/10/04 16:20:16 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
 #define	SVR4_F_GETOWN		23
 #define	SVR4_F_SETOWN		24
 #define	SVR4_F_REVOKE		25
-
+#define SVR4_F_HASREMOTELOCKS	26
 #define SVR4_F_FREESP64		27
 
 #define SVR4_F_GETLK64		33
