@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.5 2002/08/17 16:36:31 thorpej Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.6 2002/08/22 05:01:02 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -39,7 +39,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: bcopyinout.S,v 1.5 2002/08/17 16:36:31 thorpej Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.6 2002/08/22 05:01:02 briggs Exp $")	
 
 	.text
 	.align	0
@@ -103,9 +103,9 @@ ENTRY(copyin)
 	ldr	pc, [pc, r6, lsl #2]
 	b	.Lialend
 	.word	.Lialend
-	.word	.Lial1
-	.word	.Lial2
 	.word	.Lial3
+	.word	.Lial2
+	.word	.Lial1
 .Lial3:	ldrbt	r6, [r0], #1
 	sub	r2, r2, #1
 	strb	r6, [r1], #1
@@ -142,13 +142,13 @@ ENTRY(copyin)
 	ldr	pc, [pc, r6]
 	b	.Licaligned
 	.word	.Licaligned
-	.word	.Lical4
-	.word	.Lical8
-	.word	.Lical12
-	.word	.Lical16
-	.word	.Lical20
-	.word	.Lical24
 	.word	.Lical28
+	.word	.Lical24
+	.word	.Lical20
+	.word	.Lical16
+	.word	.Lical12
+	.word	.Lical8
+	.word	.Lical4
 .Lical28:ldrt	r6, [r0], #4
 	sub	r2, r2, #4
 	str	r6, [r1], #4
@@ -316,9 +316,9 @@ ENTRY(copyout)
 	ldr	pc, [pc, r6, lsl #2]
 	b	.Lalend
 	.word	.Lalend
-	.word	.Lal1
-	.word	.Lal2
 	.word	.Lal3
+	.word	.Lal2
+	.word	.Lal1
 .Lal3:	ldrb	r6, [r0], #1
 	sub	r2, r2, #1
 	strbt	r6, [r1], #1
@@ -352,13 +352,13 @@ ENTRY(copyout)
 	ldr	pc, [pc, r6]
 	b	.Lcaligned
 	.word	.Lcaligned
-	.word	.Lcal4
-	.word	.Lcal8
-	.word	.Lcal12
-	.word	.Lcal16
-	.word	.Lcal20
-	.word	.Lcal24
 	.word	.Lcal28
+	.word	.Lcal24
+	.word	.Lcal20
+	.word	.Lcal16
+	.word	.Lcal12
+	.word	.Lcal8
+	.word	.Lcal4
 .Lcal28:ldr	r6, [r0], #4
 	sub	r2, r2, #4
 	strt	r6, [r1], #4
@@ -519,9 +519,9 @@ ENTRY(kcopy)
 	ldr	pc, [pc, r6, lsl #2]
 	b	.Lkalend
 	.word	.Lkalend
-	.word	.Lkal1
-	.word	.Lkal2
 	.word	.Lkal3
+	.word	.Lkal2
+	.word	.Lkal1
 .Lkal3:	ldrb	r6, [r0], #1
 	sub	r2, r2, #1
 	strb	r6, [r1], #1
@@ -555,13 +555,13 @@ ENTRY(kcopy)
 	ldr	pc, [pc, r6]
 	b	.Lkcaligned
 	.word	.Lkcaligned
-	.word	.Lkcal4
-	.word	.Lkcal8
-	.word	.Lkcal12
-	.word	.Lkcal16
-	.word	.Lkcal20
-	.word	.Lkcal24
 	.word	.Lkcal28
+	.word	.Lkcal24
+	.word	.Lkcal20
+	.word	.Lkcal16
+	.word	.Lkcal12
+	.word	.Lkcal8
+	.word	.Lkcal4
 .Lkcal28:ldr	r6, [r0], #4
 	sub	r2, r2, #4
 	str	r6, [r1], #4
