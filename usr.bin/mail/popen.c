@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.8 1997/10/31 22:48:12 mycroft Exp $	*/
+/*	$NetBSD: popen.c,v 1.9 1998/12/19 16:34:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.8 1997/10/31 22:48:12 mycroft Exp $");
+__RCSID("$NetBSD: popen.c,v 1.9 1998/12/19 16:34:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ struct child {
 	int pid;
 	char done;
 	char free;
-	union wait status;
+	int status;
 	struct child *link;
 };
 static struct child *child;
@@ -337,11 +337,10 @@ sigchild(signo)
 	int signo;
 {
 	int pid;
-	union wait status;
+	int status;
 	struct child *cp;
 
-	while ((pid =
-	    wait3((int *)&status, WNOHANG, (struct rusage *)0)) > 0) {
+	while ((pid = wait3(&status, WNOHANG, NULL)) > 0) {
 		cp = findchild(pid);
 		if (cp->free)
 			delchild(cp);
@@ -352,7 +351,7 @@ sigchild(signo)
 	}
 }
 
-union wait wait_status;
+int wait_status;
 
 /*
  * Wait for a specific child to die.
@@ -372,7 +371,7 @@ wait_child(pid)
 	wait_status = cp->status;
 	delchild(cp);
 	sigprocmask(SIG_SETMASK, &oset, NULL);
-	return wait_status.w_status ? -1 : 0;
+	return wait_status ? -1 : 0;
 }
 
 /*
