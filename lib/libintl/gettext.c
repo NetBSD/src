@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.12 2001/12/29 05:54:36 yamt Exp $	*/
+/*	$NetBSD: gettext.c,v 1.13 2002/02/13 08:01:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gettext.c,v 1.12 2001/12/29 05:54:36 yamt Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.13 2002/02/13 08:01:13 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -535,9 +535,9 @@ static const char *get_lang_env(const char *category_name)
 		return lang;
 
 	/* 2. if LANGUAGE isn't set, see LC_ALL, LC_xxx, LANG. */
-	lang = getenv(category_name);
+	lang = getenv("LC_ALL");
 	if (!lang)
-		lang = getenv("LC_ALL");
+		lang = getenv(category_name);
 	if (!lang)
 		lang = getenv("LANG");
 
