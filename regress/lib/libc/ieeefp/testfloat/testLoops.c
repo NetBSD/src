@@ -1,3 +1,4 @@
+/* $NetBSD: testLoops.c,v 1.2 2001/03/13 06:48:56 ross Exp $ */
 
 /*
 ===============================================================================
@@ -33,14 +34,14 @@ this code that are retained.
 
 volatile flag stop = FALSE;
 
-char *trueName, *testName;
+const char *trueName, *testName;
 flag forever, errorStop;
 uint32 maxErrorCount = 0;
 flag checkNaNs = FALSE;
 int8 *trueFlagsPtr;
 int8 ( *testFlagsFunctionPtr )( void );
-char *functionName;
-char *roundingPrecisionName, *roundingModeName, *tininessModeName;
+const char *functionName;
+const char *roundingPrecisionName, *roundingModeName, *tininessModeName;
 flag anyErrors = FALSE;
 
 void writeFunctionName( FILE *stream )
@@ -79,7 +80,7 @@ static void writeTestsTotal( void )
         fputs( "Unbounded tests.\n", stderr );
     }
     else {
-        fprintf( stderr, "\r%d tests total.\n", testCases_total );
+        fprintf( stderr, "%d tests total.\n", testCases_total );
     }
 
 }
@@ -89,10 +90,10 @@ static void writeTestsPerformed( int16 count )
 
     if ( tenthousandsCount ) {
         fprintf(
-            stderr, "\r%d%04d tests performed", tenthousandsCount, count );
+            stderr, "%d%04d tests performed", tenthousandsCount, count );
     }
     else {
-        fprintf( stderr, "\r%d tests performed", count );
+        fprintf( stderr, "%d tests performed", count );
     }
     if ( errorCount ) {
         fprintf(
@@ -120,14 +121,13 @@ static void checkEarlyExit( void )
         writeTestsPerformed( 0 );
         exitWithStatus();
     }
-    fprintf( stderr, "\r%3d0000", tenthousandsCount );
+    fprintf( stderr, "%3d0000", tenthousandsCount );
 
 }
 
 static void writeErrorFound( int16 count )
 {
 
-    fputc( '\r', stderr );
     if ( errorCount == 1 ) {
         fputs( "Errors found in ", stdout );
         writeFunctionName( stdout );
