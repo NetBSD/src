@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.4 2001/05/11 06:09:01 jmc Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.5 2001/05/14 05:46:41 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1013,8 +1013,11 @@ sbp2_init(struct fwnode_softc *sc, struct fwnode_device_cap *devcap)
 	u_int32_t loc = ((int32_t *)devcap->dev_data)[0];
 	
 	ab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
+	memset(ab, 0, sizeof(struct ieee1394_abuf));
 	ab->ab_data = malloc(8, M_1394DATA, M_WAITOK);
+	memset(ab->ab_data, 0, 8);
 	ab2 = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
+	memset(ab2, 0, sizeof(struct ieee1394_abuf));
 	
 	loc *= 4;
 	ab->ab_length = 8;
@@ -1062,6 +1065,8 @@ sbp2_login(struct ieee1394_abuf *ab, int rcode)
 	ab->ab_data = malloc(32, M_1394DATA, M_WAITOK);
 	respab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
 	statab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK);
+	memset(respab, 0, sizeof(struct ieee1394_abuf));
+	memset(statab, 0, sizeof(struct ieee1394_abuf));
 	
 	statab->ab_length = 32;
 	statab->ab_tcode = IEEE1394_TCODE_WRITE_REQ_BLOCK;
