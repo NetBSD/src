@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.15 1998/01/13 02:10:15 thorpej Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.16 1998/03/26 20:07:18 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -52,9 +52,7 @@
 #include <sys/time.h>
 #include <sys/device.h>
 
-#include <machine/katelib.h>
 #include <machine/irqhandler.h>
-/*#include <machine/cpu.h>*/
 #include <arm32/iomd/iomdvar.h>
 #include <arm32/iomd/iomdreg.h>
 
@@ -64,12 +62,9 @@ struct clock_softc {
 	bus_space_handle_t	sc_ioh;
 };
 
-/*#define TIMER0_COUNT  20000*/	/* 100Hz */
 #define TIMER_FREQUENCY 2000000		/* 2MHz clock */
 #define TICKS_PER_MICROSECOND (TIMER_FREQUENCY / 1000000)
 
-/*static irqhandler_t clockirq;
-static irqhandler_t statclockirq;*/
 static void *clockirq;
 static void *statclockirq;
 static struct clock_softc *clock_sc;
@@ -194,16 +189,10 @@ setstatclockrate(hz)
 	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    IOMD_T1HIGH, (count >> 8) & 0xff);
 
-/*
-	WriteByte(IOMD_T1LOW,  (count >> 0) & 0xff);
-	WriteByte(IOMD_T1HIGH, (count >> 8) & 0xff);
-*/
-
 	/* reload the counter */
 
 	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    IOMD_T1GO, 0);
-/*	WriteByte(IOMD_T1GO, 0);*/
 }
 
 
@@ -241,25 +230,12 @@ cpu_initclocks()
 	clockirq = intr_claim(IRQ_TIMER0, IPL_CLOCK, "tmr0 hard clk",
 	    clockhandler, 0);
 
-#if 0
-	clockirq.ih_func = clockhandler;
-	clockirq.ih_arg = 0;	/* pass trapframe as arg */
-	clockirq.ih_level = IPL_CLOCK;
-	clockirq.ih_name = "TMR0 hard clk";
-	if (irq_claim(IRQ_TIMER0, &clockirq) == -1)
-#endif
 	if (clockirq == NULL)
 		panic("%s: Cannot installer timer 0 IRQ handler\n",
 		    clock_sc->sc_dev.dv_xname);
 
 	if (stathz) {
 		setstatclockrate(stathz);
-#if 0
-		statclockirq.ih_func = statclockhandler;
-		statclockirq.ih_arg = 0;	/* pass trapframe as arg */
-		statclockirq.ih_level = IPL_CLOCK;
-		if (irq_claim(IRQ_TIMER1, &clockirq) == -1)
-#endif
        		statclockirq = intr_claim(IRQ_TIMER1, IPL_CLOCK,
        		    "tmr1 stat clk", statclockhandler, 0);
 		if (statclockirq == NULL)
@@ -283,7 +259,6 @@ microtime(tvp)
 	int s;
 	int tm;
 	int deltatm;
-	static int oldtm;
 	static struct timeval oldtv;
 
 	s = splhigh();
@@ -296,40 +271,28 @@ microtime(tvp)
 	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    IOMD_T0LATCH, 0);
  
-/*	WriteByte(IOMD_T0LATCH, 0);*/
-
 	tm = bus_space_read_1(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    IOMD_T0LOW);
 	tm += (bus_space_read_1(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    IOMD_T0HIGH) << 8);
 
-/*	tm = ReadByte(IOMD_T0LOW) + (ReadByte(IOMD_T0HIGH) << 8);*/
-	deltatm = tm - oldtm;
-	if (deltatm < 0) deltatm += timer0_count;
-	if (deltatm < 0) {
+	deltatm = timer0_count - tm;
+	if (deltatm < 0)
 		printf("opps deltatm < 0 tm=%d oldtm=%d deltatm=%d\n",
 		    tm, oldtm, deltatm);
-	}
-	oldtm = tm;
 
 	/* Fill in the timeval struct */
+	*tvp = time;
 
-	*tvp = time;    
-#ifdef HIGHLY_DUBIOUS
 	tvp->tv_usec += (deltatm / TICKS_PER_MICROSECOND);
-#else
-	tvp->tv_usec += (tm / TICKS_PER_MICROSECOND);
-#endif
 
 	/* Make sure the micro seconds don't overflow. */
-
 	while (tvp->tv_usec > 1000000) {
 		tvp->tv_usec -= 1000000;
 		++tvp->tv_sec;
 	}
 
 	/* Make sure the time has advanced. */
-
 	if (tvp->tv_sec == oldtv.tv_sec &&
 	    tvp->tv_usec <= oldtv.tv_usec) {
 		tvp->tv_usec = oldtv.tv_usec + 1;
@@ -339,7 +302,6 @@ microtime(tvp)
 		}
 	}
 	    
-
 	oldtv = *tvp;
 	(void)splx(s);		
 }
