@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.112 2002/01/24 02:46:34 lukem Exp $
+#	$NetBSD: shlib_version,v 1.113 2002/03/18 09:58:18 yamt Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -9,4 +9,4 @@
 # - libc/gen/timezone.c: remove; __timezone13 -> timezone.
 #
 major=12
-minor=82
+minor=83
