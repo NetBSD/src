@@ -1,4 +1,4 @@
-/*	$Id: ppp_tty.c,v 1.1 1995/07/04 06:28:27 paulus Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.2 1995/07/04 23:26:10 paulus Exp $	*/
 
 /*
  * ppp_tty.c - Point-to-Point Protocol (PPP) driver for asynchronous
