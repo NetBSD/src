@@ -1,3 +1,5 @@
+/*	$NetBSD: lib.s,v 1.7 1994/10/26 09:12:41 cgd Exp $	*/
+
 /*
  * This file contains excerpts from the hp300 locore.s, and no original code.
  *
@@ -39,8 +41,7 @@
  *
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
- *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	locore.s,v 1.2 1993/05/22 07:57:30 cgd Exp
+ *	@(#)locore.s	7.11 (Berkeley) 5/9/91
  */
 /*
  * Primitives

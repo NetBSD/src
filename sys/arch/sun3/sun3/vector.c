@@ -1,3 +1,5 @@
+/*	$NetBSD: vector.c,v 1.9 1994/10/26 09:13:19 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: vector.c,v 1.8 1994/05/06 07:47:14 gwr Exp $
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: if_le_subr.c,v 1.7 1994/10/26 09:08:51 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: if_le_subr.c,v 1.6 1994/09/20 16:21:44 gwr Exp $
  */
 
 #include <sys/param.h>

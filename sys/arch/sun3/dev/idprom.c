@@ -1,6 +1,7 @@
+/*	$NetBSD: idprom.c,v 1.7 1994/10/26 09:08:43 cgd Exp $	*/
+
 /*
  * Machine ID PROM - system type and serial number
- * $Id: idprom.c,v 1.6 1994/05/06 07:49:15 gwr Exp $
  */
 
 #include "sys/param.h"

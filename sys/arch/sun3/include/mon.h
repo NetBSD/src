@@ -1,3 +1,5 @@
+/*	$NetBSD: mon.h,v 1.14 1994/10/26 09:10:43 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: mon.h,v 1.13 1994/09/20 16:26:40 gwr Exp $
  */
 /*
  * This file derived from kernel/mach/sun3.md/machMon.h from the

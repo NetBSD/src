@@ -1,3 +1,5 @@
+/*	$NetBSD: vector.h,v 1.6 1994/10/26 09:13:21 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/vector.h,v 1.5 1994/02/04 08:21:12 glass Exp $
  */
 
 #define COPY_ENTRY 0

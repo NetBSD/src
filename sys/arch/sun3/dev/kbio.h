@@ -1,3 +1,5 @@
+/*	$NetBSD: kbio.h,v 1.2 1994/10/26 09:09:03 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +43,7 @@
  *
  *	@(#)kbio.h	8.1 (Berkeley) 6/11/93
  *
- * from: Header: kbio.h,v 1.4 92/11/26 01:16:32 torek Exp  (LBL)
- * $Id: kbio.h,v 1.1 1994/02/23 08:28:47 glass Exp $
+ * Header: kbio.h,v 1.4 92/11/26 01:16:32 torek Exp  (LBL)
  */
 
 /*

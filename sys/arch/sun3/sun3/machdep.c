@@ -1,3 +1,5 @@
+/*	$NetBSD: machdep.c,v 1.39 1994/10/26 09:12:47 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
@@ -37,10 +39,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: machdep.c 1.63 91/04/24
- *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.38 1994/10/20 05:10:08 cgd Exp $
+ * from: Utah Hdr: machdep.c 1.63 91/04/24
+ *
+ *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
 
 #include <sys/param.h>

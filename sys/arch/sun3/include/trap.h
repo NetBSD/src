@@ -1,6 +1,4 @@
-/*
- *	$Id: trap.h,v 1.5 1994/02/04 08:20:09 glass Exp $
- */
+/*	$NetBSD: trap.h,v 1.6 1994/10/26 09:11:22 cgd Exp $	*/
 
 /* Just use the common m68k definition */
 #include <m68k/trap.h>

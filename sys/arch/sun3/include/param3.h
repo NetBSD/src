@@ -1,3 +1,5 @@
+/*	$NetBSD: param3.h,v 1.19 1994/10/26 09:10:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
@@ -38,8 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: Utah Hdr: machparam.h 1.16 92/12/20
- *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
- *	$Id: param3.h,v 1.18 1994/09/20 16:31:03 gwr Exp $
+ *	@(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
 #ifndef	MACHINE

@@ -1,3 +1,5 @@
+/*	$NetBSD: zsvar.h,v 1.5 1994/10/26 09:09:41 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1992, 1993
@@ -41,8 +43,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
- *
- * $Id: zsvar.h,v 1.4 1994/09/20 16:23:06 gwr Exp $
  */
 
 /*

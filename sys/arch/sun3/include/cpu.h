@@ -1,3 +1,5 @@
+/*	$NetBSD: cpu.h,v 1.13 1994/10/26 09:10:06 cgd Exp $	*/
+
 /* Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -35,10 +37,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: cpu.h 1.16 91/03/25
- *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
- *	$Id: cpu.h,v 1.12 1994/06/28 21:47:56 gwr Exp $
+ * from: Utah Hdr: cpu.h 1.16 91/03/25
+ *
+ *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
  */
 
 #ifdef KERNEL

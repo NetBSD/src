@@ -1,3 +1,5 @@
+/*	$NetBSD: stub.c,v 1.8 1994/10/26 09:13:05 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/stub.c,v 1.7 1994/02/04 08:21:06 glass Exp $
  */
 
 char	*memcpy(char *to, char *from, unsigned int size)

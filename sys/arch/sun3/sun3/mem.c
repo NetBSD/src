@@ -1,3 +1,5 @@
+/*	$NetBSD: mem.c,v 1.11 1994/10/26 09:12:50 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass 
@@ -37,9 +39,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah $Hdr: mem.c 1.14 90/10/12$
- *	from: @(#)mem.c	8.3 (Berkeley) 1/12/94
- *	$Id: mem.c,v 1.10 1994/09/20 16:51:09 gwr Exp $
+ * from: Utah $Hdr: mem.c 1.14 90/10/12$
+ *
+ *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
 /*

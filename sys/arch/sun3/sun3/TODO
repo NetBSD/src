@@ -1,3 +1,5 @@
+$NetBSD: TODO,v 1.4 1994/10/26 09:12:05 cgd Exp $
+
 	figure out stack issues
 	some interface to vector table useable by isr stuff, and by
 		trap stuff. would be nice only to turn traps on before

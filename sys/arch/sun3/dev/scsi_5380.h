@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_5380.h,v 1.3 1994/10/26 09:09:22 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University

@@ -1,3 +1,5 @@
+/*	$NetBSD: vm_machdep.c,v 1.19 1994/10/26 09:13:23 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1988 University of Utah.
@@ -36,10 +38,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
- *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
- *	$Id: vm_machdep.c,v 1.18 1994/07/23 03:23:15 gwr Exp $
+ * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
+ *
+ *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  */
 
 #include <sys/param.h>

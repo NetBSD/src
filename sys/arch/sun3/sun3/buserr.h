@@ -1,3 +1,5 @@
+/*	$NetBSD: buserr.h,v 1.3 1994/10/26 09:12:13 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/buserr.h,v 1.2 1994/02/04 08:20:50 glass Exp $
  */
 
 #define BUSERR_WATCHDOG   0x01

@@ -1,3 +1,5 @@
+/*	$NetBSD: config.h,v 1.2 1994/10/26 09:11:44 cgd Exp $	*/
+
 /* configuration information for base-line code */
 
 #include "../include/mon.h"

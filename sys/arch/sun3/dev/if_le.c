@@ -1,3 +1,5 @@
+/*	$NetBSD: if_le.c,v 1.12 1994/10/26 09:08:46 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,8 @@
  * SUCH DAMAGE.
  *
  * from: Header: if_le.c,v 1.25 93/10/31 04:47:50 leres Locked 
- * from: @(#)if_le.c	8.2 (Berkeley) 10/30/93
- * $Id: if_le.c,v 1.11 1994/07/11 03:31:17 gwr Exp $
+ *
+ *	@(#)if_le.c	8.2 (Berkeley) 10/30/93
  */
 
 #include "bpfilter.h"

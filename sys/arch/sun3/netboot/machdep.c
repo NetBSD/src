@@ -1,3 +1,5 @@
+/*	$NetBSD: machdep.c,v 1.2 1994/10/26 09:11:51 cgd Exp $	*/
+
 #include <sys/param.h>
 #include <sys/types.h>
 

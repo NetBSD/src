@@ -1,3 +1,5 @@
+/*	$NetBSD: intersil7170.h,v 1.7 1994/10/26 09:12:37 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: intersil7170.h,v 1.6 1994/09/26 17:25:21 gwr Exp $
  */
 
 /*

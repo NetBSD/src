@@ -1,3 +1,5 @@
+/*	$NetBSD: mtpr.h,v 1.2 1994/10/26 09:10:45 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: mtpr.h 1.1 90/07/09$
  *
- *	from: @(#)mtpr.h	7.2 (Berkeley) 11/3/90
- *	mtpr.h,v 1.2 1993/05/22 07:58:24 cgd Exp
+ *	@(#)mtpr.h	7.2 (Berkeley) 11/3/90
  */
 
 /*

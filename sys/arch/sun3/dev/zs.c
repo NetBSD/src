@@ -1,3 +1,5 @@
+/*	$NetBSD: zs.c,v 1.10 1994/10/26 09:09:33 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1992, 1993
@@ -41,8 +43,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
- *
- * $Id: zs.c,v 1.9 1994/09/20 16:21:48 gwr Exp $
  */
 
 /*
