@@ -73,6 +73,7 @@
 ./usr/share/man/cat1/ex.0
 ./usr/share/man/cat1/expand.0
 ./usr/share/man/cat1/expr.0
+./usr/share/man/cat1/f77.0
 ./usr/share/man/cat1/false.0
 ./usr/share/man/cat1/fdformat.0
 ./usr/share/man/cat1/fg.0
@@ -87,6 +88,7 @@
 ./usr/share/man/cat1/fsplit.0
 ./usr/share/man/cat1/fstat.0
 ./usr/share/man/cat1/ftp.0
+./usr/share/man/cat1/g77.0
 ./usr/share/man/cat1/gcpp.0
 ./usr/share/man/cat1/getconf.0
 ./usr/share/man/cat1/getopt.0
@@ -395,6 +397,7 @@
 ./usr/share/man/cat4/pty.0
 ./usr/share/man/cat4/puc.0
 ./usr/share/man/cat4/qsphy.0
+./usr/share/man/cat4/raid.0
 ./usr/share/man/cat4/rnd.0
 ./usr/share/man/cat4/route.0
 ./usr/share/man/cat4/rtfps.0
@@ -629,6 +632,7 @@
 ./usr/share/man/cat8/makemap.0
 ./usr/share/man/cat8/makewhatis.0
 ./usr/share/man/cat8/map-mbone.0
+./usr/share/man/cat8/mbrlabel.0
 ./usr/share/man/cat8/mdconfig.0
 ./usr/share/man/cat8/mdsetimage.0
 ./usr/share/man/cat8/mfs.0
@@ -694,6 +698,7 @@
 ./usr/share/man/cat8/quotacheck.0
 ./usr/share/man/cat8/quotaoff.0
 ./usr/share/man/cat8/quotaon.0
+./usr/share/man/cat8/raidctl.0
 ./usr/share/man/cat8/rarpd.0
 ./usr/share/man/cat8/rbootd.0
 ./usr/share/man/cat8/rc.0
@@ -1140,6 +1145,7 @@
 ./usr/share/man/man1/ex.1
 ./usr/share/man/man1/expand.1
 ./usr/share/man/man1/expr.1
+./usr/share/man/man1/f77.1
 ./usr/share/man/man1/false.1
 ./usr/share/man/man1/fdformat.1
 ./usr/share/man/man1/fg.1
@@ -1154,6 +1160,7 @@
 ./usr/share/man/man1/fsplit.1
 ./usr/share/man/man1/fstat.1
 ./usr/share/man/man1/ftp.1
+./usr/share/man/man1/g77.1
 ./usr/share/man/man1/gcpp.1
 ./usr/share/man/man1/getconf.1
 ./usr/share/man/man1/getopt.1
@@ -1462,6 +1469,7 @@
 ./usr/share/man/man4/pty.4
 ./usr/share/man/man4/puc.4
 ./usr/share/man/man4/qsphy.4
+./usr/share/man/man4/raid.4
 ./usr/share/man/man4/rnd.4
 ./usr/share/man/man4/route.4
 ./usr/share/man/man4/rtfps.4
@@ -1696,6 +1704,7 @@
 ./usr/share/man/man8/makemap.8
 ./usr/share/man/man8/makewhatis.8
 ./usr/share/man/man8/map-mbone.8
+./usr/share/man/man8/mbrlabel.8
 ./usr/share/man/man8/mdconfig.8
 ./usr/share/man/man8/mdsetimage.8
 ./usr/share/man/man8/mfs.8
@@ -1761,6 +1770,7 @@
 ./usr/share/man/man8/quotacheck.8
 ./usr/share/man/man8/quotaoff.8
 ./usr/share/man/man8/quotaon.8
+./usr/share/man/man8/raidctl.8
 ./usr/share/man/man8/rarpd.8
 ./usr/share/man/man8/rbootd.8
 ./usr/share/man/man8/rc.8
