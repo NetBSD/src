@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.94 2003/01/22 13:55:09 simonb Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.95 2003/04/02 03:27:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.94 2003/01/22 13:55:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.95 2003/04/02 03:27:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ cpu_coredump(l, vp, cred, chdr)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of NBPG.
+ * and size must be a multiple of PAGE_SIZE.
  */
 void
 pagemove(from, to, size)
@@ -292,7 +292,7 @@ pagemove(from, to, size)
 	pt_entry_t *fpte, *tpte;
 	paddr_t invalid;
 
-	if (size % NBPG)
+	if (size % PAGE_SIZE)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
@@ -310,7 +310,7 @@ pagemove(from, to, size)
 		fpte++; tpte++;
 		size -= PAGE_SIZE;
 		from += PAGE_SIZE;
-		to += NBPG;
+		to += PAGE_SIZE;
 	}
 }
 
