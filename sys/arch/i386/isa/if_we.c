@@ -53,15 +53,16 @@
  *
  * 92.09.19 - Changes to allow multiple we interfaces in one box.
  *          Allowed interupt handler to look at unit other than 0
- *            Bdry was static, made it into an array w/ one entry per
- *          interface.  nerd@percival.rain.com (Michael Galassi)
  *
  * BPF Packet Filter Support added by Marc Frajola, 12/30/92
  * Input & other routines re-written by David Greenman, 1/2/93
  * BPF trailer support added by David Greenman, 1/7/93
  *
  * $Log: if_we.c,v $
- * Revision 1.5  1993/04/10 15:58:56  glass
+ * Revision 1.6  1993/04/29 09:33:21  mycroft
+ * Fix total bogosity in the receiver code.
+ *
+ * Revision 1.5  1993/04/10  15:58:56  glass
  * Fixed so they are useable when compiled with options NS.  Not that I know
  * anyone who will.....
  *
@@ -398,7 +399,6 @@ wewatchdog(unit) {
 	weinit(unit);*/
 }
 
-static Bdry[NWE];					/* 19 Sep 92*/
 /*
  * Initialization of interface (really just DS8390). 
  */
@@ -430,7 +430,6 @@ weinit(unit)
 	 * this is stock code...please see the National manual for details.
 	 */
 	s = splhigh();
-	Bdry[unit] = 0;					/* 19 Sep 92*/
 	wecmd.cs_byte = inb(sc->we_io_nic_addr + WD_P0_COMMAND);
 	wecmd.cs_stp = 1;
 	wecmd.cs_sta = 0;
@@ -459,7 +458,7 @@ weinit(unit)
 	    outb(sc->we_io_nic_addr + WD_P1_PAR0 + i, sc->we_addr[i]);
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)	/* == broadcast addr */
 	    outb(sc->we_io_nic_addr + WD_P1_MAR0 + i, 0xff);
-	outb(sc->we_io_nic_addr + WD_P1_CURR, WD_TXBUF_SIZE);
+	outb(sc->we_io_nic_addr + WD_P1_CURR, WD_TXBUF_SIZE + 1);
 	wecmd.cs_ps = 0;
 	wecmd.cs_stp = 0;
 	wecmd.cs_sta = 1;
@@ -699,11 +698,11 @@ werint(unit)
 	wecmd.cs_ps = 0;
 	outb(sc->we_io_nic_addr + WD_P0_COMMAND, wecmd.cs_byte);
 	bnry = inb(sc->we_io_nic_addr + WD_P0_BNRY);
+	if (++bnry >= sc->we_vmem_size / WD_PAGE_SIZE)
+		bnry = WD_TXBUF_SIZE;
 	wecmd.cs_ps = 1;
 	outb(sc->we_io_nic_addr + WD_P0_COMMAND, wecmd.cs_byte);
 	curr = inb(sc->we_io_nic_addr + WD_P1_CURR);
-	if(Bdry[unit])					/* 19 Sep 92*/
-		bnry = Bdry[unit];
 
 	while (bnry != curr)
 	{
@@ -721,32 +720,23 @@ outofbufs:
 		wecmd.cs_ps = 0;
 		outb(sc->we_io_nic_addr + WD_P0_COMMAND, wecmd.cs_byte);
 
-		/* advance on chip Boundry register */
-		if((caddr_t) wer + WD_PAGE_SIZE - 1 > sc->we_vmem_end) {
-			bnry = WD_TXBUF_SIZE;
-			outb(sc->we_io_nic_addr + WD_P0_BNRY,
-					sc->we_vmem_size / WD_PAGE_SIZE-1);
-	
-		} else {
-			if (len > 30 && len <= ETHERMTU+100)
-				bnry = wer->we_next_packet;
-			else bnry = curr;
+		if (len > 30 && len <= ETHERMTU+100)
+			bnry = wer->we_next_packet;
+		else bnry = curr;
 
-			/* watch out for NIC overflow, reset Boundry if invalid */
-			if ((bnry - 1) < WD_TXBUF_SIZE) {
-		    		outb(sc->we_io_nic_addr + WD_P0_BNRY,
-					(sc->we_vmem_size / WD_PAGE_SIZE) - 1);
-				bnry = WD_TXBUF_SIZE;
-			} else
-				outb(sc->we_io_nic_addr + WD_P0_BNRY, bnry-1);
-		}
+		/* watch out for NIC overflow, reset Boundry if invalid */
+		if ((bnry - 1) < WD_TXBUF_SIZE) {
+	    		outb(sc->we_io_nic_addr + WD_P0_BNRY,
+				(sc->we_vmem_size / WD_PAGE_SIZE) - 1);
+			bnry = WD_TXBUF_SIZE;
+		} else
+			outb(sc->we_io_nic_addr + WD_P0_BNRY, bnry-1);
 
 		/* refresh our copy of CURR */
 		wecmd.cs_ps = 1;
 		outb(sc->we_io_nic_addr + WD_P0_COMMAND, wecmd.cs_byte);
 		curr = inb(sc->we_io_nic_addr + WD_P1_CURR);
 	}
-	Bdry[unit] = bnry;				/* 19 Sep 92*/
 }
 
 /*
