@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.53 2000/07/13 14:26:44 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.54 2000/07/14 07:21:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  * pairs to be used by sysctl(1) in manipulating the subsystem.
  */
 struct ctlname {
-	char	*ctl_name;	/* subsystem name */
+	const char *ctl_name;	/* subsystem name */
 	int	ctl_type;	/* type of name */
 };
 #define	CTLTYPE_NODE	1	/* name is a node */
@@ -626,9 +626,9 @@ int sysctl_rdint __P((void *, size_t *, void *, int));
 int sysctl_quad __P((void *, size_t *, void *, size_t, quad_t *));
 int sysctl_rdquad __P((void *, size_t *, void *, quad_t));
 int sysctl_string __P((void *, size_t *, void *, size_t, char *, int));
-int sysctl_rdstring __P((void *, size_t *, void *, char *));
+int sysctl_rdstring __P((void *, size_t *, void *, const char *));
 int sysctl_struct __P((void *, size_t *, void *, size_t, void *, int));
-int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
+int sysctl_rdstruct __P((void *, size_t *, void *, const void *, int));
 struct radix_node;
 struct walkarg;
 int sysctl_clockrate __P((void *, size_t *));
@@ -657,6 +657,12 @@ int cpu_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 
 /* ddb_sysctl() declared in ddb_var.h */
+
+void	sysctl_init(void);
+
+#ifdef __SYSCTL_PRIVATE
+extern struct lock sysctl_memlock;
+#endif
 
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>
