@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.19 1994/07/07 01:46:44 briggs Exp $
+ *	$Id: locore.s,v 1.20 1994/07/09 06:33:46 briggs Exp $
  */
 
 #include "assym.s"
@@ -868,7 +868,7 @@ abouttouser:
 	.globl	_etext
 	.globl	start
 	.globl _gray_bar
-	.globl _macinit
+|	.globl _macinit
 	.globl _root_scsi_id		| CPC - for scsi id passed in on d7 from booter
 	.globl _serial_boot_echo
 	.globl _videoaddr, _videorowbytes
@@ -927,8 +927,8 @@ start:
 	.word	0x4e7b, 0x0003		| Disable MMU
 	jbsr	_gray_bar
 
-	jbsr	_macserinit		| For debugging
-	jbsr	_macinit		| For debugging
+|	jbsr	_macserinit		| For debugging
+|	jbsr	_macinit		| For debugging
 
 	jsr	_get_top_of_ram		| Get amount of memory in machine
 	addl	_load_addr, d0
@@ -1041,7 +1041,7 @@ LnosetTT:
 #endif
 
 	jbsr	_gray_bar		| 5 - Turned off MMU
-	jbsr	_macserinit
+|	jbsr	_macserinit
 
 	jbsr	_gray_bar		| 6 - Initialized serial, no interrupts
 	movl	longscratch2, sp@-
