@@ -1,7 +1,8 @@
-/*	$NetBSD: ppc_reloc.c,v 1.29 2002/09/26 02:52:05 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.30 2002/09/26 03:25:29 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
+ * Portions copyright 2002 Charles M. Hannum.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
