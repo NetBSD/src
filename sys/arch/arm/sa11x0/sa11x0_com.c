@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.4 2002/07/19 18:26:56 ichiro Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.5 2002/07/19 19:07:33 ichiro Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@
 #include <arm/sa11x0/sa11x0_var.h>
 #include <arm/sa11x0/sa11x0_comreg.h>
 #include <arm/sa11x0/sa11x0_comvar.h>
+#include <arm/sa11x0/sa11x0_gpioreg.h>
 
 #ifdef hpcarm
 #include <hpc/include/platid.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.3 2001/09/24 14:29:30 takemura Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.4 2002/07/19 19:07:33 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ static void	sacc_intr_calculatemasks(struct sacc_softc *);
 static void	sacc_intr_setpolarity(sacc_chipset_tag_t *, int , int);
 int		sacc_intr(void *);
 
-#if hpcarm
+#ifndef hpcarm
 void *softintr_establish(int, int (*)(void *), void *);
 void softintr_schedule(void *);
 #endif
