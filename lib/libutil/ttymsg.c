@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.16 2002/08/16 20:21:48 itojun Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.17 2003/03/27 12:04:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.16 2002/08/16 20:21:48 itojun Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.17 2003/03/27 12:04:57 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -139,7 +139,7 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 			continue;
 		}
 		if (errno == EWOULDBLOCK) {
-			int cpid, off = 0;
+			int cpid;
 
 			if (forked) {
 				(void) close(fd);
@@ -163,7 +163,7 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 			sigfillset(&nset);
 			(void) sigprocmask(SIG_UNBLOCK, &nset, NULL);
 			(void) alarm((u_int)tmout);
-			(void) fcntl(fd, O_NONBLOCK, &off);
+			(void) fcntl(fd, F_SETFL, 0);	/* clear O_NONBLOCK */
 			continue;
 		}
 		/*
