@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.17 2002/05/28 21:41:56 bjh21 Exp $	*/
+/*	$NetBSD: fgen.l,v 1.18 2002/05/28 21:58:36 bjh21 Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -674,7 +674,7 @@ struct fcode fcodes[] = {
 		{ "xwflip",			0x0252 },
 		{ "xwflips",			0x0253 },
 		{ "xwsplit",			0x0254 },
-		{ NULL, NULL }
+		{ NULL, 0 }
 };
 
 /*
