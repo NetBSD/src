@@ -1,6 +1,6 @@
-/*	$NetBSD: msg.mi.pl,v 1.35.2.1 2004/04/18 02:26:08 jmc Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.35.2.2 2004/04/19 03:50:26 jmc Exp $	*/
 /*	Based on english version: */
-/*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
+/*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,19 +45,19 @@ message usage
 }
 
 message sysinst_message_language
-{Installation messages in Polish}	/* XXX translate */
+{Komunikaty instalacyjne w jezyku polskim}
 
 message Yes {Tak}
 message No {Nie}
-message All {All}	/* XXX translate */
-message Some {Some}	/* XXX translate */
+message All {Wszystkie}
+message Some {Niektore}
 message None {Zadne}
 message none {zadne}
 message ok {ok}
 message OK {OK}
-message unchanged {unchanged}	/* XXX translate */
-message On {On}
-message Off {Off}
+message unchanged {niezmienione}
+message On {Wlaczone}
+message Off {Wylaczone}
 
 message install
 {zainstalowac}
@@ -132,8 +132,8 @@ NetBSD wlasnie na nim.
 message ask_disk
 {Na ktorym z nich chcesz zainstalowac NetBSD? }
 
-message Available_disks	/* XXX translate */
-{Available disks}
+message Available_disks
+{Dostepne dyski}
 
 message cylinders
 {cylindry}
@@ -144,11 +144,11 @@ message heads
 message sectors
 {sektory}
 
-message fs_isize		/* XXX translate */
-{average file size (bytes)}
+message fs_isize
+{sredni rozmiar pliku (bajty)}
 
 message mountpoint
-{mount point (or 'none')}
+{punkt montowania (lub 'zaden')}
 
 message cylname
 {cyl}
@@ -188,28 +188,28 @@ message defaultunit
 lub 's' sektory rozmiary i przesuniecia podawane sa w %s.
 }
 
-message ptnsizes	/* XXX translate */
-{You can now change the sizes for the system partitions.  The default is
-to allocate all the space to the root filesystem, however you may wish
-to have separate /usr (additional system files), /var (log files etc)
-or /home (users' home directories).
+message ptnsizes
+{Mozesz teraz zmienic rozmiary partycji systemowych. Domyslne ustawienia
+alokuja cala przestrzen na glowny system plikow, aczkolwiek mozesz zdefiniowac
+osobne partycje /usr (dodatkowe pliki systemowe), /var (logi) lub
+/home (katalogi domowe uzytkownikow).
 
-Free space will be added to the partition marked with a '+'.
+Wolna przestrzen zostanie dodana do partycji oznaczonej '+'.
 }
 
-message ptnheaders /* XXX translate */
+message ptnheaders
 {
-       MB         Cylinders   Sectors   Filesystem
+       MB         Cylindry    Sektory   System plikow
 }
 
-message askfsmount	/* XXX translate */
-{Mount point?}
+message askfsmount
+{Punkt montazu?}
 
-message askfssize	/* XXX translate */
-{Size for %s in %s?}
+message askfssize
+{Rozmiar dla %s w %s?}
 
-message askunits	/* XXX translate */
-{Change input units (sectors/cylinders/MB)}
+message askunits
+{Zmien jednostki wejsciowe (sektory/cylindry/MB)}
 
 message NetBSD_partition_cant_change
 {partycja NetBSD}
@@ -220,14 +220,14 @@ message Whole_disk_cant_change
 message Boot_partition_cant_change
 {partycja uruchomic}
 
-message add_another_ptn	/* XXX translate */
-{Add a user defined partition}
+message add_another_ptn
+{Dodaj partycje zdefiniowana przez uzytkownika}
 
-message fssizesok	/* XXX translate */
-{Accept partition sizes.  Free space %d %s, %d free partitions.}
+message fssizesok
+{Zaakceptuj rozmiary partycji. Wolne miejsce %d %s, %d wolnych partycji.}
 
-message fssizesbad	/* XXX translate */
-{Reduce partition sizes by %d %s (%d sectors).}
+message fssizesbad
+{Zmniejsz rozmiary partycji o %d %s (%d sektorow).}
 
 message startoutsidedisk
 {Wartosc poczatkowa ktora podales jest poza koncem dysku.
@@ -251,11 +251,11 @@ message fspart_header	/* XXX abbreviations (or change fspart_row below) */
 message fspart_row
 {%9d %9d %10d %-10s %-7s %-5s %s}
 
-message show_all_unused_partitions	/* XXX translate */
-{Show all unused partitions}
+message show_all_unused_partitions
+{Pokaz wszystkie nieuzywane partycje}
 
-message partition_sizes_ok		/* XXX translate */
-{Partition sizes ok}
+message partition_sizes_ok
+{Rozmiary partycji w porzadku}
 
 message edfspart
 {Powinienes najpierw ustawic rodzaj systemu plikow (SP). 
@@ -267,52 +267,52 @@ Aktualne wartosci dla partycji %c:
                      ------- --------- ---------
 }
 
-message fstype_fmt		/* XXX translate */
-{        FStype: %9s}
+message fstype_fmt
+{ Typ systemu plikow: %9s}
 
-message start_fmt		/* XXX translate */
-{         start: %9u %8u%c %9u}
+message start_fmt
+{           poczatek: %9u %8u%c %9u}
 
-message size_fmt		/* XXX translate */
-{          size: %9u %8u%c %9u}
+message size_fmt
+{            rozmiar: %9u %8u%c %9u}
 
-message end_fmt			/* XXX translate */
-{           end: %9u %8u%c %9u}
+message end_fmt
+{             koniec: %9u %8u%c %9u}
 
-message bsize_fmt		/* XXX translate */
-{    block size: %9d bytes}
+message bsize_fmt
+{      rozmiar bloku: %9d bajtow}
 
-message fsize_fmt		/* XXX translate */
-{ fragment size: %9d bytes}
+message fsize_fmt
+{  rozmiar fragmentu: %9d bajtow}
 
-message isize_fmt		/* XXX translate */
-{ Avg file size: %9d bytes}
-message isize_fmt_dflt		/* XXX translate */
-{ Avg file size:         4 fragments}
+message isize_fmt
+{ Sredni rozm. pliku: %9d bajtow}
+message isize_fmt_dflt
+{ Sredni rozm. pliku:         4 fragmenty}
 
-message newfs_fmt		/* XXX translate */
-{         newfs: %9s}
+message newfs_fmt
+{              newfs: %9s}
 
-message mount_fmt		/* XXX translate */
-{         mount: %9s}
+message mount_fmt
+{             montaz: %9s}
 
-message mount_options_fmt	/* XXX translate */
-{ mount options: }
+message mount_options_fmt
+{   opcje montowania: }
 
-message mountpt_fmt		/* XXX translate */
-{   mount point: %9s}
+message mountpt_fmt
+{      punkt montazu: %9s}
 
-message toggle		/* XXX translate */
-{Toggle}
+message toggle
+{Przelacz}
 
-message restore		/* XXX translate */
-{Restore original values}
+message restore
+{Odzyskaj oryginalne wartosci}
 
 message Select_the_type
-{Wybierz rodzaj}
+{Wybierz typ}
 
-message other_types	/* XXX translate */
-{other types}
+message other_types
+{inne typy}
 
 message label_size
 {%s
@@ -322,23 +322,23 @@ Specjalne wartosci, ktore moga byc podane jako wartosci rozmiaru:
 
 rozmiar (%s)}
 
-message label_offset	/* XXX translate */
+message label_offset
 {%s
 Specjalne wartosci, ktore moga byc podane jako wartosci przesuniecia:
     -1:   zacznij na poczatku czesci dysku NetBSD
    a-%c:   zacznij na koncu partycji X  (a, b, ... %c)
 
-start (%s)}
+poczatek (%s)}
 
-message invalid_sector_number	/* XXX translate */
-{Badly formed sector number
+message invalid_sector_number
+{Zle uformowany numer sektora
 }
 
-message Select_file_system_block_size	/* XXX translate */
-{Select file system block size}
+message Select_file_system_block_size
+{Wybierz rozmiar bloku dla systemu plikow}
 
-message Select_file_system_fragment_size	/* XXX translate */
-{Select file system fragment size}
+message Select_file_system_fragment_size
+{Wybierz rozmiar fragmentu dla systemu plikow}
 
 message packname
 {Podaj nazwe dla swojego dysku NetBSD}
@@ -559,9 +559,9 @@ message nonet
 Zostaniesz przeniesiony do glownego menu.
 }
 
-message netup	/* XXX translate */
-{The following network interfaces are active: %s
-Does one of them connect to the required server?}
+message netup
+{Nastepujace interfejsy sieciowe sa aktywne: %s
+Czy ktorys z nich jest podlaczony do serwera?}
 
 message asknetdev
 {Znalazlem nastepujace interfejsy sieciowe : %s
@@ -625,9 +625,9 @@ beda domyslnymi wartosciami.
 
 }
 
-message wait_network	/* XXX translate */
+message wait_network
 {
-Waiting while network interface comes up.
+Poczekaj, az interfejs sieciowy zostanie uaktywniony.
 }
 
 message resolv
@@ -647,9 +647,9 @@ message ftperror
 message distdir
 {Jakiego katalogu powinienem uzyc dla %s? }
 
-message delete_dist_files	/* XXX translate */
-{Do you want to delete the NetBSD sets from %s?
-(You can keep them to install/upgrade a second system.)}
+message delete_dist_files
+{Czy chcesz usunac pakiety NetBSD z %s?
+(Mozesz je zachowac aby zainstalowac/zaktualizowac kolejny system.)}
 
 message verboseextract
 {Czy w trakcie rozpakowywania plikow, chcesz widziec nazwe aktualnie
@@ -794,66 +794,66 @@ message cur_distsets
 }
 
 message cur_distsets_header
-{Pakiet dystryb.       Uzyc?
----------------------- ----
+{Pakiet dystryb.                   Uzyc?
+--------------------------------- -----
 }
 
-message set_base	/* XXX translate */
+message set_base
 {Base}
 
-message set_system	/* XXX translate */
+message set_system
 {System (/etc)}
 
-message set_compiler	/* XXX translate */
-{Compiler Tools}
+message set_compiler
+{Narzedzia Kompilacyjne}
 
-message set_games	/* XXX translate */
-{Games}
+message set_games
+{Gry}
 
-message set_man_pages	/* XXX translate */
-{Online Manual Pages}
+message set_man_pages
+{Strony Podrecznika}
 
-message set_misc	/* XXX translate */
-{Miscellaneous}
+message set_misc
+{Inne}
 
-message set_text_tools	/* XXX translate */
-{Text Processing Tools}
+message set_text_tools
+{Narzedzia Przetwarzania Tekstu}
 
-message set_X11		/* XXX translate */
-{X11 sets}
+message set_X11
+{Pakiety X11}
 
-message set_X11_base	/* XXX translate */
-{X11 base and clients}
+message set_X11_base
+{X11 base oraz klienci}
 
-message set_X11_etc	/* XXX translate */
-{X11 configuration}
+message set_X11_etc
+{Konfiguracja X11}
 
-message set_X11_fonts	/* XXX translate */
-{X11 fonts}
+message set_X11_fonts
+{Fonty X11}
 
-message set_X11_servers	/* XXX translate */
-{X11 servers}
+message set_X11_servers
+{Serwery X11}
 
-message set_X_contrib	/* XXX translate */
-{X contrib clients}
+message set_X_contrib
+{Klienci dodatkowi X}
 
-message set_X11_prog	/* XXX translate */
-{X11 programming}
+message set_X11_prog
+{Programowanie X11}
 
-message set_X11_misc	/* XXX translate */
-{X11 Misc.}
+message set_X11_misc
+{Inne X11}
 
 message cur_distsets_row
-{%-27s %3s\n}
+{%-30s %3s\n}
 
-message select_all	/* XXX translate */
-{Select all the above sets}
+message select_all
+{Wybierz wszystkie powyzsze pakiety}
 
-message select_none	/* XXX translate */
-{Deselect all the above sets}
+message select_none
+{Odznasz wszystkie powyzsze pakiety}
 
-message install_selected_sets	/* XXX translate */
-{Install selected sets}
+message install_selected_sets
+{Zainstaluj wybrane pakiety}
 
 message tarerror
 {Pojawil sie blad w trakcie rozpakowywanie pliku %s. To znaczy, ze
@@ -862,8 +862,8 @@ nie bedzie kompletny.
 
 Kontynuowac rozpakowywanie pakietow?}
 
-message must_be_one_root	/* XXX translate */
-{There must be a single partition marked to be mounted on '/'.}
+message must_be_one_root
+{Musi byc tylko jedna partycja do zamontowania pod '/'.}
 
 message partitions_overlap
 {partycje %c i %c pokrycia.}
@@ -908,8 +908,8 @@ Nacisnij 'x' a potem ENTER aby wyjsc.
  Lokalny czas:	%s %s 
 }
 
-message tz_back	/* XXX translate */
-{ Back to main timezone list}
+message tz_back
+{Powroc do glownej listy stref}
 
 message choose_crypt
 {Wybierz sposob szyfrowania hasel, ktorego chcesz uzywac. NetBSD moze korzystac
@@ -942,9 +942,9 @@ message rootpw
 {Haslo root'a w nowo zainstalowanym systemie nie zostalo jeszcze ustawione,
 i dlatego jest puste. Czy chcesz ustawic haslo dla root'a teraz?}
 
-message rootsh	/* XXX translate */
-{You can now select which shell to use for the root user. The default is
-/bin/csh, but you may prefer another one.}
+message rootsh
+{Mozesz  teraz wybrac, ktorej powloki ma uzywac uzytkownik root. Domyslnie
+jest to /bin/csh, ale moze preferujesz inna.}
 
 message postuseexisting
 {
@@ -960,16 +960,16 @@ jeden mountpoint z "/".
 Nacisnij <enter> aby kontynuowac.
 }
 
-message Pick_an_option {Pick an option to turn on or off.}	/* XXX translate */
+message Pick_an_option {Wybierz opcje aby je wlaczyc lub wylaczyc.}
 message Scripting {Scripting}	/* XXX translate */
-message Logging {Logging}	/* XXX translate */
+message Logging {Logowanie}
 
-message Status  { Status: }	/* XXX translate */
-message Command {Command: }	/* XXX translate */
-message Running {Running}	/* XXX translate */
-message Finished {Finished}	/* XXX translate */
-message Command_failed {Command failed}	/* XXX translate */
-message Command_ended_on_signal {Command ended on signal}	/* XXX translate */
+message Status  { Status: }
+message Command {Polecenie: }
+message Running {Uruchamianie}
+message Finished {Zakonczone}
+message Command_failed {Polecenie nie powiodlo sie}
+message Command_ended_on_signal {Polecenie zakonczylo sie sygnalem}
 
 message NetBSD_VERSION_Install_System {System Instalacyjny NetBSD-@@VERSION@@}
 message Exit_Install_System {Wyjdz z Systemu Instalacyjnego}
@@ -988,8 +988,8 @@ message Halt_the_system {Zatrzymaj system}
 message yes_or_no {tak lub nie?}
 message Hit_enter_to_continue {Nacisnij enter aby kontynuowac}
 message Choose_your_installation {Wybierz swoja instalacje}
-message Set_Sizes {Set sizes of NetBSD partitions}	/* XXX translate */
-message Use_Existing {Use existing partition sizes}	/* XXX translate */
+message Set_Sizes {Ustaw rozmiary partycji NetBSD}
+message Use_Existing {Uzyj istniejacych romiarow partycji}
 message Choose_your_size_specifier {Wybierz specyfikator rozmiaru}
 message Megabytes {Megabajty}
 message Cylinders {Cylindry}
@@ -1005,7 +1005,7 @@ message Select_your_distribution {Wybierz swoja dystrybucje}
 message Full_installation {Pelna instalacja}
 message Custom_installation {Inna instalacja}
 message Change {Zmien}
-message hidden {** hidden **}	/* XXX translate */
+message hidden {** ukryte **}
 message Host {Host}
 message Directory {Katalog}
 message User {Uzytkownik}
@@ -1017,7 +1017,7 @@ message What_do_you_want_to_do {Co chcesz zrobic?}
 message Try_again {Sprobowac jeszcze raz}
 message Give_up {Poddac sie}
 message Ignore_continue_anyway {Zignorowac, kontynuowac}
-message Set_finished {Set finished}  /* XXX translate */
+message Set_finished {Ustawianie zakonczone}
 message Abort_install {Przerwac instalacje}
 message Password_cipher {Kodowanie hasel}
 message DES {DES}
@@ -1031,11 +1031,11 @@ message Select_IPv6_DNS_server {  Wybierz serwer nazw IPv6}
 message other {inny  }
 message Perform_IPv6_autoconfiguration {Wykonac autokonfiguracje IPv6?}
 message Perform_DHCP_autoconfiguration {Wykonac autkonfiguracje DHCP?}
-message Root_shell {Root shell}	/* XXX translate */
-message Select_set_extraction_verbosity {Select set extraction verbosity}	/* XXX translate */
-message Progress_bar_recommended {Progress bar (recommended)}	/* XXX translate */
-message Silent {Silent}	/* XXX translate */
-message Verbose_file_name_listing_slow {Verbose file name listing (slow)}	/* XXX translate */
+message Root_shell {Powloka root'a}
+message Select_set_extraction_verbosity {Wybierz gadatliwosc procesu rozpakowywania pakietow}
+message Progress_bar_recommended {Pasek postepu (zalecany)}
+message Silent {Cichy}
+message Verbose_file_name_listing_slow {Lista plikow (wolne)}
 
 .if AOUT2ELF
 message aoutfail
