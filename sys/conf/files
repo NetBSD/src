@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.642 2003/10/17 18:16:42 cdi Exp $
+#	$NetBSD: files,v 1.643 2003/10/29 17:00:40 tsutsui Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -778,6 +778,11 @@ file	dev/ic/intersil7170.c		intersil7170
 #
 define	mm58167
 file	dev/ic/mm58167.c		mm58167
+
+# Motorola mc146818 (and compatible) time-of-day clock
+#
+define	mc146818
+file	dev/ic/mc146818.c		mc146818
 
 # D-Link DL10019/10022 NE2000-compatible network interface subroutines
 #
