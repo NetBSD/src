@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.7 2004/12/23 06:08:52 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.8 2005/01/04 00:56:52 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -77,7 +77,7 @@ extern	u_int8_t *ieee80211_add_xrates(u_int8_t *frm,
 extern	void ieee80211_print_essid(u_int8_t *, int);
 extern	void ieee80211_dump_pkt(u_int8_t *, int, int, int);
 extern	int ieee80211_ibss_merge(struct ieee80211com *,
-		struct ieee80211_node *, u_int64_t);
+		struct ieee80211_node *);
 extern	int ieee80211_compute_duration(struct ieee80211_frame *, int,
 		uint32_t, int, int, struct ieee80211_duration *,
 		struct ieee80211_duration *, int *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.40 2004/12/27 07:01:00 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.41 2005/01/04 00:56:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.40 2004/12/27 07:01:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.41 2005/01/04 00:56:51 dyoung Exp $");
 #endif
 
 /*
@@ -3313,6 +3313,23 @@ bad:
 	return error;
 }
 
+static uint64_t
+ath_tsf_extend(struct ath_hal *ah, uint32_t rstamp)
+{
+	uint64_t tsf;
+	
+	KASSERT((rstamp & 0xffff0000) == 0,
+	    ("rx timestamp > 16 bits wide, %" PRIu32, rstamp));
+
+	tsf = ath_hal_gettsf64(ah);
+
+	/* Compensate for rollover. */
+	if ((tsf & 0xffff) <= rstamp)
+		tsf -= 0x10000;
+
+	return (tsf & ~(uint64_t)0xffff) | rstamp;
+}
+
 static void
 ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
     struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
@@ -3328,8 +3345,8 @@ ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
 		    ic->ic_state != IEEE80211_S_RUN)
 			break;
-		if (ieee80211_ibss_merge(ic, ni, ath_hal_gettsf64(ah)) ==
-		    ENETRESET)
+		if (le64toh(ni->ni_tsf) >= ath_tsf_extend(ah, rstamp) &&
+		    ieee80211_ibss_merge(ic, ni) == ENETRESET)
 			ath_hal_setassocid(ah, ic->ic_bss->ni_bssid, 0);
 		break;
 	default:
