@@ -1,16 +1,10 @@
-# $NetBSD: md.atari,v 1.38 2000/02/05 20:59:05 jdc Exp $
+# $NetBSD: md.atari,v 1.39 2000/03/07 20:55:06 veego Exp $
 ./dev/mouse
 ./sbin/binpatch
 ./sbin/edahdi
 ./sbin/edlabel
 ./usr/bin/fdformat
 ./usr/bin/msconfig
-./usr/include/libahdi.h
-./usr/lib/libahdi.a
-./usr/lib/libahdi_p.a
-./usr/lib/libahdi_pic.a
-./usr/lib/libahdi.so.0.0
-./usr/libdata/lint/llib-lahdi.ln
 ./usr/mdec/bootxx
 ./usr/mdec/fdboot
 ./usr/mdec/installboot

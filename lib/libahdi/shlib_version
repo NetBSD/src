@@ -1,6 +1,0 @@
-#       $NetBSD: shlib_version,v 1.1 2000/02/05 20:40:47 jdc Exp $
-#       Remember to update distrib/sets/lists/base/md.atari when changing
-#
-major=0
-minor=0
-
