@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532 2005/03/15 16:05:03 peter Exp $
+# $NetBSD: mi,v 1.533 2005/03/18 17:44:17 drochner Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2818,6 +2818,7 @@
 ./usr/share/wscons/fonts/vt220l.814		base-util-share		share
 ./usr/share/wscons/fonts/vt220l.816		base-util-share		share
 ./usr/share/wscons/keymaps			base-util-share
+./usr/share/wscons/keymaps/pckbd.br.abnt2	base-util-share		share
 ./usr/share/wscons/keymaps/amikbd.pl.qwertz.iso8859-2	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.be.azerty	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.hu.iso8859-2	base-util-share		share
