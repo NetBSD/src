@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.130 2004/09/18 16:01:03 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.131 2004/09/18 16:37:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.130 2004/09/18 16:01:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.131 2004/09/18 16:37:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ u_int	bufpages = BUFPAGES;	/* optional hardwired count */
 u_int	bufcache = BUFCACHE;	/* max % of RAM to use for buffer cache */
 
 /* Function prototypes */
-struct bqueues;
+struct bqueue;
 
 static int buf_trim(void);
 static void *bufpool_page_alloc(struct pool *, int);
@@ -129,9 +129,11 @@ static __inline u_long buf_mempoolidx(u_long);
 static __inline u_long buf_roundsize(u_long);
 static __inline caddr_t buf_malloc(size_t);
 static void buf_mrelease(caddr_t, size_t);
+static __inline void binsheadfree(struct buf *, struct bqueue *);
+static __inline void binstailfree(struct buf *, struct bqueue *);
 int count_lock_queue(void); /* XXX */
 #ifdef DEBUG
-static int checkfreelist(struct buf *, struct bqueues *);
+static int checkfreelist(struct buf *, struct bqueue *);
 #endif
 
 /* Macros to clear/set/test flags. */
@@ -165,7 +167,10 @@ struct bio_ops bioops;	/* I/O operation notification */
 #define	BQ_LRU		1		/* lru, useful buffers */
 #define	BQ_AGE		2		/* rubbish */
 
-TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
+struct bqueue {
+	TAILQ_HEAD(, buf) bq_queue;
+	uint64_t bq_bytes;
+} bufqueues[BQUEUES];
 int needbuffer;
 
 /*
@@ -244,19 +249,14 @@ buf_setvalimit(vsize_t sz)
 	return 0;
 }
 
-/*
- * Insq/Remq for the buffer free lists.
- * Call with buffer queue locked.
- */
-#define	binsheadfree(bp, dp)	TAILQ_INSERT_HEAD(dp, bp, b_freelist)
-#define	binstailfree(bp, dp)	TAILQ_INSERT_TAIL(dp, bp, b_freelist)
-
 #ifdef DEBUG
 int debug_verify_freelist = 0;
-static int checkfreelist(struct buf *bp, struct bqueues *dp)
+static int
+checkfreelist(struct buf *bp, struct bqueue *dp)
 {
 	struct buf *b;
-	TAILQ_FOREACH(b, dp, b_freelist) {
+
+	TAILQ_FOREACH(b, &dp->bq_queue, b_freelist) {
 		if (b == bp)
 			return 1;
 	}
@@ -264,37 +264,47 @@ static int checkfreelist(struct buf *bp, struct bqueues *dp)
 }
 #endif
 
+/*
+ * Insq/Remq for the buffer hash lists.
+ * Call with buffer queue locked.
+ */
+static __inline void
+binsheadfree(struct buf *bp, struct bqueue *dp)
+{
+
+	KASSERT(bp->b_freelistindex == -1);
+	TAILQ_INSERT_HEAD(&dp->bq_queue, bp, b_freelist);
+	dp->bq_bytes += bp->b_bufsize;
+	bp->b_freelistindex = dp - bufqueues;
+}
+
+static __inline void
+binstailfree(struct buf *bp, struct bqueue *dp)
+{
+
+	KASSERT(bp->b_freelistindex == -1);
+	TAILQ_INSERT_TAIL(&dp->bq_queue, bp, b_freelist);
+	dp->bq_bytes += bp->b_bufsize;
+	bp->b_freelistindex = dp - bufqueues;
+}
+
 void
 bremfree(struct buf *bp)
 {
-	struct bqueues *dp = NULL;
+	struct bqueue *dp;
+	int bqidx = bp->b_freelistindex;
 
 	LOCK_ASSERT(simple_lock_held(&bqueue_slock));
 
-	KDASSERT(!debug_verify_freelist ||
-		checkfreelist(bp, &bufqueues[BQ_AGE]) ||
-		checkfreelist(bp, &bufqueues[BQ_LRU]) ||
-		checkfreelist(bp, &bufqueues[BQ_LOCKED]) );
-
-	/*
-	 * We only calculate the head of the freelist when removing
-	 * the last element of the list as that is the only time that
-	 * it is needed (e.g. to reset the tail pointer).
-	 *
-	 * NB: This makes an assumption about how tailq's are implemented.
-	 *
-	 * We break the TAILQ abstraction in order to efficiently remove a
-	 * buffer from its freelist without having to know exactly which
-	 * freelist it is on.
-	 */
-	if (TAILQ_NEXT(bp, b_freelist) == NULL) {
-		for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
-			if (dp->tqh_last == &bp->b_freelist.tqe_next)
-				break;
-		if (dp == &bufqueues[BQUEUES])
-			panic("bremfree: lost tail");
-	}
-	TAILQ_REMOVE(dp, bp, b_freelist);
+	KASSERT(bqidx != -1);
+	dp = &bufqueues[bqidx];
+	KDASSERT(!debug_verify_freelist || checkfreelist(bp, dp));
+	KASSERT(dp->bq_bytes >= bp->b_bufsize);
+	TAILQ_REMOVE(&dp->bq_queue, bp, b_freelist);
+	dp->bq_bytes -= bp->b_bufsize;
+#if defined(DIAGNOSTIC)
+	bp->b_freelistindex = -1;
+#endif /* defined(DIAGNOSTIC) */
 }
 
 u_long
@@ -338,7 +348,7 @@ buf_memcalc(void)
 void
 bufinit(void)
 {
-	struct bqueues *dp;
+	struct bqueue *dp;
 	int use_std;
 	u_int i;
 
@@ -394,8 +404,10 @@ bufinit(void)
 	}
 
 	/* Initialize the buffer queues */
-	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
-		TAILQ_INIT(dp);
+	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++) {
+		TAILQ_INIT(&dp->bq_queue);
+		dp->bq_bytes = 0;
+	}
 
 	/*
 	 * Estimate hash table size based on the amount of memory we
@@ -427,7 +439,7 @@ buf_lotsfree(void)
 		return 0;
 
 	/* If there's anything on the AGE list, it should be eaten. */
-	if (TAILQ_FIRST(&bufqueues[BQ_AGE]) != NULL)
+	if (TAILQ_FIRST(&bufqueues[BQ_AGE].bq_queue) != NULL)
 		return 0;
 
 	/*
@@ -459,15 +471,13 @@ static int
 buf_canrelease(void)
 {
 	int pagedemand, ninvalid = 0;
-	struct buf *bp;
 
 	LOCK_ASSERT(simple_lock_held(&bqueue_slock));
 
 	if (bufmem < bufmem_lowater)
 		return 0;
 
-	TAILQ_FOREACH(bp, &bufqueues[BQ_AGE], b_freelist)
-		ninvalid += bp->b_bufsize;
+	ninvalid += bufqueues[BQ_AGE].bq_bytes;
 
 	pagedemand = uvmexp.freetarg - uvmexp.free;
 	if (pagedemand < 0)
@@ -856,7 +866,7 @@ bdirty(struct buf *bp)
 void
 brelse(struct buf *bp)
 {
-	struct bqueues *bufq;
+	struct bqueue *bufq;
 	int s;
 
 	/* Block disk interrupts. */
@@ -1181,11 +1191,14 @@ start:
 		bp->b_vnbufs.le_next = NOLIST;
 		bp->b_flags = B_BUSY;
 		simple_lock(&bp->b_interlock);
+#if defined(DIAGNOSTIC)
+		bp->b_freelistindex = -1;
+#endif /* defined(DIAGNOSTIC) */
 		return (bp);
 	}
 
-	if ((bp = TAILQ_FIRST(&bufqueues[BQ_AGE])) != NULL ||
-	    (bp = TAILQ_FIRST(&bufqueues[BQ_LRU])) != NULL) {
+	if ((bp = TAILQ_FIRST(&bufqueues[BQ_AGE].bq_queue)) != NULL ||
+	    (bp = TAILQ_FIRST(&bufqueues[BQ_LRU].bq_queue)) != NULL) {
 		simple_lock(&bp->b_interlock);
 		bremfree(bp);
 	} else {
@@ -1396,7 +1409,7 @@ count_lock_queue(void)
 	int n = 0;
 
 	simple_lock(&bqueue_slock);
-	TAILQ_FOREACH(bp, &bufqueues[BQ_LOCKED], b_freelist)
+	TAILQ_FOREACH(bp, &bufqueues[BQ_LOCKED].bq_queue, b_freelist)
 		n++;
 	simple_unlock(&bqueue_slock);
 	return (n);
@@ -1540,7 +1553,7 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 	s = splbio();
 	simple_lock(&bqueue_slock);
 	for (i = 0; i < BQUEUES; i++) {
-		TAILQ_FOREACH(bp, &bufqueues[i], b_freelist) {
+		TAILQ_FOREACH(bp, &bufqueues[i].bq_queue, b_freelist) {
 			if (len >= elem_size && elem_count > 0) {
 				sysctl_fillbuf(bp, &bs);
 				error = copyout(&bs, dp, out_size);
@@ -1672,7 +1685,7 @@ vfs_bufstats(void)
 {
 	int s, i, j, count;
 	struct buf *bp;
-	struct bqueues *dp;
+	struct bqueue *dp;
 	int counts[(MAXBSIZE / PAGE_SIZE) + 1];
 	static char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE" };
 
@@ -1681,7 +1694,7 @@ vfs_bufstats(void)
 		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
 			counts[j] = 0;
 		s = splbio();
-		TAILQ_FOREACH(bp, dp, b_freelist) {
+		TAILQ_FOREACH(bp, &dp->bq_queue, b_freelist) {
 			counts[bp->b_bufsize/PAGE_SIZE]++;
 			count++;
 		}
