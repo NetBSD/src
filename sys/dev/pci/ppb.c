@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.26 2003/06/15 23:09:09 fvdl Exp $	*/
+/*	$NetBSD: ppb.c,v 1.27 2003/12/09 19:51:39 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.26 2003/06/15 23:09:09 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.27 2003/12/09 19:51:39 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,9 @@ ppbattach(parent, self, aux)
 	char devinfo[256];
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
+	    PCI_REVISION(pa->pa_class));
+	aprint_naive("\n");
 
 	sc->sc_pc = pc;
 	sc->sc_tag = pa->pa_tag;
@@ -97,7 +99,7 @@ ppbattach(parent, self, aux)
 	busdata = pci_conf_read(pc, pa->pa_tag, PPB_REG_BUSINFO);
 
 	if (PPB_BUSINFO_SECONDARY(busdata) == 0) {
-		printf("%s: not configured by system firmware\n",
+		aprint_normal("%s: not configured by system firmware\n",
 		    self->dv_xname);
 		return;
 	}
