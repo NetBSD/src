@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.6 2002/02/13 08:18:43 ross Exp $
+.\"     $NetBSD: kthread.9,v 1.7 2002/03/08 23:03:23 kleink Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,11 +45,11 @@
 .Sh SYNOPSIS
 .Fd #include \*[Lt]sys/kthread.h\*[Gt]
 .Ft void
-.Fn kthread_create "void (*func)(void)" "void *arg"
+.Fn kthread_create "void (*func)(void *)" "void *arg"
 .Ft void
 .Fn kthread_exit "int ecode"
 .Ft int
-.Fn kthread_create1 "void (*func)(void)" "void *arg" "struct proc **newpp" \
+.Fn kthread_create1 "void (*func)(void *)" "void *arg" "struct proc **newpp" \
 "const char *fmt" "..."
 .Sh DESCRIPTION
 Kernel threads are light-weight processes which execute entirely
