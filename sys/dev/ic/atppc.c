@@ -1,3 +1,5 @@
+/* $NetBSD: atppc.c,v 1.3 2004/01/21 00:33:37 bjh21 Exp $ */
+
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
  * All rights reserved.

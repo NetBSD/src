@@ -1,3 +1,5 @@
+/* $NetBSD: lptctl.c,v 1.3 2004/01/21 00:35:09 bjh21 Exp $ */
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
