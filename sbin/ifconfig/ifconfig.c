@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.130 2002/09/20 21:21:53 christos Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.131 2002/09/22 15:29:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.130 2002/09/20 21:21:53 christos Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.131 2002/09/22 15:29:23 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,6 +169,8 @@ void 	setifmetric __P((const char *, int));
 void 	setifmtu __P((const char *, int));
 void	setifnwid __P((const char *, int));
 void	setifnwkey __P((const char *, int));
+void	setifbssid __P((const char *, int));
+void	setifchan __P((const char *, int));
 void	setifpowersave __P((const char *, int));
 void	setifpowersavesleep __P((const char *, int));
 void 	setifnetmask __P((const char *, int));
@@ -247,6 +249,9 @@ const struct cmd {
 	{ "netmask",	NEXTARG,	0,		setifnetmask },
 	{ "metric",	NEXTARG,	0,		setifmetric },
 	{ "mtu",	NEXTARG,	0,		setifmtu },
+	{ "bssid",	NEXTARG,	0,		setifbssid },
+	{ "-bssid",	-1,		0,		setifbssid },
+	{ "chan",	NEXTARG,	0,		setifchan },
 	{ "nwid",	NEXTARG,	0,		setifnwid },
 	{ "nwkey",	NEXTARG,	0,		setifnwkey },
 	{ "-nwkey",	-1,		0,		setifnwkey },
@@ -1392,6 +1397,51 @@ setifnwid(val, d)
 }
 
 void
+setifbssid(val, d)
+	const char *val;
+	int d;
+{
+	struct ieee80211_bssid bssid;
+	struct ether_addr *ea;
+
+	if (d != 0) {
+		/* no BSSID is especially desired */
+		memset(&bssid.i_bssid, 0, sizeof(bssid.i_bssid));
+	} else {
+		ea = ether_aton(val);
+		if (ea == NULL) {
+			warnx("malformed BSSID: %s", val);
+			return;
+		}
+		memcpy(&bssid.i_bssid, ea->ether_addr_octet,
+		    sizeof(bssid.i_bssid));
+	}
+	(void)strncpy(bssid.i_name, name, sizeof(bssid.i_name));
+	if (ioctl(s, SIOCS80211BSSID, (caddr_t)&bssid) == -1)
+		warn("SIOCS80211BSSID");
+}
+
+void
+setifchan(val, d)
+	const char *val;
+	int d;
+{
+	struct ieee80211_channel channel;
+	int chan;
+
+	chan = atoi(val);
+	if (chan < 0 || chan > 0xffff) {
+		warnx("invalid channel: %s", val);
+		return;
+	}
+
+	(void)strncpy(channel.i_name, name, sizeof(channel.i_name));
+	channel.i_channel = (u_int16_t) chan;
+	if (ioctl(s, SIOCS80211CHANNEL, (caddr_t)&channel) == -1)
+		warn("SIOCS80211CHANNEL");
+}
+
+void
 setifnwkey(val, d)
 	const char *val;
 	int d;
@@ -1496,6 +1546,9 @@ ieee80211_status()
 	struct ieee80211_nwkey nwkey;
 	struct ieee80211_power power;
 	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
+	struct ieee80211_bssid bssid;
+	struct ieee80211_channel channel;
+	struct ether_addr ea;
 
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_data = (caddr_t)&nwid;
@@ -1568,13 +1621,24 @@ ieee80211_status()
  skip_wep:
 	(void)strncpy(power.i_name, name, sizeof(power.i_name));
 	if (ioctl(s, SIOCG80211POWER, &power) == -1)
-		return;
+		goto skip_power;
 	printf("\tpowersave ");
 	if (power.i_enabled)
 		printf("on (%dms sleep)", power.i_maxsleep);
 	else
 		printf("off");
 	printf("\n");
+
+ skip_power:
+	(void)strncpy(bssid.i_name, name, sizeof(bssid.i_name));
+	if (ioctl(s, SIOCG80211BSSID, &bssid) == -1)
+		return;
+	(void)strncpy(channel.i_name, name, sizeof(channel.i_name));
+	if (ioctl(s, SIOCG80211CHANNEL, &channel) == -1)
+		return;
+	memcpy(ea.ether_addr_octet, bssid.i_bssid,
+	    sizeof(ea.ether_addr_octet));
+	printf("\tbssid %s chan %d", ether_ntoa(&ea), channel.i_channel);
 }
 
 void
