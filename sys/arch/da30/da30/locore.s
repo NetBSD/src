@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.5 1994/10/26 02:32:51 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.6 1995/02/08 17:48:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -895,8 +895,6 @@ Lmlloop:
 	subql	#1,d0
 	jne	Lmlloop
 	rts
-
-#include <da30/da30/copy.s>
 
 /*
  * non-local gotos
