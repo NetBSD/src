@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.37 1996/02/22 23:35:04 mycroft Exp $ */
+/*	$NetBSD: esp.c,v 1.38 1996/02/26 14:48:30 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -1080,34 +1080,35 @@ printf("<<target%d: MSG_MESSAGE_REJECT>>", ecb->xs->sc_link->target);
 					int p;
 					p =  esp_stp2cpb(sc, ti->period);
 					ti->period = esp_cpb2stp(sc, p);
+#ifdef ESP_DEBUG
+					sc_print_addr(ecb->xs->sc_link);
+#endif
 					if ((sc->sc_flags&ESP_SYNCHNEGO) == 0) {
 						/* Target initiated negotiation */
-						sc->sc_flags |= ESP_SYNCHNEGO;
 						if (ti->flags & T_SYNCMODE) {
+						    ti->flags &= ~T_SYNCMODE;
 #ifdef ESP_DEBUG
-							sc_print_addr(ecb->xs->sc_link);
-							printf("dropping out of sync mode\n");
+						    printf("renegotiated ");
 #endif
 						}
-						ti->flags &= ~T_SYNCMODE;
-						ESP_WRITE_REG(sc,
-						    ESP_SYNCOFF, 0);
+						ESP_WRITE_REG(sc, ESP_SYNCOFF,
+							      0);
+						ESP_WRITE_REG(sc, ESP_SYNCTP,
+							      0);
 						esp_sched_msgout(SEND_SDTR);
 					} else {
 						/* we are sync */
 						sc->sc_flags &= ~ESP_SYNCHNEGO;
-						ESP_WRITE_REG(sc,
-						    ESP_SYNCOFF, ti->offset);
-						ESP_WRITE_REG(sc,
-						    ESP_SYNCTP, p);
+						ESP_WRITE_REG(sc, ESP_SYNCOFF,
+							      ti->offset);
+						ESP_WRITE_REG(sc, ESP_SYNCTP,
+							      p);
 						ti->flags |= T_SYNCMODE;
-						sc_print_addr(ecb->xs->sc_link);
-#ifdef ESP_DEBUG
-						printf("max sync "
-						       "rate %d.%02dMb/s\n",
-						        r, s);
-#endif
 					}
+#ifdef ESP_DEBUG
+					printf("max sync rate %d.%02dMb/s\n",
+					        r, s);
+#endif
 				}
 				ti->flags &= ~T_NEGOTIATE;
 				break;
@@ -1214,7 +1215,6 @@ esp_msgout(sc)
 		switch (sc->sc_msgout) {
 		case SEND_SDTR:
 			ecb = sc->sc_nexus;
-			sc->sc_flags |= ESP_SYNCHNEGO;
 			ti = &sc->sc_tinfo[ecb->xs->sc_link->target];
 			sc->sc_omess[0] = MSG_EXTENDED;
 			sc->sc_omess[1] = 3;
@@ -1442,10 +1442,12 @@ espintr(sc)
 					ecb?ecb->dleft:-1);
 		}
 
+#if 0	/* Unreliable on some ESP revisions? */
 		if ((sc->sc_espstat & ESPSTAT_INT) == 0) {
 			printf("%s: spurious interrupt\n", sc->sc_dev.dv_xname);
 			return 1;
 		}
+#endif
 
 		/*
 		 * check for less serious errors
@@ -1479,9 +1481,14 @@ espintr(sc)
 			/*XXX*/sc->sc_msgpriq = sc->sc_msgout = 0;
 
 				/* it may be OK to disconnect */
-				if (!(sc->sc_flags & ESP_BUSFREE_OK))
+				if (!(sc->sc_flags & ESP_BUSFREE_OK)) {
+					if (sc->sc_state == ESP_HASNEXUS) {
+						sc_print_addr(ecb->xs->sc_link);
+						printf("disconnect without"
+							"warning\n");
+					}
 					ecb->xs->error = XS_TIMEOUT;
-				else if (sc->sc_flags & ESP_DISCON) {
+				} else if (sc->sc_flags & ESP_DISCON) {
 					TAILQ_INSERT_HEAD(&sc->nexus_list, ecb, chain);
 					ECB_SETQ(ecb, ECB_QNEXUS);
 					sc->sc_nexus = NULL;
@@ -1508,6 +1515,11 @@ if ((esp_debug & 0x10000) && ecb->dleft == 0) {
 		if (sc->sc_prevphase == MESSAGE_OUT_PHASE &&
 		    sc->sc_phase != MESSAGE_OUT_PHASE) {
 			/* we have sent it */
+			if (sc->sc_msgout == SEND_SDTR &&
+			    (sc->sc_flags & ESP_SYNCHNEGO) == 0)
+				/* We've just accepted new sync parameters */
+				sc->sc_tinfo[ecb->xs->sc_link->target].flags |=
+					T_SYNCMODE;
 			sc->sc_msgpriq &= ~sc->sc_msgout;
 			sc->sc_msgout = 0;
 		}
@@ -1627,6 +1639,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 					ti->period = sc->sc_minsync;
 					ti->offset = 15;
 					sc->sc_msgpriq = SEND_SDTR;
+					sc->sc_flags |= ESP_SYNCHNEGO;
 					break;
 				case 3:
 					/*
@@ -1883,11 +1896,12 @@ esp_timeout(arg)
 	sc_print_addr(xs->sc_link);
 again:
 	printf("%s: timed out [ecb 0x%x (flags 0x%x, dleft %x, stat %x)], "
-	       "<state %d, nexus %x, phase(c %x, p %x), resid %x, msg(q %x,o %x)>",
+	       "<state %d, nexus %x, phase(c %x, p %x), resid %x, msg(q %x,o %x) %s>",
 		sc->sc_dev.dv_xname,
 		ecb, ecb->flags, ecb->dleft, ecb->stat,
 		sc->sc_state, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase,
-		sc->sc_dleft, sc->sc_msgpriq, sc->sc_msgout);
+		sc->sc_dleft, sc->sc_msgpriq, sc->sc_msgout,
+		DMA_ISACTIVE(sc->sc_dma) ? "DMA active" : "");
 #if ESP_DEBUG > 0
 	printf("TRACE: %s.", ecb->trace);
 #endif
