@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.147 2003/08/22 20:20:11 jonathan Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.148 2003/08/22 21:53:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.147 2003/08/22 20:20:11 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.148 2003/08/22 21:53:06 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -574,6 +574,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 #endif
 	int family;	/* family on packet, not inpcb/in6pcb! */
 	struct tcphdr *th;
+	struct socket *so;
 
 	if (tp != NULL && (flags & TH_RST) == 0) {
 #ifdef DIAGNOSTIC
@@ -816,18 +817,23 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 #endif
 	}
 
+	if (tp->t_inpcb)
+		so = tp->t_inpcb->inp_socket;
+#ifdef INET6
+	else if (tp->t_in6pcb)
+		so = tp->t_in6pcb->in6p_socket;
+#endif
+	else
+		so = NULL;
 #ifdef IPSEC
-	(void)ipsec_setsocket(m, NULL);
+	if (ipsec_setsocket(m, so) != 0) {
+		m_freem(m);
+		return ENOBUFS;
+	}
 #endif /*IPSEC*/
 
 	if (tp != NULL && tp->t_inpcb != NULL) {
 		ro = &tp->t_inpcb->inp_route;
-#ifdef IPSEC
-		if (ipsec_setsocket(m, tp->t_inpcb->inp_socket) != 0) {
-			m_freem(m);
-			return ENOBUFS;
-		}
-#endif
 #ifdef DIAGNOSTIC
 		if (family != AF_INET)
 			panic("tcp_respond: address family mismatch");
@@ -841,12 +847,6 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 #ifdef INET6
 	else if (tp != NULL && tp->t_in6pcb != NULL) {
 		ro = (struct route *)&tp->t_in6pcb->in6p_route;
-#ifdef IPSEC
-		if (ipsec_setsocket(m, tp->t_in6pcb->in6p_socket) != 0) {
-			m_freem(m);
-			return ENOBUFS;
-		}
-#endif
 #ifdef DIAGNOSTIC
 		if (family == AF_INET) {
 			if (!IN6_IS_ADDR_V4MAPPED(&tp->t_in6pcb->in6p_faddr))
@@ -873,14 +873,13 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	case AF_INET:
 		error = ip_output(m, NULL, ro,
 		    (tp && tp->t_mtudisc ? IP_MTUDISC : 0),
-		    (struct ip_moptions *)0,
-		     (tp == NULL ? (struct inpcb *)0 : tp->t_inpcb));
+		    (struct ip_moptions *)0, so);
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
 		error = ip6_output(m, NULL, (struct route_in6 *)ro, 0,
-		    (struct ip6_moptions *)0, (struct in6pcb *)0, NULL);
+		    (struct ip6_moptions *)0, so, NULL);
 		break;
 #endif
 	default:

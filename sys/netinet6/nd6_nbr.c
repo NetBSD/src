@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.48 2003/08/22 20:20:10 jonathan Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.49 2003/08/22 21:53:09 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.48 2003/08/22 20:20:10 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.49 2003/08/22 21:53:09 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -508,7 +508,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	(void)ipsec_setsocket(m, NULL);
 #endif
 	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0, 
-	    &im6o, (struct in6pcb *)0, NULL);
+	    &im6o, (struct socket *)NULL, NULL);
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_neighborsolicit);
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_SOLICIT]++;
@@ -976,8 +976,7 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	/* Don't lookup socket */
 	(void)ipsec_setsocket(m, NULL);
 #endif
-	ip6_output(m, NULL, NULL, 0,
-	    &im6o, (struct in6pcb *)0, NULL);
+	ip6_output(m, NULL, NULL, 0, &im6o, (struct socket *)NULL, NULL);
 
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_neighboradvert);

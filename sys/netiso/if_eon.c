@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.40 2003/08/15 03:42:06 jonathan Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.41 2003/08/22 21:53:11 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.40 2003/08/15 03:42:06 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.41 2003/08/22 21:53:11 itojun Exp $");
 
 #include "opt_eon.h"
 
@@ -448,7 +448,7 @@ send:
 #endif
 
 	error = ip_output(m, (struct mbuf *) 0, ro, 0,
-			  (struct ip_moptions *)0, (struct inpcb *)0);
+	    (struct ip_moptions *)NULL, (struct socket *)NULL);
 	m = 0;
 	if (error) {
 		ifp->if_oerrors++;

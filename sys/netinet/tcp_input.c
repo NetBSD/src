@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.177 2003/08/22 20:20:11 jonathan Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.178 2003/08/22 21:53:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.177 2003/08/22 20:20:11 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.178 2003/08/22 21:53:05 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3641,6 +3641,7 @@ syn_cache_respond(sc, m)
 	struct tcpcb *tp;
 	struct tcphdr *th;
 	u_int hlen;
+	struct socket *so;
 
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
@@ -3689,7 +3690,6 @@ syn_cache_respond(sc, m)
 	/* Fixup the mbuf. */
 	m->m_data += max_linkhdr;
 	m->m_len = m->m_pkthdr.len = tlen;
-#ifdef IPSEC
 	if (sc->sc_tp) {
 		struct socket *so;
 
@@ -3702,13 +3702,14 @@ syn_cache_respond(sc, m)
 #endif
 		else
 			so = NULL;
+#ifdef IPSEC
 		/* use IPsec policy on listening socket, on SYN ACK */
 		if (ipsec_setsocket(m, so) != 0) {
 			m_freem(m);
 			return ENOBUFS;
 		}
-	}
 #endif
+	}
 	m->m_pkthdr.rcvif = NULL;
 	memset(mtod(m, u_char *), 0, tlen);
 
@@ -3816,8 +3817,7 @@ syn_cache_respond(sc, m)
 	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, ro,
 		    (ip_mtudisc ? IP_MTUDISC : 0), 
-		    (struct ip_moptions *)0,
-		    (struct inpcb *)0 /* XXX tp->t_in6pcb */);
+		    (struct ip_moptions *)NULL, so);
 		break;
 #endif
 #ifdef INET6
@@ -3826,8 +3826,7 @@ syn_cache_respond(sc, m)
 				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
 
 		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro, 0,
-			(struct ip6_moptions *)0,
-		        (tp == NULL ? NULL : tp->t_in6pcb), NULL);
+			(struct ip6_moptions *)0, so, NULL);
 		break;
 #endif
 	default:

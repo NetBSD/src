@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.72 2003/08/15 03:42:03 jonathan Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.73 2003/08/22 21:53:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.72 2003/08/15 03:42:03 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.73 2003/08/22 21:53:05 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -386,7 +386,7 @@ rip_output(m, va_alist)
 	}
 #endif /*IPSEC*/
 	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions,
-	     inp, &inp->inp_errormtu));
+	     inp->inp_socket, &inp->inp_errormtu));
 }
 
 /*

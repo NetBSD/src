@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.115 2003/08/22 20:29:00 jonathan Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.116 2003/08/22 21:53:04 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.115 2003/08/22 20:29:00 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.116 2003/08/22 21:53:04 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -181,13 +181,13 @@ ip_output(m0, va_alist)
 	int *mtu_p;
 	u_long mtu;
 	struct ip_moptions *imo;
-	struct inpcb *inp;
+	struct socket *so;
 	va_list ap;
 #ifdef IPSEC
-	struct socket *so;
 	struct secpolicy *sp = NULL;
 #endif /*IPSEC*/
 #ifdef FAST_IPSEC
+	struct inpcb *inp;
 	struct m_tag *mtag;
 	struct secpolicy *sp = NULL;
 	struct tdb_ident *tdbi;
@@ -201,7 +201,7 @@ ip_output(m0, va_alist)
 	ro = va_arg(ap, struct route *);
 	flags = va_arg(ap, int);
 	imo = va_arg(ap, struct ip_moptions *);
-	inp = va_arg(ap, struct inpcb *);
+	so = va_arg(ap, struct socket *);
 	if (flags & IP_RETURNMTU)
 		mtu_p = va_arg(ap, int *);
 	else
@@ -209,11 +209,16 @@ ip_output(m0, va_alist)
 	va_end(ap);
 
 	MCLAIM(m, &ip_tx_mowner);
+#ifdef FAST_IPSEC
+	if (so->so_proto->pr_domain->dom_family == AF_INET)
+		inp = (struct inpcb *)so->so_pcb;
+	else
+		inp = NULL;
+#endif /*IPSEC*/
 #ifdef IPSEC
 	/* so = ipsec_getsocket(m); */
-	so = ((inp == NULL) ? NULL : inp->inp_socket;
 	(void)ipsec_setsocket(m, NULL);
-#endif /*IPSEC*/
+#endif
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
