@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.10 2001/11/23 19:36:48 thorpej Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.11 2001/11/27 01:06:29 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
 #include <sys/kernel.h>
 #include <sys/time.h>
 
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <arm/cpufunc.h>
 #include <machine/cpu.h>
 #include <machine/ofw.h>

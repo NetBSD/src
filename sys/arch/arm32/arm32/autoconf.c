@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37 2001/05/13 13:53:08 bjh21 Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38 2001/11/27 01:06:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -53,7 +53,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <machine/bootconfig.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 
 #include "isa.h"
 

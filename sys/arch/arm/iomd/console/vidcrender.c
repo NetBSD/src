@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.3 2001/11/22 18:34:34 thorpej Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.4 2001/11/27 01:03:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -65,7 +65,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 #include <machine/bootconfig.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/pmap.h>
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>

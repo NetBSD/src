@@ -1,4 +1,4 @@
-/*	$NetBSD: qms_iomd.c,v 1.2 2001/11/22 18:34:34 thorpej Exp $	*/
+/*	$NetBSD: qms_iomd.c,v 1.3 2001/11/27 01:03:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -45,7 +45,7 @@
 #include <sys/tty.h>
 
 #include <machine/bus.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <arm/iomd/iomdvar.h>
 #include <arm/iomd/qmsvar.h>
 

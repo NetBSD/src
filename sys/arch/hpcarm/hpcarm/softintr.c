@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.5 2001/11/23 19:36:50 thorpej Exp $	*/
+/*	$NetBSD: softintr.c,v 1.6 2001/11/27 01:12:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <machine/cpu.h>
 #include <arm/cpufunc.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 
 extern int ipl_to_spl(int);
 void softintr_free(void *);

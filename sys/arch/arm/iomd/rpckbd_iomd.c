@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd_iomd.c,v 1.1 2001/10/05 22:27:42 reinoud Exp $	*/
+/*	$NetBSD: rpckbd_iomd.c,v 1.2 2001/11/27 01:03:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #include <sys/poll.h>
 
 #include <machine/bus.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/kbd.h>
 #include <arm/iomd/rpckbdvar.h>
 #include <arm/iomd/iomdreg.h>

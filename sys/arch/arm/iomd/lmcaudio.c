@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.3 2001/11/22 18:34:34 thorpej Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.4 2001/11/27 01:03:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -54,7 +54,7 @@
 
 #include <dev/audio_if.h>
 
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/vidc.h>
 #include <arm/arm32/katelib.h>
 

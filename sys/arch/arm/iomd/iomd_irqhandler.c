@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.2 2001/11/22 18:34:34 thorpej Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.3 2001/11/27 01:03:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -50,7 +50,7 @@
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
 
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/cpu.h>
 #include <arm/arm32/katelib.h>
 

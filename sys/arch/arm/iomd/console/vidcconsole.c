@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.1 2001/10/05 22:27:45 reinoud Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.2 2001/11/27 01:03:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -67,7 +67,7 @@
 /*#include <machine/cpu.h>*/
 /*#include <machine/bootconfig.h>*/
 /*#include <machine/iomd.h>*/
-/*#include <machine/irqhandler.h>*/
+/*#include <machine/intr.h>*/
 /*#include <machine/pmap.h>*/
 #include <arm/iomd/vidc.h>
 #include <machine/vconsole.h>
