@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.506 2002/12/19 23:04:27 lukem Exp $
+#	$NetBSD: mi,v 1.507 2002/12/24 07:26:05 jdc Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1732,6 +1732,7 @@
 ./usr/share/man/cat3/curses_insertch.0		comp-c-catman
 ./usr/share/man/cat3/curses_insertln.0		comp-c-catman
 ./usr/share/man/cat3/curses_line.0		comp-c-catman
+./usr/share/man/cat3/curses_pad.0		comp-c-catman
 ./usr/share/man/cat3/curses_print.0		comp-c-catman
 ./usr/share/man/cat3/curses_refresh.0		comp-c-catman
 ./usr/share/man/cat3/curses_scanw.0		comp-c-catman
@@ -2515,6 +2516,7 @@
 ./usr/share/man/cat3/new_fieldtype.0	comp-c-catman
 ./usr/share/man/cat3/new_form.0	comp-c-catman
 ./usr/share/man/cat3/new_page.0	comp-c-catman
+./usr/share/man/cat3/newpad.0		comp-c-catman
 ./usr/share/man/cat3/newterm.0		comp-c-catman
 ./usr/share/man/cat3/newwin.0		comp-c-catman
 ./usr/share/man/cat3/nextafter.0	comp-c-catman
@@ -2588,11 +2590,13 @@
 ./usr/share/man/cat3/pmap_set.0	comp-c-catman
 ./usr/share/man/cat3/pmap_unset.0	comp-c-catman
 ./usr/share/man/cat3/pmc.0	comp-c-catman
+./usr/share/man/cat3/pnoutrefresh.0		comp-c-catman
 ./usr/share/man/cat3/popen.0	comp-c-catman
 ./usr/share/man/cat3/pos_form_cursor.0	comp-c-catman
 ./usr/share/man/cat3/post_form.0	comp-c-catman
 ./usr/share/man/cat3/pow.0	comp-c-catman
 ./usr/share/man/cat3/powf.0	comp-c-catman
+./usr/share/man/cat3/prefresh.0		comp-c-catman
 ./usr/share/man/cat3/printf.0	comp-c-catman
 ./usr/share/man/cat3/printw.0		comp-c-catman
 ./usr/share/man/cat3/psignal.0	comp-c-catman
@@ -2883,6 +2887,7 @@
 ./usr/share/man/cat3/strvisx.0	comp-c-catman
 ./usr/share/man/cat3/strxfrm.0	comp-c-catman
 ./usr/share/man/cat3/stty.0	comp-c-catman
+./usr/share/man/cat3/subpad.0		comp-c-catman
 ./usr/share/man/cat3/subwin.0		comp-c-catman
 ./usr/share/man/cat3/svc_auth_reg.0	comp-c-catman
 ./usr/share/man/cat3/svc_control.0	comp-c-catman
@@ -4717,6 +4722,7 @@
 ./usr/share/man/man3/curses_insertch.3		comp-c-man
 ./usr/share/man/man3/curses_insertln.3		comp-c-man
 ./usr/share/man/man3/curses_line.3		comp-c-man
+./usr/share/man/man3/curses_pad.3		comp-c-man
 ./usr/share/man/man3/curses_print.3		comp-c-man
 ./usr/share/man/man3/curses_refresh.3		comp-c-man
 ./usr/share/man/man3/curses_scanw.3		comp-c-man
@@ -5500,6 +5506,7 @@
 ./usr/share/man/man3/new_fieldtype.3	comp-c-man
 ./usr/share/man/man3/new_form.3	comp-c-man
 ./usr/share/man/man3/new_page.3	comp-c-man
+./usr/share/man/man3/newpad.3		comp-c-man
 ./usr/share/man/man3/newterm.3		comp-c-man
 ./usr/share/man/man3/newwin.3		comp-c-man
 ./usr/share/man/man3/nextafter.3		comp-c-man
@@ -5573,11 +5580,13 @@
 ./usr/share/man/man3/pmap_set.3		comp-c-man
 ./usr/share/man/man3/pmap_unset.3		comp-c-man
 ./usr/share/man/man3/pmc.3		comp-c-man
+./usr/share/man/man3/pnoutrefresh.3		comp-c-man
 ./usr/share/man/man3/popen.3		comp-c-man
 ./usr/share/man/man3/pos_form_cursor.3	comp-c-man
 ./usr/share/man/man3/post_form.3	comp-c-man
 ./usr/share/man/man3/pow.3		comp-c-man
 ./usr/share/man/man3/powf.3		comp-c-man
+./usr/share/man/man3/prefresh.3		comp-c-man
 ./usr/share/man/man3/printf.3		comp-c-man
 ./usr/share/man/man3/printw.3		comp-c-man
 ./usr/share/man/man3/psignal.3		comp-c-man
@@ -5868,6 +5877,7 @@
 ./usr/share/man/man3/strvisx.3		comp-c-man
 ./usr/share/man/man3/strxfrm.3		comp-c-man
 ./usr/share/man/man3/stty.3		comp-c-man
+./usr/share/man/man3/subpad.3		comp-c-man
 ./usr/share/man/man3/subwin.3		comp-c-man
 ./usr/share/man/man3/svc_auth_reg.3	comp-c-man
 ./usr/share/man/man3/svc_control.3	comp-c-man
