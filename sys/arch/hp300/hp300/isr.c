@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.3 1996/10/13 03:14:29 christos Exp $	*/
+/*	$NetBSD: isr.c,v 1.4 1996/12/09 03:04:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -46,15 +46,20 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
-#include <machine/cpu.h>
 #include <net/netisr.h>
+
+#include <machine/cpu.h>
 
 #include <hp300/hp300/isr.h>
 
 typedef LIST_HEAD(, isr) isr_list_t;
 isr_list_t isr_list[NISR];
 
+u_short	hp300_bioipl, hp300_netipl, hp300_ttyipl, hp300_impipl;
+
 extern	int intrcnt[];		/* from locore.s */
+
+void	isrcomputeipl __P((void));
 
 void
 isrinit()
@@ -65,13 +70,90 @@ isrinit()
 	for (i = 0; i < NISR; ++i) {
 		LIST_INIT(&isr_list[i]);
 	}
+
+	/* Default interrupt priorities. */
+	hp300_bioipl = hp300_netipl = hp300_ttyipl = hp300_impipl =
+	    (PSL_S|PSL_IPL3);
+}
+
+/*
+ * Scan all of the ISRs, recomputing the interrupt levels for the spl*()
+ * calls.  This doesn't have to be fast.
+ */
+void
+isrcomputeipl()
+{
+	struct isr *isr;
+	int ipl;
+
+	/* Start with low values. */
+	hp300_bioipl = hp300_netipl = hp300_ttyipl = hp300_impipl =
+	    (PSL_S|PSL_IPL3);
+
+	for (ipl = 0; ipl < NISR; ipl++) {
+		for (isr = isr_list[ipl].lh_first; isr != NULL;
+		    isr = isr->isr_link.le_next) {
+			/*
+			 * Bump up the level for a given priority,
+			 * if necessary.
+			 */
+			switch (isr->isr_priority) {
+			case ISRPRI_BIO:
+				if (ipl > PSLTOIPL(hp300_bioipl))
+					hp300_bioipl = IPLTOPSL(ipl);
+				break;
+
+			case ISRPRI_NET:
+				if (ipl > PSLTOIPL(hp300_netipl))
+					hp300_netipl = IPLTOPSL(ipl);
+				break;
+
+			case ISRPRI_TTY:
+			case ISRPRI_TTYNOBUF:
+				if (ipl > PSLTOIPL(hp300_ttyipl))
+					hp300_ttyipl = IPLTOPSL(ipl);
+				break;
+
+			default:
+				printf("priority = %d\n", isr->isr_priority);
+				panic("isrcomputeipl: bad priority");
+			}
+		}
+	}
+
+	/*
+	 * Enforce `bio <= net <= tty <= imp'
+	 */
+
+	if (hp300_netipl < hp300_bioipl)
+		hp300_netipl = hp300_bioipl;
+
+	if (hp300_ttyipl < hp300_netipl)
+		hp300_ttyipl = hp300_netipl;
+
+	if (hp300_impipl < hp300_ttyipl)
+		hp300_impipl = hp300_ttyipl;
+}
+
+void
+isrprintlevels()
+{
+
+#ifdef DEBUG
+	printf("psl: bio = 0x%x, net = 0x%x, tty = 0x%x, imp = 0x%x\n",
+	    hp300_bioipl, hp300_netipl, hp300_ttyipl, hp300_impipl);
+#endif
+
+	printf("interrupt levels: bio = %d, net = %d, tty = %d\n",
+	    PSLTOIPL(hp300_bioipl), PSLTOIPL(hp300_netipl),
+	    PSLTOIPL(hp300_ttyipl));
 }
 
 /*
  * Establish an interrupt handler.
  * Called by driver attach functions.
  */
-void
+void *
 isrlink(func, arg, ipl, priority)
 	int (*func) __P((void *));
 	void *arg;
@@ -120,7 +202,7 @@ isrlink(func, arg, ipl, priority)
 	list = &isr_list[ipl];
 	if (list->lh_first == NULL) {
 		LIST_INSERT_HEAD(list, newisr, isr_link);
-		return;
+		goto compute;
 	}
 
 	/*
@@ -132,7 +214,7 @@ isrlink(func, arg, ipl, priority)
 	    curisr = curisr->isr_link.le_next) {
 		if (newisr->isr_priority > curisr->isr_priority) {
 			LIST_INSERT_BEFORE(curisr, newisr, isr_link);
-			return;
+			goto compute;
 		}
 	}
 
@@ -141,6 +223,25 @@ isrlink(func, arg, ipl, priority)
 	 * on the end.
 	 */
 	LIST_INSERT_AFTER(curisr, newisr, isr_link);
+
+ compute:
+	/* Compute new interrupt levels. */
+	isrcomputeipl();
+	return (newisr);
+}
+
+/*
+ * Disestablish an interrupt handler.
+ */
+void
+isrunlink(arg)
+	void *arg;
+{
+	struct isr *isr = arg;
+
+	LIST_REMOVE(isr, isr_link);
+	free(isr, M_DEVBUF);
+	isrcomputeipl();
 }
 
 /*
