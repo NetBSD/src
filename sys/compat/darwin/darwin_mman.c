@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mman.c,v 1.1 2002/11/17 02:47:04 manu Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.2 2002/11/17 16:51:13 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -123,21 +123,22 @@ darwin_sys_load_shared_file(p, v, retval)
 	fp = fd_getfile(fdp, fd);
 	if (fp == NULL) {
 		error = EBADF;
-		goto out2;
+		goto bad3;
 	}
 	FILE_USE(fp);
 	vp = (struct vnode *)fp->f_data;
+	vref(vp);
 
 	/* XXX maximum count ? */
 	maplen = sizeof(*mapp) * SCARG(uap, count);
 	if (maplen > PAGE_SIZE) {
 		error = ENOMEM;
-		goto out2;
+		goto bad3;
 	}
 	mapp = malloc(sizeof(*mapp) * SCARG(uap, count), M_TEMP, M_WAITOK);
 
 	if ((error = copyin(SCARG(uap, mappings), mapp, maplen)) != 0)
-		goto out2;
+		goto bad2;
 	
 #ifdef DEBUG_DARWIN
 	for (i = 0; i < SCARG(uap, count); i++) {
@@ -154,11 +155,13 @@ darwin_sys_load_shared_file(p, v, retval)
 
 	/* Check if we can load at the default addresses */
 	need_relocation = 0;
+	vm_map_lock(&p->p_vmspace->vm_map);
 	for (i = 0; i < SCARG(uap, count); i++) 
 		if ((uvm_map_findspace(&p->p_vmspace->vm_map,
 		    base + mapp[i].mapping_offset, mapp[i].size, 
 		    &uaddr, NULL, 0, 0, UVM_FLAG_FIXED)) == NULL)
 			need_relocation = 1;	
+	vm_map_unlock(&p->p_vmspace->vm_map);
 
 	/* If we cannot, we need a relocation */
 	if (need_relocation) {
@@ -176,12 +179,15 @@ darwin_sys_load_shared_file(p, v, retval)
 		    base, max_addr, len));
 
 		/* Find some place to map this region */
+		vm_map_lock(&p->p_vmspace->vm_map);
 		if ((uvm_map_findspace(&p->p_vmspace->vm_map, base, 
 		    len, &uaddr, NULL, 0, PAGE_SIZE, 0)) == NULL) {
 			DPRINTF(("Impossible to find some space\n"));
+			vm_map_unlock(&p->p_vmspace->vm_map);
 			error = ENOMEM;
-			goto out;
+			goto bad2;
 		}
+		vm_map_unlock(&p->p_vmspace->vm_map);
 
 		/* Update the base address */
 		base = uaddr;
@@ -202,16 +208,19 @@ darwin_sys_load_shared_file(p, v, retval)
 		DPRINTF(("map section %d: start = 0x%08lx, len = 0x%08lx\n",
 		    i, evc.ev_addr, evc.ev_len));
 
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = (*evc.ev_proc)(p, &evc)) != 0) {
+			VOP_UNLOCK(vp, 0);
 			DPRINTF(("Failed\n"));
-			goto out;
+			goto bad2;
 		}
+		VOP_UNLOCK(vp, 0);
 		DPRINTF(("Success\n"));
 	}
-out:
+bad2:
 	free(mapp, M_TEMP);
-
-out2:
+bad3:
+	vrele(vp);
 	FILE_UNUSE(fp, p);
 	SCARG(&close_cup, fd) = fd;
 	if ((error = sys_close(p, &close_cup, retval)) != 0)
