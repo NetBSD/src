@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.4 2000/11/08 23:44:01 eeh Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.5 2000/12/19 04:36:05 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -185,7 +185,7 @@ sunkbd_attach(parent, self, aux)
 	}
 	k->k_cc = cc;
 
-	printf("attached \n");
+	printf("\n");
 
 	callout_init(&k->k_repeat_ch);
 
