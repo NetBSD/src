@@ -25,7 +25,7 @@
  * OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS,
  * OR MODIFICATIONS.
  *
- * $Id: deflate.c,v 1.3 2002/05/29 21:47:08 christos Exp $
+ * $Id: deflate.c,v 1.4 2002/05/29 21:47:35 christos Exp $
  */
 
 #include <sys/types.h>
@@ -265,9 +265,6 @@ z_decompress(arg, mi, mo)
     state->strm.next_out = wptr;
     state->strm.avail_out = state->mru + 2;
 
-/*###268 [cc] (Each undeclared identifier is reported only once%%%*/
-/*###268 [cc] `Z_PACKET_FLUSH' undeclared (first use in this function)%%%*/
-/*###268 [cc] for each function it appears in.)%%%*/
     r = inflate(&state->strm, Z_PACKET_FLUSH);
     if (r != Z_OK) {
 #if !DEFLATE_DEBUG
