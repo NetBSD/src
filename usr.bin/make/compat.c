@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.37 2002/01/27 01:50:54 reinoud Exp $	*/
+/*	$NetBSD: compat.c,v 1.38 2002/02/03 19:58:15 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.37 2002/01/27 01:50:54 reinoud Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.38 2002/02/03 19:58:15 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.37 2002/01/27 01:50:54 reinoud Exp $");
+__RCSID("$NetBSD: compat.c,v 1.38 2002/02/03 19:58:15 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -390,7 +390,8 @@ CompatMake (gnp, pgnp)
 	 */
 	gn->flags |= REMAKE;
 	gn->made = BEINGMADE;
-	Suff_FindDeps (gn);
+	if ((gn->type & OP_MADE) == 0)
+	    Suff_FindDeps (gn);
 	Lst_ForEach (gn->children, CompatMake, (ClientData)gn);
 	if ((gn->flags & REMAKE) == 0) {
 	    gn->made = ABORTED;
