@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.11 1997/06/10 06:42:55 thorpej Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.12 1998/01/22 01:32:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -473,6 +473,10 @@ struct elf_args {
         u_long  arg_phentsize;  /* Size of program header */
         u_long  arg_phnum;      /* Number of program headers */
 };
+
+#ifndef _LKM
+#include "opt_execfmt.h"
+#endif
 
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds __P((struct proc *, struct exec_package *));
