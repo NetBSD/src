@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.8 1998/11/12 16:19:48 christos Exp $	*/
+/*	$NetBSD: interact.c,v 1.9 1999/05/03 09:45:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.8 1998/11/12 16:19:48 christos Exp $");
+__RCSID("$NetBSD: interact.c,v 1.9 1999/05/03 09:45:01 christos Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: interact.c,v 1.8 1998/11/12 16:19:48 christos Exp $");
 #include "extern.h"
 
 static void cmd_help __P((struct disklabel *, char *, int));
+static void cmd_chain __P((struct disklabel *, char *, int));
 static void cmd_print __P((struct disklabel *, char *, int));
 static void cmd_part __P((struct disklabel *, char *, int));
 static void cmd_label __P((struct disklabel *, char *, int));
@@ -59,6 +60,7 @@ static void deffstypename __P((char *, int));
 static int getfstypename __P((const char *));
 
 static int rounding = 0;	/* sector rounding */
+static int chaining = 0;	/* make partitions contiguous */
 
 static struct cmds {
 	const char *name;
@@ -66,6 +68,7 @@ static struct cmds {
 	const char *help;
 } cmds[] = {
 	{ "?",	cmd_help,	"print this menu" },
+	{ "C",	cmd_chain,	"make partitions contiguous" },
 	{ "N",	cmd_name,	"name the label" },
 	{ "P",	cmd_print,	"print current partition table" },
 	{ "Q",	NULL,		"quit" },
@@ -92,12 +95,40 @@ cmd_help(lp, s, fd)
 
 
 static void
+cmd_chain(lp, s, fd)
+	struct disklabel *lp;
+	char *s;
+	int fd;
+{
+	int i;
+	char line[BUFSIZ];
+
+	i = getinput(":", "Automatically adjust partitions",
+	    chaining ? "yes" : "no", line);
+
+	if (i <= 0)
+		return;
+
+	switch (line[0]) {
+	case 'y':
+		chaining = 1;
+		return;
+	case 'n':
+		chaining = 0;
+		return;
+	default:
+		printf("Invalid answer\n");
+		return;
+	}
+}
+
+static void
 cmd_print(lp, s, fd)
 	struct disklabel *lp;
 	char *s;
 	int fd;
 {
-	display(stdout, lp);
+	showpartitions(stdout, lp);
 }
 
 
@@ -194,6 +225,18 @@ cmd_part(lp, s, fd)
 		}
 		p->p_size = i;
 		break;
+	}
+
+	if (chaining) {
+		int offs = p[0].p_offset + p[0].p_size;
+		p = lp->d_partitions;
+		part = getrawpartition();
+		for (i = 1; i < lp->d_npartitions; i++) {
+			if (i != part && p[i].p_fstype) {
+				p[i].p_offset = offs;
+				offs = p[i].p_offset + p[i].p_size;
+			}
+		}
 	}
 }
 
