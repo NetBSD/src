@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.8 1997/05/24 16:34:30 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.9 1997/07/20 09:45:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,8 +37,10 @@
  */
 
 #ifndef SMALL
+
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: complete.c,v 1.8 1997/05/24 16:34:30 lukem Exp $";
+__RCSID("$NetBSD: complete.c,v 1.9 1997/07/20 09:45:43 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -53,6 +55,12 @@ static char rcsid[] = "$NetBSD: complete.c,v 1.8 1997/05/24 16:34:30 lukem Exp $
 #include <string.h>
 
 #include "ftp_var.h"
+
+static int	     comparstr		__P((const void *, const void *));
+static unsigned char complete_ambiguous	__P((char *, int, StringList *));
+static unsigned char complete_command	__P((char *, int));
+static unsigned char complete_local	__P((char *, int));
+static unsigned char complete_remote	__P((char *, int));
 
 static int
 comparstr(a, b)
@@ -362,4 +370,5 @@ complete(el, ch)
 
 	return (CC_ERROR);
 }
-#endif
+
+#endif /* !SMALL */
