@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.9 2002/04/09 02:32:52 thorpej Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.10 2002/04/17 12:06:23 kleink Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -1183,7 +1183,7 @@ char *file;
 		fprintf(stderr, "unable to open/create pid file: %s\n", file);
 		return;
 	}
-	fprintf(fp, "%d", getpid());
+	fprintf(fp, "%d\n", getpid());
 	fclose(fp);
 	close(fd);
 }
