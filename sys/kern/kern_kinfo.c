@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.12 1994/01/07 19:26:44 cgd Exp $
+ *	$Id: kern_kinfo.c,v 1.13 1994/01/28 04:55:41 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -49,6 +49,7 @@
 
 #define snderr(e) { error = (e); goto release;}
 extern int kinfo_doproc(), kinfo_rtable(), kinfo_vnode(), kinfo_file();
+extern int kinfo_loadavg();
 struct kinfo_lock kinfo_lock;
 
 /* ARGSUSED */
@@ -85,6 +86,10 @@ getkerninfo(p, uap, retval)
 
 	case KINFO_FILE:
 		server = kinfo_file;
+		break;
+
+	case KINFO_LOADAVG:
+		server = kinfo_loadavg;
 		break;
 
 	default:
