@@ -1,0 +1,41 @@
+# $NetBSD: README,v 1.1 2003/10/26 17:18:04 christos Exp $
+
+This note describes how to add support for gdb53 to a platform.
+
+To make gdb work on your platform of choice you need to populate the files in
+    /usr/src/gnu/usr.bin/gdb53/arch/<platform>
+
+1. Build gdb using the standard configure mechanism in the distribution
+   directory /usr/src/gnu/dist/gdb.
+
+2. Copy generated files (the ?m.h are not present on some platforms)
+        cp gdb/{tm.h,nm.h,xm.h,config.h} ...arch/<platform>
+        cp gdb/init.c ...arch/<platform>/gdb-init.c
+        cp arch/i386/version.c arch/<platform>
+        cp arch/i386/defs.mk arch/<platform>
+
+3. Add coredump and netbsd thread support to init.c (we should fix the autoconf
+   stuff to do this automatically. At the bottom on init.c add:
+
+  _initialize_nbsd_thread ();
+#ifdef USE_TUI
+  _initialize_tui ();
+  _initialize_tuiLayout ();
+  _initialize_tuiRegs ();
+  _initialize_tuiStack ();
+  _initialize_tuiWin ();
+  _initialize_tui_out ();
+#endif
+  _initialize_corelow ();
+
+4. Fix defs.h to have the right files. The readline, libiberty,
+   ones should be ok; for the others, go to the build directory
+
+   ls -1 *.o | sed -e 's/$/ \\/' 
+
+   and then incorporate the resulting sections into defs.mk. This should be
+   done for bfd, gdb, opcodes.
+
+5. Make distclean in the distribution directory and cvs update [distclean
+   removes some generated files we committed because they don't change across
+   platforms]
