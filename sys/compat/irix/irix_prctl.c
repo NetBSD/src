@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.16 2002/08/25 19:03:13 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.17 2002/09/21 21:14:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.16 2002/08/25 19:03:13 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.17 2002/09/21 21:14:57 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -344,17 +344,18 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 		printf("irix_sproc(): new stack addr=0x%08lx, len=0x%08lx\n", 
 		    (u_long)sp, (u_long)len);
 #endif
-		/* Eventually do map for a whole share group */
-		if ((error = irix_sync_saddr_vmcmd(p, &vmc)) != 0)
+		/* Normally it cannot be NULL since we just initialized it */
+		if ((isg = ied->ied_share_group) == NULL)
+			panic("irix_sproc: NULL ied->ied_share_group");
+
+		IRIX_VM_SYNC(p, error = (*vmc.ev_proc)(p, &vmc));
+		if (error)
 			return error;
 
 		/* Update stack parameters for the share group members */
 		ied = (struct irix_emuldata *)p->p_emuldata;
 		stacksize = (p->p_vmspace->vm_minsaddr - sp) / PAGE_SIZE;
 
-		/* Normally it cannot be NULL since we just initialized it */
-		if ((isg = ied->ied_share_group) == NULL)
-			panic("irix_sproc: NULL ied->ied_share_group");
 
 		(void)lockmgr(&isg->isg_lock, LK_EXCLUSIVE, NULL);
 		LIST_FOREACH(iedp, &isg->isg_head, ied_sglist) {
@@ -422,7 +423,6 @@ irix_sproc_child(isc)
 	 */
 	if (inh & IRIX_PR_SADDR) {
 		int error;
-		vaddr_t dstaddrp;
 		vaddr_t vm_min;
 		vsize_t vm_len;
 
@@ -434,8 +434,11 @@ irix_sproc_child(isc)
 
 		/* Clone the mapping from the parent */
 		error = uvm_map_extract(&parent->p_vmspace->vm_map, 
-		    vm_min, vm_len, &p2->p_vmspace->vm_map, &dstaddrp, 0);
+		    vm_min, vm_len, &p2->p_vmspace->vm_map, &vm_min, 0);
 		if (error != 0) {
+#ifdef DEBUG_IRIX
+			printf("irix_sproc_child(): error %d\n", error);
+#endif
 			isc->isc_child_done = 1;
 			wakeup(&isc->isc_child_done);
 			killproc(p2, "failed to initialize share group VM");
@@ -666,123 +669,67 @@ irix_prda_init(p)
 	return error;
 }
 
-
 int
-irix_sync_saddr_syscall(p, v, retval, syscall)
-        struct proc *p;
-	void *v;
-	register_t *retval;
-	int (*syscall) __P((struct proc *, void *, register_t *));
-{
-	struct irix_emuldata *ied;
-	struct irix_emuldata *iedp;
-	int error; 
-	int failures;
-
-	/* 
-	 * If we are not in a share group with shared VM, 
-	 * just do the syscall for the process and return.
-	 */
-	ied = (struct irix_emuldata *)p->p_emuldata;
-	if (ied->ied_share_group == NULL || ied->ied_shareaddr == 0) {
-		error = (*syscall)(ied->ied_p, v, retval);
-		return error;
-	}
-
-	/*
-	 * We are in a share group with shared VM: the operation
-	 * will be applied to all members. One failure of some but not
-	 * all members, we will destroy the whole group. 
-	 */
-	lockmgr(&ied->ied_share_group->isg_lock, LK_EXCLUSIVE, NULL);
-		
-	failures = 0;
-	LIST_FOREACH(iedp, &ied->ied_share_group->isg_head, ied_sglist) {
-		if (iedp->ied_shareaddr == 1)
-			if ((error = (*syscall)(iedp->ied_p, v, retval)) != 0)
-				failures++;
-	}
-
-	/* Full success: the operation succeed or failed for all members */
-	if (failures == 0 || failures == ied->ied_share_group->isg_refcount)
-		error = 0;
-	/* 
-	 * Failure: the operation failed, but not on all members.
-	 * This means that we failed to keep the VM in sync. 
-	 * We will destroy the whole share group 
-	 */
-	if (error != 0) {
-		LIST_FOREACH(iedp, &ied->ied_share_group->isg_head, ied_sglist)
-			killproc(iedp->ied_p, "corrupted share group VM space");
-	}
-
-	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_RELEASE, NULL);
-
-	return error;
-}
-
-int
-irix_sync_saddr_vmcmd(p, evc)
+irix_vm_fault(p, vaddr, fault_type, access_type)
 	struct proc *p;
-	struct exec_vmcmd *evc;
+	vaddr_t vaddr;
+	vm_fault_t fault_type;
+	vm_prot_t access_type;
 {
-
+	int error;
 	struct irix_emuldata *ied;
-	struct irix_emuldata *iedp;
-	int error; 
-	void *addr;
-	int len;
-	int failures;
+	struct vm_map *map;
 
-	/* 
-	 * If we are not in a share group with shared VM, 
-	 * just do the vmcmd for the process and return.
-	 */
 	ied = (struct irix_emuldata *)p->p_emuldata;
-	if (ied->ied_share_group == NULL || ied->ied_shareaddr == 0) {
-		error = (*evc->ev_proc)(p, evc);
-		return error;
-	}
+	map = &p->p_vmspace->vm_map;
 
-	/*
-	 * We are in a share group with shared VM: the operation
-	 * will be applied to all members. One failure of some but not
-	 * all members, we will destroy the whole group. 
-	 */
-	lockmgr(&ied->ied_share_group->isg_lock, LK_EXCLUSIVE, NULL);
-		
-	/*
-	 * We do a shared VM operation.
-	 * Check that this vmcmd does not operate on the private arena
-	 */
-	addr = (void *)evc->ev_addr;
-	len = evc->ev_len;
-	if ((u_long)addr >= (u_long)IRIX_PRDA &&
-	    (u_long)addr + len < (u_long)IRIX_PRDA + sizeof(struct irix_prda))
-		printf("Warning: shared vmcmd on process private arena\n");
+	if (ied->ied_share_group == NULL || ied->ied_shareaddr == 0)
+		return uvm_fault(map, vaddr, fault_type, access_type);
 
-	failures = 0;
-	LIST_FOREACH(iedp, &ied->ied_share_group->isg_head, ied_sglist) {
-		if (iedp->ied_shareaddr == 1)
-			if ((error = (*evc->ev_proc)(iedp->ied_p, evc)) != 0) 
-				failures++;
-	}
-
-	/* Full success: the operation succeed or failed for all members */
-	if (failures == 0 || failures == ied->ied_share_group->isg_refcount)
-		error = 0;
-	/* 
-	 * Failure: the operation failed, but not on all members.
-	 * This means that we failed to keep the VM in sync. 
-	 * We will destroy the whole share group 
-	 */
-	if (error != 0) {
-		LIST_FOREACH(iedp, &ied->ied_share_group->isg_head, ied_sglist)
-			killproc(iedp->ied_p, "corrupted share group VM space");
-	}
-
+	/* share group version */
+	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_EXCLUSIVE, NULL);
+	error = uvm_fault(map, vaddr, fault_type, access_type);
+	irix_vm_sync(p);
 	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_RELEASE, NULL);
 
 	return error;
 }
 
+/*
+ * Propagate changes to address space to other members of the share group
+ */
+void 
+irix_vm_sync(p) 
+	struct proc *p;
+{
+	struct proc *pp;
+	struct irix_emuldata *iedp;
+	struct irix_emuldata *ied = (struct irix_emuldata *)p->p_emuldata;
+	vaddr_t low_min = vm_map_min(&p->p_vmspace->vm_map);
+	vaddr_t low_max = (vaddr_t)IRIX_PRDA;
+	vsize_t low_len = low_max - low_min;
+	vaddr_t top_min = (vaddr_t)IRIX_PRDA + sizeof(struct irix_prda);
+	vaddr_t top_max = vm_map_max(&p->p_vmspace->vm_map);
+	vsize_t top_len = top_max - top_min;
+	int error;
+
+	LIST_FOREACH(iedp, &ied->ied_share_group->isg_head, ied_sglist) {
+		if (iedp->ied_shareaddr != 1 || iedp->ied_p == p)
+			continue;
+
+		pp = iedp->ied_p;
+
+		/* Drop the current VM space except the PRDA */
+		uvm_unmap(&pp->p_vmspace->vm_map, low_min, low_max);
+		uvm_unmap(&pp->p_vmspace->vm_map, top_min, top_max);
+
+		/* Clone the mapping from the fault initiator, except PRDA */
+		if ((error = uvm_map_extract(&p->p_vmspace->vm_map,
+		    low_min, low_len, &pp->p_vmspace->vm_map, &low_min, 0)) ||
+		    (error = uvm_map_extract(&p->p_vmspace->vm_map,
+		    top_min, top_len, &pp->p_vmspace->vm_map, &top_min, 0)))
+			killproc(pp, "failed to keep share group VM in sync");
+	}
+
+	return;
+}
