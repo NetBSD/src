@@ -21,8 +21,6 @@
  * You should have received a copy of the GNU General Public License
  * along with GAWK; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *	$Id: protos.h,v 1.3 1994/02/17 01:22:31 jtc Exp $
  */
 
 #ifdef __STDC__
@@ -34,14 +32,16 @@ extern aptr_t malloc P((MALLOC_ARG_T));
 extern aptr_t realloc P((aptr_t, MALLOC_ARG_T));
 extern aptr_t calloc P((MALLOC_ARG_T, MALLOC_ARG_T));
 
+#if !defined(sun) && !defined(__sun__)
 extern void free P((aptr_t));
-extern char *getenv P((char *));
+#endif
+extern char *getenv P((const char *));
 
 extern char *strcpy P((char *, const char *));
 extern char *strcat P((char *, const char *));
-extern char *strncpy P((char *, const char *, int));
 extern int strcmp P((const char *, const char *));
-extern int strncmp P((const char *, const char *, int));
+extern char *strncpy P((char *, const char *, size_t));
+extern int strncmp P((const char *, const char *, size_t));
 #ifndef VMS
 extern char *strerror P((int));
 #else
@@ -50,12 +50,16 @@ extern char *strerror P((int,...));
 extern char *strchr P((const char *, int));
 extern char *strrchr P((const char *, int));
 extern char *strstr P((const char *s1, const char *s2));
-extern int strlen P((const char *));
+extern size_t strlen P((const char *));
 extern long strtol P((const char *, char **, int));
 #if !defined(_MSC_VER) && !defined(__GNU_LIBRARY__)
 extern size_t strftime P((char *, size_t, const char *, const struct tm *));
 #endif
+#ifdef __STDC__
 extern time_t time P((time_t *));
+#else
+extern long time();
+#endif
 extern aptr_t memset P((aptr_t, int, size_t));
 extern aptr_t memcpy P((aptr_t, const aptr_t, size_t));
 extern aptr_t memmove P((aptr_t, const aptr_t, size_t));
@@ -64,7 +68,11 @@ extern int memcmp P((const aptr_t, const aptr_t, size_t));
 
 extern int fprintf P((FILE *, const char *, ...));
 #if !defined(MSDOS) && !defined(__GNU_LIBRARY__)
-extern size_t fwrite P((const void *, size_t, size_t, FILE *));
+#ifdef __STDC__
+extern size_t fwrite P((const aptr_t, size_t, size_t, FILE *));
+#else
+extern int fwrite();
+#endif
 extern int fputs P((const char *, FILE *));
 extern int unlink P((const char *));
 #endif
@@ -85,7 +93,7 @@ extern int tolower P((int));
 #endif
 
 extern double pow P((double x, double y));
-extern double atof P((char *));
+extern double atof P((const char *));
 extern double strtod P((const char *, char **));
 extern int fstat P((int, struct stat *));
 extern int stat P((const char *, struct stat *));
@@ -99,18 +107,16 @@ extern int dup P((int));
 extern int dup2 P((int,int));
 extern int fork P(());
 extern int execl P((/* char *, char *, ... */));
+#ifndef __STDC__
 extern int read P((int, char *, int));
+#endif
 extern int wait P((int *));
 extern void _exit P((int));
 
-#ifndef __STDC__
-extern long time P((long *));
-#endif
-
 #ifdef NON_STD_SPRINTF
-extern char *sprintf();
+extern char *sprintf P((char *, const char*, ...));
 #else
-extern int sprintf();
+extern int sprintf P((char *, const char*, ...));
 #endif /* SPRINTF_INT */
 
 #undef aptr_t

@@ -15,10 +15,6 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
-
-#ifndef lint
-static char rcsid[] = "$Id: getopt1.c,v 1.4 1994/02/17 01:22:19 jtc Exp $";
-#endif
 
 #ifdef HAVE_CONFIG_H
 #if defined (emacs) || defined (CONFIG_BROKETS)

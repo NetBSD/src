@@ -23,10 +23,6 @@
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: msg.c,v 1.3 1994/02/17 01:22:25 jtc Exp $";
-#endif
-
 #include "awk.h"
 
 int sourceline = 0;
@@ -56,7 +52,7 @@ va_list argp;
 		(void) putc('(', stderr);
 		if (file)
 			(void) fprintf(stderr, "FILENAME=%s ", file);
-		(void) fprintf(stderr, "FNR=%d) ", FNR);
+		(void) fprintf(stderr, "FNR=%ld) ", FNR);
 	}
 	(void) fprintf(stderr, s);
 	vfprintf(stderr, emsg, argp);

@@ -23,10 +23,6 @@
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.4 1994/02/17 01:22:23 jtc Exp $";
-#endif
-
 #include "getopt.h"
 #include "awk.h"
 #include "patchlevel.h"
@@ -59,9 +55,9 @@ NODE *ENVIRON_node, *IGNORECASE_node;
 NODE *ARGC_node, *ARGV_node, *ARGIND_node;
 NODE *FIELDWIDTHS_node;
 
-int NF;
-int NR;
-int FNR;
+long NF;
+long NR;
+long FNR;
 int IGNORECASE;
 char *RS;
 char *OFS;
@@ -138,11 +134,13 @@ char **argv;
 {
 	int c;
 	char *scan;
+	/* the + on the front tells GNU getopt not to rearrange argv */
+	const char *optlist = "+F:f:v:W:m:";
+	int stopped_early = 0;
+	int old_optind;
 	extern int optind;
 	extern int opterr;
 	extern char *optarg;
-	const char *optlist = "+F:f:v:W:m:";
-	int stopped_early = 0;
 
 #ifdef __EMX__
 	_response(&argc, &argv);
@@ -192,10 +190,10 @@ char **argv;
 	/* we do error messages ourselves on invalid options */
 	opterr = 0;
 
-	/* the + on the front tells GNU getopt not to rearrange argv */
-	for (optopt = 0;
+	/* option processing. ready, set, go! */
+	for (optopt = 0, old_optind = 1;
 	     (c = getopt_long(argc, argv, optlist, optab, NULL)) != EOF;
-	     optopt = 0) {
+	     optopt = 0, old_optind = optind) {
 		if (do_posix)
 			opterr = 1;
 		switch (c) {
@@ -258,7 +256,7 @@ char **argv;
 			break;
 
 		case 's':
-			if (strlen(optarg) == 0)
+			if (optarg[0] == '\0')
 				warning("empty argument to --source ignored");
 			else {
 				srcfiles[++numfiles].stype = CMDLINE;
@@ -295,7 +293,12 @@ char **argv;
 			 */
 			if (! do_posix
 			    && (optopt == 0 || strchr(optlist, optopt) == NULL)) {
-				optind--;
+				/*
+				 * can't just do optind--. In case of an
+				 * option with >=2 letters, getopt_long
+				 * won't have incremented optind.
+				 */
+				optind = old_optind;
 				stopped_early = 1;
 				goto out;
 			} else if (optopt)
@@ -312,6 +315,14 @@ out:
 
 	if (do_nostalgia)
 		nostalgia();
+
+	/* check for POSIXLY_CORRECT environment variable */
+	if (! do_posix && getenv("POSIXLY_CORRECT") != NULL) {
+		do_posix = 1;
+		if (do_lint)
+			warning(
+	"environment variable `POSIXLY_CORRECT' set: turning on --posix");
+	}
 
 	/* POSIX compliance also implies no Unix extensions either */
 	if (do_posix)
@@ -339,6 +350,10 @@ out:
 
 	/* Set up the field variables */
 	init_fields();
+
+	if (do_lint && begin_block == NULL && expression_value == NULL
+	     && end_block == NULL)
+		warning("no program");
 
 	if (begin_block) {
 		in_begin_rule = 1;
@@ -722,7 +737,7 @@ char *optstr;
 			if (strncasecmp(cp, "source=", 7) != 0)
 				goto unknown;
 			cp += 7;
-			if (strlen(cp) == 0)
+			if (cp[0] == '\0')
 				warning("empty argument to -Wsource ignored");
 			else {
 				srcfiles[++numfiles].stype = CMDLINE;
