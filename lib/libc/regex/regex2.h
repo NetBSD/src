@@ -1,4 +1,4 @@
-/*	$NetBSD: regex2.h,v 1.10 2003/08/07 16:43:20 agc Exp $	*/
+/*	$NetBSD: regex2.h,v 1.11 2004/03/26 22:42:17 enami Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -206,4 +206,4 @@ struct re_guts {
 
 /* misc utilities */
 #define	OUT	(CHAR_MAX+1)	/* a non-character value */
-#define	ISWORD(c)	(isalnum(c) || (c) == '_')
+#define	ISWORD(c)	(isalnum((unsigned char)c) || (c) == '_')
