@@ -19,7 +19,7 @@ file named COPYING.  Among other things, the copyright notice
 and this notice must be preserved on all copies.  */
 
 #ifndef lint
-static char *rcsid = "$Id: side.c,v 1.3 1993/09/16 17:39:29 jtc Exp $";
+static char *rcsid = "$Id: side.c,v 1.4 1993/09/29 21:37:13 jtc Exp $";
 #endif
 
 #include "diff.h"
@@ -142,7 +142,7 @@ print_half_line (line, indent, out_bound)
 	  break;
 
 	default:
-	  if (! isgraph (c))
+	  if (! isprint (c))
 	    goto control_char;
 	  /* falls through */
 	case ' ':

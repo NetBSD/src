@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#include "system.h"
 #include <ctype.h>
 #include <stdio.h>
-#include "system.h"
 #include "regex.h"
 
 #ifndef PR_FILE_NAME

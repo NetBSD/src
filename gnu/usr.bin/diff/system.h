@@ -17,7 +17,15 @@ You should have received a copy of the GNU General Public License
 along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+/* We must define `volatile' and `const' first (the latter inside config.h),
+   so that they're used consistently in all system includes.  */
+#if !__STDC__
+#ifndef volatile
+#define volatile
+#endif
+#endif
 #include <config.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -29,11 +37,31 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define VOID char
 #endif
 
+#if STAT_MACROS_BROKEN
+#undef S_ISBLK
+#undef S_ISCHR
+#undef S_ISDIR
+#undef S_ISFIFO
+#undef S_ISREG
+#undef S_ISSOCK
+#endif
 #ifndef S_ISDIR
 #define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
 #endif
 #ifndef S_ISREG
 #define S_ISREG(mode) (((mode) & S_IFMT) == S_IFREG)
+#endif
+#if !defined(S_ISBLK) && defined(S_IFBLK)
+#define S_ISBLK(mode) (((mode) & S_IFMT) == S_IFBLK)
+#endif
+#if !defined(S_ISCHR) && defined(S_IFCHR)
+#define S_ISCHR(mode) (((mode) & S_IFMT) == S_IFCHR)
+#endif
+#if !defined(S_ISFIFO) && defined(S_IFFIFO)
+#define S_ISFIFO(mode) (((mode) & S_IFMT) == S_IFFIFO)
+#endif
+#if !defined(S_ISSOCK) && defined(S_IFSOCK)
+#define S_ISSOCK(mode) (((mode) & S_IFMT) == S_IFSOCK)
 #endif
 
 #ifndef S_IXOTH
@@ -137,9 +165,11 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #if HAVE_STDLIB_H
 #include <stdlib.h>
 #else
-char *getenv ();
 VOID *malloc ();
 VOID *realloc ();
+#endif
+#ifndef getenv
+char *getenv ();
 #endif
 
 #if HAVE_LIMITS_H
@@ -172,7 +202,6 @@ VOID *realloc ();
 #define memcmp(s1,s2,n) bcmp (s1,s2,n)
 #endif
 #endif /* !HAVE_STRING_H */
-
 #if !HAVE_MEMCHR
 char *memchr ();
 #endif
@@ -180,12 +209,6 @@ char *memchr ();
 #include <errno.h>
 #if !STDC_HEADERS
 extern int errno;
-#endif
-
-#if !__STDC__
-#ifndef volatile
-#define volatile
-#endif
 #endif
 
 #define min(a,b) ((a) <= (b) ? (a) : (b))
