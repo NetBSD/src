@@ -1,4 +1,4 @@
-.\" $NetBSD: xfer,v 1.6 2000/03/13 22:37:15 soren Exp $	
+.\" $NetBSD: xfer,v 1.7 2000/08/22 15:34:00 minoura Exp $	
 .
 Installation is supported from several media types, including:
 .Bl -bullet -compact -offset indent
@@ -12,10 +12,63 @@ Remote NFS partition
 FTP
 .El
 .Pp
-You'll need to have a install floppy disk. On the first, you'll put
-the install floppy image.
+Other than that, you'll have to prepare the installer.  There are
+two ways to invoke the
+.Nx
+installer;
 .Pp
-If you are using a UN*X-like system to write the floppy images to
+.Bl -bullet -compact -offset indent
+.It
+Use
+.Pa loadbsd.x
+utility to boot
+.Nx
+from Human68k
+.It
+Create a boot floppy which contains the install kernel
+.El
+.Pp
+When you chose the first method, you have to put the install kernel
+.Pa netbsdsi
+(for the standard 
+.Dq sysinst
+installer) or
+.Pa netbsd
+(for the small 
+.Dq script
+installer) and
+.Pa loadbsd.x
+utility.  These files can be found in
+.Pa installation/misc
+directory of the
+.Nx
+distribution.
+The difference between the two installer is described below.
+.Pp
+To invoke the installer, just type
+.D1 Ic loadbsd.x netbsdsi
+or
+.D1 Ic loadbsd.x netbsd
+from Human68k command line.
+.Pp
+When you chose the second method, you have to create the boot floppy
+from the floppy image
+.Pa sysinst.fs
+(for the standard 
+.Dq sysinst
+installer) or
+.Pa boot.fs
+(for the small 
+.Dq script
+installer).
+The image files can be found in
+.Pa installation/floppy
+directory of the
+.Nx
+distribution.
+The difference between the two installer is described below.
+.Pp 
+If you are using a UN*X-like system to write the floppy image to
 disks, you should use the 
 .Pa dd
 command to copy the file system images (.fs files) directly to the raw
@@ -33,18 +86,8 @@ utility, provided in the
 directory of the NetBSD distribution. It will write the file system
 images (.fs files) to disks.
 .Pp
-If you can retrieve
-.Pa loadbsd.x
-utility and
-.Pa netbsd.INSTALL
-file which can be found in
-.Pa installation/misc
-directory into your Human68k disk, you can run installation kernel
-without preparing the special boot floppy.  Simply type:
-.D1 Ic loadbsd netbsd.INSTALL
-from the Human68k command line, then
-.Nx
-will start the installation sequence.
+To use the boot floppy, insert the floppy to your floppy drive 0,
+and reboot your computer with OPT.1 key pressed.
 .Pp
 Obviously, the steps necessary to prepare the distribution sets for
 installation or upgrade depend on which installation medium you

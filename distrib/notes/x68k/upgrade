@@ -1,4 +1,4 @@
-.\" $NetBSD: upgrade,v 1.9 1999/04/15 15:18:21 minoura Exp $	
+.\" $NetBSD: upgrade,v 1.10 2000/08/22 15:34:00 minoura Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,52 +32,18 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .
-The upgrade to
-.Nx \*V
-is a binary upgrade; it can be quite difficult
-to advance to a later version by recompiling from source due primarily
-to interdependencies in the various components.
-.Pp
-To do the upgrade, you must have the bootable install floppy
-.Pa boot.fs ,
-or,
-.Pa loadbsd.x
-utility and
-.Pa netbsd.INSTALL
-file which can be found in
-.Pa installation/misc in your Human68k disk.
-You must also have at least the
-.Sy base No and Sy kern
-binary distribution sets available, so that you can upgrade with it,
-using one of the upgrade methods described below.  Finally, you must
-have sufficient disk space available to install the new binaries.
-Since the old binaries are being overwritten in place, you only need
-space for the new binaries, which weren't previously on the system.
-If you have a few megabytes free on each of your root and
-.Pa /usr
-partitions, you should have enough space.
-.Pp
-Since upgrading involves replacing the boot blocks on your
-.Nx
-partition, the kernel, and most of the system binaries, it has the
-potential to cause data loss.  You are strongly advised to
-.Em back up any important data on your disk ,
-whether on the
-.Nx
-partition or on
-another operating system's partition, before beginning the upgrade
-process.
-.Pp
-To upgrade your system, follow the following instructions:
-.Bl -enum
-.It
-Boot your machine using of the boot.fs floppy, or boot with
-.Pa loadbsd.x
-utility.
-.It
-You will be presented with a welcome message and a prompt
+.so ../common/upgrade
+
+Upgrading procedure using the
+.Dq script
+installer is much more complicated than that with
+.Dq sysinst
+installer.  When the installer comes up, 
+you will be presented with a welcome message and a prompt
 asking whether you are going to "install" NetBSD or "upgrade"
 an exisiting system.  Select "upgrade" to start.
+.Pp
+.Bl -enum
 .It
 You will be presented with some information about the upgrade
 process and a warning message, and will be asked if you wish
