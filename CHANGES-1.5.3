@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.42 2002/02/23 21:06:19 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.43 2002/02/24 16:18:43 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -41,7 +41,7 @@ sys/compat/vax1k/vax1k_subr.c			delete
 usr.sbin/lpr/common_source/displayq.c		1.21
 
   Fix buffer overflow reading from queue file.  Also increase the
-  size of buffers for file names.
+  size of buffers for file names.  Fixes SA#2001-018.
 
 sys/arch/sun3/sun3/disksubr.c			patch
 
@@ -1275,7 +1275,7 @@ sys/miscfs/procfs/procfs_vnops.c		1.88 via patch
 
   Fix a ptrace/execve race condition which could be used to modify
   the child process' image during execve.  This would be a security
-  issue due to setuid programs.
+  issue due to setuid programs.  Fixes SA#2002-001.
 
 distrib/notes/common/main			1.150
 
@@ -1723,7 +1723,7 @@ sys/dev/pci/pciide.c				1.143
 
   In hpt_pci_intr(), accept interrupt only once IDEDMA_CTL_ACT is
   turned off.  Fixes DMA errors, lost interrupts, and other nasty
-  errors with some HPT730s in native mode.
+  errors with some HPT370s in native mode.
 
 sys/arch/mvme68k/stand/libsa/Makefile		1.18 via patch
 
