@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 1999/12/22 05:55:26 tsubai Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2000/01/23 15:58:04 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -49,13 +49,16 @@ struct cfattach mainbus_ca = {
 	sizeof(struct mainbus_softc), mbmatch, mbattach
 };
 
+/* There can be only one. */
+static int mainbus_found;
+
 static int
 mbmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	if (cf->cf_unit > 0)
+	if (mainbus_found)
 		return 0;
 
 	return 1;
@@ -70,6 +73,7 @@ mbattach(parent, self, aux)
 	register struct device *mb = self;
 	struct confargs nca;
 
+	mainbus_found = 1;
 	printf("\n");
 
 	nca.ca_name = "cpu";
