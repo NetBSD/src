@@ -30,7 +30,7 @@
  */
 
 /*
- * $Id: aic6360.c,v 1.5 1994/05/05 05:36:25 cgd Exp $
+ * $Id: aic6360.c,v 1.5.2.1 1994/08/07 10:52:40 mycroft Exp $
  *
  * Acknowledgements: Many of the algorithms used in this driver are
  * inspired by the work of Julian Elischer (julian@tfs.com) and
@@ -57,7 +57,7 @@
  * transparently to the processor.  This speeds up some things, notably long
  * data transfers.
  */
-#define AIC_USE_DWORDS 1
+#define AIC_USE_DWORDS 0
 
 /* Allow disconnects?  Was mainly used in an early phase of the driver when
  * the message system was very flaky.  Should go away soon.
@@ -790,7 +790,6 @@ aicattach(parent, self, aux)
 
 	AIC_TRACE(("aicattach\n"));
 	aic->state = 0;
-	aic_scsi_reset(aic);
 	aic_init(aic);	/* Init chip and driver */
 
 	/*
@@ -859,7 +858,6 @@ aic_scsi_reset(aic)
 {
 	u_short iobase = aic->iobase;
 
-	printf("aic: resetting SCSI bus\n");
 	outb(SCSISEQ, SCSIRSTO);
 	delay(500);
 	outb(SCSISEQ, 0);
@@ -878,8 +876,7 @@ aic_init(aic)
 	struct acb *acb;
 	int r;
 	
-	if (!(inb(SSTAT1) & SCSIRSTI)) /* Reset the SCSI-bus itself */
-		aic_scsi_reset(aic);
+	aic_scsi_reset(aic);
 
 	aic6360_reset(aic);	/* Clean up our own hardware */
 
@@ -1693,30 +1690,18 @@ aic_dataout(aic)
 	register struct aic_softc *aic;
 {
 	register u_short iobase = aic->iobase;
-	register unsigned xfers;
 	register u_char dmastat;
 	struct acb *acb = aic->nexus;
 	int amount, olddleft = aic->dleft;
-#if AIC_USE_DWORDS
-#define B_MASK 3
-#define C_SHIFT 2
-#else
-#define B_MASK 1
-#define C_SHIFT 1
-#endif
-#define DOUTAMOUNT 64		/* Half a FIFO */
+#define DOUTAMOUNT 128		/* Full FIFO */
 
-	AIC_TRACE(("aic_dataout\n"));
-	/* Setup for normal mode transfers, p6-5 in doc. */
-	/* 1) Set DOUT phase in SCSISIG register
-	 * 2) Turn off data path
-	 * 3) Reset all FIFOs and counters
-	 * 4) Enable the datachannel
-	 */
+	/* Enable DATA OUT transfers */
 	outb(SCSISIGO, PH_DOUT);
 	outb(CLRSINT1, CLRPHASECHG);
+	/* Clear FIFOs and counters */
+	outb(SXFRCTL0, CHEN|CLRSTCNT|CLRCH);
 	outb(DMACNTRL0, WRITE|INTEN|RSTFIFO);
-	outb(SXFRCTL0, CHEN|CLRCH|CLRSTCNT);
+	/* Enable FIFOs */
 	outb(SXFRCTL0, SCSIEN|DMAEN|CHEN);
 	outb(DMACNTRL0, ENDMA|DWORDPIO|WRITE|INTEN);
 
@@ -1731,56 +1716,59 @@ aic_dataout(aic)
 	 * means that some of the code following the loop is a bit more 
 	 * complex than otherwise.
 	 */
-	amount = (min(DOUTAMOUNT, aic->dleft)) & ~B_MASK;
-	xfers = amount >> C_SHIFT;
-	while (xfers) {
-		/* First wait for FIFO less than halffull, or a phasechange */
-		LOGLINE(aic);
-		do {
-			dmastat = inb(DMASTAT);
-		} while ((dmastat & DFIFOHF) && !(dmastat & INTSTAT));
+	while (aic->dleft) {
+		int xfer;
 
-		if (dmastat & DFIFOHF) /* Fifo more than halffull? */
-			break;
+		LOGLINE(aic);
+
+		for (;;) {
+			dmastat = inb(DMASTAT);
+			if (dmastat & DFIFOEMP)
+				break;
+			if (dmastat & INTSTAT)
+				goto phasechange;
+		}
+
+		xfer = min(DOUTAMOUNT, aic->dleft);
+
 #if AIC_USE_DWORDS
-		outsl(DMADATALONG, aic->dp, xfers);
+		if (xfer >= 12) {
+			outsl(DMADATALONG, aic->dp, xfer/4);
+			aic->dleft -= xfer & ~3;
+			aic->dp += xfer & ~3;
+			xfer &= 3;
+		}
 #else
-		outsw(DMADATA, aic->dp, xfers);
+		if (xfer >= 8) {
+			outsw(DMADATA, aic->dp, xfer/2);
+			aic->dleft -= xfer & ~1;
+			aic->dp += xfer & ~1;
+			xfer &= 1;
+		}
 #endif
-		aic->dleft -= amount;
-		aic->dp += amount;
-/*		AIC_MISC(("-%d ", amount)); */
-		amount = (min(DOUTAMOUNT, aic->dleft)) & ~B_MASK;
-		xfers = amount >> C_SHIFT;
-	}
-	/* State: phasechange || less than 4 bytes left
-	 * to transfer.  Note: resets and unexpected busfrees are handled as
-	 * phasechanges.  These conditions will be handled on a later
-	 * interrupt by the main interrupt routine.
-	 */
-	/* Handle the last few bytes */
-	while (!(dmastat & INTSTAT) && aic->dleft > 0) {
-		LOGLINE(aic);
-		do {
-			dmastat = inb(DMASTAT);
-		} while ((dmastat & DFIFOFULL) && !(dmastat & INTSTAT));
 
-		if (dmastat & DFIFOFULL) /* Fifo still full? */
-			break;
-		outb(DMADATA, *aic->dp);
-		AIC_MISC(("-1 "));
-		aic->dp++;
-		aic->dleft--;
+		if (xfer) {
+			outb(DMACNTRL0, ENDMA|B8MODE|INTEN);
+			outsb(DMADATA, aic->dp, xfer);
+			aic->dleft -= xfer;
+			aic->dp += xfer;
+			outb(DMACNTRL0, ENDMA|DWORDPIO|INTEN);
+		}
 	}
-	/* State: reset || busfree || phasechange || 0 bytes left */
+
 	/* See the bytes off chip */
-	do {
+	for (;;) {
 		dmastat = inb(DMASTAT);
-	} while (!(dmastat & INTSTAT) && 
-		 (!(dmastat & DFIFOEMP) || !(inb(SSTAT2) & SEMPTY)));
+		if ((dmastat & DFIFOEMP) && (inb(SSTAT2) & SEMPTY))
+			break;
+		if (dmastat & INTSTAT)
+			goto phasechange;
+	}
 
-	/* We now have either a phasechange or the data are off chip.  */
+phasechange:
+	/* We now have the data off chip.  */
 	outb(SXFRCTL0, CHEN);
+
 	if (dmastat & INTSTAT) { /* Some sort of phasechange */
 		register u_char sstat2;
 		/* Stop transfers, do some accounting */
@@ -1790,8 +1778,8 @@ aic_dataout(aic)
 			amount += sstat2 & SFULL ? 8 : 0;
 		else
 			amount += sstat2 & 7;
-		aic->dp -= amount;
 		aic->dleft += amount;
+		aic->dp -= amount;
 		AIC_MISC(("+%d ", amount));
 	}
 	
@@ -1822,7 +1810,7 @@ aic_datain(aic)
 	register u_char dmastat;
 	struct acb *acb = aic->nexus;
 	int amount, olddleft = aic->dleft;
-#define DINAMOUNT 64		/* Default amount of data to transfer */
+#define DINAMOUNT 128		/* Default amount of data to transfer */
 	
 	/* Enable DATA IN transfers */
 	outb(SCSISIGO, PH_DIN);
@@ -1835,45 +1823,68 @@ aic_datain(aic)
 	outb(DMACNTRL0, ENDMA|DWORDPIO|INTEN);
 
 	outb(SIMODE1, ENSCSIRST|ENPHASEMIS|ENBUSFREE|ENPHASECHG);
+
 	/* We leave this loop if one or more of the following is true:
 	 * a) phase != PH_DIN && FIFOs are empty
 	 * b) SCSIRSTI is set (a reset has occurred) or busfree is detected.
 	 */
-	while (aic->dleft >= DINAMOUNT) {
-		LOGLINE(aic);
-		do {	/* Wait for fifo half full or phase mismatch */
-			dmastat = inb(DMASTAT);
-		} while (!(dmastat & (DFIFOHF|INTSTAT)));
+	while (aic->dleft) {
+		int done = 0;
+		int xfer;
 
-		/* If FIFO isn't half full (probably because target left the
-		 * DIN phase) we should adjust amount
-		 */
-		if (!(dmastat & DFIFOHF)) /* Must be an interrupt */
-			break;
-#if AIC_USE_DWORDS
-		insl(DMADATALONG, aic->dp, DINAMOUNT/4);
-#else
-		insw(DMADATA, aic->dp, DINAMOUNT/2);
-#endif
-		aic->dp += DINAMOUNT;
-		aic->dleft -= DINAMOUNT;
-	}
-	/* One (or more) of the following has occured:
-	 * phasechg (including reset and busfree) || 
-	 * dleft < DINAMOUNT.  Let's sort it out.
-	 */
-	/* First, let's pull out any leftover data from the FIFO */
-	while (aic->dleft > 0) {
 		LOGLINE(aic);
-		do {
+
+		/* Wait for fifo half full or phase mismatch */
+		for (;;) {
 			dmastat = inb(DMASTAT);
-		} while (!(dmastat & (DFIFOEMP|INTSTAT)));
-		if ((dmastat & (DFIFOEMP|INTSTAT)) == (DFIFOEMP|INTSTAT))
+			if (dmastat & (DFIFOFULL|INTSTAT))
+				break;
+		}
+
+		if (dmastat & DFIFOFULL)
+			xfer = DINAMOUNT;
+		else {
+			while ((inb(SSTAT2) & SEMPTY) == 0)
+				;
+			xfer = inb(FIFOSTAT);
+			done = 1;
+		}
+
+		xfer = min(xfer, aic->dleft);
+
+#if AIC_USE_DWORDS
+		if (xfer >= 12) {
+			insl(DMADATALONG, aic->dp, xfer/4);
+			aic->dleft -= xfer & ~3;
+			aic->dp += xfer & ~3;
+			xfer &= 3;
+		}
+#else
+		if (xfer >= 8) {
+			insw(DMADATA, aic->dp, xfer/2);
+			aic->dleft -= xfer & ~1;
+			aic->dp += xfer & ~1;
+			xfer &= 1;
+		}
+#endif
+
+		if (xfer) {
+			outb(DMACNTRL0, ENDMA|B8MODE|INTEN);
+			insb(DMADATA, aic->dp, xfer);
+			aic->dleft -= xfer;
+			aic->dp += xfer;
+			outb(DMACNTRL0, ENDMA|DWORDPIO|INTEN);
+		}
+
+		if (done)
 			break;
-		*aic->dp++ = inb(DMADATA);
-		aic->dleft--;
 	}
-	/* Now, either dleft == 0 || phasechg */
+
+#if 0
+	if (aic->dleft)
+		printf("residual %d\n", aic->dleft);
+#endif
+
 	aic->progress = olddleft != aic->dleft;
 	/* Some SCSI-devices are rude enough to transfer more data than what
 	 * was requested, e.g. 2048 bytes from a CD-ROM instead of the 
@@ -1884,16 +1895,23 @@ aic_datain(aic)
 	if (!aic->progress) {
 		int extra = 0;
 		LOGLINE(aic);
-		while (!((dmastat = inb(DMASTAT)) & DFIFOEMP)) {
-			inb(DMADATA); /* Throw it away */
+
+		for (;;) {
+			dmastat = inb(DMASTAT);
+			if (dmastat & DFIFOEMP)
+				break;
+			(void) inb(DMADATA); /* Throw it away */
 			extra++;
 		}
+
 		AIC_MISC(("aic: %d extra bytes from %d:%d\n", extra,
 		    acb->xs->sc_link->target, acb->xs->sc_link->lun));
 		aic->progress = extra;
 	}
+
 	/* Stop the FIFO data path */
 	outb(SXFRCTL0, CHEN);
+
 	outb(DMACNTRL0, RSTFIFO|INTEN);
 	/* Come back when REQ is set again */
 	outb(SIMODE1, ENSCSIRST|ENBUSFREE|ENSCSIPERR|ENREQINIT);
