@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.47 2000/06/04 19:14:46 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.48 2000/06/04 21:27:41 mycroft Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -342,7 +342,7 @@ intr_calculatemasks()
 		int irqs = 1 << irq;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
-		intrmask[irq] = irqs;
+		intrmask[irq] = irqs | (1 << IPL_TAGINTR);
 	}
 
 	/* Lastly, determine which IRQs are actually in use. */
