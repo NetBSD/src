@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.42 2002/03/25 02:23:56 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.42.4.1 2002/10/21 01:54:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.42 2002/03/25 02:23:56 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.42.4.1 2002/10/21 01:54:27 lukem Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -309,6 +309,9 @@ WRITE(void *v)
 
 	ubc_alloc_flags = UBC_WRITE;
 	while (uio->uio_resid > 0) {
+		boolean_t extending; /* if we're extending a whole block */
+		off_t newoff;
+
 		oldoff = uio->uio_offset;
 		blkoffset = blkoff(fs, uio->uio_offset);
 		bytelen = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
@@ -320,9 +323,10 @@ WRITE(void *v)
 		 * since the new blocks will be inaccessible until the write
 		 * is complete.
 		 */
+		extending = uio->uio_offset >= preallocoff &&
+		    uio->uio_offset < endallocoff;
 
-		if (uio->uio_offset < preallocoff ||
-		    uio->uio_offset >= endallocoff) {
+		if (!extending) {
 			error = ufs_balloc_range(vp, uio->uio_offset, bytelen,
 			    cred, aflag);
 			if (error) {
@@ -347,18 +351,31 @@ WRITE(void *v)
 		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
 		    ubc_alloc_flags);
 		error = uiomove(win, bytelen, uio);
-		ubc_release(win, 0);
-		if (error) {
-			break;
+		if (error && extending) {
+			/*
+			 * if we haven't initialized the pages yet,
+			 * do it now.  it's safe to use memset here
+			 * because we just mapped the pages above.
+			 */
+			memset(win, 0, bytelen);
 		}
+		ubc_release(win, 0);
 
 		/*
 		 * update UVM's notion of the size now that we've
 		 * copied the data into the vnode's pages.
+		 *
+		 * we should update the size even when uiomove failed.
+		 * otherwise ffs_truncate can't flush soft update states.
 		 */
 
-		if (vp->v_size < uio->uio_offset) {
-			uvm_vnp_setsize(vp, uio->uio_offset);
+		newoff = oldoff + bytelen;
+		if (vp->v_size < newoff) {
+			uvm_vnp_setsize(vp, newoff);
+		}
+
+		if (error) {
+			break;
 		}
 
 		/*
