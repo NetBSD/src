@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405.h,v 1.1 2005/01/13 17:07:24 shige Exp $	*/
+/*	$NetBSD: obs405.h,v 1.2 2005/01/18 17:55:16 shige Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -70,6 +70,7 @@
 /*
  * extern variables and functions
  */
+extern void obs405_cpu_startup(void);
 extern void obs405_device_register(struct device *dev, void *aux);
 
 #endif	/* _EVBPPC_OBS405_H_ */
