@@ -65,7 +65,7 @@
  */
 /* 
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.11 1994/07/31 08:27:38 lkestel Exp $
+ *	$Id: pmap.c,v 1.12 1994/07/31 08:28:32 lkestel Exp $
  */
 
 /*
@@ -251,8 +251,6 @@ vm_offset_t	avail_end;	/* PA of last available physical page */
 
 #if defined(MACHINE_NONCONTIG)
 vm_offset_t	avail_next;	/* Next available physical page		*/
-vm_offset_t	hole_start;	/* Start of hole between banks A and B	*/
-vm_offset_t	hole_end;	/* End of hole between bank A and B	*/
 int		avail_remaining;/* Number of physical free pages left	*/
 int		avail_range;	/* Range avail_next is in		*/
 #endif
