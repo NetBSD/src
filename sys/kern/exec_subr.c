@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.40 2003/08/24 17:52:47 chs Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.41 2003/08/29 01:44:02 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.40 2003/08/24 17:52:47 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.41 2003/08/29 01:44:02 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,14 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.40 2003/08/24 17:52:47 chs Exp $");
  * (calls, extends, kills).
  */
 
-#ifdef DEBUG
 /*
  * new_vmcmd():
  *	create a new vmcmd structure and fill in its fields based
  *	on function call arguments.  make sure objects ref'd by
  *	the vmcmd are 'held'.
- *
- * If not debugging, this is a macro, so it's expanded inline.
  */
 
 void
@@ -80,7 +77,6 @@ new_vmcmd(struct exec_vmcmd_set *evsp,
 	vcp->ev_prot = prot;
 	vcp->ev_flags = flags;
 }
-#endif /* DEBUG */
 
 void
 vmcmdset_extend(struct exec_vmcmd_set *evsp)
