@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.198 2000/03/06 18:41:59 kleink Exp $
+#	$NetBSD: mi,v 1.199 2000/03/14 08:44:54 shin Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -79,6 +79,8 @@
 ./usr/include/dev/eisa/eisadevs_data.h	comp-c-include
 ./usr/include/dev/eisa/eisareg.h	comp-c-include
 ./usr/include/dev/eisa/eisavar.h	comp-c-include
+./usr/include/dev/hpc		comp-c-include
+./usr/include/dev/hpc/hpcfbio.h	comp-c-include
 ./usr/include/dev/i2c	comp-c-include
 ./usr/include/dev/i2c/i2c_bus.h	comp-c-include
 ./usr/include/dev/i2c/i2c_eeprom.h	comp-c-include
