@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.121 1995/04/21 04:51:30 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.122 1995/04/21 06:23:51 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -152,17 +152,15 @@
 	.data
 
 	.globl	_cpu,_cpu_vendor,_cold,_esym,_boothowto,_bootdev,_atdevbase
-	.globl	_cyloffset,_proc0paddr,_curpcb,_IdlePTD,_KPTphys
+	.globl	_cyloffset,_proc0paddr,_curpcb,_IdlePTD
 _cpu:		.long	0	# are we 386, 386sx, or 486
 _cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
 _cold:		.long	1	# cold till we are not
 _esym:		.long	0	# ptr to end of syms
 _atdevbase:	.long	0	# location of start of iomem in virtual
-_atdevphys:	.long	0	# location of device mapping ptes (phys)
 _cyloffset:	.long	0
 _proc0paddr:	.long	0
 _IdlePTD:	.long	0
-_KPTphys:	.long	0
 
 	.space 512
 tmpstk:
@@ -405,23 +403,20 @@ try586:	/* Use the `cpuid' instruction. */
 /*
  * Build initial page tables.
  */
-	leal	(SYSMAP)(%esi),%ebx			#   physical address of KPT in proc 0,
-	movl	%ebx,_KPTphys-KERNBASE			#    in the kernel page table,
-
-	/* XXX Map the first MB of memory read-write. */
-	movl	$(0+PG_V|PG_KW),%eax			#  having these bits set,
-	movl	$(KERNTEXTOFF-KERNBASE),%ecx
-	shrl	$PGSHIFT,%ecx
-	fillkpt
-
 	/* Calculate end of text segment, rounded to a page. */
 	leal	(_etext-KERNBASE+PGOFSET),%edx
 	andl	$~PGOFSET,%edx
 	
-	/* Map the kernel text read-only. */
-	leal	(KERNBASE-KERNTEXTOFF)(%edx),%ecx
+	/* Skip over the first 1MB. */
+	movl	$(KERNTEXTOFF-KERNBASE),%eax
+	movl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	andl	$PG_FRAME,%eax
+	leal	(SYSMAP)(%esi,%ecx,4),%ebx
+
+	/* Map the kernel text read-only. */
+	movl	%edx,%ecx
+	subl	%eax,%ecx
+	shrl	$PGSHIFT,%ecx
 #ifdef DDB
 	orl	$(PG_V|PG_KW),%eax
 #else
@@ -430,17 +425,15 @@ try586:	/* Use the `cpuid' instruction. */
 	fillkpt
 
 	/* Map the data, BSS, and bootstrap tables read-write. */
+	leal	(PG_V|PG_KW)(%edx),%eax
 	leal	(TABLESIZE)(%esi),%ecx		# end of tables
 	subl	%edx,%ecx			# subtract end of text
 	shrl	$PGSHIFT,%ecx
-	andl	$PG_FRAME,%eax
-	orl	$(PG_V|PG_KW),%eax
 	fillkpt
 
 	/* Map ISA I/O memory. */
-	movl	$(IOM_SIZE>>PGSHIFT),%ecx		# for this many pte s,
 	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax	# having these bits set
-	movl	%ebx,_atdevphys-KERNBASE		# remember phys addr of ptes
+	movl	$(IOM_SIZE>>PGSHIFT),%ecx		# for this many pte s,
 	fillkpt
 
 	/* Map proc 0's kernel stack into user page table page. */
@@ -456,20 +449,19 @@ try586:	/* Use the `cpuid' instruction. */
  */
 	/* Install a PDE for temporary double map of kernel text. */
 	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		#   pte for KPT in proc 0,
-	movl	%eax,(%esi)				# which is where temp maps!
-
+	movl	%eax,(PROC0PDIR+0*4)(%esi)		# which is where temp maps!
 	/* Map kernel PDEs. */
 	movl	$NKPDE,%ecx				# for this many pde s,
-	leal	(KPTDI*4)(%esi),%ebx			# offset of pde for kernel
+	leal	(PROC0PDIR+KPTDI*4)(%esi),%ebx		# offset of pde for kernel
 	fillkpt
 
 	/* Install a PDE recursively mapping page directory as a page table! */
 	leal	(PROC0PDIR+PG_V|PG_KW)(%esi),%eax	# pte for ptd
-	movl	%eax,(PTDPTDI*4)(%esi)			# which is where PTmap maps!
+	movl	%eax,(PROC0PDIR+PTDPTDI*4)(%esi)	# which is where PTmap maps!
 
 	/* Install a PDE to map kernel stack for proc 0. */
 	leal	(PROC0STACKMAP+PG_V|PG_KW)(%esi),%eax	# pte for pt in proc 0
-	movl	%eax,(UPTDI*4)(%esi)			# which is where kernel stack maps!
+	movl	%eax,(PROC0PDIR+UPTDI*4)(%esi)		# which is where kernel stack maps!
 
 #ifdef BDB
 	/* Copy and convert stuff from old GDT and IDT for debugger. */
@@ -529,13 +521,12 @@ try586:	/* Use the `cpuid' instruction. */
 	pushl	$begin			# jump to high mem
 	ret
 
-begin:	/* Now running relocated at KERNBASE. */
+begin:
+	/* Now running relocated at KERNBASE.  Remove double mapping. */
+	movl	$0,(PROC0PDIR+0*4)(%esi)
 
 	/* Relocate atdevbase. */
-	movl	_atdevphys,%edx		# get pte PA
-	subl	_KPTphys,%edx		# remove base of ptes; have phys offset
-	shll	$(PGSHIFT-2),%edx	# corresponding to virt offset
-	addl	$(KERNBASE),%edx	# add virtual base
+	leal	(TABLESIZE+KERNBASE)(%esi),%edx
 	movl	%edx,_atdevbase
 
 	/* Set up bootstrap stack. */
@@ -561,12 +552,10 @@ reloc_gdt:
 1:
 #endif /* BDB */
 
-	leal	(TABLESIZE)(%esi),%esi	# skip past stack and page tables
-	pushl	%esi
+	leal	(TABLESIZE)(%esi),%eax	# skip past stack and page tables
+	pushl	%eax
 	call	_init386		# wire 386 chip for unix operation
 	addl	$4,%esp
-
-	movl	$0,_PTD
 
 	/*
 	 * Set up the initial stack frame for execve() to munge.
