@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_any.c,v 1.4 2001/06/27 17:41:03 fredette Exp $	*/
+/*	$NetBSD: zs_any.c,v 1.5 2001/11/26 18:06:36 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 
 #include <sun2/sun2/machdep.h>
 #include <dev/ic/z8530reg.h>
+#include <dev/sun/kbd_reg.h>
 
 /****************************************************************
  * Autoconfig
@@ -168,7 +169,12 @@ zs_console_flags(promunit, node, channel)
 	else
 		cookie = -1;
 
-	if (cookie == prom_stdin())
+	/*
+	 * We have the console keyboard only if it's a Sun-2 
+	 * keyboard or better. (i.e., not a Sun-1 parallel kbd).
+	 */
+	if (cookie == prom_stdin() &&
+	    (cookie != PROMDEV_KBD || prom_kbdid() >= KB_SUN2))
 		flags |= ZS_HWFLAG_CONSOLE_INPUT;
 
 	/*
