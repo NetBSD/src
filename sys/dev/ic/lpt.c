@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.52 1998/10/14 20:09:06 perry Exp $	*/
+/*	$NetBSD: lpt.c,v 1.53 1999/02/12 01:51:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -318,8 +318,8 @@ lptpushbytes(sc)
 		while (sc->sc_count > 0) {
 			/* if the printer is ready for a char, give it one */
 			if ((sc->sc_state & LPT_OBUSY) == 0) {
-				LPRINTF(("%s: write %u\n", sc->sc_dev.dv_xname,
-				    sc->sc_count));
+				LPRINTF(("%s: write %lu\n", sc->sc_dev.dv_xname,
+				    (u_long)sc->sc_count));
 				s = spllpt();
 				(void) lptintr(sc);
 				splx(s);
