@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.12 2002/03/21 01:17:08 eeh Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.13 2002/07/18 11:59:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -79,7 +79,7 @@ lpt_ebus_attach(parent, self, aux)
 
 	sc->sc_iot = ea->ea_bustag;
 	/*
-	 * Addresses that shoud be supplied by the prom:
+	 * Addresses that should be supplied by the prom:
 	 *	- normal lpt registers
 	 *	- ns873xx configuration registers
 	 *	- DMA space
