@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.32 2002/05/02 17:12:06 martti Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.33 2002/05/02 17:13:29 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2002 by Darren Reed.
@@ -79,7 +79,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.32 2002/05/02 17:12:06 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.33 2002/05/02 17:13:29 martti Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.22 2002/04/26 10:23:17 darrenr Exp";
 #endif
@@ -103,10 +103,7 @@ static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
 #include "netinet/ip_rcmd_pxy.c"
 #include "netinet/ip_raudio_pxy.c"
 #include "netinet/ip_netbios_pxy.c"
-#if 0
-/* H.323 proxy code is buggy in IPFilter 3.4.25 */
 #include "netinet/ip_h323_pxy.c"
-#endif
 #endif
 #include "netinet/ip_ipsec_pxy.c"
 

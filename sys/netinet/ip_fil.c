@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.78 2002/05/02 17:12:03 martti Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.79 2002/05/02 17:13:28 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -123,10 +123,11 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.78 2002/05/02 17:12:03 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.79 2002/05/02 17:13:28 martti Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.55 2002/03/26 15:54:39 darrenr Exp";
+#endif
 #endif
 
 

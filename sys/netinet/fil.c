@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.54 2002/05/02 17:12:02 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.55 2002/05/02 17:13:27 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -100,10 +100,11 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.54 2002/05/02 17:12:02 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.55 2002/05/02 17:13:27 martti Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.60 2002/04/26 10:20:34 darrenr Exp";
+#endif
 #endif
 
 #ifndef	_KERNEL
@@ -150,6 +151,9 @@ fr_info_t	frcache[2];
 static	int	frflushlist __P((int, minor_t, int *, frentry_t **));
 #ifdef	_KERNEL
 static	void	frsynclist __P((frentry_t *));
+#endif
+#ifndef	_KERNEL
+int		mbuflen(mb_t *);
 #endif
 
 
