@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.13 1999/10/20 15:22:26 enami Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.14 1999/11/18 14:20:11 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -61,7 +61,7 @@ struct aic_pcmcia_softc {
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handler */
 	int sc_flags;
-#define AIC_PCMCIA_ATTACH	0x0001
+#define AIC_PCMCIA_ATTACH	0x0001		/* attach is in progress */
 };
 
 struct cfattach aic_pcmcia_ca = {
@@ -138,9 +138,10 @@ aic_pcmcia_attach(parent, self, aux)
 		    cfe->num_iospace != 1)
 			continue;
 
-		/* The bustoaster has a default config as first
-		 * entry, we don't want to use that. */
-
+		/*
+		 * The bustoaster has a default config as first
+		 * entry, we don't want to use that.
+		 */
 		if (pa->manufacturer == PCMCIA_VENDOR_NEWMEDIA &&
 		    pa->product == PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER &&
 		    cfe->iospace[0].start == 0)
@@ -228,6 +229,11 @@ aic_pcmcia_enable(arg, onoff)
 			return (EIO);
 		}
 
+		/*
+		 * If attach is in progress, we know that card power is
+		 * enabled and chip will be initialized later.
+		 * Otherwise, enable and reset now.
+		 */
 		if ((psc->sc_flags & AIC_PCMCIA_ATTACH) == 0) {
 			if (pcmcia_function_enable(psc->sc_pf)) {
 				printf("%s: couldn't enable PCMCIA function\n",
