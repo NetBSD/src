@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.22 1999/02/19 00:27:45 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.23 1999/02/19 03:14:00 mycroft Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1316,11 +1316,11 @@ pcic_chip_socket_enable(pch)
 	cardtype = pcmcia_card_gettype(h->pcmcia);
 
 	reg = pcic_read(h, PCIC_INTR);
-	reg &= ~PCIC_INTR_CARDTYPE_MASK;
+	reg &= ~(PCIC_INTR_CARDTYPE_MASK | PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
 	reg |= ((cardtype == PCMCIA_IFTYPE_IO) ?
 		PCIC_INTR_CARDTYPE_IO :
 		PCIC_INTR_CARDTYPE_MEM);
-	reg |= h->ih_irq | PCIC_INTR_ENABLE;
+	reg |= h->ih_irq;
 	pcic_write(h, PCIC_INTR, reg);
 
 	DPRINTF(("%s: pcic_chip_socket_enable %02x cardtype %s %02x\n",
