@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh3.h,v 1.2 2001/02/21 16:01:54 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh3.h,v 1.3 2001/03/13 16:31:31 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ void resumeIntr(u_int32_t);
 __END_DECLS
 
 /* 
- * SCIF (Windows CE's COM1)
+ * SCIF
  */
 #define SCIF_SCSMR2_REG8		0xa4000150	/* R/W */
 #define SCIF_SCBRR2_REG8		0xa4000152	/* R/W */
@@ -246,12 +246,12 @@ __END_DECLS
 #define SCIF_SCSSR2_TEND		0x00000040
 
 /* simple serial console macros. */
-#define TX_BUSY()							\
+#define SCIF_TX_BUSY()							\
   while ((VOLATILE_REF16(SCIF_SCSSR2_REG16) & SCIF_SCSSR2_TDFE) == 0)
 
-#define PUTC(c)								\
+#define SCIF_PUTC(c)							\
 __BEGIN_MACRO								\
-	TX_BUSY();							\
+	SCIF_TX_BUSY();							\
 	/*  wait until previous transmit done. */			\
 	VOLATILE_REF8(SCIF_SCFTDR2_REG8) =(c);				\
 	/* Clear transmit FIFO empty flag */				\
@@ -259,29 +259,29 @@ __BEGIN_MACRO								\
 	~(SCIF_SCSSR2_TDFE | SCIF_SCSSR2_TEND);				\
 __END_MACRO
 
-#define PRINT(s)							\
+#define SCIF_PRINT(s)							\
 __BEGIN_MACRO								\
 	char *__s =(char *)(s);						\
 	int __i;							\
 	for (__i = 0; __s[__i] != '\0'; __i++) {			\
 		char __c = __s[__i];					\
 		if (__c == '\n')					\
-			PUTC('\r');					\
-		PUTC(__c);						\
+			SCIF_PUTC('\r');				\
+		SCIF_PUTC(__c);						\
 	}								\
 __END_MACRO
 
-#define PRINT_HEX(h)							\
+#define SCIF_PRINT_HEX(h)						\
 __BEGIN_MACRO								\
 	u_int32_t __h =(u_int32_t)(h);					\
 	int __i;							\
-	PUTC('0'); PUTC('x');						\
+	SCIF_PUTC('0'); SCIF_PUTC('x');					\
 	for (__i = 0; __i < 8; __i++, __h <<= 4) {			\
 		int __n =(__h >> 28) & 0xf;				\
 		char __c = __n > 9 ? 'A' + __n - 10 : '0' + __n;	\
-		PUTC(__c);						\
+		SCIF_PUTC(__c);						\
 	}								\
-	PUTC('\r'); PUTC('\n');						\
+	SCIF_PUTC('\r'); SCIF_PUTC('\n');				\
 __END_MACRO
 
 /* 
