@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.21 2003/08/29 05:50:42 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.22 2003/09/02 21:02:56 fvdl Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.21 2003/08/29 05:50:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.22 2003/09/02 21:02:56 fvdl Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -262,8 +262,6 @@ static void ahd_freedmamem(bus_dma_tag_t tag,
 			   caddr_t vaddr,
 			   bus_dma_segment_t *seg,
 			   int nseg);
-static void ahd_update_xfer_mode(struct ahd_softc *ahc, 
-				 struct ahd_devinfo *devinfo);
 
 /******************************** Private Inlines *****************************/
 static __inline void	ahd_assert_atn(struct ahd_softc *ahd);
@@ -3087,10 +3085,6 @@ ahd_set_syncrate(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 
 	update_needed += ahd_update_neg_request(ahd, devinfo, tstate,
 						tinfo, AHD_NEG_TO_GOAL);
-
-	if (update_needed)
-		ahd_update_xfer_mode(ahd, devinfo);
-	ahd->sc_req = 0;
 
 	if (update_needed && active)
 		ahd_update_pending_scbs(ahd);
@@ -9804,38 +9798,4 @@ ahd_freedmamem(tag, size, map, vaddr, seg, nseg)
 	bus_dmamap_destroy(tag, map);
 	bus_dmamem_unmap(tag, vaddr, size);
 	bus_dmamem_free(tag, seg, nseg);
-}
-
-static void
-ahd_update_xfer_mode(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
-{
-  	struct scsipi_xfer_mode xm;
-        struct ahd_initiator_tinfo *tinfo;
-        struct ahd_tmode_tstate *tstate;
-
-	tinfo = ahd_fetch_transinfo(ahd, devinfo->channel, devinfo->our_scsiid,
-                                    devinfo->target, &tstate);
-
-        xm.xm_target = devinfo->target;
-        xm.xm_mode = 0;
-        xm.xm_period = tinfo->curr.period;
-        xm.xm_offset = tinfo->curr.offset;
-        if (tinfo->curr.width == 1)
-        	xm.xm_mode |= PERIPH_CAP_WIDE16;
-	if (tinfo->curr.period)
-                xm.xm_mode |= PERIPH_CAP_SYNC;
-	if (tinfo->curr.ppr_options & MSG_EXT_PPR_DT_REQ)
-		xm.xm_mode |= PERIPH_CAP_DT;
-        if (tstate->tagenable & devinfo->target_mask)
-		xm.xm_mode |= PERIPH_CAP_TQING;
-	
-	tinfo->goal.width = tinfo->curr.width;
-	tinfo->goal.period = tinfo->curr.period;
-	tinfo->goal.offset = tinfo->curr.offset;
-	tinfo->goal.ppr_options = tinfo->curr.ppr_options;
-
-	ahd_update_neg_request(ahd, devinfo, tstate,
-			       tinfo, AHD_NEG_TO_GOAL);
-
-        scsipi_async_event(&ahd->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
 }
