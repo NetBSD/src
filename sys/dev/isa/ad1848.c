@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.17 1997/03/19 19:31:15 mycroft Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.18 1997/03/20 03:56:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -975,7 +975,7 @@ ad1848_query_encoding(addr, fp)
 }
 
 int
-ad1848_set_encoding(addr, enc)
+ad1848_set_encoding(addr, encoding)
     void *addr;
     u_int encoding;
 {
@@ -996,7 +996,7 @@ ad1848_get_encoding(addr)
 }
 
 int
-ad1848_set_precision(addr, prec)
+ad1848_set_precision(addr, precision)
     void *addr;
     u_int precision;
 {
@@ -1017,7 +1017,7 @@ ad1848_get_precision(addr)
 }
 
 int
-ad1848_set_channels(addr, chans)
+ad1848_set_channels(addr, channels)
     void *addr;
     int channels;
 {
@@ -1040,7 +1040,7 @@ ad1848_get_channels(addr)
 {
     register struct ad1848_softc *sc = addr;
 
-    return(sc->channels);
+    return (sc->channels);
 }
 
 int
