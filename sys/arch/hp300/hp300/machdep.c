@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 1996/01/16 22:24:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 1996/02/09 18:57:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1138,9 +1138,9 @@ boot(howto)
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
-#ifdef PANICWAIT
-	if ((howto & RB_HALT) == 0) {
-		printf("hit any hey to reboot...\n");
+#if defined(PANICWAIT) && !defined(DDB)
+	if ((howto & RB_HALT) == 0 && panicstr) {
+		printf("hit any key to reboot...\n");
 		(void)cngetc();
 		printf("\n");
 	}
