@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.4 2001/11/08 04:18:46 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.5 2001/11/09 00:34:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -155,8 +155,6 @@ void	process_kernel_args(char *);
 void	data_abort_handler(trapframe_t *frame);
 void	prefetch_abort_handler(trapframe_t *frame);
 void	undefinedinstruction_bounce(trapframe_t *frame);
-void	zero_page_readonly(void);
-void	zero_page_readwrite(void);
 
 extern void db_machine_init(void);
 extern void parse_mi_bootargs(char *args);
