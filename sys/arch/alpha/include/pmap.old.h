@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.28 1998/03/18 19:00:15 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.29 1998/03/18 19:02:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@ extern	pt_entry_t *VPT;		/* Virtual Page Table */
 vm_offset_t vtophys __P((vm_offset_t));
 
 /* Machine-specific functions. */
-void	pmap_bootstrap __P((vm_offset_t ptaddr));
+void	pmap_bootstrap __P((vm_offset_t ptaddr, u_int maxasn));
 void	pmap_emulate_reference __P((struct proc *p, vm_offset_t v,
 		int user, int write));
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
