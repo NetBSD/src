@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.31 1999/05/21 21:33:59 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.32 1999/08/20 03:52:38 chs Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -1129,7 +1129,7 @@ ie_readframe(sc, num)
 	/*
 	 * Finally pass this packet up to higher layers.
 	 */
-	(*ifp->if_input)(&sc->sc_if, m);
+	(*sc->sc_if.if_input)(&sc->sc_if, m);
 	sc->sc_if.if_ipackets++;
 }
 
