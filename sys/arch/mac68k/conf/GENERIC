@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.36 1996/05/06 03:33:06 briggs Exp $
+#	$NetBSD: GENERIC,v 1.37 1996/05/19 22:29:04 scottr Exp $
 #
 # GENERIC
 
@@ -66,12 +66,16 @@ options		MACHINE_NONCONTIG
 config		netbsd	swap generic
 options		GENERIC
 
-grf0		at obio?	# Graphics devices might be internal or NuBUS
+intvid0		at obio?	# Internal video hardware
 
 nubus0		at mainbus?
 
 ae*		at nubus?
-grf*		at nubus?
+macvid*		at nubus?
+
+# Attach grf semantics to all video hardware as it is found
+grf*		at intvid?
+grf*		at macvid?
 
 ncrscsi0	at obio?		# SCSI NCR 5380
 ncr96scsi0	at obio?		# SCSI NCR 53C96
