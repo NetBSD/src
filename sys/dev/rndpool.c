@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.9 2000/06/05 23:42:34 sommerfeld Exp $        */
+/*      $NetBSD: rndpool.c,v 1.10 2000/06/10 17:01:15 sommerfeld Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -141,9 +141,10 @@ rndpool_add_one_word(rp, val)
 	val ^= rp->pool[(rp->cursor + TAP3) & (RND_POOLWORDS - 1)];
 	val ^= rp->pool[(rp->cursor + TAP4) & (RND_POOLWORDS - 1)];
 	val ^= rp->pool[(rp->cursor + TAP5) & (RND_POOLWORDS - 1)];
-	rp->pool[rp->cursor++] ^=
-	  ((val << rp->rotate) | (val >> (32 - rp->rotate)));
-
+	if (rp->rotate != 0)
+		val = ((val << rp->rotate) | (val >> (32 - rp->rotate)));
+	rp->pool[rp->cursor++] ^= val;
+	
 	/*
 	 * If we have looped around the pool, increment the rotate
 	 * variable so the next value will get xored in rotated to
