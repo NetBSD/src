@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.58 1999/04/30 13:31:52 christos Exp $
+# 	$NetBSD: Makefile.sparc,v 1.59 1999/05/05 10:50:02 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -60,10 +60,6 @@ LINKFLAGS=	-Ttext F0004000 -e start
 .if ${OBJECT_FMT} != "ELF"
 LINKFLAGS+=	-N -p
 .else
-# Something is wrong here:
-# No flags: two load sections, one starting at 0xf0000000 not 0xf0004000
-# -N: One load section, not desirable, kernel does not load properly
-# -n: Appears to DTRT, but still the kernel does not load properly
 LINKFLAGS+=	-n
 .endif
 STRIPFLAGS=	-d
