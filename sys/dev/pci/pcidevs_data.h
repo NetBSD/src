@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.386 2002/01/09 19:29:40 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.387 2002/01/13 03:14:23 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.383 2002/01/09 19:29:07 augustss Exp 
+ *	NetBSD: pcidevs,v 1.384 2002/01/13 03:13:39 augustss Exp 
  */
 
 /*
@@ -104,6 +104,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3cSOHO100-TX 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE777A,
+	    0,
+	    "3Com",
+	    "3crwe777a AirConnect",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900TPO,
@@ -2422,10 +2428,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Maestro 1 PCI Audio Accelerator",
 	},
 	{
-	    PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000,
+	    PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000P,
 	    0,
 	    "Eumitcom",
-	    "WL11000",
+	    "WL11000P",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729,
@@ -2584,7 +2590,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "GL24110P",
 	},
 	{
-	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P_2,
+	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P02,
 	    0,
 	    "Global Sun Tech",
 	    "GL24110P",
