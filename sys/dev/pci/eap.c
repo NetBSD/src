@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.29 1999/10/29 23:03:18 augustss Exp $	*/
+/*	$NetBSD: eap.c,v 1.30 1999/11/01 18:12:20 augustss Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -490,9 +490,9 @@ eap_write_codec(sc, a, d)
 	struct eap_softc *sc;
 	int a, d;
 {
+	int icss, to;
 
-	int icss, to = EAP_WRITE_TIMEOUT;
-
+	to = EAP_WRITE_TIMEOUT;
 	do {
 		icss = EREAD4(sc, EAP_ICSS);
 		DPRINTFN(5,("eap: codec %d prog: icss=0x%08x\n", a, icss));
@@ -500,10 +500,9 @@ eap_write_codec(sc, a, d)
                         printf("eap: timeout writing to codec\n");
                         return;
                 }
-	} while(to && icss & EAP_CWRIP);  /* XXX could use CSTAT here */
+	} while(icss & EAP_CWRIP);  /* XXX could use CSTAT here */
         EWRITE4(sc, EAP_CODEC, EAP_SET_CODEC(a, d));
 }
-
 
 int
 eap1371_read_codec(sc_, a, d)
@@ -559,7 +558,7 @@ eap1371_write_codec(sc_, a, d)
                 cdc = EREAD4(sc, E1371_CODEC);
                 if (!to--) {
                         printf("eap: timeout writing to codec\n");
-                        return 1;
+                        return (1);
                 }
         } while (cdc & E1371_CODEC_WIP);
 
@@ -702,18 +701,19 @@ eap_attach(parent, self, aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
+	char devinfo[256];
 	mixer_ctrl_t ctl;
 	int i;
+
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
         /* Flag if we're "creative" */
 	sc->sc_1371 = PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENSONIQ_AUDIOPCI97;
 
-	printf(": Ensoniq AudioPCI%s (rev. 0x%02x)\n",
-	    sc->sc_1371 ? "97" : "", PCI_REVISION(pa->pa_class));
-
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->iot, &sc->ioh, NULL, NULL)) {
+	      &sc->iot, &sc->ioh, NULL, NULL)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -727,7 +727,7 @@ eap_attach(parent, self, aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	    pa->pa_intrline, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -735,7 +735,7 @@ eap_attach(parent, self, aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, eap_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
-		       sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -786,8 +786,6 @@ eap_attach(parent, self, aux)
 		ctl.un.mask = 1 << EAP_MIC_VOL;
 		eap_hw_if.set_port(sc, &ctl);
 	} else {
-		int error;
-
                 /* clean slate */
                 EWRITE4(sc, EAP_SIC, 0);
                 EWRITE4(sc, EAP_ICSC, 0);
@@ -830,7 +828,7 @@ eap_attach(parent, self, aux)
 		sc->host_if.write = eap1371_write_codec;
 		sc->host_if.reset = eap1371_reset_codec;
 		
-		if ((error = ac97_attach(&sc->host_if)) == 0) {
+		if (ac97_attach(&sc->host_if) == 0) {
 			/* Interrupt enable */
 			EWRITE4(sc, EAP_SIC, EAP_P2_INTR_EN | EAP_R1_INTR_EN);
 		} else
@@ -1146,26 +1144,26 @@ eap_set_params(addr, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULINEAR_BE:
 			if (p->precision == 16) {
 				if (mode == AUMODE_PLAY)
-					p->sw_code = swap_bytes_change_sign16;
+					p->sw_code = swap_bytes_change_sign16_le;
 				else
-					p->sw_code = change_sign16_swap_bytes;
+					p->sw_code = change_sign16_swap_bytes_le;
 			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (p->precision == 16)
-				p->sw_code = change_sign16;
+				p->sw_code = change_sign16_le;
 			break;
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16;
+				p->sw_code = mulaw_to_slinear16_le;
 			} else
 				p->sw_code = ulinear8_to_mulaw;
 			break;
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = alaw_to_slinear16;
+				p->sw_code = alaw_to_slinear16_le;
 			} else
 				p->sw_code = ulinear8_to_alaw;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.10 1999/10/28 13:49:19 leo Exp $	*/
+/*	$NetBSD: eso.c,v 1.11 1999/11/01 18:12:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -708,7 +708,7 @@ eso_set_params(hdl, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = mulaw_to_ulinear16;
+				p->sw_code = mulaw_to_ulinear16_le;
 			} else {
 				p->sw_code = ulinear8_to_mulaw;
 			}
@@ -716,7 +716,7 @@ eso_set_params(hdl, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = alaw_to_ulinear16;
+				p->sw_code = alaw_to_ulinear16_le;
 			} else {
 				p->sw_code = ulinear8_to_alaw;
 			}
