@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.30 2002/01/29 10:20:37 tv Exp $	*/
+/*	$NetBSD: scan.l,v 1.31 2002/06/05 10:56:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,6 +112,7 @@ maxusers	return MAXUSERS;
 minor		return MINOR;
 needs-count	return NEEDS_COUNT;
 needs-flag	return NEEDS_FLAG;
+no		return NO;
 object		return XOBJECT;
 on		return ON;
 options		return OPTIONS;
