@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45 1996/12/23 09:15:39 veego Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.46 1997/01/31 01:43:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,27 +33,41 @@
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
+#include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 
-void setroot __P((void));
-void swapconf __P((void));
+void findroot __P((struct device **, int *));
 void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, struct cfdata *, void *));
 
 int cold;	/* 1 if still booting */
 #include <sys/kernel.h>
+
+struct devnametobdevmaj amiga_nam2blk[] = {
+	{ "fd",		2 },
+	{ "sd",		4 },
+	{ "cd",		7 },
+#ifdef notyet
+	{ "md",		XXX },
+#endif
+	{ NULL,		0 },
+};
+
 /*
  * called at boot time, configure all devices on system
  */
 void
 configure()
 {
+	struct device *booted_device;
+	int booted_partition;
 	int s;
 	/*
 	 * this is the real thing baby (i.e. not console init)
@@ -91,27 +105,18 @@ configure()
 	printf("survived interrupt enable\n");
 #endif
 
-#ifdef GENERIC
-	if ((boothowto & RB_ASKNAME) == 0) {
-		setroot();
+	findroot(&booted_device, &booted_partition);
 #ifdef DEBUG_KERNEL_START
-		printf("survived setroot()\n");
+	printf("survived findroot()\n");
 #endif
-	}
-	setconf();
-#ifdef DEBUG_KERNEL_START
-	printf("survived setconf()\n");
-#endif
-#else
-	setroot();
+	setroot(booted_device, booted_partition, amiga_nam2blk);
 #ifdef DEBUG_KERNEL_START
 	printf("survived setroot()\n");
 #endif
-#endif
-#ifdef DEBUG_KERNEL_START
-	printf("survived root device search\n");
-#endif
 	swapconf();
+	dumpconf();
+	if (dumplo < 0)
+		dumplo = 0;
 #ifdef DEBUG_KERNEL_START
 	printf("survived swap device search\n");
 #endif
@@ -287,96 +292,103 @@ mbprint(auxp, pnp)
 	return(UNCONF);
 }
 
-void
-swapconf()
-{
-	struct swdevt *swp;
-	u_int maj;
-	int nb;
+/*
+ * The system will assign the "booted device" indicator (and thus
+ * rootdev if rootspec is wildcarded) to the first partition 'a'
+ * in preference of boot.  However, it does walk unit backwards
+ * to remain compatible with the old Amiga method of picking the
+ * last root found.
+ */
+#include <sys/fcntl.h>		/* XXXX and all that uses it */
+#include <sys/proc.h>		/* XXXX and all that uses it */
 
-	for (swp = swdevt; swp->sw_dev > 0; swp++) {
-		maj = major(swp->sw_dev);
+#include "fd.h"
+#include "sd.h"
+#include "cd.h"
 
-		if (maj > nblkdev)
-			break;
+#if NFD > 0
+extern  struct cfdriver fd_cd;
+#endif
+#if NSD > 0
+extern  struct cfdriver sd_cd;  
+#endif
+#if NCD > 0
+extern  struct cfdriver cd_cd;
+#endif
 
-		if (bdevsw[maj].d_psize) {
-			nb = bdevsw[maj].d_psize(swp->sw_dev);
-			if (nb > 0 && 
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nb))
-				swp->sw_nblks = nb;
-			else
-				swp->sw_nblks = 0;
-		}
-		swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-	}
-	dumpconf();
-	if (dumplo < 0)
-		dumplo = 0;
-
-}
-
-#define	DOSWAP			/* change swdevt and dumpdev */
-u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
-
-static	char devname[][2] = {
-	{ 0	,0	},
-	{ 0	,0	},
-	{ 'f'	,'d'	},	/* 2 = fd */
-	{ 0	,0	},
-	{ 's'	,'d'	}	/* 4 = sd -- new SCSI system */
+struct cfdriver *genericconf[] = {
+#if NFD > 0
+	&fd_cd,
+#endif
+#if NSD > 0
+	&sd_cd,
+#endif
+#if NCD > 0
+	&cd_cd,
+#endif
+	NULL,
 };
 
 void
-setroot()
+findroot(devpp, partp)
+	struct device **devpp;
+	int *partp;
 {
-	int majdev, mindev, unit, part, adaptor;
-	dev_t temp = 0;
-	dev_t orootdev;
-	struct swdevt *swp;
+	struct disk *dkp;
+	struct partition *pp;
+	struct device **devs;
+	int i, maj, unit;
 
-	if (boothowto & RB_DFLTROOT ||
-	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
-		return;
-	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	if (majdev > sizeof(devname) / sizeof(devname[0]))
-		return;
-	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
-	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
-	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-	orootdev = rootdev;
-	rootdev = MAKEDISKDEV(majdev, unit, part);
 	/*
-	 * If the original rootdev is the same as the one
-	 * just calculated, don't need to adjust the swap configuration.
+	 * Default to "not found".
 	 */
-	if (rootdev == orootdev)
-		return;
-	printf("changing root device to %c%c%d%c\n",
-	    devname[majdev][0], devname[majdev][1],
-	    unit, part + 'a');
-#ifdef DOSWAP
-	mindev = DISKUNIT(rootdev);
-	for (swp = swdevt; swp->sw_dev; swp++) {
-		if (majdev == major(swp->sw_dev) &&
-		    mindev == DISKUNIT(swp->sw_dev)) {
-			temp = swdevt[0].sw_dev;
-			swdevt[0].sw_dev = swp->sw_dev;
-			swp->sw_dev = temp;
-			break;
+	*devpp = NULL;
+
+	/* always partition 'a' */
+	*partp = 0;
+
+	for (i = 0; genericconf[i] != NULL; i++) {
+		for (unit = genericconf[i]->cd_ndevs - 1; unit >= 0; unit--) {
+			if (genericconf[i]->cd_devs[unit] == NULL)
+				continue;
+
+			/*
+			 * Find the disk structure corresponding to the
+			 * current device.
+			 */
+			devs = (struct device **)genericconf[i]->cd_devs;
+			if ((dkp = disk_find(devs[unit]->dv_xname)) == NULL)
+				continue;
+
+			if (dkp->dk_driver == NULL ||
+			    dkp->dk_driver->d_strategy == NULL)
+				continue;
+
+			for (maj = 0; maj < nblkdev; maj++)
+				if (bdevsw[maj].d_strategy ==
+				    dkp->dk_driver->d_strategy)
+					break;
+#ifdef DIAGNOSTIC
+			if (maj >= nblkdev)
+				panic("findroot: impossible");
+#endif
+
+			/* Open disk; forces read of disklabel. */
+			if ((*bdevsw[maj].d_open)(MAKEDISKDEV(maj,
+			    unit, 0), FREAD|FNONBLOCK, 0, &proc0))
+				continue;
+			(void)(*bdevsw[maj].d_open)(MAKEDISKDEV(maj,
+			    unit, 0), FREAD|FNONBLOCK, 0, &proc0);
+
+			pp = &dkp->dk_label->d_partitions[0];
+			if (pp->p_size != 0 && pp->p_fstype == FS_BSDFFS) {
+				*devpp = devs[unit];
+				*partp = 0;
+				return;
+			}
 		}
 	}
-	if (swp->sw_dev == 0)
-		return;
-	/*
-	 * If dumpdev was the same as the old primary swap
-	 * device, move it to the new primary swap device.
-	 */
-	if (temp == dumpdev)
-		dumpdev = swdevt[0].sw_dev;
-#endif
 }
-
 
 /*
  * Try to determine, of this machine is an A3000, which has a builtin
