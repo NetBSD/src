@@ -13,7 +13,7 @@
 #include <netbsd.h>
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dunix -Di386 -D__NetBSD__ -Asystem(unix) -Asystem(NetBSD) -Acpu(i386) -Amachine(i386)"
+#define CPP_PREDEFINES "-Dunix -Di386 -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ -Asystem(unix) -Asystem(NetBSD) -Acpu(i386) -Amachine(i386)"
 
 #undef SIZE_TYPE
 #define SIZE_TYPE "unsigned int"
