@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.26 2000/01/13 18:52:21 mycroft Exp $	*/
+/*	$NetBSD: run.c,v 1.27 2000/01/19 08:46:26 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -462,7 +462,7 @@ run_prog(int fatal, int display, msg errmsg, const char *cmd, ...)
 			    " status window.\n");
 			exit(1);
 		}
-		boxwin = subwin(stdscr, win.ws_row - 3, win.ws_col, 3, 0);
+		boxwin = subwin(stdscr, 1, win.ws_col, 3, 0);
 		if (boxwin == NULL) {
 			fprintf(stderr, "sysinst: failed to allocate"
 			    " status box.\n");
