@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.20 1999/12/04 22:15:57 tron Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.21 1999/12/04 22:17:43 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ linux_sys_signal(p, v, retval)
 	int error, sig;
 
 	*retval = -1;
-	signum = SCARG(uap, signum);
+	sig = SCARG(uap, signum);
 	if (sig < 0 || sig >= LINUX__NSIG)
 		return (EINVAL);
 
