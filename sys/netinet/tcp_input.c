@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.28 1997/07/06 07:04:34 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.29 1997/07/23 21:26:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -33,6 +33,41 @@
  * SUCH DAMAGE.
  *
  *	@(#)tcp_input.c	8.5 (Berkeley) 4/10/94
+ */
+
+/*
+ *	TODO list for SYN cache stuff:
+ *
+ *	(a) The definition of "struct syn_cache" says:
+ *
+ *		This structure should not exceeed 32 bytes.
+ *
+ *	    but it's 40 bytes on the Alpha.  Can reduce memory use one
+ *	    of two ways:
+ *
+ *		(1) Use a dynamically-sized hash table, and handle
+ *		    collisions by rehashing.  Then sc_next is unnecessary.
+ *
+ *		(2) Allocate syn_cache structures in pages (or some other
+ *		    large chunk).  This would probably be desirable for
+ *		    maintaining locality of reference anyway.
+ *
+ *		    If you do this, you can change sc_next to a page/index
+ *		    value, and make it a 32-bit (or maybe even 16-bit)
+ *		    integer, thus partly obviating the need for the previous
+ *		    hack.
+ *
+ *	    It's also worth noting this this is necessary for IPv6, as well,
+ *	    where we use 32 bytes just for the IP addresses, so eliminating
+ *	    wastage is going to become more important.  (BTW, has anyone
+ *	    integreated these changes with one fo the IPv6 status that are
+ *	    available?)
+ *
+ *	(b) Find room for a "state" field, which is needed to keep a
+ *	    compressed state for TIME_WAIT TCBs.  It's been noted already
+ *	    that this is fairly important for very high-volume web and
+ *	    mail servers, which use a large number of short-lived
+ *	    connections.
  */
 
 #ifndef TUBA_INCLUDE
@@ -74,7 +109,6 @@ extern u_long sb_max;
 /* for modulo comparisons of timestamps */
 #define TSTMP_LT(a,b)	((int)((a)-(b)) < 0)
 #define TSTMP_GEQ(a,b)	((int)((a)-(b)) >= 0)
-
 
 /*
  * Insert segment ti into reassembly queue of tcp with
@@ -252,12 +286,9 @@ tcp_input(m, va_alist)
 	struct socket *so = NULL;
 	int todrop, acked, ourfinisacked, needoutput = 0;
 	short ostate = 0;
-	struct in_addr laddr;
-	int dropsocket = 0;
 	int iss = 0;
 	u_long tiwin;
-	u_int32_t ts_val, ts_ecr;
-	int ts_present = 0;
+	struct tcp_opt_info opti;
 	int iphlen;
 	va_list ap;
 
@@ -266,6 +297,10 @@ tcp_input(m, va_alist)
 	va_end(ap);
 
 	tcpstat.tcps_rcvtotal++;
+
+	opti.ts_present = 0;
+	opti.maxseg = 0;
+
 	/*
 	 * Get IP and TCP header together in first mbuf.
 	 * Note: IP leaves IP header in first mbuf.
@@ -328,9 +363,9 @@ tcp_input(m, va_alist)
 			optp[TCPOLEN_TSTAMP_APPA] == TCPOPT_EOL)) &&
 		     *(u_int32_t *)optp == htonl(TCPOPT_TSTAMP_HDR) &&
 		     (ti->ti_flags & TH_SYN) == 0) {
-			ts_present = 1;
-			ts_val = ntohl(*(u_int32_t *)(optp + 4));
-			ts_ecr = ntohl(*(u_int32_t *)(optp + 8));
+			opti.ts_present = 1;
+			opti.ts_val = ntohl(*(u_int32_t *)(optp + 4));
+			opti.ts_ecr = ntohl(*(u_int32_t *)(optp + 8));
 			optp = NULL;	/* we've parsed the options */
 		}
 	}
@@ -384,38 +419,65 @@ findpcb:
 			tcp_saveti = *ti;
 		}
 		if (so->so_options & SO_ACCEPTCONN) {
-			so = sonewconn(so, 0);
-			if (so == 0)
-				goto drop;
-			/*
-			 * This is ugly, but ....
-			 *
-			 * Mark socket as temporary until we're
-			 * committed to keeping it.  The code at
-			 * ``drop'' and ``dropwithreset'' check the
-			 * flag dropsocket to see if the temporary
-			 * socket created here should be discarded.
-			 * We mark the socket as discardable until
-			 * we're committed to it below in TCPS_LISTEN.
-			 */
-			dropsocket++;
-			inp = (struct inpcb *)so->so_pcb;
-			inp->inp_laddr = ti->ti_dst;
-			inp->inp_lport = ti->ti_dport;
-			in_pcbstate(inp, INP_BOUND);
-#if BSD>=43
-			inp->inp_options = ip_srcroute();
-#endif
-			tp = intotcpcb(inp);
-			tp->t_state = TCPS_LISTEN;
-
-			/* Compute proper scaling value from buffer space
-			 */
-			while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
-			   TCP_MAXWIN << tp->request_r_scale < so->so_rcv.sb_hiwat)
-				tp->request_r_scale++;
+  			if ((tiflags & (TH_RST|TH_ACK|TH_SYN)) != TH_SYN) {
+				if (tiflags & TH_RST)
+					syn_cache_reset(ti);
+				else if (tiflags & TH_ACK) {
+					so = syn_cache_get(so, m);
+					if (so == NULL) {
+						/*
+						 * We don't have a SYN for
+						 * this ACK; send an RST.
+						 */
+						tcpstat.tcps_badsyn++;
+						tp = NULL;
+						goto dropwithreset;
+					} else if (so ==
+					    (struct socket *)(-1)) {
+						/*
+						 * We were unable to create
+						 * the connection.  If the
+						 * 3-way handshake was
+						 * completeed, and RST has
+						 * been sent to the peer.
+						 * Since the mbuf might be
+						 * in use for the reply,
+						 * do not free it.
+						 */
+						m = NULL;
+					} else {
+						/*
+						 * We have created a
+						 * full-blown connection.
+						 */
+						inp = sotoinpcb(so);
+						tp = intotcpcb(inp);
+						tiwin <<= tp->snd_scale;
+						goto after_listen;
+					}
+  				}
+  			} else {
+				/*
+				 * Received a SYN; create compressed
+				 * TCP state for it.
+				 */
+				if (so->so_qlen <= so->so_qlimit &&
+				    syn_cache_add(so, m, optp, optlen, &opti))
+					m = NULL;
+			}
+			goto drop;
 		}
 	}
+
+after_listen:
+#ifdef DIAGNOSTIC
+	/*
+	 * Should not happen now that all embryonic connections
+	 * are handled with compressed state.
+	 */
+	if (tp->t_state == TCPS_LISTEN)
+		panic("tcp_input: TCPS_LISTEN");
+#endif
 
 	/*
 	 * Segment received on connection.
@@ -426,12 +488,10 @@ findpcb:
 		tp->t_timer[TCPT_KEEP] = tcp_keepidle;
 
 	/*
-	 * Process options if not in LISTEN state,
-	 * else do it below (after getting remote address).
+	 * Process options.
 	 */
-	if (optp && tp->t_state != TCPS_LISTEN)
-		tcp_dooptions(tp, optp, optlen, ti,
-			&ts_present, &ts_val, &ts_ecr);
+	if (optp)
+		tcp_dooptions(tp, optp, optlen, ti, &opti);
 
 	/* 
 	 * Header prediction: check for the two common cases
@@ -449,7 +509,7 @@ findpcb:
 	 */
 	if (tp->t_state == TCPS_ESTABLISHED &&
 	    (tiflags & (TH_SYN|TH_FIN|TH_RST|TH_URG|TH_ACK)) == TH_ACK &&
-	    (!ts_present || TSTMP_GEQ(ts_val, tp->ts_recent)) &&
+	    (!opti.ts_present || TSTMP_GEQ(opti.ts_val, tp->ts_recent)) &&
 	    ti->ti_seq == tp->rcv_nxt &&
 	    tiwin && tiwin == tp->snd_wnd &&
 	    tp->snd_nxt == tp->snd_max) {
@@ -458,10 +518,11 @@ findpcb:
 		 * If last ACK falls within this segment's sequence numbers,
 		 *  record the timestamp.
 		 */
-		if (ts_present && SEQ_LEQ(ti->ti_seq, tp->last_ack_sent) &&
-		   SEQ_LT(tp->last_ack_sent, ti->ti_seq + ti->ti_len)) {
+		if (opti.ts_present &&
+		    SEQ_LEQ(ti->ti_seq, tp->last_ack_sent) &&
+		    SEQ_LT(tp->last_ack_sent, ti->ti_seq + ti->ti_len)) {
 			tp->ts_recent_age = tcp_now;
-			tp->ts_recent = ts_val;
+			tp->ts_recent = opti.ts_val;
 		}
 
 		if (ti->ti_len == 0) {
@@ -473,10 +534,11 @@ findpcb:
 				 * this is a pure ack for outstanding data.
 				 */
 				++tcpstat.tcps_predack;
-				if (ts_present)
-					tcp_xmit_timer(tp, tcp_now-ts_ecr+1);
+				if (opti.ts_present)
+					tcp_xmit_timer(tp,
+					    tcp_now-opti.ts_ecr+1);
 				else if (tp->t_rtt &&
-					    SEQ_GT(ti->ti_ack, tp->t_rtseq))
+				    SEQ_GT(ti->ti_ack, tp->t_rtseq))
 					tcp_xmit_timer(tp, tp->t_rtt);
 				acked = ti->ti_ack - tp->snd_una;
 				tcpstat.tcps_rcvackpack++;
@@ -556,81 +618,6 @@ findpcb:
 	switch (tp->t_state) {
 
 	/*
-	 * If the state is LISTEN then ignore segment if it contains an RST.
-	 * If the segment contains an ACK then it is bad and send a RST.
-	 * If it does not contain a SYN then it is not interesting; drop it.
-	 * Don't bother responding if the destination was a broadcast.
-	 * Otherwise initialize tp->rcv_nxt, and tp->irs, select an initial
-	 * tp->iss, and send a segment:
-	 *     <SEQ=ISS><ACK=RCV_NXT><CTL=SYN,ACK>
-	 * Also initialize tp->snd_nxt to tp->iss+1 and tp->snd_una to tp->iss.
-	 * Fill in remote peer address fields if not previously specified.
-	 * Enter SYN_RECEIVED state, and process any other fields of this
-	 * segment in this state.
-	 */
-	case TCPS_LISTEN: {
-		struct mbuf *am;
-		register struct sockaddr_in *sin;
-
-		if (tiflags & TH_RST)
-			goto drop;
-		if (tiflags & TH_ACK)
-			goto dropwithreset;
-		if ((tiflags & TH_SYN) == 0)
-			goto drop;
-		/*
-		 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
-		 * in_broadcast() should never return true on a received
-		 * packet with M_BCAST not set.
-		 */
-		if (m->m_flags & (M_BCAST|M_MCAST) ||
-		    IN_MULTICAST(ti->ti_dst.s_addr))
-			goto drop;
-		am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
-		if (am == NULL)
-			goto drop;
-		am->m_len = sizeof (struct sockaddr_in);
-		sin = mtod(am, struct sockaddr_in *);
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_addr = ti->ti_src;
-		sin->sin_port = ti->ti_sport;
-		bzero((caddr_t)sin->sin_zero, sizeof(sin->sin_zero));
-		laddr = inp->inp_laddr;
-		if (in_nullhost(laddr))
-			inp->inp_laddr = ti->ti_dst;
-		if (in_pcbconnect(inp, am)) {
-			inp->inp_laddr = laddr;
-			(void) m_free(am);
-			goto drop;
-		}
-		(void) m_free(am);
-		tp->t_template = tcp_template(tp);
-		if (tp->t_template == 0) {
-			tp = tcp_drop(tp, ENOBUFS);
-			dropsocket = 0;		/* socket is already gone */
-			goto drop;
-		}
-		if (optp)
-			tcp_dooptions(tp, optp, optlen, ti,
-				&ts_present, &ts_val, &ts_ecr);
-		if (iss)
-			tp->iss = iss;
-		else
-			tp->iss = tcp_iss;
-		tcp_iss += TCP_ISSINCR/2;
-		tp->irs = ti->ti_seq;
-		tcp_sendseqinit(tp);
-		tcp_rcvseqinit(tp);
-		tp->t_flags |= TF_ACKNOW;
-		tp->t_state = TCPS_SYN_RECEIVED;
-		tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
-		dropsocket = 0;		/* committed to socket */
-		tcpstat.tcps_accepts++;
-		goto trimthenstep6;
-		}
-
-	/*
 	 * If the state is SYN_SENT:
 	 *	if seg contains an ACK, but not for our SYN, drop the input.
 	 *	if seg contains a RST, then drop the connection.
@@ -663,6 +650,7 @@ findpcb:
 		tp->irs = ti->ti_seq;
 		tcp_rcvseqinit(tp);
 		tp->t_flags |= TF_ACKNOW;
+		tcp_mss(tp, opti.maxseg);
 		if (tiflags & TH_ACK && SEQ_GT(tp->snd_una, tp->iss)) {
 			tcpstat.tcps_connects++;
 			soisconnected(so);
@@ -685,7 +673,6 @@ findpcb:
 		} else
 			tp->t_state = TCPS_SYN_RECEIVED;
 
-trimthenstep6:
 		/*
 		 * Advance ti->ti_seq to correspond to first data byte.
 		 * If data, trim to stay within window,
@@ -703,6 +690,18 @@ trimthenstep6:
 		tp->snd_wl1 = ti->ti_seq - 1;
 		tp->rcv_up = ti->ti_seq;
 		goto step6;
+
+	/*
+	 * If the state is SYN_RECEIVED:
+	 *	If seg contains an ACK, but not for our SYN, drop the input
+	 *	and generate an RST.  See page 36, rfc793
+	 */
+	case TCPS_SYN_RECEIVED:
+		if ((tiflags & TH_ACK) &&
+		    (SEQ_LEQ(ti->ti_ack, tp->iss) ||
+		     SEQ_GT(ti->ti_ack, tp->snd_max)))
+			goto dropwithreset;
+		break;
 	}
 
 	/*
@@ -715,8 +714,8 @@ trimthenstep6:
 	 * RFC 1323 PAWS: If we have a timestamp reply on this segment
 	 * and it's less than ts_recent, drop it.
 	 */
-	if (ts_present && (tiflags & TH_RST) == 0 && tp->ts_recent &&
-	    TSTMP_LT(ts_val, tp->ts_recent)) {
+	if (opti.ts_present && (tiflags & TH_RST) == 0 && tp->ts_recent &&
+	    TSTMP_LT(opti.ts_val, tp->ts_recent)) {
 
 		/* Check to see if ts_recent is over 24 days old.  */
 		if ((int)(tcp_now - tp->ts_recent_age) > TCP_PAWS_IDLE) {
@@ -838,11 +837,11 @@ trimthenstep6:
 	 * If last ACK falls within this segment's sequence numbers,
 	 * record its timestamp.
 	 */
-	if (ts_present && SEQ_LEQ(ti->ti_seq, tp->last_ack_sent) &&
+	if (opti.ts_present && SEQ_LEQ(ti->ti_seq, tp->last_ack_sent) &&
 	    SEQ_LT(tp->last_ack_sent, ti->ti_seq + ti->ti_len +
 		   ((tiflags & (TH_SYN|TH_FIN)) != 0))) {
 		tp->ts_recent_age = tcp_now;
-		tp->ts_recent = ts_val;
+		tp->ts_recent = opti.ts_val;
 	}
 
 	/*
@@ -1021,8 +1020,8 @@ trimthenstep6:
 		 * timer backoff (cf., Phil Karn's retransmit alg.).
 		 * Recompute the initial retransmit timer.
 		 */
-		if (ts_present)
-			tcp_xmit_timer(tp, tcp_now-ts_ecr+1);
+		if (opti.ts_present)
+			tcp_xmit_timer(tp, tcp_now - opti.ts_ecr + 1);
 		else if (tp->t_rtt && SEQ_GT(ti->ti_ack, tp->t_rtseq))
 			tcp_xmit_timer(tp,tp->t_rtt);
 
@@ -1315,16 +1314,13 @@ dropwithreset:
 	    IN_MULTICAST(ti->ti_dst.s_addr))
 		goto drop;
 	if (tiflags & TH_ACK)
-		tcp_respond(tp, ti, m, (tcp_seq)0, ti->ti_ack, TH_RST);
+		(void)tcp_respond(tp, ti, m, (tcp_seq)0, ti->ti_ack, TH_RST);
 	else {
 		if (tiflags & TH_SYN)
 			ti->ti_len++;
-		tcp_respond(tp, ti, m, ti->ti_seq+ti->ti_len, (tcp_seq)0,
+		(void)tcp_respond(tp, ti, m, ti->ti_seq+ti->ti_len, (tcp_seq)0,
 		    TH_RST|TH_ACK);
 	}
-	/* destroy temporarily created socket */
-	if (dropsocket)
-		(void) soabort(so);
 	return;
 
 drop:
@@ -1334,21 +1330,17 @@ drop:
 	if (tp && (tp->t_inpcb->inp_socket->so_options & SO_DEBUG))
 		tcp_trace(TA_DROP, ostate, tp, &tcp_saveti, 0);
 	m_freem(m);
-	/* destroy temporarily created socket */
-	if (dropsocket)
-		(void) soabort(so);
 	return;
 #ifndef TUBA_INCLUDE
 }
 
 void
-tcp_dooptions(tp, cp, cnt, ti, ts_present, ts_val, ts_ecr)
+tcp_dooptions(tp, cp, cnt, ti, oi)
 	struct tcpcb *tp;
 	u_char *cp;
 	int cnt;
 	struct tcpiphdr *ti;
-	int *ts_present;
-	u_int32_t *ts_val, *ts_ecr;
+	struct tcp_opt_info *oi;
 {
 	u_int16_t mss;
 	int opt, optlen;
@@ -1374,9 +1366,8 @@ tcp_dooptions(tp, cp, cnt, ti, ts_present, ts_val, ts_ecr)
 				continue;
 			if (!(ti->ti_flags & TH_SYN))
 				continue;
-			bcopy((char *) cp + 2, (char *) &mss, sizeof(mss));
-			NTOHS(mss);
-			(void) tcp_mss(tp, mss);	/* sets t_maxseg */
+			bcopy(cp + 2, &mss, sizeof(mss));
+			oi->maxseg = ntohs(mss);
 			break;
 
 		case TCPOPT_WINDOW:
@@ -1391,11 +1382,11 @@ tcp_dooptions(tp, cp, cnt, ti, ts_present, ts_val, ts_ecr)
 		case TCPOPT_TIMESTAMP:
 			if (optlen != TCPOLEN_TIMESTAMP)
 				continue;
-			*ts_present = 1;
-			bcopy((char *)cp + 2, (char *) ts_val, sizeof(*ts_val));
-			NTOHL(*ts_val);
-			bcopy((char *)cp + 6, (char *) ts_ecr, sizeof(*ts_ecr));
-			NTOHL(*ts_ecr);
+			oi -> ts_present = 1;
+			bcopy(cp + 2, &oi->ts_val, sizeof(oi->ts_val));
+			NTOHL(oi->ts_val);
+			bcopy(cp + 6, &oi->ts_ecr, sizeof(oi->ts_ecr));
+			NTOHL(oi->ts_ecr);
 
 			/* 
 			 * A timestamp received in a SYN makes
@@ -1403,7 +1394,7 @@ tcp_dooptions(tp, cp, cnt, ti, ts_present, ts_val, ts_ecr)
 			 */
 			if (ti->ti_flags & TH_SYN) {
 				tp->t_flags |= TF_RCVD_TSTMP;
-				tp->ts_recent = *ts_val;
+				tp->ts_recent = oi->ts_val;
 				tp->ts_recent_age = tcp_now;
 			}
 			break;
@@ -1667,5 +1658,633 @@ tcp_mss(tp, offer)
 	}
 #endif /* RTV_MTU */
 	return (mss);
+}
+
+/*
+ * TCP compressed state engine.  Currently used to hold compressed
+ * state for SYN_RECEIVED.
+ */
+
+u_long	syn_cache_count;
+u_int32_t syn_hash1, syn_hash2;
+
+#define SYN_HASH(sa, sp, dp) \
+	((((sa)->s_addr^syn_hash1)*(((((u_int32_t)(dp))<<16) + \
+				     ((u_int32_t)(sp)))^syn_hash2)) \
+	 & 0x7fffffff)
+
+#define	eptosp(ep, e, s)	((struct s *)((char *)(ep) - \
+			    ((char *)(&((struct s *)0)->e) - (char *)0)))
+
+#define	SYN_CACHE_RM(sc, p, scp) {					\
+	*(p) = (sc)->sc_next;						\
+	if ((sc)->sc_next)						\
+		(sc)->sc_next->sc_timer += (sc)->sc_timer;		\
+	else {								\
+		(scp)->sch_timer_sum -= (sc)->sc_timer;			\
+		if ((scp)->sch_timer_sum <= 0)				\
+			(scp)->sch_timer_sum = -1;			\
+		/* If need be, fix up the last pointer */		\
+		if ((scp)->sch_first)					\
+			(scp)->sch_last = eptosp(p, sc_next, syn_cache); \
+	}								\
+	(scp)->sch_length--;						\
+	syn_cache_count--;						\
+}
+
+extern int tcp_syn_bucket_limit;
+extern int tcp_syn_cache_limit;
+
+void
+syn_cache_insert(sc, prevp, headp)
+	struct syn_cache *sc;
+	struct syn_cache ***prevp;
+	struct syn_cache_head **headp;
+{
+	struct syn_cache_head *scp, *scp2, *sce;
+	struct syn_cache *sc2;
+	static u_int timeo_val;
+	int s;
+
+	/* Initialize the hash secrets when adding the first entry */
+	if (syn_cache_count == 0) {
+		struct timeval tv;
+		microtime(&tv);
+		syn_hash1 = random() ^ (u_long)&sc;
+		syn_hash2 = random() ^ tv.tv_usec;
+	}
+
+	sc->sc_hash = SYN_HASH(&sc->sc_src, sc->sc_sport, sc->sc_dport);
+	sc->sc_next = NULL;
+	scp = &tcp_syn_cache[sc->sc_hash % tcp_syn_cache_size];
+	*headp = scp;
+
+	/*
+	 * Make sure that we don't overflow the per-bucket
+	 * limit or the total cache size limit.
+	 */
+	s = splsoftnet();
+	if (scp->sch_length >= tcp_syn_bucket_limit) {
+		tcpstat.tcps_sc_bucketoverflow++;
+		sc2 = scp->sch_first;
+		scp->sch_first = sc2->sc_next;
+		FREE(sc2, M_PCB);
+	} else if (syn_cache_count >= tcp_syn_cache_limit) {
+		tcpstat.tcps_sc_overflowed++;
+		/*
+		 * The cache is full.  Toss the first (i.e, oldest)
+		 * element in this bucket.
+		 */
+		scp2 = scp;
+		if (scp2->sch_first == NULL) {
+			sce = &tcp_syn_cache[tcp_syn_cache_size];
+			for (++scp2; scp2 != scp; scp2++) {
+				if (scp2 >= sce)
+					scp2 = &tcp_syn_cache[0];
+				if (scp2->sch_first)
+					break;
+			}
+		}
+		sc2 = scp2->sch_first;
+		if (sc2 == NULL) {
+			FREE(sc, M_PCB);
+			return;
+		}
+		if ((scp2->sch_first = sc2->sc_next) == NULL)
+			scp2->sch_last = NULL;
+		else
+			sc2->sc_next->sc_timer += sc2->sc_timer;
+		FREE(sc2, M_PCB);
+	} else {
+		scp->sch_length++;
+		syn_cache_count++;
+	}
+	tcpstat.tcps_sc_added++;
+
+	/*
+	 * Put it into the bucket.
+	 */
+	if (scp->sch_first == NULL)
+		*prevp = &scp->sch_first;
+	else {
+		*prevp = &scp->sch_last->sc_next;
+		tcpstat.tcps_sc_collisions++;
+	}
+	**prevp = sc;
+	scp->sch_last = sc;
+
+	/*
+	 * If the timeout value has changed
+	 *   1) force it to fit in a u_char
+	 *   2) Run the timer routine to truncate all
+	 *	existing entries to the new timeout value.
+	 */
+	if (timeo_val != tcp_syn_cache_timeo) {
+		tcp_syn_cache_timeo = min(tcp_syn_cache_timeo, UCHAR_MAX);
+		if (timeo_val > tcp_syn_cache_timeo)
+			syn_cache_timer(timeo_val - tcp_syn_cache_timeo);
+		timeo_val = tcp_syn_cache_timeo;
+	}
+	if (scp->sch_timer_sum > 0)
+		sc->sc_timer = tcp_syn_cache_timeo - scp->sch_timer_sum;
+	else if (scp->sch_timer_sum == 0) {
+		/* When the bucket timer is 0, it is not in the cache queue.  */
+		scp->sch_headq = tcp_syn_cache_first;
+		tcp_syn_cache_first = scp;
+		sc->sc_timer = tcp_syn_cache_timeo;
+	}
+	scp->sch_timer_sum = tcp_syn_cache_timeo;
+	splx(s);
+}
+
+/*
+ * Walk down the cache list, decrementing the timer of
+ * the first element on each entry.  If the timer goes
+ * to zero, remove it and all successive entries with
+ * a zero timer.
+ */
+void
+syn_cache_timer(interval)
+	int interval;
+{
+	struct syn_cache_head *scp, **pscp;
+	struct syn_cache *sc, *scn;
+	int n, s;
+
+	pscp = &tcp_syn_cache_first;
+	scp = tcp_syn_cache_first;
+	s = splsoftnet();
+	while (scp) {
+		/*
+		 * Remove any empty hash buckets
+		 * from the cache queue.
+		 */
+		if ((sc = scp->sch_first) == NULL) {
+			*pscp = scp->sch_headq;
+			scp->sch_headq = NULL;
+			scp->sch_timer_sum = 0;
+			scp->sch_first = scp->sch_last = NULL;
+			scp->sch_length = 0;
+			scp = *pscp;
+			continue;
+		}
+
+		scp->sch_timer_sum -= interval;
+		if (scp->sch_timer_sum <= 0)
+			scp->sch_timer_sum = -1;
+		n = interval;
+		while (sc->sc_timer <= n) {
+			n -= sc->sc_timer;
+			scn = sc->sc_next;
+			tcpstat.tcps_sc_timed_out++;
+			syn_cache_count--;
+			FREE(sc, M_PCB);
+			scp->sch_length--;
+			if ((sc = scn) == NULL)
+				break;
+		}
+		if ((scp->sch_first = sc) != NULL) {
+			sc->sc_timer -= n;
+			pscp = &scp->sch_headq;
+			scp = scp->sch_headq;
+		}
+	}
+	splx(s);
+}
+
+/*
+ * Find an entry in the syn cache.
+ */
+struct syn_cache *
+syn_cache_lookup(ti, prevp, headp)
+	struct tcpiphdr *ti;
+	struct syn_cache ***prevp;
+	struct syn_cache_head **headp;
+{
+	struct syn_cache *sc, **prev;
+	struct syn_cache_head *head;
+	u_int32_t hash;
+	int s;
+
+	hash = SYN_HASH(&ti->ti_src, ti->ti_sport, ti->ti_dport);
+
+	head = &tcp_syn_cache[hash % tcp_syn_cache_size];
+	*headp = head;
+	prev = &head->sch_first;
+	s = splsoftnet();
+	for (sc = head->sch_first; sc; prev = &sc->sc_next, sc = sc->sc_next) {
+		if (sc->sc_hash != hash)
+			continue;
+		if (sc->sc_src.s_addr == ti->ti_src.s_addr &&
+		    sc->sc_sport == ti->ti_sport &&
+		    sc->sc_dport == ti->ti_dport &&
+		    sc->sc_dst.s_addr == ti->ti_dst.s_addr) {
+			*prevp = prev;
+			splx(s);
+			return (sc);
+		}
+	}
+	splx(s);
+	return (NULL);
+}
+
+/*
+ * This function gets called when we receive an ACK for a
+ * socket in the LISTEN state.  We look up the connection
+ * in the syn cache, and if its there, we pull it out of
+ * the cache and turn it into a full-blown connection in
+ * the SYN-RECEIVED state.
+ *
+ * The return values may not be immediately obvious, and their effects
+ * can be subtle, so here they are:
+ *
+ *	NULL	SYN was not found in cache; caller should drop the
+ *		packet and send an RST.
+ *
+ *	-1	We were unable to create the new connection, and are
+ *		aborting it.  An ACK,RST is being sent to the peer
+ *		(unless we got screwey sequence numbners; see below),
+ *		because the 3-way handshake has been completed.  Caller
+ *		should not free the mbuf, since we may be using it.  If
+ *		we are not, we will free it.
+ *
+ *	Otherwise, the return value is a pointer to the new socket
+ *	associated with the connection.
+ */
+struct socket *
+syn_cache_get(so, m)
+	struct socket *so;
+	struct mbuf *m;
+{
+	struct syn_cache *sc, **sc_prev;
+	struct syn_cache_head *head;
+	register struct inpcb *inp;
+	register struct tcpcb *tp = 0;
+	register struct tcpiphdr *ti;
+	struct sockaddr_in *sin;
+	struct mbuf *am;
+	long win;
+	int s;
+
+	ti = mtod(m, struct tcpiphdr *);
+	s = splsoftnet();
+	if ((sc = syn_cache_lookup(ti, &sc_prev, &head)) == NULL) {
+		splx(s);
+		return (NULL);
+	}
+
+	win = sbspace(&so->so_rcv);
+	if (win > TCP_MAXWIN)
+		win = TCP_MAXWIN;
+
+	/*
+	 * Verify the sequence and ack numbers.
+	 */
+	if ((ti->ti_ack != sc->sc_iss + 1) ||
+	    SEQ_LEQ(ti->ti_seq, sc->sc_irs) ||
+	    SEQ_GT(ti->ti_seq, sc->sc_irs + 1 + win)) {
+		(void) syn_cache_respond(sc, m, ti, win, 0);
+		splx(s);
+		return ((struct socket *)(-1));
+	}
+
+	/* Remove this cache entry */
+	SYN_CACHE_RM(sc, sc_prev, head);
+	splx(s);
+
+	/*
+	 * Ok, create the full blown connection, and set things up
+	 * as they would have been set up if we had created the
+	 * connection when the SYN arrived.  If we can't create
+	 * the connection, abort it.
+	 */
+	so = sonewconn(so, SS_ISCONNECTED);
+	if (so == NULL)
+		goto resetandabort;
+
+	inp = sotoinpcb(so);
+	inp->inp_laddr = sc->sc_dst;
+	inp->inp_lport = sc->sc_dport;
+	in_pcbstate(inp, INP_BOUND);
+#if BSD>=43
+	inp->inp_options = ip_srcroute();
+#endif
+
+	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
+	if (am == NULL) {
+		m_freem(m);
+		goto resetandabort;
+	}
+	am->m_len = sizeof(struct sockaddr_in);
+	sin = mtod(am, struct sockaddr_in *);
+	sin->sin_family = AF_INET;
+	sin->sin_len = sizeof(*sin);
+	sin->sin_addr = sc->sc_src;
+	sin->sin_port = sc->sc_sport;
+	bzero((caddr_t)sin->sin_zero, sizeof(sin->sin_zero));
+	if (in_pcbconnect(inp, am)) {
+		(void) m_free(am);
+		m_freem(m);
+		goto resetandabort;
+	}
+	(void) m_free(am);
+
+	tp = intotcpcb(inp);
+	if (sc->sc_request_r_scale != 15) {
+		tp->requested_s_scale = sc->sc_requested_s_scale;
+		tp->request_r_scale = sc->sc_request_r_scale;
+		tp->snd_scale = sc->sc_requested_s_scale;
+		tp->rcv_scale = sc->sc_request_r_scale;
+		tp->t_flags |= TF_RCVD_SCALE;
+	}
+	if (sc->sc_tstmp)
+		tp->t_flags |= TF_RCVD_TSTMP;
+
+	tp->t_template = tcp_template(tp);
+	if (tp->t_template == 0) {
+		tp = tcp_drop(tp, ENOBUFS);	/* destroys socket */
+		so = NULL;
+		m_freem(m);
+		goto abort;
+	}
+
+	tp->iss = sc->sc_iss;
+	tp->irs = sc->sc_irs;
+	tcp_sendseqinit(tp);
+	tcp_rcvseqinit(tp);
+	tp->t_state = TCPS_SYN_RECEIVED;
+	tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
+	tcpstat.tcps_accepts++;
+
+	tcp_mss(tp, sc->sc_peermaxseg);
+	tp->snd_wl1 = sc->sc_irs;
+	tp->rcv_up = sc->sc_irs + 1;
+
+	/*
+	 * This is what whould have happened in tcp_ouput() when
+	 * the SYN,ACK was sent.
+	 */
+	tp->snd_up = tp->snd_una;
+	tp->snd_max = tp->snd_nxt = tp->iss+1;
+	tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
+	if (win > 0 && SEQ_GT(tp->rcv_nxt+win, tp->rcv_adv))
+		tp->rcv_adv = tp->rcv_nxt + win;
+	tp->last_ack_sent = tp->rcv_nxt;
+
+	tcpstat.tcps_sc_completed++;
+	FREE(sc, M_PCB);
+	return (so);
+
+resetandabort:
+	(void) tcp_respond(NULL, ti, m, ti->ti_seq+ti->ti_len,
+	    (tcp_seq)0, TH_RST|TH_ACK);
+abort:
+	if (so != NULL)
+		(void) soabort(so);
+	FREE(sc, M_PCB);
+	tcpstat.tcps_sc_aborted++;
+	return ((struct socket *)(-1));
+}
+
+/*
+ * This function is called when we get a RST for a
+ * non-existant connection, so that we can see if the
+ * connection is in the syn cache.  If it is, zap it.
+ */
+
+void
+syn_cache_reset(ti)
+	register struct tcpiphdr *ti;
+{
+	struct syn_cache *sc, **sc_prev;
+	struct syn_cache_head *head;
+	int s = splsoftnet();
+
+	if ((sc = syn_cache_lookup(ti, &sc_prev, &head)) == NULL) {
+		splx(s);
+		return;
+	}
+	if (SEQ_LT(ti->ti_seq,sc->sc_irs) ||
+	    SEQ_GT(ti->ti_seq, sc->sc_irs+1)) {
+		splx(s);
+		return;
+	}
+	SYN_CACHE_RM(sc, sc_prev, head);
+	splx(s);
+	tcpstat.tcps_sc_reset++;
+	FREE(sc, M_PCB);
+}
+
+void
+syn_cache_unreach(ip, th)
+	struct ip *ip;
+	struct tcphdr *th;
+{
+	struct syn_cache *sc, **sc_prev;
+	struct syn_cache_head *head;
+	struct tcpiphdr ti2;
+	int s;
+
+	ti2.ti_src.s_addr = ip->ip_dst.s_addr;
+	ti2.ti_dst.s_addr = ip->ip_src.s_addr;
+	ti2.ti_sport = th->th_dport;
+	ti2.ti_dport = th->th_sport;
+
+	s = splsoftnet();
+	if ((sc = syn_cache_lookup(&ti2, &sc_prev, &head)) == NULL) {
+		splx(s);
+		return;
+	}
+	/* If the sequence number != sc_iss, then it's a bogus ICMP msg */
+	if (ntohl (th->th_seq) != sc->sc_iss) {
+		splx(s);
+		return;
+	}
+	SYN_CACHE_RM(sc, sc_prev, head);
+	splx(s);
+	tcpstat.tcps_sc_unreach++;
+	FREE(sc, M_PCB);
+}
+
+/*
+ * Given a LISTEN socket and an inbound SYN request, add
+ * this to the syn cache, and send back a segment:
+ *	<SEQ=ISS><ACK=RCV_NXT><CTL=SYN,ACK>
+ * to the source.
+ */
+
+int
+syn_cache_add(so, m, optp, optlen, oi)
+	struct socket *so;
+	struct mbuf *m;
+	u_char *optp;
+	int optlen;
+	struct tcp_opt_info *oi;
+{
+	register struct tcpiphdr *ti;
+	struct tcpcb tb;
+	long win;
+	struct syn_cache *sc, **sc_prev;
+	struct syn_cache_head *scp;
+	extern int tcp_do_rfc1323;
+
+	ti = mtod(m, struct tcpiphdr *);
+
+	/*
+	 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
+	 * in_broadcast() should never return true on a received
+	 * packet with M_BCAST not set.
+	 */
+	if (m->m_flags & (M_BCAST|M_MCAST) ||
+	    IN_MULTICAST(ti->ti_src.s_addr) ||
+	    IN_MULTICAST(ti->ti_dst.s_addr))
+		return (0);
+
+	/*
+	 * Initialize some local state.
+	 */
+	win = sbspace(&so->so_rcv);
+	if (win > TCP_MAXWIN)
+		win = TCP_MAXWIN;
+
+	if (optp) {
+		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
+		tcp_dooptions(&tb, optp, optlen, ti, oi);
+	} else
+		tb.t_flags = 0;
+
+	/*
+	 * See if we already have an entry for this connection.
+	 */
+	if ((sc = syn_cache_lookup(ti, &sc_prev, &scp)) != NULL) {
+		tcpstat.tcps_sc_dupesyn++;
+		if (syn_cache_respond(sc, m, ti, win, tb.ts_recent) == 0) {
+			tcpstat.tcps_sndacks++;
+			tcpstat.tcps_sndtotal++;
+		}
+		return (1);
+	}
+
+	MALLOC(sc, struct syn_cache *, sizeof(*sc), M_PCB, M_NOWAIT);
+	if (sc == NULL)
+		return (0);
+	/*
+	 * Fill in the cache, and put the necessary TCP
+	 * options into the reply.
+	 */
+	sc->sc_src.s_addr = ti->ti_src.s_addr;
+	sc->sc_dst.s_addr = ti->ti_dst.s_addr;
+	sc->sc_sport = ti->ti_sport;
+	sc->sc_dport = ti->ti_dport;
+	sc->sc_irs = ti->ti_seq;
+	sc->sc_iss = tcp_iss;
+	tcp_iss += TCP_ISSINCR/2;
+	sc->sc_peermaxseg = oi->maxseg;
+	sc->sc_tstmp = (tcp_do_rfc1323 && (tb.t_flags & TF_RCVD_TSTMP)) ? 1 : 0;
+	if ((tb.t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
+	    (TF_RCVD_SCALE|TF_REQ_SCALE)) {
+		sc->sc_requested_s_scale = tb.requested_s_scale;
+		sc->sc_request_r_scale = 0;
+		while (sc->sc_request_r_scale < TCP_MAX_WINSHIFT &&
+		    TCP_MAXWIN << sc->sc_request_r_scale <
+		    so->so_rcv.sb_hiwat)
+			sc->sc_request_r_scale++;
+	} else {
+		sc->sc_requested_s_scale = 15;
+		sc->sc_request_r_scale = 15;
+	}
+	if (syn_cache_respond(sc, m, ti, win, tb.ts_recent) == 0) {
+		syn_cache_insert(sc, &sc_prev, &scp);
+		tcpstat.tcps_sndacks++;
+		tcpstat.tcps_sndtotal++;
+	} else {
+		FREE(sc, M_PCB);
+		tcpstat.tcps_sc_dropped++;
+	}
+	return (1);
+}
+
+int
+syn_cache_respond(sc, m, ti, win, ts)
+	struct syn_cache *sc;
+	struct mbuf *m;
+	register struct tcpiphdr *ti;
+	long win;
+	u_long ts;
+{
+	u_int8_t *optp;
+	int optlen;
+	u_int16_t mss;
+	extern unsigned long in_maxmtu;
+	extern int tcp_mssdflt;
+
+	mss = in_maxmtu - sizeof(struct tcpiphdr);
+	if (!in_localaddr(ti->ti_dst))
+		mss = min(mss, tcp_mssdflt);
+
+	/*
+	 * Tack on the TCP options.  If there isn't enough trailing
+	 * space for them, move up the fixed header to make space.
+	 */
+	optlen = 4 + (sc->sc_request_r_scale != 15 ? 4 : 0) +
+	    (sc->sc_tstmp ? TCPOLEN_TSTAMP_APPA : 0);
+	if (optlen > M_TRAILINGSPACE(m)) {
+		if (M_LEADINGSPACE(m) >= optlen) {
+			m->m_data -= optlen;
+			m->m_len += optlen;
+		} else {
+			struct mbuf *m0 = m;
+			if ((m = m_gethdr(M_DONTWAIT, MT_HEADER)) == NULL) {
+				m_freem(m0);
+				return (ENOBUFS);
+			}
+			MH_ALIGN(m, sizeof(*ti) + optlen);
+			m->m_next = m0; /* this gets freed below */
+		}
+		ovbcopy((caddr_t)ti, mtod(m, caddr_t), sizeof(*ti));
+		ti = mtod(m, struct tcpiphdr *);
+	}
+
+	optp = (u_int8_t *)(ti + 1);
+	optp[0] = TCPOPT_MAXSEG;
+	optp[1] = 4;
+	optp[2] = (mss >> 8) & 0xff;
+	optp[3] = mss & 0xff;
+	optlen = 4;
+
+	if (sc->sc_request_r_scale != 15) {
+		*((u_int32_t *)(optp + optlen)) = htonl(TCPOPT_NOP << 24 |
+		    TCPOPT_WINDOW << 16 | TCPOLEN_WINDOW << 8 |
+		    sc->sc_request_r_scale);
+		optlen += 4;
+	}
+
+	if (sc->sc_tstmp) {
+		u_int32_t *lp = (u_int32_t *)(optp + optlen);
+		/* Form timestamp option as shown in appendix A of RFC 1323. */
+		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
+		*lp++ = htonl(tcp_now);
+		*lp   = htonl(ts);
+		optlen += TCPOLEN_TSTAMP_APPA;
+	}
+
+	/*
+	 * Toss any trailing mbufs.  No need to worry about
+	 * m_len and m_pkthdr.len, since tcp_respond() will
+	 * unconditionally set them.
+	 */
+	if (m->m_next) {
+		m_freem(m->m_next);
+		m->m_next = NULL;
+  	}
+
+	/*
+	 * Fill in the fields that tcp_respond() will not touch, and
+	 * then send the response.
+	 */
+	ti->ti_off = (sizeof(struct tcphdr) + optlen) >> 2;
+	ti->ti_win = htons(win);
+	return (tcp_respond(NULL, ti, m, sc->sc_irs + 1, sc->sc_iss,
+	    TH_SYN|TH_ACK));
 }
 #endif /* TUBA_INCLUDE */
