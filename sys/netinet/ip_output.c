@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.29 1996/02/26 23:17:12 mrg Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.30 1996/09/06 05:07:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -92,6 +92,10 @@ ip_output(m0, va_alist)
 	int flags;
 	struct ip_moptions *imo;
 	va_list ap;
+#ifdef PACKET_FILTER
+	struct packet_filter_hook *pfh;
+	struct mbuf *m1;
+#endif /* PACKET_FILTER */
 
 	va_start(ap, m0);
 	opt = va_arg(ap, struct mbuf *);
@@ -293,6 +297,20 @@ ip_output(m0, va_alist)
 	} else
 		m->m_flags &= ~M_BCAST;
 
+#ifdef PACKET_FILTER
+	/*
+	 * Run through list of hooks for output packets.
+	 */
+	m1 = m;
+	for (pfh = pfil_hook_get(PFIL_OUT); pfh; pfh = pfh->pfil_link.le_next)
+		if (pfh->pfil_func) {
+		    	if (pfh->pfil_func(ip, hlen, m->m_pkthdr.rcvif, 1, &m1)) {
+				error = EHOSTUNREACH;
+				goto bad;
+			}
+			ip = mtod(m = m1, struct ip *);
+		}
+#endif /* PACKET_FILTER */
 sendit:
 	/*
 	 * If small enough for interface, can just send directly.
@@ -398,6 +416,14 @@ done:
 		RTFREE(ro->ro_rt);
 	return (error);
 bad:
+#ifdef PACKET_FILTER
+	m1 = m;
+	for (pfh = pfil_hook_get(PFIL_BAD); pfh; pfh = pfh->pfil_link.le_next)
+		if (pfh->pfil_func) {
+			(void)pfh->pfil_func(ip, hlen, m->m_pkthdr.rcvif, 2, &m1);
+			ip = mtod(m = m1, struct ip *);
+		}
+#endif /* PACKET_FILTER */
 	m_freem(m0);
 	goto done;
 }
