@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.101 2003/01/29 07:00:39 atatat Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.102 2003/02/14 10:19:15 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.101 2003/01/29 07:00:39 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.102 2003/02/14 10:19:15 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1182,17 +1182,17 @@ svr4_sys_waitsys(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_waitsys_args *uap = v;
-	int nfound, error, s;
-	struct proc *p = l->l_proc;
-	struct proc *q, *t;
-
+	int options;
+	int error;
+	struct proc *parent = l->l_proc;
+	struct proc *child;
 
 	switch (SCARG(uap, grp)) {
 	case SVR4_P_PID:	
 		break;
 
 	case SVR4_P_PGID:
-		SCARG(uap, id) = -p->p_pgid;
+		SCARG(uap, id) = -parent->p_pgid;
 		break;
 
 	case SVR4_P_ALL:
@@ -1203,116 +1203,47 @@ svr4_sys_waitsys(l, v, retval)
 		return EINVAL;
 	}
 
+	/* Translate options */
+	options = 0;
+	if (SCARG(uap, options) & SVR4_WNOWAIT)
+		options |= WNOWAIT;
+	if (SCARG(uap, options) & SVR4_WNOHANG)
+		options |= WNOHANG;
+	if ((SCARG(uap, options) & (SVR4_WEXITED|SVR4_WTRAPPED)) == 0)
+		options |= WNOZOMBIE;
+	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
+		options |= WUNTRACED;
+
 	DPRINTF(("waitsys(%d, %d, %p, %x)\n", 
 	         SCARG(uap, grp), SCARG(uap, id),
 		 SCARG(uap, info), SCARG(uap, options)));
 
-loop:
-	nfound = 0;
-	for (q = p->p_children.lh_first; q != 0; q = q->p_sibling.le_next) {
-		if (SCARG(uap, id) != WAIT_ANY &&
-		    q->p_pid != SCARG(uap, id) &&
-		    q->p_pgid != -SCARG(uap, id)) {
-			DPRINTF(("pid %d pgid %d != %d\n", q->p_pid,
-				 q->p_pgid, SCARG(uap, id)));
-			continue;
-		}
-		nfound++;
-		if (q->p_stat == SZOMB && 
-		    ((SCARG(uap, options) & (SVR4_WEXITED|SVR4_WTRAPPED)))) {
-			*retval = 0;
-			DPRINTF(("found %d\n", q->p_pid));
-			if ((error = svr4_setinfo(q, q->p_xstat,
-						  SCARG(uap, info))) != 0)
-				return error;
+	error = find_stopped_child(parent, SCARG(uap, id), options, &child);
+	if (error != 0)
+		return error;
+	*retval = 0;
+	if (child == NULL)
+		return svr4_setinfo(NULL, 0, SCARG(uap, info));
+
+	if (child->p_stat == SZOMB) {
+		DPRINTF(("found %d\n", child->p_pid));
+		if ((error = svr4_setinfo(child, child->p_xstat,
+					  SCARG(uap, info))) != 0)
+			return error;
 
 
-		        if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
-				DPRINTF(("Don't wait\n"));
-				return 0;
-			}
-
-			/*
-			 * If we got the child via ptrace(2) or procfs, and
-			 * the parent is different (meaning the process was
-			 * attached, rather than run as a child), then we need
-			 * to give it back to the old parent, and send the
-			 * parent a SIGCHLD.  The rest of the cleanup will be
-			 * done when the old parent waits on the child.
-			 */
-			if ((q->p_flag & P_TRACED) && q->p_opptr != q->p_pptr){
-				t = q->p_opptr;
-				proc_reparent(q, t ? t : initproc);
-				q->p_opptr = NULL;
-				q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
-				psignal(q->p_pptr, SIGCHLD);
-				wakeup((caddr_t)q->p_pptr);
-				return (0);
-			}
-			q->p_xstat = 0;
-			ruadd(&p->p_stats->p_cru, q->p_ru);
-			pool_put(&rusage_pool, q->p_ru);
-
-			/*
-			 * Finally finished with old proc entry.
-			 * Unlink it from its process group and free it.
-			 */
-			leavepgrp(q);
-
-			s = proclist_lock_write();
-			LIST_REMOVE(q, p_list);	/* off zombproc */
-			proclist_unlock_write(s);
-
-			LIST_REMOVE(q, p_sibling);
-
-			/*
-			 * Decrement the count of procs running with this uid.
-			 */
-			(void)chgproccnt(q->p_cred->p_ruid, -1);
-
-			/*
-			 * Free up credentials.
-			 */
-			if (--q->p_cred->p_refcnt == 0) {
-				crfree(q->p_cred->pc_ucred);
-				pool_put(&pcred_pool, q->p_cred);
-			}
-
-			/*
-			 * Release reference to text vnode
-			 */
-			if (q->p_textvp)
-				vrele(q->p_textvp);
-
-			pool_put(&proc_pool, q);
-			nprocs--;
+		if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
+			DPRINTF(("Don't wait\n"));
 			return 0;
 		}
-		if (q->p_stat == SSTOP && (q->p_flag & P_WAITED) == 0 &&
-		    (q->p_flag & P_TRACED ||
-		     (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED)))) {
-			DPRINTF(("jobcontrol %d\n", q->p_pid));
-		        if (((SCARG(uap, options) & SVR4_WNOWAIT)) == 0)
-				q->p_flag |= P_WAITED;
-			*retval = 0;
-			return svr4_setinfo(q, W_STOPCODE(q->p_xstat),
-					    SCARG(uap, info));
-		}
-	}
 
-	if (nfound == 0)
-		return ECHILD;
-
-	if (SCARG(uap, options) & SVR4_WNOHANG) {
-		*retval = 0;
-		if ((error = svr4_setinfo(NULL, 0, SCARG(uap, info))) != 0)
-			return error;
+		proc_free(child);
 		return 0;
 	}
 
-	if ((error = tsleep((caddr_t)p, PWAIT | PCATCH, "svr4_wait", 0)) != 0)
-		return error;
-	goto loop;
+	DPRINTF(("jobcontrol %d\n", child->p_pid));
+	return svr4_setinfo(child, W_STOPCODE(child->p_xstat),
+			    SCARG(uap, info));
 }
 
 
