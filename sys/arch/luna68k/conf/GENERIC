@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.15 2000/12/19 15:51:49 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.16 2001/02/21 01:44:44 nisimura Exp $
 #
 #	GENERIC LUNA68K
 #
 include		"arch/luna68k/conf/std.luna68k"
 
-#ident 		"GENERIC-$Revision: 1.15 $"
+#ident 		"GENERIC-$Revision: 1.16 $"
 
 maxusers	8
 
@@ -134,4 +134,3 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	vnd		2	# disk-like interface to files
 pseudo-device	rnd			# /dev/random and in-kernel generator
-#options 	RND_COM			# use "com" randomness too

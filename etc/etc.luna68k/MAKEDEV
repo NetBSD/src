@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.6 2000/10/29 13:03:38 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.7 2001/02/21 01:45:25 nisimura Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -239,14 +239,14 @@ ipl)
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
-#random)
-#	rm -f random urandom
-#	mknod random c 32 0
-#	mknod urandom c 32 1
-#	chown root.wheel random urandom
-#	chmod 444 random
-#	chmod 644 urandom
-#	;;
+random)
+	rm -f random urandom
+	mknod random c 34 0
+	mknod urandom c 34 1
+	chown root.wheel random urandom
+	chmod 444 random
+	chmod 644 urandom
+	;;
 
 scsibus*)
 	unit=${i#scsibus};
