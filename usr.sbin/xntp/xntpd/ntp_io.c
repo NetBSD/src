@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.8 1998/08/12 14:11:53 christos Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.9 1999/01/29 13:19:17 bouyer Exp $	*/
 
 /*
  * xntp_io.c - input/output routines for xntpd.  The socket-opening code
@@ -601,10 +601,16 @@ create_sockets(port)
        * look for an already existing source interface address.  If
        * the machine has multiple point to point interfaces, then
        * the local address may appear more than once.
+       *
+       * A second problem exists if we have two addresses on the same
+       * network (via "ifconfig alias ...").  Don't make two xntp interfaces
+       * for the two aliases on the one physical interface. -wsr
        */
       for (j=0; j < i; j++)
-	if (inter_list[j].sin.sin_addr.s_addr ==
-	    inter_list[i].sin.sin_addr.s_addr)
+	if ((inter_list[j].sin.sin_addr.s_addr &
+	    inter_list[j].mask.sin_addr.s_addr) ==
+	    (inter_list[i].sin.sin_addr.s_addr &
+	    inter_list[i].mask.sin_addr.s_addr))
 	  {
 	    break;
 	  }
