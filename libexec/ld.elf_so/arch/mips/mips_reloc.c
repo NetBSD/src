@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.12 2002/09/06 03:05:36 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.13 2002/09/06 03:12:06 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -135,7 +135,7 @@ _rtld_setup_pltgot(obj)
 
 int
 _rtld_relocate_nonplt_objects(obj, dodebug)
-	Obj_Entry *obj;
+	const Obj_Entry *obj;
 	bool dodebug;
 {
 	const Elf_Rel *rel;
@@ -219,8 +219,30 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 }
 
 int
+_rtld_relocate_plt_lazy(obj, dodebug)
+	const Obj_Entry *obj;
+	bool dodebug;
+{
+	const Elf_Rel *rel;
+
+	if (obj->mainprog)
+		return 0;
+
+	for (rel = obj->pltrel; rel < obj->pltrellim; rel++) {
+		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
+
+		/* Just relocate the GOT slots pointing into the PLT */
+		*where += (Elf_Addr)obj->relocbase;
+		rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
+		    (void *)*where));
+	}
+
+	return 0;
+}
+
+int
 _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
-	Obj_Entry *obj;
+	const Obj_Entry *obj;
 	const Elf_Rela *rela;
 	caddr_t *addrp;
 	bool dodebug;
@@ -242,27 +264,5 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 		*where = new_value;
 
 	*addrp = (caddr_t)new_value;
-	return 0;
-}
-
-int
-_rtld_relocate_plt_lazy(obj, dodebug)
-	Obj_Entry *obj;
-	bool dodebug;
-{
-	const Elf_Rel *rel;
-
-	if (obj->mainprog)
-		return 0;
-
-	for (rel = obj->pltrel; rel < obj->pltrellim; rel++) {
-		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
-
-		/* Just relocate the GOT slots pointing into the PLT */
-		*where += (Elf_Addr)obj->relocbase;
-		rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
-		    (void *)*where));
-	}
-
 	return 0;
 }
