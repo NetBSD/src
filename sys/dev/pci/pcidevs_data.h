@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.568 2003/08/26 21:02:23 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.569 2003/08/27 14:27:13 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.570 2003/08/26 21:01:35 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.572 2003/08/27 14:21:51 kleink Exp 
  */
 
 /*
@@ -1138,6 +1138,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "AMD8111 I/O Hub",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_USB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8111 USB Host Controller",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_LPC,
 	    0,
 	    "Advanced Micro Devices",
@@ -1148,6 +1154,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "AMD8111 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_SMB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8111 SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_ACPI,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8111 ACPI Controller",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
