@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.633 2004/07/21 16:39:38 mycroft Exp $
+$NetBSD: pcidevs,v 1.634 2004/07/25 16:04:22 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2694,6 +2694,7 @@ product VIATECH VT8377		0x3189	VT8377 Apollo KT400 CPU to PCI Bridge
 product VIATECH VT8237		0x3227	VT8237 (Apollo KT600) PCI-ISA Bridge
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product VIATECH VT8231		0x8231	VT8231 IDE Controller
+product	VIATECH	VT8231_PWR	0x8235	VT8231 Power Management Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 KT133 PCI to AGP Bridge
 product VIATECH	VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge
 product VIATECH VT8501AGP	0x8501	VT8501 CPU-AGP Bridge
