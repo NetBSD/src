@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.2 2000/08/22 21:22:49 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.3 2000/10/14 23:41:04 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.2 2000/08/22 21:22:49 bjh21 Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.3 2000/10/14 23:41:04 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -406,7 +406,6 @@ cpu_initclocks()
 					  ioc_irq_clock, NULL);
 	printf("%s: %d Hz clock interrupting at %s\n",
 	       self->dv_xname, hz, irq_string(sc->sc_clkirq));
-	irq_enable(sc->sc_clkirq);
 	
 	if (stathz) {
 		setstatclockrate(stathz);
@@ -415,7 +414,6 @@ cpu_initclocks()
 						   ioc_irq_statclock, NULL);
 		printf("%s: %d Hz statclock interrupting at %s\n",
 		       self->dv_xname, stathz, irq_string(sc->sc_sclkirq));
-		irq_enable(sc->sc_sclkirq);
 	}
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.5 2000/08/22 21:22:50 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.6 2000/10/14 23:41:01 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.5 2000/08/22 21:22:50 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.6 2000/10/14 23:41:01 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -186,7 +186,7 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg)
 	new->ipl = ipl;
 	new->func = func;
 	new->arg = arg;
-	new->enabled = 0;
+	new->enabled = 1;
 	if (irq_list_head.lh_first == NULL ||
 	    irq_list_head.lh_first->ipl <= ipl)
 		/* XXX This shouldn't need to be a special case */

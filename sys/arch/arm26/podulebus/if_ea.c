@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.20 2000/09/21 22:20:39 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.21 2000/10/14 23:41:05 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.20 2000/09/21 22:20:39 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.21 2000/10/14 23:41:05 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/socket.h>
@@ -149,7 +149,6 @@ eaattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ih = podulebus_irq_establish(sc->sc_8005.sc_dev.dv_parent,
 	    pa->pa_slotnum, IPL_NET, seeq8005intr, sc);
-	irq_enable(sc->sc_ih);
 }
 
 /* End of if_ea.c */
