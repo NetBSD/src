@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.54 2000/06/29 08:15:13 mrg Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.55 2001/05/30 15:24:32 lukem Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -40,6 +40,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "zsc.h"
 
 #include <sys/param.h>

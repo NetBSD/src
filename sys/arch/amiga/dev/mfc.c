@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.23 2001/05/02 10:32:13 scw Exp $ */
+/*	$NetBSD: mfc.c,v 1.24 2001/05/30 15:24:27 lukem Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -33,6 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

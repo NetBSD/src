@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2001/05/29 18:40:25 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2001/05/30 15:24:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@
 #include "opt_algor_p6032.h"
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

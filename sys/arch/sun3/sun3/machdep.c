@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.146 2001/05/28 21:54:26 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147 2001/05/30 15:24:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -44,6 +44,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
