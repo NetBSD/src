@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)route.c	5.20 (Berkeley) 11/29/90";*/
-static char rcsid[] = "$Id: route.c,v 1.8 1994/03/28 10:29:58 cgd Exp $";
+static char rcsid[] = "$Id: route.c,v 1.9 1994/04/01 09:18:16 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -109,7 +109,7 @@ struct bits2 {
  * Print routing tables.
  */
 routepr(hostaddr, netaddr, hashsizeaddr, treeaddr)
-	off_t hostaddr, netaddr, hashsizeaddr, treeaddr;
+	u_long hostaddr, netaddr, hashsizeaddr, treeaddr;
 {
 	struct mbuf mb;
 	register struct ortentry *rt;
@@ -222,7 +222,7 @@ struct radix_mask rmask;
 
 int NewTree = 0;
 treestuff(rtree)
-off_t rtree;
+u_long rtree;
 {
 	struct radix_node_head *rnh, head;
 
@@ -713,7 +713,7 @@ netname(in, mask)
  * Print routing statistics
  */
 rt_stats(off)
-	off_t off;
+	u_long off;
 {
 	struct rtstat rtstat;
 

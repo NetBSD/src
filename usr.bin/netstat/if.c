@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)if.c	5.15 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: if.c,v 1.6 1994/03/28 10:29:31 cgd Exp $";
+static char rcsid[] = "$Id: if.c,v 1.7 1994/04/01 09:18:09 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -75,7 +75,7 @@ char *index();
  */
 intpr(interval, ifnetaddr)
 	int interval;
-	off_t ifnetaddr;
+	u_long ifnetaddr;
 {
 	struct ifnet ifnet;
 	struct in_addr in;
@@ -89,7 +89,7 @@ intpr(interval, ifnetaddr)
 		struct iso_ifaddr iso;
 #endif
 	} ifaddr;
-	off_t ifaddraddr;
+	u_long ifaddraddr;
 	struct sockaddr *sa;
 	char name[16];
 
@@ -126,7 +126,7 @@ intpr(interval, ifnetaddr)
 			    sizeof ifnet);
 			kvm_read(ifnet.if_name, name, 16);
 			name[15] = '\0';
-			ifnetaddr = (off_t)(long)ifnet.if_next;
+			ifnetaddr = (long)ifnet.if_next;
 			if (interface != 0 &&
 			    (strcmp(name, interface) != 0 || unit != ifnet.if_unit))
 				continue;
@@ -135,7 +135,7 @@ intpr(interval, ifnetaddr)
 			if ((ifnet.if_flags&IFF_UP) == 0)
 				*cp++ = '*';
 			*cp = '\0';
-			ifaddraddr = (off_t)(long)ifnet.if_addrlist;
+			ifaddraddr = (long)ifnet.if_addrlist;
 		}
 		printf("%-5.5s %-5d ", name, ifnet.if_mtu);
 		if (ifaddraddr == 0) {
@@ -226,7 +226,7 @@ intpr(interval, ifnetaddr)
 					putchar(' ');
 				break;
 			}
-			ifaddraddr = (off_t)(long)ifaddr.ifa.ifa_next;
+			ifaddraddr = (long)ifaddr.ifa.ifa_next;
 		}
 		printf("%8d %5d %8d %5d %5d",
 		    ifnet.if_ipackets, ifnet.if_ierrors,
@@ -261,17 +261,17 @@ u_char	signalled;			/* set if alarm goes off "early" */
  */
 sidewaysintpr(interval, off)
 	unsigned interval;
-	off_t off;
+	u_long off;
 {
 	struct ifnet ifnet;
-	off_t firstifnet;
+	u_long firstifnet;
 	register struct iftot *ip, *total;
 	register int line;
 	struct iftot *lastif, *sum, *interesting;
 	int oldmask;
 	void catchalarm();
 
-	kvm_read((void *)(long)off, (char *)&firstifnet, sizeof (off_t));
+	kvm_read((void *)(long)off, (char *)&firstifnet, sizeof (u_long));
 	lastif = iftot;
 	sum = iftot + MAXIF - 1;
 	total = sum - 1;
@@ -291,7 +291,7 @@ sidewaysintpr(interval, off)
 		ip++;
 		if (ip >= iftot + MAXIF - 2)
 			break;
-		off = (off_t)(long)ifnet.if_next;
+		off = (long)ifnet.if_next;
 	}
 	lastif = ip;
 
@@ -358,7 +358,7 @@ loop:
 		sum->ift_oe += ip->ift_oe;
 		sum->ift_co += ip->ift_co;
 		sum->ift_dr += ip->ift_dr;
-		off = (off_t)(long)ifnet.if_next;
+		off = (long)ifnet.if_next;
 	}
 	if (lastif - iftot > 0) {
 		printf("  %8d %5d %8d %5d %5d",
