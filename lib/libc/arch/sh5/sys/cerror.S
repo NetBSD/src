@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.3 2003/08/07 16:42:22 agc Exp $	*/
+/*	$NetBSD: cerror.S,v 1.4 2003/08/12 13:28:55 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -74,17 +74,22 @@
 #if 0
 	RCSID("from: @(#)cerror.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: cerror.S,v 1.3 2003/08/07 16:42:22 agc Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.4 2003/08/12 13:28:55 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 
 /*
- * Error code is in r2. Caller has already performed PIC_PROLOGUE.
+ * Error code is in r2.
+ * Note that we must first pop the caller's PIC prologue, since it may
+ * be different to our own PIC_PROLOGUE (if we're invoked from another
+ * shared library, for example).
+ *
  * Original caller's return address is in r18.
- * Must perform PIC_EPILOGUE before returning.
  */
 ENTRY_NOPROFILE(__cerror)
+	PIC_EPILOGUE		/* Pop caller's PIC prologue */
+	PIC_PROLOGUE
 #ifdef	_REENTRANT
 	addi	r15, -16, r15
 	st.q	r15, 0, r2
