@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.1 1995/08/25 21:25:09 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.2 1995/09/05 19:53:01 ragge Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -152,7 +152,7 @@ mt*)
 	;;
 
 hp*|hk*|up*|ra*|kra*|rl*|rb*|ccd*|vnd*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
 	case $i in
 	hp*) name=hp; blk=0; chr=4;;
 	hk*) name=hk; blk=3; chr=11;;
