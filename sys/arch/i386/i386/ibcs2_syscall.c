@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.5 2000/12/10 12:23:50 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.6 2000/12/10 19:29:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -126,7 +126,6 @@ ibcs2_syscall(frame)
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
-	u_quad_t sticks;
 
 	uvmexp.syscalls++;
 #ifdef DEBUG
@@ -137,14 +136,10 @@ ibcs2_syscall(frame)
 	p = curproc;
 	p->p_md.md_regs = &frame;
 
-	sticks = p->p_sticks;
 	code = frame.tf_eax;
-
-	callp = p->p_emul->e_sysent;
-
 	if (IBCS2_HIGH_SYSCALL(code))
 		code = IBCS2_CVT_HIGH_SYSCALL(code);
-
+	callp = p->p_emul->e_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
 #ifdef VM86
@@ -218,7 +213,7 @@ ibcs2_syscall(frame)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p, frame.tf_eip, sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.151 2000/12/10 12:09:59 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.152 2000/12/10 19:29:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -172,7 +172,6 @@ trap(frame)
 {
 	register struct proc *p = curproc;
 	int type = frame.tf_trapno;
-	u_quad_t sticks;
 	struct pcb *pcb = NULL;
 	extern char fusubail[],
 		    resume_iret[], resume_pop_ds[], resume_pop_es[],
@@ -193,11 +192,8 @@ trap(frame)
 
 	if (!KERNELMODE(frame.tf_cs, frame.tf_eflags)) {
 		type |= T_USER;
-		sticks = p->p_sticks;
 		p->p_md.md_regs = &frame;
 	}
-	else
-		sticks = 0;
 
 	switch (type) {
 
@@ -495,7 +491,7 @@ trap(frame)
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(p, frame.tf_eip, sticks);
+	userret(p);
 }
 
 #if defined(I386_CPU)
@@ -551,7 +547,6 @@ syscall(frame)
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
-	u_quad_t sticks;
 
 	uvmexp.syscalls++;
 #ifdef DEBUG
@@ -562,11 +557,8 @@ syscall(frame)
 	p = curproc;
 	p->p_md.md_regs = &frame;
 
-	sticks = p->p_sticks;
 	code = frame.tf_eax;
-
 	callp = p->p_emul->e_sysent;
-
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
 #ifdef VM86
@@ -643,7 +635,7 @@ syscall(frame)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p, frame.tf_eip, sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
@@ -660,7 +652,7 @@ child_return(arg)
 	tf->tf_eax = 0;
 	tf->tf_eflags &= ~PSL_C;
 
-	userret(p, tf->tf_eip, 0);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);

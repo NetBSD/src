@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.1 2000/12/09 11:21:52 jdolecek Exp $	*/
+/*	$NetBSD: userret.h,v 1.2 2000/12/10 19:29:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -73,32 +73,21 @@
  *
  */
 
-static __inline void userret __P((register struct proc *, int, u_quad_t));
+static __inline void userret __P((register struct proc *));
 
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
 static __inline void
-userret(p, pc, oticks)
+userret(p)
 	register struct proc *p;
-	int pc;
-	u_quad_t oticks;
 {
 	int sig;
 
 	/* Take pending signals. */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) { 
-		extern int psratio;
-
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}                   
 
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.21 2000/06/27 17:41:35 mrg Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.22 2000/12/10 19:29:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -213,27 +213,24 @@ sys_profil(p, v, retval)
  * inaccurate.
  */
 void
-addupc_intr(p, pc, ticks)
+addupc_intr(p, pc)
 	struct proc *p;
 	u_long pc;
-	u_int ticks;
 {
 	struct uprof *prof;
 	caddr_t addr;
 	u_int i;
 	int v;
 
-	if (ticks == 0)
-		return;
 	prof = &p->p_stats->p_prof;
 	if (pc < prof->pr_off ||
 	    (i = PC_TO_INDEX(pc, prof)) >= prof->pr_size)
 		return;			/* out of range; ignore */
 
 	addr = prof->pr_base + i;
-	if ((v = fuswintr(addr)) == -1 || suswintr(addr, v + ticks) == -1) {
+	if ((v = fuswintr(addr)) == -1 || suswintr(addr, v + 1) == -1) {
 		prof->pr_addr = pc;
-		prof->pr_ticks = ticks;
+		prof->pr_ticks++;
 		need_proftick(p);
 	}
 }
