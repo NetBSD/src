@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.11 2002/08/07 21:20:56 briggs Exp $
+# $NetBSD: md.hpcsh,v 1.12 2002/09/07 12:48:52 gehenna Exp $
 ./usr/include/hpcsh	comp-c-include
 ./usr/include/hpcsh/ansi.h	comp-c-include
 ./usr/include/hpcsh/aout_machdep.h	comp-c-include
@@ -8,7 +8,6 @@
 ./usr/include/hpcsh/bus.h	comp-c-include
 ./usr/include/hpcsh/cdefs.h	comp-c-include
 ./usr/include/hpcsh/coff_machdep.h	comp-c-include
-./usr/include/hpcsh/conf.h	comp-c-include
 ./usr/include/hpcsh/cpu.h	comp-c-include
 ./usr/include/hpcsh/cputypes.h	comp-c-include
 ./usr/include/hpcsh/db_machdep.h	comp-c-include
