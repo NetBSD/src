@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.21 2002/10/14 18:39:23 elric Exp $
+# 	$NetBSD: GENERIC,v 1.22 2002/10/18 15:11:09 junyoung Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.21 $"
+#ident		"GENERIC-$Revision: 1.22 $"
 
 # estimated number of users
 maxusers	32
@@ -31,6 +31,10 @@ maxusers	32
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # CPU options
 options 	CPU_SA110	# Support the SA110 core
