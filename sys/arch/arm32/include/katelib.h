@@ -1,4 +1,4 @@
-/*	$NetBSD: katelib.h,v 1.11 1997/10/14 09:20:22 mark Exp $	*/
+/*	$NetBSD: katelib.h,v 1.12 1998/02/21 22:49:18 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -61,11 +61,6 @@
 
 /* Assembly modules */
 
-/* In locore.S */
-
-void atomic_set_bit	__P((u_int *address, u_int setmask));
-void atomic_clear_bit	__P((u_int *address, u_int clearmask));
-
 /* In blockio.S */
 
 void insw	__P((u_int io, void *dest, u_int size));
@@ -121,12 +116,6 @@ u_int simpletraceback	__P((void));
 u_int irqtraceback	__P((u_int, u_int));
 u_int user_traceback	__P((u_int));
 void kstack_stuff	__P((struct proc */*p*/));
-void bootsync		__P((void));
-void boot0		__P((void))
-    __attribute__((__noreturn__));
-
-char *strstr	__P((char *s1, char *s2));
-void userret	__P((register struct proc *p, int pc, u_quad_t oticks));
 #endif
 
 /* End of katelib.h */

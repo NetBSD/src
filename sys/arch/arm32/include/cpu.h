@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 1997/10/14 09:20:07 mark Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 1998/02/21 22:49:18 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -221,19 +221,39 @@
 
 #define cpu_wait(p)	/* nothing */
 
-#ifndef _LOCORE
-void need_resched __P((void));
-void need_proftick __P((struct proc *p));
-
-extern int current_intr_depth;
-#endif	/* !_LOCORE */
-
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
 
 #define signotify(p)            setsoftast()
+
+
+#if defined(_KERNEL) && !defined(_LOCORE)
+extern int current_intr_depth;
+
+/* stubs.c */
+void need_resched	__P((void));
+void need_proftick	__P((struct proc *p));
+
+/* locore.S */
+void atomic_set_bit	__P((u_int *address, u_int setmask));
+void atomic_clear_bit	__P((u_int *address, u_int clearmask));
+
+/* cpuswitch.S */
+struct pcb;
+void	savectx		__P((struct pcb *pcb));
+
+/* ast.c */
+void userret		__P((register struct proc *p, int pc, u_quad_t oticks));
+
+/* machdep.h */
+void bootsync		__P((void));
+
+/* strstr.c */
+char *strstr		__P((const char *s1, const char *s2));
+
+#endif	/* _KERNEL && !_LOCORE */
 
 /* 
  * CTL_MACHDEP definitions.
