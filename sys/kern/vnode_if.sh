@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.16 1998/03/01 02:22:37 fvdl Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.17 1998/07/30 00:46:01 mycroft Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -179,7 +179,7 @@ function doit() {
 		if (i < (argc-1)) protoarg = (protoarg ", ");
 		arglen = length(protoarg);
 		if (i == (argc-1))
-			arglen += length(" __attribute__ ((unused))");
+			arglen += length(" __attribute__((__unused__))");
 		if ((protolen + arglen) > 77) {
 			protoarg = ("\n    " protoarg);
 			arglen += 4;
@@ -188,7 +188,7 @@ function doit() {
 		printf("%s", protoarg);
 		protolen += arglen;
 	}
-	printf(")) __attribute__ ((unused));\n");
+	printf(")) __attribute__((__unused__));\n");
 	# Define inline function.
 	printf("static __inline int %s(", toupper(name));
 	for (i=0; i<argc; i++) {
