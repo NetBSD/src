@@ -579,7 +579,7 @@ except(file)
 					return(1);
 				continue;
 			}
-			if (regexec(file, regcomp(nl->n_name)) > 0)
+			if (regexec(regcomp(nl->n_name), file) > 0)
 				return(1);
 		}
 	}
