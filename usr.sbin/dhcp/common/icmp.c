@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: icmp.c,v 1.1.1.1 1997/03/29 21:52:17 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: icmp.c,v 1.1.1.2 1997/03/31 23:45:45 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -79,10 +79,6 @@ void icmp_startup (routep, handler)
 	if (!icmp_protocol_fd)
 		error ("unable to create icmp socket: %m");
 
-	if (setsockopt (icmp_protocol_fd, SOL_SOCKET, SO_DONTROUTE,
-			(char *)&routep, sizeof routep))
-		error ("Can't set SO_DONTROUTE on ICMP socket: %m");
-
 	add_protocol ("icmp", icmp_protocol_fd, icmp_echoreply, handler);
 }
 
@@ -108,8 +104,8 @@ int icmp_echorequest (addr)
 	icmp.icmp_cksum = 0;
 	icmp.icmp_seq = 0;
 #ifdef PTRSIZE_64BIT
-	icmp.icmp_id = (((u_int32_t)addr) ^
-			(u_int32_t)(((u_int64_t)addr) >> 32));
+	icmp.icmp_id = (((u_int32_t)(u_int64_t)addr) ^
+  			(u_int32_t)(((u_int64_t)addr) >> 32));
 #else
 	icmp.icmp_id = (u_int32_t)addr;
 #endif
@@ -121,7 +117,7 @@ int icmp_echorequest (addr)
 	status = sendto (icmp_protocol_fd, (char *)&icmp, sizeof icmp, 0,
 			 (struct sockaddr *)&to, sizeof to);
 	if (status < 0)
-		warn ("icmp_echorequest: %m");
+		warn ("icmp_echorequest %s: %m", inet_ntoa(to.sin_addr));
 
 	if (status != sizeof icmp)
 		return 0;

@@ -89,3 +89,7 @@ extern int h_errno;
 #if defined (USE_DEFAULT_NETWORK)
 #  define USE_BPF
 #endif
+
+#ifdef __alpha__
+#define PTRSIZE_64BIT
+#endif
