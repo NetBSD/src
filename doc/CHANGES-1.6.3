@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.35 2004/03/15 15:30:09 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.36 2004/03/26 22:55:46 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -207,3 +207,24 @@ usr.sbin/route6d/route6d.c		1.50
 
 	Need_trigger/idx should be u_int
 	[martin, ticket #1627]
+
+lib/libc/gen/arc4random.c		1.1-1.5
+lib/libc/gen/arc4random.3		1.1-1.6
+lib/libc/gen/Makefile.inc		1.111
+lib/libcrypt/blowfish.c			1.1-1.3
+lib/libcrypt/bcrypt.c			1.1-1.3
+lib/libcrypt/crypt.c			1.19-1.21
+lib/libcrypt/crypt.3			1.14-1.17
+include/pwd.h				1.26
+include/stdlib.h			1.56
+usr.bin/passwd/pwd_gensalt.c		1.6
+share/man/man5/passwd.conf.5		1.5-1.6
+lib/libcrypt/Makefile			1.12,1.14
+lib/libc/shlib_version			1.117
+lib/libcrypt/shlib_version		1.4
+distrib/sets/lists/base/shl.mi		patch
+distrib/sets/lists/comp/mi		patch
+
+	Introduce bcrypt password scheme. Adds the arc4random API for creating 
+	cryptographically strong random numbers.
+	[provos, ticket #1386]
