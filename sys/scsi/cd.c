@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.93 1996/08/13 08:31:31 explorer Exp $	*/
+/*	$NetBSD: cd.c,v 1.94 1996/08/13 08:55:38 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1179,7 +1179,7 @@ cd_read_subchannel(cd, mode, format, track, data, len)
 	_lto2b(len, scsi_cmd.data_len);
 	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(struct scsi_read_subchannel), (u_char *)data, len,
-	    CDRETRIES, 5000, NULL, SCSI_DATA_IN);
+	    CDRETRIES, 5000, NULL, SCSI_DATA_IN|SCSI_SILENT);
 }
 
 /*
