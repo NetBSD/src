@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.96 2000/05/28 05:49:06 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.97 2000/05/31 05:02:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -135,6 +135,8 @@ struct	proc {
 
 	int	p_exitsig;		/* signal to sent to parent on exit */
 	int	p_flag;			/* P_* flags. */
+	struct cpu_info * __volatile p_cpu; /* CPU we're running on if
+					       SONPROC */
 	u_char	p_unused;		/* XXX: used to be emulation flag */
 	char	p_stat;			/* S* process status. */
 	char	p_pad1[2];
