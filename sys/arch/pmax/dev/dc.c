@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.33.6.1 1997/11/09 20:14:07 mellon Exp $	*/
+/*	$NetBSD: dc.c,v 1.33.6.2 1997/11/22 03:59:35 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.33.6.1 1997/11/09 20:14:07 mellon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.33.6.2 1997/11/22 03:59:35 mellon Exp $");
 
 /*
  * devDC7085.c --
@@ -772,6 +772,12 @@ dcrint(sc)
 #endif
 				return;
 		}
+#ifdef DDB
+		if (c & RBUF_FERR && tp->t_dev == cn_tab->cn_dev) {
+			Debugger();
+			continue;
+		}
+#endif
 		if (c & RBUF_FERR)
 			cc |= TTY_FE;
 		if (c & RBUF_PERR)
@@ -1278,7 +1284,9 @@ dcPollc(dev, on)
 	int on;
 {
 #if defined(DIAGNOSTIC) || defined(DEBUG)
+#ifndef DDB
 	printf("dc_Pollc(%d, %d): not implemented\n", minor(dev), on);
+#endif
 #endif
 }
 
