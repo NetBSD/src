@@ -68,7 +68,7 @@ Boston, MA 02111-1307, USA.  */
    %{call_shared} %{no_archive} %{exact_version} \
    %{!shared: %{!non_shared: %{!call_shared: -non_shared}}} \
    %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so} \
-   %{nostdlib:-nostdlib} %{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp \
+   %{nostdlib:-nostdlib} %{!r*:%{!e*:-e __start}} -dc -dp \
    %{static:-Bstatic} %{!static:-Bdynamic} %{assert*}"
 
 /* Provide CC1_SPEC appropriate for NetBSD/mips ELF platforms */
