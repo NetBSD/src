@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.2 1998/07/05 00:51:20 jonathan Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.3 1998/07/05 06:49:12 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

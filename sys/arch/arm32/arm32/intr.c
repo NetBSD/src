@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.9 1998/07/05 04:37:36 jonathan Exp $	*/
+/*	$NetBSD: intr.c,v 1.10 1998/07/05 06:49:04 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -40,6 +40,7 @@
 #include "opt_atalk.h"
 #include "opt_ccitt.h"
 #include "opt_iso.h"
+#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

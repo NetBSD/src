@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.17 1998/07/05 00:51:07 jonathan Exp $ */
+/* $NetBSD: if_ie.c,v 1.18 1998/07/05 06:49:04 jonathan Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -57,6 +57,7 @@
 /* Standard podule includes */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

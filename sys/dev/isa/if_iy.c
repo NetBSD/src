@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.22 1998/07/05 00:51:21 jonathan Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.23 1998/07/05 06:49:13 jonathan Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -34,6 +34,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.12 1998/01/12 20:04:28 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.13 1998/07/05 06:49:08 jonathan Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -11,6 +11,8 @@
  */
 
 #include "sn.h"
+#include "opt_inet.h"
+#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +60,7 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include <pica/dev/dma.h>
+#include <machine/bus.h>
 
 #define SONICDW 32
 typedef unsigned char uchar;
@@ -123,6 +125,11 @@ void snattach __P((struct device *, struct device *, void *));
 struct cfattach sn_ca = {
 	sizeof(struct sn_softc), snmatch, snattach
 };
+
+
+
+void	m_check __P((struct mbuf *m));
+void	m_checkm __P((struct mbuf *m));
 
 void 
 m_check(m)
