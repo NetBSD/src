@@ -120,7 +120,7 @@ sim_close (SIM_DESC sd, int quitting)
 
 
 SIM_RC
-sim_load (SIM_DESC sd, char *prog, bfd *abfd, int from_tty)
+sim_load (SIM_DESC sd, char *prog, struct _bfd *abfd, int from_tty)
 {
   TRACE(trace_gdb, ("sim_load(prog=%s, from_tty=%d) called\n",
 		    prog, from_tty));
@@ -180,7 +180,7 @@ sim_write (SIM_DESC sd, SIM_ADDR mem, unsigned char *buf, int length)
 int
 sim_fetch_register (SIM_DESC sd, int regno, unsigned char *buf, int length)
 {
-  char *regname;
+  const char *regname;
 
   if (simulator == NULL) {
     return 0;
@@ -212,7 +212,7 @@ sim_fetch_register (SIM_DESC sd, int regno, unsigned char *buf, int length)
 int
 sim_store_register (SIM_DESC sd, int regno, unsigned char *buf, int length)
 {
-  char *regname;
+  const char *regname;
 
   if (simulator == NULL)
     return 0;
