@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.28 1999/04/27 18:45:22 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.29 1999/04/28 02:02:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -1161,4 +1161,89 @@ osf1_sys_execve(p, v, retval)
 	SCARG(&ap, envp) = SCARG(uap, envp);
 
 	return sys_execve(p, &ap, retval);
+}
+
+int
+osf1_sys_uname(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_uname_args *uap = v;
+        struct osf1_utsname u;
+        char *cp, *dp, *ep;
+        extern char ostype[], osrelease[];
+
+	/* XXX would use stackgap, but our struct utsname is too big! */
+
+        strncpy(u.sysname, ostype, sizeof(u.sysname));
+        strncpy(u.nodename, hostname, sizeof(u.nodename));
+        strncpy(u.release, osrelease, sizeof(u.release));
+        dp = u.version;
+        ep = &u.version[sizeof(u.version) - 1];
+        for (cp = version; *cp && *cp != '('; cp++)
+                ;
+        for (cp++; *cp && *cp != ')' && dp < ep; cp++)
+                *dp++ = *cp;
+        for (; *cp && *cp != '#'; cp++)
+                ;
+        for (; *cp && *cp != ':' && dp < ep; cp++)
+                *dp++ = *cp;
+        *dp = '\0';
+        strncpy(u.machine, MACHINE, sizeof(u.machine));
+        return (copyout((caddr_t)&u, (caddr_t)SCARG(uap, name), sizeof u));
+}
+
+int
+osf1_sys_gettimeofday(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_gettimeofday_args *uap = v;
+	struct sys_gettimeofday_args a;
+	struct osf1_timeval otv;
+	struct osf1_timezone otz;
+	struct timeval tv;
+	struct timezone tz;
+	int error;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	if (SCARG(uap, tp) == NULL)
+		SCARG(&a, tp) = NULL;
+	else
+		SCARG(&a, tp) = stackgap_alloc(&sg, sizeof tv);
+	if (SCARG(uap, tzp) == NULL)
+		SCARG(&a, tzp) = NULL;
+	else
+		SCARG(&a, tzp) = stackgap_alloc(&sg, sizeof tz);
+
+	error = sys_gettimeofday(p, &a, retval);
+
+	if (error == 0 && SCARG(uap, tp) != NULL) {
+		error = copyin((caddr_t)SCARG(&a, tp),
+		    (caddr_t)&tv, sizeof tv);
+		if (error == 0) {
+			memset(&otv, 0, sizeof otv);
+			otv.tv_sec = tv.tv_sec;
+			otv.tv_usec = tv.tv_usec;
+
+			error = copyout((caddr_t)&otv,
+			    (caddr_t)SCARG(uap, tp), sizeof otv);
+		}
+	}
+	if (error == 0 && SCARG(uap, tzp) != NULL) {
+		error = copyin((caddr_t)SCARG(&a, tzp),
+		    (caddr_t)&tz, sizeof tz);
+		if (error == 0) {
+			memset(&otz, 0, sizeof otz);
+			otz.tz_minuteswest = tz.tz_minuteswest;
+			otz.tz_dsttime = tz.tz_dsttime;
+
+			error = copyout((caddr_t)&otv,
+			    (caddr_t)SCARG(uap, tzp), sizeof otv);
+		}
+	}
+	return (error);
 }
