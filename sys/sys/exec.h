@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.99 2003/08/07 16:34:03 agc Exp $	*/
+/*	$NetBSD: exec.h,v 1.100 2003/08/08 18:54:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -138,6 +138,7 @@ struct execsw {
 					/* Dump core */
 	int	(*es_coredump) __P((struct lwp *, struct vnode *,
 				    struct ucred *));
+	int	(*es_setup_stack) __P((struct proc *, struct exec_package *));
 };
 
 #define EXECSW_PRIO_ANY		0x000	/* default, no preference */
@@ -234,6 +235,8 @@ int	check_exec		__P((struct proc *, struct exec_package *));
 int	exec_init		__P((int));
 int	exec_read_from		__P((struct proc *, struct vnode *, u_long off,
     void *, size_t));
+int	exec_setup_stack	__P((struct proc *, struct exec_package *));
+
 
 #ifdef LKM
 int	emul_register		__P((const struct emul *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.31 2003/06/29 22:32:23 fvdl Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.32 2003/08/08 18:54:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -194,7 +194,6 @@ int	exec_aout_makecmds __P((struct proc *, struct exec_package *));
 int	exec_aout_prep_zmagic __P((struct proc *, struct exec_package *));
 int	exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
 int	exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
-int	exec_aout_setup_stack __P((struct proc *, struct exec_package *));
 
 /* For compatibility modules */
 int	exec_aout_prep_oldzmagic __P((struct proc *, struct exec_package *));

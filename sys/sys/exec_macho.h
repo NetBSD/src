@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.h,v 1.12 2003/06/29 22:32:24 fvdl Exp $	*/
+/*	$NetBSD: exec_macho.h,v 1.13 2003/08/08 18:54:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -259,7 +259,6 @@ u_long	exec_macho_thread_entry(struct exec_macho_thread_command *);
 int	exec_macho_makecmds __P((struct proc *, struct exec_package *));
 int	exec_macho_copyargs __P((struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *));
-int	exec_macho_setup_stack __P((struct proc *, struct exec_package *));
 #endif /* _KERNEL */
 
 #endif /* !_SYS_EXEC_MACHO_H_ */
