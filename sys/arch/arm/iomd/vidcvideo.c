@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.16 2002/10/02 15:45:14 thorpej Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.17 2003/05/06 00:29:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.16 2002/10/02 15:45:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.17 2003/05/06 00:29:57 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,10 @@ static const struct wsdisplay_accessops vidcvideo_accessops = {
 	vidcvideo_alloc_screen,
 	vidcvideo_free_screen,
 	vidcvideo_show_screen,
-	0 /* load_font */
+	NULL, /* load_font	*/
+	NULL, /* pollc		*/
+	NULL, /* getwschar	*/
+	NULL  /* putwschar	*/
 };
 
 
