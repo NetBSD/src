@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.69 2003/08/05 13:35:26 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.70 2003/08/09 21:36:27 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -319,6 +319,7 @@ static int
 do_flfs_newfs(const char *partname, int partno, const char *mountpoint)
 {
 	char dev_name[STRSIZE];
+	char options[16];
 	int error;
 	const char *newfs;
 
@@ -336,8 +337,13 @@ do_flfs_newfs(const char *partname, int partno, const char *mountpoint)
 		default:
 			return 0;
 		}
-		error = run_prog(RUN_DISPLAY, MSG_cmdfail, "%s /dev/r%s",
-		    newfs, partname);
+		if (bsdlabel[partno].pi_isize > 0)
+			snprintf(options, sizeof options, " -i%d",
+				bsdlabel[partno].pi_isize);
+		else
+			options[0] = 0;
+		error = run_prog(RUN_DISPLAY, MSG_cmdfail, "%s%s /dev/r%s",
+		    newfs, options, partname);
 	} else
 		error = 0;
 
