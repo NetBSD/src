@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/03/10 08:28:21 christos Exp $
+#	$NetBSD: Makefile,v 1.3 1998/03/10 09:52:41 enami Exp $
 
 PROG=	prt3270
 SRCS=	prt3270.c asc_ebc.c ebc_disp.c astosc.c
@@ -15,7 +15,7 @@ kbd.out: ${.CURDIR}/../../ctlr/hostctlr.h ${.CURDIR}/../../ctlr/${KBD} ${MKHITS}
 	${MKHITS} \
 	    ${.CURDIR}/../../ctlr/hostctlr.h TMPfunc.out \
 	    < ${.CURDIR}/../../ctlr/${KBD} > kbd.tmp
-	rm -f TMPFunc.out
+	rm -f TMPfunc.out
 	mv -f kbd.tmp ${.TARGET}
 
 MKASTOSC!=cd $(.CURDIR)/../mkastosc; \
