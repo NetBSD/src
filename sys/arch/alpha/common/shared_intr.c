@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.10 1999/12/08 23:54:55 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.11 2000/02/01 04:14:18 mjacob Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.10 1999/12/08 23:54:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.11 2000/02/01 04:14:18 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -84,6 +84,7 @@ alpha_shared_intr_alloc(n)
 		intr[i].intr_dfltsharetype = IST_NONE;
 		intr[i].intr_nstrays = 0;
 		intr[i].intr_maxstrays = 5;
+		intr[i].intr_private = NULL;
 	}
 
 	return (intr);
