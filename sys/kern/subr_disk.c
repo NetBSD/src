@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.35 2002/01/28 03:33:55 simonb Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.36 2002/02/16 02:07:56 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.35 2002/01/28 03:33:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.36 2002/02/16 02:07:56 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -367,7 +367,8 @@ diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
 		(*pr)(" (%s%d bn %d; cn %d", dname, unit, sn,
 		    sn / lp->d_secpercyl);
 		sn %= lp->d_secpercyl;
-		(*pr)(" tn %d sn %d)", sn / lp->d_nsectors, sn % lp->d_nsectors);
+		(*pr)(" tn %d sn %d)", sn / lp->d_nsectors,
+		    sn % lp->d_nsectors);
 	}
 }
 
@@ -565,7 +566,8 @@ sysctl_disknames(void *vwhere, size_t *sizep)
 				first = 0;
 			} else {
 				buf[0] = ' ';
-				strncpy(buf + 1, diskp->dk_name, sizeof(buf - 1));
+				strncpy(buf + 1, diskp->dk_name,
+				    sizeof(buf - 1));
 			}
 			buf[DK_DISKNAMELEN] = '\0';
 			slen = strlen(buf);
@@ -613,7 +615,7 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	TAILQ_FOREACH(diskp, &disklist, dk_link) {
 		if (left < sizeof(struct disk_sysctl))
 			break;
-		strncpy(sdisk.dk_name, diskp->dk_name, sizeof(sdisk.dk_name));;
+		strncpy(sdisk.dk_name, diskp->dk_name, sizeof(sdisk.dk_name));
 		sdisk.dk_xfer = diskp->dk_xfer;
 		sdisk.dk_seek = diskp->dk_seek;
 		sdisk.dk_bytes = diskp->dk_bytes;
