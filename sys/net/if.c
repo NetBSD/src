@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.69 2000/07/21 04:47:40 onoe Exp $	*/
+/*	$NetBSD: if.c,v 1.70 2000/09/29 00:37:37 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1252,18 +1252,19 @@ ifconf(cmd, data)
 	int space = ifc->ifc_len, error = 0;
 
 	ifrp = ifc->ifc_req;
-	for (ifp = ifnet.tqh_first;
-	    space >= sizeof (ifr) && ifp != 0; ifp = ifp->if_list.tqe_next) {
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
 		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
 		if ((ifa = ifp->if_addrlist.tqh_first) == 0) {
 			bzero((caddr_t)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
-			error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
-			    sizeof(ifr));
-			if (error)
-				break;
+			if (space >= (int)sizeof (ifr)) {
+				error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
+						sizeof(ifr));
+				if (error)
+					break;
+			}
 			space -= sizeof (ifr), ifrp++;
 		} else 
-		    for (; space >= sizeof (ifr) && ifa != 0; ifa = ifa->ifa_list.tqe_next) {
+		    for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 			struct sockaddr *sa = ifa->ifa_addr;
 #if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
 			if (cmd == OSIOCGIFCONF) {
@@ -1271,27 +1272,37 @@ ifconf(cmd, data)
 					 (struct osockaddr *)&ifr.ifr_addr;
 				ifr.ifr_addr = *sa;
 				osa->sa_family = sa->sa_family;
-				error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
-						sizeof (ifr));
-				ifrp++;
+				if (space >= (int)sizeof (ifr)) {
+					error = copyout((caddr_t)&ifr,
+							(caddr_t)ifrp,
+							sizeof (ifr));
+					ifrp++;
+				}
 			} else
 #endif
 			if (sa->sa_len <= sizeof(*sa)) {
 				ifr.ifr_addr = *sa;
-				error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
-						sizeof (ifr));
-				ifrp++;
+				if (space >= (int)sizeof (ifr)) {
+					error = copyout((caddr_t)&ifr,
+							(caddr_t)ifrp,
+							sizeof (ifr));
+					ifrp++;
+				}
 			} else {
 				space -= sa->sa_len - sizeof(*sa);
-				if (space < sizeof (ifr))
-					break;
-				error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
-						sizeof (ifr.ifr_name));
-				if (error == 0)
-				    error = copyout((caddr_t)sa,
-				      (caddr_t)&ifrp->ifr_addr, sa->sa_len);
-				ifrp = (struct ifreq *)
-					(sa->sa_len + (caddr_t)&ifrp->ifr_addr);
+				if (space >= (int)sizeof (ifr)) {
+					error = copyout((caddr_t)&ifr,
+							(caddr_t)ifrp,
+							sizeof (ifr.ifr_name));
+					if (error == 0) {
+						error = copyout((caddr_t)sa,
+						  (caddr_t)&ifrp->ifr_addr,
+						  sa->sa_len);
+					}
+					ifrp = (struct ifreq *)
+						(sa->sa_len +
+						 (caddr_t)&ifrp->ifr_addr);
+				}
 			}
 			if (error)
 				break;
