@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.185 1998/11/19 19:46:12 kenh Exp $ */
+/*	$NetBSD: wd.c,v 1.186 1998/11/19 23:44:20 kenh Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -97,7 +97,7 @@
 #include <dev/ata/atavar.h>
 #include <dev/ata/wdvar.h>
 #include <dev/ic/wdcreg.h>
-#include <sys/wdcio.h>
+#include <sys/ataio.h>
 #include "locators.h"
 
 #define	WAITTIME	(4 * hz)	/* time to wait for a completion */
@@ -182,7 +182,7 @@ struct wd_ioctl {
 	struct buf wi_bp;
 	struct uio wi_uio;
 	struct iovec wi_iov;
-	wdcreq_t wi_wdcreq;
+	atareq_t wi_atareq;
 	struct wd_softc *wi_softc;
 };
 
@@ -913,36 +913,36 @@ wdioctl(dev, xfer, addr, flag, p)
 		}
 #endif
 
-	case WDCIOCCOMMAND:
+	case ATAIOCCOMMAND:
 		/*
 		 * Make sure this command is (relatively) safe first
 		 */
-		if ((((wdcreq_t *) addr)->flags & WDCCMD_READ) == 0 &&
+		if ((((atareq_t *) addr)->flags & ATACMD_READ) == 0 &&
 		    (flag & FWRITE) == 0)
 			return (EBADF);
 		{
 		struct wd_ioctl *wi;
-		wdcreq_t *wdcreq = (wdcreq_t *) addr;
+		atareq_t *atareq = (atareq_t *) addr;
 		int error;
 
 		wi = wi_get();
 		wi->wi_softc = wd;
-		wi->wi_wdcreq = *wdcreq;
+		wi->wi_atareq = *atareq;
 
-		if (wdcreq->datalen && wdcreq->flags &
-		    (WDCCMD_READ | WDCCMD_WRITE)) {
-			wi->wi_iov.iov_base = wdcreq->databuf;
-			wi->wi_iov.iov_len = wdcreq->datalen;
+		if (atareq->datalen && atareq->flags &
+		    (ATACMD_READ | ATACMD_WRITE)) {
+			wi->wi_iov.iov_base = atareq->databuf;
+			wi->wi_iov.iov_len = atareq->datalen;
 			wi->wi_uio.uio_iov = &wi->wi_iov;
 			wi->wi_uio.uio_iovcnt = 1;
-			wi->wi_uio.uio_resid = wdcreq->datalen;
+			wi->wi_uio.uio_resid = atareq->datalen;
 			wi->wi_uio.uio_offset = 0;
 			wi->wi_uio.uio_segflg = UIO_USERSPACE;
 			wi->wi_uio.uio_rw =
-			    (wdcreq->flags & WDCCMD_READ) ? B_READ : B_WRITE;
+			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE;
 			wi->wi_uio.uio_procp = p;
 			error = physio(wdioctlstrategy, &wi->wi_bp, dev,
-			    (wdcreq->flags & WDCCMD_READ) ? B_READ : B_WRITE,
+			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE,
 			    minphys, &wi->wi_uio);
 		} else {
 			/* No need to call physio if we don't have any
@@ -955,7 +955,7 @@ wdioctl(dev, xfer, addr, flag, p)
 			wdioctlstrategy(&wi->wi_bp);
 			error = wi->wi_bp.b_error;
 		}
-		*wdcreq = wi->wi_wdcreq;
+		*atareq = wi->wi_atareq;
 		wi_free(wi);
 		return(error);
 		}
@@ -1339,7 +1339,7 @@ wdioctlstrategy(bp)
 	 * Abort if physio broke up the transfer
 	 */
 
-	if (bp->b_bcount != wi->wi_wdcreq.datalen) {
+	if (bp->b_bcount != wi->wi_atareq.datalen) {
 		printf("physio split wd ioctl request... cannot proceed\n");
 		error = EIO;
 		goto bad;
@@ -1361,46 +1361,46 @@ wdioctlstrategy(bp)
 	 * Make sure a timeout was supplied in the ioctl request
 	 */
 
-	if (wi->wi_wdcreq.timeout == 0) {
+	if (wi->wi_atareq.timeout == 0) {
 		error = EINVAL;
 		goto bad;
 	}
 
-	if (wi->wi_wdcreq.flags & WDCCMD_READ)
+	if (wi->wi_atareq.flags & ATACMD_READ)
 		wdc_c.flags |= AT_READ;
-	else if (wi->wi_wdcreq.flags & WDCCMD_WRITE)
+	else if (wi->wi_atareq.flags & ATACMD_WRITE)
 		wdc_c.flags |= AT_WRITE;
 
 	wdc_c.flags |= AT_WAIT;
 
-	wdc_c.timeout = wi->wi_wdcreq.timeout;
-	wdc_c.r_command = wi->wi_wdcreq.command;
-	wdc_c.r_head = wi->wi_wdcreq.head & 0x0f;
-	wdc_c.r_cyl = wi->wi_wdcreq.cylinder;
-	wdc_c.r_sector = wi->wi_wdcreq.sec_num;
-	wdc_c.r_count = wi->wi_wdcreq.sec_count;
-	wdc_c.r_precomp = wi->wi_wdcreq.features;
+	wdc_c.timeout = wi->wi_atareq.timeout;
+	wdc_c.r_command = wi->wi_atareq.command;
+	wdc_c.r_head = wi->wi_atareq.head & 0x0f;
+	wdc_c.r_cyl = wi->wi_atareq.cylinder;
+	wdc_c.r_sector = wi->wi_atareq.sec_num;
+	wdc_c.r_count = wi->wi_atareq.sec_count;
+	wdc_c.r_precomp = wi->wi_atareq.features;
 	wdc_c.r_st_bmask = WDCS_DRDY;
 	wdc_c.r_st_pmask = WDCS_DRDY;
 	wdc_c.data = wi->wi_bp.b_data;
 	wdc_c.bcount = wi->wi_bp.b_bcount;
 
 	if (wdc_exec_command(wi->wi_softc->drvp, &wdc_c) != WDC_COMPLETE) {
-		wi->wi_wdcreq.retsts = WDCCMD_ERROR;
+		wi->wi_atareq.retsts = ATACMD_ERROR;
 		goto bad;
 	}
 
 
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		if (wdc_c.flags & AT_ERROR) {
-			wi->wi_wdcreq.retsts = WDCCMD_ERROR;
-			wi->wi_wdcreq.error = wdc_c.r_error;
+			wi->wi_atareq.retsts = ATACMD_ERROR;
+			wi->wi_atareq.error = wdc_c.r_error;
 		} else if (wdc_c.flags & AT_DF)
-			wi->wi_wdcreq.retsts = WDCCMD_DF;
+			wi->wi_atareq.retsts = ATACMD_DF;
 		else
-			wi->wi_wdcreq.retsts = WDCCMD_TIMEOUT;
+			wi->wi_atareq.retsts = ATACMD_TIMEOUT;
 	} else
-		wi->wi_wdcreq.retsts = WDCCMD_OK;
+		wi->wi_atareq.retsts = ATACMD_OK;
 
 	bp->b_error = 0;
 	biodone(bp);
