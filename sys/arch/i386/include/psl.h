@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.2.4.1 1993/09/14 17:32:03 mycroft Exp $
+ *	$Id: psl.h,v 1.2.4.2 1993/09/24 08:46:50 mycroft Exp $
  */
 
 /*
@@ -54,17 +54,17 @@
 #define	PSL_RF		0x00010000	/* restart flag bit */
 #define	PSL_VM		0x00020000	/* virtual 8086 mode bit */
 
-#define	PSL_MBZ		0xfffc7fb7	/* must be zero bits */
-#define	PSL_MBO		0x00000002	/* must be one bits */
+#define	PSL_MBZ		0xfffc4028	/* must be zero bits */
+#define	PSL_MBO		0x00000202	/* must be one bits */
 
-#define	PSL_USERSET	(PSL_IOPL)
-#define	PSL_USERCLR	(PSL_I|PSL_NT)
+#define	PSL_USERSET	(PSL_IOPL|PSL_I)
+#define	PSL_USERCLR	(PSL_NT)
 
 /*
  * Software-based interrupt masks
  */
-extern	int cpl,			/* current priority level mask */
-	    ttymask,			/* interrupt mask for spltty() */
+extern	volatile int cpl;		/* current priority level mask */
+extern	int ttymask,			/* interrupt mask for spltty() */
 	    biomask,			/* interrupt mask for splbio() */
 	    netmask,			/* interrupt mask for splnet() */
 	    impmask;			/* interrupt mask for splimp() */
@@ -82,8 +82,9 @@ SPL(splnet, netmask)
 SPL(splimp, impmask)
 SPL(splhigh, -1)
 #define	splclock()	splhigh()	/* should not include fast vectors */
+#define spl0()		splnone()
 
 int splsoftclock __P((void));		/* XXXX */
 
-void splnone __P((void));
-void splx __P((int));
+int splnone __P((void));
+int splx __P((int));
