@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.12 2003/07/14 15:17:22 lukem Exp $	*/
+/*	$NetBSD: esc.c,v 1.13 2003/07/14 22:48:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -53,10 +53,10 @@
  * Modified for NetBSD/arm32 by Scott Stevens
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.13 2003/07/14 22:48:26 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.12 2003/07/14 15:17:22 lukem Exp $");
-
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.6 2003/01/01 00:25:02 thorpej Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.7 2003/07/14 22:48:25 lukem Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -39,6 +39,9 @@
  */
 
 /*#define PIOC_DEBUG*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.7 2003/07/14 22:48:25 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

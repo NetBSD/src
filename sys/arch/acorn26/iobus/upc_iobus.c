@@ -1,4 +1,4 @@
-/* $NetBSD: upc_iobus.c,v 1.6 2003/07/14 15:17:18 lukem Exp $ */
+/* $NetBSD: upc_iobus.c,v 1.7 2003/07/14 22:48:21 lukem Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -29,10 +29,10 @@
  * upc_iobus.c - attachment of the 82C7xx to the Archimedes I/O bus
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: upc_iobus.c,v 1.7 2003/07/14 22:48:21 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: upc_iobus.c,v 1.6 2003/07/14 15:17:18 lukem Exp $");
-
 #include <sys/device.h>
 
 #include <arch/acorn26/iobus/iobusvar.h>

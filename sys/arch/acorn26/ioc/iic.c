@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.7 2003/07/14 15:17:19 lukem Exp $	*/
+/*	$NetBSD: iic.c,v 1.8 2003/07/14 22:48:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -45,10 +45,10 @@
  * Based of kate/display/iiccontrol.c
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iic.c,v 1.8 2003/07/14 22:48:22 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: iic.c,v 1.7 2003/07/14 15:17:19 lukem Exp $");
-
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
