@@ -1,4 +1,4 @@
-/*	$NetBSD: com3.c,v 1.11 2000/09/24 09:46:57 jsm Exp $	*/
+/*	$NetBSD: com3.c,v 1.12 2000/09/24 14:20:23 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com3.c,v 1.11 2000/09/24 09:46:57 jsm Exp $");
+__RCSID("$NetBSD: com3.c,v 1.12 2000/09/24 14:20:23 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -114,7 +114,8 @@ bury()
 	int     value;
 
 	if (testbit(inven, SHOVEL)) {
-		while (wordtype[++wordnumber] != OBJECT && wordtype[wordnumber] != NOUNS && wordnumber < wordcount);
+		while (wordtype[++wordnumber] != OBJECT && wordtype[wordnumber] != NOUNS && wordnumber < wordcount)
+			continue;
 		value = wordvalue[wordnumber];
 		if (wordtype[wordnumber] == NOUNS && (testbit(location[position].objects, value) || value == BODY))
 			switch (value) {
