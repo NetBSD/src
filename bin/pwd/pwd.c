@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.c,v 1.8 1997/07/20 20:39:45 christos Exp $	*/
+/*	$NetBSD: pwd.c,v 1.9 1997/09/14 08:51:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: pwd.c,v 1.8 1997/07/20 20:39:45 christos Exp $");
+__RCSID("$NetBSD: pwd.c,v 1.9 1997/09/14 08:51:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ main(argc, argv)
 	 * there's no way to display a logical path after forking.  We don't
 	 * document either flag, only adding -P for future portability.
 	 */
-	while ((ch = getopt(argc, argv, "P")) != EOF)
+	while ((ch = getopt(argc, argv, "P")) != -1)
 		switch (ch) {
 		case 'P':
 			break;
