@@ -1,6 +1,9 @@
-#	$NetBSD: files.alpha.newconf,v 1.1 1995/02/13 23:07:26 cgd Exp $
+#	$NetBSD: files.alpha.newconf,v 1.2 1995/02/27 16:36:37 cgd Exp $
 #
 # alpha-specific configuration info
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
 
 maxusers 2 8 64
 
@@ -34,18 +37,19 @@ file	scsi/scsi_base.c		scsi
 file	scsi/scsi_ioctl.c		scsi
 file	scsi/scsiconf.c			scsi
 
-major { sd = 8 }
-
 device esp at tcds: scsi
 file	arch/alpha/tc/esp.c		esp needs-count
 file	arch/alpha/tc/dma.c		esp
 
 device scsibus at scsi	{ target = -1, drive = -1 }
 
+major { cd = 3 }
 device cd at scsibus: disk
 file	scsi/cd.c			cd needs-flag
+major { sd = 8 }
 device sd at scsibus: disk
 file	scsi/sd.c			sd needs-flag
+major { st = 2 }
 device st at scsibus: tape
 file	scsi/st.c			st needs-flag
 device ch at scsibus: disk
@@ -73,12 +77,10 @@ file	arch/alpha/alpha/trap.c
 file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
 
-# XXX
-file	arch/alpha/alpha/promcons.c
-
 file	dev/cons.c
 file	netinet/in_cksum.c
 file	netns/ns_cksum.c		ns
+major { cd = 3 }
 
 file	compat/osf1/osf1_ioctl.c	compat_osf1
 file	compat/osf1/osf1_misc.c		compat_osf1

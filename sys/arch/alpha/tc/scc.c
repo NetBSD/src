@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.1 1995/02/13 23:09:02 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.2 1995/02/27 16:37:04 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -105,7 +105,7 @@
 extern void ttrstrt	__P((void *));
 
 #undef	SCCDEV
-#define	SCCDEV		24			/* XXX */
+#define	SCCDEV		15			/* XXX */
 
 #define	NSCCLINE 	(NSCC*2)
 #define	SCCUNIT(dev)	(minor(dev) >> 1)
