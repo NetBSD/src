@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394var.h,v 1.14 2002/02/03 07:24:49 jmc Exp $	*/
+/*	$NetBSD: ieee1394var.h,v 1.15 2002/02/27 05:04:28 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,8 +54,8 @@ struct ieee1394_abuf {
 	u_int64_t ab_addr;
 	u_int8_t ab_tcode;
 	u_int8_t ab_tlabel;
-	u_int16_t ab_length; 
-	u_int16_t ab_retlen;			/* length returned from read. */
+	u_int32_t ab_length; 
+	u_int32_t ab_retlen;			/* length returned from read. */
 	u_int32_t ab_retries;
 	void (*ab_cb)(struct ieee1394_abuf *, int);
 	void *ab_cbarg;
