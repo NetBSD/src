@@ -38,10 +38,10 @@
  * from: Utah $Hdr: pcb.h 1.13 89/04/23$
  *
  *	@(#)pcb.h	7.4 (Berkeley) 5/4/91
- *	$Id: pcb.h,v 1.5 1994/04/10 02:06:45 chopps Exp $
+ *	$Id: pcb.h,v 1.6 1994/04/10 02:28:29 chopps Exp $
  */
-#ifndef _MACHINE_PCB_H
-#define _MACHINE_PCB_H
+#ifndef _MACHINE_PCB_H_
+#define _MACHINE_PCB_H_
 
 #include <machine/frame.h>
 
@@ -63,4 +63,4 @@ struct pcb
 
 /* flags (none currently used) */
 
-#endif /* !_MACHINE_PCB_H */
+#endif /* !_MACHINE_PCB_H_ */

@@ -31,10 +31,10 @@
  * SUCH DAMAGE.
  *
  *	@(#)proc.h	7.1 (Berkeley) 5/15/91
- *	$Id: proc.h,v 1.7 1994/04/10 02:06:46 chopps Exp $
+ *	$Id: proc.h,v 1.8 1994/04/10 02:28:31 chopps Exp $
  */
-#ifndef _MACHINE_PROC_H
-#define _MACHINE_PROC_H
+#ifndef _MACHINE_PROC_H_
+#define _MACHINE_PROC_H_
 
 /*
  * Machine-dependent part of the proc structure for amiga.
@@ -51,4 +51,4 @@ struct mdproc {
 #define MDP_STACKADJ	0x0002	/* frame SP adjusted, might have to
 				   undo when system call returns
 				   ERESTART. */
-#endif /* !_MACHINE_PROC_H */
+#endif /* !_MACHINE_PROC_H_ */

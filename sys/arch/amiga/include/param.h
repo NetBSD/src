@@ -38,10 +38,10 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.9 1994/04/10 02:06:44 chopps Exp $
+ *	$Id: param.h,v 1.10 1994/04/10 02:28:28 chopps Exp $
  */
-#ifndef _MACHINE_PARAM_H
-#define _MACHINE_PARAM_H
+#ifndef _MACHINE_PARAM_H_
+#define _MACHINE_PARAM_H_
 
 /*
  * Machine dependent constants for amiga
@@ -210,4 +210,4 @@ extern int DELAY __P((int count));
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
 #endif
 
-#endif /* !_MACHINE_PARAM_H */
+#endif /* !_MACHINE_PARAM_H_ */
