@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.14 2003/03/18 19:20:09 mycroft Exp $	 */
+/*	$NetBSD: tftp.c,v 1.15 2003/08/18 15:45:29 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -77,7 +77,7 @@ struct tftp_handle {
 	int             islastblock;	/* flag */
 	int             validsize;
 	int             off;
-	char           *path;	/* saved for re-requests */
+	const char     *path;	/* saved for re-requests */
 	struct {
 		u_char header[HEADER_SIZE];
 		struct tftphdr t;
@@ -261,7 +261,7 @@ tftp_terminate(h)
 
 int 
 tftp_open(path, f)
-	char           *path;
+	const char           *path;
 	struct open_file *f;
 {
 	struct tftp_handle *tftpfile;

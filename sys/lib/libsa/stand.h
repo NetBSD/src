@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.49 2003/08/07 16:32:30 agc Exp $	*/
+/*	$NetBSD: stand.h,v 1.50 2003/08/18 15:45:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -90,7 +90,7 @@
 struct open_file;
 
 #define FS_DEF(fs) \
-	extern int	__CONCAT(fs,_open)(char *, struct open_file *); \
+	extern int	__CONCAT(fs,_open)(const char *, struct open_file *); \
 	extern int	__CONCAT(fs,_close)(struct open_file *); \
 	extern int	__CONCAT(fs,_read)(struct open_file *, void *, \
 						size_t, size_t *); \
@@ -105,7 +105,7 @@ struct open_file;
  */
 #if !defined(LIBSA_SINGLE_FILESYSTEM)
 struct fs_ops {
-	int	(*open)(char *, struct open_file *);
+	int	(*open)(const char *, struct open_file *);
 	int	(*close)(struct open_file *);
 	int	(*read)(struct open_file *, void *, size_t, size_t *);
 	int	(*write)(struct open_file *, void *, size_t size, size_t *);

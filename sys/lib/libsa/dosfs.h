@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.h,v 1.1 2000/11/02 00:25:05 thorpej Exp $	*/
+/*	$NetBSD: dosfs.h,v 1.2 2003/08/18 15:45:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -27,9 +27,4 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	dosfs_open(char *path, struct open_file *);
-int	dosfs_close(struct open_file *);
-int	dosfs_read(struct open_file *, void *, size_t, size_t *);
-int	dosfs_write(struct open_file *, void *, size_t, size_t *);
-off_t	dosfs_seek(struct open_file *, off_t, int);
-int	dosfs_stat(struct open_file *, struct stat *);
+FS_DEF(dosfs);

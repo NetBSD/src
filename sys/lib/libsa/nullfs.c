@@ -1,4 +1,4 @@
-/*	$NetBSD: nullfs.c,v 1.6 2003/08/07 16:32:29 agc Exp $	*/
+/*	$NetBSD: nullfs.c,v 1.7 2003/08/18 15:45:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -67,7 +67,7 @@
  */
 
 int
-null_open(char *path, struct open_file *f)
+null_open(const char *path, struct open_file *f)
 {
 
 	return EIO;

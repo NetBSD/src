@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.h,v 1.3 2003/08/07 16:32:27 agc Exp $ */
+/* $NetBSD: lfs.h,v 1.4 2003/08/18 15:45:28 dsl Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -31,16 +31,5 @@
  *	@(#)ufs.h	8.1 (Berkeley) 6/11/93
  */
 
-int	lfsv1_open(char *path, struct open_file *f);
-int	lfsv1_close(struct open_file *f);
-int	lfsv1_read(struct open_file *f, void *buf, size_t size, size_t *resid);
-int	lfsv1_write(struct open_file *f, void *buf, size_t size, size_t *resid);
-off_t	lfsv1_seek(struct open_file *f, off_t offset, int where);
-int	lfsv1_stat(struct open_file *f, struct stat *sb);
-
-int	lfsv2_open(char *path, struct open_file *f);
-int	lfsv2_close(struct open_file *f);
-int	lfsv2_read(struct open_file *f, void *buf, size_t size, size_t *resid);
-int	lfsv2_write(struct open_file *f, void *buf, size_t size, size_t *resid);
-off_t	lfsv2_seek(struct open_file *f, off_t offset, int where);
-int	lfsv2_stat(struct open_file *f, struct stat *sb);
+FS_DEF(lfsv1);
+FS_DEF(lfsv2);

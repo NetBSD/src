@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.6 2003/07/15 13:27:07 scw Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.7 2003/08/18 15:45:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -202,7 +202,7 @@ dosunmount(DOS_FS * fs)
  * Open DOS file
  */
 int
-dosfs_open(char *path, struct open_file *fd)
+dosfs_open(const char *path, struct open_file *fd)
 {
 	const struct direntry *de;
 	DOS_FILE *f;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.6 2003/08/07 16:32:28 agc Exp $	*/
+/*	$NetBSD: nfs.h,v 1.7 2003/08/18 15:45:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -29,13 +29,5 @@
  * SUCH DAMAGE.
  */
 
-int	nfs_open __P((char *path, struct open_file *f));
-int	nfs_close __P((struct open_file *f));
-int	nfs_read __P((struct open_file *f, void *buf,
-			size_t size, size_t *resid));
-int	nfs_write __P((struct open_file *f, void *buf,
-			size_t size, size_t *resid));
-off_t	nfs_seek __P((struct open_file *f, off_t offset, int where));
-int	nfs_stat __P((struct open_file *f, struct stat *sb));
-int	nfs_mount __P((int, struct in_addr, char *));
-
+FS_DEF(nfs);
+int nfs_mount(int, struct in_addr, char *);
