@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.115 2000/06/06 09:53:30 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.116 2000/06/10 14:12:04 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -170,9 +170,9 @@ scriptsinstall:: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRI
 
 __scriptinstall: .USE
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} \
-	    -o ${SCRIPTSOWN_${.ALLSRC}:U${SCRIPTSOWN}} \
-	    -g ${SCRIPTSGRP_${.ALLSRC}:U${SCRIPTSGRP}} \
-	    -m ${SCRIPTSMODE_${.ALLSRC}:U${SCRIPTSMODE}} \
+	    -o ${SCRIPTSOWN_${.ALLSRC:T}:U${SCRIPTSOWN}} \
+	    -g ${SCRIPTSGRP_${.ALLSRC:T}:U${SCRIPTSGRP}} \
+	    -m ${SCRIPTSMODE_${.ALLSRC:T}:U${SCRIPTSMODE}} \
 	    ${.ALLSRC} ${.TARGET}
 
 .for S in ${SCRIPTS}
