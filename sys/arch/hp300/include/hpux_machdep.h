@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.h,v 1.16 2003/06/29 22:28:21 fvdl Exp $	*/
+/*	$NetBSD: hpux_machdep.h,v 1.17 2003/09/22 14:35:59 cl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ int	hpux_cpu_vmcmd __P((struct proc *, struct exec_vmcmd *));
 int	hpux_cpu_sysconf_arch __P((void));
 int	hpux_to_bsd_uoff __P((int *, int *, struct lwp *));
 
-void	hpux_sendsig __P((int, sigset_t *, u_long));
+void	hpux_sendsig __P((struct ksiginfo *, sigset_t *));
 void	hpux_setregs __P((struct lwp *, struct exec_package *,
 	    u_long));
 #endif /* _KERNEL */
