@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.6.4.6 1999/03/29 06:55:03 nisimura Exp $ */
+/*	$NetBSD: dec_maxine.c,v 1.6.4.7 1999/04/03 13:43:43 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.6 1999/03/29 06:55:03 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.7 1999/04/03 13:43:43 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ dec_maxine_cons_init()
 			return;
 #endif
 		}
-		if (tc_fb_cnattach(crt) > 0)
+		else if (tc_fb_cnattach(crt) > 0)
 			return;
 #endif
 		printf("No framebuffer device configured for slot %d: ", crt);
@@ -368,7 +368,7 @@ void
 kn02ca_wbflush()
 {
 	/* read once IOASIC_INTR */
-	__asm __volatile("lw $0,0xbc040120");
+	__asm __volatile("lw $2,0xbc040120");
 }
 
 unsigned
