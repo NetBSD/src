@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_sii3112_reg.h,v 1.1 2003/03/20 04:22:50 thorpej Exp $	*/
+/*	$NetBSD: pciide_sii3112_reg.h,v 1.2 2003/12/20 03:51:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -73,9 +73,16 @@
 #define	SCS_CMD_FF0_RESET	(1U << 5)	/* IDE0 FIFO reset */
 #define	SCS_CMD_IDE1_RESET	(1U << 6)	/* IDE1 module reset */
 #define	SCS_CMD_IDE0_RESET	(1U << 7)	/* IDE0 module reset */
-#define	SCS_CMD_BA5_EN		(1U << 16)	/* BA5 is enabled */
+#define	SCS_CMD_FF3_RESET	(1U << 8)	/* IDE3 FIFO reset (3114) */
+#define	SCS_CMD_FF2_RESET	(1U << 9)	/* IDE2 FIFO reset (3114) */
+#define	SCS_CMD_IDE3_RESET	(1U << 10)	/* IDE3 module reset (3114) */
+#define	SCS_CMD_IDE2_RESET	(1U << 11)	/* IDE2 module reset (3114) */
+#define	SCS_CMD_BA5_EN		(1U << 16)	/* BA5 is enabled (3112) */
+#define	SCS_CMD_M66EN		(1U << 16)	/* 1=66MHz, 0=33MHz (3114) */
 #define	SCS_CMD_IDE0_INT_BLOCK	(1U << 22)	/* IDE0 interrupt block */
 #define	SCS_CMD_IDE1_INT_BLOCK	(1U << 23)	/* IDE1 interrupt block */
+#define	SCS_CMD_IDE2_INT_BLOCK	(1U << 24)	/* IDE2 interrupt block */
+#define	SCS_CMD_IDE3_INT_BLOCK	(1U << 25)	/* IDE3 interrupt block */
 
 #define	SII3112_SSDR		0x8c	/* System SW Data Register */
 
