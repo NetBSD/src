@@ -1,5 +1,4 @@
-/* $Id: dec_3min.c,v 1.7.4.1 1998/10/15 00:42:44 nisimura Exp $ */
-/*	$NetBSD: dec_3min.c,v 1.7.4.1 1998/10/15 00:42:44 nisimura Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.7.4.2 1998/10/20 02:46:41 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -74,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.1 1998/10/15 00:42:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.2 1998/10/20 02:46:41 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,10 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.1 1998/10/15 00:42:44 nisimura Ex
 
 /* XXX XXX XXX */
 #define IOASIC_INTR_SCSI 0x00000200
-#define	KN03_INTR_CLOCK	 0x00000020
-#define	KN03_INTR_TC_0	 0x00000800
-#define	KN03_INTR_TC_1	 0x00001000
-#define	KN03_INTR_TC_2	 0x00002000
+#define	KMIN_INTR_TC_0	 0x00000800
+#define	KMIN_INTR_TC_1	 0x00001000
+#define	KMIN_INTR_TC_2	 0x00002000
 /* XXX XXX XXX */
 
 void dec_3min_init __P((void));
@@ -112,6 +110,7 @@ void dec_3min_device_register __P((struct device *, void *));
 void dec_3min_cons_init __P((void));
 int  dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
 void kn02ba_wbflush __P((void));
+unsigned kn02ba_clkread __P((void));
 
 void kmin_intr_establish
 	__P((struct device *, void *, int, int (*)(void *), void *));
@@ -120,10 +119,11 @@ void dec_3min_mcclock_cpuspeed __P((volatile struct chiptime *mcclock_addr,
 			       int clockmask));
 
 extern void prom_haltbutton __P((void));
-extern volatile struct chiptime *mcclock_addr;
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
 extern int _splx_ioasic __P((int));
+extern unsigned (*clkread) __P((void));
+extern volatile struct chiptime *mcclock_addr;
 extern char cpu_model[];
 
 struct splsw spl_3min = {
@@ -167,7 +167,7 @@ dec_3min_bus_reset()
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 	kn02ba_wbflush();
 
-	*(volatile u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
+	*(volatile u_int *)(ioasic_base + IOASIC_INTR) = 0;
 	kn02ba_wbflush();
 }
 
@@ -203,7 +203,7 @@ dec_3min_os_init()
 	 * Initialize interrupts.
 	 */
 	*(volatile u_int32_t *)(ioasic_base + IOASIC_IMSK)
-		= KN03_INTR_CLOCK|KMIN_INTR_PSWARN|KMIN_INTR_TIMEOUT;
+		= KMIN_INTR_CLOCK|KMIN_INTR_PSWARN|KMIN_INTR_TIMEOUT;
 	*(volatile u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
 
 	/*
@@ -218,6 +218,9 @@ dec_3min_os_init()
 			== 0)
 		physmem_boardmax = physmem_boardmax >> 2;
 	physmem_boardmax = MIPS_PHYS_TO_KSEG1(physmem_boardmax);
+
+	/* R4000 3MIN can ultilize on-chip counter */
+	clkread = kn02ba_clkread;
 }
 
 
@@ -333,7 +336,9 @@ dec_3min_intr(cpumask, pc, status, cause)
 			ifound = 0;
 			can_serve = *intr & *imsk;
 
-			if (can_serve & KN03_INTR_CLOCK) {
+			if (can_serve & KMIN_INTR_TIMEOUT)
+				kn02ba_memerr();
+			if (can_serve & KMIN_INTR_CLOCK) {
 				temp = clk->regc;/* XXX clear interrupt bits */
 				cf.pc = pc;
 				cf.sr = status;
@@ -394,15 +399,15 @@ dec_3min_intr(cpumask, pc, status, cause)
 	}
 	if (cpumask & MIPS_INT_MASK_0) {
 		u_int32_t can_serve = *intr & *imsk, ifound;
-		CHECKINTR(SYS_DEV_OPT0, KN03_INTR_TC_0);
+		CHECKINTR(SYS_DEV_OPT0, KMIN_INTR_TC_0);
 	}
 	if (cpumask & MIPS_INT_MASK_1) {
 		u_int32_t can_serve = *intr & *imsk, ifound;
-		CHECKINTR(SYS_DEV_OPT1, KN03_INTR_TC_1);
+		CHECKINTR(SYS_DEV_OPT1, KMIN_INTR_TC_1);
 	}
 	if (cpumask & MIPS_INT_MASK_2) {
 		u_int32_t can_serve = *intr & *imsk, ifound;
-		CHECKINTR(SYS_DEV_OPT2, KN03_INTR_TC_2);
+		CHECKINTR(SYS_DEV_OPT2, KMIN_INTR_TC_2);
 	}
 
 	return ((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_ENA_CUR);
@@ -425,7 +430,7 @@ dec_3min_mcclock_cpuspeed(mcclock_addr, clockmask)
 
 	saved_imsk = *imsk;
 	/* Allow only clock interrupts through ioasic. */
-	*imsk = KN03_INTR_CLOCK;
+	*imsk = KMIN_INTR_CLOCK;
 	kn02ba_wbflush();
      
 	mc_cpuspeed(mcclock_addr, clockmask);
@@ -437,5 +442,21 @@ dec_3min_mcclock_cpuspeed(mcclock_addr, clockmask)
 void
 kn02ba_wbflush()
 {
+	/* read twice IOASIC_INTR register */
 	__asm __volatile("lw  $2,0xbc040120; lw  $2,0xbc040120");
+}
+
+unsigned
+kn02ba_clkread()
+{
+#ifdef MIPS3
+	extern u_int32_t mips3_cycle_count __P((void));
+	extern u_int32_t latched_cycle_cnt;
+
+	if (CPUISMIPS3) {
+		u_int32_t cycles = mips3_cycle_count() - latched_cycle_cnt;
+		return (cycles / cpu_mhz);
+	}
+#endif
+	return 0;
 }

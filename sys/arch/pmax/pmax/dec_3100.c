@@ -1,5 +1,4 @@
-/* $Id: dec_3100.c,v 1.6.2.1 1998/10/15 00:42:43 nisimura Exp $ */
-/*	$NetBSD: dec_3100.c,v 1.6.2.1 1998/10/15 00:42:43 nisimura Exp $	*/
+/*	$NetBSD: dec_3100.c,v 1.6.2.2 1998/10/20 02:46:40 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +72,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.1 1998/10/15 00:42:43 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.2 1998/10/20 02:46:40 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +103,11 @@ void dec_3100_intr_establish __P((struct device *, void *,
 		int, int (*)(void *), void *));
 void dec_3100_intr_disestablish __P((struct device *, void *));
 
-static void dec_3100_errintr __P((void));
+static void dec_3100_memerr __P((void));
 
+extern void kn01_wbflush __P((void));
+extern unsigned nullclkread __P((void));
+extern unsigned (*clkread) __P((void));
 extern volatile struct chiptime *mcclock_addr;
 extern char cpu_model[];
 
@@ -154,6 +156,9 @@ dec_3100_os_init()
 
 	mcclock_addr = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
+
+	/* no high resolution timer circuit; possibly never called */
+	clkread = nullclkread;
 }
 
 /*
@@ -163,7 +168,7 @@ void
 dec_3100_bus_reset()
 {
 	/* nothing to do */
-	(void)wbflush();
+	(void)kn01_wbflush();
 }
 
 #include <dev/cons.h>
@@ -280,7 +285,7 @@ dec_3100_intr(cpumask, pc, status, cause)
 #undef CHECKINTR
 
 	if (cpumask & MIPS_INT_MASK_4) {
-		dec_3100_errintr();
+		dec_3100_memerr();
 		intrcnt[ERROR_INTR]++;
 	}
 
@@ -291,7 +296,7 @@ dec_3100_intr(cpumask, pc, status, cause)
  * Handle memory errors.
  */
 static void
-dec_3100_errintr()
+dec_3100_memerr()
 {
 	volatile u_int16_t *p = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
 	u_int16_t csr;

@@ -1,5 +1,4 @@
-/* $Id: dec_maxine.c,v 1.6.4.1 1998/10/15 00:42:44 nisimura Exp $ */
-/*	$NetBSD: dec_maxine.c,v 1.6.4.1 1998/10/15 00:42:44 nisimura Exp $	*/
+/*	$NetBSD: dec_maxine.c,v 1.6.4.2 1998/10/20 02:46:41 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -74,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.1 1998/10/15 00:42:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.2 1998/10/20 02:46:41 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,14 +108,15 @@ void dec_maxine_device_register __P((struct device *, void *));
 void dec_maxine_cons_init __P((void));
 int  dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
 void kn02ca_wbflush __P((void));
+unsigned kn02ca_clkread __P((void));
 
-extern void prom_haltbutton __P((void));
-extern volatile struct chiptime *mcclock_addr; /* XXX */
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
 extern int _splx_ioasic __P((int));
-extern void kn02ca_errintr __P((void));
-extern u_long latched_cycle_cnt;
+extern void prom_haltbutton __P((void));
+extern unsigned (*clkread) __P((void));
+extern u_int32_t latched_cycle_cnt;
+extern volatile struct chiptime *mcclock_addr; /* XXX */
 extern char cpu_model[];
 
 struct splsw spl_maxine = {
@@ -180,6 +180,9 @@ dec_maxine_os_init()
 	 */
 	*(volatile u_int *)(ioasic_base + IOASIC_INTR) = 0;
 	kn02ca_wbflush();
+
+	/* MAXINE has 1 microsec. free-running high resolution timer */
+	clkread = kn02ca_clkread;
 }
 
 
@@ -190,13 +193,13 @@ void
 dec_maxine_bus_reset()
 {
 	/*
-	 * Reset interrupts, clear any errors from newconf probes
+	 * Reset interrupts, clear any error conditions from probes
 	 */
 
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
 	kn02ca_wbflush();
 
-	*(volatile u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
+	*(volatile u_int *)(ioasic_base + IOASIC_INTR) = 0;
 	kn02ca_wbflush();
 }
 
@@ -346,7 +349,7 @@ dec_maxine_intr(cpumask, pc, status, cause)
 		} while (ifound);
 	}
 	if (cpumask & MIPS_INT_MASK_2)
-		kn02ba_errintr();
+		kn02ba_memerr();
 
 	return ((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_ENA_CUR);
 }
@@ -354,5 +357,15 @@ dec_maxine_intr(cpumask, pc, status, cause)
 void
 kn02ca_wbflush()
 {
+	/* read once IOASIC_INTR */
 	__asm __volatile("lw  $2,0xbc040120");
+}
+
+unsigned
+kn02ca_clkread()
+{
+	u_int32_t cycles;
+
+	cycles = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
+	return cycles - latched_cycle_cnt;
 }

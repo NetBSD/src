@@ -1,5 +1,4 @@
-/* $Id: dec_3maxplus.c,v 1.9.2.2 1998/10/19 19:51:17 drochner Exp $ */
-/*	$NetBSD: dec_3maxplus.c,v 1.9.2.2 1998/10/19 19:51:17 drochner Exp $ */
+/*	$NetBSD: dec_3maxplus.c,v 1.9.2.3 1998/10/20 02:46:40 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -74,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.2 1998/10/19 19:51:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.3 1998/10/20 02:46:40 nisimura Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
@@ -111,15 +110,17 @@ void dec_3maxplus_cons_init __P((void));
 void dec_3maxplus_device_register __P((struct device *, void *));
 int  dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
 void kn03_wbflush __P((void));
+unsigned kn03_clkread __P((void));
 
-static void dec_3maxplus_errintr __P ((void));
+static void dec_3maxplus_memerr __P ((void));
 
-extern void prom_haltbutton __P((void));
-extern volatile struct chiptime *mcclock_addr;
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
 extern int _splx_ioasic __P((int));
-extern u_long latched_cycle_cnt;
+extern void prom_haltbutton __P((void));
+extern unsigned (*clkread) __P((void));
+extern u_int32_t latched_cycle_cnt;
+extern volatile struct chiptime *mcclock_addr;
 extern char cpu_model[];
 
 struct splsw spl_3maxplus = {
@@ -193,6 +194,9 @@ dec_3maxplus_os_init()
 	*(volatile u_int *)(ioasic_base + IOASIC_IMSK) = KN03_INTR_PSWARN;
 	*(volatile u_int *)(ioasic_base + IOASIC_INTR) = 0;
 	kn03_wbflush();
+
+	/* 3MAX+ has IOASIC free-running high resolution timer */
+	clkread = kn03_clkread;
 }
 
 /*
@@ -208,7 +212,7 @@ dec_3maxplus_bus_reset()
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
 
-	*(volatile u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
+	*(volatile u_int *)(ioasic_base + IOASIC_INTR) = 0;
 	kn03_wbflush();
 }
 
@@ -219,7 +223,6 @@ dec_3maxplus_bus_reset()
 extern void prom_findcons __P((int *, int *, int *));
 extern int tc_fb_cnattach __P((int));
 extern int zs_ioasic_cnattach __P((tc_addr_t, tc_offset_t, int, int, int));
-extern int zs_major;
 
 void
 dec_3maxplus_cons_init()
@@ -232,7 +235,7 @@ dec_3maxplus_cons_init()
 #if NWSDISPLAY > 0
 	if (screen > 0) {
 		if ((zs_ioasic_lk201_cnattach(ioasic_base, 0x00180000, 0) == 0)
-		    && (tc_fb_cnattach(crt) > 0))
+		    && tc_fb_cnattach(crt) > 0)
 			return;
 		printf("No framebuffer device configured for slot %d\n", crt);
 		printf("Using serial console\n");
@@ -290,7 +293,7 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 		temp = clk->regc;	/* XXX clear interrupt bits */
 		cf.pc = pc;
 		cf.sr = status;
-		latched_cycle_cnt = *(u_long*)(sc->sc_base + IOASIC_CTR);
+		latched_cycle_cnt = *(u_int32_t *)(sc->sc_base + IOASIC_CTR);
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 		old_buscycle = latched_cycle_cnt - old_buscycle;
@@ -375,18 +378,18 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 		} while (ifound);
 	}
 	if (cpumask & MIPS_INT_MASK_3)
-		dec_3maxplus_errintr();
+		dec_3maxplus_memerr();
 
 	return ((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_ENA_CUR);
 }
 
 /*
- * Handle Memory error.   3max, 3maxplus has ECC.
+ * Handle Memory error.  3max, 3maxplus has ECC.
  * Correct single-bit error, panic on  double-bit error.
  * XXX on double-error on clean user page, mark bad and reload frame?
  */
 static void
-dec_3maxplus_errintr()
+dec_3maxplus_memerr()
 {
 	register u_int erradr, errsyn;
 
@@ -404,4 +407,16 @@ void
 kn03_wbflush()
 {
 	__asm __volatile("lw  $2,0xbf840000");
+}
+
+/*
+ * TURBOchannel bus-cycle counter provided by IOASIC;
+ * Interpolate micro-seconds since the last RTC clock tick.  The
+ * interpolation base is the copy of the bus cycle-counter taken by
+ * the RTC interrupt handler.
+ */
+unsigned
+kn03_clkread()
+{
+	return *(u_int32_t *)(ioasic_base + IOASIC_CTR);
 }

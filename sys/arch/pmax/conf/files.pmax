@@ -1,5 +1,5 @@
-#	$Id: files.pmax,v 1.56.2.3 1998/10/19 19:45:09 drochner Exp $
-#	$NetBSD: files.pmax,v 1.56.2.3 1998/10/19 19:45:09 drochner Exp $
+#
+#	$NetBSD: files.pmax,v 1.56.2.4 1998/10/20 02:46:42 nisimura Exp $
 #
 # DECstation-specific configuration info
 
@@ -120,9 +120,9 @@ file	dev/ic/z8530tty.c		zstty needs-flag
 
 device	zskbd: wskbddev
 attach	zskbd at zsc
-file	arch/pmax/tc/zskbd.c		zskbd		needs-flag
+file	arch/pmax/tc/zskbd.c		zskbd needs-flag
 file	dev/dec/lk201_ws.c		zskbd
-file	dev/dec/wskbdmap_lk201.c		zskbd
+file	dev/dec/wskbdmap_lk201.c	zskbd
 
 # ACCESS.bus (desktop bus) for MAXINE keyboard and mouse
 device	dtop: tty
@@ -173,7 +173,6 @@ file	arch/pmax/pmax/memcpy.c		# XXX temporary hack XXX
 # Console code.
 file	dev/cons.c
 file	arch/pmax/dev/promio.c		# default console
-#file	arch/pmax/dev/findcons.c	# find and set up console.
 
 # Ultrix Binary Compatibility (COMPAT_ULTRIX)
 include "compat/ultrix/files.ultrix"

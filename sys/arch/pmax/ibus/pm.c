@@ -1,9 +1,8 @@
-/* $Id: pm.c,v 1.1.2.1 1998/10/15 02:41:16 nisimura Exp $ */
-/* $NetBSD: pm.c,v 1.1.2.1 1998/10/15 02:41:16 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.2 1998/10/20 02:46:42 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.1 1998/10/15 02:41:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.2 1998/10/20 02:46:42 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -24,6 +23,8 @@ __KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.1 1998/10/15 02:41:16 nisimura Exp $");
 #include <machine/autoconf.h>
 
 #include <pmax/ibus/ibusvar.h>
+
+extern void kn01_wbflush __P((void));
 
 struct pccreg {
 #define	_WORD_(_x_)	u_int16_t _x_; unsigned : 16
@@ -469,15 +470,15 @@ pminit(dc)
 
 	*(volatile u_int8_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_PMASK) = 0xff;
 
-	vdac->bt_mapWA = 0;	wbflush();
-	vdac->bt_map = 0;	wbflush();
-	vdac->bt_map = 0;	wbflush();
-	vdac->bt_map = 0;	wbflush();
+	vdac->bt_mapWA = 0;	kn01_wbflush();
+	vdac->bt_map = 0;	kn01_wbflush();
+	vdac->bt_map = 0;	kn01_wbflush();
+	vdac->bt_map = 0;	kn01_wbflush();
 	for (i = 1; i < CMAP_SIZE; i++) {
-		vdac->bt_mapWA = i;	wbflush();
-		vdac->bt_map = 0xff;	wbflush();
-		vdac->bt_map = 0xff;	wbflush();
-		vdac->bt_map = 0xff;	wbflush();
+		vdac->bt_mapWA = i;	kn01_wbflush();
+		vdac->bt_map = 0xff;	kn01_wbflush();
+		vdac->bt_map = 0xff;	kn01_wbflush();
+		vdac->bt_map = 0xff;	kn01_wbflush();
 	}
 
 }
@@ -646,10 +647,10 @@ bt478_loadcmap(sc)
 	volatile struct bt478reg *vdac = sc->sc_vdac;
 	
 	for (i = 0; i < CMAP_SIZE; i++) {
-		vdac->bt_mapWA = i;	 wbflush();
-		vdac->bt_map = cm->r[i]; wbflush();
-		vdac->bt_map = cm->g[i]; wbflush();
-		vdac->bt_map = cm->b[i]; wbflush();
+		vdac->bt_mapWA = i;	 kn01_wbflush();
+		vdac->bt_map = cm->r[i]; kn01_wbflush();
+		vdac->bt_map = cm->g[i]; kn01_wbflush();
+		vdac->bt_map = cm->b[i]; kn01_wbflush();
 	}
 }
 
@@ -660,20 +661,20 @@ bt478_load_curcmap(sc)
 	u_int8_t *cp = sc->sc_cursor.cc_color;
 	volatile struct bt478reg *vdac = sc->sc_vdac;
 
-	vdac->bt_overWA = 0x04;	wbflush();
-	vdac->bt_over = cp[1];	wbflush();
-	vdac->bt_over = cp[3];	wbflush();
-	vdac->bt_over = cp[5];	wbflush();
+	vdac->bt_overWA = 0x04;	kn01_wbflush();
+	vdac->bt_over = cp[1];	kn01_wbflush();
+	vdac->bt_over = cp[3];	kn01_wbflush();
+	vdac->bt_over = cp[5];	kn01_wbflush();
 
-	vdac->bt_overWA = 0x08;	wbflush();
-	vdac->bt_over = 0x00;	wbflush();
-	vdac->bt_over = 0x00;	wbflush();
-	vdac->bt_over = 0x7f;	wbflush();
+	vdac->bt_overWA = 0x08;	kn01_wbflush();
+	vdac->bt_over = 0x00;	kn01_wbflush();
+	vdac->bt_over = 0x00;	kn01_wbflush();
+	vdac->bt_over = 0x7f;	kn01_wbflush();
 
-	vdac->bt_overWA = 0x0c;	wbflush();
-	vdac->bt_over = cp[0];	wbflush();
-	vdac->bt_over = cp[2];	wbflush();
-	vdac->bt_over = cp[4];	wbflush();
+	vdac->bt_overWA = 0x0c;	kn01_wbflush();
+	vdac->bt_over = cp[0];	kn01_wbflush();
+	vdac->bt_over = cp[2];	kn01_wbflush();
+	vdac->bt_over = cp[4];	kn01_wbflush();
 }
 
 void

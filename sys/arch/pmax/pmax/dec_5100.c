@@ -1,5 +1,4 @@
-/* $Id: dec_5100.c,v 1.2.4.1 1998/10/15 00:42:44 nisimura Exp $ */
-/*	$NetBSD: dec_5100.c,v 1.2.4.1 1998/10/15 00:42:44 nisimura Exp $	*/
+/*	$NetBSD: dec_5100.c,v 1.2.4.2 1998/10/20 02:46:40 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.1 1998/10/15 00:42:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.2 1998/10/20 02:46:40 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,10 +65,12 @@ int  dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
 void dec_5100_intr_establish __P((struct device *, void *,
 		int, int (*)(void *), void *));
 void dec_5100_intr_disestablish __P((struct device *, void *));
-void dec_5100_memintr __P((void));
+void dec_5100_memerr __P((void));
 
-extern void dec_mips1_wbflush __P((void));
 extern void prom_haltbutton __P((void));
+extern void kn230_wbflush __P((void));
+extern unsigned nullclkread __P((void));
+extern unsigned (*clkread) __P((void));
 extern volatile struct chiptime *mcclock_addr;
 extern char cpu_model[];
 
@@ -108,7 +109,7 @@ void
 dec_5100_os_init()
 {
 	/* set correct wbflush routine for this motherboard */
-	 mips_set_wbflush(dec_mips1_wbflush);
+	 mips_set_wbflush(kn230_wbflush);
 
 	/*
 	 * Set up interrupt handling and I/O addresses.
@@ -125,6 +126,9 @@ dec_5100_os_init()
 	mcclock_addr = (volatile struct chiptime *)
 		MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_2);
+
+	/* no high resolution timer circuit; possibly never called */
+	clkread = nullclkread;
 }
 
 
@@ -139,7 +143,7 @@ dec_5100_bus_reset()
 	*icsrp |= KN230_CSR_INTR_WMERR;
 
 	/* nothing else to do */
-	dec_mips1_wbflush();
+	kn230_wbflush();
 }
 
 #include <dev/cons.h>
@@ -164,7 +168,7 @@ dec_5100_cons_init()
 		panic("can't init serial console");
 
 	cn_tab->cn_pri = CN_REMOTE;
-	cn_tab->cn_dev = makedev(dc_major, 3);
+	cn_tab->cn_dev = makedev(dc_major, 0);
 }
 
 void
@@ -285,7 +289,7 @@ dec_5100_intr(cpumask, pc, status, cause)
 #undef CHECKINTR
 
 	if (cpumask & MIPS_INT_MASK_3) {
-		dec_5100_memintr();
+		dec_5100_memerr();
 		intrcnt[ERROR_INTR]++;
 	}
 
@@ -301,7 +305,7 @@ dec_5100_intr(cpumask, pc, status, cause)
  * XXX drain writebuffer on contextswitch to avoid panic?
  */
 void
-dec_5100_memintr()
+dec_5100_memerr()
 {
 	volatile u_int32_t *p = (void *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 	u_int32_t icsr;
@@ -310,7 +314,7 @@ dec_5100_memintr()
 	/* read icsr and clear error  */
 	icsr = *p;
 	*p = icsr | KN230_CSR_INTR_WMERR;
-	dec_mips1_wbflush();
+	kn230_wbflush();
 	
 #ifdef DIAGNOSTIC
 		printf("\nMemory interrupt\n");
@@ -342,7 +346,7 @@ _splraise_kn230(lvl)
 	new = oldiplmask[lvl] = *p;
 	new &= ~iplmask[lvl];
 	*p = new;
-	dec_mips1_wbflush();
+	kn230_wbflush();
 	return lvl | _splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1);
 }
 
@@ -356,7 +360,7 @@ _spllower_kn230(mask)
 	s = IPL_NONE | _spllower(mask);
 	oldiplmask[IPL_NONE] = *p;	/* save current ICSR */
 	*p = iplmask[IPL_HIGH];		/* enable all of established devices */
-	dec_mips1_wbflush();
+	kn230_wbflush();
 	return s;
 }
 
@@ -369,7 +373,7 @@ _splx_kn230(lvl)
 	(void)_splset(lvl & MIPS_INT_MASK);
 	if (lvl & 0xff) {
 		*p = oldiplmask[lvl & 0xff];
-		dec_mips1_wbflush();
+		kn230_wbflush();
 	}
 	return 0;
 }

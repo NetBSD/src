@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.8.2.1 1998/10/15 02:16:31 nisimura Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.8.2.2 1998/10/20 02:46:42 nisimura Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,15 +55,15 @@
 
 
 /*
- * DEcstation-specific mips locore code.
+ * DECstation specific locore routine collection.
  */
-
 #include <mips/asm.h>
 #include <mips/cpuarch.h>
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
 #include "opt_dec_5400.h"
+#include "opt_dec_3max.h"
 
 	.set	noreorder
 LEAF(_splraise)
@@ -137,7 +137,6 @@ END(_clrsoftintr)
 
 
 #if defined(DEC_3100) || defined(DEC_5100)
-
 /*
  * Copy data to a DMA buffer padded with 16 bits of data, 16
  * bits of padding per 32bit word (e.g., for pmin/pmax  sii (and lance) DMA).
@@ -213,30 +212,49 @@ END(CopyFromBuffer)
 #endif /* DEC_3100 || DEC_5100 */
 
 
+#if defined(DEC_3100) || defined(DEC_3MAX)
 /*
- * Write-buffer flush for writebuffer hardware on DEC mips r2000a
+ * Processor's CU0 (coprocessor 0 usability) bit wired with the writebuffer
+ * circuit; This indicates write operations are pending or not.
  */
+LEAF(cop0_busy)
+ALIAS(kn01_wbflush)
+ALIAS(kn02_wbflush)
+1:					# spin
+	bc0f	1b			# until write buffer is drained
+	nop				# -delay slot-
+	j	ra
+	nop
+END(cop0_busy)
+#endif
+
+
 #if defined(DEC_5100) || defined(DEC_5400)
-LEAF(dec_mips1_wbflush)
+/*
+ * Processor's CU3 (coprocessor 3 usability) bit wired with the writebuffer
+ * circuit; This indicates write operations are pending or not.
+ */
+LEAF(cop3_busy)
+ALIAS(kn210_wbflush)
+ALIAS(kn230_wbflush)
         mfc0	v0, MIPS_COP_0_STATUS	# save original SR in v0
 	li	t0, 0x80000000		# set CU3 bit
 	or	v1, v0 ,t0		# v1 = v0 | 0x80000000
 	nop
 	mtc0	v1, MIPS_COP_0_STATUS	
-	nop				/* two  more cycles to complete */
+	nop				# make sure new SR takes the effect
  	nop
 
 1:					# spin 
 	bc3f    1b			# until write buffer drained
-        nop                     	# (branch delay slot)
+        nop                     	# -delay slot-
 
         mtc0    v0, MIPS_COP_0_STATUS	# restore SR on exit
         nop
         j       ra
         nop
-END(dec_mips1_wbflush)
-#endif	/* defined(DEC_5100) || defined(DEC_5400) */
-
+END(cop3_busy)
+#endif
 
 /*
  * Interrupt counters for vmstat.
