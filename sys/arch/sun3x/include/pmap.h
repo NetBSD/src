@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 1997/02/12 23:01:28 gwr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4 1997/02/14 03:55:33 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@ struct pmap {
 	u_long              	pm_a_phys;  	/* MMU level-A phys addr */
 	int                 	pm_refcount;	/* reference count */
 	simple_lock_data_t  	pm_lock;    	/* lock on pmap */
-	struct pmap_statistics	pm_stats;   	/* statistics */
 };
 
 typedef struct pmap 	*pmap_t;
@@ -63,13 +62,14 @@ void	pmap_activate __P((pmap_t pmap));
 #define _pmap_fault(map, va, ftype) \
 	vm_fault(map, va, ftype, 0)
 
+/* Common function for pmap_resident_count(), pmap_wired_count() */
+segsz_t pmap_count __P((pmap_t, int));
+
 /* This needs to be a macro for kern_sysctl.c */
-extern segsz_t pmap_resident_pages(pmap_t);
-#define	pmap_resident_count(pmap)	(pmap_resident_pages(pmap))
+#define	pmap_resident_count(pmap)	(pmap_count((pmap), 0))
 
 /* This needs to be a macro for vm_mmap.c */
-extern segsz_t pmap_wired_pages(pmap_t);
-#define	pmap_wired_count(pmap)	(pmap_wired_pages(pmap))
+#define	pmap_wired_count(pmap)  	(pmap_count((pmap), 1))
 
 /* We use the PA plus some low bits for device mmap. */
 #define pmap_phys_address(addr) 	(addr)
