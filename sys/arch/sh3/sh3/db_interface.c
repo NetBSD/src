@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.25 2005/03/08 21:05:47 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.26 2005/03/08 22:04:22 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.25 2005/03/08 21:05:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.26 2005/03/08 22:04:22 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -577,21 +577,25 @@ __db_print_symbol(db_expr_t value)
 void
 db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	struct proc *p;
+	struct lwp *l;
 	struct user *u;
 	struct pcb *pcb;
 	uint32_t *t32;
 	uint8_t *t8;
 	int i, j;
+
 #define	MAX_STACK	(USPACE - PAGE_SIZE)
 #define	MAX_FRAME	(PAGE_SIZE - sizeof(struct user))
+
 	db_printf("stack max: %d byte, frame max %d byte,"
 	    " sizeof(struct trapframe) %d byte\n", MAX_STACK, MAX_FRAME,
 	    sizeof(struct trapframe));
-	db_printf("PID    stack top    max used    frame top     max used"
-	    "  nest\n");
-	LIST_FOREACH(p, &allproc, p_list) {
-		u = p->p_addr;
+	db_printf("   PID.LID    "
+		  "stack top    max used    frame top     max used"
+		  "  nest\n");
+
+	LIST_FOREACH(l, &alllwp, l_list) {
+		u = l->l_addr;
 		pcb = &u->u_pcb;
 		/* stack */
 		t32 = (uint32_t *)(pcb->pcb_sf.sf_r7_bank - MAX_STACK);
@@ -605,12 +609,12 @@ db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 			continue;
 		j = MAX_FRAME - j;
 
-		db_printf("%-6d 0x%08x %6d (%3d%%) 0x%08lx %6d (%3d%%) %d %s\n",
-		    p->p_pid,
+		db_printf("%6d.%-6d 0x%08x %6d (%3d%%) 0x%08lx %6d (%3d%%) %d %s\n",
+		    l->l_proc->p_pid, l->l_lid,
 		    pcb->pcb_sf.sf_r7_bank, i, i * 100 / MAX_STACK,
 		    (vaddr_t)pcb + PAGE_SIZE, j, j * 100 / MAX_FRAME,
 		    j / sizeof(struct trapframe),
-		    p->p_comm);
+		    l->l_proc->p_comm);
 	}
 #undef	MAX_STACK
 #undef	MAX_FRAME
