@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.23.2.3 2001/02/26 17:01:56 he Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.23.2.4 2001/04/06 00:28:02 he Exp $	*/
 /*	$KAME: ip6_output.c,v 1.109 2000/05/31 05:03:09 jinmei Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 
 	/* for AH processing. stupid to have "socket" variable in IP layer... */
 	so = ipsec_getsocket(m);
-	ipsec_setsocket(m, NULL);
+	(void)ipsec_setsocket(m, NULL);
 	ip6 = mtod(m, struct ip6_hdr *);
 #endif /* IPSEC */
 
@@ -887,6 +887,10 @@ skip_ipsec2:;
 			}
 		}
 #endif
+#ifdef IPSEC
+		/* clean ipsec history once it goes out of the node */
+		ipsec_delaux(m);
+#endif
 #ifdef OLDIP6OUTPUT
 		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
 					  ro->ro_rt);
@@ -1018,6 +1022,10 @@ sendorfree:
 						m->m_pkthdr.len;
 				}
 			}
+#endif
+#ifdef IPSEC
+			/* clean ipsec history once it goes out of the node */
+			ipsec_delaux(m);
 #endif
 #ifdef OLDIP6OUTPUT
 			error = (*ifp->if_output)(ifp, m,
