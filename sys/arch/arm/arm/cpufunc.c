@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.32 2002/03/16 18:02:19 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.33 2002/03/16 18:11:11 bjh21 Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -698,7 +698,6 @@ set_cpufuncs()
 		cpufuncs = arm3_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
-		arm_dcache_align_mask = -1;
 		return 0;
 	}
 #endif	/* CPU_ARM3 */
@@ -719,7 +718,6 @@ set_cpufuncs()
 		cpufuncs = arm7_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
-		arm_dcache_align_mask = -1;
 		return 0;
 	}
 #endif	/* CPU_ARM7 */
