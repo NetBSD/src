@@ -554,7 +554,7 @@
 #define HAVE_GAS_WEAK 1
 
 /* Define if your assembler supports .hidden. */
-/* #undef HAVE_GAS_HIDDEN */
+#define HAVE_GAS_HIDDEN 1
 
 /* Define if your assembler supports .uleb128. */
 #define HAVE_AS_LEB128 1
