@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.59 1998/05/31 23:25:43 thorpej Exp $
+#	$NetBSD: Makefile.pmax,v 1.60 1998/08/04 20:17:09 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -174,7 +174,7 @@ SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
 depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore_machdep.S 
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore_machdep.S 
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
