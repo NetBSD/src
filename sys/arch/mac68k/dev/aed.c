@@ -1,4 +1,4 @@
-/*	$Id: aed.c,v 1.3 1998/11/24 08:34:37 ender Exp $	*/
+/*	$Id: aed.c,v 1.4 1998/11/28 19:42:49 ender Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -252,9 +252,12 @@ aed_emulate_mouse(event)
 			microtime(&new_event.timestamp);
 			aed_handoff(&new_event);
 			break;
-		case ADBK_KEYVAL(ADBK_SHIFT):
-		case ADBK_KEYVAL(ADBK_CONTROL):
-		case ADBK_KEYVAL(ADBK_FLOWER):
+		case ADBK_KEYUP(ADBK_SHIFT):
+		case ADBK_KEYDOWN(ADBK_SHIFT):
+		case ADBK_KEYUP(ADBK_CONTROL):
+		case ADBK_KEYDOWN(ADBK_CONTROL):
+		case ADBK_KEYUP(ADBK_FLOWER):
+		case ADBK_KEYDOWN(ADBK_FLOWER):
 			/* ctrl, shift, cmd */
 			aed_dokeyupdown(event);
 			break;
