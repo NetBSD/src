@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.2 2002/10/19 13:17:33 scw Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.3 2002/10/22 12:22:43 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -82,12 +82,15 @@
 #define	REDUCE16(i, result)		 \
 	mshflo.w i, r63, r0		;\
 	shlri	i, 16, i		;\
-	add	r0, i, i		;\
+	addz.l	r0, i, i		;\
 	mshflo.w i, r63, r0		;\
 	shlri	i, 16, i		;\
 	add	r0, i, result
 
+
 /*
+ * The main in*_cksum() workhorse...
+ *
  * Entry parameters:
  *
  *	r3	Buffer length
@@ -97,14 +100,14 @@
  *
  * Returns:
  *
- *	r7	Accumulated sum as two pairs of "carry:sum" words.
+ *	r7	Accumulated 64-bit sum
  *
  * Trashes:
  *	r0, r1, r3, r4, r19, r20, r21, r22
  *	tr0, tr1, tr2
  */
 
-Lcksumdata:
+ASENTRY(cksumdata)
 	movi	0, r7
 	ld.b	r4, 0, r63		/* Pre-fetch the start of the buffer */
 	ptabs/u	r18, tr0
@@ -112,21 +115,19 @@ Lcksumdata:
 
 	/*
 	 * We first have to quad-align the buffer.
-	 *
-	 * XXX: We may have to shift the result of the following "ldlo.q"
-	 * depending on the buffer alignment, particularly for odd addresses,
-	 * in the same way as we do for the "ldhi.q" in Lend_game.
 	 */
 	pta/u	Lalready_aligned, tr2
-	xori	r4, 0x7, r0
-	andi	r0, 0x7, r0
+	andi	r4, 0x7, r1
+	xori	r1, 0x7, r0
 	beqi/u	r0, 0x7, tr2		/* Jump if already quad aligned */
 	addi	r0, 1, r0		/* r0 == # bytes to next quad */
 	bgtu/u	r0, r3, tr1		/* Not enough bytes left to make it */
-	ldlo.q	r4, 0, r19		/* Fetch 1 to 4 words */
+	ldlo.q	r4, 0, r19		/* Fetch 1 to 7 bytes */
+	shlli	r1, 3, r1
 	add	r4, r0, r4		/* r4 is now quad-aligned */
 	sub	r3, r0, r3		/* Update remaining length */
-	ADDC	(r19, r7, r7)		/* Accumulate the words we just read */
+	shlld	r19, r1, r19
+	ADDC	(r19, r7, r7)		/* Accumulate the bytes we just read */
 	beq/u	r3, r63, tr0		/* Return to caller if done */
 
 	/*
@@ -152,15 +153,10 @@ Lalready_aligned:
 	/*
 	 * At this point:
 	 *
-	 *  r0 == 0x00	Enter loop at 1st load.
-	 *  r0 == 0x08	Enter loop at 2nd load.
-	 *  r0 == 0x10	Enter loop at 3rd load.
-	 *  r0 == 0x18	Enter loop at 4th load.
-	 *
 	 *  r3 == # of bytes remaining, AFTER loop entry.
 	 *  r4 -> *next* 32-byte aligned chunk of buffer.
 	 *
-	 * The "big_loop" checksums 16 words at a time.
+	 * The "big_loop" checksums 32 bytes at a time.
 	 */
 
 Lbig_loop:
@@ -223,7 +219,6 @@ Lend_game:
 	ADDC	(r22, r7, r7)
 	blink	tr0, r63
 
-
 /*
  * int in_cksum(struct mbuf *m, int len)
  */
@@ -243,7 +238,7 @@ ENTRY(in_cksum)
 	 * r6  == len
 	 */
 Lcksum_top:
-	pta/u	Lcksumdata, tr4
+	pta/u	_ASM_LABEL(cksumdata), tr4
 	pta/u	Lcksum_loop, tr3
 	movi	0, r7
 	movi	0, r8
@@ -363,3 +358,4 @@ Lout_of_mbufs:
 Lmbuf_msg:
 	.asciz	"cksum: out of mbufs\n"
 #endif /* INET || INET6 */
+
