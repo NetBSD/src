@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
-#	$Id: Makefile,v 1.6 1993/08/23 09:23:16 cgd Exp $
+#	$Id: Makefile,v 1.7 1993/09/23 23:13:14 cgd Exp $
 
 PROG=		cpp
 BINDIR=		/usr/libexec
@@ -9,6 +9,7 @@ CFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/../common \
                 -I$(.CURDIR)/../arch/$(MACHINE) -I$(.CURDIR)/../arch \
 		-DGCC_INCLUDE_DIR=\"\" \
 		-DGPLUSPLUS_INCLUDE_DIR=\"/usr/include/g++\"
+LDADD+=		-lgnumalloc
 YFLAGS=
 
 MLINKS=	cpp.1 gcpp.1
