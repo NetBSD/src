@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.10 2002/10/02 05:31:46 thorpej Exp $ */
+/* $NetBSD: lunafb.c,v 1.11 2003/04/02 00:08:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.10 2002/10/02 05:31:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.11 2003/04/02 00:08:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ struct bt458 {
 #define	OMFB_FB_RADDR	0xB10C0008	/* plane #0 */
 #define	OMFB_ROPFUNC	0xB12C0000	/* ROP function code */
 #define	OMFB_RAMDAC	0xC1100000	/* Bt454/Bt458 RAMDAC */
-#define	OMFB_SIZE	(0xB1300000 - 0xB1080000 + NBPG)
+#define	OMFB_SIZE	(0xB1300000 - 0xB1080000 + PAGE_SIZE)
 
 struct om_hwdevconfig {
 	int	dc_wid;			/* width of frame buffer */
