@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.9 2002/01/12 22:06:02 enami Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.10 2002/03/14 01:38:34 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@
 .Sh SYNOPSIS
 .Nm
 .Ar special Op Ar ...
-
+.Pp
 .Nm
 .Ar device Op Ar ...
 .Sh DESCRIPTION
@@ -70,6 +70,10 @@ The script is in
 and must be called from the
 .Pa /dev
 directory.
+For the creation of the devices,
+.Xr mknod 8
+is used, which can only be used for creating devices by the
+super-user.
 .Pp
 The special targets supported on
 .Nx Ns / Ns arm26
@@ -143,8 +147,10 @@ Alias for PC COM ports, this is what the system really wants, see
 .It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
-Set of 16 master and slave pseudo terminals, see
+Set of 62 master and slave pseudo terminals, see
 .Xr \&pty 4
+. It Ar opty
+First 16 ptys, to save inodes on install media
 . El
 .It Printers :
 . Bl -tag -width 0123456789 -compact
@@ -157,6 +163,9 @@ Archimedes parallel port
 . El
 .It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
+. It Ar clockctl
+Clock control for non root users, see
+.Xr \&clockctl 4
 . It Ar fd
 File descriptors (/dev/fd/*), see
 .Xr \&fd 4
@@ -179,16 +188,27 @@ Wscons event multiplexor, see
 . El
 .El
 .Sh FILES
-.Bl -tag -width "/dev/MAKEDEV" -compact
+.Bl -tag -width "/dev/MAKEDEV.local" -compact
 .It Pa /dev
 special device files directory
 .It Pa /dev/MAKEDEV
 script described in this man page
+.It Pa /dev/MAKEDEV.local
+script for site specific devices
 .El
+.Sh DIAGNOSTICS
+If the script reports an error that is difficult to understand,
+you can get more debugging output by using
+.Dl Ic sh Fl x Ar MAKEDEV Ar argument .
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr config 8 ,
 .Xr mknod 8
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .
 .Sh BUGS
 This man page is generated automatically from the same sources
 as
