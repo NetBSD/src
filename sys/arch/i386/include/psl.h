@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.2.4.5 1993/10/09 08:53:27 mycroft Exp $
+ *	$Id: psl.h,v 1.2.4.6 1993/10/11 01:47:04 mycroft Exp $
  */
 
 /*
@@ -92,4 +92,16 @@ int splx __P((int));
 #define	splstatclock()	splclock()
 #define	splsoftclock()	splast()
 #define spl0()		splnone()
+
+static __inline void
+disable_intr(void)
+{
+	__asm __volatile("cli");
+}
+
+static __inline void
+enable_intr(void)
+{
+	__asm __volatile("sti");
+}
 #endif
