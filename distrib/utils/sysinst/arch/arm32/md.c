@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 1999/06/22 00:57:08 cgd Exp $	*/
+/*	$NetBSD: md.c,v 1.21 1999/06/27 00:23:07 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -291,19 +291,7 @@ int	md_post_newfs (void)
 
 int	md_copy_filesystem (void)
 {
-	if (target_already_root()) {
-		return 0;
-	}
-
-	/* Copy the instbin(s) to the disk */
-	printf("%s", msg_string(MSG_dotar));
-	if (run_prog(0, 1, NULL, "pax -X -r -w -pe / /mnt") != 0)
-		return 1;
-
-	/* Copy next-stage install profile into target /.profile. */
-	if (cp_to_target("/tmp/.hdprofile", "/.profile") != 0)
-		return 1;
-	return cp_to_target("/usr/share/misc/termcap", "/.termcap");
+	return 0;
 }
 
 int md_make_bsd_partitions (void)
