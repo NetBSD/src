@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.51 1999/10/13 03:01:37 augustss Exp $
+$NetBSD: usbdevs,v 1.52 1999/10/13 09:00:21 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ vendor CHIC		0x05fe	Chic Technology
 vendor MACALLY		0x0618	Macally
 vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies
+vendor SANDISK		0x0781	SanDisk Corp
 vendor SIIG		0x07cc	SIIG
 vendor ACTIVEWIRE	0x0854	ActiveWire Inc.
 vendor MOTOROLA		0x1063	Motorola
@@ -279,6 +280,9 @@ product ENTREGA CENTRONICS	0x0006	Centronics connector
 product ENTREGA 1S9		0x0093	1S9 serial connector
 product ENTREGA EZUSB		0x8000	EZ-USB
 product ENTREGA SERIAL		0x8001	DB25 Serial connector
+
+/* SanDisk products */
+product	SANDISK IMAGEMATE	0x0001	USB ImageMate
 
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
