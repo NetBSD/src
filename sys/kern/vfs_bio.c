@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.124 2004/04/25 12:41:12 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.125 2004/05/25 04:30:33 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.124 2004/04/25 12:41:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.125 2004/05/25 04:30:33 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1601,7 +1601,8 @@ SYSCTL_SETUP(sysctl_kern_buf_setup, "sysctl kern.buf subtree setup")
 		       CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "buf", NULL,
+		       CTLTYPE_NODE, "buf",
+		       SYSCTL_DESCR("Kernel buffer cache information"),
 		       sysctl_dobuf, 0, NULL, 0,
 		       CTL_KERN, KERN_BUF, CTL_EOL);
 }
@@ -1617,22 +1618,30 @@ SYSCTL_SETUP(sysctl_vm_buf_setup, "sysctl vm.buf* subtree setup")
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "bufcache", NULL,
+		       CTLTYPE_INT, "bufcache",
+		       SYSCTL_DESCR("Percentage of kernel memory to use for "
+				    "buffer cache"),
 		       sysctl_bufvm_update, 0, &bufcache, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-		       CTLTYPE_INT, "bufmem", NULL,
+		       CTLTYPE_INT, "bufmem",
+		       SYSCTL_DESCR("Amount of kernel memory used by buffer "
+				    "cache"),
 		       NULL, 0, &bufmem, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "bufmem_lowater", NULL,
+		       CTLTYPE_INT, "bufmem_lowater",
+		       SYSCTL_DESCR("Minimum amount of kernel memory to "
+				    "reserve for buffer cache"),
 		       sysctl_bufvm_update, 0, &bufmem_lowater, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "bufmem_hiwater", NULL,
+		       CTLTYPE_INT, "bufmem_hiwater",
+		       SYSCTL_DESCR("Maximum amount of kernel memory to use "
+				    "for buffer cache"),
 		       sysctl_bufvm_update, 0, &bufmem_hiwater, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
 }
