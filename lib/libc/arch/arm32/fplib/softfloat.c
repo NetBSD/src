@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.c,v 1.3 1998/01/06 00:06:12 perry Exp $	*/
+/*	$NetBSD: softfloat.c,v 1.4 1999/05/06 13:56:28 kleink Exp $	*/
 
 /*
 ===============================================================================
@@ -564,6 +564,7 @@ float64 int32_to_float64( int32 a )
 
 }
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Returns the result of converting the single-precision floating-point value
@@ -575,7 +576,7 @@ positive integer is returned.  If the conversion overflows, the largest
 integer with the same sign as `a' is returned.
 -------------------------------------------------------------------------------
 */
-int32 float32_to_int32( float32 a )
+static int32 float32_to_int32( float32 a )
 {
     flag aSign;
     int16 aExp, shiftCount;
@@ -631,6 +632,7 @@ int32 float32_to_int32( float32 a )
     return z;
 
 }
+#endif /* unused */
 
 /*
 -------------------------------------------------------------------------------
@@ -705,6 +707,7 @@ float64 float32_to_float64( float32 a )
 
 }
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Returns the result of converting the double-precision floating-point value
@@ -716,7 +719,8 @@ positive integer is returned.  If the conversion overflows, the largest
 integer with the same sign as `a' is returned.
 -------------------------------------------------------------------------------
 */
-int32 float64_to_int32( float64 a )
+
+static int32 float64_to_int32( float64 a )
 {
     flag aSign;
     int16 aExp, shiftCount;
@@ -778,6 +782,7 @@ int32 float64_to_int32( float64 a )
     return z;
 
 }
+#endif /* unused */
 
 /*
 -------------------------------------------------------------------------------
@@ -864,6 +869,7 @@ float32 float64_to_float32( float64 a )
 
 }
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Rounds the single-precision floating-point value `a' to an integer, and
@@ -872,7 +878,7 @@ operation is performed according to the IEC/IEEE Standard for Binary
 Floating-point Arithmetic.
 -------------------------------------------------------------------------------
 */
-float32 float32_round_to_int( float32 a )
+static float32 float32_round_to_int( float32 a )
 {
     flag aSign;
     int16 aExp;
@@ -924,6 +930,7 @@ float32 float32_round_to_int( float32 a )
     return z;
 
 }
+#endif /* unused */
 
 /*
 -------------------------------------------------------------------------------
@@ -1249,6 +1256,7 @@ float32 float32_div( float32 a, float32 b )
 
 }
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Returns the remainder of the single-precision floating-point value `a'
@@ -1256,7 +1264,7 @@ with respect to the corresponding value `b'.  The operation is performed
 according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
 -------------------------------------------------------------------------------
 */
-float32 float32_rem( float32 a, float32 b )
+static float32 float32_rem( float32 a, float32 b )
 {
     flag aSign, bSign, zSign;
     int16 aExp, bExp, expDiff;
@@ -1337,7 +1345,9 @@ float32 float32_rem( float32 a, float32 b )
     return normalizeRoundAndPackFloat32( aSign ^ zSign, bExp, aSig );
 
 }
+#endif /* unused */
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Returns the square root of the single-precision floating-point value `a'.
@@ -1345,7 +1355,7 @@ The operation is performed according to the IEC/IEEE Standard for Binary
 Floating-point Arithmetic.
 -------------------------------------------------------------------------------
 */
-float32 float32_sqrt( float32 a )
+static float32 float32_sqrt( float32 a )
 {
     flag aSign;
     int16 aExp, zExp;
@@ -1391,6 +1401,7 @@ float32 float32_sqrt( float32 a )
     return roundAndPackFloat32( 0, zExp, zSig );
 
 }
+#endif /* unused */
 
 /*
 -------------------------------------------------------------------------------
@@ -1465,6 +1476,7 @@ flag float32_lt( float32 a, float32 b )
 
 }
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Returns true if the single-precision floating-point value `a' is equal to
@@ -1473,7 +1485,8 @@ raised if either operand is a NaN.  The comparison is performed according to
 the IEC/IEEE Standard for Binary Floating-point Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float32_eq_signaling( float32 a, float32 b )
+
+static flag float32_eq_signaling( float32 a, float32 b )
 {
 
     if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
@@ -1485,7 +1498,9 @@ flag float32_eq_signaling( float32 a, float32 b )
     return ( a == b ) || bothZeroFloat32( a, b );
 
 }
+#endif /* unused */
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Returns true if the single-precision floating-point value `a' is less than
@@ -1494,7 +1509,7 @@ do not cause an exception.  The comparison is performed according to the
 IEC/IEEE Standard for Binary Floating-point Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float32_le_quiet( float32 a, float32 b )
+static flag float32_le_quiet( float32 a, float32 b )
 {
     flag aSign, bSign;
 /*    int16 aExp, bExp;*/
@@ -1513,7 +1528,9 @@ flag float32_le_quiet( float32 a, float32 b )
     return ( a == b ) || ( aSign ^ ( a < b ) );
 
 }
+#endif /* unused */
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Returns true if the single-precision floating-point value `a' is less than
@@ -1522,7 +1539,7 @@ an exception.  The comparison is performed according to the IEC/IEEE
 Standard for Binary Floating-point Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float32_lt_quiet( float32 a, float32 b )
+static flag float32_lt_quiet( float32 a, float32 b )
 {
     flag aSign, bSign;
 
@@ -1540,7 +1557,9 @@ flag float32_lt_quiet( float32 a, float32 b )
     return ( a != b ) && ( aSign ^ ( a < b ) );
 
 }
+#endif /* unused */
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Rounds the double-precision floating-point value `a' to an integer, and
@@ -1549,7 +1568,7 @@ operation is performed according to the IEC/IEEE Standard for Binary
 Floating-point Arithmetic.
 -------------------------------------------------------------------------------
 */
-float64 float64_round_to_int( float64 a )
+static float64 float64_round_to_int( float64 a )
 {
     flag aSign;
     int16 aExp;
@@ -1641,6 +1660,7 @@ float64 float64_round_to_int( float64 a )
     return z;
 
 }
+#endif /* unused */
 
 /*
 -------------------------------------------------------------------------------
@@ -2000,6 +2020,7 @@ float64 float64_div( float64 a, float64 b )
 
 }
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Returns the remainder of the double-precision floating-point value `a'
@@ -2007,7 +2028,7 @@ with respect to the corresponding value `b'.  The operation is performed
 according to the IEC/IEEE Standard for Binary Floating-point Arithmetic.
 -------------------------------------------------------------------------------
 */
-float64 float64_rem( float64 a, float64 b )
+static float64 float64_rem( float64 a, float64 b )
 {
     flag aSign, bSign, zSign;
     int16 aExp, bExp, expDiff;
@@ -2105,7 +2126,9 @@ float64 float64_rem( float64 a, float64 b )
         normalizeRoundAndPackFloat64( aSign ^ zSign, bExp - 4, aSig0, aSig1 );
 
 }
+#endif /* unused */
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Returns the square root of the double-precision floating-point value `a'.
@@ -2113,7 +2136,7 @@ The operation is performed according to the IEC/IEEE Standard for Binary
 Floating-point Arithmetic.
 -------------------------------------------------------------------------------
 */
-float64 float64_sqrt( float64 a )
+static float64 float64_sqrt( float64 a )
 {
     flag aSign;
     int16 aExp, zExp;
@@ -2179,6 +2202,7 @@ float64 float64_sqrt( float64 a )
     return roundAndPackFloat64( 0, zExp, zSig0, zSig1, zSig2 );
 
 }
+#endif /* unused */
 
 /*
 -------------------------------------------------------------------------------
@@ -2271,6 +2295,7 @@ flag float64_lt( float64 a, float64 b )
 
 }
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Returns true if the double-precision floating-point value `a' is equal to
@@ -2279,7 +2304,7 @@ raised if either operand is a NaN.  The comparison is performed according to
 the IEC/IEEE Standard for Binary Floating-point Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float64_eq_signaling( float64 a, float64 b )
+static flag float64_eq_signaling( float64 a, float64 b )
 {
 
     if (    (    ( extractFloat64Exp( a ) == 0x7FF )
@@ -2295,7 +2320,9 @@ flag float64_eq_signaling( float64 a, float64 b )
         && ( ( a.high == b.high ) || bothZeroFloat64( a, b ) );
 
 }
+#endif /* unused */
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Returns true if the double-precision floating-point value `a' is less than
@@ -2304,7 +2331,7 @@ do not cause an exception.  The comparison is performed according to the
 IEC/IEEE Standard for Binary Floating-point Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float64_le_quiet( float64 a, float64 b )
+static flag float64_le_quiet( float64 a, float64 b )
 {
     bits32 a0, a1, b0, b1;
     flag aSign, bSign;
@@ -2329,7 +2356,9 @@ flag float64_le_quiet( float64 a, float64 b )
     return aSign ? le64( b0, b1, a0, a1 ) : le64( a0, a1, b0, b1 );
 
 }
+#endif /* unused */
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Returns true if the double-precision floating-point value `a' is less than
@@ -2338,7 +2367,7 @@ an exception.  The comparison is performed according to the IEC/IEEE
 Standard for Binary Floating-point Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag float64_lt_quiet( float64 a, float64 b )
+static flag float64_lt_quiet( float64 a, float64 b )
 {
     bits32 a0, a1, b0, b1;
     flag aSign, bSign;
@@ -2363,6 +2392,7 @@ flag float64_lt_quiet( float64 a, float64 b )
     return aSign ? lt64( b0, b1, a0, a1 ) : lt64( a0, a1, b0, b1 );
 
 }
+#endif /* unused */
 
 
 /*
