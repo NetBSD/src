@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.113 2004/06/14 18:28:46 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.114 2004/06/16 01:35:40 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1087,3 +1087,27 @@ build.sh                                        patch
 	finishing a build. This fixes PR toolchain/25872.
 	[jmc, ticket #1712]
 
+tools/compat/compat_defs.h			patch
+bin/cat/cat.c					patch
+bin/pax/ar_io.c					patch
+bin/pax/ar_subs.c				patch
+bin/pax/buf_subs.c				patch
+bin/pax/cpio.c					patch
+bin/pax/file_subs.c				patch
+bin/pax/ftree.c					patch
+bin/pax/gen_subs.c				patch
+bin/pax/getoldopt.c				patch
+bin/pax/options.c				patch
+bin/pax/pat_rep.c				patch
+bin/pax/pax.c					patch
+bin/pax/pax.h					patch
+bin/pax/sel_subs.c				patch
+bin/pax/tables.c				patch
+bin/pax/tar.c					patch
+bin/pax/tty_subs.c				patch
+usr.bin/file/Makefile				patch
+tools/sunlabel/Makefile				patch
+usr.sbin/sunlabel/sunlabel.c			patch
+
+	Fixes for PR#24481 and botched pullup #1021 that prevented 1.6 from
+	building on non-NetBSD hosts.
