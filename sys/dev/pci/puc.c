@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.7 2000/07/29 17:43:38 jlam Exp $	*/
+/*	$NetBSD: puc.c,v 1.8 2000/07/29 17:49:08 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -277,7 +277,7 @@ puc_attach(parent, self, aux)
 		paa.t = sc->sc_bar_mappings[barindex].t;
 
 		if (
-#ifdef	PUCCN
+#ifdef PUCCN
 		    !com_is_console(sc->sc_bar_mappings[barindex].t,
 		    sc->sc_bar_mappings[barindex].a, &subregion_handle)
 		   && 
