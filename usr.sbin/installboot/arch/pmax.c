@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax.c,v 1.1 2002/04/03 06:34:32 lukem Exp $	*/
+/*	$NetBSD: pmax.c,v 1.1 2002/04/03 09:09:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: pmax.c,v 1.1 2002/04/03 06:34:32 lukem Exp $");
+__RCSID("$NetBSD: pmax.c,v 1.1 2002/04/03 09:09:04 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
