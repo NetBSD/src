@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.131.2.6 2001/02/11 19:16:19 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.131.2.7 2001/04/21 19:37:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -774,7 +774,7 @@ int cd_interpret_sense(xs)
 		 * Sleep for 5 seconds to wait for the drive to spin up
 		 */
 
-		SC_DEBUG(sc_link, SDEV_DB1, ("Waiting 5 sec for CD "
+		SC_DEBUG(periph, SDEV_DB1, ("Waiting 5 sec for CD "
 						"spinup\n"));
 		scsipi_periph_freeze(periph, 1);
 		callout_reset(&periph->periph_callout,
