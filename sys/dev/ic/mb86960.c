@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.33 1999/05/18 23:52:56 thorpej Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.34 1999/06/23 04:17:11 abs Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -343,7 +343,7 @@ mb86960_mediachange(ifp)
 
 	if (sc->sc_mediachange)
 		return ((*sc->sc_mediachange)(sc));
-	return (EINVAL);
+	return (0);
 }
 
 /*
