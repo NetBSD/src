@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 1997/05/31 21:22:11 cjs Exp $
+#	$NetBSD: Makefile,v 1.37 1997/11/04 20:34:46 gwr Exp $
 
 LIB=	kern
 NOPIC=
@@ -37,10 +37,10 @@ libinstall::
 lib${LIB}.o:: ${OBJS}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
-	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
+	@${LD} -r -o lib${LIB}.o `NM=${NM} ${LORDER} ${OBJS} | ${TSORT}`
 
 POBJS+=	${OBJS:.o=.po} mcount.po
 lib${LIB}.po:: ${POBJS}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}.po
-	@${LD} -r -o lib${LIB}.po `lorder ${POBJS} | tsort`
+	@${LD} -r -o lib${LIB}.po `NM=${NM} ${LORDER} ${POBJS} | ${TSORT}`
