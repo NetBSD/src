@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.27 2003/08/07 16:30:14 agc Exp $ */
+/*	$NetBSD: ts.c,v 1.28 2003/11/17 11:16:10 wiz Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.27 2003/08/07 16:30:14 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.28 2003/11/17 11:16:10 wiz Exp $");
 
 #define TS11_COMPAT	/* don't use extended features provided by TS05 */
 
@@ -490,7 +490,7 @@ tsstart (sc, bp)
 			/*
 			 * For some reasons which I don't (yet? :) understand,
 			 * tmscp.c initiates in this situation a GET-UNIT
-			 * command. (Because no data-buffers are neccess. ??)
+			 * command. (Because no data-buffers are necessary?)
 			 */
 			cmd = TS_CMD_STAT;
 			goto do_cmd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-int.c,v 1.17 2003/07/10 01:09:47 lukem Exp $	*/
+/*	$NetBSD: sftp-int.c,v 1.18 2003/11/17 11:16:10 wiz Exp $	*/
 /*
  * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
  *
@@ -27,7 +27,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sftp-int.c,v 1.57 2003/03/05 22:33:43 markus Exp $");
-__RCSID("$NetBSD: sftp-int.c,v 1.17 2003/07/10 01:09:47 lukem Exp $");
+__RCSID("$NetBSD: sftp-int.c,v 1.18 2003/11/17 11:16:10 wiz Exp $");
 
 #include <glob.h>
 
@@ -54,7 +54,7 @@ extern int num_requests;
 /* This is set to 0 if the progressmeter is not desired. */
 int showprogress = 1;
 
-/* Seperators for interactive commands */
+/* Separators for interactive commands */
 #define WHITESPACE " \t\r\n"
 
 /* Commands for interactive mode */
