@@ -24,7 +24,7 @@ SRCS	= argv.c argv_split.c attr.c basename.c binhash.c chroot_uid.c \
 	clean_env.c watchdog.c spawn_command.c duplex_pipe.c sane_rename.c \
 	sane_link.c unescape.c timed_read.c timed_write.c dict_tcp.c \
 	hex_quote.c dict_alloc.c rand_sleep.c sane_time.c dict_debug.c \
-	sane_socketpair.c
+	sane_socketpair.c ctable.c
 OBJS	= argv.o argv_split.o attr.o basename.o binhash.o chroot_uid.o \
 	close_on_exec.o concatenate.o dict.o dict_db.o dict_dbm.o \
 	dict_env.o dict_ht.o dict_ldap.o dict_mysql.o dict_ni.o dict_nis.o \
@@ -50,7 +50,7 @@ OBJS	= argv.o argv_split.o attr.o basename.o binhash.o chroot_uid.o \
 	clean_env.o watchdog.o spawn_command.o duplex_pipe.o sane_rename.o \
 	sane_link.o unescape.o timed_read.o timed_write.o dict_tcp.o \
 	hex_quote.o dict_alloc.o rand_sleep.o sane_time.o dict_debug.o \
-	sane_socketpair.o
+	sane_socketpair.o ctable.o
 HDRS	= argv.h attr.h binhash.h chroot_uid.h connect.h dict.h dict_db.h \
 	dict_dbm.h dict_env.h dict_ht.h dict_ldap.h dict_mysql.h \
 	dict_ni.h dict_nis.h dict_nisplus.h dir_forest.h events.h \
@@ -67,7 +67,7 @@ HDRS	= argv.h attr.h binhash.h chroot_uid.h connect.h dict.h dict_db.h \
 	vbuf.h vbuf_print.h vstream.h vstring.h vstring_vstream.h \
 	dict_unix.h dict_pcre.h dict_regexp.h mac_expand.h clean_env.h \
 	watchdog.h spawn_command.h sane_fsops.h dict_tcp.h hex_quote.h \
-	sane_time.h sane_socketpair.h
+	sane_time.h sane_socketpair.h ctable.h
 TESTSRC	= fifo_open.c fifo_rdwr_bug.c fifo_rdonly_bug.c select_bug.c \
 	stream_test.c dup2_pass_on_exec.c
 WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
@@ -83,7 +83,8 @@ TESTPROG= dict_open dup2_pass_on_exec events exec_command fifo_open \
 	inet_addr_host inet_addr_local mac_parse make_dirs msg_syslog \
 	mystrtok sigdelay translit valid_hostname vstream_popen \
 	vstring vstring_vstream doze select_bug stream_test mac_expand \
-	watchdog unescape hex_quote name_mask rand_sleep sane_time
+	watchdog unescape hex_quote name_mask rand_sleep sane_time ctable \
+	inet_addr_list
 
 LIB_DIR	= ../../lib
 INC_DIR	= ../../include
@@ -277,6 +278,16 @@ sane_time: $(LIB)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
+ctable: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+inet_addr_list: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
@@ -289,7 +300,7 @@ stream_test: stream_test.c $(LIB)
 	$(CC) $(CFLAGS)  -o $@ $@.c $(LIB) $(SYSLIBS)
 
 tests: valid_hostname_test mac_expand_test dict_test unescape_test \
-	hex_quote_test
+	hex_quote_test ctable_test inet_addr_list_test
 
 valid_hostname_test: valid_hostname valid_hostname.in valid_hostname.ref
 	./valid_hostname <valid_hostname.in 2>valid_hostname.tmp
@@ -311,6 +322,16 @@ hex_quote_test: hex_quote
 	od -cb <hex_quote.c >hex_quote.ref
 	cmp hex_quote.ref hex_quote.tmp
 	rm -f hex_quote.ref hex_quote.tmp
+
+ctable_test: ctable
+	./ctable <ctable.in >ctable.tmp 2>&1
+	diff ctable.ref ctable.tmp
+	rm -f ctable.tmp
+
+inet_addr_list_test: inet_addr_list
+	./inet_addr_list `cat inet_addr_list.in` >inet_addr_list.tmp 2>&1
+	diff inet_addr_list.ref inet_addr_list.tmp
+	rm -f inet_addr_list.tmp
 
 DB_TYPE	= `../postconf/postconf -h default_database_type`
 
@@ -371,6 +392,13 @@ concatenate.o: mymalloc.h
 concatenate.o: stringops.h
 concatenate.o: vstring.h
 concatenate.o: vbuf.h
+ctable.o: ctable.c
+ctable.o: sys_defs.h
+ctable.o: msg.h
+ctable.o: mymalloc.h
+ctable.o: ring.h
+ctable.o: htable.h
+ctable.o: ctable.h
 dict.o: dict.c
 dict.o: sys_defs.h
 dict.o: msg.h
