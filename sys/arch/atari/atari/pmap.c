@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 1999/01/13 12:17:15 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 1999/02/25 22:47:18 is Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -2566,6 +2566,23 @@ pmap_virtual_space(vstartp, vendp)
 
 	*vstartp = virtual_avail;
 	*vendp = virtual_end;
+}
+
+/*
+ *	Routine:	pmap_procwr
+ *
+ *	Function:
+ *		Synchronize caches corresponding to [addr, addr+len) in
+ *		p.
+ *
+ */
+void
+pmap_procwr(p, va, len)
+	struct proc	*p;
+	vaddr_t		va;
+	u_long		len;
+{
+	(void)cachectl1(0x80000004, va, len, p);
 }
 
 #ifdef DEBUG

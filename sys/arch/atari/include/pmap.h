@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.19 1998/09/02 15:01:55 leo Exp $	*/
+/*	$NetBSD: pmap.h,v 1.20 1999/02/25 22:47:18 is Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -160,6 +160,8 @@ void	pmap_bootstrap __P((psize_t, u_int, u_int));
 void	pmap_changebit __P((paddr_t, int, boolean_t));
 
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+void	pmap_procwr __P((struct proc *, vaddr_t, u_long));
+#define PMAP_NEED_PROCWR
 
 #endif	/* _KERNEL */
 
