@@ -1,7 +1,7 @@
-/*	$NetBSD: esovar.h,v 1.4 2000/03/22 14:37:43 kleink Exp $	*/
+/*	$NetBSD: esovar.h,v 1.5 2004/05/25 21:38:11 kleink Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000 Klaus J. Klein
+ * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,17 +66,19 @@
 /* Other, non-gain related mixer identifiers */
 #define	ESO_RECORD_SOURCE	18
 #define	ESO_MONOOUT_SOURCE	19
-#define	ESO_RECORD_MONITOR	20
-#define	ESO_MIC_PREAMP		21
-#define	ESO_SPATIALIZER_ENABLE	22
-#define	ESO_MASTER_MUTE		23
+#define	ESO_MONOIN_BYPASS	20
+#define	ESO_RECORD_MONITOR	21
+#define	ESO_MIC_PREAMP		22
+#define	ESO_SPATIALIZER_ENABLE	23
+#define	ESO_MASTER_MUTE		24
 
 /* Classes of the above */
-#define	ESO_INPUT_CLASS		24
-#define	ESO_OUTPUT_CLASS	25
-#define	ESO_MICROPHONE_CLASS	26
-#define	ESO_MONITOR_CLASS	27
-#define	ESO_RECORD_CLASS	28
+#define	ESO_INPUT_CLASS		25
+#define	ESO_OUTPUT_CLASS	26
+#define	ESO_MICROPHONE_CLASS	27
+#define	ESO_MONITOR_CLASS	28
+#define	ESO_RECORD_CLASS	29
+#define	ESO_MONOIN_CLASS	30
 
 
 /*
@@ -136,6 +138,7 @@ struct eso_softc {
 #define	ESO_RIGHT		1
 	unsigned int		sc_recsrc;	/* record source selection */
 	unsigned int		sc_monooutsrc;	/* MONO_OUT source selection */
+	unsigned int		sc_monoinbypass;/* MONO_IN bypass enable */
 	unsigned int		sc_recmon;	/* record monitor setting */
 	unsigned int		sc_preamp;	/* microphone preamp */
 	unsigned int		sc_spatializer;	/* spatializer enable */
