@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.2 2003/08/26 21:14:08 jdolecek Exp $ */
+/* $NetBSD: if_skreg.h,v 1.3 2004/09/26 14:23:58 skd Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -94,9 +94,6 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-/* Values to keep the different chip revisions apart */
-#define SK_GENESIS 0
-#define SK_YUKON 1
 
 /*
  * GEnesis registers. The GEnesis chip has a 256-byte I/O window
@@ -354,6 +351,17 @@
 #define SK_BLNKCTL	0x0178
 #define SK_BLNKSTS	0x0179
 #define SK_BLNKTST	0x017A
+
+/* values for  SK_CHIPVER */
+#define SK_GENESIS		0x0A
+#define SK_YUKON		0xB0
+#define SK_YUKON_LITE		0xB1
+#define SK_YUKON_LP		0xB2
+#define SK_YUKON_FAMILY(x) ((x) & 0xB0)
+/* known revisions in SK_CONFIG */
+#define SK_YUKON_LITE_REV_A0	0x0 /* invented, see test in skc_attach */
+#define SK_YUKON_LITE_REV_A1	0x3
+#define SK_YUKON_LITE_REV_A3	0x7
 
 #define SK_IMCTL_STOP	0x02
 #define SK_IMCTL_START	0x04
