@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.67 2000/07/20 18:40:27 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.68 2000/07/20 22:00:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -993,7 +993,7 @@ ifpromisc(ifp, pswitch)
 		 */
 		if ((ifp->if_flags & IFF_UP) == 0)
 			return (ENETDOWN);
-		if (ifp->if_pcount != 0)
+		if (ifp->if_pcount++ != 0)
 			return (0);
 		ifp->if_flags |= IFF_PROMISC;
 	} else {
