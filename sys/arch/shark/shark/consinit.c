@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1 2005/01/09 15:39:59 tsutsui Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2 2005/02/27 18:29:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -110,14 +110,7 @@ consinit()
 	initted = 1;
 	cp = NULL;
 
-	if (comconsole) {
-#if (NCOM > 0)
-		if (comcnattach(&isa_io_bs_tag, CONADDR, CONSPEED, COM_FREQ,
-		    COM_TYPE_NORMAL, comcnmode))
-			panic("can't init serial console");
-		return;
-#endif
-	} else {
+	if (!comconsole) {
 #if (NPC > 0) || (NVGA > 0)
 #if (NVGA_OFBUS > 0)
 		if (!vga_ofbus_cnattach(&isa_io_bs_tag, &isa_mem_bs_tag)) {
@@ -149,4 +142,9 @@ consinit()
 #endif /* NOFCONS */
 #endif /* NPC || NVGA */
 	}
+#if (NCOM > 0)
+	if (comcnattach(&isa_io_bs_tag, CONADDR, CONSPEED, COM_FREQ,
+	    COM_TYPE_NORMAL, comcnmode))
+		panic("can't init serial console");
+#endif
 }
