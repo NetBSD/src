@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.1.1.1 1995/07/25 23:12:01 chuck Exp $
+|	$NetBSD: vectors.s,v 1.2 1996/04/26 19:27:06 chuck Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -35,18 +35,17 @@
 |	@(#)vectors.s	8.2 (Berkeley) 1/21/94
 |
 
-	.text
+	.data
 	.globl	_buserr,_addrerr
 	.globl	_illinst,_zerodiv,_chkinst,_trapvinst,_privinst,_trace
 	.globl	_badtrap
-	.globl	_spurintr,_lev1intr,_lev2intr,_lev3intr
-	.globl	_lev4intr,_lev5intr,_lev6intr,_lev7intr
-	.globl	_pcctrap
+	.globl	_spurintr,_intrhand_autovec,_lev7intr
 	.globl	_trap0,_trap1,_trap2,_trap15
 	.globl	_fpfline, _fpunsupp
 	.globl	_trap12
+	.globl	_vectab
 
-Lvectab:
+_vectab:
 	.long	0x4ef88400	/* 0: jmp 0x8400:w (unused reset SSP) */
 	.long	0		/* 1: NOT USED (reset PC) */
 	.long	_buserr		/* 2: bus error */
@@ -72,12 +71,12 @@ Lvectab:
 	.long	_badtrap	/* 22: unassigned, reserved */
 	.long	_badtrap	/* 23: unassigned, reserved */
 	.long	_spurintr	/* 24: spurious interrupt */
-	.long	_lev1intr	/* 25: level 1 interrupt autovector */
-	.long	_lev2intr	/* 26: level 2 interrupt autovector */
-	.long	_lev3intr	/* 27: level 3 interrupt autovector */
-	.long	_lev4intr	/* 28: level 4 interrupt autovector */
-	.long	_lev5intr	/* 29: level 5 interrupt autovector */
-	.long	_lev6intr	/* 30: level 6 interrupt autovector */
+	.long	_intrhand_autovec /* 25: level 1 interrupt autovector */
+	.long	_intrhand_autovec /* 26: level 2 interrupt autovector */
+	.long	_intrhand_autovec /* 27: level 3 interrupt autovector */
+	.long	_intrhand_autovec /* 28: level 4 interrupt autovector */
+	.long	_intrhand_autovec /* 29: level 5 interrupt autovector */
+	.long	_intrhand_autovec /* 30: level 6 interrupt autovector */
 	.long	_lev7intr	/* 31: level 7 interrupt autovector */
 	.long	_trap0		/* 32: syscalls */
 	.long	_trap1		/* 33: sigreturn syscall or breakpoint */
@@ -124,29 +123,15 @@ Lvectab:
 	.long	_badtrap	/* 61: unassigned, reserved */
 	.long	_badtrap	/* 62: unassigned, reserved */
 	.long	_badtrap	/* 63: unassigned, reserved */
-
-	/* PCC traps (0x40 to start, configured from pccreg.h) */
-	.long	_pcctrap	/* 64: AC fail */
-	.long	_pcctrap	/* 65: BERR */
-	.long	_pcctrap	/* 66: abort */
-	.long	_pcctrap	/* 67: serial port */
-	.long	_pcctrap	/* 68: lance */
-	.long	_pcctrap	/* 69: SCSI port */
-	.long	_pcctrap	/* 70: SCSI dma */
-	.long	_pcctrap	/* 71: printer port */
-	.long	_pcctrap	/* 72: timer #1 */
-	.long	_pcctrap	/* 73: timer #2 */
-	.long	_pcctrap	/* 74: software intr #1 */
-	.long	_pcctrap	/* 75: software intr #2 */
-
-	.long	_badtrap	/* 76: unassigned, reserved */
-	.long	_badtrap	/* 77: unassigned, reserved */
-	.long	_badtrap	/* 78: unassigned, reserved */
-	.long	_badtrap	/* 79: unassigned, reserved */
 #define BADTRAP16	.long	_badtrap,_badtrap,_badtrap,_badtrap,\
 				_badtrap,_badtrap,_badtrap,_badtrap,\
 				_badtrap,_badtrap,_badtrap,_badtrap,\
 				_badtrap,_badtrap,_badtrap,_badtrap
+	/*
+	 * PCC, PCCTWO, MC, and VME vectors are installed from 64-255
+	 * by the *intr_extablish() functions.
+	 */
+	BADTRAP16		/* 64-255: user interrupt vectors */
 	BADTRAP16		/* 64-255: user interrupt vectors */
 	BADTRAP16		/* 64-255: user interrupt vectors */
 	BADTRAP16		/* 64-255: user interrupt vectors */
