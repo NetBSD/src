@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.29 1999/12/24 00:15:51 tron Exp $
+#	$NetBSD: SHARK,v 1.30 2000/01/23 01:06:33 tron Exp $
 # From:  NetBSD: GENERIC,v 1.55 1999/03/27 07:11:36 explorer Exp
 #
 #	SHARK
@@ -51,6 +51,7 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
+#file-system 	OVERLAY		# overlay filesystem
 #file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
@@ -230,3 +231,4 @@ pseudo-device	rnd			# /dev/random and /dev/urandom
 #pseudo-device	md	1		# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device
 pseudo-device	sequencer 1		# MIDI sequencer
+
