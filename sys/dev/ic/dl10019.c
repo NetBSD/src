@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.2 2001/06/03 04:39:52 thorpej Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.3 2001/06/12 22:32:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -49,11 +48,6 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.5 2001/02/12 18:49:04 thorpej Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.6 2001/06/12 22:32:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -50,11 +49,6 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>

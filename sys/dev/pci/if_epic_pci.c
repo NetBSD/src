@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.16 2001/05/17 17:35:13 drochner Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.17 2001/06/12 22:28:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -42,8 +42,6 @@
  * Ethernet PCI Integrated Controller (EPIC/100) driver.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -64,16 +62,6 @@
 #if NBPFILTER > 0 
 #include <net/bpf.h>
 #endif 
-
-#ifdef INET
-#include <netinet/in.h> 
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>

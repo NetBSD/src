@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.31 2001/02/02 04:34:19 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.32 2001/06/12 22:32:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -85,8 +85,6 @@
  * to select which interface to use depending on the chip type.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -107,14 +105,6 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

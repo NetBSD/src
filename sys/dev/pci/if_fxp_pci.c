@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.16 2001/05/22 16:05:01 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.17 2001/06/12 22:28:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,8 +42,6 @@
  * driver.  Works with Intel Etherexpress Pro 10+, 100B, 100+ cards.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -70,16 +68,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <machine/bus.h>
