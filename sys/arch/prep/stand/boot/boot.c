@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2004/03/10 15:17:01 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.9 2004/06/23 17:28:24 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,6 +39,7 @@
 #include <machine/bootinfo.h>
 #include <machine/cpu.h>
 #include <machine/residual.h>
+#include <powerpc/spr.h>
 
 #include "boot.h"
 
@@ -77,6 +78,7 @@ boot(resp, loadaddr)
 	extern char _end[], _edata[];
 	int n = 0;
 	int addr, speed;
+	unsigned int cpuvers;
 	char *name, *cnname, *p;
 
 	/* Clear all of BSS */
@@ -113,10 +115,16 @@ boot(resp, loadaddr)
 	/*
 	 * clock
 	 */
+	__asm __volatile ("mfpvr %0" : "=r"(cpuvers));
+	cpuvers >>= 16;
 	btinfo_clock.common.next = 0;
 	btinfo_clock.common.type = BTINFO_CLOCK;
-	btinfo_clock.ticks_per_sec = resp ?
-	    residual.VitalProductData.ProcessorBusHz / 4 : TICKS_PER_SEC;
+	if (cpuvers == MPC601) {
+		btinfo_clock.ticks_per_sec = 1000000000;
+	} else {
+		btinfo_clock.ticks_per_sec = resp ?
+		    residual.VitalProductData.ProcessorBusHz/4 : TICKS_PER_SEC;
+	}
 	ns_per_tick = 1000000000 / btinfo_clock.ticks_per_sec;
 
 	p = bootinfo;
