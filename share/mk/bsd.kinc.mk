@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.22 2002/02/11 21:14:59 mycroft Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.23 2002/08/24 13:12:38 lukem Exp $
 
 # System configuration variables:
 #
@@ -107,7 +107,7 @@ incinstall::
 			fi; \
 		fi; \
 		echo "$$t -> $$l"; \
-		rm -rf $$t; ${INSTALL_SYMLINK} $$l $$t; \
+		${INSTALL_SYMLINK} $$l $$t; \
 	 done; )
 .endif
 
