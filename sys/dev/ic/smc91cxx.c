@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.25 2000/05/29 17:37:14 jhawk Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.25.2.1 2000/08/06 02:12:15 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h> 
 #include <sys/errno.h>
@@ -131,6 +132,10 @@
 #include <net/bpfdesc.h>
 #endif
 
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
+#include <dev/mii/mii_bitbang.h>
+
 #include <dev/ic/smc91cxxreg.h>
 #include <dev/ic/smc91cxxvar.h>
 
@@ -146,7 +151,7 @@ const char *smc91cxx_idstrs[] = {
 	"SMC91C95",			/* 5 */
 	NULL,				/* 6 */
 	"SMC91C100",			/* 7 */
-	NULL,				/* 8 */
+	"SMC91C100FD",			/* 8 */
 	NULL,				/* 9 */
 	NULL,				/* 10 */
 	NULL,				/* 11 */
@@ -162,6 +167,30 @@ const int smc91cxx_media[] = {
 	IFM_ETHER|IFM_10_5,
 };
 #define	NSMC91CxxMEDIA	(sizeof(smc91cxx_media) / sizeof(smc91cxx_media[0]))
+
+/*
+ * MII bit-bang glue.
+ */
+u_int32_t smc91cxx_mii_bitbang_read __P((struct device *));
+void smc91cxx_mii_bitbang_write __P((struct device *, u_int32_t));
+
+const struct mii_bitbang_ops smc91cxx_mii_bitbang_ops = {
+	smc91cxx_mii_bitbang_read,
+	smc91cxx_mii_bitbang_write,
+	{
+		MR_MDO,		/* MII_BIT_MDO */
+		MR_MDI,		/* MII_BIT_MDI */
+		MR_MCLK,	/* MII_BIT_MDC */
+		MR_MDOE,	/* MII_BIT_DIR_HOST_PHY */
+		0,		/* MII_BIT_DIR_PHY_HOST */
+	}
+};
+
+/* MII callbacks */
+int	smc91cxx_mii_readreg __P((struct device *, int, int));
+void	smc91cxx_mii_writereg __P((struct device *, int, int, int));
+void	smc91cxx_statchg __P((struct device *));
+void	smc91cxx_tick __P((void *));
 
 int	smc91cxx_mediachange __P((struct ifnet *));
 void	smc91cxx_mediastatus __P((struct ifnet *, struct ifmediareq *));
@@ -197,28 +226,41 @@ smc91cxx_attach(sc, myea)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
+	struct ifmedia *ifm = &sc->sc_mii.mii_media;
 	const char *idstr;
+	u_int32_t miicapabilities;
 	u_int16_t tmp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
-	int i, aui;
+	int i, aui, mult, memsize;
+	char pbuf[9];
 
 	/* Make sure the chip is stopped. */
 	smc91cxx_stop(sc);
 
 	SMC_SELECT_BANK(sc, 3);
 	tmp = bus_space_read_2(bst, bsh, REVISION_REG_W);
+	sc->sc_chipid = RR_ID(tmp);
 	/* check magic number */
 	if ((tmp & BSR_DETECT_MASK) != BSR_DETECT_VALUE) {
 		idstr = NULL;
 		printf("%s: invalid BSR 0x%04x\n", sc->sc_dev.dv_xname, tmp);
 	} else
-		idstr = smc91cxx_idstrs[RR_ID(tmp)];
+		idstr = smc91cxx_idstrs[sc->sc_chipid];
 	printf("%s: ", sc->sc_dev.dv_xname);
 	if (idstr != NULL)
 		printf("%s, ", idstr);
 	else
-		printf("unknown chip id %d, ", RR_ID(tmp));
-	printf("revision %d\n", RR_REV(tmp));
+		printf("unknown chip id %d, ", sc->sc_chipid);
+	printf("revision %d, ", RR_REV(tmp));
+
+	SMC_SELECT_BANK(sc, 0);
+	mult = MCR_MEM_MULT(bus_space_read_2(bst, bsh, MEM_CFG_REG_W));
+	memsize = bus_space_read_2(bst, bsh, MEM_INFO_REG_W) & MIR_TOTAL_MASK;
+	if (memsize == 255) memsize++;
+	memsize *= 256 * mult;
+
+	format_bytes(pbuf, sizeof(pbuf), memsize);
+	printf("buffer size: %s\n", pbuf);
 
 	/* Read the station address from the chip. */
 	SMC_SELECT_BANK(sc, 1);
@@ -233,11 +275,6 @@ smc91cxx_attach(sc, myea)
 	printf("%s: MAC address %s, ", sc->sc_dev.dv_xname,
 	    ether_sprintf(myea));
 
-	/* ..and default media. */
-	tmp = bus_space_read_2(bst, bsh, CONFIG_REG_W);
-	printf("default media %s\n", (aui = (tmp & CR_AUI_SELECT)) ?
-	    "AUI" : "UTP");
-
 	/* Initialize the ifnet structure. */
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -251,12 +288,53 @@ smc91cxx_attach(sc, myea)
 	if_attach(ifp);
 	ether_ifattach(ifp, myea);
 
-	/* Initialize the media structures. */
-	ifmedia_init(&sc->sc_media, 0, smc91cxx_mediachange,
-	    smc91cxx_mediastatus);
-	for (i = 0; i < NSMC91CxxMEDIA; i++)
-		ifmedia_add(&sc->sc_media, smc91cxx_media[i], 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER | (aui ? IFM_10_5 : IFM_10_T));
+	/*
+	 * Initialize our media structures and MII info.  We will
+	 * probe the MII if we are on the SMC91Cxx
+	 */
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = smc91cxx_mii_readreg;
+	sc->sc_mii.mii_writereg = smc91cxx_mii_writereg;
+	sc->sc_mii.mii_statchg = smc91cxx_statchg;
+	ifmedia_init(ifm, 0, smc91cxx_mediachange, smc91cxx_mediastatus);
+
+	SMC_SELECT_BANK(sc, 1);
+	tmp = bus_space_read_2(bst, bsh, CONFIG_REG_W);
+
+	miicapabilities = BMSR_MEDIAMASK;
+	switch (sc->sc_chipid) {
+	case CHIP_91100:
+		/*
+		 * The 91100 does not have full-duplex capabilities,
+		 * even if the PHY does.
+		 */
+		miicapabilities &= ~(BMSR_100TXFDX | BMSR_10TFDX);
+	case CHIP_91100FD:
+		if (tmp & CR_MII_SELECT) {
+			printf("default media MII\n");
+			mii_attach(&sc->sc_dev, &sc->sc_mii, miicapabilities,
+			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
+			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+				ifmedia_add(&sc->sc_mii.mii_media,
+				    IFM_ETHER|IFM_NONE, 0, NULL);
+				ifmedia_set(&sc->sc_mii.mii_media,
+				    IFM_ETHER|IFM_NONE);
+			} else {
+				ifmedia_set(&sc->sc_mii.mii_media,
+				    IFM_ETHER|IFM_AUTO);
+			}
+			sc->sc_flags |= SMC_FLAGS_HAS_MII;
+			break;
+		}
+		/*FALLTHROUGH*/
+	default:
+		printf("default media %s\n", (aui = (tmp & CR_AUI_SELECT)) ?
+		    "AUI" : "UTP");
+		for (i = 0; i < NSMC91CxxMEDIA; i++)
+			ifmedia_add(ifm, smc91cxx_media[i], 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER | (aui ? IFM_10_5 : IFM_10_T));
+		break;
+	}
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -280,7 +358,7 @@ smc91cxx_mediachange(ifp)
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
 
-	return (smc91cxx_set_media(sc, sc->sc_media.ifm_media));
+	return (smc91cxx_set_media(sc, sc->sc_mii.mii_media.ifm_media));
 }
 
 int
@@ -302,6 +380,9 @@ smc91cxx_set_media(sc, media)
 
 	if (IFM_TYPE(media) != IFM_ETHER)
 		return (EINVAL);
+
+	if (sc->sc_flags & SMC_FLAGS_HAS_MII)
+		return (mii_mediachg(&sc->sc_mii));
 
 	switch (IFM_SUBTYPE(media)) {
 	case IFM_10_T:
@@ -339,6 +420,16 @@ smc91cxx_mediastatus(ifp, ifmr)
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0) {
 		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
 		ifmr->ifm_status = 0;
+		return;
+	}
+
+	/*
+	 * If we have MII, go ask the PHY what's going on.
+	 */
+	if (sc->sc_flags & SMC_FLAGS_HAS_MII) {
+		mii_pollstat(&sc->sc_mii);
+		ifmr->ifm_active = sc->sc_mii.mii_media_active;
+		ifmr->ifm_status = sc->sc_mii.mii_media_status;
 		return;
 	}
 
@@ -411,7 +502,7 @@ smc91cxx_init(sc)
 	/*
 	 * Set current media.
 	 */
-	smc91cxx_set_media(sc, sc->sc_media.ifm_cur->ifm_media);
+	smc91cxx_set_media(sc, sc->sc_mii.mii_media.ifm_cur->ifm_media);
 
 	/*
 	 * Set the receive filter.  We want receive enable and auto
@@ -455,6 +546,11 @@ smc91cxx_init(sc)
 	/* Interface is now running, with no output active. */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	if (sc->sc_flags & SMC_FLAGS_HAS_MII) {
+		/* Start the one second clock. */
+		callout_reset(&sc->sc_mii_callout, hz, smc91cxx_tick, sc);
+	}
 
 	/*
 	 * Attempt to start any pending transmission.
@@ -591,8 +687,9 @@ smc91cxx_start(ifp)
 	 */
 	for (top = m; m != NULL; m = m->m_next) {
 		/* Words... */
-		bus_space_write_multi_2(bst, bsh, DATA_REG_W,
-		    mtod(m, u_int16_t *), m->m_len >> 1);
+		if (m->m_len > 1)
+			bus_space_write_multi_stream_2(bst, bsh, DATA_REG_W,
+			    mtod(m, u_int16_t *), m->m_len >> 1);
 
 		/* ...and the remaining byte, if any. */
 		if (m->m_len & 1)
@@ -923,8 +1020,9 @@ smc91cxx_read(sc)
 	 */
 	eh = mtod(m, struct ether_header *);
 	data = mtod(m, u_int8_t *);
-	bus_space_read_multi_2(bst, bsh, DATA_REG_W, (u_int16_t *)data,
-	    packetlen >> 1);
+	if (packetlen > 1)
+		bus_space_read_multi_stream_2(bst, bsh, DATA_REG_W,
+		    (u_int16_t *)data, packetlen >> 1);
 	if (packetlen & 1) {
 		data += packetlen & ~1;
 		*data = bus_space_read_1(bst, bsh, DATA_REG_B);
@@ -1103,7 +1201,7 @@ smc91cxx_ioctl(ifp, cmd, data)
 
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 
 	default:
@@ -1248,7 +1346,7 @@ smc91cxx_detach(self, flags)
 	/* smc91cxx_attach() never fails */
 
 	/* Delete all media. */
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
@@ -1261,3 +1359,100 @@ smc91cxx_detach(self, flags)
 
 	return (0);
 }
+
+u_int32_t
+smc91cxx_mii_bitbang_read(self)
+	struct device *self;
+{
+	struct smc91cxx_softc *sc = (void *) self;
+
+	/* We're already in bank 3. */
+	return (bus_space_read_2(sc->sc_bst, sc->sc_bsh, MGMT_REG_W));
+}
+
+void
+smc91cxx_mii_bitbang_write(self, val)
+	struct device *self;
+	u_int32_t val;
+{
+	struct smc91cxx_softc *sc = (void *) self;
+
+	/* We're already in bank 3. */
+	bus_space_write_2(sc->sc_bst, sc->sc_bsh, MGMT_REG_W, val);
+}
+
+int
+smc91cxx_mii_readreg(self, phy, reg)
+	struct device *self;
+	int phy, reg;
+{
+	struct smc91cxx_softc *sc = (void *) self;
+	int val;
+
+	SMC_SELECT_BANK(sc, 3);
+
+	val = mii_bitbang_readreg(self, &smc91cxx_mii_bitbang_ops, phy, reg);
+
+	SMC_SELECT_BANK(sc, 2);
+
+	return (val);
+}
+
+void
+smc91cxx_mii_writereg(self, phy, reg, val)
+	struct device *self;
+	int phy, reg, val;
+{
+	struct smc91cxx_softc *sc = (void *) self;
+
+	SMC_SELECT_BANK(sc, 3);
+
+	mii_bitbang_writereg(self, &smc91cxx_mii_bitbang_ops, phy, reg, val);
+
+	SMC_SELECT_BANK(sc, 2);
+}
+
+void
+smc91cxx_statchg(self)
+	struct device *self;
+{
+	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+	int mctl;
+
+	SMC_SELECT_BANK(sc, 0);
+	mctl = bus_space_read_2(bst, bsh, TXMIT_CONTROL_REG_W);
+	if (sc->sc_mii.mii_media_active & IFM_FDX)
+		mctl |= TCR_SWFDUP;
+	else
+		mctl &= ~TCR_SWFDUP;
+	bus_space_write_2(bst, bsh, TXMIT_CONTROL_REG_W, mctl);
+	SMC_SELECT_BANK(sc, 2);	/* back to operating window */
+}
+
+/*
+ * One second timer, used to tick the MII.
+ */
+void
+smc91cxx_tick(arg)
+	void *arg;
+{
+	struct smc91cxx_softc *sc = arg;
+	int s;
+
+#ifdef DIAGNOSTIC
+	if ((sc->sc_flags & SMC_FLAGS_HAS_MII) == 0)
+		panic("smc91cxx_tick");
+#endif
+
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return;
+
+	s = splnet();
+	mii_tick(&sc->sc_mii);
+	splx(s);
+
+	callout_reset(&sc->sc_mii_callout, hz, smc91cxx_tick, sc);
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.22 2000/02/20 03:48:40 enami Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.22.4.1 2000/08/06 02:12:17 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 #include <dev/ic/smc91cxxreg.h>
 #include <dev/ic/smc91cxxvar.h>

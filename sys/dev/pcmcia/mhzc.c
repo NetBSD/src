@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.5 2000/02/05 04:44:00 enami Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.5.4.1 2000/08/06 02:12:17 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -88,6 +88,9 @@
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 #include <dev/ic/smc91cxxreg.h>
 #include <dev/ic/smc91cxxvar.h>

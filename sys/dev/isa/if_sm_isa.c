@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_isa.c,v 1.5 2000/05/29 17:37:17 jhawk Exp $	*/
+/*	$NetBSD: if_sm_isa.c,v 1.5.2.1 2000/08/06 02:12:17 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 #include <dev/ic/smc91cxxreg.h>
 #include <dev/ic/smc91cxxvar.h>
