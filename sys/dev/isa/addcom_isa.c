@@ -1,4 +1,4 @@
-/*	$NetBSD: addcom_isa.c,v 1.9 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: addcom_isa.c,v 1.10 2004/09/14 17:19:34 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Graff.  All rights reserved.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.9 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.10 2004/09/14 17:19:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,6 @@ static int slave_iobases[8] = {
 int addcomprobe __P((struct device *, struct cfdata *, void *));
 void addcomattach __P((struct device *, struct device *, void *));
 int addcomintr __P((void *));
-int addcomprint __P((void *, const char *));
 
 CFATTACH_DECL(addcom_isa, sizeof(struct addcom_softc),
     addcomprobe, addcomattach, NULL, NULL);
@@ -184,17 +183,6 @@ out:
 	return (rv);
 }
 
-int
-addcomprint(void *aux, const char *pnp)
-{
-	struct commulti_attach_args *ca = aux;
-
-	if (pnp)
-		aprint_normal("com at %s", pnp);
-	aprint_normal(" slave %d", ca->ca_slave);
-	return (UNCONF);
-}
-
 void
 addcomattach(struct device *parent, struct device *self, void *aux)
 {
@@ -237,7 +225,7 @@ addcomattach(struct device *parent, struct device *self, void *aux)
 			- SLAVE_IOBASE_OFFSET;
 		ca.ca_noien = 0;
 
-		sc->sc_slaves[i] = config_found(self, &ca, addcomprint);
+		sc->sc_slaves[i] = config_found(self, &ca, commultiprint);
 		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
 	}
