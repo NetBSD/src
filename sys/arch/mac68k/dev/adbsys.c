@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.19 1996/05/08 04:00:44 briggs Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.20 1996/05/08 13:36:41 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -110,7 +110,7 @@ extdms_init()
 		if (adbdata.origADBAddr == ADBADDR_MS &&
 		    (adbdata.devType == ADBMS_USPEED)) {
 			/* Found MicroSpeed Mouse Deluxe Mac */
-			cmd = ((adbaddr<<4)&0xF)|0x9;	/* listen 1 */
+			cmd = ((adbaddr<<4)&0xF0)|0x9;	/* listen 1 */
 
 			/*
 			 * To setup the MicroSpeed, it appears that we can
