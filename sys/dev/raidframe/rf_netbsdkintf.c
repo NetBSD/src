@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.136 2002/09/22 03:56:08 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.137 2002/09/23 03:17:36 itojun Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.136 2002/09/22 03:56:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.137 2002/09/23 03:17:36 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1766,7 +1766,8 @@ rf_DispatchKernelIO(queue, req)
 
 #if DIAGNOSTIC
 	if (queue->raidPtr->raidid >= numraid) {
-		printf("Invalid unit number: %d %d\n", unit, numraid);
+		printf("Invalid unit number: %d %d\n", queue->raidPtr->raidid,
+		    numraid);
 		panic("Invalid Unit number in rf_DispatchKernelIO\n");
 	}
 #endif
