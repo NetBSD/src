@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.7 1999/07/29 07:55:23 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.8 1999/08/16 08:11:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -491,20 +491,9 @@ ntfs_mountfs(devvp, mp, argsp, p)
 		}
 	}
 
-	/*
-	 * Read in WHOLE lowcase -> upcase translation
-	 * file.
-	 */
-	MALLOC(ntmp->ntm_upcase, wchar *, 65536 * sizeof(wchar),
-		M_NTFSMNT, M_WAITOK);
-
-	error = VFS_VGET(mp, NTFS_UPCASEINO, &vp);
-	if(error) 
-		goto out1;
-	error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
-			0, 65536*sizeof(wchar), ntmp->ntm_upcase);
-	vput(vp);
-	if(error) 
+	/* read the Unicode lowercase --> uppercase translation table,
+	 * if necessary */
+	if ((error = ntfs_toupper_use(mp, ntmp)))
 		goto out1;
 
 	/*
@@ -637,7 +626,7 @@ ntfs_unmount(
 		 if((ntmp->ntm_sysvn[i]) && 
 		    (ntmp->ntm_sysvn[i]->v_usecount > 1)) return (EBUSY);
 
-	/* Derefernce all system vnodes */
+	/* Dereference all system vnodes */
 	for(i=0;i<NTFS_SYSNODESNUM;i++)
 		 if(ntmp->ntm_sysvn[i]) vrele(ntmp->ntm_sysvn[i]);
 
@@ -664,11 +653,13 @@ ntfs_unmount(
 
 	vrele(ntmp->ntm_devvp);
 
+	/* free the toupper table, if this has been last mounted ntfs volume */
+	ntfs_toupper_unuse();
+
 	dprintf(("ntfs_umount: freeing memory...\n"));
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	FREE(ntmp->ntm_ad, M_NTFSMNT);
-	FREE(ntmp->ntm_upcase, M_NTFSMNT);
 	FREE(ntmp, M_NTFSMNT);
 	return (error);
 }
@@ -724,20 +715,17 @@ ntfs_calccfree(
 
 	error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
 			       0, bmsize, tmp);
-	if(error) {
-		FREE(tmp, M_TEMP);
-		return (error);
-	}
+	if (error)
+		goto out;
 
 	for(i=0;i<bmsize;i++)
 		for(j=0;j<8;j++)
 			if(~tmp[i] & (1 << j)) cfree++;
-
-	FREE(tmp, M_TEMP);
-
 	*cfreep = cfree;
 
-	return(0);
+    out:
+	FREE(tmp, M_TEMP);
+	return(error);
 }
 
 static int
