@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.55.8.1 2002/05/16 13:32:07 gehenna Exp $
+#	$NetBSD: files.hp300,v 1.55.8.2 2002/05/17 15:09:07 gehenna Exp $
 #
 # hp300-specific configuration info
 
@@ -156,7 +156,6 @@ device	rd: disk
 attach	rd at hpibbus
 file	arch/hp300/dev/rd.c		rd needs-flag
 file	arch/hp300/dev/rd_compat.c	rd		# XXX
-major	{rd = 2}
 
 device	ppi
 attach	ppi at hpibbus
@@ -172,7 +171,6 @@ device	sd: disk
 attach	sd at oscsi
 file	arch/hp300/dev/sd.c		sd needs-flag
 file	arch/hp300/dev/sd_compat.c	sd		# XXX
-major	{sd = 4}
 
 device	st: tape
 attach	st at oscsi
@@ -182,12 +180,8 @@ device	ac
 attach	ac at oscsi
 file	arch/hp300/dev/ac.c		ac needs-flag
 
-# RAIDframe
-major	{raid = 15}
-
 # Memory Disk for ramdisk
 file	dev/md_root.c			memory_disk_hooks
-major	{md = 14}
 
 #
 # Non-device files

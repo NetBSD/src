@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.19.2.1 2002/05/16 13:32:35 gehenna Exp $
+#	$NetBSD: files.ofppc,v 1.19.2.2 2002/05/17 15:09:15 gehenna Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -46,7 +46,6 @@ file arch/powerpc/powerpc/linux_trap.c		compat_linux
 # Generic OpenFirmware device support
 #
 include "dev/ofw/files.ofw"
-major	{ofdisk = 0}
 
 #
 # I2O device support
@@ -57,24 +56,14 @@ include "dev/i2o/files.i2o"
 # SCSI support
 #
 include "dev/scsipi/files.scsipi"
-major { cd = 3 }
-major { sd = 4 }
 
 #
 # ATA/IDE support
 #
 include "dev/ata/files.ata"
-major { wd = 5 }
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks
-major { md = 6 }
-
-# RAIDframe
-major { raid = 2 }
-
-# Logical disks
-major { ld = 17 }
 
 # Raster operations
 include "dev/rasops/files.rasops"

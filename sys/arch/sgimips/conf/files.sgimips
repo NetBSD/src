@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.20.2.1 2002/05/16 13:32:46 gehenna Exp $
+#	$NetBSD: files.sgimips,v 1.20.2.2 2002/05/17 15:09:18 gehenna Exp $
 
 maxpartitions 16
 
@@ -75,10 +75,6 @@ file arch/sgimips/sgimips/machdep.c
 file arch/sgimips/sgimips/softintr.c
 
 file dev/md_root.c			memory_disk_hooks
-major {md = 2}
-
-major {raid = 5}
-major {ld = 14}
 
 file dev/clock_subr.c
 file dev/cons.c
@@ -98,10 +94,7 @@ include "dev/wsfont/files.wsfont"
 include "dev/pckbc/files.pckbc"
 include "dev/usb/files.usb"
 include "dev/scsipi/files.scsipi"
-major {sd = 10}
-major {cd = 12}
 include "dev/ata/files.ata"
-major {wd = 13}
 
 include "arch/sgimips/gio/files.gio"
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.34.2.1 2002/05/16 13:31:59 gehenna Exp $
+#	$NetBSD: files.bebox,v 1.34.2.2 2002/05/17 15:09:04 gehenna Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -36,26 +36,17 @@ file arch/powerpc/powerpc/linux_trap.c		compat_linux
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{cd = 6}
 
 #
 # Machine-independent ATA drivers
 #
 
 include "dev/ata/files.ata"
-major	{wd = 0}
 
 #
 # Memory Disk for install floppy
 #
 file	dev/md_root.c			memory_disk_hooks
-major	{md = 17}
-
-#
-# RAIDframe
-#
-major	{raid = 18}
 
 #
 # Machine-independent I2O drivers.
@@ -96,8 +87,6 @@ file	arch/bebox/pci/pcib.c		pcib
 #
 
 include "dev/isa/files.isa"
-major	{mcd = 7}
-#major	{scd = 15}
 
 file	arch/bebox/isa/isa_machdep.c	isa
 file	arch/bebox/isa/isadma_machdep.c	isa
@@ -142,7 +131,6 @@ file	dev/isa/fdc_isa.c		fdc_isa
 
 device	fd: disk
 attach	fd at fdc
-major	{fd = 2}
 
 # Game adapter (joystick)
 file	arch/bebox/isa/joy_timer.c	joy

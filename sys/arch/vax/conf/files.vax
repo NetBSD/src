@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.96.4.1 2002/05/16 13:32:55 gehenna Exp $
+#	$NetBSD: files.vax,v 1.96.4.2 2002/05/17 15:09:21 gehenna Exp $
 #
 # new style config file for vax architecture
 #
@@ -83,7 +83,6 @@ file	arch/vax/mba/mba.c		mba needs-flag
 device	hp: disk
 attach	hp at mba
 file	arch/vax/mba/hp.c		hp needs-flag
-major	{hp = 0}
 
 device	ht: tape
 attach	ht at mba
@@ -100,14 +99,9 @@ include "dev/wsfont/files.wsfont"
 
 # Memory Disk for install floppy
 file	dev/md_root.c			memory_disk_hooks
-major	{md = 23}
-
-# RAIDframe
-major	{raid = 25}
 
 # MSCP device drivers
 include "dev/mscp/files.mscp"
-major	{ra = 9}
 
 # Unibus/Q22 bus definitions
 include "dev/qbus/files.uba"
@@ -118,9 +112,6 @@ attach	uba at sbi with uba_sbi
 file	arch/vax/uba/uba_sbi.c		uba_sbi
 attach	uba at cmi with uba_cmi
 file	arch/vax/uba/uba_cmi.c		uba_cmi
-
-# Unibus disks
-major	{rl = 14}
 
 # BI bus definitions
 include "dev/bi/files.bi"
@@ -166,18 +157,14 @@ file	arch/vax/vsa/hdc9224.c		ry | hdc | rd needs-flag
 
 device	rd: disk
 attach	rd at hdc
-major	{rd = 19}
 
 device	ry: disk
 attach	ry at hdc
-major	{ry = 24}
 
 #
 # Machine-independent SCSI driver.
 #
 include "dev/scsipi/files.scsipi"
-major	{ sd = 20 }
-major	{ cd = 22 }
 
 # builtin NCR5380 SCSI-controller on VAXstation
 device	si: scsi, ncr5380sbc

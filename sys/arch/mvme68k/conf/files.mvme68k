@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.51.2.1 2002/05/16 13:32:26 gehenna Exp $
+#	$NetBSD: files.mvme68k,v 1.51.2.2 2002/05/17 15:09:12 gehenna Exp $
 
 # config file for mvme68k
 
@@ -67,13 +67,6 @@ file arch/mvme68k/dev/timekeeper.c		timekeeper
 file dev/md_root.c				memory_disk_hooks
 
 include "dev/scsipi/files.scsipi"
-
-major { sd = 4 }
-major { cd = 8 }
-major { md = 9 }
-
-# RAIDframe
-major { raid = 16 }
 
 # WD33C93 SCSI ...
 define sbic

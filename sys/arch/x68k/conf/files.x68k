@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.46.2.1 2002/05/16 13:32:58 gehenna Exp $
+#	$NetBSD: files.x68k,v 1.46.2.2 2002/05/17 15:09:22 gehenna Exp $
 #
 # new style config file for x68k architecture
 #
@@ -143,7 +143,6 @@ attach	fdc at intio
 device	fd: disk
 attach	fd at fdc
 file	arch/x68k/dev/fd.c		fd needs-flag
-major	{fd = 2}
 
 device	par
 attach	par at intio
@@ -153,8 +152,6 @@ file	arch/x68k/dev/par.c		par needs-flag
 # SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
-major	{cd = 7}
-major	{sd = 4}
 
 device scsirom {}
 attach	scsirom at intio
@@ -183,10 +180,6 @@ file	arch/x68k/dev/if_ne_intio.c	ne_intio
 
 # memory disk
 file	dev/md_root.c			memory_disk_hooks
-major	{md = 8}
-
-# RAIDframe
-major	{raid = 16}
 
 # NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
 include "compat/aoutm68k/files.aoutm68k"

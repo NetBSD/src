@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.64.2.2 2002/05/16 13:32:50 gehenna Exp $
+#	$NetBSD: files.sparc64,v 1.64.2.3 2002/05/17 15:09:19 gehenna Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -155,15 +155,6 @@ file dev/sun/sunms.c			ms needs-flag
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
-
-major	{ cd = 18 }
-major	{ fd = 16 }
-major	{ md = 5 }
-major	{ sd = 7 }
-major	{ wd = 12 }
-
-# RAIDframe
-major 	{ raid = 25 }
 
 device cgfourteen
 attach cgfourteen at sbus

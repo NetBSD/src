@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.46.8.1 2002/05/16 13:32:38 gehenna Exp $
+#	$NetBSD: files.pc532,v 1.46.8.2 2002/05/17 15:09:15 gehenna Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -14,10 +14,6 @@ file	arch/pc532/pc532/mainbus.c
 
 # Memory Disk for install floppy
 file	dev/md_root.c			memory_disk_hooks
-major	{md = 3}
-
-# RAIDframe
-major	{raid = 13}
 
 device	rtc
 attach	rtc at mainbus
@@ -35,8 +31,6 @@ attach	lpt at mainbus
 file	arch/pc532/dev/lpt.c		lpt needs-flag
 
 include "dev/scsipi/files.scsipi"
-major	{sd = 0}
-major	{cd = 4}
 
 device	ncr: scsi, ncr5380sbc
 attach	ncr at mainbus

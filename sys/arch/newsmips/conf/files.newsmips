@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.19.2.1 2002/05/16 13:32:32 gehenna Exp $
+#	$NetBSD: files.newsmips,v 1.19.2.2 2002/05/17 15:09:14 gehenna Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -130,15 +130,5 @@ file arch/newsmips/apbus/xafb.c			xafb needs-flag
 # Memory Disk for install floppy
 #
 file dev/md_root.c				memory_disk_hooks
-
-major { sd = 0 }
-major { fd = 1 }
-major { md = 2 }
-major { cd = 16 }
-
-#
-# RAIDframe
-#
-major { raid = 32 }
 
 include "arch/newsmips/conf/majors.newsmips"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.4.2.1 2002/05/16 13:32:47 gehenna Exp $
+#	$NetBSD: files.shark,v 1.4.2.2 2002/05/17 15:09:18 gehenna Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -34,7 +34,6 @@ include "dev/wsfont/files.wsfont"
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-major	{wd = 16}
 
 # Common OFW files
 include "dev/ofw/files.ofw"
@@ -76,10 +75,6 @@ file	arch/shark/ofw/ofrom.c			ofrom	needs-flag
 
 # Memory disk driver
 file	dev/md_root.c				md & memory_disk_hooks
-major	{md = 18}
-
-# RAIDframe
-major	{raid = 71}
 
 # attribute used to represent the "keyboard controller" on the shark
 # XXX should be a real device
@@ -100,8 +95,6 @@ file	arch/shark/dev/todclock.c		todclock	needs-count
 #
 
 include "dev/scsipi/files.scsipi"
-major	{sd = 24}
-major	{cd = 26}
 
 # Generic MD files
 file	arch/shark/shark/autoconf.c

@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.12.2.1 2002/05/16 13:32:03 gehenna Exp $
+#	$NetBSD: files.cobalt,v 1.12.2.2 2002/05/17 15:09:05 gehenna Exp $
 
 maxpartitions 16
 
@@ -36,7 +36,6 @@ file arch/cobalt/cobalt/disksubr.c
 file arch/cobalt/cobalt/machdep.c
 
 file dev/md_root.c			memory_disk_hooks
-major {md = 2}
 
 file dev/clock_subr.c
 file dev/cons.c
@@ -56,13 +55,7 @@ attach pcib at pci
 file arch/cobalt/pci/pcib.c		pcib
 
 include "dev/scsipi/files.scsipi"
-major {sd = 7}
-major {cd = 8}
 
 include "dev/ata/files.ata"
-major {wd = 6}
-
-major {raid = 5}
-major {ld = 10}
 
 include "arch/cobalt/conf/majors.cobalt"

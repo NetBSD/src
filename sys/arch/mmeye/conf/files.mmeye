@@ -1,4 +1,4 @@
-#	$NetBSD: files.mmeye,v 1.12.2.1 2002/05/16 13:32:24 gehenna Exp $
+#	$NetBSD: files.mmeye,v 1.12.2.2 2002/05/17 15:09:12 gehenna Exp $
 #
 # config file for mmeye
 
@@ -20,20 +20,15 @@ defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
 #
 
 include "dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{st = 5}
-major	{cd = 6}
 
 #
 # Machine-independent ATA drivers
 #
 
 include "dev/ata/files.ata"
-major	{wd = 0}
 
 # Memory Disk for install floppy
 file dev/md_root.c				memory_disk_hooks
-major	{md = 17}
 
 #
 # System bus types
