@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.4.12 2002/08/01 04:04:33 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.13 2002/08/06 19:33:11 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -286,7 +286,7 @@ trap(struct trapframe *frame)
 			    "(SSR1=%#x)\n",
 			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
 		}
-		trapsignal(p, SIGILL, EXC_PGM);
+		trapsignal(l, SIGILL, EXC_PGM);
 		KERNEL_PROC_UNLOCK(l);
 		break;
 #endif
