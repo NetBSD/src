@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 1998/11/20 12:48:13 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 1999/01/08 09:20:37 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -1883,42 +1883,88 @@ pmap_deactivate(p)
 }
 
 /*
- *	pmap_zero_page zeros the specified (machine independent)
- *	page by mapping the page into virtual memory and using
- *	bzero to clear its contents, one machine dependent page
- *	at a time.
+ * pmap_zero_page:		[ INTERFACE ]
+ *
+ *	Zero the specified (machine independent) page by mapping the page
+ *	into virtual memory and using bzero to clear its contents, one
+ *	machine dependent page at a time.
+ *
+ *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
+ *	      (Actually, we go to splimp(), and since we don't
+ *	      support multiple processors, this is sufficient.)
  */
 void
 pmap_zero_page(phys)
 	register paddr_t	phys;
 {
+	int	s;
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%lx)\n", phys);
 #endif
-	phys >>= PG_SHIFT;
-	clearseg(phys);
+
+	s = splimp();
+
+	*CMAP1 = phys | PG_CI | PG_RW | PG_V;
+	TBIS((vaddr_t)CADDR1);
+	zeropage(CADDR1);
+
+#ifdef DEBUG
+	/*
+	 * XXX: Invalidating is not strictly necessary.... Not doing it
+         * is saving us a few cycles
+	 */
+	*CMAP1 = PG_NV;
+	TBIS((vaddr_t)CADDR1);
+#endif
+
+	splx(s);
 }
 
 /*
- *	pmap_copy_page copies the specified (machine independent)
- *	page by mapping the page into virtual memory and using
- *	bcopy to copy the page, one machine dependent page at a
- *	time.
+ * pmap_copy_page:		[ INTERFACE ]
+ *
+ *	Copy the specified (machine independent) page by mapping the page
+ *	into virtual memory and using bcopy to copy the page, one machine
+ *	dependent page at a time.
+ *
+ *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
+ *	      (Actually, we go to splimp(), and since we don't
+ *	      support multiple processors, this is sufficient.)
  */
 void
 pmap_copy_page(src, dst)
 	register paddr_t	src, dst;
 {
+	int	s;
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
 #endif
-	src >>= PG_SHIFT;
-	dst >>= PG_SHIFT;
-	physcopyseg(src, dst);
-}
+	s = splimp();
 
+	*CMAP1 = src | PG_CI | PG_RO | PG_V;
+	TBIS((vaddr_t)CADDR1);
+	*CMAP2 = dst | PG_CI | PG_RW | PG_V;
+	TBIS((vaddr_t)CADDR2);
+
+	copypage(CADDR1, CADDR2);
+
+#ifdef DEBUG
+	/*
+	 * XXX: Invalidating is not strictly necessary.... Not doing it
+         * is saving us a few cycles
+	 */
+	*CMAP1 = PG_NV;
+	TBIS((vaddr_t)CADDR1);
+	*CMAP2 = PG_NV;
+	TBIS((vaddr_t)CADDR2);
+#endif
+
+	splx(s);
+}
 
 /*
  *	Routine:	pmap_pageable
