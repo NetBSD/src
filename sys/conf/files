@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.609 2003/04/19 19:29:10 fvdl Exp $
+#	$NetBSD: files,v 1.610 2003/04/24 20:04:03 ragge Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -940,6 +940,7 @@ defpseudo md:		disk
 defpseudo pty:		tty
 defpseudo tb:		tty
 defpseudo rnd
+defpseudo ksyms
 
 defpseudo loop:		ifnet
 defpseudo sl:		ifnet
@@ -1014,7 +1015,6 @@ file	ddb/db_access.c			ddb | kgdb
 file	ddb/db_aout.c			ddb
 file	ddb/db_break.c			ddb
 file	ddb/db_command.c		ddb
-file	ddb/db_elf.c			ddb
 file	ddb/db_examine.c		ddb
 file	ddb/db_expr.c			ddb
 file	ddb/db_input.c			ddb
@@ -1073,6 +1073,7 @@ file	kern/kern_fork.c
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c
 file	kern/kern_systrace.c		systrace
+file	kern/kern_ksyms.c		ksyms | ddb | lkm needs-flag
 file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
 file	kern/kern_lwp.c
