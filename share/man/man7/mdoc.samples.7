@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.35 2003/01/06 13:14:51 wiz Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.36 2003/02/12 18:37:15 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -73,7 +73,8 @@ page layout macros
 make up the
 .Em "page structure domain"
 which consists of macros for titles, section headers, displays
-and lists. Essentially items which affect the physical position
+and lists.
+Essentially items which affect the physical position
 of text on a formatted page.
 In addition to the page structure domain, there are two more domains,
 the manual domain and the general text domain.
@@ -430,6 +431,12 @@ it may be forced with an unpaddable space and the
 escape character.
 For example,
 .Ql string\e\ \e\*[Am] .
+.Ss Sentences
+To recognize the end of a sentence,
+.Xr troff 1
+needs two spaces or a newline character.
+Since it is easy to forget about the second space, policy
+is to begin new sentences on a new line.
 .Ss Escaping Special Characters
 Special characters
 like the newline character
@@ -457,7 +464,8 @@ template found in the file:
 \&.Sh SYNOPSIS
 \&.Sh DESCRIPTION
 \&.\e" The following requests should be uncommented and
-\&.\e" used where appropriate.  This next request is for
+\&.\e" used where appropriate.
+\&.\e" This next request is for
 \&.\e" sections 1 and 8 exit statuses only.
 \&.\e" .Sh EXIT STATUS
 \&.\e" This next request is for sections 2 and 3 function return
@@ -746,8 +754,8 @@ The result is:
 .Dl Li sptr, ptr),
 .Pp
 The punctuation is not recognized and all is output in the
-literal font. If the punctuation is separated by a leading
-white space:
+literal font.
+If the punctuation is separated by a leading white space:
 .Pp
 .Dl \&.Li "sptr , ptr ) ,"
 .Pp
@@ -773,8 +781,8 @@ quotation set:
 The problem is that
 .Xr troff 1
 may assume it is supposed to actually perform the operation
-or evaluation suggested by the characters.  To prevent
-the accidental evaluation of these characters,
+or evaluation suggested by the characters.
+To prevent the accidental evaluation of these characters,
 escape them with
 .Ql \e\*[Am] .
 Typical syntax is shown in the first content macro displayed
@@ -1063,7 +1071,8 @@ and
 may be used with
 .Ql \&.Fa
 (function argument)
-to get around the limitation. For example:
+to get around the limitation.
+For example:
 .Bd -literal -offset indent
 \&.Ft "int"
 \&.Fo "res_mkquery"
@@ -1380,7 +1389,8 @@ macro is
 .Em not
 parsed and
 .Em not
-callable. It accepts at most two arguments.
+callable.
+It accepts at most two arguments.
 .Ss BSD Macro
 .Dl Usage: .Bx [Version/release] ... \*(Pu
 .Bl -tag -width ".Bx 4.3 ) ," -compact -offset 14n
@@ -1477,10 +1487,11 @@ The usual font for emphasis is italic.
 .\" .Pp
 .\" .Bf -emphasis
 .\" We are certain the reason most people desire a Harvard MBA
-.\" so they can become to be successful philanthropists.  Only
-.\" mathematicians and physicists go to graduate school strictly
-.\" to acquire infinite wealthy and fame. It's that infinity
-.\" word that does it to them. Ruins them.
+.\" so they can become to be successful philanthropists.
+.\" Only mathematicians and physicists go to graduate school strictly
+.\" to acquire infinite wealthy and fame.
+.\" It's that infinity word that does it to them.
+.\" Ruins them.
 .\" .Ef
 .Pp
 The
@@ -1533,7 +1544,8 @@ All handle punctuation properly, as long as it
 is presented one character at a time and separated by spaces.
 The quoting macros examine opening and closing punctuation
 to determine whether it comes before or after the
-enclosing string. This makes some nesting possible.
+enclosing string.
+This makes some nesting possible.
 .Bl -tag -width xxx,xxxx
 .It Li \&.Ec , \&.Eo
 These macros expect the first argument to be the
@@ -1545,8 +1557,8 @@ than
 .Xr nroff 1 .
 If formatted with
 .Xr nroff 1 ,
-a quoted literal is always quoted. If formatted with
-troff, an item is only quoted if the width
+a quoted literal is always quoted.
+If formatted with troff, an item is only quoted if the width
 of the item is less than three constant width characters.
 This is to make short strings more visible where the font change
 to literal (constant width) is less noticeable.
@@ -2464,7 +2476,8 @@ Here is an example of inset labels:
 .Bl -inset -offset indent
 .It Em Tag
 The tagged list (also called a tagged paragraph) is the
-most common type of list used in the Berkeley manuals. Use a
+most common type of list used in the Berkeley manuals.
+Use a
 .Fl width
 attribute as described below.
 .It Em Diag
@@ -2487,7 +2500,8 @@ Here is the source text which produced the above example:
 \&.Bl -inset -offset indent
 \&.It Em Tag
 \&The tagged list (also called a tagged paragraph) is the
-\&most common type of list used in the Berkeley manuals. Use a
+\&most common type of list used in the Berkeley manuals.
+Use a
 \&.Fl width
 \&attribute as described below.
 \&.It Em Diag
@@ -2600,8 +2614,8 @@ is a callable macro, the default width for that macro will be used
 as if the macro name had been supplied as the width.
 However,
 if another item in the list is given with a different callable
-macro name, a new and nested list is assumed. This effectively
-means that
+macro name, a new and nested list is assumed.
+This effectively means that
 .Fl width
 is required for the tag list type.
 .Pp
