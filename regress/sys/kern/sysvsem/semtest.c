@@ -1,4 +1,4 @@
-/*	$NetBSD: semtest.c,v 1.1 1999/08/25 04:35:34 thorpej Exp $	*/
+/*	$NetBSD: semtest.c,v 1.2 2000/01/31 15:10:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -70,12 +70,19 @@ int	signal_was_sigchld;
 
 key_t	semkey;
 
+union semun {
+	int	val;		/* value for SETVAL */
+	struct	semid_ds *buf;	/* buffer for IPC_{STAT,SET} */
+	u_short	*array;		/* array for GETALL & SETALL */
+};
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
 	struct sigaction sa;
+	union semun sun;
 	struct semid_ds s_ds;
 	sigset_t sigmask;
 	int i;
@@ -121,19 +128,23 @@ main(argc, argv)
 	if ((sender_semid = semget(semkey, 1, IPC_CREAT | 0640)) == -1)
 		err(1, "semget");
 
-	if (semctl(sender_semid, 0, IPC_STAT, &s_ds) == -1)
+	
+	sun.buf = &s_ds;
+	if (semctl(sender_semid, 0, IPC_STAT, sun) == -1)
 		err(1, "semctl IPC_STAT");
 
 	print_semid_ds(&s_ds, 0640);
 
 	s_ds.sem_perm.mode = (s_ds.sem_perm.mode & ~0777) | 0600;
 
-	if (semctl(sender_semid, 0, IPC_SET, &s_ds) == -1)
+	sun.buf = &s_ds;
+	if (semctl(sender_semid, 0, IPC_SET, sun) == -1)
 		err(1, "semctl IPC_SET");
 
 	memset(&s_ds, 0, sizeof(s_ds));
 
-	if (semctl(sender_semid, 0, IPC_STAT, &s_ds) == -1)
+	sun.buf = &s_ds;
+	if (semctl(sender_semid, 0, IPC_STAT, sun) == -1)
 		err(1, "semctl IPC_STAT");
 
 	if ((s_ds.sem_perm.mode & 0777) != 0600)
@@ -172,7 +183,8 @@ main(argc, argv)
 	 * Now set the thundering herd in motion by initializing the
 	 * semaphore to the value 1.
 	 */
-	if (semctl(sender_semid, 0, SETVAL, 1) == -1)
+	sun.val = 1;
+	if (semctl(sender_semid, 0, SETVAL, sun) == -1)
 		err(1, "sender: semctl SETVAL to 1");
 
 	/*
@@ -205,6 +217,7 @@ void
 sigchld_handler(signo)
 	int signo;
 {
+	union semun sun;
 	struct semid_ds s_ds;
 	int cstatus;
 
@@ -228,7 +241,8 @@ sigchld_handler(signo)
 	 * should exit.
 	 */
 
-	if (semctl(sender_semid, 0, IPC_STAT, &s_ds) == -1)
+	sun.buf = &s_ds;
+	if (semctl(sender_semid, 0, IPC_STAT, sun) == -1)
 		err(1, "semctl IPC_STAT");
 
 	print_semid_ds(&s_ds, 0600);
@@ -283,7 +297,8 @@ print_semid_ds(sp, mode)
 		errx(1, "gid mismatch");
 
 	if ((sp->sem_perm.mode & 0777) != mode)
-		errx(1, "mode mismatch");
+		errx(1, "mode mismatch %o != %o",
+		    (sp->sem_perm.mode & 0777), mode);
 }
 
 void
