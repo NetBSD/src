@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1998/02/28 12:10:13 ragge Exp $
+#	$NetBSD: Makefile,v 1.17 1998/03/11 22:13:55 ragge Exp $
 #
 
 INCPATH=-I. -I../../../../.. -I../../../.. -I../../.. -I../.. -I../../../lib/libsa
@@ -14,7 +14,7 @@ XXRPB=	1F4240
 CFLAGS+=-O ${INCPATH} -DSTANDALONE -DXXRPB=0x$(XXRPB)
 
 DEVS=	autoconf.o hp.o ra.o tmscp.o ctu.o mfm.o rom.o romread.o \
-	scsi_low.o scsi_hi.o sd.o netio.o if_le.o
+	scsi_low.o scsi_hi.o sd.o netio.o if_le.o if_qe.o
 
 .include "$S/lib/libsa/Makefile.inc"
 LIBS=	-L. -Llib/sa -lsvax -lsa -lsvax
