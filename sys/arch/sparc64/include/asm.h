@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 1998/09/13 16:02:48 eeh Exp $ */
+/*	$NetBSD: asm.h,v 1.5 1998/10/06 05:16:34 eeh Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -69,7 +69,7 @@
  * to work without a stack frame (doing so requires saving %o7) .
  */
 #define PIC_PROLOGUE(dest,tmp) \
-	rdpr %pc, tmp; \
+	3: rd %pc, tmp; \
 	sethi %hi(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
 	or dest,%lo(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
 	add tmp,%o7,dest
@@ -80,7 +80,7 @@
  * only works for VARs defined in the same file *and* in the text segment.
  */
 #define PICCY_SET(var,dest,tmp) \
-	rdpr %pc, tmp; add tmp,(var-3b),dest
+	3: rd %pc, tmp; add tmp,(var-3b),dest
 #else
 #define PIC_PROLOGUE(dest,tmp)
 #define PICCY_OFFSET(var,dest,tmp)
