@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.31 1998/10/15 21:22:52 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.32 1998/11/13 04:49:02 oster Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -54,6 +54,7 @@
 #	cd*	SCSI cdrom discs
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
+#	raid*	RAIDframe disk driver
 #	md*	memory pseudo-disk driver
 #	wd*	IDE disks
 #
@@ -112,6 +113,7 @@ all)
 	sh $0 vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
 	sh $0 vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3
+	sh $0 raid0 raid1 raid2 raid3
 	sh $0 ss0 ch0 uk0 uk1 wd0 wd1
 	sh $0 tun0 tun1 lkm ttyA0 ttyA1 ttyB0 lpt0 local
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
@@ -238,12 +240,13 @@ ss*)	# SCSI changer
 	chmod 640 ${name}${unit} n${name}${unit} en${name}${unit}
 	;;
 
-sd*|vnd*|ccd*|wd*)
+sd*|vnd*|ccd*|wd*|raid*)
 	case $i in
 		sd*)  name=sd;  unit=${i#sd};  blk=4;  chr=8;;
 		vnd*) name=vnd; unit=${i#vnd}; blk=0;  chr=17;;
 		ccd*) name=ccd; unit=${i#ccd}; blk=13; chr=27;;
 		wd*)  name=wd;  unit=${i#wd};  blk=14; chr=34;;
+		raid*) name=raid; unit=${i#raid}; blk=15;  chr=50;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in

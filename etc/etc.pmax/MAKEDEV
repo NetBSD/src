@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.23 1998/10/15 21:22:54 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.24 1998/11/13 04:49:03 oster Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -14,6 +14,7 @@
 #	rz*	SCSI disks
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
+#	raid*	RAIDframe disk driver
 # Terminal multiplexors:
 #	dc*	4 channel serial interface (keyboard, mouse, modem, printer)
 #	scc*	82530 serial interface
@@ -52,7 +53,7 @@ case $i in
 all)
 	sh $0 std fd rz0 rz1 rz2 rz3 rz4 rz5 rz6 rz7 tz0 tz1
 	sh $0 rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
-	sh $0 dc0 scc0 
+	sh $0 dc0 scc0 raid0 raid1 raid2 raid3
 	sh $0 pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 	sh $0 tun0 tun1 tun2 tun3
 	sh $0 bpf0 bpf1 bpf2 bpf3
@@ -132,9 +133,10 @@ lkm)
 #	chmod 640 lkm
 	;;
 
-rz*|vnd*|ccd*)
+rz*|vnd*|ccd*|raid*)
 	case $i in
 	rz*) name=rz;	unit=${i#rz};	blk=21; chr=56;;
+	raid*) name=raid; unit=${i#raid}; blk=32; chr=96;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=2; chr=11;;
 	ccd*) name=ccd;	unit=${i#ccd};	blk=24; chr=87;;
 	esac

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.19 1998/10/15 21:22:54 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.20 1998/11/13 04:49:04 oster Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -24,6 +24,7 @@
 #	rl*	unibus rl02
 #	rb*	730 idc w/ rb80 and/or rb02
 #	ccd*	"concatenated" pseudo-disks
+#	raidd*	RAIDframe disk driver
 #	vnd*	"file" pseudo-disks
 #	rd*	HDC9224 rd disks on VS2000
 #	sd*	SCSI disks
@@ -71,7 +72,7 @@ all)
 	sh $0 std fd vnd0 ccd0 pty0 pty1 lkm random
 	sh $0 mt0 mt1 ts0 ts1 st0 st1 uk0 ss0 cd0 vt0
 	sh $0 ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3 sd0 sd1 sd2 sd3 rd0 rd1 rd2
-	sh $0 dz0 dl0 dhu0 rx0 rx1
+	sh $0 dz0 dl0 dhu0 rx0 rx1 raid0 raid1 raid2 raid3
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	;;
 
@@ -187,7 +188,7 @@ ht*|tm*|mt*|ts*|ut*|st*)
 	esac
 	;;
 
-hp*|hk*|up*|ra*|rl*|rb*|ccd*|vnd*|rd*|sd*|rx*)
+hp*|hk*|up*|ra*|rl*|rb*|ccd*|vnd*|rd*|sd*|rx*|raid*)
 	umask 2
 	case $i in
 	hp*) name=hp;	unit=${i#hp};	blk=0; chr=4;;
@@ -197,6 +198,7 @@ hp*|hk*|up*|ra*|rl*|rb*|ccd*|vnd*|rd*|sd*|rx*)
 	rb*) name=rb;	unit=${i#rb};	blk=11; chr=23;;
 	rx*) name=rx;	unit=${i#rx};	blk=12; chr=30;;
 	rl*) name=rl;	unit=${i#rl};	blk=14; chr=32;;
+	raid*) name=raid; unit=${i#raid}; blk=25; chr=73;;
 	ccd*) name=ccd;	unit=${i#ccd};	blk=17; chr=54;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=18; chr=55;;
 	rd*) name=rd;	unit=${i#rd};	blk=19; chr=58;;

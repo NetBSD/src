@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.18 1998/10/15 21:22:54 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.19 1998/11/13 04:49:04 oster Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -52,6 +52,7 @@
 #	cd*	SCSI cdrom discs
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
+#	raid*	RAIDframe disk driver
 #
 # Console ports:
 #	ttye*	ite bitmapped consoles
@@ -99,6 +100,7 @@ all)
 	sh $0 tty00 tty01 tty02 tty03 com0 com1 grf0 grf1 kbd
 	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
 	sh $0 vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6 pty0
+	sh $0 raid0 raid1 raid2 raid3
 	sh $0 cd0 ss0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
 	sh $0 ccd0 ccd1 ccd2 ccd3 tun0 tun1 par0 lkm ipl
 	sh $0 sram audio pow0 pow1 bell random local
@@ -206,9 +208,10 @@ fd*)
 	esac
 	;;
 
-sd*|vnd*|ccd*)
+sd*|vnd*|ccd*|raid*)
 	case $i in
 	sd*) name=sd;	unit=${i#sd};	blk=4; chr=8;;
+	raid*) name=raid; unit=${i#raid}; blk=16; chr=41;;
 	vnd*) name=vnd; unit=${i#vnd};	blk=6; chr=19;;
 	ccd*) name=ccd; unit=${i#ccd};	blk=15; chr=34;;
 	esac

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.23 1998/10/15 21:22:54 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.24 1998/11/13 04:49:04 oster Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -45,6 +45,7 @@
 #	fd*	Floppies
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
+#	raid*	RAIDframe disk driver
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Printers:
@@ -87,6 +88,7 @@ case $arg in
 all)
 	sh $0 std fd pty0
 	sh $0 bwtwo0 cgtwo0 cgfour0
+	sh $0 raid0 raid1 raid2 raid3
 	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6
 	sh $0 cd0 cd1 st0 st1 st2 fd0
 	sh $0 xd0 xd1 xd2 xd3
@@ -184,11 +186,12 @@ pty*)
         chmod 666 tty$name? pty$name?
 	;;
 
-ccd*|cd*|fd*|sd*|xd*|xy*|vnd*)
+ccd*|cd*|fd*|sd*|xd*|xy*|vnd*|raid*)
 	case $arg in
 	  ccd*) name=ccd; blk=9; chr=33;;
 	  cd*) name=cd; blk=18; chr=58;;
 	  fd*) name=fd; blk=16; chr=54;;
+	  raid*) name=raid; blk=25; chr=82;;
 	  sd*) name=sd; blk=7; chr=17;;
 	  xd*) name=xd; blk=10; chr=42;;
 	  xy*) name=xy; blk=3; chr=9 ;;
