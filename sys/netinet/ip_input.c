@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.53.2.2 1998/07/22 23:50:10 mellon Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.53.2.3 1998/10/01 17:57:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -33,6 +33,43 @@
  * SUCH DAMAGE.
  *
  *	@(#)ip_input.c	8.2 (Berkeley) 1/4/94
+ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Public Access Networks Corporation ("Panix").  It was developed under
+ * contract to Panix by Eric Haszlakiewicz and Thor Lancelot Simon.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions  
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS 
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF  
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -121,6 +158,7 @@ extern	struct protosw inetsw[];
 u_char	ip_protox[IPPROTO_MAX];
 int	ipqmaxlen = IFQ_MAXLEN;
 struct	in_ifaddrhead in_ifaddr;
+struct	in_ifaddrhashhead *in_ifaddrhashtbl;
 struct	ifqueue ipintrq;
 
 /*
@@ -164,7 +202,8 @@ ip_init()
 	ip_id = time.tv_sec & 0xffff;
 	ipintrq.ifq_maxlen = ipqmaxlen;
 	TAILQ_INIT(&in_ifaddr);
-
+	in_ifaddrhashtbl = 
+	    hashinit(IN_IFADDR_HASH_SIZE, M_IFADDR, &in_ifaddrhash);
 	if (ip_mtudisc != 0)
 		ip_mtudisc_timeout_q = 
 		    rt_timer_queue_create(ip_mtudisc_timeout);
@@ -184,6 +223,7 @@ ipintr()
 	register struct mbuf *m;
 	register struct ipq *fp;
 	register struct in_ifaddr *ia;
+	register struct ifaddr *ifa;
 	struct ipqent *ipqe;
 	int hlen = 0, mff, len, s;
 #ifdef PFIL_HOOKS
@@ -296,12 +336,13 @@ next:
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
 	 */
-	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
-		if (in_hosteq(ip->ip_dst, ia->ia_addr.sin_addr))
-			goto ours;
-		if (((ip_directedbcast == 0) || (ip_directedbcast &&
-		    ia->ia_ifp == m->m_pkthdr.rcvif)) &&
-		    (ia->ia_ifp->if_flags & IFF_BROADCAST)) {
+	INADDR_TO_IA(ip->ip_dst, ia);
+	if (ia != NULL) goto ours;
+	if (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
+		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;
+		    ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
+			if (ifa->ifa_addr->sa_family != AF_INET) continue;
+			ia = ifatoia(ifa);
 			if (in_hosteq(ip->ip_dst, ia->ia_broadaddr.sin_addr) ||
 			    in_hosteq(ip->ip_dst, ia->ia_netbroadcast) ||
 			    /*
@@ -311,14 +352,13 @@ next:
 			    ip->ip_dst.s_addr == ia->ia_subnet ||
 			    ip->ip_dst.s_addr == ia->ia_net)
 				goto ours;
+			/*
+			 * An interface with IP address zero accepts
+			 * all packets that arrive on that interface.
+			 */
+			if (in_nullhost(ia->ia_addr.sin_addr))
+				goto ours;
 		}
-		/*
-		 * An interface with IP address zero accepts
-		 * all packets that arrive on that interface.
-		 */
-		if ((ia->ia_ifp == m->m_pkthdr.rcvif) &&
-		    in_nullhost(ia->ia_addr.sin_addr))
-			goto ours;
 	}
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 		struct in_multi *inm;
