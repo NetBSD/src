@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.71 2000/12/21 01:10:52 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.72 2001/01/10 03:03:02 hubertf Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -121,15 +121,17 @@ listed here, and described in separate sections below.
 .Pp
 .Bl -column CTLXMACHDEPXXX "Next level namesXXXXXX" -offset indent
 .It Sy Pa Name	Next level names	Description
-.It CTL\_DEBUG	sys/sysctl.h	Debugging
-.It CTL\_VFS	sys/mount.h	Filesystem
-.It CTL\_HW	sys/sysctl.h	Generic CPU, I/O
 .It CTL\_KERN	sys/sysctl.h	High kernel limits
-.It CTL\_MACHDEP	sys/sysctl.h	Machine dependent
-.It CTL\_NET	sys/socket.h	Networking
-.It CTL\_PROC	sys/sysctl.h	Per-process
-.It CTL\_USER	sys/sysctl.h	User-level
 .It CTL\_VM	uvm/uvm_param.h	Virtual memory
+.It CTL\_VFS	sys/mount.h	Filesystem
+.It CTL\_NET	sys/socket.h	Networking
+.It CTL\_DEBUG	sys/sysctl.h	Debugging
+.It CTL\_HW	sys/sysctl.h	Generic CPU, I/O
+.It CTL\_MACHDEP	sys/sysctl.h	Machine dependent
+.It CTL\_USER	sys/sysctl.h	User-level
+.It CTL\_DDB	sys/sysctl.h	In-kernel debugger
+.It CTL\_PROC	sys/sysctl.h	Per-process
+.It CTL\_VENDOR	?	Vendor specific
 .El
 .Pp
 For example, the following retrieves the maximum number of processes allowed
@@ -1308,6 +1310,10 @@ These MIB nodes are also available as variables from within the
 DDB.  See
 .Xr ddb 4
 for more details.
+.Sh CTL_VENDOR
+The "vendor" toplevel name is reserved to be used by vendors who wish to
+have their own private MIB tree. Intended use is to store values under
+.Dq vendor.<yourname>.* .
 .Sh RETURN VALUES
 If the call to
 .Nm

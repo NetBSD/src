@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.61 2000/12/21 01:10:52 itojun Exp $
+.\"	$NetBSD: sysctl.8,v 1.62 2001/01/10 03:03:02 hubertf Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -346,8 +346,14 @@ privilege can change the value.
 .It user.posix2_version	integer	no
 .It user.re_dup_max	integer	no
 .It vfs.generic.usermount	integer	yes
+.It vendor.<vendor>.*	?	vendor specific
 .It vm.loadavg	struct	no
 .El
+.Pp
+Entries found under
+.Dq vendor.<vendor>
+are left to be specified (and used) by vendors
+using the NetBSD operating system in their products. 
 .Sh EXAMPLES
 .Pp
 For example, to retrieve the maximum number of processes allowed
