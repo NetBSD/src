@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.13 1998/08/13 02:11:00 eeh Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.14 1998/09/08 23:44:22 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -311,6 +311,23 @@ uvm_fork(p1, p2, shared)
 	 * mode on its first time slice, and will not return here.
 	 */
 	cpu_fork(p1, p2);
+}
+
+/*
+ * uvm_exit: exit a virtual address space
+ *
+ * - the process passed to us is a dead (pre-zombie) process; we
+ *   are running on a different context now (the reaper).
+ * - we must run in a separate thread because freeing the vmspace
+ *   of the dead process may block.
+ */
+void
+uvm_exit(p)
+	struct proc *p;
+{
+
+	uvmspace_free(p->p_vmspace);
+	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
 }
 
 /*
