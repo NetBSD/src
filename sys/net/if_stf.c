@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.23.10.4 2002/08/06 00:09:44 lukem Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.23.10.5 2002/08/06 05:57:43 lukem Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.23.10.4 2002/08/06 00:09:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.23.10.5 2002/08/06 05:57:43 lukem Exp $");
 
 #include "opt_inet.h"
 
@@ -129,8 +129,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.23.10.4 2002/08/06 00:09:44 lukem Exp $
 
 #define IN6_IS_ADDR_6TO4(x)	(ntohs((x)->s6_addr16[0]) == 0x2002)
 #define GET_V4(x)	((struct in_addr *)(&(x)->s6_addr16[1]))
-
-#define STF_MTU		(1500 - 20)
 
 struct stf_softc {
 	struct ifnet	sc_if;	   /* common area */
@@ -212,7 +210,7 @@ stf_clone_create(ifc, unit)
 		return (EIO);	/* XXX */
 	}
 
-	sc->sc_if.if_mtu    = STF_MTU;
+	sc->sc_if.if_mtu    = IPV6_MMTU;
 	sc->sc_if.if_flags  = 0;
 	sc->sc_if.if_ioctl  = stf_ioctl;
 	sc->sc_if.if_output = stf_output;
@@ -694,7 +692,7 @@ stf_rtrequest(cmd, rt, info)
 {
 
 	if (rt)
-		rt->rt_rmx.rmx_mtu = STF_MTU;
+		rt->rt_rmx.rmx_mtu = IPV6_MMTU;
 }
 
 static int
