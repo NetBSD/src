@@ -1,4 +1,4 @@
-/*	$NetBSD: mc68851.h,v 1.2 1997/01/16 21:47:31 gwr Exp $	*/
+/*	$NetBSD: mc68851.h,v 1.3 1997/01/23 22:15:41 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -109,11 +109,17 @@
 
 
 /** MC68851 Root Pointer
+ * All address translations begin with the examination of the value
+ * in the MC68851 Root Pointer register.  It describes the base address
+ * (in physical memory) of the root table to be used as well as any limits
+ * to the address range it supports.  Its structure is identical to a Long
+ * Format Table Descriptor (described below.)
  */
 struct mmu_rootptr {
-	u_long limit; /* and type */
-	u_long paddr;
+	u_long	rp_attr;	/* Lower/Upper Limit and access flags */
+	u_long	rp_addr;	/* Physical Base Address */
 };
+typedef struct mmu_rootptr mmu_rootptr_t;
 
 
 /** MC68851 Long Format Table Descriptor
