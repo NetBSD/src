@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.24 2002/04/24 05:31:19 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.25 2002/05/20 17:38:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -89,8 +89,11 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	PTHREADD_ADD(PTHREADD_UPCALLS);
 
 	self = pthread__self();
+	self->pt_state = PT_STATE_RUNNING;
 
-	SDPRINTF(("(up %p) type %d ev %d intr %d\n", self, type, ev, intr));
+	SDPRINTF(("(up %p) type %d LWP %d ev %d intr %d\n", self, 
+	    type, sas[0]->sa_id, ev ? sas[1]->sa_id : 0, 
+	    intr ? sas[ev+intr]->sa_id : 0));
 	switch (type) {
 	case SA_UPCALL_BLOCKED:
 		t = pthread__sa_id(sas[1]);
@@ -138,20 +141,18 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	 * This includes any upcalls that have been interupted, so
 	 * they can do their own version of this dance.
 	 */
-
 	intqueue = NULL;
 	if ((ev + intr) >= first) {
 		if (pthread__find_interrupted(sas + first, ev + intr,
 		    &intqueue, self) > 0)
 			pthread__resolve_locks(self, &intqueue);
 	}
-
 	pthread__sched_idle2(self);
 	if (intqueue)
 		pthread__sched_bulk(self, intqueue);
 
-
-	/* Note that we handle signals after handling spinlock
+	/*
+	 * Note that we handle signals after handling spinlock
 	 * preemption. This is because spinlocks are only used
 	 * internally to the thread library and we don't want to
 	 * expose the middle of them to a signal.  While this means
@@ -164,7 +165,6 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	 * This also means that a thread that was interrupted to take
 	 * a signal will be on a run queue, and not in upcall limbo.
 	 */
-
 	if (deliversig) {
 		si = arg;
 		if (ev)
@@ -175,10 +175,11 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 			    si->si_signo, si->si_code);
 	}
 	
-	/* At this point everything on our list should be scheduled
+	/*
+	 * At this point everything on our list should be scheduled
 	 * (or was an upcall).
 	 */
-
+	assert(self->pt_spinlocks == 0);
 	next = pthread__next(self);
 	next->pt_state = PT_STATE_RUNNING;
 	SDPRINTF(("(up %p) switching to %p (uc: %p pc: %lx)\n", 
@@ -188,7 +189,8 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	assert(0);
 }
 
-/* Build a chain of the threads that were interrupted by the upcall. 
+/*
+ * Build a chain of the threads that were interrupted by the upcall. 
  * Determine if any of them were upcalls or lock-holders that
  * need to be continued early.
  */
@@ -211,13 +213,14 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 		SDPRINTF(("(fi %p) victim %d %p(%d)", self, i, victim,
 		    victim->pt_type));
 		if (victim->pt_type == PT_THREAD_UPCALL) {
-			/* Case 1: Upcall */
-			/* Must be resumed. */
+			/* Case 1: Upcall. Must be resumed. */
 				SDPRINTF((" upcall"));
 			resume = 1;
 			if (victim->pt_next) {
-				/* Case 1A: Upcall in a chain */
-				/* Already part of a chain. We want to
+				/*
+				 * Case 1A: Upcall in a chain.
+				 *
+				 * Already part of a chain. We want to
 				 * splice this chain into our chain, so
 				 * we have to find the root.
 				 */
@@ -226,20 +229,20 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 				      victim = victim->pt_parent) {
 					SDPRINTF((" parent %p", victim->pt_parent));
 					assert(victim->pt_parent != victim);
-
 				}
 			}
 		} else {
 			/* Case 2: Normal or idle thread. */
 			if (victim->pt_spinlocks > 0) {
-				/* Case 2A: Lockholder */
-				/* Must be resumed. */
+				/* Case 2A: Lockholder. Must be resumed. */
 				SDPRINTF((" lockholder %d",
 				    victim->pt_spinlocks));
 				resume = 1;
 				if (victim->pt_next) {
-					/* Case 2A1: Lockholder on a chain */
-					/* Same deal as 1A. */
+					/*
+					 * Case 2A1: Lockholder on a chain.
+					 * Same deal as 1A.
+					 */
 					SDPRINTF((" chain"));
 					for ( ; victim->pt_parent != NULL; 
 					      victim = victim->pt_parent) {
@@ -250,11 +253,12 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 
 				}
 			} else {
-				/* Case 2B: Non-lockholder */
+				/* Case 2B: Non-lockholder. */
 					SDPRINTF((" nonlockholder"));
 				if (victim->pt_next) {
-					/* Case 2B1: Non-lockholder on a chain
-					 * (must have just released a lock)
+					/*
+					 * Case 2B1: Non-lockholder on a chain
+					 * (must have just released a lock).
 					 */
 					SDPRINTF((" chain"));
 					resume = 1;
@@ -264,7 +268,8 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 						assert(victim->pt_parent != victim);
 					}
 				} else if (victim->pt_flags & PT_FLAG_IDLED) {
-					/* Idle threads that have already 
+					/*
+					 * Idle threads that have already 
 					 * idled must be skipped so 
 					 * that we don't (a) idle-queue them
 					 * twice and (b) get the pt_next
@@ -272,12 +277,12 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 					 * queue mangled by 
 					 * pthread__sched_idle2()
 					 */
+					SDPRINTF(("\n"));
 					continue;
 			        }
 					
 			}
 		}
-
 		assert (victim != self);
 		victim->pt_parent = self;
 		victim->pt_next = next;
@@ -301,24 +306,23 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 	recycleq = NULL;
 	runq = NULL;
 	intqueue = *intqueuep;
-
 	switchto = NULL;
 	victim = intqueue;
 
 	SDPRINTF(("(rl %p) entered\n", self));
-	
+
 	while (intqueue != self) {
-		/* Make a pass over the interrupted queue, cleaning out
+		/*
+		 * Make a pass over the interrupted queue, cleaning out
 		 * any threads that have dropped all their locks and any
 		 * upcalls that have finished.
 		 */
-		SDPRINTF(("(rl %p) intqueue %p\n",self, intqueue));
+		SDPRINTF(("(rl %p) intqueue %p\n", self, intqueue));
 		prev = NULL;
 		for (victim = intqueue; victim != self; victim = next) {
 			next = victim->pt_next;
-			SDPRINTF(("(rl %p) victim %p (uc %p)", self, victim, 
-			    victim->pt_uc));
-
+			SDPRINTF(("(rl %p) victim %p (uc %p)", self,
+			    victim, victim->pt_uc));
 			if (victim->pt_switchto) {
 				PTHREADD_ADD(PTHREADD_SWITCHTO);
 				switchto = victim->pt_switchto;
@@ -331,24 +335,26 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			if (victim->pt_type == PT_THREAD_NORMAL) {
 				SDPRINTF((" normal"));
 				if (victim->pt_spinlocks == 0) {
-					/* We can remove this guy
+					/*
+					 * We can remove this thread
 					 * from the interrupted queue.
 					 */
 					if (prev)
 						prev->pt_next = next;
 					else
 						intqueue = next;
-
-					/* Check whether the victim was
+					/*
+					 * Check whether the victim was
 					 * making a locked switch.
 					 */
 					if (victim->pt_heldlock) {
-						/* Yes. Therefore, it's on
+						/*
+						 * Yes. Therefore, it's on
 						 * some sleep queue and
 						 * all we have to do is
 						 * release the lock and
 						 * restore the real
-						 * sleep contex.
+						 * sleep context.
 						 */
 						lock = victim->pt_heldlock;
 						victim->pt_heldlock = NULL;
@@ -360,7 +366,8 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 						victim->pt_parent = NULL;
 						SDPRINTF((" heldlock: %p",lock));
 					} else {
-						/* No. Queue it for the 
+						/* 
+						 * No. Queue it for the 
 						 * run queue.
 						 */
 						victim->pt_next = runq;
@@ -369,7 +376,8 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 				} else {
 					SDPRINTF((" spinlocks: %d", 
 					    victim->pt_spinlocks));
-					/* Still holding locks.
+					/*
+					 * Still holding locks.
 					 * Leave it in the interrupted queue.
 					 */
 					prev = victim;
@@ -380,33 +388,35 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 				if (victim->pt_state == PT_STATE_RECYCLABLE) {
 					/* We're done with you. */
 					SDPRINTF((" recyclable"));
-					victim->pt_next = recycleq;
-					recycleq = victim;
 					if (prev)
 						prev->pt_next = next;
 					else
 						intqueue = next;
+					victim->pt_next = recycleq;
+					recycleq = victim;
 				} else {
-					/* Not finished yet.
+					/*
+					 * Not finished yet.
 					 * Leave it in the interrupted queue.
 					 */
 					prev = victim;
 				}
 			} else {
 				SDPRINTF((" idle"));
-				/* Idle threads should be given an opportunity
+				/*
+				 * Idle threads should be given an opportunity
 				 * to put themselves on the reidle queue. 
 				 * We know that they're done when they have no
-				 * locks and PT_FLAG_IDLED is set 
+				 * locks and PT_FLAG_IDLED is set.
 				 */
 				if (victim->pt_spinlocks != 0) {
-					/* Still holding locks.
-					 */
+					/* Still holding locks. */
 					SDPRINTF((" spinlocks: %d", 
 					    victim->pt_spinlocks));
 					prev = victim;
 				} else if (!(victim->pt_flags & PT_FLAG_IDLED)) {
-					/* Hasn't yet put itself on the
+					/*
+					 * Hasn't yet put itself on the
 					 * reidle queue. 
 					 */
 					SDPRINTF((" not done"));
@@ -422,7 +432,8 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 
 			if (switchto) {
 				assert(switchto->pt_spinlocks == 0);
-				/* Threads can have switchto set to themselves
+				/*
+				 * Threads can have switchto set to themselves
 				 * if they hit new_preempt. Don't put them
 				 * on the run queue twice.
 				 */
@@ -436,7 +447,8 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 		}
 
 		if (intqueue != self) {
-			/* There is a chain. Run through the elements
+			/*
+			 * There is a chain. Run through the elements
 			 * of the chain. If one of them is preempted again,
 			 * the upcall that handles it will have us on its
 			 * chain, and we will continue here, having
@@ -451,7 +463,8 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 		}
 
 		if (self->pt_next) {
-			/* We're on a chain ourselves. Let the other 
+			/*
+			 * We're on a chain ourselves. Let the other 
 			 * threads in the chain run; our parent upcall
 			 * will resume us here after a pass around its
 			 * interrupted queue.
@@ -485,11 +498,9 @@ pthread__recycle_bulk(pthread_t self, pthread_t qhead)
 		    (recycle_count < recycle_threshold)) {
 			upcall = qhead; 
 			qhead = qhead->pt_next;
-			upcall->pt_parent = NULL;
 			upcall->pt_state = PT_STATE_RUNNABLE;
 			upcall->pt_next = NULL;
 			upcall->pt_parent = NULL;
-
 			recyclable[my_side][recycle_count] = upcall->pt_stack;
 			recycle_count++;
 		}
@@ -517,7 +528,8 @@ pthread__recycle_bulk(pthread_t self, pthread_t qhead)
 	
 }
 
-/* Stash away an upcall and its stack, possibly recycling it to the kernel.
+/*
+ * Stash away an upcall and its stack, possibly recycling it to the kernel.
  * Must be running in the context of "new".
  */
 void
@@ -526,6 +538,10 @@ pthread__sa_recycle(pthread_t old, pthread_t new)
 	int do_recycle, my_side, ret;
 
 	do_recycle = 0;
+
+	old->pt_next = NULL;
+	old->pt_parent = NULL;
+	old->pt_state = PT_STATE_RUNNABLE;
 
 	pthread_spinlock(new, &recycle_lock);
 
