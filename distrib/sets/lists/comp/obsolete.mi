@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.20 2000/06/21 06:28:06 thorpej Exp $
+# $NetBSD: obsolete.mi,v 1.21 2000/06/26 16:47:58 mrg Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -297,10 +297,18 @@
 /usr/include/ufs/mfs/mfsiom.h
 /usr/include/vm/device_pager.h
 /usr/include/vm/lock.h
+/usr/include/vm/pglist.h
 /usr/include/vm/swap_pager.h
-/usr/include/vm/vnode_pager.h
 /usr/include/vm/vm_conf.h
+/usr/include/vm/vm_inherit.h
+/usr/include/vm/vm_kern.h
+/usr/include/vm/vm_map.h
+/usr/include/vm/vm_object.h
+/usr/include/vm/vm_pageout.h
+/usr/include/vm/vm_pager.h
+/usr/include/vm/vm_param.h
 /usr/include/vm/vm_swap.h
+/usr/include/vm/vnode_pager.h
 /usr/lib/libamu.a
 /usr/lib/libamu_p.a
 /usr/lib/libamu_pic.a
