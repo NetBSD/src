@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 2/28/91
-#	$Id: Makefile,v 1.10 1993/12/28 12:03:24 davidb Exp $
+#	$Id: Makefile,v 1.11 1994/02/10 04:42:42 cgd Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -136,7 +136,7 @@ right_posix: right_only other_two
 realinstall: ${DATA} ${REDO}
 	(cd ${.CURDIR}/datfiles; \
 	    ${ZIC} -d ${TZDIR} -p ${POSIXRULES})
-	chown -R ${BINOWN}.${BINGRP} ${TZDIR}
-	chmod -R a-w ${TZDIR}
+	chown -R ${BINOWN}:${BINGRP} ${TZDIR}
+	find ${TZDIR} -type f | xargs chmod a-w
 
 .include <bsd.prog.mk>
