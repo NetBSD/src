@@ -1,4 +1,4 @@
-/* $NetBSD: rmdir.c,v 1.22 2003/09/14 19:20:25 jschauma Exp $ */
+/* $NetBSD: rmdir.c,v 1.23 2003/09/29 21:11:15 dsl Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rmdir.c,v 1.22 2003/09/14 19:20:25 jschauma Exp $");
+__RCSID("$NetBSD: rmdir.c,v 1.23 2003/09/29 21:11:15 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,6 @@ __RCSID("$NetBSD: rmdir.c,v 1.22 2003/09/14 19:20:25 jschauma Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <vis.h>
-
-int	stdout_ok;			/* stdout connected to a terminal */
 
 int	rm_path(char *);
 void	usage(void);
@@ -84,20 +81,8 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 
-	stdout_ok = isatty(STDIN_FILENO);
-
 	for (errors = 0; *argv; argv++) {
-#ifdef notdef
-		char *p;
-
-		/* Kernel takes care of this */
-		/* Delete trailing slashes, per POSIX. */
-		p = *argv + strlen(*argv);
-		while (--p > *argv && *p == '/')
-			;
-		*++p = '\0';
-#endif
-
+		/* We rely on the kernel to ignore trailing '/' characters. */
 		if (rmdir(*argv) < 0) {
 			warn("%s", *argv);
 			errors = 1;
@@ -115,10 +100,10 @@ rm_path(char *path)
 	char *p;
 
 	while ((p = strrchr(path, '/')) != NULL) {
-		/* Delete trailing slashes. */
-		while (--p > path && *p == '/')
-			;
-		*++p = '\0';
+		*p = 0;
+		if (p[1] == 0)
+			/* Ignore trailing '/' on deleted name */
+			continue;
 
 		if (rmdir(path) < 0) {
 			warn("%s", path);
