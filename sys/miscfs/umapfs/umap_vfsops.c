@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.37 2003/06/28 14:22:05 darrenr Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.38 2003/06/29 02:17:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.37 2003/06/28 14:22:05 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.38 2003/06/29 02:17:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ umapfs_mount(mp, path, data, ndp, l)
 	amp->umapm_rootvp = vp;
 
 	error = set_statfs_info(path, UIO_USERSPACE, args.umap_target,
-	    UIO_USERSPACE, mp, p);
+	    UIO_USERSPACE, mp, l);
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount: lower %s, alias at %s\n",
 		mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
