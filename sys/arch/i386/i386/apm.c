@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.56 2000/11/26 11:08:57 takemura Exp $ */
+/*	$NetBSD: apm.c,v 1.57 2001/01/12 03:36:51 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -148,9 +148,7 @@ static void	apm_disconnect __P((void *));
 static void	apm_event_handle __P((struct apm_softc *, struct bioscallregs *));
 static int	apm_get_event __P((struct bioscallregs *));
 static int	apm_get_powstat __P((struct bioscallregs *));
-#if 0
 static void	apm_get_powstate __P((u_int));
-#endif
 static void	apm_periodic_check __P((struct apm_softc *));
 static void	apm_create_thread __P((void *));
 static void	apm_thread __P((void *));
@@ -371,7 +369,6 @@ apm_power_print(sc, regs)
 }
 #endif
 
-#if 0 /* currently unused */
 static void
 apm_get_powstate(dev)
 	u_int dev;
@@ -385,7 +382,6 @@ apm_get_powstate(dev)
 		printf("apm dev %04x state %04x\n", dev, regs.CX);
 	}
 }
-#endif
 
 static void
 apm_suspend(sc)
@@ -1490,9 +1486,7 @@ apmioctl(dev, cmd, data, flag, p)
 	struct apm_power_info *powerp;
 	struct apm_event_info *evp;
 	struct bioscallregs regs;
-#if 0
 	struct apm_ctl *actl;
-#endif
 	int i, error = 0;
 
 	APM_LOCK(sc);
@@ -1518,7 +1512,6 @@ apmioctl(dev, cmd, data, flag, p)
 		apm_suspends++;
 		break;
 
-#if 0 /* is this used at all? */
 	case APM_IOC_DEV_CTL:
 		actl = (struct apm_ctl *)data;
 		if ((flag & FWRITE) == 0) {
@@ -1528,7 +1521,6 @@ apmioctl(dev, cmd, data, flag, p)
 		apm_get_powstate(actl->dev); /* XXX */
 		error = apm_set_powstate(actl->dev, actl->mode);
 		break;
-#endif
 
 	case APM_IOC_NEXTEVENT:
 		if (!sc->event_count)
