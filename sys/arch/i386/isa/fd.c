@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.22 1993/10/28 18:49:21 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.23 1993/10/28 20:04:58 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -100,7 +100,7 @@ struct fdc_softc {
 	u_short	sc_iobase;
 	u_short	sc_drq;
 
-	struct	fd_softc *sc_fd[2];	/* pointers to children */
+	struct	fd_softc *sc_fd[4];	/* pointers to children */
 	struct	fd_softc *sc_afd;	/* active drive */
 	struct	buf sc_head;		/* head of buf chain */
 	struct	buf sc_rhead;		/* raw head of buf chain */
@@ -285,17 +285,17 @@ fdcattach(parent, self, aux)
 	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
 
 	/*
-	 * The NVRAM info only tells us about the `primary' floppy
-	 * controller.  This test is wrong but is the best I have....
+	 * The NVRAM info only tells us about the first two disks on the
+	 * `primary' floppy controller.
 	 */
 	if (fdc->sc_dev.dv_unit == 0)
 		type = nvram(NVRAM_DISKETTE);
 	else
 		type = -1;
 
-	/* physical limit: two drives per controller. */
-	for (fa.fa_drive = 0; fa.fa_drive < 2; fa.fa_drive++) {
-		if (type >= 0) {
+	/* physical limit: four drives per controller. */
+	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
+		if (type >= 0 && fa.fa_drive < 2) {
 			fa.fa_deftype = fd_nvtotype(fdc->sc_dev.dv_xname,
 			    type, fa.fa_drive);
 		} else {
@@ -322,9 +322,12 @@ fdprobe(parent, cf, aux)
 
 	fdc = (struct fdc_softc *)parent;
 	iobase = fdc->sc_iobase;
+	/* turn on motor */
+	outb(iobase + fdout, FDO_FRST | FDO_MOEN(fa->fa_drive));
+	delay(250000);
 	out_fdc(iobase, NE7CMD_RECAL);
 	out_fdc(iobase, fa->fa_drive);
-	delay(1000000);
+	delay(2500000);
 	out_fdc(iobase, NE7CMD_SENSEI);
 #if 0 /* XXXX */
 	if (fdc_result(fdc) != 2)
@@ -337,6 +340,8 @@ fdprobe(parent, cf, aux)
 		 printf(" %x", fdc->sc_status[i]);
 	 printf("\n");}
 #endif
+	/* turn off motor */
+	outb(iobase + fdout, FDO_FRST);
 
 	return 1;
 }
@@ -460,6 +465,7 @@ set_motor(fdc, reset)
 {
 	struct fd_softc *fd;
 	u_char status;
+	int n;
 
 	if (fd = fdc->sc_afd)
 		status = fd->sc_drive;
@@ -467,10 +473,9 @@ set_motor(fdc, reset)
 		status = 0;
 	if (!reset)
 		status |= FDO_FRST | FDO_FDMAEN;
-	if ((fd = fdc->sc_fd[0]) && (fd->sc_flags & FD_MOTOR))
-		status |= FDO_MOEN0;
-	if ((fd = fdc->sc_fd[1]) && (fd->sc_flags & FD_MOTOR))
-		status |= FDO_MOEN1;
+	for (n = 0; n < 4; n++)
+		if ((fd = fdc->sc_fd[n]) && (fd->sc_flags & FD_MOTOR))
+			status |= FDO_MOEN(n);
 	outb(fdc->sc_iobase + fdout, status);
 }
 
@@ -480,7 +485,7 @@ fd_motor_off(fd)
 {
 	int s = splbio();
 
-	fd->sc_flags &= ~FD_MOTOR;
+	fd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
 	set_motor((struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent, 0);
 	splx(s);
 }
@@ -721,11 +726,17 @@ fdcstate(fdc)
 			return 0;
 		}
 		if (!(fd->sc_flags & FD_MOTOR)) {
+			/* lame controller */
+			struct fd_softc *ofd = fdc->sc_fd[fd->sc_drive ^ 1];
+			if (ofd && ofd->sc_flags & FD_MOTOR) {
+				untimeout((timeout_t)fd_motor_off, (caddr_t)ofd);
+				ofd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
+			}
 			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
 			set_motor(fdc, 0);
 			fdc->sc_state = MOTORWAIT;
 			/* allow 1 second for motor to stabilize */
-			timeout((timeout_t)fd_motor_on, (caddr_t)fd, hz);
+			timeout((timeout_t)fd_motor_on, (caddr_t)fd, hz/4);
 			return 0;
 		}
 		/* at least make sure we are selected */
@@ -795,7 +806,7 @@ fdcstate(fdc)
 	    case SEEKCOMPLETE:
 		/* make sure seek really happened */
 		out_fdc(iobase, NE7CMD_SENSEI);
-		if (fdc_result(fdc) != 2 || (st0 & 0xf0) != 0x20 || cyl != bp->b_cylin) {
+		if (fdc_result(fdc) != 2 || (st0 & 0xf8) != 0x20 || cyl != bp->b_cylin) {
 			fd_status(fd, 2, "seek failed");
 			return fdcretry(fdc);
 		}
@@ -812,7 +823,7 @@ fdcstate(fdc)
 
 	    case IOCOMPLETE: /* IO DONE, post-analyze */
 		untimeout((timeout_t)fd_timeout, (caddr_t)fdc);
-		if (fdc_result(fdc) != 7 || (st0 & 0xf0) != 0) {
+		if (fdc_result(fdc) != 7 || (st0 & 0xf8) != 0) {
 			at_dma_abort(fdc->sc_drq);
 			fd_status(fd, 7, read ? "read failed" : "write failed");
 			printf("blkno %d skip %d cylin %d status %x\n", bp->b_blkno,
@@ -871,7 +882,7 @@ fdcstate(fdc)
 
 	    case RECALCOMPLETE:
 		out_fdc(iobase, NE7CMD_SENSEI);
-		if (fdc_result(fdc) != 2 || (st0 & 0xf0) != 0x20 || cyl != 0) {
+		if (fdc_result(fdc) != 2 || (st0 & 0xf8) != 0x20 || cyl != 0) {
 			fd_status(fd, 2, "recalibrate failed");
 			return fdcretry(fdc);
 		}
