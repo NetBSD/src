@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 1999/12/26 20:32:11 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.9 2000/01/12 14:41:44 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -360,7 +360,7 @@ start_in_RAM:
 
 		.align	2
 
-XLInitializeBsc:.long	_InitializeBsc
+XLInitializeBsc:.long	_C_LABEL(InitializeBsc)
 ___start:	.long	start
 ___etext:	.long	_etext
 ___end:		.long	_end
@@ -369,8 +369,8 @@ _KERNBASE:	.long	KERNBASE
 _RAM_START:	.long	IOM_RAM_BEGIN
 _ROM_START:	.long	IOM_ROM_BEGIN
 XLKernelStack:	.long	KernelStack
-XLinitSH3:	.long	_initSH3
-XLmain:		.long	_main
+XLinitSH3:	.long	_C_LABEL(initSH3)
+XLmain:		.long	_C_LABEL(main)
 
 NENTRY(proc_trampoline)
 	mov	r11, r4
@@ -407,8 +407,8 @@ XLSYS___sigreturn14:
 	.long	SYS___sigreturn14
 XLSYS_exit:
 	.long	SYS_exit
-	.globl	_esigcode
-_esigcode:
+	.globl	_C_LABEL(esigcode)
+_C_LABEL(esigcode):
 
 /*****************************************************************************/
 
@@ -1115,9 +1115,9 @@ XL_tlb_handler:	.long	_C_LABEL(tlb_handler)
 
 #if 0
 	/*
-	 *	Convert Virtual address to Physical Address
-	 *	r4 = Virtual Address
-	 *	r0 = returned Physical address
+	 * Convert Virtual address to Physical Address
+	 * r4 = Virtual Address
+	 * r0 = returned Physical address
 	 */
 ENTRY(ConvVtoP)
 	mov.l	r1, @-r15

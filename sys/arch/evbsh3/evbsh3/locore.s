@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.7 1999/12/26 20:32:13 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.8 2000/01/12 14:41:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -356,7 +356,7 @@ start_in_RAM:
 
 		.align	2
 
-XLInitializeBsc:.long	_InitializeBsc
+XLInitializeBsc:.long	_C_LABEL(InitializeBsc)
 ___start:	.long	start
 ___etext:	.long	_etext
 ___end:		.long	_end
@@ -365,8 +365,8 @@ _KERNBASE:	.long	KERNBASE
 _RAM_START:	.long	IOM_RAM_BEGIN
 _ROM_START:	.long	IOM_ROM_BEGIN
 XLKernelStack:	.long	KernelStack
-XLinitSH3:	.long	_initSH3
-XLmain:		.long	_main
+XLinitSH3:	.long	_C_LABEL(initSH3)
+XLmain:		.long	_C_LABEL(main)
 
 NENTRY(proc_trampoline)
 	mov	r11, r4
@@ -403,8 +403,8 @@ XLSYS___sigreturn14:
 	.long	SYS___sigreturn14
 XLSYS_exit:
 	.long	SYS_exit
-	.globl	_esigcode
-_esigcode:
+	.globl	_C_LABEL(esigcode)
+_C_LABEL(esigcode):
 
 /*****************************************************************************/
 
@@ -477,7 +477,7 @@ ENTRY(idle)
 
 	.align	2
 XXLwhichqs:
-	.long	_whichqs
+	.long	_C_LABEL(whichqs)
 
 
 #define	PUSHALL	\
@@ -662,7 +662,7 @@ switch_search:
 
 	.align	2
 XXXLwhichqs:
-	.long	_whichqs
+	.long	_C_LABEL(whichqs)
 1:
 
 
@@ -781,8 +781,8 @@ sw1:	mov	#1, r1
 #ifdef sh3_debug
 	mova	1f, r0
 	mov	r0, r4
-	mov	r14, r6
 	mov	r13, r5
+	mov	r14, r6
 	mov.l	2f, r0
 	jsr	@r0
 	nop
@@ -1181,7 +1181,7 @@ _C_LABEL(tlbmisshandler_stub):
 	nop
 	.align	2
 XL_tlbmisshandler:
-	.long	_tlbmisshandler
+	.long	_C_LABEL(tlbmisshandler)
 _C_LABEL(tlbmisshandler_stub_end):
 
 	.align	2
@@ -1257,9 +1257,9 @@ XL_tlb_handler:	.long	_C_LABEL(tlb_handler)
 XLexphandler:	.long	_C_LABEL(exphandler)
 
 	/*
-	 *	Convert Virtual address to Physical Address
-	 *	r4 = Virtual Address
-	 *	r0 = returned Physical address
+	 * Convert Virtual address to Physical Address
+	 * r4 = Virtual Address
+	 * r0 = returned Physical address
 	 */
 ENTRY(ConvVtoP)
 	mov.l	r1, @-r15
@@ -1426,7 +1426,7 @@ Xrestart:
 
 	.align	2
 XXL_check_ipending:
-		.long	_check_ipending
+		.long	_C_LABEL(check_ipending)
 XL_Xrecurse:	.long	Xrecurse
 XL_restart:	.long	Xrestart
 
