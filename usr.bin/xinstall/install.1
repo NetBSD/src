@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.33 2002/12/19 09:17:01 wiz Exp $
+.\"	$NetBSD: install.1,v 1.34 2002/12/22 10:15:17 lukem Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)install.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd December 19, 2002
+.Dd December 21, 2002
 .Dt INSTALL 1
 .Os
 .Sh NAME
@@ -44,6 +44,9 @@
 .Op Fl Ubcprs
 .Bk -words
 .Op Fl B Ar suffix
+.Ek
+.Bk -words
+.Op Fl D Ar destdir
 .Ek
 .Bk -words
 .Op Fl f Ar flags
@@ -82,6 +85,9 @@
 .Op Fl B Ar suffix
 .Ek
 .Bk -words
+.Op Fl D Ar destdir
+.Ek
+.Bk -words
 .Op Fl f Ar flags
 .Ek
 .Bk -words
@@ -116,6 +122,9 @@
 .Nm ""
 .Fl d
 .Op Fl Up
+.Bk -words
+.Op Fl D Ar destdir
+.Ek
 .Bk -words
 .Op Fl M Ar metalog
 .Ek
@@ -206,6 +215,17 @@ where it deletes the original file after creating the target.
 .It Fl d
 Create directories.
 Missing parent directories are created as required.
+.It Fl D Ar destdir
+Specify the
+.Ev DESTDIR
+(top of the file hierarchy) that the items are installed in to.
+If
+.Fl M Ar metalog
+is in use, a leading string of
+.Dq Ar destdir
+will removed from the file names logged to the
+.Ar metalog .
+This option does not affect where the actual files are installed.
 .It Fl f Ar flags
 Specify the target's file flags.
 (See
