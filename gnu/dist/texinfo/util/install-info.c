@@ -1,7 +1,10 @@
-/* install-info -- create Info directory entry(ies) for an Info file.
-   $Id: install-info.c,v 1.3 2001/07/25 16:46:19 assar Exp $
+/*	$NetBSD: install-info.c,v 1.4 2003/01/17 15:25:56 wiz Exp $	*/
 
-   Copyright (C) 1996, 97, 98, 99 Free Software Foundation, Inc.
+/* install-info -- create Info directory entry(ies) for an Info file.
+   Id: install-info.c,v 1.4 2002/11/05 19:32:33 karl Exp
+
+   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -119,6 +122,7 @@ struct option longopts[] =
   { "dir-file",  required_argument, NULL, 'd' },
   { "entry",     required_argument, NULL, 'e' },
   { "help",      no_argument, NULL, 'h' },
+  { "infodir",   required_argument, NULL, 'D' },
   { "info-dir",  required_argument, NULL, 'D' },
   { "info-file", required_argument, NULL, 'i' },
   { "item",      required_argument, NULL, 'e' },
@@ -173,7 +177,7 @@ xmalloc (size)
   extern void *malloc ();
   void *result = malloc (size);
   if (result == NULL)
-    fatal (_("virtual memory exhausted"), 0);
+    fatal (_("virtual memory exhausted"), 0, 0);
   return result;
 }
 
@@ -186,7 +190,7 @@ xrealloc (obj, size)
   extern void *realloc ();
   void *result = realloc (obj, size);
   if (result == NULL)
-    fatal (_("virtual memory exhausted"), 0);
+    fatal (_("virtual memory exhausted"), 0, 0);
   return result;
 }
 
@@ -230,7 +234,7 @@ pfatal_with_name (name)
      char *name;
 {
   char *s = concat ("", strerror (errno), _(" for %s"));
-  fatal (s, name);
+  fatal (s, name, 0);
 }
 
 /* Given the full text of a menu entry, null terminated,
@@ -309,6 +313,11 @@ strip_info_suffix (fname)
   if (len > 3 && FILENAME_CMP (ret + len - 3, ".gz") == 0)
     {
       len -= 3;
+      ret[len] = 0;
+    }
+  else if (len > 4 && FILENAME_CMP (ret + len - 4, ".bz2") == 0)
+    {
+      len -= 4;
       ret[len] = 0;
     }
 
@@ -416,10 +425,12 @@ Options:\n\
                      If you don't specify any sections, they are determined\n\
                      from information in the Info file itself.\n\
  --version         display version information and exit.\n\
-\n\
+"), progname);
+
+  puts (_("\n\
 Email bug reports to bug-texinfo@gnu.org,\n\
 general questions and discussion to help-texinfo@gnu.org.\n\
-"), progname);
+Texinfo home page: http://www.gnu.org/software/texinfo/"));
 }
 
 
@@ -506,6 +517,13 @@ open_possibly_compressed_file (filename, create_callback,
     {
       *opened_filename = concat (filename, ".gz", "");
       f = fopen (*opened_filename, FOPEN_RBIN);
+  if (!f)
+    {
+      free (*opened_filename);
+      *opened_filename = concat (filename, ".bz2", "");
+      f = fopen (*opened_filename, FOPEN_RBIN);
+    }
+
 #ifdef __MSDOS__
       if (!f)
         {
@@ -546,7 +564,7 @@ open_possibly_compressed_file (filename, create_callback,
       /* Empty files don't set errno, so we get something like
          "install-info: No error for foo", which is confusing.  */
       if (nread == 0)
-        fatal (_("%s: empty file"), *opened_filename);
+        fatal (_("%s: empty file"), *opened_filename, 0);
       pfatal_with_name (*opened_filename);
     }
 
@@ -560,6 +578,18 @@ open_possibly_compressed_file (filename, create_callback,
     *compression_program = "gzip.exe";
 #else
     *compression_program = "gzip";
+#endif
+  else if(data[0] == 'B' && data[1] == 'Z' && data[2] == 'h')
+#ifndef STRIP_DOT_EXE
+    *compression_program = "bzip2.exe";
+#else
+    *compression_program = "bzip2";
+#endif
+  else if(data[0] == 'B' && data[1] == 'Z' && data[2] == '0')
+#ifndef STRIP_DOT_EXE
+    *compression_program = "bzip.exe";
+#else
+    *compression_program = "bzip";
 #endif
   else
     *compression_program = NULL;
@@ -861,7 +891,7 @@ parse_input (lines, nlines, sections, entries)
               reset_tail = 1;
 
               if (start_of_this_entry != 0)
-                fatal (_("START-INFO-DIR-ENTRY without matching END-INFO-DIR-ENTRY"));
+                fatal (_("START-INFO-DIR-ENTRY without matching END-INFO-DIR-ENTRY"), 0, 0);
               start_of_this_entry = lines[i + 1].start;
             }
           else if (start_of_this_entry)
@@ -896,12 +926,13 @@ parse_input (lines, nlines, sections, entries)
               else if (!strncmp ("END-INFO-DIR-ENTRY",
                                  lines[i].start, lines[i].size)
                        && sizeof ("END-INFO-DIR-ENTRY") - 1 == lines[i].size)
-                fatal (_("END-INFO-DIR-ENTRY without matching START-INFO-DIR-ENTRY"));
+                fatal (_("END-INFO-DIR-ENTRY without matching START-INFO-DIR-ENTRY"), 0, 0);
             }
         }
     }
   if (start_of_this_entry != 0)
-    fatal (_("START-INFO-DIR-ENTRY without matching END-INFO-DIR-ENTRY"));
+    fatal (_("START-INFO-DIR-ENTRY without matching END-INFO-DIR-ENTRY"),
+           0, 0);
 
   /* If we ignored the INFO-DIR-ENTRY directives, we need now go back
      and plug the names of all the sections we found into every
@@ -1220,11 +1251,11 @@ main (argc, argv)
         case 'V':
           printf ("install-info (GNU %s) %s\n", PACKAGE, VERSION);
           puts ("");
-	  printf (_("Copyright (C) %s Free Software Foundation, Inc.\n\
+          printf (_("Copyright (C) %s Free Software Foundation, Inc.\n\
 There is NO warranty.  You may redistribute this software\n\
 under the terms of the GNU General Public License.\n\
 For more information about these matters, see the files named COPYING.\n"),
-		  "1999");
+                  "2002");
           xexit (0);
 
         default:
@@ -1240,13 +1271,14 @@ For more information about these matters, see the files named COPYING.\n"),
       else if (dirfile == 0)
         dirfile = argv[optind];
       else
-        error (_("excess command line argument `%s'"), argv[optind]);
+        error (_("excess command line argument `%s'"), argv[optind], 0);
     }
 
   if (!infile)
-    fatal (_("No input file specified; try --help for more information."));
+    fatal (_("No input file specified; try --help for more information."),
+           0, 0);
   if (!dirfile)
-    fatal (_("No dir file specified; try --help for more information."));
+    fatal (_("No dir file specified; try --help for more information."), 0, 0);
 
   /* Read the Info file and parse it into lines, unless we're deleting.  */
   if (!delete_flag)
@@ -1268,7 +1300,7 @@ For more information about these matters, see the files named COPYING.\n"),
              something an installer should have to correct (it's a
              problem for the maintainer), and there's no need to cause
              subsequent parts of `make install' to fail.  */
-          warning (_("no info dir entry in `%s'"), infile);
+          warning (_("no info dir entry in `%s'"), infile, 0);
           xexit (0);
         }
 
@@ -1311,7 +1343,7 @@ For more information about these matters, see the files named COPYING.\n"),
     char *infile_basename = infile + strlen (infile);
 
     if (HAVE_DRIVE (infile))
-      infile += 2;	/* get past the drive spec X: */
+      infile += 2;      /* get past the drive spec X: */
 
     while (infile_basename > infile && !IS_SLASH (infile_basename[-1]))
       infile_basename--;
@@ -1406,7 +1438,7 @@ For more information about these matters, see the files named COPYING.\n"),
     }
 
   if (delete_flag && !something_deleted && !quiet_flag)
-    warning (_("no entries found for `%s'; nothing deleted"), infile);
+    warning (_("no entries found for `%s'; nothing deleted"), infile, 0);
 
   output_dirfile (opened_dirfilename, dir_nlines, dir_lines, n_entries_to_add,
                   entries_to_add, input_sections, compression_program);
