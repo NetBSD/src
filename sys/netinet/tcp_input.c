@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.89 1999/07/22 12:56:56 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.90 1999/08/11 03:02:18 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1100,9 +1100,9 @@ after_listen:
 				 * this is a pure ack for outstanding data.
 				 */
 				++tcpstat.tcps_predack;
-				if (opti.ts_present)
+				if (opti.ts_present && opti.ts_ecr)
 					tcp_xmit_timer(tp,
-					    tcp_now-opti.ts_ecr+1);
+					    tcp_now - opti.ts_ecr + 1);
 				else if (tp->t_rtt &&
 				    SEQ_GT(th->th_ack, tp->t_rtseq))
 					tcp_xmit_timer(tp, tp->t_rtt);
@@ -1648,7 +1648,7 @@ after_listen:
 		 * timer backoff (cf., Phil Karn's retransmit alg.).
 		 * Recompute the initial retransmit timer.
 		 */
-		if (opti.ts_present)
+		if (opti.ts_present && opti.ts_ecr)
 			tcp_xmit_timer(tp, tcp_now - opti.ts_ecr + 1);
 		else if (tp->t_rtt && SEQ_GT(th->th_ack, tp->t_rtseq))
 			tcp_xmit_timer(tp,tp->t_rtt);
