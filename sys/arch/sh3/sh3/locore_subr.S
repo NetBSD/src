@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.9 2002/04/28 17:10:38 uch Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.10 2002/05/09 12:28:08 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,18 +33,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_cputype.h"
-
 #include "assym.h"
 
 #include <sys/syscall.h>	/* SYS___sigreturn14, SYS_exit */
 #include <sh3/asm.h>
 #include <sh3/locore.h>
-#include <sh3/mmu_sh3.h>	/* TTB */
-#include <sh3/mmu_sh4.h>	/* TTB */
 #include <sh3/param.h>		/* UPAGES */
+#include <sh3/mmu_sh3.h>
+#include <sh3/mmu_sh4.h>
 
 	.text
 	.align 5	/* align cache line size (32B) */
@@ -54,9 +53,10 @@
  */
 ENTRY(cpu_switch)
 	/* Save current process's context to switchframe */
-	mov.l	_L.P_ADDR, r0
+	mov.l	_L.SF,	r0
 	mov.l	@(r0, r4), r1
 	add	#SF_SIZE, r1
+	stc.l	r7_bank,@-r1
 	stc.l	sr,	@-r1
 	stc.l	r6_bank,@-r1
 	sts.l	pr,	@-r1
@@ -79,27 +79,31 @@ ENTRY(cpu_switch)
 	bt/s	1f
 	 mov	r0,	r4	/* new proc */
 
-	/* Set curpcb */
-	mov.l	_L.P_ADDR, r0
-	mov.l	@(r0, r4), r1
-	mov.l	_L.curpcb, r0
-	mov.l	r1,	@r0	/* curpcb = curproc->p_addr */
+	/* Setup kernel stack */
+	mov.l	_L.SF,	r0
+	mov.l	@(r0, r4), r1		/* switch frame */
+	mov.l	@(SF_R7_BANK, r1), r0	/* stack top */
+	mov.l	@(SF_R6_BANK, r1), r2	/* current frame */
+	mov.l	@(SF_R15, r1), r3	/* current stack */
+	/* During kernel stack switching, all interrupts are disabled. */
+	__EXCEPTION_BLOCK(r1, r5)
+	/* switch to new kernel stack */
+	ldc	r0,	r7_bank
+	ldc	r2,	r6_bank
+	mov	r3,	r15
 
-	/* Switch address space. */
-	mov	#PCB_PAGEDIRREG, r0
-	mov.l	@(r0, r1), r0
-	MOV	(TTB,	r1)
-	mov.l	r0,	@r1	/* TTB = curpcb->pageDirReg */
-
-	/* Wire kernel stack */
+	/* Wire u-area */
 	MOV	(switch_resume, r0)
 	jsr	@r0
-	 nop
+	 mov	r4,	r8	/* save new proc */
+	mov	r8,	r4
+	__EXCEPTION_UNBLOCK(r0, r1)
+	/* Now OK to use kernel stack. */
 
 	/* Restore new process's context from switchframe */
-1:	mov.l	_L.curpcb, r1
-	mov.l	@r1,	r1
-	mov.l	@r1+,	r15
+1:	mov.l	_L.SF,	r0
+	mov.l	@(r0, r4), r1
+	add	#4,	r1		/* r15 already restored */
 	mov.l	@r1+,	r14
 	mov.l	@r1+,	r13
 	mov.l	@r1+,	r12
@@ -108,99 +112,45 @@ ENTRY(cpu_switch)
 	mov.l	@r1+,	r9
 	mov.l	@r1+,	r8
 	lds.l	@r1+,	pr
-	ldc.l	@r1+,	r6_bank	/* current fp */
-	mov.l	@r1+,	r0
-	ldc.l	@r1+,	r7_bank	/* kernel stack top */
-	ldc	r0,	sr
+	add	#4,	r1		/* r6_bank already restored */
+	ldc.l	@r1+,	sr
 	rts
 	 nop
 	.align	2
-_L.P_ADDR:		.long	P_ADDR
+_L.SF:			.long	(P_MD + MD_PCB)
 _L.cpu_switch_search:	.long	_C_LABEL(cpu_switch_search)
-_L.curpcb:		.long	_C_LABEL(curpcb)
-REG_SYMBOL(TTB)
 FUNC_SYMBOL(switch_resume)
 
 #ifdef SH3
 /*
  * void sh3_switch_resume(sturct proc *p)
- *	Zero clear all TLB. and
- *	Set current kernel stack PTE table.
+ *	Set current u-area PTE array to curupte.
+ *	No need to flush any entries. it is depended on u-area mapping is
+ *	wired, and its mapping never cause modified/reference fault.
+ *	u-area TLB fault is only covered by TLB miss exception.
+ *	When the situation that "VPN match but not Valid" occur, SH3 jump to
+ *	"generic exception" handler instead of TLB miss exception.
+ *	But NetBSD/sh3 code doesn't handle it. As the result, it causes
+ *	hard reset. (never can access kernel stack).
  */
 NENTRY(sh3_switch_resume)
 	mov.l	_L.UPTE, r0
 	add	r4,	r0
 	mov.l	_L.curupte, r1
 	mov.l	r0,	@r1
-
-	mov.l	_L.MMUAA, r7
-	mov.l	_L.MMUDA, r6
-	mov	#3,	r5	/* max way # */
-2:	mov	r5,	r3
-	shll8	r3
-	mov	#31,	r4	/* max entry # */
-1:	mov	r4,	r2
-	shll8	r2
-	shll2	r2
-	shll2	r2
-	or	r3,	r2	/* r2 = way|entry */
-	mov	r7,	r1
-	or	r2,	r1	/* Address array */
-	xor	r0,	r0
-	mov.l	r0,	@r1
-	mov	r6,	r1
-	or	r2,	r1	/* Data array */
-	mov.l	r0,	@r1
-	cmp/gt	r0,	r4
-	bt/s	1b
-	 add	#-1,	r4
-	cmp/gt	r0,	r5
-	bt/s	2b
-	 add	#-1,	r5
 	rts
 	 nop
 	.align	2
-_L.MMUCR:		.long	SH3_MMUCR
-_L.MMUAA:		.long	SH3_MMUAA
-_L.MMUDA:		.long	SH3_MMUDA
 _L.curupte:		.long	_C_LABEL(curupte)
 #endif /* SH3 */
 
 #ifdef SH4
 /*
  * void sh4_switch_resume(sturct proc *p)
- *	Invalidate all TLB
- *	Wire kernel stack.
+ *	Wire u-area. invalidate TLB entry for kernel stack to prevent
+ *	TLB multiple hit.
  */
 NENTRY(sh4_switch_resume)
-	/* Invalidate ITLB */
-	mov.l	_L.4_ITLB_AA, r0
-	mov	#1,	r2
-	xor	r1,	r1
-	mov.l	r1,	@r0
-	shll8	r2
-	add	r2,	r0
-	mov.l	r1,	@r0
-	add	r2,	r0
-	mov.l	r1,	@r0
-	add	r2,	r0
-	mov.l	r1,	@r0
-
-	/* Invalidate UTLB */
-	mov.l	_L.4_MMUCR, r0
-	mov.l	@r0,	r1
-	mov.l	_L.4_MMUCR_MASK, r2
-	and	r2,	r1
-	mov	#4,	r2	/* SH4_MMUCR_TI */
-	or	r2,	r1
-	mov.l	r1,	@r0
-
-	/*
-	 * Wire u-area
-	 * for (i = 0; i < UPAGES * 2; i++)
-	 *	_reg_write_4(p->p_md.md_upte[i].addr, p->p_md.md_upte[i].data);
-	 * if u-area is P1, nothing to do.
-	 */
 	mov.l	_L.UPTE,r0
 	add	r0,	r4	/* p->p_md.md_upte */
 	mov	#UPAGES,r3
@@ -208,10 +158,35 @@ NENTRY(sh4_switch_resume)
 	mov.l	@r4,	r0	/* if (p->p_md.md_upte[0].addr == 0) return; */
 	tst	r0,	r0
 	bt	2f
-1:	/* Address array */
+
+	/* Save old ASID and set ASID to zero */
+	xor	r0,	r0
+	mov.l	_L.4_PTEH, r1
+	mov.l	@r1,	r7
+	mov.l	r0,	@r1
+
+	mov.l	_L.VPN_MASK, r6
+	mov.l	_L.4_UTLB_AA_A, r5
+
+	/* TLB address array must be accessed via P2. Setup jump address. */
+	mova	1f,	r0
+	mov.l	_L.P2BASE, r1
+	or	r1,	r0
+	jmp	@r0		/* run P2 */
+	 nop
+
+	/* Probe VPN match TLB entry and invalidate it. */
+	.align	2		/* mova target must be 4byte alignment */
+1:	mov.l	@(4, r4), r0
+	and	r6,	r0
+	mov.l	r0,	@r5	/* clear D, V */
+
+	/* Wire u-area TLB entry */
+	/* Address array */
 	mov.l	@r4+,	r0	/* addr */
 	mov.l	@r4+,	r1	/* data */
 	mov.l	r1,	@r0	/* *addr = data */
+
 	/* Data array */
 	mov.l	@r4+,	r0	/* addr */
 	mov.l	@r4+,	r1	/* data */
@@ -219,12 +194,22 @@ NENTRY(sh4_switch_resume)
 	cmp/eq	r2,	r3
 	bf/s	1b
 	 add	#1,	r2
-2:	rts
+
+	/* restore ASID */
+	mov.l	_L.4_PTEH, r0
+	mov.l	r7,	@r0
+	mova	2f,	r0
+	jmp	@r0		/* run P1 */
 	 nop
 	.align	2
+2:	rts			/* mova target must be 4byte alignment */
+	 nop
+	.align	2
+_L.4_PTEH:		.long	SH4_PTEH
+_L.4_UTLB_AA_A:		.long	(SH4_UTLB_AA | SH4_UTLB_A)
 _L.4_ITLB_AA:		.long	SH4_ITLB_AA
-_L.4_MMUCR:		.long	SH4_MMUCR
-_L.4_MMUCR_MASK:	.long	SH4_MMUCR_MASK
+_L.VPN_MASK:		.long	0xfffff000
+_L.P2BASE:		.long	0xa0000000
 #endif /* SH4 */
 _L.UPTE:		.long	(P_MD + MD_UPTE)
 
@@ -344,7 +329,7 @@ NENTRY(_cpu_spin)
 /*
  * proc_trapmpoline:
  *	Call the service funciton with one argument specified by the r12 and r11
- *	respectively.
+ *	respectively. setted by cpu_fork().
  */
 NENTRY(proc_trampoline)
 	jsr	@r12
@@ -381,6 +366,7 @@ _C_LABEL(esigcode):
  */
 ENTRY(savectx)
 	add	#SF_SIZE, r4
+	stc.l	r7_bank,@-r4
 	stc.l	sr,	@-r4
 	stc.l	r6_bank,@-r4
 	sts.l	pr,	@-r4

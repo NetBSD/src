@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.3 2002/03/17 14:02:04 uch Exp $	*/
+/*	$NetBSD: proc.h,v 1.4 2002/05/09 12:28:08 uch Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -50,8 +50,8 @@ struct md_upte {
 
 struct mdproc {
 	struct trapframe *md_regs;	/* user context */
+	struct pcb *md_pcb;		/* pcb access address */
 	int md_flags;			/* machine-dependent flags */
-	struct user *md_p3;		/* P3 address of p_addr */
 	/* u-area PTE: *2 .. SH4 data/address data array access */
 	struct md_upte md_upte[UPAGES * 2];
 	__volatile int md_astpending;	/* AST pending on return to userland */
@@ -62,7 +62,7 @@ struct mdproc {
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-vsize_t sh_proc0_init(vaddr_t, paddr_t, paddr_t);
+void sh_proc0_init(void);
 extern struct md_upte *curupte;	/* SH3 wired u-area hack */
 #endif /* _LOCORE */
 #endif /* _KERNEL */
