@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.32 2001/04/10 12:59:32 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.33 2001/04/25 03:31:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -148,6 +148,8 @@ int	_i386_memio_map __P((bus_space_tag_t t, bus_addr_t addr,
 
 void	i386_memio_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
+void	_i386_memio_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
+	    bus_size_t size, bus_addr_t *));
 
 #define bus_space_unmap(t, h, s)					\
 	i386_memio_unmap((t), (h), (s))

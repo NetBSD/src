@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.7 2001/04/24 04:30:58 thorpej Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.8 2001/04/25 03:31:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -317,6 +317,69 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 	pmap_update();
  
 	return 0;
+}
+
+/*
+ * void _i386_memio_unmap(bus_space_tag bst, bus_space_handle bsh,
+ *                        bus_size_t size, bus_addr_t *adrp)
+ *
+ *   This function unmaps memory- or io-space mapped by the function
+ *   _i386_memio_map().  This function works nearly as same as
+ *   i386_memio_unmap(), but this function does not ask kernel
+ *   built-in extents and returns physical address of the bus space,
+ *   for the convenience of the extra extent manager.
+ */
+void
+_i386_memio_unmap(t, bsh, size, adrp)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+	bus_addr_t *adrp;
+{
+	u_long va, endva;
+	bus_addr_t bpa;
+
+	/*
+	 * Find the correct extent and bus physical address.
+	 */
+	if (t == I386_BUS_SPACE_IO) {
+		bpa = bsh;
+	} else if (t == I386_BUS_SPACE_MEM) {
+		if (bsh >= atdevbase && (bsh + size) <= (atdevbase + IOM_SIZE)) {
+			bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
+		} else {
+
+			va = i386_trunc_page(bsh);
+			endva = i386_round_page(bsh + size);
+
+#ifdef DIAGNOSTIC
+			if (endva <= va) {
+				panic("_i386_memio_unmap: overflow");
+			}
+#endif
+
+#if __NetBSD_Version__ > 104050000
+			if (pmap_extract(pmap_kernel(), va, &bpa) == FALSE) {
+				panic("_i386_memio_unmap:"
+				    "i386/rbus_machdep.c wrong virtual address");
+			}
+			bpa += (bsh & PGOFSET);
+#else
+			bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
+#endif
+
+			/*
+			 * Free the kernel virtual mapping.
+			 */
+			uvm_km_free(kernel_map, va, endva - va);
+		}
+	} else {
+		panic("_i386_memio_unmap: bad bus space tag");
+	}
+
+	if (adrp != NULL) {
+		*adrp = bpa;
+	}
 }
 
 void
