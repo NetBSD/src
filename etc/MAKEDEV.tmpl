@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.39 2005/03/11 20:55:10 bouyer Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.40 2005/03/12 10:26:45 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -882,12 +882,14 @@ bpf)
 	lndev bpf bpf0
 	;;
 
-tun*|joy*)
-	case $i in
-	joy*) name=joy;	unit=${i#joy};	chr=%joy_chr%;;
-	tun*) name=tun;	unit=${i#tun};	chr=%tun_chr%;;
-	esac
-	mkdev $name$unit c $chr $unit
+tun*)
+	unit=${i#tun}
+	mkdev tun$unit c %tun_chr% $unit
+	;;
+
+joy*)
+	unit=${i#joy}
+	mkdev joy$unit c %joy_chr% $unit
 	;;
 
 ipl)
