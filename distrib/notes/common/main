@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.91 2000/11/13 01:22:39 hubertf Exp $
+.\"	$NetBSD: main,v 1.92 2000/11/13 23:01:36 hubertf Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -265,6 +265,12 @@ security).
 .It
 Disable various services by default, and set the default options for
 disabled daemons to a higher level of logging.
+.It 
+Several code audits were performed, the last one identifying and disabling 
+places where format strings were used in an
+unsafe way, allowing arbitrary data enterred by (possibly) mallicious
+users to overwrite application code, and leading from Denial of
+Service attacks to compromised system.
 .bullet)
 .
 .Ss2 System administration and user tools
