@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.3 2003/09/12 11:21:00 itojun Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.4 2003/10/06 22:05:15 tls Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.3 2003/09/12 11:21:00 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.4 2003/10/06 22:05:15 tls Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -74,8 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.3 2003/09/12 11:21:00 itojun Exp $");
 #include <netinet6/ip6_ecn.h>
 #endif
 
-#include <netkey/key.h>
-#include <netkey/key_debug.h>
+#include <netipsec/key.h>
+#include <netipsec/key_debug.h>
 #include <netipsec/ipsec_osdep.h>
 
 #include <opencrypto/cryptodev.h>
@@ -108,7 +108,7 @@ SYSCTL_INT(_net_inet_ah, OID_AUTO,
 SYSCTL_STRUCT(_net_inet_ah, IPSECCTL_STATS,
 	stats,		CTLFLAG_RD,	&ahstat,	ahstat, "");
 
-#endif __FreeBSD__
+#endif /* __FreeBSD__ */
 
 static unsigned char ipseczeroes[256];	/* larger than an ip6 extension hdr */
 
