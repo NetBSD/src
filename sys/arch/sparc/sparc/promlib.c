@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.33 2004/03/23 11:40:29 martin Exp $ */
+/*	$NetBSD: promlib.c,v 1.34 2004/03/23 15:29:56 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.33 2004/03/23 11:40:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.34 2004/03/23 15:29:56 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -1093,7 +1093,6 @@ read_idprom:
 	memcpy(cp, idp->id_ether, 6);
 }
 
-#ifndef _LP64
 /*
  * The integer property "get-unum" on the root device is the address
  * of a callable function in the PROM that takes a physical address
@@ -1108,29 +1107,25 @@ static	char *(*unum)(u_int,u_int);
 
 	switch (prom_version()) {
 	case PROM_OLDMON:
-	case PROM_OBP_V0:
 	case PROM_OPENFIRM:
+		/* to do */
 	default:
-		return (unk);
+		break;
+	case PROM_OBP_V0:
 	case PROM_OBP_V2:
 	case PROM_OBP_V3:
-		break;
+		if (unum == NULL)
+			unum = (char *(*)(u_int,u_int))(u_long)
+				prom_getpropint(prom_findroot(), "get-unum", 0);
+
+		if (unum == NULL || (str = unum(phys_lo, phys_hi)) == NULL)
+			break;
+
+		return (str);
 	}
 
-	if (unum == 0)
-		unum = (char *(*)(u_int,u_int))
-			prom_getpropint(prom_findroot(), "get-unum", 0);
-
-	if (unum == NULL)
-		return (unk);
-
-	str = unum(phys_lo, phys_hi);
-	if (str == NULL)
-		return (unk);
-
-	return (str);
+	return (unk);
 }
-#endif
 
 static void prom_init_oldmon(void);
 static void prom_init_obp(void);
