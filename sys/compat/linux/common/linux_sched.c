@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.7 2000/08/25 01:04:12 thorpej Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.8 2001/11/13 02:08:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * Linux compatibility module. Try to deal with scheduler related syscalls.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.8 2001/11/13 02:08:58 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.4 2001/10/28 04:47:27 christos Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.5 2001/11/13 02:09:02 lukem Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.5 2001/11/13 02:09:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

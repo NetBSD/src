@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.6 2001/05/15 15:20:29 lukem Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.7 2001/11/13 02:08:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.7 2001/11/13 02:08:39 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

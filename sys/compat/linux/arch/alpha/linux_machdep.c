@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.18 2001/09/30 02:36:42 simonb Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.19 2001/11/13 02:08:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  *	written by Frank van der Linden
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.19 2001/11/13 02:08:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

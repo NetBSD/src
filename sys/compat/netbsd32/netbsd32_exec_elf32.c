@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.7 2001/08/25 15:06:03 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.8 2001/11/13 02:09:05 lukem Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.8 2001/11/13 02:09:05 lukem Exp $");
 
 #define	ELFSIZE		32
 

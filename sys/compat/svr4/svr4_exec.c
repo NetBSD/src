@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.46 2001/09/18 19:36:41 jdolecek Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.47 2001/11/13 02:09:21 lukem Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.47 2001/11/13 02:09:21 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

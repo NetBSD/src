@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_filio.c,v 1.7 1999/09/07 18:20:18 christos Exp $	 */
+/*	$NetBSD: svr4_filio.c,v 1.8 2001/11/13 02:09:22 lukem Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.8 2001/11/13 02:09:22 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

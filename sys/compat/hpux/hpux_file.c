@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.17 2001/06/14 20:32:42 thorpej Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.18 2001/11/13 02:08:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,6 +82,9 @@
  * File-related routines for HP-UX binary compatibility.  Partially
  * modeled after sys/compat/linux/linux_file.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.18 2001/11/13 02:08:14 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

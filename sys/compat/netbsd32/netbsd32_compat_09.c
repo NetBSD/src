@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_09.c,v 1.6 2000/11/30 19:19:43 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_compat_09.c,v 1.7 2001/11/13 02:09:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.7 2001/11/13 02:09:03 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
