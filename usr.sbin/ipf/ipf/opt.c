@@ -1,3 +1,5 @@
+/*	$NetBSD: opt.c,v 1.1.1.2 1997/03/27 15:13:58 darrenr Exp $	*/
+
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -22,7 +24,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)opt.c	1.8 4/10/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: opt.c,v 1.1.1.1 1997/01/05 13:06:38 mrg Exp $";
+static	char	rcsid[] = "$Id: opt.c,v 1.1.1.2 1997/03/27 15:13:58 darrenr Exp $";
 #endif
 
 extern	int	opts;
@@ -63,6 +65,7 @@ struct	ipopt_names	secclass[] = {
 	{ 0, 0, 0, NULL }	/* must be last */
 };
 
+static	u_char	seclevel __P((char *));
 
 static u_char seclevel(slevel)
 char *slevel;

@@ -1,3 +1,5 @@
+/*	$NetBSD: ipf.h,v 1.1.1.2 1997/03/27 15:13:59 darrenr Exp $	*/
+
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -6,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ipf.h	1.12 6/5/96
- * $Id: ipf.h,v 1.1.1.1 1997/01/05 13:06:38 mrg Exp $
+ * $Id: ipf.h,v 1.1.1.2 1997/03/27 15:13:59 darrenr Exp $
  */
 
 #ifndef	SOLARIS
@@ -29,10 +31,22 @@
 #define	OPT_SHOWLINENO	0x04000
 #define	OPT_PRINTFR	0x08000
 #define	OPT_ZERORULEST	0x10000
+#define	OPT_SAVEOUT	0x20000
 
-extern	struct	frentry	*parse();
+#ifndef __P
+# ifdef	__STDC__
+#  define	__P(x)	x
+# else
+#  define	__P(x)	()
+# endif
+#endif
 
-extern	void	printfr(), binprint(), initparse();
+extern	struct	frentry	*parse __P((char *));
+
+extern	void	printfr __P((struct frentry *));
+extern	void	binprint __P((struct frentry *)), initparse __P((void));
+extern	u_short	portnum __P((char *));
+
 
 #if defined(__SVR4) || defined(__svr4__)
 #define	index	strchr
@@ -48,10 +62,12 @@ struct	ipopt_names	{
 };
 
 
-extern	u_long	hostnum(), optname();
-extern	void	printpacket();
+extern	u_long	buildopts __P((char *, char *));
+extern	u_long	hostnum __P((char *, int *));
+extern	u_long	optname __P((char ***, u_short *));
+extern	void	printpacket __P((struct ip *));
 #if SOLARIS
-extern	int	inet_aton();
+extern	int	inet_aton __P((const char *, struct in_addr *));
 #endif
 
 #ifdef	sun
@@ -65,6 +81,3 @@ extern	char	*sys_errlist[];
 #define	MIN(a,b)	((a) > (b) ? (b) : (a))
 #endif
 
-#include "pathnames.h"
-
-#define IPL_NAME _PATH_IPL
