@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.52 2004/05/19 23:37:41 abs Exp $	*/
+/*	$NetBSD: stand.h,v 1.53 2004/06/30 13:59:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -60,6 +60,9 @@
  *
  *	@(#)stand.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _LIBSA_STAND_H_
+#define	_LIBSA_STAND_H_
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
@@ -219,7 +222,7 @@ void	*alloc(unsigned int);
 void	free(void *, unsigned int);
 struct	disklabel;
 char	*getdisklabel(const char *, struct disklabel *);
-int	dkcksum(struct disklabel *);
+int	dkcksum(const struct disklabel *);
 
 void	printf(const char *, ...);
 int	sprintf(char *, const char *, ...);
@@ -278,3 +281,5 @@ int	oclose(int);
 ssize_t	oread(int, void *, size_t);
 off_t	olseek(int, off_t, int);
 #endif
+
+#endif /* _LIBSA_STAND_H_ */
