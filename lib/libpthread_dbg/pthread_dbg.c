@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.1.2.2 2002/08/06 06:10:59 thorpej Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.1.2.3 2002/08/06 20:05:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -37,6 +37,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
