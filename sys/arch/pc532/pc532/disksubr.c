@@ -32,7 +32,7 @@
  *
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  *	
- *	$Id: disksubr.c,v 1.2 1994/01/14 08:09:42 phil Exp $
+ *	$Id: disksubr.c,v 1.3 1994/03/10 21:39:58 phil Exp $
  */
 
 #include "param.h"
@@ -201,20 +201,10 @@ int
 bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 {
 	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
-	int labelsect = lp->d_partitions[0].p_offset;
 	int maxsz = p->p_size,
 		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
-	/* overwriting disk label ? */
-	/* XXX should also protect bootstrap in first 8K */
-        if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
-#if LABELSECTOR != 0
-            bp->b_blkno + p->p_offset + sz > LABELSECTOR + labelsect &&
-#endif
-            (bp->b_flags & B_READ) == 0 && wlabel == 0) {
-                bp->b_error = EROFS;
-                goto bad;
-        }
+	/* We will let the disklabel be overwritten!!!! */
 
 	/* beyond partition? */
         if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
