@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.18 2000/03/18 23:53:24 erh Exp $
+	$NetBSD: syscalls.master,v 1.19 2000/03/20 00:50:14 erh Exp $
 ;
 ; XXX XAX lib/libc/sys/reboot.2 needs updating
 ;
@@ -44,7 +44,6 @@
 ;		make sure linux_foo() matches expected prototypes in .c files.
 ;		kill not used functions.  (ifdef the actual code)
 ;		fix getfsuid in linux_misc.c
-;		fix clone in linux_sched.c
 ;		make linux_sys_sigreturn in linux_machdep.c use frame.extramask
 ;
 ; NOT USED = This syscall is not really used in Linux, except in its
@@ -469,8 +468,7 @@
 310	UNIMPL		syslog
 311	STD		{ int linux_sys_reboot(int magic1, int magic2, \
 			    int cmd, void *arg); }
-; XXX XXX XAX need machine dependant sys_clone
-312	UNIMPL		{ int linux_sys_clone(int flags, void *stack); }
+312	STD		{ int linux_sys_clone(int flags, void *stack); }
 ; XXX XAX does alpha linux really have a.out exec?
 #ifdef EXEC_AOUT
 313	STD		{ int linux_sys_uselib(char *path); }
