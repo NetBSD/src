@@ -1,6 +1,4 @@
 /*
- * modstat.c
- *
  * This is the loadable kernel module status display program.  The
  * interface is nearly identical to the SunOS 4.1.3 not because I
  * lack imagination but because I liked Sun's approach in this
@@ -43,11 +41,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modstat.c,v 1.2 1993/12/03 10:39:31 deraadt Exp $
+ *	$Id: modstat.c,v 1.3 1994/04/01 04:33:48 mycroft Exp $
  */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <err.h>
+#include <string.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
@@ -58,90 +58,18 @@
 #include <a.out.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+#include "pathnames.h"
 
-extern int	errno;	/* should be in errno.h*/
-
-
-#ifdef sun
-/* these are defined in stdlib.h for everything but sun*/
-extern char *optarg;
-extern int optind;
-#endif	/* sun*/
-
-#define	LKM_DEV		"/dev/lkm"
-
-
-extern int dostat();
-
-
+void
 usage()
 {
-	fprintf( stderr, "usage:\n");
-	fprintf( stderr,
-		 "modstat [-i <module id>] [-n <module name>]\n");
-	exit( 1);
+
+	fprintf(stderr, "usage:\n");
+	fprintf(stderr, "modstat [-i <module id>] [-n <module name>]\n");
+	exit(1);
 }
 
-
-main( ac, av)
-int	ac;
-char	*av[];
-{
-	int	devfd;
-	int	i;
-	int	ch;
-	int	err = 0;
-	int	modnum = -1;
-	char	*modname = NULL;
-
-	while( ( ch = getopt( ac, av, "i:n:")) != EOF) {
-		switch(ch) {
-		case 'i':	modnum = atoi( optarg);	break;	/* number*/
-		case 'n':	modname = optarg;	break;	/* name*/
-		case '?':	usage();
-		default:	printf( "default!\n");
-		}
-	}
-	ac -= optind;
-	av += optind;
-
-	if( ac != 0)
-		usage();
-
-
-	/*
-	 * Open the virtual device device driver for exclusive use (needed
-	 * to ioctl() to retrive the loaded module(s) status).
-	 */
-	if( ( devfd = open( LKM_DEV, O_RDONLY, 0)) == -1) {
-		perror( LKM_DEV);
-		exit( 2);
-	}
-
-	printf( "Type    Id  Off Loadaddr Size Info     Rev Module Name\n");
-
-	/*
-	 * Oneshot?
-	 */
-	if( modnum != -1 || modname != NULL) {
-		if( dostat( devfd, modnum, modname))
-			err = 3;
-		goto done;
-	}
-
-	/*
-	 * Start at 0 and work up until "EEXIST"
-	 */
- 	for( modnum = 0; dostat( devfd, modnum, NULL) < 2; modnum++)
- 		continue;
-
-done:
-	close( devfd);
-	exit( err);
-}
-
-
-static char	*type_names[] = {
+static char *type_names[] = {
 	"SYSCALL",
 	"VFS",
 	"DEV",
@@ -151,51 +79,114 @@ static char	*type_names[] = {
 };
 
 int
-dostat( devfd, modnum, modname)
-int	devfd;
-int	modnum;
-char	*modname;
+dostat(devfd, modnum, modname)
+	int devfd;
+	int modnum;
+	char *modname;
 {
 	struct lmc_stat	sbuf;
 
-	if( modname != NULL)
-		strcpy( sbuf.name, modname);
+	if (modname != NULL)
+		strcpy(sbuf.name, modname);
 
 	sbuf.id = modnum;
 
-	if( ioctl( devfd, LMSTAT, &sbuf) == -1) {
-		switch( errno) {
-		case EINVAL:		/* out of range*/
-			return( 2);
-		case ENOENT:		/* no such entry*/
-			return( 1);
-		default:		/* other error (EFAULT, etc)*/
-			perror( "LMSTAT");
-			return( 4);
+	if (ioctl(devfd, LMSTAT, &sbuf) == -1) {
+		switch (errno) {
+		case EINVAL:		/* out of range */
+			return 2;
+		case ENOENT:		/* no such entry */
+			return 1;
+		default:		/* other error (EFAULT, etc) */
+			warn("LMSTAT");
+			return 4;
 		}
 	}
 
 	/*
 	 * Decode this stat buffer...
 	 */
-	printf( "%-7s %3d %3d %08x %04x %8x %3d %s\n",
-		type_names[ sbuf.type],
-		sbuf.id,		/* module id*/
-		sbuf.offset,		/* offset into modtype struct*/
-		sbuf.area,		/* address module loaded at*/
-		sbuf.size,		/* size in pages(K)*/
-		sbuf.private,		/* kernel address of private area*/
-		sbuf.ver,		/* Version; always 1 for now*/
-		sbuf.name		/* name from private area*/
+	printf("%-7s %3d %3d %08x %04x %8x %3d %s\n",
+	    type_names[sbuf.type],
+	    sbuf.id,		/* module id */
+	    sbuf.offset,	/* offset into modtype struct */
+	    sbuf.area,		/* address module loaded at */
+	    sbuf.size,		/* size in pages(K) */
+	    sbuf.private,	/* kernel address of private area */
+	    sbuf.ver,		/* Version; always 1 for now */
+	    sbuf.name		/* name from private area */
 	);
 
 	/*
 	 * Done (success).
 	 */
-	return( 0);
+	return 0;
 }
 
+int devfd;
 
-/*
- * EOF -- This file has not been truncated.
- */
+void
+cleanup()
+{
+
+	close(devfd);
+}
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
+{
+	int c;
+	int modnum = -1;
+	char *modname = NULL;
+
+	while ((c = getopt(argc, argv, "i:n:")) != EOF) {
+		switch (c) {
+		case 'i':
+			modnum = atoi(optarg);
+			break;	/* number */
+		case 'n':
+			modname = optarg;
+			break;	/* name */
+		case '?':
+			usage();
+		default:
+			printf("default!\n");
+			break;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 0)
+		usage();
+
+	/*
+	 * Open the virtual device device driver for exclusive use (needed
+	 * to ioctl() to retrive the loaded module(s) status).
+	 */
+	if ((devfd = open(_PATH_LKM, O_RDONLY, 0)) == -1)
+		err(2, _PATH_LKM);
+
+	atexit(cleanup);
+
+	printf("Type    Id  Off Loadaddr Size Info     Rev Module Name\n");
+
+	/*
+	 * Oneshot?
+	 */
+	if (modnum != -1 || modname != NULL) {
+		if (dostat(devfd, modnum, modname))
+			exit(3);
+		exit(0);
+	}
+
+	/*
+	 * Start at 0 and work up until "EINVAL".
+	 */
+ 	for (modnum = 0; dostat(devfd, modnum, NULL) < 2; modnum++)
+ 		;
+
+	exit(0);
+}
