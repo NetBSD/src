@@ -1,13 +1,13 @@
-#	$Id: Makefile,v 1.3 1993/10/06 21:28:25 cgd Exp $
+#	$Id: Makefile,v 1.4 1995/02/24 02:07:59 mycroft Exp $
 
 # Define FSYNC_ALL to get slower but safer writes in case of crashes in
 # the middle of CVS/RCS changes
-CFLAGS += -DFSYNC_ALL
+CFLAGS+=-DFSYNC_ALL
 
-LIB     = rcs
-SRCS    = maketime.c partime.c rcsedit.c rcsfcmp.c rcsfnms.c rcsgen.c \
-	  rcskeep.c rcskeys.c rcslex.c rcsmap.c rcsrev.c rcssyn.c rcsutil.c \
-	  merger.c
+LIB=	rcs
+SRCS=	maketime.c merger.c partime.c rcsedit.c rcsfcmp.c rcsfnms.c rcsgen.c \
+	rcskeep.c rcskeys.c rcslex.c rcsmap.c rcsrev.c rcssyn.c rcstime.c \
+	rcsutil.c version.c
 
 NOPROFILE=noprofile
 NOPIC=nopic
