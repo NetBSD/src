@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.92 1999/02/17 02:43:14 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.93 1999/02/18 07:08:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -129,48 +129,49 @@ struct sbmode {
 	u_char	precision;
 	u_short	lowrate, highrate;
 	u_char	cmd;
+	u_char	halt, cont;
 	u_char	cmdchan;
 };
 static struct sbmode sbpmodes[] = {
- { SB_1,    1,  8,  4000, 22727, SB_DSP_WDMA      },
- { SB_20,   1,  8,  4000, 22727, SB_DSP_WDMA_LOOP },
- { SB_2x,   1,  8,  4000, 22727, SB_DSP_WDMA_LOOP },
- { SB_2x,   1,  8, 22727, 45454, SB_DSP_HS_OUTPUT },
- { SB_PRO,  1,  8,  4000, 22727, SB_DSP_WDMA_LOOP },
- { SB_PRO,  1,  8, 22727, 45454, SB_DSP_HS_OUTPUT },
- { SB_PRO,  2,  8, 11025, 22727, SB_DSP_HS_OUTPUT },
+ { SB_1,   1, 8, 4000,22727,SB_DSP_WDMA     ,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_20,  1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_2x,  1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_2x,  1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_PRO, 1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_PRO, 1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_PRO, 2, 8,11025,22727,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  },
  /* Yes, we write the record mode to set 16-bit playback mode. weird, huh? */
- { SB_JAZZ, 1,  8,  4000, 22727, SB_DSP_WDMA_LOOP, SB_DSP_RECORD_MONO },
- { SB_JAZZ, 1,  8, 22727, 45454, SB_DSP_HS_OUTPUT, SB_DSP_RECORD_MONO },
- { SB_JAZZ, 2,  8, 11025, 22727, SB_DSP_HS_OUTPUT, SB_DSP_RECORD_STEREO },
- { SB_JAZZ, 1, 16,  4000, 22727, SB_DSP_WDMA_LOOP, JAZZ16_RECORD_MONO },
- { SB_JAZZ, 1, 16, 22727, 45454, SB_DSP_HS_OUTPUT, JAZZ16_RECORD_MONO },
- { SB_JAZZ, 2, 16, 11025, 22727, SB_DSP_HS_OUTPUT, JAZZ16_RECORD_STEREO },
- { SB_16,   1,  8,  5000, 45000, SB_DSP16_WDMA_8  },
- { SB_16,   2,  8,  5000, 45000, SB_DSP16_WDMA_8  },
+ { SB_JAZZ,1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
+ { SB_JAZZ,1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
+ { SB_JAZZ,2, 8,11025,22727,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_STEREO },
+ { SB_JAZZ,1,16, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
+ { SB_JAZZ,1,16,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
+ { SB_JAZZ,2,16,11025,22727,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_STEREO },
+ { SB_16,  1, 8, 5000,45000,SB_DSP16_WDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_16,  2, 8, 5000,45000,SB_DSP16_WDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
 #define PLAY16 15 /* must be the index of the next entry in the table */
- { SB_16,   1, 16,  5000, 45000, SB_DSP16_WDMA_16 },
- { SB_16,   2, 16,  5000, 45000, SB_DSP16_WDMA_16 },
+ { SB_16,  1,16, 5000,45000,SB_DSP16_WDMA_16,SB_DSP16_HALT,SB_DSP16_CONT},
+ { SB_16,  2,16, 5000,45000,SB_DSP16_WDMA_16,SB_DSP16_HALT,SB_DSP16_CONT},
  { -1 }
 };
 static struct sbmode sbrmodes[] = {
- { SB_1,    1,  8,  4000, 12987, SB_DSP_RDMA      },
- { SB_20,   1,  8,  4000, 12987, SB_DSP_RDMA_LOOP },
- { SB_2x,   1,  8,  4000, 12987, SB_DSP_RDMA_LOOP },
- { SB_2x,   1,  8, 12987, 14925, SB_DSP_HS_INPUT  },
- { SB_PRO,  1,  8,  4000, 22727, SB_DSP_RDMA_LOOP, SB_DSP_RECORD_MONO },
- { SB_PRO,  1,  8, 22727, 45454, SB_DSP_HS_INPUT,  SB_DSP_RECORD_MONO },
- { SB_PRO,  2,  8, 11025, 22727, SB_DSP_HS_INPUT,  SB_DSP_RECORD_STEREO },
- { SB_JAZZ, 1,  8,  4000, 22727, SB_DSP_RDMA_LOOP, SB_DSP_RECORD_MONO },
- { SB_JAZZ, 1,  8, 22727, 45454, SB_DSP_HS_INPUT,  SB_DSP_RECORD_MONO },
- { SB_JAZZ, 2,  8, 11025, 22727, SB_DSP_HS_INPUT,  SB_DSP_RECORD_STEREO },
- { SB_JAZZ, 1, 16,  4000, 22727, SB_DSP_RDMA_LOOP, JAZZ16_RECORD_MONO },
- { SB_JAZZ, 1, 16, 22727, 45454, SB_DSP_HS_INPUT,  JAZZ16_RECORD_MONO },
- { SB_JAZZ, 2, 16, 11025, 22727, SB_DSP_HS_INPUT,  JAZZ16_RECORD_STEREO },
- { SB_16,   1,  8,  5000, 45000, SB_DSP16_RDMA_8  },
- { SB_16,   2,  8,  5000, 45000, SB_DSP16_RDMA_8  },
- { SB_16,   1, 16,  5000, 45000, SB_DSP16_RDMA_16 },
- { SB_16,   2, 16,  5000, 45000, SB_DSP16_RDMA_16 },
+ { SB_1,   1, 8, 4000,12987,SB_DSP_RDMA     ,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_20,  1, 8, 4000,12987,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_2x,  1, 8, 4000,12987,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_2x,  1, 8,12987,14925,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_PRO, 1, 8, 4000,22727,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
+ { SB_PRO, 1, 8,22727,45454,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
+ { SB_PRO, 2, 8,11025,22727,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_STEREO },
+ { SB_JAZZ,1, 8, 4000,22727,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
+ { SB_JAZZ,1, 8,22727,45454,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
+ { SB_JAZZ,2, 8,11025,22727,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_STEREO },
+ { SB_JAZZ,1,16, 4000,22727,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
+ { SB_JAZZ,1,16,22727,45454,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
+ { SB_JAZZ,2,16,11025,22727,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_STEREO },
+ { SB_16,  1, 8, 5000,45000,SB_DSP16_RDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_16,  2, 8, 5000,45000,SB_DSP16_RDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_16,  1,16, 5000,45000,SB_DSP16_RDMA_16,SB_DSP16_HALT,SB_DSP16_CONT},
+ { SB_16,  2,16, 5000,45000,SB_DSP16_RDMA_16,SB_DSP16_HALT,SB_DSP16_CONT},
  { -1 }
 };
 
@@ -692,13 +693,6 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 
 	}
 
-	/*
-	 * XXX
-	 * Should wait for chip to be idle.
-	 */
-	sc->sc_i.run = SB_NOTRUNNING;
-	sc->sc_o.run = SB_NOTRUNNING;
-
 	if (sc->sc_fullduplex &&
 	    usemode == (AUMODE_PLAY | AUMODE_RECORD) &&
 	    sc->sc_i.dmachan == sc->sc_o.dmachan) {
@@ -716,7 +710,7 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 	DPRINTF(("sbdsp_set_params ichan=%d, ochan=%d\n", 
 		 sc->sc_i.dmachan, sc->sc_o.dmachan));
 
-	return 0;
+	return (0);
 }
 
 void
@@ -896,13 +890,15 @@ sbdsp_close(addr)
 
         DPRINTF(("sbdsp_close: sc=%p\n", sc));
 
-	sc->sc_open = SB_CLOSED;
 	sbdsp_spkroff(sc);
 	sc->spkr_state = SPKR_OFF;
+
+	sbdsp_halt_output(sc);
+	sbdsp_halt_input(sc);
+
 	sc->sc_intr8 = 0;
 	sc->sc_intr16 = 0;
-	sc->sc_intrm = 0;
-	sbdsp_haltdma(sc);
+	sc->sc_open = SB_CLOSED;
 
 	DPRINTF(("sbdsp_close: closed\n"));
 }
@@ -924,14 +920,7 @@ sbdsp_reset(sc)
 
 	sc->sc_intr8 = 0;
 	sc->sc_intr16 = 0;
-	if (sc->sc_i.run != SB_NOTRUNNING) {
-		isa_dmaabort(sc->sc_ic, sc->sc_i.dmachan);
-		sc->sc_i.run = SB_NOTRUNNING;
-	}
-	if (sc->sc_o.run != SB_NOTRUNNING) {
-		isa_dmaabort(sc->sc_ic, sc->sc_o.dmachan);
-		sc->sc_o.run = SB_NOTRUNNING;
-	}
+	sc->sc_intrm = 0;
 
 	/*
 	 * See SBK, section 11.3.
@@ -1119,21 +1108,6 @@ sbversion(sc)
 	}
 }
 
-/*
- * Halt a DMA in progress.
- */
-int
-sbdsp_haltdma(addr)
-	void *addr;
-{
-	struct sbdsp_softc *sc = addr;
-
-	DPRINTF(("sbdsp_haltdma: sc=%p\n", sc));
-
-	sbdsp_reset(sc);
-	return 0;
-}
-
 int
 sbdsp_set_timeconst(sc, tc)
 	struct sbdsp_softc *sc;
@@ -1181,6 +1155,8 @@ sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
 		DPRINTF(("stereo record odd bytes (%d)\n", blksize));
 		return (EIO);
 	}
+	if (sc->sc_i.run != SB_NOTRUNNING)
+		printf("sbdsp_trigger_input: already running\n");
 #endif
 
 	sc->sc_intrr = intr;
@@ -1316,6 +1292,8 @@ sbdsp_trigger_output(addr, start, end, blksize, intr, arg, param)
 		DPRINTF(("stereo playback odd bytes (%d)\n", blksize));
 		return (EIO);
 	}
+	if (sc->sc_o.run != SB_NOTRUNNING)
+		printf("sbdsp_trigger_output: already running\n");
 #endif
 
 	sc->sc_intrp = intr;
@@ -1428,6 +1406,38 @@ sbdsp_block_output(addr)
 			}
 		}
 		sc->sc_o.run = SB_LOOPING;
+	}
+
+	return (0);
+}
+
+int
+sbdsp_halt_output(addr)
+	void *addr;
+{
+	struct sbdsp_softc *sc = addr;
+
+	if (sc->sc_o.run != SB_NOTRUNNING) {
+		if (sbdsp_wdsp(sc, sc->sc_o.modep->halt) < 0)
+			printf("sbdsp_halt_output: failed to halt\n");
+		isa_dmaabort(sc->sc_ic, sc->sc_o.dmachan);
+		sc->sc_o.run = SB_NOTRUNNING;
+	}
+
+	return (0);
+}
+
+int
+sbdsp_halt_input(addr)
+	void *addr;
+{
+	struct sbdsp_softc *sc = addr;
+
+	if (sc->sc_i.run != SB_NOTRUNNING) {
+		if (sbdsp_wdsp(sc, sc->sc_i.modep->halt) < 0)
+			printf("sbdsp_halt_input: failed to halt\n");
+		isa_dmaabort(sc->sc_ic, sc->sc_i.dmachan);
+		sc->sc_i.run = SB_NOTRUNNING;
 	}
 
 	return (0);
@@ -2289,8 +2299,9 @@ sbdsp_midi_close(addr)
 
 	if (sc->sc_model >= SB_20)
 		sbdsp_reset(sc); /* exit UART mode */
-	sc->sc_open = SB_CLOSED;
+
 	sc->sc_intrm = 0;
+	sc->sc_open = SB_CLOSED;
 }
 
 int
