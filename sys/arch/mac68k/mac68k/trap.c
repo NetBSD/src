@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 1997/05/20 03:25:09 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.53 1997/06/25 12:44:05 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,7 +98,8 @@ short	exframesize[] = {
 	FMT1SIZE,	/* type 1 - throwaway (68020/030/040) */
 	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040) */
 	FMT3SIZE,	/* type 3 - FP post-instruction (68040) */
-	-1, -1, -1,	/* type 4-6 - undefined */
+	FMT4SIZE,	/* type 4 - LC040 FP exception (68LC040) */
+	-1, -1,		/* type 5-6 - undefined */
 	FMT7SIZE,	/* type 7 - access error (68040) */
 	58,		/* type 8 - bus fault (68010) */
 	FMT9SIZE,	/* type 9 - coprocessor mid-instruction (68020/030) */
