@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.92 1997/08/19 23:49:47 augustss Exp $
+#	$NetBSD: GENERIC,v 1.93 1997/08/20 18:40:35 mjacob Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -91,6 +91,7 @@ config		netbsd	root on ? type ?
 
 options 	EISAVERBOSE	# verbose EISA device messages
 options 	PCIVERBOSE	# verbose PCI device messages
+#options	SCSIVERBOSE	# Verbose SCSI errors
 
 mainbus0 at root
 
