@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.11 1997/07/13 18:01:06 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.12 1997/10/10 02:21:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -59,10 +59,10 @@ typedef void *	DIR;
 typedef struct _dirdesc {
 	int	dd_fd;		/* file descriptor associated with directory */
 	long	dd_loc;		/* offset in current buffer */
-	long	dd_size;	/* amount of data returned by getdirentries */
+	long	dd_size;	/* amount of data returned by getdents */
 	char	*dd_buf;	/* data buffer */
 	int	dd_len;		/* size of data buffer */
-	long	dd_seek;	/* magic cookie returned by getdirentries */
+	off_t	dd_seek;	/* magic cookie returned by getdents */
 	long	dd_rewind;	/* magic cookie for rewinding */
 	int	dd_flags;	/* flags for readdir */
 } DIR;
