@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: local,v 1.3 2000/04/13 00:39:47 lukem Exp $
+# $NetBSD: local,v 1.4 2000/05/13 08:45:07 lukem Exp $
 #
 
 # REQUIRE: DAEMON
@@ -8,7 +8,6 @@
 # BEFORE: LOGIN
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="local"
 start_cmd="do_local"
@@ -21,4 +20,5 @@ do_local()
 	fi
 }
 
+load_rc_config $name
 run_rc_command "$1"

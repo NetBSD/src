@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: xdm,v 1.3 2000/04/30 13:23:35 lukem Exp $
+# $NetBSD: xdm,v 1.4 2000/05/13 08:45:10 lukem Exp $
 #
 
 # PROVIDE: xdm
 # REQUIRE: DAEMON LOGIN wscons
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="xdm"
 command="/usr/X11R6/bin/${name}"
@@ -15,4 +14,5 @@ pidfile="/var/run/${name}.pid"
 required_files="/usr/X11R6/lib/X11/xdm/xdm-config"
 extra_commands="reload"
 
+load_rc_config $name
 run_rc_command "$1"

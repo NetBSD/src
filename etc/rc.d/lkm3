@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: lkm3,v 1.2 2000/03/11 20:10:21 veego Exp $
+# $NetBSD: lkm3,v 1.3 2000/05/13 08:45:07 lukem Exp $
 #
 
 # PROVIDE: aftermountlkm
 # REQUIRE: mountall
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="lkm3"
 start_precmd="checkyesno lkm"
@@ -25,4 +24,5 @@ do_lkm3()
 	fi
 }
 
+load_rc_config $name
 run_rc_command "$1"

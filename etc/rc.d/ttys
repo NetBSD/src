@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: ttys,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+# $NetBSD: ttys,v 1.2 2000/05/13 08:45:10 lukem Exp $
 #
 
 # PROVIDE: tty
 # REQUIRE: root
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="ttyflags"
 start_cmd="ttyflags_start"
@@ -29,4 +28,5 @@ ttyflags_start()
 	chmod 666 /dev/tty[pqrs]*
 }
 
+load_rc_config $name
 run_rc_command "$1"

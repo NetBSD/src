@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: motd,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+# $NetBSD: motd,v 1.2 2000/05/13 08:45:07 lukem Exp $
 #
 
 # PROVIDE: motd
 # REQUIRE: systemfs
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="motd"
 start_precmd="checkyesno update_motd"
@@ -33,4 +32,5 @@ motd_start()
 	rm -f $T
 }
 
+load_rc_config $name
 run_rc_command "$1"

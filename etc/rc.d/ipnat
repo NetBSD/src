@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: ipnat,v 1.3 2000/04/30 13:23:33 lukem Exp $
+# $NetBSD: ipnat,v 1.4 2000/05/13 08:45:07 lukem Exp $
 #
 
 # PROVIDE: ipnat
 # REQUIRE: ipfilter
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="ipnat"
 config="/etc/ipnat.conf"
@@ -36,4 +35,5 @@ ipnat_start()
 	/usr/sbin/ipnat -F -f ${config}
 }
 
+load_rc_config $name
 run_rc_command "$1"

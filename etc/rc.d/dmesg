@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: dmesg,v 1.2 2000/04/30 12:39:56 lukem Exp $
+# $NetBSD: dmesg,v 1.3 2000/05/13 08:45:06 lukem Exp $
 #
 
 # PROVIDE: dmesg
 # REQUIRE: systemfs
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="dmesg"
 start_precmd="checkyesno dmesg"
@@ -20,4 +19,5 @@ do_dmesg()
 	dmesg $dmesg_flags > /var/run/dmesg.boot
 }
 
+load_rc_config $name
 run_rc_command "$1"

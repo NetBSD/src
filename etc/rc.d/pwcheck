@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: pwcheck,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+# $NetBSD: pwcheck,v 1.2 2000/05/13 08:45:08 lukem Exp $
 #
 
 # PROVIDE: pwcheck
 # REQUIRE: systemfs syslogd
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="pwcheck"
 start_cmd="pwcheck_start"
@@ -23,4 +22,5 @@ pwcheck_start()
 	fi
 }
 
+load_rc_config $name
 run_rc_command "$1"

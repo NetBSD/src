@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: virecover,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+# $NetBSD: virecover,v 1.2 2000/05/13 08:45:10 lukem Exp $
 #
 
 # PROVIDE: virecover
@@ -9,7 +9,6 @@
 # XXX: should require `mail'!
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="virecover"
 start_cmd="virecover_start" 
@@ -30,4 +29,5 @@ virecover_start()
 	fi
 }
 
+load_rc_config $name
 run_rc_command "$1"

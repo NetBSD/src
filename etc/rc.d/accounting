@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: accounting,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+# $NetBSD: accounting,v 1.2 2000/05/13 08:45:06 lukem Exp $
 #
 
 # PROVIDE: accounting
 # REQUIRE: mountall
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="accounting"
 start_precmd="checkyesno accounting"
@@ -29,4 +28,5 @@ accounting_stop()
 	/usr/sbin/accton
 }
 
+load_rc_config $name
 run_rc_command "$1"
