@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.39 2002/02/04 17:24:56 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.40 2002/02/07 16:48:22 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.39 2002/02/04 17:24:56 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.40 2002/02/07 16:48:22 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.39 2002/02/04 17:24:56 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.40 2002/02/07 16:48:22 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -374,12 +374,7 @@ CompatMake (gnp, pgnp)
     GNode *gn = (GNode *) gnp;
     GNode *pgn = (GNode *) pgnp;
 
-    if (gn != pgn && pgn->type & OP_MADE) {
-	(void) Dir_MTime(gn);
-	gn->made = UPTODATE;
-    }
-
-    if (gn->made == UNMADE) {
+    if (gn->made == UNMADE && (gn == pgn || (pgn->type & OP_MADE) == 0)) {
 	/*
 	 * First mark ourselves to be made, then apply whatever transformations
 	 * the suffix module thinks are necessary. Once that's done, we can
