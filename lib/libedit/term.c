@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.19 1999/10/24 04:04:13 lukem Exp $	*/
+/*	$NetBSD: term.c,v 1.20 2000/01/20 22:56:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.19 1999/10/24 04:04:13 lukem Exp $");
+__RCSID("$NetBSD: term.c,v 1.20 2000/01/20 22:56:22 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -233,20 +233,24 @@ private struct termcapval {
     char   *name;
     char   *long_name;
 } tval[] = {
-#define T_pt	0
-    {	"pt",	"has physical tabs"	},
-#define T_li	1
-    {	"li",	"Number of lines"	},
-#define T_co	2
-    {	"co",	"Number of columns"	},
-#define T_km	3
-    {	"km",	"Has meta key"		},
-#define T_xt	4
-    {	"xt",	"Tab chars destructive" },
-#define T_MT	5
-    {	"MT",	"Has meta key"		},	/* XXX? */
-#define T_val	6
-    {	NULL, 	NULL,			}
+#define T_am	0
+    {	"am",	"has automatic margins"			},
+#define T_pt	1
+    {	"pt",	"has physical tabs"			},
+#define T_li	2
+    {	"li",	"Number of lines"			},
+#define T_co	3
+    {	"co",	"Number of columns"			},
+#define T_km	4
+    {	"km",	"Has meta key"				},
+#define T_xt	5
+    {	"xt",	"Tab chars destructive"			},
+#define T_xn	6
+    {	"xn",	"newline ignored at right margin"	},
+#define T_MT	7
+    {	"MT",	"Has meta key"				},	/* XXX? */
+#define T_val	8
+    {	NULL, 	NULL,					}
 };
 
 /* do two or more of the attributes use me */
@@ -281,6 +285,8 @@ term_setflags(el)
     EL_FLAGS |= (GoodStr(T_im) || GoodStr(T_ic) || GoodStr(T_IC)) ?
 		 TERM_CAN_INSERT : 0;
     EL_FLAGS |= (GoodStr(T_up) || GoodStr(T_UP))  ? TERM_CAN_UP : 0;
+    EL_FLAGS |= Val(T_am) ? TERM_HAS_AUTO_MARGINS : 0;
+    EL_FLAGS |= Val(T_xn) ? TERM_HAS_MAGIC_MARGINS : 0;
 
     if (GoodStr(T_me) && GoodStr(T_ue))
 	EL_FLAGS |= (strcmp(Str(T_me), Str(T_ue)) == 0) ? TERM_CAN_ME : 0;
@@ -424,8 +430,7 @@ term_rebuffer_display(el)
 
     term_free_display(el);
 
-    /* make this public, -1 to avoid wraps */
-    c->h = Val(T_co) - 1;
+    c->h = Val(T_co);
     c->v = (EL_BUFSIZ * 4) / c->h + 1;
 
     term_alloc_display(el);
@@ -494,7 +499,7 @@ term_move_to_line(el, where)
     EditLine *el;
     int     where;
 {
-    int     del, i;
+    int     del;
 
     if (where == el->el_cursor.v)
 	return;
@@ -508,12 +513,28 @@ term_move_to_line(el, where)
     }
 
     if ((del = where - el->el_cursor.v) > 0) {
-	if ((del > 1) && GoodStr(T_DO))
-	    (void) tputs(tgoto(Str(T_DO), del, del), del, term__putc);
-	else {
-	    for (i = 0; i < del; i++)
-		term__putc('\n');
-	    el->el_cursor.h = 0;	/* because the \n will become \r\n */
+	while (del > 0) {
+	    if (EL_HAS_AUTO_MARGINS &&
+		el->el_display[el->el_cursor.v][0] != '\0') {
+		/* move without newline */
+		term_move_to_char(el, el->el_term.t_size.h);
+		term_overwrite(el,
+		    &el->el_display[el->el_cursor.v][el->el_cursor.h], 1);
+		/* updates Cursor */
+		del--;
+	    }
+	    else {
+		if ((del > 1) && GoodStr(T_DO)) {
+		    (void) tputs(tgoto(Str(T_DO), del, del), del, term__putc);
+		    del = 0;
+		}
+		else {
+		    for (; del > 0; del--)
+			term__putc('\n');
+		    /* because the \n will become \r\n */
+		    el->el_cursor.h = 0;
+		}
+	    }
 	}
     }
     else {			/* del < 0 */
@@ -521,7 +542,7 @@ term_move_to_line(el, where)
 	    (void) tputs(tgoto(Str(T_UP), -del, -del), -del, term__putc);
 	else {
 	    if (GoodStr(T_up))
-		for (i = 0; i < -del; i++)
+		for (; del < 0; del++)
 		    (void) tputs(Str(T_up), 1, term__putc);
 	}
     }
@@ -543,7 +564,7 @@ mc_again:
     if (where == el->el_cursor.h)
 	return;
 
-    if (where > (el->el_term.t_size.h + 1)) {
+    if (where > el->el_term.t_size.h) {
 #ifdef DEBUG_SCREEN
 	(void) fprintf(el->el_errfile,
 		"term_move_to_char: where is riduculous: %d\r\n", where);
@@ -618,7 +639,7 @@ term_overwrite(el, cp, n)
     if (n <= 0)
 	return;			/* catch bugs */
 
-    if (n > (el->el_term.t_size.h + 1)) {
+    if (n > el->el_term.t_size.h) {
 #ifdef DEBUG_SCREEN
 	(void) fprintf(el->el_errfile, "term_overwrite: n is riduculous: %d\r\n", n);
 #endif /* DEBUG_SCREEN */
@@ -629,6 +650,25 @@ term_overwrite(el, cp, n)
 	term__putc(*cp++);
 	el->el_cursor.h++;
     } while (--n);
+
+    if (el->el_cursor.h >= el->el_term.t_size.h) { /* wrap? */
+	if (EL_HAS_AUTO_MARGINS) { /* yes */
+	    el->el_cursor.h = 0;
+	    el->el_cursor.v++;
+	    if (EL_HAS_MAGIC_MARGINS) {
+		/* force the wrap to avoid the "magic" situation */
+		char c;
+		if ((c = el->el_display[el->el_cursor.v][el->el_cursor.h])
+		    != '\0')
+		    term_overwrite(el, &c, 1);
+		else
+		    term__putc(' ');
+		 el->el_cursor.h = 1;
+	    }
+	}
+	else			/* no wrap, but cursor stays on screen */
+	    el->el_cursor.h = el->el_term.t_size.h;
+    }
 } /* end term_overwrite */
 
 
@@ -863,6 +903,9 @@ term_set(el, term)
 	    term_alloc(el, t, NULL);
     }
     else {
+	/* auto/magic margins */
+	Val(T_am) = tgetflag("am");
+	Val(T_xn) = tgetflag("xn");
 	/* Can we tab */
 	Val(T_pt) = tgetflag("pt");
 	Val(T_xt) = tgetflag("xt");
@@ -1182,13 +1225,11 @@ term_telltc(el, argc, argv)
 		   "\tIt has %s meta key\n", EL_HAS_META ? "a" : "no");
     (void) fprintf(el->el_outfile,
 		   "\tIt can%suse tabs\n", EL_CAN_TAB ? " " : "not ");
-#ifdef notyet
     (void) fprintf(el->el_outfile, "\tIt %s automatic margins\n",
-		   (T_Margin&MARGIN_AUTO)? "has": "does not have");
-    if (T_Margin & MARGIN_AUTO)
+		   EL_HAS_AUTO_MARGINS ? "has" : "does not have");
+    if (EL_HAS_AUTO_MARGINS)
 	(void) fprintf(el->el_outfile, "\tIt %s magic margins\n",
-			(T_Margin&MARGIN_MAGIC)?"has":"does not have");
-#endif
+		       EL_HAS_MAGIC_MARGINS ? "has" : "does not have");
 
     for (t = tstr, ts = el->el_term.t_str; t->name != NULL; t++, ts++)
 	(void) fprintf(el->el_outfile, "\t%25s (%s) == %s\n", t->long_name,
@@ -1240,11 +1281,8 @@ term_settc(el, argc, argv)
 	    break;
 
     if (tv->name != NULL) {
-	if (tv == &tval[T_pt] || tv == &tval[T_km]
-#ifdef notyet
-	    || tv == &tval[T_am] || tv == &tval[T_xn]
-#endif
-	    ) {
+	if (tv == &tval[T_pt] || tv == &tval[T_km] ||
+	    tv == &tval[T_am] || tv == &tval[T_xn]) {
 	    if (strcmp(how, "yes") == 0)
 		el->el_term.t_val[tv - tval] = 1;
 	    else if (strcmp(how, "no") == 0)
@@ -1318,18 +1356,16 @@ term_echotc(el, argc, argv)
 	(void) fprintf(el->el_outfile, fmts, Val(T_km) ? "yes" : "no");
 	return 0;
     }
-#ifdef notyet
     else if (strcmp(*argv, "xn") == 0) {
-	(void) fprintf(el->el_outfile, fmts, T_Margin & MARGIN_MAGIC ?
+	(void) fprintf(el->el_outfile, fmts, EL_HAS_MAGIC_MARGINS ?
 			"yes" : "no");
 	return 0;
     }
     else if (strcmp(*argv, "am") == 0) {
-	(void) fprintf(el->el_outfile, fmts, T_Margin & MARGIN_AUTO ?
+	(void) fprintf(el->el_outfile, fmts, EL_HAS_AUTO_MARGINS ?
 			"yes" : "no");
 	return 0;
     }
-#endif
     else if (strcmp(*argv, "baud") == 0) {
 #ifdef notdef
 	int     i;
