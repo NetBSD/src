@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getgrent.c	5.9 (Berkeley) 4/1/91";*/
-static char *rcsid = "$Id: getgrent.c,v 1.8.2.1 1994/08/01 17:40:50 cgd Exp $";
+static char *rcsid = "$Id: getgrent.c,v 1.8.2.2 1994/08/03 03:42:40 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -223,7 +223,7 @@ grscan(search, gid, name)
 			continue;
 		}
 #ifdef YP
-		if ((strcmp("+\n", line) == 0) || (strncmp("+:*:0:", line, 5) == 0)) {
+		if ((strcmp("+\n", line) == 0) || (strncmp("+:", line, 2) == 0)) {
 			if(_yp_check(NULL)) {
 				__ypmode = 1;
 				continue;
