@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.579 2003/05/07 13:14:50 takemura Exp $
+# $NetBSD: mi,v 1.580 2003/05/11 19:00:06 ragge Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1498,7 +1498,6 @@
 ./usr/share/man/cat8/kpasswdd.0			man-krb5-catman
 ./usr/share/man/cat8/kstash.0			man-krb5-catman
 ./usr/share/man/cat8/ktutil.0			man-krb5-catman
-./usr/share/man/cat8/kvm_mkdb.0			man-sysutil-catman
 ./usr/share/man/cat8/lastlogin.0		man-sysutil-catman
 ./usr/share/man/cat8/ldconfig.0			man-sysutil-catman
 ./usr/share/man/cat8/lfs_cleanerd.0		man-sysutil-catman
@@ -3310,7 +3309,6 @@
 ./usr/share/man/man8/kpasswdd.8			man-krb5-man
 ./usr/share/man/man8/kstash.8			man-krb5-man
 ./usr/share/man/man8/ktutil.8			man-krb5-man
-./usr/share/man/man8/kvm_mkdb.8			man-sysutil-man
 ./usr/share/man/man8/lastlogin.8		man-sysutil-man
 ./usr/share/man/man8/ldconfig.8			man-sysutil-man
 ./usr/share/man/man8/lfs_cleanerd.8		man-sysutil-man
