@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.10 1997/10/07 00:30:31 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.11 1997/10/09 10:38:13 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1808,16 +1808,19 @@ tags:
 #  - fixing list of man-pages according to MANCOMPRESSED/MANZ
 #    (we don't regard MANCOMPRESSED as many ports seem to have .gz pages in
 #     PLIST even when they install manpages without compressing them)
+#  - substituting machine architecture (uname -m) for <$ARCH>
 ${PLIST}: ${PKGDIR}/PLIST
 .if defined(MANZ)
-	@sed \
+	@${SED} \
 		-e '/man\/man.*[^g][^z]$$/s/$$/.gz/g' \
 		-e '/man\/cat.*[^g][^z]$$/s/$$/.gz/g' \
+		-e 's/\<\$$ARCH\>/'${ARCH}'/g' \
 		<${PKGDIR}/PLIST >${PLIST}
 .else   # !MANZ
-	@sed \
+	@${SED} \
 		-e '/man\/man/s/\.gz$$//g' \
 		-e '/man\/cat/s/\.gz$$//g' \
+		-e 's/\<\$$ARCH\>/'${ARCH}'/g' \
 		<${PKGDIR}/PLIST >${PLIST}
 .endif  # MANZ
 
