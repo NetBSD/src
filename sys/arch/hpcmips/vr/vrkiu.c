@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.23 2000/07/22 08:26:00 takemura Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.24 2000/08/05 05:55:27 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -120,6 +120,8 @@ static int vrkiu_is_console(bus_space_tag_t, bus_space_handle_t);
 static int detect_key __P((struct vrkiu_chip *));
 static int vrkiu_getevent __P((struct vrkiu_chip*, u_int*, int*));
 static int vrkiu_putevent __P((struct vrkiu_chip*, u_int, int));
+static int countbits(int);
+static void eliminate_phantom_keys(struct vrkiu_chip*, unsigned short *);
 
 /* wskbd accessopts */
 int vrkiu_enable __P((void *, int));
@@ -540,6 +542,41 @@ vrkiu_intr(arg)
 }
 
 static int
+countbits(d)
+	int d;
+{
+	int i, n;
+
+	for (i = 0, n = 0; i < NBBY; i++)
+		if (d & (1 << i))
+			n++;
+	return n;
+}
+
+static void
+eliminate_phantom_keys(chip, scandata)
+	struct vrkiu_chip* chip;
+	unsigned short *scandata;
+{
+	unsigned char *p, *s;
+	int i, j, mask;
+
+	p = (unsigned char *)scandata;
+	s = (unsigned char *)chip->kc_scandata;
+
+	for (i = 0; i < KIU_NSCANLINE - 1; i++) {
+		if (countbits(p[i]) > 1) {
+			for (j = i + 1; j < KIU_NSCANLINE; j++) {
+				if ((mask = p[i] & p[j]) != 0) {
+					s[i] |= (p[i] & mask) ^ s[i];
+					s[j] |= (p[j] & mask) ^ s[j];
+				}
+			}
+		}
+	}
+}
+
+static int
 detect_key(chip)
 	struct vrkiu_chip* chip;
 {
@@ -550,6 +587,7 @@ detect_key(chip)
 	for (i = 0; i < KIU_NSCANLINE / 2; i++) {
 		scandata[i] = vrkiu_read(chip, KIUDATP + i * 2);
 	}
+	eliminate_phantom_keys(chip, scandata);
 
 	DPRINTF(("%s(%d): detect_key():", __FILE__, __LINE__));
 
