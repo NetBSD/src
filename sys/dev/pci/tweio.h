@@ -1,4 +1,4 @@
-/*	$NetBSD: tweio.h,v 1.1 2002/12/13 23:31:33 christos Exp $	*/
+/*	$NetBSD: tweio.h,v 1.2 2003/09/22 01:44:57 thorpej Exp $	*/
 /*-
  * Copyright (c) 2000 Michael Smith
  * Copyright (c) 2000 BSDi
@@ -92,3 +92,9 @@ struct twe_paramcommand {
  * Request a controller soft-reset
  */
 #define	TWEIO_RESET	_IO('T', 106)
+
+/*
+ * Request a drive addition or deletion
+ */
+#define	TWEIO_ADD_UNIT	_IOW('U', 107, int)
+#define	TWEIO_DEL_UNIT	_IOW('U', 108, int)
