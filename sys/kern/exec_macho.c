@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.30 2004/03/23 13:22:32 junyoung Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.31 2004/09/04 23:21:26 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.30 2004/03/23 13:22:32 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.31 2004/09/04 23:21:26 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -481,6 +481,7 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 	case MACHO_MOH_EXECUTE:
 	case MACHO_MOH_DYLINKER:
 	case MACHO_MOH_DYLIB:
+	case MACHO_MOH_BUNDLE:
 		break;
 	default:
 		DPRINTF(("Unsupported exec_macho filetype 0x%lx\n",
