@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.9 2001/06/20 14:19:28 nonaka Exp $	*/
+/*	$NetBSD: extintr.c,v 1.10 2002/02/26 00:30:11 kleink Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -138,6 +138,47 @@ ext_intr(void)
 	pcpl = splhigh();	/* Turn off all */
 
 	irq = isa_intr();
+	intrcnt2[irq]++;
+
+	r_imen = 1 << irq;
+
+	if ((pcpl & r_imen) != 0) {
+		ipending |= r_imen;	/* Masked! Mark this as pending */
+		imen |= r_imen;
+		isa_intr_mask(imen);
+	} else {
+		ih = intrhand[irq];
+		if (ih == NULL)
+			printf("spurious interrupt %d\n", irq);
+		while (ih) {
+			(*ih->ih_fun)(ih->ih_arg);
+			ih = ih->ih_next;
+		}
+
+		isa_intr_clr(irq);
+
+		uvmexp.intrs++;
+		intrcnt[irq]++;
+	}
+
+	splx(pcpl);	/* Process pendings. */
+}
+
+/*
+ * Same as the above, but using the board's interrupt vector register.
+ */
+void
+ext_intr_ivr(void)
+{
+	u_int8_t irq;
+	int r_imen;
+	int pcpl;
+	struct intrhand *ih;
+
+	/* what about enabling external interrupt in here? */
+	pcpl = splhigh();	/* Turn off all */
+
+	irq = *((u_char *)prep_intr_reg + INTR_VECTOR_REG);
 	intrcnt2[irq]++;
 
 	r_imen = 1 << irq;
