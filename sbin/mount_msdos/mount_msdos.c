@@ -29,64 +29,148 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: mount_msdos.c,v 1.5 1994/04/07 02:31:22 cgd Exp $";
+static char rcsid[] = "$Id: mount_msdos.c,v 1.6 1994/04/08 01:27:02 cgd Exp $";
 #endif /* not lint */
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
+#include <ctype.h>
+#include <err.h>
+#include <grp.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-char *progname;
-
-void
-usage ()
-{
-	fprintf (stderr, "usage: %s bdev dir\n", progname);
-	exit (1);
-}
+gid_t	a_gid __P((char *));
+uid_t	a_uid __P((char *));
+mode_t	a_mask __P((char *));
+void	usage __P((void));
 		
 int
-main (argc, argv)
-int argc;
-char **argv;
+main(argc, argv)
+	int argc;
+	char **argv;
 {
-	char *dev;
-	char *dir;
 	struct msdosfs_args args;
-	int c;
-	extern char *optarg;
-	extern int optind;
-	int opts;
+	struct stat sb;
+	int c, opts, set_gid, set_uid, set_mask;
+	char *dev, *dir;
 
-	progname = argv[0];
+	opts = set_gid = set_uid = set_mask = 0;
+	(void)memset(&args, '\0', sizeof(args));
 
-	opts = 0;
-
-	while ((c = getopt (argc, argv, "F:")) != EOF) {
+	while ((c = getopt(argc, argv, "F:u:g:m:")) != EOF) {
 		switch (c) {
 		case 'F':
-			opts |= atoi (optarg);
+			opts |= atoi(optarg);
 			break;
+		case 'u':
+			args.uid = a_uid(optarg);
+			set_uid = 1;
+			break;
+		case 'g':
+			args.gid = a_gid(optarg);
+			set_gid = 1;
+			break;
+		case 'm':
+			args.mask = a_mask(optarg);
+			set_mask = 1;
+			break;
+		case '?':
 		default:
-			usage ();
+			usage();
+			break;
 		}
 	}
 
 	if (optind + 2 != argc)
-		usage ();
+		usage();
 
 	dev = argv[optind];
 	dir = argv[optind + 1];
 
-	(void)memset(&args, '\0', sizeof(args));
 	args.fspec = dev;
+	if (!set_gid || !set_uid || !set_mask) {
+		if (stat(dir, &sb) == -1)
+			err(1, "stat %s", dir);
 
-	if (mount (MOUNT_MSDOS, dir, opts, &args) < 0) {
-		perror ("mount");
-		exit (1);
+		if (!set_uid)
+			args.uid = sb.st_uid;
+		if (!set_gid)
+			args.gid = sb.st_gid;
+		if (!set_mask)
+			args.mask = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
 
+	if (mount(MOUNT_MSDOS, dir, opts, &args) < 0)
+		err(1, "mount");
+
 	exit (0);
+}
+
+gid_t
+a_gid(s)
+	char *s;
+{
+	struct group *gr;
+	char *gname;
+	gid_t gid;
+
+	if ((gr = getgrnam(s)) != NULL)
+		gid = gr->gr_gid;
+	else {
+		for (gname = s; *s && isdigit(*s); ++s);
+		if (!*s)
+			gid = atoi(gname);
+		else
+			errx(1, "unknown group id: %s", gname);
+	}
+	return (gid);
+}
+
+uid_t
+a_uid(s)
+	char *s;
+{
+	struct passwd *pw;
+	char *uname;
+	uid_t uid;
+
+	if ((pw = getpwnam(s)) != NULL)
+		uid = pw->pw_uid;
+	else {
+		for (uname = s; *s && isdigit(*s); ++s);
+		if (!*s)
+			uid = atoi(uname);
+		else
+			errx(1, "unknown user id: %s", uname);
+	}
+	return (uid);
+}
+
+mode_t
+a_mask(s)
+	char *s;
+{
+	int done, rv;
+	char *ep;
+
+	done = 0;
+	if (*s >= '0' && *s <= '7') {
+		done = 1;
+		rv = strtol(optarg, &ep, 8);
+	}
+	if (!done || rv < 0 || *ep)
+		errx(1, "invalid file mode: %s", s);
+	return (rv);
+}
+
+void
+usage()
+{
+	fprintf(stderr, "usage: mount_msdos [-F flags] [-u user] [-g group] [-m mask] bdev dir\n");
+	exit(1);
 }
