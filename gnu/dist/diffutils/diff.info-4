@@ -1,0 +1,152 @@
+This is Info file diff.info, produced by Makeinfo-1.55 from the input
+file ./diff.texi.
+
+   This file documents the the GNU `diff', `diff3', `sdiff', and `cmp'
+commands for showing the differences between text files and the `patch'
+command for using their output to update files.
+
+   Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be stated in a
+translation approved by the Foundation.
+
+
+File: diff.info,  Node: Concept Index,  Prev: Projects,  Up: Top
+
+Concept Index
+*************
+
+* Menu:
+
+* cmp invocation:                       Invoking cmp.
+* cmp options:                          cmp Options.
+* diff3 hunks:                          diff3 Hunks.
+* diff3 invocation:                     Invoking diff3.
+* diff3 options:                        diff3 Options.
+* diff3 sample input:                   Sample diff3 Input.
+* diff invocation:                      Invoking diff.
+* diff options:                         diff Options.
+* diff sample input:                    Sample diff Input.
+* ed script output format:              ed Scripts.
+* ifdef output format:                  If-then-else.
+* patch input format:                   patch Input.
+* patch invocation:                     Invoking patch.
+* patch messages and questions:         patch Messages.
+* patch options:                        patch Options.
+* sdiff invocation:                     Invoking sdiff.
+* sdiff options:                        sdiff Options.
+* sdiff output format:                  sdiff Option Summary.
+* ! output format:                      Context.
+* +- output format:                     Unified Format.
+* <<<<<<< for marking conflicts:        Marking Conflicts.
+* < output format:                      Normal.
+* aligning tabstops:                    Tabs.
+* alternate file names:                 Alternate Names.
+* backup file names:                    Backups.
+* binary file diff:                     Binary.
+* binary file patching:                 Arbitrary Limits.
+* blank and tab difference suppression: White Space.
+* blank line difference suppression:    Blank Lines.
+* brief difference reports:             Brief.
+* bug reports:                          Bugs.
+* C function headings:                  C Function Headings.
+* C if-then-else output format:         If-then-else.
+* case difference suppression:          Case Folding.
+* columnar output:                      Side by Side.
+* comparing three files:                Comparing Three Files.
+* conflict:                             diff3 Merging.
+* conflict marking:                     Marking Conflicts.
+* context output format:                Context.
+* diagnostics from patch:               patch Messages.
+* diff merging:                         Interactive Merging.
+* directories and patch:                patch Directories.
+* directory structure changes:          Changing Structure.
+* empty files, removing:                Empty Files.
+* file name alternates:                 Alternate Names.
+* file names with unusual characters:   Unusual File Names.
+* format of diff3 output:               Comparing Three Files.
+* format of diff output:                Output Formats.
+* formats for if-then-else line groups: Line Group Formats.
+* forward ed script output format:      Forward ed.
+* full lines:                           Incomplete Lines.
+* function headings, C:                 C Function Headings.
+* fuzz factor when patching:            Inexact.
+* headings:                             Sections.
+* hunks:                                Hunks.
+* hunks for diff3:                      diff3 Hunks.
+* if-then-else output format:           If-then-else.
+* imperfect patch application:          Imperfect.
+* incomplete line merging:              Merging Incomplete Lines.
+* incomplete lines:                     Incomplete Lines.
+* inexact patches:                      Inexact.
+* interactive merging:                  Interactive Merging.
+* introduction:                         Comparison.
+* invoking cmp:                         Invoking cmp.
+* invoking diff3:                       Invoking diff3.
+* invoking diff:                        Invoking diff.
+* invoking patch:                       Invoking patch.
+* invoking sdiff:                       Invoking sdiff.
+* large files:                          Large Files.
+* line formats:                         Line Formats.
+* line group formats:                   Line Group Formats.
+* merge commands:                       Merge Commands.
+* merged diff3 format:                  Bypassing ed.
+* merged output format:                 If-then-else.
+* merging from a common ancestor:       diff3 Merging.
+* merging interactively:                Merge Commands.
+* messages from patch:                  patch Messages.
+* multiple patches:                     Multiple Patches.
+* newline treatment by diff:            Incomplete Lines.
+* normal output format:                 Normal.
+* options for cmp:                      cmp Options.
+* options for diff3:                    diff3 Options.
+* options for diff:                     diff Options.
+* options for patch:                    patch Options.
+* options for sdiff:                    sdiff Options.
+* output formats:                       Output Formats.
+* overlap:                              diff3 Merging.
+* overlapping change, selection of:     Which Changes.
+* overview of diff and patch:           Overview.
+* paginating diff output:               Pagination.
+* patch making tips:                    Making Patches.
+* patching directories:                 patch Directories.
+* performance of diff:                  diff Performance.
+* projects for directories:             Shortcomings.
+* RCS script output format:             RCS.
+* regular expression matching headings: Specified Headings.
+* regular expression suppression:       Specified Folding.
+* reject file names:                    Rejects.
+* removing empty files:                 Empty Files.
+* reporting bugs:                       Bugs.
+* reversed patches:                     Reversed Patches.
+* sample input for diff3:               Sample diff3 Input.
+* sample input for diff:                Sample diff Input.
+* script output formats:                Scripts.
+* section headings:                     Sections.
+* side by side:                         Side by Side.
+* side by side format:                  Side by Side Format.
+* special files:                        Special Files.
+* specified headings:                   Specified Headings.
+* summarizing which files differ:       Brief.
+* System V diff3 compatibility:         Saving the Changed File.
+* tab and blank difference suppression: White Space.
+* tabstop alignment:                    Tabs.
+* text versus binary diff:              Binary.
+* tips for patch making:                Making Patches.
+* two-column output:                    Side by Side.
+* unified output format:                Unified Format.
+* unmerged change:                      Which Changes.
+* white space in patches:               Changed White Space.
+
+
