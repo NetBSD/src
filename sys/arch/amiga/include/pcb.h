@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.10 1998/01/06 06:47:04 thorpej Exp $	*/
+/*	$NetBSD: pcb.h,v 1.11 2000/09/27 08:23:50 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,10 @@ struct pcb
 	struct	fpframe pcb_fpregs; /* 68881/2 context save area */
 	int	pcb_exec[16];	/* exec structure for core dumps */
 };
+
+/* Positions within pcb_regs[] of A6 and A7 (FP and SP). For m68k DDB. */
+#define PCB_REGS_FP	10
+#define PCB_REGS_SP	11
 
 /* flags (none currently used) */
 
