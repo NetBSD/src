@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2002/08/19 13:35:07 lukem Exp $
+# $NetBSD: Makefile,v 1.17 2002/08/29 01:31:29 itojun Exp $
 
 NOLINT=		# defined
 
@@ -55,7 +55,6 @@ CPPFLAGS+= -I.					\
 	 -I${KRB5}				\
 	 -I${DIST}/heimdal/lib/krb5		\
 	 -I${DIST}/heimdal/lib/asn1		\
-	 -I${DIST}/openssl/crypto		\
 	 -I${HDB}				\
 	 -I${DIST}/heimdal/lib/hdb		\
 	 -I${DIST}/heimdal/lib/asn1		\
