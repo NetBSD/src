@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.99 1997/10/19 20:35:21 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.99.2.1 1997/10/28 01:59:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)tty.c	8.8 (Berkeley) 1/21/94
  */
+
+#include "opt_uconsole.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
