@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 2002/02/17 20:55:57 uch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 2002/03/08 20:48:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -749,7 +749,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 */
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	    &pool_allocator_nointr);
 
 	/*
 	 * we must call uvm_page_physload() after we are done playing with

@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.28 2001/10/07 12:44:06 bjh21 Exp $	*/
+/*	$NetBSD: pool.h,v 1.29 2002/03/08 20:48:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -82,6 +82,21 @@ struct pool_cache {
 	unsigned long	pc_nitems;	/* # objects currently in cache */
 };
 
+struct pool_allocator {
+	void		*(*pa_alloc)(struct pool *, int);
+	void		(*pa_free)(struct pool *, void *);
+	int		pa_pagesz;
+
+	/* The following fields are for internal use only. */
+	struct simplelock pa_slock;
+	TAILQ_HEAD(, pool) pa_list;	/* list of pools using this allocator */
+	int		pa_flags;
+#define	PA_INITIALIZED	0x01
+#define	PA_WANT		0x02		/* wakeup any sleeping pools on free */
+	int		pa_pagemask;
+	int		pa_pageshift;
+};
+
 struct pool {
 	TAILQ_ENTRY(pool)
 			pr_poollist;
@@ -97,32 +112,27 @@ struct pool {
 	unsigned int	pr_minpages;	/* same in page units */
 	unsigned int	pr_maxpages;	/* maximum # of pages to keep */
 	unsigned int	pr_npages;	/* # of pages allocated */
-	unsigned int	pr_pagesz;	/* page size, must be 2^n */
-	unsigned long	pr_pagemask;	/* abbrev. of above */
-	unsigned int	pr_pageshift;	/* shift corr. to above */
 	unsigned int	pr_itemsperpage;/* # items that fit in a page */
 	unsigned int	pr_slack;	/* unused space in a page */
 	unsigned int	pr_nitems;	/* number of available items in pool */
 	unsigned int	pr_nout;	/* # items currently allocated */
 	unsigned int	pr_hardlimit;	/* hard limit to number of allocated
 					   items */
-	void		*(*pr_alloc)(unsigned long, int, int);
-	void		(*pr_free)(void *, unsigned long, int);
-	int		pr_mtype;	/* memory allocator tag */
+	struct pool_allocator *pr_alloc;/* back-end allocator */
+	TAILQ_ENTRY(pool) pr_alloc_list;/* link on allocator's pool list */
 	const char	*pr_wchan;	/* tsleep(9) identifier */
 	unsigned int	pr_flags;	/* r/w flags */
 	unsigned int	pr_roflags;	/* r/o flags */
-#define PR_MALLOCOK	1
-#define	PR_NOWAIT	0		/* for symmetry */
-#define PR_WAITOK	2
-#define PR_WANTED	4
-#define PR_STATIC	8
-#define PR_FREEHEADER	16
-#define PR_URGENT	32
-#define PR_PHINPAGE	64
-#define PR_LOGGING	128
-#define PR_LIMITFAIL	256	/* even if waiting, fail if we hit limit */
-#define PR_RECURSIVE	512	/* pool contains pools, for vmstat(8) */
+#define PR_MALLOCOK	0x01
+#define	PR_NOWAIT	0x00		/* for symmetry */
+#define PR_WAITOK	0x02
+#define PR_WANTED	0x04
+#define PR_STATIC	0x08
+#define PR_FREEHEADER	0x10
+#define PR_PHINPAGE	0x40
+#define PR_LOGGING	0x80
+#define PR_LIMITFAIL	0x100	/* even if waiting, fail if we hit limit */
+#define PR_RECURSIVE	0x200	/* pool contains pools, for vmstat(8) */
 
 	/*
 	 * `pr_slock' protects the pool's data structures when removing
@@ -174,16 +184,22 @@ struct pool {
 #endif /* __POOL_EXPOSE */
 
 #ifdef _KERNEL
+/*
+ * pool_allocator_kmem is the default that all pools get unless
+ * otherwise specified.  pool_allocator_nointr is provided for
+ * pools that know they will never be accessed in interrupt
+ * context.
+ */
+extern struct pool_allocator pool_allocator_kmem;
+extern struct pool_allocator pool_allocator_nointr;
+
 void		pool_init(struct pool *, size_t, u_int, u_int,
-				 int, const char *, size_t,
-				 void *(*)__P((unsigned long, int, int)),
-				 void  (*)__P((void *, unsigned long, int)),
-				 int);
+				 int, const char *, struct pool_allocator *);
 void		pool_destroy(struct pool *);
 
 void		*pool_get(struct pool *, int);
 void		pool_put(struct pool *, void *);
-void		pool_reclaim(struct pool *);
+int		pool_reclaim(struct pool *);
 
 #ifdef POOL_DIAGNOSTIC
 /*
@@ -210,13 +226,6 @@ void		pool_print(struct pool *, const char *);
 void		pool_printit(struct pool *, const char *,
 		    void (*)(const char *, ...));
 int		pool_chk(struct pool *, const char *);
-
-/*
- * Alternate pool page allocator, provided for pools that know they
- * will never be accessed in interrupt context.
- */
-void		*pool_page_alloc_nointr(unsigned long, int, int);
-void		pool_page_free_nointr(void *, unsigned long, int);
 
 /*
  * Pool cache routines.
