@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.3 1999/04/29 15:47:03 bad Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.4 1999/04/30 15:29:24 bad Exp $	*/
 
 #undef TRISADEBUG
 /*
@@ -191,11 +191,15 @@ tr_isa_attach(parent, self, aux)
 
 	sc->sc_piot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
-	if (tr_isa_map_io(ia, &sc->sc_pioh, &sc->sc_mmioh))
-		panic("tr_isa_attach: IO space vanished\n");
+	if (tr_isa_map_io(ia, &sc->sc_pioh, &sc->sc_mmioh)) {
+		printf("tr_isa_attach: IO space vanished\n");
+		return;
+	}
 	if (bus_space_map(sc->sc_memt, ia->ia_maddr, ia->ia_msize, 0,
-	    &sc->sc_sramh))
-		panic("tr_isa_attach: shared ram space vanished\n");
+	    &sc->sc_sramh)) {
+		printf("tr_isa_attach: shared ram space vanished\n");
+		return;
+	}
 	/* set ACA offset */
 	sc->sc_aca = TR_ACA_OFFSET;
 	sc->sc_memwinsz = ia->ia_msize;
