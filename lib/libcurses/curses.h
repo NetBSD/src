@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.81 2003/12/23 23:12:44 christos Exp $	*/
+/*	$NetBSD: curses.h,v 1.82 2004/02/14 18:23:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -181,12 +181,7 @@ typedef	char	bool;
 #define    KEY_MOUSE      0x199    /* Mouse event has occurred */
 #define    KEY_MAX        0x199    /* maximum extended key value */
 
-/* 8-bit ASCII characters. */
-#define	unctrl(c)		__unctrl[((unsigned)c) & 0xff]
-#define	unctrllen(ch)		__unctrllen[((unsigned)ch) & 0xff]
-
-extern char	 *__unctrl[256];	/* Control strings. */
-extern char	 __unctrllen[256];	/* Control strings length. */
+#include <unctrl.h>
 
 /*
  * A window an array of __LINE structures pointed to by the 'lines' pointer.
