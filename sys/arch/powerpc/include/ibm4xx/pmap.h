@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 2001/09/11 04:35:44 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3 2002/03/13 00:47:59 eeh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -79,7 +79,8 @@
  * stuffed in the (unused) low bits of the PA.
  */
 #define	TTE_PA_MASK		0xffffc000
-#define TTE_ENDIAN		0x00002000
+#define	TTE_RPN_MASK(sz)	(~((1 << (10 + 2 * (sz))) - 1))
+#define	TTE_ENDIAN		0x00002000
 #define	TTE_SZ_MASK		0x00001c00
 #define	TTE_SZ_SHIFT		10
 
