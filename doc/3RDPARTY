@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.263 2004/12/06 13:18:54 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.264 2004/12/11 02:46:35 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -81,7 +81,7 @@ Todo[3]: net/base64.c could be imported from bind and should be moved from
 Todo[4]: Re-entrant functions of net/*
 
 Package:	binutils
-Version:	2.14
+Version:	2.15-20041204
 Current Vers:	2.15
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
