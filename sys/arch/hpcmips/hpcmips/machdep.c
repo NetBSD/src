@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2000/04/11 17:57:42 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2000/04/15 22:02:26 soda Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2000/04/11 17:57:42 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2000/04/15 22:02:26 soda Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -147,6 +147,8 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
  * disables mips1 FPU interrupts.
  */
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
+
+unsigned ssir;				/* schedules software interrupt */
 
 struct splvec	splvec;			/* XXX will go XXX */
 
