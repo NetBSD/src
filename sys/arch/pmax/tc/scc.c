@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.63 2000/02/03 04:09:07 nisimura Exp $	*/
+/*	$NetBSD: scc.c,v 1.64 2000/02/09 08:29:40 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,9 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.63 2000/02/03 04:09:07 nisimura Exp $");
-
-#include "opt_ddb.h"
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.64 2000/02/09 08:29:40 nisimura Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -78,6 +76,10 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.63 2000/02/03 04:09:07 nisimura Exp $");
  *
  * See: Intel MicroCommunications Handbook, Section 2, pg. 155-173, 1992.
  */
+
+#include "opt_ddb.h"
+#include "rasterconsole.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -107,8 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.63 2000/02/03 04:09:07 nisimura Exp $");
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
-
-#include "rasterconsole.h"
 
 void	ttrstrt __P((void *));
 
@@ -292,6 +292,7 @@ scc_cnattach(base, offset)
 	scc_tty_init(sc, cn_tab->cn_dev);
 }
 
+#if NRASTERCONSOLE > 0
 void
 scc_lk201_cnattach(base, offset)
 	u_int32_t	base;
@@ -307,6 +308,7 @@ scc_lk201_cnattach(base, offset)
 	cn_tab->cn_getc = lk_getc;
 	rcons_indev(cn_tab); /* cn_dev & cn_putc */
 }
+#endif
 
 /*
  * Test to see if device is present.
