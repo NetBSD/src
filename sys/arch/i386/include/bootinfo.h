@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.6 1999/03/10 01:28:25 fvdl Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.7 1999/03/12 01:01:42 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -119,19 +119,6 @@ struct btinfo_biosgeom {
 	struct btinfo_common common;
 	int num;
 	struct bi_biosgeom_entry disk[1]; /* var len */
-};
-
-#define BI_NHD	16
-
-/*
- * Structure containing a disk device name and possible matching BIOS
- * disks (indices in the bi_biosgeom_entry array)
- * XXX shouldn't really be here.
- */
-struct bi_devmatch {
-	char bd_devname[16];
-	int bd_nmatches;
-	int bd_matches[BI_NHD];
 };
 
 #ifdef _KERNEL
