@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.c,v 1.1 1995/10/10 23:37:04 ragge Exp $	*/
+/*	$NetBSD: n_sincos.c,v 1.2 1998/08/22 12:49:09 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)sincos.c	8.1 (Berkeley) 6/4/93";
+#endif
 #endif /* not lint */
 
 #include "mathimpl.h"
@@ -62,7 +64,7 @@ double x;
 	}
 
 	if (a < small) {		/* rtn. S(x) */
-		big+a;
+		z = big+a;
 		return x;
 	}
 	return x+x*sin__S(x*x);
@@ -89,7 +91,7 @@ double x;
 		}
 	}
 	if (a < small) {
-		big+a;
+		z = big+a;
 		return s;		/* rtn. s*C(a) */
 	}
 	z = a*a;
