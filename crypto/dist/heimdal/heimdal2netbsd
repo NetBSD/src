@@ -1,7 +1,7 @@
 #! /bin/sh
 
 # $Heimdal: heimdal2netbsd,v 1.3 2002/09/12 14:12:18 joda Exp $
-# $NetBSD: heimdal2netbsd,v 1.4 2003/01/26 20:51:58 elric Exp $
+# $NetBSD: heimdal2netbsd,v 1.5 2003/01/26 21:59:49 elric Exp $
 
 if [ \! -f kuser/kinit.c ]; then 
 	echo "`basename $0`: should be run in top src directory" 1>&2
@@ -21,7 +21,7 @@ rm doc/heimdal.info
 echo 'Fixing .Os in man pages.'
 perl -i~ -p -e 's/\.Os HEIMDAL/.Os/' `find . -name '*.[1358]'`
 
-echo 'Changing $Id: heimdal2netbsd,v 1.4 2003/01/26 20:51:58 elric Exp $ to $Heimdal$.'
+echo 'Changing $Id: heimdal2netbsd,v 1.5 2003/01/26 21:59:49 elric Exp $ to $Heimdal$.'
 ## Ugh!
 set -- 'RCSID\("'	'"\)'	'__RCSID("'	'"\n        "\$NetBSD\$")' \
 	'/\* '		' \*/'	'/* '		'\n   \$NetBSD\$ */'       \
@@ -55,6 +55,7 @@ update_inc() {
 	    -e 's,#include <hdb_asn1.h>,#include <krb5/hdb_asn1.h>,'	      \
 	    -e 's,#include <hdb_err.h>,#include <krb5/hdb_err.h>,'	      \
 	    -e 's,#include <hdb-protos.h>,#include <krb5/hdb-protos.h>,'      \
+	    -e 's,#include <krb5-protos.h>,#include <krb5/krb5-protos.h>,'    \
 	    -e 's,#include <roken-common.h>,#include <krb5/roken-common.h>,'  \
 	    -e 's,#include <sl.h>,#include <krb5/sl.h>,'
 }
