@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.23 1996/05/23 17:03:29 mycroft Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.24 1997/06/12 18:41:14 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -142,16 +142,9 @@ tcp_usrreq(so, req, m, nam, control, p)
 
 	/*
 	 * PRU_DETACH detaches the TCP protocol from the socket.
-	 * If the protocol state is non-embryonic, then can't
-	 * do this directly: have to initiate a PRU_DISCONNECT,
-	 * which may finish later; embryonic TCB's can just
-	 * be discarded here.
 	 */
 	case PRU_DETACH:
-		if (tp->t_state > TCPS_LISTEN)
-			tp = tcp_disconnect(tp);
-		else
-			tp = tcp_close(tp);
+		tp = tcp_disconnect(tp);
 		break;
 
 	/*
