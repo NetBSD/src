@@ -1,12 +1,12 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.32 2001/01/22 00:29:46 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.33 2001/01/25 01:25:05 itojun Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
 
 SRCS+=	_def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
 	ctypeio.c localeconv.c nl_langinfo.c \
-	setlocale.c setlocale_sb.c __mb_cur_max.c
+	setlocale.c setlocale1.c setlocale32.c __mb_cur_max.c
 MAN+=	nl_langinfo.3 setlocale.3
 
 MLINKS+=setlocale.3 localeconv.3
@@ -16,14 +16,15 @@ RUNE?=	yes
 .if ${RUNE} == "no"
 # singlebyte locale - dummy
 SRCS+=	multibyte_sb.c iswctype_sb.c
-CPPFLAGS+=	-UWITH_RUNE
+CPPFLAGS+=-UWITH_RUNE
 .else
 # citrus multibyte locale support
+CPPFLAGS+=-DWITH_RUNE
 SRCS+=	___runetype_mb.c ___tolower_mb.c ___toupper_mb.c iswctype.c \
 	multibyte.c rune.c runeglue.c runenone.c runetable.c setrunelocale.c
-CPPFLAGS+=	-DWITH_RUNE
-#MODULE_SHLIB_MAJOR!=	. ${.CURDIR}/../localemod/shlib_version; echo $$major
-#CPPFLAGS+=	-DDLRUNE -DRUNEMOD_MAJOR=${MODULE_SHLIB_MAJOR} \
+# workaround: build singlebyte setlocale() for libc.a, multibyte for libc.so
+#MODULE_SHLIB_MAJOR!=	. ${.CURDIR}/../runemodule/shlib_version; echo $$major
+#CPICFLAGS+=	-DDLRUNE -DRUNEMOD_MAJOR=${MODULE_SHLIB_MAJOR} \
 #		-D_PATH_LOCALEMODULE=\"/usr/lib/runemodule\"
 # to be dynamically loaded
 #SRCS+=	big5.c euc.c euctw.c iso2022.c mskanji.c utf2.c utf8.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale_sb.c,v 1.5 2001/01/03 15:23:26 lukem Exp $	*/
+/*	$NetBSD: setlocale1.c,v 1.1 2001/01/25 01:25:07 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -24,12 +24,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	Id: setlocale_sb.c,v 1.4 2000/01/25 14:24:22 cvscitrus Exp
  */
 
-
 #include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: setlocale1.c,v 1.1 2001/01/25 01:25:07 itojun Exp $");
+#endif /* LIBC_SCCS and not lint */
+
 #include "namespace.h"
 #define __SETLOCALE_SOURCE__
 #include <locale.h>

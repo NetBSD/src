@@ -1,4 +1,4 @@
-/*	$NetBSD: utf8.c,v 1.7 2001/01/03 15:23:27 lukem Exp $	*/
+/*	$NetBSD: utf8.c,v 1.8 2001/01/25 01:25:10 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)utf2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utf8.c,v 1.7 2001/01/03 15:23:27 lukem Exp $");
+__RCSID("$NetBSD: utf8.c,v 1.8 2001/01/25 01:25:10 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,6 +82,7 @@ __RCSID("$NetBSD: utf8.c,v 1.7 2001/01/03 15:23:27 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 
+const char *_UTF8_magic __P((void));
 int _UTF8_init __P((_RuneLocale *));
 static int findlen __P((rune_t));
 size_t _UTF8_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *, size_t,
@@ -112,6 +113,13 @@ static u_int32_t _UTF8_range[] = {
 	0x00000000, 0x00000080, 0x00000800, 0x00010000, 
 	0x00200000, 0x04000000, 0x80000000,
 };
+
+const char *
+_UTF8_magic()
+{
+
+	return _RUNE_MODULE_1("LC_CTYPE");
+}
 
 int
 _UTF8_init(rl)
