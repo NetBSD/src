@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.706 2004/06/25 00:06:09 itojun Exp $
+# $NetBSD: mi,v 1.707 2004/06/25 16:25:00 itojun Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1471,6 +1471,7 @@
 ./usr/share/man/cat5/services.0			man-net-catman		.cat
 ./usr/share/man/cat5/shells.0			man-sys-catman		.cat
 ./usr/share/man/cat5/siginfo.0			man-obsolete		obsolete
+./usr/share/man/cat5/spamd.conf.0		man-netutil-catman	.cat
 ./usr/share/man/cat5/ssh_config.0		man-secsh-catman	crypto,.cat
 ./usr/share/man/cat5/sshd_config.0		man-secsh-catman	crypto,.cat
 ./usr/share/man/cat5/stab.0			man-sys-catman		.cat
@@ -2018,6 +2019,7 @@
 ./usr/share/man/cat8/smtpd.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/spamd-setup.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/spamd.0			man-netutil-catman	.cat
+./usr/share/man/cat8/spamdb.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/sparc/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/sparc/binstall.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/sparc/boot.0		man-sys-catman		.cat
@@ -3588,6 +3590,7 @@
 ./usr/share/man/man5/services.5			man-net-man		.man
 ./usr/share/man/man5/shells.5			man-sys-man		.man
 ./usr/share/man/man5/siginfo.5			man-obsolete		obsolete
+./usr/share/man/man5/spamd.conf.5		man-netutil-man		.man
 ./usr/share/man/man5/ssh_config.5		man-secsh-man		crypto,.man
 ./usr/share/man/man5/sshd_config.5		man-secsh-man		crypto,.man
 ./usr/share/man/man5/stab.5			man-sys-man		.man
@@ -4135,6 +4138,7 @@
 ./usr/share/man/man8/smtpd.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/spamd-setup.8		man-netutil-man		.man
 ./usr/share/man/man8/spamd.8			man-netutil-man		.man
+./usr/share/man/man8/spamdb.8			man-netutil-man		.man
 ./usr/share/man/man8/sparc/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/sparc/binstall.8		man-sys-man		.man
 ./usr/share/man/man8/sparc/boot.8		man-sys-man		.man
