@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.8 1999/10/31 19:45:26 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.9 2000/02/08 16:17:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -113,8 +113,11 @@ struct fnode {
 
 /* This overlays the fid structure (see <sys/mount.h>) */
 struct ntfid {
-        u_int16_t ntfid_len;     /* Length of structure. */
-        u_int16_t ntfid_pad;     /* Force 32-bit alignment. */
-        ino_t     ntfid_ino;     /* File number (ino). */
-        int32_t   ntfid_gen;     /* Generation number. */
+	u_int16_t ntfid_len;	/* Length of structure. */
+	u_int16_t ntfid_pad;	/* Force 32-bit alignment. */
+	ino_t     ntfid_ino;	/* File number (ino). */
+	u_int8_t  ntfid_attr;	/* Attribute identifier */
+#ifdef notyet
+	int32_t   ntfid_gen;	/* Generation number. */
+#endif
 };
