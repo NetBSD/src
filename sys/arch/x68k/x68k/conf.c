@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1996/09/08 00:11:52 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1996/09/16 20:08:58 oki Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -80,6 +80,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_lkm_dummy(),		/* 14 */
+	bdev_disk_init(NCCD,ccd),	/* 15: concatenated disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -180,6 +181,10 @@ cdev_decl(zs);
 cdev_decl(pow);
 #include "bell.h"
 cdev_decl(bell);
+#include "ch.h"
+cdev_decl(ch);
+#include "uk.h"
+cdev_decl(uk);
 
 struct cdevsw	cdevsw[] =
 {
@@ -221,6 +226,8 @@ struct cdevsw	cdevsw[] =
 	cdev_bell_init(NBELL,bell),	/* 33: opm bell device */
 	cdev_disk_init(NCCD,ccd),	/* 34: concatenated disk driver */
 	cdev_scanner_init(NSS,ss),	/* 35: SCSI scanner */
+	cdev_ch_init(NCH,ch),		/* 36: SCSI changer device */
+	cdev_ch_init(NUK,uk),		/* 37: SCSI unknown device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -264,7 +271,7 @@ static int chrtoblktbl[] = {
 	/*  0 */	NODEV,		/*  1 */	NODEV,
 	/*  2 */	NODEV,		/*  3 */	3,
 	/*  4 */	NODEV,		/*  5 */	NODEV,
-	/*  6 */	NODEV,		/*  7 */	NODEV,
+	/*  6 */	NODEV,		/*  7 */	8,
 	/*  8 */	4,		/*  9 */	7,
 	/* 10 */	NODEV,		/* 11 */	NODEV,
 	/* 12 */	NODEV,		/* 13 */	NODEV,
@@ -278,6 +285,7 @@ static int chrtoblktbl[] = {
 	/* 28 */	NODEV,		/* 29 */	NODEV,
 	/* 30 */	NODEV,		/* 31 */	NODEV,
 	/* 32 */	NODEV,		/* 33 */	NODEV,
+	/* 34 */	15,		/* 33 */	NODEV,
 };
 
 /*

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.2 1996/06/17 02:28:39 oki Exp $
+#	$NetBSD: MAKEDEV,v 1.3 1996/09/16 20:08:56 oki Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -70,6 +70,7 @@
 #	par*	motherboard parallel port
 #
 # Special purpose devices:
+#	rd	ram disk
 #	grf*	builtin video
 #	kbd	keyboard
 #	aconf	autoconfig information (not yet)
@@ -80,6 +81,8 @@
 #	tun*	network tunnel driver
 #	pow*	power management device
 #	bell*	OPM bell device
+#	ch*	SCSI changer device
+#	uk*	SCSI unknown device
 #	ss*	SCSI scanner device
 #
 
@@ -97,6 +100,7 @@ all)
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV tun0 tun1 par0 lkm
 	sh MAKEDEV sram audio pow0 pow1 bell local
+	sh MAKEDEV rd0 rd1 ch0 uk0 uk1 ss0
 	;;
 
 floppy)
@@ -197,12 +201,13 @@ fd*)
 	umask 77
 	;;
 
-sd*|vnd*|ccd*)
+sd*|vnd*|rd*|ccd*)
 	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
 	case $i in
 	sd*) name=sd; blk=4; chr=8;;
 	vnd*) name=vnd; blk=6; chr=19;;
-	ccd*) name=ccd; blk=8; chr=7;;
+	rd*) name=ccd; blk=8; chr=7;;
+	ccd*) name=ccd; blk=15; chr=34;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
@@ -257,10 +262,12 @@ cd*)
 	umask 77
 	;;
 
-ss*)
+ss*|ch*|uk*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
 	ss*) name=ss;  chr=35;;
+	ch*) name=ch;  chr=36;;
+	uk*) name=uk;  chr=37;;
 	esac
 	rm -f $name$unit
 	mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
