@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.13 1995/09/16 16:11:38 chopps Exp $	*/
+/*	$NetBSD: pte.h,v 1.14 1995/09/29 13:52:09 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,15 +51,15 @@
 struct pte {
 	u_int pte;
 };
-typedef u_int pt_entry_t;
+typedef u_int pt_entry_t;		/* Mach page table entry */
 
 struct ste {
 	u_int ste;
 };
-typedef u_int st_entry_t;
+typedef u_int st_entry_t;		/* segment table entry */
 
-#define	PT_ENTRY_NULL	((u_int *) 0)
-#define	ST_ENTRY_NULL	((u_int *) 0)
+#define	PT_ENTRY_NULL	((pt_entry_t *) 0)
+#define	ST_ENTRY_NULL	((st_entry_t *) 0)
 
 #define	SG_V		0x00000002	/* segment is valid */
 #define	SG_NV		0x00000000
@@ -82,6 +82,9 @@ typedef u_int st_entry_t;
 #define	SG4_SHIFT3	13
 #define	SG4_ADDR1	0xfffffe00	/* pointer table address mask */
 #define	SG4_ADDR2	0xffffff80	/* page table address mask */
+#define SG4_LEV1SIZE	128		/* entries in pointer table 1 */
+#define SG4_LEV2SIZE	128		/* entries in pointer table 2 */
+#define SG4_LEV3SIZE	32		/* entries in page table */
 
 #define	PG_V		0x00000001
 #define	PG_NV		0x00000000
@@ -107,7 +110,11 @@ typedef u_int st_entry_t;
 #define AMIGA_040RTSIZE		512	/* root (level 1) table size */
 #define AMIGA_040STSIZE		512	/* segment (level 2) table size */
 #define	AMIGA_040PTSIZE		128	/* page (level 3) table size */
+#if 0
 #define AMIGA_STSIZE		1024	/* segment table size */
+#else
+#define	AMIGA_STSIZE		(MAXUL2SIZE*SG4_LEV2SIZE*sizeof(st_entry_t))
+#endif
 /*
  * AMIGA_MAX_COREUPT	maximum number of incore user page tables
  * AMIGA_USER_PTSIZE	the number of bytes for user pagetables

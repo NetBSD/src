@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.6 1995/07/04 18:06:40 chopps Exp $ */
+/*	$NetBSD: mfc.c,v 1.7 1995/09/29 13:51:57 chopps Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -59,8 +59,12 @@
 
 #include "mfcs.h"
 
+#ifndef SEROBUF_SIZE
 #define SEROBUF_SIZE	128
+#endif
+#ifndef SERIBUF_SIZE
 #define SERIBUF_SIZE	1024
+#endif
 
 #define splser()	spl6()
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 1995/09/16 16:11:09 chopps Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 1995/09/29 13:51:41 chopps Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -76,6 +76,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
@@ -149,12 +150,27 @@ int pmapdebug = PDB_PARANOIA;
 /*
  * Get STEs and PTEs for user/kernel address space
  */
+#ifdef M68040
 #define	pmap_ste(m, v)	(&((m)->pm_stab[(vm_offset_t)(v) >> pmap_ishift]))
+#define pmap_ste1(m, v) \
+	(&((m)->pm_stab[(vm_offset_t)(v) >> SG4_SHIFT1]))
+/* XXX assumes physically contiguous ST pages (if more than one) */
+#define pmap_ste2(m, v) \
+	(&((m)->pm_stab[(u_int *)(*(u_int *)pmap_ste1(m,v) & SG4_ADDR1) \
+			- (m)->pm_stpa + (((v) & SG4_MASK2) >> SG4_SHIFT2)]))
+#define pmap_ste_v(m, v) \
+	(mmutype == MMU_68040 \
+	? ((*pmap_ste1(m, v) & SG_V) && \
+	   (*pmap_ste2(m, v) & SG_V)) \
+	: (*pmap_ste(m, v) & SG_V))
+#else
+#define	pmap_ste(m, v)	(&((m)->pm_stab[(vm_offset_t)(v) >> SG_ISHIFT]))
+#define pmap_ste_v(m, v)	(*pmap_ste(m, v) & SG_V)
+#endif
 #define pmap_pte(m, v)	(&((m)->pm_ptab[(vm_offset_t)(v) >> PG_SHIFT]))
 
 #define pmap_pte_pa(pte)	(*(u_int *)(pte) & PG_FRAME)
 
-#define pmap_ste_v(ste)		(*(u_int *)(ste) & SG_V)
 #define pmap_pte_w(pte)		(*(u_int *)(pte) & PG_W)
 #define pmap_pte_ci(pte)	(*(u_int *)(pte) & PG_CI)
 #define pmap_pte_m(pte)		(*(u_int *)(pte) & PG_M)
@@ -201,10 +217,10 @@ struct kpt_page *kpt_pages;
  * Segtabzero is an empty segment table which all processes share til they
  * reference something.
  */
-u_int	*Sysseg2;		/* 68040 2nd level descriptor table */
 u_int	*Sysseg;
+u_int	*Sysseg_pa;
 u_int	*Sysmap, *Sysptmap;
-u_int	*Segtabzero;
+u_int	*Segtabzero, *Segtabzeropa;
 vm_size_t	Sysptsize = VM_KERNEL_PT_PAGES + 4 / NPTEPG;
 
 struct pmap	kernel_pmap_store;
@@ -219,7 +235,9 @@ vm_offset_t	vm_first_phys;	/* PA of first managed page */
 vm_offset_t	vm_last_phys;	/* PA just past last managed page */
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
 char		*pmap_attributes;	/* reference and modify bits */
+#ifdef M68040
 static int	pmap_ishift;	/* segment table index shift */
+#endif
 
 #ifdef MACHINE_NONCONTIG
 struct physeg {
@@ -268,7 +286,6 @@ pmap_bootstrap(firstaddr, loadaddr)
 	vm_offset_t firstaddr;
 	vm_offset_t loadaddr;
 {
-	extern vm_offset_t maxmem, physmem;
 	vm_offset_t va;
 	u_int *pte;
 #ifdef MACHINE_NONCONTIG
@@ -340,16 +357,16 @@ pmap_bootstrap(firstaddr, loadaddr)
 	 * Kernel page/segment table allocated in locore,
 	 * just initialize pointers.
 	 */
+	pmap_kernel()->pm_stpa = Sysseg_pa;
 	pmap_kernel()->pm_stab = Sysseg;
 	pmap_kernel()->pm_ptab = Sysmap;
 #ifdef M68040
 	if (mmutype == MMU_68040) {
-		pmap_kernel()->pm_stpa = Sysseg;
-		pmap_kernel()->pm_stab = Sysseg2;
-		pmap_ishift = SG4_SHIFT2;
+		pmap_ishift = SG4_SHIFT1;
+		pmap_kernel()->pm_stfree = 0xfffffff8;	/* XXXX */
 	} else
-#endif
 		pmap_ishift = SG_ISHIFT;
+#endif
 
 	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
@@ -476,24 +493,14 @@ pmap_init(phys_start, phys_end)
 #else
 	npg = atop(phys_end - phys_start);
 #endif
-#ifdef M68040
-	if (mmutype == MMU_68040)
-		s = (vm_size_t)AMIGA_040STSIZE * 128 + 
-		    sizeof(struct pv_entry) * npg + npg;
-	else 
-#endif
-		s = (vm_size_t)AMIGA_STSIZE +
-		    sizeof(struct pv_entry) * npg + npg;
+	s = (vm_size_t)AMIGA_STSIZE +
+	    sizeof(struct pv_entry) * npg + npg;
 
 	s = round_page(s);
 	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
 	Segtabzero = (u_int *) addr;
-#ifdef M68040
-	if (mmutype == MMU_68040)
-		addr += AMIGA_040STSIZE * 128;
-	else
-#endif
-		addr += AMIGA_STSIZE;
+	Segtabzeropa = (u_int *) pmap_extract(pmap_kernel(), addr);
+	addr += AMIGA_STSIZE;
 	pv_table = (pv_entry_t) addr;
 	addr += sizeof(struct pv_entry) * npg;
 	pmap_attributes = (char *) addr;
@@ -723,11 +730,12 @@ pmap_pinit(pmap)
 	 * "null" segment table.  On the first pmap_enter, a real
 	 * segment table will be allocated.
 	 */
+	pmap->pm_stab = Segtabzero;
+	pmap->pm_stpa = Segtabzeropa;
 #ifdef M68040
 	if (mmutype == MMU_68040)
-		pmap->pm_stpa = Segtabzero;
+		pmap->pm_stfree = 0x0000fffe;	/* XXXX */
 #endif
-	pmap->pm_stab = Segtabzero;
 	pmap->pm_stchanged = TRUE;
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
@@ -784,16 +792,7 @@ pmap_release(pmap)
 		kmem_free_wakeup(pt_map, (vm_offset_t)pmap->pm_ptab,
 				 AMIGA_UPTSIZE);
 	if (pmap->pm_stab != Segtabzero)
-#ifdef M68040
-		if (mmutype == MMU_68040) {
-			kmem_free(kernel_map, (vm_offset_t)pmap->pm_stpa,
-			    AMIGA_040RTSIZE);
-			kmem_free(kernel_map, (vm_offset_t)pmap->pm_stab,
-			    AMIGA_040STSIZE*128);
-		}
-		else
-#endif
-			kmem_free(kernel_map, (vm_offset_t)pmap->pm_stab, AMIGA_STSIZE);
+		kmem_free(kernel_map, (vm_offset_t)pmap->pm_stab, AMIGA_STSIZE);
 }
 
 /*
@@ -849,7 +848,7 @@ pmap_remove(pmap, sva, eva)
 		 * Weed out invalid mappings.
 		 * Note: we assume that the segment table is always allocated.
 		 */
-		if (!pmap_ste_v(pmap_ste(pmap, va))) {
+		if (!pmap_ste_v(pmap, va)) {
 			/* XXX: avoid address wrap around */
 			if (va >= amiga_trunc_seg((vm_offset_t)-1))
 				break;
@@ -965,19 +964,19 @@ printf ("pmap_remove: PA %08x index %d\n", pa, pa_index(pa));
 #ifdef M68040
 			if (mmutype == MMU_68040) {
 			/*
-			 * On the 68040, the PT page contains 64 page tables,
-			 * so we need to remove all the associated segment
-			 * table entries
+			 * On the 68040, the PT page contains NPTEPG/SG4_LEV3SIZE
+			 * page tables, so we need to remove all the associated
+			 * segment table entries
 			 * (This may be incorrect:  if a single page table is
 			 * being removed, the whole page should not be
 			 * removed.)
 			 */
-				for (i = 0; i < 64; ++i)
+				for (i = 0; i < NPTEPG / SG4_LEV3SIZE; ++i)
 					*ste++ = SG_NV;
-				ste -= 64;
+				ste -= NPTEPG / SG4_LEV3SIZE;
 #ifdef DEBUG
 				if (pmapdebug &(PDB_REMOVE|PDB_SEGTAB|0x10000))
-					printf("pmap_remove:PT at %x remved\n",
+					printf("pmap_remove:PT at %x removed\n",
 					    va);
 #endif
 			}
@@ -1005,29 +1004,23 @@ printf ("pmap_remove: PA %08x index %d\n", pa, pa_index(pa));
 					printf("remove: free stab %x\n",
 					       ptpmap->pm_stab);
 #endif
-#ifdef M68040
-					if (mmutype == MMU_68040) {
-						kmem_free(kernel_map,
-							(vm_offset_t)ptpmap->pm_stpa,
-							AMIGA_040RTSIZE);
-						kmem_free(kernel_map,
-							(vm_offset_t)ptpmap->pm_stab,
-							AMIGA_040STSIZE*128);
-						ptpmap->pm_stpa = Segtabzero;
-					}
-					else
-#endif
-						kmem_free(kernel_map,
-							  (vm_offset_t)ptpmap->pm_stab,
-							  AMIGA_STSIZE);
+					kmem_free(kernel_map,
+						  (vm_offset_t)ptpmap->pm_stab,
+						  AMIGA_STSIZE);
 					ptpmap->pm_stab = Segtabzero;
+					ptpmap->pm_stpa = Segtabzeropa;
+#ifdef M68040
+					if (mmutype == MMU_68040)
+						ptpmap->pm_stfree = 0x0000fffe; /* XXXX */
+#endif
 					ptpmap->pm_stchanged = TRUE;
 					/*
 					 * XXX may have changed segment table
 					 * pointer for current process so
 					 * update now to reload hardware.
 					 */
-					if (ptpmap == curproc->p_vmspace->vm_map.pmap)
+					if (curproc &&
+					    ptpmap == curproc->p_vmspace->vm_map.pmap)
 						PMAP_ACTIVATE(ptpmap,
 							(struct pcb *)curproc->p_addr, 1);
 				}
@@ -1095,11 +1088,11 @@ pmap_page_protect(pa, prot)
 		s = splimp();
 		while (pv->pv_pmap != NULL) {
 #ifdef DEBUG
-			if (!pmap_ste_v(pmap_ste(pv->pv_pmap,pv->pv_va)) ||
+			if (!pmap_ste_v(pv->pv_pmap,pv->pv_va) ||
 			    pmap_pte_pa(pmap_pte(pv->pv_pmap,pv->pv_va)) != pa)
 {
   printf ("pmap_page_protect: va %08x, pmap_ste_v %d pmap_pte_pa %08x/%08x\n",
-    pv->pv_va, pmap_ste_v(pmap_ste(pv->pv_pmap,pv->pv_va)),
+    pv->pv_va, pmap_ste_v(pv->pv_pmap,pv->pv_va),
     pmap_pte_pa(pmap_pte(pv->pv_pmap,pv->pv_va)),pa);
   printf (" pvh %08x pv %08x pv_next %08x\n", pa_to_pvh(pa), pv, pv->pv_next);
 				panic("pmap_page_protect: bad mapping");
@@ -1151,7 +1144,7 @@ pmap_protect(pmap, sva, eva, prot)
 		 * Skip it, we don't want to force allocation
 		 * of unnecessary PTE pages just to set the protection.
 		 */
-		if (!pmap_ste_v(pmap_ste(pmap, va))) {
+		if (!pmap_ste_v(pmap, va)) {
 			/* XXX: avoid address wrap around */
 			if (va >= amiga_trunc_seg((vm_offset_t)-1))
 				break;
@@ -1236,7 +1229,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	/*
 	 * Segment table entry not valid, we need a new PT page
 	 */
-	if (!pmap_ste_v(pmap_ste(pmap, va)))
+	if (!pmap_ste_v(pmap, va))
 		pmap_enter_ptpage(pmap, va);
 
 	pte = pmap_pte(pmap, va);
@@ -1459,7 +1452,7 @@ pmap_change_wiring(pmap, va, wired)
 	 * Should this ever happen?  Ignore it for now,
 	 * we don't want to force allocation of unnecessary PTE pages.
 	 */
-	if (!pmap_ste_v(pmap_ste(pmap, va))) {
+	if (!pmap_ste_v(pmap, va)) {
 		if (pmapdebug & PDB_PARANOIA)
 			printf("pmap_change_wiring: invalid STE for %x\n", va);
 		return;
@@ -1505,7 +1498,7 @@ pmap_extract(pmap, va)
 		printf("pmap_extract(%x, %x) -> ", pmap, va);
 #endif
 	pa = 0;
-	if (pmap && pmap_ste_v(pmap_ste(pmap, va)))
+	if (pmap && pmap_ste_v(pmap, va))
 		pa = *(int *)pmap_pte(pmap, va);
 	if (pa)
 		pa = (pa & PG_FRAME) | (va & ~PG_FRAME);
@@ -1767,7 +1760,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 			printf("pmap_pageable(%x, %x, %x, %x)\n",
 			       pmap, sva, eva, pageable);
 #endif
-		if (!pmap_ste_v(pmap_ste(pmap, sva)))
+		if (!pmap_ste_v(pmap, sva))
 			return;
 		pa = pmap_pte_pa(pmap_pte(pmap, sva));
 		if (!pmap_valid_page(pa))
@@ -2047,30 +2040,15 @@ pmap_enter_ptpage(pmap, va)
 	 * reference count drops to zero.
 	 */
 	if (pmap->pm_stab == Segtabzero) {
+		pmap->pm_stab = (u_int *)
+			kmem_alloc(kernel_map, AMIGA_STSIZE);
+		pmap->pm_stpa = (u_int *) pmap_extract(
+		    pmap_kernel(), (vm_offset_t)pmap->pm_stab);
 #ifdef M68040
 		if (mmutype == MMU_68040) {
-			pmap->pm_stpa = (u_int *)
-				kmem_alloc(kernel_map, AMIGA_040RTSIZE);
-			pmap->pm_stab = (u_int *)
-				kmem_alloc(kernel_map, AMIGA_040STSIZE*128);
-			/* intialize root table entries */
-			sg = (u_int *) pmap->pm_stpa;
-			sg_proto = pmap_extract(pmap_kernel(), 
-			    (vm_offset_t) pmap->pm_stab) | SG_RW | SG_V;
-#ifdef DEBUG
-			if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
-				printf ("pmap_enter_ptpage: ROOT TABLE SETUP %x %x\n",
-				    pmap->pm_stpa, sg_proto);
-#endif
-			while (sg < (u_int *) ((u_int) pmap->pm_stpa + AMIGA_040RTSIZE)) {
-				*sg++ = sg_proto;
-				sg_proto += AMIGA_040STSIZE;
-			}
+			pmap->pm_stfree = 0x0000fffe;	/* XXXX */
 		}
-		else
 #endif
-			pmap->pm_stab = (u_int *)
-				kmem_alloc(kernel_map, AMIGA_STSIZE);
 		pmap->pm_stchanged = TRUE;
 		/*
 		 * XXX may have changed segment table pointer for current
@@ -2080,27 +2058,53 @@ pmap_enter_ptpage(pmap, va)
 			PMAP_ACTIVATE(pmap, (struct pcb *)curproc->p_addr, 1);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
-			printf("enter: pmap %x stab %x\n",
-			       pmap, pmap->pm_stab);
+			printf("enter_pt: pmap %x stab %x(%x)\n",
+			       pmap, pmap->pm_stab, pmap->pm_stpa);
 #endif
 	}
 
-	/*
-	 * On the 68040, a page will hold 64 page tables, so the segment
-	 * table will have to have 64 entries set up.  First get the ste
-	 * for the page mapped by the first PT entry.
-	 */
+	ste = pmap_ste(pmap, va);
+
 #ifdef M68040
+	/*
+	 * Allocate level 2 descriptor block if necessary
+	 */
 	if (mmutype == MMU_68040) {
-		ste = pmap_ste(pmap, va & ((SG4_MASK1 | SG4_MASK2) << 6));
-		va = trunc_page((vm_offset_t)pmap_pte(pmap,
-		    va & ((SG4_MASK1|SG4_MASK2) << 6)));
-	} else
+		if (*ste == SG_NV) {
+			int ix;
+			caddr_t addr;
+
+			ix = bmtol2(pmap->pm_stfree);
+			if (ix == -1)
+				panic("enter_pt: out of address space");
+			pmap->pm_stfree &= ~l2tobm(ix);
+			addr = (caddr_t)&pmap->pm_stab[ix * SG4_LEV2SIZE];
+			bzero(addr, SG4_LEV2SIZE * sizeof(st_entry_t));
+			addr = (caddr_t)&pmap->pm_stpa[ix * SG4_LEV2SIZE];
+			*ste = (u_int) addr | SG_RW | SG_U | SG_V;
+#ifdef DEBUG
+			if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
+				printf("enter_pt: alloc ste2 %d(%x)\n", ix, addr);
 #endif
-	{
-		ste = pmap_ste(pmap, va);
-		va = trunc_page((vm_offset_t)pmap_pte(pmap, va));
+		}
+		ste = pmap_ste2(pmap, va);
+		/*
+		 * Since a level 2 descriptor maps a block of SG4_LEV3SIZE
+		 * level 3 descriptors, we need a chunk of NPTEPG/SEG4_LEV3SIZE
+		 * (64) such descriptors (NBPG/SG4_LEV3SIZE bytes) to map a
+		 * PT page -- the unit of allocation.  We set 'ste' to point
+		 * to the first entry of that chunk which is validated in its
+		 * entirety below.
+		 */
+		ste = (u_int *)((int)ste & ~(NBPG / SG4_LEV3SIZE - 1));
+#ifdef DEBUG
+		if (pmapdebug &  (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
+			printf("enter_pt: ste2 %x (%x)\n",
+			    pmap_ste2(pmap, va), ste);
+#endif
 	}
+#endif
+	va = trunc_page((vm_offset_t)pmap_pte(pmap, va));
 
 	/*
 	 * In the kernel we allocate a page from the kernel PT page
@@ -2118,7 +2122,7 @@ pmap_enter_ptpage(pmap, va)
 			 */
 #ifdef DEBUG
 			if (pmapdebug & PDB_COLLECT)
-				printf("enter: no KPT pages, collecting...\n");
+				printf("enter_pt: no KPT pages, collecting...\n");
 #endif
 			pmap_collect(pmap_kernel());
 			if ((kpt = kpt_free_list) == (struct kpt_page *)0)
@@ -2132,11 +2136,11 @@ pmap_enter_ptpage(pmap, va)
 		kpt->kpt_next = kpt_used_list;
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
-		bzero(kpt->kpt_va, NBPG);
+		bzero((char *)kpt->kpt_va, NBPG);
 		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
-			printf("enter: add &Sysptmap[%d]: %x (KPT page %x)\n",
+			printf("enter_pt: add &Sysptmap[%d]: %x (KPT page %x)\n",
 			       ste - pmap_ste(pmap, 0),
 			       *(int *)&Sysptmap[ste - pmap_ste(pmap, 0)],
 			       kpt->kpt_va);
@@ -2155,7 +2159,7 @@ pmap_enter_ptpage(pmap, va)
 		pmap->pm_sref++;
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
-			printf("enter: about to fault UPT pg at %x\n", va);
+			printf("enter_pt: about to fault UPT pg at %x\n", va);
 #endif
 		if (vm_fault(pt_map, va, VM_PROT_READ|VM_PROT_WRITE, FALSE)
 		    != KERN_SUCCESS)
@@ -2181,14 +2185,16 @@ pmap_enter_ptpage(pmap, va)
 		} while (pv = pv->pv_next);
 	}
 #ifdef DEBUG
-	if (pv == NULL)
+	if (pv == NULL) {
+		printf("enter_pt: PV entry for PT page %x not found\n", ptpa);
 		panic("pmap_enter_ptpage: PT page not entered");
+	}
 #endif
 	pv->pv_ptste = ste;
 	pv->pv_ptpmap = pmap;
 #ifdef DEBUG
 	if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
-		printf("enter: new PT page at PA %x, ste at %x\n", ptpa, ste);
+		printf("enter_pt: new PT page at PA %x, ste at %x\n", ptpa, ste);
 #endif
 
 	/*
@@ -2201,12 +2207,11 @@ pmap_enter_ptpage(pmap, va)
 	 */
 #ifdef M68040
 	if (mmutype == MMU_68040) {
-		/* 68040 has 64 page tables, so we have to map all 64 */
-		sg = (u_int *) ste;
-		sg_proto = (ptpa & SG_FRAME) | SG_RW | SG_V;
-		while (sg < (u_int *) (ste + 64)) {
-			*sg++ = sg_proto;
-			sg_proto += AMIGA_040PTSIZE;
+		u_int *este;
+
+		for (este = &ste[NPTEPG / SG4_LEV3SIZE]; ste < este; ++ste) {
+			*ste = ptpa | SG_U | SG_RW | SG_V;
+			ptpa += SG4_LEV3SIZE * sizeof(st_entry_t);
 		}
 	}
 	else
@@ -2215,7 +2220,7 @@ pmap_enter_ptpage(pmap, va)
 	if (pmap != pmap_kernel()) {
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
-			printf("enter: stab %x refcnt %d\n",
+			printf("enter_pt: stab %x refcnt %d\n",
 			       pmap->pm_stab, pmap->pm_sref);
 #endif
 	}
@@ -2252,7 +2257,7 @@ pmap_check_wiring(str, va)
 	register int count, *pte;
 
 	va = trunc_page(va);
-	if (!pmap_ste_v(pmap_ste(pmap_kernel(), va)) ||
+	if (!pmap_ste_v(pmap_kernel(), va) ||
 	    !pmap_pte_v(pmap_pte(pmap_kernel(), va)))
 		return;
 

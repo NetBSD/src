@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 1995/08/18 15:27:39 chopps Exp $	*/
+/*	$NetBSD: trap.c,v 1.37 1995/09/29 13:51:43 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -224,7 +224,9 @@ panictrap(type, code, v, fp)
 		regdump(fp, 128);
 	}
 	type &= ~T_USER;
-	DCIS(); /* XXX? push cache */
+#ifdef DEBUG
+	DCIS(); 		/* XXX? push cache */
+#endif
 	if ((u_int)type < trap_types)
 		panic(trap_type[type]);
 	panic("trap");
@@ -265,8 +267,6 @@ trapmmufault(type, code, v, fp, p, sticks)
 	vm_map_t map;
 	u_int nss;
 	int rv;
-	
-	vm = p->p_vmspace;
 
 	/*
 	 * It is only a kernel address space fault iff:
@@ -280,6 +280,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	/*
 	 * Print out some data about the fault
 	 */
+/*page0*/if (v < NBPG) mmudebug |= 0x100;
 	if (mmudebug && mmutype == MMU_68040) {
 		printf ("68040 access error: pc %x, code %x,"
 		    " ea %x, fa %x\n", fp->f_pc, code, fp->f_fmt7.f_ea, v);
@@ -287,10 +288,16 @@ trapmmufault(type, code, v, fp, p, sticks)
 			printf (" curpcb %x ->pcb_ustp %x / %x\n",
 			    curpcb, curpcb->pcb_ustp, 
 			    curpcb->pcb_ustp << PG_SHIFT);
+/*page0*/if (v < NBPG) Debugger();
+/*page0*/mmudebug &= ~0x100;
 	}
 #endif
+
+	if (p)
+		vm = p->p_vmspace;
+
 	if (type == T_MMUFLT && 
-	    (p->p_addr->u_pcb.pcb_onfault == 0 ||
+	    (!p || !p->p_addr || p->p_addr->u_pcb.pcb_onfault == 0 ||
 	    (mmutype == MMU_68040 && (code & SSW_TMMASK) == FC_SUPERD) ||
 	    (mmutype != MMU_68040 && (code & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))))
 		map = kernel_map;
@@ -315,7 +322,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	 * XXX: rude hack to make stack limits "work"
 	 */
 	nss = 0;
-	if ((caddr_t)va >= vm->vm_maxsaddr && map != kernel_map) {
+	if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr) {
 		nss = clrnd(btoc(USRSTACK - (unsigned)va));
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
 			rv = KERN_FAILURE;
@@ -400,7 +407,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if ((caddr_t)va >= vm->vm_maxsaddr && map != kernel_map) {
+	if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
 			nss = clrnd(btoc(USRSTACK-(unsigned)va));
 			if (nss > vm->vm_ssize)
@@ -493,7 +500,7 @@ trap(type, code, v, frame)
 	 * Kernel Bus error
 	 */
 	case T_BUSERR:
-		if (!p->p_addr->u_pcb.pcb_onfault)
+		if (!p || !p->p_addr || !p->p_addr->u_pcb.pcb_onfault)
 			panictrap(type, code, v, &frame);
 		trapcpfault(p, &frame);
 		return;
@@ -627,8 +634,14 @@ trap(type, code, v, frame)
 	 * Kernel/User page fault
 	 */
 	case T_MMUFLT:
-		if (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fubail ||
-		    p->p_addr->u_pcb.pcb_onfault == (caddr_t)subail) {
+/*page0*/if (v < NBPG) {
+/*page0*/  printf("page 0 access pc %x fa %x fp %x\n", frame.f_pc, v, &frame);
+/*page0*/  mmudebug |= 0x100;
+/*page0*/  Debugger();
+/*page0*/}
+		if (p && p->p_addr &&
+		    (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fubail ||
+		    p->p_addr->u_pcb.pcb_onfault == (caddr_t)subail)) {
 			trapcpfault(p, &frame);
 			return;
 		}
@@ -641,7 +654,7 @@ trap(type, code, v, frame)
 #ifdef DEBUG
 	if (i != SIGTRAP)
 		printf("trapsignal(%d, %d, %d, %x, %x)\n", p->p_pid, i,
-		    ucode, v, frame.f_regs[PC]);
+		    ucode, v, frame.f_pc);
 #endif
 	trapsignal(p, i, ucode);
 	if ((type & T_USER) == 0)

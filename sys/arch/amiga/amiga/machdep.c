@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 1995/09/19 23:06:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 1995/09/29 13:51:38 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -913,7 +913,7 @@ dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
-#define BYTES_PER_DUMP NBPG	/* Must be a multiple of pagesize XXX small */
+#define BYTES_PER_DUMP MAXPHYS	/* Must be a multiple of pagesize XXX small */
 static vm_offset_t dumpspace;
 
 vm_offset_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.24 1995/09/16 16:11:29 chopps Exp $	*/
+/*	$NetBSD: siop.c,v 1.25 1995/09/29 13:52:04 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -365,7 +365,8 @@ siop_scsidone(acb, stat)
 	if (acb == NULL || xs == NULL)
 		panic("siop_scsidone");
 #endif
-	if (((struct device *)(slp->device_softc))->dv_unit < dk_ndrive)
+	if (slp->device_softc && 
+	    ((struct device *)(slp->device_softc))->dv_unit < dk_ndrive)
 		++dk_xfer[((struct device *)(slp->device_softc))->dv_unit];
 	/*
 	 * is this right?

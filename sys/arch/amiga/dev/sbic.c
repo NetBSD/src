@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.17 1995/09/16 16:11:26 chopps Exp $	*/
+/*	$NetBSD: sbic.c,v 1.18 1995/09/29 13:51:59 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -147,6 +147,7 @@ int	report_sense = 0;
 int	data_pointer_debug = 0;
 u_char	debug_asr, debug_csr, routine;
 void sbictimeout __P((struct sbic_softc *dev));
+void sbic_dump __P((struct sbic_softc *dev));
 
 #define CSR_TRACE_SIZE 32
 #if CSR_TRACE_SIZE
@@ -561,10 +562,9 @@ sbic_scsidone(acb, stat)
 		return;
 	}
 #endif
-#if 1
-	if (((struct device *)(slp->device_softc))->dv_unit < dk_ndrive)
+	if (slp->device_softc &&
+	    ((struct device *)(slp->device_softc))->dv_unit < dk_ndrive)
 		++dk_xfer[((struct device *)(slp->device_softc))->dv_unit];
-#endif
 	/*
 	 * is this right?
 	 */
