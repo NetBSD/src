@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.1.2.4 1997/07/31 00:43:54 thorpej Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.1.2.5 1997/08/02 04:30:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -59,6 +59,7 @@
 #include <dev/pcmcia/pcmciareg.h>
 
 #include <dev/isa/comvar.h>
+#include <dev/isa/isareg.h>
 
 #define PCMCIA_MANUFACTURER_3COM		0x101
 #define PCMCIA_PRODUCT_3COM_3C562		0x562
@@ -89,6 +90,7 @@ com_pcmcia_match(parent, match, aux)
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = (struct pcmcia_attach_args *) aux;
+	struct pcmcia_config_entry *cfe;
 
 	if ((pa->manufacturer == PCMCIA_MANUFACTURER_3COM) &&
 	    (pa->product == PCMCIA_PRODUCT_3COM_3C562) &&
@@ -99,6 +101,17 @@ com_pcmcia_match(parent, match, aux)
 	    (pa->product == PCMCIA_PRODUCT_MOTOROLA_POWER144) &&
 	    (pa->pf->number == 0))
 		return(1);
+
+	/* find a cfe we can use (if it matches a standard COM port) */
+
+	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
+	     cfe = cfe->cfe_list.sqe_next) {
+		if (cfe->iospace[0].start == IO_COM1 ||
+		    cfe->iospace[0].start == IO_COM2 ||
+		    cfe->iospace[0].start == IO_COM3 ||
+		    cfe->iospace[0].start == IO_COM4)
+			return(1);
+	}
 
 	return(0);
 }
