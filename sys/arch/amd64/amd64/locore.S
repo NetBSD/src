@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.9 2003/11/30 23:58:51 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.10 2004/02/19 17:18:38 drochner Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -355,6 +355,11 @@ start:	movw	$0x1234,0x472			# warm boot
 	/* Brand ID is bits 0-7 of %ebx */
 	andl	$255,%ebx
 	movl	%ebx,RELOC(cpu_brand_id)
+
+	/* add AMD specific feature flags */
+	movl	$0x80000001,%eax
+	cpuid
+	orl	%edx,RELOC(cpu_feature)
 
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
