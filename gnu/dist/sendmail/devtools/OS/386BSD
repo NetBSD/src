@@ -1,0 +1,7 @@
+#	$Id: 386BSD,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confENVDEF', ` -DMIME')
+define(`confLIBS', `-lutil')
+define(`confLINKS', `/usr/sbin/sendmail /usr/bin/newaliases \
+	/usr/sbin/sendmail /usr/bin/mailq \
+	/usr/sbin/sendmail /usr/bin/hoststat \
+	/usr/sbin/sendmail /usr/bin/purgestat')

@@ -1,0 +1,10 @@
+#	$Id: AIX.4.x,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confMAPDEF', `-DNDBM -DNIS -DMAP_REGEX')
+define(`confENVDEF', `-D_AIX4')
+define(`confOPTIMIZE', `-O3 -qstrict')
+define(`confLIBS', `-ldbm')
+define(`confINSTALL', `/usr/ucb/install')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `system')
+define(`confDEPEND_TYPE', `AIX')
+define(`confLDOPTS', `-blibpath:/usr/lib:/lib')
