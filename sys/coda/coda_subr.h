@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.h,v 1.5 1998/09/25 15:01:13 rvb Exp $	*/
+/*	$NetBSD: coda_subr.h,v 1.6 2003/08/27 17:49:49 drochner Exp $	*/
 
 /*
  * 
@@ -33,7 +33,7 @@
 
 struct cnode *coda_alloc(void);
 void  coda_free(struct cnode *cp);
-struct cnode *coda_find(ViceFid *fid);
+struct cnode *coda_find(CodaFid *fid);
 void coda_flush(enum dc_status dcstat);
 void coda_testflush(void);
 void coda_checkunmounting(struct mount *mp);
