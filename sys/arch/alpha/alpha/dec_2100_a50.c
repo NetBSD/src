@@ -1,7 +1,7 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.4 1996/04/12 02:09:51 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.5 1996/04/12 06:07:18 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

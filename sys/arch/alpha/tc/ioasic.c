@@ -1,7 +1,7 @@
-/*	$NetBSD: ioasic.c,v 1.3 1996/04/12 01:31:46 cgd Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.4 1996/04/12 06:09:48 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Keith Bostic, Chris G. Demetriou

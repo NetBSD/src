@@ -1,7 +1,7 @@
-/*	$NetBSD: lca.c,v 1.3 1996/04/12 04:40:52 cgd Exp $	*/
+/*	$NetBSD: lca.c,v 1.4 1996/04/12 06:08:33 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Authors: Jeffrey Hsu and Chris G. Demetriou

@@ -1,7 +1,7 @@
-/*	$NetBSD: vm_machdep.c,v 1.7 1996/02/05 02:07:35 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8 1996/04/12 06:07:42 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
