@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.10 2001/12/04 04:31:56 gmcgarry Exp $ */
+/*	$NetBSD: util.c,v 1.11 2001/12/04 09:56:31 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,9 +95,9 @@ static struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_SFBP,		"dec-sfb+" },
 	{ WSDISPLAY_TYPE_PCIMISC,	"generic-pci" },
 	{ WSDISPLAY_TYPE_NEXTMONO,	"next-mono" },
-	{ WSDISPLAY_TYPE_PX,		"dex-px" },
-	{ WSDISPLAY_TYPE_PXG,		"dex-pxg" },
-	{ WSDISPLAY_TYPE_TX,		"dex-tx" },
+	{ WSDISPLAY_TYPE_PX,		"dec-px" },
+	{ WSDISPLAY_TYPE_PXG,		"dec-pxg" },
+	{ WSDISPLAY_TYPE_TX,		"dec-tx" },
 	{ WSDISPLAY_TYPE_HPCFB,		"generic-hpc" },
 	{ WSDISPLAY_TYPE_VIDC,		"arm-vidc" },
 	{ WSDISPLAY_TYPE_SPX,		"dec-spx" },
