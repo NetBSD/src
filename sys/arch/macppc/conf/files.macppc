@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.35 2000/11/08 17:53:46 tsubai Exp $
+#	$NetBSD: files.macppc,v 1.36 2000/11/10 17:09:15 hannken Exp $
 #
 # macppc-specific configuration info
 
@@ -50,6 +50,12 @@ major {wd = 10}
 #
 #include "dev/ofw/files.ofw"
 #major {ofdisk = 0}
+
+#
+# Machine-independent I2O drivers
+#
+
+include "dev/i2o/files.i2o"
 
 #
 # System bus types
