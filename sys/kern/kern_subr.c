@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.25 1997/06/12 17:12:20 mrg Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.26 1997/06/14 04:17:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -72,7 +72,7 @@
 static int findblkmajor __P((const char *, struct devnametobdevmaj *));
 static const char *findblkname __P((int, struct devnametobdevmaj *));
 static struct device *getdisk __P((char *, int, int,
-	struct devnametobdevmaj *, dev_t *));
+	struct devnametobdevmaj *, dev_t *, int));
 static struct device *parsedisk __P((char *, int, int,
 	struct devnametobdevmaj *, dev_t *));
 static int getstr __P((char *, int));
@@ -371,9 +371,12 @@ setroot(bootdv, bootpartition, nam2blk)
 	struct device *dv;
 	register int len, i;
 	dev_t nrootdev;
+	dev_t ndumpdev = NODEV;
 	char buf[128];
 	const char *rootdevname;
-	struct device *rootdv;
+	const char *dumpdevname;
+	struct device *rootdv = NULL;		/* XXX gcc -Wuninitialized */
+	struct device *dumpdv = NULL;
 	struct ifnet *ifp;
 	const char *deffsname;
 	struct vfsops *vops;
@@ -430,6 +433,8 @@ setroot(bootdv, bootpartition, nam2blk)
 
  top:
 	if (boothowto & RB_ASKNAME) {
+		struct device *defdumpdv;
+
 		for (;;) {
 			printf("root device");
 			if (bootdv != NULL) {
@@ -446,21 +451,64 @@ setroot(bootdv, bootpartition, nam2blk)
 			}
 			if (len > 0 && buf[len - 1] == '*') {
 				buf[--len] = '\0';
-				dv = getdisk(buf, len, 1, nam2blk, &nrootdev);
+				dv = getdisk(buf, len, 1, nam2blk,
+				    &nrootdev, 0);
 				if (dv != NULL) {
 					rootdv = dv;
 					break;
 				}
 			}
 			dv = getdisk(buf, len, bootpartition, nam2blk,
-			    &nrootdev);
+			    &nrootdev, 0);
 			if (dv != NULL) {
 				rootdv = dv;
 				break;
 			}
 		}
 
+		/*
+		 * Set up the default dump device.  If root is on
+		 * a network device, there is no default dump
+		 * device, since we don't support dumps to the
+		 * network.
+		 */
+		if (rootdv->dv_class == DV_IFNET)
+			defdumpdv = NULL;
+		else
+			defdumpdv = rootdv;
+
+		for (;;) {
+			printf("dump device");
+			if (defdumpdv != NULL) {
+				/*
+				 * Note, we know it's a disk if we get here.
+				 */
+				printf(" (default %sb)", defdumpdv->dv_xname);
+			}
+			printf(": ");
+			len = getstr(buf, sizeof(buf));
+			if (len == 0) {
+				if (defdumpdv != NULL) {
+					ndumpdev = MAKEDISKDEV(major(nrootdev),
+					    DISKUNIT(nrootdev), 1);
+				}
+				dumpdv = rootdv;
+				break;
+			}
+			if (len == 4 && strcmp(buf, "none") == 0) {
+				dumpspec = "none";
+				goto havedump;
+			}
+			dv = getdisk(buf, len, 1, nam2blk, &ndumpdev, 1);
+			if (dv) {
+				dumpdv = dv;
+				break;
+			}
+		}
+
+ havedump:
 		rootdev = nrootdev;
+		dumpdev = ndumpdev;
 
 		for (i = 0; i < nvfssw; i++) {
 			if (vfssw[i] != NULL &&
@@ -505,22 +553,16 @@ setroot(bootdv, bootpartition, nam2blk)
 		/*
 		 * Wildcarded root; use the boot device.
 		 */
+		rootdv = bootdv;
+
 		majdev = findblkmajor(bootdv->dv_xname, nam2blk);
 		if (majdev >= 0) {
 			/*
 			 * Root is on a disk.  `bootpartition' is root.
 			 */
-			rootdv = bootdv;
 			rootdev = MAKEDISKDEV(majdev, bootdv->dv_unit,
 			    bootpartition);
-		} else {
-			/*
-			 * Root is on the net.
-			 */
-			rootdv = bootdv;
 		}
-		/* Initialise dumpdev */
-		dumpdev = NODEV;
 	} else {
 
 		/*
@@ -536,8 +578,8 @@ setroot(bootdv, bootpartition, nam2blk)
 			if (strcmp(dv->dv_xname, rootspec) == 0)
 				break;
 		if (dv != NULL && dv->dv_class == DV_IFNET) {
-			root_device = dv;
-			return;
+			rootdv = dv;
+			goto haveroot;
 		}
 
 		rootdevname = findblkname(major(rootdev), nam2blk);
@@ -552,30 +594,30 @@ setroot(bootdv, bootpartition, nam2blk)
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
 			if (strcmp(buf, dv->dv_xname) == 0) {
-				root_device = dv;
+				rootdv = dv;
 				break;
 			}
 		}
-		if (dv == NULL) {
+		if (rootdv == NULL) {
 			printf("device %s (0x%x) not configured\n",
 			    buf, rootdev);
 			boothowto |= RB_ASKNAME;
 			goto top;
 		}
-
-		return;
 	}
+
+ haveroot:
 
 	root_device = rootdv;
 
 	switch (rootdv->dv_class) {
 	case DV_IFNET:
-		return;
+		/* Nothing. */
+		break;
 
 	case DV_DISK:
 		printf("root on %s%c", rootdv->dv_xname,
 		    DISKPART(rootdev) + 'a');
-		printf("\n");
 		break;
 
 	default:
@@ -583,6 +625,78 @@ setroot(bootdv, bootpartition, nam2blk)
 		boothowto |= RB_ASKNAME;
 		goto top;
 	}
+
+	/*
+	 * Now configure the dump device.
+	 */
+
+	if (dumpspec != NULL && strcmp(dumpspec, "none") == 0) {
+		/*
+		 * Operator doesn't want a dump device.
+		 */
+		goto nodumpdev;
+	}
+
+	/*
+	 * If we haven't figured out the dump device, do so, with
+	 * the following rules:
+	 *
+	 *	(a) We already know dumpdv in the RB_ASKNAME case.
+	 *
+	 *	(b) If dumpspec is set, try to use it.  If the device
+	 *	    is not available, punt.
+	 *
+	 *	(c) If dumpspec is not set, the dump device is
+	 *	    wildcarded or unspecified.  If the root device
+	 *	    is DV_IFNET, punt.  Otherwise, use partition b
+	 *	    of the root device.
+	 */
+
+	if (dumpdv != NULL)
+		goto out;
+
+	if (dumpspec != NULL) {
+		if (dumpdev == NODEV) {
+			/*
+			 * Looks like they tried to pick a network
+			 * device.  Oops.
+			 */
+			goto nodumpdev;
+		}
+
+		dumpdevname = findblkname(major(dumpdev), nam2blk);
+		if (dumpdevname == NULL)
+			goto nodumpdev;
+		bzero(buf, sizeof(buf));
+		sprintf(buf, "%s%d", dumpdevname, DISKUNIT(dumpdev));
+
+		for (dv = alldevs.tqh_first; dv != NULL;
+		    dv = dv->dv_list.tqe_next) {
+			if (strcmp(buf, dv->dv_xname) == 0) {
+				dumpdv = dv;
+				break;
+			}
+		}
+		if (dv == NULL) {
+			/*
+			 * Device not configured.
+			 */
+			goto nodumpdev;
+		}
+	} else if (rootdv->dv_class == DV_IFNET)
+		goto nodumpdev;
+	else {
+		dumpdv = rootdv;
+		dumpdev = MAKEDISKDEV(major(rootdev), dumpdv->dv_unit, 1);
+	}
+
+ out:
+	printf(" dumps on %s%c\n", dumpdv->dv_xname, DISKPART(dumpdev) + 'a');
+	return;
+
+ nodumpdev:
+	dumpdev = NODEV;
+	printf("\n");
 }
 
 static int
@@ -619,28 +733,32 @@ findblkname(maj, nam2blk)
 }
 
 static struct device *
-getdisk(str, len, defpart, nam2blk, devp)
+getdisk(str, len, defpart, nam2blk, devp, isdump)
 	char *str;
 	int len, defpart;
 	struct devnametobdevmaj *nam2blk;
 	dev_t *devp;
+	int isdump;
 {
 	struct device *dv;
 
 	if ((dv = parsedisk(str, len, defpart, nam2blk, devp)) == NULL) {
 		printf("use one of:");
 #ifdef MEMORY_DISK_HOOKS
-		printf(" %s[a-%c]", fakemdrootdev.dv_xname,
-		    'a' + MAXPARTITIONS - 1);
+		if (isdump == 0)
+			printf(" %s[a-%c]", fakemdrootdev.dv_xname,
+			    'a' + MAXPARTITIONS - 1);
 #endif
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
 			if (dv->dv_class == DV_DISK)
 				printf(" %s[a-%c]", dv->dv_xname,
 				    'a' + MAXPARTITIONS - 1);
-			if (dv->dv_class == DV_IFNET)
+			if (isdump == 0 && dv->dv_class == DV_IFNET)
 				printf(" %s", dv->dv_xname);
 		}
+		if (isdump)
+			printf(" none");
 		printf(" halt\n");
 	}
 	return (dv);
