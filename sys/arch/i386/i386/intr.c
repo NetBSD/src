@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4 2002/11/27 00:43:12 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.5 2002/11/28 16:37:35 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -460,7 +460,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 #ifdef INTRDEBUG
 	printf("allocated pic %s type %s pin %d level %d to cpu%u slot %d idt entry %d\n",
 	    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin, level,
-	    (unsigned)ci->ci_cpuid, slot, idt_vec);
+	    (unsigned)ci->ci_apicid, slot, idt_vec);
 #endif
 
 	return (ih);
@@ -506,7 +506,7 @@ intr_disestablish(struct intrhand *ih)
 
 #ifdef INTRDEBUG
 	printf("cpu%lu: remove slot %d (pic %s pin %d vec %d)\n",
-	    ci->ci_cpuid, ih->ih_slot, pic->pic_dev.dv_xname, ih->ih_pin,
+	    ci->ci_apicid, ih->ih_slot, pic->pic_dev.dv_xname, ih->ih_pin,
 	    idtvec);
 #endif
 
@@ -535,7 +535,7 @@ struct intrhand fake_softserial_intrhand;
 struct intrhand fake_timer_intrhand;
 struct intrhand fake_ipi_intrhand;
 
-#if NLAPIC > 0
+#if NLAPIC > 0 && defined(MULTIPROCESSOR)
 static char *i386_ipi_names[I386_NIPI] = I386_IPI_NAMES;
 #endif
 
@@ -547,7 +547,7 @@ void
 cpu_intr_init(struct cpu_info *ci)
 {
 	struct intrsource *isp;
-#if NLAPIC > 0
+#if NLAPIC > 0 && defined(MULTIPROCESSOR)
 	int i;
 #endif
 
@@ -604,6 +604,7 @@ cpu_intr_init(struct cpu_info *ci)
 	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
 	    ci->ci_dev->dv_xname, "timer");
 
+#ifdef MULTIPROCESSOR
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
 	if (isp == NULL)
@@ -618,6 +619,7 @@ cpu_intr_init(struct cpu_info *ci)
 	for (i = 0; i < I386_NIPI; i++)
 		evcnt_attach_dynamic(&ci->ci_ipi_events[i], EVCNT_TYPE_INTR,
 		    NULL, ci->ci_dev->dv_xname, i386_ipi_names[i]);
+#endif
 #endif
 
 	intr_calculatemasks(ci);
@@ -651,7 +653,7 @@ intr_printconfig(void)
 	CPU_INFO_ITERATOR cii;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		printf("cpu%d: interrupt masks:\n", (unsigned)ci->ci_cpuid);
+		printf("cpu%d: interrupt masks:\n", (unsigned)ci->ci_apicid);
 		for (i = 0; i < NIPL; i++)
 			printf("IPL %d mask %lx unmask %lx\n", i,
 			    (u_long)ci->ci_imask[i], (u_long)ci->ci_iunmask[i]);
@@ -661,7 +663,7 @@ intr_printconfig(void)
 			if (isp == NULL)
 				continue;
 			printf("cpu%u source %d is pin %d from pic %s maxlevel %d\n",
-			    (unsigned)ci->ci_cpuid, i, isp->is_pin,
+			    (unsigned)ci->ci_apicid, i, isp->is_pin,
 			    isp->is_pic->pic_name, isp->is_maxlevel);
 			for (ih = isp->is_handlers; ih != NULL;
 			     ih = ih->ih_next)

@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.5 2002/11/22 15:23:40 fvdl Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.6 2002/11/28 16:37:35 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -368,7 +368,7 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 		 * cpu's.  but there's no point in doing that until after 
 		 * most interrupts run without the kernel lock.  
 		 */
-		redhi |= (ci->ci_cpuid << IOAPIC_REDHI_DEST_SHIFT);
+		redhi |= (ci->ci_apicid << IOAPIC_REDHI_DEST_SHIFT);
 
 		/* XXX derive this bit from BIOS info */
 		if (pp->ip_type == IST_LEVEL)
