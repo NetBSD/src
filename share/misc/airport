@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.11 1999/01/15 23:44:52 hubertf Exp $
+#	$NetBSD: airport,v 1.11.10.1 2000/10/17 21:18:46 tv Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -6,14 +6,17 @@
 # available at http://www.cowtown.net/users/rcr/aaa/ccmain.htm
 #
 # Airport Code : Airport
+AAR:Tirstrup, Aarhus, Denmark
 ABE:Allentown-Bethlehem-Easton International, Pennsylvania, USA
 ABQ:Albuquerque International, New Mexico, USA
+ADL:Adelaide, Australia
 AGC:Pittsburgh/Allegheny County, Pennsylvania, USA
 AGP:Malaga, Spain
 AIY:Atlantic City International, New Jersey, USA
 AKL:Auckland, New Zealand
 ALB:Albany, New York, USA
 AMM:Amman, Jordan
+AMS:Shiphol, Amsterdam, Netherlands
 ANC:Anchorage International, Alaska, USA
 ANU:Antigua, Leeward Islands
 ARN:Arlanda Airport, Stockholm, Sweden
@@ -21,6 +24,7 @@ ATH:Athens, Greece
 ATL:Atlanta William B. Hartsfield International, Georgia, USA
 AUS:Austin Robert Mueller Municipal, Texas, USA
 AVL:Asheville Regional, North Carolina, USA
+AVV:Avalon Airport, Victoria, Australia
 AXA:Anguilla
 BDA:Bermuda, BM
 BDL:Hartford/Springfield Bradley International, Connecticut, USA
@@ -36,6 +40,7 @@ BIS:Bismarck Municipal, North Dakota, USA
 BKK:Bangkok, Thailand
 BKL:Cleveland Lakefront, Ohio, USA
 BNA:Nashville Metro, Tennessee, USA
+BNE:Brisbane Intl., Australia
 BOI:Boise Air Terminal/Gowen Field, Idaho, USA
 BOS:Boston Logan International, Massachusetts, USA
 BPT:Beaumont, Texas, USA
@@ -46,20 +51,26 @@ BUF:Buffalo International, New York, USA
 BUH:All Airports around Bucharest, Romania
 BUR:Burbank/Glendale/Pasadena, California, USA
 BWI:Baltimore-Washington International, Maryland, USA
+BWU:Bankstown, Australia
 CAE:Columbia Metropolitan, South Carolina, USA
 CAK:Akron/Canton Regional, Ohio, USA
+CBR:Canberra, Australia
 CDG:Charles de Gaulle, Paris, France
+CGD:Changde, China
+CGN:Koeln/Bonn, Cologne, Germany
 CGX:Chicago Merrill C. Meigs Field, Chicago, Illinois, USA
 CHI:All Airports around Chicago, Illinois, USA
+CHQ:Chania, Souda, Greece
 CHS:Charleston International, South Carolina, USA
 CID:Cedar Rapids/Iowa City, Iowa, USA
 CLE:Cleveland-Hopkins International, Ohio, USA
 CLT:Charlotte/Douglas International, North Carolina, USA
 CMH:Columbus International, Ohio, USA
+CNS:Cairns, Australia
 COS:Peterson, Colorado Springs, USA
+CPH:Copenhagen, Denmark
 CPR:Casper/Natrone County International, Wyoming, USA
 CRM:Charleston (WV) Yeager, South Carolina, USA
-CPH:Copenhagen, Denmark
 CRP:Corpus Christi International, Texas, USA
 CUN:Cancun, Mexico
 CVG:Cincinnati International, Ohio, USA
@@ -72,6 +83,8 @@ DEL:Delhi, India
 DEN:Denver International, Colorado, USA
 DET:Detroit City, Michigan, USA
 DFW:Dallas-Ft. Worth International, Texas, USA
+DMR:Dhamar, Yemen
+DRW:Darwin, Australia
 DSM:Des Moines International, Iowa, USA
 DTT:All Airports around Detroit, Michigan, USA
 DTW:Detroit Metropolitan/Wayne County, Michigan, USA
@@ -94,13 +107,16 @@ FWA:Ft. Wayne Allen County, Indiana, USA
 GCM:Grand Cayman, KY
 GDL:Guadalajara, Mex
 GEG:Spokane International, Washington, USA
+GEX:Geelong, Australia
 GIG:Rio De Janeiro, Brazil
 GLA:Glasgow, Scotland
 GND:Grenada, GD
 GRR:Grand Rapids/Kent County International, Michigan, USA
 GRU:Sao Paulo, Brazil
 GSO:Greensboro-High Pt.-Winston Salem Regional, North Carolina, USA
+HAV:Jose Marti, Havana, Cuba
 HEL:Helsinki, Finland
+HEL:Kazantzakis, Herakleion, Greece
 HKG:Hong Kong
 HNL:Honolulu International, Hawaii, USA
 HOT:Hot Springs Memorial Field
@@ -123,9 +139,11 @@ JFK:New York John F. Kennedy International, New York, USA
 JKT:All Airports around Jakarta, Indonesia
 JNU:Juneau International, Alaska, USA
 KCK:All Airports around Kansas City, Kansas, USA
+KEN:Kenema, Sierra Leone
 KIN:Kingston, Jamaica
 KIX:Osaka, Japan
 KOA:Kailua-Kona Keahole, HI
+KRE:Kirundo, Burundi
 LAN:Lansing Capital City, Michigan, USA
 LAS:Las Vegas McCarran International, Nevada, USA
 LAX:Los Angeles International, California, USA
@@ -133,21 +151,25 @@ LCH:Lake Charles, Louisiana, USA
 LFT:Lafayette, Louisiana, USA
 LGA:New York La Guardia, New York, USA
 LGB:Long Beach Daugherty Field, California, USA
-LHR:London-Heathrow, UK
+LGW:Gatwick, London, UK
+LHR:Heathrow, London, UK
 LIH:Lihue, Hawaii, USA
 LIT:Little Rock Regional, Arkansas, USA
 LNK:Lincoln Municipal, Nebraska, USA
 LON:All Airports around London, United Kingdom
 LRD:Laredo, Texas, USA
+LST:Launceston, Tasmania
 MAD:Madrid, Spain
 MAN:Manchester, UK
 MBJ:Montego Bay, Jamaica
 MBS:Saginaw Tri-City, Michigan, USA
+MBW:Moorabbin, Australia
 MCI:Kansas City International, Missouri, USA
 MCO:Orlando International, Florida, USA
 MDT:Harrisburg International, Pennsylvania, USA
 MDW:Chicago Midway, Illinois, USA
-MEL:Melbourne, Australia
+MEB:Essendon, Melbourne, Australia
+MEL:Tulamarine, Melbourne, Australia
 MEM:Memphis International, Tennessee, USA
 MEX:Mexico City, Mexico
 MFW:All Airports around Miami, Ft. Lauderdale and West Palm Beach, Florida, USA
@@ -179,6 +201,7 @@ OKC:Oklahoma City Will Rogers World, Oklahoma, USA
 OLM:Olympia, WA
 OMA:Omaha Eppley Airfield, Nebraska, USA
 ONT:Ontario International, California, USA
+OOL:Coolangatta
 ORD:Chicago-O'Hare International, Illinois, USA
 ORF:Norfolk International, Virginia, USA
 OSA:All Airports around Osaka, Japan
@@ -188,6 +211,7 @@ PAP:Port-au-Prince, Haiti
 PAR:All Airports around Paris, France
 PBI:Palm Beach International, Florida, USA
 PDX:Portland International, Oregon, USA
+PER:Perth, Australia
 PHF:Newport News Patrick Henry International, Virginia, USA
 PHL:Philadelphia International, Pennsylvania, USA
 PHX:Phoenix Sky Harbor International, Arizona, USA
@@ -244,6 +268,7 @@ TLV:Tel Aviv, Israel
 TOL:Toledo Express, Ohio, USA
 TPA:Tampa International, Florida, USA
 TPE:Taipei, Taiwan
+TSV:Townsville, Australia
 TUL:Tulsa International, Oklahoma, USA
 TUS:Tucson International, Arizona, USA
 TXL:Berlin, Germany
@@ -338,6 +363,7 @@ YZF:Yellowknife, Northwest Territories, Canada
 YZR:Sarnia, Ontario, Canada
 YZV:Sept-Iles, Quebec, Canada
 ZBF:Bathurst, New Brunswick, Canada
+ZBT:Bus Service, Aarhus, Denmark
 ZGS:Gethsemani, Quebec, Canada
 ZKG:Kegaska, Quebec, Canada
 ZRH:Zurich, Switzerland
