@@ -1,3 +1,5 @@
+/*	$NetBSD: platform.h,v 1.3 2004/11/07 01:13:18 christos Exp $	*/
+
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: platform.h,v 1.2 2004/05/21 16:05:51 christos Exp $ */
+/* Id: platform.h.in,v 1.24.2.1.10.11 2004/03/08 09:04:52 marka Exp */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -156,7 +158,7 @@
 /*
  * Defined if we are using threads.
  */
-/* #define ISC_PLATFORM_USETHREADS 1 */
+#define ISC_PLATFORM_USETHREADS 1
 
 /*
  * Defined if unistd.h does not cause fd_set to be delared.
