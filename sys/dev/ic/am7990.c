@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.1 1995/06/28 02:24:50 cgd Exp $	*/
+/*	$NetBSD: am7990.c,v 1.2 1995/07/24 04:15:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -141,8 +141,11 @@ void
 lereset(sc)
 	struct le_softc *sc;
 {
+	int s;
 
+	s = splimp();
 	leinit(sc);
+	splx(s);
 }
 
 void
@@ -244,11 +247,8 @@ leinit(sc)
 	register struct le_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int s;
 	register int timo;
 	u_long a;
-
-	s = splimp();
 
 	lewrcsr(sc, LE_CSR0, LE_C0_STOP);
 	LE_DELAY(100);
@@ -282,8 +282,6 @@ leinit(sc)
 		lestart(ifp);
 	} else
 		printf("%s: card failed to initialize\n", sc->sc_dev.dv_xname);
-
-	splx(s);
 }
 
 /*
@@ -376,23 +374,29 @@ leread(sc, boff, len)
 	register struct le_softc *sc;
 	int boff, len;
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 
-	len -= 4;
-	if (len <= sizeof(struct ether_header))
+	if (len <= sizeof(struct ether_header) ||
+	    len > ETHER_MAX_LEN) {
+		printf("%s: invalid packet size %d; dropping\n",
+		    sc->sc_dev.dv_xname, len);
+		ifp->if_ierrors++;
 		return;
+	}
 
 	/* Pull packet off interface. */
 	m = leget(sc, boff, len);
-	if (m == 0)
+	if (m == 0) {
+		ifp->if_ierrors++;
 		return;
+	}
+
+	ifp->if_ipackets++;
 
 	/* We assume that the header fit entirely in one mbuf. */
 	eh = mtod(m, struct ether_header *);
-
-	ifp = &sc->sc_arpcom.ac_if;
 
 #if NBPFILTER > 0
 	/*
@@ -467,8 +471,7 @@ lerint(sc)
 			if (sc->sc_debug)
 				recv_print(sc, sc->sc_last_rd);
 #endif
-			leread(sc, LE_RBUFADDR(sc, bix), (int)rmd.rmd3);
-			sc->sc_arpcom.ac_if.if_ipackets++;
+			leread(sc, LE_RBUFADDR(sc, bix), (int)rmd.rmd3 - 4);
 		}
 
 		rmd.rmd1_bits = LE_R1_OWN;
@@ -811,7 +814,7 @@ leioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom):
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
 		    ether_delmulti(ifr, &sc->sc_arpcom);
 
 		if (error == ENETRESET) {
@@ -819,13 +822,14 @@ leioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			leinit(sc);
+			lereset(sc);
 			error = 0;
 		}
 		break;
 
 	default:
 		error = EINVAL;
+		break;
 	}
 
 	splx(s);
