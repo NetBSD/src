@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.26 1997/10/18 06:21:32 lukem Exp $
+#	$NetBSD: gcc2netbsd,v 1.27 1997/10/22 12:56:54 is Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -20,6 +20,7 @@
 #  Updated November 29, 1995 for gcc-2.7.2
 #  Updated May 13, 1997 for gcc-2.7.2.1
 #  Updated May 14, 1997 for gcc-2.7.2.2
+#  Updated Oct 21, 1997 to complete objc-support (Ignatios Souvatzis)
 #
 #  This is currently updated for gcc-2.7.2.2.  Newer versions of gcc
 #	should have this script and related files updated.
@@ -109,14 +110,14 @@ $version = "2.7.2.2";
 
 @libgccof = ("gbl-ctors.h");
 
-@libobjcf = ("archive.c", "class.c", "encoding.c", "hash.c", "init.c",
+@libobjcf = ("NXConstStr.m", "Object.m", "Protocol.m",
+	     "archive.c", "class.c", "encoding.c", "hash.c", "init.c",
 	     "misc.c", "objects.c", "sarray.c", "selector.c",
 	     "sendmsg.c");
 
-@libobjcof = ("NXConstStr.h", "NXConstStr.m", "Object.h", "Object.m",
-	      "Protocol.h", "Protocol.m", "encoding.h", "hash.h",
-	      "list.h", "objc-api.h", "objc.h", "runtime.h",
-	      "sarray.h", "typedstream.h");
+@libobjcof = ("NXConstStr.h", "Object.h", "Protocol.h",
+	      "encoding.h", "hash.h", "list.h", "objc-api.h",
+	      "objc.h", "runtime.h", "sarray.h", "typedstream.h");
 
 @genh = ("attr", "flags", "codes", "config");
 
@@ -128,20 +129,7 @@ $gendep = "rtl.o obstack.o";
 
 $bcdep = "bi-parser.o bi-lexer.o bi-reverse.o obstack.o";
 
-%sedlist = ("libobjc/NXConstStr.h","'s/objc\\///g'",
-	    "libobjc/NXConstStr.m","'s/objc\\///g'",
-	    "libobjc/Object.h","'s/objc\\///g'",
-	    "libobjc/Object.m","'s/objc\\///g'",
-	    "libobjc/Protocol.h","'s/objc\\///g'",
-	    "libobjc/Protocol.m","'s/objc\\///g'",
-	    "libobjc/encoding.h","'s/objc\\///g'",
-	    "libobjc/hash.c","'s/objc\\///g'",
-	    "libobjc/objc-api.h","'s/objc\\///g'",
-	    "libobjc/runtime.h","'s/objc\\///g'",
-	    "libobjc/sarray.c","'s/objc\\///g'",
-	    "libobjc/selector.c","'s/objc\\///g'",
-	    "libobjc/typedstream.h","'s/objc\\///g'",
-	    "libobjc/objects.c","'s/\\.\\.\\///g'",
+%sedlist = ("libobjc/objects.c","'s/\\.\\.\\///g'",
 	    "libobjc/sendmsg.c","'s/\\.\\.\\///g'");
 
 #
@@ -750,11 +738,19 @@ ${LIB2SOBJS}: libgcc2.c
 %% NetBSD
 
 LIB=	objc
+INCSDIR=/usr/include/objc
+INCS=	NXConstStr.h Object.h Protocol.h \
+	encoding.h hash.h list.h objc.h objc-api.h sarray.h typedstream.h
 NOPROFILE=
 NOPIC=
 
+.SUFFIXES: .o .m
+
+.m.o: ;	${CC} -c ${CFLAGS} -o ${.TARGET} ${.IMPSRC}
+
 CFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/${MACHINE_ARCH}
+
 
 %% srcs objc
 

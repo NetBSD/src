@@ -27,7 +27,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef __Protocol_INCLUDE_GNU
 #define __Protocol_INCLUDE_GNU
 
-#include "Object.h"
+#include "objc/Object.h"
 
 @interface Protocol : Object
 {
