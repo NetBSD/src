@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.109 2000/07/19 22:05:02 jeffs Exp $	*/
+/*	$NetBSD: locore.S,v 1.110 2000/07/20 18:33:42 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1297,6 +1297,7 @@ _C_LABEL(cpu_arch):
 	.globl	_C_LABEL(mips_L1DCacheLSize)
 	.globl	_C_LABEL(mips_L1ICacheLSize)
 	.globl	_C_LABEL(mips_CacheAliasMask)
+	.globl	_C_LABEL(mips_CachePreferMask)
 	.globl	_C_LABEL(mips_L2CacheSize)
 	.globl	_C_LABEL(mips_L2CacheLSize)
 	.globl	_C_LABEL(mips_L2CachePresent)
@@ -1309,6 +1310,8 @@ _C_LABEL(mips_L1DCacheLSize):
 _C_LABEL(mips_L1ICacheLSize):
 	.word	0
 _C_LABEL(mips_CacheAliasMask):
+	.word 0
+_C_LABEL(mips_CachePreferMask):
 	.word 0
 _C_LABEL(mips_L2CacheSize):
 	.word	0
