@@ -1,0 +1,8 @@
+-rw-rw-r--  1 mrg  mrg  29 Mar 23 11:37 ../../../dist/gcc/tconfig.h
+-rw-rw-r--  1 mrg  mrg  1629 Mar 23 11:37 ../../../dist/gcc/config.h
+-rw-rw-r--  1 mrg  mrg  29 Mar 23 11:37 ../../../dist/gcc/hconfig.h
+-rw-rw-r--  1 mrg  mrg  53 Mar 23 11:37 ../../../dist/gcc/specs.h
+
+ls: ../../../dist/gcc/insn-codes.h: No such file or directory
+ls: ../../../dist/gcc/insn-flags.h: No such file or directory
+ls: ../../../dist/gcc/multilib.h: No such file or directory
