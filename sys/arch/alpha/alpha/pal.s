@@ -1,4 +1,4 @@
-/*	$NetBSD: pal.s,v 1.5 1996/07/14 04:21:53 cgd Exp $	*/
+/* $NetBSD: pal.s,v 1.6 1997/04/07 00:18:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
