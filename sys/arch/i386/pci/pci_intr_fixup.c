@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.15 2001/07/17 13:53:15 mrg Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.16 2001/08/01 09:11:19 haya Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -134,6 +134,8 @@ const struct pciintr_icu_table {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82371FB_ISA,
 	  piix_init },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82371SB_ISA,
+	  piix_init },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801BA_LPC,
 	  piix_init },
 
 	{ PCI_VENDOR_OPTI,	PCI_PRODUCT_OPTI_82C558,
