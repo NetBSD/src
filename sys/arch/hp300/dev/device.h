@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.7 1996/02/14 02:44:14 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.8 1996/10/14 07:11:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -35,6 +35,8 @@
  *	@(#)device.h	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/device.h>
+
 struct driver {
 	int	(*d_match)();
 	void	(*d_attach)();
@@ -64,6 +66,7 @@ struct hp_ctlr {
 	int		hp_ipl;
 	struct hp_hw	*hp_args;
 	char		hp_xname[8];
+	struct device	hp_dev;
 };
 
 struct hp_device {
@@ -78,8 +81,11 @@ struct hp_device {
 	int		hp_alive;
 	int		hp_ipl;
 	struct hp_hw	*hp_args;
-	char		hp_xname[8];
+	struct device	hp_dev;
 };
+
+/* XXX until the code is cleaed up */
+#define	hp_xname	hp_dev.dv_xname
 
 /* XXX This needs to die. */
 struct	devqueue {
