@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.h,v 1.2 2003/08/07 10:04:22 agc Exp $	*/
+/*	$NetBSD: bufcache.h,v 1.3 2005/02/26 05:45:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -119,3 +119,4 @@ void bwrite(struct ubuf *);
 void brelse(struct ubuf *);
 int bread(struct uvnode *, daddr_t, int, struct ucred *, struct ubuf **);
 void reassignbuf(struct ubuf *, struct uvnode *);
+void dump_free_lists(void);

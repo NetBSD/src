@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.6 2003/12/24 01:39:27 heas Exp $ */
+/* $NetBSD: segwrite.c,v 1.7 2005/02/26 05:45:54 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,6 +114,7 @@ time_t write_time;
 
 extern u_int32_t cksum(void *, size_t);
 extern u_int32_t lfs_sb_cksum(struct dlfs *);
+extern int preen;
 
 /*
  * Logical block number match routines used when traversing the dirty block
@@ -174,7 +175,7 @@ lfs_segwrite(struct lfs * fs, int flags)
 		vp = fs->lfs_ivnode;
 		fs->lfs_flags &= ~LFS_IFDIRTY;
 		ip = VTOI(vp);
-		if (LIST_FIRST(&vp->v_dirtyblkhd) != NULL)
+		if (LIST_FIRST(&vp->v_dirtyblkhd) != NULL || fs->lfs_idaddr <= 0)
 			lfs_writefile(fs, sp, vp);
 
 		redo = lfs_writeinode(fs, sp, ip);
@@ -902,7 +903,7 @@ lfs_seglock(struct lfs * fs, unsigned long flags)
 	sp = fs->lfs_sp = (struct segment *) malloc(sizeof(*sp));
 	sp->bpp = (struct ubuf **) malloc(fs->lfs_ssize * sizeof(struct ubuf *));
 	if (!sp->bpp)
-		errx(1, "Could not allocate %zu bytes: %s",
+		errx(!preen, "Could not allocate %zu bytes: %s",
 			(size_t)(fs->lfs_ssize * sizeof(struct ubuf *)),
 			strerror(errno));
 	sp->seg_flags = flags;
