@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.43 2002/11/01 11:31:54 mrg Exp $	*/
+/*	$NetBSD: xy.c,v 1.44 2003/01/01 02:26:13 thorpej Exp $	*/
 
 /*
  *
@@ -457,10 +457,10 @@ xyc_print(aux, name)
 	struct xyc_attach_args *xa = aux;
 
 	if (name != NULL)
-		printf("%s: ", name);
+		aprint_normal("%s: ", name);
 
 	if (xa->driveno != -1)
-		printf(" drive %d", xa->driveno);
+		aprint_normal(" drive %d", xa->driveno);
 
 	return UNCONF;
 }
