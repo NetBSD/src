@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2001/07/16 16:53:00 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.23 2001/12/18 10:12:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,16 @@ static __inline void spllower __P((int));
 static __inline void softintr __P((int));
 
 /*
+ * compiler barrier: prevent reordering of instructions.
+ * XXX something similar will move to <sys/cdefs.h>
+ * or thereabouts.
+ * This prevents the compiler from reordering code around
+ * this "instruction", acting as a sequence point for code generation.
+ */
+
+#define __splbarrier() __asm __volatile("":::"memory")
+
+/*
  * Add a mask to cpl, and return the old value of cpl.
  */
 static __inline int
@@ -89,6 +99,7 @@ splraise(ncpl)
 	register int ocpl = cpl;
 
 	cpl = ocpl | ncpl;
+	__splbarrier();
 	return (ocpl);
 }
 
@@ -101,6 +112,7 @@ spllower(ncpl)
 	register int ncpl;
 {
 
+	__splbarrier();
 	cpl = ncpl;
 	if (ipending & ~ncpl)
 		Xspllower();
