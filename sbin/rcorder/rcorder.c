@@ -1,4 +1,4 @@
-/*	$NetBSD: rcorder.c,v 1.4 2000/05/10 02:04:27 enami Exp $	*/
+/*	$NetBSD: rcorder.c,v 1.5 2000/07/17 14:16:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Matthew R. Green
@@ -64,6 +64,10 @@ int debug = 0;
 #define PROVIDES_LEN	(sizeof(PROVIDES_STR) - 1)
 #define BEFORE_STR	"# BEFORE:"
 #define BEFORE_LEN	(sizeof(BEFORE_STR) - 1)
+#define KEYWORD_STR	"# KEYWORD:"
+#define KEYWORD_LEN	(sizeof(KEYWORD_STR) - 1)
+#define KEYWORDS_STR	"# KEYWORDS:"
+#define KEYWORDS_LEN	(sizeof(KEYWORDS_STR) - 1)
 
 int exit_code;
 int file_count;
@@ -82,7 +86,7 @@ typedef struct provnode provnode;
 typedef struct filenode filenode;
 typedef struct f_provnode f_provnode;
 typedef struct f_reqnode f_reqnode;
-typedef struct beforelist beforelist;
+typedef struct strnodelist strnodelist;
 
 struct provnode {
 	flag		head;
@@ -101,32 +105,42 @@ struct f_reqnode {
 	f_reqnode	*next;
 };
 
+struct strnodelist {
+	filenode	*node;
+	char		*s;
+	strnodelist	*next;
+};
+
 struct filenode {
 	char		*filename;
 	flag		in_progress;
 	filenode	*next, *last;
 	f_reqnode	*req_list;
 	f_provnode	*prov_list;
+	strnodelist	*keyword_list;
 };
-
-struct beforelist {
-	filenode	*node;
-	char		*s;
-	beforelist	*next;
-} *bl_list = NULL;
 
 filenode fn_head_s, *fn_head;
 
+strnodelist *bl_list;
+strnodelist *keep_list;
+strnodelist *skip_list;
+
 void do_file __P((filenode *fnode));
+void strnode_add __P((strnodelist **, char *, filenode *));
+int skip_ok __P((filenode *fnode));
+int keep_ok __P((filenode *fnode));
 void satisfy_req __P((f_reqnode *rnode, char *filename));
 void crunch_file __P((char *));
 void parse_require __P((filenode *, char *));
 void parse_provide __P((filenode *, char *));
 void parse_before __P((filenode *, char *));
+void parse_keywords __P((filenode *, char *));
 filenode *filenode_new __P((char *));
 void add_require __P((filenode *, char *));
 void add_provide __P((filenode *, char *));
 void add_before __P((filenode *, char *));
+void add_keyword __P((filenode *, char *));
 void insert_before __P((void));
 Hash_Entry *make_fake_provision __P((filenode *));
 void crunch_all_files __P((void));
@@ -141,7 +155,7 @@ main(argc, argv)
 {
 	int ch;
 
-	while ((ch = getopt(argc, argv, "d")) != -1)
+	while ((ch = getopt(argc, argv, "dk:s:")) != -1)
 		switch (ch) {
 		case 'd':
 #ifdef DEBUG
@@ -149,6 +163,12 @@ main(argc, argv)
 #else
 			warnx("debugging not compiled in, -d ignored");
 #endif
+			break;
+		case 'k':
+			strnode_add(&keep_list, optarg, 0);
+			break;
+		case 's':
+			strnode_add(&skip_list, optarg, 0);
 			break;
 		default:
 			/* XXX should crunch it? */
@@ -184,6 +204,22 @@ initialize()
 	Hash_InitTable(provide_hash, file_count);
 }
 
+/* generic function to insert a new strnodelist element */
+void
+strnode_add(listp, s, fnode)
+	strnodelist **listp;
+	char *s;
+	filenode *fnode;
+{
+	strnodelist *ent;
+
+	ent = emalloc(sizeof *ent);
+	ent->node = fnode;
+	ent->s = s;
+	ent->next = *listp;
+	*listp = ent;
+}
+
 /*
  * below are the functions that deal with creating the lists
  * from the filename's given and the dependancies and provisions
@@ -205,6 +241,7 @@ filenode_new(filename)
 	temp->filename = estrdup(filename);
 	temp->req_list = NULL;
 	temp->prov_list = NULL;
+	temp->keyword_list = NULL;
 	temp->in_progress = RESET;
 	/*
 	 * link the filenode into the list of filenodes.
@@ -220,7 +257,7 @@ filenode_new(filename)
 }
 
 /*
- * add a requirement a filenode.
+ * add a requirement to a filenode.
  */
 void
 add_require(fnode, s)
@@ -330,13 +367,25 @@ add_before(fnode, s)
 	filenode *fnode;
 	char *s;
 {
-	beforelist *bf_ent;
+	strnodelist *bf_ent;
 
 	bf_ent = emalloc(sizeof *bf_ent);
 	bf_ent->node = fnode;
 	bf_ent->s = s;
 	bf_ent->next = bl_list;
 	bl_list = bf_ent;
+}
+
+/*
+ * add a key to a filenode.
+ */
+void
+add_keyword(fnode, s)
+	filenode *fnode;
+	char *s;
+{
+
+	strnode_add(&fnode->keyword_list, s, fnode);
 }
 
 /*
@@ -388,6 +437,22 @@ parse_before(node, buffer)
 }
 
 /*
+ * loop over the rest of a KEYWORD line, giving each word to
+ * add_keyword() to do the real work.
+ */
+void
+parse_keywords(node, buffer)
+	filenode *node;
+	char *buffer;
+{
+	char *s;
+	
+	while ((s = strsep(&buffer, " \t\n")) != NULL)
+		if (*s != '\0')
+			add_keyword(node, s);
+}
+
+/*
  * given a file name, create a filenode for it, read in lines looking
  * for provision and requirement lines, building the graphs as needed.
  */
@@ -397,7 +462,8 @@ crunch_file(filename)
 {
 	FILE *fp;
 	char *buf;
-	int require_flag, provide_flag, before_flag, directive_flag;
+	int require_flag, provide_flag, before_flag, keywords_flag,
+	    directive_flag;
 	filenode *node;
 	char delims[3] = { '\\', '\\', '\0' };
 	struct stat st;
@@ -428,7 +494,7 @@ crunch_file(filename)
 	 * and have no flags.
 	 */
 	while ((buf = fparseln(fp, NULL, NULL, delims, 0))) {
-		require_flag = provide_flag = before_flag = 0;
+		require_flag = provide_flag = before_flag = keywords_flag = 0;
 		if (strncmp(REQUIRE_STR, buf, REQUIRE_LEN) == 0)
 			require_flag = REQUIRE_LEN;
 		else if (strncmp(REQUIRES_STR, buf, REQUIRES_LEN) == 0)
@@ -439,6 +505,10 @@ crunch_file(filename)
 			provide_flag = PROVIDES_LEN;
 		else if (strncmp(BEFORE_STR, buf, BEFORE_LEN) == 0)
 			before_flag = BEFORE_LEN;
+		else if (strncmp(KEYWORD_STR, buf, KEYWORD_LEN) == 0)
+			keywords_flag = KEYWORD_LEN;
+		else if (strncmp(KEYWORDS_STR, buf, KEYWORDS_LEN) == 0)
+			keywords_flag = KEYWORDS_LEN;
 
 		if (require_flag)
 			parse_require(node, buf + require_flag);
@@ -448,6 +518,9 @@ crunch_file(filename)
 
 		if (before_flag)
 			parse_before(node, buf + before_flag);
+
+		if (keywords_flag)
+			parse_keywords(node, buf + keywords_flag);
 	}
 	fclose(fp);
 }
@@ -505,7 +578,7 @@ insert_before()
 	Hash_Entry *entry, *fake_prov_entry;
 	provnode *pnode;
 	f_reqnode *rnode;
-	beforelist *bl;
+	strnodelist *bl;
 	int new;
 	
 	while (bl_list != NULL) {
@@ -605,6 +678,37 @@ satisfy_req(rnode, filename)
 		do_file(head->next->fnode);
 }
 
+int
+skip_ok(fnode)
+	filenode *fnode;
+{
+	strnodelist *s;
+	strnodelist *k;
+
+	for (s = skip_list; s; s = s->next)
+		for (k = fnode->keyword_list; k; k = k->next)
+			if (strcmp(k->s, s->s) == 0)
+				return (0);
+
+	return (1);
+}
+
+int
+keep_ok(fnode)
+	filenode *fnode;
+{
+	strnodelist *s;
+	strnodelist *k;
+
+	for (s = keep_list; s; s = s->next)
+		for (k = fnode->keyword_list; k; k = k->next)
+			if (strcmp(k->s, s->s) == 0)
+				return (1);
+
+	/* an empty keep_list means every one */
+	return (!keep_list);
+}
+
 /*
  * given a filenode, we ensure we are not a cyclic graph.  if this
  * is ok, we loop over the filenodes requirements, calling satisfy_req()
@@ -673,7 +777,7 @@ do_file(fnode)
 	DPRINTF((stderr, "next do: "));
 
 	/* if we were already in progress, don't print again */
-	if (was_set == 0)
+	if (was_set == 0 && skip_ok(fnode) && keep_ok(fnode))
 		printf("%s\n", fnode->filename);
 	
 	if (fnode->next != NULL) {
