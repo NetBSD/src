@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.41 2001/11/28 10:21:12 lukem Exp $
+# $NetBSD: files.arm26,v 1.42 2001/11/29 22:17:16 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -29,6 +29,9 @@
 
 maxpartitions 8
 maxusers 2 8 64
+
+# Display current IPL in screen border
+defflag FLASHYTHING
 
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
