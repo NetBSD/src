@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ops.c,v 1.8 2000/04/07 18:04:05 jdolecek Exp $	*/
+/*	$NetBSD: procfs_ops.c,v 1.9 2000/05/26 03:04:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 }
 
 static int verify_procfs_fd __P((int, const char *));
-static int parsekinfo __P((const char *, KINFO *));
+static int parsekinfo __P((const char *, struct kinfo_proc2 *));
 
 static int
 verify_procfs_fd(fd, path)
@@ -101,14 +101,13 @@ verify_procfs_fd(fd, path)
 static int
 parsekinfo(path, ki)
 	const char *path;
-	KINFO *ki;
+	struct kinfo_proc2 *ki;
 {
 	char    fullpath[MAXPATHLEN];
 	int     dirfd, fd, nbytes, devmajor, devminor;
 	struct timeval usertime, systime, starttime;
 	char    buff[STATUS_SIZE];
 	char    flagstr[256];
-	struct kinfo_proc *kp = ki->ki_p;
 
 	/*
 	 * Verify that /proc/<pid> is a procfs file (and that no one has
@@ -160,28 +159,24 @@ parsekinfo(path, ki)
 	buff[nbytes] = '\0';
 
 	sscanf(buff, "%s %d %d %d %d %d,%d %s %ld,%ld %ld,%ld %ld,%ld %s %d",
-	    kp->kp_proc.p_comm, &kp->kp_proc.p_pid,
-	    &kp->kp_eproc.e_ppid, &kp->kp_eproc.e_pgid,
-	    &kp->kp_eproc.e_sid, &devmajor, &devminor,
-	    flagstr, &starttime.tv_sec, &starttime.tv_usec,
-	    &usertime.tv_sec, &usertime.tv_usec,
-	    &systime.tv_sec, &systime.tv_usec,
-	    kp->kp_eproc.e_wmesg, &kp->kp_eproc.e_ucred.cr_uid);
+	    ki->p_comm, &ki->p_pid, &ki->p_ppid, &ki->p_tpgid, &ki->p_sid,
+	    &devmajor, &devminor, flagstr, &starttime.tv_sec,
+	    &starttime.tv_usec, &usertime.tv_sec, &usertime.tv_usec,
+	    &systime.tv_sec, &systime.tv_usec, ki->p_wmesg, &ki->p_uid);
 
-	kp->kp_proc.p_wmesg = kp->kp_eproc.e_wmesg;
-	kp->kp_proc.p_wchan = (void *) 1;	/* XXX Set it to _something_. */
-	kp->kp_eproc.e_tdev = makedev(devmajor, devminor);
+	ki->p_wchan = 1;			/* XXX Set it to _something_. */
+	ki->p_tdev = makedev(devmajor, devminor);
 
 	/* Put both user and sys time into rtime field.  */
-	kp->kp_proc.p_rtime.tv_sec = usertime.tv_sec + systime.tv_sec;
-	kp->kp_proc.p_rtime.tv_usec = usertime.tv_usec + systime.tv_usec;
+	ki->p_rtime_sec = usertime.tv_sec + systime.tv_sec;
+	ki->p_rtime_usec = usertime.tv_usec + systime.tv_usec;
 
 	/* if starttime.[u]sec is != -1, it's in-memory process */
 	if (starttime.tv_sec != -1 && starttime.tv_usec != -1) {
-		kp->kp_proc.p_flag |= P_INMEM;
-		ki->ki_u.u_valid = 1;
-		ki->ki_u.u_start.tv_sec = starttime.tv_sec;
-		ki->ki_u.u_start.tv_usec = starttime.tv_usec;
+		ki->p_flag |= P_INMEM;
+		ki->p_uvalid = 1;
+		ki->p_ustart_sec = starttime.tv_sec;
+		ki->p_ustart_usec = starttime.tv_usec;
 	}
 
 	/*
@@ -191,16 +186,16 @@ parsekinfo(path, ki)
 
 	/* Set the flag for whether or not there is a controlling terminal. */
 	if (strstr(flagstr, "ctty"))
-		kp->kp_proc.p_flag |= P_CONTROLT;
+		ki->p_flag |= P_CONTROLT;
 
 	/* Set the flag for whether or not this process is session leader */
 	if (strstr(flagstr, "sldr"))
-		kp->kp_eproc.e_flag |= EPROC_SLEADER;
+		ki->p_eflag |= EPROC_SLEADER;
 
 	return 0;
 }
 
-KINFO *
+struct kinfo_proc2 *
 getkinfo_procfs(op, arg, cnt)
 	int     op, arg;
 	int    *cnt;
@@ -208,8 +203,7 @@ getkinfo_procfs(op, arg, cnt)
 	struct stat statbuf;
 	int     procdirfd, nbytes, knum = 0, maxknum = 0;
 	char   *direntbuff;
-	struct kinfo_proc *kp;
-	KINFO	*ki;
+	struct kinfo_proc2 *ki;
 	int     mib[4];
 	size_t  len;
 	struct statfs procfsstat;
@@ -265,8 +259,7 @@ getkinfo_procfs(op, arg, cnt)
 		err(1, "sysctl to fetch maxproc");
 	maxknum *= 2;		/* Double it, to be really paranoid.  */
 
-	kp = (struct kinfo_proc *) calloc(sizeof(struct kinfo_proc)*maxknum, 1);
-	ki = (KINFO *) calloc(sizeof(KINFO)*maxknum, 1);
+	ki = (struct kinfo_proc2 *) calloc(sizeof(struct kinfo_proc2)*maxknum, 1);
 
 	/* Read in a batch of entries at a time.  */
 	while ((knum < maxknum) &&
@@ -285,7 +278,6 @@ getkinfo_procfs(op, arg, cnt)
 				continue;
 			if (strcmp(dp->d_name, "self") == 0)
 				continue;
-			ki[knum].ki_p = &kp[knum];
 			if (parsekinfo(dp->d_name, &ki[knum]) != 0)
 				continue;
 			/*
@@ -295,23 +287,23 @@ getkinfo_procfs(op, arg, cnt)
 			 */
 			switch (op) {
 			case KERN_PROC_PID:
-				if (kp[knum].kp_proc.p_pid == arg)
+				if (ki[knum].p_pid == arg)
 					knum++;
 				break;
 			case KERN_PROC_PGRP:
-				if (kp[knum].kp_eproc.e_pgid == arg)
+				if (ki[knum].p_tpgid == arg)
 					knum++;
 				break;
 			case KERN_PROC_SESSION:
-				if (kp[knum].kp_eproc.e_sid == arg)
+				if (ki[knum].p_sid == arg)
 					knum++;
 				break;
 			case KERN_PROC_TTY:
-				if (kp[knum].kp_eproc.e_tdev == arg)
+				if (ki[knum].p_tdev == arg)
 					knum++;
 				break;
 			case KERN_PROC_UID:
-				if (kp[knum].kp_eproc.e_ucred.cr_uid == arg)
+				if (ki[knum].p_uid == arg)
 					knum++;
 				break;
 			case KERN_PROC_RUID:
@@ -342,12 +334,8 @@ getkinfo_procfs(op, arg, cnt)
 	*cnt = knum;
 	close(procdirfd);
 	/* free unused memory */
-	if (knum < maxknum) {
-		kp = realloc(kp, sizeof(*kp) * knum);
+	if (knum < maxknum)
 		ki = realloc(ki, sizeof(*ki) * knum);
-		for(; knum >= 0; knum--)
-			ki[knum].ki_p = &kp[knum];
-	}
 	return ki;
 }
 
@@ -358,7 +346,7 @@ getkinfo_procfs(op, arg, cnt)
  */
 char **
 procfs_getargv(kp, nchr)
-	const struct kinfo_proc *kp;
+	const struct kinfo_proc2 *kp;
 	int nchr;
 {
 	char    fullpath[MAXPATHLEN], *buf, *name, *args, **argv;
@@ -367,7 +355,7 @@ procfs_getargv(kp, nchr)
 	size_t idx;
 
 	/* Open /proc/<pid>/cmdline, and parse it into the argv array */
-	snprintf(fullpath, MAXPATHLEN, "/proc/%d/cmdline", kp->kp_proc.p_pid);
+	snprintf(fullpath, MAXPATHLEN, "/proc/%d/cmdline", kp->p_pid);
 	fd = open(fullpath, O_RDONLY, 0);
 	if (fd == -1 || verify_procfs_fd(fd, fullpath)) {
 		/*
@@ -404,7 +392,7 @@ procfs_getargv(kp, nchr)
 	 * in parentheses, just return NULL - the code in command()
 	 * will DTRT */
 	if (num == 1 && name[0] == '(' && name[len-1] == ')'
-		&& strncmp(name+1, kp->kp_proc.p_comm, len-2) == 0)
+		&& strncmp(name+1, kp->p_comm, len-2) == 0)
 	{
 		return (NULL);
 	}
