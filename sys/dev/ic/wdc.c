@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.172.2.3 2004/05/29 14:10:40 tron Exp $ */
+/*	$NetBSD: wdc.c,v 1.172.2.4 2004/06/24 13:57:07 he Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.3 2004/05/29 14:10:40 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.4 2004/06/24 13:57:07 he Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -669,6 +669,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 	}
 
 
+#if 0 /* XXX this break some ATA or ATAPI devices */
 	/*
 	 * reset bus. Also send an ATAPI_RESET to devices, in case there are
 	 * ATAPI device out there which don't react to the bus reset
@@ -691,6 +692,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 	}
 
 	delay(5000);
+#endif
 
 	if (wdc != NULL && (wdc->cap & WDC_CAPABILITY_SELECT))
 		wdc->select(chp,0);
