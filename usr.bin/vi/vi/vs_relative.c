@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_relative.c,v 1.4 2002/04/09 01:47:37 thorpej Exp $	*/
+/*	$NetBSD: vs_relative.c,v 1.5 2005/03/06 03:39:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)vs_relative.c	10.11 (Berkeley) 5/13/96";
 #else
-__RCSID("$NetBSD: vs_relative.c,v 1.4 2002/04/09 01:47:37 thorpej Exp $");
+__RCSID("$NetBSD: vs_relative.c,v 1.5 2005/03/06 03:39:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,10 @@ vs_column(sp, colp)
 	VI_PRIVATE *vip;
 
 	vip = VIP(sp);
+	if (vip->sc_smap == NULL) {
+		*colp = 0;
+		return 0;
+	}
 
 	*colp = (O_ISSET(sp, O_LEFTRIGHT) ?
 	    vip->sc_smap->coff : (vip->sc_smap->soff - 1) * sp->cols) +
