@@ -1,4 +1,4 @@
-# $NetBSD: XENU,v 1.1 2005/03/11 20:48:24 bouyer Exp $
+# $NetBSD: XENU,v 1.2 2005/04/03 19:29:18 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -235,6 +235,7 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
