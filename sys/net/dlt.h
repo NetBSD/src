@@ -1,4 +1,4 @@
-/*	$NetBSD: dlt.h,v 1.3 2001/09/10 23:11:06 bjh21 Exp $	*/
+/*	$NetBSD: dlt.h,v 1.4 2002/08/28 09:31:20 onoe Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -69,7 +69,10 @@
 #define	DLT_PPP_SERIAL	50	/* PPP over serial (async and sync) */
 #define	DLT_PPP_ETHER	51	/* XXX - depreceated! PPP over Ethernet; session only, w/o ether header */
 
-#define DLT_ECONET	115	/* Acorn Econet */
+#define DLT_IEEE802_11		105	/* IEEE 802.11 wireless */
+#define DLT_ECONET		115	/* Acorn Econet */
+#define DLT_PRISM_HEADER	119	/* 802.11 header plus Prism II info. */
+#define DLT_AIRONET_HEADER 	120	/* 802.11 header plus Aironet info. */
 
 /*
  * NetBSD-specific generic "raw" link type.  The upper 16-bits indicate
