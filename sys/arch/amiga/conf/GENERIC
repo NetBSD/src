@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.93.2.4 1998/05/08 05:18:09 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.93.2.5 1998/05/10 14:31:48 mycroft Exp $
 
 #
 # GENERIC AMIGA
@@ -117,7 +117,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #
 # Amiga specific options
 #
-#options	LIMITMEM=24	# Don't use more than LIMITMEM MB of the
+options		LIMITMEM=24	# Don't use more than LIMITMEM MB of the
 				# first bank of RAM. (default: unlimited)
 #options	NKPTADD=4	# set this for 4 additional KPT pages
 #options	NKPTADDSHIFT=24	# set this for 1 additional KPT page
