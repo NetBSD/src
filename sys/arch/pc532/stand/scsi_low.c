@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_low.c,v 1.3 1994/10/26 08:25:54 cgd Exp $	*/
+/*	$NetBSD: scsi_low.c,v 1.4 1994/12/09 21:04:42 phil Exp $	*/
 
 /****************************************************************************
  * NS32K Monitor SCSI low-level driver
@@ -90,7 +90,7 @@
 
 PRIVATE struct scsi_args	*sc_ptrs;
 PRIVATE char			sc_cur_phase,
-				sc_reset_done,
+				sc_reset_done = 1,
 				sc_have_msg,
 				sc_accept_int,
 				sc_dma_dir;

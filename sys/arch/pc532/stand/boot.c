@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 1994/10/26 08:25:44 cgd Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 1994/12/09 21:04:40 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: boot.c,v 1.2 1994/10/26 08:25:44 cgd Exp $";
+static char rcsid[] = "$NetBSD: boot.c,v 1.3 1994/12/09 21:04:40 phil Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ main()
 	cninit();
 	scsiinit();
 
-	printf("\n>> NetBSD BOOT pc532 [$Revision: 1.2 $]\n");
+	printf("\n>> NetBSD BOOT pc532 [$Revision: 1.3 $]\n");
 
 	bdev  = B_TYPE(bootdev);
 	bctlr = B_CONTROLLER(bootdev);
@@ -93,6 +93,8 @@ main()
 		    printf(": %s\n", name);
 
 		io = open(name, 0);
+		reset_twiddle();
+
 		if (io >= 0) {
 			copyunix(howto, opendev, io);
 			close(io);
@@ -125,7 +127,7 @@ copyunix(howto, devtype, io)
 		printf("Bad format\n");
 		return;
 	}
-
+	reset_twiddle();
 	load = addr = x.a_entry & 0x00ffff00;	/* XXX make less magical? */
 	printf("Booting %s%d%c:%s @ 0x%x\n",
 	    devsw[dev].dv_name, unit + (8*ctlr), 'a'+part, name, addr);
@@ -158,12 +160,14 @@ copyunix(howto, devtype, io)
 		while ((int)addr & CLOFSET)
 			*addr++ = 0;
 	/* Data */
+	reset_twiddle();
 	printf("+%d", x.a_data);
 	if (read(io, addr, x.a_data) != x.a_data)
 		goto shread;
 	addr += x.a_data;
 
 	/* Bss */
+	reset_twiddle();
 	printf("+%d", x.a_bss);
 	bzero( addr, x.a_bss );
 	addr += x.a_bss;
@@ -172,16 +176,19 @@ copyunix(howto, devtype, io)
 	ssym = addr;
 	bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 	addr += sizeof(x.a_syms);
+	reset_twiddle();
 	printf(" [%d+", x.a_syms);
-	if (read(io, addr, x.a_syms) != x.a_syms)
+	if (x.a_syms && read(io, addr, x.a_syms) != x.a_syms)
 		goto shread;
 	addr += x.a_syms;
 
 	/* read size of string table */
-	if (read(io, &i, sizeof(int)) != sizeof(int))
+	i = 0;
+	if (x.a_syms && read(io, &i, sizeof(int)) != sizeof(int))
 		goto shread;
 
 	/* read strings */
+	reset_twiddle();
 	printf("%d]", i);
 	bcopy(&i, addr, sizeof(int));
 	if (i) {
@@ -198,6 +205,7 @@ copyunix(howto, devtype, io)
 #undef round_to_size
 
 	/* and note the end address of all this	*/
+	reset_twiddle();
 	printf(" total=0x%x", addr);
 
 #ifdef pc532
@@ -275,3 +283,26 @@ getbootdev(howto)
 	} else
 		printf("\n");
 }
+
+static int tw_on;
+static int tw_pos;
+static char tw_chars[] = "|/-\\";
+
+reset_twiddle()
+{
+	if (tw_on)
+		putchar('\b');
+	tw_on = 0;
+	tw_pos = 0;
+}
+
+twiddle()
+{
+	if (tw_on)
+		putchar('\b');
+	else
+		tw_on = 1;
+	putchar(tw_chars[tw_pos++]);
+	tw_pos %= (sizeof(tw_chars) - 1);
+}
+
