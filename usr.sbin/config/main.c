@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.75 2003/01/27 05:00:54 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.76 2003/04/26 12:53:43 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,9 +59,12 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/mman.h>
+#include <paths.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,6 +72,10 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #include "defs.h"
 #include "sem.h"
 #include <vis.h>
+
+#ifndef LINE_MAX
+#define LINE_MAX 1024
+#endif
 
 int	vflag;				/* verbose output */
 int	Pflag;				/* pack locators */
@@ -110,6 +117,9 @@ static	void	logconfig_end(void);
 static	FILE	*cfg;
 static	time_t	cfgtime;
 
+static	int	is_elf(const char *);
+static	int	extract_config(const char *, const char *, int);
+
 int badfilename(const char *fname);
 
 const char *progname;
@@ -117,14 +127,15 @@ const char *progname;
 int
 main(int argc, char **argv)
 {
-	char *p;
+	char *p, cname[20];
 	const char *last_component;
-	int pflag, ch;
+	int pflag, xflag, ch, removeit;
 
 	setprogname(argv[0]);
 
 	pflag = 0;
-	while ((ch = getopt(argc, argv, "DPgpvb:s:")) != -1) {
+	xflag = 0;
+	while ((ch = getopt(argc, argv, "DPgpvb:s:x")) != -1) {
 		switch (ch) {
 
 #ifndef MAKE_BOOTSTRAP
@@ -175,6 +186,10 @@ main(int argc, char **argv)
 			srcdir = optarg;
 			break;
 
+		case 'x':
+			xflag = 1;
+			break;
+
 		case '?':
 		default:
 			goto usage;
@@ -185,9 +200,34 @@ main(int argc, char **argv)
 	argv += optind;
 	if (argc > 1) {
  usage:
-		(void)fputs("usage: config [-Ppv] [-s srcdir] [-b builddir] sysname\n", stderr);
+		(void)fputs("usage: config [-Ppv] [-s srcdir] [-b builddir] "
+		    "[sysname]\n", stderr);
+		(void)fputs("       config -x [kernel-file]\n", stderr);
 		exit(1);
 	}
+
+	if (xflag && (builddir != NULL || srcdir != NULL || Pflag || pflag ||
+	    vflag)) {
+		(void)fprintf(stderr, "config: -x must be used alone\n");
+		exit(1);
+	}
+
+	if (xflag) {
+		conffile = (argc == 1) ? argv[0] : _PATH_UNIX;
+		if (!is_elf(conffile)) {
+			(void)fprintf(stderr, "%s: not a binary kernel\n",
+			    conffile);
+			exit(1);
+		}
+		if (!extract_config(conffile, "stdout", STDOUT_FILENO)) {
+			(void)fprintf(stderr,
+			    "config: %s does not contain embedded "
+			    "configuration data\n", conffile);
+			exit(2);
+		}
+		exit(0);
+	}
+
 	conffile = (argc == 1) ? argv[0] : "CONFIG";
 	if (firstfile(conffile)) {
 		(void)fprintf(stderr, "config: cannot read %s: %s\n",
@@ -242,6 +282,43 @@ main(int argc, char **argv)
 	}
 	defbuilddir = (argc == 0) ? "." : p;
 
+	removeit = 0;
+	if (is_elf(conffile)) {
+		char *tmpdir;
+		int cfd;
+
+		if (builddir == NULL) {
+			(void)fprintf(stderr,
+			    "config: build directory must be specified with "
+			    "binary kernels\n");
+			exit(1);
+		}
+
+		/* Open temporary configuration file */
+		tmpdir = getenv("TMPDIR");
+		if (tmpdir == NULL)
+			tmpdir = "/tmp";
+		snprintf(cname, sizeof(cname), "%s/config.tmp.XXXXXX", tmpdir);
+		cfd = mkstemp(cname);
+		if (cfd == -1) {
+			fprintf(stderr, "config: cannot create %s: %s", cname,
+			    strerror(errno));
+			exit(2);
+		}
+
+		printf("Using configuration data embedded in kernel...\n");
+		if (!extract_config(conffile, cname, cfd)) {
+			(void)fprintf(stderr,
+			    "config: %s does not contain embedded "
+			    "configuration data\n", conffile);
+			exit(2);
+		}
+
+		removeit = 1;
+		close(cfd);
+		firstfile(cname);
+	}
+
 	/*
 	 * Parse config file (including machine definitions).
 	 */
@@ -249,6 +326,9 @@ main(int argc, char **argv)
 	if (yyparse())
 		stop();
 	logconfig_end();
+
+	if (removeit)
+		unlink(cname);
 
 	/*
 	 * Select devices and pseudo devices and their attributes
@@ -1297,3 +1377,91 @@ strtolower(const char *name)
 	return (intern(low));
 }
 
+static int
+is_elf(const char *file)
+{
+	int kernel;
+	char hdr[4];
+
+	kernel = open(file, O_RDONLY);
+	if (kernel == -1) {
+		fprintf(stderr, "config: cannot open %s: %s\n", file,
+		    strerror(errno));
+		exit(2);
+	}
+	if (read(kernel, hdr, 4) == -1) {
+		fprintf(stderr, "config: cannot read from %s: %s\n", file,
+		    strerror(errno));
+		exit(2);
+	}
+	close(kernel);
+
+	return memcmp("\177ELF", hdr, 4) == 0 ? 1 : 0;
+}
+
+static int
+extract_config(const char *kname, const char *cname, int cfd)
+{
+	char *ptr;
+	int found, kfd, i;
+	struct stat st;
+
+	found = 0;
+
+	/* mmap(2) binary kernel */
+	kfd = open(conffile, O_RDONLY);
+	if (kfd == -1) {
+		fprintf(stderr, "config: cannot open %s: %s\n", kname,
+		    strerror(errno));
+		exit(2);
+	}
+	if ((fstat(kfd, &st) == -1)) {
+		fprintf(stderr, "config: cannot stat %s: %s\n", kname,
+		    strerror(errno));
+		exit(2);
+	}
+	ptr = (char *)mmap(0, st.st_size, PROT_READ, MAP_FILE | MAP_SHARED,
+	    kfd, 0);
+	if (ptr == MAP_FAILED) {
+		fprintf(stderr, "config: cannot mmap %s: %s\n", kname,
+		    strerror(errno));
+		exit(2);
+	}
+
+	/* Scan mmap(2)'ed region, extracting kernel configuration */
+	for (i = 0; i < st.st_size; i++) {
+		if ((*ptr == '_') && (st.st_size - i > 5) && memcmp(ptr,
+		    "_CFG_", 5) == 0) {
+			/* Line found */
+			char *oldptr, line[LINE_MAX + 1], uline[LINE_MAX + 1];
+			int i;
+
+			found = 1;
+
+			oldptr = (ptr += 5);
+			while (*ptr != '\n' && *ptr != '\0') ptr++;
+			if (ptr - oldptr > LINE_MAX) {
+				fprintf(stderr, "config: line too long\n");
+				exit(2);
+			}
+			memcpy(line, oldptr, (ptr - oldptr));
+			line[ptr - oldptr] = '\0';
+			i = strunvis(uline, line);
+			if (i == -1) {
+				fprintf(stderr, "config: unvis: invalid "
+				    "encoded sequence\n");
+				exit(2);
+			}
+			uline[i] = '\n';
+			if (write(cfd, uline, i + 1) == -1) {
+				fprintf(stderr, "config: cannot write to %s: "
+				    "%s\n", cname, strerror(errno));
+				exit(2);
+			}
+		} else ptr++;
+	}
+
+	close(kfd);
+
+	return found;
+}
