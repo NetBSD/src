@@ -1,4 +1,4 @@
-/*	$NetBSD: termout.c,v 1.10 1999/07/26 01:49:09 itohy Exp $	*/
+/*	$NetBSD: termout.c,v 1.11 2000/04/27 16:48:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termout.c	4.3 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: termout.c,v 1.10 1999/07/26 01:49:09 itohy Exp $");
+__RCSID("$NetBSD: termout.c,v 1.11 2000/04/27 16:48:42 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,10 +109,6 @@ static char *bellSequence = "\07";	/* bell sequence (may be replaced by
 					 */
 static WINDOW *bellwin = 0;		/* The window the bell message is in */
 int	bellwinup = 0;			/* Are we up with it or not */
-
-#if	defined(unix)
-static char *myKS, *myKE;
-#endif	/* defined(unix) */
 
 
 static int inHighlightMode = 0;
@@ -674,11 +670,6 @@ InitTerminal()
     
     InitMapping();		/* Go do mapping file (MAP3270) first */
     if (!screenInitd) { 	/* not initialized */
-#if	defined(unix)
-	char KSEbuffer[2050];
-	char *lotsofspace = KSEbuffer;
-#endif	/* defined(unix) */
-
 	if (initscr() == NULL) {	/* Initialize curses to get line size */
 	    ExitString("InitTerminal:  Error initializing curses", 1);
 	    /*NOTREACHED*/
@@ -707,27 +698,8 @@ InitTerminal()
 	}
 #endif	/* defined(unix) */
 	setcommandmode();
-	/*
-	 * By now, initscr() (in curses) has been called (from telnet.c),
-	 * and the screen has been initialized.
-	 */
 #if defined(unix)
 	nonl();
-			/* the problem is that curses catches SIGTSTP to
-			 * be nice, but it messes us up.
-			 */
-	signal(SIGTSTP, SIG_DFL);
-	if ((myKS = tgetstr("ks", &lotsofspace)) != 0) {
-	    myKS = strsave(myKS);
-	    StringToTerminal(myKS);
-	}
-	if ((myKE = tgetstr("ke", &lotsofspace)) != 0) {
-	    myKE = strsave(myKE);
-	}
-	if (tgetstr("md", &lotsofspace) && tgetstr("me", &lotsofspace)) {
-	   SO = strsave(tgetstr("md", &lotsofspace));
-	   SE = strsave(tgetstr("me", &lotsofspace));
-	}
 #endif
 	DoARefresh();
 	setconnmode(0);
@@ -751,14 +723,9 @@ int doNewLine;
 	standend();
 	inHighlightMode = 0;
 	DoARefresh();
-	setcommandmode();
 	endwin();
+	setcommandmode();
 	setconnmode(0);
-#if	defined(unix)
-	if (myKE) {
-	    StringToTerminal(myKE);
-	}
-#endif	/* defined(unix) */
 	if (doNewLine) {
 	    StringToTerminal("\r\n");
 	}
@@ -784,11 +751,6 @@ void
 ConnectScreen()
 {
     if (screenInitd) {
-#if	defined(unix)
-	if (myKS) {
-	    StringToTerminal(myKS);
-	}
-#endif	/* defined(unix) */
 	RefreshScreen();
 	(*TryToSend)();
 	screenStopped = 0;
