@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.16 2002/12/12 23:31:21 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.17 2003/01/27 06:22:07 jmc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.18 2002/12/12 23:29:46 he Exp 
+ *	NetBSD
  */
 
 /*
@@ -3820,6 +3820,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801BA Hub-to-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_SMB,
+	    0,
+	    "Intel",
+	    "82801E SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_LAN_1,
+	    0,
+	    "Intel",
+	    "82801E LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_LAN_2,
+	    0,
+	    "Intel",
+	    "82801E LAN Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC,
 	    0,
 	    "Intel",
@@ -5828,6 +5846,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ServerWorks",
 	    "CMIC_HE Host",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_LE,
+	    0,
+	    "ServerWorks",
+	    "CMIC_LE Host",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_SL,
+	    0,
+	    "ServerWorks",
+	    "CMIC_SL Host",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4_IDE,
