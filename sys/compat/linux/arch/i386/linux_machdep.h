@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.27 2003/09/06 22:09:21 christos Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.28 2004/11/13 07:20:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -155,10 +155,13 @@ struct linux_sigframe {
 };
 
 /*
- * Major device numbers of VT device on both Linux and NetBSD. Used in
- * ugly patch to fake device numbers.
+ * Used in ugly patch to fake device numbers.
  */
-#define LINUX_CONS_MAJOR   4
+/* Major device numbers for new style ptys. */
+#define LINUX_PTC_MAJOR		2
+#define LINUX_PTS_MAJOR		3
+/* Major device numbers of VT device on both Linux and NetBSD. */
+#define LINUX_CONS_MAJOR   	4
 
 /*
  * Linux ioctl calls for the keyboard.

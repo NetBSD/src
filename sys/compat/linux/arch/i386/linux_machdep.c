@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.103 2004/10/20 04:20:05 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.104 2004/11/13 07:20:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.103 2004/10/20 04:20:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.104 2004/11/13 07:20:54 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -740,13 +740,21 @@ linux_fakedev(dev, raw)
 	dev_t dev;
 	int raw;
 {
+	extern const struct cdevsw ptc_cdevsw, pts_cdevsw;
+	const struct cdevsw *cd = cdevsw_lookup(dev);
+
 	if (raw) {
 #if (NWSDISPLAY > 0)
 		extern const struct cdevsw wsdisplay_cdevsw;
-		if (cdevsw_lookup(dev) == &wsdisplay_cdevsw)
+		if (cd == &wsdisplay_cdevsw)
 			return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
 #endif
 	}
+
+	if (cd == &ptc_cdevsw)
+		return makedev(LINUX_PTC_MAJOR, minor(dev));
+	if (cd == &pts_cdevsw)
+		return makedev(LINUX_PTS_MAJOR, minor(dev));
 
 	return dev;
 }
