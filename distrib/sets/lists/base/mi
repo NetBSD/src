@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.14 2001/01/25 17:54:17 jhawk Exp $
+# $NetBSD: mi,v 1.169.2.15 2001/02/26 21:03:20 he Exp $
 .
 ./altroot
 ./bin
@@ -336,6 +336,7 @@
 ./usr/bin/sdiff
 ./usr/bin/sed
 ./usr/bin/send-pr
+./usr/bin/sftp
 ./usr/bin/shar
 ./usr/bin/shlock
 ./usr/bin/showmount
@@ -349,8 +350,9 @@
 ./usr/bin/split
 ./usr/bin/ssh
 ./usr/bin/ssh-add
-./usr/bin/ssh-keygen
 ./usr/bin/ssh-agent
+./usr/bin/ssh-keygen
+./usr/bin/ssh-keyscan
 ./usr/bin/string2key
 ./usr/bin/su
 ./usr/bin/sum
@@ -517,6 +519,7 @@
 ./usr/libexec/rshd
 ./usr/libexec/sendmail
 ./usr/libexec/sendmail/sendmail
+./usr/libexec/sftp-server
 ./usr/libexec/sm.bin
 ./usr/libexec/smrsh
 ./usr/libexec/telnetd
