@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.196 2004/02/20 17:35:01 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.197 2004/02/27 21:37:48 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196 2004/02/20 17:35:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.197 2004/02/27 21:37:48 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -418,7 +418,6 @@ copyfault:
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
 		switch (type) {
-		case T_PROTFLT|T_USER:
 		case T_SEGNPFLT|T_USER:
 		case T_STKFLT|T_USER:
 			ksi.ksi_code = BUS_ADRERR;
