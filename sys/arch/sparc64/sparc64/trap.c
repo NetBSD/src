@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79 2002/06/19 04:58:32 grant Exp $ */
+/*	$NetBSD: trap.c,v 1.80 2002/06/19 23:32:01 eeh Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -100,7 +100,7 @@
 #include <sparc64/sparc64/cache.h>
 
 #ifndef offsetof
-#define	offsetof(s, f) ((int)&((s *)0)->f)
+#define	offsetof(s, f) ((size_t)&((s *)0)->f)
 #endif
 
 #ifdef DEBUG
@@ -371,8 +371,8 @@ const char *trap_type[] = {
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
-static __inline void userret __P((struct proc *, int,  u_quad_t));
 static __inline void share_fpu __P((struct proc *, struct trapframe64 *));
+static __inline void userret __P((struct proc *, int,  u_quad_t));
 
 void trap __P((struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate));
 void data_access_fault __P((struct trapframe64 *tf, unsigned type, vaddr_t pc, 
@@ -787,9 +787,11 @@ badtrap:
 			break;
 		}
 		
+#ifdef DEBUG
 #define fmt64(x)	(u_int)((x)>>32), (u_int)((x))
 		printf("Alignment error: pid=%d comm=%s dsfsr=%08x:%08x dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
 		       p->p_pid, p->p_comm, fmt64(dsfsr), fmt64(dsfar), fmt64(isfsr), pc);
+#endif
 	}
 		
 #if defined(DDB) && defined(DEBUG)
@@ -1850,8 +1852,14 @@ syscall(tf, code, pc)
 		callp += p->p_emul->e_nosys;
 	else if (tf->tf_out[6] & 1L) {
 		register64_t *argp;
-#ifndef __arch64__
 #ifdef DEBUG
+#ifdef __arch64__
+		if ((curproc->p_flag & P_32) != 0)
+		{
+			printf("syscall(): 64-bit stack but P_32 set\n");
+			Debugger();
+		}
+#else
 		printf("syscall(): 64-bit stack on a 32-bit kernel????\n");
 		Debugger();
 #endif
@@ -1887,6 +1895,10 @@ syscall(tf, code, pc)
 		for (argp = &args.l[0]; i--;) 
 			*argp++ = *ap++;
 		
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_SYSCALL))
+			ktrsyscall(p, code, (register_t*)args.l);
+#endif
 		if (error) goto bad;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
@@ -1906,16 +1918,12 @@ syscall(tf, code, pc)
 		/* 32-bit stack */
 		callp += code;
 
-#if defined(__arch64__) && !defined(COMPAT_NETBSD32)
-#ifdef DEBUG
-#ifdef LKM
+#if defined(__arch64__) && defined(DEBUG)
 		if ((curproc->p_flag & P_32) == 0)
-#endif
 		{
-			printf("syscall(): 32-bit stack on a 64-bit kernel????\n");
+			printf("syscall(): 32-bit stack but no P_32\n");
 			Debugger();
 		}
-#endif
 #endif
 
 		i = (long)callp->sy_argsize / sizeof(register32_t);
@@ -1948,24 +1956,20 @@ syscall(tf, code, pc)
 		/* Need to convert from int64 to int32 or we lose */
 		for (argp = &args.i[0]; i--;) 
 			*argp++ = *ap++;
-#ifdef notdef
 		if (KTRPOINT(p, KTR_SYSCALL)) {
 #if defined(__arch64__)
 			register_t temp[8];
 			
 			/* Need to xlate 32-bit->64-bit */
-			i = (long)callp->sy_argsize / 
-				sizeof(register32_t);
+			i = callp->sy_narg;
 			for (j=0; j<i; j++) 
 				temp[j] = args.i[j];
-			ktrsyscall(p, code,
-				   i * sizeof(register_t), (register_t *)temp);
+			ktrsyscall(p, code, (register_t *)temp);
 #else
 			ktrsyscall(p, code,
 				   callp->sy_argsize, (register_t *)args.i);
 #endif
 		}
-#endif
 		if (error) {
 			goto bad;
 		}
@@ -1981,9 +1985,6 @@ syscall(tf, code, pc)
 		}
 #endif
 	}
-
-	if ((error = trace_enter(p, code, &args, rval)) != 0)
-		goto bad;
 
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
@@ -2063,14 +2064,10 @@ syscall(tf, code, pc)
 	}
 
 
-	trace_exit(p, code, &args, rval, error);
-
 	userret(p, pc, sticks);
-#ifdef NOTDEF_DEBUG
-	if ( code == 202) {
-		/* Trap on __sysctl */
-		Debugger();
-	}
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p, code, error, rval[0]);
 #endif
 	share_fpu(p, tf);
 #ifdef DEBUG
@@ -2107,4 +2104,3 @@ child_return(arg)
 			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 #endif
 }
-
