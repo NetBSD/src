@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.5 2002/04/12 18:50:31 thorpej Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.6 2002/05/04 10:04:42 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -203,6 +203,8 @@ footbridge_attach(parent, self, aux)
 	footbridge_create_mem_bs_tag(&footbridge_pci_mem_bs_tag,
 	    (void *)DC21285_PCI_MEM_BASE);
 
+	/* calibrate the delay loop */
+	calibrate_delay();
 	/* Attach the PCI bus */
 	fba.fba_pba.pba_busname = "pci";
 	fba.fba_pba.pba_pc = &footbridge_pci_chipset;
@@ -228,7 +230,7 @@ footbridge_attach(parent, self, aux)
 	fba.fba_fca.fca_rx_irq = IRQ_SERIAL_RX;
 	fba.fba_fca.fca_tx_irq = IRQ_SERIAL_TX;
 	config_found(self, &fba.fba_fca, footbridge_print); 
-
+	
 	/* Setup fast SA110 cache clean area */
 #ifdef CPU_SA110
 	if (cputype == CPU_ID_SA110)
