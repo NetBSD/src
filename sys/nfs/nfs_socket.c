@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.81 2003/04/03 15:14:51 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.82 2003/04/15 13:51:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.81 2003/04/03 15:14:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.82 2003/04/15 13:51:11 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2071,70 +2071,70 @@ nfsrv_getstream(slp, waitflag)
 		panic("nfs getstream");
 	slp->ns_flag |= SLP_GETSTREAM;
 	for (;;) {
-	    if (slp->ns_reclen == 0) {
-		if (slp->ns_cc < NFSX_UNSIGNED) {
+		if (slp->ns_reclen == 0) {
+			if (slp->ns_cc < NFSX_UNSIGNED) {
+				slp->ns_flag &= ~SLP_GETSTREAM;
+				return (0);
+			}
+			m = slp->ns_raw;
+			m_copydata(m, 0, NFSX_UNSIGNED, (caddr_t)&recmark);
+			m_adj(m, NFSX_UNSIGNED);
+			slp->ns_cc -= NFSX_UNSIGNED;
+			recmark = ntohl(recmark);
+			slp->ns_reclen = recmark & ~0x80000000;
+			if (recmark & 0x80000000)
+				slp->ns_flag |= SLP_LASTFRAG;
+			else
+				slp->ns_flag &= ~SLP_LASTFRAG;
+			if (slp->ns_reclen > NFS_MAXPACKET) {
+				slp->ns_flag &= ~SLP_GETSTREAM;
+				return (EPERM);
+			}
+		}
+
+		/*
+		 * Now get the record part.
+		 *
+		 * Note that slp->ns_reclen may be 0.  Linux sometimes
+		 * generates 0-length records.
+		 */
+		if (slp->ns_cc == slp->ns_reclen) {
+			recm = slp->ns_raw;
+			slp->ns_raw = slp->ns_rawend = (struct mbuf *)0;
+			slp->ns_cc = slp->ns_reclen = 0;
+		} else if (slp->ns_cc > slp->ns_reclen) {
+			recm = slp->ns_raw;
+			m = m_split(recm, slp->ns_reclen, waitflag);
+			if (m == NULL) {
+				slp->ns_flag &= ~SLP_GETSTREAM;
+				return (EWOULDBLOCK);
+			}
+			m_claim(recm, &nfs_mowner);
+			slp->ns_raw = m;
+			if (m->m_next == NULL)
+				slp->ns_rawend = m;
+			slp->ns_cc -= slp->ns_reclen;
+			slp->ns_reclen = 0;
+		} else {
 			slp->ns_flag &= ~SLP_GETSTREAM;
 			return (0);
 		}
-		m = slp->ns_raw;
-		m_copydata(m, 0, NFSX_UNSIGNED, (caddr_t)&recmark);
-		m_adj(m, NFSX_UNSIGNED);
-		slp->ns_cc -= NFSX_UNSIGNED;
-		recmark = ntohl(recmark);
-		slp->ns_reclen = recmark & ~0x80000000;
-		if (recmark & 0x80000000)
-			slp->ns_flag |= SLP_LASTFRAG;
-		else
-			slp->ns_flag &= ~SLP_LASTFRAG;
-		if (slp->ns_reclen > NFS_MAXPACKET) {
-			slp->ns_flag &= ~SLP_GETSTREAM;
-			return (EPERM);
-		}
-	    }
 
-	    /*
-	     * Now get the record part.
-	     *
-	     * Note that slp->ns_reclen may be 0.  Linux sometimes
-	     * generates 0-length records.
-	     */
-	    if (slp->ns_cc == slp->ns_reclen) {
-		recm = slp->ns_raw;
-		slp->ns_raw = slp->ns_rawend = (struct mbuf *)0;
-		slp->ns_cc = slp->ns_reclen = 0;
-	    } else if (slp->ns_cc > slp->ns_reclen) {
-		recm = slp->ns_raw;
-		m = m_split(recm, slp->ns_reclen, waitflag);
-		if (m == NULL) {
-			slp->ns_flag &= ~SLP_GETSTREAM;
-			return (EWOULDBLOCK);
+		/*
+		 * Accumulate the fragments into a record.
+		 */
+		mpp = &slp->ns_frag;
+		while (*mpp)
+			mpp = &((*mpp)->m_next);
+		*mpp = recm;
+		if (slp->ns_flag & SLP_LASTFRAG) {
+			if (slp->ns_recend)
+				slp->ns_recend->m_nextpkt = slp->ns_frag;
+			else
+				slp->ns_rec = slp->ns_frag;
+			slp->ns_recend = slp->ns_frag;
+			slp->ns_frag = (struct mbuf *)0;
 		}
-		m_claim(recm, &nfs_mowner);
-		slp->ns_raw = m;
-		if (m->m_next == NULL)
-			slp->ns_rawend = m;
-		slp->ns_cc -= slp->ns_reclen;
-		slp->ns_reclen = 0;
-	    } else {
-		slp->ns_flag &= ~SLP_GETSTREAM;
-		return (0);
-	    }
-
-	    /*
-	     * Accumulate the fragments into a record.
-	     */
-	    mpp = &slp->ns_frag;
-	    while (*mpp)
-		mpp = &((*mpp)->m_next);
-	    *mpp = recm;
-	    if (slp->ns_flag & SLP_LASTFRAG) {
-		if (slp->ns_recend)
-		    slp->ns_recend->m_nextpkt = slp->ns_frag;
-		else
-		    slp->ns_rec = slp->ns_frag;
-		slp->ns_recend = slp->ns_frag;
-		slp->ns_frag = (struct mbuf *)0;
-	    }
 	}
 }
 
