@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.10 2000/11/30 23:59:04 simonb Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.11 2001/01/27 11:08:23 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -59,9 +59,9 @@ static struct nlist namelist[] = {
 	{ "_hz" },		/* ticks per second */
 #define	X_STATHZ	3
 	{ "_stathz" },
-#define X_DISK_COUNT	4
+#define	X_DISK_COUNT	4
 	{ "_disk_count" },	/* number of disks */
-#define X_DISKLIST	5
+#define	X_DISKLIST	5
 	{ "_disklist" },	/* TAILQ of disks */
 	{ NULL },
 };
@@ -78,28 +78,29 @@ extern char	*memf;
 static struct disk	*dk_drivehead = NULL;
 
 /* Backward compatibility references. */
-int	  	dk_ndrive = 0;
+int		dk_ndrive = 0;
 int		*dk_select;
 char		**dr_name;
 
-#define	KVM_ERROR(_string) {						\
+#define	KVM_ERROR(_string) do {						\
 	warnx("%s", (_string));						\
 	errx(1, "%s", kvm_geterr(kd));					\
-}
+} while (/* CONSTCOND */0)
 
 /*
  * Dereference the namelist pointer `v' and fill in the local copy 
  * 'p' which is of size 's'.
  */
-#define deref_nl(v, p, s) deref_kptr((void *)namelist[(v)].n_value, (p), (s));
+#define	deref_nl(v, p, s) do {						\
+	deref_kptr((void *)namelist[(v)].n_value, (p), (s));		\
+} while (/* CONSTCOND */0)
 
 /* Missing from <sys/time.h> */
-#define timerset(tvp, uvp) ((uvp)->tv_sec = (tvp)->tv_sec);		\
-			   ((uvp)->tv_usec = (tvp)->tv_usec)
+#define	timerset(tvp, uvp) do {						\
+	((uvp)->tv_sec = (tvp)->tv_sec);				\
+	((uvp)->tv_usec = (tvp)->tv_usec);				\
+} while (/* CONSTCOND */0)
 
-void dkswap(void);
-void dkreadstats(void);
-int dkinit(int, gid_t);
 static void deref_kptr(void *, void *, size_t);
 
 /*
@@ -113,9 +114,11 @@ dkswap(void)
 	u_int64_t tmp;
 	int	i;
 
-#define SWAP(fld)	tmp = cur.fld;		\
-			cur.fld -= last.fld;	\
-			last.fld = tmp
+#define	SWAP(fld) do {							\
+	tmp = cur.fld;							\
+	cur.fld -= last.fld;						\
+	last.fld = tmp;							\
+} while (/* CONSTCOND */0)
 
 	for (i = 0; i < dk_ndrive; i++) {
 		struct timeval	tmp_timer;
@@ -195,7 +198,7 @@ dkinit(int select, gid_t egid)
 	gid_t oldgid;
 	struct disklist_head disk_head;
 	struct disk	cur_disk, *p;
-        char		errbuf[_POSIX2_LINE_MAX];
+	char		errbuf[_POSIX2_LINE_MAX];
 	static int	once = 0;
 	extern int	hz;
 	int		i;
@@ -203,15 +206,15 @@ dkinit(int select, gid_t egid)
 	if (once)
 		return (1);
 
-	/* assume privs for kvm access */
+	/* Assume privs for kvm access. */
 	oldgid = getegid();
 	(void)setegid(egid);
 
 	/* Open the kernel. */
-        if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
+	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
 		errx(1, "kvm_openfiles: %s", errbuf);
 
-	/* we are finished with privs now */
+	/* We are finished with privs now. */
 	(void)setegid(oldgid);
 
 	/* Obtain the namelist symbols from the kernel. */
@@ -225,8 +228,7 @@ dkinit(int select, gid_t egid)
 		errx(1, "invalid _disk_count %d.", dk_ndrive);
 	else if (dk_ndrive == 0) {
 		warnx("No drives attached.");
-	}
-	else {
+	} else {
 		/* Get a pointer to the first disk. */
 		deref_nl(X_DISKLIST, &disk_head, sizeof(disk_head));
 		dk_drivehead = disk_head.tqh_first;
@@ -237,7 +239,7 @@ dkinit(int select, gid_t egid)
 	if (!hz)
 		deref_nl(X_HZ, &hz, sizeof(hz));
 
-	/* allocate space for the statistics */
+	/* Allocate space for the statistics. */
 	cur.dk_time = calloc(dk_ndrive, sizeof(struct timeval));
 	cur.dk_xfer = calloc(dk_ndrive, sizeof(u_int64_t));
 	cur.dk_seek = calloc(dk_ndrive, sizeof(u_int64_t));
@@ -249,9 +251,11 @@ dkinit(int select, gid_t egid)
 	cur.dk_select = calloc(dk_ndrive, sizeof(int));
 	cur.dk_name = calloc(dk_ndrive, sizeof(char *));
 	
-	if (!cur.dk_time || !cur.dk_xfer || !cur.dk_seek || !cur.dk_bytes
-	    || !last.dk_time || !last.dk_xfer || !last.dk_seek || !last.dk_bytes
-	    || !cur.dk_select || !cur.dk_name)
+	if (cur.dk_time == NULL|| cur.dk_xfer == NULL ||
+	    cur.dk_seek == NULL || cur.dk_bytes == NULL ||
+	    last.dk_time == NULL || last.dk_xfer == NULL ||
+	    last.dk_seek == NULL || last.dk_bytes == NULL ||
+	    cur.dk_select == NULL || cur.dk_name == NULL)
 		errx(1, "Memory allocation failure.");
 
 	/* Set up the compatibility interfaces. */
@@ -272,7 +276,7 @@ dkinit(int select, gid_t egid)
 
 	/* Never do this initalization again. */
 	once = 1;
-	return(1);
+	return (1);
 }
 
 /*
