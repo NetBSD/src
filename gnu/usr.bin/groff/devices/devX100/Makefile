@@ -1,5 +1,10 @@
-#	@(#)Makefile	6.1 (Berkeley) 3/3/91
+# Makefile for devX100
 
 DEVICE=		X100
+FONTFILES=	CB CBI CI CR HB HBI HI HR NB NBI NI NR S TB TBI TI TR DESC
 
-.include "../Makefile.xdit.10"
+NOOBJ=		noobj
+
+clean cleandir:
+
+.include "../Makefile.dev"
