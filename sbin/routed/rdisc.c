@@ -1,4 +1,4 @@
-/*	$NetBSD: rdisc.c,v 1.9 1999/02/23 10:47:40 christos Exp $	*/
+/*	$NetBSD: rdisc.c,v 1.10 2000/03/02 21:00:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rdisc.c,v 1.9 1999/02/23 10:47:40 christos Exp $");
+__RCSID("$NetBSD: rdisc.c,v 1.10 2000/03/02 21:00:41 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -144,7 +144,7 @@ trace_rdisc(const char	*act,
 		trace_act("%s Router Solic. from %s to %s via %s value=%#x",
 			  act, naddr_ntoa(from), naddr_ntoa(to),
 			  ifp ? ifp->int_name : "?",
-			  ntohl(p->so.icmp_so_rsvd));
+			  (int)ntohl(p->so.icmp_so_rsvd));
 	}
 }
 
