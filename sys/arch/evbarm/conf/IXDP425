@@ -1,6 +1,6 @@
-#	$NetBSD: IXDP425,v 1.3 2003/10/23 10:50:01 scw Exp $
+#	$NetBSD: IXDP425,v 1.4 2004/04/06 20:00:54 ross Exp $
 #
-#	ZAO425 -- Intel IXP425
+#	IXDP425 -- Intel IXDP425/IXCDP1100 Development Platform
 #
 
 include	"arch/evbarm/conf/std.ixdp425"
@@ -137,7 +137,7 @@ options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=250000
+options 	SYMTAB_SPACE=260000
 
 config		netbsd		root on ? type ?
 
