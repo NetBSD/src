@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.18 1999/02/21 00:52:05 hubertf Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.19 1999/03/25 16:17:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -188,7 +188,6 @@ wdc_atapi_send_cmd(sc_xfer)
 {
 	struct wdc_softc *wdc = (void*)sc_xfer->sc_link->adapter_softc;
 	struct wdc_xfer *xfer;
-	struct ata_drive_datas *drvp;
 	int flags = sc_xfer->flags;
 	int channel = sc_xfer->sc_link->scsipi_atapi.channel;
 	int drive = sc_xfer->sc_link->scsipi_atapi.drive;
@@ -203,10 +202,6 @@ wdc_atapi_send_cmd(sc_xfer)
 	}
 	if (sc_xfer->flags & SCSI_POLL)
 		xfer->c_flags |= C_POLL;
-	drvp = &wdc->channels[channel]->ch_drive[drive];
-	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-	    sc_xfer->datalen > 0)
-		xfer->c_flags |= C_DMA;
 	xfer->drive = drive;
 	xfer->c_flags |= C_ATAPI;
 	xfer->cmd = sc_xfer;
@@ -237,6 +232,12 @@ wdc_atapi_start(chp, xfer)
 	WDCDEBUG_PRINT(("wdc_atapi_start %s:%d:%d, scsi flags 0x%x \n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive,
 	    sc_xfer->flags), DEBUG_XFERS);
+	/* Adjust C_DMA, it may have changed if we are requesting sense */
+	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
+	    (sc_xfer->datalen > 0 || (xfer->c_flags & C_SENSE)))
+		xfer->c_flags |= C_DMA;
+	else
+		xfer->c_flags &= ~C_DMA;
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
 		if (drvp->state != PIOMODE) {
@@ -291,12 +292,7 @@ wdc_atapi_start(chp, xfer)
 		while ((sc_xfer->flags & ITSDONE) == 0) {
 			/* Wait for at last 400ns for status bit to be valid */
 			delay(1);
-			if (wdc_atapi_intr(chp, xfer) == 0) {
-				sc_xfer->error = XS_SELTIMEOUT;
-				    /* do we know more ? */
-				wdc_atapi_done(chp, xfer);
-				return;
-			}
+			wdc_atapi_intr(chp, xfer);
 		}
 	}
 }
@@ -329,16 +325,23 @@ wdc_atapi_intr(chp, xfer)
 	/* Ack interrupt done in wait_for_unbusy */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (xfer->drive << 4));
-	if (wait_for_unbusy(chp, sc_xfer->timeout) != 0) {
+	if (wait_for_unbusy(chp,
+	    (sc_xfer->flags & SCSI_POLL) ? sc_xfer->timeout : 0) != 0) {
+		if ((sc_xfer->flags & SCSI_POLL) == 0 &&
+		    (xfer->c_flags & C_TIMEOU) == 0)
+			return 0; /* IRQ was not for us */
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
 		if (xfer->c_flags & C_DMA)
-				drvp->n_dmaerrs++;
+			drvp->n_dmaerrs++;
 		sc_xfer->error = XS_TIMEOUT;
 		wdc_atapi_reset(chp, xfer);
 		return 1;
 	}
+	/* If we missed an IRQ and were using DMA, flag it as a DMA error */
+	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA))
+		drvp->n_dmaerrs++;
 	/* 
 	 * if the request sense command was aborted, report the short sense
 	 * previously recorded, else continue normal processing
@@ -355,8 +358,8 @@ wdc_atapi_intr(chp, xfer)
 	}
 
 	if (xfer->c_flags & C_DMA) {
-		dma_flags = (sc_xfer->flags & SCSI_DATA_IN) ?
-		    WDC_DMA_READ : 0;
+		dma_flags = ((sc_xfer->flags & SCSI_DATA_IN) ||
+		    (xfer->c_flags & C_SENSE)) ?  WDC_DMA_READ : 0;
 		dma_flags |= sc_xfer->flags & SCSI_POLL ? WDC_DMA_POLL : 0;
 	}
 again:
@@ -684,6 +687,7 @@ wdc_atapi_ctrl(chp, xfer)
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	char *errstring = NULL;
+	int delay = (sc_xfer->flags & SCSI_POLL) ? ATAPI_DELAY : 0;
 
 	/* Ack interrupt done in wait_for_unbusy */
 again:
@@ -706,7 +710,7 @@ again:
 		break;
 	case PIOMODE_WAIT:
 		errstring = "piomode";
-		if (wait_for_unbusy(chp, ATAPI_DELAY))
+		if (wait_for_unbusy(chp, delay))
 			goto timeout;
 		if (chp->ch_status & WDCS_ERR)
 			goto error;
@@ -726,7 +730,7 @@ again:
 		break;
 	case DMAMODE_WAIT:
 		errstring = "dmamode";
-		if (wait_for_unbusy(chp, ATAPI_DELAY))
+		if (wait_for_unbusy(chp, delay))
 			goto timeout;
 		if (chp->ch_status & WDCS_ERR)
 			goto error;
@@ -749,7 +753,7 @@ again:
 	return 1;
 
 timeout:
-	if ((xfer->c_flags & C_TIMEOU) == 0 ) {
+	if ((xfer->c_flags & C_TIMEOU) == 0 && delay == 0) {
 		return 0; /* IRQ was not for us */
 	}
 	printf("%s:%d:%d: %s timed out\n",
@@ -785,11 +789,10 @@ wdc_atapi_done(chp, xfer)
 	xfer->c_skip = 0;
 	wdc_free_xfer(chp, xfer);
 	sc_xfer->flags |= ITSDONE;
-	if (sc_xfer->error == XS_NOERROR ||
-	    sc_xfer->error == XS_SENSE ||
-	    sc_xfer->error == XS_SHORTSENSE) {
+	if (drvp->n_dmaerrs ||
+	  (sc_xfer->error != XS_NOERROR && sc_xfer->error != XS_SENSE &&
+	  sc_xfer->error != XS_SHORTSENSE)) {
 		drvp->n_dmaerrs = 0;
-	} else {
 		wdc_downgrade_mode(drvp);
 	}
 	    
