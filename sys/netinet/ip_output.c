@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.67 2000/02/17 10:59:35 darrenr Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.68 2000/02/20 00:56:40 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -417,7 +417,7 @@ sendit:
 	 * Run through list of hooks for output packets.
 	 */
 	m1 = m;
-	pfh = pfil_hook_get(PFIL_OUT, &inetsw[ip_protox[IPPROTO_IP]]);
+	pfh = pfil_hook_get(PFIL_OUT, &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
 	for (; pfh; pfh = pfh->pfil_link.tqe_next)
 		if (pfh->pfil_func) {
 		    	rv = pfh->pfil_func(ip, hlen, ifp, 1, &m1);
