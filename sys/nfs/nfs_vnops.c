@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.197 2004/05/10 10:40:42 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.198 2004/05/10 12:43:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.197 2004/05/10 10:40:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.198 2004/05/10 12:43:51 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -842,6 +842,22 @@ nfs_lookup(v)
 		return (EROFS);
 	if (dvp->v_type != VDIR)
 		return (ENOTDIR);
+
+	/*
+	 * RFC1813(nfsv3) 3.2 says clients should handle "." by themselves.
+	 */
+	if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
+		error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_proc);
+		if (error)
+			return error;
+		if (cnp->cn_nameiop == RENAME && (flags & ISLASTCN))
+			return EISDIR;
+		VREF(dvp);
+		*vpp = dvp;
+		if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
+				cnp->cn_flags |= SAVENAME;
+		return 0;
+	}
 
 	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT|WANTPARENT);
