@@ -2,14 +2,14 @@
 # Distribition miniroot kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.12 1997/06/01 08:44:57 jonathan Exp $
+# 	$NetBSD: GENERIC,v 1.13 1997/06/22 03:17:39 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
 maxusers	64
 
-options		MIPS1			# R2000/R3000 support (new)
-#options	MIPS3			# R4000/R4400 support (not finished)
+options		MIPS1			# R2000/R3000 CPUs
+options 	MIPS3			# R4000/R4400/R4600 CPUs
 
 
 # Support for specific models of DECstation

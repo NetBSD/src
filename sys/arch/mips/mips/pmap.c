@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 1997/06/21 04:36:22 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 1997/06/22 03:17:43 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -621,7 +621,7 @@ pmap_remove(pmap, sva, eva)
 			 */
 			if (pmap->pm_tlbgen == tlbpid_gen) {
 				MachTLBFlushAddr(sva | (pmap->pm_tlbpid <<
-					VMMACH_TLB_PID_SHIFT));
+					MIPS_TLB_PID_SHIFT));
 #ifdef DEBUG
 				remove_stats.flushes++;
 #endif
@@ -786,7 +786,7 @@ pmap_protect(pmap, sva, eva, prot)
 			 */
 			if (pmap->pm_tlbgen == tlbpid_gen)
 				MachTLBUpdate(sva | (pmap->pm_tlbpid <<
-					VMMACH_TLB_PID_SHIFT), entry);
+					MIPS_TLB_PID_SHIFT), entry);
 		}
 	}
 }
@@ -856,7 +856,7 @@ pmap_page_cache(pa,mode)
 					    tlbpid_gen)
 						MachTLBUpdate(pv->pv_va |
 						    (pv->pv_pmap->pm_tlbpid <<
-						    VMMACH_TLB_PID_SHIFT),
+						    MIPS3_TLB_PID_SHIFT),
 						    entry);
 				}
 			}
@@ -1067,7 +1067,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		pte->pt_entry = npte;
 		if (pmap->pm_tlbgen == tlbpid_gen)
 			MachTLBUpdate(va | (pmap->pm_tlbpid <<
-				VMMACH_TLB_PID_SHIFT), npte);
+				MIPS_TLB_PID_SHIFT), npte);
 		va += NBPG;
 		npte += vad_to_pfn(NBPG);
 		pte++;
@@ -1465,7 +1465,7 @@ pmap_alloc_tlbpid(p)
 	pmap = p->p_vmspace->vm_map.pmap;
 	if (pmap->pm_tlbgen != tlbpid_gen) {
 		id = tlbpid_cnt;
-		if (id == VMMACH_NUM_PIDS) {
+		if (id == MIPS_TLB_NUM_PIDS) {
 			MachTLBFlush();
 			/* reserve tlbpid_gen == 0 to alway mean invalid */
 			if (++tlbpid_gen == 0)
