@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.23 1996/01/14 00:23:56 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.24 1996/01/15 21:53:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1116,6 +1116,12 @@ fdstart(sc)
 	}
 
 	/*
+	 * Mark us as busy now, in case fddone() gets called in one
+	 * of the cases below.
+	 */
+	disk_busy(&sc->dkdev);
+
+	/*
 	 * make sure same disk is loaded
 	 */
 	fdselunit(sc);
@@ -1169,9 +1175,6 @@ fdstart(sc)
 	 * figure trk given blkno
 	 */
 	trk = bp->b_blkno / sc->nsectors;
-
-	/* Instrumentation. */
-	disk_busy(&sc->dkdev);
 
 	/*
 	 * check to see if same as currently cached track
