@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.4 1997/10/12 17:45:09 christos Exp $	*/
+/*	$NetBSD: execute.c,v 1.5 1998/09/11 13:54:08 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: execute.c,v 1.4 1997/10/12 17:45:09 christos Exp $");
+__RCSID("$NetBSD: execute.c,v 1.5 1998/09/11 13:54:08 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -249,7 +249,7 @@ char	*file;
 	char 		*start, *end;
 	STAT		sbuf;
 
-	if ((inf=open(file, 0)) < 0) {
+	if ((inf=open(file, O_RDONLY)) < 0) {
 		perror(file);
 		return FALSE;
 	}
