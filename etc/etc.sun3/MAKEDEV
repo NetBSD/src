@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.21 1997/12/09 21:22:16 gwr Exp $
+#	$NetBSD: MAKEDEV,v 1.22 1998/02/11 19:33:56 gwr Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -87,7 +87,7 @@ all)
 	sh $0 std fd pty0
 	sh $0 bwtwo0 cgtwo0 cgfour0
 	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6
-	sh $0 cd0 cd1 st0 st1 st2
+	sh $0 cd0 cd1 st0 st1 st2 fd0
 	sh $0 xd0 xd1 xd2 xd3
 	sh $0 xy0 xy1 xy2 xy3
 	sh $0 bpf0 bpf1 bpf2 bpf3
@@ -182,14 +182,15 @@ pty*)
         chmod 666 tty$name? pty$name?
 	;;
 
-cd*|sd*|xd*|xy*|vnd*|ccd*)
+ccd*|cd*|fd*|sd*|xd*|xy*|vnd*)
 	case $arg in
+	  ccd*) name=ccd; blk=9; chr=33;;
 	  cd*) name=cd; blk=18; chr=58;;
+	  fd*) name=fd; blk=16; chr=54;;
 	  sd*) name=sd; blk=7; chr=17;;
 	  xd*) name=xd; blk=10; chr=42;;
 	  xy*) name=xy; blk=3; chr=9 ;;
 	  vnd*) name=vnd; blk=5; chr=19;;
-	  ccd*) name=ccd; blk=9; chr=33;;
 	esac
 	case $unit in
 	  [0-7]) offset=$(($unit * 8));;
