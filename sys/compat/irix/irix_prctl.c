@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.19.2.1 2002/12/18 01:05:46 gmcgarry Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.19.2.2 2002/12/19 04:14:17 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.19.2.1 2002/12/18 01:05:46 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.19.2.2 2002/12/19 04:14:17 gmcgarry Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -478,9 +478,9 @@ irix_sproc_child(isc)
 	 * Handle shared process UID/GID
 	 */
 	if (inh & IRIX_PR_SID) {
+		crfree(p2->p_ucred);	
 		p2->p_ucred = parent->p_ucred;
 		crhold(parent->p_ucred);
-		crfree(p->p_ucred);	
 	}
 
 	/* 
