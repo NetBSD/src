@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.10 1999/03/26 22:04:07 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.11 1999/03/27 15:33:46 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -178,38 +178,35 @@ dzcnprobe(cndev)
 	struct	consdev *cndev;
 {
 	extern	vaddr_t iospace;
-	int pri = CN_NORMAL, min = 0;
+	int diagcons;
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
 	case VAX_BTYP_420:
 	case VAX_BTYP_43:
-		if (vax_confdata & 0x20) {
-			min = 3;
-			pri = CN_REMOTE;
-		}
+		diagcons = (vax_confdata & 0x20 ? 3 : 0);
 		break;
 
 	case VAX_BTYP_46:
-		/* if (vax_confdata & 0x100) */
-			min = 3;
+	case VAX_BTYP_48:
+		diagcons = (vax_confdata & 0x100 ? 3 : 0);
 		break;
 
 	case VAX_BTYP_49:
-	case VAX_BTYP_48:
-		min = 3;
+		diagcons = 3;
 		break;
 
 	default:
-		pri = CN_DEAD;
-		break;
+		cndev->cn_pri = CN_DEAD;
+		return;
 	}
-	cndev->cn_pri = pri;
-	if (pri != CN_DEAD) {
-		cndev->cn_dev = makedev(DZMAJOR, min);
-		dz_regs = iospace;
-		ioaccess(iospace, 0x200A0000, 1);
-	}
+	if (diagcons)
+		cndev->cn_pri = CN_REMOTE;
+	else
+		cndev->cn_pri = CN_NORMAL;
+	cndev->cn_dev = makedev(DZMAJOR, diagcons);
+	dz_regs = iospace;
+	ioaccess(iospace, 0x200A0000, 1);
 }
 
 void
