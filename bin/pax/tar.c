@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.7 1997/05/16 09:38:40 kleink Exp $	*/
+/*	$NetBSD: tar.c,v 1.8 1997/06/25 22:44:00 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: tar.c,v 1.7 1997/05/16 09:38:40 kleink Exp $";
+static char rcsid[] = "$NetBSD: tar.c,v 1.8 1997/06/25 22:44:00 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -833,6 +833,7 @@ ustar_rd(arcn, buf)
 		cnt = l_strncpy(arcn->name, hd->prefix, sizeof(hd->prefix));
 		dest = arcn->name + arcn->nlen;
 		*dest++ = '/';
+		cnt++;
 	}
 	arcn->nlen = l_strncpy(dest, hd->name, sizeof(hd->name));
 	arcn->nlen += cnt;
