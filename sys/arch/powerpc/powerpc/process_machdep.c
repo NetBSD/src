@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.9 2002/07/28 07:07:45 chs Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.10 2003/01/18 06:23:34 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,11 +42,11 @@
 #include <machine/reg.h>
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
+process_read_regs(l, regs)
+	struct lwp *l;
 	struct reg *regs;
 {
-	struct trapframe *tf = trapframe(p);
+	struct trapframe *tf = trapframe(l);
 
 	memcpy(regs->fixreg, tf->fixreg, sizeof(regs->fixreg));
 	regs->lr = tf->lr;
@@ -59,11 +59,11 @@ process_read_regs(p, regs)
 }
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
+process_write_regs(l, regs)
+	struct lwp *l;
 	struct reg *regs;
 {
-	struct trapframe *tf = trapframe(p);
+	struct trapframe *tf = trapframe(l);
 
 	memcpy(tf->fixreg, regs->fixreg, sizeof(regs->fixreg));
 	tf->lr = regs->lr;
@@ -76,11 +76,11 @@ process_write_regs(p, regs)
 }
 
 int
-process_read_fpregs(p, regs)
-	struct proc *p;
+process_read_fpregs(l, regs)
+	struct lwp *l;
 	struct fpreg *regs;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
 	/* Is the process using the fpu? */
 	if ((pcb->pcb_flags & PCB_FPU) == 0) {
@@ -89,7 +89,7 @@ process_read_fpregs(p, regs)
 	}
 
 #ifdef PPC_HAVE_FPU
-	save_fpu_proc(p);
+	save_fpu_lwp(l);
 #endif
 	memcpy(regs, &pcb->pcb_fpu, sizeof (struct fpreg));
 
@@ -97,14 +97,14 @@ process_read_fpregs(p, regs)
 }
 
 int
-process_write_fpregs(p, regs)
-	struct proc *p;
+process_write_fpregs(l, regs)
+	struct lwp *l;
 	struct fpreg *regs;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
 #ifdef PPC_HAVE_FPU
-	save_fpu_proc(p);
+	save_fpu_lwp(l);
 #endif
 
 	memcpy(&pcb->pcb_fpu, regs, sizeof(struct fpreg));
@@ -119,22 +119,22 @@ process_write_fpregs(p, regs)
  * Set the process's program counter.
  */
 int
-process_set_pc(p, addr)
-	struct proc *p;
+process_set_pc(l, addr)
+	struct lwp *l;
 	caddr_t addr;
 {
-	struct trapframe *tf = trapframe(p);
+	struct trapframe *tf = trapframe(l);
 	
 	tf->srr0 = (int)addr;
 	return 0;
 }
 
 int
-process_sstep(p, sstep)
-	struct proc *p;
+process_sstep(l, sstep)
+	struct lwp *l;
 	int sstep;
 {
-	struct trapframe *tf = trapframe(p);
+	struct trapframe *tf = trapframe(l);
 	
 	if (sstep)
 		tf->srr1 |= PSL_SE;

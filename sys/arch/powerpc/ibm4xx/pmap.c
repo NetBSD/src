@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 2003/01/06 20:30:33 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 2003/01/18 06:23:30 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -1127,23 +1127,23 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  * is the current process, load the new MMU context.
  */
 void
-pmap_activate(struct proc *p)
+pmap_activate(struct lwp *l)
 {
 #if 0
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	struct pcb *pcb = &l->l_proc->p_addr->u_pcb;
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	/*
 	 * XXX Normally performed in cpu_fork().
 	 */
-	printf("pmap_activate(%p), pmap=%p\n",p,pmap);
+	printf("pmap_activate(%p), pmap=%p\n",l,pmap);
 	if (pcb->pcb_pm != pmap) {
 		pcb->pcb_pm = pmap;
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm,
 		    (paddr_t *)&pcb->pcb_pmreal);
 	}
 
-	if (p == curproc) {
+	if (l == curlwp) {
 		/* Store pointer to new current pmap. */
 		curpm = pcb->pcb_pmreal;
 	}
@@ -1154,7 +1154,7 @@ pmap_activate(struct proc *p)
  * Deactivate the specified process's address space.
  */
 void
-pmap_deactivate(struct proc *p)
+pmap_deactivate(struct lwp *l)
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.5 2002/08/02 03:46:42 chs Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.6 2003/01/18 06:23:31 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -373,8 +373,9 @@ s_sctrap:
 	wrteei	1			/* Enable interrupts */
 /* Call the appropriate syscall handler: */
 	addi	3,1,8
-	lis	4,_C_LABEL(curproc)@ha
-	lwz	4,_C_LABEL(curproc)@l(4)
+	lis	4,_C_LABEL(curlwp)@ha
+	lwz	4,_C_LABEL(curlwp)@l(4)
+	lwz	4,L_PROC@l(4)
 	lwz	4,P_MD_SYSCALL@l(4)
 	mtctr	4
 	bctrl

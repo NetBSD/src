@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62 2002/10/22 04:34:13 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63 2003/01/18 06:23:32 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2033,13 +2033,13 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  * is the current process, load the new MMU context.
  */
 void
-pmap_activate(struct proc *p)
+pmap_activate(struct lwp *l)
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	DPRINTFN(ACTIVATE,
-	    ("pmap_activate: proc %p (curproc %p)\n", p, curproc));
+	    ("pmap_activate: lwp %p (curlwp %p)\n", l, curlwp));
 
 	/*
 	 * XXX Normally performed in cpu_fork().
@@ -2053,7 +2053,7 @@ pmap_activate(struct proc *p)
 	 * In theory, the SR registers need only be valid on return
 	 * to user space wait to do them there.
 	 */
-	if (p == curproc) {
+	if (l == curlwp) {
 		/* Store pointer to new current pmap. */
 		curpm = pmap;
 	}
@@ -2063,7 +2063,7 @@ pmap_activate(struct proc *p)
  * Deactivate the specified process's address space.
  */
 void
-pmap_deactivate(struct proc *p)
+pmap_deactivate(struct lwp *l)
 {
 }
 

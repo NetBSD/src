@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2003/01/10 03:48:40 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 2003/01/18 06:30:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -54,6 +54,7 @@
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 
@@ -515,9 +516,9 @@ mach_init(argc, argv, magic, btinfo)
 	 * Allocate space for proc0's USPACE.
 	 */
 	v = (caddr_t)uvm_pageboot_alloc(USPACE);
-	proc0.p_addr = proc0paddr = (struct user *)v;
-	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &proc0.p_addr->u_pcb;
+	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
@@ -643,7 +644,7 @@ cpu_reboot(howto, bootstr)
 	char *bootstr;
 {
 	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
+	if (curlwp)
 		savectx((struct user *)curpcb);
 
 	if (cold) {

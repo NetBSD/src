@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.6 2002/12/19 19:37:26 thorpej Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.7 2003/01/18 06:23:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,6 +80,7 @@ GLOBAL(powersave)
 	.long	-1
 
 	.text
+	.align 2
 /*
  * No processes are runnable, so loop waiting for one.
  * Separate label here for accounting purposes.
@@ -135,9 +136,10 @@ ASENTRY(Idle)
 	b	_ASM_LABEL(Idle)
 
 /*
- * switchexit gets called from cpu_exit to complete the exit procedure.
+ * switch_exit(struct lwp *l, void (*exit)(struct lwp *))
+ * switch_exit gets called from cpu_exit to complete the exit procedure.
  */
-ENTRY(switchexit)
+ENTRY(switch_exit)
 /* First switch to the idle pcb/kernel stack */
 #if defined(MULTIPROCESSOR)
 	GET_CPUINFO(7)
@@ -149,12 +151,16 @@ ENTRY(switchexit)
 	lis	7,_C_LABEL(curpcb)@ha
 	stw	6,_C_LABEL(curpcb)@l(7)
 #endif
-	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
+	/*
+	 * Adjust the stack to provide space for the callee to save LR.
+	 */
+	addi	1,6,USPACE-16
 	/*
 	 * Schedule the vmspace and stack to be freed (the proc arg is
-	 * already in r3).
+	 * already in r3).  Function to call is in r4.
 	 */
-	bl	_C_LABEL(exit2)
+	mtctr	4
+	bctrl
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
@@ -164,7 +170,7 @@ ENTRY(switchexit)
 	li	3,0			/* indicate exited process */
 
 /*
- * void cpu_switch(struct proc *p)
+ * void cpu_switch(struct lwp *l)
  * Find a runnable process and switch to it.
  */
 ENTRY_NOPROFILE(cpu_switch)
@@ -186,7 +192,7 @@ ENTRY_NOPROFILE(cpu_switch)
 	mr	12,2			/* save r2 */
 	stwu	1,-SFRAMELEN(1)		/* still running on old stack */
 	stmw	10,8(1)
-	lwz	3,P_ADDR(30)
+	lwz	3,L_ADDR(30)
 	stw	1,PCB_SP(3)		/* save SP */
 
 	lwz	6,CI_IDLE_PCB(7)
@@ -194,15 +200,15 @@ ENTRY_NOPROFILE(cpu_switch)
 
 1:
 	xor	31,31,31
-	stw	31,CI_CURPROC(7)	/* Zero to not accumulate cpu time */
+	stw	31,CI_CURLWP(7)		/* Zero to not accumulate cpu time */
 	lwz	31,CI_CURPCB(7)
 
 	lwz	3,CI_CPL(7)
 	stw	3,PCB_SPL(31)		/* save spl */
 #else
-	lis	3,_C_LABEL(curproc)@ha
+	lis	3,_C_LABEL(curlwp)@ha
 	xor	31,31,31
-	stw	31,_C_LABEL(curproc)@l(3) /* Zero to not accumulate cpu time */
+	stw	31,_C_LABEL(curlwp)@l(3) /* Zero to not accumulate cpu time */
 	lis	3,_C_LABEL(curpcb)@ha
 	lwz	31,_C_LABEL(curpcb)@l(3)
 #endif
@@ -246,10 +252,10 @@ ENTRY_NOPROFILE(cpu_switch)
 	slwi	3,10,3
 	add	3,3,4			/* select queue */
 
-	lwz	31,P_FORW(3)		/* unlink first proc from queue */
-	lwz	4,P_FORW(31)
-	stw	4,P_FORW(3)
-	stw	3,P_BACK(4)
+	lwz	31,L_FORW(3)		/* unlink first proc from queue */
+	lwz	4,L_FORW(31)
+	stw	4,L_FORW(3)
+	stw	3,L_BACK(4)
 
 	cmpl	0,3,4			/* queue empty? */
 	bne	1f
@@ -259,6 +265,7 @@ ENTRY_NOPROFILE(cpu_switch)
 	andc	9,9,3
 	stw	9,_C_LABEL(sched_whichqs)@l(8) /* mark it empty */
 
+switch_common:
 1:
 	/* just did this resched thing */
 	xor	3,3,3
@@ -270,31 +277,36 @@ ENTRY_NOPROFILE(cpu_switch)
 	stw	3,_C_LABEL(want_resched)@l(4)
 #endif
 
-	stw	3,P_BACK(31)		/* probably superfluous */
+	stw	3,L_BACK(31)		/* probably superfluous */
 
 #if defined(MULTIPROCESSOR)
 	GET_CPUINFO(4)
-	stw	4,P_CPU(31)		/* p->p_cpu = curcpu() */
+	stw	4,L_CPU(31)		/* l->l_cpu = curcpu() */
+#else
+	lis	4,_C_LABEL(cpu_info_store)@ha
+	addi	4,4,_C_LABEL(cpu_info_store)@l
+	stw	4,L_CPU(31)		/* l->l_cpu = &cpu_info_store */
 #endif
 
 	/* Process now running on a processor. */
-	li	3,SONPROC		/* p->p_stat = SONPROC */
-	stb	3,P_STAT(31)
+	li	3,LSONPROC		/* l->l_stat = LSONPROC */
+	stw	3,L_STAT(31)
 
 	/* record new process */
 #if defined(MULTIPROCESSOR)
-	stw	31,CI_CURPROC(4)
+	stw	31,CI_CURLWP(4)
 #else
-	lis	4,_C_LABEL(curproc)@ha
-	stw	31,_C_LABEL(curproc)@l(4)
+	lis	4,_C_LABEL(curlwp)@ha
+	stw	31,_C_LABEL(curlwp)@l(4)
 #endif
-	lwz	4,P_ADDR(31)
+	lwz	4,L_ADDR(31)
 
 #if !defined(MULTIPROCESSOR)		/* XXX */
-	cmpl	0,31,30			/* is it the same process? */
+	xor	3,3,3			/* if it is the same lwp, return 0 */
+	cmpl	0,31,30			/* is it the same lwp? */
 	beq	switch_return
 
-	or.	30,30,30		/* old process was exiting? */
+	or.	30,30,30		/* old lwp was exiting? */
 	beq	switch_exited
 
 #if defined(PPC_IBM4XX)
@@ -306,7 +318,7 @@ ENTRY_NOPROFILE(cpu_switch)
 	mr	12,2			/* save r2 */
 	stwu	1,-SFRAMELEN(1)		/* still running on old stack */
 	stmw	10,8(1)
-	lwz	3,P_ADDR(30)
+	lwz	3,L_ADDR(30)
 	stw	1,PCB_SP(3)		/* save SP */
 
 switch_exited:
@@ -348,7 +360,10 @@ switch_exited:
 	isync
 #endif
 
+	li	3,1			/* switched lwps */
+
 switch_return:
+	mr	30,3			/* save return value */
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* Unlock the sched_lock, but leave interrupts off, for now. */
 	bl	_C_LABEL(sched_unlock_idle)
@@ -362,7 +377,6 @@ switch_return:
 	mtmsr	3
 #endif
 
-	mr	30,7			/* save proc pointer */
 	lwz	3,PCB_SPL(4)
 	bl	_C_LABEL(lcsplx)
 
@@ -373,16 +387,14 @@ switch_return:
 	lwz	4,PM_CTX(3)
 	cmpwi	4,0
 #	mtspr	SPR_SPR0,4		/* Always keep the current ctx here */
-	mr	3,30
+	mr	3,30			/* restore return value */
 	bne	1f
 	bl	_C_LABEL(ctx_alloc)
-	mr	3,30			/* get curproc for special fork
-					   returns */
+	mr	3,30			/* restore return value */
 	b	0b			/* reload */
 1:
 #else /* PPC_MPC6XX */
-	mr	3,30			/* get curproc for special fork
-					   returns */
+	mr	3,30			/* restore return value */
 #endif
 
 	lwz	31,12(1)
@@ -391,6 +403,92 @@ switch_return:
 	lwz	0,4(1)
 	mtlr	0
 	blr
+
+/*
+ * void
+ * cpu_switchto(struct lwp *current, struct lwp *new)
+ * Variant of cpu_switch, but instead of picking a new LWP from the run
+ * queue, switch to the indicated new LWP.
+ * 	r3 - current LWP
+ * 	r4 - LWP to switch to
+ */
+ENTRY(cpu_switchto)
+	mflr	0			/* save lr */
+	stw	0,4(1)
+	stwu	1,-16(1)
+	stw	31,12(1)
+	stw	30,8(1)
+
+	stwu	1,-16(1)
+	stw	29,8(1)
+	mr	30,3			/* r30 = curlwp */
+	mr	29,4			/* r29 = newlwp */
+
+#if defined(MULTIPROCESSOR)
+	/* Switch to the idle PCB unless we're already running on it. */
+	GET_CPUINFO(7)
+	cmpwi	30,0			/* old process was exiting? */
+	beq	1f
+
+	mfsr	10,USER_SR		/* save USER_SR for copyin/copyout */
+	mfcr	11			/* save cr */
+	mr	12,2			/* save r2 */
+	stwu	1,-SFRAMELEN(1)		/* still running on old stack */
+	stmw	10,8(1)
+	lwz	3,L_ADDR(30)
+	stw	1,PCB_SP(3)		/* save SP */
+
+	lwz	6,CI_IDLE_PCB(7)
+	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
+
+1:
+	xor	31,31,31
+	stw	31,CI_CURLWP(7)	/* Zero to not accumulate cpu time */
+	lwz	31,CI_CURPCB(7)
+
+	lwz	3,CI_CPL(7)
+	stw	3,PCB_SPL(31)		/* save spl */
+#else
+	lis	3,_C_LABEL(curlwp)@ha
+	xor	31,31,31
+	stw	31,_C_LABEL(curlwp)@l(3) /* Zero to not accumulate cpu time */
+	lis	3,_C_LABEL(curpcb)@ha
+	lwz	31,_C_LABEL(curpcb)@l(3)
+#endif
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+/* Release the sched_lock before processing interrupts. */
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
+	xor	3,3,3
+	bl	_C_LABEL(lcsplx)
+#if !defined(MULTIPROCESSOR)
+	stw	3,PCB_SPL(31)		/* save spl */
+#endif
+
+/* Lock the scheduler. */
+#if defined(PPC_IBM4XX)
+	wrteei	0			/* disable interrupts while
+					   manipulating runque */
+#else /* PPC_MPC6XX */
+	mfmsr	3
+	andi.	3,3,~PSL_EE@l		/* disable interrupts while
+					   manipulating runque */
+	mtmsr	3
+	isync
+#endif
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
+
+	/* Make stack normal, r31 newlwp, r30 oldlwp */
+	mr	31,29
+	lwz	29,8(1)
+	addi	1,1,16
+
+	b	switch_common
+/* NOTREACHED */
 
 /*
  * Child comes here at the end of a fork.

@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.4 2000/06/08 06:48:45 kleink Exp $	*/
+/*	$NetBSD: Locore.c,v 1.5 2003/01/18 06:23:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -46,23 +46,23 @@
  * Calls should be made at splstatclock(), and p->p_stat should be SRUN.
  */
 void
-setrunqueue(p)
-	struct proc *p;
+setrunqueue(l)
+	struct lwp *l;
 {
 	struct  prochd *q;
-	struct proc *oldlast;
-	int which = p->p_priority >> 2;
+	struct lwp *oldlast;
+	int which = l->l_priority >> 2;
 	
 #ifdef	DIAGNOSTIC
-	if (p->p_back)
+	if (l->l_back)
 		panic("setrunqueue");
 #endif
 	q = &sched_qs[which];
 	sched_whichqs |= 0x80000000 >> which;
-	p->p_forw = (struct proc *)q;
-	p->p_back = oldlast = q->ph_rlink;
-	q->ph_rlink = p;
-	oldlast->p_forw = p;
+	l->l_forw = (struct lwp *)q;
+	l->l_back = oldlast = q->ph_rlink;
+	q->ph_rlink = l;
+	oldlast->l_forw = l;
 }
 
 /*
@@ -71,20 +71,20 @@ setrunqueue(p)
  * Calls should be made at splstatclock().
  */
 void
-remrunqueue(p)
-	struct proc *p;
+remrunqueue(l)
+	struct lwp *l;
 {
-	int which = p->p_priority >> 2;
+	int which = l->l_priority >> 2;
 	struct prochd *q;
 
 #ifdef	DIAGNOSTIC	
 	if (!(sched_whichqs & (0x80000000 >> which)))
 		panic("remrunqueue");
 #endif
-	p->p_forw->p_back = p->p_back;
-	p->p_back->p_forw = p->p_forw;
-	p->p_back = NULL;
+	l->l_forw->l_back = l->l_back;
+	l->l_back->l_forw = l->l_forw;
+	l->l_back = NULL;
 	q = &sched_qs[which];
-	if (q->ph_link == (struct proc *)q)
+	if (q->ph_link == (struct lwp *)q)
 		sched_whichqs &= ~(0x80000000 >> which);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 2002/11/25 05:11:32 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.10 2003/01/18 06:23:31 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -81,6 +81,9 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+#include <sys/pool.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #ifdef SYSTRACE
 #include <sys/systrace.h>
 #endif
@@ -112,7 +115,7 @@ volatile int astpending;
 volatile int want_resched;
 #endif
 
-static int fix_unaligned __P((struct proc *p, struct trapframe *frame));
+static int fix_unaligned __P((struct lwp *l, struct trapframe *frame));
 
 void trap __P((struct trapframe *));	/* Called from locore / trap_subr */
 int setfault __P((faultbuf));	/* defined in locore.S */
@@ -132,11 +135,12 @@ int trapdebug = /* TDB_ALL */ 0;
 void
 trap(struct trapframe *frame)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l ? l->l_proc : NULL;
 	int type = frame->exc;
 	int ftype, rv;
 
-	KASSERT(p == 0 || (p->p_stat == SONPROC));
+	KASSERT(l == 0 || (l->l_stat == LSONPROC));
 
 	if (frame->srr1 & PSL_PR)
 		type |= EXC_USER;
@@ -157,10 +161,10 @@ printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2, srr3);
 		 * DEBUG intr -- probably single-step.
 		 */
 	case EXC_TRC|EXC_USER:
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		frame->srr1 &= ~PSL_SE;
-		trapsignal(p, SIGTRAP, EXC_TRC);
-		KERNEL_PROC_UNLOCK(p);
+		trapsignal(l, SIGTRAP, EXC_TRC);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 
 	  /* If we could not find and install appropriate TLB entry, fall through */
@@ -190,7 +194,7 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->esr));
 			KERNEL_UNLOCK();
 			if (rv == 0)
 				goto done;
-			if ((fb = p->p_addr->u_pcb.pcb_onfault) != NULL) {
+			if ((fb = l->l_addr->u_pcb.pcb_onfault) != NULL) {
 				frame->pid = KERNEL_PID;
 				frame->srr0 = (*fb)[0];
 				frame->srr1 |= PSL_IR; /* Re-enable IMMU */
@@ -208,50 +212,50 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->esr));
 	case EXC_DSI|EXC_USER:
 		/* FALLTHROUGH */
 	case EXC_DTMISS|EXC_USER:
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 
 		if (frame->esr & (ESR_DST|ESR_DIZ))
 			ftype = VM_PROT_WRITE;
 
 DBPRINTF(TDB_ALL, ("trap(EXC_DSI|EXC_USER) at %x %s fault on %x %x\n",
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->dear, frame->esr));
-KASSERT(p == curproc && (p->p_stat == SONPROC));
+KASSERT(l == curlwp && (l->l_stat == LSONPROC));
 		rv = uvm_fault(&p->p_vmspace->vm_map,
 			       trunc_page(frame->dear), 0, ftype);
 		if (rv == 0) {
-		  KERNEL_PROC_UNLOCK(p);
+		  KERNEL_PROC_UNLOCK(l);
 		  break;
 		}
 		if (rv == ENOMEM) {
-			printf("UVM: pid %d (%s), uid %d killed: "
+			printf("UVM: pid %d (%s) lid %d, uid %d killed: "
 			       "out of swap\n",
-			       p->p_pid, p->p_comm,
+			       p->p_pid, p->p_comm, l->l_lid,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, EXC_DSI);
+			trapsignal(l, SIGKILL, EXC_DSI);
 		} else {
-			trapsignal(p, SIGSEGV, EXC_DSI);
+			trapsignal(l, SIGSEGV, EXC_DSI);
 		}
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 	case EXC_ITMISS|EXC_USER:
 	case EXC_ISI|EXC_USER:
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
 DBPRINTF(TDB_ALL, ("trap(EXC_ISI|EXC_USER) at %x %s fault on %x tf %p\n",
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0), 0, ftype);
 		if (rv == 0) {
-		  KERNEL_PROC_UNLOCK(p);
+		  KERNEL_PROC_UNLOCK(l);
 		  break;
 		}
-		trapsignal(p, SIGSEGV, EXC_ISI);
-		KERNEL_PROC_UNLOCK(p);
+		trapsignal(l, SIGSEGV, EXC_ISI);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 
 	case EXC_AST|EXC_USER:
 		astpending = 0;		/* we are about to do it */
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		uvmexp.softs++;
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
@@ -259,18 +263,18 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		}
 		/* Check whether we are being preempted. */
 		if (want_resched)
-			preempt(NULL);
-		KERNEL_PROC_UNLOCK(p);
+			preempt(0);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 
 
 	case EXC_ALI|EXC_USER:
-		KERNEL_PROC_LOCK(p);
-		if (fix_unaligned(p, frame) != 0)
-			trapsignal(p, SIGBUS, EXC_ALI);
+		KERNEL_PROC_LOCK(l);
+		if (fix_unaligned(l, frame) != 0)
+			trapsignal(l, SIGBUS, EXC_ALI);
 		else
 			frame->srr0 += 4;
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 
 	case EXC_PGM|EXC_USER:
@@ -280,17 +284,17 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		 * let's try to see if it's FPU and can be emulated.
 		 */
 		uvmexp.traps ++;
-		if (!(p->p_addr->u_pcb.pcb_flags & PCB_FPU)) {
-			memset(&p->p_addr->u_pcb.pcb_fpu, 0,
-				sizeof p->p_addr->u_pcb.pcb_fpu);
-			p->p_addr->u_pcb.pcb_flags |= PCB_FPU;
+		if (!(l->l_addr->u_pcb.pcb_flags & PCB_FPU)) {
+			memset(&l->l_addr->u_pcb.pcb_fpu, 0,
+				sizeof l->l_addr->u_pcb.pcb_fpu);
+			l->l_addr->u_pcb.pcb_flags |= PCB_FPU;
 		}
 
 		if ((rv = fpu_emulate(frame,
-			(struct fpreg *)&p->p_addr->u_pcb.pcb_fpu))) {
-			KERNEL_PROC_LOCK(p);
-			trapsignal(p, rv, EXC_PGM);
-			KERNEL_PROC_UNLOCK(p);
+			(struct fpreg *)&l->l_addr->u_pcb.pcb_fpu))) {
+			KERNEL_PROC_LOCK(l);
+			trapsignal(l, rv, EXC_PGM);
+			KERNEL_PROC_UNLOCK(l);
 		}
 		break;
 
@@ -298,7 +302,7 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		{
 			faultbuf *fb;
 
-			if ((fb = p->p_addr->u_pcb.pcb_onfault) != NULL) {
+			if ((fb = l->l_addr->u_pcb.pcb_onfault) != NULL) {
 				frame->pid = KERNEL_PID;
 				frame->srr0 = (*fb)[0];
 				frame->srr1 |= PSL_IR; /* Re-enable IMMU */
@@ -330,11 +334,19 @@ brain_damage:
 	{
 		int sig;
 
-		while ((sig = CURSIG(p)) != 0)
+		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
+
+	/* Invoke any pending upcalls */
+	while (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
+
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
   done:
 	return;
 }
@@ -431,20 +443,23 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 {
 	const char *up;
 	char *kp = kaddr;
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p;
 	int error;
 
-	if (!p) {
+	if (!l) {
 		return EFAULT;
 	}
+
+	p = l->l_proc;
 
 	/*
 	 * Stolen from physio():
 	 */
-	PHOLD(p);
+	PHOLD(l);
 	error = uvm_vslock(p, (caddr_t)udaddr, len, VM_PROT_READ);
 	if (error) {
-		PRELE(p);
+		PRELE(l);
 		return EFAULT;
 	}
 	up = (char *)vmaprange(p, (vaddr_t)udaddr, len, VM_PROT_READ);
@@ -452,7 +467,7 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	memcpy(kp, up, len);
 	vunmaprange((vaddr_t)up, len);
 	uvm_vsunlock(p, (caddr_t)udaddr, len);
-	PRELE(p);
+	PRELE(l);
 
 	return 0;
 }
@@ -508,20 +523,23 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 {
 	char *up;
 	const char *kp = (char *)kaddr;
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p;
 	int error;
 
-	if (!p) {
+	if (!l) {
 		return EFAULT;
 	}
+
+	p = l->l_proc;
 
 	/*
 	 * Stolen from physio():
 	 */
-	PHOLD(p);
+	PHOLD(l);
 	error = uvm_vslock(p, udaddr, len, VM_PROT_WRITE);
 	if (error) {
-		PRELE(p);
+		PRELE(l);
 		return EFAULT;
 	}
 	up = (char *)vmaprange(p, (vaddr_t)udaddr, len,
@@ -530,7 +548,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	memcpy(up, kp, len);
 	vunmaprange((vaddr_t)up, len);
 	uvm_vsunlock(p, udaddr, len);
-	PRELE(p);
+	PRELE(l);
 
 	return 0;
 }
@@ -620,8 +638,54 @@ badaddr_read(void *addr, size_t size, int *rptr)
  */
 
 static int
-fix_unaligned(struct proc *p, struct trapframe *frame)
+fix_unaligned(struct lwp *l, struct trapframe *frame)
 {
 
 	return -1;
+}
+
+/* 
+ * Start a new LWP
+ */
+void
+startlwp(arg)
+	void *arg;
+{
+	int err;
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("Error %d from cpu_setmcontext.", err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	upcallret(l);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(l)
+	struct lwp *l;
+{
+	int sig;
+
+	/* Take pending signals. */
+	while ((sig = CURSIG(l)) != 0)
+		postsig(sig);
+
+	/* Invoke per-process kernel-exit handling, if any */
+	if (l->l_proc->p_userret)
+		(l->l_proc->p_userret)(l, l->l_proc->p_userret_arg);
+
+	/* Invoke any pending upcalls */
+	while (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
+
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }

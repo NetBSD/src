@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 2002/10/10 22:37:51 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 2003/01/18 06:23:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1489,11 +1489,11 @@ next:
  * is the current process, load the new MMU context.
  */
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(l)
+	struct lwp *l;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap, rpm;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap, rpm;
 	int psl, i, seg;
 
 	/*
@@ -1505,7 +1505,7 @@ pmap_activate(p)
 		    (paddr_t *)&pcb->pcb_pmreal);
 	}
 
-	if (p == curproc) {
+	if (l == curlwp) {
 		/* Disable interrupts while switching. */
 		__asm __volatile("mfmsr %0" : "=r"(psl) :);
 		psl &= ~PSL_EE;
@@ -1538,8 +1538,8 @@ pmap_activate(p)
  * Deactivate the specified process's address space.
  */
 void
-pmap_deactivate(p)
-	struct proc *p;
+pmap_deactivate(l)
+	struct lwp *l;
 {
 }
 

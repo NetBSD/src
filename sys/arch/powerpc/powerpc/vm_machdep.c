@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.43 2002/08/11 02:17:30 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.44 2003/01/18 06:23:36 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,16 +57,16 @@ void vunmaprange(vaddr_t, vsize_t);
 #endif
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
+ * Finish a fork operation, with execution context l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
  * Rig the child's kernel stack so that it will start out in
- * fork_trampoline() and call child_return() with p2 as an
+ * fork_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
+ * l1 is the execution context being forked; if l1 == &lwp0, we are creating
  * a kernel thread, and the return path and argument are specified with
  * `func' and `arg'.
  *
@@ -75,8 +75,8 @@ void vunmaprange(vaddr_t, vsize_t);
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
+	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
 	void (*func)(void *);
@@ -87,30 +87,30 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct switchframe *sf;
 	caddr_t stktop1, stktop2;
 	void fork_trampoline(void);
-	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct pcb *pcb = &l2->l_addr->u_pcb;
 
 #ifdef DIAGNOSTIC
 	/*
-	 * if p1 != curproc && p1 == &proc0, we're creating a kernel thread.
+	 * if p1 != curlwp && p1 == &proc0, we're creating a kernel thread.
 	 */
-	if (p1 != curproc && p1 != &proc0)
-		panic("cpu_fork: curproc");
+	if (l1 != curlwp && l1 != &lwp0)
+		panic("cpu_lwp_fork: curlwp");
 #endif
 
 #ifdef PPC_HAVE_FPU
-	if (p1->p_addr->u_pcb.pcb_fpcpu)
-		save_fpu_proc(p1);
+	if (l1->l_addr->u_pcb.pcb_fpcpu)
+		save_fpu_lwp(l1);
 #endif
-	*pcb = p1->p_addr->u_pcb;
+	*pcb = l1->l_addr->u_pcb;
 #ifdef ALTIVEC
-	if (p1->p_addr->u_pcb.pcb_vr != NULL) {
-		save_vec_proc(p1);
+	if (l1->l_addr->u_pcb.pcb_vr != NULL) {
+		save_vec_lwp(l1);
 		pcb->pcb_vr = pool_get(&vecpool, PR_WAITOK);
-		*pcb->pcb_vr = *p1->p_addr->u_pcb.pcb_vr;
+		*pcb->pcb_vr = *l1->l_addr->u_pcb.pcb_vr;
 	}
 #endif
 
-	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
+	pcb->pcb_pm = l2->l_proc->p_vmspace->vm_map.pmap;
 #ifndef OLDPMAP
 	pcb->pcb_pmreal = pcb->pcb_pm;		/* XXX */
 #else
@@ -121,19 +121,26 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	/*
 	 * Setup the trap frame for the new process
 	 */
-	stktop1 = (caddr_t)trapframe(p1);
-	stktop2 = (caddr_t)trapframe(p2);
+	stktop1 = (caddr_t)trapframe(l1);
+	stktop2 = (caddr_t)trapframe(l2);
 	memcpy(stktop2, stktop1, sizeof(struct trapframe));
 
 	/*
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL) {
-		tf = trapframe(p2);
+		tf = trapframe(l2);
 		tf->fixreg[1] = (register_t)stack + stacksize;
 	}
 
-	stktop2 = (caddr_t)((u_long)stktop2 & ~15);	/* Align stack pointer */
+	/*
+	 * Align stack pointer
+	 * Since sizeof(struct trapframe) is 41 words, this will
+	 * give us 12 bytes on the stack, which pad us somewhat
+	 * for an extra call frame (or at least space for callee
+	 * to store LR).
+	 */
+	stktop2 = (caddr_t)((u_long)stktop2 & ~15);
 
 	/*
 	 * There happens to be a callframe, too.
@@ -164,10 +171,41 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 }
 
 void
-cpu_swapin(p)
-	struct proc *p;
+cpu_setfunc(l, func, arg)
+	struct lwp *l;
+	void (*func) __P((void *));
+	void *arg;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	extern void fork_trampoline(void);
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf;
+	struct callframe *cf;
+	struct switchframe *sf;
+	caddr_t vaddr;
+
+	tf = trapframe(l);
+	cf = (struct callframe *) ((u_long)tf & ~15);
+	cf->lr = (register_t) fork_trampoline;
+	cf--;
+	cf->r31 = (register_t) func;
+	cf->r30 = (register_t) arg;
+	vaddr = (unsigned char *) cf;
+	vaddr -= roundup(sizeof *sf, 16);
+	sf = (struct switchframe *) vaddr;
+	memset((void *)sf, 0, sizeof *sf);		/* just in case */
+	sf->sp = (register_t) cf;
+#ifndef PPC_IBM4XX
+	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
+#endif
+	pcb->pcb_sp = (int)sf;
+	pcb->pcb_spl = 0;
+}
+
+void
+cpu_swapin(l)
+	struct lwp *l;
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
 #ifndef OLDPMAP
 	pcb->pcb_pmreal = pcb->pcb_pm;		/* XXX */
@@ -207,21 +245,21 @@ pagemove(from, to, size)
  * run.
  */
 void
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(struct lwp *l, int proc)
 {
-	void switchexit(struct proc *);		/* Defined in locore.S */
+	/* This is in locore_subr.S */
+	void switch_exit(struct lwp *, void (*)(struct lwp *));
 #if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 #endif
 
 #ifdef PPC_HAVE_FPU
 	if (pcb->pcb_fpcpu)			/* release the FPU */
-		save_fpu_proc(p);
+		save_fpu_lwp(l);
 #endif
 #ifdef ALTIVEC
 	if (pcb->pcb_veccpu) {			/* release the AltiVEC */
-		save_vec_proc(p);
+		save_vec_lwp(l);
 		__asm __volatile("dssall;sync"); /* stop any streams */
 /* XXX this stops streams on the current cpu, should be pcb->pcb_veccpu */
 	}
@@ -230,22 +268,23 @@ cpu_exit(p)
 #endif
 
 	splsched();
-	switchexit(p);
+	switch_exit(l, proc ? exit2 : lwp_exit2);
 }
 
 /*
  * Write the machine-dependent part of a core dump.
  */
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
+cpu_coredump(l, vp, cred, chdr)
+	struct lwp *l;
 	struct vnode *vp;
 	struct ucred *cred;
 	struct core *chdr;
 {
 	struct coreseg cseg;
 	struct md_coredump md_core;
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct proc *p = l->l_proc;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	int error;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_POWERPC, 0);
@@ -253,11 +292,11 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_seghdrsize = ALIGN(sizeof cseg);
 	chdr->c_cpusize = sizeof md_core;
 
-	md_core.frame = *trapframe(p);
+	md_core.frame = *trapframe(l);
 	if (pcb->pcb_flags & PCB_FPU) {
 #ifdef PPC_HAVE_FPU
-		if (p->p_addr->u_pcb.pcb_fpcpu)
-			save_fpu_proc(p);
+		if (l->l_addr->u_pcb.pcb_fpcpu)
+			save_fpu_lwp(l);
 #endif
 		md_core.fpstate = pcb->pcb_fpu;
 	} else
@@ -266,7 +305,7 @@ cpu_coredump(p, vp, cred, chdr)
 #ifdef ALTIVEC
 	if (pcb->pcb_flags & PCB_ALTIVEC) {
 		if (pcb->pcb_veccpu)
-			save_vec_proc(p);
+			save_vec_lwp(l);
 		md_core.vstate = *pcb->pcb_vr;
 	} else
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.8 2002/11/03 22:36:22 matt Exp $	*/
+/*	$NetBSD: fpu.h,v 1.9 2003/01/18 06:23:29 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -78,9 +78,9 @@
 
 void	enable_fpu(void);
 void	save_fpu_cpu(void);
-void	save_fpu_proc(struct proc *);
+void	save_fpu_lwp(struct lwp *);
 #ifdef MULTIPROCESSOR
-void	mp_save_fpu_proc(struct proc *);
+void	mp_save_fpu_lwp(struct lwp *);
 #endif
 #endif /* PPC_HAVE_FPU */
 #endif /* _KERNEL */
