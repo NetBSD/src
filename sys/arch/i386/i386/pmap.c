@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.8.2.9 1993/10/26 12:02:46 mycroft Exp $
+ *	$Id: pmap.c,v 1.8.2.10 1993/10/30 13:15:43 mycroft Exp $
  */
 
 /*
@@ -172,7 +172,6 @@ pmap_t		kernel_pmap;
 
 vm_offset_t    	avail_start;	/* PA of first available physical page */
 vm_offset_t	avail_end;	/* PA of last available physical page */
-vm_size_t	mem_size;	/* memory size in bytes */
 vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
@@ -222,7 +221,6 @@ pmap_bootstrap(virtual_start)
 	/* XXX: allow for msgbuf */
 	avail_end -= i386_round_page(sizeof(struct msgbuf));
 
-	mem_size = physmem << PGSHIFT;
 	virtual_avail = virtual_start;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
