@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.5.4.1 2000/10/09 13:43:29 fvdl Exp $
+#	$NetBSD: Makefile,v 1.9.2.2 2000/10/09 13:43:28 fvdl Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
-IMAGE=	boot-tiny.fs
+IMAGE=	boot-small.fs
 KERN!=	cd $(.CURDIR)/../kernel-ramdisk/; \
-        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.INSTALL_TINY.gz\n" | \
+        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.INSTALL_SMALL.gz\n" | \
 	${MAKE} -s -f-
 
 DISKTYPE=	floppy5
