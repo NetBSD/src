@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.13 2001/12/04 20:00:15 sommerfeld Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.14 2001/12/06 21:04:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.13 2001/12/04 20:00:15 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.14 2001/12/06 21:04:27 jdolecek Exp $");
 
 #include "rnd.h"
 
@@ -249,7 +249,7 @@ edc_mca_attach(parent, self, aux)
 	/* Create a MCA DMA map, used for data transfer */
 	sc->sc_dmat = ma->ma_dmat;
 	if ((error = mca_dmamap_create(sc->sc_dmat, MAXPHYS,
-	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | MCABUS_DMA_16BIT,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | MCABUS_DMA_16BIT,
 	    &sc->sc_dmamap_xfer, drq)) != 0){
 		printf("%s: couldn't create DMA map - error %d\n",
 			sc->sc_dev.dv_xname, error);
