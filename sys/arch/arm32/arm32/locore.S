@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.3 1996/02/15 22:15:21 mark Exp $ */
+/* $NetBSD: locore.S,v 1.4 1996/02/22 22:41:31 mark Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -30,7 +30,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: locore.S,v 1.3 1996/02/15 22:15:21 mark Exp $
+ *	$Id: locore.S,v 1.4 1996/02/22 22:41:31 mark Exp $
  */
 
 #include "assym.h"
@@ -75,16 +75,11 @@ start:
 	ldmia	r1, { r1, r2, r13 }		/* Set initial stack and */
 	sub	r2, r2, r1			/* get zero init data */
 	mov	r3, #0
-	mov	r4, r3
-	mov	r5, r3
-	mov	r6, r3
 
-/* Q - what happens if the data is not 4 word aligned ? */
-/* A - it always will be word aligned */
-
-L1:	stmea	r1!, { r3, r4, r5, r6 }		/* zero the zero init */
-	subs	r2, r2, #16			/* data area */
-	bcs	L1
+L1:
+	str	r3, [r1], #0x0004		/* Zero the bss */
+	subs	r2, r2, #4
+	bgt	L1
 
 	mov	fp, #0x00000000			/* trace back starts here */
 	bl	_initarm			/* Off we go */
@@ -353,10 +348,13 @@ tbloop:
 	add	r0, pc, #Ltb1 - .  - 8
 	bl	_printf
 
-	ldr	r1, [r4, #-4]
+/*	ldr	r1, [r4, #-4]
 	ldr	r2, [r4]
 	add	r0, pc, #Ltb2 - .  - 8
-	bl	_printf
+	bl	_printf*/
+	ldr	r0, [r4, #-4]
+	ldr	r1, [r4]
+	bl	_traceback_sym
 
 	mov	r3, r4
 	ldr	r4, [r4, #-12]
@@ -398,10 +396,13 @@ _simpletraceback:
 	ldr	r6, Ltracebackmax
 
 stbloop:
-	ldr	r1, [r4, #-4]
+/*	ldr	r1, [r4, #-4]
 	ldr	r2, [r4]
 	add	r0, pc, #Ltb2 - .  - 8
-	bl	_printf
+	bl	_printf*/
+	ldr	r0, [r4, #-4]
+	ldr	r1, [r4]
+	bl	_traceback_sym
 
 	mov	r3, r4
 	ldr	r4, [r4, #-12]
@@ -436,10 +437,13 @@ itbloop:
 	add	r0, pc, #Ltb1 - .  - 8
 	bl	_printf
 
-	ldr	r1, [r4, #-4]
+/*	ldr	r1, [r4, #-4]
 	ldr	r2, [r4]
 	add	r0, pc, #Ltb2 - .  - 8
-	bl	_printf
+	bl	_printf*/
+	ldr	r0, [r4, #-4]
+	ldr	r1, [r4]
+	bl	_traceback_sym
 
 	mov	r3, r4
 	ldr	r4, [r4, #-12]
