@@ -1,4 +1,4 @@
-/*	$NetBSD: environment.h,v 1.4 1998/06/28 20:19:30 christos Exp $	*/
+/*	$NetBSD: environment.h,v 1.5 1999/05/06 13:56:28 kleink Exp $	*/
 
 /*
 ===============================================================================
@@ -45,3 +45,19 @@ a compiler does not support inlining, this macro should be defined to be
 -------------------------------------------------------------------------------
 */
 #define INLINE static __inline
+
+/*
+-------------------------------------------------------------------------------
+Move private identifiers with external linkage into implementation namespace.
+  -- Klaus Klein <kleink@netbsd.org>, May 5, 1999
+-------------------------------------------------------------------------------
+*/
+#define float_exception_flags	_arm32_float_exception_flags
+#define float_rounding_mode	_arm32_float_rounding_mode
+#define float32_eq		_arm32_float32_eq
+#define float32_le		_arm32_float32_le
+#define float32_lt		_arm32_float32_lt
+#define float64_eq		_arm32_float64_eq
+#define float64_le		_arm32_float64_le
+#define float64_lt		_arm32_float64_lt
+#define float_raise		_arm32_float_raise

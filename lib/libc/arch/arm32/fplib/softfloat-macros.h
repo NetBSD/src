@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat-macros.h,v 1.4 1998/04/24 18:46:53 cgd Exp $	*/
+/*	$NetBSD: softfloat-macros.h,v 1.5 1999/05/06 13:56:28 kleink Exp $	*/
 
 /*
 ===============================================================================
@@ -115,7 +115,9 @@ INLINE void mul64To128(
 
 static bits32 estimateDiv64To32( bits32 a0, bits32 a1, bits32 b );
 
+#if 0 /* unused */
 static bits32 estimateSqrt32( int16 aExp, bits32 a );
+#endif
 
 static int8 countLeadingZeros( bits32 a );
 
@@ -608,6 +610,7 @@ static bits32 estimateDiv64To32( bits32 a0, bits32 a1, bits32 b )
 
 }
 
+#if 0 /* unused */
 /*
 -------------------------------------------------------------------------------
 Returns an approximation to the square root of the 32-bit significand given
@@ -647,6 +650,7 @@ static bits32 estimateSqrt32( int16 aExp, bits32 a )
     return ( ( estimateDiv64To32( a, 0, z ) )>>1 ) + ( z>>1 );
 
 }
+#endif /* unused */
 
 /*
 -------------------------------------------------------------------------------
