@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.79 2004/08/12 02:30:23 lukem Exp $
+# $NetBSD: postinstall,v 1.80 2004/08/12 13:32:37 lukem Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -810,6 +810,8 @@ do_obsolete()
 	(
 		obsolete_libs /lib
 		obsolete_libs /usr/lib
+		obsolete_libs /usr/lib/i18n
+		obsolete_libs /usr/X11R6/lib
 	) | obsolete_paths ${op}
 	failed=$(( ${failed} + $? ))
 
