@@ -30,18 +30,21 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     From: @(#)gethostbyname.3	8.4 (Berkeley) 5/25/95
-.\"     $Id: getaddrinfo.3,v 1.2 1999/07/03 13:58:31 kleink Exp $
+.\"     KAME Id: getaddrinfo.3,v 1.5 1999/12/10 04:04:30 itojun Exp
 .\"
 .Dd May 25, 1995
 .Dt GETADDRINFO 3
 .Os KAME
+.\"
 .Sh NAME
-.Nm getaddrinfo
+.Nm getaddrinfo ,
 .Nm freeaddrinfo ,
 .Nm gai_strerror
 .Nd nodename-to-address translation in protocol-independent manner
+.\"
 .Sh LIBRARY
 .Lb libc
+.\"
 .Sh SYNOPSIS
 .Fd #include <sys/socket.h>
 .Fd #include <netdb.h>
@@ -52,6 +55,7 @@
 .Fn freeaddrinfo "struct addrinfo *ai"
 .Ft "char *"
 .Fn gai_strerror "int ecode"
+.\"
 .Sh DESCRIPTION
 The
 .Fn getaddrinfo
@@ -62,8 +66,10 @@ and
 .Xr getservbyname 3 ,
 in more sophisticated manner.
 .Pp
-The addrinfo structure is defined as a result of including the
-.Li <netdb.h>
+The
+.Li addrinfo
+structure is defined as a result of including the
+.Aq Pa netdb.h
 header:
 .Bd -literal -offset
 struct addrinfo {                                                  *
@@ -157,7 +163,8 @@ pointer, this is the same as if the caller had filled in an
 .Li addrinfo
 structure initialized to zero with
 .Fa ai_family
-set to PF_UNSPEC.
+set to
+.Dv PF_UNSPEC .
 .Pp
 Upon successful return a pointer to a linked list of one or more
 .Li addrinfo
@@ -220,7 +227,8 @@ call to
 .Pq for a connection-oriented protocol
 or either
 .Fn connect ,
-.Fn sendto , or
+.Fn sendto ,
+or
 .Fn sendmsg
 .Pq for a connectionless protocol .
 In this case, if the
@@ -265,7 +273,7 @@ All of the information returned by
 is dynamically allocated:
 the
 .Li addrinfo
-structures, and the socket address structures and canonical node name
+structures, the socket address structures, and canonical node name
 strings pointed to by the addrinfo structures.
 To return this information to the system the function
 .Fn freeaddrinfo
@@ -294,43 +302,87 @@ If the argument is not one of the
 .Dv EAI_xxx
 values, the function still returns a pointer to a string whose contents
 indicate an unknown error.
+.\"
+.Sh EXTENSION
+The implementation allows experimental numeric IPv6 address notation with
+scope identifier.
+By appending atmark and scope identifier to addresses, you can fill
+.Li sin6_scope_id
+field for addresses.
+This would make management of scoped address easier,
+and allows cut-and-paste input of scoped address.
+.Pp
+At this moment the code supports only link-local addresses with the format.
+Scope identifier is hardcoded to name of hardware interface associated
+with the link.
+.Po
+such as
+.Li ne0
+.Pc .
+Example would be like
+.Dq Li fe80::1@ne0 ,
+which means
+.Do
+.Li fe80::1
+on the link associated with
+.Li ne0
+interface
+.Dc .
+.Pp
+The implementation is still very experimental and non-standard.
+The current implementation assumes one-by-one relationship between
+interface and link, which is not necessarily true from the specification.
+.\"
 .Sh FILES
 .Bl -tag -width /etc/resolv.conf -compact
 .It Pa /etc/hosts
 .It Pa /etc/host.conf
 .It Pa /etc/resolv.conf
 .El
+.\"
 .Sh DIAGNOSTICS
 Error return status from 
 .Fn getaddrinfo
 is zero on success and non-zero on errors.
 Non-zero error codes are defined in
-.Li <netdb.h> ,
+.Aq Pa netdb.h ,
 and as follows:
 .Pp
 .Bl -tag -width EAI_ADDRFAMILY -compact
 .It Dv EAI_ADDRFAMILY 
-address family for nodename not supported
+address family for
+.Fa nodename
+not supported
 .It Dv EAI_AGAIN
 temporary failure in name resolution
 .It Dv EAI_BADFLAGS
-invalid value for ai_flags
+invalid value for
+.Fa ai_flags
 .It Dv EAI_FAIL
 non-recoverable failure in name resolution
 .It Dv EAI_FAMILY
-ai_family not supported
+.Fa ai_family
+not supported
 .It Dv EAI_MEMORY
 memory allocation failure
 .It Dv EAI_NODATA
-no address associated with nodename
+no address associated with
+.Fa nodename
 .It Dv EAI_NONAME
-nodename nor servname provided, or not known
+.Fa nodename
+nor
+.Fa servname
+provided, or not known
 .It Dv EAI_SERVICE
-servname not supported for ai_socktype
+.Fa servname
+not supported for
+.Fa ai_socktype
 .It Dv EAI_SOCKTYPE
-ai_socktype not supported
+.Fa ai_socktype
+not supported
 .It Dv EAI_SYSTEM
-system error returned in errno
+system error returned in
+.Va errno
 .El
 .Pp
 If called with proper argument,
@@ -340,6 +392,7 @@ If the argument is not one of the
 .Dv EAI_xxx
 values, the function still returns a pointer to a string whose contents
 indicate an unknown error.
+.\"
 .Sh SEE ALSO
 .Xr getnameinfo 3 ,
 .Xr gethostbyname 3 ,
@@ -347,17 +400,28 @@ indicate an unknown error.
 .Xr hosts 5 ,
 .Xr services 5 ,
 .Xr hostname 7 ,
-.Xr named 8
+.Xr named 8 .
 .Pp
-R. Gilligan, S.  Thomson, J. Bound, and W. Stevens,
-``Basic Socket Interface Extensions for IPv6,'' RFC2553, March 1999.
+.Rs
+.%A R. Gilligan
+.%A S. Thomson
+.%A J. Bound
+.%A W. Stevens
+.%T Basic Socket Interface Extensions for IPv6
+.%R RFC2553
+.%D March 1999
+.Re
+.\"
 .Sh HISTORY
 The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
+.\"
 .Sh STANDARDS
 The
 .Fn getaddrinfo
 function is defined IEEE POSIX 1003.1g draft specification,
-and documented in ``Basic Socket Interface Extensions for IPv6''
+and documented in
+.Dq Basic Socket Interface Extensions for IPv6
 .Pq RFC2533 .
+.\"
 .Sh BUGS
 The text was shamelessly copied from RFC2553.
