@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.2 2002/06/06 21:03:28 bjh21 Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.3 2002/06/16 13:20:15 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -63,7 +63,6 @@ struct vidc20_softc {
 
 static int  vidcmatch  __P((struct device *self, struct cfdata *cf, void *aux));
 static void vidcattach __P((struct device *parent, struct device *self, void *aux));
-static int  vidcprint  __P((void *aux, const char *name));
 static int  vidcsearch __P((struct device *, struct cfdata *, void *));
 
 /*
@@ -102,32 +101,6 @@ vidcmatch(parent, cf, aux)
 }
 
 /*
- * vidcprint()
- *
- * print routine used during config of children
- */
-
-static int
-vidcprint(aux, name)
-	void *aux;
-	const char *name;
-{
-	struct mainbus_attach_args *mb = aux;
-
-	if (mb->mb_iobase != MAINBUSCF_BASE_DEFAULT)
-		printf(" base 0x%x", mb->mb_iobase);
-	if (mb->mb_iosize > 1)
-		printf("-0x%x", mb->mb_iobase + mb->mb_iosize - 1);
-	if (mb->mb_irq != -1)
-		printf(" irq %d", mb->mb_irq);
-	if (mb->mb_drq != -1)
-		printf(" drq 0x%08x", mb->mb_drq);
-
-/* XXXX print flags */
-	return (QUIET);
-}
-
-/*
  * vidcsearch()
  *
  * search routine used during the config of children
@@ -139,30 +112,9 @@ vidcsearch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct vidc20_softc *sc = (struct vidc20_softc *)parent;
-	struct mainbus_attach_args mb;
-	int tryagain;
-
-	do {
-		if (cf->cf_loc[MAINBUSCF_BASE] == MAINBUSCF_BASE_DEFAULT) {
-			mb.mb_iobase = MAINBUSCF_BASE_DEFAULT;
-			mb.mb_iosize = 0;
-			mb.mb_drq = MAINBUSCF_DACK_DEFAULT;
-			mb.mb_irq = MAINBUSCF_IRQ_DEFAULT;
-		} else {
-			mb.mb_iobase = cf->cf_loc[MAINBUSCF_BASE] + IO_CONF_BASE;
-			mb.mb_iosize = 0;
-			mb.mb_drq = cf->cf_loc[MAINBUSCF_DACK];
-			mb.mb_irq = cf->cf_loc[MAINBUSCF_IRQ];
-		}
-		mb.mb_iot = sc->sc_iot;
-
-		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &mb) > 0) {
-			config_attach(parent, cf, &mb, vidcprint);
-/*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
-		}
-	} while (tryagain);
+	
+	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+		config_attach(parent, cf, NULL, NULL);
 
 	return (0);
 }
