@@ -1,4 +1,4 @@
-/*    $NetBSD: if_de.c,v 1.20 1996/05/07 23:23:23 christos Exp $       */
+/*    $NetBSD: if_de.c,v 1.21 1996/05/11 14:00:15 mycroft Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -1944,7 +1944,6 @@ tulip_ioctl(
 	    switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET: {
-		    sc->tulip_ac.ac_ipaddr = IA_SIN(ifa)->sin_addr;
 		    tulip_init(sc);
 		    arp_ifinit(&sc->tulip_ac, ifa);
 		    break;
