@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.7 1993/10/12 23:19:58 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.8 1993/10/15 03:29:10 mycroft Exp $
  */
 
 #include "npx.h"
@@ -77,7 +77,6 @@
 #include "machine/cpufunc.h"
 #include "machine/reg.h"
 #include "machine/specialreg.h"
-#include "machine/sysarch.h"
 
 #include "i386/isa/isa.h"
 #include "i386/isa/isavar.h"
@@ -116,23 +115,24 @@ int	_udatasel, _ucodesel, _gsel_tss;
 
 void dumpsys __P((void));
 
+caddr_t allocsys();
+
+/*
+ * Machine-dependent startup code
+ */
 void
 cpu_startup()
 {
-	register int unixsize;
-	register unsigned i;
-	register struct pte *pte;
-	int mapaddr, j;
-	register caddr_t v;
-	int maxbufs, base, residual;
-	extern long Usrptsize;
-	vm_offset_t minaddr, maxaddr, firstaddr;
+	unsigned i;
+	caddr_t v;
+	int sz;
+	int base, residual;
+	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
 
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
 		pmap_enter(pmap_kernel(), (caddr_t)msgbufp + i * NBPG,
@@ -144,77 +144,15 @@ cpu_startup()
 	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
-	 * Allocate space for system data structures.
-	 * The first available kernel virtual address is in "v".
-	 * As pages of kernel virtual memory are allocated, "v" is incremented.
-	 * As pages of memory are allocated and cleared,
-	 * "firstaddr" is incremented.
-	 * An index into the kernel page table corresponding to the
-	 * virtual memory address maintained in "v" is kept in "mapaddr".
+	 * Find out how much space we need, allocate it,
+	 * and then give everything true virtual addresses.
 	 */
-
-	/*
-	 * Make two passes.  The first pass calculates how much memory is
-	 * needed and allocates it.  The second pass assigns virtual
-	 * addresses to the various data structures.
-	 */
-	firstaddr = 0;
-again:
-	v = (caddr_t)firstaddr;
-
-#define	valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)((name)+(num))
-#define	valloclim(name, type, num, lim) \
-	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-/*	valloc(cfree, struct cblock, nclist);  no clists any more!!! - cgd */
-	valloc(callout, struct callout, ncallout);
-	valloc(swapmap, struct map, nswapmap = maxproc * 2);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-	/*
-	 * Determine how many buffers to allocate.
-	 * Use 10% of memory for the first 2 Meg, 5% of the remaining
-	 * memory. Insure a minimum of 16 buffers.
-	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
-	 */
-	if (bufpages == 0)
-	    if (physmem < btoc(2 * 1024 * 1024))
-		bufpages = physmem / 10 / CLSIZE;
-	    else
-		bufpages = (btoc(2 * 1024 * 1024) + physmem) / 20 / CLSIZE;
-
-	bufpages = min(NKMEMCLUSTERS*2/5, bufpages);  /* XXX ? - cgd */
-
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(swbuf, struct buf, nswbuf);
-	valloc(buf, struct buf, nbuf);
-
-	/*
-	 * End of first pass, size has been calculated so allocate memory
-	 */
-	if (firstaddr == 0) {
-		size = (vm_size_t)(v - firstaddr);
-		firstaddr = (int)kmem_alloc(kernel_map, round_page(size));
-		if (firstaddr == 0)
-			panic("startup: no room for tables");
-		goto again;
-	}
-	/*
-	 * End of second pass, addresses have been assigned
-	 */
-	if ((vm_size_t)(v - firstaddr) != size)
+	sz = (int)allocsys((caddr_t)0);
+	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
+		panic("startup: no room for tables");
+	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
-#if 0
+
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -228,7 +166,8 @@ again:
 		panic("startup: cannot allocate buffers");
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE) { /* don't want to alloc more physical mem than needed */
+	if (base >= MAXBSIZE) {
+		/* don't want to alloc more physical mem than needed */
 		base = MAXBSIZE;
 		residual = 0;
 	}
@@ -248,13 +187,6 @@ again:
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
-#else
-	/*
-	 * Allocate a submap for buffer space allocations.
-	 */
-	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-		bufpages * CLBYTES, TRUE);
-#endif
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -303,6 +235,55 @@ again:
 	configure();
 }
 
+/*
+ * Allocate space for system data structures.  We are given
+ * a starting virtual address and we return a final virtual
+ * address; along the way we set each data structure pointer.
+ *
+ * We call allocsys() with 0 to find out how much space we want,
+ * allocate that much and fill it with zeroes, and then call
+ * allocsys() again with the correct base virtual address.
+ */
+caddr_t
+allocsys(v)
+	register caddr_t v;
+{
+
+#define	valloc(name, type, num) \
+	    v = (caddr_t)(((name) = (type *)v) + (num))
+#ifdef REAL_CLISTS
+	valloc(cfree, struct cblock, nclist);
+#endif
+	valloc(callout, struct callout, ncallout);
+	valloc(swapmap, struct map, nswapmap = maxproc * 2);
+#ifdef SYSVSHM
+	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+#endif
+
+	/*
+	 * Determine how many buffers to allocate (enough to
+	 * hold 5% of total physical memory, but at least 16).
+	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
+	 */
+	if (bufpages == 0)
+	    if (physmem < btoc(2 * 1024 * 1024))
+		bufpages = (physmem / 10) / CLSIZE;
+	    else
+		bufpages = (physmem / 20) / CLSIZE;
+	if (nbuf == 0) {
+		nbuf = bufpages;
+		if (nbuf < 16)
+			nbuf = 16;
+	}
+	if (nswbuf == 0) {
+		nswbuf = (nbuf / 2) &~ 1;	/* force even */
+		if (nswbuf > 256)
+			nswbuf = 256;		/* sanity */
+	}
+	valloc(swbuf, struct buf, nswbuf);
+	valloc(buf, struct buf, nbuf);
+	return v;
+}
 
 struct cpu_nameclass i386_cpus[] = {
 	{ "Intel 80286",	CPUCLASS_286 },		/* CPU_286   */
@@ -601,6 +582,10 @@ boot(howto)
 			printf("giving up\n");
 		else
 			printf("done\n");
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
+		 */
 		resettodr();
 	}
 	(void) splhigh();			/* XXX */
@@ -635,13 +620,16 @@ dumpconf()
 	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
 		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 		/*
-		 * Skip first CLBYTES(?) do avoid smashing disk label.
+		 * Don't dump on the first CLBYTES (why CLBYTES?)
+		 * in case the dumpd evice includes a disk label.
 		 */
 		if (dumplo < btodb(CLBYTES))
 			dumplo = btodb(CLBYTES);
+
 		/*
-		 * Make sure dumpsize fits in partition; put padding at
-		 * beginning of partition if any.
+		 * If dumpsize is too big for the partition, truncate it.
+		 * Otherwise, put the dump at the end of the partition
+		 * by making dumplo as large as possible.
 		 */
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
@@ -661,6 +649,7 @@ vm_offset_t
 reserve_dumppages(p)
 	vm_offset_t p;
 {
+
 	dumpspace = p;
 	return(p + BYTES_PER_DUMP);
 }
@@ -670,6 +659,7 @@ dumpvaddr(maddr, n)
 	caddr_t maddr;
 	int n;
 {
+
 	(void) pmap_map(dumpspace, (vm_offset_t)maddr,
 			(vm_offset_t)maddr + (vm_size_t)n, VM_PROT_READ);
 	return((caddr_t)dumpspace);
@@ -687,6 +677,10 @@ dumpsys()
 
 	if (dumpdev == NODEV)
 		return;
+	/*
+	 * For dumps during autoconfiguration,
+	 * if the dump device has not been configured.
+	 */
 	if (dumpsize == 0)
 		dumpconf();
 	if (dumplo < 0)
@@ -711,6 +705,7 @@ dumpsys()
 		n = bytes - i;
 		if (n > BYTES_PER_DUMP)
 			n = BYTES_PER_DUMP;
+		/* print out how many MBs we have dumped */
 		if (i && (i % (1024*1024)) == 0)
 			printf("%d ", i / (1024*1024));
 		error = (*dump)(dumpdev, blkno, (caddr_t)maddr, (int)n);
@@ -764,11 +759,11 @@ microtime(tvp)
 
 	*tvp = time;
 	tvp->tv_usec += tick;
+	splx(s);
 	while (tvp->tv_usec > 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
-	splx(s);
 }
 #endif /* HZ */
 
@@ -811,6 +806,7 @@ setregs(p, entry, stack, retval)
 	u_long stack;
 	int retval[2];
 {
+
 	p->p_regs[tEBP] = 0;	/* bottom of the fp chain */
 	p->p_regs[tEIP] = entry;
 	p->p_regs[tESP] = stack;
@@ -818,13 +814,14 @@ setregs(p, entry, stack, retval)
 	p->p_regs[tDS] = _udatasel;
 	p->p_regs[tES] = _udatasel;
 	p->p_regs[tCS] = _ucodesel;
-	/* XXX -- do something with retval? */
 
 	p->p_addr->u_pcb.pcb_flags &= 0 /* FM_SYSCTRC */; /* no fp at all */
 	lcr0(rcr0() | CR0_TS);	/* start emulating */
 #if	NNPX > 0
 	npxinit(__INITIAL_NPXCW__);
 #endif
+
+	retval[1] = 0;
 }
 
 /*
@@ -850,12 +847,13 @@ union descriptor gdt[NGDT];
 /* local descriptor table */
 #define	LSYS5CALLS_SEL	0	/* forced by intel BCS */
 #define	LSYS5SIGR_SEL	1
-
 #define	L43BSDCALLS_SEL	2	/* notyet */
 #define	LUCODE_SEL	3
 #define	LUDATA_SEL	4
+#ifdef notyet
 /* seperate stack, es,fs,gs sels ? */
-/* #define	LPOSIXCALLS_SEL	5	/* notyet */
+#define	LPOSIXCALLS_SEL	5	/* notyet */
+#endif
 #define NLDT		LUDATA_SEL+1
 
 union descriptor ldt[NLDT];
@@ -989,23 +987,15 @@ struct soft_segment_descriptor ldt_segs[] = {
 	1,			/* default 32 vs 16 bit size */
 	1  			/* limit granularity (byte/page units)*/ } };
 
-#define	IDTVEC(name)	__CONCAT(X, name)
-extern	IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
-	IDTVEC(bnd), IDTVEC(ill), IDTVEC(dna), IDTVEC(dble), IDTVEC(fpusegm),
-	IDTVEC(tss), IDTVEC(missing), IDTVEC(stk), IDTVEC(prot),
-	IDTVEC(page), IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(rsvd0),
-	IDTVEC(rsvd1), IDTVEC(rsvd2), IDTVEC(rsvd3), IDTVEC(rsvd4),
-	IDTVEC(rsvd5), IDTVEC(rsvd6), IDTVEC(rsvd7), IDTVEC(rsvd8),
-	IDTVEC(rsvd9), IDTVEC(rsvd10), IDTVEC(rsvd11), IDTVEC(rsvd12),
-	IDTVEC(rsvd13), IDTVEC(rsvd14), IDTVEC(rsvd14), IDTVEC(syscall),
-	IDTVEC(0), IDTVEC(1), IDTVEC(2), IDTVEC(3), IDTVEC(4), IDTVEC(5),
-	IDTVEC(6), IDTVEC(7), IDTVEC(8), IDTVEC(9), IDTVEC(10), IDTVEC(11),
-	IDTVEC(12), IDTVEC(13), IDTVEC(14), IDTVEC(15);
-
 /* interrupt descriptor table */
 struct gate_descriptor idt[NIDT];
 
-setidt(idx, func, typ, dpl) char *func; {
+void
+setidt(idx, func, typ, dpl)
+	int idx;
+	char *func;
+	int typ, dpl;
+{
 	struct gate_descriptor *ip = idt + idx;
 
 	ip->gd_looffset = (int)func;
@@ -1018,6 +1008,17 @@ setidt(idx, func, typ, dpl) char *func; {
 	ip->gd_hioffset = ((int)func)>>16;
 }
 
+#define	IDTVEC(name)	__CONCAT(X, name)
+extern	IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
+	IDTVEC(bnd), IDTVEC(ill), IDTVEC(dna), IDTVEC(dble), IDTVEC(fpusegm),
+	IDTVEC(tss), IDTVEC(missing), IDTVEC(stk), IDTVEC(prot),
+	IDTVEC(page), IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(rsvd0),
+	IDTVEC(rsvd1), IDTVEC(rsvd2), IDTVEC(rsvd3), IDTVEC(rsvd4),
+	IDTVEC(rsvd5), IDTVEC(rsvd6), IDTVEC(rsvd7), IDTVEC(rsvd8),
+	IDTVEC(rsvd9), IDTVEC(rsvd10), IDTVEC(rsvd11), IDTVEC(rsvd12),
+	IDTVEC(rsvd13), IDTVEC(rsvd14), IDTVEC(rsvd14), IDTVEC(syscall);
+
+void
 init386(first_avail)
 	vm_offset_t first_avail;
 {
@@ -1036,13 +1037,14 @@ init386(first_avail)
 	/* make gdt memory segments */
 	gdt_segs[GCODE_SEL].ssd_limit = btoc((int) &etext + NBPG);
 #endif
+	for (x=0; x < NGDT; x++)
+		ssdtosd(gdt_segs+x, gdt+x);
 
-	for (x=0; x < NGDT; x++) ssdtosd(gdt_segs+x, gdt+x);
 	/* make ldt memory segments */
 	ldt_segs[LUCODE_SEL].ssd_limit = btoc(VM_MAXUSER_ADDRESS) - 1;
 	ldt_segs[LUDATA_SEL].ssd_limit = btoc(VM_MAXUSER_ADDRESS) - 1;
-	/* Note. eventually want private ldts per process */
-	for (x=0; x < NLDT; x++) ssdtosd(ldt_segs+x, ldt+x);
+	for (x=0; x < NLDT; x++)
+		ssdtosd(ldt_segs+x, ldt+x);
 
 	/* exceptions */
 	setidt(0, &IDTVEC(div), SDT_SYS386TGT, SEL_KPL);
@@ -1077,22 +1079,6 @@ init386(first_avail)
 	setidt(29, &IDTVEC(rsvd12), SDT_SYS386TGT, SEL_KPL);
 	setidt(30, &IDTVEC(rsvd13), SDT_SYS386TGT, SEL_KPL);
 	setidt(31, &IDTVEC(rsvd14), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 0, &IDTVEC(0), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 1, &IDTVEC(1), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 2, &IDTVEC(2), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 3, &IDTVEC(3), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 4, &IDTVEC(4), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 5, &IDTVEC(5), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 6, &IDTVEC(6), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 7, &IDTVEC(7), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 8, &IDTVEC(8), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 9, &IDTVEC(9), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 10, &IDTVEC(10), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 11, &IDTVEC(11), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 12, &IDTVEC(12), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 13, &IDTVEC(13), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 14, &IDTVEC(14), SDT_SYS386TGT, SEL_KPL);
-	setidt(NRSVIDT + 15, &IDTVEC(15), SDT_SYS386TGT, SEL_KPL);
 
 	disable_intr();
 	r_gdt.rd_limit = sizeof(gdt)-1;
@@ -1128,28 +1114,23 @@ init386(first_avail)
 #define BIOS_BASEMEM 640
 #endif
 
-	if (biosbasemem != BIOS_BASEMEM) {
-		printf( "Warning: Base memory %dK, assuming %dK\n", biosbasemem, BIOS_BASEMEM);
-		biosbasemem = BIOS_BASEMEM;		/* assume base */
-	}
-
-	if (biosextmem > 65536) {
-		printf("Warning: Extended memory %dK(>64M), assuming 0K\n",
-		       biosextmem);
-		biosextmem = 0;				/* assume none */
+	if (biosbasemem == 0) {
+		printf("warning: nvram reports 0k base memory; assuming %k\n",
+		       biosbasemem);
+		biosbasemem = BIOS_BASEMEM;
 	}
 
 	avail_start = 0x1000;	/* BIOS leaves data in low memory */
 				/* and VM system doesn't work with phys 0 */
-	avail_end = biosextmem ? 0x100000 + biosextmem * 1024
+	avail_end = biosextmem ? IOM_END + biosextmem * 1024
 			       : biosbasemem * 1024;
 
 	/* number of pages of physmem addr space; XXX first page unused */
 	physmem = atop(avail_end) - 1;
 
 	/*
-	 *	Initialize for pmap_free_pages and pmap_next_page.
-	 *	These guys should be page-aligned.
+	 * Initialize for pmap_free_pages and pmap_next_page.
+	 * These guys should be page-aligned.
 	 */
 	hole_start = biosbasemem * 1024;
 	hole_end = round_page((vm_offset_t)first_avail);
@@ -1157,9 +1138,9 @@ init386(first_avail)
 	avail_remaining = atop((avail_end - avail_start) -
 			       (hole_end - hole_start));
 
-	if (avail_remaining < 2048/4) {
-		printf("Too little RAM available; running in degraded mode.\n"
-		       "Press a key to confirm.\n\n");
+	if (avail_remaining < atop(2 * 1024 * 1024)) {
+		printf("warning: too little memory available; running in degraded mode\n"
+		       "press a key to confirm\n\n");
 		/*
 		 * People with less than 2 Meg have to press a key; this way
 		 * we see the messages and can tell them why they blow up later.
@@ -1197,7 +1178,6 @@ init386(first_avail)
 	gdp->gd_hioffset = ((int) &IDTVEC(syscall)) >>16;
 
 	/* transfer to user mode */
-
 	_ucodesel = LSEL(LUCODE_SEL, SEL_UPL);
 	_udatasel = LSEL(LUDATA_SEL, SEL_UPL);
 
@@ -1212,11 +1192,14 @@ extern caddr_t		CADDR1, CADDR2;
  * zero out physical memory
  * specified in relocation units (NBPG bytes)
  */
-clearseg(n) {
+void
+clearseg(n)
+	unsigned n;
+{
 
 	*(int *)CMAP2 = PG_V | PG_KW | ctob(n);
 	tlbflush();
-	bzero(CADDR2,NBPG);
+	bzero(CADDR2, NBPG);
 }
 
 /*
@@ -1224,11 +1207,14 @@ clearseg(n) {
  * specified in relocation units (NBPG bytes)
  */
 void
-copyseg(frm, n) {
+copyseg(frm, n)
+	void *frm;
+	unsigned n;
+{
 
 	*(int *)CMAP2 = PG_V | PG_KW | ctob(n);
 	tlbflush();
-	bcopy((void *)frm, (void *)CADDR2, NBPG);
+	bcopy(frm, CADDR2, NBPG);
 }
 
 /*
@@ -1236,7 +1222,9 @@ copyseg(frm, n) {
  * specified in relocation units (NBPG bytes)
  */
 void
-physcopyseg(frm, to) {
+physcopyseg(frm, to)
+	unsigned frm, to;
+{
 
 	*(int *)CMAP1 = PG_V | PG_KW | ctob(frm);
 	*(int *)CMAP2 = PG_V | PG_KW | ctob(to);
@@ -1244,12 +1232,15 @@ physcopyseg(frm, to) {
 	bcopy(CADDR1, CADDR2, NBPG);
 }
 
-/*aston() {
+void
+aston()
+{
 	schednetisr(NETISR_AST);
-}*/
+}
 
 void
-setsoftclock() {
+setsoftclock()
+{
 	schednetisr(NETISR_SCLK);
 }
 
@@ -1278,8 +1269,6 @@ _remque(element)
 	element->ph_rlink = (struct proc *)0;
 }
 
-vmunaccess() {}
-
 /*
  * cpu_exec_aout_makecmds():
  *	cpu-dependent a.out format hook for execve().
@@ -1290,7 +1279,6 @@ vmunaccess() {}
  * On the i386, old (386bsd) ZMAGIC binaries and BSDI QMAGIC binaries
  * if COMPAT_NOMID is given as a kernel option.
  */
-
 cpu_exec_aout_makecmds(p, epp)
 struct proc *p;
 struct exec_package *epp;
@@ -1344,7 +1332,6 @@ struct exec_package *epp;
  * Cloned from exec_aout_prep_zmagic() in kern/exec_aout.c; a more verbose
  * description of operation is there.
  */
-
 int
 cpu_exec_aout_prep_oldzmagic(p, epp)
      struct proc *p;
@@ -1465,9 +1452,9 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
  * index into the user block.  Don't you just *love* virtual memory?
  * (I'm starting to think seymour is right...)
  */
-
 int
-ptrace_set_pc (struct proc *p, unsigned int addr) {
+ptrace_set_pc (struct proc *p, unsigned int addr)
+{
 	struct pcb *pcb;
 	void *regs = (char*)p->p_addr +
 		((char*) p->p_regs - (char*) kstack);
@@ -1478,7 +1465,8 @@ ptrace_set_pc (struct proc *p, unsigned int addr) {
 }
 
 int
-ptrace_single_step (struct proc *p) {
+ptrace_single_step (struct proc *p)
+{
 	struct pcb *pcb;
 	void *regs = (char*)p->p_addr +
 		((char*) p->p_regs - (char*) kstack);
@@ -1487,13 +1475,14 @@ ptrace_single_step (struct proc *p) {
 	((struct trapframe *)regs)->tf_eflags |= PSL_T;
 	return 0;
 }
+
 /*
  * Copy the registers to user-space.  This is tedious because
  * we essentially duplicate code for trapframe and syscframe. *sigh*
  */
-
 int
-ptrace_getregs (struct proc *p, unsigned int *addr) {
+ptrace_getregs (struct proc *p, unsigned int *addr)
+{
 	int error;
 	struct trapframe *tp;
 	struct pcb *pcb;
@@ -1521,7 +1510,8 @@ ptrace_getregs (struct proc *p, unsigned int *addr) {
 }
 
 int
-ptrace_setregs (struct proc *p, unsigned int *addr) {
+ptrace_setregs (struct proc *p, unsigned int *addr)
+{
 	int error;
 	struct trapframe *tp;
 	struct pcb *pcb;
@@ -1551,223 +1541,15 @@ ptrace_setregs (struct proc *p, unsigned int *addr) {
 	return 0;
 }
 
-#ifdef USER_LDT
-void
-set_user_ldt(struct pcb *pcb)
-{
-	gdt_segs[GUSERLDT_SEL].ssd_base = (unsigned)pcb->pcb_ldt;
-	gdt_segs[GUSERLDT_SEL].ssd_limit = (pcb->pcb_ldt_len * sizeof(union descriptor)) - 1;
-	ssdtosd(gdt_segs+GUSERLDT_SEL, gdt+GUSERLDT_SEL);
-	lldt(GSEL(GUSERLDT_SEL, SEL_KPL));
-	currentldt = GSEL(GUSERLDT_SEL, SEL_KPL);
-}
-
-struct i386_get_ldt_args {
-	int start;
-	union descriptor *desc;
-	int num;
-};
-
-i386_get_ldt(p, args, retval)
-	struct proc *p;
-	char *args;
-	int *retval;
-{
-	int error = 0;
-	struct pcb *pcb = (struct pcb *)p->p_addr;
-	int nldt, num;
-	union descriptor *lp;
-	int s;
-	struct i386_get_ldt_args ua, *uap;
-
-	if ((error = copyin(args, &ua, sizeof(struct i386_get_ldt_args))) < 0)
-		return(error);
-
-	uap = &ua;
-#ifdef	DEBUG
-	printf("i386_get_ldt: start=%d num=%d descs=%x\n", uap->start, uap->num, uap->desc);
-#endif
-
-	if (uap->start < 0 || uap->num < 0)
-		return(EINVAL);
-
-	s = splhigh();
-
-	if (pcb->pcb_ldt) {
-		nldt = pcb->pcb_ldt_len;
-		num = min(uap->num, nldt);
-		lp = &((union descriptor *)(pcb->pcb_ldt))[uap->start];
-	} else {
-		nldt = sizeof(ldt)/sizeof(ldt[0]);
-		num = min(uap->num, nldt);
-		lp = &ldt[uap->start];
-	}
-	if (uap->start > nldt) {
-		splx(s);
-		return(EINVAL);
-	}
-
-	error = copyout(lp, uap->desc, num * sizeof(union descriptor));
-	if (!error)
-		*retval = num;
-
-	splx(s);
-	return(error);
-}
-
-struct i386_set_ldt_args {
-	int start;
-	union descriptor *desc;
-	int num;
-};
-
-i386_set_ldt(p, args, retval)
-	struct proc *p;
-	char *args;
-	int *retval;
-{
-	int error = 0, i, n;
-	struct pcb *pcb = (struct pcb *)p->p_addr;
-	union descriptor *lp;
-	int s;
-	struct i386_set_ldt_args ua, *uap;
-
-	if ((error = copyin(args, &ua, sizeof(struct i386_set_ldt_args))) < 0)
-		return(error);
-
-	uap = &ua;
-
-#ifdef	DEBUG
-	printf("i386_set_ldt: start=%d num=%d descs=%x\n", uap->start, uap->num, uap->desc);
-#endif
-
-	if (uap->start < 0 || uap->num < 0)
-		return(EINVAL);
-
-	/* XXX Should be 8192 ! */
-	if (uap->start > 512 ||
-	    (uap->start + uap->num) > 512)
-		return(EINVAL);
-
-	/* allocate user ldt */
-	if (!pcb->pcb_ldt) {
-		union descriptor *new_ldt =
-			(union descriptor *)kmem_alloc(kernel_map, 512*sizeof(union descriptor));
-		bcopy(ldt, new_ldt, sizeof(ldt));
-		pcb->pcb_ldt = (caddr_t)new_ldt;
-		pcb->pcb_ldt_len = 512;		/* XXX need to grow */
-#ifdef DEBUG
-		printf("i386_set_ldt(%d): new_ldt=%x\n", p->p_pid, new_ldt);
-#endif
-	}
-
-	/* Check descriptors for access violations */
-	for (i = 0, n = uap->start; i < uap->num; i++, n++) {
-		union descriptor desc, *dp;
-		dp = &uap->desc[i];
-		error = copyin(dp, &desc, sizeof(union descriptor));
-		if (error)
-			return(error);
-
-		/* Only user (ring-3) descriptors */
-		if (desc.sd.sd_dpl != SEL_UPL)
-			return(EACCES);
-
-		/* Must be "present" */
-		if (desc.sd.sd_p == 0)
-			return(EACCES);
-
-		switch (desc.sd.sd_type) {
-		case SDT_SYSNULL:
-		case SDT_SYS286CGT:
-		case SDT_SYS386CGT:
-			break;
-		case SDT_MEMRO:
-		case SDT_MEMROA:
-		case SDT_MEMRW:
-		case SDT_MEMRWA:
-		case SDT_MEMROD:
-		case SDT_MEMRODA:
-		case SDT_MEME:
-		case SDT_MEMEA:
-		case SDT_MEMER:
-		case SDT_MEMERA:
-		case SDT_MEMEC:
-		case SDT_MEMEAC:
-		case SDT_MEMERC:
-		case SDT_MEMERAC: {
-#if 0
-			unsigned long base = (desc.sd.sd_hibase << 24)&0xFF000000;
-			base |= (desc.sd.sd_lobase&0x00FFFFFF);
-			if (base >= KERNBASE)
-				return(EACCES);
-#endif
-			break;
-		}
-		default:
-			return(EACCES);
-			/*NOTREACHED*/
-		}
-	}
-
-	s = splhigh();
-
-	/* Fill in range */
-	for (i = 0, n = uap->start; i < uap->num && !error; i++, n++) {
-		union descriptor desc, *dp;
-		dp = &uap->desc[i];
-		lp = &((union descriptor *)(pcb->pcb_ldt))[n];
-#ifdef DEBUG
-		printf("i386_set_ldt(%d): ldtp=%x\n", p->p_pid, lp);
-#endif
-		error = copyin(dp, lp, sizeof(union descriptor));
-	}
-	if (!error) {
-		*retval = uap->start;
-		need_resched();
-	}
-
-	splx(s);
-	return(error);
-}
-#endif	/* USER_LDT */
-
-struct sysarch_args {
-	int op;
-	char *parms;
-};
-
-sysarch(p, uap, retval)
-	struct proc *p;
-	register struct sysarch_args *uap;
-	int *retval;
-{
-	int error = 0;
-
-	switch(uap->op) {
-#ifdef	USER_LDT
-	case I386_GET_LDT: 
-		error = i386_get_ldt(p, uap->parms, retval);
-		break;
-
-	case I386_SET_LDT: 
-		error = i386_set_ldt(p, uap->parms, retval);
-		break;
-#endif
-	default:
-		error = EINVAL;
-		break;
-	}
-	return(error);
-}
-
 /* XXX probably should be in pmap.c */
 
-unsigned int pmap_free_pages()
+unsigned int
+pmap_free_pages()
 {
 	return avail_remaining;
 }
 
+int
 pmap_next_page(addrp)
 	vm_offset_t	*addrp;
 {
@@ -1784,6 +1566,7 @@ pmap_next_page(addrp)
 	return TRUE;
 }
 
+unsigned int
 pmap_page_index(pa)
 	vm_offset_t pa;
 {
