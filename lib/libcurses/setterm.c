@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.13 1999/12/07 03:18:52 simonb Exp $	*/
+/*	$NetBSD: setterm.c,v 1.13.2.1 2000/01/09 20:43:22 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.13 1999/12/07 03:18:52 simonb Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.13.2.1 2000/01/09 20:43:22 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ setterm(type)
 	char *type;
 {
 	static char genbuf[1024];
-	static char __ttytype[1024];
+	static char __ttytype[128];
 	int unknown;
 	struct winsize win;
 	char *p;
@@ -160,7 +160,7 @@ setterm(type)
 
 	PC = _PC ? _PC[0] : 0;
 	aoftspace = tspace;
-	ttytype = longname(genbuf, __ttytype);
+	ttytype = __longname(genbuf, __ttytype);
 
 	/* If no scrolling commands, no quick change. */
 	__noqch =

@@ -1,4 +1,4 @@
-/*	$NetBSD: idlok.c,v 1.8 1999/04/13 14:08:18 mrg Exp $	*/
+/*	$NetBSD: idlok.c,v 1.8.6.1 2000/01/09 20:43:19 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)idlok.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: idlok.c,v 1.8 1999/04/13 14:08:18 mrg Exp $");
+__RCSID("$NetBSD: idlok.c,v 1.8.6.1 2000/01/09 20:43:19 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -49,13 +49,14 @@ __RCSID("$NetBSD: idlok.c,v 1.8 1999/04/13 14:08:18 mrg Exp $");
  *	Turn on and off using insert/deleteln sequences for the
  *	given window.
  */
-void
+int
 idlok(win, bf)
 	WINDOW *win;
-	int     bf;
+	bool     bf;
 {
 	if (bf)
 		win->flags |= __IDLINE;
 	else
 		win->flags &= ~__IDLINE;
+	return (OK);
 }

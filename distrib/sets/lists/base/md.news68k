@@ -1,4 +1,0 @@
-# $NetBSD: md.news68k,v 1.1 1999/12/09 15:04:42 tsutsui Exp $
-./usr/mdec/boot
-./usr/mdec/bootxx
-./usr/mdec/installboot

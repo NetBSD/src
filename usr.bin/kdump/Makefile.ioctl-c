@@ -1,5 +1,0 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.1 1999/07/12 04:13:34 mrg Exp $
-
-ioctl.c: mkioctls ${DESTDIR}/usr/include/sys/ioctl.h ${DESTDIR}/usr/include/sys/ioctl_compat.h
-	/bin/sh ${.CURDIR}/../kdump/mkioctls ${DESTDIR}/usr/include/sys/ioctl.h \
-	    ${DESTDIR}/usr/include/sys/ioctl_compat.h > ioctl.c
