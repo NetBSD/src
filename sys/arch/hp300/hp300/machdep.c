@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 1996/10/04 22:19:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1327,14 +1327,14 @@ badbaddr(addr)
 	return(0);
 }
 
-#if (defined(DDB) || defined(DEBUG)) && !defined(PANICBUTTON)
-#define PANICBUTTON
-#endif
-
 #ifdef PANICBUTTON
+/*
+ * Declare these so they can be patched.
+ */
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
-int crashandburn = 0;
-int candbdelay = 50;	/* give em half a second */
+int candbdiv = 2;	/* give em half a second (hz / candbdiv) */
+
+int crashandburn;
 
 void
 candbtimer(arg)
@@ -1343,7 +1343,9 @@ candbtimer(arg)
 
 	crashandburn = 0;
 }
-#endif
+#endif /* PANICBUTTON */
+
+static int innmihand;	/* simple mutex */
 
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
@@ -1351,39 +1353,56 @@ candbtimer(arg)
 nmihand(frame)
 	struct frame frame;
 {
+
+	/* Prevent unwanted recursion. */
+	if (innmihand)
+		return;
+	innmihand = 1;
+
+	/* Check for keyboard <CRTL>+<SHIFT>+<RESET>. */
 	if (kbdnmi()) {
-#ifdef PANICBUTTON
-		static int innmihand = 0;
+		printf("Got a keyboard NMI");
 
 		/*
-		 * Attempt to reduce the window of vulnerability for recursive
-		 * NMIs (e.g. someone holding down the keyboard reset button).
+		 * We can:
+		 *
+		 *	- enter DDB
+		 *
+		 *	- Start the crashandburn sequence
+		 *
+		 *	- Ignore it.
 		 */
-		if (innmihand == 0) {
-			innmihand = 1;
-			printf("Got a keyboard NMI\n");
-			innmihand = 0;
-		}
 #ifdef DDB
+		printf(": entering debugger\n");
 		Debugger();
 #else
+#ifdef PANICBUTTON
 		if (panicbutton) {
 			if (crashandburn) {
 				crashandburn = 0;
-				panic(panicstr ?
-				      "forced crash, nosync" : "forced crash");
+				printf(": CRASH AND BURN!\n");
+				panic("forced crash");
+			} else {
+				/* Start the crashandburn sequence */
+				printf("\n");
+				crashandburn = 1;
+				timeout(candbtimer, NULL, hz / candbdiv);
 			}
-			crashandburn++;
-			timeout(candbtimer, (void *)0, candbdelay);
-		}
-#endif /* DDB */
+		} else
 #endif /* PANICBUTTON */
-		return;
+			printf(": ignoring\n");
+#endif /* DDB */
+
+		goto nmihand_out;	/* no more work to do */
 	}
+
 	if (parityerror(&frame))
 		return;
 	/* panic?? */
 	printf("unexpected level 7 interrupt ignored\n");
+
+ nmihand_out:
+	innmihand = 0;
 }
 
 /*
