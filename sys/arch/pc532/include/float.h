@@ -32,8 +32,11 @@
  *
  *	@(#)float.h	7.2 (Berkeley) 6/28/90
  *
- *	$Id: float.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ *	float.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
+
+#ifndef _MACHINE_FLOAT_H_
+#define _MACHINE_FLOAT_H_
 
 #define FLT_RADIX	2		/* b */
 #define FLT_ROUNDS	1		/* FP addition rounds to nearest */
@@ -67,3 +70,5 @@
 #define LDBL_MAX_EXP	DBL_MAX_EXP
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
+
+#endif

@@ -35,7 +35,7 @@
  *
  *	@(#)param.h	5.8 (Berkeley) 6/28/91
  *
- *	$Id: param.h,v 1.3 1993/09/12 06:26:13 phil Exp $
+ *	param.h,v 1.3 1993/09/12 06:26:13 phil Exp
  */
 
 /*

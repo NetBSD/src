@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon 
  * the rights to redistribute these changes.
  *
- *	$Id: asm.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ *	asm.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
 /*
@@ -35,8 +35,8 @@
  *	Helsinki University of Technology 1992.
  */
 
-#ifndef _NS532_ASM_H_ 
-#define _NS532_ASM_H_
+#ifndef _MACHINE_ASM_H_ 
+#define _MACHINE_ASM_H_
 
 #define S_ARG0	4(sp)
 #define S_ARG1	8(sp)
@@ -84,4 +84,4 @@
 #define	Entry(x)	.globl EX(x); LEX(x)
 #define	DATA(x)		.globl EX(x); .align ALIGN; LEX(x)
 
-#endif /* _NS532_ASM_H_ */
+#endif
