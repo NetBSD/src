@@ -22,6 +22,9 @@
 
 #include "defs.h"
 
+#include <sys/types.h>
+#include <sys/ptrace.h>
+
 #include <pthread.h>
 #include <pthread_dbg.h>
 
@@ -37,6 +40,16 @@
 #include "gdbcore.h"
 
 #include <machine/reg.h>
+
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+
+#include "gregset.h"
 
 /* nbsd_thread_present indicates that new_objfile has spotted
    libpthread and that post_attach() or create_inferior() should fire
@@ -65,26 +78,17 @@ extern struct target_ops core_ops; /* target vector for corelow.c */
 
 extern int child_suppress_run;
 
-/* inferior_ptid is a global variable that is used by gdb to identify
-   the entity that is under the debugging microscope. In normal
-   operation, it would be the PID of the child process. For threaded
-   programs, the thread module of GDB keeps a "ptid" value for each
-   thread and sets inferior_ptid to that value when switching
-   threads. Therefore, inferior_ptid needs to encode some kind of
-   thread identifier. It can't be the pthread_t, because that's a
-   pointer, and pointers can be larger than ints, so we use the "ID"
-   number given to us by libthread_db.
-
-   Unfortunately, inferior_ptid is also used implicitly by the various
-   ptrace target operations, so when we call one of those we have to
-   save the thread-specific inferior_ptid, set inferior_ptid to
-   main_ptid, make the call, and then do the restoration. In order to
-   guarantee that inferior_ptid gets restored (in case of errors), we
-   need to call save_inferior_ptid before changing it.  At the end of the
-   function, we invoke do_cleanups to restore it. */
-
 static ptid_t find_active_thread PARAMS ((void));
 static void nbsd_find_new_threads PARAMS ((void));
+
+#define GET_PID(ptid)		ptid_get_pid (ptid)
+#define GET_LWP(ptid)		ptid_get_lwp (ptid)
+#define GET_THREAD(ptid)	ptid_get_tid (ptid)
+
+#define IS_THREAD(ptid)		(GET_LWP (ptid) == 0)
+
+#define BUILD_LWP(lwp, ptid)	ptid_build (GET_PID(ptid), lwp, 0)
+#define BUILD_THREAD(tid, ptid)	ptid_build (GET_PID(ptid), 0, tid)
 
 static td_proc_t *main_ta;
 
@@ -131,14 +135,14 @@ td_err_string (int errcode)
 }
 
 static void
-nbsd_thread_activate ()
+nbsd_thread_activate (void)
 {
   int val;
   ptid_t ptid;
 
   val = td_open (&nbsd_thread_callbacks, NULL, &main_ta);
   if (val != 0)
-    error ("nbsd_thread_create_inferior: td_open: %s",
+    error ("nbsd_thread_activate: td_open: %s",
 	  td_err_string (val));
 
   main_ptid = inferior_ptid;
@@ -151,7 +155,7 @@ nbsd_thread_activate ()
 }
 
 static void
-nbsd_thread_deactivate ()
+nbsd_thread_deactivate (void)
 {
   inferior_ptid = main_ptid;
   main_ptid = minus_one_ptid;
@@ -168,6 +172,10 @@ nbsd_thread_attach (char *args, int from_tty)
   child_ops.to_attach (args, from_tty);
 
   push_target (&nbsd_thread_ops);
+
+  /* Must get symbols from solibs before libthread_db can run! */
+  SOLIB_ADD ((char *) 0, from_tty, (struct target_ops *) 0, auto_solib_add);
+
 }
 
 /* Attach to process PID, then initialize for debugging it
@@ -196,52 +204,43 @@ nbsd_thread_post_attach (int pid)
 static void
 nbsd_thread_detach (char *args, int from_tty)
 {
-  struct cleanup *old_chain;
-  old_chain = save_inferior_ptid ();
 
   if (nbsd_thread_active)
     nbsd_thread_deactivate ();
   unpush_target (&nbsd_thread_ops);
   child_ops.to_detach (args, from_tty);
-
-  do_cleanups (old_chain);
 }
 
 static void
 nbsd_thread_resume (ptid_t ptid, int step, enum target_signal signo)
 {
-  struct cleanup *old_chain;
-  old_chain = save_inferior_ptid ();
-
-  if (nbsd_thread_active)
-    inferior_ptid = main_ptid;
-  ptid = inferior_ptid;
-
   child_ops.to_resume (ptid, step, signo);
 
   cached_thread = minus_one_ptid;
-
-  do_cleanups (old_chain);
 }
 
 
 static ptid_t
-find_active_thread ()
+find_active_thread (void)
 {
-  int val;
+  int val, lwp;
   td_thread_t *thread;
   td_thread_info_t ti;
+  struct ptrace_lwpinfo pl;
 
-  val = td_map_lwps (main_ta);
-  if (val != 0)
-    {
-      warning ("find_active_thread: td_map_lwps: %s\n", td_err_string (val));
-      return minus_one_ptid;
-    }
-  if (ptid_equal (cached_thread, minus_one_ptid))
+  if (!ptid_equal (cached_thread, minus_one_ptid))
     return cached_thread;
 
-  val = td_map_lwp2thr (main_ta, 0, &thread);
+  if (target_has_execution)
+    {
+      pl.pl_lwpid = 0;
+      val = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
+      while ((val != -1) && (pl.pl_lwpid != 0) &&
+	     (pl.pl_event != PL_EVENT_SIGNAL))
+	val = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
+    }
+
+  val = td_map_lwp2thr (main_ta, pl.pl_lwpid, &thread);
   if (val != 0)
     {
       warning ("find_active_thread: td_map_lwp2thr: %s\n",
@@ -255,7 +254,7 @@ find_active_thread ()
       return minus_one_ptid;
     }
 
-  cached_thread = MERGEPID (PIDGET (main_ptid), ti.thread_id);
+  cached_thread = BUILD_THREAD (ti.thread_id, main_ptid);
   return cached_thread;
 }
 
@@ -267,16 +266,10 @@ static ptid_t
 nbsd_thread_wait (ptid_t ptid, struct target_waitstatus *ourstatus)
 {
   ptid_t rtnval;
-  struct cleanup *old_chain;
-  old_chain = save_inferior_ptid ();
 
-  if (nbsd_thread_active)
-    inferior_ptid = main_ptid;
-
-  if (!ptid_equal(ptid, minus_one_ptid))
-    ptid = inferior_ptid;
   rtnval = child_ops.to_wait (ptid, ourstatus);
-  if (ptid_equal (rtnval, minus_one_ptid) && nbsd_thread_active)
+
+  if (nbsd_thread_active && (ourstatus->kind != TARGET_WAITKIND_EXITED))
     {
       rtnval = find_active_thread ();
       if (ptid_equal (rtnval, minus_one_ptid))
@@ -284,7 +277,6 @@ nbsd_thread_wait (ptid_t ptid, struct target_waitstatus *ourstatus)
       if (!in_thread_list (rtnval))
 	add_thread (rtnval);
     }
-  do_cleanups (old_chain);
 
   return rtnval;
 }
@@ -300,9 +292,9 @@ nbsd_thread_fetch_registers (int regno)
 
   old_chain = save_inferior_ptid ();
 
-  if (nbsd_thread_active && !ptid_equal (inferior_ptid, minus_one_ptid))
+  if (nbsd_thread_active && IS_THREAD (inferior_ptid))
     {
-      if ((val = td_map_id2thr (main_ta, TIDGET (inferior_ptid), &thread)) != 0)
+      if ((val = td_map_id2thr (main_ta, GET_THREAD (inferior_ptid), &thread)) != 0)
 	error ("nbsd_thread_fetch_registers: td_map_id2thr: %s\n",
 	       td_err_string (val));
       if ((val = td_thr_getregs (thread, 0, &gregs)) != 0)
@@ -311,18 +303,19 @@ nbsd_thread_fetch_registers (int regno)
       if ((val = td_thr_getregs (thread, 1, &fpregs)) != 0)
 	error ("nbsd_thread_fetch_registers: td_thr_getregs: %s\n",
 	       td_err_string (val));
-      nbsd_reg_to_internal (&gregs);
-      nbsd_fpreg_to_internal (&fpregs);
+      supply_gregset (&gregs);
+      supply_fpregset (&fpregs);
     }
   else
     {
-      if (nbsd_thread_active)
-	inferior_ptid = MERGEPID (PIDGET (inferior_ptid),
-	  TIDGET (inferior_ptid));
       if (target_has_execution)
 	child_ops.to_fetch_registers (regno);
       else
-	orig_core_ops.to_fetch_registers (regno);
+	{
+	  inferior_ptid = pid_to_ptid ((GET_LWP (inferior_ptid) << 16) | 
+				        GET_PID (inferior_ptid));
+	  orig_core_ops.to_fetch_registers (regno);
+	}
     }
   
   do_cleanups (old_chain);
@@ -335,19 +328,16 @@ nbsd_thread_store_registers (int regno)
   struct reg gregs;
   struct fpreg fpregs;
   int val;
-  struct cleanup *old_chain;
 
-  old_chain = save_inferior_ptid ();
-
-  if (nbsd_thread_active && !ptid_equal (inferior_ptid, minus_one_ptid))
+  if (nbsd_thread_active && IS_THREAD (inferior_ptid))
     {
-      val = td_map_id2thr (main_ta, TIDGET (inferior_ptid), &thread);
+      val = td_map_id2thr (main_ta, GET_THREAD (inferior_ptid), &thread);
       if (val != 0)
 	error ("nbsd_thread_store_registers: td_map_id2thr: %s\n",
 	      td_err_string (val));
 
-      nbsd_internal_to_reg (&gregs);
-      nbsd_internal_to_fpreg (&fpregs);
+      fill_gregset (&gregs, -1);
+      fill_fpregset (&fpregs, -1);
 
       val = td_thr_setregs (thread, 0, &gregs);
       if (val != 0)
@@ -360,95 +350,54 @@ nbsd_thread_store_registers (int regno)
     }
   else
     {
-      if (nbsd_thread_active)
-	inferior_ptid = MERGEPID (PIDGET (inferior_ptid),
-	  TIDGET (inferior_ptid));
       if (target_has_execution)
 	child_ops.to_store_registers (regno);
       else
 	orig_core_ops.to_store_registers (regno);
     }
 
-  do_cleanups (old_chain);
 }
 
-
-/* Get ready to modify the registers array.  On machines which store
-   individual registers, this doesn't need to do anything.  On machines
-   which store all the registers in one fell swoop, this makes sure
-   that registers contains all the registers from the program being
-   debugged.  */
-
-static void
-nbsd_thread_prepare_to_store ()
-{
-  struct cleanup *old_chain;
-  old_chain = save_inferior_ptid ();
-
-  if (nbsd_thread_active)
-    inferior_ptid = main_ptid;
-
-  child_ops.to_prepare_to_store ();
-
-  do_cleanups (old_chain);
-}
 
 
 static int
 nbsd_thread_xfer_memory (CORE_ADDR memaddr, char *myaddr, int len, int dowrite,
-     struct mem_attrib *attribs, struct target_ops *target)
+			 struct mem_attrib *attrib, struct target_ops *target)
 {
-  int retval;
-  struct cleanup *old_chain;
-
-  old_chain = save_inferior_ptid ();
-
-  if (nbsd_thread_active)
-    inferior_ptid = main_ptid;
-
-  if (target_has_execution)
-    retval = child_ops.to_xfer_memory (memaddr, myaddr, len, dowrite, attribs,
-      target);
-  else
-    retval = orig_core_ops.to_xfer_memory (memaddr, myaddr, len, dowrite,
-      attribs, target);
-
-  do_cleanups (old_chain);
-
-  return retval;
-}
-
-/* ARGSUSED */
-static int
-nbsd_thread_has_exited (int pid, int wait_status, int *exit_status)
-{
-  struct cleanup *old_chain;
   int val;
 
-  old_chain = save_inferior_ptid ();
-  if (nbsd_thread_active)
-    inferior_ptid = main_ptid;
+  if (target_has_execution)
+    val = child_ops.to_xfer_memory (memaddr, myaddr, len, dowrite, attrib, target);
+  else
+    val = orig_core_ops.to_xfer_memory (memaddr, myaddr, len, dowrite, attrib, target);
 
-  val = child_ops.to_has_exited (pid, wait_status, exit_status);
-  do_cleanups (old_chain);
   return val;
 }
 
 /* Clean up after the inferior dies.  */
 
 static void
-nbsd_thread_mourn_inferior ()
+nbsd_thread_mourn_inferior (void)
 {
-  struct cleanup *old_chain;
-  old_chain = save_inferior_ptid ();
 
   if (nbsd_thread_active)
     nbsd_thread_deactivate ();
 
   unpush_target (&nbsd_thread_ops);
   child_ops.to_mourn_inferior ();
+}
 
-  do_cleanups (old_chain);
+
+static void
+nbsd_thread_files_info (struct target_ops *ignore)
+{
+  child_ops.to_files_info (ignore);
+}
+
+static void
+nbsd_core_files_info (struct target_ops *ignore)
+{
+  orig_core_ops.to_files_info (ignore);
 }
 
 /* Convert a ptid to printable form. */
@@ -461,16 +410,20 @@ nbsd_pid_to_str (ptid_t ptid)
   int retval;
   char name[32];
 
-  if (!ptid_equal (ptid, minus_one_ptid))
+  if ((GET_THREAD(ptid) == 0) &&
+      (GET_LWP(ptid) == 0) && 
+      (nbsd_thread_active == 0))
+    sprintf (buf, "process %d", GET_PID (ptid));
+  else if (IS_THREAD (ptid))
     {
-      if ((td_map_id2thr (main_ta, TIDGET (ptid), &th) == 0) &&
+      if ((td_map_id2thr (main_ta, GET_THREAD (ptid), &th) == 0) &&
 	  (td_thr_getname (th, name, 32) == 0))
-	sprintf (buf, "Thread %d (%s)", TIDGET (ptid), name);
+	sprintf (buf, "Thread %ld (%s)", GET_THREAD (ptid), name);
       else
-	sprintf (buf, "Thread %d", TIDGET (ptid));
+	sprintf (buf, "Thread %ld", GET_THREAD (ptid));
     }
   else
-    sprintf (buf, "LWP %d", TIDGET (ptid));
+    sprintf (buf, "LWP %ld", GET_LWP (ptid));
 
   return buf;
 }
@@ -534,34 +487,43 @@ nbsd_thread_alive (ptid_t ptid)
 {
   td_thread_t *th;
   td_thread_info_t ti;
-  int retval;
-  struct cleanup *old_chain;
+  int val;
 
-  old_chain = save_inferior_ptid ();
-
-  if (nbsd_thread_active && !ptid_equal (ptid, minus_one_ptid))
+  if (nbsd_thread_active)
     {
-      retval = 0;
-      if (td_map_id2thr (main_ta, TIDGET (ptid), &th) == 0)
+      if (IS_THREAD (ptid))
 	{
-	  /* Thread found */
-	  if (td_thr_info (th, &ti) == 0)
-	    retval = 1;
+	  val = 0;
+	  if (td_map_id2thr (main_ta, GET_THREAD (ptid), &th) == 0)
+	    {
+	      /* Thread found */
+	      if ((td_thr_info (th, &ti) == 0) &&
+		  (ti.thread_state != TD_STATE_ZOMBIE) &&
+		  (ti.thread_type != TD_TYPE_SYSTEM))
+		val = 1;
+	    }
+	}
+      else 
+	{
+	  struct ptrace_lwpinfo pl;
+	  pl.pl_lwpid = GET_LWP (ptid);
+	  val = ptrace (PT_LWPINFO, GET_PID (ptid), (void *)&pl, sizeof(pl));
+	  if (val == -1)
+	    val = 0;
+	  else
+	    val = 1;
 	}
     }
   else
-    {
-      if (nbsd_thread_active)
-	inferior_ptid = MERGEPID (PIDGET (inferior_ptid),
-	  TIDGET (inferior_ptid));
-      if (target_has_execution)
-	retval = child_ops.to_thread_alive (ptid);
-      else
-	retval = orig_core_ops.to_thread_alive (ptid);
-    }
+    val = child_ops.to_thread_alive (ptid);
 
-  do_cleanups (old_chain);
-  return retval;
+  return val;
+}
+
+static int
+nbsd_core_thread_alive (ptid_t ptid)
+{
+  return orig_core_ops.to_thread_alive (ptid);;
 }
 
 
@@ -579,7 +541,7 @@ nbsd_find_new_threads_callback (td_thread_t *th, void *ignored)
   if ((retval = td_thr_info (th, &ti)) != 0)
       return -1;
 
-  ptid = MERGEPID (PIDGET (main_ptid), ti.thread_id);
+  ptid = BUILD_THREAD (ti.thread_id, main_ptid);
   if (ti.thread_type == TD_TYPE_USER &&
       ti.thread_state != TD_STATE_ZOMBIE &&
       !in_thread_list (ptid))
@@ -589,9 +551,11 @@ nbsd_find_new_threads_callback (td_thread_t *th, void *ignored)
 }
 
 static void
-nbsd_find_new_threads ()
+nbsd_find_new_threads (void)
 {
   int retval;
+  ptid_t ptid;
+  td_thread_t *thread;
 
   if (nbsd_thread_active == 0)
 	  return;
@@ -605,76 +569,35 @@ nbsd_find_new_threads ()
       printf_filtered ("No process.\n");
       return;
     }
+
+  if (target_has_execution)
+    {
+      struct ptrace_lwpinfo pl;
+      pl.pl_lwpid = 0;
+      retval = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
+      while ((retval != -1) && pl.pl_lwpid != 0)
+	{
+	  ptid = BUILD_LWP (pl.pl_lwpid, main_ptid);
+	  td_map_lwp2thr (main_ta, pl.pl_lwpid, &thread);
+	  if (!in_thread_list (ptid))
+	    add_thread (ptid);
+	  retval = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
+	}
+    }
+
   retval = td_thr_iter (main_ta, nbsd_find_new_threads_callback, (void *) 0);
   if (retval != 0)
     error ("nbsd_find_new_threads: td_thr_iter: %s",
-	  td_err_string (retval));
+	   td_err_string (retval));
 }
 
 
 /* Mark our target-struct as eligible for stray "run" and "attach" commands.  */
 
 static int
-nbsd_thread_can_run ()
+nbsd_thread_can_run (void)
 {
   return child_suppress_run;
-}
-
-static void
-nbsd_thread_stop ()
-{
-  struct cleanup *old_chain;
-  old_chain = save_inferior_ptid ();
-
-  if (nbsd_thread_active)
-    inferior_ptid = main_ptid;
-  child_ops.to_stop ();
-
-  do_cleanups (old_chain);
-}
-
-/* Print status information about what we're accessing.  */
-
-static void
-nbsd_thread_files_info (struct target_ops *ignore)
-{
-  struct cleanup *old_chain;
-  old_chain = save_inferior_ptid ();
-
-  if (nbsd_thread_active)
-    inferior_ptid = main_ptid;
-
-  child_ops.to_files_info (ignore);
-
-  do_cleanups (old_chain);
-}
-
-static void
-nbsd_thread_kill_inferior ()
-{
-  struct cleanup *old_chain;
-  old_chain = save_inferior_ptid ();
-
-  if (nbsd_thread_active)
-    inferior_ptid = main_ptid;
-
-  child_ops.to_kill ();
-
-  do_cleanups (old_chain);
-}
-
-static void
-nbsd_thread_notice_signals (ptid_t ptid)
-{
-  struct cleanup *old_chain;
-  old_chain = save_inferior_ptid ();
-
-  if (nbsd_thread_active)
-    inferior_ptid = main_ptid;
-
-  child_ops.to_notice_signals (ptid);
-
-  do_cleanups (old_chain);
 }
 
 
@@ -685,12 +608,27 @@ nbsd_thread_create_inferior (char *exec_file, char *allargs, char **env)
 {
   int val;
 
-  child_ops.to_create_inferior (exec_file, allargs, env);
-
   push_target (&nbsd_thread_ops);
 
-  if (nbsd_thread_present)
-    nbsd_thread_activate ();
+  child_ops.to_create_inferior (exec_file, allargs, env);
+
+  if (!nbsd_thread_active && nbsd_thread_present && GET_PID(inferior_ptid) != 0)
+    {
+      nbsd_thread_activate ();
+#if 0
+      /* This is gross. Due to the the differences in when the thread
+	 library gets initialized (static vs. dynamic binaries,
+	 mostly) and calls back to nbsd_thread_wait(), there's no
+	 decent way for the child_ops.to_create_inferior() routine to
+	 call back to us to start threads and find the right current
+	 thread before it prints out a stack frame. So we print out
+	 another stack frame here, after activating, to make sure that
+	 the user sees what we think is interesing. */
+      flush_cached_frames ();
+      select_frame (get_current_frame ());
+      show_and_print_stack_frame (selected_frame, -1, 1);
+#endif
+    }
 }
 
 
@@ -768,12 +706,6 @@ info_cb (td_thread_t *th, void *s)
 	      printf_filtered ("on %s at %p ",
 			       syncnames[tsi.sync_type],
 			       (void *)tsi.sync_addr);
-	      if (tsi.sync_type == TD_SYNC_MUTEX &&
-		  tsi.sync_data.mutex.owner != 0)
-		{
-		  td_thr_info (tsi.sync_data.mutex.owner, &ti2);
-		  printf_filtered ("owned by %d ", ti2.thread_id);
-		}
 	    }
 	}
 
@@ -869,7 +801,7 @@ nbsd_thread_sync_cmd (char *exp, int from_tty)
   if ((ret = td_sync_info (ts, &tsi)) != 0)
     error ("nbsd_thread_sync_cmd: td_sync_info: %s", td_err_string (ret));
 
-  printf_filtered ("%p: %s ", addr, syncnames[tsi.sync_type]);
+  printf_filtered ("%p: %s ", (void *)addr, syncnames[tsi.sync_type]);
 
   if (tsi.sync_type == TD_SYNC_MUTEX)
     {
@@ -909,7 +841,7 @@ nbsd_thread_sync_cmd (char *exp, int from_tty)
 }
 
 int
-tsd_cb (pthread_key_t key, void (*destructor)(void *), void *arg)
+tsd_cb (pthread_key_t key, void (*destructor)(void *), void *ignore)
 {
   struct minimal_symbol *ms;
   char *name;
@@ -925,6 +857,8 @@ tsd_cb (pthread_key_t key, void (*destructor)(void *), void *arg)
     name = SYMBOL_NAME (ms);
 
   printf_filtered ("Destructor %p <%s>\n", destructor, name);
+
+  return 0;
 }
 
 static void
@@ -939,8 +873,6 @@ nbsd_add_to_thread_list (bfd *abfd, asection *asect, PTR reg_sect_arg)
   int regval;
   td_thread_t *dummy;
 
-  asection *reg_sect = (asection *) reg_sect_arg;
-
   if (strncmp (bfd_section_name (abfd, asect), ".reg/", 5) != 0)
     return;
 
@@ -948,13 +880,15 @@ nbsd_add_to_thread_list (bfd *abfd, asection *asect, PTR reg_sect_arg)
 
   td_map_lwp2thr (main_ta, regval >> 16, &dummy);
 
-  add_thread (MERGEPID (PIDGET (main_ptid), regval >> 16));
+  add_thread (BUILD_LWP(regval >> 16, main_ptid));
 }
 
 static void
 nbsd_core_open (char *filename, int from_tty)
 {
   int val;
+  td_thread_t *thread;
+  td_thread_info_t ti;
 
   orig_core_ops.to_open (filename, from_tty);
 
@@ -963,10 +897,10 @@ nbsd_core_open (char *filename, int from_tty)
       val = td_open (&nbsd_thread_callbacks, NULL, &main_ta);
       if (val == 0)
 	{
-	  main_ptid = MERGEPID (elf_tdata (core_bfd)->core_pid, -1);
+	  main_ptid = pid_to_ptid (elf_tdata (core_bfd)->core_pid);
 	  nbsd_thread_active = 1;
-	  bfd_map_over_sections (core_bfd, nbsd_add_to_thread_list,
-				 bfd_get_section_by_name (core_bfd, ".reg"));
+	  init_thread_list ();
+	  bfd_map_over_sections (core_bfd, nbsd_add_to_thread_list, NULL);
 	  nbsd_find_new_threads ();
 	}
       else
@@ -988,17 +922,12 @@ nbsd_core_close (int quitting)
 }
 
 static void
-nbsd_core_detach (args, from_tty)
-     char *args;
-     int from_tty;
+nbsd_core_detach (char *args, int from_tty)
 {
+  if (nbsd_thread_active)
+    nbsd_thread_deactivate ();
+  unpush_target (&nbsd_thread_ops);
   orig_core_ops.to_detach (args, from_tty);
-}
-
-static void
-nbsd_core_files_info (struct target_ops *t)
-{
-  orig_core_ops.to_files_info (t);
 }
 
 /*
@@ -1068,33 +997,35 @@ nbsd_thread_proc_regsize (void *arg, int regset, size_t *size)
 static int
 nbsd_thread_proc_getregs (void *arg, int regset, int lwp, void *buf)
 {
-  struct reg gregs;
-  struct fpreg fpregs;
   struct cleanup *old_chain;
   int ret;
 
   old_chain = save_inferior_ptid ();
-  inferior_ptid = main_ptid;
 
-  /* Fetching registers requires that inferior_ptid have the
-     funky LWP/process mix that the kernel drops. */
-     inferior_ptid = MERGEPID (PIDGET (inferior_ptid), lwp);
   if (target_has_execution)
-    child_ops.to_fetch_registers (-1);
+    {
+      /* Fetching registers from a live process requires that
+	 inferior_ptid is a LWP value rather than a thread value. */
+      inferior_ptid = BUILD_LWP (lwp, main_ptid);
+      child_ops.to_fetch_registers (-1);
+    }
   else
-    orig_core_ops.to_fetch_registers (-1);
-
-  nbsd_internal_to_reg (&gregs);
-  nbsd_internal_to_fpreg (&fpregs);
+    {
+      /* Fetching registers from a core process requires that
+	 the PID value of inferior_ptid have the funky value that
+	 the kernel drops rather than the real PID. Gross. */
+      inferior_ptid = pid_to_ptid ((lwp << 16) | GET_PID (main_ptid));
+      orig_core_ops.to_fetch_registers (-1);
+    }
 
   ret = 0;
   switch (regset)
     {
     case 0:
-      memcpy (buf, &gregs, sizeof (struct reg));
+      fill_gregset ((struct reg *)buf, -1);
       break;
     case 1:
-      memcpy (buf, &fpregs, sizeof (struct fpreg));
+      fill_fpregset ((struct fpreg *)buf, -1);
       break;
     default: /* XXX need to handle other reg sets: SSE, AltiVec, etc. */
       ret = TD_ERR_INVAL;
@@ -1108,34 +1039,28 @@ nbsd_thread_proc_getregs (void *arg, int regset, int lwp, void *buf)
 static int
 nbsd_thread_proc_setregs (void *arg, int regset, int lwp, void *buf)
 {
-  struct reg gregs;
-  struct fpreg fpregs;
   struct cleanup *old_chain;
   int ret;
 
   ret = 0;
   old_chain = save_inferior_ptid ();
-  inferior_ptid = main_ptid;
 
   switch (regset)
     {
     case 0:
-      memcpy (&gregs, buf, sizeof (struct reg));
+      supply_gregset((struct reg *)buf);
       break;
     case 1:
-      memcpy (&fpregs, buf, sizeof (struct fpreg));
+      supply_fpregset((struct fpreg *)buf);
       break;
     default: /* XXX need to handle other reg sets: SSE, AltiVec, etc. */
       ret = TD_ERR_INVAL;
     }
 
-  /* Storing registers requires that inferior_ptid have the
-     funky LWP/process mix that the kernel drops. */
-  inferior_ptid = MERGEPID (PIDGET (inferior_ptid), lwp);
-  nbsd_reg_to_internal (&gregs);
-  nbsd_fpreg_to_internal (&fpregs);
+  /* Storing registers requires that inferior_ptid is a LWP value
+     rather than a thread value. */
+  inferior_ptid = BUILD_LWP (lwp, main_ptid);
   child_ops.to_store_registers (-1);
-
   do_cleanups (old_chain);
 
   return ret;
@@ -1143,15 +1068,13 @@ nbsd_thread_proc_setregs (void *arg, int regset, int lwp, void *buf)
 
 
 static int
-ignore (addr, contents)
-     CORE_ADDR addr;
-     char *contents;
+ignore (CORE_ADDR addr, char *contents)
 {
   return 0;
 }
 
 static void
-init_nbsd_proc_callbacks ()
+init_nbsd_proc_callbacks (void)
 {
   nbsd_thread_callbacks.proc_read = nbsd_thread_proc_read;
   nbsd_thread_callbacks.proc_write = nbsd_thread_proc_write;
@@ -1162,7 +1085,7 @@ init_nbsd_proc_callbacks ()
 }
 
 static void
-init_nbsd_thread_ops ()
+init_nbsd_thread_ops (void)
 {
   nbsd_thread_ops.to_shortname = "netbsd-threads";
   nbsd_thread_ops.to_longname = "NetBSD pthread.";
@@ -1176,7 +1099,7 @@ init_nbsd_thread_ops ()
   nbsd_thread_ops.to_wait = nbsd_thread_wait;
   nbsd_thread_ops.to_fetch_registers = nbsd_thread_fetch_registers;
   nbsd_thread_ops.to_store_registers = nbsd_thread_store_registers;
-  nbsd_thread_ops.to_prepare_to_store = nbsd_thread_prepare_to_store;
+  nbsd_thread_ops.to_prepare_to_store = 0;
   nbsd_thread_ops.to_xfer_memory = nbsd_thread_xfer_memory;
   nbsd_thread_ops.to_files_info = nbsd_thread_files_info;
   nbsd_thread_ops.to_insert_breakpoint = memory_insert_breakpoint;
@@ -1186,19 +1109,19 @@ init_nbsd_thread_ops ()
   nbsd_thread_ops.to_terminal_ours_for_output = terminal_ours_for_output;
   nbsd_thread_ops.to_terminal_ours = terminal_ours;
   nbsd_thread_ops.to_terminal_info = child_terminal_info;
-  nbsd_thread_ops.to_kill = nbsd_thread_kill_inferior;
+  nbsd_thread_ops.to_kill = 0;
   nbsd_thread_ops.to_load = 0;
   nbsd_thread_ops.to_lookup_symbol = 0;
   nbsd_thread_ops.to_create_inferior = nbsd_thread_create_inferior;
-  nbsd_thread_ops.to_has_exited = nbsd_thread_has_exited;
+  nbsd_thread_ops.to_has_exited = child_has_exited;
   nbsd_thread_ops.to_mourn_inferior = nbsd_thread_mourn_inferior;
   nbsd_thread_ops.to_can_run = nbsd_thread_can_run;
-  nbsd_thread_ops.to_notice_signals = nbsd_thread_notice_signals;
+  nbsd_thread_ops.to_notice_signals = 0;
   nbsd_thread_ops.to_thread_alive = nbsd_thread_alive;
   nbsd_thread_ops.to_pid_to_str = nbsd_pid_to_str;
   nbsd_thread_ops.to_find_new_threads = nbsd_find_new_threads;
-  nbsd_thread_ops.to_stop = nbsd_thread_stop;
-  nbsd_thread_ops.to_stratum = process_stratum;
+  nbsd_thread_ops.to_stop = 0;
+  nbsd_thread_ops.to_stratum = thread_stratum;
   nbsd_thread_ops.to_has_all_memory = 1;
   nbsd_thread_ops.to_has_memory = 1;
   nbsd_thread_ops.to_has_stack = 1;
@@ -1211,7 +1134,7 @@ init_nbsd_thread_ops ()
 }
 
 static void
-init_nbsd_core_ops ()
+init_nbsd_core_ops (void)
 {
   nbsd_core_ops.to_shortname = "netbsd-core";
   nbsd_core_ops.to_longname = "NetBSD core pthread.";
@@ -1246,7 +1169,7 @@ init_nbsd_core_ops ()
   nbsd_core_ops.to_has_registers = 1;
   nbsd_core_ops.to_has_execution = 0;
   nbsd_core_ops.to_has_thread_control = tc_none;
-  nbsd_core_ops.to_thread_alive = nbsd_thread_alive;
+  nbsd_core_ops.to_thread_alive = nbsd_core_thread_alive;
   nbsd_core_ops.to_pid_to_str = nbsd_pid_to_str;
   nbsd_core_ops.to_find_new_threads = nbsd_find_new_threads;
   nbsd_core_ops.to_sections = 0;
@@ -1261,7 +1184,7 @@ init_nbsd_core_ops ()
 int coreops_suppress_target = 1;
 
 void
-_initialize_nbsd_thread ()
+_initialize_nbsd_thread (void)
 {
   static struct cmd_list_element *thread_examine_list = NULL;
 
