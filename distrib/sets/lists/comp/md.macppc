@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.17 2001/04/14 22:53:35 kleink Exp $
+# $NetBSD: md.macppc,v 1.18 2001/04/15 15:33:09 kleink Exp $
 ./usr/include/macppc	comp-c-include
 ./usr/include/macppc/_G_config.h	comp-c-include
 ./usr/include/macppc/adbsys.h	comp-c-include
@@ -23,6 +23,7 @@
 ./usr/include/macppc/ieee.h	comp-c-include
 ./usr/include/macppc/ieeefp.h	comp-c-include
 ./usr/include/macppc/int_const.h	comp-c-include
+./usr/include/macppc/int_limits.h	comp-c-include
 ./usr/include/macppc/int_mwgwtypes.h	comp-c-include
 ./usr/include/macppc/int_types.h	comp-c-include
 ./usr/include/macppc/intr.h	comp-c-include

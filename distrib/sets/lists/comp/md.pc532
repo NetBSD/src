@@ -1,4 +1,4 @@
-# $NetBSD: md.pc532,v 1.35 2001/04/14 22:53:35 kleink Exp $
+# $NetBSD: md.pc532,v 1.36 2001/04/15 15:33:09 kleink Exp $
 ./usr/include/pc532	comp-c-include
 ./usr/include/pc532/_G_config.h	comp-c-include
 ./usr/include/pc532/ansi.h	comp-c-include
@@ -22,6 +22,7 @@
 ./usr/include/pc532/ieee.h	comp-c-include
 ./usr/include/pc532/ieeefp.h	comp-c-include
 ./usr/include/pc532/int_const.h	comp-c-include
+./usr/include/pc532/int_limits.h	comp-c-include
 ./usr/include/pc532/int_mwgwtypes.h	comp-c-include
 ./usr/include/pc532/int_types.h	comp-c-include
 ./usr/include/pc532/jmpbuf.h	comp-c-include
