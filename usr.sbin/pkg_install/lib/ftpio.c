@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.26 2000/10/09 14:35:27 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.27 2000/11/28 01:16:01 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.26 2000/10/09 14:35:27 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.27 2000/11/28 01:16:01 hubertf Exp $");
 #endif
 
 /*
@@ -643,7 +643,7 @@ unpackURL(const char *url, const char *dir)
 			printf("unpackURL '%s' to '%s'\n", url, dir);
 
 		/* yes, this is gross, but needed for borken ftp(1) */
-		(void) snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s ; gunzip 2>/dev/null | tar -%sx >&2 -f - )\"\n", pkg, dir, Verbose?"vv":"");
+		(void) snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s ; gunzip 2>/dev/null | tar -%sx -f - | tee /dev/stderr )\"\n", pkg, dir, Verbose?"vv":"");
 		rc = ftp_cmd(cmd, "\n(226|550).*\n");
 		if (rc != 226) {
 			warnx("Cannot fetch file (%d!=226)!", rc);
