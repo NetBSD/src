@@ -289,6 +289,10 @@ main(argc, argv)
 	if (argwidth < 4)
 		argwidth = 8;
 	for (ep = ehead; ep != NULL; ep = ep->next) {
+		if (!ep->proc) {
+			ep->args = NULL;
+			continue;
+		}
 		ep->args = strdup(kvm_getargs(ep->proc, kvm_getu(ep->proc)));
 		if (ep->args == NULL) {
 			error("out of memory");
@@ -326,7 +330,7 @@ main(argc, argv)
 			printf("       ");
 		else
 			prttime(ep->idle, " ");
-		printf("%.*s\n", argwidth, ep->args);
+		printf("%.*s\n", argwidth, ep->args ?: "-");
 	}
 	exit(0);
 }
