@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsdispatch.3,v 1.16 2004/07/24 18:42:51 thorpej Exp $
+.\"	$NetBSD: nsdispatch.3,v 1.17 2004/07/27 14:35:56 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -180,12 +180,12 @@ The
 function loads callback modules from the run-time link-editor's search
 path using the following naming convention:
 .Bd -literal -offset indent
-nss_<source>.so.<version>
+nss_\*[Lt]source\*[Gt].so.\*[Lt]version\*[Gt]
 .Ed
-.Bl -tag -width <version> -offset indent
-.It <source>
+.Bl -tag -width XversionX -offset indent
+.It Aq source
 The source that the module implements.
-.It <version>
+.It Aq version
 The
 .Nm nsdispatch
 module interface version, which is defined by the integer
@@ -301,8 +301,8 @@ for a complete description of what each status code is.
 returns the value of the callback that caused the dispatcher to finish,
 or NS_NOTFOUND otherwise.
 .Sh SEE ALSO
-.Xr hesiod 3 ,
 .Xr ld.elf_so 1 ,
+.Xr hesiod 3 ,
 .Xr stdarg 3 ,
 .Xr ypclnt 3 ,
 .Xr nsswitch.conf 5
