@@ -1,8 +1,14 @@
-#	$NetBSD: Makefile,v 1.4 1995/04/23 07:49:43 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1997/01/22 04:19:48 thorpej Exp $
 
 SUBDIR+= lib usr.bin
+
 .if (${MACHINE_ARCH} != "alpha")
-SUBDIR+= games libexec
+
+.if exists(games)
+SUBDIR+= games
+.endif
+
+SUBDIR+= libexec
 .endif
 
 .include <bsd.subdir.mk>
