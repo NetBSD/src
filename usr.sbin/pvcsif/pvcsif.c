@@ -1,3 +1,5 @@
+/*	$NetBSD: pvcsif.c,v 1.2 1999/07/11 17:35:07 itojun Exp $	*/
+
 /*
  * Copyright (C) 1998
  *	Sony Computer Science Laboratory Inc.  All rights reserved.
@@ -23,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: pvcsif.c,v 1.1.1.1 1999/07/11 17:28:28 itojun Exp $
+ * ALTQ Id: pvcsif.c,v 0.3 1999/05/19 11:31:11 kjc Exp
  */
 
 #include <stdio.h>
@@ -39,9 +41,8 @@
 
 #include <net/if_atm.h>
 
-#include "if_nameindex.h"
-
-void list_all(void);
+void usage __P((void));
+void list_all __P((void));
 
 void usage(void)
 {
