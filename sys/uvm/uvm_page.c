@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.97 2004/03/24 07:50:49 junyoung Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.98 2004/05/05 11:58:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.97 2004/03/24 07:50:49 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.98 2004/05/05 11:58:27 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1443,6 +1443,7 @@ uvm_pagefree(pg)
  * => if pages are object-owned, object must be locked.
  * => if pages are anon-owned, anons must be locked.
  * => caller must lock page queues if pages may be released.
+ * => caller must make sure that anon-owned pages are not PG_RELEASED.
  */
 
 void
@@ -1459,11 +1460,22 @@ uvm_page_unbusy(pgs, npgs)
 		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
+
+		LOCK_ASSERT(pg->uobject == NULL ||
+		    simple_lock_held(&pg->uobject->vmobjlock));
+		LOCK_ASSERT(pg->uobject != NULL ||
+		    (pg->uanon != NULL &&
+		    simple_lock_held(&pg->uanon->an_lock)));
+
+		KASSERT(pg->flags & PG_BUSY);
+		KASSERT((pg->flags & PG_PAGEOUT) == 0);
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
 		}
 		if (pg->flags & PG_RELEASED) {
 			UVMHIST_LOG(ubchist, "releasing pg %p", pg,0,0,0);
+			KASSERT(pg->uobject != NULL ||
+			    (pg->uanon != NULL && pg->uanon->an_ref > 0));
 			pg->flags &= ~PG_RELEASED;
 			uvm_pagefree(pg);
 		} else {
