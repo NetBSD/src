@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 2002/08/04 01:41:23 gmcgarry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76 2002/08/07 07:21:08 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2002/08/04 01:41:23 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2002/08/07 07:21:08 gmcgarry Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -99,12 +99,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2002/08/04 01:41:23 gmcgarry Exp $"
 #include <sys/mount.h>
 #include <sys/boot_flag.h>
 
+#include <uvm/uvm_extern.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <ufs/mfs/mfs_extern.h>	/* mfs_initminiroot() */
 #include <dev/cons.h>		/* cntab access (cpu_reboot) */
 
 #include <machine/psl.h>
 #include <machine/sysconf.h>
-#include <machine/bootinfo.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 #include <machine/kloader.h>
@@ -150,7 +153,7 @@ static int __bicons_enable;
 #endif
 
 /* the following is used externally (sysctl_hw) */
-extern	cpu_model[128];	
+extern	char cpu_model[];	
 char	cpu_name[40];			/* set cpu depend xx_init() */
 
 struct cpu_info cpu_info_store;		/* only one cpu */
@@ -618,35 +621,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-
-/*
- * Machine dependent system variables.
- */
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen, struct proc *p)
-{
-
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
-		    sizeof cn_tab->cn_dev));
-	case CPU_ROOT_DEVICE:
-		return (sysctl_rdstring(oldp, oldlenp, newp, 
-		    root_device->dv_xname));
-	case CPU_BOOTED_KERNEL:
-		return (sysctl_rdstring(oldp, oldlenp, newp, 
-		    booted_kernel));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 void
