@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.13.2.4 2001/03/12 13:27:59 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.13.2.5 2001/03/28 18:20:26 bouyer Exp $
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.13.2.4 $"
+#ident 		"GENERIC-$Revision: 1.13.2.5 $"
 
 maxusers	32
 
@@ -117,7 +117,7 @@ pcib* 		at pci? dev ? function ?
 # PCI SCSI controllers
 #adv*		at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA]
 #adw*		at pci? dev ? function ?	# AdvanSys 9xxUW SCSI
-ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+#ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 #bha*		at pci? dev ? function ?	# BusLogic 9xx SCSI
 #dpt*		at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #isp*		at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FC
@@ -127,7 +127,7 @@ siop*		at pci? dev ? function ?	# NCR 53c8xx SCSI
 # SCSI bus support
 #scsibus* 	at adv?
 #scsibus* 	at adw?
-scsibus* 	at ahc?
+#scsibus* 	at ahc?
 #scsibus* 	at bha?
 #scsibus* 	at dpt?
 #scsibus* 	at isp?
