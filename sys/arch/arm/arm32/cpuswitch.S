@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.36 2003/06/23 11:01:07 martin Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.37 2003/10/13 21:44:27 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -303,28 +303,34 @@ ENTRY(cpu_switch)
 	/* rem: r3 = whichqs */
 	/* rem: interrupts are disabled */
 
+	/* used further down, saves SA stall */
+	ldr	r6, .Lqs
+
 	/*
 	 * We have found an active queue. Currently we do not know which queue
 	 * is active just that one of them is.
 	 */
-	/* this is the ffs algorithm devised by d.seal and posted to
-	 * comp.sys.arm on 16 Feb 1994.
+	/* Non-Xscale version of the ffs algorithm devised by d.seal and
+	 * posted to comp.sys.arm on 16 Feb 1994.
 	 */
  	rsb	r5, r3, #0
  	ands	r0, r3, r5
-	
+
+#ifndef __XSCALE__
 	adr	r5, .Lcpu_switch_ffs_table
-	
+
 				    /* X = R0 */
 	orr	r4, r0, r0, lsl #4  /* r4 = X * 0x11 */ 
 	orr	r4, r4, r4, lsl #6  /* r4 = X * 0x451 */
 	rsb	r4, r4, r4, lsl #16 /* r4 = X * 0x0450fbaf */
 	
-	/* used further down, saves SA stall */
-	ldr	r6, .Lqs
-              
 	/* now lookup in table indexed on top 6 bits of a4 */
 	ldrb	r4, [ r5, r4, lsr #26 ]
+
+#else	/* __XSCALE__ */
+	clz	r4, r0
+	rsb	r4, r4, #31
+#endif	/* __XSCALE__ */
 
 	/* rem: r0 = bit mask of chosen queue (1 << r4) */
 	/* rem: r1 = old lwp */
@@ -462,8 +468,14 @@ ENTRY(cpu_switch)
 	ldr	r1, [r0, #(L_ADDR)]
 
 	/* Save all the registers in the old lwp's pcb */
+#ifndef __XSCALE__
 	add	r7, r1, #(PCB_R8)
 	stmia	r7, {r8-r13}
+#else
+	strd	r8, [r1, #(PCB_R8)]
+	strd	r10, [r1, #(PCB_R10)]
+	strd	r12, [r1, #(PCB_R12)]
+#endif
 
 	/*
 	 * NOTE: We can now use r8-r13 until it is time to restore
@@ -692,10 +704,20 @@ ENTRY(cpu_switch)
         msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* Restore all the save registers */
+#ifndef __XSCALE__
 	add	r7, r9, #PCB_R8
 	ldmia	r7, {r8-r13}
 
 	sub	r7, r7, #PCB_R8		/* restore PCB pointer */
+#else
+	mov	r7, r9
+	ldr	r8, [r7, #(PCB_R8)]
+	ldr	r9, [r7, #(PCB_R9)]
+	ldr	r10, [r7, #(PCB_R10)]
+	ldr	r11, [r7, #(PCB_R11)]
+	ldr	r12, [r7, #(PCB_R12)]
+	ldr	r13, [r7, #(PCB_SP)]
+#endif
 
 	ldr	r5, [r6, #(L_PROC)]	/* fetch the proc for below */
 
@@ -936,9 +958,17 @@ ENTRY(switch_exit)
 	ldr	r0, .Lcurpcb
    
 	/* Restore all the save registers */
+#ifndef __XSCALE__
 	add	r1, r7, #PCB_R8
 	ldmia	r1, {r8-r13}
-
+#else
+	ldr	r8, [r7, #(PCB_R8)]
+	ldr	r9, [r7, #(PCB_R9)]
+	ldr	r10, [r7, #(PCB_R10)]
+	ldr	r11, [r7, #(PCB_R11)]
+	ldr	r12, [r7, #(PCB_R12)]
+	ldr	r13, [r7, #(PCB_SP)]
+#endif
 	str	r7, [r0]	/* curpcb = lwp0's PCB */
 
 	IRQenableALL
@@ -964,8 +994,14 @@ ENTRY(savectx)
 	stmfd	sp!, {r4-r7, lr}
 
 	/* Store all the registers in the process's pcb */
+#ifndef __XSCALE__
 	add	r2, r0, #(PCB_R8)
 	stmia	r2, {r8-r13}
+#else
+	strd	r8, [r0, #(PCB_R8)]
+	strd	r10, [r0, #(PCB_R10)]
+	strd	r12, [r0, #(PCB_R12)]
+#endif
 
 	/* Pull the regs of the stack */
 	ldmfd	sp!, {r4-r7, pc}
@@ -988,6 +1024,7 @@ ENTRY(proc_trampoline)
 
 	movs	pc, lr			/* Exit */
 
+#ifndef __XSCALE__
 	.type .Lcpu_switch_ffs_table, _ASM_TYPE_OBJECT;
 .Lcpu_switch_ffs_table:
 /* same as ffs table but all nums are -1 from that */
@@ -1000,3 +1037,4 @@ ENTRY(proc_trampoline)
 	.byte	 9,  0,  0, 24,  0,  0, 20, 26  /* 40-47 */
 	.byte	30,  0,  0,  0,  0, 23,  0, 19  /* 48-55 */
 	.byte   29,  0, 22, 18, 28, 17, 16,  0  /* 56-63 */
+#endif	/* !__XSCALE_ */
