@@ -1,5 +1,7 @@
-#	@(#)Makefile	8.1 (Berkeley) 6/5/93
+#	@(#)Makefile	5.8.1.1 (Berkeley) 5/7/91
 
-SUBDIR=	dict doc man me misc mk skel tabset termcap tmac zoneinfo
+# Missing:  ms
+
+SUBDIR=	dict doc lkm man me misc mk skel tabset termcap tmac zoneinfo
 
 .include <bsd.subdir.mk>
