@@ -1,9 +1,10 @@
-/*	$NetBSD: lib_strbuf.c,v 1.1.1.1 2000/03/29 12:38:50 simonb Exp $	*/
+/*	$NetBSD: lib_strbuf.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*
  * lib_strbuf - library string storage
  */
 
+#include "ntp_stdlib.h"
 #include "lib_strbuf.h"
 
 /*

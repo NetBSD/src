@@ -1,4 +1,4 @@
-/*	$NetBSD: pcl720.h,v 1.1.1.1 2000/03/29 12:38:49 simonb Exp $	*/
+/*	$NetBSD: pcl720.h,v 1.1.1.2 2003/12/04 16:05:23 drochner Exp $	*/
 
 /* Copyright (c) 1995 Vixie Enterprises
  *
@@ -63,7 +63,7 @@ static void pcl720_outb(int addr, unsigned char x) {
 	})
 
 #define	pcl720_read(Base,Cntr) \
-	({	register unsigned int	b = Base, c = Cntr, v; \
+	({	register unsigned int	b = Base, v; \
 		i8253_ctrl ctrl; \
 		\
 		ctrl.s.rl = i8253_latch; \

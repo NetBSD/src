@@ -1,0 +1,23 @@
+2.0.1
+	Add work-arounds for kernel and library bugs under HP-UX.	
+	HP has been notified and will repair these soon.
+
+2.0.2
+	Add support for DEC Alpha. Add %a pattern for printing addresses, which
+	assumes they are passed in a void *.
+
+2.0.3 30-Sep-1993
+	When realloc is passed a zero address, it should work the same
+	way as malloc(). Fix forward declaration of mprotect() in page.c to
+	use void *, not caddr_t, for addresses. IRIX 5.0.1 complained about that.
+
+2.0.4 29-May-1994
+	Don't attempt to allow access to a zero-sized page when
+	EF_ALLOW_MALLOC_0 is set. Attempt to un-map memory from
+	Page_Delete(). If that doesn't work, fall back by protecting the
+	page from all references. Un-mapping small segments of a mapping
+	used to crash my SGI IRIX 5.0 system. I assume that nobody is running
+	5.0 any longer.
+
+2.0.5 20-January-1995
+	Port to Linux.

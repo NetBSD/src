@@ -1,4 +1,4 @@
-/*	$NetBSD: adjtime.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: adjtime.h,v 1.1.1.2 2003/12/04 16:05:21 drochner Exp $	*/
 
 /*************************************************************************/
 /* (c) Copyright Tai Jin, 1988.  All Rights Reserved.                    */
@@ -41,6 +41,10 @@
 
 #include "ntp_types.h"
 
+#ifdef __QNXNTO__
+int adjtime( const struct timeval * oldtime, struct timeval * newtime );
+#else /* not __QNXNTO__ */
+
 #define KEY	659847L
 
 typedef union {
@@ -63,3 +67,5 @@ typedef union {
  */
 #define DELTA1	0
 #define DELTA2	1
+
+#endif /* not __QNXNTO__ */

@@ -1,13 +1,22 @@
-/*	$NetBSD: ntpd.c,v 1.1.1.2 2000/04/22 14:53:23 simonb Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.1.1.3 2003/12/04 16:05:30 drochner Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
  */
+
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
 
-#include <sys/types.h>
+#include "ntp_machine.h"
+#include "ntpd.h"
+#include "ntp_io.h"
+#include "ntp_stdlib.h"
+
+#ifdef SIM
+#include "ntpsim.h"
+#endif
+
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -17,13 +26,18 @@
 #include <stdio.h>
 #ifndef SYS_WINNT
 # if !defined(VMS)	/*wjm*/
-#  include <sys/param.h>
+#  ifdef HAVE_SYS_PARAM_H
+#   include <sys/param.h>
+#  endif
 # endif /* VMS */
-# include <sys/signal.h>
+# ifdef HAVE_SYS_SIGNAL_H
+#  include <sys/signal.h>
+# else
+#  include <signal.h>
+# endif
 # ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
 # endif /* HAVE_SYS_IOCTL_H */
-# include <sys/time.h>
 # ifdef HAVE_SYS_RESOURCE_H
 #  include <sys/resource.h>
 # endif /* HAVE_SYS_RESOURCE_H */
@@ -32,6 +46,7 @@
 # include <process.h>
 # include <io.h>
 # include "../libntp/log.h"
+# include <clockstuff.h>
 # include <crtdbg.h>
 #endif /* SYS_WINNT */
 #if defined(HAVE_RTPRIO)
@@ -70,11 +85,8 @@
 # include <apollo/base.h>
 #endif /* SYS_DOMAINOS */
 
-#include "ntpd.h"
-#include "ntp_io.h"
-
-#include "ntp_stdlib.h"
 #include "recvbuff.h"  
+#include "ntp_cmdargs.h"  
 
 #if 0				/* HMS: I don't think we need this. 961223 */
 #ifdef LOCK_PROCESS
@@ -94,9 +106,11 @@
 # include <sys/ci/ciioctl.h>
 #endif
 
-#ifdef PUBKEY
-#include "ntp_crypto.h"
-#endif /* PUBKEY */
+#ifdef HAVE_CLOCKCTL
+# include <ctype.h>
+# include <grp.h>
+# include <pwd.h>
+#endif
 
 /*
  * Signals we catch for debugging.	If not debugging we ignore them.
@@ -118,11 +132,13 @@
 /* handles for various threads, process, and objects */
 HANDLE ResolverThreadHandle = NULL;
 /* variables used to inform the Service Control Manager of our current state */
+BOOL NoWinService = FALSE;
 SERVICE_STATUS ssStatus;
 SERVICE_STATUS_HANDLE	sshStatusHandle;
-HANDLE WaitHandles[2] = { NULL, NULL };
+HANDLE WaitHandles[3] = { NULL, NULL, NULL };
 char szMsgPath[255];
 static BOOL WINAPI OnConsoleEvent(DWORD dwCtrlType);
+BOOL init_randfile();
 #endif /* SYS_WINNT */
 
 /*
@@ -130,15 +146,36 @@ static BOOL WINAPI OnConsoleEvent(DWORD dwCtrlType);
  */
 #define NTPD_PRIO	(-12)
 
+int priority_done = 2;		/* 0 - Set priority */
+				/* 1 - priority is OK where it is */
+				/* 2 - Don't set priority */
+				/* 1 and 2 are pretty much the same */
+
 /*
  * Debugging flag
  */
 volatile int debug;
 
 /*
+ * Set the processing not to be in the forground
+ */
+int forground_process = FALSE;
+
+/*
  * No-fork flag.  If set, we do not become a background daemon.
  */
 int nofork;
+
+#ifdef HAVE_CLOCKCTL
+char *user = NULL;		/* User to switch to */
+char *group = NULL;		/* group to switch to */
+char *chrootdir = NULL;		/* directory to chroot to */
+int sw_uid;
+int sw_gid;
+char *endp;  
+struct group *gr;
+struct passwd *pw; 
+#endif /* HAVE_CLOCKCTL */
 
 /*
  * Initializing flag.  All async routines watch this and only do their
@@ -166,8 +203,10 @@ static	RETSIGTYPE	finish		P((int));
 #endif	/* SIGDIE2 */
 
 #ifdef	DEBUG
+#ifndef SYS_WINNT
 static	RETSIGTYPE	moredebug	P((int));
 static	RETSIGTYPE	lessdebug	P((int));
+#endif
 #else /* not DEBUG */
 static	RETSIGTYPE	no_debug	P((int));
 #endif	/* not DEBUG */
@@ -175,7 +214,16 @@ static	RETSIGTYPE	no_debug	P((int));
 int 		ntpdmain		P((int, char **));
 static void	set_process_priority	P((void));
 
-
+#ifdef SIM
+int
+main(
+	int argc,
+	char *argv[]
+	)
+{
+	return ntpsim(argc, argv);
+}
+#else /* SIM */
 #ifdef NO_MAIN_ALLOWED
 CALL(ntpd,"ntpd",ntpdmain);
 #else
@@ -188,6 +236,7 @@ main(
 	return ntpdmain(argc, argv);
 }
 #endif
+#endif /* SIM */
 
 #ifdef _AIX
 /*
@@ -229,39 +278,23 @@ catch_danger(int signo)
 static void
 set_process_priority(void)
 {
-	int done = 0;
+
+#ifdef DEBUG
+	if (debug > 1)
+		msyslog(LOG_DEBUG, "set_process_priority: %s: priority_done is <%d>",
+			((priority_done)
+			 ? "Leave priority alone"
+			 : "Attempt to set priority"
+				),
+			priority_done);
+#endif /* DEBUG */
 
 #ifdef SYS_WINNT
-	DWORD  SingleCPUMask = 0;
-	DWORD ProcessAffinityMask, SystemAffinityMask;
-	if (!GetProcessAffinityMask(GetCurrentProcess(), &ProcessAffinityMask, &SystemAffinityMask))
-		msyslog(LOG_ERR, "GetProcessAffinityMask: %m");
-	else {
-		SingleCPUMask = 1;
-# ifdef DEBUG
-		msyslog(LOG_INFO, "System AffinityMask = %x", SystemAffinityMask );
-# endif
-	}
-	while (SingleCPUMask && !(SingleCPUMask & SystemAffinityMask)) {
-		SingleCPUMask = SingleCPUMask << 1;
-	}
-
-	if (!SingleCPUMask)
-		msyslog(LOG_ERR, "Can't set Processor Affinity Mask");
-	else if (!SetProcessAffinityMask(GetCurrentProcess(), SingleCPUMask))
-		msyslog(LOG_ERR, "SetProcessAffinityMask: %m");
-# ifdef DEBUG
-	else msyslog(LOG_INFO,"ProcessorAffinity Mask: %x", SingleCPUMask );
-# endif
-
-	if (!SetPriorityClass(GetCurrentProcess(), (DWORD) REALTIME_PRIORITY_CLASS))
-		msyslog(LOG_ERR, "SetPriorityClass: %m");
-	else
-		++done;
+	priority_done += NT_set_process_priority();
 #endif
 
 #if defined(HAVE_SCHED_SETSCHEDULER)
-	if (!done) {
+	if (!priority_done) {
 		extern int config_priority_override, config_priority;
 		int pmax, pmin;
 		struct sched_param sched;
@@ -280,12 +313,12 @@ set_process_priority(void)
 		if ( sched_setscheduler(0, SCHED_FIFO, &sched) == -1 )
 			msyslog(LOG_ERR, "sched_setscheduler(): %m");
 		else
-			++done;
+			++priority_done;
 	}
 #endif /* HAVE_SCHED_SETSCHEDULER */
 #if defined(HAVE_RTPRIO)
 # ifdef RTP_SET
-	if (!done) {
+	if (!priority_done) {
 		struct rtprio srtp;
 
 		srtp.type = RTP_PRIO_REALTIME;	/* was: RTP_PRIO_NORMAL */
@@ -294,37 +327,37 @@ set_process_priority(void)
 		if (rtprio(RTP_SET, getpid(), &srtp) < 0)
 			msyslog(LOG_ERR, "rtprio() error: %m");
 		else
-			++done;
+			++priority_done;
 	}
 # else /* not RTP_SET */
-	if (!done) {
+	if (!priority_done) {
 		if (rtprio(0, 120) < 0)
 			msyslog(LOG_ERR, "rtprio() error: %m");
 		else
-			++done;
+			++priority_done;
 	}
 # endif /* not RTP_SET */
 #endif  /* HAVE_RTPRIO */
 #if defined(NTPD_PRIO) && NTPD_PRIO != 0
 # ifdef HAVE_ATT_NICE
-	if (!done) {
+	if (!priority_done) {
 		errno = 0;
 		if (-1 == nice (NTPD_PRIO) && errno != 0)
 			msyslog(LOG_ERR, "nice() error: %m");
 		else
-			++done;
+			++priority_done;
 	}
 # endif /* HAVE_ATT_NICE */
 # ifdef HAVE_BSD_NICE
-	if (!done) {
+	if (!priority_done) {
 		if (-1 == setpriority(PRIO_PROCESS, 0, NTPD_PRIO))
 			msyslog(LOG_ERR, "setpriority() error: %m");
 		else
-			++done;
+			++priority_done;
 	}
 # endif /* HAVE_BSD_NICE */
 #endif /* NTPD_PRIO && NTPD_PRIO != 0 */
-	if (!done)
+	if (!priority_done)
 		msyslog(LOG_ERR, "set_process_priority: No way found to improve our priority");
 }
 
@@ -341,10 +374,6 @@ ntpdmain(
 {
 	l_fp now;
 	char *cp;
-	u_int n;
-#ifdef AUTOKEY
-	char hostname[MAXFILENAME];
-#endif /* AUTOKEY */
 	struct recvbuf *rbuflist;
 	struct recvbuf *rbuf;
 #ifdef _AIX			/* HMS: ifdef SIGDANGER? */
@@ -357,7 +386,7 @@ ntpdmain(
 
 #ifdef HAVE_UMASK
 	{
-		unsigned int uv;
+		mode_t uv;
 
 		uv = umask(0);
 		if(uv)
@@ -367,7 +396,7 @@ ntpdmain(
 	}
 #endif
 
-#ifdef HAVE_GETUID
+#if defined(HAVE_GETUID) && !defined(MPE) /* MPE lacks the concept of root */
 	{
 		uid_t uid;
 
@@ -390,9 +419,17 @@ ntpdmain(
 #endif
 	getstartup(argc, argv); /* startup configuration, may set debug */
 
+	if (debug)
+	    printf("%s\n", Version);
+
 	/*
 	 * Initialize random generator and public key pair
 	 */
+#ifdef SYS_WINNT
+	/* Initialize random file before OpenSSL checks */
+	if(!init_randfile())
+		msyslog(LOG_ERR, "Unable to initialize .rnd file\n");
+#endif
 	get_systime(&now);
 	SRANDOM((int)(now.l_i * now.l_uf));
 
@@ -420,12 +457,12 @@ ntpdmain(
 			int max_fd;
 #endif /* not F_CLOSEM */
 
+#if defined(F_CLOSEM)
 			/*
 			 * From 'Writing Reliable AIX Daemons,' SG24-4946-00,
 			 * by Eric Agar (saves us from doing 32767 system
 			 * calls)
 			 */
-#if defined(F_CLOSEM)
 			if (fcntl(0, F_CLOSEM, 0) == -1)
 			    msyslog(LOG_ERR, "ntpd: failed to close open files(): %m");
 #else  /* not F_CLOSEM */
@@ -490,16 +527,22 @@ ntpdmain(
 #  else /* SYS_WINNT */
 
 		{
-			SERVICE_TABLE_ENTRY dispatchTable[] = {
+			if (NoWinService == FALSE) {
+				SERVICE_TABLE_ENTRY dispatchTable[] = {
 				{ TEXT("NetworkTimeProtocol"), (LPSERVICE_MAIN_FUNCTION)service_main },
 				{ NULL, NULL }
-			};
+				};
 
-			/* daemonize */
-			if (!StartServiceCtrlDispatcher(dispatchTable))
-			{
-				msyslog(LOG_ERR, "StartServiceCtrlDispatcher: %m");
-				ExitProcess(2);
+				/* daemonize */
+				if (!StartServiceCtrlDispatcher(dispatchTable))
+				{
+					msyslog(LOG_ERR, "StartServiceCtrlDispatcher: %m");
+					ExitProcess(2);
+				}
+			}
+			else {
+				service_main(argc, argv);
+				return 0;
 			}
 		}
 #  endif /* SYS_WINNT */
@@ -527,11 +570,12 @@ service_main(
 	struct recvbuf *rbuflist;
 	struct recvbuf *rbuf;
 
-	if(!debug)
+	if(!debug && NoWinService == FALSE)
 	{
 		/* register our service control handler */
-		if (!(sshStatusHandle = RegisterServiceCtrlHandler( TEXT("NetworkTimeProtocol"),
-									(LPHANDLER_FUNCTION)service_ctrl)))
+		sshStatusHandle = RegisterServiceCtrlHandler( TEXT("NetworkTimeProtocol"),
+							(LPHANDLER_FUNCTION)service_ctrl);
+		if(sshStatusHandle == 0)
 		{
 			msyslog(LOG_ERR, "RegisterServiceCtrlHandler failed: %m");
 			return;
@@ -570,7 +614,7 @@ service_main(
 	debug = 0; /* will be immediately re-initialized 8-( */
 	getstartup(argc, argv); /* startup configuration, catch logfile this time */
 
-#if !defined(SYS_WINNT) && !defined(VMS)
+#if !defined(VMS)
 
 # ifndef LOG_DAEMON
 	openlog(cp, LOG_PID);
@@ -627,6 +671,25 @@ service_main(
 #endif
 
 #if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT) && defined(MCL_FUTURE)
+# ifdef HAVE_SETRLIMIT
+	/*
+	 * Set the stack limit to something smaller, so that we don't lock a lot
+	 * of unused stack memory.
+	 */
+	{
+	    struct rlimit rl;
+
+	    if (getrlimit(RLIMIT_STACK, &rl) != -1
+		&& (rl.rlim_cur = 20 * 4096) < rl.rlim_max)
+	    {
+		    if (setrlimit(RLIMIT_STACK, &rl) == -1)
+		    {
+			    msyslog(LOG_ERR,
+				"Cannot adjust stack limit for mlockall: %m");
+		    }
+	    }
+	}
+# endif /* HAVE_SETRLIMIT */
 	/*
 	 * lock the process into memory
 	 */
@@ -727,9 +790,6 @@ service_main(
 #ifdef REFCLOCK
 	init_refclock();
 #endif
-#ifdef PUBKEY
-	crypto_init();		/* Call *before* going to high-priority */
-#endif /* PUBKEY */
 	set_process_priority();
 	init_proto();		/* Call at high priority */
 	init_io();
@@ -743,19 +803,13 @@ service_main(
 	 * for the gizmo board. While at it, save the host name for later
 	 * along with the length. The crypto needs this.
 	 */
+#ifdef DEBUG
+	debug = 0;
+#endif
 	getconfig(argc, argv);
-#ifdef AUTOKEY
-	gethostname(hostname, MAXFILENAME);
-	for (n = strlen(hostname); n % 4 != 0; n++)
-		hostname[n] = 0;
-	sys_hostname = emalloc(n);
-	sys_hostnamelen = n;
-	memcpy(sys_hostname, hostname, n);
-#ifdef PUBKEY
-	if (crypto_enable)
-		crypto_setup();
-#endif /* PUBKEY */
-#endif /* AUTOKEY */
+#ifdef OPENSSL
+	crypto_setup();
+#endif /* OPENSSL */
 	initializing = 0;
 
 #if defined(SYS_WINNT) && !defined(NODETACH)
@@ -763,23 +817,83 @@ service_main(
 	if(!debug)
 	{
 # endif
+		if (NoWinService == FALSE) {
 		/* report to the service control manager that the service is running */
-		ssStatus.dwCurrentState = SERVICE_RUNNING;
-		ssStatus.dwWin32ExitCode = NO_ERROR;
-		if (!SetServiceStatus(sshStatusHandle, &ssStatus))
-		{
-			msyslog(LOG_ERR, "SetServiceStatus: %m");
-			if (ResolverThreadHandle != NULL)
-				CloseHandle(ResolverThreadHandle);
-			ssStatus.dwCurrentState = SERVICE_STOPPED;
-			SetServiceStatus(sshStatusHandle, &ssStatus);
-			return;
+			ssStatus.dwCurrentState = SERVICE_RUNNING;
+			ssStatus.dwWin32ExitCode = NO_ERROR;
+			if (!SetServiceStatus(sshStatusHandle, &ssStatus))
+			{
+				msyslog(LOG_ERR, "SetServiceStatus: %m");
+				if (ResolverThreadHandle != NULL)
+					CloseHandle(ResolverThreadHandle);
+				ssStatus.dwCurrentState = SERVICE_STOPPED;
+				SetServiceStatus(sshStatusHandle, &ssStatus);
+				return;
+			}
 		}
 # if defined(DEBUG)
 	}
 # endif  
 #endif
 
+#ifdef HAVE_CLOCKCTL
+	/* 
+	 * Drop super-user privileges and chroot now if the OS supports
+	 * non root clock control (only NetBSD for now).
+	 */
+	if (user != NULL) {
+	        if (isdigit((unsigned char)*user)) {
+	                sw_uid = (uid_t)strtoul(user, &endp, 0);
+	                if (*endp != '\0') 
+	                        goto getuser;
+	        } else {
+getuser:	
+	                if ((pw = getpwnam(user)) != NULL) {
+	                        sw_uid = pw->pw_uid;
+	                } else {
+	                        errno = 0;
+	                        msyslog(LOG_ERR, "Cannot find user `%s'", user);
+									exit (-1);
+	                }
+	        }
+	}
+	if (group != NULL) {
+	        if (isdigit((unsigned char)*group)) {
+	                sw_gid = (gid_t)strtoul(group, &endp, 0);
+	                if (*endp != '\0') 
+	                        goto getgroup;
+	        } else {
+getgroup:	
+	                if ((gr = getgrnam(group)) != NULL) {
+	                        sw_gid = pw->pw_gid;
+	                } else {
+	                        errno = 0;
+	                        msyslog(LOG_ERR, "Cannot find group `%s'", group);
+									exit (-1);
+	                }
+	        }
+	}
+	if (chrootdir && chroot(chrootdir)) {
+		msyslog(LOG_ERR, "Cannot chroot to `%s': %m", chrootdir);
+		exit (-1);
+	}
+	if (group && setgid(sw_gid)) {
+		msyslog(LOG_ERR, "Cannot setgid() to group `%s': %m", group);
+		exit (-1);
+	}
+	if (group && setegid(sw_gid)) {
+		msyslog(LOG_ERR, "Cannot setegid() to group `%s': %m", group);
+		exit (-1);
+	}
+	if (user && setuid(sw_uid)) {
+		msyslog(LOG_ERR, "Cannot setuid() to user `%s': %m", user);
+		exit (-1);
+	}
+	if (user && seteuid(sw_uid)) {
+		msyslog(LOG_ERR, "Cannot seteuid() to user `%s': %m", user);
+		exit (-1);
+	}
+#endif
 	/*
 	 * Report that we're up to any trappers
 	 */
@@ -803,9 +917,10 @@ service_main(
 #if defined(HAVE_IO_COMPLETION_PORT)
 		WaitHandles[0] = CreateEvent(NULL, FALSE, FALSE, NULL); /* exit reques */
 		WaitHandles[1] = get_timer_handle();
+		WaitHandles[2] = get_io_event();
 
 		for (;;) {
-			DWORD Index = WaitForMultipleObjectsEx(sizeof(WaitHandles)/sizeof(WaitHandles[0]), WaitHandles, FALSE, 1000, MWMO_ALERTABLE);
+			DWORD Index = WaitForMultipleObjectsEx(sizeof(WaitHandles)/sizeof(WaitHandles[0]), WaitHandles, FALSE, 1000, TRUE);
 			switch (Index) {
 				case WAIT_OBJECT_0 + 0 : /* exit request */
 					exit(0);
@@ -814,20 +929,26 @@ service_main(
 				case WAIT_OBJECT_0 + 1 : /* timer */
 					timer();
 				break;
-				case WAIT_OBJECT_0 + 2 : { /* Windows message */
-					MSG msg;
-					while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-						if (msg.message == WM_QUIT) {
-							exit(0);
-						}
-						DispatchMessage(&msg);
+
+				case WAIT_OBJECT_0 + 2 : /* Io event */
+# ifdef DEBUG
+					if ( debug > 3 )
+					{
+						printf( "IoEvent occurred\n" );
 					}
-				}
+# endif
 				break;
 
 				case WAIT_IO_COMPLETION : /* loop */
 				case WAIT_TIMEOUT :
 				break;
+				case WAIT_FAILED:
+					msyslog(LOG_ERR, "ntpdc: WaitForMultipleObjectsEx Failed: Error: %m");
+					break;
+
+				/* For now do nothing if not expected */
+				default:
+					break;		
 				
 			} /* switch */
 			rbuflist = getrecvbufs();	/* get received buffers */
@@ -885,9 +1006,10 @@ service_main(
 			}
 			else if (nfound == -1 && errno != EINTR)
 				msyslog(LOG_ERR, "select() error: %m");
-			else if (debug > 2) {
+#  ifdef DEBUG
+			else if (debug > 2)
 				msyslog(LOG_DEBUG, "select(): nfound=%d, error: %m", nfound);
-			}
+#  endif /* DEBUG */
 # else /* HAVE_SIGNALED_IO */
                         
 			wait_for_signal();
@@ -935,8 +1057,12 @@ service_main(
 		 * Go around again
 		 */
 	}
+#ifndef SYS_WINNT
 	exit(1); /* unreachable */
+#endif
+#ifndef SYS_WINNT
 	return 1;		/* DEC OSF cc braindamage */
+#endif
 }
 
 
@@ -969,6 +1095,7 @@ finish(
 
 
 #ifdef DEBUG
+#ifndef SYS_WINNT
 /*
  * moredebug - increase debugging verbosity
  */
@@ -1004,8 +1131,9 @@ lessdebug(
 	}
 	errno = saved_errno;
 }
+#endif
 #else /* not DEBUG */
-/*
+#ifndef SYS_WINNT/*
  * no_debug - We don't do the debug here.
  */
 static RETSIGTYPE
@@ -1018,6 +1146,7 @@ no_debug(
 	msyslog(LOG_DEBUG, "ntpd not compiled for debugging (signal %d)", sig);
 	errno = saved_errno;
 }
+#endif  /* not SYS_WINNT */
 #endif	/* not DEBUG */
 
 #ifdef SYS_WINNT

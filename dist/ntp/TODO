@@ -1,6 +1,8 @@
 
       *** IF YOU CAN HELP FIX ANY OF THESE THINGS, PLEASE DO! ***
 
+010402: Look harder at -lm and -lelf - they are needed less and less...
+
 970711: Look Real Hard at changing the key stuff from u_long to u_int32.
 
 970711: Make sure it's safe to convert proto_config's 2nd argument from
@@ -13,10 +15,6 @@
 
 970210: Find a way to dump the current configuration to either syslog or
 	a file.
-
-CPP macros we need to handle:
-
- SUN_3_3_STINKS  (this will be easy to handle if anybody still needs it)
 
 Problems that need to be fixed:
 

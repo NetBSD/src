@@ -1,4 +1,4 @@
-/*	$NetBSD: tickadj.c,v 1.1.1.1 2000/03/29 12:39:00 simonb Exp $	*/
+/*	$NetBSD: tickadj.c,v 1.1.1.2 2003/12/04 16:05:35 drochner Exp $	*/
 
 /*
  * tickadj - read, and possibly modify, the kernel `tick' and
@@ -15,14 +15,13 @@
 # include <config.h>
 #endif
 
+#include "ntp_types.h"
+#include "l_stdlib.h"
+
 #include <stdio.h>
-#include <sys/types.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-
-#include "ntp_types.h"
-#include "l_stdlib.h"
 
 #ifdef HAVE___ADJTIMEX		/* Linux */
 
@@ -180,7 +179,6 @@ main(
 #ifdef NLIST_STRUCT
 # include <nlist.h>
 #else /* not NLIST_STRUCT */ /* was defined(SYS_AUX3) || defined(SYS_AUX2) */
-# include <sys/time.h>
 # include <sys/resource.h>
 # include <sys/file.h>
 # include <a.out.h>
@@ -759,8 +757,8 @@ getoffsets(
 		else
 		{
 			(void) fprintf(stderr,
-				       "%s: nlist didn't find needed symbols from <%s>: %m\n",
-				       progname, *kname);
+				       "%s: nlist didn't find needed symbols from <%s>: %s\n",
+				       progname, *kname, strerror(errno));
 		}
 	}
 	if (*kname == NULL)

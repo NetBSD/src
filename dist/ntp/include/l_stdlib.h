@@ -1,4 +1,4 @@
-/*	$NetBSD: l_stdlib.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: l_stdlib.h,v 1.1.1.2 2003/12/04 16:05:21 drochner Exp $	*/
 
 /*
  * Proto types for machines that are not ANSI and POSIX	 compliant.
@@ -14,6 +14,12 @@
 
 #ifdef HAVE_STDLIB_H
 # include <stdlib.h>
+#endif
+
+#if defined(__STDC__) || defined(HAVE_STDARG_H)
+# include <stdarg.h>
+#else
+# include <varargs.h>
 #endif
 
 #ifdef HAVE_SYS_TYPES_H
@@ -58,6 +64,10 @@ extern	int	cfsetospeed	P((struct termios *, speed_t));
 #endif
 
 extern	char *	getpass		P((const char *));
+
+#ifdef DECL_HSTRERROR_0
+extern	const char * hstrerror	P((int));
+#endif
 
 #ifdef DECL_INET_NTOA_0
 struct in_addr;
@@ -136,6 +146,16 @@ extern	int	setpriority	P((int, id_t, int));
 #ifdef DECL_SIGVEC_0
 struct sigvec;
 extern	int	sigvec		P((int, struct sigvec *, struct sigvec *));
+#endif
+
+#ifndef HAVE_SNPRINTF
+/* PRINTFLIKE3 */
+extern	int	snprintf	P((char *, size_t, const char *, ...));
+#endif
+
+/* HMS: does this need further protection? */
+#ifndef HAVE_VSNPRINTF
+extern	int	vsnprintf	P((char *, size_t, const char *, va_list));
 #endif
 
 #ifdef DECL_SRAND48_0
@@ -228,7 +248,7 @@ extern	int	toupper		P((int));
 extern	int	errno;
 #endif
 
-#ifdef DECL_H_ERRNO
+#if defined(DECL_H_ERRNO) && !defined(h_errno)
 extern	int	h_errno;
 #endif
 

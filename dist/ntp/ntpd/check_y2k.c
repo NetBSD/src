@@ -1,4 +1,4 @@
-/*	$NetBSD: check_y2k.c,v 1.1.1.1 2000/03/29 12:38:52 simonb Exp $	*/
+/*	$NetBSD: check_y2k.c,v 1.1.1.2 2003/12/04 16:05:30 drochner Exp $	*/
 
 /* check_y2k.c -- test ntp code constructs for Y2K correctness 	Y2KFixes [*/
 
@@ -33,7 +33,8 @@
 # include <config.h>
 #endif
 
-#include <sys/types.h>
+#include "ntpd.h"
+
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -46,11 +47,13 @@
 # if !defined(VMS)	/*wjm*/
 #  include <sys/param.h>
 # endif /* VMS */
+# if HAVE_SYS_SIGNAL_H
+#  include <sys/signal.h>
+# endif /* HAVE_SYS_SIGNAL_H */
 # include <sys/signal.h>
 # ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
 # endif /* HAVE_SYS_IOCTL_H */
-# include <sys/time.h>
 # if !defined(VMS)	/*wjm*/
 #  include <sys/resource.h>
 # endif /* VMS */
@@ -96,8 +99,6 @@
 # include <apollo/base.h>
 #endif /* SYS_DOMAINOS */
 
-#include "ntpd.h"
-
 /* } end definitions lifted from ntpd.c */
 
 #include "ntp_calendar.h"
@@ -105,7 +106,7 @@
 
 #define GoodLeap(Year) (((Year)%4 || (!((Year)%100) && (Year)%400)) ? 0 : 13 )
 
-int debug = 0;			/* debugging requests for parse stuff */
+volatile int debug = 0;		/* debugging requests for parse stuff */
 char const *progname = "check_y2k";
 
 long

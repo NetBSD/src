@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptimeset.c,v 1.1.1.2 2000/04/22 14:53:42 simonb Exp $	*/
+/*	$NetBSD: ntptimeset.c,v 1.1.1.3 2003/12/04 16:05:31 drochner Exp $	*/
 
 /*
  * ntptimeset - get/set the time via ntp
@@ -123,37 +123,7 @@
 # include <config.h>
 #endif
 
-#ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#include <stdio.h>
-#include <signal.h>
-#include <ctype.h>
-#ifndef SYS_WINNT
-# include <netdb.h>
-# include <sys/signal.h>
-# include <sys/ioctl.h>
-#endif /* SYS_WINNT */
-#include <sys/time.h>
-#ifdef HAVE_SYS_RESOURCE_H
-# include <sys/resource.h>
-#endif /* HAVE_SYS_RESOURCE_H */
-
-#ifdef SYS_VXWORKS
-# include "ioLib.h"
-# include "sockLib.h"
-# include "timers.h"
-#endif
-
-
-#if defined(SYS_HPUX)
-# include <utmp.h>
-#endif
-
+#include "ntp_machine.h"
 #include "ntp_fp.h"
 #include "ntp.h"
 #include "ntp_io.h"
@@ -164,6 +134,34 @@
 #include "ntp_syslog.h"
 #include "ntp_select.h"
 #include "ntp_stdlib.h"
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
+#include <stdio.h>
+#include <signal.h>
+#include <ctype.h>
+#ifndef SYS_WINNT
+# include <netdb.h>
+# ifdef HAVE_SYS_SIGNAL_H
+#  include <sys/signal.h>
+# else
+#  include <signal.h>
+# endif
+# include <sys/ioctl.h>
+#endif /* SYS_WINNT */
+
+#ifdef HAVE_SYS_RESOURCE_H
+# include <sys/resource.h>
+#endif /* HAVE_SYS_RESOURCE_H */
+
+#ifdef SYS_VXWORKS
+# include "ioLib.h"
+# include "sockLib.h"
+# include "timers.h"
+#endif
+
 #include "recvbuff.h"
 
 #ifdef SYS_WINNT
@@ -310,7 +308,6 @@ u_long finish_time = 0;
 
 
 int	ntptimesetmain	P((int argc, char *argv[]));
-extern	void	loadservers	P((char *cfgpath));
 static	void	analysis	P((int final));
 static	int	have_enough	P((void));
 static	void	transmit	P((register struct server *server));
@@ -1015,7 +1012,7 @@ receive(
 
 	if ((PKT_MODE(rpkt->li_vn_mode) != MODE_SERVER
 	    && PKT_MODE(rpkt->li_vn_mode) != MODE_PASSIVE)
-	    || rpkt->stratum > NTP_MAXSTRATUM) {
+	    || rpkt->stratum >=STRATUM_UNSPEC) {
 		if (debug > 1)
 			printf("receive: mode %d stratum %d\n",
 			    PKT_MODE(rpkt->li_vn_mode), rpkt->stratum);
@@ -1979,7 +1976,7 @@ sendpkt(
 	}
 
 
-	cc = sendto(fd, (char *)pkt, len, 0, (struct sockaddr *)dest,
+	cc = sendto(fd, (char *)pkt, (size_t)len, 0, (struct sockaddr *)dest,
 	    sizeof(struct sockaddr_in));
 #ifndef SYS_WINNT
 	if (cc == -1) {

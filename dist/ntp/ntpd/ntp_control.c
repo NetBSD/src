@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.1.1.2 2000/04/22 14:53:15 simonb Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.1.1.3 2003/12/04 16:05:25 drochner Exp $	*/
 
 /*
  * ntp_control.c - respond to control messages and send async traps
@@ -7,21 +7,18 @@
 #include <config.h>
 #endif
 
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <sys/time.h>
-
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
 #include "ntp_control.h"
 #include "ntp_stdlib.h"
 
-#ifdef PUBKEY
-#include "ntp_crypto.h"
-#endif /* PUBKEY */
+#include <stdio.h>
+#include <ctype.h>
+#include <signal.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 /*
  * Structure to hold request procedure information
@@ -47,7 +44,9 @@ struct ctl_proc {
  * Request processing routines
  */
 static	void	ctl_error	P((int));
+#ifdef REFCLOCK
 static	u_short ctlclkstatus	P((struct refclockstat *));
+#endif
 static	void	ctl_flushpkt	P((int));
 static	void	ctl_putdata	P((const char *, unsigned int, int));
 static	void	ctl_putstr	P((const char *, const char *,
@@ -57,7 +56,7 @@ static	void	ctl_putuint	P((const char *, u_long));
 static	void	ctl_puthex	P((const char *, u_long));
 static	void	ctl_putint	P((const char *, long));
 static	void	ctl_putts	P((const char *, l_fp *));
-static	void	ctl_putadr	P((const char *, u_int32));
+static	void	ctl_putadr	P((const char *, u_int32, struct sockaddr_storage*));
 static	void	ctl_putid	P((const char *, char *));
 static	void	ctl_putarray	P((const char *, double *, int));
 static	void	ctl_putsys	P((int));
@@ -75,7 +74,7 @@ static	void	read_clock_status P((struct recvbuf *, int));
 static	void	write_clock_status P((struct recvbuf *, int));
 static	void	set_trap	P((struct recvbuf *, int));
 static	void	unset_trap	P((struct recvbuf *, int));
-static	struct ctl_trap *ctlfindtrap P((struct sockaddr_in *,
+static	struct ctl_trap *ctlfindtrap P((struct sockaddr_storage *,
 				    struct interface *));
 
 static	struct ctl_proc control_codes[] = {
@@ -106,22 +105,26 @@ static struct ctl_var sys_var[] = {
 	{ CS_POLL,	RO, "poll" },		/* 8 */
 	{ CS_PEERID,	RO, "peer" },		/* 9 */
 	{ CS_STATE,	RO, "state" },		/* 10 */
-	{ CS_OFFSET,	RO, "phase" },		/* 11 */
+	{ CS_OFFSET,	RO, "offset" },		/* 11 */
 	{ CS_DRIFT,	RO, "frequency" },	/* 12 */
-	{ CS_COMPLIANCE, RO, "jitter" },	/* 13 */
+	{ CS_JITTER,	RO, "jitter" },		/* 13 */
 	{ CS_CLOCK,	RO, "clock" },		/* 14 */
 	{ CS_PROCESSOR, RO, "processor" },	/* 15 */
 	{ CS_SYSTEM,	RO, "system" },		/* 16 */
-	{ CS_STABIL,	RO, "stability" },	/* 17 */
-	{ CS_VARLIST,	RO, "sys_var_list" },	/* 18 */
-#ifdef PUBKEY
-	{ CS_PRIVATE,	RO, "privatekey" },	/* 19 */
-	{ CS_PUBLIC,	RO, "publickey" },	/* 20 */
-	{ CS_DHPARAMS,	RO, "dhparams" },	/* 21 */
-	{ CS_HOSTNAM,	RO, "hostname" },	/* 22 */
-	{ CS_REVTIME,	RO, "revoketime"},	/* 23 */
-#endif /* PUBKEY */
-	{ 0,		EOV,	""  }
+	{ CS_VERSION,	RO, "version" },	/* 17 */
+	{ CS_STABIL,	RO, "stability" },	/* 18 */
+	{ CS_VARLIST,	RO, "sys_var_list" },	/* 19 */
+#ifdef OPENSSL
+	{ CS_FLAGS,	RO, "flags" },		/* 20 */
+	{ CS_HOST,	RO, "hostname" },	/* 21 */
+	{ CS_PUBLIC,	RO, "hostkey" },	/* 22 */
+	{ CS_CERTIF,	RO, "cert" },		/* 23 */
+	{ CS_REVTIME,	RO, "refresh" },	/* 24 */
+	{ CS_LEAPTAB,	RO, "leapseconds" },	/* 25 */
+	{ CS_TAI,	RO, "tai" },		/* 26 */
+	{ CS_DIGEST,	RO, "signature" },	/* 27 */
+#endif /* OPENSSL */
+	{ 0,		EOV, "" }		/* 28 */
 };
 
 static struct ctl_var *ext_sys_var = (struct ctl_var *)0;
@@ -131,6 +134,7 @@ static struct ctl_var *ext_sys_var = (struct ctl_var *)0;
  * more-or-less)
  */
 static	u_char def_sys_var[] = {
+	CS_VERSION,
 	CS_PROCESSOR,
 	CS_SYSTEM,
 	CS_LEAP,
@@ -146,15 +150,17 @@ static	u_char def_sys_var[] = {
 	CS_STATE,
 	CS_OFFSET,
 	CS_DRIFT,
-	CS_COMPLIANCE,
+	CS_JITTER,
 	CS_STABIL,
-#ifdef PUBKEY
-	CS_PRIVATE,
+#ifdef OPENSSL
+	CS_HOST,
+	CS_DIGEST,
+	CS_FLAGS,
 	CS_PUBLIC,
-	CS_DHPARAMS,
-	CS_HOSTNAM,
 	CS_REVTIME,
-#endif /* PUBKEY */
+	CS_LEAPTAB,
+	CS_CERTIF,
+#endif /* OPENSSL */
 	0
 };
 
@@ -163,53 +169,55 @@ static	u_char def_sys_var[] = {
  * Peer variable list
  */
 static struct ctl_var peer_var[] = {
-	{ 0,		PADDING, "" },      /* 0 */
-	{ CP_CONFIG,	RO, "config" }, /* 1 */
-	{ CP_AUTHENABLE, RO,	"authenable" }, /* 2 */
-	{ CP_AUTHENTIC, RO, "authentic" },  /* 3 */
-	{ CP_SRCADR,	RO, "srcadr" }, /* 4 */
-	{ CP_SRCPORT,	RO, "srcport" },    /* 5 */
-	{ CP_DSTADR,	RO, "dstadr" }, /* 6 */
-	{ CP_DSTPORT,	RO, "dstport" },    /* 7 */
-	{ CP_LEAP,	RO, "leap" },   /* 8 */
-	{ CP_HMODE, RO, "hmode" },  /* 9 */
-	{ CP_STRATUM,	RO, "stratum" },    /* 10 */
-	{ CP_PPOLL, RO, "ppoll" },  /* 11 */
-	{ CP_HPOLL, RO, "hpoll" },  /* 12 */
-	{ CP_PRECISION, RO, "precision" },  /* 13 */
-	{ CP_ROOTDELAY, RO, "rootdelay" },  /* 14 */
+	{ 0,		PADDING, "" },		/* 0 */
+	{ CP_CONFIG,	RO, "config" },		/* 1 */
+	{ CP_AUTHENABLE, RO,	"authenable" },	/* 2 */
+	{ CP_AUTHENTIC, RO, "authentic" }, 	/* 3 */
+	{ CP_SRCADR,	RO, "srcadr" },		/* 4 */
+	{ CP_SRCPORT,	RO, "srcport" },	/* 5 */
+	{ CP_DSTADR,	RO, "dstadr" },		/* 6 */
+	{ CP_DSTPORT,	RO, "dstport" },	/* 7 */
+	{ CP_LEAP,	RO, "leap" },		/* 8 */
+	{ CP_HMODE,	RO, "hmode" },		/* 9 */
+	{ CP_STRATUM,	RO, "stratum" },	/* 10 */
+	{ CP_PPOLL,	RO, "ppoll" },		/* 11 */
+	{ CP_HPOLL,	RO, "hpoll" },		/* 12 */
+	{ CP_PRECISION,	RO, "precision" },	/* 13 */
+	{ CP_ROOTDELAY,	RO, "rootdelay" },	/* 14 */
 	{ CP_ROOTDISPERSION, RO, "rootdispersion" }, /* 15 */
-	{ CP_REFID, RO, "refid" },  /* 16 */
-	{ CP_REFTIME,	RO, "reftime" },    /* 17 */
-	{ CP_ORG,	RO, "org" },    /* 18 */
-	{ CP_REC,	RO, "rec" },    /* 19 */
-	{ CP_XMT,	RO, "xmt" },    /* 20 */
-	{ CP_REACH, RO, "reach" },  /* 21 */
-	{ CP_VALID, RO, "valid" },  /* 22 */
-	{ CP_TIMER, RO, "timer" },  /* 23 */
-	{ CP_DELAY, RO, "delay" },  /* 24 */
-	{ CP_OFFSET,	RO, "offset" }, /* 25 */
-	{ CP_JITTER,	RO, "jitter" }, /* 26 */
-	{ CP_DISPERSION,RO, "dispersion" }, /* 27 */
-	{ CP_KEYID, RO, "keyid" },  /* 28 */
-	{ CP_FILTDELAY, RO, "filtdelay=" }, /* 29 */
-	{ CP_FILTOFFSET, RO,	"filtoffset=" }, /* 30 */
-	{ CP_PMODE, RO, "pmode" },  /* 31 */
-	{ CP_RECEIVED,	RO, "received"},    /* 32 */
-	{ CP_SENT,	RO, "sent" },   /* 33 */
-	{ CP_FILTERROR, RO, "filtdisp=" },  /* 34 */
-	{ CP_FLASH, RO, "flash" },  /* 35 */
-	{ CP_DISP,	PADDING,"" },       /* 36 */
-	{ CP_VARLIST,	RO, "peer_var_list" }, /* 37 */
-#ifdef PUBKEY
-	{ CP_PUBLIC,	RO, "publickey" },	/* 38 */
-	{ CP_SESKEY,	RO, "pcookie" },	/* 39 */
-	{ CP_SASKEY,	RO, "hcookie" },	/* 40 */
+	{ CP_REFID,	RO, "refid" },		/* 16 */
+	{ CP_REFTIME,	RO, "reftime" },	/* 17 */
+	{ CP_ORG,	RO, "org" },		/* 18 */
+	{ CP_REC,	RO, "rec" },		/* 19 */
+	{ CP_XMT,	RO, "xmt" },		/* 20 */
+	{ CP_REACH,	RO, "reach" },		/* 21 */
+	{ CP_VALID,	RO, "unreach" },	/* 22 */
+	{ CP_TIMER,	RO, "timer" },		/* 23 */
+	{ CP_DELAY,	RO, "delay" },		/* 24 */
+	{ CP_OFFSET,	RO, "offset" },		/* 25 */
+	{ CP_JITTER,	RO, "jitter" },		/* 26 */
+	{ CP_DISPERSION, RO, "dispersion" },	/* 27 */
+	{ CP_KEYID,	RO, "keyid" },		/* 28 */
+	{ CP_FILTDELAY,	RO, "filtdelay=" },	/* 29 */
+	{ CP_FILTOFFSET, RO, "filtoffset=" },	/* 30 */
+	{ CP_PMODE,	RO, "pmode" },		/* 31 */
+	{ CP_RECEIVED,	RO, "received"},	/* 32 */
+	{ CP_SENT,	RO, "sent" },		/* 33 */
+	{ CP_FILTERROR,	RO, "filtdisp=" },	/* 34 */
+	{ CP_FLASH,	RO, "flash" },		/* 35 */
+	{ CP_TTL,	RO, "ttl" },		/* 36 */
+	{ CP_RANK,	RO, "rank" },		/* 37 */
+	{ CP_VARLIST,	RO, "peer_var_list" },	/* 38 */
+#ifdef OPENSSL
+	{ CP_FLAGS,	RO, "flags" },		/* 39 */
+	{ CP_HOST,	RO, "hostname" },	/* 40 */
 	{ CP_INITSEQ,	RO, "initsequence" },   /* 41 */
 	{ CP_INITKEY,	RO, "initkey" },	/* 42 */
 	{ CP_INITTSP,	RO, "timestamp" },	/* 43 */
-#endif /* PUBKEY */
-	{ 0,		EOV,	""  }
+	{ CP_DIGEST,	RO, "signature" },	/* 44 */
+	{ CP_IDENT,	RO, "identity" },	/* 45 */
+#endif /* OPENSSL */
+	{ 0,		EOV, "" }		/* 39/46 */
 };
 
 
@@ -221,36 +229,39 @@ static u_char def_peer_var[] = {
 	CP_SRCPORT,
 	CP_DSTADR,
 	CP_DSTPORT,
-	CP_KEYID,
+	CP_LEAP,
 	CP_STRATUM,
 	CP_PRECISION,
 	CP_ROOTDELAY,
 	CP_ROOTDISPERSION,
 	CP_REFID,
-	CP_REFTIME,
-	CP_DELAY,
-	CP_OFFSET,
-	CP_JITTER,
-	CP_DISPERSION,
 	CP_REACH,
 	CP_VALID,
 	CP_HMODE,
 	CP_PMODE,
 	CP_HPOLL,
 	CP_PPOLL,
-	CP_LEAP,
 	CP_FLASH,
+	CP_KEYID,
+	CP_TTL,
+	CP_OFFSET,
+	CP_DELAY,
+	CP_DISPERSION,
+	CP_JITTER,
+	CP_REFTIME,
 	CP_ORG,
 	CP_REC,
 	CP_XMT,
 	CP_FILTDELAY,
 	CP_FILTOFFSET,
 	CP_FILTERROR,
-#ifdef PUBKEY
-	CP_PUBLIC,
-	CP_SESKEY,
+#ifdef OPENSSL
+	CP_HOST,
+	CP_DIGEST,
+	CP_FLAGS,
+	CP_IDENT,
 	CP_INITSEQ,
-#endif /* PUBKEY */
+#endif /* OPENSSL */
 	0
 };
 
@@ -260,21 +271,21 @@ static u_char def_peer_var[] = {
  * Clock variable list
  */
 static struct ctl_var clock_var[] = {
-	{ 0,		PADDING, "" },      /* 0 */
-	{ CC_TYPE,	RO, "type" },   /* 1 */
-	{ CC_TIMECODE,	RO, "timecode" },   /* 2 */
-	{ CC_POLL,	RO, "poll" },   /* 3 */
-	{ CC_NOREPLY,	RO, "noreply" },    /* 4 */
-	{ CC_BADFORMAT, RO, "badformat" },  /* 5 */
-	{ CC_BADDATA,	RO, "baddata" },    /* 6 */
-	{ CC_FUDGETIME1, RO,	"fudgetime1" }, /* 7 */
-	{ CC_FUDGETIME2, RO,	"fudgetime2" }, /* 8 */
-	{ CC_FUDGEVAL1, RO, "stratum" },    /* 9 */
-	{ CC_FUDGEVAL2, RO, "refid" },  /* 10 */
-	{ CC_FLAGS, RO, "flags" },  /* 11 */
-	{ CC_DEVICE,	RO, "device" }, /* 12 */
-	{ CC_VARLIST,	RO, "clock_var_list" },/* 13 */
-	{ 0,		EOV,	""  }
+	{ 0,		PADDING, "" },		/* 0 */
+	{ CC_TYPE,	RO, "type" },		/* 1 */
+	{ CC_TIMECODE,	RO, "timecode" },	/* 2 */
+	{ CC_POLL,	RO, "poll" },		/* 3 */
+	{ CC_NOREPLY,	RO, "noreply" },	/* 4 */
+	{ CC_BADFORMAT, RO, "badformat" },	/* 5 */
+	{ CC_BADDATA,	RO, "baddata" },	/* 6 */
+	{ CC_FUDGETIME1, RO, "fudgetime1" },	/* 7 */
+	{ CC_FUDGETIME2, RO, "fudgetime2" },	/* 8 */
+	{ CC_FUDGEVAL1, RO, "stratum" },	/* 9 */
+	{ CC_FUDGEVAL2, RO, "refid" },		/* 10 */
+	{ CC_FLAGS,	RO, "flags" },		/* 11 */
+	{ CC_DEVICE,	RO, "device" },		/* 12 */
+	{ CC_VARLIST,	RO, "clock_var_list" },	/* 13 */
+	{ 0,		EOV, ""  }		/* 14 */
 };
 
 
@@ -380,6 +391,13 @@ static u_char clocktypes[] = {
 	CTL_SST_TS_LF,		/* REFCLK_PCF (35) */
 	CTL_SST_TS_LF,		/* REFCLK_WWV (36) */
 	CTL_SST_TS_LF,		/* REFCLK_FG (37) */
+	CTL_SST_TS_UHF, 	/* REFCLK_HOPF_SERIAL (38) */
+	CTL_SST_TS_UHF,		/* REFCLK_HOPF_PCI (39) */
+	CTL_SST_TS_LF,		/* REFCLK_JJY (40) */
+	CTL_SST_TS_UHF,		/* REFCLK_TT560 (41) */
+	CTL_SST_TS_UHF,		/* REFCLK_ZYFER (42) */
+	CTL_SST_TS_UHF,		/* REFCLK_RIPENCC (43) */
+	CTL_SST_TS_UHF,		/* REFCLK_NEOCLOCK4X (44) */
 };
 
 
@@ -424,13 +442,13 @@ u_long numasyncmsgs;		/* number of async messages we've sent */
 static struct ntp_control rpkt;
 static u_char	res_version;
 static u_char	res_opcode;
-static u_short	res_associd;
+static associd_t res_associd;
 static int	res_offset;
 static u_char * datapt;
 static u_char * dataend;
 static int	datalinelen;
 static int	datanotbinflag;
-static struct sockaddr_in *rmt_addr;
+static struct sockaddr_storage *rmt_addr;
 static struct interface *lcl_inter;
 
 static u_char	res_authenticate;
@@ -715,14 +733,16 @@ ctlpeerstatus(
 /*
  * ctlclkstatus - return a status word for this clock
  */
+#ifdef REFCLOCK
 static u_short
 ctlclkstatus(
 	struct refclockstat *this_clock
 	)
 {
-	return ((u_short)(this_clock->currentstatus) << 8) |
-	    (u_short)(this_clock->lastevent);
+	return ((u_short)(((this_clock->currentstatus) << 8) |
+	    (this_clock->lastevent)));
 }
+#endif
 
 
 /*
@@ -1054,12 +1074,13 @@ ctl_putts(
 
 
 /*
- * ctl_putadr - write a dotted quad IP address into the response
+ * ctl_putadr - write an IP address into the response
  */
 static void
 ctl_putadr(
 	const char *tag,
-	u_int32 addr
+	u_int32 addr32,
+	struct sockaddr_storage* addr
 	)
 {
 	register char *cp;
@@ -1072,7 +1093,10 @@ ctl_putadr(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	cq = numtoa(addr);
+	if (addr == NULL)
+		cq = numtoa(addr32);
+	else
+		cq = stoa(addr);
 	while (*cq != '\0')
 		*cp++ = *cq++;
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
@@ -1119,7 +1143,6 @@ ctl_putarray(
 	register const char *cq;
 	char buffer[200];
 	int i;
-
 	cp = buffer;
 	cq = tag;
 	while (*cq != '\0')
@@ -1146,9 +1169,12 @@ ctl_putsys(
 	)
 {
 	l_fp tmp;
-#ifdef HAVE_UNAME
-	char str[50];
-#endif
+	char str[256];
+#ifdef OPENSSL
+	struct cert_info *cp;
+	char cbuf[256];
+#endif /* OPENSSL */
+
 	switch (varid) {
 
 	case CS_LEAP:
@@ -1174,8 +1200,8 @@ ctl_putsys(
 		break;
 
 	case CS_REFID:
-		if (sys_stratum > 1)
-			ctl_putadr(sys_var[CS_REFID].text, sys_refid);
+		if (sys_stratum > 1 && sys_stratum < STRATUM_UNSPEC)
+			ctl_putadr(sys_var[CS_REFID].text, sys_refid, NULL);
 		else
 			ctl_putid(sys_var[CS_REFID].text,
 			    (char *)&sys_refid);
@@ -1209,9 +1235,8 @@ ctl_putsys(
 		ctl_putdbl(sys_var[CS_DRIFT].text, drift_comp * 1e6);
 		break;
 
-	case CS_COMPLIANCE:
-		ctl_putdbl(sys_var[CS_COMPLIANCE].text, sys_error *
-		    1e3);
+	case CS_JITTER:
+		ctl_putdbl(sys_var[CS_JITTER].text, sys_jitter * 1e3);
 		break;
 
 	case CS_CLOCK:
@@ -1234,10 +1259,14 @@ ctl_putsys(
 		ctl_putstr(sys_var[CS_SYSTEM].text, str_system,
 		    sizeof(str_system) - 1);
 #else
-		(void)strcpy(str, utsnamebuf.sysname);
-		(void)strcat(str, utsnamebuf.release);
+		sprintf(str, "%s/%s", utsnamebuf.sysname, utsnamebuf.release);
 		ctl_putstr(sys_var[CS_SYSTEM].text, str, strlen(str));
 #endif /* HAVE_UNAME */
+		break;
+
+	case CS_VERSION:
+		ctl_putstr(sys_var[CS_VERSION].text, Version,
+		    strlen(Version));
 		break;
 
 	case CS_STABIL:
@@ -1308,35 +1337,60 @@ ctl_putsys(
 		}
 		break;
 
-#ifdef PUBKEY
-	case CS_PRIVATE:
-		if (private_key_file != NULL)
-			ctl_putstr(sys_var[CS_PRIVATE].text,
-			    private_key_file, strlen(private_key_file));
+#ifdef OPENSSL
+	case CS_FLAGS:
+		if (crypto_flags) {
+			ctl_puthex(sys_var[CS_FLAGS].text, crypto_flags);
+		}
+		break;
+
+	case CS_DIGEST:
+		if (crypto_flags) {
+			const EVP_MD *dp;
+
+			dp = EVP_get_digestbynid(crypto_flags >> 16);
+			strcpy(str, OBJ_nid2ln(EVP_MD_pkey_type(dp)));
+			ctl_putstr(sys_var[CS_DIGEST].text, str,
+			    strlen(str));
+		}
+		break;
+
+	case CS_HOST:
+		if (sys_hostname != NULL)
+			ctl_putstr(sys_var[CS_HOST].text, sys_hostname,
+			    strlen(sys_hostname));
+		break;
+
+	case CS_CERTIF:
+		for (cp = cinfo; cp != NULL; cp = cp->link) {
+			sprintf(cbuf, "%s %s 0x%x %u", cp->subject,
+			    cp->issuer, cp->flags,
+			    ntohl(cp->cert.fstamp));
+			ctl_putstr(sys_var[CS_CERTIF].text, cbuf,
+			    strlen(cbuf));
+		}
 		break;
 
 	case CS_PUBLIC:
-		if (public_key_file != NULL)
-			ctl_putstr(sys_var[CS_PUBLIC].text,
-			    public_key_file, strlen(public_key_file));
-		break;
-
-	case CS_DHPARAMS:
-		if (dh_params_file != NULL)
-			ctl_putstr(sys_var[CS_DHPARAMS].text,
-			    dh_params_file, strlen(dh_params_file));
-		break;
-
-	case CS_HOSTNAM:
-		if (sys_hostname != NULL)
-			ctl_putstr(sys_var[CS_HOSTNAM].text,
-			    sys_hostname, sys_hostnamelen);
+		if (hostval.fstamp != 0)
+			ctl_putuint(sys_var[CS_PUBLIC].text,
+			    ntohl(hostval.fstamp));
 		break;
 
 	case CS_REVTIME:
-		ctl_putts(sys_var[CS_REVTIME].text, &sys_revoketime);
+		if (hostval.tstamp != 0)
+			ctl_putuint(sys_var[CS_REVTIME].text,
+			    ntohl(hostval.tstamp));
 		break;
-#endif /* PUBKEY */
+
+	case CS_LEAPTAB:
+		if (tai_leap.fstamp != 0)
+			ctl_putuint(sys_var[CS_LEAPTAB].text,
+			    ntohl(tai_leap.fstamp));
+		if (sys_tai != 0)
+			ctl_putuint(sys_var[CS_TAI].text, sys_tai);
+		break;
+#endif /* OPENSSL */
 	}
 }
 
@@ -1350,9 +1404,10 @@ ctl_putpeer(
 	struct peer *peer
 	)
 {
-#ifdef PUBKEY
-	u_int len;
-#endif /* PUBKEY */
+#ifdef OPENSSL
+	char str[256];
+	struct autokey *ap;
+#endif /* OPENSSL */
 
 	switch (varid) {
 
@@ -1372,29 +1427,24 @@ ctl_putpeer(
 		break;
 
 	case CP_SRCADR:
-		ctl_putadr(peer_var[CP_SRCADR].text,
-		    peer->srcadr.sin_addr.s_addr);
+		ctl_putadr(peer_var[CP_SRCADR].text, 0,
+		    &peer->srcadr);
 		break;
 
 	case CP_SRCPORT:
 		ctl_putuint(peer_var[CP_SRCPORT].text,
-		    ntohs(peer->srcadr.sin_port));
+		    ntohs(((struct sockaddr_in*)&peer->srcadr)->sin_port));
 		break;
 
 	case CP_DSTADR:
-		ctl_putadr(peer_var[CP_DSTADR].text, peer->processed ?
-		    peer->cast_flags & MDF_BCAST ?
-		    peer->dstadr->bcast.sin_addr.s_addr:
-		    peer->cast_flags ?
-		    peer->dstadr->sin.sin_addr.s_addr ?
-		    peer->dstadr->sin.sin_addr.s_addr:
-		    peer->dstadr->bcast.sin_addr.s_addr: 8 : 12);
+		ctl_putadr(peer_var[CP_DSTADR].text, 0,
+		    &(peer->dstadr->sin));
 		break;
 
 	case CP_DSTPORT:
 		ctl_putuint(peer_var[CP_DSTPORT].text,
 		    (u_long)(peer->dstadr ?
-		    ntohs(peer->dstadr->sin.sin_port) : 0));
+		    ntohs(((struct sockaddr_in*)&peer->dstadr->sin)->sin_port) : 0));
 		break;
 
 	case CP_LEAP:
@@ -1433,16 +1483,22 @@ ctl_putpeer(
 		break;
 
 	case CP_REFID:
-		if (peer->stratum > 1) {
-			if (peer->flags & FLAG_REFCLOCK)
-			    ctl_putadr(peer_var[CP_REFID].text,
-			        peer->srcadr.sin_addr.s_addr);
+		if (peer->flags & FLAG_REFCLOCK) {
+			if (peer->stratum > 0 && peer->stratum <
+			    STRATUM_UNSPEC)
+				ctl_putadr(peer_var[CP_REFID].text,
+				    peer->refid, NULL);
 			else
-			    ctl_putadr(peer_var[CP_REFID].text,
-			        peer->refid);
+				ctl_putid(peer_var[CP_REFID].text,
+				   (char *)&peer->refid);
 		} else {
-			ctl_putid(peer_var[CP_REFID].text,
-			    (char *)&peer->refid);
+			if (peer->stratum > 1 && peer->stratum <
+			    STRATUM_UNSPEC)
+				ctl_putadr(peer_var[CP_REFID].text,
+				    peer->refid, NULL);
+			else
+				ctl_putid(peer_var[CP_REFID].text,
+				    (char *)&peer->refid);
 		}
 		break;
 
@@ -1470,9 +1526,18 @@ ctl_putpeer(
 		ctl_puthex(peer_var[CP_FLASH].text, peer->flash);
 		break;
 
-	case CP_VALID:
-		ctl_putuint(peer_var[CP_VALID].text, peer->valid);
+	case CP_TTL:
+		ctl_putint(peer_var[CP_TTL].text, sys_ttl[peer->ttl]);
 		break;
+
+	case CP_VALID:
+		ctl_putuint(peer_var[CP_VALID].text, peer->unreach);
+		break;
+
+	case CP_RANK:
+		ctl_putuint(peer_var[CP_RANK].text, peer->rank);
+		break;
+
 	case CP_TIMER:
 		ctl_putuint(peer_var[CP_TIMER].text,
 		    peer->nextdate - current_time);
@@ -1489,7 +1554,7 @@ ctl_putpeer(
 
 	case CP_JITTER:
 		ctl_putdbl(peer_var[CP_JITTER].text,
-		    SQRT(peer->variance) * 1e3);
+		    SQRT(peer->jitter) * 1e3);
 		break;
 
 	case CP_DISPERSION:
@@ -1566,30 +1631,44 @@ ctl_putpeer(
 			ctl_putdata(buf, (unsigned)(s - buf), 0);
 		}
 		break;
-#ifdef PUBKEY
-	case CP_PUBLIC:
-		if (peer->keystr == NULL)
-			break;
-		len = strlen(peer->keystr);
-		ctl_putstr(peer_var[CP_PUBLIC].text, peer->keystr, len);
+#ifdef OPENSSL
+	case CP_FLAGS:
+		if (peer->crypto)
+			ctl_puthex(peer_var[CP_FLAGS].text, peer->crypto);
 		break;
 
-	case CP_SESKEY:
-		if (peer->pcookie.key != NULL)
-			ctl_puthex(peer_var[CP_SESKEY].text,
-			    peer->pcookie.key);
-		if (peer->hcookie != NULL)
-			ctl_puthex(peer_var[CP_SASKEY].text, peer->hcookie);
+	case CP_DIGEST:
+		if (peer->crypto) {
+			const EVP_MD *dp;
+
+			dp = EVP_get_digestbynid(peer->crypto >> 16);
+			strcpy(str, OBJ_nid2ln(EVP_MD_pkey_type(dp)));
+			ctl_putstr(peer_var[CP_DIGEST].text, str,
+       	                     strlen(str));
+		}
+		break;
+
+	case CP_HOST:
+		if (peer->subject != NULL)
+			ctl_putstr(peer_var[CP_HOST].text, peer->subject,
+			    strlen(peer->subject));
+		break;
+
+	case CP_IDENT:
+		if (peer->issuer != NULL)
+			ctl_putstr(peer_var[CP_IDENT].text, peer->issuer,
+			    strlen(peer->issuer));
 		break;
 
 	case CP_INITSEQ:
-		if (peer->keylist == NULL)
+		if ((ap = (struct autokey *)peer->recval.ptr) == NULL)
 			break;
-		ctl_putint(peer_var[CP_INITSEQ].text, peer->recauto.seq);
-		ctl_puthex(peer_var[CP_INITKEY].text, peer->recauto.key);
-		ctl_putuint(peer_var[CP_INITTSP].text, peer->recauto.tstamp);
+		ctl_putint(peer_var[CP_INITSEQ].text, ap->seq);
+		ctl_puthex(peer_var[CP_INITKEY].text, ap->key);
+		ctl_putuint(peer_var[CP_INITTSP].text,
+		    ntohl(peer->recval.tstamp));
 		break;
-#endif /* PUBKEY */
+#endif /* OPENSSL */
 	}
 }
 
@@ -1659,7 +1738,7 @@ ctl_putclock(
 		if (mustput || (clock_stat->haveflags & CLK_HAVEVAL2)) {
 			if (clock_stat->fudgeval1 > 1)
 				ctl_putadr(clock_var[CC_FUDGEVAL2].text,
-				    (u_int32)clock_stat->fudgeval2);
+				    (u_int32)clock_stat->fudgeval2, NULL);
 			else
 				ctl_putid(clock_var[CC_FUDGEVAL2].text,
 				    (char *)&clock_stat->fudgeval2);
@@ -1809,17 +1888,28 @@ ctl_getitem(
 				if (*cp == '=') {
 					cp++;
 					tp = buf;
-					while (cp < reqend &&
-					    isspace((int)*cp))
+					while (cp < reqend && isspace((int)*cp))
 						cp++;
-					while (cp < reqend && *cp !=
-					    ',')
+					while (cp < reqend && *cp != ',') {
 						*tp++ = *cp++;
+						if (tp >= buf + sizeof(buf)) {
+							ctl_error(CERR_BADFMT);
+							numctlbadpkts++;
+							msyslog(LOG_WARNING,
+		"Possible 'ntpdx' exploit from %s:%d (possibly spoofed)\n",
+		stoa(rmt_addr), SRCPORT(rmt_addr)
+								);
+							return (0);
+						}
+					}
 					if (cp < reqend)
 						cp++;
-					*tp = '\0';
-					while (isspace((int)(*(tp-1))))
-						*(--tp) = '\0';
+					*tp-- = '\0';
+					while (tp >= buf) {
+						if (!isspace((int)(*tp)))
+							break;
+						*tp-- = '\0';
+					}
 					reqpt = cp;
 					*data = buf;
 					return (v);
@@ -1851,7 +1941,7 @@ control_unspec(
 	 * doesn't exist.
 	 */
 	if (res_associd != 0) {
-		if ((peer = findpeerbyassoc((int)res_associd)) == 0) {
+		if ((peer = findpeerbyassoc(res_associd)) == 0) {
 			ctl_error(CERR_BADASSOC);
 			return;
 		}
@@ -1912,7 +2002,7 @@ read_status(
 			    sizeof(u_short), 1);
 		ctl_flushpkt(0);
 	} else {
-		peer = findpeerbyassoc((int)res_associd);
+		peer = findpeerbyassoc(res_associd);
 		if (peer == 0) {
 			ctl_error(CERR_BADASSOC);
 		} else {
@@ -2011,7 +2101,7 @@ read_variables(
 		 * Wants info for a particular peer. See if we know
 		 * the guy.
 		 */
-		peer = findpeerbyassoc((int)res_associd);
+		peer = findpeerbyassoc(res_associd);
 		if (peer == 0) {
 			ctl_error(CERR_BADASSOC);
 			return;
@@ -2061,7 +2151,7 @@ write_variables(
 	register struct ctl_var *v;
 	register int ext_var;
 	char *valuep;
-	long val;
+	long val = 0;
 
 	/*
 	 * If he's trying to write into a peer tell him no way
@@ -2200,7 +2290,7 @@ read_clock_status(
 			}
 		}
 	} else {
-		peer = findpeerbyassoc((int)res_associd);
+		peer = findpeerbyassoc(res_associd);
 		if (peer == 0 || !(peer->flags & FLAG_REFCLOCK)) {
 			ctl_error(CERR_BADASSOC);
 			return;
@@ -2365,7 +2455,7 @@ unset_trap(
  */
 int
 ctlsettrap(
-	struct sockaddr_in *raddr,
+	struct sockaddr_storage *raddr,
 	struct interface *linter,
 	int traptype,
 	int version
@@ -2470,7 +2560,7 @@ ctlsettrap(
 	tptouse->tr_sequence = 1;
 	tptouse->tr_addr = *raddr;
 	tptouse->tr_localaddr = linter;
-	tptouse->tr_version = version;
+	tptouse->tr_version = (u_char) version;
 	tptouse->tr_flags = TRAP_INUSE;
 	if (traptype == TRAP_TYPE_CONFIG)
 		tptouse->tr_flags |= TRAP_CONFIGURED;
@@ -2486,7 +2576,7 @@ ctlsettrap(
  */
 int
 ctlclrtrap(
-	struct sockaddr_in *raddr,
+	struct sockaddr_storage *raddr,
 	struct interface *linter,
 	int traptype
 	)
@@ -2511,18 +2601,18 @@ ctlclrtrap(
  */
 static struct ctl_trap *
 ctlfindtrap(
-	struct sockaddr_in *raddr,
+	struct sockaddr_storage *raddr,
 	struct interface *linter
 	)
 {
 	register struct ctl_trap *tp;
 
 	for (tp = ctl_trap; tp < &ctl_trap[CTL_MAXTRAPS]; tp++) {
-		if (tp->tr_flags & TRAP_INUSE && NSRCADR(raddr) ==
-		    NSRCADR(&tp->tr_addr) && NSRCPORT(raddr) ==
-		    NSRCPORT(&tp->tr_addr) && linter ==
-		    tp->tr_localaddr)
-			return (tp);
+		if ((tp->tr_flags & TRAP_INUSE)
+		    && (NSRCPORT(raddr) == NSRCPORT(&tp->tr_addr))
+		    && SOCKCMP(raddr, &tp->tr_addr)
+	 	    && (linter == tp->tr_localaddr) )
+		return (tp);
 	}
 	return (struct ctl_trap *)NULL;
 }
@@ -2543,7 +2633,7 @@ report_event(
 	 * Record error code in proper spots, but have mercy on the
 	 * log file.
 	 */
-	if (!(err & PEER_EVENT)) {
+	if (!(err & (PEER_EVENT | CRPT_EVENT))) {
 		if (ctl_sys_num_events < CTL_SYS_MAXEVENTS)
 			ctl_sys_num_events++;
 		if (ctl_sys_last_event != (u_char)err) {
@@ -2565,10 +2655,10 @@ report_event(
 
 #ifdef REFCLOCK
 		if (ISREFCLOCKADR(&peer->srcadr))
-			src = refnumtoa(peer->srcadr.sin_addr.s_addr);
+			src = refnumtoa(&peer->srcadr);
 		else
 #endif
-			src = ntoa(&peer->srcadr);
+			src = stoa(&peer->srcadr);
 
 		peer->last_event = (u_char)(err & ~PEER_EVENT);
 		if (peer->num_events < CTL_PEER_MAXEVENTS)
@@ -2621,10 +2711,10 @@ report_event(
 		 * variables. Don't send crypto strings.
 		 */
 		for (i = 1; i <= CS_MAXCODE; i++) {
-#ifdef PUBKEY
+#ifdef OPENSSL
 			if (i > CS_VARLIST)
 				continue;
-#endif /* PUBKEY */
+#endif /* OPENSSL */
 			ctl_putsys(i);
 		}
 #ifdef REFCLOCK
@@ -2650,7 +2740,7 @@ report_event(
 					    strlen(kv->text), 0);
 			free_varlist(clock_stat.kv_list);
 		}
-#endif /*REFCLOCK*/
+#endif /* REFCLOCK */
 	} else {
 		rpkt.associd = htons(peer->associd);
 		rpkt.status = htons(ctlpeerstatus(peer));
@@ -2658,12 +2748,13 @@ report_event(
 		/*
 		 * Dump it all. Later, maybe less.
 		 */
-		for (i = 1; i <= CP_MAXCODE; i++)
-#ifdef PUBKEY
+		for (i = 1; i <= CP_MAXCODE; i++) {
+#ifdef OPENSSL
 			if (i > CP_VARLIST)
 				continue;
-#endif /* PUBKEY */
+#endif /* OPENSSL */
 			ctl_putpeer(i, peer);
+		}
 #ifdef REFCLOCK
 		/*
 		 * for clock exception events: add clock variables to
@@ -2689,7 +2780,7 @@ report_event(
 					    strlen(kv->text), 0);
 			free_varlist(clock_stat.kv_list);
 		}
-#endif /*REFCLOCK*/
+#endif /* REFCLOCK */
 	}
 
 	/*
@@ -2743,7 +2834,7 @@ char *
 add_var(
 	struct ctl_var **kv,
 	u_long size,
-	int def
+	u_short def
 	)
 {
 	register u_long c;
@@ -2772,7 +2863,7 @@ set_var(
 	struct ctl_var **kv,
 	const char *data,
 	u_long size,
-	int def
+	u_short def
 	)
 {
 	register struct ctl_var *k;
@@ -2783,7 +2874,8 @@ set_var(
 	if (!data || !size)
 		return;
 
-	if ((k = *kv)) {
+	k = *kv;
+	if (k != NULL) {
 		while (!(k->flags & EOV)) {
 			s = data;
 			t = k->text;
@@ -2818,7 +2910,7 @@ void
 set_sys_var(
 	char *data,
 	u_long size,
-	int def
+	u_short def
 	)
 {
 	set_var(&ext_sys_var, data, size, def);

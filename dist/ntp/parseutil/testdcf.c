@@ -1,4 +1,4 @@
-/*	$NetBSD: testdcf.c,v 1.1.1.1 2000/03/29 12:38:56 simonb Exp $	*/
+/*	$NetBSD: testdcf.c,v 1.1.1.2 2003/12/04 16:05:32 drochner Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/v4/parseutil/testdcf.c,v 3.18 1996/12/01 16:05:04 kardel Exp
@@ -18,21 +18,19 @@
  * written consent of the author.
  */
 
+#include "ntp_stdlib.h"
+
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <termios.h>
-#include <sys/types.h>
-#include <sys/time.h>
-
-#include "ntp_stdlib.h"
 
 /*
  * state flags
  */
 #define DCFB_ANNOUNCE           0x0001 /* switch time zone warning (DST switch) */
 #define DCFB_DST                0x0002 /* DST in effect */
-#define DCFB_LEAP		0x0004 /* LEAP warning (1 hour prior to occurence) */
+#define DCFB_LEAP		0x0004 /* LEAP warning (1 hour prior to occurrence) */
 #define DCFB_ALTERNATE		0x0008 /* alternate antenna used */
 
 struct clocktime		/* clock time broken up from time code */

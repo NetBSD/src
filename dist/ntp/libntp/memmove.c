@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.c,v 1.1.1.1 2000/03/29 12:38:50 simonb Exp $	*/
+/*	$NetBSD: memmove.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,6 +49,8 @@ static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #include <sys/types.h>
 #endif
 #include <string.h>
+
+#include "l_stdlib.h"
 
 /*
  * sizeof(word) MUST BE A POWER OF TWO
@@ -105,7 +107,8 @@ memmove(
 		 * Copy whole words, then mop up any trailing bytes.
 		 */
 		t = length / wsize;
-		TLOOP(*(word *)dst = *(word *)src; src += wsize; dst += wsize);
+		TLOOP(*(word *)dst = *(const word *)src; src += wsize;
+		    dst += wsize);
 		t = length & wmask;
 		TLOOP(*dst++ = *src++);
 	} else {
@@ -126,7 +129,8 @@ memmove(
 			TLOOP1(*--dst = *--src);
 		}
 		t = length / wsize;
-		TLOOP(src -= wsize; dst -= wsize; *(word *)dst = *(word *)src);
+		TLOOP(src -= wsize; dst -= wsize;
+		    *(word *)dst = *(const word *)src);
 		t = length & wmask;
 		TLOOP(*--dst = *--src);
 	}

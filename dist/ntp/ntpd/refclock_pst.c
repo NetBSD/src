@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_pst.c,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: refclock_pst.c,v 1.1.1.2 2003/12/04 16:05:29 drochner Exp $	*/
 
 /*
  * refclock_pst - clock driver for PSTI/Traconex WWV/WWVH receivers
@@ -10,14 +10,13 @@
 
 #if defined(REFCLOCK) && defined(CLOCK_PST)
 
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/time.h>
-
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
 #include "ntp_stdlib.h"
+
+#include <stdio.h>
+#include <ctype.h>
 
 /*
  * This driver supports the PSTI 1010 and Traconex 1020 WWV/WWVH
@@ -74,7 +73,7 @@
 /*
  * Interface definitions
  */
-#define	DEVICE		"/dev/pst%d" /* device name and unit */
+#define	DEVICE		"/dev/wwv%d" /* device name and unit */
 #define	SPEED232	B9600	/* uart speed (9600 baud) */
 #define	PRECISION	(-10)	/* precision assumed (about 1 ms) */
 #define	WWVREFID	"WWV\0"	/* WWV reference ID */
@@ -87,7 +86,7 @@
  * Unit control structure
  */
 struct pstunit {
-	u_char	tcswitch;	/* timecode switch */
+	int	tcswitch;	/* timecode switch */
 	char	*lastptr;	/* pointer to timecode data */
 };
 
@@ -158,9 +157,9 @@ pst_start(
 	 * Initialize miscellaneous variables
 	 */
 	peer->precision = PRECISION;
-	peer->burst = NSTAGE;
 	pp->clockdesc = DESCRIPTION;
 	memcpy((char *)&pp->refid, WWVREFID, 4);
+	peer->burst = MAXSTAGE;
 	return (1);
 }
 
@@ -217,17 +216,12 @@ pst_receive(
 	 * Note we get a buffer and timestamp for each <cr>, but only
 	 * the first timestamp is retained.
 	 */
-	if (!up->tcswitch)
+	if (up->tcswitch == 0)
 		pp->lastrec = trtmp;
 	up->tcswitch++;
 	pp->lencode = up->lastptr - pp->a_lastcode;
 	if (up->tcswitch < 3)
 		return;
-#ifdef DEBUG
-	if (debug)
-		printf("pst: timecode %d %s\n", pp->lencode,
-		    pp->a_lastcode);
-#endif
 
 	/*
 	 * We get down to business, check the timecode format and decode
@@ -243,13 +237,14 @@ pst_receive(
 	 * Timecode format:
 	 * "ahh:mm:ss.fffs yy/dd/mm/ddd frdzycchhSSFTttttuuxx"
 	 */
-	if (sscanf(pp->a_lastcode, "%c%2d:%2d:%2d.%3d%c %9s%3d%13s%4ld",
-	    &ampmchar, &pp->hour, &pp->minute, &pp->second,
-	    &pp->msec, &daychar, junque, &pp->day,
-	    info, &ltemp) != 10) {
+	if (sscanf(pp->a_lastcode,
+	    "%c%2d:%2d:%2d.%3ld%c %9s%3d%13s%4ld",
+	    &ampmchar, &pp->hour, &pp->minute, &pp->second, &pp->nsec,
+	    &daychar, junque, &pp->day, info, &ltemp) != 10) {
 		refclock_report(peer, CEVNT_BADREPLY);
 		return;
 	}
+	pp->nsec *= 1000000;
 
 	/*
 	 * Decode synchronization, quality and last update. If
@@ -266,7 +261,9 @@ pst_receive(
 		memcpy((char *)&pp->refid, WWVREFID, 4);
 	if (peer->stratum <= 1)
 		peer->refid = pp->refid;
-	pp->disp = PST_PHI * ltemp;
+	if (ltemp == 0)
+		pp->lastref = pp->lastrec;
+	pp->disp = PST_PHI * ltemp * 60;
 
 	/*
 	 * Process the new sample in the median filter and determine the
@@ -293,8 +290,10 @@ pst_poll(
 	/*
 	 * Time to poll the clock. The PSTI/Traconex clock responds to a
 	 * "QTQDQMT" by returning a timecode in the format specified
-	 * above. If nothing is heard from the clock for two polls,
-	 * declare a timeout and keep going.
+	 * above. Note there is no checking on state, since this may not
+	 * be the only customer reading the clock. Only one customer
+	 * need poll the clock; all others just listen in. If the clock
+	 * becomes unreachable, declare a timeout and keep going.
 	 */
 	pp = peer->procptr;
 	up = (struct pstunit *)pp->unitptr;
@@ -302,17 +301,21 @@ pst_poll(
 	up->lastptr = pp->a_lastcode;
 	if (write(pp->io.fd, "QTQDQMT", 6) != 6)
 		refclock_report(peer, CEVNT_FAULT);
-	else
-		pp->polls++;
 	if (peer->burst > 0)
 		return;
 	if (pp->coderecv == pp->codeproc) {
 		refclock_report(peer, CEVNT_TIMEOUT);
 		return;
 	}
-	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 	refclock_receive(peer);
-	peer->burst = NSTAGE;
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
+#ifdef DEBUG
+	if (debug)
+		printf("pst: timecode %d %s\n", pp->lencode,
+		    pp->a_lastcode);
+#endif
+	peer->burst = MAXSTAGE;
+	pp->polls++;
 }
 
 #else

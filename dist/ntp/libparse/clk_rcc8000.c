@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_rcc8000.c,v 1.1.1.1 2000/03/29 12:38:51 simonb Exp $	*/
+/*	$NetBSD: clk_rcc8000.c,v 1.1.1.2 2003/12/04 16:05:25 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libparse/clk_rcc8000.c,v 4.6 1999/11/28 09:13:51 kardel RELEASE_19991128_A
@@ -20,9 +20,6 @@
 #endif
 
 #if defined(REFCLOCK) && defined(CLOCK_PARSE) && defined(CLOCK_RCC8000)
-
-#include <sys/types.h>
-#include <sys/time.h>
 
 #include "ntp_fp.h"
 #include "ntp_unixtime.h"
@@ -145,7 +142,7 @@ inp_rcc8000(
 {
 	unsigned int rtc;
 	
-	parseprintf(DD_PARSE, ("inp_rcc8000(0x%x, 0x%x, ...)\n", (int)parseio, (int)ch));
+	parseprintf(DD_PARSE, ("inp_rcc8000(0x%lx, 0x%x, ...)\n", (long)parseio, ch));
 	
 	switch (ch)
 	{

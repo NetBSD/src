@@ -1,10 +1,12 @@
-/*	$NetBSD: ntpdate.h,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: ntpdate.h,v 1.1.1.2 2003/12/04 16:05:31 drochner Exp $	*/
 
 /*
  * ntpdate.h - declarations for the ntpdate and ntptimeset programs
  */
 
 #include "ntp_malloc.h"
+
+extern void	loadservers	P((char *cfgpath));
 
 /*
  * The server structure is a much simplified version of the
@@ -15,7 +17,7 @@
  */
 struct server {
 	struct server *next_server;	/* next server in build list */
-	struct sockaddr_in srcadr;	/* address of remote host */
+	struct sockaddr_storage srcadr;	/* address of remote host */
 	u_char version;			/* version to use */
 	u_char leap;			/* leap indicator */
 	u_char stratum;			/* stratum of remote server */
@@ -63,6 +65,8 @@ struct server {
  */
 #define	NTPDATE_THRESHOLD	(FP_SECOND >> 1)	/* 1/2 second */
 
+#define NTP_MAXAGE	86400	/* one day in seconds */
+
 /*
  * When doing adjustments, ntpdate actually overadjusts (currently
  * by 50%, though this may change).  While this will make it take longer
@@ -95,3 +99,8 @@ struct server {
 #define	DEFMAXPERIOD	60		/* maximum time to wait */
 #define	DEFMINSERVERS	3		/* minimum responding servers */
 #define	DEFMINVALID	1		/* mimimum servers with valid time */
+
+/*
+ * Define the max number of sockets we can open
+ */
+#define MAX_AF 2
