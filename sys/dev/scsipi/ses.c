@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.27 2005/01/31 21:13:16 reinoud Exp $ */
+/*	$NetBSD: ses.c,v 1.28 2005/01/31 23:06:41 reinoud Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.27 2005/01/31 21:13:16 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.28 2005/01/31 23:06:41 reinoud Exp $");
 
 #include "opt_scsi.h"
 
@@ -157,9 +157,9 @@ struct ses_softc {
 	encvec		ses_vec;	/* vector to handlers */
 	void *		ses_private;	/* per-type private data */
 	encobj *	ses_objmap;	/* objects */
-	u_int32_t	ses_nobjects;	/* number of objects */
+	uint32_t	ses_nobjects;	/* number of objects */
 	ses_encstat	ses_encstat;	/* overall status */
-	u_int8_t	ses_flags;
+	uint8_t	ses_flags;
 };
 #define	SES_FLAG_INVALID	0x01
 #define	SES_FLAG_OPEN		0x02
@@ -352,7 +352,7 @@ sesclose(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 static int
-sesioctl(dev_t dev, u_long cmd, caddr_t arg_addr, int flag, struct proc *p)
+sesioctl(dev_t dev, ulong cmd, caddr_t arg_addr, int flag, struct proc *p)
 {
 	ses_encstat tmp;
 	ses_objstat objs;

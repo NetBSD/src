@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.226 2004/08/21 21:29:39 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.227 2005/01/31 23:06:41 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.226 2004/08/21 21:29:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.227 2005/01/31 23:06:41 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,7 +441,7 @@ scsibusprint(void *aux, const char *pnp)
 {
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_inquiry_pattern *inqbuf;
-	u_int8_t type;
+	uint8_t type;
 	const char *dtype;
 	char vendor[33], product[65], revision[17];
 	int target, lun;
@@ -791,7 +791,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	/* Now go ask the device all about itself. */
 	memset(&inqbuf, 0, sizeof(inqbuf));
 	{
-		u_int8_t *extension = &inqbuf.flags1;
+		uint8_t *extension = &inqbuf.flags1;
 		int len = 0;
 		while (len < 3)
 			extension[len++] = '\0';
@@ -1017,7 +1017,7 @@ scsibusclose(dev_t dev, int flag, int fmt, struct proc *p)
 }
 
 static int
-scsibusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+scsibusioctl(dev_t dev, ulong cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
 	struct scsipi_channel *chan = sc->sc_channel;

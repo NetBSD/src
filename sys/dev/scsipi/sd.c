@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.233 2005/01/31 21:13:16 reinoud Exp $	*/
+/*	$NetBSD: sd.c,v 1.234 2005/01/31 23:06:41 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.233 2005/01/31 21:13:16 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.234 2005/01/31 23:06:41 reinoud Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -105,9 +105,9 @@ static void	sddone(struct scsipi_xfer *, int);
 static void	sd_shutdown(void *);
 static int	sd_interpret_sense(struct scsipi_xfer *);
 
-static int	sd_mode_sense(struct sd_softc *, u_int8_t, void *, size_t, int,
+static int	sd_mode_sense(struct sd_softc *, uint8_t, void *, size_t, int,
 		    int, int *);
-static int	sd_mode_select(struct sd_softc *, u_int8_t, void *, size_t, int,
+static int	sd_mode_select(struct sd_softc *, uint8_t, void *, size_t, int,
 		    int);
 static int	sd_get_simplifiedparms(struct sd_softc *, struct disk_parms *,
 		    int);
@@ -275,11 +275,12 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	switch (result) {
 	case SDGP_RESULT_OK:
 		format_bytes(pbuf, sizeof(pbuf),
-		    (u_int64_t)dp->disksize * dp->blksize);
+		    (uint64_t)dp->disksize * dp->blksize);
 	        aprint_normal(
-		"%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect x %llu sectors",
+		"%s, %" PRIu32 " cyl, %" PRIu32" head, %" PRIu32 " sec, " \
+		"%" PRIu32 " bytes/sect x %" PRIu64" sectors",
 		    pbuf, dp->cyls, dp->heads, dp->sectors, dp->blksize,
-		    (unsigned long long)dp->disksize);
+		    (uint64_t) dp->disksize);
 		break;
 
 	case SDGP_RESULT_OFFLINE:
@@ -999,7 +1000,7 @@ sdwrite(dev_t dev, struct uio *uio, int ioflag)
  * Knows about the internals of this device
  */
 static int
-sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+sdioctl(dev_t dev, ulong cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
@@ -1571,7 +1572,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 }
 
 static int
-sd_mode_sense(struct sd_softc *sd, u_int8_t byte2, void *sense, size_t size,
+sd_mode_sense(struct sd_softc *sd, uint8_t byte2, void *sense, size_t size,
     int page, int flags, int *big)
 {
 
@@ -1590,7 +1591,7 @@ sd_mode_sense(struct sd_softc *sd, u_int8_t byte2, void *sense, size_t size,
 }
 
 static int
-sd_mode_select(struct sd_softc *sd, u_int8_t byte2, void *sense, size_t size,
+sd_mode_select(struct sd_softc *sd, uint8_t byte2, void *sense, size_t size,
     int flags, int big)
 {
 
@@ -1617,16 +1618,16 @@ sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	struct {
 		struct scsipi_mode_header header;
 		/* no block descriptor */
-		u_int8_t pg_code; /* page code (should be 6) */
-		u_int8_t pg_length; /* page length (should be 11) */
-		u_int8_t wcd; /* bit0: cache disable */
-		u_int8_t lbs[2]; /* logical block size */
-		u_int8_t size[5]; /* number of log. blocks */
-		u_int8_t pp; /* power/performance */
-		u_int8_t flags;
-		u_int8_t resvd;
+		uint8_t pg_code; /* page code (should be 6) */
+		uint8_t pg_length; /* page length (should be 11) */
+		uint8_t wcd; /* bit0: cache disable */
+		uint8_t lbs[2]; /* logical block size */
+		uint8_t size[5]; /* number of log. blocks */
+		uint8_t pp; /* power/performance */
+		uint8_t flags;
+		uint8_t resvd;
 	} scsipi_sense;
-	u_int64_t sectors;
+	uint64_t sectors;
 	int error;
 
 	/*
@@ -1675,11 +1676,11 @@ sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 static int
 sd_get_capacity(struct sd_softc *sd, struct disk_parms *dp, int flags)
 {
-	u_int64_t sectors;
+	uint64_t sectors;
 	int error;
 #if 0
 	int i;
-	u_int8_t *p;
+	uint8_t *p;
 #endif
 
 	dp->disksize = sectors = scsipi_size(sd->sc_periph, flags);
@@ -1774,7 +1775,7 @@ sd_get_parms_page4(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	union scsi_disk_pages *pages;
 #if 0
 	int i;
-	u_int8_t *p;
+	uint8_t *p;
 #endif
 
 	byte2 = SMS_DBD;
@@ -1801,7 +1802,7 @@ again:
 		poffset += scsipi_sense.header.small.blk_desc_len;
 	}
 
-	pages = (void *)((u_long)&scsipi_sense + poffset);
+	pages = (void *)((uint32_t)&scsipi_sense + poffset);
 #if 0
 printf("page 4 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
 printf("page 4 pg_code=%d sense=%p/%p\n", pages->rigid_geometry.pg_code, &scsipi_sense, pages);
@@ -1849,7 +1850,7 @@ sd_get_parms_page5(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	union scsi_disk_pages *pages;
 #if 0
 	int i;
-	u_int8_t *p;
+	uint8_t *p;
 #endif
 
 	byte2 = SMS_DBD;
@@ -1876,7 +1877,7 @@ again:
 		poffset += scsipi_sense.header.small.blk_desc_len;
 	}
 
-	pages = (void *)((u_long)&scsipi_sense + poffset);
+	pages = (void *)((uint32_t)&scsipi_sense + poffset);
 #if 0
 printf("page 5 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
 printf("page 5 pg_code=%d sense=%p/%p\n", pages->flex_geometry.pg_code, &scsipi_sense, pages);

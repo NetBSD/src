@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.50 2004/09/18 00:08:16 mycroft Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.51 2005/01/31 23:06:41 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.50 2004/09/18 00:08:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.51 2005/01/31 23:06:41 reinoud Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -309,7 +309,7 @@ bad:
  * still be running in the context of the calling process
  */
 int
-scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
+scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, ulong cmd,
     caddr_t addr, int flag, struct proc *p)
 {
 	int error;

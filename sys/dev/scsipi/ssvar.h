@@ -1,4 +1,4 @@
-/*	$NetBSD: ssvar.h,v 1.12 2004/08/27 20:37:29 bouyer Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.13 2005/01/31 23:06:42 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -69,7 +69,7 @@ struct ss_softc {
 	struct scan_io sio;
 	struct bufq_state buf_queue;	/* the queue of pending IO operations */
 	struct callout sc_callout;	/* to restart the buf queue */
-	u_int quirks;			/* scanner is only mildly twisted */
+	uint quirks;			/* scanner is only mildly twisted */
 #define SS_Q_GET_BUFFER_SIZE	0x0001	/* poll for available data in ssread() */
 /* truncate to byte boundary is assumed by default unless one of these is set */
 #define SS_Q_PAD_TO_BYTE	0x0002	/* pad monochrome data to byte boundary */
