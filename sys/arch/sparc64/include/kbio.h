@@ -1,3 +1,3 @@
-/*       $NetBSD: kbio.h,v 1.2 2002/07/20 11:52:21 mrg Exp $        */
+/*	$NetBSD: kbio.h,v 1.3 2002/08/27 09:47:46 uwe Exp $	*/
 
-#include <sparc/kbio.h>
+#include <dev/sun/kbio.h>

@@ -1,3 +1,3 @@
-/*       $NetBSD: kbd.h,v 1.3 2002/07/20 11:52:21 mrg Exp $        */
+/*	$NetBSD: kbd.h,v 1.4 2002/08/27 09:47:45 uwe Exp $	*/
 
-#include <sparc/kbd.h>
+#include <dev/sun/kbd_reg.h>
