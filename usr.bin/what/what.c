@@ -1,4 +1,4 @@
-/*	$NetBSD: what.c,v 1.3 1994/11/17 06:59:40 jtc Exp $	*/
+/*	$NetBSD: what.c,v 1.4 1994/12/20 16:01:03 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,15 +43,18 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)what.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: what.c,v 1.3 1994/11/17 06:59:40 jtc Exp $";
+static char rcsid[] = "$NetBSD: what.c,v 1.4 1994/12/20 16:01:03 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+
+void search __P((void));
 
 /*
  * what
  */
 /* ARGSUSED */
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -69,6 +72,7 @@ main(argc, argv)
 	exit(0);
 }
 
+void
 search()
 {
 	register int c;
