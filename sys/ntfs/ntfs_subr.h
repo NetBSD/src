@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.h,v 1.4 1999/08/16 08:11:34 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.h,v 1.5 1999/09/04 18:56:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -71,8 +71,6 @@ struct ntvattr {
 #define va_a_ialloc	va_d.ialloc
 
 
-#define uastrcmp(a,b,c,d)	ntfs_uastrcmp(ntmp,a,b,c,d)
-
 #ifndef NTFS_DEBUG
 #define ntfs_ntref(i)	(i)->i_usecount++
 #else
@@ -85,18 +83,17 @@ struct ntvattr {
 int ntfs_procfixups __P(( struct ntfsmount *, u_int32_t, caddr_t, size_t ));
 int ntfs_parserun __P(( cn_t *, cn_t *, u_int8_t *, u_long, u_long *));
 int ntfs_runtocn __P(( cn_t *, struct ntfsmount *, u_int8_t *, u_long, cn_t));
-int ntfs_readntvattr_plain __P(( struct ntfsmount *, struct ntnode *, struct ntvattr *, off_t, size_t, void *,size_t *));
-int ntfs_readattr_plain __P(( struct ntfsmount *, struct ntnode *, u_int32_t, char *, off_t, size_t, void *,size_t *));
-int ntfs_readattr __P(( struct ntfsmount *, struct ntnode *, u_int32_t, char *, off_t, size_t, void *));
+int ntfs_readntvattr_plain __P(( struct ntfsmount *, struct ntnode *, struct ntvattr *, off_t, size_t, void *,size_t *, struct uio *));
+int ntfs_readattr_plain __P(( struct ntfsmount *, struct ntnode *, u_int32_t, char *, off_t, size_t, void *,size_t *, struct uio *));
+int ntfs_readattr __P(( struct ntfsmount *, struct ntnode *, u_int32_t, char *, off_t, size_t, void *, struct uio *));
 int ntfs_filesize __P(( struct ntfsmount *, struct fnode *, u_int64_t *, u_int64_t *));
 int ntfs_times __P(( struct ntfsmount *, struct ntnode *, ntfs_times_t *));
 struct timespec	ntfs_nttimetounix __P(( u_int64_t ));
 int ntfs_ntreaddir __P(( struct ntfsmount *, struct fnode *, u_int32_t, struct attr_indexentry **));
-int ntfs_uustricmp __P(( struct ntfsmount *, wchar *, int, wchar *, int ));
-int ntfs_uastricmp __P(( struct ntfsmount *, const wchar *, int, const char *,
-    int ));
-int ntfs_uastrcmp __P(( struct ntfsmount *, const wchar *, int, const char *,
-    int ));
+int ntfs_uustricmp __P((wchar *, int, wchar *, int ));
+int ntfs_uastricmp __P((const wchar *, int, const char *, int ));
+int ntfs_uastrcmp __P((const wchar *, int, const char *, int ));
+char ntfs_u28	__P((wchar));
 int ntfs_runtovrun __P(( cn_t **, cn_t **, u_long *, u_int8_t *));
 int ntfs_attrtontvattr __P(( struct ntfsmount *, struct ntvattr **, struct attr * ));
 void ntfs_freentvattr __P(( struct ntvattr * ));
@@ -112,8 +109,8 @@ void ntfs_ntrele __P((struct ntnode *));
 void ntfs_ntput __P((struct ntnode *));
 int ntfs_loadntnode __P(( struct ntfsmount *, struct ntnode * ));
 int ntfs_ntlookupattr __P((struct ntfsmount *, const char *, int, int *, char **));
-int ntfs_writentvattr_plain __P((struct ntfsmount *, struct ntnode *, struct ntvattr *, off_t, size_t, void *, size_t *));
-int ntfs_writeattr_plain __P((struct ntfsmount *, struct ntnode *, u_int32_t, char *, off_t, size_t, void *, size_t *));
+int ntfs_writentvattr_plain __P((struct ntfsmount *, struct ntnode *, struct ntvattr *, off_t, size_t, void *, size_t *, struct uio *));
+int ntfs_writeattr_plain __P((struct ntfsmount *, struct ntnode *, u_int32_t, char *, off_t, size_t, void *, size_t *, struct uio *));
 void ntfs_toupper_init __P((void));
 int ntfs_toupper_use __P((struct mount *, struct ntfsmount *));
 void ntfs_toupper_unuse __P((void));
