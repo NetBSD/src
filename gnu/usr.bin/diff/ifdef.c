@@ -19,7 +19,7 @@ file named COPYING.  Among other things, the copyright notice
 and this notice must be preserved on all copies.  */
 
 #ifndef lint
-static char *rcsid = "$Id: ifdef.c,v 1.4 1993/09/16 17:39:16 jtc Exp $";
+static char *rcsid = "$Id: ifdef.c,v 1.5 1993/09/29 21:37:11 jtc Exp $";
 #endif
 
 #include "diff.h"
@@ -144,17 +144,19 @@ format_group (out, format, endchar, groups)
 
 		for (i = 0; i < 2; i++)
 		  {
-		    if (isdigit (*f))
+		    unsigned char f0 = f[0];
+		    if (isdigit (f0))
 		      {
 			value[i] = atoi (f);
-			while (isdigit (*++f))
+			while (isdigit ((unsigned char) *++f))
 			  continue;
 		      }
 		    else
 		      {
-			value[i] = groups_letter_value (groups, *f++);
+			value[i] = groups_letter_value (groups, f0);
 			if (value[i] < 0)
 			  goto bad_format;
+			f++;
 		      }
 		    if (*f++ != "=?"[i])
 		      goto bad_format;

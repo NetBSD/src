@@ -18,7 +18,7 @@ along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char *rcsid = "$Id: analyze.c,v 1.4 1993/09/16 17:39:02 jtc Exp $";
+static char *rcsid = "$Id: analyze.c,v 1.5 1993/09/29 21:37:02 jtc Exp $";
 #endif
 
 /* The basic algorithm is described in:
@@ -312,7 +312,7 @@ compareseq (xoff, xlim, yoff, ylim)
    When we discard a line, we also mark it as a deletion or insertion
    so that it will be printed in the output.  */
 
-void
+static void
 discard_confusing_lines (filevec)
      struct file_data filevec[];
 {
@@ -776,9 +776,10 @@ diff_2_files (filevec, depth)
 
 	      /* If the buffers differ, the files differ.  */
 	      if (filevec[0].buffered_chars != filevec[1].buffered_chars
-		  || memcmp (filevec[0].buffer,
-			     filevec[1].buffer,
-			     filevec[0].buffered_chars) != 0)
+		  || (filevec[0].buffered_chars != 0
+		      && memcmp (filevec[0].buffer,
+				 filevec[1].buffer,
+				 filevec[0].buffered_chars) != 0))
 		{
 		  changes = 1;
 		  break;
