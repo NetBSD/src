@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.20 1997/10/13 00:46:19 explorer Exp $	*/
+/*	$NetBSD: conf.c,v 1.21 1997/10/14 10:02:49 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -116,6 +116,12 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 47: */
 	bdev_lkm_dummy(),		/* 48: */
 	bdev_lkm_dummy(),		/* 49: */
+	bdev_lkm_dummy(),		/* 50: */
+	bdev_lkm_dummy(),		/* 51: */
+	bdev_lkm_dummy(),		/* 52: */
+	bdev_lkm_dummy(),		/* 53: */
+	bdev_lkm_dummy(),		/* 54: */
+	bdev_lkm_dummy(),		/* 55: */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -133,7 +139,7 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "uk.h"
 #include "ss.h"
 #include "tun.h"
-#include "quadmouse.h"
+#include "qms.h"
 #include "pms.h"
 #include "beep.h"
 #include "kbd.h"
@@ -141,6 +147,7 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "cpu.h"
 #include "iic.h"
 #include "rtc.h"
+#include "vidcvideo.h"
 #include "ipfilter.h"
 #include "rnd.h"
 
@@ -151,12 +158,16 @@ struct cdevsw cdevsw[] = {
 	cdev_swap_init(1, sw),          /*  1: /dev/drum (swap pseudo-device) */
 	cdev_cn_init(1, cn),            /*  2: virtual console */
 	cdev_ctty_init(1,ctty),         /*  3: controlling terminal */
+#if     defined(RISCPC) || defined(RC7500)
 	cdev_physcon_init(NVT, physcon),  /*  4: RPC console */
+#else	/* RISCPC || RC7500 */
+	cdev_lkm_dummy(),		/*  4: */
+#endif	/* RISCPC || RC7500 */
         cdev_log_init(1,log),           /*  5: /dev/klog */
 	cdev_ptc_init(NPTY,ptc),        /*  6: pseudo-tty master */
 	cdev_tty_init(NPTY,pts),        /*  7: pseudo-tty slave */
 	cdev_lpt_init(NLPT,lpt),        /*  8: parallel printer */
-	cdev_mouse_init(NQUADMOUSE,quadmouse),       /* 9: quadmouse driver */
+	cdev_mouse_init(NQMS,qms),	/*  9: qms driver */
 	cdev_beep_init(NBEEP,beep),	/* 10: simple beep device */
 	cdev_kbd_init(NKBD,kbd),	/* 11: kbd device */
 	cdev_tty_init(NCOM,com),        /* 12: serial port */
@@ -184,7 +195,7 @@ struct cdevsw cdevsw[] = {
         cdev_fd_init(1,filedesc),       /* 34: file descriptor pseudo-device */
 	cdev_lkm_init(NLKM,lkm),        /* 35: loadable module driver */
 	cdev_audio_init(NAUDIO,audio),	/* 36: generic audio I/O */
-	cdev_vidcvid_init(1,vidcvideo),	/* 37: vidcvideo device */
+	cdev_vidcvid_init(NVIDCVIDEO,vidcvideo),	/* 37: vidcvideo device */
 	cdev_cpu_init(NCPU,cpu),	/* 38: cpu device */
 	cdev_lkm_dummy(),		/* 39: */
 	cdev_mouse_init(NPMS,pms),      /* 40: PS2 mouse driver */
@@ -197,7 +208,12 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 47: */
 	cdev_lkm_dummy(),		/* 48: */
 	cdev_lkm_dummy(),		/* 49: */
-	cdev_rnd_init(NRND,rnd),	/* 50: random source pseudo-device */
+	cdev_lkm_dummy(),		/* 50: */
+	cdev_lkm_dummy(),		/* 51: */
+	cdev_rnd_init(NRND,rnd),	/* 52: random source pseudo-device */
+	cdev_lkm_dummy(),		/* 53: */
+	cdev_lkm_dummy(),		/* 54: */
+	cdev_lkm_dummy(),		/* 55: */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -290,6 +306,11 @@ static int chrtoblktbl[] = {
     /* 48 */        NODEV,
     /* 49 */        NODEV,
     /* 50 */        NODEV,
+    /* 51 */        NODEV,
+    /* 52 */        NODEV,
+    /* 53 */        NODEV,
+    /* 54 */        NODEV,
+    /* 55 */        NODEV,
 };
 
 /*
@@ -322,16 +343,13 @@ chrtoblk(dev)
 
 cons_decl(rpcconsole);
 cons_decl(com);   
-       
+
 struct consdev constab[] = {
 #if (NVT + NRPC > 0)
 	cons_init(rpcconsole),
 #endif
-
-#ifdef notyet
 #if (NCOM > 0)
 	cons_init(com),
-#endif
 #endif
 	{ 0 },
 };
