@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.118.2.7 2000/01/15 17:21:21 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.118.2.8 2000/02/10 21:45:50 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.113.2.6 2000/01/15 17:20:12 he Exp 
+ *	NetBSD: pcidevs,v 1.113.2.7 2000/02/10 21:44:19 he Exp 
  */
 
 /*
@@ -2528,6 +2528,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ULSI Systems",
 	    "US201",
+	},
+	{
+	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5609,
+	    0,
+	    "US Robotics (3Com)",
+	    "3CP5609 PCI 16550 Modem",
 	},
 	{
 	    PCI_VENDOR_V3, PCI_PRODUCT_V3_V292PBC,
@@ -5605,6 +5611,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ALTEON, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Alteon",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_USR, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "US Robotics (3Com)",
 	    NULL,
 	},
 	{
