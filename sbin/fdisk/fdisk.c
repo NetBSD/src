@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.71 2003/10/08 04:25:44 lukem Exp $ */
+/*	$NetBSD: fdisk.c,v 1.72 2003/10/11 04:50:49 lukem Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.71 2003/10/08 04:25:44 lukem Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.72 2003/10/11 04:50:49 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,11 +59,12 @@ __RCSID("$NetBSD: fdisk.c,v 1.71 2003/10/08 04:25:44 lukem Exp $");
 #include <unistd.h>
 #include <util.h>
 
+#define	DEFAULT_BOOTDIR		"/usr/mdec"
+
 #if defined(__i386__) || defined(__x86_64__)
 #include <machine/cpu.h>
 #define BOOTSEL
 
-#define	DEFAULT_BOOTDIR		"/usr/mdec"
 #define	DEFAULT_BOOTCODE	"mbr"
 #define	DEFAULT_BOOTSELCODE	"mbr_bootsel"
 #define	DEFAULT_BOOTEXTCODE	"mbr_ext"
