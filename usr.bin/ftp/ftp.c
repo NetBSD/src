@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.50 1999/07/03 05:49:57 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.51 1999/07/10 19:41:01 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.50 1999/07/03 05:49:57 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.51 1999/07/10 19:41:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ hookup(host, port)
 	char *host;
 	char *port;
 {
-	int s, len, tos, error;
+	int s, len, error;
 	struct addrinfo hints, *res, *res0;
 	static char hostnamebuf[MAXHOSTNAMELEN];
 	char hbuf[MAXHOSTNAMELEN];
