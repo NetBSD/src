@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.431 2002/03/17 22:14:07 tshiozak Exp $
+#	$NetBSD: mi,v 1.432 2002/03/18 08:27:53 tshiozak Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2214,6 +2214,13 @@
 ./usr/share/man/cat3/lsearch.0	comp-c-catman
 ./usr/share/man/cat3/malloc.0	comp-c-catman
 ./usr/share/man/cat3/math.0	comp-c-catman
+./usr/share/man/cat3/mblen.0	comp-c-catman
+./usr/share/man/cat3/mbrlen.0	comp-c-catman
+./usr/share/man/cat3/mbrtowc.0	comp-c-catman
+./usr/share/man/cat3/mbsinit.0	comp-c-catman
+./usr/share/man/cat3/mbsrtowcs.0	comp-c-catman
+./usr/share/man/cat3/mbstowcs.0	comp-c-catman
+./usr/share/man/cat3/mbtowc.0	comp-c-catman
 ./usr/share/man/cat3/md2.0	comp-c-catman
 ./usr/share/man/cat3/md4.0	comp-c-catman
 ./usr/share/man/cat3/md5.0		comp-c-catman
@@ -2705,6 +2712,9 @@
 ./usr/share/man/cat3/vwarnx.0	comp-c-catman
 ./usr/share/man/cat3/warn.0	comp-c-catman
 ./usr/share/man/cat3/warnx.0	comp-c-catman
+./usr/share/man/cat3/wcrtomb.0	comp-c-catman
+./usr/share/man/cat3/wcsrtombs.0	comp-c-catman
+./usr/share/man/cat3/wcstombs.0	comp-c-catman
 ./usr/share/man/cat3/wcscat.0		comp-c-catman
 ./usr/share/man/cat3/wcschr.0		comp-c-catman
 ./usr/share/man/cat3/wcscmp.0		comp-c-catman
@@ -2720,6 +2730,7 @@
 ./usr/share/man/cat3/wcsrchr.0		comp-c-catman
 ./usr/share/man/cat3/wcsspn.0		comp-c-catman
 ./usr/share/man/cat3/wcsstr.0		comp-c-catman
+./usr/share/man/cat3/wctomb.0	comp-c-catman
 ./usr/share/man/cat3/wmemchr.0		comp-c-catman
 ./usr/share/man/cat3/wmemcmp.0		comp-c-catman
 ./usr/share/man/cat3/wmemcpy.0		comp-c-catman
@@ -4683,6 +4694,13 @@
 ./usr/share/man/man3/lsearch.3		comp-c-man
 ./usr/share/man/man3/malloc.3		comp-c-man
 ./usr/share/man/man3/math.3		comp-c-man
+./usr/share/man/man3/mblen.3	comp-c-man
+./usr/share/man/man3/mbrlen.3	comp-c-man
+./usr/share/man/man3/mbrtowc.3	comp-c-man
+./usr/share/man/man3/mbsinit.3	comp-c-man
+./usr/share/man/man3/mbsrtowcs.3	comp-c-man
+./usr/share/man/man3/mbstowcs.3	comp-c-man
+./usr/share/man/man3/mbtowc.3	comp-c-man
 ./usr/share/man/man3/md2.3		comp-c-man
 ./usr/share/man/man3/md4.3		comp-c-man
 ./usr/share/man/man3/md5.3		comp-c-man
@@ -5174,6 +5192,9 @@
 ./usr/share/man/man3/vwarnx.3		comp-c-man
 ./usr/share/man/man3/warn.3		comp-c-man
 ./usr/share/man/man3/warnx.3		comp-c-man
+./usr/share/man/man3/wcrtomb.3	comp-c-man
+./usr/share/man/man3/wcsrtombs.3	comp-c-man
+./usr/share/man/man3/wcstombs.3	comp-c-man
 ./usr/share/man/man3/wcscat.3		comp-c-man
 ./usr/share/man/man3/wcschr.3		comp-c-man
 ./usr/share/man/man3/wcscmp.3		comp-c-man
@@ -5189,6 +5210,7 @@
 ./usr/share/man/man3/wcsrchr.3		comp-c-man
 ./usr/share/man/man3/wcsspn.3		comp-c-man
 ./usr/share/man/man3/wcsstr.3		comp-c-man
+./usr/share/man/man3/wctomb.3	comp-c-man
 ./usr/share/man/man3/wmemchr.3		comp-c-man
 ./usr/share/man/man3/wmemcmp.3		comp-c-man
 ./usr/share/man/man3/wmemcpy.3		comp-c-man
