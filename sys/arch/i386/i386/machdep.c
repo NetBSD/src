@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.266 1997/11/19 11:11:26 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.267 1997/11/27 11:53:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -304,6 +304,22 @@ static int exec_nomid	__P((struct proc *, struct exec_package *));
 int	i386_mem_add_mapping __P((bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *));
 
+void cyrix6x86_cpu_setup __P((void));
+
+static __inline u_char
+cyrix_read_reg(u_char reg)
+{
+	outb(0x22, reg);
+	return inb(0x23);
+}
+
+static __inline void
+cyrix_write_reg(u_char reg, u_char data)
+{
+	outb(0x22, reg);
+	outb(0x23, data);
+}
+
 /*
  * Machine-dependent startup code
  */
@@ -325,6 +341,7 @@ cpu_startup()
 
 	printf(version);
 	identifycpu();
+
 	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
@@ -545,13 +562,20 @@ extern	char version[];
  * We deal with the rest in a different way.
  */
 struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
-	{ CPUVENDOR_INTEL, "Intel", "386SX",	CPUCLASS_386 },	/* CPU_386SX */
-	{ CPUVENDOR_INTEL, "Intel", "386DX",	CPUCLASS_386 },	/* CPU_386   */
-	{ CPUVENDOR_INTEL, "Intel", "486SX",	CPUCLASS_486 },	/* CPU_486SX */
-	{ CPUVENDOR_INTEL, "Intel", "486DX",	CPUCLASS_486 },	/* CPU_486   */
-	{ CPUVENDOR_CYRIX, "Cyrix", "486DLC",	CPUCLASS_486 },	/* CPU_486DLC */
-	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",		CPUCLASS_486 }, /* CPU_6x86 */
-	{ CPUVENDOR_NEXGEN,"NexGen","586",      CPUCLASS_386 }, /* CPU_NX586 */
+	{ CPUVENDOR_INTEL, "Intel", "386SX",	CPUCLASS_386,
+		NULL},				/* CPU_386SX */
+	{ CPUVENDOR_INTEL, "Intel", "386DX",	CPUCLASS_386,
+		NULL},				/* CPU_386   */
+	{ CPUVENDOR_INTEL, "Intel", "486SX",	CPUCLASS_486,
+		NULL},				/* CPU_486SX */
+	{ CPUVENDOR_INTEL, "Intel", "486DX",	CPUCLASS_486,
+		NULL},				/* CPU_486   */
+	{ CPUVENDOR_CYRIX, "Cyrix", "486DLC",	CPUCLASS_486,
+		NULL},				/* CPU_486DLC */
+	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",		CPUCLASS_486,
+		cyrix6x86_cpu_setup},	/* CPU_6x86 */
+	{ CPUVENDOR_NEXGEN,"NexGen","586",      CPUCLASS_386,
+		NULL},				/* CPU_NX586 */
 };
 
 const char *classnames[] = {
@@ -581,7 +605,8 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"486SX2", 0, "486DX2 W/B Enhanced",
 				"486DX4", 0, 0, 0, 0, 0, 0, 0,
 				"486"		/* Default */
-			}
+			},
+			NULL
 		},
 		/* Family 5 */
 		{
@@ -591,7 +616,8 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium (P24T)", "Pentium/MMX", "Pentium", 0,
 				"Pentium (P54C)", 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium"	/* Default */
-			}
+			},
+			NULL
 		},
 		/* Family 6 */
 		{
@@ -601,7 +627,8 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium Pro", 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro"	/* Default */
-			}
+			},
+			NULL
 		} }
 	},
 	{
@@ -620,6 +647,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Am5x86 W/B 133/160",
 				"Am486 or Am5x86"	/* Default */
 			},
+			NULL
 		},
 		/* Family 5 */
 		{
@@ -627,8 +655,9 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				"K5", "K5", "K5", "K5", 0, 0, "K6",
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
-				"K5 or K6",		/* Default */
+				"K5 or K6"		/* Default */
 			},
+			NULL
 		},
 		/* Family 6, not yet available from AMD */
 		{
@@ -638,6 +667,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
+			NULL
 		} }
 	},
 	{
@@ -651,6 +681,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"486"		/* Default */
 			},
+			NULL
 		},
 		/* Family 5 */
 		{
@@ -659,7 +690,8 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, "6x86", 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0,
 				"6x86"		/* Default */
-			}
+			},
+			cyrix6x86_cpu_setup
 		},
 		/* Family 6, not yet available from Cyrix */
 		{
@@ -667,12 +699,30 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				"M2", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"M2"		/* Default */
-			}
+			},
+			NULL
 		} }
 	}
 };
 
 #define CPUDEBUG
+
+void
+cyrix6x86_cpu_setup()
+{
+	/* set up various cyrix registers */
+	/* Enable suspend on halt */
+	cyrix_write_reg(0xc2, cyrix_read_reg(0xc2) | 0x08);
+	/* enable access to ccr4/ccr5 */
+	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) | 0x10);
+	/* cyrix's workaround  for the "coma bug" */
+	cyrix_write_reg(0x31, cyrix_read_reg(0x31) | 0xf8);
+	cyrix_write_reg(0x32, cyrix_read_reg(0x32) | 0x7f);
+	cyrix_write_reg(0x33, cyrix_read_reg(0x33) & ~0xff);
+	cyrix_write_reg(0x3c, cyrix_read_reg(0x3c) | 0x87);
+	/* disable access to ccr4/ccr5 */
+	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
+}
 
 void
 identifycpu()
@@ -683,6 +733,7 @@ identifycpu()
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif;
 	struct cpu_cpuid_nameclass *cpup = NULL;
+	void (*cpu_setup) __P((void));
 
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
@@ -694,6 +745,7 @@ identifycpu()
 		vendor = i386_nocpuid_cpus[cpu].cpu_vendor;
 		vendorname = i386_nocpuid_cpus[cpu].cpu_vendorname;
 		class = i386_nocpuid_cpus[cpu].cpu_class;
+		cpu_setup = i386_nocpuid_cpus[cpu].cpu_setup;
 		modifier = "";
 	} else {
 		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
@@ -727,6 +779,7 @@ identifycpu()
 			class = family - 3;
 			modifier = "";
 			name = "";
+			cpu_setup = NULL;
 		} else {
 			vendor = cpup->cpu_vendor;
 			vendorname = cpup->cpu_vendorname;
@@ -741,6 +794,7 @@ identifycpu()
 			if (name == NULL)
 			    name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
 			class = cpup->cpu_family[i].cpu_class;
+			cpu_setup = cpup->cpu_family[i].cpu_setup;
 		}
 	}
 
@@ -794,6 +848,9 @@ identifycpu()
 		break;
 	}
 
+	/* configure the CPU if needed */
+	if (cpu_setup != NULL)
+		cpu_setup();
 	if (cpu == CPU_486DLC) {
 #ifndef CYRIX_CACHE_WORKS
 		printf("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 1997/09/20 12:40:25 drochner Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 1997/11/27 11:53:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -105,6 +105,7 @@ struct cpu_nocpuid_nameclass {
 	const char *cpu_vendorname;
 	const char *cpu_name;
 	int cpu_class;
+	void (*cpu_setup) __P((void));
 };
 
 
@@ -115,6 +116,7 @@ struct cpu_cpuid_nameclass {
 	struct cpu_cpuid_family {
 		int cpu_class;
 		const char *cpu_models[CPU_MAXMODEL+2];
+		void (*cpu_setup) __P((void));
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
