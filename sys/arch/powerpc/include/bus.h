@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2001/07/19 15:32:17 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 2001/12/10 20:30:21 briggs Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -119,6 +119,7 @@ struct powerpc_bus_space {
 	bus_addr_t pbs_offset;
 	bus_addr_t pbs_base;
 	bus_addr_t pbs_limit;
+	paddr_t (*pbs_mmap) __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
 	int (*pbs_map) __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *));
 	void (*pbs_unmap) __P((bus_space_tag_t, bus_space_handle_t,
@@ -146,6 +147,16 @@ struct powerpc_bus_space {
  */
 
 #define	__BUS_SPACE_HAS_STREAM_METHODS
+
+/*
+ *	paddr_t bus_space_mmap  __P((bus_space_tag_t t, bus_addr_t addr,
+ *	    off_t offset, int prot, int flags));
+ *
+ * Mmap a region of bus space.
+ */
+
+#define bus_space_mmap(t, b, o, p, f)					\
+    ((*(t)->pbs_mmap)((t), (b), (o), (p), (f)))
 
 /*
  *	int bus_space_map  __P((bus_space_tag_t t, bus_addr_t addr,
