@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.26 2000/08/07 14:29:58 ad Exp $
+.\"	$NetBSD: isa.4,v 1.27 2001/04/05 12:47:05 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -137,8 +137,8 @@ NS8250-, NS16450-, and NS16550-based serial ports.
 .It cy
 Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications cards.
 .It ioat
-.Tn BOCA Research 
-IOAT66 
+.Tn BOCA Research
+IOAT66
 serial interfaces.
 .It lpt
 Standard
@@ -193,12 +193,6 @@ Fujitsu FMV-181 and FMV-182 interfaces.
 .\" Broken driver for HP -relabelled
 .\" .Tn Ethernet
 .\" cards.
-.It ie
-.Tn Ethernet
-interfaces based on Intel 82586
-.Tn Ethernet
-chip,
-including AT&T Starlan-10, AT&T EN100, AT&T Starlan Fibre, and 3Com 3c507.
 .It ix
 Intel EtherExpress/16
 .Tn Ethernet
@@ -259,6 +253,8 @@ compatible chips.
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width pcdisplay -offset indent
+.It ega
+EGA graphics boards.
 .It lm
 National Semiconductor LM78, LM79 and compatible hardware monitors.
 .It pcdisplay
@@ -299,6 +295,7 @@ devices.
 .Xr intro 4 ,
 .Xr aha 4 ,
 .Xr ahc 4 ,
+.Xr ai 4 ,
 .Xr aic 4 ,
 .Xr aria 4 ,
 .Xr ast 4 ,
@@ -309,12 +306,13 @@ devices.
 .Xr cy 4 ,
 .Xr dpt 4 ,
 .Xr ec 4 ,
+.Xr ef 4 ,
 .Xr el 4 ,
 .Xr ep 4 ,
 .Xr ess 4 ,
 .Xr gus 4 ,
-.Xr ie 4 ,
 .Xr isapnp 4 ,
+.Xr ix 4 ,
 .Xr iy 4 ,
 .Xr joy 4 ,
 .Xr lc 4 ,
