@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.31 1997/11/01 14:36:49 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.32 1997/11/02 00:18:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.31 1997/11/01 14:36:49 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.32 1997/11/02 00:18:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -785,7 +785,7 @@ sethash(argc, argv)
 		char *ep;
 
 		nmark = strtol(argv[1], &ep, 10);
-		if (nmark < 1 || *ep == '\0') {
+		if (nmark < 1 || *ep != '\0') {
 			printf("mark: bad bytecount value `%s'.\n", argv[1]);
 			code = -1;
 			return;
