@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.14 1998/07/28 17:44:24 mycroft Exp $	*/
+/*	$NetBSD: options.c,v 1.15 1999/01/20 14:45:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.14 1998/07/28 17:44:24 mycroft Exp $");
+__RCSID("$NetBSD: options.c,v 1.15 1999/01/20 14:45:09 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -612,7 +612,7 @@ tar_options(argc, argv)
 	/*
 	 * process option flags
 	 */
-	while ((c = getoldopt(argc, argv, "b:cef:lmoprutvwxzBC:HLPXZ014578")) 
+	while ((c = getoldopt(argc, argv, "b:cef:lmoprutvwxzBC:HLPX:Z014578")) 
 	    != -1)  {
 		switch(c) {
 		case 'b':
@@ -746,9 +746,10 @@ tar_options(argc, argv)
 			break;
 		case 'X':
 			/*
-			 * do not pass over mount points in the file system
+			 * GNU tar compat: exclude the files listed in optarg
 			 */
-			Xflag = 1;
+			if (tar_gnutar_X_compat(optarg) != 0)
+				tar_usage();
 			break;
 		case 'Z':
 			/*
@@ -1403,7 +1404,7 @@ tar_usage()
 {
 	(void)fputs("usage: tar -{txru}[cevfblmopwBHLPX014578] [tapefile] ",
 		 stderr);
-	(void)fputs("[blocksize] file1 file2...\n", stderr);
+	(void)fputs("[blocksize] [exclude-file] file1 file2...\n", stderr);
 	exit(1);
 	/* NOTREACHED */
 }
