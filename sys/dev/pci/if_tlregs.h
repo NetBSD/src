@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlregs.h,v 1.3 1998/08/15 16:49:33 bouyer Exp $	*/
+/*	$NetBSD: if_tlregs.h,v 1.4 1998/08/15 16:58:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -176,7 +176,7 @@ struct tl_Tx_list {
 	struct tl_data_seg seg[TL_NSEG];
 };
 
-#define TL_TX_CSTAT_CPL		0x4000 /* Frame complete */
+#define TL_TX_CSTAT_CPLT	0x4000 /* Frame complete */
 #define TL_TX_CSTAT_EOC		0x0800 /* Tx EOC */
 
 /*
