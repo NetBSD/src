@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2000/05/05 21:34:32 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.26.4.1 2000/07/20 00:25:37 fvdl Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -18,10 +18,13 @@ DISKTYPE?=	floppy3
 DISKSIZE?=	2880
 BLOCK8K?=	179
 
-CLEANFILES+=	netbsd boot ustar.tmp
+CLEANFILES+=	netbsd boot ustar.tmp ${METAFILE}
 
 realall:	netbsd boot
-	tar cvf ${FSTMP} boot netbsd
+	if test "${METAFILE}" != ""; then \
+		touch ${METAFILE}; \
+	fi
+	tar cvf ${FSTMP} boot ${METAFILE} netbsd
 	@echo
 	@echo Making disk number one
 	dd if=/dev/zero of=${IMAGE} count=${DISKSIZE}
@@ -45,8 +48,17 @@ realall:	netbsd boot
 		fi; \
 		echo; \
                 bytes=$$(($$dksize * $$disks - $$size));    \
-                echo "There are $$bytes ($$(($$bytes / 1024))K) bytes free\
-                        on disk $$disks."; \
+		if test "${PAD}" = "yes"; then \
+			bytes=$$(($$bytes + 8 * 1024)); \
+			echo "Padding image with $$bytes bytes"; \
+			sectors=$$(($$bytes / 512)); \
+			ssize=$$(($$size / 512)); \
+			dd if=/dev/zero bs=512 seek=$${ssize} of=${IMAGE}.tmp \
+				count=$${sectors}; \
+                else \
+			echo "There are $$bytes ($$(($$bytes / 1024))K) bytes\
+				free on disk $$disks."; \
+		fi; \
 	)
 
 # Let the kernel on the diskette be called "netbsd" although
