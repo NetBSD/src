@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.64 2003/11/19 18:39:34 jonathan Exp $	*/
+/*	$NetBSD: in.h,v 1.65 2004/04/18 21:00:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -467,13 +467,13 @@ in_cksum_addword(u_int16_t a, u_int16_t b)
 extern	struct in_addr zeroin_addr;
 extern	u_char	ip_protox[];
 
-int	in_broadcast __P((struct in_addr, struct ifnet *));
-int	in_canforward __P((struct in_addr));
-int	in_cksum __P((struct mbuf *, int));
-int	in4_cksum __P((struct mbuf *, u_int8_t, int, int));
-void	in_delayed_cksum __P((struct mbuf *));
-int	in_localaddr __P((struct in_addr));
-void	in_socktrim __P((struct sockaddr_in *));
+int	in_broadcast (struct in_addr, struct ifnet *);
+int	in_canforward (struct in_addr);
+int	in_cksum (struct mbuf *, int);
+int	in4_cksum (struct mbuf *, u_int8_t, int, int);
+void	in_delayed_cksum (struct mbuf *);
+int	in_localaddr (struct in_addr);
+void	in_socktrim (struct sockaddr_in *);
 
 #define	in_hosteq(s,t)	((s).s_addr == (t).s_addr)
 #define	in_nullhost(x)	((x).s_addr == INADDR_ANY)
