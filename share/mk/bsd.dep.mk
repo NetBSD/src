@@ -1,7 +1,7 @@
-#	$NetBSD: bsd.dep.mk,v 1.31 2001/06/01 17:49:32 tv Exp $
+#	$NetBSD: bsd.dep.mk,v 1.32 2001/08/14 07:02:13 tv Exp $
 
 .PHONY:		cleandepend
-cleandir: cleandepend
+cleandir:	cleandepend
 
 MKDEP?=		mkdep
 
