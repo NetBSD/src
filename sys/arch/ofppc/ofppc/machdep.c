@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 1998/01/27 09:16:02 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 1998/02/02 03:01:28 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -216,20 +216,17 @@ initppc(startkernel, endkernel, args)
 		case EXC_DSMISS:
 			bcopy(&tlbdsmiss, (void *)EXC_DSMISS, (size_t)&tlbdsmsize);
 			break;
-#ifdef DDB
+#if defined(DDB) || NIPKDB > 0
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
+#if defined(DDB)
 			bcopy(&ddblow, (void *)exc, (size_t)&ddbsize);
-			break;
-#endif
-#if NIPKDB > 0
-		case EXC_PGM:
-		case EXC_TRC:
-		case EXC_BPT:
+#else
 			bcopy(&ipkdblow, (void *)exc, (size_t)&ipkdbsize);
-			break;
 #endif
+			break;
+#endif /* DDB || NIPKDB > 0 */
 		}
 
 	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
