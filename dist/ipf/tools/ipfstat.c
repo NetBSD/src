@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.2 2004/04/07 17:28:54 christos Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.3 2004/04/07 20:27:54 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1316,7 +1316,7 @@ ipfrstat_t *ifsp;
 	 */
 	PRINTF("\n");
 	for (i = 0; i < IPFT_SIZE; i++)
-		while (ipfrtab[i != NULL]) {
+		while (ipfrtab[i] != NULL) {
 			if (kmemcpy((char *)&ifr, (u_long)ipfrtab[i],
 				    sizeof(ifr)) == -1)
 				break;
