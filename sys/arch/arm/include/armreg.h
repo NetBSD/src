@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.8.6.6 2002/06/20 03:38:08 nathanw Exp $	*/
+/*	$NetBSD: armreg.h,v 1.8.6.7 2002/08/01 02:41:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -189,10 +189,14 @@
 #define CPU_ID_SA1110		0x6901b110
 #define CPU_ID_IXP1200		0x6901c120
 #define CPU_ID_80200		0x69052000
-#define CPU_ID_PXA250		0x69052100
-#define CPU_ID_PXA210		0x69052120
+#define CPU_ID_PXA250A		0x69052100 /* 1st version Core */
+#define CPU_ID_PXA210A		0x69052120 /* 1st version Core */
+#define CPU_ID_PXA250B		0x69052900 /* 3rd version Core */
+#define CPU_ID_PXA210B		0x69052920 /* 3rd version Core */
 #define	CPU_ID_80321_400	0x69052420
 #define	CPU_ID_80321_600	0x69052430
+#define	CPU_ID_80321_400_B0	0x69052c20
+#define	CPU_ID_80321_600_B0	0x69052c30
 
 /* ARM3-specific coprocessor 15 registers */
 #define ARM3_CP15_FLUSH		1

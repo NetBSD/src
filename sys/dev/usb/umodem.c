@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.39.2.4 2002/04/01 07:47:37 nathanw Exp $	*/
+/*	$NetBSD: umodem.c,v 1.39.2.5 2002/08/01 02:46:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.39.2.4 2002/04/01 07:47:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.39.2.5 2002/08/01 02:46:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,8 +236,8 @@ USB_ATTACH(umodem)
 		goto bad;
 	}
 
-	/* 
-	 * Find the bulk endpoints. 
+	/*
+	 * Find the bulk endpoints.
 	 * Iterate over all endpoints in the data interface and take note.
 	 */
 	uca.bulkin = uca.bulkout = -1;
@@ -427,7 +427,7 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		/* Currently, lsr is always zero. */
 		sc->sc_lsr = sc->sc_msr = 0;
 		mstatus = sc->sc_notify_buf.data[0];
-		
+
 		if (ISSET(mstatus, UCDC_N_SERIAL_RI))
 			sc->sc_msr |= UMSR_RI;
 		if (ISSET(mstatus, UCDC_N_SERIAL_DSR))
@@ -465,7 +465,7 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm)
 		return;
 	}
 	*acm = cad->bmCapabilities;
-} 
+}
 
 void
 umodem_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
@@ -533,7 +533,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 
 	if (sc->sc_dying)
 		return (EIO);
- 
+
 	DPRINTF(("umodemioctl: cmd=0x%08lx\n", cmd));
 
 	switch (cmd) {
@@ -660,7 +660,7 @@ umodem_set_line_coding(struct umodem_softc *sc, usb_cdc_line_state_t *state)
 
 	err = usbd_do_request(sc->sc_udev, &req, state);
 	if (err) {
-		DPRINTF(("umodem_set_line_coding: failed, err=%s\n", 
+		DPRINTF(("umodem_set_line_coding: failed, err=%s\n",
 			 usbd_errstr(err)));
 		return (err);
 	}

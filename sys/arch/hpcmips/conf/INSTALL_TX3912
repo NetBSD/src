@@ -1,7 +1,7 @@
 #
 # kernel config file for system install
 #
-# 	$NetBSD: INSTALL_TX3912,v 1.1.12.4 2002/04/17 00:03:05 nathanw Exp $
+# 	$NetBSD: INSTALL_TX3912,v 1.1.12.5 2002/08/01 02:41:49 nathanw Exp $
 #
 
 include		"arch/hpcmips/conf/TX3912"
@@ -16,3 +16,4 @@ options 	MEMORY_DISK_ROOT_SIZE=8192	# size of memory disk, in blocks
 
 #options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory

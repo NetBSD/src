@@ -1,4 +1,4 @@
-/*	$NetBSD: rlvar.h,v 1.1.2.2 2002/04/01 07:47:04 nathanw Exp $	*/
+/*	$NetBSD: rlvar.h,v 1.1.2.3 2002/08/01 02:45:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlvar.h,v 1.1.2.2 2002/04/01 07:47:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlvar.h,v 1.1.2.3 2002/08/01 02:45:34 nathanw Exp $");
 
 struct rlc_softc {
 	struct device sc_dev;
@@ -45,7 +45,7 @@ struct rlc_softc {
 	bus_space_handle_t sc_ioh;
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmam;
-	struct buf_queue sc_q;		/* Queue of waiting bufs */
+	struct bufq_state sc_q;		/* Queue of waiting bufs */
 	struct buf *sc_active;		/* Currently active buf */
 	caddr_t sc_bufaddr;		/* Current in-core address */
 	int sc_diskblk;			/* Current block on disk */

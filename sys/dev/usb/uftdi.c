@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.6.2.3 2002/06/20 03:46:54 nathanw Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.6.2.4 2002/08/01 02:45:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.6.2.3 2002/06/20 03:46:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.6.2.4 2002/08/01 02:45:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ USB_DECLARE_DRIVER(uftdi);
 USB_MATCH(uftdi)
 {
 	USB_MATCH_START(uftdi, uaa);
-	
+
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
@@ -207,7 +207,7 @@ USB_ATTACH(uftdi)
 			       ": %s\n", devname, usbd_errstr(err));
 			goto bad;
 		}
-		
+
 		addr = ed->bEndpointAddress;
 		dir = UE_GET_DIR(ed->bEndpointAddress);
 		attr = ed->bmAttributes & UE_XFERTYPE;
@@ -230,7 +230,7 @@ USB_ATTACH(uftdi)
 		       USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
-	
+
 	uca.portno = FTDI_PIT_SIOA;
 	/* bulkin, bulkout set above */
 	uca.ibufsize = UFTDIIBUFSIZE;
@@ -426,7 +426,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	struct uftdi_softc *sc = vsc;
 	usb_device_request_t req;
 	usbd_status err;
-	int rate, data;
+	int rate, data, flow;
 
 	DPRINTF(("uftdi_param: sc=%p\n", sc));
 
@@ -522,6 +522,24 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	if (err)
 		return (EIO);
 
+	if (ISSET(t->c_cflag, CRTSCTS)) {
+		flow = FTDI_SIO_RTS_CTS_HS;
+		USETW(req.wValue, 0);
+	} else if (ISSET(t->c_iflag, IXON|IXOFF)) {
+		flow = FTDI_SIO_XON_XOFF_HS;
+		USETW2(req.wValue, t->c_cc[VSTOP], t->c_cc[VSTART]);
+	} else {
+		flow = FTDI_SIO_DISABLE_FLOW_CTRL;
+		USETW(req.wValue, 0);
+	}
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = FTDI_SIO_SET_FLOW_CTRL;
+	USETW2(req.wIndex, flow, portno);
+	USETW(req.wLength, 0);
+	err = usbd_do_request(sc->sc_udev, &req, NULL);
+	if (err)
+		return (EIO);
+
 	return (0);
 }
 
@@ -547,7 +565,7 @@ uftdi_break(void *vsc, int portno, int onoff)
 	int data;
 
 	DPRINTF(("uftdi_break: sc=%p, port=%d onoff=%d\n", vsc, portno,
-		  onoff)); 
+		  onoff));
 
 	if (onoff) {
 		data = sc->last_lcr | FTDI_SIO_SET_BREAK;

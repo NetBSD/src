@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.19.2.5 2002/06/20 03:48:33 nathanw Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.19.2.6 2002/08/01 02:46:46 nathanw Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.19.2.5 2002/06/20 03:48:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.19.2.6 2002/08/01 02:46:46 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -187,6 +187,7 @@ in_gif_output(ifp, family, m)
 	if (dst->sin_family != sin_dst->sin_family ||
 	    dst->sin_addr.s_addr != sin_dst->sin_addr.s_addr) {
 		/* cache route doesn't match */
+		bzero(dst, sizeof(*dst));
 		dst->sin_family = sin_dst->sin_family;
 		dst->sin_len = sizeof(struct sockaddr_in);
 		dst->sin_addr = sin_dst->sin_addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.3.2.6 2002/06/24 22:09:23 nathanw Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.3.2.7 2002/08/01 02:44:12 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3.2.6 2002/06/24 22:09:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3.2.7 2002/08/01 02:44:12 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -175,8 +175,7 @@ irix_to_native_sigset(sss, bss)
 }
 
 void
-irix_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+irix_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -186,6 +185,7 @@ irix_sendsig(catcher, sig, mask, code)
 	struct frame *f;
 	int onstack;
 	int error;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct irix_sigframe sf;
  
 	f = (struct frame *)p->p_md.md_regs;
@@ -801,11 +801,10 @@ loop:
 			 * parent a SIGCHLD.  The rest of the cleanup will be
 			 * done when the old parent waits on the child.
 			 */
-			if ((q->p_flag & P_TRACED) &&
-			    q->p_oppid != q->p_pptr->p_pid) {
-				t = pfind(q->p_oppid);
+			if ((q->p_flag & P_TRACED) && q->p_opptr != q->p_pptr){
+				t = q->p_opptr;
 				proc_reparent(q, t ? t : initproc);
-				q->p_oppid = 0;
+				q->p_opptr = NULL;
 				q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
 				psignal(q->p_pptr, SIGCHLD);
 				wakeup((caddr_t)q->p_pptr);
@@ -936,7 +935,7 @@ irix_sys_sigaction(p, v, retval)
 	int signum;
 	struct svr4_sys_sigaction_args cup;
 	struct irix_emuldata *ied;
-#ifdef DBUG_IRIX
+#ifdef DEBUG_IRIX
 	void *sigtramp;
 #endif
 

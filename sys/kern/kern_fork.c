@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.13 2002/07/17 18:03:06 nathanw Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.14 2002/08/01 02:46:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.13 2002/07/17 18:03:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.14 2002/08/01 02:46:19 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -396,8 +396,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	if (flags & FORK_PPWAIT)
 		p2->p_flag |= P_PPWAIT;
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
-	p2->p_pptr = p1;
-	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
+	p2->p_pptr = (flags & FORK_NOWAIT) ? initproc : p1;
+	LIST_INSERT_HEAD(&p2->p_pptr->p_children, p2, p_sibling);
 	LIST_INIT(&p2->p_children);
 
 #ifdef KTRACE

@@ -1,8 +1,8 @@
-# 	$NetBSD: INSTALL,v 1.1.4.2 2002/06/20 03:42:25 nathanw Exp $
+# 	$NetBSD: INSTALL,v 1.1.4.3 2002/08/01 02:44:03 nathanw Exp $
 
 include "arch/walnut/conf/WALNUT"
 
-#ident 		"INSTALL-$Revision: 1.1.4.2 $"
+#ident 		"INSTALL-$Revision: 1.1.4.3 $"
 
 # DEBUG options turned on:
 
@@ -12,7 +12,9 @@ options 	DIAGNOSTIC
 options 	DEBUG
 #options 	SYSCALL_DEBUG
 #options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS

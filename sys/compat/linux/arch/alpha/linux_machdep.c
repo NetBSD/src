@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.15.2.10 2002/06/24 22:09:25 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.15.2.11 2002/08/01 02:44:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15.2.10 2002/06/24 22:09:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15.2.11 2002/08/01 02:44:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,14 +319,15 @@ void setup_linux_sigframe(tf, sig, mask)
  * specified pc, psl.
  */
 void
-linux_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+linux_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_tf;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 #ifdef notyet
 	struct linux_emuldata *edp;
 

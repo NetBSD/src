@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.19 2002/07/12 03:04:05 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.20 2002/08/01 02:46:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -45,6 +45,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
+#include "opt_kstack.h"
 #endif
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct */
@@ -99,7 +100,7 @@ struct emul {
 	const struct sysent *e_sysent;	/* System call array */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
-	void		(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
+	void		(*e_sendsig) __P((int, sigset_t *, u_long));
 	void		(*e_trapsignal) __P((struct lwp *, int, u_long));
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */
@@ -280,7 +281,7 @@ struct proc {
 #define	P_32		0x040000 /* 32-bit process (used on 64-bit kernels) */
 #define	P_INEXEC	0x100000 /* Process is exec'ing and cannot be traced */
 #define	P_SYSTRACE	0x200000 /* Process system call tracing active */
-
+#define	P_CHTRACED	0x400000 /* Child has been traced & reparented */
 
 /*
  * Macro to compute the exit signal to be delivered.
@@ -341,6 +342,7 @@ do {									\
 #define	FORK_SHARECWD	0x04		/* Share cdir/rdir/cmask */
 #define	FORK_SHAREFILES	0x08		/* Share file descriptors */
 #define	FORK_SHARESIGS	0x10		/* Share signal actions */
+#define	FORK_NOWAIT	0x20		/* Make init the parent of the child */
 
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
 extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;
@@ -439,6 +441,24 @@ void	p_sugid(struct proc*);
 
 #if defined(MULTIPROCESSOR)
 void	proc_trampoline_mp(void);	/* XXX */
+#endif
+
+#ifdef KSTACK_CHECK_MAGIC
+void kstack_setup_magic(const struct proc *);
+void kstack_check_magic(const struct proc *);
+#endif
+
+/*
+ * kernel stack paramaters
+ * XXX require sizeof(struct user)
+ */
+/* the lowest address of kernel stack */
+#ifndef KSTACK_LOWEST_ADDR
+#define	KSTACK_LOWEST_ADDR(p)	((caddr_t)ALIGN((p)->p_addr + 1))
+#endif
+/* size of kernel stack */
+#ifndef KSTACK_SIZE
+#define	KSTACK_SIZE	(USPACE - ALIGN(sizeof(struct user)))
 #endif
 
 #endif	/* _KERNEL */

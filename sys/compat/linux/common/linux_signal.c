@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.31.2.7 2002/07/12 01:40:02 nathanw Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.31.2.8 2002/08/01 02:44:18 nathanw Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.31.2.7 2002/07/12 01:40:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.31.2.8 2002/08/01 02:44:18 nathanw Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -323,7 +323,9 @@ linux_sys_rt_sigaction(l, v, retval)
 		obsa.sa_flags = 0;
 	} else {
 		error = sigaction1(p, linux_to_native_signo[sig],
-		    SCARG(uap, nsa) ? &nbsa : NULL, SCARG(uap, osa) ? &obsa : NULL);
+		    SCARG(uap, nsa) ? &nbsa : NULL,
+		    SCARG(uap, osa) ? &obsa : NULL,
+		    NULL, 0);
 		if (error)
 			return (error);
 	}

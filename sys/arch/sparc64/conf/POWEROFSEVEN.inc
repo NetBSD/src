@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.4.2.6 2002/06/20 03:41:18 nathanw Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.4.2.7 2002/08/01 02:43:34 nathanw Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -34,7 +34,6 @@ options 	BLINK			# Blink the system LED
 ## automagically determined at boot time.
 
 config		netbsd	root on ? type ?
-options 	NVNODE=7000
 
 ## UVM options.
 #options 	UVM_PAGE_TRKOWN
@@ -332,7 +331,16 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
-#pseudo-device	raid	4
+pseudo-device	raid	4
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.

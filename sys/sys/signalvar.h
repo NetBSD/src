@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.28.2.5 2002/04/01 07:49:12 nathanw Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.28.2.6 2002/08/01 02:46:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -47,7 +47,11 @@
  * Process signal actions, possibly shared between threads.
  */
 struct sigacts {
-	struct sigaction sa_sigact[NSIG];      /* disposition of signals */
+	struct sigact_sigdesc {
+		struct sigaction sd_sigact;
+		void *sd_tramp;
+		int sd_vers;
+	} sa_sigdesc[NSIG];		/* disposition of signals */
 
 	int	sa_refcnt;		/* reference count */
 };
@@ -83,8 +87,8 @@ struct	sigctx {
 /*
  * get signal action for process and signal; currently only for current process
  */
-#define SIGACTION(p, sig)	(p->p_sigacts->sa_sigact[(sig)])
-#define	SIGACTION_PS(ps, sig)	(ps->sa_sigact[(sig)])
+#define SIGACTION(p, sig)	(p->p_sigacts->sa_sigdesc[(sig)].sd_sigact)
+#define	SIGACTION_PS(ps, sig)	(ps->sa_sigdesc[(sig)].sd_sigact)
 
 /*
  * Mark that signals for a process need to be checked.
@@ -212,14 +216,16 @@ void	psignal1 __P((struct proc *p, int sig, int dolock));
 #define	psignal(p, sig)		psignal1((p), (sig), 1)
 #define	sched_psignal(p, sig)	psignal1((p), (sig), 0)
 void	siginit __P((struct proc *p));
-void	trapsignal __P((struct lwp *l, int sig, u_long code));
+void	trapsignal __P((struct lwp *p, int sig, u_long code));
 void	sigexit __P((struct lwp *, int));
+void	killproc __P((struct proc *, const char *));
 void	setsigvec __P((struct proc *, int, struct sigaction *));
 int	killpg1 __P((struct proc *, int, int, int));
 struct lwp *proc_unstop __P((struct proc *p));
 
 int	sigaction1 __P((struct proc *p, int signum, \
-	    const struct sigaction *nsa, struct sigaction *osa));
+	    const struct sigaction *nsa, struct sigaction *osa,
+	    void *, int));
 int	sigprocmask1 __P((struct proc *p, int how, \
 	    const sigset_t *nss, sigset_t *oss));
 void	sigpending1 __P((struct proc *p, sigset_t *ss));
@@ -239,7 +245,7 @@ void	psendsig __P((struct lwp *l, sig_t action, int sig, sigset_t *returnmask, u
 /*
  * Machine-dependent functions:
  */
-void	sendsig __P((sig_t action, int sig, sigset_t *returnmask, u_long code));
+void	sendsig __P((int sig, sigset_t *returnmask, u_long code));
 struct core;
 struct core32;
 int	cpu_coredump __P((struct lwp *, struct vnode *, struct ucred *,

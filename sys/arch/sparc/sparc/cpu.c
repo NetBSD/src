@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.124.4.5 2002/06/24 22:07:31 nathanw Exp $ */
+/*	$NetBSD: cpu.c,v 1.124.4.6 2002/08/01 02:43:27 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -783,6 +783,7 @@ void cpumatch_turbosparc __P((struct cpu_info *, struct module_info *, int));
 void getcacheinfo_sun4 __P((struct cpu_info *, int node));
 void getcacheinfo_sun4c __P((struct cpu_info *, int node));
 void getcacheinfo_obp __P((struct cpu_info *, int node));
+void getcacheinfo_sun4d __P((struct cpu_info *, int node));
 
 void sun4_hotfix __P((struct cpu_info *));
 void viking_hotfix __P((struct cpu_info *));
@@ -1273,90 +1274,6 @@ swift_mmu_enable()
 {
 }
 
-struct module_info module_viking = {
-	CPUTYP_UNKNOWN,		/* set in cpumatch() */
-	VAC_NONE,
-	cpumatch_viking,
-	getcacheinfo_obp,
-	viking_hotfix,
-	viking_mmu_enable,
-	viking_cache_enable,
-	4096,
-	viking_get_syncflt,
-	no_asyncflt_regs,
-	/* supersparcs use cached DVMA, no need to flush */
-	noop_cache_flush,
-	noop_vcache_flush_page,
-	noop_vcache_flush_segment,
-	noop_vcache_flush_region,
-	noop_vcache_flush_context,
-	viking_pcache_flush_page,
-	noop_pure_vcache_flush,
-	noop_cache_flush_all,
-	viking_memerr,
-	pmap_zero_page4m,
-	pmap_copy_page4m
-};
-
-void
-cpumatch_viking(sc, mp, node)
-	struct cpu_info *sc;
-	struct module_info *mp;
-	int	node;
-{
-	if (node == 0)
-		viking_hotfix(sc);
-}
-
-void
-viking_hotfix(sc)
-	struct cpu_info *sc;
-{
-	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
-
-	/* Test if we're directly on the MBus */
-	if ((pcr & VIKING_PCR_MB) == 0) {
-		sc->mxcc = 1;
-		sc->flags |= CPUFLG_CACHE_MANDATORY;
-		sc->zero_page = pmap_zero_page_viking_mxcc;
-		sc->copy_page = pmap_copy_page_viking_mxcc;
-		/*
-		 * Ok to cache PTEs; set the flag here, so we don't
-		 * uncache in pmap_bootstrap().
-		 */
-		if ((pcr & VIKING_PCR_TC) == 0)
-			printf("[viking: PCR_TC is off]");
-		else
-			sc->flags |= CPUFLG_CACHEPAGETABLES;
-	} else {
-		sc->cache_flush = viking_cache_flush;
-	}
-
-	/* XXX! */
-	if (sc->mxcc)
-		sc->cpu_type = CPUTYP_SS1_MBUS_MXCC;
-	else
-		sc->cpu_type = CPUTYP_SS1_MBUS_NOMXCC;
-}
-
-void
-viking_mmu_enable()
-{
-	int pcr;
-
-	pcr = lda(SRMMU_PCR, ASI_SRMMU);
-
-	if (cpuinfo.mxcc) {
-		if ((pcr & VIKING_PCR_TC) == 0) {
-			printf("[viking: turn on PCR_TC]");
-		}
-		pcr |= VIKING_PCR_TC;
-		cpuinfo.flags |= CPUFLG_CACHEPAGETABLES;
-	} else
-		pcr &= ~VIKING_PCR_TC;
-	sta(SRMMU_PCR, ASI_SRMMU, pcr);
-}
-
 
 /* ROSS Hypersparc */
 struct module_info module_hypersparc = {
@@ -1508,6 +1425,176 @@ turbosparc_hotfix(sc)
 }
 #endif /* SUN4M */
 
+#if defined(SUN4M)
+struct module_info module_viking = {
+	CPUTYP_UNKNOWN,		/* set in cpumatch() */
+	VAC_NONE,
+	cpumatch_viking,
+	getcacheinfo_obp,
+	viking_hotfix,
+	viking_mmu_enable,
+	viking_cache_enable,
+	4096,
+	viking_get_syncflt,
+	no_asyncflt_regs,
+	/* supersparcs use cached DVMA, no need to flush */
+	noop_cache_flush,
+	noop_vcache_flush_page,
+	noop_vcache_flush_segment,
+	noop_vcache_flush_region,
+	noop_vcache_flush_context,
+	viking_pcache_flush_page,
+	noop_pure_vcache_flush,
+	noop_cache_flush_all,
+	viking_memerr,
+	pmap_zero_page4m,
+	pmap_copy_page4m
+};
+#endif /* SUN4M */
+
+#if defined(SUN4M) || defined(SUN4D)
+void
+cpumatch_viking(sc, mp, node)
+	struct cpu_info *sc;
+	struct module_info *mp;
+	int	node;
+{
+	if (node == 0)
+		viking_hotfix(sc);
+}
+
+void
+viking_hotfix(sc)
+	struct cpu_info *sc;
+{
+	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
+
+	/* Test if we're directly on the MBus */
+	if ((pcr & VIKING_PCR_MB) == 0) {
+		sc->mxcc = 1;
+		sc->flags |= CPUFLG_CACHE_MANDATORY;
+		sc->zero_page = pmap_zero_page_viking_mxcc;
+		sc->copy_page = pmap_copy_page_viking_mxcc;
+		/*
+		 * Ok to cache PTEs; set the flag here, so we don't
+		 * uncache in pmap_bootstrap().
+		 */
+		if ((pcr & VIKING_PCR_TC) == 0)
+			printf("[viking: PCR_TC is off]");
+		else
+			sc->flags |= CPUFLG_CACHEPAGETABLES;
+	} else {
+		sc->cache_flush = viking_cache_flush;
+	}
+
+	/* XXX! */
+	if (sc->mxcc)
+		sc->cpu_type = CPUTYP_SS1_MBUS_MXCC;
+	else
+		sc->cpu_type = CPUTYP_SS1_MBUS_NOMXCC;
+}
+
+void
+viking_mmu_enable()
+{
+	int pcr;
+
+	pcr = lda(SRMMU_PCR, ASI_SRMMU);
+
+	if (cpuinfo.mxcc) {
+		if ((pcr & VIKING_PCR_TC) == 0) {
+			printf("[viking: turn on PCR_TC]");
+		}
+		pcr |= VIKING_PCR_TC;
+		cpuinfo.flags |= CPUFLG_CACHEPAGETABLES;
+	} else
+		pcr &= ~VIKING_PCR_TC;
+	sta(SRMMU_PCR, ASI_SRMMU, pcr);
+}
+#endif /* SUN4M || SUN4D */
+
+#if defined(SUN4D)
+void
+getcacheinfo_sun4d(sc, node)
+	struct	cpu_info *sc;
+	int	node;
+{
+	struct cacheinfo *ci = &sc->cacheinfo;
+	int i, l;
+
+	if (node == 0)
+		/* Bootstrapping */
+		return;
+
+	/*
+	 * The Sun4d always has TI TMS390Z55 Viking CPUs; we hard-code
+	 * much of the cache information here.
+	 */
+
+	ci->c_physical = 1;
+	ci->c_split = 1;
+
+	/* hwflush is used only by sun4/4c code */
+	ci->c_hwflush = 0; 
+
+	ci->ic_nlines = 0x00000040;
+	ci->ic_linesize = 0x00000040;
+	ci->ic_l2linesize = 6;
+	ci->ic_associativity = 0x00000005;
+	ci->ic_totalsize = ci->ic_linesize * ci->ic_nlines *
+	    ci->ic_associativity;
+
+	ci->dc_nlines = 0x00000080;
+	ci->dc_linesize = 0x00000020;
+	ci->dc_l2linesize = 5;
+	ci->dc_associativity = 0x00000004;
+	ci->dc_totalsize = ci->dc_linesize * ci->dc_nlines *
+	    ci->dc_associativity;
+
+	ci->c_l2linesize = min(ci->ic_l2linesize, ci->dc_l2linesize);
+	ci->c_linesize = min(ci->ic_linesize, ci->dc_linesize);
+	ci->c_totalsize = ci->ic_totalsize + ci->dc_totalsize;
+
+	if (node_has_property(node, "ecache-nlines")) {
+		/* we have a L2 "e"xternal cache */
+		ci->ec_nlines = PROM_getpropint(node, "ecache-nlines", 32768);
+		ci->ec_linesize = l = PROM_getpropint(node, "ecache-line-size", 0);
+		for (i = 0; (1 << i) < l && l; i++)
+			/* void */;
+		if ((1 << i) != l && l)
+			panic("bad ecache line size %d", l);
+		ci->ec_l2linesize = i;
+		ci->ec_associativity =
+			PROM_getpropint(node, "ecache-associativity", 1);
+		ci->ec_totalsize = l * ci->ec_nlines * ci->ec_associativity;
+	}
+}
+
+struct module_info module_viking_sun4d = {
+	CPUTYP_UNKNOWN,		/* set in cpumatch() */
+	VAC_NONE,
+	cpumatch_viking,
+	getcacheinfo_sun4d,
+	viking_hotfix,
+	viking_mmu_enable,
+	viking_cache_enable,
+	4096,
+	viking_get_syncflt,
+	no_asyncflt_regs,
+	/* supersparcs use cached DVMA, no need to flush */
+	noop_cache_flush,
+	noop_vcache_flush_page,
+	noop_vcache_flush_segment,
+	noop_vcache_flush_region,
+	noop_vcache_flush_context,
+	viking_pcache_flush_page,
+	noop_pure_vcache_flush,
+	noop_cache_flush_all,
+	viking_memerr,
+	pmap_zero_page4m,
+	pmap_copy_page4m
+};
+#endif /* SUN4D */
 
 #define	ANY	-1	/* match any version */
 
@@ -1551,6 +1638,11 @@ struct cpu_conf {
 	{ CPU_SUN4M, 4, 4, ANY, ANY, "TI_4_4", &module_viking },
 #endif
 
+#if defined(SUN4D)
+	{ CPU_SUN4D, 4, 0, 0, ANY, "TMS390Z50 v0 or TMS390Z55",
+	  &module_viking_sun4d },
+#endif
+
 	{ ANY, ANY, ANY, ANY, ANY, "Unknown", &module_unknown }
 };
 
@@ -1581,7 +1673,7 @@ getcpuinfo(sc, node)
 		    (cpu_vers = PROM_getpropint(node, "psr-version", -1)) == -1)
 			cpu_vers = IU_VERS(i);
 
-		if (CPU_ISSUN4M) {
+		if (CPU_HAS_SRMMU) {
 			i = lda(SRMMU_PCR, ASI_SRMMU);
 			if (node == 0 ||
 			    (mmu_impl =

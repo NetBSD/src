@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-comp.h,v 1.5.2.1 2002/06/20 03:48:20 nathanw Exp $	*/
+/*	$NetBSD: ppp-comp.h,v 1.5.2.2 2002/08/01 02:46:43 nathanw Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.
@@ -25,8 +25,6 @@
  * ON AN "AS IS" BASIS, AND THE AUSTRALIAN NATIONAL UNIVERSITY HAS NO
  * OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS,
  * OR MODIFICATIONS.
- *
- * Id: ppp-comp.h,v 1.10 1996/09/26 06:30:11 paulus Exp 
  */
 
 #ifndef _NET_PPP_COMP_H

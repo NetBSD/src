@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.62.2.12 2002/07/12 01:40:00 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.62.2.13 2002/08/01 02:44:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.12 2002/07/12 01:40:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.13 2002/08/01 02:44:14 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -186,8 +186,7 @@ linux_setregs(l, epp, stack)
  */
 
 void
-linux_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+linux_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -197,6 +196,7 @@ linux_sendsig(catcher, sig, mask, code)
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_regs;
 	/* Do we need to jump onto the signal stack? */

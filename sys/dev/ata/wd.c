@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.212.2.4 2002/02/28 04:13:12 nathanw Exp $ */
+/*	$NetBSD: wd.c,v 1.212.2.5 2002/08/01 02:44:37 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.212.2.4 2002/02/28 04:13:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.212.2.5 2002/08/01 02:44:37 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -134,7 +134,7 @@ struct wd_softc {
 	/* General disk infos */
 	struct device sc_dev;
 	struct disk sc_dk;
-	struct buf_queue sc_q;
+	struct bufq_state sc_q;
 	struct callout sc_restart_ch;
 	/* IDE disk soft states */
 	struct ata_bio sc_wdc_bio; /* current transfer */
@@ -181,7 +181,7 @@ void	wdattach	__P((struct device *, struct device *, void *));
 int	wddetach __P((struct device *, int));
 int	wdactivate __P((struct device *, enum devact));
 int	wdprint	__P((void *, char *));
-void    wdperror __P((struct ata_drive_datas *, int, char *));
+void	wdperror __P((const struct wd_softc *));
 
 struct cfattach wd_ca = {
 	sizeof(struct wd_softc), wdprobe, wdattach, wddetach, wdactivate
@@ -267,7 +267,7 @@ wdattach(parent, self, aux)
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
 	callout_init(&wd->sc_restart_ch);
-	BUFQ_INIT(&wd->sc_q);
+	bufq_alloc(&wd->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 
 	wd->atabus = adev->adev_bustype;
 	wd->openings = adev->adev_openings;
@@ -411,13 +411,14 @@ wddetach(self, flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */ 
-	while ((bp = BUFQ_FIRST(&sc->sc_q)) != NULL) {
-		BUFQ_REMOVE(&sc->sc_q, bp);
+	while ((bp = BUFQ_GET(&sc->sc_q)) != NULL) {
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR; 
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
+
+	bufq_free(&sc->sc_q);
 
 	splx(s);
 
@@ -502,7 +503,7 @@ wdstrategy(bp)
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	disksort_blkno(&wd->sc_q, bp);
+	BUFQ_PUT(&wd->sc_q, bp);
 	wdstart(wd);
 	splx(s);
 	return;
@@ -529,9 +530,8 @@ wdstart(arg)
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */
-		if ((bp = BUFQ_FIRST(&wd->sc_q)) == NULL)
+		if ((bp = BUFQ_GET(&wd->sc_q)) == NULL)
 			return;
-		BUFQ_REMOVE(&wd->sc_q, bp);
 	
 		/* 
 		 * Make the command. First lock the device
@@ -589,36 +589,41 @@ wddone(v)
 {
 	struct wd_softc *wd = v;
 	struct buf *bp = wd->sc_bp;
-	char buf[256], *errbuf = buf;
+	const char *errmsg;
+	int do_perror = 0;
 	WDCDEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 
 	if (bp == NULL)
 		return;
 	bp->b_resid = wd->sc_wdc_bio.bcount;
-	errbuf[0] = '\0';
 	switch (wd->sc_wdc_bio.error) {
 	case ERR_DMA:
-		errbuf = "DMA error";
+		errmsg = "DMA error";
 		goto retry;
 	case ERR_DF:
-		errbuf = "device fault";
+		errmsg = "device fault";
 		goto retry;
 	case TIMEOUT:
-		errbuf = "device timeout";
+		errmsg = "device timeout";
 		goto retry;
 	case ERROR:
 		/* Don't care about media change bits */
 		if (wd->sc_wdc_bio.r_error != 0 &&
 		    (wd->sc_wdc_bio.r_error & ~(WDCE_MC | WDCE_MCR)) == 0)
 			goto noerror;
-		wdperror(wd->drvp, wd->sc_wdc_bio.r_error, errbuf);
+		errmsg = "error";
+		do_perror = 1;
 retry:		/* Just reset and retry. Can we do more ? */
 		wd->atabus->ata_reset_channel(wd->drvp);
-		diskerr(bp, "wd", errbuf, LOG_PRINTF,
+		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
-		if (wd->retries++ < WDIORETRIES) {
+		if (wd->retries < WDIORETRIES)
 			printf(", retrying\n");
+		if (do_perror)
+			wdperror(wd);
+		if (wd->retries < WDIORETRIES) {
+			wd->retries++;
 			callout_reset(&wd->sc_restart_ch, RECOVERYTIME,
 			    wdrestart, wd);
 			return;
@@ -938,37 +943,43 @@ wdgetdisklabel(wd)
 }
 
 void
-wdperror(drvp, errno, buf)
-	struct ata_drive_datas *drvp;
-	int errno;
-	char *buf;
+wdperror(wd)
+	const struct wd_softc *wd;
 {
-	static char *errstr0_3[] = {"address mark not found",
+	static const char *const errstr0_3[] = {"address mark not found",
 	    "track 0 not found", "aborted command", "media change requested",
 	    "id not found", "media changed", "uncorrectable data error",
 	    "bad block detected"};
-	static char *errstr4_5[] = {"obsolete (address mark not found)",
+	static const char *const errstr4_5[] = {
+	    "obsolete (address mark not found)",
 	    "no media/write protected", "aborted command",
 	    "media change requested", "id not found", "media changed",
 	    "uncorrectable data error", "interface CRC error"};
-	char **errstr;  
+	const char *const *errstr;  
 	int i;
 	char *sep = "";
+
+	const char *devname = wd->sc_dev.dv_xname;
+	struct ata_drive_datas *drvp = wd->drvp;
+	int errno = wd->sc_wdc_bio.r_error;
 
 	if (drvp->ata_vers >= 4)
 		errstr = errstr4_5;
 	else
 		errstr = errstr0_3;
 
+	printf("%s: (", devname);
+
 	if (errno == 0)
-		sprintf(buf, "error not notified");
+		printf("error not notified");
 
 	for (i = 0; i < 8; i++) {
 		if (errno & (1 << i)) {
-			buf += sprintf(buf, "%s%s", sep, errstr[i]);
+			printf("%s%s", sep, errstr[i]);
 			sep = ", ";
 		}
 	}
+	printf(")\n");
 }
 
 int
@@ -1235,7 +1246,6 @@ wddump(dev, blkno, va, size)
 	struct disklabel *lp;   /* disk's disklabel */
 	int part, err;
 	int nblks;	/* total number of sectors left to write */
-	char errbuf[256];
 
 	/* Check if recursive dump; if so, punt. */
 	if (wddoingadump)
@@ -1312,9 +1322,8 @@ again:
 			err = EIO;
 			break;
 		case ERROR:
-			errbuf[0] = '\0';
-			wdperror(wd->drvp, wd->sc_wdc_bio.r_error, errbuf);
-			printf("wddump: %s", errbuf);
+			printf("wddump: ");
+			wdperror(wd);
 			err = EIO;
 			break;
 		case NOERROR: 

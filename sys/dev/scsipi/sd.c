@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.169.2.8 2002/06/20 03:46:41 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.169.2.9 2002/08/01 02:45:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.8 2002/06/20 03:46:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.9 2002/08/01 02:45:45 nathanw Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -134,7 +134,7 @@ sdattach(parent, sd, periph, ops)
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
 
-	BUFQ_INIT(&sd->buf_queue);
+	bufq_alloc(&sd->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 
 	/*
 	 * Store information needed to contact our base driver
@@ -269,13 +269,14 @@ sddetach(self, flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	while ((bp = BUFQ_FIRST(&sd->buf_queue)) != NULL) {
-		BUFQ_REMOVE(&sd->buf_queue, bp);
+	while ((bp = BUFQ_GET(&sd->buf_queue)) != NULL) {
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
+
+	bufq_free(&sd->buf_queue);
 
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(sd->sc_periph);
@@ -644,7 +645,7 @@ sdstrategy(bp)
 	 * XXX Only do disksort() if the current operating mode does not
 	 * XXX include tagged queueing.
 	 */
-	disksort_blkno(&sd->buf_queue, bp);
+	BUFQ_PUT(&sd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -714,9 +715,8 @@ sdstart(periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_FIRST(&sd->buf_queue)) == NULL)
+		if ((bp = BUFQ_GET(&sd->buf_queue)) == NULL)
 			return;
-		BUFQ_REMOVE(&sd->buf_queue, bp);
 
 		/*
 		 * If the device has become invalid, abort all the

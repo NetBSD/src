@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5.2.6 2002/06/20 03:38:03 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.2.7 2002/08/01 02:41:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -143,6 +143,10 @@
 /*#include "plcom.h"*/
 #ifndef NPLCOM
 #define NPLCOM	0
+#endif
+/*#include "ixpcom.h"*/
+#ifndef NIXPCOM
+#define NIXPCOM	0
 #endif
 
 /*
@@ -404,6 +408,12 @@ cdev_decl(isdntel);
 #define ptctty          ptytty
 #define ptcioctl        ptyioctl
 
+#include "kttcp.h"
+cdev_decl(kttcp);
+
+#include <dev/sysmon/sysmonconf.h>
+cdev_decl(sysmon);
+
 struct cdevsw cdevsw[] = {
 	cdev_mm_init(1,mm),			/*  0: /dev/{null,mem,kmem,...} */
 	cdev_swap_init(1,sw),			/*  1: /dev/drum (swap pseudo-device) */
@@ -504,10 +514,13 @@ struct cdevsw cdevsw[] = {
 	cdev_ir_init(NCIR,cir),			/* 96: Consumer Ir */
 	cdev_radio_init(NRADIO,radio),		/* 97: generic radio I/O */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),	/* 98: system call tracing */
+	cdev_clonemisc_init(1, systrace),	/* 98: system call tracing */
 #else
 	cdev_notdef(),				/* 98: system call tracing */
 #endif
+	cdev__oci_init(NKTTCP,kttcp),		/* 99: kernel ttcp helper */
+	cdev_tty_init(NIXPCOM,ixpcom),		/* 100: IXP1200 serial port */
+	cdev_sysmon_init(NSYSMON, sysmon),	/* 101: System Monitor */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -649,6 +662,9 @@ static int chrtoblktbl[] = {
     /* 96 */	    NODEV,
     /* 97 */	    NODEV,
     /* 98 */	    NODEV,
+    /* 99 */	    NODEV,
+    /* 100 */	    NODEV,
+    /* 101 */	    NODEV,
 };
 
 /*

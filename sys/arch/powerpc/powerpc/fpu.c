@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.5.6.3 2002/07/12 01:39:46 nathanw Exp $	*/
+/*	$NetBSD: fpu.c,v 1.5.6.4 2002/08/01 02:43:09 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_multiprocessor.h"
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -39,20 +42,27 @@
 #include <machine/psl.h>
 
 void
-enable_fpu(l)
-	struct lwp *l;
+enable_fpu(void)
 {
-	int msr, scratch;
+	struct cpu_info *ci = curcpu();
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf = trapframe(l);
-	
-	tf->srr1 |= PSL_FP;
+	int msr;
+
+	KASSERT(pcb->pcb_fpcpu == NULL);
 	if (!(pcb->pcb_flags & PCB_FPU)) {
 		memset(&pcb->pcb_fpu, 0, sizeof pcb->pcb_fpu);
 		pcb->pcb_flags |= PCB_FPU;
 	}
-	asm volatile ("mfmsr %0; ori %1,%0,%2; mtmsr %1; isync"
-		      : "=r"(msr), "=r"(scratch) : "K"(PSL_FP));
+	msr = mfmsr();
+        mtmsr((msr & ~PSL_EE) | PSL_FP);
+	asm volatile ("isync");
+	if (ci->ci_fpuproc) {
+		save_fpu_cpu();
+	}
+	KASSERT(ci->ci_fpuproc == NULL);
 	asm volatile ("lfd 0,0(%0); mtfsf 0xff,0" :: "b"(&pcb->pcb_fpu.fpscr));
 	asm ("lfd 0,0(%0);"
 	     "lfd 1,8(%0);"
@@ -86,18 +96,33 @@ enable_fpu(l)
 	     "lfd 29,232(%0);"
 	     "lfd 30,240(%0);"
 	     "lfd 31,248(%0)" :: "b"(&pcb->pcb_fpu.fpr[0]));
-	asm volatile ("mtmsr %0; isync" :: "r"(msr));
+	asm volatile ("isync");
+	tf->srr1 |= PSL_FP;
+	ci->ci_fpuproc = p;
+	pcb->pcb_fpcpu = ci;
+	asm volatile ("sync");
+	mtmsr(msr);
 }
 
+/*
+ * Save the contents of the current CPU's FPU to its PCB.
+ */
 void
-save_fpu(l)
-	struct lwp *l;
+save_fpu_cpu(void)
 {
-	int msr, scratch;
-	struct pcb *pcb = &l->l_addr->u_pcb;
-	
-	asm volatile ("mfmsr %0; ori %1,%0,%2; mtmsr %1; isync"
-		      : "=r"(msr), "=r"(scratch) : "K"(PSL_FP));
+	struct cpu_info *ci = curcpu();
+	struct lwp *l;
+	struct pcb *pcb;
+	int msr;
+
+	msr = mfmsr();
+        mtmsr((msr & ~PSL_EE) | PSL_FP);
+	__asm __volatile ("isync");
+	l = ci->ci_fpulwp;
+	if (l == NULL) {
+		goto out;
+	}
+	pcb = &l->l_addr->u_pcb;
 	asm ("stfd 0,0(%0);"
 	     "stfd 1,8(%0);"
 	     "stfd 2,16(%0);"
@@ -131,7 +156,52 @@ save_fpu(l)
 	     "stfd 30,240(%0);"
 	     "stfd 31,248(%0)" :: "b"(&pcb->pcb_fpu.fpr[0]));
 	asm volatile ("mffs 0; stfd 0,0(%0)" :: "b"(&pcb->pcb_fpu.fpscr));
-	asm volatile ("mtmsr %0; isync" :: "r"(msr));
+	asm volatile ("sync");
 	pcb->pcb_fpcpu = NULL;
-	fpuproc = NULL;
+	ci->ci_fpuproc = NULL;
+	ci->ci_ev_fpusw.ev_count++;
+	asm volatile ("sync");
+ out:
+	mtmsr(msr);
+}
+
+/*
+ * Save a process's FPU state to its PCB.  The state may be in any CPU.
+ * The process must either be curproc or traced by curproc (and stopped).
+ * (The point being that the process must not run on another CPU during
+ * this function).
+ */
+void
+save_fpu_proc(p)
+	struct proc *p;
+{
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct cpu_info *ci = curcpu();
+
+	/*
+	 * If it's already in the PCB, there's nothing to do.
+	 */
+
+	if (pcb->pcb_fpcpu == NULL) {
+		return;
+	}
+
+	/*
+	 * If the state is in the current CPU, just flush the current CPU's
+	 * state.
+	 */
+
+	if (p == ci->ci_fpuproc) {
+		save_fpu_cpu();
+		return;
+	}
+
+#ifdef MULTIPROCESSOR
+
+	/*
+	 * It must be on another CPU, flush it from there.
+	 */
+
+	mp_save_fpu_proc(p);
+#endif
 }

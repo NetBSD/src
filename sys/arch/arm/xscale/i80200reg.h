@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200reg.h,v 1.1.2.4 2002/04/01 07:39:16 nathanw Exp $	*/
+/*	$NetBSD: i80200reg.h,v 1.1.2.5 2002/08/01 02:41:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,8 +46,8 @@
  * Interrupt Controller Unit		(CP13)
  *
  *	CP13.0		Interrupt Control
- *	CP13.1		Interrupt Source
- *	CP13.2		Interrupt Steer
+ *	CP13.4		Interrupt Source
+ *	CP13.8		Interrupt Steer
  */
 
 #define	INTCTL_FM	0x00000001	/* external FIQ# enable */

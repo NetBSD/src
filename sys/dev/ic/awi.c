@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.30.2.4 2002/06/24 22:09:55 nathanw Exp $	*/
+/*	$NetBSD: awi.c,v 1.30.2.5 2002/08/01 02:44:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.30.2.4 2002/06/24 22:09:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.30.2.5 2002/08/01 02:44:39 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -473,6 +473,11 @@ awi_init(struct ifnet *ifp)
 
 	sc->sc_mib_local.Network_Mode =
 	    (ic->ic_flags & IEEE80211_F_ADHOC) ? 0 : 1;
+	memset(&sc->sc_mib_mac.aDesired_ESS_ID, 0, AWI_ESS_ID_SIZE);
+	sc->sc_mib_mac.aDesired_ESS_ID[0] = IEEE80211_ELEMID_SSID;
+	sc->sc_mib_mac.aDesired_ESS_ID[1] = sc->sc_ic.ic_des_esslen;
+	memcpy(&sc->sc_mib_mac.aDesired_ESS_ID[2], sc->sc_ic.ic_des_essid,
+	    sc->sc_ic.ic_des_esslen);
 
 	if ((error = awi_mode_init(sc)) != 0) {
 		DPRINTF(("awi_init: awi_mode_init failed %d\n", error));

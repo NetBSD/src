@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.6.8.2 2002/04/01 07:41:44 nathanw Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.6.8.3 2002/08/01 02:42:49 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -67,7 +67,7 @@ const struct wsdisplay_emulops nextdisplay_mono_emulops = {
 	rcons_erasecols,
 	rcons_copyrows,
 	rcons_eraserows,
-	rcons_alloc_attr
+	rcons_allocattr
 };
 
 struct wsscreen_descr nextdisplay_mono = {
@@ -343,10 +343,10 @@ nextdisplay_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 
-			 (strcmp(type->name, "color") == 0) 
-			 ? 0 
-			 : WSATTR_REVERSE, &defattr);
+	rcons_allocattr(&sc->sc_dc->dc_rcons, 0, 0, 
+			(strcmp(type->name, "color") == 0) 
+			? 0 
+			: WSATTR_REVERSE, &defattr);
 	*defattrp = defattr;
 	sc->nscreens++;
 #if 0
@@ -408,8 +408,8 @@ nextdisplay_cnattach(void)
 	/* set up the display */
 	nextdisplay_init(&nextdisplay_console_dc, iscolor);
 
-	rcons_alloc_attr(&dc->dc_rcons, 0, 0, 
-			 iscolor ? 0 : WSATTR_REVERSE, &defattr);
+	rcons_allocattr(&dc->dc_rcons, 0, 0, 
+			iscolor ? 0 : WSATTR_REVERSE, &defattr);
 
 	wsdisplay_cnattach(iscolor ? &nextdisplay_color : &nextdisplay_mono,
 			   &dc->dc_rcons, 0, 0, defattr);

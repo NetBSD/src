@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_socket.c,v 1.1.4.2 2002/05/29 21:33:05 nathanw Exp $	*/
+/*	$NetBSD: svr4_32_socket.c,v 1.1.4.3 2002/08/01 02:44:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_socket.c,v 1.1.4.2 2002/05/29 21:33:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_socket.c,v 1.1.4.3 2002/08/01 02:44:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -194,29 +194,36 @@ svr4_32_sys_socket(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_socket_args *uap = v;
+	struct sys_socket_args uap0;
 
+	/*
+	 * We need to use a separate args since native has a different
+	 * padding.
+	 */
+	SCARG(&uap0, domain) = SCARG(uap, domain);
+	SCARG(&uap0, protocol) = SCARG(uap, protocol);
 	switch (SCARG(uap, type)) {
 	case SVR4_SOCK_DGRAM:
-		SCARG(uap, type) = SOCK_DGRAM;
+		SCARG(&uap0, type) = SOCK_DGRAM;
 		break;
 
 	case SVR4_SOCK_STREAM:
-		SCARG(uap, type) = SOCK_STREAM;
+		SCARG(&uap0, type) = SOCK_STREAM;
 		break;
 
 	case SVR4_SOCK_RAW:
-		SCARG(uap, type) = SOCK_RAW;
+		SCARG(&uap0, type) = SOCK_RAW;
 		break;
 
 	case SVR4_SOCK_RDM:
-		SCARG(uap, type) = SOCK_RDM;
+		SCARG(&uap0, type) = SOCK_RDM;
 		break;
 
 	case SVR4_SOCK_SEQPACKET:
-		SCARG(uap, type) = SOCK_SEQPACKET;
+		SCARG(&uap0, type) = SOCK_SEQPACKET;
 		break;
 	default:
 		return EINVAL;
 	}
-	return sys_socket(p, uap, retval);
+	return sys_socket(p, &uap0, retval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.11 2002/07/12 01:39:48 nathanw Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.12 2002/08/01 02:43:32 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1334,9 +1334,6 @@ syscall(code, tf, pc)
 		}
 		copywords(ap, args.i, i * sizeof(register_t));
 	}
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args.i);
-#endif /* SYSCALL_DEBUG */
 
 	/* Lock the kernel if the syscall isn't MP-safe. */
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)

@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.1.4.5 2002/06/20 03:39:07 nathanw Exp $
+# $NetBSD: NET4501,v 1.1.4.6 2002/08/01 02:41:58 nathanw Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.1.4.5 $"
+#ident 		"NET4501-$Revision: 1.1.4.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -68,7 +68,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	LKM		# loadable kernel modules
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.11.6.1 2002/06/20 03:48:32 nathanw Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.11.6.2 2002/08/01 02:46:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -74,6 +74,12 @@ extern	struct igmpstat igmpstat;
  * is defined somewhere (and that it returns a positive number).
  */
 #define	IGMP_RANDOM_DELAY(X)	(arc4random() % (X) + 1)
+
+#ifdef __NO_STRICT_ALIGNMENT
+#define	IGMP_HDR_ALIGNED_P(ig)	1
+#else
+#define	IGMP_HDR_ALIGNED_P(ig)	((((vaddr_t) (ig)) & 3) == 0)
+#endif
 
 void	igmp_init __P((void));
 void	igmp_input __P((struct mbuf *, ...));

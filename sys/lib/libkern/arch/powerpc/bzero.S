@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.2.2.3 2002/04/01 07:48:06 nathanw Exp $ */
+/*	$NetBSD: bzero.S,v 1.2.2.4 2002/08/01 02:46:29 nathanw Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@netbsd.org>
@@ -198,7 +198,7 @@ cb_cacheline_known:
 
 #else /* _KERNEL */
 #ifdef	MULTIPROCESSOR
-		mfspr	r10, 0			/* Get cpu_info pointer */
+		mfsprg	r10, 0			/* Get cpu_info pointer */
 #else
 		lis	r10, cpu_info_store@ha
 		addi	r10, r10, cpu_info_store@l

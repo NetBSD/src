@@ -1,11 +1,3 @@
-/*	$NetBSD: proc.h,v 1.1.8.2 2001/11/18 18:08:11 scw Exp $	*/
+/*	$NetBSD: proc.h,v 1.1.8.3 2002/08/01 02:41:28 nathanw Exp $	*/
 
-#ifndef _CESFIC_PROC_H
-#define _CESFIC_PROC_H
-
-#include <m68k/lwp.h>
-
-struct mdproc {
-};
-
-#endif
+#include <m68k/proc.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.64.2.3 2002/06/24 22:03:06 nathanw Exp $ */
+/* $NetBSD: cpu.c,v 1.64.2.4 2002/08/01 02:40:58 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64.2.3 2002/06/24 22:03:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64.2.4 2002/08/01 02:40:58 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -151,6 +151,9 @@ struct cputable_struct {
 	{ PCS_PROC_PCA56,	"PCA56",	NULL		},
 	{ PCS_PROC_PCA57,	"PCA57",	NULL		},
 	{ PCS_PROC_EV67,	"21264A",	NULL		},
+	{ PCS_PROC_EV68CB,	"21264C",	NULL		},
+	{ PCS_PROC_EV68AL,	"21264B",	NULL		},
+	{ PCS_PROC_EV68CX,	"21264D",	NULL		},
 };
 
 /*

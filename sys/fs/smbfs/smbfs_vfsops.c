@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.2.4.2 2002/02/28 04:14:42 nathanw Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.2.4.3 2002/08/01 02:46:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -178,7 +178,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 		goto bad;
         }
 	bzero(smp, sizeof(*smp));
-        mp->mnt_data = (qaddr_t)smp;
+        mp->mnt_data = smp;
 	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST, 
 				M_SMBFSHASH, M_WAITOK, &smp->sm_hashlen);
 	if (smp->sm_hash == NULL)
@@ -263,7 +263,7 @@ smbfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		return error;
 	smb_makescred(&scred, p, p->p_ucred);
 	smb_share_put(smp->sm_share, &scred);
-	mp->mnt_data = (qaddr_t)0;
+	mp->mnt_data = NULL;
 
 	if (smp->sm_hash)
 		free(smp->sm_hash, M_SMBFSHASH);

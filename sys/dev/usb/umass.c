@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.52.2.6 2002/04/01 07:47:36 nathanw Exp $	*/
+/*	$NetBSD: umass.c,v 1.52.2.7 2002/08/01 02:46:00 nathanw Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -54,7 +54,7 @@
  * - UFI (USB Floppy Interface)
  *
  * 8070i is a transformed version of the SCSI command set. UFI is a transformed
- * version of the 8070i command set.  The sc->transform method is used to 
+ * version of the 8070i command set.  The sc->transform method is used to
  * convert the commands into the appropriate format (if at all necessary).
  * For example, ATAPI requires all commands to be 12 bytes in length amongst
  * other things.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.52.2.6 2002/04/01 07:47:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.52.2.7 2002/08/01 02:46:00 nathanw Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -166,7 +166,7 @@ Static usbd_status umass_setup_transfer(struct umass_softc *sc,
 				usbd_xfer_handle xfer);
 Static usbd_status umass_setup_ctrl_transfer(struct umass_softc *sc,
 				usb_device_request_t *req,
-				void *buffer, int buflen, int flags, 
+				void *buffer, int buflen, int flags,
 				usbd_xfer_handle xfer);
 Static void umass_clear_endpoint_stall(struct umass_softc *sc, int endpt,
 				usbd_xfer_handle xfer);
@@ -183,7 +183,7 @@ Static void umass_bbb_state(usbd_xfer_handle, usbd_private_handle, usbd_status);
 usbd_status umass_bbb_get_max_lun(struct umass_softc *, u_int8_t *);
 
 /* CBI related functions */
-Static void umass_cbi_transfer(struct umass_softc *, int, void *, int, void *,  
+Static void umass_cbi_transfer(struct umass_softc *, int, void *, int, void *,
 			       int, int, u_int, umass_callback, void *);
 Static void umass_cbi_reset(struct umass_softc *, int);
 Static void umass_cbi_state(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -440,7 +440,7 @@ USB_ATTACH(umass)
 	/*
 	 * Get the maximum LUN supported by the device.
 	 */
-	if (sc->sc_wire == UMASS_WPROTO_BBB && 
+	if (sc->sc_wire == UMASS_WPROTO_BBB &&
 	    !(sc->sc_quirks & UMASS_QUIRK_NO_MAX_LUN)) {
 		err = umass_bbb_get_max_lun(sc, &sc->maxlun);
 		if (err) {
@@ -470,7 +470,7 @@ USB_ATTACH(umass)
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
-	/* 
+	/*
 	 * Open the intr-in pipe if the protocol is CBI with CCI.
 	 * Note: early versions of the Zip drive do have an interrupt pipe, but
 	 * this pipe is unused
@@ -518,7 +518,7 @@ USB_ATTACH(umass)
 	case UMASS_WPROTO_CBI_I:
 		bno = XFER_CBI_DATA;
 	dalloc:
-		sc->data_buffer = usbd_alloc_buffer(sc->transfer_xfer[bno], 
+		sc->data_buffer = usbd_alloc_buffer(sc->transfer_xfer[bno],
 						    UMASS_MAX_TRANSFER_SIZE);
 		if (sc->data_buffer == NULL) {
 			umass_disco(sc);
@@ -670,7 +670,7 @@ umass_activate(struct device *dev, enum devact act)
 
 Static void
 umass_disco(struct umass_softc *sc)
-{ 
+{
 	int i;
 
 	DPRINTF(UDMASS_GEN, ("umass_disco\n"));
@@ -812,7 +812,7 @@ umass_bbb_reset(struct umass_softc *sc, int status)
 
 	DPRINTF(UDMASS_BBB, ("%s: Bulk Reset\n",
 		USBDEVNAME(sc->sc_dev)));
-	
+
 	sc->transfer_state = TSTATE_BBB_RESET1;
 	sc->transfer_status = status;
 
@@ -851,7 +851,7 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	 * is stored in the buffer pointed to by data.
 	 *
 	 * umass_bbb_transfer initialises the transfer and lets the state
-	 * machine in umass_bbb_state handle the completion. It uses the 
+	 * machine in umass_bbb_state handle the completion. It uses the
 	 * following states:
 	 * TSTATE_BBB_COMMAND
 	 *   -> TSTATE_BBB_DATA
@@ -994,7 +994,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 			return;
 		} else if (sc->transfer_dir == DIR_OUT) {
-			memcpy(sc->data_buffer, sc->transfer_data, 
+			memcpy(sc->data_buffer, sc->transfer_data,
 			       sc->transfer_datalen);
 			if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKOUT],
 					sc->data_buffer, sc->transfer_datalen,
@@ -1066,7 +1066,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 			return;
 		}
-	
+
 		/* Status transport phase, setup transfer */
 		if (sc->transfer_state == TSTATE_BBB_COMMAND ||
 		    sc->transfer_state == TSTATE_BBB_DATA ||
@@ -1155,7 +1155,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			printf("%s: Phase Error, residue = %d\n",
 				USBDEVNAME(sc->sc_dev),
 				UGETDW(sc->csw.dCSWDataResidue));
-				
+
 			umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 			return;
 
@@ -1278,7 +1278,7 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 
 	/*
 	 * Command Block Reset Protocol
-	 * 
+	 *
 	 * First send a reset request to the device. Then clear
 	 * any possibly stalled bulk endpoints.
 
@@ -1292,7 +1292,7 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 
 	DPRINTF(UDMASS_CBI, ("%s: CBI Reset\n",
 		USBDEVNAME(sc->sc_dev)));
-	
+
 	KASSERT(sizeof(sc->cbl) >= SEND_DIAGNOSTIC_CMDLEN,
 		("%s: CBL struct is too small (%d < %d)\n",
 			USBDEVNAME(sc->sc_dev),
@@ -1341,7 +1341,7 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 	 * is stored in the buffer pointed to by data.
 	 *
 	 * umass_cbi_transfer initialises the transfer and lets the state
-	 * machine in umass_cbi_state handle the completion. It uses the 
+	 * machine in umass_cbi_state handle the completion. It uses the
 	 * following states:
 	 * TSTATE_CBI_COMMAND
 	 *   -> XXX fill in
@@ -1424,7 +1424,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 			return;
 		}
-		
+
 		sc->transfer_state = TSTATE_CBI_DATA;
 		if (sc->transfer_dir == DIR_IN) {
 			if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKIN],
@@ -1434,7 +1434,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 
 		} else if (sc->transfer_dir == DIR_OUT) {
-			memcpy(sc->data_buffer, sc->transfer_data, 
+			memcpy(sc->data_buffer, sc->transfer_data,
 			       sc->transfer_datalen);
 			if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKOUT],
 					sc->transfer_data, sc->transfer_datalen,
@@ -1536,7 +1536,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		if (sc->sc_cmd == UMASS_CPROTO_UFI) {
 			int status;
-			
+
 			/* Section 3.4.3.1.3 specifies that the UFI command
 			 * protocol returns an ASC and ASCQ in the interrupt
 			 * data block.

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.h,v 1.3.4.1 2001/11/14 19:12:47 nathanw Exp $	*/
+/*	$NetBSD: freebsd_machdep.h,v 1.3.4.2 2002/08/01 02:42:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -192,7 +192,7 @@ struct freebsd_ptrace_reg {
 /* sys/i386/include/exec.h */
 #define FREEBSD___LDPGSZ	4096
 
-void freebsd_sendsig __P((sig_t, int, sigset_t *, u_long));
+void freebsd_sendsig __P((int, sigset_t *, u_long));
 void freebsd_syscall_intern __P((struct proc *));
 
 #endif /* _FREEBSD_MACHDEP_H */

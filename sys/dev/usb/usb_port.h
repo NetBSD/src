@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.40.2.8 2002/06/20 03:46:57 nathanw Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.40.2.9 2002/08/01 02:46:05 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #ifndef _USB_PORT_H
 #define _USB_PORT_H
 
-/* 
+/*
  * Macro's to cope with the differences between operating systems.
  */
 

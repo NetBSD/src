@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9.2.6 2002/06/20 03:38:03 nathanw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9.2.7 2002/08/01 02:41:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.6 2002/06/20 03:38:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.7 2002/08/01 02:41:12 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -210,6 +210,13 @@ static const char *ixp12x0_steppings[16] = {
 
 static const char *xscale_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step C-0",
+	"step D-0",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+static const char *i80321_steppings[16] = {
+	"step A-0",	"step B-0",	"rev 2",	"rev 3",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
@@ -294,14 +301,22 @@ const struct cpuidtab cpuids[] = {
 	  xscale_steppings },
 
 	{ CPU_ID_80321_400,	CPU_CLASS_XSCALE,	"i80321 400MHz",
-	  xscale_steppings },
+	  i80321_steppings },
 	{ CPU_ID_80321_600,	CPU_CLASS_XSCALE,	"i80321 600MHz",
-	  xscale_steppings },
+	  i80321_steppings },
+	{ CPU_ID_80321_400_B0,	CPU_CLASS_XSCALE,	"i80321 400MHz",
+	  i80321_steppings },
+	{ CPU_ID_80321_600_B0,	CPU_CLASS_XSCALE,	"i80321 600MHz",
+	  i80321_steppings },
 
-	{ CPU_ID_PXA250,	CPU_CLASS_XSCALE,	"PXA250",
+	{ CPU_ID_PXA250A,	CPU_CLASS_XSCALE,	"PXA250(1st ver core)",
 	  pxa2x0_steppings },
-	{ CPU_ID_PXA210,	CPU_CLASS_XSCALE,	"PXA210",
-	  pxa2x0_steppings },	/* XXX */
+	{ CPU_ID_PXA210A,	CPU_CLASS_XSCALE,	"PXA210(1st ver core)",
+	  pxa2x0_steppings },
+	{ CPU_ID_PXA250B,	CPU_CLASS_XSCALE,	"PXA250(3rd ver core)",
+	  pxa2x0_steppings },
+	{ CPU_ID_PXA210B,	CPU_CLASS_XSCALE,	"PXA210(3rd ver core)",
+	  pxa2x0_steppings },
 
 	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022ES",
 	  generic_steppings },

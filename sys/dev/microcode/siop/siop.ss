@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.12.4.1 2002/06/20 03:45:15 nathanw Exp $
+;	$NetBSD: siop.ss,v 1.12.4.2 2002/08/01 02:45:00 nathanw Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -153,7 +153,7 @@ script_sched:
 ; changes the FALSE to TRUE. The select script will change it back to false
 ; once the target is selected.
 ; The RAM could hold 370 slot entry, we limit it to 40. Should be more than
-; enouth.
+; enough.
 script_sched_slot0:
 	JUMP abs_script_sched_slot0, IF FALSE;
 	JUMP abs_script_sched_slot0, IF FALSE;
@@ -215,7 +215,7 @@ led_on2:
 	NOP;
 	MOVE SSID & 0x8f to SFBR
 	MOVE SFBR to SCRATCHA0 ; save reselect ID
-; find the rigth param for this target
+; find the right param for this target
 resel_targ0:
 	JUMP abs_targ0, IF 0xff;
 	JUMP abs_targ0, IF 0xff;

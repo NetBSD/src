@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.2.14.1 2002/02/28 04:12:51 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.2.14.2 2002/08/01 02:44:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,5 +158,11 @@ struct linux_rt_sigframe {
 #define LINUX_RT_SF_SIGTRAMP0 (0x203C0000 | (LINUX_SYS_rt_sigreturn >> 16))
 #define LINUX_RT_SF_SIGTRAMP1 (0x00004E40 | (LINUX_SYS_rt_sigreturn << 16))
 			/* movel #LINUX_SYS_rt_sigreturn,#d0; trap #0 */
+
+#ifdef _KERNEL
+__BEGIN_DECLS
+void linux_syscall_intern __P((struct proc *));
+__END_DECLS
+#endif /* !_KERNEL */
 
 #endif /* _M68K_LINUX_MACHDEP_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.51.2.6 2002/06/20 03:45:39 nathanw Exp $	*/
+/*	$NetBSD: pci.c,v 1.51.2.7 2002/08/01 02:45:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.51.2.6 2002/06/20 03:45:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.51.2.7 2002/08/01 02:45:22 nathanw Exp $");
 
 #include "opt_pci.h"
 
@@ -260,10 +260,10 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 
 	/* Invalid vendor ID value? */
 	if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-		return (NULL);
+		return (0);
 	/* XXX Not invalid, but we've done this ~forever. */
 	if (PCI_VENDOR(id) == 0)
-		return (NULL);
+		return (0);
 
 	pa.pa_iot = sc->sc_iot;
 	pa.pa_memt = sc->sc_memt;
@@ -463,7 +463,7 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int newstate)
 		return (EOPNOTSUPP);
 
 	cap = value >> 16;
-	value = pci_conf_read(pc, tag, offset+PCI_PMCSR);
+	value = pci_conf_read(pc, tag, offset + PCI_PMCSR);
 	now    = value & PCI_PMCSR_STATE_MASK;
 	value &= ~PCI_PMCSR_STATE_MASK;
 	switch (newstate) {
@@ -498,7 +498,7 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int newstate)
 	default:
 		return (EINVAL);
 	}
-	pci_conf_write(pc, tag, offset+PCI_PMCSR, value);
+	pci_conf_write(pc, tag, offset + PCI_PMCSR, value);
 	DELAY(1000);
 
 	return (0);
@@ -512,7 +512,7 @@ pci_get_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
 
 	if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, &value))
 		return (PCI_PWR_D0);
-	value = pci_conf_read(pc, tag, offset+PCI_PMCSR);
+	value = pci_conf_read(pc, tag, offset + PCI_PMCSR);
 	value &= PCI_PMCSR_STATE_MASK;
 	switch (value) {
 	case PCI_PMCSR_STATE_D0:

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.77.2.7 2002/06/20 03:49:00 nathanw Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.77.2.8 2002/08/01 02:46:50 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -678,6 +678,12 @@ extern	u_long syn_cache_count;
 	{ 1, 0, &tcp_rst_ppslim },		\
 	{ 1, 0, &tcp_delack_ticks },		\
 }
+
+#ifdef __NO_STRICT_ALIGNMENT
+#define	TCP_HDR_ALIGNED_P(th)	1
+#else
+#define	TCP_HDR_ALIGNED_P(th)	((((vaddr_t) (th)) & 3) == 0)
+#endif
 
 int	 tcp_attach __P((struct socket *));
 void	 tcp_canceltimers __P((struct tcpcb *));

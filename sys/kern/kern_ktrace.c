@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.53.2.6 2002/07/12 01:40:16 nathanw Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.53.2.7 2002/08/01 02:46:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.6 2002/07/12 01:40:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.7 2002/08/01 02:46:19 nathanw Exp $");
 
 #include "opt_ktrace.h"
 
@@ -661,7 +661,8 @@ ktrcanset(struct proc *callp, struct proc *targetp)
 	     target->p_ruid == target->p_svuid &&
 	     caller->p_rgid == target->p_rgid &&	/* XXX */
 	     target->p_rgid == target->p_svgid &&
-	     (targetp->p_traceflag & KTRFAC_ROOT) == 0) ||
+	     (targetp->p_traceflag & KTRFAC_ROOT) == 0 &&
+	     (targetp->p_flag & P_SUGID) == 0) ||
 	     caller->pc_ucred->cr_uid == 0)
 		return (1);
 

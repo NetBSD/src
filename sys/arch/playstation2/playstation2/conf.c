@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.4.3 2002/06/20 03:40:28 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.4.4 2002/08/01 02:42:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -201,7 +201,7 @@ struct cdevsw cdevsw[] =
 	    uscanner),			/* 37: USB scanner */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 38: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 39: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 39: system call tracing */
 #else
 	cdev_notdef(),			/* 39: system call tracing */
 #endif

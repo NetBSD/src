@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.20.2.7 2002/07/12 01:40:02 nathanw Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.20.2.8 2002/08/01 02:44:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.20.2.7 2002/07/12 01:40:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.20.2.8 2002/08/01 02:44:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,8 @@ linux_sys_sigaction(l, v, retval)
 		obsa.sa_flags = 0;
 	} else {
 		error = sigaction1(p, linux_to_native_signo[sig],
-		    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
+		    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0,
+		    NULL, 0);
 		if (error)
 			return (error);
 	}

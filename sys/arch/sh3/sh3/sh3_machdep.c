@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.41.6.5 2002/07/05 02:43:11 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.41.6.6 2002/08/01 02:43:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -419,13 +419,15 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
  * specified pc, psl.
  */
 void
-sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
+sendsig(int sig, sigset_t *mask, u_long code)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_regs;
 
@@ -441,12 +443,6 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	else
 		fp = (struct sigframe *)tf->tf_r15;
 	fp--;
-
-	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
-	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
 
 	/* Save register context. */
 	frame.sf_sc.sc_ssr = tf->tf_ssr;
@@ -486,9 +482,29 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	}
 
 	/*
-	 * Build context to run handler in.
+	 * Build context to run handler in.  We invoke the handler
+	 * directly, only returning via the trampoline.
 	 */
-	tf->tf_spc = (int)p->p_sigctx.ps_sigcode;
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		tf->tf_pr = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		tf->tf_pr = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
+
+	tf->tf_r4 = sig;
+	tf->tf_r5 = code;
+	tf->tf_r6 = (int)&fp->sf_sc;
+	tf->tf_spc = (int)catcher;
 	tf->tf_r15 = (int)fp;
 
 	/* Remember that we're now on the signal stack. */

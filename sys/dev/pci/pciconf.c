@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.2.2.5 2002/02/28 04:14:05 nathanw Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.2.2.6 2002/08/01 02:45:22 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.2.2.5 2002/02/28 04:14:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.2.2.6 2002/08/01 02:45:22 nathanw Exp $");
 
 #include "opt_pci.h"
 
@@ -90,8 +90,6 @@ int pci_conf_debug = 0;
 #define MAX_CONF_DEV	32			/* Arbitrary */
 #define MAX_CONF_MEM	(3 * MAX_CONF_DEV)	/* Avg. 3 per device -- Arb. */
 #define MAX_CONF_IO	(3 * MAX_CONF_DEV)	/* Avg. 1 per device -- Arb. */
-
-#define PCI_BUSNO_SPACING	(1 << 5)
 
 struct _s_pciconf_bus_t;			/* Forward declaration */
 
@@ -119,7 +117,6 @@ typedef struct _s_pciconf_bus_t {
 	int		busno;
 	int		next_busno;
 	int		last_busno;
-	int		busno_spacing;
 	int		max_mingnt;
 	int		min_maxlat;
 	int		cacheline_size;
@@ -296,21 +293,25 @@ static void
 alloc_busno(pciconf_bus_t *parent, pciconf_bus_t *pb)
 {
 	pb->busno = parent->next_busno;
-	if (parent->next_busno + parent->busno_spacing > parent->last_busno)
-		panic("Too many PCI busses on bus %d", parent->busno);
-	parent->next_busno = parent->next_busno + parent->busno_spacing;
-	pb->next_busno = pb->busno+1;
-	pb->busno_spacing = parent->busno_spacing >> 1;
-	if (!pb->busno_spacing)
-		panic("PCI busses nested too deep.");
-	pb->last_busno = parent->next_busno - 1;
+	pb->next_busno = pb->busno + 1;
+}
+
+static void
+set_busreg(pci_chipset_tag_t pc, pcitag_t tag, int prim, int sec, int sub)
+{
+	pcireg_t	busreg;
+
+	busreg  =  prim << PCI_BRIDGE_BUS_PRIMARY_SHIFT;
+	busreg |=   sec << PCI_BRIDGE_BUS_SECONDARY_SHIFT;
+	busreg |=   sub << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT;
+	pci_conf_write(pc, tag, PCI_BRIDGE_BUS_REG, busreg);
 }
 
 static pciconf_bus_t *
 query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 {
 	pciconf_bus_t	*pb;
-	pcireg_t	busreg, io, pmem;
+	pcireg_t	io, pmem;
 	pciconf_win_t	*pi, *pm;
 
 	pb = malloc (sizeof (pciconf_bus_t), M_DEVBUF, M_NOWAIT);
@@ -320,14 +321,8 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 	pb->cacheline_size = parent->cacheline_size;
 	pb->parent_bus = parent;
 	alloc_busno(parent, pb);
-	if (pci_conf_debug)
-		printf("PCI bus bridge covers busses %d-%d\n",
-			pb->busno, pb->last_busno);
 
-	busreg  =  parent->busno << PCI_BRIDGE_BUS_PRIMARY_SHIFT;
-	busreg |=      pb->busno << PCI_BRIDGE_BUS_SECONDARY_SHIFT;
-	busreg |= pb->last_busno << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT;
-	pci_conf_write(parent->pc, pd->tag, PCI_BRIDGE_BUS_REG, busreg);
+	set_busreg(parent->pc, pd->tag, parent->busno, pb->busno, 0xff);
 
 	pb->swiz = parent->swiz + dev;
 
@@ -358,6 +353,15 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 		printf("Failed to probe bus %d\n", pb->busno);
 		goto err;
 	}
+
+	/* We have found all subordinate busses now, reprogram busreg. */
+	pb->last_busno = pb->next_busno-1;
+	parent->next_busno = pb->next_busno;
+	set_busreg(parent->pc, pd->tag, parent->busno, pb->busno,
+		   pb->last_busno);
+	if (pci_conf_debug)
+		printf("PCI bus bridge (parent %d) covers busses %d-%d\n",
+			parent->busno, pb->busno, pb->last_busno);
 
 	if (pb->io_total > 0) {
 		if (parent->niowin >= MAX_CONF_IO) {
@@ -544,7 +548,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 				size = (u_int64_t) PCI_MAPREG_MEM64_SIZE(
 				      (((u_int64_t) mask64) << 32) | mask);
 				width = 8;
-				continue;
+				break;
 			default:
 				print_tag(pb->pc, tag);
 				printf("reserved mapping type 0x%x\n",
@@ -561,6 +565,14 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 						64 : 32, br);
 				}
 				continue;
+			} else {
+				if (pci_conf_debug) {
+					print_tag(pb->pc, tag);
+					printf("MEM%d BAR 0x%x has size %lx\n",
+					    PCI_MAPREG_MEM_TYPE(mask) ==
+						PCI_MAPREG_MEM_TYPE_64BIT ?
+						64 : 32, br, (unsigned long)size);
+				}
 			}
 
 			if (pb->nmemwin >= MAX_CONF_MEM) {
@@ -1038,7 +1050,6 @@ pci_configure_bus(pci_chipset_tag_t pc, struct extent *ioext,
 
 	pb = malloc (sizeof (pciconf_bus_t), M_DEVBUF, M_NOWAIT);
 	pb->busno = firstbus;
-	pb->busno_spacing = PCI_BUSNO_SPACING;
 	pb->next_busno = pb->busno + 1;
 	pb->last_busno = 255;
 	pb->cacheline_size = cacheline_size;
@@ -1057,6 +1068,7 @@ pci_configure_bus(pci_chipset_tag_t pc, struct extent *ioext,
 	pb->io_total = pb->mem_total = pb->pmem_total = 0;
 
 	rv = probe_bus(pb);
+	pb->last_busno = pb->next_busno-1;
 	if (rv == 0) {
 		rv = configure_bus(pb);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.53.2.11 2002/07/15 20:23:25 nathanw Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.53.2.12 2002/08/01 02:46:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.53.2.11 2002/07/15 20:23:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.53.2.12 2002/08/01 02:46:34 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -649,7 +649,7 @@ spec_close(v)
 		flags1 |= FNONBLOCK;
 
 	/*
-	 * If we're able to block, release the vnode lock & reaquire. We
+	 * If we're able to block, release the vnode lock & reacquire. We
 	 * might end up sleaping for someone else who wants our queues. They
 	 * won't get them if we hold the vnode locked. Also, if VXLOCK is set,
 	 * don't release the lock as we won't be able to regain it.

@@ -1,4 +1,4 @@
-# 	$NetBSD: SPLODE,v 1.3.2.5 2002/06/20 03:41:19 nathanw Exp $
+# 	$NetBSD: SPLODE,v 1.3.2.6 2002/08/01 02:43:35 nathanw Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
@@ -6,7 +6,7 @@ include "arch/sparc64/conf/std.sparc64"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.3.2.5 $"
+#ident 		"GENERIC-$Revision: 1.3.2.6 $"
 
 maxusers	256
 
@@ -35,8 +35,9 @@ options 	BLINK		# blink the system LED
 ## automagically determined at boot time.
 
 config		netbsd	root on ? type ?
-options 	NVNODE=16384
-options 	NMBCLUSTERS=2048
+#options 	NVNODE=16384
+options 	NMBCLUSTERS=4096
+options 	BUFCACHE=10
 #options 	NKMEMPAGES=16384
 
 ## UVM options.
@@ -173,11 +174,11 @@ options 	FFS_EI		# FFS Endian Independent support
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
-#options 	INET6		# IPV6
+options 	INET6		# IPV6
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	GATEWAY		# packet forwarding ("router switch")
+options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 #options 	NS		# Xerox NS networking

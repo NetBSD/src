@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9.12.2 2002/06/20 03:40:23 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.9.12.3 2002/08/01 02:42:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -203,7 +203,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMUX, wsmux),  /* 45: ws multiplexor */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 46: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 47: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 47: system call tracing */
 #else
 	cdev_notdef(),			/* 47: system call tracing */
 #endif

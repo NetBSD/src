@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.17.2.6 2002/06/24 22:12:35 nathanw Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.17.2.7 2002/08/01 02:47:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.17.2.6 2002/06/24 22:12:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.17.2.7 2002/08/01 02:47:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,9 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	fs->lfs_seglock = 1;
 	fs->lfs_lockpid = curproc->p_pid;
 	
+	/* Drain fragment size changes out */
+	lockmgr(&fs->lfs_fraglock, LK_EXCLUSIVE, 0);
+
 	sp = fs->lfs_sp = malloc(sizeof(struct segment), M_SEGMENT, M_WAITOK);
 	sp->bpp = malloc(((fs->lfs_sumsize - SEGSUM_SIZE(fs)) /
 			  sizeof(ufs_daddr_t) + 1) * sizeof(struct buf *),
@@ -319,6 +322,8 @@ lfs_segunlock(struct lfs *fs)
 			fs->lfs_lockpid = 0;
 			wakeup(&fs->lfs_seglock);
 		}
+		/* Reenable fragment size changes */
+		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
 	} else if (fs->lfs_seglock == 0) {
 		panic ("Seglock not held");
 	} else {

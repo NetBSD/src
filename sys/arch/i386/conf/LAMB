@@ -1,13 +1,13 @@
-#	$NetBSD: LAMB,v 1.2.2.9 2002/06/20 03:39:06 nathanw Exp $
+#	$NetBSD: LAMB,v 1.2.2.10 2002/08/01 02:41:57 nathanw Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
 
-include "arch/i386/conf/std.i386"
+include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.2.2.9 $"
+#ident 		"GENERIC-Revision: 1.501"
 
 maxusers	32		# estimated number of users
 
@@ -54,6 +54,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
+options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -62,12 +63,12 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 options 	TIMER_FREQ=1189200	# LAMB uses nonstandard timer freq
 
@@ -179,6 +180,12 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	PCDISPLAY_SOFTCURSOR
 # modify the screen type of the console; defaults to "80x25"
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
+# work around a hardware bug that loaded fonts don't work; found on ATI cards
+#options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
+# the following enables some functions to get mouse console support.
+# if you want a really secure system, it may be better not to enable them,
+# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
+#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -265,15 +272,16 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 
 # wscons
-pckbc0		at isa?			# pc keyboard controller
-pckbd*		at pckbc?		# PC keyboard
-pms*		at pckbc?		# PS/2 mouse for wsmouse
-vga0		at isa?
-pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
-wsdisplay*	at vga? console ?
-wsdisplay*	at pcdisplay? console ?
-wskbd* 		at pckbd? console ?
-wsmouse*	at pms? mux 0
+#pckbc0		at isa?			# pc keyboard controller
+#pckbd*		at pckbc?		# PC keyboard
+#pms*		at pckbc?		# PS/2 mouse for wsmouse
+#options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
+#vga0		at isa?
+#pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+#wsdisplay*	at vga? console ?
+#wsdisplay*	at pcdisplay? console ?
+#wskbd*		at pckbd? console ?
+#wsmouse*	at pms? mux 0
 
 # no buzzer installed
 #pcppi0		at isa?
@@ -315,15 +323,6 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 # 0x0000 means "use whatever the drive claims to support".
 wd*	at wdc? channel ? drive ? flags 0x0000
 
-# ATAPI bus support
-atapibus* at wdc? channel ?
-
-# ATAPI devices
-# flags have the same meaning as for IDE drives.
-cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
-sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
-uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
-
 
 # Network Interfaces
 
@@ -341,8 +340,16 @@ ne1	at isa? port 0x300 irq 10		# GLOBAL (right)
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#Options to enable various other RAIDframe RAID types.
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 
@@ -351,8 +358,10 @@ pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+#pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
@@ -363,8 +372,8 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	tb		1	# tablet line discipline
-pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	tb		1	# tablet line discipline
+#pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
@@ -374,6 +383,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # wscons pseudo-devices
-pseudo-device	wsmux			# mouse & keyboard multiplexor
-pseudo-device	wsfont
-
+#pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsfont

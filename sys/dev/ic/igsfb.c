@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.2.2.2 2002/04/17 00:05:38 nathanw Exp $ */
+/*	$NetBSD: igsfb.c,v 1.2.2.3 2002/08/01 02:44:43 nathanw Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,10 +28,11 @@
  */
 
 /*
- * Integraphics Systems IGA 1682 and (untested) CyberPro 2k.
+ * Integraphics Systems IGA 168x and CyberPro series.
+ * Only tested on IGA 1682 in Krups JavaStation-NC.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.2.2.2 2002/04/17 00:05:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.2.2.3 2002/08/01 02:44:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,75 +124,60 @@ static void	igsfb_convert_cursor_data(struct igsfb_softc *, u_int, u_int);
  */
 static u_int16_t igsfb_spread_bits_8(u_int8_t);
 
-struct igs_bittab *igsfb_bittab = NULL;
-struct igs_bittab *igsfb_bittab_bswap = NULL;
-
-static __inline__ u_int16_t
-igsfb_spread_bits_8(b)
-	u_int8_t b;
-{
-	u_int16_t s = b;
-
-	s = ((s & 0x00f0) << 4) | (s & 0x000f);
-	s = ((s & 0x0c0c) << 2) | (s & 0x0303);
-	s = ((s & 0x2222) << 1) | (s & 0x1111);
-	return (s);
-}
+static struct igs_bittab *igsfb_bittab = NULL;
+static struct igs_bittab *igsfb_bittab_bswap = NULL;
 
 
 /*
- * Enable Video.  This might go through either memory or i/o space and
- * requires access to registers that we don't need for normal
- * operation.  So for greater flexibility this function takes bus tag
- * and base address, not the igsfb_softc.
+ * Enable chip.  This always goes through I/O space because
+ * uninitialized card only decodes I/O accesses to VDO and VSE.
  */
 int
-igsfb_io_enable(bt, base)
-	bus_space_tag_t bt;
-	bus_addr_t base;
+igsfb_enable(iot)
+	bus_space_tag_t iot;
 {
 	bus_space_handle_t vdoh;
 	bus_space_handle_t vseh;
+	bus_space_handle_t regh;
 	int ret;
 
-	ret = bus_space_map(bt, base + IGS_VDO, 1, 0, &vdoh);
+	ret = bus_space_map(iot, IGS_VDO, 1, 0, &vdoh);
 	if (ret != 0) {
 		printf("unable to map VDO register\n");
-		return (ret);
+		goto out0;
 	}
 
-	ret = bus_space_map(bt, base + IGS_VSE, 1, 0, &vseh);
+	ret = bus_space_map(iot, IGS_VSE, 1, 0, &vseh);
 	if (ret != 0) {
-		bus_space_unmap(bt, vdoh, 1);
 		printf("unable to map VSE register\n");
-		return (ret);
+		goto out1;
 	}
 
-	/* enable video: start decoding i/o space accesses */
-	bus_space_write_1(bt, vdoh, 0, IGS_VDO_ENABLE | IGS_VDO_SETUP);
-	bus_space_write_1(bt, vseh, 0, IGS_VSE_ENABLE);
-	bus_space_write_1(bt, vdoh, 0, IGS_VDO_ENABLE);
+	ret = bus_space_map(iot, IGS_REG_BASE, IGS_REG_SIZE, 0, &regh);
+	if (ret != 0) {
+		printf("unable to map I/O registers\n");
+		goto out2;
+	}
 
-	bus_space_unmap(bt, vdoh, 1);
-	bus_space_unmap(bt, vseh, 1);
+	/*
+	 * Enable video: start decoding i/o space accesses.
+	 */
+	bus_space_write_1(iot, vdoh, 0, IGS_VDO_ENABLE | IGS_VDO_SETUP);
+	bus_space_write_1(iot, vseh, 0, IGS_VSE_ENABLE);
+	bus_space_write_1(iot, vdoh, 0, IGS_VDO_ENABLE);
 
-	return (0);
-}
+	/*
+	 * Enable memory: start decoding memory space accesses.
+	 * While here, enable coprocessor and select IGS_COP_BASE_B.
+	 */
+	igs_ext_write(iot, regh, IGS_EXT_BIU_MISC_CTL,
+		      (IGS_EXT_BIU_LINEAREN
+		       | IGS_EXT_BIU_COPREN | IGS_EXT_BIU_COPASELB));
 
-
-/*
- * Enable linear: start decoding memory space accesses.
- * while here, enable coprocessor and set its addrress to 0xbf000.
- */
-void
-igsfb_mem_enable(sc)
-	struct igsfb_softc *sc;
-{
-
-	igs_ext_write(sc->sc_iot, sc->sc_ioh, IGS_EXT_BIU_MISC_CTL,
-		      IGS_EXT_BIU_LINEAREN
-		      | IGS_EXT_BIU_COPREN
-		      | IGS_EXT_BIU_COPASELB);
+	bus_space_unmap(iot, regh, IGS_REG_SIZE);
+  out2:	bus_space_unmap(iot, vseh, 1);
+  out1:	bus_space_unmap(iot, vdoh, 1);
+  out0: return (ret);
 }
 
 
@@ -204,6 +190,11 @@ igsfb_common_attach(sc, isconsole)
 	struct igsfb_softc *sc;
 	int isconsole;
 {
+	bus_space_handle_t tmph;
+	u_int8_t *p;
+	int need_bswap;
+	char *bswap_msg;
+	bus_addr_t fbaddr;
 	bus_addr_t craddr;
 	off_t croffset;
 	struct rasops_info *ri;
@@ -212,35 +203,77 @@ igsfb_common_attach(sc, isconsole)
 
 	busctl = igs_ext_read(sc->sc_iot, sc->sc_ioh, IGS_EXT_BUS_CTL);
 	if (busctl & 0x2)
-		sc->sc_memsz = 4 * 1024 * 1024;
+		sc->sc_vmemsz = 4 << 20;
 	else if (busctl & 0x1)
-		sc->sc_memsz = 2 * 1024 * 1024;
+		sc->sc_vmemsz = 2 << 20;
 	else
-		sc->sc_memsz = 1 * 1024 * 1024;
+		sc->sc_vmemsz = 1 << 20;
+
+	/*
+	 * Check for endianness mismatch by writing a word at the end
+	 * of video memory (off-screen) and reading it back byte-by-byte.
+	 */
+	if (bus_space_map(sc->sc_memt,
+			  sc->sc_memaddr + sc->sc_vmemsz - sizeof(u_int32_t),
+			  sizeof(u_int32_t),
+			  sc->sc_memflags | BUS_SPACE_MAP_LINEAR,
+			  &tmph) != 0)
+	{
+		printf("unable to map video memory for endianness test\n");
+		return;
+	}
+
+	p = bus_space_vaddr(sc->sc_memt, tmph);
+#if BYTE_ORDER == BIG_ENDIAN
+	*((u_int32_t *)p) = 0x12345678;
+#else
+	*((u_int32_t *)p) = 0x78563412;
+#endif
+	if (p[0] == 0x12 && p[1] == 0x34 && p[2] == 0x56 && p[3] == 0x78)
+		need_bswap = 0;
+	else
+		need_bswap = 1;
+
+	bus_space_unmap(sc->sc_memt, tmph, sizeof(u_int32_t));
+
+	/*
+	 * On CyberPro we can use magic bswap bit in linear address.
+	 */
+	fbaddr = sc->sc_memaddr;
+	if (need_bswap)
+		if (sc->sc_is2k) {
+			fbaddr |= IGS_MEM_BE_SELECT;
+			bswap_msg = ", hw bswap";
+		} else {
+			sc->sc_hwflags |= IGSFB_HW_BSWAP;
+			bswap_msg = ", sw bswap"; /* sic! */
+		}
+	else
+		bswap_msg = "";
 
 	/*
 	 * Don't map in all N megs, just the amount we need for wsscreen
 	 */
 	sc->sc_fbsz = 1024 * 768; /* XXX: 8bpp specific */
-	if (bus_space_map(sc->sc_memt, sc->sc_memaddr, sc->sc_fbsz,
+	if (bus_space_map(sc->sc_memt, fbaddr, sc->sc_fbsz,
 			  sc->sc_memflags | BUS_SPACE_MAP_LINEAR,
 			  &sc->sc_fbh) != 0)
 	{
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, IGS_IO_SIZE);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, IGS_REG_SIZE);
 		printf("unable to map framebuffer\n");
 		return;
 	}
 
 	/*
-	 * 1Kb for cursor sprite data at the very end of linear space
+	 * 1Kb for cursor sprite data at the very end of video memory
 	 */
-	croffset = sc->sc_memsz - IGS_CURSOR_DATA_SIZE;
-	craddr = sc->sc_memaddr + croffset;
+	croffset = sc->sc_vmemsz - IGS_CURSOR_DATA_SIZE;
+	craddr = fbaddr + croffset;
 	if (bus_space_map(sc->sc_memt, craddr, IGS_CURSOR_DATA_SIZE,
 			  sc->sc_memflags | BUS_SPACE_MAP_LINEAR,
 			  &sc->sc_crh) != 0)
 	{
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, IGS_IO_SIZE);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, IGS_REG_SIZE);
 		bus_space_unmap(sc->sc_memt, sc->sc_fbh, sc->sc_fbsz);
 		printf("unable to map cursor sprite region\n");
 		return;
@@ -282,13 +315,16 @@ igsfb_common_attach(sc, isconsole)
 	 */
 	if (isconsole) {
 		long defattr;
-		(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&igsfb_stdscreen, ri, 0, 0, defattr);
 	}
 
 
-	printf("%s: %dx%d, %dbpp\n",
-	       sc->sc_dev.dv_xname, ri->ri_width, ri->ri_height, ri->ri_depth);
+	printf("%s: %dmb%s, %dx%d, %dbpp\n",
+	       sc->sc_dev.dv_xname,
+	       (u_int32_t)(sc->sc_vmemsz >> 20),
+	       bswap_msg,
+	       ri->ri_width, ri->ri_height, ri->ri_depth);
 
 	/* attach wsdisplay */
 	waa.console = isconsole;
@@ -297,6 +333,22 @@ igsfb_common_attach(sc, isconsole)
 	waa.accesscookie = sc;
 
 	config_found(&sc->sc_dev, &waa, wsemuldisplaydevprint);
+}
+
+
+/*
+ * Helper function for igsfb_init_bit_tables().
+ */
+static u_int16_t
+igsfb_spread_bits_8(b)
+	u_int8_t b;
+{
+	u_int16_t s = b;
+
+	s = ((s & 0x00f0) << 4) | (s & 0x000f);
+	s = ((s & 0x0c0c) << 2) | (s & 0x0303);
+	s = ((s & 0x2222) << 1) | (s & 0x1111);
+	return (s);
 }
 
 
@@ -427,6 +479,7 @@ igsfb_common_init(sc)
 
 /*
  * wsdisplay_accessops: mmap()
+ *   XXX: allow mmapping i/o mapped i/o regs if INSECURE???
  */
 static paddr_t
 igsfb_mmap(v, offset, prot)
@@ -780,6 +833,7 @@ igsfb_set_cursor(sc, p)
 	return (0);
 }
 
+
 /*
  * Convert incoming 1bpp cursor image/mask into native 2bpp format.
  */
@@ -870,7 +924,7 @@ igsfb_update_cursor(sc, which)
 
 		/* tell DAC we want access to the cursor palette */
 		igs_ext_write(iot, ioh, IGS_EXT_SPRITE_CTL,
-			      curctl | IGS_EXT_SPRITE_SELECT);
+			      curctl | IGS_EXT_SPRITE_DAC_PEL);
 
 		p = sc->sc_cursor.cc_color;
 

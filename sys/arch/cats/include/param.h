@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3.8.3 2002/06/20 03:38:24 nathanw Exp $	*/
+/*	$NetBSD: param.h,v 1.3.8.4 2002/08/01 02:41:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -49,8 +49,9 @@
 /*
  * cats boot dmesg is bigger than 4k
  */
-
+#ifndef MSGBUFSIZE
 #define MSGBUFSIZE	(2*NBPG)
+#endif
 
 #include <arm/arm32/param.h>
 

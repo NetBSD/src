@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.91.2.9 2002/06/20 03:45:04 nathanw Exp $	*/
+/*	$NetBSD: tulip.c,v 1.91.2.10 2002/08/01 02:44:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.91.2.9 2002/06/20 03:45:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.91.2.10 2002/08/01 02:44:47 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -1962,8 +1962,10 @@ tlp_power(why, arg)
 
 	s = splnet();
 	switch (why) {
-	case PWR_SUSPEND:
 	case PWR_STANDBY:
+		/* do nothing! */
+		break;
+	case PWR_SUSPEND:
 		tlp_stop(ifp, 0);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
@@ -3521,8 +3523,10 @@ tlp_21140_reset(sc)
 	}
 
 	/* If there were no sequences, just lower the pins. */
-	if (tm->tm_reset_length == 0 && tm->tm_gp_length == 0)
+	if (tm->tm_reset_length == 0 && tm->tm_gp_length == 0) {
+		delay(10);
 		TULIP_WRITE(sc, CSR_GPP, 0);
+	}
 }
 
 /*
@@ -3934,6 +3938,7 @@ tlp_get_minst(sc)
 void	tlp_sia_update_link __P((struct tulip_softc *));
 void	tlp_sia_get __P((struct tulip_softc *, struct ifmediareq *));
 int	tlp_sia_set __P((struct tulip_softc *));
+int	tlp_sia_media __P((struct tulip_softc *, struct ifmedia_entry *));
 void	tlp_sia_fixup __P((struct tulip_softc *));
 
 void
@@ -4075,10 +4080,17 @@ int
 tlp_sia_set(sc)
 	struct tulip_softc *sc;
 {
+
+	return (tlp_sia_media(sc, TULIP_CURRENT_MEDIA(sc)));
+}
+
+int
+tlp_sia_media(sc, ife)
+	struct tulip_softc *sc;
 	struct ifmedia_entry *ife;
+{
 	struct tulip_21x4x_media *tm;
 
-	ife = TULIP_CURRENT_MEDIA(sc);
 	tm = ife->ifm_aux;
 
 	/*
@@ -4107,7 +4119,7 @@ tlp_sia_set(sc)
 		TULIP_WRITE(sc, CSR_SIAGEN, tm->tm_siagen | tm->tm_gpdata);
 		break;
 	default:
-		TULIP_WRITE(sc, CSR_SIAGEN,  tm->tm_siagen);
+		TULIP_WRITE(sc, CSR_SIAGEN, tm->tm_siagen);
 	}
 
 	TULIP_WRITE(sc, CSR_SIACONN, tm->tm_siaconn);
@@ -5016,29 +5028,19 @@ tlp_2114x_nway_statchg(self)
 {
 	struct tulip_softc *sc = (struct tulip_softc *)self;
 	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia_entry *ife;
 
 	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE)
 		return;
+	
+	if ((ife = ifmedia_match(&mii->mii_media, mii->mii_media_active, 
+	    mii->mii_media.ifm_mask)) == NULL) {
+		printf("tlp_2114x_nway_statchg: no match for media 0x%x/0x%x\n",
+		    mii->mii_media_active, ~mii->mii_media.ifm_mask);
+		panic("tlp_2114x_nway_statchg");
+	}
 
-	/* Idle the transmit and receive processes. */
-	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
-
-	sc->sc_opmode &= ~(OPMODE_TTM|OPMODE_FD|OPMODE_PS|OPMODE_PCS|
-	    OPMODE_SCR|OPMODE_HBD);
-
-	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_10_T)
-		sc->sc_opmode |= OPMODE_TTM;
-	else
-		sc->sc_opmode |= OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_HBD;
-
-	if (mii->mii_media_active & IFM_FDX)
-		sc->sc_opmode |= OPMODE_FD|OPMODE_HBD;
-
-	/*
-	 * Write new OPMODE bits.  This also restarts the transmit
-	 * and receive processes.
-	 */
-	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+	tlp_sia_media(sc, ife);
 }
 
 void
@@ -5158,15 +5160,14 @@ tlp_2114x_nway_auto(sc)
 
 	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
 
-	sc->sc_opmode &= ~(OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_TTM);
-	sc->sc_opmode |= OPMODE_FD|OPMODE_HBD;
+	sc->sc_opmode &= ~(OPMODE_PS|OPMODE_PCS|OPMODE_SCR);
+	sc->sc_opmode |= OPMODE_TTM|OPMODE_FD|OPMODE_HBD;
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
 
 	TULIP_WRITE(sc, CSR_SIACONN, 0);
 	delay(1000);
-	TULIP_WRITE(sc, CSR_SIACONN, SIACONN_SRL);
-
 	TULIP_WRITE(sc, CSR_SIATXRX, 0x3ffff);
+	TULIP_WRITE(sc, CSR_SIACONN, SIACONN_SRL);
 
 	siastat = TULIP_READ(sc, CSR_SIASTAT);
 	siastat &= ~(SIASTAT_ANS|SIASTAT_LPC|SIASTAT_TRA|SIASTAT_ARA|SIASTAT_LS100|SIASTAT_LS10|SIASTAT_MRA);

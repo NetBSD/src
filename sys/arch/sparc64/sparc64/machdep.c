@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.13 2002/07/12 01:39:49 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.112.4.14 2002/08/01 02:43:48 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -459,14 +459,14 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct sigacts *ps = p->p_sigacts;
 	struct sigframe *fp;
 	struct trapframe64 *tf;
 	vaddr_t addr; 
@@ -476,6 +476,7 @@ sendsig(catcher, sig, mask, code)
 #endif
 	struct sigframe sf;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_tf;
 	oldsp = (struct rwindow *)(u_long)(tf->tf_out[6] + STACK_OFFSET);
@@ -594,8 +595,22 @@ sendsig(catcher, sig, mask, code)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-	addr = (vaddr_t)p->p_sigctx.ps_sigcode;
-	addr += 8; /* XXX skip the upcall code */
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		addr = (vaddr_t)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		addr = (vaddr_t)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(l, SIGILL);
+	}
+
 	tf->tf_global[1] = (vaddr_t)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;

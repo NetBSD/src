@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.10.8.5 2002/06/20 03:39:21 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.10.8.6 2002/08/01 02:42:20 nathanw Exp $
 #
 # INSTALL
 
@@ -32,7 +32,8 @@ options 	INSECURE	# disable kernel security levels
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options - XXX remove these at some point
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -56,7 +57,7 @@ file-system 	KERNFS		# /kern
 
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
@@ -171,6 +172,7 @@ mc*	at obio?			# MACE-based
 ae*	at nubus?			# DP8390-based
 sn*	at nubus?			# SONIC-based (DP83932, DP83916)
 sm*	at nubus?			# SMC-based
+netdock*	at nubus?		# Asante NetDock, Newer Ether MicroDock
 
 nsphy*	at mii? phy ?
 ukphy*	at mii? phy ?
@@ -191,4 +193,5 @@ pseudo-device	ppp		1 	# Point-to-Point Protocol
 pseudo-device	sl		1 	# Serial Line IP
 
 # miscellaneous pseudo-devices
+pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)

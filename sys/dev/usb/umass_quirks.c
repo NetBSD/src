@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.8.2.4 2002/06/20 03:46:56 nathanw Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.8.2.5 2002/08/01 02:46:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,6 +58,14 @@ Static void umass_fixup_sony(struct umass_softc *);
 Static void umass_fixup_yedata(struct umass_softc *);
 
 Static const struct umass_quirk umass_quirks[] = {
+        { { USB_VENDOR_DMI, USB_PRODUCT_DMI_SA2_0 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+          0,
+          PQUIRK_NOMODESENSE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
 	{ { USB_VENDOR_FUJIPHOTO, USB_PRODUCT_FUJIPHOTO_MASS0100 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  UMASS_QUIRK_NO_START_STOP,
@@ -178,6 +186,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  NULL, NULL
 	},
 
+	{ { USB_VENDOR_TRUMPION, USB_PRODUCT_TRUMPION_XXX1100 },
+	  UMASS_WPROTO_CBI, UMASS_CPROTO_ATAPI,
+	  0,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
 	{ { USB_VENDOR_YANO, USB_PRODUCT_YANO_U640MO },
 	  UMASS_WPROTO_CBI_I, UMASS_CPROTO_ATAPI,
 	  UMASS_QUIRK_FORCE_SHORT_INQUIRY,
@@ -251,6 +267,13 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,
 	  0,
 	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_INSYSTEM, USB_PRODUCT_INSYSTEM_IDEUSB2 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NOMODESENSE,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},

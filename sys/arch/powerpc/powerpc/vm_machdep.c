@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36.4.7 2002/07/12 01:39:47 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36.4.8 2002/08/01 02:43:12 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,12 +45,11 @@
 
 #include <uvm/uvm_extern.h>
 
+#ifdef ALTIVEC
+#include <powerpc/altivec.h>
+#endif
 #include <machine/fpu.h>
 #include <machine/pcb.h>
-
-#if !defined(MULTIPROCESSOR) && defined(PPC_HAVE_FPU)
-#define save_fpu_proc(l) save_fpu(l)		/* XXX */
-#endif
 
 #ifdef PPC_IBM4XX
 vaddr_t vmaprange(struct proc *, vaddr_t, vsize_t, int);
@@ -104,11 +103,10 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 #endif
 	*pcb = l1->l_addr->u_pcb;
 #ifdef ALTIVEC
-	if (l1->l_addr->u_pcb.pcb_vr != NULL) {
-		if (l1 == vecproc)
-			save_vec(l1);
-		pcb->pcb_vr = pool_get(vecpl, POOL_WAITOK);
-		*pcb->pcb_vr = *l1->l_addr->u_ucb.pcb_vr;
+	if (l1->p_addr->u_pcb.pcb_vr != NULL) {
+		save_vec_proc(l1);
+		pcb->pcb_vr = pool_get(&vecpool, PR_WAITOK);
+		*pcb->pcb_vr = *l1->p_addr->u_pcb.pcb_vr;
 	}
 #endif
 
@@ -249,21 +247,24 @@ pagemove(from, to, size)
 void
 cpu_exit(struct lwp *l, int proc)
 {
-	void switch_exit(struct lwp *);		/* Defined in locore_subr.S */
+	void switchexit(struct lwp *);		/* Defined in locore.S */
 	void switch_lwp_exit(struct lwp *);	/* Defined in locore_subr.S */
-#ifdef ALTIVEC
+#if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
 	struct pcb *pcb = &l->l_addr->u_pcb;
 #endif
 
 #ifdef PPC_HAVE_FPU
-	if (l->l_addr->u_pcb.pcb_fpcpu)		/* release the FPU */
-		fpuproc = NULL;
+	if (pcb->pcb_fpcpu)			/* release the FPU */
+		save_fpu_proc(l);
 #endif
 #ifdef ALTIVEC
-	if (l == vecproc)			/* release the AltiVEC */
-		vecproc = NULL;
+	if (pcb->pcb_veccpu) {			/* release the AltiVEC */
+		save_vec_proc(l);
+		__asm __volatile("dssall;sync"); /* stop any streams */
+/* XXX this stops streams on the current cpu, should be pcb->pcb_veccpu */
+	}
 	if (pcb->pcb_vr != NULL)
-		pool_put(vecpl, pcb->pcb_vr);
+		pool_put(&vecpool, pcb->pcb_vr);
 #endif
 
 	splsched();
@@ -306,8 +307,8 @@ cpu_coredump(l, vp, cred, chdr)
 
 #ifdef ALTIVEC
 	if (pcb->pcb_flags & PCB_ALTIVEC) {
-		if (l == vecproc)
-			save_vec(l);
+		if (pcb->pcb_veccpu)
+			save_vec_proc(l);
 		md_core.vstate = *pcb->pcb_vr;
 	} else
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.15 2002/07/12 01:39:35 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.16 2002/08/01 02:42:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,18 +103,19 @@ int sigpid = 0;
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct sigacts *ps = p->p_sigacts;
 	struct sigframe *fp, kf;
 	struct frame *frame;
 	short ft;
 	int onstack, fsize;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	frame = (struct frame *)l->l_md.md_regs;
 	ft = frame->f_format;
@@ -140,10 +141,25 @@ sendsig(catcher, sig, mask, code)
 #endif
 
 	/* Build stack frame for signal trampoline. */
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		kf.sf_ra = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		kf.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
+
 	kf.sf_signum = sig;
 	kf.sf_code = code;
 	kf.sf_scp = &fp->sf_sc;
-	kf.sf_handler = catcher;
 
 	/*
 	 * Save necessary hardware state.  Currently this includes:
@@ -237,9 +253,12 @@ sendsig(catcher, sig, mask, code)
 		       kf.sf_sc.sc_sp, kf.sf_sc.sc_ap);
 #endif
 
-	/* Set up the registers to return to sigcode. */
+	/*
+	 * Set up the registers to return to the signal handler.  The
+	 * handler will then return to the signal trampoline.
+	 */
 	frame->f_regs[SP] = (int)fp;
-	frame->f_pc = (int)p->p_sigctx.ps_sigcode;
+	frame->f_pc = (int)catcher;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.9.8.4 2002/06/20 03:40:40 nathanw Exp $	*/
+/*	$NetBSD: extintr.c,v 1.9.8.5 2002/08/01 02:43:15 nathanw Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -94,6 +94,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+
+#include <net/netisr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -526,8 +528,10 @@ do_pending_int(void)
 		softclock(NULL);
 	}
 	if ((ipending & ~pcpl) & SINT_NET) {
+		int pisr = netisr;
+		netisr = 0;
 		ipending &= ~SINT_NET;
-		softnet();
+		softnet(pisr);
 	}
 	if ((ipending & ~pcpl) & SINT_SERIAL) {
 		ipending &= ~SINT_SERIAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.60.2.11 2002/07/12 01:40:38 nathanw Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.60.2.12 2002/08/01 02:47:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -181,8 +181,13 @@ struct ctlname {
 #define	KERN_SBMAX		58	/* int: max socket buffer size */
 #define	KERN_TKSTAT		59	/* tty in/out counters */
 #define	KERN_MONOTONIC_CLOCK	60	/* int: POSIX monotonic clock */
-#define	KERN_LWP		61	/* struct: lwp entries */
-#define	KERN_MAXID		62	/* number of valid kern ids */
+#define	KERN_URND		61	/* int: random integer from urandom */
+#ifndef _KERNEL
+#define	KERN_ARND		KERN_URND	/* compat w/ openbsd */
+#endif
+#define	KERN_LWP		62	/* struct: lwp entries */
+#define	KERN_MAXID		63	/* number of valid kern ids */
+
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -246,6 +251,7 @@ struct ctlname {
 	{ "sbmax", CTLTYPE_INT }, \
 	{ "tkstat", CTLTYPE_NODE }, \
 	{ "monotonic_clock", CTLTYPE_INT }, \
+	{ "urandom", CTLTYPE_INT }, \
 	{ "lwp", CTLTYPE_STRUCT }, \
 }
 

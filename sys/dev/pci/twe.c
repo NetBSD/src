@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.12.2.8 2002/06/20 03:45:55 nathanw Exp $	*/
+/*	$NetBSD: twe.c,v 1.12.2.9 2002/08/01 02:45:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.12.2.8 2002/06/20 03:45:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.12.2.9 2002/08/01 02:45:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ struct cfattach twe_ca = {
 };
 
 struct {
-	const u_int	aen;		/* High byte non-zero if w/unit */
+	const u_int	aen;	/* High byte indicates type of message */
 	const char	*desc;
 } static const twe_aen_names[] = {
 	{ 0x0000, "queue empty" },
@@ -128,15 +128,43 @@ struct {
 	{ 0x0104, "rebuild fail" },
 	{ 0x0105, "rebuild done" },
 	{ 0x0106, "incompatible unit" },
-	{ 0x0107, "init done" },
-	{ 0x0108, "unclean shutdown" },
-	{ 0x0109, "aport timeout" },
+	{ 0x0107, "initialisation done" },
+	{ 0x0108, "unclean shutdown detected" },
+	{ 0x0109, "drive timeout" },
 	{ 0x010a, "drive error" },
 	{ 0x010b, "rebuild started" },
 	{ 0x010c, "init started" },
-	{ 0x0015, "table undefined" },
+	{ 0x010d, "logical unit deleted" },
+	{ 0x020f, "SMART threshold exceeded" },
+	{ 0x0015, "table undefined" },	/* XXX: Not in FreeBSD's table */
+	{ 0x0221, "ATA UDMA downgrade" },
+	{ 0x0222, "ATA UDMA upgrade" },
+	{ 0x0222, "ATA UDMA upgrade" },
+	{ 0x0223, "Sector repair occurred" },
+	{ 0x0024, "SBUF integrity check failure" },
+	{ 0x0225, "lost cached write" },
+	{ 0x0226, "drive ECC error detected" },
+	{ 0x0227, "DCB checksum error" },
+	{ 0x0228, "DCB unsupported version" },
+	{ 0x0129, "verify started" },
+	{ 0x012a, "verify failed" },
+	{ 0x012b, "verify complete" },
+	{ 0x022c, "overwrote bad sector during rebuild" },
+	{ 0x022d, "encountered bad sector during rebuild" },
 	{ 0x00ff, "aen queue full" },
 };
+
+/*
+ * The high byte of the message above determines the format,
+ * currently we know about format 0 (no unit/port specific)
+ * format 1 (unit specific message), and format 2 (port specific message).
+ */
+static const char *aenfmt[] = {
+	""		/* No message */
+	"unit %d: ",	/* Unit message */
+	"port %d: "	/* Port message */
+};
+
 
 static inline u_int32_t
 twe_inl(struct twe_softc *sc, int off)
@@ -558,16 +586,14 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 	while (i < sizeof(twe_aen_names) / sizeof(twe_aen_names[0])) {
 		if (TWE_AEN_CODE(twe_aen_names[i].aen) == TWE_AEN_CODE(aen)) {
 			str = twe_aen_names[i].desc;
-			hu = (TWE_AEN_UNIT(twe_aen_names[i].aen) != 0);
+			hu = TWE_AEN_UNIT(twe_aen_names[i].aen);
 			break;
 		}
 		i++;
 	}
-	printf("%s: AEN 0x%04x (%s) received", sc->sc_dv.dv_xname,
-	    TWE_AEN_CODE(aen), str);
-	if (hu != 0)
-		printf(" for unit %d", TWE_AEN_UNIT(aen));
-	printf("\n");
+	printf("%s: ", sc->sc_dv.dv_xname);
+	printf(aenfmt[hu], TWE_AEN_UNIT(aen));
+	printf("AEN 0x%04x (%s) received\n", TWE_AEN_CODE(aen), str);
 
 	/*
 	 * Chain another retrieval in case interrupts have been

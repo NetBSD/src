@@ -1,4 +1,4 @@
-/*      $NetBSD: scsi.c,v 1.2.26.1 2002/06/20 03:40:24 nathanw Exp $        */
+/*      $NetBSD: scsi.c,v 1.2.26.2 2002/08/01 02:42:53 nathanw Exp $        */
 /*
  * Copyright (c) 1994, 1997 Rolf Grossmann
  * All rights reserved.
@@ -56,9 +56,12 @@ void scsierror(char *error);
 short scsi_getbyte(volatile caddr_t sr);
 int scsi_wait_for_intr(void);
 int scsiicmd(char target, char lun,
-	 u_char *cbuf, int clen, char *addr, int len);
+	 u_char *cbuf, int clen, char *addr, int *len);
 
-#ifdef SCSI_DEBUG
+#define NDPRINTF(x)
+#define PRINTF(x)
+/* printf x; */
+#ifdef xSCSI_DEBUG
 #define DPRINTF(x) printf x;
 #else
 #define DPRINTF(x)
@@ -92,7 +95,7 @@ scsi_init(void)
 
     /* now reset the SCSI bus */
     sr[NCR_CMD]        = NCRCMD_RSTSCSI;
-    DELAY(18000000);	/* XXX should be about 2-3 seconds at least */
+    DELAY(4000000);	/* XXX should be about 2-3 seconds at least */
     
     /* then reset the SCSI chip again and initialize it properly */
     sr[NCR_CMD]        = NCRCMD_RSTCHIP;
@@ -140,12 +143,14 @@ scsi_wait_for_intr(void)
   extern char *mg;
 #define	MON(type, off) (*(type *)((u_int) (mg) + off))
   volatile int *intrstat = MON(volatile int *,MG_intrstat);
-  volatile int *intrmask = MON(volatile int *,MG_intrmask);
+#ifdef SCSI_DEBUG
+/*   volatile int *intrmask = MON(volatile int *,MG_intrmask); */
+#endif
 #endif
     int count;
 
     for(count = 0; count < SCSI_TIMEOUT; count++) {
-			DPRINTF(("  *intrstat = 0x%x\t*intrmask = 0x%x\n",*intrstat,*intrmask));
+			NDPRINTF(("  *intrstat = 0x%x\t*intrmask = 0x%x\n",*intrstat,*intrmask));
 
 	if (*intrstat & SCSI_INTR)
 	    return 0;
@@ -158,13 +163,13 @@ scsi_wait_for_intr(void)
 int
 scsiicmd(char target, char lun,
 	 u_char *cbuf, int clen,
-	 char *addr, int len)
+	 char *addr, int *len)
 {
     volatile caddr_t sr;
     int i;
 
     DPRINTF(("scsiicmd: [%x, %d] -> %d (%lx, %d)\n",*cbuf, clen,
-	     target, (long)addr, len));
+	     target, (long)addr, *len));
     sr = P_SCSI;
 
     if (sc->sc_state != SCSI_IDLE) {
@@ -192,14 +197,16 @@ scsiicmd(char target, char lun,
 	    /* registers are not valid on dma intr */
 	    sc->sc_status = sc->sc_seqstep = sc->sc_intrstatus = 0;
 	    DPRINTF(("scsiicmd: dma intr\n"));
-	} else {
-	    /* scsi processing */
-	    sc->sc_status     = sr[NCR_STAT];
-	    sc->sc_seqstep    = sr[NCR_STEP];
-	    sc->sc_intrstatus = sr[NCR_INTR];
-	    DPRINTF(("scsiicmd: regs[intr=%x, stat=%x, step=%x]\n",
-		     sc->sc_intrstatus, sc->sc_status, sc->sc_seqstep));
+	    sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD;
 	}
+
+	/* scsi processing */
+	sc->sc_status     = sr[NCR_STAT];
+	sc->sc_seqstep    = sr[NCR_STEP];
+	sc->sc_intrstatus = sr[NCR_INTR];
+    redo:
+	DPRINTF(("scsiicmd: regs[intr=%x, stat=%x, step=%x]\n",
+		 sc->sc_intrstatus, sc->sc_status, sc->sc_seqstep));
 	
 	if (sc->sc_intrstatus & NCRINTR_SBR) {
 	    scsierror("scsi bus reset");
@@ -247,9 +254,15 @@ scsiicmd(char target, char lun,
 		  scsierror("target disconnected");
 		  return EIO;
 	      }
-	      if (dma_done() != 0)
-		  return EIO;
-	      continue;
+	      *len = dma_done();
+	      if (*len < 0) {
+		      *len = 0;
+		      return EIO;
+	      }
+	      /* continue; */
+	      sc->sc_status     = sr[NCR_STAT];
+	      goto redo;
+	      break;
 	  case SCSI_CLEANUP:
 	      if (sc->sc_intrstatus & NCRINTR_DIS)
 	      {
@@ -265,7 +278,8 @@ scsiicmd(char target, char lun,
 	switch(sc->sc_status & NCRSTAT_PHASE)
 	{
 	  case DATA_IN_PHASE:
-	      if (dma_start(addr, len) != 0)
+		  sr[NCR_CMD] = NCRCMD_FLUSH;
+	      if (dma_start(addr, *len) != 0)
 		  return EIO;
 	      break;
 	  case DATA_OUT_PHASE:
@@ -278,9 +292,13 @@ scsiicmd(char target, char lun,
 	      DPRINTF(("status is 0x%x.\n", sc->sc_result));
 	      break;
 	  case MSG_IN_PHASE:
-	      if (scsi_msgin() != 0)
-		  return EIO;
-	      break;
+		if ((sc->sc_intrstatus & NCRINTR_BS) != 0) {
+			sr[NCR_CMD] = NCRCMD_FLUSH;
+			sr[NCR_CMD] = NCRCMD_TRANS;
+		} else
+			if (scsi_msgin() != 0)
+				return EIO;
+		break;
 	  default:
 	      DPRINTF(("phase not implemented: 0x%x.\n",
 		      sc->sc_status & NCRSTAT_PHASE));
@@ -348,7 +366,7 @@ dma_start(char *addr, int len)
 #endif
     }
     
-    DPRINTF(("dma start: %lx, %d byte.\n", (long)addr, len));
+    PRINTF(("dma start: %lx, %d byte.\n", (long)addr, len));
 
     DPRINTF(("dma_bufffer: start: 0x%lx end: 0x%lx \n", 
 				(long)dma_buffer,(long)DMA_ENDALIGN(char *, dma_buffer+len)));
@@ -369,7 +387,7 @@ dma_start(char *addr, int len)
 #else
     dma->dd_csr = 0;
     dma->dd_csr = DMACSR_INITBUF | DMACSR_READ | DMACSR_RESET;
-    dma->dd_next_initbuf = dma_buffer;
+    dma->dd_next = dma_buffer;
     dma->dd_limit = DMA_ENDALIGN(char *, dma_buffer+len);
     dma->dd_csr = DMACSR_READ | DMACSR_SETENABLE;
 #endif
@@ -385,7 +403,8 @@ dma_done(void)
 {
     volatile caddr_t sr;
     struct dma_dev *dma;
-    int count, state;
+    int resid, state;
+    int flushcount = 0;
     
     sr = P_SCSI;
     dma = (struct dma_dev *)P_SCSI_CSR;
@@ -393,51 +412,59 @@ dma_done(void)
     state = dma->dd_csr & (DMACSR_BUSEXC | DMACSR_COMPLETE
 			   | DMACSR_SUPDATE | DMACSR_ENABLE);
 
-    count = sr[NCR_TCM]<<8 | sr[NCR_TCL];
-    DPRINTF(("dma state = 0x%x, remain = %d.\n", state, count));
-    
-    if (state & DMACSR_ENABLE) 
-    {
+    sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD;
+    resid = sr[NCR_TCM]<<8 | sr[NCR_TCL];
+    DPRINTF(("dma state = 0x%x, remain = %d.\n", state, resid));
 
-			DPRINTF(("dma still enabled, flushing DCTL.\n"));
-
-	sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD
-		       | ESPDCTL_DMARD | ESPDCTL_FLUSH;
-/*	DELAY(5); */
-	sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD
-		       | ESPDCTL_DMARD;
-/*	DELAY(5); */
-
-	return 0;
+    if (!(sr[NCR_FFLAG] & NCRFIFO_FF)) {
+	    sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD
+		    | ESPDCTL_DMARD;
+	    while (!(state & DMACSR_COMPLETE) && (state & DMACSR_ENABLE) && flushcount < 16) 
+	    {
+		    
+		    DPRINTF(("dma still enabled, flushing DCTL.\n"));
+		    
+		    sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD
+			    | ESPDCTL_DMARD | ESPDCTL_FLUSH;
+		    sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD
+			    | ESPDCTL_DMARD;
+		    
+		    flushcount++;
+		    state = dma->dd_csr & (DMACSR_BUSEXC | DMACSR_COMPLETE
+					   | DMACSR_SUPDATE | DMACSR_ENABLE);
+	    }
     }
-
     sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB;
-    count = sr[NCR_TCM]<<8 | sr[NCR_TCL];
-    dma->dd_csr = DMACSR_RESET;
+    resid = (sr[NCR_TCM]<<8) + sr[NCR_TCL];
 
-    DPRINTF(("dma done. remain = %d, state = 0x%x.\n", count, state));
+    dma->dd_csr = DMACSR_CLRCOMPLETE | DMACSR_RESET;
 
-    if (count != 0)
+    DPRINTF(("dma done. remain = %d, state = 0x%x, fifo = 0x%x.\n", resid, state, sr[NCR_FFLAG] & NCRFIFO_FF));
+
+    if (resid != 0)
     {
-      printf("WARNING: unexpected %d characters remain in dma\n",count);
-	scsierror("dma transfer incomplete");
 #if 0
+      printf("WARNING: unexpected %d characters remain in dma\n",resid);
+	scsierror("dma transfer incomplete");
 	return -1;
 #endif
     }
 
-    if (state & DMACSR_COMPLETE)
-    {
-	bcopy(dma_buffer, sc->dma_addr, sc->dma_len);
-	sc->sc_state = SCSI_HASBUS;
-	return 0;
-    }
     if (state & DMACSR_BUSEXC)
     {
 	scsierror("dma failed");
 	return -1;
     }
-    scsierror("dma not completed\n");
+
+    sc->dma_len -= resid;
+    if (sc->dma_len < 0)
+	    sc->dma_len = 0;
+    bcopy(dma_buffer, sc->dma_addr, sc->dma_len);
+    sc->sc_state = SCSI_HASBUS;
+    DPRINTF(("dma done. got %d.\n", sc->dma_len));
+    return sc->dma_len;
+
+    /* scsierror("dma not completed\n"); */
     
-    return -1;
+    return 0;
 }

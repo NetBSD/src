@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.2.2.3 2001/11/14 19:15:45 nathanw Exp $ */
+/*	$NetBSD: ts.c,v 1.2.2.4 2002/08/01 02:45:34 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.2.2.3 2001/11/14 19:15:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.2.2.4 2002/08/01 02:45:34 nathanw Exp $");
 
 #undef	TSDEBUG
 
@@ -130,7 +130,7 @@ struct	ts_softc {
 	struct	ts *sc_bts;		/* Unibus address of ts struct */
 	int	sc_type;		/* TS11 or TS05? */
 	short	sc_waddr;		/* Value to write to TSDB */
-	struct	buf_queue sc_bufq;	/* pending I/O requests */
+	struct	bufq_state sc_bufq;	/* pending I/O requests */
 
 	short	sc_mapped;		/* Unibus map allocated ? */
 	short	sc_state;		/* see below: ST_xxx */
@@ -241,7 +241,7 @@ tsattach(struct device *parent, struct device *self, void *aux)
 	    0, BUS_DMA_NOWAIT, &sc->sc_dmam)))
 		return printf(": failed create DMA map %d\n", error);
 
-	BUFQ_INIT(&sc->sc_bufq);
+	bufq_alloc(&sc->sc_bufq, BUFQ_FCFS);
 
 	/*
 	 * write the characteristics (again)
@@ -370,7 +370,7 @@ tsstart(struct ts_softc *sc, int isloaded)
 	if (TAILQ_EMPTY(&sc->sc_bufq.bq_head))
 		return 0;
 
-	bp = BUFQ_FIRST(&sc->sc_bufq);
+	bp = BUFQ_PEEK(&sc->sc_bufq);
 #ifdef TSDEBUG
 	printf("buf: %p bcount %ld blkno %d\n", bp, bp->b_bcount, bp->b_blkno);
 #endif
@@ -458,7 +458,7 @@ int
 tsready(struct uba_unit *uu)
 {
 	struct ts_softc *sc = uu->uu_softc;
-	struct buf *bp = BUFQ_FIRST(&sc->sc_bufq);
+	struct buf *bp = BUFQ_PEEK(&sc->sc_bufq);
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmam, bp->b_data,
 	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT))
@@ -776,9 +776,7 @@ tsintr(void *arg)
 			sc->sc_dev.dv_xname, sr & TS_TC);
 		tsreset(sc);
 	}
-	if ((bp = TAILQ_FIRST(&sc->sc_bufq.bq_head)) != NULL) {
-		BUFQ_REMOVE(&sc->sc_bufq, bp);
-
+	if ((bp = BUFQ_GET(&sc->sc_bufq)) != NULL) {
 #ifdef TSDEBUG
 		printf("tsintr2: que %p\n", TAILQ_FIRST(&sc->sc_bufq.bq_head));
 #endif
@@ -902,8 +900,8 @@ tsstrategy(struct buf *bp)
 	printf("buf: %p bcount %ld blkno %d\n", bp, bp->b_bcount, bp->b_blkno);
 #endif
 	s = splbio ();
-	empty = TAILQ_EMPTY(&sc->sc_bufq.bq_head);
-	BUFQ_INSERT_TAIL(&sc->sc_bufq, bp);
+	empty = (BUFQ_PEEK(&sc->sc_bufq) == NULL);
+	BUFQ_PUT(&sc->sc_bufq, bp);
 	if (empty)
 		tsstart(sc, 0);
 	splx(s);

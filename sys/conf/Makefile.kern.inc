@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.3.2.5 2002/06/20 03:43:17 nathanw Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.3.2.6 2002/08/01 02:44:29 nathanw Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -286,10 +286,12 @@ tags:
 
 EXTRA_CLEAN+= cscope.out
 .if !target(cscope.out)
-cscope.out: Makefile
+cscope.out: Makefile depend
 	@echo Building cscope.out source database
-	@echo ${SRCS} | ${CSCOPE} -k -i - -b \
-		`echo ${INCLUDES} | sed s/-nostdinc//`
+	@echo ${SRCS} `sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' \
+	lib/kern/.depend lib/compat/.depend | tr ' ' '\n' | \
+	sed "s|^../../||" | sort -u` \
+	| ${CSCOPE} -k -i - -b `echo ${INCLUDES} | sed s/-nostdinc//`
 #	cscope doesn't write cscope.out if it's uptodate, so ensure
 #	make doesn't keep calling cscope when not needed.
 	@touch cscope.out
@@ -305,9 +307,13 @@ EXTRA_CLEAN+= ID
 .PHONY: mkid
 mkid: ID
 
-ID: Makefile
+ID: Makefile depend
 	@echo Building mkid database
-	@${MKID} ${SRCS}
+	@${MKID} `sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' lib/kern/.depend \
+	lib/compat/.depend | tr ' ' '\n' | sed "s|^../../||" | sort -u` \
+	`sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' .depend | tr ' ' '\n' \
+	| sort -u`
+
 .endif
 
 ##

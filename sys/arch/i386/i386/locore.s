@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.14 2002/07/19 22:20:37 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.15 2002/08/01 02:42:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -278,9 +278,9 @@ start:	movw	$0x1234,0x472			# warm boot
 	testl	%eax, %eax
 	jz	1f
 	movl	(%eax), %ebx		/* number of entries */
-	movl	$RELOC(bootinfo), %edx
-	movl	%ebx, (%edx)
-	addl	$4, %edx
+	movl	$RELOC(bootinfo), %edi
+	movl	%ebx, (%edi)
+	addl	$4, %edi
 2:
 	testl	%ebx, %ebx
 	jz	1f
@@ -289,9 +289,9 @@ start:	movw	$0x1234,0x472			# warm boot
 	pushl	%eax
 	pushl	(%ecx)			/* len */
 	pushl	%ecx
-	pushl	%edx
-	addl	(%ecx), %edx		/* update dest pointer */
-	cmpl	$_RELOC(_C_LABEL(bootinfo) + BOOTINFO_MAXSIZE), %edx
+	pushl	%edi
+	addl	(%ecx), %edi		/* update dest pointer */
+	cmpl	$_RELOC(_C_LABEL(bootinfo) + BOOTINFO_MAXSIZE), %edi
 	jg	2f
 	call	_C_LABEL(memcpy)
 	addl	$12, %esp
@@ -300,8 +300,8 @@ start:	movw	$0x1234,0x472			# warm boot
 	jmp	2b
 2:	/* cleanup for overflow case */
 	addl	$16, %esp
-	movl	$RELOC(bootinfo), %edx
-	subl	%ebx, (%edx)		/* correct number of entries */
+	movl	$RELOC(bootinfo), %edi
+	subl	%ebx, (%edi)		/* correct number of entries */
 1:
 
  	movl	16(%esp),%eax
@@ -726,11 +726,13 @@ NENTRY(proc_trampoline)
  */
 /* LINTSTUB: Var: char sigcode[1], esigcode[1]; */
 NENTRY(sigcode)
-	call	*SIGF_HANDLER(%esp)
-	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-	pushl	%eax
-	pushl	%eax			# junk to fake return address
+	/*
+	 * Handler has returned here as if we called it.  The sigcontext
+	 * is on the stack after the 3 args "we" pushed.
+	 */
+	leal	12(%esp),%eax		# get pointer to sigcontext
+	movl	%eax,4(%esp)		# put it in the argument slot
+					# fake return address already there
 	movl	$SYS___sigreturn14,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SYS_exit,%eax

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.306.2.15 2002/06/20 03:45:40 nathanw Exp $
+$NetBSD: pcidevs,v 1.306.2.16 2002/08/01 02:45:22 nathanw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -47,6 +47,7 @@ $NetBSD: pcidevs,v 1.306.2.15 2002/06/20 03:45:40 nathanw Exp $
  * List of known PCI vendors
  */
 
+vendor PEAK		0x001c	Peak System Technik
 vendor MARTINMARIETTA	0x003d	Martin-Marietta Corporation 
 vendor HAUPPAUGE	0x0070	Hauppauge Computer Works
 vendor COMPAQ		0x0e11	Compaq
@@ -540,6 +541,7 @@ vendor AVERMEDIA	0x1461	Avermedia Technologies
 vendor AIRONET		0x14b9	Aironet Wireless Communications
 vendor COMPAL		0x14c0	COMPAL Electronics, Inc.
 vendor TITAN		0x14d2  Titan Electronics, Inc.
+vendor AVLAB		0x14db  Avlab Technology, Inc.
 vendor INVERTEX		0x14e1	Invertex
 vendor BROADCOM		0x14e4	Broadcom Corporation
 vendor CONEXANT		0x14f1	Conexant Systems
@@ -556,6 +558,7 @@ vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor COREGA		0x15e8	Corega
 vendor ACTIONTEC	0x1668	Action Tec Electronics, Inc.
 vendor GLOBALSUN	0x16ab	Global Sun Tech
+vendor ALTIMA		0x173b	Altima
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor SANDBURST	0x17ba	Sandburst, Inc.
 vendor HINT		0x3388	HiNT
@@ -762,6 +765,11 @@ product ALTEON ACENIC_COPPER	0x0002	ACEnic 1000baseT Gigabit Ethernet
 product ALTEON BCM5700		0x0003	ACEnic BCM5700 10/100/1000 Ethernet
 product ALTEON BCM5701		0x0004	ACEnic BCM5701 10/100/1000 Ethernet
 
+/* Altima products */
+product ALTIMA AC1000	0x03e8	AC1000 Gigabit Ethernet
+product ALTIMA AC1001	0x03e9	AC1001 Gigabit Ethernet
+product ALTIMA AC9100	0x03ea	AC9100 Gigabit Ethernet
+
 /* AMD products */
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
@@ -822,6 +830,11 @@ product APPLE UNINORTH_AGP2	0x002d	UniNorth AGP Interface
 product APPLE UNINORTH3		0x002e	UniNorth Host-PCI Bridge
 product APPLE UNINORTH4		0x002f	UniNorth Host-PCI Bridge
 product APPLE PANGEA_FW		0x0030	Pangea Firewire
+product APPLE UNINORTH_FW	0x0031	UniNorth Firewire
+product APPLE GMAC3		0x0032	GMAC Ethernet
+product APPLE UNINORTH_AGP3	0x0034	UniNorth AGP Bridge
+product APPLE UNINORTH5		0x0035	UniNorth Host-PCI Bridge
+product APPLE UNINORTH6		0x0036	UniNorth Host-PCI Bridge
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
@@ -923,11 +936,16 @@ product AVANCE2 ALG2301	0x2301	ALG2301
 product AVANCE2 ALG2302	0x2302	ALG2302
 product AVANCE2 ALS4000	0x4000	ALS4000 Audio
 
+/* Avlab Technology products */
+product AVLAB LPPCI4S	0x2150	Low Profile PCI 4 Serial
+
 /* CCUBE products */
 product CCUBE CINEMASTER	0x8888	Cinemaster C 3.0 DVD Decoder
 
 /* AVM products */
 product AVM FRITZ_CARD		0x0a00	Fritz! Card ISDN Interface
+product AVM B1			0x0700	Basic Rate B1 ISDN Interface
+product AVM T1			0x1200	Primary Rate T1 ISDN Interface
 
 /* Stallion products */
 product STALLION EC8_32		0x0000	EC8/32
@@ -1005,6 +1023,7 @@ product CMDTECH 649		0x0649	PCI0649
 product CMDTECH 650A		0x0650	PCI0650A
 product CMDTECH 670		0x0670	USB0670
 product CMDTECH 673		0x0673	USB0673
+product CMDTECH 680		0x0680	SiI0680
 
 /* C-Media products */
 product CMEDIA CMI8338A		0x0100	CMI8338A PCI Audio Device
@@ -1251,6 +1270,7 @@ product HIFN 7951	0x0012	7951
 
 /* HiNT products */
 product HINT HB1	0x0021	HB1 PCI-PCI Bridge
+product HINT HB4	0x0022	HB4 PCI-PCI Bridge
 
 /* IBM products */
 product IBM MCABRIDGE 	0x0002	MCA Bridge
@@ -1308,13 +1328,18 @@ product INTEL GDT_RAID2		0x061f	GDT RAID
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL 82542		0x1000	i82452 Gigabit Ethernet
-product INTEL 82543_FIBER	0x1001	i82453 Gigabit Ethernet (1000BASE-X)
-product INTEL 82543_SC		0x1003	i82453-SC Gigabit Ethernet
-product INTEL 82543_COPPER	0x1004	i82543 Gigabit Ethernet (1000BASE-T)
-product INTEL 82544_XT		0x1008	i82544 Gigabit Ethernet (1000BASE-T)
-product INTEL 82544_XF		0x1009	i82544 Gigabit Ethernet (1000BASE-X)
-product INTEL 82544GC		0x100c	i82544GC Gigabit Ethernet (1000BASE-T)
-product INTEL 82544GC_64	0x100d	i82544GC (64-bit) Gigabit Ethernet (1000BASE-T)
+product INTEL 82543GC_FIBER	0x1001	i82453GC Gigabit Ethernet (1000BASE-X)
+product INTEL 82543GC_COPPER	0x1004	i82543GC Gigabit Ethernet (1000BASE-T)
+product INTEL 82544EI_COPPER	0x1008	i82544EI Gigabit Ethernet (1000BASE-T)
+product INTEL 82544EI_FIBER	0x1009	i82544EI Gigabit Ethernet (1000BASE-X)
+product INTEL 82544GC_COPPER	0x100c	i82544GC Gigabit Ethernet (1000BASE-T)
+product INTEL 82544GC_LOM	0x100d	i82544GC (LOM) Gigabit Ethernet
+product INTEL 82540EM		0x100e	i82540EM Gigabit Ethernet (1000BASE-T)
+product INTEL 82545EM_COPPER	0x100f	i82545EM Gigabit Ethernet (1000BASE-T)
+product INTEL 82546EB_COPPER	0x1010	i82546EB Gigabit Ethernet (1000BASE-T)
+product INTEL 82545EM_FIBER	0x1011	i82545EM Gigabit Ethernet (1000BASE-X)
+product INTEL 82546EB_FIBER	0x1012	i82546EB Gigabit Ethernet (1000BASE-X)
+product INTEL 82540EM_LOM	0x1015	i82540EM (LOM) Gigabit Ethernet
 product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
 product INTEL PRO_100_VE_0	0x1031	PRO/100 VE Network Controller
 product INTEL PRO_100_VE_1	0x1032	PRO/100 VE Network Controller
@@ -1324,6 +1349,12 @@ product INTEL 82562EH_HPNA_0	0x1035	82562EH HomePNA Network Controller
 product INTEL 82562EH_HPNA_1	0x1036	82562EH HomePNA Network Controller
 product INTEL 82562EH_HPNA_2	0x1037	82562EH HomePNA Network Controller
 product INTEL PRO_100_VM_2	0x1038	PRO/100 VM Network Controller
+product INTEL PRO_100_VE_2	0x1039	PRO/100 VE Network Controller with 82562ET/EZ PHY
+product INTEL PRO_100_VE_3	0x103a	PRO/100 VE Network Controller with 82562ET/EZ (CNR) PHY
+product INTEL PRO_100_VM_3	0x103b	PRO/100 VM Network Controller with 82562EM/EX PHY
+product INTEL PRO_100_VM_4	0x103c	PRO/100 VM Network Controller with 82562EM/EX (CNR) PHY
+product INTEL PRO_100_VE_4	0x103d	PRO/100 VE (MOB) Network Controller
+product INTEL PRO_100_VM_5	0x103e	PRO/100 VM (MOB) Network Controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
@@ -1339,6 +1370,7 @@ product INTEL IXP1200		0x1200	IXP1200 Network Processor
 product INTEL 82559ER		0x1209	82559ER Fast Ethernet LAN Controller
 product INTEL 82092AA		0x1222	82092AA IDE controller
 product INTEL SAA7116		0x1223	SAA7116
+product INTEL 82452_PB		0x1225	82452KX/GX Orion Extended Express Processor to PCI Bridge
 product INTEL 82596		0x1226	82596 LAN Controller
 product INTEL EEPRO100		0x1227	EE Pro 100 10/100 Fast Ethernet
 product INTEL EEPRO100S		0x1228	EE Pro 100 Smart 10/100 Fast Ethernet
@@ -1387,6 +1419,9 @@ product	INTEL 82801BAM_IDE	0x244a	82801BAM IDE Controller
 product INTEL 82801BA_IDE	0x244b	82801BA IDE Controller
 product INTEL 82801BAM_LPC	0x244c	82801BAM LPC Interface Bridge
 product INTEL 82801BA_HPB	0x244e	82801BA Hub-to-PCI Bridge
+product INTEL 82801E_SMB	0x2453	82801E SMBus Controller
+product INTEL 82801E_LAN_1	0x2459	82801E LAN Controller
+product INTEL 82801E_LAN_2	0x245d	82801E LAN Controller
 product INTEL 82801CA_LPC	0x2480	82801CA LPC Interface
 product INTEL 82801CA_USB_1	0x2482	82801CA/CAM USB Controller
 product INTEL 82801CA_SMB	0x2483	82801CA/CAM SMBus Controller
@@ -1397,6 +1432,15 @@ product INTEL 82801CA_USBC	0x2487	82801CA/CAM USB Controller
 product INTEL 82801CA_IDE_1	0x248A	82801CA IDE Controller
 product INTEL 82801CA_IDE_2	0x248B	82801CA IDE Controller
 product INTEL 82801CAM_LPC	0x248C	82801CAM LPC Interface
+product INTEL 82801DB_LPC	0x24C0	82801DB LPC Interface Bridge
+product INTEL 82801DB_USB_1	0x24C2	82801DB USB UHCI Controller #1
+product INTEL 82801DB_SMB	0x24C3	82801DB SMBus Controller
+product INTEL 82801DB_USB_2	0x24C4	82801DB USB UHCI Controller #2
+product INTEL 82801DB_AC	0x24C5	82801DB AC97 Audio Controller
+product INTEL 82801DB_MOD	0x24C6	82801DB AC97 Modem Controller
+product INTEL 82801DB_USB_3	0x24C7	82801DB USB UHCI Controller #3
+product INTEL 82801DB_IDE	0x24CB	82801DB IDE Controller (UltraATA/100)
+product INTEL 82801DB_USBC	0x24CD	82801DB USB EHCI Controller
 product INTEL 82820_MCH		0x2501	82820 MCH (Camino)
 product INTEL 82820_AGP		0x250f	82820 AGP
 product INTEL 82850_HB		0x2530	82850 Host
@@ -1415,6 +1459,9 @@ product INTEL E7500_HI_C1	0x2545	E7500 MCH HI_C vppb 1
 product INTEL E7500_HI_C2	0x2546	E7500 MCH HI_C vppb 2
 product INTEL E7500_HI_D1	0x2547	E7500 MCH HI_C vppb 1
 product INTEL E7500_HI_D2	0x2548	E7500 MCH HI_C vppb 2
+product INTEL 82845G_DRAM	0x2560	82845G/GL DRAM Controller / Host-Hub I/F Bridge
+product INTEL 82845G_AGP	0x2561	82845G/GL Host-to-AGP Bridge
+product INTEL 82845G_IGD	0x2562	82845G/GL Integrated Graphics Device
 product INTEL 82830MP_IO_1	0x3575	82830MP CPU to I/O Bridge 1
 product INTEL 82830MP_AGP	0x3576	82830MP CPU to AGP Bridge
 product INTEL 82830MP_IV	0x3577	82830MP Integrated Video
@@ -1710,8 +1757,12 @@ product OPTI 82C701	0xc701	82C701
 /* PC Tech products */
 product PCTECH RZ1000	0x1000	RZ1000
 
+/* Peak System Technik products */
+product PEAK PCAN	0x0001	PCAN	CAN controller
+
 /* PLX Technology products */
 product PLX 9060ES	0x906e	9060ES PCI bus controller
+product PLX 9656	0x9656	9656 I/O Accelerator
 
 /* Powerhouse Systems products */
 product	POWERHOUSE POWERTOP	0x6037	PowerTop PowerPC system controller
@@ -1809,6 +1860,11 @@ product	S3 SONICVIBES	0xca00	SonicVibes
 /* Samsung Semiconductor products */
 product SAMSUNGSEMI	KS8920	0x8920	KS8920 10/100 Ethernet
 
+/* Sandburst products */
+product SANDBURST	QE1000	0x0180	QE1000
+product SANDBURST	FE1000	0x0200	FE1000
+/*product SANDBURST	SE1600	0x0100	SE1600*/
+
 /* SEGA Enterprises products */
 product	SEGA	BROADBAND	0x1234	Broadband Adapter
 
@@ -1821,7 +1877,10 @@ product SERVERWORKS XX7		0x0007	PCIHB7
 product SERVERWORKS CNB20HE	0x0008	CNB20HE Host
 product SERVERWORKS CNB20LE	0x0009	CNB20LE Host
 product SERVERWORKS CIOB30	0x0010	CIOB30
+product SERVERWORKS CIOBX2	0x0101	CIOB-X2
 product SERVERWORKS CMIC_HE	0x0011	CMIC_HE Host
+product SERVERWORKS CMIC_LE	0x0012	CMIC_LE Host
+product SERVERWORKS CMIC_SL	0x0017	CMIC_SL Host
 product SERVERWORKS OSB4_IDE	0x0211	OSB4 IDE
 product SERVERWORKS CSB5_IDE	0x0212	CSB5 IDE
 product SERVERWORKS USB		0x0220	OSB4/CSB5 USB
@@ -1918,7 +1977,7 @@ product SYMPHONY	83C553	0x0565	83C553 PCI-ISA Bridge
 /* Schneider & Koch (really SysKonnect) products */
 product	SCHNEIDERKOCH	SKNET_FDDI	0x4000	SK-NET FDDI-xP
 product	SCHNEIDERKOCH	SKNET_GE	0x4300	SK-NET GE
-product SCHNEIDERKOCH	ALTIMA		0x4400	SK-NET Altima Gigabit Ethernet
+product SCHNEIDERKOCH	SK_9DX1		0x4400	SK-NET SK-9DX1 Gigabit Ethernet
 /* These next two are are really subsystem IDs */
 product SCHNEIDERKOCH	SK_9D21		0x4421	SK-9D21 1000BASE-T
 product SCHNEIDERKOCH	SK_9D41		0x4441	SK-9D41 1000BASE-X
@@ -1944,6 +2003,9 @@ product TI	PCI4410LYNX	0x8017	PCI4410 OHCI IEEE 1394 HOST Controller w/ PCI-Card
 product	TI	TSB12LV23	0x8019	TSB12LV23 OHCI IEEE 1394 Host Controller
 product	TI	TSB12LV26	0x8020	TSB12LV26 OHCI IEEE 1394 Host Controller
 product	TI	TSB43AA22	0x8021	TSB43AA22 OHCI IEEE 1394 Host Controller
+product	TI	TSB43AA22A	0x8023	TSB43AA22/A OHCI IEEE 1394 Host Controller
+product	TI	TSB43AA23	0x8024	TSB43AA23 OHCI IEEE 1394 Host Controller
+product TI	TSB43AB21	0x8026	TSB43AA21 OHCI IEEE 1394 Host Controller
 product TI	PCI4451LYNX	0x8027	PCI4451 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
 product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1031		0xac13	PCI1031 PCI-PCMCIA Bridge

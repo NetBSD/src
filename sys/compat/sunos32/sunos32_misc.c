@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.7.4.6 2002/05/29 21:32:58 nathanw Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.7.4.7 2002/08/01 02:44:24 nathanw Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.7.4.6 2002/05/29 21:32:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.7.4.7 2002/08/01 02:44:24 nathanw Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -1608,7 +1608,8 @@ sunos32_sys_sigvec(p, v, retval)
 	}
 	error = sigaction1(p, SCARG(uap, signum),
 			   SCARG(uap, nsv) ? &nsa : 0,
-			   SCARG(uap, osv) ? &osa : 0);
+			   SCARG(uap, osv) ? &osa : 0,
+			   NULL, 0);
 	if (error != 0)
 		return (error);
 

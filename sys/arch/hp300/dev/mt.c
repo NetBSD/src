@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.14.12.2 2002/04/01 07:39:53 nathanw Exp $	*/
+/*	$NetBSD: mt.c,v 1.14.12.3 2002/08/01 02:41:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.14.12.2 2002/04/01 07:39:53 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.14.12.3 2002/08/01 02:41:38 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ struct	mt_softc {
 	short	sc_type;	/* tape drive model (hardware IDs) */
 	struct	hpibqueue sc_hq; /* HPIB device queue member */
 	tpr_t	sc_ttyp;
-	struct buf_queue sc_tab;/* buf queue */
+	struct bufq_state sc_tab;/* buf queue */
 	int	sc_active;
 	struct buf sc_bufstore;	/* XXX buffer storage */
 };
@@ -185,7 +185,7 @@ mtattach(parent, self, aux)
 	hpibno = parent->dv_unit;
 	slave = ha->ha_slave;
 
-	BUFQ_INIT(&sc->sc_tab);
+	bufq_alloc(&sc->sc_tab, BUFQ_FCFS);
 	callout_init(&sc->sc_start_ch);
 	callout_init(&sc->sc_intr_ch);
 
@@ -513,7 +513,7 @@ mtstrategy(bp)
 		}
 	}
 	s = splbio();
-	BUFQ_INSERT_TAIL(&sc->sc_tab, bp);
+	BUFQ_PUT(&sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		mtustart(sc);
@@ -564,7 +564,7 @@ mtstart(arg)
 
 	dlog(LOG_DEBUG, "%s start", sc->sc_dev.dv_xname);
 	sc->sc_flags &= ~MTF_WRT;
-	bp = BUFQ_FIRST(&sc->sc_tab);
+	bp = BUFQ_PEEK(&sc->sc_tab);
 	if ((sc->sc_flags & MTF_ALIVE) == 0 &&
 	    ((bp->b_flags & B_CMD) == 0 || bp->b_cmd != MTRESET))
 		goto fatalerror;
@@ -745,10 +745,10 @@ errdone:
 	bp->b_flags |= B_ERROR;
 done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
-	BUFQ_REMOVE(&sc->sc_tab, bp);
+	(void)BUFQ_GET(&sc->sc_tab);
 	biodone(bp);
 	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
-	if ((bp = BUFQ_FIRST(&sc->sc_tab)) == NULL)
+	if ((bp = BUFQ_PEEK(&sc->sc_tab)) == NULL)
 		sc->sc_active = 0;
 	else
 		mtustart(sc);
@@ -768,7 +768,7 @@ mtgo(arg)
 	int rw;
 
 	dlog(LOG_DEBUG, "%s go", sc->sc_dev.dv_xname);
-	bp = BUFQ_FIRST(&sc->sc_tab);
+	bp = BUFQ_PEEK(&sc->sc_tab);
 	rw = bp->b_flags & B_READ;
 	hpibgo(sc->sc_hpibno, sc->sc_slave, rw ? MTT_READ : MTL_WRITE,
 	    bp->b_data, bp->b_bcount, rw, rw != 0);
@@ -783,7 +783,7 @@ mtintr(arg)
 	int i;
 	u_char cmdbuf[4];
 
-	bp = BUFQ_FIRST(&sc->sc_tab);
+	bp = BUFQ_PEEK(&sc->sc_tab);
 	if (bp == NULL) {
 		log(LOG_ERR, "%s intr: bp == NULL", sc->sc_dev.dv_xname);
 		return;
@@ -930,10 +930,10 @@ mtintr(arg)
 	cmdbuf[0] = MTE_COMPLETE | MTE_IDLE;
 	(void) hpibsend(sc->sc_hpibno, sc->sc_slave, MTL_ECMD, cmdbuf, 1);
 	bp->b_flags &= ~B_CMD;
-	BUFQ_REMOVE(&sc->sc_tab, bp);
+	(void)BUFQ_GET(&sc->sc_tab);
 	biodone(bp);
 	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
-	if (BUFQ_FIRST(&sc->sc_tab) == NULL)
+	if (BUFQ_PEEK(&sc->sc_tab) == NULL)
 		sc->sc_active = 0;
 	else
 		mtustart(sc);

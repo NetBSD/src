@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.1.4.2 2002/02/28 04:07:44 nathanw Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.1.4.3 2002/08/01 02:41:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -46,17 +46,8 @@
 /*
  * irq_entry:
  *
- *	Main entry point for the IRQ vector.
- *
- *	This function reads the 2 IQ80310 CPLD interrupt source
- *	registers, and then calls the installed handlers for each
- *	bit that is set.  The function stray_irqhandler is called
- *	if a handler is not defined for a particular interrupt.
- *
- *	If an interrupt handler is found, then it is called with
- *	r0 containing the argument defined in the handler structure.
- *	If the field ih_arg is zero, then a pointer to the IRQ frame
- *	on the stack is passed instead.
+ *	Main entry point for the IRQ vector on i80200 CPUs.  Calls
+ *	board-specific external interrupt dispatch routine.
  */
 
 	.text
@@ -93,7 +84,7 @@ ASENTRY_NP(irq_entry)
 	/*
 	 * Get the interrupt status into a callee-save register.
 	 */
-	mrc	p13, 0, r4, c1, c0, 0
+	mrc	p13, 0, r4, c4, c0, 0
 
 	/*
 	 * XXX Right here will be a good place to check for PMU
@@ -108,7 +99,7 @@ ASENTRY_NP(irq_entry)
 	 * disabled.
 	 */
 	tst	r4, #(INTSRC_II)
-	bne	Lextirq_return		/* no external IRQ pending */
+	beq	Lextirq_return		/* no external IRQ pending */
 	ldr	r1, Lintr_dispatch
 	add	lr, pc, #Lextirq_return - . - 8
 	mov	r0, sp

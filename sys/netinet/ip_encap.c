@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.4.4.5 2002/06/20 03:48:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.4.4.6 2002/08/01 02:46:46 nathanw Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -118,18 +118,18 @@ struct sockaddr_pack {
 	u_int8_t sp_len;
 	u_int8_t sp_family;	/* not really used */
 	/* followed by variable-length data */
-} __attribute__((__packed__));
+};
 
 struct pack4 {
 	struct sockaddr_pack p;
 	struct sockaddr_in mine;
 	struct sockaddr_in yours;
-} __attribute__((__packed__));
+};
 struct pack6 {
 	struct sockaddr_pack p;
 	struct sockaddr_in6 mine;
 	struct sockaddr_in6 yours;
-} __attribute__((__packed__));
+};
 
 enum direction { INBOUND, OUTBOUND };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.20.2.6 2002/06/20 03:38:44 nathanw Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.20.2.7 2002/08/01 02:41:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -50,6 +50,7 @@
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
+#include "fs_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +87,8 @@
 #include <arm/undefined.h>
 #include <machine/rtc.h>
 #include <machine/platid.h>
-#include <hpcarm/sa11x0/sa11x0_reg.h>
+
+#include <arm/sa11x0/sa11x0_reg.h>
 
 #include <dev/hpc/bicons.h>
 
@@ -94,6 +96,14 @@
 
 /* XXX for consinit related hacks */
 #include <sys/conf.h>
+
+#ifdef NFS
+#include <sys/mount.h>
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
+#endif
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -137,7 +147,7 @@ pv_addr_t abtstack;
 pv_addr_t kernelstack;
 
 char *boot_args = NULL;
-char *boot_file = NULL;
+char boot_file[16];
 
 vaddr_t msgbufphys;
 
@@ -331,6 +341,7 @@ initarm(argc, argv, bi)
 	kerneldatasize = ((kerneldatasize - 1) & ~(NBPG * 4 - 1)) + NBPG * 8;
 
 	/* parse kernel args */
+	boot_file[0] = '\0';
 	strncpy(booted_kernel_storage, *argv, sizeof(booted_kernel_storage));
 	for(argc--, argv++; argc; argc--, argv++)
 		switch(**argv) {
@@ -339,6 +350,18 @@ initarm(argc, argv, bi)
 			break;
 		case 's':
 			boothowto |= RB_SINGLE;
+			break;
+		case 'b':
+			/* boot device: -b=sd0 etc. */
+#ifdef NFS
+			if (strcmp(*argv + 2, "nfs") == 0)
+				mountroot = nfs_mountroot;
+			else
+				strncpy(boot_file, *argv + 2,
+				    sizeof(boot_file));
+#else /* NFS */
+			strncpy(boot_file, *argv + 2, sizeof(boot_file));
+#endif /* NFS */
 			break;
 		default:
 			break;
@@ -661,6 +684,21 @@ initarm(argc, argv, bi)
 	printf("freemempos=%08lx\n", freemempos);
 	printf("MMU enabled. control=%08x\n", cpu_get_control());
 #endif
+
+	/* Load memory into UVM. */
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	for (loop = 0; loop < bootconfig.dramblocks; loop++) {
+		paddr_t start = (paddr_t)bootconfig.dram[loop].address;
+		paddr_t end = start + (bootconfig.dram[loop].pages * NBPG);
+
+		if (start < physical_freestart)
+			start = physical_freestart;
+		if (end > physical_freeend)
+			end = physical_freeend;
+
+		uvm_page_physload(atop(start), atop(end),
+		    atop(start), atop(end), VM_FREELIST_DEFAULT);
+	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);

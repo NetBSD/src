@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.7.6.9 2002/07/12 01:39:24 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.7.6.10 2002/08/01 02:41:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.9 2002/07/12 01:39:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.10 2002/08/01 02:41:11 nathanw Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -81,13 +81,15 @@ process_frame(struct lwp *l)
  * frame pointer, it returns to the user specified pc.
  */
 void
-sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
+sendsig(int sig, sigset_t *mask, u_long code)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = process_frame(l);
 
@@ -104,12 +106,6 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 		fp = (struct sigframe *)tf->tf_usr_sp;
 	fp--;
 	(u_int)fp = STACKALIGN(fp);
-
-	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
-	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
 
 	/* Save register context. */
 	frame.sf_sc.sc_r0     = tf->tf_r0;
@@ -157,18 +153,40 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	}
 
 	/*
-	 * Build context to run handler in.
+	 * Build context to run handler in.  We invoke the handler
+	 * dorectly, only returning via the trampoline.  Note the
+	 * trampoline version numbers are coordinated with machine-
+	 * depdent code in libc.
 	 */
-	tf->tf_r0 = frame.sf_signum;
-	tf->tf_r1 = frame.sf_code;
-	tf->tf_r2 = (int)frame.sf_scp;
-	tf->tf_r3 = (int)frame.sf_handler;
-	tf->tf_usr_sp = (int)fp;
-	tf->tf_pc = (int)p->p_sigctx.ps_sigcode;
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		tf->tf_r0 = sig;
+		tf->tf_r1 = code;
+		tf->tf_r2 = (int)&fp->sf_sc;
+		tf->tf_pc = (int)catcher;
+		tf->tf_usr_sp = (int)fp;
+		tf->tf_usr_lr = (int)p->p_sigctx.ps_sigcode;
 #ifndef acorn26
-	/* XXX This should not be needed. */
-	cpu_icache_sync_all();
+		/* XXX This should not be needed. */
+		cpu_icache_sync_all();
 #endif
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		tf->tf_r0 = sig;
+		tf->tf_r1 = code;
+		tf->tf_r2 = (int)&fp->sf_sc;
+		tf->tf_pc = (int)catcher;
+		tf->tf_usr_sp = (int)fp;
+		tf->tf_usr_lr = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

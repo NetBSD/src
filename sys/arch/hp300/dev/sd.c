@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.46.8.7 2002/07/12 01:39:27 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.46.8.8 2002/08/01 02:41:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.8.7 2002/07/12 01:39:27 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.8.8 2002/08/01 02:41:39 nathanw Exp $");                                                  
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -240,7 +240,7 @@ sdattach(parent, self, aux)
 	struct sd_softc *sc = (struct sd_softc *)self;
 	struct oscsi_attach_args *osa = aux;
 
-	BUFQ_INIT(&sc->sc_tab);
+	bufq_alloc(&sc->sc_tab, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 
 	/*
 	 * XXX formerly 0 meant unused but now pid 0 can legitimately
@@ -793,7 +793,7 @@ sdstrategy(bp)
 		bp->b_rawblkno = (bn + offset) >> sc->sc_bshift;
 	}
 	s = splbio();
-	disksort_blkno(&sc->sc_tab, bp);
+	BUFQ_PUT(&sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		sdustart(unit);
@@ -883,11 +883,11 @@ sdfinish(sc, bp)
 {
 
 	sc->sc_errcnt = 0;
-	BUFQ_REMOVE(&sc->sc_tab, bp);
+	(void)BUFQ_GET(&sc->sc_tab);
 	bp->b_resid = 0;
 	biodone(bp);
 	scsifree(sc->sc_dev.dv_parent, &sc->sc_sq);
-	if (BUFQ_FIRST(&sc->sc_tab) != NULL)
+	if (BUFQ_PEEK(&sc->sc_tab) != NULL)
 		sdustart(sc->sc_dev.dv_unit);
 	else {
 		sc->sc_active = 0;
@@ -909,7 +909,7 @@ sdstart(arg)
 	 * so check now.
 	 */
 	if (sc->sc_format_pid >= 0 && legal_cmds[sc->sc_cmdstore.cdb[0]] > 0) {
-		struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
+		struct buf *bp = BUFQ_PEEK(&sc->sc_tab);
 		int sts;
 
 		sc->sc_errcnt = 0;
@@ -939,7 +939,7 @@ sdgo(arg)
 	void *arg;
 {
 	struct sd_softc *sc = arg;
-	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
+	struct buf *bp = BUFQ_PEEK(&sc->sc_tab);
 	int pad;
 	struct scsi_fmt_cdb *cmd;
 
@@ -997,7 +997,7 @@ sdintr(arg, stat)
 	int stat;
 {
 	struct sd_softc *sc = arg;
-	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
+	struct buf *bp = BUFQ_PEEK(&sc->sc_tab);
 	int cond;
 	
 	if (bp == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.25 2000/07/10 09:14:32 ragge Exp $ */
+/*	$NetBSD: mba.c,v 1.25.8.1 2002/08/01 02:43:58 nathanw Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -186,7 +186,7 @@ mbaintr(void *mba)
 		return;	/* During autoconfig */
 
 	md = sc->sc_first;
-	bp = BUFQ_FIRST(&md->md_q);
+	bp = BUFQ_PEEK(&md->md_q);
 	/*
 	 * A data-transfer interrupt. Current operation is finished,
 	 * call that device's finish routine to see what to do next.
@@ -203,13 +203,13 @@ mbaintr(void *mba)
 			 * If more to transfer, start the adapter again
 			 * by calling mbastart().
 			 */
-			BUFQ_REMOVE(&md->md_q, bp);
+			(void)BUFQ_GET(&md->md_q);
 			sc->sc_first = md->md_back;
 			md->md_back = 0;
 			if (sc->sc_first == 0)
 				sc->sc_last = (void *)&sc->sc_first;
 
-			if (BUFQ_FIRST(&md->md_q) != NULL) {
+			if (BUFQ_PEEK(&md->md_q) != NULL) {
 				sc->sc_last->md_back = md;
 				sc->sc_last = md;
 			}
@@ -279,7 +279,7 @@ void
 mbastart(struct mba_softc *sc)
 {
 	struct	mba_device *md = sc->sc_first;
-	struct	buf *bp = BUFQ_FIRST(&md->md_q);
+	struct	buf *bp = BUFQ_PEEK(&md->md_q);
 
 	disk_reallymapin(bp, (void *)(sc->sc_ioh + MAPREG(0)), 0, PG_V);
 

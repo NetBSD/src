@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.4.2.5 2002/06/20 03:38:29 nathanw Exp $
+#	$NetBSD: files.evbarm,v 1.4.2.6 2002/08/01 02:41:32 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -72,3 +72,8 @@ include "dev/cardbus/files.cardbus"		# CARDBus device
 defflag	opt_plcom.h	PLCOM_DEBUG PLCOM_MPLOCK
 device	plcom { }: tty
 file	arch/evbarm/dev/plcom.c			plcom needs-flag
+
+# IXM1200 serial device
+device	ixpcom: tty
+file	arch/arm/ixp12x0/ixp12x0_com.c		ixpcom needs-flag
+file	arch/arm/ixp12x0/ixp12x0_com_io.c       ixpcom

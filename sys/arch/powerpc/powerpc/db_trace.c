@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.14.6.7 2002/06/20 03:40:34 nathanw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14.6.8 2002/08/01 02:43:09 nathanw Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -158,7 +159,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		if (frame < NBPG)
 			break;
 #ifdef PPC_MPC6XX
-		if (kernel_only &&
+		if (kernel_only && !cold &&
 		    ((frame > (db_addr_t) end &&
 		      frame < VM_MIN_KERNEL_ADDRESS) ||
 		     frame >= VM_MAX_KERNEL_ADDRESS))
@@ -170,7 +171,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		if (frame < NBPG)
 			break;
 #ifdef PPC_MPC6XX
-		if (kernel_only &&
+		if (kernel_only && !cold &&
 		    ((frame > (db_addr_t) end &&
 		      frame < VM_MIN_KERNEL_ADDRESS) ||
 		     frame >= VM_MAX_KERNEL_ADDRESS))

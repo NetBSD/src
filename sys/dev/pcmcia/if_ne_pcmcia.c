@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.8 2002/06/20 03:46:07 nathanw Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.9 2002/08/01 02:45:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.70.2.8 2002/06/20 03:46:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.70.2.9 2002/08/01 02:45:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,6 +462,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA411,
       PCMCIA_CIS_NETGEAR_FA411,
       0, -1, { 0x00, 0x40, 0xf4 } },
+
+    { PCMCIA_STR_DYNALINK_L10C,
+      PCMCIA_VENDOR_DYNALINK, PCMCIA_PRODUCT_DYNALINK_L10C,
+      PCMCIA_CIS_DYNALINK_L10C,
+      0, -1, { 0x00, 0x00, 0x00 } },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device

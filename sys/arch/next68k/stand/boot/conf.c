@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.1.1.32.1 2002/08/01 02:42:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -70,6 +70,8 @@ extern int	enclose __P((struct open_file *));
 struct devsw devsw[] = {
 	{ "sd",	sdstrategy,	sdopen,	sdclose,	sdioctl },
 	{ "en",	net_strategy,	net_open, net_close,	net_ioctl },
+	{ "tp",	net_strategy,	net_open, net_close,	net_ioctl },
+	{ "xe",	net_strategy,	net_open, net_close,	net_ioctl },
 #if 0
 	{ "fd",	nullsys,	nodev,	nullsys,	noioctl },
 	{ "od",	nullsys,	nodev,	nullsys,	noioctl },

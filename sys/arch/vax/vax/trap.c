@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66.8.7 2002/07/12 01:39:54 nathanw Exp $     */
+/*	$NetBSD: trap.c,v 1.66.8.8 2002/08/01 02:44:02 nathanw Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -353,7 +353,6 @@ syscall(struct trapframe *frame)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 
-
 #ifdef TRAPDEBUG
 if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n",
 	       syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
@@ -388,7 +387,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 			goto bad;
 	}
 
-	if ((error = trace_enter(l, code, args, rval)) != 0)
+	if ((err = trace_enter(l, frame->code, args, rval)) != 0)
 		goto bad;
 
 	err = (*callp->sy_call)(curlwp, args, rval);
@@ -418,13 +417,12 @@ bad:
 		break;
 
 	default:
-	bad:
 		exptr->r0 = err;
 		exptr->psl |= PSL_C;
 		break;
 	}
 
-	trace_exit(l, code, args, rval, error);
+	trace_exit(l, frame->code, args, rval, err);
 
 	userret(l, frame, oticks);
 }

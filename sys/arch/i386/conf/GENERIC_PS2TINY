@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.2.4.8 2002/06/20 03:39:04 nathanw Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.2.4.9 2002/08/01 02:41:54 nathanw Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -63,7 +63,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	LKM		# loadable kernel modules
 
@@ -202,8 +202,7 @@ aha*	at mca? slot ?			# Adaptec AHA-1640
 esp*	at mca? slot ?			# NCR 53C90
 
 # SCSI bus support
-scsibus* at aha?
-scsibus* at esp?
+scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives

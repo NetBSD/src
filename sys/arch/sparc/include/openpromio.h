@@ -1,4 +1,4 @@
-/*	$NetBSD: openpromio.h,v 1.2 1994/11/20 20:53:17 deraadt Exp $ */
+/*	$NetBSD: openpromio.h,v 1.2.50.1 2002/08/01 02:43:23 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,3 +58,4 @@ struct opiocdesc {
 #define	OPIOCGETOPTNODE	_IOR('O', 4, int)	/* get openprom field */
 #define	OPIOCGETNEXT	_IOWR('O', 5, int)	/* get next node of node */
 #define	OPIOCGETCHILD	_IOWR('O', 6, int)	/* get first child of node */
+#define	OPIOCFINDDEVICE	_IOWR('O', 7, struct opiocdesc) /* find a specific device */

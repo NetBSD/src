@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.27.2.4 2002/01/08 00:33:45 nathanw Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.27.2.5 2002/08/01 02:46:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.27.2.4 2002/01/08 00:33:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.27.2.5 2002/08/01 02:46:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ umapfs_mount(mp, path, data, ndp, p)
 				M_UFSMNT, M_WAITOK);	/* XXX */
 	memset((caddr_t)amp, 0, sizeof(struct umap_mount));
 
-	mp->mnt_data = (qaddr_t) amp;
+	mp->mnt_data = amp;
 	amp->umapm_vfs = lowerrootvp->v_mount;
 	if (amp->umapm_vfs->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;

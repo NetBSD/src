@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.48.8.3 2002/02/28 04:12:03 nathanw Exp $ */
+/*	$NetBSD: param.h,v 1.48.8.4 2002/08/01 02:43:23 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -168,6 +168,7 @@ extern int nbpg, pgofset, pgshift;
 #define CPU_SUN4C	1
 #define CPU_SUN4M	2
 #define CPU_SUN4U	3
+#define	CPU_SUN4D	4
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #ifndef _LOCORE
@@ -188,8 +189,8 @@ extern void	delay __P((unsigned int));
  * system.  So insist on SUN4M defined and SUN4 and SUN4C not defined.
  */
 #if defined(MSIIEP)
-#if defined(SUN4) || defined(SUN4C)
-#error "microSPARC-IIep kernels cannot support sun4 or sun4c"
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4D)
+#error "microSPARC-IIep kernels cannot support sun4, sun4c, or sun4d"
 #endif
 #if !defined(SUN4M)
 #error "microSPARC-IIep kernel must have 'options SUN4M'"
@@ -197,91 +198,84 @@ extern void	delay __P((unsigned int));
 #endif /* MSIIEP */
 
 /*
- * Shorthand CPU-type macros. Enumerate all eight cases.
- * Let compiler optimize away code conditional on constants.
- *
- * On a sun4 machine, the page size is 8192, while on a sun4c and sun4m
- * it is 4096. Therefore, in the (SUN4 && (SUN4C || SUN4M)) cases below,
- * NBPG, PGOFSET and PGSHIFT are defined as variables which are initialized
- * early in locore.s after the machine type has been detected.
- *
- * Note that whenever the macros defined below evaluate to expressions
- * involving variables, the kernel will perform slighly worse due to the
- * extra memory references they'll generate.
+ * Shorthand CPU-type macros.  Let compiler optimize away code
+ * conditional on constants.
  */
-#define CPU_ISSUN4U	(0)
-#define CPU_ISSUN4MOR4U	(CPU_ISSUN4M)
-#if   defined(SUN4M) && defined(SUN4C) && defined(SUN4)
-#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
-#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-#	define NBPG		nbpg
-#	define PGOFSET		pgofset
-#	define PGSHIFT		pgshift
-#elif defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
-#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
-#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
+
+/*
+ * Step 1: Count the number of CPU types configured into the
+ * kernel.
+ */
+#define	CPU_NTYPES	(defined(SUN4) + defined(SUN4C) + \
+			 defined(SUN4M) + defined(SUN4D))
+
+/*
+ * Step 2: Define the CPU type predicates.  Rules:
+ *
+ *	* If CPU types are configured in, and the CPU type
+ *	  is not one of them, then the test is always false.
+ *
+ *	* If exactly one CPU type is configured in, and it's
+ *	  this one, then the test is always true.
+ *
+ *	* Otherwise, we have to reference the cputyp variable.
+ */
+#if CPU_NTYPES != 0 && !defined(SUN4)
 #	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-#	define NBPG		4096
-#	define PGOFSET		(NBPG-1)
-#	define PGSHIFT		SUN4CM_PGSHIFT
-#elif defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
-#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
-#	define CPU_ISSUN4C	(0)
-#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4M)
-#	define NBPG		nbpg
-#	define PGOFSET		pgofset
-#	define PGSHIFT		pgshift
-#elif defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
-#	define CPU_ISSUN4M	(1)
-#	define CPU_ISSUN4C	(0)
-#	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(0)
-#	define CPU_ISSUN4COR4M	(1)
-#	define NBPG		4096
-#	define PGOFSET		(NBPG-1)
-#	define PGSHIFT		SUN4CM_PGSHIFT
-#elif !defined(SUN4M) && defined(SUN4C) && defined(SUN4)
-#	define CPU_ISSUN4M	(0)
-#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(1)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C)
-#	define NBPG		nbpg
-#	define PGOFSET		pgofset
-#	define PGSHIFT		pgshift
-#elif !defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
-#	define CPU_ISSUN4M	(0)
-#	define CPU_ISSUN4C	(1)
-#	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(1)
-#	define CPU_ISSUN4COR4M	(1)
-#	define NBPG		4096
-#	define PGOFSET		(NBPG-1)
-#	define PGSHIFT		SUN4CM_PGSHIFT
-#elif !defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
-#	define CPU_ISSUN4M	(0)
-#	define CPU_ISSUN4C	(0)
+#elif CPU_NTYPES == 1 && defined(SUN4)
 #	define CPU_ISSUN4	(1)
-#	define CPU_ISSUN4OR4C	(1)
-#	define CPU_ISSUN4COR4M	(0)
+#else
+#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
+#endif
+
+#if CPU_NTYPES != 0 && !defined(SUN4C)
+#	define CPU_ISSUN4C	(0)
+#elif CPU_NTYPES == 1 && defined(SUN4C)
+#	define CPU_ISSUN4C	(1)
+#else
+#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
+#endif
+
+#if CPU_NTYPES != 0 && !defined(SUN4M)
+#	define CPU_ISSUN4M	(0)
+#elif CPU_NTYPES == 1 && defined(SUN4M)
+#	define CPU_ISSUN4M	(1)
+#else
+#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
+#endif
+
+#if CPU_NTYPES != 0 && !defined(SUN4D)
+#	define CPU_ISSUN4D	(0)
+#elif CPU_NTYPES == 1 && defined(SUN4D)
+#	define CPU_ISSUN4D	(1)
+#else
+#	define CPU_ISSUN4D	(cputyp == CPU_SUN4D)
+#endif
+
+#define	CPU_ISSUN4U		(0)
+
+/*
+ * Step 3: Sun4 machines have a page size of 8192.  All other machines
+ * have a page size of 4096.  Short cut page size variables if we can.
+ */
+#if CPU_NTYPES != 0 && !defined(SUN4)
+#	define NBPG		4096
+#	define PGOFSET		(NBPG-1)
+#	define PGSHIFT		SUN4CM_PGSHIFT
+#elif CPU_NTYPES == 1 && defined(SUN4)
 #	define NBPG		8192
 #	define PGOFSET		(NBPG-1)
 #	define PGSHIFT		SUN4_PGSHIFT
-#elif !defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
-#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
-#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+#else
 #	define NBPG		nbpg
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift
 #endif
+
+/*
+ * Step 4: Sun4M and Sun4D systems have an SRMMU.  Define some
+ * short-hand for this.
+ */
+#define	CPU_HAS_SRMMU		(CPU_ISSUN4M || CPU_ISSUN4D)
+
 #endif /* _KERNEL || _STANDALONE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.16 2002/07/12 01:40:21 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.17 2002/08/01 02:46:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.16 2002/07/12 01:40:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.17 2002/08/01 02:46:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ sys_ptrace(l, v, retval)
 	case  PT_TRACE_ME:
 		/* Just set the trace flag. */
 		SET(t->p_flag, P_TRACED);
-		t->p_oppid = t->p_pptr->p_pid;
+		t->p_opptr = t->p_pptr;
 		return (0);
 
 	case  PT_WRITE_I:		/* XXX no separate I and D spaces */
@@ -351,15 +351,13 @@ sys_ptrace(l, v, retval)
 
 		if (SCARG(uap, req) == PT_DETACH) {
 			/* give process back to original parent or init */
-			if (t->p_oppid != t->p_pptr->p_pid) {
-				struct proc *pp;
-
-				pp = pfind(t->p_oppid);
+			if (t->p_opptr != t->p_pptr) {
+				struct proc *pp = t->p_opptr;
 				proc_reparent(t, pp ? pp : initproc);
 			}
 
 			/* not being traced any more */
-			t->p_oppid = 0;
+			t->p_opptr = NULL;
 			CLR(t->p_flag, P_TRACED|P_WAITED);
 		}
 
@@ -395,9 +393,11 @@ sys_ptrace(l, v, retval)
 		 * Stop the target.
 		 */
 		SET(t->p_flag, P_TRACED);
-		t->p_oppid = t->p_pptr->p_pid;
-		if (t->p_pptr != p)
+		t->p_opptr = t->p_pptr;
+		if (t->p_pptr != p) {
+			t->p_pptr->p_flag |= P_CHTRACED;
 			proc_reparent(t, p);
+		}
 		SCARG(uap, data) = SIGSTOP;
 		goto sendsig;
 

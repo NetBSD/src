@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.6.6.2 2002/04/01 07:43:05 nathanw Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.6.6.3 2002/08/01 02:43:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -63,6 +63,9 @@ struct psycho_pbm {
 
 	/* and pointers into the psycho regs for our bits */
 	bus_space_handle_t		pp_pcictl;
+	struct strbuf_ctl		pp_sb;
+	/* area we can use for flushing our streaming buffer */
+	char				pp_flush[0x80];
 };
 
 /*

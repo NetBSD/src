@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.26.4.8 2002/07/12 01:39:29 nathanw Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.26.4.9 2002/08/01 02:42:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.26.4.8 2002/07/12 01:39:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.26.4.9 2002/08/01 02:42:01 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -92,8 +92,7 @@ freebsd_setregs(l, epp, stack)
  * specified pc, psl.
  */
 void
-freebsd_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+freebsd_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -103,6 +102,7 @@ freebsd_sendsig(catcher, sig, mask, code)
 	register struct trapframe *tf;
 	struct freebsd_sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_regs;
 

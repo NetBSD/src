@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.2.4.8 2002/05/29 21:33:04 nathanw Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.2.4.9 2002/08/01 02:44:27 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.2.4.8 2002/05/29 21:33:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.2.4.9 2002/08/01 02:44:27 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1261,11 +1261,10 @@ loop:
 			 * parent a SIGCHLD.  The rest of the cleanup will be
 			 * done when the old parent waits on the child.
 			 */
-			if ((q->p_flag & P_TRACED) &&
-			    q->p_oppid != q->p_pptr->p_pid) {
-				t = pfind(q->p_oppid);
+			if ((q->p_flag & P_TRACED) && q->p_opptr != q->p_pptr){
+				t = q->p_opptr;
 				proc_reparent(q, t ? t : initproc);
-				q->p_oppid = 0;
+				q->p_opptr = NULL;
 				q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
 				psignal(q->p_pptr, SIGCHLD);
 				wakeup((caddr_t)q->p_pptr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10.2.3 2002/06/20 03:40:26 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.10.2.4 2002/08/01 02:42:54 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -135,7 +135,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NLD,ld),		/* 18: logical disks */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 19: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 20: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 20: system call tracing */
 #else
 	cdev_notdef(),			/* 20: system call tracing */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.1.1.1.32.1 2002/08/01 02:42:50 nathanw Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -38,6 +38,7 @@
 #define	MAXPARTITIONS	8	/* number of partitions */
 #define	RAW_PART	2	/* raw partition: xx?c */
 
+#define	CPUMAXPARTITIONS	8	/* number of partitions in cpu_disklabel */
 #define CD_V1	0x4e655854	/* version #1: "NeXT" */
 #define CD_V2	0x646c5632	/* version #2: "dlV2" */
 #define CD_V3	0x646c5633	/* version #3: "dlV3" */
@@ -53,8 +54,29 @@
 #define MAXMPTLEN       16
 #define MAXFSTLEN       8
 
+#define DEFAULTFRONTPORCH (160 * 2)
+#define DEFAULTBOOT0_1 (32 * 2)
+#define DEFAULTBOOT0_2 (96 * 2)
+
+struct  cpu_partition {
+	int cp_offset;		/* starting sector */
+	int cp_size;		/* number of sectors in partition */
+	short cp_bsize;		/* block size in bytes */
+	short cp_fsize;		/* filesystem basic fragment size */
+	char cp_opt;		/* optimization type: 's'pace/'t'ime */
+	char cp_pad1;
+	short cp_cpg;		/* filesystem cylinders per group */
+	short cp_density;	/* bytes per inode density */
+	char cp_minfree;	/* minfree (%) */
+	char cp_newfs;		/* run newfs during init */
+	char cp_mountpt[MAXMPTLEN];/* default/standard mount point */
+	char cp_automnt;	/* auto-mount when inserted */
+	char cp_type[MAXFSTLEN]; /* file system type name */
+	char cp_pad2;
+} __attribute__ ((packed));
+
 /* The disklabel the way it is on the disk */
-struct cpu_disklabel {
+struct nextstep_disklabel {
     int cd_version;		/* label version */
     int cd_label_blkno;         /* block # of this label */
     int cd_size;                /* size of media area (sectors) */
@@ -80,21 +102,7 @@ struct cpu_disklabel {
     char cd_hostname[MAXHNLEN];	/* host name (usu. where disk was labeled) */
     char cd_rootpartition;	/* root partition letter e.g. 'a' */
     char cd_rwpartition;	/* r/w partition letter e.g. 'b' */
-    struct  cpu_partition {
-	int cp_offset;		/* starting sector */
-	int cp_size;		/* number of sectors in partition */
-	short cp_bsize;		/* block size in bytes */
-	short cp_fsize;		/* filesystem basic fragment size */
-	char cp_opt;		/* optimization type: 's'pace/'t'ime */
-	short cp_cpg;		/* filesystem cylinders per group */
-	short cp_density;	/* bytes per inode density */
-	char cp_minfree;	/* minfree (%) */
-	short cp_reserved;	/* no useful data here */
-	char cp_mountpt[MAXMPTLEN];/* default/standard mount point */
-	char cp_automnt;	/* auto-mount when inserted */
-	char cp_res2;		/* alignment byte */
-	char cp_type[MAXFSTLEN]; /* file system type name */
-    } cd_partitions[MAXPARTITIONS];
+    struct cpu_partition cd_partitions[CPUMAXPARTITIONS];
 
     union {
 	u_short CD_v3_checksum;	/* label version 3 checksum */
@@ -104,6 +112,10 @@ struct cpu_disklabel {
 #define cd_v3_checksum  cd_un.CD_v3_checksum
 #define cd_bad          cd_un.CD_bad
     u_short cd_checksum;	/* label version 1 or 2 checksum */
+} __attribute__ ((packed));
+
+struct cpu_disklabel {
+	int od_version;
 };
 
 #endif /* _MACHINE_DISKLABEL_H_ */

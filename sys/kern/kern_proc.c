@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.44.2.8 2002/07/12 01:40:17 nathanw Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.44.2.9 2002/08/01 02:46:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.8 2002/07/12 01:40:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.9 2002/08/01 02:46:20 nathanw Exp $");
+
+#include "opt_kstack.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,7 +363,8 @@ pgfind(pgid)
 {
 	struct pgrp *pgrp;
 
-	for (pgrp = PGRPHASH(pgid)->lh_first; pgrp != 0; pgrp = pgrp->pg_hash.le_next)
+	for (pgrp = PGRPHASH(pgid)->lh_first; pgrp != NULL;
+	    pgrp = pgrp->pg_hash.le_next)
 		if (pgrp->pg_id == pgid)
 			return (pgrp);
 	return (NULL);
@@ -395,8 +398,10 @@ enterpgrp(p, pgid, mksess)
 			panic("enterpgrp: new pgrp and pid != pgid");
 #endif
 		pgrp = pool_get(&pgrp_pool, PR_WAITOK);
-		if ((np = pfind(savepid)) == NULL || np != p)
+		if ((np = pfind(savepid)) == NULL || np != p) {
+			pool_put(&pgrp_pool, pgrp);
 			return (ESRCH);
+		}
 		if (mksess) {
 			struct session *sess;
 
@@ -405,6 +410,11 @@ enterpgrp(p, pgid, mksess)
 			 */
 			MALLOC(sess, struct session *, sizeof(struct session),
 			    M_SESSION, M_WAITOK);
+			if ((np = pfind(savepid)) == NULL || np != p) {
+				FREE(sess, M_SESSION);
+				pool_put(&pgrp_pool, pgrp);
+				return (ESRCH);
+			}
 			sess->s_sid = p->p_pid;
 			sess->s_leader = p;
 			sess->s_count = 1;
@@ -563,13 +573,11 @@ p_sugid(p)
 			newlim = limcopy(p->p_limit);
 			limfree(p->p_limit);
 			p->p_limit = newlim;
-		} else {
-			free(p->p_limit->pl_corename, M_TEMP);
 		}
+		free(p->p_limit->pl_corename, M_TEMP);
 		p->p_limit->pl_corename = defcorename;
 	}
 }
-
 
 #ifdef DEBUG
 void
@@ -583,7 +591,8 @@ pgrpdump()
 		if ((pgrp = pgrphashtbl[i].lh_first) != NULL) {
 			printf("\tindx %d\n", i);
 			for (; pgrp != 0; pgrp = pgrp->pg_hash.le_next) {
-				printf("\tpgrp %p, pgid %d, sess %p, sesscnt %d, mem %p\n",
+				printf("\tpgrp %p, pgid %d, sess %p, "
+				    "sesscnt %d, mem %p\n",
 				    pgrp, pgrp->pg_id, pgrp->pg_session,
 				    pgrp->pg_session->s_count,
 				    pgrp->pg_members.lh_first);
@@ -597,3 +606,79 @@ pgrpdump()
 	}
 }
 #endif /* DEBUG */
+
+#ifdef KSTACK_CHECK_MAGIC
+#include <sys/user.h>
+
+#define	KSTACK_MAGIC	0xdeadbeaf
+
+/* XXX should be per process basis? */
+int kstackleftmin = KSTACK_SIZE;
+int kstackleftthres = KSTACK_SIZE / 8; /* warn if remaining stack is
+					  less than this */
+
+void
+kstack_setup_magic(const struct proc *p)
+{
+	u_int32_t *ip;
+	u_int32_t const *end;
+
+	KASSERT(p != 0);
+	KASSERT(p != &proc0);
+
+	/*
+	 * fill all the stack with magic number
+	 * so that later modification on it can be detected.
+	 */
+	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(p);
+	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(p) + KSTACK_SIZE); 
+	for (; ip < end; ip++) {
+		*ip = KSTACK_MAGIC;
+	}
+}
+
+void
+kstack_check_magic(const struct proc *p)
+{
+	u_int32_t const *ip, *end;
+	int stackleft;
+
+	KASSERT(p != 0);
+
+	/* don't check proc0 */ /*XXX*/
+	if (p == &proc0)
+		return;
+
+#ifdef __MACHINE_STACK_GROWS_UP
+	/* stack grows upwards (eg. hppa) */
+	ip = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(p) + KSTACK_SIZE); 
+	end = (u_int32_t *)KSTACK_LOWEST_ADDR(p);
+	for (ip--; ip >= end; ip--)
+		if (*ip != KSTACK_MAGIC)
+			break;
+		
+	stackleft = (caddr_t)KSTACK_LOWEST_ADDR(p) + KSTACK_SIZE - (caddr_t)ip;
+#else /* __MACHINE_STACK_GROWS_UP */
+	/* stack grows downwards (eg. i386) */
+	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(p);
+	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(p) + KSTACK_SIZE); 
+	for (; ip < end; ip++)
+		if (*ip != KSTACK_MAGIC)
+			break;
+
+	stackleft = (caddr_t)ip - KSTACK_LOWEST_ADDR(p);
+#endif /* __MACHINE_STACK_GROWS_UP */
+
+	if (kstackleftmin > stackleft) {
+		kstackleftmin = stackleft;
+		if (stackleft < kstackleftthres)
+			printf("warning: kernel stack left %d bytes(pid %u)\n",
+			    stackleft, p->p_pid);
+	}
+
+	if (stackleft <= 0) {
+		panic("magic on the top of kernel stack changed for pid %u: "
+		    "maybe kernel stack overflow\n", p->p_pid);
+	}
+}
+#endif /* KSTACK_CHECK_MAGIC */

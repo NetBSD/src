@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11.8.3 2002/06/24 22:09:08 nathanw Exp $	*/
+/*	$NetBSD: clock.c,v 1.11.8.4 2002/08/01 02:44:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,10 +98,14 @@ clock_attach(parent, self, aux)
 }
 
 
-/* We're using a 100 Hz clock. */
+/*
+ * MFP of X68k uses 4MHz clock always and we use 1/200 prescaler here.
+ * Therefore, clock interval is 50 usec.
+ */
+#define CLK_RESOLUTION	(50)
+#define CLOCKS_PER_SEC	(1000000 / CLK_RESOLUTION)
 
-#define CLK_INTERVAL 200
-#define CLOCKS_PER_SEC 100
+static int clkint;		/* clock interval */
 
 static int clkread __P((void));
 
@@ -130,10 +134,17 @@ static int clkread __P((void));
 void
 cpu_initclocks()
 {
-	mfp_set_tcdcr(mfp_get_tcdcr() & 0x0f); /* stop timer C */
-	mfp_set_tcdr(CLK_INTERVAL);
+	if (CLOCKS_PER_SEC % hz ||
+	    hz <= (CLOCKS_PER_SEC / 256) || hz > CLOCKS_PER_SEC) {
+		printf("cannot set %d Hz clock. using 100 Hz\n", hz);
+		hz = 100;
+	}
+	clkint = CLOCKS_PER_SEC / hz;
 
+	mfp_set_tcdcr(mfp_get_tcdcr() & 0x0f); /* stop timer C */
 	mfp_set_tcdcr(mfp_get_tcdcr() | 0x70); /* 1/200 delay mode */
+
+	mfp_set_tcdr(clkint);
 	mfp_bit_set_ierb(MFP_INTR_TIMER_C);
 }
 
@@ -155,7 +166,7 @@ setstatclockrate(hz)
 int
 clkread()
 {
-	return (mfp_get_tcdr() * CLOCKS_PER_SEC) / CLK_INTERVAL;
+	return (clkint - mfp_get_tcdr()) * CLK_RESOLUTION;
 }
 
 

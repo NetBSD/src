@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.6.3 2002/06/20 03:40:31 nathanw Exp $	*/
+/*	$NetBSD: intr.c,v 1.1.6.4 2002/08/01 02:43:01 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@ ext_intr(void)
 
 	pcpl = cpl;
 	asm volatile ("mfmsr %0" : "=r"(msr));
-	
+
 	int_state = mfdcr(DCR_UIC0_MSR);	/* Read non-masked interrupt status */
 	bits_to_clear = int_state;
 
@@ -133,13 +133,13 @@ ext_intr(void)
 		}
 	}
 	mtdcr(DCR_UIC0_SR, bits_to_clear);	/* Acknowledge all pending interrupts */
-	
+
 	asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
 	splx(pcpl);
 	asm volatile ("mtmsr %0" :: "r"(msr));
 }
 
-static inline void 
+static inline void
 disable_irq(int irq)
 {
 	int mask, omask;
@@ -154,7 +154,7 @@ disable_irq(int irq)
 #endif
 }
 
-static inline void 
+static inline void
 enable_irq(int irq)
 {
 	int mask, omask;
@@ -310,7 +310,7 @@ intr_calculatemasks(void)
 				irqs |= IRQ_TO_MASK(irq);
 		imask[level] = irqs | SINT_MASK;
 	}
-	
+
 	/*
 	 * IPL_CLOCK should mask clock interrupt even if interrupt handler
 	 * is not registered.
@@ -400,7 +400,7 @@ do_pending_int(void)
 	asm volatile("mtmsr %0" :: "r"(dmsr));
 
 	pcpl = cpl;		/* Turn off all */
-  again:	
+  again:
 	while ((hwpend = ipending & ~pcpl & HWINT_MASK)) {
 		irq = cntlzw(hwpend);
 		enable_irq(irq);

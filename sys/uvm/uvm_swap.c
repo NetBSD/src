@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.46.2.11 2002/07/12 01:40:46 nathanw Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.46.2.12 2002/08/01 02:47:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.11 2002/07/12 01:40:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.12 2002/08/01 02:47:09 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -141,7 +141,7 @@ struct swapdev {
 
 	int			swd_bsize;	/* blocksize (bytes) */
 	int			swd_maxactive;	/* max active i/o reqs */
-	struct buf_queue	swd_tab;	/* buffer list */
+	struct bufq_state	swd_tab;	/* buffer list */
 	int			swd_active;	/* number of active buffers */
 };
 
@@ -607,20 +607,20 @@ sys_swapctl(l, v, retval)
 		priority = SCARG(uap, misc);
 		sdp = malloc(sizeof *sdp, M_VMSWAP, M_WAITOK);
 		spp = malloc(sizeof *spp, M_VMSWAP, M_WAITOK);
+		memset(sdp, 0, sizeof(*sdp));
+		sdp->swd_flags = SWF_FAKE;
+		sdp->swd_vp = vp;
+		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
+		bufq_alloc(&sdp->swd_tab, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 		simple_lock(&uvm.swap_data_lock);
 		if (swaplist_find(vp, 0) != NULL) {
 			error = EBUSY;
 			simple_unlock(&uvm.swap_data_lock);
+			bufq_free(&sdp->swd_tab);
 			free(sdp, M_VMSWAP);
 			free(spp, M_VMSWAP);
 			break;
 		}
-		memset(sdp, 0, sizeof(*sdp));
-		sdp->swd_flags = SWF_FAKE;	/* placeholder only */
-		sdp->swd_vp = vp;
-		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
-		BUFQ_INIT(&sdp->swd_tab);
-
 		swaplist_insert(sdp, spp, priority);
 		simple_unlock(&uvm.swap_data_lock);
 
@@ -641,6 +641,7 @@ sys_swapctl(l, v, retval)
 			(void) swaplist_find(vp, 1);  /* kill fake entry */
 			swaplist_trim();
 			simple_unlock(&uvm.swap_data_lock);
+			bufq_free(&sdp->swd_tab);
 			free(sdp->swd_path, M_VMSWAP);
 			free(sdp, M_VMSWAP);
 			break;
@@ -1043,6 +1044,7 @@ swap_off(p, sdp)
 	extent_free(swapmap, sdp->swd_drumoffset, sdp->swd_drumsize,
 		    EX_WAITOK);
 	extent_destroy(sdp->swd_ex);
+	bufq_free(&sdp->swd_tab);
 	free(sdp, M_VMSWAP);
 	return (0);
 }
@@ -1298,7 +1300,7 @@ sw_reg_strategy(sdp, bp, bn)
 		vnx->vx_pending++;
 
 		/* sort it in and start I/O if we are not over our limit */
-		disksort_blkno(&sdp->swd_tab, &nbp->vb_buf);
+		BUFQ_PUT(&sdp->swd_tab, &nbp->vb_buf);
 		sw_reg_start(sdp);
 		splx(s);
 
@@ -1327,7 +1329,7 @@ out: /* Arrive here at splbio */
 /*
  * sw_reg_start: start an I/O request on the requested swapdev
  *
- * => reqs are sorted by disksort (above)
+ * => reqs are sorted by b_rawblkno (above)
  */
 static void
 sw_reg_start(sdp)
@@ -1343,10 +1345,9 @@ sw_reg_start(sdp)
 	sdp->swd_flags |= SWF_BUSY;
 
 	while (sdp->swd_active < sdp->swd_maxactive) {
-		bp = BUFQ_FIRST(&sdp->swd_tab);
+		bp = BUFQ_GET(&sdp->swd_tab);
 		if (bp == NULL)
 			break;
-		BUFQ_REMOVE(&sdp->swd_tab, bp);
 		sdp->swd_active++;
 
 		UVMHIST_LOG(pdhist,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_reg.h,v 1.2.6.3 2002/02/28 04:07:43 nathanw Exp $	*/
+/*	$NetBSD: sa11x0_reg.h,v 1.2.6.4 2002/08/01 02:41:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -47,6 +47,7 @@
 #define SAIPIC_BASE		0x90050000	/* Interrupt Controller */
 #define SAPPC_BASE		0x90060000	/* Peripheral Pin Controller */
 #define SAUDC_BASE		0x80000000	/* USB Device Controller*/
+#define	SACOM1_BASE		0x80010000	/* GPCLK/UART 1 */
 #define SACOM3_HW_BASE		0x80050000	/* UART 3  */
 #define SAMCP_BASE		0x80060000	/* MCP Controller */
 #define SASSP_BASE		0x80070000	/* Synchronous serial port */

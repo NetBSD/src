@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.35.8.2 2002/06/20 03:40:22 nathanw Exp $	*/
+/*	$NetBSD: esp.c,v 1.35.8.3 2002/08/01 02:42:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -120,9 +120,14 @@
 #ifdef ESP_DEBUG
 int esp_debug = 0;
 #define DPRINTF(x) if (esp_debug) printf x;
+int esplogshow = 0;
+char esplog[8192+100];
+char *esplogp = esplog;
+#define ESPLOGIF 10 && (esplogp < (esplog + 8192))
 #else
 #define DPRINTF(x)
 #endif
+#define PRINTF(x) printf x;
 
 
 void	espattach_intio	__P((struct device *, struct device *, void *));
@@ -320,10 +325,10 @@ espattach_intio(parent, self, aux)
 
 	/* @@@ Some ESP_DCTL bits probably need setting */
 	NCR_WRITE_REG(sc, ESP_DCTL, 
-			ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_RESET);
+			ESPDCTL_16MHZ | ESPDCTL_INTENB | ESPDCTL_RESET);
 	DELAY(10);
 	DPRINTF(("esp dctl is 0x%02x\n",NCR_READ_REG(sc,ESP_DCTL)));
-	NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_20MHZ | ESPDCTL_INTENB);
+	NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_16MHZ | ESPDCTL_INTENB);
 	DELAY(10);
 	DPRINTF(("esp dctl is 0x%02x\n",NCR_READ_REG(sc,ESP_DCTL)));
 
@@ -426,25 +431,68 @@ esp_write_reg(sc, reg, val)
 	bus_space_write_1(esc->sc_bst, esc->sc_bsh, reg, val);
 }
 
+volatile u_int32_t save1;
+
+#define xADDR 0x0211a000
+int doze __P((volatile int));
+int
+doze(c)
+	volatile int c;
+{
+/* 	static int tmp1; */
+	u_int32_t tmp1;
+	volatile u_int8_t tmp2;
+	volatile u_int8_t *reg = (volatile u_int8_t *)IIOV(xADDR);
+	if (c > 244) return (0);
+	if (c == 0) return (0);
+/* 		((*(volatile u_long *)IIOV(NEXT_P_INTRMASK))&=(~NEXT_I_BIT(x))) */
+	(*reg) = 0;
+	(*reg) = 0;
+	do {
+		save1 = (*reg);
+		tmp2 = *(reg + 3);
+		tmp1 = tmp2;
+	} while (tmp1 <= c);
+	return (0);
+}
+
 int
 esp_dma_isintr(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
+	if (INTR_OCCURRED(NEXT_I_SCSI)) {
+		if (ESPLOGIF) *esplogp++ = 'i';
+		NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_16MHZ | ESPDCTL_INTENB | (esc->sc_datain ? ESPDCTL_DMARD : 0));
+		return (1);
+	} else {
+		return (0);
+	}
+}
+
+int
+esp_dma_intr(sc)
+	struct ncr53c9x_softc *sc;
+{
+	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	int r = (INTR_OCCURRED(NEXT_I_SCSI));
+	int flushcount;
+	r = 1;
 
+	if (ESPLOGIF) *esplogp++ = 'I';
 	if (r) {
-
+		/* printf ("esp_dma_isintr start\n"); */
 		{
-			int flushcount;
-			int s;
-			s = spldma();
+			int s = spldma();
+			void *ndmap = esc->sc_scsi_dma._nd_map;
+			int ndidx = esc->sc_scsi_dma._nd_idx;
+			splx(s);
 
 			flushcount = 0;
 
 #ifdef ESP_DEBUG
-			esp_dma_nest++;
+/* 			esp_dma_nest++; */
 
 			if (esp_debug) {
 				char sbuf[256];
@@ -455,106 +503,171 @@ esp_dma_isintr(sc)
 			}
 #endif
 
-			while (esp_dma_isactive(sc)) {
-				flushcount++;
+			while (!nextdma_finished(&esc->sc_scsi_dma)) { /* esp_dma_isactive(sc)) { */
+				if (ESPLOGIF) *esplogp++ = 'w';
+				if (ESPLOGIF) {
+					sprintf (esplogp, "f%dm%dl%dw", NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF,
+						 NCR_READ_REG((sc), NCR_TCM), NCR_READ_REG((sc), NCR_TCL));
+					esplogp += strlen (esplogp);
+				}
+				if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)
+					flushcount=5;
+				NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_16MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD |
+					      (esc->sc_datain ? ESPDCTL_DMARD : 0));
 
-#ifdef DIAGNOSTIC
-				r = (INTR_OCCURRED(NEXT_I_SCSI));
-				if (!r) panic("esp intr enabled but dma failed to flush");
-#endif
-#ifdef DIAGNOSTIC
-#if 0
-				if ((esc->sc_loaded & (ESP_LOADED_TAIL/* |ESP_UNLOADED_MAIN */))
-						!= (ESP_LOADED_TAIL /* |ESP_UNLOADED_MAIN */)) {
-					if (esc->sc_datain) {
-						NCR_WRITE_REG(sc, ESP_DCTL,
-								ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
-					} else {
-						NCR_WRITE_REG(sc, ESP_DCTL,
-								ESPDCTL_20MHZ | ESPDCTL_INTENB);
+				s = spldma();
+				while (ndmap == esc->sc_scsi_dma._nd_map && ndidx == esc->sc_scsi_dma._nd_idx &&
+				       !(bus_space_read_4(esc->sc_scsi_dma.nd_bst, esc->sc_scsi_dma.nd_bsh, DD_CSR)
+					 & 0x08000000) &&
+				       ++flushcount < 5) {
+					splx(s);
+					if (flushcount < 10) if (ESPLOGIF) *esplogp++ = 'F';
+					NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_FLUSH |
+						      ESPDCTL_16MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD |
+						      (esc->sc_datain ? ESPDCTL_DMARD : 0));
+					doze(0x32);
+					NCR_WRITE_REG(sc, ESP_DCTL, 
+						      ESPDCTL_16MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD |
+						      (esc->sc_datain ? ESPDCTL_DMARD : 0));
+					doze(0x32);
+					s = spldma();
+				}
+				if (ESPLOGIF) *esplogp++ = '0' + flushcount;
+				if (flushcount > 4) {
+					int next;
+					int onext = 0;
+					splx(s);
+					DPRINTF (("DMA reset\n"));
+					while (((next = bus_space_read_4(esc->sc_scsi_dma.nd_bst, esc->sc_scsi_dma.nd_bsh, DD_NEXT)) !=
+						(bus_space_read_4(esc->sc_scsi_dma.nd_bst, esc->sc_scsi_dma.nd_bsh, DD_LIMIT) & 0x7FFFFFFF)) &&
+					       onext != next) {
+						onext = next;
+						DELAY(50);
 					}
-					next_dma_print(&esc->sc_scsi_dma);
-					esp_dma_print(sc);
-					printf("%s: unexpected flush: tc=0x%06x\n",
-							sc->sc_dev.dv_xname,
-							(((sc->sc_cfg2 & NCRCFG2_FE)
-									? NCR_READ_REG(sc, NCR_TCH) : 0)<<16)|
-							(NCR_READ_REG(sc, NCR_TCM)<<8)|
-							NCR_READ_REG(sc, NCR_TCL));
-					ncr53c9x_readregs(sc);
-					printf("%s: readregs[intr=%02x,stat=%02x,step=%02x]\n",
-							sc->sc_dev.dv_xname,
-							sc->sc_espintr, sc->sc_espstat, sc->sc_espstep);
-					panic("%s: flushing flushing non-tail dma\n",
-							sc->sc_dev.dv_xname);
-				}
-#endif
-#endif
-				DPRINTF(("%s: flushing dma, count = %d\n", sc->sc_dev.dv_xname,flushcount));
-				if (esc->sc_datain) {
-					NCR_WRITE_REG(sc, ESP_DCTL, 
-							ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD | ESPDCTL_FLUSH);
-					DPRINTF(("esp dctl is 0x%02x\n",NCR_READ_REG(sc,ESP_DCTL)));
-					NCR_WRITE_REG(sc, ESP_DCTL, 
-							ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
-				} else {
-					NCR_WRITE_REG(sc, ESP_DCTL, 
-							ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_FLUSH);
-					DPRINTF(("esp dctl is 0x%02x\n",NCR_READ_REG(sc,ESP_DCTL)));
-					NCR_WRITE_REG(sc, ESP_DCTL, 
-							ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
-				}
-				DPRINTF(("esp dctl is 0x%02x\n",NCR_READ_REG(sc,ESP_DCTL)));
-
-				{
-					int nr;
-					nr = nextdma_intr(&esc->sc_scsi_dma);
-					if (nr) {
-						DPRINTF(("nextma_intr = %d\n",nr));
-#ifdef DIAGNOSTIC
-						if (flushcount > 4) {
-							printf("%s: unexpected flushcount %d\n",sc->sc_dev.dv_xname,flushcount);
-						}
-#endif
-#ifdef DIAGNOSTIC
-#if 0
-						if (esp_dma_isactive(sc)) {
-							esp_dma_print(sc);
-							printf("%s: dma still active after a flush with count %d\n",
-									sc->sc_dev.dv_xname,flushcount);
-
-						}
-#endif
-#endif
-						flushcount = 0;
+					if (ESPLOGIF) *esplogp++ = 'R';
+					NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_16MHZ | ESPDCTL_INTENB);
+					if (ESPLOGIF) {
+						sprintf (esplogp, "ff:%d tcm:%d tcl:%d ",
+							 NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF,
+							 NCR_READ_REG((sc), NCR_TCM), NCR_READ_REG((sc), NCR_TCL));
+						esplogp += strlen (esplogp);
 					}
+					s = spldma();
+					nextdma_reset (&esc->sc_scsi_dma);
+					splx(s);
+					goto out;
 				}
+				splx(s);
+
+#ifdef DIAGNOSTIC
+				if (flushcount > 4) {
+					if (ESPLOGIF) *esplogp++ = '+';
+					printf("%s: unexpected flushcount %d on %s\n",sc->sc_dev.dv_xname,
+					       flushcount, esc->sc_datain ? "read" : "write");
+				}
+#endif
+
+				if (!nextdma_finished(&esc->sc_scsi_dma)) { /* esp_dma_isactive(sc)) { */
+					if (ESPLOGIF) *esplogp++ = '1';
+				}
+				flushcount = 0;
+				s = spldma();
+				ndmap = esc->sc_scsi_dma._nd_map;
+				ndidx = esc->sc_scsi_dma._nd_idx;
+				splx(s);
+
+				goto loop;
+
+			loop:
 			}
+			goto out;
+		out:
 
 #ifdef ESP_DEBUG
-			esp_dma_nest--;
+/* 			esp_dma_nest--; */
 #endif
 
-			splx(s);
 		}
 
-#ifdef DIAGNOSTIC
-		r = (INTR_OCCURRED(NEXT_I_SCSI));
-		if (!r) panic("esp intr not enabled after dma flush");
+		doze (0x32);
+		NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_16MHZ | ESPDCTL_INTENB | (esc->sc_datain ? ESPDCTL_DMARD : 0));
+		if (ESPLOGIF) *esplogp++ = 'b';
+
+		while (esc->sc_datain != -1) DELAY(50);
+
+		if (esc->sc_dmaaddr) {
+			bus_size_t xfer_len = 0;
+			int resid;
+
+			NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_16MHZ | ESPDCTL_INTENB);
+			if (esc->sc_scsi_dma.dm_xfer_exception == 0) {
+				resid = NCR_READ_REG((sc), NCR_TCL) + (NCR_READ_REG((sc), NCR_TCM) << 8);
+				if (resid) {
+					resid += (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF);
+					if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)
+						if ((NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) != 16 || NCR_READ_REG((sc), NCR_TCL) != 240)
+							esplogshow++;
+				}
+				xfer_len = esc->sc_dmasize - resid;
+			} else {
+/*static*/ void	ncr53c9x_abort(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
+#define ncr53c9x_sched_msgout(m) \
+	do {							\
+		NCR_MISC(("ncr53c9x_sched_msgout %x %d", m, __LINE__));	\
+		NCRCMD(sc, NCRCMD_SETATN);			\
+		sc->sc_flags |= NCR_ATN;			\
+		sc->sc_msgpriq |= (m);				\
+	} while (0)
+				int i;
+				xfer_len = esc->sc_scsi_dma.dm_xfer_len;
+				resid = 0;
+				printf ("X\n");
+				for (i = 0; i < 16; i++) {
+					NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_FLUSH |
+						      ESPDCTL_16MHZ | ESPDCTL_INTENB |
+						      (esc->sc_datain ? ESPDCTL_DMARD : 0));
+					NCR_WRITE_REG(sc, ESP_DCTL, 
+						      ESPDCTL_16MHZ | ESPDCTL_INTENB |
+						      (esc->sc_datain ? ESPDCTL_DMARD : 0));
+				}
+#if 0
+				printf ("ff:%02x tcm:%d tcl:%d esp_dstat:%02x stat:%02x step: %02x intr:%02x new stat:%02X\n",
+					NCR_READ_REG(sc, NCR_FFLAG),
+					NCR_READ_REG((sc), NCR_TCM), NCR_READ_REG((sc), NCR_TCL),
+					NCR_READ_REG(sc, ESP_DSTAT),
+					sc->sc_espstat, sc->sc_espstep,
+					sc->sc_espintr, NCR_READ_REG(sc, NCR_STAT));
+				printf ("sc->sc_state: %x sc->sc_phase: %x sc->sc_espstep:%x sc->sc_prevphase:%x sc->sc_flags:%x\n",
+					sc->sc_state, sc->sc_phase, sc->sc_espstep, sc->sc_prevphase, sc->sc_flags);
 #endif
+				/* sc->sc_flags &= ~NCR_ICCS; */
+				sc->sc_nexus->flags |= ECB_ABORT;
+				if (sc->sc_phase == MESSAGE_IN_PHASE) {
+					/* ncr53c9x_sched_msgout(SEND_ABORT); */
+					ncr53c9x_abort(sc, sc->sc_nexus);
+				} else if (sc->sc_phase != STATUS_PHASE) {
+					printf ("ATTENTION!!!  not message/status phase: %d\n", sc->sc_phase);
+				}
+			}
+			
+			if (ESPLOGIF) {
+				sprintf (esplogp, "f%dm%dl%ds%dx%dr%dS", NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF, NCR_READ_REG((sc), NCR_TCM),
+					 NCR_READ_REG((sc), NCR_TCL), esc->sc_dmasize, (int)xfer_len, resid);
+				esplogp += strlen (esplogp);
+			}
 
-		/* Clear the DMAMOD bit in the DCTL register, since if this
-		 * routine returns true, then the ncr53c9x_intr handler will
-		 * be called and needs access to the scsi registers.
-		 */
-		if (esc->sc_datain) {
-			NCR_WRITE_REG(sc, ESP_DCTL,
-					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
-		} else {
-			NCR_WRITE_REG(sc, ESP_DCTL,
-					ESPDCTL_20MHZ | ESPDCTL_INTENB);
+			*(esc->sc_dmaaddr) += xfer_len;
+			*(esc->sc_dmalen)  -= xfer_len;
+			esc->sc_dmaaddr = 0;
+			esc->sc_dmalen  = 0;
+			esc->sc_dmasize = 0;
 		}
+
+		if (ESPLOGIF) *esplogp++ = 'B';
+		sc->sc_espstat = NCR_READ_REG(sc, NCR_STAT) | (sc->sc_espstat & NCRSTAT_INT);
+
 		DPRINTF(("esp dctl is 0x%02x\n",NCR_READ_REG(sc,ESP_DCTL)));
+		/* printf ("esp_dma_isintr DONE\n"); */
 
 	}
 
@@ -585,10 +698,11 @@ esp_dma_reset(sc)
 
 	/* Clear the DMAMOD bit in the DCTL register: */
 	NCR_WRITE_REG(sc, ESP_DCTL,
-			ESPDCTL_20MHZ | ESPDCTL_INTENB);
+			ESPDCTL_16MHZ | ESPDCTL_INTENB);
 	DPRINTF(("esp dctl is 0x%02x\n",NCR_READ_REG(sc,ESP_DCTL)));
 
 	nextdma_reset(&esc->sc_scsi_dma);
+	nextdma_init(&esc->sc_scsi_dma);
 
 	esc->sc_datain = -1;
 	esc->sc_dmaaddr = 0;
@@ -613,17 +727,6 @@ esp_dma_reset(sc)
 	esc->sc_tail_size = 0;
 }
 
-int
-esp_dma_intr(sc)
-	struct ncr53c9x_softc *sc;
-{
-#ifdef DIAGNOSTIC
-	panic("%s: esp_dma_intr shouldn't be invoked.\n", sc->sc_dev.dv_xname);
-#endif
-
-	return -1;
-}
-
 /* it appears that:
  * addr and len arguments to this need to be kept up to date
  * with the status of the transfter.
@@ -642,6 +745,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
+	if (ESPLOGIF) *esplogp++ = 'h';
 #ifdef DIAGNOSTIC
 #ifdef ESP_DEBUG
 	/* if this is a read DMA, pre-fill the buffer with 0xdeadbeef
@@ -652,7 +756,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 		int i;
 		for(i=0;i<((*len)/4);i++) v[i] = 0xdeadbeef;
 		v = (int *)(&(esc->sc_tailbuf[0]));
-		for(i=0;i<((sizeof(esc->sc_tailbuf)/4));i++) v[i] = 0xdeaffeed;
+		for(i=0;i<((sizeof(esc->sc_tailbuf)/4));i++) v[i] = 0xdeafbeef;
 	} else {
 		int *v;
 		int i;
@@ -666,8 +770,8 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 #if 0
 #ifdef DIAGNOSTIC /* @@@ this is ok sometimes. verify that we handle it ok
-									 * and then remove this check
-									 */
+		   * and then remove this check
+		   */
 	if (*len != *dmasize) {
 		panic("esp dmalen 0x%lx != size 0x%lx",*len,*dmasize);
 	}
@@ -692,6 +796,9 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	if (*dmasize <= 0) {
 		return(0);
 	}
+
+	if (*dmasize > ESP_MAX_DMASIZE)
+		*dmasize = ESP_MAX_DMASIZE;
 
 	/* Save these in case we have to abort DMA */
 	esc->sc_datain   = datain;
@@ -758,6 +865,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 			esc->sc_begin_size = 0;
 		}
 
+#if 01
 		/* Load the normal DMA map */
 		{
 			esc->sc_main      = *esc->sc_dmaaddr+slop_bgn_size;
@@ -765,6 +873,17 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 			if (esc->sc_main_size) {
 				int error;
+
+				if (!esc->sc_datain || DMA_ENDALIGNED(esc->sc_main_size + slop_end_size)) {
+					KASSERT(DMA_SCSI_ALIGNMENT == DMA_ENDALIGNMENT);
+					KASSERT(DMA_BEGINALIGNMENT == DMA_ENDALIGNMENT);
+					esc->sc_main_size += slop_end_size;
+					slop_end_size = 0;
+					if (!esc->sc_datain) {
+						esc->sc_main_size = DMA_ENDALIGN(caddr_t,esc->sc_main+esc->sc_main_size)-esc->sc_main;
+					}
+				}
+
 				error = bus_dmamap_load(esc->sc_scsi_dma.nd_dmat,
 						esc->sc_main_dmamap,
 						esc->sc_main, esc->sc_main_size,
@@ -783,6 +902,11 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 #endif
 					panic("%s: can't load main dma map. error = %d, addr=%p, size=0x%08x",
 							sc->sc_dev.dv_xname, error,esc->sc_main,esc->sc_main_size);
+				}
+				if (!esc->sc_datain) { /* patch the dma map for write overrun */
+					esc->sc_main_dmamap->dm_mapsize += ESP_DMA_OVERRUN;
+					esc->sc_main_dmamap->dm_segs[esc->sc_main_dmamap->dm_nsegs - 1].ds_len +=
+						ESP_DMA_OVERRUN;
 				}
 #if 0
 				bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_main_dmamap,
@@ -828,6 +952,73 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 #endif
 			}
 		}
+#else
+
+		esc->sc_begin = *esc->sc_dmaaddr;
+		slop_bgn_size = DMA_SCSI_ALIGNMENT-((ulong)esc->sc_begin % DMA_SCSI_ALIGNMENT);
+		if (slop_bgn_size == DMA_SCSI_ALIGNMENT) slop_bgn_size = 0;
+		slop_end_size = esc->sc_dmasize - slop_bgn_size;
+
+		if (slop_bgn_size < esc->sc_dmasize) {
+			int error;
+
+			esc->sc_tail = 0;
+			esc->sc_tail_size = 0;
+
+			esc->sc_begin_size = slop_bgn_size;
+			esc->sc_main = *esc->sc_dmaaddr+slop_bgn_size;
+			esc->sc_main_size = DMA_ENDALIGN(caddr_t,esc->sc_main+esc->sc_dmasize-slop_bgn_size)-esc->sc_main;
+
+			if (!esc->sc_datain) {
+				esc->sc_main_size += ESP_DMA_OVERRUN;
+			}
+			error = bus_dmamap_load(esc->sc_scsi_dma.nd_dmat,
+						esc->sc_main_dmamap,
+						esc->sc_main, esc->sc_main_size,
+						NULL, BUS_DMA_NOWAIT);
+			if (error) {
+				panic("%s: can't load main dma map. error = %d, addr=%p, size=0x%08x",
+				      sc->sc_dev.dv_xname, error,esc->sc_main,esc->sc_main_size);
+			}
+		} else {
+			esc->sc_begin = 0;
+			esc->sc_begin_size = 0;
+			esc->sc_main = 0;
+			esc->sc_main_size = 0;
+
+#if 0
+			esc->sc_tail      = DMA_ENDALIGN(caddr_t,esc->sc_tailbuf+slop_bgn_size)-slop_bgn_size;
+			/* If the beginning of the tail is not correctly aligned,
+			 * we have no choice but to align the start, which might then unalign the end.
+			 */
+#endif
+			esc->sc_tail      = DMA_SCSI_ALIGN(caddr_t,esc->sc_tailbuf);
+			/* So therefore, we change the tail size to be end aligned again. */
+			esc->sc_tail_size = DMA_ENDALIGN(caddr_t,esc->sc_tail+esc->sc_dmasize)-esc->sc_tail;
+
+			/* @@@ next dma overrun lossage */
+			if (!esc->sc_datain) {
+				esc->sc_tail_size += ESP_DMA_OVERRUN;
+			}
+
+			{
+				int error;
+				error = bus_dmamap_load(esc->sc_scsi_dma.nd_dmat,
+						esc->sc_tail_dmamap,
+						esc->sc_tail, esc->sc_tail_size,
+						NULL, BUS_DMA_NOWAIT);
+				if (error) {
+					panic("%s: can't load tail dma map. error = %d, addr=%p, size=0x%08x",
+							sc->sc_dev.dv_xname, error,esc->sc_tail,esc->sc_tail_size);
+				}
+			}
+		}
+#endif
+
+		DPRINTF(("%s: setup: %8p %d %8p %d %8p %d %8p %d\n", sc->sc_dev.dv_xname,
+			 *esc->sc_dmaaddr, esc->sc_dmasize, esc->sc_begin,
+			 esc->sc_begin_size, esc->sc_main, esc->sc_main_size, esc->sc_tail,
+			 esc->sc_tail_size));
 	}
 
 	return (0);
@@ -861,7 +1052,7 @@ esp_dma_store(sc)
 			sc->sc_dev.dv_xname, esc->sc_begin, esc->sc_begin_size);
 	p += sprintf(p,"%s: sc_main = %p, sc_main_size = 0x%08x\n",
 			sc->sc_dev.dv_xname, esc->sc_main, esc->sc_main_size);
-	{
+	/* if (esc->sc_main) */ {
 		int i;
 		bus_dmamap_t map = esc->sc_main_dmamap;
 		p += sprintf(p,"%s: sc_main_dmamap. mapsize = 0x%08lx, nsegs = %d\n",
@@ -873,7 +1064,7 @@ esp_dma_store(sc)
 	}
 	p += sprintf(p,"%s: sc_tail = %p, sc_tail_size = 0x%08x\n",
 			sc->sc_dev.dv_xname, esc->sc_tail, esc->sc_tail_size);
-	{
+	/* if (esc->sc_tail) */ {
 		int i;
 		bus_dmamap_t map = esc->sc_tail_dmamap;
 		p += sprintf(p,"%s: sc_tail_dmamap. mapsize = 0x%08lx, nsegs = %d\n",
@@ -899,6 +1090,18 @@ esp_dma_go(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
+/* 	int s = spldma(); */
+
+	if (esplogp != esplog) {
+		if (esplogshow) {
+			*esplogp = '\0';
+			printf ("esplog: %s\n", esplog);
+			esplogshow = 0;
+		} else {
+			DPRINTF (("X"));
+		}
+		esplogp = esplog;
+	}
 
 	DPRINTF(("%s: esp_dma_go(datain = %d)\n",
 			sc->sc_dev.dv_xname, esc->sc_datain));
@@ -919,6 +1122,7 @@ esp_dma_go(sc)
 
 	/* zero length dma transfers are boring */
 	if (esc->sc_dmasize == 0) {
+/* 		splx(s); */
 		return;
 	}
 
@@ -952,13 +1156,6 @@ esp_dma_go(sc)
 		DPRINTF(("\n"));
 	}
 
-	/* if we are a dma write cycle, copy the end slop */
-	if (esc->sc_datain == 0) {
-		memcpy(esc->sc_tail,
-				(*esc->sc_dmaaddr+esc->sc_begin_size+esc->sc_main_size),
-				(esc->sc_dmasize-(esc->sc_begin_size+esc->sc_main_size)));
-	}
-
 	if (esc->sc_main_dmamap->dm_mapsize) {
 		bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_main_dmamap,
 				0, esc->sc_main_dmamap->dm_mapsize, 
@@ -967,23 +1164,36 @@ esp_dma_go(sc)
 	}
 
 	if (esc->sc_tail_dmamap->dm_mapsize) {
+		/* if we are a dma write cycle, copy the end slop */
+		if (!esc->sc_datain) {
+			memcpy(esc->sc_tail, *esc->sc_dmaaddr+esc->sc_begin_size+esc->sc_main_size,
+			       esc->sc_dmasize-(esc->sc_begin_size+esc->sc_main_size));
+		}
 		bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap,
 				0, esc->sc_tail_dmamap->dm_mapsize, 
 				(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
 		esc->sc_tail_dmamap->dm_xfer_len = 0;
 	}
 
+	esc->sc_scsi_dma.dm_xfer_len = 0;
+	esc->sc_scsi_dma.dm_xfer_exception = 0;
 	nextdma_start(&esc->sc_scsi_dma, 
 			(esc->sc_datain ? DMACSR_SETREAD : DMACSR_SETWRITE));
 
 	if (esc->sc_datain) { 
 		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
+				ESPDCTL_16MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
 	} else {
 		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
+				ESPDCTL_16MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
 	}
 	DPRINTF(("esp dctl is 0x%02x\n",NCR_READ_REG(sc,ESP_DCTL)));
+
+	if (esc->sc_begin_size) if (ESPLOGIF) { *esplogp++ = '1'; *esplogp++ = 'A' + esc->sc_begin_size; }
+	if (esc->sc_main_size) if (ESPLOGIF) { *esplogp++ = '2'; *esplogp++ = '0' + esc->sc_main_dmamap->dm_nsegs; }
+	if (esc->sc_tail_size) if (ESPLOGIF) { *esplogp++ = '3'; *esplogp++ = 'A' + esc->sc_tail_size; }
+
+/* 	splx(s); */
 }
 
 void
@@ -993,7 +1203,9 @@ esp_dma_stop(sc)
 	struct esp_softc *esc = (struct esp_softc *)sc;
 	next_dma_print(&esc->sc_scsi_dma);
 	esp_dma_print(sc);
+#if 1
 	panic("%s: stop not yet implemented\n",sc->sc_dev.dv_xname);
+#endif
 }
 
 int
@@ -1001,12 +1213,207 @@ esp_dma_isactive(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	int r = !nextdma_finished(&esc->sc_scsi_dma);
+	int r = (esc->sc_dmaaddr != NULL);   /* !nextdma_finished(&esc->sc_scsi_dma); */
 	DPRINTF(("esp_dma_isactive = %d\n",r));
 	return(r);
 }
 
 /****************************************************************/
+
+int esp_dma_int __P((void *));
+int esp_dma_int(arg)
+	void *arg;
+{
+	void next_dma_rotate __P((struct nextdma_config *));
+	void next_dma_setup_curr_regs __P((struct nextdma_config *));
+	void next_dma_setup_cont_regs __P((struct nextdma_config *));
+
+	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
+	struct esp_softc *esc = (struct esp_softc *)sc;
+	unsigned int state;
+	unsigned int ds_len;
+	struct nextdma_config *nd = &esc->sc_scsi_dma;
+
+	if (ESPLOGIF) *esplogp++ = 'E';
+
+	state = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_CSR);
+
+#if 1
+	if (state & DMACSR_COMPLETE) if (ESPLOGIF) *esplogp++ = 'c';
+	if (state & DMACSR_ENABLE) if (ESPLOGIF) *esplogp++ = 'e';
+	if (state & DMACSR_BUSEXC) if (ESPLOGIF) *esplogp++ = 'b';
+	if (state & DMACSR_READ) if (ESPLOGIF) *esplogp++ = 'r';
+	if (state & DMACSR_SUPDATE) if (ESPLOGIF) *esplogp++ = 's';
+
+	if (ESPLOGIF) *esplogp++ = 'E';
+
+	if (0) if ((state & DMACSR_BUSEXC) && (state & DMACSR_ENABLE)) esplogshow++;
+	if (0) if ((state & DMACSR_SUPDATE)) esplogshow++;
+#endif
+
+	ds_len = nd->_nd_map->dm_segs[nd->_nd_idx].ds_len;
+
+	if ((nd->_nd_idx+1) == nd->_nd_map->dm_nsegs) {
+		if (nd->nd_completed_cb) 
+			(*nd->nd_completed_cb)(nd->_nd_map, nd->nd_cb_arg);
+	}
+	next_dma_rotate(nd);
+
+	if ((state & DMACSR_COMPLETE) && (state & DMACSR_ENABLE)) {
+#if 0
+		int l = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT) & 0x7FFFFFFF;
+		int s = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_STOP);
+#endif
+/* 		next_dma_setup_cont_regs(nd); */
+		if (nd->_nd_map_cont) {
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_START,
+						  nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr);
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_STOP,
+					  (nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr +
+					   nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_len) | 0/* x80000000 */);
+		}
+
+		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
+				  DMACSR_CLRCOMPLETE | (state & DMACSR_READ ? DMACSR_SETREAD : DMACSR_SETWRITE) |
+				  (nd->_nd_map_cont ? DMACSR_SETSUPDATE : 0));
+		
+		if (nd->dm_xfer_exception == 0) {
+			nd->dm_xfer_len += ds_len;
+		}
+
+#if 0
+		if (state & DMACSR_BUSEXC) {
+			sprintf (esplogp, "CE/BUSEXC: %08lX %08X %08X\n", 
+				 (nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr + nd->_nd_map->dm_segs[nd->_nd_idx].ds_len),
+				 l, s);
+			esplogp += strlen (esplogp);
+		}
+#endif
+	} else {
+#if 0
+		if (state & DMACSR_BUSEXC) {
+			while (bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT) !=
+			       (bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT) & 0x7FFFFFFF))
+				printf ("Y"); /* DELAY(50); */
+			state = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_CSR);
+		}
+#endif
+
+		if (!(state & DMACSR_SUPDATE)) {
+			next_dma_rotate(nd);
+		} else {
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, DMACSR_CLRCOMPLETE |
+					  DMACSR_INITBUF | DMACSR_RESET |
+					  (state & DMACSR_READ ? DMACSR_SETREAD : DMACSR_SETWRITE));
+
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT, nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr);
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT, 
+					  (nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr +
+					   nd->_nd_map->dm_segs[nd->_nd_idx].ds_len) | 0/* x80000000 */);
+			if (nd->_nd_map_cont) {
+				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_START,
+						  nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr);
+				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_STOP,
+						  (nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr +
+						   nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_len) | 0/* x80000000 */);
+			}
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, DMACSR_SETENABLE |
+					  DMACSR_CLRCOMPLETE | (state & DMACSR_READ ? DMACSR_SETREAD : DMACSR_SETWRITE) |
+					  (nd->_nd_map_cont ? DMACSR_SETSUPDATE : 0));
+#if 1
+			sprintf (esplogp, "supdate ");
+			esplogp += strlen (esplogp);
+			sprintf (esplogp, "%08X %08X %08X %08X ",
+				 bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT),
+				 bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT) & 0x7FFFFFFF,
+				 bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_START),
+				 bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_STOP) & 0x7FFFFFFF);
+			esplogp += strlen (esplogp);
+#endif
+			nd->dm_xfer_exception++; 
+			return(1);
+			/* NCR_WRITE_REG(sc, ESP_DCTL, ctl); */
+			goto restart;
+		}
+
+		if (nd->_nd_map) {
+#if 1
+			sprintf (esplogp, "%08X %08X %08X %08X ",
+				 bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT),
+				 bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT) & 0x7FFFFFFF,
+				 bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_START),
+				 bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_STOP) & 0x7FFFFFFF);
+			esplogp += strlen (esplogp);
+#endif
+
+#if 0			
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, DMACSR_CLRCOMPLETE | DMACSR_RESET);
+			
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 0);
+#endif
+#if 1
+ /* 6/2 */
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, DMACSR_CLRCOMPLETE |
+					  DMACSR_INITBUF | DMACSR_RESET |
+					  (state & DMACSR_READ ? DMACSR_SETREAD : DMACSR_SETWRITE));
+			
+			/* 			next_dma_setup_curr_regs(nd); */
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT, nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr);
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT, 
+					  (nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr +
+					   nd->_nd_map->dm_segs[nd->_nd_idx].ds_len) | 0/* x80000000 */);
+			/* 			next_dma_setup_cont_regs(nd); */
+			if (nd->_nd_map_cont) {
+				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_START,
+						  nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr);
+				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_STOP,
+						  (nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr +
+						   nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_len) | 0/* x80000000 */);
+			}
+			
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
+					  DMACSR_SETENABLE | (nd->_nd_map_cont ? DMACSR_SETSUPDATE : 0) |
+					  (state & DMACSR_READ ? DMACSR_SETREAD : DMACSR_SETWRITE));
+			/* esplogshow++; */
+			nd->dm_xfer_exception++; 
+			return(1);
+#endif
+			/* NCR_WRITE_REG(sc, ESP_DCTL, ctl); */
+			goto restart;
+		restart:
+#if 1
+			sprintf (esplogp, "restart %08lX %08lX\n",
+				 nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr, 
+				 nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr +
+				 nd->_nd_map->dm_segs[nd->_nd_idx].ds_len);
+			if (nd->_nd_map_cont) {
+				sprintf (esplogp + strlen(esplogp) - 1, " %08lX %08lX\n",
+					 nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr,
+					 nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr +
+					 nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_len);
+			}
+			esplogp += strlen (esplogp);
+#endif
+			next_dma_print(nd);
+			NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_16MHZ | ESPDCTL_INTENB);
+			printf ("ff:%02x tcm:%d tcl:%d esp_dstat:%02x state:%02x step: %02x intr:%02x state:%08X\n",
+				NCR_READ_REG(sc, NCR_FFLAG),
+				NCR_READ_REG((sc), NCR_TCM), NCR_READ_REG((sc), NCR_TCL),
+				NCR_READ_REG(sc, ESP_DSTAT),
+				NCR_READ_REG(sc, NCR_STAT), NCR_READ_REG(sc, NCR_STEP),
+				NCR_READ_REG(sc, NCR_INTR), state);
+			*esplogp = '\0';
+			printf ("esplog: %s\n", esplog);
+			panic("%s: busexc/supdate occured.  Please email this output to chris@pin.lu.",
+			      sc->sc_dev.dv_xname);
+			esplogshow++;
+		} else {
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, DMACSR_CLRCOMPLETE | DMACSR_RESET);
+			if (nd->nd_shutdown_cb) (*nd->nd_shutdown_cb)(nd->nd_cb_arg);
+		}
+	}
+	return (1);
+}
 
 /* Internal dma callback routines */
 bus_dmamap_t
@@ -1016,6 +1423,7 @@ esp_dmacb_continue(arg)
 	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
+	if (ESPLOGIF) *esplogp++ = 'x';
 	DPRINTF(("%s: dma continue\n",sc->sc_dev.dv_xname));
 
 #ifdef DIAGNOSTIC
@@ -1064,6 +1472,7 @@ esp_dmacb_completed(map, arg)
 	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
+	if (ESPLOGIF) *esplogp++ = 'X';
 	DPRINTF(("%s: dma completed\n",sc->sc_dev.dv_xname));
 
 #ifdef DIAGNOSTIC
@@ -1135,10 +1544,10 @@ esp_dmacb_completed(map, arg)
 		 */
 		if (esc->sc_datain) {
 			NCR_WRITE_REG(sc, ESP_DCTL,
-					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
+					ESPDCTL_16MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
 		} else {
 			NCR_WRITE_REG(sc, ESP_DCTL,
-					ESPDCTL_20MHZ | ESPDCTL_INTENB);
+					ESPDCTL_16MHZ | ESPDCTL_INTENB);
 		}
 		DPRINTF(("esp dctl is 0x%02x\n",NCR_READ_REG(sc,ESP_DCTL)));
 	}
@@ -1159,9 +1568,12 @@ esp_dmacb_shutdown(arg)
 {
 	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	bus_size_t xfer_len = 0;
 
+	if (ESPLOGIF) *esplogp++ = 'S';
 	DPRINTF(("%s: dma shutdown\n",sc->sc_dev.dv_xname));
+
+	if (esc->sc_loaded == 0)
+		return;
 
 #if 0
 	{
@@ -1170,10 +1582,10 @@ esp_dmacb_shutdown(arg)
 		 */
 		if (esc->sc_datain) {
 			NCR_WRITE_REG(sc, ESP_DCTL,
-					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
+					ESPDCTL_16MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
 		} else {
 			NCR_WRITE_REG(sc, ESP_DCTL,
-					ESPDCTL_20MHZ | ESPDCTL_INTENB);
+					ESPDCTL_16MHZ | ESPDCTL_INTENB);
 		}
 		DPRINTF(("esp dctl is 0x%02x\n",NCR_READ_REG(sc,ESP_DCTL)));
 	}
@@ -1192,34 +1604,36 @@ esp_dmacb_shutdown(arg)
 	}
 #endif
 
-	xfer_len += esc->sc_begin_size;
-
 	if (esc->sc_main_dmamap->dm_mapsize) {
-		xfer_len += esc->sc_main_dmamap->dm_xfer_len;
+		if (!esc->sc_datain) { /* unpatch the dma map for write overrun */
+			esc->sc_main_dmamap->dm_mapsize -= ESP_DMA_OVERRUN;
+			esc->sc_main_dmamap->dm_segs[esc->sc_main_dmamap->dm_nsegs - 1].ds_len -=
+				ESP_DMA_OVERRUN;
+		}
 		bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_main_dmamap,
 			0, esc->sc_main_dmamap->dm_mapsize,
 				(esc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
 		bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_main_dmamap);
+		if (ESPLOGIF) {
+			sprintf (esplogp, "m%ld", esc->sc_main_dmamap->dm_xfer_len);
+			esplogp += strlen (esplogp);
+		}
 	}
 
 	if (esc->sc_tail_dmamap->dm_mapsize) {
-		xfer_len += esc->sc_tail_dmamap->dm_xfer_len;
 		bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap,
 			0, esc->sc_tail_dmamap->dm_mapsize,
 				(esc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
 		bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap);
-	}
-
-	/* truncate in case tail overran */
-	if (xfer_len > esc->sc_dmasize) {
-		xfer_len = esc->sc_dmasize;
-	}
-
-	/* copy the tail dma buffer data for read transfers */
-	if (esc->sc_datain == 1) {
-		memcpy((*esc->sc_dmaaddr+esc->sc_begin_size+esc->sc_main_size),
-				esc->sc_tail,
-				(esc->sc_dmasize-(esc->sc_begin_size+esc->sc_main_size)));
+		/* copy the tail dma buffer data for read transfers */
+		if (esc->sc_datain) {
+			memcpy(*esc->sc_dmaaddr+esc->sc_begin_size+esc->sc_main_size,
+			       esc->sc_tail, esc->sc_dmasize-(esc->sc_begin_size+esc->sc_main_size));
+		}
+		if (ESPLOGIF) {
+			sprintf (esplogp, "t%ld", esc->sc_tail_dmamap->dm_xfer_len);
+			esplogp += strlen (esplogp);
+		}
 	}
 
 #ifdef ESP_DEBUG
@@ -1237,22 +1651,15 @@ esp_dmacb_shutdown(arg)
 	}
 #endif
 
-#if 0
-	KASSERT(xfer_len == esc->sc_dmasize);
-#endif
-
-	*(esc->sc_dmaaddr) += xfer_len;
-	*(esc->sc_dmalen)  -= xfer_len;
-
 	esc->sc_main = 0;
 	esc->sc_main_size = 0;
 	esc->sc_tail = 0;
 	esc->sc_tail_size = 0;
 
 	esc->sc_datain = -1;
-	esc->sc_dmaaddr = 0;
-	esc->sc_dmalen  = 0;
-	esc->sc_dmasize = 0;
+/* 	esc->sc_dmaaddr = 0; */
+/* 	esc->sc_dmalen  = 0; */
+/* 	esc->sc_dmasize = 0; */
 
 	esc->sc_loaded = 0;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.11.2.6 2002/06/20 03:38:43 nathanw Exp $
+#	$NetBSD: JORNADA720,v 1.11.2.7 2002/08/01 02:41:43 nathanw Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.11.2.6 $"
+#ident 		"GENERIC-$Revision: 1.11.2.7 $"
 
 # estimated number of users
 maxusers	32
@@ -94,7 +94,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
-options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 #options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
@@ -168,6 +168,30 @@ wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 #com*	at mhzc?
 #sm*	at mhzc?
 
+# MII/PHY support
+acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
+amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
+bmtphy*	at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
+brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
+dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
+exphy*	at mii? phy ?			# 3Com internal PHYs
+glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
+pnaphy*	at mii? phy ?			# generic HomePNA PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
+
 # RTC device via IIC bus
 #rtc*	at iic? addr 0xa0
 
@@ -190,7 +214,12 @@ wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=2
+# see arch/hpcarm/dev/j720kbdmap.c for implemented layouts
+#options	J720KBD_LAYOUT=KB_FR
 options 	FONT_VT220L8x10
+# The X server requires theses two options
+options         WSDISPLAY_COMPAT_USL
+options         WSDISPLAY_COMPAT_RAWKBD
 
 # physical console
 sed0		at saip?
@@ -198,6 +227,7 @@ hpcfb*		at sed?
 wsdisplay*	at hpcfb?
 j720ssp0	at saip?	addr 0x80070000 size 0x100
 wskbd*		at j720ssp?	mux 1
+wsmouse*	at j720ssp?	mux 1
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter

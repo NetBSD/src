@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19.4.4 2002/06/20 03:41:27 nathanw Exp $ */
+/*	$NetBSD: conf.c,v 1.19.4.5 2002/08/01 02:43:46 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -285,7 +285,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NCLCD,cdtty),	/* 124: Cirrus-Logic CD18xx */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 125 clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 126: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 126: system call tracing */
 #else
 	cdev_notdef(),			/* 126: system call tracing */
 #endif

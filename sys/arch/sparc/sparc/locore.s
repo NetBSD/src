@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.10 2002/06/24 22:07:36 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.11 2002/08/01 02:43:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -248,6 +248,10 @@ _mapme:
 #endif
 #endif
 
+#if !defined(SUN4D)
+sun4d_notsup:
+	.asciz	"cr .( NetBSD/sparc: this kernel does not support the sun4d) cr"
+#endif
 #if !defined(SUN4M)
 sun4m_notsup:
 	.asciz	"cr .( NetBSD/sparc: this kernel does not support the sun4m) cr"
@@ -3495,9 +3499,10 @@ dostart:
 	be	is_sun4
 	 nop
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4M) || defined(SUN4D)
 	/*
 	 * Be prepared to get OF client entry in either %o0 or %o3.
+	 * XXX Will this ever trip on sun4d?  Let's hope not!
 	 */
 	cmp	%o0, 0
 	be	is_openfirm
@@ -3513,7 +3518,7 @@ dostart:
 	 nop				! }
 
 	/*
-	 * are we on a sun4c or a sun4m?
+	 * are we on a sun4c or a sun4m or a sun4d?
 	 */
 	ld	[%g7 + PV_NODEOPS], %o4	! node = pv->pv_nodeops->no_nextnode(0)
 	ld	[%o4 + NO_NEXTNODE], %o4
@@ -3535,9 +3540,15 @@ dostart:
 	cmp	%o0, 'm'
 	be	is_sun4m
 	 nop
-#endif /* SUN4C || SUN4M */
+	cmp	%o0, 'd'
+	be	is_sun4d
+	 nop
+#endif /* SUN4C || SUN4M || SUN4D */
 
-	! ``on a sun4d?!  hell no!''
+	/*
+	 * Don't know what type of machine this is; just halt back
+	 * out to the PROM.
+	 */
 	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
@@ -3558,6 +3569,22 @@ is_sun4m:
 	ld	[%g7 + PV_EVAL], %o1
 	call	%o1			! print a message saying that the
 	 nop				! sun4m architecture is not supported
+	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
+	call	%o1
+	 nop
+	/*NOTREACHED*/
+#endif
+is_sun4d:
+#if defined(SUN4D)
+	set	trapbase_sun4m, %g6	/* XXXJRT trapbase_sun4d */
+	mov	SUN4CM_PGSHIFT, %g5
+	b	start_havetype
+	 mov	CPU_SUN4D, %g4
+#else
+	set	sun4d_notsup-KERNBASE, %o0
+	ld	[%g7 + PV_EVAL], %o1
+	call	%o1			! print a message saying that the
+	 nop				! sun4d architecture is not supported
 	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
@@ -3700,10 +3727,14 @@ no_3mmu:
 2:
 #endif /* SUN4 */
 
-#if defined(SUN4M)
-	cmp	%g4, CPU_SUN4M		! skip for sun4m!
-	bne	3f
+#if defined(SUN4M) || defined(SUN4D)
+	cmp	%g4, CPU_SUN4M
+	beq	3f
+	 nop
+	cmp	%g4, CPU_SUN4D
+	bne	4f
 
+3:
 	/*
 	 * The OBP guarantees us a 16MB mapping using a level 1 PTE at
 	 * the start of the memory bank in which we were loaded. All we
@@ -3771,8 +3802,8 @@ remap_notvik:
 	sta	%l4, [%o1] ASI_BYPASS
 	!b,a	startmap_done
 
-3:
-#endif /* SUN4M */
+4:
+#endif /* SUN4M || SUN4D */
 	! botch! We should blow up.
 
 startmap_done:
@@ -3875,7 +3906,7 @@ noplab:	 nop
 1:
 #endif
 
-#if ((defined(SUN4) || defined(SUN4C)) && defined(SUN4M))
+#if (defined(SUN4) || defined(SUN4C)) && (defined(SUN4M) || defined(SUN4D))
 
 	/*
 	 * Patch instructions at specified labels that start
@@ -3891,10 +3922,14 @@ Lgandul:	nop
 	ld	[%o0 + %lo(Lgandul)], %l0	! %l0 = NOP
 
 	cmp	%g4, CPU_SUN4M
+	beq,a	2f
+	 nop
+
+	cmp	%g4, CPU_SUN4D
 	bne,a	1f
 	 nop
 
-	! this should be automated!
+2:	! this should be automated!
 	MUNGE(NOP_ON_4M_1)
 	MUNGE(NOP_ON_4M_2)
 	MUNGE(NOP_ON_4M_3)

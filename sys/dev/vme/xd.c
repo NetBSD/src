@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.35.2.5 2002/02/28 04:14:37 nathanw Exp $	*/
+/*	$NetBSD: xd.c,v 1.35.2.6 2002/08/01 02:46:13 nathanw Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.35.2.5 2002/02/28 04:14:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.35.2.6 2002/08/01 02:46:13 nathanw Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -619,7 +619,7 @@ xdcattach(parent, self, aux)
 
 	/* init queue of waiting bufs */
 
-	BUFQ_INIT(&xdc->sc_wq);
+	bufq_alloc(&xdc->sc_wq, BUFQ_FCFS);
 	callout_init(&xdc->sc_tick_ch);
 
 	/*
@@ -1286,7 +1286,7 @@ xdstrategy(bp)
 
 	/* first, give jobs in front of us a chance */
 	parent = xd->parent;
-	while (parent->nfree > 0 && BUFQ_FIRST(&parent->sc_wq) != NULL)
+	while (parent->nfree > 0 && BUFQ_PEEK(&parent->sc_wq) != NULL)
 		if (xdc_startbuf(parent, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1295,7 +1295,7 @@ xdstrategy(bp)
 	 */
 
 	if (parent->nfree == 0) {
-		BUFQ_INSERT_TAIL(&parent->sc_wq, bp);
+		BUFQ_PUT(&parent->sc_wq, bp);
 		splx(s);
 		return;
 	}
@@ -1347,7 +1347,7 @@ xdcintr(v)
 
 	/* fill up any remaining iorq's with queue'd buffers */
 
-	while (xdcsc->nfree > 0 && BUFQ_FIRST(&xdcsc->sc_wq) != NULL)
+	while (xdcsc->nfree > 0 && BUFQ_PEEK(&xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1587,10 +1587,9 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	/* get buf */
 
 	if (bp == NULL) {
-		bp = BUFQ_FIRST(&xdcsc->sc_wq);
+		bp = BUFQ_GET(&xdcsc->sc_wq);
 		if (bp == NULL)
 			panic("xdc_startbuf bp");
-		BUFQ_REMOVE(&xdcsc->sc_wq, bp);
 		xdsc = xdcsc->sc_drives[DISKUNIT(bp->b_dev)];
 	}
 	partno = DISKPART(bp->b_dev);
@@ -1618,7 +1617,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 		printf("%s: warning: cannot load DMA map\n",
 			xdcsc->sc_dev.dv_xname);
 		XDC_FREE(xdcsc, rqno);
-		BUFQ_INSERT_TAIL(&xdcsc->sc_wq, bp);
+		BUFQ_PUT(&xdcsc->sc_wq, bp);
 		return (XD_ERR_FAIL);	/* XXX: need some sort of
 					 * call-back scheme here? */
 	}
@@ -1824,7 +1823,7 @@ xdc_piodriver(xdcsc, iorqno, freeone)
 	/* now that we've drained everything, start up any bufs that have
 	 * queued */
 
-	while (xdcsc->nfree > 0 && BUFQ_FIRST(&xdcsc->sc_wq) != NULL)
+	while (xdcsc->nfree > 0 && BUFQ_PEEK(&xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 

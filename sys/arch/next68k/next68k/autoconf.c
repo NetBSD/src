@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 1999/09/17 20:04:44 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.20.1 2002/08/01 02:42:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,12 +66,17 @@
 #include <machine/pte.h>
 
 #include <next68k/next68k/isr.h>
+#include <next68k/next68k/nextrom.h>
 
 struct device *booted_device;	/* boot device */
 
 void mainbus_attach __P((struct device *, struct device *, void *));
 int  mainbus_match __P((struct device *, struct cfdata *, void *));
 int  mainbus_print __P((void *, const char *));
+
+static struct device *getdevunit __P((char *, int));
+static int devidentparse __P((const char *, int *, int *, int *));
+static int atoi __P((const char *));
 
 struct mainbus_softc {
 	struct device sc_dev;
@@ -92,6 +97,16 @@ static	char *mainbusdevs[] = {
         "nextdisplay",
 	NULL
 };
+
+struct device_equiv {
+	char *alias;
+	char *real;
+};
+static struct device_equiv device_equiv[] = {
+	{ "en", "xe" },
+	{ "tp", "xe" },
+};
+static int ndevice_equivs = (sizeof(device_equiv)/sizeof(device_equiv[0]));
 
 int
 mainbus_match(parent, cf, args)
@@ -162,18 +177,23 @@ cpu_configure()
 void
 cpu_rootconf()
 {
+	int count, lun, part;
+	
+	count = lun = part = 0;
 
+	devidentparse (rom_boot_info, &count, &lun, &part);
+	booted_device = getdevunit (rom_boot_dev, count);
+	
 	printf("boot device: %s\n",
 		(booted_device) ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, 0);
+	setroot(booted_device, part);
 }
 
-#if 0 /* @@@ Does anything use this? Is it a required interface? */
 /*
  * find a device matching "name" and unit number
  */
-struct device *
+static struct device *
 getdevunit(name, unit)
 	char *name;
 	int unit;
@@ -181,6 +201,11 @@ getdevunit(name, unit)
 	struct device *dev = alldevs.tqh_first;
 	char num[10], fullname[16];
 	int lunit;
+	int i;
+
+	for (i = 0; i < ndevice_equivs; i++)
+		if (device_equiv->alias && strcmp (name, device_equiv->alias) == 0)
+			name = device_equiv->real;
 
 	/* compute length of name and decimal expansion of unit number */
 	sprintf(num, "%d", unit);
@@ -198,4 +223,65 @@ getdevunit(name, unit)
 	return dev;
 }
 
-#endif
+/*
+ * Parse a device ident.
+ *
+ * Format:
+ *   (count, lun, part)
+ */
+static int
+devidentparse(spec, count, lun, part)
+	const char *spec;
+	int *count; 
+	int *lun;
+	int *part;
+{
+	int i;
+	const char *args[3];
+
+	if (*spec == '(') {
+		/* tokenize device ident */
+		args[0] = ++spec;
+		for (i = 1; *spec && *spec != ')' && i<3; spec++) {
+			if (*spec == ',')
+				args[i++] = ++spec;
+		}
+		if (*spec != ')')
+			goto baddev;
+	
+		switch(i) {
+		case 3:
+			*count  = atoi(args[0]);
+			*lun  = atoi(args[1]);
+			*part  = atoi(args[2]);
+			break;
+		case 2:
+			*lun  = atoi(args[0]);
+			*part  = atoi(args[1]);
+			break;
+		case 1:
+			*part  = atoi(args[0]);
+			break;
+		case 0:
+			break;
+		}
+	}
+	else
+		goto baddev;
+    
+	return 0;
+    
+ baddev:
+	return ENXIO;
+}
+
+static int
+atoi(s)
+	const char *s;
+{
+	int val = 0;
+	
+	while(isdigit(*s))
+		val = val * 10 + (*s++ - '0');
+	return val;
+}

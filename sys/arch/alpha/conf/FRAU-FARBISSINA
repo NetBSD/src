@@ -1,4 +1,4 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.9.2.5 2002/06/20 03:37:34 nathanw Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.9.2.6 2002/08/01 02:41:01 nathanw Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
@@ -7,7 +7,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.9.2.5 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.9.2.6 $"
 
 maxusers 64
 
@@ -180,9 +180,9 @@ pci*	at	mcpcia?
 # PCI devices
 #adv*	at	pci? dev ? function ?		# AdvanSys SCSI
 adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
-#options 	ADW_WDTR_DISABLE		# 	disable WDTR
-#options 	ADW_SDTR_DISABLE		# 	disable SDTR
-#options 	ADW_TAGQ_DISABLE		# 	disable Tag Queuing
+#options 	SCSI_ADW_WDTR_DISABLE		# 	disable WDTR
+#options 	SCSI_ADW_SDTR_DISABLE		# 	disable SDTR
+#options 	SCSI_ADW_TAGQ_DISABLE		# 	disable Tag Queuing
 #ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 #bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 #cac*	at	pci? dev ? function ?		# Compaq array controller (untested)

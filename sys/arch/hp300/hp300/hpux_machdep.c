@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.26.8.6 2002/07/12 01:39:28 nathanw Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.26.8.7 2002/08/01 02:41:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.26.8.6 2002/07/12 01:39:28 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.26.8.7 2002/08/01 02:41:41 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,8 +419,7 @@ int hpuxsigpid = 0;
  * Send an interrupt to process.
  */
 void
-hpux_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+hpux_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -431,6 +430,7 @@ hpux_sendsig(catcher, sig, mask, code)
 	struct frame *frame;
 	short ft;
 	int onstack, fsize;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	frame = (struct frame *)l->l_md.md_regs;
 	ft = frame->f_format;

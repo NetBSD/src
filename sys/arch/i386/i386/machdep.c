@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.23 2002/07/19 22:18:25 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.24 2002/08/01 02:42:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.23 2002/07/19 22:18:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.24 2002/08/01 02:42:04 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1968,17 +1968,18 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * specified pc, psl.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_regs;
 
@@ -1996,10 +1997,25 @@ sendsig(catcher, sig, mask, code)
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		frame.sf_ra = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
+
 	frame.sf_signum = sig;
 	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
 
 	/* Save register context. */
 #ifdef VM86
@@ -2059,13 +2075,16 @@ sendsig(catcher, sig, mask, code)
 	}
 
 	/*
-	 * Build context to run handler in.
+	 * Build context to run handler in.  We invoke the handler
+	 * directly, only returning via the trampoline.  Note the
+	 * trampoline version numbers are coordinated with machine-
+	 * dependent code in libc.
 	 */
 	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
+	tf->tf_eip = (int)catcher;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
@@ -2235,12 +2254,10 @@ haltsys:
 	doshutdownhooks();
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-#if 0
 #if NACPI > 0
 		delay(500000);
 		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 		printf("WARNING: powerdown failed!\n");
-#endif
 #endif
 #if NAPM > 0 && !defined(APM_NO_POWEROFF)
 		/* turn off, if we can.  But try to turn disk off and
@@ -2729,7 +2746,7 @@ add_mem_cluster(seg_start, seg_end, type)
 
 void
 init386(first_avail)
-	vaddr_t first_avail;
+	paddr_t first_avail;
 {
 	extern void consinit __P((void));
 	extern struct extent *iomem_ex;

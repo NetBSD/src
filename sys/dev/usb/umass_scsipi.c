@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.4.2.2 2002/01/08 00:32:14 nathanw Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.4.2.3 2002/08/01 02:46:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.4.2.2 2002/01/08 00:32:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.4.2.3 2002/08/01 02:46:02 nathanw Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -201,7 +201,7 @@ umass_scsipi_setup(struct umass_softc *sc)
 
 	return (scbus);
 }
-	
+
 Static int
 scsipiprint(void *aux, const char *pnp)
 {
@@ -330,7 +330,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 						  xs->datalen, dir,
 						  xs->timeout, 0, xs);
 			sc->sc_xfer_flags = 0;
-			DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: done err=%d\n", 
+			DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: done err=%d\n",
 					      scbus->sc_sync_status));
 			switch (scbus->sc_sync_status) {
 			case USBD_NORMAL_COMPLETION:
@@ -519,7 +519,7 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	splx(s);
 }
 
-/* 
+/*
  * Finalise a completed autosense operation
  */
 Static void
@@ -593,7 +593,7 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 	if (periph == NULL) {
 		printf("%s: can't allocate link for drive %d\n",
 		       atapi->sc_dev.dv_xname, target);
-		return;       
+		return;
 	}
 
 	DIF(UDMASS_UPPER, periph->periph_dbflags |= 1); /* XXX 1 */

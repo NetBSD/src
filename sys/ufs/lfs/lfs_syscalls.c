@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.56.2.9 2002/07/12 01:40:41 nathanw Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.56.2.10 2002/08/01 02:47:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.56.2.9 2002/07/12 01:40:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.56.2.10 2002/08/01 02:47:05 nathanw Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -261,6 +261,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 #endif /* CHECK_COPYIN */
 	int numlocked = 0, numrefed = 0;
 	ino_t maxino;
+	size_t obsize;
 
 	if ((mntp = vfs_getvfs(fsidp)) == NULL)
 		return (ENOENT);
@@ -449,34 +450,33 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				continue;
 			}
 		}
+
 		/*
-		 * If we got to here, then we are keeping the block.  If
+		 * Check block sizes.  The blocks being cleaned come from
+		 * disk, so they should have the same size as their on-disk
+		 * counterparts.
+		 */
+		obsize = blksize(fs, ip, blkp->bi_lbn);
+		/* Check for fragment size change */
+		if (blkp->bi_lbn >= 0 && blkp->bi_lbn < NDADDR) {
+			obsize = ip->i_lfs_fragsize[blkp->bi_lbn];
+		}
+		if (obsize != blkp->bi_size) {
+			printf("lfs_markv: ino %d lbn %d wrong size (%ld != %d), try again\n",
+				blkp->bi_inode, blkp->bi_lbn,
+				(long) obsize, blkp->bi_size);
+			do_again++;
+			continue;
+		}
+
+		/*
+		 * If we get to here, then we are keeping the block.  If
 		 * it is an indirect block, we want to actually put it
 		 * in the buffer cache so that it can be updated in the
 		 * finish_meta section.  If it's not, we need to
 		 * allocate a fake buffer so that writeseg can perform
 		 * the copyin and write the buffer.
 		 */
-		/*
-		 * XXX - if the block we are reading has been *extended* since
-		 * it was written to disk, then we risk throwing away
-		 * the extension in bread()/getblk().  Check the size
-		 * here.
-		 */
-		if (blkp->bi_size < fs->lfs_bsize) {
-			s = splbio();
-			bp = incore(vp, blkp->bi_lbn);
-			if (bp && bp->b_bcount > blkp->bi_size) {
-				splx(s);
-				printf("lfs_markv: ino %d lbn %d fragment size changed (%ld > %d), try again\n",
-					blkp->bi_inode, blkp->bi_lbn,
-					bp->b_bcount, blkp->bi_size);
-				do_again++;
-				continue;
-				/* blkp->bi_size = bp->b_bcount; */
-			}
-			splx(s);
-		}
 		if (ip->i_number != LFS_IFILE_INUM && blkp->bi_lbn >= 0) {
 			/* Data Block */
 			bp = lfs_fakebuf(fs, vp, blkp->bi_lbn,
@@ -724,14 +724,6 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	lastino = LFS_UNUSED_INUM;
 	for (blkp = blkiov; cnt--; ++blkp)
 	{
-#ifdef DEBUG
-		if (dtosn(fs, fs->lfs_curseg) == dtosn(fs, blkp->bi_daddr)) {
-			printf("lfs_bmapv: attempt to clean current segment? (#%d)\n",
-			       dtosn(fs, fs->lfs_curseg));
-			vfs_unbusy(mntp);
-			return (EBUSY);
-		}
-#endif /* DEBUG */
 		/*
 		 * Get the IFILE entry (only once) and see if the file still
 		 * exists.
@@ -1098,7 +1090,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 	struct vnode *vp;
 	struct ufsmount *ump;
 	dev_t dev;
-	int error, retries;
+	int i, error, retries;
 	struct buf *bp;
 	struct lfs *fs;
 	
@@ -1210,6 +1202,12 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 	}
 	ip->i_ffs_effnlink = ip->i_ffs_nlink;
 	ip->i_lfs_effnblks = ip->i_ffs_blocks;
+	ip->i_lfs_osize = ip->i_ffs_size;
+
+	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
+	for (i = 0; i < NDADDR; i++)
+		if (ip->i_ffs_db[i] != 0)
+			ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.  In all

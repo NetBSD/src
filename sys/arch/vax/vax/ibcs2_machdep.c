@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.1.14.2 2002/04/17 00:04:41 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.1.14.3 2002/08/01 02:43:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -74,13 +74,12 @@ ibcs2_setregs(l, epp, stack)
  * specified pc, psl.
  */
 void
-ibcs2_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+ibcs2_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
-	sendsig(catcher, native_to_ibcs2_signo[sig], mask, code);
+	sendsig(native_to_ibcs2_signo[sig], mask, code);
 }
 
 int

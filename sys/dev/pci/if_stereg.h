@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stereg.h,v 1.1.4.3 2002/06/20 03:45:28 nathanw Exp $	*/
+/*	$NetBSD: if_stereg.h,v 1.1.4.4 2002/08/01 02:45:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ struct ste_rfd {
 
 #define	STE_RxDMAListPtr	0x10	/* 32-bit */
 
-#define	STE_RxDMABrustThresh	0x14	/* 8-bit */
+#define	STE_RxDMABurstThresh	0x14	/* 8-bit */
 
 #define	STE_RxDMAUrgentThresh	0x15	/* 8-bit */
 

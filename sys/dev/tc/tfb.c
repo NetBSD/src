@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.29.2.4 2002/04/01 07:47:27 nathanw Exp $ */
+/* $NetBSD: tfb.c,v 1.29.2.5 2002/08/01 02:45:51 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.29.2.4 2002/04/01 07:47:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.29.2.5 2002/08/01 02:45:51 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,7 +514,7 @@ tfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = ri; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	return (0);
@@ -555,7 +555,7 @@ tfb_cnattach(addr)
 	ri = &tfb_console_ri;
 	ri->ri_hw = (void *)addr;
 	tfb_common_init(ri);
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&tfb_stdscreen, ri, 0, 0, defattr);
 	tfb_consaddr = addr;
 	return (0);

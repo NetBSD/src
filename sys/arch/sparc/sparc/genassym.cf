@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.32.8.6 2002/06/24 22:07:35 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.32.8.7 2002/08/01 02:43:27 nathanw Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ define	PG_VSHIFT	PG_VSHIFT
 define	PG_PROTSHIFT	PG_PROTSHIFT
 define	PG_PROTUREAD	PG_PROTUREAD
 define	PG_PROTUWRITE	PG_PROTUWRITE
-if defined(SUN4M)
+
 define	SRMMU_TETYPE	SRMMU_TETYPE
 define	SRMMU_TEPTE	SRMMU_TEPTE
 define	SRMMU_PROT_MASK	SRMMU_PROT_MASK
@@ -170,7 +170,6 @@ define	PPROT_R_RW	PPROT_R_RW
 define	PPROT_RX_RX	PPROT_RX_RX
 define	PPROT_RWX_RWX	PPROT_RWX_RWX
 define	PPROT_WRITE	PPROT_WRITE
-endif
 
 # FPU state
 define	FS_REGS		offsetof(struct fpstate, fs_regs)

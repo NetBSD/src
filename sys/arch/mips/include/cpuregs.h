@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.47.4.4 2002/06/20 03:39:45 nathanw Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.47.4.5 2002/08/01 02:42:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -557,10 +557,6 @@
  */
 #define	MIPS_OPCODE_SHIFT	26
 #define	MIPS_OPCODE_C1		0x11
-#define	MIPS_OPCODE_LWC1	0x31
-#define	MIPS_OPCODE_LDC1	0x35
-#define	MIPS_OPCODE_SWC1	0x39
-#define	MIPS_OPCODE_SDC1	0x3d
 
 
 /*
@@ -724,14 +720,21 @@
  */
 #define	MIPS_4Kc	0x80	/* MIPS 4Kc			ISA 32  */
 #define	MIPS_5Kc	0x81	/* MIPS 5Kc			ISA 64  */
+#define	MIPS_20Kc	0x82	/* MIPS 20Kc			ISA 64  */
 #define	MIPS_4KEc	0x84	/* MIPS 4KEc			ISA 32  */
 #define	MIPS_4KSc	0x86	/* MIPS 4KSc			ISA 32  */
 
 /*
- * CPU processor revision IDs for company ID == 3 (Alchemy)
+ * Alchemy (company ID 3) use the processor ID field to donote the CPU core
+ * revision and the company options field do donate the SOC chip type.
  */
-#define	MIPS_AU1000_R1	0x01	/* Alchemy Au1000 (Rev 1)	ISA 32  */
-#define	MIPS_AU1000_R2	0x02	/* Alchemy Au1000 (Rev 2)	ISA 32  */
+/* CPU processor revision IDs */
+#define	MIPS_AU_REV1	0x01	/* Alchemy Au1000 (Rev 1)	ISA 32  */
+#define	MIPS_AU_REV2	0x02	/* Alchemy Au1000 (Rev 2)	ISA 32  */
+/* CPU company options IDs */
+#define	MIPS_AU1000	0x00
+#define	MIPS_AU1500	0x01
+#define	MIPS_AU1100	0x02
 
 /*
  * CPU processor revision IDs for company ID == 4 (SiByte)

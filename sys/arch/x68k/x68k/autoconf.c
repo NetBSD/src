@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26.8.2 2002/06/20 03:42:36 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26.8.3 2002/08/01 02:44:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,6 +31,7 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "scsibus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,6 +238,7 @@ static struct device *
 scsi_find(bdev)
 	dev_t bdev;	/* encoded boot device */
 {
+#if defined(NSCSIBUS) && NSCSIBUS > 0
 	int ifid;
 	char tname[16];
 	struct device *scsibus;
@@ -279,6 +281,9 @@ scsi_find(bdev)
 	    B_X68K_SCSI_ID(bdev), B_X68K_SCSI_LUN(bdev));
 
 	return periph ? periph->periph_dev : NULL;
+#else
+	return NULL;
+#endif /* NSCSIBUS > 0 */
 }
 
 /*
