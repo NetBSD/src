@@ -1,10 +1,31 @@
-$NetBSD: am-utils.info-5,v 1.1.1.4 1998/08/08 22:05:41 christos Exp $
+$NetBSD: am-utils.info-5,v 1.1.1.5 1999/02/01 18:47:04 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
 START-INFO-DIR-ENTRY
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
 END-INFO-DIR-ENTRY
+
+
+File: am-utils.info,  Node: Single-Host Mail Spool Directory,  Next: Centralized Mail Spool Directory,  Prev: Background to Mail Delivery,  Up: Background to Mail Delivery
+
+Single-Host Mail Spool Directory
+--------------------------------
+
+   The most common method for mail delivery is for mail to be appended
+to a mailbox file in a standard spool directory on the designated "mail
+home" machine of the user. The greatest advantage of this method is
+that it is the default method most vendors provide with their systems,
+thus very little (if any) configuration is required on the SA's part.
+All they need to set up are mail aliases directing mail to the host on
+which the user's mailbox file is assigned.  (Otherwise, mail is
+delivered locally, and users find mailboxes on many machines.)
+
+   As users become more sophisticated, and aided by windowing systems,
+they find themselves logging in on multiple hosts at once, performing
+several tasks concurrently.  They ask to be able to read their mail on
+any host on the network, not just the one designated as their "mail
+home".
 
 
 File: am-utils.info,  Node: Centralized Mail Spool Directory,  Next: Distributed Mail Spool Service,  Prev: Single-Host Mail Spool Directory,  Up: Background to Mail Delivery
@@ -363,8 +384,8 @@ Hlfsd Files
      if it is unable to verify the that user's home directory is
      accessible.
 
-   For discussion on other files used by Hlfsd, see *Note lostaltmail::
-and *Note lostaltmail.conf-sample::.
+   For discussion on other files used by Hlfsd, see *Note
+lostaltmail::, and *Note lostaltmail.conf-sample::.
 
 
 File: am-utils.info,  Node: Assorted Tools,  Next: Examples,  Prev: Hlfsd,  Up: Top
@@ -451,7 +472,7 @@ ctl-amd restart
      Stop the running Amd (if any), safely wait for it to terminate, and
      then start a new process -- only if the previous one died cleanly.
 
-   *Note Run-time Administration:: for more details.
+   *Note Run-time Administration::, for more details.
 
 
 File: am-utils.info,  Node: ctl-hlfsd,  Next: expn,  Prev: ctl-amd,  Up: Assorted Tools
@@ -473,7 +494,7 @@ ctl-hlfsd restart
      terminate, and then start a new process -- only if the previous one
      died cleanly.
 
-   *Note Hlfsd:: for more details.
+   *Note Hlfsd::, for more details.
 
 
 File: am-utils.info,  Node: expn,  Next: fix-amd-map,  Prev: ctl-hlfsd,  Up: Assorted Tools
@@ -553,7 +574,7 @@ does.
      lostaltmail
 
    This script needs a configuration file `lostaltmail.conf' set up
-with the right parameters to properly work.  *Note Hlfsd:: for more
+with the right parameters to properly work.  *Note Hlfsd::, for more
 details.
 
 
@@ -1130,7 +1151,7 @@ it corresponds exactly to the message produced by Amd.  Words in
 indicate that the value of the appropriate variable is output.
 
    Log messages are either sent directly to a file, or logged via the
-syslog(3) mechanism.  *Note log_file Parameter:: In either case,
+syslog(3) mechanism.  *Note log_file Parameter::.  In either case,
 entries in the file are of the form:
      date-string  hostname amd[pid]  message
 

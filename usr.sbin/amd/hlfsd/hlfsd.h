@@ -1,7 +1,7 @@
-/*	$NetBSD: hlfsd.h,v 1.1.1.4 1998/08/08 22:05:34 christos Exp $	*/
+/*	$NetBSD: hlfsd.h,v 1.1.1.5 1999/02/01 18:46:33 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: hlfs.h,v 1.9 1993/09/13 15:11:00 ezk Exp 
+ * Id: hlfsd.h,v 1.2 1999/01/10 21:54:32 ezk Exp 
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -54,7 +54,7 @@
  * MACROS AND CONSTANTS:
  */
 
-#define HLFSD_VERSION	"hlfsd 1.1 (March 4, 1997-1998)"
+#define HLFSD_VERSION	"hlfsd 1.1 (March 4, 1997-1999)"
 #define PERS_SPOOLMODE	0755
 #define OPEN_SPOOLMODE	01777
 #define DOTSTRING	"."
@@ -112,7 +112,7 @@
   (fatal (strcat (strnsave ((str), strlen ((str)) + sizeof (ERRM) - 1), ERRM)))
 
 /*
- * TYPDEFS:
+ * TYPEDEFS:
  */
 typedef struct uid2home_t uid2home_t;
 typedef struct username2uid_t username2uid_t;

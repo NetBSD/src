@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_host.c,v 1.1.1.1 1998/08/08 22:05:27 christos Exp $	*/
+/*	$NetBSD: amfs_host.c,v 1.1.1.2 1999/02/01 18:45:59 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amfs_host.c,v 5.2.2.2 1992/05/31 16:36:08 jsp Exp 
+ * Id: amfs_host.c,v 1.3 1999/01/13 23:30:57 ezk Exp 
  *
  */
 
@@ -226,7 +226,7 @@ fetch_fhandle(CLIENT * client, char *dir, am_nfs_handle_t *fhp, u_long nfs_versi
    * get the filehandle.  Use NFS version specific call.
    */
 
-  plog(XLOG_INFO, "fetch_fhandle: NFS version %d", nfs_version);
+  plog(XLOG_INFO, "fetch_fhandle: NFS version %d", (int) nfs_version);
 #ifdef HAVE_FS_NFS3
   if (nfs_version == NFS_VERSION3) {
     memset((char *) &fhp->v3, 0, sizeof(fhp->v3));
@@ -258,7 +258,7 @@ fetch_fhandle(CLIENT * client, char *dir, am_nfs_handle_t *fhp, u_long nfs_versi
 			  (SVC_IN_ARG_TYPE) &fhp->v2,
 			  tv);
     if (clnt_stat != RPC_SUCCESS) {
-      char *msg = clnt_sperrno(clnt_stat);
+      const char *msg = clnt_sperrno(clnt_stat);
       plog(XLOG_ERROR, "mountd rpc failed: %s", msg);
       return EIO;
     }
@@ -337,7 +337,7 @@ amfs_host_fmount(mntfs *mf)
    */
   host = mf->mf_server->fs_host;
   sin = *mf->mf_server->fs_ip;
-  plog(XLOG_INFO, "amfs_host_fmount: NFS version %d", mf->mf_server->fs_version);
+  plog(XLOG_INFO, "amfs_host_fmount: NFS version %d", (int) mf->mf_server->fs_version);
 #ifdef HAVE_FS_NFS3
   if (mf->mf_server->fs_version == NFS_VERSION3)
     mnt_version = MOUNTVERS3;
@@ -349,7 +349,7 @@ amfs_host_fmount(mntfs *mf)
    * The original 10 second per try timeout is WAY too large, especially
    * if we're only waiting 10 or 20 seconds max for the response.
    * That would mean we'd try only once in 10 seconds, and we could
-   * lose the transmitt or receive packet, and never try again.
+   * lose the transmit or receive packet, and never try again.
    * A 2-second per try timeout here is much more reasonable.
    * 09/28/92 Mike Mitchell, mcm@unx.sas.com
    */
@@ -394,7 +394,7 @@ amfs_host_fmount(mntfs *mf)
 			(SVC_IN_ARG_TYPE) & exlist,
 			tv2);
   if (clnt_stat != RPC_SUCCESS) {
-    char *msg = clnt_sperrno(clnt_stat);
+    const char *msg = clnt_sperrno(clnt_stat);
     plog(XLOG_ERROR, "host_fmount rpc failed: %s", msg);
     /* clnt_perror(client, "rpc"); */
     error = EIO;
@@ -632,7 +632,7 @@ amfs_host_umounted(am_node *mp)
    */
   host = mf->mf_server->fs_host;
   sin = *mf->mf_server->fs_ip;
-  plog(XLOG_INFO, "amfs_host_umounted: NFS version %d", mf->mf_server->fs_version);
+  plog(XLOG_INFO, "amfs_host_umounted: NFS version %d", (int) mf->mf_server->fs_version);
 #ifdef HAVE_FS_NFS3
   if (mf->mf_server->fs_version == NFS_VERSION3)
     mnt_version = MOUNTVERS3;
@@ -675,8 +675,8 @@ amfs_host_umounted(am_node *mp)
 			tv);
   if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_SYSTEMERROR) {
     /* RPC_SYSTEMERROR seems to be returned for no good reason ... */
-    char *msg = clnt_sperrno(clnt_stat);
-    plog(XLOG_ERROR, "unmount all from %s rpc failed: %s", host, msg, clnt_stat);
+    const char *msg = clnt_sperrno(clnt_stat);
+    plog(XLOG_ERROR, "unmount all from %s rpc failed: %s", host, msg);
     goto out;
   }
 
