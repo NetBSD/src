@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.102 1998/08/28 07:44:12 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.103 1998/08/28 12:07:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1757,21 +1757,24 @@ audio_pint(v)
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	u_char *inp;
 	int cc, ccr;
+	int blksize;
 	int error;
 
         if (!sc->sc_open)
         	return;         /* ignore interrupt if not open */
 
-	cb->outp += cb->blksize;
+	blksize = cb->blksize;
+
+	cb->outp += blksize;
 	if (cb->outp >= cb->end)
 		cb->outp = cb->start;
-	cb->stamp += cb->blksize / sc->sc_pparams.factor;
+	cb->stamp += blksize / sc->sc_pparams.factor;
 	if (cb->mmapped) {
 		DPRINTFN(5, ("audio_pint: mmapped outp=%p cc=%d inp=%p\n", 
-                             cb->outp, cb->blksize, cb->inp));
+                             cb->outp, blksize, cb->inp));
 		if (!hw->trigger_output)
 			(void)hw->start_output(sc->hw_hdl, cb->outp,
-			    cb->blksize, audio_pint, (void *)sc);
+			    blksize, audio_pint, (void *)sc);
 		return;
 	}
 		
@@ -1801,8 +1804,8 @@ audio_pint(v)
 	}
 #endif
 
-	cb->used -= cb->blksize;
-	if (cb->used < cb->blksize) {
+	cb->used -= blksize;
+	if (cb->used < blksize) {
 		/* we don't have a full block to use */
 		if (cb->copying) {
 			/* writer is in progress, don't disturb */
@@ -1810,7 +1813,7 @@ audio_pint(v)
 			DPRINTFN(1, ("audio_pint: copying in progress\n"));
 		} else {
 			inp = cb->inp;
-			cc = cb->blksize - (inp - cb->start) % cb->blksize;
+			cc = blksize - (inp - cb->start) % blksize;
 			ccr = cc / sc->sc_pparams.factor;
 			if (cb->pause)
 				cb->pdrops += ccr;
@@ -1827,13 +1830,13 @@ audio_pint(v)
 
 			/* Clear next block so we keep ahead of the DMA. */
 			if (cb->used + cc < cb->usedhigh)
-				audio_pint_silence(sc, cb, inp, cb->blksize);
+				audio_pint_silence(sc, cb, inp, blksize);
 		}
 	}
 
-	DPRINTFN(5, ("audio_pint: outp=%p cc=%d\n", cb->outp, cb->blksize));
+	DPRINTFN(5, ("audio_pint: outp=%p cc=%d\n", cb->outp, blksize));
 	if (!hw->trigger_output) {
-		error = hw->start_output(sc->hw_hdl, cb->outp, cb->blksize,
+		error = hw->start_output(sc->hw_hdl, cb->outp, blksize,
 		    audio_pint, (void *)sc);
 		if (error) {
 			/* XXX does this really help? */
@@ -1877,20 +1880,23 @@ audio_rint(v)
 	struct audio_softc *sc = v;
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_ringbuffer *cb = &sc->sc_rr;
+	int blksize;
 	int error;
 
         if (!sc->sc_open)
         	return;         /* ignore interrupt if not open */
 
-	cb->inp += cb->blksize;
+	blksize = cb->blksize;
+
+	cb->inp += blksize;
 	if (cb->inp >= cb->end)
 		cb->inp = cb->start;
-	cb->stamp += cb->blksize;
+	cb->stamp += blksize;
 	if (cb->mmapped) {
 		DPRINTFN(2, ("audio_rint: mmapped inp=%p cc=%d\n", 
-                             cb->inp, cb->blksize));
+                             cb->inp, blksize));
 		if (!hw->trigger_input)
-			(void)hw->start_input(sc->hw_hdl, cb->inp, cb->blksize,
+			(void)hw->start_input(sc->hw_hdl, cb->inp, blksize,
 			    audio_rint, (void *)sc);
 		return;
 	}
@@ -1922,23 +1928,23 @@ audio_rint(v)
 	}
 #endif
 
-	cb->used += cb->blksize;
+	cb->used += blksize;
 	if (cb->pause) {
 		DPRINTFN(1, ("audio_rint: pdrops %lu\n", cb->pdrops));
-		cb->pdrops += cb->blksize;
-		cb->outp += cb->blksize;
-		cb->used -= cb->blksize;
-	} else if (cb->used + cb->blksize >= cb->usedhigh && !cb->copying) {
+		cb->pdrops += blksize;
+		cb->outp += blksize;
+		cb->used -= blksize;
+	} else if (cb->used + blksize >= cb->usedhigh && !cb->copying) {
 		DPRINTFN(1, ("audio_rint: drops %lu\n", cb->drops));
-		cb->drops += cb->blksize;
-		cb->outp += cb->blksize;
-		cb->used -= cb->blksize;
+		cb->drops += blksize;
+		cb->outp += blksize;
+		cb->used -= blksize;
 	}
 
 	DPRINTFN(2, ("audio_rint: inp=%p cc=%d used=%d\n", 
-                     cb->inp, cb->blksize, cb->used));
+                     cb->inp, blksize, cb->used));
 	if (!hw->trigger_input) {
-		error = hw->start_input(sc->hw_hdl, cb->inp, cb->blksize,
+		error = hw->start_input(sc->hw_hdl, cb->inp, blksize,
 		    audio_rint, (void *)sc);
 		if (error) {
 			/* XXX does this really help? */
