@@ -445,11 +445,11 @@ installdirs mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 
-#asconfig.texi: $(CONFIG).texi
-#	rm -f asconfig.texi
-#	ln -s $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
-#	  || ln $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
-#	  || cp $(srcdir)/$(CONFIG).texi ./asconfig.texi
+asconfig.texi: $(CONFIG).texi
+	rm -f asconfig.texi
+	ln -s $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
+	  || ln $(srcdir)/$(CONFIG).texi ./asconfig.texi >/dev/null 2>&1 \
+	  || cp $(srcdir)/$(CONFIG).texi ./asconfig.texi
 
 #gasver.texi: Makefile
 #	rm -f $@
