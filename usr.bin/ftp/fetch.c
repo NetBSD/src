@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.16 1997/09/21 01:06:31 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.17 1997/11/01 14:36:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.16 1997/09/21 01:06:31 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.17 1997/11/01 14:36:55 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -235,9 +235,8 @@ url_get(origline, proxyenv)
 		printf("Requesting %s\n", origline);
 	else
 		printf("Requesting %s (via %s)\n", origline, proxyenv);
-	snprintf(buf, sizeof(buf), "GET %s%s HTTP/1.0\r\n\r\n",
+	len = snprintf(buf, sizeof(buf), "GET %s%s HTTP/1.0\r\n\r\n",
 	    proxy ? "" : "/", path);
-	len = strlen(buf);
 	if (write(s, buf, len) < len) {
 		warn("Writing HTTP request");
 		goto cleanup_url_get;

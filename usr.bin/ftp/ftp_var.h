@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.20 1997/09/13 09:05:58 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.21 1997/11/01 14:37:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -129,6 +129,7 @@ size_t	  cursor_argo;		/* offset of cursor in margv[cursor_argc] */
 off_t	bytes;			/* current # of bytes read */
 off_t	filesize;		/* size of file being transferred */
 char   *direction;		/* direction transfer is occurring */
+off_t	restart_point;		/* offset to restart transfer */
 
 char   *hostname;		/* name of host connected to */
 int	unix_server;		/* server is unix, can use binary for ascii */
