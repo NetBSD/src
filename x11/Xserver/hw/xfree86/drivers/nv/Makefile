@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/01/02 06:17:35 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/01/05 03:47:10 soren Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -12,6 +12,8 @@ MAN=	nv.4
 
 SRCS=	nv_driver.c nv_dac.c nv_setup.c nv_cursor.c nv_xaa.c nv_dga.c \
 	nv_shadow.c riva_hw.c nv_video.c
+
+XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/nv \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
@@ -37,7 +39,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/nv \
 		-I${X11SRCDIR.xc}/programs/Xserver/render \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/vbe \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86 \
-		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/bus
+		-I${XSERVERINCDIR}
 
 CPPFLAGS+=	-DPSZ=8
 		
