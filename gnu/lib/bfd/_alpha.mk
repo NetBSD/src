@@ -1,4 +1,4 @@
-# $NetBSD: _alpha.mk,v 1.2 1997/10/17 20:06:59 gwr Exp $
+# $NetBSD: _alpha.mk,v 1.3 1998/08/21 21:11:02 tv Exp $
 
 BFD_MACHINES =	cpu-alpha.c
 BFD_BACKENDS =	elf64-alpha.c elf64.c elf.c elflink.c \
@@ -15,3 +15,6 @@ TDEFAULTS = \
  -DNETBSD_CORE
 
 OPCODE_MACHINES =  alpha-dis.c alpha-opc.c
+
+BFD_WORDSIZE=	64
+BFD_64BIT_LONG=	1

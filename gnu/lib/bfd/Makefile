@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1998/07/29 11:05:26 tron Exp $
+#	$NetBSD: Makefile,v 1.14 1998/08/21 21:11:02 tv Exp $
 
 LIB=	bfd
 
@@ -29,6 +29,16 @@ CPPFLAGS+= -I$(dist)/include
 .if exists(_${MACHINE_ARCH:S/^mips$/mipsel/}.mk)
 .include  "_${MACHINE_ARCH:S/^mips$/mipsel/}.mk"
 .endif
+
+BFD_WORDSIZE?=	32
+BFD_64BIT_LONG?=0
+
+bfd.h: bfd-in2.h
+	@sed	-e 's,@VERSION@,2.8.1,' \
+		-e 's,@wordsize@,${BFD_WORDSIZE},' \
+		-e 's,@BFD_HOST_64BIT_LONG@,${BFD_64BIT_LONG},' \
+		-e 's,@BFD_HOST_64_BIT_DEFINED@,0,' \
+		< $> > $@
 
 # From $(dist)/bfd: BFD_LIBS, BFD_BACKENDS, BFD_MACHINES, ...
 # Have to ommit libbfd.c to avoid .c.so rule problem.
