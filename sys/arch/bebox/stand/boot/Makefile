@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2003/10/26 07:25:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.19.2.1 2004/06/22 07:57:14 tron Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -69,6 +69,6 @@ ${BOOTPROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} vers.o
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 .include <bsd.prog.mk>
