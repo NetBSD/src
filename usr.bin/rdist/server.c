@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.14 1997/10/19 14:25:33 mycroft Exp $	*/
+/*	$NetBSD: server.c,v 1.15 1997/10/19 14:51:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.14 1997/10/19 14:25:33 mycroft Exp $");
+__RCSID("$NetBSD: server.c,v 1.15 1997/10/19 14:51:01 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -433,8 +433,8 @@ sendf(rname, opts)
 			}
 		}
 		(void) snprintf(buf, sizeof(buf), "K%o %o %qd %ld %s %s %s\n",
-		    opts, stb.st_mode & 07777, stb.st_size, stb.st_mtime,
-		    protoname(), protogroup(), rname);
+		    opts, stb.st_mode & 07777, (unsigned long long)stb.st_size,
+		    (u_long)stb.st_mtime, protoname(), protogroup(), rname);
 		if (debug)
 			printf("buf = %s", buf);
 		(void) write(rem, buf, strlen(buf));
@@ -485,9 +485,9 @@ sendf(rname, opts)
 		error("%s: %s\n", target, strerror(errno));
 		return;
 	}
-	(void)snprintf(buf, sizeof(buf), "R%o %o %qd %ld %s %s %s\n", opts,
-		stb.st_mode & 07777, stb.st_size, stb.st_mtime,
-		protoname(), protogroup(), rname);
+	(void)snprintf(buf, sizeof(buf), "R%o %o %qd %lu %s %s %s\n", opts,
+		stb.st_mode & 07777, (unsigned long long)stb.st_size,
+		(u_long)stb.st_mtime, protoname(), protogroup(), rname);
 	if (debug)
 		printf("buf = %s", buf);
 	(void) write(rem, buf, strlen(buf));
@@ -688,8 +688,8 @@ query(name)
 
 	switch (stb.st_mode & S_IFMT) {
 	case S_IFREG:
-		(void)snprintf(buf, sizeof(buf), "Y%qd %ld\n", stb.st_size,
-		    stb.st_mtime);
+		(void)snprintf(buf, sizeof(buf), "Y%qd %ld\n",
+		    (unsigned long long)stb.st_size, (u_long)stb.st_mtime);
 		(void)write(rem, buf, strlen(buf));
 		break;
 
