@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 1999/03/29 05:12:39 mrg Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 2000/04/27 00:33:49 jdc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.8 1999/03/29 05:12:39 mrg Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9 2000/04/27 00:33:49 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ error(str, va_alist)
 #endif
 	wmove(Score, ERR_Y, ERR_X);
 	vwprintw(Score, str, ap);
-	clrtoeol();
+	wclrtoeol(Score);
 	putchar('\07');
 	refresh();
 	va_end(ap);
