@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.21 1996/12/05 01:25:35 cgd Exp $	*/
+/*	$NetBSD: tc.c,v 1.22 1997/07/22 03:44:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -48,11 +48,7 @@ struct tc_softc {
 };
 
 /* Definition of the driver for autoconfig. */
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	tcmatch __P((struct device *, void *, void *));
-#else
 int	tcmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	tcattach __P((struct device *, struct device *, void *));
 
 struct cfattach tc_ca = {
@@ -64,31 +60,16 @@ struct cfdriver tc_cd = {
 };
 
 int	tcprint __P((void *, const char *));
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	tcsubmatch __P((struct device *, void *, void *));
-#else
 int	tcsubmatch __P((struct device *, struct cfdata *, void *));
-#endif
 int	tc_checkslot __P((tc_addr_t, char *));
 void	tc_devinfo __P((const char *, char *));
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-tcmatch(parent, cfdata, aux)
-#else
 tcmatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *cfdata;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = cfdata;
-#endif
 	struct tcbus_attach_args *tba = aux;
 
 	if (strcmp(tba->tba_busname, cf->cf_driver->cd_name))
@@ -224,22 +205,11 @@ tcprint(aux, pnp)
 }
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-tcsubmatch(parent, match, aux)
-#else
 tcsubmatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = match;
-#endif
 	struct tc_attach_args *d = aux;
 
 	if ((cf->tccf_slot != TCCF_SLOT_UNKNOWN) &&
