@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.1.2.2 1997/06/03 07:07:37 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.1.2.3 1997/06/05 18:47:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.1.2.2 1997/06/03 07:07:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.1.2.3 1997/06/05 18:47:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ void	cia_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
  */
 #define	CIA_TLB_INVALIDATE() \
 do { \
+	alpha_mb(); \
 	REGVAL(CIA_PCI_TBIA) = CIA_PCI_TBIA_ALL; \
 	alpha_mb(); \
 } while (0)
