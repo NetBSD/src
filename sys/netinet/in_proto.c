@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.19 1998/01/12 03:02:50 scottr Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.20 1998/05/07 01:37:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -208,6 +208,5 @@ int	tcp_syn_cache_size = TCP_SYN_HASH_SIZE;
 int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
 int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
 struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
-struct	syn_cache_head *tcp_syn_cache_first;
 int	tcp_syn_cache_interval = 8;	/* runs timer every 4 seconds */
 int	tcp_syn_cache_timeo = TCPTV_KEEP_INIT;

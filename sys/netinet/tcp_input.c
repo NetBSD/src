@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.58 1998/05/06 01:21:20 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.59 1998/05/07 01:37:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1767,37 +1767,41 @@ u_int32_t syn_hash1, syn_hash2;
 	((((sa)->s_addr^syn_hash1)*(((((u_int32_t)(dp))<<16) + \
 				     ((u_int32_t)(sp)))^syn_hash2)))
 
-#define	eptosp(ep, e, s)	((struct s *)((char *)(ep) - \
-			    ((char *)(&((struct s *)0)->e) - (char *)0)))
+LIST_HEAD(, syn_cache_head) tcp_syn_cache_queue;
 
-#define	SYN_CACHE_RM(sc, p, scp) {					\
-	*(p) = (sc)->sc_next;						\
-	if ((sc)->sc_next)						\
-		(sc)->sc_next->sc_timer += (sc)->sc_timer;		\
-	else {								\
-		(scp)->sch_timer_sum -= (sc)->sc_timer;			\
-		if ((scp)->sch_timer_sum <= 0)				\
-			(scp)->sch_timer_sum = -1;			\
-		/* If need be, fix up the last pointer */		\
-		if ((scp)->sch_first)					\
-			(scp)->sch_last = eptosp(p, sc_next, syn_cache); \
-	}								\
-	(scp)->sch_length--;						\
+#define	SYN_CACHE_RM(sc, scp)						\
+do {									\
+	TAILQ_REMOVE(&(scp)->sch_queue, (sc), sc_queue);		\
+	if (--(scp)->sch_length	== 0)					\
+		LIST_REMOVE((scp), sch_headq);				\
 	syn_cache_count--;						\
+} while (0)
+
+void
+syn_cache_init()
+{
+	int i;
+
+	/* Initialize the hash bucket queues. */
+	for (i = 0; i < tcp_syn_cache_size; i++)
+		TAILQ_INIT(&tcp_syn_cache[i].sch_queue);
+
+	/* Initialize the active hash bucket cache. */
+	LIST_INIT(&tcp_syn_cache_queue);
 }
 
 void
-syn_cache_insert(sc, prevp, headp)
+syn_cache_insert(sc)
 	struct syn_cache *sc;
-	struct syn_cache ***prevp;
-	struct syn_cache_head **headp;
 {
 	struct syn_cache_head *scp, *scp2, *sce;
 	struct syn_cache *sc2;
-	static u_int timeo_val;
 	int s;
 
-	/* Initialize the hash secrets when adding the first entry */
+	/*
+	 * If there are no entries in the hash table, reinitialize
+	 * the hash secrets.
+	 */
 	if (syn_cache_count == 0) {
 		struct timeval tv;
 		microtime(&tv);
@@ -1806,9 +1810,7 @@ syn_cache_insert(sc, prevp, headp)
 	}
 
 	sc->sc_hash = SYN_HASH(&sc->sc_src, sc->sc_sport, sc->sc_dport);
-	sc->sc_next = NULL;
 	scp = &tcp_syn_cache[sc->sc_hash % tcp_syn_cache_size];
-	*headp = scp;
 
 	/*
 	 * Make sure that we don't overflow the per-bucket
@@ -1817,140 +1819,83 @@ syn_cache_insert(sc, prevp, headp)
 	s = splsoftnet();
 	if (scp->sch_length >= tcp_syn_bucket_limit) {
 		tcpstat.tcps_sc_bucketoverflow++;
-		sc2 = scp->sch_first;
-		scp->sch_first = sc2->sc_next;
+		/*
+		 * The bucket is full.  Toss the first (i.e. oldest)
+		 * element in this bucket.
+		 */
+		sc2 = TAILQ_FIRST(&scp->sch_queue);
+		SYN_CACHE_RM(sc2, scp);
 		if (sc2->sc_ipopts)
 			(void) m_free(sc2->sc_ipopts);
 		FREE(sc2, M_PCB);
 	} else if (syn_cache_count >= tcp_syn_cache_limit) {
 		tcpstat.tcps_sc_overflowed++;
 		/*
-		 * The cache is full.  Toss the first (i.e, oldest)
-		 * element in this bucket.
+		 * The cache is full.  Toss the first (i.e. oldest)
+		 * element in the first non-empty bucket we can find.
 		 */
 		scp2 = scp;
-		if (scp2->sch_first == NULL) {
+		if (TAILQ_FIRST(&scp2->sch_queue) == NULL) {
 			sce = &tcp_syn_cache[tcp_syn_cache_size];
 			for (++scp2; scp2 != scp; scp2++) {
 				if (scp2 >= sce)
 					scp2 = &tcp_syn_cache[0];
-				if (scp2->sch_first)
+				if (TAILQ_FIRST(&scp2->sch_queue) != NULL)
 					break;
 			}
 		}
-		sc2 = scp2->sch_first;
+		sc2 = TAILQ_FIRST(&scp2->sch_queue);
 		if (sc2 == NULL) {
 			if (sc->sc_ipopts)
 				(void) m_free(sc->sc_ipopts);
 			FREE(sc, M_PCB);
 			return;
 		}
-		if ((scp2->sch_first = sc2->sc_next) == NULL)
-			scp2->sch_last = NULL;
-		else
-			sc2->sc_next->sc_timer += sc2->sc_timer;
+		SYN_CACHE_RM(sc2, scp2);
 		if (sc2->sc_ipopts)
 			(void) m_free(sc2->sc_ipopts);
 		FREE(sc2, M_PCB);
-	} else {
-		scp->sch_length++;
-		syn_cache_count++;
 	}
+
+	/* Set entry's timer. */
+	PRT_SLOW_ARM(sc->sc_timer, tcp_syn_cache_timeo);
+
+	/* Put it into the bucket. */
+	TAILQ_INSERT_TAIL(&scp->sch_queue, sc, sc_queue);
+	if (++scp->sch_length == 1)
+		LIST_INSERT_HEAD(&tcp_syn_cache_queue, scp, sch_headq);
+	syn_cache_count++;
+
 	tcpstat.tcps_sc_added++;
-
-	/*
-	 * Put it into the bucket.
-	 */
-	if (scp->sch_first == NULL)
-		*prevp = &scp->sch_first;
-	else {
-		*prevp = &scp->sch_last->sc_next;
-		tcpstat.tcps_sc_collisions++;
-	}
-	**prevp = sc;
-	scp->sch_last = sc;
-
-	/*
-	 * If the timeout value has changed
-	 *   1) force it to fit in a u_char
-	 *   2) Run the timer routine to truncate all
-	 *	existing entries to the new timeout value.
-	 */
-	if (timeo_val != tcp_syn_cache_timeo) {
-		tcp_syn_cache_timeo = min(tcp_syn_cache_timeo, UCHAR_MAX);
-		if (timeo_val > tcp_syn_cache_timeo)
-			syn_cache_timer(timeo_val - tcp_syn_cache_timeo);
-		timeo_val = tcp_syn_cache_timeo;
-	}
-	if (scp->sch_timer_sum > 0)
-		sc->sc_timer = tcp_syn_cache_timeo - scp->sch_timer_sum;
-	else {
-		if (scp->sch_timer_sum == 0) {
-			/*
-			 * When the bucket timer is 0, it is not in the
-			 * cache queue.
-			 */
-			scp->sch_headq = tcp_syn_cache_first;
-			tcp_syn_cache_first = scp;
-		}
-		sc->sc_timer = tcp_syn_cache_timeo;
-	}
-	scp->sch_timer_sum = tcp_syn_cache_timeo;
 	splx(s);
 }
 
 /*
- * Walk down the cache list, decrementing the timer of
- * the first element on each entry.  If the timer goes
- * to zero, remove it and all successive entries with
- * a zero timer.
+ * Walk down the cache list, looking for expired entries in each bucket.
  */
 void
-syn_cache_timer(interval)
-	int interval;
+syn_cache_timer()
 {
-	struct syn_cache_head *scp, **pscp;
-	struct syn_cache *sc, *scn;
-	int n, s;
+	struct syn_cache_head *scp, *nscp;
+	struct syn_cache *sc, *nsc;
+	int s;
 
-	pscp = &tcp_syn_cache_first;
-	scp = tcp_syn_cache_first;
 	s = splsoftnet();
-	while (scp) {
-		/*
-		 * Remove any empty hash buckets
-		 * from the cache queue.
-		 */
-		if ((sc = scp->sch_first) == NULL) {
-			*pscp = scp->sch_headq;
-			scp->sch_headq = NULL;
-			scp->sch_timer_sum = 0;
-			scp->sch_first = scp->sch_last = NULL;
-			scp->sch_length = 0;
-			scp = *pscp;
-			continue;
-		}
-
-		scp->sch_timer_sum -= interval;
-		if (scp->sch_timer_sum <= 0)
-			scp->sch_timer_sum = -1;
-		n = interval;
-		while (sc->sc_timer <= n) {
-			n -= sc->sc_timer;
-			scn = sc->sc_next;
+	for (scp = LIST_FIRST(&tcp_syn_cache_queue); scp != NULL; scp = nscp) {
+#ifdef DIAGNOSTIC
+		if (TAILQ_FIRST(&scp->sch_queue) == NULL)
+			panic("syn_cache_timer: queue inconsistency");
+#endif
+		nscp = LIST_NEXT(scp, sch_headq);
+		for (sc = TAILQ_FIRST(&scp->sch_queue);
+		     sc != NULL && PRT_SLOW_ISEXPIRED(sc->sc_timer);
+		     sc = nsc) {
+			nsc = TAILQ_NEXT(sc, sc_queue);
 			tcpstat.tcps_sc_timed_out++;
-			syn_cache_count--;
+			SYN_CACHE_RM(sc, scp);
 			if (sc->sc_ipopts)
 				(void) m_free(sc->sc_ipopts);
 			FREE(sc, M_PCB);
-			scp->sch_length--;
-			if ((sc = scn) == NULL)
-				break;
-		}
-		if ((scp->sch_first = sc) != NULL) {
-			sc->sc_timer -= n;
-			pscp = &scp->sch_headq;
-			scp = scp->sch_headq;
 		}
 	}
 	splx(s);
@@ -1960,30 +1905,28 @@ syn_cache_timer(interval)
  * Find an entry in the syn cache.
  */
 struct syn_cache *
-syn_cache_lookup(ti, prevp, headp)
+syn_cache_lookup(ti, headp)
 	struct tcpiphdr *ti;
-	struct syn_cache ***prevp;
 	struct syn_cache_head **headp;
 {
-	struct syn_cache *sc, **prev;
-	struct syn_cache_head *head;
+	struct syn_cache *sc;
+	struct syn_cache_head *scp;
 	u_int32_t hash;
 	int s;
 
 	hash = SYN_HASH(&ti->ti_src, ti->ti_sport, ti->ti_dport);
 
-	head = &tcp_syn_cache[hash % tcp_syn_cache_size];
-	*headp = head;
-	prev = &head->sch_first;
+	scp = &tcp_syn_cache[hash % tcp_syn_cache_size];
+	*headp = scp;
 	s = splsoftnet();
-	for (sc = head->sch_first; sc; prev = &sc->sc_next, sc = sc->sc_next) {
+	for (sc = TAILQ_FIRST(&scp->sch_queue); sc != NULL;
+	     sc = TAILQ_NEXT(sc, sc_queue)) {
 		if (sc->sc_hash != hash)
 			continue;
 		if (sc->sc_src.s_addr == ti->ti_src.s_addr &&
 		    sc->sc_sport == ti->ti_sport &&
 		    sc->sc_dport == ti->ti_dport &&
 		    sc->sc_dst.s_addr == ti->ti_dst.s_addr) {
-			*prevp = prev;
 			splx(s);
 			return (sc);
 		}
@@ -2020,8 +1963,8 @@ syn_cache_get(so, m)
 	struct socket *so;
 	struct mbuf *m;
 {
-	struct syn_cache *sc, **sc_prev;
-	struct syn_cache_head *head;
+	struct syn_cache *sc;
+	struct syn_cache_head *scp;
 	register struct inpcb *inp;
 	register struct tcpcb *tp = 0;
 	register struct tcpiphdr *ti;
@@ -2032,7 +1975,7 @@ syn_cache_get(so, m)
 
 	ti = mtod(m, struct tcpiphdr *);
 	s = splsoftnet();
-	if ((sc = syn_cache_lookup(ti, &sc_prev, &head)) == NULL) {
+	if ((sc = syn_cache_lookup(ti, &scp)) == NULL) {
 		splx(s);
 		return (NULL);
 	}
@@ -2053,7 +1996,7 @@ syn_cache_get(so, m)
 	}
 
 	/* Remove this cache entry */
-	SYN_CACHE_RM(sc, sc_prev, head);
+	SYN_CACHE_RM(sc, scp);
 	splx(s);
 
 	/*
@@ -2176,11 +2119,11 @@ void
 syn_cache_reset(ti)
 	register struct tcpiphdr *ti;
 {
-	struct syn_cache *sc, **sc_prev;
-	struct syn_cache_head *head;
+	struct syn_cache *sc;
+	struct syn_cache_head *scp;
 	int s = splsoftnet();
 
-	if ((sc = syn_cache_lookup(ti, &sc_prev, &head)) == NULL) {
+	if ((sc = syn_cache_lookup(ti, &scp)) == NULL) {
 		splx(s);
 		return;
 	}
@@ -2189,7 +2132,7 @@ syn_cache_reset(ti)
 		splx(s);
 		return;
 	}
-	SYN_CACHE_RM(sc, sc_prev, head);
+	SYN_CACHE_RM(sc, scp);
 	splx(s);
 	tcpstat.tcps_sc_reset++;
 	if (sc->sc_ipopts)
@@ -2202,8 +2145,8 @@ syn_cache_unreach(ip, th)
 	struct ip *ip;
 	struct tcphdr *th;
 {
-	struct syn_cache *sc, **sc_prev;
-	struct syn_cache_head *head;
+	struct syn_cache *sc;
+	struct syn_cache_head *scp;
 	struct tcpiphdr ti2;
 	int s;
 
@@ -2213,7 +2156,7 @@ syn_cache_unreach(ip, th)
 	ti2.ti_dport = th->th_sport;
 
 	s = splsoftnet();
-	if ((sc = syn_cache_lookup(&ti2, &sc_prev, &head)) == NULL) {
+	if ((sc = syn_cache_lookup(&ti2, &scp)) == NULL) {
 		splx(s);
 		return;
 	}
@@ -2222,7 +2165,7 @@ syn_cache_unreach(ip, th)
 		splx(s);
 		return;
 	}
-	SYN_CACHE_RM(sc, sc_prev, head);
+	SYN_CACHE_RM(sc, scp);
 	splx(s);
 	tcpstat.tcps_sc_unreach++;
 	if (sc->sc_ipopts)
@@ -2250,10 +2193,9 @@ syn_cache_add(so, m, optp, optlen, oi)
 	register struct tcpiphdr *ti;
 	struct tcpcb tb, *tp;
 	long win;
-	struct syn_cache *sc, **sc_prev;
+	struct syn_cache *sc;
 	struct syn_cache_head *scp;
 	struct mbuf *ipopts;
-	extern int tcp_do_rfc1323;
 
 	tp = sototcpcb(so);
 	ti = mtod(m, struct tcpiphdr *);
@@ -2292,7 +2234,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 	 * initial congestion window must be initialized to 1
 	 * segment when the connection completes.
 	 */
-	if ((sc = syn_cache_lookup(ti, &sc_prev, &scp)) != NULL) {
+	if ((sc = syn_cache_lookup(ti, &scp)) != NULL) {
 		tcpstat.tcps_sc_dupesyn++;
 		sc->sc_flags |= SCF_SYNACK_REXMT;
 
@@ -2350,7 +2292,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 		sc->sc_request_r_scale = 15;
 	}
 	if (syn_cache_respond(sc, m, ti, win, tb.ts_recent) == 0) {
-		syn_cache_insert(sc, &sc_prev, &scp);
+		syn_cache_insert(sc);
 		tcpstat.tcps_sndacks++;
 		tcpstat.tcps_sndtotal++;
 	} else {

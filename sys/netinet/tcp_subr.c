@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.51 1998/05/06 01:21:21 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.52 1998/05/07 01:37:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -141,6 +141,9 @@ tcp_init()
 		max_protohdr = sizeof(struct tcpiphdr);
 	if (max_linkhdr + sizeof(struct tcpiphdr) > MHLEN)
 		panic("tcp_init");
+	
+	/* Initialize the compressed state engine. */
+	syn_cache_init();
 }
 
 /*
