@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.13 1996/03/17 22:56:48 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.14 1996/03/18 16:47:33 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -78,7 +78,9 @@ struct	uba_softc {
 	int	uh_memsize;		/* size of uba memory, pages */
 	caddr_t	uh_mem;			/* start of uba memory address space */
 	caddr_t	uh_iopage;		/* start of uba io page */
-	void	(**Nuh_vec)();		/* interrupt vector */
+	void	(**uh_reset)();		/* UBA reset function array */
+	int	*uh_resarg;		/* array of ubareset args */
+	int	uh_resno;		/* Number of devices to reset */
 	struct	ivec_dsp *uh_idsp;	/* Interrupt dispatch area */
 	u_int	*uh_iarea;		/* Interrupt vector array */
 	struct	uba_device *uh_actf;	/* head of queue to transfer */
@@ -194,8 +196,8 @@ struct uba_driver {
  */
 struct uba_attach_args {
 	caddr_t	ua_addr;
-	void	(*ua_ivec)();
-	int	ua_iarg;
+	void	(*ua_ivec)();	/* Pointer to int routine, filled in by probe*/
+	void	(*ua_reset)();	/* UBA reset routine, filled in by probe */
 	int	ua_iaddr;
 	int	ua_br;
 	int	ua_cvec;

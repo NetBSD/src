@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.17 1996/03/17 22:56:33 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.18 1996/03/18 16:47:24 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -145,7 +145,7 @@ void	deattach __P((struct device *, struct device *, void *));
 int	dewait __P((struct de_softc *, char *));
 void	deinit __P((int));
 int     deioctl __P((struct ifnet *, u_long, caddr_t));
-int	dereset __P((int));
+void	dereset __P((int));
 void    destart __P((struct ifnet *));
 void	deread __P((struct de_softc *, struct ifrw *, int));
 void    derecv __P((int));
@@ -221,7 +221,6 @@ deattach(parent, self, aux)
 	printf("de%d: hardware address %s\n", ds->ds_device.dv_unit,
 		ether_sprintf(ds->ds_addr));
 	ifp->if_ioctl = deioctl;
-	ifp->if_reset = dereset;
 	ifp->if_start = destart;
 	ds->ds_deuba.iff_flags = UBA_CANTWAIT;
 #ifdef notdef
@@ -234,26 +233,20 @@ deattach(parent, self, aux)
 
 /*
  * Reset of interface after UNIBUS reset.
- * If interface is on specified uba, reset its state.
  */
-int
+void
 dereset(unit)
 	int unit;
 {
-#if 0
-	register struct uba_device *ui;
+	struct	de_softc *sc = de_cd.cd_devs[unit];
+	volatile struct dedevice *addr = sc->ds_vaddr;
 
-	if (unit >= NDE || (ui = deinfo[unit]) == 0 || ui->ui_alive == 0 ||
-	    ui->ui_ubanum != uban)
-		return;
 	printf(" de%d", unit);
-	de_softc[unit].ds_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	de_softc[unit].ds_flags &= ~DSF_RUNNING;
-	((struct dedevice *)ui->ui_addr)->pcsr0 = PCSR0_RSET;
-	(void)dewait(ui, "reset");
+	sc->ds_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->ds_flags &= ~DSF_RUNNING;
+	addr->pcsr0 = PCSR0_RSET;
+	(void)dewait(sc, "reset");
 	deinit(unit);
-#endif
-	return 0;
 }
 
 /*
@@ -715,7 +708,9 @@ dematch(parent, match, aux)
 	addr->pcsr3 = 0;
 	addr->pcsr0 = PCSR0_INTE|CMD_GETPCBB;
 	DELAY(50000);
+
 	ua->ua_ivec = deintr;
-	ua->ua_iarg = sc->ds_device.dv_unit;
+	ua->ua_reset = dereset;	/* Wish to be called after ubareset */
+
 	return 1;
 }

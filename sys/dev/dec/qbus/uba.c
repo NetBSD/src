@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.20 1996/03/17 22:56:46 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.21 1996/03/18 16:47:31 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -77,6 +77,8 @@ int	ubaprint __P((void *, char *));
 void	uba_dw780int __P((int));
 void	ubaerror __P((int, struct uba_softc *, int *, int *,
 	    struct uba_regs *));
+void	ubainit __P((struct uba_softc *));
+void	ubareset __P((int));
 
 struct	cfdriver uba_cd = {
 	NULL, "uba", DV_DULL, 1
@@ -599,15 +601,15 @@ ubainitmaps(uhp)
 
 /*
  * Generate a reset on uba number uban.  Then
- * call each device in the character device table,
+ * call each device that asked to be called during attach,
  * giving it a chance to clean up so as to be able to continue.
  */
+void
 ubareset(uban)
 	int uban;
 {
-	register struct cdevsw *cdp;
 	register struct uba_softc *uh = uba_cd.cd_devs[uban];
-	int s;
+	int s, i;
 
 	s = spluba();
 	uh->uh_users = 0;
@@ -619,39 +621,26 @@ ubareset(uban)
 	ubainitmaps(uh);
 	wakeup((caddr_t)&uh->uh_bdpwant);
 	wakeup((caddr_t)&uh->uh_mrwant);
-	printf("uba%d: reset", uban);
+	printf("%s: reset", uh->uh_dev.dv_xname);
 	ubainit(uh);
 #ifdef notyet
 	ubameminit(uban);
 #endif
-	/* XXX - ???
-	 * Intressant, vi m}ste l|sa det h{r med ubareset() p} n}t smart
-	 * s{tt. En l{nkad lista som s{tts upp vid autoconfiggen? Kanske.
-	 * N{r anv{nds dom? Jag vet faktiskt inte; det verkar vara en
-	 * ren sm|rja den gamla koden. F}r peturba lite mer docs...
-	 * 950428/Ragge
-	 */
-	udareset(0); /* XXX */
-/*	for (cdp = cdevsw; cdp < cdevsw + nchrdev; cdp++)
-		(*cdp->d_reset)(uban); 
-	ifubareset(uban);
- */
+	for (i = 0; i < uh->uh_resno; i++)
+		(*uh->uh_reset[i])(uh->uh_resarg[i]);
 	printf("\n");
 	splx(s);
 }
 
 /*
- * Init a uba.  This is called with a pointer
- * rather than a virtual address since it is called
- * by code which runs with memory mapping disabled.
- * In these cases we really don't need the interrupts
- * enabled, but since we run with ipl high, we don't care
- * if they are, they will never happen anyways.
+ * Init a uba.
  */
 void
 ubainit(uhp)
 	struct uba_softc *uhp;
 {
+	volatile struct uba_regs *ur = uhp->uh_uba;
+
 	switch (uhp->uh_type) {
 #ifdef DWBUA
 	case DWBUA:
@@ -660,11 +649,11 @@ ubainit(uhp)
 		DELAY(500000);
 		break;
 #endif
-#if DW780 && 0	/* XXX - must fix to get dumps to work!!! */
+#if DW780
 	case DW780:
-		uba->uba_cr = UBACR_ADINIT;
-		uba->uba_cr = UBACR_IFS|UBACR_BRIE|UBACR_USEFIE|UBACR_SUEFIE;
-		while ((uba->uba_cnfgr & UBACNFGR_UBIC) == 0)
+		ur->uba_cr = UBACR_ADINIT;
+		ur->uba_cr = UBACR_IFS|UBACR_BRIE|UBACR_USEFIE|UBACR_SUEFIE;
+		while ((ur->uba_cnfgr & UBACNFGR_UBIC) == 0)
 			;
 		break;
 #endif
@@ -1034,6 +1023,7 @@ uba_attach(parent, self, aux)
 	sc->uh_memsize = UBAPAGES;
 	sc->uh_iopage = (void *)min + (sc->uh_memsize * NBPG);
 	sc->uh_iarea = (void *)scb + NBPG + sa->nexinfo * NBPG;
+	sc->uh_resno = 0;
 	/*
 	 * Create interrupt dispatchers for this uba.
 	 */
@@ -1195,6 +1185,7 @@ ubascan(parent, match)
 	int	i;
 
 	ua.ua_addr = (caddr_t)ubaddr(sc, cf->cf_loc[0]);
+	ua.ua_reset = NULL;
 
 	if (badaddr(ua.ua_addr, 2))
 		goto forgetit;
@@ -1222,6 +1213,14 @@ ubascan(parent, match)
 		
 	sc->uh_idsp[rcvec].hoppaddr = ua.ua_ivec;
 	sc->uh_idsp[rcvec].pushlarg = dev->dv_unit;
+	if (ua.ua_reset) { /* device wants ubaeset */
+		if (sc->uh_resno == 0) {
+			sc->uh_reset = malloc(1024, M_DEVBUF, M_NOWAIT);
+			sc->uh_resarg = malloc(256, M_DEVBUF, M_NOWAIT);
+		}
+		sc->uh_resarg[sc->uh_resno] = dev->dv_unit;
+		sc->uh_reset[sc->uh_resno++] = ua.ua_reset;
+	}
 	ua.ua_br = rbr;
 	ua.ua_cvec = rcvec;
 	ua.ua_iaddr = dev->dv_cfdata->cf_loc[0];
