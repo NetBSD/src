@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: bt742a.c,v 1.10 1993/12/20 09:05:27 mycroft Exp $
+ *	$Id: bt742a.c,v 1.11 1993/12/20 23:27:36 davidb Exp $
  */
 
 /*
@@ -388,16 +388,8 @@ int	bt_timeout();
 void	btminphys();
 long int bt_adapter_info();
 
-struct	scsi_switch	bt_switch =
-{
-	"bt",
-	bt_scsi_cmd,
-	btminphys,
-	0,
-	0,
-	bt_adapter_info,
-	0,0,0
-};	
+struct	scsi_switch	bt_switch[NBT];
+
 #define BT_CMD_TIMEOUT_FUDGE 200 /* multiplied to get Secs */
 #define BT_RESET_TIMEOUT 1000000
 #define BT_SCSI_TIMEOUT_FUDGE 20 /* divided by for mSecs */
@@ -607,10 +599,25 @@ btattach(dev)
 struct	isa_dev	*dev;
 {
 	static int firsttime;
+	static int firstswitch[NBT];
 	int masunit = dev->id_masunit;
 	int r;
 
-	r = scsi_attach(masunit, bt_scsi_dev[masunit], &bt_switch,
+	if (!firstswitch[masunit]) {
+		firstswitch[masunit] = 1;
+		bt_switch[masunit].name = "bt";
+		bt_switch[masunit].scsi_cmd = bt_scsi_cmd;
+		bt_switch[masunit].scsi_minphys = btminphys;
+		bt_switch[masunit].open_target_lu = 0;
+		bt_switch[masunit].close_target_lu = 0;
+		bt_switch[masunit].adapter_info = bt_adapter_info;
+		for (r = 0; r < 8; r++) {
+			bt_switch[masunit].empty[r] = 0;
+			bt_switch[masunit].used[r] = 0;
+			bt_switch[masunit].printed[r] = 0;
+		}
+	}
+	r = scsi_attach(masunit, bt_scsi_dev[masunit], &bt_switch[masunit],
 		&dev->id_physid, &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
