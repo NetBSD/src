@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.36 2005/01/04 15:06:24 manu Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.37 2005/01/08 20:32:10 joff Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1231,6 +1231,10 @@ mouse*)
 
 panel)
 	mkdev panel0 c %panel_chr% 0 660
+	;;
+
+tslcd)
+	mkdev tslcd0 c %tslcd_chr% 0 660
 	;;
 
 ipty)
