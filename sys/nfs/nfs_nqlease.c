@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.47 2003/04/24 21:21:04 drochner Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.48 2003/05/21 13:50:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.47 2003/04/24 21:21:04 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.48 2003/05/21 13:50:54 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -146,9 +146,6 @@ extern struct nfssvc_sock *nfs_udp6sock;
 extern int nfsd_waiting;
 extern struct nfsstats nfsstats;
 
-
-#define TRUE	1
-#define	FALSE	0
 
 #if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
 /*
