@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.38 2002/08/11 21:49:40 thorpej Exp $	*/
+/*	$NetBSD: wireg.h,v 1.39 2002/09/23 14:31:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -209,6 +209,8 @@
 #define WI_IOSIZE		0x40
 #define WI_PCI_CBMA		0x10	/* Configuration Base Memory Address */
 
+#define WI_PCI_COR_OFFSET        0x4C
+
 /*
  * Hermes & Prism2 register definitions 
  */
@@ -358,6 +360,9 @@
 #define WI_PCI_MASTER0_ADDRL	0x84
 #define WI_PCI_MASTER0_LEN	0x88
 #define WI_PCI_MASTER0_CON	0x8C
+
+#define WI_COR_SOFT_RESET	(1 << 7)
+#define WI_COR_CLEAR		0x00
 
 #define WI_PCI_STATUS		0x98
 
@@ -711,14 +716,27 @@ struct wi_frame {
 	u_int8_t		wi_dst_addr[6];	/* 0x2E */
 	u_int8_t		wi_src_addr[6];	/* 0x34 */
 	u_int16_t		wi_len;		/* 0x3A */
-	u_int16_t		wi_dat[3];	/* 0x3C */ /* SNAP header */
-	u_int16_t		wi_type;	/* 0x42 */
+#if 0
+	struct llc		wi_llc;		/* 0x3C */ /* SNAP header */
+#endif
 };
+
+#define WI_TX_BUFSIZE (ETHER_MAX_LEN + sizeof(struct wi_frame) + 8)
 
 #define WI_802_3_OFFSET		0x2E
 #define WI_802_11_OFFSET	0x44
 #define WI_802_11_OFFSET_RAW	0x3C
 #define	WI_802_11_OFFSET_HDR	0x0E
+
+#define WI_HWSPEC_END		0x0E
+#define WI_802_11_BEGIN		0x0E
+#define WI_SHORT_802_11_END	0x26
+#define WI_LONG_802_11_END	0x2C
+#define WI_802_3_BEGIN		0x2E
+#define WI_802_3_END		0x3C
+#define WI_DATA_BEGIN		0x3C
+#define WI_LLC_BEGIN		0x3C
+#define WI_LLC_END		0x44
 
 /* Tx Status Field */
 #define	WI_TXSTAT_RET_ERR	0x0001
@@ -733,23 +751,18 @@ struct wi_frame {
 #define WI_STAT_MAC_PORT	0x0700
 #define	WI_STAT_PCF		0x1000
 #define WI_RXSTAT_MSG_TYPE	0xE000
+#define  WI_STAT_NORMAL		0x0000
 #define  WI_STAT_1042		0x2000	/* RFC1042 encoded */
 #define  WI_STAT_TUNNEL		0x4000	/* Bridge-tunnel encoded */
 #define  WI_STAT_WMP_MSG	0x6000	/* WaveLAN-II management protocol */
 #define	 WI_STAT_MGMT		0x8000	/* 802.11b management frames */
-
-#define	WI_ENC_TX_MGMT		0x08
-#define WI_ENC_TX_E_II		0x0E
-
-#define WI_ENC_TX_1042		0x00
-#define WI_ENC_TX_TUNNEL	0xF8
 
 /* TxControl Field (enhanced) */
 #define	WI_TXCNTL_TX_OK		0x0002
 #define	WI_TXCNTL_TX_EX		0x0004
 #define	WI_TXCNTL_STRUCT_TYPE	0x0018
 #define	 WI_ENC_TX_802_3	0x00
-#define	 WI_ENC_TX_802_11	0x11
+#define	 WI_ENC_TX_802_11	0x08
 #define	WI_TXCNTL_ALTRTRY	0x0020
 #define	WI_TXCNTL_NOCRYPT	0x0080
 
@@ -759,9 +772,4 @@ struct wi_frame {
  * We need these for the LLC/SNAP header fields in the TX/RX frame
  * structure.
  */
-#define WI_SNAP_K1		0xaa	/* assigned global SAP for SNAP */
-#define WI_SNAP_K2		0x00
-#define WI_SNAP_CONTROL		0x03	/* unnumbered information format */
-#define WI_SNAP_WORD0		(WI_SNAP_K1 | (WI_SNAP_K1 << 8))
-#define WI_SNAP_WORD1		(WI_SNAP_K2 | (WI_SNAP_CONTROL << 8))
-#define WI_SNAPHDR_LEN		0x6
+#define WI_SNAP_LEN		8

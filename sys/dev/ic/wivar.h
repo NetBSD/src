@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.18 2002/08/11 21:50:06 thorpej Exp $	*/
+/*	$NetBSD: wivar.h,v 1.19 2002/09/23 14:31:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -66,6 +66,8 @@ struct wi_softc	{
 
 	u_int8_t		sc_macaddr[ETHER_ADDR_LEN];
 	
+	u_int16_t		wi_txbuf[(sizeof(struct wi_frame) + 2312) / 2];
+
 	struct ifmedia		sc_media;
 	int			wi_flags;
 	int			wi_tx_data_id;
@@ -78,7 +80,7 @@ struct wi_softc	{
 	u_int16_t		wi_ap_density;
 	u_int16_t		wi_tx_rate;
 	u_int16_t		wi_create_ibss;
-	u_int16_t		wi_channel;
+	u_int16_t		wi_channels;
 	u_int16_t		wi_pm_enabled;
 	u_int16_t		wi_mor_enabled;
 	u_int16_t		wi_max_sleep;
@@ -90,12 +92,20 @@ struct wi_softc	{
 	struct ieee80211_nwid	wi_netid;
 	struct ieee80211_nwid	wi_ibssid;
 
-	u_int16_t		wi_txbuf[1596 / 2];
 	int                     wi_use_wep;
+	int			wi_do_host_encrypt;
 	int                     wi_tx_key;
 	struct wi_ltv_keys      wi_keys;
 	struct wi_counters	wi_stats;
 	u_int16_t		wi_ibss_port;
+
+	u_int8_t		wi_current_bssid[IEEE80211_ADDR_LEN];
+	u_int16_t		wi_current_channel; /* current BSS channel */
+
+	u_int8_t		wi_join_bssid[IEEE80211_ADDR_LEN];
+	u_int16_t		wi_join_channel; /* channel of BSS to join */
+
+	u_int16_t		wi_create_channel;/* channel of BSS to create */
 
 	struct wi_apinfo	wi_aps[MAXAPINFO];
 	int 			wi_naps;
@@ -104,6 +114,9 @@ struct wi_softc	{
 	struct wihap_info	wi_hostap_info;
 	u_int32_t		wi_icv;
 	int			wi_icv_flag;
+
+	caddr_t			sc_bpf80211;
+	caddr_t			sc_bpf80211plus;
 };
 
 /* Values for wi_flags. */
@@ -116,6 +129,9 @@ struct wi_softc	{
 #define	WI_FLAGS_HAS_ROAMING		0x0040
 #define	WI_FLAGS_HAS_DIVERSITY		0x0080
 #define	WI_FLAGS_HAS_HOSTAP		0x0100
+#define	WI_FLAGS_CONNECTED		0x0200
+#define	WI_FLAGS_AP_IN_RANGE		0x0400
+#define	WI_FLAGS_JOINING		0x0800
 
 struct wi_card_ident {
 	u_int16_t	card_id;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_hostap.h,v 1.1 2002/08/11 06:13:54 thorpej Exp $	*/
+/*	$NetBSD: wi_hostap.h,v 1.2 2002/09/23 14:31:28 thorpej Exp $	*/
 /*	$OpenBSD: if_wi_hostap.h,v 1.6 2002/06/08 22:19:47 millert Exp $	*/
 
 /*
@@ -50,7 +50,10 @@ struct hostap_sta {
 #define HOSTAP_FLAGS_AUTHEN	0x0001
 #define HOSTAP_FLAGS_ASSOC	0x0002
 #define HOSTAP_FLAGS_PERM	0x0004
-#define	HOSTAP_FLAGS_BITS	"\20\01ASSOC\02AUTH\03PERM"
+#if defined(WI_HOSTAP_POWERSAVE)
+#define HOSTAP_FLAGS_ASLEEP	0x0008
+#define HOSTAP_FLAGS_PSPOLL	0x0010
+#endif /* WI_HOSTAP_POWERSAVE */
 
 #define SIOCHOSTAP_GET		_IOWR('i', 210, struct ifreq)
 #define SIOCHOSTAP_ADD		_IOWR('i', 211, struct ifreq)
@@ -91,11 +94,18 @@ struct wihap_sta_info {
 	u_int8_t	tx_curr_rate;
 	u_int8_t	tx_max_rate;
 	u_int32_t	*challenge;
+#if defined(WI_HOSTAP_POWERSAVE)
+	struct altq	ps_q;
+#endif
 };
 
 #define WI_SIFLAGS_ASSOC	HOSTAP_FLAGS_ASSOC
 #define WI_SIFLAGS_AUTHEN	HOSTAP_FLAGS_AUTHEN
 #define WI_SIFLAGS_PERM		HOSTAP_FLAGS_PERM
+#if defined(WI_HOSTAP_POWERSAVE)
+#define WI_SIFLAGS_ASLEEP	HOSTAP_FLAGS_ASLEEP
+#define WI_SIFLAGS_PSPOLL	HOSTAP_FLAGS_PSPOLL
+#endif /* WI_HOSTAP_POWERSAVE */
 
 #define WI_STA_HASH_SIZE	113
 
@@ -123,7 +133,7 @@ struct wihap_info {
 struct wi_softc;
 struct wi_frame;
 
-int	wihap_check_tx(struct wihap_info *, u_int8_t [], u_int8_t *);
+int	wihap_check_tx(struct wi_softc *, struct mbuf *, u_int8_t *);
 int	wihap_data_input(struct wi_softc *, struct wi_frame *, struct mbuf *);
 int	wihap_ioctl(struct wi_softc *, u_long, caddr_t);
 void	wihap_init(struct wi_softc *);
