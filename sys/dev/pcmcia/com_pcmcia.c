@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.1.2.1 1997/07/30 07:30:20 marc Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.1.2.2 1997/07/30 07:38:48 marc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
