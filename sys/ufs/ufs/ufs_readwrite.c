@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.22.4.5 1999/07/11 05:44:00 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.22.4.6 1999/07/31 18:53:44 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -264,7 +264,7 @@ WRITE(v)
 		/*
 		 * make sure the range of file offsets to be written
 		 * is fully allocated.  updating of ip->i_ffs_size
-		 * is handled by ffs_balloc_range().
+		 * is handled by ufs_balloc_range().
 		 */
 
 		if ((error = ufs_balloc_range(vp, uio->uio_offset,
@@ -311,8 +311,9 @@ WRITE(v)
 		else
 			flags &= ~B_CLRBUF;
 
-		error = VOP_BALLOC(vp, uio->uio_offset, blkoffset + xfersize,
-				   ap->a_cred, flags, &bp);
+		error = ffs_balloc1(vp, lblkno(fs, uio->uio_offset),
+				    blkoffset + xfersize,
+				    ap->a_cred, flags, &bp);
 #endif
 		if (error)
 			break;
