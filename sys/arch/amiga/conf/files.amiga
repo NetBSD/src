@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.91 1999/09/07 19:40:56 is Exp $
+#	$NetBSD: files.amiga,v 1.92 1999/09/20 23:17:13 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -11,6 +11,7 @@ defopt	opt_amigaccgrf.h	GRF_ECS GRF_AGA
 defopt	opt_amigaccgrf.h	GRF_A2024:GRF_ECS
 defopt	opt_amigaccgrf.h	GRF_AGA_VGA:GRF_AGA
 defopt	opt_amigaccgrf.h	GRF_SUPER72:GRF_AGA
+defopt	opt_amigaccgrf.h	USE_C_BFOPS
 
 defopt	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
 defopt	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
@@ -369,11 +370,13 @@ device	drbbc
 attach	drbbc at mainbus
 file	arch/amiga/dev/drbbc.c		drbbc
 
-# list of standard files...
+# kernel floating point emulator
 include	"arch/m68k/fpe/files.fpe"
 
-# list of standard files...
+# Motorola 68060 support package
 include	"arch/m68k/060sp/files.060sp"
+
+# list of standard files...
 
 file	dev/cons.c			ite | ser
 file	dev/cninit.c			ite | ser

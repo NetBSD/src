@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.26 1999/03/25 21:55:17 is Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.27 1999/09/20 23:17:15 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -83,6 +83,27 @@ extern u_char kernel_font_width, kernel_font_height, kernel_font_baseline;
 extern short  kernel_font_boldsmear;
 extern u_char kernel_font_lo, kernel_font_hi;
 extern u_char kernel_font[], kernel_cursor[];
+
+
+#define USE_C_BFOPS
+#if !defined(USE_C_BFOPS)
+#define BFEXT(v,p,o,w)	asm("bfextu %1@{%2:%3},%0" : "=d" (v) : \
+		"a"(p), "d"(o), "d"(w))
+#define BFINS(v,p,o,w)	asm("bfins %0,%1@{%2:%3}" : /* no output */ : \
+		"d"(v), "a"(p), "d"(o), "d"(w))
+#define BFCLR(p,o,w)	asm("bfclr %0@{%1:%2}" : /* no output */ : \
+		"a"(p), "d"(o), "d"(w))
+#define BFCHG(p,o,w)	asm("bfchg %0@{%1:%2}" : /* no output */ : \
+		"a"(p), "d"(o), "d"(w))
+#define BFSET(p,o,w)	asm("bfset %0@{%1:%2}" : /* no output */ : \
+		"a"(p), "d"(o), "d"(w))
+#else
+#define BFEXT(v,p,o,w)	do {v = ((u_int8_t *)(p))[(o)>>3];} while (0)
+#define BFINS(v,p,o,w)	do {((u_int8_t *)(p))[(o)>>3] = (v);} while (0)
+#define BFCLR(p,o,w)	BFINS(0x00,p,o,w)
+#define BFSET(p,o,w)	BFINS(0xff,p,o,w)
+#define BFCHG(p,o,w)	do {((u_int8_t *)(p))[(o)>>3] ^= 0xff;} while (0)
+#endif
 
 /*
  * This is what ip->priv points to;
@@ -400,14 +421,12 @@ cursor32(struct ite_softc *ip, int flag)
 
 		if (dr_plane) {
 			for (h = cend; h >= 0; h--) {
-				asm("bfclr %0@{%1:%2}" : : "a" (pl),
-				    "d" (ofs), "d" (ip->ftwidth));
+				BFCLR(pl, ofs, ip->ftwidth);
 				pl += cci->row_offset;
 			}
 		} else {
 			for (h = cend; h >= 0; h--) {
-				asm("bfchg %0@{%1:%2}" : : "a" (pl),
-				    "d" (ofs), "d" (ip->ftwidth));
+				BFCHG(pl, ofs, ip->ftwidth);
 				pl += cci->row_offset;
 			}
 		}
@@ -430,14 +449,12 @@ cursor32(struct ite_softc *ip, int flag)
 
 	if (dr_plane) {
 		for (h = cend; h >= 0; h--) {
-			asm("bfset %0@{%1:%2}" : : "a" (pl),
-			    "d" (ofs), "d" (ip->ftwidth));
+			BFSET(pl, ofs, ip->ftwidth);
 			pl += cci->row_offset;
 		}
 	} else {
 		for (h = cend; h >= 0; h--) {
-			asm("bfchg %0@{%1:%2}" : : "a" (pl),
-			    "d" (ofs), "d" (ip->ftwidth));
+			BFCHG(pl, ofs, ip->ftwidth);
 			pl += cci->row_offset;
 		}
 	}
@@ -479,8 +496,7 @@ putc_nm (cci,p,f,co,ro,fw,fh)
     register u_int    fh;
 {
     while (fh--) {
-	asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	     "d" (*f++), "a" (p), "d" (co), "d" (fw));
+	BFINS(*f++, p, co, fw);
 	p += ro;
     }
 }
@@ -496,8 +512,7 @@ putc_in (cci,p,f,co,ro,fw,fh)
     register u_int    fh;
 {
     while (fh--) {
-	asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	     "d" (~(*f++)), "a" (p), "d" (co), "d" (fw));
+	BFINS(~(*f++),p,co,fw);
 	p += ro;
     }
 }
@@ -515,19 +530,16 @@ putc_ul (cci,p,f,co,ro,fw,fh)
 {
     int underline = cci->underline;
     while (underline--) {
-	asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	     "d" (*f++), "a" (p), "d" (co), "d" (fw));
+	BFINS(*f++,p,co,fw);
 	p += ro;
     }
 
-    asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	 "d" (expbits(*f++)), "a" (p), "d" (co), "d" (fw));
+    BFINS(expbits(*f++),p,co,fw);
     p += ro;
 
     underline = fh - cci->underline - 1;
     while (underline--) {
-	asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	     "d" (*f++), "a" (p), "d" (co), "d" (fw));
+	BFINS(*f++,p,co,fw);
 	p += ro;
     }
 }
@@ -545,19 +557,16 @@ putc_ul_in (cci,p,f,co,ro,fw,fh)
 {
     int underline = cci->underline;
     while (underline--) {
-	asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	     "d" (~(*f++)), "a" (p), "d" (co), "d" (fw));
+	BFINS(~(*f++),p,co,fw);
 	p += ro;
     }
 
-    asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	 "d" (~expbits(*f++)), "a" (p), "d" (co), "d" (fw));
+    BFINS(~expbits(*f++),p,co,fw);
     p += ro;
 
     underline = fh - cci->underline - 1;
     while (underline--) {
-	asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	     "d" (~(*f++)), "a" (p), "d" (co), "d" (fw));
+	BFINS(~(*f++),p,co,fw);
 	p += ro;
     }
 }
@@ -578,8 +587,7 @@ putc_bd (cci,p,f,co,ro,fw,fh)
     while (fh--) {
 	ch = *f++;
 	ch |= ch << 1;
-	asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	     "d" (ch), "a" (p), "d" (co), "d" (fw+1));
+	BFINS(ch,p,co,fw+1);
 	p += ro;
     }
 }
@@ -599,8 +607,7 @@ putc_bd_in (cci,p,f,co,ro,fw,fh)
     while (fh--) {
 	ch = *f++;
 	ch |= ch << 1;
-	asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	     "d" (~(ch)), "a" (p), "d" (co), "d" (fw+1));
+	BFINS(~ch,p,co,fw+1);
 	p += ro;
     }
 }
@@ -622,23 +629,20 @@ putc_bd_ul (cci,p,f,co,ro,fw,fh)
     while (underline--) {
 	ch = *f++;
 	ch |= ch << 1;
-	asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	     "d" (ch), "a" (p), "d" (co), "d" (fw+1));
+	BFINS(ch,p,co,fw+1);
 	p += ro;
     }
 
     ch = *f++;
     ch |= ch << 1;
-    asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	 "d" (expbits(ch)), "a" (p), "d" (co), "d" (fw+1));
+    BFINS(expbits(ch),p,co,fw+1);
     p += ro;
 
     underline = fh - cci->underline - 1;
     while (underline--) {
 	ch = *f++;
 	ch |= ch << 1;
-	asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	     "d" (ch), "a" (p), "d" (co), "d" (fw+1));
+	BFINS(ch,p,co,fw+1);
 	p += ro;
     }
 }
@@ -660,23 +664,20 @@ putc_bd_ul_in (cci,p,f,co,ro,fw,fh)
     while (underline--) {
 	ch = *f++;
 	ch |= ch << 1;
-	asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	     "d" (~(ch)), "a" (p), "d" (co), "d" (fw+1));
+	BFINS(~ch,p,co,fw+1);
 	p += ro;
     }
 
     ch = *f++;
     ch |= ch << 1;
-    asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	 "d" (~expbits(ch)), "a" (p), "d" (co), "d" (fw+1));
+    BFINS(~expbits(ch),p,co,fw+1);
     p += ro;
 
     underline = fh - cci->underline - 1;
     while (underline--) {
 	ch = *f++;
 	ch |= ch << 1;
-	asm ("bfins %0,%1@{%2:%3}" : /* no output */ :
-	     "d" (~(ch)), "a" (p), "d" (co), "d" (fw+1));
+	BFINS(~ch,p,co,fw+1);
 	p += ro;
     }
 }
@@ -762,8 +763,7 @@ clear8(struct ite_softc *ip, int sy, int sx, int h, int w)
 	      u_char *ppl = pl;
               for (j = ip->ftheight-1; j >= 0; j--)
 	        {
-	          asm("bfclr %0@{%1:%2}"
-	              : : "a" (ppl), "d" (ofs), "d" (ip->ftwidth));
+		  BFCLR(ppl, ofs, ip->ftwidth);
 	          ppl += bm->row_mod + bm->bytes_per_row; 
 	        }
 	      ofs += ip->ftwidth;
@@ -823,11 +823,8 @@ scroll8(ip, sy, sx, count, dir)
 	      int t;
 	      sofs2 -= ip->ftwidth;
 	      dofs2 -= ip->ftwidth;
-	      asm("bfextu %1@{%2:%3},%0"
-	          : "=d" (t)
-		  : "a" (pl), "d" (sofs2), "d" (ip->ftwidth));
-	      asm("bfins %3,%0@{%1:%2}"
-	          : : "a" (pl), "d" (dofs2), "d" (ip->ftwidth), "d" (t));
+	      BFEXT(t, pl, sofs2, ip->ftwidth);
+	      BFINS(t, pl, dofs2, ip->ftwidth);
 	    }
 	  pl += bm->row_mod + bm->bytes_per_row; 
 	}
@@ -848,8 +845,8 @@ scroll8(ip, sy, sx, count, dir)
 	      asm("bfextu %1@{%2:%3},%0"
 	          : "=d" (t)
 		  : "a" (pl), "d" (sofs2), "d" (ip->ftwidth));
-	      asm("bfins %3,%0@{%1:%2}"
-	          : : "a" (pl), "d" (dofs2), "d" (ip->ftwidth), "d" (t));
+	      BFEXT(t, pl, sofs2, ip->ftwidth);
+	      BFINS(t, pl, dofs2, ip->ftwidth);
 	      sofs2 += ip->ftwidth;
 	      dofs2 += ip->ftwidth;
 	    }
