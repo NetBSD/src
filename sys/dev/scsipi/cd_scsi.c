@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.1.2.1 1997/07/01 16:52:27 bouyer Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.1.2.2 1997/07/01 18:23:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -74,7 +74,7 @@ void scsicdattach __P((struct device *, struct device *, void *));
 int	scsi_cd_get_mode __P((struct cd_softc *, struct scsi_cd_mode_data *, int));
 int	scsi_cd_set_mode __P((struct cd_softc *, struct scsi_cd_mode_data *));
 
-struct cfattach scsicd_ca = {
+struct cfattach cd_scsi_ca = {
 	sizeof(struct cd_softc), scsicdmatch, scsicdattach
 };
 
