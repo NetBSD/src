@@ -1,4 +1,4 @@
-/*	$NetBSD: ka680.h,v 1.1 2001/02/05 13:20:10 ragge Exp $	*/
+/*	$NetBSD: ka680.h,v 1.2 2002/12/01 21:21:45 matt Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,6 +36,8 @@
  * KA675/680 (VAX4000/[45]00) specific definitions.
  */
 
+#ifndef _VAX_KA680_H_
+#define _VAX_KA680_H_
 
 /* IPR bits definitions */
 #define        PCSTS_FLUSH              4
@@ -56,3 +58,4 @@
 #define        KA680_BWF0      0x20080014
 #define        BWF0_FEN        0x01000000
 
+#endif /* _VAX_KA680_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka420.h,v 1.2 1998/06/07 18:34:09 ragge Exp $ */
+/*	$NetBSD: ka420.h,v 1.3 2002/12/01 21:21:45 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _VAX_KA420_H_
+#define _VAX_KA420_H_
 
 /*
  * Definitions for I/O addresses of
@@ -170,3 +173,4 @@
 #define	KA420_CACR_TPE		0x00000020	/* tag parity error */
 #define	KA420_CACR_CEN		0x00000010	/* cache enable */
 
+#endif /* _VAX_KA420_H_ */

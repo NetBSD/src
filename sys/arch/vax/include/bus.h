@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.19 2002/11/15 14:52:56 ragge Exp $	*/
+/*	$NetBSD: bus.h,v 1.20 2002/12/01 21:21:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1058,7 +1058,7 @@ struct vax_bus_dmamap {
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
 
-#ifdef _VAX_BUS_DMA_PRIVATE
+/*#ifdef _VAX_BUS_DMA_PRIVATE */
 int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *));
 void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
@@ -1087,6 +1087,6 @@ void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
 paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags));
-#endif /* _VAX_BUS_DMA_PRIVATE */
+/*#endif*/ /* _VAX_BUS_DMA_PRIVATE */
 
 #endif /* _VAX_BUS_H_ */

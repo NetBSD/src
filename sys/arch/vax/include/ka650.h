@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.h,v 1.8 2001/08/31 04:44:56 simonb Exp $	*/
+/*	$NetBSD: ka650.h,v 1.9 2002/12/01 21:21:45 matt Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -36,6 +36,9 @@
  *
  *	@(#)ka650.h	7.5 (Berkeley) 6/28/90
  */
+
+#ifndef _VAX_KA650_H_
+#define _VAX_KA650_H_
 
 /*
  *
@@ -242,3 +245,5 @@ struct ka650_ipcr {
 #define	GETSYSSUBT(x)	((x >> 8) & 0xff)
 #define	GETFRMREV(x)	((x >> 16) & 0xff)
 #define	GETCODREV(x)	(x & 0xff)
+
+#endif /* _VAX_KA650_H_ */
