@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.58 2002/11/21 00:23:24 simonb Exp $ */
+/*	$NetBSD: scn.c,v 1.59 2002/11/22 13:26:39 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -790,6 +790,7 @@ scnattach(parent, self, aux)
 	u_char delim = ':';
 	enum scntype scntype = SCNUNK;
 	char *duart_type = "Unknown";
+	char *intrname;
 
 	sc = (void *) self;
 	unit = self->dv_unit;	/* sc->sc_dev.dv_unit ??? */
@@ -882,8 +883,10 @@ scnattach(parent, self, aux)
 		splx(s);
 
 		/* Arg 0 is special, so we must pass "unit + 1" */
+		intrname = malloc(sizeof("scnXX"), M_DEVBUF, M_NOWAIT);
+		snprintf(intrname, sizeof("scnXX"), "scn%d", unit);
 		intr_establish(scnints[duart], scnintr, (void *) (unit + 1),
-			       "scn", IPL_TTY, IPL_ZERO, LOW_LEVEL);
+			       intrname, IPL_TTY, IPL_ZERO, LOW_LEVEL);
 
 		printf("%c %s", delim, duart_type);
 		delim = ',';
@@ -892,8 +895,10 @@ scnattach(parent, self, aux)
 		 * IPL_ZERO is the right priority for the rx interrupt.
 		 * Only splhigh() should disable rxints.
 		 */
+		intrname = malloc(sizeof("scnXXrx"), M_DEVBUF, M_NOWAIT);
+		snprintf(intrname, 8, "scn%drx", unit);
 		intr_establish(rxints[duart], scnrxintr, (void *) (unit + 1),
-			       "scnrx", IPL_ZERO, IPL_RTTY, LOW_LEVEL);
+			       intrname, IPL_ZERO, IPL_RTTY, LOW_LEVEL);
 	}
 	/* Record unit number, uart */
 	sc->sc_unit = unit;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.25 2002/09/27 15:36:33 provos Exp $	*/
+/*	$NetBSD: intr.c,v 1.26 2002/11/22 13:26:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -33,6 +33,7 @@
 #define DEFINE_SPLX
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -131,7 +132,7 @@ check_sir(arg)
 			if ((cirpending & mask) != 0) {
 				register int s;
 				uvmexp.softs++;
-				iv->iv_cnt++;
+				iv->iv_evcnt.ev_count++;
 				s = splraise(iv->iv_mask);
 				iv->iv_vec(iv->iv_arg);
 				splx(s);
@@ -159,9 +160,10 @@ intr_establish(intr, vector, arg, use, blevel, rlevel, mode)
 	int rlevel;
 	int mode;
 {
-	int i;
+	int i, soft;
 
 	di();
+	soft = intr == SOFTINT;
 	if (rlevel < IPL_ZERO || rlevel >= NIPL ||
 	    blevel < IPL_ZERO || blevel >= NIPL)
 		panic("Illegal interrupt level for %s in intr_establish", use);
@@ -195,9 +197,10 @@ intr_establish(intr, vector, arg, use, blevel, rlevel, mode)
 	}
 	ivt[intr].iv_vec   = vector;
 	ivt[intr].iv_arg   = arg;
-	ivt[intr].iv_cnt   = 0;
 	ivt[intr].iv_use   = use;
 	ivt[intr].iv_level = rlevel;
+	evcnt_attach_dynamic(&ivt[intr].iv_evcnt, EVCNT_TYPE_INTR, NULL,
+	    soft ? "soft" : "intr", use);
 	ei();
 	imask[blevel] |= 1 << intr;
 
