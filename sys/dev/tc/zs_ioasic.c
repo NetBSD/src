@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.4 2000/10/17 08:55:43 nisimura Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.5 2000/10/17 09:27:22 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.4 2000/10/17 08:55:43 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.5 2000/10/17 09:27:22 nisimura Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -80,10 +80,10 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.4 2000/10/17 08:55:43 nisimura Exp $
 
 #include <dev/tc/zs_ioasicvar.h>
 
-#ifdef alpha
+#if defined(__alpha__) || defined(alpha)
 #include <machine/rpb.h>
 #endif
-#ifdef pmax
+#if defined(pmax)
 #include <pmax/pmax/pmaxtype.h>
 #endif
 
@@ -113,10 +113,10 @@ void	zs_putc __P((struct zs_chanstate *, int));
  * Some warts needed by z8530tty.c
  */
 int zs_def_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-#if alpha
+#if defined(__alpha__) || defined(alpha)
 int zs_major = 15;
 #endif
-#if pmax
+#if defined(pmax)
 int zs_major = 17;
 #endif
 
@@ -127,13 +127,13 @@ int zs_major = 17;
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zshan {
-#ifdef alpha
+#if defined(__alpha__) || defined(alpha)
 	volatile u_int	zc_csr;		/* ctrl,status, and indirect access */
 	u_int		zc_pad0;
 	volatile u_int	zc_data;	/* data */
 	u_int		sc_pad1;
 #endif
-#ifdef pmax
+#if defined(pmax)
 	volatile u_int16_t zc_csr;	/* ctrl,status, and indirect access */
 	unsigned : 16;
 	volatile u_int16_t zc_data;	/* data */
@@ -176,10 +176,10 @@ zs_ioasic_get_chan_addr(zsaddr, channel)
 	struct zsdevice *addr;
 	struct zshan *zc;
 
-#if alpha
+#if defined(__alpha__) || defined(alpha)
 	addr = (struct zsdevice *)TC_DENSE_TO_SPARSE(zsaddr);
 #endif
-#if pmax
+#if defined(pmax)
 	addr = (struct zsdevice *)MIPS_PHYS_TO_KSEG1(zsaddr);
 #endif
 
@@ -373,7 +373,7 @@ zs_ioasic_attach(parent, self, aux)
 	/* master interrupt control (enable) */
 	zs_write_reg(zs->zsc_cs[0], 9, zs_ioasic_init_reg[9]);
 	zs_write_reg(zs->zsc_cs[1], 9, zs_ioasic_init_reg[9]);
-#if alpha
+#if defined(__alpha__) || defined(alpha)
 	/* ioasic interrupt enable */
 	*(volatile u_int *)(ioasic_base + IOASIC_IMSK) |=
 		    IOASIC_INTR_SCC_1 | IOASIC_INTR_SCC_0;
@@ -413,7 +413,7 @@ zs_ioasic_submatch(parent, cf, aux)
 		return (0);
 	if (cf->cf_loc[ZSCCF_CHANNEL] == ZSCCF_CHANNEL_DEFAULT) {
 		if (pa->channel == 0) {
-#ifdef pmax
+#if defined(pmax)
 			if (systype == DS_MAXINE)
 				return (0);
 #endif
@@ -424,11 +424,11 @@ zs_ioasic_submatch(parent, cf, aux)
 		}
 		else if (zs->zsc_addroffset == 0x100000)
 			defname = "zstty";
-#ifdef pmax
+#if defined(pmax)
 		else if (systype == DS_MAXINE)
 			return (0);
 #endif
-#ifdef alpha
+#if defined(__alpha__) || defined(alpha)
 		else if (cputype == ST_DEC_3000_300)
 			return (0);
 #endif
@@ -571,7 +571,7 @@ zs_set_modes(cs, cflag)
  * The delay is now handled inside the chip access functions.
  * These could be inlines, but with the delay, speed is moot.
  */
-#ifdef pmax
+#if defined(pmax)
 #undef	DELAY
 #define	DELAY(x)
 #endif
@@ -769,10 +769,10 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
 	 * Compute the physical address of the chip, "map" it via
 	 * K0SEG, and then get the address of the actual channel.
 	 */
-#if alpha
+#if defined(__alpha__) || defined(alpha)
 	zs_addr = ALPHA_PHYS_TO_K0SEG(ioasic_addr + zs_offset);
 #endif
-#if pmax
+#if defined(pmax)
 	zs_addr = MIPS_PHYS_TO_KSEG1(ioasic_addr + zs_offset);
 #endif
 	zc = zs_ioasic_get_chan_addr(zs_addr, channel);
