@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.74 2004/10/11 08:43:35 wiz Exp $
+.\"	$NetBSD: pci.4,v 1.75 2004/12/11 09:53:04 jdolecek Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -218,6 +218,10 @@ Silicon Integrated Systems SiS 900, SiS 7016, and National Semiconductor
 DP83815 based
 .Tn Ethernet
 interfaces.
+.It sk
+SysKonnect SK-98xx based Gigabit
+.Tn Ethernet
+interfaces.
 .It ste
 Sundance ST-201 10/100 based
 .Tn Ethernet
@@ -396,6 +400,7 @@ VGA graphics boards.
 .Xr sf 4 ,
 .Xr siop 4 ,
 .Xr sip 4 ,
+.Xr sk 4 ,
 .Xr ste 4 ,
 .Xr stge 4 ,
 .Xr sv 4 ,
