@@ -1,5 +1,5 @@
-/*	$NetBSD: prefix.h,v 1.1 2001/02/15 17:58:55 itojun Exp $	*/
-/*	$KAME: prefix.h,v 1.3 2000/11/19 11:45:38 itojun Exp $	*/
+/*	$NetBSD: prefix.h,v 1.2 2002/05/09 14:24:03 itojun Exp $	*/
+/*	$KAME: prefix.h,v 1.4 2001/09/05 03:04:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
