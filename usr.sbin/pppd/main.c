@@ -157,7 +157,7 @@ int debug = 0;		        /* Debug flag */
 static char user[80];		/* User name */
 static char passwd[80];		/* password */
 static char *connector = NULL;	/* "connect" command */
-static char inspeed = 0;	/* Input/Output speed */
+static int inspeed = 0;		/* Input/Output speed */
 static u_long netmask = 0;	/* netmask to use on ppp interface */
 static int crtscts = 0;		/* use h/w flow control */
 static int nodetach = 0;	/* don't fork */
@@ -427,7 +427,7 @@ main(argc, argv)
 
   /* run connection script */
   if (connector) {
-      syslog(LOG_NOTICE, "Connecting with <%s>", connector);
+      syslog(LOG_INFO, "Connecting with <%s>", connector);
 	/* set line speed */
 	set_up_tty(fd, 0);
     if (set_up_connection(connector, fd, fd) < 0) {
@@ -435,7 +435,7 @@ main(argc, argv)
       setdtr(fd, FALSE);
       exit(1);
     }
-    syslog(LOG_NOTICE, "Connected...");
+    syslog(LOG_INFO, "Connected...");
   }
   
   if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -531,7 +531,7 @@ main(argc, argv)
   }
 #endif
 
-  syslog(LOG_NOTICE, "Using interface ppp%d", ifunit);
+  syslog(LOG_INFO, "Using interface ppp%d", ifunit);
   (void) sprintf(ifname, "ppp%d", ifunit);
   pid = getpid();
 
@@ -743,6 +743,8 @@ int flow;
     tios.c_cc[VERASE] = tios.c_cc[VKILL] = 0;
     tios.c_cc[VMIN] = 1;
     tios.c_cc[VTIME] = 0;
+    if (inspeed)
+        tios.c_ispeed = tios.c_ospeed = inspeed;
 
     if (ioctl(fd, TIOCSETA, &tios) < 0) {
 	syslog(LOG_ERR, "ioctl(TIOCSETA): %m");
@@ -758,7 +760,7 @@ int flow;
 void 
   quit()
 {
-  syslog(LOG_NOTICE, "Quitting");
+  syslog(LOG_INFO, "Quitting");
 
   if (fd == 0)
 	return;
@@ -995,7 +997,7 @@ int sig, code;
 struct sigcontext *scp;
 char *addr;
 {
-  syslog(LOG_NOTICE, "Hangup (SIGHUP)");
+  syslog(LOG_INFO, "Hangup (SIGHUP)");
   adjtimeout();		/* Adjust timeouts */
   lcp_lowerdown(0);		/* Reset connection */
 }
@@ -1013,7 +1015,7 @@ int sig, code;
 struct sigcontext *scp;
 char *addr;
 {
-  syslog(LOG_NOTICE, "Terminate signal received.");
+  syslog(LOG_INFO, "Terminate signal received.");
   adjtimeout();		/* Adjust timeouts */
   lcp_close(0);		/* Close connection */
 }
@@ -1031,7 +1033,7 @@ int sig, code;
 struct sigcontext *scp;
 char *addr;
 {
-  syslog(LOG_NOTICE, "Interrupt received.  Exiting.");
+  syslog(LOG_INFO, "Interrupt received.  Exiting.");
   adjtimeout();		/* Adjust timeouts */
   lcp_close(0);		/* Close connection */
 }
@@ -1265,7 +1267,7 @@ int sig, code;
 struct sigcontext *scp;
 char *addr;
 {
-  syslog(LOG_NOTICE, "Debug turned ON, Level %d", debug);
+  syslog(LOG_INFO, "Debug turned ON, Level %d", debug);
   setlogmask(LOG_UPTO(LOG_DEBUG));
   debug++;
 }
@@ -2011,7 +2013,7 @@ int *msglen;
   attempts = 0;			/* Reset count */
   *msg = "Login ok";
   *msglen = strlen(*msg);
-  syslog(LOG_NOTICE, "user %s logged in", tmp_user);
+  syslog(LOG_INFO, "user %s logged in", tmp_user);
   tty = rindex(devname, '/');
   if (tty == NULL)
     tty = devname;
