@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 1998/11/24 12:51:19 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.12 1999/02/17 03:23:28 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -248,7 +248,7 @@ intr_establish(level, ih)
 	 * This is O(N^2) for long chains, but chains are never long
 	 * and we do want to preserve order.
 	 */
-	ih->ih_pil = (1<<level); /* XXXX caller should have done this before */
+	ih->ih_pil = level; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
 	for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next);
 	*p = ih;
