@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1997/10/11 02:01:05 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1998/09/13 15:20:31 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,7 +55,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.6 1997/10/11 02:01:05 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 1998/09/13 15:20:31 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,6 +168,7 @@ main(ac, av)
 	tcgetattr(fileno(stdin), &tty_start);
 	tty_new = tty_start;
 	tty_new.c_lflag &= ~(ICANON|ECHO);
+	tty_new.c_iflag |= ICRNL;
 	tty_new.c_cc[VMIN] = 1;
 	tty_new.c_cc[VTIME] = 0;
 	tcsetattr(fileno(stdin), TCSADRAIN, &tty_new);
