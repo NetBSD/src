@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.63 2004/11/14 15:25:11 soren Exp $      */
+/*      $NetBSD: ata.c,v 1.64 2005/01/26 21:51:40 jmcneill Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.63 2004/11/14 15:25:11 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.64 2005/01/26 21:51:40 jmcneill Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -105,6 +105,7 @@ const struct cdevsw atabus_cdevsw = {
 
 extern struct cfdriver atabus_cd;
 
+static void atabus_powerhook(int, void *);
 
 /*
  * atabusprint:
@@ -321,7 +322,11 @@ atabus_thread(void *arg)
 	splx(s);
 
 	/* Configure the devices on the bus. */
-	atabusconfig(sc);
+	if (sc->sc_sleeping == 1) {
+		printf("%s: resuming...\n", sc->sc_dev.dv_xname);
+		sc->sc_sleeping = 0;
+	} else
+		atabusconfig(sc);
 
 	for (;;) {
 		s = splbio();
@@ -424,6 +429,12 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
 	config_pending_incr();
 	kthread_create(atabus_create_thread, sc);
+
+	sc->sc_sleeping = 0;
+	sc->sc_powerhook = powerhook_establish(atabus_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
+		    sc->sc_dev.dv_xname);
 }
 
 /*
@@ -1396,3 +1407,34 @@ atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	}
 	return (error);
 };
+
+static void
+atabus_powerhook(int why, void *hdl)
+{
+	struct atabus_softc *sc = (struct atabus_softc *)hdl;
+	struct ata_channel *chp = sc->sc_chan;
+	int s;
+
+	switch (why) {
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+		sc->sc_sleeping = 1;
+		s = splbio();
+		chp->ch_flags = ATACH_SHUTDOWN;
+		splx(s);
+		wakeup(&chp->ch_thread);
+		while (chp->ch_thread != NULL)
+			(void) tsleep((void *)&chp->ch_flags, PRIBIO,
+			    "atadown", 0);
+		break;
+	case PWR_RESUME:
+		atabus_create_thread(sc);
+		break;
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+
+	return;
+}
