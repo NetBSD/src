@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.4 2003/07/15 01:29:21 lukem Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.5 2003/09/28 22:00:26 cl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.4 2003/07/15 01:29:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.5 2003/09/28 22:00:26 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ zsc_pcc_attach(parent, self, aux)
 	static int didintr;
 
 	if (!zsbase)
-		mainbus_map(0x58000000, 0x10000, 0, (void **)&zsbase);
+		mainbus_map(0x58000000, 0x10000, 0, (void *)&zsbase);
 
 	/* Do common parts of SCC configuration. */
 	zs_config(zsc, zsbase);
