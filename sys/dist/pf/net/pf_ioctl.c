@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.2 2004/06/22 14:17:07 itojun Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.3 2004/06/22 18:04:32 christos Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.112 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -98,6 +98,7 @@
 #endif
 
 void			 pfattach(int);
+int			 pfdetach(void);
 int			 pfopen(dev_t, int, int, struct proc *);
 int			 pfclose(dev_t, int, int, struct proc *);
 struct pf_pool		*pf_get_pool(char *, char *, u_int32_t,
@@ -248,6 +249,12 @@ pfopen(dev_t dev, int flags, int fmt, struct proc *p)
 	if (minor(dev) >= 1)
 		return (ENXIO);
 	return (0);
+}
+
+int
+pfdetach(void)
+{
+	return pf_pfil_detach();
 }
 
 int
