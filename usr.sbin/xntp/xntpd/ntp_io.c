@@ -287,7 +287,7 @@ create_sockets(port)
   inter_list[0].sin.sin_addr.s_addr = htonl(INADDR_ANY);
   (void) strncpy(inter_list[0].name, "wildcard",
 		 sizeof(inter_list[0].name));
-  inter_list[0].mask.sin_addr.s_addr = htonl(~ (u_long)0);
+  inter_list[0].mask.sin_addr.s_addr = htonl((u_int32_t) ~ (u_long)0);
   inter_list[0].received = 0;
   inter_list[0].sent = 0;
   inter_list[0].notsent = 0;
@@ -637,7 +637,7 @@ create_sockets(port)
   /*
    * Blacklist all bound interface addresses
    */
-  resmask.sin_addr.s_addr = ~ (u_long)0;
+  resmask.sin_addr.s_addr = (u_int32_t) ~ (u_long)0;
   for (i = 1; i < ninterfaces; i++)
     restrict(RESTRICT_FLAGS, &inter_list[i].sin, &resmask,
 	     RESM_NTPONLY|RESM_INTERFACE, RES_IGNORE);
