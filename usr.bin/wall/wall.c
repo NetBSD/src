@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.24 2003/08/07 11:17:14 agc Exp $	*/
+/*	$NetBSD: wall.c,v 1.25 2004/10/27 17:49:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.24 2003/08/07 11:17:14 agc Exp $");
+__RCSID("$NetBSD: wall.c,v 1.25 2004/10/27 17:49:19 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -93,7 +93,6 @@ main(int argc, char **argv)
 	gid_t egid;
 	struct wallgroup *wg;
 	struct passwd *pw;
-	time_t atime;
 
 	setprogname(argv[0]);
 	egid = getegid();
@@ -101,7 +100,7 @@ main(int argc, char **argv)
 		err(1, "setegid");
 	pw = getpwnam("nobody");
 
-	(void)check_sender(&atime, getuid(), egid);
+	(void)check_sender(NULL, getuid(), egid);
 
 	while ((ch = getopt(argc, argv, "g:n")) != -1)
 		switch (ch) {
