@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.18 2005/03/23 00:18:01 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.19 2005/03/23 11:12:47 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -263,4 +263,24 @@ lib/libc/stdlib/tsearch.3			1.7
 	* Add restrict qualifiers to tdelete() function arguments.
 	* Const-poison tfind()'s rootp argument, per SVID Issue 1 and later.
 	[kleink, ticket #51]
+
+sbin/sysctl/sysctl.c				1.100
+
+	If a "create" or "destroy" operation succeeds, mark the cached tree as
+	"stale" so that the next time we try to read or write to it, we can
+	purge (and refresh) it. Addresses PR 29222.
+	[atatat, ticket #52]
+
+usr.sbin/pppd/pppd/Makefile			1.37
+
+	If SMALLPROG is set, do not build in PAM support. While there, depend
+	USE_INET6 on SMALLPROG/SMALLPROG_INET6 like ftp does it.
+	This fixes the build of install media (pc532 and sparc64) that include
+	ppp support.
+	[martin, ticket #53]
+
+lib/libc/stdlib/tfind.c				1.5
+
+	Avoid lint warning after previous.
+	[kleink, ticket #54]
 
