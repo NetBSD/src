@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.5 1997/07/14 21:04:43 veego Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1997/10/02 21:47:50 is Exp $
 
-SRCS+=	_setjmp.S alloca.S fabs.S frexp.c infinity.c isinf.c ldexp.S modf.S \
+SRCS+=	_setjmp.S alloca.S fabs.S frexp.c infinity.c isinf.c modf.S \
 	setjmp.S sigsetjmp.S
 SRCS+=	flt_rounds.S fpgetmask.S fpgetround.S fpgetsticky.S fpsetmask.S \
 	fpsetround.S fpsetsticky.S
@@ -10,3 +10,10 @@ SRCS+=	adddf3.S addsf3.S ashlsi3.S ashrsi3.S cmpdf2.S cmpsf2.S divdf3.S \
 	negdf2.S negsf2.S subdf3.S subsf3.S truncdfsf2.S udivsi3.S \
 	umodsi3.S umulsi3.S
 
+.ifdef(M68040)
+SRCS+=	ldexp.c
+.elseifdef(M68060)
+SRCS+=	ldexp.c
+.else
+SRCS+=	ldexp.S 
+.endif

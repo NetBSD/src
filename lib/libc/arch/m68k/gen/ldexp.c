@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp.c,v 1.2 1997/07/13 18:41:59 christos Exp $	*/
+/*	$NetBSD: ldexp.c,v 1.3 1997/10/02 21:47:47 is Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,13 +44,13 @@
 #if 0
 static const char sccsid[] = "@(#)ldexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ldexp.c,v 1.2 1997/07/13 18:41:59 christos Exp $");
+__RCSID("$NetBSD: ldexp.c,v 1.3 1997/10/02 21:47:47 is Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <math.h>
 #include <sys/types.h>
-#include <machine/ieee.h>
+#include <m68k/ieee.h>
 #include <errno.h>
 
 /*
