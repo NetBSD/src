@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.2 1995/05/05 16:30:33 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.3 1995/05/10 06:33:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -337,11 +337,11 @@ fault:
 
 	.globl	_straytrap
 
-_lev2intr:				| HBL, cannot be turned off on
-	rte				|  a Falcon, so just ignore it.
+_lev4intr:				| HBL & VBL interrupts can not
+_lev2intr:				|  be turned off on a Falcon, so
+	rte				|  just ignore them.
 
 _lev3intr:
-_lev4intr:
 _lev5intr:
 _lev6intr:
 _badtrap:
