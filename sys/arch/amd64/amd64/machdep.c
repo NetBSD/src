@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2004/03/28 15:46:14 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2004/05/03 08:59:38 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2004/03/28 15:46:14 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2004/05/03 08:59:38 toshii Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -143,6 +143,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2004/03/28 15:46:14 drochner Exp $"
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
+#endif
+
+#include "acpi.h"
+
+#if NACPI > 0
+#include <dev/acpi/acpivar.h>
+#define ACPI_MACHDEP_PRIVATE
+#include <machine/acpi_machdep.h>
 #endif
 
 #include "isa.h"
