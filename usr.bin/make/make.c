@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.11 1997/02/20 16:51:48 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.12 1997/03/10 21:19:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: make.c,v 1.11 1997/02/20 16:51:48 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.12 1997/03/10 21:19:56 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -877,7 +877,7 @@ Make_ExpandUse (targs)
 	    Lst_ForEach (gn->children, MakeHandleUse, (ClientData)gn);
 	    Suff_FindDeps (gn);
 
-	    if (gn->unmade != 0) {
+	    if (gn->unmade != 0 && (gn->type & OP_MADE) == 0) {
 		Lst_ForEach (gn->children, MakeAddChild, (ClientData)examine);
 	    } else {
 		(void)Lst_EnQueue (ntargs, (ClientData)gn);

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.14 1997/02/20 16:51:49 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -202,6 +202,8 @@ typedef struct GNode {
 				     * state of the -n or -t flags */
 #define OP_JOIN 	0x00000400  /* Target is out-of-date only if any of its
 				     * children was out-of-date */
+#define	OP_MADE		0x00000800  /* Assume the node is already made; even if
+				     * it really is out of date */
 #define OP_INVISIBLE	0x00004000  /* The node is invisible to its parents.
 				     * I.e. it doesn't show up in the parents's
 				     * local variables. */
