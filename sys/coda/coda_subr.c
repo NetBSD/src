@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.15 2003/08/27 17:49:49 drochner Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.16 2003/08/28 05:55:19 mrg Exp $	*/
 
 /*
  * 
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.15 2003/08/27 17:49:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.16 2003/08/28 05:55:19 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.15 2003/08/27 17:49:49 drochner Exp 
 #include <coda/coda_subr.h>
 #include <coda/coda_namecache.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_coda_compat.h"
+#endif
 
 int coda_active = 0;
 int coda_reuse = 0;
@@ -80,7 +82,6 @@ struct cnode *coda_cache[CODA_CACHESIZE];
 
 #define	CNODE_NEXT(cp)	((cp)->c_next)
 
-#include "opt_coda_compat.h"
 #ifdef CODA_COMPAT_5
 #define coda_hash(fid) \
     (((fid)->Volume + (fid)->Vnode) & (CODA_CACHESIZE-1))
