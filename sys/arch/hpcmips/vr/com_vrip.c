@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.2 1999/12/23 06:26:10 takemura Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.3 2000/02/11 03:20:21 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -70,6 +70,7 @@
 
 #include "locators.h"
 
+#define COMVRIPDEBUG
 #ifdef COMVRIPDEBUG
 int	com_vrip_debug = 0;
 #define	DPRINTF(arg) if (com_vrip_debug) printf arg;
