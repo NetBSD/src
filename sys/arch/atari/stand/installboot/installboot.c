@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.6 1997/01/08 12:55:41 leo Exp $	*/
+/*	$NetBSD: installboot.c,v 1.7 1997/07/09 14:31:13 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -42,13 +42,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <err.h>
-
-/*
- * Small reminder for myself ;-)
- */
-#if NetBSD != 199611
-#error New NetBSD version! Update OS_LIST in installboot.h
-#endif
+#include <limits.h>
+#include <nlist.h>
+#include <kvm.h>
 
 #define	DKTYPENAMES
 #include <sys/disklabel.h>
@@ -99,7 +95,7 @@ main (argc, argv)
 	char		 *dn;
 	int		 fd, c;
 
-	/* check OS type, release and revision */
+	/* check OS bootversion */
 	oscheck();
 
 	/* parse options */
@@ -168,64 +164,28 @@ main (argc, argv)
 	return(EXIT_SUCCESS);
 }
 
-static char *
-lststr (lst, str, bra)
-	char	*lst, *str, *bra;
-{
-	char	*p;
-
-	while ((p = strchr(lst, bra[0])) != NULL) {
-		lst = strchr(++p, bra[1]);
-		if (strncmp(str, p, lst - p))
-			continue;
-		if ((p = strchr(lst, bra[0])))
-			*p = 0;
-		return(++lst);
-	}
-	return(NULL);
-}
-
 static void
 oscheck ()
 {
-	/* ideally, this would be a nested function... */
-	static char *lststr __P((char *, char *, char *));
-	static const char os_list[] = OS_LIST;
+	struct nlist	kbv[] = { { "_bootversion" }, { NULL } };
+	kvm_t		*kd_kern;
+	char		errbuf[_POSIX2_LINE_MAX];
+	u_short		kvers;
 
-	char	*list, *type, *rel, *rev;
-	int	mib[2], rvi;
-	size_t	len;
-
-	list = alloca(sizeof(os_list));
-	strcpy(list, os_list);
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_OSTYPE;
-	sysctl(mib, 2, NULL, &len, NULL, 0);
-	type = alloca(len);
-	sysctl(mib, 2, type, &len, NULL, 0);
-	if ((list = lststr(list, type, BRA_TYPE)) == NULL)
-		errx(EXIT_FAILURE,
-		     "%s: OS type not supported", type);
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_OSRELEASE;
-	sysctl(mib, 2, NULL, &len, NULL, 0);
-	rel = alloca(len);
-	sysctl(mib, 2, rel, &len, NULL, 0);
-	if ((list = lststr(list, rel, BRA_RELEASE)) == NULL)
-		errx(EXIT_FAILURE,
-		     "%s %s: OS release not supported", type, rel);
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_OSREV;
-	len = sizeof(rvi);
-	sysctl(mib, 2, &rvi, &len, NULL, 0);
-	rev = alloca(3 * sizeof(rvi));
-	sprintf(rev, "%u", rvi);
-	if ((list = lststr(list, rev, BRA_REVISION)) == NULL)
-		errx(EXIT_FAILURE,
-		     "%s %s %s: OS revision not supported", type, rel, rev);
+	kd_kern = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
+	if (kd_kern == NULL)
+		errx(EXIT_FAILURE, "kvm_openfiles: %s", errbuf);
+	if (kvm_nlist(kd_kern, kbv) == -1)
+		errx(EXIT_FAILURE, "kvm_nlist: %s", kvm_geterr(kd_kern));
+	if (kbv[0].n_value == 0)
+		errx(EXIT_FAILURE, "%s not in namelist", kbv[0].n_name);
+	if (kvm_read(kd_kern, kbv[0].n_value, (char *)&kvers,
+						sizeof(kvers)) == -1)
+		errx(EXIT_FAILURE, "kvm_read: %s", kvm_geterr(kd_kern));
+	kvm_close(kd_kern);
+	if (kvers != BOOTVERSION)
+		errx(EXIT_FAILURE, "Kern bootversion: %d, expected: %d\n",
+					kvers, BOOTVERSION);
 }
 
 static void
