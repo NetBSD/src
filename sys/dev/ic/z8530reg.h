@@ -1,4 +1,4 @@
-/*	$NetBSD: zsreg.h,v 1.2 1994/11/20 20:52:30 deraadt Exp $ */
+/*	$NetBSD: z8530reg.h,v 1.1 1995/04/11 02:29:25 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
