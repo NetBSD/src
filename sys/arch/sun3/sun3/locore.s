@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.74 2000/05/31 05:06:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.75 2000/08/20 21:50:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -46,6 +46,7 @@
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
+#include "opt_lockdebug.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -622,8 +623,12 @@ ENTRY(switch_exit)
 	/* Schedule the vmspace and stack to be freed. */
 	movl	a0,sp@-			| exit2(p)
 	jbsr	_C_LABEL(exit2)
+	lea	sp@(4),sp		| pop args
 
-	/* Don't pop the proc; pass it to cpu_switch(). */
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
 
 	jra	_C_LABEL(cpu_switch)
 
@@ -631,19 +636,20 @@ ENTRY(switch_exit)
  * When no processes are on the runq, cpu_switch() branches to idle
  * to wait for something to come ready.
  */
-	.data
-GLOBAL(Idle_count)
-	.long	0
-	.text
-
 Lidle:
+#if defined(LOCKDEBUG)
+	/* Release sched_lock */
+	jbsr	_C_LABEL(sched_unlock_idle)
+#endif
 	stop	#PSL_LOWIPL
 GLOBAL(_Idle)				| See clock.c
 	movw	#PSL_HIGHIPL,sr
-	addql	#1, _C_LABEL(Idle_count)
-	tstl	_C_LABEL(sched_whichqs)
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
+	movl	_C_LABEL(sched_whichqs),d0
 	jeq	Lidle
-	movw	#PSL_LOWIPL,sr
 	jra	Lsw1
 
 Lbadsw:
@@ -654,69 +660,54 @@ Lbadsw:
 /*
  * cpu_switch()
  * Hacked for sun3
- * XXX - Arg 1 is a proc pointer (curproc) but this doesn't use it.
- * XXX - Sould we use p->p_addr instead of curpcb? -gwr
  */
 ENTRY(cpu_switch)
-	movl	_C_LABEL(curpcb),a1	| current pcb
-	movw	sr,a1@(PCB_PS)		| save sr before changing ipl
+	movl	_C_LABEL(curpcb),a0	| current pcb
+	movw	sr,a0@(PCB_PS)		| save sr before changing ipl
 #ifdef notyet
 	movl	_C_LABEL(curproc),sp@-	| remember last proc running
 #endif
 	clrl	_C_LABEL(curproc)
 
-Lsw1:
 	/*
 	 * Find the highest-priority queue that isn't empty,
 	 * then take the first proc from that queue.
 	 */
-	clrl	d0
-	lea	_C_LABEL(sched_whichqs),a0
-	movl	a0@,d1
-Lswchk:
-	btst	d0,d1
-	jne	Lswfnd
-	addqb	#1,d0
-	cmpb	#32,d0
-	jne	Lswchk
-	jra	_C_LABEL(_Idle)
-Lswfnd:
-	movw	#PSL_HIGHIPL,sr		| lock out interrupts
-	movl	a0@,d1			| and check again...
-	bclr	d0,d1
-	jeq	Lsw1			| proc moved, rescan
-	movl	d1,a0@			| update whichqs
-	moveq	#1,d1			| double check for higher priority
-	lsll	d0,d1			| process (which may have snuck in
-	subql	#1,d1			| while we were finding this one)
-	andl	a0@,d1
-	jeq	Lswok			| no one got in, continue
-	movl	a0@,d1
-	bset	d0,d1			| otherwise put this one back
-	movl	d1,a0@
-	jra	Lsw1			| and rescan
-Lswok:
-	movl	d0,d1
-	lslb	#3,d1			| convert queue number to index
-	addl	#_C_LABEL(sched_qs),d1	| locate queue (q)
-	movl	d1,a1
-	cmpl	a1@(P_FORW),a1		| anyone on queue?
+	movl	_C_LABEL(sched_whichqs),%d0
+	jeq	LIdle
+Lsw1:
+	/*
+	 * Interrupts are blocked, sched_lock is held.  If
+	 * we come here via Idle, %d0 contains the contents
+	 * of a non-zero sched_whichqs.
+	 */
+	movl	%d0,%d1
+	negl	%d0
+	andl	%d1,%d0
+	bfffo	%d0{#0:#32},%d1
+	eorib	#31,%d1
+
+	movl	%d1,%d0
+	lslb	#3,%d1			| convert queue number to index
+	addl	#_C_LABEL(sched_qs),%d1	| locate queue (q)
+	movl	%d1,%a1
+	movl	%a1@(P_FORW),%a0	| p = q->p_forw
+	cmpal	%d1,%a0			| anyone on queue?
 	jeq	Lbadsw			| no, panic
-	movl	a1@(P_FORW),a0		| p = q->p_forw
 #ifdef DIAGNOSTIC
-	tstl	a0@(P_WCHAN)
+	tstl	%a0@(P_WCHAN)
 	jne	Lbadsw
-	cmpb	#SRUN,a0@(P_STAT)
+	cmpb	#SRUN,%a0@(P_STAT)
 	jne	Lbadsw
 #endif
-	movl	a0@(P_FORW),a1@(P_FORW)	| q->p_forw = p->p_forw
-	movl	a0@(P_FORW),a1		| q = p->p_forw
-	movl	a0@(P_BACK),a1@(P_BACK)	| q->p_back = p->p_back
-	cmpl	a0@(P_FORW),d1		| anyone left on queue?
-	jeq	Lsw2			| no, skip
-	movl	_C_LABEL(sched_whichqs),d1
-	bset	d0,d1			| yes, reset bit
-	movl	d1,_C_LABEL(sched_whichqs)
+	movl	%a0@(P_FORW),%a1@(P_FORW)	| q->p_forw = p->p_forw
+	movl	%a0@(P_FORW),%a1		| n = p->p_forw
+	movl	%a0@(P_BACK),%a1@(P_BACK)	| n->p_back = q
+	cmpal	%d1,%a1			| anyone left on queue?
+	jne	Lsw2			| yes, skip
+	movl	_C_LABEL(sched_whichqs),%d1
+	bclr	%d0,%d1			| no, clear bit
+	movl	%d1,_C_LABEL(sched_whichqs)
 Lsw2:
 	/* p->p_cpu initialized in fork1() for single-processor */
 	movb	#SONPROC,a0@(P_STAT)	| p->p_stat = SONPROC
@@ -755,6 +746,18 @@ Lswnofpsave:
 	clrl	a0@(P_BACK)		| clear back link
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_C_LABEL(curpcb)
+
+#if defined(LOCKDEBUG)
+	/*
+	 * Done mucking with the run queues, release the
+	 * scheduler lock, but keep interrupts out.
+	 */
+	movl	%a0,sp@-		| not args...
+	movl	%a1,sp@-		| ...just saving
+	jbsr	_C_LABEL(sched_unlock_idle)
+	movl	sp@+,%a1
+	movl	sp@+,%a0
+#endif
 
 	/*
 	 * Load the new VM context (new MMU root pointer)

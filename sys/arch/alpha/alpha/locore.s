@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.78 2000/07/19 14:00:24 nathanw Exp $ */
+/* $NetBSD: locore.s,v 1.79 2000/08/20 21:50:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 #include "opt_compat_linux.h"
 
 #ifdef COMPAT_LINUX
@@ -76,7 +77,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.78 2000/07/19 14:00:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.79 2000/08/20 21:50:06 thorpej Exp $");
 
 #include "assym.h"
 
@@ -767,7 +768,6 @@ LEAF(savectx, 1)
 /**************************************************************************/
 
 IMPORT(sched_whichqs, 4)
-IMPORT(kernel_lev1map, 8)
 
 /*
  * When no processes are on the runq, cpu_switch branches to idle
@@ -781,13 +781,19 @@ LEAF(idle, 0)
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
 	stq	zero, 0(v0)			/* curproc <- NULL for stats */
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	CALL(sched_unlock_idle)			/* release sched_lock */
+#endif
 	mov	zero, a0			/* enable all interrupts */
 	call_pal PAL_OSF1_swpipl
 2:	ldl	t0, sched_whichqs		/* look for non-empty queue */
 	beq	t0, 2b
 	ldiq	a0, ALPHA_PSL_IPL_HIGH		/* disable all interrupts */
 	call_pal PAL_OSF1_swpipl
-	jmp	zero, cpu_switch_queuescan	/* jump back into the fray */
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	CALL(sched_lock_idle)			/* acquire sched_lock */
+#endif
+	jmp	zero, cpu_switch_queuescan	/* jump back into the fire */
 	END(idle)
 
 /*
@@ -818,11 +824,6 @@ LEAF(cpu_switch, 0)
 	mov	a0, s0				/* save old curproc */
 	mov	a1, s1				/* save old U-area */
 
-	ldl	t0, sched_whichqs		/* look for non-empty queue */
-	beq	t0, idle			/* and if none, go idle */
-
-	ldiq	a0, ALPHA_PSL_IPL_HIGH		/* disable all interrupts */
-	call_pal PAL_OSF1_swpipl
 cpu_switch_queuescan:
 	br	pv, 1f
 1:	LDGP(pv)
@@ -863,6 +864,13 @@ cpu_switch_queuescan:
 5:
 	mov	t4, s2				/* save new proc */
 	ldq	s3, P_MD_PCBPADDR(s2)		/* save new pcbpaddr */
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	/*
+	 * Done mucking with the run queues, release the
+	 * scheduler lock, but keep interrupts out.
+	 */
+	CALL(sched_unlock_idle)
+#endif
 
 	/*
 	 * Check to see if we're switching to ourself.  If we are,
@@ -874,7 +882,7 @@ cpu_switch_queuescan:
 	 * saved it.  Also note that switch_exit() ensures that
 	 * s0 is clear before jumping here to find a new process.
 	 */
-	cmpeq	s0, t4, t0			/* oldproc == newproc? */
+	cmpeq	s0, s2, t0			/* oldproc == newproc? */
 	bne	t0, 7f				/* Yes!  Skip! */
 
 	/*
@@ -1038,6 +1046,10 @@ LEAF(switch_exit, 1)
 	/* Schedule the vmspace and stack to be freed. */
 	mov	s2, a0
 	CALL(exit2)
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	CALL(sched_lock_idle)			/* acquire sched_lock */
+#endif
 
 	/*
 	 * Now jump back into the middle of cpu_switch().  Note that

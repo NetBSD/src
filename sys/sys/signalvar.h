@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.23 1999/12/30 15:53:09 eeh Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.24 2000/08/20 21:50:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -147,7 +147,9 @@ void	gsignal __P((int pgid, int sig));
 int	issignal __P((struct proc *p));
 void	pgsignal __P((struct pgrp *pgrp, int sig, int checkctty));
 void	postsig __P((int sig));
-void	psignal __P((struct proc *p, int sig));
+void	psignal1 __P((struct proc *p, int sig, int dolock));
+#define	psignal(p, sig)		psignal1((p), (sig), 1)
+#define	sched_psignal(p, sig)	psignal1((p), (sig), 0)
 void	siginit __P((struct proc *p));
 void	trapsignal __P((struct proc *p, int sig, u_long code));
 void	sigexit __P((struct proc *, int));
