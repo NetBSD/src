@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# Here is a generic script that makes a Sun2 boot tape using
+# the files in ../binary
+#
+# $NetBSD: MakeInstTape,v 1.1 2001/05/18 00:16:38 fredette Exp $
+
+T=${1:-/dev/nrst0}
+
+# Remember, skip "etc" for an upgrade.
+sets="etc base comp games man misc text"
+
+# Entertain...
+set -x
+
+# Make sure we start at the beginning.
+mt -f $T rewind
+
+# Write each *.tgz file into a tape segment.
+for f in $sets
+do
+  dd if=../../binary/sets/${f}.tgz of=$T obs=8k conv=sync
+done
+
+# Done!
+mt -f $T rewind
