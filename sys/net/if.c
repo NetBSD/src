@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.30 1996/03/12 12:55:52 mrg Exp $	*/
+/*	$NetBSD: if.c,v 1.31 1996/03/12 13:01:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -213,7 +213,7 @@ ifa_ifwithnet(addr)
 
 			if (ifa->ifa_addr->sa_family != af ||
 			    ifa->ifa_netmask == 0)
-				next: continue;
+				continue;
 			cp = addr_data;
 			cp2 = ifa->ifa_addr->sa_data;
 			cp3 = ifa->ifa_netmask->sa_data;
@@ -221,7 +221,7 @@ ifa_ifwithnet(addr)
 				ifa->ifa_netmask->sa_len;
 			while (cp3 < cplim)
 				if ((*cp++ ^ *cp2++) & *cp3++)
-					goto next;
+					continue;
 			if (ifa_maybe == 0 ||
 			    rn_refines((caddr_t)ifa->ifa_netmask,
 			    (caddr_t)ifa_maybe->ifa_netmask))
