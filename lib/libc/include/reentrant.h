@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.6.4.2 2001/12/30 02:27:59 nathanw Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.6.4.3 2002/02/06 23:00:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997,98 The NetBSD Foundation, Inc.
@@ -100,9 +100,11 @@
 #define mutex_unlock(m)		pthread_mutex_unlock(m)
 
 #define cond_t			pthread_cond_t
+#define COND_INITIALIZER	PTHREAD_COND_INITIALIZER
+
 #define cond_signal(m)		pthread_cond_signal(m)
 #define cond_wait(c, m)		pthread_cond_wait(c, m)
-#define cond_init(c, a, p)	pthread_cond_init(c, a)
+#define cond_init(c, t, a)     	pthread_cond_init(c, a)
 
 #if 0
 #define rwlock_t		pthread_rwlock_t
@@ -127,6 +129,8 @@
 #define thr_setspecific(k, p)	pthread_setspecific(k, p)
 #define thr_getspecific(k)	pthread_getspecific(k)
 #define thr_sigsetmask(f, n, o)	pthread_sigmask(f, n, o)
+
+#define thr_t			pthread_t
 
 #define thr_self()		pthread_self()
 #define thr_exit(x)		pthread_exit(x)
