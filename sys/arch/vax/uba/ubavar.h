@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.17 1996/07/11 19:34:00 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.18 1996/08/20 13:38:04 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -71,37 +71,41 @@
  */
 struct	uba_softc {
 	struct	device uh_dev;		/* Device struct, autoconfig */
+	SIMPLEQ_HEAD(, uba_unit) uh_resq;	/* resource wait chain */
 	int	uh_type;		/* type of adaptor */
 	struct	uba_regs *uh_uba;	/* virt addr of uba adaptor regs */
-	struct	uba_regs *uh_physuba;	/* phys addr of uba adaptor regs */
 	struct	pte *uh_mr;		/* start of page map */
 	int	uh_memsize;		/* size of uba memory, pages */
-	caddr_t	uh_mem;			/* start of uba memory address space */
 	caddr_t	uh_iopage;		/* start of uba io page */
 	void	(**uh_reset) __P((int));/* UBA reset function array */
 	int	*uh_resarg;		/* array of ubareset args */
 	int	uh_resno;		/* Number of devices to reset */
 	struct	ivec_dsp *uh_idsp;	/* Interrupt dispatch area */
 	u_int	*uh_iarea;		/* Interrupt vector array */
-	struct	uba_unit *uh_actf;	/* head of queue to transfer */
-	struct	uba_unit *uh_actl;	/* tail of queue to transfer */
 	short	uh_mrwant;		/* someone is waiting for map reg */
 	short	uh_bdpwant;		/* someone awaits bdp's */
 	int	uh_bdpfree;		/* free bdp's */
-	int	uh_hangcnt;		/* number of ticks hung */
 	int	uh_zvcnt;		/* number of recent 0 vectors */
 	long	uh_zvtime;		/* time over which zvcnt accumulated */
 	int	uh_zvtotal;		/* total number of 0 vectors */
-	int	uh_errcnt;		/* number of errors */
 	int	uh_lastiv;		/* last free interrupt vector */
 	short	uh_users;		/* transient bdp use count */
 	short	uh_xclu;		/* an rk07 is using this uba! */
 	int	uh_lastmem;		/* limit of any unibus memory */
-#define	UAMSIZ	100
 	struct	map *uh_map;		/* register free map */
+	int	(*uh_errchk) __P((struct uba_softc *));
+	void	(*uh_beforescan) __P((struct uba_softc *));
+	void	(*uh_afterscan) __P((struct uba_softc *));
+	void	(*uh_ubainit) __P((struct uba_softc *));
+	void	(*uh_ubapurge) __P((struct uba_softc *, int));
+#ifdef DW780
 	struct	ivec_dsp uh_dw780;	/* Interrupt handles for DW780 */
-	int	uh_nr;			/* Unibus sequential number */
+#endif
+	short	uh_nr;			/* Unibus sequential number */
+	short	uh_nbdp;		/* # of BDP's */
 };
+
+#define	UAMSIZ	100
 
 /* given a pointer to uba_regs, find DWBUA registers */
 /* this should be replaced with a union in uba_softc */
@@ -114,12 +118,11 @@ struct	uba_softc {
  * BDP's, and calls the adapter queueing subroutines.
  */
 struct	uba_unit {
+	SIMPLEQ_ENTRY(uba_unit) uu_resq;/* Queue while waiting for resources */
 	void	*uu_softc;	/* Pointer to units softc */
 	int	uu_ubinfo;	/* save unibus registers, etc */
 	int	uu_bdp;		/* for controllers that hang on to bdp's */
-	struct	buf uu_tab;	/* queue of devices for this controller */
-	void    (*uu_dgo) __P((struct uba_unit *));
-	struct	uba_unit *uu_forw;	/* Link when waiting for resources */
+	int    (*uu_ready) __P((struct uba_unit *));
 	short   uu_xclu;        /* want exclusive use of bdp's */
 	short   uu_keepbdp;     /* hang on to bdp's once allocated */
 };
@@ -174,19 +177,17 @@ struct ubinfo {
 
 #ifndef _LOCORE
 #ifdef _KERNEL
-#define	ubago(ui)	ubaqueue(ui, 0)
+#define	ubago(ui)	ubaqueue(ui)
 #define b_forw  b_hash.le_next	/* Nice to have when handling uba queues */
 
 extern	struct cfdriver	uba_cd;
 
-void	ubainit __P((struct uba_softc *));
 void    ubasetvec __P((struct device *, int, void (*) __P((int))));
-int	uballoc __P((int, caddr_t, int, int));
-void	ubarelse __P((int, int *));
-int	ubaqueue __P((struct uba_unit *, int));
+int	uballoc __P((struct uba_softc *, caddr_t, int, int));
+void	ubarelse __P((struct uba_softc *, int *));
+int	ubaqueue __P((struct uba_unit *, struct buf *));
 void	ubadone __P((struct uba_unit *));
 void	ubareset __P((int));
-int	ubasetup __P((int, struct buf *, int));
 
 #endif /* _KERNEL */
 #endif !_LOCORE
