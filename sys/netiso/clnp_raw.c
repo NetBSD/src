@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.13 1996/10/13 02:04:19 christos Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.14 2000/03/30 13:10:07 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -215,7 +215,7 @@ rclnp_ctloutput(op, so, level, optname, m)
 	struct mbuf   **m;	/* ptr to ptr to option data */
 {
 	int             error = 0;
-	register struct rawisopcb *rp = sotorawisopcb(so);	/* raw cb ptr */
+	struct rawisopcb *rp = sotorawisopcb(so);	/* raw cb ptr */
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CTLOUTPUT]) {
@@ -304,8 +304,8 @@ clnp_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register int    error = 0;
-	register struct rawisopcb *rp = sotorawisopcb(so);
+	int    error = 0;
+	struct rawisopcb *rp = sotorawisopcb(so);
 
 	rp = sotorawisopcb(so);
 	switch (req) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.3 2000/02/15 00:42:22 itojun Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.4 2000/03/30 13:24:55 augustss Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -90,13 +90,13 @@
 
 int
 in4_cksum(m, nxt, off, len)
-	register struct mbuf *m;
+	struct mbuf *m;
 	u_int8_t nxt;
-	register int off, len;
+	int off, len;
 {
-	register u_int16_t *w;
-	register int sum = 0;
-	register int mlen = 0;
+	u_int16_t *w;
+	int sum = 0;
+	int mlen = 0;
 	int byte_swapped = 0;
 	struct ipovly ipov;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.65 2000/03/30 02:39:37 simonb Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.66 2000/03/30 13:25:11 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -672,7 +672,7 @@ bad:
 static int
 in6_mcmatch(in6p, ia6, ifp)
 	struct in6pcb *in6p;
-	register struct in6_addr *ia6;
+	struct in6_addr *ia6;
 	struct ifnet *ifp;
 {
 	struct ip6_moptions *im6o = in6p->in6p_moptions;
@@ -873,9 +873,9 @@ udp_input(m, va_alist)
 #endif
 {
 	int proto;
-	register struct ip *ip;
-	register struct udphdr *uh;
-	register struct inpcb *inp;
+	struct ip *ip;
+	struct udphdr *uh;
+	struct inpcb *inp;
 	struct mbuf *opts = 0;
 	int len;
 	struct ip save_ip;
@@ -1144,7 +1144,7 @@ bad:
  */
 static void
 udp_notify(inp, errno)
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	int errno;
 {
 
@@ -1159,8 +1159,8 @@ udp_ctlinput(cmd, sa, v)
 	struct sockaddr *sa;
 	void *v;
 {
-	register struct ip *ip = v;
-	register struct udphdr *uh;
+	struct ip *ip = v;
+	struct udphdr *uh;
 	void (*notify) __P((struct inpcb *, int)) = udp_notify;
 	int errno;
 
@@ -1197,9 +1197,9 @@ udp_output(m, va_alist)
 	va_dcl
 #endif
 {
-	register struct inpcb *inp;
-	register struct udpiphdr *ui;
-	register int len = m->m_pkthdr.len;
+	struct inpcb *inp;
+	struct udpiphdr *ui;
+	int len = m->m_pkthdr.len;
 	int error = 0;
 	va_list ap;
 
@@ -1278,9 +1278,9 @@ udp_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	int s;
-	register int error = 0;
+	int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)nam,

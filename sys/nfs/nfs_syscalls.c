@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.37 2000/03/30 02:43:58 simonb Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.38 2000/03/30 12:51:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -130,7 +130,7 @@ sys_nfssvc(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_nfssvc_args /* {
+	struct sys_nfssvc_args /* {
 		syscallarg(int) flag;
 		syscallarg(caddr_t) argp;
 	} */ *uap = v;
@@ -331,10 +331,10 @@ nfssvc_addsock(fp, mynam)
 	struct file *fp;
 	struct mbuf *mynam;
 {
-	register struct mbuf *m;
-	register int siz;
-	register struct nfssvc_sock *slp;
-	register struct socket *so;
+	struct mbuf *m;
+	int siz;
+	struct nfssvc_sock *slp;
+	struct socket *so;
 	struct nfssvc_sock *tslp;
 	int error, s;
 
@@ -423,11 +423,11 @@ nfssvc_nfsd(nsd, argp, p)
 	caddr_t argp;
 	struct proc *p;
 {
-	register struct mbuf *m;
-	register int siz;
-	register struct nfssvc_sock *slp;
-	register struct socket *so;
-	register int *solockp;
+	struct mbuf *m;
+	int siz;
+	struct nfssvc_sock *slp;
+	struct socket *so;
+	int *solockp;
 	struct nfsd *nfsd = nsd->nsd_nfsd;
 	struct nfsrv_descript *nd = NULL;
 	struct mbuf *mreq;
@@ -735,10 +735,10 @@ done:
  */
 void
 nfsrv_zapsock(slp)
-	register struct nfssvc_sock *slp;
+	struct nfssvc_sock *slp;
 {
-	register struct nfsuid *nuidp, *nnuidp;
-	register struct nfsrv_descript *nwp, *nnwp;
+	struct nfsuid *nuidp, *nnuidp;
+	struct nfsrv_descript *nwp, *nnwp;
 	struct socket *so;
 	struct file *fp;
 	struct mbuf *m;
@@ -785,7 +785,7 @@ nfsrv_zapsock(slp)
  */
 void
 nfsrv_slpderef(slp)
-	register struct nfssvc_sock *slp;
+	struct nfssvc_sock *slp;
 {
 	if (--(slp->ns_sref) == 0 && (slp->ns_flag & SLP_VALID) == 0) {
 		TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
@@ -802,7 +802,7 @@ void
 nfsrv_init(terminating)
 	int terminating;
 {
-	register struct nfssvc_sock *slp, *nslp;
+	struct nfssvc_sock *slp, *nslp;
 
 	if (nfssvc_sockhead_flag & SLP_INIT)
 		panic("nfsd init");
@@ -848,10 +848,10 @@ nfsrv_init(terminating)
 static void
 nfsd_rt(sotype, nd, cacherep)
 	int sotype;
-	register struct nfsrv_descript *nd;
+	struct nfsrv_descript *nd;
 	int cacherep;
 {
-	register struct drt *rt;
+	struct drt *rt;
 
 	rt = &nfsdrt.drt[nfsdrt.pos];
 	if (cacherep == RC_DOIT)
@@ -890,8 +890,8 @@ int
 nfssvc_iod(p)
 	struct proc *p;
 {
-	register struct buf *bp;
-	register int i, myiod;
+	struct buf *bp;
+	int i, myiod;
 	struct nfsmount *nmp;
 	int error = 0;
 
@@ -965,7 +965,7 @@ nfssvc_iod(p)
  */
 int
 nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
-	register struct nfsmount *nmp;
+	struct nfsmount *nmp;
 	struct nfsreq *rep;
 	struct ucred *cred;
 	char **auth_str;
@@ -1034,8 +1034,8 @@ nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
 	char *verf_str;
 	int verf_len;
 {
-	register struct nfsuid *nuidp;
-	register u_int32_t *nickp, *verfp;
+	struct nfsuid *nuidp;
+	u_int32_t *nickp, *verfp;
 	struct timeval ktvin, ktvout;
 
 #ifdef DIAGNOSTIC
@@ -1095,7 +1095,7 @@ nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
  */
 int
 nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
-	register struct nfsmount *nmp;
+	struct nfsmount *nmp;
 	struct ucred *cred;
 	int len;
 	NFSKERBKEY_T key;
@@ -1103,9 +1103,9 @@ nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 	char **dposp;
 	struct mbuf *mrep;
 {
-	register struct nfsuid *nuidp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	struct nfsuid *nuidp;
+	u_int32_t *tl;
+	int32_t t1;
 	struct mbuf *md = *mdp;
 	struct timeval ktvin, ktvout;
 	u_int32_t nick;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.105 2000/03/01 12:49:37 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.106 2000/03/30 13:25:05 augustss Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -241,12 +241,12 @@ do {									\
 
 int
 tcp_reass(tp, th, m, tlen)
-	register struct tcpcb *tp;
-	register struct tcphdr *th;
+	struct tcpcb *tp;
+	struct tcphdr *th;
 	struct mbuf *m;
 	int *tlen;
 {
-	register struct ipqent *p, *q, *nq, *tiqe = NULL;
+	struct ipqent *p, *q, *nq, *tiqe = NULL;
 	struct socket *so = NULL;
 	int pkt_flags;
 	tcp_seq pkt_seq;
@@ -559,22 +559,22 @@ void
 tcp_input(struct mbuf *m, ...)
 #else
 tcp_input(m, va_alist)
-	register struct mbuf *m;
+	struct mbuf *m;
 #endif
 {
 	int proto;
-	register struct tcphdr *th;
+	struct tcphdr *th;
 	struct ip *ip;
-	register struct inpcb *inp;
+	struct inpcb *inp;
 #ifdef INET6
 	struct ip6_hdr *ip6;
-	register struct in6pcb *in6p;
+	struct in6pcb *in6p;
 #endif
 	caddr_t optp = NULL;
 	int optlen = 0;
 	int len, tlen, toff, hdroptlen = 0;
-	register struct tcpcb *tp = 0;
-	register int tiflags;
+	struct tcpcb *tp = 0;
+	int tiflags;
 	struct socket *so = NULL;
 	int todrop, acked, ourfinisacked, needoutput = 0;
 	short ostate = 0;
@@ -1802,8 +1802,8 @@ after_listen:
 		 * open quickly enough.
 		 */
 		{
-		register u_int cw = tp->snd_cwnd;
-		register u_int incr = tp->t_segsz;
+		u_int cw = tp->snd_cwnd;
+		u_int incr = tp->t_segsz;
 
 		if (cw > tp->snd_ssthresh)
 			incr = incr * incr / cw;
@@ -2313,7 +2313,7 @@ void
 tcp_pulloutofband(so, th, m, off)
 	struct socket *so;
 	struct tcphdr *th;
-	register struct mbuf *m;
+	struct mbuf *m;
 	int off;
 {
 	int cnt = off + th->th_urp - 1;
@@ -2343,10 +2343,10 @@ tcp_pulloutofband(so, th, m, off)
  */
 void
 tcp_xmit_timer(tp, rtt)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 	short rtt;
 {
-	register short delta;
+	short delta;
 	short rttmin;
 
 	tcpstat.tcps_rttupdated++;
@@ -2823,11 +2823,11 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
-	register struct inpcb *inp = NULL;
+	struct inpcb *inp = NULL;
 #ifdef INET6
-	register struct in6pcb *in6p = NULL;
+	struct in6pcb *in6p = NULL;
 #endif
-	register struct tcpcb *tp = 0;
+	struct tcpcb *tp = 0;
 	struct mbuf *am;
 	int s;
 	struct socket *oso;
