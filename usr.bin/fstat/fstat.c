@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.37 1999/08/02 17:39:13 jdolecek Exp $	*/
+/*	$NetBSD: fstat.c,v 1.38 2000/01/17 16:14:39 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.37 1999/08/02 17:39:13 jdolecek Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.38 2000/01/17 16:14:39 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,13 @@ __RCSID("$NetBSD: fstat.c,v 1.37 1999/08/02 17:39:13 jdolecek Exp $");
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
+#include <netinet6/in6_pcb.h>
+#endif
+
+#include <netdb.h>
 #include <arpa/inet.h>
 
 #include <ctype.h>
@@ -140,6 +147,9 @@ void	getinetproto __P((int));
 char   *getmnton __P((struct mount *));
 int	main __P((int, char **));
 int	nfs_filestat __P((struct vnode *, struct filestat *));
+#ifdef INET6
+static const char *inet6_addrstr __P((struct in6_addr *));
+#endif
 void	socktrans __P((struct socket *, int));
 int	ufs_filestat __P((struct vnode *, struct filestat *));
 void	usage __P((void));
@@ -600,6 +610,38 @@ getmnton(m)
 	return (mt->mntonname);
 }
 
+#ifdef INET6
+static const char *
+inet6_addrstr(p)
+	struct in6_addr *p;
+{
+	struct sockaddr_in6 sin6;
+	static char hbuf[NI_MAXHOST];
+#ifdef NI_WITHSCOPEID
+	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+	const int niflags = NI_NUMERICHOST
+#endif
+
+	memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_len = sizeof(struct sockaddr_in6);
+	sin6.sin6_addr = *p;
+	if (IN6_IS_ADDR_LINKLOCAL(p) &&
+	    *(u_int16_t *)&sin6.sin6_addr.s6_addr[2] != 0) {
+		sin6.sin6_scope_id =
+			ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
+		sin6.sin6_addr.s6_addr[2] = sin6.sin6_addr.s6_addr[3] = 0;
+	}
+
+	if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+			hbuf, sizeof(hbuf), NULL, 0, niflags))
+		return "invalid";
+
+	return hbuf;
+}
+#endif
+
 void
 socktrans(sock, i)
 	struct socket *sock;
@@ -618,9 +660,15 @@ socktrans(sock, i)
 	struct protosw	proto;
 	struct domain	dom;
 	struct inpcb	inpcb;
+#ifdef INET6
+	struct in6pcb	in6pcb;
+#endif
 	struct unpcb	unpcb;
 	int len;
 	char dname[32];
+#ifdef INET6
+	char xaddrbuf[NI_MAXHOST + 2];
+#endif
 
 	PREFIX(i);
 
@@ -682,8 +730,7 @@ socktrans(sock, i)
 			    inpcb.inp_laddr.s_addr == INADDR_ANY ? "*" :
 			    inet_ntoa(inpcb.inp_laddr), ntohs(inpcb.inp_lport));
 			if (inpcb.inp_fport) {
-				printf(" <-> ");
-				printf("%s:%d",
+				printf(" <-> %s:%d",
 				    inpcb.inp_faddr.s_addr == INADDR_ANY ? "*" :
 				    inet_ntoa(inpcb.inp_faddr),
 				    ntohs(inpcb.inp_fport));
@@ -708,6 +755,59 @@ socktrans(sock, i)
 		} else if (so.so_pcb)
 			printf(" %lx", (long)so.so_pcb);
 		break;
+#ifdef INET6
+	case AF_INET6:
+		getinetproto(proto.pr_protocol);
+		if (proto.pr_protocol == IPPROTO_TCP) {
+			if (so.so_pcb == NULL)
+				break;
+			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&in6pcb,
+			    sizeof(struct in6pcb)) != sizeof(struct in6pcb)) {
+				dprintf("can't read in6pcb at %p", so.so_pcb);
+				goto bad;
+			}
+			printf(" %lx", (long)in6pcb.in6p_ppcb);
+			sprintf(xaddrbuf, "[%s]",
+			    inet6_addrstr(&in6pcb.in6p_laddr));
+			printf(" %s:%d",
+			    IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_laddr) ? "*" :
+			    xaddrbuf,
+			    ntohs(in6pcb.in6p_lport));
+			if (in6pcb.in6p_fport) {
+				sprintf(xaddrbuf, "[%s]", 
+				    inet6_addrstr(&in6pcb.in6p_faddr));
+				printf(" <-> %s:%d",
+			            IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_faddr) ? "*" :
+				    xaddrbuf,
+				    ntohs(in6pcb.in6p_fport));
+			}
+		} else if (proto.pr_protocol == IPPROTO_UDP) {
+			if (so.so_pcb == NULL)
+				break;
+			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&in6pcb,
+			    sizeof(struct in6pcb)) != sizeof(struct in6pcb)) {
+				dprintf("can't read inpcb at %p", so.so_pcb);
+				goto bad;
+			}
+			printf(" %lx", (long)so.so_pcb);
+			sprintf(xaddrbuf, "[%s]", 
+			    inet6_addrstr(&in6pcb.in6p_laddr));
+			printf(" %s:%d",
+		            IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_laddr) ? "*" :
+			    xaddrbuf,
+			    ntohs(in6pcb.in6p_lport));
+			if (in6pcb.in6p_fport) {
+				sprintf(xaddrbuf, "[%s]", 
+				    inet6_addrstr(&in6pcb.in6p_faddr));
+				printf(" <-> %s:%d",
+			            IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_faddr) ? "*" :
+				    xaddrbuf,
+				    ntohs(in6pcb.in6p_fport));
+			}
+		} else if (so.so_pcb)
+			printf(" %lx", (long)so.so_pcb);
+		break;
+#endif
 	case AF_LOCAL:
 		/* print address of pcb and connected pcb */
 		if (so.so_pcb) {
@@ -771,6 +871,8 @@ getinetproto(number)
 		cp ="idp"; break;
 	case IPPROTO_RAW:
 		cp ="raw"; break;
+	case IPPROTO_ICMPV6:
+		cp ="icmp6"; break;
 	default:
 		printf(" %d", number);
 		return;
