@@ -42,6 +42,10 @@
  *	across the network to save BandWidth
  *
  * $Log: supfilesrv.c,v $
+ * Revision 1.8  1995/10/29 23:54:49  christos
+ * - runio fails when result != 0 not only < 0
+ * - print vis-encoded file in the scanner.
+ *
  * Revision 1.7  1995/06/24 16:21:55  christos
  * - Don't use system(3) to fork processes. It is a big security hole.
  * - Encode the filenames in the scan files using strvis(3), so filenames
@@ -1219,7 +1223,7 @@ TREE *t;
 						av[0] = "gzip";
 						av[1] = "-c";
 						av[2] = NULL;
-						if (runio(av, rcs_file, temp_file, NULL) < 0) {
+						if (runio(av, rcs_file, temp_file, NULL) != 0) {
                                                         /* Just in case */
                                                         unlink(temp_file);
                                                         unlink(rcs_file);
@@ -1239,7 +1243,7 @@ TREE *t;
 					av[0] = "gzip";
 					av[1] = "-c";
 					av[2] = NULL;
-					if (runio(av, t->Tname, temp_file, NULL) < 0) {
+					if (runio(av, t->Tname, temp_file, NULL) != 0) {
                                                 /* Just in case */
                                                 unlink(temp_file);
                                                 goaway ("We died trying to run gzip");

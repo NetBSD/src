@@ -28,6 +28,10 @@
  **********************************************************************
  * HISTORY
  * $Log: scan.c,v $
+ * Revision 1.4  1995/10/29 23:54:45  christos
+ * - runio fails when result != 0 not only < 0
+ * - print vis-encoded file in the scanner.
+ *
  * Revision 1.3  1995/06/24 16:21:42  christos
  * - Don't use system(3) to fork processes. It is a big security hole.
  * - Encode the filenames in the scan files using strvis(3), so filenames
@@ -972,7 +976,7 @@ FILE **scanF;
 	if (t->Tflags&FNOACCT)  fprintf (*scanF,"N");
 	strvis(fname, t->Tname, VIS_WHITE);
 	fprintf (*scanF,"%o %d %d %s\n",
-		t->Tmode,t->Tctime,t->Tmtime,t->Tname);
+		t->Tmode,t->Tctime,t->Tmtime,fname);
 	(void) Tprocess (t->Texec,recordexec,*scanF);
 	return (SCMOK);
 }
