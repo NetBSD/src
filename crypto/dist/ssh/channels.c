@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.1.1.1 2000/09/28 22:09:51 thorpej Exp $	*/
+/*	$NetBSD: channels.c,v 1.2 2000/10/05 14:09:07 sommerfeld Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: channels.c,v 1.1.1.1 2000/09/28 22:09:51 thorpej Exp $");
+__RCSID("$NetBSD: channels.c,v 1.2 2000/10/05 14:09:07 sommerfeld Exp $");
 #endif
 
 #include "includes.h"
@@ -1821,25 +1821,19 @@ static
 int
 connect_local_xsocket(unsigned int dnr)
 {
-	static const char *const x_sockets[] = {
-		_PATH_XUNIX_DIR "%u",
-		NULL
-	};
+	static const char x_socket[] = _PATH_XUNIX_DIR "%u";
 	int sock;
 	struct sockaddr_un addr;
-	const char *const * path;
 
-	for (path = x_sockets; *path; ++path) {
-		sock = socket(AF_UNIX, SOCK_STREAM, 0);
-		if (sock < 0)
-			error("socket: %.100s", strerror(errno));
-		memset(&addr, 0, sizeof(addr));
-		addr.sun_family = AF_UNIX;
-		snprintf(addr.sun_path, sizeof addr.sun_path, *path, dnr);
-		if (connect(sock, (struct sockaddr *) & addr, sizeof(addr)) == 0)
-			return sock;
-		close(sock);
-	}
+	sock = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (sock < 0)
+	  	error("socket: %.100s", strerror(errno));
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	snprintf(addr.sun_path, sizeof addr.sun_path, x_socket, dnr);
+	if (connect(sock, (struct sockaddr *) & addr, sizeof(addr)) == 0)
+		return sock;
+	close(sock);
 	error("connect %.100s: %.100s", addr.sun_path, strerror(errno));
 	return -1;
 }

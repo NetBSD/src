@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.1.1.1 2000/09/28 22:09:42 thorpej Exp $	*/
+/*	$NetBSD: auth1.c,v 1.2 2000/10/05 14:09:07 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: auth1.c,v 1.1.1.1 2000/09/28 22:09:42 thorpej Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.2 2000/10/05 14:09:07 sommerfeld Exp $");
 #endif
 
 #include "includes.h"
@@ -105,7 +105,7 @@ do_fake_authloop1(char *user)
 				   (password = packet_get_string(&dlen)) != NULL &&
 				   dlen == 5 &&
 				   strncasecmp(password, "s/key", 5) == 0 ) {
-				packet_send_debug(skeyinfo);
+				packet_send_debug("%s", skeyinfo);
 			}
 		}
 		if (password != NULL)
