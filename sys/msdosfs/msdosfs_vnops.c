@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.56 1997/05/08 16:20:28 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.57 1997/05/08 16:45:02 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -251,7 +251,7 @@ msdosfs_access(v)
 		mode = S_IRWXU|S_IRWXG|S_IRWXO;
 	else
 		mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-	return (vaccess(mode & pmp->pm_mask,
+	return (vaccess(ap->a_vp->v_type, mode & pmp->pm_mask,
 	    pmp->pm_uid, pmp->pm_gid, ap->a_mode, ap->a_cred));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.39 1997/05/08 16:20:02 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.40 1997/05/08 16:43:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -157,7 +157,8 @@ cd9660_access(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct iso_node *ip = VTOI(ap->a_vp);
+	struct vnode *vp = ap->a_vp;
+	struct iso_node *ip = VTOI(vp);
 
 	return (vaccess(vp->v_type, ip->inode.iso_mode & ALLPERMS,
 	    ip->inode.iso_uid, ip->inode.iso_gid, ap->a_mode, ap->a_cred));
@@ -174,8 +175,8 @@ cd9660_getattr(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct iso_node *ip = VTOI(vp);
 	register struct vattr *vap = ap->a_vap;
-	register struct iso_node *ip = VTOI(vp);
 
 	vap->va_fsid	= ip->i_dev;
 	vap->va_fileid	= ip->i_number;
