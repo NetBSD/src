@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.144 2000/05/29 20:13:06 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.145 2000/05/30 01:49:19 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -595,6 +595,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* Letting the motor run kills floppy drives and disks quite fast. */
 	{{T_DIRECT, T_REMOV,
 	 "TEAC", "FC-1",		 ""},	  SDEV_NOSTARTUNIT},
+
+	{{T_DIRECT, T_REMOV,
+	 "Y-E DATA", "USB-FDU",		 "3.04"}, SDEV_NOMODESENSE},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
