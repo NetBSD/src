@@ -1,42 +1,63 @@
-#	$NetBSD: Makefile,v 1.16 1996/10/18 02:46:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.17 1996/12/23 01:14:34 cgd Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/19/94
 
-SRCS=	fortunes fortunes2 startrek zippy
-BLDS=	fortunes.dat fortunes2.dat startrek.dat zippy.dat \
-	fortunes-o fortunes-o.dat
+.include <bsd.own.mk>			# for INSTALL_OFFENSIVE_FORTUNES
 
-# TO INSTALL THE POTENTIALLY OFFENSIVE FORTUNES, UNCOMMENT THE THREE
-# LINES AND COMMENT OUT THE FOURTH LINE.
+SRCFILES=	fortunes fortunes2 startrek zippy
+DATFILES=	fortunes.dat fortunes2.dat startrek.dat zippy.dat \
+		fortunes-o fortunes-o.dat fortunes2-o fortunes2-o.dat \
+		limerick limerick.dat
 
-# THE THREE LINES
-SRCS+=	fortunes2-o limerick
-BLDS+=	fortunes2-o.dat limerick.dat
-TYPE=	real
+# TO AVOID INSTALLIND THE POTENTIALLY OFFENSIVE FORTUNES, RUN 'make' with
+# "INSTALL_OFFENSIVE_FORTUNES=NO", or set "INSTALL_OFFENSIVE_FORTUNES=NO"
+# IN bsd.own.mk OR /etc/mk.conf.
 
-# THE FOURTH LINE
-#TYPE=	fake
+INSTALL_OFFENSIVE_FORTUNES?=	YES
+.if (${INSTALL_OFFENSIVE_FORTUNES} == "YES")
+TYPE=		real
+.else
+TYPE=		fake
+.endif
 
-CLEANFILES+=${BLDS}
+CLEANFILES+=${DATFILES}
 
 STRFILE!=cd $(.CURDIR)/../strfile; \
 	printf "xxx:\n\techo \$${.OBJDIR}/strfile\n" | \
 	${MAKE} -r -s -f - xxx | grep strfile
 
-all: ${BLDS}
+all: ${DATFILES}
 
-install: ${SRCS} ${BLDS}
+install:
 	(cd ${.CURDIR} && ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    ${SRCS} ${DESTDIR}/usr/share/games/fortune)
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${BLDS} \
-	    ${DESTDIR}/usr/share/games/fortune
+	    ${SRCFILES} ${DESTDIR}/usr/share/games/fortune)
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+	    ${DATFILES} ${DESTDIR}/usr/share/games/fortune
 
-fortunes.dat fortunes2.dat fortunes2-o.dat limerick.dat startrek.dat zippy.dat:
+# Normal fortunes: build directly from data files.
+
+fortunes.dat fortunes2.dat startrek.dat zippy.dat:
 	${STRFILE} -rs ${.CURDIR}/${.TARGET:R} ${.TARGET}
+fortunes.dat:	fortunes
+fortunes2.dat:	fortunes2
+startrek.dat:	startrek
+zippy.dat:	zippy
 
-fortunes-o.dat: fortunes-o
-	${STRFILE} -rsx fortunes-o ${.TARGET}
+# Obscene fortunes: we have to build source and data files
 
 fortunes-o: fortunes-o.${TYPE}
 	tr [a-zA-Z] [n-za-mN-ZA-M] < ${.ALLSRC} > ${.TARGET}
+fortunes-o.dat: fortunes-o
+	${STRFILE} -rsx ${.ALLSRC} ${.TARGET}
+
+fortunes2-o: fortunes2-o.${TYPE}
+	tr [a-zA-Z] [n-za-mN-ZA-M] < ${.ALLSRC} > ${.TARGET}
+fortunes2-o.dat: fortunes2-o
+	${STRFILE} -rsx ${.ALLSRC} ${.TARGET}
+
+limerick: limerick.${TYPE}
+	tr [a-zA-Z] [n-za-mN-ZA-M] < ${.ALLSRC} > ${.TARGET}
+limerick.dat: limerick
+	${STRFILE} -rsx ${.ALLSRC} ${.TARGET}
+
 
 .include <bsd.prog.mk>
