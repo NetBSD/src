@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.7 2004/07/26 13:43:14 yamt Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.8 2004/07/26 13:46:43 yamt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.112 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -2797,7 +2797,7 @@ pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 }
 #endif
 
-extern void pfi_kifaddr_update(void *);
+extern void pfi_kifaddr_update_if(struct ifnet *);
 
 int
 pfil_if_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
@@ -2811,7 +2811,9 @@ pfil_if_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	case SIOCSIFADDR:
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
-		pfi_kifaddr_update((struct ifnet *)arg);
+	case SIOCAIFADDR_IN6:
+	case SIOCDIFADDR_IN6:
+		pfi_kifaddr_update_if(ifp);
 		break;
 	default:
 		panic("unexpected ioctl");
