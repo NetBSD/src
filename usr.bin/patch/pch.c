@@ -1,7 +1,7 @@
-/*	$NetBSD: pch.c,v 1.14 2003/04/20 19:37:08 christos Exp $	*/
+/*	$NetBSD: pch.c,v 1.15 2003/05/29 00:59:24 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pch.c,v 1.14 2003/04/20 19:37:08 christos Exp $");
+__RCSID("$NetBSD: pch.c,v 1.15 2003/05/29 00:59:24 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -25,13 +25,13 @@ static LINENUM p_max;			/* max allowed value of p_end */
 static LINENUM p_context = 3;		/* # of context lines */
 static LINENUM p_input_line = 0;	/* current line # from patch file */
 static char **p_line = NULL;		/* the text of the hunk */
-static short *p_len = NULL;		/* length of each line */
+static size_t *p_len = NULL;		/* length of each line */
 static char *p_char = NULL;		/* +, -, and ! */
 static int hunkmax = INITHUNKMAX;	/* size of above arrays to begin with */
 static int p_indent;			/* indent to patch */
-static LINENUM p_base;			/* where to intuit this time */
+static long p_base;			/* where to intuit this time */
 static LINENUM p_bline;			/* line # of p_base */
-static LINENUM p_start;			/* where intuit found a patch */
+static long p_start;			/* where intuit found a patch */
 static LINENUM p_sline;			/* and the line number for it */
 static LINENUM p_hunk_beg;		/* line number of current hunk */
 static LINENUM p_efake = -1;		/* end of faked up lines--don't free */
@@ -73,7 +73,7 @@ open_patch_file(char *filename)
 		pfatal("patch file %s not found", filename);
 	Fstat(fileno(pfp), &filestat);
 	p_filesize = filestat.st_size;
-	next_intuit_at(0L,1L);			/* start at the beginning */
+	next_intuit_at(0L,1);			/* start at the beginning */
 	set_hunkmax();
 }
 
@@ -86,7 +86,7 @@ set_hunkmax(void)
 	if (p_line == NULL)
 		p_line = malloc(hunkmax * sizeof(char *));
 	if (p_len == NULL)
-		p_len  = malloc(hunkmax * sizeof(short));
+		p_len  = malloc(hunkmax * sizeof(size_t));
 	if (p_char == NULL)
 		p_char = malloc(hunkmax * sizeof(char));
 }
@@ -98,7 +98,7 @@ void
 grow_hunkmax(void)
 {
 	char **tp_line;
-	short *tp_len;
+	size_t *tp_len;
 	char *tp_char;
 
 	hunkmax *= 2;
@@ -108,7 +108,7 @@ grow_hunkmax(void)
 	tp_len = p_len;
 	tp_char = p_char;
 	p_line = realloc(p_line, hunkmax * sizeof(char *));
-	p_len  = realloc(p_len,  hunkmax * sizeof(short));
+	p_len  = realloc(p_len,  hunkmax * sizeof(size_t));
 	p_char = realloc(p_char, hunkmax * sizeof(char));
 	if (p_line != NULL && p_len != NULL && p_char != NULL)
 		return;
@@ -198,7 +198,7 @@ intuit_diff_type(void)
 	long this_line = 0;
 	long previous_line;
 	long first_command_line = -1;
-	long fcl_line = -1;
+	LINENUM fcl_line = -1;
 	bool last_line_was_command = FALSE;
 	bool this_is_a_command = FALSE;
 	bool stars_last_line = FALSE;
@@ -399,7 +399,7 @@ intuit_diff_type(void)
  * Remember where this patch ends so we know where to start up again.
  */
 void
-next_intuit_at(long file_pos, long file_line)
+next_intuit_at(long file_pos, LINENUM file_line)
 {
 	p_base = file_pos;
 	p_bline = file_line;
@@ -409,7 +409,7 @@ next_intuit_at(long file_pos, long file_line)
  * Basically a verbose fseek() to the actual diff listing.
  */
 void
-skip_to(long file_pos, long file_line)
+skip_to(long file_pos, LINENUM file_line)
 {
 	char *ret;
 
@@ -437,7 +437,7 @@ skip_to(long file_pos, long file_line)
 static void
 malformed(void)
 {
-	fatal("malformed patch at line %ld: %s", p_input_line, buf);
+	fatal("malformed patch at line %d: %s", p_input_line, buf);
 		/* about as informative as "Syntax error" in C */
 }
 
@@ -460,7 +460,7 @@ remove_special_line(void)
 	}
 
 	if (c != EOF)
-		fseek(pfp, -1, SEEK_CUR);
+		fseek(pfp, -1L, SEEK_CUR);
 
 	return FALSE;
 }
@@ -539,7 +539,7 @@ another_hunk(void)
 			goto hunk_done;
 		    }
 		    else
-			fatal("unexpected end of hunk at line %ld\n",
+			fatal("unexpected end of hunk at line %d\n",
 			    p_input_line);
 		}
 		if (p_end != 0) {
@@ -547,7 +547,7 @@ another_hunk(void)
 			repl_missing = TRUE;
 			goto hunk_done;
 		    }
-		    fatal("unexpected *** at line %ld: %s", p_input_line, buf);
+		    fatal("unexpected *** at line %d: %s", p_input_line, buf);
 		}
 		context = 0;
 		p_line[p_end] = savestr(buf);
@@ -560,13 +560,13 @@ another_hunk(void)
 		    malformed ();
 		if (strnEQ(s,"0,0",3))
 		    strcpy(s,s+2);
-		p_first = atol(s);
+		p_first = atoi(s);
 		while (isdigit((unsigned char)*s)) s++;
 		if (*s == ',') {
 		    for (; *s && !isdigit((unsigned char)*s); s++) ;
 		    if (!*s)
 			malformed ();
-		    p_ptrn_lines = atol(s) - p_first + 1;
+		    p_ptrn_lines = atoi(s) - p_first + 1;
 		}
 		else if (p_first)
 		    p_ptrn_lines = 1;
@@ -599,12 +599,12 @@ another_hunk(void)
 				    goto hunk_done;
 				}
 				fatal(
-"duplicate \"---\" at line %ld--check line numbers at line %ld\n",
+"duplicate \"---\" at line %d--check line numbers at line %d\n",
 				    p_input_line, p_hunk_beg + repl_beginning);
 			    }
 			    else {
 				fatal(
-"%s \"---\" at line %ld--check line numbers at line %ld\n",
+"%s \"---\" at line %d--check line numbers at line %d\n",
 				    (p_end <= p_ptrn_lines
 					? "Premature"
 					: "Overdue" ),
@@ -624,13 +624,13 @@ another_hunk(void)
 		    for (s=buf; *s && !isdigit((unsigned char)*s); s++) ;
 		    if (!*s)
 			malformed ();
-		    p_newfirst = atol(s);
+		    p_newfirst = atoi(s);
 		    while (isdigit((unsigned char)*s)) s++;
 		    if (*s == ',') {
 			for (; *s && !isdigit((unsigned char)*s); s++) ;
 			if (!*s)
 			    malformed ();
-			p_repl_lines = atol(s) - p_newfirst + 1;
+			p_repl_lines = atoi(s) - p_newfirst + 1;
 		    }
 		    else if (p_newfirst)
 			p_repl_lines = 1;
@@ -640,7 +640,7 @@ another_hunk(void)
 		    }
 		    p_max = p_repl_lines + p_end;
 		    if (p_max > MAXHUNKSIZE)
-			fatal("hunk too large (%ld lines) at line %ld: %s",
+			fatal("hunk too large (%d lines) at line %d: %s",
 			      p_max, p_input_line, buf);
 		    while (p_max >= hunkmax)
 			grow_hunkmax();
@@ -731,7 +731,7 @@ another_hunk(void)
 	
     hunk_done:
 	if (p_end >=0 && !repl_beginning)
-	    fatal("no --- found in patch at line %ld\n", pch_hunk_beg());
+	    fatal("no --- found in patch at line %d\n", pch_hunk_beg());
 
 	if (repl_missing) {
 	    
@@ -788,7 +788,7 @@ another_hunk(void)
 		while (fillsrc <= p_end && p_char[fillsrc] != ' ')
 		    fillsrc++;
 		if (fillsrc > p_end)
-		    fatal("replacement text or line numbers mangled in hunk at line %ld\n",
+		    fatal("replacement text or line numbers mangled in hunk at line %d\n",
 			p_hunk_beg);
 		p_line[filldst] = p_line[fillsrc];
 		p_char[filldst] = p_char[fillsrc];
@@ -800,7 +800,7 @@ another_hunk(void)
 		fillsrc++;
 #ifdef DEBUGGING
 	    if (debug & 64)
-		printf("fillsrc %ld, filldst %ld, rb %ld, e+1 %ld\n",
+		printf("fillsrc %d, filldst %d, rb %d, e+1 %d\n",
 		    fillsrc,filldst,repl_beginning,p_end+1);
 #endif
 	    if (fillsrc != p_end + 1 && fillsrc != repl_beginning)
@@ -833,20 +833,20 @@ another_hunk(void)
 	s = buf+4;
 	if (!*s)
 	    malformed ();
-	p_first = atol(s);
+	p_first = atoi(s);
 	while (isdigit((unsigned char)*s)) s++;
 	if (*s == ',') {
-	    p_ptrn_lines = atol(++s);
+	    p_ptrn_lines = atoi(++s);
 	    while (isdigit((unsigned char)*s)) s++;
 	} else
 	    p_ptrn_lines = 1;
 	if (*s == ' ') s++;
 	if (*s != '+' || !*++s)
 	    malformed ();
-	p_newfirst = atol(s);
+	p_newfirst = atoi(s);
 	while (isdigit((unsigned char)*s)) s++;
 	if (*s == ',') {
-	    p_repl_lines = atol(++s);
+	    p_repl_lines = atoi(++s);
 	    while (isdigit((unsigned char)*s)) s++;
 	} else
 	    p_repl_lines = 1;
@@ -861,14 +861,14 @@ another_hunk(void)
 	fillsrc = 1;
 	filldst = fillsrc + p_ptrn_lines;
 	p_end = filldst + p_repl_lines;
-	Sprintf(buf,"*** %ld,%ld ****\n",p_first,p_first + p_ptrn_lines - 1);
+	Sprintf(buf,"*** %d,%d ****\n",p_first,p_first + p_ptrn_lines - 1);
 	p_line[0] = savestr(buf);
 	if (out_of_mem) {
 	    p_end = -1;
 	    return FALSE;
 	}
 	p_char[0] = '*';
-        Sprintf(buf,"--- %ld,%ld ----\n",p_newfirst,p_newfirst+p_repl_lines-1);
+        Sprintf(buf,"--- %d,%d ----\n",p_newfirst,p_newfirst+p_repl_lines-1);
 	p_line[filldst] = savestr(buf);
 	if (out_of_mem) {
 	    p_end = 0;
@@ -985,10 +985,10 @@ another_hunk(void)
 	    next_intuit_at(line_beginning,p_input_line);
 	    return FALSE;
 	}
-	p_first = atol(buf);
+	p_first = atoi(buf);
 	for (s=buf; isdigit((unsigned char)*s); s++) ;
 	if (*s == ',') {
-	    p_ptrn_lines = atol(++s) - p_first + 1;
+	    p_ptrn_lines = atoi(++s) - p_first + 1;
 	    while (isdigit((unsigned char)*s)) s++;
 	}
 	else
@@ -996,23 +996,23 @@ another_hunk(void)
 	hunk_type = *s;
 	if (hunk_type == 'a')
 	    p_first++;			/* do append rather than insert */
-	min = atol(++s);
+	min = atoi(++s);
 	for (; isdigit((unsigned char)*s); s++) ;
 	if (*s == ',')
-	    max = atol(++s);
+	    max = atoi(++s);
 	else
 	    max = min;
 	if (hunk_type == 'd')
 	    min++;
 	p_end = p_ptrn_lines + 1 + max - min + 1;
 	if (p_end > MAXHUNKSIZE)
-	    fatal("hunk too large (%ld lines) at line %ld: %s",
+	    fatal("hunk too large (%d lines) at line %d: %s",
 		  p_end, p_input_line, buf);
 	while (p_end >= hunkmax)
 	    grow_hunkmax();
 	p_newfirst = min;
 	p_repl_lines = max - min + 1;
-	Sprintf(buf, "*** %ld,%ld\n", p_first, p_first + p_ptrn_lines - 1);
+	Sprintf(buf, "*** %d,%d\n", p_first, p_first + p_ptrn_lines - 1);
 	p_line[0] = savestr(buf);
 	if (out_of_mem) {
 	    p_end = -1;
@@ -1023,10 +1023,10 @@ another_hunk(void)
 	    ret = pgets(buf, sizeof buf, pfp);
 	    p_input_line++;
 	    if (ret == NULL)
-		fatal("unexpected end of file in patch at line %ld\n",
+		fatal("unexpected end of file in patch at line %d\n",
 		  p_input_line);
 	    if (*buf != '<')
-		fatal("< expected at line %ld of patch\n", p_input_line);
+		fatal("< expected at line %d of patch\n", p_input_line);
 	    p_line[i] = savestr(buf+2);
 	    if (out_of_mem) {
 		p_end = i-1;
@@ -1045,12 +1045,12 @@ another_hunk(void)
 	    ret = pgets(buf, sizeof buf, pfp);
 	    p_input_line++;
 	    if (ret == NULL)
-		fatal("unexpected end of file in patch at line %ld\n",
+		fatal("unexpected end of file in patch at line %d\n",
 		    p_input_line);
 	    if (*buf != '-')
-		fatal("--- expected at line %ld of patch\n", p_input_line);
+		fatal("--- expected at line %d of patch\n", p_input_line);
 	}
-	Sprintf(buf, "--- %ld,%ld\n", min, max);
+	Sprintf(buf, "--- %d,%d\n", min, max);
 	p_line[i] = savestr(buf);
 	if (out_of_mem) {
 	    p_end = i-1;
@@ -1061,10 +1061,10 @@ another_hunk(void)
 	    ret = pgets(buf, sizeof buf, pfp);
 	    p_input_line++;
 	    if (ret == NULL)
-		fatal("unexpected end of file in patch at line %ld\n",
+		fatal("unexpected end of file in patch at line %d\n",
 		    p_input_line);
 	    if (*buf != '>')
-		fatal("> expected at line %ld of patch\n", p_input_line);
+		fatal("> expected at line %d of patch\n", p_input_line);
 	    p_line[i] = savestr(buf+2);
 	    if (out_of_mem) {
 		p_end = i-1;
@@ -1135,7 +1135,7 @@ bool
 pch_swap(void)
 {
 	char **tp_line;		/* the text of the hunk */
-	short *tp_len;		/* length of each line */
+	size_t *tp_len;		/* length of each line */
 	char *tp_char;		/* +, -, and ! */
 	LINENUM i;
 	LINENUM n;
@@ -1198,7 +1198,7 @@ pch_swap(void)
 		n++;
 	}
 	if (p_char[0] != '=')
-		fatal("malformed patch at line %ld: expected `=' found `%c'\n",
+		fatal("malformed patch at line %d: expected `=' found `%c'\n",
 		    p_input_line, p_char[0]);
 	p_char[0] = '*';
 	for (s=p_line[0]; *s; s++)
@@ -1208,7 +1208,7 @@ pch_swap(void)
 	/* now turn the old into the new */
 
 	if (tp_char[0] != '*')
-		fatal("malformed patch at line %ld: expected `*' found `%c'\n",
+		fatal("malformed patch at line %d: expected `*' found `%c'\n",
 		    p_input_line, tp_char[0]);
 	tp_char[0] = '=';
 	for (s=tp_line[0]; *s; s++)
@@ -1222,7 +1222,7 @@ pch_swap(void)
 		p_len[n] = tp_len[i];
 	}
 	if (i != p_ptrn_lines + 1)
-		fatal("malformed patch at line %ld: need %ld lines, got %ld\n", 
+		fatal("malformed patch at line %d: need %d lines, got %d\n", 
 		    p_input_line, p_ptrn_lines + 1, i);
 	i = p_ptrn_lines;
 	p_ptrn_lines = p_repl_lines;
@@ -1293,7 +1293,7 @@ pch_context(void)
 /*
  * Return the length of a particular patch line.
  */
-short
+size_t
 pch_line_len(LINENUM line)
 {
 	return p_len[line];

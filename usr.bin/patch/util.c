@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.13 2003/01/06 20:30:41 wiz Exp $	*/
+/*	$NetBSD: util.c,v 1.14 2003/05/29 00:59:24 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.13 2003/01/06 20:30:41 wiz Exp $");
+__RCSID("$NetBSD: util.c,v 1.14 2003/05/29 00:59:24 kristerw Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -25,7 +25,7 @@ move_file(char *from, char *to)
 {
 	char bakname[MAXPATHLEN];
 	char *s;
-	int i;
+	size_t i;
 	int fromfd;
 
 	/* to stdout? */
@@ -153,7 +153,7 @@ copy_file(char *from, char *to)
 {
 	int tofd;
 	int fromfd;
-	int i;
+	size_t i;
 
 	tofd = creat(to, 0666);
 	if (tofd < 0)
@@ -446,7 +446,7 @@ fetchname(char *at, int strip_leading, int assume_exists)
 
 	if (stat(name, &filestat) && !assume_exists) {
 		char *filebase = basename(name);
-		int pathlen = filebase - name;
+		size_t pathlen = filebase - name;
 
 		/* Put any leading path into `tmpbuf'. */
 		strncpy(tmpbuf, name, pathlen);
