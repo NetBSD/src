@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.15 1993/11/23 05:29:14 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.16 1993/12/12 09:08:51 glass Exp $
  */
 #include "systm.h"
 #include "param.h"
@@ -405,6 +405,7 @@ void context_free(pmap)		/* :) */
 	va += NBSG;
     }
     set_context(saved_context);
+    context->context_upmap = NULL;
     enqueue_tail(&context_free_queue, context);
     pmap->pm_context = NULL;
 #ifdef CONTEXT_DEBUG

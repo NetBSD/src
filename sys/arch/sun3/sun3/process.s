@@ -152,7 +152,7 @@ pcbflag:
 ENTRY(swtch_exit)
 	movl	#nullpcb,_curpcb	| save state into garbage pcb
 	lea	tmpstk,sp		| goto a tmp stack
-	jra	_swtch
+	jra	_cpu_swtch
 
 /*
  * When no processes are on the runq, Swtch branches to idle

@@ -69,8 +69,16 @@
 #include "../hpux/hpux.h"
 #endif
 
+#ifdef COMPAT_SUNOS
+#include "compat/sunos/sun_syscall.h"
+#endif
+
 struct	sysent	sysent[];
 int	nsysent;
+#ifdef COMPAT_SUNOS
+struct	sysent	sun_sysent[];
+int	nsun_sysent;
+#endif
 
 char	*trap_type[] = {
 	"Bus error",
@@ -326,6 +334,12 @@ copyfault:
 
 	case T_TRACE|T_USER:	/* user trace trap */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
+#ifdef COMPAT_SUNOS
+		/* SunOS seems to use Trap #2 for some obscure fpu operations.
+		   So far, just ignore it, but DONT trap on it.. */
+		if (p->p_emul == EMUL_SUNOS)
+		    break;
+#endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
@@ -494,21 +508,52 @@ syscall(code, frame)
 	extern int hpuxnsysent, notimp();
 #endif
 
-	printf("entered syscall()\n");
 	cnt.v_syscall++;
 	sticks = p->p_sticks;
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p->p_regs = frame.f_regs;
 	opc = frame.f_pc - 2;
-	systab = sysent;
-	numsys = nsysent;
+	switch (p->p_emul) {
+#ifdef COMPAT_SUNOS
+	case EMUL_SUNOS: {
+	    extern char *sun_syscallnames[];
+
+	    systab = sun_sysent;
+	    numsys = nsun_sysent;
+	    
+	    /* SunOS passes the syscall-number on the stack, whereas
+	       BSD passes it in D0. So, we have to get the real "code"
+	       from the stack, and clean up the stack, as SunOS glue
+	       code assumes the kernel pops the syscall argument the
+	       glue pushed on the stack. Sigh... */
+	    code = fuword ((caddr_t) frame.f_regs[SP]);
+	    /* XXX don't do this for sun_sigreturn, as there's no
+	       XXX stored pc on the stack to skip, the argument follows
+	       XXX the syscall number without a gap. */
+	    if (code != SYS_sigreturn)
+	      {
+		  frame.f_regs[SP] += sizeof (int);
+		  /* remember that we adjusted the SP, might have to undo
+		     this if the system call returns ERESTART. */
+		  p->p_md.md_flags |= MDP_STACKADJ;
+	      }
+	}
+	    break;
+#endif
 #ifdef HPUXCOMPAT
-	if (p->p_flag & SHPUX) {
+	case EMUL_HPUX: 
 		systab = hpuxsysent;
 		numsys = hpuxnsysent;
-	}
+	    break;
+	    
 #endif
+	case EMUL_NETBSD:
+	default:
+	    systab = sysent;
+	    numsys = nsysent;
+
+	}
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
 	if (code == 0) {			/* indir */
 		code = fuword(params);
@@ -570,6 +615,14 @@ done:
 	 * if this is a child returning from fork syscall.
 	 */
 	p = curproc;
+#ifdef COMPAT_SUNOS
+	/* need new p-value for this */
+	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))
+	  {
+	    frame.f_regs[SP] -= sizeof (int);
+	    p->p_md.md_flags &= ~MDP_STACKADJ;
+	  }
+#endif
 	userret(p, opc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
