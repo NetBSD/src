@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.263 2002/07/26 13:31:33 joda Exp $
+$NetBSD: usbdevs,v 1.264 2002/07/29 03:29:34 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -745,6 +745,7 @@ product INSIDEOUT MT4X56USB	0x1403	OEM device
 /* In-System products */
 product INSYSTEM F5U002		0x0002	Parallel printer adapter
 product INSYSTEM ATAPI		0x0031	ATAPI adapter
+product INSYSTEM IDEUSB2	0x0060	USB2 Storage Adapter
 product INSYSTEM ISD110		0x0200	IDE adapter ISD110
 product INSYSTEM ISD105		0x0202	IDE adapter ISD105
 product INSYSTEM DRIVEV2	0x0301	Portable USB Harddrive V2
