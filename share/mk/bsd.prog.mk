@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.82 1997/05/17 02:01:09 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.83 1997/05/17 16:43:33 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -190,9 +190,9 @@ lint: ${LOBJS}
 .endif
 
 .include <bsd.obj.mk>
-.include <bsd.links.mk>
 .include <bsd.files.mk>
 .include <bsd.inc.mk>
+.include <bsd.links.mk>
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
 .include <bsd.sys.mk>
