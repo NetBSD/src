@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.5.2.1 1994/07/20 03:17:50 cgd Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.5.2.2 1994/10/06 05:15:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -65,10 +65,10 @@ cd9660_rrip_attr(p,ana)
 	ISO_RRIP_ATTR *p;
 	ISO_RRIP_ANALYZE *ana;
 {
-	ana->inop->inode.iso_mode = isonum_731(p->mode_l);
-	ana->inop->inode.iso_uid = (uid_t)isonum_731(p->uid_l);
-	ana->inop->inode.iso_gid = (gid_t)isonum_731(p->gid_l);
-	ana->inop->inode.iso_links = isonum_731(p->links_l);
+	ana->inop->inode.iso_mode = isonum_733(p->mode);
+	ana->inop->inode.iso_uid = isonum_733(p->uid);
+	ana->inop->inode.iso_gid = isonum_733(p->gid);
+	ana->inop->inode.iso_links = isonum_733(p->links);
 	ana->fields &= ~ISO_SUSP_ATTR;
 	return ISO_SUSP_ATTR;
 }
@@ -326,7 +326,7 @@ cd9660_rrip_tstamp(p,ana)
 			cd9660_tstamp_conv7(ptime,&ana->inop->inode.iso_mtime);
 			ptime += 7;
 		} else
-			bzero(&ana->inop->inode.iso_mtime,sizeof(struct timeval));
+			bzero(&ana->inop->inode.iso_mtime,sizeof(struct timespec));
 		
 		if (*p->flags&ISO_SUSP_TSTAMP_ACCESS) {
 			cd9660_tstamp_conv7(ptime,&ana->inop->inode.iso_atime);
@@ -347,7 +347,7 @@ cd9660_rrip_tstamp(p,ana)
 			cd9660_tstamp_conv17(ptime,&ana->inop->inode.iso_mtime);
 			ptime += 17;
 		} else
-			bzero(&ana->inop->inode.iso_mtime,sizeof(struct timeval));
+			bzero(&ana->inop->inode.iso_mtime,sizeof(struct timespec));
 		
 		if (*p->flags&ISO_SUSP_TSTAMP_ACCESS) {
 			cd9660_tstamp_conv17(ptime,&ana->inop->inode.iso_atime);
@@ -383,8 +383,8 @@ cd9660_rrip_device(p,ana)
 {
 	u_int high, low;
 	
-	high = isonum_733(p->dev_t_high_l);
-	low  = isonum_733(p->dev_t_low_l);
+	high = isonum_733(p->dev_t_high);
+	low  = isonum_733(p->dev_t_low);
 	
 	if (high == 0)
 		ana->inop->inode.iso_rdev = makedev(major(low), minor(low));
