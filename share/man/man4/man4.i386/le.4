@@ -28,12 +28,13 @@
 .Nm le 
 .Nd Ethernet driver for Lance based Ethernet boards
 .Sh SYNOPSIS
-.Cd "le0 at isa? port 0x320 irq 10 drq 7"
+.Cd "le0 at isa? port 0x320 irq 10 drq 7              # ISA  boards"
+.Cd "le* at pci? dev? function ?                      # PCI boards"
 .Sh DESCRIPTION
 The
 .Nm
 interface provides access to a 10 Mb/s Ethernet network via the
-Lance Ethernet chips.  The Ethernet cards supported by the
+Lance Ethernet chips.  The ISA-bus Ethernet cards supported by the
 .Nm
 interface are:
 .Pp
@@ -42,6 +43,10 @@ interface are:
 .It Novell NE2100
 .It Digital DEPCA
 .El
+.Pp
+The le driver also supports PCnet-PCI cards based on the AMD 79c970
+chipset, which is a single-chip implementation of a LANCE 
+chip and PCI bus interface.
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr intro 4 ,
