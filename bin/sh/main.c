@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 1995/09/11 17:05:44 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.23 1995/11/19 23:27:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.22 1995/09/11 17:05:44 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.23 1995/11/19 23:27:42 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ static char rcsid[] = "$NetBSD: main.c,v 1.22 1995/09/11 17:05:44 christos Exp $
 #include "init.h"
 #include "mystring.h"
 #include "exec.h"
+#include "cd.h"
 
 #define PROFILE 0
 
@@ -159,6 +160,7 @@ main(argc, argv)
 	init();
 	setstackmark(&smark);
 	procargs(argc, argv);
+	getpwd();
 	if (argv[0] && argv[0][0] == '-') {
 		state = 1;
 		read_profile("/etc/profile");
