@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.10 1997/10/12 14:17:27 lukem Exp $	*/
+/*	$NetBSD: fortune.c,v 1.11 1997/10/19 17:58:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.10 1997/10/12 14:17:27 lukem Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.11 1997/10/19 17:58:53 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -727,7 +727,7 @@ is_dir(file)
 
 	if (stat(file, &sbuf) < 0)
 		return FALSE;
-	return (sbuf.st_mode & S_IFDIR);
+	return (S_ISDIR(sbuf.st_mode));
 }
 
 /*
