@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.55 1999/10/28 09:22:57 jun Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.56 1999/10/28 20:00:29 sommerfeld Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.54 1999/10/28 09:21:46 jun Exp 
+ *	NetBSD: pcmciadevs,v 1.55 1999/10/28 19:59:31 sommerfeld Exp 
  */
 
 /*-
@@ -402,6 +402,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "WaveLAN/IEEE"	},
 	},
 	{
+	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_STACK_650,
+	    PCMCIA_CIS_BAY_STACK_650,
+	    0,
+	    "Bay Networks",
+	    "BayStack 650 Wireless LAN"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
 	    PCMCIA_CIS_MEGAHERTZ_XJ2288,
 	    0,
@@ -644,6 +651,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Dayna Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_BAY, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Bay Networks",
 	    NULL,
 	},
 	{
