@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.60 2002/05/29 13:56:14 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.61 2002/05/30 05:06:29 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.60 2002/05/29 13:56:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.61 2002/05/30 05:06:29 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,7 @@ struct nd_prhead nd_prefix = { 0 };
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 static struct sockaddr_in6 all1_sa;
 
+static void nd6_setmtu0 __P((struct ifnet *, struct nd_ifinfo *));
 static void nd6_slowtimo __P((void *));
 static struct llinfo_nd6 *nd6_free __P((struct rtentry *, int));
 
@@ -155,7 +156,9 @@ nd6_ifattach(ifp)
 	nd->reachable = ND_COMPUTE_RTIME(nd->basereachable);
 	nd->retrans = RETRANS_TIMER;
 	nd->flags = ND6_IFF_PERFORMNUD;
-	nd6_setmtu(ifp, nd);
+
+	/* XXX: we cannot call nd6_setmtu since ifp is not fully initialized */
+	nd6_setmtu0(ifp, nd);
 
 	return nd;
 }
@@ -169,10 +172,20 @@ nd6_ifdetach(nd)
 }
 
 void
-nd6_setmtu(ifp, ndi)
+nd6_setmtu(ifp)
+	struct ifnet *ifp;
+{
+	nd6_setmtu0(ifp, ND_IFINFO(ifp));
+}
+
+void
+nd6_setmtu0(ifp, ndi)
 	struct ifnet *ifp;
 	struct nd_ifinfo *ndi;
 {
+	u_int32_t omaxmtu;
+
+	omaxmtu = ndi->maxmtu;
 
 	switch (ifp->if_type) {
 	case IFT_ARCNET:	/* XXX MTU handling needs more work */
@@ -198,10 +211,16 @@ nd6_setmtu(ifp, ndi)
 		break;
 	}
 
-	if (ndi->maxmtu < IPV6_MMTU) {
-		nd6log((LOG_INFO, "nd6_setmtu: "
-		    "link MTU on %s (%lu) is too small for IPv6\n",
-		    if_name(ifp), (unsigned long)ndi->maxmtu));
+	/*
+	 * Decreasing the interface MTU under IPV6 minimum MTU may cause
+	 * undesirable situation.  We thus notify the operator of the change
+	 * explicitly.  The check for omaxmtu is necessary to restrict the
+	 * log to the case of changing the MTU, not initializing it. 
+	 */
+	if (omaxmtu >= IPV6_MMTU && ndi->maxmtu < IPV6_MMTU) {
+		log(LOG_NOTICE, "nd6_setmtu0: "
+		    "new link MTU on %s (%lu) is too small for IPv6\n",
+		    if_name(ifp), (unsigned long)ndi->maxmtu);
 	}
 
 	if (ndi->maxmtu > in6_maxmtu)

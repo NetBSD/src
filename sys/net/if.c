@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.107 2002/05/27 13:46:45 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.108 2002/05/30 05:06:28 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.107 2002/05/27 13:46:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.108 2002/05/30 05:06:28 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -137,21 +137,13 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.107 2002/05/27 13:46:45 itojun Exp $");
 #endif
 
 #ifdef INET6
-/*XXX*/
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
+#include <netinet6/nd6.h>
 #endif
 
 int	ifqmaxlen = IFQ_MAXLEN;
 struct	callout if_slowtimo_ch;
-
-#ifdef INET6
-/*
- * XXX: declare here to avoid to include many inet6 related files..
- * should be more generalized?
- */
-void nd6_setmtu __P((struct ifnet *));
-#endif 
 
 int netisr;			/* scheduling bits for network */
 
