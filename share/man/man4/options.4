@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.28 1997/10/08 09:45:19 mycroft Exp $
+.\"	$NetBSD: options.4,v 1.29 1997/10/08 09:46:24 mycroft Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -891,8 +891,8 @@ between 5% and 10% of total available RAM.
 Overrides the base memory size passed in from the boot block.  Use this option
 only if the boot block reports the size incorrectly.  (Note that some BIOSes
 put the extended BIOS data area at the top of base memory, and therefore report
-a smaller base memory size to prevents programs overwriting it.  This is
-correct behavior, and you should not use the
+a smaller base memory size to prevent programs overwriting it.  This is correct
+behavior, and you should not use the
 .Em REALBASEMEM
 option to access this memory.)
 .It Cd options REALEXTMEM
