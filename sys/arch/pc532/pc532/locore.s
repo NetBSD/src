@@ -954,8 +954,10 @@ ENTRY(_int_clk)
 	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
 	sprd	usp, REGS_USP(sp)
 	movd	Cur_pl(pc), tos
-	movqd 0,tos
-	bsr _hardclock
+	movqd	0,tos
+	addr	0(sp),tos	/* The address of the frame. */
+	bsr	_hardclock
+	cmpqd	0,tos		/* Remove the address of the frame. */
 	br	exit_int
 
 ENTRY(_int_scsi0)
@@ -1083,8 +1085,9 @@ do_soft_intr:
 	/* Make it a new interrupt frame again. */
 	movd	Cur_pl(pc), tos
 	movqd	0,tos
+	addr	0(sp),tos	/* Push the pointer. */
 	bsr	_softclock
-	adjspb	-8
+	adjspb	-12
 	movqd	0, _want_softclock(pc)
 	
 no_soft:
