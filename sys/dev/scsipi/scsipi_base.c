@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.11 2001/03/27 13:03:04 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.12 2001/03/28 09:39:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1207,11 +1207,11 @@ scsipi_complete(xs)
 		/* request sense for a request sense ? */
 		if (xs->xs_control & XS_CTL_REQSENSE) {
 			scsipi_printaddr(periph);
-			printf("request sense for request sense\n");
+			/* XXX maybe we should reset the device ? */
 			/* we've been frozen because xs->error != XS_NOERROR */
 			scsipi_periph_thaw(periph, 1);
 			splx(s);
-			return EIO;
+			return EINVAL;
 		}
 		scsipi_request_sense(xs);
 	}
@@ -1423,6 +1423,14 @@ scsipi_request_sense(xs)
 	case EINTR:
 		/* REQUEST_SENSE interrupted by bus reset. */
 		xs->error = XS_RESET;
+		return;
+	case EIO:
+		 /* request sense coudn't be performed */
+		/*
+		 * XXX this isn't quite rigth but we don't have anything
+		 * better for now
+		 */
+		xs->error = XS_DRIVER_STUFFUP;
 		return;
 	default:
 		 /* Notify that request sense failed. */
