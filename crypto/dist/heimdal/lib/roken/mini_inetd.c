@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: mini_inetd.c,v 1.30 2002/02/18 19:08:55 joda Exp $"
-        "$NetBSD: mini_inetd.c,v 1.1.1.5 2002/09/12 12:41:42 joda Exp $");
+        "$NetBSD: mini_inetd.c,v 1.2 2002/09/20 21:48:58 mycroft Exp $");
 #endif
 
 #include <err.h>
@@ -70,8 +70,12 @@ mini_inetd_addrinfo (struct addrinfo *ai)
     struct addrinfo *a;
     int n, nalloc, i;
     int *fds;
+#ifdef HAVE_POLL
+    struct pollfd *set;
+#else
     fd_set orig_read_set, read_set;
     int max_fd = -1;
+#endif
 
     for (nalloc = 0, a = ai; a != NULL; a = a->ai_next)
 	++nalloc;
@@ -80,7 +84,13 @@ mini_inetd_addrinfo (struct addrinfo *ai)
     if (fds == NULL)
 	errx (1, "mini_inetd: out of memory");
 
+#ifdef HAVE_POLL
+    set = malloc (nalloc * sizeof(*set));
+    if (set == NULL)
+	errx (1, "mini_inetd: out of memory");
+#else
     FD_ZERO(&orig_read_set);
+#endif
 
     for (i = 0, a = ai; a != NULL; a = a->ai_next) {
 	fds[i] = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
@@ -99,10 +109,15 @@ mini_inetd_addrinfo (struct addrinfo *ai)
 	    close(fds[i]);
 	    continue;
 	}
+#ifdef HAVE_POLL
+	set[i].fd = fds[i];
+	set[i].events = POLLIN;
+#else
 	if (fds[i] >= FD_SETSIZE)
 	    errx (1, "fd too large");
 	FD_SET(fds[i], &orig_read_set);
 	max_fd = max(max_fd, fds[i]);
+#endif
 	++i;
     }
     if (i == 0)
@@ -110,16 +125,33 @@ mini_inetd_addrinfo (struct addrinfo *ai)
     n = i;
 
     do {
+#ifdef HAVE_POLL
+	ret = poll (set, nalloc, INFTIM);
+#else
 	read_set = orig_read_set;
 
 	ret = select (max_fd + 1, &read_set, NULL, NULL, NULL);
+#endif
 	if (ret < 0 && errno != EINTR)
+#ifdef HAVE_POLL
+	    err (1, "poll");
+#else
 	    err (1, "select");
+#endif
     } while (ret <= 0);
 
     for (i = 0; i < n; ++i)
-	if (FD_ISSET (fds[i], &read_set)) {
+#ifdef HAVE_POLL
+	if (set[i].revents & POLLIN)
+#else
+	if (FD_ISSET (fds[i], &read_set))
+#endif
+	{
 	    accept_it (fds[i]);
+	    free (fds);
+#ifdef HAVE_POLL
+	    free (set);
+#endif
 	    return;
 	}
     abort ();
