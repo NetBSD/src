@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.1 1999/02/17 00:08:42 lukem Exp $
+.\"	$NetBSD: mk.conf.5,v 1.2 1999/02/17 00:54:53 hubertf Exp $
 .\"
 .\"  Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -152,6 +152,10 @@ The system is using the new UVM virtual memory subsystem.
 .El
 .Pp
 .Ss Pkgsrc system variables
+
+Please see also
+.Pa /usr/pkgsrc/mk/mk.conf.example
+for package-specific examples.
 .Bl -tag -width OBJMACHINE
 .It Sy ACCEPTABLE_LICENSES
 Whitespace-delimited list of the types of license which are acceptable for
@@ -193,13 +197,6 @@ If defined, use passive mode
 .Xr ftp 1
 when fetching files.
 Default: not defined.
-.It Sy USE_LOCALBASE_FOR_X11
-If defined, use the value of
-.Sy LOCALBASE ,
-not
-.Sy X11BASE
-for installing X11-dependent pkgs (requires X11R6.1, or NetBSD's X sets).
-Default: not defined
 .It Sy USETBL
 If defined, run raw manual pages through
 .Xr tbl 1
