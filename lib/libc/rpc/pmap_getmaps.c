@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getmaps.c,v 1.10 1999/01/20 11:37:37 lukem Exp $	*/
+/*	$NetBSD: pmap_getmaps.c,v 1.11 1999/01/31 20:45:31 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getmaps.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getmaps.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getmaps.c,v 1.10 1999/01/20 11:37:37 lukem Exp $");
+__RCSID("$NetBSD: pmap_getmaps.c,v 1.11 1999/01/31 20:45:31 christos Exp $");
 #endif
 #endif
 
@@ -90,8 +90,9 @@ pmap_getmaps(address)
 	client = clnttcp_create(address, PMAPPROG,
 	    PMAPVERS, &sock, 50, 500);
 	if (client != (CLIENT *)NULL) {
-		if (CLNT_CALL(client, PMAPPROC_DUMP, xdr_void, NULL,
-		    xdr_pmaplist, &head, minutetimeout) != RPC_SUCCESS) {
+		if (CLNT_CALL(client, PMAPPROC_DUMP, (xdrproc_t)xdr_void, NULL,
+		    (xdrproc_t)xdr_pmaplist, &head, minutetimeout) !=
+		    RPC_SUCCESS) {
 			clnt_perror(client, "pmap_getmaps rpc problem");
 		}
 		CLNT_DESTROY(client);

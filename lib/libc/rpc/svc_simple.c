@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.13 1999/01/20 11:37:39 lukem Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.14 1999/01/31 20:45:31 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_simple.c 1.18 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_simple.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_simple.c,v 1.13 1999/01/20 11:37:39 lukem Exp $");
+__RCSID("$NetBSD: svc_simple.c,v 1.14 1999/01/31 20:45:31 christos Exp $");
 #endif
 #endif
 
@@ -130,7 +130,7 @@ universal(rqstp, transp)
 	 * enforce "procnum 0 is echo" convention
 	 */
 	if (rqstp->rq_proc == NULLPROC) {
-		if (svc_sendreply(transp, xdr_void, NULL) == FALSE) {
+		if (svc_sendreply(transp, (xdrproc_t)xdr_void, NULL) == FALSE) {
 			errx(1, "svc_sendreply failed");
 			exit(1);
 		}
@@ -148,7 +148,7 @@ universal(rqstp, transp)
 			}
 			outdata = (*(plist->p_progname))(xdrbuf);
 			if (outdata == NULL &&
-			    plist->p_outproc != xdr_void)
+			    plist->p_outproc != (xdrproc_t)xdr_void)
 				/* there was an error */
 				return;
 			if (!svc_sendreply(transp, plist->p_outproc, outdata))

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getport.c,v 1.10 1999/01/20 11:37:37 lukem Exp $	*/
+/*	$NetBSD: pmap_getport.c,v 1.11 1999/01/31 20:45:31 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getport.c 1.9 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getport.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getport.c,v 1.10 1999/01/20 11:37:37 lukem Exp $");
+__RCSID("$NetBSD: pmap_getport.c,v 1.11 1999/01/31 20:45:31 christos Exp $");
 #endif
 #endif
 
@@ -91,8 +91,9 @@ pmap_getport(address, program, version, protocol)
 		parms.pm_vers = version;
 		parms.pm_prot = protocol;
 		parms.pm_port = 0;  /* not needed or used */
-		if (CLNT_CALL(client, PMAPPROC_GETPORT, xdr_pmap, &parms,
-		    xdr_u_short, &port, tottimeout) != RPC_SUCCESS){
+		if (CLNT_CALL(client, PMAPPROC_GETPORT, (xdrproc_t)xdr_pmap,
+		    &parms, (xdrproc_t)xdr_u_short, &port, tottimeout) !=
+		    RPC_SUCCESS){
 			rpc_createerr.cf_stat = RPC_PMAPFAILURE;
 			clnt_geterr(client, &rpc_createerr.cf_error);
 		} else if (port == 0) {

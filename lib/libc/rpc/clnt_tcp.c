@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_tcp.c,v 1.16 1999/01/20 11:37:36 lukem Exp $	*/
+/*	$NetBSD: clnt_tcp.c,v 1.17 1999/01/31 20:45:31 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_tcp.c,v 1.16 1999/01/20 11:37:36 lukem Exp $");
+__RCSID("$NetBSD: clnt_tcp.c,v 1.17 1999/01/31 20:45:31 christos Exp $");
 #endif
 #endif
  
@@ -310,7 +310,7 @@ call_again:
 	for (;;) {
 		reply_msg.acpted_rply.ar_verf = _null_auth;
 		reply_msg.acpted_rply.ar_results.where = NULL;
-		reply_msg.acpted_rply.ar_results.proc = xdr_void;
+		reply_msg.acpted_rply.ar_results.proc = (xdrproc_t)xdr_void;
 		if (! xdrrec_skiprecord(xdrs))
 			return (ct->ct_error.re_status);
 		/* now decode and validate the response header */
