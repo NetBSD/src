@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.22 1995/11/29 18:28:51 ws Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.23 1995/11/30 17:50:26 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -917,11 +917,11 @@ removede(pdep, dep)
 			 * there should be no harm.
 			 */
 			ep--->deName[0] = SLOT_DELETED;
+			offset -= sizeof(struct direntry);
 			if ((pmp->pm_flags & MSDOSFSMNT_NOWIN95)
-			    || !(offset & pmp->pm_crbomask)
+			    || !((offset + sizeof(struct direntry)) & pmp->pm_crbomask)
 			    || ep->deAttributes != ATTR_WIN95)
 				break;
-			offset -= sizeof(struct direntry);
 		}
 		if (error = bwrite(bp))
 			return error;
