@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.12 1999/04/02 03:19:08 cgd Exp $ */
+/* $NetBSD: bootxx.c,v 1.13 1999/04/02 03:35:55 cgd Exp $ */
 
 /*
  * Copyright (C) 1998 by Ross Harvey
@@ -47,8 +47,6 @@
 
 extern int _end, start;
 
-extern void puts __P((const char *)); /* XXX private, does not append '\n' */
-
 struct bbinfoloc desc = {
 	0xbabefacedeadbeef,
 	(u_int64_t)&start,
@@ -63,7 +61,7 @@ errorstatus(const char *msg, u_int64_t val)
 {
 	int	i, c;
 
-	puts(msg);
+	putstr(msg);
 	for(i=60; i >= 0; i -= 4) {
 		c = val >> i & 0xf;
 		if (c >= 10)
@@ -87,11 +85,11 @@ load_file(fd, bbinfop, loadaddr)
 	int i, j, n, rv, nextblk, wantblk, blksize;
 
 	if (bbinfop->nblocks <= 0) {
-		puts("invalid number of blocks in boot program description\n");
+		putstr("invalid number of blocks in boot program description\n");
 		return 0;
 	}
 	if (bbinfop->bsize < DEV_BSIZE || bbinfop->bsize > MAXBSIZE) {
-		puts("invalid block size in boot program description\n");
+		putstr("invalid block size in boot program description\n");
 		return 0;
 	}
 
@@ -100,14 +98,14 @@ load_file(fd, bbinfop, loadaddr)
 	    (sizeof(*bbinfop) / sizeof(bbinfop->blocks[0])) - 1;
 	if ((long)&_end - (long)&start + sizeof(bbinfop->blocks[0]) * n >
 	    15 * 512) {
-		puts("way too many blocks\n");
+		putstr("way too many blocks\n");
 		return 0;
 	}
 
 	for (i = 0, cksum = 0; i < n; i++)
 		cksum += *int32p++;
 	if (cksum != 0) {
-		puts("invalid checksum in boot program description\n");
+		putstr("invalid checksum in boot program description\n");
 		return 0;
 	}
 
@@ -132,11 +130,11 @@ load_file(fd, bbinfop, loadaddr)
 		cp      += blksize;
 		if (ret.u.status) {
 			rv = 0;
-			puts("\nBLOCK READ ERROR!\n");
+			putstr("\nBLOCK READ ERROR!\n");
 			break;
 		}
 	}
-	puts(".\n");
+	putstr(".\n");
 
 	return (rv);
 }
@@ -159,23 +157,23 @@ main()
 	/* Init prom callback vector. */
 	init_prom_calls();
 
-	puts("\nNetBSD/Alpha " NETBSD_VERS " Primary Boot +\n");
+	putstr("\nNetBSD/Alpha " NETBSD_VERS " Primary Boot +\n");
 
 	bbinfop = (struct bbinfo *)&_end;
 	loadaddr = (char *)SECONDARY_LOAD_ADDRESS;
 
 	if (!booted_dev_open()) {
-		puts("Can't open boot device\n");
+		putstr("Can't open boot device\n");
 		return;
 	}
 	if (!load_file(fd, bbinfop, loadaddr)) {
-		puts("\nLOAD FAILED!\n\n");
+		putstr("\nLOAD FAILED!\n\n");
 		return;
 	}
 
-	puts("Jumping to entry point...\n");
+	putstr("Jumping to entry point...\n");
 	entry = (void (*)(int))loadaddr;
 	(*entry)(fd);
 	prom_close(fd);
-	puts("SECONDARY BOOT RETURNED!\n");
+	putstr("SECONDARY BOOT RETURNED!\n");
 }
