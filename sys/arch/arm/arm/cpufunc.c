@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.66 2004/01/26 15:54:16 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.67 2004/04/03 04:34:40 bsh Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.66 2004/01/26 15:54:16 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.67 2004/04/03 04:34:40 bsh Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -977,7 +977,11 @@ set_cpufuncs()
 		    arm9_dcache_sets_inc;
 		arm9_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
 		arm9_dcache_index_max = 0U - arm9_dcache_index_inc;
+#ifdef	ARM9_CACHE_WRITE_THROUGH
+		pmap_pte_init_arm9();
+#else
 		pmap_pte_init_generic();
+#endif
 		return 0;
 	}
 #endif /* CPU_ARM9 */
