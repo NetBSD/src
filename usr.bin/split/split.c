@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.16 2003/06/26 23:19:15 bjh21 Exp $	*/
+/*	$NetBSD: split.c,v 1.17 2003/06/29 22:57:23 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.16 2003/06/26 23:19:15 bjh21 Exp $");
+__RCSID("$NetBSD: split.c,v 1.17 2003/06/29 22:57:23 bjh21 Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -296,7 +296,9 @@ newfile(void)
 			fpnt = fname + strlen(fname);
 			defname = 0;
 		}
-		ofd = fileno(stdout);
+	} else {
+		if (close(ofd) != 0)
+			err(1, "%s", fname);
 	}
 	/*
 	 * Hack to increase max files; original code wandered through
@@ -315,7 +317,7 @@ newfile(void)
 		fnum = 0;
 	}
 	++fnum;
-	if (!freopen(fname, "w", stdout))
+	if ((ofd = open(fname, O_WRONLY | O_CREAT | O_TRUNC, DEFFILEMODE)) < 0)
 		err(1, "%s", fname);
 }
 
