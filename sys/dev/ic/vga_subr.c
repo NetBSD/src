@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.3 1999/01/13 16:48:58 drochner Exp $ */
+/* $NetBSD: vga_subr.c,v 1.4 1999/08/17 16:15:05 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -125,7 +125,7 @@ vga_setfontset(vh, fontset1, fontset2)
 		0x08, 0x28, 0x0c, 0x2c
 	};
 
-	/* no extended fonts for now */
+	/* extended font if fontset1 != fontset2 */
 	cmap = cmaptaba[fontset1] | cmaptabb[fontset2];
 
 	vga_ts_write(vh, fontsel, cmap);
