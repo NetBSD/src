@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.21 2000/02/19 01:56:21 mycroft Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.22 2000/02/23 17:04:06 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -244,10 +244,10 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	lw	a0, TF_BASE+TF_REG_SR(sp)
 	lw	t0, TF_BASE+TF_REG_MULLO(sp)
 	lw	t1, TF_BASE+TF_REG_MULHI(sp)
-	lw	k0, TF_BASE+TF_REG_EPC(sp)
 	mtc0	a0, MIPS_COP_0_STATUS
 	mtlo	t0
 	mthi	t1
+	lw	k0, TF_BASE+TF_REG_EPC(sp)
 	lw	AT, TF_BASE+TF_REG_AST(sp)
 	lw	v0, TF_BASE+TF_REG_V0(sp)
 	lw	v1, TF_BASE+TF_REG_V1(sp)
