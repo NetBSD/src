@@ -80,15 +80,33 @@ lapic_map(apic_paddr)
 	paddr_t apic_paddr;
 {
 	int s;
+	pt_entry_t *pte;
+	vaddr_t va = (vaddr_t)&local_apic;
 	
 	disable_intr();
 	s = lapic_tpr;
 	/*
 	 * Map local apic.
 	 */
-	pmap_enter(pmap_kernel(),(vaddr_t)&local_apic,
-	    apic_paddr,
+	pmap_enter(pmap_kernel(), va, apic_paddr,
 	    VM_PROT_ALL, PMAP_WIRED|VM_PROT_ALL);
+
+	/*
+	 * Mark page uncacheable.
+	 *
+	 * PG_N doesn't exist on 386's, so we assume that
+	 * the mainboard has wired up device space non-cacheable
+	 * on those machines.
+	 *
+	 * XXX should hand this bit to pmap_kenter_pa to
+	 * save the extra invalidate!
+	 */
+	if (cpu_class != CPUCLASS_386) {
+		pte = kvtopte(va);
+		*pte |= PG_N;
+		pmap_update_pg(va);
+	}
+
 	lapic_tpr = s;
 	enable_intr();
 }
