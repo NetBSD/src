@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.44 1999/03/19 12:40:21 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.45 1999/05/30 00:22:59 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -2021,7 +2021,7 @@ ess_query_devinfo(addr, dip)
 
 	case ESS_RECORD_MONITOR:
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNmonitor);
+		strcpy(dip->label.name, AudioNmute);
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = ESS_MONITOR_CLASS;
 		dip->un.e.num_mem = 2;
