@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.37.2.6 2005/03/04 16:41:28 skrll Exp $	*/
+/*	$NetBSD: hme.c,v 1.37.2.7 2005/03/08 13:53:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.37.2.6 2005/03/04 16:41:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.37.2.7 2005/03/08 13:53:10 skrll Exp $");
 
 /* #define HMEDEBUG */
 
@@ -510,8 +510,7 @@ hme_init(sc)
 	bus_space_write_4(t, mac, HME_MACI_LTCNT, 0);
 	bus_space_write_4(t, mac, HME_MACI_TXSIZE,
 	    (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
-	    ETHER_VLAN_ENCAP_LEN + ETHER_MAX_LEN :
-            ETHER_MAX_LEN);
+	    ETHER_VLAN_ENCAP_LEN + ETHER_MAX_LEN : ETHER_MAX_LEN);
 	sc->sc_ec_capenable = sc->sc_ethercom.ec_capenable;
 
 	/* Load station MAC address */
@@ -541,9 +540,7 @@ hme_init(sc)
 	bus_space_write_4(t, erx, HME_ERXI_RING, sc->sc_rb.rb_rxddma);
 	bus_space_write_4(t, mac, HME_MACI_RXSIZE,
 	    (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
-	    ETHER_VLAN_ENCAP_LEN + ETHER_MAX_LEN :
-            ETHER_MAX_LEN);
-
+	    ETHER_VLAN_ENCAP_LEN + ETHER_MAX_LEN : ETHER_MAX_LEN);
 
 	/* step 8. Global Configuration & Interrupt Mask */
 	bus_space_write_4(t, seb, HME_SEBI_IMASK,
@@ -610,10 +607,12 @@ hme_init(sc)
 	v |= HME_ERX_CFG_DMAENABLE;
 
 	/* set h/w rx checksum start offset (# of half-words) */
+#ifdef INET
 	v |= (((ETHER_HDR_LEN + sizeof(struct ip) +
 		((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
 		ETHER_VLAN_ENCAP_LEN : 0)) / 2) << HME_ERX_CFG_CSUMSHIFT) &
 		HME_ERX_CFG_CSUMSTART;
+#endif
 	bus_space_write_4(t, erx, HME_ERXI_CFG, v);
 
 	/* step 11. XIF Configuration */
@@ -754,6 +753,8 @@ hme_get(sc, ri, flags)
 		}
 	}
 
+#ifdef INET
+	/* hardware checksum */
 	if (ifp->if_csum_flags_rx & (M_CSUM_TCPv4 | M_CSUM_TCPv4)) {
 		struct ether_header *eh;
 		struct ip *ip;
@@ -783,10 +784,13 @@ hme_get(sc, ri, flags)
 		if (hlen < sizeof(struct ip))
 			goto swcsum;
 
-		/* too short, truncated, fragment */
-		if ((ntohs(ip->ip_len) < hlen) || (ntohs(ip->ip_len) > pktlen)
+		/*
+		 * bail if too short, has random trailing garbage, truncated,
+		 * fragment, or has ethernet pad.
+		 */
+		if ((ntohs(ip->ip_len) < hlen) || (ntohs(ip->ip_len) != pktlen)
 		    || (ntohs(ip->ip_off) & (IP_MF | IP_OFFMASK)))
-                       goto swcsum;
+			goto swcsum;
 
 		switch (ip->ip_p) {
 		case IPPROTO_TCP:
@@ -808,7 +812,7 @@ hme_get(sc, ri, flags)
 			m0->m_pkthdr.csum_flags = M_CSUM_UDPv4;
 			break;
 		default:
-                       goto swcsum;
+			goto swcsum;
 		}
 
 		/* w/ M_CSUM_NO_PSEUDOHDR, the uncomplemented sum is expected */
@@ -822,7 +826,7 @@ hme_get(sc, ri, flags)
 			temp = hlen - sizeof(struct ip);
 			opts = (uint16_t *) ((caddr_t) ip + sizeof(struct ip));
 
-		        while (temp > 1) {
+			while (temp > 1) {
 				optsum += ntohs(*opts++);
 				temp -= 2;
 			}
@@ -841,8 +845,10 @@ hme_get(sc, ri, flags)
 
 		m0->m_pkthdr.csum_flags |= M_CSUM_DATA | M_CSUM_NO_PSEUDOHDR;
 	}
-
 swcsum:
+		m0->m_pkthdr.csum_flags = 0;
+#endif
+
 	return (m0);
 
 bad:
@@ -928,6 +934,7 @@ hme_start(ifp)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
+#ifdef INET
 		/* collect bits for h/w csum, before hme_put frees the mbuf */
 		if (ifp->if_csum_flags_tx & (M_CSUM_TCPv4 | M_CSUM_UDPv4) &&
 		    m->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
@@ -954,6 +961,7 @@ hme_start(ifp)
 				  (offset << HME_XD_TXCSSTUFFSHIFT) |
 		  		  (start << HME_XD_TXCSSTARTSHIFT);
 		} else
+#endif
 			txflags = 0;
 
 		/*

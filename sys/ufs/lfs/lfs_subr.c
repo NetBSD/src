@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.40.2.4 2005/03/04 16:54:49 skrll Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.40.2.5 2005/03/08 13:53:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.40.2.4 2005/03/04 16:54:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.40.2.5 2005/03/08 13:53:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ lfs_blkatoff(void *v)
 	return (0);
 }
 
-#ifdef LFS_DEBUG_MALLOC
+#ifdef DEBUG
 char *lfs_res_names[LFS_NB_COUNT] = {
 	"summary",
 	"superblock",
@@ -258,13 +258,9 @@ lfs_malloc(struct lfs *fs, size_t size, int type)
 				return r;
 			}
 		}
-#ifdef LFS_DEBUG_MALLOC
-		printf("sleeping on %s (%d)\n", lfs_res_names[type], lfs_res_qty[type]);
-#endif
+		DLOG((DLOG_MALLOC, "sleeping on %s (%d)\n", lfs_res_names[type], lfs_res_qty[type]));
 		tsleep(&fs->lfs_resblk, PVM, "lfs_malloc", 0);
-#ifdef LFS_DEBUG_MALLOC
-		printf("done sleeping on %s\n", lfs_res_names[type]);
-#endif
+		DLOG((DLOG_MALLOC, "done sleeping on %s\n", lfs_res_names[type]));
 	}
 	/* NOTREACHED */
 	return r;
@@ -425,9 +421,7 @@ lfs_auto_segclean(struct lfs *fs)
 			waited = 1;
 
 			if ((error = lfs_do_segclean(fs, i)) != 0) {
-#ifdef DEBUG
-				printf("lfs_auto_segclean: lfs_do_segclean returned %d for seg %d\n", error, i);
-#endif /* DEBUG */
+				DLOG((DLOG_CLEAN, "lfs_auto_segclean: lfs_do_segclean returned %d for seg %d\n", error, i));
 			}
 		}
 		fs->lfs_suflags[1 - fs->lfs_activesb][i] =
@@ -462,7 +456,7 @@ lfs_segunlock(struct lfs *fs)
 			bp = *sp->bpp;
 			lfs_freebuf(fs, bp);
 		} else
-			printf ("unlock to 0 with no summary");
+			DLOG((DLOG_SEG, "lfs_segunlock: unlock to 0 with no summary"));
 
 		pool_put(&fs->lfs_bpppool, sp->bpp);
 		sp->bpp = NULL;
@@ -511,7 +505,7 @@ lfs_segunlock(struct lfs *fs)
 		while (sync && sp->seg_iocount) {
 			(void)tsleep(&sp->seg_iocount, PRIBIO + 1,
 				     "seg_iocount", 0);
-			/* printf("sleeping on iocount %x == %d\n", sp, sp->seg_iocount); */
+			DLOG((DLOG_SEG, "sleeping on iocount %x == %d\n", sp, sp->seg_iocount));
 		}
 		if (sync)
 			pool_put(&fs->lfs_segpool, sp);

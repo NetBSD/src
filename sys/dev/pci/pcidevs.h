@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.543.2.14 2005/03/04 16:45:22 skrll Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.543.2.15 2005/03/08 13:53:10 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.695 2005/02/27 00:27:33 perry Exp
+ *	NetBSD: pcidevs,v 1.696 2005/03/07 02:27:17 christos Exp
  */
 
 /*
@@ -966,7 +966,9 @@
 #define	PCI_PRODUCT_ATI_IXP_AUDIO_200	0x4341		/* IXP AC'97 Audio Controller */
 #define	PCI_PRODUCT_ATI_IXP_AUDIO_300	0x4361		/* IXP AC'97 Audio Controller */
 #define	PCI_PRODUCT_ATI_IXP_AUDIO_400	0x4370		/* IXP AC'97 Audio Controller */
-#define	PCI_PRODUCT_ATI_IXP_IDE	0x4349		/* IXP IDE Controller */
+#define	PCI_PRODUCT_ATI_IXP_IDE_200	0x4349		/* IXP IDE Controller */
+#define	PCI_PRODUCT_ATI_IXP_IDE_300	0x4369		/* IXP IDE Controller */
+#define	PCI_PRODUCT_ATI_IXP_IDE_400	0x4376		/* IXP IDE Controller */
 #define	PCI_PRODUCT_ATI_MACH64_CT	0x4354		/* Mach64 CT */
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
 #define	PCI_PRODUCT_ATI_RAGE_PRO_AGP	0x4742		/* 3D Rage Pro (AGP) */

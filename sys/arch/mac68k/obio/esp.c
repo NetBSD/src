@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.34.6.5 2005/01/24 08:34:13 skrll Exp $	*/
+/*	$NetBSD: esp.c,v 1.34.6.6 2005/03/08 13:53:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.34.6.5 2005/01/24 08:34:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.34.6.6 2005/03/08 13:53:09 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -196,7 +196,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 	 * pseudo-DMA timing.  The default value is 0x1d1.
 	 */
 	esp_have_dreq = esp_dafb_have_dreq;
-	if (sc->sc_dev.dv_unit == 0) {
+	if (oa->oa_addr == 0) {
 		if (reg_offset == 0x10000) {
 			quick = 1;
 			esp_have_dreq = esp_iosb_have_dreq;
@@ -236,7 +236,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Save the regs
 	 */
-	if (sc->sc_dev.dv_unit == 0) {
+	if (oa->oa_addr == 0) {
 		esp0 = esc;
 
 		esc->sc_reg = (volatile u_char *) SCSIBase;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.10.4.5 2004/12/18 09:33:17 skrll Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.10.4.6 2005/03/08 13:53:12 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.10.4.5 2004/12/18 09:33:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.10.4.6 2005/03/08 13:53:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -602,8 +602,8 @@ cryptof_close(struct file *fp, struct lwp *l)
 
 	fp->f_data = NULL;
 #if 0
-	FILE_UNUSE(fp, p);	/* release file */
-	fdrelease(p, fd); 	/* release fd table slot */
+	FILE_UNUSE(fp, l);	/* release file */
+	fdrelease(l, fd); 	/* release fd table slot */
 #endif
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.118.2.11 2005/03/04 16:54:46 skrll Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.118.2.12 2005/03/08 13:53:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.11 2005/03/04 16:54:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.12 2005/03/08 13:53:12 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1052,7 +1052,7 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 	fs->fs_csaddr = fs->fs_old_csaddr;
 	fs->fs_sblockloc = sblockloc;
 
-	fs->fs_flags = fs->fs_old_flags;
+        fs->fs_flags = fs->fs_old_flags | (fs->fs_flags & FS_INTERNAL);
 
 	if (fs->fs_old_postblformat == FS_42POSTBLFMT) {
 		fs->fs_old_nrpos = 8;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.84.2.7 2005/03/04 16:54:22 skrll Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.84.2.8 2005/03/08 13:53:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -158,6 +158,7 @@ struct	pkthdr {
 	int	len;			/* total packet length */
 	int	csum_flags;		/* checksum flags */
 	u_int32_t csum_data;		/* checksum data */
+	u_int	segsz;			/* segment size */
 };
 
 /*
@@ -172,6 +173,7 @@ struct	pkthdr {
 #define	M_CSUM_UDPv6		0x00000020	/* IPv6 UDP header/payload */
 #define	M_CSUM_IPv4		0x00000040	/* IPv4 header */
 #define	M_CSUM_IPv4_BAD		0x00000080	/* IPv4 header checksum bad */
+#define	M_CSUM_TSOv4		0x00000100	/* TCPv4 segmentation offload */
 
 /* Checksum-assist quirks: keep separate from jump-table bits. */
 #define	M_CSUM_NO_PSEUDOHDR	0x80000000	/* Rx csum_data does not include

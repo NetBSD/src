@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.50.2.7 2005/03/04 16:54:48 skrll Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.50.2.8 2005/03/08 13:53:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,10 @@ MALLOC_DECLARE(M_SEGMENT);
 #define LFS_DOSTATS	 3
 #define LFS_MAXPAGES	 4
 #define LFS_FS_PAGETRIP	 5
-#define LFS_MAXID	 6
+#define LFS_STATS	 6
+#define LFS_DO_RFW	 7
+#define LFS_DEBUGLOG	 8
+#define LFS_MAXID	 9
 
 #define LFS_NAMES { \
 	{ 0, 0 }, \
@@ -94,6 +97,7 @@ MALLOC_DECLARE(M_SEGMENT);
 	{ "clean_vnhead", CTLTYPE_INT }, \
 	{ "dostats", CTLTYPE_INT }, \
 	{ "maxpages", CTLTYPE_INT }, \
+	{ "debug", CTLTYPE_NODE }, \
 }
 
 struct fid;
@@ -125,6 +129,7 @@ extern long locked_queue_bytes;
 extern int lfs_subsys_pages;
 extern int lfs_dirvcount;
 extern struct simplelock lfs_subsys_lock;
+extern int lfs_debug_log_subsys[];
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
@@ -162,6 +167,7 @@ void lfs_dump_super(struct lfs *);
 void lfs_dump_dinode(struct ufs1_dinode *);
 void lfs_check_bpp(struct lfs *, struct segment *, char *, int);
 void lfs_check_segsum(struct lfs *, struct segment *, char *, int);
+void lfs_debug_log(int, const char *, ...);
 #endif /* DEBUG */
 
 /* lfs_inode.c */
