@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.1.2.2 2001/10/30 16:41:41 uch Exp $	*/
+/*	$NetBSD: cache.c,v 1.1.2.3 2001/11/10 16:26:16 uch Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -104,6 +104,12 @@ void	tx3900_get_cache_config(void);
 void	tx3920_get_cache_config(void);
 #endif /* ENABLE_MIPS_TX3900 */
 #endif /* MIPS1 */
+
+#ifdef MIPS3
+#ifdef MIPS3_5900
+#include <mips/cache_r5900.h>
+#endif /* MIPS3_5900 */
+#endif /* MIPS3 */
 
 #ifdef MIPS3
 void	mips3_get_cache_config(int);
@@ -361,6 +367,39 @@ mips_config_cache(void)
 
 		/* Virtually-indexed cache; no use for colors. */
 		break;
+#ifdef MIPS3_5900
+	case MIPS_R5900:	
+		/* cache spec */
+		mips_picache_ways = 2;
+		mips_pdcache_ways = 2;
+		mips_picache_size = CACHE_R5900_SIZE_I;
+		mips_picache_line_size = CACHE_R5900_LSIZE_I;
+		mips_pdcache_size = CACHE_R5900_SIZE_D;
+		mips_pdcache_line_size = CACHE_R5900_LSIZE_D;
+		mips_cache_alias_mask =
+		    ((mips_pdcache_size / mips_pdcache_ways) - 1) &
+		    ~(PAGE_SIZE - 1);
+		mips_cache_prefer_mask =
+		    max(mips_pdcache_size, mips_picache_size) - 1;
+		/* cache ops */
+		mips_cache_ops.mco_icache_sync_all =
+		    r5900_icache_sync_all_64;
+		mips_cache_ops.mco_icache_sync_range =
+		    r5900_icache_sync_range_64;
+		mips_cache_ops.mco_icache_sync_range_index =
+		    r5900_icache_sync_range_index_64;
+		mips_cache_ops.mco_pdcache_wbinv_all =
+		    r5900_pdcache_wbinv_all_64;
+		mips_cache_ops.mco_pdcache_wbinv_range =
+		    r5900_pdcache_wbinv_range_64;
+		mips_cache_ops.mco_pdcache_wbinv_range_index =
+		    r5900_pdcache_wbinv_range_index_64;
+		mips_cache_ops.mco_pdcache_inv_range =
+		    r5900_pdcache_inv_range_64;
+		mips_cache_ops.mco_pdcache_wb_range =
+		    r5900_pdcache_wb_range_64;
+		break;
+#endif /* MIPS3_5900 */
 #endif /* MIPS3 */
 
 	default:
