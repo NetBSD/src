@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.13 2003/07/27 20:36:18 is Exp $
+# $NetBSD: GENERIC.in,v 1.14 2003/09/22 14:11:15 cl Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -175,6 +175,8 @@ options 	COMPAT_10	# compatibility with NetBSD 1.0
 options 	COMPAT_12	# compatibility with NetBSD 1.2
 options 	COMPAT_13	# compatibility with NetBSD 1.3
 options 	COMPAT_14	# compatibility with NetBSD 1.4
+options 	COMPAT_15	# compatibility with NetBSD 1.5
+options 	COMPAT_16	# compatibility with NetBSD 1.6
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
