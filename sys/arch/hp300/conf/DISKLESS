@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.24 1998/06/26 01:53:54 lukem Exp $
+#	$NetBSD: DISKLESS,v 1.25 1998/08/28 04:56:15 thorpej Exp $
 #
 # Diskless HP 9000/300-series workstation
 #
@@ -44,6 +44,9 @@ file-system	KERNFS		# kernel data-structure filesystem
 file-system	FDESC		# user file descriptor filesystem
 file-system	PROCFS		# /proc filesystem
 file-system	MFS		# Memory-based filesystem
+
+# File system options
+options 	NFS_BOOT_BOOTPARAM # use Sun bootparams for NFS boot
 
 # Networking options
 options 	INET		# Internet protocols
