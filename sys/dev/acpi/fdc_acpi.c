@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.7 2003/01/13 06:26:10 jmcneill Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.8 2003/05/21 17:23:55 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.7 2003/01/13 06:26:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.8 2003/05/21 17:23:55 christos Exp $");
 
 #include "rnd.h"
 
@@ -263,9 +263,9 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 		goto out;
 	}
 	if (fde->Buffer.Length < 5 * sizeof(UINT32)) {
-		printf("%s: expected buffer len of %d, got %d\n",
+		printf("%s: expected buffer len of %lu, got %d\n",
 		    sc->sc_dev.dv_xname,
-		    5 * sizeof(UINT32), fde->Buffer.Length);
+		    (unsigned long)(5 * sizeof(UINT32)), fde->Buffer.Length);
 		goto out;
 	}
 
