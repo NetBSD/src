@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 1997/05/17 13:56:06 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 1998/09/12 19:15:00 matthias Exp $	*/
 
 /* 
  * Copyright (c) 1994 Philip L. Budne.
@@ -92,7 +92,7 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 	load = (char *)((long)entry & 0x00ffff00);
 
 	if (load != loadaddr) {
-		bcopy(loadaddr, load, esym - loadaddr);
+		memcpy(load, loadaddr, esym - loadaddr);
 		ssym += loadaddr - load;
 		esym += loadaddr - load;
 	}
@@ -115,7 +115,7 @@ _rtt()
 	lprd(sp, 0x2000);
 
 	/* Copy start of ROM. */
-	bcopy((void *)0x10000000, (void *)0, 0x1f00);
+	memcpy((void *)0, (void *)0x10000000, 0x1f00);
 
 	/* Jump into ROM copy. */
 	__asm __volatile("jump @0");

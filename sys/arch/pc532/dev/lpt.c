@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.27 1998/08/15 03:02:41 mycroft Exp $	*/
+/*	$NetBSD: lpt.c,v 1.28 1998/09/12 19:14:58 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -521,7 +521,7 @@ plipattach(sc, unit)
 
 	sc->sc_ifbuf = NULL;
 	sprintf(ifp->if_xname, "plip%d", unit);
-	bzero(myaddr, sizeof(myaddr));
+	memset(myaddr, 0, sizeof(myaddr));
 	ifp->if_softc = sc;
 	ifp->if_start = plipstart;
 	ifp->if_ioctl = plipioctl;
@@ -593,8 +593,8 @@ plipioctl(ifp, cmd, data)
 					       M_DEVBUF, M_WAITOK);
 			LLADDR(sdl)[0] = 0xfc;
 			LLADDR(sdl)[1] = 0xfc;
-			bcopy((caddr_t)&IA_SIN(ifa)->sin_addr,
-			      (caddr_t)&LLADDR(sdl)[2], 4);
+			memcpy((caddr_t)&LLADDR(sdl)[2],
+				(caddr_t)&IA_SIN(ifa)->sin_addr, 4);
 #if defined(COMPAT_PLIP10)
 			if (ifp->if_flags & IFF_LINK0) {
 				int i;

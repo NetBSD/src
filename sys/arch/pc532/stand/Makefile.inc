@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/11/18 01:19:21 phil Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1998/09/12 19:14:59 matthias Exp $
 
 BINDIR=		/usr/mdec
 
@@ -9,7 +9,7 @@ RELOC=		3BE000
 
 CLEANFILES+=	${PROG}.sym ${PROG}
 
-CPPFLAGS+=	-DSCNCONSOLE -DSTANDALONE
+CPPFLAGS+=	-DSCNCONSOLE -DSTANDALONE -DINSECURE
 
 # Limit the alloc() heap to below 4mb
 CPPFLAGS+=	-DHEAP_LIMIT=0x400000
