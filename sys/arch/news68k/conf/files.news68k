@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.6 2000/10/02 15:24:09 tsutsui Exp $
+#	$NetBSD: files.news68k,v 1.7 2000/10/03 13:49:24 tsutsui Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -26,6 +26,7 @@ file	arch/news68k/news68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
 file	arch/news68k/news68k/sys_machdep.c
 file	arch/news68k/news68k/trap.c
 file	arch/news68k/news68k/vm_machdep.c
+file	dev/clock_subr.c
 file	dev/cons.c
 
 major { vnd = 6 }
