@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cons.c	7.2 (Berkeley) 5/9/91
- *	$Id: cons.c,v 1.12 1994/02/16 00:09:39 cgd Exp $
+ *	$Id: cons.c,v 1.13 1994/04/10 01:11:28 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -56,6 +56,8 @@ extern struct consdev constab[];
 
 struct	tty *constty = NULL;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
+struct	vnode *cn_devvp;	/* vnode for underlying device. */
+
 
 void
 cninit()
@@ -98,6 +100,10 @@ cnopen(dev, flag, mode, p)
 	 * open() calls.
 	 */
 	dev = cn_tab->cn_dev;
+	if (cn_devvp == NULLVP) {
+		/* try to get a reference on its vnode, but fail silently */
+		cdevvp(dev, &cn_devvp);
+	}
 	return ((*cdevsw[major(dev)].d_open)(dev, flag, mode, p));
 }
  
@@ -118,6 +124,11 @@ cnclose(dev, flag, mode, p)
 	 * screw up others who have it open.
 	 */
 	dev = cn_tab->cn_dev;
+	if (cn_devvp != NULLVP) {
+		/* release our reference to real dev's vnode */
+		vrele(cn_devvp);
+		cn_devvp = NULLVP;
+	}
 	if ((vfinddev(dev, VCHR, &vp) == 0) && vcount(vp))
 		return (0);
 	return ((*cdevsw[major(dev)].d_close)(dev, flag, mode, p));
