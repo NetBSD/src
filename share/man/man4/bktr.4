@@ -1,4 +1,4 @@
-.\" $NetBSD: bktr.4,v 1.9 2002/09/04 00:47:12 wiz Exp $
+.\" $NetBSD: bktr.4,v 1.10 2002/09/26 01:05:04 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Thomas Klausner
 .\" 	All rights reserved.
@@ -83,7 +83,8 @@ The following kernel configuration options are available:
 .It Cd options BKTR_OVERRIDE_CARD=n
 If the card is not recognized correctly by the auto-detection routine,
 it can be overridden by setting this option to the appropriate
-value. The following values are allowed:
+value.
+The following values are allowed:
 .Bl -tag -width 2n -compact
 .It 1
 Pinnacle (Miro) TV,
@@ -122,7 +123,8 @@ TerraTVplus.
 .It Cd options BKTR_OVERRIDE_TUNER=n
 If the TV tuner is not recognized correctly by the auto-detection
 routine, it can be overridden by setting this option to the
-appropriate value. Known values are:
+appropriate value.
+Known values are:
 .Bl -tag -width 2n -compact
 .It 1
 Temic NTSC,
@@ -171,11 +173,13 @@ default to PAL, else to NTSC.
 .It Cd options BKTR_USE_PLL
 Default to PLL instead of XTAL.
 .It Cd options BKTR_GPIO_ACCESS
-Use ioctl's for direct GPIO access.
+Use
+.Fn ioctl Ns s
+for direct GPIO access.
 .It Cd options BKTR_NO_MSP_RESET
-Skip the MSP reset. This option is handy if you initialize the
-MSP audio in another operating system first and then do a soft
-reboot.
+Skip the MSP reset.
+This option is handy if you initialize the MSP audio in another
+operating system first and then do a soft reboot.
 .\" The following options have no effect:
 .\" .It Cd options BKTR_430_FX_MODE
 .\" .It Cd options BKTR_SIS_VIA_MODE
