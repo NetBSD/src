@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.4 2003/02/27 00:54:07 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.5 2003/03/08 08:03:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pthread_dbg.c,v 1.5 2003/03/08 08:03:37 lukem Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.6 2003/02/15 00:52:19 nathanw Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.7 2003/03/08 08:03:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pthread_stack.c,v 1.7 2003/03/08 08:03:36 lukem Exp $");
 
 #include <err.h>
 #include <errno.h>

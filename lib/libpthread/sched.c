@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.c,v 1.2 2003/01/18 10:34:17 thorpej Exp $	*/
+/*	$NetBSD: sched.c,v 1.3 2003/03/08 08:03:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: sched.c,v 1.3 2003/03/08 08:03:36 lukem Exp $");
 
 #include <errno.h>
 #include <sched.h>

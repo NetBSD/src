@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sleep.c,v 1.1 2003/02/15 22:15:50 nathanw Exp $ */
+/*	$NetBSD: pthread_sleep.c,v 1.2 2003/03/08 08:03:36 lukem Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <errno.h>
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: pthread_sleep.c,v 1.2 2003/03/08 08:03:36 lukem Exp $");
+
+#include <errno.h>
 #include <sys/time.h>
 
 #include "pthread.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.5 2003/02/15 04:39:16 nathanw Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.6 2003/03/08 08:03:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,9 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pthread_specific.c,v 1.6 2003/03/08 08:03:36 lukem Exp $");
+
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
-#include <sys/cdefs.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
