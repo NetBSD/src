@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcireg.h,v 1.1 1998/07/12 19:51:59 augustss Exp $	*/
+/*	$NetBSD: ohcireg.h,v 1.2 1998/07/26 00:40:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 /*** PCI config registers ***/
 
 #define PCI_CBMEM		0x10	/* configuration base memory */
+
+#define PCI_INTERFACE_OHCI	0x10
 
 /*** OHCI registers */
 
