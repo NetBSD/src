@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.11 2000/08/12 12:15:59 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.12 2000/08/12 12:20:17 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -52,7 +52,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.11 2000/08/12 12:15:59 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.12 2000/08/12 12:20:17 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -241,9 +241,9 @@ eaprobe(struct device *parent, struct cfdata *cf, void *aux)
 	    && (matchpodule(pa, MANUFACTURER_ACORN,
 			    PODULE_ACORN_ETHER3XXX, -1) == 0)
 	    && (matchpodule(pa, MANUFACTURER_ANT, PODULE_ANT_ETHER3, -1) == 0))
-		return(0);
+		return 0;
 
-	return(1);
+	return 1;
 }
 
 
@@ -512,7 +512,7 @@ ea_stoptx(struct ea_softc *sc)
 
 	status = ReadShort(iobase + EA_8005_STATUS);
 	if (!(status & EA_STATUS_TX_ON))
-		return(0);
+		return 0;
 
 	/* Stop any tx and wait for confirmation */
 	WriteShort(iobase + EA_8005_COMMAND, sc->sc_command | EA_CMD_TX_OFF);
@@ -527,7 +527,7 @@ ea_stoptx(struct ea_softc *sc)
 	/* Clear any pending tx interrupt */
 	WriteShort(iobase + EA_8005_COMMAND,
 		   sc->sc_command | EA_CMD_TX_INTACK);
-	return(1);
+	return 1;
 }
 
 
@@ -548,7 +548,7 @@ ea_stoprx(struct ea_softc *sc)
 
 	status = ReadShort(iobase + EA_8005_STATUS);
 	if (!(status & EA_STATUS_RX_ON))
-		return(0);
+		return 0;
 
 	/* Stop any rx and wait for confirmation */
 
@@ -565,7 +565,7 @@ ea_stoprx(struct ea_softc *sc)
 
 	WriteShort(iobase + EA_8005_COMMAND,
 		   sc->sc_command | EA_CMD_RX_INTACK);
-	return(1);
+	return 1;
 }
 
 
@@ -877,7 +877,7 @@ ea_init(struct ea_softc *sc)
 	ea_start(ifp);
 
 	splx(s);
-	return(0);
+	return 0;
 }
 
 
