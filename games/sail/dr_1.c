@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.19 2003/08/07 09:37:41 agc Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.20 2004/09/07 13:20:39 jrf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.19 2003/08/07 09:37:41 agc Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.20 2004/09/07 13:20:39 jrf Exp $");
 #endif
 #endif /* not lint */
 
@@ -429,10 +429,8 @@ next(void)
 					*tp = toupper(*tp);
 				p = tp;
 			}
-			strncpy(bestship->file->captain, p,
+			strlcpy(bestship->file->captain, p,
 				sizeof bestship->file->captain);
-			bestship->file->captain
-				[sizeof bestship->file->captain - 1] = 0;
 			logger(bestship);
 		}
 		return -1;
