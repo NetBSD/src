@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1995/04/20 22:40:40 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1997/05/07 16:01:43 mycroft Exp $
 
 PROG=	sigsetjmptest
 SRCS=	jmptest.c
@@ -7,8 +7,6 @@ NOMAN=	noman, no way, man
 CFLAGS+= -DTEST_SIGSETJMP
 
 .PATH:	${.CURDIR}/../setjmp
-
-install:
 
 regress: ${PROG}
 	./${PROG} save
