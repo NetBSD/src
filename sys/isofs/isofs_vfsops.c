@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vfsops.c,v 1.10 1993/12/18 04:32:01 mycroft Exp $
+ *	$Id: isofs_vfsops.c,v 1.11 1994/04/14 04:05:14 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -25,6 +25,7 @@
 extern int enodev ();
 
 struct vfsops isofs_vfsops = {
+	MOUNT_ISOFS,
 	isofs_mount,
 	isofs_start,
 	isofs_unmount,
@@ -280,7 +281,7 @@ static iso_mountfs(devvp, mp, p, argp)
 	
 	mp->mnt_data = (qaddr_t)isomp;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
-	mp->mnt_stat.f_fsid.val[1] = MOUNT_ISOFS;
+	mp->mnt_stat.f_fsid.val[1] = (long)MOUNT_ISOFS;
 	mp->mnt_flag |= MNT_LOCAL;
 	isomp->im_mountp = mp;
 	isomp->im_dev = dev;
@@ -435,8 +436,12 @@ isofs_statfs(mp, sbp, p)
 	register struct fs *fs;
 	
 	isomp = VFSTOISOFS(mp);
-	
-	sbp->f_type = MOUNT_ISOFS;
+
+#ifdef COMPAT_09
+	sbp->f_type = 5;	/* XXX */
+#else
+	sbp->f_type = 0;
+#endif
 	sbp->f_fsize = isomp->logical_block_size;
 	sbp->f_bsize = sbp->f_fsize;
 	sbp->f_blocks = isomp->volume_space_size;
@@ -452,6 +457,8 @@ isofs_statfs(mp, sbp, p)
 	}
 	/* Use the first spare for flags: */
 	sbp->f_spare[0] = isomp->im_flags;
+	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return 0;
 }
 
