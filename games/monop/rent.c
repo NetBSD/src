@@ -1,4 +1,4 @@
-/*	$NetBSD: rent.c,v 1.4 1997/10/12 17:45:24 christos Exp $	*/
+/*	$NetBSD: rent.c,v 1.5 1999/08/21 10:40:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,23 +38,22 @@
 #if 0
 static char sccsid[] = "@(#)rent.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rent.c,v 1.4 1997/10/12 17:45:24 christos Exp $");
+__RCSID("$NetBSD: rent.c,v 1.5 1999/08/21 10:40:04 simonb Exp $");
 #endif
 #endif /* not lint */
 
-#include	"monop.ext"
+#include "monop.ext"
 
 /*
  *	This routine has the player pay rent
  */
 void
 rent(sqp)
-SQUARE	*sqp;
+	SQUARE *sqp;
 {
-
-	int		rnt = 0;
-	PROP	*pp;
-	PLAY		*plp;
+	int rnt = 0;
+	PROP *pp;
+	PLAY *plp;
 
 	plp = &play[sqp->owner];
 	printf("Owned by %s\n", plp->name);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trade.c,v 1.4 1997/10/12 17:45:27 christos Exp $	*/
+/*	$NetBSD: trade.c,v 1.5 1999/08/21 10:40:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)trade.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: trade.c,v 1.4 1997/10/12 17:45:27 christos Exp $");
+__RCSID("$NetBSD: trade.c,v 1.5 1999/08/21 10:40:04 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,7 @@ static void move_em __P((TRADE *, TRADE *));
 void
 trade()
 {
-
-	int	tradee, i;
+	int tradee, i;
 
 	trading = TRUE;
 	for (i = 0; i < 2; i++) {
@@ -101,20 +100,20 @@ over:
 	if (getyn("Is the trade ok? ") == 0)
 		do_trade();
 }
+
 /*
  *	This routine gets the list of things to be trader for the
  * player, and puts in the structure given.
  */
 static void
 get_list(struct_no, play_no)
-int	struct_no, play_no; 
+	int struct_no, play_no; 
 {
-
-	int		sn, pn;
-	PLAY	*pp;
-	int		numin, prop, num_prp;
-	OWN		*op;
-	TRADE		*tp;
+	int sn, pn;
+	PLAY *pp;
+	int numin, prop, num_prp;
+	OWN *op;
+	TRADE *tp;
 
 	for (numin = 0; numin < MAX_PRP; numin++)
 		used[numin] = FALSE;
@@ -155,16 +154,16 @@ once_more:
 		}
 	}
 }
+
 /*
  *	This routine sets up the list of tradable property.
  */
 static int
 set_list(the_list)
-OWN	*the_list; 
+	OWN *the_list; 
 {
-
-	int	i;
-	OWN	*op;
+	int i;
+	OWN *op;
 
 	i = 0;
 	for (op = the_list; op; op = op->next)
@@ -174,17 +173,17 @@ OWN	*the_list;
 	plist[i--] = 0;
 	return i;
 }
+
 /*
  *	This routine summates the trade.
  */
 static void
 summate()
 {
-
-	bool	some;
-	int		i;
-	TRADE	*tp;
-	OWN	*op;
+	bool some;
+	int i;
+	TRADE *tp;
+	OWN *op;
 
 	for (i = 0; i < 2; i++) {
 		tp = &trades[i];
@@ -205,26 +204,26 @@ summate()
 			printf("\t-- Nothing --\n");
 	}
 }
+
 /*
  *	This routine actually executes the trade.
  */
 static void
 do_trade()
 {
-
 	move_em(&trades[0], &trades[1]);
 	move_em(&trades[1], &trades[0]);
 }
+
 /*
  *	This routine does a switch from one player to another
  */
 static void
 move_em(from, to)
-TRADE	*from, *to; 
+	TRADE *from, *to; 
 {
-
-	PLAY	*pl_fr, *pl_to;
-	OWN		*op;
+	PLAY *pl_fr, *pl_to;
+	OWN *op;
 
 	pl_fr = &play[from->trader];
 	pl_to = &play[to->trader];
@@ -240,16 +239,16 @@ TRADE	*from, *to;
 	}
 	set_ownlist(to->trader);
 }
+
 /*
  *	This routine lets a player resign
  */
 void
 resign()
 {
-
-	int	i, new_own;
-	OWN	*op;
-	SQUARE	*sqp;
+	int i, new_own;
+	OWN *op;
+	SQUARE *sqp;
 
 	if (cur_p->money <= 0) {
 		switch (board[cur_p->loc].type) {

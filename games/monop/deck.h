@@ -1,4 +1,4 @@
-/*	$NetBSD: deck.h,v 1.4 1999/08/21 09:23:44 simonb Exp $	*/
+/*	$NetBSD: deck.h,v 1.5 1999/08/21 10:40:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,10 +37,10 @@
 
 #include <sys/types.h>
 
-# define	bool	char
+#define	bool	char
 
-# define	CC_D	deck[0]
-# define	CH_D	deck[1]
+#define	CC_D	deck[0]
+#define	CH_D	deck[1]
 
 struct dk_st {			/* deck description structure		*/
 	int	num_cards;		/* number of cards in deck	*/

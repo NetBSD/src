@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.6 1999/08/21 09:23:44 simonb Exp $	*/
+/*	$NetBSD: cards.c,v 1.7 1999/08/21 10:40:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,26 +38,26 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.6 1999/08/21 09:23:44 simonb Exp $");
+__RCSID("$NetBSD: cards.c,v 1.7 1999/08/21 10:40:03 simonb Exp $");
 #endif
 #endif /* not lint */
 
-# include	<sys/types.h>
-# include	<sys/endian.h>
-# include	"monop.ext"
-# include	"pathnames.h"
+#include <sys/types.h>
+#include <sys/endian.h>
+#include "monop.ext"
+#include "pathnames.h"
 
 /*
  *	These routine deal with the card decks
  */
 
-# define	GOJF	'F'	/* char for get-out-of-jail-free cards	*/
+#define	GOJF	'F'	/* char for get-out-of-jail-free cards	*/
 
-# ifndef DEV
+#ifndef DEV
 static char	*cardfile	= _PATH_CARDS;
-# else
+#else
 static char	*cardfile	= "cards.pck";
-# endif
+#endif
 
 static FILE	*deckf;
 
@@ -90,15 +90,16 @@ file_err:
 	set_up(&CC_D);
 	set_up(&CH_D);
 }
+
 /*
  *	This routine sets up the offset pointers for the given deck.
  */
 static void
 set_up(dp)
-DECK	*dp; {
-
-	int	r1, r2;
-	int	i;
+	DECK *dp;
+{
+	int r1, r2;
+	int i;
 
 	dp->offsets = (off_t *) calloc(sizeof (off_t), dp->num_cards);
 	if (fread(dp->offsets, sizeof(off_t), dp->num_cards, deckf) !=
@@ -121,18 +122,18 @@ DECK	*dp; {
 		dp->offsets[r1] = temp;
 	}
 }
+
 /*
  *	This routine draws a card from the given deck
  */
 void
 get_card(dp)
-DECK	*dp;
+	DECK *dp;
 {
-
-	char	type_maj, type_min;
-	int		num;
-	int		i, per_h, per_H, num_h, num_H;
-	OWN		*op;
+	char type_maj, type_min;
+	int num;
+	int i, per_h, per_H, num_h, num_H;
+	OWN *op;
 
 	do {
 		fseek(deckf, dp->offsets[dp->last_card], 0);
@@ -209,7 +210,9 @@ DECK	*dp;
 					num_h += op->sqr->desc->houses;
 			}
 		num = per_h * num_h + per_H * num_H;
-		printf("You had %d Houses and %d Hotels, so that cost you $%d\n", num_h, num_H, num);
+		printf(
+		    "You had %d Houses and %d Hotels, so that cost you $%d\n",
+		    num_h, num_H, num);
 		if (num == 0)
 			lucky("");
 		else
@@ -227,9 +230,9 @@ DECK	*dp;
  *	This routine prints out the message on the card
  */
 static void
-printmes() {
-
-	char	c;
+printmes()
+{
+	char c;
 
 	printline();
 	fflush(stdout);

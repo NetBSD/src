@@ -1,4 +1,4 @@
-/*	$NetBSD: initdeck.c,v 1.6 1999/08/21 09:23:44 simonb Exp $	*/
+/*	$NetBSD: initdeck.c,v 1.7 1999/08/21 10:40:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: initdeck.c,v 1.6 1999/08/21 09:23:44 simonb Exp $");
+__RCSID("$NetBSD: initdeck.c,v 1.7 1999/08/21 10:40:03 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,11 +64,10 @@ __RCSID("$NetBSD: initdeck.c,v 1.6 1999/08/21 09:23:44 simonb Exp $");
  * string to print, terminated with a null byte.
  */
 
-# define	TRUE	1
-# define	FALSE	0
+#define	TRUE	1
+#define	FALSE	0
 
-# define	bool	char
-# define	reg	register
+#define	bool	char
 
 char	*infile		= "cards.inp",		/* input file		*/
 	*outfile	= "cards.pck";		/* "packed" file	*/
@@ -85,9 +84,9 @@ static void putem __P((void));
 
 int
 main(ac, av)
-int	ac;
-char	*av[]; {
-
+	int ac;
+	char *av[];
+{
 	int i;
 	int32_t nc;
 
@@ -142,16 +141,16 @@ char	*av[]; {
 	fwrite(CH_D.offsets, sizeof (off_t), CH_D.num_cards, outf);
 
 	fclose(outf);
-	printf("There were %d com. chest and %d chance cards\n", CC_D.num_cards, CH_D.num_cards);
+	printf("There were %d com. chest and %d chance cards\n",
+	    CC_D.num_cards, CH_D.num_cards);
 	exit(0);
 }
 
 static void
 getargs(ac, av)
-int	ac;
-char	*av[];
+	int ac;
+	char *av[];
 {
-
 	if (ac > 1)
 		infile = av[1];
 	if (ac > 2)
@@ -164,10 +163,9 @@ char	*av[];
 static void
 count() 
 {
-
-	reg bool	newline;
-	reg DECK	*in_deck;
-	reg int		c;
+	bool newline;
+	DECK *in_deck;
+	int c;
 
 	newline = TRUE;
 	in_deck = &CC_D;
@@ -182,17 +180,17 @@ count()
 			newline = (c == '\n');
 	in_deck->num_cards++;
 }
+
 /*
  *	put strings in the file
  */
 static void
 putem() 
 {
-
-	reg bool	newline;
-	reg DECK	*in_deck;
-	reg int		c;
-	reg int		num;
+	bool newline;
+	DECK *in_deck;
+	int c;
+	int num;
 
 	in_deck = &CC_D;
 	CC_D.num_cards = 1;

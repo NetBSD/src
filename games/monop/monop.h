@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.6 1997/10/12 17:45:20 christos Exp $	*/
+/*	$NetBSD: monop.h,v 1.7 1999/08/21 10:40:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,41 +35,41 @@
  *	@(#)monop.h	8.1 (Berkeley) 5/31/93
  */
 
-# include	<stdio.h>
-# include	<stdlib.h>
-# include	<string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-# define	bool	char
+#define	bool	char
 
-# define	TRUE	(1)
-# define	FALSE	(0)
+#define	TRUE	(1)
+#define	FALSE	(0)
 
-# define	N_MON	8	/* number of monopolies			*/
-# define	N_PROP	22	/* number of normal property squares	*/
-# define	N_RR	4	/* number of railroads			*/
-# define	N_UTIL	2	/* number of utilities			*/
-# define	N_SQRS	40	/* number of squares on board		*/
-# define	MAX_PL	9	/* maximum number of players		*/
-# define	MAX_PRP	(N_PROP+N_RR+N_UTIL) /* max # ownable property	*/
+#define	N_MON	8	/* number of monopolies			*/
+#define	N_PROP	22	/* number of normal property squares	*/
+#define	N_RR	4	/* number of railroads			*/
+#define	N_UTIL	2	/* number of utilities			*/
+#define	N_SQRS	40	/* number of squares on board		*/
+#define	MAX_PL	9	/* maximum number of players		*/
+#define	MAX_PRP	(N_PROP+N_RR+N_UTIL) /* max # ownable property	*/
 
 				/* square type numbers			*/
-# define	PRPTY	0	/* normal property			*/
-# define	RR	1	/* railroad				*/
-# define	UTIL	2	/* water works - electric co		*/
-# define	SAFE	3	/* safe spot				*/
-# define	CC	4	/* community chest			*/
-# define	CHANCE	5	/* chance (surprise!!!)			*/
-# define	INC_TAX	6	/* Income tax */
-# define	GOTO_J	7	/* Go To Jail! */
-# define	LUX_TAX	8	/* Luxury tax */
-# define	IN_JAIL	9	/* In jail */
+#define	PRPTY	0	/* normal property			*/
+#define	RR	1	/* railroad				*/
+#define	UTIL	2	/* water works - electric co		*/
+#define	SAFE	3	/* safe spot				*/
+#define	CC	4	/* community chest			*/
+#define	CHANCE	5	/* chance (surprise!!!)			*/
+#define	INC_TAX	6	/* Income tax */
+#define	GOTO_J	7	/* Go To Jail! */
+#define	LUX_TAX	8	/* Luxury tax */
+#define	IN_JAIL	9	/* In jail */
 
-# define	JAIL	40	/* JAIL square number			*/
+#define	JAIL	40	/* JAIL square number			*/
 
-# define	lucky(str)	printf("%s%s\n",str,lucky_mes[roll(1,num_luck)-1])
-# define	printline()	printf("------------------------------\n")
-# define	sqnum(sqp)	(sqp - board)
-# define	swap(A1,A2)	if ((A1) != (A2)) { \
+#define	lucky(str)	printf("%s%s\n",str,lucky_mes[roll(1,num_luck)-1])
+#define	printline()	printf("------------------------------\n")
+#define	sqnum(sqp)	(sqp - board)
+#define	swap(A1,A2)	if ((A1) != (A2)) { \
 					(A1) ^= (A2); \
 					(A2) ^= (A1); \
 					(A1) ^= (A2); \
