@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)ttyname.c	5.10 (Berkeley) 5/6/91";*/
-static char *rcsid = "$Id: ttyname.c,v 1.6 1993/12/28 19:46:35 jtc Exp $";
+static char *rcsid = "$Id: ttyname.c,v 1.7 1994/01/28 01:19:11 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -77,8 +77,10 @@ ttyname(fd)
 		if (!(db->get)(db, &key, &data, 0)) {
 			bcopy(data.data,
 			    buf + sizeof(_PATH_DEV) - 1, data.size);
+			(void)(db->close)(db);
 			return(buf);
 		}
+		(void)(db->close)(db);
 	}
 	return(__oldttyname(fd, &sb));
 }
