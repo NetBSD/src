@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.8 1997/06/10 19:36:53 veego Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.9 1997/10/16 16:13:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include <machine/pmap.h>
 #include <machine/machdep.h>
 #include <machine/mon.h>
+#include <machine/vme.h>
 
 /*
  * bus_scan:
@@ -136,12 +137,15 @@ label_t *nofault;
 extern vm_offset_t tmp_vpages[];
 extern int tmp_vpages_inuse;
 
-static const int bustype_to_patype[4] = {
-	0,		/* OBMEM  */
+static const int
+bus_physbase[BUS_NTYPES] = {
 	0,		/* OBIO   */
-	PMAP_VME16,	/* VMED16 */
-	PMAP_VME32,	/* VMED32 */
-};
+	0,		/* OBMEM  */
+	VME32D32_BASE,
+	VME24D32_BASE,
+	VME24D16_BASE,
+	VME16D32_BASE,
+	VME16D16_BASE };
 
 /*
  * Read addr with size len (1,2,4) into val.
@@ -152,72 +156,72 @@ static const int bustype_to_patype[4] = {
  *	Clean up temp. mapping
  */
 int
-bus_peek(bustype, paddr, sz)
-	int bustype, paddr, sz;
+bus_peek(bustype, pa, sz)
+	int bustype, pa, sz;
 {
-	int	offset, rtn, s;
-	vm_offset_t va_page;
+	int off, rv, s;
+	vm_offset_t pgva;
 	caddr_t va;
 
-	/* XXX - Must fix for VME support... */
-	if (bustype != OBIO && bustype != OBMEM)
-		return -1;
+	if ((bustype < 0) || (bustype >= BUS_NTYPES))
+		panic("bus_peek: bustype");
 
-	offset = paddr & ~(MMU_PAGE_MASK);
-	paddr = m68k_trunc_page(paddr);
-	paddr |= bustype_to_patype[bustype];
-	paddr |= PMAP_NC;
+	off = pa & PGOFSET;
+	pa -= off;
+	pa |= bus_physbase[bustype];
+	pa |= PMAP_NC;
 
 	s = splimp();
 	if (tmp_vpages_inuse)
 		panic("bus_peek: temporary vpages are in use.");
 	tmp_vpages_inuse++;
 
-	va_page = tmp_vpages[1];
-	va      = (caddr_t) va_page + offset;
+	pgva = tmp_vpages[1];
+	va = (caddr_t)pgva + off;
 
-	pmap_enter(pmap_kernel(), va_page, paddr, (VM_PROT_READ|VM_PROT_WRITE),
-		TRUE);
+	pmap_enter(pmap_kernel(), pgva, pa,
+	           (VM_PROT_READ|VM_PROT_WRITE), TRUE);
 
 	switch (sz) {
-		case 1:
-			rtn = peek_byte(va);
-			break;
-		case 2:
-			rtn = peek_word(va);
-			break;
-		case 4:
-			rtn = peek_long(va);
-			break;
-		default:
-			printf(" bus_peek: invalid size=%d\n", sz);
-			rtn = -1;
+	case 1:
+		rv = peek_byte(va);
+		break;
+	case 2:
+		rv = peek_word(va);
+		break;
+	case 4:
+		rv = peek_long(va);
+		break;
+	default:
+		printf(" bus_peek: invalid size=%d\n", sz);
+		rv = -1;
 	}
 
-	pmap_remove(pmap_kernel(), va_page, va_page + NBPG);
+	pmap_remove(pmap_kernel(), pgva, pgva + NBPG);
 	--tmp_vpages_inuse;
 	splx(s);
 
-	return (rtn);
+	return (rv);
 }
 
 
 void *
-bus_mapin(bustype, paddr, sz)
-	int bustype, paddr, sz;
+bus_mapin(bustype, pa, sz)
+	int bustype, pa, sz;
 {
-	int off, pa, pmt;
 	vm_offset_t va, retval;
+	int off;
 
-	if (bustype & ~3)
-		return (NULL);
+	if ((bustype < 0) || (bustype >= BUS_NTYPES))
+		panic("bus_mapin: bustype");
 
-	off = paddr & PGOFSET;
-	pa = paddr - off;
+	off = pa & PGOFSET;
+	pa -= off;
 	sz += off;
-	sz = round_page(sz);
+	sz = m68k_round_page(sz);
 
-	pmt = PMAP_NC;	/* non-cached */
+	pa |= bus_physbase[bustype];
+	pa |= PMAP_NC;	/* non-cached */
 
 	/* Get some kernel virtual address space. */
 	va = kmem_alloc_wait(kernel_map, sz);
@@ -228,13 +232,14 @@ bus_mapin(bustype, paddr, sz)
 	/* Map it to the specified bus. */
 #if 0
 	/* This has a problem with wrap-around... (on the sun3x? -j) */
-	pmap_map((int)va, pa | pmt, pa + sz, VM_PROT_ALL);
+	pmap_map((int)va, pa, pa + sz, VM_PROT_ALL);
 #else
 	do {
-		pmap_enter(pmap_kernel(), va, pa | pmt, VM_PROT_ALL, FALSE);
+		pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, FALSE);
 		va += NBPG;
 		pa += NBPG;
-	} while ((sz -= NBPG) > 0);
+		sz -= NBPG;
+	} while (sz > 0);
 #endif
 
 	return ((void*)retval);
