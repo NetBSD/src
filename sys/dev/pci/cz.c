@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.7 2000/06/09 16:53:23 wrstuden Exp $	*/
+/*	$NetBSD: cz.c,v 1.8 2000/06/09 18:00:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -652,7 +652,7 @@ cz_load_firmware(struct cz_softc *cz)
 	}
 
 	fid = CZ_FWCTL_READ(cz, BRDCTL_FWVERSION);
-	printf("%s: %s, %d channels (ttyCZ%02x..ttyCZ%02x), "
+	printf("%s: %s, %d channels (ttyCZ%04d..ttyCZ%04d), "
 	    "firmware %x.%x.%x\n",
 	    cz->cz_dev.dv_xname, board, cz->cz_nchannels,
 	    cztty_attached_ttys, cztty_attached_ttys + (cz->cz_nchannels - 1),
