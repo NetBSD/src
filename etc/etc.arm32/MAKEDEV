@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.28 1998/12/09 01:47:15 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.29 1999/01/16 01:40:27 abs Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -111,7 +111,8 @@ all)
 	sh $0 ccd0 ccd1 uk0 uk1 ss0
 	sh $0 raid0 raid1 raid2 raid3
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8 ttyv9
-	sh $0 lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 ipl
+	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	sh $0 lpa0 lpt0 tun0 tun1 tun2 ipl
 	sh $0 beep lkm qms0 pms0 local cpu0 cpu1
 	sh $0 usbs
 	sh $0 mouse-qms0 random

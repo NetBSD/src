@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.78 1999/01/13 17:41:44 drochner Exp $
+#	$NetBSD: MAKEDEV,v 1.79 1999/01/16 01:40:28 abs Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -113,7 +113,8 @@ all)
 	sh $0 std fd wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2 sd3 sd4
 	sh $0 tty0 tty1 pty0 pty1 raid0 raid1 raid2 raid3
 	sh $0 st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1 lpa2
-	sh $0 lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
+	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	sh $0 lpt0 lpt1 lpt2 ttyv0 tun0 tun1 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
 	sh $0 speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm local satlink0
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8
