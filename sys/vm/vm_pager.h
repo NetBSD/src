@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pager.h	8.4 (Berkeley) 1/12/94
- *	$Id: vm_pager.h,v 1.6 1994/05/23 03:12:03 cgd Exp $
+ *	$Id: vm_pager.h,v 1.7 1994/06/27 04:03:17 cgd Exp $
  */
 
 /*
@@ -131,18 +131,8 @@ void		 vm_pager_unmap_pages __P((vm_offset_t, int));
 /*
  * XXX compat with old interface
  */
-#define vm_pager_get(p, m, s) \
-({ \
-	vm_page_t ml[1]; \
-	ml[0] = (m); \
-	vm_pager_get_pages(p, ml, 1, s); \
-})
-#define vm_pager_put(p, m, s) \
-({ \
-	vm_page_t ml[1]; \
-	ml[0] = (m); \
-	vm_pager_put_pages(p, ml, 1, s); \
-})
+int		 vm_pager_get __P((vm_pager_t, vm_page_t, boolean_t));
+int		 vm_pager_put __P((vm_pager_t, vm_page_t, boolean_t));
 #endif
 
 #endif	/* _VM_PAGER_ */
