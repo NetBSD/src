@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.70 1999/10/06 20:03:51 fvdl Exp $	*/
+/*	$NetBSD: npx.c,v 1.71 2000/04/17 07:57:21 tron Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -456,7 +456,7 @@ npxsave1()
 /*
  * Implement device not available (DNA) exception
  *
- * If the we were the last process to use the FPU, we can simply return.
+ * If we were the last process to use the FPU, we can simply return.
  * Otherwise, we save the previous state, if necessary, and restore our last
  * saved state.
  */
