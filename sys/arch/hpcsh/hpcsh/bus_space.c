@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.6 2002/01/29 18:53:01 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.7 2002/02/11 17:22:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -239,7 +239,9 @@ _bus_space_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 				       &bpa);
 
 	if (error) {
-		DPRINTF("failed.\n");
+		DPRINTF("failed. base=0x%08x rstart=0x%08x, rend=0x%08x"
+		    " size=0x%08x\n", (u_int32_t)base, (u_int32_t)rstart,
+		    (u_int32_t)rend, (u_int32_t)size);
 		return (error);
 	}
 
