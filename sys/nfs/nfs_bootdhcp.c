@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.10 1999/02/12 01:38:38 thorpej Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.11 1999/02/21 15:07:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -220,8 +220,7 @@ static const u_int8_t vm_rfc1048[4] = { 99, 130, 83, 99 };
 /* Convenience macro */
 #define INTOHL(ina) ((u_int32_t)ntohl((ina).s_addr))
 
-static int bootpc_call __P((struct socket *, struct ifnet *,
-			struct nfs_diskless *, struct proc *));
+static int bootpc_call __P((struct nfs_diskless *, struct proc *));
 static void bootp_extract __P((struct bootp *, int, struct nfs_diskless *));
 
 /* #define DEBUG	XXX */
@@ -237,57 +236,30 @@ static void bootp_extract __P((struct bootp *, int, struct nfs_diskless *));
  * Get our boot parameters using BOOTP.
  */
 int
-nfs_bootdhcp(ifp, nd, procp)
-	struct ifnet *ifp;
+nfs_bootdhcp(nd, procp)
 	struct nfs_diskless *nd;
 	struct proc *procp;
 {
-	struct ifaliasreq iareq;
-	struct socket *so;
-	struct sockaddr_in *sin;
+	struct ifnet *ifp = nd->nd_ifp;
 	int error;
-
-	/*
-	 * Get a socket to use for various things in here.
-	 * After this, use "goto out" to cleanup and return.
-	 */
-	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
-	if (error) {
-		printf("nfs_boot: socreate, error=%d\n", error);
-		return (error);
-	}
 
 	/*
 	 * Do enough of ifconfig(8) so that the chosen interface
 	 * can talk to the servers.  Use address zero for now.
 	 */
-	memset(&iareq, 0, sizeof(iareq));
-	memcpy(iareq.ifra_name, ifp->if_xname, IFNAMSIZ);
-	/* Set the I/F address */
-	sin = (struct sockaddr_in *)&iareq.ifra_addr;
-	sin->sin_len = sizeof(*sin);
-	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = INADDR_ANY;
-	/* Leave subnetmask unspecified (len=0) */
-	/* Set the broadcast addr. */
-	sin = (struct sockaddr_in *)&iareq.ifra_broadaddr;
-	sin->sin_len = sizeof(*sin);
-	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = INADDR_BROADCAST;
-	error = ifioctl(so, SIOCAIFADDR, (caddr_t)&iareq, procp);
+	error = nfs_boot_setaddress(ifp, procp, INADDR_ANY, INADDR_ANY,
+				    INADDR_BROADCAST);
 	if (error) {
 		printf("nfs_boot: set ifaddr zero, error=%d\n", error);
-		goto out;
+		return (error);
 	}
 
 	/* This function call does the real send/recv work. */
-	error = bootpc_call(so, ifp, nd, procp);
+	error = bootpc_call(nd, procp);
+
 	/* Get rid of the temporary (zero) IP address. */
-	/*
-	 * XXX SIOCDIFADDR takes a "struct ifreq", which is
-	 * an exact subset of "struct ifaliasreq".
-	 */
-	(void) ifioctl(so, SIOCDIFADDR, (caddr_t)&iareq, procp);
+	(void) nfs_boot_deladdress(ifp, procp, INADDR_ANY);
+
 	/* NOW we can test the error from bootpc_call. */
 	if (error)
 		goto out;
@@ -295,29 +267,18 @@ nfs_bootdhcp(ifp, nd, procp)
 	/*
 	 * Do ifconfig with our real IP address and mask.
 	 */
-	/* I/F address */
-	sin = (struct sockaddr_in *)&iareq.ifra_addr;
-	sin->sin_addr = nd->nd_myip;
-	/* subnetmask */
-	if (nd->nd_mask.s_addr) {
-		sin = (struct sockaddr_in *)&iareq.ifra_mask;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_family = AF_INET;
-		sin->sin_addr = nd->nd_mask;
-	}
-	/* Let ifioctl() default the broadcast address. */
-	sin = (struct sockaddr_in *)&iareq.ifra_broadaddr;
-	sin->sin_len = 0;
-	sin->sin_family = 0;
-	sin->sin_addr.s_addr = 0;
-	error = ifioctl(so, SIOCAIFADDR, (caddr_t)&iareq, procp);
+	error = nfs_boot_setaddress(ifp, procp, nd->nd_myip.s_addr,
+				    nd->nd_mask.s_addr, INADDR_ANY);
 	if (error) {
 		printf("nfs_boot: set ifaddr real, error=%d\n", error);
 		goto out;
 	}
 
 out:
-	soclose(so);
+	if (error) {
+		(void) nfs_boot_ifupdown(ifp, procp, 0);
+		nfs_boot_flushrt(ifp);
+	}
 	return (error);
 }
 
@@ -470,12 +431,12 @@ warn:
 }
 
 static int
-bootpc_call(so, ifp, nd, procp)
-	struct socket *so;
-	struct ifnet *ifp;
+bootpc_call(nd, procp)
 	struct nfs_diskless *nd;
 	struct proc *procp;
 {
+	struct socket *so;
+	struct ifnet *ifp = nd->nd_ifp;
 	static u_int32_t xid = ~0xFF;
 	struct bootp *bootp;	/* request */
 	struct mbuf *m, *nam;
@@ -484,6 +445,12 @@ bootpc_call(so, ifp, nd, procp)
 	u_char *haddr;
 	u_char hafmt, halen;
 	struct bootpcontext bpc;
+
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+	if (error) {
+		printf("bootp: socreate, error=%d\n", error);
+		return (error);
+	}
 
 	/*
 	 * Initialize to NULL anything that will hold an allocation,
@@ -650,6 +617,7 @@ out:
 		m_freem(m);
 	if (nam)
 		m_freem(nam);
+	soclose(so);
 	return (error);
 }
 

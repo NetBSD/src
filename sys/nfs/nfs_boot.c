@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.49 1998/09/13 13:49:29 christos Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.50 1999/02/21 15:07:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -117,6 +117,7 @@ nfs_boot_init(nd, procp)
 		       root_device->dv_xname);
 		return (ENXIO);
 	}
+	nd->nd_ifp = ifp;
 
 	error = EADDRNOTAVAIL; /* ??? */
 #if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
@@ -126,13 +127,13 @@ nfs_boot_init(nd, procp)
 #else
 		printf("nfs_boot: trying BOOTP\n");
 #endif
-		error = nfs_bootdhcp(ifp, nd, procp);
+		error = nfs_bootdhcp(nd, procp);
 	}
 #endif
 #ifdef NFS_BOOT_BOOTPARAM
 	if (error && nfs_boot_bootparam) {
 		printf("nfs_boot: trying RARP (and RPC/bootparam)\n");
-		error = nfs_bootparam(ifp, nd, procp);
+		error = nfs_bootparam(nd, procp);
 	}
 #endif
 	if (error)
@@ -150,11 +151,171 @@ nfs_boot_init(nd, procp)
 	 */
 	error = nfs_boot_getfh(&nd->nd_root);
 
+	if (error)
+		nfs_boot_cleanup(nd, procp);
+
 	return (error);
 }
 
-int nfs_boot_setrecvtimo(so)
-struct socket *so;
+void
+nfs_boot_cleanup(nd, procp)
+	struct nfs_diskless *nd;
+	struct proc *procp;
+{
+
+	nfs_boot_deladdress(nd->nd_ifp, procp, nd->nd_myip.s_addr);
+	nfs_boot_ifupdown(nd->nd_ifp, procp, 0);
+	nfs_boot_flushrt(nd->nd_ifp);
+}
+
+int
+nfs_boot_ifupdown(ifp, procp, up)
+	struct ifnet *ifp;
+	struct proc *procp;
+	int up;
+{
+	struct socket *so;
+	struct ifreq ireq;
+	int error;
+
+	memset(&ireq, 0, sizeof(ireq));
+	memcpy(ireq.ifr_name, ifp->if_xname, IFNAMSIZ);
+
+	/*
+	 * Get a socket to use for various things in here.
+	 * After this, use "goto out" to cleanup and return.
+	 */
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+	if (error) {
+		printf("ifupdown: socreate, error=%d\n", error);
+		return (error);
+	}
+
+	/*
+	 * Bring up the interface. (just set the "up" flag)
+	 * Get the old interface flags and or IFF_UP into them so
+	 * things like media selection flags are not clobbered.
+	 */
+	error = ifioctl(so, SIOCGIFFLAGS, (caddr_t)&ireq, procp);
+	if (error) {
+		printf("ifupdown: GIFFLAGS, error=%d\n", error);
+		goto out;
+	}
+	if (up)
+		ireq.ifr_flags |= IFF_UP;
+	else
+		ireq.ifr_flags &= ~IFF_UP;
+	error = ifioctl(so, SIOCSIFFLAGS, (caddr_t)&ireq, procp);
+	if (error) {
+		printf("ifupdown: SIFFLAGS, error=%d\n", error);
+		goto out;
+	}
+
+out:
+	soclose(so);
+	return (error);
+}
+
+int
+nfs_boot_setaddress(ifp, procp, addr, netmask, braddr)
+	struct ifnet *ifp;
+	struct proc *procp;
+	u_int32_t addr, netmask, braddr;
+{
+	struct socket *so;
+	struct ifaliasreq iareq;
+	struct sockaddr_in *sin;
+	int error;
+
+	/*
+	 * Get a socket to use for various things in here.
+	 * After this, use "goto out" to cleanup and return.
+	 */
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+	if (error) {
+		printf("setaddress: socreate, error=%d\n", error);
+		return (error);
+	}
+
+	memset(&iareq, 0, sizeof(iareq));
+	memcpy(iareq.ifra_name, ifp->if_xname, IFNAMSIZ);
+
+	/* Set the I/F address */
+	sin = (struct sockaddr_in *)&iareq.ifra_addr;
+	sin->sin_len = sizeof(*sin);
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = addr;
+
+	/* Set the netmask */
+	if (netmask != INADDR_ANY) {
+		sin = (struct sockaddr_in *)&iareq.ifra_mask;
+		sin->sin_len = sizeof(*sin);
+		sin->sin_family = AF_INET;
+		sin->sin_addr.s_addr = netmask;
+	} /* else leave subnetmask unspecified (len=0) */
+
+	/* Set the broadcast addr. */
+	if (braddr != INADDR_ANY) {
+		sin = (struct sockaddr_in *)&iareq.ifra_broadaddr;
+		sin->sin_len = sizeof(*sin);
+		sin->sin_family = AF_INET;
+		sin->sin_addr.s_addr = braddr;
+	} /* else leave broadcast addr unspecified (len=0) */
+
+	error = ifioctl(so, SIOCAIFADDR, (caddr_t)&iareq, procp);
+	if (error) {
+		printf("setaddress, error=%d\n", error);
+		goto out;
+	}
+
+out:
+	soclose(so);
+	return (error);
+}
+
+int
+nfs_boot_deladdress(ifp, procp, addr)
+	struct ifnet *ifp;
+	struct proc *procp;
+	u_int32_t addr;
+{
+	struct socket *so;
+	struct ifreq ireq;
+	struct sockaddr_in *sin;
+	int error;
+
+	/*
+	 * Get a socket to use for various things in here.
+	 * After this, use "goto out" to cleanup and return.
+	 */
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+	if (error) {
+		printf("deladdress: socreate, error=%d\n", error);
+		return (error);
+	}
+
+	memset(&ireq, 0, sizeof(ireq));
+	memcpy(ireq.ifr_name, ifp->if_xname, IFNAMSIZ);
+
+	sin = (struct sockaddr_in *)&ireq.ifr_addr;
+	sin->sin_len = sizeof(*sin);
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = addr;
+
+	error = ifioctl(so, SIOCDIFADDR, (caddr_t)&ireq, procp);
+	if (error) {
+		printf("deladdress, error=%d\n", error);
+		goto out;
+	}
+
+out:
+	soclose(so);
+	return (error);
+}
+
+int
+nfs_boot_setrecvtimo(so)
+	struct socket *so;
 {
 	struct mbuf *m;
 	struct timeval *tv;
@@ -164,11 +325,12 @@ struct socket *so;
 	m->m_len = sizeof(*tv);
 	tv->tv_sec = 1;
 	tv->tv_usec = 0;
-	return(sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m));
+	return (sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m));
 }
 
-int nfs_boot_enbroadcast(so)
-struct socket *so;
+int
+nfs_boot_enbroadcast(so)
+	struct socket *so;
 {
 	struct mbuf *m;
 	int32_t *on;
@@ -177,12 +339,13 @@ struct socket *so;
 	on = mtod(m, int32_t *);
 	m->m_len = sizeof(*on);
 	*on = 1;
-	return(sosetopt(so, SOL_SOCKET, SO_BROADCAST, m));
+	return (sosetopt(so, SOL_SOCKET, SO_BROADCAST, m));
 }
 
-int nfs_boot_sobind_ipport(so, port)
-struct socket *so;
-u_int16_t port;
+int
+nfs_boot_sobind_ipport(so, port)
+	struct socket *so;
+	u_int16_t port;
 {
 	struct mbuf *m;
 	struct sockaddr_in *sin;
@@ -196,7 +359,7 @@ u_int16_t port;
 	sin->sin_port = htons(port);
 	error = sobind(so, m);
 	m_freem(m);
-	return(error);
+	return (error);
 }
 
 /*
@@ -208,15 +371,15 @@ u_int16_t port;
 #define	MAX_RESEND_DELAY 5	/* seconds */
 #define TOTAL_TIMEOUT   30	/* seconds */
 
-int nfs_boot_sendrecv(so, nam, sndproc, snd, rcvproc, rcv,
-		      from_p, context)
-struct socket *so;
-struct mbuf *nam;
-int (*sndproc) __P((struct mbuf*, void*, int));
-struct mbuf *snd;
-int (*rcvproc) __P((struct mbuf*, void*));
-struct mbuf **rcv, **from_p;
-void *context;
+int
+nfs_boot_sendrecv(so, nam, sndproc, snd, rcvproc, rcv, from_p, context)
+	struct socket *so;
+	struct mbuf *nam;
+	int (*sndproc) __P((struct mbuf*, void*, int));
+	struct mbuf *snd;
+	int (*rcvproc) __P((struct mbuf*, void*));
+	struct mbuf **rcv, **from_p;
+	void *context;
 {
 	int error, rcvflg, timo, secs, waited;
 	struct mbuf *m, *from;
@@ -234,7 +397,7 @@ void *context;
 send_again:
 	waited += timo;
 	if (waited >= TOTAL_TIMEOUT)
-		return(ETIMEDOUT);
+		return (ETIMEDOUT);
 
 	/* Determine new timeout. */
 	if (timo < MAX_RESEND_DELAY)
@@ -307,7 +470,7 @@ send_again:
 	}
 out:
 	if (from) m_freem(from);
-	return(error);
+	return (error);
 }
 
 /*
@@ -337,11 +500,38 @@ nfs_boot_defrt(gw_ip)
 
 	/* add, dest, gw, mask, flags, 0 */
 	error = rtrequest(RTM_ADD, &dst, &gw, &mask,
-					  (RTF_UP | RTF_GATEWAY | RTF_STATIC), NULL);
+			  (RTF_UP | RTF_GATEWAY | RTF_STATIC), NULL);
 	if (error) {
 		printf("nfs_boot: add route, error=%d\n", error);
 		error = 0;
 	}
+}
+
+static int nfs_boot_delroute __P((struct radix_node *, void *));
+static int
+nfs_boot_delroute(rn, w)
+	struct radix_node *rn;
+	void *w;
+{
+	struct rtentry *rt = (struct rtentry *)rn;
+	int error;
+
+	if (rt->rt_ifp != (struct ifnet *)w)
+		return (0);
+
+	error = rtrequest(RTM_DELETE, rt_key(rt), NULL, rt_mask(rt), 0, NULL);
+	if (error)
+		printf("nfs_boot: del route, error=%d\n", error);
+
+	return (0);
+}
+
+void
+nfs_boot_flushrt(ifp)
+	struct ifnet *ifp;
+{
+
+	rn_walktree(rt_tables[AF_INET], nfs_boot_delroute, ifp);
 }
 
 /*
