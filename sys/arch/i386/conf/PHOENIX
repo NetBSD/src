@@ -1,10 +1,10 @@
 #
 # Compaq DeskPro/20 PHOENIX
 #
-#	$Id: PHOENIX,v 1.8 1993/05/07 08:33:30 cgd Exp $
+#	$Id: PHOENIX,v 1.9 1993/05/20 14:32:35 cgd Exp $
 #
 machine		"i386"
-cpu		"i386"
+cpu		"I386_CPU"
 ident		PHOENIX
 timezone	8 dst
 maxusers	4
@@ -17,6 +17,7 @@ options		"TCP_COMPAT_42"
 #options		DEBUG
 options		DIAGNOSTIC
 options		DDB
+options		"MATH_EMULATE"
 
 config		netbsd	root on wd0 swap on wd0 and as0
 

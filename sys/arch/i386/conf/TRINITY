@@ -1,15 +1,14 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.6 1993/05/07 08:33:40 cgd Exp $
+#	$Id: TRINITY,v 1.7 1993/05/20 14:32:41 cgd Exp $
 #
 
 machine		"i386"
-cpu		"i386"
+cpu		"I386_CPU"
 ident		TRINITY
 timezone	5 dst
 maxusers	16
-options		"i387"
 options		INET,NFSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"

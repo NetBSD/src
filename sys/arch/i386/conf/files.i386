@@ -1,4 +1,4 @@
-# $Id: files.i386,v 1.11 1993/05/18 08:54:22 cgd Exp $
+# $Id: files.i386,v 1.12 1993/05/20 14:32:43 cgd Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/cons.c	standard
@@ -7,7 +7,7 @@ arch/i386/i386/db_interface.c	optional ddb
 arch/i386/i386/db_trace.c	optional ddb
 arch/i386/i386/in_cksum.c	optional inet
 arch/i386/i386/machdep.c	standard config-dependent
-arch/i386/i386/math_emulate.c	standard
+arch/i386/i386/math_emulate.c	optional math_emulate
 arch/i386/i386/mem.c		standard
 arch/i386/i386/microtime.s   standard
 arch/i386/i386/ns_cksum.c	optional ns

@@ -2,11 +2,12 @@
 # GENERICAHA_DDB -- Generic ISA machine, w/non-EISA scsi controller support
 #		    and the kernel debugger.
 #
-#	$Id: GENERICAHA_DDB,v 1.4 1993/05/07 08:33:17 cgd Exp $
+#	$Id: GENERICAHA_DDB,v 1.5 1993/05/20 14:32:27 cgd Exp $
 #
 
 machine		"i386"
-cpu		"i386"
+cpu		"I386_CPU"
+cpu		"I486_CPU"
 ident		GENERICAHA_DDB
 timezone	8 dst
 maxusers	10
@@ -17,6 +18,7 @@ options		XSERVER,UCONSOLE
 options		PCFS,KERNFS
 options		SCSI
 options		DDB
+options		"MATH_EMULATE"
 
 config		netbsd	root on sd0 swap on sd0
 
