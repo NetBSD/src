@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.166 2004/05/20 00:52:58 petrov Exp $ */
+/*	$NetBSD: machdep.c,v 1.167 2004/05/20 11:36:43 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,10 +78,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2004/05/20 00:52:58 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2004/05/20 11:36:43 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
+#include "opt_compat_svr4.h"
+#include "opt_compat_sunos.h"
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -137,6 +139,14 @@ int bus_space_debug = 0; /* This may be used by macros elsewhere. */
 #define DPRINTF(l, s)   do { if (bus_space_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
+#endif
+
+#if defined(COMPAT_16) || defined(COMPAT_SVR4) || defined(COMPAT_SVR4_32) || defined(COMPAT_SUNOS)
+#ifdef DEBUG
+/* See <sparc64/sparc64/sigdebug.h> */
+int sigdebug = 0x0;
+int sigpid = 0;
+#endif
 #endif
 
 struct vm_map *exec_map = NULL;
