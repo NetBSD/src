@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.22 1999/06/15 23:27:47 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.23 1999/06/16 17:25:39 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -965,7 +965,7 @@ sys_mlockall(p, v, retval)
 
 #ifdef pmap_wired_count
 	/* Actually checked in uvm_map_pageable_all() */
-	limit = p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur];
+	limit = p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur;
 #else
 	limit = 0;
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
