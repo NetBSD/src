@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.17 1997/09/02 13:20:26 thorpej Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.18 1998/07/31 04:37:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.17 1997/09/02 13:20:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.18 1998/07/31 04:37:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.17 1997/09/02 13:20:26 thorpej Exp 
 
 /* mapping/unmapping */
 int		tc_mem_map __P((void *, bus_addr_t, bus_size_t, int,
-		    bus_space_handle_t *));
-void		tc_mem_unmap __P((void *, bus_space_handle_t, bus_size_t));
+		    bus_space_handle_t *, int));
+void		tc_mem_unmap __P((void *, bus_space_handle_t, bus_size_t, int));
 int		tc_mem_subregion __P((void *, bus_space_handle_t, bus_size_t,
 		    bus_size_t, bus_space_handle_t *));
 
@@ -231,13 +231,15 @@ tc_bus_mem_init(memv)
 	return (h);
 }
 
+/* ARGSUSED */
 int
-tc_mem_map(v, memaddr, memsize, flags, memhp)
+tc_mem_map(v, memaddr, memsize, flags, memhp, acct)
 	void *v;
 	bus_addr_t memaddr;
 	bus_size_t memsize;
 	int flags;
 	bus_space_handle_t *memhp;
+	int acct;
 {
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
@@ -255,11 +257,13 @@ tc_mem_map(v, memaddr, memsize, flags, memhp)
 	return (0);
 }
 
+/* ARGSUSED */
 void
-tc_mem_unmap(v, memh, memsize)
+tc_mem_unmap(v, memh, memsize, acct)
 	void *v;
 	bus_space_handle_t memh;
 	bus_size_t memsize;
+	int acct;
 {
 
 	/* XXX XX XXX nothing to do. */

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.3 1998/06/07 00:29:29 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.4 1998/07/31 04:37:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -89,9 +89,9 @@
 
 /* mapping/unmapping */
 int		__C(CHIP,_mem_map) __P((void *, bus_addr_t, bus_size_t, int,
-		    bus_space_handle_t *));
+		    bus_space_handle_t *, int));
 void		__C(CHIP,_mem_unmap) __P((void *, bus_space_handle_t,
-		    bus_size_t));
+		    bus_size_t, int));
 int		__C(CHIP,_mem_subregion) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_size_t, bus_space_handle_t *));
 
@@ -291,12 +291,13 @@ __C(CHIP,_bus_mem_init)(t, v)
 }
 
 int
-__C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp)
+__C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 	void *v;
 	bus_addr_t memaddr;
 	bus_size_t memsize;
 	int flags;
 	bus_space_handle_t *memhp;
+	int acct;
 {
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
@@ -305,6 +306,9 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp)
 	/* Requests for linear uncacheable space can't be satisfied. */
 	if (linear && !cacheable)
 		return (EOPNOTSUPP);
+
+	if (acct == 0)
+		goto mapit;
 
 #ifdef EXTENT_DEBUG
 	printf("mem: allocating 0x%lx to 0x%lx\n", memaddr,
@@ -320,19 +324,24 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp)
 		return (error);
 	}
 
+ mapit:
 	*memhp = ALPHA_PHYS_TO_K0SEG(CHIP_MEM_SYS_START(v)) + memaddr;
 
 	return (0);
 }
 
 void
-__C(CHIP,_mem_unmap)(v, memh, memsize)
+__C(CHIP,_mem_unmap)(v, memh, memsize, acct)
 	void *v;
 	bus_space_handle_t memh;
 	bus_size_t memsize;
+	int acct;
 {
 	bus_addr_t memaddr;
 	int error;
+
+	if (acct == 0)
+		return;
 
 #ifdef EXTENT_DEBUG
 	printf("mem: freeing handle 0x%lx for 0x%lx\n", memh, memsize);
@@ -420,7 +429,7 @@ __C(CHIP,_mem_free)(v, bsh, size)
 {
 
 	/* Unmap does all we need to do. */
-	__C(CHIP,_mem_unmap)(v, bsh, size);
+	__C(CHIP,_mem_unmap)(v, bsh, size, 1);
 }
 
 inline void
