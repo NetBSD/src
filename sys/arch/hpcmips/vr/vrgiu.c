@@ -1,6 +1,6 @@
-/*	$NetBSD: vrgiu.c,v 1.19 2001/04/21 10:32:38 sato Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.20 2001/04/30 11:42:19 takemura Exp $	*/
 /*-
- * Copyright (c) 1999
+ * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,11 +46,14 @@
 #include <machine/bus.h>
 #include <machine/config_hook.h>
 
+#include <dev/hpc/hpciovar.h>
+
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrgiureg.h>
+#include <hpcmips/vr/vrgiuvar.h>
 
 #include "locators.h"
 
@@ -91,35 +94,39 @@ int vrgiu_intr_led = 1;
 #define	LEGAL_INTR_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_INOUT)
 #define	LEGAL_OUT_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_OUT)
 
-int vrgiu_match __P((struct device*, struct cfdata*, void*));
-void vrgiu_attach __P((struct device*, struct device*, void*));
-int vrgiu_intr __P((void*));
-int vrgiu_print __P((void*, const char*));
-void vrgiu_callback __P((struct device*));
+int vrgiu_match(struct device*, struct cfdata*, void*);
+void vrgiu_attach(struct device*, struct device*, void*);
+int vrgiu_intr(void*);
+int vrgiu_print(void*, const char*);
+void vrgiu_callback(struct device*);
 
-void	vrgiu_dump_regs __P((struct vrgiu_softc *sc));
-void	vrgiu_dump_io __P((struct vrgiu_softc *sc));
-void	vrgiu_diff_io __P((void));
-void	vrgiu_dump_iosetting __P((struct vrgiu_softc *sc));
-void	vrgiu_diff_iosetting __P((void));
-u_int32_t vrgiu_regread_4 __P((vrgiu_chipset_tag_t, bus_addr_t));
-u_int16_t vrgiu_regread __P((vrgiu_chipset_tag_t, bus_addr_t));
-void	vrgiu_regwrite_4 __P((vrgiu_chipset_tag_t, bus_addr_t, u_int32_t));
-void	vrgiu_regwrite __P((vrgiu_chipset_tag_t, bus_addr_t, u_int16_t));
+void	vrgiu_dump_regs(struct vrgiu_softc *);
+void	vrgiu_dump_io(struct vrgiu_softc *);
+void	vrgiu_diff_io(void);
+void	vrgiu_dump_iosetting(struct vrgiu_softc *);
+void	vrgiu_diff_iosetting(void);
+u_int32_t vrgiu_regread_4(struct vrgiu_softc *, bus_addr_t);
+u_int16_t vrgiu_regread(struct vrgiu_softc *, bus_addr_t);
+void	vrgiu_regwrite_4(struct vrgiu_softc *, bus_addr_t, u_int32_t);
+void	vrgiu_regwrite(struct vrgiu_softc *, bus_addr_t, u_int16_t);
 
-int vrgiu_port_read __P((vrgiu_chipset_tag_t, int));
-int vrgiu_port_write __P((vrgiu_chipset_tag_t, int, int));
+static int vrgiu_port_read(hpcio_chip_t, int);
+static void vrgiu_port_write(hpcio_chip_t, int, int);
+static void *vrgiu_intr_establish(hpcio_chip_t, int, int, int (*)(void *), void*);
+static void vrgiu_intr_disestablish(hpcio_chip_t, void*);
+static void vrgiu_intr_clear(hpcio_chip_t, void*);
+static void vrgiu_update(hpcio_chip_t);
+static void vrgiu_dump(hpcio_chip_t);
+static hpcio_chip_t vrgiu_getchip(void*, int);
 
-void *vrgiu_intr_establish __P((vrgiu_chipset_tag_t, int, int, int, int (*)(void *), void*));
-void vrgiu_intr_disestablish __P((vrgiu_chipset_tag_t, void*));
-
-struct vrgiu_function_tag vrgiu_functions = {
-	vrgiu_port_read,
-	vrgiu_port_write,
-	vrgiu_regread_4,
-	vrgiu_regwrite_4,
-	vrgiu_intr_establish,
-	vrgiu_intr_disestablish
+static struct hpcio_chip vrgiu_iochip = {
+	.hc_portread =		vrgiu_port_read,
+	.hc_portwrite =		vrgiu_port_write,
+	.hc_intr_establish =	vrgiu_intr_establish,
+	.hc_intr_disestablish =	vrgiu_intr_disestablish,
+	.hc_intr_clear =	vrgiu_intr_clear,
+	.hc_update =		vrgiu_update,
+	.hc_dump =		vrgiu_dump,
 };
 
 struct cfattach vrgiu_ca = {
@@ -145,7 +152,7 @@ vrgiu_attach(parent, self, aux)
 {
 	struct vrip_attach_args *va = aux;
 	struct vrgiu_softc *sc = (void*)self;
-	struct gpbus_attach_args gpa;
+	struct hpcio_attach_args haa;
 	int i;
 
 	this_giu = sc;
@@ -174,12 +181,15 @@ vrgiu_attach(parent, self, aux)
 		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	vrgiu_functions.gf_intr_establish = vrgiu_intr_establish;
-	vrgiu_functions.gf_intr_disestablish = vrgiu_intr_disestablish;
 	/*
-	 * Register functions to upper interface. 
+	 * fill hpcio_chip structure
 	 */
-	vrip_giu_function_register(va->va_vc, &vrgiu_functions, self);
+	sc->sc_iochip = vrgiu_iochip; /* structure copy */
+	sc->sc_iochip.hc_chipid = VRIP_IOCHIP_VRGIU;
+	sc->sc_iochip.hc_name = sc->sc_dev.dv_xname;
+	sc->sc_iochip.hc_sc = sc;
+	/* Register functions to upper interface */
+	vrip_gpio_register(va->va_vc, &sc->sc_iochip);
 
 	/* Display port status (Input/Output) for debugging */
 	VPRINTF(DEBUG_IO, ("I/O setting:                                "));
@@ -189,12 +199,12 @@ vrgiu_attach(parent, self, aux)
 	VDUMP_IO(DEBUG_IO, sc);
 
 	/* 
-	 *  General purpose bus 
+	 *  hpcio I/F
 	 */
-	gpa.gpa_busname = "gpbus";
-	gpa.gpa_gc = sc;
-	gpa.gpa_gf = &vrgiu_functions;
-	while (config_found(self, &gpa, vrgiu_print)) ;
+	haa.haa_busname = "hpcio";
+	haa.haa_sc = sc;
+	haa.haa_getchip = vrgiu_getchip;
+	while (config_found(self, &haa, vrgiu_print)) ;
 	/*
 	 * GIU-ISA bridge
 	 */
@@ -210,12 +220,12 @@ vrgiu_callback(self)
 	struct device *self;
 {
 	struct vrgiu_softc *sc = (void*)self;
-	struct gpbus_attach_args gpa;
+	struct hpcio_attach_args haa;
 
-	gpa.gpa_busname = "vrisab";
-	gpa.gpa_gc = sc;
-	gpa.gpa_gf = &vrgiu_functions;
-	config_found(self, &gpa, vrgiu_print);
+	haa.haa_busname = "vrisab";
+	haa.haa_sc = sc;
+	haa.haa_getchip = vrgiu_getchip;
+	config_found(self, &haa, vrgiu_print);
 }
 
 int
@@ -320,33 +330,29 @@ vrgiu_dump_regs(sc)
  * GIU regster access method.
  */
 u_int32_t
-vrgiu_regread_4(vc, offs)
-	vrgiu_chipset_tag_t vc;
+vrgiu_regread_4(sc, offs)
+	struct vrgiu_softc *sc;
 	bus_addr_t offs;
 {
-	struct vrgiu_softc *sc = (void*)vc;
 	u_int16_t reg[2];
 	bus_space_read_region_2 (sc->sc_iot, sc->sc_ioh, offs, reg, 2);
 	return reg[0]|(reg[1]<<16);
 }
 
 u_int16_t
-vrgiu_regread(vc, off)
-	vrgiu_chipset_tag_t vc;
+vrgiu_regread(sc, off)
+	struct vrgiu_softc *sc;
 	bus_addr_t off;
 {
-	struct vrgiu_softc *sc = (void*)vc;
 	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, off);
 }
 
 void
-vrgiu_regwrite_4(vc, offs, data)
-	vrgiu_chipset_tag_t vc;
+vrgiu_regwrite_4(sc, offs, data)
+	struct vrgiu_softc *sc;
 	bus_addr_t offs;
 	u_int32_t data;
 {
-	struct vrgiu_softc *sc = (void*)vc;
-
 	u_int16_t reg[2];
 	reg[0] = data & 0xffff;
 	reg[1] = (data>>16)&0xffff;
@@ -354,12 +360,11 @@ vrgiu_regwrite_4(vc, offs, data)
 }
 
 void
-vrgiu_regwrite(vc, off, data)
-	vrgiu_chipset_tag_t vc;
+vrgiu_regwrite(sc, off, data)
+	struct vrgiu_softc *sc;
 	bus_addr_t off;
 	u_int16_t data;
 {
-	struct vrgiu_softc *sc = (void*)vc;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, off, data);
 }
 
@@ -367,37 +372,39 @@ vrgiu_regwrite(vc, off, data)
  * PORT 
  */
 int
-vrgiu_port_read(vc, port)
-	vrgiu_chipset_tag_t vc;
+vrgiu_port_read(hc, port)
+	hpcio_chip_t hc;
 	int port;
 {
+	struct vrgiu_softc *sc = hc->hc_sc;
 	int on;
 
 	if (!LEGAL_OUT_PORT(port))
 		panic("vrgiu_port_read: illegal gpio port");
 
 	if (port < 32)
-		on = (vrgiu_regread_4(vc, GIUPIOD_REG) & (1 << port));
+		on = (vrgiu_regread_4(sc, GIUPIOD_REG) & (1 << port));
 	else
-		on = (vrgiu_regread_4(vc, GIUPODAT_REG) & (1 << (port - 32)));
+		on = (vrgiu_regread_4(sc, GIUPODAT_REG) & (1 << (port - 32)));
 
 	return (on ? 1 : 0);
 }
     
-int
-vrgiu_port_write(vc, port, onoff)
-	vrgiu_chipset_tag_t vc;
+void
+vrgiu_port_write(hc, port, onoff)
+	hpcio_chip_t hc;
 	int port;
 	int onoff;
 {
+	struct vrgiu_softc *sc = hc->hc_sc;
 	u_int32_t reg[2];
 	int bank;
 
 	if (!LEGAL_OUT_PORT(port))
 		panic("vrgiu_port_write: illegal gpio port");
 
-	reg[0] = vrgiu_regread_4(vc, GIUPIOD_REG);
-	reg[1] = vrgiu_regread_4(vc, GIUPODAT_REG);
+	reg[0] = vrgiu_regread_4(sc, GIUPIOD_REG);
+	reg[1] = vrgiu_regread_4(sc, GIUPODAT_REG);
 	bank = port < 32 ? 0 : 1;
 	if (bank == 1)
 		port -= 32;
@@ -406,11 +413,32 @@ vrgiu_port_write(vc, port, onoff)
 		reg[bank] |= (1<<port);
 	else
 		reg[bank] &= ~(1<<port);
-	vrgiu_regwrite_4(vc, GIUPIOD_REG, reg[0]);
-	vrgiu_regwrite_4(vc, GIUPODAT_REG, reg[1]);
-
-	return 0;
+	vrgiu_regwrite_4(sc, GIUPIOD_REG, reg[0]);
+	vrgiu_regwrite_4(sc, GIUPODAT_REG, reg[1]);
 }
+
+static void
+vrgiu_update(hc)
+	hpcio_chip_t hc;
+{
+}
+
+static void
+vrgiu_dump(hc)
+	hpcio_chip_t hc;
+{
+}
+
+static hpcio_chip_t
+vrgiu_getchip(scx, chipid)
+	void* scx;
+	int chipid;
+{
+	struct vrgiu_softc *sc = scx;
+
+	return (&sc->sc_iochip);
+}
+
 /* 
  *  For before autoconfiguration.  
  */
@@ -455,15 +483,14 @@ __vrgiu_out(port, data)
  * Interrupt staff 
  */
 void *
-vrgiu_intr_establish(ic, port, mode, level, ih_fun, ih_arg)
-	vrgiu_chipset_tag_t ic;
+vrgiu_intr_establish(hc, port, mode, ih_fun, ih_arg)
+	hpcio_chip_t hc;
 	int port; /* GPIO pin # */
 	int mode; /* GIU trigger setting */
-	int level;  /* XXX not yet */
 	int (*ih_fun) __P((void*));
 	void *ih_arg;
 {
-	struct vrgiu_softc *sc = (void*)ic;
+	struct vrgiu_softc *sc = hc->hc_sc;
 	int s;
 	u_int32_t reg, mask;
 	struct vrgiu_intr_entry *ih;
@@ -499,7 +526,7 @@ vrgiu_intr_establish(ic, port, mode, level, ih_fun, ih_arg)
 	/* interrupt type */
 	reg = vrgiu_regread_4(sc, GIUINTTYP_REG);
 	DPRINTF(DEBUG_INTR, ("[%s->",reg & mask ? "edge" : "level"));
-	if (mode & VRGIU_INTR_EDGE) {
+	if (mode & HPCIO_INTR_EDGE) {
 		DPRINTF(DEBUG_INTR, ("edge]"));
 		reg |= mask;	/* edge */
 	} else {
@@ -509,10 +536,10 @@ vrgiu_intr_establish(ic, port, mode, level, ih_fun, ih_arg)
 	vrgiu_regwrite_4(sc, GIUINTTYP_REG, reg);
 
 	/* interrupt level */
-	if (!(mode & VRGIU_INTR_EDGE)) {
+	if (!(mode & HPCIO_INTR_EDGE)) {
 		reg = vrgiu_regread_4(sc, GIUINTALSEL_REG);
 		DPRINTF(DEBUG_INTR, ("[%s->",reg & mask ? "high" : "low"));
-		if (mode & VRGIU_INTR_HIGH) {
+		if (mode & HPCIO_INTR_HIGH) {
 			DPRINTF(DEBUG_INTR, ("high]"));
 			reg |= mask;	/* high */
 		} else {
@@ -524,7 +551,7 @@ vrgiu_intr_establish(ic, port, mode, level, ih_fun, ih_arg)
 	/* hold or through */
 	reg = vrgiu_regread_4(sc, GIUINTHTSEL_REG);
 	DPRINTF(DEBUG_INTR, ("[%s->",reg & mask ? "hold" : "through"));
-	if (mode & VRGIU_INTR_HOLD) {
+	if (mode & HPCIO_INTR_HOLD) {
 		DPRINTF(DEBUG_INTR, ("hold]"));
 		reg |= mask;	/* hold */
 	} else {
@@ -558,12 +585,12 @@ vrgiu_intr_establish(ic, port, mode, level, ih_fun, ih_arg)
 }
 
 void
-vrgiu_intr_disestablish(ic, arg)
-	vrgiu_chipset_tag_t ic;
+vrgiu_intr_disestablish(hc, arg)
+	hpcio_chip_t hc;
 	void *arg;
 {
 	struct vrgiu_intr_entry *ihe = arg;
-	struct vrgiu_softc *sc = (void*)ic;
+	struct vrgiu_softc *sc = hc->hc_sc;
 	int port = ihe->ih_port;
 	struct vrgiu_intr_entry *ih;
 	int s;
@@ -590,6 +617,21 @@ vrgiu_intr_disestablish(ic, arg)
 	/* NOTREACHED */
 }
 
+/* Clear interrupt */
+void
+vrgiu_intr_clear(hc, arg)
+	hpcio_chip_t hc;
+	void *arg;
+{
+	struct vrgiu_softc *sc = hc->hc_sc;
+	struct vrgiu_intr_entry *ihe = arg;
+	u_int32_t reg;
+
+	reg = vrgiu_regread_4(sc, GIUINTSTAT_REG);
+	vrgiu_regwrite_4(sc, GIUINTSTAT_REG, reg & ~(1 << ihe->ih_port));
+}
+
+/* interrupt handler */
 int
 vrgiu_intr(arg)
 	void *arg;
