@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2002/09/12 12:44:14 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 2002/09/22 20:46:32 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2456,6 +2456,8 @@ validate_kipt(int cookie)
 
 		switch (pt & SH5_PTEL_CB_MASK) {
 		case SH5_PTEL_CB_NOCACHE:
+		case SH5_PTEL_CB_WRITEBACK:
+		case SH5_PTEL_CB_WRITETHRU:
 			if (pa < 0x80000000ul || pa >= 0x88000000) {
 				printf("kva 0x%lx has bad DRAM pa: 0x%lx\n",
 				    va, (u_long)pt);
@@ -2469,13 +2471,6 @@ validate_kipt(int cookie)
 				    va, (u_long)pt);
 				errors++;
 			}
-			break;
-
-		case SH5_PTEL_CB_WRITEBACK:
-		case SH5_PTEL_CB_WRITETHRU:
-			printf("kva 0x%lx has bad cache mode: 0x%lx\n",
-			    va, (u_long)pt);
-			errors++;
 			break;
 		}
 
