@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_ns32k.c,v 1.3 1996/02/01 07:24:37 phil Exp $	*/
+/*	$NetBSD: kvm_ns32k.c,v 1.4 1996/03/18 22:33:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -37,12 +37,17 @@
  * SUCH DAMAGE.
  */
 
-/* from: "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
+#else
+static char *rcsid = "$NetBSD: kvm_ns32k.c,v 1.4 1996/03/18 22:33:50 thorpej Exp $";
+#endif
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * ns32k machine dependent routines for kvm.  Hopefully, the forthcoming 
  * vm code will one day obsolete this module.
- *
  */
 
 #include <sys/param.h>
