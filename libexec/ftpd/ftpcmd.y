@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.50 2000/07/15 03:45:19 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.51 2000/07/17 02:30:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.50 2000/07/15 03:45:19 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.51 2000/07/17 02:30:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,7 +205,7 @@ cmd
 	| CWD check_login CRLF
 		{
 			if ($2)
-				cwd(pw->pw_dir);
+				cwd(homedir);
 		}
 
 	| CWD check_login SP pathname CRLF
@@ -703,7 +703,7 @@ cmd
 				send_file_list(".");
 		}
 
-	| NLST check_login SP STRING CRLF
+	| NLST check_login SP pathname CRLF
 		{
 			if ($2)
 				send_file_list($4);
@@ -1259,11 +1259,10 @@ pathname
 			 */
 			if (logged_in && $1 && *$1 == '~') {
 				glob_t gl;
-				int flags =
-				 GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
+				int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 
 				if ($1[1] == '\0')
-					$$ = xstrdup(pw->pw_dir);
+					$$ = xstrdup(homedir);
 				else {
 					memset(&gl, 0, sizeof(gl));
 					if (glob($1, flags, NULL, &gl) ||
