@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.24 2004/03/15 05:07:03 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.25 2004/03/15 05:09:19 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -142,3 +142,8 @@ sys/dev/pci/eso.c			1.33
 
 	Fix a (non-dangerous) malloc size botch in eso_allocm(). PR#18342
 	[kleink, ticket #1614]
+
+usr.sbin/route6d/route6d.c		1.51
+
+	Let it compile again on sparc/sparc64.
+	[martin, ticket #1626]
