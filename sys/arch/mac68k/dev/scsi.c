@@ -30,23 +30,26 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id: scsi.c,v 1.2 1993/11/29 00:32:54 briggs Exp $
+ *
  */
-#ident "$Id: scsi.c,v 1.1.1.1 1993/09/29 06:09:27 briggs Exp $"
 
 #define PSEUDO_DMA 1
 
 static int pdebug=0;
 
 #include "sys/types.h"
+#include "sys/malloc.h"
 #include "sys/param.h"
 #include "sys/systm.h"
 #include "sys/errno.h"
 #include "sys/buf.h"
 #include "sys/proc.h"
 #include "sys/user.h"
+#include "sys/device.h"
 #include "../scsi/scsi_all.h"
+#include "../scsi/scsi_debug.h"
 #include "../scsi/scsiconf.h"
-#include "../dev/device.h"
 
 #include "scsi_defs.h"
 #define PAD(n)	u_char	n[15]
@@ -104,19 +107,19 @@ static volatile sci_padded_regmap_t	*ncr  =   (sci_regmap_t *) 0x50F10000;
 static volatile long			*sci_4byte_addr=  (long *) 0x50F06000;
 static volatile u_char			*sci_1byte_addr=(u_char *) 0x50F12000;
 
-static long int	ncr5380_adapter_info(int adapter_number);
-static void	ncr5380_minphys(struct buf *bp);
-static int	ncr5380_scsi_cmd(struct scsi_xfer *xs);
+static unsigned long	ncr5380_adapter_info(int adapter_number);
+static void		ncr5380_minphys(struct buf *bp);
+static int32		ncr5380_scsi_cmd(struct scsi_xfer *xs);
 
-static int	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
-static int	ncr5380_reset_target(int adapter, int target);
-static int	ncr5380_poll(int adapter, int timeout);
-static int	ncr5380_send_cmd(struct scsi_xfer *xs);
+static int		ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
+static int		ncr5380_reset_target(int adapter, int target);
+static int		ncr5380_poll(int adapter, int timeout);
+static int		ncr5380_send_cmd(struct scsi_xfer *xs);
 
-extern void	ncr5380_intr(int adapter);
-extern void	spinwait(int);
+extern void		ncr5380_intr(int adapter);
+extern void		spinwait(int);
 
-static void	delay(int);
+static void		delay(int);
 
 static int	scsi_gen(int adapter, int id, int lum,
 			 struct scsi_generic *cmd, int cmdlen,
@@ -125,26 +128,57 @@ static int	scsi_group0(int adapter, int id, int lum,
 			    int opcode, int addr, int len,
 			    int flags, caddr_t databuf, int datalen);
 
-struct scsi_switch	ncr5380_switch = {
+#define NNCR5380	1
+
+struct ncr5380_data {
+	void			*reg_base;
+	int			adapter_target;
+	struct scsi_link	sc_link;
+} *ncr5380data[NNCR5380];
+
+static char scsi_name[] = "ncr5380";
+
+struct scsi_adapter	ncr5380_switch = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
 	ncr5380_minphys,		/* scsi_minphys()	*/
 	0,				/* open_target_lu()	*/
 	0,				/* close_target_lu()	*/
 	ncr5380_adapter_info,		/* adapter_info()	*/
-	{0, 0, 0}			/* spare[3]		*/
+	scsi_name,			/* name			*/
+	{0, 0}				/* spare[3]		*/
 };
 
-static char	*scsi_name = "ncr5380";
+/* This is copied from julian's bt driver */
+/* "so we have a default dev struct for our link struct." */
+struct scsi_device ncr_dev = {
+	NULL,		/* Use default error handler.	    */
+	NULL,		/* have a queue, served by this (?) */
+	NULL,		/* have no async handler.	    */
+	NULL,		/* Use default "done" routine.	    */
+	"ncr5380",
+	0,
+	0, 0
+};
 
-extern int
-ncr5380_init(struct macdriver *md)
+static int
+ncr_print(aux, name)
+	void *aux;
+	char *name;
+{
+	printf("%s: (sc_link = 0x%x)", name, (int) aux);
+	return UNCONF;
+}
+
+static void
+ncrattach(parent, dev, aux)
+	struct device	*parent, *dev;
+	void		*aux;
 {
 	register volatile sci_padded_regmap_t *regs = ncr;
-	int	r;
+	struct ncr5380_data	*ncr5380;
+	int	r, unit=0;
 
-	md->hwfound = 1;
-	md->name = scsi_name;
-
+	printf("\n");
 #if 0
 	printf("ncr5380(%d): Resetting bus.\n", md->unit);
 	regs->sci_icmd    = 0x80;
@@ -158,14 +192,38 @@ ncr5380_init(struct macdriver *md)
 	spinwait(1);
 #endif
 
-	printf("ncr5380(%d): Probing for scsi devices.\n", md->unit);
-	scsi_attachdevs(md->unit, 7, &ncr5380_switch);
-	printf("ncr5380(%d): Probe finished.\n", md->unit);
+ 	if (unit > NNCR5380) {
+		printf("ncr5380attach: unit %d more than %d configured.\n",
+			unit, NNCR5380);
+		return;
+	}
+	ncr5380data[unit] = malloc(sizeof(struct ncr5380_data), M_TEMP, M_NOWAIT);
+	if (!ncr5380data[unit]) {
+		printf("ncr5380attach: Can't malloc.\n");
+		return;
+	}
+	bzero(ncr5380data[unit], sizeof(struct ncr5380_data));
+	ncr5380 = ncr5380data[unit];
+/*	printf("ncr5380(%d): Probing for scsi devices.\n", unit); */
 
-	return 1;
+	ncr5380->sc_link.adapter_unit = unit;
+	ncr5380->sc_link.adapter_targ = 7;
+	ncr5380->sc_link.adapter = &ncr5380_switch;
+	ncr5380->sc_link.device = &ncr_dev;
+
+	scsi_attachdevs(&(ncr5380->sc_link));
+/*	config_found(dev, &(ncr5380->sc_link), ncr_print); */
+
+/*	printf("ncr5380(%d): Probe finished.\n", unit); */
 }
 
-static long int
+extern int	matchbyname();
+
+struct cfdriver ncrcd =
+      {	NULL, "ncr", matchbyname, ncrattach,
+	DV_DULL, sizeof(struct device), NULL, 0 };
+
+static unsigned long
 ncr5380_adapter_info(int adapter_number)
 {
 	return 1;
@@ -182,13 +240,11 @@ ncr5380_minphys(struct buf *bp)
 }
 #undef MIN_PHYS
 
-static int
+static int32
 ncr5380_scsi_cmd(struct scsi_xfer *xs)
 {
 	int flags, s, r;
 
-	if (scsi_debug & PRINTROUTINES)
-		printf("ncr5380_scsi_cmd.\n");
 	flags = xs->flags;
 	if (xs->bp) flags |= (SCSI_NOSLEEP);
 	if ( flags & ITSDONE ) {
@@ -200,22 +256,16 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 		xs->flags |= INUSE;
 	}
 
-	if ( scsi_debug & SHOWCOMMANDS ) {
-		ncr5380_show_scsi_cmd(xs);
-	}
-
 	if ( flags & SCSI_RESET ) {
 		printf("flags & SCSIRESET.\n");
-		if ( ! ( flags & SCSI_NOMASK ) ) {
+		if ( ! ( flags & SCSI_NOSLEEP ) ) {
 			s = splbio();
-			ncr5380_reset_target(xs->adapter, xs->targ);
+			ncr5380_reset_target(xs->sc_link->adapter_unit, xs->sc_link->target);
 			splx(s);
 			return(SUCCESSFULLY_QUEUED);
 		} else {
-			ncr5380_reset_target(xs->adapter, xs->targ);
-			if ( scsi_debug & TRACEINTERRUPTS )
-				printf("wait ");
-			if (ncr5380_poll(xs->adapter, xs->timeout)) {
+			ncr5380_reset_target(xs->sc_link->adapter_unit, xs->sc_link->target);
+			if (ncr5380_poll(xs->sc_link->adapter_unit, xs->timeout)) {
 				return (HAD_ERROR);
 			}
 			return (COMPLETE);
@@ -226,27 +276,30 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	 * SCSI puppy and send it off.  If we can, we'll just
 	 * queue and go; otherwise, we'll wait for the command
 	 * to finish.
-	if ( ! ( flags & SCSI_NOMASK ) ) {
+	if ( ! ( flags & SCSI_NOSLEEP ) ) {
 		s = splbio();
 		ncr5380_send_cmd(xs);
 		splx(s);
-		if ( scsi_debug & TRACEINTERRUPTS )
-			printf("cmd_sent ");
 		return(SUCCESSFULLY_QUEUED);
 	}
 	 */
 
 	r = ncr5380_send_cmd(xs);
-	if (xs->when_done)
-		(*(xs->when_done))(xs->done_arg, xs->done_arg2);
+	xs->flags |= ITSDONE;
+	scsi_done(xs);
+	switch(r) {
+		case COMPLETE: case SUCCESSFULLY_QUEUED:
+			r = SUCCESSFULLY_QUEUED;
+			if (xs->flags&SCSI_NOMASK)
+				r = COMPLETE;
+			break;
+		default:
+			break;
+	}
 	return r;
-
 /*
-	if ( scsi_debug & TRACEINTERRUPTS )
-		printf("cmd_wait ");
-
 	do {
-		if (ncr5380_poll(xs->adapter, xs->timeout)) {
+		if (ncr5380_poll(xs->sc_link->adapter_unit, xs->timeout)) {
 			if ( ! ( xs->flags & SCSI_SILENT ) )
 				printf("cmd fail.\n");
 			cmd_cleanup
@@ -265,7 +318,7 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 
 	if ( ! ( xs->flags & SCSI_RESET ) ) {
 		printf("ncr5380(%d:%d:%d)-",
-			xs->adapter, xs->targ, xs->lu);
+			xs->sc_link->adapter_unit, xs->sc_link->target, xs->sc_link->lun);
 		while (i < xs->cmdlen) {
 			if (i) printf(",");
 			printf("%x",b[i++]);
@@ -273,7 +326,7 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 		printf("-\n");
 	} else {
 		printf("ncr5380(%d:%d:%d)-RESET-\n",
-			xs->adapter, xs->targ, xs->lu);
+			xs->sc_link->adapter_unit, xs->sc_link->target, xs->sc_link->lun);
 	}
 }
 
@@ -307,20 +360,21 @@ ncr5380_intr(int adapter)
 extern int
 scsi_irq_intr(void)
 {
-	/* register volatile sci_padded_regmap_t *regs = ncr; */
+	register volatile sci_padded_regmap_t *regs = ncr;
 
-	/* if (regs->sci_csr != SCI_CSR_PHASE_MATCH) */
-		/* printf("scsi_irq_intr called (not just phase match -- " */
-			/* "csr = 0x%x).\n", regs->sci_csr); */
-	/* ncr5380_intr(0); */
+/*	if (regs->sci_csr != SCI_CSR_PHASE_MATCH)
+		printf("scsi_irq_intr called (not just phase match -- "
+			"csr = 0x%x, bus_csr = 0x%x).\n",
+			regs->sci_csr, regs->sci_bus_csr);
+	ncr5380_intr(0); */
 	return 1;
 }
 
 extern int
 scsi_drq_intr(void)
 {
-	/* printf("scsi_drq_intr called.\n"); */
-	/* ncr5380_intr(0); */
+/*	printf("scsi_drq_intr called.\n"); */
+/*	ncr5380_intr(0); */
 	return 1;
 }
 
@@ -354,8 +408,10 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 	int	s;
 	int	sense;
 
+/*	ncr5380_show_scsi_cmd(xs); */
 	s = splbio();
-	sense = scsi_gen( xs->adapter, xs->targ, xs->lu, xs->cmd, xs->cmdlen,
+	sense = scsi_gen( xs->sc_link->adapter_unit, xs->sc_link->target,
+			  xs->sc_link->lun, xs->cmd, xs->cmdlen,
 			  xs->data, xs->datalen );
 	splx(s);
 	if (sense) {
@@ -363,7 +419,9 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 			case 0x02:	/* Check condition */
 /*				printf("check cond. target %d.\n", xs->targ);*/
 				s = splbio();
-				scsi_group0(xs->adapter, xs->targ, xs->lu,
+				scsi_group0(xs->sc_link->adapter_unit,
+					    xs->sc_link->target,
+					    xs->sc_link->lun,
 					    0x3, 0x0,
 					    sizeof(struct scsi_sense_data),
 					    0, (caddr_t) &(xs->sense),
@@ -848,7 +906,7 @@ pdebug=2;
 	if (count < 128)
 		return sci_data_in(regs, phase, count, data);
 
-/*	printf("Called sci_pdma_in(0x%x, 0x%x, %d, 0x%x.\n", regs, phase, count, data);*/
+/*	printf("Called sci_pdma_in(0x%x, 0x%x, %d, 0x%x.\n", regs, phase, count, data); */
 
 	WAIT_FOR_BSY(regs);
 	regs->sci_mode |= SCI_MODE_DMA;

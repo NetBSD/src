@@ -30,8 +30,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id: keyboard.h,v 1.2 1993/11/29 00:32:49 briggs Exp $
  */
-#ident "$Id: keyboard.h,v 1.1.1.1 1993/09/29 06:09:28 briggs Exp $"
 
 /* LAK: This table is unfinished. */
 
@@ -67,7 +67,7 @@ unsigned char keyboard[128][3] = {
     /*   0x1B, */       '-',       '_',         0x00,
     /*   0x1C, */       '8',       '*',         0x00,
     /*   0x1D, */       '0',       ')',         0x00,
-    /*   0x1E, */       ']',       '}',         0x00,
+    /*   0x1E, */       ']',       '}',         0x1D,
     /*   0x1F, */       'o',       'O',         0x0F,
     /*   0x20, */       'u',       'U',         0x15,
     /*   0x21, */       '[',       '{',         0x1B,
@@ -81,7 +81,7 @@ unsigned char keyboard[128][3] = {
     /*   0x29, */       ';',       ':',         0x00,
     /*   0x2A, */      '\\',       '|',         0x00,
     /*   0x2B, */       ',',       '<',         0x00,
-    /*   0x2C, */       '/',       '?',         0x00,
+    /*   0x2C, */       '/',       '?',         0x1C,
     /*   0x2D, */       'n',       'N',         0x0E,
     /*   0x2E, */       'm',       'M',         0x0D,
     /*   0x2F, */       '.',       '>',         0x00,

@@ -30,8 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id: scsi_defs.h,v 1.2 1993/11/29 00:32:56 briggs Exp $
+ *
  */
-#ident "$Id: scsi_defs.h,v 1.1.1.1 1993/09/29 06:09:26 briggs Exp $"
 
 #ifndef _SCSI_DEFS_H
 #define _SCSI_DEFS_H
