@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.36 2003/05/09 20:50:35 christos Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.37 2003/05/17 21:28:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.36 2003/05/09 20:50:35 christos Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.37 2003/05/17 21:28:53 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -789,14 +789,12 @@ getterminaltype(name)
 	 * we have to just go with what we (might) have already gotten.
 	 */
 	if (his_state_is_will(TELOPT_TTYPE) && !terminaltypeok(terminaltype)) {
-	    (void) strncpy(first, terminaltype, sizeof(first) - 1);
-	    first[sizeof(first) - 1] = '\0';
+	    (void) strlcpy(first, terminaltype, sizeof(first));
 	    for(;;) {
 		/*
 		 * Save the unknown name, and request the next name.
 		 */
-		(void) strncpy(last, terminaltype, sizeof(last) - 1);
-		last[sizeof(last) - 1] = '\0';
+		(void) strlcpy(last, terminaltype, sizeof(last));
 		_gettermname();
 		if (terminaltypeok(terminaltype))
 		    break;
@@ -815,8 +813,7 @@ getterminaltype(name)
 		     */
 		     _gettermname();
 		    if (strncmp(first, terminaltype, sizeof(first)) != 0) {
-			(void) strncpy(terminaltype, first, sizeof(first) - 1);
-			terminaltype[sizeof(terminaltype) - 1] = '\0';
+			(void) strlcpy(terminaltype, first, sizeof(first));
 		    }
 		    break;
 		}
