@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.167 2002/10/23 09:12:58 jdolecek Exp $	*/
+/*	$NetBSD: audio.c,v 1.168 2002/11/08 05:02:07 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.167 2002/10/23 09:12:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.168 2002/11/08 05:02:07 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2546,11 +2546,11 @@ au_set_gain(struct audio_softc *sc, struct au_mixer_ports *ports,
 	if (balance == AUDIO_MID_BALANCE) {
 		l = r = gain;
 	} else if (balance < AUDIO_MID_BALANCE) {
-		r = gain;
-		l = (balance * gain) / AUDIO_MID_BALANCE;
-	} else {
 		l = gain;
-		r = ((AUDIO_RIGHT_BALANCE - balance) * gain)
+		r = (balance * gain) / AUDIO_MID_BALANCE;
+	} else {
+		r = gain;
+		l = ((AUDIO_RIGHT_BALANCE - balance) * gain)
 		    / AUDIO_MID_BALANCE;
 	}
 	DPRINTF(("au_set_gain: gain=%d balance=%d, l=%d r=%d\n",
@@ -2687,11 +2687,13 @@ bad:
 		*pbalance = AUDIO_MID_BALANCE;
 	} else if (lgain < rgain) {
 		*pgain = rgain;
-		*pbalance = (AUDIO_MID_BALANCE * lgain) / rgain;
+		/* balance should be > AUDIO_MID_BALANCE */
+		*pbalance = AUDIO_RIGHT_BALANCE -
+			(AUDIO_MID_BALANCE * lgain) / rgain;
 	} else /* lgain > rgain */ {
 		*pgain = lgain;
-		*pbalance = AUDIO_RIGHT_BALANCE -
-			    (AUDIO_MID_BALANCE * rgain) / lgain;
+		/* balance should be < AUDIO_MID_BALANCE */
+		*pbalance = (AUDIO_MID_BALANCE * rgain) / lgain;
 	}
 }
 
