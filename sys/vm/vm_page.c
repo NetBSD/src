@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.23 1995/01/09 02:46:41 cgd Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.24 1995/03/27 09:09:05 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -393,7 +393,7 @@ vm_page_startup(start, end)
 		m->flags = 0;
 		m->object = NULL;
 		m->phys_addr = pa;
-#ifdef i386					/* XXX will never be used */
+#ifdef atari				/* XXX should use MACHINE_NONCONTIG */
 		if (pmap_isvalidphys(m->phys_addr)) {
 			TAILQ_INSERT_TAIL(&vm_page_queue_free, m, pageq);
 		} else {
@@ -401,9 +401,9 @@ vm_page_startup(start, end)
 			m->flags |= PG_FICTITIOUS | PG_BUSY;
 			cnt.v_free_count--;
 		}
-#else /* i386 */
+#else /* atari */
 		TAILQ_INSERT_TAIL(&vm_page_queue_free, m, pageq);
-#endif /* i386 */
+#endif /* atari */
 		m++;
 		pa += PAGE_SIZE;
 	}
