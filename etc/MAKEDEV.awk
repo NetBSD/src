@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.2 2003/10/15 19:43:00 jdolecek Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.3 2003/10/15 21:40:49 itojun Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -72,7 +72,7 @@ BEGIN {
 
 	# process all files with majors and fill the chr[] and blk[]
 	# arrays, used in template processing
-	for(m in majors) {
+	for (m in majors) {
 		file = top majors[m]
 		while (getline < file) {
 			if ($1 == "device-major") {
@@ -137,9 +137,9 @@ BEGIN {
 		# character and block devices. If no unknown character
 		# or block device definition remains within the entry,
 		# print it to output, otherwise scrap it.
-		for(c in chr)
+		for (c in chr)
 			gsub("%" c "_chr%", chr[c], deventry)
-		for(b in blk)
+		for (b in blk)
 			gsub("%" b "_blk%", blk[b], deventry)
 
 		if (deventry !~ "%[a-z]*_chr%" && deventry !~ "%[a-z]*_blk%")
