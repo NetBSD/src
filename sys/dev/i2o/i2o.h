@@ -1,4 +1,4 @@
-/*	$NetBSD: i2o.h,v 1.1.2.4 2001/03/27 15:31:51 bouyer Exp $	*/
+/*	$NetBSD: i2o.h,v 1.1.2.5 2001/04/01 15:03:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -978,6 +978,8 @@ struct i2o_lan_packet_send {
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
 	u_int32_t	tcw;
+
+	/* SGL follows */
 };
 
 #define	I2O_LAN_TCW_ACCESS_PRI_MASK	0x00000007
@@ -996,6 +998,19 @@ struct i2o_lan_sdu_send {
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
 	u_int32_t	tcw;		/* As per PACKET_SEND. */
+
+	/* SGL follows */
+};
+
+struct i2o_lan_send_reply {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int32_t	trl;
+	u_int16_t	detail;
+	u_int8_t	reserved;
+	u_int8_t	reqstatus;
+	u_int32_t	tctx[1];
 };
 
 #define	I2O_LAN_RECIEVE_POST		0x3e
@@ -1004,6 +1019,29 @@ struct i2o_lan_recieve_post {
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
 	u_int32_t	bktcnt;
+
+	/* SGL follows */
+};
+
+struct i2o_lan_pdb {
+	u_int32_t	bctx;
+	u_int32_t	pktoff;
+	u_int32_t	pktlen;
+};
+
+#define	I2O_LAN_FRAG_VALID		0x00
+#define	I2O_LAN_FRAG_VALID_MASK		foo
+
+struct i2o_lan_recieve_reply {
+	u_int32_t	msgflags;
+	u_int32_t	msgfunc;
+	u_int32_t	msgictx;
+	u_int8_t	trlcount;
+	u_int8_t	trlesize;
+	u_int8_t	reserved;
+	u_int8_t	trlflags;
+	u_int32_t	bucketsleft;
+	struct i2o_lan_pdb	pdb[1];
 };
 
 #define	I2O_LAN_RESET			0x35
@@ -1116,5 +1154,51 @@ struct i2o_param_lan_media_operation {
 	u_int8_t	linkstatus;
 	u_int8_t	badpkthandling;
 };
+
+#define	I2O_LAN_CONNECTOR_OTHER		0x00
+#define	I2O_LAN_CONNECTOR_UNKNOWN	0x01
+#define	I2O_LAN_CONNECTOR_AUI		0x02
+#define	I2O_LAN_CONNECTOR_UTP		0x03
+#define	I2O_LAN_CONNECTOR_BNC		0x04
+#define	I2O_LAN_CONNECTOR_RJ45		0x05
+#define	I2O_LAN_CONNECTOR_STP_DB9	0x06
+#define	I2O_LAN_CONNECTOR_FIBER_MIC	0x07
+#define	I2O_LAN_CONNECTOR_APPLE_AUI	0x08
+#define	I2O_LAN_CONNECTOR_MII		0x09
+#define	I2O_LAN_CONNECTOR_COPPER_DB9	0x0a
+#define	I2O_LAN_CONNECTOR_COPPER_AW	0x0b
+#define	I2O_LAN_CONNECTOR_OPTICAL_LW	0x0c
+#define	I2O_LAN_CONNECTOR_SIP		0x0d
+#define	I2O_LAN_CONNECTOR_OPTICAL_SW	0x0e
+
+#define	I2O_LAN_CONNECTION_UNKNOWN		0x0000
+
+#define	I2O_LAN_CONNECTION_ETHERNET_AUI		0x0301
+#define	I2O_LAN_CONNECTION_ETHERNET_10BASE5	0x0302
+#define	I2O_LAN_CONNECTION_ETHERNET_FOIRL	0x0303
+#define	I2O_LAN_CONNECTION_ETHERNET_10BASE2	0x0304
+#define	I2O_LAN_CONNECTION_ETHERNET_10BROAD36	0x0305
+#define	I2O_LAN_CONNECTION_ETHERNET_10BASET	0x0306
+#define	I2O_LAN_CONNECTION_ETHERNET_10BASEFP	0x0307
+#define	I2O_LAN_CONNECTION_ETHERNET_10BASEFB	0x0308
+#define	I2O_LAN_CONNECTION_ETHERNET_10BASEFL	0x0309
+#define	I2O_LAN_CONNECTION_ETHERNET_100BASETX	0x030a
+#define	I2O_LAN_CONNECTION_ETHERNET_100BASEFX	0x030b
+#define	I2O_LAN_CONNECTION_ETHERNET_100BASET4	0x030c
+
+#define	I2O_LAN_CONNECTION_100BASEVG_100BASEVG	0x0401
+
+#define	I2O_LAN_CONNECTION_TOKEN_RING_4MBIT	0x0501
+#define	I2O_LAN_CONNECTION_TOKEN_RING_16MBIT	0x0502
+
+#define	I2O_LAN_CONNECTION_FDDI_125MBIT		0x0601
+
+#define	I2O_LAN_CONNECTION_FIBRECHANNEL_P2P	0x0701
+#define	I2O_LAN_CONNECTION_FIBRECHANNEL_AL	0x0702
+#define	I2O_LAN_CONNECTION_FIBRECHANNEL_PL	0x0703
+#define	I2O_LAN_CONNECTION_FIBRECHANNEL_F	0x0704
+
+#define	I2O_LAN_CONNECTION_OTHER_EMULATED	0x0f00
+#define	I2O_LAN_CONNECTION_OTHER_OTHER		0x0f01
 
 #endif	/* !defined _I2O_I2O_H_ */

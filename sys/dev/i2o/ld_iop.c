@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.3.2.5 2001/03/27 15:31:52 bouyer Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.3.2.6 2001/04/01 15:03:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.

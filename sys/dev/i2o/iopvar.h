@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.2.2.5 2001/03/27 15:31:52 bouyer Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.2.2.6 2001/04/01 15:03:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@ struct iop_msg {
 #define	IM_WAIT			0x0100	/* Wait (sleep) for completion */
 #define	IM_POLL			0x0200	/* Wait (poll) for completion */
 #define	IM_NOSTATUS		0x0400	/* Don't check status if waiting */
+#define	IM_POLL_INTR		0x0800	/* Do send interrupt when polling */
 
 struct iop_initiator {
 	LIST_ENTRY(iop_initiator) ii_list;
@@ -142,6 +143,9 @@ struct iop_softc {
 	int		sc_rep_size;
 	bus_addr_t	sc_rep_phys;
 	caddr_t		sc_rep;
+
+	bus_space_tag_t	sc_bus_memt;
+	bus_space_tag_t	sc_bus_iot;
 
 	struct i2o_status sc_status;	/* status */
 };

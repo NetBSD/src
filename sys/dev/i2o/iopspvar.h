@@ -1,7 +1,7 @@
-/*	$NetBSD: iopspvar.h,v 1.2.2.5 2001/03/27 15:31:52 bouyer Exp $	*/
+/*	$NetBSD: iopspvar.h,v 1.2.2.6 2001/04/01 15:03:43 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,6 +64,7 @@ struct iopsp_softc {
 	struct	iop_initiator sc_ii;		/* I2O initiator state */
 	u_short	*sc_tidmap;			/* Target/LUN -> TID map */
 	u_int	sc_chgind;			/* Last LCT change # */
+	u_int	sc_curqd;			/* Current queue depth */
 #ifdef I2OVERBOSE
 	struct	iopsp_target *sc_targetmap;	/* Target information */
 #endif
