@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.103 2005/03/08 00:18:20 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.104 2005/04/01 21:59:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.103 2005/03/08 00:18:20 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.104 2005/04/01 21:59:46 perseant Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -884,8 +884,10 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	if (fs->lfs_version > 1 && segnum == 0 &&
 	    fs->lfs_start < btofsb(fs, LFS_LABELPAD))
 		fs->lfs_avail -= btofsb(fs, LFS_LABELPAD) - fs->lfs_start;
+	simple_lock(&fs->lfs_interlock);
 	fs->lfs_bfree += sup->su_nsums * btofsb(fs, fs->lfs_sumsize) +
 		btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
+	simple_unlock(&fs->lfs_interlock);
 	fs->lfs_dmeta -= sup->su_nsums * btofsb(fs, fs->lfs_sumsize) +
 		btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
 	if (fs->lfs_dmeta < 0)
@@ -898,7 +900,9 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	--cip->dirty;
 	fs->lfs_nclean = cip->clean;
 	cip->bfree = fs->lfs_bfree;
+	simple_lock(&fs->lfs_interlock);
 	cip->avail = fs->lfs_avail - fs->lfs_ravail - fs->lfs_favail;
+	simple_unlock(&fs->lfs_interlock);
 	(void) LFS_BWRITE_LOG(bp);
 	wakeup(&fs->lfs_avail);
 
@@ -1026,9 +1030,13 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, str
 	 * Wait until the filesystem is fully mounted before allowing vget
 	 * to complete.	 This prevents possible problems with roll-forward.
 	 */
+	simple_lock(&fs->lfs_interlock);
 	while (fs->lfs_flags & LFS_NOTYET) {
-		tsleep(&fs->lfs_flags, PRIBIO+1, "lfs_fnotyet", 0);
+		ltsleep(&fs->lfs_flags, PRIBIO+1, "lfs_fnotyet", 0,
+			&fs->lfs_interlock);
 	}
+	simple_unlock(&fs->lfs_interlock);
+
 	/*
 	 * This is playing fast and loose.  Someone may have the inode
 	 * locked, in which case they are going to be distinctly unhappy
@@ -1166,7 +1174,9 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uadd
 	KDASSERT(bp->b_iodone == lfs_callback);
 
 #if 0
+	simple_lock(&fs->lfs_interlock);
 	++fs->lfs_iocount;
+	simple_unlock(&fs->lfs_interlock);
 #endif
 	bp->b_bufsize = size;
 	bp->b_bcount = size;

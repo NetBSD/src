@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.140 2005/03/25 01:45:05 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.141 2005/04/01 21:59:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.140 2005/03/25 01:45:05 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.141 2005/04/01 21:59:47 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,6 +386,8 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 	KASSERT(vp == NULL || VOP_ISLOCKED(vp));
 
 	fs = VTOI(dvp)->i_lfs;
+
+	ASSERT_NO_SEGLOCK(fs);
 	/*
 	 * LFS_NRESERVE calculates direct and indirect blocks as well
 	 * as an inode block; an overestimate in most cases.
@@ -393,15 +395,16 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 	if ((error = lfs_reserve(fs, dvp, vp, LFS_NRESERVE(fs))) != 0)
 		return (error);
 
-	if (fs->lfs_dirops == 0)
-		lfs_check(dvp, LFS_UNUSED_LBN, 0);
-restart:
+    restart:
 	simple_lock(&fs->lfs_interlock);
-	if (fs->lfs_writer) {
-		ltsleep(&fs->lfs_dirops, (PRIBIO + 1) | PNORELOCK,
-		    "lfs_sdirop", 0, &fs->lfs_interlock);
-		goto restart;
+	if (fs->lfs_dirops == 0) {
+		simple_unlock(&fs->lfs_interlock);
+		lfs_check(dvp, LFS_UNUSED_LBN, 0);
+		simple_lock(&fs->lfs_interlock);
 	}
+	while (fs->lfs_writer)
+		ltsleep(&fs->lfs_dirops, (PRIBIO + 1), "lfs_sdirop", 0,
+			&fs->lfs_interlock);
 	simple_lock(&lfs_subsys_lock);
 	if (lfs_dirvcount > LFS_MAX_DIROP && fs->lfs_dirops == 0) {
 		wakeup(&lfs_writer_daemon);
@@ -458,6 +461,7 @@ lfs_set_dirop_create(struct vnode *dvp, struct vnode **vpp)
 	struct lfs *fs;
 
 	fs = VFSTOUFS(dvp->v_mount)->um_lfs;
+	ASSERT_NO_SEGLOCK(fs);
 	if (fs->lfs_ronly)
 		return EROFS;
 	if (vpp && (error = getnewvnode(VT_LFS, dvp->v_mount, lfs_vnodeop_p, vpp))) {
@@ -524,10 +528,13 @@ lfs_mark_vnode(struct vnode *vp)
 	struct inode *ip = VTOI(vp);
 	struct lfs *fs = ip->i_lfs;
 
+	simple_lock(&fs->lfs_interlock);
 	if (!(ip->i_flag & IN_ADIROP)) {
 		if (!(vp->v_flag & VDIROP)) {
 			(void)lfs_vref(vp);
+			simple_lock(&lfs_subsys_lock);
 			++lfs_dirvcount;
+			simple_unlock(&lfs_subsys_lock);
 			TAILQ_INSERT_TAIL(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 			vp->v_flag |= VDIROP;
 		}
@@ -535,6 +542,7 @@ lfs_mark_vnode(struct vnode *vp)
 		ip->i_flag |= IN_ADIROP;
 	} else
 		KASSERT(vp->v_flag & VDIROP);
+	simple_unlock(&fs->lfs_interlock);
 }
 
 void
@@ -544,7 +552,9 @@ lfs_unmark_vnode(struct vnode *vp)
 
 	if (ip->i_flag & IN_ADIROP) {
 		KASSERT(vp->v_flag & VDIROP);
+		simple_lock(&ip->i_lfs->lfs_interlock);
 		--ip->i_lfs->lfs_nadirop;
+		simple_unlock(&ip->i_lfs->lfs_interlock);
 		ip->i_flag &= ~IN_ADIROP;
 	}
 }
@@ -1121,8 +1131,12 @@ lfs_strategy(void *v)
 				DLOG((DLOG_CLEAN,
 				      "lfs_strategy: sleeping on ino %d lbn %"
 				      PRId64 "\n", ip->i_number, bp->b_lblkno));
-				tsleep(&fs->lfs_seglock, PRIBIO+1,
-					"lfs_strategy", 0);
+				simple_lock(&fs->lfs_interlock);
+				if (fs->lfs_seglock)
+					ltsleep(&fs->lfs_seglock,
+						(PRIBIO + 1) | PNORELOCK,
+						"lfs_strategy", 0,
+						&fs->lfs_interlock);
 				/* Things may be different now; start over. */
 				slept = 1;
 				break;
@@ -1146,11 +1160,17 @@ lfs_flush_dirops(struct lfs *fs)
 	struct segment *sp;
 	int needunlock;
 
+	ASSERT_NO_SEGLOCK(fs);
+
 	if (fs->lfs_ronly)
 		return;
 
-	if (TAILQ_FIRST(&fs->lfs_dchainhd) == NULL)
+	simple_lock(&fs->lfs_interlock);
+	if (TAILQ_FIRST(&fs->lfs_dchainhd) == NULL) {
+		simple_unlock(&fs->lfs_interlock);
 		return;
+	} else
+		simple_unlock(&fs->lfs_interlock);
 
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
@@ -1177,8 +1197,10 @@ lfs_flush_dirops(struct lfs *fs)
 	 * no dirops are active.
 	 *
 	 */
+	simple_lock(&fs->lfs_interlock);
 	for (ip = TAILQ_FIRST(&fs->lfs_dchainhd); ip != NULL; ip = nip) {
 		nip = TAILQ_NEXT(ip, i_lfs_dchain);
+		simple_unlock(&fs->lfs_interlock);
 		vp = ITOV(ip);
 
 		/*
@@ -1213,7 +1235,9 @@ lfs_flush_dirops(struct lfs *fs)
 			VOP_UNLOCK(vp, 0);
 		else
 			LFS_SET_UINO(ip, IN_MODIFIED);
+		simple_lock(&fs->lfs_interlock);
 	}
+	simple_unlock(&fs->lfs_interlock);
 	/* We've written all the dirops there are */
 	((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
 	(void) lfs_writeseg(fs, sp);
@@ -1414,6 +1438,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	int tdirty;
 	int pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
 
+	ASSERT_MAYBE_SEGLOCK(fs);
   top:
 	by_list = (vp->v_uobj.uo_npages <=
 		   ((endoffset - startoffset) >> PAGE_SHIFT) *
@@ -1545,7 +1570,9 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	if (any_dirty) {
 		if (!(ip->i_flags & IN_PAGING)) {
 			ip->i_flags |= IN_PAGING;
+			simple_lock(&fs->lfs_interlock);
 			TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip, i_lfs_pchain);
+			simple_unlock(&fs->lfs_interlock);
 		}
 	}
 #endif
@@ -1737,7 +1764,9 @@ lfs_putpages(void *v)
 	 * notice the pager inode queue and act on that.
 	 */
 	if (pagedaemon) {
+		simple_lock(&fs->lfs_interlock);
 		++fs->lfs_pdflush;
+		simple_unlock(&fs->lfs_interlock);
 		wakeup(&lfs_writer_daemon);
 		simple_unlock(&vp->v_interlock);
 		return EWOULDBLOCK;
@@ -1761,7 +1790,9 @@ lfs_putpages(void *v)
 		if (locked)
 			VOP_UNLOCK(vp, 0);
 
+		simple_lock(&fs->lfs_interlock);
 		lfs_flush_fs(fs, sync ? SEGM_SYNC : 0);
+		simple_unlock(&fs->lfs_interlock);
 
 		simple_lock(&vp->v_interlock);
 		if (locked)
@@ -1803,7 +1834,9 @@ lfs_putpages(void *v)
 	 * VOP_PUTPAGES should not be called while holding the seglock.
 	 * XXXUBC fix lfs_markv, or do this properly.
 	 */
-	/* KASSERT(fs->lfs_seglock == 1); */
+#ifdef notyet
+	KASSERT(fs->lfs_seglock == 1);
+#endif /* notyet */
 
 	/*
 	 * We assume we're being called with sp->fip pointing at blank space.
