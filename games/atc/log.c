@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.5 1997/10/10 02:07:25 lukem Exp $	*/
+/*	$NetBSD: log.c,v 1.6 1997/10/11 02:01:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: log.c,v 1.5 1997/10/10 02:07:25 lukem Exp $");
+__RCSID("$NetBSD: log.c,v 1.6 1997/10/11 02:01:02 lukem Exp $");
 #endif
 #endif not lint
 
@@ -115,7 +115,7 @@ log_score(list_em)
 	umask(0);
 	fd = open(_PATH_SCORE, O_CREAT|O_RDWR, 0644);
 	if (fd < 0) {
-		perror(_PATH_SCORE);
+		warn("open %s", _PATH_SCORE);
 		return (-1);
 	}
 	/*
@@ -124,7 +124,7 @@ log_score(list_em)
 	 */
 	fp = fdopen(fd, "r+");
 	if (fp == NULL) {
-		perror(_PATH_SCORE);
+		warn("fdopen %s", _PATH_SCORE);
 		return (-1);
 	}
 #ifdef BSD
@@ -134,7 +134,7 @@ log_score(list_em)
 	while (lockf(fileno(fp), F_LOCK, 1) < 0)
 #endif
 	{
-		perror("flock");
+		warn("flock %s", _PATH_SCORE);
 		return (-1);
 	}
 	for (;;) {
