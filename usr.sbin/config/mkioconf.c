@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.55 2001/01/18 07:09:47 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.56 2001/10/01 04:22:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -389,7 +389,7 @@ emitpseudo(FILE *fp)
 	if (fputs("\n/* pseudo-devices */\n", fp) < 0)
 		return (1);
 	for (i = allpseudo; i != NULL; i = i->i_next)
-		if (fprintf(fp, "extern void %sattach __P((int));\n",
+		if (fprintf(fp, "void %sattach(int);\n",
 		    i->i_base->d_name) < 0)
 			return (1);
 	if (fputs("\nstruct pdevinit pdevinit[] = {\n", fp) < 0)
