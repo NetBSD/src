@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 1999/06/05 20:38:25 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 1999/06/07 05:28:04 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 /*
- * Copyright (c) 1997, 1998 Eduardo E. Horvath. All rights reserved.
+ * Copyright (c) 1997-1999 Eduardo E. Horvath. All rights reserved.
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  *
