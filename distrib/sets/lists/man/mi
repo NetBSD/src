@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.442 2002/01/06 16:10:15 augustss Exp $
+# $NetBSD: mi,v 1.443 2002/01/09 22:33:54 thorpej Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1279,6 +1279,7 @@
 ./usr/share/man/cat8/disklabel.0		man-sysutil-catman
 ./usr/share/man/cat8/diskless.0			man-sysutil-catman
 ./usr/share/man/cat8/diskpart.0			man-sysutil-catman
+./usr/share/man/cat8/dkctl.0			man-sysutil-catman
 ./usr/share/man/cat8/dm.0			man-games-catman
 ./usr/share/man/cat8/dmesg.0			man-sysutil-catman
 ./usr/share/man/cat8/dreamcast/MAKEDEV.0	man-sysutil-catman
@@ -2945,6 +2946,7 @@
 ./usr/share/man/man8/disklabel.8		man-sysutil-man
 ./usr/share/man/man8/diskless.8			man-sysutil-man
 ./usr/share/man/man8/diskpart.8			man-sysutil-man
+./usr/share/man/man8/dkctl.8			man-sysutil-man
 ./usr/share/man/man8/dm.8			man-games-man
 ./usr/share/man/man8/dmesg.8			man-sysutil-man
 ./usr/share/man/man8/dreamcast/MAKEDEV.8	man-sysutil-man
