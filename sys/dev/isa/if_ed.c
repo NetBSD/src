@@ -11,12 +11,59 @@
  *
  * Currently supports the Western Digital/SMC 8003 and 8013 series
  *   and the 3Com 3c503
+ */
+
+/*
+ * $Id: if_ed.c,v 1.8 1993/09/09 09:40:56 davidg Exp $
+ */
+
+/*
+ * Modification history
  *
- *	$Id: if_ed.c,v 1.7 1993/09/04 00:02:48 jtc Exp $
+ * Revision 1.25  93/09/08  23:04:25  davidg
+ * fixed problem where 3c503 boards lock up if the cable is 
+ * disconnected at boot time. Added printing of irq number if
+ * the kernel config and board don't match
+ * 
+ * Revision 1.24  93/09/07  12:08:36  davidg
+ * ED_FLAGS_NO_DOUBLE_BUFFERING was being checked against wrong variable
+ * 
+ * Revision 1.23  93/09/07  10:32:53  davidg
+ * split wd and 3Com probe code into seperate routines
+ * 
+ * Revision 1.22  93/09/06  20:28:22  davidg
+ * change references to LAAR to use shadow/prototype rather than the
+ * real thing because 8013EBT asic regs are write-only.
+ * 
+ * Revision 1.21  93/08/25  20:38:02  davidg
+ * added recognition for WD8013WC (10BaseT) card type
+ * 
+ * Revision 1.20  93/08/14  20:07:35  davidg
+ * one more stab at getting the 8013EBT working
+ * 
+ * Revision 1.19  93/08/02  02:57:53  davidg
+ * Fixed problem where some rev 8013EBT boards want the DCR_LS flag
+ * set in order to work in 16bit mode. Also improves performance on
+ * all types of boards.
+ *
+ *...(part of log nuked for brevity)
+ * 
+ * Revision 1.12  93/07/07  06:27:44  davidg
+ * moved call to bpfattach to after this drivers attach printf -
+ * improves readability of startup messages.
+ * 
+ *...(part of log nuked for brevity)
+ * 
+ * Revision 1.1  93/06/14  22:21:24  davidg
+ * Beta release of device driver for SMC/WD80x3 and 3C503 ethernet boards.
+ * 
+ * 
  */
  
 #include "ed.h"
 #if	NED > 0
+/* bpfilter included here in case it is needed in future net includes */
+#include "bpfilter.h"
 
 #include "param.h"
 #include "systm.h"
@@ -25,9 +72,6 @@
 #include "mbuf.h"
 #include "socket.h"
 #include "syslog.h"
-
-#include "select.h"
-#include "bpfilter.h"
 
 #include "net/if.h"
 #include "net/if_dl.h"
@@ -59,6 +103,10 @@
 
 #include "i386/include/pio.h"
 
+/* For backwards compatibility */
+#ifndef IFF_ALTPHYS
+#define IFF_ALTPHYS IFF_LLC0
+#endif
  
 /*
  * ed_softc: per line info and status
@@ -92,6 +140,11 @@ struct	ed_softc {
 	u_char	rec_page_start;	/* first page of RX ring-buffer */
 	u_char	rec_page_stop;	/* last page of RX ring-buffer */
 	u_char	next_packet;	/* pointer to next unread RX packet */
+/*
+ * The following 'proto' variable is part of a work-around for 8013EBT asics
+ *	being write-only. It's sort of a prototype/shadow of the real thing.
+ */
+	u_char	wd_laar_proto;
 } ed_softc[NED];
 
 int	ed_attach(), ed_init(), edintr(), ed_ioctl(), ed_probe(),
@@ -144,9 +197,8 @@ ed_probe(isa_dev)
 	struct isa_device *isa_dev;
 {
 	struct ed_softc *sc = &ed_softc[isa_dev->id_unit];
-	int i, x;
-	u_int memsize;
-	u_char iptr, memwidth, sum, tmp;
+	int i;
+	u_char sum;
 
 	/*
 	 * Setup initial i/o address for ASIC and NIC
@@ -168,19 +220,27 @@ ed_probe(isa_dev)
 	}
 	
 	if (sum == ED_WD_ROM_CHECKSUM_TOTAL) {
-		goto type_WD80x3;
+		return (ed_probe_WD80x3(isa_dev));
 	} else {
 		/*
-		 * Do additional checking to make sure its a 3Com and
-		 * not a broken WD clone
+		 * XXX - Should do additional checking to make sure its a 3Com
+		 *	and not a broken WD clone
 		 */
-		goto type_3Com;
+		return (ed_probe_3Com(isa_dev));
 	}
+}
 
-type_WD80x3:
-	/*
-	 * Looks like a WD/SMC board
-	 */
+/*
+ * Probe and vendor-specific initialization routine for SMC/WD80x3 boards
+ */
+int
+ed_probe_WD80x3(isa_dev)
+	struct isa_device *isa_dev;
+{
+	struct ed_softc *sc = &ed_softc[isa_dev->id_unit];
+	int i;
+	u_int memsize;
+	u_char iptr, memwidth, sum, tmp;
 
 	sc->vendor = ED_VENDOR_WD_SMC;
 	sc->type = inb(sc->asic_addr + ED_WD_CARD_ID);
@@ -213,17 +273,22 @@ type_WD80x3:
 		memsize = 16384;
 		memwidth = 16;
 		break;
-	case ED_TYPE_WD8013EB:		/* also WD8003EP */
+	case ED_TYPE_WD8013EP:		/* also WD8003EP */
 		if (inb(sc->asic_addr + ED_WD_ICR)
 			& ED_WD_ICR_16BIT) {
 			memwidth = 16;
 			memsize = 16384;
-			sc->type_str = "WD8013EB";
+			sc->type_str = "WD8013EP";
 		} else {
 			sc->type_str = "WD8003EP";
 			memsize = 8192;
 			memwidth = 8;
 		}
+		break;
+	case ED_TYPE_WD8013WC:
+		sc->type_str = "WD8013WC";
+		memsize = 16384;
+		memwidth = 16;
 		break;
 	case ED_TYPE_WD8013EBP:
 		sc->type_str = "WD8013EBP";
@@ -245,14 +310,16 @@ type_WD80x3:
 	 * Make some adjustments to initial values depending on what is
 	 *	found in the ICR.
 	 */
-	if ((memwidth==16)
+	if ((memwidth == 16) && (sc->type != ED_TYPE_WD8013EBT)
 		&& ((inb(sc->asic_addr + ED_WD_ICR) & ED_WD_ICR_16BIT) == 0)) {
 		memwidth = 8;
 		memsize = 8192;
 	}
+#if 0 /* This has caused more problems than it's worth */
 	if (inb(sc->asic_addr + ED_WD_ICR) & ED_WD_ICR_MSZ) {
 		memsize = 32768;
 	}
+#endif
 
 #if ED_DEBUG
 	printf("type=%s memwidth=%d memsize=%d id_msize=%d\n",
@@ -290,8 +357,8 @@ type_WD80x3:
 		 * Translate it using translation table, and check for correctness.
 		 */
 		if (ed_intr_mask[iptr] != isa_dev->id_irq) {
-			printf("ed%d: kernel configured irq doesn't match board configured irq\n",
-				isa_dev->id_unit);
+			printf("ed%d: kernel configured irq %d doesn't match board configured irq %d\n",
+				isa_dev->id_unit, ffs(isa_dev->id_irq) - 1, ffs(ed_intr_mask[iptr]) - 1);
 			return(0);
 		}
 		/*
@@ -305,7 +372,7 @@ type_WD80x3:
 	/*
 	 * allocate one xmit buffer if < 16k, two buffers otherwise
 	 */
-	if ((memsize < 16384) || (isa_dev->id_msize & ED_FLAGS_NO_DOUBLE_BUFFERING)) {
+	if ((memsize < 16384) || (isa_dev->id_flags & ED_FLAGS_NO_DOUBLE_BUFFERING)) {
 		sc->smem_ring = sc->smem_start + (ED_PAGE_SIZE * ED_TXBUF_SIZE);
 		sc->txb_cnt = 1;
 		sc->rec_page_start = ED_TXBUF_SIZE;
@@ -334,14 +401,14 @@ type_WD80x3:
 	/*
 	 * Set upper address bits and 8/16 bit access to shared memory
 	 */
-	if (sc->type & ED_WD_SOFTCONFIG) {
+	if ((sc->type & ED_WD_SOFTCONFIG) || (sc->type == ED_TYPE_WD8013EBT)) {
 		if (memwidth == 8) {
-			outb(sc->asic_addr + ED_WD_LAAR,
-			((kvtop(sc->smem_start) >> 19) & ED_WD_LAAR_ADDRHI));
+			outb(sc->asic_addr + ED_WD_LAAR, (sc->wd_laar_proto =
+			((kvtop(sc->smem_start) >> 19) & ED_WD_LAAR_ADDRHI)));
 		} else {
-			outb(sc->asic_addr + ED_WD_LAAR,
+			outb(sc->asic_addr + ED_WD_LAAR, (sc->wd_laar_proto =
 				ED_WD_LAAR_L16EN | ED_WD_LAAR_M16EN |
-				((kvtop(sc->smem_start) >> 19) & ED_WD_LAAR_ADDRHI));
+				((kvtop(sc->smem_start) >> 19) & ED_WD_LAAR_ADDRHI)));
 		}
 	}
 
@@ -359,9 +426,8 @@ type_WD80x3:
 			 * Disable 16 bit access to shared memory
 			 */
 			if (memwidth == 16)
-				outb(sc->asic_addr + ED_WD_LAAR,
-					inb(sc->asic_addr + ED_WD_LAAR)
-					& ~ED_WD_LAAR_M16EN);
+				outb(sc->asic_addr + ED_WD_LAAR, (sc->wd_laar_proto &=
+					~ED_WD_LAAR_M16EN));
 
 			return(0);
 		}
@@ -375,16 +441,23 @@ type_WD80x3:
 	 *	memory can be used in this 128k region, too.
 	 */
 	if (memwidth == 16)
-		outb(sc->asic_addr + ED_WD_LAAR, inb(sc->asic_addr + ED_WD_LAAR)
-			& ~ED_WD_LAAR_M16EN);
+		outb(sc->asic_addr + ED_WD_LAAR, (sc->wd_laar_proto &=
+			~ED_WD_LAAR_M16EN));
 
 	isa_dev->id_msize = memsize;
 	return (ED_WD_IO_PORTS);
+}
 
-type_3Com:
-	/*
-	 * Looks like a 3Com board
-	 */
+/*
+ * Probe and vendor-specific initialization routine for 3Com 3c503 boards
+ */
+ed_probe_3Com(isa_dev)
+	struct isa_device *isa_dev;
+{
+	struct ed_softc *sc = &ed_softc[isa_dev->id_unit];
+	int i;
+	u_int memsize;
+	u_char memwidth, sum;
 
 	sc->vendor = ED_VENDOR_3COM;
 	sc->asic_addr = isa_dev->id_iobase + ED_3COM_ASIC_OFFSET;
@@ -461,27 +534,46 @@ type_3Com:
 	}
 
 	/*
-	 * Reset NIC and ASIC
+	 * Reset NIC and ASIC. Enable on-board transceiver through reset sequence
+	 *	because it'll lock up if the cable isn't connected if we don't.
 	 */
-	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_RST);
+	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_RST | ED_3COM_CR_XSEL);
+
 	/*
 	 * Wait for a while, then un-reset it
 	 */
-	DELAY(5000);
-	outb(sc->asic_addr + ED_3COM_CR, 0);
+	DELAY(50);
+	/*
+	 * The 3Com ASIC defaults to rather strange settings for the CR after
+	 *	a reset - it's important to set it again after the following
+	 *	outb (this is done when we map the PROM below).
+	 */
+	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
 
 	/*
 	 * Wait a bit for the NIC to recover from the reset
 	 */
-	DELAY(5000);
+	DELAY(50);
 
 	/*
-	 * The 3Com ASIC defaults to rather strange settings for the CR after
-	 *	a reset - it's important to set it so that the NIC I/O
-	 *	registers are mapped. The above setting of it to '0' only
-	 *	resets the reset condition - the CR is *not* set to zeros.
+	 * Get station address from on-board ROM
 	 */
-	outb(sc->asic_addr + ED_3COM_CR, 0);
+	/*
+	 * First, map ethernet address PROM over the top of where the NIC
+	 *	registers normally appear.
+	 */
+	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_EALO | ED_3COM_CR_XSEL);
+
+	for (i = 0; i < ETHER_ADDR_LEN; ++i)
+		sc->arpcom.ac_enaddr[i] = inb(sc->nic_addr + i);
+
+	/*
+	 * Unmap PROM - select NIC registers. The proper setting of the
+	 *	tranceiver is set in ed_init so that the attach code
+	 *	is given a chance to set the default based on a compile-time
+	 *	config option
+	 */
+	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
 
 	/*
 	 * Determine if this is an 8bit or 16bit board
@@ -552,7 +644,8 @@ type_3Com:
 		outb(sc->asic_addr + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ5);
 		break;
 	default:
-		printf("ed%d: Invalid irq configuration\n", isa_dev->id_unit);
+		printf("ed%d: Invalid irq configuration (%d) must be 2-5 for 3c503\n",
+			isa_dev->id_unit, ffs(isa_dev->id_irq) - 1);
 		return(0);
 	}
 
@@ -571,44 +664,6 @@ type_3Com:
 	outb(sc->asic_addr + ED_3COM_VPTR2, 0xff);
 	outb(sc->asic_addr + ED_3COM_VPTR1, 0xff);
 	outb(sc->asic_addr + ED_3COM_VPTR0, 0x00);
-
-	/*
-	 * Get station address from on-board ROM
-	 */
-	/*
-	 * First, map ethernet address PROM over the top of where the NIC
-	 *	registers normally appear.
-	 */
-	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_EALO);
-
-	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		sc->arpcom.ac_enaddr[i] = inb(sc->nic_addr + i);
-
-	/*
-	 * Unmap PROM - select NIC registers. Tranceiver remains disabled at
-	 *	this point. It's enabled in ed_init so that the attach code
-	 *	is given a chance to set the default based on a compile-time
-	 *	config option
-	 */
-	outb(sc->asic_addr + ED_3COM_CR, 0);
-
-#if 0
-printf("Starting write\n");
-for (i = 0; i < 8192; ++i)
-	bzero(sc->smem_start, 8192);
-printf("Done.\n");
-#endif
-#if 0
-{ char	test_buf[1024];
-printf("starting write\n");
-	for (i = 0; i < 8*8192; ++i)
-	bcopy(test_buf, sc->smem_start, 1024);
-printf("starting read\n");
-	for (i = 0; i < 8*8192; ++i)
-	bcopy(sc->smem_start, test_buf, 1024);
-printf("done.\n");
-}
-#endif
 
 	/*
 	 * Zero memory and verify that it is clear
@@ -657,12 +712,12 @@ ed_attach(isa_dev)
 	ifp->if_watchdog = ed_watchdog;
 
 	/*
-	 * Set default state for LLC0 flag (used to disable the tranceiver
+	 * Set default state for ALTPHYS flag (used to disable the tranceiver
 	 *	for AUI operation), based on compile-time config option.
 	 */
 	if (isa_dev->id_flags & ED_FLAGS_DISABLE_TRANCEIVER)
 		ifp->if_flags = (IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS
-			| IFF_LLC0);
+			| IFF_ALTPHYS);
 	else
 		ifp->if_flags = (IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS);
 
@@ -700,7 +755,7 @@ ed_attach(isa_dev)
 	printf("ed%d: address %s, type %s (%dbit) %s\n", isa_dev->id_unit,
 		ether_sprintf(sc->arpcom.ac_enaddr), sc->type_str,
 		sc->memwidth, ((sc->vendor == ED_VENDOR_3COM) &&
-			(ifp->if_flags & IFF_LLC0)) ? "tranceiver disabled" : "");
+			(ifp->if_flags & IFF_ALTPHYS)) ? "tranceiver disabled" : "");
 
 	/*
 	 * If BPF is in the kernel, call the attach for it
@@ -728,7 +783,7 @@ ed_reset(unit)
 	ed_stop(unit);
 	ed_init(unit);
 
-	s = splx(s);
+	(void) splx(s);
 }
  
 /*
@@ -902,7 +957,7 @@ ed_init(unit)
 	 *	(there is no settable hardware default).
 	 */
 	if (sc->vendor == ED_VENDOR_3COM) {
-		if (ifp->if_flags & IFF_LLC0) {
+		if (ifp->if_flags & IFF_ALTPHYS) {
 			outb(sc->asic_addr + ED_3COM_CR, 0);
 		} else {
 			outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
@@ -988,7 +1043,6 @@ ed_start(ifp)
 	struct mbuf *m0, *m;
 	caddr_t buffer;
 	int len;
-	u_char laar_tmp;
 
 outloop:
 	/*
@@ -1035,11 +1089,14 @@ outloop:
 	 */
 	/*
 	 * Enable 16bit access to shared memory on WD/SMC boards
+	 *	Don't update wd_laar_proto because we want to restore the
+	 *	previous state (because an arp reply in the input code
+	 *	may cause a call-back to ed_start)
 	 */
 	if (sc->memwidth == 16)
 		if (sc->vendor == ED_VENDOR_WD_SMC) {
-			laar_tmp = inb(sc->asic_addr + ED_WD_LAAR);
-			outb(sc->asic_addr + ED_WD_LAAR, laar_tmp | ED_WD_LAAR_M16EN);
+			outb(sc->asic_addr + ED_WD_LAAR,
+				(sc->wd_laar_proto | ED_WD_LAAR_M16EN));
 		}
 
 	buffer = sc->smem_start + (sc->txb_next * ED_TXBUF_SIZE * ED_PAGE_SIZE);
@@ -1047,7 +1104,7 @@ outloop:
 	for (m0 = m; m != 0; m = m->m_next) {
 		bcopy(mtod(m, caddr_t), buffer, m->m_len);
 		buffer += m->m_len;
-        	len += m->m_len;
+       		len += m->m_len;
 	}
 
 	/*
@@ -1055,7 +1112,7 @@ outloop:
 	 */
 	if (sc->memwidth == 16)
 		if (sc->vendor == ED_VENDOR_WD_SMC) {
-			outb(sc->asic_addr + ED_WD_LAAR, laar_tmp);
+			outb(sc->asic_addr + ED_WD_LAAR, sc->wd_laar_proto);
 		}
 
 	sc->txb_next_len = MAX(len, ETHER_MIN_LEN);
@@ -1380,8 +1437,8 @@ edintr(unit)
 			if (sc->memwidth == 16)
 				if (sc->vendor == ED_VENDOR_WD_SMC) {
 					outb(sc->asic_addr + ED_WD_LAAR,
-						inb(sc->asic_addr + ED_WD_LAAR)
-						| ED_WD_LAAR_M16EN);
+						(sc->wd_laar_proto |=
+						 ED_WD_LAAR_M16EN));
 				}
 
 			ed_rint (unit);
@@ -1392,8 +1449,8 @@ edintr(unit)
 			if (sc->memwidth == 16)
 				if (sc->vendor == ED_VENDOR_WD_SMC) {
 					outb(sc->asic_addr + ED_WD_LAAR,
-						inb(sc->asic_addr + ED_WD_LAAR)
-						& ~ED_WD_LAAR_M16EN);
+						(sc->wd_laar_proto &=
+						 ~ED_WD_LAAR_M16EN));
 				}
 		}
 
@@ -1537,11 +1594,11 @@ ed_ioctl(ifp, command, data)
 #endif
 		/*
 		 * An unfortunate hack to provide the (required) software control
-		 *	of the tranceiver for 3Com boards. The LLC0 flag disables
+		 *	of the tranceiver for 3Com boards. The ALTPHYS flag disables
 		 *	the tranceiver if set.
 		 */
 		if (sc->vendor == ED_VENDOR_3COM) {
-			if (ifp->if_flags & IFF_LLC0) {
+			if (ifp->if_flags & IFF_ALTPHYS) {
 				outb(sc->asic_addr + ED_3COM_CR, 0);
 			} else {
 				outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
