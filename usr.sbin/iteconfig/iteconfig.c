@@ -1,4 +1,4 @@
-/*	$NetBSD: iteconfig.c,v 1.6 1997/10/17 09:54:34 lukem Exp $	*/
+/*	$NetBSD: iteconfig.c,v 1.7 2003/04/17 02:41:21 lukem Exp $	*/
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: iteconfig.c,v 1.6 1997/10/17 09:54:34 lukem Exp $");
+__RCSID("$NetBSD: iteconfig.c,v 1.7 2003/04/17 02:41:21 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -207,6 +207,7 @@ xstrtol(s)
 {
 	long rv;
 
+	errno = 0;
 	rv = strtol(s, NULL, 0);
 	if (errno == ERANGE && (rv == LONG_MIN || rv == LONG_MAX))
 		err(1, "bad format: \"%s\"", s);
