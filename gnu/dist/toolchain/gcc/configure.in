@@ -498,7 +498,9 @@ changequote([,])dnl
 	hppa*-*-*)
 		cpu_type=pa
 		;;
-	m68000-*-*)
+changequote(,)dnl
+	m680[01]0-*-*)
+changequote([,])dnl
 		cpu_type=m68k
 		;;
 	mips*-*-*)
@@ -2054,6 +2056,14 @@ changequote([,])dnl
 		float_format=m68k
 		;;
 	m68*-*-netbsdelf*)
+		case $machine in
+		  m68010-*)
+		    target_cpu_default="0"
+		    ;;
+		  *)
+		    target_cpu_default="MASK_68020|MASK_68881|MASK_BITFIELD"
+		    ;;
+		esac
 		float_format=m68k
 		gas=yes gnu_ld=yes
 		;;
