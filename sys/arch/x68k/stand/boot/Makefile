@@ -1,14 +1,16 @@
-#	$NetBSD: Makefile,v 1.4 2001/09/29 01:42:09 minoura Exp $
+#	$NetBSD: Makefile,v 1.5 2001/10/15 16:23:00 minoura Exp $
 
 .include <bsd.own.mk>
 
-BOOT=		boot
-VERSION=	1.0
+BOOT=		Multi-boot
+VERSIONFILE=	${.CURDIR}/version
+VERSION!=	awk -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } END { print it }' ${VERSIONFILE}
+NEWVERSWHAT=	"${BOOT}"
 
 # text address
 TEXT=		006000
 
-PROG=		${BOOT}
+PROG=		boot
 BINDIR=		/usr/mdec
 BINMODE=	444
 MKMAN=		no
@@ -24,9 +26,14 @@ M=		$S/arch/${MACHINE}
 COMMONDIR=	$M/stand/common
 .PATH:		${COMMONDIR}
 
+SRCS+=		vers.c
+CLEANFILES+=	vers.c
+vers.c:	${VERSIONFILE}
+	sh ${S}/conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+
 CPPFLAGS+=	-nostdinc -I$S -I${.OBJDIR} -I$M/stand/libsa
 CPPFLAGS+=	-I$M/stand/libiocs -I${COMMONDIR}
-CPPFLAGS+=	-D_STANDALONE
+CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
 CPPFLAGS+=	-DTEXTADDR="0x${TEXT}" 
 CPPFLAGS+=	-DBOOT=\"${BOOT}\" -DBOOT_VERS=\"${VERSION}\"
 CFLAGS=		-Wno-main -Os -m68020-60
@@ -49,10 +56,10 @@ machine-links:
 CLEANFILES+=	machine ${MACHINE_ARCH}
 
 realall: machine-links ${PROG}
-${BOOT}:	${OBJS}
-	${LD} ${LDFLAGS} -o ${BOOT}.sym ${OBJS} ${LDLIBS}
-	${STRIP} -F ${BFDNAME} -o ${BOOT} ${BOOT}.sym
+${PROG}:	${OBJS}
+	${LD} ${LDFLAGS} -o ${PROG}.sym ${OBJS} ${LDLIBS}
+	${STRIP} -F ${BFDNAME} -o ${PROG} ${PROG}.sym
 
-CLEANFILES+=	${BOOT}.sym
+CLEANFILES+=	${PROG}.sym
 
 .include <bsd.prog.mk>
