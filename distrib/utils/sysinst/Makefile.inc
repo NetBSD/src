@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1999/06/20 05:55:51 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1999/12/27 20:31:32 garbled Exp $
 #
 # Makefile for install
 
@@ -27,8 +27,8 @@ LANG?=en
 
 .PATH: ${.CURDIR}/../..
 
-MENUC=menuc
-MSGC=msgc
+MENUC?=menuc
+MSGC?=msgc
 
 .include <bsd.prog.mk>
 
