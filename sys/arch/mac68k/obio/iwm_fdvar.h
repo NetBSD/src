@@ -1,4 +1,4 @@
-/* $Id: iwm_fdvar.h,v 1.2 1999/02/18 07:50:54 scottr Exp $ */
+/*	$NetBSD: iwm_fdvar.h,v 1.3 1999/03/27 05:45:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,20 +32,20 @@
  **	Constants
  **/
 
-/* Number of attachable drives */
-#define IWM_MAX_DRIVE		2
+enum {
+	IWM_MAX_DRIVE = 2,		/* Attachable drives */
+	IWM_GCR_DISK_ZONES = 5,		/* Zones on GCR disk */
+	IWM_MAX_GCR_SECTORS = 12,	/* Max. sectors per GCR track */
+	IWM_MAX_FLOPPY_SECT = 50,	/* Larger than the highest sector */
+					/* number likely to occur */
+};
 
-/* Number of zones on GCR disk */
-#define IWM_GCR_DISK_ZONES	5
-
-/* Larger than the highest sector number likely */
-#define IWM_MAX_FLOPPY_SECT	50
 
 /* Physical track format codes */
 enum {
-	IWM_GCR,		/* Apple's Group Code Recording format	 */
-	IWM_MFM_DD,		/* Standard MFM on DD disk (250 KBit/s)	 */
-	IWM_MFM_HD		/* Standard MFM on HD disk (500 KBit/s)	 */
+	IWM_GCR,		/* Apple's Group Code Recording format */
+	IWM_MFM_DD,		/* Standard MFM on DD disk (250 KBit/s)	*/
+	IWM_MFM_HD		/* Standard MFM on HD disk (500 KBit/s)	*/
 };
 
 /* Drive softc flags */
@@ -61,6 +61,12 @@ enum {
 	IWM_SEEK_VERIFY
 };
 
+/* I/O direction */
+enum {
+	IWM_WRITE = 0,
+	IWM_READ
+};
+
 
 /**
  **	Data Types
@@ -73,15 +79,15 @@ enum {
  *     tenaciously to the trailing edge of technology...
  */
 struct fdInfo {
-	short	heads;		/* # of heads the drive has	 */
-	short	tracks;		/* # of tracks per side (cyl's)	 */
-	short	sectorSize;	/* Bytes per sector		 */
-	short	secPerTrack;	/* fake				 */
-	short	secPerCyl;	/* fake				 */
-	short	secPerDisk;	/* # of sectors per __disk__	 */
-	short	stepRate;	/* in ms (is a software delay)	 */
-	short	interleave;	/* Sector interleave		 */
-	short	physFormat;	/* GCR, MFM DD, MFM HD		 */
+	short	heads;			/* # of heads the drive has */
+	short	tracks;			/* # of tracks per side (cyl's)	*/
+	short	sectorSize;		/* Bytes per sector */
+	short	secPerTrack;		/* fake	*/
+	short	secPerCyl;		/* fake	*/
+	short	secPerDisk;		/* # of sectors per __disk__ */
+	short	stepRate;		/* in ms (is a software delay) */
+	short	interleave;		/* Sector interleave */
+	short	physFormat;		/* GCR, MFM DD, MFM HD */
 	char	*description;
 };
 typedef struct fdInfo fdInfo_t;
@@ -94,7 +100,7 @@ struct diskPosition {
 	short	oldTrack;
 	short	side;
 	short	sector;
-	short	maxSect;	/* Highest sector # for this track */
+	short	maxSect;		/* Highest sector # for this track */
 };
 typedef struct diskPosition diskPosition_t;
 
@@ -102,7 +108,7 @@ typedef struct diskPosition diskPosition_t;
  * Zone recording scheme (per disk surface/head)
  */
 struct diskZone {
-	short	tracks;		/* # of tracks per zone		 */
+	short	tracks;			/* # of tracks per zone	*/
 	short	sectPerTrack;
 	short	firstBlock;
 	short	lastBlock;
@@ -113,8 +119,8 @@ typedef struct diskZone diskZone_t;
  * Arguments passed between iwmAttach() and the fd probe routines.
  */
 struct iwmAttachArgs {
-	fdInfo_t *driveType;	/* Default drive parameters     */
-	short	unit;		/* Current drive #              */
+	fdInfo_t *driveType;		/* Default drive parameters */
+	short	unit;			/* Current drive # */
 };
 typedef struct iwmAttachArgs iwmAttachArgs_t;
 
@@ -124,25 +130,43 @@ typedef struct iwmAttachArgs iwmAttachArgs_t;
  *
  */
 struct fd_softc {
-	struct device devInfo;	/* generic device info 		 */
-	struct disk diskInfo;	/* generic disk info		 */
-	struct buf bufQueue;	/* queue of buf's		 */
+	struct device devInfo;		/* generic device info */
+	struct disk diskInfo;		/* generic disk info */
+	struct buf bufQueue;		/* queue of buf's */
 
 /* private stuff here */
-	daddr_t	startBlk;	/* Starting block #		 */
-	int	bytesLeft;	/* Bytes left to transfer	 */
-	int	bytesDone;	/* Bytes transferred		 */
+/* errors & retries in current I/O job */
+	int	iwmErr;			/* Last IO error */
+	int	ioRetries;
+	int	seekRetries;
+	int	sectRetries;
+	int	verifyRetries;
+	
+/* hardware info */
+	int	drvFlags;		/* Copy of drive flags */
+	short   stepDirection;		/* Current step direction */
+	diskPosition_t pos;		/* Physical position on disk */
+	
+	
+/* drive info */
+	short	unit;			/* Drive # as seen by IWM */
+	short	partition;		/* "Partition" info {a,b,c,...} */
+	fdInfo_t *defaultType;		/* default floppy format */
+	fdInfo_t *currentType;		/* current floppy format */
+	int     state;			/* XXX */
 
-	int	drvFlags;	/* Copy of drive flags		 */
-	short	unit;		/* Drive # as seen by IWM	 */
-	short	partition;	/* "Partition" info {a,b,c,...}	 */
-	fdInfo_t *defaultType;	/* default floppy format	 */
-	fdInfo_t *currentType;	/* current floppy format	 */
-	int	state;		/* XXX				 */
-	void	*trackBuf;	/* Pointer to track buffer	 */
-	short	stepDirection;	/* Current step direction	 */
-	diskPosition_t pos;	/* Physical position on disk	 */
-	int	writeLabel;	/* Write access to disklabel?	 */
+/* data transfer info */
+	int	ioDirection;		/* Read/write */
+	daddr_t	startBlk;		/* Starting block # */
+	int	bytesLeft;		/* Bytes left to transfer */
+	int	bytesDone;		/* Bytes transferred */
+	caddr_t current_buffer; 	/* target of current data transfer */
+	unsigned char *cbuf;		/* ptr to cylinder cache */
+	int	cachedSide;		/* Which head is cached? */
+	cylCacheSlot_t r_slots[IWM_MAX_GCR_SECTORS];
+	cylCacheSlot_t w_slots[IWM_MAX_GCR_SECTORS];
+	int	writeLabel;		/* Write access to disklabel? */
+	sectorHdr_t sHdr;		/* current sector header */
 };
 typedef struct fd_softc fd_softc_t;
 
@@ -152,15 +176,15 @@ typedef struct fd_softc fd_softc_t;
  * SWIM/MFM mode may have some state to keep here.
  */
 struct iwm_softc {
-	struct device devInfo;	/* generic device info		 */
-	int	drives;		/* # of attached fd's		 */
-	fd_softc_t *fd[IWM_MAX_DRIVE];	/* ptrs to children	 */
+	struct device devInfo;		/* generic device info */
+	int	drives;			/* # of attached fd's */
+	fd_softc_t *fd[IWM_MAX_DRIVE];	/* ptrs to children */
 
-	int	state;		/* make that an enum?		 */
-	u_char	modeReg;	/* Copy of IWM mode register	 */
-	short	maxRetries;	/* I/O retries			 */
+	int	state;			/* make that an enum? */
+	u_char	modeReg;		/* Copy of IWM mode register */
+	short	maxRetries;		/* I/O retries */
 	int	errors;
-	int	underruns;	/* data not delivered in time	 */
+	int	underruns;		/* data not delivered in time */
 };
 typedef struct iwm_softc iwm_softc_t;
 
@@ -193,27 +217,32 @@ dev_type_size(fdsize);
 dev_type_dump(fddump);
 
 
-int	iwmSelectDrive __P((int drive));
-int	iwmSelectSide __P((int side));
+int 	iwmInit __P((void));
+int 	iwmCheckDrive __P((int32_t drive));
+int	iwmSelectDrive __P((int32_t drive));
+int	iwmSelectSide __P((int32_t side));
 int	iwmTrack00 __P((void));
-int	iwmSeek __P((int steps));
+int	iwmSeek __P((int32_t steps));
 
-int	iwmReadSector __P((caddr_t buf, sectorHdr_t *hdr));
-int	iwmWriteSector __P((caddr_t buf, sectorHdr_t *hdr));
+int     iwmReadSector __P((sectorHdr_t *hdr, cylCacheSlot_t *r_slots, 
+			   caddr_t buf));
+int	iwmWriteSector __P((sectorHdr_t *hdr, cylCacheSlot_t *w_slots));
 
-int	iwmDiskEject __P((int drive));		/* drive = [0..1]	 */
-int	iwmMotor __P((int drive, int onOff));	/* on(1)/off(0)		 */
+int	iwmDiskEject __P((int32_t drive));		/* drive = [0..1] */
+int	iwmMotor __P((int32_t drive, int32_t onOff));	/* on(1)/off(0)	*/
 
 /*
  * Debugging only
  */
-int	iwmQueryDrvFlag __P((int drive, int reg)); /* reg = [0..15]	 */
+int	iwmQueryDrvFlag __P((int32_t drive, int32_t reg)); /* reg = [0..15] */
 
 /* Make sure we run at splhigh when calling! */
 int	iwmReadSectHdr __P((sectorHdr_t *hdr));
 
-int	iwmReadRawSector __P((int ID, caddr_t buf));
-int	iwmWriteRawSector __P((int ID, caddr_t buf));
-int	iwmReadRawTrack __P((int mode, caddr_t buf));
+#if 0 /* XXX not yet */
+int	iwmReadRawSector __P((int32_t ID, caddr_t buf));
+int	iwmWriteRawSector __P((int32_t ID, caddr_t buf));
+int	iwmReadRawTrack __P((int32_t mode, caddr_t buf));
+#endif
 
 #endif /* _MAC68K_FDVAR_H */
