@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.89 2003/04/09 14:30:30 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.90 2003/04/12 06:53:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.89 2003/04/09 14:30:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.90 2003/04/12 06:53:09 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -990,7 +990,7 @@ nfs_doio(bp, p)
 		bp->b_error = error;
 	    }
 	} else {
-	    int i, npages = bp->b_bufsize >> PAGE_SHIFT;
+	    int i, npages = (bp->b_bcount + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	    struct vm_page *pgs[npages];
 	    boolean_t needcommit = TRUE;
 
@@ -1003,8 +1003,15 @@ nfs_doio(bp, p)
 	    for (i = 0; i < npages; i++) {
 		    pgs[i] = uvm_pageratop((vaddr_t)bp->b_data +
 					   (i << PAGE_SHIFT));
+		    KASSERT((pgs[i]->flags & PG_BUSY) ||
+			pgs[i]->uobject != (struct uvm_object *)vp);
 		    if ((pgs[i]->flags & PG_NEEDCOMMIT) == 0) {
 			    needcommit = FALSE;
+		    }
+		    if ((pgs[i]->flags & (PG_RELEASED|PG_PAGEOUT)) ||
+			pgs[i]->uobject != (struct uvm_object *)vp) {
+			    KASSERT(i == 0 || iomode == NFSV3WRITE_FILESYNC);
+			    iomode = NFSV3WRITE_FILESYNC;
 		    }
 	    }
 	    if (!needcommit && iomode == NFSV3WRITE_UNSTABLE) {
