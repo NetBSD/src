@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.3 1995/06/30 01:23:21 briggs Exp $	*/
+/*	$NetBSD: adb.c,v 1.4 1995/09/03 20:59:53 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -284,6 +284,7 @@ adb_processevent(event)
     adb_event_t *event;
 {
 	adb_event_t new_event;
+	int i, button_bit, max_byte, mask;
 
 	new_event = *event;
 
@@ -300,10 +301,29 @@ adb_processevent(event)
 		}
 		break;
 	case ADBADDR_MS:
-		if (!(event->bytes[0] & 0x80))	/* 0 is button down */
-			adb_ms_buttons |= 1;
-		else
-			adb_ms_buttons &= 0xfe;
+		/*
+		 * This should handle both plain ol' Apple mice and mice
+		 * that claim to support the Extended Apple Mouse Protocol.
+		 */
+		max_byte = event->byte_count;
+		button_bit = 1;
+		/* Classic Mouse Protocol (up to 2 buttons) */
+		for (i = 0; i < 2; i++, button_bit <<= 1)
+			/* 0 when button down */
+			if (!(event->bytes[i] & 0x80))
+				adb_ms_buttons |= button_bit;
+			else
+				adb_ms_buttons &= ~button_bit;
+		/* Extended Protocol (up to 6 more buttons) */
+		for (mask = 0x80; i < max_byte;
+		     i += (mask == 0x80), button_bit <<= 1) {
+			/* 0 when button down */
+			if (!(event->bytes[i] & mask))
+				adb_ms_buttons |= button_bit;
+			else
+				adb_ms_buttons &= ~button_bit;
+			mask = ((mask >> 4) & 0xf) | ((mask & 0xf) << 4);
+		}
 		new_event.u.m.buttons = adb_ms_buttons;
 		new_event.u.m.dx = ((signed int) (event->bytes[1] & 0x3f)) -
 					((event->bytes[1] & 0x40) ? 64 : 0);
