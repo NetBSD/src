@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.88 1999/02/27 13:11:21 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.89 1999/03/17 23:21:38 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -261,11 +261,11 @@ static	int cpu_number;
 	int node, mid;
 
 	node = ma->ma_node;
+	mid = 0;
 
 	/*
 	 * First, find out if we're attaching the boot CPU.
 	 */
-	mid = getpropint(node, "mid", 0);
 	if (bootcpu == NULL) {
 		extern struct pcb idle_u[];
 		bootcpu = sc;
@@ -278,6 +278,7 @@ static	int cpu_number;
 		/* Note: `curpcb' is set to `proc0' in locore */
 	} else {
 #if defined(MULTIPROCESSOR)
+		mid = getpropint(node, "mid", 0);
 		cpi = sc->sc_cpuinfo = alloc_cpuinfo();
 		cpi->curpcb = cpi->idle_u;
 		/* Note: `idle_u' and `eintstack' are set in alloc_cpuinfo() */
