@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 1997/02/08 09:32:33 matthias Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22 1997/03/20 12:02:36 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -100,16 +100,19 @@ void	delay __P((int));
 /* autoconf.c */
 void	configure __P((void));
 
+/* ieee_handler.c */
+int	ieee_handle_exception __P((struct proc *));
+
 /* machdep.c */
-void	delay __P((int));
 void	dumpconf __P((void));
-void	cpu_reset __P((void));
 
 /* locore.s */
+void	delay __P((int));
+struct pcb;
 void	proc_trampoline __P((void));
-
-/* clock.c */
-void	startrtclock __P((void));
+int	ram_size __P((void *));
+void	restore_fpu_context __P((struct pcb *));
+void	save_fpu_context __P((struct pcb *));
 
 /* trap.c */
 void	child_return __P((struct proc *, struct syscframe frame));
