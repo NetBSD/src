@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.22 1997/10/05 18:39:51 thorpej Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.23 1997/12/30 09:51:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -342,17 +342,17 @@ disk_detach(diskp)
 {
 
 	/*
+	 * Remove from the disklist.
+	 */
+	if (--disk_count < 0)
+		panic("disk_detach: disk_count < 0");
+	TAILQ_REMOVE(&disklist, diskp, dk_link);
+
+	/*
 	 * Free the space used by the disklabel structures.
 	 */
 	free(diskp->dk_label, M_DEVBUF);
 	free(diskp->dk_cpulabel, M_DEVBUF);
-
-	/*
-	 * Remove from the disklist.
-	 */
-	TAILQ_REMOVE(&disklist, diskp, dk_link);
-	if (--disk_count < 0)
-		panic("disk_detach: disk_count < 0");
 }
 
 /*
@@ -388,8 +388,10 @@ disk_unbusy(diskp, bcount)
 	int s;
 	struct timeval dv_time, diff_time;
 
-	if (diskp->dk_busy-- == 0)
-		panic("disk_unbusy: %s: dk_busy < 0", diskp->dk_name);
+	if (diskp->dk_busy-- == 0) {
+		printf("%s: dk_busy < 0\n", diskp->dk_name);
+		panic("disk_unbusy");
+	}
 
 	s = splclock();
 	dv_time = mono_time;
