@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.122 2001/11/13 19:16:41 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.123 2002/01/14 00:55:57 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -65,21 +65,26 @@ ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
 	__shmctl13.S shmdt.S shmget.S shutdown.S __sigaction14.S \
 	__sigaltstack14.S __sigpending14.S __sigprocmask14.S __sigsuspend14.S \
 	socket.S socketpair.S __stat13.S statfs.S \
-	swapctl.S symlink.S sysarch.S umask.S undelete.S unlink.S \
+	swapctl.S symlink.S umask.S undelete.S unlink.S \
 	unmount.S utimes.S utrace.S vadvise.S wait4.S write.S writev.S \
 	__sysctl.S \
 	__posix_chown.S __posix_fchown.S __posix_lchown.S __posix_rename.S
+
+WEAKASM= sysarch.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
 	issetugid.S sync.S
 
 PSEUDONOERR=	_exit.S
 
-SRCS+=		${ASM} ${NOERR} ${PSEUDONOERR}
-CLEANFILES+=	${ASM} ${NOERR} ${PSEUDONOERR}
+SRCS+=		${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR}
+CLEANFILES+=	${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR}
 
 ${ASM}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 	printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' >${.TARGET}
+
+${WEAKASM}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
+	printf '#include "SYS.h"\nWSYSCALL(${.PREFIX},_${.PREFIX})\n' >${.TARGET}
 
 ${NOERR}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 	printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' >${.TARGET}
@@ -90,7 +95,7 @@ ${PSEUDONOERR}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
 	sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} \
-	    -s ${DESTDIR}/usr/include/sys/syscall.h ${ASM}
+	    -s ${DESTDIR}/usr/include/sys/syscall.h ${ASM} ${WEAKASM}
 
 LintSysNoerr.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
