@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.121 2002/10/18 13:18:42 atatat Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.122 2002/10/24 20:37:59 atatat Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.121 2002/10/18 13:18:42 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.122 2002/10/24 20:37:59 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -745,11 +745,23 @@ forwardmerge:
 		/*
 		 * can't extend a shared amap.  note: no need to lock amap to
 		 * look at refs since we don't care about its exact value.
-		 * if it is one (i.e. we have only reference) it will stay there
+		 * if it is one (i.e. we have only reference) it will stay there.
+		 *
+		 * note that we also can't merge two amaps, so if we
+		 * merged with the previous entry which has an amap,
+		 * and the next entry also has an amap, we give up.
+		 *
+		 * XXX should we attempt to deal with someone refilling
+		 * the deallocated region between two entries that are
+		 * backed by the same amap (ie, arefs is 2, "prev" and
+		 * "next" refer to it, and adding this allocation will
+		 * close the hole, thus restoring arefs to 1 and
+		 * deallocating the "next" vm_map_entry)?  -- @@@
 		 */
 
 		if (prev_entry->next->aref.ar_amap &&
-		    amap_refs(prev_entry->next->aref.ar_amap) != 1) {
+		    (amap_refs(prev_entry->next->aref.ar_amap) != 1 ||
+		     (merged && prev_entry->aref.ar_amap))) {
 			goto nomerge;
 		}
 
@@ -771,16 +783,33 @@ forwardmerge:
 			goto nomerge;
 		}
 
+		/*
+		 * XXX call amap_extend() to merge backwards here if needed.  -- @@@
+		 */
+		if (merged) {
+			if (prev_entry->aref.ar_amap) {
+				error = amap_extend(prev_entry,
+				    prev_entry->next->end -
+				    prev_entry->next->start);
+				if (error) {
+					vm_map_unlock(map);
+					if (new_entry) {
+						uvm_mapent_free(new_entry);
+					}
+					return error;
+				}
+			}
+		}
+
 		if (merged) {
 			if (kmap) {
 				UVMCNT_DECR(map_kbackmerge);
 				UVMCNT_INCR(map_kbimerge);
 			} else {
-				UVMCNT_DECR(map_kbackmerge);
-				UVMCNT_INCR(map_kbimerge);
+				UVMCNT_DECR(map_ubackmerge);
+				UVMCNT_INCR(map_ubimerge);
 			}
-		}
-		else {
+		} else {
 			if (kmap)
 				UVMCNT_INCR(map_kforwmerge);
 			else
@@ -795,10 +824,6 @@ forwardmerge:
 		 */
 		if (uobj && uobj->pgops->pgo_detach && !merged)
 			uobj->pgops->pgo_detach(uobj);
-
-		/*
-		 * XXX call amap_extend() to merge backwards here.  -- @@@
-		 */
 
 		if (merged) {
 			struct vm_map_entry *dead = prev_entry->next;
