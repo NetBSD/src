@@ -3159,8 +3159,6 @@
 ./usr/share/man/man8/config.8
 ./usr/share/man/man8/kgmon.8
 ./usr/share/misc/getopt
-./usr/share/misc/gprof.callg
-./usr/share/misc/gprof.flat
 ./usr/share/misc/indent.pro
 ./usr/share/misc/menu_sys.def
 ./usr/share/misc/msg_sys.def
