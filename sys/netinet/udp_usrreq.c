@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.21 1995/06/12 06:48:56 mycroft Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.22 1995/06/18 20:01:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -184,8 +184,9 @@ udp_input(m, iphlen)
 		 * (Algorithm copied from raw_intr().)
 		 */
 		last = NULL;
-		for (inp = udbtable.inpt_list.lh_first; inp != 0;
-		    inp = inp->inp_list.le_next) {
+		for (inp = udbtable.inpt_queue.cqh_first;
+		    inp != (struct inpcb *)&udbtable.inpt_queue;
+		    inp = inp->inp_queue.cqe_next) {
 			if (inp->inp_lport != uh->uh_dport)
 				continue;
 			if (inp->inp_laddr.s_addr != INADDR_ANY) {
