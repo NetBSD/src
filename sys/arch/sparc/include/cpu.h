@@ -42,7 +42,7 @@
  *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  *
  * from: Header: cpu.h,v 1.12 93/05/25 10:36:34 torek Exp  (LBL)
- * $Id: cpu.h,v 1.7 1994/05/19 08:23:17 deraadt Exp $
+ * $Id: cpu.h,v 1.8 1994/09/27 01:32:06 deraadt Exp $
  */
 
 #ifndef _CPU_H_
@@ -82,7 +82,7 @@
  */
 #define cpu_set_init_frame(p, fp) \
 	(p)->p_md.md_tf = (struct trapframe *) \
-	    ((caddr_t)(p)->p_addr + UPAGES * NBPG - sizeof(struct trapframe))
+	    ((caddr_t)(p)->p_addr + USPACE - sizeof(struct trapframe))
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
