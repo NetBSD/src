@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 1995/03/26 08:04:18 cgd Exp $ */
+/*	$NetBSD: trap.c,v 1.27 1995/03/31 02:54:35 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,8 +144,9 @@ const char *trap_type[] = {
 	"range check",		/* 85 */
 	"fix align",		/* 86 */
 	"integer overflow",	/* 87 */
-	"kgdb exec",		/* 88 */
-	"4.4 syscall"		/* 89 */
+	"svr4 syscall",		/* 88 */
+	"4.4 syscall",		/* 89 */
+	"kgdb exec",		/* 8a */
 };
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
@@ -681,6 +682,11 @@ syscall(code, tf, pc)
 	extern int nsunos_sysent;
 	extern struct sysent sunos_sysent[];
 #endif
+#ifdef COMPAT_SVR4
+	extern int nsvr4_sysent;
+	extern struct sysent svr4_sysent[];
+	extern int svr4_error[];
+#endif
 
 	cnt.v_syscall++;
 	p = curproc;
@@ -706,6 +712,16 @@ syscall(code, tf, pc)
 		callp = sunos_sysent;
 		nsys = nsunos_sysent;
 		break;
+#endif
+#ifdef COMPAT_SVR4
+	case EMUL_IBCS2_ELF:
+		callp = svr4_sysent;
+		nsys = nsvr4_sysent;
+		break;
+#endif
+#ifdef DIAGNOSTIC
+	default:
+		panic("invalid p_emul %d", p->p_emul);
 #endif
 	}
 
@@ -805,6 +821,12 @@ bad:
 	}
 	/* else if (error == ERESTART || error == EJUSTRETURN) */
 		/* nothing to do */
+
+#ifdef COMPAT_SVR4
+	if (p->p_emul == EMUL_IBCS2_ELF)
+		error = svr4_error[error];
+#endif
+
 	userret(p, pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
