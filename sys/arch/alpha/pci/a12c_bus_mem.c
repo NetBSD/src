@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_bus_mem.c,v 1.2 1998/03/02 07:07:41 ross Exp $ */
+/* $NetBSD: a12c_bus_mem.c,v 1.3 1998/09/23 21:20:55 ross Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -46,7 +46,7 @@
 
 #define	A12C_BUS_MEM()	/* Generate ctags(1) key */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_bus_mem.c,v 1.2 1998/03/02 07:07:41 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_bus_mem.c,v 1.3 1998/09/23 21:20:55 ross Exp $");
 
 /* Memory barrier */
 void		pci_a12c_mem_barrier __P((void *, bus_space_handle_t,
@@ -146,9 +146,9 @@ void		pci_a12c_mem_copy_region_8 __P((void *, bus_space_handle_t,
 
 /* mapping/unmapping */
 int		pci_a12c_mem_map __P((void *, bus_addr_t, bus_size_t, int,
-		    bus_space_handle_t *));
+		    bus_space_handle_t *, int));
 void		pci_a12c_mem_unmap __P((void *, bus_space_handle_t,
-		    bus_size_t));
+		    bus_size_t, int));
 int		pci_a12c_mem_subregion __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_size_t, bus_space_handle_t *));
 
@@ -242,12 +242,13 @@ a12c_bus_mem_init(v)
 }
 
 int
-pci_a12c_mem_map(v, memaddr, memsize, flags, memhp)
+pci_a12c_mem_map(v, memaddr, memsize, flags, memhp, acct)
 	void *v;
 	bus_addr_t memaddr;
 	bus_size_t memsize;
 	int flags;
 	bus_space_handle_t *memhp;
+	int acct;
 {
 	if(flags & BUS_SPACE_MAP_LINEAR)
 		printf("warning, linear a12 pci map requested\n");
@@ -258,10 +259,11 @@ pci_a12c_mem_map(v, memaddr, memsize, flags, memhp)
 }
 
 void
-pci_a12c_mem_unmap(v, memh, memsize)
+pci_a12c_mem_unmap(v, memh, memsize, acct)
 	void *v;
 	bus_space_handle_t memh;
 	bus_size_t memsize;
+	int acct;
 {
 }
 
