@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)var.c	5.7 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: var.c,v 1.7 1994/06/16 18:50:20 jtc Exp $";
+static char *rcsid = "$Id: var.c,v 1.8 1995/01/09 18:31:41 christos Exp $";
 #endif /* not lint */
 
 /*-
@@ -271,15 +271,10 @@ VarFind (name, ctxt, flags)
 	char *env;
 
 	if ((env = getenv (name)) != NULL) {
-	    /*
-	     * If the variable is found in the environment, we only duplicate
-	     * its value (since eVarVal was allocated on the stack). The name
-	     * doesn't need duplication since it's always in the environment
-	     */
 	    int	  	len;
 	    
 	    v = (Var *) emalloc(sizeof(Var));
-	    v->name = name;
+	    v->name = strdup(name);
 
 	    len = strlen(env);
 	    
