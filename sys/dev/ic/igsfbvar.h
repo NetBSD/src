@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.7 2003/05/11 03:20:09 uwe Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.8 2003/05/31 23:22:26 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -62,13 +62,16 @@ struct igsfb_devconfig {
 	/* io registers */
 	bus_space_handle_t dc_ioh;
 
+	/* graphic coprocessor */
+	bus_space_handle_t dc_coph;
+
 	/* linear memory */
 	bus_space_tag_t dc_memt;
 	bus_addr_t dc_memaddr;
 	bus_size_t dc_memsz; /* size of linear address space including mmio */
 	int dc_memflags;
 
-	/* actual video memory size */
+	/* video memory size */
 	bus_size_t dc_vmemsz;
 
 	/* resolution */
@@ -80,13 +83,6 @@ struct igsfb_devconfig {
 
 	/* 1KB of cursor sprite data */
 	bus_space_handle_t dc_crh;
-
-	/* XXX: notyet
-	 * graphic coprocessor can be accessed either via i/o space
-	 * or via memory-mapped i/o access through memory space
-	 */
-	bus_space_tag_t dc_copt;
-	bus_space_handle_t dc_coph;
 
 	/* product id: IGA 168x, CyberPro 2k &c */
 	int dc_id;
@@ -109,6 +105,9 @@ struct igsfb_devconfig {
 	int dc_mapped;			/* currently in mapped mode */
 
 	struct rasops_info dc_ri;
+
+	/* saved dc_ri.ri_ops.putchar */
+	void (*dc_ri_putchar)(void *, int, int, u_int, long);
 
 	struct igs_hwcmap dc_cmap;	/* software copy of colormap */
 	struct igs_hwcursor dc_cursor;	/* software copy of cursor sprite */
