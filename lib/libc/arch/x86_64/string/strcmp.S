@@ -1,88 +1,72 @@
 /*
- * Written by J.T. Conklin <jtc@NetBSD.org>.
+ * Written by J.T. Conklin <jtc@acorntoolworks.com>
  * Public domain.
- * Adapted for NetBSD/x86_64 by Frank van der Linden <fvdl@wasabisystems.com>
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcmp.S,v 1.2 2003/07/26 19:24:40 salo Exp $")
+	RCSID("$NetBSD: strcmp.S,v 1.3 2004/07/19 20:04:41 drochner Exp $")
 #endif
 
-/*
- * NOTE: I've unrolled the loop eight times: large enough to make a
- * significant difference, and small enough not to totally trash the
- * cache.
- */
-
 ENTRY(strcmp)
-	jmp	L2			/* Jump into the loop. */
-
-L1:	incq	%rdi
-	incq	%rsi
-L2:	movb	(%rdi),%cl
-	testb	%cl,%cl			/* null terminator */
-	jz	L3
-	cmpb	%cl,(%rsi)		/* chars match */
-	jne	L3
-
+	/*
+	 * Align s1 to word boundary.
+	 * Consider unrolling loop?
+	 */
+.Ls1align:
+	testb	$7,%dil
+	je	.Ls1aligned
+	movb	(%rdi),%al
 	incq	%rdi
+	movb	(%rsi),%dl
 	incq	%rsi
-	movb	(%rdi),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%rsi)
-	jne	L3
+	testb	%al,%al
+	je	.Ldone
+	cmpb	%al,%dl
+	je	.Ls1align
+	jmp	.Ldone
 
-	incq	%rdi
-	incq	%rsi
-	movb	(%rdi),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%rsi)
-	jne	L3
+	/*
+	 * Check whether s2 is aligned to a word boundry.  If it is, we
+	 * can compare by words.  Otherwise we have to compare by bytes.
+	 */
+.Ls1aligned:
+	testb	$7,%sil
+	jne	.Lbyte_loop
 
-	incq	%rdi
-	incq	%rsi
-	movb	(%rdi),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%rsi)
-	jne	L3
+	movabsq	$0x0101010101010101,%r8
+	subq	$8,%rdi
+	movabsq	$0x8080808080808080,%r9
+	subq	$8,%rsi
 
-	incq	%rdi
-	incq	%rsi
-	movb	(%rdi),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%rsi)
-	jne	L3
+	_ALIGN_TEXT
+.Lword_loop:
+	movq	8(%rdi),%rax
+	addq	$8,%rdi
+	movq	8(%rsi),%rdx
+	addq	$8,%rsi
+	cmpq	%rax,%rdx
+	jne	.Lbyte_loop
+	subq	%r8,%rdx
+	notq	%rax
+	andq	%rax,%rdx
+	testq	%r9,%rdx
+	je	.Lword_loop
 
+	_ALIGN_TEXT
+.Lbyte_loop:
+	movb	(%rdi),%al
 	incq	%rdi
+	movb	(%rsi),%dl
 	incq	%rsi
-	movb	(%rdi),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%rsi)
-	jne	L3
+	testb	%al,%al
+	je	.Ldone
+	cmpb	%al,%dl
+	je	.Lbyte_loop
 
-	incq	%rdi
-	incq	%rsi
-	movb	(%rdi),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%rsi)
-	jne	L3
-
-	incq	%rdi
-	incq	%rsi
-	movb	(%rdi),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%rsi)
-	je	L1
-L3:	movzbl	(%rdi),%eax		/* unsigned comparison */
-	movzbl	(%rsi),%edx
-	subl	%edx,%eax
+.Ldone:
+	movzbq	%al,%rax
+	movzbq	%dl,%rdx
+	subq	%rdx,%rax
 	ret

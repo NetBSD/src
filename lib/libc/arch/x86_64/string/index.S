@@ -1,29 +1,4 @@
-/*
- * Written by J.T. Conklin <jtc@NetBSD.org>.
- * Public domain.
- * Adapted for NetBSD/x86_64 by Frank van der Linden <fvdl@wasabisystems.com>
- */
+/* $NetBSD: index.S,v 1.3 2004/07/19 20:04:41 drochner Exp $ */
 
-#include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: index.S,v 1.2 2003/07/26 19:24:38 salo Exp $")
-#endif
-
-#ifdef STRCHR
-ENTRY(strchr)
-#else
-ENTRY(index)
-#endif
-	movq	%rdi,%rax
-	movb	%sil,%cl
-L1:
-	movb	(%rax),%dl
-	cmpb	%dl,%cl			/* found char? */
-	je 	L2
-	incq	%rax
-	testb	%dl,%dl			/* null terminator? */
-	jnz	L1
-	xorq	%rax,%rax
-L2:
-	ret
+#define INDEX
+#include "strchr.S"
