@@ -1526,7 +1526,7 @@ expand_isakmpspec(prop_no, trns_no, types,
 				TMPALGTYPE2STR(dh));
 			return -1;
 		}
-#undef TMPALGTYPE2STR(n)
+#undef TMPALGTYPE2STR
 
 	/* set new sa */
 	new = newisakmpsa();

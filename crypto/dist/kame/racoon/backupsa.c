@@ -294,7 +294,7 @@ do { \
 		GETNEXTNUM(l_usetime, strtouq);
 		GETNEXTNUM(seq, strtoul);
 
-#undef GETNEXTNUM(n)
+#undef GETNEXTNUM
 
 		keymat = str2val(p, 16, &keymatlen);
 		if (keymat == NULL) {
