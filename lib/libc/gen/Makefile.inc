@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.54 1994/11/14 23:46:52 dean Exp $
+#	$Id: Makefile.inc,v 1.55 1994/12/07 04:47:23 phil Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -37,7 +37,7 @@ SRCS+=	_setjmp.S alloca.S fabs.S frexp.c ldexp.c modf.S setjmp.S sigsetjmp.S
 SRCS+=	divsi3.S fixdfsi.S fixunsdfsi.S udivsi3.S
 .elif (${MACHINE_ARCH} == "ns32k")
 SRCS+=	__main.c _setjmp.S alloca.S fabs.S frexp.S infinity.c isinf.c
-SRCS+=  ldexp.S modf.S setjmp.S
+SRCS+=  ldexp.S modf.S setjmp.S sigsetjmp.S
 .elif (${MACHINE_ARCH} == "tahoe")
 CFLAGS+=-I/sys
 SRCS+=	_setjmp.S alloca.S fabs.S frexp.c ldexp.S modf.S setjmp.S
