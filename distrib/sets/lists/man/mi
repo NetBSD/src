@@ -220,6 +220,7 @@
 ./usr/share/man/cat1/rusers.0
 ./usr/share/man/cat1/rwall.0
 ./usr/share/man/cat1/rwho.0
+./usr/share/man/cat1/screenblank.0
 ./usr/share/man/cat1/script.0
 ./usr/share/man/cat1/sdiff.0
 ./usr/share/man/cat1/sed.0
@@ -791,7 +792,9 @@
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
 ./usr/share/man/cat8/wire-test.0
+./usr/share/man/cat8/wsconscfg.0
 ./usr/share/man/cat8/wsconsctl.0
+./usr/share/man/cat8/wsfontload.0
 ./usr/share/man/cat8/xntpd.0
 ./usr/share/man/cat8/xntpdc.0
 ./usr/share/man/cat8/yp.0
@@ -1295,6 +1298,7 @@
 ./usr/share/man/man1/rusers.1
 ./usr/share/man/man1/rwall.1
 ./usr/share/man/man1/rwho.1
+./usr/share/man/man1/screenblank.1
 ./usr/share/man/man1/script.1
 ./usr/share/man/man1/sdiff.1
 ./usr/share/man/man1/sed.1
@@ -1866,7 +1870,9 @@
 ./usr/share/man/man8/vmstat.8
 ./usr/share/man/man8/vnconfig.8
 ./usr/share/man/man8/wire-test.8
+./usr/share/man/man8/wsconscfg.8
 ./usr/share/man/man8/wsconsctl.8
+./usr/share/man/man8/wsfontload.8
 ./usr/share/man/man8/xntpd.8
 ./usr/share/man/man8/xntpdc.8
 ./usr/share/man/man8/yp.8
