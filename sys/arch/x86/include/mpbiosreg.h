@@ -1,4 +1,4 @@
-/* 	$NetBSD: mpbiosreg.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
+/* 	$NetBSD: mpbiosreg.h,v 1.2 2003/03/04 23:20:29 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,10 +101,10 @@ struct mpbios_proc {
 	u_int8_t  cpu_flags;
 #define PROCENTRY_FLAG_EN	0x01
 #define PROCENTRY_FLAG_BP	0x02
-	u_long  cpu_signature;
-	u_long  feature_flags;
-	u_long  reserved1;
-	u_long  reserved2;
+	u_int32_t  cpu_signature;
+	u_int32_t  feature_flags;
+	u_int32_t  reserved1;
+	u_int32_t  reserved2;
 };
 
 struct mpbios_bus {
@@ -119,7 +119,7 @@ struct mpbios_ioapic {
 	u_int8_t  apic_version;
 	u_int8_t  apic_flags;
 #define IOAPICENTRY_FLAG_EN	0x01
-	void   *apic_address;
+	int32_t   apic_address;
 };
 
 struct mpbios_int {
