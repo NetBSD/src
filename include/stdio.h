@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.8 1993/12/01 23:59:29 jtc Exp $
+ *	$Id: stdio.h,v 1.9 1993/12/02 04:45:32 mycroft Exp $
  */
 
 #ifndef	_STDIO_H_
@@ -218,7 +218,7 @@ int	 getchar __P((void));
 char	*gets __P((char *));
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 extern int sys_nerr;			/* perror(3) external variables */
-extern char *sys_errlist[];
+extern const char *const sys_errlist[];
 #endif
 void	 perror __P((const char *));
 int	 printf __P((const char *, ...));
