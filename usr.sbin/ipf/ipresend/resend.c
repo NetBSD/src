@@ -29,7 +29,11 @@ static	char	sccsid[] = "@(#)resend.c	1.3 1/11/96 (C)1995 Darren Reed";
 #ifndef	linux
 #include <netinet/ip_var.h>
 #include <netinet/tcpip.h>
+#if defined(__NetBSD__)
+#include <net/if_ether.h>
+#else
 #include <netinet/if_ether.h>
+#endif
 #endif
 #include "ip_compat.h"
 #ifdef	linux
