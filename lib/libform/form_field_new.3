@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_new.3,v 1.1 2001/07/08 12:10:29 blymn Exp $
+.\"	$NetBSD: form_field_new.3,v 1.2 2001/07/18 12:24:27 blymn Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -49,7 +49,14 @@
 .Ft FIELD *
 .Fn link_field "FIELD *field, int frow, int fcol"
 .Ft FIELD *
-.Fn new_field "int rows, int cols, int frow, int fcol, int nrows, int nbuf"
+.Fo new_field
+.Fa "int rows"
+.Fa "int cols"
+.Fa "int frow"
+.Fa "int fcol"
+.Fa "int nrows"
+.Fa "int nbuf"
+.Fc
 .Sh DESCRIPTION
 The
 .Fn dup_field
