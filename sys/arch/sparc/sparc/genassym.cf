@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22 1999/10/04 19:23:49 pk Exp $
+#	$NetBSD: genassym.cf,v 1.23 2000/01/17 16:52:04 pk Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -232,6 +232,7 @@ define	OLDMON_PRINTF	offsetof(struct om_vector, printf)
 define	OLDMON_HALT	offsetof(struct om_vector, exitToMon)
 
 # floppy trap handler fields
+define	FDC_REG_HANDLE	offsetof(struct fdcio, fdcio_handle)
 define	FDC_REG_MSR	offsetof(struct fdcio, fdcio_reg_msr)
 define	FDC_REG_FIFO	offsetof(struct fdcio, fdcio_reg_fifo)
 define	FDC_ISTATE	offsetof(struct fdcio, fdcio_istate)
