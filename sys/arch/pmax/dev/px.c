@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.27 2000/01/14 02:00:46 ad Exp $	*/
+/* 	$NetBSD: px.c,v 1.28 2000/02/03 04:09:16 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.27 2000/01/14 02:00:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.28 2000/02/03 04:09:16 nisimura Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -98,6 +98,7 @@ struct px_softc {
 
 static int	px_match __P((struct device *, struct cfdata *, void *));
 static void	px_attach __P((struct device *, struct device *, void *));
+static int	px_init __P((struct fbinfo *, caddr_t, int, int));
 static int	px_intr __P((void *xxx_sc));
 
 static int32_t *px_alloc_pbuf __P((struct px_info *));
@@ -259,6 +260,17 @@ struct bt459_regs {
 
 #define PACK_WORD(p, o) ((p)[(o)] | ((p)[(o)+1] << 16))
 
+int
+px_cnattach(addr)
+      paddr_t addr;
+{
+      caddr_t base;
+      base = (caddr_t)TC_PHYS_TO_UNCACHED(addr);
+      if (px_init((struct fbinfo *)1, base, 0, 1) != 1)
+              return (0);
+      return (1);
+}
+
 /*
  * Match a supported board.
  */
@@ -333,7 +345,7 @@ px_attach(parent, self, aux)
  *
  * XXX use magic number to make sure fi isn't a real struct fbinfo?
  */
-int
+static int
 px_init(fi, slotbase, unit, console)
 	struct fbinfo *fi;
 	caddr_t slotbase;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.37 2000/01/10 03:24:31 simonb Exp $	*/
+/*	$NetBSD: cfb.c,v 1.38 2000/02/03 04:09:13 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,10 +80,6 @@
  * rights to redistribute these changes.
  */
 
-#include "fb.h"
-#include "cfb.h"
-
-#if NCFB > 0
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/fcntl.h>
@@ -103,6 +99,7 @@
  */
 static struct fbuaccess		cfbu;
 static struct pmax_fbtty	cfbfb;
+static struct fbinfo		*cfb_fi;
 
 /*
  * Method table for standard framebuffer operations on a CFB.
@@ -119,7 +116,7 @@ struct fbdriver cfb_driver = {
 	bt459CursorColor
 };
 
-#define	CFB_OFFSET_VRAM		0x0		/* from module's base */
+#define CFB_OFFSET_VRAM		0x0		/* from module's base */
 #define CFB_OFFSET_BT459	0x200000	/* Bt459 registers */
 #define CFB_OFFSET_IREQ		0x300000	/* Interrupt req. control */
 #define CFB_OFFSET_ROM		0x380000	/* Diagnostic ROM */
@@ -134,11 +131,24 @@ struct fbdriver cfb_driver = {
 
 static int	cfbmatch __P((struct device *, struct cfdata *, void *));
 static void	cfbattach __P((struct device *, struct device *, void *));
+static int	cfbinit __P((struct fbinfo *, caddr_t, int, int));
 static int	cfb_intr __P((void *sc));
 
 struct cfattach cfb_ca = {
 	sizeof(struct fbsoftc), cfbmatch, cfbattach
 };
+
+int
+cfb_cnattach(addr)
+	paddr_t addr;
+{
+	struct fbinfo *fi;
+
+	fbcnalloc(&fi);
+	cfbinit(fi, (caddr_t)addr, 0, 1);
+	cfb_fi = fi;
+	return (1);
+}
 
 static int
 cfbmatch(parent, match, aux)
@@ -147,11 +157,6 @@ cfbmatch(parent, match, aux)
 	void *aux;
 {
 	struct tc_attach_args *ta = aux;
-
-#ifdef FBDRIVER_DOES_ATTACH
-	/* leave configuration  to the fb driver */
-	return 0;
-#endif
 
 	/* make sure that we're looking for this type of device. */
 	if (!TC_BUS_MATCHNAME(ta, "PMAG-BA "))
@@ -176,12 +181,20 @@ cfbattach(parent, self, aux)
 	int unit = self->dv_unit;
 	struct fbinfo *fi;
 	
-	/* Allocate a struct fbinfo and point the softc at it */
-	if (fballoc(base, &fi) == 0 && !cfbinit(fi, base, unit, 0))
-			return;
+	if (cfb_fi)
+		fi = cfb_fi;
+	else {
+		/* Allocate a struct fbinfo and point the softc at it */
+		if (fballoc(&fi) < 0 || cfbinit(fi, base, unit, 0) < 0)
+			return; /* failed */
+	}
+	((struct fbsoftc *)self)->sc_fi = fi;
 
-	if ((((struct fbsoftc *)self)->sc_fi = fi) == NULL)
-		return;
+	printf(": %dx%dx%d%s",
+		fi->fi_type.fb_width,
+		fi->fi_type.fb_height,
+		fi->fi_type.fb_depth, 
+		(cfb_fi) ? " console" : "");
 
 	/*
 	 * 3MIN does not mask un-established TC option interrupts,
@@ -190,7 +203,6 @@ cfbattach(parent, self, aux)
 	 * interrupt handler, which interrupts during vertical-retrace.
 	 */
 	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, cfb_intr, fi);
-	fbconnect("PMAG-BA", fi, 0);
 	printf("\n");
 }
 
@@ -200,7 +212,7 @@ cfbattach(parent, self, aux)
  * CFB initialization.  This is divorced from cfbattch() so that
  * a console framebuffer can be initialized early during boot.
  */
-int
+static int
 cfbinit(fi, cfbaddr, unit, silent)
 	struct fbinfo *fi;
 	caddr_t cfbaddr;
@@ -258,14 +270,10 @@ cfbinit(fi, cfbaddr, unit, silent)
 	/* Initialize old-style pmax glass-tty screen info. */
 	fi->fi_glasstty = &cfbfb;
 
-	/* Initialize the color map, the screen, and the mouse. */
-	if (tb_kbdmouseconfig(fi)) {
-		printf(" (mouse/keyboard config failed)");
-		return (0);
-	}
+	if (tb_kbdmouseconfig(fi))
+		return (-1);
 
-	/* Connect to the raster-console pseudo-driver */
-	fbconnect("PMAG-BA", fi, silent);
+	fbconnect(fi);
 	return (1);
 }
 
@@ -294,5 +302,3 @@ cfb_intr(sc)
 	*(int*) (slot_addr + CFB_OFFSET_IREQ) = 0;
 	return (0);
 }
-
-#endif /* NCFB */
