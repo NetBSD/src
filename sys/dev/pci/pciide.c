@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.33 1999/02/22 10:12:00 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.33.2.1 1999/04/06 17:48:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -543,7 +543,7 @@ pciide_attach(parent, self, aux)
 			}
 		}
 	} else {
-		printf("%s: pciide0: hardware does not support DMA",
+		printf("%s: hardware does not support DMA",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 	}
 	printf("\n");
