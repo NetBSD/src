@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 2000/02/05 00:13:25 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2000/09/04 22:18:43 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 
 #if defined(_KERNEL)
 typedef struct label_t {
-	int val[6];
+	int val[9];
 } label_t;
 #endif
 
