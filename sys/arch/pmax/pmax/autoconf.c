@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.61 2001/08/27 02:00:17 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.62 2002/09/26 20:45:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.61 2001/08/27 02:00:17 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62 2002/09/26 20:45:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ device_register(dev, aux)
 	static struct device *ioasicdev;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	struct cfdriver *cd = cf->cf_driver;
+	const char *name = cf->cf_driver->cd_name;
 
 	if (found)
 		return;
@@ -187,7 +187,7 @@ device_register(dev, aux)
 	/*
 	 * Check if IOASIC was the boot slot.
 	 */
-	if (strcmp(cd->cd_name, "ioasic") == 0) {
+	if (strcmp(name, "ioasic") == 0) {
 		struct tc_attach_args *ta = aux;
 
 		if (ta->ta_slot == booted_slot)
@@ -198,7 +198,7 @@ device_register(dev, aux)
 	/*
 	 * Check for ASC controller on either IOASIC or TC option card.
 	 */
-	if (scsiboot && strcmp(cd->cd_name, "asc") == 0) {
+	if (scsiboot && strcmp(name, "asc") == 0) {
 		struct tc_attach_args *ta = aux;
 
 		/*
@@ -218,7 +218,7 @@ device_register(dev, aux)
 	 * If an SII device is configured, it's currently the only
 	 * possible SCSI boot device.
 	 */
-	if (scsiboot && strcmp(cd->cd_name, "sii") == 0) {
+	if (scsiboot && strcmp(name, "sii") == 0) {
 		booted_controller = dev;
 		return;
 	}
@@ -227,9 +227,9 @@ device_register(dev, aux)
 	 * If we found the boot controller, if check disk/tape/cdrom device
 	 * on that controller matches.
 	 */
-	if (booted_controller && (strcmp(cd->cd_name, "sd") == 0 ||
-	    strcmp(cd->cd_name, "st") == 0 ||
-	    strcmp(cd->cd_name, "cd") == 0)) {
+	if (booted_controller && (strcmp(name, "sd") == 0 ||
+	    strcmp(name, "st") == 0 ||
+	    strcmp(name, "cd") == 0)) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != booted_controller)
@@ -244,7 +244,7 @@ device_register(dev, aux)
 	/*
 	 * Check if netboot device.
 	 */
-	if (netboot && strcmp(cd->cd_name, "le") == 0) {
+	if (netboot && strcmp(name, "le") == 0) {
 		struct tc_attach_args *ta = aux;
 
 #if defined(DEC_3100) || defined(DEC_5100)
