@@ -67,21 +67,37 @@ static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #define NPGBANK 16                      /* 2^4 pages per bank (64K / bank) */
 #define BSHIFT  4                       /* log2(NPGBANK) */
 #define BOFFSET (NPGBANK - 1)
-#define BTSIZE  (MAXMEM / NBPG / NPGBANK)
+#define BTSIZE  (MAXMEM / 4096 / NPGBANK)
 #define HWTOSW(pmap_stod, pg) (pmap_stod[(pg) >> BSHIFT] | ((pg) & BOFFSET))
 
 struct vmstate {
 	pmeg_t segmap[NKSEG];
-	int pmeg[NPMEG][NPTESG];
+	int *pmeg;
 	int pmap_stod[BTSIZE];              /* dense to sparse */
 };
+
+static int cputyp;
+
+static int pgshift, nptesg;
+
+static void
+getpgshift(kd)
+	kvm_t *kd;
+{
+	for (pgshift = 12; (1 << pgshift) != kd->nbpg; pgshift++)
+		;
+	nptesg = NBPSG / kd->nbpg;
+}
 
 void
 _kvm_freevtop(kd)
 	kvm_t *kd;
 {
-	if (kd->vmst != 0)
+	if (kd->vmst != 0) {
+		if (kd->vmst->pmeg != 0)
+			free(kd->vmst->pmeg);
 		free(kd->vmst);
+	}
 }
 
 int
@@ -92,10 +108,16 @@ _kvm_initvtop(kd)
 	register int off;
 	register struct vmstate *vm;
 	struct stat st;
-	struct nlist nlist[2];
+	struct nlist nlist[3];
+
+	if (pgshift == 0)
+		getpgshift(kd);
 
 	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
 	if (vm == 0)
+		return (-1);
+	vm->pmeg = (int *)_kvm_malloc(kd, NPMEG * nptesg * sizeof(int));
+	if (vm->pmeg == 0)
 		return (-1);
 
 	kd->vmst = vm;
@@ -105,7 +127,7 @@ _kvm_initvtop(kd)
 	/*
 	 * Read segment table.
 	 */
-	off = st.st_size - ctob(btoc(sizeof(vm->segmap)));
+	off = st.st_size - roundup(sizeof(vm->segmap), kd->nbpg);
 	errno = 0;
 	if (lseek(kd->pmfd, (off_t)off, 0) == -1 && errno != 0 || 
 	    read(kd->pmfd, (char *)vm->segmap, sizeof(vm->segmap)) < 0) {
@@ -115,11 +137,11 @@ _kvm_initvtop(kd)
 	/*
 	 * Read PMEGs.
 	 */
-	off = st.st_size - ctob(btoc(sizeof(vm->pmeg)) +
-	    btoc(sizeof(vm->segmap)));
+	off = st.st_size - roundup(NPMEG * nptesg * sizeof(int), kd->nbpg) +
+	    ((sizeof(vm->segmap) + kd->nbpg - 1) >> pgshift);
 	errno = 0;
 	if (lseek(kd->pmfd, (off_t)off, 0) == -1 && errno != 0 || 
-	    read(kd->pmfd, (char *)vm->pmeg, sizeof(vm->pmeg)) < 0) {
+	    read(kd->pmfd, (char *)vm->pmeg, NPMEG * nptesg * sizeof(int)) < 0) {
 		_kvm_err(kd, kd->program, "cannot read PMEG table");
 		return (-1);
 	}
@@ -136,22 +158,44 @@ _kvm_initvtop(kd)
 	 * them is if we do a kvm_getprocs() on a dead kernel, which is
 	 * not too common.
 	 */
-	nlist[0].n_name = "_pmap_stod";
-	nlist[1].n_name = 0;
-	if (kvm_nlist(kd, nlist) != 0) {
-		_kvm_err(kd, kd->program, "pmap_stod: no such symbol");
+	nlist[0].n_name = "_cputyp";
+	nlist[1].n_name = "_pmap_stod";
+	nlist[2].n_name = 0;
+	(void)kvm_nlist(kd, nlist);
+	if (nlist[0].n_value == 0) {
+		_kvm_err(kd, kd->program, "cputyp: no such symbol");
 		return (-1);
 	}
 	if (kvm_read(kd, (u_long)nlist[0].n_value, 
-		     (char *)vm->pmap_stod, sizeof(vm->pmap_stod))
-	    != sizeof(vm->pmap_stod)) {
-		_kvm_err(kd, kd->program, "cannot read pmap_stod");
+	    (char *)&cputyp, sizeof(cputyp)) != sizeof(cputyp)) {
+		_kvm_err(kd, kd->program, "cannot read cputyp");
 		return (-1);
 	}
+
+	/*
+	 * a kernel compiled only for the sun4 will not contain the symbol
+	 * map_stod. Instead, we are happy to use the identity map
+	 * initialized earlier.
+	 * If we are not a sun4, the lack of this symbol is fatal.
+	 */
+	if (nlist[1].n_value != 0) {
+		if (kvm_read(kd, (u_long)nlist[1].n_value, 
+		    (char *)vm->pmap_stod, sizeof(vm->pmap_stod))
+		    != sizeof(vm->pmap_stod)) {
+			_kvm_err(kd, kd->program, "cannot read pmap_stod");
+			return (-1);
+		}
+	} else {
+		if (cputyp != CPU_SUN4) {
+			_kvm_err(kd, kd->program, "pmap_stod: no such symbol");
+			return (-1);
+		}
+	}
+
 	return (0);
 }
 
-#define VA_OFF(va) (va & (NBPG - 1))
+#define VA_OFF(va) (va & (kd->nbpg - 1))
 
 /*
  * Translate a user virtual address to a physical address.
@@ -167,6 +211,9 @@ _kvm_uvatop(kd, p, va, pa)
 	register int off, frame;
 	register struct vmspace *vms = p->p_vmspace;
 	struct usegmap *usp;
+
+	if (pgshift == 0)
+		getpgshift(kd);
 
 	if ((u_long)vms < KERNBASE) {
 		_kvm_err(kd, kd->program, "_kvm_uvatop: corrupt proc");
@@ -198,8 +245,8 @@ _kvm_uvatop(kd, p, va, pa)
 			frame = pte & PG_PFNUM;
 		else
 			frame = HWTOSW(kd->vmst->pmap_stod, pte & PG_PFNUM);
-		*pa = (frame << PGSHIFT) | off;		
-		return (NBPG - off);
+		*pa = (frame << pgshift) | off;		
+		return (kd->nbpg - off);
 	}
 invalid:
 	_kvm_err(kd, 0, "invalid address (%x)", va);
@@ -223,16 +270,19 @@ _kvm_kvatop(kd, va, pa)
 	register int pte;
 	register int off;
 
+	if (pgshift == 0)
+		getpgshift(kd);
+
 	if (va >= KERNBASE) {
 		vm = kd->vmst;
 		s = vm->segmap[VA_VSEG(va) - NUSEG];
-		pte = vm->pmeg[s][VA_VPG(va)];
+		pte = vm->pmeg[VA_VPG(va) + nptesg * s];
 		if ((pte & PG_V) != 0) {
 			off = VA_OFF(va);
 			*pa = (HWTOSW(vm->pmap_stod, pte & PG_PFNUM)
-			       << PGSHIFT) | off;
+			       << pgshift) | off;
 
-			return (NBPG - off);
+			return (kd->nbpg - off);
 		}
 	}
 	_kvm_err(kd, 0, "invalid address (%x)", va);
