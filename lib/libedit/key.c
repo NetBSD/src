@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.9 2000/11/11 22:18:57 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.10 2001/01/04 15:56:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.9 2000/11/11 22:18:57 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.10 2001/01/04 15:56:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -107,6 +107,8 @@ key_init(EditLine *el)
 {
 
 	el->el_key.buf = (char *) el_malloc(KEY_BUFSIZ);
+	if (el->el_key.buf == NULL)
+		return (-1);
 	el->el_key.map = NULL;
 	key_reset(el);
 	return (0);
@@ -459,6 +461,8 @@ node__get(int ch)
 	key_node_t *ptr;
 
 	ptr = (key_node_t *) el_malloc((size_t) sizeof(key_node_t));
+	if (ptr == NULL)
+		return NULL;
 	ptr->ch = ch;
 	ptr->type = XK_NOD;
 	ptr->val.str = NULL;
