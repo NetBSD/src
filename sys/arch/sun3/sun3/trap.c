@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: trap.c 1.37 92/12/20
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
- *	$Id: trap.c,v 1.26 1994/07/11 03:41:35 gwr Exp $
+ *	$Id: trap.c,v 1.27 1994/07/19 02:45:55 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -445,11 +445,13 @@ trap(type, code, v, frame)
 		}
 #endif
 		rv = vm_fault(map, va, ftype, FALSE);
-#if defined(DEBUG) || defined(PMAP_DEBUG)	/* XXX */
-		if (rv) {
+#ifdef	DEBUG
+		if (mmudebug && rv) {
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
+#ifdef	DDB
 			Debugger();
+#endif
 		}
 #endif
 #ifdef VMFAULT_TRACE
