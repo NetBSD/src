@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.2 1998/09/05 15:42:12 augustss Exp $
+$NetBSD: usbdevs,v 1.3 1998/09/05 15:45:34 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ $NetBSD: usbdevs,v 1.2 1998/09/05 15:42:12 augustss Exp $
  */
 
 vendor NEC		0x0409	NEC
-vendor KODAK		0x0409	Eastman Kodak
+vendor KODAK		0x040a	Eastman Kodak
 vendor NANAO		0x0440	Nanao
 vendor UNIXTAR		0x0451  Unixtar
 vendor GENIUS		0x0458	Genius
