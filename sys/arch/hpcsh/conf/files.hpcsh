@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.16 2002/01/29 18:44:25 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.17 2002/02/11 17:32:35 uch Exp $
 #
 maxpartitions 8
 
@@ -15,6 +15,7 @@ file	arch/hpcsh/hpcsh/clock.c
 file	arch/hpcsh/hpcsh/console.c
 file	arch/hpcsh/hpcsh/autoconf.c
 file	arch/hpcsh/hpcsh/bus_space.c
+#file	arch/hpcsh/hpcsh/bus_dma.c
 file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
 
 file	arch/hpc/hpc/kloader.c
@@ -93,11 +94,25 @@ attach	hd64461video at hd64461if
 file	arch/hpcsh/dev/hd64461/hd64461video.c	hd64461video	needs-flag
 file	dev/hpc/video_subr.c			hd64461video
 
-# network devices MII bus
-include	"dev/mii/files.mii"
+#
+# HD64465
+#
+define	hd64465if {}
+device	hd64465if: hd64465if
+attach	hd64465if at shb
+file	arch/hpcsh/dev/hd64465/hd64465.c	hd64465if
 
-#
-# Workstation Console
-#
+attach	com at hd64465if with hd64465uart
+file	arch/hpcsh/dev/hd64465/hd64465uart.c	hd64465uart
+
+device	hd64465pcmcia: pcmciabus
+attach	hd64465pcmcia at hd64465if
+file	arch/hpcsh/dev/hd64465/hd64465pcmcia.c	hd64465pcmcia
+
+#attach	ohci at hd64465if with hd64465ohci
+#file	arch/hpcsh/dev/hd64465/hd64465ohci.c	hd64465ohci
+
+include	"dev/mii/files.mii"
+include "dev/usb/files.usb"
 include	"dev/wscons/files.wscons"
 

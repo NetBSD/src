@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2002/02/01 17:52:55 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2002/02/11 17:32:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <sh3/tmureg.h>
 
 #include <machine/shbvar.h>
+#include <machine/debug.h>
 
 #include <hpcsh/hpcsh/clockvar.h>
 
@@ -139,6 +140,9 @@ clock_init()
 	DELAY_LOOP(10000000);
 	t0 = TMU_ELAPSED(0);
 	__cpuclock = (100000000 / t0) * RTC_CLOCK;
+#ifdef SH4
+	__cpuclock >>= 1;	/* two-issue */
+#endif
 	__cnt_delay = (RTC_CLOCK * 10) / t0;
 
 	/*
@@ -242,6 +246,7 @@ clockintr(void *arg) /* trap frame */
 	/* clear underflow status */
 	SHREG_TCR1 &= ~TCR_UNF;
 
+	__dbg_heart_beat(HEART_BEAT_WHITE);
 	hardclock(arg);
 
 	return (1);
