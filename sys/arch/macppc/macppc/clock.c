@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 1998/07/18 16:23:44 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 1998/07/24 14:40:40 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -48,8 +48,8 @@
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
  */
-static u_long ticks_per_sec = 3125000;
-static u_long ns_per_tick = 320;
+static u_long ticks_per_sec = 12500000;
+static u_long ns_per_tick = 80;
 static long ticks_per_intr;
 static volatile u_long lasttb;
 
@@ -169,6 +169,11 @@ decr_intr(frame)
 
 void
 cpu_initclocks()
+{
+}
+
+void
+calc_delayconst()
 {
 	int qhandle, phandle;
 	char name[32];
