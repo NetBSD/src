@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.80 2003/05/03 18:11:26 wiz Exp $	*/
+/*	$NetBSD: gus.c,v 1.81 2003/05/09 23:51:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.80 2003/05/03 18:11:26 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.81 2003/05/09 23:51:29 fvdl Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -960,6 +960,11 @@ gusattach(parent, self, aux)
 	if (sc->sc_playdrq != -1) {
 		sc->sc_play_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_playdrq);
+		if (isa_drq_alloc(sc->sc_ic, sc->sc_playdrq) != 0) {
+			printf("%s: can't reserve drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_playdrq);
+			return;
+		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
 		    sc->sc_play_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
@@ -970,6 +975,11 @@ gusattach(parent, self, aux)
 	if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_playdrq) {
 		sc->sc_req_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_recdrq);
+		if (isa_drq_alloc(sc->sc_ic, sc->sc_recdrq) != 0) {
+			printf("%s: can't reserve drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_recdrq);
+			return;
+		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
 		    sc->sc_req_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
