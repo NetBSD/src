@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace6.c,v 1.6 2001/01/12 18:53:20 itojun Exp $	*/
+/*	$NetBSD: mtrace6.c,v 1.7 2002/03/04 01:38:32 wiz Exp $	*/
 /*	$KAME: mtrace6.c,v 1.16 2000/12/04 06:45:34 itojun Exp $	*/
 
 /*
@@ -388,7 +388,7 @@ set_sockaddr(addrname, hints, sap)
 
 	ret_ga = getaddrinfo(addrname, NULL, hints, &res);
 	if (ret_ga)
-		errx(1, "getaddrinfo faild: %s", gai_strerror(ret_ga));
+		errx(1, "getaddrinfo failed: %s", gai_strerror(ret_ga));
 	if (!res->ai_addr)
 		errx(1, "getaddrinfo failed");
 	memcpy((void *)sap, (void *)res->ai_addr, res->ai_addr->sa_len);
