@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.27 1997/01/27 19:40:52 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.28 1997/01/27 20:51:20 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #include <machine/pte.h>
 #include <machine/mon.h>
 #include <machine/obio.h>
+
+#include <sun3/sun3/sunmon.h>
 
 static int  obio_match __P((struct device *, struct cfdata *, void *));
 static void obio_attach __P((struct device *, struct device *, void *));
@@ -278,7 +280,7 @@ make_required_mappings __P((void))
 			 * "high segment" and add it there. -gwr
 			 */
 			mon_printf("obio: no mapping for 0x%x\n", *rmp);
-			mon_panic("obio: Ancient PROM?\n");
+			sunmon_abort();
 		}
 		rmp++;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.58 1997/01/27 17:14:34 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.59 1997/01/27 20:50:42 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -120,9 +120,12 @@ high_segment_alloc(npages)
 {
 	vm_offset_t va, tmp;
 
-	if (npages == 0)
-		mon_panic("panic: request for high segment allocation of 0 pages");
-	if (high_segment_free_start == high_segment_free_end) return NULL;
+	if (npages == 0) {
+		mon_printf("high_segment_alloc: npages=0\n");
+		sunmon_abort();
+	}
+	if (high_segment_free_start == high_segment_free_end)
+		return NULL;
 
 	va = high_segment_free_start + (npages*NBPG);
 	if (va > high_segment_free_end) return NULL;
@@ -148,13 +151,15 @@ sun3_context_equiv __P((void))
 
 #ifdef	DIAGNOSTIC
 	/* Near the beginning of locore.s we set context zero. */
-	if (get_context() != 0)
-		mon_panic("sun3_context_equiv: not in context zero?\n");
+	if (get_context() != 0) {
+		mon_printf("sun3_context_equiv: not in context zero?\n");
+		sunmon_abort();
+	}
 	/* Note: PROM setcxsegmap function needs sfc=dfs=FC_CONTROL */
-	if (getsfc() != FC_CONTROL)
-		mon_panic("sun3_context_equiv: sfc != FC_CONTROL?\n");
-	if (getdfc() != FC_CONTROL)
-		mon_panic("sun3_context_equiv: dfc != FC_CONTROL?\n");
+	if ((getsfc() != FC_CONTROL) || (getdfc() != FC_CONTROL)) {
+		mon_printf("sun3_context_equiv: bad dfc or sfc\n");
+		sunmon_abort();
+	}
 #endif
 
 	for (x = 1; x < NCONTEXT; x++) {
@@ -404,8 +409,10 @@ _vm_init(kehp)
 	va = VM_MIN_KERNEL_ADDRESS;
 	while (va < virtual_avail) {
 		sme = get_segmap(va);
-		if (sme == SEGINV)
-			mon_panic("kernel text/data/bss not mapped\n");
+		if (sme == SEGINV) {
+			mon_printf("kernel text/data/bss not mapped\n");
+			sunmon_abort();
+		}
 		sun3_reserve_pmeg(sme);
 		va += NBSG;
 	}
@@ -540,12 +547,13 @@ _verify_hardware()
 	unsigned char machtype;
 	int cpu_match = 0;
 
-	if (idprom_init())
-		mon_panic("idprom_init failed\n");
+	idprom_init();
 
 	machtype = identity_prom.idp_machtype;
-	if ((machtype & CPU_ARCH_MASK) != SUN3_ARCH)
-		mon_panic("not a sun3?\n");
+	if ((machtype & CPU_ARCH_MASK) != SUN3_ARCH) {
+		mon_printf("not a sun3?\n");
+		sunmon_abort();
+	}
 
 	cpu_machine_id = machtype & SUN3_IMPL_MASK;
 	switch (cpu_machine_id) {
@@ -596,10 +604,13 @@ _verify_hardware()
 		break;
 
 	default:
-		mon_panic("unknown sun3 model\n");
+		mon_printf("unknown sun3 model\n");
+		sunmon_abort();
 	}
-	if (!cpu_match)
-		mon_panic("kernel not configured for the Sun 3 model\n");
+	if (!cpu_match) {
+		mon_printf("kernel not configured for the Sun 3 model\n");
+		sunmon_abort();
+	}
 }
 
 /*

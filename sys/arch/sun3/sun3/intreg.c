@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.7 1997/01/24 00:09:34 gwr Exp $	*/
+/*	$NetBSD: intreg.c,v 1.8 1997/01/27 20:50:38 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #include <machine/obio.h>
 #include <machine/machdep.h>
 
-#include "interreg.h"
+#include <sun3/sun3/interreg.h>
 
 
 struct intreg_softc {
@@ -80,8 +80,10 @@ void
 intreg_init()
 {
 	interrupt_reg = obio_find_mapping(OBIO_INTERREG, 1);
-	if (!interrupt_reg)
-		mon_panic("interrupt reg VA not found\n");
+	if (!interrupt_reg) {
+		mon_printf("intreg_init\n");
+		sunmon_abort();
+	}
 	/* Turn off all interrupts until clock_attach */
 	*interrupt_reg = 0;
 }

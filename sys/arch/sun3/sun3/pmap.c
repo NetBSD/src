@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 1997/01/27 17:23:31 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.67 1997/01/27 20:50:39 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -590,10 +590,14 @@ sun3_reserve_pmeg(sme)
 	/* Can not use pmeg_p() because it fails on SEGINV. */
 	pmegp = &pmeg_array[sme];
 
-	if (pmegp->pmeg_reserved)
-		mon_panic("sun3_reserve_pmeg: already reserved\n");
-	if (pmegp->pmeg_owner)
-		mon_panic("sun3_reserve_pmeg: already owned\n");
+	if (pmegp->pmeg_reserved) {
+		mon_printf("sun3_reserve_pmeg: already reserved\n");
+		sunmon_abort();
+	}
+	if (pmegp->pmeg_owner) {
+		mon_printf("sun3_reserve_pmeg: already owned\n");
+		sunmon_abort();
+	}
 
 	/* XXX - Owned by kernel, but not really usable... */
 	pmegp->pmeg_owner = kernel_pmap;
@@ -1401,8 +1405,10 @@ pv_init()
 	sz *= sizeof(struct pv_entry);
 
 	pv_head_table = (pv_entry_t) kmem_alloc(kernel_map, sz);
-	if (!pv_head_table)
-		mon_panic("pmap: kmem_alloc() of pv table failed");
+	if (!pv_head_table) {
+		mon_printf("pmap: kmem_alloc() of pv table failed\n");
+		sunmon_abort();
+	}
 	bzero((caddr_t) pv_head_table, sz);
 
 	pv_initialized++;
@@ -1464,8 +1470,10 @@ pmap_bootstrap()
 	temp_seg_va = virtual_avail;
 	virtual_avail += NBSG;
 #ifdef	DEBUG
-	if (temp_seg_va & SEGOFSET)
-		mon_panic("pmap_bootstrap: temp_seg_va");
+	if (temp_seg_va & SEGOFSET) {
+		mon_printf("pmap_bootstrap: temp_seg_va\n");
+		sunmon_abort();
+	}
 #endif
 
 	/* Initialization for pmap_next_page() */
