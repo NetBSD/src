@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.9 2002/09/13 22:44:58 manu Exp $ */
+/* $NetBSD: j720ssp.c,v 1.10 2002/09/18 19:54:47 manu Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,6 +74,8 @@
  *	@(#)pccons.c	5.11 (Berkeley) 5/21/91
  */
 
+#include "apm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -86,6 +88,7 @@
 #include <machine/bus.h>
 #include <machine/config_hook.h>
 #include <machine/bootinfo.h>
+#include <machine/apmvar.h>
 
 #include <hpcarm/dev/sed1356var.h>
 
@@ -127,26 +130,30 @@ struct j720ssp_softc {
 #define J720_SSP_STATUS_TP	1
 #define J720_SSP_STATUS_KBD	2
 
-void j720ssp_create_kthread(void *);
-void j720ssp_kthread(void *);
-int j720kbd_intr(void *);
-int j720tp_intr(void *);
-void j720kbd_poll(void *);
-int j720tp_poll(void *);
+void j720ssp_create_kthread __P((void *));
+void j720ssp_kthread __P((void *));
+int  j720kbd_intr __P((void *));
+int  j720tp_intr __P((void *));
+void j720kbd_poll __P((void *));
+int  j720tp_poll __P((void *));
 
-int j720lcdparam(void *, int, long, void *);
-static void j720kbd_read(struct j720ssp_softc *, char *);
-static int j720ssp_readwrite(struct j720ssp_softc *, int, int, int *, int);
+int  j720lcdparam __P((void *, int, long, void *));
+static void j720kbd_read __P((struct j720ssp_softc *, char *));
+static int  j720ssp_readwrite __P((struct j720ssp_softc *, int,
+	int, int *, int));
 
-int j720sspprobe(struct device *, struct cfdata *, void *);
-void j720sspattach(struct device *, struct device *, void *);
+int  j720sspprobe __P((struct device *, struct cfdata *, void *));
+void j720sspattach __P((struct device *, struct device *, void *));
 
-int j720kbd_submatch(struct device *, struct cfdata *, void *);
-int j720tp_submatch(struct device *, struct cfdata *, void *);
+int  j720kbd_submatch __P((struct device *, struct cfdata *, void *));
+int  j720tp_submatch __P((struct device *, struct cfdata *, void *));
+int  apm_submatch __P((struct device *, struct cfdata *, void *));
 
-int j720kbd_enable(void *, int);
-void j720kbd_set_leds(void *, int);
-int j720kbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int  j720kbd_enable __P((void *, int));
+void j720kbd_set_leds __P((void *, int));
+int  j720kbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+
+int  hpcarm_apm_getpower __P((struct apm_power_info *, void *));
 
 struct cfattach j720ssp_ca = {
 	sizeof(struct j720ssp_softc), j720sspprobe, j720sspattach,
@@ -158,9 +165,9 @@ const struct wskbd_accessops j720kbd_accessops = {
 	j720kbd_ioctl,
 };
 
-void j720kbd_cngetc(void *, u_int *, int *);
-void j720kbd_cnpollc(void *, int);
-void j720kbd_cnbell(void *, u_int, u_int, u_int);
+void j720kbd_cngetc __P((void *, u_int *, int *));
+void j720kbd_cnpollc __P((void *, int));
+void j720kbd_cnbell __P((void *, u_int, u_int, u_int));
 
 const struct wskbd_consops j720kbd_consops = {
 	j720kbd_cngetc,
@@ -177,9 +184,9 @@ const struct wskbd_mapdata j720kbd_keymapdata = {
 #endif
 };
 
-static int j720tp_enable(void *);
-static int j720tp_ioctl(void *, u_long, caddr_t, int, struct proc *);
-static void j720tp_disable(void *);
+static int  j720tp_enable __P((void *));
+static int  j720tp_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static void j720tp_disable __P((void *));
 
 const struct wsmouse_accessops j720tp_accessops = {
 	j720tp_enable,
@@ -205,20 +212,28 @@ extern int gettick();
 	(x) = ((((x) & 0xaa) >> 1) | (((x) & 0x55) << 1));	\
 	} while(0)
 
+
 int
-j720sspprobe(struct device *parent, struct cfdata *cf, void *aux)
+j720sspprobe(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
 	return (1);
 }
 
 void
-j720sspattach(struct device *parent, struct device *self, void *aux)
+j720sspattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
 {
 	struct j720ssp_softc *sc = (void *)self;
 	struct sa11x0_softc *psc = (void *)parent;
 	struct sa11x0_attach_args *sa = aux;
-	struct wskbddev_attach_args a;
-	struct wsmousedev_attach_args ma;
+	struct wskbddev_attach_args kbd_args;
+	struct wsmousedev_attach_args mouse_args;
+	struct apm_attach_args apm_args;
 
 	printf("\n");
 
@@ -237,17 +252,17 @@ j720sspattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_enabled = 0;
 
-	a.console = 0;
+	kbd_args.console = 0;
 
-	a.keymap = &j720kbd_keymapdata;
+	kbd_args.keymap = &j720kbd_keymapdata;
 
-	a.accessops = &j720kbd_accessops;
-	a.accesscookie = sc;
+	kbd_args.accessops = &j720kbd_accessops;
+	kbd_args.accesscookie = sc;
 
 	/* Do console initialization */
 	if (! (bootinfo->bi_cnuse & BI_CNUSE_SERIAL)) {
 		j720kbdcons_sc = *sc;
-		a.console = 1;
+		kbd_args.console = 1;
 
 		wskbd_cnattach(&j720kbd_consops, NULL, &j720kbd_keymapdata);
 		j720kbdcons_initstate = 1;
@@ -257,7 +272,7 @@ j720sspattach(struct device *parent, struct device *self, void *aux)
 	 * Attach the wskbd, saving a handle to it.
 	 * XXX XXX XXX
 	 */
-	sc->sc_wskbddev = config_found_sm(self, &a, wskbddevprint,
+	sc->sc_wskbddev = config_found_sm(self, &kbd_args, wskbddevprint,
 	    j720kbd_submatch);
 
 #ifdef DEBUG
@@ -269,11 +284,11 @@ j720sspattach(struct device *parent, struct device *self, void *aux)
 	if (j720kbdcons_initstate == 1)
 		j720kbd_enable(sc, 1);
 
-	ma.accessops = &j720tp_accessops;
-	ma.accesscookie = sc;
+	mouse_args.accessops = &j720tp_accessops;
+	mouse_args.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found_sm(self, &ma, wsmousedevprint,
-	    j720tp_submatch);
+	sc->sc_wsmousedev = config_found_sm(self, &mouse_args, 
+	    wsmousedevprint, j720tp_submatch);
 	tpcalib_init(&sc->sc_tpcalib);
 
 	/* XXX fill in "default" calibrate param */
@@ -308,6 +323,14 @@ j720sspattach(struct device *parent, struct device *self, void *aux)
 		    CONFIG_HOOK_SHARE, j720lcdparam, sc);
 	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_CONTRAST_MAX,
 		    CONFIG_HOOK_SHARE, j720lcdparam, sc);
+
+#if NAPM > 0
+	/* attach APM emulation */
+	apm_args.aaa_magic = APM_ATTACH_ARGS_MAGIC; /* magic number */
+	(void)config_found_sm(self, &apm_args, NULL, apm_submatch);
+#endif
+
+	return;
 }
 
 void
@@ -358,23 +381,42 @@ j720ssp_kthread(arg)
 
 
 int
-j720kbd_submatch(struct device *parant, struct cfdata *cf, void *aux) {
-
+j720kbd_submatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf; 
+	void *aux;
+{
 	if (strcmp(cf->cf_driver->cd_name, "wskbd") == 0)
 		return (1);
 	return (0);
 }
 
 int
-j720tp_submatch(struct device *parant, struct cfdata *cf, void *aux) {
-
+j720tp_submatch(parent, cf, aux)
+	struct device *parent; 
+	struct cfdata *cf;
+	void *aux;
+{
 	if (strcmp(cf->cf_driver->cd_name, "wsmouse") == 0)
 		return (1);
 	return (0);
 }
 
 int
-j720kbd_enable(void *v, int on)
+apm_submatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	if (strcmp(cf->cf_driver->cd_name, "apm") == 0)
+		return (1);
+	return (0);
+}
+
+int
+j720kbd_enable(v, on)
+	void *v;
+	int on;
 {
 	struct j720ssp_softc *sc = v;
 
@@ -388,7 +430,9 @@ j720kbd_enable(void *v, int on)
 }
 
 void
-j720kbd_set_leds(void *v, int on)
+j720kbd_set_leds(v, on)
+	void *v;
+	int on;
 {
 	/* XXX */
 	return;
@@ -412,7 +456,8 @@ j720kbd_ioctl(v, cmd, data, flag, p)
 }
 
 int
-j720kbd_intr(void *arg)
+j720kbd_intr(arg)
+	void *arg;
 {
 	struct j720ssp_softc *sc = arg;
 
@@ -428,7 +473,8 @@ j720kbd_intr(void *arg)
 }
 
 int
-j720tp_intr(void *arg)
+j720tp_intr(arg)
+	void *arg;
 {
 	struct j720ssp_softc *sc = arg;
 
@@ -445,7 +491,8 @@ j720tp_intr(void *arg)
 }
 
 void
-j720kbd_poll(void *arg)
+j720kbd_poll(arg)
+	void *arg;
 {
 	struct j720ssp_softc *sc = arg;
 	int s, type, value;
@@ -473,7 +520,9 @@ j720kbd_poll(void *arg)
 }
 
 void
-j720kbd_read(struct j720ssp_softc *sc, char *buf)
+j720kbd_read(sc, buf)
+	struct j720ssp_softc *sc;
+	char *buf;
 {
 	int data, count;
 #ifdef DEBUG
@@ -519,11 +568,14 @@ out:
 	bus_space_write_4(sc->sc_iot, sc->sc_ssph, SASSP_CR0, 0x307);
 	delay(100);
 	bus_space_write_4(sc->sc_iot, sc->sc_ssph, SASSP_CR0, 0x387);
-printf("j720kbd_read: error %x\n", data);
+
+	printf("j720kbd_read: error %x\n", data);
+	return;
 }
 
 int
-j720tp_poll(void *arg)
+j720tp_poll(arg)
+	void *arg;
 {
 	struct j720ssp_softc *sc = arg;
 	int buf[8], data, i, x, y;
@@ -589,7 +641,9 @@ out:
 }
 
 static int
-j720tp_enable(void *arg) {
+j720tp_enable(arg)
+	void *arg;
+{
 	struct j720ssp_softc *sc = arg;
 	int er, s;
 
@@ -603,7 +657,9 @@ j720tp_enable(void *arg) {
 }
 	
 static void
-j720tp_disable(void *arg) {
+j720tp_disable(arg)
+	void *arg;
+{
 	struct j720ssp_softc *sc = arg;
 	int er, s;
 
@@ -615,7 +671,13 @@ j720tp_disable(void *arg) {
 }
 
 static int
-j720tp_ioctl(void *arg, u_long cmd, caddr_t data, int flag, struct proc *p) {
+j720tp_ioctl(arg, cmd, data, flag, p)
+	void *arg;
+	u_long cmd;
+	caddr_t data; 
+	int flag; 
+	struct proc *p;
+{
 	struct j720ssp_softc *sc = arg;
 
 	switch (cmd) {
@@ -633,7 +695,11 @@ j720tp_ioctl(void *arg, u_long cmd, caddr_t data, int flag, struct proc *p) {
 }
 
 int
-j720lcdparam(void *ctx, int type, long id, void *msg)
+j720lcdparam(ctx, type, id, msg)
+	void *ctx; 
+	int type; 
+	long id; 
+	void *msg;
 {
 	struct j720ssp_softc *sc = ctx;
 	int i, s;
@@ -759,7 +825,7 @@ j720ssp_readwrite(sc, drainfifo, in, out, wait)
 
 #if 0
 int
-j720kbd_cnattach()
+j720kbd_cnattach(void)
 {
 	/* XXX defer initialization till j720sspattach */
 
@@ -769,7 +835,10 @@ j720kbd_cnattach()
 
 /* ARGSUSED */
 void
-j720kbd_cngetc(void *v, u_int *type, int *data)
+j720kbd_cngetc(v, type, data)
+	void *v;
+	u_int *type;
+	int *data;
 {
 	char buf[9];
 
@@ -790,7 +859,9 @@ j720kbd_cngetc(void *v, u_int *type, int *data)
 }
 
 void
-j720kbd_cnpollc(void *v, int on)
+j720kbd_cnpollc(v, on)
+	void *v;
+	int on;
 {
 #if 0
 	/* XXX */
@@ -801,12 +872,20 @@ j720kbd_cnpollc(void *v, int on)
 }
 
 void
-j720kbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
+j720kbd_cnbell(v, pitch, period, volume)
+	void *v; 
+	u_int pitch; 
+	u_int period;
+	u_int volume;
 {
 }
 
 int
-j720lcdpower(void *ctx, int type, long id, void *msg)
+j720lcdpower(ctx, type, id, msg)
+	void *ctx;
+	int type; 
+	long id; 
+	void *msg;
 {
 	struct sed1356_softc *sc = ctx;
 	struct sa11x0_softc *psc = sc->sc_parent;
@@ -861,4 +940,70 @@ j720lcdpower(void *ctx, int type, long id, void *msg)
 		bus_space_write_4(psc->sc_iot, psc->sc_ppch, SAPPC_PSR, reg);
 	}
 	return 1;
+}
+
+int
+hpcarm_apm_getpower(api, parent)
+	struct apm_power_info *api;
+	void *parent;
+{
+	int data, pmdata[3], i;
+	struct j720ssp_softc *sc = (struct j720ssp_softc *)parent;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_PCR, 0x2000000);
+
+	if (j720ssp_readwrite(sc, 1, 0x300, &data, 100) < 0 || data != 0x88)
+		goto out;
+
+	for (i = 0; i < 3; i++) {
+		if (j720ssp_readwrite(sc, 0, 0x8800, &pmdata[i], 500) < 0)
+			goto out;
+		BIT_INVERT(pmdata[i]);
+#if 0
+		printf("pmdata%d = %d ", i, pmdata[i]);
+#endif
+	}
+	printf("\n");
+
+	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_PSR, 0x2000000);
+
+	bzero(api, sizeof(struct apm_power_info));
+	api->ac_state = APM_AC_UNKNOWN;
+
+	/*
+	 * pmdata[0] is the main battery level
+	 * pmdata[1] is the backup battery level
+	 * pmdata[2] tells which battery is present
+	 */
+	switch(pmdata[2]) {
+	case 14: /* backup battery present */
+	case 2:  /* backup battery absent */
+		api->battery_state = APM_BATT_CHARGING;
+		api->minutes_left = (pmdata[0] * 840) / 170;
+		api->battery_life = (pmdata[0] * 100) / 170;
+		api->nbattery = 1;
+		break;
+	case 15: /* backup battery present */
+	case 3:  /* backup battery absent */
+		api->battery_state = APM_BATT_ABSENT;
+		api->battery_life = 0;
+		api->nbattery = 0;
+		break;
+	default:
+		api->battery_state = APM_BATT_UNKNOWN;
+		break;
+	}
+
+	return 0;
+
+out:
+	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_PSR, 0x2000000);
+
+	/* reset SSP */
+	bus_space_write_4(sc->sc_iot, sc->sc_ssph, SASSP_CR0, 0x307);
+	delay(100);
+	bus_space_write_4(sc->sc_iot, sc->sc_ssph, SASSP_CR0, 0x387);
+
+	printf("hpcarm_apm_getpower: error %x\n", data);
+	return EIO;
 }
