@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.3 2002/04/28 17:10:33 uch Exp $	*/
+/*	$NetBSD: cache.h,v 1.4 2002/05/09 12:30:45 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,11 +111,6 @@
 #define	_SH3_CACHE_H_
 
 #ifdef _KERNEL
-#define	COMPAT_OLD_CACHE_FLUSH //XXX
-#ifdef COMPAT_OLD_CACHE_FLUSH
-#define	cacheflush()	sh_dcache_wbinv_all()
-#endif /* COMPAT_OLD_CACHE_FLUSH */
-
 struct sh_cache_ops {
 	void (*_icache_sync_all)(void);
 	void (*_icache_sync_range)(vaddr_t, vsize_t);
@@ -179,6 +174,20 @@ extern struct sh_cache_ops sh_cache_ops;
 
 void sh_cache_init(void);
 void sh_cache_information(void);
+
+#if defined(SH3) && defined(SH4)
+#define	SH_HAS_VIRTUAL_ALIAS	CPU_IS_SH4
+#define	SH_HAS_UNIFIED_CACHE	CPU_IS_SH3
+#define	SH_HAS_WRITEBACK_CACHE	(!sh_cache_write_through)
+#elif defined(SH3)
+#define	SH_HAS_VIRTUAL_ALIAS	0
+#define	SH_HAS_UNIFIED_CACHE	1
+#define	SH_HAS_WRITEBACK_CACHE	(!sh_cache_write_through)
+#elif defined(SH4)
+#define	SH_HAS_VIRTUAL_ALIAS	1
+#define	SH_HAS_UNIFIED_CACHE	0
+#define	SH_HAS_WRITEBACK_CACHE	(!sh_cache_write_through)
+#endif
 
 #endif /* _KERNEL */
 #endif /* _SH3_CACHE_H_ */
