@@ -1,4 +1,4 @@
-/*	$NetBSD: lca.c,v 1.10 1996/10/13 03:00:07 christos Exp $	*/
+/*	$NetBSD: lca.c,v 1.11 1996/10/23 04:12:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -94,8 +94,8 @@ lca_init(lcp)
 	 * Can't set up SGMAP data here; can be called before malloc().
 	 */
 
-	apecs_lca_bus_io_init(&lcp->lc_bc, lcp);
-	apecs_lca_bus_mem_init(&lcp->lc_bc, lcp);
+	lcp->lc_iot = apecs_lca_bus_io_init(lcp);
+	lcp->lc_memt = apecs_lca_bus_mem_init(lcp);
 	lca_pci_init(&lcp->lc_pc, lcp);
 
 	/*
@@ -127,6 +127,13 @@ lca_init(lcp)
 /*	REGVAL(LCA_IOC_W_BASE0) = 0;
 	REGVAL(LCA_IOC_W_BASE1) = 0; */
 	alpha_mb();
+
+	/* XXX XXX BEGIN XXX XXX */
+	{							/* XXX */
+		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
+		alpha_XXX_dmamap_or = 0x40000000;		/* XXX */
+	}							/* XXX */
+	/* XXX XXX END XXX XXX */
 }
 
 #ifdef notdef
@@ -192,7 +199,8 @@ lcaattach(parent, self, aux)
 	}
 
 	pba.pba_busname = "pci";
-	pba.pba_bc = &lcp->lc_bc;
+	pba.pba_iot = lcp->lc_iot;
+	pba.pba_memt = lcp->lc_memt;
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0;
 	config_found(self, &pba, lcaprint);

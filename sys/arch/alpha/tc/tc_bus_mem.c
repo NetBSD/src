@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_bus_mem.c,v 1.8 1996/10/22 21:34:19 cgd Exp $	*/
+/*	$NetBSD: tc_bus_mem.c,v 1.9 1996/10/23 04:12:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -338,7 +338,7 @@ __abs_c(tc_mem_read_multi_,BYTES)(v, h, o, a, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		tc_mem_barrier(v, h, o, sizeof(*a), BUS_BARRIER_READ);	\
+		tc_mem_barrier(v, h, o, sizeof *a, BUS_BARRIER_READ);	\
 		*a++ = __abs_c(tc_mem_read_,BYTES)(v, h, o);		\
 	}								\
 }
@@ -358,7 +358,7 @@ __abs_c(tc_mem_read_region_,BYTES)(v, h, o, a, c)			\
 									\
 	while (c-- > 0) {						\
 		*a++ = __abs_c(tc_mem_read_,BYTES)(v, h, o);		\
-		o += sizeof(*a);					\
+		o += sizeof *a;						\
 	}								\
 }
 tc_mem_read_region_N(1,u_int8_t)
@@ -471,7 +471,7 @@ __abs_c(tc_mem_write_multi_,BYTES)(v, h, o, a, c)			\
 									\
 	while (c-- > 0) {						\
 		__abs_c(tc_mem_write_,BYTES)(v, h, o, *a++);		\
-		tc_mem_barrier(v, h, o, sizeof(*a), BUS_BARRIER_WRITE);	\
+		tc_mem_barrier(v, h, o, sizeof *a, BUS_BARRIER_WRITE);	\
 	}								\
 }
 tc_mem_write_multi_N(1,u_int8_t)
@@ -489,9 +489,8 @@ __abs_c(tc_mem_write_region_,BYTES)(v, h, o, a, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		__abs_c(tc_mem_write_,BYTES)(v, h, o, *a);		\
-		o += sizeof(*a);					\
-		a++;							\
+		__abs_c(tc_mem_write_,BYTES)(v, h, o, *a++);		\
+		o += sizeof *a;						\
 	}								\
 }
 tc_mem_write_region_N(1,u_int8_t)

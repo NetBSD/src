@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs.c,v 1.12 1996/10/13 03:00:00 christos Exp $	*/
+/*	$NetBSD: apecs.c,v 1.13 1996/10/23 04:12:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -101,8 +101,8 @@ apecs_init(acp)
 	 * Can't set up SGMAP data here; can be called before malloc().
 	 */
 
-	apecs_lca_bus_io_init(&acp->ac_bc, acp);
-	apecs_lca_bus_mem_init(&acp->ac_bc, acp);
+	acp->ac_iot = apecs_lca_bus_io_init(acp);
+	acp->ac_memt = apecs_lca_bus_mem_init(acp);
 	apecs_pci_init(&acp->ac_pc, acp);
 
 	/* Turn off DMA window enables in PCI Base Reg 1. */
@@ -110,6 +110,13 @@ apecs_init(acp)
 	alpha_mb();
 
 	/* XXX SGMAP? */
+
+	/* XXX XXX BEGIN XXX XXX */
+	{							/* XXX */
+		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
+		alpha_XXX_dmamap_or = 0x40000000;		/* XXX */
+	}							/* XXX */
+	/* XXX XXX END XXX XXX */
 }
 
 void
@@ -155,7 +162,8 @@ apecsattach(parent, self, aux)
 	}
 
 	pba.pba_busname = "pci";
-	pba.pba_bc = &acp->ac_bc;
+	pba.pba_iot = acp->ac_iot;
+	pba.pba_memt = acp->ac_memt;
 	pba.pba_pc = &acp->ac_pc;
 	pba.pba_bus = 0;
 	config_found(self, &pba, apecsprint);
