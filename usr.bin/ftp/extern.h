@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.19 1998/01/18 14:23:34 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.20 1998/06/04 08:28:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -44,7 +44,7 @@ void    abortsend __P((int));
 void	account __P((int, char **));
 void	alarmtimer __P((int));
 int	another __P((int *, char ***, const char *));
-int	auto_fetch __P((int, char **));
+int	auto_fetch __P((int, char **, char *));
 void	blkfree __P((char **));
 void	cd __P((int, char **));
 void	cdup __P((int, char **));
@@ -67,6 +67,7 @@ char   *domap __P((char *));
 void	doproxy __P((int, char **));
 char   *dotrans __P((char *));
 int     empty __P((struct fd_set *, int));
+int	foregroundproc __P((void));
 void	get __P((int, char **));
 struct cmd *getcmd __P((const char *));
 int	getit __P((int, char **, int, const char *));
