@@ -48,7 +48,8 @@
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
 
-#define MACHINE "ns532"
+#define MACHINE 	"pc532"
+#define MACHINE_ARCH	"ns32k"
 #define MID_MACHINE	MID_NS32532
 
 /*
