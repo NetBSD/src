@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.12 1996/08/27 21:55:00 cgd Exp $	*/
+/*	$NetBSD: gvpbus.c,v 1.13 1996/10/10 23:55:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -90,7 +90,7 @@ gvpbusattach(pdp, dp, auxp)
 		ga.prod = *((u_char *)zap->va + 0x8001) & 0xf8;
 		if (*((u_char *)zap->va + 0x8001) & 0x01)
 			ga.flags |= GVP_14MHZ;
-	printf(": subprod %02x flags %02x", *((u_char *)zap->va + 0x8001), ga.flags);
+	kprintf(": subprod %02x flags %02x", *((u_char *)zap->va + 0x8001), ga.flags);
 #if 0
 	} else {
 		ga.prod = GVP_SERIESII;		/* really a series I */
@@ -138,9 +138,9 @@ gvpbusattach(pdp, dp, auxp)
 		ga.flags |= GVP_IO;
 		break;
 	default:
-		printf(": unknown Series II %x", ga.prod);
+		kprintf(": unknown Series II %x", ga.prod);
 	}
-	printf("\n");
+	kprintf("\n");
 	/*
 	 * attempt to configure the board.
 	 */
@@ -165,9 +165,9 @@ gvpbusprint(auxp, pnp)
 	 * doesn't support io yet.
 	 */
 	if (gap->prod == GVP_IOEXTEND) 
-		printf("gio at %s", pnp);
+		kprintf("gio at %s", pnp);
 	else
-		printf("gtsc at %s", pnp);
+		kprintf("gtsc at %s", pnp);
 	return(UNCONF);
 }
 

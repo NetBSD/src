@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.19 1996/09/28 03:37:36 mycroft Exp $	*/
+/*	$NetBSD: esp.c,v 1.20 1996/10/10 23:51:30 christos Exp $	*/
 
 #ifdef __sparc__
 #define	SPARC_DRIVER
@@ -205,12 +205,12 @@ espattach(parent, self, aux)
 	 * necessary, but it seem to be in all of Torek's code.
 	 */
 	if (ca->ca_ra.ra_nintr != 1) {
-		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
+		kprintf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
 		return;
 	}
 
 	sc->sc_pri = ca->ca_ra.ra_intr[0].int_pri;
-	printf(" pri %d", sc->sc_pri);
+	kprintf(" pri %d", sc->sc_pri);
 
 	/*
 	 * Map my registers in, if they aren't already in virtual
@@ -227,7 +227,7 @@ espattach(parent, self, aux)
 	sc->sc_cookie = tcdsdev->tcdsda_cookie;
 	sc->sc_dma = tcdsdev->tcdsda_sc;
 
-	printf(": address %x", sc->sc_reg);
+	kprintf(": address %x", sc->sc_reg);
 	tcds_intr_establish(parent, sc->sc_cookie, TC_IPL_BIO,
 	    (int (*)(void *))espintr, sc);
 #endif
@@ -301,7 +301,7 @@ espattach(parent, self, aux)
 	ESP_WRITE_REG(sc, ESP_CFG2, sc->sc_cfg2);
 
 	if ((ESP_READ_REG(sc, ESP_CFG2) & ~ESPCFG2_RSVD) != (ESPCFG2_SCSI2 | ESPCFG2_RPE)) {
-		printf(": ESP100");
+		kprintf(": ESP100");
 		sc->sc_rev = ESP100;
 	} else {
 		sc->sc_cfg2 = ESPCFG2_SCSI2;
@@ -311,21 +311,21 @@ espattach(parent, self, aux)
 		sc->sc_cfg3 = (ESPCFG3_CDB | ESPCFG3_FCLK);
 		ESP_WRITE_REG(sc, ESP_CFG3, sc->sc_cfg3);
 		if (ESP_READ_REG(sc, ESP_CFG3) != (ESPCFG3_CDB | ESPCFG3_FCLK)) {
-			printf(": ESP100A");
+			kprintf(": ESP100A");
 			sc->sc_rev = ESP100A;
 		} else {
 			/* ESPCFG2_FE enables > 64K transfers */
 			sc->sc_cfg2 |= ESPCFG2_FE;
 			sc->sc_cfg3 = 0;
 			ESP_WRITE_REG(sc, ESP_CFG3, sc->sc_cfg3);
-			printf(": ESP200");
+			kprintf(": ESP200");
 			sc->sc_rev = ESP200;
 		}
 	}
 #else
 	sc->sc_cfg2 = ESPCFG2_SCSI2;
 	sc->sc_cfg3 = 0x4;		/* Save residual byte. XXX??? */
-	printf(": NCR53C94");
+	kprintf(": NCR53C94");
 	sc->sc_rev = NCR53C94;
 #endif
 
@@ -389,7 +389,7 @@ espattach(parent, self, aux)
 	sc->sc_state = 0;
 	esp_init(sc, 1);
 
-	printf(" %dMhz, target %d\n", sc->sc_freq, sc->sc_id);
+	kprintf(" %dMhz, target %d\n", sc->sc_freq, sc->sc_id);
 
 #ifdef SPARC_DRIVER
 	/* add me to the sbus structures */
@@ -490,7 +490,7 @@ esp_reset(sc)
 		ESP_WRITE_REG(sc, ESP_TIMEOUT, sc->sc_timeout);
 		break;
 	default:
-		printf("%s: unknown revision code, assuming ESP100\n",
+		kprintf("%s: unknown revision code, assuming ESP100\n",
 		    sc->sc_dev.dv_xname);
 		ESP_WRITE_REG(sc, ESP_CFG1, sc->sc_cfg1);
 		ESP_WRITE_REG(sc, ESP_CCF, sc->sc_ccf);
@@ -515,7 +515,7 @@ esp_scsi_reset(sc)
 	 */
 #endif
 
-	printf("esp: resetting SCSI bus\n");
+	kprintf("esp: resetting SCSI bus\n");
 	ESPCMD(sc, ESPCMD_RSTSCSI);
 }
 
@@ -977,11 +977,11 @@ esp_done(sc, ecb)
 #ifdef ESP_DEBUG
 	if (esp_debug & ESP_SHOWMISC) {
 		if (xs->resid != 0)
-			printf("resid=%d ", xs->resid);
+			kprintf("resid=%d ", xs->resid);
 		if (xs->error == XS_SENSE)
-			printf("sense=0x%02x\n", xs->sense.error_code);
+			kprintf("sense=0x%02x\n", xs->sense.error_code);
 		else
-			printf("error=%d\n", xs->error);
+			kprintf("error=%d\n", xs->error);
 	}
 #endif
 
@@ -1049,7 +1049,7 @@ esp_reselect(sc, message)
 	 */
 	selid = sc->sc_selid & ~(1 << sc->sc_id);
 	if (selid & (selid - 1)) {
-		printf("%s: reselect with invalid selid %02x; sending DEVICE RESET\n",
+		kprintf("%s: reselect with invalid selid %02x; sending DEVICE RESET\n",
 		    sc->sc_dev.dv_xname, selid);
 		goto reset;
 	}
@@ -1069,7 +1069,7 @@ esp_reselect(sc, message)
 			break;
 	}
 	if (ecb == NULL) {
-		printf("%s: reselect from target %d lun %d with no nexus; sending ABORT\n",
+		kprintf("%s: reselect from target %d lun %d with no nexus; sending ABORT\n",
 		    sc->sc_dev.dv_xname, target, lun);
 		goto abort;
 	}
@@ -1121,7 +1121,7 @@ esp_msgin(sc)
 	ESP_TRACE(("[esp_msgin(curmsglen:%d)] ", sc->sc_imlen));
 
 	if ((ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) == 0) {
-		printf("%s: msgin: no msg byte available\n",
+		kprintf("%s: msgin: no msg byte available\n",
 			sc->sc_dev.dv_xname);
 		return;
 	}
@@ -1160,7 +1160,7 @@ esp_msgin(sc)
 
 	if ((sc->sc_flags & ESP_DROP_MSGI)) {
 		ESPCMD(sc, ESPCMD_MSGOK);
-		printf("<dropping msg byte %x>",
+		kprintf("<dropping msg byte %x>",
 			sc->sc_imess[sc->sc_imlen]);
 		return;
 	}
@@ -1209,7 +1209,7 @@ gotit:
 			ESP_MSGS(("cmdcomplete "));
 			if (sc->sc_dleft < 0) {
 				struct scsi_link *sc_link = ecb->xs->sc_link;
-				printf("%s: %d extra bytes from %d:%d\n",
+				kprintf("%s: %d extra bytes from %d:%d\n",
 				    sc->sc_dev.dv_xname, -sc->sc_dleft,
 				    sc_link->target, sc_link->lun);
 				sc->sc_dleft = 0;
@@ -1220,7 +1220,7 @@ gotit:
 
 		case MSG_MESSAGE_REJECT:
 			if (esp_debug & ESP_SHOWMSGS)
-				printf("%s: our msg rejected by target\n",
+				kprintf("%s: our msg rejected by target\n",
 				    sc->sc_dev.dv_xname);
 			switch (sc->sc_msgout) {
 			case SEND_SDTR:
@@ -1271,7 +1271,7 @@ gotit:
 				if (sc->sc_minsync == 0 ||
 				    ti->offset == 0 ||
 				    ti->period > 124) {
-					printf("%s:%d: async\n", "esp",
+					kprintf("%s:%d: async\n", "esp",
 						ecb->xs->sc_link->target);
 					if ((sc->sc_flags&ESP_SYNCHNEGO) == 0) {
 						/* target initiated negotiation */
@@ -1291,7 +1291,7 @@ gotit:
 					ti->period = esp_cpb2stp(sc, p);
 #ifdef ESP_DEBUG
 					sc_print_addr(ecb->xs->sc_link);
-					printf("max sync rate %d.%02dMb/s\n",
+					kprintf("max sync rate %d.%02dMb/s\n",
 						r, s);
 #endif
 					if ((sc->sc_flags&ESP_SYNCHNEGO) == 0) {
@@ -1312,7 +1312,7 @@ gotit:
 				break;
 
 			default:
-				printf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
+				kprintf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
 				    sc->sc_dev.dv_xname);
 				goto reject;
 			}
@@ -1320,7 +1320,7 @@ gotit:
 
 		default:
 			ESP_MSGS(("ident "));
-			printf("%s: unrecognized MESSAGE; sending REJECT\n",
+			kprintf("%s: unrecognized MESSAGE; sending REJECT\n",
 			    sc->sc_dev.dv_xname);
 		reject:
 			esp_sched_msgout(SEND_REJECT);
@@ -1330,7 +1330,7 @@ gotit:
 
 	case ESP_RESELECTED:
 		if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
-			printf("%s: reselect without IDENTIFY; sending DEVICE RESET\n",
+			kprintf("%s: reselect without IDENTIFY; sending DEVICE RESET\n",
 			    sc->sc_dev.dv_xname);
 			goto reset;
 		}
@@ -1339,7 +1339,7 @@ gotit:
 		break;
 
 	default:
-		printf("%s: unexpected MESSAGE IN; sending DEVICE RESET\n",
+		kprintf("%s: unexpected MESSAGE IN; sending DEVICE RESET\n",
 		    sc->sc_dev.dv_xname);
 	reset:
 		esp_sched_msgout(SEND_DEV_RESET);
@@ -1385,7 +1385,7 @@ esp_msgout(sc)
 			esp_sched_msgout(sc->sc_msgoutq);
 			goto new;
 		} else {
-			printf("esp at line %d: unexpected MESSAGE OUT phase\n", __LINE__);
+			kprintf("esp at line %d: unexpected MESSAGE OUT phase\n", __LINE__);
 		}
 	}
 			
@@ -1412,7 +1412,7 @@ esp_msgout(sc)
 			break;
 		case SEND_IDENTIFY:
 			if (sc->sc_state != ESP_CONNECTED) {
-				printf("esp at line %d: no nexus\n", __LINE__);
+				kprintf("esp at line %d: no nexus\n", __LINE__);
 			}
 			ecb = sc->sc_nexus;
 			sc->sc_omess[0] = MSG_IDENTIFY(ecb->xs->sc_link->lun,0);
@@ -1494,7 +1494,7 @@ espintr(sc)
 
 	/*
 	 * I have made some (maybe seriously flawed) assumptions here,
-	 * but basic testing (uncomment the printf() below), show that
+	 * but basic testing (uncomment the kprintf() below), show that
 	 * certainly something happens when this loop is here.
 	 *
 	 * The idea is that many of the SCSI operations take very little
@@ -1517,7 +1517,7 @@ espintr(sc)
 			return (loop != 0);
 #if 0
 		if (loop)
-			printf("*");
+			kprintf("*");
 #endif
 
 		/* and what do the registers say... */
@@ -1549,13 +1549,13 @@ espintr(sc)
 				DELAY(1);
 			}
 			if (sc->sc_state != ESP_SBR) {
-				printf("%s: SCSI bus reset\n",
+				kprintf("%s: SCSI bus reset\n",
 					sc->sc_dev.dv_xname);
 				esp_init(sc, 0); /* Restart everything */
 				return 1;
 			}
 #if 0
-	/*XXX*/		printf("<expected bus reset: "
+	/*XXX*/		kprintf("<expected bus reset: "
 				"[intr %x, stat %x, step %d]>\n",
 				sc->sc_espintr, sc->sc_espstat,
 				sc->sc_espstep);
@@ -1588,7 +1588,7 @@ espintr(sc)
 
 			if (sc->sc_espintr & ESPINTR_ILL) {
 				/* illegal command, out of sync ? */
-				printf("%s: illegal command: 0x%x (state %d, phase %x, prevphase %x)\n",
+				kprintf("%s: illegal command: 0x%x (state %d, phase %x, prevphase %x)\n",
 					sc->sc_dev.dv_xname, sc->sc_lastcmd,
 					sc->sc_state, sc->sc_phase,
 					sc->sc_prevphase);
@@ -1616,7 +1616,7 @@ espintr(sc)
 
 			if (sc->sc_dleft == 0 &&
 			    (sc->sc_espstat & ESPSTAT_TC) == 0)
-				printf("%s: !TC [intr %x, stat %x, step %d]"
+				kprintf("%s: !TC [intr %x, stat %x, step %d]"
 				       " prevphase %x, resid %x\n",
 					sc->sc_dev.dv_xname,
 					sc->sc_espintr,
@@ -1628,7 +1628,7 @@ espintr(sc)
 
 #if 0	/* Unreliable on some ESP revisions? */
 		if ((sc->sc_espstat & ESPSTAT_INT) == 0) {
-			printf("%s: spurious interrupt\n", sc->sc_dev.dv_xname);
+			kprintf("%s: spurious interrupt\n", sc->sc_dev.dv_xname);
 			return 1;
 		}
 #endif
@@ -1637,7 +1637,7 @@ espintr(sc)
 		 * check for less serious errors
 		 */
 		if (sc->sc_espstat & ESPSTAT_PE) {
-			printf("%s: SCSI bus parity error\n",
+			kprintf("%s: SCSI bus parity error\n",
 				sc->sc_dev.dv_xname);
 			if (sc->sc_prevphase == MESSAGE_IN_PHASE)
 				esp_sched_msgout(SEND_PARITY_ERROR);
@@ -1670,7 +1670,7 @@ espintr(sc)
 #ifdef ESP_DEBUG
 					if (ecb)
 						sc_print_addr(ecb->xs->sc_link);
-					printf("sync nego not completed!\n");
+					kprintf("sync nego not completed!\n");
 #endif
 					ti = &sc->sc_tinfo[ecb->xs->sc_link->target];
 					sc->sc_flags &= ~ESP_SYNCHNEGO;
@@ -1688,13 +1688,13 @@ espintr(sc)
 					 * disconnecting, and this is necessary
 					 * to clean up their state.
 					 */     
-					printf("%s: unexpected disconnect; ",
+					kprintf("%s: unexpected disconnect; ",
 					    sc->sc_dev.dv_xname);
 					if (ecb->flags & ECB_SENSE) {
-						printf("resetting\n");
+						kprintf("resetting\n");
 						goto reset;
 					}
-					printf("sending REQUEST SENSE\n");
+					kprintf("sending REQUEST SENSE\n");
 					esp_sense(sc, ecb);
 					goto out;
 				}
@@ -1715,7 +1715,7 @@ espintr(sc)
 		switch (sc->sc_state) {
 
 		case ESP_SBR:
-			printf("%s: waiting for SCSI Bus Reset to happen\n",
+			kprintf("%s: waiting for SCSI Bus Reset to happen\n",
 				sc->sc_dev.dv_xname);
 			return 1;
 
@@ -1724,17 +1724,17 @@ espintr(sc)
 			 * we must be continuing a message ?
 			 */
 			if (sc->sc_phase != MESSAGE_IN_PHASE) {
-				printf("%s: target didn't identify\n",
+				kprintf("%s: target didn't identify\n",
 					sc->sc_dev.dv_xname);
 				esp_init(sc, 1);
 				return 1;
 			}
-printf("<<RESELECT CONT'd>>");
+kprintf("<<RESELECT CONT'd>>");
 #if XXXX
 			esp_msgin(sc);
 			if (sc->sc_state != ESP_CONNECTED) {
 				/* IDENTIFY fail?! */
-				printf("%s: identify failed\n",
+				kprintf("%s: identify failed\n",
 					sc->sc_dev.dv_xname);
 				esp_init(sc, 1);
 				return 1;
@@ -1743,7 +1743,7 @@ printf("<<RESELECT CONT'd>>");
 			break;
 
 		case ESP_IDLE:
-if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
+if (sc->sc_flags & ESP_ICCS) kprintf("[[esp: BUMMER]]");
 		case ESP_SELECTING:
 			sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
 			sc->sc_flags = 0;
@@ -1768,13 +1768,13 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 					 * Things are seriously fucked up.
 					 * Pull the brakes, i.e. reset
 					 */
-					printf("%s: target didn't identify\n",
+					kprintf("%s: target didn't identify\n",
 						sc->sc_dev.dv_xname);
 					esp_init(sc, 1);
 					return 1;
 				}
 				if ((ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) != 2) {
-					printf("%s: RESELECT: %d bytes in FIFO!\n",
+					kprintf("%s: RESELECT: %d bytes in FIFO!\n",
 						sc->sc_dev.dv_xname,
 						ESP_READ_REG(sc, ESP_FFLAG) &
 						ESPFIFO_FF);
@@ -1786,7 +1786,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 				esp_msgin(sc);	/* Handle identify message */
 				if (sc->sc_state != ESP_CONNECTED) {
 					/* IDENTIFY fail?! */
-					printf("%s: identify failed\n",
+					kprintf("%s: identify failed\n",
 						sc->sc_dev.dv_xname);
 					esp_init(sc, 1);
 					return 1;
@@ -1805,18 +1805,18 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 
 				switch (sc->sc_espstep) {
 				case 0:
-					printf("%s: select timeout/no disconnect\n",
+					kprintf("%s: select timeout/no disconnect\n",
 						sc->sc_dev.dv_xname);
 					ecb->xs->error = XS_SELTIMEOUT;
 					goto finish;
 				case 1:
 					if ((ti->flags & T_NEGOTIATE) == 0) {
-						printf("%s: step 1 & !NEG\n",
+						kprintf("%s: step 1 & !NEG\n",
 							sc->sc_dev.dv_xname);
 						goto reset;
 					}
 					if (sc->sc_phase != MESSAGE_OUT_PHASE) {
-						printf("%s: !MSGOUT\n",
+						kprintf("%s: !MSGOUT\n",
 							sc->sc_dev.dv_xname);
 						goto reset;
 					}
@@ -1840,7 +1840,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 						/* Hope for the best.. */
 						break;
 					}
-					printf("(%s:%d:%d): selection failed;"
+					kprintf("(%s:%d:%d): selection failed;"
 						" %d left in FIFO "
 						"[intr %x, stat %x, step %d]\n",
 						sc->sc_dev.dv_xname,
@@ -1884,7 +1884,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 				sc->sc_state = ESP_CONNECTED;
 				break;
 			} else {
-				printf("%s: unexpected status after select"
+				kprintf("%s: unexpected status after select"
 					": [intr %x, stat %x, step %x]\n",
 					sc->sc_dev.dv_xname,
 					sc->sc_espintr, sc->sc_espstat,
@@ -1894,7 +1894,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 				goto reset;
 			}
 			if (sc->sc_state == ESP_IDLE) {
-				printf("%s: stray interrupt\n", sc->sc_dev.dv_xname);
+				kprintf("%s: stray interrupt\n", sc->sc_dev.dv_xname);
 					return 0;
 			}
 			break;
@@ -1906,7 +1906,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 				sc->sc_flags &= ~ESP_ICCS;
 
 				if (!(sc->sc_espintr & ESPINTR_DONE)) {
-					printf("%s: ICCS: "
+					kprintf("%s: ICCS: "
 					      ": [intr %x, stat %x, step %x]\n",
 						sc->sc_dev.dv_xname,
 						sc->sc_espintr, sc->sc_espstat,
@@ -1924,7 +1924,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 					ecb->xs->resid = ecb->dleft = sc->sc_dleft;
 					sc->sc_state = ESP_CMDCOMPLETE;
 				} else
-					printf("%s: STATUS_PHASE: msg %d\n",
+					kprintf("%s: STATUS_PHASE: msg %d\n",
 						sc->sc_dev.dv_xname, msg);
 				ESPCMD(sc, ESPCMD_MSGOK);
 				continue; /* ie. wait for disconnect */
@@ -1958,7 +1958,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 				ESPCMD(sc, ESPCMD_TRANS);
 			} else if (sc->sc_espintr & ESPINTR_FC) {
 				if ((sc->sc_flags & ESP_WAITI) == 0) {
-					printf("%s: MSGIN: unexpected FC bit: "
+					kprintf("%s: MSGIN: unexpected FC bit: "
 						"[intr %x, stat %x, step %x]\n",
 					sc->sc_dev.dv_xname,
 					sc->sc_espintr, sc->sc_espstat,
@@ -1967,7 +1967,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 				sc->sc_flags &= ~ESP_WAITI;
 				esp_msgin(sc);
 			} else {
-				printf("%s: MSGIN: weird bits: "
+				kprintf("%s: MSGIN: weird bits: "
 					"[intr %x, stat %x, step %x]\n",
 					sc->sc_dev.dv_xname,
 					sc->sc_espintr, sc->sc_espstat,
@@ -2039,7 +2039,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 		case INVALID_PHASE:
 			break;
 		default:
-			printf("%s: unexpected bus phase; resetting\n",
+			kprintf("%s: unexpected bus phase; resetting\n",
 			    sc->sc_dev.dv_xname);
 			goto reset;
 		}
@@ -2100,7 +2100,7 @@ esp_timeout(arg)
 	int s;
 
 	sc_print_addr(sc_link);
-	printf("%s: timed out [ecb %p (flags 0x%x, dleft %x, stat %x)], "
+	kprintf("%s: timed out [ecb %p (flags 0x%x, dleft %x, stat %x)], "
 	       "<state %d, nexus %p, phase(c %x, p %x), resid %x, msg(q %x,o %x) %s>",
 		sc->sc_dev.dv_xname,
 		ecb, ecb->flags, ecb->dleft, ecb->stat,
@@ -2108,18 +2108,18 @@ esp_timeout(arg)
 		sc->sc_dleft, sc->sc_msgpriq, sc->sc_msgout,
 		DMA_ISACTIVE(sc->sc_dma) ? "DMA active" : "");
 #if ESP_DEBUG > 0
-	printf("TRACE: %s.", ecb->trace);
+	kprintf("TRACE: %s.", ecb->trace);
 #endif
 
 	s = splbio();
 
 	if (ecb->flags & ECB_ABORT) {
 		/* abort timed out */
-		printf(" AGAIN\n");
+		kprintf(" AGAIN\n");
 		esp_init(sc, 1);
 	} else {
 		/* abort the operation that has timed out */
-		printf("\n");
+		kprintf("\n");
 		xs->error = XS_TIMEOUT;
 		esp_abort(sc, ecb);
 	}

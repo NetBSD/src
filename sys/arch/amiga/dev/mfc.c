@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.15 1996/09/02 06:43:26 mycroft Exp $ */
+/*	$NetBSD: mfc.c,v 1.16 1996/10/10 23:56:18 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -347,7 +347,7 @@ mfcattach(pdp, dp, auxp)
 
 	zap = auxp;
 
-	printf ("\n");
+	kprintf ("\n");
 
 	scc = (struct mfc_softc *)dp;
 	unit = scc->sc_dev.dv_unit;
@@ -429,7 +429,7 @@ mfcsattach(pdp, dp, auxp)
 	ma = auxp;
 
 	if (dp) {
-		printf (": input fifo %d output fifo %d\n", SERIBUF_SIZE,
+		kprintf (": input fifo %d output fifo %d\n", SERIBUF_SIZE,
 		    SEROBUF_SIZE);
 		alloc_sicallback();
 	}
@@ -774,7 +774,7 @@ mfcsparam(tp, t)
 	scc->imask |= (0x2 << ((unit & 1) * 4)) | 0x80;
 	scc->sc_regs->du_imr = scc->imask;
 #if defined(DEBUG) && 0
-	printf("mfcsparam: speed %d => %x ct %d imask %x cflag %x\n",
+	kprintf("mfcsparam: speed %d => %x ct %d imask %x cflag %x\n",
 	    t->c_ospeed, ospeed, scc->ct_val, scc->imask, cflag);
 #endif
 	if (ospeed == 0)
@@ -1040,7 +1040,7 @@ mfcintr(arg)
 	}
 	if (istat & 0x80) {		/* input port change interrupt */
 		c = regs->du_ipcr;
-		printf ("%s: ipcr %02x", scc->sc_dev.dv_xname, c);
+		kprintf ("%s: ipcr %02x", scc->sc_dev.dv_xname, c);
 	}
 	return(1);
 }

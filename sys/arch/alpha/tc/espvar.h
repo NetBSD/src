@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.7 1996/09/27 21:37:18 thorpej Exp $	*/
+/*	$NetBSD: espvar.h,v 1.8 1996/10/10 23:51:32 christos Exp $	*/
 
 #if defined(__sparc__) && !defined(SPARC_DRIVER)
 #define	SPARC_DRIVER
@@ -79,7 +79,7 @@ struct esp_ecb {
 	const char *f = "[" msg "]"; \
 	int n = strlen((ecb)->trace); \
 	if (n < (sizeof((ecb)->trace)-100)) \
-		sprintf((ecb)->trace + n, f,  a, b); \
+		ksprintf((ecb)->trace + n, f,  a, b); \
 } while(0)
 #else
 #define ECB_TRACE(ecb, msg, a, b)
@@ -124,15 +124,15 @@ struct esp_tinfo {
 
 #ifdef ESP_DEBUG
 extern int esp_debug;
-#define ESP_ECBS(str)  do {if (esp_debug & ESP_SHOWECBS) printf str;} while (0)
-#define ESP_MISC(str)  do {if (esp_debug & ESP_SHOWMISC) printf str;} while (0)
-#define ESP_INTS(str)  do {if (esp_debug & ESP_SHOWINTS) printf str;} while (0)
-#define ESP_TRACE(str) do {if (esp_debug & ESP_SHOWTRAC) printf str;} while (0)
-#define ESP_CMDS(str)  do {if (esp_debug & ESP_SHOWCMDS) printf str;} while (0)
-#define ESP_START(str) do {if (esp_debug & ESP_SHOWSTART) printf str;}while (0)
-#define ESP_PHASE(str) do {if (esp_debug & ESP_SHOWPHASE) printf str;}while (0)
-#define ESP_DMA(str)   do {if (esp_debug & ESP_SHOWDMA) printf str;}while (0)
-#define ESP_MSGS(str)  do {if (esp_debug & ESP_SHOWMSGS) printf str;}while (0)
+#define ESP_ECBS(str)  do {if (esp_debug & ESP_SHOWECBS) kprintf str;} while (0)
+#define ESP_MISC(str)  do {if (esp_debug & ESP_SHOWMISC) kprintf str;} while (0)
+#define ESP_INTS(str)  do {if (esp_debug & ESP_SHOWINTS) kprintf str;} while (0)
+#define ESP_TRACE(str) do {if (esp_debug & ESP_SHOWTRAC) kprintf str;} while (0)
+#define ESP_CMDS(str)  do {if (esp_debug & ESP_SHOWCMDS) kprintf str;} while (0)
+#define ESP_START(str) do {if (esp_debug & ESP_SHOWSTART) kprintf str;}while (0)
+#define ESP_PHASE(str) do {if (esp_debug & ESP_SHOWPHASE) kprintf str;}while (0)
+#define ESP_DMA(str)   do {if (esp_debug & ESP_SHOWDMA) kprintf str;}while (0)
+#define ESP_MSGS(str)  do {if (esp_debug & ESP_SHOWMSGS) kprintf str;}while (0)
 #else
 #define ESP_ECBS(str)
 #define ESP_MISC(str)
@@ -312,7 +312,7 @@ ESP_READ_REG(sc, reg)
 #ifdef ESP_DEBUG
 #define	ESPCMD(sc, cmd) do {				\
 	if (esp_debug & ESP_SHOWCCMDS)			\
-		printf("<cmd:0x%x>", (unsigned)cmd);	\
+		kprintf("<cmd:0x%x>", (unsigned)cmd);	\
 	sc->sc_lastcmd = cmd;				\
 	ESP_WRITE_REG(sc, ESP_CMD, cmd);		\
 } while (0)
