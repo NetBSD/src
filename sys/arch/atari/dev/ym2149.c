@@ -1,4 +1,4 @@
-/*	$NetBSD: ym2149.c,v 1.1 1996/03/27 10:08:32 leo Exp $	*/
+/*	$NetBSD: ym2149.c,v 1.2 1997/01/21 20:41:07 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -56,5 +56,5 @@ ym2149_init()
 	 * Sensible value for ioa:
 	 */
 	YM2149->sd_selr = YM_IOA;
-	YM2149->sd_wdat = ym2149_ioa = PA_FDSEL|PA_PSTROBE|PA_SER2;
+	YM2149->sd_wdat = ym2149_ioa = PA_FDSEL|PA_PSTROBE;
 }
