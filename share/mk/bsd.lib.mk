@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.117 1997/10/11 08:16:26 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.117.2.1 1997/11/04 21:52:50 thorpej Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -23,7 +23,8 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 # add additional suffixes not exported.
 # .po is used for profiling object files.
 # .so is used for PIC object files.
-.SUFFIXES: .out .a .ln .so .po .o .s .S .c .cc .C .F .f .r .y .l .cl .p .h .sh .m4
+.SUFFIXES: .out .a .ln .so .po .o .s .S .c .cc .C .m .F .f .r .y .l .cl .p .h
+.SUFFIXES: .sh .m4 .m
 
 
 # Set PICFLAGS to cc flags for producing position-independent code,
@@ -129,6 +130,24 @@ CFLAGS+=	${COPTS}
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
+.m.o:
+	@echo ${COMPILE.m:Q} ${.IMPSRC}
+	@${COMPILE.m} ${.IMPSRC}  -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+.m.po:
+	@echo ${COMPILE.m:Q} -pg ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.m} -pg ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+.m.so:
+	@echo ${COMPILE.m:Q} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.m} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
 .S.o .s.o:
 	@echo ${COMPILE.S:Q} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC}
 	@${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
@@ -169,7 +188,7 @@ all: ${SRCS} ${_LIBS}
 
 __archivebuild: .USE
 	@rm -f ${.TARGET}
-	@${AR} cq ${.TARGET} `NM=${NM} lorder ${.ALLSRC} | tsort -q`
+	@${AR} cq ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC} | ${TSORT}`
 	${RANLIB} ${.TARGET}
 
 __archiveinstall: .USE
