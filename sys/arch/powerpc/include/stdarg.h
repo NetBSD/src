@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.6 2001/05/16 15:41:03 simonb Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.7 2001/05/30 20:37:48 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -30,6 +30,7 @@
 #define _POWERPC_STDARG_H_
 
 #include <machine/ansi.h>
+#include <sys/cdefs.h>
 #include <sys/featuretest.h>
 
 #if 0
@@ -51,6 +52,11 @@ typedef _BSD_VA_LIST_	va_list;
 
 #else
 
+#if __GNUC_PREREQ__(2, 95)
+#define va_start(ap, last)						\
+	(__builtin_next_arg(last),					\
+	 (ap) = *(va_list *)__builtin_saveregs())
+#else
 #define va_start(ap, last)						\
 	(__builtin_next_arg(last),					\
 	 (ap).__stack = __va_stack_args,				\
@@ -65,6 +71,7 @@ typedef _BSD_VA_LIST_	va_list;
 	 (__va_first_gpr >= 8 ? __va_first_gpr - 8 : 0) * sizeof(int))
 #define __va_reg_args							\
 	((char *)__builtin_frame_address(0) + __builtin_args_info(4))
+#endif /* 2.95 */
 
 /* From gcc/typeclass.h */
 #define __INTEGER_TYPE_CLASS	1
@@ -116,7 +123,7 @@ typedef _BSD_VA_LIST_	va_list;
 
 #endif /* __lint__ */
 
-#define va_end(ap)	
+#define va_end(ap)
 
 #if !defined(_ANSI_SOURCE) &&						\
     (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) ||		\
