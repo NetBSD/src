@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.20 1998/07/21 13:36:54 mycroft Exp $	*/
+/*	$NetBSD: getcap.c,v 1.21 1998/07/27 07:41:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.20 1998/07/21 13:36:54 mycroft Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.21 1998/07/27 07:41:53 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,8 +84,8 @@ static size_t	 topreclen;	/* toprec length */
 static char	*toprec;	/* Additional record specified by cgetset() */
 static int	 gottoprec;	/* Flag indicating retrieval of toprecord */
 
-static int	cdbget __P((DB *, char **, char *));
-static int 	getent __P((char **, size_t *, char **, int, char *, int, char *));
+static int	cdbget __P((DB *, char **, const char *));
+static int 	getent __P((char **, size_t *, char **, int, const char *, int, char *));
 static int	nfcmp __P((char *, char *));
 
 /*
@@ -95,7 +95,7 @@ static int	nfcmp __P((char *, char *));
  */
 int
 cgetset(ent)
-	char *ent;
+	const char *ent;
 {
 	if (ent == NULL) {
 		if (toprec)
@@ -128,10 +128,12 @@ cgetset(ent)
  */
 char *
 cgetcap(buf, cap, type)
-	char *buf, *cap;
+	char *buf;
+	const char *cap;
 	int type;
 {
-	char *bp, *cp;
+	char *bp;
+	const char *cp;
 
 	bp = buf;
 	for (;;) {
@@ -180,7 +182,8 @@ cgetcap(buf, cap, type)
  */
 int
 cgetent(buf, db_array, name)
-	char **buf, **db_array, *name;
+	char **buf, **db_array;
+	const char *name;
 {
 	size_t dummy;
 
@@ -207,7 +210,8 @@ cgetent(buf, db_array, name)
  */
 static int
 getent(cap, len, db_array, fd, name, depth, nfield)
-	char **cap, **db_array, *name, *nfield;
+	char **cap, **db_array, *nfield;
+	const char *name;
 	size_t *len;
 	int fd, depth;
 {
@@ -584,11 +588,12 @@ tc_exp:	{
 static int
 cdbget(capdbp, bp, name)
 	DB *capdbp;
-	char **bp, *name;
+	char **bp;
+	const char *name;
 {
 	DBT key, data;
 
-	key.data = name;
+	key.data = (char *)name;
 	key.size = strlen(name);
 
 	for (;;) {
@@ -618,9 +623,9 @@ cdbget(capdbp, bp, name)
  */
 int
 cgetmatch(buf, name)
-	char *buf, *name;
+	const char *buf, *name;
 {
-	char *np, *bp;
+	const char *np, *bp;
 
 	/*
 	 * Start search at beginning of record.
@@ -815,11 +820,13 @@ cgetnext(bp, db_array)
  */
 int
 cgetstr(buf, cap, str)
-	char *buf, *cap;
+	char *buf;
+	const char *cap;
 	char **str;
 {
 	u_int m_room;
-	char *bp, *mp;
+	const char *bp;
+	char *mp;
 	int len;
 	char *mem;
 
@@ -940,10 +947,13 @@ cgetstr(buf, cap, str)
  */
 int
 cgetustr(buf, cap, str)
-	char *buf, *cap, **str;
+	char *buf;
+	const char *cap;
+	char **str;
 {
 	u_int m_room;
-	char *bp, *mp;
+	const char *bp;
+	char *mp;
 	int len;
 	char *mem;
 
@@ -1009,12 +1019,13 @@ cgetustr(buf, cap, str)
  */
 int
 cgetnum(buf, cap, num)
-	char *buf, *cap;
+	char *buf;
+	const char *cap;
 	long *num;
 {
 	long n;
 	int base, digit;
-	char *bp;
+	const char *bp;
 
 	/*
 	 * Find numeric capability cap

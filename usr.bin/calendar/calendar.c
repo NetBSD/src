@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.13 1998/04/01 20:50:17 kleink Exp $	*/
+/*	$NetBSD: calendar.c,v 1.14 1998/07/27 07:41:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.13 1998/04/01 20:50:17 kleink Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.14 1998/07/27 07:41:31 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -401,7 +401,7 @@ closecal(fp)
 	/* parent -- write to pipe input */
 	(void)close(pdes[0]);
 
-	header[1].iov_base = header[3].iov_base = pw->pw_name;
+	header[1].iov_base = header[3].iov_base = (void *)pw->pw_name;
 	header[1].iov_len = header[3].iov_len = strlen(pw->pw_name);
 	writev(pdes[1], header, 7);
 	while ((nread = read(fileno(fp), buf, sizeof(buf))) > 0)
