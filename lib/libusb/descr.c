@@ -1,4 +1,4 @@
-/*	$NetBSD: descr.c,v 1.8 2000/08/20 15:57:02 augustss Exp $	*/
+/*	$NetBSD: descr.c,v 1.9 2000/09/24 02:13:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -44,20 +44,28 @@ report_desc_t
 hid_get_report_desc(int fd)
 {
 	struct usb_ctl_report_desc rep;
-	report_desc_t r;
 
 	_DIAGASSERT(fd != -1);
 
 	rep.size = 0;
 	if (ioctl(fd, USB_GET_REPORT_DESC, &rep) < 0)
-		return (0);
-	r = malloc(sizeof *r + rep.size);
+		return (NULL);
+
+	return hid_use_report_desc(rep.data, (unsigned int)rep.size);
+}
+
+report_desc_t
+hid_use_report_desc(unsigned char *data, unsigned int size)
+{
+	report_desc_t r;
+
+	r = malloc(sizeof(*r) + size);
 	if (r == 0) {
 		errno = ENOMEM;
-		return (0);
+		return (NULL);
 	}
-	r->size = rep.size;
-	memcpy(r->data, rep.data, (unsigned int)rep.size);
+	r->size = size;
+	memcpy(r->data, data, size);
 	return (r);
 }
 
