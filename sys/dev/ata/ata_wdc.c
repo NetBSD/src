@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.53.2.2 2004/07/02 17:07:57 he Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.53.2.3 2004/08/11 19:44:09 jmc Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.53.2.2 2004/07/02 17:07:57 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.53.2.3 2004/08/11 19:44:09 jmc Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -119,7 +119,8 @@ static void	wdc_ata_bio_start(struct wdc_channel *,struct ata_xfer *);
 static void	_wdc_ata_bio_start(struct wdc_channel *,struct ata_xfer *);
 static int	wdc_ata_bio_intr(struct wdc_channel *, struct ata_xfer *,
 				 int);
-static void	wdc_ata_bio_kill_xfer(struct wdc_channel *,struct ata_xfer *);
+static void	wdc_ata_bio_kill_xfer(struct wdc_channel *,
+				      struct ata_xfer *, int);
 static void	wdc_ata_bio_done(struct wdc_channel *, struct ata_xfer *); 
 static int	wdc_ata_err(struct ata_drive_datas *, struct ata_bio *);
 #define WDC_ATA_NOERR 0x00 /* Drive doesn't report an error */
@@ -744,7 +745,8 @@ wdc_ata_kill_pending(struct ata_drive_datas *drvp)
 }
 
 static void
-wdc_ata_bio_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
+wdc_ata_bio_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer,
+    int reason)
 {
 	struct ata_bio *ata_bio = xfer->c_cmd;
 	int drive = xfer->c_drive;
@@ -754,7 +756,18 @@ wdc_ata_bio_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
 	wdc_free_xfer(chp, xfer);
 
 	ata_bio->flags |= ATA_ITSDONE;
-	ata_bio->error = ERR_NODEV;
+	switch (reason) {
+	case KILL_GONE:
+		ata_bio->error = ERR_NODEV;
+		break;
+	case KILL_RESET:
+		ata_bio->error = ERR_RESET;
+		break;
+	default:
+		printf("wdc_ata_bio_kill_xfer: unknown reason %d\n",
+		    reason);
+		panic("wdc_ata_bio_kill_xfer");
+	}
 	ata_bio->r_error = WDCE_ABRT;
 	WDCDEBUG_PRINT(("wdc_ata_done: drv_done\n"), DEBUG_XFERS);
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
