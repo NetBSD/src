@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)master.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.3 $"
+#ident "$Revision: 1.4 $"
 #endif
 
 #include "globals.h"
@@ -376,7 +376,7 @@ mchgdate(struct tsp *msg)
 	(void)gettimeofday(&otime, 0);
 	adj_msg_time(msg,&otime);
 
-	timevalsub(&ntime, &msg->tsp_time, &otime);
+	timersub(&msg->tsp_time, &otime, &ntime);
 	if (ntime.tv_sec < MAXADJ && ntime.tv_sec > -MAXADJ) {
 		/*
 		 * do not change the clock if we can adjust it
@@ -453,7 +453,7 @@ synch(long mydelta)
 				htp->delta = measure_delta;
 			}
 			(void)gettimeofday(&stop, 0);
-			timevalsub(&stop, &stop, &check);
+			timersub(&stop, &check, &stop);
 			if (stop.tv_sec >= 1) {
 				if (trace)
 					(void)fflush(fd);

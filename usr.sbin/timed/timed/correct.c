@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)correct.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.3 $"
+#ident "$Revision: 1.4 $"
 #endif
 
 #include "globals.h"
@@ -77,7 +77,7 @@ correct(long avdelta)
 			    || corr <= -MAXADJ*1000) {
 				htp->need_set = 0;
 				(void)gettimeofday(&to.tsp_time,0);
-				timevaladd(&to.tsp_time, &adjlocal);
+				timeradd(&to.tsp_time, &adjlocal, &to.tsp_time);
 				to.tsp_type = TSP_SETTIME;
 			} else {
 				mstotvround(&to.tsp_time, corr);
@@ -164,7 +164,7 @@ adjclock(struct timeval *corr)
 		       "clock correction %d sec too large to adjust",
 		       adj.tv_sec);
 		(void) gettimeofday(&now, 0);
-		timevaladd(&now, corr);
+		timeradd(&now, corr, &now);
 		if (settimeofday(&now, 0) < 0)
 			syslog(LOG_ERR, "settimeofday: %m");
 	}
