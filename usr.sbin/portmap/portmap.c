@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: portmap.c,v 1.2 1993/08/01 17:57:16 mycroft Exp $";
+static char rcsid[] = "$Id: portmap.c,v 1.3 1993/12/03 10:01:06 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -385,7 +385,7 @@ reg_service(rqstp, xprt)
 #define ARGSIZE 9000
 
 struct encap_parms {
-	u_long arglen;
+	u_int arglen;
 	char *args;
 };
 
