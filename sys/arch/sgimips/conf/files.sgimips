@@ -1,10 +1,11 @@
-#	$NetBSD: files.sgimips,v 1.37 2004/03/13 17:31:34 bjh21 Exp $
+#	$NetBSD: files.sgimips,v 1.38 2004/04/10 22:48:44 pooka Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
 
-device mainbus {[addr = -1]}
+# XXX: arcemu needs smc93cx6, so put it here pending a better solution
+device mainbus {[addr = -1]}: smc93cx6
 attach mainbus at root
 file arch/sgimips/sgimips/mainbus.c	mainbus
 
@@ -14,6 +15,8 @@ file arch/sgimips/sgimips/cpu.c		cpu
 
 file dev/arcbios/arcbios.c
 file dev/arcbios/arcbios_tty.c
+
+file arch/sgimips/sgimips/arcemu.c
 
 file arch/sgimips/sgimips/ip22_cache.S		indy_r4600_cache
 file arch/sgimips/sgimips/autoconf.c
