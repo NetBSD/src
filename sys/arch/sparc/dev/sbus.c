@@ -1,4 +1,40 @@
-/*	$NetBSD: sbus.c,v 1.19 1998/03/21 19:55:31 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.20 1998/03/21 22:03:33 pk Exp $ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Kranenburg.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,6 +103,14 @@ void sbusreset __P((int));
 static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int, int *));
 static int sbus_bus_mmap __P((void *, bus_type_t, bus_addr_t, int));
+static int _sbus_bus_map __P((
+		void *,			/*cookie*/
+		bus_type_t,		/*slot*/
+		bus_addr_t,		/*offset*/
+		bus_size_t,		/*size*/
+		int,			/*flags*/
+		vm_offset_t,		/*preferred virtual address */
+		bus_space_handle_t *));
 
 
 /* autoconfiguration driver */
@@ -112,16 +156,11 @@ static int intr_sbus2ipl_4m[] = {
 	0, 2, 3, 5, 7, 9, 11, 13
 };
 
-#if 0
-/* Table to translate `intr' property values to Sbus interrupt levels */
-static int intr2sbus_4c[] = {
-	0, 1, 2, 3, -1, 4, -1, 5, 6, 7, -1, -1, -1, -1, -1
-};
-static int intr2sbus_4m[] = {
-	0, -1, 1, 2, -1, 3, -1, 4, -1, 5, -1, 6, -1, 7, -1, -1
-};
-#endif
-
+/*
+ * This value is or'ed into the attach args' interrupt level cookie
+ * if the interrupt level comes from an `intr' property, i.e. it is
+ * not an Sbus interrupt level.
+ */
 #define SBUS_INTR_COMPAT	0x80000000
 
 
@@ -214,12 +253,6 @@ sbus_attach_mainbus(parent, self, aux)
 				? intr_sbus2ipl_4c
 				: intr_sbus2ipl_4m;
 
-#if 0 /* this won't work */
-	sc->sc_intr_compat = CPU_ISSUN4C
-				? intr2sbus_4c
-				: intr2sbus_4m;
-#endif
-
 	/*
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
@@ -245,10 +278,6 @@ sbus_attach_iommu(parent, self, aux)
 
 	/* Setup interrupt translation tables */
 	sc->sc_intr2ipl = CPU_ISSUN4C ? intr_sbus2ipl_4c : intr_sbus2ipl_4m;
-
-#if 0 /* this won't work */
-	sc->sc_intr_compat = CPU_ISSUN4C ? intr2sbus_4c : intr2sbus_4m;
-#endif
 
 	/*
 	 * Record clock frequency for synchronous SCSI.
@@ -390,13 +419,17 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
 }
 
 int
-sbus_bus_map(t, slot, offset, size, flags, vaddr, hp)
-	bus_space_tag_t t;
-	int slot, offset, size, flags;
+_sbus_bus_map(cookie, btype, offset, size, flags, vaddr, hp)
+	void	*cookie;
+	bus_type_t btype;
+	bus_addr_t offset;
+	bus_size_t size;
+	int	flags;
 	vm_offset_t vaddr;
 	bus_space_handle_t *hp;
 {
-	struct sbus_softc *sc = t->cookie;
+	struct sbus_softc *sc = cookie;
+	int slot = btype;
 	int i;
 
 	for (i = 0; i < sc->sc_nrange; i++) {
@@ -591,9 +624,7 @@ sbus_alloc_bustag(sc)
 
 	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
-#if notyet
 	sbt->sparc_bus_map = _sbus_bus_map;
-#endif
 	sbt->sparc_bus_mmap = sbus_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
 	return (sbt);
