@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.28 1999/02/16 23:18:40 cjs Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.29 1999/02/16 23:27:43 cjs Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.28 1999/02/16 23:18:40 cjs Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.29 1999/02/16 23:27:43 cjs Exp $");
 #endif
 #endif
 
@@ -225,7 +225,6 @@ __RCSID("$NetBSD: traceroute.c,v 1.28 1999/02/16 23:18:40 cjs Exp $");
 
 #include <ctype.h>
 #include <errno.h>
-#include <limits.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
