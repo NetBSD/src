@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1997/04/13 19:10:00 perry Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1997/06/13 13:22:08 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -44,8 +44,6 @@
 #include <lib/libkern/libkern.h>
 
 #include <libi386.h>
-
-extern char *strerror __P((int)); /* XXX missing in stand.h */
 
 extern void ls __P((char*));
 extern int bios2dev __P((int, char**, int*));
@@ -363,7 +361,7 @@ awaitkey(timeout, tell)
 	int timeout, tell;
 {
 	int i;
-	char c;
+	char c = 0;
 
 	i = timeout * POLL_FREQ;
 

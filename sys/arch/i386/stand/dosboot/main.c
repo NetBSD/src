@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1997/03/22 09:06:20 thorpej Exp $	 */
+/*	$NetBSD: main.c,v 1.3 1997/06/13 13:24:10 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -42,8 +42,6 @@
 #include <lib/libsa/stand.h>
 
 #include <libi386.h>
-
-extern char    *strerror __P((int));	/* XXX missing in stand.h */
 
 extern void ls  __P((char *));
 extern int getopt __P((int, char **, const char *));
