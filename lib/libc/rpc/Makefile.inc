@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 1998/03/18 01:37:39 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2000/01/26 13:20:24 itojun Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/arch/${MACHINE}/rpc ${.CURDIR}/rpc
@@ -13,7 +13,8 @@ SRCS+=	auth_none.c auth_unix.c  authunix_prot.c bindresvport.c \
 	xdr_rec.c xdr_reference.c xdr_stdio.c
 
 MAN+=	bindresvport.3 getrpcent.3 getrpcport.3 rpc.3 xdr.3
-MLINKS+=	getrpcent.3 getrpcbyname.3 \
+MLINKS+=	bindresvport.3 bindresvport_sa.3 \
+		getrpcent.3 getrpcbyname.3 \
 		getrpcent.3 getrpcbynumber.3 \
 		getrpcent.3 endrpcent.3 \
 		getrpcent.3 setrpcent.3 \
