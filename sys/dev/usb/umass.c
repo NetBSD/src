@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.5 1999/08/29 18:57:15 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.6 1999/08/29 18:58:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -57,6 +57,8 @@
  *	x Need to handle hot-unplug.
  *
  *	x Add support for other than Bulk.
+ *
+ *	x Add support for other than SCSI.
  */
 
 /* Authors: (with short acronyms for comments)
