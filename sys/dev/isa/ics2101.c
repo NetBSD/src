@@ -1,4 +1,4 @@
-/* $NetBSD: ics2101.c,v 1.6 1997/10/09 07:57:23 jtc Exp $ */
+/* $NetBSD: ics2101.c,v 1.7 1998/06/17 08:17:25 augustss Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 #include <sys/buf.h>
 
 #include <machine/cpu.h>
-#include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

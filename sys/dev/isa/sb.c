@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
+/*	$NetBSD: sb.c,v 1.58 1998/06/17 08:17:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -45,7 +45,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

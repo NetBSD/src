@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.56 1998/06/09 07:24:59 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.57 1998/06/17 08:17:25 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -112,7 +112,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 #include <machine/cpufunc.h>
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
