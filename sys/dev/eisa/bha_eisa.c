@@ -1,7 +1,7 @@
-/*	$NetBSD: bha_eisa.c,v 1.10 1998/01/09 20:55:17 mycroft Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.11 1998/01/09 21:16:36 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997, 1998 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
