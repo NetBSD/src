@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.3 2000/06/29 06:30:02 mrg Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.4 2001/01/26 13:20:32 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -54,7 +54,7 @@ static void
 getcachelinesize()
 {
 	static int cachemib[] = { CTL_MACHDEP, CPU_CACHELINE };
-	int clen = sizeof(_cachelinesize);
+	size_t clen = sizeof(_cachelinesize);
 
 	if (sysctl(cachemib, sizeof(cachemib) / sizeof(cachemib[0]),
 		   &_cachelinesize, &clen, NULL, 0) < 0
