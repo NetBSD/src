@@ -61,12 +61,12 @@ extern u_char m_buf[BUFSIZ];
 extern u_int m_len;
 extern int f_debug;
 
-int yylex __P((void));
-void yyfatal __P((const char *s));
-void yyerror __P((const char *s));
-extern void parse_init __P((void));
-int parse __P((FILE **));
-int yyparse __P((void));
+int yylex(void);
+void yyfatal(const char *s);
+void yyerror(const char *s);
+extern void parse_init(void);
+int parse(FILE **);
+int yyparse(void);
 %}
 
 /* common section */
@@ -251,23 +251,20 @@ any		{ return(ANY); }
 %%
 
 void
-yyfatal(s)
-	const char *s;
+yyfatal(const char *s)
 {
 	yyerror(s);
 	exit(1);
 }
 
 void
-yyerror(s)
-	const char *s;
+yyerror(const char *s)
 {
 	printf("line %d: %s at [%s]\n", lineno, s, yytext);
 }
 
 int
-parse(fp)
-	FILE **fp;
+parse(FILE **fp)
 {
 	yyin = *fp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.35 2004/04/02 09:08:55 martin Exp $	*/
+/*	$NetBSD: rcp.c,v 1.36 2005/02/17 15:25:02 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.35 2004/04/02 09:08:55 martin Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.36 2005/02/17 15:25:02 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,22 +98,19 @@ int pflag, iamremote, iamrecursive, targetshouldbedirectory;
 char cmd[CMDNEEDS];		/* must hold "rcp -r -p -d\0" */
 
 #ifdef KERBEROS
-int	 kerberos __P((char **, char *, char *, char *));
-void	 oldw __P((const char *, ...));
+int	 kerberos(char **, char *, char *, char *);
+void	 oldw(const char *, ...);
 #endif
-int	 response __P((void));
-void	 rsource __P((char *, struct stat *));
-void	 sink __P((int, char *[]));
-void	 source __P((int, char *[]));
-void	 tolocal __P((int, char *[]));
-void	 toremote __P((char *, int, char *[]));
-void	 usage __P((void));
-int	 main __P((int, char *[]));
+int	 response(void);
+void	 rsource(char *, struct stat *);
+void	 sink(int, char *[]);
+void	 source(int, char *[]);
+void	 tolocal(int, char *[]);
+void	 toremote(char *, int, char *[]);
+void	 usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct servent *sp;
 	int ch, fflag, tflag;
@@ -242,9 +239,7 @@ main(argc, argv)
 }
 
 void
-toremote(targ, argc, argv)
-	char *targ, *argv[];
-	int argc;
+toremote(char *targ, int argc, char *argv[])
 {
 	int i, len;
 	char *bp, *host, *src, *suser, *thost, *tuser;
@@ -326,9 +321,7 @@ toremote(targ, argc, argv)
 }
 
 void
-tolocal(argc, argv)
-	int argc;
-	char *argv[];
+tolocal(int argc, char *argv[])
 {
 	int i, len;
 	char *bp, *host, *src, *suser;
@@ -383,9 +376,7 @@ tolocal(argc, argv)
 }
 
 void
-source(argc, argv)
-	int argc;
-	char *argv[];
+source(int argc, char *argv[])
 {
 	struct stat stb;
 	static BUF buffer;
@@ -478,9 +469,7 @@ next:			(void)close(fd);
 }
 
 void
-rsource(name, statp)
-	char *name;
-	struct stat *statp;
+rsource(char *name, struct stat *statp)
 {
 	DIR *dirp;
 	struct dirent *dp;
@@ -533,9 +522,7 @@ rsource(name, statp)
 }
 
 void
-sink(argc, argv)
-	int argc;
-	char *argv[];
+sink(int argc, char *argv[])
 {
 	static BUF buffer;
 	struct stat stb;
@@ -794,8 +781,7 @@ screwup:
 
 #ifdef KERBEROS
 int
-kerberos(host, bp, locuser, user)
-	char **host, *bp, *locuser, *user;
+kerberos(char **host, char *bp, char *locuser, char *user)
 {
 	struct servent *sp;
 
@@ -837,7 +823,7 @@ again:
 #endif /* KERBEROS */
 
 int
-response()
+response(void)
 {
 	char ch, *cp, resp, rbuf[BUFSIZ];
 
@@ -870,7 +856,7 @@ response()
 }
 
 void
-usage()
+usage(void)
 {
 #ifdef KERBEROS
 #ifdef CRYPT
