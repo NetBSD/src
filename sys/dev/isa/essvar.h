@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.13 1999/03/16 13:06:36 mycroft Exp $	*/
+/*	$NetBSD: essvar.h,v 1.14 1999/03/18 06:03:31 mycroft Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.13 $ (SHARK) $Date: 1999/03/16 13:06:36 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.14 $ (SHARK) $Date: 1999/03/18 06:03:31 $
 **
 **++
 **
@@ -107,6 +107,14 @@ struct ess_audio_channel
 
 	/* Status information */
 	int	active;			/* boolean: channel in use? */
+
+	/* Polling state */
+	int	polled;			/* 1 if channel is polled */
+	int	dmapos;			/* last DMA pointer */
+	int	buffersize;		/* size of DMA buffer */
+	/* (The following is only needed due to the stupid block interface.) */
+	int	dmacount;		/* leftover partial block */
+	int	blksize;		/* current block size */
 };
 
 struct ess_softc
