@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.13 2000/05/05 20:13:29 mycroft Exp $
+#	$NetBSD: Makefile,v 1.14 2000/05/05 21:37:05 mycroft Exp $
 
-SUBDIR=	ramdisk ramdisk-kernel fdset bootfloppy-big # bootfloppy-tiny
+SUBDIR=	ramdisk ramdisk-kernel fdset bootfloppy-big bootfloppy-tiny
 
 TARGETS+=release
 
