@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.172 2002/12/15 17:43:50 jmcneill Exp $	*/
+/*	$NetBSD: cd.c,v 1.173 2002/12/15 17:48:14 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.172 2002/12/15 17:43:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.173 2002/12/15 17:48:14 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -2105,16 +2105,15 @@ dvd_read_manufact(cd, s)
 	u_int8_t *buf;
 	int error;
 
-	buf = malloc(4 + 2048, M_TEMP, M_WAITOK);
+	buf = malloc(4 + 2048, M_TEMP, M_WAITOK|M_ZERO);
 	if (buf == NULL)
 		return (EIO);
 	memset(cmd.bytes, 0, 15);
-	memset(buf, 0, sizeof(buf));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd.bytes[6] = s->type;
-	_lto2b(sizeof(buf), &cmd.bytes[7]);
+	_lto2b(4 + 2048, &cmd.bytes[7]);
 
-	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 4 + 2048,
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error == 0) {
 		s->manufact.len = _2btol(&buf[0]);
