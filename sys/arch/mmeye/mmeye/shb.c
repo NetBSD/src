@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.2 1999/09/17 20:04:41 thorpej Exp $	*/
+/*	$NetBSD: shb.c,v 1.3 2000/02/21 20:38:49 erh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -564,43 +564,17 @@ void nsintr __P((void));
 void
 Xsoftnet(void)
 {
-#ifdef INET
         unsigned long ni = netisr;
         netisr = 0;
 
-#include "arp.h"
-#if NARP > 0
-	if (ni & (1 << NETISR_ARP))
-		arpintr();
-#endif
-	if (ni & (1 << NETISR_IP))
-		ipintr();
-#endif /* INET */
-#ifdef NS
-	if (ni & (1 << NETISR_NS))
-		nsintr();
-#endif
-#ifdef ISO
-	if (ni & (1 << NETISR_ISO))
-		clnlintr();
-#endif
-#ifdef CCITT
-	if (ni & (1 << NETISR_CCITT))
-		ccittintr();
-#endif
-#ifdef NATM
-	if (ni & (1 << NETISR_NATM))
-		natmintr();
-#endif
-#ifdef NETATALK
-	if (ni & (1 << NETISR_ATALK))
-		atintr();
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (ni & (1 << NETISR_PPP))
-		pppintr();
-#endif
+#define DONETISR(bit, fn) do {		\
+	if (ni & (1 << bit))		\
+		fn();			\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
 }
 
 void
