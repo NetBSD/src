@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.38 2000/07/19 15:01:16 thorpej Exp $	 */
+/*	$NetBSD: rtld.c,v 1.39 2000/07/26 02:07:35 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -73,7 +73,7 @@ typedef void    (*funcptr) __P((void));
 static void     _rtld_init __P((caddr_t, int));
 static void     _rtld_exit __P((void));
 
-Elf_Addr        _rtld __P((Elf_Word *));
+Elf_Addr        _rtld __P((Elf_Addr *));
 
 
 /*
@@ -281,7 +281,7 @@ _rtld_exit()
  */
 Elf_Addr
 _rtld(sp)
-	Elf_Word *sp;
+	Elf_Addr *sp;
 {
 	const AuxInfo  *pAUX_base, *pAUX_entry, *pAUX_execfd, *pAUX_phdr,
 	               *pAUX_phent, *pAUX_phnum;
@@ -291,10 +291,11 @@ _rtld(sp)
 	char          **env;
 	const AuxInfo  *aux;
 	const AuxInfo  *auxp;
-	Elf_Word       *const osp = sp;
+	Elf_Addr       *const osp = sp;
 	bool            bind_now = 0;
 	const char     *ld_bind_now;
 	const char    **argv;
+	int		argc;
 	Obj_Entry	*obj;
 	const char **real___progname;
 	const Obj_Entry **real___mainprog_obj;
@@ -322,7 +323,8 @@ _rtld(sp)
 
 	sp += 2;		/* skip over return argument space */
 	argv = (const char **) &sp[1];
-	sp += ((int *)sp)[0] + 2;	/* Skip over argc, arguments, and NULL
+	argc = *(int *)sp;
+	sp += 2 + argc;		/* Skip over argc, arguments, and NULL
 				 * terminator */
 	env = (char **) sp;
 	while (*sp++ != 0) {	/* Skip over environment, and NULL terminator */
