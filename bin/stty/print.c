@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.11 1996/05/07 18:20:10 jtc Exp $	*/
+/*	$NetBSD: print.c,v 1.12 1997/04/02 03:13:16 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.11 1996/05/07 18:20:10 jtc Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.12 1997/04/02 03:13:16 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,6 +148,7 @@ print(tp, wp, ldisc, fmt)
 	binit("oflags");
 	put("-opost", OPOST, 1);
 	put("-onlcr", ONLCR, 1);
+	put("-ocrnl", OCRNL, 0);
 	put("-oxtabs", OXTABS, 1);
 
 	/* control flags (hardware state) */

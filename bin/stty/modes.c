@@ -1,4 +1,4 @@
-/*	$NetBSD: modes.c,v 1.9 1996/05/07 18:20:09 jtc Exp $	*/
+/*	$NetBSD: modes.c,v 1.10 1997/04/02 03:13:15 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: modes.c,v 1.9 1996/05/07 18:20:09 jtc Exp $";
+static char rcsid[] = "$NetBSD: modes.c,v 1.10 1997/04/02 03:13:15 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -185,6 +185,8 @@ const struct modes omodes[] = {
 	{ "-litout",	OPOST, 0 },
 	{ "onlcr",	ONLCR, 0 },
 	{ "-onlcr",	0, ONLCR },
+	{ "ocrnl",	OCRNL, 0 },
+	{ "-ocrnl",	0, OCRNL },
 	{ "tabs",	0, OXTABS },		/* "preserve" tabs */
 	{ "-tabs",	OXTABS, 0 },
 	{ "oxtabs",	OXTABS, 0 },

@@ -1,4 +1,4 @@
-.\"	$NetBSD: stty.1,v 1.13 1997/03/13 05:03:45 mikel Exp $
+.\"	$NetBSD: stty.1,v 1.14 1997/04/02 03:13:17 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -239,6 +239,12 @@ Map (do not map)
 .Dv NL
 to
 .Dv CR-NL
+on output.
+.It Cm ocrnl Pq Fl ocrnl
+Map (do not map)
+.Dv CR
+to
+.Dv NL
 on output.
 .It Cm oxtabs Pq Fl oxtabs
 Expand (do not expand) tabs to spaces on output.
