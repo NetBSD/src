@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.106 2000/05/10 16:53:53 groo Exp $
+#	$NetBSD: NetBSD.dist,v 1.107 2000/05/12 18:11:50 thorpej Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1406,6 +1406,11 @@ arc
 # ./usr/share/man/cat8/arc
 ..
 
+# ./usr/share/man/cat8/arm26
+arm26
+# ./usr/share/man/cat8/arm26
+..
+
 # ./usr/share/man/cat8/arm32
 arm32
 # ./usr/share/man/cat8/arm32
@@ -1500,6 +1505,11 @@ alpha
 # ./usr/share/man/cat9/amiga
 amiga
 # ./usr/share/man/cat9/amiga
+..
+
+# ./usr/share/man/cat9/arm26
+arm26
+# ./usr/share/man/cat9/arm26
 ..
 
 # ./usr/share/man/cat9/arm32
@@ -1727,6 +1737,11 @@ arc
 # ./usr/share/man/man8/arc
 ..
 
+# ./usr/share/man/man8/arm26
+arm26
+# ./usr/share/man/man8/arm26
+..
+
 # ./usr/share/man/man8/arm32
 arm32
 # ./usr/share/man/man8/arm32
@@ -1821,6 +1836,11 @@ alpha
 # ./usr/share/man/man9/amiga
 amiga
 # ./usr/share/man/man9/amiga
+..
+
+# ./usr/share/man/man8/arm26
+arm26
+# ./usr/share/man/man8/arm26
 ..
 
 # ./usr/share/man/man9/arm32
