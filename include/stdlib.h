@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.22 1994/12/17 04:19:06 jtc Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.23 1995/03/21 23:08:14 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,10 @@
 #define _STDLIB_H_
 #include <machine/ansi.h>
 
+#if !defined(_ANSI_SOURCE)	/* for quad_t, etc. */
+#include <sys/types.h>
+#endif
+
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
@@ -53,10 +57,19 @@ typedef struct {
 	int quot;		/* quotient */
 	int rem;		/* remainder */
 } div_t;
+
 typedef struct {
 	long quot;		/* quotient */
 	long rem;		/* remainder */
 } ldiv_t;
+
+#if !defined(_ANSI_SOURCE)
+typedef struct {
+	quad_t quot;		/* quotient */
+	quad_t rem;		/* remainder */
+} qdiv_t;
+#endif
+
 
 #ifndef	NULL
 #define	NULL	0
@@ -107,8 +120,6 @@ int	 mbtowc __P((wchar_t *, const char *, size_t));
 size_t	 wcstombs __P((char *, const wchar_t *, size_t));
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-#include <sys/types.h>
-
 #if defined(alloca) && (alloca == __builtin_alloca) && (__GNUC__ < 2)
 void  *alloca __P((int));     /* built-in for gcc */ 
 #else 
@@ -165,6 +176,7 @@ int	 setenv __P((const char *, const char *, int));
 void	 unsetenv __P((const char *));
 void	 setproctitle __P((const char *, ...));
 
+qdiv_t	 qdiv __P((quad_t, quad_t));
 quad_t	 strtoq __P((const char *, char **, int));
 u_quad_t strtouq __P((const char *, char **, int));
 
