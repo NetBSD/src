@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.97 2000/12/31 14:29:54 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.98 2001/01/20 23:36:03 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -948,7 +948,7 @@ ohci_power(int why, void *v)
 	ohci_dumpregs(sc);
 #endif
 
-	s = splusb();
+	s = splhardusb();
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
