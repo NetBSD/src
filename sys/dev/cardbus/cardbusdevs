@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.21.10.1 2002/12/11 18:05:30 he Exp $
+$NetBSD: cardbusdevs,v 1.21.10.2 2004/11/11 23:08:23 he Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -48,6 +48,7 @@ vendor ADVSYS		0x10cd	Advanced System Products
 vendor REALTEK		0x10ec	Realtek Semiconductor
 vendor IODATA		0x10fc	IO Data
 vendor ACCTON		0x1113	Accton Technology
+vendor WORKBIT		0x1145	Workbit
 vendor XIRCOM		0x115d	Xircom
 vendor DLINK		0x1186	D-Link Systems
 vendor COREGA		0x1259	Corega
@@ -90,6 +91,7 @@ product REALTEK RT8139	0x8139	8139 Ethernet
 
 /* IO Data products */
 product IODATA CBIDE2	0x0003	CBIDE2 IDE controller
+product IODATA CBSCII	0x0005	CBSCII NinjaSCSI-32Bi SCSI
 
 /* Accton products */
 product ACCTON MPX5030  0x1211  MPX 5030/5038 Ethernet
@@ -126,3 +128,8 @@ product INTEL MODEM56	0x1002	56k Modem
 
 /* Adaptec products */
 product ADP 1480        0x6075  APA-1480
+
+/* Workbit products */
+product WORKBIT NJSC32BI		0x8007	NinjaSCSI-32Bi SCSI
+product WORKBIT NJSC32UDE		0x8009	NinjaSCSI-32UDE SCSI
+product WORKBIT NJSC32BI_KME		0xf007	NinjaSCSI-32Bi SCSI (KME)
