@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.33 1998/01/12 10:39:29 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.33.8.1 2000/02/18 19:34:03 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -268,7 +268,6 @@ grfioctl(dev, cmd, data, flag, p)
 	case GRFIOCGSPRITEMAX:
 	case GRFIOCBITBLT:
     	case GRFIOCSETMON:
-	case GRFIOCBLANK:	/* blank ioctl, IOCON/OFF will turn ite on */
 	case GRFTOGGLE: /* Toggles between Cirrus boards and native ECS on
                      Amiga. 15/11/94 ill */
 		/*
@@ -277,8 +276,16 @@ grfioctl(dev, cmd, data, flag, p)
 		 */
 		return(gp->g_mode(gp, GM_GRFIOCTL, data, cmd, dev));
 
+	case GRFIOCBLANK:	/* blank ioctl, IOCON/OFF will turn ite on */
 	case FBIOSVIDEO:
-		return(gp->g_mode(gp, GM_GRFIOCTL, data, GRFIOCBLANK, dev));
+		error = gp->g_mode(gp, GM_GRFIOCTL, data, GRFIOCBLANK, dev);
+		if (!error)
+			gp->g_blank = *(int *)data;
+		return (error);
+
+	case FBIOGVIDEO:
+		*(int *)data = gp->g_blank;
+		return (0);
 
 	default:
 #if NVIEW > 0
