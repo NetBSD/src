@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.35 1998/10/13 13:37:14 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.36 1998/10/24 08:12:55 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -272,12 +272,24 @@ nmi_hard()
 void
 nmi_soft()
 {
-	printf("Message interrupt on CPU %d\n", cpuinfo.mid);
 
 #ifdef MULTIPROCESSOR
 	switch (cpuinfo.msg.tag) {
 	case XPMSG_SAVEFPU: {
 		savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
+		}
+		break;
+	case XPMSG_PAUSECPU: {
+		cpuinfo.flags |= 0x4000;
+		while (cpuinfo.flags & 0x4000) {
+			simple_unlock(&cpuinfo.msg.lock);
+			delay(1);
+			simple_lock(&cpuinfo.msg.lock);
+		}
+		}
+		break;
+	case XPMSG_RESUMECPU: {
+		cpuinfo.flags &= ~0x4000;
 		}
 		break;
 	case XPMSG_VCACHE_FLUSH_PAGE: {
