@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.10 2002/02/22 03:24:09 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.11 2002/03/15 22:19:49 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -290,9 +290,9 @@ copyfault:
 	if (error == ABORT_FIXUP_RETURN)
 		return;
 	if (error == ABORT_FIXUP_FAILED) {
-		printf("pc = 0x%08x, insn = ", fault_pc);
+		printf("pc = 0x%08x, opcode 0x%08x, insn = ", fault_pc, *((u_int *)fault_pc));
 		disassemble(fault_pc);
-		panic("data abort fixup failed\n");
+		printf("data abort handler: fixup failed for this instruction\n");
 	}
 
 #ifdef PMAP_DEBUG
@@ -319,6 +319,16 @@ copyfault:
 		p->p_addr->u_pcb.pcb_tf = frame;
 	} else
 		user = 0;
+
+	/* check if this was a failed fixup */
+	if (error == ABORT_FIXUP_FAILED) {
+		if (user) {
+			trapsignal(p, SIGSEGV, TRAP_CODE);
+			userret(p);
+			return;
+		};
+		panic("Data abort fixup failed in kernel - we're dead\n");
+	};
 
 	/* Now act on the fault type */
 	switch (fault_code) {
