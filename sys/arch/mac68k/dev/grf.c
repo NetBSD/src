@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.12 1994/10/30 13:34:31 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.13 1994/12/03 23:26:25 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,8 +47,6 @@
  * This is the hardware-independent portion of the driver.
  * Hardware access is through the grfdev routines below.
  */
-
-#define DEBUG 1
 
 #include "grf.h"
 #if NGRF > 0
