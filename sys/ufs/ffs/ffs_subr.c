@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.16 2001/08/09 08:15:26 lukem Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.17 2001/10/26 05:56:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -52,7 +52,6 @@ extern u_char *fragtbl[];
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>

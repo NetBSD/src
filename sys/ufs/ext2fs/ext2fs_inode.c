@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.25 2001/10/26 05:56:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -49,7 +49,6 @@
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>

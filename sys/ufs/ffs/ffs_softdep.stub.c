@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.5 2001/09/16 13:51:45 jdolecek Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.6 2001/10/26 05:56:09 lukem Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -36,7 +36,6 @@
 #include <sys/param.h>
 #include <sys/vnode.h>
 #include <sys/systm.h>
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
