@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.19 1999/03/24 05:51:36 mrg Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.19.2.1 1999/04/12 23:20:09 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -77,8 +77,12 @@
  * This belongs in types.h, but breaks too many existing programs.
  */
 typedef int	boolean_t;
+#ifndef TRUE
 #define	TRUE	1
+#endif
+#ifndef FALSE
 #define	FALSE	0
+#endif
 
 /*
  *	The machine independent pages are refered to as PAGES.  A page
