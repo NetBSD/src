@@ -1,4 +1,4 @@
-/*	$NetBSD: merge.c,v 1.3 1995/12/28 08:52:28 thorpej Exp $	*/
+/*	$NetBSD: merge.c,v 1.4 1997/07/13 20:16:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "from: @(#)merge.c	8.2 (Berkeley) 2/14/94";
 #else
-static char *rcsid = "$NetBSD: merge.c,v 1.3 1995/12/28 08:52:28 thorpej Exp $";
+__RCSID("$NetBSD: merge.c,v 1.4 1997/07/13 20:16:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,8 +65,10 @@ static char *rcsid = "$NetBSD: merge.c,v 1.3 1995/12/28 08:52:28 thorpej Exp $";
 #include <stdlib.h>
 #include <string.h>
 
-static void setup __P((u_char *, u_char *, size_t, size_t, int (*)()));
-static void insertionsort __P((u_char *, size_t, size_t, int (*)()));
+static void setup __P((u_char *, u_char *, size_t, size_t,
+    int (*)(const void *, const void *)));
+static void insertionsort __P((u_char *, size_t, size_t,
+    int (*)(const void *, const void *)));
 
 #define ISIZE sizeof(int)
 #define PSIZE sizeof(u_char *)
@@ -153,7 +156,10 @@ mergesort(base, nmemb, size, cmp)
 	    			sense = 0;
 	    		}
 	    		if (!big) {	/* here i = 0 */
-LINEAR:	    			while ((b += size) < t && cmp(q, b) >sense)
+#if 0
+LINEAR:
+#endif
+				while ((b += size) < t && cmp(q, b) >sense)
 	    				if (++i == 6) {
 	    					big = 1;
 	    					goto EXPONENTIAL;
@@ -174,7 +180,10 @@ EXPONENTIAL:	    		for (i = size; ; i <<= 1)
 	    					goto FASTCASE;
 	    				} else
 	    					b = p;
-SLOWCASE:	    		while (t > b+size) {
+#if 0
+SLOWCASE:
+#endif
+				while (t > b+size) {
 	    				i = (((t - b) / size) >> 1) * size;
 	    				if ((*cmp)(q, p = b + i) <= sense)
 	    					t = p;

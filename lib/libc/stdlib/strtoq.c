@@ -1,3 +1,5 @@
+/*	$NetBSD: strtoq.c,v 1.7 1997/07/13 20:17:01 christos Exp $	*/
+
 /*-
  * Copyright (c) 1992 The Regents of the University of California.
  * All rights reserved.
@@ -31,10 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)strtoq.c	5.1 (Berkeley) 6/26/92";
+#else
+__RCSID("$NetBSD: strtoq.c,v 1.7 1997/07/13 20:17:01 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -49,7 +57,7 @@ static char sccsid[] = "@(#)strtoq.c	5.1 (Berkeley) 6/26/92";
  * alphabets and digits are each contiguous.
  */
 quad_t
-strtoq(nptr, endptr, base)
+_strtoq(nptr, endptr, base)
 	const char *nptr;
 	char **endptr;
 	register int base;
@@ -125,7 +133,7 @@ strtoq(nptr, endptr, base)
 		if (any < 0)
 			continue;
 		if (neg) {
-			if (acc < cutoff || acc == cutoff && c > cutlim) {
+			if (acc < cutoff || (acc == cutoff && c > cutlim)) {
 				any = -1;
 				acc = QUAD_MIN;
 				errno = ERANGE;
@@ -135,7 +143,7 @@ strtoq(nptr, endptr, base)
 				acc -= c;
 			}
 		} else {
-			if (acc > cutoff || acc == cutoff && c > cutlim) {
+			if (acc > cutoff || (acc == cutoff && c > cutlim)) {
 				any = -1;
 				acc = QUAD_MAX;
 				errno = ERANGE;

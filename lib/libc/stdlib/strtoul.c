@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoul.c,v 1.9 1996/07/20 01:00:57 jtc Exp $	*/
+/*	$NetBSD: strtoul.c,v 1.10 1997/07/13 20:17:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Regents of the University of California.
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char *sccsid = "from: @(#)strtoul.c	5.3 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: strtoul.c,v 1.9 1996/07/20 01:00:57 jtc Exp $";
+__RCSID("$NetBSD: strtoul.c,v 1.10 1997/07/13 20:17:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -100,7 +101,7 @@ strtoul(nptr, endptr, base)
 			break;
 		if (any < 0)
 			continue;
-		if (acc > cutoff || acc == cutoff && c > cutlim) {
+		if (acc > cutoff || (acc == cutoff && c > cutlim)) {
 			any = -1;
 			acc = ULONG_MAX;
 			errno = ERANGE;

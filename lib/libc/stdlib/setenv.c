@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.8 1995/12/28 08:52:49 thorpej Exp $	*/
+/*	$NetBSD: setenv.c,v 1.9 1997/07/13 20:16:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -33,16 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char *sccsid = "from: @(#)setenv.c	5.6 (Berkeley) 6/4/91";
 #else
-static char *rcsid = "$NetBSD: setenv.c,v 1.8 1995/12/28 08:52:49 thorpej Exp $";
+__RCSID("$NetBSD: setenv.c,v 1.9 1997/07/13 20:16:56 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 #include <string.h>
+#include "local.h"
 
 /*
  * setenv --
@@ -59,7 +61,6 @@ setenv(name, value, rewrite)
 	static int alloced;			/* if allocated space before */
 	register char *C;
 	int l_value, offset;
-	char *__findenv();
 
 	if (*value == '=')			/* no `=' in value */
 		++value;
@@ -68,7 +69,7 @@ setenv(name, value, rewrite)
 		if (!rewrite)
 			return (0);
 		if (strlen(C) >= l_value) {	/* old larger; copy over */
-			while (*C++ = *value++);
+			while ((*C++ = *value++) != '\0');
 			return (0);
 		}
 	} else {					/* create new slot */
@@ -100,7 +101,7 @@ setenv(name, value, rewrite)
 		return (-1);
 	for (C = environ[offset]; (*C = *name++) && *C != '='; ++C)
 		;
-	for (*C++ = '='; *C++ = *value++; )
+	for (*C++ = '='; (*C++ = *value++) != '\0'; )
 		;
 	return (0);
 }
@@ -116,9 +117,8 @@ unsetenv(name)
 	extern char **environ;
 	register char **P;
 	int offset;
-	char *__findenv();
 
-	while (__findenv(name, &offset))		/* if set multiple times */
+	while (__findenv(name, &offset))	/* if set multiple times */
 		for (P = &environ[offset];; ++P)
 			if (!(*P = *(P + 1)))
 				break;

@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.31 1997/04/23 01:17:59 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.32 1997/07/13 20:16:31 christos Exp $
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/stdlib ${.CURDIR}/stdlib
 
-SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c bsearch.c calloc.c \
+SRCS+=	_strtoq.c _strtouq.c a64l.c abort.c atexit.c atoi.c atof.c atol.c \
+	bsearch.c calloc.c \
 	exit.c getenv.c getopt.c heapsort.c l64a.c malloc.c merge.c \
 	multibyte.c putenv.c qsort.c radixsort.c rand.c rand_r.c random.c \
 	realpath.c \

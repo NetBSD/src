@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.8 1995/12/28 08:52:19 thorpej Exp $	*/
+/*	$NetBSD: getopt.c,v 1.9 1997/07/13 20:16:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "from: @(#)getopt.c	8.2 (Berkeley) 4/2/94";
 #else
-static char *rcsid = "$NetBSD: getopt.c,v 1.8 1995/12/28 08:52:19 thorpej Exp $";
+__RCSID("$NetBSD: getopt.c,v 1.9 1997/07/13 20:16:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

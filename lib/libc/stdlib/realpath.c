@@ -1,4 +1,4 @@
-/*	$NetBSD: realpath.c,v 1.3 1997/01/23 14:02:19 mrg Exp $	*/
+/*	$NetBSD: realpath.c,v 1.4 1997/07/13 20:16:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "from: @(#)realpath.c	8.1 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: realpath.c,v 1.3 1997/01/23 14:02:19 mrg Exp $";
+__RCSID("$NetBSD: realpath.c,v 1.4 1997/07/13 20:16:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: putenv.c,v 1.5 1995/12/28 08:52:31 thorpej Exp $	*/
+/*	$NetBSD: putenv.c,v 1.6 1997/07/13 20:16:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char *sccsid = "from: @(#)putenv.c	5.4 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: putenv.c,v 1.5 1995/12/28 08:52:31 thorpej Exp $";
+__RCSID("$NetBSD: putenv.c,v 1.6 1997/07/13 20:16:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: abort.c,v 1.8 1997/05/19 02:18:14 kleink Exp $	*/
+/*	$NetBSD: abort.c,v 1.9 1997/07/13 20:16:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1985 Regents of the University of California.
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char *sccsid = "from: @(#)abort.c	5.11 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: abort.c,v 1.8 1997/05/19 02:18:14 kleink Exp $";
+__RCSID("$NetBSD: abort.c,v 1.9 1997/07/13 20:16:33 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,7 +46,7 @@ static char *rcsid = "$NetBSD: abort.c,v 1.8 1997/05/19 02:18:14 kleink Exp $";
 #include <stdlib.h>
 #include <unistd.h>
 
-void (*__cleanup)();
+extern void (*__cleanup) __P((void));
 static int aborting = 0;
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.h,v 1.4 1995/12/28 08:52:03 thorpej Exp $	*/
+/*	$NetBSD: atexit.h,v 1.5 1997/07/13 20:16:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 struct atexit {
 	struct atexit *next;		/* next in list */
 	int ind;			/* next index in this table */
-	void (*fns[ATEXIT_SIZE])();	/* the table itself */
+	void (*fns[ATEXIT_SIZE]) __P((void));	/* the table itself */
 };
 
 extern struct atexit *__atexit;		/* points to head of LIFO stack */

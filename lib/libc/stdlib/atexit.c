@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.6 1995/12/28 08:52:02 thorpej Exp $	*/
+/*	$NetBSD: atexit.c,v 1.7 1997/07/13 20:16:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char *sccsid = "from: @(#)atexit.c	5.2 (Berkeley) 11/14/90";
 #else
-static char *rcsid = "$NetBSD: atexit.c,v 1.6 1995/12/28 08:52:02 thorpej Exp $";
+__RCSID("$NetBSD: atexit.c,v 1.7 1997/07/13 20:16:35 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +55,7 @@ struct atexit *__atexit;
  */
 int
 atexit(fn)
-	void (*fn)();
+	void (*fn) __P((void));
 {
 	static struct atexit __atexit0;	/* one guaranteed table */
 	register struct atexit *p;

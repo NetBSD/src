@@ -1,4 +1,4 @@
-/*	$NetBSD: atof.c,v 1.7 1995/12/28 08:52:05 thorpej Exp $	*/
+/*	$NetBSD: atof.c,v 1.8 1997/07/13 20:16:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char *sccsid = "from: @(#)atof.c	5.3 (Berkeley) 1/8/93";
 #else
-static char *rcsid = "$NetBSD: atof.c,v 1.7 1995/12/28 08:52:05 thorpej Exp $";
+__RCSID("$NetBSD: atof.c,v 1.8 1997/07/13 20:16:36 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

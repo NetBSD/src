@@ -1,4 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.7 1997/06/19 07:41:33 mikel Exp $	*/
+/*	$NetBSD: qsort.c,v 1.8 1997/07/13 20:16:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,18 +33,20 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: qsort.c,v 1.7 1997/06/19 07:41:33 mikel Exp $";
+__RCSID("$NetBSD: qsort.c,v 1.8 1997/07/13 20:16:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <stdlib.h>
 
-static __inline char	*med3 __P((char *, char *, char *, int (*)()));
+static __inline char	*med3 __P((char *, char *, char *,
+    int (*)(const void *, const void *)));
 static __inline void	 swapfunc __P((char *, char *, int, int));
 
 #define min(a, b)	(a) < (b) ? a : b
@@ -90,7 +92,7 @@ swapfunc(a, b, n, swaptype)
 static __inline char *
 med3(a, b, c, cmp)
 	char *a, *b, *c;
-	int (*cmp)();
+	int (*cmp) __P((const void *, const void *));
 {
 	return cmp(a, b) < 0 ?
 	       (cmp(b, c) < 0 ? b : (cmp(a, c) < 0 ? c : a ))
@@ -101,7 +103,7 @@ void
 qsort(a, n, es, cmp)
 	void *a;
 	size_t n, es;
-	int (*cmp)();
+	int (*cmp) __P((const void *, const void *));
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
 	int d, r, swaptype, swap_cnt;
