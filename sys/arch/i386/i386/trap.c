@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.5 1993/10/13 02:22:01 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.6 1993/10/15 03:22:06 mycroft Exp $
  */
 
 /*
@@ -337,10 +337,10 @@ copyfault:
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 			va = trunc_page(vtopte(va));
-			/* for page table, increment wiring
-			   as long as not a page table fault as well */
+			/* for page table, increment wiring as long as
+			   not a page table fault as well */
 			if (!v && map != kernel_map)
-			  vm_map_pageable(map, va, round_page(va+1), FALSE);
+				vm_map_pageable(map, va, round_page(va+1), FALSE);
 			if (type == T_PAGEFLT)
 				return;
 			goto out;
@@ -385,8 +385,10 @@ nogo:
 			return;
 #endif
 		/* machine/parity/power fail/"kitchen sink" faults */
-		if(isa_nmi(code) == 0) return;
-		else goto we_re_toast;
+		if (isa_nmi() == 0)
+			return;
+		else
+			goto we_re_toast;
 #endif
 	}
 
