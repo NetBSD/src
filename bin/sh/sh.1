@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.63 2003/04/12 16:39:19 zuntum Exp $
+.\"	$NetBSD: sh.1,v 1.64 2003/05/02 09:00:14 gmcgarry Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -289,12 +289,17 @@ Enable the built-in
 command line editor (disables
 .Fl E
 if it has been set).
+(See the
+.Sx Command Line Editing
+section below.)
 .It Fl E Em emacs
-Enable the built-in
-.Xr emacs 1
+Enable the built-in emacs style
 command line editor (disables
 .Fl V
 if it has been set).
+(See the
+.Sx Command Line Editing
+section below.)
 .It Fl b Em notify
 Enable asynchronous notification of background job completion.
 (UNIMPLEMENTED for 4.4alpha)
@@ -1722,21 +1727,38 @@ and the command history (see
 .Ic fc
 in
 .Sx Builtins )
-can be edited using vi-mode command-line editing.
-This mode uses commands, described below,
-similar to a subset of those described in the vi man page.
+can be edited using emacs-mode or vi-mode command-line editing.
+The command
+.Ql set -o emacs
+enables emacs-mode editing.
 The command
 .Ql set -o vi
-enables vi-mode editing and place sh into vi insert mode.
+enables vi-mode editing and places sh into vi insert mode.
+(See the
+.Sx Argument List Processing
+section above.) 
+.Pp
+The vi mode uses commands similar to a subset of those described in the
+.Xr vi 1
+man page.
 With vi-mode
 enabled, sh can be switched between insert mode and command mode.
-The editor is not described in full here, but will be in a later document.
 It's similar to vi: typing
 .Aq ESC
 will throw you into command VI command mode.
 Hitting
 .Aq return
 while in command mode will pass the line to the shell.
+.Pp
+The emacs mode uses commands similar to a subset available in
+the emacs editor.
+With emacs-mode enabled, special keys can be used to modify the text
+in the buffer using the control key.
+.Pp
+.Nm
+uses the
+.Xr editline 3
+library.
 .Sh EXIT STATUS
 Errors that are detected by the shell, such as a syntax error, will cause the
 shell to exit with a non-zero exit status.
@@ -1830,8 +1852,10 @@ The number of lines in the history buffer for the shell.
 .Xr login 1 ,
 .Xr printf 1 ,
 .Xr test 1 ,
+.Xr editline 3 ,
 .Xr getopt 3 ,
 .Xr passwd 5 ,
+.Xr editrc 5 ,
 .\" .Xr profile 4 ,
 .Xr environ 7 ,
 .Xr nls 7 ,
