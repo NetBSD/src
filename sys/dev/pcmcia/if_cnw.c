@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.7 2000/02/07 09:40:37 augustss Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.8 2000/02/26 05:34:43 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -504,8 +504,8 @@ cnw_attach(parent, self, aux)
 		printf(": can't allocate memory\n");
 		goto fail;
 	}
-	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_MEM_COMMON, CNW_MEM_ADDR,
-	    CNW_MEM_SIZE, &sc->sc_pcmemh, &sc->sc_memoff,
+	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_WIDTH_MEM8|PCMCIA_MEM_COMMON,
+	    CNW_MEM_ADDR, CNW_MEM_SIZE, &sc->sc_pcmemh, &sc->sc_memoff,
 	    &sc->sc_memwin) != 0) {
 		printf(": can't map memory\n");
 		pcmcia_mem_free(sc->sc_pf, &sc->sc_pcmemh);
