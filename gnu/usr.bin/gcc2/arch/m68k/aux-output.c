@@ -18,7 +18,7 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: aux-output.c,v 1.1 1993/11/25 01:25:57 paulus Exp $";
+static char rcsid[] = "$Id: aux-output.c,v 1.2 1994/03/03 10:35:50 pk Exp $";
 #endif /* not lint */
 
 /* Some output-actions in m68k.md need these.  */
@@ -55,19 +55,6 @@ static rtx find_addr_reg ();
 rtx legitimize_pic_address ();
 
 
-/* Emit a (use pic_offset_table_rtx) if we used PIC relocation in the 
-   function at any time during the compilation process.  In the future 
-   we should try and eliminate the USE if we can easily determine that 
-   all PIC references were deleted from the current function.  That would 
-   save an address register */
-   
-finalize_pic ()
-{
-  if (flag_pic && current_function_uses_pic_offset_table)
-    emit_insn (gen_rtx (USE, VOIDmode, pic_offset_table_rtx));
-}
-
-
 /* This function generates the assembly code for function entry.
    STREAM is a stdio stream to output the code to.
    SIZE is an int: how many units of temporary storage to allocate.
@@ -809,7 +796,15 @@ legitimize_pic_address (orig, mode, reg)
       pic_ref = gen_rtx (MEM, Pmode,
 			 gen_rtx (PLUS, Pmode,
 				  pic_offset_table_rtx, orig));
+ 
+      /* We could have a function which didn't use the GOT after RTL
+ 	 generation, but because of some action from a later pass
+ 	 (reload in particular) uses the GOT now.  So emit both a USE
+ 	 insn and set regs_ever_live for the GOT register.  */
+
       current_function_uses_pic_offset_table = 1;
+      emit_insn (gen_rtx (USE, VOIDmode, pic_offset_table_rtx));
+      regs_ever_live[REGNO (pic_offset_table_rtx)] = 1;
       RTX_UNCHANGING_P (pic_ref) = 1;
       emit_move_insn (reg, pic_ref);
       return reg;
