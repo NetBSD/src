@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.3 1998/01/12 18:18:06 thorpej Exp $	*/
+/*	$NetBSD: joy.c,v 1.4 1998/02/02 05:54:22 sakamoto Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -52,8 +52,9 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 
+#include <dev/ic/i8253reg.h>
+
 #include <bebox/isa/joyvar.h>
-#include <bebox/isa/timerreg.h>		/* XXX XXX XXX */
 
 
 /*
@@ -225,9 +226,9 @@ get_tick()
 {
 	int low, high;
 
-	isa_outb(TIMER_MODE, TIMER_SEL0);
-	low = isa_inb(TIMER_CNTR0);
-	high = isa_inb(TIMER_CNTR0);
+	isa_outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0);
+	low = isa_inb(IO_TIMER1 + TIMER_CNTR0);
+	high = isa_inb(IO_TIMER1 + TIMER_CNTR0);
 
 	return (high << 8) | low;
 }
