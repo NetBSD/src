@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.56 1999/02/17 23:05:29 mycroft Exp $	*/
+/*	$NetBSD: wss.c,v 1.57 1999/02/18 17:27:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -93,8 +93,8 @@ struct audio_hw_if wss_hw_if = {
 	NULL,
 	NULL,
 	NULL,
-	ad1848_halt_out,
-	ad1848_halt_in,
+	ad1848_isa_halt_output,
+	ad1848_isa_halt_input,
 	NULL,
 	wss_getdev,
 	NULL,
