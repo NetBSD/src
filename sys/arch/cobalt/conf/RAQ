@@ -1,4 +1,4 @@
-#	$NetBSD: RAQ,v 1.5 2000/04/27 10:52:43 soren Exp $
+#	$NetBSD: RAQ,v 1.6 2000/05/29 15:44:22 soren Exp $
 
 include		"arch/cobalt/conf/std.cobalt"
 
@@ -14,7 +14,7 @@ options 	DDB_HISTORY_SIZE=100
 options 	DIAGNOSTIC
 #makeoptions 	DEBUG="-g"
 
-#options 	COMPAT_LINUX
+#options 	COMPAT_ULTRIX
 #options 	EXEC_ECOFF
 
 file-system	FFS
