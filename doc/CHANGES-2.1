@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.24 2005/03/05 18:18:18 he Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.25 2005/03/16 11:52:13 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -668,3 +668,17 @@ sys/arch/amiga/conf/MDINSTALL			1.18
 
 	Remove use of ``idesc'', use ``wdc'' instead.
 	[is, ticket #1011]
+
+sys/kern/kern_descrip.c				1.128 (via patch)
+
+	Avoid endless loop in F_CLOSEM fnctl which could be abused for a
+	local DoS. This fixes PR kern/28929.
+	[cube, ticket #1089]
+
+sys/arch/amd64/amd64/copy.S			1.2
+sys/arch/i386/i386/locore.S			1.33
+
+	Check the passed in address as well as determining the maximum length
+	using VM_MAXUSER_ADDRESS in copyinstr and copyoutstr.
+	[fvdl, ticket #1317]
+
