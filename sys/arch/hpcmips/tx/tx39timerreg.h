@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39timerreg.h,v 1.1 1999/11/20 19:56:37 uch Exp $ */
+/*	$NetBSD: tx39timerreg.h,v 1.2 1999/12/22 15:35:35 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -30,11 +30,28 @@
  */
 
 #define TX39_TIMERRTCHI_REG	0x140
-#define TX39_TIMERRTCLO_REG	0x140
+#define TX39_TIMERRTCLO_REG	0x144
 #define TX39_TIMERALARMHI_REG	0x148
 #define TX39_TIMERALARMLO_REG	0x14C
 #define TX39_TIMERCONTROL_REG	0x150
 #define	TX39_TIMERPERIODIC_REG	0x154
+
+/* Periodic timer (1.15MHz) */
+#ifdef TX391X
+/*
+ * TX3912 base clock is 36.864MHz
+ */
+#define TX39_TIMERCLK		1152000
+#endif
+#ifdef TX392X 
+/*
+ * TX3922 base clock seems to be 32.25MHz (Telios)
+ */
+#define TX39_TIMERCLK		1007812
+#endif
+
+/* Real timer clock (32.768kHz) */
+#define TX39_RTCLOCK		32768
 
 /*
  *	RTC Register High/Low
@@ -50,7 +67,7 @@
 
 #define TX39_TIMERRTCHI(cr) \
 	(((cr) >> TX39_TIMERRTCHI_SHIFT) & \
-	TX39_TIMERRTCLO_MASK)
+	TX39_TIMERRTCHI_MASK)
 
 /*
  *	Alarm Register High/Low
@@ -83,9 +100,9 @@
 #define TX39_TIMERCONTROL_FREEZERTC	0x00000040
 #define TX39_TIMERCONTROL_FREEZETIMER	0x00000020
 #define TX39_TIMERCONTROL_ENPERTIMER	0x00000010
-#define TX39_TIMERCONTROL_RTCCLR	0x00000008	/* Don't set */
+#define TX39_TIMERCONTROL_RTCCLR	0x00000008
 #define TX39_TIMERCONTROL_TESTCMS	0x00000004	/* Don't set */
-#define TX39_TIMERCONTROL_ENTESTCLK	0x00000002
+#define TX39_TIMERCONTROL_ENTESTCLK	0x00000002	/* Don't set */
 #define TX39_TIMERCONTROL_ENRTCTST	0x00000001
 
 /*
@@ -106,5 +123,8 @@
 #define TX39_TIMERPERIODIC_PERVAL_SET(cr, val) \
 	((cr) | (((val) << TX39_TIMERPERIODIC_PERVAL_SHIFT) & \
 	(TX39_TIMERPERIODIC_PERVAL_MASK << TX39_TIMERPERIODIC_PERVAL_SHIFT)))
+#define TX39_TIMERPERIODIC_PERVAL_CLR(cr) ((cr) &= \
+	 ~(TX39_TIMERPERIODIC_PERVAL_MASK << TX39_TIMERPERIODIC_PERVAL_SHIFT))
 #define TX39_TIMERPERIODIC_INTRRATE(val) \
-	((val) + 1)/1150000 /* unit:Hz */
+	((val) + 1)/TX39_TIMERCLK /* unit:Hz */
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39var.h,v 1.1 1999/11/20 19:56:39 uch Exp $ */
+/*	$NetBSD: tx39var.h,v 1.2 1999/12/22 15:35:35 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  */
-#define TX39_PREFER_FUNCTION
+
 struct tx_chipset_tag {
 	void *tc_intrt;  /* interrupt tag */
 	void *tc_powert; /* power/clock tag */
@@ -38,17 +38,23 @@ typedef u_int32_t txreg_t;
  *	TX39 Internal Function Register access
  */
 #define TX39_SYSADDR_CONFIG_REG_KSEG1	0xb0c00000
+
 #ifdef TX39_PREFER_FUNCTION
+
 tx_chipset_tag_t tx_conf_get_tag __P((void));
 u_int32_t	 tx_conf_read __P((tx_chipset_tag_t, int));
 void		 tx_conf_write __P((tx_chipset_tag_t, int, txreg_t));
+
 #else /* TX39_PREFER_FUNCTION */
+
 extern struct tx_chipset_tag tx_chipset;
 #define tx_conf_read(t, reg) ((void)(t), \
-	(*((txreg_t*)(TX39_SYSADDR_CONFIG_REG_KSEG1 + (reg)))))
+	(*((volatile txreg_t*)(TX39_SYSADDR_CONFIG_REG_KSEG1 + (reg)))))
 #define tx_conf_write(t, reg, val) ((void)(t), \
-	(*((txreg_t*)(TX39_SYSADDR_CONFIG_REG_KSEG1 + (reg))) = (val)))
+	(*((volatile txreg_t*)(TX39_SYSADDR_CONFIG_REG_KSEG1 + (reg))) \
+	= (val)))
 #define tx_conf_get_tag() (&tx_chipset)
+
 #endif /* TX39_PREFER_FUNCTION */
 
 /*
