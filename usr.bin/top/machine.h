@@ -1,4 +1,4 @@
-/*	$NetBSD: machine.h,v 1.5 2001/05/22 15:38:22 christos Exp $	*/
+/*	$NetBSD: machine.h,v 1.6 2002/03/23 01:28:10 thorpej Exp $	*/
 
 /*
  *  This file defines the interface between top and the machine-dependent
@@ -14,6 +14,7 @@ struct statics
     char **procstate_names;
     char **cpustate_names;
     char **memory_names;
+    char **swap_names;
 #ifdef ORDER
     char **order_names;
 #endif
@@ -38,6 +39,7 @@ struct system_info
     int    *procstates;
     int    *cpustates;
     int    *memory;
+    int    *swap;
 };
 
 /* cpu_states is an array of percentages * 10.  For example, 

@@ -1,4 +1,4 @@
-/*	$NetBSD: top.h,v 1.3 1999/04/12 06:02:26 ross Exp $	*/
+/*	$NetBSD: top.h,v 1.4 2002/03/23 01:28:11 thorpej Exp $	*/
 
 /*
  *  Top - a top users display for Berkeley Unix
@@ -10,7 +10,7 @@
 #define VERSION		3
 
 /* Number of lines of header information on the standard screen */
-#define Header_lines	6
+#define Header_lines	7
 
 /* Maximum number of columns allowed for display */
 #define MAX_COLS	128

@@ -1,4 +1,4 @@
-/*	$NetBSD: display.h,v 1.4 2000/10/11 14:46:19 is Exp $	*/
+/*	$NetBSD: display.h,v 1.5 2002/03/23 01:28:10 thorpej Exp $	*/
 
 /* constants needed for display.c */
 
@@ -21,6 +21,8 @@ void u_cpustates __P((int *));
 void z_cpustates __P((void));
 void i_memory __P((int *));
 void u_memory __P((int *));
+void i_swap __P((int *));
+void u_swap __P((int *));
 void i_message __P((void));
 void u_message __P((void));
 void i_header __P((char *));
