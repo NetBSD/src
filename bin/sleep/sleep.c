@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.16 1998/11/04 20:13:03 christos Exp $	*/
+/* $NetBSD: sleep.c,v 1.17 2001/09/16 21:18:33 wiz Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,34 +43,32 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.16 1998/11/04 20:13:03 christos Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.17 2001/09/16 21:18:33 wiz Exp $");
 #endif
 #endif /* not lint */
 
-#include <time.h>
 #include <ctype.h>
+#include <locale.h>
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
-#include <locale.h>
 
-void usage __P((void));
-void alarmhandle __P((int));
-int  main __P((int, char *[]));
+void alarmhandle(int);
+void usage(void);
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *arg, *temp;
-	double val, ival, fval;
+	double fval, ival, val;
 	struct timespec ntime;
-	int fracflag;
-	int ch;
+	int ch, fracflag;
 
+	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
 	(void)signal(SIGALRM, alarmhandle);
@@ -128,17 +126,16 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
-	(void)fputs("usage: sleep seconds\n", stderr);
+	(void)fprintf(stderr, "usage: %s seconds\n", getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
 
 /* ARGSUSED */
 void
-alarmhandle(i)
-	int i;
+alarmhandle(int i)
 {
 	_exit(0);
 	/* NOTREACHED */
