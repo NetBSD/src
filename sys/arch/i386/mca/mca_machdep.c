@@ -1,8 +1,12 @@
-/*	$NetBSD: mca_machdep.c,v 1.2 2000/06/04 19:14:47 cgd Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.3 2000/07/09 10:35:12 jdolecek Exp $	*/
 
-/*
+/*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
- * Copyright (c) 1996-1999 Scott D. Telford. All rights reserved.
+ * Copyright (c) 1996-1999 Scott D. Telford.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Scott Telford <s.telford@ed.ac.uk>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,19 +16,25 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -73,24 +83,6 @@ struct i386_bus_dma_tag mca_bus_dma_tag = {
 /* setup by mca_busprobe() */
 int MCA_system = 1; /* XXX force MCA for now */
 int bios_features = 1;
-
-/* System Configuration Block */
-struct sys_config {
-	u_int16_t	count;
-	u_int8_t	model;
-	u_int8_t	submodel;
-	u_int8_t	bios_rev;
-	u_int8_t	feature;
-#define FEATURE_RESV	0x01	/* Reserved				*/
-#define FEATURE_MCABUS	0x02	/* MicroChannel Architecture		*/
-#define FEATURE_EBDA	0x04	/* Extended BIOS data area allocated	*/
-#define FEATURE_WAITEV	0x08	/* Wait for external event is supported	*/
-#define FEATURE_KBDINT	0x10	/* Keyboard intercept called by Int 09h	*/
-#define FEATURE_RTC	0x20	/* Real-time clock present		*/
-#define FEATURE_IC2	0x40	/* Second interrupt chip present	*/
-#define FEATURE_DMA3	0x80	/* DMA channel 3 used by hard disk BIOS	*/
-	u_int8_t	pad[3];
-} __attribute__ ((packed));
 
 void
 mca_attach_hook(parent, self, mba)
@@ -237,6 +229,8 @@ mca_busprobe()
 	 */
 
 #if notyet
+	char buf[10];
+
 	/*
 	 * Following has been taken from FreeBSD, for now just for
 	 * documentation purposes
@@ -265,16 +259,18 @@ mca_busprobe()
 		scp->model, scp->submodel, scp->bios_rev);
 
 #ifdef MCAVERBOSE
-	printf("BIOS SDT: features 0x%b\n", scp->feature,
-			"\20"
-			"\01RESV"
-			"\02MCABUS"
-			"\03EBDA"
-			"\04WAITEV"
-			"\05KBDINT"
-			"\06RTC"
-			"\07IC2"
-			"\08DMA3\n");
+	bitmask_snprintf(scp->feature,
+		"\20"
+		"\01RESV"
+		"\02MCABUS"
+		"\03EBDA"
+		"\04WAITEV"
+		"\05KBDINT"
+		"\06RTC"
+		"\07IC2",
+		"\08DMA3\n",
+		buf, sizeof(buf));
+	printf("BIOS SDT: features 0x%s\n", buf);
 #endif
 
 	bios_features = scp->feature;
