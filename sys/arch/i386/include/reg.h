@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)reg.h	5.5 (Berkeley) 1/18/91
- *	$Id: reg.h,v 1.5 1993/09/16 03:24:49 brezak Exp $
+ *	reg.h,v 1.4 1993/09/05 03:54:15 sef Exp
  */
 
 /*
@@ -51,7 +51,7 @@
 #define	tEDI	(2)
 #define	tESI	(3)
 #define	tEBP	(4)
-
+#define tISP	(5)
 #define	tEBX	(6)
 #define	tEDX	(7)
 #define	tECX	(8)
