@@ -1,5 +1,6 @@
 #	@(#)Makefile	5.11 (Berkeley) 5/21/91
 
+TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
 
 NOOBJ=	oobj
