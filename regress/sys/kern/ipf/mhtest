@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+# $NetBSD: mhtest,v 1.2 2002/05/13 06:34:15 martti Exp $
+#
 # multiple rules at the same time
 
 if [ -f /usr/ucb/touch ] ; then
@@ -13,21 +16,23 @@ else
 	fi
 fi
 echo "$1...";
+TESTDIR=$2
+[ -z "$2" ] && TESTDIR=${PWD}
 
 /bin/cp /dev/null results/$1
 
-../ipftest -br regress/$1 -Hi input/$1 > results/$1
+ipftest -br ${TESTDIR}/regress/$1 -Hi ${TESTDIR}/input/$1 > results/$1
 if [ $? -ne 0 ] ; then
 	exit 1
 fi
 echo "--------" >> results/$1
 
-cmp expected/$1 results/$1
+cmp ${TESTDIR}/expected/$1 results/$1
 status=$?
 if [ $status -ne 0 ] ; then
 	exit $status
 fi
-cmp expected/$1 results/$1
+cmp ${TESTDIR}/expected/$1 results/$1
 status=$?
 if [ $status -ne 0 ] ; then
 	exit $status
