@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.1.2.2 2002/11/29 15:40:50 uwe Exp $ */
+/*	$NetBSD: _lwp.c,v 1.1.2.3 2002/12/18 17:39:59 skrll Exp $ */
 
 #include <sys/types.h>
 #include <ucontext.h>
@@ -14,7 +14,7 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *), void *arg,
 	unsigned long *sp;
 
 	getcontext(u);
-	gr = u->uc_mcontext.__greg;
+	gr = u->uc_mcontext.__gregs;
 
 	u->uc_link = NULL;
 
