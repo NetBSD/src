@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.14 2001/07/22 15:16:18 itojun Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.15 2003/05/05 13:56:14 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_network.c,v 1.14 2001/07/22 15:16:18 itojun Exp $");
+__RCSID("$NetBSD: inet_network.c,v 1.15 2003/05/05 13:56:14 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,7 +59,7 @@ __weak_alias(inet_network,_inet_network)
  * The library routines call this routine to interpret
  * network numbers.
  */
-u_long
+in_addr_t
 inet_network(cp)
 	register const char *cp;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.h,v 1.14 2003/04/29 11:58:15 bjh21 Exp $	*/
+/*	$NetBSD: inet.h,v 1.15 2003/05/05 13:56:13 bjh21 Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -78,11 +78,11 @@ typedef __socklen_t	socklen_t;
 #endif /* _POSIX_C_SOURCE >= 200112 || XOPEN_SOURCE >= 520 || _NETBSD_SOURCE */
 
 __BEGIN_DECLS
-unsigned long	 inet_addr __P((const char *));
-unsigned long	 inet_lnaof __P((struct in_addr));
-struct in_addr	 inet_makeaddr __P((u_long , u_long));
-unsigned long	 inet_netof __P((struct in_addr));
-unsigned long	 inet_network __P((const char *));
+in_addr_t	 inet_addr __P((const char *));
+in_addr_t	 inet_lnaof __P((struct in_addr));
+struct in_addr	 inet_makeaddr __P((in_addr_t, in_addr_t));
+in_addr_t	 inet_netof __P((struct in_addr));
+in_addr_t	 inet_network __P((const char *));
 char		*inet_ntoa __P((struct in_addr));
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
     defined(_NETBSD_SOURCE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.17 2002/11/11 18:04:18 thorpej Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.18 2003/05/05 13:56:14 bjh21 Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.17 2002/11/11 18:04:18 thorpej Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.18 2003/05/05 13:56:14 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -317,7 +317,7 @@ inet_pton6(src, dst)
  * Ascii internet address interpretation routine.
  * The value returned is in network order.
  */
-u_long
+in_addr_t
 inet_addr(cp)
 	register const char *cp;
 {

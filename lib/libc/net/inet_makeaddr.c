@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_makeaddr.c,v 1.10 2002/02/14 22:10:56 augustss Exp $	*/
+/*	$NetBSD: inet_makeaddr.c,v 1.11 2003/05/05 13:56:14 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_makeaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_makeaddr.c,v 1.10 2002/02/14 22:10:56 augustss Exp $");
+__RCSID("$NetBSD: inet_makeaddr.c,v 1.11 2003/05/05 13:56:14 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ __weak_alias(inet_makeaddr,_inet_makeaddr)
  */
 struct in_addr
 inet_makeaddr(net, host)
-	u_long net, host;
+	in_addr_t net, host;
 {
 	in_addr_t anet = (in_addr_t)net;
 	in_addr_t ahost = (in_addr_t)host;

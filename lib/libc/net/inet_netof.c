@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_netof.c,v 1.7 2000/01/22 22:19:15 mycroft Exp $	*/
+/*	$NetBSD: inet_netof.c,v 1.8 2003/05/05 13:56:14 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_netof.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_netof.c,v 1.7 2000/01/22 22:19:15 mycroft Exp $");
+__RCSID("$NetBSD: inet_netof.c,v 1.8 2003/05/05 13:56:14 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@ __weak_alias(inet_netof,_inet_netof)
  * Return the network number from an internet
  * address; handles class a/b/c network #'s.
  */
-u_long
+in_addr_t
 inet_netof(in)
 	struct in_addr in;
 {
