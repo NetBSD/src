@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.50 1996/10/13 03:21:48 christos Exp $	*/
+/*	$NetBSD: via.c,v 1.51 1996/10/16 03:55:21 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -159,12 +159,14 @@ VIA_initialize()
 		via2itab[1] = via2_nubus_intr;
 
 	} else {	/* RBV */
+#ifdef DISABLE_EXT_CACHE
 		if (current_mac_model->class == MACH_CLASSIIci) {
 			/*
 			 * Disable cache card. (p. 174--GtMFH)
 			 */
 			via2_reg(rBufB) |= DB2O_CEnable;
 		}
+#endif
 		real_via2_intr = rbv_intr;
 		via2itab[1] = rbv_nubus_intr;
 		add_nubus_intr(0, slot_ignore, NULL);
