@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.15 1998/02/10 14:09:14 mrg Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.16 1998/04/07 13:32:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -386,7 +386,7 @@ typedef mblk_t PDQ_OS_DATABUF_T;
 #endif
 
 extern void pdq_os_addr_fill(pdq_t *pdq, pdq_lanaddr_t *addrs, size_t numaddrs);
-extern void pdq_os_receive_pdu(pdq_t *, PDQ_OS_DATABUF_T *pdu, size_t pdulen);
+extern void pdq_os_receive_pdu(pdq_t *, PDQ_OS_DATABUF_T *pdu, size_t pdulen, int drop);
 extern void pdq_os_restart_transmitter(pdq_t *pdq);
 extern void pdq_os_transmit_done(pdq_t *pdq, PDQ_OS_DATABUF_T *pdu);
 #if !defined(pdq_os_update_status)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqreg.h,v 1.7 1997/03/24 00:35:15 thorpej Exp $	*/
+/*	$NetBSD: pdqreg.h,v 1.8 1998/04/07 13:32:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -310,19 +310,36 @@ typedef struct {
 
 typedef union {
     pdq_uint32_t rxs_status;
-    pdq_uint32_t PDQ_BITFIELD12(rxs_len : 13,
-				rxs_rcc_ss : 2,
-				rxs_rcc_dd : 2,
-				rxs_rcc_reason : 3,
-				rxs_rcc_badcrc : 1,
-				rxs_rcc_badpdu : 1,
-				rxs_fsb__reserved : 2,
-				rxs_fsb_c : 1,
-				rxs_fsb_a : 1,
-				rxs_fsb_e : 1,
-				rxs_fsc : 3,
-				rxs__reserved : 2);
+    struct {
+	pdq_uint32_t PDQ_BITFIELD12(st_len : 13,
+				    st_rcc_ss : 2,
+				    st_rcc_dd : 2,
+				    st_rcc_reason : 3,
+				    st_rcc_badcrc : 1,
+				    st_rcc_badpdu : 1,
+				    st_fsb__reserved : 2,
+				    st_fsb_c : 1,
+				    st_fsb_a : 1,
+				    st_fsb_e : 1,
+				    st_fsc : 3,
+				    st__reserved : 2);
+    } rxs_st;
 } pdq_rxstatus_t;
+#define rxs_len			rxs_st.st_len
+#define rxs_rcc_ss		rxs_st.st_rcc_ss
+#define rxs_rcc_dd		rxs_st.st_rcc_dd
+#define rxs_rcc_reason		rxs_st.st_rcc_reason
+#define rxs_rcc_badcrc		rxs_st.st_rcc_badcrc
+#define rxs_rcc_badpdu		rxs_st.st_rcc_badpdu
+#define rxs_fsb_c		rxs_st.st_fsb_c
+#define rxs_fsb_a		rxs_st.st_fsb_a
+#define rxs_fsb_e		rxs_st.st_fsb_e
+#define rxs_fsc			rxs_st.st_fsc
+
+#define	PDQ_RXS_RCC_DD_NO_MATCH		0x00
+#define	PDQ_RXS_RCC_DD_PROMISC_MATCH	0x01
+#define	PDQ_RXS_RCC_DD_CAM_MATCH	0x02
+#define	PDQ_RXS_RCC_DD_MLA_MATCH	0x03
 
 typedef struct {
     pdq_uint32_t PDQ_BITFIELD5(txd_pa_hi : 16,
