@@ -1,4 +1,4 @@
-/*	$KAME: eaytest.c,v 1.19 2000/12/17 23:04:19 sakane Exp $	*/
+/*	$KAME: eaytest.c,v 1.20 2001/04/03 15:51:55 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -249,7 +249,7 @@ certtest()
 		/* print text */
 		str = eay_get_x509text(&c);
 		printf("%s", str);
-		free(str);
+		racoon_free(str);
 
 		/* print ASN.1 of subject name */
 		vstr = eay_get_x509asn1subjectname(&c);
@@ -271,7 +271,7 @@ certtest()
 			if (!str)
 				break;
 			printf("SubjectAltName: %d: %s\n", type, str);
-			free(str);
+			racoon_free(str);
 		}
 	    }
 

@@ -1,4 +1,4 @@
-/*	$KAME: schedule.c,v 1.14 2001/03/06 20:41:01 thorpej Exp $	*/
+/*	$KAME: schedule.c,v 1.15 2001/04/03 15:51:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,6 +41,7 @@
 
 #include "schedule.h"
 #include "var.h"
+#include "gcmalloc.h"
 
 #define FIXY2038PROBLEM
 
@@ -91,7 +92,7 @@ schedular()
 	   next_schedule:
 		next = TAILQ_NEXT(p, chain);
 		TAILQ_REMOVE(&sctree, p, chain);
-		free(p);
+		racoon_free(p);
 	}
 
 	p = TAILQ_FIRST(&sctree);
@@ -119,7 +120,7 @@ sched_new(tick, func, param)
 	static long id = 1;
 	struct sched *new;
 
-	new = (struct sched *)malloc(sizeof(*new));
+	new = (struct sched *)racoon_malloc(sizeof(*new));
 	if (new == NULL)
 		return NULL;
 
@@ -228,7 +229,7 @@ sched_dump(buf, len)
 
 	*len = cnt * sizeof(*dst);
 
-	new = malloc(*len);
+	new = racoon_malloc(*len);
 	if (new == NULL)
 		return -1;
 	dst = (struct scheddump *)new;
@@ -277,7 +278,7 @@ test(tick)
 	int *tick;
 {
 	printf("execute %d\n", *tick);
-	free(tick);
+	racoon_free(tick);
 }
 
 void
@@ -298,11 +299,11 @@ getstdin()
 			if (p->last)
 				break;
 		}
-		free(scbuf);
+		racoon_free(scbuf);
 		return;
 	}
 
-	tick = (int *)malloc(sizeof(*tick));
+	tick = (int *)racoon_malloc(sizeof(*tick));
 	*tick = atoi(buf);
 	printf("new queue tick = %d\n", *tick);
 	sched_new(*tick, test, tick);

@@ -1,4 +1,4 @@
-/*	$KAME: str2val.c,v 1.9 2000/10/04 17:41:04 itojun Exp $	*/
+/*	$KAME: str2val.c,v 1.10 2001/04/03 15:51:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -37,6 +37,7 @@
 #include <stdio.h>
 
 #include "str2val.h"
+#include "gcmalloc.h"
 
 /*
  * exchange a value to a hex string.
@@ -51,7 +52,7 @@ val2str(buf, mlen)
 	size_t len = (mlen * 2) + mlen / 8 + 10;
 	size_t i, j;
 
-	if ((new = malloc(len)) == 0) return(0);
+	if ((new = racoon_malloc(len)) == 0) return(0);
 
 	for (i = 0, j = 0; i < mlen; i++) {
 		snprintf(&new[j], len - j, "%02x", (u_char)buf[i]);
@@ -94,7 +95,7 @@ str2val(str, base, len)
 		return NULL;
 	i /= 2;
 
-	if ((dst = malloc(i)) == NULL)
+	if ((dst = racoon_malloc(i)) == NULL)
 		return NULL;
 
 	i = 0;

@@ -1,4 +1,4 @@
-/*	$KAME: vmbuf.c,v 1.9 2000/10/04 17:41:04 itojun Exp $	*/
+/*	$KAME: vmbuf.c,v 1.10 2001/04/03 15:51:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,6 +40,7 @@
 #include "misc.h"
 #include "vmbuf.h"
 #include "debug.h"
+#include "gcmalloc.h"
 
 vchar_t *
 vmalloc(size)
@@ -47,13 +48,13 @@ vmalloc(size)
 {
 	vchar_t *var;
 
-	if ((var = (vchar_t *)malloc(sizeof(*var))) == NULL)
+	if ((var = (vchar_t *)racoon_malloc(sizeof(*var))) == NULL)
 		return NULL;
 
 	var->l = size;
-	var->v = (caddr_t)calloc(1, size);
+	var->v = (caddr_t)racoon_calloc(1, size);
 	if (var->v == NULL) {
-		(void)free(var);
+		(void)racoon_free(var);
 		return NULL;
 	}
 
@@ -68,7 +69,7 @@ vrealloc(ptr, size)
 	caddr_t v;
 
 	if (ptr != NULL) {
-		if ((v = (caddr_t)realloc(ptr->v, size)) == NULL) {
+		if ((v = (caddr_t)racoon_realloc(ptr->v, size)) == NULL) {
 			(void)vfree(ptr);
 			return NULL;
 		}
@@ -91,9 +92,9 @@ vfree(var)
 		return;
 
 	if (var->v)
-		(void)free(var->v);
+		(void)racoon_free(var->v);
 
-	(void)free(var);
+	(void)racoon_free(var);
 
 	return;
 }

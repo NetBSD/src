@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.c,v 1.49 2001/01/31 06:21:05 sakane Exp $	*/
+/*	$KAME: crypto_openssl.c,v 1.50 2001/04/03 15:51:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -80,6 +80,7 @@
 #include "plog.h"
 #include "crypto_openssl.h"
 #include "debug.h"
+#include "gcmalloc.h"
 
 /*
  * I hate to cast every parameter to des_xx into void *, but it is
@@ -108,7 +109,7 @@ eay_str2asn1dn(str, len)
 	vchar_t *ret;
 	caddr_t p;
 
-	buf = malloc(len + 1);
+	buf = racoon_malloc(len + 1);
 	if (!buf) {
 		printf("failed to allocate buffer\n");
 		return NULL;
@@ -164,7 +165,7 @@ eay_str2asn1dn(str, len)
 
     err:
 	if (buf)
-		free(buf);
+		racoon_free(buf);
 	if (name)
 		X509_NAME_free(name);
 	return NULL;
@@ -442,7 +443,7 @@ eay_get_x509subjectaltname(cert, altname, type, pos)
 			continue;
 		cval = sk_CONF_VALUE_value(nval, i);
 		len = strlen(cval->value) + 1;	/* '\0' included */
-		*altname = malloc(len);
+		*altname = racoon_malloc(len);
 		if (!*altname) {
 			sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
 			goto end;
@@ -460,7 +461,7 @@ eay_get_x509subjectaltname(cert, altname, type, pos)
    end:
 	if (error) {
 		if (*altname) {
-			free(*altname);
+			racoon_free(*altname);
 			*altname = NULL;
 		}
 #ifndef EAYDEBUG
@@ -526,7 +527,7 @@ eay_get_x509text(cert)
 	}
 
 	len = BIO_get_mem_data(bio, &bp);
-	text = malloc(len + 1);
+	text = racoon_malloc(len + 1);
 	if (text == NULL)
 		goto end;
 	memcpy(text, bp, len);
@@ -537,7 +538,7 @@ eay_get_x509text(cert)
     end:
 	if (error) {
 		if (text) {
-			free(text);
+			racoon_free(text);
 			text = NULL;
 		}
 #ifndef EAYDEBUG
@@ -1478,7 +1479,7 @@ eay_hmacmd5_one(key, data)
 caddr_t
 eay_sha1_init()
 {
-	SHA_CTX *c = malloc(sizeof(*c));
+	SHA_CTX *c = racoon_malloc(sizeof(*c));
 
 	SHA1_Init(c);
 
@@ -1505,7 +1506,7 @@ eay_sha1_final(c)
 		return(0);
 
 	SHA1_Final(res->v, (SHA_CTX *)c);
-	(void)free(c);
+	(void)racoon_free(c);
 
 	return(res);
 }
@@ -1530,7 +1531,7 @@ eay_sha1_one(data)
 caddr_t
 eay_md5_init()
 {
-	MD5_CTX *c = malloc(sizeof(*c));
+	MD5_CTX *c = racoon_malloc(sizeof(*c));
 
 	MD5_Init(c);
 
@@ -1557,7 +1558,7 @@ eay_md5_final(c)
 		return(0);
 
 	MD5_Final(res->v, (MD5_CTX *)c);
-	(void)free(c);
+	(void)racoon_free(c);
 
 	return(res);
 }
@@ -1681,7 +1682,7 @@ eay_dh_compute(prime, g, pub, priv, pub2, key)
 	if (!BN_set_word(dh->g, g))
 		goto end;
 
-	if ((v = (caddr_t)calloc(prime->l, sizeof(u_char))) == NULL)
+	if ((v = (caddr_t)racoon_calloc(prime->l, sizeof(u_char))) == NULL)
 		goto end;
 	if ((l = DH_compute_key(v, dh_pub, dh)) == -1)
 		goto end;
@@ -1695,7 +1696,7 @@ end:
 	if (dh != NULL)
 		DH_free(dh);
 	if (v != NULL)
-		free(v);
+		racoon_free(v);
 	return(error);
 }
 

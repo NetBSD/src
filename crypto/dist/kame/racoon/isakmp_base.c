@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_base.c,v 1.40 2000/12/15 13:43:55 sakane Exp $	*/
+/*	$KAME: isakmp_base.c,v 1.41 2001/03/27 02:39:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -288,6 +288,7 @@ base_i2send(iph1, msg)
 {
 	struct isakmp_gen *gen;
 	caddr_t p;
+	vchar_t *vid = NULL;
 	int tlen;
 	int need_cert = 0;
 	int error = -1;
@@ -328,9 +329,8 @@ base_i2send(iph1, msg)
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
 		tlen += sizeof(*gen) + iph1->dhpub->l
 			+ sizeof(*gen) + iph1->hash->l;
-		if (lcconf->vendorid) {
-			tlen += sizeof(*gen) + lcconf->vendorid->l;
-		}
+		if ((vid = set_vendorid(iph1->approval->vendorid)) != NULL)
+			tlen += sizeof(*gen) + vid->l;
 
 		iph1->sendbuf = vmalloc(tlen);
 		if (iph1->sendbuf == NULL) {
@@ -349,11 +349,11 @@ base_i2send(iph1, msg)
 
 		/* create isakmp HASH payload */
 		p = set_isakmp_payload(p, iph1->hash,
-			lcconf->vendorid ? ISAKMP_NPTYPE_VID : ISAKMP_NPTYPE_NONE);
+			vid ? ISAKMP_NPTYPE_VID : ISAKMP_NPTYPE_NONE);
 
 		/* append vendor id, if needed */
-		if (lcconf->vendorid)
-			p = set_isakmp_payload(p, lcconf->vendorid, ISAKMP_NPTYPE_NONE);
+		if (vid)
+			p = set_isakmp_payload(p, vid, ISAKMP_NPTYPE_NONE);
 		break;
 #ifdef HAVE_SIGNING_C
 	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
@@ -424,6 +424,8 @@ base_i2send(iph1, msg)
 	error = 0;
 
 end:
+	if (vid)
+		vfree(vid);
 	return error;
 }
 
@@ -900,6 +902,7 @@ base_r2send(iph1, msg)
 {
 	struct isakmp_gen *gen;
 	char *p;
+	vchar_t *vid = NULL;
 	int tlen;
 	int need_cert = 0;
 	int error = -1;
@@ -940,9 +943,8 @@ base_r2send(iph1, msg)
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
 		tlen += sizeof(*gen) + iph1->dhpub->l
 			+ sizeof(*gen) + iph1->hash->l;
-		if (lcconf->vendorid) {
-			tlen += sizeof(*gen) + lcconf->vendorid->l;
-		}
+		if ((vid = set_vendorid(iph1->approval->vendorid)) != NULL)
+			tlen += sizeof(*gen) + vid->l;
 
 		iph1->sendbuf = vmalloc(tlen);
 		if (iph1->sendbuf == NULL) {
@@ -961,11 +963,11 @@ base_r2send(iph1, msg)
 
 		/* create isakmp HASH payload */
 		p = set_isakmp_payload(p, iph1->hash,
-			lcconf->vendorid ? ISAKMP_NPTYPE_VID : ISAKMP_NPTYPE_NONE);
+			vid ? ISAKMP_NPTYPE_VID : ISAKMP_NPTYPE_NONE);
 
 		/* append vendor id, if needed */
-		if (lcconf->vendorid)
-			p = set_isakmp_payload(p, lcconf->vendorid, ISAKMP_NPTYPE_NONE);
+		if (vid)
+			p = set_isakmp_payload(p, vid, ISAKMP_NPTYPE_NONE);
 		break;
 #ifdef HAVE_SIGNING_C
 	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
@@ -1043,6 +1045,8 @@ base_r2send(iph1, msg)
 	error = 0;
 
 end:
+	if (vid)
+		vfree(vid);
 	return error;
 }
 
