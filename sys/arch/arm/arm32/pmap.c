@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 2001/03/04 07:30:19 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 2001/03/04 19:05:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -656,7 +656,7 @@ pmap_map(va, spa, epa, prot)
 
 
 /*
- * void pmap_bootstrap(pd_entry_t *kernel_l1pt)
+ * void pmap_bootstrap(pd_entry_t *kernel_l1pt, pv_addr_t kernel_ptpt)
  *
  * bootstrap the pmap system. This is called from initarm and allows
  * the pmap system to initailise any structures it requires.
@@ -2762,7 +2762,7 @@ void
 pmap_procwr(p, va, len)
 	struct proc	*p;
 	vaddr_t		va;
-	u_long		len;
+	int		len;
 {
 	/* We only need to do anything if it is the current process. */
 	if (p == curproc)
