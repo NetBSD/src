@@ -1,4 +1,4 @@
-/*	$NetBSD: crontab.c,v 1.10 1998/04/01 20:59:08 kleink Exp $	*/
+/*	$NetBSD: crontab.c,v 1.11 1998/07/28 19:27:39 mycroft Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: crontab.c,v 2.13 1994/01/17 03:20:37 vixie Exp";
 #else
-__RCSID("$NetBSD: crontab.c,v 1.10 1998/04/01 20:59:08 kleink Exp $");
+__RCSID("$NetBSD: crontab.c,v 1.11 1998/07/28 19:27:39 mycroft Exp $");
 #endif
 #endif
 
@@ -310,7 +310,8 @@ check_error(msg)
 
 static void
 edit_cmd() {
-	char		n[MAX_FNAME], q[MAX_TEMPSTR], *editor;
+	char		n[MAX_FNAME], q[MAX_TEMPSTR];
+	const char	*editor;
 	FILE		*f;
 	int		ch, t, x;
 	struct stat	statbuf;
