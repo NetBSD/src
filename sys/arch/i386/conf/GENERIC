@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.42 1996/04/25 02:23:38 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.43 1996/04/25 18:59:14 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -9,6 +9,7 @@ options		I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU
 options		I586_CPU
 options		MATH_EMULATE	# floating point emulation
+#options	VM86		# Virtual 8086 emulation
 
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
