@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.31 1999/12/03 22:48:22 thorpej Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.32 2000/02/05 22:14:42 veego Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.31 1999/12/03 22:48:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.32 2000/02/05 22:14:42 veego Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.31 1999/12/03 22:48:22 thorpej Exp $
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
+#include <dev/ata/atavar.h>
 
 #include "pckbd.h"
 
@@ -67,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.31 1999/12/03 22:48:22 thorpej Exp $
 #define CONSPEED TTYDEF_SPEED
 #endif
 static int comcnrate = CONSPEED;
+
+#define	DR_VERBOSE(f) while (0)
 
 void dec_eb164_init __P((void));
 static void dec_eb164_cons_init __P((void));
@@ -171,11 +174,9 @@ dec_eb164_device_register(dev, aux)
 		 * older SRM firmware use the protocol identifier SCSI.
 		 */
 		ideboot = (strcmp(b->protocol, "IDE") == 0);
-#if 0
-		printf("scsiboot = %d, ideboot = %d, netboot = %d\n", scsiboot,
-			ideboot, netboot);
-#endif
-		initted =1;
+		DR_VERBOSE(printf("scsiboot = %d, ideboot = %d, netboot = %d\n",
+		    scsiboot, ideboot, netboot));
+		initted = 1;
 	}
 
 	if (pcidev == NULL) {
@@ -188,14 +189,13 @@ dec_eb164_device_register(dev, aux)
 				return;
 	
 			pcidev = dev;
-#if 0
-			printf("\npcidev = %s\n", pcidev->dv_xname);
-#endif
+			DR_VERBOSE(printf("\npcidev = %s\n",
+			    pcidev->dv_xname));
 			return;
 		}
 	}
 
-	if ( (ideboot || scsiboot) && (scsipidev == NULL) ) {
+	if ((ideboot || scsiboot) && (scsipidev == NULL)) {
 		if (parent != pcidev)
 			return;
 		else {
@@ -207,9 +207,8 @@ dec_eb164_device_register(dev, aux)
 				return;
 	
 			scsipidev = dev;
-#if 0
-			printf("\nscsipidev = %s\n", scsipidev->dv_xname);
-#endif
+			DR_VERBOSE(printf("\nscsipidev = %s\n",
+			    scsipidev->dv_xname));
 			return;
 		}
 	}
@@ -244,31 +243,34 @@ dec_eb164_device_register(dev, aux)
 
 		/* we've found it! */
 		booted_device = dev;
-#if 0
-		printf("\nbooted_device = %s\n", booted_device->dv_xname);
-#endif
+		DR_VERBOSE(printf("\nbooted_device = %s\n",
+		    booted_device->dv_xname));
 		found = 1;
 	}
 
 	/*
 	 * Support to boot from IDE drives.
-	 * Should work with all SRM firmware versions, but is at the
-	 * moment limited to hard disks. (No support for booting from an
-	 * IDE cdrom).
 	 */
-	if ( (ideboot || scsiboot) && !strcmp(cd->cd_name, "wd")) {
+	if ((ideboot || scsiboot) && !strcmp(cd->cd_name, "wd")) {
+		struct ata_atapi_attach *aa_link = aux;
 		if ((strncmp("pciide", parent->dv_xname, 6) != 0)) {
 			return;
 		} else {
 			if (parent != scsipidev)
 				return;
 		}
+		DR_VERBOSE(printf("\nAtapi info: drive: %d, channel %d\n",
+		    aa_link->aa_drv_data->drive, aa_link->aa_channel));
+		DR_VERBOSE(printf("Bootdev info: unit: %d, channel: %d\n",
+		    b->unit, b->channel));
+		if (b->unit != aa_link->aa_drv_data->drive ||
+		    b->channel != aa_link->aa_channel)
+			return;
 
 		/* we've found it! */
 		booted_device = dev;
-#if 0
-		printf("\nbooted_device = %s\n", booted_device->dv_xname);
-#endif
+		DR_VERBOSE(printf("booted_device = %s\n",
+		    booted_device->dv_xname));
 		found = 1;
 	}
 
@@ -284,9 +286,8 @@ dec_eb164_device_register(dev, aux)
 			/* XXX function? */
 	
 			booted_device = dev;
-#if 0
-			printf("\nbooted_device = %s\n", booted_device->dv_xname);
-#endif
+			DR_VERBOSE(printf("\nbooted_device = %s\n",
+			    booted_device->dv_xname));
 			found = 1;
 			return;
 		}
