@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.75 2003/07/16 22:42:47 dsl Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.76 2003/08/04 18:53:06 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.75 2003/07/16 22:42:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.76 2003/08/04 18:53:06 drochner Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -146,7 +146,7 @@ ktrsyscall(p, code, realcode, callp, args)
 	if (callp == NULL)
 		callp = p->p_emul->e_sysent;
 	
-	argsize = callp[code].sy_narg * sizeof (register_t);
+	argsize = callp[code].sy_argsize;
 	len = sizeof(struct ktr_syscall) + argsize;
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
