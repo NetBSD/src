@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.170 2003/01/21 06:18:41 sjg Exp $ */
+/*	$NetBSD: cpu.c,v 1.171 2003/01/23 11:50:50 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2164,13 +2164,15 @@ cpu_debug_dump(void)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	db_printf("addr		cpuid	flags	curproc		fpproc\n");
+	db_printf("%-4s %-10s %-8s %-10s %-10s %-10s\n",
+		    "CPU#", "CPUINFO", "FLAGS", "CURLWP", "CURPROC", "FPLWP");
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		db_printf("%p	%d	%x	%10p	%10p\n",
-		    ci,
+		db_printf("%-4d %-10p %-8x %-10p %-10p %-10p\n",
 		    ci->ci_cpuid,
+		    ci,
 		    ci->flags,
 		    ci->ci_curlwp,
+		    ci->ci_curlwp == NULL ? NULL : ci->ci_curlwp->l_proc,
 		    ci->fplwp);
 	}
 }
