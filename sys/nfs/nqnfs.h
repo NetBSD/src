@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.3 1994/08/18 22:48:10 mycroft Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.4 1994/12/13 17:17:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nqnfs.h	8.1 (Berkeley) 6/10/93
+ *	@(#)nqnfs.h	8.2 (Berkeley) 8/18/94
  */
 
 /*
