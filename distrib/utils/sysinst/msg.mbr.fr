@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.7 2003/07/07 12:30:21 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.8 2003/07/07 12:55:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -207,11 +207,13 @@ message dofdisk
 message wmbrfail
 {L'écriture du MBR a échouée. Je ne peux pas continuer.}
 
-.if BOOTSEL && 0
+.if 0
+.if BOOTSEL
 message Set_timeout_value
 {Changer le temps d'attente}
 
 message bootseltimeout
 {Temps d'attente: %d\n}
 
+.endif
 .endif
