@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.3 1998/03/01 23:19:01 fvdl Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.4 1998/03/10 14:53:20 chuck Exp $	*/
 
 /*
  *
@@ -1110,7 +1110,7 @@ int mode;
     goto steal_one;
   }
 
-  pg = uvm_pagealloc(uvmexp.kmem_object, pv_cachedva - vm_map_min(kmem_map),
+  pg = uvm_pagealloc(uvmexp.kmem_object, pv_cachedva - vm_map_min(kernel_map),
 			NULL);
   if (pg)
     pg->flags &= ~PG_BUSY;	/* never busy */
