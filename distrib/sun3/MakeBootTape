@@ -8,7 +8,7 @@
 #   segment 2:  netbsd.sun3x (RAMDISK3X)
 #   segment 3:  miniroot image
 #
-# $NetBSD: MakeBootTape,v 1.4 1998/02/12 20:32:44 gwr Exp $
+# $NetBSD: MakeBootTape,v 1.4.2.1 2000/07/23 16:30:05 he Exp $
 
 T=${1:-/dev/nrst0}
 
@@ -22,11 +22,11 @@ mt -f $T rewind
 dd if=tapeboot of=$T obs=8k conv=sync
 
 # Segment 2 is the Sun3 ramdisk kernel.
-gzip -d -c ../../binary/kernel/netbsd-rd.sun3.gz |
+gzip -d -c ../../binary/kernel/netbsd.RAMDISK.gz |
   dd of=$T obs=8k conv=sync
 
 # Segment 3 is the Sun3X ramdisk kernel.
-gzip -d -c ../../binary/kernel/netbsd-rd.sun3x.gz |
+gzip -d -c ../../binary/kernel/netbsd.RAMDISK3X.gz |
   dd of=$T obs=8k conv=sync
 
 # Segment 4 is the miniroot image, unzipped!
