@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.6 2000/12/27 09:01:45 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.7 2001/02/02 01:55:52 enami Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -145,6 +145,8 @@ ubc_init(void)
 
 	ubc_object.umap = malloc(ubc_nwins * sizeof(struct ubc_map),
 				 M_TEMP, M_NOWAIT);
+	if (ubc_object.umap == NULL)
+		panic("ubc_init: failed to allocate ubc_map");
 	bzero(ubc_object.umap, ubc_nwins * sizeof(struct ubc_map));
 
 	va = (vaddr_t)1L;
@@ -161,6 +163,8 @@ ubc_init(void)
 	ubc_object.inactive = malloc(UBC_NQUEUES *
 				     sizeof(struct ubc_inactive_head),
 				     M_TEMP, M_NOWAIT);
+	if (ubc_object.inactive == NULL)
+		panic("ubc_init: failed to allocate inactive queue heads");
 	for (i = 0; i < UBC_NQUEUES; i++) {
 		TAILQ_INIT(&ubc_object.inactive[i]);
 	}
