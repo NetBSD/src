@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.30 1996/06/20 19:50:41 pk Exp $
+# 	$NetBSD: GENERIC,v 1.31 1996/08/26 23:40:59 mrg Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc
@@ -39,6 +39,7 @@ options		LKM		# loadable kernel modules
 options		COMPAT_43	# 4.3BSD system interfaces
 options		COMPAT_10	# NetBSD 1.0 binary compatibility
 options		COMPAT_11	# NetBSD 1.1 binary compatibility
+options		COMPAT_12	# NetBSD 1.2 binary compatibility
 options		COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options		COMPAT_SVR4	# SunOS 5.x binary compatibility
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON,v 1.8 1996/03/27 10:31:14 leo Exp $
+#	$NetBSD: FALCON,v 1.9 1996/08/26 23:39:50 mrg Exp $
 #
 # ATARI-FALCON
 #
@@ -54,6 +54,7 @@ options		DDB		# Kernel debugger
 options		COMPAT_43	# 4.3 BSD compatible system calls (required)
 options		COMPAT_10	# Compatibility to NetBSD1.0
 options		COMPAT_11	# Compatibility to NetBSD1.1
+options 	COMPAT_12
 
 #
 # Support for various kernel options

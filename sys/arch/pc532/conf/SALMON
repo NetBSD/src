@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.1 1996/02/01 03:01:39 phil Exp $
+#	$NetBSD: SALMON,v 1.2 1996/08/26 23:40:38 mrg Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532 
 #
@@ -23,6 +23,8 @@ options		"COMPAT_43"		# 4.3 system calls
 options		"TCP_COMPAT_42"		# 4.2 networking ABI
 options		"COMPAT_09"		# NetBSD-0.9
 options		"COMPAT_10"		# NetBSD-1.0
+options 	COMPAT_11
+options 	COMPAT_12
 
 # file system options
 #options	QUOTA			# file system quotas

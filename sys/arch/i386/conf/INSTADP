@@ -1,4 +1,4 @@
-#	$NetBSD: INSTADP,v 1.19 1996/08/05 21:16:00 soda Exp $
+#	$NetBSD: INSTADP,v 1.20 1996/08/26 23:40:04 mrg Exp $
 #
 #	INSTADP -- like GENERICADP.  This supports only Adaptec SCSI
 #                     adapters.  This kernel is GENERICADP with lines
@@ -34,6 +34,7 @@ options		DEVPAGER	# mmap() of devices
 
 options		COMPAT_10	# NetBSD 1.0,
 options		COMPAT_11	# NetBSD 1.1,
+options 	COMPAT_12
 
 options		LKM		# loadable kernel modules
 
