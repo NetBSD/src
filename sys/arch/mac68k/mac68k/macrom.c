@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.6 1995/06/30 05:25:41 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.7 1995/07/04 03:34:09 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -179,7 +179,7 @@ mrg_NewPtr()
 {
 	int result = noErr;
 	u_int numbytes;
-	u_long trapword;
+	u_int32_t trapword;
 	caddr_t ptr;
 
 	asm("	movl	d1, %0
@@ -206,7 +206,7 @@ mrg_NewPtr()
 #if defined(MRG_SHOWTRAPS)
 		printf(" succeded = %x.\n", ptr);
 #endif
-		*(u_long *)ptr = numbytes;
+		*(u_int32_t *)ptr = numbytes;
 		ptr += 4;
 	}
 
@@ -321,7 +321,7 @@ mrg_aline_super(struct frame *frame)
 	int isOStrap;
 	int trapnum;
 	int a0passback;
-	u_long a0bucket, d0bucket;
+	u_int32_t a0bucket, d0bucket;
         int danprint=0; /* This shouldn't be necessary, but seems to be.  */
 
 #if defined(MRG_DEBUG)
@@ -429,15 +429,15 @@ mrg_aline_user()
 #endif
 }
 
-extern u_long traceloopstart[];
-extern u_long traceloopend;
-extern u_long *traceloopptr;
+extern u_int32_t traceloopstart[];
+extern u_int32_t traceloopend;
+extern u_int32_t *traceloopptr;
 
 void
 dumptrace()
 {
 #if defined(MRG_TRACE)
-	u_long *traceindex;
+	u_int32_t *traceindex;
 
 	printf("instruction trace:\n");
 	traceindex = traceloopptr + 1;
@@ -457,32 +457,33 @@ void
 mrg_setvectors(rom)
 	romvec_t *rom;
 {
-	if(rom == NULL)
+	if (rom == NULL)
 		return;		/* whoops!  ROM vectors not defined! */
 
 	mrg_romident = rom->romident;
 	mrg_romadbintr = rom->adbintr;
 	mrg_rompmintr = rom->pmintr;
-		/* mrg_adbstore becomes ADBBase */
-	*((unsigned long *)(mrg_adbstore + 0x130)) = (unsigned long)rom->adb130intr;
 
-/* in MacIIvi otherwise uninitialized when ADBReInit() runs */
-        if(current_mac_model->class == MACH_CLASSIIsi)
-        {
+	/* mrg_adbstore becomes ADBBase */
+	*((u_int32_t *)(mrg_adbstore + 0x130)) = (u_int32_t) rom->adb130intr;
+
+	/* in MacIIvi otherwise uninitialized when ADBReInit() runs */
+        if (current_mac_model->class == MACH_CLASSIIsi) {
 	    int i;
 
-	    *((unsigned long *)(0x0dd0)) = 0x0000773f;	/* Egret and ADBReInit look into these */
-	    *((unsigned long *)(0x0dd4)) = 0x000001a6;
+	    /* Egret and ADBReInit look into these */
+	    *((u_int32_t *)(0x0dd0)) = 0x0000773f;
+	    *((u_int32_t *)(0x0dd4)) = 0x000001a6;
 
 	    for (i=0; i<4; i++)				/* some basic inits */
-		*((unsigned long *)(0x174 + 4*i)) = 0;
+		*((u_int32_t *)(0x174 + 4*i)) = 0;
 	    *((unsigned short *)(0x216)) = 0;
 	    *((unsigned short *)(mrg_adbstore + 0x184)) = 0xff01;
         }
 
 		/* IIsi crap */
-	*((unsigned long *)(mrg_adbstore + 0x180)) = 0x4081517c;
-	*((unsigned long *)(mrg_adbstore + 0x194)) = 0x408151ea;
+	*((u_int32_t *)(mrg_adbstore + 0x180)) = 0x4081517c;
+	*((u_int32_t *)(mrg_adbstore + 0x194)) = 0x408151ea;
 	jEgret = (void (*))0x40814800;
 
 	mrg_OStraps[0x77] = rom->CountADBs;
@@ -515,8 +516,8 @@ mrg_romready()
 	return(mrg_romident != NULL);
 }
 
-extern unsigned long		IOBase;
-extern volatile unsigned char	*sccA;
+extern unsigned long	IOBase;
+extern volatile u_char	*sccA;
 
 	/* initialize Mac ROM Glue */
 void
@@ -660,13 +661,13 @@ mrg_initadbintr()
 {
 	int i;
 
-	if(current_mac_model->class == MACH_CLASSIIsi) {
-		/* _vSetupTags initializes ADBState (mrg_ADBStore2) and
+	if (current_mac_model->class == MACH_CLASSIIsi) {
+		/* This initializes ADBState (mrg_ADBStore2) and
                    enables interrupts */
 		asm("	movml	a0-a2, sp@-
 			movl	0x0de0, a0      /* ADBState, mrg_ADBStore2 */
 			movl	_ROMBase,a1
-			addl	#0x147c4,a1	/* _vSetUpTags + 0x04 */
+			addl	#0x147c4,a1	/* EgretInitAlt */
 						/* avoids calling _NewPtr */
 			jbsr	a1@
 			movml	sp@+, a0-a2 ");
@@ -684,18 +685,18 @@ mrg_fixupROMBase(obase, nbase)
 	caddr_t obase;
 	caddr_t nbase;
 {
-	int     i;
-	u_long  temp, *p, oldbase, newbase;
+	int       i;
+	u_int32_t temp, *p, oldbase, newbase;
 
-	oldbase = (u_long) obase;
-	newbase = (u_long) nbase;
+	oldbase = (u_int32_t) obase;
+	newbase = (u_int32_t) nbase;
 	for (i=0 ; i<256 ; i++)
 		if (IS_ROM_ADDR(mrg_OStraps[i])) {
 			temp = (u_int) mrg_OStraps[i];
 			temp = (temp - oldbase) + newbase;
 			mrg_OStraps[i] = (caddr_t) temp;
 		}
-	p = (u_long *) mrg_adbstore;
+	p = (u_int32_t *) mrg_adbstore;
 	for (i=0 ; i<512/4 ; i++)
 		if (IS_ROM_ADDR(p[i]))
 			p[i] = (p[i] - oldbase) + newbase;
