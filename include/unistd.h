@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.65 1998/07/28 00:28:29 mycroft Exp $	*/
+/*	$NetBSD: unistd.h,v 1.66 1998/07/30 00:44:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #endif
 
 __BEGIN_DECLS
-__dead	 void _exit __P((int)) __attribute__((noreturn));
+__dead	 void _exit __P((int)) __attribute__((__noreturn__));
 int	 access __P((const char *, int));
 unsigned int alarm __P((unsigned int));
 int	 chdir __P((const char *));
