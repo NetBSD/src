@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.h,v 1.2 1995/03/06 11:39:07 mycroft Exp $	*/
+/*	$NetBSD: pcap.h,v 1.3 1996/05/02 00:18:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -55,8 +55,8 @@
  * predates the bpf typedefs for 64-bit support.
  */
 #if BPF_RELEASE - 0 < 199406
-typedef	long bpf_int32;
-typedef	u_long bpf_u_int32;
+typedef	int32_t bpf_int32;
+typedef	u_int32_t bpf_u_int32;
 #endif
 
 typedef struct pcap pcap_t;
