@@ -35,7 +35,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rnusers.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$NetBSD: rnusers.x,v 1.3 1996/12/02 06:51:11 mikel Exp $";
+%static char rcsid[] = "$NetBSD: rnusers.x,v 1.4 1997/04/17 17:29:24 christos Exp $";
 %#endif /* not lint */
 #endif
 
@@ -115,13 +115,20 @@
 %	char *ptr;
 %	int size;
 %
+%
+%	/*
+%	 * We are using a non-malloc allocated array,
+%	 * so we are not supposed to call xdr_free with it.
+%	 */
+%	if (xdrs->x_op == XDR_FREE)
+%		return (TRUE);
 %	ptr  = objp->ut_line;
 %	size = sizeof(objp->ut_line);
 %	if (!xdr_bytes(xdrs, &ptr, &size, size)) {
 %		return (FALSE);
 %	}
 %	ptr  = objp->ut_name;
-%	size = sizeof(objp->ut_line);
+%	size = sizeof(objp->ut_name);
 %	if (!xdr_bytes(xdrs, &ptr, &size, size)) {
 %		return (FALSE);
 %	}
