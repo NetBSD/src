@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.40 1998/07/07 00:04:59 sommerfe Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.41 1998/07/17 22:52:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -183,6 +183,15 @@ tcp_output(tp)
 
 	idle = (tp->snd_max == tp->snd_una);
 
+	/*
+	 * Restart Window computation.  From draft-floyd-incr-init-win-03:
+	 *
+	 *	Optionally, a TCP MAY set the restart window to the
+	 *	minimum of the value used for the initial window and
+	 *	the current value of cwnd (in other words, using a
+	 *	larger value for the restart window should never increase
+	 *	the size of cwnd).
+	 */
 	if (tcp_cwm) {
 		/*
 		 * Hughes/Touch/Heidemann Congestion Window Monitoring.
@@ -202,8 +211,8 @@ tcp_output(tp)
 			 * expected to clock out any data we send --
 			 * slow start to get ack "clock" running again.
 			 */
-			tp->snd_cwnd = TCP_INITIAL_WINDOW(tcp_init_win,
-			    txsegsize);
+			tp->snd_cwnd = min(tp->snd_cwnd,
+			    TCP_INITIAL_WINDOW(tcp_init_win, txsegsize));
 		}
 	}
 
