@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.47 1999/12/03 02:16:41 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.48 1999/12/03 02:26:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.47 1999/12/03 02:16:41 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.48 1999/12/03 02:26:36 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,9 +66,6 @@ __RCSID("$NetBSD: print.c,v 1.47 1999/12/03 02:16:41 simonb Exp $");
 #include <unistd.h>
 
 #include "ps.h"
-
-extern kvm_t *kd;
-extern int needenv, needcomm, commandonly, dontuseprocfs, use_procfs;
 
 static char *cmdpart __P((char *));
 static void  printval __P((char *, VAR *));

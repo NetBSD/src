@@ -1,5 +1,6 @@
-/*	$NetBSD: fmt.c,v 1.13 1998/02/03 03:16:01 perry Exp $	*/
+/*	$NetBSD: fmt.c,v 1.14 1999/12/03 02:26:36 simonb Exp $	*/
 
+#include <kvm.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,7 +9,6 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include "ps.h"
-#include "extern.h"
 
 void
 fmt_puts(s, leftp)

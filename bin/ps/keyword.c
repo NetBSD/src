@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.20 1999/11/09 15:06:31 drochner Exp $	*/
+/*	$NetBSD: keyword.c,v 1.21 1999/12/03 02:26:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.20 1999/11/09 15:06:31 drochner Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.21 1999/12/03 02:26:36 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: keyword.c,v 1.20 1999/11/09 15:06:31 drochner Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <kvm.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
