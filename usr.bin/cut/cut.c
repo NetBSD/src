@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cut.c	5.4 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$Id: cut.c,v 1.3 1993/08/01 18:16:57 mycroft Exp $";
+static char rcsid[] = "$Id: cut.c,v 1.4 1993/08/16 22:44:51 jtc Exp $";
 #endif /* not lint */
 
 #include <limits.h>
@@ -67,8 +67,11 @@ main(argc, argv)
 
 	dchar = '\t';			/* default delimiter is \t */
 
-	while ((ch = getopt(argc, argv, "c:d:f:s")) != EOF)
+	/* Since we don't support multi-byte characters, the -c and -b 
+	   options are equivalent, and the -n option is meaningless. */
+	while ((ch = getopt(argc, argv, "b:c:d:f:sn")) != EOF)
 		switch(ch) {
+		case 'b':
 		case 'c':
 			fcn = c_cut;
 			get_list(optarg);
@@ -85,6 +88,8 @@ main(argc, argv)
 			break;
 		case 's':
 			sflag = 1;
+			break;
+		case 'n':
 			break;
 		case '?':
 		default:
