@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2004/04/03 22:16:27 he Exp $
-
-NOGCCERROR=	# defined
+#	$NetBSD: Makefile,v 1.19 2005/01/01 13:56:21 lukem Exp $
 
 PROG=		ipfstat
 SRCS=		ipfstat.c
