@@ -1,4 +1,4 @@
-/*  $NetBSD: mii.c,v 1.1 1997/10/17 17:33:53 bouyer Exp $   */
+/*  $NetBSD: mii.c,v 1.1.2.1 1998/11/10 06:02:44 cgd Exp $   */
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -315,7 +315,6 @@ void mii_media_add(ifmedia, adapter)
 		ifmedia_add(ifmedia, IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
 	if (media & PHY_100baseT4)
 		ifmedia_add(ifmedia, IFM_ETHER | IFM_100_T4, 0, NULL);
-	ifmedia_add(ifmedia, IFM_ETHER | IFM_NONE, 0, NULL);
 }
 
 int mii_mediachg(adapter)
