@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 1999/07/17 14:06:25 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.2 1999/08/19 17:31:06 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -35,7 +35,7 @@
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
  *
- *  KAME Id: main.c,v 1.13 1998/06/01 15:25:46 kurtw Exp
+ *  KAME Id: main.c,v 1.2 1999/08/13 09:20:13 jinmei Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
@@ -214,7 +214,7 @@ main(argc, argv)
     setlinebuf(stderr);
 	
     if (geteuid() != 0) {
-	fprintf(stderr, "pimdd: must be root\n");
+	fprintf(stderr, "pim6dd: must be root\n");
 	exit(1);
     }
     
@@ -298,7 +298,7 @@ main(argc, argv)
     if (argc > 0) {
     usage:
 	tmpd = 0xffffffff;
-	fprintf(stderr, "usage: pimdd [-c configfile] [-d [debug_level][,debug_level]]\n");
+	fprintf(stderr, "usage: pim6dd [-c configfile] [-d [debug_level][,debug_level]]\n");
 	
 	fprintf(stderr, "debug levels: ");
     c = '(';
@@ -330,12 +330,12 @@ main(argc, argv)
     }
     
 #ifdef LOG_DAEMON
-    (void)openlog("pimdd", LOG_PID, LOG_DAEMON);
+    (void)openlog("pim6dd", LOG_PID, LOG_DAEMON);
     (void)setlogmask(LOG_UPTO(LOG_NOTICE));
 #else
-    (void)openlog("pimdd", LOG_PID);
+    (void)openlog("pim6dd", LOG_PID);
 #endif /* LOG_DAEMON */
-    sprintf(versionstring, "pimdd version %s", todaysversion);
+    sprintf(versionstring, "pim6dd version %s", todaysversion);
     
     log(LOG_DEBUG, 0, "%s starting", versionstring);
     
@@ -664,11 +664,13 @@ restart(i)
     /*
      * reset all the entries
      */
-    /* TODO: delete?
-       free_all_routes();
-       */
+    /*
+     * TODO: delete?
+     * free_all_routes();
+     */
     free_all_callouts();
     stop_all_vifs();
+    nhandlers=0;
     k_stop_pim(mld6_socket);
     close(mld6_socket);
     close(pim6_socket);
@@ -677,7 +679,6 @@ restart(i)
     /*
      * start processing again
      */
-    
     init_mld6();
     init_pim6();
 #ifdef HAVE_ROUTING_SOCKETS

@@ -34,7 +34,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  $Id: LICENSE.pimd,v 1.1 1999/07/17 14:06:24 itojun Exp $
+ *  KAME Id: LICENSE.pimd,v 1.1.1.1 1999/08/08 23:30:50 itojun Exp
  */
 /*
  * Part of this program has been derived from mrouted.

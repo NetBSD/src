@@ -1,4 +1,4 @@
-/*	$NetBSD: routesock.c,v 1.1 1999/07/17 14:06:26 itojun Exp $	*/
+/*	$NetBSD: routesock.c,v 1.2 1999/08/19 17:31:08 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -36,7 +36,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: routesock.c,v 1.2 1998/05/29 20:08:57 kurtw Exp
+ *  KAME Id: routesock.c,v 1.2 1999/08/17 13:38:04 itojun Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -313,8 +313,9 @@ getmsg(rtm, msglen, rpfinfop)
 	 */
 	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
 		rpfinfop->rpfneighbor.sin6_scope_id =
-			ntohs(sin6->sin6_addr.s6_addr16[1]);
-		rpfinfop->rpfneighbor.sin6_addr.s6_addr16[1] = 0;
+			ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
+		rpfinfop->rpfneighbor.sin6_addr.s6_addr[2] = 0;
+		rpfinfop->rpfneighbor.sin6_addr.s6_addr[3] = 0;
 	}
     }
     
