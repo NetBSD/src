@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.41 1994/03/08 13:24:57 mycroft Exp $
+ *	$Id: isa.c,v 1.42 1994/03/09 07:58:41 mycroft Exp $
  */
 
 /*
@@ -60,7 +60,7 @@
 
 #include <vm/vm.h>
 
-#include <machine/cpu.h>
+#include <machine/segments.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
@@ -107,27 +107,27 @@ isa_configure()
 	struct isa_device *dvp;
 	struct isa_driver *dp;
 
-	(void) splhigh();
+	splhigh();
 	INTREN(IRQ_SLAVE);
 	enable_intr();
 
-	for (dvp = isa_devtab_tty; config_isadev(dvp, &imask[PIL_TTY]); dvp++)
+	for (dvp = isa_devtab_tty; config_isadev(dvp, &ttymask); dvp++)
 		;
-	for (dvp = isa_devtab_bio; config_isadev(dvp, &imask[PIL_BIO]); dvp++)
+	for (dvp = isa_devtab_bio; config_isadev(dvp, &biomask); dvp++)
 		;
-	for (dvp = isa_devtab_net; config_isadev(dvp, &imask[PIL_IMP]); dvp++)
+	for (dvp = isa_devtab_net; config_isadev(dvp, &netmask); dvp++)
 		;
 	for (dvp = isa_devtab_null; config_isadev(dvp, (u_int *) NULL); dvp++)
 		;
 
-	printf("biomask %x ttymask %x impmask %x\n",
-	       imask[PIL_BIO], imask[PIL_TTY], imask[PIL_IMP]);
+	printf("biomask %x ttymask %x netmask %x\n",
+	       biomask, ttymask, netmask);
 
-	imask[PIL_AST] |= 0x80000000;	/* must be non-zero */
-	imask[PIL_IMP] |= imask[PIL_AST];
-	imask[PIL_TTY] |= imask[PIL_AST];
-	imask[PIL_BIO] |= imask[PIL_AST];
-	imask[PIL_CLOCK] |= imask[PIL_AST];
+	clockmask |= astmask;
+	biomask |= astmask;
+	ttymask |= astmask;
+	netmask |= astmask;
+	impmask = netmask | ttymask;
 
 	spl0();
 }
