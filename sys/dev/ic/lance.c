@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.7 1999/02/28 17:10:53 explorer Exp $	*/
+/*	$NetBSD: lance.c,v 1.8 1999/04/30 18:15:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -555,7 +555,7 @@ lance_mediachange(ifp)
 
 	if (sc->sc_mediachange)
 		return ((*sc->sc_mediachange)(sc));
-	return (EINVAL);
+	return (0);
 }
 
 void
