@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.7 2002/03/10 14:15:09 bjh21 Exp $ */
+/* $NetBSD: softfloat.c,v 1.8 2002/05/06 19:05:00 bjh21 Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.7 2002/03/10 14:15:09 bjh21 Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.8 2002/05/06 19:05:00 bjh21 Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -73,8 +73,8 @@ Floating-point rounding mode, extended double-precision rounding precision,
 and exception flags.
 -------------------------------------------------------------------------------
 */
-int8 float_rounding_mode = float_round_nearest_even;
-int8 float_exception_flags = 0;
+fp_rnd float_rounding_mode = float_round_nearest_even;
+fp_except float_exception_flags = 0;
 #ifdef FLOATX80
 int8 floatx80_rounding_precision = 80;
 #endif
