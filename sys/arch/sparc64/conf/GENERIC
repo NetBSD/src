@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.27 2000/04/05 02:34:19 mrg Exp $
+# 	$NetBSD: GENERIC,v 1.28 2000/04/05 14:28:55 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.27 $"
+#ident 		"GENERIC-$Revision: 1.28 $"
 
 maxusers	32
 
@@ -214,7 +214,7 @@ ebus*	at pci?					# ebus devices
 
 ## Auxiliary system registers -- We use the OBP for power management
 #auxreg0 at sbus0
-#auxreg0 at pci0
+auxio0	at ebus?				# auxio registers
 
 # We also need:
 # bpp0 at sbus0					# parallel port

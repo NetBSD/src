@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN,v 1.7 2000/04/05 02:34:19 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN,v 1.8 2000/04/05 14:28:55 mrg Exp $
 #
 # Configuration for Ultra5/Ultra10
 
@@ -195,7 +195,7 @@ ebus*	at pci?					# ebus devices
 
 ## Auxiliary system registers -- We use the OBP for power management
 #auxreg0 at sbus0
-#auxreg0 at pci0				# XXX this is wrong
+auxio0	at ebus?				# auxio registers
 
 # We also need:
 # bpp0 at sbus0					# parallel port
