@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.31 1999/10/19 00:03:18 mycroft Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.32 1999/12/01 23:22:59 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.31 1999/10/19 00:03:18 mycroft Exp $";
+    "$NetBSD: wsdisplay.c,v 1.32 1999/12/01 23:22:59 augustss Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1710,6 +1710,13 @@ wsdisplay_set_cons_kbd(get, poll)
 {
 	wsdisplay_cons.cn_getc = get;
 	wsdisplay_cons.cn_pollc = poll;
+}
+
+void
+wsdisplay_unset_cons_kbd()
+{
+	wsdisplay_cons.cn_getc = wsdisplay_getc_dummy;
+	wsdisplay_cons.cn_pollc = wsdisplay_pollc_dummy;
 }
 
 /*

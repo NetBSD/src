@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.49 1999/11/26 01:39:27 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.50 1999/12/01 23:22:57 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -420,6 +420,7 @@ USB_DETACH(ukbd)
 	DPRINTF(("ukbd_detach: sc=%p flags=%d\n", sc, flags));
 
 	if (sc->sc_console_keyboard) {
+#if 0
 		/*
 		 * XXX Should probably disconnect our consops,
 		 * XXX and either notify some other keyboard that
@@ -429,6 +430,10 @@ USB_DETACH(ukbd)
 		 * XXX to the system will get it.
 		 */
 		panic("ukbd_detach: console keyboard");
+#else
+		wskbd_cndetach();
+		ukbd_is_console = 1;
+#endif
 	}
 	/* No need to do reference counting of ukbd, wskbd has all the goo. */
 	if (sc->sc_wskbddev != NULL)
@@ -646,7 +651,7 @@ ukbd_cngetc(v, type, data)
 	int s;
 	int c;
 
-	DPRINTFN(-1,("ukbd_cngetc: enter\n"));
+	DPRINTFN(0,("ukbd_cngetc: enter\n"));
 	s = splusb();
 	sc->sc_polling = 1;
 	while(sc->sc_npollchar <= 0)
@@ -659,7 +664,7 @@ ukbd_cngetc(v, type, data)
 	*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*data = c & CODEMASK;
 	splx(s);
-	DPRINTFN(-1,("ukbd_cngetc: return 0x%02x\n", c));
+	DPRINTFN(0,("ukbd_cngetc: return 0x%02x\n", c));
 }
 
 void
