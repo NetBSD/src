@@ -166,12 +166,12 @@
 #define spl7()  _spl(PSL_S|PSL_IPL7)
 
 #define splsoftclock()  spl1()
-#define splnet()        spl1()
-#define splbio()        spl5()
+#define splnet()        spl3()
+#define splbio()        spl2()
 #define splimp()        spl5()
-#define spltty()        spl5()
-#define splclock()      spl6()
-#define splvm()         spl6()
+#define spltty()        spl6()
+#define splclock()      spl5()
+#define splvm()         spl2()
 #define splhigh()       spl7()
 #define splsched()      spl7()
 
