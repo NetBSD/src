@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.98 2003/05/08 14:19:39 lukem Exp $
+#	$NetBSD: build.sh,v 1.99 2003/05/09 09:10:06 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -668,12 +668,13 @@ validatemakeparams()
 	statusmsg "TOOLDIR path:    ${TOOLDIR}"
 	DESTDIR=$(getmakevar DESTDIR)
 	RELEASEDIR=$(getmakevar RELEASEDIR)
-	export TOOLDIR DESTDIR RELEASEDIR
 	if ! $do_expertmode; then
 		_SRCTOPOBJ_=$(getmakevar _SRC_TOP_OBJ_)
 		: ${DESTDIR:=${_SRCTOPOBJ_}/destdir.${MACHINE}}
 		: ${RELEASEDIR:=${_SRCTOPOBJ_}/releasedir}
+		makeenv="${makeenv} DESTDIR RELEASEDIR"
 	fi
+	export TOOLDIR DESTDIR RELEASEDIR
 	statusmsg "DESTDIR path:    ${DESTDIR}"
 	statusmsg "RELEASEDIR path: ${RELEASEDIR}"
 
@@ -758,7 +759,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.98 2003/05/08 14:19:39 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.99 2003/05/09 09:10:06 lukem Exp $
 #
 
 EOF
