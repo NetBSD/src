@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.7 1996/10/11 00:47:02 christos Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.8 1996/10/13 03:47:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -158,7 +158,7 @@ zs_kgdb_init()
 	/* Note: (ttya,ttyb) on zsc1, and (ttyc,ttyd) on zsc0 */
 	zsc_unit = 2 - (kgdb_dev & 2);
 	channel  =      kgdb_dev & 1;
-	kprintf("zs_kgdb_init: attaching zstty%d at %d baud\n",
+	printf("zs_kgdb_init: attaching zstty%d at %d baud\n",
 		   channel, kgdb_rate);
 
 	/* Setup temporary chanstate. */
@@ -197,7 +197,7 @@ zs_check_kgdb(cs, dev)
 	 * Yes, this is the kgdb port.  Finish the autoconfig
 	 * message and set up the port for our exclusive use.
 	 */
-	kprintf(" (kgdb)\n");
+	printf(" (kgdb)\n");
 
 	cs->cs_private = NULL;
 	cs->cs_ops = &zsops_kgdb;
@@ -216,7 +216,7 @@ zskgdb()
 {
 	int unit = minor(kgdb_dev);
 
-	kprintf("zstty%d: kgdb interrupt\n", unit);
+	printf("zstty%d: kgdb interrupt\n", unit);
 	/* This will trap into the debugger. */
 	kgdb_connect(1);
 }
@@ -276,7 +276,7 @@ static void
 zs_kgdb_softint(cs)
 	struct zs_chanstate *cs;
 {
-	kprintf("zs_kgdb_softint?\n");
+	printf("zs_kgdb_softint?\n");
 }
 
 struct zsops zsops_kgdb = {

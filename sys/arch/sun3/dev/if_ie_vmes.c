@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vmes.c,v 1.3 1996/10/11 00:46:39 christos Exp $	*/
+/*	$NetBSD: if_ie_vmes.c,v 1.4 1996/10/13 03:47:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -92,7 +92,7 @@ ie_vmes_match(parent, vcf, args)
 
 #ifdef	DIAGNOSTIC
 	if (ca->ca_bustype != BUS_VME16) {
-		kprintf("ie_vmes_match: bustype %d?\n", ca->ca_bustype);
+		printf("ie_vmes_match: bustype %d?\n", ca->ca_bustype);
 		return (0);
 	}
 #endif
