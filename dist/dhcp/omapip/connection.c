@@ -120,10 +120,6 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 	omapi_connection_object_t *obj;
 	int flag;
 	struct sockaddr_in local_sin;
-#if defined (TRACING)
-	trace_addr_t *addrs;
-	u_int16_t naddrs;
-#endif
 
 	obj = (omapi_connection_object_t *)0;
 	status = omapi_connection_allocate (&obj, MDL);
@@ -170,6 +166,7 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 				omapi_connection_dereference (&obj, MDL);
 				return ISC_R_INVALIDARG;
 			}
+			memset (&local_sin, 0, sizeof local_sin);
 			local_sin.sin_port = htons (local_addr -> port);
 			memcpy (&local_sin.sin_addr,
 				local_addr -> address,
@@ -178,8 +175,6 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 			local_sin.sin_len = sizeof local_addr;
 #endif
 			local_sin.sin_family = AF_INET;
-			memset (&local_sin.sin_zero, 0,
-				sizeof local_sin.sin_zero);
 			
 			if (bind (obj -> socket, (struct sockaddr *)&local_sin,
 				  sizeof local_sin) < 0) {
@@ -618,6 +613,7 @@ static isc_result_t omapi_connection_connect_internal (omapi_object_t *h)
 			return ISC_R_INVALIDARG;
 		}
 
+		memset (&c->remote_addr, 0, sizeof c->remote_addr);
 		memcpy (&c -> remote_addr.sin_addr,
 			&c -> connect_list -> addresses [c -> cptr].address,
 			sizeof c -> remote_addr.sin_addr);
@@ -627,8 +623,6 @@ static isc_result_t omapi_connection_connect_internal (omapi_object_t *h)
 #if defined (HAVE_SA_LEN)
 		c -> remote_addr.sin_len = sizeof c -> remote_addr;
 #endif
-		memset (&c -> remote_addr.sin_zero, 0,
-			sizeof c -> remote_addr.sin_zero);
 		++c -> cptr;
 
 		error = connect (c -> socket,
@@ -1014,7 +1008,6 @@ isc_result_t omapi_connection_stuff_values (omapi_object_t *c,
 					    omapi_object_t *id,
 					    omapi_object_t *m)
 {
-	int i;
 
 	if (m -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;

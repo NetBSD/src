@@ -348,7 +348,6 @@ isc_result_t dhcpctl_remote_stuff_values (omapi_object_t *c,
 					  omapi_object_t *id,
 					  omapi_object_t *p)
 {
-	int i;
 
 	if (p -> type != dhcpctl_remote_type)
 		return ISC_R_INVALIDARG;

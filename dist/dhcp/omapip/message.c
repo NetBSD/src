@@ -218,7 +218,6 @@ isc_result_t omapi_message_get_value (omapi_object_t *h,
 isc_result_t omapi_message_destroy (omapi_object_t *h,
 				    const char *file, int line)
 {
-	int i;
 
 	omapi_message_object_t *m;
 	if (h -> type != omapi_type_message)
@@ -270,7 +269,6 @@ isc_result_t omapi_message_stuff_values (omapi_object_t *c,
 					 omapi_object_t *id,
 					 omapi_object_t *m)
 {
-	int i;
 
 	if (m -> type != omapi_type_message)
 		return ISC_R_INVALIDARG;
