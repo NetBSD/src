@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: syscall.s,v 1.1 91/07/06 13:06:02 torek Exp
- * $Id: syscall.S,v 1.1 1993/10/07 00:22:31 cgd Exp $
+ * $Id: syscall.S,v 1.2 1996/11/18 22:35:53 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -44,8 +44,4 @@
 
 #include "SYS.h"
 
-ENTRY(syscall)
-	mov	0|SYSCALL_G2RFLAG, %g1	! 0 == indir
-	add	%o7, 8, %g2
-	t	ST_SYSCALL
-	ERROR()
+RSYSCALL(syscall)
