@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.93 2003/05/30 15:43:33 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.94 2003/06/05 10:41:33 simonb Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -123,6 +123,7 @@ static void
 _rtld_call_init_functions(first)
 	Obj_Entry *first;
 {
+
 	if (first != NULL) {
 		_rtld_call_init_functions(first->next);
 		if (first->init != NULL)
@@ -139,6 +140,7 @@ static void
 _rtld_init(mapbase, relocbase)
 	caddr_t mapbase, relocbase;
 {
+
 	/* Conjure up an Obj_Entry structure for the dynamic linker. */
 	_rtld_objself.path = _rtld_path;
 	_rtld_objself.pathlen = strlen(_rtld_path);
@@ -181,6 +183,7 @@ _rtld_init(mapbase, relocbase)
 static void
 _rtld_exit()
 {
+
 	dbg(("rtld_exit()"));
 
 	_rtld_call_fini_functions(_rtld_objlist->next);
@@ -488,6 +491,7 @@ static void
 _rtld_init_dag(root)
 	Obj_Entry *root;
 {
+
 	_rtld_init_dag1(root, root);
 }
 
@@ -519,6 +523,7 @@ _rtld_unload_object(root, do_fini_funcs)
 	Obj_Entry *root;
 	bool do_fini_funcs;
 {
+
 	_rtld_unref_dag(root);
 	if (root->refcount == 0) { /* We are finished with some objects. */
 		Obj_Entry *obj;
@@ -564,6 +569,7 @@ static void
 _rtld_unref_dag(root)
 	Obj_Entry *root;
 {
+
 	assert(root);
 	assert(root->refcount != 0);
 	--root->refcount;
@@ -603,6 +609,7 @@ char *
 _rtld_dlerror()
 {
 	char *msg = error_message;
+
 	error_message = NULL;
 	return msg;
 }
@@ -842,6 +849,7 @@ _rtld_error(const char *fmt,...)
 void
 _rtld_debug_state()
 {
+
 	/* do nothing */
 }
 

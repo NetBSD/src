@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.28 2003/03/06 17:01:27 taca Exp $	 */
+/*	$NetBSD: map_object.c,v 1.29 2003/06/05 10:41:32 simonb Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -342,6 +342,7 @@ protflags(elfflags)
 	int elfflags;
 {
 	int prot = 0;
+
 	if (elfflags & PF_R)
 		prot |= PROT_READ;
 #ifdef RTLD_LOADER

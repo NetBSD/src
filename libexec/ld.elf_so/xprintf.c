@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.13 2002/09/24 14:09:43 mycroft Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.14 2003/06/05 10:41:33 simonb Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -189,6 +189,7 @@ xvprintf(fmt, ap)
 	va_list ap;
 {
 	char buf[256];
+
 	(void) write(2, buf, xvsnprintf(buf, sizeof(buf), fmt, ap));
 }
 
@@ -220,6 +221,7 @@ const char *
 xstrerror(error)
 	int error;
 {
+
 	if (error >= sys_nerr || error < 0) {
 		static char buf[128];
 		xsnprintf(buf, sizeof(buf), "Unknown error: %d", error);
@@ -287,6 +289,7 @@ xassert(file, line, failedexpr)
 	int line;
 	const char *failedexpr;
 {
+
 	xprintf("assertion \"%s\" failed: file \"%s\", line %d\n",
 		failedexpr, file, line);
 	abort();
