@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.48 2000/06/01 00:49:55 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.49 2000/06/01 04:16:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -356,11 +356,13 @@ findroot(devpp, partp)
 	char buf[32];
 #endif
 
+#if 0
 	/*
 	 * Default to "not found."
 	 */
 	*devpp = NULL;
 	*partp = 0;
+#endif
 
 	if (booted_device) {
 		*devpp = booted_device;
