@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_fifo.c,v 1.7 2001/11/13 07:11:14 lukem Exp $	*/
+/*	$NetBSD: rf_fifo.c,v 1.8 2002/09/17 03:43:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_fifo.c,v 1.7 2001/11/13 07:11:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_fifo.c,v 1.8 2002/09/17 03:43:34 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -88,10 +88,12 @@ rf_FifoEnqueue(q_in, elem, priority)
 		q->hq_count++;
 	} else {
 		RF_ASSERT(elem->next == NULL);
+#if RF_DEBUG_QUEUE
 		if (rf_fifoDebug) {
 			printf("raid%d: fifo: ENQ lopri\n", 
 			       elem->raidPtr->raidid);
 		}
+#endif
 		if (!q->lq_tail) {
 			RF_ASSERT(q->lq_count == 0 && q->lq_head == NULL);
 			q->lq_head = q->lq_tail = elem;
@@ -139,10 +141,12 @@ rf_FifoDequeue(q_in)
 				q->lq_tail = NULL;
 			nd->next = NULL;
 			q->lq_count--;
+#if RF_DEBUG_QUEUE
 			if (rf_fifoDebug) {
 				printf("raid%d: fifo: DEQ lopri %lx\n", 
 				       nd->raidPtr->raidid, (long) nd);
 			}
+#endif
 		} else {
 			RF_ASSERT(q->hq_count == 0 && q->lq_count == 0 && q->hq_tail == NULL && q->lq_tail == NULL);
 			nd = NULL;

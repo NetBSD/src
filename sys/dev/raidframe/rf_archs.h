@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.16 2002/09/17 03:21:41 oster Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.17 2002/09/17 03:43:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -122,6 +122,10 @@
 
 #ifndef RF_DEBUG_VERIFYPARITY
 #define RF_DEBUG_VERIFYPARITY 0
+#endif
+
+#ifndef RF_DEBUG_QUEUE
+#define RF_DEBUG_QUEUE 0
 #endif
 
 #include "rf_options.h"
