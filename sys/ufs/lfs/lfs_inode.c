@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.32 2000/03/30 12:41:13 augustss Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.33 2000/04/23 21:10:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -227,6 +227,7 @@ lfs_truncate(v)
 	} */ *ap = v;
 	struct indir *inp;
 	int i;
+        int error, aflags;
 	ufs_daddr_t *daddrp;
 	struct vnode *vp = ap->a_vp;
 	off_t length = ap->a_length;
@@ -241,7 +242,12 @@ lfs_truncate(v)
 	long off, a_released, fragsreleased, i_released;
 	int e1, e2, depth, lastseg, num, offset, seg, freesize, s;
 	
+	if (length < 0)
+		return (EINVAL);
+
 	ip = VTOI(vp);
+	if (length == ip->i_ffs_size) /* XXX don't update times */
+		return 0;
 
 	if (vp->v_type == VLNK &&
 	   (ip->i_ffs_size < vp->v_mount->mnt_maxsymlinklen ||
@@ -256,16 +262,30 @@ lfs_truncate(v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(vp, NULL, NULL, 0));
 	}
-	uvm_vnp_setsize(vp, length);
 	
 	fs = ip->i_lfs;
 	lfs_imtime(fs);
 	
 	/* If length is larger than the file, just update the times. */
-	if (ip->i_ffs_size <= length) {
+	if (ip->i_ffs_size < length) {
+		if (length > fs->lfs_maxfilesize)
+			return (EFBIG);
+		/*
+		 * Allocate the new last block to ensure that any previously
+		 * existing fragments get extended.  (XXX Adding the new
+		 * block is not really necessary.)
+		 */
+		error = VOP_BALLOC(vp, length - 1, 1, ap->a_cred, aflags, &bp);
+		if (error)
+ 			return (error);
+		VOP_BWRITE(bp);
+		ip->i_ffs_size = length;
+		uvm_vnp_setsize(vp, length);
+		(void) uvm_vnp_uncache(vp);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(vp, NULL, NULL, 0));
 	}
+	uvm_vnp_setsize(vp, length);
 
 	/*
 	 * Make sure no writes happen while we're truncating.
