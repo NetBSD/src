@@ -35,7 +35,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.1.2.2 1993/11/29 18:19:12 mycroft Exp $
+ *	$Id: mcd.c,v 1.1.2.3 1993/11/29 18:28:18 mycroft Exp $
  */
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
@@ -58,9 +58,11 @@
 #include <sys/disk.h>
 #include <sys/device.h>
 
+#include <machine/cpu.h>
+#include <machine/pio.h>
+
 #include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
-
 #include <i386/isa/mcdreg.h>
 
 #ifndef MCDDEBUG
