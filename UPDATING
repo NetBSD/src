@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.50 2002/01/30 06:54:56 itojun Exp $
+$NetBSD: UPDATING,v 1.51 2002/02/23 11:06:53 pooka Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -32,7 +32,7 @@ Recent changes:
 	Use the new toolchain to build and install natively (i.e. /usr/lib)
 
 	gnu/lib/libgcc
-	gnu/lib/libstc++
+	gnu/lib/libstdc++
 
 	After this a snapshot will be able to be built.
 
