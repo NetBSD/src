@@ -396,7 +396,7 @@ arm_frame_find_saved_regs (frame_info, saved_regs_addr)
 
   memset (saved_regs_addr, '\0', sizeof (*saved_regs_addr));
   frame = frame_info->frame;
-  return_data_save = read_memory_integer (frame, 4) & 0x03fffffc - 12;
+  return_data_save = ADDR_BITS_REMOVE(read_memory_integer (frame, 4)) - 12;
   saved_register_mask = read_memory_integer (return_data_save, 4);
   next_addr = frame - 12;
   for (regnum = 4; regnum < 10; regnum++)
