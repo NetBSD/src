@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.69 1995/05/16 14:19:03 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.70 1995/07/19 15:19:08 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -474,6 +474,11 @@ execve(p, uap, retval)
 
 	p->p_emul = pack.ep_emul;
 	FREE(pack.ep_hdr, M_EXEC);
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_EMUL))
+		ktremul(p->p_tracep, p->p_emul->e_name);
+#endif
 	return 0;
 
 bad:
