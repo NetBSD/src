@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.3 2002/07/11 14:16:42 scw Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.4 2002/09/05 09:53:17 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -47,13 +47,26 @@
  *
  * Note: the jmpbuf is the same size (and layout) as struct sigcontext
  * declared in <sh5/signal.h>
+ *
+ * XXX: Can't use sizeof(t) here; this is included by asm source...
  */
 
-#define	_JB_R(r)	((4 + (r)) * 8)
-#define	_JB_TR(r)	((67 + (r)) * 8)
-#define	_JB_DR(r)	((76 + (r)) * 8)
+#define	_JB_SZINT		4
+#define	_JB_SZREGISTER_T	8
 
-#define	_JB_USR		24
+#define	_JB_SIGONSTACK	(_JB_SZINT * 0)
+#define	_JB_SIGMASK13	(_JB_SZINT * 1)
+#define	_JB_SIGFPSTATE	(_JB_SZINT * 2)
+#define	_JB_SIGPAD	(_JB_SZINT * 3)
+#define	_JB_REGS	(_JB_SZINT * 4)
+#define	_JB_SIGMASK	(_JB_DR(32))
+
+#define	_JB_PC		(_JB_REGS + (_JB_SZREGISTER_T * 0))
+#define	_JB_USR		(_JB_REGS + (_JB_SZREGISTER_T * 1))
+#define	_JB_R(r)	(_JB_REGS + (_JB_SZREGISTER_T * 2) + ((r) * 8))
+#define	_JB_TR(r)	(_JB_REGS + (_JB_SZREGISTER_T * 65) + ((r) * 8))
+#define	_JB_FPSCR	(_JB_REGS + (_JB_SZREGISTER_T * 73))
+#define	_JB_DR(r)	(_JB_REGS + (_JB_SZREGISTER_T * 74) + ((r) * 8))
 
 #define	_JB_R2		_JB_R(2)
 #define	_JB_R10		_JB_R(10)
@@ -99,8 +112,6 @@
 #define	_JB_TR6		_JB_TR(6)
 #define	_JB_TR7		_JB_TR(7)
 
-#define	_JB_FPSCR	600
-
 #define	_JB_DR12	_JB_DR(12)
 #define	_JB_DR14	_JB_DR(14)
 #define	_JB_DR36	_JB_DR(36)
@@ -117,12 +128,6 @@
 #define	_JB_DR58	_JB_DR(58)
 #define	_JB_DR60	_JB_DR(60)
 #define	_JB_DR62	_JB_DR(62)
-
-#define	_JB_SIGONSTACK	0
-#define	_JB_SIGMASK13	4
-#define	_JB_SIGFPSTATE	8
-#define	_JB_SIGPAD	12
-#define	_JB_SIGMASK	864
 
 /*
  * XXX: It would be better if jmp_buf was an array of register_t ...
