@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.39 2002/04/05 16:58:03 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.40 2002/04/09 21:00:42 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -719,6 +719,7 @@ set_cpufuncs()
 		cpufuncs = arm6_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
+		pmap_pte_init_generic();
 		return 0;
 	}
 #endif	/* CPU_ARM6 */
@@ -729,6 +730,7 @@ set_cpufuncs()
 		cpufuncs = arm7_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
+		pmap_pte_init_generic();
 		return 0;
 	}
 #endif	/* CPU_ARM7 */
@@ -739,6 +741,7 @@ set_cpufuncs()
 		cpufuncs = arm7tdmi_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_cp15();
+		pmap_pte_init_generic();
 		return 0;
 	}
 #endif	
@@ -748,15 +751,16 @@ set_cpufuncs()
 		cpufuncs = arm8_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;	/* XXX correct? */
 		get_cachetype_cp15();
+		pmap_pte_init_generic();
 		return 0;
 	}
 #endif	/* CPU_ARM8 */
 #ifdef CPU_ARM9
 	if (cputype == CPU_ID_ARM920T) {
-		pte_cache_mode = L2_C;	/* Select write-through cacheing. */
 		cpufuncs = arm9_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
+		pmap_pte_init_arm9();
 		return 0;
 	}
 #endif /* CPU_ARM9 */
@@ -766,6 +770,7 @@ set_cpufuncs()
 		cpufuncs = sa110_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it */
 		get_cachetype_table();
+		pmap_pte_init_generic();
 		/*
 		 * Enable the right variant of sleeping.
 		 */
@@ -811,7 +816,6 @@ set_cpufuncs()
 			:
 			: "r" (BCUCTL_E0|BCUCTL_E1|BCUCTL_EV));
 
-		pte_cache_mode = L2_C;	/* Select write-through cacheing. */
 		cpufuncs = xscale_cpufuncs;
 
 		/*
@@ -826,6 +830,7 @@ set_cpufuncs()
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
+		pmap_pte_init_i80200();
 		return 0;
 	}
 #endif /* CPU_XSCALE_80200 */
@@ -849,6 +854,7 @@ set_cpufuncs()
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
+		pmap_pte_init_xscale();
 		return 0;
 	}
 #endif /* CPU_XSCALE_80321 */
