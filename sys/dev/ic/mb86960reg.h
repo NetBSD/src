@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960reg.h,v 1.2 1998/01/05 07:31:05 perry Exp $	*/
+/*	$NetBSD: mb86960reg.h,v 1.3 1998/03/23 16:57:21 msaitoh Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -76,7 +76,7 @@
 #define FE_MAR14	14
 #define FE_MAR15	15
 
-/* Buffer Memory Port Registers.  On register back #2.  */
+/* Buffer Memory Port Registers.  On register bank #2.  */
 #define FE_BMPR8	8
 #define FE_BMPR9	9
 #define FE_BMPR10	10
