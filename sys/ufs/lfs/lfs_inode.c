@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.58 2002/07/02 19:07:03 yamt Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.59 2002/07/06 01:30:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.58 2002/07/02 19:07:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.59 2002/07/06 01:30:12 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -124,11 +124,11 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct buf *bp)
 #endif
 
 	/*
-	 * XXX we used to go from the top down here, presumably with the
-	 * idea that the same inode could be written twice in the same
-	 * block (which is not supposed to be true).
+	 * Read the inode block backwards, since later versions of the
+	 * inode will supercede earlier ones.  Though it is unlikely, it is
+	 * possible that the same inode will appear in the same inode block.
 	 */
-	for (ldip = dip; ldip < fin; ++ldip)
+	for (ldip = fin - 1; ldip >= dip; --ldip)
 		if (ldip->di_inumber == ino)
 			return (ldip);
 
@@ -218,6 +218,7 @@ lfs_update(void *v)
  * disk blocks.
  */
 /* VOP_BWRITE 1 + NIADDR + VOP_BALLOC == 2 + 2*NIADDR times */
+
 int
 lfs_truncate(void *v)
 {
@@ -312,18 +313,11 @@ lfs_truncate(void *v)
 	 * truncating.  Otherwise, blocks which are accounted for on the
 	 * inode *and* which have been created for cleaning can coexist,
 	 * and cause an overcounting.
-	 *
-	 * (We don't need to *hold* the seglock, though, because we already
-	 * hold the inode lock; draining the seglock is sufficient.)
 	 */
-#ifdef LFS_AGGRESSIVE_SEGLOCK
+#ifdef LFS_FRAGSIZE_SEGLOCK
 	lfs_seglock(fs, SEGM_PROT);
 #else
-	if (ovp != fs->lfs_unlockvp) {
-		while (fs->lfs_seglock) {
-			tsleep(&fs->lfs_seglock, PRIBIO+1, "lfs_truncate", 0);
-		}
-	}
+	lockmgr(&fs->lfs_fraglock, LK_SHARED, 0);
 #endif
 	
 	/*
@@ -347,8 +341,10 @@ lfs_truncate(void *v)
 		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
 		if (error) {
 			lfs_reserve(fs, ovp, -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
-#ifdef LFS_AGGRESSIVE_SEGLOCK
+#ifdef LFS_FRAGSIZE_SEGLOCK
 			lfs_segunlock(fs);
+#else
+			lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
 #endif
 			return (error);
 		}
@@ -430,17 +426,22 @@ lfs_truncate(void *v)
 	 * All whole direct blocks or frags.
 	 */
 	for (i = NDADDR - 1; i > lastblock; i--) {
-		long bsize;
+		long bsize, obsize;
 
 		bn = oip->i_ffs_db[i];
 		if (bn == 0)
 			continue;
 		bsize = blksize(fs, oip, i);
-		if (oip->i_ffs_db[i] > 0)
-			real_released += btofsb(fs, bsize);
+		if (oip->i_ffs_db[i] > 0) {
+			/* Check for fragment size changes */
+			obsize = oip->i_lfs_fragsize[i];
+			real_released += btofsb(fs, obsize);
+			oip->i_lfs_fragsize[i] = 0;
+		} else
+			obsize = 0;
 		blocksreleased += btofsb(fs, bsize);
 		oip->i_ffs_db[i] = 0;
-		lfs_blkfree(fs, bn, bsize, &lastseg, &bc);
+		lfs_blkfree(fs, bn, obsize, &lastseg, &bc);
 	}
 	if (lastblock < 0)
 		goto done;
@@ -451,23 +452,28 @@ lfs_truncate(void *v)
 	 */
 	bn = oip->i_ffs_db[lastblock];
 	if (bn != 0) {
-		long oldspace, newspace;
+		long oldspace, newspace, olddspace;
 
 		/*
 		 * Calculate amount of space we're giving
 		 * back as old block size minus new block size.
 		 */
 		oldspace = blksize(fs, oip, lastblock);
+		olddspace = oip->i_lfs_fragsize[lastblock];
+
 		oip->i_ffs_size = length;
 		newspace = blksize(fs, oip, lastblock);
 		if (newspace == 0)
 			panic("itrunc: newspace");
 		if (oldspace - newspace > 0) {
-			lfs_blkfree(fs, bn, oldspace - newspace, &lastseg, &bc);
-			if (bn > 0)
-				real_released += btofsb(fs, oldspace - newspace);
 			blocksreleased += btofsb(fs, oldspace - newspace);
 		}
+#if 0
+		if (bn > 0 && olddspace - newspace > 0) {
+			/* No segment accounting here, just vnode */
+			real_released += btofsb(fs, olddspace - newspace);
+		}
+#endif
 	}
 
 done:
@@ -503,8 +509,10 @@ done:
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif
 	lfs_reserve(fs, ovp, -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
-#ifdef LFS_AGGRESSIVE_SEGLOCK
+#ifdef LFS_FRAGSIZE_SEGLOCK
 	lfs_segunlock(fs);
+#else
+	lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
 #endif
 	return (allerror);
 }
