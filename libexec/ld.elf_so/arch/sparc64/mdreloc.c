@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.24 2002/09/25 14:35:39 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.25 2002/09/25 14:36:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -239,6 +239,7 @@ _rtld_install_plt(pltgot, proc)
 	pltgot[7] = MOV_g1_o0;
 }
 
+#if 0
 long _rtld_bind_start_0_stub __P((long x, long y));
 long 
 _rtld_bind_start_0_stub(x, y)
@@ -252,6 +253,7 @@ _rtld_bind_start_0_stub(x, y)
 
 	return (n);
 }
+#endif
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
