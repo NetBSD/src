@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.17 1994/01/08 03:24:19 mycroft Exp $
+ *	$Id: vm_mmap.c,v 1.18 1994/01/08 04:22:40 mycroft Exp $
  */
 
 /*
@@ -58,6 +58,7 @@
 #include <vm/vm_pager.h>
 #include <vm/vm_prot.h>
 #include <vm/vm_statistics.h>
+#include <vm/vm_user.h>
 
 #ifdef DEBUG
 int mmapdebug = 0;
