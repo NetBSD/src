@@ -1,4 +1,4 @@
-/*	$NetBSD: number.c,v 1.5 1997/10/10 16:41:43 lukem Exp $	*/
+/*	$NetBSD: number.c,v 1.6 1998/09/13 15:24:57 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)number.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: number.c,v 1.5 1997/10/10 16:41:43 lukem Exp $");
+__RCSID("$NetBSD: number.c,v 1.6 1998/09/13 15:24:57 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ int	number __P((char *, int));
 void	pfract __P((int));
 void	toobig __P((void));
 int	unit __P((int, char *));
-void	usage __P((void));
+void	usage __P((void)) __attribute__((__noreturn__));
 
 int lflag;
 
@@ -173,6 +173,7 @@ badnum:			errx(1, "illegal number: %s", line);
 	if (*line == '-') {
 		(void)printf("minus%s", lflag ? " " : "\n");
 		++line;
+		--len;
 	}
 
 	rval = len > 0 ? unit(len, line) : 0;
