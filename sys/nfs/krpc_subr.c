@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.6 1994/08/12 04:31:51 cgd Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.7 1994/09/26 16:42:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon Ross, Adam Glass 
@@ -56,6 +56,7 @@
 #include <netinet/in.h>
 
 #include <nfs/rpcv2.h>
+#include <nfs/krpc.h>
 
 /*
  * Kernel support for Sun RPC
@@ -65,11 +66,6 @@
  * Note: will not work on variable-sized rpc args/results.
  *       implicit size-limit of an mbuf.
  */
- 
-#define	PMAPPORT		111
-#define	PMAPPROG		100000
-#define	PMAPVERS		2
-#define	PMAPPROC_GETPORT	3
 
 /*
  * Generic RPC headers
@@ -119,8 +115,8 @@ struct rpc_reply {
  * Returns non-zero error on failure.
  */
 int
-krpc_portmap(sa,  prog, vers, portp)
-	struct sockaddr *sa;		/* server address */
+krpc_portmap(sin,  prog, vers, portp)
+	struct sockaddr_in *sin;		/* server address */
 	u_long prog, vers;	/* host order */
 	u_short *portp;		/* network order */
 {
@@ -156,8 +152,9 @@ krpc_portmap(sa,  prog, vers, portp)
 	sdata->proto = htonl(IPPROTO_UDP);
 	sdata->port = 0;
 
-	error = krpc_call(sa, PMAPPROG, PMAPVERS,
-					  PMAPPROC_GETPORT, &m);
+	sin->sin_port = htons(PMAPPORT);
+	error = krpc_call(sin, PMAPPROG, PMAPVERS,
+					  PMAPPROC_GETPORT, &m, NULL);
 	if (error) 
 		return error;
 
@@ -170,17 +167,19 @@ krpc_portmap(sa,  prog, vers, portp)
 
 /*
  * Do a remote procedure call (RPC) and wait for its reply.
+ * If from_p is non-null, then we are doing broadcast, and
+ * the address from whence the response came is saved there.
  */
 int
-krpc_call(sa, prog, vers, func, data)
-	struct sockaddr *sa;
+krpc_call(sa, prog, vers, func, data, from_p)
+	struct sockaddr_in *sa;
 	u_long prog, vers, func;
 	struct mbuf **data;	/* input/output */
+	struct mbuf **from_p;	/* output */
 {
 	struct socket *so;
 	struct sockaddr_in *sin;
-	struct timeval *tv;
-	struct mbuf *m, *nam, *mhead;
+	struct mbuf *m, *nam, *mhead, *from;
 	struct rpc_call *call;
 	struct rpc_reply *reply;
 	struct uio auio;
@@ -192,11 +191,12 @@ krpc_call(sa, prog, vers, func, data)
 	 * Validate address family.
 	 * Sorry, this is INET specific...
 	 */
-	if (sa->sa_family != AF_INET)
+	if (sa->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
 
 	/* Free at end if not null. */
 	nam = mhead = NULL;
+	from = NULL;
 
 	/*
 	 * Create socket and set its recieve timeout.
@@ -208,13 +208,32 @@ krpc_call(sa, prog, vers, func, data)
 	if (m == NULL) {
 		error = ENOBUFS;
 		goto out;
+	} else {
+		struct timeval *tv;
+		tv = mtod(m, struct timeval *);
+		m->m_len = sizeof(*tv);
+		tv->tv_sec = 1;
+		tv->tv_usec = 0;
+		if ((error = sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m)))
+			goto out;
 	}
-	tv = mtod(m, struct timeval *);
-	m->m_len = sizeof(*tv);
-	tv->tv_sec = 1;
-	tv->tv_usec = 0;
-	if ((error = sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m)))
-		goto out;
+
+	/*
+	 * Enable broadcast if necessary.
+	 */
+	if (from_p) {
+		int *on;
+		m = m_get(M_WAIT, MT_SOOPTS);
+		if (m == NULL) {
+			error = ENOBUFS;
+			goto out;
+		}
+		on = mtod(m, int *);
+		m->m_len = sizeof(*on);
+		*on = 1;
+		if ((error = sosetopt(so, SOL_SOCKET, SO_BROADCAST, m)))
+			goto out;
+	}
 
 	/*
 	 * Bind the local endpoint to a reserved port,
@@ -248,13 +267,7 @@ krpc_call(sa, prog, vers, func, data)
 		goto out;
 	}
 	sin = mtod(nam, struct sockaddr_in *);
-	bcopy((caddr_t)sa, (caddr_t)sin, (nam->m_len = sa->sa_len));
-
-	/*
-	 * Set the port number that the request will use.
-	 */
-	if ((error = krpc_portmap(sa, prog, vers, &sin->sin_port)))
-		goto out;
+	bcopy((caddr_t)sa, (caddr_t)sin, (nam->m_len = sa->sin_len));
 
 	/*
 	 * Prepend RPC message header.
@@ -280,7 +293,8 @@ krpc_call(sa, prog, vers, func, data)
 	 */
 	call = mtod(mhead, struct rpc_call *);
 	bzero((caddr_t)call, sizeof(*call));
-	call->rp_xid = ++xid;	/* no need to put in network order */
+	xid++;
+	call->rp_xid = htonl(xid);
 	/* call->rp_direction = 0; */
 	call->rp_rpcvers = htonl(2);
 	call->rp_prog = htonl(prog);
@@ -322,9 +336,17 @@ krpc_call(sa, prog, vers, func, data)
 		 */
 		secs = timo;
 		while (secs > 0) {
+			if (from) {
+				m_freem(from);
+				from = NULL;
+			}
+			if (m) {
+				m_freem(m);
+				m = NULL;
+			}
 			auio.uio_resid = len = 1<<16;
 			rcvflg = 0;
-			error = soreceive(so, NULL, &auio, &m, NULL, &rcvflg);
+			error = soreceive(so, &from, &auio, &m, NULL, &rcvflg);
 			if (error == EWOULDBLOCK) {
 				secs--;
 				continue;
@@ -333,20 +355,35 @@ krpc_call(sa, prog, vers, func, data)
 				goto out;
 			len -= auio.uio_resid;
 
-			/* Is the reply complete and the right one? */
-			if (len < MIN_REPLY_HDR) {
-				m_freem(m);
+			/* Does the reply contain at least a header? */
+			if (len < MIN_REPLY_HDR)
+				continue;
+			if (m->m_len < MIN_REPLY_HDR)
+				continue;
+			reply = mtod(m, struct rpc_reply *);
+
+			/* Is it the right reply? */
+			if (reply->rp_direction != htonl(RPC_REPLY))
+				continue;
+
+			if (reply->rp_xid != htonl(xid))
+				continue;
+
+			/* Was RPC accepted? (authorization OK) */
+			if (reply->rp_astatus != 0) {
+				error = ntohl(reply->rp_u.rpu_errno);
+				printf("rpc denied, error=%d\n", error);
 				continue;
 			}
-			if (m->m_len < MIN_REPLY_HDR) {
-				m = m_pullup(m, MIN_REPLY_HDR);
-				if (!m)
-					continue;
+
+			/* Did the call succeed? */
+			if ((error = ntohl(reply->rp_u.rpu_ok.rp_rstatus)) != 0) {
+				printf("rpc status=%d\n", error);
+				continue;
 			}
-			reply = mtod(m, struct rpc_reply *);
-			if ((reply->rp_direction == htonl(RPC_REPLY)) &&
-				(reply->rp_xid == xid))
-				goto gotreply;	/* break two levels */
+
+			goto gotreply;	/* break two levels */
+
 		} /* while secs */
 	} /* forever send/receive */
 
@@ -373,22 +410,7 @@ krpc_call(sa, prog, vers, func, data)
 			error = ENOBUFS;
 			goto out;
 		}
-	}
-	reply = mtod(m, struct rpc_reply *);
-
-	/*
-	 * Check RPC acceptance and status.
-	 */
-	if (reply->rp_astatus != 0) {
-		error = ntohl(reply->rp_u.rpu_errno);
-		printf("rpc denied, error=%d\n", error);
-		m_freem(m);
-		goto out;
-	}
-	if ((error = ntohl(reply->rp_u.rpu_ok.rp_rstatus)) != 0) {
-		printf("rpc status=%d\n", error);
-		m_freem(m);
-		goto out;
+		reply = mtod(m, struct rpc_reply *);
 	}
 
 	/*
@@ -403,10 +425,15 @@ krpc_call(sa, prog, vers, func, data)
 
 	/* result */
 	*data = m;
+	if (from_p) {
+		*from_p = from;
+		from = NULL;
+	}
 
  out:
 	if (nam) m_freem(nam);
 	if (mhead) m_freem(mhead);
+	if (from) m_freem(from);
 	soclose(so);
 	return error;
 }
