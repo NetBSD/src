@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.62 2004/09/04 23:35:43 manu Exp $	*/
+/*	$NetBSD: inet.c,v 1.63 2004/09/06 14:51:32 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.62 2004/09/04 23:35:43 manu Exp $");
+__RCSID("$NetBSD: inet.c,v 1.63 2004/09/06 14:51:32 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -535,9 +535,7 @@ pim_stats(off, name)
 	printf("%s:\n", name);
 
 #define	p(f, m) if (pimstat.f || sflag <= 1) \
-	printf(m, pimstat.f, plural(pimstat.f))
-#define	py(f, m) if (pimstat.f || sflag <= 1) \
-	printf(m, pimstat.f, pimstat.f != 1 ? "ies" : "y")
+	printf(m, (unsigned long long)pimstat.f, plural(pimstat.f))
 
 	p(pims_rcv_total_msgs, "\t%llu message%s received\n");
 	p(pims_rcv_total_bytes, "\t%llu byte%s received\n");
@@ -551,7 +549,6 @@ pim_stats(off, name)
 	p(pims_snd_registers_msgs, "\t%llu data register message%s sent\n");
 	p(pims_snd_registers_bytes, "\t%llu data register byte%s sent\n");
 #undef p
-#undef py
 }
 
 /*
