@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.20 2001/05/08 20:57:17 kleink Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.21 2001/06/17 14:39:32 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -105,26 +105,33 @@ svr4_printmcontext(fun, mc)
 	printf("%s at %p\n", fun, mc);
 
 	printf("Regs: ");
-	printf("TSTATE = 0x%x ", r[SVR4_SPARC_PSR]);
-	printf("PC = 0x%x ",  r[SVR4_SPARC_PC]);
-	printf("nPC = 0x%x ", r[SVR4_SPARC_nPC]);
-	printf("Y = 0x%x ",   r[SVR4_SPARC_Y]);
-	printf("G1 = 0x%x ",  r[SVR4_SPARC_G1]);
-	printf("G2 = 0x%x ",  r[SVR4_SPARC_G2]);
-	printf("G3 = 0x%x ",  r[SVR4_SPARC_G3]);
-	printf("G4 = 0x%x ",  r[SVR4_SPARC_G4]);
-	printf("G5 = 0x%x ",  r[SVR4_SPARC_G5]);
-	printf("G6 = 0x%x ",  r[SVR4_SPARC_G6]);
-	printf("G7 = 0x%x ",  r[SVR4_SPARC_G7]);
-	printf("O0 = 0x%x ",  r[SVR4_SPARC_O0]);
-	printf("O1 = 0x%x ",  r[SVR4_SPARC_O1]);
-	printf("O2 = 0x%x ",  r[SVR4_SPARC_O2]);
-	printf("O3 = 0x%x ",  r[SVR4_SPARC_O3]);
-	printf("O4 = 0x%x ",  r[SVR4_SPARC_O4]);
-	printf("O5 = 0x%x ",  r[SVR4_SPARC_O5]);
-	printf("O6 = 0x%x ",  r[SVR4_SPARC_O6]);
-	printf("O7 = 0x%x ",  r[SVR4_SPARC_O7]);
-	printf("ASI = 0x%x ",  r[SVR4_SPARC_ASI]);
+#ifdef __arch64__
+	printf("CCR = 0x%lx ", r[SVR4_SPARC_CCR]);
+#else
+	printf("PSR = 0x%lx ", r[SVR4_SPARC_PSR]);
+#endif
+	printf("PC = 0x%lx ",  r[SVR4_SPARC_PC]);
+	printf("nPC = 0x%lx ", r[SVR4_SPARC_nPC]);
+	printf("Y = 0x%lx ",   r[SVR4_SPARC_Y]);
+	printf("G1 = 0x%lx ",  r[SVR4_SPARC_G1]);
+	printf("G2 = 0x%lx ",  r[SVR4_SPARC_G2]);
+	printf("G3 = 0x%lx ",  r[SVR4_SPARC_G3]);
+	printf("G4 = 0x%lx ",  r[SVR4_SPARC_G4]);
+	printf("G5 = 0x%lx ",  r[SVR4_SPARC_G5]);
+	printf("G6 = 0x%lx ",  r[SVR4_SPARC_G6]);
+	printf("G7 = 0x%lx ",  r[SVR4_SPARC_G7]);
+	printf("O0 = 0x%lx ",  r[SVR4_SPARC_O0]);
+	printf("O1 = 0x%lx ",  r[SVR4_SPARC_O1]);
+	printf("O2 = 0x%lx ",  r[SVR4_SPARC_O2]);
+	printf("O3 = 0x%lx ",  r[SVR4_SPARC_O3]);
+	printf("O4 = 0x%lx ",  r[SVR4_SPARC_O4]);
+	printf("O5 = 0x%lx ",  r[SVR4_SPARC_O5]);
+	printf("O6 = 0x%lx ",  r[SVR4_SPARC_O6]);
+	printf("O7 = 0x%lx ",  r[SVR4_SPARC_O7]);
+#ifdef __arch64__
+	printf("ASI = 0x%lx ",  r[SVR4_SPARC_ASI]);
+	printf("FPRS = 0x%lx ",  r[SVR4_SPARC_FPRS]);
+#endif
 	printf("\n");
 }
 #endif
@@ -156,7 +163,11 @@ svr4_getmcontext(p, mc, flags)
 	/*
 	 * Get the general purpose registers
 	 */
+#ifdef __arch64__
 	r[SVR4_SPARC_CCR] = (tf->tf_tstate & TSTATE_CCR) >> TSTATE_CCR_SHIFT;
+#else
+	r[SVR4_SPARC_PSR] = TSTATECCR_TO_PSR(tf->tf_tstate);
+#endif
 	r[SVR4_SPARC_PC] = tf->tf_pc;
 	r[SVR4_SPARC_nPC] = tf->tf_npc;
 	r[SVR4_SPARC_Y] = tf->tf_y;
@@ -175,7 +186,9 @@ svr4_getmcontext(p, mc, flags)
 	r[SVR4_SPARC_O5] = tf->tf_out[5];
 	r[SVR4_SPARC_O6] = tf->tf_out[6];
 	r[SVR4_SPARC_O7] = tf->tf_out[7];
+#ifdef __arch64__
 	r[SVR4_SPARC_ASI] = (tf->tf_tstate & TSTATE_ASI) >> TSTATE_ASI_SHIFT;
+#endif
 
 	*flags |= SVR4_UC_CPU;
 
@@ -183,7 +196,7 @@ svr4_getmcontext(p, mc, flags)
 	/*
 	 * Get the floating point registers
 	 */
-	bcopy(fps->fs_regs, f->fpu_regs, sizeof(fps->fs_regs));
+	bcopy(fps->fs_regs, f->fpu_regs, sizeof(f->fpu_regs));
 	f->fp_nqsize = sizeof(struct fp_qentry);
 	f->fp_nqel = fps->fs_qsize;
 	f->fp_fsr = fps->fs_fsr;
@@ -272,10 +285,16 @@ svr4_setmcontext(p, mc, flags)
 			return EINVAL;
 		}
 
+#ifdef __arch64__
 		/* take only tstate ASI and CCR fields */
 		tf->tf_tstate = (tf->tf_tstate & ~(TSTATE_CCR | TSTATE_ASI)) |
 		    ((r[SVR4_SPARC_CCR] << TSTATE_CCR_SHIFT) & TSTATE_CCR) |
 		    ((r[SVR4_SPARC_ASI] << TSTATE_ASI_SHIFT) & TSTATE_ASI);
+#else
+		/* take only tstate CCR field */
+		tf->tf_tstate = (tf->tf_tstate & ~TSTATE_CCR) |
+		    PSRCC_TO_TSTATE(r[SVR4_SPARC_PSR]);
+#endif
 		tf->tf_pc = r[SVR4_SPARC_PC];
 		tf->tf_npc = r[SVR4_SPARC_nPC];
 		tf->tf_y = r[SVR4_SPARC_Y];
@@ -315,7 +334,8 @@ svr4_setmcontext(p, mc, flags)
 #endif
 			return EINVAL;
 		}
-		bcopy(f->fpu_regs, fps->fs_regs, sizeof(fps->fs_regs));
+		/* Note: only copy as much FP registers as in the mcontext. */
+		bcopy(f->fpu_regs, fps->fs_regs, sizeof(f->fpu_regs));
 		fps->fs_qsize = f->fp_nqel;
 		fps->fs_fsr = f->fp_fsr;
 		if (f->fp_q != NULL) {
