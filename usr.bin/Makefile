@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 1997/03/07 06:14:02 mikel Exp $
+#	$NetBSD: Makefile,v 1.69 1997/04/09 06:23:43 mikel Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -22,9 +22,15 @@ SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar \
 	which who whois window write \
 	xargs xinstall xlint xstr yacc yes ypcat ypmatch ypwhich
 
+.if	make(clean) || make(cleandir)
+SUBDIR+=ar elf2aout elf2ecoff elfstrip fdformat \
+	gprof ldd nm ranlib size strip telnet
+.else
+
 # XXX Keep telnet(1) and libtelnet from getting out of sync during the build
 # XXX process.
-.if !exists(${.CURDIR}/../domestic/usr.bin/telnet) || defined(EXPORTABLE_SYSTEM)
+.if !exists(${.CURDIR}/../domestic/usr.bin/telnet) || \
+    defined(EXPORTABLE_SYSTEM)
 SUBDIR+=telnet
 .endif
 
@@ -44,5 +50,7 @@ SUBDIR+= fdformat
 .if (${MACHINE_ARCH} == "mips")
 SUBDIR+= elf2aout elf2ecoff elfstrip
 .endif
+
+.endif	# make(clean) || make(cleandir)
 
 .include <bsd.subdir.mk>
