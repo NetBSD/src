@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.28 1998/02/15 18:24:26 tls Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.29 1998/04/29 03:44:11 kml Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ int	icmpprintfs = 0;
 extern	struct protosw inetsw[];
 
 static void icmp_mtudisc __P((struct icmp *));
+static void icmp_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
 
 /*
  * Generate an error packet of type error
@@ -668,6 +669,7 @@ icmp_mtudisc(icp)
 	struct rtentry *rt;
 	struct sockaddr *dst = sintosa(&icmpsrc);
 	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
+	int    error;
 
 	/* Table of common MTUs: */
 
@@ -682,7 +684,6 @@ icmp_mtudisc(icp)
     
 	if ((rt->rt_flags & RTF_HOST) == 0) {
 		struct rtentry *nrt;
-		int error;
 
 		error = rtrequest((int) RTM_ADD, dst, 
 		    (struct sockaddr *) rt->rt_gateway,
@@ -696,6 +697,11 @@ icmp_mtudisc(icp)
 		nrt->rt_rmx = rt->rt_rmx;
 		rtfree(rt);
 		rt = nrt;
+	}
+	error = rt_timer_add(rt, icmp_mtudisc_timeout, ip_mtudisc_timeout_q);
+	if (error) {
+		rtfree(rt);
+		return;
 	}
 
 	if (mtu == 0) {
@@ -724,6 +730,14 @@ icmp_mtudisc(icp)
 			}
 	}
 
+	/*
+	 * XXX:   RTV_MTU is overloaded, since the admin can set it
+	 *	  to turn off PMTU for a route, and the kernel can
+	 *	  set it to indicate a serious problem with PMTU
+	 *	  on a route.  We should be using a separate flag
+	 *	  for the kernel to indicate this.
+	 */
+
 	if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
 		if (mtu < 296 || mtu > rt->rt_ifp->if_mtu)
 			rt->rt_rmx.rmx_locks |= RTV_MTU;
@@ -734,4 +748,23 @@ icmp_mtudisc(icp)
 
 	if (rt)
 		rtfree(rt);
+}
+
+
+static void
+icmp_mtudisc_timeout(rt, r)
+	struct rtentry *rt;
+	struct rttimer *r;
+{
+	if (rt == NULL)
+		panic("icmp_mtudisc_timeout:  bad route to timeout");
+	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) == 
+	    (RTF_DYNAMIC | RTF_HOST)) {
+		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+	} else {
+		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
+			rt->rt_rmx.rmx_mtu = 0;
+		}
+	}
 }

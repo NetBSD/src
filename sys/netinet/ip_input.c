@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.59 1998/03/19 15:46:43 mrg Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.60 1998/04/29 03:44:11 kml Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,6 +122,9 @@
 #ifndef IPMTUDISC
 #define IPMTUDISC	0
 #endif
+#ifndef IPMTUDISCTIMEOUT
+#define IPMTUDISCTIMEOUT (1 * 60)	/* experimental short timeout value! */
+#endif
 
 /*
  * Note: DIRECTED_BROADCAST is handled this way so that previous
@@ -141,9 +144,12 @@ int	ip_forwsrcrt = IPFORWSRCRT;
 int	ip_directedbcast = IPDIRECTEDBCAST;
 int	ip_allowsrcrt = IPALLOWSRCRT;
 int	ip_mtudisc = IPMTUDISC;
+u_int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
+
+struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 
 extern	struct domain inetdomain;
 extern	struct protosw inetsw[];
@@ -196,6 +202,9 @@ ip_init()
 	TAILQ_INIT(&in_ifaddr);
 	in_ifaddrhashtbl = 
 	    hashinit(IN_IFADDR_HASH_SIZE, M_IFADDR, M_WAITOK, &in_ifaddrhash);
+	if (ip_mtudisc != 0)
+		ip_mtudisc_timeout_q = 
+		    rt_timer_queue_create(ip_mtudisc_timeout);
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
@@ -1325,8 +1334,16 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &subnetsarelocal));
 	case IPCTL_MTUDISC:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip_mtudisc));
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ip_mtudisc);
+		if (ip_mtudisc != 0 && ip_mtudisc_timeout_q == NULL) {
+			ip_mtudisc_timeout_q = 
+			    rt_timer_queue_create(ip_mtudisc_timeout);
+		} else if (ip_mtudisc == 0 && ip_mtudisc_timeout_q != NULL) {
+			rt_timer_queue_destroy(ip_mtudisc_timeout_q, TRUE);
+			ip_mtudisc_timeout_q = NULL;
+		}
+		return error;
 	case IPCTL_ANONPORTMIN:
 		old = anonportmin;
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &anonportmin);
@@ -1350,6 +1367,13 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			anonportmax = old;
 			return (EINVAL);
 		}
+		return (error);
+	case IPCTL_MTUDISCTIMEOUT:
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		   &ip_mtudisc_timeout);
+		if (ip_mtudisc_timeout_q != NULL)
+			rt_timer_queue_change(ip_mtudisc_timeout_q, 
+					      ip_mtudisc_timeout);
 		return (error);
 	default:
 		return (EOPNOTSUPP);
