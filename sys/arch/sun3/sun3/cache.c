@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.9 1997/10/06 19:58:04 gwr Exp $	*/
+/*	$NetBSD: cache.c,v 1.10 1998/02/05 04:57:27 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,9 +54,13 @@
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
-#include <machine/control.h>
 #include <machine/vmparam.h>
-#include <machine/machdep.h>
+
+#include <sun3/sun3/cache.h>
+#include <sun3/sun3/control.h>
+#include <sun3/sun3/enable.h>
+#include <sun3/sun3/fc.h>
+#include <sun3/sun3/machdep.h>
 
 #define	CACHE_LINE	16	/* bytes */
 #define	VAC_FLUSH_INCR	512	/* bytes */
@@ -189,7 +193,7 @@ cache_enable()
 
 	/* OK, just set the "enable" bit. */
 	enab_reg = get_control_byte(SYSTEM_ENAB);
-	enab_reg |= SYSTEM_ENAB_CACHE;
+	enab_reg |= ENA_CACHE;
 	set_control_byte(SYSTEM_ENAB, enab_reg);
 
 	/* Brag... */

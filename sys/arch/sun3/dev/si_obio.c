@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.18 1997/12/09 22:29:04 gwr Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.19 1998/02/05 04:56:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -96,7 +96,6 @@
 #include <dev/scsipi/scsiconf.h>
 
 #include <machine/autoconf.h>
-#include <machine/obio.h>
 #include <machine/dvma.h>
 
 /* #define DEBUG XXX */
@@ -153,10 +152,6 @@ si_obio_match(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 
-	/* We use obio_mapin(), so require OBIO. */
-	if (ca->ca_bustype != BUS_OBIO)
-		return (0);
-
 	/* Make sure something is there... */
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr + 1, 1) == -1)
 		return (0);
@@ -187,8 +182,8 @@ si_obio_attach(parent, self, args)
 	printf(": options=0x%x\n", sc->sc_options);
 
 	sc->sc_adapter_type = ca->ca_bustype;
-	sc->sc_regs = (struct si_regs *)
-		obio_mapin(ca->ca_paddr, sizeof(struct si_regs));
+	sc->sc_regs = bus_mapin(ca->ca_bustype,
+		ca->ca_paddr, sizeof(struct si_regs));
 
 	/*
 	 * MD function pointers used by the MI code.

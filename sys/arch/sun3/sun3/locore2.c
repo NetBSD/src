@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.71 1997/10/30 00:59:40 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.72 1998/02/05 04:57:41 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,18 +45,18 @@
 
 #include <vm/vm.h>
 
-#include <machine/control.h>
 #include <machine/cpu.h>
 #include <machine/db_machdep.h>
 #include <machine/dvma.h>
-#include <machine/mon.h>
-#include <machine/pte.h>
-#include <machine/pmap.h>
 #include <machine/idprom.h>
-#include <machine/obio.h>
-#include <machine/machdep.h>
+#include <machine/leds.h>
+#include <machine/mon.h>
+#include <machine/pmap.h>
+#include <machine/pte.h>
 
+#include <sun3/sun3/control.h>
 #include <sun3/sun3/interreg.h>
+#include <sun3/sun3/machdep.h>
 #include <sun3/sun3/vector.h>
 
 /* This is defined in locore.s */
@@ -82,7 +82,7 @@ int mmutype = 2;	/* MMU_SUN */
  * Now our own stuff.
  */
 
-unsigned char cpu_machine_id = 0;
+u_char cpu_machine_id = 0;
 char *cpu_string = NULL;
 int cpu_has_vme = 0;
 
@@ -200,6 +200,7 @@ _vm_init(kehp)
 
 	/*
 	 * Steal some special-purpose, already mapped pages.
+	 * Note: msgbuf is setup in machdep.c:cpu_startup()
 	 */
 	nextva = m68k_round_page(esym);
 
@@ -236,15 +237,13 @@ _verify_hardware()
 	unsigned char machtype;
 	int cpu_match = 0;
 
-	idprom_init();
-
 	machtype = identity_prom.idp_machtype;
-	if ((machtype & CPU_ARCH_MASK) != SUN3_ARCH) {
-		mon_printf("not a sun3?\n");
+	if ((machtype & IDM_ARCH_MASK) != IDM_ARCH_SUN3) {
+		mon_printf("Bad IDPROM arch!\n");
 		sunmon_abort();
 	}
 
-	cpu_machine_id = machtype & SUN3_IMPL_MASK;
+	cpu_machine_id = machtype;
 	switch (cpu_machine_id) {
 
 	case SUN3_MACH_50 :
@@ -318,10 +317,13 @@ _bootstrap(keh)
 	/* Set v_handler, get boothowto. */
 	sunmon_init();
 
-	/* Determine the Sun3 model. */
+	/* Copy the IDPROM from control space. */
+	idprom_init();
+
+	/* Validate the Sun3 model (from IDPROM). */
 	_verify_hardware();
 
-	/* handle kernel mapping, pmap_bootstrap(), etc. */
+	/* Handle kernel mapping, pmap_bootstrap(), etc. */
 	_vm_init(&keh);
 
 	/*
@@ -329,9 +331,6 @@ _bootstrap(keh)
 	 * and call some init functions.
 	 */
 	obio_init();
-
-	/* We now may enable the console.  (yea!) */
-	cninit();
 
 	/*
 	 * Point interrupts/exceptions to our vector table.
@@ -343,6 +342,11 @@ _bootstrap(keh)
 	 * Done after _vm_init so the PROM can debug that.
 	 */
 	setvbr((void **)vector_table);
-
 	/* Interrupts are enabled later, after autoconfig. */
+
+	/*
+	 * Turn on the LEDs so we know power is on.
+	 * Needs idprom_init and obio_init earlier.
+	 */
+	leds_init();
 }

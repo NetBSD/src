@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.h,v 1.13 1997/03/18 23:26:38 gwr Exp $	*/
+/*	$NetBSD: eeprom.h,v 1.14 1998/02/05 04:56:51 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ struct eeprom {
 					 * true:  use stored device spec.
 					 * false: use default (try all)
 					 */
+	/* 0x19 */
 	/* Stored boot device spec. i.e.: "sd(Ctlr,Unit,Part)" */
 	u_char	eeBootDevName[2];	/* xy,xd,sd,ie,le,st,xt,mt,...	*/
 	u_char	eeBootDevCtlr;
@@ -89,6 +90,8 @@ struct eeprom {
 
 	/* 0x1E */
 	u_char	eeKeyboardType;		/* zero for sun keyboards */
+
+	/* 0x1F */
 	u_char	eeConsole;		/* What to use for the console	*/
 #define	EE_CONS_BW		0x00	/* - On-board B&W / keyboard	*/
 #define	EE_CONS_TTYA		0x10	/* - serial port A		*/
@@ -104,6 +107,7 @@ struct eeprom {
 
 	u_char	eeKeyClick;		/* true/false */
 
+	/* 0x22 */
 	/* Boot device with "Diag" switch in Diagnostic mode: */
 	u_char	eeDiagDevName[2];
 	u_char	eeDiagDevCtlr;
@@ -117,8 +121,8 @@ struct eeprom {
 	char	eeDiagPath[40];		/* path name of diag program	*/
 
 	/* 0x50 */
-	u_char	eeTtyCols;		/* normally 80 */
-	u_char	eeTtyRows;		/* normally 34 */
+	u_char	eeTtyCols;		/* normally 80 (0x50) */
+	u_char	eeTtyRows;		/* normally 34 (0x22) */
 	u_char	ee_x52[6];		/* unused */
 
 	/* 0x58 */
@@ -165,13 +169,42 @@ struct eeprom {
 	u_char	eeLogoBitmap[64][8];	/* 64x64 bit custom logo */
 
 	/* 0x490 */
-	u_char	ee_x490[0x500-0x490];	/* unused */
+	u_char	ee_x490[2];		/* unused */
 
-	/* Other stuff we don't care about... */
+	/* 0x492 */
+	u_char	ee_passwd_mode;		/* Only (ROM rev > 2.7.0)
+					 * 0x5E = fully secure mode
+					 * 0x01 = command secure mode
+					 * Rest = non-secure mode
+					 */
+	u_char	ee_password[8];
+	u_char	ee_x49b[0x500-0x49b];	/* unused */
+
 	/* 0x500 */
 	u_char	eeReserved[0x100];
+
 	/* 0x600 */
 	u_char	eeROM_Area[0x100];
+
 	/* 0x700 */
-	u_char	eeUnixArea[0x100];
+	/* "Unix area" (hah!) */
+	u_char ee_x700[0xb];		/* unused */
+	/* 0x70b */
+	u_char ee_diag_mode;		/* 3/80 diag switch:
+					 * 0x06 = normal boot
+					 * 0x12 = diagnostic mode
+					 * Rest = full diagnostic boot
+					 */
+	/* 0x70c */
+	u_char	ee_x70c[0x7d8-0x70c];	/* unused */
+
+	/* 0x7d8 */
+	u_char ee_80_IDPROM[32];	/* 3/80 IDPROM */
+	/* 0x7f8 */
+	u_char ee_80_CLOCK[8];		/* 3/80 clock */
 };
+
+#ifdef	_KERNEL
+extern struct eeprom *eeprom_copy;
+int	eeprom_uio __P((struct uio *));
+#endif	/* _KERNEL */

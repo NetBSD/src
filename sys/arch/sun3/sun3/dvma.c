@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.12 1998/01/22 23:45:06 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.13 1998/02/05 04:57:32 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,12 +54,12 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/control.h>
-#include <machine/reg.h>
-#include <machine/pte.h>
-#include <machine/pmap.h>
 #include <machine/dvma.h>
-#include <machine/machdep.h>
+#include <machine/pmap.h>
+#include <machine/pte.h>
+
+#include <sun3/sun3/control.h>
+#include <sun3/sun3/machdep.h>
 
 /* DVMA is the last 1MB, but the PROM owns the last page. */
 #define DVMA_MAP_END	(DVMA_MAP_BASE + DVMA_MAP_AVAIL)
@@ -130,7 +130,8 @@ dvma_malloc(bytes)
 /*
  * Free pages from dvma_malloc()
  */
-void dvma_free(addr, size)
+void
+dvma_free(addr, size)
 	void *addr;
 	size_t size;
 {
