@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.1 2001/10/05 22:27:50 reinoud Exp $	*/
+/* 	$NetBSD: intr.h,v 1.2 2001/11/26 20:43:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -67,6 +67,6 @@
 #define SOFTIRQ_BIT(x)	(1 << x)
 
 #include <machine/irqhandler.h>
-#include <machine/psl.h>
+#include <arm/arm32/psl.h>
 
 #endif	/* _ARM32_INTR_H */
