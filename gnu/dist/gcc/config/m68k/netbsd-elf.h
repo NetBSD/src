@@ -244,6 +244,26 @@ dtors_section ()							\
 	   (DECL) && TREE_CODE (DECL) == FUNCTION_DECL ? "ax" : \
 	   (DECL) && DECL_READONLY_SECTION (DECL, RELOC) ? "a" : "aw")
 
+/* A C statement (sans semicolon) to output an element in the table of
+   global constructors.  */
+#define ASM_OUTPUT_CONSTRUCTOR(FILE,NAME)				\
+  do {									\
+    ctors_section ();							\
+    fprintf (FILE, "\t.long\t ");					\
+    assemble_name (FILE, NAME);						\
+    fprintf (FILE, "\n");						\
+  } while (0)
+
+/* A C statement (sans semicolon) to output an element in the table of
+   global destructors.  */
+#define ASM_OUTPUT_DESTRUCTOR(FILE,NAME)       				\
+  do {									\
+    dtors_section ();                   				\
+    fprintf (FILE, "\t.long\t ");					\
+    assemble_name (FILE, NAME);              				\
+    fprintf (FILE, "\n");						\
+  } while (0)
+
 /* These macros generate the special .type and .size directives which
    are used to set the corresponding fields of the linker symbol table
    entries in an ELF object file under SVR4.  These macros also output
