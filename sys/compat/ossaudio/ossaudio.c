@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.25 1998/05/25 17:13:43 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.26 1998/08/07 00:00:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,9 @@
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
+#include <sys/kernel.h>
 #include <sys/audioio.h>
+#include <sys/midiio.h>
 
 #include <sys/syscallargs.h>
 
@@ -94,12 +96,12 @@ oss_ioctl_audio(p, uap, retval)
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
 		return (EBADF);
 
-	ioctlf = fp->f_ops->fo_ioctl;
-
 	com = SCARG(uap, com);
+	DPRINTF(("oss_ioctl_audio: com=%08lx\n", com));
+
 	retval[0] = 0;
 
-	DPRINTF(("oss_sys_ioctl: com=%08lx\n", com));
+	ioctlf = fp->f_ops->fo_ioctl;
 	switch (com) {
 	case OSS_SNDCTL_DSP_RESET:
 		error = ioctlf(fp, AUDIO_FLUSH, (caddr_t)0, p);
@@ -640,6 +642,8 @@ oss_ioctl_mixer(p, uap, retval)
 		return (EBADF);
 
 	com = SCARG(uap, com);
+	DPRINTF(("oss_ioctl_mixer: com=%08lx\n", com));
+
 	retval[0] = 0;
 
 	di = getdevinfo(fp, p);
@@ -776,7 +780,7 @@ oss_ioctl_mixer(p, uap, retval)
 	return copyout(&idat, SCARG(uap, data), sizeof idat);
 }
 
-/* XXX hook for sequencer emulation */
+/* Sequencer emulation */
 int
 oss_ioctl_sequencer(p, uap, retval)
 	struct proc *p;
@@ -789,11 +793,13 @@ oss_ioctl_sequencer(p, uap, retval)
 {	       
 	struct file *fp;
 	struct filedesc *fdp;
-#if 0
 	u_long com;
-	int idat;
+	int idat, idat1;
+	struct synth_info si;
+	struct oss_synth_info osi;
+	struct oss_seq_event_rec oser;
 	int error;
-#endif
+	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
 
 	fdp = p->p_fd;
 	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
@@ -803,12 +809,175 @@ oss_ioctl_sequencer(p, uap, retval)
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
 		return (EBADF);
 
-#if 0
 	com = SCARG(uap, com);
-#endif
+	DPRINTF(("oss_ioctl_sequencer: com=%08lx\n", com));
+
 	retval[0] = 0;
 
-	return EINVAL;
+	ioctlf = fp->f_ops->fo_ioctl;
+	switch (com) {
+	case OSS_SEQ_RESET:
+		return ioctlf(fp, SEQUENCER_RESET, (caddr_t)&idat, p);
+	case OSS_SEQ_SYNC:
+		return ioctlf(fp, SEQUENCER_SYNC, (caddr_t)&idat, p);
+	case OSS_SYNTH_INFO:
+		error = copyin(SCARG(uap, data), &osi, sizeof osi);
+		if (error)
+			return error;
+		si.device = osi.device;
+		error = ioctlf(fp, SEQUENCER_INFO, (caddr_t)&si, p);
+		if (error)
+			return error;
+		strncpy(osi.name, si.name, sizeof osi.name);
+		osi.device = si.device;
+		switch(si.synth_type) {
+		case SYNTH_TYPE_FM: 
+			osi.synth_type = OSS_SYNTH_TYPE_FM; break;
+		case SYNTH_TYPE_SAMPLE: 
+			osi.synth_type = OSS_SYNTH_TYPE_SAMPLE; break;
+		case SYNTH_TYPE_MIDI: 
+			osi.synth_type = OSS_SYNTH_TYPE_MIDI; break;
+		default:
+			osi.synth_type = 0; break;
+		}
+		switch(si.synth_subtype) {
+		case SYNTH_SUB_FM_TYPE_ADLIB: 
+			osi.synth_subtype = OSS_FM_TYPE_ADLIB; break;
+		case SYNTH_SUB_FM_TYPE_OPL3: 
+			osi.synth_subtype = OSS_FM_TYPE_OPL3; break;
+		case SYNTH_SUB_MIDI_TYPE_MPU401: 
+			osi.synth_subtype = OSS_MIDI_TYPE_MPU401; break;
+		case SYNTH_SUB_SAMPLE_TYPE_BASIC: 
+			osi.synth_subtype = OSS_SAMPLE_TYPE_BASIC; break;
+		default:
+			osi.synth_subtype = 0; break;
+		}
+		osi.perc_mode = 0;
+		osi.nr_voices = si.nr_voices;
+		osi.nr_drums = 0;
+		osi.instr_bank_size = si.instr_bank_size;
+		osi.capabilities = 0;
+		if (si.capabilities & SYNTH_CAP_OPL3) 
+			osi.capabilities |= OSS_SYNTH_CAP_OPL3;
+		if (si.capabilities & SYNTH_CAP_INPUT)
+			osi.capabilities |= OSS_SYNTH_CAP_INPUT;
+		return copyout(&osi, SCARG(uap, data), sizeof osi);
+	case OSS_SEQ_CTRLRATE:
+		error = copyin(SCARG(uap, data), &idat, sizeof idat);
+		if (error)
+			return error;
+		error = ioctlf(fp, SEQUENCER_CTRLRATE, (caddr_t)&idat, p);
+		if (error)
+			return error;
+		retval[0] = idat;
+		break;
+	case OSS_SEQ_GETOUTCOUNT:
+		error = ioctlf(fp, SEQUENCER_GETOUTCOUNT, (caddr_t)&idat, p);
+		if (error)
+			return error;
+		retval[0] = idat;
+		break;
+	case OSS_SEQ_GETINCOUNT:
+		error = ioctlf(fp, SEQUENCER_GETINCOUNT, (caddr_t)&idat, p);
+		if (error)
+			return error;
+		retval[0] = idat;
+		break;
+	case OSS_SEQ_NRSYNTHS:
+		error = ioctlf(fp, SEQUENCER_NRSYNTHS, (caddr_t)&idat, p);
+		if (error)
+			return error;
+		retval[0] = idat;
+		break;
+	case OSS_SEQ_NRMIDIS:
+		error = ioctlf(fp, SEQUENCER_NRMIDIS, (caddr_t)&idat, p);
+		if (error)
+			return error;
+		retval[0] = idat;
+		break;
+	case OSS_SEQ_THRESHOLD:
+		error = copyin(SCARG(uap, data), &idat, sizeof idat);
+		if (error)
+			return error;
+		return ioctlf(fp, SEQUENCER_THRESHOLD, (caddr_t)&idat, p);
+	case OSS_MEMAVL:
+		error = copyin(SCARG(uap, data), &idat, sizeof idat);
+		if (error)
+			return error;
+		error = ioctlf(fp, SEQUENCER_MEMAVL, (caddr_t)&idat, p);
+		if (error)
+			return error;
+		retval[0] = idat;
+		break;
+	case OSS_SEQ_PANIC:
+		return ioctlf(fp, SEQUENCER_PANIC, (caddr_t)&idat, p);
+	case OSS_SEQ_OUTOFBAND:
+		error = copyin(SCARG(uap, data), &oser, sizeof oser);
+		if (error)
+			return error;
+		error = ioctlf(fp, SEQUENCER_OUTOFBAND, (caddr_t)&oser, p);
+		if (error)
+			return error;
+		break;
+	case OSS_SEQ_GETTIME:
+		error = ioctlf(fp, SEQUENCER_GETTIME, (caddr_t)&idat, p);
+		if (error)
+			return error;
+		retval[0] = idat;
+		break;
+	case OSS_TMR_TIMEBASE:
+		error = copyin(SCARG(uap, data), &idat, sizeof idat);
+		if (error)
+			return error;
+		error = ioctlf(fp, SEQUENCER_TMR_TIMEBASE, (caddr_t)&idat, p);
+		if (error)
+			return error;
+		retval[0] = idat;
+		break;
+	case OSS_TMR_START:
+		return ioctlf(fp, SEQUENCER_TMR_START, (caddr_t)&idat, p);
+	case OSS_TMR_STOP:
+		return ioctlf(fp, SEQUENCER_TMR_STOP, (caddr_t)&idat, p);
+	case OSS_TMR_CONTINUE:
+		return ioctlf(fp, SEQUENCER_TMR_CONTINUE, (caddr_t)&idat, p);
+	case OSS_TMR_TEMPO:
+		error = copyin(SCARG(uap, data), &idat, sizeof idat);
+		if (error)
+			return error;
+		error = ioctlf(fp, SEQUENCER_TMR_TEMPO, (caddr_t)&idat, p);
+		if (error)
+			return error;
+		retval[0] = idat;
+		break;
+	case OSS_TMR_SOURCE:
+		error = copyin(SCARG(uap, data), &idat1, sizeof idat);
+		if (error)
+			return error;
+		idat = 0;
+		if (idat1 & OSS_TMR_INTERNAL) idat |= SEQUENCER_TMR_INTERNAL;
+		error = ioctlf(fp, SEQUENCER_TMR_SOURCE, (caddr_t)&idat, p);
+		if (error)
+			return error;
+		idat1 = idat;
+		if (idat1 & SEQUENCER_TMR_INTERNAL) idat |= OSS_TMR_INTERNAL;
+		retval[0] = idat;
+		break;
+	case OSS_TMR_METRONOME:
+		error = copyin(SCARG(uap, data), &idat, sizeof idat);
+		if (error)
+			return error;
+		return ioctlf(fp, SEQUENCER_TMR_METRONOME, (caddr_t)&idat, p);
+	case OSS_TMR_SELECT:
+		error = copyin(SCARG(uap, data), &idat, sizeof idat);
+		if (error)
+			return error;
+		retval[0] = idat;
+		return ioctlf(fp, SEQUENCER_TMR_SELECT, (caddr_t)&idat, p);
+	default:
+		return EINVAL;
+	}
+
+	return copyout(&idat, SCARG(uap, data), sizeof idat);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudiovar.h,v 1.4 1997/10/16 16:49:40 augustss Exp $	*/
+/*	$NetBSD: ossaudiovar.h,v 1.5 1998/08/07 00:00:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@ struct oss_sys_ioctl_args {
 	syscallarg(caddr_t) data;
 };
 
-#define OSS_IOCPARM_MASK    0x7f            /* parameters must be < 128 bytes */
+#define OSS_IOCPARM_MASK    0xfff           /* parameters must be < 4096 bytes */
 #define OSS_IOC_VOID        0x00000000      /* no parameters */
 #define OSS_IOC_IN          0x40000000      /* copy in parameters */
 #define OSS_IOC_OUT         0x80000000      /* copy out parameters */
@@ -166,3 +166,86 @@ struct oss_buffmem_desc {
 	unsigned int *buffer;
 	int size;
 };
+
+/*
+ * MIDI and sequencer I/O.
+ */
+#define OSS_SEQ_RESET			_OSS_IO  ('Q', 0)
+#define OSS_SEQ_SYNC			_OSS_IO  ('Q', 1)
+#define OSS_SYNTH_INFO			_OSS_IOWR('Q', 2, struct oss_synth_info)
+#define OSS_SEQ_CTRLRATE		_OSS_IOWR('Q', 3, int)
+#define OSS_SEQ_GETOUTCOUNT		_OSS_IOR ('Q', 4, int)
+#define OSS_SEQ_GETINCOUNT		_OSS_IOR ('Q', 5, int)
+#define OSS_SEQ_PERCMODE		_OSS_IOW ('Q', 6, int)
+#define OSS_SEQ_TESTMIDI		_OSS_IOW ('Q', 8, int)
+#define OSS_SEQ_RESETSAMPLES		_OSS_IOW ('Q', 9, int)
+#define OSS_SEQ_NRSYNTHS		_OSS_IOR ('Q',10, int)
+#define OSS_SEQ_NRMIDIS			_OSS_IOR ('Q',11, int)
+#define OSS_MIDI_INFO			_OSS_IOWR('Q',12, struct oss_midi_info)
+#define OSS_SEQ_THRESHOLD		_OSS_IOW ('Q',13, int)
+#define OSS_MEMAVL			_OSS_IOWR('Q',14, int)
+#define OSS_FM_4OP_ENABLE		_OSS_IOW ('Q',15, int)
+#define OSS_SEQ_PANIC			_OSS_IO  ('Q',17)
+#define OSS_SEQ_OUTOFBAND		_OSS_IOW ('Q',18, struct oss_seq_event_rec)
+#define OSS_SEQ_GETTIME			_OSS_IOR ('Q',19, int)
+#define OSS_ID				_OSS_IOWR('Q',20, struct oss_synth_info)
+#define OSS_CONTROL			_OSS_IOWR('Q',21, struct oss_synth_control)
+#define OSS_REMOVESAMPLE		_OSS_IOWR('Q',22, struct oss_remove_sample)
+
+struct oss_synth_control {
+	int devno;	/* Synthesizer # */
+	char data[4000]; /* Device spesific command/data record */
+};
+
+struct oss_remove_sample {
+	int devno;	/* Synthesizer # */
+	int bankno;	/* MIDI bank # (0=General MIDI) */
+	int instrno;	/* MIDI instrument number */
+};
+
+struct oss_seq_event_rec {
+	u_char arr[8];
+};
+
+struct oss_synth_info {
+	char	name[30];
+	int	device;
+	int	synth_type;
+#define OSS_SYNTH_TYPE_FM		0
+#define OSS_SYNTH_TYPE_SAMPLE		1
+#define OSS_SYNTH_TYPE_MIDI		2
+
+	int	synth_subtype;
+#define OSS_FM_TYPE_ADLIB		0x00
+#define OSS_FM_TYPE_OPL3		0x01
+#define OSS_MIDI_TYPE_MPU401		0x401
+
+#define OSS_SAMPLE_TYPE_BASIC		0x10
+#define OSS_SAMPLE_TYPE_GUS		OSS_SAMPLE_TYPE_BASIC
+
+	int	perc_mode;
+	int	nr_voices;
+	int	nr_drums;
+	int	instr_bank_size;
+	u_int	capabilities;	
+#define OSS_SYNTH_CAP_PERCMODE		0x00000001
+#define OSS_SYNTH_CAP_OPL3		0x00000002
+#define OSS_SYNTH_CAP_INPUT		0x00000004
+	int	_unused[19];
+};
+
+#define OSS_TMR_TIMEBASE		_OSS_IOWR('T', 1, int)
+#define OSS_TMR_START			_OSS_IO  ('T', 2)
+#define OSS_TMR_STOP			_OSS_IO  ('T', 3)
+#define OSS_TMR_CONTINUE		_OSS_IO  ('T', 4)
+#define OSS_TMR_TEMPO			_OSS_IOWR('T', 5, int)
+#define OSS_TMR_SOURCE			_OSS_IOWR('T', 6, int)
+#  define OSS_TMR_INTERNAL		0x00000001
+#  define OSS_TMR_EXTERNAL		0x00000002
+#  define OSS_TMR_MODE_MIDI		0x00000010
+#  define OSS_TMR_MODE_FSK		0x00000020
+#  define OSS_TMR_MODE_CLS		0x00000040
+#  define OSS_TMR_MODE_SMPTE		0x00000080
+#define OSS_TMR_METRONOME		_OSS_IOW ('T', 7, int)
+#define OSS_TMR_SELECT			_OSS_IOW ('T', 8, int)
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.99 1998/07/27 18:50:42 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.100 1998/08/07 00:00:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -188,6 +188,10 @@ cdev_decl(tun);
 cdev_decl(vnd);
 #include "audio.h"
 cdev_decl(audio);
+#include "midi.h"
+cdev_decl(midi);
+#include "sequencer.h"
+cdev_decl(music);
 cdev_decl(svr4_net);
 cdev_decl(ccd);
 #include "joy.h"
@@ -319,7 +323,6 @@ struct cdevsw	cdevsw[] =
 	cdev_ipf_init(NIPFILTER,ipl),	/* 44: ip-filter device */
 	cdev_satlink_init(NSATLINK,satlink), /* 45: planetconnect satlink */
 	cdev_rnd_init(NRND,rnd),	/* 46: random source pseudo-device */
-
 	cdev_wsdisplay_init(NWSDISPLAY,
 			    wsdisplay), /* 47: frame buffers, etc. */
 
@@ -343,8 +346,8 @@ struct cdevsw	cdevsw[] =
 	cdev_usb_init(NUSB,usb),	/* 55: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 56: USB generic HID */
 	cdev_lpt_init(NULPT,ulpt),	/* 57: USB printer */
-	cdev_notdef(),			/* 58: free */
-	cdev_notdef(),			/* 59: free */
+	cdev_midi_init(NMIDI,midi),	/* 58: MIDI I/O */
+	cdev_midi_init(NSEQUENCER,sequencer),	/* 59: sequencer I/O */
 	cdev_vc_nb_init(NVCFS,vc_nb_),  /* 60: coda file system psdev */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
