@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.3 1998/08/01 20:52:45 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.4 1998/08/20 19:55:07 veego Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -506,11 +506,12 @@ uhidpoll(dev, events, p)
 	s = spltty();
 	if (events & (POLLOUT | POLLWRNORM))
 		revents |= events & (POLLOUT | POLLWRNORM);
-	if (events & (POLLIN | POLLRDNORM))
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_q.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(p, &sc->sc_rsel);
+	}
 
 	splx(s);
 	return (revents);
