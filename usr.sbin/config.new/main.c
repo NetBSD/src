@@ -39,7 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)main.c	5.2 (Berkeley) 4/18/93
+ *	from: @(#)main.c	5.2 (Berkeley) 4/18/93
+ *	$Id: main.c,v 1.3 1993/12/04 06:06:10 cgd Exp $
  */
 
 #ifndef lint

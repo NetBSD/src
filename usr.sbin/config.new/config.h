@@ -39,7 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)config.h	5.2 (Berkeley) 4/18/93
+ *	from: @(#)config.h	5.2 (Berkeley) 4/18/93
+ *	$Id: config.h,v 1.3 1993/12/04 06:06:01 cgd Exp $
  */
 
 /*
@@ -229,7 +230,6 @@ struct {			/* loc[] table for config */
 	int	used;
 } locators;
 
-#include "cdefs.h"
 /* files.c */
 void	initfiles __P((void));
 void	checkfiles __P((void));
