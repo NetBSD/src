@@ -1,4 +1,4 @@
-/*	$NetBSD: chrtbl.c,v 1.2 1997/06/06 06:55:07 kleink Exp $	*/
+/*	$NetBSD: chrtbl.c,v 1.3 1997/10/19 09:23:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -149,7 +149,7 @@ setfilename(cs, token, arg, line, lnum)
 		return 0;
 
 	if ((p = strdup(p)) == NULL)
-		err(1, "Out of memory at line %d", lnum);
+		err(1, "Out of memory at line %lu", (u_long)lnum);
 
 	switch (arg) {
 	case 0:
@@ -159,8 +159,8 @@ setfilename(cs, token, arg, line, lnum)
 		cs->numericfilename = p;
 		return 0;
 	default:
-		warn("%s: Bad filename argument %d at line %d", token, arg,
-		    lnum);
+		warn("%s: Bad filename argument %d at line %lu", token, arg,
+		    (u_long)lnum);
 		return 1;
 	}
 }
@@ -192,8 +192,8 @@ addattr(cs, token, arg, line, lnum)
 
 		n = (size_t) strtoul(ptr, &ep, 0);
 		if (ptr == ep || *ep) {
-			warnx("%s: Bad number `%s' at line %d", token,
-			    ptr, lnum);
+			warnx("%s: Bad number `%s' at line %lu", token,
+			    ptr, (u_long)lnum);
 			return 1;
 		}
 		switch (++st) {
@@ -240,14 +240,16 @@ addattr(cs, token, arg, line, lnum)
 	}
 
 oorange:
-	warnx("%s: Character %d out of range at line %d", token, n, lnum);
+	warnx("%s: Character %lu out of range at line %lu", token, (u_long)n,
+	    (u_long)lnum);
 	return 1;
 badstate:
-	warnx("%s: Unexpected state %d at line %d", token, st, lnum);
+	warnx("%s: Unexpected state %d at line %lu", token, st,
+	    (u_long)lnum);
 	return 1;
 badrange:
-	warnx("%s: Missing %s range at line %d", token,
-	    st == 1 ? "begin" : "end", lnum);
+	warnx("%s: Missing %s range at line %lu", token,
+	    st == 1 ? "begin" : "end", (u_long)lnum);
 	return 1;
 }
 
@@ -315,10 +317,11 @@ uplow(cs, token, arg, line, lnum)
 	}
 
 badtoken:
-	warnx("%s: Bad token `%s' at line %d", token, p, lnum);
+	warnx("%s: Bad token `%s' at line %lu", token, p, (u_long)lnum);
 	return 1;
 oorange:
-	warnx("%s: Out of range character %x at line %d", token, lo, lnum);
+	warnx("%s: Out of range character %lx at line %lu", token, (u_long)lo,
+	    (u_long)lnum);
 	return 1;
 }
 
@@ -533,7 +536,8 @@ main(argc, argv)
 			if (strcmp(t->name, token) == 0)
 				break;
 		if (t->name == NULL) {
-			warnx("Unknown token %s at line %d", token, lnum);
+			warnx("Unknown token %s at line %lu", token,
+			   (u_long)lnum);
 			error |= 1;
 			continue;
 		}
