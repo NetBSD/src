@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17.2.2 2002/02/11 20:09:11 jdolecek Exp $ */
+/*	$NetBSD: conf.c,v 1.17.2.3 2002/06/23 17:42:15 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,16 +107,16 @@ cdev_decl(ses);
 #include "vcoda.h"
 cdev_decl(vc_nb_);
 
-#include "i4b.h"
-#include "i4bctl.h"
-#include "i4btrc.h"
-#include "i4brbch.h"
-#include "i4btel.h"
-cdev_decl(i4b);
-cdev_decl(i4bctl);
-cdev_decl(i4btrc);
-cdev_decl(i4brbch);
-cdev_decl(i4btel);
+#include "isdn.h"
+#include "isdnctl.h"
+#include "isdntrc.h"
+#include "isdnbchan.h"
+#include "isdntel.h"
+cdev_decl(isdn);
+cdev_decl(isdnctl);
+cdev_decl(isdntrc);
+cdev_decl(isdnbchan);
+cdev_decl(isdntel);
 
 #include "pci.h"
 cdev_decl(pci);
@@ -229,11 +229,11 @@ struct cdevsw	cdevsw[] =
 	cdev__ocrwip_init(NAUDIO,audio),	/* 69: /dev/audio */
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
 	cdev_notdef(),			/* 71 */
-	cdev_i4b_init(NI4B, i4b),		/* 72: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 73: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 74: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 75: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel),	/* 76: i4b phone device */
+	cdev_isdn_init(NISDN, isdn),		/* 72: isdn main device */
+	cdev_isdnctl_init(NISDNCTL, isdnctl),	/* 73: isdn control device */
+	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan),	/* 74: isdn raw b-channel access */
+	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 75: isdn trace device */
+	cdev_isdntel_init(NISDNTEL, isdntel),	/* 76: isdn phone device */
 	cdev_notdef(),			/* 77 */
 	cdev_notdef(),			/* 78 */
 	cdev_notdef(),			/* 79 */

@@ -1,4 +1,4 @@
-/* $NetBSD: pal.h,v 1.1 1997/09/06 01:23:53 thorpej Exp $ */
+/* $NetBSD: pal.h,v 1.1.34.1 2002/06/23 17:34:12 jdolecek Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -39,12 +39,14 @@
 #define	PAL_cserve		0x0009			/* P */
 #define	PAL_swppal		0x000a			/* P */
 #define	PAL_ipir		0x000d			/* P */
+#define	PAL_wtint		0x003e			/* P */
 #define	PAL_bpt			0x0080			/* U */
 #define	PAL_bugchk		0x0081			/* U */
 #define	PAL_imb			0x0086			/* U */
 #define	PAL_rdunique		0x009e			/* U */
 #define	PAL_wrunique		0x009f			/* U */
 #define	PAL_gentrap		0x00aa			/* U */
+#define	PAL_clrfen		0x00ae			/* U */
 
 /* VMS PAL function codes. */
 #define	PAL_VMS_ldqp		0x0003			/* P */
@@ -90,3 +92,4 @@
 #define	PAL_OSF1_rti		0x003f			/* P */
 #define	PAL_OSF1_callsys	0x0083			/* U */
 #define	PAL_OSF1_imb		0x0086			/* U */
+#define	PAL_OSF1_urti		0x0092			/* U */

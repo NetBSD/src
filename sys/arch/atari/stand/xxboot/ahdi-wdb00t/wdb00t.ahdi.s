@@ -1,4 +1,4 @@
-/*	$NetBSD: wdb00t.ahdi.s,v 1.3.42.1 2001/09/13 01:13:23 thorpej Exp $	*/
+/*	$NetBSD: wdb00t.ahdi.s,v 1.3.42.2 2002/06/23 17:35:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -33,13 +33,13 @@
 #include "xxboot.h"
 
 #ifdef __ELF__
-	.globl	_start, main, fill, end
+	.globl	_start, main, fill
 
 	.text
 
 _start:	bras	main
 #else
-	.globl	start, main, fill, end
+	.globl	start, main, fill
 
 	.text
 

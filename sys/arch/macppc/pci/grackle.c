@@ -1,4 +1,4 @@
-/*	$NetBSD: grackle.c,v 1.1.10.1 2001/08/03 04:11:57 lukem Exp $	*/
+/*	$NetBSD: grackle.c,v 1.1.10.2 2002/06/23 17:37:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -124,6 +124,7 @@ grackle_attach(parent, self, aux)
 	pba.pba_iot = pc->iot;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_bus = pc->bus;
+	pba.pba_bridgetag = NULL;
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.8.2.1 2001/08/25 06:15:08 thorpej Exp $	*/
+/*	$NetBSD: necpb.c,v 1.8.2.2 2002/06/23 17:34:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -176,6 +176,7 @@ necpb_init(ncp)
 	ncp->nc_pc.pc_attach_hook = necpb_attach_hook;
 	ncp->nc_pc.pc_bus_maxdevs = necpb_bus_maxdevs;
 	ncp->nc_pc.pc_make_tag = necpb_make_tag;
+	ncp->nc_pc.pc_decompose_tag = necpb_decompose_tag;
 	ncp->nc_pc.pc_conf_read = necpb_conf_read;
 	ncp->nc_pc.pc_conf_write = necpb_conf_write;
 	ncp->nc_pc.pc_intr_map = necpb_intr_map;
@@ -243,6 +244,7 @@ necpbattach(parent, self, aux)
 	pba.pba_pc = &sc->sc_ncp->nc_pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 
 	config_found(self, &pba, necpbprint);
 }

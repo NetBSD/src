@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4.2.1 2002/02/11 20:07:41 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.4.2.2 2002/06/23 17:35:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -63,12 +63,12 @@ struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NWD,wd),		/* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
-	bdev_notdef(),			/* 2 (was floppy diskette) */
-	bdev_notdef(),			/* 3 (was QIC-02/QIC-36 tape) */
+	bdev_notdef(),			/* 2 */
+	bdev_notdef(),			/* 3 */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
-	bdev_notdef(),			/* 7 (was Mitsumi CD-ROM) */
+	bdev_notdef(),			/* 7 */
 	bdev_lkm_dummy(),		/* 8 */
 	bdev_lkm_dummy(),		/* 9 */
 	bdev_lkm_dummy(),		/* 10 */
@@ -76,7 +76,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_disk_init(NVND,vnd),	/* 14: vnode disk driver */
-	bdev_notdef(),			/* 15 (was Sony CD-ROM) */
+	bdev_notdef(),			/* 15 */
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
 	bdev_disk_init(NMD,md),		/* 17: memory disk driver */
 	bdev_disk_init(NRAID,raid),	/* 18: RAIDframe disk driver */
@@ -101,13 +101,8 @@ cdev_decl(pts);
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
-#include "com.h"
-cdev_decl(com);
-#include "sci.h"
-cdev_decl(sci);
 #include "scif.h"
 cdev_decl(scif);
-cdev_decl(fd);
 cdev_decl(sd);
 cdev_decl(st);
 #include "ss.h"
@@ -171,10 +166,10 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
 	cdev_log_init(1,log),		/* 7: /dev/klog */
-	cdev_tty_init(NCOM,com),	/* 8: serial port */
-	cdev_notdef(),			/* 9 (was floppy disk) */
+	cdev_notdef(),			/* 8 */
+	cdev_notdef(),			/* 9 */
 	cdev_tty_init(NSCIF,scif),	/* 10: serial with FIFO */
-	cdev_tty_init(NSCI,sci),	/* 11: serial */
+	cdev_notdef(),			/* 11: */
 	cdev_notdef(),			/* 12: */
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
@@ -184,13 +179,13 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 	cdev_scanner_init(NSS,ss),	/* 19: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 20: SCSI unknown */
-	cdev_notdef(),			/* 21 (was APM) */
+	cdev_notdef(),			/* 21 */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
 	cdev_disk_init(NMD,md),		/* 24: memory disk driver */
 	cdev_notdef(),			/* 25 */
-	cdev_notdef(),			/* 26 (was joystick) */
-	cdev_notdef(),			/* 27 (was PC speaker) */
+	cdev_notdef(),			/* 26 */
+	cdev_notdef(),			/* 27 */
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
@@ -198,17 +193,17 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 32 */
 	cdev_lkm_dummy(),		/* 33 */
 	cdev_lkm_dummy(),		/* 34 */
-	cdev_notdef(),			/* 35 (was Microsoft mouse) */
-	cdev_notdef(),			/* 36 (was Logitech mouse) */
-	cdev_notdef(),			/* 37 (was PS/2 mouse) */
-	cdev_notdef(),			/* 38 (was Cyclom serial port) */
-	cdev_notdef(),			/* 39 (was Mitsumi CD-ROM) */
+	cdev_notdef(),			/* 35 */
+	cdev_notdef(),			/* 36 */
+	cdev_notdef(),			/* 37 */
+	cdev_notdef(),			/* 38 */
+	cdev_notdef(),			/* 39 */
 	cdev_bpftun_init(NTUN,tun),	/* 40: network tunnel */
 	cdev_disk_init(NVND,vnd),	/* 41: vnode disk driver */
 	cdev_audio_init(NAUDIO,audio),	/* 42: generic audio I/O */
 	cdev_notdef(),			/* 43 */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 44: ip-filter device */
-	cdev_notdef(),			/* 45 (was planetconnect satlink) */
+	cdev_notdef(),			/* 45 */
 	cdev_rnd_init(NRND,rnd),	/* 46: random source pseudo-device */
 	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 47: coda file system psdev */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 48: SCSI bus */
@@ -346,42 +341,32 @@ chrtoblk(dev)
 
 #include <dev/cons.h>
 
-#define scicnpollc	nullcnpollc
 #define scifcnpollc	nullcnpollc
 
 #if NPVR > 0
 #if NWSKBD > 0
 #define pvrcngetc wskbd_cngetc
-#else
+#else /* NWSKBD > 0 */
 static int
 pvrcngetc(dev_t dev)
 {
 	return 0;
 }
-#endif
+#endif /* NWSKBD > 0 */
 
 #define pvrcnputc wsdisplay_cnputc
 #define	pvrcnpollc nullcnpollc
-#endif
+#endif /* NPVR > 0 */
 
-
-cons_decl(sci);
 cons_decl(scif);
-cons_decl(com);
 cons_decl(pvr);
 
 struct consdev constab[] = {
 #if NPVR > 0
 	cons_init(pvr),
 #endif
-#if NSCI > 0
-	cons_init(sci),
-#endif
 #if NSCIF > 0
 	cons_init(scif),
-#endif
-#if NCOM > 0
-	cons_init(com),
 #endif
 	{ 0 },
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa1.S,v 1.4.4.2 2002/01/10 19:37:46 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa1.S,v 1.4.4.3 2002/06/23 17:34:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -47,7 +47,7 @@ Lblock_userspace_access:
  * We need to clean and flush the cache as it uses virtual
  * addresses that are about to change.
  */
-ENTRY(sa110_setttb)
+ENTRY(sa1_setttb)
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	mrs	r3, cpsr_all
 	orr	r1, r3, #(I32_bit | F32_bit)
@@ -59,7 +59,7 @@ ENTRY(sa110_setttb)
 	str	r1, [r3]
 #endif
 	stmfd	sp!, {r0-r3, lr}
-	bl	_C_LABEL(sa110_cache_cleanID)
+	bl	_C_LABEL(sa1_cache_cleanID)
 	ldmfd	sp!, {r0-r3, lr}
 	mcr	p15, 0, r0, c7, c5, 0	/* invalidate I$ and BTB */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write and fill buffer */
@@ -86,7 +86,7 @@ ENTRY(sa110_setttb)
 /*
  * TLB functions
  */
-ENTRY(sa110_tlb_flushID_SE)
+ENTRY(sa1_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
 	mcr	p15, 0, r0, c8, c5, 0	/* flush I tlb */
 	mov	pc, lr
@@ -94,23 +94,23 @@ ENTRY(sa110_tlb_flushID_SE)
 /*
  * Cache functions
  */
-ENTRY(sa110_cache_flushID)
+ENTRY(sa1_cache_flushID)
 	mcr	p15, 0, r0, c7, c7, 0	/* flush I+D cache */
 	mov	pc, lr
 
-ENTRY(sa110_cache_flushI)
+ENTRY(sa1_cache_flushI)
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
 	mov	pc, lr
 
-ENTRY(sa110_cache_flushD)
+ENTRY(sa1_cache_flushD)
 	mcr	p15, 0, r0, c7, c6, 0	/* flush D cache */
 	mov	pc, lr
 
-ENTRY(sa110_cache_flushD_SE)
+ENTRY(sa1_cache_flushD_SE)
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	mov	pc, lr
 
-ENTRY(sa110_cache_cleanD_E)
+ENTRY(sa1_cache_cleanD_E)
 	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	mov	pc, lr
 
@@ -122,20 +122,24 @@ ENTRY(sa110_cache_cleanD_E)
  */
 	.data
 
-	.global	_C_LABEL(sa110_cache_clean_addr)
-_C_LABEL(sa110_cache_clean_addr):
+	.global	_C_LABEL(sa1_cache_clean_addr)
+_C_LABEL(sa1_cache_clean_addr):
 	.word	0xf0000000
 
-	.global	_C_LABEL(sa110_cache_clean_size)
-_C_LABEL(sa110_cache_clean_size):
+	.global	_C_LABEL(sa1_cache_clean_size)
+_C_LABEL(sa1_cache_clean_size):
+#if defined(CPU_SA1100) || defined(CPU_SA1110)
+	.word	0x00004000
+#else
 	.word	0x00008000
+#endif
 
 	.text
 
-Lsa110_cache_clean_addr:
-	.word	_C_LABEL(sa110_cache_clean_addr)
-Lsa110_cache_clean_size:
-	.word	_C_LABEL(sa110_cache_clean_size)
+Lsa1_cache_clean_addr:
+	.word	_C_LABEL(sa1_cache_clean_addr)
+Lsa1_cache_clean_size:
+	.word	_C_LABEL(sa1_cache_clean_size)
 
 #ifdef CACHE_CLEAN_BLOCK_INTR
 #define	SA1_CACHE_CLEAN_BLOCK						\
@@ -166,19 +170,19 @@ Lsa110_cache_clean_size:
 
 #define	SA1_CACHE_CLEAN_PROLOGUE					\
 	SA1_CACHE_CLEAN_BLOCK					;	\
-	ldr	r2, Lsa110_cache_clean_addr			;	\
+	ldr	r2, Lsa1_cache_clean_addr			;	\
 	ldmia	r2, {r0, r1}					;	\
 	SA1_DOUBLE_CACHE_CLEAN_BANK
 
 #define	SA1_CACHE_CLEAN_EPILOGUE					\
 	SA1_CACHE_CLEAN_UNBLOCK
 
-ENTRY_NP(sa110_cache_syncI)
-ENTRY_NP(sa110_cache_purgeID)
+ENTRY_NP(sa1_cache_syncI)
+ENTRY_NP(sa1_cache_purgeID)
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache (D cleaned below) */
-ENTRY_NP(sa110_cache_cleanID)
-ENTRY_NP(sa110_cache_purgeD)
-ENTRY(sa110_cache_cleanD)
+ENTRY_NP(sa1_cache_cleanID)
+ENTRY_NP(sa1_cache_purgeD)
+ENTRY(sa1_cache_cleanD)
 	SA1_CACHE_CLEAN_PROLOGUE
 
 1:	ldr	r2, [r0], #32
@@ -190,14 +194,14 @@ ENTRY(sa110_cache_cleanD)
 	SA1_CACHE_CLEAN_EPILOGUE
 	mov	pc, lr
 
-ENTRY(sa110_cache_purgeID_E)
+ENTRY(sa1_cache_purgeID_E)
 	mcr	p15, 0, r0, c7, c10, 1	/* clean dcache entry */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	mov	pc, lr
 
-ENTRY(sa110_cache_purgeD_E)
+ENTRY(sa1_cache_purgeD_E)
 	mcr	p15, 0, r0, c7, c10, 1	/* clean dcache entry */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
@@ -206,12 +210,12 @@ ENTRY(sa110_cache_purgeD_E)
 /*
  * Soft functions
  */
-/* sa110_cache_syncI is identical to sa110_cache_purgeID */
+/* sa1_cache_syncI is identical to sa1_cache_purgeID */
 
-ENTRY(sa110_cache_cleanID_rng)
-ENTRY(sa110_cache_cleanD_rng)
+ENTRY(sa1_cache_cleanID_rng)
+ENTRY(sa1_cache_cleanD_rng)
 	cmp	r1, #0x4000
-	bcs	_C_LABEL(sa110_cache_cleanID)
+	bcs	_C_LABEL(sa1_cache_cleanID)
 
 	and	r2, r0, #0x1f
 	add	r1, r1, r2
@@ -225,9 +229,9 @@ ENTRY(sa110_cache_cleanD_rng)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
 
-ENTRY(sa110_cache_purgeID_rng)
+ENTRY(sa1_cache_purgeID_rng)
 	cmp	r1, #0x4000
-	bcs	_C_LABEL(sa110_cache_purgeID)
+	bcs	_C_LABEL(sa1_cache_purgeID)
 
 	and	r2, r0, #0x1f
 	add	r1, r1, r2
@@ -243,9 +247,9 @@ ENTRY(sa110_cache_purgeID_rng)
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
 	mov	pc, lr
 
-ENTRY(sa110_cache_purgeD_rng)
+ENTRY(sa1_cache_purgeD_rng)
 	cmp	r1, #0x4000
-	bcs	_C_LABEL(sa110_cache_purgeD)
+	bcs	_C_LABEL(sa1_cache_purgeD)
 
 	and	r2, r0, #0x1f
 	add	r1, r1, r2
@@ -260,9 +264,9 @@ ENTRY(sa110_cache_purgeD_rng)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
 
-ENTRY(sa110_cache_syncI_rng)
+ENTRY(sa1_cache_syncI_rng)
 	cmp	r1, #0x4000
-	bcs	_C_LABEL(sa110_cache_syncI)
+	bcs	_C_LABEL(sa1_cache_syncI)
 
 	and	r2, r0, #0x1f
 	add	r1, r1, r2
@@ -287,6 +291,7 @@ ENTRY(sa110_cache_syncI_rng)
  * NOTE: Special calling convention
  *	r1, r4-r13 must be preserved
  */
+#if defined(CPU_SA110)
 ENTRY(sa110_context_switch)
 	/*
 	 * CF_CACHE_PURGE_ID will *ALWAYS* be called prior to this.
@@ -305,3 +310,6 @@ ENTRY(sa110_context_switch)
 	mov	r0, r0
 	mov	r0, r0
 	mov	pc, lr
+#endif
+
+

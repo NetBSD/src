@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_pci.c,v 1.2 2001/04/24 19:43:25 marcus Exp $	*/
+/*	$NetBSD: gapspci_pci.c,v 1.2.2.1 2002/06/23 17:35:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -46,7 +46,6 @@
  
 #include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/shbvar.h>
 #include <machine/sysasicvar.h>
 
 #include <dev/pci/pcivar.h>
@@ -58,6 +57,7 @@ void		gaps_attach_hook(struct device *, struct device *,
 		    struct pcibus_attach_args *);
 int		gaps_bus_maxdevs(void *, int);
 pcitag_t	gaps_make_tag(void *, int, int, int);
+void		gaps_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t	gaps_conf_read(void *, pcitag_t, int);
 void		gaps_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -77,6 +77,7 @@ gaps_pci_init(struct gaps_softc *sc)
 	pc->pc_attach_hook = gaps_attach_hook;
 	pc->pc_bus_maxdevs = gaps_bus_maxdevs;
 	pc->pc_make_tag = gaps_make_tag;
+	pc->pc_decompose_tag = gaps_decompose_tag;
 	pc->pc_conf_read = gaps_conf_read;
 	pc->pc_conf_write = gaps_conf_write;
 	pc->pc_conf_v = sc;
@@ -127,6 +128,31 @@ gaps_make_tag(void *v, int bus, int dev, int func)
 	return (0);
 }
 
+void
+gaps_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
+{
+	int b, d, f;
+
+	if (tag == GAPS_PCITAG_MAGIC)
+		b = d = f = 0;
+	else {
+		/*
+		 * Invalid for GAPS.  These values ensure that a valid
+		 * tag cannot be built.
+		 */
+		b = 0xff;
+		d = 0x1f;
+		f = 0x7;
+	}
+
+	if (bp != NULL)
+		*bp = b;
+	if (dp != NULL)
+		*dp = d;
+	if (fp != NULL)
+		*fp = f;
+}
+
 pcireg_t
 gaps_conf_read(void *v, pcitag_t tag, int reg)
 {
@@ -165,8 +191,7 @@ int
 gaps_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 
-	/* We interrupt at the CPU's irq 11. */
-	*ihp = 11;
+	*ihp = SYSASIC_EVENT_EXT;
 	return (0);
 }
 
@@ -174,15 +199,15 @@ const char *
 gaps_intr_string(void *v, pci_intr_handle_t ih)
 {
 
-	return ("SH4 irq 11");
+	return ("SH4 IRL 11");
 }
 
 void *
 gaps_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
 {
-	return sysasic_intr_establish(ih, SYSASIC_EVENT_EXT,
-				      level, func, arg);
+
+	return (sysasic_intr_establish(ih, func, arg));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123.2.3 2002/03/16 15:59:07 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123.2.4 2002/06/23 17:39:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -789,7 +789,7 @@ setregs(p, pack, stack)
 	r->r_sp  = stack;
 	r->r_pc  = pack->ep_entry;
 	r->r_psr = PSL_USERSET;
-	r->r_r7  = (int)PS_STRINGS;
+	r->r_r7  = (int)p->p_psstr;
 
 	pcbp->pcb_fsr = FPC_UEN;
 	memset(pcbp->pcb_freg, 0, sizeof(pcbp->pcb_freg));

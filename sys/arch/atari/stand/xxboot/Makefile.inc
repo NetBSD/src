@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3.36.2 2002/01/10 19:40:34 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.3.36.3 2002/06/23 17:35:22 jdolecek Exp $
 
 BINDIR=		/usr/mdec
 BINMODE=	${NONBINMODE}
@@ -17,11 +17,11 @@ afterinstall:
 
 .s.o: ../LOADADDR
 	${CPP} ${CPPFLAGS} ${.IMPSRC} | ${AS} ${ASFLAGS} -o ${.TARGET}
-	@if nm ${.TARGET} | grep -q "00000200 T end";	\
+	@if nm ${.TARGET} | grep -q "00000200 t end";	\
 	 then						\
 		true;					\
 	 else						\
-		nm -g ${.TARGET} | sort;		\
+		nm ${.TARGET} | grep -q " end";		\
 		rm -f ${.TARGET};			\
 		false;					\
 	 fi

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.69.2.3 2002/03/16 15:58:40 jdolecek Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.69.2.4 2002/06/23 17:38:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -112,8 +112,8 @@
  *	mtc0/mfc0	one integer op before and after
  *	tlbp		-- one integer op afterwards
  * Obvious solution is to take least common denominator.
- *	
- * For the Toshiba R5900, TX79:		
+ *
+ * For the Toshiba R5900, TX79:
  *	mtc0		following sync.p
  *	tlbw[ri], tlbp	following sync.p or eret
  * for those CPU, define COP0_SYNC as sync.p
@@ -163,7 +163,7 @@ END(mips3_wbflush)
 /* XXX simonb: ugg, another ugly #ifdef check... */
 #if (defined(MIPS3) && !defined(MIPS3_5900)) || defined(MIPS32) || defined(MIPS64)
 /*
- * rm52xx_idle:
+ * mips_wait_idle:
  *
  *	When no processes are on the runq, cpu_switch branches to
  *	idle to wait for something to come ready.
@@ -172,10 +172,9 @@ END(mips3_wbflush)
  *	for kernel profiling.
  *
  *	This version takes advantage of power-saving features on
- *	the QED RM52xx family of CPUs.
+ *	the QED RM52xx family of CPUs, and MIPS32 & MIPS64 CPUs.
  */
-LEAF(rm52xx_idle)
-XLEAF(mipsNN_idle)
+LEAF(mips_wait_idle)
 	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
@@ -235,9 +234,8 @@ XLEAF(mipsNN_idle)
 	j	ra
 	nop
 #endif
-END(rm52xx_idle)
-#endif /* MIPS3 && !MIPS3_5900 */	
-
+END(mips_wait_idle)
+#endif /* (MIPS3 && !MIPS3_5900) || MIPS32 || MIPS64 */
 
 /*
  * u_int32_t mips3_cp0_compare_read(void)
@@ -263,7 +261,6 @@ LEAF(mips3_cp0_compare_write)
 	j	ra
 	nop
 END(mips3_cp0_compare_write)
-
 
 /*
  * u_int32_t mips3_cp0_config_read(void)
@@ -300,7 +297,6 @@ LEAF(mipsNN_cp0_config1_read)
 	.set push
 	.set mips32
 	mfc0	v0, MIPS_COP_0_CONFIG, 1
-	nop
 	j	ra
 	nop
 	.set pop
@@ -330,7 +326,6 @@ LEAF(mipsNN_cp0_config2_read)
 	.set push
 	.set mips32
 	mfc0	v0, MIPS_COP_0_CONFIG, 2
-	nop
 	j	ra
 	nop
 	.set pop
@@ -345,7 +340,6 @@ LEAF(mipsNN_cp0_config3_read)
 	.set push
 	.set mips32
 	mfc0	v0, MIPS_COP_0_CONFIG, 3
-	nop
 	j	ra
 	nop
 	.set pop
@@ -376,7 +370,6 @@ LEAF(mips3_cp0_count_write)
 	j	ra
 	nop
 END(mips3_cp0_count_write)
-
 
 /*
  * u_int32_t mips3_cp0_wired_read(void)

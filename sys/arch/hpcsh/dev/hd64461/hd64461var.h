@@ -1,7 +1,7 @@
-/*	$NetBSD: hd64461var.h,v 1.1 2001/02/21 15:39:09 uch Exp $	*/
+/*	$NetBSD: hd64461var.h,v 1.1.6.1 2002/06/23 17:36:59 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _HPCSH_DEV_HD64461VAR_H_
+#define _HPCSH_DEV_HD64461VAR_H_
 /*
  * HD64461 register access macro.
  */
@@ -63,3 +65,10 @@ enum hd64461_module_id {
 struct hd64461_attach_args {
 	enum hd64461_module_id  ha_module_id;
 };
+
+/*
+ * Interrupt staff.
+ */
+#include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
+
+#endif /* !_HPCSH_DEV_HD64461VAR_H_ */

@@ -1,11 +1,12 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.1.4.5 2002/03/16 15:59:55 jdolecek Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.1.4.6 2002/06/23 17:42:03 jdolecek Exp $
 #
-# from: $NetBSD: POWEROFSEVEN32,v 1.10 2001/08/25 15:04:26 mrg Exp
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
 # Configuration for Ultra5/Ultra10
 
 include "arch/sparc64/conf/std.sparc64"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	64
 
@@ -57,6 +58,7 @@ options 	SYSVSHM		# System V shared memory
 ## Loadable kernel module support; still under development.
 options 	LKM
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; default on sparc is the bootparam protocol
@@ -87,7 +89,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## such that gdb(1) can be used on a kernel coredump.
 
 makeoptions	DEBUG="-g"
-options 	AUDIO_DEBUG
+makeoptions	COPTS="-O2 -mcpu=ultrasparc"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -321,7 +323,7 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
-pseudo-device	vnd	4
+#pseudo-device	vnd	4
 
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
@@ -366,10 +368,6 @@ hme*		at pci?	dev ? function ?		# network "hme" compatible
 
 # DEC Tulip
 tlp*		at pci? dev ? function ?
-options 	TLP_MATCH_21040
-options 	TLP_MATCH_21041
-options 	TLP_MATCH_21140
-options 	TLP_MATCH_21142
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.1 2001/07/08 23:37:53 rjs Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.1.2.1 2002/06/23 17:34:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -37,7 +37,6 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_cputypes.h"
 #include "opt_irqstats.h"
 
 #include "assym.h"

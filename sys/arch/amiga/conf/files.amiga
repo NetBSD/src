@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.108.2.3 2002/02/11 20:06:49 jdolecek Exp $
+#	$NetBSD: files.amiga,v 1.108.2.4 2002/06/23 17:34:24 jdolecek Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -17,6 +17,9 @@ defflag	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
 defflag	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
 defflag	opt_amigacons.h		CV3DONZORRO2
 defflag	opt_amigacons.h		SERCONSOLE
+
+defflag	opt_kfont.h		KFONT_CONS_ISO8859_1
+defflag	opt_kfont.h		KFONT_CONS_ISO8859_2
 
 defparam opt_retina.h		RH_MEMCLK
 defflag	opt_retina.h		RH_64BIT_SPRITE RH_HARDWARECURSOR
@@ -91,19 +94,19 @@ attach	par at mainbus
 file	arch/amiga/dev/par.c		par needs-count
 
 # audio
-device	aucc: audio
+device	aucc: audiobus
 attach	aucc at mainbus
 file	arch/amiga/dev/aucc.c		aucc needs-flag
 
-device	melody: audio, tms320av110
+device	melody: audiobus, tms320av110
 attach	melody at zbus
 file	arch/amiga/dev/melody.c		melody
 
-device repulse: audio, ac97, mulaw
+device repulse: audiobus, ac97, mulaw
 attach	repulse at zbus
 file	arch/amiga/dev/repulse.c	repulse
 
-device toccata: audio, ad1848, auconv
+device toccata: audiobus, ad1848, auconv
 attach	toccata at zbus
 file	arch/amiga/dev/toccata.c	toccata
 
@@ -132,9 +135,15 @@ device	ite: tty
 attach	ite at grf
 file	arch/amiga/dev/ite.c		ite needs-flag
 file	arch/amiga/dev/kbdmap.c		ite
-file	arch/amiga/dev/kf_8x8.c		ite | amidisplaycc
-file	arch/amiga/dev/kf_8x11.c	kfont_8x11
 file	arch/amiga/dev/kf_custom.c	kfont_custom
+file	arch/amiga/dev/kf_iso8859_1_8x8.c	kfont_cons_iso8859_1 &
+	( ite | amidisplaycc )
+file	arch/amiga/dev/kf_iso8859_1_8x11.c	kfont_cons_iso8859_1 &
+	kfont_8x11
+file	arch/amiga/dev/kf_iso8859_2_8x8.c	kfont_cons_iso8859_2 &
+	( ite | amidisplaycc )
+file	arch/amiga/dev/kf_iso8859_2_8x11.c	kfont_cons_iso8859_2 &
+	kfont_8x11
 
 # custom chips grf (ite0 grf0)
 device	grfcc: grfbus
@@ -179,7 +188,7 @@ device	grful: grfbus
 attach	grful at zbus
 file	arch/amiga/dev/grf_ul.c		grful needs-flag
 file	arch/amiga/dev/ite_ul.c		grful & ite
-file	arch/amiga/dev/grf_ultms.g	grful
+file	arch/amiga/dev/grf_ultms.c	grful
 
 # CyberVison 64 grf (ite5 grf5)
 device	grfcv: grfbus
@@ -455,7 +464,6 @@ device	pccard: pcmciabus, gayle
 attach	pccard at mainbus
 
 include "dev/pcmcia/files.pcmcia"
-include "dev/mii/files.mii"
 
 include "dev/ata/files.ata"
 major	{wd = 17}

@@ -1,6 +1,8 @@
-#	$NetBSD: VME162,v 1.8.2.3 2002/02/11 20:08:41 jdolecek Exp $
+#	$NetBSD: VME162,v 1.8.2.4 2002/06/23 17:38:16 jdolecek Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Boards this kernel supports; need at least one
 options 	MVME162
@@ -16,6 +18,7 @@ maxusers	8
 #options 	SYSVSHM
 options 	KTRACE
 options 	COMPAT_43
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 file-system 	FFS

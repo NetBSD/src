@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.2.1 2002/03/16 16:00:10 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.1.2.2 2002/06/23 17:42:47 jdolecek Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -29,7 +29,7 @@ ${SA_PROG}.bin : ${SA_PROG}
 	${OBJCOPY} --output-target=binary ${SA_PROG} $@
 
 ${SA_PROG} : ${OBJS} ${DPADD} ${SRTLIB}
-	${LD} -N -Ttext ${RELOC} -e start -o $@ \
+	${LD} -N -Ttext ${RELOC} -e start ${SA_LDFLAGS} -o $@ \
 	  ${SRTOBJ} ${OBJS} ${LDADD} ${SRTLIB}
 	@${SIZE} $@
 

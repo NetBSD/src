@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.29.4.1 2002/02/11 20:07:01 jdolecek Exp $ */
+/*	$NetBSD: ite_cc.c,v 1.29.4.2 2002/06/23 17:34:28 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.29.4.1 2002/02/11 20:07:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.29.4.2 2002/06/23 17:34:28 jdolecek Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -364,7 +364,7 @@ ite_grf_ioctl(struct ite_softc *ip, u_long cmd, caddr_t addr, int flag,
 		error = viewioctl(0, cmd, addr, -1, p);
 		break;
 	default:
-		error = -1;
+		error = EPASSTHROUGH;
 		break;
 	}
 	return (error);

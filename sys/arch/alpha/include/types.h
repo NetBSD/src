@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.21.2.1 2002/03/16 15:55:42 jdolecek Exp $ */
+/* $NetBSD: types.h,v 1.21.2.2 2002/06/23 17:34:12 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993

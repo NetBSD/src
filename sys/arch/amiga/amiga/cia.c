@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.6.46.1 2002/02/11 20:06:44 jdolecek Exp $	*/
+/*	$NetBSD: cia.c,v 1.6.46.2 2002/06/23 17:34:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.6.46.1 2002/02/11 20:06:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.6.46.2 2002/06/23 17:34:20 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <amiga/amiga/cia.h>
@@ -56,6 +56,8 @@ struct cia_intr_dispatch {
   u_char	mask;
   void		(*handler)(int);
 };
+
+vaddr_t CIAAbase, CIABbase, CIAADDR;
 
 static void not_used(int);
 void kbdintr(int);

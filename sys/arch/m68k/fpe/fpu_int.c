@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_int.c,v 1.4 2001/02/18 20:05:58 chs Exp $	*/
+/*	$NetBSD: fpu_int.c,v 1.4.4.1 2002/06/23 17:37:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -113,7 +113,8 @@ fpu_int(fe)
   for (i = 0; i + wsh < 2; i++) {
     x->fp_mant[i] = (x->fp_mant[i+wsh] << lsh) | (x->fp_mant[i+wsh+1] >> rsh);
   }
-  x->fp_mant[i++] = (x->fp_mant[i+wsh] << lsh);
+  x->fp_mant[i] = (x->fp_mant[i+wsh] << lsh);
+  i++;
   for (; i < 3; i++) {
     x->fp_mant[i] = 0;
   }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3.4.4 2002/03/16 15:56:03 jdolecek Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3.4.5 2002/06/23 17:34:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,11 +42,10 @@
  */
 
 #include "opt_armfpe.h"
-#include "opt_cputypes.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.4.4 2002/03/16 15:56:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.4.5 2002/06/23 17:34:44 jdolecek Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -55,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.4.4 2002/03/16 15:56:03 jdolecek Exp $")
 #include <uvm/uvm_extern.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
+
+#include <arm/cpuconf.h>
 #include <arm/undefined.h>
 
 #ifdef ARMFPE
@@ -86,11 +87,12 @@ cpu_attach(struct device *dv)
 	/* Get the cpu ID from coprocessor 15 */
 
 	curcpu()->ci_cpuid = cpu_id();
+	curcpu()->ci_cputype = curcpu()->ci_cpuid & CPU_ID_CPU_MASK;
+	curcpu()->ci_cpurev = curcpu()->ci_cpuid & CPU_ID_REVISION_MASK;
 
 	identify_arm_cpu(dv, curcpu());
 
-	if ((curcpu()->ci_cpuid & CPU_ID_CPU_MASK) == CPU_ID_SA110
-	    && (curcpu()->ci_cpuid & CPU_ID_REVISION_MASK) < 3) {
+	if (curcpu()->ci_cputype == CPU_ID_SA110 && curcpu()->ci_cpurev < 3) {
 		printf("%s: SA-110 with bugged STM^ instruction\n",
 		       dv->dv_xname);
 	}
@@ -166,6 +168,7 @@ enum cpu_class {
 	CPU_CLASS_ARM9ES,
 	CPU_CLASS_SA1,
 	CPU_CLASS_XSCALE,
+	CPU_CLASS_ARM10E
 };
 
 static const char *generic_steppings[16] = {
@@ -196,8 +199,24 @@ static const char *sa1110_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *i80200_steppings[16] = {
+static const char *ixp12x0_steppings[16] = {
+	"(IXP1200 step A)",		"(IXP1200 step B)",
+	"rev 2",			"(IXP1200 step C)",
+	"(IXP1200 step D)",		"(IXP1240/1250 step A)",
+	"(IXP1240 step B)",		"(IXP1250 step B)",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+static const char *xscale_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step C-0",
+	"rev 4",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+static const char *pxa2x0_steppings[16] = {
+	"step A-0",	"step A-1",	"step B-0",	"step B-1",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
@@ -268,8 +287,24 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110",
 	  sa1110_steppings },
 
-	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"i80200",
-	  i80200_steppings },
+	{ CPU_ID_IXP1200,	CPU_CLASS_SA1,		"IXP1200",
+	  ixp12x0_steppings },
+
+	{ CPU_ID_80200,		CPU_CLASS_XSCALE,	"i80200",
+	  xscale_steppings },
+
+	{ CPU_ID_80321_400,	CPU_CLASS_XSCALE,	"i80321 400MHz",
+	  xscale_steppings },
+	{ CPU_ID_80321_600,	CPU_CLASS_XSCALE,	"i80321 600MHz",
+	  xscale_steppings },
+
+	{ CPU_ID_PXA250,	CPU_CLASS_XSCALE,	"PXA250",
+	  pxa2x0_steppings },
+	{ CPU_ID_PXA210,	CPU_CLASS_XSCALE,	"PXA210",
+	  pxa2x0_steppings },	/* XXX */
+
+	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022ES",
+	  generic_steppings },
 
 	{ 0, CPU_CLASS_NONE, NULL, NULL }
 };
@@ -291,7 +326,8 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
 	{ "ARM9E-S",	NULL },			/* CPU_CLASS_ARM9ES */
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
-	{ "XScale",	"CPU_XSCALE" },		/* CPU_CLASS_XSCALE */
+	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
+	{ "ARM10E",	NULL },			/* CPU_CLASS_ARM10E */
 };
 
 /*
@@ -347,46 +383,49 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	if (cpuids[i].cpuid == 0)
 		sprintf(cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
 
+	printf(": %s\n", cpu_model);
+
+	printf("%s:", dv->dv_xname);
+
 	switch (cpu_class) {
 	case CPU_CLASS_ARM6:
 	case CPU_CLASS_ARM7:
 	case CPU_CLASS_ARM7TDMI:
 	case CPU_CLASS_ARM8:
 		if ((ci->ci_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
-			strcat(cpu_model, " IDC disabled");
+			printf(" IDC disabled");
 		else
-			strcat(cpu_model, " IDC enabled");
+			printf(" IDC enabled");
 		break;
 	case CPU_CLASS_ARM9TDMI:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
-			strcat(cpu_model, " DC disabled");
+			printf(" DC disabled");
 		else
-			strcat(cpu_model, " DC enabled");
+			printf(" DC enabled");
 		if ((ci->ci_ctrl & CPU_CONTROL_IC_ENABLE) == 0)
-			strcat(cpu_model, " IC disabled");
+			printf(" IC disabled");
 		else
-			strcat(cpu_model, " IC enabled");
+			printf(" IC enabled");
 		break;
 	default:
 		break;
 	}
 	if ((ci->ci_ctrl & CPU_CONTROL_WBUF_ENABLE) == 0)
-		strcat(cpu_model, " WB disabled");
+		printf(" WB disabled");
 	else
-		strcat(cpu_model, " WB enabled");
+		printf(" WB enabled");
 
 	if (ci->ci_ctrl & CPU_CONTROL_LABT_ENABLE)
-		strcat(cpu_model, " LABT");
+		printf(" LABT");
 	else
-		strcat(cpu_model, " EABT");
+		printf(" EABT");
 
 	if (ci->ci_ctrl & CPU_CONTROL_BPRD_ENABLE)
-		strcat(cpu_model, " branch prediction enabled");
+		printf(" branch prediction enabled");
 
-	/* Print the info */
-	printf(": %s\n", cpu_model);
+	printf("\n");
 
 	/* Print cache info. */
 	if (arm_picache_line_size == 0 && arm_pdcache_line_size == 0)
@@ -434,10 +473,12 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #ifdef CPU_ARM9
 	case CPU_CLASS_ARM9TDMI:
 #endif
-#ifdef CPU_SA110
+#if defined(CPU_SA110) || defined(CPU_SA1100) || \
+    defined(CPU_SA1110) || defined(CPU_IXP12X0)
 	case CPU_CLASS_SA1:
 #endif
-#ifdef CPU_XSCALE
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
+    defined(CPU_XSCALE_PXA2X0)
 	case CPU_CLASS_XSCALE:
 #endif
 		break;

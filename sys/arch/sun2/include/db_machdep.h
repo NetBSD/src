@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.1.4.1 2002/01/10 19:49:36 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.1.4.2 2002/06/23 17:42:31 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -39,9 +39,6 @@
 
 /* This enables some code in db_command.c */
 #define DB_MACHINE_COMMANDS
-
-/* XXX - Put this in db_extern.h instead? -gwr */
-extern label_t	*db_recover;	/* db_command.c */
 
 extern char	*esym;	/* end of symbols */
 

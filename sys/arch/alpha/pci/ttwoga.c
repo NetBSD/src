@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.1 2000/12/21 20:51:54 thorpej Exp $ */
+/* $NetBSD: ttwoga.c,v 1.1.6.1 2002/06/23 17:34:15 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.1 2000/12/21 20:51:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.1.6.1 2002/06/23 17:34:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,6 +268,7 @@ ttwopciattach(struct device *parent, struct device *self, void *aux)
 	    alphabus_dma_get_tag(&tcp->tc_dmat_direct, ALPHA_BUS_PCI);
 	npba.pba_pc = &tcp->tc_pc;
 	npba.pba_bus = 0;
+	npba.pba_bridgetag = NULL;
 	npba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
 	/*

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.60.2.3 2002/02/11 20:09:19 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.60.2.4 2002/06/23 17:43:15 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include 	"arch/x68k/conf/std.x68k"
 
-#ident 		"GENERIC-$Revision: 1.60.2.3 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.60.2.4 $"
 
 maxusers	8
 
@@ -83,6 +85,7 @@ options 	SYSVSHM		# System V shared memory
 ## Loadable kernel module support
 #options 	LKM
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; not supported currently: needs nfsboot program

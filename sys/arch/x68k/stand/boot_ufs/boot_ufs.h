@@ -1,4 +1,4 @@
-/*	$NetBSD: boot_ufs.h,v 1.1.6.2 2002/01/10 19:50:28 thorpej Exp $	*/
+/*	$NetBSD: boot_ufs.h,v 1.1.6.3 2002/06/23 17:43:20 jdolecek Exp $	*/
 
 /***************************************************************
  *
@@ -11,7 +11,6 @@
 /* xxboot.S */
 __dead void BOOT_ERROR __P((const char *msg)) __attribute__((noreturn));
 int badbaddr __P((volatile void *adr));
-void RAW_READ __P((void *buf, u_int32_t blkpos, size_t bytelen));
 #ifdef SCSI_ADHOC_BOOTPART
 void RAW_READ0 __P((void *buf, u_int32_t blkpos, size_t bytelen));
 #endif

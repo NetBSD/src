@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200reg.h,v 1.1.4.3 2002/02/11 20:07:22 jdolecek Exp $	*/
+/*	$NetBSD: i80200reg.h,v 1.1.4.4 2002/06/23 17:34:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -91,29 +91,5 @@
 #define	ELOGx_ET_MB	0x20000000	/* multi-bit */
 #define	ELOGx_ET_BA	0x40000000	/* bus abort */
 #define	ELOGx_RW	0x80000000	/* direction 0 = read 1 = write */
-
-/*
- * Performance Monitoring Unit		(CP14)
- *
- *	CP14.0		Performance Monitor Control Register
- *	CP14.1		Clock Counter
- *	CP14.2		Performance Counter Register 0
- *	CP14.3		Performance Counter Register 1
- */
-
-#define	PMNC_E		0x00000001	/* enable counters */
-#define	PMNC_P		0x00000002	/* reset both PMNs to 0 */
-#define	PMNC_C		0x00000004	/* clock counter reset */
-#define	PMNC_D		0x00000008	/* clock counter / 64 */
-#define	PMNC_PMN0_IE	0x00000010	/* enable PMN0 interrupt */
-#define	PMNC_PMN1_IE	0x00000020	/* enable PMN1 interrupt */
-#define	PMNC_CC_IE	0x00000040	/* enable clock counter interrupt */
-#define	PMNC_PMN0_IF	0x00000100	/* PMN0 overflow/interrupt */
-#define	PMNC_PMN1_IF	0x00000200	/* PMN1 overflow/interrupt */
-#define	PMNC_CC_IF	0x00000400	/* clock counter overflow/interrupt */
-#define	PMNC_EVCNT0_MASK 0x000ff000	/* event to count for PMN0 */
-#define	PMNC_EVCNT0_SHIFT 12
-#define	PMNC_EVCNT1_MASK 0x0ff00000	/* event to count for PMN1 */
-#define	PMNC_EVCNT1_SHIFT 20
 
 #endif /* _ARM_XSCALE_I80200REG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.9.2.1 2001/08/03 04:10:37 lukem Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.9.2.2 2002/06/23 17:34:05 jdolecek Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -234,8 +234,16 @@ static void dumpring(void **);
  * course, they won't be needing de(4) drivers.
  */
 static void
-donothing(caddr_t m, u_int p, void *q)
+donothing(struct mbuf *m, caddr_t buf, u_int size, void *arg)
 {
+	int s;
+
+	if (__predict_true(m != NULL)) {
+		s = splvm();
+		pool_cache_put(&mbpool_cache, m);
+		splx(s);
+	}
+
 }
 static void a12r2pb(void *vsrc, void *vdst, int len) {
 	long	bounce[9];
@@ -5022,7 +5030,7 @@ tulip_pci_attach(
 #define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
 #define	PCI_GETBUSDEVINFO(sc)	do { \
 	int busno, devno, funcno; \
-	alpha_pci_decompose_tag(pa->pa_pc, pa->pa_tag, &busno, &devno, &funcno); \
+	pci_decompose_tag(pa->pa_pc, pa->pa_tag, &busno, &devno, &funcno); \
 	(sc)->tulip_pci_busno = busno; \
 	(sc)->tulip_pci_devno = devno; \
     } while (0)

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.c,v 1.13.4.1 2001/08/03 04:10:46 lukem Exp $ */
+/* $NetBSD: pci_1000a.c,v 1.13.4.2 2002/06/23 17:34:14 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.13.4.1 2001/08/03 04:10:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.13.4.2 2002/06/23 17:34:14 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -195,7 +195,7 @@ dec_1000a_intr_map(pa, ihp)
 		return 1;
 	if (!(1 <= buspin && buspin <= 4))
 		goto bad;
-	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
+	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 	if (0 <= device && device < sizeof imrmap / sizeof imrmap[0]) {
 		if (device == 0)
 			printf("dec_1000a_intr_map: ?! UNEXPECTED DEV 0\n");

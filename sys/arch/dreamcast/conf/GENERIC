@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.11.2.4 2002/03/16 15:57:23 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.11.2.5 2002/06/23 17:35:33 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,28 +20,16 @@
 
 include 	"arch/dreamcast/conf/std.dreamcast"
 
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+maxusers	16		# estimated number of users
+
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_SIZE=2880	# size of memory disk, in blocks
-#options 	MEMORY_DISK_SIZE=6000
-
-# wscons options
-options 	WSEMUL_VT100		# VT100 / VT220 emulation
-options 	FONT_BOLD8x16
-
-maxusers	16		# estimated number of users
-
-# CPU support
-options 	SH7750
-options 	SH4
-options 	PCLOCK=49900000			# 50MHz
-#options 	PCLOCK=50000000			# 50MHz
-options 	IOM_ROM_BEGIN=0x00000000
-options 	IOM_ROM_SIZE=0x00100000		# 1MB
-options 	IOM_RAM_BEGIN=0x8c000000
-options 	IOM_RAM_SIZE=0x01000000		# 16MB
+options 	MEMORY_DISK_ROOT_SIZE=2880	# size of memory disk, in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=6000
 
 # Standard system options
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
@@ -53,6 +41,7 @@ options 	HZ=100		# clock interrupt generates every 1/HZ sec
 
 #options 	KTRACE		# system call tracing via ktrace(1)
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #options 	SYSVMSG		# System V-like message queues
@@ -108,18 +97,24 @@ options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 #config		netbsd	root on wd0a type ffs
 config		netbsd	root on ? type ?
 
+
+# wscons options
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	FONT_BOLD8x16
+
 #
 # Device configuration
 #
 
 mainbus0 at root
 
-shb*	at mainbus?
+cpu*		at mainbus?
+shb*		at mainbus?
 
 # Serial Devices
 #options		SCIFCONSOLE
 options 	SCIFCN_SPEED=57600
-scif0 at shb? port 0xffe80000 irq 12
+scif0		at shb?
 
 pvr0		at shb?
 wsdisplay*	at pvr? console ?

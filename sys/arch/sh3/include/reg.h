@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.2 2000/04/13 15:41:55 msaitoh Exp $	*/
+/*	$NetBSD: reg.h,v 1.2.8.1 2002/06/23 17:40:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  */
 
 #ifndef _SH3_REG_H_
-#define _SH3_REG_H_
+#define	_SH3_REG_H_
 
 /*
  * Location of the users' stored

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.3.26.1 2002/01/10 19:45:50 thorpej Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.3.26.2 2002/06/23 17:37:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -130,7 +130,7 @@ void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 /* Hook for MD ioctl support */
 int	zsmdioctl __P((struct zs_chanstate *cs, u_long cmd, caddr_t data));
 /* XXX - This is a bit gross... */
-#define ZS_MD_IOCTL zsmdioctl(cs, cmd, data)
+#define ZS_MD_IOCTL(cs, cmd, data) zsmdioctl(cs, cmd, data)
 
 /* Callback for "external" clock sources */
 void zsmd_setclock  __P((struct zs_chanstate *cs));

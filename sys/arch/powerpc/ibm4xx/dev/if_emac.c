@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.1 2001/06/24 02:13:37 simonb Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.1.2.1 2002/06/23 17:39:39 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -109,18 +109,19 @@ emac_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 emac_attach(struct device *parent, struct device *self, void *aux)
 {
-	union mainbus_attach_args *maa = aux;
+	struct mainbus_attach_args *maa = aux;
 	struct emac_softc *sc = (struct emac_softc *)self;
 
 	sc->sc_st = galaxy_make_bus_space_tag(0, 0);
-	sc->sc_sh = maa->mba_rmb.rmb_addr;
+	sc->sc_sh = maa->mb_addr;
 
 	printf(": 405GP EMAC\n");
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(board_data.mac_address_local));
 
-	intr_establish(maa->mba_rmb.rmb_irq, IST_LEVEL, IPL_NET, emac_intr, sc);
-	printf("%s: interrupting at irq %d\n", sc->sc_dev.dv_xname, maa->mba_rmb.rmb_irq);
+	intr_establish(maa->mb_irq, IST_LEVEL, IPL_NET, emac_intr, sc);
+	printf("%s: interrupting at irq %d\n", sc->sc_dev.dv_xname, 
+		maa->mb_irq);
 }
 
 static int

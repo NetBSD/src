@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.2 2002/01/10 19:50:27 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10.2.3 2002/06/23 17:43:19 jdolecek Exp $
 
 NOMAN=		# defined
 
@@ -26,7 +26,7 @@ LIBKERN=	$S/lib/libkern/arch/${MACHINE_ARCH}
 COMMONDIR=	$M/stand/common
 LIBIOCS=	$M/stand/libiocs
 .PATH:		${LIBKERN} ${COMMONDIR}
-SRCS=	boot.S bootmain.c readufs.c readufs_ffs.c #readufs_lfs.c
+SRCS=	boot.S bootmain.c readufs.c readufs_ffs.c readufs_lfs.c
 SRCS+=	exec_image.S memset.S strcmp.S
 
 SRCS+=		vers.c
@@ -40,7 +40,7 @@ CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
 CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
 CPPFLAGS+= -DSCSI_ADHOC_BOOTPART
 #CPPFLAGS+= -DBOOT_DEBUG
-CPPFLAGS+= -DUSE_FFS #-DUSE_LFS
+CPPFLAGS+= -DUSE_FFS -DUSE_LFS
 CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS}
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 .if ${OBJECT_FMT} == "ELF"

@@ -1,9 +1,11 @@
-#	$NetBSD: DR-EVIL,v 1.29.2.4 2002/03/16 15:58:11 jdolecek Exp $
+#	$NetBSD: DR-EVIL,v 1.29.2.5 2002/06/23 17:37:17 jdolecek Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
 
 include "arch/i386/conf/std.i386"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32		# estimated number of users
 
@@ -25,6 +27,7 @@ options 	__AUDIT__
 #options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	MTRR		# MTRR support
+#options 	PERFCTRS	# performance-monitoring counters support
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 options 	DUMMY_NOPS
 
@@ -67,6 +70,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -308,10 +312,7 @@ pcmcia*		at cardslot?
 # wscons
 pckbc*	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms" or "pmsi"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-#pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
-#opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 vga*		at pci?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -319,7 +320,6 @@ wsdisplay*	at vga? console ?
 #wsdisplay*	at pcdisplay? console ?
 wskbd*		at pckbd? console ? mux 1
 wsmouse*	at pms? mux 0
-#wsmouse*	at pmsi? mux 0
 
 pcppi0		at isa?
 sysbeep0	at pcppi?
@@ -524,7 +524,6 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
-#de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
 #ex*	at pci? dev ? function ?	# 3Com 90x[BC]
@@ -540,11 +539,7 @@ fd*	at fdc? drive ?			# the drives themselves
 #sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 #ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
-#tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+#tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 #vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # EISA network interfaces
@@ -790,7 +785,6 @@ bktr* at pci? dev ? function ?
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
-#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

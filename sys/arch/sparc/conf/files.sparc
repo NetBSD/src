@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.102.2.3 2002/03/16 15:59:44 jdolecek Exp $
+#	$NetBSD: files.sparc,v 1.102.2.4 2002/06/23 17:41:42 jdolecek Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -18,12 +18,15 @@ maxusers 2 8 1024
 device mainbus {}
 attach mainbus at root
 
+device msiiep {}
+attach msiiep at mainbus
+
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
-device msiiep: pcibus
-attach msiiep at mainbus
-file	arch/sparc/sparc/msiiep.c		msiiep
-file	arch/sparc/sparc/pci_machdep.c		msiiep
+device mspcic {}: pcibus
+attach mspcic at msiiep
+file	arch/sparc/sparc/msiiep.c		msiiep | mspcic
+file	arch/sparc/sparc/pci_machdep.c		msiiep | mspcic
 
 device ebus {[addr = -1]}: pcibus
 attach ebus at pci
@@ -62,16 +65,21 @@ file	arch/sparc/sparc/auxiotwo.c
 device clock: mk48txx
 attach clock at mainbus with clock_mainbus
 attach clock at obio with clock_obio
+file	arch/sparc/sparc/mkclock.c		clock
 
 device oclock: intersil7170
 attach oclock at obio
+file	arch/sparc/sparc/oclock.c		oclock
 
 device timer
 attach timer at mainbus with timer_mainbus
 attach timer at obio with timer_obio
+attach timer at msiiep with timer_msiiep
+file	arch/sparc/sparc/timer.c		timer
 
 device eeprom
 attach eeprom at obio
+file	arch/sparc/sparc/eeprom.c		eeprom
 
 file	arch/sparc/sparc/clock.c
 file	dev/clock_subr.c
@@ -125,9 +133,6 @@ device tpcic: pcmciabus
 attach tpcic at sbus
 file	arch/sparc/dev/ts102.c			tpcic
 
-# network devices MII bus
-include "dev/mii/files.mii"
-
 # PCMCIA bus
 include "dev/pcmcia/files.pcmcia"
 include "dev/ata/files.ata"
@@ -179,7 +184,7 @@ file	arch/sparc/dev/dma_obio.c	dma_obio
 attach esp at obio with esp_obio
 file	arch/sparc/dev/esp_obio.c	esp_obio
 
-device	audioamd: audio, am7930
+device	audioamd: audiobus, am7930
 attach	audioamd at mainbus with audioamd_mainbus
 attach	audioamd at sbus with audioamd_sbus
 file	arch/sparc/dev/audioamd.c		audioamd

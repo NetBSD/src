@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile.pmax.inc,v 1.2.2.1 2002/01/10 19:47:46 thorpej Exp $
-ELF2ECOFF?=	elf2ecoff
+#	$NetBSD: Makefile.pmax.inc,v 1.2.2.2 2002/06/23 17:39:11 jdolecek Exp $
 
 SYSTEM_LD_TAIL_EXTRA=; \
 		echo ${ELF2ECOFF} $@ $@.ecoff; ${ELF2ECOFF} $@ $@.ecoff; \

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.7.2.3 2002/03/16 15:56:15 jdolecek Exp $	*/
+/*	$NetBSD: i80312.c,v 1.7.2.4 2002/06/23 17:34:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -273,6 +273,7 @@ i80312_attach(struct i80312_softc *sc)
 	pba.pba_dmat = &sc->sc_pci_dmat;
 	pba.pba_pc = &sc->sc_pci_chipset;
 	pba.pba_bus = PPB_BUSINFO_SECONDARY(preg);
+	pba.pba_bridgetag = NULL;
 	pba.pba_intrswiz = 3;
 	pba.pba_intrtag = 0;
 	/* XXX MRL/MRM/MWI seem to have problems, at the moment. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.64 2001/05/30 15:24:36 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.64.2.1 2002/06/23 17:39:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -49,6 +49,7 @@
 #include <sys/syscall.h>
 
 #include <machine/asm.h>
+#include <machine/intr.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/trap.h>

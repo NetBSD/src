@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.116.2.1 2002/01/10 19:44:31 thorpej Exp $
+#	$NetBSD: Makefile.i386,v 1.116.2.2 2002/06/23 17:37:21 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -32,7 +32,11 @@ GENASSYM=	${I386}/i386/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-Di386
+.if defined(HAVE_GCC3)
+AFLAGS+=	-x assembler-with-cpp
+.else
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+.endif
 
 ##
 ## (3) libkern and compat

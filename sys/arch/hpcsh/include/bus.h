@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4.2.2 2002/03/16 15:58:09 jdolecek Exp $	*/
+/*	$NetBSD: bus.h,v 1.4.2.3 2002/06/23 17:37:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -608,7 +608,7 @@ void bus_space_destroy(bus_space_tag_t);
 /*
  * Private flags stored in the DMA map.
  */
-#define	HPCSH_DMAMAP_COHERENT	0x100	/* no cache flush necessary on sync */
+#define	HPCSH_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.2.2.1 2002/01/10 19:50:09 thorpej Exp $
+#	$NetBSD: files.walnut,v 1.2.2.2 2002/06/23 17:43:11 jdolecek Exp $
 #
 # walnut-specific configuration info
 
@@ -11,11 +11,9 @@ include "arch/powerpc/fpu/files.fpu"
 
 file	arch/walnut/walnut/autoconf.c
 file	arch/walnut/walnut/bus_dma.c
-file	arch/walnut/walnut/clock.c
 file	arch/walnut/walnut/consinit.c
 file	arch/walnut/walnut/conf.c
 file	arch/walnut/walnut/disksubr.c		disk
-file	arch/walnut/walnut/extintr.c
 file	arch/walnut/walnut/machdep.c
 file	arch/walnut/dev/ibm405gp.c
 file	arch/walnut/walnut/procfs_machdep.c	procfs
@@ -27,9 +25,6 @@ major	{md = 9}
 
 # Machine-independent I2O drivers.
 include	"dev/i2o/files.i2o"
-
-# Machine-independent MII/PHY drivers.
-include	"dev/mii/files.mii"
 
 # Machine-independent SCSI drivers
 include	"dev/scsipi/files.scsipi"
@@ -50,18 +45,15 @@ include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 
-# PCI bus support
-include	"dev/pci/files.pci"
-
 # System bus
 define	mainbus {[addr=-1], [irq=-1]}
-device	mainbus : pcibus, mainbus
+device	mainbus : mainbus
 attach	mainbus at root
 file	arch/walnut/walnut/mainbus.c		mainbus
 
 device	cpu
 attach	cpu at mainbus
-file	arch/walnut/walnut/cpu.c
+file	arch/powerpc/ibm4xx/cpu.c
 
 # On-chip com device(s)
 attach	com at mainbus with com_mainbus
@@ -72,9 +64,12 @@ device	emac: ether, ifnet, arp, mii
 attach	emac at mainbus
 file	arch/powerpc/ibm4xx/dev/if_emac.c	emac
 
+# PCI bus support
+include	"dev/pci/files.pci"
+
 # On-chip PCI bridge
 device	pchb : pcibus
-attach	pchb at pci
+attach	pchb at mainbus
 file	arch/walnut/pci/pchb.c			pchb
 
 file	arch/walnut/pci/pci_machdep.c		pci
@@ -92,3 +87,15 @@ file	arch/walnut/dev/ds1743.c		dsrtc
 include "dev/pckbc/files.pckbc"
 attach	pckbc at mainbus with pckbc_mainbus
 file	arch/walnut/dev/pckbc_mainbus.c		pckbc_mainbus
+
+#
+# Machine-independent CardBus drivers
+#
+
+# XXX dev/pcmcia needs fdc
+device fdc {drive = -1}
+
+include "dev/cardbus/files.cardbus"
+include "dev/pcmcia/files.pcmcia"
+
+file arch/macppc/macppc/rbus_machdep.c		cardbus

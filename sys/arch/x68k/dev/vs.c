@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.7.4.1 2002/01/10 19:50:22 thorpej Exp $	*/
+/*	$NetBSD: vs.c,v 1.7.4.2 2002/06/23 17:43:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -168,11 +168,17 @@ struct {
 
 #define NUM_RATE	(sizeof(vs_l2r)/sizeof(vs_l2r[0]))
 
-struct audio_encoding vs_encodings[] = {
-	{0, AudioEadpcm, AUDIO_ENCODING_ADPCM, 4, 0},
-	{1, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8,
-	    AUDIO_ENCODINGFLAG_EMULATED},
-	{2, AudioEmulaw, AUDIO_ENCODING_ULAW, 8, AUDIO_ENCODINGFLAG_EMULATED},
+struct {
+	char	*name;
+	int	encoding;
+	int	precision;
+} vs_encodings[] = {
+	{AudioEadpcm,      AUDIO_ENCODING_ADPCM,       4},
+	{AudioEslinear,    AUDIO_ENCODING_SLINEAR,     8},
+	{AudioEulinear,    AUDIO_ENCODING_ULINEAR,     8},
+	{AudioEmulaw,      AUDIO_ENCODING_ULAW,        8},
+	{AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE, 16},
+	{AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE, 16},
 };
 
 static int
@@ -317,6 +323,8 @@ vs_open(void *hdl, int flags)
 	sc->sc_pintr = NULL;
 	sc->sc_rintr = NULL;
 
+	msm6258_codec_open(sc);
+
 	return 0;
 }
 
@@ -334,7 +342,13 @@ vs_query_encoding(void *hdl, struct audio_encoding *fp)
 	if (fp->index >= sizeof(vs_encodings) / sizeof(vs_encodings[0]))
 		return EINVAL;
 
-	*fp = vs_encodings[fp->index];
+	strcpy(fp->name, vs_encodings[fp->index].name);
+	fp->encoding  = vs_encodings[fp->index].encoding;
+	fp->precision = vs_encodings[fp->index].precision;
+	if (fp->encoding == AUDIO_ENCODING_ADPCM)
+		fp->flags = 0;
+	else
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 	return 0;
 }
 
@@ -372,6 +386,8 @@ vs_set_params(void *hdl, int setmode, int usemode,
 	struct audio_params *p;
 	int mode;
 	int rate;
+	void (*pswcode)(void *, u_char *, int);
+	void (*rswcode)(void *, u_char *, int);
 
 	DPRINTF(1, ("vs_set_params: setmode=%d, usemode=%d\n", setmode, usemode));
 
@@ -387,50 +403,75 @@ vs_set_params(void *hdl, int setmode, int usemode,
 			return (EINVAL);
 
 		rate = p->sample_rate;
-		p->sw_code = NULL;
+		pswcode = NULL;
+		rswcode = NULL;
 		p->factor = 1;
-		switch (p->encoding) {
-		case AUDIO_ENCODING_ULAW:
-			if (p->precision != 8)
-				return EINVAL;
-			if (mode == AUMODE_PLAY) {
-				p->sw_code = msm6258_mulaw_to_adpcm;
-				rate = p->sample_rate * 2;
-			} else {
-				p->sw_code = msm6258_adpcm_to_mulaw;
-				p->factor = 2;
+		p->factor_denom = 0;
+		p->hw_precision = 4;
+		p->hw_encoding = AUDIO_ENCODING_ADPCM;
+		DPRINTF(1, ("vs_set_params: encoding=%d, precision=%d\n",
+			p->encoding, p->precision));
+		switch (p->precision) {
+		case 4:
+			if (p->encoding == AUDIO_ENCODING_ADPCM)
+				p->factor_denom = 1;
+			break;
+		case 8:
+			switch (p->encoding) {
+			case AUDIO_ENCODING_ULAW:
+				p->factor_denom = 2;
+				pswcode = msm6258_mulaw_to_adpcm;
+				rswcode = msm6258_adpcm_to_mulaw;
+				break;
+			case AUDIO_ENCODING_SLINEAR:
+			case AUDIO_ENCODING_SLINEAR_LE:
+			case AUDIO_ENCODING_SLINEAR_BE:
+				p->factor_denom = 2;
+				pswcode = msm6258_slinear8_to_adpcm;
+				rswcode = msm6258_adpcm_to_slinear8;
+				break;
+			case AUDIO_ENCODING_ULINEAR:
+			case AUDIO_ENCODING_ULINEAR_LE:
+			case AUDIO_ENCODING_ULINEAR_BE:
+				p->factor_denom = 2;
+				pswcode = msm6258_ulinear8_to_adpcm;
+				rswcode = msm6258_adpcm_to_ulinear8;
+				break;
 			}
 			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision != 8)
-				return EINVAL;
-			if (mode == AUMODE_PLAY) {
-				p->sw_code = msm6258_ulinear8_to_adpcm;
-				rate = p->sample_rate * 2;
-			} else {
-				p->sw_code = msm6258_adpcm_to_ulinear8;
-				p->factor = 2;
+		case 16:
+			switch (p->encoding) {
+			case AUDIO_ENCODING_SLINEAR_LE:
+				p->factor_denom = 4;
+				pswcode = msm6258_slinear16_le_to_adpcm;
+				rswcode = msm6258_adpcm_to_slinear16_le;
+				break;
+			case AUDIO_ENCODING_SLINEAR_BE:
+				p->factor_denom = 4;
+				pswcode = msm6258_slinear16_be_to_adpcm;
+				rswcode = msm6258_adpcm_to_slinear16_be;
+				break;
 			}
 			break;
-		case AUDIO_ENCODING_ADPCM:
-			if (p->precision != 4)
-				return EINVAL;
-			break;
-		default:
+		}
+		if (p->factor_denom == 0) {
 			DPRINTF(1, ("vs_set_params: mode=%d, encoding=%d\n",
 				mode, p->encoding));
-			return (EINVAL);
+			return EINVAL;
 		}
+
 		DPRINTF(1, ("vs_set_params: rate=%d -> ", rate));
 		rate = vs_round_sr(rate);
 		DPRINTF(1, ("%d\n", rate));
 		if (rate < 0)
 			return (EINVAL);
-		if (mode == AUMODE_PLAY)
+		if (mode == AUMODE_PLAY) {
+			p->sw_code = pswcode;
 			sc->sc_current.prate = rate;
-		else
+		} else {
+			p->sw_code = rswcode;
 			sc->sc_current.rrate = rate;
+		}
 	}
 
 	return 0;

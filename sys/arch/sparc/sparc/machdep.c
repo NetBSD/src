@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.181.2.5 2002/03/16 15:59:53 jdolecek Exp $ */
+/*	$NetBSD: machdep.c,v 1.181.2.6 2002/06/23 17:41:52 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@
 #include <machine/pmap.h>
 #include <machine/oldmon.h>
 #include <machine/bsd_openprom.h>
+#include <machine/bootinfo.h>
 
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
@@ -222,7 +223,6 @@ cpu_startup()
 	pmap_extract(pmap_kernel(), (vaddr_t)KERNBASE, &pa);
 
 	/* Allocate additional physical pages */
-	TAILQ_INIT(&mlist);
 	if (uvm_pglistalloc(size - 8192,
 			    vm_first_phys, vm_first_phys+vm_num_phys,
 			    0, 0, &mlist, 1, 0) != 0)
@@ -405,7 +405,7 @@ setregs(p, pack, stack)
 	 * Set the registers to 0 except for:
 	 *	%o6: stack pointer, built in exec())
 	 *	%psr: (retain CWP and PSR_S bits)
-	 *	%g1: address of PS_STRINGS (used by crt0)
+	 *	%g1: address of p->p_psstr (used by crt0)
 	 *	%pc,%npc: entry point of program
 	 */
 	psr = tf->tf_psr & (PSR_S | PSR_CWP);
@@ -427,7 +427,7 @@ setregs(p, pack, stack)
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_psr = psr;
-	tf->tf_global[1] = (int)PS_STRINGS;
+	tf->tf_global[1] = (int)p->p_psstr;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
 	stack -= sizeof(struct rwindow);
@@ -464,6 +464,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	char *cp;
+	struct btinfo_kernelfile *bi_file;
 
 	/* all sysctl names are this level are terminal */
 	if (namelen != 1)
@@ -471,7 +472,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	switch (name[0]) {
 	case CPU_BOOTED_KERNEL:
-		cp = prom_getbootfile();
+		if ((bi_file = lookup_bootinfo(BTINFO_KERNELFILE)) != NULL)
+			cp = bi_file->name;
+		else
+			cp = prom_getbootfile();
 		if (cp == NULL)
 			return (ENOENT);
 		if (*cp == '\0')
@@ -1279,7 +1283,6 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	/*
 	 * Allocate pages from the VM system.
 	 */
-	TAILQ_INIT(mlist);
 	error = uvm_pglistalloc(size, low, high, 0, 0,
 				mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)

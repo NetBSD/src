@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.4.1 2002/01/10 19:47:03 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3.4.2 2002/06/23 17:38:54 jdolecek Exp $
 
 PROG= bootxx
 SRCS= start.S bootxx.c
@@ -12,18 +12,26 @@ SIZE?= size
 COMMON!=  cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 
 LDFLAGS= -x -N -Ttext a0004000 -e _start
-CFLAGS= -Os -mno-abicalls -G 0 -Wall
+CFLAGS= -Os -mmemcpy -mno-abicalls -G 0 -Wall
 
 CPPFLAGS+= -D_STANDALONE #-DBOOTXX_DEBUG
-CPPFLAGS+= -I${COMMON} -I${.CURDIR}/../../../..
+CPPFLAGS+= -nostdinc -I${COMMON} -I${.CURDIR}/../../../..
 
 AFLAGS= -D_LOCORE
+
+CLEANFILES+= machine mips ${PROG}.sym
+CLEANFILES+= ${PROG}.bin ${PROG}.tmp
 
 LIBS=  ${COMMON}/romcalls.o
 LIBS+= ${COMMON}/lib/sa/libsa.a ${COMMON}/lib/kern/libkern.a
 
 ${PROG}: ${OBJS}
-	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LIBS}
-	${SIZE} ${PROG}
+	${LD} ${LDFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
+	${SIZE} ${.TARGET}.sym
+# XXX objcopy does not work for prog at KSEG
+#	${OBJCOPY} -O binary ${.TARGET}.sym ${.TARGET}
+	${STRIP} ${.TARGET}.sym -o ${.TARGET}.tmp
+	tail -c +177 ${.TARGET}.tmp > ${.TARGET}.bin
+	mv ${.TARGET}.bin ${.TARGET}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.1.4.5 2002/03/16 15:59:18 jdolecek Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.1.4.6 2002/06/23 17:39:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -72,11 +72,48 @@ char cpu_model[80];
 void
 cpu_probe_cache(void)
 {
-	/* XXXX Initialze cache_info */
-	curcpu()->ci_ci.dcache_size = PAGE_SIZE;
+	u_int assoc, pvr, vers;
+
+	__asm __volatile ("mfpvr %0" : "=r"(pvr));
+	vers = pvr >> 16;
+
+	switch (vers) {
+#define	K	*1024
+	case MPC601:
+	case MPC750:
+	case MPC7450:
+	case MPC7455:
+		curcpu()->ci_ci.dcache_size = 32 K;
+		curcpu()->ci_ci.icache_size = 32 K;
+		assoc = 8;
+		break;
+	case MPC603e:
+	case MPC603ev:
+	case MPC604:
+		curcpu()->ci_ci.dcache_size = 16 K;
+		curcpu()->ci_ci.icache_size = 16 K;
+		assoc = 4;
+		break;
+	case MPC604ev:
+		curcpu()->ci_ci.dcache_size = 32 K;
+		curcpu()->ci_ci.icache_size = 32 K;
+		assoc = 4;
+		break;
+	default:
+		curcpu()->ci_ci.dcache_size = PAGE_SIZE;
+		curcpu()->ci_ci.icache_size = PAGE_SIZE;
+		assoc = 1;
+#undef	K
+	}
+
+	/* Presently common across all implementations. */
 	curcpu()->ci_ci.dcache_line_size = CACHELINESIZE;
-	curcpu()->ci_ci.icache_size = PAGE_SIZE;
 	curcpu()->ci_ci.icache_line_size = CACHELINESIZE;
+
+	/*
+	 * Possibly recolor.
+	 */
+        uvm_page_recolor(atop(curcpu()->ci_ci.dcache_line_size / assoc));
 }
 
 struct cpu_info *
@@ -216,6 +253,7 @@ cpu_attach_common(struct device *self, int id)
 			break;
 		default:
 			bitmask = HID0_BITMASK;
+			break;
 		}
 		bitmask_snprintf(hid0, bitmask, hidbuf, sizeof hidbuf);
 		printf("%s: HID0 %s\n", self->dv_xname, hidbuf);
@@ -310,8 +348,15 @@ cpu_identify(char *str, size_t len)
 
 	asm ("mfpvr %0" : "=r"(pvr));
 	vers = pvr >> 16;
-	maj = (pvr >>  8) & 0xff;
-	min = (pvr >>  0) & 0xff;
+	switch (vers) {
+	case MPC7410:
+		min = (pvr >> 0) & 0xff;
+		maj = min <= 4 ? 1 : 2;
+		break;
+	default:
+		maj = (pvr >>  8) & 0xff;
+		min = (pvr >>  0) & 0xff;
+	}
 
 	for (cp = models; cp->name != NULL; cp++) {
 		if (cp->version == vers)
@@ -368,6 +413,18 @@ cpu_config_l2cr(int vers)
 	}
 
 	if (l2cr & L2CR_L2E) {
+		if (vers == MPC7450 || vers == MPC7455) {
+			u_int l3cr;
+
+			printf(": 256KB L2 cache");
+
+			__asm __volatile("mfspr %0,%1" :
+			    "=r"(l3cr) : "n"(SPR_L3CR) );
+			if (l3cr & L3CR_L3E)
+				printf(", %cMB L3 backside cache",
+				   l3cr & L3CR_L3SIZ ? '2' : '1');
+			printf("\n");
+		}
 		switch (l2cr & L2CR_L2SIZ) {
 		case L2SIZ_256K:
 			printf(": 256KB");

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.5.2.4 2002/03/16 15:58:00 jdolecek Exp $	*/
+/*	$NetBSD: rtc.c,v 1.5.2.5 2002/06/23 17:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -54,7 +54,6 @@
 /*
  * for debugging definitions
  * 	VRRTCDEBUG	print rtc debugging information
- *	VRRTC_HEARTBEAT	print HEARTBEAT (too many print...)
  */
 #ifdef VRRTCDEBUG
 #ifndef VRRTCDEBUG_CONF
@@ -224,18 +223,7 @@ vrrtc_intr(void *arg, u_int32_t pc, u_int32_t statusReg)
 	cf.pc = pc;
 	cf.sr = statusReg;
 	hardclock(&cf);
-	intrcnt[HARDCLOCK]++;
 
-#ifdef VRRTC_HEARTBEAT
-	if ((intrcnt[HARDCLOCK] % (CLOCK_RATE * 5)) == 0) {
-		struct clock_ymdhms dt;
-		clock_get((struct device *)sc, NULL, &dt);
-		printf("%s(%d): rtc_intr: %2d.%2d.%2d %02d:%02d:%02d\n",
-		    __FILE__, __LINE__,
-		    dt.dt_year, dt.dt_mon, dt.dt_day,
-		    dt.dt_hour, dt.dt_min, dt.dt_sec);
-	}
-#endif
 	return 0;
 }
 

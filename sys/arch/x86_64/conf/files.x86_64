@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86_64,v 1.3.2.2 2002/02/11 20:09:24 jdolecek Exp $
+#	$NetBSD: files.x86_64,v 1.3.2.3 2002/06/23 17:43:26 jdolecek Exp $
 #
 # new style config file for x86_64 architecture
 #
@@ -50,7 +50,7 @@ file	arch/x86_64/x86_64/mem.c
 file	netns/ns_cksum.c			ns
 file	arch/x86_64/x86_64/pmap.c
 file	arch/x86_64/x86_64/process_machdep.c
-#file	arch/x86_64/x86_64/procfs_machdep.c	procfs
+file	arch/x86_64/x86_64/procfs_machdep.c	procfs
 file	arch/x86_64/x86_64/sys_machdep.c
 file	arch/x86_64/x86_64/syscall.c
 file	arch/x86_64/x86_64/trap.c
@@ -190,9 +190,6 @@ file	arch/x86_64/x86_64/netbsd32_syscall.c	compat_netbsd32
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
-
-# network devices MII bus
-include	"dev/mii/files.mii"
 
 include	"dev/usb/files.usb"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.49.2.2 2002/01/10 19:47:20 thorpej Exp $ */
+/*	$NetBSD: scn.c,v 1.49.2.3 2002/06/23 17:39:04 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -1620,7 +1620,7 @@ scnsoft(arg)
 			}
 			sc->sc_rbget = get;
 		}
-	done:
+	done: ;
 	}
 }
 
@@ -1648,10 +1648,11 @@ scnioctl(dev, cmd, data, flag, p)
 	register int error;
 
 	error = (*tp->t_linesw->l_ioctl) (tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -1768,7 +1769,7 @@ scnioctl(dev, cmd, data, flag, p)
 		}
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

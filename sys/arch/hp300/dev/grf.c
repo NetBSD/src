@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39.2.2 2002/01/10 19:42:51 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.39.2.3 2002/06/23 17:36:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,9 @@
  * This is the hardware-independent portion of the driver.
  * Hardware access is through the machine dependent grf switch routines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.2.3 2002/06/23 17:36:06 jdolecek Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -719,11 +722,9 @@ grffindpid(gp)
 	int i, limit;
 	int ni;
 
-	if (gp->g_pid == NULL) {
-		gp->g_pid = (short *)
-			malloc(GRFMAXLCK * sizeof(short), M_DEVBUF, M_WAITOK);
-		memset((caddr_t)gp->g_pid, 0, GRFMAXLCK * sizeof(short));
-	}
+	if (gp->g_pid == NULL)
+		MALLOC(gp->g_pid, short *, GRFMAXLCK*sizeof(short),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
 	pid = curproc->p_pid;
 	ni = limit = gp->g_pid[0];
 	for (i = 1, sp = &gp->g_pid[1]; i <= limit; i++, sp++) {

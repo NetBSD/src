@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.115.2.3 2002/03/16 15:57:35 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.115.2.4 2002/06/23 17:36:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -94,9 +94,16 @@ ASLOCAL(tmpstk)
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
  */
-#define	_RELOC(var, ar)		\
-	lea	var,ar;		\
+#ifdef __STDC__
+#define	IMMEDIATE		#
+#define	_RELOC(var, ar)			\
+	movel	IMMEDIATE var,ar;	\
 	addl	%a5,ar
+#else
+#define	_RELOC(var, ar)			\
+	movel	#var,ar;		\
+	addl	%a5,ar
+#endif /* __STDC__ */
 
 #define	RELOC(var, ar)		_RELOC(_C_LABEL(var), ar)
 #define	ASRELOC(var, ar)	_RELOC(_ASM_LABEL(var), ar)
@@ -106,9 +113,6 @@ ASLOCAL(tmpstk)
  * must be disabled when this is invoked.
  */
 #define DOREBOOT						\
-	/* Reset Vector Base Register to what PROM expects. */	\
-	movl	#0,%d0;						\
-	movc	%d0,%vbr;					\
 	/* Jump to REQ_REBOOT */				\
 	jmp	0x1A4;
 
@@ -463,21 +467,18 @@ Lhighcode:
 	.long	0x4e7b0003		| movc %d0,%tc
 	movl	#0x80008000,%d0
 	movc	%d0,%cacr		| turn on both caches
-	.word	0x4ef9			| jmp Lenab1
-	.long	Lenab1			| (forced not be be pc-relative)
+	jmp	Lenab1:l		| forced not be pc-relative
 Lmotommu2:
 	movl	#MMU_IEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD
 					| enable 68881 and i-cache
 	RELOC(prototc, %a2)
 	movl	#0x82c0aa00,%a2@	| value to load TC with
 	pmove	%a2@,%tc		| load it
-	.word	0x4ef9			| jmp Lenab1
-	.long	Lenab1			| (forced not be be pc-relative)
+	jmp	Lenab1:l		| forced not be pc-relative
 Lhpmmu3:
 	movl	#0,INTIOBASE+MMUBASE+MMUCMD		| clear external cache
 	movl	#MMU_ENAB,INTIOBASE+MMUBASE+MMUCMD	| turn on MMU
-	.word	0x4ef9			| jmp Lenab1
-	.long	Lenab1			| (forced not be be pc-relative)
+	jmp	Lenab1:l		| forced not be pc-relative
 Lehighcode:
 
 	/*

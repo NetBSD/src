@@ -1,4 +1,4 @@
-/*	$Id: readufs_ffs.c,v 1.1.6.2 2002/01/10 19:50:29 thorpej Exp $	*/
+/*	from Id: readufs_ffs.c,v 1.5 2002/01/26 16:26:44 itohy Exp 	*/
 
 /*
  * FS specific support for 4.2BSD Fast Filesystem
@@ -51,8 +51,6 @@ try_ffs()
 	/* This partition looks like an FFS. */
 	fsi.fstype = UFSTYPE_FFS;
 	fsi.get_inode = get_ffs_inode;
-	/* Disk addr in inode is in block --- need shifting. */
-	fsi.iblkshift = buf.sblk.fs_fsbtodb;
 
 	/* Get information from the superblock. */
 	fsi.bsize = buf.sblk.fs_bsize;
@@ -92,7 +90,7 @@ get_ffs_inode(ino, dibuf)
 	struct dinode *buf = alloca((size_t) fsi.bsize);
 	struct dinode *di;
 
-	RAW_READ(buf, (unsigned int) fsbtodb(&fsi, ino_to_fsba(&fsi, ino)),
+	RAW_READ(buf, fsbtodb(&fsi, ino_to_fsba(&fsi, ino)),
 			(size_t) fsi.bsize);
 
 	di = &buf[ino_to_fsbo(&fsi, ino)];

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.169.2.5 2002/03/16 15:58:12 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.169.2.6 2002/06/23 17:37:20 jdolecek Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -11,14 +11,16 @@
 
 include "arch/i386/conf/std.i386"
 
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_SIZE=4096	# size of memory disk, in blocks
-#options 	MEMORY_DISK_SIZE=2880	# 1.44M, same as a floppy
+options 	MEMORY_DISK_ROOT_SIZE=4096	# size of memory disk, in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a floppy
 
 maxusers	32		# estimated number of users
 
@@ -70,6 +72,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -229,10 +232,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 # wscons
 #pckbc0	at isa?			# pc keyboard controller
 #pckbd*	at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms" or "pmsi"
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
-#opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 #vga*		at pci?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -240,7 +240,6 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #wsdisplay*	at pcdisplay? console ?
 #wskbd*	at pckbd? console ?
 #wsmouse*	at pms?
-#wsmouse*	at pmsi?
 
 #pcppi0	at isa?
 #sysbeep0	at pcppi?
@@ -371,15 +370,22 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 
 # RAID controllers and devices
+aac*	at pci? dev ? function ?	# Adaptec AAC family
 cac*	at eisa? slot ?			# Compaq EISA array controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 
-ld*	at cac? unit ?			# logical disk devices
+ld*	at aac? unit ?			# logical disk devices
+ld*	at cac? unit ?
+ld*	at icp? unit ?
 ld*	at twe? unit ?
 ld*	at mlx? unit ?
+
+icpsp*	at icp? unit ?			# SCSI pass-through
+scsibus* at icpsp?
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
@@ -450,7 +456,6 @@ fd*	at fdc? drive ?			# the drives themselves
 
 # PCI network interfaces
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
-de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
@@ -472,13 +477,10 @@ ste*	at pci? dev ? function ?	# Sundance ST-201 Ethernet
 stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
-tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
+wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
@@ -555,6 +557,7 @@ qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+urlphy*	at mii? phy ?			# Realtek RTL8150L internal PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Controller and Devices
@@ -603,6 +606,7 @@ scsibus* at umass? channel ?
 aue* 	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue* 	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue* 	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Audio Devices
 
@@ -667,7 +671,6 @@ kue* 	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
-#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 # Joysticks
 

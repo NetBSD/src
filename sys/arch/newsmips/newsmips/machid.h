@@ -1,4 +1,4 @@
-/*	$NetBSD: machid.h,v 1.3 1999/12/22 05:55:26 tsubai Exp $	*/
+/*	$NetBSD: machid.h,v 1.3.8.1 2002/06/23 17:38:52 jdolecek Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -90,13 +90,13 @@
 #define	NWB235A	236
 #define	NWXRES	255
 
-#ifdef mips
+#ifdef __mips__
 #define	MACHID_MODEL(X)		(((X)>>18)&0x1f)
 #define	MACHID_SERIAL(X)	((X)&0x3ffff)
-#else /* mips */
+#else /* __mips__ */
 #define	MACHID_MODEL(X)		(((X)>>16)&0xff)
 #define	MACHID_SERIAL(X)	((X)&0xffff)
-#endif /* mips */
+#endif /* __mips__ */
 
 #ifndef LOCORE
 

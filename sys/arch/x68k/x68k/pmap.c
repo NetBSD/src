@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65.2.4 2002/03/16 16:00:24 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.65.2.5 2002/06/23 17:43:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -847,8 +847,10 @@ pmap_release(pmap)
 	if (pmap->pm_ptab) {
 		pmap_remove(pmap_kernel(), (vaddr_t)pmap->pm_ptab,
 		    (vaddr_t)pmap->pm_ptab + X68K_MAX_PTSIZE);
-		uvm_km_pgremove(uvm.kernel_object, (vaddr_t)pmap->pm_ptab,
-		    (vaddr_t)pmap->pm_ptab + X68K_MAX_PTSIZE);
+		uvm_km_pgremove(uvm.kernel_object,
+		    (vaddr_t)pmap->pm_ptab - vm_map_min(kernel_map),
+		    (vaddr_t)pmap->pm_ptab + X68K_MAX_PTSIZE
+				- vm_map_min(kernel_map));
 		uvm_km_free_wakeup(pt_map, (vaddr_t)pmap->pm_ptab,
 				   X68K_MAX_PTSIZE);
 	}
@@ -2551,8 +2553,9 @@ pmap_enter_ptpage(pmap, va)
 		pmap->pm_sref++;
 		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE,
 		    ("enter: about to alloc UPT pg at %lx\n", va));
-		while ((pg = uvm_pagealloc(uvm.kernel_object, va, NULL,
-					   UVM_PGA_ZERO)) == NULL) {
+		while ((pg = uvm_pagealloc(uvm.kernel_object,
+					   va - vm_map_min(kernel_map),
+					   NULL, UVM_PGA_ZERO)) == NULL) {
 			uvm_wait("ptpage");
 		}
 		pg->flags &= ~(PG_BUSY|PG_FAKE);

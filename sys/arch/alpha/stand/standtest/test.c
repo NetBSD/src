@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.2 1999/05/11 00:04:52 cgd Exp $ */
+/* $NetBSD: test.c,v 1.2.18.1 2002/06/23 17:34:17 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -82,7 +82,7 @@ main(pfn, ptb, bim, bip, biv)
 	unsigned long biv;	/* bootinfo version */
 {
 	char input_buf[512];
-	const struct cmdtab toplevel_cmds[] = {
+	static const struct cmdtab toplevel_cmds[] = {
 	    {	"?",		toplevel_help,	},
 #if 0 /* XXX notyet */
 	    {	"dpb",		toplevel_dpb,	},
@@ -401,7 +401,7 @@ toplevel_help(const char *buf)
 void
 toplevel_show(const char *buf)
 {
-	const struct cmdtab show_cmds[] = {
+	static const struct cmdtab show_cmds[] = {
 	    {	"args",		show_args,	},
 	    {	"bootinfo",	show_bootinfo,	},
 #if 0 /* XXX notyet */

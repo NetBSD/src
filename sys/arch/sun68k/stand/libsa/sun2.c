@@ -1,4 +1,4 @@
-/*	$NetBSD: sun2.c,v 1.1.2.1 2002/01/10 19:49:55 thorpej Exp $	*/
+/*	$NetBSD: sun2.c,v 1.1.2.2 2002/06/23 17:42:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,12 @@
 #define set_pte sun2_set_pte
 #define get_segmap sun2_get_segmap
 #define set_segmap sun2_set_segmap
+
+/*
+ * We need to get the sun2 NBSG definition, even if we're 
+ * building this with a different sun68k target.
+ */
+#include <arch/sun2/include/param.h>
 
 #include <sys/param.h>
 #include <machine/idprom.h>

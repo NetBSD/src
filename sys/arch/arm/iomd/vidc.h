@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.2.6.2 2002/01/10 19:38:19 thorpej Exp $	*/
+/*	$NetBSD: vidc.h,v 1.2.6.3 2002/06/23 17:34:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -55,7 +55,10 @@
 #ifndef	_ARM32_VIDC_H_
 #define	_ARM32_VIDC_H_
 
+
+#ifdef _KERNEL
 #include <machine/vidc_machdep.h>
+#endif
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.10.4.2 2002/03/16 15:59:41 jdolecek Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.10.4.3 2002/06/23 17:40:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -73,7 +73,7 @@ exec_coff_makecmds(struct proc *p, struct exec_package *epp)
 
 	if (COFF_BADMAG(fp))
 		return ENOEXEC;
-	
+
 	ap = (void *)((char *)epp->ep_hdr + sizeof(struct coff_filehdr));
 	switch (ap->a_magic) {
 	case COFF_OMAGIC:
@@ -184,7 +184,7 @@ exec_coff_prep_omagic(struct proc *p, struct exec_package *epp,
 		    NULLVP, 0,
 		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 #endif
-	
+
 	return exec_coff_setup_stack(p, epp);
 }
 
@@ -238,7 +238,7 @@ coff_find_section(struct proc *p, struct vnode *vp, struct coff_filehdr *fp,
     struct coff_scnhdr *sh, int s_type)
 {
 	int i, pos, resid, siz, error;
-	
+
 	pos = COFF_HDR_SIZE;
 	for (i = 0; i < fp->f_nscns; i++, pos += sizeof(struct coff_scnhdr)) {
 		siz = sizeof(struct coff_scnhdr);
@@ -284,12 +284,12 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 	long  baddr, bsize;
 #endif
 	struct coff_scnhdr sh;
-	
+
 	DPRINTF(("enter exec_coff_prep_zmagic\n"));
 
 	/* set up command for text segment */
 	error = coff_find_section(p, epp->ep_vp, fp, &sh, COFF_STYP_TEXT);
-	if (error) {		
+	if (error) {
 		DPRINTF(("can't find text section: %d\n", error));
 		return error;
 	}
@@ -363,7 +363,6 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 		    COFF_ROUND(ap->a_dstart + ap->a_dsize, COFF_LDPGSZ),
 		    NULLVP, 0,
 		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-		
 	}
 #else
 	/* set up command for bss segment */
@@ -386,7 +385,7 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 		struct coff_slhdr *slhdr;
 		char buf[128], *bufp;	/* FIXME */
 		int len = sh.s_size, path_index, entry_len;
-		
+
 		DPRINTF(("COFF shlib size %d offset %d\n",
 		    sh.s_size, sh.s_scnptr));
 
@@ -415,7 +414,6 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 		}
 	}
 #endif
-		
 	/* set up entry point */
 	epp->ep_entry = ap->a_entry;
 
@@ -425,7 +423,6 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 	    epp->ep_daddr, epp->ep_dsize,
 	    epp->ep_entry));
 #endif
-	
 	return exec_coff_setup_stack(p, epp);
 }
 
@@ -438,7 +435,7 @@ coff_load_shlib(struct proc *p, char *path, struct exec_package *epp)
 	struct nameidata nd;
 	struct coff_filehdr fh, *fhp = &fh;
 	struct coff_scnhdr sh, *shp = &sh;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	/*
 	 * 1. open shlib file

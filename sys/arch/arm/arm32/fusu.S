@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.1.2.3 2002/03/16 15:56:03 jdolecek Exp $	*/
+/*	$NetBSD: fusu.S,v 1.1.2.4 2002/06/23 17:34:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -35,48 +35,6 @@
 #include "assym.h"
 #include <machine/asm.h>
 
-/*
- * Reads a word but traps failed faults
- *
- * This is similar to fuword() but rather than returnin
- * the word, the second argument points to the location
- * to store the word in. The function returns 0 for
- * suceess and -1 for failure.
- * This routine is used to fetch a word from user space
- * when the value being fetched could be -1. By separating
- * error flagging from the return value this is achieved.
- * This function is used by the prefetch abort handler
- *
- *  r0 - address to read
- *  r1 - address to store result
- */
-
-ENTRY(fetchuserword)
-	ldr	r2, Lvm_min_address
-	cmp	r0, r2
-	bcc	fusuaddrfault
-	ldr	r2, Lvm_maxuser_address
-	cmp	r0, r2
-	bcs	fusuaddrfault
-
-	ldr	r2, Lcurpcb
-	ldr	r2, [r2]
-
-#ifdef DIAGNOSTIC
-	teq	r2, #0x00000000
-	beq	fusupcbfault
-#endif
-
-	add	r3, pc, #fusufault - . - 8
-	str	r3, [r2, #PCB_ONFAULT]
-
-	ldr	r0, [r0]
-	str	r0, [r1]
-
-	mov	r0, #0x00000000
-	str	r0, [r2, #PCB_ONFAULT]
-	mov	pc, lr
-
 Lcurpcb:
 	.word	_C_LABEL(curpcb)
 
@@ -84,7 +42,6 @@ Lvm_min_address:
 	.word	VM_MIN_ADDRESS
 Lvm_maxuser_address:
 	.word	VM_MAXUSER_ADDRESS
-
 
 /*
  * fuword(caddr_t uaddr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5.2.1 2002/02/11 20:08:17 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.2.2 2002/06/23 17:37:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,10 +48,15 @@
 #include <sys/disklabel.h>
 #include <sys/device.h>
 
+#include <sh3/exception.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <machine/config_hook.h>
 #include <machine/autoconf.h>
+
+#include <hpcsh/dev/hd64461/hd64461var.h>
+#include <hpcsh/dev/hd64465/hd64465var.h>
 
 static struct device *booted_device;
 static int booted_partition;
@@ -61,21 +66,34 @@ static void get_device(char *name);
 void
 cpu_configure()
 {
-	/* Kick off autoconfiguration. */
-	(void)splhigh();
 
 	config_hook_init();
+	softintr_init();
+	hd6446x_intr_init();
+#ifdef SH3
+	if (CPU_IS_SH3)	/* HD64461 (Jornada 690, HP620LX, HPW-50PA) */
+		intc_intr_establish(SH7709_INTEVT2_IRQ4, IST_LEVEL, IPL_TTY,
+		    (void *)1/* fake. see intc_intr(). */, 0);
+#endif
+#ifdef SH4
+	if (CPU_IS_SH4)	/* HD64465 (HPW-650PA) */
+		intc_intr_establish(SH_INTEVT_IRL11, IST_LEVEL, IPL_TTY,
+		    (void *)1/* fake. see intc_intr(). */, 0);
+#endif
 
+	/* Kick off autoconfiguration. */
+	splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
 	/* Configuration is finished, turn on interrupts. */
-	spl0();	/* enable all source forcing SOFT_INTs cleared */
+	spl0();
 }
 
 void
 cpu_rootconf()
 {
+
 	get_device(booted_device_name);
 
 	printf("boot device: %s\n",
@@ -87,6 +105,7 @@ cpu_rootconf()
 void
 makebootdev(const char *cp)
 {
+
 	strncpy(booted_device_name, cp, 16);
 }
 
@@ -126,5 +145,5 @@ get_device(char *name)
 				}
 			}
 		}
-	} 
+	}
 }

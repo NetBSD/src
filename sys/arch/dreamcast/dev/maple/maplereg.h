@@ -1,4 +1,4 @@
-/*	$NetBSD: maplereg.h,v 1.2 2001/01/21 22:45:58 marcus Exp $	*/
+/*	$NetBSD: maplereg.h,v 1.2.6.1 2002/06/23 17:35:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -32,7 +32,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define MAPLE_DMAADDR	(*(volatile paddr_t *)	0xa05f6c04)
+#define MAPLE_DMAADDR	(*(volatile paddr_t *)		0xa05f6c04)
 #define MAPLE_RESET2	(*(volatile u_int32_t *)	0xa05f6c10)
 #define MAPLE_ENABLE	(*(volatile u_int32_t *)	0xa05f6c14)
 #define MAPLE_STATE	(*(volatile u_int32_t *)	0xa05f6c18)

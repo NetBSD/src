@@ -1,10 +1,12 @@
-# $NetBSD: ALPHA,v 1.151.2.4 2002/03/16 15:55:39 jdolecek Exp $
+# $NetBSD: ALPHA,v 1.151.2.5 2002/06/23 17:34:09 jdolecek Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.151.2.4 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+ident		"ALPHA-$Revision: 1.151.2.5 $"
 
 maxusers 32
 
@@ -131,6 +133,7 @@ options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 #options 	EXTENT_DEBUG		# extent alloc/dealloc code debugging
 options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
 #options 	NO_KERNEL_RCSIDS	# don't include kernel file RCS IDs
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP
@@ -244,7 +247,6 @@ cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 cmpci*	at	pci? dev ? function ?		# C-Media CMI8338/8738 Audio
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
 cz*	at	pci? dev ? function ?		# Cyclades-Z (untested)
-de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
@@ -268,6 +270,7 @@ pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
+puc*	at 	pci? dev ? function ?		# PCI "universal" comm. cards
 rtk*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
@@ -276,10 +279,6 @@ tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 ti*	at	pci? dev ? function ?		# Alteon Tigon Gig-E
 tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
 uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
@@ -400,6 +399,10 @@ ne*	at	pcmcia? function ?		# NE2000-compatible Eth.
 sm*	at	pcmcia? function ?		# Megahertz Ethernet
 ray*	at	pcmcia? function ?		# Raytheon Raylink (802.11)
 wi*	at	pcmcia? function ?		# Lucent WaveLAN/IEEE
+
+# PUC devices
+com*	at puc? port ?			# 16x50s on "universal" comm boards
+lpt*	at puc? port ?			# || ports on "universal" comm boards
 
 # SCSI bus support
 scsibus* at	adv?

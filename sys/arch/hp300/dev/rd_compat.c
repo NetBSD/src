@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_compat.c,v 1.8 1998/01/12 18:31:07 thorpej Exp $	*/
+/*	$NetBSD: rd_compat.c,v 1.8.28.1 2002/06/23 17:36:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,9 @@
 /*
  * Compatibility for CS80 disks without disklabels.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rd_compat.c,v 1.8.28.1 2002/06/23 17:36:10 jdolecek Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/disklabel.h>

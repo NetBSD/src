@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.7 2001/06/08 04:48:56 simonb Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.7.2.1 2002/06/23 17:34:12 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -54,6 +54,8 @@ struct alpha_pci_chipset {
 			    struct device *, struct pcibus_attach_args *);
 	int		(*pc_bus_maxdevs)(void *, int);
 	pcitag_t	(*pc_make_tag)(void *, int, int, int);
+	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
+			    int *, int *);
 	pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
 	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
@@ -66,9 +68,6 @@ struct alpha_pci_chipset {
 			    int, int (*)(void *), void *);
 	void		(*pc_intr_disestablish)(void *, void *);
 
-	/* alpha-specific */
-	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
-			    int *, int *);
 	void		*(*pc_pciide_compat_intr_establish)(void *,
 			    struct device *, struct pci_attach_args *, int,
 			    int (*)(void *), void *);
@@ -83,6 +82,8 @@ struct alpha_pci_chipset {
     (*(c)->pc_bus_maxdevs)((c)->pc_conf_v, (b))
 #define	pci_make_tag(c, b, d, f)					\
     (*(c)->pc_make_tag)((c)->pc_conf_v, (b), (d), (f))
+#define	pci_decompose_tag(c, t, bp, dp, fp)				\
+    (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
 #define	pci_conf_read(c, t, r)						\
     (*(c)->pc_conf_read)((c)->pc_conf_v, (t), (r))
 #define	pci_conf_write(c, t, r, v)					\
@@ -98,14 +99,15 @@ struct alpha_pci_chipset {
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 
+#define	pci_enumerate_bus(sc, m, p)					\
+	pci_enumerate_bus_generic((sc), (m), (p))
+
 /*
  * alpha-specific PCI functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 void	pci_display_console(bus_space_tag_t, bus_space_tag_t,
 	    pci_chipset_tag_t, int, int, int);
-#define	alpha_pci_decompose_tag(c, t, bp, dp, fp)			\
-    (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
 #define	alpha_pciide_compat_intr_establish(c, d, p, ch, f, a)		\
     ((c)->pc_pciide_compat_intr_establish == NULL ? NULL :		\
      (*(c)->pc_pciide_compat_intr_establish)((c)->pc_conf_v, (d), (p),	\

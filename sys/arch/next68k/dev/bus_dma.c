@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.24.2.1 2001/09/13 01:14:09 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.24.2.2 2002/06/23 17:38:56 jdolecek Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.24.2.1 2001/09/13 01:14:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.24.2.2 2002/06/23 17:38:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -553,7 +553,6 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	/*
 	 * Allocate pages from the VM system.
 	 */
-	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(size, avail_start, high, alignment, boundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)

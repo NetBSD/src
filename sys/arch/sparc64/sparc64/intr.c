@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.38.4.3 2002/01/10 19:49:26 thorpej Exp $ */
+/*	$NetBSD: intr.c,v 1.38.4.4 2002/06/23 17:42:17 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -237,7 +237,7 @@ intr_establish(level, ih)
 	int level;
 	struct intrhand *ih;
 {
-	register struct intrhand **p, *q;
+	register struct intrhand **p, *q = NULL;
 	int s;
 
 	s = splhigh();
@@ -248,9 +248,7 @@ intr_establish(level, ih)
 	ih->ih_pil = level; /* XXXX caller should have done this before */
 	ih->ih_pending = 0; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
-	for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next)
-		;
-	*p = ih;
+
 	/*
 	 * Store in fast lookup table
 	 */
@@ -278,16 +276,16 @@ intr_establish(level, ih)
 						M_DEVBUF, M_NOWAIT);
 				/* Point the old IH at the new handler */
 				*nih = *q;
-				q->ih_fun = intr_list_handler;
-				q->ih_arg = (void *)nih;
 				nih->ih_next = NULL;
+				q->ih_arg = (void *)nih;
+				q->ih_fun = intr_list_handler;
 			}
 			/* Add the ih to the head of the list */
 			ih->ih_next = (struct intrhand *)q->ih_arg;
 			q->ih_arg = (void *)ih;
-		}
-		else
+		} else {
 			intrlev[ih->ih_number] = ih;
+		}
 #ifdef NOT_DEBUG
 		printf("\nintr_establish: vector %x pil %x mapintr %p "
 			"clrintr %p fun %p arg %p\n",
@@ -298,6 +296,14 @@ intr_establish(level, ih)
 #endif
 	} else
 		panic("intr_establish: bad intr number %x", ih->ih_number);
+
+	/* If it's not shared, stick it in the intrhand list for that level. */
+	if (q == NULL) {
+		for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next)
+			;
+		*p = ih;
+	}
+
 	splx(s);
 }
 

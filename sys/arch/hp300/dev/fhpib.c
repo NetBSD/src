@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.21 2000/03/23 06:37:23 thorpej Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.21.8.1 2002/06/23 17:36:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
 /*
  * 98625A/B HPIB driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.21.8.1 2002/06/23 17:36:06 jdolecek Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.3.24.1 2002/01/10 19:45:13 thorpej Exp $	 */
+/*	$NetBSD: panic.c,v 1.3.24.2 2002/06/23 17:37:33 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -50,5 +50,5 @@ panic(const char *fmt,...)
 	printf("\n");
 	va_end(ap);
 
-	exit();
+	exit(0);
 }

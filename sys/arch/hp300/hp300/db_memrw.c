@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.9 2000/06/29 08:23:02 mrg Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.9.4.1 2002/06/23 17:36:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@
  * Modified from sun3 version for hp300 (and probably other m68ks, too)
  * by Jason R. Thorpe <thorpej@NetBSD.ORG>.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.9.4.1 2002/06/23 17:36:12 jdolecek Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

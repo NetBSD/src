@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.26.2.4 2002/02/11 20:08:41 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.26.2.5 2002/06/23 17:38:16 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.26.2.4 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.26.2.5 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -44,6 +46,7 @@ options 	DIAGNOSTIC, DEBUG
 options 	KTRACE
 options 	COMPAT_43
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 file-system 	FFS

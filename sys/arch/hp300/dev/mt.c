@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.14.8.1 2002/03/16 15:57:34 jdolecek Exp $	*/
+/*	$NetBSD: mt.c,v 1.14.8.2 2002/06/23 17:36:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
  * Modified for 4.4BSD by Mark Davies and Andrew Vignaux, Department of
  * Computer Science, Victoria University of Wellington
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.14.8.2 2002/06/23 17:36:09 jdolecek Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.3.2.3 2002/02/11 20:07:33 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.3.2.4 2002/06/23 17:35:31 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,6 +20,8 @@
 
 include 	"arch/cesfic/conf/std.cesfic"
 
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
 # Need to set locally
 maxusers	32
 
@@ -28,6 +30,7 @@ maxusers	32
 options 	FPSP
 
 # Standard system options
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.6.1 2002/03/16 15:57:24 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.6.2 2002/06/23 17:35:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@ cpu_configure()
 {
 	/* Start configuration */
 	splhigh();
+	softintr_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");

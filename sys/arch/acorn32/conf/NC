@@ -1,9 +1,11 @@
-#	$NetBSD: NC,v 1.3.2.4 2002/03/16 15:55:23 jdolecek Exp $
+#	$NetBSD: NC,v 1.3.2.5 2002/06/23 17:33:55 jdolecek Exp $
 #
 #	NC - with vidcconsole
 #
 
 include	"arch/acorn32/conf/std.acorn32"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
@@ -22,7 +24,6 @@ options 	CPU_ARM7	# Support the ARM7 core
 #options 	ARM6_LATE_ABORT	# ARM6XX late abort support
 
 # Architecture options
-options 	RISCPC		# We are a RiscPC
 options 	NC
 
 # FPA options
@@ -94,7 +95,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
@@ -102,6 +103,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
@@ -269,10 +271,6 @@ pseudo-device	vnd	4		# disk-like interface to files
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
-#makeoptions	MONITOR="Taxan875+LR"
-makeoptions	MONITOR="AKF85"
-makeoptions	MODES="640,480,70"
-#makeoptions	MODES="800,600,60"
-#makeoptions	MONITOR="PALTV"
-#makeoptions	MODES="640,256,60 640,480,60 1024,768,60 1024,768,70 800,600,60 1280,1024 1152,900"
-
+makeoptions	MONITOR="Taxan875+LR"
+#makeoptions	MONITOR="AKF60"
+makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"

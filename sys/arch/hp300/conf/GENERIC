@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.66.2.4 2002/03/16 15:57:32 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.66.2.5 2002/06/23 17:36:04 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,11 @@
 
 include 	"arch/hp300/conf/std.hp300"
 
-#ident 		"GENERIC-$Revision: 1.66.2.4 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.66.2.5 $"
+
+maxusers	32		# estimated number of users
 
 # Support for various CPU types
 options 	HP320
@@ -36,11 +40,36 @@ options 	HP385
 options 	HP400
 options 	HP425
 options 	HP433
-
-# Need to set locally
-maxusers	32
+options 	FPSP		# floating point interface for 68040
 
 # Standard system options
+options 	KTRACE		# system call tracing support
+options 	LKM		# Loadable kernel modules
+#options 	INSECURE	# disable kernel security level
+#options 	UCONSOLE	# Allow non-root TIOCCONS
+#options 	USERCONF	# userconf(4) support
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options 	NTP		# NTP phase/frequency locked loop
+options 	SYSVSHM		# System V-style shared memory
+#options	SHMMAXPGS=1024	# 1024 pages is the default
+options 	SYSVMSG		# System V-style message queues
+options 	SYSVSEM		# System V-style semaphores
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
+
+# Debugging options
+options 	DIAGNOSTIC	# Extra kernel sanity checks
+#options 	DEBUG		# Enable misc. kernel debugging code
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	DDB		# Kernel Dynamic Debugger
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+#options 	KGDB		# remote debugger
+#makeoptions	DEBUG="-g"	# netbsd.gdb with full debugging symbols
+
+# Compatibility options
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces
 options 	COMPAT_44	# compatibility with 4.4BSD binaries
 options 	COMPAT_09	# compatibility with NetBSD 0.9
@@ -50,33 +79,38 @@ options 	COMPAT_12	# compatibility with NetBSD 1.2
 options 	COMPAT_13	# compatibility with NetBSD 1.3
 options 	COMPAT_14	# compatibility with NetBSD 1.4
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options 	SYSVSHM		# System V-style shared memory
-options 	SYSVSEM		# System V-style semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
-options 	SYSVMSG		# System V-style message queues
-options 	KTRACE		# system call tracing support
-options 	LKM		# Loadable kernel modules
-#options 	SCSIVERBOSE	# Verbose SCSI errors
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Binary compatibility.
+options 	COMPAT_HPUX	# HP-UX binary compatibility
+options 	COMPAT_AOUT_M68K	# NetBSD/m68k a.out binary compatibility
+options 	COMPAT_M68K4K	# NetBSD/m68k4k binary compatibility
+options 	COMPAT_SUNOS	# SunOS4 m68k binary compatibility
+options 	COMPAT_LINUX	# Linux/m68k binary compatibility
+options 	COMPAT_SVR4	# SVR4 binary compatibility
 
 # Filesystems
-file-system	FFS		# fast filesystem
 file-system	CD9660		# CD-ROM ISO-9660 filesystem
-file-system	NFS		# Network filesystem client
-file-system	UNION		# Union filesystem (req. for FDESC)
-file-system	KERNFS		# kernel data-structure filesystem
+file-system	EXT2FS		# second extended file system (linux)
 file-system	FDESC		# user file descriptor filesystem
-file-system	PROCFS		# /proc filesystem
+file-system	FFS		# fast filesystem
+file-system	KERNFS		# kernel data-structure filesystem
+file-system	LFS		# log-structured file system
 file-system	MFS		# Memory-based filesystem
+file-system	NFS		# Network filesystem client
+file-system	NULLFS		# loopback file system
+file-system	OVERLAY		# overlay file system
+file-system	PORTAL		# portal filesystem (still experimental)
+file-system	PROCFS		# /proc filesystem
+file-system	UMAPFS		# NULLFS + uid and gid remapping
+file-system	UNION		# Union filesystem (req. for FDESC)
+file-system	CODA		# Coda File System; also needs vcoda (below)
 
 # Filesystem options
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network filesystem server
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags
 options 	NFS_BOOT_BOOTP	# use bootp for NFS boot
 
 # Networking options
@@ -87,78 +121,64 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	GATEWAY		# IP forwarding + larger mb_map
 options 	MROUTING	# Multicast routing
+options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+options 	CCITT,LLC,HDLC	# X.25
+options 	NETATALK	# AppleTalk networking protocols
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Options for HP hardware
-options 	FPSP		# floating point interface for 68040
 options 	USELEDS		# make the lights twinkle
 options 	COMPAT_NOLABEL	# defaults for unlabeled disks
 #options 	PANICBUTTON	# two fast <reset>s on HIL dump kernel
 #options 	CONSCODE=9	# force console at this select code
-options 	UK_KEYBOARD	# include United Kingdom HIL keymap
-options 	SE_KEYBOARD	# include Swedish HIL keymap
-
-# This option enables a different copyin/copyout that uses page
-# mapping for large copies.
 #options 	MAPPEDCOPY	# different copyin/copyout for large copies
 
-# Binary compatibility.
-options 	COMPAT_HPUX	# HP-UX binary compatibility
-options 	COMPAT_AOUT_M68K	# NetBSD/m68k a.out binary compatibility
-options 	COMPAT_M68K4K	# NetBSD/m68k4k binary compatibility
-#options 	COMPAT_SUNOS	# SunOS4 m68k binary compatibility
-#options 	COMPAT_LINUX	# Linux/m68k binary compatibility
-#options 	COMPAT_SVR4	# SVR4 binary compatibility
-
-# Debugging options
-options 	DIAGNOSTIC	# Extra kernel sanity checks
-#options 	DEBUG		# Enable misc. kernel debugging code
-options 	DDB		# Kernel Dynamic Debugger
-#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-makeoptions	DEBUG="-g"	# netbsd.gdb with full debugging symbols
-
-# Verbose descriptions of unconfigured DIO devices
-# (Warning: this compiles in a large string table)
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+#options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	DIOVERBOSE	# recognize "unknown" DIO devices
 
 config		netbsd root on ? type ?
 
-mainbus0	at root		# root "bus"
+#
+# Device configuration
+#
 
-intio0		at mainbus0	# internal i/o space
-dio0		at mainbus0	# DIO/DIO-II bus
+mainbus0	at root			# root "bus"
 
-# Real-time clock (not optional)
-rtc*		at intio?
+intio0		at mainbus0		# internal i/o space
+dio0		at mainbus0		# DIO/DIO-II bus
 
-# Human Interface Loop
-hil*		at intio?
-
-# Frodo utility chip found on 4xx's
-frodo*		at intio?
+rtc*		at intio?		# real-time clock (not optional)
+hil*		at intio?		# Human Interface Loop
+options 	UK_KEYBOARD		# include United Kingdom HIL keymap
+options 	SE_KEYBOARD		# include Swedish HIL keymap
+frodo*		at intio?		# Frodo utility chip found on 4xx's
 
 # 8250-like serial ports found on Frodo ASIC
 #dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
 apci*		at frodo? offset ?	# tty flavor
 
-# Davinci framebuffer
-dvbox*		at intio?
+dvbox*		at intio? 		# Davinci framebuffer
 dvbox*		at dio? scode ?
 
-# Gatorbox framebuffer
-gbox*		at intio?
+gbox*		at intio?		# Gatorbox framebuffer
 gbox*		at dio? scode ?
 
-# Hyperion framebuffer
-hyper*		at dio? scode ?
+hyper*		at dio? scode ?		# Hyperion framebuffer
 
-# Renaissance framebuffer
-rbox*		at intio?
+rbox*		at intio?		# Renaissance framebuffer
 rbox*		at dio? scode ?
 
-# Topcat/catseye framebuffers
-topcat*		at intio?
+topcat*		at intio?		# Topcat/catseye framebuffers
 topcat*		at dio? scode ?
 
 # Framebuffer abstraction
@@ -168,8 +188,7 @@ grf*		at hyper?
 grf*		at rbox?
 grf*		at topcat?
 
-# Internal Terminal Emulator
-ite*		at grf?
+ite*		at grf?			# Internal Terminal Emulator
 
 dca0		at dio? scode 9	flags 1	# DCA serial interfaces
 dca*		at dio? scode ?
@@ -198,12 +217,11 @@ sd*		at oscsi? target ? lun ?	# SCSI disks
 st*		at oscsi? target ? lun ?	# SCSI tapes
 ac*		at oscsi? target ? lun ?	# SCSI changers
 
-pseudo-device	pty			# pseudo-terminals
-pseudo-device	sl		4	# SLIP network interfaces
-pseudo-device	ppp		4	# PPP network interfaces
-pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	bpfilter	16	# Berkeley packet filter
-pseudo-device	vnd		4	# vnode pseudo-disks
+#
+# Pseudo-devices
+#
+
+# disk pseudo-devices
 pseudo-device	ccd		4	# concatenated disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
@@ -215,12 +233,25 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # options	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	loop			# loopback network interface
-pseudo-device	ipfilter 		# IP Filter package
+pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	vnd		4	# vnode pseudo-disks
+
+# network pseudo-devices
+pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	bpfilter	8	# Berkeley packet filter
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+pseudo-device	ipfilter 		# IP Filter package
+pseudo-device	loop			# loopback network interface
+pseudo-device	ppp		4	# PPP network interfaces
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+pseudo-device	sl		4	# SLIP network interfaces
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	vlan			# IEEE 802.1q encapsulation
-pseudo-device	bridge			# simple inter-network bridging
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	vcoda		4	# coda minicache <-> venus comm.

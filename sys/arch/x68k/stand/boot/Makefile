@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.2 2002/01/10 19:50:26 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8.2.3 2002/06/23 17:43:19 jdolecek Exp $
 
 NOMAN=		# defined
 
@@ -47,14 +47,7 @@ LIBIOCS!=	cd $M/stand/libiocs && ${PRINTOBJDIR}
 LIBSA!=		cd $M/stand/libsa && ${PRINTOBJDIR}
 LDLIBS=		-L${LIBSA} -lsa -L${LIBIOCS} -liocs
 
-.PHONY:	machine-links
-beforedepend: machine-links
-machine-links:
-	-rm -f machine && \
-	    ln -s $M/include machine
-	-rm -f ${MACHINE_ARCH} && \
-	    ln -s $S/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
-CLEANFILES+=	machine ${MACHINE_ARCH}
+.include "../Makefile.booters"
 
 realall: machine-links ${PROG}
 ${PROG}:	${OBJS}

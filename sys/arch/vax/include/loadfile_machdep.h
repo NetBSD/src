@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.2.6.1 2002/01/10 19:50:03 thorpej Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.2.6.2 2002/06/23 17:43:00 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,11 +42,11 @@
 #define BOOT_AOUT
 #define BOOT_ELF32
 
-#define LOAD_KERNEL	(LOAD_ALL & ~(LOAD_HDR|LOAD_TEXTA))
-#define COUNT_KERNEL	(COUNT_ALL & ~(COUNT_HDR|COUNT_TEXTA))
+#define LOAD_KERNEL		LOAD_ALL
+#define COUNT_KERNEL		COUNT_ALL
 
 #define LOADADDR(a)		(((u_long)(a)) + offset)
-#define ALIGNENTRY(a)		((u_long)(a) & ~0xffffff)
+#define ALIGNENTRY(a)		(0)
 #define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
 #define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))

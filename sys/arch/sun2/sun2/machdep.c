@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9.2.3 2002/03/16 16:00:04 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9.2.4 2002/06/23 17:42:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -217,7 +217,7 @@ vaddr_t vmmap;
 int	safepri = PSL_LOWIPL;
 
 /* Soft copy of the enable register. */
-u_short	enable_reg_soft = ENABLE_REG_SOFT_UNDEF;
+__volatile u_short enable_reg_soft = ENABLE_REG_SOFT_UNDEF;
 
 /*
  * Our no-fault fault handler.
@@ -434,7 +434,7 @@ setregs(p, pack, stack)
 	tf->tf_regs[D7] = 0;
 	tf->tf_regs[A0] = 0;
 	tf->tf_regs[A1] = 0;
-	tf->tf_regs[A2] = (int)PS_STRINGS;
+	tf->tf_regs[A2] = (int)p->p_psstr;
 	tf->tf_regs[A3] = 0;
 	tf->tf_regs[A4] = 0;
 	tf->tf_regs[A5] = 0;

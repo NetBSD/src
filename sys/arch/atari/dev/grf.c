@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.25.4.2 2002/06/17 18:48:24 jdolecek Exp $	*/
+/*	$NetBSD: grf.c,v 1.25.4.3 2002/06/23 17:35:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -466,6 +466,6 @@ void			*arg;
 	default:
 			break;
 	}
-	return(EINVAL);
+	return(EPASSTHROUGH);
 }
 #endif	/* NGRF > 0 */

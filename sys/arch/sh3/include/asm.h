@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7.2.1 2002/01/10 19:48:38 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.7.2.2 2002/06/23 17:40:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,14 +39,13 @@
  */
 
 #ifndef _SH3_ASM_H_
-#define _SH3_ASM_H_
+#define	_SH3_ASM_H_
 
-
-#define PIC_PROLOGUE
-#define PIC_EPILOGUE
-#define PIC_PLT(x)	x
-#define PIC_GOT(x)	x
-#define PIC_GOTOFF(x)	x
+#define	PIC_PROLOGUE
+#define	PIC_EPILOGUE
+#define	PIC_PLT(x)	x
+#define	PIC_GOT(x)	x
+#define	PIC_GOTOFF(x)	x
 
 /*
  * The old NetBSD/sh3 ELF toolchain used underscores.  The new
@@ -71,40 +70,40 @@
 #endif
 
 #ifdef __ELF__
-#define _ENTRY(x) \
-	.text ;\
-	_ALIGN_TEXT; \
-	.globl x; \
-	.type x,@function; \
+#define	_ENTRY(x)							\
+	.text								;\
+	_ALIGN_TEXT							;\
+	.globl x							;\
+	.type x,@function						;\
 	x:
-#else
-#define _ENTRY(x) \
-	.text ;\
-	_ALIGN_TEXT; \
-	.globl x; \
+#else /* __ELF__ */
+#define	_ENTRY(x)							\
+	.text								;\
+	_ALIGN_TEXT							;\
+	.globl x							;\
 	x:
-#endif
+#endif /* __ELF__ */
 
-# define _PROF_PROLOGUE
+#define	_PROF_PROLOGUE
 
-#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); \
+#define	ENTRY(y)	_ENTRY(_C_LABEL(y))				;\
 	_PROF_PROLOGUE
 #define	NENTRY(y)	_ENTRY(_C_LABEL(y))
-#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y));\
+#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y))				;\
 	_PROF_PROLOGUE
 
 #ifdef __ELF__
-#define	ALTENTRY(name)	.globl _C_LABEL(name); \
-	.type _C_LABEL(name),@function; \
+#define	ALTENTRY(name)	.globl _C_LABEL(name)				;\
+	.type _C_LABEL(name),@function					;\
 	_C_LABEL(name):
 #else
-#define	ALTENTRY(name)	.globl _C_LABEL(name); \
+#define	ALTENTRY(name)	.globl _C_LABEL(name)				;\
 	_C_LABEL(name):
 #endif
 
 #define	ASMSTR		.asciz
 
-#define RCSID(x)	.text; .asciz x
+#define	RCSID(x)	.text; .asciz x
 
 #ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\

@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_amiga.c,v 1.1.6.1 2002/02/11 20:07:08 jdolecek Exp $ */
+/*	$NetBSD: wskbdmap_amiga.c,v 1.1.6.2 2002/06/23 17:34:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_amiga.c,v 1.1.6.1 2002/02/11 20:07:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_amiga.c,v 1.1.6.2 2002/06/23 17:34:33 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -299,7 +299,7 @@ static const keysym_t amikbd_keydesc_no_nodead[] = {
     KC(27),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
 };
 
-static const keysym_t pckbd_keydesc_it[] = {
+static const keysym_t pckbd_keydesc_it[] __attribute__((__unused__)) = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(3),   KS_2,	    	KS_quotedbl,	KS_twosuperior,
     KC(4),   KS_3,	    	KS_sterling,	KS_threesuperior,
@@ -325,7 +325,7 @@ static const keysym_t pckbd_keydesc_it[] = {
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
-static const keysym_t pckbd_keydesc_uk[] = {
+static const keysym_t pckbd_keydesc_uk[] __attribute__((__unused__)) = {
 /*  pos      normal             shifted         altgr           shift-altgr */
     KC(2),   KS_1,              KS_exclam,      KS_plusminus,   KS_exclamdown,
     KC(3),   KS_2,              KS_quotedbl,    KS_twosuperior, KS_cent,
@@ -345,7 +345,7 @@ static const keysym_t pckbd_keydesc_uk[] = {
     KC(86),  KS_backslash,      KS_bar,         KS_Udiaeresis,
 };
 
-static const keysym_t pckbd_keydesc_jp[] = {
+static const keysym_t pckbd_keydesc_jp[] __attribute__((__unused__)) = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(3),   KS_2,              KS_quotedbl,
     KC(7),   KS_6,              KS_ampersand,
@@ -368,7 +368,7 @@ static const keysym_t pckbd_keydesc_jp[] = {
     KC(125), KS_backslash,      KS_bar,
 };
 
-static const keysym_t pckbd_keydesc_es[] = {
+static const keysym_t pckbd_keydesc_es[] __attribute__((__unused__)) = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(2),   KS_1,		KS_exclam,	KS_bar,
     KC(3),   KS_2,		KS_quotedbl,	KS_at,
@@ -394,7 +394,7 @@ static const keysym_t pckbd_keydesc_es[] = {
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
-static const keysym_t pckbd_keydesc_us_declk[] = {
+static const keysym_t pckbd_keydesc_us_declk[] __attribute__((__unused__)) = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(1),	KS_grave,	KS_asciitilde, /* replace escape */
     KC(41),	KS_less,	KS_greater, /* replace grave/tilde */
@@ -433,7 +433,7 @@ static const keysym_t pckbd_keydesc_us_declk[] = {
     KC(207),	KS_Select, /* replace end */
 };
 
-static const keysym_t pckbd_keydesc_us_dvorak[] = {
+static const keysym_t pckbd_keydesc_us_dvorak[] __attribute__((__unused__)) = {
 /*  pos      command		normal		shifted */
     KC(12), 			KS_bracketleft,	KS_braceleft,
     KC(13), 			KS_bracketright, KS_braceright,
@@ -470,7 +470,8 @@ static const keysym_t pckbd_keydesc_us_dvorak[] = {
     KC(53), 			KS_z,
 };
 
-static const keysym_t pckbd_keydesc_swapctrlcaps[] = {
+static const keysym_t pckbd_keydesc_swapctrlcaps[]
+    __attribute__((__unused__)) = {
 /*  pos      command		normal		shifted */
     KC(29), 			KS_Caps_Lock,
     KC(58),  KS_Cmd1,		KS_Control_L,

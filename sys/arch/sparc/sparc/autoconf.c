@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.150.2.4 2002/03/16 15:59:50 jdolecek Exp $ */
+/*	$NetBSD: autoconf.c,v 1.150.2.5 2002/06/23 17:41:46 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -50,6 +50,8 @@
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
+
+#include "scsibus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1629,7 +1631,7 @@ static struct {
 	{ "xdc",	BUSCLASS_XDC },
 	{ "xyc",	BUSCLASS_XYC },
 	{ "fdc",	BUSCLASS_FDC },
-	{ "msiiep",	BUSCLASS_PCIC },
+	{ "mspcic",	BUSCLASS_PCIC },
 	{ "pci",	BUSCLASS_PCI },
 };
 
@@ -1719,11 +1721,12 @@ instance_match(dev, aux, bp)
 	case BUSCLASS_MAINBUS:
 		ma = aux;
 		DPRINTF(ACDB_BOOTDEV, ("instance_match: mainbus device, "
-		    "want space %#x addr %#x have space %#lx addr %#llx\n",
-		    bp->val[0], bp->val[1], BUS_ADDR_IOSPACE(ma->ma_paddr),
+		    "want space %#x addr %#x have space %#x addr %#llx\n",
+		    bp->val[0], bp->val[1], (int)BUS_ADDR_IOSPACE(ma->ma_paddr),
 			(unsigned long long)BUS_ADDR_PADDR(ma->ma_paddr)));
 		if ((u_long)bp->val[0] == BUS_ADDR_IOSPACE(ma->ma_paddr) &&
-		    (bus_addr_t)(u_long)bp->val[1] == BUS_ADDR_PADDR(ma->ma_paddr))
+		    (bus_addr_t)(u_long)bp->val[1] ==
+		    BUS_ADDR_PADDR(ma->ma_paddr))
 			return (1);
 		break;
 	case BUSCLASS_SBUS:
@@ -1882,6 +1885,7 @@ device_register(dev, aux)
 			return;
 		}
 	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
+#if NSCSIBUS > 0
 		/*
 		 * A SCSI disk or cd; retrieve target/lun information
 		 * from parent and match with current bootpath component.
@@ -1933,7 +1937,7 @@ device_register(dev, aux)
 			    dev->dv_xname));
 			return;
 		}
-
+#endif /* NSCSIBUS */
 	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
 
 		/* A Xylogic disk */
@@ -2015,9 +2019,12 @@ bootinfo_relocate(newloc)
 	}
 
 	/*
-	 * Find total size of bootinfo array
+	 * Find total size of bootinfo array.
+	 * The array is terminated with a `nul' record (size == 0);
+	 * we account for that up-front by initializing `bi_size'
+	 * to size of a `btinfo_common' record.
 	 */
-	bi_size = 0;
+	bi_size = sizeof(struct btinfo_common);
 	cp = bootinfo;
 	do {
 		bt = (struct btinfo_common *)cp;
@@ -2045,6 +2052,10 @@ bootinfo_relocate(newloc)
 		dp += bt->next;
 	} while (bt->next != 0 &&
 		(size_t)cp < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	/* Write the terminating record */
+	bt = (struct btinfo_common *)dp;
+	bt->next = bt->type = 0;
 
 	/* Set new bootinfo location and adjust kernel_top */
 	bootinfo = newloc;

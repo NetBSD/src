@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63.2.4 2002/03/16 15:57:00 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63.2.5 2002/06/23 17:35:24 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -127,8 +127,6 @@ paddr_t bebox_mb_reg;		/* BeBox MotherBoard register */
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
-
-int astpending;
 
 char *bootpath;
 
@@ -348,7 +346,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	/*
 	 * Initialize pmap module.
 	 */
-	pmap_bootstrap(startkernel, endkernel);
+	pmap_bootstrap(startkernel, endkernel, NULL);
 
 #ifdef DDB
 	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
@@ -374,7 +372,6 @@ mem_regions(mem, avail)
 /*
  * This should probably be in autoconf!				XXX
  */
-int cpu;
 
 void
 install_extint(handler)

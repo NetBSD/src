@@ -1,15 +1,18 @@
-#	$NetBSD: POWERMAC,v 1.30.2.3 2002/03/16 15:58:29 jdolecek Exp $
+#	$NetBSD: POWERMAC,v 1.30.2.4 2002/06/23 17:37:52 jdolecek Exp $
 #
 # POWERMAC config file
 #
 
 include		"arch/macppc/conf/std.macppc"
 
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
 maxusers	32
 
 # Standard system options
 options 	KTRACE		# system call tracing via ktrace(1)
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -67,13 +70,14 @@ pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 #options 	OFB_ENABLE_CACHE	# Speed up console
 obio0	at pci? dev ? function ?
 
 nsphy*	at mii? phy ?			# NS83840 PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 mc*	at obio?			# MACE ethernet
 esp*	at obio? flags 0x0		# 53c9x SCSI

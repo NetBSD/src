@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.iq80310,v 1.1.4.2 2002/03/16 15:57:26 jdolecek Exp $	*/
+/*	$NetBSD: ldscript.iq80310,v 1.1.4.3 2002/06/23 17:35:38 jdolecek Exp $	*/
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
 	      "elf32-littlearm")

@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.15.2.3 2002/03/16 15:59:35 jdolecek Exp $ */
+/* $NetBSD: sci.c,v 1.15.2.4 2002/06/23 17:40:34 jdolecek Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -119,12 +119,12 @@
 
 #include <dev/cons.h>
 
-#include <machine/cpu.h>
 #include <sh3/clock.h>
 #include <sh3/scireg.h>
+#include <sh3/pfcreg.h>
 #include <sh3/tmureg.h>
-
-#include <machine/shbvar.h>
+#include <sh3/exception.h>
+#include <machine/intr.h>
 
 static void	scistart(struct tty *);
 static int	sciparam(struct tty *, struct termios *);
@@ -139,8 +139,7 @@ int sciintr(void *);
 struct sci_softc {
 	struct device sc_dev;		/* boilerplate */
 	struct tty *sc_tty;
-	void *sc_ih;
-
+	void *sc_si;
 	struct callout sc_diag_ch;
 
 #if 0
@@ -218,9 +217,9 @@ void	scidiag(void *);
 #define	SCIDIALOUT(x)	(minor(x) & SCIDIALOUT_MASK)
 
 /* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
+#define	SET(t, f)	(t) |= (f)
+#define	CLR(t, f)	(t) &= ~(f)
+#define	ISSET(t, f)	((t) & (f))
 
 /* Hardware flag masks */
 #define	SCI_HW_NOIEN	0x01
@@ -237,7 +236,7 @@ void	scidiag(void *);
 u_int sci_rbuf_hiwat = (SCI_RING_SIZE * 1) / 4;
 u_int sci_rbuf_lowat = (SCI_RING_SIZE * 3) / 4;
 
-#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#define	CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 int sciconscflag = CONMODE;
 int sciisconsole = 0;
 
@@ -271,9 +270,9 @@ void InitializeSci (unsigned int);
 /*
  * following functions are debugging prupose only
  */
-#define CR      0x0D
-#define I2C_ADRS (*(volatile unsigned int *)0xa8000000)
-#define USART_ON (unsigned int)~0x08
+#define	CR      0x0D
+#define	I2C_ADRS (*(volatile unsigned int *)0xa8000000)
+#define	USART_ON (unsigned int)~0x08
 
 void sci_putc(unsigned char);
 unsigned char sci_getc(void);
@@ -375,22 +374,20 @@ sci_getc(void)
 }
 
 #if 0
-#define SCI_MAX_UNITS 2
+#define	SCI_MAX_UNITS 2
 #else
-#define SCI_MAX_UNITS 1
+#define	SCI_MAX_UNITS 1
 #endif
 
 
 static int
 sci_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
-	struct shb_attach_args *sa = aux;
 
 	if (strcmp(cfp->cf_driver->cd_name, "sci")
-	    || cfp->cf_unit >= SCI_MAX_UNITS)
+	    || cfp->cf_unit >= SCI_MAX_UNITS) //XXX __BROKEN_CONFIG_UNIT_USAGE
 		return 0;
 
-	sa->ia_iosize = 0x10;
 	return 1;
 }
 
@@ -399,14 +396,10 @@ sci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sci_softc *sc = (struct sci_softc *)self;
 	struct tty *tp;
-	int irq;
-	struct shb_attach_args *ia = aux;
 
 	sc->sc_hwflags = 0;	/* XXX */
 	sc->sc_swflags = 0;	/* XXX */
 	sc->sc_fifolen = 0;	/* XXX */
-
-	irq = ia->ia_irq;
 
 	if (sciisconsole) {
 		SET(sc->sc_hwflags, SCI_HW_CONSOLE);
@@ -419,18 +412,18 @@ sci_attach(struct device *parent, struct device *self, void *aux)
 
 	callout_init(&sc->sc_diag_ch);
 
-#if 0
-	if (irq != IRQUNK) {
-		sc->sc_ih = shb_intr_establish(irq,
-		    IST_EDGE, IPL_SERIAL, sciintr, sc);
-	}
-#else
-	if (irq != IRQUNK) {
-		sc->sc_ih = shb_intr_establish(SCI_IRQ,
-		    IST_EDGE, IPL_SERIAL, sciintr, sc);
-	}
-#endif
+	intc_intr_establish(SH_INTEVT_SCI_ERI, IST_LEVEL, IPL_SERIAL, sciintr,
+	    sc);
+	intc_intr_establish(SH_INTEVT_SCI_RXI, IST_LEVEL, IPL_SERIAL, sciintr,
+	    sc);
+	intc_intr_establish(SH_INTEVT_SCI_TXI, IST_LEVEL, IPL_SERIAL, sciintr,
+	    sc);
+	intc_intr_establish(SH_INTEVT_SCI_TEI, IST_LEVEL, IPL_SERIAL, sciintr,
+	    sc);
 
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, scisoft, sc);
+#endif
 	SET(sc->sc_hwflags, SCI_HW_DEV_OK);
 
 	tp = ttymalloc();
@@ -801,7 +794,7 @@ scipoll(dev_t dev, int events, struct proc *p)
 {
 	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
@@ -826,11 +819,11 @@ sciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EIO);
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = 0;
@@ -858,7 +851,7 @@ sciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 
@@ -1171,78 +1164,84 @@ sciintr(void *arg)
 	put = sc->sc_rbput;
 	cc = sc->sc_rbavail;
 
-	ssr = SHREG_SCSSR;
-	if (ISSET(ssr, SCSSR_FER)) {
-		SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_PER | SCSSR_FER);
+	do {
+		ssr = SHREG_SCSSR;
+		if (ISSET(ssr, SCSSR_FER)) {
+			SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_PER | SCSSR_FER);
 #if defined(DDB) || defined(KGDB)
 #ifdef SH4
-		if ((SHREG_SCSPTR & SCPTR_SPB0DT) != 0) {
+			if ((SHREG_SCSPTR & SCSPTR_SPB0DT) != 0) {
 #else
-		if ((SHREG_SCSPDR & SCPDR_SCP0DT) != 0) {
+			if ((SHREG_SCSPDR & SCSPDR_SCP0DT) != 0) {
 #endif
 #ifdef DDB
-			if (ISSET(sc->sc_hwflags, SCI_HW_CONSOLE)) {
-				console_debugger();
-			}
+				if (ISSET(sc->sc_hwflags, SCI_HW_CONSOLE)) {
+					console_debugger();
+				}
 #endif
 #ifdef KGDB
-			if (ISSET(sc->sc_hwflags, SCI_HW_KGDB)) {
-				kgdb_connect(1);
-			}
+				if (ISSET(sc->sc_hwflags, SCI_HW_KGDB)) {
+					kgdb_connect(1);
+				}
 #endif
-		}
+			}
 #endif /* DDB || KGDB */
-	}
-	if ((SHREG_SCSSR & SCSSR_RDRF) != 0) {
-		if (cc > 0) {
-			put[0] = SHREG_SCRDR;
-			put[1] = SHREG_SCSSR & 0x00ff;
+		}
+		if ((SHREG_SCSSR & SCSSR_RDRF) != 0) {
+			if (cc > 0) {
+				put[0] = SHREG_SCRDR;
+				put[1] = SHREG_SCSSR & 0x00ff;
+
+				put += 2;
+				if (put >= end)
+					put = sc->sc_rbuf;
+				cc--;
+			}
 
 			SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_FER | SCSSR_PER |
-					 SCSSR_RDRF);
+			    SCSSR_RDRF);
 
-			put += 2;
-			if (put >= end)
-				put = sc->sc_rbuf;
-			cc--;
-		}
+				/*
+				 * Current string of incoming characters ended because
+				 * no more data was available or we ran out of space.
+				 * Schedule a receive event if any data was received.
+				 * If we're out of space, turn off receive interrupts.
+				 */
+			sc->sc_rbput = put;
+			sc->sc_rbavail = cc;
+			if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
+				sc->sc_rx_ready = 1;
 
-		/*
-		 * Current string of incoming characters ended because
-		 * no more data was available or we ran out of space.
-		 * Schedule a receive event if any data was received.
-		 * If we're out of space, turn off receive interrupts.
-		 */
-		sc->sc_rbput = put;
-		sc->sc_rbavail = cc;
-		if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
-			sc->sc_rx_ready = 1;
-
-		/*
-		 * See if we are in danger of overflowing a buffer. If
-		 * so, use hardware flow control to ease the pressure.
-		 */
-		if (!ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED) &&
-		    cc < sc->sc_r_hiwat) {
-			SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
+				/*
+				 * See if we are in danger of overflowing a buffer. If
+				 * so, use hardware flow control to ease the pressure.
+				 */
+			if (!ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED) &&
+			    cc < sc->sc_r_hiwat) {
+				SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
 #if 0
-			sci_hwiflow(sc);
+				sci_hwiflow(sc);
 #endif
-		}
+			}
 
-		/*
-		 * If we're out of space, disable receive interrupts
-		 * until the queue has drained a bit.
-		 */
-		if (!cc) {
-			SHREG_SCSCR &= ~SCSCR_RIE;
+				/*
+				 * If we're out of space, disable receive interrupts
+				 * until the queue has drained a bit.
+				 */
+			if (!cc) {
+				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
+				SHREG_SCSCR &= ~SCSCR_RIE;
+			}
+		} else {
+			if (SHREG_SCSSR & SCSSR_RDRF) {
+				SHREG_SCSCR &= ~(SCSCR_TIE | SCSCR_RIE);
+				delay(10);
+				SHREG_SCSCR |= SCSCR_TIE | SCSCR_RIE;
+				continue;
+			}
 		}
-	} else {
-		if (SHREG_SCSSR & SCSSR_RDRF) {
-			SHREG_SCSCR &= ~(SCSCR_TIE | SCSCR_RIE);
-		}
-	}
-	
+	} while (SHREG_SCSSR & SCSSR_RDRF);
+
 #if 0
 	msr = bus_space_read_1(iot, ioh, sci_msr);
 	delta = msr ^ sc->sc_msr;

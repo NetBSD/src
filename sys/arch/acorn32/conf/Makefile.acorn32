@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn32,v 1.10.2.4 2002/03/16 15:55:23 jdolecek Exp $
+#	$NetBSD: Makefile.acorn32,v 1.10.2.5 2002/06/23 17:33:54 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -67,6 +67,7 @@ modedefs.o: modedefs.c
 ## (5) link settings
 ##
 LOADADDRESS?=	0xF0000000
+LINKFORMAT=	-N
 LINKFLAGS_NORMAL=	-x
 
 ##

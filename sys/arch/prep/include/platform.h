@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.1.2.1 2002/03/16 15:59:22 jdolecek Exp $	*/
+/*	$NetBSD: platform.h,v 1.1.2.2 2002/06/23 17:39:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,9 +49,10 @@ struct platform {
 	int		(*match)(struct platform *);
 	void		(*pci_get_chipset_tag)(pci_chipset_tag_t);
 	void		(*pci_intr_fixup)(int, int, int *);
-	void		(*ext_intr)(void);
+	void		(*init_intr)(void);
 	void		(*cpu_setup)(struct device *);
 	void		(*reset)(void);
+	const char	**obiodevs;
 };
 
 struct plattab {
@@ -60,29 +61,26 @@ struct plattab {
 };
 
 extern struct platform *platform;
+extern const char *obiodevs_nodev[];
 
 int ident_platform(void);
 int platform_generic_match(struct platform *);
 void pci_intr_nofixup(int, int, int *);
 void cpu_setup_unknown(struct device *);
 void reset_unknown(void);
+void reset_prep_generic(void);
 
 /* IBM */
 extern struct plattab plattab_ibm;
 extern struct platform platform_ibm_6050;
 extern struct platform platform_ibm_7248;
+extern struct platform platform_ibm_7043_140;
 
 void cpu_setup_ibm_generic(struct device *);
-void reset_ibm_generic(void);
-
-void pci_intr_fixup_ibm_6050(int, int, int *);
-void pci_intr_fixup_ibm_7248(int, int, int *);
 
 /* Motorola */
 extern struct plattab plattab_mot;
 
 extern struct platform platform_mot_ulmb60xa;
-
-void pci_intr_fixup_mot_ulmb60xa(int, int, int *);
 
 #endif /* !_PREP_PLATFORM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.24 2001/06/16 09:18:46 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.24.2.1 2002/06/23 17:38:57 jdolecek Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -124,6 +124,7 @@ void mb8795_txdma_completed __P((bus_dmamap_t,void *));
 void mb8795_rxdma_shutdown __P((void *));
 void mb8795_txdma_shutdown __P((void *));
 bus_dmamap_t mb8795_txdma_restart __P((bus_dmamap_t,void *));
+void mb8795_start_dma __P((struct ifnet *));
 
 void
 mb8795_config(sc)
@@ -551,8 +552,8 @@ mb8795_init(sc)
 
 	nextdma_start(sc->sc_rx_nd, DMACSR_SETREAD);
 
-	if (ifp->if_snd.ifq_head != NULL) {
-		mb8795_start(ifp);
+	if (! IF_IS_EMPTY(&sc->sc_tx_snd)) {
+		mb8795_start_dma(ifp);
 	}
 }
 
@@ -710,43 +711,96 @@ mb8795_ioctl(ifp, cmd, data)
  */
 void
 mb8795_start(ifp)
-     struct ifnet *ifp;
+	struct ifnet *ifp;
 {
-  int error;
-  struct mb8795_softc *sc = ifp->if_softc;
+	struct mb8795_softc *sc = ifp->if_softc;
+	struct mbuf *m;
+	int s;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
-		return;
+	DPRINTF(("%s: mb8795_start()\n",sc->sc_dev.dv_xname));
 
-  DPRINTF(("%s: mb8795_start()\n",sc->sc_dev.dv_xname));
+#ifdef DIAGNOSTIC
+	IFQ_POLL(&ifp->if_snd, m);
+	if (m == 0) {
+		panic("%s: No packet to start\n",
+		      sc->sc_dev.dv_xname);
+	}
+#endif
+
+	while (1) {
+		if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+			return;
+
+#if 0
+		return;	/* @@@ Turn off xmit for debugging */
+#endif
+
+		ifp->if_flags |= IFF_OACTIVE;
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == 0) {
+			ifp->if_flags &= ~IFF_OACTIVE;
+			return;
+		}
+
+#if NBPFILTER > 0
+		/*
+		 * Pass packet to bpf if there is a listener.
+		 */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+#endif
+
+		s = spldma();
+		IF_ENQUEUE(&sc->sc_tx_snd, m);
+		if (sc->sc_tx_loaded == 0)
+			mb8795_start_dma(ifp);
+		splx(s);
+
+		ifp->if_flags &= ~IFF_OACTIVE;
+	}
+
+}
+
+void
+mb8795_start_dma(ifp)
+	struct ifnet *ifp;
+{
+	int error;
+	struct mb8795_softc *sc = ifp->if_softc;
+
+	DPRINTF(("%s: mb8795_start_dma()\n",sc->sc_dev.dv_xname));
 
 #if (defined(DIAGNOSTIC))
-  {
-    u_char txstat;
-    txstat = bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_TXSTAT);
-    if (!(txstat & XE_TXSTAT_READY)) {
+	{
+		u_char txstat;
+		txstat = bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_TXSTAT);
+		if (!(txstat & XE_TXSTAT_READY)) {
 			/* @@@ I used to panic here, but then it paniced once.
 			 * Let's see if I can just reset instead. [ dbj 980706.1900 ]
 			 */
-      printf("%s: transmitter not ready\n", sc->sc_dev.dv_xname);
+			printf("%s: transmitter not ready\n",
+				sc->sc_dev.dv_xname);
 			mb8795_reset(sc);
 			return;
-    }
-  }
+		}
+	}
 #endif
 
 #if 0
 	return;	/* @@@ Turn off xmit for debugging */
 #endif
 
-  bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_TXSTAT, XE_TXSTAT_CLEAR);
+	IF_DEQUEUE(&sc->sc_tx_snd, sc->sc_tx_mb_head);
+	if (sc->sc_tx_mb_head == 0) {
+#ifdef DIAGNOSTIC
+		panic("%s: No packet to start_dma\n",
+		      sc->sc_dev.dv_xname);
+#endif
+		return;
+	}
 
-  IF_DEQUEUE(&ifp->if_snd, sc->sc_tx_mb_head);
-  if (sc->sc_tx_mb_head == 0) {
-    printf("%s: No packet to start\n",
-				sc->sc_dev.dv_xname);
-    return;
-  }
+	bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_TXSTAT, XE_TXSTAT_CLEAR);
 
 	ifp->if_timer = 5;
 
@@ -762,10 +816,8 @@ mb8795_start(ifp)
 				&~(DMA_ENDALIGNMENT-1)))-(s);}
 
 #if 0
-  error = bus_dmamap_load_mbuf(sc->sc_tx_dmat,
-			sc->sc_tx_dmamap,
-			sc->sc_tx_mb_head,
-			BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_tx_dmat,
+		     sc->sc_tx_dmamap, sc->sc_tx_mb_head, BUS_DMA_NOWAIT);
 #else
 	{
 		u_char *buf = sc->sc_txbuf;
@@ -788,39 +840,30 @@ mb8795_start(ifp)
 		}
 
 		error = bus_dmamap_load(sc->sc_tx_dmat, sc->sc_tx_dmamap,
-				buf,buflen,NULL,BUS_DMA_NOWAIT);
+					buf,buflen,NULL,BUS_DMA_NOWAIT);
 	}
 #endif
-  if (error) {
-    printf("%s: can't load mbuf chain, error = %d\n",
-				sc->sc_dev.dv_xname, error);
-    m_freem(sc->sc_tx_mb_head);
-    sc->sc_tx_mb_head = NULL;
-    return;
-  }
+	if (error) {
+		printf("%s: can't load mbuf chain, error = %d\n",
+		       sc->sc_dev.dv_xname, error);
+		m_freem(sc->sc_tx_mb_head);
+		sc->sc_tx_mb_head = NULL;
+		return;
+	}
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_tx_loaded != 0) {
-			panic("%s: sc->sc_tx_loaded is %d",sc->sc_dev.dv_xname,
-					sc->sc_tx_loaded);
+		panic("%s: sc->sc_tx_loaded is %d",sc->sc_dev.dv_xname,
+		      sc->sc_tx_loaded);
 	}
 #endif
 
-	ifp->if_flags |= IFF_OACTIVE;
-
-  bus_dmamap_sync(sc->sc_tx_dmat, sc->sc_tx_dmamap, 0,
+	bus_dmamap_sync(sc->sc_tx_dmat, sc->sc_tx_dmamap, 0,
 			sc->sc_tx_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	nextdma_start(sc->sc_tx_nd, DMACSR_SETWRITE);
-
-#if NBPFILTER > 0
-  /*
-   * Pass packet to bpf if there is a listener.
-   */
-  if (ifp->if_bpf)
-    bpf_mtap(ifp->if_bpf, sc->sc_tx_mb_head);
-#endif
-
+	
+	ifp->if_opackets++;
 }
 
 /****************************************************************/
@@ -852,7 +895,7 @@ mb8795_txdma_shutdown(arg)
 	struct mb8795_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-  DPRINTF(("%s: mb8795_txdma_shutdown()\n",sc->sc_dev.dv_xname));
+	DPRINTF(("%s: mb8795_txdma_shutdown()\n",sc->sc_dev.dv_xname));
 
 #ifdef DIAGNOSTIC
 	if (!sc->sc_tx_loaded) {
@@ -880,12 +923,10 @@ mb8795_txdma_shutdown(arg)
 		}
 #endif
 
-		ifp->if_flags &= ~IFF_OACTIVE;
-
 		ifp->if_timer = 0;
 
-		if (ifp->if_snd.ifq_head != NULL) {
-			mb8795_start(ifp);
+		if (! IF_IS_EMPTY(&sc->sc_tx_snd)) {
+			mb8795_start_dma(ifp);
 		}
 
 	}
@@ -909,7 +950,7 @@ mb8795_rxdma_completed(map, arg)
 	sc->sc_rx_completed_idx++;
 	sc->sc_rx_completed_idx %= MB8795_NRXBUFS;
 
-  DPRINTF(("%s: mb8795_rxdma_completed(), sc->sc_rx_completed_idx = %d\n",
+	DPRINTF(("%s: mb8795_rxdma_completed(), sc->sc_rx_completed_idx = %d\n",
 			sc->sc_dev.dv_xname, sc->sc_rx_completed_idx));
 
 #if (defined(DIAGNOSTIC))
@@ -926,7 +967,8 @@ mb8795_rxdma_shutdown(arg)
 {
 	struct mb8795_softc *sc = arg;
 
-  DPRINTF(("%s: mb8795_rxdma_shutdown(), restarting.\n",sc->sc_dev.dv_xname));
+	DPRINTF(("%s: mb8795_rxdma_shutdown(), restarting.\n",
+		sc->sc_dev.dv_xname));
 
 	nextdma_start(sc->sc_rx_nd, DMACSR_SETREAD);
 }
@@ -977,23 +1019,23 @@ mb8795_rxdmamap_load(sc,map)
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len;
 
-  error = bus_dmamap_load_mbuf(sc->sc_rx_dmat,
+	error = bus_dmamap_load_mbuf(sc->sc_rx_dmat,
 			map, m, BUS_DMA_NOWAIT);
 
-  bus_dmamap_sync(sc->sc_rx_dmat, map, 0,
+	bus_dmamap_sync(sc->sc_rx_dmat, map, 0,
 			map->dm_mapsize, BUS_DMASYNC_PREREAD);
 	
-  if (error) {
+	if (error) {
 		DPRINTF(("DEBUG: m->m_data = %p, m->m_len = %d\n",
 				m->m_data, m->m_len));
 		DPRINTF(("DEBUG: MCLBYTES = %d, map->_dm_size = %ld\n",
 				MCLBYTES, map->_dm_size));
 
-    panic("%s: can't load rx mbuf chain, error = %d\n",
+		panic("%s: can't load rx mbuf chain, error = %d\n",
 				sc->sc_dev.dv_xname, error);
-    m_freem(m);
+		m_freem(m);
 		m = NULL;
-  }
+	}
 
 	return(m);
 }
@@ -1011,7 +1053,7 @@ mb8795_rxdma_continue(arg)
 	 * buffers instead so we drop older packets instead
 	 * of newer ones.
 	 */
-	if (((sc->sc_rx_loaded_idx+1)%MB8795_NRXBUFS) != sc->sc_rx_handled_idx) {
+	if (((sc->sc_rx_loaded_idx+1)%MB8795_NRXBUFS) != sc->sc_rx_handled_idx){
 		sc->sc_rx_loaded_idx++;
 		sc->sc_rx_loaded_idx %= MB8795_NRXBUFS;
 		map = sc->sc_rx_dmamap[sc->sc_rx_loaded_idx];
@@ -1035,7 +1077,7 @@ mb8795_txdma_continue(arg)
 	struct mb8795_softc *sc = arg;
 	bus_dmamap_t map;
 
-  DPRINTF(("%s: mb8795_txdma_continue()\n",sc->sc_dev.dv_xname));
+	DPRINTF(("%s: mb8795_txdma_continue()\n",sc->sc_dev.dv_xname));
 
 	if (sc->sc_tx_loaded) {
 		map = NULL;

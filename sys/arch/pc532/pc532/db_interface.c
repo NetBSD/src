@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.9 2000/06/29 07:51:46 mrg Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.9.4.1 2002/06/23 17:39:07 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -54,7 +54,6 @@
 #include <ddb/db_output.h>
 
 
-extern label_t *db_recover;
 extern char *	trap_type[];
 extern int	trap_types;
 

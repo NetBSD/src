@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.1.2.1 2002/01/10 19:50:49 thorpej Exp $	*/
+/*	$NetBSD: fpu.h,v 1.1.2.2 2002/06/23 17:43:28 jdolecek Exp $	*/
 
 #ifndef	_X86_64_FPU_H_
 #define	_X86_64_FPU_H_
@@ -12,17 +12,25 @@
 struct fxsave64 {
 /*BITFIELDTYPE*/ u_int64_t	fx_fcw:16;
 /*BITFIELDTYPE*/ u_int64_t	fx_fsw:16;
-/*BITFIELDTYPE*/ u_int64_t	fx_unused1:8;
 /*BITFIELDTYPE*/ u_int64_t	fx_ftw:8;
+/*BITFIELDTYPE*/ u_int64_t	fx_unused1:8;
 /*BITFIELDTYPE*/ u_int64_t	fx_fop:16;
 /*BITFIELDTYPE*/ u_int64_t	fx_rip;
-/*BITFIELDTYPE*/ u_int64_t	fx_dp;
+/*BITFIELDTYPE*/ u_int64_t	fx_rdp;
 /*BITFIELDTYPE*/ u_int64_t	fx_mxcsr:32;
-/*BITFIELDTYPE*/ u_int64_t	fx_unused2:32;
+/*BITFIELDTYPE*/ u_int64_t	fx_mxcsr_mask:32;
 /*BITFIELDTYPE*/ u_int64_t	fx_st[8 * 2];	/* 8 normal FP regs */
 /*BITFIELDTYPE*/ u_int64_t	fx_xmm[16 * 2];	/* 16 SSE2 registers */
 /*BITFIELDTYPE*/ u_int8_t	fx_unused3[96];
 } __attribute__ ((aligned (16)));
+
+#ifdef _KERNEL
+
+struct savefpu {
+	struct fxsave64 fp_fxsave;	/* see above */
+	u_int16_t fp_ex_sw;		/* saved status from last exception */
+	u_int16_t fp_ex_tw;		/* saved tag from last exception */
+};
 
 /*
  * This one only used for backward compat coredumping.
@@ -41,13 +49,17 @@ struct oldfsave {
 	u_int16_t	fs_opsel;
 } __attribute__ ((packed));
 
+#endif
+
 
 /*
  * The i387 defaults to Intel extended precision mode and round to nearest,
  * with all exceptions masked.
- * XXXfvdl check this. This stuff is probably invalid.
  */
 #define	__INITIAL_NPXCW__	0x037f
+#define __INITIAL_MXCSR__ 	0x1f80
+#define __INITIAL_MXCSR_MASK__	0xffbf
+
 /* NetBSD uses IEEE double precision. */
 #define	__NetBSD_NPXCW__	0x127f
 /* Linux just uses the default control word. */
@@ -69,6 +81,8 @@ struct oldfsave {
  * because it makes the results of calculations depend on whether
  * intermediate values are stored in memory or in FPU registers.
  */
+
+#ifdef _KERNEL
 /*
  * XXX
  */
@@ -77,8 +91,11 @@ struct trapframe;
 extern void fpuinit(void);
 extern void fpudrop(void);
 extern void fpusave(void);
+extern void fpudiscard(struct proc *);
 extern void fputrap(struct trapframe *);
 
 extern struct proc *fpuproc;
+
+#endif
 
 #endif /* _X86_64_FPU_H_ */

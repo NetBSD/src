@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.46.2.2 2002/03/16 16:00:14 jdolecek Exp $    */
+/*      $NetBSD: param.h,v 1.46.2.3 2002/06/23 17:43:01 jdolecek Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -93,6 +93,14 @@
 #endif
 
 /*
+ * KVA is very tight on vax, reduce the amount of KVA used by pipe
+ * "direct" write code to reasonably low value.
+ */
+#ifndef PIPE_DIRECT_CHUNK
+#define PIPE_DIRECT_CHUNK	65536
+#endif
+
+/*
  * Constants related to network buffer management.
  * MCLBYTES must be no larger than NBPG (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
@@ -141,8 +149,8 @@
 #define	btop(x)		(((unsigned)(x)) >> PGSHIFT)
 
 /* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define	dbtob(x)	((x) << DEV_BSHIFT)
+#define	btodb(x)	((unsigned long)(x) >> DEV_BSHIFT)
+#define	dbtob(x)	((unsigned long)(x) << DEV_BSHIFT)
 
 /* MD conversion macros */
 #define	vax_btoc(x)	(((unsigned)(x) + VAX_PGOFSET) >> VAX_PGSHIFT)

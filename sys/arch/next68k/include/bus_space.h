@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.7 2001/05/12 22:35:29 chs Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.7.2.1 2002/06/23 17:38:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -115,6 +115,16 @@ typedef u_long	bus_space_handle_t;
      (-1)
 
 #define	bus_space_free(t, h, s)
+
+/*
+ *	paddr_t bus_space_mmap __P((bus_space_tag_t t, bus_addr_t base,
+ *	    off_t offset, int prot, int flags));
+ *
+ * Mmap an area of bus space.
+ */
+
+#define bus_space_mmap(t, addr, off, prot, flags) 			\
+	m68k_btop((addr) + (off))
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,

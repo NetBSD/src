@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOT,v 1.39.2.2 2002/02/11 20:07:30 jdolecek Exp $
+# $NetBSD: BOOT,v 1.39.2.3 2002/06/23 17:35:13 jdolecek Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.5 2001/11/20 11:29:41 lukem Exp $
-#		NetBSD: GENERIC.in,v 1.14 2002/01/27 13:23:13 jdolecek Exp $
+#		NetBSD: GENERIC.in,v 1.18 2002/04/16 22:42:55 bjh21 Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -16,6 +16,8 @@
 #Generic atari
 
 include "arch/atari/conf/std.atari"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -91,7 +93,7 @@ config		netbsd root on ? type ?
 
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
-pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)

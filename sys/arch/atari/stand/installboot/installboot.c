@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.10.4.2 2002/01/10 19:40:16 thorpej Exp $	*/
+/*	$NetBSD: installboot.c,v 1.10.4.3 2002/06/23 17:35:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -173,6 +173,13 @@ oscheck ()
 	kvm_t		*kd_kern;
 	char		errbuf[_POSIX2_LINE_MAX];
 	u_short		kvers;
+	struct stat	sb;
+
+	if (stat(_PATH_UNIX, &sb) < 0) {
+		warnx("Cannot stat %s, no bootversion check done\n",
+							_PATH_UNIX);
+		return;
+	}
 
 	kd_kern = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
 	if (kd_kern == NULL)

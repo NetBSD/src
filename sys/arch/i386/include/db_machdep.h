@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.17 2001/06/17 21:01:37 sommerfeld Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.17.2.1 2002/06/23 17:37:28 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -41,7 +41,7 @@ typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
-db_regs_t	ddb_regs;	/* register state */
+extern db_regs_t ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
 #if defined(lint)

@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.6.2.1 2001/08/25 06:15:07 thorpej Exp $	*/
+/*	$NetBSD: btl.c,v 1.6.2.2 2002/06/23 17:34:40 jdolecek Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -806,7 +806,7 @@ bt_start_ccbs(sc)
 
 		if ((ccb->xs->xs_control & XS_CTL_POLL) == 0)
 			callout_reset(&ccb->xs->xs_callout,
-			    (ccb->timeout * hz) / 1000, bt_timeout, ccb);
+			    mstohz(ccb->timeout), bt_timeout, ccb);
 
 		++sc->sc_mbofull;
 		bt_nextmbx(wmbo, wmbx, mbo);

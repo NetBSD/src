@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.7.2.5 2002/03/16 15:57:03 jdolecek Exp $
+#	$NetBSD: files.cats,v 1.7.2.6 2002/06/23 17:35:28 jdolecek Exp $
 #
 # CATS-specific configuration info
 #
@@ -97,9 +97,6 @@ include "dev/i2o/files.i2o"
 # Include PCI config
 #
 include "dev/pci/files.pci"
-
-# network devices MII bus
-include "dev/mii/files.mii"
 
 device	pcib: isabus
 attach	pcib at pci

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.4.1 2002/01/10 19:46:56 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3.4.2 2002/06/23 17:38:47 jdolecek Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -7,6 +7,7 @@ NOMAN= # defined
 CFLAGS= -Os -Wall
 
 CPPFLAGS+= -D_STANDALONE
+CPPFLAGS+= -DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S} -I.
 AFLAGS= -D_LOCORE
 

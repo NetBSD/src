@@ -1,8 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.16.2.5 2002/03/16 15:59:55 jdolecek Exp $
+# 	$NetBSD: GENERIC32,v 1.16.2.6 2002/06/23 17:42:02 jdolecek Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.16.2.5 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.16.2.6 $"
 
 maxusers	64
 
@@ -54,6 +56,7 @@ options 	SYSVSHM		# System V shared memory
 ## Loadable kernel module support; still under development.
 options 	LKM
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; default on sparc is the bootparam protocol
@@ -199,9 +202,7 @@ sbus0	at mainbus0				# Ultra 1
 psycho*	at mainbus0				# Darwin, Ultra5
 pci*	at psycho?
 pci*	at ppb?
-ppb*	at pci? dev ? function ?		# `APB' support.
-#pci*	at simba?
-#simba*	at pci? dev ? function ?		# `APB' support.
+ppb*	at pci?					# `APB' support.
 ebus*	at pci?					# ebus devices
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?		# PCI "universal" comm. cards
@@ -223,6 +224,7 @@ lpt*	at ebus?				# parallel port
 ## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
 clock*	at sbus? slot ? offset ?
 clock*	at ebus?
+rtc*	at ebus?
 
 ## Timer chip found on 4/300, sun4c, sun4m and (some) sun4u systems.
 timer*	at mainbus0				# sun4c
@@ -393,7 +395,6 @@ qe*		at qec?
 # PCI network interfaces
 # 	UT marks untested.
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11) UT
-de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet UT
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM UT
 # XXX causes ICE
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
@@ -411,13 +412,8 @@ ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139 UT
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet UT
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
-# XXX uses vtophys()
-#tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
-tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # MII/PHY support
@@ -519,10 +515,13 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 ## /dev/audio support (`audiocs' plus `audio')
 ##
 audiocs*	at sbus? slot ? offset ?	# SUNW,CS4231
+audiocs*	at ebus?			# SUNW,CS4231 in U5/U10
 autri*		at pci? dev ? function ?	# Blade 100 'sound'
 
 audio*		at audiocs?
 audio*		at autri?
+
+#midi*		at autri?
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m

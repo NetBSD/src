@@ -1,4 +1,4 @@
-#	$NetBSD: files.integrator,v 1.3.2.3 2002/02/11 20:07:41 jdolecek Exp $
+#	$NetBSD: files.integrator,v 1.3.2.4 2002/06/23 17:35:38 jdolecek Exp $
 #
 # ARM, Ltd. Integrator evaluation board configuraiton info
 #
@@ -11,11 +11,10 @@ file	arch/evbarm/integrator/integrator_machdep.c
 file	arch/evbarm/integrator/int_bus_dma.c
 
 # Integrator fpga specific files
-device	ifpga {[offset = -1], [irq = -1]}: pcibus
+device	ifpga {[offset = -1], [irq = -1]}: pcibus, bus_space_generic
 attach	ifpga at mainbus
 file	arch/evbarm/ifpga/ifpga.c		ifpga
 file	arch/evbarm/ifpga/ifpga_io.c		ifpga
-file	arch/evbarm/ifpga/ifpga_io_asm.S	ifpga
 file	arch/evbarm/ifpga/ifpga_clock.c		ifpga
 file	arch/evbarm/ifpga/ifpga_irq.S		ifpga
 file	arch/evbarm/ifpga/ifpga_irqhandler.c	ifpga

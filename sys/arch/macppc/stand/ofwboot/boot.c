@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10.2.2 2001/08/25 06:15:31 thorpej Exp $	*/
+/*	$NetBSD: boot.c,v 1.10.2.3 2002/06/23 17:37:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,20 +77,12 @@
  *	[promdev[{:|,}partition]]/[filename] [flags]
  */
 
-#define	ELFSIZE		32		/* We use 32-bit ELF. */
-
 #include <sys/param.h>
-#include <sys/exec.h>
-#include <sys/exec_elf.h>
-#include <sys/reboot.h>
-#include <sys/disklabel.h>
 #include <sys/boot_flag.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
 #include <lib/libkern/libkern.h>
-
-#include <machine/cpu.h>
 
 #include "ofdev.h"
 #include "openfirm.h"
@@ -104,7 +96,6 @@
 char bootdev[128];
 char bootfile[128];
 int boothowto;
-int debug;
 
 static ofw_version = 0;
 static char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.macppc", NULL };
@@ -114,7 +105,7 @@ prom2boot(dev)
 	char *dev;
 {
 	char *cp;
-	
+
 	cp = dev + strlen(dev) - 1;
 	for (; *cp; cp--) {
 		if (*cp == ':') {
@@ -218,9 +209,7 @@ main()
 				ofw_version = *cp - '0';
 				break;
 			}
-#if 0
-		printf(">> Open Firmware version %d.x\n", ofw_version);
-#endif
+		DPRINTF(">> Open Firmware version %d.x\n", ofw_version);
 	}
 
 	/*
@@ -307,10 +296,31 @@ loaded:
 	entry = marks[MARK_ENTRY];
 	ssym = (void *)marks[MARK_SYM];
 	esym = (void *)marks[MARK_END];
-	
+
 	printf(" start=0x%x\n", entry);
 	__syncicache((void *)entry, (u_int)ssym - (u_int)entry);
 	chain((void *)entry, bootline, ssym, esym);
 
 	OF_exit();
 }
+
+#ifdef HAVE_CHANGEDISK_HOOK
+void
+changedisk_hook(of)
+	struct open_file *of;
+{
+	struct of_dev *op = of->f_devdata;
+	int c;
+
+	OF_call_method("eject", op->handle, 0, 0);
+
+	c = getchar();
+	if (c == 'q') {
+		printf("quit\n");
+		OF_exit();
+	}
+
+	OF_call_method("close", op->handle, 0, 0);
+	OF_call_method("open", op->handle, 0, 0);
+}
+#endif

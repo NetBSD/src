@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4.2.3 2002/03/16 15:58:44 jdolecek Exp $	*/
+/*	$NetBSD: syscall.c,v 1.4.2.4 2002/06/23 17:38:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4.2.3 2002/03/16 15:58:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4.2.4 2002/06/23 17:38:06 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -259,9 +259,6 @@ EMULNAME(syscall_plain)(struct proc *p, u_int status, u_int cause, u_int opc)
 
 	error = (*callp->sy_call)(p, args, rval);
 
-	if (p->p_emul->e_errno)
-		error = p->p_emul->e_errno[error];
-
 	switch (error) {
 	case 0:
 #if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
@@ -278,6 +275,8 @@ EMULNAME(syscall_plain)(struct proc *p, u_int status, u_int cause, u_int opc)
 		break;	/* nothing to do */
 	default:
 	bad:
+		if (p->p_emul->e_errno)
+			error = p->p_emul->e_errno[error];
 		frame->f_regs[V0] = error;
 		frame->f_regs[A3] = 1;
 		break;
@@ -412,9 +411,6 @@ EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 
 	error = (*callp->sy_call)(p, args, rval);
 
-	if (p->p_emul->e_errno)
-		error = p->p_emul->e_errno[error];
-
 	switch (error) {
 	case 0:
 #if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
@@ -431,6 +427,8 @@ EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 		break;	/* nothing to do */
 	default:
 	bad:
+		if (p->p_emul->e_errno)
+			error = p->p_emul->e_errno[error];
 		frame->f_regs[V0] = error;
 		frame->f_regs[A3] = 1;
 		break;

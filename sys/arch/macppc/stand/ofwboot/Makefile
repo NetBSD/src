@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.4.4 2002/03/16 15:58:33 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.20.4.5 2002/06/23 17:37:58 jdolecek Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -7,10 +7,12 @@ FILES=		${PROG}.elf ${PROG}.xcf
 SRCS=		Locore.c ofdev.c hfs.c net.c netif_of.c vers.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
-CFLAGS+=	-msoft-float -Wno-main
-#CFLAGS+=	-DDEBUG -DNETIF_DEBUG
-CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
-DBG=		-Os -mmultiple
+CFLAGS+=	-Wno-main -msoft-float -mmultiple
+#CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
+CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
+CPPFLAGS+=	-DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
+CPPFLAGS+=	-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
+DBG=		-Os
 
 .PATH:		${S}/arch/powerpc/powerpc
 SRCS+=		ofwmagic.S
@@ -45,7 +47,7 @@ ENTRY=		_start
 CLEANFILES+=	vers.c ${PROG}.elf ${PROG}.el1 ${PROG}.mrg ${PROG}.xcf
 CLEANFILES+=	machine powerpc
 
-CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
+CPPFLAGS+=	-I. -I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC} -DRELOC_FLATFILE=0x${RELOC_FLATFILE}
 #CPPFLAGS+=	-DXCOFF_GLUE		# for booting PCI Powermacs
 
@@ -74,6 +76,11 @@ SA_AS=		library
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
+
+cleandir distclean: cleanlibdir
+
+cleanlibdir:
+	rm -rf lib
 
 .PHONY: vers.c
 vers.c: version

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/09/26 09:11:04 wdk Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2002/06/23 17:38:12 jdolecek Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 SECONDARY_PROG=	boot
@@ -9,7 +9,9 @@ SRCS+=		prom.S
 
 CPPFLAGS+=	-DBOOT_TYPE_NAME='"Secondary"'
 
+# Copy boot to / as well.
 afterinstall:
-	cp -p ${DESTDIR}${BINDIR}/${PROG} ${DESTDIR}/
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    ${STRIPFLAG} ${DESTDIR}${BINDIR}/${PROG} ${DESTDIR}/${PROG}
 
 .include "../Makefile.booters"

@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS3X,v 1.20.2.2 2002/02/11 20:09:15 jdolecek Exp $
+# $NetBSD: DISKLESS3X,v 1.20.2.3 2002/06/23 17:42:34 jdolecek Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/80)
@@ -6,6 +6,8 @@
 # Includes devices needed to run as an X-terminal
 
 include "arch/sun3/conf/std.sun3x"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Machines to be supported by this kernel
 # options 	FPU_EMULATE	# XXX - Ever needed?
@@ -23,6 +25,7 @@ maxusers	2
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:

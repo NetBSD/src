@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.29.4.1 2001/08/03 04:10:47 lukem Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.29.4.2 2002/06/23 17:34:14 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.29.4.1 2001/08/03 04:10:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.29.4.2 2002/06/23 17:34:14 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,7 +124,7 @@ dec_2100_a50_intr_map(pa, ihp)
 		return 1;
 	}
 
-	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
+	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 
 	switch (device) {
 	case 6:					/* NCR SCSI */

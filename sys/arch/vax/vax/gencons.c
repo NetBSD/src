@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.35 2001/06/12 13:18:38 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.35.2.1 2002/06/23 17:43:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -118,9 +118,9 @@ gencnclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
 
-	gc_softc[minor(dev)].alive = 0;
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
+	gc_softc[minor(dev)].alive = 0;
 	return (0);
 }
 
@@ -161,13 +161,9 @@ gencnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
-	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
-		return error;
- 
-	return ENOTTY;
+	return ttioctl(tp, cmd, data, flag, p);
 }
 
 void

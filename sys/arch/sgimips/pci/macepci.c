@@ -1,4 +1,4 @@
-/*	$NetBSD: macepci.c,v 1.3.10.1 2002/03/16 15:59:31 jdolecek Exp $	*/
+/*	$NetBSD: macepci.c,v 1.3.10.2 2002/06/23 17:40:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -139,6 +139,7 @@ printf("macepci0: ctrl %x\n", *(volatile u_int32_t *)0xbf080008);
 /*XXX*/	pba.pba_memt = 2;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	pba.pba_pc = pc;

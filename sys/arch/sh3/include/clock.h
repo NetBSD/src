@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.h,v 1.1.8.2 2002/03/16 15:59:37 jdolecek Exp $	*/
+/*	$NetBSD: clock.h,v 1.1.8.3 2002/06/23 17:40:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,11 +50,11 @@
  *	Implement machine specific part of clock routines.
  *	must call sh_clock_init() at exit.
  *
- * int sh_clock_get_cpuclock(void): 
+ * int sh_clock_get_cpuclock(void):
  *	returns CPU clock estimated by sh_clock_init().
  *
  * int sh_clock_get_pclock(void):
- *	returns PCLOCK. when PCLOCK is not specified by kernel configuration 
+ *	returns PCLOCK. when PCLOCK is not specified by kernel configuration
  *	file, this value is estimated by sh_clock_init().
  *
  */
@@ -62,22 +62,22 @@ struct rtc_ops;
 struct clock_ymdhms;
 
 void sh_clock_init(int, struct rtc_ops *);
-#define SH_CLOCK_NORTC			0x00000001
-#define SH_CLOCK_NOINITTODR		0x00000002
+#define	SH_CLOCK_NORTC			0x00000001
+#define	SH_CLOCK_NOINITTODR		0x00000002
 void machine_clock_init(void);
 
 int sh_clock_get_cpuclock(void);
 int sh_clock_get_pclock(void);
 
-/* 
+/*
  * SH RTC module interface.
  */
 void sh_rtc_init(void *);
 void sh_rtc_get(void *, time_t, struct clock_ymdhms *);
 void sh_rtc_set(void *, struct clock_ymdhms *);
 
-/* 
- * machine specific RTC ops 
+/*
+ * machine specific RTC ops
  */
 struct clock_ymdhms;
 struct rtc_ops {

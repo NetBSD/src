@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.19.2.1 2002/02/11 20:07:07 jdolecek Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.19.2.2 2002/06/23 17:34:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -117,7 +117,7 @@ struct siop_tinfo {
 	u_char  flags;
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
-} tinfo_t;
+};
 
 struct	siop_softc {
 	struct	device sc_dev;

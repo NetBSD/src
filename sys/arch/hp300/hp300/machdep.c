@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147.2.4 2002/03/16 15:57:36 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147.2.5 2002/06/23 17:36:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.2.5 2002/06/23 17:36:13 jdolecek Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -103,11 +106,11 @@
 
 #include "opt_useleds.h"
 
-#include <arch/hp300/dev/hilreg.h>
-#include <arch/hp300/dev/hilioctl.h>
-#include <arch/hp300/dev/hilvar.h>
+#include <hp300/dev/hilreg.h>
+#include <hp300/dev/hilioctl.h>
+#include <hp300/dev/hilvar.h>
 #ifdef USELEDS
-#include <arch/hp300/hp300/leds.h>
+#include <hp300/hp300/leds.h>
 #endif
 
 /* the following is used externally (sysctl_hw) */
@@ -277,7 +280,7 @@ consinit()
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu, and do autoconfiguration.
+ * initialize cpu
  */
 void
 cpu_startup()
@@ -441,7 +444,7 @@ setregs(p, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A2] = (int)p->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;

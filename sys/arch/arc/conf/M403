@@ -1,9 +1,11 @@
-#	$NetBSD: M403,v 1.14.2.3 2002/03/16 15:55:57 jdolecek Exp $
+#	$NetBSD: M403,v 1.14.2.4 2002/06/23 17:34:39 jdolecek Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
 
 include		"arch/arc/conf/std.arc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32		# estimated number of users
 
@@ -175,8 +177,6 @@ pckbd*		at pckbc?	# PC keyboard (kbd port)
 wskbd*		at pckbd?
 pms*		at pckbc?	# PS/2-style mouse (aux port)
 wsmouse*	at pms?
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse (aux port)
-#wsmouse*	at pmsi?
 
 #### Pseudo devices
 

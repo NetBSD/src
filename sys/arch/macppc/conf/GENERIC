@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.103.2.5 2002/03/16 15:58:29 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.103.2.6 2002/06/23 17:37:52 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.103.2.5 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.103.2.6 $"
 
 maxusers	32
 
@@ -43,7 +45,8 @@ options 	SYSVSHM		# System V shared memory
 
 options 	LKM		# loadable kernel modules
 
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	USERCONF	# userconf(4) support
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -52,7 +55,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
 
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_09	# NetBSD 0.9,
@@ -148,8 +151,9 @@ pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+# XXX 'puc's aren't really bridges, but there's no better place for them here
+puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
-de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 fpa*	at pci? dev ? function ?	# DEC PCI FDDI (DEFPA) Controller
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
@@ -159,11 +163,7 @@ lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
-tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
@@ -197,6 +197,7 @@ tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI serial interfaces
+com*	at puc? port ?			# 16x50s on "universal" comm boards
 cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 #cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 
@@ -214,7 +215,11 @@ zsc*	at obio?
 zstty*	at zsc? channel ?
 mediabay* at obio?
 wdc*	at mediabay? flags 0
-awacs*	at obio?			# Apple audio device
+# awacs is disabled because on some systems--e.g., a 350MHz G4 GigE--
+# it may generate interrupt storms, rendering the machine unusable.
+# If you uncomment this, you'll also want to uncomment "audio* at awacs?"
+# below.
+#awacs*	at obio?			# Apple audio device
 wi*	at obio?			# AirMac
 
 cardslot* at cbb?
@@ -237,6 +242,7 @@ wskbd0	at akbd? console ?
 wsmouse0 at ams?
 
 scsibus* at adv?
+scsibus* at adw?
 scsibus* at ahc?
 scsibus* at bha?
 scsibus* at iha?
@@ -327,7 +333,7 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 #opl*	at fms?
 
 # Audio support
-audio* at awacs?
+#audio* at awacs?
 #audio*	at clcs?
 #audio*	at cmpci?
 audio*	at eap?
@@ -350,13 +356,13 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
-# options	RF_INCLUDE_EVENODD=1
-# options	RF_INCLUDE_RAID5_RS=1
-# options	RF_INCLUDE_PARITYLOGGING=1
-# options	RF_INCLUDE_CHAINDECLUSTER=1
-# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_EVENODD=1
+# options 	RF_INCLUDE_RAID5_RS=1
+# options 	RF_INCLUDE_PARITYLOGGING=1
+# options 	RF_INCLUDE_CHAINDECLUSTER=1
+# options 	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
-# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.7 1998/12/22 08:47:06 scottr Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.7.24.1 2002/06/23 17:37:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -34,10 +34,17 @@
 
 #include <sys/device.h>
 
+#include <machine/bus.h>
+
 /*
  * Autoconfiguration information.
  * From sun3 port--adapted for mac68k platform by Allen Briggs.
  */
+
+struct mainbus_attach_args {
+	bus_space_tag_t	mba_bst;
+	bus_dma_tag_t	mba_dmat;
+};
 
 /* autoconf.c */
 void	setconf __P((void));

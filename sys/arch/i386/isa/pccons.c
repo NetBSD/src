@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.147.4.2 2002/01/10 19:44:59 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.147.4.3 2002/06/23 17:37:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.147.4.2 2002/01/10 19:44:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.147.4.3 2002/06/23 17:37:30 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -995,10 +995,11 @@ pcioctl(dev, cmd, data, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -1053,7 +1054,7 @@ pcioctl(dev, cmd, data, flag, p)
 #endif
  	}
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 
 #ifdef DIAGNOSTIC
@@ -1242,6 +1243,20 @@ pcparam(tp, t)
 	return (0);
 }
 
+#ifndef	PCCONS_DEFAULT_FG
+#define	PCCONS_DEFAULT_FG	FG_LIGHTGREY
+#endif
+#ifndef	PCCONS_DEFAULT_SO_FG
+#define	PCCONS_DEFAULT_SO_FG	FG_YELLOW
+#endif
+
+#ifndef	PCCONS_DEFAULT_BG
+#define	PCCONS_DEFAULT_BG	BG_BLACK
+#endif
+#ifndef	PCCONS_DEFAULT_SO_BG
+#define	PCCONS_DEFAULT_SO_BG	BG_BLACK
+#endif
+
 void
 pcinit()
 {
@@ -1281,12 +1296,12 @@ pcinit()
 	vs.ncol = COL;
 	vs.nrow = ROW;
 	vs.nchr = COL * ROW;
-	vs.at = FG_LIGHTGREY | BG_BLACK;
 
+	vs.at = PCCONS_DEFAULT_FG | PCCONS_DEFAULT_BG;
 	if (vs.color == 0)
 		vs.so_at = FG_BLACK | BG_LIGHTGREY;
 	else
-		vs.so_at = FG_YELLOW | BG_BLACK;
+		vs.so_at = PCCONS_DEFAULT_SO_FG | PCCONS_DEFAULT_SO_BG;
 
 	fillw((vs.at << 8) | ' ', crtat, vs.nchr - cursorat);
 }
@@ -1667,7 +1682,8 @@ sput(cp, n)
 				case 'x': /* set attributes */
 					switch (vs.cx) {
 					case 0:
-						vs.at = FG_LIGHTGREY | BG_BLACK;
+						vs.at = PCCONS_DEFAULT_FG |
+						    PCCONS_DEFAULT_BG;
 						break;
 					case 1:
 						/* ansi background */

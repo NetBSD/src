@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.14.2.2 2002/03/16 15:58:04 jdolecek Exp $
+#	$NetBSD: files.hpcsh,v 1.14.2.3 2002/06/23 17:36:58 jdolecek Exp $
 #
 maxpartitions 8
 
@@ -16,8 +16,8 @@ file	arch/hpcsh/hpcsh/machdep.c
 file	arch/hpcsh/hpcsh/console.c
 file	arch/hpcsh/hpcsh/autoconf.c
 file	arch/hpcsh/hpcsh/bus_space.c
+#file	arch/hpcsh/hpcsh/bus_dma.c
 file	arch/hpcsh/hpcsh/clock_machdep.c
-file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
 
 file	arch/hpc/hpc/kloader.c
 file	arch/hpcsh/hpcsh/kloader_machdep.c
@@ -37,7 +37,6 @@ include "dev/hpc/files.hpcfb"
 
 include "arch/hpc/conf/files.debug"
 file	arch/hpcsh/hpcsh/debug.c
-defflag	opt_interrupt_monitor.h		INTERRUPT_MONITOR
 
 #
 # Machine-independent SCSI drivers
@@ -63,10 +62,11 @@ major	{md = 6}
 attach	mainbus at root
 file	arch/hpcsh/hpcsh/mainbus.c		mainbus
 
-#
-# SH3 bus
-#
-include	"arch/hpcsh/conf/files.shbus"
+device cpu
+attach cpu at mainbus
+file	arch/sh3/sh3/cpu.c			cpu
+
+include	"arch/sh3/conf/files.shb"
 
 device	pfckbd: hpckbdif
 attach	pfckbd at mainbus
@@ -111,8 +111,13 @@ file	arch/hpcsh/dev/hd64465/hd64465pcmcia.c	hd64465pcmcia
 #attach	ohci at hd64465if with hd64465ohci
 #file	arch/hpcsh/dev/hd64465/hd64465ohci.c	hd64465ohci
 
-include	"dev/mii/files.mii"
-include "dev/usb/files.usb"
+#
+# HD64461/HD64465 common
+#
+file	arch/hpcsh/dev/hd6446x/hd6446x_subr.S	hd64461if | hd64465if
+file	arch/hpcsh/dev/hd6446x/hd6446xintc.c	hd64461if | hd64465if
+
+#include "dev/usb/files.usb"
 include	"dev/wscons/files.wscons"
 
 #

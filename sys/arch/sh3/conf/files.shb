@@ -1,0 +1,24 @@
+#	$NetBSD: files.shb,v 1.2.8.2 2002/06/23 17:40:33 jdolecek Exp $
+#
+# SuperH internal devices.
+#
+device	shb { }
+attach	shb at mainbus
+
+file	arch/sh3/dev/shb.c		shb
+
+device	wdog
+attach	wdog at shb
+file	arch/sh3/dev/wdog.c		wdog	needs-flag
+
+defflag	opt_sci.h	SCICONSOLE
+defparam opt_sci.h	SCICN_SPEED
+device	sci: tty
+attach	sci at shb
+file	arch/sh3/dev/sci.c		sci	needs-flag
+
+defflag	opt_scif.h	SCIFCONSOLE
+defparam opt_scif.h	SCIFCN_SPEED
+device	scif: tty
+attach	scif at shb
+file	arch/sh3/dev/scif.c		scif	needs-flag

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.17.2.5 2002/03/16 15:58:12 jdolecek Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.17.2.6 2002/06/23 17:37:19 jdolecek Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,9 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.17.2.5 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.17.2.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -24,6 +26,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	DUMMY_NOPS
 
 options 	MTRR		# memory-type range register syscall support
+options 	PERFCTRS	# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -64,6 +67,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -254,7 +258,7 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
-#agp* 	at pchb?
+agp* 	at pchb?
 
 # ISA bus support
 isa0	at mainbus?
@@ -310,10 +314,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms" or "pmsi"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
-#opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -321,7 +322,6 @@ wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
 wskbd* 		at pckbd? console ?
 wsmouse*	at pms? mux 0
-wsmouse*	at pmsi? mux 0
 
 pcppi0		at isa?
 sysbeep0	at pcppi?
@@ -471,6 +471,7 @@ ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # PCMCIA network interfaces
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
@@ -559,6 +560,15 @@ uaudio*	at uhub? port ? configuration ?
 # USB MIDI
 umidi* at uhub? port ? configuration ?
 
+# USB IrDA
+# USB-IrDA bridge spec
+uirda* at uhub? port ? configuration ? interface ?
+irframe* at uirda?
+
+# SigmaTel STIr4200 USB/IrDA Bridge
+ustir* at uhub? port ?
+irframe* at ustir?
+
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
@@ -590,6 +600,13 @@ uyap* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+
+
+# IrDA and Consumer Ir devices
+
+# Toshiba Oboe
+oboe* 	at pci? dev ? function ?
+irframe* at oboe?
 
 
 # Audio Devices
@@ -714,7 +731,6 @@ wsmouse*	at mms? mux 0
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
-#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks
@@ -763,6 +779,7 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)

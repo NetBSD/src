@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49.16.2 2002/03/16 15:57:35 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.49.16.3 2002/06/23 17:36:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -97,6 +97,9 @@
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49.16.3 2002/06/23 17:36:11 jdolecek Exp $");                                                  
 
 #include "hil.h"
 #include "dvbox.h"
@@ -401,11 +404,11 @@ device_register(dev, aux)
 	 * Note that we only really care about devices that
 	 * we can mount as root.
 	 */
-	dd = (struct dev_data *)malloc(sizeof(struct dev_data),
-	    M_DEVBUF, M_NOWAIT);
+
+	MALLOC(dd, struct dev_data *, sizeof(struct dev_data),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (dd == NULL)
 		panic("device_register: can't allocate dev_data");
-	memset(dd, 0, sizeof(struct dev_data));
 
 	dd->dd_dev = dev;
 
@@ -793,12 +796,12 @@ hp300_cninit()
 	/*
 	 * Look for serial consoles first.
 	 */
-#if NDCA > 0
-	if (!dio_scan(dcacnattach))
+#if NAPCI > 0
+	if (!apcicnattach(HP300_BUS_SPACE_INTIO, 0x1c020, -1))
 		return;
 #endif
-#if NAPCI > 0
-	if (!dio_scan(apcicnattach))
+#if NDCA > 0
+	if (!dio_scan(dcacnattach))
 		return;
 #endif
 #if NDCM > 0
@@ -827,7 +830,7 @@ hp300_cninit()
 	if (!topcatcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
 		goto find_kbd;
 #endif
-#endif
+#endif	/* CONSCODE */
 
 	/*
 	 * Look for external framebuffers.

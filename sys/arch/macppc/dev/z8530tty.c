@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.10.2.1 2002/01/10 19:45:49 thorpej Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.10.2.2 2002/06/23 17:37:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -646,16 +646,16 @@ zsioctl(dev, cmd, data, flag, p)
 	int s;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 #ifdef	ZS_MD_IOCTL
-	error = ZS_MD_IOCTL;
-	if (error >= 0)
+	error = ZS_MD_IOCTL(cs, cmd, data);
+	if (error != EPASSTHROUGH)
 		return (error);
 #endif	/* ZS_MD_IOCTL */
 
@@ -702,7 +702,7 @@ zsioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 

@@ -1,5 +1,5 @@
-# $NetBSD: KRUPS,v 1.2.2.3 2002/03/16 15:59:44 jdolecek Exp $
-# From: NetBSD: GENERIC,v 1.131 2002/02/10 17:37:02 wiz Exp
+# $NetBSD: KRUPS,v 1.2.2.4 2002/06/23 17:41:41 jdolecek Exp $
+# From: NetBSD: GENERIC,v 1.133 2002/04/25 15:06:37 atatat Exp
 #
 # Krups (JavaStation 10, aka JavaStation NC) machine description file
 #
@@ -8,7 +8,9 @@
 
 include 	"arch/sparc/conf/std.sparc"
 
-#ident 		"KRUPS-$Revision: 1.2.2.3 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"KRUPS-$Revision: 1.2.2.4 $"
 
 maxusers	32
 
@@ -65,12 +67,13 @@ options 	KTRACE
 ## Loadable kernel module support; still under development.
 #options 	LKM
 
+#options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-## NFS boot options; default on sparc is the bootparam protocol
+## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTP
-#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_DHCP
 
 #### Debugging options
 
@@ -97,7 +100,7 @@ options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 ## such that gdb(1) can be used on a kernel coredump.
 
 #makeoptions	DEBUG="-g"
-makeoptions	COPTS="-pipe -mv8 -O2"
+makeoptions	COPTS="-pipe -mcpu=supersparc -O2"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -199,7 +202,8 @@ cpu0	at mainbus0
 
 msiiep0	at mainbus0	# microSPARC-IIep PCIC, timer, ...
 
-pci0	at msiiep0
+mspcic0	at msiiep0	# PCI tree
+pci0	at mspcic0
 options 	PCIVERBOSE
 #options 	PCI_CONFIG_DUMP	# hangs reading IGA1682 config past offset 64
 
@@ -209,6 +213,7 @@ ebus0	at pci0					# ebus devices
 #### Standard system devices -- all required for a given architecture
 
 # timer is part of ms-IIep PCIC
+timer0	at msiiep0
 
 ## ds1287 TOD clock at EBus
 rtc0	at ebus0

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.7.2.2 2002/03/16 15:59:29 jdolecek Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.7.2.3 2002/06/23 17:40:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -258,6 +258,9 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_6;
 	}
 
+	evcnt_attach_dynamic(&sc->sq_intrcnt, EVCNT_TYPE_INTR, NULL,
+					      self->dv_xname, "intr");
+
 	if ((cpu_intr_establish(haa->ha_irq, IPL_NET, sq_intr, sc)) == NULL) {
 		printf(": unable to establish interrupt!\n");
 		goto fail_6;
@@ -438,7 +441,10 @@ sq_set_filter(struct sq_softc *sc)
 	ETHER_FIRST_MULTI(step, ec, enm);
 
 	if (enm == NULL) {
+		sc->sc_rxcmd &= ~RXCMD_REC_MASK;
 		sc->sc_rxcmd |= RXCMD_REC_BROAD;
+
+		ifp->if_flags &= ~IFF_ALLMULTI;
 		return;
 	}
 
@@ -779,6 +785,8 @@ sq_intr(void * arg)
 	 */
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return 0;
+
+	sc->sq_intrcnt.ev_count++;
 
 	/* Always check for received packets */
 	if (sq_rxintr(sc) != 0)

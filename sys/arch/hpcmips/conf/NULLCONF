@@ -1,7 +1,9 @@
 #
-# 	$NetBSD: NULLCONF,v 1.9.2.2 2002/02/11 20:08:03 jdolecek Exp $
+# 	$NetBSD: NULLCONF,v 1.9.2.3 2002/06/23 17:36:49 jdolecek Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	8
 

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.68.2.4 2002/03/16 15:58:13 jdolecek Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.68.2.5 2002/06/23 17:37:20 jdolecek Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -14,11 +14,13 @@
 
 include "arch/i386/conf/std.i386"
 
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_SIZE=2880	# 1.44M, same as a floppy
+options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a floppy
 
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
@@ -67,6 +69,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -323,15 +326,22 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # RAID controllers and devices
+#aac*	at pci? dev ? function ?	# Adaptec AAC family
 #cac*	at eisa? slot ?			# Compaq EISA array controllers
 #cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+#icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 #mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 #mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family
 #twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 
-#ld*	at cac? unit ?			# logical disk devices
+#ld*	at aac? unit ?			# logical disk devices
+#ld*	at cac? unit ?
+#ld*	at icp? unit ?
 #ld*	at twe? unit ?
 #ld*	at mlx? unit ?
+
+#icpsp*	at icp? unit ?			# SCSI pass-through
+#scsibus* at icpsp?
 
 # IDE and related devices
 
@@ -376,7 +386,6 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
-#de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3Com 3c59x/3c90x Ethernet
 #fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
@@ -384,6 +393,7 @@ fd*	at fdc? drive ?			# the drives themselves
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 #ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+#tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
@@ -429,6 +439,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #nsphy*	at mii? phy ?			# NS83840 PHYs
 #qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 #tlphy*	at mii? phy ?			# ThunderLAN PHYs
+#ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # Audio Devices
 
@@ -463,7 +474,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
-#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

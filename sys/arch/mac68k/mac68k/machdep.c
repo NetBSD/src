@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.264.2.3 2002/03/16 15:58:27 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.264.2.4 2002/06/23 17:37:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -375,6 +375,8 @@ consinit(void)
 void
 cpu_startup(void)
 {
+	extern char *start;
+	extern char *etext;
 	caddr_t v;
 	unsigned i;
 	int vers;
@@ -486,6 +488,19 @@ cpu_startup(void)
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
+	 * Tell the VM system that writing to kernel text isn't allowed.
+	 * If we don't, we might end up COW'ing the text segment!
+	 *
+	 * XXX I'd like this to be m68k_trunc_page(&kernel_text) instead
+	 * XXX of the reference to &start, but we have to keep the
+	 * XXX interrupt vectors and such writable for the Mac toolbox.
+	 */
+	if (uvm_map_protect(kernel_map,
+	    m68k_trunc_page(&start + (NBPG - 1)), m68k_round_page(&etext),
+	    (UVM_PROT_READ | UVM_PROT_EXEC), TRUE) != 0)
+		panic("can't protect kernel text");
+
+	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
 	initcpu();
@@ -558,7 +573,7 @@ setregs(p, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A2] = (int)p->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
@@ -1064,6 +1079,7 @@ getenvvars(flag, buf)
 	extern u_long macos_boottime, MacOSROMBase;
 	extern long macos_gmtbias;
 	int root_scsi_id;
+	u_long root_ata_dev;
 #ifdef	__ELF__
 	int i;
 	Elf_Ehdr *ehdr;
@@ -1120,9 +1136,30 @@ getenvvars(flag, buf)
 	 * bootdev using the SCSI ID passed in via the environment.
 	 */
 	root_scsi_id = getenv("ROOT_SCSI_ID");
+	root_ata_dev = getenv("ROOT_ATA_DEV");
 	if (((mac68k_machine.booter_version < CURRENTBOOTERVER) ||
-	    (flag & 0x40000)) && bootdev == 0)
-		bootdev = MAKEBOOTDEV(4, 0, 0, root_scsi_id, 0);
+	    (flag & 0x40000)) && bootdev == 0) {
+		if (root_ata_dev) {
+			/*
+			 * Consider only internal IDE drive.
+			 * Buses(=channel) will be always 0.
+			 * Because 68k Mac has only single channel.
+			 */
+			switch (root_ata_dev) {
+			default: /* fall through */
+			case 0xffffffe0: /* buses,drive = 0,0 */
+			case 0x20: /* buses,drive = 1,0 */
+			case 0x21: /* buses,drive = 1,1 */
+				bootdev = MAKEBOOTDEV(22, 0, 0, 0, 0);
+				break;
+			case 0xffffffe1: /* buses,drive = 0,1 */
+				bootdev = MAKEBOOTDEV(22, 0, 0, 1, 0);
+				break;
+			}
+		} else {
+			bootdev = MAKEBOOTDEV(4, 0, 0, root_scsi_id, 0);
+		}
+	}
 
 	/*
 	 * Booter 1.11.3 and later pass a BOOTHOWTO variable with the
@@ -1955,6 +1992,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACPB180, "PowerBook", " 180 ", MACH_CLASSPB, &romvecs[5]},
 	{MACH_MACPB180C, "PowerBook", " 180c ", MACH_CLASSPB, &romvecs[5]},
 	{MACH_MACPB190, "PowerBook", " 190 ", MACH_CLASSPB, &romvecs[8]},
+	{MACH_MACPB190CS, "PowerBook", " 190cs ", MACH_CLASSPB, &romvecs[8]},
 	{MACH_MACPB500, "PowerBook", " 500 ", MACH_CLASSPB, &romvecs[8]},
 
 /* The Duos */
@@ -1996,13 +2034,19 @@ struct intvid_info_t {
 	u_long	fblen;
 } intvid_info[] = {
 	{ MACH_MACCLASSICII,	0x009f9a80,	0x0,		21888 },
-	{ MACH_MACPB140,	0xfee00000,	0x0,		32 * 1024 },
-	{ MACH_MACPB145,	0xfee00000,	0x0,		32 * 1024 },
-	{ MACH_MACPB170,	0xfee00000,	0x0,		32 * 1024 },
+	{ MACH_MACPB140,	0xfee08000,	0x0,		32 * 1024 },
+	{ MACH_MACPB145,	0xfee08000,	0x0,		32 * 1024 },
+	{ MACH_MACPB170,	0xfee08000,	0x0,		32 * 1024 },
 	{ MACH_MACPB150,	0x60000000,	0x0,		128 * 1024 },
 	{ MACH_MACPB160,	0x60000000,	0x0ffe0000,	128 * 1024 },
 	{ MACH_MACPB165,	0x60000000,	0x0ffe0000,	128 * 1024 },
 	{ MACH_MACPB180,	0x60000000,	0x0ffe0000,	128 * 1024 },
+	{ MACH_MACPB210,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB230,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB250,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB270,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB280,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB280C,	0x60000000,	0x0,		128 * 1024 },
 	{ MACH_MACIICI,		0x0,		0x0,		320 * 1024 },
 	{ MACH_MACIISI,		0x0,		0x0,		320 * 1024 },
 	{ MACH_MACCCLASSIC,	0x50f40000,	0x0,		512 * 1024 },
@@ -2010,6 +2054,7 @@ struct intvid_info_t {
 	{ MACH_MACPB165C,	0xfc040000,	0x0,		512 * 1024 },
 	{ MACH_MACPB180C,	0xfc040000,	0x0,		512 * 1024 },
 	{ MACH_MACPB190,	0x60000000,	0x0,		512 * 1024 },
+	{ MACH_MACPB190CS,	0x60000000,	0x0,		512 * 1024 },
 	{ MACH_MACPB500,	0x60000000,	0x0,		512 * 1024 },
 	{ MACH_MACLCIII,	0x60b00000,	0x0,		768 * 1024 },
 	{ MACH_MACLC520,	0x60000000,	0x0,		1024 * 1024 },
@@ -2378,10 +2423,11 @@ gray_bar()
    	3) restore regs
 */
 
-	__asm __volatile ("	movl %a0,%sp@-;
-				movl %a1,%sp@-;
-				movl %d0,%sp@-;
-				movl %d1,%sp@-");
+	__asm __volatile (
+			"	movl %a0,%sp@-;"
+			"	movl %a1,%sp@-;"
+			"	movl %d0,%sp@-;"
+			"	movl %d1,%sp@-");
 
 /* check to see if gray bars are turned off */
 	if (mac68k_machine.do_graybars) {
@@ -2393,10 +2439,11 @@ gray_bar()
 			((u_long *)videoaddr)[gray_nextaddr++] = 0x00000000;
 	}
 
-	__asm __volatile ("	movl %sp@+,%d1;
-				movl %sp@+,%d0;
-				movl %sp@+,%a1;
-				movl %sp@+,%a0");
+	__asm __volatile (
+			"	movl %sp@+,%d1;"
+			"	movl %sp@+,%d0;"
+			"	movl %sp@+,%a1;"
+			"	movl %sp@+,%a0");
 }
 #endif
 
@@ -2786,17 +2833,19 @@ printstar(void)
 	 * Be careful as we assume that no registers are clobbered
 	 * when we call this from assembly.
 	 */
-	__asm __volatile ("	movl %a0,%sp@-;
-				movl %a1,%sp@-;
-				movl %d0,%sp@-;
-				movl %d1,%sp@-");
+	__asm __volatile (
+			"	movl %a0,%sp@-;"
+			"	movl %a1,%sp@-;"
+			"	movl %d0,%sp@-;"
+			"	movl %d1,%sp@-");
 
 	/* printf("*"); */
 
-	__asm __volatile ("	movl %sp@+,%d1;
-				movl %sp@+,%d0;
-				movl %sp@+,%a1;
-				movl %sp@+,%a0");
+	__asm __volatile (
+			"	movl %sp@+,%d1;"
+			"	movl %sp@+,%d0;"
+			"	movl %sp@+,%a1;"
+			"	movl %sp@+,%a0");
 }
 
 /*

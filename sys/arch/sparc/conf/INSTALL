@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.26.2.3 2002/03/16 15:59:44 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.26.2.4 2002/06/23 17:41:41 jdolecek Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -6,6 +6,8 @@
 # leave as much disabled as possible.
 
 include "arch/sparc/conf/std.sparc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -17,7 +19,7 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 ## The miniroot size must be kept in sync manually with the size of
 ## the `ramdisk' image (which is built in distrib/sparc/ramdisk).
-options 	MEMORY_DISK_SIZE=1360	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=1360	# size of memory disk, in blocks
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 
@@ -71,9 +73,10 @@ config		netbsd	root on ? type ?
 ## Loadable kernel module support; still under development.
 #options 	LKM
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-## NFS boot options; default on sparc is the bootparam protocol
+## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP

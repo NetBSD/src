@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.2.2.1 2002/01/10 19:49:37 thorpej Exp $ */
+/*	$NetBSD: promlib.h,v 1.2.2.2 2002/06/23 17:42:32 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,5 +78,17 @@ char	*prom_getbootfile	__P((void));
 char	*prom_getbootargs	__P((void));
 int	prom_sd_target	__P((int));
 #define	callrom		prom_abort
+
+/*
+ * We also provide these, to keep #ifdef'ing down in common
+ * code.  These should be revisited.  The worst offender is
+ * our definition of CPU_ISSUN4, for the benefit of 
+ * sys/dev/sun/fb.c.
+ */
+#define PROM_OBP_V2	2
+#define PROM_OBP_V3	3
+#define PROM_OPENFIRM	4
+#define PROM_getpropint(a, b, c) (0)
+#define CPU_ISSUN4 (1)
 
 #endif /* _MACHINE_PROMLIB_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.4.2.2 2002/01/10 19:38:10 thorpej Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.4.2.3 2002/06/23 17:34:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -67,15 +67,15 @@
 #include <arm/iomd/lmc1982.h>
 
 struct audio_general {
-	vm_offset_t silence;
-	vm_offset_t beep;
+	vaddr_t silence;
+	vaddr_t beep;
 	irqhandler_t ih;
 
 	void (*intr) ();
 	void *arg;
 
-	vm_offset_t next_cur;
-	vm_offset_t next_end;
+	paddr_t next_cur;
+	paddr_t next_end;
 	void (*next_intr) ();
 	void *next_arg;
 
@@ -103,7 +103,7 @@ int lmcaudio_drain	__P((void *addr));
 void lmcaudio_timeout	__P((void *arg));
 
 int lmcaudio_intr	__P((void *arg));
-int lmcaudio_dma_program	__P((vm_offset_t cur, vm_offset_t end, void (*intr)(), void *arg));
+int lmcaudio_dma_program	__P((vaddr_t cur, vaddr_t end, void (*intr)(), void *arg));
 void lmcaudio_dummy_routine	__P((void *arg));
 int lmcaudio_rate	__P((int rate));
 void lmcaudio_shutdown	__P((void));
@@ -417,7 +417,7 @@ lmcaudio_start_output(addr, p, cc, intr, arg)
 			cc = NBPG;
 		}
 	}
-	lmcaudio_dma_program((vm_offset_t)p, (vm_offset_t)(p+cc), intr, arg);
+	lmcaudio_dma_program((vaddr_t)p, (vaddr_t)(p+cc), intr, arg);
 	return(0);
 }
 
@@ -539,8 +539,8 @@ lmcaudio_rate(rate)
 
 int
 lmcaudio_dma_program(cur, end, intr, arg)
-	vm_offset_t cur;
-	vm_offset_t end;
+	vaddr_t cur;
+	vaddr_t end;
 	void (*intr)();
 	void *arg;
 {

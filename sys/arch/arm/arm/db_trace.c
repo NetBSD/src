@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.1.4.3 2002/03/16 15:56:01 jdolecek Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.1.4.4 2002/06/23 17:34:43 jdolecek Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.1.4.3 2002/03/16 15:56:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.1.4.4 2002/06/23 17:34:43 jdolecek Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.1.4.3 2002/03/16 15:56:01 jdolecek Ex
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 
-#define INKERNEL(va)	(((vm_offset_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
+#define INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
 
 /*
  * APCS stack frames are awkward beasts, so I don't think even trying to use
@@ -117,7 +117,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				return;
 			}
 			u = p->p_addr;
-#ifdef arm26
+#ifdef acorn26
 			frame = (u_int32_t *)(u->u_pcb.pcb_sf->sf_r11);
 #else
 			frame = (u_int32_t *)(u->u_pcb.pcb_un.un_32.pcb32_r11);

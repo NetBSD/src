@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3.2.1 2001/08/03 04:12:18 lukem Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.2.2 2002/06/23 17:40:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -484,7 +484,7 @@ __SGIMIPS_copy_region(4)
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 
-#define	SGIMIPS_DMAMAP_COHERENT	0x100	/* no cache flush necessary on sync */
+#define	SGIMIPS_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

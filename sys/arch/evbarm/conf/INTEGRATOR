@@ -1,9 +1,11 @@
-#	$NetBSD: INTEGRATOR,v 1.4.2.4 2002/03/16 15:57:26 jdolecek Exp $
+#	$NetBSD: INTEGRATOR,v 1.4.2.5 2002/06/23 17:35:37 jdolecek Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
 
 include	"arch/evbarm/conf/std.integrator"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
@@ -102,7 +104,7 @@ options 	COMPAT_15	# NetBSD 1.5 compatibility.
 # Device options
 
 #options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=4000	# Size in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=4000	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
@@ -118,6 +120,7 @@ options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever to
 					# configure PCI devices
 options 	PCI_CONFIGURE_VERBOSE	# Show PCI config information
 options 	DDB_KEYCODE=0x1d	# Enter ddb on ^]
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
@@ -187,10 +190,8 @@ cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 # PCI network interfaces
 fxp*		at pci? dev ? function ?	# I82557/I82558 ethernet cards
-#de*		at pci? dev ? function ?	# DC21X4X-based ethernet cards
 #ne*		at pci? dev ? function ?	# NE2000 compat ethernet
-#tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21142
+#tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # MII/PHY support
 inphy*		at mii? phy ?			# Intel 82555 PHYs
@@ -205,8 +206,6 @@ ukphy*		at mii? phy ?			# generic unknown PHYs
 #wskbd*		at pckbd? console ?
 #pms*		at pckbc?
 #wsmouse*	at pms? mux 0
-#pmsi*		at pckbc?
-#wsmouse*	at pmsi? mux 0
 
 #vga*		at pci? dev ? function ?
 #wsdisplay*	at vga? console ?

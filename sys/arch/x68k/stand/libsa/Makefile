@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.2 2002/01/10 19:50:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10.2.3 2002/06/23 17:43:23 jdolecek Exp $
 
 S=		${.CURDIR}/../../../..
 LIBSADIR=	$S/lib/libsa
@@ -39,13 +39,7 @@ CPPFLAGS+=	-DHAVE_CHANGEDISK_HOOK
 
 .PATH:	${LIBSADIR} ${LIBKERNDIR} ${LIBZDIR}
 
-.if !make(obj)
-.BEGIN:
-	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
-	@([ -h ${MACHINE_ARCH} ] || ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH})
-.NOPATH: machine m68k
-CLEANFILES+= machine m68k
-.endif
+.include "../Makefile.booters"
 
 # only needed during build
 libinstall::

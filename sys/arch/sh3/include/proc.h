@@ -1,6 +1,7 @@
-/*	$NetBSD: proc.h,v 1.1.16.1 2002/03/16 15:59:39 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.1.16.2 2002/06/23 17:40:42 jdolecek Exp $	*/
 
 /*
+ * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1991 Regents of the University of California.
  * All rights reserved.
  *
@@ -35,17 +36,34 @@
  *	@(#)proc.h	7.1 (Berkeley) 5/15/91
  */
 
+#ifndef _SH3_PROC_H_
+#define	_SH3_PROC_H_
 /*
  * Machine-dependent part of the proc structure for sh3.
  */
+
+/* Kernel stack PTE */
+struct md_upte {
+	u_int32_t addr;
+	u_int32_t data;
+};
+
 struct mdproc {
-	struct	trapframe *md_regs;	/* registers on current frame */
-	int	md_flags;		/* machine-dependent flags */
+	struct trapframe *md_regs;	/* user context */
+	struct pcb *md_pcb;		/* pcb access address */
+	int md_flags;			/* machine-dependent flags */
+	/* u-area PTE: *2 .. SH4 data/address data array access */
+	struct md_upte md_upte[UPAGES * 2];
+	__volatile int md_astpending;	/* AST pending on return to userland */
 };
 
 /* md_flags */
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
 
 #ifdef _KERNEL
-vsize_t sh_proc0_init(vaddr_t, paddr_t, paddr_t);
-#endif
+#ifndef _LOCORE
+void sh_proc0_init(void);
+extern struct md_upte *curupte;	/* SH3 wired u-area hack */
+#endif /* _LOCORE */
+#endif /* _KERNEL */
+#endif /* !_SH3_PROC_H_ */

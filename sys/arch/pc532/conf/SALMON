@@ -1,9 +1,11 @@
-#	$NetBSD: SALMON,v 1.13.2.2 2002/02/11 20:08:48 jdolecek Exp $
+#	$NetBSD: SALMON,v 1.13.2.3 2002/06/23 17:39:04 jdolecek Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532
 #
 
 include	"arch/pc532/conf/std.pc532"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	10			# estimated number of users
 #options 	DDB			# kernel debugger; not working
@@ -15,6 +17,7 @@ options 	KTRACE			# system call tracing, a la ktrace(1)
 #options 	SYSVSHM			# System V shared memory; broken
 #options 	SHMMAXPGS=1024
 #options 	LKM			# loadable kernel modules
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # compatibility options

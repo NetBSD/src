@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.4.2.2 2002/02/11 20:09:01 jdolecek Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.4.2.3 2002/06/23 17:40:39 jdolecek Exp $	*/
 
 #ifndef _BYTE_ORDER
 #error Define _BYTE_ORDER!
@@ -19,7 +19,7 @@
 
 #define	ELF32_MACHDEP_ID	EM_SH
 
-#define ARCH_ELFSIZE		32	/* MD native binary size */
+#define	ARCH_ELFSIZE		32	/* MD native binary size */
 
 /*
  * SuperH ELF header flags.

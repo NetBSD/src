@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.6 2001/05/30 20:37:48 tsubai Exp $	*/
+/*	$NetBSD: varargs.h,v 1.6.2.1 2002/06/23 17:39:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -32,15 +32,18 @@
 #include <machine/stdarg.h>
 
 #define va_alist	__builtin_va_alist
-#define va_dcl		int __builtin_va_alist; ...
+#define va_dcl		int va_alist; ...
 
 #undef va_start
 
 #ifdef __lint__
 #define va_start(ap)	((ap) = *(va_list *)0)
+#elif __GNUC_PREREQ__(3, 0)
+#define va_start(ap)	__builtin_varargs_start((ap).__va)
 #elif __GNUC_PREREQ__(2, 95)
-#define va_start(ap)							\
-	((ap) = *(va_list *)__builtin_saveregs())
+#define va_start(ap)	((ap) = *(va_list *)__builtin_saveregs())
+#undef va_alist
+#define va_alist __va_1st_arg
 #else
 #define	va_start(ap)							\
 	((ap).__stack = __va_stack_args,				\

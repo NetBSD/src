@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.20.2.4 2002/02/11 20:08:01 jdolecek Exp $
+#	$NetBSD: files.hpcarm,v 1.20.2.5 2002/06/23 17:36:44 jdolecek Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -26,20 +26,13 @@ file	arch/arm/arm32/conf.c
 
 # Generic MD files
 file	arch/hpcarm/hpcarm/autoconf.c
-file	arch/hpcarm/hpcarm/fault.c
-file	arch/hpcarm/hpcarm/fusu.S
 file	arch/hpcarm/hpcarm/intr.c
-file	arch/hpcarm/hpcarm/mem.c
-file	arch/hpcarm/hpcarm/process_machdep.c
-file	arch/hpcarm/hpcarm/procfs_machdep.c	procfs
-file	arch/hpcarm/hpcarm/setcpsr.S
-file	arch/hpcarm/hpcarm/setstack.S
 file	arch/hpcarm/hpcarm/softintr.c
 file	arch/hpcarm/hpcarm/spl.S
 file	arch/hpcarm/hpcarm/stubs.c
 
 # HPCARM specific files
-file	arch/hpcarm/hpcarm/hpc_machdep.c	hpcarm
+file	arch/hpcarm/hpcarm/hpc_machdep.c
 
 # SA11[01]0 integrated peripherals
 # parent to sacom, gpio, fb, saost,  XXX
@@ -148,9 +141,6 @@ include "dev/i2o/files.i2o"
 
 # Include PCI stuff
 include "dev/pci/files.pci"
-
-# network devices MII bus
-include "dev/mii/files.mii"
 
 # Include USB stuff
 include "dev/usb/files.usb"

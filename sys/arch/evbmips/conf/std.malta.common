@@ -1,0 +1,16 @@
+# $NetBSD: std.malta.common,v 1.1.6.2 2002/06/23 17:35:49 jdolecek Exp $
+
+machine evbmips mips
+
+options MIPS3_ENABLE_CLOCK_INTR
+
+# Platform support
+options	MIPS_MALTA
+
+options	EXEC_ELF32	# exec ELF32 binaries
+options	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	DEFTEXTADDR="0x80100000"
+makeoptions	BOARDTYPE="malta"
+
+include "arch/evbmips/conf/files.malta"

@@ -1,4 +1,4 @@
-#	$NetBSD: std.amigappc,v 1.1 2000/05/25 22:11:58 is Exp $
+#	$NetBSD: std.amigappc,v 1.1.10.1 2002/06/23 17:34:37 jdolecek Exp $
 
 # standard amiga information
 
@@ -12,3 +12,5 @@ zbus0	at mainbus0
 
 options 	EXEC_ELF
 options 	EXEC_SCRIPT
+options 	PPC_MPC6XX
+makeoptions	PPCDIR="mpc6xx"	# Tell Makefile.powerpc what dir to use

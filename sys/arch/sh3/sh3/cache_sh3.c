@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.c,v 1.3.4.2 2002/03/16 15:59:40 jdolecek Exp $	*/
+/*	$NetBSD: cache_sh3.c,v 1.3.4.3 2002/06/23 17:40:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,8 +68,6 @@ sh3_cache_config()
 	switch (cpu_product) {
 	default:
 		/* FALLTHROUGH */
-	case CPU_PRODUCT_UNKNOWN:
-		/* FALLTHROUGH */
 	case CPU_PRODUCT_7708:
 		/* FALLTHROUGH */
 	case CPU_PRODUCT_7708S:
@@ -112,7 +110,7 @@ sh3_cache_config()
 	/* mask for extracting entry select */
 	sh_cache_entry_mask = (sh_cache_way_size - 1) & ~15/*line-mask*/;
 	/* shift for way selection (16KB/8KB) */
-	sh_cache_way_shift = 
+	sh_cache_way_shift =
 	    /* entry bits */
 	    ffs(sh_cache_size_unified / (4/*way*/ * 16/*line-size*/)) - 1
 	    /* line bits */
@@ -145,7 +143,7 @@ cache_sh3_op_line_16_nway(int n, vaddr_t va, u_int32_t bits)
 {
 	vaddr_t cca;
 	int way;
-	
+
 	/* extract entry # */
 	va &= sh_cache_entry_mask;
 
@@ -167,7 +165,7 @@ cache_sh3_op_8lines_16_nway(int n, vaddr_t va, u_int32_t bits)
 {
 	__volatile__ u_int32_t *cca;
 	int way;
-	
+
 	/* extract entry # */
 	va &= sh_cache_entry_mask;
 
@@ -192,18 +190,18 @@ sh3_cache_wbinv_all()
 	vaddr_t va;
 
 	for (va = 0; va < sh_cache_way_size; va += 16 * 8)
-		cache_sh3_op_8lines_16_nway(sh_cache_ways, va, CCA_U | CCA_V); 
+		cache_sh3_op_8lines_16_nway(sh_cache_ways, va, CCA_U | CCA_V);
 }
 
 void
 sh3_cache_wbinv_range_index(vaddr_t va, vsize_t sz)
 {
 	vaddr_t eva = round_line(va + sz);
-	
+
 	va = trunc_line(va);
-	
+
 	while ((eva - va) >= (8 * 16)) {
-		cache_sh3_op_8lines_16_nway(sh_cache_ways, va, CCA_U | CCA_V); 
+		cache_sh3_op_8lines_16_nway(sh_cache_ways, va, CCA_U | CCA_V);
 		va += 16 * 8;
 	}
 
@@ -220,7 +218,7 @@ sh3_cache_wbinv_range(vaddr_t va, vsize_t sz)
 	vaddr_t cca;
 
 	va = trunc_line(va);
-	
+
 	while (va < eva) {
 		cca = SH3_CCA | CCA_A | (va & sh_cache_entry_mask);
 		/*
@@ -229,7 +227,7 @@ sh3_cache_wbinv_range(vaddr_t va, vsize_t sz)
 		 * and write to address-array.
 		 * implicitly specified U = 0, V = 0.
 		 */
-		_reg_write_4(cca, va & CCA_TAGADDR_MASK);  
+		_reg_write_4(cca, va & CCA_TAGADDR_MASK);
 		va += 16;
 	}
 }
@@ -237,7 +235,7 @@ sh3_cache_wbinv_range(vaddr_t va, vsize_t sz)
 void
 sh3_cache_panic(vaddr_t va, vsize_t size)
 {
-	
+
 	panic("SH3 can't invalidate without write-back");
 }
 

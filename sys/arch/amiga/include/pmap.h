@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.32.2.1 2001/09/13 01:13:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.32.2.2 2002/06/23 17:34:33 jdolecek Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -120,10 +120,9 @@ struct pv_page {
 };
 
 #ifdef	_KERNEL
-pv_entry_t	pv_table;	/* array of entries, one per page */
-u_int		*Sysmap;
-char		*vmmap;		/* map for mem, dumps, etc. */
-struct pmap	kernel_pmap_store;
+extern u_int		*Sysmap;
+extern caddr_t		vmmap;		/* map for mem, dumps, etc. */
+extern struct pmap	kernel_pmap_store;
 
 #define	pmap_kernel()		(&kernel_pmap_store)
 

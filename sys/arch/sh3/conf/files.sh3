@@ -1,18 +1,19 @@
-#	$NetBSD: files.sh3,v 1.12.2.3 2002/03/16 15:59:34 jdolecek Exp $
-#
-# new style config file for sh3 architecture
+#	$NetBSD: files.sh3,v 1.12.2.4 2002/06/23 17:40:33 jdolecek Exp $
 #
 
-defparam PCLOCK
+defflag	opt_cputype.h		SH3 SH4
+
+defparam	PCLOCK
+defflag	opt_kstack_debug.h	KSTACK_DEBUG
 
 file	arch/sh3/sh3/db_disasm.c	ddb
 file	arch/sh3/sh3/db_interface.c	ddb | kgdb
 file	arch/sh3/sh3/db_memrw.c		ddb | kgdb
 file	arch/sh3/sh3/db_trace.c		ddb
-file	arch/sh3/sh3/sh3disasm.c	ddb
 file	arch/sh3/sh3/in_cksum.S		inet
 file	netinet/in4_cksum.c		inet
 file	arch/sh3/sh3/kgdb_machdep.c	kgdb
+file	arch/sh3/sh3/exception.c
 file	arch/sh3/sh3/exception_vector.S
 file	arch/sh3/sh3/Locore.c
 file	arch/sh3/sh3/locore_subr.S
@@ -22,7 +23,6 @@ file	arch/sh3/sh3/pmap.c
 file	arch/sh3/sh3/process_machdep.c
 file	arch/sh3/sh3/sh3_machdep.c
 file	arch/sh3/sh3/sys_machdep.c
-file	arch/sh3/sh3/trap.c
 file	arch/sh3/sh3/vm_machdep.c
 file	arch/sh3/sh3/cache.c
 file	arch/sh3/sh3/cache_sh3.c	sh3
@@ -32,18 +32,14 @@ file	arch/sh3/sh3/mmu_sh3.c		sh3
 file	arch/sh3/sh3/mmu_sh4.c		sh4
 file	arch/sh3/sh3/clock.c
 file	arch/sh3/sh3/devreg.c		sh3 & sh4
+file	arch/sh3/sh3/interrupt.c
 file	dev/clock_subr.c
 file	dev/cninit.c
 file	dev/cons.c
 
-#
-# Compatibility modules
-#
-
-# Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/sh3/sh3/compat_13_machdep.c	compat_13
+file	arch/sh3/sh3/procfs_machdep.c	procfs
 
 #
 # Executable file format
 #
-file arch/sh3/sh3/coff_exec.c	exec_coff
+file arch/sh3/sh3/coff_exec.c		exec_coff

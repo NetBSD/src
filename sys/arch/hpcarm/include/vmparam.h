@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4.2.4 2002/03/16 15:57:54 jdolecek Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4.2.5 2002/06/23 17:36:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,25 +44,16 @@
  * Address space constants
  */
 
-#ifndef HPCARM
 /*
  * The line between user space and kernel space
- * Mappings >= KERNEL_SPACE_START are constant across all processes
+ * Mappings >= KERNEL_BASE are constant across all processes
  */
-#define	KERNEL_SPACE_START	0xf0000000
+#define	KERNEL_BASE		0xc0000000
 
 /* Various constants used by the MD code*/
-#define	KERNEL_BASE		0xf0000000
-#define	KERNEL_TEXT_BASE	KERNEL_BASE
-#define	ALT_PAGE_TBLS_BASE	0xf0c00000
-#define	KERNEL_VM_BASE		0xf1000000
-#else /* defined(HPCARM) */
-#define	KERNEL_SPACE_START	0xc0000000
-#define	KERNEL_BASE		0xc0040000
-#define	KERNEL_TEXT_BASE	KERNEL_BASE
-#define	ALT_PAGE_TBLS_BASE	0xc0800000
-#define	KERNEL_VM_BASE		0xc0c00000
-#endif /* defined(HPCARM) */
+#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00040000)
+#define	APTE_BASE		(KERNEL_BASE + 0x00800000)
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x00c00000)
 
 /*
  * The Kernel VM Size varies depending on the machine depending on how
@@ -73,11 +64,7 @@
  * You only need to increase these values if you find that the number of
  * buffers is being limited due to lack of VA space.
  */
-#ifdef HPCARM
 #define	KERNEL_VM_SIZE		0x05000000
-#endif
-
-#define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
 
 /*
  * Override the default pager_map size, there's not enough KVA.

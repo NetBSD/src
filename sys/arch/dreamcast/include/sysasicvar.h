@@ -1,4 +1,4 @@
-/*	$NetBSD: sysasicvar.h,v 1.1 2001/04/24 19:43:24 marcus Exp $	*/
+/*	$NetBSD: sysasicvar.h,v 1.1.4.1 2002/06/23 17:35:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,23 +39,13 @@
 #ifndef _DREAMCAST_SYSASICVAR_H_
 #define	_DREAMCAST_SYSASICVAR_H_
 
-#define SYSASIC_IRQ_LEVEL_13  0
-#define SYSASIC_IRQ_LEVEL_11  1
-#define SYSASIC_IRQ_LEVEL_9   2
-#define SYSASIC_IRQ_LEVEL_MAX 2
-
 #define SYSASIC_EVENT_GDROM  32
 #define SYSASIC_EVENT_AICA   33
 #define SYSASIC_EVENT_EXT    35
 #define SYSASIC_EVENT_MAX    63
 
-
-void	*sysasic_intr_establish __P((int irq, int event,
-	    int level, int (*ih_fun)(void *), void *ih_arg));
-void    sysasic_intr_disestablish __P((void *ic, void *arg));
-
-void	sysasic_mask_irq __P((int level));
-void	sysasic_unmask_irq __P((int level));
+void	*sysasic_intr_establish(int, int (*ih_fun)(void *), void *);
+void    sysasic_intr_disestablish(void *);
 
 #endif /* !_DREAMCAST_SYSASICVAR_H_ */
 

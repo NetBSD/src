@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.10 2001/05/26 21:32:30 minoura Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.10.2.1 2002/06/23 17:43:17 jdolecek Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -117,11 +117,9 @@ rtc_attach(parent, self, aux)
 
 
 /*
- * x68k/clock.c calls thru this vector, if it is set, to read
+ * x68k/clock.c calls thru the get/set tod vector, if it is set, to read
  * the realtime clock.
  */
-time_t (*gettod) __P((void));
-int (*settod) __P((long));
 
 int
 rtclockinit()

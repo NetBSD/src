@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_6050.c,v 1.1.2.1 2002/03/16 15:59:23 jdolecek Exp $	*/
+/*	$NetBSD: ibm_6050.c,v 1.1.2.2 2002/06/23 17:39:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,17 +41,25 @@
 #include <machine/intr.h>
 #include <machine/platform.h>
 
+static void pci_intr_fixup_ibm_6050(int, int, int *);
+
+static const char *obiodevs_ibm_6050[] = {
+	"wdc",
+	NULL
+};
+
 struct platform platform_ibm_6050 = {
 	"IBM PPS Model 6050/6070 (E)",		/* model */
 	platform_generic_match,			/* match */
 	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
 	pci_intr_fixup_ibm_6050,		/* pci_intr_fixup */
-	ext_intr_ivr,				/* ext_intr */
+	init_intr_ivr,				/* init_intr */
 	cpu_setup_ibm_generic,			/* cpu_setup */
-	reset_ibm_generic,			/* reset */
+	reset_prep_generic,			/* reset */
+	obiodevs_ibm_6050,			/* obiodevs */
 };
 
-void
+static void
 pci_intr_fixup_ibm_6050(int bus, int dev, int *line)
 {
 	if (bus != 0)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.8.2.4 2002/03/16 15:57:02 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.8.2.5 2002/06/23 17:35:28 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,6 +20,8 @@
 
 include		"arch/cats/conf/std.cats"
 
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
 # estimated number of users
 
 maxusers	32
@@ -37,9 +39,6 @@ options 	NTP		# NTP phase/frequency locked loop
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
 makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
-
-# Architecture options
-options 	FOOTBRIDGE	# We have DC21285 'Footbridge' core logic
 
 # FPA options
 
@@ -122,7 +121,7 @@ options 	SYSVSHM		# System V-like memory sharing
 # Device options
 
 #options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
@@ -137,6 +136,7 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
 options 	PMAP_STATIC_L1S=128
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # wscons options
@@ -255,7 +255,6 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # PCI network interfaces
-de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3C590 ethernet cards
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
@@ -268,11 +267,7 @@ ne*	at pci? dev ? function ?	# NE2000 compat ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
-tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
@@ -401,10 +396,8 @@ isapnp0	at isa?
 pckbc0	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
 wskbd*		at pckbd? console ?
 wsmouse*	at pms?
-wsmouse*	at pmsi?
 
 pcppi0	at isa?
 sysbeep0	at pcppi?

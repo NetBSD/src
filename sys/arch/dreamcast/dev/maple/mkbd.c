@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.8.2.3 2002/01/10 19:41:57 thorpej Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.8.2.4 2002/06/23 17:35:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -56,16 +56,15 @@
 #include <dreamcast/dev/maple/mkbdvar.h>
 #include <dreamcast/dev/maple/mkbdmap.h>
 
-
 /*
  * Function declarations.
  */
-static	int mkbdmatch __P((struct device *, struct cfdata *, void *));
-static	void mkbdattach __P((struct device *, struct device *, void *));
+static	int mkbdmatch(struct device *, struct cfdata *, void *);
+static	void mkbdattach(struct device *, struct device *, void *);
 
-int	mkbd_enable __P((void *, int));
-void	mkbd_set_leds __P((void *, int));
-int	mkbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	mkbd_enable(void *, int);
+void	mkbd_set_leds(void *, int);
+int	mkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 struct wskbd_accessops mkbd_accessops = {
 	mkbd_enable,
@@ -73,11 +72,11 @@ struct wskbd_accessops mkbd_accessops = {
 	mkbd_ioctl,
 };
 
-static void mkbd_intr __P((struct mkbd_softc *, struct mkbd_condition *, int));
+static void mkbd_intr(struct mkbd_softc *, struct mkbd_condition *, int);
 
-void	mkbd_cngetc __P((void *, u_int *, int *));
-void	mkbd_cnpollc __P((void *, int));
-int	mkbd_cnattach __P((void));
+void	mkbd_cngetc(void *, u_int *, int *);
+void	mkbd_cnpollc(void *, int);
+int	mkbd_cnattach(void);
 
 struct wskbd_consops mkbd_consops = {
 	mkbd_cngetc,
@@ -99,20 +98,15 @@ struct cfattach mkbd_ca = {
 };
 
 static int
-mkbdmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mkbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
-	return (ma->ma_function & MAPLE_FUNC_KEYBOARD) != 0;
+	return ((ma->ma_function & MAPLE_FUNC_KEYBOARD) != 0);
 }
 
 static void
-mkbdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mkbdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mkbd_softc *sc = (struct mkbd_softc *) self;
 	struct maple_attach_args *ma = aux;
@@ -157,55 +151,43 @@ mkbdattach(parent, self, aux)
 #endif
 
 	maple_set_condition_callback(parent, sc->sc_port, sc->sc_subunit,
-	    MAPLE_FUNC_KEYBOARD,
-	    (void (*) (void *, void *, int)) mkbd_intr,
-	    sc);
+	    MAPLE_FUNC_KEYBOARD,(void (*) (void *, void *, int)) mkbd_intr, sc);
 }
 
 
 
 int
-mkbd_enable(v, on)
-	void *v;
-	int on;
+mkbd_enable(void *v, int on)
 {
 
-	return 0;
+	return (0);
 }
 
 void
-mkbd_set_leds(v, on)
-	void *v;
-	int on;
+mkbd_set_leds(void *v, int on)
 {
 }
 
 int
-mkbd_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+mkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *) data = WSKBD_TYPE_USB;	/* XXX */
-		return 0;
+		return (0);
 	case WSKBDIO_SETLEDS:
-		return 0;
+		return (0);
 	case WSKBDIO_GETLEDS:
 		*(int *) data = 0;
-		return 0;
+		return (0);
 	case WSKBDIO_BELL:
 	case WSKBDIO_COMPLEXBELL:
-		return 0;
+		return (0);
 	}
 
-	return -1;
+	return (EPASSTHROUGH);
 }
-
 
 int
 mkbd_cnattach()
@@ -214,7 +196,7 @@ mkbd_cnattach()
 	wskbd_cnattach(&mkbd_consops, NULL, &mkbd_keymapdata);
 	mkbd_console_initted = 1;
 
-	return 0;
+	return (0);
 }
 
 static int polledkey;
@@ -223,28 +205,25 @@ extern int maple_polling;
 #define SHIFT_KEYCODE_BASE 0xe0
 #define UP_KEYCODE_FLAG 0x1000
 
-#define KEY_UP(n) do { \
-	if (maple_polling) \
-		polledkey = (n)|UP_KEYCODE_FLAG; \
-	else \
-		wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_UP, (n)); \
-	} while (0)
+#define KEY_UP(n) do {							\
+	if (maple_polling)						\
+		polledkey = (n)|UP_KEYCODE_FLAG;			\
+	else								\
+		wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_UP, (n));	\
+	} while (/*CONSTCOND*/0)
 
-#define KEY_DOWN(n) do { \
-	if (maple_polling) \
-		polledkey = (n); \
-	else \
+#define KEY_DOWN(n) do {						\
+	if (maple_polling)						\
+		polledkey = (n);					\
+	else								\
 		wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_DOWN, (n)); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
-#define SHIFT_UP(n) KEY_UP((n)|SHIFT_KEYCODE_BASE)
-#define SHIFT_DOWN(n) KEY_DOWN((n)|SHIFT_KEYCODE_BASE)
+#define SHIFT_UP(n)	KEY_UP((n) | SHIFT_KEYCODE_BASE)
+#define SHIFT_DOWN(n)	KEY_DOWN((n) | SHIFT_KEYCODE_BASE)
 
 static void
-mkbd_intr(sc, kbddata, sz)
-	struct mkbd_softc *sc;
-	struct mkbd_condition *kbddata;
-	int sz;
+mkbd_intr(struct mkbd_softc *sc, struct mkbd_condition *kbddata, int sz)
 {
 
 	if (sz >= sizeof(struct mkbd_condition)) {
@@ -282,10 +261,7 @@ mkbd_intr(sc, kbddata, sz)
 }
 
 void
-mkbd_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+mkbd_cngetc(void *v, u_int *type,int *data)
 {
 	int key;
 
@@ -308,8 +284,6 @@ mkbd_cngetc(v, type, data)
 }
 
 void
-mkbd_cnpollc(v, on)
-	void *v;
-	int on;
+mkbd_cnpollc(void *v, int on)
 {
 }

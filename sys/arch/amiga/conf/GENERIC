@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.160.2.4 2002/03/16 15:55:47 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.160.2.5 2002/06/23 17:34:23 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -34,7 +34,9 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.160.2.4 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.160.2.5 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -184,6 +186,7 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 #endif
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USERCONF	# userconf(4) support
 #ifndef INSTALL_CONFIGURATION
 options 	NTP		# NTP phase/frequency locked loop
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -200,7 +203,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
-#options 	PANICBUTTON	# Forced crash via keypress (???)
+#options 	PANICBUTTON	# Forced crash via keypress (?)
 
 #
 # Amiga specific options
@@ -244,6 +247,11 @@ options 	GRF_SUPER72	# AGA Super-72
 #endif
 #options 	KFONT_8X11	# 8x11 font
 
+# select a font for the console according to the character set and keymap
+# you want to use
+options        KFONT_CONS_ISO8859_1
+#options         KFONT_CONS_ISO8859_2
+
 # This is how you would tell the kernel the A2410 oscillator frequencies:
 # The used frequencies are the defaults, and do not need option setting
 #options 	ULOWELL_OSC1=36000000
@@ -279,7 +287,7 @@ grfrt0		at zbus0		# retina II
 #endif
 grfrh0		at zbus0		# retina III
 #ifdef AMIGA_CONFIGURATION
-grfcl*		at zbus0		# Picasso II/Piccalo/Spectrum
+grfcl*		at zbus0		# Picasso II/Piccolo/Spectrum
 grful0		at zbus0		# A2410
 grfcv0		at zbus0		# CyberVision 64
 grfet*		at zbus0		# Tseng (oMniBus, Domino, Merlin)

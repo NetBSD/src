@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.1.6.2 2002/03/16 15:56:02 jdolecek Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.1.6.3 2002/06/23 17:34:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe.
@@ -99,7 +99,7 @@ ENTRY(copyin)
  */
 
 Lpgbase:
-	.long	PROCESS_PAGE_TBLS_BASE
+	.long	PTE_BASE
 	
 ENTRY(copyout)
 	/* Validate user and kernel addresses */

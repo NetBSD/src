@@ -1,4 +1,4 @@
-# $NetBSD: std.alpha,v 1.19 2000/06/22 20:27:49 fvdl Exp $
+# $NetBSD: std.alpha,v 1.19.4.1 2002/06/23 17:34:11 jdolecek Exp $
 #
 # Standard/required configuration info for NetBSD/alpha.
 

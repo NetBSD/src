@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.31 2001/06/12 13:22:06 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.31.2.1 2002/06/23 17:43:05 jdolecek Exp $	*/
 
 /* 
  * :set tabs=4
@@ -69,7 +69,7 @@
 
 #include "ioconf.h"
 
-extern	label_t *db_recover;
+db_regs_t ddb_regs;
 
 void	kdbprinttrap(int, int);
 
@@ -314,7 +314,7 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 	db_expr_t	diff;
 	db_sym_t	sym;
 	char		*symname;
-	extern int	sret;
+	extern int	sret, etext;
 
 	(*pr)("Stack traceback : \n");
 	if (IN_USERLAND(fp)) {
@@ -363,9 +363,14 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 
 		diff = INT_MAX;
 		symname = NULL;
-		sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
-		db_symbol_values(sym, &symname, 0);
-		(*pr)("0x%lx: %s+0x%lx(", fp, symname, diff);
+		if (pc >= 0x80000000 && pc < (u_int) &etext) {
+			sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
+			db_symbol_values(sym, &symname, 0);
+		}
+		if (symname != NULL)
+			(*pr)("0x%lx: %s+0x%lx(", fp, symname, diff);
+		else
+			(*pr)("0x%lx: %#x(", fp, pc);
 
 		/* First get the frame that called this function ... */
 		tmp_frame = fp->vax_fp;

@@ -1,4 +1,4 @@
-/*	$Id: readufs_lfs.c,v 1.1.6.2 2002/01/10 19:50:29 thorpej Exp $	*/
+/*	from Id: readufs_lfs.c,v 1.5 2002/01/26 16:26:44 itohy Exp 	*/
 
 /*
  * FS specific support for 4.4BSD Log-structured Filesystem
@@ -32,58 +32,112 @@ static struct dinode	ifile_dinode;
 int
 try_lfs()
 {
-	struct ufs_info *ufsinfo = &ufs_info;
+	struct ufs_info	*ufsinfo = &ufs_info;
 	struct dlfs	sblk, sblk2;
 	struct dlfs	*s = &sblk;
+	ufs_daddr_t	sbpos;
+	int		fsbshift;
 
 #ifdef DEBUG_WITH_STDIO
 	printf("trying LFS\n");
 #endif
+	sbpos =  btodb(LFS_LABELPAD);
+
 	/* read primary superblock */
-	RAW_READ(&sblk, btodb(LFS_LABELPAD), sizeof sblk);
+	for (;;) {
+#ifdef DEBUG_WITH_STDIO
+		printf("LFS: reading primary sblk at: 0x%x\n", sbpos);
+#endif
+		RAW_READ(&sblk, sbpos, sizeof sblk);
 
 #ifdef DEBUG_WITH_STDIO
-	printf("LFS: sblk: magic: 0x%x, version: %d\n",
-		sblk.dlfs_magic, sblk.dlfs_version);
+		printf("LFS: sblk: magic: 0x%x, version: %d\n",
+			sblk.dlfs_magic, sblk.dlfs_version);
 #endif
 
-	if (sblk.dlfs_magic != LFS_MAGIC)
-		return 1;
+		if (sblk.dlfs_magic != LFS_MAGIC)
+			return 1;
 
 #ifdef DEBUG_WITH_STDIO
+		printf("LFS: bsize %d, fsize %d, bshift %d, blktodb %d, fsbtodb %d, inopf %d, inopb %d\n",
+		    sblk.dlfs_bsize, sblk.dlfs_fsize,
+		    sblk.dlfs_bshift, sblk.dlfs_blktodb, sblk.dlfs_fsbtodb,
+		    sblk.dlfs_inopf, sblk.dlfs_inopb);
+#endif
+		if ((fsi_lfs.version = sblk.dlfs_version) == 1) {
+			fsbshift = 0;
+			break;
+		} else {
+			ufs_daddr_t	sbpos1;
+#if 0
+			fsbshift = sblk.dlfs_bshift - sblk.dlfs_blktodb + sblk.dlfs_fsbtodb - DEV_BSHIFT;
+#endif
+			fsbshift = sblk.dlfs_fsbtodb;
+			sbpos1 = sblk.dlfs_sboffs[0] << fsbshift;
+			if (sbpos == sbpos1)
+				break;
+#ifdef DEBUG_WITH_STDIO
+			printf("LFS: correcting primary sblk location\n");
+#endif
+			sbpos = sbpos1;
+		}
+	}
+
+#ifdef DEBUG_WITH_STDIO
+	printf("fsbshift: %d\n", fsbshift);
 	printf("sboff[1]: %d\n", sblk.dlfs_sboffs[1]);
 #endif
 
 	if (sblk.dlfs_sboffs[1] > 0) {
+#ifdef DEBUG_WITH_STDIO
+		printf("LFS: reading secondary sblk at: 0x%x\n",
+		    sblk.dlfs_sboffs[1] << fsbshift);
+#endif
 		/* read secondary superblock */
-		RAW_READ(&sblk2,
-			 (unsigned int) sblk.dlfs_sboffs[1], sizeof sblk2);
+		RAW_READ(&sblk2, sblk.dlfs_sboffs[1] << fsbshift, sizeof sblk2);
 
 #ifdef DEBUG_WITH_STDIO
 		printf("LFS: sblk2: magic: 0x%x, version: %d\n",
 			sblk2.dlfs_magic, sblk2.dlfs_version);
 #endif
 
-		if (sblk2.dlfs_magic == LFS_MAGIC &&
-		    sblk.dlfs_tstamp > sblk2.dlfs_tstamp)
-			s = &sblk2;
+		if (sblk2.dlfs_magic == LFS_MAGIC) {
+			if (fsi_lfs.version == 1) {
+				if (sblk.dlfs_otstamp > sblk2.dlfs_otstamp)
+					s = &sblk2;
+			} else {
+				if (sblk.dlfs_serial > sblk2.dlfs_serial)
+					s = &sblk2;
+			}
+		}
 	}
 
 	/* This partition looks like an LFS. */
 	fsi.get_inode = get_lfs_inode;
-	/* Disk addr in inode is in disk sector --- no shifting. */
-	fsi.iblkshift = 0;
+	/*
+	 * version 1: disk addr is in disk sector --- no shifting
+	 * version 2: disk addr is in fragment
+	 */
+	fsi.fsbtodb = fsbshift;
 
 	/* Get information from the superblock. */
 	fsi.bsize = s->dlfs_bsize;
-	fsi.fsbtodb = s->dlfs_fsbtodb;
 	fsi.nindir = s->dlfs_nindir;
-
 	fsi_lfs.idaddr = s->dlfs_idaddr;
+#if 0
+	fsi_lfs.ibsize = (fsi_lfs.version == 1) ? s->dlfs_bsize : s->dlfs_fsize;
+#else	/* simplify calculation to reduce code size */
+	/* use fsi.bsize (larger then needed for v2, but probably no harm) */
+#endif
+
+	/*
+	 * version 1: number of inode per block
+	 * version 2: number of inode per fragment (but in dlfs_inopb)
+	 */
 	fsi_lfs.inopb = s->dlfs_inopb;
+
 	fsi_lfs.ifpb = s->dlfs_ifpb;
-	fsi_lfs.cleansz = s->dlfs_cleansz;
-	fsi_lfs.segtabsz = s->dlfs_segtabsz;
+	fsi_lfs.ioffset = s->dlfs_cleansz + s->dlfs_segtabsz;
 
 	/* ifile is always used to look-up other inodes, so keep its inode. */
 	if (get_lfs_inode(LFS_IFILE_INUM, &ifile_dinode))
@@ -105,22 +159,24 @@ get_lfs_inode(ino, dibuf)
 	struct ufs_info *ufsinfo = &ufs_info;
 	ufs_daddr_t daddr;
 	char *buf = alloca(fsi.bsize);
-	struct dinode *di;
-	int cnt;
+	struct dinode *di, *diend;
+	int i;
 
 	/* Get fs block which contains the specified inode. */
 	if (ino == LFS_IFILE_INUM)
 		daddr = fsi_lfs.idaddr;
 	else {
 #ifdef DEBUG_WITH_STDIO
-	printf("LFS: ino: %d\nifpb: %d, cleansz: %d, segtabsz: %d, bsize: %d\n",
-	    ino, fsi_lfs.ifpb, fsi_lfs.cleansz, fsi_lfs.segtabsz, fsi.bsize);
+		printf("LFS: ino: %d\nifpb: %d, bsize: %d\n",
+			ino, fsi_lfs.ifpb, fsi.bsize);
 #endif
 		ufs_read(&ifile_dinode, buf, 
-			 ino / fsi_lfs.ifpb + fsi_lfs.cleansz +
-				fsi_lfs.segtabsz,
+			 ino / fsi_lfs.ifpb + fsi_lfs.ioffset,
 			 fsi.bsize);
-		daddr = ((IFILE *) buf + ino % fsi_lfs.ifpb)->if_daddr;
+		i = ino % fsi_lfs.ifpb;
+		daddr = (fsi_lfs.version == 1) ?
+		    ((IFILE_V1 *) buf + i)->if_daddr
+		    : ((IFILE *) buf + i)->if_daddr;
 	}
 #ifdef DEBUG_WITH_STDIO
 	printf("LFS(%d): daddr: %d\n", ino, daddr);
@@ -130,13 +186,19 @@ get_lfs_inode(ino, dibuf)
 		return 1;
 
 	/* Read the inode block. */
-	RAW_READ(buf, (unsigned int) daddr, fsi.bsize);
+	RAW_READ(buf, daddr << fsi.fsbtodb,
+#if 0
+	fsi_lfs.ibsize
+#else	/* simplify calculation to reduce code size */
+	fsi.bsize
+#endif
+	);
 
 	/* Search for the inode. */
-	cnt = fsi_lfs.inopb;
-	di = (struct dinode *) buf + (cnt - 1);
+	di = (struct dinode *) buf;
+	diend = di + fsi_lfs.inopb;
 
-	for ( ; cnt--; di--)
+	for ( ; di < diend; di++)
 		if (di->di_inumber == ino)
 			goto found;
 	/* not found */

@@ -4,10 +4,10 @@
 |	written by Yasha (ITOH Yasufumi)
 |	public domain
 |
-|	$NetBSD: execkern.S,v 1.2 2001/06/12 16:57:27 minoura Exp $
+|	$NetBSD: execkern.S,v 1.2.2.1 2002/06/23 17:43:22 jdolecek Exp $
 
-/* XXX this value is from <machine/exec_aout.h> */
-#define __LDPGSZ	8192
+#include <machine/asm.h>
+#include "execkern.h"
 
 #define MFP		0x00E88000	/* MFP */
 #define MFP_IERA	(MFP+0x07)	/* (B) interrupt enable reg A */
@@ -19,16 +19,20 @@
 #define SRAM_MEMSZ	(SRAM + 8)	/* (L) size of main memory */
 #endif
 
-|	%a3+0	kernel image top address (a.out header is excluded)
-|	%a3+4	load address
-|	%a3+8	text size
-|	%a3+12	data size
-|	%a3+16	bss size
-|	%a3+20	symbol size
-|	%a3+24	(reserved) (%d5)
-|	%a3+28	bootdev (%d6)
-|	%a3+32	boothowto (%d7)
-|	%a3+36	entry address (absolute address)
+|	a3+0	load address
+|
+|	a3+4	section #1 image top address
+|	a3+8	section #1 size
+|	a3+12	section #1 gap size
+|	  :	  :
+|	a3+n-12	section #XK_NSEC image top address
+|	a3+n-8	section #XK_NSEC size
+|	a3+n-4	section #XK_NSEC gap size
+|
+|	a3+n	(reserved) (d5)
+|	a3+n+4	bootdev (d6)
+|	a3+n+8	boothowto (d7)
+|	a3+n+12	entry address (absolute address)
 
 #ifndef XK_NO_C_INTERFACE
 	.text
@@ -38,7 +42,6 @@ ENTRY_NOPROFILE(exec_kernel)
 	moveal	%sp@+,%a3		| struct execkern_arg *
 #endif
 
-	moveal	%a3@+,%a0		| image address
 	moveal	%a3@+,%a1		| load address
 	movel	%a1,%d3
 
@@ -46,41 +49,16 @@ ENTRY_NOPROFILE(exec_kernel)
 	| copy image
 	|
 
-	| copy text segment
-	movel	%a3@+,%d0		| text size
+	movel	#XK_NSEC-1,%d2
+Lloop:
+	moveal	%a3@+,%a0		| section image address
+	movel	%a3@+,%d0		| section size
 	movel	%d0,%d1
 	jbsr	copy
-
-	| clear gap between text and data
-	negl	%d1
-	andil	#__LDPGSZ-1,%d1
-	movel	%d1,%d0			| gap size between text and data
+	movel	%a3@+,%d0		| section gap
 	jbsr	clear
 
-	| copy data segment
-	movel	%a3@+,%d0		| data size
-	jbsr	copy
-
-	| clear bss
-	movel	%a3@+,%d0		| bss size
-	jbsr	clear
-
-	| copy symbol table
-	movel	%a3@+,%d0		| symbol table size
-	movel	%d0,%a1@+
-	beqs	Lnotable
-	jbsr	copy
-
-	| copy string table size
-	movel	%a0@+,%d0
-	movel	%d0,%a1@+
-	beqs	Lnotable
-
-	| copy string table
-	subql	#4,%d0			| table size is already copied
-	jbsr	copy
-
-Lnotable:
+	dbra	%d2,Lloop
 
 	| stop MFP interrupts (for compatibility)
 	clrb	MFP_IERA
@@ -95,7 +73,7 @@ Lnotable:
 	addql	#3,%d0
 	andib	#0xFC,%d0
 	subl	%d3,%d0
-	movel	%d0,%sp@-		| arg #3 (kernel size)
+	movel	%d0,%sp@-		| arg #3 (end of kernel)
 	movel	SRAM_MEMSZ,%sp@-	| arg #2 (RAM size from SRAM)
 	movel	%d3,%sp@-		| arg #1 (load address)
 

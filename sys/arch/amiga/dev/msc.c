@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.19.2.1 2002/02/11 20:07:04 jdolecek Exp $ */
+/*	$NetBSD: msc.c,v 1.19.2.2 2002/06/23 17:34:31 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.19.2.1 2002/02/11 20:07:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.19.2.2 2002/06/23 17:34:31 jdolecek Exp $");
 
 #include "msc.h"
 
@@ -750,13 +750,11 @@ mscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return ENXIO;
 
 	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p);
-
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -820,7 +818,7 @@ mscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			break;
 
 		default:
-			return (ENOTTY);
+			return (EPASSTHROUGH);
 	}
 
 	return (0);

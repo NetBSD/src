@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh3.h,v 1.2.8.2 2002/03/16 15:59:38 jdolecek Exp $	*/
+/*	$NetBSD: mmu_sh3.h,v 1.2.8.3 2002/06/23 17:40:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,53 +37,53 @@
  */
 
 #ifndef _SH3_MMU_SH3_H_
-#define _SH3_MMU_SH3_H_
+#define	_SH3_MMU_SH3_H_
 #include <sh3/devreg.h>
 
 /* 128-entry 4-way set-associative */
-#define SH3_MMU_WAY			4
-#define SH3_MMU_ENTRY			32
+#define	SH3_MMU_WAY			4
+#define	SH3_MMU_ENTRY			32
 
-#define SH3_PTEH			0xfffffff0
-#define   SH3_PTEH_ASID_MASK		  0x0000000f
-#define   SH3_PTEH_VPN_MASK		  0xfffffc00
-#define SH3_PTEL			0xfffffff4
-#define   SH3_PTEL_HWBITS		  0x1ffff17e /* [28:12][8][6:1] */
-#define SH3_TTB				0xfffffff8
-#define SH3_TEA				0xfffffffc
-#define SH3_MMUCR			0xffffffe0
-#define   SH3_MMUCR_AT			  0x00000001
-#define   SH3_MMUCR_IX			  0x00000002
-#define   SH3_MMUCR_TF			  0x00000004
-#define   SH3_MMUCR_RC			  0x00000030
-#define   SH3_MMUCR_SV			  0x00000100
+#define	SH3_PTEH			0xfffffff0
+#define	  SH3_PTEH_ASID_MASK		  0x000000ff
+#define	  SH3_PTEH_VPN_MASK		  0xfffffc00
+#define	SH3_PTEL			0xfffffff4
+#define	  SH3_PTEL_HWBITS		  0x1ffff17e /* [28:12][8][6:1] */
+#define	SH3_TTB				0xfffffff8
+#define	SH3_TEA				0xfffffffc
+#define	SH3_MMUCR			0xffffffe0
+#define	  SH3_MMUCR_AT			  0x00000001
+#define	  SH3_MMUCR_IX			  0x00000002
+#define	  SH3_MMUCR_TF			  0x00000004
+#define	  SH3_MMUCR_RC			  0x00000030
+#define	  SH3_MMUCR_SV			  0x00000100
 
-/* 
- * memory-mapped TLB 
+/*
+ * memory-mapped TLB
  */
 /* Address array */
-#define SH3_MMUAA			0xf2000000
+#define	SH3_MMUAA			0xf2000000
 /* address specification */
-#define   SH3_MMU_VPN_SHIFT		  12
-#define   SH3_MMU_VPN_MASK		  0x0001f000	/* [16:12] */
-#define   SH3_MMU_WAY_SHIFT		  8
-#define   SH3_MMU_WAY_MASK		  0x00000300	/* [9:8] */
+#define	  SH3_MMU_VPN_SHIFT		  12
+#define	  SH3_MMU_VPN_MASK		  0x0001f000	/* [16:12] */
+#define	  SH3_MMU_WAY_SHIFT		  8
+#define	  SH3_MMU_WAY_MASK		  0x00000300	/* [9:8] */
 /* data specification */
-#define   SH3_MMU_D_VALID		  0x00000100
-#define   SH3_MMUAA_D_VPN_MASK_1K	  0xfffe0c00	/* [31:17][11:10] */
-#define   SH3_MMUAA_D_VPN_MASK_4K	  0xfffe0000	/* [31:17] */
-#define   SH3_MMUAA_D_ASID_MASK		  0x0000000f
+#define	  SH3_MMU_D_VALID		  0x00000100
+#define	  SH3_MMUAA_D_VPN_MASK_1K	  0xfffe0c00	/* [31:17][11:10] */
+#define	  SH3_MMUAA_D_VPN_MASK_4K	  0xfffe0000	/* [31:17] */
+#define	  SH3_MMUAA_D_ASID_MASK		  0x000000ff
 
 /* Data array */
-#define SH3_MMUDA			0xf3000000
-#define   SH3_MMUDA_D_PPN_MASK		  0xfffffc00
-#define   SH3_MMUDA_D_V			  0x00000100
-#define   SH3_MMUDA_D_PR_SHIFT		  5
-#define   SH3_MMUDA_D_PR_MASK		  0x00000060	/* [6:5] */
-#define   SH3_MMUDA_D_SZ		  0x00000010
-#define   SH3_MMUDA_D_C			  0x00000008
-#define   SH3_MMUDA_D_D			  0x00000004
-#define   SH3_MMUDA_D_SH		  0x00000002
+#define	SH3_MMUDA			0xf3000000
+#define	  SH3_MMUDA_D_PPN_MASK		  0xfffffc00
+#define	  SH3_MMUDA_D_V			  0x00000100
+#define	  SH3_MMUDA_D_PR_SHIFT		  5
+#define	  SH3_MMUDA_D_PR_MASK		  0x00000060	/* [6:5] */
+#define	  SH3_MMUDA_D_SZ		  0x00000010
+#define	  SH3_MMUDA_D_C			  0x00000008
+#define	  SH3_MMUDA_D_D			  0x00000004
+#define	  SH3_MMUDA_D_SH		  0x00000002
 
-#define SH3_TLB_DISABLE	*(__volatile__ u_int32_t *)SH3_MMUCR = SH3_MMUCR_TF
+#define	SH3_TLB_DISABLE	*(__volatile__ u_int32_t *)SH3_MMUCR = SH3_MMUCR_TF
 #endif /* !_SH3_MMU_SH3_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.2.2.2 2002/01/10 19:36:30 thorpej Exp $	*/
+/*	$NetBSD: amps.c,v 1.2.2.3 2002/06/23 17:33:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -143,9 +143,7 @@ amps_probe(parent, cf, aux)
 {
 	struct podule_attach_args *pa = (void *)aux;
 
-	if (matchpodule(pa, MANUFACTURER_ATOMWIDE2, PODULE_ATOMWIDE2_SERIAL, -1) == 0)
-		return(0);
-	return(1);
+	return (pa->pa_product == PODULE_ATOMWIDE_SERIAL);
 }
 
 /*

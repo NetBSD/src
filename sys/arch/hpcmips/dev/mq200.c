@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.15.2.2 2002/01/10 19:43:49 thorpej Exp $	*/
+/*	$NetBSD: mq200.c,v 1.15.2.3 2002/06/23 17:36:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -144,6 +144,20 @@ mq200_attach(struct mq200_softc *sc)
 	mq200_setup_regctx(sc);
 	mq200_mdsetup(sc);
 	if (sc->sc_md) {
+		int mode;
+
+		switch (sc->sc_fbconf.hf_pixel_width) {
+		case  1:	mode = MQ200_GCC_1BPP;		break;
+		case  2:	mode = MQ200_GCC_2BPP;		break;
+		case  4:	mode = MQ200_GCC_4BPP;		break;
+		case  8:	mode = MQ200_GCC_8BPP;		break;
+		case 16:	mode = MQ200_GCC_16BPP_DIRECT;	break;
+		default:
+			printf("%s: %dbpp isn't supported\n",
+			    sc->sc_dev.dv_xname, sc->sc_fbconf.hf_pixel_width);
+			return;
+		}
+
 		if (sc->sc_md->md_flags & MQ200_MD_HAVEFP) {
 			sc->sc_flags |= MQ200_SC_GC2_ENABLE;	/* FP	*/
 		}
@@ -164,15 +178,15 @@ mq200_attach(struct mq200_softc *sc)
 		mq200_setup(sc);
 
 		if (sc->sc_flags & MQ200_SC_GC2_ENABLE)	/* FP	*/
-			mq200_win_enable(sc, MQ200_GC2, MQ200_GCC_16BPP_DIRECT,
-			    0x00080100, 
-			    sc->sc_md->md_fp_width, sc->sc_md->md_fp_height,
-			    1280);
+			mq200_win_enable(sc, MQ200_GC2, mode,
+			    sc->sc_fbconf.hf_baseaddr,
+			    sc->sc_fbconf.hf_width, sc->sc_fbconf.hf_height,
+			    sc->sc_fbconf.hf_bytes_per_plane);
 		if (sc->sc_flags & MQ200_SC_GC1_ENABLE)	/* CRT	*/
-			mq200_win_enable(sc, MQ200_GC1, MQ200_GCC_16BPP_DIRECT,
-			    0x00080100,
-			    sc->sc_md->md_fp_width, sc->sc_md->md_fp_height,
-			    1280);
+			mq200_win_enable(sc, MQ200_GC1, mode,
+			    sc->sc_fbconf.hf_baseaddr,
+			    sc->sc_fbconf.hf_width, sc->sc_fbconf.hf_height,
+			    sc->sc_fbconf.hf_bytes_per_plane);
 	}
 #ifdef MQ200_DEBUG
 	if (sc->sc_md == NULL || bootverbose) {
@@ -343,6 +357,22 @@ mq200_fbinit(struct hpcfb_fbconf *fb)
 	fb->hf_access_flags |= HPCFB_ACCESS_DWORD;
 
 	switch (bootinfo->fb_type) {
+		/*
+		 * monochrome
+		 */
+	case BIFB_D1_M2L_1:
+		fb->hf_access_flags |= HPCFB_ACCESS_REVERSE;
+		/* fall through */
+	case BIFB_D1_M2L_0:
+		fb->hf_class = HPCFB_CLASS_GRAYSCALE;
+		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
+		fb->hf_pack_width = 8;
+		fb->hf_pixels_per_pack = 8;
+		fb->hf_pixel_width = 1;
+		fb->hf_class_data_length = sizeof(struct hf_gray_tag);
+		fb->hf_u.hf_gray.hf_flags = 0;	/* reserved for future use */
+		break;
+
 		/*
 		 * gray scale
 		 */
@@ -678,7 +708,7 @@ mq200_ioctl(v, cmd, data, flag, p)
 		return (EINVAL);
 	}
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.1.2.2 2002/03/16 15:59:24 jdolecek Exp $	*/
+/*	$NetBSD: platform.c,v 1.1.2.3 2002/06/23 17:39:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,17 +46,22 @@
 #include <machine/residual.h>
 
 static struct platform platform_unknown = {
-	NULL,					/* model */
+	"",					/* model */
 	platform_generic_match,			/* match */
 	prep_pci_get_chipset_tag_indirect,	/* pci_setup */
 	pci_intr_nofixup,			/* pci_intr_fixup */
-	ext_intr,				/* ext_intr */
+	init_intr,				/* init_intr */
 	cpu_setup_unknown,			/* cpu_setup */
 	reset_unknown,				/* reset */
+	obiodevs_nodev,				/* obiodevs */
 };
 
 static struct plattab plattab_unknown = {
 	NULL,	0
+};
+
+const char *obiodevs_nodev[] = {
+	NULL
 };
 
 struct platform *platform = &platform_unknown;
@@ -64,7 +69,7 @@ struct platform *platform = &platform_unknown;
 int
 ident_platform(void)
 {
-	struct plattab *p;
+	struct plattab *p = &plattab_unknown;
 	int matched = -1, match = 0;
 	int i, rv;
 
@@ -80,8 +85,6 @@ ident_platform(void)
 	else if (strncmp(res->VitalProductData.PrintableModel,
 	    "BULL ESTRELLA (e0)         (e0)", 31) == 0) /* XXX */
 		p = &plattab_mot;
-	else
-		p = &plattab_unknown;
 
 	for (i = 0; i < p->num; i++) {
 		rv = (*p->platform[i]->match)(p->platform[i]);
@@ -99,13 +102,12 @@ int
 platform_generic_match(struct platform *p)
 {
 
-	if (p->model == NULL)
+	if (p == NULL || p->model == NULL)
 		return 0;
-	if (strcmp(res->VitalProductData.PrintableModel, p->model) == 0)
-    		return 1;
-	return 0;
+	if (strcmp(res->VitalProductData.PrintableModel, p->model) != 0)
+    		return 0;
+	return 1;
 }
-
 
 /* ARGUSED */
 void
@@ -122,4 +124,22 @@ cpu_setup_unknown(struct device *dev)
 void
 reset_unknown(void)
 {
+}
+
+void
+reset_prep_generic(void)
+{
+	int msr;
+	u_char reg;
+
+	asm volatile("mfmsr %0" : "=r"(msr));
+	msr |= PSL_IP;
+	asm volatile("mtmsr %0" :: "r"(msr));
+
+	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
+	reg &= ~1UL;
+	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
+	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
+	reg |= 1;
+	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
 }

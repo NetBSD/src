@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1 2001/01/31 18:38:26 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.1.6.1 2002/06/23 17:35:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -58,6 +58,8 @@ struct dreamcast_pci_chipset {
                             struct device *, struct pcibus_attach_args *);
         int             (*pc_bus_maxdevs)(void *, int);
         pcitag_t        (*pc_make_tag)(void *, int, int, int);
+	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
+			    int *, int *);
         pcireg_t        (*pc_conf_read)(void *, pcitag_t, int);
         void            (*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
@@ -77,6 +79,8 @@ struct dreamcast_pci_chipset {
     (*(c)->pc_bus_maxdevs)((c)->pc_conf_v, (b))
 #define pci_make_tag(c, b, d, f)                                        \
     (*(c)->pc_make_tag)((c)->pc_conf_v, (b), (d), (f))
+#define	pci_decompose_tag(c, t, bp, dp, fp)				\
+    (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
 #define pci_conf_read(c, t, r)                                          \
     (*(c)->pc_conf_read)((c)->pc_conf_v, (t), (r))
 #define pci_conf_write(c, t, r, v)                                      \
@@ -90,3 +94,6 @@ struct dreamcast_pci_chipset {
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a))
 #define	pci_intr_disestablish(c, ih)					\
     (*(c)->pc_intr_disestablish)((v)->pc_intr_v, (ih))
+
+#define	pci_enumerate_bus(sc, m, p)					\
+	pci_enumerate_bus_generic((sc), (m), (p))

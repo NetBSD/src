@@ -1,4 +1,4 @@
-/*	$NetBSD: cfdev.h,v 1.4 2001/02/26 16:07:58 is Exp $	*/
+/*	$NetBSD: cfdev.h,v 1.4.4.1 2002/06/23 17:34:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -62,7 +62,7 @@ struct cfdev {
 	u_char	resv1[28];	/* 40 */
 };
 
-struct	cfdev *cfdev;
-int	ncfdev;
+extern struct	cfdev *cfdev;
+extern int	ncfdev;
 
 #endif /* _CFDEV_H_ */

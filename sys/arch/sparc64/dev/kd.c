@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.16.2.1 2002/01/10 19:49:16 thorpej Exp $	*/
+/*	$NetBSD: kd.c,v 1.16.2.2 2002/06/23 17:42:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -314,17 +314,18 @@ kdioctl(dev, cmd, data, flag, p)
 	tp = kd->kd_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
 
 	/* Handle any ioctl commands specific to kbd/display. */
 	/* XXX - Send KB* ioctls to kbd module? */
 	/* XXX - Send FB* ioctls to fb module?  */
 
-	return ENOTTY;
+	return EPASSTHROUGH;
 }
 
 void
@@ -367,7 +368,7 @@ kdstart(tp)
 	if (cl->c_cc) {
 		if (kd_is_console) {
 			tp->t_state |= TS_BUSY;
-			if ((s & PSR_PIL) == 0) {
+			if (s == 0) {
 				/* called at level zero - update screen now. */
 				(void) spllowersoftclock();
 				kd_putfb(tp);

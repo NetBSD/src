@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.8 2001/06/08 04:48:57 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.8.2.1 2002/06/23 17:35:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -69,6 +69,8 @@ void		pci_attach_hook(struct device *, struct device *,
 			struct pcibus_attach_args *);
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
+void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
+		    int *);
 pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
@@ -77,5 +79,8 @@ const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 			int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+
+#define	pci_enumerate_bus(sc, m, p)					\
+	pci_enumerate_bus_generic((sc), (m), (p))
 
 #endif /* _ATARI_PCI_MACHDEP_H_ */

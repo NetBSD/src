@@ -1,7 +1,8 @@
-/*	$NetBSD: mainbus.c,v 1.1 2001/02/06 16:45:22 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.6.1 2002/06/23 17:38:15 jdolecek Exp $	*/
 
-/*
- * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,98 +14,69 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *	for the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <machine/autoconf.h>
 
-#include <machine/shbvar.h>
+int mainbus_match(struct device *, struct cfdata *, void *);
+void mainbus_attach(struct device *, struct device *, void *);
+int mainbus_print(void *, const char *);
 
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-void	mainbus_attach __P((struct device *, struct device *, void *));
+struct mainbus_attach_args mainbusdevs[] = {
+	{ "cpu"		,         -1,         -1, -1, -1 },
+	{ "shb"		,         -1,         -1, -1, -1 },
+	{ "com"		, 0xa4000000,         -1, 11, -1 },
+	{ "com"		, 0xa4000008,         -1, 12, -1 },
+	{ "mmeyepcmcia"	, 0xb000000a, 0xb8000000,  3, 10 },
+	{ "mmeyepcmaia"	, 0xb000000c, 0xb9000000,  4,  9 },
+	{ NULL }	/* terminator */
+};
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
-int	mainbus_print __P((void *, const char *));
-
-union mainbus_attach_args {
-	const char *mba_busname;		/* first elem of all */
-	struct shbus_attach_args mba_sba;
-#ifdef	TODO
-	struct pcibus_attach_args mba_pba;
-	struct eisabus_attach_args mba_eba;
-	struct isabus_attach_args mba_iba;
-#endif
-};
-
-/*
- * This is set when the ISA bus is attached.  If it's not set by the
- * time it's checked below, then mainbus attempts to attach an ISA.
- */
-int	isa_has_been_seen;
-
-/*
- * Probe for the mainbus; always succeeds.
- */
 int
-mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	return 1;
+	return (1);
 }
 
-/*
- * Attach the mainbus.
- */
 void
-mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	union mainbus_attach_args mba;
+	struct mainbus_attach_args *ma;
 
 	printf("\n");
 
-	mba.mba_sba.iba_busname = "shb";
-	mba.mba_sba.iba_iot = 0;
-	mba.mba_sba.iba_memt = 0;
-
-	config_found(self, &mba.mba_sba, mainbus_print);
+	for (ma = mainbusdevs; ma->ma_name != NULL; ma++)
+		config_found(self, ma, mainbus_print);
 }
 
 int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mainbus_print(void *aux, const char *pnp)
 {
-	union mainbus_attach_args *mba = aux;
 
-	if (pnp)
-		printf("%s at %s", mba->mba_busname, pnp);
-#ifdef	TODO
-	if (!strcmp(mba->mba_busname, "pci"))
-		printf(" bus %d", mba->mba_pba.pba_bus);
-#endif
-	return (UNCONF);
+	return (pnp ? QUIET : UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.1.2.1 2002/01/10 19:50:50 thorpej Exp $	*/
+/*	$NetBSD: segments.h,v 1.1.2.2 2002/06/23 17:43:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -278,21 +278,18 @@ void set_mem_segment __P((struct mem_segment_descriptor *, void *, size_t,
 
 /*
  * Byte offsets in the Local Descriptor Table (LDT)
+ * Strange order because of syscall/sysret insns
  */
 #define	LSYS5CALLS_SEL	0	/* iBCS system call gate */
-
-#if 0
-/* Sorry, no room. Luckily, it's not needed. */
-#define	LSYS5SIGR_SEL	1	/* iBCS sigreturn gate */
-#endif
-
-#define	LUCODE_SEL	16	/* User code descriptor */
-#define	LUDATA_SEL	24	/* User data descriptor */
+#define LUCODE32_SEL	8	/* 32 bit user code descriptor */
+#define	LUDATA_SEL	16	/* User data descriptor */
+#define	LUCODE_SEL	24	/* User code descriptor */
 #define	LSOL26CALLS_SEL	32	/* Solaris 2.6 system call gate */
-#define LUCODE32_SEL	48	/* 32 bit user code descriptor */
-#define LUDATA32_SEL	56	/* 32 bit user data descriptor */
+#define LUDATA32_SEL	56	/* 32 bit user data descriptor (needed?)*/
 #define	LBSDICALLS_SEL	128	/* BSDI system call gate */
 
 #define LDT_SIZE	144
+
+#define LSYSRETBASE_SEL	LUCODE32_SEL
 
 #endif /* _X86_64_SEGMENTS_H_ */

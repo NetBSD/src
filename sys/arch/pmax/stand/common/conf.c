@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16.12.1 2002/03/16 15:59:14 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.16.12.2 2002/06/23 17:39:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,11 +50,14 @@
 #include <machine/dec_prom.h>
 #include "../common/rz.h"
 
+#ifdef NET_DEBUG
+/* only used for network debugging for now */
 #ifdef DEBUG_VAL
 int debug = DEBUG_VAL;
 #else
 int debug = 0;
 #endif
+#endif /* NET_DEBUG */
 
 #ifndef LIBSA_SINGLE_DEVICE
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.2.4.2 2002/03/16 15:59:42 jdolecek Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.2.4.3 2002/06/23 17:40:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ kvacc(vaddr_t kva)
 
 	if (kva < SH3_P2SEG_BASE)
 		return (1);
-	
+
 	if (kva >= VM_MAX_KERNEL_ADDRESS)
 		return (0);
 
@@ -118,7 +118,7 @@ kvacc(vaddr_t kva)
 		return (0);
 
 	/* check page which related kva is valid. */
-	pte = kvtopte(kva);
+	pte = __pmap_kpte_lookup(kva);
 	if (!(*pte & PG_V))
 		return (0);
 
@@ -149,37 +149,37 @@ kgdb_acc(vaddr_t va, size_t len)
  * Translate a trap number into a unix compatible signal value.
  * (gdb only understands unix signal numbers).
  */
-int 
+int
 kgdb_signal(int type)
 {
 
 	switch (type) {
-	case T_TLBMISSR:
-	case T_TLBMISSW:
-	case T_INITPAGEWR:
-	case T_TLBPRIVR:
-	case T_TLBPRIVW:
-	case T_ADDRESSERRR:
-	case T_ADDRESSERRW:
-	case T_TLBMISSR+T_USER:
-	case T_TLBMISSW+T_USER:
-	case T_INITPAGEWR+T_USER:
-	case T_TLBPRIVR+T_USER:
-	case T_TLBPRIVW+T_USER:
-	case T_ADDRESSERRR+T_USER:
-	case T_ADDRESSERRW+T_USER:
+	case EXPEVT_TLB_MISS_LD:
+	case EXPEVT_TLB_MISS_ST:
+	case EXPEVT_TLB_MOD:
+	case EXPEVT_TLB_PROT_LD:
+	case EXPEVT_TLB_PROT_ST:
+	case EXPEVT_ADDR_ERR_LD:
+	case EXPEVT_ADDR_ERR_ST:
+	case EXPEVT_TLB_MISS_LD | EXP_USER:
+	case EXPEVT_TLB_MISS_ST | EXP_USER:
+	case EXPEVT_TLB_MOD | EXP_USER:
+	case EXPEVT_TLB_PROT_LD | EXP_USER:
+	case EXPEVT_TLB_PROT_ST | EXP_USER:
+	case EXPEVT_ADDR_ERR_LD | EXP_USER:
+	case EXPEVT_ADDR_ERR_ST | EXP_USER:
 		return (SIGSEGV);
 
-	case T_TRAP:
-	case T_TRAP+T_USER:
-	case T_USERBREAK:
-	case T_USERBREAK+T_USER:
+	case EXPEVT_TRAPA:
+	case EXPEVT_BREAK:
+	case EXPEVT_TRAPA | EXP_USER:
+	case EXPEVT_BREAK | EXP_USER:
 		return (SIGTRAP);
 
-	case T_INVALIDISN:
-	case T_INVALIDSLOT:
-	case T_INVALIDISN+T_USER:
-	case T_INVALIDSLOT+T_USER:
+	case EXPEVT_RES_INST:
+	case EXPEVT_SLOT_INST:
+	case EXPEVT_RES_INST | EXP_USER:
+	case EXPEVT_SLOT_INST | EXP_USER:
 		return (SIGILL);
 
 	default:
@@ -271,7 +271,7 @@ kgdb_connect(int verbose)
 	if (verbose)
 		printf("kgdb waiting...");
 
-	__asm__ __volatile__("trapa #0xc3");
+	__asm__ __volatile__("trapa %0" :: "i"(_SH_TRA_BREAK));
 
 	if (verbose)
 		printf("connected.\n");

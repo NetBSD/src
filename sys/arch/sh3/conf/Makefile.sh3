@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile.sh3,v 1.12.2.2 2002/03/16 15:59:34 jdolecek Exp $
+#	$NetBSD: Makefile.sh3,v 1.12.2.3 2002/06/23 17:40:33 jdolecek Exp $
 
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/arch/sh3/conf/``machineid''
+#	/sys/arch/<machine>/conf/``machineid''
 # after which you should do
 #	config machineid
-# Machine generic makefile changes should be made in
+# CPU generic makefile changes should be made in
 #	/sys/arch/sh3/conf/Makefile.sh3
 # after which config should be rerun for all machines of that type.
 #

@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         Yasha(itohy@netbsd.org)
 |
-| $NetBSD: boot.S,v 1.4.2.2 2002/01/10 19:50:28 thorpej Exp $
+| $NetBSD: boot.S,v 1.4.2.3 2002/06/23 17:43:19 jdolecek Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -44,8 +44,9 @@ ASENTRY_NOPROFILE(entry0)
 |	Disklabel= 404bytes
 |	Since LABELLOFFSET in <machine/disklabel.h> is 0x40,
 |	entry must be after 0x000001d4 (0x000f01d4)
+		nop
 disklabel:
-		.space	406
+		.space	404
 
 ASENTRY_NOPROFILE(entry)
 		movew	#_end-1,%d0	| bss end (low word only)

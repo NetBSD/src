@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34.2.2 2002/03/16 15:59:04 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.34.2.3 2002/06/23 17:39:01 jdolecek Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -87,6 +87,10 @@
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
 extern struct emul emul_sunos;
+#endif
+
+#ifdef KGDB
+#include <sys/kgdb.h>
 #endif
 
 int	writeback __P((struct frame *fp, int docachepush));
@@ -321,7 +325,7 @@ trap(type, code, v, frame)
 		s = splhigh();
 #ifdef KGDB
 		/* If connected, step or cont returns 1 */
-		if (kgdb_trap(type, &frame))
+		if (kgdb_trap(type, (db_regs_t *)&frame))
 			goto kgdb_cont;
 #endif
 #ifdef DDB

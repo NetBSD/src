@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1.2.1 2001/08/03 04:12:39 lukem Exp $	*/
+/*	$NetBSD: cpu.h,v 1.1.2.2 2002/06/23 17:43:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,12 +65,14 @@ struct cpu_info {
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
+	u_int64_t ci_scratch;
 };
 
 #ifdef _KERNEL
 extern struct cpu_info cpu_info_store;
 
 #define	curcpu()			(&cpu_info_store)
+
 #endif
 
 /*
@@ -89,7 +91,7 @@ extern struct cpu_info cpu_info_store;
  */
 #define clockframe intrframe
 
-#define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_eflags)
+#define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_rflags)
 #define	CLKF_BASEPRI(frame)	((frame)->if_ppl == 0)
 #define	CLKF_PC(frame)		((frame)->if_rip)
 #define	CLKF_INTR(frame)	((frame)->if_ppl & (1 << IPL_TAGINTR))
@@ -154,6 +156,7 @@ struct pcb;
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct proc *));
 void	proc_trampoline __P((void));
+void	child_trampoline __P((void));
 
 /* clock.c */
 void	initrtclock __P((void));

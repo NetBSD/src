@@ -1,6 +1,7 @@
-/*	$NetBSD: cpu.h,v 1.13.2.1 2002/03/16 15:59:37 jdolecek Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13.2.2 2002/06/23 17:40:38 jdolecek Exp $	*/
 
 /*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -39,25 +40,23 @@
  */
 
 /*
- * SH3 Version
+ * SH3/SH4 support.
  *
  *  T.Horiuchi    Brains Corp.   5/22/98
  */
 
 #ifndef _SH3_CPU_H_
-#define _SH3_CPU_H_
+#define	_SH3_CPU_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 
-/*
- * Definitions unique to sh3 cpu support.
- */
-#include <machine/psl.h>
-#include <machine/frame.h>
-
 #include <sys/sched.h>
+#include <sh3/psl.h>
+#include <sh3/frame.h>
+
+#ifdef _KERNEL
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
@@ -66,119 +65,138 @@ struct cpu_info {
 #endif
 };
 
-#ifdef _KERNEL
 extern struct cpu_info cpu_info_store;
-
 #define	curcpu()			(&cpu_info_store)
-#endif
 
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)			/* nothing */
-#define	cpu_swapout(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_number()			0
+/*
+ * Can't swapout u-area, (__SWAP_BROKEN)
+ * since we use P1 converted address for trapframe.
+ */
+#define	cpu_swapin(p)			/* nothing */
+#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*
- * Arguments to hardclock, softclock and statclock
- * encapsulate the previous machine state in an opaque
- * clockframe; for now, use generic intrframe.
- *
- * XXX intrframe has a lot of gunk we don't need.
+ * Arguments to hardclock and gatherstats encapsulate the previous
+ * machine state in an opaque clockframe.
  */
-#define clockframe trapframe
+struct clockframe {
+	int	spc;	/* program counter at time of interrupt */
+	int	ssr;	/* status register at time of interrupt */
+	int	ssp;	/* stack pointer at time of interrupt */
+};
 
-#define	CLKF_USERMODE(frame)	(!KERNELMODE((frame)->tf_ssr))
-/* XXX we should fix this */
-#define	CLKF_BASEPRI(frame)	(0)
-#define	CLKF_PC(frame)		((frame)->tf_spc)
-/* XXX we should have an interrupt stack */
-#define	CLKF_INTR(frame)	(0)
+#define	CLKF_USERMODE(cf)	(!KERNELMODE((cf)->ssr))
+#define	CLKF_BASEPRI(cf)	(((cf)->ssr & 0xf0) == 0)
+#define	CLKF_PC(cf)		((cf)->spc)
+#define	CLKF_INTR(cf)		0	/* XXX */
+
+/*
+ * This is used during profiling to integrate system time.  It can safely
+ * assume that the process is resident.
+ */
+#define	PROC_PC(p)							\
+	(((struct trapframe *)(p)->p_md.md_regs)->tf_spc)
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-int	want_resched;		/* resched() was called */
-#define	need_resched(ci)	(want_resched = 1, setsoftast())
+#define	need_resched(ci)						\
+do {									\
+	want_resched = 1;						\
+	if (curproc != NULL)						\
+		aston(curproc);						\
+} while (/*CONSTCOND*/0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid.  On the i386, request an ast to send us
- * through trap(), marking the proc as needing a profiling tick.
+ * buffer pages are invalid.  On the MIPS, request an ast to send us
+ * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
+#define	need_proftick(p)						\
+do {									\
+	(p)->p_flag |= P_OWEUPC;					\
+	aston(p);							\
+} while (/*CONSTCOND*/0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)		setsoftast()
+#define	signotify(p)	aston(p)
+
+#define	aston(p)	((p)->p_md.md_astpending = 1)
+
+extern int want_resched;		/* need_resched() was called */
 
 /*
  * We need a machine-independent name for this.
  */
 #define	DELAY(x)		delay(x)
+#endif /* _KERNEL */
 
 /*
- * Logical address space of SH3 CPU.
+ * Logical address space of SH3/SH4 CPU.
  */
-#define SH3_P0SEG_BASE	0x00000000	/* TLB mapped, also U0SEG */
-#define SH3_P0SEG_END	0x7fffffff
-#define SH3_P1SEG_BASE	0x80000000	/* pa == va */
-#define SH3_P1SEG_END	0x9fffffff
-#define SH3_P2SEG_BASE	0xa0000000	/* pa == va, non-cacheable */
-#define SH3_P2SEG_END	0xbfffffff
-#define SH3_P3SEG_BASE	0xc0000000	/* TLB mapped, supervisor mode */
-#define SH3_P3SEG_END	0xdfffffff
-#define SH3_P4SEG_BASE	0xe0000000	/* peripheral space */
-#define SH3_P4SEG_END	0xffffffff
+#define	SH3_PHYS_MASK	0x1fffffff
 
-#define SH3_PHYS_MASK	0x1fffffff
-#define SH3_P1234SEG_SIZE	0x20000000
+#define	SH3_P0SEG_BASE	0x00000000	/* TLB mapped, also U0SEG */
+#define	SH3_P0SEG_END	0x7fffffff
+#define	SH3_P1SEG_BASE	0x80000000	/* pa == va */
+#define	SH3_P1SEG_END	0x9fffffff
+#define	SH3_P2SEG_BASE	0xa0000000	/* pa == va, non-cacheable */
+#define	SH3_P2SEG_END	0xbfffffff
+#define	SH3_P3SEG_BASE	0xc0000000	/* TLB mapped, kernel mode */
+#define	SH3_P3SEG_END	0xdfffffff
+#define	SH3_P4SEG_BASE	0xe0000000	/* peripheral space */
+#define	SH3_P4SEG_END	0xffffffff
 
-#define SH3_P1SEG_TO_PHYS(x)	((unsigned)(x) & SH3_PHYS_MASK)
-#define SH3_P2SEG_TO_PHYS(x)	((unsigned)(x) & SH3_PHYS_MASK)
-#define SH3_PHYS_TO_P1SEG(x)	((unsigned)(x) | SH3_P1SEG_BASE)
-#define SH3_PHYS_TO_P2SEG(x)	((unsigned)(x) | SH3_P2SEG_BASE)
-#define SH3_P1SEG_TO_P2SEG(x)	((unsigned)(x) | SH3_P1234SEG_SIZE)
+#define	SH3_P1SEG_TO_PHYS(x)	((u_int32_t)(x) & SH3_PHYS_MASK)
+#define	SH3_P2SEG_TO_PHYS(x)	((u_int32_t)(x) & SH3_PHYS_MASK)
+#define	SH3_PHYS_TO_P1SEG(x)	((u_int32_t)(x) | SH3_P1SEG_BASE)
+#define	SH3_PHYS_TO_P2SEG(x)	((u_int32_t)(x) | SH3_P2SEG_BASE)
+#define	SH3_P1SEG_TO_P2SEG(x)	((u_int32_t)(x) | 0x20000000)
 
 /* run on P2 */
-#define RUN_P2								\
+#define	RUN_P2								\
 do {									\
 	u_int32_t p;							\
 	p = (u_int32_t)&&P2;						\
 	goto *(u_int32_t *)(p | 0x20000000);				\
- P2:									\
+ P2:	(void)0;							\
 } while (/*CONSTCOND*/0)
 
 /* run on P1 */
-#define RUN_P1								\
+#define	RUN_P1								\
 do {									\
 	u_int32_t p;							\
 	p = (u_int32_t)&&P1;						\
 	__asm__ __volatile__("nop;nop;nop;nop;nop;nop;nop;nop");	\
 	goto *(u_int32_t *)(p & ~0x20000000);				\
- P1:									\
+ P1:	(void)0;							\
 } while (/*CONSTCOND*/0)
+
+#if defined(SH4)
+/* SH4 Processor Version Register */
+#define	SH4_PVR_ADDR	0xff000030	/* P4  address */
+#define	SH4_PVR		(*(volatile unsigned int *) SH4_PVR_ADDR)
+
+#define	SH4_PVR_MASK	0xffffff00
+#define	SH4_PVR_SH7750	0x04020500	/* SH7750  */
+#define	SH4_PVR_SH7750S	0x04020600	/* SH7750S */
+#define	SH4_PVR_SH7751	0x04110000	/* SH7751  */
+#endif
 
 /*
  * pull in #defines for kinds of processors
  */
 #include <machine/cputypes.h>
-
-#ifdef _KERNEL
-void sh_cpu_init(int, int);
-void delay(int);
-void _cpu_spin(u_int32_t);	/* for delay loop. */
-void cpu_reset(void);		/* Soft reset */
-void sh3_startup(void);
-struct pcb;
-void savectx(struct pcb *);
-void dumpsys(void);
-#endif /* _KERNEL */
 
 /*
  * CTL_MACHDEP definitions.
@@ -193,4 +211,15 @@ void dumpsys(void);
 	{ "load_and_reset",	CTLTYPE_INT },				\
 }
 
+#ifdef _KERNEL
+void sh_cpu_init(int, int);
+void sh_startup(void);
+void cpu_reset(void);		/* Soft reset */
+void _cpu_spin(u_int32_t);	/* for delay loop. */
+void delay(int);
+struct pcb;
+void savectx(struct pcb *);
+void dumpsys(void);
+#endif /* _KERNEL */
 #endif /* !_SH3_CPU_H_ */
+

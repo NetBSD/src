@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.446.2.6 2002/03/16 15:58:14 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.446.2.7 2002/06/23 17:37:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.446.2.6 2002/03/16 15:58:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.446.2.7 2002/06/23 17:37:25 jdolecek Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -179,12 +179,19 @@ extern struct proc *npxproc;
 char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
+volatile int cpl, ipending, astpending;
+int imask[NIPL];
+
+int want_resched;			/* resched() was called */
+
 u_int cpu_serial[3];
 
 char bootinfo[BOOTINFO_MAXSIZE];
 
 /* Our exported CPU info; we have only one right now. */  
 struct cpu_info cpu_info_store;
+
+struct pcb *curpcb;			/* our current running pcb */
 
 struct bi_devmatch *i386_alldisks = NULL;
 int i386_ndisks = 0;
@@ -203,7 +210,6 @@ struct mtrr_funcs *mtrr_funcs;
 int	physmem;
 int	dumpmem_low;
 int	dumpmem_high;
-int	boothowto;
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
@@ -449,6 +455,11 @@ cpu_startup()
 	}
 	if ((cpu_feature & CPUID_MASK2) != 0) {
 		bitmask_snprintf(cpu_feature, CPUID_FLAGS2,
+		    buf, sizeof(buf));
+		printf("cpu0: features %s\n", buf);
+	}
+	if ((cpu_feature & CPUID_MASK3) != 0) {
+		bitmask_snprintf(cpu_feature, CPUID_FLAGS3,
 		    buf, sizeof(buf));
 		printf("cpu0: features %s\n", buf);
 	}
@@ -1594,9 +1605,10 @@ amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 }
 
-static const char n_support[] =
+static const char n_support[] __attribute__((__unused__)) =
     "NOTICE: this kernel does not support %s CPU class\n";
-static const char n_lower[] = "NOTICE: lowering CPU class to %s\n";
+static const char n_lower[] __attribute__((__unused__)) =
+    "NOTICE: lowering CPU class to %s\n";
 
 void
 identifycpu(struct cpu_info *ci)
@@ -2505,7 +2517,7 @@ setregs(p, pack, stack)
 	tf->tf_edi = 0;
 	tf->tf_esi = 0;
 	tf->tf_ebp = 0;
-	tf->tf_ebx = (int)PS_STRINGS;
+	tf->tf_ebx = (int)p->p_psstr;
 	tf->tf_edx = 0;
 	tf->tf_ecx = 0;
 	tf->tf_eax = 0;

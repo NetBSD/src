@@ -1,4 +1,4 @@
-/*	$NetBSD: ubcreg.h,v 1.1.16.1 2002/03/16 15:59:40 jdolecek Exp $	*/
+/*	$NetBSD: ubcreg.h,v 1.1.16.2 2002/06/23 17:40:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #ifndef _SH3_UBCREG_H_
-#define _SH3_UBCREG_H_
+#define	_SH3_UBCREG_H_
 #include <sh3/devreg.h>
 
 /*
@@ -35,36 +35,36 @@
  */
 
 /* ch-A */
-#define SH3_BARA		0xffffffb0
-#define SH3_BAMRA		0xffffffb4
-#define SH3_BASRA		0xffffffe4
-#define SH3_BBRA		0xffffffb8
-/* ch-B */			  
-#define SH3_BARB		0xffffffa0
-#define SH3_BAMRB		0xffffffa4
-#define SH3_BASRB		0xffffffe8
-#define SH3_BBRB		0xffffffa8
-#define SH3_BDRB		0xffffff90
-#define SH3_BDMRB		0xffffff94
-/* common */			  
-#define SH3_BRCR		0xffffff98
+#define	SH3_BARA		0xffffffb0
+#define	SH3_BAMRA		0xffffffb4
+#define	SH3_BASRA		0xffffffe4
+#define	SH3_BBRA		0xffffffb8
+/* ch-B */
+#define	SH3_BARB		0xffffffa0
+#define	SH3_BAMRB		0xffffffa4
+#define	SH3_BASRB		0xffffffe8
+#define	SH3_BBRB		0xffffffa8
+#define	SH3_BDRB		0xffffff90
+#define	SH3_BDMRB		0xffffff94
+/* common */
+#define	SH3_BRCR		0xffffff98
 
 
 /* ch-A */
-#define SH4_BARA		0xff200000
-#define SH4_BAMRA		0xff200004
-#define SH4_BASRA		0xff000014
-#define SH4_BBRA		0xff200008
+#define	SH4_BARA		0xff200000
+#define	SH4_BAMRA		0xff200004
+#define	SH4_BASRA		0xff000014
+#define	SH4_BBRA		0xff200008
 
-/* ch-B */			  
-#define SH4_BARB		0xff20000c
-#define SH4_BAMRB		0xff200010
-#define SH4_BASRB		0xff000018
-#define SH4_BBRB		0xff200014
-#define SH4_BDRB		0xff200018
-#define SH4_BDMRB		0xff20001c
-/* common */			  
-#define SH4_BRCR		0xff200020
+/* ch-B */
+#define	SH4_BARB		0xff20000c
+#define	SH4_BAMRB		0xff200010
+#define	SH4_BASRB		0xff000018
+#define	SH4_BBRB		0xff200014
+#define	SH4_BDRB		0xff200018
+#define	SH4_BDMRB		0xff20001c
+/* common */
+#define	SH4_BRCR		0xff200020
 
 #ifndef _LOCORE
 #if defined(SH3) && defined(SH4)

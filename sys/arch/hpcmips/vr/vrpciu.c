@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.1.4.3 2002/03/16 15:58:03 jdolecek Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.1.4.4 2002/06/23 17:36:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -299,6 +299,7 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = sc->sc_iot;
 	pba.pba_dmat = &hpcmips_default_bus_dma_tag.bdt;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 
 	if (platid_match(&platid, &platid_mask_MACH_LASER5_L_BOARD)) {
 		/*
@@ -348,10 +349,12 @@ int
 vrpciu_intr(void *arg)
 {
 	struct vrpciu_softc *sc = (struct vrpciu_softc *)arg;
-	u_int32_t isr;
+	u_int32_t isr, baddr;
 
 	isr = vrpciu_read(sc, VRPCIU_INTCNTSTAREG);
-	printf("%s: vrpciu_intr 0x%08x\n", sc->sc_dev.dv_xname, isr);
+	baddr = vrpciu_read(sc, VRPCIU_BUSERRADREG);
+	printf("%s: status=0x%08x  bad addr=0x%08x\n",
+	    sc->sc_dev.dv_xname, isr, baddr);
 	return ((isr & 0x0f) ? 1 : 0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1 2001/06/19 00:21:16 fvdl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.1.2.1 2002/06/23 17:43:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -89,6 +89,7 @@
 #define fwait()			__asm("fwait")
 #define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
 #define	fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
+#define fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
@@ -116,11 +117,14 @@ fpuinit(void)
  * Reinitializing the state allows naive SIGFPE handlers to longjmp without
  * doing any fixups.
  */
+
 void
 fputrap(frame)
 	struct trapframe *frame;
 {
 	register struct proc *p = fpuproc;
+	struct savefpu *sfp = &p->p_addr->u_pcb.pcb_savefpu;
+	u_int16_t cw;
 
 #ifdef DIAGNOSTIC
 	/*
@@ -131,9 +135,17 @@ fputrap(frame)
 		panic("fputrap: wrong process");
 #endif
 
-	fxsave(&p->p_addr->u_pcb.pcb_savefpu);
-	fninit();
-	fwait();
+	fxsave(sfp);
+	if (frame->tf_trapno == T_XMM) {
+	} else {
+		fninit();
+		fwait();
+		cw = sfp->fp_fxsave.fx_fcw;
+		fldcw(&cw);
+		fwait();
+	}
+	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
+	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
 	trapsignal(p, SIGFPE, frame->tf_err);
 }
 
@@ -166,6 +178,7 @@ fpudna(struct proc *p)
 	if (cpl != 0)
 		panic("fpudna: masked");
 #endif
+	u_int16_t cw;
 
 	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
@@ -182,9 +195,11 @@ fpudna(struct proc *p)
 
 	fpuproc = p;
 
-	if ((p->p_md.md_flags & MDP_USEDFPU) == 0)
+	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
+		cw = p->p_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_fcw;
+		fldcw(&cw);
 		p->p_md.md_flags |= MDP_USEDFPU;
-	else
+	} else
 		fxrstor(&p->p_addr->u_pcb.pcb_savefpu);
 }
 
@@ -222,4 +237,13 @@ fpusave(void)
 	fpusave1();
 	fpuproc = 0;
 	stts();
+}
+
+void
+fpudiscard(struct proc *p)
+{
+	if (p == fpuproc) {
+		fpuproc = 0;
+		stts();
+	}
 }

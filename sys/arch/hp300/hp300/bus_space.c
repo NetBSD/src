@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2.4.1 2002/01/10 19:43:01 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2.4.2 2002/06/23 17:36:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Implementation of bus_space mapping for the hp300.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2.4.2 2002/06/23 17:36:11 jdolecek Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

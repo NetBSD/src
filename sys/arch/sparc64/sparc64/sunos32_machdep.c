@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.3.2.1 2002/01/10 19:49:32 thorpej Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.3.2.2 2002/06/23 17:42:24 jdolecek Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -119,7 +119,7 @@ sunos32_setregs(p, pack, stack)
 	 * Set the registers to 0 except for:
 	 *	%o6: stack pointer, built in exec())
 	 *	%tstate: (retain icc and xcc and cwp bits)
-	 *	%g1: address of PS_STRINGS (used by crt0)
+	 *	%g1: address of p->p_psstr (used by crt0)
 	 *	%tpc,%tnpc: entry point of program
 	 */
 	tstate = ((PSTATE_USER32)<<TSTATE_PSTATE_SHIFT) 

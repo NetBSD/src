@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.6.2.2 2002/02/11 20:08:05 jdolecek Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.6.2.3 2002/06/23 17:36:51 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -952,7 +952,7 @@ plumpcmcia_event_thread(void *arg)
 				break;
 			}
 			s = spltty();
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_event_head, pe, pe_link);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_event_head, pe_link);
 			plumpcmcia_event_free(pe);
 		}
 		splx(s);

@@ -1,11 +1,13 @@
 #
-# 	$NetBSD: LROUTER,v 1.4.2.2 2002/02/11 20:08:03 jdolecek Exp $
+# 	$NetBSD: LROUTER,v 1.4.2.3 2002/06/23 17:36:49 jdolecek Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
 #
 
 include		"arch/hpcmips/conf/std.hpcmips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32
 
@@ -26,6 +28,7 @@ options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	VRGIUDEBUG_CONF=2	# debug GIU intr
 options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=16384	# dmesg buffer size
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 ## UVM options.

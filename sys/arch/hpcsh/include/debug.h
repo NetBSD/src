@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.1.2.3 2002/03/16 15:58:10 jdolecek Exp $	*/
+/*	$NetBSD: debug.h,v 1.1.2.4 2002/06/23 17:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -36,15 +36,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_interrupt_monitor.h"
 #define USE_HPC_DPRINTF
 #define __DPRINTF_EXT
 #include <hpc/include/debug.h>
 
+#include "debug_hpc.h"
 /*
  * interrupt monitor
  */
-#ifdef INTERRUPT_MONITOR
+#ifdef HPC_DEBUG_INTERRUPT_MONITOR
 enum heart_beat {
 	HEART_BEAT_BLACK = 0,
 	HEART_BEAT_RED,
@@ -58,5 +58,5 @@ enum heart_beat {
 void __dbg_heart_beat(enum heart_beat);
 #else
 #define __dbg_heart_beat(x)	((void)0)
-#endif /* INTERRUPT_MONITOR */
+#endif /* HPC_DEBUG_INTERRUPT_MONITOR */
 

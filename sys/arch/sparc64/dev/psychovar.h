@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.5.2.1 2001/08/03 04:12:27 lukem Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.5.2.2 2002/06/23 17:42:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -62,7 +62,7 @@ struct psycho_pbm {
 	int				pp_flags;
 
 	/* and pointers into the psycho regs for our bits */
-	struct pci_ctl			*pp_pcictl;
+	bus_space_handle_t		pp_pcictl;
 };
 
 /*
@@ -93,7 +93,9 @@ struct psycho_softc {
 
 	/* our tags (from parent) */
 	bus_space_tag_t			sc_bustag;
-	bus_dma_tag_t			sc_dmatag;	
+	bus_dma_tag_t			sc_dmatag;
+
+	bus_space_handle_t		sc_bh;
 
 	/* config space */
 	bus_space_tag_t			sc_configtag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.3 2000/08/08 22:31:14 tshiozak Exp $	*/
+/*	$NetBSD: limits.h,v 1.3.4.1 2002/06/23 17:40:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,14 +35,14 @@
  *	@(#)limits.h	7.2 (Berkeley) 6/28/90
  */
 
-#ifndef	_MACHINE_LIMITS_H_
-#define	_MACHINE_LIMITS_H_
+#ifndef	_SH3_LIMITS_H_
+#define	_SH3_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	32		/* no multibyte characters */
 
 #define	SCHAR_MAX	0x7f		/* max value for a signed char */
-#define SCHAR_MIN	(-0x7f-1)	/* min value for a signed char */
+#define	SCHAR_MIN	(-0x7f-1)	/* min value for a signed char */
 
 #define	UCHAR_MAX	0xffU		/* max value for an unsigned char */
 #define	CHAR_MAX	0x7f		/* max value for a char */
@@ -50,7 +50,7 @@
 
 #define	USHRT_MAX	0xffffU		/* max value for an unsigned short */
 #define	SHRT_MAX	0x7fff		/* max value for a short */
-#define SHRT_MIN        (-0x7fff-1)     /* min value for a short */
+#define	SHRT_MIN        (-0x7fff-1)     /* min value for a short */
 
 #define	UINT_MAX	0xffffffffU	/* max value for an unsigned int */
 #define	INT_MAX		0x7fffffff	/* max value for an int */
@@ -63,7 +63,7 @@
 #if !defined(_ANSI_SOURCE)
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) ||		\
      defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L
 #define	ULLONG_MAX	0xffffffffffffffffULL	/* max unsigned long long */
 #define	LLONG_MAX	0x7fffffffffffffffLL	/* max signed long long */
@@ -80,18 +80,18 @@
 #endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif /* !_ANSI_SOURCE */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) ||		\
     defined(_XOPEN_SOURCE)
-#define LONG_BIT	32
-#define WORD_BIT	32
+#define	LONG_BIT	32
+#define	WORD_BIT	32
 
-#define DBL_DIG		15
-#define DBL_MAX		1.7976931348623157E+308
-#define DBL_MIN		2.2250738585072014E-308
+#define	DBL_DIG		15
+#define	DBL_MAX		1.7976931348623157E+308
+#define	DBL_MIN		2.2250738585072014E-308
 
-#define FLT_DIG		6
-#define FLT_MAX		3.40282347E+38F
-#define FLT_MIN		1.17549435E-38F
+#define	FLT_DIG		6
+#define	FLT_MAX		3.40282347E+38F
+#define	FLT_MIN		1.17549435E-38F
 #endif
 
-#endif /* _MACHINE_LIMITS_H_ */
+#endif /* !_SH3_LIMITS_H_ */

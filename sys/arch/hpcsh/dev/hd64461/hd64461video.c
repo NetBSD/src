@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.2.4.5 2002/03/16 15:58:06 jdolecek Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.2.4.6 2002/06/23 17:36:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -330,7 +330,6 @@ hd64461video_setup_hpcfbif(struct hd64461video_chip *hvc)
 		panic("%s: not supported color depth\n", __FUNCTION__);
 		/* NOTREACHED */
 	case 16:
-		fb->hf_order_flags = HPCFB_REVORDER_WORD;
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
 		fb->hf_pack_width = 16;
@@ -352,7 +351,6 @@ hd64461video_setup_hpcfbif(struct hd64461video_chip *hvc)
 		break;
 
 	case 8:
-		fb->hf_order_flags = HPCFB_REVORDER_BYTE | HPCFB_REVORDER_WORD;
 		fb->hf_class = HPCFB_CLASS_INDEXCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
 		fb->hf_pack_width = 8;
@@ -525,7 +523,7 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EINVAL);
 	}
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t
@@ -1227,7 +1225,7 @@ hd64461video_dump()
 	printf("---[Display Mode Setting]---\n");
 #define	DUMPREG(x)							\
 	r = hd64461_reg_read_2(HD64461_LCD ## x ## _REG16);		\
-	__dbg_bit_print(r, sizeof(u_int16_t), 0, 0, #x, 1)
+	__dbg_bit_print(r, sizeof(u_int16_t), 0, 0, #x, DBG_BIT_PRINT_COUNT)
 	DUMPREG(CBAR);
 	DUMPREG(CLOR);
 	DUMPREG(CCR);

@@ -1,18 +1,20 @@
 #
-# $NetBSD: ATARITT,v 1.40.2.2 2002/02/11 20:07:29 jdolecek Exp $
+# $NetBSD: ATARITT,v 1.40.2.3 2002/06/23 17:35:13 jdolecek Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: ATARITT.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.14 2002/01/27 13:23:13 jdolecek Exp $
+#		NetBSD: GENERIC.in,v 1.18 2002/04/16 22:42:55 bjh21 Exp $
 
 #This configuration file is for a GENERIC ATARI-TT
 
 #Generic atari
 
 include "arch/atari/conf/std.atari"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -129,6 +131,7 @@ options 	SYSVSEM			# System V semaphores
 
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #These options enable verbose messages for several subsystems.
@@ -150,7 +153,8 @@ options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 
 options 	SERCONSOLE		# modem1 console support
 options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
-options 	STATCLOCK		# Separate {stat,prof}clock
+#options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
+#options 	STATCLOCK	        # Separate {stat,prof}clock
 
 #Try linked commands on all targets
 options 	TRY_SCSI_LINKED_COMMANDS=0x7f
@@ -161,7 +165,9 @@ config		netbsd root on ? type ?
 
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
+
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)

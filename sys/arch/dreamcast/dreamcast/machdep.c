@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3.2.3 2002/03/16 15:57:25 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.2.4 2002/06/23 17:35:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -87,7 +87,6 @@
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
-#include <sys/msgbuf.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -99,18 +98,14 @@
 #endif
 
 #include <sh3/cpu.h>
+#include <sh3/exception.h>
+#include <machine/intr.h>
+
 #include <dev/cons.h>
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* dreamcast */
 char machine_arch[] = MACHINE_ARCH;	/* sh3el */
-
-paddr_t msgbuf_paddr;
-
-extern paddr_t avail_start, avail_end;
-extern char start[], etext[], edata[], end[];
-
-#define IOM_RAM_END	((paddr_t)IOM_RAM_BEGIN + IOM_RAM_SIZE - 1)
 
 void main(void) __attribute__((__noreturn__));
 void dreamcast_startup(void) __attribute__((__noreturn__));
@@ -118,8 +113,8 @@ void dreamcast_startup(void) __attribute__((__noreturn__));
 void
 dreamcast_startup()
 {
-	vaddr_t kernend;
-	vsize_t sz;
+	extern char edata[], end[];
+	paddr_t kernend;
 
 	/* Clear bss */
 	memset(edata, 0, end - edata);
@@ -127,40 +122,39 @@ dreamcast_startup()
 	/* Initialize CPU ops. */
 	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
 
-	/* Initialize proc0 and enable MMU. */
-	kernend = sh3_round_page(end);
-	sz = sh_proc0_init(kernend, IOM_RAM_BEGIN, IOM_RAM_END);
-
-	/* Number of pages of physmem addr space */
-	physmem = atop(IOM_RAM_END - IOM_RAM_BEGIN + 1);
-
-	/* avail_start is first available physical memory address */
-	avail_start = kernend + sz;
-	avail_end = IOM_RAM_END + 1;
-
+	/* Console */
 	consinit();
+
+	/* Load memory to UVM */
+	physmem = atop(IOM_RAM_SIZE);
+	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(end)));
+	uvm_page_physload(
+		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
+		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
+		VM_FREELIST_DEFAULT);
+
+	/* Initialize proc0 u-area */
+	sh_proc0_init();
+
+	/* Initialize pmap and start to address translation */
+	pmap_bootstrap();
+
+	/* Debugger. */
 #ifdef DDB
 	ddb_init(0, NULL, NULL);
 #endif
-#if defined(KGDB) && NSCIF > 0
+#if defined(KGDB) && (NSCIF > 0)
 	if (scif_kgdb_init() == 0) {
 		kgdb_debug_init = 1;
 		kgdb_connect(1);
 	}
 #endif /* KGDB && NSCIF > 0 */
 
-	/* Call pmap initialization to make new kernel address space */
-	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
-
-	/* jump to main */
+	/* Jump to main */
 	__asm__ __volatile__(
 		"jmp	@%0;"
-		"mov	%1, sp" :: "r"(main), "r"(proc0.p_addr->u_pcb.kr15));
+		"mov	%1, sp"
+		:: "r"(main),"r"(proc0.p_md.md_pcb->pcb_sf.sf_r7_bank));
 	/* NOTREACHED */
 	while (1)
 		;
@@ -182,8 +176,9 @@ void
 cpu_startup()
 {
 
-	sh3_startup();
-	printf("%s\n", cpu_model);
+	strcpy(cpu_model, "SEGA Dreamcast\n");
+
+	sh_startup();
 }
 
 int
@@ -199,6 +194,7 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
 		    sizeof cn_tab->cn_dev));
 	default:
+		break;
 	}
 
 	return (EOPNOTSUPP);
@@ -249,3 +245,29 @@ haltsys:
 	/*NOTREACHED*/
 }
 
+void
+intc_intr(int ssr, int spc, int ssp)
+{
+	struct intc_intrhand *ih;
+	int s, evtcode;
+
+	evtcode = _reg_read_4(SH4_INTEVT);
+
+	ih = EVTCODE_IH(evtcode);
+	KDASSERT(ih->ih_func);
+	/*
+	 * On entry, all interrrupts are disabled, and exception is enabled.
+	 * Enable higher level interrupt here.
+	 */
+	s = _cpu_intr_resume(ih->ih_level);
+
+	if (evtcode == SH_INTEVT_TMU0_TUNI0) {	/* hardclock */
+		struct clockframe cf;
+		cf.spc = spc;
+		cf.ssr = ssr;
+		cf.ssp = ssp;
+		(*ih->ih_func)(&cf);
+	} else {
+		(*ih->ih_func)(ih->ih_arg);
+	}
+}

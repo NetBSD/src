@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13.2.3 2002/03/16 15:58:08 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.2.4 2002/06/23 17:37:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#undef LOAD_ALL_MEMORY
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -53,12 +52,13 @@
 #include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/kcore.h>
-#include <sys/msgbuf.h>
 #include <sys/boot_flag.h>
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <sh3/cpu.h>
+#include <sh3/exception.h>
+#include <sh3/cache.h>
 #include <sh3/clock.h>
 #include <sh3/intcreg.h>
 
@@ -72,7 +72,7 @@
 #ifndef DB_ELFSIZE
 #error Must define DB_ELFSIZE!
 #endif
-#define ELFSIZE		DB_ELFSIZE
+#define	ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif /* DDB || KGDB */
 
@@ -84,34 +84,7 @@
 #include <machine/platid_mask.h>
 #include <machine/autoconf.h>		/* makebootdev() */
 #include <machine/kloader.h>
-#include <hpcsh/dev/hd64465/hd64465var.h>
-
-#ifdef DEBUG
-#define DPRINTF_ENABLE
-#define DPRINTF_DEBUG	machdep_debug
-#endif /* DEBUG */
-#include <machine/debug.h>
-
-/* 
- * D-RAM location (Windows CE machine specific)
- *
- * sample) jornada 690 (32MByte) SH7709A
- * SH7709A has 2 banks in CS3
- *
- * CS3 (0x0c000000-0x0fffffff
- * 0x0c000000 --- main      16MByte
- * 0x0d000000 --- main      16MByte (shadow)
- * 0x0e000000 --- extension 16MByte
- * 0x10000000 --- extension 16MByte (shadow)
- */
-
-#define DRAM_BANK_NUM		2
-#define DRAM_BANK_SIZE		0x02000000	/* 32MByte */
-
-#define DRAM_BANK0_START	0x0c000000
-#define DRAM_BANK0_END		(DRAM_BANK0_START + DRAM_BANK_SIZE)
-#define DRAM_BANK1_START	0x0e000000
-#define DRAM_BANK1_END		(DRAM_BANK1_START + DRAM_BANK_SIZE)
+#include <machine/intr.h>
 
 #ifdef NFS
 #include <nfs/rpcv2.h>
@@ -120,6 +93,46 @@
 #include <nfs/nfsmount.h>
 #endif
 
+#include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
+#include <hpcsh/dev/hd6446x/hd6446xintcreg.h>
+#include <hpcsh/dev/hd64465/hd64465var.h>
+
+#ifdef DEBUG
+#define	DPRINTF_ENABLE
+#define	DPRINTF_DEBUG	machdep_debug
+#endif /* DEBUG */
+#include <machine/debug.h>
+
+/*
+ * D-RAM location (Windows CE machine specific)
+ *
+ * Jornada 690 (32MB model) SH7709A
+ *  + SH7709A split CS3 to 2 banks.
+ *
+ * CS3 (0x0c000000-0x0fffffff
+ * 0x0c000000 --- onboard   16MByte
+ * 0x0d000000 --- onboard   16MByte (shadow)
+ * 0x0e000000 --- extension 16MByte
+ * 0x0f000000 --- extension 16MByte (shadow)
+ *
+ * PERSONA HPW-650PA (16MB model) SH7750
+ * SH7750
+ *
+ * CS3 (0x0c000000-0x0fffffff
+ * 0x0c000000 --- onboard   16MByte
+ * 0x0d000000 --- onboard   16MByte (shadow)
+ * 0x0e000000 --- onboard   16MByte (shadow)
+ * 0x0f000000 --- onboard   16MByte (shadow)
+ */
+
+#define	SH_CS3_START			0x0c000000
+#define	SH_CS3_END			(SH_CS3_START + 0x04000000)
+
+#define	SH7709_CS3_BANK0_START		0x0c000000
+#define	SH7709_CS3_BANK0_END		(SH7709_CS3_BANK0_START + 0x02000000)
+#define	SH7709_CS3_BANK1_START		0x0e000000
+#define	SH7709_CS3_BANK1_END		(SH7709_CS3_BANK1_START + 0x02000000)
+
 /* Machine */
 char machine[]		= MACHINE;
 char machine_arch[]	= MACHINE_ARCH;
@@ -127,7 +140,6 @@ extern char cpu_model[];
 struct bootinfo *bootinfo;
 
 /* Physical memory */
-extern paddr_t avail_start, avail_end;
 static int	mem_cluster_init(paddr_t);
 static void	mem_cluster_load(void);
 static void	__find_dram_shadow(paddr_t, paddr_t);
@@ -136,7 +148,6 @@ static int	__check_dram(paddr_t, paddr_t);
 #endif
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
-paddr_t msgbuf_paddr;
 
 void main(void) __attribute__((__noreturn__));
 void machine_startup(int, char *[], struct bootinfo *)
@@ -147,11 +158,10 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 {
 	extern char edata[], end[];
 	vaddr_t kernend;
-	vsize_t sz;
 	size_t symbolsize;
 	int i;
 	char *p;
-	/* 
+	/*
 	 * this routines stack is never polluted since stack pointer
 	 * is lower than kernel text segment, and at exiting, stack pointer
 	 * is changed to proc0.
@@ -185,27 +195,6 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709A);
 	else if (platid_match(&platid, &platid_mask_CPU_SH_4))
 		sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
-
-	/* ICU initiailze. (now we can use cpu_arch and cpu_product) */
-	switch (cpu_product) {
-	case CPU_PRODUCT_7709A:
-		_reg_write_2(SH7709_IPRC, 0);
-		_reg_write_2(SH7709_IPRD, 0);
-		_reg_write_2(SH7709_IPRE, 0);
-		/* FALLTHROUGH */
-	case CPU_PRODUCT_7709:
-		_reg_write_2(SH3_IPRA, 0);
-		_reg_write_2(SH3_IPRB, 0);
-		break;
-	case CPU_PRODUCT_7750:
-		_reg_write_2(SH4_IPRA, 0);
-		_reg_write_2(SH4_IPRB, 0);
-		_reg_write_2(SH4_IPRC, 0);
-		break;
-	}
-#if NHD64465IF > 0
-	hd64465_intr_disable();
-#endif
 
 	/* Start to determine heap area */
 	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
@@ -249,9 +238,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	}
 #endif /* MFS */
 
-	/* 
-	 * Console
-	 */
+	/* Console */
 	consinit();
 #ifdef HPC_DEBUG_LCD
 	dbg_lcd_test();
@@ -259,27 +246,18 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* copy boot parameter for kloader */
 	kloader_bootinfo_set(&kbi, argc, argv, bi, TRUE);
 
-	/* 
-	 * Find memory cluster.
-	 */
+	/* Find memory cluster. and load to UVM */
 	physmem = mem_cluster_init(SH3_P1SEG_TO_PHYS(kernend));
 	_DPRINTF("total memory = %dMbyte\n", (int)(sh3_ptob(physmem) >> 20));
+	mem_cluster_load();
 
-	/*
-	 * Initialize proc0 and enable MMU.
-	 */
-	sz = sh_proc0_init(kernend, mem_clusters[0].start,
-	    mem_clusters[1].start + mem_clusters[1].size - 1);
-	/* adjust heap size */
-	kernend += sz;
-	mem_clusters[1].start += sz;
-	mem_clusters[1].size -= sz;
-	_DPRINTF("proc0: steal %ld KB, stack: 0x%08x\n", sz >> 10,
-	    proc0.p_addr->u_pcb.kr15);
+	/* Initialize proc0 u-area */
+	sh_proc0_init();
 
-	/* 
-	 * Debugger.
-	 */
+	/* Initialize pmap and start to address translation */
+	pmap_bootstrap();
+
+	/* Debugger. */
 #ifdef DDB
 	if (symbolsize) {
 		ddb_init(symbolsize, &end, end + symbolsize);
@@ -298,18 +276,12 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		}
 	}
 #endif /* KGDB */
-	/*
-	 * Load physical memory to VM 
-	 */
-	mem_cluster_load();
-	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
-
-	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
 
 	/* Jump to main */
 	__asm__ __volatile__(
 		"jmp	@%0;"
-		"mov	%1, sp" :: "r"(main), "r"(proc0.p_addr->u_pcb.kr15));
+		"mov	%1, sp"
+		:: "r"(main),"r"(proc0.p_md.md_pcb->pcb_sf.sf_r7_bank));
 	/* NOTREACHED */
 	while (1)
 		;
@@ -324,13 +296,13 @@ cpu_startup()
 	cpuclock = sh_clock_get_cpuclock();
 	pclock = sh_clock_get_pclock();
 
-	sh3_startup();
+	sh_startup();
 
 	memcpy(&cpu, &platid, sizeof(platid_t));
 	cpu.dw.dw1 = 0;	/* clear platform */
 	sprintf(cpu_model, "[%s] %s", platid_name(&platid), platid_name(&cpu));
 
-#define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
+#define	MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
 	printf("%s %d.%02d MHz PCLOCK %d.%02d MHz\n", cpu_model,
 	    MHZ(cpuclock), MHZ(pclock));
 }
@@ -415,7 +387,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 #if NHD64465IF > 0
-	hd64465_intr_reboot();
+	hd64465_shutdown();
 #endif
 
 	cpu_reset();
@@ -432,14 +404,24 @@ mem_cluster_init(paddr_t addr)
 	int npages, i;
 
 	/* cluster 0 is always kernel myself. */
-	mem_clusters[0].start = DRAM_BANK0_START;
-	mem_clusters[0].size = addr - DRAM_BANK0_START;
+	mem_clusters[0].start = SH_CS3_START;
+	mem_clusters[0].size = addr - SH_CS3_START;
 	mem_cluster_cnt = 1;
-	
+
 	/* search CS3 */
-	__find_dram_shadow(addr, DRAM_BANK0_END);
-#ifdef LOAD_ALL_MEMORY /* notyet */
-	__find_dram_shadow(DRAM_BANK1_START, DRAM_BANK1_END);
+#ifdef SH3
+	/* SH7709A's CS3 is splited to 2 banks. */
+	if (CPU_IS_SH3) {
+		__find_dram_shadow(addr, SH7709_CS3_BANK0_END);
+		__find_dram_shadow(SH7709_CS3_BANK1_START,
+		    SH7709_CS3_BANK1_END);
+	}
+#endif
+#ifdef SH4
+	/* contig CS3 */
+	if (CPU_IS_SH4) {
+		__find_dram_shadow(addr, SH_CS3_END);
+	}
 #endif
 	_DPRINTF("mem_cluster_cnt = %d\n", mem_cluster_cnt);
 	npages = 0;
@@ -469,35 +451,21 @@ mem_cluster_load()
 {
 	paddr_t start, end;
 	psize_t size;
-#ifdef LOAD_ALL_MEMORY /*  notyet */
 	int i;
 
 	/* Cluster 0 is always the kernel, which doesn't get loaded. */
+	sh_dcache_wbinv_all();
 	for (i = 1; i < mem_cluster_cnt; i++) {
 		start = (paddr_t)mem_clusters[i].start;
 		size = (psize_t)mem_clusters[i].size;
 
 		_DPRINTF("loading 0x%lx,0x%lx\n", start, size);
-		start = SH3_PHYS_TO_P1SEG(start);
-		memset((void *)start, 0, size);
-		sh_dcache_wbinv_all();
+		memset((void *)SH3_PHYS_TO_P1SEG(start), 0, size);
 		end = atop(start + size);
 		start = atop(start);
 		uvm_page_physload(start, end, start, end, VM_FREELIST_DEFAULT);
 	}
-#else
-	/* load cluster 1 only. */
-	start = (paddr_t)mem_clusters[1].start;
-	size = (psize_t)mem_clusters[1].size;
-	_DPRINTF("loading 0x%lx,0x%lx\n", start, size);
-
-	start = SH3_PHYS_TO_P1SEG(start);
-	end = start + size;
-	memset((void *)start, 0, size);
-
-	avail_start = start;
-	avail_end = end;
-#endif
+	sh_dcache_wbinv_all();
 }
 
 void
@@ -544,7 +512,7 @@ __find_dram_shadow(paddr_t start, paddr_t end)
 	/* skip kernel area */
 	if (mem_cluster_cnt == 1)
 		mem_clusters[1].size -= mem_clusters[0].size;
-	
+
 	mem_cluster_cnt++;
 }
 
@@ -578,3 +546,52 @@ __check_dram(paddr_t start, paddr_t end)
 	return (1);
 }
 #endif /* NARLY_MEMORY_PROBE */
+
+void
+intc_intr(int ssr, int spc, int ssp)
+{
+	struct intc_intrhand *ih;
+	int evtcode;
+	u_int16_t r;
+
+	evtcode = _reg_read_4(CPU_IS_SH3 ? SH7709_INTEVT2 : SH4_INTEVT);
+
+	ih = EVTCODE_IH(evtcode);
+	KDASSERT(ih->ih_func);
+	/*
+	 * On entry, all interrrupts are disabled,
+	 * and exception is enabled for P3 access. (kernel stack is P3,
+	 * SH3 may or may not cause TLB miss when access stack.)
+	 * Enable higher level interrupt here.
+	 */
+	r = _reg_read_2(HD6446X_NIRR);
+
+	splx(ih->ih_level);
+
+	if (evtcode == SH_INTEVT_TMU0_TUNI0) {
+		struct clockframe cf;
+		cf.spc = spc;
+		cf.ssr = ssr;
+		cf.ssp = ssp;
+		(*ih->ih_func)(&cf);
+		__dbg_heart_beat(HEART_BEAT_RED);
+	} else if (evtcode ==
+	    (CPU_IS_SH3 ? SH7709_INTEVT2_IRQ4 : SH_INTEVT_IRL11)) {
+		int cause = r & hd6446x_ienable;
+		struct hd6446x_intrhand *hh = &hd6446x_intrhand[ffs(cause) - 1];
+		if (cause == 0) {
+			printf("masked HD6446x interrupt.0x%04x\n", r);
+			_reg_write_2(HD6446X_NIRR, 0x0000);
+			return;
+		}
+		/* Enable higher level interrupt*/
+		hd6446x_intr_resume(hh->hh_ipl);
+		KDASSERT(hh->hh_func != NULL);
+		(*hh->hh_func)(hh->hh_arg);
+		__dbg_heart_beat(HEART_BEAT_GREEN);
+	} else {
+		(*ih->ih_func)(ih->ih_arg);
+		__dbg_heart_beat(HEART_BEAT_BLUE);
+	}
+}
+

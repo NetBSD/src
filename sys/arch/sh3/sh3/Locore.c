@@ -1,7 +1,7 @@
-/*	$NetBSD: Locore.c,v 1.4.4.2 2002/03/16 15:59:40 jdolecek Exp $	*/
+/*	$NetBSD: Locore.c,v 1.4.4.3 2002/06/23 17:40:46 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -78,6 +78,8 @@
  *	@(#)Locore.c
  */
 
+#include "opt_lockdebug.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/user.h>
@@ -86,394 +88,74 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
-#include <machine/psl.h>
+#include <sh3/locore.h>
+#include <sh3/cpu.h>
+#include <sh3/pmap.h>
+#include <sh3/mmu_sh3.h>
+#include <sh3/mmu_sh4.h>
+
+void (*__sh_switch_resume)(struct proc *);
+struct proc *cpu_switch_search(struct proc *);
+void idle(void);
+int want_resched;
+
+#ifdef LOCKDEBUG
+#define	SCHED_LOCK_IDLE()	sched_lock_idle()
+#define	SCHED_UNLOCK_IDLE()	sched_unlock_idle()
+#else
+#define	SCHED_LOCK_IDLE()	((void)0)
+#define	SCHED_UNLOCK_IDLE()	((void)0)
+#endif
 
 /*
- * copyout(caddr_t from, caddr_t to, size_t len);
- * Copy len bytes into the user's address space.
+ * struct proc *cpu_switch_search(struct proc *oldproc):
+ *	Find the highest priority process.
  */
-int
-copyout(const void *kaddr, void *uaddr, size_t len)
+struct proc *
+cpu_switch_search(struct proc *oldproc)
 {
-	const void *from = kaddr;
-	char *to = uaddr;
+	struct prochd *q;
+	struct proc *p;
 
-	if (to + len < to || to + len > (char *)VM_MAXUSER_ADDRESS)
-		return EFAULT;
+	curproc = 0;
 
-	curpcb->pcb_onfault = &&Err999;
-	memcpy(to, from, len);
-	curpcb->pcb_onfault = 0;
-	return 0;
-
- Err999:
-	curpcb->pcb_onfault = 0;
-	return EFAULT;
-}
-
-/*
- * copyin(caddr_t from, caddr_t to, size_t len);
- * Copy len bytes from the user's address space.
- */
-int
-copyin(const void *uaddr, void *kaddr, size_t len)
-{
-	const char *from = uaddr;
-	void *to = kaddr;
-
-	if (from + len < from || from + len > (char *)VM_MAXUSER_ADDRESS)
-		return EFAULT;
-
-	curpcb->pcb_onfault = &&Err999;
-	memcpy(to, from, len);
-	curpcb->pcb_onfault = 0;
-	return 0;
-
- Err999:
-	curpcb->pcb_onfault = 0;
-	return EFAULT;
-}
-
-/*
- * copyoutstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
- * Copy a NUL-terminated string, at most maxlen characters long, into the
- * user's address space.  Return the number of characters copied (including the
- * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
- * return 0 or EFAULT.
- */
-int
-copyoutstr(const void *kaddr, void *uaddr, size_t maxlen, size_t *lencopied)
-{
-	const char *from = kaddr;
-	char *to = uaddr;
-	int cnt;
-	int rc = 0;
-	const char *from_top = from;
-
-	curpcb->pcb_onfault = &&Err999;
-
-	if ((cnt = (char *)VM_MAXUSER_ADDRESS - to) > maxlen)
-		cnt = maxlen;
-
-	while (cnt--) {
-		if ((*to++ = *from++) == 0) {
-			rc = 0;
-			goto out;
-		}
+	SCHED_LOCK_IDLE();
+	while (sched_whichqs == 0) {
+		SCHED_UNLOCK_IDLE();
+		idle();
+		SCHED_LOCK_IDLE();
 	}
 
-	if (to >= (char *)VM_MAXUSER_ADDRESS)
-		rc = EFAULT;
-	else
-		rc = ENAMETOOLONG;
+	q = &sched_qs[ffs(sched_whichqs) - 1];
+	p = q->ph_link;
+	remrunqueue(p);
+	want_resched = 0;
+	SCHED_UNLOCK_IDLE();
 
-out:
-	if (lencopied)
-		*lencopied = from - from_top;
-	curpcb->pcb_onfault = 0;
-	return rc;
+	p->p_stat = SONPROC;
 
- Err999:
-	if (lencopied)
-		*lencopied = from - from_top;
-	curpcb->pcb_onfault = 0;
-	return EFAULT;
-}
-
-/*
- * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
- * Copy a NUL-terminated string, at most maxlen characters long, from the
- * user's address space.  Return the number of characters copied (including the
- * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
- * return 0 or EFAULT.
- */
-int
-copyinstr(const void *uaddr, void *kaddr, size_t maxlen, size_t *lencopied)
-{
-	const char *from = uaddr;
-	char *to = kaddr;
-	int cnt;
-	int rc = 0;
-	const char *from_top = from;
-
-	curpcb->pcb_onfault = &&Err999;
-
-	if ((cnt = (char *)VM_MAXUSER_ADDRESS - to) > maxlen)
-		cnt = maxlen;
-
-	while (cnt--) {
-		if ((*to++ = *from++) == 0) {
-			rc = 0;
-			goto out;
-		}
+	if (p != oldproc) {
+		curpcb = p->p_md.md_pcb;
+		pmap_activate(p);
 	}
+	curproc = p;
 
-	if (to >= (char *)VM_MAXUSER_ADDRESS)
-		rc = EFAULT;
-	else
-		rc = ENAMETOOLONG;
-
-out:
-	if (lencopied)
-		*lencopied = from - from_top;
-	curpcb->pcb_onfault = 0;
-	return rc;
-
- Err999:
-	if (lencopied)
-		*lencopied = from - from_top;
-	curpcb->pcb_onfault = 0;
-	return EFAULT;
+	return (p);
 }
 
 /*
- * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
- * Copy a NUL-terminated string, at most maxlen characters long.  Return the
- * number of characters copied (including the NUL) in *lencopied.  If the
- * string is too long, return ENAMETOOLONG; else return 0.
+ * void idle(void):
+ *	When no processes are on the run queue, wait for something to come
+ *	ready. Separated function for profiling.
  */
-int
-copystr(const void *kfaddr, void *kdaddr, size_t maxlen, size_t *lencopied)
+void
+idle()
 {
-	const char *from = kfaddr;
-	char *to = kdaddr;
-	int i;
 
-	for (i = 0; i < maxlen; i++) {
-		if ((*to++ = *from++) == NULL) {
-			if (lencopied)
-				*lencopied = i + 1;
-			return (0);
-		}
-	}
-
-	if (lencopied)
-		*lencopied = i;
-	return (ENAMETOOLONG);
-}
-
-/*
- * fuword(caddr_t uaddr);
- * Fetch an int from the user's address space.
- */
-long
-fuword(const void *base)
-{
-	const char *uaddr = base;
-	long rc;
-
-	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(long))
-		return -1;
-
-	curpcb->pcb_onfault = &&Err999;
-
-	rc = *(long *)uaddr;
-
-	curpcb->pcb_onfault = 0;
-	return rc;
-
- Err999:
-	curpcb->pcb_onfault = 0;
-	return -1;
-}
-
-/*
- * fusword(caddr_t uaddr);
- * Fetch a short from the user's address space.
- */
-int
-fusword(const void *base)
-{
-	const char *uaddr = base;
-	int rc;
-
-	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(short))
-		return -1;
-
-	curpcb->pcb_onfault = &&Err999;
-
-	rc = *(unsigned short *)uaddr;
-
-	curpcb->pcb_onfault = 0;
-	return rc;
-
- Err999:
-	curpcb->pcb_onfault = 0;
-	return -1;
-}
-
-/*
- * fuswintr(caddr_t uaddr);
- * Fetch a short from the user's address space.  Can be called during an
- * interrupt.
- */
-int
-fuswintr(const void *base)
-{
-	const char *uaddr = base;
-	int rc;
-
-	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(short))
-		return -1;
-
-	curpcb->pcb_onfault = &&Err999;
-	curpcb->fusubail = 1;
-
-	rc = *(unsigned short *)uaddr;
-
-	curpcb->pcb_onfault = 0;
-	curpcb->fusubail = 0;
-	return rc;
-
- Err999:
-	curpcb->pcb_onfault = 0;
-	curpcb->fusubail = 0;
-	return -1;
-}
-
-/*
- * fubyte(caddr_t uaddr);
- * Fetch a byte from the user's address space.
- */
-int
-fubyte(const void *base)
-{
-	const char *uaddr = base;
-	int rc;
-
-	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(char))
-		return -1;
-
-	curpcb->pcb_onfault = &&Err999;
-
-	rc = *(unsigned char *)uaddr;
-
-	curpcb->pcb_onfault = 0;
-	return rc;
-
- Err999:
-	curpcb->pcb_onfault = 0;
-	return -1;
-}
-
-/*
- * suword(caddr_t uaddr, int x);
- * Store an int in the user's address space.
- */
-int
-suword(void *base, long x)
-{
-	char *uaddr = base;
-
-	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(long))
-		return -1;
-
-	curpcb->pcb_onfault = &&Err999;
-
-	*(int *)uaddr = x;
-
-	curpcb->pcb_onfault = 0;
-	return 0;
-
- Err999:
-	curpcb->pcb_onfault = 0;
-	return -1;
-}
-
-/*
- * susword(void *uaddr, short x);
- * Store a short in the user's address space.
- */
-int
-susword(void *base, short x)
-{
-	char *uaddr = base;
-
-	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(short))
-		return -1;
-
-	curpcb->pcb_onfault = &&Err999;
-
-	*(short *)uaddr = x;
-
-	curpcb->pcb_onfault = 0;
-	return 0;
-
- Err999:
-	curpcb->pcb_onfault = 0;
-	return -1;
-}
-
-/*
- * suswintr(caddr_t uaddr, short x);
- * Store a short in the user's address space.  Can be called during an
- * interrupt.
- */
-int
-suswintr(void *base, short x)
-{
-	char *uaddr = base;
-
-	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(short))
-		return -1;
-
-	curpcb->pcb_onfault = &&Err999;
-	curpcb->fusubail = 1;
-
-	*(short *)uaddr = x;
-
-	curpcb->pcb_onfault = 0;
-	curpcb->fusubail = 0;
-	return 0;
-
- Err999:
-	curpcb->pcb_onfault = 0;
-	curpcb->fusubail = 0;
-	return -1;
-}
-
-/*
- * subyte(caddr_t uaddr, char x);
- * Store a byte in the user's address space.
- */
-int
-subyte(void *base, int x)
-{
-	char *uaddr = base;
-
-	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(char))
-		return -1;
-
-	curpcb->pcb_onfault = &&Err999;
-
-	*(char *)uaddr = x;
-
-	curpcb->pcb_onfault = 0;
-	return 0;
-
- Err999:
-	curpcb->pcb_onfault = 0;
-	return -1;
-}
-
-int
-kcopy(const void *src, void *dst, size_t len)
-{
-	caddr_t oldfault;
-
-	oldfault = curpcb->pcb_onfault;
-
-	curpcb->pcb_onfault = &&Err999;
-	memcpy(dst, src, len);
-	curpcb->pcb_onfault = oldfault;
-
-	return 0;
-
- Err999:
-	curpcb->pcb_onfault = oldfault;
-
-	return EFAULT;
+	spl0();
+	uvm_pageidlezero();
+	__asm__ __volatile__("sleep");
+	splsched();
 }
 
 /*
@@ -523,4 +205,445 @@ remrunqueue(struct proc *p)
 	q = &sched_qs[which];
 	if (q->ph_link == (struct proc *)q)
 		sched_whichqs &= ~(0x00000001 << which);
+}
+
+/*
+ * void sh3_switch_setup(struct proc *p):
+ *	prepare kernel stack PTE table. TLB miss handler check these.
+ */
+void
+sh3_switch_setup(struct proc *p)
+{
+	pt_entry_t *pte;
+	struct md_upte *md_upte = p->p_md.md_upte;
+	u_int32_t vpn;
+	int i;
+
+	vpn = (u_int32_t)p->p_addr;
+	vpn &= ~PGOFSET;
+	for (i = 0; i < UPAGES; i++, vpn += NBPG, md_upte++) {
+		pte = __pmap_kpte_lookup(vpn);
+		KDASSERT(pte && *pte != 0);
+
+		md_upte->addr = vpn;
+		md_upte->data = (*pte & PG_HW_BITS) | PG_D | PG_V;
+	}
+}
+
+/*
+ * void sh4_switch_setup(struct proc *p):
+ *	prepare kernel stack PTE table. sh4_switch_resume wired this PTE.
+ */
+void
+sh4_switch_setup(struct proc *p)
+{
+	pt_entry_t *pte;
+	struct md_upte *md_upte = p->p_md.md_upte;
+	u_int32_t vpn;
+	int i, e;
+
+	vpn = (u_int32_t)p->p_addr;
+	vpn &= ~PGOFSET;
+	e = SH4_UTLB_ENTRY - UPAGES;
+	for (i = 0; i < UPAGES; i++, e++, vpn += NBPG) {
+		pte = __pmap_kpte_lookup(vpn);
+		KDASSERT(pte && *pte != 0);
+		/* Address array */
+		md_upte->addr = SH4_UTLB_AA | (e << SH4_UTLB_E_SHIFT);
+		md_upte->data = vpn | SH4_UTLB_AA_D | SH4_UTLB_AA_V;
+		md_upte++;
+		/* Data array */
+		md_upte->addr = SH4_UTLB_DA1 | (e << SH4_UTLB_E_SHIFT);
+		md_upte->data = (*pte & PG_HW_BITS) |
+		    SH4_UTLB_DA1_D | SH4_UTLB_DA1_V;
+		md_upte++;
+	}
+}
+
+/*
+ * copyout(caddr_t from, caddr_t to, size_t len);
+ * Copy len bytes into the user's address space.
+ */
+int
+copyout(const void *kaddr, void *uaddr, size_t len)
+{
+	const void *from = kaddr;
+	char *to = uaddr;
+
+	if (to + len < to || to + len > (char *)VM_MAXUSER_ADDRESS)
+		return (EFAULT);
+
+	curpcb->pcb_onfault = &&Err999;
+	memcpy(to, from, len);
+	curpcb->pcb_onfault = 0;
+	return (0);
+
+ Err999:
+	curpcb->pcb_onfault = 0;
+	return (EFAULT);
+}
+
+/*
+ * copyin(caddr_t from, caddr_t to, size_t len);
+ * Copy len bytes from the user's address space.
+ */
+int
+copyin(const void *uaddr, void *kaddr, size_t len)
+{
+	const char *from = uaddr;
+	void *to = kaddr;
+
+	if (from + len < from || from + len > (char *)VM_MAXUSER_ADDRESS)
+		return (EFAULT);
+
+	curpcb->pcb_onfault = &&Err999;
+	memcpy(to, from, len);
+	curpcb->pcb_onfault = 0;
+	return (0);
+
+ Err999:
+	curpcb->pcb_onfault = 0;
+	return (EFAULT);
+}
+
+/*
+ * copyoutstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * Copy a NUL-terminated string, at most maxlen characters long, into the
+ * user's address space.  Return the number of characters copied (including the
+ * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
+ * return 0 or EFAULT.
+ */
+int
+copyoutstr(const void *kaddr, void *uaddr, size_t maxlen, size_t *lencopied)
+{
+	const char *from = kaddr;
+	char *to = uaddr;
+	int cnt;
+	int rc = 0;
+	const char *from_top = from;
+
+	curpcb->pcb_onfault = &&Err999;
+
+	if ((cnt = (char *)VM_MAXUSER_ADDRESS - to) > maxlen)
+		cnt = maxlen;
+
+	while (cnt--) {
+		if ((*to++ = *from++) == 0) {
+			rc = 0;
+			goto out;
+		}
+	}
+
+	if (to >= (char *)VM_MAXUSER_ADDRESS)
+		rc = EFAULT;
+	else
+		rc = ENAMETOOLONG;
+
+ out:
+	if (lencopied)
+		*lencopied = from - from_top;
+	curpcb->pcb_onfault = 0;
+	return (rc);
+
+ Err999:
+	if (lencopied)
+		*lencopied = from - from_top;
+	curpcb->pcb_onfault = 0;
+	return (EFAULT);
+}
+
+/*
+ * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * Copy a NUL-terminated string, at most maxlen characters long, from the
+ * user's address space.  Return the number of characters copied (including the
+ * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
+ * return 0 or EFAULT.
+ */
+int
+copyinstr(const void *uaddr, void *kaddr, size_t maxlen, size_t *lencopied)
+{
+	const char *from = uaddr;
+	char *to = kaddr;
+	int cnt;
+	int rc = 0;
+	const char *from_top = from;
+
+	curpcb->pcb_onfault = &&Err999;
+
+	if ((cnt = (char *)VM_MAXUSER_ADDRESS - to) > maxlen)
+		cnt = maxlen;
+
+	while (cnt--) {
+		if ((*to++ = *from++) == 0) {
+			rc = 0;
+			goto out;
+		}
+	}
+
+	if (to >= (char *)VM_MAXUSER_ADDRESS)
+		rc = EFAULT;
+	else
+		rc = ENAMETOOLONG;
+
+ out:
+	if (lencopied)
+		*lencopied = from - from_top;
+	curpcb->pcb_onfault = 0;
+	return (rc);
+
+ Err999:
+	if (lencopied)
+		*lencopied = from - from_top;
+	curpcb->pcb_onfault = 0;
+	return (EFAULT);
+}
+
+/*
+ * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * Copy a NUL-terminated string, at most maxlen characters long.  Return the
+ * number of characters copied (including the NUL) in *lencopied.  If the
+ * string is too long, return ENAMETOOLONG; else return 0.
+ */
+int
+copystr(const void *kfaddr, void *kdaddr, size_t maxlen, size_t *lencopied)
+{
+	const char *from = kfaddr;
+	char *to = kdaddr;
+	int i;
+
+	for (i = 0; i < maxlen; i++) {
+		if ((*to++ = *from++) == NULL) {
+			if (lencopied)
+				*lencopied = i + 1;
+			return (0);
+		}
+	}
+
+	if (lencopied)
+		*lencopied = i;
+
+	return (ENAMETOOLONG);
+}
+
+/*
+ * fuword(caddr_t uaddr);
+ * Fetch an int from the user's address space.
+ */
+long
+fuword(const void *base)
+{
+	const char *uaddr = base;
+	long rc;
+
+	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(long))
+		return (-1);
+
+	curpcb->pcb_onfault = &&Err999;
+
+	rc = *(long *)uaddr;
+
+	curpcb->pcb_onfault = 0;
+	return (rc);
+
+ Err999:
+	curpcb->pcb_onfault = 0;
+	return (-1);
+}
+
+/*
+ * fusword(caddr_t uaddr);
+ * Fetch a short from the user's address space.
+ */
+int
+fusword(const void *base)
+{
+	const char *uaddr = base;
+	int rc;
+
+	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(short))
+		return (-1);
+
+	curpcb->pcb_onfault = &&Err999;
+
+	rc = *(unsigned short *)uaddr;
+
+	curpcb->pcb_onfault = 0;
+	return (rc);
+
+ Err999:
+	curpcb->pcb_onfault = 0;
+	return (-1);
+}
+
+/*
+ * fuswintr(caddr_t uaddr);
+ * Fetch a short from the user's address space.  Can be called during an
+ * interrupt.
+ */
+int
+fuswintr(const void *base)
+{
+	const char *uaddr = base;
+	int rc;
+
+	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(short))
+		return (-1);
+
+	curpcb->pcb_onfault = &&Err999;
+	curpcb->pcb_faultbail = 1;
+
+	rc = *(unsigned short *)uaddr;
+
+	curpcb->pcb_onfault = 0;
+	curpcb->pcb_faultbail = 0;
+	return (rc);
+
+ Err999:
+	curpcb->pcb_onfault = 0;
+	curpcb->pcb_faultbail = 0;
+	return (-1);
+}
+
+/*
+ * fubyte(caddr_t uaddr);
+ * Fetch a byte from the user's address space.
+ */
+int
+fubyte(const void *base)
+{
+	const char *uaddr = base;
+	int rc;
+
+	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(char))
+		return (-1);
+
+	curpcb->pcb_onfault = &&Err999;
+
+	rc = *(unsigned char *)uaddr;
+
+	curpcb->pcb_onfault = 0;
+	return (rc);
+
+ Err999:
+	curpcb->pcb_onfault = 0;
+	return (-1);
+}
+
+/*
+ * suword(caddr_t uaddr, int x);
+ * Store an int in the user's address space.
+ */
+int
+suword(void *base, long x)
+{
+	char *uaddr = base;
+
+	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(long))
+		return (-1);
+
+	curpcb->pcb_onfault = &&Err999;
+	*(int *)uaddr = x;
+	curpcb->pcb_onfault = 0;
+
+	return (0);
+
+ Err999:
+	curpcb->pcb_onfault = 0;
+	return (-1);
+}
+
+/*
+ * susword(void *uaddr, short x);
+ * Store a short in the user's address space.
+ */
+int
+susword(void *base, short x)
+{
+	char *uaddr = base;
+
+	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(short))
+		return (-1);
+
+	curpcb->pcb_onfault = &&Err999;
+
+	*(short *)uaddr = x;
+
+	curpcb->pcb_onfault = 0;
+	return (0);
+
+ Err999:
+	curpcb->pcb_onfault = 0;
+	return (-1);
+}
+
+/*
+ * suswintr(caddr_t uaddr, short x);
+ * Store a short in the user's address space.  Can be called during an
+ * interrupt.
+ */
+int
+suswintr(void *base, short x)
+{
+	char *uaddr = base;
+
+	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(short))
+		return (-1);
+
+	curpcb->pcb_onfault = &&Err999;
+	curpcb->pcb_faultbail = 1;
+
+	*(short *)uaddr = x;
+
+	curpcb->pcb_onfault = 0;
+	curpcb->pcb_faultbail = 0;
+	return (0);
+
+ Err999:
+	curpcb->pcb_onfault = 0;
+	curpcb->pcb_faultbail = 0;
+
+	return (-1);
+}
+
+/*
+ * subyte(caddr_t uaddr, char x);
+ * Store a byte in the user's address space.
+ */
+int
+subyte(void *base, int x)
+{
+	char *uaddr = base;
+
+	if (uaddr > (char *)VM_MAXUSER_ADDRESS - sizeof(char))
+		return (-1);
+
+	curpcb->pcb_onfault = &&Err999;
+
+	*(char *)uaddr = x;
+
+	curpcb->pcb_onfault = 0;
+	return (0);
+
+ Err999:
+	curpcb->pcb_onfault = 0;
+	return (-1);
+}
+
+int
+kcopy(const void *src, void *dst, size_t len)
+{
+	caddr_t oldfault;
+
+	oldfault = curpcb->pcb_onfault;
+
+	curpcb->pcb_onfault = &&Err999;
+	memcpy(dst, src, len);
+	curpcb->pcb_onfault = oldfault;
+
+	return (0);
+
+ Err999:
+	curpcb->pcb_onfault = oldfault;
+
+	return (EFAULT);
 }

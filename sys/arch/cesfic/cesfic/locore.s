@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.2.2.1 2001/08/03 04:11:23 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.2.2.2 2002/06/23 17:35:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -267,7 +267,7 @@ Lstploaddone:
 	movl	#0x80008000, %d0
 	movc	%d0, %cacr		| turn on both caches
 
-	jmp	Lenab1
+	jmp	Lenab1:l		| avoid pc-relative
 Lmotommu2:
 	/* XXX do TT here */
 	RELOC(prototc, %a2)

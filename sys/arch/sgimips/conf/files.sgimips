@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.10.2.2 2002/03/16 15:59:26 jdolecek Exp $
+#	$NetBSD: files.sgimips,v 1.10.2.3 2002/06/23 17:40:27 jdolecek Exp $
 
 maxpartitions 16
 
@@ -96,7 +96,6 @@ include "dev/vme/files.vme"
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 include "dev/pckbc/files.pckbc"
-include "dev/mii/files.mii"
 include "dev/usb/files.usb"
 include "dev/scsipi/files.scsipi"
 major {sd = 10}

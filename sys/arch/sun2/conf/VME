@@ -1,11 +1,13 @@
-# $NetBSD: VME,v 1.2.4.3 2002/02/11 20:09:15 jdolecek Exp $
+# $NetBSD: VME,v 1.2.4.4 2002/06/23 17:42:28 jdolecek Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
 
 include "arch/sun2/conf/std.sun2"
 
-#ident 		"VME-$Revision: 1.2.4.3 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"VME-$Revision: 1.2.4.4 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -26,6 +28,7 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:

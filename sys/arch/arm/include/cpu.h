@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14.2.4 2002/03/16 15:56:08 jdolecek Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14.2.5 2002/06/23 17:34:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -74,10 +74,10 @@
  */
 
 #ifndef _LKM
-#include "opt_cputypes.h"
 #include "opt_lockdebug.h"
 #endif /* !_LKM */
 
+#include <arm/cpuconf.h>
 
 #include <machine/intr.h>
 #ifndef _LOCORE
@@ -125,12 +125,13 @@
 #endif
 
 /*
- * CLKF_BASEPRI: True if we were at spl0 before the interrupt
+ * CLKF_BASEPRI: True if we were at spl0 before the interrupt.
  *
- * This needs straighening, prob is the frame does not have info on the
- * priority a guess that needs trying is (current_spl_level == SPL0)
+ * This is hard-wired to 0 on the ARM, since spllowersoftclock() might
+ * not actually be able to unblock the interrupt, which would cause us
+ * to run the softclock interrupts with hardclock blocked.
  */
-#define CLKF_BASEPRI(frame)	CLKF_USERMODE(frame)
+#define CLKF_BASEPRI(frame)	0
 
 /*
  * CLKF_INTR: True if we took the interrupt from inside another
@@ -164,6 +165,23 @@ extern int current_intr_depth;
 #define PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
 #endif
 
+/* The address of the vector page. */
+extern vaddr_t vector_page;
+#ifdef __PROG32
+void	arm32_vector_init(vaddr_t, int);
+
+#define	ARM_VEC_RESET			(1 << 0)
+#define	ARM_VEC_UNDEFINED		(1 << 1)
+#define	ARM_VEC_SWI			(1 << 2)
+#define	ARM_VEC_PREFETCH_ABORT		(1 << 3)
+#define	ARM_VEC_DATA_ABORT		(1 << 4)
+#define	ARM_VEC_ADDRESS_EXCEPTION	(1 << 5)
+#define	ARM_VEC_IRQ			(1 << 6)
+#define	ARM_VEC_FIQ			(1 << 7)
+
+#define	ARM_NVEC			8
+#define	ARM_VEC_ALL			0xffffffff
+#endif
 
 /*
  * Per-CPU information.  For now we assume one CPU.
@@ -178,7 +196,9 @@ struct cpu_info {
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
 	struct device *ci_dev;		/* Device corresponding to this CPU */
-	u_int32_t ci_cpuid;		/* The CPU id */
+	u_int32_t ci_cpuid;		/* aggregate CPU id */
+	u_int32_t ci_cputype;		/* CPU type */
+	u_int32_t ci_cpurev;		/* CPU revision */
 	u_int32_t ci_ctrl;		/* The CPU control register */
 	struct evcnt ci_arm700bugcount;
 };
@@ -218,7 +238,7 @@ int	want_resched;		/* resched() was called */
  */
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
 
-#ifndef arm26
+#ifndef acorn26
 /*
  * cpu device glue (belongs in cpuvar.h)
  */

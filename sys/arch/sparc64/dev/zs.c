@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.29.2.1 2002/01/10 19:49:18 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.29.2.2 2002/06/23 17:42:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -215,6 +215,7 @@ zs_attach_mainbus(parent, self, aux)
 {
 	struct zsc_softc *zsc = (void *) self;
 	struct sbus_attach_args *sa = aux;
+	bus_space_handle_t bh;
 	int zs_unit = zsc->zsc_dev.dv_unit;
 
 	if (sa->sa_nintr == 0) {
@@ -222,7 +223,7 @@ zs_attach_mainbus(parent, self, aux)
 		return;
 	}
 
-	/* Use the mapping setup by the Sun PROM. */
+	/* Use the mapping setup by the Sun PROM if possible. */
 	if (zsaddr[zs_unit] == NULL) {
 		/* Only map registers once. */
 		if (sa->sa_npromvaddrs) {
@@ -236,24 +237,23 @@ zs_attach_mainbus(parent, self, aux)
 			 * high 4GB range, this needs to be changed to
 			 * sign-extend the address.
 			 */
-			zsaddr[zs_unit] = 
-				(struct zsdevice *)
-				(uintptr_t)sa->sa_promvaddrs[0];
+			sparc_promaddr_to_handle(sa->sa_bustag,
+				sa->sa_promvaddrs[0], &bh);
+
 		} else {
-			bus_space_handle_t kvaddr;
 
 			if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 					 sa->sa_offset,
 					 sa->sa_size,
 					 BUS_SPACE_MAP_LINEAR,
-					 0, &kvaddr) != 0) {
+					 &bh) != 0) {
 				printf("%s @ sbus: cannot map registers\n",
 				       self->dv_xname);
 				return;
 			}
-			zsaddr[zs_unit] = (struct zsdevice *)
-				(uintptr_t)kvaddr;
 		}
+		zsaddr[zs_unit] = (struct zsdevice *)
+			bus_space_vaddr(sa->sa_bustag, bh);
 	}
 	zsc->zsc_bustag = sa->sa_bustag;
 	zsc->zsc_dmatag = sa->sa_dmatag;

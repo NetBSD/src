@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.4.2.3 2002/03/16 16:00:03 jdolecek Exp $
+# $NetBSD: RAMDISK,v 1.4.2.4 2002/06/23 17:42:28 jdolecek Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -10,6 +10,8 @@
 # Supports root on: ie0, sd*, ...
 
 include "arch/sun2/conf/std.sun2"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -26,6 +28,7 @@ maxusers	2
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:
@@ -91,7 +94,7 @@ options 	INET		# IP prototol stack support
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_SIZE=800	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=800	# size of memory disk, in blocks
 
 config		netbsd root on ? type ffs
 

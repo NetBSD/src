@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.20.2.1 2002/03/16 16:00:18 jdolecek Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.20.2.2 2002/06/23 17:43:09 jdolecek Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -124,8 +124,8 @@ dz_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct ss_dz *dzP;
 	short i;
 
-#if VAX53 || VAXANY
-	if (vax_boardtype == VAX_BTYP_53)
+#if VAX53 || VAX49 || VAXANY
+	if (vax_boardtype == VAX_BTYP_53 || vax_boardtype == VAX_BTYP_49)
 		if (cf->cf_loc[0] != 0x25000000)
 			return 0; /* Ugly */
 #endif
@@ -183,13 +183,15 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	DELAY(10000);
 
 #if NDZKBD > 0
-	/* Don't change speed if this is the console */
-	if (cn_tab->cn_dev != makedev(getmajor(dzopen), 0))
+	/* Don't touch this port if this is the console */
+	if (cn_tab->cn_dev != makedev(getmajor(dzopen), 0)) {
 		dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) 
 		    | DZ_LPR_8_BIT_CHAR;
-	daa.daa_line = 0;
-	daa.daa_flags = (cn_tab->cn_pri == CN_INTERNAL ? DZKBD_CONSOLE : 0);
-	config_found(self, &daa, dz_print);
+		daa.daa_line = 0;
+		daa.daa_flags =
+		    (cn_tab->cn_pri == CN_INTERNAL ? DZKBD_CONSOLE : 0);
+		config_found(self, &daa, dz_print);
+	}
 #endif
 #if NDZMS > 0
 	dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) | DZ_LPR_7_BIT_CHAR \

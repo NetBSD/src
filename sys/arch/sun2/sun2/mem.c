@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3.2.3 2002/03/16 16:00:04 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.3.2.4 2002/06/23 17:42:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -63,6 +63,11 @@
 #include <machine/pte.h>
 
 #include <sun2/sun2/machdep.h>
+
+#define DEV_VME16D16	5	/* minor device 5 is /dev/vme16d16 */
+#define DEV_VME24D16	6	/* minor device 6 is /dev/vme24d16 */
+#define DEV_EEPROM	11 	/* minor device 11 is eeprom */
+#define DEV_LEDS	13 	/* minor device 13 is leds */
 
 static int promacc __P((caddr_t, int, int));
 static caddr_t devzeropage;

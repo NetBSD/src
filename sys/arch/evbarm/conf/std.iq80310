@@ -1,4 +1,4 @@
-#	$NetBSD: std.iq80310,v 1.10.2.2 2002/02/11 20:07:41 jdolecek Exp $
+#	$NetBSD: std.iq80310,v 1.10.2.3 2002/06/23 17:35:38 jdolecek Exp $
 #
 # standard NetBSD/evbarm for IQ80310 options
 
@@ -10,7 +10,6 @@ include "arch/evbarm/conf/files.iq80310"
 options 	EXEC_ELF32
 options 	EXEC_AOUT
 options 	EXEC_SCRIPT
-options 	XSCALE_CCLKCFG=9
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32

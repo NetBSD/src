@@ -1,4 +1,4 @@
-/*	$NetBSD: sqvar.h,v 1.2.2.1 2002/03/16 15:59:30 jdolecek Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.2.2.2 2002/06/23 17:40:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -121,6 +121,8 @@ struct sq_softc {
 	struct mbuf*		sc_txmbuf[SQ_NTXDESC];
 
 	u_int8_t		sc_rxcmd;	/* prototype rxcmd */
+
+	struct evcnt		sq_intrcnt;	/* count interrupts */
 
 #if NRND > 0
 	rndsource_element_t 	rnd_source;	/* random source */

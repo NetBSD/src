@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110.2.3 2002/03/16 15:56:50 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110.2.4 2002/06/23 17:35:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,12 +62,12 @@
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
-#include <sys/exec.h>            /* for PS_STRINGS */
 #include <sys/vnode.h>
 #include <sys/queue.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <sys/exec.h>
 #if defined(DDB) && defined(__ELF__)
 #include <sys/exec_elf.h>
 #endif
@@ -350,7 +350,7 @@ setregs(p, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A2] = (int)p->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;

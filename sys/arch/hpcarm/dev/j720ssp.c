@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.2.2.2 2002/02/11 20:08:01 jdolecek Exp $ */
+/* $NetBSD: j720ssp.c,v 1.2.2.3 2002/06/23 17:36:45 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -271,7 +271,7 @@ j720kbd_set_leds(void *v, int on)
 int
 j720kbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	return (-1);
+	return (EPASSTHROUGH);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.53.2.3 2002/03/16 15:58:35 jdolecek Exp $ */
+/* $NetBSD: locore.h,v 1.53.2.4 2002/06/23 17:38:02 jdolecek Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -33,11 +33,6 @@
 
 struct tlb;
 
-/*
- * locore service routine for exception vectors. Used outside locore
- * only to print them by name in stack tracebacks
- */
-
 uint32_t mips_cp0_cause_read(void);
 void	mips_cp0_cause_write(uint32_t);
 uint32_t mips_cp0_status_read(void);
@@ -66,6 +61,7 @@ void	mips3_TLBRead(int, struct tlb *);
 void	mips3_wbflush(void);
 void	mips3_proc_trampoline(void);
 void	mips3_cpu_switch_resume(void);
+void	mips3_pagezero(caddr_t dst);
 
 #ifdef MIPS3_5900
 void	mips5900_SetPID(int);
@@ -77,6 +73,7 @@ void	mips5900_TLBRead(int, struct tlb *);
 void	mips5900_wbflush(void);
 void	mips5900_proc_trampoline(void);
 void	mips5900_cpu_switch_resume(void);
+void	mips5900_pagezero(caddr_t dst);
 #endif
 #endif
 
@@ -102,15 +99,21 @@ void	mips64_TLBRead(int, struct tlb *);
 void	mips64_wbflush(void);
 void	mips64_proc_trampoline(void);
 void	mips64_cpu_switch_resume(void);
+void	mips64_pagezero(caddr_t dst);
 #endif
 
+#if defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)
 uint32_t mips3_cp0_compare_read(void);
 void	mips3_cp0_compare_write(uint32_t);
 
 uint32_t mips3_cp0_config_read(void);
 void	mips3_cp0_config_write(uint32_t);
+#if defined(MIPS32) || defined(MIPS64)
 uint32_t mipsNN_cp0_config1_read(void);
 void	mipsNN_cp0_config1_write(uint32_t);
+uint32_t mipsNN_cp0_config2_read(void);
+uint32_t mipsNN_cp0_config3_read(void);
+#endif
 
 uint32_t mips3_cp0_count_read(void);
 void	mips3_cp0_count_write(uint32_t);
@@ -120,7 +123,9 @@ void	mips3_cp0_wired_write(uint32_t);
 
 uint64_t mips3_ld(uint64_t *);
 void	mips3_sd(uint64_t *, uint64_t);
+#endif	/* MIPS3 || MIPS4 || MIPS32 || MIPS64 */
 
+#if defined(MIPS3) || defined(MIPS4) || defined(MIPS64)
 static inline uint32_t	mips3_lw_a64(uint64_t addr)
 		    __attribute__((__unused__));
 static inline void	mips3_sw_a64(uint64_t addr, uint32_t val)
@@ -182,6 +187,7 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
 
 	mips_cp0_status_write(sr);
 }
+#endif	/* MIPS3 || MIPS4 || MIPS64 */
 
 /*
  * A vector with an entry for each mips-ISA-level dependent
@@ -198,12 +204,10 @@ typedef struct  {
 	void (*wbflush)(void);
 } mips_locore_jumpvec_t;
 
-/* Override writebuffer-drain method. */
 void	mips_set_wbflush(void (*)(void));
+void	mips_wait_idle(void);
 
-/* stacktrace() -- print a stack backtrace to the console */
 void	stacktrace(void);
-/* logstacktrace() -- log a stack traceback to msgbuf */
 void	logstacktrace(void);
 
 /*
@@ -328,5 +332,5 @@ struct kernframe {
 	register_t cf_ra;
 	struct trapframe cf_frame;
 };
-#endif
+#endif	/* _KERNEL */
 #endif	/* _MIPS_LOCORE_H */

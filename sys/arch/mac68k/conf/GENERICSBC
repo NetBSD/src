@@ -1,10 +1,12 @@
-#	$NetBSD: GENERICSBC,v 1.2.2.3 2002/02/11 20:08:31 jdolecek Exp $
+#	$NetBSD: GENERICSBC,v 1.2.2.4 2002/06/23 17:37:41 jdolecek Exp $
 #
 # GENERICSBC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.2.2.3 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERICSBC-$Revision: 1.2.2.4 $"
 
 maxusers	16		# estimated number of users
 
@@ -38,6 +40,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -64,7 +67,8 @@ options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # The following is needed to run pre-NetBSD 1.6 binaries under ELF.
-#options 	COMPAT_AOUT_M68K # compatibility with NetBSD/m68k a.out
+options 	COMPAT_AOUT_M68K # compatibility with NetBSD/m68k a.out
+options 	EXEC_AOUT	# support for exec'ing a.out
 
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
@@ -211,6 +215,10 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 se*	at scsibus? target ? lun ?	# SCSI ethernet
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+# IDE controller and devices
+wdc*	at obio? flags 0x1000
+wd*	at wdc? channel ? drive ?
 
 
 # Miscellaneous mass storage devices

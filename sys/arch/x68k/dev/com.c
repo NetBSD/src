@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.21.2.1 2002/01/10 19:50:17 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.21.2.2 2002/06/23 17:43:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ comspeed(speed)
 		return -1;
 	return x;
 
-#undef	divrnd(n, q)
+#undef	divrnd
 }
 
 static int
@@ -673,10 +673,11 @@ comioctl(dev, cmd, data, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
 
 	switch (cmd) {
@@ -767,7 +768,7 @@ comioctl(dev, cmd, data, flag, p)
 		break;
 	}
 	default:
-		return ENOTTY;
+		return EPASSTHROUGH;
 	}
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11.2.1 2002/01/10 19:44:04 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.2.2 2002/06/23 17:36:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -112,15 +112,6 @@ void	_clrsoftintr(int);
 #define	splsoftserial()	_splraise(ipl_sr_bits[IPL_SOFTSERIAL])
 
 #define	spllowersoftclock() _spllower(ipl_sr_bits[IPL_SOFTCLOCK])
-
-/*
- * Index into intrcnt[], which is defined in locore
- */
-extern u_long intrcnt[];
-
-#define	SOFTCLOCK_INTR	0
-#define	SOFTNET_INTR	1
-#define	HARDCLOCK	8
 
 /*
  * software simulated interrupt

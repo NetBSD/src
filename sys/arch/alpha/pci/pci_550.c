@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.21.2.1 2001/08/03 04:10:47 lukem Exp $ */
+/* $NetBSD: pci_550.c,v 1.21.2.2 2002/06/23 17:34:14 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.21.2.1 2001/08/03 04:10:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.21.2.2 2002/06/23 17:34:14 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -196,7 +196,7 @@ dec_550_intr_map(pa, ihp)
 		return 1;
 	}
 
-	alpha_pci_decompose_tag(pc, bustag, &bus, &device, &function);
+	pci_decompose_tag(pc, bustag, &bus, &device, &function);
 
 	/*
 	 * There are two main variants of Miata: Miata 1 (Intel SIO)
@@ -382,7 +382,7 @@ dec_550_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 	void *cookie = NULL;
 	int bus, irq;
 
-	alpha_pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
+	pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
 
 	/*
 	 * If this isn't PCI bus #0, all bets are off.

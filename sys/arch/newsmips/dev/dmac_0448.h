@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac_0448.h,v 1.2 1999/02/15 04:36:33 hubertf Exp $	*/
+/*	$NetBSD: dmac_0448.h,v 1.2.22.1 2002/06/23 17:38:50 jdolecek Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
 #define DMAC_CMAPH		(DMAC_BASE + 0xc)
 #define DMAC_CMAPL		(DMAC_BASE + 0xd)
 
-#ifdef mips
+#ifdef __mips__
 #define	VOLATILE	volatile
 #else
 #define	VOLATILE

@@ -1,18 +1,18 @@
-/* $NetBSD: wdogvar.h,v 1.3.6.1 2002/03/16 15:59:40 jdolecek Exp $ */
+/*	$NetBSD: wdogvar.h,v 1.3.6.2 2002/06/23 17:40:46 jdolecek Exp $	*/
 
 #ifndef _SH3_WDOGVAR_H_
-#define _SH3_WDOGVAR_H_
+#define	_SH3_WDOGVAR_H_
 
-#define WDOGF_OPEN	1
+#define	WDOGF_OPEN	1
 
-#define SIORESETWDOG	_IO('S', 0x0)
-#define SIOSTARTWDOG	_IO('S', 0x1)
-#define SIOSTOPWDOG	_IO('S', 0x2)
+#define	SIORESETWDOG	_IO('S', 0x0)
+#define	SIOSTARTWDOG	_IO('S', 0x1)
+#define	SIOSTOPWDOG	_IO('S', 0x2)
 #define	SIOSETWDOG	_IOW('S', 0x3, int)
-#define SIOWDOGSETMODE	_IOW('S', 0x4, int)
+#define	SIOWDOGSETMODE	_IOW('S', 0x4, int)
 
-#define WDOGM_RESET	1
-#define WDOGM_INTR	2
+#define	WDOGM_RESET	1
+#define	WDOGM_INTR	2
 
 #ifdef _KERNEL
 extern unsigned int maxwdog;

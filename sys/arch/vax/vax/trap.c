@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66.2.1 2002/03/16 16:00:17 jdolecek Exp $     */
+/*	$NetBSD: trap.c,v 1.66.2.2 2002/06/23 17:43:09 jdolecek Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -299,10 +299,12 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 #endif
 	}
 	if (trapsig) {
+#ifdef DEBUG
 		if (sig == SIGSEGV || sig == SIGILL)
 			printf("pid %d (%s): sig %d: type %lx, code %lx, pc %lx, psl %lx\n",
 			       p->p_pid, p->p_comm, sig, frame->trap,
 			       frame->code, frame->pc, frame->psl);
+#endif
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, sig, frame->code);
 		KERNEL_PROC_UNLOCK(p);
@@ -325,7 +327,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	exptr->r6 = stack;			/* for ELF */
 	exptr->r7 = 0;				/* for ELF */
 	exptr->r8 = 0;				/* for ELF */
-	exptr->r9 = (u_long) PS_STRINGS;	/* for ELF */
+	exptr->r9 = (u_long) p->p_psstr;	/* for ELF */
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.5 2000/01/22 12:34:57 pk Exp $	*/
+/*	$NetBSD: net.c,v 1.5.8.1 2002/06/23 17:42:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -173,11 +173,11 @@ net_mountroot()
 	 * and the more modern, BOOTP way. (RFC951, RFC1048)
 	 */
 
-	/* Historically, we've used BOOTPARAMS, so try that first */
-	error = net_mountroot_bootparams();
+		/* Try BOOTP first */
+	error = net_mountroot_bootp();
+		/* Historically, we've used BOOTPARAMS, so try that next */
 	if (error != 0)
-		/* Next, try BOOTP */
-		error = net_mountroot_bootp();
+		error = net_mountroot_bootparams();
 	if (error != 0)
 		return (error);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: getchar.c,v 1.1.2.2 2002/01/10 19:48:35 thorpej Exp $	 */
+/*	$NetBSD: getchar.c,v 1.1.2.3 2002/06/23 17:40:33 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,6 +47,6 @@ getchar()
 	char ch;
 	int count;
 
-	(*ARCBIOS->Read)(1, &ch, 1, &count);
+	(*ARCBIOS->Read)(0, &ch, 1, &count);
 	return(ch);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.23.2.1 2001/08/03 04:12:07 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.23.2.2 2002/06/23 17:38:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,6 +91,16 @@ ASLOCAL(monitor)
 /*
  * LED control for DEBUG.
  */
+#ifdef __STDC__
+#define	IMMEDIATE	#
+#define	SETLED(func)	\
+	movl	IMMEDIATE func,%d0; \
+	jmp	debug_led
+
+#define	SETLED2(func)	\
+	movl	IMMEDIATE func,%d0; \
+	jmp	debug_led2
+#else
 #define	SETLED(func)	\
 	movl	#func,%d0; \
 	jmp	debug_led
@@ -98,6 +108,7 @@ ASLOCAL(monitor)
 #define	SETLED2(func)	\
 	movl	#func,%d0; \
 	jmp	debug_led2
+#endif /* __STDC__ */
 
 #define	TOMONITOR	\
 	moveal	_ASM_LABEL(monitor), %a0; \
@@ -1526,8 +1537,6 @@ GLOBAL(bootdevlun)
 GLOBAL(bootctrllun)
 	.long	0
 GLOBAL(bootaddr)
-	.long	0
-GLOBAL(boothowto)
 	.long	0
 
 GLOBAL(want_resched)

@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.47.4.1 2002/01/10 19:45:41 thorpej Exp $	*/
+/*	$NetBSD: macrom.c,v 1.47.4.2 2002/06/23 17:37:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -196,13 +196,13 @@ mrg_execute_deferred()
 		mrg_DTList = *(caddr_t *)ptr;
 		splx(s);
 
-		__asm __volatile ("
-			moveml %%a0-%%a6/%%d1-%%d7,%%sp@-
-			movl %0,%%a0
-			movl %%a0@(8),%%a2
-			movl %%a0@(12),%%a1
-			jsr %%a2@
-			moveml %%sp@+,%%a0-%%a6/%%d1-%%d7" : : "g" (ptr));
+		__asm __volatile (
+		"	moveml %%a0-%%a6/%%d1-%%d7,%%sp@-	\n"
+		"	movl %0,%%a0		\n"
+		"	movl %%a0@(8),%%a2	\n"
+		"	movl %%a0@(12),%%a1	\n"
+		"	jsr %%a2@		\n"
+		"	moveml %%sp@+,%%a0-%%a6/%%d1-%%d7" : : "g" (ptr));
 	}
 }
 
@@ -229,12 +229,12 @@ mrg_VBLQueue()
 			printf("mrg: mrg_VBLQueue: calling VBL task at 0x%x with VBLTask block at %p\n",
 			    *((u_int32_t *)(vbltask + vblAddr)), vbltask);
 #endif
-			__asm __volatile("
-				movml	#0xfffe,%%sp@-
-				movl	%0,%%a0
-				movl	%1,%%a1
-				jbsr	%%a1@
-				movml	%%sp@+,#0x7fff"
+			__asm __volatile(
+			"	movml	#0xfffe,%%sp@-	\n"
+			"	movl	%0,%%a0		\n"
+			"	movl	%1,%%a1		\n"
+			"	jbsr	%%a1@		\n"
+			"	movml	%%sp@+,#0x7fff"
 				: : "g" (vbltask),
 				    "g" (*((caddr_t)(vbltask + vblAddr)))
 				: "a0","a1");
@@ -414,12 +414,12 @@ mrg_adbintr()	/* Call ROM ADB Interrupt */
 
 		/* Gotta load a1 with VIA address. */
 		/* ADB int expects it from Mac intr routine. */
-		__asm __volatile ("
-			movml	#0xffff,%%sp@-
-			movl	%0,%%a0
-			movl	" ___STRING(_C_LABEL(VIA)) ",%%a1
-			jbsr	%%a0@
-			movml	%%sp@+,#0xffff"
+		__asm __volatile (
+		"	movml	#0xffff,%%sp@-	\n"
+		"	movl	%0,%%a0		\n"
+		"	movl	" ___STRING(_C_LABEL(VIA)) ",%%a1 \n"
+		"	jbsr	%%a0@		\n"
+		"	movml	%%sp@+,#0xffff"
 			:
 			: "g" (mrg_romadbintr)
 			: "a0","a1");
@@ -442,12 +442,12 @@ mrg_pmintr()	/* Call ROM PM Interrupt */
 
 		/* Gotta load a1 with VIA address. */
 		/* ADB int expects it from Mac intr routine. */
-		__asm __volatile ("
-			movml	#0xffff,%%sp@-
-			movl	%0,%%a0
-			movl	" ___STRING(_C_LABEL(VIA)) ",%%a1
-			jbsr	%%a0@
-			movml	%%sp@+,#0xffff"
+		__asm __volatile (
+		"	movml	#0xffff,%%sp@-	\n"
+		"	movl	%0,%%a0		\n"
+		"	movl	" ___STRING(_C_LABEL(VIA)) ",%%a1 \n"
+		"	jbsr	%%a0@		\n"
+		"	movml	%%sp@+,#0xffff"
 			:
 			: "g" (mrg_rompmintr)
 			: "a0","a1");
@@ -555,9 +555,9 @@ mrg_SetPtrSize()
 	caddr_t ptr;
 	int newbytes;
 
-	__asm __volatile("
-		movl	%%a0,%0
-		movl	%%d0,%1"
+	__asm __volatile(
+	"	movl	%%a0,%0	\n"
+	"	movl	%%d0,%1"
 		: "=g" (ptr), "=g" (newbytes) : : "d0","a0");
 
 #if defined(MRG_SHOWTRAPS)
@@ -585,9 +585,9 @@ mrg_SetTrapAddress()
 	caddr_t ptr;
 	int trap_num;
 
-	__asm __volatile("
-		movl %%a0,%0
-		movl %%d0,%1"
+	__asm __volatile(
+	"	movl %%a0,%0	\n"
+	"	movl %%d0,%1"
 		: "=g" (ptr), "=g" (trap_num) : : "d0","a0");
 
 #if defined(MRG_DEBUG)
@@ -722,15 +722,15 @@ mrg_aline_super(struct frame *frame)
 /* 	store a0 in d0bucket */
 /* This will change a2,a1,d1,d0,a0 and possibly a6 */
 
-	__asm __volatile ("
-		movl	%2@,%%d0
-		movl	%2@(4),%%d1
-		movl	%2@(32),%%a0
-		movl	%2@(36),%%a1
-		movl	%3,%%a2
-		jbsr	%%a2@
-		movl	%%a0,%0
-		movl	%%d0,%1"
+	__asm __volatile (
+	"	movl	%2@,%%d0	\n"
+	"	movl	%2@(4),%%d1	\n"
+	"	movl	%2@(32),%%a0	\n"
+	"	movl	%2@(36),%%a1	\n"
+	"	movl	%3,%%a2		\n"
+	"	jbsr	%%a2@		\n"
+	"	movl	%%a0,%0		\n"
+	"	movl	%%d0,%1"
 
 		: "=g" (a0bucket), "=g" (d0bucket)
 
@@ -820,18 +820,18 @@ mrg_init()
 #if defined(MRG_TEST)
 	if (ROMResourceMap) {
 		printf("mrg: testing CountResources\n");
-		__asm __volatile ("
-			clrl    %%sp@-
-			clrl    %%sp@-
-			.word   0xa99c
-			movw    %%sp@+,%0"
+		__asm __volatile (
+		"	clrl    %%sp@-	\n"
+		"	clrl    %%sp@-	\n"
+		"	.word   0xa99c	\n"
+		"	movw    %%sp@+,%0"
 			: "=g" (rcnt));
 		printf("mrg: found %d resources in ROM\n", rcnt);
-		__asm __volatile ("
-			clrl    %%sp@-
-			movl    #0x44525652,%%sp@-
-			.word   0xa99c
-			movw    %%sp@+,%0"
+		__asm __volatile (
+		"	clrl    %%sp@-	\n"
+		"	movl    #0x44525652,%%sp@-	\n"
+		"	.word   0xa99c	\n"
+		"	movw    %%sp@+,%0"
 			: "=g" (rcnt));
 		printf("mrg: %d are DRVR resources\n", rcnt);
 		if (rcnt == 0)
@@ -841,24 +841,24 @@ mrg_init()
 #if defined(MRG_TEST)
 	if (ROMResourceMap) {
 		printf("mrg: testing GetIndResource\n");
-		__asm __volatile ("
-			clrl    %%sp@-
-			movl    #0x44525652,%%sp@-
-			movw    #0x01,%%sp@-
-			.word   0xa99d
-			movl    %%sp@+,%0"
+		__asm __volatile (
+		"	clrl    %%sp@-		\n"
+		"	movl    #0x44525652,%%sp@-	\n"
+		"	movw    #0x01,%%sp@-	\n"
+		"	.word   0xa99d		\n"
+		"	movl    %%sp@+,%0"
 			: "=g" (handle));
 		printf("Handle to first DRVR resource is 0x%p\n", handle);
 		printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
 		    (long)Get_Ind_Resource(0x44525652, 1),
 		    (long)*Get_Ind_Resource(0x44525652, 1),
 		    (long)*((u_int32_t *)*Get_Ind_Resource(0x44525652, 1)));
-		__asm __volatile ("
-			clrl    %%sp@-
-			movl    #0x44525652,%%sp@-
-			movw    #0x02,%%sp@-
-			.word   0xa99d
-			movl    %%sp@+,%0"
+		__asm __volatile (
+		"	clrl    %%sp@-		\n"
+		"	movl    #0x44525652,%%sp@-	\n"
+		"	movw    #0x02,%%sp@-	\n"
+		"	.word   0xa99d		\n"
+		"	movl    %%sp@+,%0"
 			: "=g" (handle));
 		printf("Handle to second DRVR resource is 0x%p\n", handle);
 		printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
@@ -1043,12 +1043,12 @@ setup_egret(void)
 
 	/* This initializes ADBState (mrg_ADBStore2) and
 	   enables interrupts */
-		__asm __volatile ("
-			movml	%%a0-%%a2,%%sp@-
-			movl	%1,%%a0		/* ADBState, mrg_adbstore2 */
-			movl	%0,%%a1
-			jbsr	%%a1@
-			movml	%%sp@+,%%a0-%%a2 "
+		__asm __volatile (
+		"	movml	%%a0-%%a2,%%sp@-	\n"
+		"	movl	%1,%%a0	\n"	/* ADBState, mrg_adbstore2 */
+		"	movl	%0,%%a1	\n"
+		"	jbsr	%%a1@	\n"
+		"	movml	%%sp@+,%%a0-%%a2 "
 			:
 			: "g" (mrg_InitEgret), "g" (ADBState)
 			: "a0","a1");
@@ -1296,12 +1296,12 @@ ADBAlternateInit(void)
 	if (0 == mrg_ADBAlternateInit) {
 		ADBReInit();
 	} else {
- 		__asm __volatile ("
-			movml	%%a0-%%a6/%%d0-%%d7,%%sp@-
-			movl	%0,%%a1
-			movl	%1,%%a3
-			jbsr	%%a1@
-			movml	%%sp@+,%%a0-%%a6/%%d0-%%d7"
+ 		__asm __volatile (
+		"	movml	%%a0-%%a6/%%d0-%%d7,%%sp@-	\n"
+		"	movl	%0,%%a1		\n"
+		"	movl	%1,%%a3		\n"
+		"	jbsr	%%a1@		\n"
+		"	movml	%%sp@+,%%a0-%%a6/%%d0-%%d7"
 			: 
 			: "g" (mrg_ADBAlternateInit), "g" (ADBBase)
 			: "a1","a3");

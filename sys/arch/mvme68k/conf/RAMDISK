@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.9.2.4 2002/03/16 15:58:50 jdolecek Exp $
+#	$NetBSD: RAMDISK,v 1.9.2.5 2002/06/23 17:38:16 jdolecek Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -11,6 +11,8 @@
 #
 
 include		"arch/mvme68k/conf/std.mvme68k"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Boards this kernel supports
 options 	MVME147
@@ -40,8 +42,9 @@ options 	INET6		# IPV6
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT
-options 	MEMORY_DISK_SIZE=1024
+options 	MEMORY_DISK_ROOT_SIZE=1600
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## "generic" boot (put root on boot device)

@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.7.4.2 2002/01/10 19:45:55 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.7.4.3 2002/06/23 17:37:58 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -161,8 +161,8 @@ OF_finddevice(name)
 		"finddevice",
 		1,
 		1,
-	};	
-	
+	};
+
 	args.device = name;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -184,7 +184,7 @@ OF_instance_to_package(ihandle)
 		1,
 		1,
 	};
-	
+
 	args.ihandle = ihandle;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -212,7 +212,7 @@ OF_getprop(handle, prop, buf, buflen)
 		4,
 		1,
 	};
-	
+
 	args.phandle = handle;
 	args.prop = prop;
 	args.buf = buf;
@@ -244,7 +244,7 @@ OF_setprop(handle, prop, buf, len)
 		4,
 		1,
 	};
-	
+
 	args.phandle = handle;
 	args.prop = prop;
 	args.buf = buf;
@@ -270,7 +270,7 @@ OF_open(dname)
 		1,
 		1,
 	};
-	
+
 #ifdef OFW_DEBUG
 	printf("OF_open(%s) -> ", dname);
 #endif
@@ -302,7 +302,7 @@ OF_close(handle)
 		1,
 		0,
 	};
-	
+
 #ifdef OFW_DEBUG
 	printf("OF_close(%d)\n", handle);
 #endif
@@ -408,7 +408,7 @@ OF_seek(handle, pos)
 		3,
 		1,
 	};
-	
+
 #ifdef OFW_DEBUG
 	printf("OF_seek(%d, %x, %x) -> ", handle, (int)(pos >> 32), (int)pos);
 #endif
@@ -481,7 +481,7 @@ OF_release(virt, size)
 		2,
 		0,
 	};
-	
+
 #ifdef OFW_DEBUG
 	printf("OF_release(%x, %x)\n", virt, size);
 #endif
@@ -503,7 +503,7 @@ OF_milliseconds()
 		0,
 		1,
 	};
-	
+
 	openfirmware(&args);
 	return args.ms;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: ieeefp.h,v 1.1 1999/09/13 10:31:18 itojun Exp $ */
+/* $NetBSD: ieeefp.h,v 1.1.16.1 2002/06/23 17:40:39 jdolecek Exp $ */
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -6,15 +6,15 @@
  */
 
 #ifndef _SH3_IEEEFP_H_
-#define _SH3_IEEEFP_H_
+#define	_SH3_IEEEFP_H_
 
 typedef int fp_except;
-#define FP_X_INV	0x01	/* invalid operation exception */
-#define FP_X_DNML	0x02	/* denormalization exception */
-#define FP_X_DZ		0x04	/* divide-by-zero exception */
-#define FP_X_OFL	0x08	/* overflow exception */
-#define FP_X_UFL	0x10	/* underflow exception */
-#define FP_X_IMP	0x20	/* imprecise (loss of precision) */
+#define	FP_X_INV	0x01	/* invalid operation exception */
+#define	FP_X_DNML	0x02	/* denormalization exception */
+#define	FP_X_DZ		0x04	/* divide-by-zero exception */
+#define	FP_X_OFL	0x08	/* overflow exception */
+#define	FP_X_UFL	0x10	/* underflow exception */
+#define	FP_X_IMP	0x20	/* imprecise (loss of precision) */
 
 typedef enum {
 	FP_RN=0,		/* round to nearest representable number */
@@ -23,4 +23,4 @@ typedef enum {
 	FP_RZ=3			/* round to zero (truncate) */
 } fp_rnd;
 
-#endif /* _SH3_IEEEFP_H_ */
+#endif /* !_SH3_IEEEFP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_hpcio.c,v 1.2.2.2 2002/01/10 19:43:47 thorpej Exp $	*/
+/*	$NetBSD: com_hpcio.c,v 1.2.2.3 2002/06/23 17:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin. All rights reserved.
@@ -100,6 +100,10 @@ struct bus_space_ops com_hpcio_bs_ops = {
 
 	/* barrier */
 	bs_through_bs_barrier,
+
+	/* probe */
+	bs_through_bs_peek,
+	bs_through_bs_poke,
 
 	/* read (single) */
 	com_hpcio_bs_r_1,

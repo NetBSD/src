@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.9.22.1 2002/01/10 19:37:29 thorpej Exp $
+# $NetBSD: Makefile,v 1.9.22.2 2002/06/23 17:34:35 jdolecek Exp $
 
 PROG=loadkmap
 NOMAN=	# defined
 BINDIR=/usr/sbin
-SUBDIR=din es fr sw us
+SUBDIR=din es fr pl_din pl_us sw us
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

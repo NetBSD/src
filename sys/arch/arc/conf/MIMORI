@@ -1,10 +1,12 @@
-#	$NetBSD: MIMORI,v 1.6.2.4 2002/03/16 15:55:57 jdolecek Exp $
+#	$NetBSD: MIMORI,v 1.6.2.5 2002/06/23 17:34:39 jdolecek Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp 
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
 #
 
 include		"arch/arc/conf/std.arc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32		# estimated number of users
 
@@ -25,6 +27,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -169,16 +172,11 @@ scsibus*	at ahc?
 #siop*		at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
 #scsibus* 	at siop?
 
-#de*		at pci? dev ? function ?
 ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
 le*		at pci? dev ? function ?	# PCnet-PCI
 ne*		at pci? dev ? function ?	# NE2000-compatible
-tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones)
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
@@ -228,8 +226,6 @@ pckbd*		at pckbc?	# PC keyboard (kbd port)
 wskbd*		at pckbd?
 pms*		at pckbc?	# PS/2-style mouse (aux port)
 wsmouse*	at pms?
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse (aux port)
-#wsmouse*	at pmsi?
 
 #### Pseudo devices
 

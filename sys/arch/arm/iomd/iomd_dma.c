@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.2.2.4 2002/03/16 15:56:11 jdolecek Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.2.2.5 2002/06/23 17:34:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -144,7 +144,7 @@ dma_intr(cookie)
 {
 	struct dma_ctrl *dp = cookie;
 	u_char status = (*dp->dc_st) & DMA_ST_MASK;
-	vm_offset_t cur;
+	paddr_t cur;
 	int len;
 	int bufap = 0;
 
@@ -219,7 +219,7 @@ fill:
 /*
  * Flush the cache for this address
  */
-	cpu_dcache_wbinv_range((vm_offset_t)dp->dc_nextaddr, len);
+	cpu_dcache_wbinv_range((vaddr_t)dp->dc_nextaddr, len);
 
 	dp->dc_nextaddr += len;
 	dp->dc_len -= len;

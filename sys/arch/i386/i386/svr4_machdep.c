@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.53.4.3 2002/03/16 15:58:16 jdolecek Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.53.4.4 2002/06/23 17:37:27 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.53.4.3 2002/03/16 15:58:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.53.4.4 2002/06/23 17:37:27 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -268,7 +268,7 @@ svr4_getsiginfo(si, sig, code, addr)
 	u_long			 code;
 	caddr_t			 addr;
 {
-	si->si_signo = native_to_svr4_sig[sig];
+	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
 	si->si_addr  = addr;
 
@@ -426,6 +426,8 @@ svr4_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
@@ -450,7 +452,7 @@ svr4_sys_sysarch(p, v, retval)
 {
 	struct svr4_sys_sysarch_args *uap = v;
 #ifdef USER_LDT
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int error;
 #endif
 	*retval = 0;	/* XXX: What to do */
@@ -507,10 +509,11 @@ svr4_sys_sysarch(p, v, retval)
 			bsd.sd.sd_gran = (ssd.access2 >> 3)& 0x1;
 
 			sa.start = IDXSEL(ssd.selector);
-			sa.desc = stackgap_alloc(&sg, sizeof(union descriptor));
+			sa.desc = stackgap_alloc(p, &sg,
+			    sizeof(union descriptor));
 			sa.num = 1;
-			sap = stackgap_alloc(&sg,
-					     sizeof(struct i386_set_ldt_args));
+			sap = stackgap_alloc(p, &sg,
+			     sizeof(struct i386_set_ldt_args));
 
 			if ((error = copyout(&sa, sap, sizeof(sa))) != 0)
 				return error;

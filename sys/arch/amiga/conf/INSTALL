@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.16.2.4 2002/03/16 15:55:47 jdolecek Exp $
+# $NetBSD: INSTALL,v 1.16.2.5 2002/06/23 17:34:23 jdolecek Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.174 2002/02/13 12:08:57 is Exp $
+# Created from: #NetBSD: GENERIC,v 1.180 2002/05/30 19:45:15 thorpej Exp $
 
 #GENERIC machine description file
 
@@ -24,7 +24,9 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.16.2.4 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident  		"GENERIC-$Revision: 1.16.2.5 $"
 
 makeoptions	COPTS="-Os"
 
@@ -97,6 +99,7 @@ options 	COMPAT_AOUT_M68K # actually make some system calls work.
 
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USERCONF	# userconf(4) support
 
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
@@ -108,7 +111,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
-#options 	PANICBUTTON	# Forced crash via keypress (???)
+#options 	PANICBUTTON	# Forced crash via keypress (?)
 
 #Amiga specific options
 
@@ -149,6 +152,11 @@ options 	GRF_SUPER72	# AGA Super-72
 
 #options 	KFONT_8X11	# 8x11 font
 
+#select a font for the console according to the character set and keymap
+#you want to use
+options        KFONT_CONS_ISO8859_1
+#options         KFONT_CONS_ISO8859_2
+
 #This is how you would tell the kernel the A2410 oscillator frequencies:
 #The used frequencies are the defaults, and do not need option setting
 #options 	ULOWELL_OSC1=36000000
@@ -181,7 +189,7 @@ grfrt0		at zbus0		# retina II
 
 grfrh0		at zbus0		# retina III
 
-grfcl*		at zbus0		# Picasso II/Piccalo/Spectrum
+grfcl*		at zbus0		# Picasso II/Piccolo/Spectrum
 grful0		at zbus0		# A2410
 grfcv0		at zbus0		# CyberVision 64
 grfet*		at zbus0		# Tseng (oMniBus, Domino, Merlin)
@@ -234,7 +242,7 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 #Keyboard device. Optionally can attach a wskbd.
 #wskbd works together with a wsdisplay so enable them both if you will.
 #Don't enable wskbd if you use ite.
-
+#
 #XXX in std.amiga: kbd0 at mainbus0
 #wskbd0		at kbd0 console ?
 

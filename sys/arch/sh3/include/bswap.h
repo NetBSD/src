@@ -1,9 +1,9 @@
-/*      $NetBSD: bswap.h,v 1.1.16.1 2002/03/16 15:59:36 jdolecek Exp $      */
+/*      $NetBSD: bswap.h,v 1.1.16.2 2002/06/23 17:40:36 jdolecek Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
 #ifndef _SH3_BSWAP_H_
-#define _SH3_BSWAP_H_
+#define	_SH3_BSWAP_H_
 
 #include <sys/cdefs.h>
 
@@ -45,4 +45,4 @@ bswap32(u_int32_t x)
 }
 #endif /* _KERNEL */
 
-#endif /* _SH3_BSWAP_H_ */
+#endif /* !_SH3_BSWAP_H_ */

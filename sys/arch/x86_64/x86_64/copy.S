@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.1 2001/06/19 00:21:16 fvdl Exp $	*/
+/*	$NetBSD: copy.S,v 1.1.2.1 2002/06/23 17:43:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -186,10 +186,10 @@ ENTRY(copyin)
 	xorl	%eax,%eax
 	ret
 
-ENTRY(copy_efault)
+NENTRY(copy_efault)
 	movq	$EFAULT,%rax
 
-ENTRY(copy_fault)
+NENTRY(copy_fault)
 	movq	_C_LABEL(curpcb)(%rip),%rdx
 	popq	PCB_ONFAULT(%rdx)
 	ret

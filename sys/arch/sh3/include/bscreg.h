@@ -1,4 +1,4 @@
-/*	$NetBSD: bscreg.h,v 1.2.16.1 2002/03/16 15:59:36 jdolecek Exp $	*/
+/*	$NetBSD: bscreg.h,v 1.2.16.2 2002/06/23 17:40:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -27,36 +27,36 @@
  */
 
 #ifndef _SH3_BSCREG_H_
-#define _SH3_BSCREG_H_
+#define	_SH3_BSCREG_H_
 #include <sh3/devreg.h>
 
 /*
  * Bus State Controller
  */
 
-#define SH3_BCR1		0xffffff60	/* 16bit */
-#define SH3_BCR2		0xffffff62	/* 16bit */
-#define SH3_WCR1		0xffffff64	/* 16bit */
-#define SH3_WCR2		0xffffff66	/* 16bit */
-#define SH3_MCR			0xffffff68	/* 16bit */
-#define SH3_DCR			0xffffff6a	/* 16bit */
-#define SH3_PCR			0xffffff6c	/* 16bit */
-#define SH3_RTCSR		0xffffff6e	/* 16bit */
-#define SH3_RTCNT		0xffffff70	/* 16bit */
-#define SH3_RTCOR		0xffffff72	/* 16bit */
-#define SH3_RFCR		0xffffff74	/* 16bit */
-#define SH3_BCR3		0xffffff7e	/* 16bit */
+#define	SH3_BCR1		0xffffff60	/* 16bit */
+#define	SH3_BCR2		0xffffff62	/* 16bit */
+#define	SH3_WCR1		0xffffff64	/* 16bit */
+#define	SH3_WCR2		0xffffff66	/* 16bit */
+#define	SH3_MCR			0xffffff68	/* 16bit */
+#define	SH3_DCR			0xffffff6a	/* 16bit */
+#define	SH3_PCR			0xffffff6c	/* 16bit */
+#define	SH3_RTCSR		0xffffff6e	/* 16bit */
+#define	SH3_RTCNT		0xffffff70	/* 16bit */
+#define	SH3_RTCOR		0xffffff72	/* 16bit */
+#define	SH3_RFCR		0xffffff74	/* 16bit */
+#define	SH3_BCR3		0xffffff7e	/* 16bit */
 
-#define SH4_BCR1		0xff800000	/* 32bit */
-#define SH4_BCR2		0xff800004	/* 16bit */
-#define SH4_WCR1		0xff800008	/* 32bit */
-#define SH4_WCR2		0xff80000c	/* 32bit */
-#define SH4_WCR3		0xff800010	/* 32bit */
-#define SH4_MCR			0xff800014	/* 32bit */
-#define SH4_PCR			0xff800018	/* 16bit */
-#define SH4_RTCSR		0xff80001c	/* 16bit */
-#define SH4_RTCNT		0xff800020	/* 16bit */
-#define SH4_RTCOR		0xff800024	/* 16bit */
-#define SH4_RFCR		0xff800028	/* 16bit */
+#define	SH4_BCR1		0xff800000	/* 32bit */
+#define	SH4_BCR2		0xff800004	/* 16bit */
+#define	SH4_WCR1		0xff800008	/* 32bit */
+#define	SH4_WCR2		0xff80000c	/* 32bit */
+#define	SH4_WCR3		0xff800010	/* 32bit */
+#define	SH4_MCR			0xff800014	/* 32bit */
+#define	SH4_PCR			0xff800018	/* 16bit */
+#define	SH4_RTCSR		0xff80001c	/* 16bit */
+#define	SH4_RTCNT		0xff800020	/* 16bit */
+#define	SH4_RTCOR		0xff800024	/* 16bit */
+#define	SH4_RFCR		0xff800028	/* 16bit */
 
 #endif	/* !_SH3_BSCREG_H_ */

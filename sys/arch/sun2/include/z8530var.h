@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.2 2001/06/27 19:01:14 fredette Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.2.2.1 2002/06/23 17:42:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -58,4 +58,4 @@
  */
 #define	zs_peripheral_type(promunit, node, channel) ((promunit) == 1 ? ((channel) == 0 ? ZS_PERIPHERAL_SUNKBD : ZS_PERIPHERAL_SUNMS) : ZS_PERIPHERAL_UNKNOWN)
 
-#include <dev/sun/zsvar.h>
+#include <sun2/dev/zsvar.h>

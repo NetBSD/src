@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.29.22.3 2002/02/11 20:06:56 jdolecek Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.29.22.4 2002/06/23 17:34:27 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.29.22.3 2002/02/11 20:06:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.29.22.4 2002/06/23 17:34:27 jdolecek Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -1745,7 +1745,7 @@ rh_mode(register struct grf_softc *gp, u_long cmd, void *arg, u_long a2,
 		break;
 	}
 
-	return(EINVAL);
+	return(EPASSTHROUGH);
 }
 
 int
@@ -1788,7 +1788,7 @@ rh_ioctl(register struct grf_softc *gp, u_long cmd, void *data)
 		return (rh_blank(gp, (int *)data));
 	}
 
-	return(EINVAL);
+	return(EPASSTHROUGH);
 }
 
 

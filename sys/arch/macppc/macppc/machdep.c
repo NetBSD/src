@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101.2.4 2002/03/16 15:58:32 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101.2.5 2002/06/23 17:37:56 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -117,8 +117,6 @@ static int chosen;
 struct pmap ofw_pmap;
 int ofkbd_ihandle;
 
-int msgbufmapped = 0;
-
 #ifdef DDB
 void *startsym, *endsym;
 #endif
@@ -218,6 +216,9 @@ initppc(startkernel, endkernel, args)
 	asm volatile ("mtibatl 0,%0; mtibatu 0,%1;"
 		      "mtdbatl 0,%0; mtdbatu 0,%1;"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
+	/* BAT1 used for primary I/O 256 MB segment */
+	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1;"
+		      :: "r"(battable[8].batl), "r"(battable[8].batu));
 
 	/*
 	 * Set up battable to map all RAM regions.
@@ -391,7 +392,7 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Initialize pmap module.
 	 */
-	pmap_bootstrap(startkernel, endkernel);
+	pmap_bootstrap(startkernel, endkernel, NULL);
 
 	restore_ofmap(ofmap, ofmaplen);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.2.2.2 2002/01/10 19:37:54 thorpej Exp $	*/
+/*	$NetBSD: profile.h,v 1.2.2.3 2002/06/23 17:34:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -87,7 +87,7 @@
 	__asm__("ldmfd	sp!, {r0-r3, lr, pc}");
 
 #ifdef _KERNEL
-#ifdef arm26
+#ifdef acorn26
 extern int int_off_save(void);
 extern void int_restore(int);
 #define	MCOUNT_ENTER	(s = int_off_save())
@@ -102,5 +102,5 @@ extern void int_restore(int);
  */
 #define	MCOUNT_ENTER	s = SetCPSR(0x0080, 0x0080);	/* set IRQ disable bit */
 #define	MCOUNT_EXIT	SetCPSR(0xffffffff, s);		/* restore old value */
-#endif /* !arm26 */
+#endif /* !acorn26 */
 #endif /* _KERNEL */

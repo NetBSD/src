@@ -1,7 +1,7 @@
-/* $NetBSD: stdarg.h,v 1.3.8.1 2002/02/11 20:09:01 jdolecek Exp $ */
+/* $NetBSD: stdarg.h,v 1.3.8.2 2002/06/23 17:40:44 jdolecek Exp $ */
 
 #ifndef _SH3_STDARG_H_
-#define _SH3_STDARG_H_
+#define	_SH3_STDARG_H_
 
 #ifdef __lint__
 
@@ -17,7 +17,7 @@ typedef	_BSD_VA_LIST_		va_list;	/* XXX */
 #else /* ! __lint__ */
 
 #ifndef _VARARGS_H
-#define _STDARG_H
+#define	_STDARG_H
 #endif
 
 #include <sh3/va-sh.h>

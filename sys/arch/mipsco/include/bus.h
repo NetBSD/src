@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5.2.2 2002/01/10 19:46:18 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.5.2.3 2002/06/23 17:38:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -785,7 +785,7 @@ __bus_space_set_region(8, 64)		/* bus_space_set_region_stream_8 */
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 
-#define MIPSCO_DMAMAP_COHERENT	0x100	/* no cache flush necessary on sync */
+#define MIPSCO_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

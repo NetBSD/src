@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2002/02/11 20:07:11 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.1.2.4 2002/06/23 17:34:34 jdolecek Exp $
 
 ### what we need:
 
@@ -19,7 +19,7 @@ BINDIR=/usr/mdec
 
 COBJS = main.o console.o xd.o twiddle.o bzero.o gets.o
 COBJS+=  lseek.o open.o read.o close.o dev.o errno.o
-COBJS+=  ufs.o ustarfs.o panic.o vers.o
+COBJS+=  ufs.o ustarfs.o panic.o vers.o files.o
 
 SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
 SOBJS += strlen.o strcmp.o fstat.o
@@ -49,7 +49,7 @@ AFLAGS += -m68030 -l
 CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH} -D_PRIMARY_BOOT
 
 COPTIM= -O -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
-CFLAGS= ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
+CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
 NETBSD_VERS!=	sh ${.CURDIR}/../../../../../conf/osrelease.sh
 DEFS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'

@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.22.2.1 2002/01/10 19:50:21 thorpej Exp $	*/
+/*	$NetBSD: mha.c,v 1.22.2.2 2002/06/23 17:43:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -748,8 +748,7 @@ mha_scsi_request(chan, req, arg)
 		TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
 #if 1
 		callout_reset(&acb->xs->xs_callout,
-		    ((u_int64_t)xs->timeout * (u_int64_t)hz) / 1000,
-		    mha_timeout, acb);
+		    mstohz(xs->timeout), mha_timeout, acb);
 #endif
 
 		/*
@@ -1520,6 +1519,7 @@ nextbyte:
 
 out:
 	/* Disable REQ/ACK protocol. */
+	return;
 }
 
 

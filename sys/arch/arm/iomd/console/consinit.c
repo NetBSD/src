@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1.6.2 2002/01/10 19:38:25 thorpej Exp $ */
+/*	$NetBSD: consinit.c,v 1.1.6.3 2002/06/23 17:34:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -66,6 +66,12 @@ extern struct bus_space iomd_bs_tag;
 extern struct rpckbd_softc console_kbd;
 
 #endif
+
+
+#ifdef COMCONSOLE
+extern void comcninit(struct consdev *cp);
+#endif
+
 
 void
 consinit(void)

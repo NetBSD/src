@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28.4.1 2002/03/16 16:00:15 jdolecek Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28.4.2 2002/06/23 17:43:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -52,6 +52,16 @@
 #include <machine/cpu.h>
 
 #include <dev/mscp/mscp.h> /* For disk encoding scheme */
+
+#include "opt_compat_ultrix.h"
+#ifdef COMPAT_ULTRIX
+#include <dev/dec/dec_boot.h>
+#include <ufs/ufs/dinode.h>	/* XXX for fs.h */
+#include <ufs/ffs/fs.h>		/* XXX for BBSIZE & SBSIZE */
+
+char *compat_label(dev_t dev, void (*strat)(struct buf *bp),
+	struct disklabel *lp, struct cpu_disklabel *osdep);
+#endif /* COMPAT_ULTRIX */
 
 /*
  * Determine the size of the transfer, and make sure it is
@@ -141,8 +151,98 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		}
 	}
 	brelse(bp);
+
+#ifdef COMPAT_ULTRIX
+	/*
+	 * If no NetBSD label was found, check for an Ultrix label and
+	 * construct tne incore label from the Ultrix partition information.
+	 */
+	if (msg != NULL) {
+		msg = compat_label(dev, strat, lp, osdep);
+		if (msg == NULL) {
+			printf("WARNING: using Ultrix partition information\n");
+			/* set geometry? */
+		}
+	}
+#endif
 	return (msg);
 }
+
+#ifdef COMPAT_ULTRIX
+/*
+ * Given a buffer bp, try and interpret it as an Ultrix disk label,
+ * putting the partition info into a native NetBSD label
+ */
+char *
+compat_label(dev, strat, lp, osdep)
+	dev_t dev;
+	void (*strat)(struct buf *bp);
+	struct disklabel *lp;
+	struct cpu_disklabel *osdep;
+{
+	dec_disklabel *dlp;
+	struct buf *bp = NULL;
+	char *msg = NULL;
+
+	bp = geteblk((int)lp->d_secsize);
+	bp->b_dev = dev;
+	bp->b_blkno = DEC_LABEL_SECTOR;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags |= B_READ;
+	bp->b_cylinder = DEC_LABEL_SECTOR / lp->d_secpercyl;
+	(*strat)(bp);
+
+	if (biowait(bp)) {
+		msg = "I/O error";
+		goto done;
+	}
+
+	for (dlp = (dec_disklabel *)bp->b_data;
+	    dlp <= (dec_disklabel *)(bp->b_data+DEV_BSIZE-sizeof(*dlp));
+	    dlp = (dec_disklabel *)((char *)dlp + sizeof(long))) {
+
+		int part;
+
+		if (dlp->magic != DEC_LABEL_MAGIC) {
+			printf("label: %x\n",dlp->magic);
+			msg = ((msg != NULL) ? msg: "no disk label");
+			goto done;
+		}
+
+		lp->d_magic = DEC_LABEL_MAGIC;
+		lp->d_npartitions = 0;
+		strncpy(lp->d_packname, "Ultrix label", 16);
+		lp->d_rpm = 3600;
+		lp->d_interleave = 1;
+		lp->d_flags = 0;
+		lp->d_bbsize = BBSIZE;
+		lp->d_sbsize = SBSIZE;
+		for (part = 0;
+		     part <((MAXPARTITIONS<DEC_NUM_DISK_PARTS) ?
+		            MAXPARTITIONS : DEC_NUM_DISK_PARTS);
+		     part++) {
+			lp->d_partitions[part].p_size = dlp->map[part].num_blocks;
+			lp->d_partitions[part].p_offset = dlp->map[part].start_block;
+			lp->d_partitions[part].p_fsize = 1024;
+			lp->d_partitions[part].p_fstype =
+			    (part==1) ? FS_SWAP : FS_BSDFFS;
+			lp->d_npartitions += 1;
+
+#ifdef DIAGNOSTIC
+			printf(" Ultrix label rz%d%c: start %d len %d\n",
+			       DISKUNIT(dev), "abcdefgh"[part],
+			       lp->d_partitions[part].p_offset,
+			       lp->d_partitions[part].p_size);
+#endif
+		}
+		break;
+	}
+
+done:
+	brelse(bp);
+	return (msg);
+}
+#endif /* COMPAT_ULTRIX */
 
 /*
  * Check new disk label for sensibility

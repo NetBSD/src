@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_sigcode.s,v 1.1 2001/06/06 21:19:51 mrg Exp $	*/
+/*	$NetBSD: sunos_sigcode.s,v 1.1.4.1 2002/06/23 17:42:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
@@ -61,6 +61,9 @@
 #include <machine/signal.h>
 #include <machine/frame.h>
 #include <compat/sunos/sunos_syscall.h>
+
+	.register	%g2,#scratch
+	.register	%g3,#scratch
 
 /*
  * The following code is copied to the top of the user stack when each

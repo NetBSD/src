@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.1.4.2 2001/09/13 01:13:34 thorpej Exp $	*/
+/*	$NetBSD: mms.c,v 1.1.4.3 2002/06/23 17:35:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -194,7 +194,7 @@ mms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EOPNOTSUPP);
 
 	default:
-		return (-1);
+		return (EPASSTHROUGH);
 	}
 
 	return (0);

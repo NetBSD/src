@@ -1,4 +1,4 @@
-/*	$NetBSD: upa.c,v 1.7.4.1 2002/01/10 19:49:18 thorpej Exp $ */
+/*	$NetBSD: upa.c,v 1.7.4.2 2002/06/23 17:42:09 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -636,7 +636,7 @@ upa_enter(va, pa)
 		panic("upa_enter: va 0x%x not in DVMA space",va);
 #endif
 
-#ifdef 1
+#if 1
 	/* Streaming */
 	tte = MAKEIOTTE(pa, 1, 1, 1);
 #else

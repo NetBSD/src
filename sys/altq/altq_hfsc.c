@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.3.2.1 2002/01/10 19:35:56 thorpej Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.3.2.2 2002/06/23 17:33:33 jdolecek Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.9 2001/10/26 04:56:11 kjc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.3.2.1 2002/01/10 19:35:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.3.2.2 2002/06/23 17:33:33 jdolecek Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -486,8 +486,23 @@ hfsc_class_modify(cl, rsc, fsc)
 	struct hfsc_class *cl;
 	struct service_curve *rsc, *fsc;
 {
-	struct internal_sc *tmp;
+	struct internal_sc *rsc_tmp, *fsc_tmp;
 	int s;
+
+	if (rsc != NULL && (rsc->m1 != 0 || rsc->m2 != 0) &&
+	    cl->cl_rsc == NULL) {
+		MALLOC(rsc_tmp, struct internal_sc *,
+		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
+		if (rsc_tmp == NULL)
+			return (ENOMEM);
+	}
+	if (fsc != NULL && (fsc->m1 != 0 || fsc->m2 != 0) &&
+	    cl->cl_fsc == NULL) {
+		MALLOC(fsc_tmp, struct internal_sc *,
+		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
+		if (fsc_tmp == NULL)
+			return (ENOMEM);
+	}
 
 	s = splnet();
 	if (!qempty(cl->cl_q))
@@ -500,16 +515,8 @@ hfsc_class_modify(cl, rsc, fsc)
 				cl->cl_rsc = NULL;
 			}
 		} else {
-			if (cl->cl_rsc == NULL) {
-				MALLOC(tmp, struct internal_sc *,
-				       sizeof(struct internal_sc),
-				       M_DEVBUF, M_WAITOK);
-				if (tmp == NULL) {
-					splx(s);
-					return (ENOMEM);
-				}
-				cl->cl_rsc = tmp;
-			}
+			if (cl->cl_rsc == NULL)
+				cl->cl_rsc = rsc_tmp;
 			bzero(cl->cl_rsc, sizeof(struct internal_sc));
 			sc2isc(rsc, cl->cl_rsc);
 			rtsc_init(&cl->cl_deadline, cl->cl_rsc, 0, 0);
@@ -524,16 +531,8 @@ hfsc_class_modify(cl, rsc, fsc)
 				cl->cl_fsc = NULL;
 			}
 		} else {
-			if (cl->cl_fsc == NULL) {
-				MALLOC(tmp, struct internal_sc *,
-				       sizeof(struct internal_sc),
-				       M_DEVBUF, M_WAITOK);
-				if (tmp == NULL) {
-					splx(s);
-					return (ENOMEM);
-				}
-				cl->cl_fsc = tmp;
-			}
+			if (cl->cl_fsc == NULL)
+				cl->cl_fsc = fsc_tmp;
 			bzero(cl->cl_fsc, sizeof(struct internal_sc));
 			sc2isc(fsc, cl->cl_fsc);
 			rtsc_init(&cl->cl_virtual, cl->cl_fsc, 0, 0);
@@ -866,6 +865,16 @@ init_v(cl, len)
 			/* already active */
 			break;
 
+		/*
+		 * if parent became idle while this class was idle.
+		 * reset vt and the runtime service curve.
+		 */
+		if (cl->cl_parent->cl_nactive == 0 ||
+		    cl->cl_parent->cl_vtperiod != cl->cl_parentperiod) {
+			cl->cl_vt = 0;
+			rtsc_init(&cl->cl_virtual, cl->cl_fsc,
+				  0, cl->cl_total);
+		}
 		min_cl = actlist_first(cl->cl_parent->cl_actc);
 		if (min_cl != NULL) {
 			u_int64_t vt;
@@ -877,17 +886,13 @@ init_v(cl, len)
 			 */
 			max_cl = actlist_last(cl->cl_parent->cl_actc);
 			vt = (min_cl->cl_vt + max_cl->cl_vt) / 2;
-			if (cl->cl_parent->cl_vtperiod == cl->cl_parentperiod)
-				vt = max(cl->cl_vt, vt);
-			cl->cl_vt = vt;
-		} else {
-			/* no packet is backlogged.  set vt to 0 */
-			cl->cl_vt = 0;
+			if (cl->cl_parent->cl_vtperiod != cl->cl_parentperiod
+			    || vt > cl->cl_vt)
+				cl->cl_vt = vt;
 		}
 
 		/* update the virtual curve */
-		rtsc_min(&cl->cl_virtual, cl->cl_fsc,
-			 cl->cl_vt, cl->cl_total);
+		rtsc_min(&cl->cl_virtual, cl->cl_fsc, cl->cl_vt, cl->cl_total);
 
 		cl->cl_vtperiod++;  /* increment vt period */
 		cl->cl_parentperiod = cl->cl_parent->cl_vtperiod;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52.2.3 2002/03/16 15:58:34 jdolecek Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52.2.4 2002/06/23 17:38:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -59,12 +59,34 @@ struct cpu_info {
 	u_long ci_cpu_freq;		/* CPU frequency */
 	u_long ci_cycles_per_hz;	/* CPU freq / hz */
 	u_long ci_divisor_delay;	/* for delay/DELAY */
-	u_long ci_divisor_recip;	/* scaled reciprocal of previous */
+	u_long ci_divisor_recip;	/* scaled reciprocal of previous;
+					   see below */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
 };
+/*
+ * To implement a more accurate microtime using the CP0 COUNT register
+ * we need to divide that register by the number of cycles per MHz.
+ * But...
+ *
+ * DIV and DIVU are expensive on MIPS (eg 75 clocks on the R4000).  MULT
+ * and MULTU are only 12 clocks on the same CPU.
+ *
+ * The strategy we use is to calculate the reciprical of cycles per MHz,
+ * scaled by 1<<32.  Then we can simply issue a MULTU and pluck of the
+ * HI register and have the results of the division.
+ */
+#define	MIPS_SET_CI_RECIPRICAL(cpu)					\
+do {									\
+	KASSERT((cpu)->ci_divisor_delay != 0);				\
+	(cpu)->ci_divisor_recip = 0x100000000ULL / (cpu)->ci_divisor_delay; \
+} while (0)
+
+#define	MIPS_COUNT_TO_MHZ(cpu, count, res)				\
+	asm volatile("multu %1,%2 ; mfhi %0"				\
+	    : "=r"((res)) : "r"((count)), "r"((cpu)->ci_divisor_recip))
 #endif /* !defined(_LOCORE) */
 
 /*
@@ -132,7 +154,19 @@ extern int mips3_pg_cached;
 #define	CPU_MIPS_HAVE_SPECIAL_CCA	0x0008	/* Defaults to '3' if not set. */
 #define	CPU_MIPS_CACHED_CCA_MASK	0x0070
 #define	CPU_MIPS_CACHED_CCA_SHIFT	 4
+#define	CPU_MIPS_DOUBLE_COUNT		0x0080	/* 1 cp0 count == 2 clock cycles */
+#define	CPU_MIPS_USE_WAIT		0x0100	/* Use "wait"-based cpu_idle() */
+#define	CPU_MIPS_NO_WAIT		0x0200	/* Inverse of previous, for mips32/64 */
 #define	MIPS_NOT_SUPP			0x8000
+
+#ifdef _LKM
+/* Assume all CPU architectures are valid for LKM's */
+#define	MIPS1	1
+#define	MIPS3	1
+#define	MIPS4	1
+#define	MIPS32	1
+#define	MIPS64	1
+#endif
 
 #if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS64) == 0
 #error at least one of MIPS1, MIPS3, MIPS4, MIPS32 or MIPS64 must be specified
@@ -333,8 +367,9 @@ void	mips_init_msgbuf(void);
 void	savefpregs(struct proc *);
 void	loadfpregs(struct proc *);
 
-/* locore.S */
+/* locore*.S */
 int	badaddr(void *, size_t);
+int	badaddr64(uint64_t, size_t);
 
 /* mips_machdep.c */
 void	cpu_identify(void);

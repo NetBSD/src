@@ -1,4 +1,4 @@
-/*	$NetBSD: cpgreg.h,v 1.2.16.1 2002/03/16 15:59:37 jdolecek Exp $	*/
+/*	$NetBSD: cpgreg.h,v 1.2.16.2 2002/06/23 17:40:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -26,22 +26,22 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SH3_CPGREG_H__
-#define _SH3_CPGREG_H__
+#ifndef _SH3_CPGREG_H_
+#define	_SH3_CPGREG_H_
 
 /*
  * Clock Pulse Generator
  */
-#define SH3_FRQCR		0xffffff80	/* 16bit */
-#define SH4_FRQCR		0xffc00000	/* 16bit */
+#define	SH3_FRQCR		0xffffff80	/* 16bit */
+#define	SH4_FRQCR		0xffc00000	/* 16bit */
 
 /*
  * Standby Control
  */
-#define SH3_STBCR		0xffffff82	/* 8bit */
-#define SH7709_STBCR2		0xffffff88	/* 8bit */
+#define	SH3_STBCR		0xffffff82	/* 8bit */
+#define	SH7709_STBCR2		0xffffff88	/* 8bit */
 
-#define SH4_STBCR		0xffc00004	/* 8bit */
-#define SH4_STBCR2		0xffc00010	/* 8bit */
+#define	SH4_STBCR		0xffc00004	/* 8bit */
+#define	SH4_STBCR2		0xffc00010	/* 8bit */
 
-#endif /* !_SH3_CPGREG_H__ */
+#endif /* !_SH3_CPGREG_H_ */

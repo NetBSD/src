@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27.2.2 2002/03/16 15:57:30 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27.2.3 2002/06/23 17:36:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_syscall_debug.h"
 #include "opt_memsize.h"
 #include "opt_initbsc.h"
 
@@ -88,31 +87,32 @@
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
-#include <sys/msgbuf.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
-#include <machine/bus.h>
+
 #include <sh3/bscreg.h>
 #include <sh3/cpgreg.h>
 #include <sh3/cache_sh3.h>
+#include <sh3/cache_sh4.h>
+#include <sh3/exception.h>
+
+#include <machine/bus.h>
+#include <machine/intr.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#endif
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* evbsh3 */
 char machine_arch[] = MACHINE_ARCH;	/* sh3eb or sh3el */
 
-paddr_t msgbuf_paddr;
-extern paddr_t avail_start, avail_end;
-
-#define IOM_RAM_END	((paddr_t)IOM_RAM_BEGIN + IOM_RAM_SIZE - 1)
-
 void initSH3 __P((void *));
 void LoadAndReset __P((char *));
 void XLoadAndReset __P((char *));
-void consinit __P((void));
-
-extern char start[], etext[], edata[], end[];
 
 /*
  * Machine-dependent startup code
@@ -123,7 +123,7 @@ void
 cpu_startup()
 {
 
-	sh3_startup();
+	sh_startup();
 }
 
 /*
@@ -220,10 +220,8 @@ haltsys:
 void
 initSH3(void *pc)	/* XXX return address */
 {
+	extern char edata[], end[];
 	vaddr_t kernend;
-	vsize_t sz;
-
-	kernend = sh3_round_page(end);
 
 	/* Clear bss */
 	memset(edata, 0, end - edata);
@@ -232,31 +230,50 @@ initSH3(void *pc)	/* XXX return address */
 #if defined(SH3) && defined(SH4)
 #error "don't define both SH3 and SH4"
 #elif defined(SH3)
-	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_UNKNOWN);	
+#if defined(SH7708)
+	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7708);
+#elif defined(SH7708S)
+	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7708S);
+#elif defined(SH7708R)
+	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7708R);
+#elif defined(SH7709)
+	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709);
+#elif defined(SH7709A)
+	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709A);
+#else
+#error "unsupported SH3 variants"
+#endif
 #elif defined(SH4)
-	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_UNKNOWN);	
+#if defined(SH7750)
+	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);	
+#elif defined(SH7750S)
+	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750S);
+#else
+#error "unsupported SH4 variants"
+#endif
 #else
 #error "define SH3 or SH4"
 #endif
-	/* Initialize proc0 and enable MMU. */
-	sz = sh_proc0_init(kernend, IOM_RAM_BEGIN, IOM_RAM_END);
-
-	/* Number of pages of physmem addr space */
-	physmem = atop(IOM_RAM_END - IOM_RAM_BEGIN + 1);
-
-	/* avail_start is first available physical memory address */
-	avail_start = kernend + sz;
-	avail_end = IOM_RAM_END + 1;
-
+	/* Console */
 	consinit();
 
-	/* Call pmap initialization to make new kernel address space */
-	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
+	/* Load memory to UVM */
+	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(end)));
+	physmem = atop(IOM_RAM_SIZE);
+	uvm_page_physload(
+		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
+		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
+		VM_FREELIST_DEFAULT);
 
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
+	/* Initialize proc0 u-area */
+	sh_proc0_init();
+
+	/* Initialize pmap and start to address translation */
+	pmap_bootstrap();
+
+#ifdef DDB
+	ddb_init(0, NULL, NULL);
+#endif
 
 	/*
 	 * XXX We can't return here, because we change stack pointer.
@@ -264,7 +281,8 @@ initSH3(void *pc)	/* XXX return address */
 	 */
 	__asm __volatile (
 		"jmp	@%0;"
-		"mov	%1, r15" :: "r"(pc), "r"(proc0.p_addr->u_pcb.kr15));
+		"mov	%1, r15"
+		:: "r"(pc),"r"(proc0.p_md.md_pcb->pcb_sf.sf_r7_bank));
 }
 
 /*
@@ -283,10 +301,6 @@ consinit()
 	initted = 1;
 
 	cninit();
-
-#ifdef DDB
-	ddb_init();
-#endif
 }
 
 int
@@ -453,16 +467,13 @@ shpcmcia_mem_add_mapping(bpa, size, type, bshp)
 #undef MODE
 
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
-		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
-
-		pte = kvtopte(va);
-		*pte &= ~PG_N;
-		*pte |= m;
-		pmap_update_pg(va);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pte = __pmap_kpte_lookup(va);
+		KDASSERT(pte);
+		*pte |= m;  /* PTEA PCMCIA assistant bit */
+		sh_tlb_update(0, va, *pte);
 	}
-	pmap_update(pmap_kernel());
- 
+
 	return 0;
 }
 
@@ -718,3 +729,53 @@ LoadAndReset(osimage)
 
 	XLoadAndReset(buf_addr);
 }
+
+void
+intc_intr(int ssr, int spc, int ssp)
+{
+	struct intc_intrhand *ih;
+	struct clockframe cf;
+	int s, evtcode;
+
+	switch (cpu_product) {
+	case CPU_PRODUCT_7708:
+	case CPU_PRODUCT_7708S:
+	case CPU_PRODUCT_7708R:
+		evtcode = _reg_read_4(SH3_INTEVT);
+		break;
+	case CPU_PRODUCT_7709:
+	case CPU_PRODUCT_7709A:
+		evtcode = _reg_read_4(SH7709_INTEVT2);
+		break;
+	case CPU_PRODUCT_7750:
+	case CPU_PRODUCT_7750S:
+		evtcode = _reg_read_4(SH4_INTEVT);
+		break;
+	}
+
+	ih = EVTCODE_IH(evtcode);
+	KDASSERT(ih->ih_func);
+	/* 
+	 * On entry, all interrrupts are disabled,
+	 * and exception is enabled for P3 access. (kernel stack is P3,
+	 * SH3 may or may not cause TLB miss when access stack.)
+	 * Enable higher level interrupt here.
+	 */
+	s = _cpu_intr_resume(ih->ih_level);
+
+	switch (evtcode) {
+	default:
+		(*ih->ih_func)(ih->ih_arg);
+		break;
+	case SH_INTEVT_TMU0_TUNI0:
+		cf.spc = spc;
+		cf.ssr = ssr;
+		cf.ssp = ssp;
+		(*ih->ih_func)(&cf);
+		break;
+	case SH_INTEVT_NMI:
+		printf("NMI ignored.\n");
+		break;
+	}
+}
+

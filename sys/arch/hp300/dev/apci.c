@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.12.2.1 2002/01/10 19:42:48 thorpej Exp $	*/
+/*	$NetBSD: apci.c,v 1.12.2.2 2002/06/23 17:36:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -92,6 +92,9 @@
  * XXX FIXME!
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.12.2.2 2002/06/23 17:36:05 jdolecek Exp $");                                                  
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -110,9 +113,7 @@
 
 #include <dev/cons.h>
 
-#include <hp300/dev/dioreg.h>		/* to check for dca at 9 */
-#include <hp300/dev/diovar.h>
-#include <hp300/dev/diodevs.h>
+#include <hp300/dev/intiovar.h>
 
 #include <hp300/dev/frodoreg.h>
 #include <hp300/dev/frodovar.h>
@@ -587,10 +588,11 @@ apciioctl(dev, cmd, data, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -659,7 +661,7 @@ apciioctl(dev, cmd, data, flag, p)
 	}
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }
@@ -735,7 +737,8 @@ apciparam(tp, t)
 	tp->t_cflag = cflag;
 
 	apci->ap_ier = IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC;
-	apci->ap_mcr |= MCR_IEN;
+	if (mmuid != MMUID_425_E)
+		apci->ap_mcr |= MCR_IEN;
 
 	splx(s);
 	return (0);
@@ -801,13 +804,15 @@ apcimctl(sc, bits, how)
 	struct apciregs *apci = sc->sc_apci;
 	int s;
 
-	/*
-	 * Always make sure MCR_IEN is set (unless setting to 0)
-	 */
-	if (how == DMBIS || (how == DMSET && bits))
-		bits |= MCR_IEN;
-	else if (how == DMBIC)
-		bits &= ~MCR_IEN;
+	if (mmuid != MMUID_425_E) {
+		/*
+		 * Always make sure MCR_IEN is set (unless setting to 0)
+		 */
+		if (how == DMBIS || (how == DMSET && bits))
+			bits |= MCR_IEN;
+		else if (how == DMBIC)
+			bits &= ~MCR_IEN;
+	}
 
 	s = spltty();
 
@@ -900,7 +905,7 @@ apcicnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	if (machineid != HP_425 || mmuid != MMUID_425_E)
 		return (1);
 
-        if (bus_space_map(bst, addr, DIOCSIZE, 0, &bsh))
+        if (bus_space_map(bst, addr, INTIO_DEVSIZE, BUS_SPACE_MAP_LINEAR, &bsh))
                 return (1);
 
         va = bus_space_vaddr(bst, bsh);

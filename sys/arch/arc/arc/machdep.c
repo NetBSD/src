@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62.2.3 2002/03/16 15:55:55 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62.2.4 2002/06/23 17:34:38 jdolecek Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
+#include "opt_md.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,11 +252,11 @@ mach_init(argc, argv, envv)
 	 * Default to SINGLE and ASKNAME if no args or
 	 * SINGLE and DFLTROOT if this is a ramdisk kernel.
 	 */
-#ifdef MEMORY_DISK_HOOKS
+#ifdef MEMORY_DISK_IS_ROOT
 	boothowto = RB_SINGLE;
 #else
 	boothowto = RB_SINGLE | RB_ASKNAME;
-#endif /* MEMORY_DISK_HOOKS */
+#endif /* MEMORY_DISK_IS_ROOT */
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif

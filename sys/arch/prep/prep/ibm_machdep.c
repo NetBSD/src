@@ -1,4 +1,4 @@
-/*      $NetBSD: ibm_machdep.c,v 1.1.2.1 2001/09/13 01:14:26 thorpej Exp $        */
+/*      $NetBSD: ibm_machdep.c,v 1.1.2.2 2002/06/23 17:39:54 jdolecek Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_platform.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 
@@ -43,12 +45,20 @@
 #include <machine/platform.h>
 
 static struct platform *platform_ibm[] = {
+#if defined(PLATFORM_IBM_6050)
 	&platform_ibm_6050,
+#endif
+#if defined(PLATFORM_IBM_7248)
 	&platform_ibm_7248,
+#endif
+#if defined(PLATFORM_IBM_7043_140)
+	&platform_ibm_7043_140,
+#endif
+	NULL
 };
 
 struct plattab plattab_ibm = {
-	platform_ibm,	sizeof(platform_ibm)/sizeof(platform_ibm[0])
+	platform_ibm,	sizeof(platform_ibm)/sizeof(platform_ibm[0]) - 1
 };
 
 void
@@ -63,37 +73,4 @@ cpu_setup_ibm_generic(struct device *dev)
 
 	/* Enable L2 cache */
 	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x81c) = l2ctrl | 0xc0;
-
-	printf("%s: ", dev->dv_xname);
-	if (((cpuinf>>1) & 1) == 0) {
-		printf("Upgrade CPU, ");
-	}
-
-	printf("L2 cache ");
-	if ((cpuinf & 1) == 0) {
-		printf("%s ", ((cpuinf>>2) & 1) ? "256KB" : "unknown size");
-		printf("%s", ((cpuinf>>3) & 1) ? "copy-back" : "write-through");
-	} else {
-		printf("not present");
-	}
-
-	printf("\n");
-}
-
-void
-reset_ibm_generic(void)
-{
-	int msr;
-	u_char reg;
-
-	asm volatile("mfmsr %0" : "=r"(msr));
-	msr |= PSL_IP;
-	asm volatile("mtmsr %0" :: "r"(msr));
-
-	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
-	reg &= ~1UL;
-	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
-	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
-	reg |= 1;
-	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
 }

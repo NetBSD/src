@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.1.2.2 2002/02/11 20:09:25 jdolecek Exp $	*/
+/*	$NetBSD: pccons.c,v 1.1.2.3 2002/06/23 17:43:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -987,10 +987,11 @@ pcioctl(dev, cmd, data, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -1045,7 +1046,7 @@ pcioctl(dev, cmd, data, flag, p)
 #endif
  	}
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 
 #ifdef DIAGNOSTIC
@@ -2688,7 +2689,7 @@ pc_xmode_on()
 #ifdef COMPAT_10
 	/* This is done by i386_iopl(3) now. */
 	fp = curproc->p_md.md_regs;
-	fp->tf_eflags |= PSL_IOPL;
+	fp->tf_rflags |= PSL_IOPL;
 #endif
 }
 
@@ -2708,6 +2709,6 @@ pc_xmode_off()
 	async_update();
 
 	fp = curproc->p_md.md_regs;
-	fp->tf_eflags &= ~PSL_IOPL;
+	fp->tf_rflags &= ~PSL_IOPL;
 }
 #endif /* XSERVER */

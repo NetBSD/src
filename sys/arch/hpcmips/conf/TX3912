@@ -2,9 +2,11 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.30.2.3 2002/03/16 15:57:56 jdolecek Exp $
+#	$NetBSD: TX3912,v 1.30.2.4 2002/06/23 17:36:49 jdolecek Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16
 
@@ -27,13 +29,13 @@ options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 #options 	SYSCALL_DEBUG		# for debug
-#options 	 MEMORY_DISK_SIZE=10000
+#options 	MEMORY_DISK_ROOT_SIZE=10000
 options 	MSGBUFSIZE=65534	# for dmesg
 
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MEMORY_DISK_SIZE=12288	# size of memory disk, in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=12288	# size of memory disk, in blocks
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -47,6 +49,7 @@ options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # File systems

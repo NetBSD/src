@@ -1,11 +1,12 @@
 #
-#	$NetBSD: std.hpcmips.vr41,v 1.1.2.4 2002/03/16 15:57:57 jdolecek Exp $
+#	$NetBSD: std.hpcmips.vr41,v 1.1.2.5 2002/06/23 17:36:50 jdolecek Exp $
 #	VR41XX common configuration.
 #
 options 	MIPS3			# R4000/R4400/R4600 CPUs
 options 	MIPS3_4100		# VR4100 core
 options 	VR41XX			# NEC VR41xx series
 options 	MIPS3_L2CACHE_ABSENT
+options 	MIPS3_NO_PV_UNCACHED
 
 #
 #  Vr4102, 4111, 4121
@@ -26,6 +27,8 @@ vrpiu*	at vr4102ip? addr 0x0b000120 size 0x20 addr2 0x0b0002a0 size2 0x20 unit V
 vrled*	at vr4102ip? addr 0x0b000240 size 0x10 unit VRLED
 vrdmaau* at vr4102ip? addr 0x0b000020 size 0x18 unit VRDMAAU
 vrdcu*	at vr4102ip? addr 0x0b000040 size 0x0c unit VRDCU
+vraiu*	at vr4102ip? addr 0x0b000160 size 0x20 unit VRAIU pwctl PWCTL_SPEAKER
+audio*	at vraiu?
 
 #
 #  Vr4122, 4131

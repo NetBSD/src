@@ -1,0 +1,27 @@
+#	$NetBSD: files.iq80321,v 1.2.6.2 2002/06/23 17:35:38 jdolecek Exp $
+#
+# Intel IQ80321 evaluation board configuration info
+#
+
+# Use the generic ARM soft interrupt code.
+file	arch/arm/arm/softintr.c
+
+file	arch/evbarm/iq80321/iq80321_7seg.c
+file	arch/evbarm/iq80321/iq80321_machdep.c
+file	arch/evbarm/iq80321/iq80321_pci.c
+
+# IQ80321 on-board devices
+device	obio {[addr = -1]}: bus_space_generic
+attach	obio at mainbus
+file	arch/evbarm/iq80321/obio.c			obio
+file	arch/evbarm/iq80321/obio_space.c		obio
+
+# on-board TI 165C50 UART
+attach	com at obio with com_obio
+file	arch/evbarm/iq80321/com_obio.c			com_obio
+
+# i80321 I/O Processor CPU support
+include "arch/arm/xscale/files.i80321"
+
+attach	iopxs at mainbus with iopxs_mainbus
+file	arch/evbarm/iq80321/i80321_mainbus.c		iopxs_mainbus

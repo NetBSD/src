@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.7.2.3 2002/03/16 15:55:24 jdolecek Exp $
+#	$NetBSD: files.acorn32,v 1.7.2.4 2002/06/23 17:33:55 jdolecek Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -66,7 +66,7 @@ major	{md = 18}
 major	{raid = 71}
 
 # IOMD device
-# parent to kbd, qms, pms, iic
+# parent to kbd, qms, opms, iic
 # also provides irq and timer services
 device	iomd {}
 attach	iomd at mainbus
@@ -111,10 +111,10 @@ file	arch/arm/iomd/qms_iomd.c		qms_iomd
 
 # PS/2 mouse device
 device	opms: tty
-file	arch/arm/iomd/pms.c			opms & opms_iomd needs-flag
+file	arch/arm/iomd/opms.c			opms & opms_iomd needs-flag
 
 attach	opms at iomd with opms_iomd
-file	arch/arm/iomd/pms_iomd.c		opms_iomd
+file	arch/arm/iomd/opms_iomd.c		opms_iomd
 
 # Standard keyboard driver (obsolete ... old vidc console)
 device	kbd
@@ -164,11 +164,11 @@ device	beep
 attach	beep at vidc
 file	arch/arm/iomd/beep.c			beep needs-flag
 
-device	vidcaudio: audio
+device	vidcaudio: audiobus
 attach	vidcaudio at vidc
 file	arch/arm/iomd/vidcaudio.c		vidcaudio needs-flag
 
-device	lmcaudio: audio
+device	lmcaudio: audiobus
 attach	lmcaudio at vidc
 file	arch/arm/iomd/lmcaudio.c		lmcaudio needs-flag
 file	arch/arm/iomd/lmc1982.S		lmcaudio
@@ -306,8 +306,8 @@ file	arch/arm/arm32/intr.c
 file	arch/arm/arm32/spl.S
 
 # RiscPC specific files
-file	arch/acorn32/acorn32/rpc_machdep.c	riscpc
-file	arch/acorn32/acorn32/rpc_kbd_map.c	riscpc & kbd
+file	arch/acorn32/acorn32/rpc_machdep.c
+file	arch/acorn32/acorn32/rpc_kbd_map.c
 
 device	sysbeep
 attach	sysbeep at vidc with sysbeep_vidc
