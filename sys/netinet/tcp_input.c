@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.166 2003/05/17 17:08:15 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.167 2003/05/17 17:16:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.166 2003/05/17 17:08:15 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.167 2003/05/17 17:16:20 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2410,26 +2410,6 @@ dropwithreset:
 			goto drop;
 	}
 
-    {
-	/*
-	 * need to recover version # field, which was overwritten on
-	 * ip_cksum computation.
-	 */
-	struct ip *sip;
-	sip = mtod(m, struct ip *);
-	switch (af) {
-#ifdef INET
-	case AF_INET:
-		sip->ip_v = 4;
-		break;
-#endif
-#ifdef INET6
-	case AF_INET6:
-		sip->ip_v = 6;
-		break;
-#endif
-	}
-    }
 	if (tiflags & TH_ACK)
 		(void)tcp_respond(tp, m, m, th, (tcp_seq)0, th->th_ack, TH_RST);
 	else {
