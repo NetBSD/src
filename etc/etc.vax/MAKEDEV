@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.12 1997/08/22 15:30:49 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.12.2.1 1997/11/20 08:36:45 mellon Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -58,6 +58,7 @@
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
+#	random	Random number generator
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -66,7 +67,7 @@ do
 case $i in
 
 all)
-	sh $0 std fd vnd0 ccd0 pty0 pty1 lkm
+	sh $0 std fd vnd0 ccd0 pty0 pty1 lkm random
 	sh $0 mt0 mt1 ts0 ts1 st0 st1 uk0 ss0 cd0
 	sh $0 ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3 sd0 sd1 sd2 sd3 rd0 rd1 rd2
 	sh $0 dz0 dl0 dhu0
@@ -504,6 +505,15 @@ ttyv0)
 	if [ ! -f ttyqe ]; then sh ./$0 pty1; fi
 	mv ttyqf ttyv0
 	mv ptyqf ptyv0
+	;;
+
+random)
+	rm -f random urandom
+	mknod random c 67 0
+	mknod urandom c 67 1
+	chown root.wheel random urandom
+	chmod 444 random
+	chmod 644 urandom
 	;;
 
 local)
