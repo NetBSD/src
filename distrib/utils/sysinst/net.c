@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.8 1997/10/20 06:13:36 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.9 1997/10/22 15:29:05 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,6 +51,8 @@
 
 static network_up = 0;
 
+/* Get the list of network interfaces. */
+
 static void get_ifconfig_info (void)
 {
 	char *textbuf;
@@ -77,8 +79,10 @@ static void get_ifconfig_info (void)
 		*t = 0;
 }
 
+/* Get the information to configure the network, configure it and
+   make sure both the gateway and the name server are up. */
 
-static int config_network (void)
+int config_network (void)
 {	char *tp;
 	char defname[255];
 	int  octet0;

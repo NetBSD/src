@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.4 1997/10/15 04:35:32 phil Exp $ */
+/*	$NetBSD: disks.c,v 1.5 1997/10/22 15:28:45 phil Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -350,11 +350,11 @@ inode_kind (char *dev)
                 return -1;
         if ((ret = read(fd, &fs, SBSIZE)) != SBSIZE) {
 		close (fd);
-                return -1;
+                return -2;
 	}
 	close (fd);
 	if (fs.fs.fs_magic != FS_MAGIC)
-		return -1;
+		return -3;
 	if (fs.fs.fs_inodefmt < FS_44INODEFMT)
 		return 0;
 	return 1;
@@ -372,7 +372,7 @@ do_fsck(char *disk, char *part)
 
 	if (inodetype < 0) {
 		/* error */
-		return 0;
+		return inodetype;
 	}
 	else if (inodetype == 0) {
 		/* Ask to upgrade */
@@ -383,7 +383,7 @@ do_fsck(char *disk, char *part)
 	}
 
 	endwin();
-	if (run_prog ("/sbin/fsck -f -p %s%s", upgr, raw)) {
+	if (run_prog ("/sbin/fsck_ffs -f %s%s", upgr, raw)) {
 		wrefresh(stdscr);
 		return 0;
 	}
@@ -396,10 +396,11 @@ fsck_disks (void)
 {	char *fstab;
 	int   fstabsize;
 	int   i;
+	int   res;
 
 	/* First the root device. */
-	if (!do_fsck (diskdev, "a")) {
-		msg_display (MSG_badfs, diskdev, "a");
+	if ((res = do_fsck (diskdev, "a")) <= 0) {
+		msg_display (MSG_badfs, diskdev, "a", res);
 		process_menu (MENU_ok);
 		return 0;
 	}
@@ -426,7 +427,7 @@ fsck_disks (void)
 			process_menu (MENU_ok);
 			return 0;
 		}
-		if (run_prog ("/sbin/mount /dev/%s %s", dev[i], mnt[i])) {
+		if (run_prog ("/sbin/mount /dev/%s /mnt/%s", dev[i], mnt[i])) {
 			msg_display (MSG_badmount, dev[i], "");
 			process_menu (MENU_ok);
 			return 0;
