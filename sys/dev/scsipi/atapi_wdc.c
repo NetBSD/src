@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.82 2004/08/12 22:39:41 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.83 2004/08/13 02:10:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.82 2004/08/12 22:39:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.83 2004/08/13 02:10:43 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -386,7 +386,7 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		xfer->c_kill_xfer = wdc_atapi_kill_xfer;
 		xfer->c_dscpoll = 0;
 		s = splbio();
-		wdc_exec_xfer(wdc->channels[channel], xfer);
+		ata_exec_xfer(wdc->channels[channel], xfer);
 #ifdef DIAGNOSTIC
 		if ((sc_xfer->xs_control & XS_CTL_POLL) != 0 &&
 		    (sc_xfer->xs_status & XS_STS_DONE) == 0)

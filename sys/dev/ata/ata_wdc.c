@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.67 2004/08/12 22:39:40 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.68 2004/08/13 02:10:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.67 2004/08/12 22:39:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.68 2004/08/13 02:10:43 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -193,7 +193,7 @@ wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 	xfer->c_start = wdc_ata_bio_start;
 	xfer->c_intr = wdc_ata_bio_intr;
 	xfer->c_kill_xfer = wdc_ata_bio_kill_xfer;
-	wdc_exec_xfer(chp, xfer);
+	ata_exec_xfer(chp, xfer);
 	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
