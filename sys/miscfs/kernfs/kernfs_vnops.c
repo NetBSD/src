@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.90 2003/09/08 06:51:54 itojun Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.91 2003/09/08 10:54:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.90 2003/09/08 06:51:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.91 2003/09/08 10:54:14 itojun Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1045,10 +1045,8 @@ kernfs_inactive(v)
 		m = key_setdumpsa_spi(htonl(kfs->kfs_value));
 		if (m)
 			m_freem(m);
-		else {
-			/* should never happen as we hold a refcnt */
+		else
 			vgone(vp);
-		}
 		break;
 	case Pipsecsp:
 		sp = key_getspbyid(kfs->kfs_value);
