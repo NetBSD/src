@@ -178,7 +178,6 @@
  * Engage compiler specific rotate intrinsic function if available.
  */
 #undef ROTATE
-#ifndef PEDANTIC
 # if defined(_MSC_VER)
 #  define ROTATE(a,n)	_lrotl(a,n)
 # elif defined(__MWERKS__)
@@ -198,7 +197,7 @@
    *
    * 					<appro@fy.chalmers.se>
    */
-#  if defined(__i386)
+#  if defined(__i386) || defined(__i386__)
 #   define ROTATE(a,n)	({ register unsigned int ret;	\
 				asm (			\
 				"roll %1,%0"		\
@@ -224,7 +223,7 @@
  */
 # if defined(__GNUC__) && __GNUC__>=2 && !defined(NO_ASM) && !defined(NO_INLINE_ASM)
   /* some GNU C inline assembler templates by <appro@fy.chalmers.se> */
-#  if defined(__i386) && !defined(I386_ONLY)
+#  if (defined(__i386) || defined(__i386__)) && !defined(I386_ONLY)
 #   define BE_FETCH32(a)	({ register unsigned int l=(a);\
 				asm (			\
 				"bswapl %0"		\
@@ -250,7 +249,6 @@
 			})
 #  endif
 # endif
-#endif /* PEDANTIC */
 
 #if HASH_LONG_LOG2==2	/* Engage only if sizeof(HASH_LONG)== 4 */
 /* A nice byte order reversal from Wei Dai <weidai@eskimo.com> */
