@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.23 2003/11/17 01:52:14 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.24 2003/11/18 01:40:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.23 2003/11/17 01:52:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.24 2003/11/18 01:40:18 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -229,6 +229,9 @@ darwin_e_proc_exec(p, epp)
 
 	darwin_e_proc_init(p, p->p_vmspace);
 
+	/* Setup the mach_emuldata part of darwin_emuldata */
+	mach_e_proc_exec(p, epp);
+
 	ded = (struct darwin_emuldata *)p->p_emuldata;
 	if (p->p_pid == darwin_init_pid)
 		ded->ded_fakepid = 1;
@@ -253,6 +256,9 @@ darwin_e_proc_fork(p, parent)
 
 	/* Use parent's vmspace because our vmspace may not be setup yet */
 	darwin_e_proc_init(p, parent->p_vmspace);
+
+	/* Setup the mach_emuldata part of darwin_emuldata */
+	mach_e_proc_fork(p, parent);
 
 	ded1 = p->p_emuldata;
 	ded2 = parent->p_emuldata;
@@ -291,6 +297,7 @@ darwin_e_proc_init(p, vmspace)
 	ded->ded_fakepid = 0;
 	ded->ded_wsdev = NODEV;
 
+	/* Initalize the mach_emuldata part of darwin_emuldata */
 	mach_e_proc_init(p, vmspace);
 
 	return;
@@ -373,6 +380,10 @@ darwin_e_proc_exit(p)
 
 	}
 		
+	/* 
+	 * Cleanup mach_emuldata part of darwin_emuldata 
+	 * It will also free p->p_emuldata.
+	 */
 	mach_e_proc_exit(p);
 
 	return;

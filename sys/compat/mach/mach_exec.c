@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.35 2003/11/17 01:52:14 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.36 2003/11/18 01:40:18 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.35 2003/11/17 01:52:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.36 2003/11/18 01:40:18 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -62,9 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.35 2003/11/17 01:52:14 manu Exp $");
 #include <compat/mach/mach_exec.h>
 
 static int mach_cold = 1; /* Have we initialized COMPAT_MACH structures? */
-
-static void mach_e_proc_exec(struct proc *, struct exec_package *);
-static void mach_e_proc_fork(struct proc *, struct proc *);
 static void mach_init(void);
 
 extern struct sysent sysent[];
@@ -192,7 +189,7 @@ exec_mach_probe(path)
 	return 0;
 }
 
-static void 
+void 
 mach_e_proc_exec(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
@@ -202,7 +199,7 @@ mach_e_proc_exec(p, epp)
 	return;
 }
 
-static void 
+void 
 mach_e_proc_fork(p, parent)
 	struct proc *p;
 	struct proc *parent;
@@ -217,7 +214,9 @@ mach_e_proc_fork(p, parent)
 
 	med1 = p->p_emuldata;
 	med2 = parent->p_emuldata;
-	/* Nothing is inherited across forks in struct  mach_emuldata */
+
+	/* Exception ports are inherited between forks. */
+	(void)memcpy(med1->med_exc, med2->med_exc, sizeof(med1->med_exc));
 
 	return;
 }
