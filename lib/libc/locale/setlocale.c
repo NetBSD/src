@@ -91,6 +91,10 @@ setlocale(category, locale)
 	int found, i, len;
 	char *env, *r;
 
+	/*
+	 * XXX potential security problem here with set-id programs
+	 * being able to read files the user can not normally read.
+	 */
 	if (!PathLocale && !(PathLocale = getenv("PATH_LOCALE")))
 		PathLocale = _PATH_LOCALE;
 
@@ -123,7 +127,7 @@ setlocale(category, locale)
 		if (!env)
 			env = "C";
 
-		(void) strncpy(new_categories[category], env, 31);
+		(void)strncpy(new_categories[category], env, 31);
 		new_categories[category][31] = 0;
 		if (!category) {
 			for (i = 1; i < _LC_LAST; ++i) {
@@ -133,7 +137,7 @@ setlocale(category, locale)
 				new_categories[i][31] = 0;
 			}
 		}
-	} else if (category)  {
+	} else if (category) {
 		(void)strncpy(new_categories[category], locale, 31);
 		new_categories[category][31] = 0;
 	} else {
