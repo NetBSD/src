@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.139 2003/04/15 12:11:25 skrll Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.140 2003/04/23 21:32:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.139 2003/04/15 12:11:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.140 2003/04/23 21:32:10 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1396,18 +1396,27 @@ proc_unstop(struct proc *p)
 	SCHED_ASSERT_LOCKED();
 
 	/*
-	 * Our caller will want to invoke setrunnable() on whatever we return,
-	 * provided that it isn't NULL.
+	 * Our caller wants to be informed if there are only sleeping
+	 * and interruptable LWPs left after we have run so that it
+	 * can invoke setrunnable() if required - return one of the
+	 * interruptable LWPs if this is the case.
 	 */
 
 	p->p_stat = SACTIVE;
 	if (p->p_flag & P_SA) {
-		lr = p->p_sa->sa_idle; /* OK if this is NULL. */
-		cantake = 1;
+		/*
+		 * Preferentially select the idle LWP as the interruptable
+		 * LWP to return if it exists.
+		 */
+		lr = p->p_sa->sa_idle;
+		if (lr != NULL)
+			cantake = 1;
 	}
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		if (l->l_stat == LSRUN)
+		if (l->l_stat == LSRUN) {
+			lr = NULL;
 			cantake = 1;
+		}
 		if (l->l_stat != LSSTOP)
 			continue;
 
@@ -1418,8 +1427,8 @@ proc_unstop(struct proc *p)
 				cantake = 1;
 			}
 		} else {
-			if (l != lr)
-				setrunnable(l);
+			setrunnable(l);
+			lr = NULL;
 			cantake = 1;
 		}
 	}
