@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2001/09/21 22:59:01 tv Exp $
+# $NetBSD: Makefile,v 1.12 2001/10/04 10:44:12 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -35,7 +35,7 @@ krb_err.c krb_err.h: krb_err.et
 
 ERR_FILES=	krb_err.c
 
-DPSRCS=		krb_err.h
+DPSRCS=		krb.h krb_err.h
 
 SRCS=	\
 	check_time.c \
