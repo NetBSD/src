@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.13 1998/07/28 11:41:42 mycroft Exp $	*/
+/*	$NetBSD: err.c,v 1.14 2000/05/31 22:48:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.13 1998/07/28 11:41:42 mycroft Exp $");
+__RCSID("$NetBSD: err.c,v 1.14 2000/05/31 22:48:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,7 @@ seterror(id, va_alist)
 #endif
 {
     if (seterr == 0) {
-	char    berr[BUFSIZ];
+	char    berr[BUFSIZE];
 	va_list va;
 
 #if __STDC__
