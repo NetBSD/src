@@ -1,7 +1,4 @@
-# 	$NetBSD: GENERIC_SCSI3,v 1.34 1996/11/03 11:18:16 pk Exp $
-
-# Machine architecture; required by config(8)
-machine		sparc
+# 	$NetBSD: GENERIC_SCSI3,v 1.35 1996/11/18 00:10:20 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -11,15 +8,9 @@ options		SUN4		# sun4/100, sun4/200, sun4/300
 options		SUN4C		# sun4c - SS1, 1+, 2, ELC, SLC, IPC, IPX, etc.
 options		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
-#options	MMU_3L		# 3-level MMU on sun4/400
-
-# obsolete timezone spec; optional
-#options	TIMEZONE=0, DST=0
+#options	MMU_3L		# 3-level MMU on sun4/400; (incomplete)
 
 # Standard system options
-options		SWAPPAGER	# swap and anonymous memory; required
-options		VNODEPAGER	# mapped files; required
-options		DEVPAGER	# mapped devices; required
 options		KTRACE		# system call tracing
 options		SYSVMSG		# System V message queues
 options		SYSVSEM		# System V semaphores
@@ -41,6 +32,7 @@ options		LKM		# loadable kernel modules
 options		COMPAT_43	# 4.3BSD system interfaces
 options		COMPAT_10	# NetBSD 1.0 binary compatibility
 options		COMPAT_11	# NetBSD 1.1 binary compatibility
+options		COMPAT_12	# NetBSD 1.2 binary compatibility
 options		COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options		COMPAT_SVR4	# SunOS 5.x binary compatibility
 options		EXEC_ELF32	# Exec module for SunOS 5.x binaries.
