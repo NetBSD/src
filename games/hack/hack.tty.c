@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.tty.c,v 1.6 1997/10/19 16:59:17 christos Exp $	*/
+/*	$NetBSD: hack.tty.c,v 1.7 2000/07/10 10:19:25 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char     sccsid[] = "@(#)hack.tty.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hack.tty.c,v 1.6 1997/10/19 16:59:17 christos Exp $");
+__RCSID("$NetBSD: hack.tty.c,v 1.7 2000/07/10 10:19:25 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -98,7 +98,7 @@ settty(s)
 	clear_screen();
 	end_screen();
 	if (s)
-		printf(s);
+		printf("%s", s);
 	(void) fflush(stdout);
 	if (tcsetattr(0, TCSADRAIN, &inittyb) < 0)
 		perror("Hack (settty)");
