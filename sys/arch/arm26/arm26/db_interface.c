@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.3 2000/06/29 08:32:34 mrg Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.4 2000/12/23 15:18:34 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -203,20 +203,14 @@ db_write_bytes(addr, size, data)
 	}
 }
 
-void db_show_vmstat_cmd __P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_show_vnode_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_show_intrchain_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_show_panic_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_show_frame_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
+void db_bus_write_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 
 struct db_command arm26_db_command_table[] = {
+	{ "bsw",	db_bus_write_cmd,	CS_MORE, NULL },
 	{ "frame",	db_show_frame_cmd,	0, NULL },
-#if 0
-	{ "intrchain",	db_show_intrchain_cmd,	0, NULL },
-#endif
 	{ "panic",	db_show_panic_cmd,	0, NULL },
-	{ "vmstat",	db_show_vmstat_cmd,	0, NULL },
-	{ "vnode",	db_show_vnode_cmd,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
 };
 
