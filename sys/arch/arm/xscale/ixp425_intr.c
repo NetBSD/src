@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.1 2003/05/23 00:57:25 ichiro Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.2 2003/06/16 20:00:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.1 2003/05/23 00:57:25 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.2 2003/06/16 20:00:58 thorpej Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -231,14 +231,14 @@ ixp425_intr_calculate_masks(void)
 	 * splvm() blocks all interrupts that use the kernel memory
 	 * allocation facilities.
 	 */
-	ixp425_imask[IPL_IMP] |= ixp425_imask[IPL_TTY];
+	ixp425_imask[IPL_VM] |= ixp425_imask[IPL_TTY];
 
 	/*
 	 * Audio devices are not allowed to perform memory allocation
 	 * in their interrupt routines, and they have fairly "real-time"
 	 * requirements, so give them a high interrupt priority.
 	 */
-	ixp425_imask[IPL_AUDIO] |= ixp425_imask[IPL_IMP];
+	ixp425_imask[IPL_AUDIO] |= ixp425_imask[IPL_VM];
 
 	/*
 	 * splclock() must block anything that uses the scheduler.

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.4 2002/10/05 17:01:49 chs Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.5 2003/06/16 20:01:05 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -339,9 +339,9 @@ irq_calculatemasks()
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
-	irqmasks[IPL_IMP] &= irqmasks[IPL_TTY];
+	irqmasks[IPL_VM] &= irqmasks[IPL_TTY];
 
-	irqmasks[IPL_AUDIO] &= irqmasks[IPL_IMP];
+	irqmasks[IPL_AUDIO] &= irqmasks[IPL_VM];
 
 	/*
 	 * Since run queues may be manipulated by both the statclock and tty,

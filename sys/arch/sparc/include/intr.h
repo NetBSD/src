@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2002/12/31 15:51:18 pk Exp $ */
+/*	$NetBSD: intr.h,v 1.7 2003/06/16 20:01:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #define IPL_BIO		5	/* block I/O */
 #define IPL_TTY		6	/* terminal */
 #define IPL_SOFTSERIAL	6	/* serial */
-#define IPL_IMP		7	/* memory allocation */
+#define IPL_VM		7	/* memory allocation */
 #define IPL_NET		7	/* network */
 #define IPL_CLOCK	10	/* clock */
 #define IPL_SCHED	11	/* scheduler */

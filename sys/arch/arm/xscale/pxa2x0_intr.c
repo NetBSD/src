@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.3 2003/06/05 13:48:28 scw Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.4 2003/06/16 20:00:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -258,14 +258,14 @@ pxa2x0_update_intr_masks(int irqno, int level)
 	 * splvm() blocks all interrupts that use the kernel memory
 	 * allocation facilities.
 	 */
-	pxa2x0_imask[IPL_IMP] &= pxa2x0_imask[IPL_TTY];
+	pxa2x0_imask[IPL_VM] &= pxa2x0_imask[IPL_TTY];
 
 	/*
 	 * Audio devices are not allowed to perform memory allocation
 	 * in their interrupt routines, and they have fairly "real-time"
 	 * requirements, so give them a high interrupt priority.
 	 */
-	pxa2x0_imask[IPL_AUDIO] &= pxa2x0_imask[IPL_IMP];
+	pxa2x0_imask[IPL_AUDIO] &= pxa2x0_imask[IPL_VM];
 
 	/*
 	 * splclock() must block anything that uses the scheduler.
