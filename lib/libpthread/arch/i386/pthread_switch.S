@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.16 2002/12/18 22:57:48 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.17 2002/12/18 23:01:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ ENTRY(pthread__switch)
 	pushl	%esi			/* callee save */
 	pushl	%edi			/* callee save */
 	PIC_PROLOGUE
-	movl	8(%ebp), %eax		/* eax holds the current thread */
+	movl	8(%ebp), %eax		/* eax holds the current thread	     */
 	movl	12(%ebp), %ecx		/* ecx holds the thread to switch to */
 	subl	$CONTEXTSIZE+12, %esp	/* Allocate space for the ucontext_t */
 	leal	12(%esp), %edi
@@ -81,7 +81,7 @@ ENTRY(pthread__switch)
 	 * 12 bytes of STACKSPACE.
 	 */
 	movl	PT_UC(%ecx), %esi
-	pushl	%esi			/* ucontext_t *ucp */
+	pushl	%esi			/* ucontext_t *ucp  */
 	pushl	%edi			/* ucontext_t *oucp */
 	call	*PIC_GOTOFF(_C_LABEL(_md_swapcontext_u))
 	addl	$CONTEXTSIZE+20, %esp
@@ -148,7 +148,8 @@ ENTRY(pthread__switch)
 pthread__switch_away:
 	STACK_SWITCH
 
-	/* If we're invoked from the switch-to-next provisions of
+	/*
+	 * If we're invoked from the switch-to-next provisions of
 	 * pthread__locked_switch or pthread__upcall_switch, there
 	 * may be a fake spinlock-count set. If so, they will set %edx
 	 * to let us know, and we decrement it once we're no longer using
@@ -176,10 +177,10 @@ ENTRY(pthread__locked_switch)
 	pushl	%esi			/* callee save */
 	pushl	%edi			/* callee save */
 	PIC_PROLOGUE	
-	movl	8(%ebp), %eax		/* eax holds the current thread */
+	movl	8(%ebp), %eax		/* eax holds the current thread	     */
 	movl	12(%ebp), %ecx 		/* ecx holds the thread to switch to */
-	movl	16(%ebp), %edx		/* edx holds the spinlock pointer */
-	incl	PT_SPINLOCKS(%ecx)	/* Make sure we get continued */
+	movl	16(%ebp), %edx		/* edx holds the spinlock pointer    */
+	incl	PT_SPINLOCKS(%ecx)	/* Make sure we get continued	     */
 	subl	$CONTEXTSIZE+12, %esp	/* Allocate space for the ucontext_t */
 	leal	12(%esp), %edi
 	andl	$~(0xf), %edi		/* 16-byte-align the ucontext_t area */
@@ -210,13 +211,15 @@ ENTRY(pthread__locked_switch)
 	
 	STACK_SWITCH
 	
-	/* Check if the original thread was preempted while holding
+	/*
+	 * Check if the original thread was preempted while holding
 	 * its queue lock.
 	 */
 	cmpl	$0, PT_NEXT(%eax)
 	je	locked_no_old_preempt
 
-	/* Yes, it was. Stash the thread we were going to
+	/*
+	 * Yes, it was. Stash the thread we were going to
 	 * switch to, the lock the original thread was holding, 
 	 * and go to the next thread in the chain.  
 	 * Mark the fact that this was a locked switch, and so the
@@ -230,7 +233,8 @@ ENTRY(pthread__locked_switch)
 	movl	%edx, PT_HELDLOCK(%eax)
 	decl	PT_SPINLOCKS(%eax)
 
-	/* Save the context we previously stored in PT_UC(%eax); 
+	/*
+	 * Save the context we previously stored in PT_UC(%eax); 
 	 * that was overwritten when we were preempted and continued,
 	 * so we need to put it somewhere. 
 	 */
@@ -244,8 +248,10 @@ ENTRY(pthread__locked_switch)
 	NOTREACHED
 
 locked_no_old_preempt:		
-	/* We've moved to the new stack, and the old context has been 
-	 * saved. The queue lock can be released. */
+	/*
+	 * We've moved to the new stack, and the old context has been 
+	 * saved. The queue lock can be released.
+	 */
 	decl	PT_SPINLOCKS(%eax)
 	/* We happen to know that this is the right way to release a lock. */
 	movl	$0, 0(%edx)
@@ -289,7 +295,7 @@ ENTRY(pthread__upcall_switch)
 	movl	%esp, %ebp
 	/* No need to save %esi, %edi;  this function never returns */
 	PIC_PROLOGUE
-	movl	8(%ebp), %eax		/* eax holds the upcall thread */
+	movl	8(%ebp), %eax		/* eax holds the upcall thread       */
 	movl	12(%ebp), %ecx		/* ecx holds the thread to switch to */
 	incl	PT_SPINLOCKS(%ecx)
 	
@@ -298,7 +304,8 @@ ENTRY(pthread__upcall_switch)
 	/* Check if the upcall was preempted and continued. */
 	cmpl	$0, PT_NEXT(%eax)
 	je	upcall_no_old_preempt
-	/* Yes, it was. Stash the thread we were going to
+	/*
+	 * Yes, it was. Stash the thread we were going to
 	 * switch to, and go to the next thread in the chain.
 	 */
 	movl	%ecx, PT_SWITCHTO(%eax)
