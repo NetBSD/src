@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.42 2001/08/14 09:02:26 tv Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.43 2001/09/21 20:50:23 tv Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -51,7 +51,7 @@ __RECURSETARG=	${TARGETS}
 __TARGDIR := ${dir}
 .if ${__TARGDIR} == ".WAIT"
 SUBDIR_${targ} += .WAIT
-.else
+.elif !commands(${targ}-${dir})
 .PHONY: ${targ}-${dir}
 ${targ}-${dir}: .MAKE __recurse
 SUBDIR_${targ} += ${targ}-${dir}
