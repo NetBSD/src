@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.49 2002/03/04 01:56:12 dbj Exp $	*/
+/*	$NetBSD: wi.c,v 1.50 2002/03/06 14:41:39 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.49 2002/03/04 01:56:12 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.50 2002/03/06 14:41:39 dbj Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1469,7 +1469,7 @@ wi_ioctl(ifp, command, data)
 			wreq.wi_len = (sizeof(sc->wi_stats) / 2) + 1;
 		} else if (wreq.wi_type == WI_RID_READ_APS) {
 			if (sc->wi_scanning) {
-				error = EINVAL;
+				error = EINPROGRESS;
 				break;
 			} else {
 				len = sc->wi_naps * sizeof(struct wi_apinfo);
