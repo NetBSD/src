@@ -34,10 +34,8 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)ucbarpa.mc	8.1 (Berkeley) 6/7/93')
-DOMAIN(cs.exposed)dnl
-OSTYPE(bsd4.4)dnl
-MAILER(local)dnl
+VERSIONID(`@(#)udb.mc	8.1 (Berkeley) 6/7/93')
+OSTYPE(sunos4.1)dnl
+DOMAIN(cs.hidden)dnl
 MAILER(smtp)dnl
-MAILER(uucp)dnl
-SITECONFIG(uucp.ucbarpa, ucbarpa, U)
+define(`USERDB_FILE', `/home/auspex/a/staff/gnn/UDB/UI')dnl
