@@ -21,6 +21,8 @@
 ./usr/include/pmax/fbvar.h
 ./usr/include/pmax/float.h
 ./usr/include/pmax/ieeefp.h
+./usr/include/pmax/intr.h
+./usr/include/pmax/kcore.h
 ./usr/include/pmax/kdbparam.h
 ./usr/include/pmax/limits.h
 ./usr/include/pmax/locore.h
