@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.27 2000/12/19 21:34:24 jdc Exp $	*/
+/*	$NetBSD: setterm.c,v 1.28 2000/12/22 17:07:13 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.27 2000/12/19 21:34:24 jdc Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.28 2000/12/22 17:07:13 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,7 @@ setterm(char *type)
 	} else
 		__CA = 1;
 
-	__tc_pc = _PC ? _PC[0] : 0;
+	PC = _PC ? _PC[0] : 0;
 	aoftspace = tspace;
 	if (unknown) {
 		strcpy(ttytype, "dumb");
