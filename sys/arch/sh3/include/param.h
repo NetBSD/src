@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 2000/02/11 19:30:29 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.4 2000/06/30 17:55:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -110,7 +110,7 @@
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
  */
-#define	MSIZE		128		/* size of an mbuf */
+#define	MSIZE		256		/* size of an mbuf */
 
 #ifndef MCLSHIFT
 # define	MCLSHIFT	11	/* convert bytes to m_buf clusters */

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2000/06/14 15:39:59 soren Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2000/06/30 17:55:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,7 +54,7 @@
 #define	CLSIZE		1
 #define	CLSIZELOG2	0
 
-#define	MSIZE		128		/* Size of an mbuf */
+#define	MSIZE		256		/* Size of an mbuf */
 
 #ifndef MCLSHIFT
 #define	MCLSHIFT	11		/* Convert bytes to m_buf clusters. */
