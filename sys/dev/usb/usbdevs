@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.81 2000/02/27 20:43:53 augustss Exp $
+$NetBSD: usbdevs,v 1.82 2000/02/29 19:06:40 hubertf Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -139,6 +139,7 @@ vendor INTEL		0x8086	Intel
 product 3COM HOMECONN		0x009d	HomeConnect USB Camera
 product 3COM 3C19250		0x03E8	3C19250 Ethernet adapter
 product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
+product 3COM 3C460		0x11f8	HomeConnect Ethernet USB Adapter
 
 product 3COMUSR OFFICECONN	0x0082	3Com OfficeConnect Analog Modem
 product 3COMUSR USRISDN		0x008f	3Com U.S. Robotics Pro ISDN TA
