@@ -1,6 +1,8 @@
+/*	$NetBSD: fstab.c,v 1.6 1995/02/27 03:43:12 cgd Exp $	*/
+
 /*
- * Copyright (c) 1980, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,22 +34,25 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)fstab.c	5.15 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: fstab.c,v 1.5 1994/08/13 09:41:50 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: fstab.c,v 1.6 1995/02/27 03:43:12 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
-#include <sys/errno.h>
-#include <sys/uio.h>
+#include <errno.h>
 #include <fstab.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static FILE *_fs_fp;
 static struct fstab _fs_fstab;
-static error();
+
+static error __P((int));
+static fstabscan __P((void));
 
 static
 fstabscan()

@@ -1,5 +1,7 @@
+/*	$NetBSD: fnmatch.c,v 1.11 1995/02/27 03:43:06 cgd Exp $	*/
+
 /*
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -35,8 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)fnmatch.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: fnmatch.c,v 1.10 1993/11/24 19:43:51 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
+#else
+static char rcsid[] = "$NetBSD: fnmatch.c,v 1.11 1995/02/27 03:43:06 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -53,14 +58,13 @@ static const char *rangematch __P((const char *, int, int));
 
 int
 fnmatch(pattern, string, flags)
-	register const char *pattern, *string;
+	const char *pattern, *string;
 	int flags;
 {
-	const char *stringstart = string;
-	register char c;
-	char test;
+	const char *stringstart;
+	char c, test;
 
-	for (;;)
+	for (stringstart = string;;)
 		switch (c = *pattern++) {
 		case EOS:
 			return (*string == EOS ? 0 : FNM_NOMATCH);
@@ -70,7 +74,8 @@ fnmatch(pattern, string, flags)
 			if (*string == '/' && (flags & FNM_PATHNAME))
 				return (FNM_NOMATCH);
 			if (*string == '.' && (flags & FNM_PERIOD) &&
-			    (string == stringstart || ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
+			    (string == stringstart ||
+			    ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
 				return (FNM_NOMATCH);
 			++string;
 			break;
@@ -81,7 +86,8 @@ fnmatch(pattern, string, flags)
 				c = *++pattern;
 
 			if (*string == '.' && (flags & FNM_PERIOD) &&
-			    (string == stringstart || ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
+			    (string == stringstart ||
+			    ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
 				return (FNM_NOMATCH);
 
 			/* Optimize for pattern with * at end or before /. */
@@ -111,7 +117,8 @@ fnmatch(pattern, string, flags)
 				return (FNM_NOMATCH);
 			if (*string == '/' && flags & FNM_PATHNAME)
 				return (FNM_NOMATCH);
-			if ((pattern = rangematch(pattern, *string, flags)) == NULL)
+			if ((pattern =
+			    rangematch(pattern, *string, flags)) == NULL)
 				return (FNM_NOMATCH);
 			++string;
 			break;
@@ -133,47 +140,38 @@ fnmatch(pattern, string, flags)
 
 static const char *
 rangematch(pattern, test, flags)
-	register const char *pattern;
-	register int test;
-	int flags;
+	const char *pattern;
+	int test, flags;
 {
-	register char c, c2;
 	int negate, ok;
+	char c, c2;
 
-	/* A bracket expression starting with an unquoted circumflex
+	/*
+	 * A bracket expression starting with an unquoted circumflex
 	 * character produces unspecified results (IEEE 1003.2-1992,
-	 * 3.13.2).  I have chosen to treat it like '!', for 
-	 * consistancy with regular expression syntax.
+	 * 3.13.2).  This implementation treats it like '!', for
+	 * consistency with the regular expression syntax.
+	 * J.T. Conklin (conklin@ngai.kaleida.com)
 	 */
-	if (negate = (*pattern == '!' || *pattern == '^')) {
-		pattern++;
-	}
+	if (negate = (*pattern == '!' || *pattern == '^'))
+		++pattern;
 	
 	for (ok = 0; (c = *pattern++) != ']';) {
-		if (c == '\\' && !(flags & FNM_NOESCAPE)) {
+		if (c == '\\' && !(flags & FNM_NOESCAPE))
 			c = *pattern++;
-	        }
-		if (c == EOS) {
+		if (c == EOS)
 			return (NULL);
-		}
-
 		if (*pattern == '-' 
 		    && (c2 = *(pattern+1)) != EOS && c2 != ']') {
 			pattern += 2;
-			if (c2 == '\\' && !(flags & FNM_NOESCAPE)) {
+			if (c2 == '\\' && !(flags & FNM_NOESCAPE))
 				c2 = *pattern++;
-			}
-			if (c2 == EOS) {
+			if (c2 == EOS)
 				return (NULL);
-			}
-			
-			if (c <= test && test <= c2) {
+			if (c <= test && test <= c2)
 				ok = 1;
-			}
-		} else if (c == test) {
+		} else if (c == test)
 			ok = 1;
-		}
 	}
-
 	return (ok == negate ? NULL : pattern);
 }
