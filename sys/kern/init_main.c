@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.70 1994/11/03 05:58:44 deraadt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.71 1994/12/19 14:36:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -417,7 +417,7 @@ start_init(p, framep)
 		/*
 		 * Move out the arg pointers.
 		 */
-		uap = (char **)((int)ucp & ~(sizeof(char **)-1));
+		uap = (char **)((int)ucp & ~ALIGNBYTES);
 		(void)suword((caddr_t)--uap, 0);	/* terminator */
 		if (options != 0)
 			(void)suword((caddr_t)--uap, (long)arg1);
