@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.191 2003/10/20 05:03:41 cyber Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.192 2003/10/20 05:07:15 cyber Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2458,4 +2458,10 @@ sys/dev/pci/if_bge.c				1.50
 	Do not initalize the LED's to 0x00.  The default configuration
 	the chip comes up in should yeild proper operation of the LED's.
 	[tron, ticket #1447]
+
+share/man/man4/umass.4				1.18
+
+	Add a few more devices which are known to work with this driver.
+	Some of them were suggested by Rich Neswold in PR kern/22684.
+	[tron, ticket #1448]
 
