@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.15 1998/04/25 00:12:44 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.16 1998/05/11 23:36:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.15 1998/04/25 00:12:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.16 1998/05/11 23:36:46 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -172,12 +172,7 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
 {
 	struct cia_config *ccp = ccv;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
-	int device;
-	int eb164_irq, pinbase, pinoff;
-
-#ifndef DIAGNOSTIC
-	pinbase = pinoff = 0;			/* XXX gcc -Wuninitialized */
-#endif
+	int bus, device, function;
 
 	if (buspin == 0) {
 		/* No IRQ used. */
@@ -188,65 +183,35 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
 		return 1;
 	}
 
-	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
-	switch (device) {
+	alpha_pci_decompose_tag(pc, bustag, &bus, &device, &function);
+
 	/*
-	 * There might be a PCI IDE controller on one of the SIO's
-	 * functions, so go ahead and map this interrupt.
+	 * The PCI-ISA bridge lives on device 8 of bus 0.  On the AlphaPC
+	 * 164SX, this is a Cypress chip with PCI IDE wired to compatibility
+	 * mode on functions 1 and 2.  There will be no interrupt mapping
+	 * for this device, so just bail out now.
 	 */
-	case 8: 					/* SIO */
-		eb164_irq = 4;
-		break;
-
-	case 11:
-		eb164_irq = 5;				/* IDE */
-		break;
-
-	case 5:
-	case 6:
-	case 7:
-	case 9:
-		switch (buspin) {
-		case 1:
-			pinbase = 0;
-			break;
-		case 2:
-		case 3:
-		case 4:
-			pinbase = (buspin * 4) - 1;
-			break;
-#ifdef DIAGNOSTIC
-		default:
-			panic("dec_eb164_intr_map: slot buspin switch");
-#endif
-		};
-		switch (device) {
-		case 5:
-			pinoff = 2;
-			break;
-
-		case 6:
-		case 7:
-		case 9:
-			pinoff = device - 6;
-			break;
-#ifdef DIAGNOSTIC
-		default:
-			panic("dec_eb164_intr_map: slot device switch");
-#endif
-		}
-		eb164_irq = pinoff + pinbase;
-		break;
-	default:
-		panic("dec_eb164_intr_map: invalid device number %d\n",
-		    device);
+	if (bus == 0 && device == 8) {
+		if (function == 0)
+			panic("dec_eb164_intr_map: SIO device");
+		return (1);
 	}
 
-	if (eb164_irq > EB164_MAX_IRQ)
-		panic("dec_eb164_intr_map: eb164_irq too large (%d)\n",
-		    eb164_irq);
+	/*
+	 * The console places the interrupt mapping in the "line" value.
+	 * A value of (char)-1 indicates there is no mapping.
+	 */
+	if (line == 0xff) {
+		printf("dec_eb164_intr_map: no mapping for %d/%d/%d\n",
+		    bus, device, function);
+		return (1);
+	}
 
-	*ihp = eb164_irq;
+	if (line > EB164_MAX_IRQ)
+		panic("dec_eb164_intr_map: eb164 irq too large (%d)\n",
+		    line);
+
+	*ihp = line;
 	return (0);
 }
 
