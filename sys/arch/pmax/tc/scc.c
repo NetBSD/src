@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.23 1997/06/15 18:03:26 mhitch Exp $	*/
+/*	$NetBSD: scc.c,v 1.24 1997/06/16 04:30:15 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -107,7 +107,6 @@
 #include <pmax/pmax/asic.h>
 #include <pmax/dev/sccreg.h>
 #include <pmax/tc/sccvar.h>	/* XXX */
-#include <machine/locore.h>	/* XXX wbflush() */
 #endif
 
 #ifdef alpha
@@ -118,10 +117,12 @@
 #endif
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
+#include <machine/conf.h>
+
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
 
-#include <machine/conf.h>
 
 #include "rasterconsole.h"
 
