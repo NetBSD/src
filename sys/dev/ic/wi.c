@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.48 2002/03/04 01:33:17 dbj Exp $	*/
+/*	$NetBSD: wi.c,v 1.49 2002/03/04 01:56:12 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.48 2002/03/04 01:33:17 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.49 2002/03/04 01:56:12 dbj Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -428,6 +428,8 @@ void wi_inquire(xsc)
 
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return;
+
+	KASSERT(sc->sc_enabled);
 
 	callout_reset(&sc->wi_inquire_ch, hz * 60, wi_inquire, sc);
 
@@ -1462,8 +1464,6 @@ wi_ioctl(ifp, command, data)
 		if (error)
 			break;
 		if (wreq.wi_type == WI_RID_IFACE_STATS) {
-			wi_update_stats(sc);
-			/* XXX native byte order */
 			memcpy((char *)&wreq.wi_val, (char *)&sc->wi_stats,
 			    sizeof(sc->wi_stats));
 			wreq.wi_len = (sizeof(sc->wi_stats) / 2) + 1;
@@ -1505,7 +1505,8 @@ wi_ioctl(ifp, command, data)
 		if (error)
 			break;
 		if (wreq.wi_type == WI_RID_IFACE_STATS) {
-			error = EINVAL;
+			if (sc->sc_enabled)
+				wi_inquire(sc);
 			break;
 		} else if (wreq.wi_type == WI_RID_MGMT_XMIT) {
 			error = wi_mgmt_xmit(sc, (caddr_t)&wreq.wi_val,
