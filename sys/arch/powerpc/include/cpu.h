@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 1999/04/17 21:16:47 ws Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 1999/05/05 11:20:54 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -39,6 +39,7 @@ extern void __syncicache __P((void *, int));
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CACHELINE	1
+#define	CPU_MAXID	2
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
