@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.6 2002/12/12 00:29:24 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.7 2002/12/15 00:40:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,19 @@
 
 #ifndef	_MACH_PORT_H_
 #define	_MACH_PORT_H_
+
+#define MACH_PORT_RIGHT_SEND		0
+#define MACH_PORT_RIGHT_RECEIVE		1
+#define MACH_PORT_RIGHT_SEND_ONCE	2
+#define MACH_PORT_RIGHT_PORT_SET	3
+#define MACH_PORT_RIGHT_DEAD_NAME	4
+#define MACH_PORT_RIGHT_NUMBER		5
+
+#define MACH_PORT_TYPE_SEND		(MACH_PORT_RIGHT_SEND << 16)
+#define MACH_PORT_TYPE_RECEIVE		(MACH_PORT_RIGHT_RECEIVE << 16)
+#define MACH_PORT_TYPE_SEND_ONCE	(MACH_PORT_RIGHT_SEND_ONCE << 16)
+#define MACH_PORT_TYPE_PORT_RIGHTS \
+    (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_RECEIVE | MACH_PORT_TYPE_SEND_ONCE)
 
 /* port_deallocate */
 
@@ -191,5 +204,40 @@ int mach_port_insert_member(struct proc *, mach_msg_header_t *,
     size_t,  mach_msg_header_t *);
 int mach_port_move_member(struct proc *, mach_msg_header_t *,
     size_t,  mach_msg_header_t *);
+
+
+/* In-kernel Mach port right description */
+struct mach_right {
+	struct mach_port *mr_port;	/* Port we have the right on */
+	struct proc *mr_p;		/* points back to struct proc */
+	int mr_type;			/* right type (recv, send, sendonce) */
+	LIST_ENTRY(mach_right) mr_list; 
+};
+
+struct mach_right *mach_right_get(struct mach_port *, struct proc *, int);
+void mach_right_put(struct mach_right *);
+int mach_right_check(struct mach_right *, struct proc *, int);
+
+/* In-kernel Mach port description */
+struct mach_port {
+	struct proc *mp_recv;	/* Receiving process (holding recv. right) */
+	int mp_count;		/* Count of queued messages */			
+	TAILQ_HEAD(mp_msglist,	/* Queue of messages pending delivery */
+	    mach_message) mp_msglist;
+	struct lock mp_msglock;	/* Lock for the queue */
+	LIST_ENTRY(mach_port) 	/* List of all ports */
+	    mp_alllist;
+	int mp_refcount;	/* Reference count (amount of rights) */
+};
+
+void mach_port_init(void);
+struct mach_port *mach_port_get(struct proc *);       
+void mach_port_put(struct mach_port *);
+void mach_remove_recvport(struct mach_port *);
+void mach_add_recvport(struct mach_port *, struct proc *);
+int mach_port_check(struct mach_port *);
+#ifdef DEBUG_MACH
+void mach_debug_port(struct proc *);
+#endif
 
 #endif /* _MACH_PORT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.2 2002/12/09 21:29:24 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.3 2002/12/15 00:40:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.2 2002/12/09 21:29:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.3 2002/12/15 00:40:25 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -47,6 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.2 2002/12/09 21:29:24 manu Exp $"
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
+#include <sys/queue.h>
+#include <sys/malloc.h>
+#include <sys/pool.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif 
@@ -56,6 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.2 2002/12/09 21:29:24 manu Exp $"
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_syscallargs.h>
+
+/* Mach message pool */
+static struct pool mach_message_pool;
 
 #ifdef DEBUG_MACH
 static void mach_print_msg_header_t(mach_msg_header_t *);
@@ -243,4 +249,31 @@ mach_msg_return(p, rep, msgh, msglen, maxlen, dst)
 #endif
 
 	return 0;
+}
+
+void
+mach_message_init(void)
+{
+	pool_init(&mach_message_pool, sizeof (struct mach_message),
+	    0, 0, 128, "mach_message_pool", NULL);
+	return;
+}
+
+struct mach_message *
+mach_message_get(void)
+{
+	struct mach_message *mm;
+
+	mm = (struct mach_message *)pool_get(&mach_message_pool, M_WAITOK);
+
+	return mm;
+}
+
+void
+mach_message_put(mm)
+	struct mach_message *mm;
+{
+	pool_put(&mach_message_pool, mm);
+
+	return;
 }

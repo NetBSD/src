@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.14 2002/12/09 21:29:24 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.15 2002/12/15 00:40:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.14 2002/12/09 21:29:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.15 2002/12/15 00:40:25 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -85,7 +85,6 @@ mach_host_info(p, msgh, maxlen, dst)
 		struct mach_host_basic_info *info
 		    = (struct mach_host_basic_info *)&rep.rep_data[0];
 
-		DPRINTF(("mach_host_info(BASIC_INFO);\n"));
 		rep.rep_msgh.msgh_size = sizeof(*reps) 
 		    - sizeof(rep.rep_trailer) + sizeof(*info);
 		rep.rep_count = sizeof(*info) / sizeof(mach_integer_t);
@@ -102,7 +101,6 @@ mach_host_info(p, msgh, maxlen, dst)
 		struct mach_host_priority_info *info
 		    = (struct mach_host_priority_info *)&rep.rep_data[0];
 
-		DPRINTF(("mach_host_info(PRIORITY_INFO);\n"));
 		rep.rep_msgh.msgh_size = sizeof(*reps) 
 		    - sizeof(rep.rep_trailer) + sizeof(*info);
 		rep.rep_count = sizeof(*info) / sizeof(mach_integer_t);
@@ -117,9 +115,6 @@ mach_host_info(p, msgh, maxlen, dst)
 
 	case MACH_HOST_SEMAPHORE_TRAPS:
 	case MACH_HOST_MACH_MSG_TRAP:
-		DPRINTF(("mach_host_info(%s);\n",
-		    req.req_flavor == MACH_HOST_SEMAPHORE_TRAPS ?
-		    "SEMAPHORE_TRAPS" : "MACH_MSG_TRAP"));
 		reps = (mach_host_info_reply_simple_t *)&rep;
 		reps->rep_msgh.msgh_size = 
 		    sizeof(*reps) - sizeof(reps->rep_trailer);
@@ -129,8 +124,8 @@ mach_host_info(p, msgh, maxlen, dst)
 
 	case MACH_HOST_SCHED_INFO:
 	case MACH_HOST_RESOURCE_SIZES:
-		DPRINTF(("Unimplemented host_info flavor %d\n", 
-		    req.req_flavor));
+		uprintf("mach_host_info() Unimplemented host_info flavor %d\n", 
+		    req.req_flavor);
 	default:
 		uprintf("Unknown host_info flavor %d\n", req.req_flavor);
 		rep.rep_retval = native_to_mach_errno[EINVAL];
@@ -154,8 +149,6 @@ mach_host_page_size(p, msgh, maxlen, dst)
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
-
-	DPRINTF(("mach_host_page_size();\n"));
 
 	bzero(&rep, sizeof(rep));
 
@@ -183,8 +176,6 @@ mach_host_get_clock_service(p, msgh, maxlen, dst)
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
-
-	DPRINTF(("mach_host_get_clock_service();\n"));
 
 	bzero(&rep, sizeof(rep));
 

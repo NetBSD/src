@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.c,v 1.7 2002/12/09 21:53:28 manu Exp $ */
+/*	$NetBSD: mach_errno.c,v 1.8 2002/12/15 00:40:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.7 2002/12/09 21:53:28 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.8 2002/12/15 00:40:24 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/null.h>
+#include <sys/queue.h>
 #include <sys/errno.h>
 
 #include <compat/mach/mach_types.h>
