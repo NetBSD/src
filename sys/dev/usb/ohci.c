@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.140 2003/05/13 04:42:00 gson Exp $	*/
+/*	$NetBSD: ohci.c,v 1.141 2003/09/10 20:08:29 mycroft Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.140 2003/05/13 04:42:00 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.141 2003/09/10 20:08:29 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1323,16 +1323,18 @@ ohci_softintr(void *v)
 			continue;
 		}
 		usb_uncallout(xfer->timeout_handle, ohci_timeout, xfer);
+
+		len = std->len;
+		if (std->td.td_cbp != 0)
+			len -= le32toh(std->td.td_be) -
+			       le32toh(std->td.td_cbp) + 1;
+		DPRINTFN(10, ("ohci_process_done: len=%d, flags=0x%x\n", len,
+		    std->flags));
+		if (std->flags & OHCI_ADD_LEN)
+			xfer->actlen += len;
+
 		cc = OHCI_TD_GET_CC(le32toh(std->td.td_flags));
 		if (cc == OHCI_CC_NO_ERROR) {
-			len = std->len;
-			if (std->td.td_cbp != 0)
-				len -= le32toh(std->td.td_be) -
-				       le32toh(std->td.td_cbp) + 1;
-			DPRINTFN(10, ("ohci_process_done: len=%d, flags=0x%x\n",
-				      len, std->flags));
-			if (std->flags & OHCI_ADD_LEN)
-				xfer->actlen += len;
 			if (std->flags & OHCI_CALL_DONE) {
 				xfer->status = USBD_NORMAL_COMPLETION;
 				s = splusb();
