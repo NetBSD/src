@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.15 1998/08/27 03:55:06 mark Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16 1999/01/03 02:19:32 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -125,8 +125,8 @@ typedef struct {
  * addresses of various pages
  */
 typedef struct {
-	vm_offset_t physical;
-	vm_offset_t virtual;
+	vm_offset_t pv_pa;
+	vm_offset_t pv_va;
 } pv_addr_t;
 
 /*
