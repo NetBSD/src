@@ -1,7 +1,7 @@
-/*	$NetBSD: html.h,v 1.1.1.1 2001/04/19 12:52:18 wiz Exp $	*/
+/*	$NetBSD: html.h,v 1.1.1.2 2003/06/30 17:52:16 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 2000, 2001 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -20,11 +20,40 @@ You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
+#if !defined(HTML_H)
+#  define HTML_H
+
+/*
+ *  class and structure needed to buffer words
+ */
+
+struct word {
+  char *s;
+  word  *next;
+
+  word  (const char *w, int n);
+  ~word ();
+};
+
+class word_list {
+public:
+            word_list     ();
+  int       flush         (FILE *f);
+  void      add_word      (const char *s, int n);
+  int       get_length    (void);
+  
+private:
+  int       length;
+  word     *head;
+  word     *tail;
+};
+
 class simple_output {
 public:
   simple_output(FILE *, int max_line_length);
   simple_output &put_string(const char *, int);
   simple_output &put_string(const char *s);
+  simple_output &put_string(const string &s);
   simple_output &put_troffps_char (const char *s);
   simple_output &put_translated_string(const char *s);
   simple_output &put_number(int);
@@ -42,14 +71,22 @@ public:
   simple_output &end_line();
   simple_output &put_raw_char(char);
   simple_output &special(const char *);
-  simple_output &put_html_char (char);
+  simple_output &enable_newlines(int);
+  simple_output &check_newline(int n);
+  simple_output &nl(void);
+  simple_output &space_or_newline (void);
+  simple_output &begin_tag (void);
   FILE *get_file();
 private:
-  FILE *fp;
-  int max_line_length;		// not including newline
-  int col;
-  int need_space;
-  int fixed_point;
+  FILE         *fp;
+  int           max_line_length;          // not including newline
+  int           col;
+  int           fixed_point;
+  int           newlines;                 // can we issue newlines automatically?
+  word_list     last_word;
+
+  void          flush_last_word (void);
+  int           check_space (const char *s, int n);
 };
 
 inline FILE *simple_output::get_file()
@@ -57,3 +94,4 @@ inline FILE *simple_output::get_file()
   return fp;
 }
 
+#endif

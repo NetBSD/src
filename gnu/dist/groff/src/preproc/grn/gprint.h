@@ -1,4 +1,4 @@
-/*	$NetBSD: gprint.h,v 1.1.1.1 2001/04/19 12:51:45 wiz Exp $	*/
+/*	$NetBSD: gprint.h,v 1.1.1.2 2003/06/30 17:52:13 wiz Exp $	*/
 
 /* Last non-groff version: gprint.h  1.1  84/10/08
  *
@@ -40,6 +40,8 @@
 #define ARC 4
 #define CURVE 5
 #define POLYGON 6
+#define BSPLINE 7
+#define BEZIER 8
 #define TOPLEFT 10
 #define TOPCENT 11
 #define TOPRIGHT 12

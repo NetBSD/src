@@ -1,7 +1,7 @@
-/*	$NetBSD: label.y,v 1.1.1.1 2001/04/19 12:52:00 wiz Exp $	*/
+/*	$NetBSD: label.y,v 1.1.1.2 2003/06/30 17:52:14 wiz Exp $	*/
 
 /* -*- C++ -*-
-   Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1989, 1990, 1991, 1992, 2000 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.

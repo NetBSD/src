@@ -1,6 +1,7 @@
-/*	$NetBSD: pipeline.c,v 1.1.1.1 2001/04/19 12:50:58 wiz Exp $	*/
+/*	$NetBSD: pipeline.c,v 1.1.1.2 2003/06/30 17:52:07 wiz Exp $	*/
 
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -19,14 +20,9 @@ You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
-/*
-Compile options are:
-
--DWCOREFLAG=0200 (or whatever)
--DHAVE_SYS_SIGLIST
--DSYS_SIGLIST_DECLARED
--DHAVE_UNISTD_H
-*/
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <stdio.h>
 #include <signal.h>
@@ -36,11 +32,11 @@ Compile options are:
 #include <unistd.h>
 #endif
 
-#ifndef errno
-extern int errno;
-#endif
-
+#ifdef HAVE_STRERROR
+#include <string.h>
+#else
 extern char *strerror();
+#endif
 
 #ifdef _POSIX_VERSION
 
@@ -88,7 +84,9 @@ extern char *strerror();
 #define P(parms) parms
 #else
 #define P(parms) ()
+#ifndef _WIN32
 #define const /* as nothing */
+#endif
 #endif
 
 #define error c_error
@@ -104,7 +102,9 @@ static char *i_to_a P((int));
    have a workable groff by using the good-ole DOS pipe simulation
    via temporary files...  */
 
-#if defined(__MSDOS__) || (defined(_WIN32) && !defined(__CYGWIN32__))
+#if defined(__MSDOS__) \
+    || (defined(_WIN32) && !defined(_UWIN) && !defined(__CYGWIN__)) \
+    || defined(__EMX__)
 
 #include <process.h>
 #include <fcntl.h>
@@ -116,7 +116,7 @@ static char *i_to_a P((int));
 /* A signal handler that just records that a signal has happened.  */
 static int child_interrupted;
 
-static RETSIGTYPE signal_catcher (int signo)
+static RETSIGTYPE signal_catcher(int signo)
 {
   child_interrupted++;
 }
@@ -125,77 +125,188 @@ static const char *sh = "sh";
 static const char *command = "command";
 
 const char *
-system_shell_name (void)
+system_shell_name(void)
 {
   static const char *shell_name;
 
   /* We want them to be able to use a Unixy shell if they have it
      installed.  Let spawnlp try to find it, but if it fails, default
      to COMMAND.COM.  */
-  if (shell_name == NULL)
-    {
-      int sh_found = spawnlp (P_WAIT, sh, sh, "-c", ":", NULL) == 0;
+  if (shell_name == NULL) {
+    int sh_found = spawnlp(P_WAIT, sh, sh, "-c", ":", NULL) == 0;
 
-      if (sh_found)
-	shell_name = sh;
-      else
-	shell_name = command;
-    }
+    if (sh_found)
+      shell_name = sh;
+    else
+      shell_name = command;
+  }
   return shell_name;
 }
 
 const char *
-system_shell_dash_c (void)
+system_shell_dash_c(void)
 {
-  if (strcmp (system_shell_name(), sh) == 0)
+  if (strcmp(system_shell_name(), sh) == 0)
     return "-c";
   else
     return "/c";
 }
 
 int
-is_system_shell (const char *shell)
+is_system_shell(const char *shell)
 {
-  char monocased_shell[FILENAME_MAX];
   size_t shlen;
-  int ibase = 0, idot, i;
+  size_t ibase = 0, idot, i;
 
   if (!shell)	/* paranoia */
     return 0;
   idot = shlen = strlen(shell);
 
-  for (i = 0; i < shlen; i++)
-    {
-      if (isalpha(shell[i]))
-	monocased_shell[i] = tolower(shell[i]);
-      else
-	{
-	  monocased_shell[i] = shell[i];
-	  if (shell[i] == '.')
-	    idot = i;
-	  else if (shell[i] == '/' || shell[i] == '\\' || shell[i] == ':')
-	    {
-	      ibase = i + 1;
-	      idot = shlen;
-	    }
-	}
+  for (i = 0; i < shlen; i++) {
+    if (shell[i] == '.')
+      idot = i;
+    else if (shell[i] == '/' || shell[i] == '\\' || shell[i] == ':') {
+      ibase = i + 1;
+      idot = shlen;
     }
-  monocased_shell[i] = '\0';
+  }
 
   /* "sh" and "sh.exe" should compare equal.  */
-  return
-    strncmp(monocased_shell + ibase, system_shell_name(), idot - ibase) == 0
-    && (idot == shlen
-	|| strcmp(monocased_shell + idot, ".exe") == 0
-	|| strcmp(monocased_shell + idot, ".com") == 0);
+  return (strncasecmp(shell + ibase, system_shell_name(), idot - ibase) == 0
+	  && (idot == shlen
+	      || strcasecmp(shell + idot, ".exe") == 0
+	      || strcasecmp(shell + idot, ".com") == 0));
 }
 
-/* MSDOS doesn't have `fork', so we need to simulate the pipe by
-   running the programs in sequence with redirected standard streams.  */
+#ifdef _WIN32
 
-int run_pipeline (ncommands, commands)
-     int ncommands;
-     char ***commands;
+/* Win32 doesn't have fork() */
+
+int
+run_pipeline(int ncommands, char ***commands, int no_pipe)
+{
+  int save_stdin, save_stdout;
+  int i;
+  int last_input = 0;
+  int proc_count = ncommands;
+  int ret = 0;
+  char err_str[BUFSIZ];
+  PID_T pids[MAX_COMMANDS];
+
+  for (i = 0; i < ncommands; i++) {
+    int pdes[2];
+    PID_T pid;
+
+    /* If no_pipe is set, just run the commands in sequence
+       to show the version numbers */
+    if (ncommands > 1 && !no_pipe) {
+      /* last command doesn't need a new pipe */
+      if (i < ncommands - 1) {
+	if (_pipe(pdes, BUFSIZ, O_BINARY | O_NOINHERIT) < 0)
+	  sys_fatal("pipe");
+      }
+      /* 1st command; writer */
+      if (i == 0) {
+	/* save stdout */
+	if ((save_stdout = _dup(1)) < 0)
+	  sys_fatal("dup stdout");
+	/* connect stdout to write end of pipe */
+	if (_dup2(pdes[1], 1) < 0) {
+	  sprintf(err_str, "%s: dup2(stdout)", commands[i][0]);
+	  sys_fatal(err_str);
+	}
+	if (close(pdes[1]) < 0) {
+	  sprintf(err_str, "%s: close(pipe[WRITE])", commands[i][0]);
+	  sys_fatal(err_str);
+	}
+	last_input = pdes[0];
+      }
+      /* reader and writer */
+      else if (i < ncommands - 1) {
+	/* connect stdin to read end of last pipe */
+	if (_dup2(last_input, 0) < 0) {
+	  sprintf(err_str, " %s: dup2(stdin)", commands[i][0]);
+	  sys_fatal("err_str");
+	}
+	/* connect stdout to write end of new pipe */
+	if (_dup2(pdes[1], 1) < 0) {
+	  sprintf(err_str, "%s: dup2(stdout)", commands[i][0]);
+	  sys_fatal("err_str");
+	}
+	if (close(pdes[1]) < 0) {
+	  sprintf(err_str, "%s: close(pipe[WRITE])", commands[i][0]);
+	  sys_fatal(err_str);
+	}
+	last_input = pdes[0];
+      }
+      /* last command; reader */
+      else {
+	/* connect stdin to read end of last pipe */
+	if (_dup2(last_input, 0) < 0) {
+	  sprintf(err_str, "%s: dup2(stdin)", commands[i][0]);
+	  sys_fatal("err_str");
+	}
+	if (close(last_input) < 0) {
+	  sprintf(err_str, "%s: close(pipe[READ])", commands[i][0]);
+	  sys_fatal(err_str);
+	}
+	/* restore original stdout */
+	if (_dup2(save_stdout, 1) < 0) {
+	  sprintf(err_str, "%s: dup2(stdout))", "groff");
+	  sys_fatal(err_str);
+	}
+      }
+    }
+    if ((pid = _spawnvp(_P_NOWAIT, commands[i][0], commands[i])) < 0) {
+      error("couldn't exec %1: %2",
+	    commands[i][0], strerror(errno), (char *)0);
+      fflush(stderr);			/* just in case error() doesn't */
+      _exit(EXEC_FAILED_EXIT_STATUS);
+    }
+    pids[i] = pid;
+  }
+  for (i = 0; i < ncommands; i++) {
+    int status;
+    int pid;
+
+    pid = pids[i];
+    if ((pid = _cwait(&status, pid, _WAIT_CHILD)) < 0) {
+      perror(NULL);
+      sys_fatal("wait");
+      if (WIFSIGNALED(status)) {
+	int sig = WTERMSIG(status);
+
+	error("%1: %2%3",
+	      commands[i][0],
+	      xstrsignal(sig),
+	      WCOREDUMP(status) ? " (core dumped)" : "");
+	ret |= 2;
+      }
+      else if (WIFEXITED(status)) {
+	int exit_status = WEXITSTATUS(status);
+
+	if (exit_status == EXEC_FAILED_EXIT_STATUS)
+	  ret |= 4;
+	else if (exit_status != 0)
+	  ret |= 1;
+      }
+      else
+        error("unexpected status %1", itoa(status), (char *)0, (char *)0);
+      break;
+    }
+  }
+  return ret;
+}
+
+#else  /* _WIN32 */
+
+/* MSDOS doesn't have `fork', so we need to simulate the pipe by running
+   the programs in sequence with standard streams redirected fot and
+   from temporary files.
+*/
+
+int
+run_pipeline(int ncommands, char ***commands, int no_pipe)
 {
   int save_stdin = dup(0);
   int save_stdout = dup(1);
@@ -208,80 +319,71 @@ int run_pipeline (ncommands, commands)
   tmpfiles[0] = tmpnam(tem1);
   tmpfiles[1] = tmpnam(tem2);
 
-  for (i = 0; i < ncommands; i++)
-    {
-      int exit_status;
-      RETSIGTYPE (*prev_handler)(int);
+  for (i = 0; i < ncommands; i++) {
+    int exit_status;
+    RETSIGTYPE (*prev_handler)(int);
 
-      if (i)
-	{
-	  /* redirect stdin from temp file */
-	  f = open(tmpfiles[infile], O_RDONLY|O_BINARY, 0666);
-	  if (f < 0)
-	    sys_fatal("open stdin");
-	  if (dup2(f, 0) < 0)
-	    sys_fatal("dup2 stdin"); 
-	  if (close(f) < 0)
-	    sys_fatal("close stdin");
-	}
-      if (i < ncommands - 1)
-	{
-	  /* redirect stdout to temp file */
-	  f = open(tmpfiles[outfile], O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, 0666);
-	  if (f < 0)
-	    sys_fatal("open stdout");
-	  if (dup2(f, 1) < 0)
-	    sys_fatal("dup2 stdout");
-	  if (close(f) < 0)
-	    sys_fatal("close stdout");
-	}
-      else if (dup2(save_stdout, 1) < 0)
-	sys_fatal("restore stdout");
-
-      /* run the program */
-      child_interrupted = 0;
-      prev_handler = signal(SIGINT, signal_catcher);
-      exit_status = spawnvp(P_WAIT, commands[i][0], commands[i]);
-      signal(SIGINT, prev_handler);
-      if (child_interrupted)
-	{
-	  error("%1: Interrupted", commands[i][0], (char *)0, (char *)0);
-	  ret |= 2;
-	}
-      else if (exit_status < 0)
-	{
-	  error("couldn't exec %1: %2", commands[i][0],
-		strerror(errno), (char *)0);
-	  fflush(stderr);		/* just in case error() doesn't */
-	  ret |= 4;
-	}
-      if (exit_status != 0)
-	ret |= 1;
-
-      /* There's no sense to continue with the pipe if one of the
-	 programs has ended abnormally, is there?  */
-      if (ret != 0)
-	break;
-
-      /* swap temp files: make output of this program be input for the next */
-      infile = 1 - infile;
-      outfile = 1 - outfile;
+    if (i) {
+      /* redirect stdin from temp file */
+      f = open(tmpfiles[infile], O_RDONLY|O_BINARY, 0666);
+      if (f < 0)
+	sys_fatal("open stdin");
+      if (dup2(f, 0) < 0)
+	sys_fatal("dup2 stdin"); 
+      if (close(f) < 0)
+	sys_fatal("close stdin");
     }
+    if ((i < ncommands - 1) && !no_pipe) {
+      /* redirect stdout to temp file */
+      f = open(tmpfiles[outfile], O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, 0666);
+      if (f < 0)
+	sys_fatal("open stdout");
+      if (dup2(f, 1) < 0)
+	sys_fatal("dup2 stdout");
+      if (close(f) < 0)
+	sys_fatal("close stdout");
+    }
+    else if (dup2(save_stdout, 1) < 0)
+      sys_fatal("restore stdout");
 
+    /* run the program */
+    child_interrupted = 0;
+    prev_handler = signal(SIGINT, signal_catcher);
+    exit_status = spawnvp(P_WAIT, commands[i][0], commands[i]);
+    signal(SIGINT, prev_handler);
+    if (child_interrupted) {
+      error("%1: Interrupted", commands[i][0], (char *)0, (char *)0);
+      ret |= 2;
+    }
+    else if (exit_status < 0) {
+      error("couldn't exec %1: %2",
+	    commands[i][0], strerror(errno), (char *)0);
+      fflush(stderr);			/* just in case error() doesn't */
+      ret |= 4;
+    }
+    if (exit_status != 0)
+      ret |= 1;
+    /* There's no sense to continue with the pipe if one of the
+       programs has ended abnormally, is there? */
+    if (ret != 0)
+      break;
+    /* swap temp files: make output of this program be input for the next */
+    infile = 1 - infile;
+    outfile = 1 - outfile;
+  }
   if (dup2(save_stdin, 0) < 0)
     sys_fatal("restore stdin");
-
   unlink(tmpfiles[0]);
   unlink(tmpfiles[1]);
-
   return ret;
 }
 
-#else  /* not __MSDOS__, not _WIN32 */
+#endif /* MS-DOS */
 
-int run_pipeline(ncommands, commands)
-     int ncommands;
-     char ***commands;
+#else /* not __MSDOS__, not _WIN32 */
+
+int
+run_pipeline(int ncommands, char ***commands, int no_pipe)
 {
   int i;
   int last_input = 0;
@@ -290,56 +392,58 @@ int run_pipeline(ncommands, commands)
   int proc_count = ncommands;
 
   for (i = 0; i < ncommands; i++) {
-      int pdes[2];
-      PID_T pid;
-      if (i != ncommands - 1) {
-	if (pipe(pdes) < 0)
-	  sys_fatal("pipe");
-      }
-      pid = fork();
-      if (pid < 0)
-	sys_fatal("fork");
-      if (pid == 0) {
-	/* child */
-	if (last_input != 0) {
-	  if (close(0) < 0)
-	    sys_fatal("close");
-	  if (dup(last_input) < 0)
-	    sys_fatal("dup");
-	  if (close(last_input) < 0)
-	    sys_fatal("close");
-	}
-	if (i != ncommands - 1) {
-	  if (close(1) < 0)
-	    sys_fatal("close");
-	  if (dup(pdes[1]) < 0)
-	    sys_fatal("dup");
-	  if (close(pdes[1]) < 0)
-	    sys_fatal("close");
-	  if (close(pdes[0]))
-	    sys_fatal("close");
-	}
-	execvp(commands[i][0], commands[i]);
-	error("couldn't exec %1: %2", commands[i][0],
-	      strerror(errno), (char *)0);
-	fflush(stderr);		/* just in case error() doesn't */
-	_exit(EXEC_FAILED_EXIT_STATUS);
-      }
-      /* in the parent */
+    int pdes[2];
+    PID_T pid;
+
+    if ((i != ncommands - 1) && !no_pipe) {
+      if (pipe(pdes) < 0)
+	sys_fatal("pipe");
+    }
+    pid = fork();
+    if (pid < 0)
+      sys_fatal("fork");
+    if (pid == 0) {
+      /* child */
       if (last_input != 0) {
+	if (close(0) < 0)
+	  sys_fatal("close");
+	if (dup(last_input) < 0)
+	  sys_fatal("dup");
 	if (close(last_input) < 0)
 	  sys_fatal("close");
       }
-      if (i != ncommands - 1) {
+      if ((i != ncommands - 1) && !no_pipe) {
+	if (close(1) < 0)
+	  sys_fatal("close");
+	if (dup(pdes[1]) < 0)
+	  sys_fatal("dup");
 	if (close(pdes[1]) < 0)
 	  sys_fatal("close");
-	last_input = pdes[0];
+	if (close(pdes[0]))
+	  sys_fatal("close");
       }
-      pids[i] = pid;
+      execvp(commands[i][0], commands[i]);
+      error("couldn't exec %1: %2",
+	    commands[i][0], strerror(errno), (char *)0);
+      fflush(stderr);			/* just in case error() doesn't */
+      _exit(EXEC_FAILED_EXIT_STATUS);
     }
+    /* in the parent */
+    if (last_input != 0) {
+      if (close(last_input) < 0)
+	sys_fatal("close");
+    }
+    if ((i != ncommands - 1) && !no_pipe) {
+      if (close(pdes[1]) < 0)
+	sys_fatal("close");
+      last_input = pdes[0];
+    }
+    pids[i] = pid;
+  }
   while (proc_count > 0) {
     int status;
     PID_T pid = wait(&status);
+
     if (pid < 0)
       sys_fatal("wait");
     for (i = 0; i < ncommands; i++)
@@ -351,7 +455,6 @@ int run_pipeline(ncommands, commands)
 #ifdef SIGPIPE
 	  if (sig == SIGPIPE) {
 	    if (i == ncommands - 1) {
-
 	      /* This works around a problem that occurred when using the
 		 rerasterize action in gxditview.  What seemed to be
 		 happening (on SunOS 4.1.1) was that pclose() closed the
@@ -361,6 +464,7 @@ int run_pipeline(ncommands, commands)
 		 groff.  I don't understand why gpic wasn't getting a
 		 SIGPIPE. */
 	      int j;
+
 	      for (j = 0; j < ncommands; j++)
 		if (pids[j] > 0)
 		  (void)kill(pids[j], SIGPIPE);
@@ -378,14 +482,14 @@ int run_pipeline(ncommands, commands)
 	}
 	else if (WIFEXITED(status)) {
 	  int exit_status = WEXITSTATUS(status);
+
 	  if (exit_status == EXEC_FAILED_EXIT_STATUS)
 	    ret |= 4;
 	  else if (exit_status != 0)
 	    ret |= 1;
 	}
 	else
-	  error("unexpected status %1",
-		i_to_a(status), (char *)0, (char *)0);
+	  error("unexpected status %1",	i_to_a(status), (char *)0, (char *)0);
 	break;
       }
   }
@@ -394,24 +498,25 @@ int run_pipeline(ncommands, commands)
 
 #endif /* not __MSDOS__, not _WIN32 */
 
-static void sys_fatal(s)
-     const char *s;
+static void
+sys_fatal(const char *s)
 {
   c_fatal("%1: %2", s, strerror(errno), (char *)0);
 }
 
-static char *i_to_a(n)
-     int n;
+static char *
+i_to_a(int n)
 {
   static char buf[12];
   sprintf(buf, "%d", n);
   return buf;
 }
 
-static const char *xstrsignal(n)
-     int n;
+static const char *
+xstrsignal(int n)
 {
-  static char buf[sizeof("Signal ") + 1 + sizeof(int)*3];
+  static char buf[sizeof("Signal ") + 1 + sizeof(int) * 3];
+
 #ifdef NSIG
 #ifdef SYS_SIGLIST_DECLARED
   if (n >= 0 && n < NSIG && sys_siglist[n] != 0)

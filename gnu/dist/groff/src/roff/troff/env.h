@@ -1,7 +1,8 @@
-/*	$NetBSD: env.h,v 1.1.1.1 2001/04/19 12:51:04 wiz Exp $	*/
+/*	$NetBSD: env.h,v 1.1.1.2 2003/06/30 17:52:08 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -86,6 +87,7 @@ public:
   ~tab_stops();
   void operator=(const tab_stops &);
   tab_type distance_to_next_tab(hunits pos, hunits *distance);
+  tab_type distance_to_next_tab(hunits curpos, hunits *distance, hunits *leftpos);
   void clear();
   void add_tab(hunits pos, tab_type type, int repeated);
   const char *to_string();
@@ -138,9 +140,11 @@ class environment {
   hunits target_text_length;
   int pre_underline_fontno;
   int underline_lines;
+  int underline_spaces;
   symbol input_trap;
   int input_trap_count;
-  node *line; // in reverse order
+  int continued_input_trap;
+  node *line;			// in reverse order
   hunits prev_text_length;
   hunits width_total;
   int space_total;
@@ -149,6 +153,7 @@ class environment {
   node *tab_contents;
   hunits tab_width;
   hunits tab_distance;
+  int line_tabs;
   tab_type current_tab;
   node *leader_node;
   charinfo *tab_char;
@@ -166,8 +171,8 @@ class environment {
   hunits margin_character_distance;
   node *numbering_nodes;
   hunits line_number_digit_width;
-  int number_text_separation; // in digit spaces
-  int line_number_indent;	 // in digit spaces
+  int number_text_separation;	// in digit spaces
+  int line_number_indent;	// in digit spaces
   int line_number_multiple;
   int no_number_count;
   unsigned hyphenation_flags;
@@ -180,8 +185,15 @@ class environment {
 #ifdef WIDOW_CONTROL
   int widow_control;
 #endif /* WIDOW_CONTROL */
+  int ignore_next_eol;
+  int emitted_node;    // have we emitted a node since the last html eol tag?
+  color *glyph_color;
+  color *prev_glyph_color;
+  color *fill_color;
+  color *prev_fill_color;
 
   tab_type distance_to_next_tab(hunits *);
+  tab_type distance_to_next_tab(hunits *distance, hunits *leftpos);
   void start_line();
   void output_line(node *, hunits);
   void output(node *nd, int retain_size, vunits vs, vunits post_vs,
@@ -191,9 +203,8 @@ class environment {
 #ifdef WIDOW_CONTROL
   void mark_last_line();
 #endif /* WIDOW_CONTROL */
-  void possibly_break_line(int forced = 0);
   breakpoint *choose_breakpoint();
-  void hyphenate_line();
+  void hyphenate_line(int start_here = 0);
   void start_field();
   void wrap_up_field();
   void add_padding();
@@ -249,6 +260,7 @@ public:
     { return env_half_narrow_space_width(this); }
   hunits get_input_line_position();
   const char *get_tabs();
+  int get_line_tabs();
   int get_hyphenation_flags();
   int get_hyphen_line_max();
   int get_hyphen_line_count();
@@ -257,6 +269,12 @@ public:
   int get_center_lines();
   int get_right_justify_lines();
   int get_prev_line_interrupted() { return prev_line_interrupted; }
+  color *get_fill_color();
+  color *get_glyph_color();
+  color *get_prev_glyph_color();
+  color *get_prev_fill_color();
+  void set_glyph_color(color *c);
+  void set_fill_color(color *c);
   node *make_char_node(charinfo *);
   node *extract_output_line();
   void width_registers();
@@ -270,8 +288,14 @@ public:
   void set_input_line_position(hunits);	// used by \n(hp
   void interrupt();
   void spread() { spread_flag = 1; }
-  void do_break();			// .br
+  void possibly_break_line(int start_here = 0, int forced = 0);
+  void do_break(int spread = 0);	// .br
   void final_break();
+  void add_html_tag(int, const char *);
+  void add_html_tag(int, const char *, int);
+  void add_html_tag_tabs(int);
+  node *make_html_tag(const char *name, int i);
+  node *make_html_tag(const char *);
   void newline();
   void handle_tab(int is_leader = 0); // do a tab or leader
   void add_node(node *);
@@ -279,8 +303,10 @@ public:
   void add_hyphen_indicator();
   void add_italic_correction();
   void space();
+  void space(hunits, hunits);
   void space_newline();
   const char *get_font_family_string();
+  const char *get_font_name_string();
   const char *get_name_string();
   const char *get_point_size_string();
   const char *get_requested_point_size_string();
@@ -300,8 +326,8 @@ public:
   friend void line_length();
   friend void indent();
   friend void temporary_indent();
-  friend void underline();
-  friend void input_trap();
+  friend void do_underline(int);
+  friend void do_input_trap(int);
   friend void set_tabs();
   friend void margin_character();
   friend void no_number();
@@ -318,10 +344,13 @@ public:
   friend void tabs_save();
   friend void tabs_restore();
 #endif
+  friend void line_tabs_request();
   friend void title();
 #ifdef WIDOW_CONTROL
   friend void widow_control_request();
 #endif /* WIDOW_CONTROL */
+
+  friend void do_divert(int append, int boxing);
 };
 	
 extern environment *curenv;
@@ -330,7 +359,12 @@ extern void push_env(int);
 
 void init_environments();
 void read_hyphen_file(const char *name);
+void title();
+
+extern double spread_limit;
 
 extern int break_flag;
 extern symbol default_family;
 extern int translate_space_to_dummy;
+
+extern unsigned char hpf_code_table[];
