@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.24 1998/01/18 22:07:50 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.25 1998/01/31 12:17:40 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -102,8 +102,6 @@ extern	struct pmap kernel_pmap_store;
 #define	pmap_collect(pmap)		/* No need so far */
 #define	pmap_reference(pmap)	if(pmap) (pmap)->ref_count++
 #define	pmap_phys_address(phys) ((u_int)(phys)<<PAGE_SHIFT)
-#define	pmap_is_referenced(phys)	(FALSE)
-#define	pmap_clear_reference(pa)	pmap_page_protect(pa, VM_PROT_NONE)
 #define pmap_change_wiring(pmap, v, w)  /* no need */
 #define	pmap_remove(pmap, start, slut)  pmap_protect(pmap, start, slut, 0)
 

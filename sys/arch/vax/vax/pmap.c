@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1998/01/27 17:35:03 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.45 1998/01/31 12:17:34 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -613,6 +613,46 @@ if(startpmapdebug) printf("pmap_protect: pmap %x, start %x, end %x, prot %x\n",
 		}
 	}
 	mtpr(0,PR_TBIA);
+}
+
+/*
+ * Checks if page is referenced; returns true or false depending on result.
+ */
+boolean_t
+pmap_is_referenced(pa)
+	vm_offset_t     pa;
+{
+	struct	pv_entry *pv;
+
+	pv = pv_table + (pa >> CLSHIFT);
+
+	if (pv->pv_pte)
+		if ((pv->pv_pte[0].pg_v))
+			return 1;
+
+	while ((pv = pv->pv_next)) {
+		if ((pv->pv_pte[0].pg_v))
+			return 1;
+	}
+	return 0;
+}
+
+/*
+ * Clears valid bit in all ptes referenced to this physical page.
+ */
+void 
+pmap_clear_reference(pa)
+	vm_offset_t	pa;
+{
+	struct	pv_entry *pv;
+
+	pv = pv_table + (pa >> CLSHIFT);
+
+	if (pv->pv_pte)
+		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v = 0;
+
+	while ((pv = pv->pv_next))
+		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v = 0;
 }
 
 /*
