@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.13 2001/09/04 08:46:59 sato Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.14 2004/03/17 04:18:38 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -703,9 +703,9 @@ platid_t platid_mask_MACH_HP_JORNADA_680JP = {{
 	PLATID_CPU_SH_3_7709A,
 	PLATID_MACH_HP_JORNADA_680JP
 }};
-platid_t platid_mask_MACH_HP_JORNADA_680HU = {{
+platid_t platid_mask_MACH_HP_JORNADA_680EU = {{
 	PLATID_CPU_SH_3_7709A,
-	PLATID_MACH_HP_JORNADA_680HU
+	PLATID_MACH_HP_JORNADA_680EU
 }};
 platid_t platid_mask_MACH_HP_JORNADA_680DE = {{
 	PLATID_CPU_SH_3_7709A,
@@ -719,13 +719,29 @@ platid_t platid_mask_MACH_HP_JORNADA_690JP = {{
 	PLATID_CPU_SH_3_7709A,
 	PLATID_MACH_HP_JORNADA_690JP
 }};
-platid_t platid_mask_MACH_HP_JORNADA_690HU = {{
+platid_t platid_mask_MACH_HP_JORNADA_690EU = {{
 	PLATID_CPU_SH_3_7709A,
-	PLATID_MACH_HP_JORNADA_690HU
+	PLATID_MACH_HP_JORNADA_690EU
 }};
 platid_t platid_mask_MACH_HP_JORNADA_690DE = {{
 	PLATID_CPU_SH_3_7709A,
 	PLATID_MACH_HP_JORNADA_690DE
+}};
+platid_t platid_mask_MACH_HP_JORNADA_680FR = {{
+	PLATID_CPU_SH_3_7709A,
+	PLATID_MACH_HP_JORNADA_680FR
+}};
+platid_t platid_mask_MACH_HP_JORNADA_690FR = {{
+	PLATID_CPU_SH_3_7709A,
+	PLATID_MACH_HP_JORNADA_690FR
+}};
+platid_t platid_mask_MACH_HP_JORNADA_680SV = {{
+	PLATID_CPU_SH_3_7709A,
+	PLATID_MACH_HP_JORNADA_680SV
+}};
+platid_t platid_mask_MACH_HP_JORNADA_690SV = {{
+	PLATID_CPU_SH_3_7709A,
+	PLATID_MACH_HP_JORNADA_690SV
 }};
 #endif /* hpcsh */
 #ifdef hpcarm
