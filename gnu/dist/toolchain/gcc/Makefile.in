@@ -41,7 +41,7 @@ SUBDIRS =@subdirs@
 # Selection of languages to be made.
 # This is overridden by configure.
 CONFIG_LANGUAGES = @all_languages@
-LANGUAGES = c proto gcov$(exeext) $(CONFIG_LANGUAGES)
+LANGUAGES = c gcov$(exeext) $(CONFIG_LANGUAGES)
 
 # Languages should create dependencies of $(INTL_TARGETS) on generated
 # sources in Make-lang.in.  Example:
