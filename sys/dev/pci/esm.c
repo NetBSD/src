@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.18 2002/12/30 05:23:27 fredette Exp $      */
+/*      $NetBSD: esm.c,v 1.19 2002/12/31 13:10:59 fredette Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.18 2002/12/30 05:23:27 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.19 2002/12/31 13:10:59 fredette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1545,17 +1545,6 @@ esm_allocmem(struct esm_softc *sc, size_t size, size_t align,
 	bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
 
 	return error;
-}
-
-
-int
-esm_freemem(struct esm_softc *sc, struct esm_dma *p)
-{
-	bus_dmamap_unload(sc->dmat, p->map);
-	bus_dmamap_destroy(sc->dmat, p->map);
-	bus_dmamem_unmap(sc->dmat, p->addr, p->size);
-	bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
-	return 0;
 }
 
 
