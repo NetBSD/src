@@ -1,3 +1,5 @@
+/*	$NetBSD: kvm_sparc.c,v 1.8 1996/03/18 22:34:02 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +38,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
+#else
+static char *rcsid = "$NetBSD: kvm_sparc.c,v 1.8 1996/03/18 22:34:02 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_arm32.c,v 1.1 1996/02/02 15:35:41 mark Exp $ */
+/*	$NetBSD: kvm_arm32.c,v 1.2 1996/03/18 22:33:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1992, 1993
@@ -35,13 +35,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *  $Id: kvm_arm32.c,v 1.1 1996/02/02 15:35:41 mark Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: kvm_arm32.c,v 1.1 1996/02/02 15:35:41 mark Exp $";
+#if 0
+static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
+#else
+static char *rcsid = "$NetBSD: kvm_arm32.c,v 1.2 1996/03/18 22:33:16 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
