@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.22 1994/12/22 10:14:56 cgd Exp $
+#	$Id: Makefile.inc,v 1.23 1995/02/10 17:46:54 cgd Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/stdlib ${.CURDIR}/stdlib
@@ -21,6 +21,9 @@ SRCS+=	abs.S div.c labs.c ldiv.c
 SRCS+=	abs.S div.c labs.c ldiv.c
 .elif (${MACHINE_ARCH} == "vax")
 SRCS+=	abs.S div.c labs.c ldiv.c
+.elif (${MACHINE_ARCH} == "alpha")
+# XXX should be .S's
+SRCS+=	abs.c div.c labs.c ldiv.c
 .else
 SRCS+=	abs.c div.c labs.c ldiv.c
 .endif
