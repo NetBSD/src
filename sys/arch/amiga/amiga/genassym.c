@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.12 1994/05/21 10:05:34 chopps Exp $
+ *	$Id: genassym.c,v 1.13 1994/05/25 07:58:26 chopps Exp $
  */
 
 #define KERNEL
@@ -58,6 +58,7 @@ main()
 	register struct vmmeter *vm = (struct vmmeter *)0;
 	register struct user *up = (struct user *)0;
 	register struct rusage *rup = (struct rusage *)0;
+	struct frame *frame = NULL;
 	struct vmspace *vms = (struct vmspace *)0;
 	pmap_t pmap = (pmap_t)0;
 	struct pcb *pcb = (struct pcb *)0;
@@ -143,6 +144,11 @@ main()
 	printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
 	printf("#define\tPCB_FPCTX %d\n", &pcb->pcb_fpregs);
 	printf("#define\tSIZEOF_PCB %d\n", sizeof(struct pcb));
+
+	printf("#define\tFR_SP %d\n", &frame->f_regs[15]);
+	printf("#define\tFR_HW %d\n", &frame->f_sr);
+	printf("#define\tFR_ADJ %d\n", &frame->f_stackadj);
+
 	printf("#define\tSP %d\n", SP);
 	printf("#define\tSYS_exit %d\n", SYS_exit);
 	printf("#define\tSYS_execve %d\n", SYS_execve);
