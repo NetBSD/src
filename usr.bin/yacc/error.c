@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.5 1997/07/25 16:46:31 perry Exp $	*/
+/*	$NetBSD: error.c,v 1.6 1998/12/19 20:03:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	5.3 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: error.c,v 1.5 1997/07/25 16:46:31 perry Exp $");
+__RCSID("$NetBSD: error.c,v 1.6 1998/12/19 20:03:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ char *st_cptr;
     if (st_line == 0) return;
     for (s = st_line; *s != '\n'; ++s)
     {
-	if (isprint(*s) || *s == '\t')
+	if (isprint((unsigned char)*s) || *s == '\t')
 	    putc(*s, stderr);
 	else
 	    putc('?', stderr);
