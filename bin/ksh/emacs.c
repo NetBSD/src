@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.16 2003/06/23 11:38:55 agc Exp $	*/
+/*	$NetBSD: emacs.c,v 1.17 2003/08/26 07:27:42 wiz Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.16 2003/06/23 11:38:55 agc Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.17 2003/08/26 07:27:42 wiz Exp $");
 #endif
 
 
@@ -1823,7 +1823,7 @@ do_complete(flags, type)
 	olen = end - start;
 	nlen = x_longest_prefix(nwords, words);
 	/* complete */
-	if (nlen > olen) {
+	if (nwords == 1 || nlen > olen) {
 		x_goto(xbuf + start);
 		x_delete(olen, FALSE);
 		x_escape(words[0], nlen, x_emacs_putbuf);
