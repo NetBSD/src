@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.11 1997/07/17 05:49:13 mikel Exp $	*/
+/*	$NetBSD: lpd.c,v 1.12 1997/10/05 11:52:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -43,9 +43,9 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lpd.c	8.4 (Berkeley) 4/17/94";
+static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.11 1997/07/17 05:49:13 mikel Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.12 1997/10/05 11:52:32 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,7 @@ __RCSID("$NetBSD: lpd.c,v 1.11 1997/07/17 05:49:13 mikel Exp $");
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 #include <netinet/in.h>
 
 #include <netdb.h>
@@ -114,6 +115,7 @@ static void       mcleanup __P((int));
 static void       doit __P((void));
 static void       startup __P((void));
 static void       chkhost __P((struct sockaddr_in *));
+static int	  ckqueue __P((char *));
 
 uid_t	uid, euid;
 
@@ -451,11 +453,17 @@ startup()
 	 * Restart the daemons.
 	 */
 	while (cgetnext(&buf, printcapdb) > 0) {
+		if (ckqueue(buf) <= 0) {
+			free(buf);
+			continue;	/* no work to do for this printer */
+		}
 		for (cp = buf; *cp; cp++)
 			if (*cp == '|' || *cp == ':') {
 				*cp = '\0';
 				break;
 			}
+		if (lflag)
+			syslog(LOG_INFO, "work for %s", buf);
 		if ((pid = fork()) < 0) {
 			syslog(LOG_WARNING, "startup: cannot fork");
 			mcleanup(0);
@@ -464,8 +472,35 @@ startup()
 			printer = buf;
 			cgetclose();
 			printjob();
+			/* NOTREACHED */
 		}
+		else free(buf);
 	}
+}
+
+/*
+ * Make sure there's some work to do before forking off a child
+ */
+static int
+ckqueue(cap)
+	char *cap;
+{
+	register struct dirent *d;
+	DIR *dirp;
+	char *spooldir;
+
+	if (cgetstr(cap, "sd", &spooldir) == -1)
+		spooldir = _PATH_DEFSPOOL;
+	if ((dirp = opendir(spooldir)) == NULL)
+		return (-1);
+	while ((d = readdir(dirp)) != NULL) {
+		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
+			continue;	/* daemon control files only */
+		closedir(dirp);
+		return (1);		/* found something */
+	}
+	closedir(dirp);
+	return (0);
 }
 
 #define DUMMY ":nobody::"

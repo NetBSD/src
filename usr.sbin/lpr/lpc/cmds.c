@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.10 1997/07/10 06:09:27 mikel Exp $	*/
+/*	$NetBSD: cmds.c,v 1.11 1997/10/05 11:52:26 mrg Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
 static char rcsid[] = "$NetBSD";
 #endif
@@ -54,6 +54,7 @@ static char rcsid[] = "$NetBSD";
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 
 #include <signal.h>
 #include <fcntl.h>

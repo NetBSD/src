@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.8 1997/07/17 05:44:34 mikel Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.9 1997/10/05 11:52:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,9 +43,9 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)recvjob.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: recvjob.c,v 1.8 1997/07/17 05:44:34 mikel Exp $");
+__RCSID("$NetBSD: recvjob.c,v 1.9 1997/10/05 11:52:35 mrg Exp $");
 #endif
 #endif /* not lint */
 
