@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2004/01/05 15:15:26 nonaka Exp $
+#	$NetBSD: Makefile,v 1.13 2004/01/05 15:17:54 nonaka Exp $
 
 NOMAN= # defined
 
@@ -21,7 +21,7 @@ SRCS+= boot.c clock.c com.c conf.c cons.c devopen.c fd.c
 SRCS+= filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
 SRCS+= kbd.c ns16550.c vers.c vreset.c vga.c video.c
 
-CFLAGS+= -ffreestanding
+CFLAGS= -Os -mmultiple -ffreestanding
 AFLAGS= -x assembler-with-cpp -traditional-cpp
 
 CPPFLAGS= -nostdinc -I${.OBJDIR} -I${.CURDIR}/../mkbootimage -I${S}

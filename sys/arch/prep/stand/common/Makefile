@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/01/05 15:15:26 nonaka Exp $
+#	$NetBSD: Makefile,v 1.6 2004/01/05 15:17:54 nonaka Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -9,7 +9,7 @@ CPPFLAGS+= -D__daddr_t=int32_t
 CPPFLAGS+= -I. -I${S} -I${.OBJDIR}
 CPPFLAGS+= -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 
-CFLAGS+= -ffreestanding
+CFLAGS= -Os -mmultiple -ffreestanding
 
 CLEANFILES+= machine powerpc
 
