@@ -1,5 +1,4 @@
-/*	$NetBSD: if_ixreg.h,v 1.1 1998/02/27 23:50:51 pk Exp $	*/
-/*	$Id: if_ixreg.h,v 1.1 1998/02/27 23:50:51 pk Exp $	*/
+/*	$NetBSD: if_ixreg.h,v 1.2 1998/02/28 20:43:28 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995
