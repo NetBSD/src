@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.1 1996/12/16 19:59:56 cgd Exp $	*/
+/*	$NetBSD: ldd.c,v 1.2 1999/02/25 16:26:51 pk Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -85,13 +85,13 @@ main(
 #ifdef DEBUG
     debug = 1;
 #endif
-    _rtld_add_paths(&_rtld_paths, RTLD_DEFAULT_LIBRARY_PATH);
+    _rtld_add_paths(&_rtld_paths, RTLD_DEFAULT_LIBRARY_PATH, true);
 
 
     _rtld_trust = geteuid() == getuid() && getegid() == getgid();
 
     if (_rtld_trust) {
-	_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
+	_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"), true);
     }
 
     for (argc--, argv++; argc != 0; argc--, argv++) {
