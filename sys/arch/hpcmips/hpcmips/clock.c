@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.2 1999/09/19 00:46:05 shin Exp $ */
+/* $NetBSD: clock.c,v 1.3 1999/12/07 05:02:01 sato Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 1999/09/19 00:46:05 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 1999/12/07 05:02:01 sato Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 1999/09/19 00:46:05 shin Exp $");
 #include "opt_clock_compat_osf1.h"
 #endif /* alpha */
 
-#define MINYEAR 1998 /* "today" */
+#define MINYEAR 1999 /* "today" */
 #ifdef CLOCK_COMPAT_OSF1
 /*
  * According to OSF/1's /usr/sys/include/arch/alpha/clock.h,
@@ -139,7 +139,7 @@ cpu_initclocks()
 		tickfixinterval = hz >> (ftp - 1);
         }
 
-#ifdef aplha
+#ifdef alpha
 	/*
 	 * Establish the clock interrupt; it's a special case.
 	 *
