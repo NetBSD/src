@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.23 2003/08/07 10:31:27 agc Exp $
+.\"	$NetBSD: boot.8,v 1.24 2004/01/02 15:00:28 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,6 +69,19 @@ device, and the path to
 Bring the system up in debug mode.
 Here it waits for a kernel debugger connect; see
 .Xr gdb 1 .
+.It Fl C
+Boot kernel in compat mode.
+Starting with revision 1.14
+.Pq introduced on 2003/03/01 ,
+the sparc boot program loads the
+.Nx
+kernel at its linked virtual address.
+This feature requires a kernel built after 2003/02/21
+.Pq corresponding to kernel version 1.6Q .
+To load older kernels, the
+.Fl C
+option must be used, which loads the kernel at physical address 0x4000. The
+size of a kernel loaded in this way is limited to approximately 3MB.
 .It Fl q
 Boot the system in quiet mode.
 .It Fl s
