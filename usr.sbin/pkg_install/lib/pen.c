@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.27 2003/07/14 06:17:56 itojun Exp $	*/
+/*	$NetBSD: pen.c,v 1.28 2003/08/24 21:11:39 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.27 2003/07/14 06:17:56 itojun Exp $");
+__RCSID("$NetBSD: pen.c,v 1.28 2003/08/24 21:11:39 tron Exp $");
 #endif
 #endif
 
@@ -185,7 +185,7 @@ leave_playpen(char *save)
 			fprintf(stderr, "PANIC: About to rm -rf / (not doing so, aborting)\n");
 			abort();
 		}
-		if (vsystem("rm -rf %s", Current))
+		if (fexec("rm", "-rf", Current, NULL))
 			warnx("couldn't remove temporary dir '%s'", Current);
 		strlcpy(Current, Previous, sizeof(Current));
 	}
