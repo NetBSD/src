@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.9 2003/11/27 16:30:54 cl Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.10 2004/01/02 19:14:00 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_stack.c,v 1.9 2003/11/27 16:30:54 cl Exp $");
+__RCSID("$NetBSD: pthread_stack.c,v 1.10 2004/01/02 19:14:00 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
 #include <signal.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <ucontext.h>
@@ -185,4 +186,15 @@ pthread__stackid_setup(void *base, size_t size)
 #endif
 
 	return t;
+}
+
+
+ssize_t
+pthread__stackinfo_offset()
+{
+	size_t pagesize;
+
+	pagesize = (size_t)sysconf(_SC_PAGESIZE);
+	return (-(2 * pagesize) +
+	    offsetof(struct __pthread_st, pt_stackinfo));
 }
