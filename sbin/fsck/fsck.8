@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)fsck.8	8.2 (Berkeley) 12/11/93
-.\"	$Id: fsck.8,v 1.7 1994/06/08 19:00:20 mycroft Exp $
+.\"	from: @(#)fsck.8	8.3 (Berkeley) 11/29/94
+.\"	$Id: fsck.8,v 1.8 1994/12/28 00:03:51 mycroft Exp $
 .\"
-.Dd December 11, 1993
+.Dd November 29, 1994
 .Dt FSCK 8
 .Os BSD 4
 .Sh NAME
@@ -182,7 +182,7 @@ do not open the filesystem for writing.
 Convert the filesystem to the specified level.
 Note that the level of a filesystem can only be raised.
 .Bl -tag -width indent
-There are currently three levels defined:
+There are currently four levels defined:
 .It 0
 The filesystem is in the old (static table) format.
 .It 1
@@ -191,6 +191,10 @@ The filesystem is in the new (dynamic table) format.
 The filesystem supports 32-bit uid's and gid's,
 short symbolic links are stored in the inode, 
 and directories have an added field showing the file type.
+.It 3
+If maxcontig is greater than one,
+build the free segment maps to aid in finding contiguous sets of blocks.
+If maxcontig is equal to one, delete any existing segment maps.
 .El
 .Pp
 In interactive mode,

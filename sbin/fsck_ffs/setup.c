@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)setup.c	8.2 (Berkeley) 2/21/94";*/
-static char *rcsid = "$Id: setup.c,v 1.17 1994/12/27 19:26:57 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)setup.c	8.5 (Berkeley) 11/23/94";*/
+static char *rcsid = "$Id: setup.c,v 1.18 1994/12/28 00:03:57 mycroft Exp $";
 #endif /* not lint */
 
 #define DKTYPENAMES
@@ -360,9 +360,9 @@ readsb(listerr)
 	altsblock.fs_optim = sblock.fs_optim;
 	altsblock.fs_rotdelay = sblock.fs_rotdelay;
 	altsblock.fs_maxbpg = sblock.fs_maxbpg;
-	altsblock.fs_maxcluster = sblock.fs_maxcluster;
 	memcpy(altsblock.fs_csp, sblock.fs_csp,
 		sizeof sblock.fs_csp);
+	altsblock.fs_maxcluster = sblock.fs_maxcluster;
 	memcpy(altsblock.fs_fsmnt, sblock.fs_fsmnt,
 		sizeof sblock.fs_fsmnt);
 	memcpy(altsblock.fs_sparecon, sblock.fs_sparecon,
@@ -374,11 +374,26 @@ readsb(listerr)
 	altsblock.fs_interleave = sblock.fs_interleave;
 	altsblock.fs_npsect = sblock.fs_npsect;
 	altsblock.fs_nrpos = sblock.fs_nrpos;
+	altsblock.fs_state = sblock.fs_state;
 	altsblock.fs_qbmask = sblock.fs_qbmask;
 	altsblock.fs_qfmask = sblock.fs_qfmask;
 	altsblock.fs_state = sblock.fs_state;
 	altsblock.fs_maxfilesize = sblock.fs_maxfilesize;
 	if (memcmp(&sblock, &altsblock, (int)sblock.fs_sbsize)) {
+		if (debug) {
+			long *nlp, *olp, *endlp;
+
+			printf("superblock mismatches\n");
+			nlp = (long *)&altsblock;
+			olp = (long *)&sblock;
+			endlp = olp + (sblock.fs_sbsize / sizeof *olp);
+			for ( ; olp < endlp; olp++, nlp++) {
+				if (*olp == *nlp)
+					continue;
+				printf("offset %d, original %d, alternate %d\n",
+				    olp - (long *)&sblock, *olp, *nlp);
+			}
+		}
 		badsb(listerr,
 		"VALUES IN SUPER BLOCK DISAGREE WITH THOSE IN FIRST ALTERNATE");
 		return (0);

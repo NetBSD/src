@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)preen.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: preen.c,v 1.9 1994/12/05 20:16:04 cgd Exp $";
+/*static char sccsid[] = "from: @(#)preen.c	8.3 (Berkeley) 12/6/94";*/
+static char *rcsid = "$Id: preen.c,v 1.10 1994/12/28 00:03:55 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -281,47 +281,51 @@ startdisk(dk, checkit)
 }
 
 char *
-blockcheck(name)
-	char *name;
+blockcheck(origname)
+	char *origname;
 {
 	struct stat stslash, stblock, stchar;
-	char *raw;
+	char *newname, *raw;
 	int retried = 0;
 
 	hotroot = 0;
 	if (stat("/", &stslash) < 0) {
 		perror("/");
 		printf("Can't stat root\n");
-		return (0);
+		return (origname);
 	}
+	newname = origname;
 retry:
-	if (stat(name, &stblock) < 0) {
-		perror(name);
-		printf("Can't stat %s\n", name);
-		return (0);
+	if (stat(newname, &stblock) < 0) {
+		perror(newname);
+		printf("Can't stat %s\n", newname);
+		return (origname);
 	}
 	if (S_ISBLK(stblock.st_mode)) {
 		if (stslash.st_dev == stblock.st_rdev)
 			hotroot++;
-		raw = rawname(name);
+		raw = rawname(newname);
 		if (stat(raw, &stchar) < 0) {
 			perror(raw);
 			printf("Can't stat %s\n", raw);
-			return (name);
+			return (origname);
 		}
 		if (S_ISCHR(stchar.st_mode)) {
 			return (raw);
 		} else {
 			printf("%s is not a character device\n", raw);
-			return (name);
+			return (origname);
 		}
 	} else if (S_ISCHR(stblock.st_mode) && !retried) {
-		name = unrawname(name);
+		newname = unrawname(newname);
 		retried++;
 		goto retry;
 	}
-	printf("Can't make sense out of name %s\n", name);
-	return (0);
+	/*
+	 * Not a block or character device, just return name and
+	 * let the user decide whether to use it.
+	 */
+	return (origname);
 }
 
 char *

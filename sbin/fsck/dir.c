@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)dir.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: dir.c,v 1.15 1994/12/05 20:15:44 cgd Exp $";
+/*static char sccsid[] = "from: @(#)dir.c	8.5 (Berkeley) 12/8/94";*/
+static char *rcsid = "$Id: dir.c,v 1.16 1994/12/28 00:03:49 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -348,11 +348,11 @@ mkentry(idesc)
 	dirp->d_reclen = oldlen;
 	dirp = (struct direct *)(((char *)dirp) + oldlen);
 	dirp->d_ino = idesc->id_parent;	/* ino to be entered is in id_parent */
+	dirp->d_reclen = newent.d_reclen;
 	if (newinofmt)
 		dirp->d_type = typemap[idesc->id_parent];
 	else
 		dirp->d_type = 0;
-	dirp->d_reclen = newent.d_reclen;
 	dirp->d_namlen = newent.d_namlen;
 	memcpy(dirp->d_name, idesc->id_name, (size_t)dirp->d_namlen + 1);
 #	if (BYTE_ORDER == LITTLE_ENDIAN)

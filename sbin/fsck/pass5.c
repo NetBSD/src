@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)pass5.c	8.2 (Berkeley) 2/2/94";*/
-static char *rcsid = "$Id: pass5.c,v 1.11 1994/12/18 15:55:41 cgd Exp $";
+/*static char sccsid[] = "from: @(#)pass5.c	8.6 (Berkeley) 11/30/94";*/
+static char *rcsid = "$Id: pass5.c,v 1.12 1994/12/28 00:03:54 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,9 +60,10 @@ pass5()
 	register struct cg *newcg = (struct cg *)buf;
 	struct ocg *ocg = (struct ocg *)buf;
 
+	statemap[WINO] = USTATE;
 	memset(newcg, 0, (size_t)fs->fs_cgsize);
 	newcg->cg_niblk = fs->fs_ipg;
-	if (cvtlevel > 3) {
+	if (cvtlevel >= 3) {
 		if (fs->fs_maxcontig < 2 && fs->fs_contigsumsize > 0) {
 			if (preen)
 				pwarn("DELETING CLUSTERING MAPS\n");
@@ -106,8 +107,7 @@ pass5()
 	case FS_42POSTBLFMT:
 		basesize = (char *)(&ocg->cg_btot[0]) -
 		    (char *)(&ocg->cg_firstfield);
-		sumsize = (char *)&ocg->cg_iused[0] -
-		    (char *)(&ocg->cg_btot[0]);
+		sumsize = &ocg->cg_iused[0] - (u_int8_t *)(&ocg->cg_btot[0]);
 		mapsize = &ocg->cg_free[howmany(fs->fs_fpg, NBBY)] -
 			(u_char *)&ocg->cg_iused[0];
 		ocg->cg_magic = CG_MAGIC;
