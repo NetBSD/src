@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.27 (Berkeley) 8/7/90";*/
-static char rcsid[] = "$Id: main.c,v 1.5 1993/10/01 01:45:30 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.6 1993/10/01 01:48:01 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -279,7 +279,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	inocleanup();
 	if (!clean) {
 		sblock.fs_state = FSOKAY;
-		sblock.fs_clean = FSCLEANED;
+		sblock.fs_clean = FS_CLEANFREQ;
 		fsmodified = 1;
 	}
 	if (fsmodified) {
