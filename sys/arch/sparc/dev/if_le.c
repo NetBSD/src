@@ -33,7 +33,7 @@
  *	@(#)if_le.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: if_le.c,v 1.23 93/04/21 02:39:38 torek Exp 
- * $Id: if_le.c,v 1.5 1994/04/08 01:14:24 deraadt Exp $
+ * $Id: if_le.c,v 1.6 1994/04/22 13:19:13 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -743,7 +743,7 @@ leread(sc, pkt, len)
 		break;
 
 	case ETHERTYPE_ARP:
-#ifdef NETISR_ARP
+#if defined(NETISR_ARP) && 0
 		schednetisr(NETISR_ARP);
 		inq = &arpintrq;
 		break;
