@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cfb,v 1.7 2003/12/23 04:45:08 rtr Exp $
+#	$NetBSD: Makefile.cfb,v 1.8 2004/01/25 02:21:23 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -77,7 +77,7 @@ CPPFLAGS+=	-DPSZ=${PIXELSIZE} -DXFREE86
 
 
 .if ${MACHINE} == "sparc64"
-CPPFLAGS+=	-UXF86VIDMODE -UXF86VIDMODE -UXF86DRI -D__GLX_ALIGN64
+CPPFLAGS+=	-UXF86VIDMODE
 .endif
 
 CPPFLAGS.cfb8lineCO.c=	-DRROP=GXcopy
