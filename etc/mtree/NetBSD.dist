@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.149 2001/04/06 10:47:18 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.150 2001/04/16 08:20:57 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1802,6 +1802,11 @@ mac68k
 # ./usr/share/man/cat8/mac68k
 ..
 
+# ./usr/share/man/cat8/macppc
+macppc
+# ./usr/share/man/cat8/macppc
+..
+
 # ./usr/share/man/cat8/mvme68k
 mvme68k
 # ./usr/share/man/cat8/mvme68k
@@ -2119,6 +2124,11 @@ i386
 # ./usr/share/man/man8/mac68k
 mac68k
 # ./usr/share/man/man8/mac68k
+..
+
+# ./usr/share/man/man8/macppc
+macppc
+# ./usr/share/man/man8/macppc
 ..
 
 # ./usr/share/man/man8/mvme68k
