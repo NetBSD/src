@@ -1,8 +1,9 @@
 Bugs to fix:
 
-- pthread_cond_timedwait() doesn't work if SA's aren't running yet,
-  because the alarm system isn't up and running. It would be weird to
-  use them that way, but it's perfectly legal.
+- some blocking routines (like sem_wait()) don't work if SA's aren't
+  running yet, because the alarm system isn't up and running or there is no
+  thread context to switch to. It would be weird to use them that
+  way, but it's perfectly legal.
 - There is a race between pthread_cancel() and
   pthread_cond_broadcast() or pthread_exit() about removing an item
   from the sleep queue. The locking protocols there need a little
@@ -27,7 +28,6 @@ Bugs to fix:
 
 
 Interfaces/features to implement:
-- pthread_kill()
 - pthread_atfork()
 - priority scheduling
 - libc integration: 
