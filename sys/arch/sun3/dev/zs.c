@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.19 1995/01/11 20:38:25 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.20 1995/02/14 22:40:00 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -966,8 +966,10 @@ zssoft(int arg)
 	if (zssoftpending == 0)
 		return (0);
 
+	s = splzs();
 	zssoftpending = 0;
 	isr_soft_clear(ZSSOFT_PRI);
+	splx(s);
 
 	for (cs = zslist; cs != NULL; cs = cs->cs_next) {
 		get = cs->cs_rbget;
