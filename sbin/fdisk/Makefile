@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.17 2000/01/31 15:54:48 soda Exp $
+#	$NetBSD: Makefile,v 1.18 2000/03/19 23:01:07 soren Exp $
 
 SUBDIR=	mbr
 .if ${MACHINE} == "i386"
 SUBDIR+= mbr_bootsel
 .endif
 
-.if (${MACHINE} == "i386" || ${MACHINE} == "bebox" || \
+.if (${MACHINE} == "i386" || ${MACHINE} == "bebox" || ${MACHINE} == "cobalt" ||\
     ${MACHINE} == "ofppc" || ${MACHINE} == "hpcmips" || ${MACHINE} == "arc")
 PROG=	fdisk 
 SRCS=	fdisk.c
