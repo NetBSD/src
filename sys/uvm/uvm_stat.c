@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.23 2004/03/24 07:55:01 junyoung Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.23.2.1 2004/05/09 08:55:12 jdc Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.23 2004/03/24 07:55:01 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.23.2.1 2004/05/09 08:55:12 jdc Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ddb.h"
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.23 2004/03/24 07:55:01 junyoung Exp $
 /*
  * globals
  */
-
-struct uvm_cnt *uvm_cnt_head = NULL;
 
 #ifdef UVMHIST
 struct uvm_history_head uvm_histories;
@@ -191,19 +189,6 @@ uvm_hist(bitmask)
 	uvmhist_dump_histories(hists);
 }
 #endif /* UVMHIST */
-
-void
-uvmcnt_dump()
-{
-	struct uvm_cnt *uvc = uvm_cnt_head;
-
-	while (uvc) {
-		if ((uvc->t & UVMCNT_MASK) != UVMCNT_CNT)
-			continue;
-		printf("%s = %d\n", uvc->name, uvc->c);
-		uvc = uvc->next;
-	}
-}
 
 /*
  * uvmexp_print: ddb hook to print interesting uvm counters
