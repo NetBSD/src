@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.4 1999/08/29 18:56:24 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.5 1999/08/29 18:57:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -37,7 +37,7 @@
  *
  * Universal Serial Bus Mass Storage Bulk Only 1.0rc4 Specification:
  *
- *	http://www.usb.org/developers/umassbulk_10rc4.pdf
+ *	http://www.usb.org/developers/usbmassbulk_10rc4.pdf
  *
  * Relevant parts of the old spec (Bulk-only 0.9) have been quoted
  * in the source.
