@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.14 1996/03/17 07:30:25 cgd Exp $
+#	$NetBSD: files.isa,v 1.15 1996/03/17 13:21:31 cgd Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -47,7 +47,7 @@ file	dev/isa/rtfps.c			rtfps
 device	com: tty
 attach	com at isa with com_isa
 attach	com at commulti with com_commulti
-file	dev/isa/com.c			com com_isa com_commulti needs-flag
+file	dev/isa/com.c			com & (com_isa | com_commulti) needs-flag
 
 # Cyclades Cyclom multiport serial cards
 # XXX currently broken

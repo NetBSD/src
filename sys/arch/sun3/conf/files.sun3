@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.21 1996/03/17 06:08:12 cgd Exp $
+#	$NetBSD: files.sun3,v 1.22 1996/03/17 13:21:25 cgd Exp $
 
 #
 # sun3-specific configuration info
@@ -17,7 +17,7 @@ file arch/sun3/sun3/control.c
 file arch/sun3/sun3/ctrlsp.S
 file arch/sun3/sun3/dvma.c
 file arch/sun3/sun3/db_machdep.c		ddb
-file arch/sun3/sun3/db_memrw.c  		ddb kgdb
+file arch/sun3/sun3/db_memrw.c  		ddb | kgdb
 file arch/sun3/sun3/disksubr.c	
 file arch/sun3/sun3/isr.c
 file arch/sun3/sun3/kgdb_stub.c 		kgdb
@@ -69,7 +69,7 @@ attach vmel at mainbus
 file arch/sun3/dev/obctl.c		obctl
 file arch/sun3/dev/obio.c		obio
 file arch/sun3/dev/obmem.c		obmem
-file arch/sun3/dev/vme.c		vmes vmel
+file arch/sun3/dev/vme.c		vmes | vmel
 
 #
 # Machine-independent SCSI drivers

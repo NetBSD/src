@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.16 1996/03/17 02:00:30 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.17 1996/03/17 13:21:23 cgd Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -17,7 +17,7 @@ device vmel { [addr = -1], [level = -1], [vect = -1] }
 attach vmel at mainbus
 device vmes { [addr = -1], [level = -1], [vect = -1] }
 attach vmes at mainbus
-file	arch/sparc/dev/obio.c		obio vmel vmes
+file	arch/sparc/dev/obio.c		obio | vmel | vmes
 
 device audio
 attach audio at mainbus
@@ -75,7 +75,7 @@ device espdma { slot = -1, offset = -1 }
 attach espdma at sbus
 device ledma { slot = -1, offset = -1 }
 attach ledma at sbus
-file	arch/sparc/dev/dma.c		dma espdma ledma needs-flag
+file	arch/sparc/dev/dma.c		dma | espdma | ledma needs-flag
 
 device esp: scsi
 attach esp at sbus, espdma, obio
@@ -136,7 +136,7 @@ device si: scsi, ncr5380sbc
 attach si at vmes
 device sw: scsi, ncr5380sbc
 attach sw at obio
-file	arch/sparc/dev/si.c		si sw
+file	arch/sparc/dev/si.c		si | sw
 
 pseudo-device	kbd
 
