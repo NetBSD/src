@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.131 2004/08/17 14:00:30 junyoung Exp $
+#	$NetBSD: build.sh,v 1.132 2004/10/09 20:38:01 mrg Exp $
 #
 # Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -78,6 +78,7 @@ initdefaults()
 
 	uname_s=$(uname -s 2>/dev/null)
 	uname_m=$(uname -m 2>/dev/null)
+	uname_p=$(uname -p 2>/dev/null)
 
 	# If $PWD is a valid name of the current directory, POSIX mandates
 	# that pwd return it by default which causes problems in the
@@ -225,6 +226,10 @@ getarch()
 	xen)			# no default MACHINE_ARCH
 		;;
 
+	sparc64)
+		MACHINE_ARCH=${uname_p}
+		;;
+
 	alpha|i386|sparc|sparc64|vax)
 		MACHINE_ARCH=${MACHINE}
 		;;
@@ -273,6 +278,10 @@ validatearch()
 
 	evbsh5)
 		arches="sh5eb sh5el"
+		;;
+
+	sparc64)
+		arches="sparc sparc64"
 		;;
 
 	*)
@@ -861,7 +870,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.131 2004/08/17 14:00:30 junyoung Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.132 2004/10/09 20:38:01 mrg Exp $
 # with these arguments: ${_args}
 #
 EOF
