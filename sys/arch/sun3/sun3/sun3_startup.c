@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.34 1995/02/13 22:24:26 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.35 1995/03/24 17:27:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -76,13 +76,6 @@ unsigned int *old_vector_table;
 unsigned char cpu_machine_id = 0;
 char *cpu_string = NULL;
 int cpu_has_vme = 0;
-
-/* XXX - Need real code to do this at startup. */
-#ifdef	FPCOPROC
-int fpu_type = 1;	/* XXX */
-#else
-int fpu_type = 0;	/* XXX */
-#endif
 
 vm_offset_t high_segment_free_start = 0;
 vm_offset_t high_segment_free_end = 0;
@@ -760,18 +753,6 @@ void internal_configure()
 	clock_init();
 }
 
-/* XXX - Move this into a real device driver. */
-void fpu_init()
-{
-	int enab_reg;
-
-	if (fpu_type) {
-		enab_reg = get_control_byte((char *) SYSTEM_ENAB);
-		enab_reg |= SYSTEM_ENAB_FPP;
-		set_control_byte((char *) SYSTEM_ENAB, enab_reg);
-	}
-}
-
 /*
  * This is called from locore.s just after the kernel is remapped
  * to its proper address, but before the call to main().
@@ -804,7 +785,4 @@ sun3_bootstrap()
 	 * it will not cause "spurrious level 7" complaints.
 	 */
 	initialize_vector_table();
-
-	/* XXX - Move this into a real device driver. */
-	fpu_init();
 }
