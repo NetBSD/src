@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.72 1997/12/01 15:30:53 kleink Exp $
+#	$NetBSD: GENERIC,v 1.73 1998/01/09 17:18:20 drochner Exp $
 #
 # GENERIC
 
@@ -105,6 +105,7 @@ options 	ZS_CONSOLE_ABORT
 options 	DISABLE_EXT_CACHE # Don't use IIci external cache
 options 	MRG_ADB		# Use ROM-based ADB driver
 
+options 	NFS_BOOT_BOOTP
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?

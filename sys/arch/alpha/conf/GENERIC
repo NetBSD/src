@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.72 1997/11/30 23:19:01 mjacob Exp $
+# $NetBSD: GENERIC,v 1.73 1998/01/09 17:10:16 drochner Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -74,6 +74,11 @@ options 	PCIVERBOSE		# recognize "unknown" PCI devices
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+
+# The Alpha console firmware network boots using the BOOTP
+# protocol, so we ask the NFS code to use BOOTP as well, in
+# case we have NFS root.
+options 	NFS_BOOT_BOOTP
 
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0 type ffs
