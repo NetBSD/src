@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.50 2004/06/04 07:28:26 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.51 2004/06/05 03:21:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -299,6 +299,7 @@ one_def:
 					{ defdevattach($5, $2, $4, $6); } |
 	MAXPARTITIONS NUMBER		{ maxpartitions = $2.val; } |
 	MAXUSERS NUMBER NUMBER NUMBER	{ setdefmaxusers($2.val, $3.val, $4.val); } |
+	MAKEOPTIONS condmkopt_list |
 	DEFPSEUDO devbase interface_opt attrs_opt
 					{ defdev($2, $3, $4, 1); } |
 	MAJOR '{' majorlist '}';
@@ -480,7 +481,13 @@ mkopt_list:
 
 mkoption:
 	WORD '=' value			{ addmkoption($1, $3); } |
-	WORD PLUSEQ value		{ appendmkoption($1, $3); } |
+	WORD PLUSEQ value		{ appendmkoption($1, $3); };
+
+condmkopt_list:
+	condmkopt_list ',' condmkoption |
+	condmkoption;
+
+condmkoption:
 	WORD WORD PLUSEQ value		{ appendcondmkoption($1, $2, $4); };
 
 no_mkopt_list:
