@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile.newsmips,v 1.2 1998/03/03 07:38:40 thorpej Exp $
+#	$NetBSD: Makefile.newsmips,v 1.3 1998/03/04 22:14:14 thorpej Exp $
 
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/arch/news/conf/``machineid''
+#	/sys/arch/newsmips/conf/``machineid''
 # after which you should do
 #	config machineid
 # Machine generic makefile changes should be made in
-#	/sys/arch/news/conf/Makefile.news
+#	/sys/arch/newsmips/conf/Makefile.newsmips
 # after which config should be rerun for all machines of that type.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
@@ -41,12 +41,12 @@ COPTS?=	-O2
 #S!=	cd ../../../..; pwd
 S=	../../../..
 .endif
-NEWS=	$S/arch/news
+NEWS=	$S/arch/newsmips
 MIPS=	$S/arch/mips
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dnews ${GP}
+		-Dnewsmips ${GP}
 CWARNFLAGS=	-Werror -Wall -Wno-parentheses
 GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-abicalls -mno-half-pic
@@ -162,12 +162,12 @@ links:
 	sh makelinks && rm -f dontlink
 
 SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
-	${NEWS}/news/locore_machdep.S \
+	${NEWS}/newsmips/locore_machdep.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${NEWS}/news/locore_machdep.S 
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${NEWS}/newsmips/locore_machdep.S 
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
@@ -196,7 +196,7 @@ locore.o: ${MIPS}/mips/locore.S ${MIPS}/mips/locore_r2000.S ${MIPS}/mips/locore_
 fp.o: ${MIPS}/mips/fp.S assym.h
 	${NORMAL_S}
 
-locore_machdep.o: ${NEWS}/news/locore_machdep.S assym.h
+locore_machdep.o: ${NEWS}/newsmips/locore_machdep.S assym.h
 	${NORMAL_S}
 
 %RULES

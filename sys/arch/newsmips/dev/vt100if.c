@@ -50,8 +50,8 @@
 #endif /* IPC_MRX */
 
 #if CPU_SINGLE
-#include <news/dev/scc.h>
-#include <news/dev/sccparam.h>
+#include <newsmips/dev/scc.h>
+#include <newsmips/dev/sccparam.h>
 #endif /* CPU_SINGLE */
 
 #ifdef IPC_MRX

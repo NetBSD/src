@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.1 1998/02/18 13:48:04 tsubai Exp $
+#	$NetBSD: files.newsmips,v 1.2 1998/03/04 22:14:15 thorpej Exp $
 # NEWS-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -11,39 +11,39 @@ attach mainbus at root
 
 device hb { [addr = -1], [level = -1] }
 attach hb at mainbus
-file arch/news/dev/hb.c				hb
+file arch/newsmips/dev/hb.c			hb
 
 #device iop { [addr = -1], [level = -1] }
 #attach iop at mainbus
-#file arch/news/dev/iop.c			iop
+#file arch/newsmips/dev/iop.c			iop
 
 device cpu
 attach cpu at mainbus
-file arch/news/news/cpu.c			cpu
+file arch/newsmips/newsmips/cpu.c		cpu
 
 device mkclock
 attach mkclock at hb
-file arch/news/news/clock.c			mkclock
+file arch/newsmips/newsmips/clock.c		mkclock
 
 #device le: ifnet, ether, arp
 attach le at hb
-file arch/news/dev/if_le.c			le needs-count
+file arch/newsmips/dev/if_le.c			le needs-count
 
 device ms
 attach ms at hb
-file arch/news/dev/ms.c				ms needs-count
+file arch/newsmips/dev/ms.c			ms needs-count
 
 device kb
 attach kb at hb
-file arch/news/dev/kb.c				kb needs-count
-file arch/news/dev/kbms_if.c			kb | ms
-file arch/news/dev/keyconf.c			kb
-file arch/news/dev/kb_ctrl.c			kb
-file arch/news/dev/kb_encode.c			kb
+file arch/newsmips/dev/kb.c			kb needs-count
+file arch/newsmips/dev/kbms_if.c		kb | ms
+file arch/newsmips/dev/keyconf.c		kb
+file arch/newsmips/dev/kb_ctrl.c		kb
+file arch/newsmips/dev/kb_encode.c		kb
 
 device zsc { [channel = -1] }
 attach zsc at hb
-file arch/news/dev/zs.c				zsc needs-count
+file arch/newsmips/dev/zs.c			zsc needs-count
 file dev/ic/z8530sc.c				zsc
 
 device zstty: tty
@@ -52,35 +52,35 @@ file dev/ic/z8530tty.c				zstty needs-count
 
 device fb
 attach fb at hb
-file arch/news/dev/fb.c				fb needs-count
-file arch/news/dev/fb_conf.c			fb
-file arch/news/dev/fb_mfbs.c			fb
-file arch/news/dev/fb_probe.c			fb
-file arch/news/dev/fb_start.c			fb
-file arch/news/dev/fb_sub.c			fb
-file arch/news/dev/fbbm_253.c			fb
-#file arch/news/dev/fbbm_lcdm.c			fb
-file arch/news/dev/bmcons.c			fb
-file arch/news/dev/bitmapif.c			fb
-file arch/news/dev/fnt.c			fb
-file arch/news/dev/fnt24.c			fb
-file arch/news/dev/vt100.c			fb
-file arch/news/dev/vt100esc.c			fb
-file arch/news/dev/vt100if.c			fb
+file arch/newsmips/dev/fb.c			fb needs-count
+file arch/newsmips/dev/fb_conf.c		fb
+file arch/newsmips/dev/fb_mfbs.c		fb
+file arch/newsmips/dev/fb_probe.c		fb
+file arch/newsmips/dev/fb_start.c		fb
+file arch/newsmips/dev/fb_sub.c			fb
+file arch/newsmips/dev/fbbm_253.c		fb
+#file arch/newsmips/dev/fbbm_lcdm.c		fb
+file arch/newsmips/dev/bmcons.c			fb
+file arch/newsmips/dev/bitmapif.c		fb
+file arch/newsmips/dev/fnt.c			fb
+file arch/newsmips/dev/fnt24.c			fb
+file arch/newsmips/dev/vt100.c			fb
+file arch/newsmips/dev/vt100esc.c		fb
+file arch/newsmips/dev/vt100if.c		fb
 
 device fdc {}
 attach fdc at hb
 device fd: disk
 attach fd at fdc
-file arch/news/dev/fd.c				fdc | fd needs-count
+file arch/newsmips/dev/fd.c			fdc | fd needs-count
 
-file arch/news/news/autoconf.c
-file arch/news/news/conf.c
-file arch/news/news/machdep.c
-file arch/news/news/news_trap.c
-file arch/news/news/disksubr.c
-file arch/news/news/mainbus.c
-file arch/news/news/cpu_cons.c
+file arch/newsmips/newsmips/autoconf.c
+file arch/newsmips/newsmips/conf.c
+file arch/newsmips/newsmips/machdep.c
+file arch/newsmips/newsmips/newsmips_trap.c
+file arch/newsmips/newsmips/disksubr.c
+file arch/newsmips/newsmips/mainbus.c
+file arch/newsmips/newsmips/cpu_cons.c
 file dev/cons.c
 
 major {md = 2}
@@ -96,6 +96,6 @@ major { cd = 16 }
 major { st = 17 }
 
 device sc: scsi
-file arch/news/dev/scsi_1185.c			sc needs-count
-file arch/news/dev/sc_wrap.c			sc
+file arch/newsmips/dev/scsi_1185.c		sc needs-count
+file arch/newsmips/dev/sc_wrap.c		sc
 attach sc at hb

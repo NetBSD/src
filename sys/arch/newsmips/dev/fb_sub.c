@@ -54,7 +54,7 @@
 #include <machine/framebuf.h>
 #include <machine/locore.h>
 
-#include <news/dev/fbreg.h>
+#include <newsmips/dev/fbreg.h>
 
 #ifdef CPU_DOUBLE
 #ifdef IPC_MRX

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 1998/02/18 13:48:29 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 1998/03/04 22:22:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,7 +60,7 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 
-#include <news/news/machid.h>
+#include <newsmips/newsmips/machid.h>
 #include <machine/cpu.h>
 
 void dumpconf __P((void)); 	/* XXX */

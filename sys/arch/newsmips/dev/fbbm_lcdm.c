@@ -52,8 +52,8 @@
 #include <machine/framebuf.h>
 #include <machine/locore.h>
 
-#include <news/dev/fbreg.h>
-#include <news/dev/fbdefs.h>
+#include <newsmips/dev/fbreg.h>
+#include <newsmips/dev/fbdefs.h>
 
 extern int nofunc();
 extern int fb_error();
