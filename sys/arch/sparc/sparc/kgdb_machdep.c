@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.2 1997/09/27 18:04:47 pk Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.3 1998/01/08 01:17:55 mrg Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -149,7 +149,9 @@ kgdb_connect(verbose)
 
 	if (kgdb_dev < 0)
 		return;
+#if NFB > 0
 	fb_unblank();
+#endif
 	if (verbose)
 		printf("kgdb waiting...");
 	__asm("ta %0" :: "n" (T_KGDB_EXEC));	/* trap into kgdb */

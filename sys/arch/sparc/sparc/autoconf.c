@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.80 1997/10/18 00:01:42 gwr Exp $ */
+/*	$NetBSD: autoconf.c,v 1.81 1998/01/08 01:13:58 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1697,7 +1697,11 @@ callrom()
 
 #if 0			/* sun4c FORTH PROMs do this for us */
 	if (CPU_ISSUN4)
+#if NFB > 0
 		fb_unblank();
+#else
+		;
+#endif
 #endif
 	promvec->pv_abort();
 }
