@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.1.2.11 1998/10/04 15:50:23 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.1.2.12 1998/10/05 08:17:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -595,14 +595,8 @@ again:
 	switch (drvp->state) {
 	case PIOMODE:
 		/* Don't try to set mode if controller can't be adjusted */
-		if ((chp->wdc->cap & WDC_CAPABILITY_PIO) == 0)
-			goto dmamode;
-		/*
-		 * if mode is < 3, it is unknown. Assume the defaults are
-		 * good.
-		 */
-		if (drvp->PIO_mode < 3)
-			goto dmamode;
+		if ((chp->wdc->cap & WDC_CAPABILITY_MODE) == 0)
+			goto ready;
 		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 		    0x08 | drvp->PIO_mode, WDSF_SET_MODE);
 		drvp->state = PIOMODE_WAIT;
@@ -616,7 +610,6 @@ again:
 	/* fall through */
 
 	case DMAMODE:
-	dmamode:
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 			    0x40 | drvp->UDMA_mode, WDSF_SET_MODE);

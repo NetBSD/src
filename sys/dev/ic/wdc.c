@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.17 1998/10/04 15:01:55 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.18 1998/10/05 08:17:34 bouyer Exp $ */
 
 
 /*
@@ -728,7 +728,7 @@ wdc_probe_caps(drvp)
 			 * assume the defaults are good, so don't try
 			 * to set it
 			 */
-			if ((wdc->cap & WDC_CAPABILITY_PIO) != 0)
+			if ((wdc->cap & WDC_CAPABILITY_MODE) != 0)
 				if (ata_set_mode(drvp, 0x08 | (i + 3),
 				   AT_POLL) != CMD_OK)
 					continue;
@@ -742,7 +742,7 @@ wdc_probe_caps(drvp)
 			 * If controller's driver can't set its PIO mode,
 			 * get the highter one for the drive.
 			 */
-			if ((wdc->cap & WDC_CAPABILITY_PIO) == 0 ||
+			if ((wdc->cap & WDC_CAPABILITY_MODE) == 0 ||
 			    wdc->pio_mode >= i + 3) {
 				drvp->PIO_mode = i + 3;
 				break;
@@ -759,7 +759,8 @@ wdc_probe_caps(drvp)
 		for (i = 7; i >= 0; i--) {
 			if ((params.atap_dmamode_supp & (1 << i)) == 0)
 				continue;
-			if (wdc->cap & WDC_CAPABILITY_DMA)
+			if ((wdc->cap & WDC_CAPABILITY_DMA) &&
+			    (wdc->cap & WDC_CAPABILITY_MODE))
 				if (ata_set_mode(drvp, 0x20 | i, AT_POLL)
 				    != CMD_OK)
 					continue;
@@ -769,7 +770,8 @@ wdc_probe_caps(drvp)
 				printed = 1;
 			}
 			if (wdc->cap & WDC_CAPABILITY_DMA) {
-				if (wdc->dma_mode < i)
+				if ((wdc->cap & WDC_CAPABILITY_MODE) &&
+				    wdc->dma_mode < i)
 					continue;
 				drvp->DMA_mode = i;
 				drvp->drive_flags |= DRIVE_DMA;
@@ -781,9 +783,10 @@ wdc_probe_caps(drvp)
 				if ((params.atap_udmamode_supp & (1 << i))
 				    == 0)
 					continue;
-				if (ata_set_mode(drvp, 0x40 | i, AT_POLL)
-				    != CMD_OK)
-					continue;
+				if (wdc->cap & WDC_CAPABILITY_MODE)
+					if (ata_set_mode(drvp, 0x40 | i,
+					    AT_POLL) != CMD_OK)
+						continue;
 				printf("%s UDMA mode %d", sep, i);
 				sep = ",";
 				/*

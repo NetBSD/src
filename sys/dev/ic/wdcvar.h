@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.2.2.12 1998/10/04 15:50:23 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.2.2.13 1998/10/05 08:17:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct wdc_softc { /* Per controller state */
 /* Capabilities supported by the controller */
 #define	WDC_CAPABILITY_DATA16 0x0001    /* can do  16-bit data access */
 #define	WDC_CAPABILITY_DATA32 0x0002    /* can do 32-bit data access */
-#define WDC_CAPABILITY_PIO    0x0004	/* controller knows its PIO modes */
+#define WDC_CAPABILITY_MODE   0x0004	/* controller knows its PIO/DMA modes */
 #define	WDC_CAPABILITY_DMA    0x0008	/* DMA */
 #define	WDC_CAPABILITY_UDMA   0x0010	/* Ultra-DMA/33 */
 #define	WDC_CAPABILITY_HWLOCK 0x0020	/* Needs to lock HW */
