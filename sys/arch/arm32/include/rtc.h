@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.h,v 1.5 1998/04/19 03:49:17 mark Exp $	*/
+/*	$NetBSD: rtc.h,v 1.5.24.1 2000/11/03 18:40:53 tv Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,6 +41,7 @@
  * Header file for RTC / CMOS stuff
  *
  * Created      : 13/10/94
+ * Updated	: 15/07/2000
  *
  * Based of kate/display/iiccontrol.c
  */
@@ -68,6 +69,7 @@ typedef struct {
 	u_char rtc_cen;
 } rtc_t;
 
+#define RTC_ADDR_CHECKSUM	0x3f
 #define RTC_ADDR_BOOTOPTS	0x90
 #define RTC_ADDR_REBOOTCNT	0x91
 #define RTC_ADDR_YEAR     	0xc0
