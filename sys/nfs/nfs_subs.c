@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.49 1997/10/19 01:46:32 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.49.2.1 1998/01/29 12:13:23 mellon Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1269,6 +1269,14 @@ nfs_enterdircache(vp, off, blkoff, en, blkno)
 		 * isn't known at that time.
 		 */
 		nfs_initdircache(vp);
+
+	/*
+	 * XXX refuse entries for offset 0. amd(8) erroneously sets
+	 * cookie 0 for the '.' entry, making this necessary. This
+	 * isn't so bad, as 0 is a special case anyway.
+	 */
+	if (off == 0)
+		return &dzero;
 
 	ndp = nfs_searchdircache(vp, off, 0, &hashent);
 
