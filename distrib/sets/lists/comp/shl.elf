@@ -1,9 +1,10 @@
-# $NetBSD: shl.elf,v 1.38 2003/04/22 20:35:23 elric Exp $
+# $NetBSD: shl.elf,v 1.39 2003/06/14 08:04:43 nonaka Exp $
 ./lib/libc.so			comp-c-lib
 ./lib/libcrypt.so		comp-c-lib
 ./lib/libcrypto.so		comp-c-lib
 ./lib/libdes.so			comp-c-lib
 ./lib/libedit.so		comp-c-lib
+./lib/libevent.so		comp-c-lib
 ./lib/libipsec.so		comp-c-lib
 ./lib/libkvm.so			comp-c-lib
 ./lib/libm.so			comp-c-lib
@@ -31,6 +32,7 @@
 ./usr/lib/libdes.so		comp-c-lib
 ./usr/lib/libcurses.so		comp-c-lib
 ./usr/lib/libedit.so		comp-c-lib
+./usr/lib/libevent.so		comp-c-lib
 ./usr/lib/libform.so		comp-c-lib
 ./usr/lib/libgnumalloc.so	comp-c-lib
 ./usr/lib/libgssapi.so		comp-c-lib
