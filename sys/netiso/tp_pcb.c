@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.20 2000/03/30 13:10:14 augustss Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.21 2000/10/02 03:54:53 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -961,8 +961,8 @@ tp_pcbbind(v, nam, p)
 				tlen = 2;
 			if (satosin(siso)->sin_addr.s_addr == 0)
 				siso = 0;
-		}
 #endif
+		}
 	}
 	if (tpcb->tp_lsuffixlen == 0) {
 		if (tlen) {
