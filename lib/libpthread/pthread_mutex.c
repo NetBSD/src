@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.7 2003/01/27 21:01:00 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.8 2003/01/31 02:55:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -181,7 +181,14 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 	}
 
 	/* We have the lock! */
-	mutex->ptm_owner = pthread__self();
+	/*
+	 * Identifying ourselves may be slow, and this assignment is
+	 * only needed for (a) debugging identity of the owning thread
+	 * and (b) handling errorcheck and recursive mutexes. It's
+	 * better to just stash our stack pointer here and let those
+	 * slow exception cases compute the stack->thread mapping.
+	 */
+	mutex->ptm_owner = (pthread_t)pthread__sp();
 
 	return 0;
 }
@@ -213,7 +220,7 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 
 			GET_MUTEX_PRIVATE(mutex, mp);
 
-			if (mutex->ptm_owner == self) {
+			if (pthread__id(mutex->ptm_owner) == self) {
 				switch (mp->type) {
 				case PTHREAD_MUTEX_ERRORCHECK:
 					pthread_spinunlock(self,
@@ -241,7 +248,7 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 			 * Locking a mutex is not a cancellation
 			 * point, so we don't need to do the
 			 * test-cancellation dance. We may get woken
-			 * up spuriously by pthread_cancel, though,
+			 * up spuriously by pthread_cancel or signals,
 			 * but it's okay since we're just going to
 			 * retry.
 			 */
@@ -267,7 +274,6 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 int
 pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
-	pthread_t self = pthread__self();
 
 #ifdef ERRORCHECK
 	if ((mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
@@ -276,6 +282,7 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 
 	PTHREADD_ADD(PTHREADD_MUTEX_TRYLOCK);
 	if (pthread__simple_lock_try(&mutex->ptm_lock) == 0) {
+		pthread_t self;
 		struct mutex_private *mp;
 
 		GET_MUTEX_PRIVATE(mutex, mp);
@@ -285,7 +292,8 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 		 * interlock because these fields are only modified
 		 * if we know we own the mutex.
 		 */
-		if (mutex->ptm_owner == self) {
+		self = pthread__self();
+		if (pthread__id(mutex->ptm_owner) == self) {
 			switch (mp->type) {
 			case PTHREAD_MUTEX_ERRORCHECK:
 				return EDEADLK;
@@ -301,7 +309,8 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 		return EBUSY;
 	}
 
-	mutex->ptm_owner = self;
+	/* see comment at the end of pthread_mutex_lock() */
+	mutex->ptm_owner = (pthread_t)pthread__sp();
 
 	return 0;
 }
@@ -312,8 +321,6 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
 	struct mutex_private *mp;
 	pthread_t self, blocked; 
-
-	self = pthread__self();
 
 #ifdef ERRORCHECK
 	if ((mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
@@ -333,12 +340,12 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	 */
 	switch (mp->type) {
 	case PTHREAD_MUTEX_ERRORCHECK:
-		if (mutex->ptm_owner != self)
+		if (pthread__id(mutex->ptm_owner) != pthread__self())
 			return EPERM;
 		break;
 
 	case PTHREAD_MUTEX_RECURSIVE:
-		if (mutex->ptm_owner != self)
+		if (pthread__id(mutex->ptm_owner) != pthread__self())
 			return EPERM;
 		if (mp->recursecount != 0) {
 			mp->recursecount--;
@@ -347,18 +354,31 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 		break;
 	}
 
-	pthread_spinlock(self, &mutex->ptm_interlock);
-	blocked = PTQ_FIRST(&mutex->ptm_blocked);
-	if (blocked)
-		PTQ_REMOVE(&mutex->ptm_blocked, blocked, pt_sleep);
 	mutex->ptm_owner = NULL;
 	pthread__simple_unlock(&mutex->ptm_lock);
-	pthread_spinunlock(self, &mutex->ptm_interlock);
-
-	/* Give the head of the blocked queue another try. */
-	if (blocked) {
-		PTHREADD_ADD(PTHREADD_MUTEX_UNLOCK_UNBLOCK);
-		pthread__sched(self, blocked);
+	/*
+	 * Do a double-checked locking dance to see if there are any
+	 * waiters.  If we don't see any waiters, we can exit, because
+	 * we've already released the lock. If we do see waiters, they
+	 * were probably waiting on us... there's a slight chance that
+	 * they are waiting on a different thread's ownership of the
+	 * lock that happened between the unlock above and this
+	 * examination of the queue; if so, no harm is done, as the
+	 * waiter will loop and see that the mutex is still locked.
+	 */
+	if (!PTQ_EMPTY(&mutex->ptm_blocked)) {
+		self = pthread__self();
+		pthread_spinlock(self, &mutex->ptm_interlock);
+		blocked = PTQ_FIRST(&mutex->ptm_blocked);
+		if (blocked)
+			PTQ_REMOVE(&mutex->ptm_blocked, blocked, pt_sleep);
+		pthread_spinunlock(self, &mutex->ptm_interlock);
+		
+		/* Give the head of the blocked queue another try. */
+		if (blocked) {
+			PTHREADD_ADD(PTHREADD_MUTEX_UNLOCK_UNBLOCK);
+			pthread__sched(self, blocked);
+		}
 	}
 	return 0;
 }
