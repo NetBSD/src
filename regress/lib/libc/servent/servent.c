@@ -1,6 +1,7 @@
 #include <netdb.h>
 #include <stdint.h>
 #include <netinet/in.h>
+#include <sys/types.h>
 
 int
 main(int argc, char *argv[])
