@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.377 2003/01/22 00:29:44 grant Exp $
+# $NetBSD: mi,v 1.378 2003/01/26 22:17:49 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1049,6 +1049,8 @@
 ./usr/share/locale/fr_FR.ISO8859-1/LC_CTYPE	base-locale-fr
 ./usr/share/locale/fr_FR.ISO8859-15		base-locale-fr
 ./usr/share/locale/fr_FR.ISO8859-15/LC_CTYPE	base-locale-fr
+./usr/share/locale/gl				base-locale-gl
+./usr/share/locale/gl/LC_MESSAGES		base-locale-gl
 ./usr/share/locale/he				base-locale-he
 ./usr/share/locale/he/LC_MESSAGES		base-locale-he
 ./usr/share/locale/he/LC_MESSAGES/texinfo.mo	base-texinfo_locale-he
