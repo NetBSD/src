@@ -42,7 +42,7 @@
  *	@(#)vm_machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: vm_machdep.c,v 1.10 92/11/26 03:05:11 torek Exp  (LBL)
- * $Id: vm_machdep.c,v 1.5 1994/05/19 21:44:50 deraadt Exp $
+ * $Id: vm_machdep.c,v 1.6 1994/05/24 03:33:38 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -278,13 +278,11 @@ cpu_coredump(p, vp, cred)
 {
 	register struct user *up = p->p_addr;
 
-#ifdef notdef
 	up->u_md.md_tf = *p->p_md.md_tf;
 	if (p->p_md.md_fpstate)
 		up->u_md.md_fpstate = *p->p_md.md_fpstate;
 	else
 		bzero((caddr_t)&up->u_md.md_fpstate, sizeof(struct fpstate));
-#endif
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t)up, ctob(UPAGES), (off_t)0,
 	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p));
 }
