@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.45 2003/10/14 14:02:56 dbj Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.46 2003/12/21 07:53:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.45 2003/10/14 14:02:56 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.46 2003/12/21 07:53:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,14 +176,14 @@ lfs_setup_resblks(struct lfs *fs)
 	/*
 	 * Initialize pools for small types (XXX is BPP small?)
 	 */
-	pool_init(&fs->lfs_clpool, sizeof(struct lfs_cluster), 0, 0,
-		LFS_N_CL, "lfsclpl", &pool_allocator_nointr);
-	pool_init(&fs->lfs_segpool, sizeof(struct segment), 0, 0,
-		LFS_N_SEG, "lfssegpool", &pool_allocator_nointr);
+	pool_init(&fs->lfs_clpool, sizeof(struct lfs_cluster), 0, 0, 0,
+		"lfsclpl", &pool_allocator_nointr);
+	pool_init(&fs->lfs_segpool, sizeof(struct segment), 0, 0, 0,
+		"lfssegpool", &pool_allocator_nointr);
 	maxbpp = ((fs->lfs_sumsize - SEGSUM_SIZE(fs)) / sizeof(int32_t) + 2);
 	maxbpp = MIN(maxbpp, fs->lfs_ssize / fs->lfs_fsize + 2);
-	pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0,
-		LFS_N_BPP, "lfsbpppl", &pool_allocator_nointr);
+	pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0, 0,
+		"lfsbpppl", &pool_allocator_nointr);
 }
 
 void

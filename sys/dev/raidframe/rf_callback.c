@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.8 2002/10/25 03:14:37 oster Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.9 2003/12/21 07:53:59 simonb Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.8 2002/10/25 03:14:37 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.9 2003/12/21 07:53:59 simonb Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include <sys/pool.h>
@@ -66,8 +66,8 @@ rf_ConfigureCallback(listp)
 {
 	int     rc;
 
-	pool_init(&rf_callback_pool, sizeof(RF_CallbackDesc_t), 0, 0,
-		  RF_CALLBACK_INITIAL, "rf_callbackpl", NULL);
+	pool_init(&rf_callback_pool, sizeof(RF_CallbackDesc_t), 0, 0, 0,
+		  "rf_callbackpl", NULL);
 	pool_sethiwat(&rf_callback_pool, RF_MAX_FREE_CALLBACK);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownCallback, NULL);
 	if (rc) {
