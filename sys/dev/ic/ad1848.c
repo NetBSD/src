@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.18.2.1 2005/01/03 06:37:57 kent Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.18.2.2 2005/01/03 16:40:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.18.2.1 2005/01/03 06:37:57 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.18.2.2 2005/01/03 16:40:26 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -958,9 +958,9 @@ ad1848_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
 	phw.sample_rate = p->sample_rate;
 
 	if (pswcode != NULL)
-		stream_filter_list_append(pfil, pswcode, &phw);
+		pfil->append(pfil, pswcode, &phw);
 	if (rswcode != NULL)
-		stream_filter_list_append(rfil, rswcode, &rhw);
+		rfil->append(rfil, rswcode, &rhw);
 
 	sc->format_bits = bits;
 	sc->channels = p->channels;

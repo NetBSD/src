@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.85.2.1 2005/01/03 06:37:58 kent Exp $	*/
+/*	$NetBSD: gus.c,v 1.85.2.2 2005/01/03 16:40:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.85.2.1 2005/01/03 06:37:58 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.85.2.2 2005/01/03 16:40:26 kent Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -2326,26 +2326,26 @@ gus_set_params(addr, setmode, usemode, p, r, pfil, rfil)
 	case AUDIO_ENCODING_ULAW:
 		hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
 		pfil->req_size = rfil->req_size = 0;
-		stream_filter_list_append(pfil, mulaw_to_linear8, &hw);
-		stream_filter_list_append(rfil, linear8_to_mulaw, &hw);
+		pfil->append(pfil, mulaw_to_linear8, &hw);
+		rfil->append(rfil, linear8_to_mulaw, &hw);
 		break;
 	case AUDIO_ENCODING_ALAW:
 		hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
 		pfil->req_size = rfil->req_size = 0;
-		stream_filter_list_append(pfil, alaw_to_linear8, &hw);
-		stream_filter_list_append(rfil, linear8_to_alaw, &hw);
+		pfil->append(pfil, alaw_to_linear8, &hw);
+		rfil->append(rfil, linear8_to_alaw, &hw);
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
 		hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
 		pfil->req_size = rfil->req_size = 0;
-		stream_filter_list_append(pfil, swap_bytes, &hw);
-		stream_filter_list_append(rfil, swap_bytes, &hw);
+		pfil->append(pfil, swap_bytes, &hw);
+		rfil->append(rfil, swap_bytes, &hw);
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
 		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
 		pfil->req_size = rfil->req_size = 0;
-		stream_filter_list_append(pfil, swap_bytes, &hw);
-		stream_filter_list_append(rfil, swap_bytes, &hw);
+		pfil->append(pfil, swap_bytes, &hw);
+		rfil->append(rfil, swap_bytes, &hw);
 		break;
 	}
 

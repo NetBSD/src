@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.24 2005/01/02 15:54:44 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.25 2005/01/03 16:40:26 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.24 2005/01/02 15:54:44 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.25 2005/01/03 16:40:26 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -155,6 +155,13 @@ static void audio_destruct_pfilters(struct audio_softc *);
 static void audio_destruct_rfilters(struct audio_softc *);
 static void audio_stream_dtor(audio_stream_t *);
 static int audio_stream_ctor(audio_stream_t *, const audio_params_t *, int);
+static void stream_filter_list_append
+	(stream_filter_list_t *, stream_filter_factory_t, const audio_params_t *);
+static void stream_filter_list_prepend
+	(stream_filter_list_t *, stream_filter_factory_t, const audio_params_t *);
+static void stream_filter_list_set
+	(stream_filter_list_t *, int, stream_filter_factory_t,
+	 const audio_params_t *);
 int	audio_set_defaults(struct audio_softc *, u_int);
 
 int	audioprobe(struct device *, struct cfdata *, void *);
@@ -768,6 +775,53 @@ audio_stream_ctor(audio_stream_t *stream, const audio_params_t *param, int size)
 	stream->param = *param;
 	stream->loop = FALSE;
 	return 0;
+}
+
+static void
+stream_filter_list_append(stream_filter_list_t *list,
+			  stream_filter_factory_t factory,
+			  const audio_params_t *param)
+{
+	if (list->req_size >= AUDIO_MAX_FILTERS) {
+		printf("%s: increase AUDIO_MAX_FILTERS in sys/dev/audio_if.h\n",
+		       __func__);
+		return;
+	}
+	list->filters[list->req_size].factory = factory;
+	list->filters[list->req_size].param = *param;
+	list->req_size++;
+}
+
+static void
+stream_filter_list_set(stream_filter_list_t *list, int i,
+		       stream_filter_factory_t factory,
+		       const audio_params_t *param)
+{
+	if (i < 0 || i >= AUDIO_MAX_FILTERS) {
+		printf("%s: invalid index: %d\n", __func__, i);
+		return;
+	}
+	list->filters[i].factory = factory;
+	list->filters[i].param = *param;
+	if (list->req_size <= i)
+		list->req_size = i + 1;
+}
+
+static void
+stream_filter_list_prepend(stream_filter_list_t *list,
+			   stream_filter_factory_t factory,
+			   const audio_params_t *param)
+{
+	if (list->req_size >= AUDIO_MAX_FILTERS) {
+		printf("%s: increase AUDIO_MAX_FILTERS in sys/dev/audio_if.h\n",
+		       __func__);
+		return;
+	}
+	memmove(&list->filters[1], &list->filters[0],
+		sizeof(struct stream_filter_req) * list->req_size);
+	list->filters[0].factory = factory;
+	list->filters[0].param = *param;
+	list->req_size++;
 }
 
 int
@@ -3037,6 +3091,12 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		}
 		memset(&pfilters, 0, sizeof(pfilters));
 		memset(&rfilters, 0, sizeof(rfilters));
+		pfilters.append = stream_filter_list_append;
+		pfilters.prepend = stream_filter_list_prepend;
+		pfilters.set = stream_filter_list_set;
+		rfilters.append = stream_filter_list_append;
+		rfilters.prepend = stream_filter_list_prepend;
+		rfilters.set = stream_filter_list_set;
 		/* Some device drivers change channels/sample_rate and change
 		 * no channels/sample_rate. */
 		error = hw->set_params(sc->hw_hdl, setmode,

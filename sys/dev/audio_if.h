@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.54.2.11 2005/01/02 15:54:44 kent Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.54.2.12 2005/01/03 16:40:26 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -153,6 +153,12 @@ typedef stream_filter_t *stream_filter_factory_t(struct audio_softc *,
 # define AUDIO_MAX_FILTERS	8
 #endif
 typedef struct stream_filter_list {
+	void (*append)(struct stream_filter_list *, stream_filter_factory_t,
+		       const audio_params_t *);
+	void (*prepend)(struct stream_filter_list *, stream_filter_factory_t,
+			const audio_params_t *);
+	void (*set)(struct stream_filter_list *, int, stream_filter_factory_t,
+		    const audio_params_t *);
 	int req_size;
 	struct stream_filter_req {
 		stream_filter_factory_t *factory;
