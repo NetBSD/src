@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.12 1998/02/02 21:07:45 perry Exp $	*/
+/*	$NetBSD: resolv.h,v 1.13 1998/02/03 04:21:46 perry Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1987, 1989, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
- *	$Id: resolv.h,v 1.12 1998/02/02 21:07:45 perry Exp $
+ *	Id: resolv.h,v 4.9.1.2 1993/05/17 09:59:01 vixie Exp
  * -
  * Portions Copyright (c) 1993 by Digital Equipment Corporation.
  * 
