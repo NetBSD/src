@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.436 2001/12/28 17:39:19 augustss Exp $
+# $NetBSD: mi,v 1.437 2002/01/01 22:28:59 augustss Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -295,6 +295,7 @@
 ./usr/share/man/cat1/pushd.0			man-util-catman
 ./usr/share/man/cat1/pwd.0			man-util-catman
 ./usr/share/man/cat1/quota.0			man-util-catman
+./usr/share/man/cat1/radioctl.0			man-audio-catman
 ./usr/share/man/cat1/rcmd.0			man-netutil-catman
 ./usr/share/man/cat1/rcp.0			man-netutil-catman
 ./usr/share/man/cat1/rcs.0			man-rcs-catman
@@ -537,6 +538,7 @@
 ./usr/share/man/cat4/autri.0			man-sys-catman
 ./usr/share/man/cat4/auvia.0			man-sys-catman
 ./usr/share/man/cat4/awi.0			man-sys-catman
+./usr/share/man/cat4/az.0			man-sys-catman
 ./usr/share/man/cat4/bba.0			man-sys-catman
 ./usr/share/man/cat4/bha.0			man-sys-catman
 ./usr/share/man/cat4/bicc.0			man-sys-catman
@@ -754,6 +756,7 @@
 ./usr/share/man/cat4/mlx.0			man-sys-catman
 ./usr/share/man/cat4/mly.0			man-sys-catman
 ./usr/share/man/cat4/mpu.0			man-sys-catman
+./usr/share/man/cat4/mr.0			man-sys-catman
 ./usr/share/man/cat4/mtio.0			man-sys-catman
 ./usr/share/man/cat4/music.0			man-sys-catman
 ./usr/share/man/cat4/mvme68k/autoconf.0		man-sys-catman
@@ -833,6 +836,7 @@
 ./usr/share/man/cat4/px.0			man-sys-catman
 ./usr/share/man/cat4/pxg.0			man-sys-catman
 ./usr/share/man/cat4/qsphy.0			man-sys-catman
+./usr/share/man/cat4/radio.0			man-sys-catman
 ./usr/share/man/cat4/raid.0			man-sys-catman
 ./usr/share/man/cat4/rasterconsole.0		man-sys-catman
 ./usr/share/man/cat4/ray.0			man-sys-catman
@@ -840,7 +844,9 @@
 ./usr/share/man/cat4/rmidi.0			man-sys-catman
 ./usr/share/man/cat4/rnd.0			man-sys-catman
 ./usr/share/man/cat4/route.0			man-sys-catman
+./usr/share/man/cat4/rt.0			man-sys-catman
 ./usr/share/man/cat4/rtfps.0			man-sys-catman
+./usr/share/man/cat4/rtii.0			man-sys-catman
 ./usr/share/man/cat4/rtk.0			man-sys-catman
 ./usr/share/man/cat4/sb.0			man-sys-catman
 ./usr/share/man/cat4/sbus.0			man-sys-catman
@@ -854,6 +860,7 @@
 ./usr/share/man/cat4/sequencer.0		man-sys-catman
 ./usr/share/man/cat4/ses.0			man-sys-catman
 ./usr/share/man/cat4/sf.0			man-sys-catman
+./usr/share/man/cat4/sf2r.0			man-sys-catman
 ./usr/share/man/cat4/sfb.0			man-sys-catman
 ./usr/share/man/cat4/si.0			man-sys-catman
 ./usr/share/man/cat4/siop.0			man-sys-catman
@@ -1952,6 +1959,7 @@
 ./usr/share/man/man1/pushd.1			man-util-man
 ./usr/share/man/man1/pwd.1			man-util-man
 ./usr/share/man/man1/quota.1			man-util-man
+./usr/share/man/man1/radioctl.1			man-audio-man
 ./usr/share/man/man1/rcmd.1			man-netutil-man
 ./usr/share/man/man1/rcp.1			man-netutil-man
 ./usr/share/man/man1/rcs.1			man-rcs-man
@@ -2193,6 +2201,7 @@
 ./usr/share/man/man4/auich.4			man-sys-man
 ./usr/share/man/man4/autri.4			man-sys-man
 ./usr/share/man/man4/auvia.4			man-sys-man
+./usr/share/man/man4/az.4			man-sys-man
 ./usr/share/man/man4/awi.4			man-sys-man
 ./usr/share/man/man4/bba.4			man-sys-man
 ./usr/share/man/man4/bha.4			man-sys-man
@@ -2411,6 +2420,7 @@
 ./usr/share/man/man4/mlx.4			man-sys-man
 ./usr/share/man/man4/mly.4			man-sys-man
 ./usr/share/man/man4/mpu.4			man-sys-man
+./usr/share/man/man4/mr.4			man-sys-man
 ./usr/share/man/man4/mtio.4			man-sys-man
 ./usr/share/man/man4/music.4			man-sys-man
 ./usr/share/man/man4/mvme68k/autoconf.4		man-sys-man
@@ -2490,6 +2500,7 @@
 ./usr/share/man/man4/px.4			man-sys-man
 ./usr/share/man/man4/pxg.4			man-sys-man
 ./usr/share/man/man4/qsphy.4			man-sys-man
+./usr/share/man/man4/radio.4			man-sys-man
 ./usr/share/man/man4/raid.4			man-sys-man
 ./usr/share/man/man4/rasterconsole.4		man-sys-man
 ./usr/share/man/man4/ray.4			man-sys-man
@@ -2497,7 +2508,9 @@
 ./usr/share/man/man4/rmidi.4			man-sys-man
 ./usr/share/man/man4/rnd.4			man-sys-man
 ./usr/share/man/man4/route.4			man-sys-man
+./usr/share/man/man4/rt.4			man-sys-man
 ./usr/share/man/man4/rtfps.4			man-sys-man
+./usr/share/man/man4/rtii.4			man-sys-man
 ./usr/share/man/man4/rtk.4			man-sys-man
 ./usr/share/man/man4/sb.4			man-sys-man
 ./usr/share/man/man4/sbus.4			man-sys-man
@@ -2511,6 +2524,7 @@
 ./usr/share/man/man4/sequencer.4		man-sys-man
 ./usr/share/man/man4/ses.4			man-sys-man
 ./usr/share/man/man4/sf.4			man-sys-man
+./usr/share/man/man4/sf2r.4			man-sys-man
 ./usr/share/man/man4/sfb.4			man-sys-man
 ./usr/share/man/man4/si.4			man-sys-man
 ./usr/share/man/man4/siop.4			man-sys-man
