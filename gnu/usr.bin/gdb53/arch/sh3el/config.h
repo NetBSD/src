@@ -180,7 +180,7 @@
 #define DEFAULT_BFD_ARCH bfd_sh_arch
 
 /* BFD's default target vector. */
-#define DEFAULT_BFD_VEC bfd_elf32_shnbsd_vec
+#define DEFAULT_BFD_VEC bfd_elf32_shlnbsd_vec
 
 /* Multi-arch enabled. */
 /* #undef GDB_MULTI_ARCH */
