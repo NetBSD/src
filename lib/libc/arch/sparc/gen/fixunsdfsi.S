@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: fixunsdfsi.s,v 1.3 91/10/08 00:03:15 torek Exp
- * $Id: fixunsdfsi.S,v 1.2 1995/08/14 15:47:32 pk Exp $
+ * $Id: fixunsdfsi.S,v 1.3 1996/11/16 20:53:19 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -49,7 +49,7 @@
  * that it really matters, by using `fbul,a'.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 	.align	8
 Lbig:

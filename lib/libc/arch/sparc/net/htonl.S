@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: htonl.s,v 1.1 92/06/25 12:47:05 torek Exp
- * $Id: htonl.S,v 1.1 1993/10/07 00:21:46 cgd Exp $
+ * $Id: htonl.S,v 1.2 1996/11/16 20:53:25 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -44,7 +44,7 @@
 
 /* netorder = htonl(hostorder) */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(htonl)
 	retl

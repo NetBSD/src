@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: saveregs.s,v 1.1 91/07/06 17:22:33 torek Exp
- * $Id: saveregs.S,v 1.1 1993/10/07 00:21:39 cgd Exp $
+ * $Id: saveregs.S,v 1.2 1996/11/16 20:53:22 pk Exp $
  */
 
 /*
@@ -48,7 +48,7 @@
  *
  * We assume the caller has executed a `save' instruction.
  */
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(__builtin_saveregs)
 	st	%i0, [%fp + 0x44]	! fr->fr_argd[0]

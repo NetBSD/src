@@ -35,14 +35,14 @@
  * SUCH DAMAGE.
  *
  * from: Header: ffs.s,v 1.3 92/07/07 00:23:57 torek Exp
- * $Id: ffs.S,v 1.2 1994/02/10 20:15:50 pk Exp $
+ * $Id: ffs.S,v 1.3 1996/11/16 20:53:31 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #endif  /* LIBC_SCCS and not lint */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 /*
  * ffs returns the number of the rightmost bit set in its argument,
