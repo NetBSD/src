@@ -1,4 +1,4 @@
-/*	$NetBSD: abi.h,v 1.2 2003/09/14 21:26:14 fvdl Exp $	*/
+/*	$NetBSD: abi.h,v 1.3 2004/03/22 13:41:09 wiz Exp $	*/
 
 /*
  * Written by Frank van der Linden (fvdl@wasabisystems.com)
@@ -8,7 +8,7 @@
  * The x86-64 ABI specifies that float, double and long double
  * arguments are passed in SSE2 (xmm) registers. Unfortunately,
  * there is no way to push those on to the FP stack, which is
- * where he fancier instructions get their arguments from.
+ * where the fancier instructions get their arguments from.
  *
  * Define some prologues and epilogues to store and retrieve
  * xmm regs to local variables.
