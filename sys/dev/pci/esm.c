@@ -1,4 +1,4 @@
-/*	$NetBSD: esm.c,v 1.2 2001/01/09 06:36:13 lukem Exp $	*/
+/*	$NetBSD: esm.c,v 1.3 2001/01/09 23:27:07 rh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -99,6 +99,7 @@ int esm_debug = 0xfffc;
 #define ESM_DEBUG_PARAM		0x0020
 #define ESM_DEBUG_APU		0x0040
 #define ESM_DEBUG_CODEC		0x0080
+#define ESM_DEBUG_PCI		0x0100
 #else
 #define DPRINTF(x,y)	/* nothing */
 #define DUMPREG(x)	/* nothing */
@@ -193,6 +194,34 @@ static audio_encoding_t esm_encoding[] = {
 
 #define MAESTRO_NENCODINGS 8
 
+
+static const struct esm_quirks esm_quirks[] = {
+	/* COMPAL 38W2 OEM Notebook, e.g. Dell INSPIRON 5000e */
+	{ PCI_VENDOR_COMPAL, PCI_PRODUCT_COMPAL_38W2, ESM_QUIRKF_SWAPPEDCH },
+
+	/* NEC Versa Pro LX VA26D */
+	{ PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VA26D, ESM_QUIRKF_GPIO },
+
+	/* NEC Versa LX */
+	{ PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSALX, ESM_QUIRKF_GPIO }
+};
+
+enum esm_quirk_flags
+esm_get_quirks(pcireg_t subid)
+{
+	int i;
+
+	for (i = 0; i < (sizeof esm_quirks / sizeof esm_quirks[0]); i++) {
+		if (PCI_VENDOR(subid) == esm_quirks[i].eq_vendor &&
+		    PCI_PRODUCT(subid) == esm_quirks[i].eq_product) {
+			return esm_quirks[i].eq_quirks;
+		}
+	}
+
+	return 0;
+}
+
+
 #ifdef AUDIO_DEBUG
 struct esm_reg_info {
 	int	offset;			/* register offset */
@@ -212,17 +241,16 @@ struct esm_reg_info {
 	{ PORT_ASSP_CTRL_A,		1 },
 	{ PORT_ASSP_CTRL_B,		1 },
 	{ PORT_ASSP_CTRL_C,		1 },
-	{ PORT_ASSP_INT_STAT,		1 },
-	{ -1, -1 }
+	{ PORT_ASSP_INT_STAT,		1 }
 };
 
 static void
 esm_dump_regs(struct esm_softc *ess)
 {
-	int i = 0;
+	int i;
 
 	printf("%s registers:", ess->sc_dev.dv_xname);
-	while (dump_regs[i].offset != -1) {
+	for (i = 0; i < (sizeof dump_regs / sizeof dump_regs[0]); i++) {
 		if (i % 5 == 0)
 			printf("\n");
 		printf("0x%2.2x: ", dump_regs[i].offset);
@@ -240,11 +268,11 @@ esm_dump_regs(struct esm_softc *ess)
 			    bus_space_read_1(ess->st, ess->sh,
 			    dump_regs[i].offset));
 		}
-		i++;
 	}
 	printf("\n");
 }
 #endif
+
 
 /* -----------------------------
  * Subsystems.
@@ -493,6 +521,15 @@ esm_reset_codec(void *sc)
 }
 
 
+enum ac97_host_flags
+esm_flags_codec(void *sc)
+{
+	struct esm_softc *ess = sc;
+
+	return ess->codec_flags;
+}
+
+
 void
 esm_initcodec(struct esm_softc *ess)
 {
@@ -585,23 +622,14 @@ esm_init(struct esm_softc *ess)
 	 * Setup GPIO.
 	 * There seems to be speciality with NEC systems.
 	 */
-	switch (PCI_VENDOR(ess->subid)) {
-	case PCI_VENDOR_NEC:
-		switch (PCI_PRODUCT(ess->subid)) {
-		case PCI_PRODUCT_NEC_VERSALX:
-		case PCI_PRODUCT_NEC_VA26D:
-			/* Matthew Braithwaite <matt@braithwaite.net> reported
-			 * that NEC Versa LX doesn't need GPIO operation. */
-			bus_space_write_2(ess->st, ess->sh, PORT_GPIO_MASK,
-			    0x9ff);
-			bus_space_write_2(ess->st, ess->sh, PORT_GPIO_DIR,
-			    bus_space_read_2(ess->st, ess->sh, PORT_GPIO_DIR) |
-				0x600);
-			bus_space_write_2(ess->st, ess->sh, PORT_GPIO_DATA,
-			    0x200);
-			break;
-		}
-		break;
+	if (esm_get_quirks(ess->subid) & ESM_QUIRKF_GPIO) {
+		bus_space_write_2(ess->st, ess->sh, PORT_GPIO_MASK,
+		    0x9ff);
+		bus_space_write_2(ess->st, ess->sh, PORT_GPIO_DIR,
+		    bus_space_read_2(ess->st, ess->sh, PORT_GPIO_DIR) |
+			0x600);
+		bus_space_write_2(ess->st, ess->sh, PORT_GPIO_DATA,
+		    0x200);
 	}
 
 	DUMPREG(ess);
@@ -646,6 +674,7 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 	struct esm_chinfo *ch = &ess->pch;
 	struct esm_dma *p;
 	int pan = 0, choffset;
+	int i, nch = 1;
 	unsigned speed = ch->sample_rate, offset, wpwa, dv;
 	size_t size;
 	u_int16_t apuch = ch->num << 1;
@@ -693,8 +722,11 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 		offset >>= 1;
 		/* FALLTHROUGH */
 	case APUTYPE_8BITSTEREO:
-		pan = 8;
-		apuch++;
+		if (ess->codec_flags & AC97_HOST_SWAPPED_CHANNELS)
+			pan = 8;
+		else
+			pan = -8;
+		nch++;
 		break;
 	case APUTYPE_8BITLINEAR:
 		ess->pch.apublk <<= 1;
@@ -711,26 +743,27 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 	dv = (((speed % 48000) << 16) + 24000) / 48000
 	    + ((speed / 48000) << 16);
 
-	do {
-		wp_wrapu(ess, apuch, APUREG_WAVESPACE, wpwa & 0xff00);
-		wp_wrapu(ess, apuch, APUREG_CURPTR, offset);
-		wp_wrapu(ess, apuch, APUREG_ENDPTR, offset + size);
-		wp_wrapu(ess, apuch, APUREG_LOOPLEN, size - 1);
-		wp_wrapu(ess, apuch, APUREG_AMPLITUDE, 0xe800);
-		wp_wrapu(ess, apuch, APUREG_POSITION, 0x8f00
+	for (i = nch-1; i >= 0; i--) {
+		wp_wrapu(ess, apuch + i, APUREG_WAVESPACE, wpwa & 0xff00);
+		wp_wrapu(ess, apuch + i, APUREG_CURPTR, offset);
+		wp_wrapu(ess, apuch + i, APUREG_ENDPTR, offset + size);
+		wp_wrapu(ess, apuch + i, APUREG_LOOPLEN, size - 1);
+		wp_wrapu(ess, apuch + i, APUREG_AMPLITUDE, 0xe800);
+		wp_wrapu(ess, apuch + i, APUREG_POSITION, 0x8f00
 		    | (RADIUS_CENTERCIRCLE << APU_RADIUS_SHIFT)
 		    | ((PAN_FRONT + pan) << APU_PAN_SHIFT));
-		wp_wrapu(ess, apuch, APUREG_FREQ_LOBYTE, APU_plus6dB
+		wp_wrapu(ess, apuch + i, APUREG_FREQ_LOBYTE, APU_plus6dB
 		    | ((dv & 0xff) << APU_FREQ_LOBYTE_SHIFT));
-		wp_wrapu(ess, apuch, APUREG_FREQ_HIWORD, dv >> 8);
+		wp_wrapu(ess, apuch + i, APUREG_FREQ_HIWORD, dv >> 8);
 
 		if (ch->aputype == APUTYPE_16BITSTEREO)
 			wpwa |= APU_STEREO >> 1;
 		pan = -pan;
-	} while (pan < 0 && apuch--);
+	}
 
 	wc_wrchctl(ess, apuch, ch->wcreg_tpl);
-	wc_wrchctl(ess, apuch + 1, ch->wcreg_tpl);
+	if (nch > 1)
+		wc_wrchctl(ess, apuch + 1, ch->wcreg_tpl);
 
 	wp_wrapu(ess, apuch, APUREG_APUTYPE,
 	    (ch->aputype << APU_APUTYPE_SHIFT) | APU_DMA_ENABLED | 0xf);
@@ -1289,6 +1322,11 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	ess->pc = pc;
 	ess->subid = pci_conf_read(pc, tag, PCI_SUBSYS_ID_REG);
 
+	DPRINTF(ESM_DEBUG_PCI,
+	    ("%s: sub-system vendor 0x%4.4x, product 0x%4.4x\n",
+	    ess->sc_dev.dv_xname,
+	    PCI_VENDOR(ess->subid), PCI_PRODUCT(ess->subid)));
+
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		printf("%s: can't map interrupt\n", ess->sc_dev.dv_xname);
@@ -1335,12 +1373,23 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/*
+	 * Some cards and Notebooks appear to have left and right channels
+	 * reversed.  Check if there is a corresponding quirk entry for
+	 * the subsystem vendor and product and if so, set the appropriate
+	 * codec flag.
+	 */
+	if (esm_get_quirks(ess->subid) & ESM_QUIRKF_SWAPPEDCH) {
+		ess->codec_flags |= AC97_HOST_SWAPPED_CHANNELS;
+	}
+
 	/* initialize AC97 host interface */
 	ess->host_if.arg = self;
 	ess->host_if.attach = esm_attach_codec;
 	ess->host_if.read = esm_read_codec;
 	ess->host_if.write = esm_write_codec;
 	ess->host_if.reset = esm_reset_codec;
+	ess->host_if.flags = esm_flags_codec;
 
 	if (ac97_attach(&ess->host_if) != 0)
 		return;
