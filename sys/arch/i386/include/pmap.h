@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.4 (Berkeley) 5/12/91
- *	$Id: pmap.h,v 1.10 1994/08/15 14:49:15 mycroft Exp $
+ *	$Id: pmap.h,v 1.11 1994/09/07 20:48:52 mycroft Exp $
  */
 
 /*
@@ -78,6 +78,11 @@ extern pd_entry_t	PTD[], APTD[], PTDpde, APTDpde, Upde;
 extern pt_entry_t	*Sysmap;
 
 extern int	IdlePTD;	/* physical address of "Idle" state directory */
+
+void pmap_bootstrap __P((vm_offset_t start));
+boolean_t pmap_testbit __P((vm_offset_t, int));
+void pmap_changebit __P((vm_offset_t, int, int));
+__pure u_int pmap_page_index __P((vm_offset_t));
 #endif
 
 /*
@@ -106,7 +111,7 @@ extern int	IdlePTD;	/* physical address of "Idle" state directory */
 /*
  * Pmap stuff
  */
-struct pmap {
+typedef struct pmap {
 	pd_entry_t		*pm_pdir;	/* KVA of page directory */
 	boolean_t		pm_pdchanged;	/* pdir changed */
 	short			pm_dref;	/* page directory ref count */
@@ -114,47 +119,84 @@ struct pmap {
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	long			pm_ptpages;	/* more stats: PT pages */
-};
-
-typedef struct pmap	*pmap_t;
-
-#ifdef KERNEL
-extern pmap_t		kernel_pmap;
-#endif
-
-/*
- * Macros for speed
- */
-#define PMAP_ACTIVATE(pmapp, pcbp) \
-	if ((pmapp) != NULL /*&& (pmapp)->pm_pdchanged */) {  \
-		(pcbp)->pcb_cr3 = \
-		    pmap_extract(kernel_pmap, (vm_offset_t)(pmapp)->pm_pdir); \
-		if ((pmapp) == &curproc->p_vmspace->vm_pmap) \
-			lcr3((pcbp)->pcb_cr3); \
-		(pmapp)->pm_pdchanged = FALSE; \
-	}
-
-#define PMAP_DEACTIVATE(pmapp, pcbp)
+} *pmap_t;
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
- * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
+ * mappings of that page.  An entry is a pv_entry, the list is pv_table.
  */
-typedef struct pv_entry {
+struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	pmap_t		pv_pmap;	/* pmap where mapping lies */
 	vm_offset_t	pv_va;		/* virtual address for mapping */
-	int		pv_flags;	/* flags */
-} *pv_entry_t;
+};
+
+struct pv_page;
+
+struct pv_page_info {
+	TAILQ_ENTRY(pv_page) pgi_list;
+	struct pv_entry *pgi_freelist;
+	int pgi_nfree;
+};
+
+/*
+ * This is basically:
+ * ((NBPG - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
+ */
+#define	NPVPPG	340
+
+struct pv_page {
+	struct pv_page_info pvp_pgi;
+	struct pv_entry pvp_pv[NPVPPG];
+};
 
 #ifdef	KERNEL
-
-pv_entry_t	pv_table;		/* array of entries, one per page */
-
-#define pa_to_pvh(pa)	(&pv_table[pmap_page_index(pa)])
-void pmap_bootstrap __P((vm_offset_t start));
+extern pmap_t	kernel_pmap;
+struct pv_entry	*pv_table;		/* array of entries, one per page */
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+
+static __inline void
+pmap_clear_modify(vm_offset_t pa)
+{
+	pmap_changebit(pa, 0, ~PG_M);
+}
+
+static __inline void
+pmap_clear_reference(vm_offset_t pa)
+{
+	pmap_changebit(pa, 0, ~PG_U);
+}
+
+static __inline void
+pmap_copy_on_write(vm_offset_t pa)
+{
+	pmap_changebit(pa, PG_RO, ~PG_RW);
+}
+
+static __inline boolean_t
+pmap_is_modified(vm_offset_t pa)
+{
+	return pmap_testbit(pa, PG_M);
+}
+
+static __inline boolean_t
+pmap_is_referenced(vm_offset_t pa)
+{
+	return pmap_testbit(pa, PG_U);
+}
+
+static __inline vm_offset_t
+pmap_phys_address(int ppn)
+{
+	return i386_ptob(ppn);
+}
+
+static __inline void
+pmap_update(void)
+{
+	__asm __volatile("movl %%cr3,%%eax\n\tmovl %%eax,%%cr3" : : : "%eax");
+}
 
 #endif	/* KERNEL */
 
