@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.17 2000/02/23 03:44:03 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.18 2000/02/24 04:39:41 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -477,9 +477,16 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		if (raidPtr->raid_cinfo[row][col].ci_vp != NULL) {
 			printf("Closed the open device: %s\n",
 			       raidPtr->Disks[row][col].devname);
-			VOP_UNLOCK(raidPtr->raid_cinfo[row][col].ci_vp, 0);
-			(void) vn_close(raidPtr->raid_cinfo[row][col].ci_vp,
+			if (raidPtr->Disks[row][col].auto_configured == 1) {
+				VOP_CLOSE(raidPtr->raid_cinfo[row][col].ci_vp, 
+					  FREAD, NOCRED, 0);
+				vput(raidPtr->raid_cinfo[row][col].ci_vp);
+
+			} else {
+				VOP_UNLOCK(raidPtr->raid_cinfo[row][col].ci_vp, 0);
+				(void) vn_close(raidPtr->raid_cinfo[row][col].ci_vp,
 					FREAD | FWRITE, proc->p_ucred, proc);
+			}
 			raidPtr->raid_cinfo[row][col].ci_vp = NULL;
 		}
 		printf("About to (re-)open the device for rebuilding: %s\n",
