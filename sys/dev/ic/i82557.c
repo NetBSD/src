@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.2 1999/08/03 22:43:28 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.3 1999/08/03 23:18:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ void	fxp_mdi_write __P((struct device *, int, int, int));
 void	fxp_read_eeprom __P((struct fxp_softc *, u_int16_t *, int, int));
 void	fxp_get_info __P((struct fxp_softc *, u_int8_t *));
 void	fxp_tick __P((void *));
-void	fxp_mc_setup __P((struct fxp_softc *, int));
+void	fxp_mc_setup __P((struct fxp_softc *));
 
 void	fxp_shutdown __P((void *));
 
@@ -563,7 +563,7 @@ fxp_start(ifp)
 	/*
 	 * If we need multicast setup, bail out now.
 	 */
-	if (sc->sc_flags & (FXPF_NEEDMCSETUP|FXPF_DOINGMCSETUP)) {
+	if (sc->sc_flags & FXPF_NEEDMCSETUP) {
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
@@ -732,7 +732,6 @@ fxp_intr(arg)
 {
 	struct fxp_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct fxp_cb_mcs *mcsp;
 	struct fxp_cb_tx *txd;
 	struct fxp_txsoft *txs;
 	int i, oflags, claimed = 0;
@@ -831,26 +830,6 @@ fxp_intr(arg)
 		 */
 		if (statack & FXP_SCB_STATACK_CNA) {
 			ifp->if_flags &= ~IFF_OACTIVE;
-
-			/*
-			 * Check for multicast setup completion.
-			 */
-			if (sc->sc_flags & FXPF_DOINGMCSETUP) {
-#ifdef DIAGNOSTIC
-				if (sc->sc_txpending)
-					panic("fxp_intr: doing mcsetup and "
-					    "txpending");
-#endif
-				mcsp = &sc->sc_control_data->fcd_mcscb;
-				if ((mcsp->cb_status & FXP_CB_STATUS_C) == 0) {
-					printf("%s: mcsetup interrupt but not "
-					    "complete\n", sc->sc_dev.dv_xname);
-					fxp_init(sc);
-					return (claimed);
-				}
-				sc->sc_flags &= ~FXPF_DOINGMCSETUP;
-			}
-
 			for (i = sc->sc_txdirty; sc->sc_txpending != 0;
 			     i = FXP_NEXTTX(i), sc->sc_txpending--) {
 				txd = FXP_CDTX(sc, i);
@@ -888,7 +867,7 @@ fxp_intr(arg)
 				 */
 				if (sc->sc_flags & FXPF_NEEDMCSETUP) {
 					oflags = ifp->if_flags;
-					fxp_mc_setup(sc, 0);
+					fxp_mc_setup(sc);
 
 					/*
 					 * If IFF_ALLMULTI state changed,
@@ -975,7 +954,7 @@ fxp_tick(arg)
 	 */
 	if (sc->rx_idle_secs > FXP_MAX_RX_IDLE) {
 		sc->rx_idle_secs = 0;
-		fxp_mc_setup(sc, 0);
+		fxp_mc_setup(sc);
 	}
 	/*
 	 * If there is no pending command, start another stats
@@ -1103,12 +1082,8 @@ fxp_watchdog(ifp)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 
-	if (sc->sc_flags & FXPF_DOINGMCSETUP)
-		printf("%s: mcsetup timed out\n", sc->sc_dev.dv_xname);
-	else {
-		printf("%s: device timeout\n", sc->sc_dev.dv_xname);
-		ifp->if_oerrors++;
-	}
+	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+	ifp->if_oerrors++;
 
 	fxp_init(sc);
 }
@@ -1148,7 +1123,7 @@ fxp_init(sc)
 	 * Initialize the multicast filter.  Do this now, since we might
 	 * have to setup the config block differently.
 	 */
-	fxp_mc_setup(sc, 1);
+	fxp_mc_setup(sc);
 
 	prm = (ifp->if_flags & IFF_PROMISC) ? 1 : 0;
 	allm = (ifp->if_flags & IFF_ALLMULTI) ? 1 : 0;
@@ -1604,7 +1579,7 @@ fxp_ioctl(ifp, command, data)
 			 * filter accordingly.
 			 */
 			oflags = ifp->if_flags;
-			fxp_mc_setup(sc, 0);
+			fxp_mc_setup(sc);
 
 			/*
 			 * If IFF_ALLMULTI state changed, we need to
@@ -1637,9 +1612,8 @@ fxp_ioctl(ifp, command, data)
  * This function must be called at splnet().
  */
 void
-fxp_mc_setup(sc, poll)
+fxp_mc_setup(sc)
 	struct fxp_softc *sc;
-	int poll;
 {
 	struct fxp_cb_mcs *mcsp = &sc->sc_control_data->fcd_mcscb;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1653,10 +1627,6 @@ fxp_mc_setup(sc, poll)
 	 * complete.  fxp_intr() will call us when they've drained.
 	 */
 	if (sc->sc_txpending) {
-#ifdef DIAGNOSTIC
-		if (poll)
-			panic("fxp_mc_setup: poll and txpending");
-#endif
 		sc->sc_flags |= FXPF_NEEDMCSETUP;
 		return;
 	}
@@ -1697,14 +1667,8 @@ fxp_mc_setup(sc, poll)
 	}
 
 	mcsp->cb_status = 0;
-	if (poll) {
-		mcsp->cb_command = FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_EL;
-		mcsp->link_addr = -1;
-	} else {
-		mcsp->cb_command = FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_S |
-		    FXP_CB_COMMAND_I;
-		mcsp->link_addr = FXP_CDTXADDR(sc, FXP_NEXTTX(sc->sc_txlast));
-	}
+	mcsp->cb_command = FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_S;
+	mcsp->link_addr = FXP_CDTXADDR(sc, FXP_NEXTTX(sc->sc_txlast));
 	mcsp->mc_cnt = nmcasts * ETHER_ADDR_LEN;
 
 	FXP_CDMCSSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -1724,16 +1688,9 @@ fxp_mc_setup(sc, poll)
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDMCSOFF);
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
 
-	if (poll) {
-		do {
-			FXP_CDMCSSYNC(sc,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		} while ((mcsp->cb_status & FXP_CB_STATUS_C) == 0);
-	} else {
-		sc->sc_flags |= FXPF_DOINGMCSETUP;
-		ifp->if_flags |= IFF_OACTIVE;
-
-		/* Set a watchdog timer in case the chip flakes out. */
-		ifp->if_timer = 5;
-	}
+	/* ...and wait for it to complete. */
+	do {
+		FXP_CDMCSSYNC(sc,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	} while ((mcsp->cb_status & FXP_CB_STATUS_C) == 0);
 }
