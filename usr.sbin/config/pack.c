@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.9 2000/10/02 19:48:35 cgd Exp $	*/
+/*	$NetBSD: pack.c,v 1.10 2001/07/01 02:46:47 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -353,14 +353,20 @@ static void
 packlocs(void)
 {
 	struct devi **p, *i;
-	int l, o;
+	int l,o;
+	extern int Pflag;
 
 	qsort(packed, npacked, sizeof *packed, loclencmp);
 	for (p = packed; (i = *p) != NULL; p++) {
 		if ((l = i->i_atattr->a_loclen) > 0) {
-			o = findvec(i->i_locs, LOCHASH(i->i_locs[l - 1]), l,
+			if (Pflag) {
+				o = findvec(i->i_locs, 
+				    LOCHASH(i->i_locs[l - 1]), l,
 				    samelocs, locators.used);
-			i->i_locoff = o < 0 ? addlocs(i->i_locs, l) : o;
+				i->i_locoff = o < 0 ?
+				    addlocs(i->i_locs, l) : o;
+			} else
+				i->i_locoff = addlocs(i->i_locs, l);
 		} else
 			i->i_locoff = -1;
 	}
