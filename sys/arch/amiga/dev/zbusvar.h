@@ -1,4 +1,4 @@
-/*	$NetBSD: zbusvar.h,v 1.5 2002/04/25 09:20:32 aymeric Exp $	*/
+/*	$NetBSD: zbusvar.h,v 1.6 2003/04/09 01:54:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -74,7 +74,7 @@ extern u_int		ZBUSAVAIL;	/* bytes of Zorro bus I/O space left */
 #define isztwopa(pa) ((u_int)(pa) >= ZTWOROMBASE && (u_int)(pa) <= ZTWOROMTOP)
 #define isztwomem(kva) \
     (ZTWOMEMADDR && (u_int)(kva) >= ZTWOMEMADDR && \
-    (u_int)(kva) < (ZTWOMEMADDR + NZTWOMEMPG * NBPG))
+    (u_int)(kva) < (ZTWOMEMADDR + NZTWOMEMPG * PAGE_SIZE))
 
 #define ZTHREEBASE	(0x40000000)
 #define ZTHREETOP	((u_long)0x80000000)

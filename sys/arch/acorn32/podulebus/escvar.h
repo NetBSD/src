@@ -1,4 +1,4 @@
-/* $NetBSD: escvar.h,v 1.3 2002/10/05 17:16:34 chs Exp $ */
+/* $NetBSD: escvar.h,v 1.4 2003/04/09 01:54:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -41,7 +41,7 @@
  * MAXCHAIN is the anticipated maximum number of chain blocks needed. This
  * assumes that we are NEVER requested to transfer more than MAXPHYS bytes.
  */
-#define MAXCHAIN	(MAXPHYS/NBPG+2)
+#define MAXCHAIN	(MAXPHYS/PAGE_SIZE+2)
 
 /*
  * Maximum number of requests standing by. Could be anything, but I think 9
