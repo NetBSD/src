@@ -1,6 +1,6 @@
-.\" $NetBSD: usb.4,v 1.56 2002/08/20 16:37:47 wiz Exp $
+.\" $NetBSD: usb.4,v 1.57 2002/09/27 22:31:44 wiz Exp $
 .\"
-.\" Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 12, 1998
+.Dd September 27, 2002
 .Dt USB 4
 .Os
 .Sh NAME
@@ -54,6 +54,8 @@
 .Cd "uhub*   at usb?"
 .Cd "uhub*   at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
 .Cd "XX*     at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
+.Pp
+.Cd options USBVERBOSE
 .Pp
 .Cd "#include \*[Lt]dev/usb/usb.h\*[Gt]"
 .Cd "#include \*[Lt]dev/usb/usbhid.h\*[Gt]"
