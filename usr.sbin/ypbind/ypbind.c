@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.48 2003/09/05 14:59:37 bouyer Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.49 2003/11/17 21:29:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.48 2003/09/05 14:59:37 bouyer Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.49 2003/11/17 21:29:21 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -86,7 +86,6 @@ struct _dom_binding {
 	struct _dom_binding *dom_pnext;
 	char dom_domain[YPMAXDOMAIN + 1];
 	struct sockaddr_in dom_server_addr;
-	unsigned short int dom_server_port;
 	int dom_socket;
 	CLIENT *dom_client;
 	long dom_vers;
@@ -316,7 +315,7 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 	res.ypbind_respbody.ypbind_bindinfo.ypbind_binding_addr.s_addr =
 		ypdb->dom_server_addr.sin_addr.s_addr;
 	res.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port =
-		ypdb->dom_server_port;
+		ypdb->dom_server_addr.sin_port;
 #ifdef DEBUG
 	if (debug)
 		printf("domain %s at %s/%d\n", ypdb->dom_domain,
