@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.14 1997/05/25 12:40:13 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.15 1997/05/26 17:57:21 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_fil.c,v 1.14 1997/05/25 12:40:13 darrenr Exp $";
+static	char	rcsid[] = "$Id: ip_fil.c,v 1.15 1997/05/26 17:57:21 darrenr Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -589,7 +589,7 @@ caddr_t data;
  * routines below for saving IP headers to buffer
  */
 int iplopen(dev, flags
-#if ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || (NetBSD >= 199511) || \
+# if ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || (NetBSD >= 199511) || \
      (__FreeBSD_version >= 220000)) && defined(_KERNEL)
 , devtype, p)
 int devtype;
@@ -611,7 +611,7 @@ int flags;
 
 
 int iplclose(dev, flags
-#if ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || (NetBSD >= 199511) || \
+# if ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || (NetBSD >= 199511) || \
      (__FreeBSD_version >= 220000)) && defined(_KERNEL)
 , devtype, p)
 int devtype;
@@ -784,9 +784,9 @@ struct tcpiphdr *ti;
 	struct tcphdr *tcp;
 	struct mbuf *m;
 	int tlen = 0;
-#if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
+# if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
 	struct route ro;
-#endif
+# endif
 
 	if (ti->ti_flags & TH_RST)
 		return -1;		/* feedback loop */
@@ -798,8 +798,6 @@ struct tcpiphdr *ti;
 # endif
 	if (m == NULL)
 		return -1;
-#if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
-#endif
 
 	if (ti->ti_flags & TH_SYN)
 		tlen = 1;
@@ -833,17 +831,17 @@ struct tcpiphdr *ti;
 	ip->ip_ttl = ip_defttl;
 # endif
 
-#if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
+# if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
 	bzero((char *)&ro, sizeof(ro));
 	(void) ip_output(m, (struct mbuf *)0, &ro, 0, 0);
 	if (ro.ro_rt)
 		RTFREE(ro.ro_rt);
-#else
+# else
 	/*
 	 * extra 0 in case of multicast
 	 */
 	(void) ip_output(m, (struct mbuf *)0, 0, 0, 0);
-#endif
+# endif
 	return 0;
 }
 
@@ -863,7 +861,6 @@ iplinit()
 	(void) ipfilterattach();
 	ip_init();
 }
-#  endif
 # endif /* ! __NetBSD__ */
 
 
