@@ -1,4 +1,4 @@
-/*	$Id: err.c,v 1.1 2001/12/11 21:17:59 tv Exp $	*/
+/*	$Id: err.c,v 1.2 2002/01/04 14:28:05 lukem Exp $	*/
 
 /*
  * Copyright 1997-2000 Luke Mewburn <lukem@netbsd.org>.
@@ -34,6 +34,8 @@
 #endif
 
 #ifndef HAVE_ERRX
+#include <errno.h>
+#include <stdarg.h>
 #include <stdlib.h>
 
 void
