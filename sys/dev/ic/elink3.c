@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.54.2.2 2000/02/06 17:39:39 he Exp $	*/
+/*	$NetBSD: elink3.c,v 1.54.2.3 2000/05/11 09:59:52 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -744,7 +744,7 @@ epinit(sc)
 	 */
 	epstop(sc);
 
-	if (sc->bustype != ELINK_BUS_PCI) {
+	if (sc->bustype != ELINK_BUS_PCI && sc->bustype != ELINK_BUS_EISA) {
 		GO_WINDOW(0);
 		bus_space_write_2(iot, ioh, ELINK_W0_CONFIG_CTRL, 0);
 		bus_space_write_2(iot, ioh, ELINK_W0_CONFIG_CTRL,
