@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.18 1995/09/07 21:49:01 fvdl Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.19 1995/09/13 21:51:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -700,7 +700,6 @@ linux_readdir(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-
 	SCARG(uap, count) = 1;
 	return linux_getdents(p, uap, retval);
 }
@@ -799,6 +798,7 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("linux_readdir");
+		off += reclen;
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			continue;
@@ -815,7 +815,7 @@ again:
 		 * the copyout() call).
 		 */
 		idb.d_ino = (long)bdp->d_fileno;
-		idb.d_off = off;
+		idb.d_off = off - reclen;
 		/*
 		 * The old readdir() call used the reclen field as namlen.
 		 */
@@ -825,7 +825,6 @@ again:
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
-		off += reclen;
 		/* advance output past Linux-shaped entry */
 		outp += linuxreclen;
 		resid -= linuxreclen;
