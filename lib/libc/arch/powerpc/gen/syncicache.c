@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.6 2002/03/12 22:08:21 eeh Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.7 2002/03/13 00:57:53 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -69,16 +69,9 @@ getcachelinesize(void)
 	static int cacheinfomib[] = { CTL_MACHDEP, CPU_CACHEINFO };
 	size_t clen = sizeof(_cache_info);
 
-extern int printf(char *, ...);
 	if (sysctl(cacheinfomib, sizeof(cacheinfomib) / sizeof(cacheinfomib[0]),
 		&_cache_info, &clen, NULL, 0) == 0) {
 		_cachelinesize = _cache_info.dcache_line_size;
-printf("getcachelinesize: d$ line %d d$ sz\n",
-	_cache_info.dcache_line_size,
-	_cache_info.dcache_size);
-printf("getcachelinesize: i$ line %d i$ sz\n",
-	_cache_info.dcache_line_size,
-	_cache_info.dcache_size);
 		return;
 	}
 
@@ -88,8 +81,6 @@ printf("getcachelinesize: i$ line %d i$ sz\n",
 		   &_cachelinesize, &clen, NULL, 0) < 0
 	    || !_cachelinesize)
 		abort();
-
-printf("getcachelinesize: old linesz %d\n", _cachelinesize);
 
 	_cache_info.dcache_size = _cachelinesize;
 	_cache_info.dcache_line_size = _cachelinesize;
