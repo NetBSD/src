@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.1.2.1 2002/01/24 02:35:31 petrov Exp $ */
+/*	$NetBSD: _lwp.c,v 1.1.2.2 2002/09/10 01:04:32 petrov Exp $ */
 
 #include <sys/types.h>
 #include <ucontext.h>
@@ -28,7 +28,7 @@ void _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 
 	sp[8]  = (ulong) arg;
 	sp[14] = (ulong)((caddr_t)sp - 2047);
-	sp[15] = (ulong)(_lwp_exit - 8);
+	sp[15] = (ulong)((caddr_t)_lwp_exit - 8);
 
 	sp = (ulong *)((caddr_t)sp - 2047);
 
