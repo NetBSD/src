@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlutil.c,v 1.2 2003/12/04 20:07:59 atatat Exp $ */
+/*	$NetBSD: sysctlutil.c,v 1.3 2004/02/19 03:16:24 atatat Exp $ */
 
 #include <sys/param.h>
 #define __USE_NEW_SYSCTL
@@ -81,11 +81,16 @@ learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
 	pnode->sysctl_clen = 0;
 	pnode->sysctl_csize = 0;
 	rc = sysctl(name, namelen + 1, pnode->sysctl_child, &sz, NULL, 0);
-	if (sz == 0)
+	if (sz == 0) {
+		free(pnode->sysctl_child);
+		pnode->sysctl_child = NULL;
 		return (rc);
+	}
 	if (rc) {
 		free(pnode->sysctl_child);
 		pnode->sysctl_child = NULL;
+		if ((sz % sizeof(struct sysctlnode)) != 0)
+			errno = EINVAL;
 		if (errno != ENOMEM)
 			return (rc);
 	}
@@ -108,6 +113,12 @@ learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
 	 */
 	pnode->sysctl_clen = sz / sizeof(struct sysctlnode);
 	pnode->sysctl_csize = sz / sizeof(struct sysctlnode);
+	if (pnode->sysctl_clen * sizeof(struct sysctlnode) != sz) {
+		free(pnode->sysctl_child);
+		pnode->sysctl_child = NULL;
+		errno = EINVAL;
+		return (-1);
+	}
 
 	/*
 	 * you know, the kernel doesn't really keep them in any
