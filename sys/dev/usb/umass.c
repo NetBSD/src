@@ -1,4 +1,5 @@
-/*	$NetBSD: umass.c,v 1.8 1999/08/29 20:41:12 thorpej Exp $	*/
+#define	UMASS_DEBUG
+/*	$NetBSD: umass.c,v 1.9 1999/08/30 01:04:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +125,7 @@
 #define UDMASS_USB	0x00040000
 #define UDMASS_BULK	0x00080000
 #define UDMASS_ALL	0xffff0000
-int umassdebug = /* UDMASS_SCSI|UDMASS_BULK|UDMASS_USB */ 0;
+int umassdebug = /* UDMASS_SCSI|UDMASS_BULK|UDMASS_USB */ UDMASS_USB;
 #else
 #define	DPRINTF(m, x)
 #endif
@@ -140,6 +141,10 @@ typedef struct umass_softc {
 
 	struct scsipi_link	sc_link;	/* prototype for devs */
 	struct scsipi_adapter	sc_adapter;
+
+	bdevice			*sc_child;	/* child device, for detach */
+
+	char			sc_dying;
 } umass_softc_t;
 
 #define USBD_COMMAND_FAILED	USBD_INVAL	/* redefine some errors for */
@@ -209,8 +214,8 @@ struct scsipi_device umass_dev = {
 	NULL,			/* Use default `done' routine */
 };
 
-void	umass_minphys		__P((struct buf *));
-int	umass_scsi_cmd		__P((struct scsipi_xfer *));
+void	umass_scsipi_minphys	__P((struct buf *));
+int	umass_scsipi_scsi_cmd	__P((struct scsipi_xfer *));
 
 
 
@@ -307,9 +312,9 @@ USB_ATTACH(umass)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	/* attach the device to the SCSI layer */
-	sc->sc_adapter.scsipi_cmd = umass_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = umass_minphys;
+	/* attach the device to the SCSIPI layer */
+	sc->sc_adapter.scsipi_cmd = umass_scsipi_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = umass_scsipi_minphys;
 
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
@@ -321,7 +326,8 @@ USB_ATTACH(umass)
 	sc->sc_link.scsipi_scsi.max_lun = maxlun;
 	sc->sc_link.type = BUS_SCSI;
 
-	if (config_found(&sc->sc_dev, &sc->sc_link, scsiprint) == NULL) {
+	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	if (sc->sc_child == NULL) {
 		usbd_close_pipe(sc->sc_bulkout_pipe);
 		usbd_close_pipe(sc->sc_bulkin_pipe);
 		/* XXX Not really an error. */
@@ -336,18 +342,28 @@ umass_activate(self, act)
 	struct device *self;
 	enum devact act;
 {
+	struct umass_softc *sc = (struct umass_softc *) self;
+	int rv = 0;
+
+	DPRINTF(UDMASS_USB, ("%s: umass_activate: %d\n",
+	    USBDEVNAME(sc->sc_dev), act));
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
+		rv = EOPNOTSUPP;
 		break;
 
 	case DVACT_DEACTIVATE:
-		/* XXX Not supported yet. */
-		return (EOPNOTSUPP);
+		if (sc->sc_child != NULL)
+			break;
+		rv = config_deactivate(sc->sc_child);
+		DPRINTF(UDMASS_USB, ("%s: umass_activate: child "
+		    "returned %d\n", USBDEVNAME(sc->sc_dev), rv));
+		if (rv == 0)
+			sc->sc_dying = 1;
 		break;
 	}
-	return (0);
+	return (rv);
 }
 
 int
@@ -355,9 +371,23 @@ umass_detach(self, flags)
 	struct device *self;
 	int flags;
 {
+	struct umass_softc *sc = (struct umass_softc *) self;
+	int rv = 0;
 
-	/* XXX Not supported yet. */
-	return (EOPNOTSUPP);
+	DPRINTF(UDMASS_USB, ("%s: umass_detach: flags 0x%x\n",
+	    USBDEVNAME(sc->sc_dev), flags));
+
+	if (sc->sc_child != NULL)
+		rv = config_detach(sc->sc_child, flags);
+	
+	if (rv == 0) {
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
+		usbd_close_pipe(sc->sc_bulkin_pipe);
+		usbd_abort_pipe(sc->sc_bulkout_pipe);
+		usbd_close_pipe(sc->sc_bulkout_pipe);
+	}
+
+	return (rv);
 }
 
 /* Performs a request over a pipe.
@@ -712,7 +742,7 @@ umass_bulk_transfer(umass_softc_t *sc, int lun, void *cmd, int cmdlen,
  */
 
 int
-umass_scsi_cmd(xs)
+umass_scsipi_scsi_cmd(xs)
 	struct scsipi_xfer *xs;
 {
 	struct scsipi_link *sc_link = xs->sc_link;
@@ -725,12 +755,10 @@ umass_scsi_cmd(xs)
 	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun));
 
 #ifdef UMASS_DEBUG
-	if (sc_link->scsipi_scsi.target != UMASS_SCSIID_DEVICE ||
-	    sc_link->scsipi_scsi.lun != 0) {
-		DPRINTF(UDMASS_SCSI, ("%s: Wrong SCSI ID %d or LUN %d\n",
+	if (sc_link->scsipi_scsi.target != UMASS_SCSIID_DEVICE) {
+		DPRINTF(UDMASS_SCSI, ("%s: Wrong SCSI ID %d\n",
 		    USBDEVNAME(sc->sc_dev),
-		    sc_link->scsipi_scsi.target,
-		    sc_link->scsipi_scsi.lun));
+		    sc_link->scsipi_scsi.target));
 		xs->error = XS_DRIVER_STUFFUP;
 		return (COMPLETE);
 	}
@@ -785,7 +813,7 @@ umass_scsi_cmd(xs)
 }
 
 void
-umass_minphys(bp)
+umass_scsipi_minphys(bp)
 	struct buf *bp;
 {
 
