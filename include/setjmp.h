@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.10 1994/12/10 11:42:26 jtc Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.11 1994/12/20 10:35:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,39 +43,13 @@
 #ifndef _SETJMP_H_
 #define _SETJMP_H_
 
-#if defined(mc68000) || defined(__mc68000__)
-#define _JBLEN	17
-#endif
-
-#if defined(i386) || defined(__i386__)
-#define _JBLEN	10
-#endif
-
-#if defined(mips) || defined(__mips__)
-#define _JBLEN	83
-#endif
-
-#if defined(sparc) || defined(__sparc__)
-#define _JBLEN	10
-#endif
-
-#if defined(tahoe) || defined(__tahoe__)
-#define _JBLEN	10
-#endif
-
-#if defined(vax) || defined(__vax__)
-#define _JBLEN	10
-#endif
-
-#if defined(pc532) || defined(__pc532__)
-#define _JBLEN	10
-#endif
+#include <machine/setjmp.h>
 
 #ifndef _ANSI_SOURCE
-typedef int sigjmp_buf[_JBLEN + 1];
+typedef long sigjmp_buf[_JBLEN + 1];
 #endif /* not ANSI */
 
-typedef int jmp_buf[_JBLEN];
+typedef long jmp_buf[_JBLEN];
 
 #include <sys/cdefs.h>
 
