@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.9 1998/06/26 21:20:34 drochner Exp $
+# $NetBSD: files.wscons,v 1.10 1999/01/29 22:24:24 drochner Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -16,7 +16,8 @@ defopt	opt_wsemul.h	WSEMUL_DEFAULT WSEMUL_NO_DUMB
 	WSEMUL_SUN WSEMUL_VT100
 defopt	opt_wskernattr.h WS_KERNEL_FG WS_KERNEL_BG
 	WS_KERNEL_COLATTR WS_KERNEL_MONOATTR
-defopt	opt_wsdisplay_compat.h WSDISPLAY_COMPAT_USL WSDISPLAY_COMPAT_RAWKBD
+defopt	opt_wsdisplay_compat.h WSDISPLAY_COMPAT_USL WSCOMPAT_USL_SYNCTIMEOUT
+	WSDISPLAY_COMPAT_RAWKBD
 	WSDISPLAY_COMPAT_PCVT WSDISPLAY_COMPAT_SYSCONS
 
 # this loses, but there's no way to define attributes which have attributes
