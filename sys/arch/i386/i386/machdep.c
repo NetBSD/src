@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.492 2002/10/20 10:35:41 kanaoka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.493 2002/10/23 21:41:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.492 2002/10/20 10:35:41 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.493 2002/10/23 21:41:34 mycroft Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1400,19 +1400,26 @@ transmeta_cpu_info(struct cpu_info *ci)
 		printf("%s: %s\n", ci->ci_dev->dv_xname, info.text);
 	}
 
-	crusoe_longrun = tmx86_get_longrun_mode();
-	tmx86_get_longrun_status(&crusoe_frequency,
-	    &crusoe_voltage, &crusoe_percentage);
-	printf("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n", ci->ci_dev->dv_xname,
-	    crusoe_longrun, crusoe_frequency, crusoe_voltage,
-	    crusoe_percentage);
+	if (nreg >= 0x80860007) {
+		crusoe_longrun = tmx86_get_longrun_mode();
+		tmx86_get_longrun_status(&crusoe_frequency,
+		    &crusoe_voltage, &crusoe_percentage);
+		printf("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n",
+		    ci->ci_dev->dv_xname,
+		    crusoe_longrun, crusoe_frequency, crusoe_voltage,
+		    crusoe_percentage);
+	}
 }
 
 void
 transmeta_cpu_setup(struct cpu_info *ci)
 {
+	u_int regs[4], nreg = 0;
 
-	tmx86_has_longrun = 1;
+	do_cpuid(0x80860000, regs);
+	nreg = regs[0];
+	if (nreg >= 0x80860007)
+		tmx86_has_longrun = 1;
 }
 
 
