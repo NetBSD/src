@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.11 1994/03/01 07:58:28 glass Exp $
+ *	$Id: kern_xxx.c,v 1.12 1994/03/18 18:57:15 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -166,9 +166,9 @@ uname(p, uap, retval)
 	struct uname_args *uap;
 	int *retval;
 {
-	bcopy(hostname, utsname.nodename, sizeof(utsname.nodename));
-	utsname.nodename[sizeof(utsname.nodename)-1] = '\0';
-	return (copyout((caddr_t)&utsname, (caddr_t)uap->name, sizeof(struct utsname)));
+	strncpy(utsname.nodename, hostname, sizeof(utsname.nodename)-1);
+	return (copyout((caddr_t)&utsname, (caddr_t)uap->name,
+	    sizeof(struct utsname)));
 }
 
 struct reboot_args {
