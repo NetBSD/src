@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.26 1994/03/25 00:06:43 mycroft Exp $
+ *	$Id: icu.s,v 1.27 1994/03/25 00:45:42 mycroft Exp $
  */
 
 /*
@@ -211,13 +211,13 @@ test_clock:
 	addl	$12,%esp	# XXX discard dummies
 	FASTSPL($0)
 test_ast:
-	btrl	$SIR_AST,_sir		# signal handling, rescheduling, ...
-	jnc	2f
 	testb   $SEL_RPL_MASK,TF_CS(%esp)
-					# to non-kernel (i.e., user)?
-	jz	2f			# nope, leave
+	jz	1f
+	btrl	$SIR_AST,_sir
+	jnc	1f
+	/* Pushed T_ASTFLT into TF_TRAPNO on interrupt entry. */
 	call	_trap
-2:
+1:
 	INTRFASTEXIT
 
 /*
