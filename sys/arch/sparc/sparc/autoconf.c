@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.123 1999/09/17 20:04:52 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.124 1999/09/30 23:01:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -840,6 +840,13 @@ cpu_rootconf()
 	bootdv = bp == NULL ? NULL : bp->dev;
 	bootpartition = bp == NULL ? 0 : bp->val[2];
 
+#if 1
+	/*
+	 * Old bootpath code no longer works now that SCSI autoconfiguration
+	 * can be delayed.  device_register() is the One True Way.
+	 */
+	bootdv = altbootdev;
+#else
 	if (bootdv != altbootdev) {
 		int c;
 		printf("device_register boot device mismatch\n");
@@ -853,6 +860,7 @@ cpu_rootconf()
 		printf("\n");
 		cnpollc(0);
 	}
+#endif
 	setroot(bootdv, bootpartition);
 }
 
