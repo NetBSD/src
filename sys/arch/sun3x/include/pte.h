@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1.1.1 1997/01/14 20:57:05 gwr Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 1997/01/16 21:48:32 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,6 +34,13 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * This file should contain the machine-dependent details about
+ * Page Table Entries (PTEs) and related things.  For example,
+ * things that depend on the MMU configuration (number of levels
+ * in the translation structure) should go here.
  */
 
 #ifndef _MACHINE_PTE_H
@@ -77,6 +84,9 @@
 #define sun3x_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
 #define sun3x_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define sun3x_ptob(x)		((unsigned)(x) << PGSHIFT)
+
+#define	sun3x_round_up_page(x)\
+	((unsigned long) ((x) + MMU_PAGE_SIZE - 1) & MMU_PAGE_MASK)
 
 /* XXX - Not sure about these.  Use pmap_enter_kernel() instead? */
 #if 1 /* XXX */
