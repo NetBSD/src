@@ -1,3 +1,5 @@
+/* $NetBSD: ispppcontrol.c,v 1.2 2001/04/29 10:30:41 martin Exp $ */
+
 /*
  * Copyright (c) 1997 Joerg Wunsch
  *
@@ -24,18 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * From: spppcontrol.c,v 1.3 1998/01/07 07:55:26 charnier Exp
- *
- *---------------------------------------------------------------------------
- *
- *	last edit-date: [Fri May 12 16:34:01 2000]
- *
- *---------------------------------------------------------------------------
+ * From: ispppcontrol
  */
-
-#ifndef lint
-static const char rcsid[] =
-	"$Id: ispppcontrol.c,v 1.1.1.1 2001/01/06 13:00:11 martin Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -44,26 +36,9 @@ static const char rcsid[] =
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/sysctl.h>
-
 #include <net/if.h>
-
-#if (defined (__FreeBSD__) && __FreeBSD__ >= 3)
-#include <net/if_var.h>
-#endif
-
-#if defined (__FreeBSD__) || defined (__OpenBSD__)
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#include <net/slcompress.h>
-#endif
-
-#ifdef __NetBSD__
 #include <net/if_sppp.h>
-#else
-#include <machine/i4b_isppp.h>
-#endif
-
+#include <net/if_pppoe.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,15 +64,31 @@ main(int argc, char **argv)
 	int errs = 0, verbose = 0;
 	size_t off, len;
 	const char *ifname, *cp;
+	const char *eth_if_name, *access_concentrator, *service;
 	struct ifreq ifr;
 	struct spppreq spr;
 	int mib[2];
 	struct clockinfo clockinfo;
-	
-	while ((c = getopt(argc, argv, "v")) != -1)
+
+	eth_if_name = NULL;
+	access_concentrator = NULL;
+	service = NULL;
+	while ((c = getopt(argc, argv, "vde:s:a:")) != -1)
 		switch (c) {
 		case 'v':
 			verbose++;
+			break;
+
+		case 'e':
+			eth_if_name = optarg;
+			break;
+
+		case 's':
+			service = optarg;
+			break;
+
+		case 'a':
+			access_concentrator = optarg;
 			break;
 
 		default:
@@ -111,6 +102,7 @@ main(int argc, char **argv)
 		usage();
 
 	ifname = argv[0];
+	
 	strncpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
 
 	/* use a random AF to create the socket */
@@ -119,6 +111,30 @@ main(int argc, char **argv)
 
 	argc--;
 	argv++;
+
+	if (eth_if_name) {
+		struct pppoediscparms parms;
+		int e;
+
+		memset(&parms, 0, sizeof parms);
+		strncpy(parms.ifname, ifname, sizeof(parms.ifname));
+		strncpy(parms.eth_ifname, eth_if_name, sizeof(parms.eth_ifname));
+		if (access_concentrator) {
+			parms.ac_name = (char*)access_concentrator;
+			parms.ac_name_len = strlen(access_concentrator);
+		}
+		if (service) {
+			parms.service_name = (char*)service;
+			parms.service_name_len = strlen(service);
+		}
+
+		e = ioctl(s, PPPOESETPARMS, &parms);
+		if (e) {
+			fprintf(stderr, "%s: ioctl(PPPOESETPARMS): %s\n",
+			ifname, strerror(e));
+		}
+		return 0;
+	}
 
 	spr.cmd = (int)SPPPIOGDEFS;
 	ifr.ifr_data = (caddr_t)&spr;
