@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 1998/12/18 16:55:39 drochner Exp $ */
+/*	$NetBSD: conf.c,v 1.5 1999/06/04 13:58:59 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,6 +68,7 @@
 #include "st.h"
 #include "cd.h"
 #include "uk.h"
+#include "wd.h"
 #include "raid.h"
 
 #include "kbd.h"
@@ -102,7 +103,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
 	bdev_notdef(),			/* 10: SMD disk -- not this arch */
 	bdev_tape_init(NST,st),		/* 11: SCSI tape */
-	bdev_notdef(),			/* 12 */
+	bdev_disk_init(NWD,wd),		/* 12: IDE disk */
 	bdev_notdef(),			/* 13 */
 	bdev_notdef(),			/* 14 */
 	bdev_notdef(),			/* 15 */
@@ -147,7 +148,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 24: file descriptor pseudo-device */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 25: ip-filter device */
-	cdev_notdef(),			/* 26 */
+	cdev_disk_init(NWD,wd),		/* 26: IDE disk */
 	cdev_fb_init(NBWTWO,bwtwo),	/* 27: /dev/bwtwo */
 	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */
 	cdev_mouse_init(NKBD,kbd),	/* 29: /dev/kbd */
