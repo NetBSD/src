@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.11 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.12 1999/03/17 16:49:00 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -241,7 +241,7 @@ struct dlfs {
 #define LFS_MAX_ACTIVE          10
 /* Checksum -- last valid disk field. */
         u_int32_t dlfs_cksum;     /* 324: checksum for superblock checking */
-        int8_t    dlfs_pad[181];  /* 328: round to 512 bytes */
+        int8_t    dlfs_pad[184];  /* 328: round to 512 bytes */
 };
 
 /* Maximum number of io's we can have pending at once */
