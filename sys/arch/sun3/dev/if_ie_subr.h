@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_subr.h,v 1.1 1994/12/12 18:59:11 gwr Exp $	*/
+/*	$NetBSD: if_ie_subr.h,v 1.2 1994/12/15 21:08:11 gwr Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
@@ -16,13 +16,6 @@ enum ie_hardware {
 	IE_OBIO,		/* on board */
 	IE_VME3E,		/* sun 3e VME card */
 	IE_UNKNOWN
-};
-
-const char *ie_hardware_names[] = {
-	"multibus/vme",
-	"onboard",
-	"3e/vme",
-	"unknown"
 };
 
 /*

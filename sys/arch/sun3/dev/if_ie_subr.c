@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_subr.c,v 1.2 1994/12/13 18:31:48 gwr Exp $	*/
+/*	$NetBSD: if_ie_subr.c,v 1.3 1994/12/15 21:08:10 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -56,8 +56,9 @@
 #include <machine/idprom.h>
 /* #include <machine/vme.h> */
 
-#include "if_iereg.h"
+#include "i82586.h"
 #include "if_ie.h"
+#include "if_ie_subr.h"
 
 static void ie_obreset __P((struct ie_softc *));
 static void ie_obattend __P((struct ie_softc *));
@@ -74,7 +75,7 @@ ie_md_match(parent, vcf, args)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
-	int x;
+	int x, sz;
 
 	switch (ca->ca_bustype) {
 
@@ -112,7 +113,7 @@ ie_md_attach(parent, self, args)
 {
 	struct ie_softc *sc = (void *) self;
 	struct confargs *ca = args;
-	caddr_t mem, reg;
+	caddr_t mem, reg, dvma_malloc();
 
 	/*
 	 * *note*: we don't detect the difference between a VME3E and
@@ -128,6 +129,7 @@ ie_md_attach(parent, self, args)
 		sc->run_586 = ie_obrun;
 		sc->memcopy = bcopy;
 		sc->memzero = bzero;
+		sc->sc_iobase = (caddr_t)0xf000000;	/* XXX */
 		sc->sc_msize = 0x10000;	/* XXX */
 
 		/* Map in the control register. */
@@ -142,13 +144,13 @@ ie_md_attach(parent, self, args)
 			panic(": not enough dvma space");
 		sc->sc_maddr = mem;
 
+		sc->scp = (volatile struct ie_sys_conf_ptr *)
+		    (sc->sc_iobase + IE_SCP_ADDR);
+
 		/* Install interrupt handler. */
 		isr_add_autovect(ie_intr, (void *)sc, ca->ca_intpri);
 
-		/* XXX - to do... */
-		printf("unsupported (for now)\n");
-		return;
-
+		break;
 
 #if 0	/* not yet... */
 	case BUS_VME16: {
@@ -176,6 +178,9 @@ ie_md_attach(parent, self, args)
 		sc->sc_iobase = sc->sc_maddr;
 		iev->pectrl = iev->pectrl | IEVME_PARACK; /* clear to start */
 
+		sc->scp = (volatile struct ie_sys_conf_ptr *)
+		    (sc->sc_iobase + (IE_SCP_ADDR & (IEVME_PAGESIZE - 1)));
+
 		/*
 		 * set up mappings, direct map except for last page
 		 * which is mapped at zero and at high address (for
@@ -186,26 +191,6 @@ ie_md_attach(parent, self, args)
 			iev->pgmap[lcv] = IEVME_SBORDR | IEVME_OBMEM | lcv;
 		iev->pgmap[IEVME_MAPSZ - 1] = IEVME_SBORDR | IEVME_OBMEM | 0;
 		(sc->memzero)(sc->sc_maddr, sc->sc_msize);
-
-		/*
-		 * set up pointers to data structures and buffer area.
-		 * scp is in double mapped page... get offset into page
-		 * and add to sc_maddr.
-		 */
-		sc->scp = (volatile struct ie_sys_conf_ptr *)
-		    (sc->sc_maddr + (IE_SCP_ADDR & (IEVME_PAGESIZE - 1)));
-		sc->iscp = (volatile struct ie_int_sys_conf_ptr *)
-		    sc->sc_maddr;	/* iscp @ location zero */
-		sc->scb = (volatile struct ie_sys_ctl_block *)
-		    sc->sc_maddr + sizeof(struct ie_int_sys_conf_ptr);
-		/* scb follows iscp */
-
-		/*
-		 * rest of first page is unused, rest of ram
-		 * for buffers
-		 */
-		sc->buf_area = sc->sc_maddr + IEVME_PAGESIZE;
-		sc->buf_area_sz = sc->sc_msize - IEVME_PAGESIZE;
 
 		isr_add_vectored(ieintr, (void *)sc,
 						 ca->ca_intpri,
@@ -219,6 +204,21 @@ ie_md_attach(parent, self, args)
 		printf("unknown\n");
 		return;
 	}
+
+	/*
+	 * set up pointers to data structures and buffer area.
+	 */
+	sc->iscp = (volatile struct ie_int_sys_conf_ptr *)
+	    sc->sc_maddr;
+	sc->scb = (volatile struct ie_sys_ctl_block *)
+	    sc->sc_maddr + sizeof(struct ie_int_sys_conf_ptr);
+
+	/*
+	 * rest of first page is unused, rest of ram
+	 * for buffers
+	 */
+	sc->buf_area = sc->sc_maddr + IEVME_PAGESIZE;
+	sc->buf_area_sz = sc->sc_msize - IEVME_PAGESIZE;
 
 	idprom_etheraddr(sc->sc_addr); /* ethernet addr */
 }
