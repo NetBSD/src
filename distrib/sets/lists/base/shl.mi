@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.40 1999/09/19 23:26:29 lukem Exp $
+# $NetBSD: shl.mi,v 1.41 1999/10/26 10:00:29 itojun Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libbfd.so.3.0
 ./usr/lib/libbz2.so.0.0
@@ -25,4 +25,4 @@
 ./usr/lib/libusb.so.0.0
 ./usr/lib/libutil.so.5.1
 ./usr/lib/libwrap.so.0.2
-./usr/lib/libz.so.0.1
+./usr/lib/libz.so.0.2
