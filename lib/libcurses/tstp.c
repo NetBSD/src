@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.26 2002/08/04 14:11:59 jdc Exp $	*/
+/*	$NetBSD: tstp.c,v 1.27 2003/05/18 10:02:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.26 2002/08/04 14:11:59 jdc Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.27 2003/05/18 10:02:07 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -119,6 +119,9 @@ __restore_stophandler(void)
 int
 __stopwin(void)
 {
+	if (_cursesi_screen->endwin)
+		return OK;
+
 	/* Get the current terminal state (which the user may have changed). */
 	(void) tcgetattr(fileno(_cursesi_screen->infd),
 			 &_cursesi_screen->save_termios);
