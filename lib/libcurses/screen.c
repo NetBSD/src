@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.13 2003/04/05 10:07:00 jdc Exp $	*/
+/*	$NetBSD: screen.c,v 1.14 2003/07/30 11:19:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.13 2003/04/05 10:07:00 jdc Exp $");
+__RCSID("$NetBSD: screen.c,v 1.14 2003/07/30 11:19:01 dsl Exp $");
 #endif
 #endif					/* not lint */
 
@@ -63,7 +63,6 @@ set_term(SCREEN *new)
 		old_screen->pfast = __pfast;
 		old_screen->rawmode = __rawmode;
 		old_screen->noqch = __noqch;
-		old_screen->winlistp = __winlistp;
 		old_screen->COLS = COLS;
 		old_screen->LINES = LINES;
 		old_screen->COLORS = COLORS;
@@ -88,8 +87,6 @@ set_term(SCREEN *new)
 	__UPPERCASE = new->UPPERCASE;
 
 	_cursesi_resetterm(new);
-
-	__winlistp = new->winlistp;
 
 	curscr = new->curscr;
 	clearok(curscr, new->clearok);
@@ -204,22 +201,17 @@ newterm(char *type, FILE *outfd, FILE *infd)
 void
 delscreen(SCREEN *screen)
 {
-        struct __winlist *list, *np;
+        struct __winlist *list;
 
 	  /* free up the termcap entry stuff */
 	t_freent(screen->cursesi_genbuf);
 
 	  /* walk the window list and kill all the parent windows */
-	for (list = screen->winlistp; list != NULL; list = list->nextp) {
-		if (list->winp->orig == NULL)
-			delwin(list->winp);
-	}
-
-	  /* free the windows list structures */
-	for (list = screen->winlistp; list;) {
-		np = list->nextp;
-		free(list);
-		list = np;
+	while ((list = screen->winlistp)) {
+		delwin(list->winp);
+		if (list == screen->winlistp)
+			/* sanity - abort if window didn't remove itself */
+			break;
 	}
 
 	  /* free the storage of the keymaps */
