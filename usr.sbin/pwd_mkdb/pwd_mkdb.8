@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwd_mkdb.8,v 1.14 2000/12/07 12:53:14 tron Exp $
+.\"	$NetBSD: pwd_mkdb.8,v 1.15 2001/02/21 12:14:37 agc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -117,6 +117,9 @@ on different password files at the same time.
 The front-ends to 
 .Xr chpass 1 ,
 .Xr passwd 1 ,
+.Xr useradd 8 ,
+.Xr userdel 8 ,
+.Xr usermod 8 ,
 and
 .Xr vipw 8
 handle the locking necessary to avoid this problem.
@@ -139,4 +142,7 @@ not be surprised by the changes in functionality.
 .Xr getpwent 3 ,
 .Xr pw_mkdb 3 ,
 .Xr passwd 5 ,
+.Xr useradd 8 ,
+.Xr userdel 8 ,
+.Xr usermod 8 ,
 .Xr vipw 8
