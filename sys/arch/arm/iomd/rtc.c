@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.10 2003/01/06 12:38:50 wiz Exp $	*/
+/*	$NetBSD: rtc.c,v 1.10.2.1 2003/07/03 00:40:25 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -350,11 +350,11 @@ rtcattach(parent, self, aux)
 
 
 int
-rtcopen(dev, flag, mode, p)
+rtcopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct rtc_softc *sc;
 	int unit = minor(dev);
@@ -376,11 +376,11 @@ rtcopen(dev, flag, mode, p)
 
 
 int
-rtcclose(dev, flag, mode, p)
+rtcclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 	struct rtc_softc *sc = rtc_cd.cd_devs[unit];
