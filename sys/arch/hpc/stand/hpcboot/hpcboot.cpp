@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.6 2002/02/11 17:05:45 uch Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.7 2002/03/02 22:01:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 
 #include <boot.h>
 
+OSVERSIONINFOW WinCEVersion;
+
 int WINAPI
 WinMain(HINSTANCE instance, HINSTANCE prev_instance,
     LPTSTR cmd_line, int window_show)
@@ -100,6 +102,9 @@ hpcboot(void *arg)
 	HpcMenuInterface &menu = HPC_MENU;
 	Boot &f = Boot::Instance();
 
+	// Open serial port for kernel KGDB.
+	SerialConsole::OpenCOM1();
+
 	menu.progress();
 	if (!f.setup()) {
 		error_message = TEXT("architecture not supported.\n");
@@ -143,17 +148,17 @@ hpcboot(void *arg)
 	menu.progress();
 	if (!f._file->open(f.args.fileName)) {
 		error_message = TEXT("couldn't open kernel image.\n");
-		goto failed;
+		goto failed_exit;
 	}
-  
+
 	menu.progress();
 	// put kernel to loader.
 	if (!f.attachLoader())
-		goto failed;
-		
+		goto file_close_exit;
+
 	if (!f._loader->setFile(f._file)) {
 		error_message = TEXT("couldn't initialize loader.\n");
-		goto failed;
+		goto file_close_exit;
 	}
 
 	menu.progress();
@@ -162,31 +167,35 @@ hpcboot(void *arg)
 	// allocate required memory.
 	if (!f._arch->allocateMemory(sz)) {
 		error_message = TEXT("couldn't allocate memory.\n");
-		goto failed;
+		goto file_close_exit;
 	}
 
 	menu.progress();
 	// load kernel to memory.
 	if (!f._arch->setupLoader()) {
 		error_message = TEXT("couldn't set up loader.\n");
-		goto failed;
+		goto file_close_exit;
 	}
 
 	menu.progress();
 	if (!f._loader->load()) {
 		error_message = TEXT("couldn't load kernel image to memory.\n");
-		goto failed;
+		goto file_close_exit;
 	}
 	menu.progress();
 	f._file->close();
 
 	// load file system image to memory
 	if (f.args.loadmfs) {
-		f._file->open(f.args.mfsName);
+		if (!f._file->open(f.args.mfsName)) {
+			error_message =
+			    TEXT("couldn't open file system image.\n");
+			goto failed_exit;
+		}
 		if (!f._loader->loadExtData()) {
 			error_message =
 			    TEXT("couldn't load filesystem image to memory.\n");
-			goto failed;
+			goto file_close_exit;
 		}
 		f._file->close();
 	}
@@ -203,13 +212,13 @@ hpcboot(void *arg)
 	if (HPC_PREFERENCE.pause_before_boot) {
 		if (MessageBox(menu._root->_window, TEXT("Push OK to boot."),
 		    TEXT("Last chance..."), MB_YESNO) != IDYES)
-			goto failed;
+			goto failed_exit;
 	}
 
 	f._arch->jump(p, f._loader->tagStart());
 	// NOTREACHED
 
- failed:
+ file_close_exit:
 	if (error_message == 0)
 		error_message = TEXT("can't jump to kernel.\n");
 	f._file->close();
@@ -225,7 +234,7 @@ int
 HpcBootApp::run(void)
 {
 	MSG msg;
-
+		
 	while (GetMessage(&msg, 0, 0, 0)) {
 		// cancel auto-boot.
 		if (HPC_PREFERENCE.auto_boot > 0 && _root &&
