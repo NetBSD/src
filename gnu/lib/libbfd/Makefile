@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2000/03/27 19:15:32 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.16 2000/05/20 20:30:48 kristerw Exp $
 
 LIB=		bfd
 
@@ -108,7 +108,8 @@ SELECT_VECS+=		${DEFAULT_VEC.i386} bfd_elf32_i386_vec i386bsd_vec \
 .endif
 SRCS+=			cpu-i386.c i386bsd.c i386freebsd.c i386netbsd.c \
 			coff-i386.c elf32-i386.c i386-dis.c \
-			aout32.c cofflink.c elf32.c elf.c elflink.c dwarf2.c
+			aout32.c cofflink.c elf32.c elf.c elflink.c dwarf2.c \
+			netbsdaout.c
 .endif
 
 ##### m68k #####
