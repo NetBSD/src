@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.1 1999/01/15 13:31:15 bouyer Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.2 1999/01/22 10:59:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -37,9 +37,8 @@
 LEAF(__bswap16, 1)		/* a0 contains 0x0123 */
 XLEAF(htons, 1)
 XLEAF(ntohs, 1)
-	extbl	a0, 0, t0	/* t0 = 0x  23 */
+	insbl	a0, 1, t0	/* t0 = 0x23   */
 	extbl	a0, 1, t1	/* t1 = 0x  01 */
-	sll	t0, 8, t0	/* t1 = 0x23   */
 	or	t0, t1, v0	/* v0 = 0x2301 */
 	RET
 END(__bswap16)
