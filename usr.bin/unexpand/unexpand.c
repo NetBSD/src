@@ -1,4 +1,4 @@
-/*	$NetBSD: unexpand.c,v 1.8 1999/02/11 15:29:14 kleink Exp $	*/
+/*	$NetBSD: unexpand.c,v 1.9 2003/04/08 09:44:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unexpand.c,v 1.8 1999/02/11 15:29:14 kleink Exp $");
+__RCSID("$NetBSD: unexpand.c,v 1.9 2003/04/08 09:44:47 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -57,13 +57,11 @@ __RCSID("$NetBSD: unexpand.c,v 1.8 1999/02/11 15:29:14 kleink Exp $");
 char	genbuf[BUFSIZ];
 char	linebuf[BUFSIZ];
 
-int	main __P((int, char **));
-void tabify __P((int));
+int	main(int, char **);
+void	tabify(int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	int all, c;
 	char *cp;
