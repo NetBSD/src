@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993 Charles Hannum
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -34,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.5 1993/10/09 22:19:25 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.6 1993/10/10 08:31:45 mycroft Exp $
  */
 
 /*
@@ -97,9 +98,9 @@ struct	pc_softc {
 	int 	cy;	/* "y" parameter */
 	int 	row, col;	/* current cursor position */
 	int 	nrow, ncol;	/* current screen geometry */
-	char	fg_at, bg_at;	/* normal attributes */
+	char	at;	/* normal attributes */
 	char	so_at;	/* standout attribute */
-	char	kern_fg_at, kern_bg_at;
+	char	kern_at;
 	char	color;	/* color or mono display */
 };
 
@@ -119,7 +120,10 @@ struct	cfdriver pccd =
 #define	ROW		25
 #define	CHR		2
 
-static unsigned int addr_6845 = MONO_BASE;
+static unsigned int addr_6845;
+static u_short *Crtat;
+static u_short *crtat = 0;
+
 static openf;
 
 char *sgetc __P((int));
@@ -127,15 +131,6 @@ static sputc __P((u_char, u_char));
 
 static	char	*more_chars;
 static	int	char_count;
-
-/*
- * We check the console periodically to make sure
- * that it hasn't wedged.  Unfortunately, if an XOFF
- * is typed on the console, that can't be distinguished
- * from more catastrophic failure.
- */
-#define	CN_TIMERVAL	(hz)		/* frequency at which to check cons */
-#define	CN_TIMO		(2*60)		/* intervals to allow for output char */
 
 void	pcstart();
 int	pcparam();
@@ -293,7 +288,7 @@ pcopen(dev, flag, mode, p)
 
 	if (minor(dev) != 0)
 		return (ENXIO);
-	if(!pc_tty[0]) {
+	if (!pc_tty[0]) {
 		tp = pc_tty[0] = ttymalloc();
 	} else {
 		tp = pc_tty[0];
@@ -436,7 +431,6 @@ pcioctl(dev, cmd, data, flag)
 	return (ENOTTY);
 }
 
-int	pcconsintr = 1;
 /*
  * Got a console transmission interrupt -
  * the console processor wants another character.
@@ -447,8 +441,6 @@ pcxint(dev)
 	register struct tty *tp = pc_tty[0];
 	register int unit;
 
-	if (!pcconsintr)
-		return;
 	tp->t_state &= ~TS_BUSY;
 	if (tp->t_line)
 		(*linesw[tp->t_line].l_start)(tp);
@@ -460,7 +452,7 @@ void
 pcstart(tp)
 register struct tty *tp;
 {
-	register struct clist *rbp;
+	register struct clist *cl;
 	int s, len, n;
 	u_char buf[PCBURST];
 
@@ -473,20 +465,21 @@ register struct tty *tp;
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
 	 */
-	rbp = &tp->t_outq;
-	len = q_to_b(rbp, buf, PCBURST);
+	cl = &tp->t_outq;
+	len = q_to_b(cl, buf, PCBURST);
 	for (n = 0; n < len; n++)
-		if (buf[n]) sputc(buf[n], 0);
+		if (buf[n])
+			sputc(buf[n], 0);
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	if (rbp->c_cc) {
+	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
 		timeout((timeout_t)ttrstrt, (caddr_t)tp, 1);
 	}
-	if (rbp->c_cc <= tp->t_lowat) {
+	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)rbp);
+			wakeup((caddr_t)cl);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -558,7 +551,8 @@ pccngetc(dev)
 	s = spltty();		/* block pcrint while we poll */
 	cp = sgetc(0);
 	splx(s);
-	if (*cp == '\r') return('\n');
+	if (*cp == '\r')
+		return('\n');
 	return (*cp);
 }
 
@@ -611,9 +605,6 @@ pcpoll(onoff)
  *   as when a portion of screen memory is 0, the cursor may dissappear.
  */
 
-static u_short *Crtat;
-static u_short *crtat = 0;
-
 cursor(int a)
 { 	int pos = crtat - Crtat;
 
@@ -656,16 +647,13 @@ static char bgansitopc[] =
  *   sputc has support for emulation of the 'pc3' termcap entry.
  *   if ka, use kernel attributes.
  */
-#ifdef __STDC__
-static sputc(u_char c, u_char ka)
-#else
+void
 static sputc(c, ka)
 	u_char c, ka;
-#endif
 {
 
 	int sc = 1;	/* do scroll check */
-	char fg_at, bg_at, at;
+	char at;
 
 #ifdef XSERVER
 	if (pc_xmode)
@@ -685,55 +673,47 @@ static sputc(c, ka)
 		*cp = (u_short) 0xA55A;
 		if (*cp != 0xA55A) {
 			addr_6845 = MONO_BASE;
-			vs.color=0;
+			vs.color = 0;
 			Crtat = cp;
 		} else {
 			*cp = was;
 			addr_6845 = CGA_BASE;
-			vs.color=1;
+			vs.color = 1;
 			Crtat = ISA_HOLE_VADDR(CGA_BUF);
 		}
+
 		/* Extract cursor location */
-		outb(addr_6845,14);
-		cursorat = inb(addr_6845+1)<<8 ;
-		outb(addr_6845,15);
-		cursorat |= inb(addr_6845+1);
+		outb(addr_6845, 14);
+		cursorat = inb(addr_6845 + 1) << 8 ;
+		outb(addr_6845, 15);
+		cursorat |= inb(addr_6845 + 1);
 
 		crtat = Crtat + cursorat;
 		vs.ncol = COL;
 		vs.nrow = ROW;
-		vs.fg_at = FG_LIGHTGREY;
-		vs.bg_at = BG_BLACK;
 
-		if (vs.color == 0) {
-			vs.kern_fg_at = FG_UNDERLINE;
+		vs.at = vs.kern_at = FG_LIGHTGREY | BG_BLACK;
+		if (vs.color == 0)
 			vs.so_at = FG_BLACK | BG_LIGHTGREY;
-		} else {
-			vs.kern_fg_at = FG_LIGHTGREY;
+		else
 			vs.so_at = FG_YELLOW | BG_BLACK;
-		}
-		vs.kern_bg_at = BG_BLACK;
 
-		fillw(((vs.bg_at|vs.fg_at)<<8)|' ', crtat, COL*ROW-cursorat);
+		fillw((vs.at << 8) | ' ', crtat, COL * ROW - cursorat);
 	}
 
 	/* which attributes do we use? */
-	if (ka) {
-		fg_at = vs.kern_fg_at;
-		bg_at = vs.kern_bg_at;
-	} else {
-		fg_at = vs.fg_at;
-		bg_at = vs.bg_at;
-	}
-	at = fg_at|bg_at;
+	if (ka)
+		at = vs.kern_at;
+	else
+		at = vs.at;
 
 	switch(c) {
 		int inccol;
 
 	case 0x1B:
-		if(vs.esc)
+		if (vs.esc)
 			wrtchar(c, vs.so_at); 
-		vs.esc = 1; vs.ebrac = 0; vs.eparm = 0;
+		vs.esc = 1; vs.ebrac = vs.eparm = 0;
 		break;
 
 	case '\t':
@@ -743,115 +723,127 @@ static sputc(c, ka)
 		break;
 
 	case '\010':
-		crtat--; vs.col--;
-		if (vs.col < 0) vs.col += vs.ncol;  /* non-destructive backspace */
+		crtat--;
+		if (--vs.col < 0)
+			vs.col += vs.ncol;	/* non-destructive backspace */
 		break;
 
 	case '\r':
-		crtat -=  (crtat - Crtat) % vs.ncol; vs.col = 0;
+		crtat -= vs.col;
+		vs.col = 0;
 		break;
 
 	case '\n':
-		crtat += vs.ncol ;
+		crtat += vs.ncol;
 		break;
 
 	default:
 	bypass:
 		if (vs.esc) {
+			sc = 0;
 			if (vs.ebrac) {
 				switch(c) {
 					int pos;
 				case 'm':
-					if (!vs.cx) vs.so = 0;
-					else vs.so = 1;
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+					if (!vs.cx)
+						vs.so = 0;
+					else
+						vs.so = 1;
+					vs.esc = vs.ebrac = vs.eparm = 0;
 					break;
 				case 'A': /* back cx rows */
-					if (vs.cx <= 0) vs.cx = 1;
-					vs.cx %= vs.nrow;
+					if (vs.cx <= 0)
+						vs.cx = 1;
+					else
+						vs.cx %= vs.nrow;
 					pos = crtat - Crtat;
 					pos -= vs.ncol * vs.cx;
 					if (pos < 0)
 						pos += vs.nrow * vs.ncol;
 					crtat = Crtat + pos;
-					sc = vs.esc = vs.ebrac = vs.eparm = 0;
+					vs.esc = vs.ebrac = vs.eparm = 0;
 					break;
 				case 'B': /* down cx rows */
-					if (vs.cx <= 0) vs.cx = 1;
-					vs.cx %= vs.nrow;
+					if (vs.cx <= 0)
+						vs.cx = 1;
+					else
+						vs.cx %= vs.nrow;
 					pos = crtat - Crtat;
 					pos += vs.ncol * vs.cx;
 					if (pos >= vs.nrow * vs.ncol) 
 						pos -= vs.nrow * vs.ncol;
 					crtat = Crtat + pos;
-					sc = vs.esc = vs.ebrac = vs.eparm = 0;
+					vs.esc = vs.ebrac = vs.eparm = 0;
 					break;
 				case 'C': /* right cursor */
 					if (vs.cx <= 0)
 						vs.cx = 1;
-					vs.cx %= vs.ncol;
+					else
+						vs.cx %= vs.ncol;
 					pos = crtat - Crtat;
-					pos += vs.cx; vs.col += vs.cx;
+					pos += vs.cx;
+					vs.col += vs.cx;
 					if (vs.col >= vs.ncol) {
 						vs.col -= vs.ncol;
 						pos -= vs.ncol;     /* cursor stays on same line */
 					}
 					crtat = Crtat + pos;
-					sc = vs.esc = vs.ebrac = vs.eparm = 0;
+					vs.esc = vs.ebrac = vs.eparm = 0;
 					break;
 				case 'D': /* left cursor */
 					if (vs.cx <= 0)
 						vs.cx = 1;
-					vs.cx %= vs.ncol;
+					else
+						vs.cx %= vs.ncol;
 					pos = crtat - Crtat;
-					pos -= vs.cx; vs.col -= vs.cx;
+					pos -= vs.cx;
+					vs.col -= vs.cx;
 					if (vs.col < 0) {
 						vs.col += vs.ncol;
 						pos += vs.ncol;     /* cursor stays on same line */
 					}
 					crtat = Crtat + pos;
-					sc = vs.esc = vs.ebrac = vs.eparm = 0;
+					vs.esc = vs.ebrac = vs.eparm = 0;
 					break;
 				case 'J': /* Clear ... */
 					if (vs.cx == 0)
 						/* ... to end of display */
-						fillw((at << 8) + ' ',
+						fillw((at << 8) | ' ',
 							crtat,
 							Crtat + vs.ncol * vs.nrow - crtat);
 					else if (vs.cx == 1)
 						/* ... to next location */
-						fillw((at << 8) + ' ',
+						fillw((at << 8) | ' ',
 							Crtat,
 							crtat - Crtat + 1);
 					else if (vs.cx == 2)
 						/* ... whole display */
-						fillw((at << 8) + ' ',
+						fillw((at << 8) | ' ',
 							Crtat,
 							vs.ncol * vs.nrow);
-						
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+					vs.esc = vs.ebrac = vs.eparm = 0;
 					break;
 				case 'K': /* Clear line ... */
 					if (vs.cx == 0)
 						/* ... current to EOL */
-						fillw((at << 8) + ' ',
+						fillw((at << 8) | ' ',
 							crtat,
-							vs.ncol - (crtat - Crtat) % vs.ncol);
+							vs.ncol - vs.col);
 					else if (vs.cx == 1)
 						/* ... beginning to next */
-						fillw((at << 8) + ' ',
-							crtat - (crtat - Crtat) % vs.ncol,
-							((crtat - Crtat) % vs.ncol) + 1);
+						fillw((at << 8) | ' ',
+							crtat - vs.col,
+							vs.col + 1);
 					else if (vs.cx == 2)
 						/* ... entire line */
-						fillw((at << 8) + ' ',
-							crtat - (crtat - Crtat) % vs.ncol,
+						fillw((at << 8) | ' ',
+							crtat - vs.col,
 							vs.ncol);
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+					vs.esc = vs.ebrac = vs.eparm = 0;
 					break;
 				case 'f': /* in system V consoles */
 				case 'H': /* Cursor move */
-					if ((!vs.cx)||(!vs.cy)) {
+					if (!vs.cx || !vs.cy) {
 						crtat = Crtat;
 						vs.col = 0;
 					} else {
@@ -862,7 +854,7 @@ static sputc(c, ka)
 						crtat = Crtat + (vs.cx - 1) * vs.ncol + vs.cy - 1;
 						vs.col = vs.cy - 1;
 					}
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+					vs.esc = vs.ebrac = vs.eparm = 0;
 					break;
 				case 'S':  /* scroll up cx lines */
 					if (vs.cx <= 0)
@@ -871,9 +863,9 @@ static sputc(c, ka)
 						vs.cx = vs.nrow;
 					if (vs.cx < vs.nrow)
 						bcopy(Crtat+vs.ncol*vs.cx, Crtat, vs.ncol*(vs.nrow-vs.cx)*CHR);
-					fillw((at <<8)+' ', Crtat+vs.ncol*(vs.nrow-vs.cx), vs.ncol*vs.cx);
+					fillw((at << 8) | ' ', Crtat+vs.ncol*(vs.nrow-vs.cx), vs.ncol*vs.cx);
 					/* crtat -= vs.ncol*vs.cx; /* XXX */
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+					vs.esc = vs.ebrac = vs.eparm = 0;
 					break;
 				case 'T':  /* scroll down cx lines */
 					if (vs.cx <= 0)
@@ -882,57 +874,54 @@ static sputc(c, ka)
 						vs.cx = vs.nrow;
 					if (vs.cx < vs.nrow)
 						bcopy(Crtat, Crtat+vs.ncol*vs.cx, vs.ncol*(vs.nrow-vs.cx)*CHR);
-					fillw((at <<8)+' ', Crtat, vs.ncol*vs.cx);
+					fillw((at << 8) | ' ', Crtat, vs.ncol*vs.cx);
 					/* crtat += vs.ncol*vs.cx; /* XXX */
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+					vs.esc = vs.ebrac = vs.eparm = 0;
 					break;
 				case ';': /* Switch params in cursor def */
 					vs.eparm = 1;
 					break;
 				case 'r':
-					vs.so_at = (vs.cx & 0x0f) | ((vs.cy & 0x0f) << 4);
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+					vs.so_at = (vs.cx & FG_MASK) | ((vs.cy << 4) & BG_MASK);
+					vs.esc = vs.ebrac = vs.eparm = 0;
 					break;
 				case 'x': /* set attributes */
 					switch (vs.cx) {
 					case 0:
 						/* reset to normal attributes */
-						bg_at = BG_BLACK;
-						if (ka)
-							fg_at = vs.color? FG_LIGHTGREY: FG_UNDERLINE;
+						if (ka && !vs.color)
+							at = FG_UNDERLINE | BG_BLACK;
 						else
-							fg_at = FG_LIGHTGREY;
-						break;
+							at = FG_LIGHTGREY | BG_BLACK;
 					case 1:
 						/* ansi background */
-						if (vs.color)
-							bg_at = bgansitopc[vs.cy & 7];
+						if (vs.color) {
+							at &= FG_MASK;
+							at |= bgansitopc[vs.cy & 7];
+						}
 						break;
 					case 2:
 						/* ansi foreground */
-						if (vs.color)
-							fg_at = fgansitopc[vs.cy & 7];
+						if (vs.color) {
+							at &= BG_MASK;
+							at |= fgansitopc[vs.cy & 7];
+						}
 						break;
 					case 3:
 						/* pc text attribute */
-						if (vs.eparm) {
-							fg_at = vs.cy & 0x8f;
-							bg_at = vs.cy & 0x70;
-						}
+						if (vs.eparm)
+							at = vs.cy;
 						break;
 					}
-					if (ka) {
-						vs.kern_fg_at = fg_at;
-						vs.kern_bg_at = bg_at;
-					} else {
-						vs.fg_at = fg_at;
-						vs.bg_at = bg_at;
-					}
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+					if (ka)
+						vs.kern_at = at;
+					else
+						vs.at = at;
+					vs.esc = vs.ebrac = vs.eparm = 0;
 					break;
 					
 				default: /* Only numbers valid here */
-					if ((c >= '0')&&(c <= '9')) {
+					if ((c >= '0') && (c <= '9')) {
 						if (vs.eparm) {
 							vs.cy *= 10;
 							vs.cy += c - '0';
@@ -940,44 +929,46 @@ static sputc(c, ka)
 							vs.cx *= 10;
 							vs.cx += c - '0';
 						}
-					} else {
-						vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
-					}
+					} else
+						vs.esc = vs.ebrac = vs.eparm = 0;
 					break;
 				}
-				break;
 			} else if (c == 'c') { /* Clear screen & home */
-				fillw((at << 8) + ' ', Crtat, vs.ncol*vs.nrow);
+				fillw((at << 8) | ' ', Crtat, vs.ncol*vs.nrow);
 				crtat = Crtat; vs.col = 0;
-				vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+				vs.esc = vs.ebrac = vs.eparm = 0;
 			} else if (c == '[') { /* Start ESC [ sequence */
-				vs.ebrac = 1; vs.cx = 0; vs.cy = 0; vs.eparm = 0;
+				vs.cx = vs.cy = 0;
+				vs.ebrac = 1; vs.eparm = 0;
 			} else { /* Invalid, clear state */
-				 vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
-					wrtchar(c, vs.so_at); 
+				vs.esc = vs.ebrac = vs.eparm = 0;
+				wrtchar(c, vs.so_at); 
 			}
 		} else {
-			if (c == 7)
+			if (c == 7) {
 				sysbeep(BEEP_FREQ, BEEP_TIME);
-			else {
-				if (vs.so) {
+				sc = 0;
+			} else {
+				if (vs.so)
 					wrtchar(c, vs.so_at);
-				} else
+				else
 					wrtchar(c, at); 
-				if (vs.col >= vs.ncol) vs.col = 0;
-				break ;
+				if (vs.col >= vs.ncol)
+					vs.col = 0;
+				break;
 			}
 		}
 	}
 	if (sc && crtat >= Crtat+vs.ncol*vs.nrow) { /* scroll check */
-		if (openf) {
-			(void)sgetc(1);
+		/* can't sleep if in kernel code */
+		if (!ka) {
+			int s = spltty();
 			if (scroll)
 				sleep((caddr_t)&scroll, PUSER);
+			splx(s);
 		}
 		bcopy(Crtat+vs.ncol, Crtat, vs.ncol*(vs.nrow-1)*CHR);
-		fillw ((at << 8) + ' ', Crtat + vs.ncol*(vs.nrow-1),
-			vs.ncol);
+		fillw ((at << 8) | ' ', Crtat + vs.ncol*(vs.nrow-1), vs.ncol);
 		crtat -= vs.ncol;
 	}
 	if (ka)
@@ -1138,10 +1129,10 @@ static char extscantokey[] = {
 1,	/* ` */
 0,
 0,
- 62,	/* ALT (right) */
- 124,	/* Print Screen */
+62,	/* ALT (right) */
+124,	/* Print Screen */
 0,
- 64,	/* CTRL (right) */
+64,	/* CTRL (right) */
 17,	/* Q */
 2,	/* 1 */
 0,
@@ -1195,7 +1186,7 @@ static char extscantokey[] = {
 0,
 0,
 54,	/* . */
- 95,	/* / */
+95,	/* / */
 39,	/* L */
 40,	/* ; */
 26,	/* P */
@@ -1211,7 +1202,7 @@ static char extscantokey[] = {
 0,
 0,
 57,	/* SHIFT (right) */
- 108,	/* ENTER */
+108,	/* ENTER */
 28,	/* ] */
 0,
 29,	/* \ */
@@ -1226,27 +1217,27 @@ static char extscantokey[] = {
 15,	/* backspace */
 0,
 0,				/* keypad */
- 81,	/* end */
+81,	/* end */
 0,
- 79,	/* left arrow */
- 80,	/* home */
+79,	/* left arrow */
+80,	/* home */
 0,
 0,
 0,
- 75,	/* ins */
- 76,	/* del */
- 84,	/* down arrow */
+75,	/* ins */
+76,	/* del */
+84,	/* down arrow */
 97,	/* 5 */
- 89,	/* right arrow */
- 83,	/* up arrow */
+89,	/* right arrow */
+83,	/* up arrow */
 110,	/* ESC */
 90,	/* Num Lock */
 122,	/* F11 */
 106,	/* + */
- 86,	/* page down */
+86,	/* page down */
 105,	/* - */
- 124,	/* print screen */
- 85,	/* page up */
+124,	/* print screen */
+85,	/* page up */
 0,
 0,
 0,
