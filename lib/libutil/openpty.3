@@ -1,4 +1,4 @@
-.\"	$NetBSD: openpty.3,v 1.7 2002/02/20 11:34:14 wiz Exp $
+.\"	$NetBSD: openpty.3,v 1.8 2002/05/30 01:42:58 simonb Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -132,8 +132,8 @@ return 0, and the parent process of
 .Fn forkpty
 returns the process ID of the child process.
 .Sh FILES
-.Bl -tag -width /dev/[pt]ty[pqrstuwxyzPQRST][0123456789abcdef] -compact
-.It Pa /dev/[pt]ty[pqrstuwxyzPQRST][0123456789abcdef]
+.Bl -tag -width /dev/[pt]ty[p-zP-T][0-9a-zA-Z] -compact
+.It Pa /dev/[pt]ty[p-zP-T][0-9a-zA-Z]
 .El
 .Sh ERRORS
 .Fn openpty
