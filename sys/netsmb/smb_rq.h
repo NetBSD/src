@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.h,v 1.6 2003/03/23 16:57:51 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.h,v 1.7 2003/03/30 11:58:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -89,8 +89,8 @@ struct smb_rq {
 	struct smb_cred *	sr_cred;
 	u_short			sr_mid;
 	u_short			sr_flags;	/* SMBR_* */
-	struct timeval		sr_sendtimo;	/* timeout expiration time */
-	int			sr_timo;
+	struct callout		sr_timo_ch;	/* for timeout expiration */
+	int			sr_timo;	/* timeout in ticks, -1 notimo*/
 	int			sr_sendcnt;
 	int			sr_lerror;
 	u_int8_t *		sr_rqtid;
