@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.63 2002/01/02 20:58:12 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.64 2002/01/02 22:44:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.63 2002/01/02 20:58:12 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.64 2002/01/02 22:44:44 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ struct usb_softc {
 	usbd_bus_handle sc_bus;		/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
 
-	usb_proc_ptr	sc_event_thread;
+	struct proc	*sc_event_thread;
 
 	char		sc_dying;
 };
@@ -109,7 +109,7 @@ Static void	usb_discover(void *);
 Static void	usb_create_event_thread(void *);
 Static void	usb_event_thread(void *);
 Static void	usb_task_thread(void *);
-Static usb_proc_ptr usb_task_thread_proc = NULL;
+Static struct proc *usb_task_thread_proc = NULL;
 
 #define USB_MAX_EVENTS 100
 struct usb_event_q {
@@ -295,6 +295,9 @@ usb_event_thread(void *arg)
 	 * In case this controller is a companion controller to an
 	 * EHCI controller we need to wait until the EHCI controller
 	 * has grabbed the port.
+	 * XXX It would be nicer to do this with a tsleep(), but I don't
+	 * know how to synchronize the creation of the threads so it
+	 * will work.
 	 */
 	usb_delay_ms(sc->sc_bus, 500);
 
