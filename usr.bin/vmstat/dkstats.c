@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.17 2002/11/01 12:47:56 mrg Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.18 2002/11/01 15:23:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -183,7 +183,7 @@ dkreadstats(void)
 		mib[2] = sizeof(struct disk_sysctl);
 
 		size = dk_ndrive * sizeof(struct disk_sysctl);
-		if (sysctl(mib, 2, dk_drives, &size, NULL, 0) < 0)
+		if (sysctl(mib, 3, dk_drives, &size, NULL, 0) < 0)
 			err(1, "sysctl hw.diskstats failed");
 		for (i = 0; i < dk_ndrive; i++) {
 			cur.dk_rxfer[i] = dk_drives[i].dk_rxfer;
@@ -247,10 +247,10 @@ dkinit(int select)
 	struct disklist_head disk_head;
 	struct disk	cur_disk, *p;
 	struct clockinfo clockinfo;
-	char		errbuf[_POSIX2_LINE_MAX], *names, *s;
+	char		errbuf[_POSIX2_LINE_MAX];
 	size_t		size;
 	static int	once = 0;
-	int		i, mib[2];
+	int		i, mib[3];
 
 	if (once)
 		return (1);
@@ -272,26 +272,11 @@ dkinit(int select)
 			hz = clockinfo.hz;
 
 		mib[0] = CTL_HW;
-		mib[1] = HW_DISKNAMES;
-		if (sysctl(mib, 2, NULL, &size, NULL, 0) == -1)
-			err(1, "sysctl hw.disknames failed");
-		names = (char *)malloc(size);
-		if (names == NULL)
-			errx(1, "Memory allocation failure.");
-		mib[0] = CTL_HW;
-		mib[1] = HW_DISKNAMES;
-		if (sysctl(mib, 2, names, &size, NULL, 0) == -1)
-			err(1, "sysctl hw.disknames failed");
-		dk_ndrive = 0;
-		for (s = names; *s; s++)
-			if (*s == ' ')
-				dk_ndrive++;
-		free(names);
-
-		mib[0] = CTL_HW;
 		mib[1] = HW_DISKSTATS;
-		if (sysctl(mib, 2, NULL, &size, NULL, 0) == -1)
+		mib[2] = sizeof(struct disk_sysctl);
+		if (sysctl(mib, 3, NULL, &size, NULL, 0) == -1)
 			err(1, "sysctl hw.diskstats failed");
+		dk_ndrive = size / sizeof(struct disk_sysctl);
 
 		if (size == 0) {
 			warnx("No drives attached.");
