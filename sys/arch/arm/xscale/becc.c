@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.2 2003/03/25 19:45:52 thorpej Exp $	*/
+/*	$NetBSD: becc.c,v 1.3 2003/04/20 17:17:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -135,7 +135,7 @@ becc_attach(struct becc_softc *sc)
 		    sc->sc_iwin[2].iwin_base | PCI_MAPREG_MEM_TYPE_32BIT |
 		    PCI_MAPREG_MEM_PREFETCHABLE_MASK);
 		reg = becc_pcicore_read(sc, PCI_MAPREG_START + 8);
-		BECC_CSR_WRITE(BECC_PSTR1,
+		BECC_CSR_WRITE(BECC_PSTR2,
 		    sc->sc_iwin[2].iwin_xlate & PSTR2_ADDRMASK);
 	}
 
