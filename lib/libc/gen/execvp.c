@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.1 1996/07/03 21:41:54 jtc Exp $	*/
+/*	$NetBSD: execvp.c,v 1.2 1997/04/24 18:55:51 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: execvp.c,v 1.1 1996/07/03 21:41:54 jtc Exp $";
+static char rcsid[] = "$NetBSD: execvp.c,v 1.2 1997/04/24 18:55:51 kleink Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,6 +63,11 @@ execvp(name, argv)
 	int eacces = 0, etxtbsy = 0;
 	char *bp, *cur, *path, buf[PATH_MAX];
 
+	/* "" is not a valid filename; check this before traversing PATH. */
+	if (name[0] == '\0') {
+		errno = ENOENT;
+		goto done;
+	}
 	/* If it's an absolute or relative path name, it's easy. */
 	if (strchr(name, '/')) {
 		bp = (char *)name;
