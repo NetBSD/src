@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:44 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.41 1996/11/07 07:31:20 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -172,112 +172,6 @@ _esigcode:
 	/* Just a gap between _esigcode and the next label */
 	.long	0
 #endif
-
-/****************************************************************************/
-
-/*
- * The following primitives are used to fill and copy regions of memory.
- */
-
-/*
- * bzero (void *b, size_t len)
- *	write len zero bytes to the string b.
- */
-
-ENTRY(bzero)
-	enter	[r3],0
-
-	movd	B_ARG0,r1		/* b */
-	movd	B_ARG1,r2		/* len */
-	cmpd	19,r2
-	bhs	6f			/* Not worth the trouble. */
-
-	/*
-	 * Is address aligned?
-	 */
-	movd	r1,r0
-	andd	3,r0			/* r0 = b & 3 */
-	cmpqd	0,r0
-	beq	0f
-
-	/*
-	 * Align address (if necessary).
-	 */
-	movqd	0,0(r1)
-	addr	-4(r0)[r2:b],r2		/* len = len + (r0 - 4) */
-	negd	r0,r0
-	addr	4(r0)[r1:b],r1		/* b = b + (-r0 + 4) */
-
-0:	/*
-	 * Compute loop start address.
-	 */
-	movd	r2,r0
-	addr	60(r2),r3
-	andd	60,r0			/* r0 = len & 60 */
-	lshd	-6,r3			/* r3 = (len + 60) >> 6 */
-	andd	3,r2			/* len &= 3 */
-
-	cmpqd	0,r0
-	beq	1f
-
-	addr	-64(r1)[r0:b],r1	/* b = b - 64 + r0 */
-	lshd	-2,r0
-	addr	0(r0)[r0:w],r0
-	negd	r0,r0			/* r0 = -3 * r0 / 4 */
-
-	jump	2f(pc)[r0:b]		/* Now enter the loop */
-
-	/*
-	 * Zero 64 bytes per loop iteration.
-	 */
-	.align	2
-1:	movqd	0,0(r1)
-	movqd	0,4(r1)
-	movqd	0,8(r1)
-	movqd	0,12(r1)
-	movqd	0,16(r1)
-	movqd	0,20(r1)
-	movqd	0,24(r1)
-	movqd	0,28(r1)
-	movqd	0,32(r1)
-	movqd	0,36(r1)
-	movqd	0,40(r1)
-	movqd	0,44(r1)
-	movqd	0,48(r1)
-	movqd	0,52(r1)
-	movqd	0,56(r1)
-	movqd	0,60(r1)
-2:	addd	64,r1
-	acbd	-1,r3,1b
-
-3:	cmpqd	0,r2
-	beq	5f
-
-	/*
-	 * Zero out blocks shorter then four bytes.
-	 */
-4:	movqb	0,-1(r1)[r2:b]
-	acbd	-1,r2,4b
-
-5:	exit	[r3]
-	ret	0
-
-	/*
-	 * For blocks smaller then 20 bytes
-	 * this is faster.
-	 */
-	.align	2
-6:	cmpqd	3,r2
-	bhs	3b
-
-	movd	r2,r0
-	andd	3,r2
-	lshd	-2,r0
-
-7:	movqd	0,0(r1)
-	addqd	4,r1
-	acbd	-1,r0,7b
-	br	3b
 
 /****************************************************************************/
 
@@ -1239,9 +1133,6 @@ rz_exit:
 tmp_nmi:				/* come here if parity error */
 	addr	rz_exit(pc),0(sp)	/* modify return addr to exit */
 	rett	0
-
-/* Include all other .s files. */
-#include "bcopy.s"
 
 /****************************************************************************/
 
