@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.66 2000/03/23 07:01:35 thorpej Exp $	*/
+/*	$NetBSD: mcd.c,v 1.67 2000/07/06 02:02:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -318,15 +318,11 @@ mcdopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	int error;
-	int unit, part;
+	int error, part;
 	struct mcd_softc *sc;
 
-	unit = MCDUNIT(dev);
-	if (unit >= mcd_cd.cd_ndevs)
-		return ENXIO;
-	sc = mcd_cd.cd_devs[unit];
-	if (!sc)
+	sc = device_lookup(&mcd_cd, MCDUNIT(dev));
+	if (sc == NULL)
 		return ENXIO;
 
 	if ((error = mcdlock(sc)) != 0)
@@ -424,7 +420,7 @@ mcdclose(dev, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct mcd_softc *sc = mcd_cd.cd_devs[MCDUNIT(dev)];
+	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int part = MCDPART(dev);
 	int error;
 	
@@ -460,7 +456,7 @@ void
 mcdstrategy(bp)
 	struct buf *bp;
 {
-	struct mcd_softc *sc = mcd_cd.cd_devs[MCDUNIT(bp->b_dev)];
+	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(bp->b_dev));
 	struct disklabel *lp = sc->sc_dk.dk_label;
 	daddr_t blkno;
 	int s;
@@ -601,7 +597,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct mcd_softc *sc = mcd_cd.cd_devs[MCDUNIT(dev)];
+	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int error;
 	int part;
 	
