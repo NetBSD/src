@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 1998/07/13 19:22:26 tsubai Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 1998/07/21 18:01:30 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -97,6 +97,7 @@ mainbus_attach(parent, self, aux)
 			pba.pba_busname = "pci";
 			pba.pba_iot = pci_bridges[n].iot;
 			pba.pba_memt = (bus_space_tag_t)0;
+			pba.pba_dmat = &pci_bus_dma_tag;
 			pba.pba_bus = 0;
 			pba.pba_pc = pci_bridges[n].pc;
 			pba.pba_flags =
