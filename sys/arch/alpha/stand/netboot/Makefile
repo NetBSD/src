@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1996/09/23 04:30:56 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1996/10/18 06:02:24 thorpej Exp $
 
 .PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
 
@@ -44,7 +44,7 @@ ${BOOT_PROG}: ${BOOT_OBJS} ${HEADERSIZE_PROG}
 	    bs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${BOOT_PROG}.hdr` skip=1
 
 install:
-	install -c -o bin -g bin -m 444 ${BOOT_PROG} \
+	${INSTALL} -c -o bin -g bin -m 444 ${BOOT_PROG} \
 	    ${DESTDIR}${BINDIR}/${BOOT_PROG}
 
 clean: _SUBDIRUSE

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1996/10/07 04:45:41 thorpej Exp $
+#	$NetBSD: Makefile,v 1.22 1996/10/18 06:03:25 thorpej Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -97,10 +97,11 @@ clean::
 	rm -f libdrive.a mkboot installboot
 
 install:
-	install -d -m 755 -o ${BINOWN} -g ${BINGRP} ${DESTDIR}/usr/mdec/rbootd
-	install -c -o ${BINOWN} -g ${BINGRP} -m 555 installboot \
+	${INSTALL} -d -m 755 -o ${BINOWN} -g ${BINGRP} \
+	    ${DESTDIR}/usr/mdec/rbootd
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 installboot \
 	    ${DESTDIR}/usr/mdec
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 uboot.lif \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 uboot.lif \
 	    ${DESTDIR}/usr/mdec
 	rm -f ${DESTDIR}/usr/mdec/rdboot
 	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/rdboot
@@ -116,7 +117,7 @@ install:
 	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/bootct
 	rm -f ${DESTDIR}/usr/mdec/rbootd/SYS_UBOOT
 	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/rbootd/SYS_UBOOT
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 inst.lif \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 inst.lif \
 	    ${DESTDIR}/usr/mdec
 	rm -f ${DESTDIR}/usr/mdec/rbootd/SYS_INST
 	ln ${DESTDIR}/usr/mdec/inst.lif ${DESTDIR}/usr/mdec/rbootd/SYS_INST

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1996/05/11 14:46:46 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 1996/10/18 06:29:11 thorpej Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:46 vixie Exp 
 
 .PATH:	${.CURDIR}/../man
@@ -8,7 +8,7 @@ CLEANFILES+= named.reload
 MAN=	named.reload.8
 
 realinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    named.reload ${DESTDIR}${BINDIR}/named.reload
 
 named.reload:	named.reload.sh Makefile ${.CURDIR}/../Makefile.inc

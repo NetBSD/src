@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1996/05/11 14:46:39 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 1996/10/18 06:28:24 thorpej Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:47 vixie Exp 
 
 .PATH:	${.CURDIR}/../man
@@ -8,7 +8,7 @@ CLEANFILES+= ndc
 MAN=	ndc.8
 
 realinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ndc ${DESTDIR}${BINDIR}/ndc
 
 ndc: ndc.sh Makefile ${.CURDIR}/../Makefile.inc

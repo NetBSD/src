@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$NetBSD: Makefile,v 1.3 1996/05/28 15:22:41 chuck Exp $
+#	$NetBSD: Makefile,v 1.4 1996/10/18 06:07:11 thorpej Exp $
 
 RELOC=0x3F0000 
 
@@ -34,6 +34,6 @@ bootst stboot: bootst.bug ${WRTVID}
 	${WRTVID} bootst.bug
 
 install:
-	install -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}
+	${INSTALL} -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}
 
 .include <bsd.prog.mk>

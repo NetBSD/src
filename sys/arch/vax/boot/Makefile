@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1996/08/02 11:21:41 ragge Exp $
+#	$NetBSD: Makefile,v 1.11 1996/10/18 06:10:18 thorpej Exp $
 #
 
 INCPATH=-I. -I../../.. -I../.. -I../../../lib/libsa
@@ -102,8 +102,9 @@ bootxx.o: bootxx.c
 
 #
 install: boot xxboot
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 boot ${DESTDIR}/
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 xxboot ${DESTDIR}/usr/mdec
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 boot ${DESTDIR}/
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 xxboot \
+	    ${DESTDIR}/usr/mdec
 	rm -f ${DESTDIR}/usr/mdec/raboot
 	ln ${DESTDIR}/usr/mdec/xxboot ${DESTDIR}/usr/mdec/raboot
 	rm -f ${DESTDIR}/usr/mdec/hpboot

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.11 1996/10/08 22:00:18 christos Exp $
+#	$NetBSD: Makefile,v 1.12 1996/10/18 06:20:54 thorpej Exp $
 #	@(#)Makefile	5.4 (Berkeley) 5/11/90
 
 PROG=	strip
 
 realinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 600 strip \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 600 strip \
 	    ${DESTDIR}${BINDIR}
 	./strip ${DESTDIR}${BINDIR}/strip
 	chmod ${BINMODE} ${DESTDIR}${BINDIR}/strip
