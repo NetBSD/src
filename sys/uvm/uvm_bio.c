@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.19 2001/09/28 11:59:55 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.20 2001/10/16 05:56:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -256,9 +256,9 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	KASSERT(vp != NULL);
 
 	npages = MIN(ubc_winsize - slot_offset,
-		     (int)(round_page(MAX(vp->v_size, umap->offset +
-				    umap->writeoff + umap->writelen)) -
-			   umap->offset)) >> PAGE_SHIFT;
+		     (round_page(MAX(vp->v_size, umap->offset +
+				     umap->writeoff + umap->writelen)) -
+		      umap->offset)) >> PAGE_SHIFT;
 
 again:
 	memset(pgs, 0, sizeof (pgs));
