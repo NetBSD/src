@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.24 2000/06/24 00:15:52 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.25 2000/06/28 03:29:45 mrg Exp $	*/
 /*	$KAME: key.c,v 1.132 2000/06/15 13:41:49 itojun Exp $	*/
 
 /*
@@ -7210,7 +7210,7 @@ key_alloc_mbuf(l)
 	return m;
 }
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 static int *key_sysvars[] = KEYCTL_VARS;
