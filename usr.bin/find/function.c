@@ -556,7 +556,7 @@ f_name(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	return(fnmatch(plan->c_data, entry->fts_name, FNM_QUOTE));
+	return(!fnmatch(plan->c_data, entry->fts_name, FNM_QUOTE));
 }
  
 PLAN *
