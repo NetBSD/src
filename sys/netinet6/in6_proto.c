@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.23 2000/10/19 20:23:02 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.24 2001/02/11 05:25:04 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ struct ip6protosw in6_gif_protosw =
 #endif /*NGIF*/
 
 struct domain inet6domain =
-    { AF_INET6, "internet6", 0, 0, 0, 
+    { AF_INET6, "internet6", 0, 0, 0,
       (struct protosw *)inet6sw,
       (struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])], 0,
       rn_inithead,
