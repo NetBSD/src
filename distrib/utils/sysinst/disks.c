@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.6 1997/10/29 01:06:48 phil Exp $ */
+/*	$NetBSD: disks.c,v 1.7 1997/10/31 23:00:37 phil Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -168,10 +168,12 @@ void disp_cur_fspart (int disp, int showall)
 	msg_display_add (MSG_fspart_head);
 	for (i=start; i<stop; i++) {
 		if (showall || bsdlabel[i][D_SIZE] > 0) {
-			msg_printf_add (" %c:%10d%10d %6s",
+			msg_printf_add (" %c: %9d %9d %9d %6s",
 					'a'+i,
 					bsdlabel[i][D_SIZE]/sizemult ,
 					bsdlabel[i][D_OFFSET]/sizemult,
+					(bsdlabel[i][D_OFFSET] +
+					 bsdlabel[i][D_SIZE])/sizemult,
 					fstype[bsdlabel[i][D_FSTYPE]]);
 			if (bsdlabel[i][D_FSTYPE] == T_42BSD)
 				msg_printf_add ("%6d%6d %s",
