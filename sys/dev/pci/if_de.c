@@ -1,3 +1,5 @@
+/*	$NetBSD: if_de.c,v 1.2 1995/06/05 00:47:42 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
  * All rights reserved.
@@ -20,9 +22,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: if_de.c,v 1.1.1.1 1995/06/05 00:38:24 cgd Exp $
- *
  */
 
 /*
