@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.58 1999/01/24 01:21:18 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.58.2.1 1999/04/29 14:52:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -277,16 +277,21 @@ struct tcp_opt_info {
  * Data for the TCP compressed state engine.
  */
 struct syn_cache {
-	TAILQ_ENTRY(syn_cache) sc_queue;
+	LIST_ENTRY(syn_cache) sc_bucketq;	/* link on bucket list */
+	TAILQ_ENTRY(syn_cache) sc_timeq;	/* link on timer queue */
 	struct route sc_route;			/* cached route */
-	u_int sc_timer;
+	long sc_win;				/* advertised window */
+	int sc_bucketidx;			/* our bucket index */
 	u_int32_t sc_hash;
+	u_int32_t sc_timestamp;			/* timestamp from SYN */
 	struct in_addr sc_src;
 	struct in_addr sc_dst;
 	tcp_seq sc_irs;
 	tcp_seq sc_iss;
-	u_short sc_rexmt_count;			/* number of times SYN,ACK
-						   was retransmitted */
+	u_int sc_rexmt;				/* retransmit timer */
+	u_int sc_rxtcur;			/* current rxt timeout */
+	u_int sc_rxttot;			/* total time spend on queues */
+	u_short sc_rxtshift;			/* for computing backoff */
 	u_short sc_flags;
 
 #define	SCF_UNREACH		0x0001		/* we've had an unreach error */
@@ -302,8 +307,7 @@ struct syn_cache {
 };
 
 struct syn_cache_head {
-	TAILQ_HEAD(, syn_cache) sch_queue;	/* time-sorted entries */
-	LIST_ENTRY(syn_cache_head) sch_headq;	/* non-empty buckets */
+	LIST_HEAD(, syn_cache) sch_bucket;	/* bucket entries */
 	u_short sch_length;			/* # entries in bucket */
 };
 
@@ -424,6 +428,7 @@ struct	tcpstat {
 	u_long	tcps_sc_dupesyn;	/* # of duplicate SYNs received */
 	u_long	tcps_sc_dropped;	/* # of SYNs dropped (no route/mem) */
 	u_long	tcps_sc_collisions;	/* # of hash collisions */
+	u_long	tcps_sc_retransmitted;	/* # of retransmissions */
 };
 
 /*
@@ -498,7 +503,6 @@ extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_syn_cache_interval; /* compressed state timer */
 
 extern	int tcp_syn_cache_size;
-extern	int tcp_syn_cache_timeo;
 extern	struct syn_cache_head tcp_syn_cache[];
 extern	u_long syn_cache_count;
 
@@ -584,8 +588,7 @@ void	 syn_cache_insert __P((struct syn_cache *));
 struct syn_cache *
 	 syn_cache_lookup __P((struct tcpiphdr *, struct syn_cache_head **));
 void	 syn_cache_reset __P((struct tcpiphdr *));
-int	 syn_cache_respond __P((struct syn_cache *, struct mbuf *,
-	    long, u_long));
+int	 syn_cache_respond __P((struct syn_cache *, struct mbuf *));
 void	 syn_cache_timer __P((void));
 
 int	tcp_newreno __P((struct tcpcb *, struct tcpiphdr *));
