@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.18 2001/05/15 04:24:28 kanaoka Exp $
+$NetBSD: cardbusdevs,v 1.19 2001/06/20 05:39:17 ichiro Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -83,6 +83,7 @@ product ADVSYS ULTRA	0x1300	Ultra SCSI
 
 /* Realtek (Creative Labs?) products */
 product REALTEK RT8138	0x8138	8138 Ethernet
+product REALTEK RT8139	0x8139	8139 Ethernet
 
 /* IO Data products */
 product IODATA CBIDE2	0x0003	CBIDE2 IDE controller
