@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.2 2004/12/06 02:59:23 christos Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.2.8.1 2005/02/06 07:40:35 jmc Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed & Guido van Rooij.
@@ -121,7 +121,7 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.2 2004/12/06 02:59:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.2.8.1 2005/02/06 07:40:35 jmc Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.73.2.2 2004/06/08 13:14:12 darrenr Exp";
 #endif
