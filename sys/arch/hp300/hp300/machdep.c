@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.74 92/12/20$
  *
  *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
- *	$Id: machdep.c,v 1.39 1994/07/16 06:43:00 cgd Exp $
+ *	$Id: machdep.c,v 1.40 1994/10/20 04:38:33 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -63,6 +63,7 @@
 #include <sys/exec.h>
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
+#include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -418,7 +419,7 @@ setregs(p, entry, stack, retval)
 	register struct proc *p;
 	u_long entry;
 	u_long stack;
-	int retval[2];
+	register_t *retval;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
@@ -921,14 +922,13 @@ sendsig(catcher, sig, mask, code)
  * psl to gain improper priviledges or to cause
  * a machine fault.
  */
-struct sigreturn_args {
-	struct sigcontext *sigcntxp;
-};
 /* ARGSUSED */
 sigreturn(p, uap, retval)
 	struct proc *p;
-	struct sigreturn_args *uap;
-	int *retval;
+	struct sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap;
+	register_t *retval;
 {
 	register struct sigcontext *scp;
 	register struct frame *frame;
@@ -937,7 +937,7 @@ sigreturn(p, uap, retval)
 	struct sigstate tstate;
 	int flags;
 
-	scp = uap->sigcntxp;
+	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
@@ -1037,7 +1037,7 @@ sigreturn(p, uap, retval)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
-		       p->p_pid, &flags, scp->sc_sp, uap->sigcntxp,
+		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
 		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
 	/*

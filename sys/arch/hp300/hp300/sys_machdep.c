@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_machdep.c	8.2 (Berkeley) 1/13/94
- *	$Id: sys_machdep.c,v 1.5 1994/05/23 06:15:27 mycroft Exp $
+ *	$Id: sys_machdep.c,v 1.6 1994/10/20 04:38:36 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -51,42 +51,42 @@
 #ifdef TRACE
 int	nvualarm;
 
-struct vtrace_args {
-	int	request;
-	int	value;
-};
 vtrace(p, uap, retval)
 	struct proc *p;
-	register struct vtrace_args *uap;
-	int *retval;
+	register struct vtrace_args /* {
+		syscallarg(int) request;
+		syscallarg(int) value;
+	} */ *uap;
+	register_t *retval;
 {
 	int vdoualarm();
 
-	switch (uap->request) {
+	switch (SCARG(uap, request)) {
 
 	case VTR_DISABLE:		/* disable a trace point */
 	case VTR_ENABLE:		/* enable a trace point */
-		if (uap->value < 0 || uap->value >= TR_NFLAGS)
+		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
 			return (EINVAL);
-		*retval = traceflags[uap->value];
-		traceflags[uap->value] = uap->request;
+		*retval = traceflags[SCARG(uap, value)];
+		traceflags[SCARG(uap, value)] = SCARG(uap, request);
 		break;
 
 	case VTR_VALUE:		/* return a trace point setting */
-		if (uap->value < 0 || uap->value >= TR_NFLAGS)
+		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
 			return (EINVAL);
-		*retval = traceflags[uap->value];
+		*retval = traceflags[SCARG(uap, value)];
 		break;
 
 	case VTR_UALARM:	/* set a real-time ualarm, less than 1 min */
-		if (uap->value <= 0 || uap->value > 60 * hz || nvualarm > 5)
+		if (SCARG(uap, value) <= 0 || SCARG(uap, value) > 60 * hz ||
+		    nvualarm > 5)
 			return (EINVAL);
 		nvualarm++;
-		timeout(vdoualarm, (void *)p->p_pid, uap->value);
+		timeout(vdoualarm, (void *)p->p_pid, SCARG(uap, value));
 		break;
 
 	case VTR_STAMP:
-		trace(TR_STAMP, uap->value, p->p_pid);
+		trace(TR_STAMP, SCARG(uap, value), p->p_pid);
 		break;
 	}
 	return (0);
@@ -249,8 +249,11 @@ cachectl(req, addr, len)
 int
 sysarch(p, uap, retval)
 	struct proc *p;
-	void  *uap;
-	int *retval;
+	struct sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(char *) parms;
+	} */ *uap;
+	register_t *retval;
 {
 	return ENOSYS;
 }
