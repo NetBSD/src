@@ -1,4 +1,4 @@
-/*	$NetBSD: auacerreg.h,v 1.1 2004/10/10 16:37:07 augustss Exp $	*/
+/*	$NetBSD: auacerreg.h,v 1.2 2005/01/15 15:19:52 kent Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -151,8 +151,8 @@
 #define	ALI_DMALIST_MAX	32
 #define	ALI_DMASEG_MAX	(65536*2)	/* 64k samples, 2x16 bit samples */
 struct auacer_dmalist {
-	u_int32_t	base;
-	u_int32_t	len;
+	uint32_t	base;
+	uint32_t	len;
 #define	ALI_DMAF_IOC	0x80000000	/* 1-int on complete */
 #define	ALI_DMAF_BUP	0x40000000	/* 0-retrans last, 1-transmit 0 */
 };
