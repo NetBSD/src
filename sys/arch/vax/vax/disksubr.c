@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 1994/10/26 08:03:01 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4 1994/11/25 19:09:52 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -48,6 +48,8 @@
 #define dkminor(unit, part)	(((unit) << 3) | (part))
 
 #define	b_cylin	b_resid
+
+#define		RAW_PART	3
 
 /*
  * Determine the size of the transfer, and make sure it is
@@ -140,7 +142,7 @@ writedisklabel(dev, strat, lp, osdep)
 }
 /*
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.3 1994/10/26 08:03:01 cgd Exp $
+ *	$Id: disksubr.c,v 1.4 1994/11/25 19:09:52 ragge Exp $
  */
 
 /*

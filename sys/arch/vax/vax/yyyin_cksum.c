@@ -1,4 +1,4 @@
-/*	$NetBSD: yyyin_cksum.c,v 1.2 1994/10/26 08:03:08 cgd Exp $	*/
+/*      $NetBSD: yyyin_cksum.c,v 1.3 1994/11/25 19:09:53 ragge Exp $ */
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -53,6 +53,7 @@ in_cksum(m, len)
 	register int sum = 0;		/* on vax, known to be r8 */
 	register int mlen = 0;
 
+printf("in_cksum: m %x, len %d\n",m,len);
 	for (;;) {
 		/*
 		 * Each trip around loop adds in
@@ -106,17 +107,26 @@ in_cksum(m, len)
 #ifdef unneeded		 /* The loop construct clears carry for us... */
 			asm("bicpsr $1");		/* clears carry */
 #endif
+#define	ADD(reg,to)	{asm __volatile ("adwc (%0)+,%1"::"g" (reg),"g" (to));}
+#define	ADDEND(reg)	{asm __volatile ("adwc $0, %0"::"g" (reg));}
+			ADD(w,sum);ADD(w,sum);ADD(w,sum);ADD(w,sum);
+			ADD(w,sum);ADD(w,sum);ADD(w,sum);ADD(w,sum);
+			ADDEND(sum);
+
+#if 0 /* Old construction */
 #define ADD		asm("adwc (r9)+,r8;");
 			ADD; ADD; ADD; ADD; ADD; ADD; ADD; ADD;
 			asm("adwc $0,r8");
+#endif
+
 		}
 		mlen += 32;
 		while ((mlen -= 8) >= 0) {
 #ifdef unneeded		 /* The loop construct clears carry for us... */
 			asm("bicpsr $1");		/* clears carry */
 #endif
-			ADD; ADD;
-			asm("adwc $0,r8");
+			ADD(w,sum); ADD(w,sum);
+			ADDEND(sum);
 		}
 		mlen += 8;
 		/*
@@ -125,10 +135,31 @@ in_cksum(m, len)
 		 * low parts together.)  Then mop up trailing words
 		 * and maybe an odd byte.
 		 */
+		{ 
+			asm __volatile ("
+			pushl	r0
+			ashl	$-16,%0,r0
+			addw2	r0,%0
+			adwc	$0,%0
+			movzwl	%0,%0
+			movl	(sp)+,r0
+			"::"g" (sum));
+		}
+
+#if 0
 		{ asm("ashl $-16,r8,r0; addw2 r0,r8");
 		  asm("adwc $0,r8; movzwl r8,r8"); }
+#endif
+
 		while ((mlen -= 2) >= 0) {
-			asm("movzwl (r9)+,r0; addl2 r0,r8");
+			asm __volatile ("
+			pushl   r0
+			movzwl	(%0)+,r0
+			addl2	r0,%1
+			movl    (sp)+,r0
+			"::"g" (w),"g" (sum));
+
+/*			asm("movzwl (r9)+,r0; addl2 r0,r8"); */
 		}
 		if (mlen == -1) {
 			sum += *(u_char *)w;
@@ -158,7 +189,26 @@ done:
 	 * Have to be careful to not drop the last
 	 * carry here.
 	 */
+	{
+		asm __volatile ("
+		pushl	r0
+		ashl	$-16,%0,r0
+		addw2	r0,%0
+		adwc	$0,%0
+		mcoml	%0,%0
+		movzwl	%0,%0
+		movl	(sp)+,r0
+		"::"g" (sum));
+	}
+
+#if 0
 	{ asm("ashl $-16,r8,r0; addw2 r0,r8; adwc $0,r8");
 	  asm("mcoml r8,r8; movzwl r8,r8"); }
+#endif
 	return (sum);
 }
+
+
+
+
+
