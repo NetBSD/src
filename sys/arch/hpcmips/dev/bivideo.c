@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.16 2001/01/21 14:00:32 takemura Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.17 2001/02/15 09:17:18 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.16 2001/01/21 14:00:32 takemura Exp $";
+    "$Id: bivideo.c,v 1.17 2001/02/15 09:17:18 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,6 +154,8 @@ bivideoattach(parent, self, aux)
 		printf(", console");
 	}
 	printf("\n");
+	printf("%s: framebuffer address: 0x%08lx\n", 
+		sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
 
 	/* Add a suspend hook to power saving */
 	sc->sc_powerstate = 0;
