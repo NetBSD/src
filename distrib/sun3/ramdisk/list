@@ -1,7 +1,7 @@
 #
-#	$NetBSD: rd_bin.conf,v 1.7 2001/09/21 06:12:52 mrg Exp $
+#	$NetBSD: list,v 1.1 2002/05/17 17:52:36 lukem Exp $
 #
-# common/rd_bin.conf - unified binary for the ramdisk.
+# ramdisk/list - packing list for the ramdisk.
 #
 # The ramdisk root has to stay small enough so the kernel
 # can be loaded in less than one megabyte of ram, including
@@ -24,7 +24,7 @@
 #
 # Include mknod incase I forgot some device nodes...
 # Support copying miniroot from NFS, TFTP, or CDROM.
-# Need mount_ffs, mount_ufs to remount the ramdisk.
+# Need mount_ffs to remount the ramdisk.
 #
 # Might use cat to look at files (it's small anyway).
 # Need for copying miniroot from tape: dd, mt
@@ -42,46 +42,66 @@
 # No need to extract archives either...
 #
 
-#
-# Here are all the programs, ordered by source location:
+SRCDIRS	bin sbin usr.bin distrib/utils
 
-# Special programs used to save space...
-srcdirs distrib/utils
-progs init ssh ls zcat
-special init srcdir distrib/utils/init_s
-special ls srcdir distrib/utils/tls
-ln init oinit
-ln ssh sh
-ln ssh -sh	# login shell (not actual file name)
+# From /usr/src/distrib/utils:
+PROG		bin/dd
+PROG		bin/ls
+PROG		bin/rsh
+PROG		bin/ssh		bin/sh bin/-sh
+# PROG		bin/tftp
+PROG		sbin/edlabel
+PROG		sbin/ifconfig
+PROG		sbin/init
+PROG		sbin/route
+
+# From /usr/src/sbin:
+PROG		sbin/mknod
+PROG		sbin/mount
+PROG		sbin/mount_cd9660
+PROG		sbin/mount_ffs
+PROG		sbin/mount_nfs
+PROG		sbin/reboot	sbin/halt
+PROG		sbin/umount
+
+# From /usr/src/bin:
+PROG		bin/cat
+# PROG		bin/chmod
+# PROG		bin/cp
+PROG		bin/echo
+PROG		bin/ln
+PROG		bin/mkdir
+PROG		bin/mt
+PROG		bin/mv
+PROG		bin/pwd
+PROG		bin/rcmd
+# PROG		bin/rm
+PROG		bin/sync
+PROG		bin/zcat
+
+LIBS libhack.o -lrmt -lutil -lz
 
 # These are built with special flags to save a little space.
-progs dd ifconfig mount route umount
-special dd srcdir distrib/utils/x_dd
-special ifconfig srcdir distrib/utils/x_ifconfig
-special mount srcdir distrib/utils/x_mount
-special route srcdir distrib/utils/x_route
-special umount srcdir distrib/utils/x_umount
+SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
+SPECIAL	ls		srcdir	distrib/utils/tls
+SPECIAL	mount		srcdir	distrib/utils/x_mount
+SPECIAL	route		srcdir	distrib/utils/x_route
+SPECIAL	ssh		srcdir	distrib/utils/ssh
+SPECIAL	umount		srcdir	distrib/utils/x_umount
 
-srcdirs sbin
-progs edlabel mknod
-progs mount_cd9660 mount_ffs mount_nfs
-progs reboot
-ln mount_ffs ffs mount_ufs ufs
-ln mount_nfs nfs
-ln mount_cd9660 cd9660
-ln reboot halt
+# various files that we need in /etc for the install
+COPY	${CURDIR}/disktab	etc/disktab
+COPY	${CURDIR}/fstab		etc/fstab
+COPY	${CURDIR}/passwd	etc/passwd
+COPY	${CURDIR}/protocols	etc/protocols
+COPY	${CURDIR}/services	etc/services
+COPY	${CURDIR}/sshrc		.sshrc
+COPY	${CURDIR}/welcome	.welcome
 
-srcdirs bin
-progs cat echo ln mkdir mt mv pwd rcmd sync
+COPY	${NETBSDSRCDIR}/etc/netconfig	etc/netconfig
 
-srcdirs usr.bin
-progs rsh
-# progs tftp
+# Fake /usr
+SYMLINK	.	usr
 
-# srcdirs usr.sbin
-
-# srcdirs gnu/usr.bin
-# progs cpio, gzip, tar
-# ln gzip gzcat gunzip
-
-libs libhack.o -lrmt -lutil -lz
+# Shell lacks pipe support, so use this.
+CMD	mkfifo dev/pipe
