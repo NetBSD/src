@@ -1,4 +1,4 @@
-/*	$NetBSD: bindresvport.c,v 1.4 1995/04/14 19:48:20 jtc Exp $	*/
+/*	$NetBSD: bindresvport.c,v 1.5 1995/06/03 22:37:19 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bindresvport.c 1.8 88/02/08 SMI";*/
 /*static char *sccsid = "from: @(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: bindresvport.c,v 1.4 1995/04/14 19:48:20 jtc Exp $";
+static char *rcsid = "$NetBSD: bindresvport.c,v 1.5 1995/06/03 22:37:19 mycroft Exp $";
 #endif
 
 /*
@@ -64,6 +64,7 @@ bindresvport(sd, sin)
 	if (sin == (struct sockaddr_in *)0) {
 		sin = &myaddr;
 		memset(sin, 0, sizeof (*sin));
+		sin->sin_len = sizeof(struct sockaddr_in);
 		sin->sin_family = AF_INET;
 	} else if (sin->sin_family != AF_INET) {
 		errno = EPFNOSUPPORT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.4 1995/04/14 19:48:24 jtc Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.5 1995/06/03 22:37:23 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_simple.c 1.35 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_simple.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_simple.c,v 1.4 1995/04/14 19:48:24 jtc Exp $";
+static char *rcsid = "$NetBSD: clnt_simple.c,v 1.5 1995/06/03 22:37:23 mycroft Exp $";
 #endif
 
 /* 
@@ -95,6 +95,7 @@ callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 		timeout.tv_sec = 5;
 		memset(&server_addr, 0, sizeof(server_addr));
 		bcopy(hp->h_addr, (char *)&server_addr.sin_addr, hp->h_length);
+		server_addr.sin_len = sizeof(struct sockaddr_in);
 		server_addr.sin_family = AF_INET;
 		server_addr.sin_port =  0;
 		if ((crp->client = clntudp_create(&server_addr, (u_long)prognum,
