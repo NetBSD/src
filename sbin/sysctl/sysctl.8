@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.46 2000/04/08 23:18:27 soren Exp $
+.\"	$NetBSD: sysctl.8,v 1.47 2000/05/23 12:35:35 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -128,7 +128,7 @@ For a detailed description of these variable see
 .Xr sysctl 3 .
 The changeable column indicates whether a process with appropriate
 privilege can change the value.
-.Bl -column net.inet6.tcp6.syn_cache_intervalxxxxxx integerxxx
+.Bl -column proc.<pid>.rlimit.coredumpsize.hardxxxxxx integerxxx
 .It Sy Name	Type	Changeable
 .It ddb.fromconsole	integer 	yes
 .It ddb.lines	integer		yes
@@ -274,24 +274,8 @@ privilege can change the value.
 .It net.inet6.ipsec6.esp_net_deflev	integer	yes
 .It net.inet6.ipsec6.esp_trans_deflev	integer	yes
 .It net.inet6.ipsec6.inbound_call_ike	integer	yes
-.It net.inet6.tcp6.43maxseg	integer	yes
-.It net.inet6.tcp6.conntimeo	integer	yes
-.It net.inet6.tcp6.do_rfc1323	integer	yes
-.It net.inet6.tcp6.keepcount	integer	yes
-.It net.inet6.tcp6.keepidle	integer	yes
-.It net.inet6.tcp6.keepinterval	integer	yes
-.It net.inet6.tcp6.maxpersistidle	integer	yes
-.It net.inet6.tcp6.mssdflt	integer	yes
-.It net.inet6.tcp6.pmtu	integer	yes
-.It net.inet6.tcp6.pmtu_expire	integer	yes
-.It net.inet6.tcp6.pmtu_probe	integer	yes
-.It net.inet6.tcp6.recvspace	integer	yes
-.It net.inet6.tcp6.sendspace	integer	yes
-.It net.inet6.tcp6.syn_bucket_limit	integer	yes
-.It net.inet6.tcp6.syn_cache_interval	integer	yes
-.It net.inet6.tcp6.syn_cache_limit	integer	yes
 .It net.inet6.udp6.recvspace	integer	yes
-.It net.inet6.udp6.sendmax	integer	yes
+.It net.inet6.udp6.sendspace	integer	yes
 .It net.key.acq_exp_int	integer	yes
 .It net.key.acq_maxtime	integer	yes
 .It net.key.debug	integer	yes
@@ -382,7 +366,7 @@ changes the value for the sysctl process itself, and will not have the desired
 effect.
 
 .Sh FILES
-.Bl -tag -width <netinet/icmpXvar.h> -compact
+.Bl -tag -width <netinet6/udp6Xvar.h> -compact
 .It Pa <sys/sysctl.h>
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers
@@ -393,14 +377,20 @@ definitions for third level profiling identifiers
 .It Pa <vm/vm_param.h>
 definitions for second level virtual memory identifiers
 .It Pa <netinet/in.h>
-definitions for third level Internet identifiers and
-fourth level IP identifiers
+definitions for third level IPv4/v6 identifiers and
+fourth level IPv4/v6 identifiers
 .It Pa <netinet/icmp_var.h>
 definitions for fourth level ICMP identifiers
+.It Pa <netinet/icmp6.h>
+definitions for fourth level ICMPv6 identifiers
 .It Pa <netinet/tcp_var.h>
 definitions for fourth level TCP identifiers
 .It Pa <netinet/udp_var.h>
 definitions for fourth level UDP identifiers
+.It Pa <netinet6/udp6_var.h>
+definitions for fourth level IPv6 UDP identifiers
+.It Pa <netinet6/ipsec.h>
+definitions for fourth level IPsec identifiers
 .El
 .Sh SEE ALSO
 .Xr sysctl 3
