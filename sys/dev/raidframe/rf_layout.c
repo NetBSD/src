@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.c,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
+/*	$NetBSD: rf_layout.c,v 1.3.2.1 1999/09/27 05:02:51 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -435,6 +435,13 @@ rf_ConfigureLayout(
 	layoutPtr->SUsPerPU = cfgPtr->SUsPerPU;
 	layoutPtr->SUsPerRU = cfgPtr->SUsPerRU;
 	parityConfig = cfgPtr->parityConfig;
+
+	if (layoutPtr->sectorsPerStripeUnit <= 0) {
+		RF_ERRORMSG2("raid%d: Invalid sectorsPerStripeUnit: %d\n",
+			     raidPtr->raidid, 
+			     (int)layoutPtr->sectorsPerStripeUnit );
+		return (EINVAL); 
+	}
 
 	layoutPtr->stripeUnitsPerDisk = raidPtr->sectorsPerDisk / layoutPtr->sectorsPerStripeUnit;
 
