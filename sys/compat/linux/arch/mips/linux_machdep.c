@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.8 2001/11/20 21:37:51 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.9 2001/11/20 21:50:13 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8 2001/11/20 21:37:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9 2001/11/20 21:50:13 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,10 +224,6 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-
-	/* Attempt to flush everything just in case it fixes problems */
-/*	mips_icache_sync_all();
-	mips_dcache_wbinv_all(); */
 
 	return;
 }
