@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.6 1995/03/30 21:25:36 ragge Exp $     */
+/*      $NetBSD: subr.s,v 1.7 1995/04/10 03:54:46 mycroft Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -95,7 +95,7 @@ _physcopypage:	.word 0x7
 		movl	r0,*(_pte_cmap)
 		movl	r1,*$4+(_pte_cmap)
 
-		movl	_v_cmap,r2
+		movl	_vmmap,r2
 		addl3	$0x200,r2,r1
 		mtpr	r1,$PR_TBIS
 		mtpr	r2,$PR_TBIS
