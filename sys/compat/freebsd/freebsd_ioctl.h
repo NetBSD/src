@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ioctl.h,v 1.4 1998/10/04 11:25:28 veego Exp $	*/
+/*	$NetBSD: freebsd_ioctl.h,v 1.5 2000/10/09 06:19:31 onoe Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -41,5 +41,11 @@
 #define FREEBSD_IOC_OUT		0x40000000
 #define FREEBSD_IOC_IN		0x80000000
 #define FREEBSD_IOC_INOUT	(FREEBSD_IOC_IN|FREEBSD_IOC_OUT)
+
+#define FREEBSD_SIOCALIFADDR	 _IOW('i', 27, struct if_laddrreq)
+#define FREEBSD_SIOCGLIFADDR	_IOWR('i', 28, struct if_laddrreq)
+#define FREEBSD_SIOCDLIFADDR	 _IOW('i', 29, struct if_laddrreq)
+#define FREEBSD_SIOCGIFMTU	_IOWR('i', 51, struct ifreq)
+#define FREEBSD_SIOCSIFMTU	 _IOW('i', 52, struct ifreq)
 
 #endif /* !_FREEBSD_IOCTL_H */
