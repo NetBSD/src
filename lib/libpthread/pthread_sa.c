@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.4 2001/07/13 04:12:18 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.5 2001/07/19 17:32:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,13 +73,10 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr)
 	pthread_t t, self, next, intqueue;
 	int first = 1;
 	int deliversig = 0;
-	struct timeval tm;
-
 
 	PTHREADD_ADD(PTHREADD_UPCALLS);
 
 	self = pthread__self();
-	gettimeofday(&tm, NULL);
 
 	switch (type) {
 	case SA_UPCALL_BLOCKED:
@@ -115,6 +112,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr)
 	 * they can do their own version of this dance.
 	 */
 
+	intqueue = NULL;
 	if ((ev + intr) >= first) {
 		if (pthread__find_interrupted(sas + first, ev + intr,
 		    &intqueue, self) > 0)
@@ -139,9 +137,11 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr)
 				pthread__signal(NULL, sas[0]->sa_sig, 
 				    sas[0]->sa_code);
 		}
-		pthread__sched_idle2(self);
-		pthread__sched_bulk(self, intqueue);
 	}
+
+	pthread__sched_idle2(self);
+	if (intqueue)
+		pthread__sched_bulk(self, intqueue);
 	
 	/* At this point everything on our list should be scheduled
 	 * (or was an upcall).
