@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.116 2000/06/10 14:12:04 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.117 2000/06/19 19:00:14 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -32,33 +32,45 @@ LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
 LIBBZ2?=	${DESTDIR}/usr/lib/libbz2.a
 LIBC?=		${DESTDIR}/usr/lib/libc.a
 LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
+LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
 LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
 LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
+LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
 LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
 LIBDES?=	${DESTDIR}/usr/lib/libdes.a
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
 LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
+LIBGSSAPI?=	${DESTDIR}/usr/lib/libgssapi.a
+LIBHDB?=	${DESTIDR}/usr/lib/libhdb.a
 LIBIPSEC?=	${DESTDIR}/usr/lib/libipsec.a
-LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
+LIBKADM?=	${DESTDIR}/usr/lib/libkadm.a
+LIBKADM5CLNT?=	${DESTDIR}/usr/lib/libkadm5clnt.a
+LIBKADM5SRV?=	${DESTDIR}/usr/lib/libkadm5srv.a
+LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
+LIBKRB?=	${DESTDIR}/usr/lib/libkdb.a
 LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
+LIBKRB5?=	${DESTDIR}/usr/lib/libkrb5.a
+LIBKSTREAM?=	${DESTDIR}/usr/lib/libkstream.a
 LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
 LIBL?=		${DESTDIR}/usr/lib/libl.a
 LIBM?=		${DESTDIR}/usr/lib/libm.a
 LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
-LIBMP?=		${DESTDIR}/usr/lib/libmp.a
-LIBNTP?=	${DESTDIR}/usr/lib/libntp.a
 LIBOBJC?=	${DESTDIR}/usr/lib/libobjc.a
-LIBPC?=		${DESTDIR}/usr/lib/libpc.a
+LIBOSSAUDIO?=	${DESTDIR}/usr/lib/libossaudio.a
 LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
-LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
 LIBPOSIX?=	${DESTDIR}/usr/lib/libposix.a
 LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
+LIBRMT?=	${DESTDIR}/usr/lib/librmt.a
+LIBROKEN?=	${DESTDIR}/usr/lib/libroken.a
 LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
+LIBSS?=		${DESTDIR}/usr/lib/libss.a
+LIBSL?=		${DESTDIR}/usr/lib/libsl.a
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 LIBTELNET?=	${DESTDIR}/usr/lib/libtelnet.a
+LIBUSB?=	${DESTDIR}/usr/lib/libusb.a
 LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
 LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
 LIBY?=		${DESTDIR}/usr/lib/liby.a
