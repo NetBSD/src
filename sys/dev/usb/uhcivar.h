@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.25 2000/03/24 22:03:32 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.26 2000/03/24 22:57:58 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -80,6 +80,14 @@ typedef struct uhci_intr_info {
 #endif
 } uhci_intr_info_t;
 
+struct uhci_xfer {
+	struct usbd_xfer xfer;
+	uhci_intr_info_t iinfo;
+	int curframe;
+};
+
+#define UXFER(xfer) ((struct uhci_xfer *)(xfer))
+
 /*
  * Extra information that we need for a TD.
  */
@@ -106,8 +114,6 @@ struct uhci_soft_qh {
 	uhci_soft_td_t *elink;		/* soft version of qh_elink */
 	uhci_physaddr_t physaddr;	/* QH's physical address. */
 	int pos;			/* Timeslot position */
-	uhci_intr_info_t *intr_info;	/* Who to call on completion. */
-/* XXX should try to shrink with 4 bytes to fit into 32 bytes */
 };
 /* See comment about UHCI_STD_SIZE. */
 #define UHCI_SQH_SIZE ((sizeof (struct uhci_soft_qh) + UHCI_QH_ALIGN - 1) / UHCI_QH_ALIGN * UHCI_QH_ALIGN)
@@ -158,10 +164,6 @@ typedef struct uhci_softc {
 	/* Info for the root hub interrupt channel. */
 	int sc_ival;			/* time between root hug intrs */
 	usbd_xfer_handle sc_has_timo;	/* root hub interrupt transfer */
-
-	char sc_vflock;			/* for lock virtual frame list */
-#define UHCI_HAS_LOCK 1
-#define UHCI_WANT_LOCK 2
 
 	char sc_vendor[16];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
