@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5 1997/03/18 23:49:08 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.6 1997/03/24 23:49:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -155,7 +155,7 @@ mmrw(dev, uio, flags)
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
-			continue;
+			break;
 
 		case 1:                        /*  /dev/kmem  */
 			v = uio->uio_offset;
@@ -175,7 +175,7 @@ mmrw(dev, uio, flags)
 				goto unlock;
 			}
 			error = uiomove((caddr_t)v, c, uio);
-			continue;
+			break;
 
 		case 2:                        /*  /dev/null  */
 			if (uio->uio_rw == UIO_WRITE)
@@ -184,14 +184,14 @@ mmrw(dev, uio, flags)
 
 		case 11:                        /*  /dev/eeprom  */
 			error = eeprom_uio(uio);
-			/* Yes, return (not continue) so EOF works. */
+			/* Yes, return (not break) so EOF works. */
 			return (error);
 
 		case 12:                        /*  /dev/zero  */
 			/* Write to /dev/zero is ignored. */
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
-				return 0;
+				return (0);
 			}
 			/*
 			 * On the first call, allocate and zero a page
@@ -204,7 +204,7 @@ mmrw(dev, uio, flags)
 			}
 			c = min(iov->iov_len, CLBYTES);
 			error = uiomove(devzeropage, c, uio);
-			continue;
+			break;
 
 		default:
 			return (ENXIO);
@@ -273,7 +273,6 @@ mmmmap(dev, off, prot)
 	case 10:	/* dev/vme32d32 */
 		return (v | PMAP_VME32);
 #endif	/* XXX */
-
 	}
 
 	return (-1);
