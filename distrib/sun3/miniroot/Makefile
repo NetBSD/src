@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2002/05/17 17:52:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.29 2002/05/18 13:26:14 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -55,7 +55,7 @@ IMAGEDEPENDS=	${KERNEL3} ${KERNEL3X} \
 		${DESTDIR}/usr/bin/sed ${DESTDIR}/usr/bin/sort \
 		${DESTDIR}/usr/bin/tip ${DESTDIR}/usr/bin/true \
 		${DESTDIR}/usr/bin/vi \
-		${DESTDIR}/usr/mdec/bootxx ${DESTDIR}/usr/mdec/bootyy \
+		${DESTDIR}/usr/mdec/bootxx \
 		${DESTDIR}/usr/mdec/netboot ${DESTDIR}/usr/mdec/tapeboot \
 		${DESTDIR}/usr/mdec/ufsboot \
 		${DESTDIR}/usr/sbin/chown ${DESTDIR}/usr/sbin/installboot \

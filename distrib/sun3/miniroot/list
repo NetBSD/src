@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.1 2002/05/17 17:52:36 lukem Exp $
+# $NetBSD: list,v 1.2 2002/05/18 13:26:14 lukem Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -11,7 +11,7 @@ COPY	${DESTDIR}/usr/bin/true 	bin/true
 
 # From usr/mdec:
 COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec/bootxx
-COPY	${DESTDIR}/usr/mdec/bootyy	usr/mdec/bootyy
+# COPY	${DESTDIR}/usr/mdec/bootyy	usr/mdec/bootyy
 SYMLINK		  /usr/sbin/installboot usr/mdec/installboot
 COPY	${DESTDIR}/usr/mdec/netboot	usr/mdec/netboot
 COPY	${DESTDIR}/usr/mdec/tapeboot	usr/mdec/tapeboot
@@ -127,21 +127,21 @@ SYMLINK	/usr/lib usr/libexec
 # libedit: ftp
 # libtermcap: ftp, less, vi
 # libutil: rdate
-COPY	${DESTDIR}/usr/libexec/ld.elf_so	usr/lib
-COPY	${DESTDIR}/usr/lib/libc.so		usr/lib
+COPY	${DESTDIR}/usr/libexec/ld.elf_so	usr/lib/ld.elf_so
+COPY	${DESTDIR}/usr/lib/libc.so		usr/lib/libc.so
 LINK	usr/lib/libc.so				usr/lib/libc.so.12
-COPY	${DESTDIR}/usr/lib/libcurses.so		usr/lib
+COPY	${DESTDIR}/usr/lib/libcurses.so		usr/lib/libcurses.so
 LINK	usr/lib/libcurses.so			usr/lib/libcurses.so.4
-COPY	${DESTDIR}/usr/lib/libedit.so		usr/lib
+COPY	${DESTDIR}/usr/lib/libedit.so		usr/lib/libedit.so
 LINK	usr/lib/libedit.so			usr/lib/libedit.so.2
-COPY	${DESTDIR}/usr/lib/libtermcap.so	usr/lib
+COPY	${DESTDIR}/usr/lib/libtermcap.so	usr/lib/libtermcap.so
 LINK	usr/lib/libtermcap.so			usr/lib/libtermcap.so.0
-COPY	${DESTDIR}/usr/lib/libutil.so		usr/lib
+COPY	${DESTDIR}/usr/lib/libutil.so		usr/lib/libutil.so
 LINK	usr/lib/libutil.so			usr/lib/libutil.so.6
 
 # usr.sbin:
 COPY	${DESTDIR}/usr/sbin/chown		usr/sbin/chown
-COPY	${DESTDIR}/usr/sbin/eeprom		usr/sbin
+COPY	${DESTDIR}/usr/sbin/eeprom		usr/sbin/eeprom
 COPY	${DESTDIR}/usr/sbin/installboot		usr/sbin/installboot
 COPY	${DESTDIR}/usr/sbin/rdate		usr/sbin/rdate
 
