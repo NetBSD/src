@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.78 2001/06/02 16:17:11 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.79 2001/06/27 23:40:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -758,10 +758,10 @@ udp6_realinput(af, src, dst, m, off)
 	struct mbuf *m;
 	int off;	/* offset of udphdr */
 {
-	u_int16_t *sport, *dport;
+	u_int16_t sport, dport;
 	int rcvcnt;
-	struct in6_addr *src6, *dst6;
-	struct in_addr *dst4;
+	struct in6_addr src6, dst6;
+	const struct in_addr *dst4;
 	struct in6pcb *in6p;
 
 	rcvcnt = 0;
@@ -772,14 +772,14 @@ udp6_realinput(af, src, dst, m, off)
 	if (src->sin6_family != AF_INET6 || dst->sin6_family != AF_INET6)
 		goto bad;
 
-	src6 = &src->sin6_addr;
-	sport = &src->sin6_port;
-	dst6 = &dst->sin6_addr;
-	dport = &dst->sin6_port;
+	in6_embedscope(&src6, src, NULL, NULL);
+	sport = src->sin6_port;
+	in6_embedscope(&dst6, dst, NULL, NULL);
+	dport = dst->sin6_port;
 	dst4 = (struct in_addr *)&dst->sin6_addr.s6_addr32[12];
 
-	if (IN6_IS_ADDR_MULTICAST(dst6)
-	 || (af == AF_INET && IN_MULTICAST(dst4->s_addr))) {
+	if (IN6_IS_ADDR_MULTICAST(&dst6) ||
+	    (af == AF_INET && IN_MULTICAST(dst4->s_addr))) {
 		struct in6pcb *last;
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets
@@ -806,29 +806,29 @@ udp6_realinput(af, src, dst, m, off)
 		 */
 		for (in6p = udb6.in6p_next; in6p != &udb6;
 		     in6p = in6p->in6p_next) {
-			if (in6p->in6p_lport != *dport)
+			if (in6p->in6p_lport != dport)
 				continue;
 			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
-				if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, dst6)
-				 && !in6_mcmatch(in6p, dst6, m->m_pkthdr.rcvif))
+				if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &dst6) &&
+				    !in6_mcmatch(in6p, &dst6, m->m_pkthdr.rcvif))
 					continue;
 			}
 #ifndef INET6_BINDV6ONLY
 			else {
-				if (IN6_IS_ADDR_V4MAPPED(dst6)
-				 && (in6p->in6p_flags & IN6P_BINDV6ONLY))
+				if (IN6_IS_ADDR_V4MAPPED(&dst6) &&
+				    (in6p->in6p_flags & IN6P_BINDV6ONLY))
 					continue;
 			}
 #endif
 			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
-				if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, src6)
-				 || in6p->in6p_fport != *sport)
+				if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr,
+				    &src6) || in6p->in6p_fport != sport)
 					continue;
 			}
 #ifndef INET6_BINDV6ONLY
 			else {
-				if (IN6_IS_ADDR_V4MAPPED(src6)
-				 && (in6p->in6p_flags & IN6P_BINDV6ONLY))
+				if (IN6_IS_ADDR_V4MAPPED(&src6) &&
+				    (in6p->in6p_flags & IN6P_BINDV6ONLY))
 					continue;
 			}
 #endif
@@ -873,11 +873,11 @@ udp6_realinput(af, src, dst, m, off)
 		/*
 		 * Locate pcb for datagram.
 		 */
-		in6p = in6_pcblookup_connect(&udb6, src6, *sport,
-			dst6, *dport, 0);
+		in6p = in6_pcblookup_connect(&udb6, &src6, sport,
+		    &dst6, dport, 0);
 		if (in6p == 0) {
 			++udpstat.udps_pcbhashmiss;
-			in6p = in6_pcblookup_bind(&udb6, dst6, *dport, 0);
+			in6p = in6_pcblookup_bind(&udb6, &dst6, dport, 0);
 			if (in6p == 0) {
 #if 0
 				struct mbuf *n;
