@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2003/03/19 16:54:25 ross Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2003/11/11 11:32:39 dsl Exp $
 
 .include <bsd.own.mk>
 
@@ -43,7 +43,8 @@ crt0.o: crt0.c
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
-gcrt0.o: ${.CURDIR}/crt0.c
+# dependant on crt0.o to pick up header dependencies
+gcrt0.o: ${.CURDIR}/crt0.c crt0.o
 	@echo "${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}"
 	@${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
