@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.3 1995/04/07 00:41:43 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1995/05/03 03:43:05 briggs Exp $
 
 SRCS+=	_setjmp.S alloca.S fabs.S frexp.c infinity.c isinf.c ldexp.S modf.S \
-	setjmp.S
+	setjmp.S sigsetjmp.S
 SRCS+=	flt_rounds.S fpgetmask.S fpgetround.S fpgetsticky.S fpsetmask.S \
 	fpsetround.S fpsetsticky.S
 SRCS+=	adddf3.S addsf3.S ashlsi3.S ashrsi3.S cmpdf2.S cmpsf2.S divdf3.S \
