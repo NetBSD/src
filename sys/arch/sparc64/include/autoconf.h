@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.16 2004/03/16 13:14:34 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.17 2004/03/16 23:05:46 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -184,4 +184,6 @@ int	romgetcursoraddr __P((int **, int **));
 int	findroot __P((void));
 int	findnode __P((int, const char *));
 int	node_has_property __P((int, const char *));
+int	prom_getoptionsnode __P((void));
+int	prom_getoption __P((const char *name, char *buf, int buflen));
 

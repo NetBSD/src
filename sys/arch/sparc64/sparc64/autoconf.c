@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.89 2004/03/16 13:14:34 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.90 2004/03/16 23:05:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.89 2004/03/16 13:14:34 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.90 2004/03/16 23:05:45 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -890,6 +890,41 @@ node_has_property(node, prop)	/* returns 1 if node has given property */
 	return (OF_getproplen(node, (caddr_t)prop) != -1);
 }
 
+/*
+ * Get the global "options" node Id.
+ */
+int prom_getoptionsnode()
+{
+static	int optionsnode;
+
+	if (optionsnode == 0) {
+		optionsnode = findnode(firstchild(findroot()), "options");
+	}
+	return optionsnode;
+}
+
+/*
+ * Return a property string value from the global "options" node.
+ */
+int prom_getoption(const char *name, char *buf, int buflen)
+{
+	int node = prom_getoptionsnode();
+	int error, len;
+
+	if (buflen == 0)
+		return (EINVAL);
+
+	if (node == 0)
+		return (ENOENT);
+
+	len = buflen - 1;
+	if ((error = PROM_getprop(node, (char *)name, 1, &len, &buf)) != 0)
+		return error;
+
+	buf[len] = '\0';
+	return (0);
+}
+
 struct idprom *
 prom_getidprom(void)
 {
@@ -928,7 +963,6 @@ void prom_getether(node, cp)
 	u_char *cp;
 {
 	struct idprom *idp = prom_getidprom();
-	int optionsnode;
 	char buf[6+1], *bp;
 	int nitem;
 
@@ -956,9 +990,8 @@ void prom_getether(node, cp)
 	 * if we should try to extract the node's "local-mac-address"
 	 * property.
 	 */
-	optionsnode = findnode(firstchild(findroot()), "options");
-	if (strcmp(PROM_getpropstring(optionsnode, "local-mac-address?"),
-			  "true") != 0)
+	if (prom_getoption("local-mac-address?", buf, sizeof buf) != 0 ||
+	    strcmp(buf, "true") != 0)
 		goto read_idprom;
 
 	/* Retrieve the node's "local-mac-address" property, if any */
