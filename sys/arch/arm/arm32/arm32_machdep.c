@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.33 2003/05/21 18:04:42 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.34 2003/06/04 13:30:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -99,7 +99,6 @@ char *booted_kernel;
 
 /* Prototypes */
 
-u_long strtoul			__P((const char *s, char **ptr, int base));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 extern void configure		__P((void));
