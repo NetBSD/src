@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.38 1996/11/22 18:53:31 jonathan Exp $
+#	$NetBSD: Makefile.pmax,v 1.39 1996/12/01 03:23:04 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -26,6 +26,7 @@ LD?=	ld
 KERNLD?=	ld.old	# GNU binutils 2.7 ld can't link kernels, use 2.6
 MKDEP?=	mkdep
 STRIP?=	strip
+COPTS?=		-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -39,7 +40,7 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dpmax ${GP}
 CWARNFLAGS=	-Werror
-CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80030000 -e start
 STRIPFLAGS=	-d
