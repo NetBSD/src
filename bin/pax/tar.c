@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.24 2002/10/13 00:34:16 mrg Exp $	*/
+/*	$NetBSD: tar.c,v 1.25 2002/10/13 17:21:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.24 2002/10/13 00:34:16 mrg Exp $");
+__RCSID("$NetBSD: tar.c,v 1.25 2002/10/13 17:21:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -775,7 +775,7 @@ ustar_rd(ARCHD *arcn, char *buf)
 		*dest++ = '/';
 		cnt++;
 	}
-	arcn->nlen = cnt + strlcpy(dest, hd->name, sizeof(arcn->name) - cnt);
+	arcn->nlen = strlcpy(dest, hd->name, sizeof(arcn->name) - cnt);
 
 	/*
 	 * follow the spec to the letter. we should only have mode bits, strip
