@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.11 2000/12/16 02:22:53 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.12 2000/12/24 07:59:04 jhawk Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -312,3 +312,24 @@ sys/arch/mac68k/obio/grf_obio.c			1.46-1.47
 sys/dev/ic/an.c					patch
 
   Fix multicast packet reception; handle corresponding ioctl().
+
+sys/kern/vfs_getcwd.c				1.14
+
+  Avoid an infinite loop if VOP_READDIR returned an error.
+
+sys/arch/news68k/include/cpu.h			1.7
+sys/arch/news68k/news68k/genassym.cf		1.6
+sys/arch/news68k/news68k/locore.s		1.13,1.16
+
+  Allow runtime enabling/disabling of DC_BE and IC_BE bits in %cacr
+  and enable them on news1200/1400/1500 (Which have no L2 cache); yields
+  a performance improvement. Also correct a typo in a comment.
+
+sys/arch/news68k/include/romcall.h		1.2
+sys/arch/news68k/stand/boot/boot.c		1.3
+sys/arch/news68k/stand/boot/locore.S		1.3
+sys/arch/news68k/stand/bootxx/start.S		1.2
+sys/arch/news68k/stand/common/romcalls.S	1.2
+
+  Make sure to return PROM prompt even if loading kernel fails halfway,
+  by calling the PROM halt routine upon failure of loadfile().
