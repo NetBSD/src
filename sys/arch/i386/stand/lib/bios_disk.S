@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.8 2000/05/21 16:59:28 perry Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.9 2002/10/10 18:52:42 dyoung Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -59,6 +59,41 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	data32	.byte 0x66
 
 /*
+# BIOS call "INT 0x13 Function 0x0" to reset the disk subsystem
+#	Call with	%ah = 0x0
+#			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
+#	Return:		
+#			%al = 0x0 on success; err code on failure
+*/
+ENTRY(biosdiskreset)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ebx
+	push	%edx
+	push	%edi
+
+	movb	8(%ebp), %dl	# device
+
+	call	_C_LABEL(prot_to_real)	# enter real mode
+
+	movb	$0x0, %ah	# subfunction
+	int	$0x13
+	setc	%bl
+	movb	%ah, %bh	# save error code
+
+	data32
+	call	_C_LABEL(real_to_prot) # back to protected mode
+
+	xorl	%eax, %eax
+	movw	%bx, %ax	# return value in %ax
+
+	pop	%edi
+	pop	%edx
+	popl	%ebx
+	popl	%ebp
+	ret
+
+/*
 # BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
 #	Call with	%ah = 0x2
 #			%al = number of sectors
@@ -69,6 +104,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #			%es:%bx = segment:offset of buffer
 #	Return:		
 #			%al = 0x0 on success; err code on failure
+#
+#  Note: On failure, you must reset the disk with biosdiskreset() before
+#        sending another command.
 */
 ENTRY(biosread)
 	pushl	%ebp
