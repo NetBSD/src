@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstr.c,v 1.5 1997/05/17 20:06:57 pk Exp $	*/
+/*	$NetBSD: mkstr.c,v 1.6 1997/07/04 21:54:06 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkstr.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mkstr.c,v 1.5 1997/05/17 20:06:57 pk Exp $";
+static char rcsid[] = "$NetBSD: mkstr.c,v 1.6 1997/07/04 21:54:06 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ copystr()
 	}
 out:
 	*cp = 0;
-	printf("%d", hashit(buf, 1, NULL));
+	printf("%d", hashit(buf, 1, 0));
 }
 
 int
@@ -328,5 +328,5 @@ fgetNUL(obuf, rmdr, file)
 		*buf++ = c;
 	*buf++ = 0;
 	getc(file);
-	return ((feof(file) || ferror(file)) ? NULL : 1);
+	return ((feof(file) || ferror(file)) ? 0 : 1);
 }
