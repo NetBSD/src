@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.35 2005/03/15 08:16:39 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.36 2005/03/17 00:21:04 jmc Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -146,6 +146,16 @@ Scope:		Entire tree. (src + xsrc)
 Notes:
 		Commits restricted to Release Engineering.
 
+Branch:		netbsd-3
+Description:	The NetBSD 3 release branch
+Status:		Active
+Start Date:	16 Mar 2005
+End Date:
+Base Tag:	netbsd-3-base
+Maintainer:	3.0 Release Engineering <releng-3@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:
+		Commits restricted to Release Engineering.
 
 # Individual developers' branches:
 
