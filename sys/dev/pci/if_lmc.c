@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.12 2001/07/07 16:46:35 thorpej Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.13 2001/07/19 15:38:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -506,6 +506,10 @@ lmc_watchdog(int unit)
 static void
 lmc_ifup(lmc_softc_t * const sc)
 {
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+	struct sppp *sp = &sc->lmc_sppp;
+#endif
+
 	sc->lmc_if.if_timer = 0;
 
 	lmc_dec_reset(sc);
@@ -544,6 +548,12 @@ lmc_ifup(lmc_softc_t * const sc)
 	LMC_CSR_WRITE(sc, csr_command, sc->lmc_cmdmode);
 
 	sc->lmc_if.if_timer = 1;
+
+
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+	/* connect LCP */
+	(sp->pp_up)(sp);
+#endif
 }
 
 /*
@@ -553,6 +563,13 @@ lmc_ifup(lmc_softc_t * const sc)
 static void
 lmc_ifdown(lmc_softc_t * const sc)
 {
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+	struct sppp *sp = &sc->lmc_sppp;
+
+	/* disconnect LCP */
+	(sp->pp_down)(sp);
+#endif
+
 	sc->lmc_if.if_timer = 0;
 	sc->lmc_flags &= ~LMC_IFUP;
 
@@ -1258,6 +1275,8 @@ lmc_ifstart(struct ifnet * const ifp)
 	if (sc->lmc_flags & LMC_IFUP) {
 		while (sppp_isempty(ifp) == 0) {
 			m = sppp_dequeue(ifp);
+			if (!m)
+				break;
 			if ((m = lmc_txput(sc, m)) != NULL) {
 				IF_PREPEND(&((struct sppp *)ifp)->pp_fastq, m);
 				break;
@@ -1275,8 +1294,9 @@ lmc_ifstart_one(struct ifnet * const ifp)
 
 	if ((sc->lmc_flags & LMC_IFUP) && (sppp_isempty(ifp) == 0)) {
 		m = sppp_dequeue(ifp);
-		if ((m = lmc_txput(sc, m)) != NULL) {
-			IF_PREPEND(&((struct sppp *)ifp)->pp_fastq, m);
+		if (m) {
+			if ((m = lmc_txput(sc, m)) != NULL)
+				IF_PREPEND(&((struct sppp *)ifp)->pp_fastq, m);
 		}
 		LMC_CSR_WRITE(sc, csr_txpoll, 1);
 	}
