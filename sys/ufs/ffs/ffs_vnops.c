@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.42 2001/09/26 06:20:50 chs Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.43 2001/10/26 05:56:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -52,7 +52,6 @@
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_extern.h>

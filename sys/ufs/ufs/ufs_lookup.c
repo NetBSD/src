@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.33 2001/02/26 20:25:11 fvdl Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.34 2001/10/26 05:56:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,7 +50,6 @@
 #include <sys/vnode.h>
 #include <sys/kernel.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufsmount.h>

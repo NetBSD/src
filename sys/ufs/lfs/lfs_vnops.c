@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.56 2001/09/22 22:35:20 sommerfeld Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.57 2001/10/26 05:56:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -90,7 +90,6 @@
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufsmount.h>

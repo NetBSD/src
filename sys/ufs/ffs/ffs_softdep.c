@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.17 2001/09/15 20:36:42 chs Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.18 2001/10/26 05:56:08 lukem Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -44,7 +44,6 @@
 #include <sys/vnode.h>
 #include <miscfs/specfs/specdev.h>
 #include <ufs/ufs/dir.h>
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ffs/fs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.61 2001/07/09 17:30:37 ad Exp $	*/
+/*	$NetBSD: pstat.c,v 1.62 2001/10/26 05:56:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.61 2001/07/09 17:30:37 ad Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.62 2001/10/26 05:56:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,6 @@ __RCSID("$NetBSD: pstat.c,v 1.61 2001/07/09 17:30:37 ad Exp $");
 #include <sys/ucred.h>
 #define _KERNEL
 #include <sys/file.h>
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #define NFS
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.11 2001/08/24 10:24:46 wiz Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.12 2001/10/26 05:56:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -46,7 +46,6 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.17 2001/10/26 05:56:08 lukem Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -61,7 +61,6 @@
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>

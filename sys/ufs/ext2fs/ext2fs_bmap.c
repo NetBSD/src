@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.6 2001/10/26 05:56:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -53,7 +53,6 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>

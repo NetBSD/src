@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.10 2000/11/27 08:39:57 chs Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.11 2001/10/26 05:56:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -51,7 +51,6 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>

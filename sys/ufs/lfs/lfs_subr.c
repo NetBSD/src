@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.18 2001/07/13 20:30:24 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.19 2001/10/26 05:56:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,6 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>

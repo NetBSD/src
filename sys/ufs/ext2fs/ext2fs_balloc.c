@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.11 2001/09/15 20:36:41 chs Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.12 2001/10/26 05:56:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -51,7 +51,6 @@
 
 #include <uvm/uvm.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
 
