@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.3 1999/02/05 00:06:08 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.4 1999/03/14 21:53:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -506,6 +506,9 @@ rf_GenericWakeupFunc(node, status)
 			node->status = rf_undone;
 		break;
 	default:
+		printf("rf_GenericWakeupFunc:");
+		printf("node->status is %d,", node->status);
+		printf("status is %d \n", status);
 		RF_PANIC();
 		break;
 	}
