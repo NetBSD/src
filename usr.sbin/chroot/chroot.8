@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chroot.8	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: chroot.8,v 1.4 1997/06/22 08:26:10 lukem Exp $
+.\"	$NetBSD: chroot.8,v 1.5 1997/10/18 04:06:28 lukem Exp $
 .\"
 .Dd June 9, 1993
 .Dt CHROOT 8
@@ -39,7 +39,7 @@
 .Nm chroot
 .Nd change root directory
 .Sh SYNOPSIS
-.Nm chroot
+.Nm
 .Ar newroot
 .Op Ar command
 .Sh DESCRIPTION
@@ -56,7 +56,7 @@ Note,
 or the shell are run as your real-user-id.
 .Sh ENVIRONMENT
 The following environment variable is referenced by
-.Nm chroot :
+.Nm "" :
 .Bl -tag -width SHELL
 .It Ev SHELL
 If set,
