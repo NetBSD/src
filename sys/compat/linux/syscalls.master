@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.8 1995/08/14 01:27:56 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.9 1995/08/21 03:42:12 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -100,7 +100,7 @@
 56	UNIMPL		linux_mpx
 57	NOARGS		{ int setpgid(int pid, int pgid); }
 58	UNIMPL		linux_ulimit
-59	UNIMPL		linux_oldolduname
+59	STD		{ int linux_oldolduname(struct linux_oldold_utsname *up); }
 60	NOARGS		{ int umask(int newmask); }
 61	NOARGS		{ int chroot(char *path); }
 62	UNIMPL		linux_ustat
@@ -160,7 +160,7 @@
 106	STD		{ int linux_stat(char *path, struct linux_stat *sp); }
 107	STD		{ int linux_lstat(char *path, struct linux_stat *sp); }
 108	STD		{ int linux_fstat(int fd, struct linux_stat *sp); }
-109	UNIMPL		linux_olduname
+109	STD		{ int linux_olduname(struct linux_old_utsname *up); }
 110	UNIMPL		linux_iopl
 111	UNIMPL		linux_vhangup
 112	UNIMPL		linux_idle

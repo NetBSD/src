@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.14 1995/08/16 04:50:17 mycroft Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.15 1995/08/21 03:42:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -350,29 +350,91 @@ linux_uname(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	extern char ostype[], osrelease[], version[], hostname[], domainname[];
-	extern char machine[];
-	struct linux_utsname tluts;
+	extern char ostype[], hostname[], osrelease[], version[], machine[],
+	    domainname[];
+	struct linux_utsname luts;
 	int len;
 	char *cp;
 
-	strncpy(tluts.l_sysname, ostype, sizeof (tluts.l_sysname));
-	strncpy(tluts.l_nodename, hostname, sizeof (tluts.l_nodename));
-	strncpy(tluts.l_release, osrelease, sizeof (tluts.l_release));
-	strncpy(tluts.l_machine, machine, sizeof (tluts.l_machine));
-	strncpy(tluts.l_domainname, domainname, sizeof (tluts.l_domainname));
-	strncpy(tluts.l_version, version, sizeof (tluts.l_version));
+	strncpy(luts.l_sysname, ostype, sizeof(luts.l_sysname));
+	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+	strncpy(luts.l_release, osrelease, sizeof(luts.l_release));
+	strncpy(luts.l_version, version, sizeof(luts.l_version));
+	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
+	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
 
 	/* This part taken from the the uname() in libc */
-	len = sizeof (tluts.l_version);
-	for (cp = tluts.l_version; len--; ++cp)
+	len = sizeof(luts.l_version);
+	for (cp = luts.l_version; len--; ++cp)
 		if (*cp == '\n' || *cp == '\t')
 			if (len > 1)
 				*cp = ' ';
 			else
 				*cp = '\0';
 
-	return copyout(&tluts, SCARG(uap, up), sizeof tluts);
+	return copyout(&luts, SCARG(uap, up), sizeof(luts));
+}
+
+int
+linux_olduname(p, uap, retval)
+	struct proc *p;
+	struct linux_uname_args /* {
+		syscallarg(struct linux_oldutsname *) up;
+	} */ *uap;
+	register_t *retval;
+{
+	extern char ostype[], hostname[], osrelease[], version[], machine[];
+	struct linux_oldutsname luts;
+	int len;
+	char *cp;
+
+	strncpy(luts.l_sysname, ostype, sizeof(luts.l_sysname));
+	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+	strncpy(luts.l_release, osrelease, sizeof(luts.l_release));
+	strncpy(luts.l_version, version, sizeof(luts.l_version));
+	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
+
+	/* This part taken from the the uname() in libc */
+	len = sizeof(luts.l_version);
+	for (cp = luts.l_version; len--; ++cp)
+		if (*cp == '\n' || *cp == '\t')
+			if (len > 1)
+				*cp = ' ';
+			else
+				*cp = '\0';
+
+	return copyout(&luts, SCARG(uap, up), sizeof(luts));
+}
+
+int
+linux_oldolduname(p, uap, retval)
+	struct proc *p;
+	struct linux_uname_args /* {
+		syscallarg(struct linux_oldoldutsname *) up;
+	} */ *uap;
+	register_t *retval;
+{
+	extern char ostype[], hostname[], osrelease[], version[], machine[];
+	struct linux_oldoldutsname luts;
+	int len;
+	char *cp;
+
+	strncpy(luts.l_sysname, ostype, sizeof(luts.l_sysname));
+	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+	strncpy(luts.l_release, osrelease, sizeof(luts.l_release));
+	strncpy(luts.l_version, version, sizeof(luts.l_version));
+	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
+
+	/* This part taken from the the uname() in libc */
+	len = sizeof(luts.l_version);
+	for (cp = luts.l_version; len--; ++cp)
+		if (*cp == '\n' || *cp == '\t')
+			if (len > 1)
+				*cp = ' ';
+			else
+				*cp = '\0';
+
+	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
 
 /*
