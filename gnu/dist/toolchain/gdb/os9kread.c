@@ -1549,7 +1549,7 @@ os9k_process_one_symbol (type, desc, valu, name, section_offsets, objfile)
       /* Relocate for dynamic loading and for ELF acc fn-relative syms.  */
       valu += ANOFFSET (section_offsets, SECT_OFF_TEXT);
       /* FIXME: loses if sizeof (char *) > sizeof (int) */
-      record_line (current_subfile, (int) name, valu);
+      record_line (current_subfile, (int) (long) name, valu);
       break;
 
       /* The following symbol types need to have the appropriate offset added
