@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.12 2002/01/08 02:46:15 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.13 2002/01/13 14:28:32 manu Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -86,6 +86,7 @@
 #	i4btrc*	trace device
 #
 # Special purpose devices:
+#       clockctl clock control for non root users
 #	bpf*	Berkeley packet filter devices
 #	ch*	SCSI media changer
 #	fd	file descriptors (/dev/fd/*)
@@ -119,6 +120,7 @@ all)
 	sh $0 ttyZ0 ttyZ1 ttyZ2 ttyZ3
 	sh $0 random local isdn
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
+	sh $0 clockctl
 	;;
 
 minimal)
@@ -467,6 +469,13 @@ wsfont)
 	mknod wsfont c 54 0
 	chown root:wheel wsfont
 	chmod 600 wsfont 
+	;;
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 60 0
+	chown root.ntpd clockctl
+	chmod 660 clockctl
 	;;
 
 local)

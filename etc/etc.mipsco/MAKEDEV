@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.6 2001/12/19 18:30:04 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.7 2002/01/13 14:21:26 manu Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -60,6 +60,7 @@
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Special purpose devices:
+#       clockctl clock control for non root users
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
@@ -86,6 +87,7 @@ all)
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 ipl raid0 raid1 raid2 raid3
 	sh $0 lkm random local
+	sh $0 clockctl
 	;;
 
 minimal|ramdisk)
@@ -320,6 +322,13 @@ scsibus*)
 	mknod scsibus$unit c 73 $unit
 	chown root.wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 75 0
+	chown root.ntpd clockctl
+	chmod 660 clockctl
 	;;
 
 local)
