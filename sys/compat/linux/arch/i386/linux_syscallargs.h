@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.29 2000/12/13 21:42:21 augustss Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.30 2000/12/18 14:38:12 fvdl Exp $ */
 
 /*
  * System call argument lists.
@@ -72,7 +72,7 @@ struct linux_sys_chmod_args {
 	syscallarg(int) mode;
 };
 
-struct linux_sys_lchown_args {
+struct linux_sys_lchown16_args {
 	syscallarg(const char *) path;
 	syscallarg(int) uid;
 	syscallarg(int) gid;
@@ -80,6 +80,10 @@ struct linux_sys_lchown_args {
 
 struct linux_sys_break_args {
 	syscallarg(char *) nsize;
+};
+
+struct linux_sys_setuid16_args {
+	syscallarg(uid_t) uid;
 };
 
 struct linux_sys_stime_args {
@@ -142,6 +146,10 @@ struct linux_sys_brk_args {
 	syscallarg(char *) nsize;
 };
 
+struct linux_sys_setgid16_args {
+	syscallarg(gid_t) gid;
+};
+
 struct linux_sys_signal_args {
 	syscallarg(int) signum;
 	syscallarg(linux_handler_t) handler;
@@ -173,12 +181,12 @@ struct linux_sys_sigsetmask_args {
 	syscallarg(linux_old_sigset_t) mask;
 };
 
-struct linux_sys_setreuid_args {
+struct linux_sys_setreuid16_args {
 	syscallarg(int) ruid;
 	syscallarg(int) euid;
 };
 
-struct linux_sys_setregid_args {
+struct linux_sys_setregid16_args {
 	syscallarg(int) rgid;
 	syscallarg(int) egid;
 };
@@ -238,7 +246,7 @@ struct linux_sys_truncate_args {
 	syscallarg(long) length;
 };
 
-struct linux_sys_fchown_args {
+struct linux_sys_fchown16_args {
 	syscallarg(int) fd;
 	syscallarg(int) uid;
 	syscallarg(int) gid;
@@ -496,7 +504,7 @@ struct linux_sys_pwrite_args {
 	syscallarg(linux_off_t) offset;
 };
 
-struct linux_sys_chown_args {
+struct linux_sys_chown16_args {
 	syscallarg(const char *) path;
 	syscallarg(int) uid;
 	syscallarg(int) gid;
@@ -547,12 +555,12 @@ int	linux_sys_chdir(struct proc *, void *, register_t *);
 int	linux_sys_time(struct proc *, void *, register_t *);
 int	linux_sys_mknod(struct proc *, void *, register_t *);
 int	linux_sys_chmod(struct proc *, void *, register_t *);
-int	linux_sys_lchown(struct proc *, void *, register_t *);
+int	linux_sys_lchown16(struct proc *, void *, register_t *);
 int	linux_sys_break(struct proc *, void *, register_t *);
 int	compat_43_sys_lseek(struct proc *, void *, register_t *);
 int	sys_getpid(struct proc *, void *, register_t *);
-int	sys_setuid(struct proc *, void *, register_t *);
-int	sys_getuid(struct proc *, void *, register_t *);
+int	linux_sys_setuid16(struct proc *, void *, register_t *);
+int	linux_sys_getuid16(struct proc *, void *, register_t *);
 int	linux_sys_stime(struct proc *, void *, register_t *);
 int	linux_sys_ptrace(struct proc *, void *, register_t *);
 int	linux_sys_alarm(struct proc *, void *, register_t *);
@@ -569,11 +577,11 @@ int	sys_dup(struct proc *, void *, register_t *);
 int	linux_sys_pipe(struct proc *, void *, register_t *);
 int	linux_sys_times(struct proc *, void *, register_t *);
 int	linux_sys_brk(struct proc *, void *, register_t *);
-int	sys_setgid(struct proc *, void *, register_t *);
-int	sys_getgid(struct proc *, void *, register_t *);
+int	linux_sys_setgid16(struct proc *, void *, register_t *);
+int	linux_sys_getgid16(struct proc *, void *, register_t *);
 int	linux_sys_signal(struct proc *, void *, register_t *);
-int	sys_geteuid(struct proc *, void *, register_t *);
-int	sys_getegid(struct proc *, void *, register_t *);
+int	linux_sys_geteuid16(struct proc *, void *, register_t *);
+int	linux_sys_getegid16(struct proc *, void *, register_t *);
 int	sys_acct(struct proc *, void *, register_t *);
 int	linux_sys_ioctl(struct proc *, void *, register_t *);
 int	linux_sys_fcntl(struct proc *, void *, register_t *);
@@ -588,8 +596,8 @@ int	sys_setsid(struct proc *, void *, register_t *);
 int	linux_sys_sigaction(struct proc *, void *, register_t *);
 int	linux_sys_siggetmask(struct proc *, void *, register_t *);
 int	linux_sys_sigsetmask(struct proc *, void *, register_t *);
-int	linux_sys_setreuid(struct proc *, void *, register_t *);
-int	linux_sys_setregid(struct proc *, void *, register_t *);
+int	linux_sys_setreuid16(struct proc *, void *, register_t *);
+int	linux_sys_setregid16(struct proc *, void *, register_t *);
 int	linux_sys_sigsuspend(struct proc *, void *, register_t *);
 int	linux_sys_sigpending(struct proc *, void *, register_t *);
 int	compat_43_sys_sethostname(struct proc *, void *, register_t *);
@@ -613,7 +621,7 @@ int	sys_munmap(struct proc *, void *, register_t *);
 int	linux_sys_truncate(struct proc *, void *, register_t *);
 int	compat_43_sys_ftruncate(struct proc *, void *, register_t *);
 int	sys_fchmod(struct proc *, void *, register_t *);
-int	linux_sys_fchown(struct proc *, void *, register_t *);
+int	linux_sys_fchown16(struct proc *, void *, register_t *);
 int	sys_getpriority(struct proc *, void *, register_t *);
 int	sys_setpriority(struct proc *, void *, register_t *);
 int	sys_profil(struct proc *, void *, register_t *);
@@ -681,7 +689,7 @@ int	linux_sys_rt_queueinfo(struct proc *, void *, register_t *);
 int	linux_sys_rt_sigsuspend(struct proc *, void *, register_t *);
 int	linux_sys_pread(struct proc *, void *, register_t *);
 int	linux_sys_pwrite(struct proc *, void *, register_t *);
-int	linux_sys_chown(struct proc *, void *, register_t *);
+int	linux_sys_chown16(struct proc *, void *, register_t *);
 int	sys___getcwd(struct proc *, void *, register_t *);
 int	linux_sys_sigaltstack(struct proc *, void *, register_t *);
 int	sys___vfork14(struct proc *, void *, register_t *);
@@ -690,4 +698,15 @@ int	sys_ftruncate(struct proc *, void *, register_t *);
 int	linux_sys_stat64(struct proc *, void *, register_t *);
 int	linux_sys_lstat64(struct proc *, void *, register_t *);
 int	linux_sys_fstat64(struct proc *, void *, register_t *);
+int	sys___posix_lchown(struct proc *, void *, register_t *);
+int	sys_getuid(struct proc *, void *, register_t *);
+int	sys_getgid(struct proc *, void *, register_t *);
+int	sys_geteuid(struct proc *, void *, register_t *);
+int	sys_getegid(struct proc *, void *, register_t *);
+int	sys_setreuid(struct proc *, void *, register_t *);
+int	sys_setregid(struct proc *, void *, register_t *);
+int	sys___posix_fchown(struct proc *, void *, register_t *);
+int	sys___posix_chown(struct proc *, void *, register_t *);
+int	sys_setuid(struct proc *, void *, register_t *);
+int	sys_setgid(struct proc *, void *, register_t *);
 #endif /* _LINUX_SYS__SYSCALLARGS_H_ */

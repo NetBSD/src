@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.29 2000/12/13 21:42:21 augustss Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.30 2000/12/18 14:38:12 fvdl Exp $ */
 
 /*
  * System call numbers.
@@ -55,8 +55,8 @@
 /* syscall: "chmod" ret: "int" args: "const char *" "int" */
 #define	LINUX_SYS_chmod	15
 
-/* syscall: "lchown" ret: "int" args: "const char *" "int" "int" */
-#define	LINUX_SYS_lchown	16
+/* syscall: "lchown16" ret: "int" args: "const char *" "int" "int" */
+#define	LINUX_SYS_lchown16	16
 
 /* syscall: "break" ret: "int" args: "char *" */
 #define	LINUX_SYS_break	17
@@ -68,11 +68,11 @@
 /* syscall: "getpid" ret: "pid_t" args: */
 #define	LINUX_SYS_getpid	20
 
-/* syscall: "setuid" ret: "int" args: "uid_t" */
-#define	LINUX_SYS_setuid	23
+/* syscall: "setuid16" ret: "int" args: "uid_t" */
+#define	LINUX_SYS_setuid16	23
 
-/* syscall: "getuid" ret: "uid_t" args: */
-#define	LINUX_SYS_getuid	24
+/* syscall: "getuid16" ret: "uid_t" args: */
+#define	LINUX_SYS_getuid16	24
 
 /* syscall: "stime" ret: "int" args: "linux_time_t *" */
 #define	LINUX_SYS_stime	25
@@ -127,20 +127,20 @@
 /* syscall: "brk" ret: "int" args: "char *" */
 #define	LINUX_SYS_brk	45
 
-/* syscall: "setgid" ret: "int" args: "gid_t" */
-#define	LINUX_SYS_setgid	46
+/* syscall: "setgid16" ret: "int" args: "gid_t" */
+#define	LINUX_SYS_setgid16	46
 
-/* syscall: "getgid" ret: "gid_t" args: */
-#define	LINUX_SYS_getgid	47
+/* syscall: "getgid16" ret: "gid_t" args: */
+#define	LINUX_SYS_getgid16	47
 
 /* syscall: "signal" ret: "int" args: "int" "linux_handler_t" */
 #define	LINUX_SYS_signal	48
 
-/* syscall: "geteuid" ret: "uid_t" args: */
-#define	LINUX_SYS_geteuid	49
+/* syscall: "geteuid16" ret: "uid_t" args: */
+#define	LINUX_SYS_geteuid16	49
 
-/* syscall: "getegid" ret: "gid_t" args: */
-#define	LINUX_SYS_getegid	50
+/* syscall: "getegid16" ret: "gid_t" args: */
+#define	LINUX_SYS_getegid16	50
 
 /* syscall: "acct" ret: "int" args: "char *" */
 #define	LINUX_SYS_acct	51
@@ -188,11 +188,11 @@
 /* syscall: "sigsetmask" ret: "int" args: "linux_old_sigset_t" */
 #define	LINUX_SYS_sigsetmask	69
 
-/* syscall: "setreuid" ret: "int" args: "int" "int" */
-#define	LINUX_SYS_setreuid	70
+/* syscall: "setreuid16" ret: "int" args: "int" "int" */
+#define	LINUX_SYS_setreuid16	70
 
-/* syscall: "setregid" ret: "int" args: "int" "int" */
-#define	LINUX_SYS_setregid	71
+/* syscall: "setregid16" ret: "int" args: "int" "int" */
+#define	LINUX_SYS_setregid16	71
 
 /* syscall: "sigsuspend" ret: "int" args: "caddr_t" "int" "int" */
 #define	LINUX_SYS_sigsuspend	72
@@ -263,8 +263,8 @@
 /* syscall: "fchmod" ret: "int" args: "int" "int" */
 #define	LINUX_SYS_fchmod	94
 
-/* syscall: "fchown" ret: "int" args: "int" "int" "int" */
-#define	LINUX_SYS_fchown	95
+/* syscall: "fchown16" ret: "int" args: "int" "int" "int" */
+#define	LINUX_SYS_fchown16	95
 
 /* syscall: "getpriority" ret: "int" args: "int" "int" */
 #define	LINUX_SYS_getpriority	96
@@ -467,8 +467,8 @@
 /* syscall: "pwrite" ret: "int" args: "int" "char *" "size_t" "linux_off_t" */
 #define	LINUX_SYS_pwrite	181
 
-/* syscall: "chown" ret: "int" args: "const char *" "int" "int" */
-#define	LINUX_SYS_chown	182
+/* syscall: "chown16" ret: "int" args: "const char *" "int" "int" */
+#define	LINUX_SYS_chown16	182
 
 /* syscall: "__getcwd" ret: "int" args: "char *" "size_t" */
 #define	LINUX_SYS___getcwd	183
@@ -493,6 +493,39 @@
 
 /* syscall: "fstat64" ret: "int" args: "int" "struct linux_stat64 *" */
 #define	LINUX_SYS_fstat64	197
+
+/* syscall: "__posix_lchown" ret: "int" args: "const char *" "uid_t" "gid_t" */
+#define	LINUX_SYS___posix_lchown	198
+
+/* syscall: "getuid" ret: "uid_t" args: */
+#define	LINUX_SYS_getuid	199
+
+/* syscall: "getgid" ret: "gid_t" args: */
+#define	LINUX_SYS_getgid	200
+
+/* syscall: "geteuid" ret: "uid_t" args: */
+#define	LINUX_SYS_geteuid	201
+
+/* syscall: "getegid" ret: "gid_t" args: */
+#define	LINUX_SYS_getegid	202
+
+/* syscall: "setreuid" ret: "int" args: "uid_t" "uid_t" */
+#define	LINUX_SYS_setreuid	203
+
+/* syscall: "setregid" ret: "int" args: "gid_t" "gid_t" */
+#define	LINUX_SYS_setregid	204
+
+/* syscall: "__posix_fchown" ret: "int" args: "int" "uid_t" "gid_t" */
+#define	LINUX_SYS___posix_fchown	207
+
+/* syscall: "__posix_chown" ret: "int" args: "const char *" "uid_t" "gid_t" */
+#define	LINUX_SYS___posix_chown	212
+
+/* syscall: "setuid" ret: "int" args: "uid_t" */
+#define	LINUX_SYS_setuid	213
+
+/* syscall: "setgid" ret: "int" args: "gid_t" */
+#define	LINUX_SYS_setgid	214
 
 #define	LINUX_SYS_MAXSYSCALL	218
 #define	LINUX_SYS_NSYSENT	256
