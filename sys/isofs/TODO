@@ -1,3 +1,5 @@
+#	$Id: TODO,v 1.2 1993/05/20 03:30:41 cgd Exp $
+
 should understand "older", original High Sierra ("CDROM001") type
 should understand Rockridge
 should be called cdfs, as there are other ISO filesystem soon possible
