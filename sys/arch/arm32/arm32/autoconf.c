@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.13 1997/01/31 01:46:23 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.14 1997/01/31 19:10:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -59,8 +59,6 @@
 #include "sd.h"
 #include "cd.h"
 #include "podulebus.h"
-
-dev_t   argdev = NODEV;
 
 static	struct device *booted_device;
 static	int booted_partition;
