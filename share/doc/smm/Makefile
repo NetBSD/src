@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.13 1997/10/17 09:44:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 1997/12/21 16:12:03 christos Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 5/10/94
 
 # The following modules do not build/install:
 # 10.named, 13.amd
 
 # Missing:
-# 02.config 11.timedop 12.timed
+# 02.config
 
 # Missing from 4.4BSD-Lite:
 # 14.uucpimpl 15.uucpnet 16.security 17.password
@@ -26,7 +26,7 @@ SUBDIR+= 08.sendmailop
 SUBDIR+= 09.sendmail
 .endif
 #SUBDIR=	01.setup 02.config 03.fsck 04.quotas 05.fastfs 06.nfs 07.lpd \
-#	08.sendmailop 09.sendmail 11.timedop 12.timed 14.uucpimpl \
+#	08.sendmailop 09.sendmail 14.uucpimpl \
 #	15.uucpnet 16.security 17.password 18.net 19.perl
 
 Title.ps: ${FILES}
