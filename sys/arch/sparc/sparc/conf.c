@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.41 1996/06/19 13:28:14 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.42 1996/06/20 20:07:45 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +76,7 @@
 #include "tcx.h"
 #include "xd.h"
 #include "xy.h"
+#include "rd.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -84,7 +85,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 2 */
 	bdev_disk_init(NXY,xy),		/* 3: SMD disk */
 	bdev_swap_init(1,sw),		/* 4 */
-	bdev_notdef(),			/* 5 */
+	bdev_disk_init(NRD,rd),		/* 5: memory disk */
 	bdev_notdef(),			/* 6 */
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
