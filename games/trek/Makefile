@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/11 09:34:21 mycroft Exp $
+#	$NetBSD: Makefile,v 1.9 1997/10/12 14:21:51 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
+WARNS=0
 PROG=	trek
 SRCS=	abandon.c attack.c autover.c capture.c check_out.c checkcond.c \
 	compkl.c computer.c damage.c damaged.c dcrept.c destruct.c \
