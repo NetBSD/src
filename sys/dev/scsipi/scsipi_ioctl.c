@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.48 2004/09/09 19:35:31 bouyer Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.49 2004/09/17 23:43:17 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.48 2004/09/09 19:35:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.49 2004/09/17 23:43:17 mycroft Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -278,7 +278,7 @@ scsistrategy(struct buf *bp)
 	if (screq->flags & SCCMD_ESCAPE)
 		flags |= XS_CTL_ESCAPE;
 
-	error = scsipi_command(periph, NULL,
+	error = scsipi_command(periph,
 	    (struct scsipi_generic *)screq->cmd, screq->cmdlen,
 	    (u_char *)bp->b_data, screq->datalen,
 	    0, /* user must do the retries *//* ignored */

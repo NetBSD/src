@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.114 2004/09/17 23:30:22 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.115 2004/09/17 23:43:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.114 2004/09/17 23:30:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.115 2004/09/17 23:43:17 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -1040,7 +1040,7 @@ scsipi_size(struct scsipi_periph *periph, int flags)
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks
 	 */
-	if (scsipi_command(periph, NULL, (struct scsipi_generic *)&scsipi_cmd,
+	if (scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(scsipi_cmd), (u_char *)&rdcap, sizeof(rdcap),
 	    SCSIPIRETRIES, 20000, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
@@ -1072,7 +1072,7 @@ scsipi_test_unit_ready(struct scsipi_periph *periph, int flags)
 	else
 		retries = SCSIPIRETRIES;
 
-	return (scsipi_command(periph, NULL,
+	return (scsipi_command(periph,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, retries, 10000, NULL, flags));
 }
@@ -1110,13 +1110,13 @@ scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
 	 * - mycroft, 2003/10/16
 	 */
 	scsipi_cmd.length = SCSIPI_INQUIRY_LENGTH_SCSI2;
-	error = scsipi_command(periph, NULL,
+	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *) inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI2,
 	    retries, 10000, NULL, XS_CTL_DATA_IN | flags);
 	if (!error && inqbuf->additional_length > SCSIPI_INQUIRY_LENGTH_SCSI2 - 4) {
 		scsipi_cmd.length = SCSIPI_INQUIRY_LENGTH_SCSI3;
-		error = scsipi_command(periph, NULL,
+		error = scsipi_command(periph,
 		    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 		    (u_char *) inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI3,
 		    retries, 10000, NULL, XS_CTL_DATA_IN | flags);
@@ -1180,7 +1180,7 @@ scsipi_prevent(struct scsipi_periph *periph, int type, int flags)
 	scsipi_cmd.opcode = PREVENT_ALLOW;
 	scsipi_cmd.how = type;
 
-	return (scsipi_command(periph, NULL,
+	return (scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, SCSIPIRETRIES, 5000, NULL, flags));
 }
@@ -1200,7 +1200,7 @@ scsipi_start(struct scsipi_periph *periph, int type, int flags)
 	scsipi_cmd.byte2 = 0x00;
 	scsipi_cmd.how = type;
 
-	return (scsipi_command(periph, NULL,
+	return (scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, SCSIPIRETRIES, (type & SSS_START) ? 60000 : 10000,
 	    NULL, flags));
@@ -1224,7 +1224,7 @@ scsipi_mode_sense(struct scsipi_periph *periph, int byte2, int page,
 	scsipi_cmd.byte2 = byte2;
 	scsipi_cmd.page = page;
 	scsipi_cmd.length = len & 0xff;
-	error = scsipi_command(periph, NULL,
+	error = scsipi_command(periph,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (void *)data, len, retries, timeout, NULL,
 	    flags | XS_CTL_DATA_IN);
@@ -1246,7 +1246,7 @@ scsipi_mode_sense_big(struct scsipi_periph *periph, int byte2, int page,
 	scsipi_cmd.byte2 = byte2;
 	scsipi_cmd.page = page;
 	_lto2b(len, scsipi_cmd.length);
-	error = scsipi_command(periph, NULL,
+	error = scsipi_command(periph,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (void *)data, len, retries, timeout, NULL,
 	    flags | XS_CTL_DATA_IN);
@@ -1267,7 +1267,7 @@ scsipi_mode_select(struct scsipi_periph *periph, int byte2,
 	scsipi_cmd.opcode = MODE_SELECT;
 	scsipi_cmd.byte2 = byte2;
 	scsipi_cmd.length = len & 0xff;
-	error = scsipi_command(periph, NULL,
+	error = scsipi_command(periph,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (void *)data, len, retries, timeout, NULL,
 	    flags | XS_CTL_DATA_OUT);
@@ -1288,7 +1288,7 @@ scsipi_mode_select_big(struct scsipi_periph *periph, int byte2,
 	scsipi_cmd.opcode = MODE_SELECT_BIG;
 	scsipi_cmd.byte2 = byte2;
 	_lto2b(len, scsipi_cmd.length);
-	error = scsipi_command(periph, NULL,
+	error = scsipi_command(periph,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (void *)data, len, retries, timeout, NULL,
 	    flags | XS_CTL_DATA_OUT);
@@ -1675,7 +1675,7 @@ scsipi_request_sense(struct scsipi_xfer *xs)
 	cmd.opcode = REQUEST_SENSE;
 	cmd.length = sizeof(struct scsipi_sense_data);
 
-	error = scsipi_command(periph, NULL,
+	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char*)&xs->sense.scsi_sense, sizeof(struct scsipi_sense_data),
 	    0, 1000, NULL, flags);
