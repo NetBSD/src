@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.44 1999/09/23 15:14:57 minoura Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.45 1999/12/30 01:03:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -308,10 +308,16 @@ config_attach(parent, cf, aux, print)
 	ca = cf->cf_attach;
 	if (ca->ca_devsize < sizeof(struct device))
 		panic("config_attach");
-	myunit = cf->cf_unit;
-	if (cf->cf_fstate == FSTATE_STAR)
-		cf->cf_unit++;
-	else {
+	if (cf->cf_fstate == FSTATE_STAR) {
+		for (myunit = cf->cf_unit; myunit < cd->cd_ndevs; myunit++)
+			if (cd->cd_devs[myunit] == NULL)
+				break;
+		/*
+		 * myunit is now the unit of the first NULL device pointer,
+		 * or max(cd->cd_ndevs,cf->cf_unit).
+		 */
+	} else {
+		myunit = cf->cf_unit;
 		KASSERT(cf->cf_fstate == FSTATE_NOTFOUND);
 		cf->cf_fstate = FSTATE_FOUND;
 	}
@@ -379,15 +385,12 @@ config_attach(parent, cf, aux, print)
 
 	/*
 	 * Before attaching, clobber any unfound devices that are
-	 * otherwise identical, or bump the unit number on all starred
-	 * cfdata for this device.
+	 * otherwise identical.
 	 */
 	for (cf = cfdata; cf->cf_driver; cf++)
 		if (cf->cf_driver == cd && cf->cf_unit == dev->dv_unit) {
 			if (cf->cf_fstate == FSTATE_NOTFOUND)
 				cf->cf_fstate = FSTATE_FOUND;
-			if (cf->cf_fstate == FSTATE_STAR)
-				cf->cf_unit++;
 		}
 #if defined(__alpha__) || defined(hp300) || defined(__i386__) || \
 	defined(__sparc__) || defined(__vax__) || defined(x68k)
@@ -476,17 +479,12 @@ config_detach(dev, flags)
 
 	/*
 	 * Mark cfdata to show that the unit can be reused, if possible.
-	 * Note that we can only re-use a starred unit number if the unit
-	 * being detached had the last assigned unit number.
 	 */
 	for (cf = cfdata; cf->cf_driver; cf++) {
 		if (cf->cf_driver == cd) {
 			if (cf->cf_fstate == FSTATE_FOUND &&
 			    cf->cf_unit == dev->dv_unit)
 				cf->cf_fstate = FSTATE_NOTFOUND;
-			if (cf->cf_fstate == FSTATE_STAR &&
-			    cf->cf_unit == dev->dv_unit + 1)
-				cf->cf_unit--;
 		}
 	}
 
