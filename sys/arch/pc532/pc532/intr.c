@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 1996/11/24 13:35:12 matthias Exp $  */
+/*	$NetBSD: intr.c,v 1.12 1996/12/23 08:36:02 matthias Exp $  */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -40,7 +40,7 @@
 #define INTS	32
 struct iv ivt[INTS];
 static int next_sir = SOFTINT;
-unsigned int imask[NIPL] = {0xffffffff};
+unsigned int imask[NIPL] = {0xffffffff, 0xffffffff};
 unsigned int Cur_pl = 0xffffffff, sirpending, astpending;
 
 static void softnet __P((void *));
@@ -54,12 +54,16 @@ void
 intr_init()
 {
 	int i, clk, net, sir;
-	for (i = 0; i < 16; i++)
+		
+	for (i = 0; i < 16; i++) {
 		ivt[i].iv_vec = badhard;
+		ivt[i].iv_level = IPL_ZERO;
+	}
 
 	for (i = 16; i < 32; i++) {
 		ivt[i].iv_vec = badsoft;
 		ivt[i].iv_arg = (void *)i;
+		ivt[i].iv_level = IPL_ZERO;
 	}
 
 	/*
@@ -73,7 +77,7 @@ intr_init()
 
 	/* Install check_sir as the handler for IR_SOFT. */
 	sir = intr_establish(IR_SOFT, check_sir, NULL,
-				"softint", IPL_NONE, LOW_LEVEL);
+				"softint", IPL_ZERO, IPL_ZERO, LOW_LEVEL);
 	if (sir != IR_SOFT)
 		panic("Could not allocate IR_SOFT");
 
@@ -83,8 +87,9 @@ intr_init()
 
 	/* Allocate softclock at IPL_NET as splnet() has to block softclock. */
 	clk = intr_establish(SOFTINT, (void (*)(void *))softclock, NULL,
-				"softclock", IPL_NET, 0);
-	net = intr_establish(SOFTINT, softnet, NULL, "softnet", IPL_NET, 0);
+				"softclock", IPL_NET, IPL_NET, 0);
+	net = intr_establish(SOFTINT, softnet, NULL,
+				"softnet", IPL_NET, IPL_NET, 0);
 	if (clk != SIR_CLOCK || net != SIR_NET)
 		panic("Wrong clock or net softint allocated");
 }
@@ -111,9 +116,12 @@ check_sir(arg)
 		for (iv = ivt + SOFTINT, mask = 0x10000;
 		     cirpending & -mask; mask <<= 1, iv++) {
 			if ((cirpending & mask) != 0) {
+				register int s;
 				cnt.v_soft++;
 				iv->iv_cnt++;
+				s = splraise(iv->iv_mask);
 				iv->iv_vec(iv->iv_arg);
+				splx(s);
 			}
 		}
 		di();
@@ -129,15 +137,21 @@ check_sir(arg)
  * is allocated.
  */
 int
-intr_establish(intr, vector, arg, use, level, mode)
+intr_establish(intr, vector, arg, use, blevel, rlevel, mode)
 	int intr;
 	void (*vector) __P((void *));
 	void *arg;
 	char *use;
-	int level;
+	int blevel;
+	int rlevel;
 	int mode;
 {
+	int i;
+
 	di();
+	if (rlevel < IPL_ZERO || rlevel >= NIPL ||
+	    blevel < IPL_ZERO || blevel >= NIPL)
+		panic("Illegal interrupt level for %s in intr_establish", use);
 	if (intr == SOFTINT) {
 		if (next_sir >= INTS)
 			panic("No software interrupts left");
@@ -166,13 +180,13 @@ intr_establish(intr, vector, arg, use, level, mode)
 			panic("Unknown interrupt mode");
 		}
 	}
-	ivt[intr].iv_vec = vector;
-	ivt[intr].iv_arg = arg;
-	ivt[intr].iv_cnt = 0;
-	ivt[intr].iv_use = use;
+	ivt[intr].iv_vec   = vector;
+	ivt[intr].iv_arg   = arg;
+	ivt[intr].iv_cnt   = 0;
+	ivt[intr].iv_use   = use;
+	ivt[intr].iv_level = rlevel;
 	ei();
-	if (level > IPL_ZERO)
-		imask[level] |= 1 << intr;
+	imask[blevel] |= 1 << intr;
 
 	/*
 	 * Since run queues may be manipulated by both the statclock and tty,
@@ -193,7 +207,15 @@ intr_establish(intr, vector, arg, use, level, mode)
 	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
 	imask[IPL_NET] |= imask[IPL_BIO];
 
+	/*
+	 * Update run masks for all handlers.
+	 */
+	for (i = 0; i < INTS; i++)
+		ivt[i].iv_mask = imask[ivt[i].iv_level] |
+				 (1 << i) | (1 << IR_SOFT);
+
 	imask[IPL_ZERO] &= ~(1 << intr);
+
 	return(intr);
 }
 
@@ -204,12 +226,10 @@ static void
 softnet(arg)
 	void *arg;
 {
-	register int isr, s;
+	register int isr;
 
 	di(); isr = netisr; netisr = 0; ei();
 	if (isr == 0) return;
-
-	s = splnet();
 
 #ifdef INET
 #include "ether.h"
@@ -234,7 +254,6 @@ softnet(arg)
 #if NPPP > 0
 	if (isr & (1 << NETISR_PPP)) pppintr();
 #endif
-	splx(s);
 }
 
 /*
