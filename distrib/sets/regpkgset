@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkgset,v 1.1 2003/06/12 20:04:00 agc Exp $
+# $NetBSD: regpkgset,v 1.2 2004/01/16 10:05:10 dyoung Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -36,10 +36,12 @@
 # Usage: regpkgset set
 
 verbose=""
+cache=""
 
 while [ $# -gt 1 ]; do
 	case $1 in
 	-v)	verbose=$1 ;;
+	-c)	cache=$1 ;;
 	*)	break ;;
 	esac
 	shift
@@ -55,10 +57,29 @@ all)	list="base comp etc games man misc text" ;;
 *)	list=$@ ;;
 esac
 
+if [ x${cache} != x ]; then
+	BUILD_INFO_CACHE=$(mktemp /var/tmp/$(basename $0)-BUILD_INFO.XXXXXX)
+	export BUILD_INFO_CACHE
+	{
+	echo "OPSYS=`uname -s`"
+	echo "OS_VERSION=`uname -r`"
+	make -f- all <<EOF
+.include <bsd.own.mk>
+all:
+	@echo OBJECT_FMT=${OBJECT_FMT}
+	@echo MACHINE_ARCH=${MACHINE_ARCH}
+	@echo MACHINE_GNU_ARCH=${MACHINE_GNU_ARCH}
+EOF
+	echo "_PKGTOOLS_VER=`pkg_create -V`"
+	} > ${BUILD_INFO_CACHE}
+fi
+
 for pkgset in $list; do
 	for pkg in `./listpkgs $pkgset`; do
 		./regpkg $verbose $pkgset $pkg
 	done
 done
+
+[ x${BUILD_INFO_CACHE} != x ] && rm -f ${BUILD_INFO_CACHE}
 
 exit 0
