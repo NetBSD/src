@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.148 2000/02/20 06:58:47 mycroft Exp $
+# $NetBSD: mi,v 1.149 2000/02/26 20:47:02 mycroft Exp $
 .
 ./altroot
 ./bin
@@ -542,6 +542,7 @@
 ./usr/sbin/faithd
 ./usr/sbin/fixmount
 ./usr/sbin/fsinfo
+./usr/sbin/getencstat
 ./usr/sbin/gifconfig
 ./usr/sbin/greconfig
 ./usr/sbin/group
@@ -644,7 +645,10 @@
 ./usr/sbin/screenblank
 ./usr/sbin/scriptdump
 ./usr/sbin/sendmail
+./usr/sbin/sesd
+./usr/sbin/setencstat
 ./usr/sbin/setkey
+./usr/sbin/setobjstat
 ./usr/sbin/sliplogin
 ./usr/sbin/slstats
 ./usr/sbin/spray
@@ -1190,6 +1194,7 @@
 ./usr/share/zoneinfo/America/Guyana
 ./usr/share/zoneinfo/America/Halifax
 ./usr/share/zoneinfo/America/Havana
+./usr/share/zoneinfo/America/Hermosillo
 ./usr/share/zoneinfo/America/Indiana
 ./usr/share/zoneinfo/America/Indiana/Indianapolis
 ./usr/share/zoneinfo/America/Indiana/Knox
@@ -1295,6 +1300,7 @@
 ./usr/share/zoneinfo/Asia/Gaza
 ./usr/share/zoneinfo/Asia/Harbin
 ./usr/share/zoneinfo/Asia/Hong_Kong
+./usr/share/zoneinfo/Asia/Hovd
 ./usr/share/zoneinfo/Asia/Irkutsk
 ./usr/share/zoneinfo/Asia/Istanbul
 ./usr/share/zoneinfo/Asia/Jakarta
@@ -1337,6 +1343,7 @@
 ./usr/share/zoneinfo/Asia/Thimbu
 ./usr/share/zoneinfo/Asia/Tokyo
 ./usr/share/zoneinfo/Asia/Ujung_Pandang
+./usr/share/zoneinfo/Asia/Ulaanbaatar
 ./usr/share/zoneinfo/Asia/Ulan_Bator
 ./usr/share/zoneinfo/Asia/Urumqi
 ./usr/share/zoneinfo/Asia/Vientiane
@@ -1494,6 +1501,7 @@
 ./usr/share/zoneinfo/Europe/Zurich
 ./usr/share/zoneinfo/Factory
 ./usr/share/zoneinfo/GB
+./usr/share/zoneinfo/GB-Eire
 ./usr/share/zoneinfo/GMT
 ./usr/share/zoneinfo/GMT+0
 ./usr/share/zoneinfo/GMT-0

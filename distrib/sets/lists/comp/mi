@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.196 2000/02/26 15:46:02 itojun Exp $
+#	$NetBSD: mi,v 1.197 2000/02/26 20:47:02 mycroft Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -297,6 +297,7 @@
 ./usr/include/dev/scsipi/scsipi_disk.h		comp-c-include
 ./usr/include/dev/scsipi/scsipiconf.h		comp-c-include
 ./usr/include/dev/scsipi/sdvar.h		comp-c-include
+./usr/include/dev/scsipi/ses.h			comp-c-include
 ./usr/include/dev/scsipi/ss_mustek.h		comp-c-include
 ./usr/include/dev/scsipi/ssvar.h		comp-c-include
 ./usr/include/dev/sun		comp-c-include
