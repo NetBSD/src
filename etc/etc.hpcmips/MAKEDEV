@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.7 2000/01/21 12:28:24 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.8 2000/02/29 19:07:42 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -121,9 +121,10 @@ ramdisk)
 	;;
 
 usbs)
-	sh $0 usb0 usb1 
+	sh $0 usb usb0 usb1 
 	sh $0 uhid0 uhid1 uhid2 uhid3
 	sh $0 ulpt0 ulpt1 
+	sh $0 ttyU0 ttyU1
 	;;
 
 std)
@@ -144,7 +145,12 @@ std)
 
 usb*)
 	unit=${i#usb}
-	usb=usb$unit
+	if [ "$unit" = "" ]; then
+	    unit=255
+	    usb=usb
+	else
+	    usb=usb$unit
+	fi
 	major=23
 	rm -f $usb
 	mknod $usb c $major $unit
@@ -170,6 +176,20 @@ ulpt*)
 	mknod $ulpt c $major $unit
 	chown root.wheel $ulpt
 	chmod 600 $ulpt
+	;;
+
+ttyU*)
+	unit=${i#ttyU}
+	ttyU=ttyU$unit
+	dtyU=dtyU$unit
+	ctyU=ctyU$unit
+	major=66
+	rm -f $ttyU $dtyU $ctyU
+	mknod $ttyU c $major $(($unit + $dialin  ))
+	mknod $dtyU c $major $(($unit + $dialout ))
+	mknod $ctyU c $major $(($unit + $callunit))
+	chown uucp.wheel $ttyU $dtyU $ctyU
+	chmod 600 $ttyU $dtyU $ctyU
 	;;
 
 ugen*)
