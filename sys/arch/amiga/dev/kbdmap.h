@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.7 1995/02/16 21:57:47 chopps Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.8 1995/03/28 18:14:56 jtc Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -131,7 +131,7 @@ struct kbdmap {
 };
 
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /* XXX: ITE interface */
 extern struct kbdmap kbdmap, ascii_kbdmap;
 extern unsigned char acctable[KBD_NUM_ACC][64];

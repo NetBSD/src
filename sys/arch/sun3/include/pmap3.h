@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.11 1994/11/21 21:34:04 gwr Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.12 1995/03/28 18:21:07 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -49,7 +49,7 @@ struct pmap {
 
 typedef struct pmap *pmap_t;
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 extern pmap_t kernel_pmap;
 #define	pmap_kernel()			(kernel_pmap)
@@ -78,5 +78,5 @@ extern segsz_t pmap_resident_pages(pmap_t);
 #define	PMAP_NC		0x10		/* tells pmap_enter to set PG_NC */
 #define	PMAP_SPEC	0x1C		/* mask to get all above. */
 
-#endif	/* KERNEL */
+#endif	/* _KERNEL */
 #endif	/* _MACHINE_PMAP_ */

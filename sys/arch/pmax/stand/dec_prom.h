@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.5 1995/01/18 06:53:40 mellon Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.6 1995/03/28 18:19:41 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -146,7 +146,7 @@ struct callback {
 extern const struct callback *callv;
 extern const struct callback callvec;
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #define memcpy (*callv -> _memcpy)
 #define memset (*callv -> _memset)
 #define strcat (*callv -> _strcat)

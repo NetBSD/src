@@ -1,4 +1,4 @@
-/*	$NetBSD: sun_disklabel.h,v 1.3 1994/11/20 20:53:34 deraadt Exp $ */
+/*	$NetBSD: sun_disklabel.h,v 1.4 1995/03/28 18:20:12 jtc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,7 +106,7 @@ struct sun_disklabel {			/* total size = 512 bytes */
 
 #define SUN_LABELOFFSET	128
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /* reads sun label in sector at [cp..cp+511] and sets *lp to BSD label */
 int	sun_disklabel __P((caddr_t, struct disklabel *)); /* true on success */
 

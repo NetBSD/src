@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.2 1994/11/20 20:53:24 deraadt Exp $ */
+/*	$NetBSD: profile.h,v 1.3 1995/03/28 18:20:03 jtc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
 
 #define	_MCOUNT_DECL	static void _mcount
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Block interrupts during mcount so that those interrupts can also be
  * counted (as soon as we get done with the current counting).  On the
@@ -62,4 +62,4 @@
  */
 #define	MCOUNT_ENTER	s = splhigh()
 #define	MCOUNT_EXIT	splx(s)
-#endif /* KERNEL */
+#endif /* _KERNEL */

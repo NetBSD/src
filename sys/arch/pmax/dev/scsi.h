@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.h,v 1.4 1994/10/26 21:09:19 cgd Exp $	*/
+/*	$NetBSD: scsi.h,v 1.5 1995/03/28 18:19:00 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -547,12 +547,12 @@ struct scsi_fmt_sense {
 #define	SDIOCSCSICOMMAND	_IOW('S', 0x3, struct scsi_fmt_cdb)
 #define	SDIOCSENSE		_IOR('S', 0x4, struct scsi_fmt_sense)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Routines.
  */
 extern void scsiGroup0Cmd();
 extern void scsiGroup1Cmd();
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #endif /* _SCSI_H */

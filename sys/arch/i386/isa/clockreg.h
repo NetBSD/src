@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.2 1994/10/27 04:16:59 cgd Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.3 1995/03/28 18:17:47 jtc Exp $	*/
 
 /* 
  * Mach Operating System
@@ -63,7 +63,7 @@ struct rtc_st {
 	u_char	rtc_yr;
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern int rtcget __P((struct rtc_st *rtc_regs));
 extern void rtcput __P((struct rtc_st *rtc_regs));
 extern void rtcinit __P((void));        

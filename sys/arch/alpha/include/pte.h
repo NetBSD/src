@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 1995/02/13 23:07:50 cgd Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 1995/03/28 18:14:04 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -64,7 +64,7 @@ typedef u_int64_t	pt_entry_t;
 #define	PG_SHIFT	32
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 
-#if defined(KERNEL) && !defined(LOCORE)
+#if defined(_KERNEL) && !defined(LOCORE)
 #define	K0SEG_BEGIN	0xfffffc0000000000	/* unmapped, cached */
 #define	K0SEG_END	0xfffffe0000000000
 #define PHYS_UNCACHED	0x0000000040000000

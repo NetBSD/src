@@ -1,4 +1,4 @@
-/*	$NetBSD: custom.h,v 1.8 1994/10/26 02:01:46 cgd Exp $	*/
+/*	$NetBSD: custom.h,v 1.9 1995/03/28 18:14:32 jtc Exp $	*/
 
 /*
  * Mach Operating System
@@ -199,7 +199,7 @@ struct Custom {
 
 
 /* Custom chips as seen by the kernel */
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifndef LOCORE
 vm_offset_t CUSTOMADDR, CUSTOMbase;
 #define CUSTOMBASE	(0x00DFF000)	/* now just offset rel to zorro2 */

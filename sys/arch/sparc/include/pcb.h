@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.3 1994/11/20 20:53:20 deraadt Exp $ */
+/*	$NetBSD: pcb.h,v 1.4 1995/03/28 18:19:56 jtc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,6 +118,6 @@ struct md_coredump {
 	struct	fpstate md_fpstate;
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern struct pcb *cpcb;
-#endif /* KERNEL */
+#endif /* _KERNEL */

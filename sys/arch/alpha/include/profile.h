@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.1 1995/02/13 23:07:47 cgd Exp $	*/
+/*	$NetBSD: profile.h,v 1.2 1995/03/28 18:13:57 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 extern void mcount() /* XXX asm("mcount") */; void mcount() { \
 }
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #define MCOUNT_ENTER
 #define MCOUNT_EXIT
 #endif

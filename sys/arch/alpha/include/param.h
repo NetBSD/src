@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 1995/03/24 15:01:34 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.4 1995/03/28 18:13:48 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #define	MACHINE_ARCH	"alpha"
 #define	MID_MACHINE	MID_ALPHA
 
-#ifdef KERNEL				/* XXX */
+#ifdef _KERNEL				/* XXX */
 #include <machine/cpu.h>		/* XXX */
 #endif					/* XXX */
 
@@ -159,7 +159,7 @@
 #define	splstatclock()		pal_swpipl(PSL_IPL_CLOCK)
 #define	splhigh()               pal_swpipl(PSL_IPL_HIGH)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifndef LOCORE
 
 /* This was calibrated empirically */
@@ -172,9 +172,9 @@ extern	u_int64_t cycles_per_usec;
 int spl0 __P((void));					/* drop ipl to zero */
 
 #endif
-#else /* !KERNEL */
+#else /* !_KERNEL */
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 
 int prtloc;
 extern int ticks;

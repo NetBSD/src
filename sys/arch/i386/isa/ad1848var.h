@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.2 1995/03/25 00:01:04 mycroft Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.3 1995/03/28 18:17:42 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ad1848var.h,v 1.2 1995/03/25 00:01:04 mycroft Exp $
+ *	$Id: ad1848var.h,v 1.3 1995/03/28 18:17:42 jtc Exp $
  */
 
 #define AD1848_NPORT	8
@@ -100,7 +100,7 @@ struct ad1848_softc {
 #define AUX1_IN_PORT	2
 #define DAC_IN_PORT	3
 
-#ifdef KERNEL
+#ifdef _KERNEL
 int	ad1848_probe __P((struct ad1848_softc *));
 void	ad1848_attach __P((struct ad1848_softc *));
 

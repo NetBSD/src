@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.4 1994/11/20 20:53:35 deraadt Exp $ */
+/*	$NetBSD: trap.h,v 1.5 1995/03/28 18:20:19 jtc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,7 +103,7 @@
 
 /* 0x8a..0xff are currently unallocated */
 
-#ifdef KERNEL			/* pseudo traps for locore.s */
+#ifdef _KERNEL			/* pseudo traps for locore.s */
 #define	T_RWRET		-1	/* need first user window for trap return */
 #define	T_AST		-2	/* no-op, just needed reschedule or profile */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 1994/10/26 08:24:36 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4 1995/03/28 18:18:28 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -148,7 +148,7 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
  * Address of current and alternate address space page table maps
  * and directories.
  */
-#ifdef KERNEL
+#ifdef _KERNEL
 extern struct pte	PTmap[], APTmap[], Upte;
 extern struct pde	PTD[], APTD[], PTDpde, APTDpde, Upde;
 extern	pt_entry_t	*Sysmap;
@@ -195,7 +195,7 @@ struct pmap {
 
 typedef struct pmap	*pmap_t;
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern pmap_t		kernel_pmap;
 #endif
 

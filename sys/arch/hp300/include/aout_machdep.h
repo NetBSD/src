@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.8 1994/10/26 07:26:23 cgd Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.9 1995/03/28 18:16:33 jtc Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,7 +30,7 @@
 #ifndef _HP300_EXEC_H_
 #define _HP300_EXEC_H_
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 #ifdef COMPAT_HPUX
 #include "user.h"			/* for pcb */
@@ -57,7 +57,7 @@ int cpu_exec_makecmds __P((struct proc *p, struct exec_package *epp));
 #define cpu_exec_checkmid(mid) ((mid == MID_HP200) || (mid == MID_HP300)))
 #endif
 
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #define __LDPGSZ	4096
 

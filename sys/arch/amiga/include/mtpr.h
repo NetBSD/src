@@ -1,4 +1,4 @@
-/*	$NetBSD: mtpr.h,v 1.8 1995/02/12 19:19:37 chopps Exp $	*/
+/*	$NetBSD: mtpr.h,v 1.9 1995/03/28 18:15:09 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 #ifndef _MACHINE_MPTR_H_
 #define _MACHINE_MPTR_H_
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * simulated software interrupt register (extends hardware
  * SOFTINT bit)
@@ -69,6 +69,6 @@ extern unsigned char ssir;
 #define setsoftclock()	(ssir |= SIR_CLOCK, setsoftint())
 #define setsoftcback()	(ssir |= SIR_CBACK, setsoftint())
 
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #endif /* !_MACHINE_MPTR_H_ */

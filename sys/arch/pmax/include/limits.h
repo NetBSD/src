@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.7 1994/11/15 19:00:49 dean Exp $	*/
+/*	$NetBSD: limits.h,v 1.8 1995/03/28 18:19:16 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	6		/* Allow 31 bit UTF2 */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #define	CLK_TCK		60		/* ticks per second */
 #endif
 

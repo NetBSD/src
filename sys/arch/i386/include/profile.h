@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.5 1994/10/27 04:16:19 cgd Exp $	*/
+/*	$NetBSD: profile.h,v 1.6 1995/03/28 18:17:08 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,11 +57,11 @@ mcount()								\
 	_mcount(frompcindex, selfpc);					\
 }
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Note that we assume splhigh() and splx() cannot call mcount()
  * recursively.
  */
 #define	MCOUNT_ENTER	s = splhigh()
 #define	MCOUNT_EXIT	splx(s)
-#endif /* KERNEL */
+#endif /* _KERNEL */

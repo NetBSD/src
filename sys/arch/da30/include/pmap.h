@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 1994/10/26 02:33:48 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4 1995/03/28 18:15:42 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -111,6 +111,6 @@ pv_entry_t	pv_table;		/* array of entries, one per page */
 
 extern	struct pte *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #endif /* _PMAP_MACHINE_ */

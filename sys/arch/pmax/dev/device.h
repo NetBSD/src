@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.4 1994/10/26 21:08:57 cgd Exp $	*/
+/*	$NetBSD: device.h,v 1.5 1995/03/28 18:18:53 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,7 +114,7 @@ typedef struct ScsiCmd {
 #define SCSICMD_DATA_TO_DEVICE	0x01
 #define SCSICMD_USE_SYNC	0x02
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern struct pmax_ctlr pmax_cinit[];
 extern struct scsi_device scsi_dinit[];
 #endif

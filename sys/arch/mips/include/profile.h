@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.4 1994/10/26 21:09:53 cgd Exp $	*/
+/*	$NetBSD: profile.h,v 1.5 1995/03/28 18:19:23 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@
 	".set reorder;" \
 	".set at");
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * The following two macros do splhigh and splx respectively.
  * They have to be defined this way because these are real
@@ -76,4 +76,4 @@
 #define	MCOUNT_ENTER	s = _splhigh()
 
 #define	MCOUNT_EXIT	_splx(s)
-#endif /* KERNEL */
+#endif /* _KERNEL */

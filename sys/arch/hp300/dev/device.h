@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.4 1994/10/26 07:23:38 cgd Exp $	*/
+/*	$NetBSD: device.h,v 1.5 1995/03/28 18:15:55 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -117,7 +117,7 @@ struct hp_hw {
 #define HW_ISSCSI(hw)	(((hw)->hw_type & C_MASK) == C_SCSI)
 #define HW_ISDEV(hw,d)	(((hw)->hw_type & D_MASK) == (d))
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifdef hp300
 extern struct hp_hw sc_table[];
 extern struct hp_ctlr hp_cinit[];

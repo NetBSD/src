@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 1994/10/31 06:30:52 andrew Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 1995/03/28 18:17:06 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -74,7 +74,7 @@
  * Address of current and alternate address space page table maps
  * and directories.
  */
-#ifdef KERNEL
+#ifdef _KERNEL
 extern pt_entry_t	PTmap[], APTmap[], Upte;
 extern pd_entry_t	PTD[], APTD[], PTDpde, APTDpde, Upde;
 extern pt_entry_t	*Sysmap;
@@ -196,6 +196,6 @@ pmap_phys_address(int ppn)
 	return i386_ptob(ppn);
 }
 
-#endif	/* KERNEL */
+#endif	/* _KERNEL */
 
 #endif /* _I386_PMAP_H_ */

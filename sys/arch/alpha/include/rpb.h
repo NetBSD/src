@@ -1,4 +1,4 @@
-/*	$NetBSD: rpb.h,v 1.3 1995/03/24 15:00:51 cgd Exp $	*/
+/*	$NetBSD: rpb.h,v 1.4 1995/03/28 18:14:11 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -130,7 +130,7 @@ struct rpb {
 	u_int64_t	rpb_tbhint[8];		/* 149: TB hint block */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern struct rpb *hwrpb;
 #endif
 

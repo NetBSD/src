@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.7 1995/01/28 01:52:17 jtc Exp $	*/
+/*	$NetBSD: varargs.h,v 1.8 1995/03/28 18:19:30 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@ typedef _BSD_VA_LIST_	va_list;
 #define	va_start(ap) \
 	ap = (char *)&va_alist
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #define	va_arg(ap, type) \
 	((type *)(ap += sizeof(type)))[-1]
 #else

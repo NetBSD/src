@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24 1995/03/18 07:23:26 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.25 1995/03/28 18:16:58 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
  * Machine dependent constants for Intel 386.
  */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifdef LOCORE
 #include <machine/psl.h>
 #else

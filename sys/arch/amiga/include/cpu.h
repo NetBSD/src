@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 1995/02/12 19:19:36 chopps Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 1995/03/28 18:15:06 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -139,7 +139,7 @@ int	want_resched;		/* resched() was called */
 #define	MHZ_33		4
 #define	MHZ_50		6
 
-#ifdef KERNEL
+#ifdef _KERNEL
 int machineid, mmutype, cpu040;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 1995/03/10 16:56:27 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.13 1995/03/28 18:19:59 jtc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -141,7 +141,7 @@ struct ksegmap {
 
 typedef struct pmap *pmap_t;
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 #define PMAP_NULL	((pmap_t)0)
 
@@ -177,6 +177,6 @@ int		pmap_pa_exists __P((vm_offset_t));
 #define PMAP_DEACTIVATE(pmap, pcb)
 #define PMAP_PREFER(pa, va)		pmap_prefer((pa), (va))
 
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #endif /* _SPARC_PMAP_H_ */

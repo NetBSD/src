@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 1995/03/18 07:23:44 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.9 1995/03/28 18:19:19 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -146,7 +146,7 @@
 #define pmax_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define pmax_ptob(x)		((unsigned)(x) << PGSHIFT)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifndef LOCORE
 extern int (*Mach_splnet)(), (*Mach_splbio)(), (*Mach_splimp)(),
 	   (*Mach_spltty)(), (*Mach_splclock)(), (*Mach_splstatclock)();
@@ -160,6 +160,6 @@ extern	int cpuspeed;
 #define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 #endif
 
-#else /* !KERNEL */
+#else /* !_KERNEL */
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
-#endif /* !KERNEL */
+#endif /* !_KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.8 1994/10/26 02:02:55 cgd Exp $	*/
+/*	$NetBSD: dmavar.h,v 1.9 1995/03/28 18:14:51 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #define	DMAGO_READ	0x08	/* transfer is a read */
 #define	DMAGO_NOINT	0x80	/* don't interrupt on completion */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 typedef void (*dmafree_t) (void *dev);
 typedef int  (*dmago_t)   (void *dev, char *, int, int);
 typedef int  (*dmanext_t) (void *dev);

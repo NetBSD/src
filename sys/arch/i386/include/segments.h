@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.9 1994/11/08 23:09:24 mycroft Exp $	*/
+/*	$NetBSD: segments.h,v 1.10 1995/03/28 18:17:18 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990 William F. Jolitz
@@ -225,7 +225,7 @@ struct region_descriptor {
 #endif
 #define NLDT		LUDATA_SEL+1
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern int currentldt;
 extern union descriptor gdt[NGDT];
 extern union descriptor ldt[NLDT];

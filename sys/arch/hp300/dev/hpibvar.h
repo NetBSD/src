@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.5 1995/01/07 10:30:13 mycroft Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.6 1995/03/28 18:16:09 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -86,7 +86,7 @@ struct	hpib_softc {
 #define	HPIBF_TIMO	0x10
 #define	HPIBF_DMA16	0x8000
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern	struct hpib_softc hpib_softc[];
 extern	caddr_t internalhpib;
 extern	int hpibtimeout;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 1994/10/27 04:15:58 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25 1995/03/28 18:16:47 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -103,7 +103,7 @@ struct cpu_nameclass {
 	int  cpu_class;
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern int cpu;
 extern int cpu_class;
 extern struct cpu_nameclass i386_cpus[];

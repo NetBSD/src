@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.16 1995/01/15 00:57:50 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.17 1995/03/28 18:17:11 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,7 +68,7 @@
 #define	PSL_USERSET	(PSL_MBO | PSL_I)
 #define	PSL_USERSTATIC	(PSL_MBO | PSL_MBZ | PSL_I | PSL_IOPL | PSL_VM | PSL_VIF | PSL_VIP)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 /* Interrupt priority `levels'; not mutually exclusive. */
 #define	IPL_NONE	-1
@@ -164,6 +164,6 @@ splx(ncpl)
 #define	setsofttty()	softintr(SIR_TTY)
 
 #endif /* !LOCORE */
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #endif /* !_I386_PSL_H_ */

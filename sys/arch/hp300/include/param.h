@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.19 1995/03/18 07:23:09 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.20 1995/03/28 18:16:35 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -175,7 +175,7 @@
 /* watch out for side effects */
 #define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifndef LOCORE
 int	cpuspeed;
 #define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
