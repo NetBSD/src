@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.19 1998/06/24 11:20:55 jonathan Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.20 1998/06/30 03:30:56 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -150,9 +150,9 @@ defopts_print(name, value, arg)
 	}
 
 	for (nv = value; nv != NULL; nv = nv->nv_next) {
-		isfsoption = (ht_lookup(deffstab, nv->nv_name) != NULL);
-		isparam  = (ht_lookup(defparamtab, nv->nv_name) != NULL);
-		isflag  = (ht_lookup(defflagtab, nv->nv_name) != NULL);
+		isfsoption = OPT_FSOPT(nv->nv_name);
+		isparam  = OPT_DEFPARAM(nv->nv_name);
+		isflag  = OPT_DEFFLAG(nv->nv_name);
 
 		if ((option = ht_lookup(opttab, nv->nv_name)) == NULL &&
 		    (option = ht_lookup(fsopttab, nv->nv_name)) == NULL) {
