@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hack.o_init.c,v 1.2 1993/08/02 17:17:30 mycroft Exp $";
+static char rcsid[] = "$NetBSD: hack.o_init.c,v 1.3 1995/03/23 08:31:06 cgd Exp $";
 #endif /* not lint */
 
 #include	"config.h"		/* for typedefs */

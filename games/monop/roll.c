@@ -1,6 +1,8 @@
+/*	$NetBSD: roll.c,v 1.5 1995/03/23 08:35:13 cgd Exp $	*/
+
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)roll.c	5.6 (Berkeley) 9/29/92";*/
-static char rcsid[] = "$Id: roll.c,v 1.4 1993/08/07 08:28:06 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)roll.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: roll.c,v 1.5 1995/03/23 08:35:13 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <stdlib.h>

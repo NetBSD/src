@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.9 (Berkeley) 7/25/90
-#	$Id: Makefile,v 1.6 1994/12/22 09:34:45 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1995/03/23 08:33:05 cgd Exp $
+#	@(#)Makefile	5.12 (Berkeley) 5/30/93
 
 # EXTRA
 #	Incorporates code to gather additional performance statistics
@@ -54,7 +54,7 @@
 
 PROG=	larn
 MAN=	larn.6
-CFLAGS+=-DBSD -DVER=12 -DSUBVER=0 -DNONAP
+CFLAGS+=-DBSD -DVER=12 -DSUBVER=0 -DNONAP -DUIDSCORE
 SRCS=	main.c object.c create.c tok.c display.c global.c data.c io.c \
 	monster.c store.c diag.c help.c config.c nap.c bill.c scores.c \
 	signal.c moreobj.c movem.c regen.c fortune.c savelev.c
@@ -63,14 +63,6 @@ LDADD=	-ltermcap -lcompat
 HIDEGAME=hidegame
 
 beforeinstall:
-	@if [ ! -d ${DESTDIR}/usr/share/games/larn ]; then \
-                /bin/rm -f ${DESTDIR}/usr/share/games/larn ; \
-                mkdir -p ${DESTDIR}/usr/share/games/larn ; \
-                chown root.wheel ${DESTDIR}/usr/share/games/larn ; \
-                chmod 755 ${DESTDIR}/usr/share/games/larn ; \
-        else \
-                true ; \
-        fi
 	(cd ${.CURDIR}/datfiles; install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    larnmaze larnopts lfortune larn.help \
 	    ${DESTDIR}/usr/share/games/larn)

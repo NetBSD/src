@@ -1,3 +1,5 @@
+$NetBSD: READ_ME,v 1.2 1995/03/23 08:29:12 cgd Exp $
+
 Hack is a display oriented dungeons & dragons - like game.
 Both display and command structure resemble rogue.
 (For a game with the same structure but entirely different display -
