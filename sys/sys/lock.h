@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.47 2003/01/18 09:53:19 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.48 2003/06/13 05:13:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -171,6 +171,17 @@ struct lock {
 	int lk_unlock_line;
 #endif
 };
+
+#define	LOCK_INITIALIZER(prio, wmesg, timo, flags)			\
+	{ SIMPLELOCK_INITIALIZER,					\
+	  (flags),							\
+	  0,								\
+	  0,								\
+	  0,								\
+	  0,								\
+	  (wmesg),							\
+	  { .lk_un_sleep = { 0, 0, (prio), (timo) } }			\
+	}
 
 /*
  * Lock request types:
