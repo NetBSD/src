@@ -1,7 +1,11 @@
-#	$NetBSD: all.debug,v 1.1 2000/07/13 14:27:05 lukem Exp $
+#	$NetBSD: all.debug,v 1.2 2003/09/01 00:30:34 lukem Exp $
 #
-# example /etc/syslog.conf:
-# each facility is logged to a separate file
+# Example /etc/syslog.conf:
+#	Each facility is logged to a separate file
+#
+# The following commands will setup the appropriate files:
+#	touch `awk '/^[^#]/ {print $2}' /etc/syslog.conf`
+#	chmod go= /var/log/authpriv
 #
 auth.debug		/var/log/auth
 authpriv.debug		/var/log/authpriv
