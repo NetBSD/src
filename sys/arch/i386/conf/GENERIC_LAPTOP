@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.2.2.8 2001/05/03 20:59:01 he Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.2.2.9 2001/05/06 14:44:50 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.2.2.8 $"
+#ident 		"GENERIC-$Revision: 1.2.2.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -568,6 +568,7 @@ cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+neo*	at pci? dev ? function ?	# 
 fms*	at pci? dev ? function ?	# Forte Media FM801
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
@@ -615,6 +616,7 @@ audio*	at ess?
 audio*	at fms?
 audio*	at gus?
 audio*	at guspnp?
+audio*	at neo?
 audio*	at pas?
 audio*	at sb?
 audio*	at sp?
