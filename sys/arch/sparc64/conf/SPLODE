@@ -1,10 +1,10 @@
-# 	$NetBSD: SPLODE,v 1.8 2002/01/27 13:23:27 jdolecek Exp $
+# 	$NetBSD: SPLODE,v 1.9 2002/02/10 15:49:39 mrg Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 maxusers	256
 
@@ -323,7 +323,7 @@ pseudo-device	ccd	4
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
-pseudo-device	raid	4
+pseudo-device	raid	8
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 ## Memory disk device, used on boot floppies with compressed
