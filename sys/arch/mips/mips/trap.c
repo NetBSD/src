@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.184 2003/10/29 23:39:45 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.185 2003/11/02 08:20:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.184 2003/10/29 23:39:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.185 2003/11/02 08:20:48 christos Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -217,7 +217,7 @@ trap(status, cause, vaddr, opc, frame)
 	struct proc *p = curproc;
 	vm_prot_t ftype;
 	ksiginfo_t ksi;
-	struct frame *fp = (struct frame *)l->l_md.md_regs;
+	struct frame *fp;
 	extern void fswintrberr(void);
 	KSI_INIT_TRAP(&ksi);
 
@@ -245,10 +245,11 @@ trap(status, cause, vaddr, opc, frame)
 			USERMODE(status) ? "user" : "kernel");
 		printf("status=0x%x, cause=0x%x, epc=0x%x, vaddr=0x%x\n",
 			status, cause, opc, vaddr);
-		if (curlwp != NULL)
+		if (curlwp != NULL) {
+			fp = (struct frame *)l->l_md.md_regs;
 			printf("pid=%d cmd=%s usp=0x%x ",
 			    p->p_pid, p->p_comm, (int)fp->f_regs[SP]);
-		else
+		} else
 			printf("curlwp == NULL ");
 		printf("ksp=0x%x\n", (int)&status);
 #if defined(DDB)
@@ -581,6 +582,7 @@ trap(status, cause, vaddr, opc, frame)
 		ksi.ksi_code = FPE_FLTOVF; /* XXX */
 		break; /* SIGNAL */
 	}
+	fp = (struct frame *)l->l_md.md_regs;
 	fp->f_regs[CAUSE] = cause;
 	fp->f_regs[BADVADDR] = vaddr;
 #ifdef __HAVE_SIGINFO
