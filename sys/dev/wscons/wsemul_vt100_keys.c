@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_keys.c,v 1.1 1998/06/20 19:17:47 drochner Exp $ */
+/* $NetBSD: wsemul_vt100_keys.c,v 1.2 1998/07/14 19:32:17 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -144,10 +144,10 @@ wsemul_vt100_translate(cookie, in, out)
 	}
 	switch (in) {
 	    case KS_Help:
-		*out = vt100_fkeys[15];
+		*out = vt100_fkeys[15 - 1];
 		return (5);
 	    case KS_Execute: /* "Do" */
-		*out = vt100_fkeys[16];
+		*out = vt100_fkeys[16 - 1];
 		return (5);
 	    case KS_Find:
 		*out = "\033[1~";
