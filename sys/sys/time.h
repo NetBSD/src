@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.10 1994/12/11 17:02:41 mycroft Exp $	*/
+/*	$NetBSD: time.h,v 1.11 1994/12/13 14:48:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -129,9 +129,6 @@ struct clockinfo {
 #ifdef KERNEL
 int	itimerfix __P((struct timeval *tv));
 int	itimerdecr __P((struct itimerval *itp, int usec));
-void	timevaladd __P((struct timeval *t1, struct timeval *t2));
-void	timevalsub __P((struct timeval *t1, struct timeval *t2));
-void	timevalfix __P((struct timeval *t1));
 #else /* !KERNEL */
 #include <time.h>
 
