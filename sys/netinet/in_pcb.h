@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.18 1996/09/17 17:10:20 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.19 1997/01/11 05:21:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -82,8 +82,10 @@ struct inpcbtable {
 #define	INP_RECVOPTS		0x01	/* receive incoming IP options */
 #define	INP_RECVRETOPTS		0x02	/* receive IP options for reply */
 #define	INP_RECVDSTADDR		0x04	/* receive IP dst address */
-#define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR)
 #define	INP_HDRINCL		0x08	/* user supplies entire IP header */
+#define	INP_RECVIF		0x80	/* receive incoming interface */
+#define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR|\
+				INP_RECVIF)
 
 #define	INPLOOKUP_WILDCARD	1
 
