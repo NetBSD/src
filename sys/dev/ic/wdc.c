@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.104 2001/12/03 00:20:23 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.105 2001/12/03 11:07:34 enami Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.104 2001/12/03 00:20:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.105 2001/12/03 11:07:34 enami Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -414,7 +414,7 @@ wdcattach(chp)
 		/*
 		 * Fake the autoconfig "not configured" message
 		 */
-		printf("atapibus at %s channel %s not configured\n",
+		printf("atapibus at %s channel %d not configured\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel);
 		chp->atapibus = NULL;
 #endif
