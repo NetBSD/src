@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 1999/03/22 08:37:32 ender Exp $ */
+/*	$NetBSD: md.c,v 1.2 1999/03/26 08:52:44 ender Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -709,9 +709,7 @@ md_copy_filesystem(void)
 	run_prog (0, 0, "pax -X -r -w -pe / /mnt");
 
 	/* Copy next-stage install profile into target /.profile. */
-#if 0	/* what is this? */
 	cp_to_target ("/tmp/.hdprofile", "/.profile");
-#endif 
 	cp_to_target ("/usr/share/misc/termcap", "/.termcap");
 }
 
@@ -803,9 +801,7 @@ md_make_bsd_partitions(void)
 	strcpy (bsddiskname, diskdev);
 
 	/* Create the disktab.preinstall */
-#if 0
 	run_prog (0, 0, "cp /etc/disktab.preinstall /etc/disktab");
-#endif
 #ifdef DEBUG
 	f = fopen ("/tmp/disktab", "a");
 #else
