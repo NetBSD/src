@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.69 1997/10/04 19:46:17 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.70 1997/10/06 20:04:05 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -103,10 +103,6 @@ int cpu_has_vme = 0;
  */
 int delay_divisor = 82;		/* assume the fastest (3/260) */
 
-vm_offset_t high_segment_free_start = 0;
-vm_offset_t high_segment_free_end = 0;
-
-extern vm_offset_t tmp_vpages[];
 extern int physmem;
 
 struct user *proc0paddr;	/* proc[0] pcb address (u-area VA) */
@@ -115,109 +111,8 @@ extern struct pcb *curpcb;
 /* First C code called by locore.s */
 void _bootstrap __P((struct exec));
 
-static void _mon_init __P((vm_offset_t sva, vm_offset_t eva, int keep));
 static void _verify_hardware __P((void));
 static void _vm_init __P((struct exec *kehp));
-
-
-/*
- * XXX - This can go away soon...
- */
-vm_offset_t
-high_segment_alloc(npages)
-	int npages;
-{
-	vm_offset_t va, tmp;
-
-	if (npages == 0) {
-		mon_printf("high_segment_alloc: npages=0\n");
-		sunmon_abort();
-	}
-	if (high_segment_free_start == high_segment_free_end)
-		return NULL;
-
-	va = high_segment_free_start + (npages*NBPG);
-	if (va > high_segment_free_end) return NULL;
-	tmp = high_segment_free_start;
-	high_segment_free_start = va;
-	return tmp;
-}
-
-/*
- * Duplicate all mappings in the current context into
- * every other context.  We have to let the PROM do the
- * actual segmap manipulation because we can only switch
- * the MMU context after we are sure that the kernel text
- * is identically mapped in all contexts.  The PROM can
- * do the job using hardware-dependent tricks...
- */
-void
-sun3_context_equiv __P((void))
-{
-	unsigned int sme;
-	int x;
-	vm_offset_t va;
-
-#ifdef	DIAGNOSTIC
-	/* Near the beginning of locore.s we set context zero. */
-	if (get_context() != 0) {
-		mon_printf("sun3_context_equiv: not in context zero?\n");
-		sunmon_abort();
-	}
-	/* Note: PROM setcxsegmap function needs sfc=dfs=FC_CONTROL */
-	if ((getsfc() != FC_CONTROL) || (getdfc() != FC_CONTROL)) {
-		mon_printf("sun3_context_equiv: bad dfc or sfc\n");
-		sunmon_abort();
-	}
-#endif
-
-	for (x = 1; x < NCONTEXT; x++) {
-		for (va = 0; va < (vm_offset_t) (NBSG * NSEGMAP); va += NBSG) {
-			sme = get_segmap(va);
-			mon_setcxsegmap(x, va, sme);
-		}
-	}
-}
-
-/*
- * Examine PMEGs used by the monitor, and either
- * reserve them (keep=1) or clear them (keep=0)
- */
-static void
-_mon_init(sva, eva, keep)
-	vm_offset_t sva, eva;
-	int keep;	/* true: steal, false: clear */
-{
-	vm_offset_t pgva, endseg;
-	int pte, valid;
-	unsigned char sme;
-
-	sva &= ~(NBSG-1);
-
-	while (sva < eva) {
-		sme = get_segmap(sva);
-		if (sme != SEGINV) {
-#ifdef	DEBUG
-			mon_printf("mon va=0x%x seg=0x%x\n", sva, sme);
-#endif
-			valid = 0;
-			endseg = sva + NBSG;
-			for (pgva = sva; pgva < endseg; pgva += NBPG) {
-				pte = get_pte(pgva);
-				if (pte & PG_VALID) {
-					valid++;
-#ifdef	DEBUG
-					mon_printf("mon va=0x%x pte=0x%x\n", pgva, pte);
-#endif
-				}
-			}
-			if (keep && valid)
-				sun3_reserve_pmeg(sme);
-			else set_segmap(sva, SEGINV);
-		}
-		sva += NBSG;
-	}
-}
 
 #if defined(DDB) && !defined(SYMTAB_SPACE)
 static void _save_symtab __P((struct exec *kehp));
@@ -288,247 +183,55 @@ _save_symtab(kehp)
 #endif	/* DDB && !SYMTAB_SPACE */
 
 /*
- * This is called just before pmap_bootstrap()
- * (from _bootstrap(), below) to initialize enough
- * to allow the VM system to run normally.  This involves
- * allocating some physical pages and virtual space for
- * special purposes, etc. by advancing avail_start and
- * virtual_avail past the "stolen" pages.
+ * This function is called from _bootstrap() to initialize
+ * pre-vm-sytem virtual memory.  All this really does is to
+ * set virtual_avail to the first page following preloaded
+ * data (i.e. the kernel and its symbol table) and special
+ * things that may be needed very early (proc0 upages).
+ * Once that is done, pmap_bootstrap() is called to do the
+ * usual preparations for our use of the MMU.
  */
 static void
 _vm_init(kehp)
 	struct exec *kehp;	/* kernel exec header */
 {
-	MachMonRomVector *rvec;
-	vm_offset_t va, eva, pte;
-	unsigned int sme;
-
-	rvec = romVectorPtr;
+	vm_offset_t nextva;
 
 	/*
-	 * Determine the range of kernel virtual space available.
-	 * This is just page-aligned for now, so we can allocate
-	 * some special-purpose pages before rounding to a segment.
+	 * First preserve our symbol table, which might have been
+	 * loaded after our BSS area by the boot loader.  However,
+	 * if DDB is not part of this kernel, ignore the symbols.
 	 */
 	esym = end;
 #if defined(DDB) && !defined(SYMTAB_SPACE)
 	/* This will advance esym past the symbols. */
 	_save_symtab(kehp);
 #endif
-	virtual_avail = m68k_round_page(esym);
-	virtual_end = VM_MAX_KERNEL_ADDRESS;
-
-	/*
-	 * Determine the range of physical memory available.
-	 * Physical memory at zero was remapped to KERNBASE.
-	 */
-	avail_start = virtual_avail - KERNBASE;
-	if (rvec->romvecVersion < 1) {
-		mon_printf("Warning: ancient PROM version=%d\n",
-				   rvec->romvecVersion);
-		/* Guess that PROM version 0.X used two pages. */
-		avail_end = *rvec->memorySize - (2*NBPG);
-	} else {
-		/* PROM version 1 or later. */
-		avail_end = *rvec->memoryAvail;
-	}
-	avail_end = m68k_trunc_page(avail_end);
 
 	/*
 	 * Steal some special-purpose, already mapped pages.
-	 * First take pages that are already mapped as
-	 * VA -> PA+KERNBASE since that's convenient.
 	 */
+	nextva = m68k_round_page(esym);
 
 	/*
-	 * Message buffer page (msgbuf).
-	 * This is put in physical page zero so it
-	 * is always in the same place after reboot.
+	 * Setup the u-area pages (stack, etc.) for proc0.
+	 * This is done very early (here) to make sure the
+	 * fault handler works in case we hit an early bug.
+	 * (The fault handler may reference proc0 stuff.)
 	 */
-	va = KERNBASE;
-	/* XXX: Make it non-cached? */
-	pte = get_pte(va);
-	pte |= PG_NC;
-	set_pte(va, pte);
-	/* Initialize msgbufaddr later, in machdep.c */
-
-	/*
-	 * Virtual and physical pages for proc[0] u-area (already mapped)
-	 */
-	proc0paddr = (struct user *) virtual_avail;
-	virtual_avail += UPAGES*NBPG;
-	avail_start   += UPAGES*NBPG;
-
-	/*
-	 * XXX - Make sure avail_start is within the low 1M range
-	 * that the Sun PROM guarantees will be mapped in?
-	 * Make sure it is below avail_end as well?
-	 */
-
-	/*
-	 * Now steal some virtual addresses, but
-	 * not the physical pages behind them.
-	 */
-	va = virtual_avail;	/* will clear PTEs from here */
-
-	/*
-	 * vpages array:  just some virtual addresses for
-	 * temporary mappings in the pmap module (two pages)
-	 */
-	tmp_vpages[0] = virtual_avail;
-	virtual_avail += NBPG;
-	tmp_vpages[1] = virtual_avail;
-	virtual_avail += NBPG;
-
-	/*
-	 * Done allocating PAGES of virtual space, so
-	 * clean out the rest of the last used segment.
-	 * After this point, virtual_avail is seg-aligned.
-	 */
-	virtual_avail = m68k_round_seg(virtual_avail);
-	while (va < virtual_avail) {
-		set_pte(va, PG_INVAL);
-		va += NBPG;
-	}
-
-	/*
-	 * Now that we are done stealing physical pages, etc.
-	 * figure out which PMEGs are used by those mappings
-	 * and reserve them -- but first, init PMEG management.
-	 */
-	sun3_pmeg_init();
-
-	/*
-	 * Reserve PMEGS for kernel text/data/bss
-	 * and the misc pages taken above.
-	 */
-	va = VM_MIN_KERNEL_ADDRESS;
-	while (va < virtual_avail) {
-		sme = get_segmap(va);
-		if (sme == SEGINV) {
-			mon_printf("kernel text/data/bss not mapped\n");
-			sunmon_abort();
-		}
-		sun3_reserve_pmeg(sme);
-		va += NBSG;
-	}
-
-	/*
-	 * Unmap kernel virtual space (only segments.  if it squished ptes,
-	 * bad things might happen).  Also, make sure to leave no valid
-	 * segmap entries in the MMU unless pmeg_array records them.
-	 */
-	va = virtual_avail;
-	while (va < virtual_end) {
-		set_segmap(va, SEGINV);
-		va += NBSG;
-	}
-
-	/*
-	 * Clear-out pmegs left in DVMA space by the PROM.
-	 * DO NOT kill the last one! (owned by the PROM!)
-	 */
-	va  = m68k_trunc_seg(DVMA_SPACE_START);
-	eva = m68k_trunc_seg(DVMA_SPACE_END);  /* Yes trunc! */
-	while (va < eva) {
-		set_segmap(va, SEGINV);
-		va += NBSG;
-	}
-
-	/*
-	 * Reserve PMEGs used by the PROM monitor:
-	 *   need to preserve/protect mappings between
-	 *		MONSTART, MONEND.
-	 *   free up any pmegs in this range which have no mappings
-	 *   deal with the awful MONSHORTSEG/MONSHORTPAGE
-	 */
-	_mon_init(MONSTART, MONEND, TRUE);
-
-	/*
-	 * Make sure the hole between MONEND, MONSHORTSEG is clear.
-	 */
-	_mon_init(MONEND, MONSHORTSEG, FALSE);
-
-	/*
-	 * MONSHORTSEG contains MONSHORTPAGE which is some stupid page
-	 * allocated by the PROM monitor.  (PROM data)
-	 * We use some of the segment for our u-area mapping.
-	 */
-	sme = get_segmap(MONSHORTSEG);
-	sun3_reserve_pmeg(sme);
-	high_segment_free_start = MONSHORTSEG;
-	high_segment_free_end = MONSHORTPAGE;
-
-	for (va = high_segment_free_start;
-		 va < high_segment_free_end;
-		 va += NBPG)
-		set_pte(va, PG_INVAL);
-
-	/*
-	 * Initialize the "u-area" pages.
-	 * Must initialize p_addr before autoconfig or
-	 * the fault handler will get a NULL reference.
-	 */
+	proc0paddr = (struct user *) nextva;
+	nextva += USPACE;
 	bzero((caddr_t)proc0paddr, USPACE);
 	proc0.p_addr = proc0paddr;
+
+	/*
+	 * Now that proc0 exists, make it the "current" one.
+	 */
 	curproc = &proc0;
 	curpcb = &proc0paddr->u_pcb;
 
-	/*
-	 * XXX  It might be possible to move much of what is
-	 * XXX  done after this point into pmap_bootstrap...
-	 */
-
-	/*
-	 * unmap user virtual segments
-	 */
-	va = 0;
-	while (va < KERNBASE) {	/* starts and ends on segment boundries */
-		set_segmap(va, SEGINV);
-		va += NBSG;
-	}
-
-	/*
-	 * Verify protection bits on kernel text/data/bss
-	 * All of kernel text, data, and bss are cached.
-	 * Text is read-only (except in db_write_ktext).
-	 *
-	 * Note that the Sun PROM initialized the memory
-	 * mapping with everything non-cached...
-	 */
-
-	/* text */
-	va = (vm_offset_t) kernel_text;
-	eva = m68k_trunc_page(etext);
-	while (va < eva) {
-		pte = get_pte(va);
-		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
-			mon_printf("invalid page at 0x%x\n", va);
-		}
-		pte &= ~(PG_WRITE|PG_NC);
-		/* Kernel text is read-only */
-		pte |= (PG_SYSTEM);
-		set_pte(va, pte);
-		va += NBPG;
-	}
-
-	/* data and bss */
-	eva = m68k_round_page(end);
-	while (va < eva) {
-		pte = get_pte(va);
-		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
-			mon_printf("invalid page at 0x%x\n", va);
-		}
-		pte &= ~(PG_NC);
-		pte |= (PG_SYSTEM | PG_WRITE);
-		set_pte(va, pte);
-		va += NBPG;
-	}
-
-	/* Finally, duplicate the mappings into all contexts. */
-	sun3_context_equiv();
-
-	pmap_bootstrap();	/* bootstrap pmap module */
+	/* This does most of the real work. */
+	pmap_bootstrap(nextva);
 }
 
 /*
