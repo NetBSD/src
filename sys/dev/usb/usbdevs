@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.375 2004/05/30 09:27:56 grant Exp $
+$NetBSD: usbdevs,v 1.376 2004/06/05 08:39:31 jdolecek Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -394,6 +394,7 @@ vendor NI		0x3923	National Instruments
 vendor IODATA2		0x40bb	I-O Data
 vendor DELL		0x413c	Dell
 vendor ONSPEC2		0x55aa	OnSpec Electronic Inc.
+vendor SITECOM		0x6189	Sitecom
 vendor INTEL		0x8086	Intel
 vendor HP2		0xf003	Hewlett Packard
 
@@ -1472,6 +1473,9 @@ product SILICONPORTALS YAPPHONE	0x0201	YAP Phone
 
 /* Sirius Technologies products */
 product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56 USB
+
+/* Sitecom products */
+product SITECOM SERIAL		0x2068	USB to serial cable
 
 /* SmartBridges products */
 product SMARTBRIDGES SMARTLINK	0x0001	SmartLink USB ethernet adapter
