@@ -34,9 +34,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strrchr.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strrchr.3,v 1.6 2002/02/07 07:00:33 ross Exp $
+.\"	$NetBSD: strrchr.3,v 1.7 2002/08/11 08:22:30 yamt Exp $
 .\"
-.Dd June 4, 1993
+.Dd August 11, 2002
 .Dt STRRCHR 3
 .Os
 .Sh NAME
@@ -74,6 +74,18 @@ pointer if
 .Fa c
 does not occur anywhere in
 .Fa s .
+.Sh EXAMPLES
+After the following call to
+.Fn strrchr ,
+.Va p
+will point to the string
+.Qq obar :
+.Bd -literal -offset indent
+char *p;
+char *s = "foobar";
+
+p = strrchr(s, 'o');
+.Ed
 .Sh SEE ALSO
 .Xr index 3 ,
 .Xr memchr 3 ,
