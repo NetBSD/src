@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.2 2003/01/18 11:08:12 thorpej Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.3 2003/01/26 15:54:35 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.2 2003/01/18 11:08:12 thorpej Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.3 2003/01/26 15:54:35 fvdl Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
@@ -63,7 +63,7 @@ ENTRY(swapcontext)
 #else
 	leal	8(%esp),%edx
 #endif
-	movl	%edx,(36 + 17 * 36)(%ecx)	/* ... and %esp. */
+	movl	%edx,(36 + 17 * 4)(%ecx)	/* ... and %esp. */
 	/* Note: oucp->%eax has been cleared by getcontext(). */
 	movl	8(%esp),%ecx
 	PIC_PROLOGUE
