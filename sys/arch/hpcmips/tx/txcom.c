@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.12 2001/05/02 10:32:16 scw Exp $ */
+/*	$NetBSD: txcom.c,v 1.13 2001/06/13 19:09:08 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -65,8 +65,6 @@
 #include <hpcmips/tx/tx39irvar.h>
 
 #include <hpcmips/tx/tx39clockreg.h> /* XXX */
-
-#include <hpcmips/tx/txiomanvar.h>
 
 #define SET(t, f)	(t) |= (f)
 #define CLR(t, f)	(t) &= ~(f)

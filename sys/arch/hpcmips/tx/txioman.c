@@ -1,4 +1,4 @@
-/*	$NetBSD: txioman.c,v 1.2 2000/10/22 10:42:33 uch Exp $ */
+/*	$NetBSD: txioman.c,v 1.3 2001/06/13 19:09:08 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -42,92 +42,68 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
-
-#include <machine/config_hook.h>
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
-
 #include <hpcmips/tx/tx39var.h>
-#include <hpcmips/tx/txiomanvar.h>
 
-#include "locators.h"
+#include <dev/hpc/hpciovar.h>
 
-int	txioman_match(struct device *, struct cfdata *, void *);
-void	txioman_attach(struct device *, struct device *, void *);
-int	txioman_print(void *, const char *);
-int	txioman_search(struct device *, struct cfdata *, void *);
-
-struct txioman_softc {
-	struct device sc_dev;
-};
+int txioman_match(struct device *, struct cfdata *, void *);
+void txioman_attach(struct device *, struct device *, void *);
+void txioman_callback(struct device *);
+int txioman_print(void *, const char *);
+hpcio_chip_t tx_conf_reference_ioman(void *, int);
 
 struct cfattach txioman_ca = {
-	sizeof(struct txioman_softc), txioman_match, txioman_attach
+	sizeof(struct device), txioman_match, txioman_attach
 };
 
 int
 txioman_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	platid_mask_t mask;
-
-	/* select platform */
-	mask = PLATID_DEREF(cf->cf_loc[TXSIMCF_PLATFORM]);
-	if (platid_match(&platid, &mask)) {
-		return ATTACH_NORMAL;
-	}
-
-	return 0;
+	return (1);
 }
 
 void
 txioman_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct txsim_attach_args *ta = aux;
-	struct txio_attach_args taa;
-	
-	taa.taa_tc = ta->ta_tc;
 	printf("\n");
 
-	config_search(txioman_search, self, &taa);
+	config_defer(self, txioman_callback);
 }
 
-int
-txioman_search(struct device *parent, struct cfdata *cf, void *aux)
+void
+txioman_callback(struct device *self)
 {
-	struct txio_attach_args *taa = aux;
-		
-	taa->taa_group	= cf->cf_group;
-	taa->taa_port	= cf->cf_port;
-	taa->taa_type	= cf->cf_type;
-	taa->taa_id	= cf->cf_id;
-	taa->taa_edge	= cf->cf_edge;
-	taa->taa_initial = cf->cf_initial;
-	
-	config_attach(parent, cf, taa, txioman_print);
+	struct hpcio_attach_args haa;
 
-	return 0;
+	haa.haa_busname = HPCIO_BUSNAME;
+	haa.haa_sc = tx_conf_get_tag();
+	haa.haa_getchip = tx_conf_reference_ioman;
+	haa.haa_iot = 0; /* not needed for TX */
+
+	config_found(self, &haa, txioman_print);
 }
 
 int
 txioman_print(void *aux, const char *pnp)
 {
-	struct txio_attach_args *taa = aux;
-	int edge = taa->taa_edge;
-	int type = taa->taa_type;
-	
-	if (!pnp)  {
-		printf(" group %d port %d type %d id %d", taa->taa_group,
-		       taa->taa_port, type, taa->taa_id);
-		if (type == CONFIG_HOOK_BUTTONEVENT ||
-		    type == CONFIG_HOOK_PMEVENT || 
-		    type == CONFIG_HOOK_EVENT) {
-			printf (" interrupt edge [%s%s]",
-				edge & 0x1 ? "p" : "", edge & 0x2 ? "n" : "");
-		}
-		if (taa->taa_initial != -1)
-			printf(" initial %d", taa->taa_initial);
-	}
-	
-	return QUIET;
+
+	return (QUIET);
+}
+
+void
+tx_conf_register_ioman(tx_chipset_tag_t t, struct hpcio_chip *hc)
+{
+	KASSERT(t == tx_conf_get_tag());
+	KASSERT(hc);
+
+	t->tc_iochip[hc->hc_chipid] = hc;
+}
+
+hpcio_chip_t
+tx_conf_reference_ioman(void *ctx, int iochip)
+{
+	struct tx_chipset_tag *t = tx_conf_get_tag();
+	KASSERT(iochip >= 0 && iochip < NTXIO_GROUP);
+
+	return (t->tc_iochip[iochip]);
 }
