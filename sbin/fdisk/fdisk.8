@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.37 2003/05/01 10:43:58 dsl Exp $
+.\"	$NetBSD: fdisk.8,v 1.38 2003/05/01 12:55:52 wiz Exp $
 .\"
 .Dd April 30, 2003
 .Dt FDISK 8
@@ -19,7 +19,7 @@
 .Op Fl b Ar cylinders/heads/sectors
 .Ek
 .Bk -words
-.Op Fl s Ar id/start/size[/bootmenu]
+.Op Fl s Ar id/start/size Ns Bq Ar /bootmenu
 .Ek
 .Bk -words
 .Op Fl c Ar bootcode
@@ -88,7 +88,8 @@ will calculate the correct
 .Em head ,
 and
 .Em sector
-values for any partition you edit.  If you specify
+values for any partition you edit.
+If you specify
 .Fl v
 you will be asked whether you want to specify them yourself.
 .Pp
@@ -117,7 +118,7 @@ have been processed.
 .It Fl b Ar cylinders/heads/sectors
 Specify the BIOS parameters for
 .Ar cylinders ,
-.Ar heads
+.Ar heads ,
 and
 .Ar sectors .
 It is used only in conjunction with the
@@ -168,7 +169,7 @@ flag with
 .Fl u
 makes it impossible to specify the starting and ending
 .Ar cylinder ,
-.Ar head
+.Ar head ,
 and
 .Ar sector
 fields.
@@ -199,11 +200,11 @@ Read the boot record from file
 instead of the specified disk.
 The geometry information used is still that of the disk volume.
 Any changes are written back to the file.
-.It Fl s Ar id/start/size[/bootmenu]
+.It Fl s Ar id/start/size Ns Bq Ar /bootmenu
 Specify the partition
 .Ar id ,
 .Ar start ,
-.Ar size
+.Ar size ,
 and optionally
 .Ar bootmenu .
 This flag requires the use of a partition selection flag
