@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.5 2000/03/23 07:01:42 thorpej Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.6 2000/06/05 15:08:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -85,16 +85,17 @@ void	esp_pcmcia_init __P((struct esp_pcmcia_softc *));
 int	esp_pcmcia_detach __P((struct device *, int));
 int	esp_pcmcia_enable __P((void *, int));
 
+static struct scsipi_adapter esp_pci_adapter = {
+	0,			/* adapter refcnt */
+	ncr53c9x_scsi_cmd,	/* cmd */
+	minphys,		/* minphys */
+	NULL,			/* ioctl */
+	esp_pcmcia_enable,	/* enable */
+};
+
 struct cfattach esp_pcmcia_ca = {
 	sizeof(struct esp_pcmcia_softc), esp_pcmcia_match, esp_pcmcia_attach,
 	esp_pcmcia_detach
-};
-
-struct scsipi_device esp_pcmcia_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -203,15 +204,11 @@ esp_pcmcia_attach(parent, self, aux)
 
 	esp_pcmcia_init(esc);
 
-	sc->sc_adapter.scsipi_enable = esp_pcmcia_enable;
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-
 	/*
 	 *  Initialize nca board itself.
 	 */
 	esc->sc_flags |= ESP_PCMCIA_ATTACHING;
-	ncr53c9x_attach(sc, &esp_pcmcia_dev);
+	ncr53c9x_attach(sc, &esp_pci_adapter, NULL);
 	esc->sc_flags &= ~ESP_PCMCIA_ATTACHING;
 	esc->sc_flags |= ESP_PCMCIA_ATTACHED;
 	return;
