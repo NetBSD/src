@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.12 1995/09/23 03:36:08 gwr Exp $	*/
+/*	$NetBSD: nfs.c,v 1.13 1996/02/26 21:50:09 scottr Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -38,7 +38,7 @@
 #include <netinet/in_systm.h>
 
 #include <nfs/rpcv2.h>
-#include <nfs/nfsv2.h>
+#include "nfsv2.h"
 #include <nfs/xdr_subs.h>
 
 #include "stand.h"

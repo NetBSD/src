@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.10 1995/09/23 03:36:11 gwr Exp $	*/
+/*	$NetBSD: rpc.c,v 1.11 1996/02/26 21:50:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -54,7 +54,7 @@
 #include <netinet/in_systm.h>
 
 #include <nfs/rpcv2.h>
-#include <nfs/nfsv2.h>
+#include "nfsv2.h"
 #include <nfs/xdr_subs.h>
 
 #include <string.h>
