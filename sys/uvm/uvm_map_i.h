@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.7 1998/08/13 02:11:02 eeh Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.8 1998/08/31 01:50:11 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -75,6 +75,8 @@
 
 #include "opt_uvmhist.h"
 
+#include <sys/pool.h>
+
 /*
  * uvm_map_i.h
  */
@@ -97,7 +99,7 @@ uvm_map_create(pmap, min, max, pageable)
 {
 	vm_map_t result;
 
-	MALLOC(result, vm_map_t, sizeof(struct vm_map), M_VMMAP, M_WAITOK);
+	result = pool_get(&uvm_map_pool, PR_WAITOK);
 	uvm_map_setup(result, min, max, pageable);
 	result->pmap = pmap;
 	return(result);
@@ -239,7 +241,7 @@ uvm_map_deallocate(map)
 	uvm_unmap(map, map->min_offset, map->max_offset, TRUE);
 	pmap_destroy(map->pmap);
 
-	FREE(map, M_VMMAP);
+	pool_put(&uvm_map_pool, map);
 }
 
 #endif /* defined(UVM_MAP_INLINE) || defined(UVM_MAP) */
