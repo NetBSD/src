@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.22 2002/09/27 03:18:13 thorpej Exp $	*/
+/*	$NetBSD: mlx.c,v 1.23 2002/10/06 23:17:46 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.22 2002/09/27 03:18:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.23 2002/10/06 23:17:46 kristerw Exp $");
 
 #include "ld.h"
 
@@ -602,7 +602,6 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 	if (mes == NULL) {
 		printf("%s: error fetching drive status\n",
 		    mlx->mlx_dv.dv_xname);
-		free(me, M_DEVBUF);
 		goto out;
 	}
 
@@ -2219,7 +2218,7 @@ mlx_fw_message(struct mlx_softc *mlx, int error, int param1, int param2)
 			    mlx->mlx_dv.dv_xname);
 			mlx->mlx_flags |= MLXF_SPINUP_REPORTED;
 		}
-		break;
+		return (0);
 
 	case 0x30:
 		fmt = "configuration checksum error";
@@ -2250,7 +2249,8 @@ mlx_fw_message(struct mlx_softc *mlx, int error, int param1, int param2)
 		break;
 
 	case 0xf0:
-		fmt = "FATAL MEMORY PARITY ERROR";
+		printf("%s: FATAL MEMORY PARITY ERROR\n",
+		    mlx->mlx_dv.dv_xname);
 		return (1);
 
 	default:
