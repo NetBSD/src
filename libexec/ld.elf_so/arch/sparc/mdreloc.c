@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.12 2002/09/05 16:33:58 junyoung Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.13 2002/09/05 18:25:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -161,6 +161,85 @@ static int reloc_target_bitmask[] = {
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
 
 int
+_rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
+	Obj_Entry *obj;
+	const Elf_Rela *rela;
+	caddr_t *addrp;
+	bool bind_now;
+	bool dodebug;
+{
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+	Elf_Addr *where = (Elf_Addr *) (obj->relocbase + rela->r_offset);
+	Elf_Addr value;
+
+	if (bind_now == 0 && obj->pltgot != NULL)
+		return (0);
+
+	/* Fully resolve procedure addresses now */
+
+	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
+
+	def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
+	if (def == NULL)
+		return (-1);
+
+	value = (Elf_Addr) (defobj->relocbase + def->st_value);
+
+	rdbg(dodebug, ("bind now %d/fixup in %s --> old=%p new=%p", 
+	    (int)bind_now, defobj->strtab + def->st_name,
+	    (void *)*where, (void *)value));
+
+	/*
+	 * At the PLT entry pointed at by `where', we now construct
+	 * a direct transfer to the now fully resolved function
+	 * address.  The resulting code in the jump slot is:
+	 *
+	 *	sethi	%hi(roffset), %g1
+	 *	sethi	%hi(addr), %g1
+	 *	jmp	%g1+%lo(addr)
+	 *
+	 * We write the third instruction first, since that leaves the
+	 * previous `b,a' at the second word in place. Hence the whole
+	 * PLT slot can be atomically change to the new sequence by
+	 * writing the `sethi' instruction at word 2.
+	 */
+#define SETHI	0x03000000
+#define JMP	0x81c06000
+#define NOP	0x01000000
+	where[2] = JMP   | (value & 0x000003ff);
+	where[1] = SETHI | ((value >> 10) & 0x003fffff);
+	__asm __volatile("iflush %0+8" : : "r" (where));
+	__asm __volatile("iflush %0+4" : : "r" (where));
+
+	if (addrp != NULL)
+		*addrp = (caddr_t)value;
+
+	return (0);
+}
+
+void
+_rtld_setup_pltgot(const Obj_Entry *obj)
+{
+	/*
+	 * PLTGOT is the PLT on the sparc.
+	 * The first entry holds the call the dynamic linker.
+	 * We construct a `call' sequence that transfers
+	 * to `_rtld_bind_start()'.
+	 * The second entry holds the object identification.
+	 * Note: each PLT entry is three words long.
+	 */
+#define SAVE	0x9de3bfc0	/* i.e. `save %sp,-64,%sp' */
+#define CALL	0x40000000
+#define NOP	0x01000000
+	obj->pltgot[0] = SAVE;
+	obj->pltgot[1] = CALL |
+	    ((Elf_Addr) &_rtld_bind_start - (Elf_Addr) &obj->pltgot[1]) >> 2;
+	obj->pltgot[2] = NOP;
+	obj->pltgot[3] = (Elf_Addr) obj;
+}
+
+int
 _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	Obj_Entry *obj;
 	const Elf_Rela *rela;
@@ -259,83 +338,4 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	}
 #endif
 	return (0);
-}
-
-int
-_rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
-	Obj_Entry *obj;
-	const Elf_Rela *rela;
-	caddr_t *addrp;
-	bool bind_now;
-	bool dodebug;
-{
-	const Elf_Sym *def;
-	const Obj_Entry *defobj;
-	Elf_Addr *where = (Elf_Addr *) (obj->relocbase + rela->r_offset);
-	Elf_Addr value;
-
-	if (bind_now == 0 && obj->pltgot != NULL)
-		return (0);
-
-	/* Fully resolve procedure addresses now */
-
-	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
-
-	def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
-	if (def == NULL)
-		return (-1);
-
-	value = (Elf_Addr) (defobj->relocbase + def->st_value);
-
-	rdbg(dodebug, ("bind now %d/fixup in %s --> old=%p new=%p", 
-	    (int)bind_now, defobj->strtab + def->st_name,
-	    (void *)*where, (void *)value));
-
-	/*
-	 * At the PLT entry pointed at by `where', we now construct
-	 * a direct transfer to the now fully resolved function
-	 * address.  The resulting code in the jump slot is:
-	 *
-	 *	sethi	%hi(roffset), %g1
-	 *	sethi	%hi(addr), %g1
-	 *	jmp	%g1+%lo(addr)
-	 *
-	 * We write the third instruction first, since that leaves the
-	 * previous `b,a' at the second word in place. Hence the whole
-	 * PLT slot can be atomically change to the new sequence by
-	 * writing the `sethi' instruction at word 2.
-	 */
-#define SETHI	0x03000000
-#define JMP	0x81c06000
-#define NOP	0x01000000
-	where[2] = JMP   | (value & 0x000003ff);
-	where[1] = SETHI | ((value >> 10) & 0x003fffff);
-	__asm __volatile("iflush %0+8" : : "r" (where));
-	__asm __volatile("iflush %0+4" : : "r" (where));
-
-	if (addrp != NULL)
-		*addrp = (caddr_t)value;
-
-	return (0);
-}
-
-void
-_rtld_setup_pltgot(const Obj_Entry *obj)
-{
-	/*
-	 * PLTGOT is the PLT on the sparc.
-	 * The first entry holds the call the dynamic linker.
-	 * We construct a `call' sequence that transfers
-	 * to `_rtld_bind_start()'.
-	 * The second entry holds the object identification.
-	 * Note: each PLT entry is three words long.
-	 */
-#define SAVE	0x9de3bfc0	/* i.e. `save %sp,-64,%sp' */
-#define CALL	0x40000000
-#define NOP	0x01000000
-	obj->pltgot[0] = SAVE;
-	obj->pltgot[1] = CALL |
-	    ((Elf_Addr) &_rtld_bind_start - (Elf_Addr) &obj->pltgot[1]) >> 2;
-	obj->pltgot[2] = NOP;
-	obj->pltgot[3] = (Elf_Addr) obj;
 }
