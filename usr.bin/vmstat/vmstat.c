@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.90 2001/11/26 14:06:31 lukem Exp $ */
+/* $NetBSD: vmstat.c,v 1.91 2001/11/26 21:04:49 jmc Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.90 2001/11/26 14:06:31 lukem Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.91 2001/11/26 21:04:49 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -1278,15 +1278,17 @@ dohashstat(int verbose, int todo, const char *hashname)
 		    &hashaddr, sizeof(hashaddr),
 		    hashnl[curhash->hashtbl].n_name);
 		if (verbose)
-			printf("%s %lu, %s %p, offset %ld, elemsize %d\n",
+			printf("%s %lu, %s %p, offset %ld, elemsize %llu\n",
 			    hashnl[curhash->hashsize].n_name + 1, hashsize,
 			    hashnl[curhash->hashtbl].n_name + 1, hashaddr,
-			    (long)curhash->offset, elemsize);
+			    (long)curhash->offset, 
+			    (unsigned long long)elemsize);
 		thissize = hashsize * elemsize;
 		if (thissize > hashbufsize) {
 			hashbufsize = thissize;
 			if ((hashbuf = realloc(hashbuf, hashbufsize)) == NULL)
-				errx(1, "malloc hashbuf %d", hashbufsize);
+				errx(1, "malloc hashbuf %llu", 
+				    (unsigned long long)hashbufsize);
 		}
 		deref_kptr(hashaddr, hashbuf, thissize,
 		    hashnl[curhash->hashtbl].n_name);
