@@ -1,4 +1,4 @@
-/*      $NetBSD: rcache.c,v 1.7 2001/12/22 07:45:38 lukem Exp $       */
+/*	$NetBSD: rcache.c,v 1.8 2001/12/22 08:05:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -18,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -145,9 +145,9 @@ initcache(int cachesize, int readblksize)
 static int 
 findlru(void)
 {
-	int     i;
-	int     minTime = cdesc[0].time;
-	int     minIdx = 0;
+	int	i;
+	size_t	minTime = cdesc[0].time;
+	int	minIdx = 0;
 
 	for (i = 0; i < cachebufs; i++) {
 		if (cdesc[i].time < minTime) {
@@ -243,7 +243,7 @@ err:
 void 
 bread(daddr_t blkno, char *buf, int size)
 {
-	int     osize = size;
+	int	osize = size;
 	daddr_t oblkno = blkno;
 	char   *obuf = buf;
 	daddr_t numBlocks = (size + dev_bsize -1) / dev_bsize;
@@ -268,7 +268,7 @@ bread(daddr_t blkno, char *buf, int size)
 
 retry:
 	while(size > 0) {
-		int     i;
+		int	i;
 		
 		for (i = 0; i < cachebufs; i++) {
 			struct cdesc *curr = &cdesc[i];
@@ -354,9 +354,9 @@ retry:
 			rawread(oblkno, obuf, osize);
 			break;
 		} else {
-			int     idx;
-			ssize_t rsize;
-			daddr_t blockBlkNo;
+			int	idx;
+			ssize_t	rsize;
+			daddr_t	blockBlkNo;
 
 			blockBlkNo = (blkno / nblksread) * nblksread;
 			idx = findlru();

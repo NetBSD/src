@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.43 2001/12/20 20:20:38 soren Exp $	*/
+/*	$NetBSD: main.c,v 1.44 2001/12/22 08:05:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.43 2001/12/20 20:20:38 soren Exp $");
+__RCSID("$NetBSD: main.c,v 1.44 2001/12/22 08:05:24 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ __RCSID("$NetBSD: main.c,v 1.43 2001/12/20 20:20:38 soren Exp $");
 #include "pathnames.h"
 
 gid_t	egid;			/* Retain tty privs for notification */
-int     timestamp;              /* print message timestamps */
+int	timestamp;		/* print message timestamps */
 int	notify;			/* notify operator flag */
 int	blockswritten;		/* number of blocks written on current tape */
 int	tapeno;			/* current tape number */
@@ -331,7 +331,7 @@ main(int argc, char *argv[])
 		}
 	}
 	if (Tflag && uflag) {
-	        (void)fprintf(stderr,
+		(void)fprintf(stderr,
 		    "You cannot use the T and u flags together.\n");
 		exit(X_ABORT);
 	}
@@ -346,7 +346,7 @@ main(int argc, char *argv[])
 		/*
 		 * Determine how to default tape size and density
 		 *
-		 *         	density				tape size
+		 *		density				tape size
 		 * 9-track	1600 bpi (160 bytes/.1")	2300 ft.
 		 * 9-track	6250 bpi (625 bytes/.1")	2300 ft.
 		 * cartridge	8000 bpi (100 bytes/.1")	1700 ft.
@@ -432,7 +432,7 @@ main(int argc, char *argv[])
 	spcl.c_date = iswap32(spcl.c_date);
 	spcl.c_ddate = iswap32(spcl.c_ddate);
 	if (!Tflag)
-	        getdumptime();		/* /etc/dumpdates snarfed */
+		getdumptime();		/* /etc/dumpdates snarfed */
 
 	date = iswap32(spcl.c_date);
 	msg("Date of this level %c dump: %s", level,
