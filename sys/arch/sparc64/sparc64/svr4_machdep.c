@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.11 2000/04/06 12:17:27 mrg Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.12 2000/04/10 13:34:20 pk Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -138,7 +138,9 @@ svr4_getmcontext(p, mc, flags)
 	if (rwindow_save(p)) {
 #ifdef DEBUG
 		printf("svr4_getcontext: rwindow_save(%p) failed, sending SIGILL\n", p);
+#ifdef DDB
 		Debugger();
+#endif
 #endif
 		sigexit(p, SIGILL);
 	}
@@ -234,7 +236,9 @@ svr4_setmcontext(p, mc, flags)
 	if (rwindow_save(p)) {
 #ifdef DEBUG
 		printf("svr4_setcontext: rwindow_save(%p) failed, sending SIGILL\n", p);
+#ifdef DDB
 		Debugger();
+#endif
 #endif
 		sigexit(p, SIGILL);
 	}
@@ -486,7 +490,9 @@ svr4_sendsig(catcher, sig, mask, code)
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("svr4_sendsig: %s[%d] sig %d newusp %p scp %p oldsp %p\n",
 		    p->p_comm, p->p_pid, sig, fp, &fp->sf_uc, oldsp);
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 	}
 #endif
 	/*
@@ -527,7 +533,9 @@ svr4_sendsig(catcher, sig, mask, code)
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("svr4_sendsig: window save or copyout error\n");
 		printf("svr4_sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
+#ifdef DDB
 		Debugger();
+#endif
 #endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
@@ -555,7 +563,9 @@ svr4_sendsig(catcher, sig, mask, code)
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("svr4_sendsig: about to return to catcher %p thru %p\n", 
 		       catcher, addr);
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 	}
 #endif
 }
