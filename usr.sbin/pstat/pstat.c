@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94"; */
-static char *rcsid = "$Id: pstat.c,v 1.14 1995/08/24 19:58:07 ragge Exp $";
+static char *rcsid = "$Id: pstat.c,v 1.15 1995/11/28 19:43:40 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -328,7 +328,7 @@ vnodemode()
 			maddr = vp->v_mount;
 			mount_print(mp);
 			vnode_header();
-			if (!strncmp(ST.f_fstypename, MOUNT_UFS, MFSNAMELEN) ||
+			if (!strncmp(ST.f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
 			    !strncmp(ST.f_fstypename, MOUNT_MFS, MFSNAMELEN)) {
 				ufs_header();
 			} else if (!strncmp(ST.f_fstypename, MOUNT_NFS,
@@ -338,7 +338,7 @@ vnodemode()
 			(void)printf("\n");
 		}
 		vnode_print(evp->avnode, vp);
-		if (!strncmp(ST.f_fstypename, MOUNT_UFS, MFSNAMELEN) ||
+		if (!strncmp(ST.f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
 		    !strncmp(ST.f_fstypename, MOUNT_MFS, MFSNAMELEN)) {
 			ufs_print(vp);
 		} else if (!strncmp(ST.f_fstypename, MOUNT_NFS, MFSNAMELEN)) {
