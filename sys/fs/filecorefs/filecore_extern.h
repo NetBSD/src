@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.6 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.6.2.1 2004/05/23 10:44:39 tron Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -121,6 +121,10 @@ int filecore_vptofh __P((struct vnode *, struct fid *));
 void filecore_init __P((void));
 void filecore_reinit __P((void));
 void filecore_done __P((void));
+
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_filecore_setup);
+#endif /* SYSCTL_SETUP_PROTO */
 
 extern int (**filecore_vnodeop_p) __P((void *));
 
