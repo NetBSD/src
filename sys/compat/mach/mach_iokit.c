@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.24 2003/11/01 18:41:25 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.25 2003/11/13 13:40:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.24 2003/11/01 18:41:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.25 2003/11/13 13:40:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.24 2003/11/01 18:41:25 manu Exp $")
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_iokit.h>
+#include <compat/mach/mach_services.h>
 
 #ifdef COMPAT_DARWIN
 #include <compat/darwin/darwin_iokit.h>
@@ -103,7 +104,13 @@ mach_io_service_get_matching_services(args)
 	struct mach_iokit_devclass *mid; 
 	struct mach_device_iterator *mdi;
 	size_t size;
+	int end_offset;
 	int i;
+
+	/* Sanity check req_size */
+	end_offset = req->req_size;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_string[end_offset]))
+		return mach_msg_error(args, EINVAL);
 
 	mp = mach_port_get();
 	mp->mp_flags |= MACH_MP_INKERNEL;
@@ -113,7 +120,7 @@ mach_io_service_get_matching_services(args)
 	i = 0;
 	while ((mid = mach_iokit_devclasses[i++]) != NULL) {
 		if (memcmp(req->req_string, mid->mid_string, 
-		    strlen(mid->mid_string)) == 0) {
+		    req->req_size) == 0) {
 			mp->mp_datatype = MACH_MP_DEVICE_ITERATOR;
 
 			size = sizeof(*mdi) 
@@ -242,6 +249,20 @@ mach_io_connect_method_scalari_scalaro(args)
 	mach_port_t mn;
 	struct mach_right *mr;
 	struct mach_iokit_devclass *mid;
+	int end_offset;
+
+	/* 
+	 * Sanity check req_incount 
+	 * the +1 gives us the last field of the message, req_outcount 
+	 */
+	end_offset = req->req_incount + 
+		     (sizeof(req->req_outcount) / sizeof(req->req_in[0]));
+	if (MACH_REQMSG_OVERFLOW(args, req->req_in[end_offset]))
+		return mach_msg_error(args, EINVAL);
+
+	/* Sanity check req->req_outcount */
+	if (req->req_outcount > 16)
+		return mach_msg_error(args, EINVAL);
 
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
@@ -320,6 +341,16 @@ mach_io_registry_entry_create_iterator(args)
 	struct mach_iokit_devclass **midp;
 	int maxdev, index;
 	size_t size;
+	int end_offset;
+
+	/* 
+	 * req_planeoffset is not used.
+	 * Sanity check req_planecount
+	 */
+	end_offset = req->req_planecount +
+		     (sizeof(req->req_options) / sizeof(req->req_plane[0]));
+	if (MACH_REQMSG_OVERFLOW(args, req->req_plane[end_offset]))
+		return mach_msg_error(args, EINVAL);
 
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
@@ -384,6 +415,19 @@ mach_io_object_conforms_to(args)
 	mach_io_object_conforms_to_request_t *req = args->smsg;
 	mach_io_object_conforms_to_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize; 
+	int end_offset;
+
+	/* 
+	 * req_classnameoffset is not used.
+	 * Sanity check req_classnamecount.
+	 */
+	end_offset = req->req_classnamecount;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_classname[end_offset]))
+		return mach_msg_error(args, EINVAL);
+
+#ifdef DEBUG_DARWIN
+	uprintf("Unimplemented mach_io_object_conforms_to\n");
+#endif
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -407,11 +451,28 @@ mach_io_service_add_interest_notification(args)
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
+	int end_offset;
+	int item_size, refitem_size;
+
+	/* 
+	 * req_typeofinterestoffset is not used.
+	 * Sanity check req_typeofinterestcount and req_refcount
+	 */
+	item_size = sizeof(req->req_typeofinterest[0]);
+	refitem_size = sizeof(req->req_ref[0]);
+	end_offset = req->req_typeofinterestcount +
+		     (sizeof(req->req_refcount) / item_size) + 
+		     (req->req_refcount * refitem_size / item_size);
+	if (MACH_REQMSG_OVERFLOW(args, req->req_typeofinterest[end_offset]))
+		return mach_msg_error(args, EINVAL);
 
 	mp = mach_port_get();
 	mp->mp_flags |= MACH_MP_INKERNEL;
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 
+#ifdef DEBUG_DARWIN
+	uprintf("Unimplemented mach_io_service_add_interest_notification\n");
+#endif
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;
@@ -519,6 +580,15 @@ mach_io_registry_entry_get_child_iterator(args)
 	struct mach_device_iterator *mdi;
 	int maxdev;
 	size_t size;
+	int end_offset;
+
+	/* 
+	 * req_planeoffset is not used.
+	 * Sanity check req_planecount.
+	 */
+	end_offset = req->req_planecount;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_plane[end_offset]))
+		return mach_msg_error(args, EINVAL);
 
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
@@ -567,6 +637,15 @@ mach_io_registry_entry_get_name_in_plane(args)
 	struct mach_right *mr;
 	mach_port_t mn;
 	struct mach_iokit_devclass *mid;
+	int end_offset;
+
+	/* 
+	 * req_planeoffset is not used.
+	 * Sanity check req_planecount.
+	 */
+	end_offset = req->req_planecount;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_plane[end_offset]))
+		return mach_msg_error(args, EINVAL);
 
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
@@ -624,6 +703,15 @@ mach_io_registry_entry_get_location_in_plane(args)
 	mach_io_registry_entry_get_location_in_plane_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize; 
 	char location[] = "";
+	int end_offset;
+
+	/* 
+	 * req_nameoffset is not used.
+	 * Sanity check req_namecount.
+	 */
+	end_offset = req->req_namecount;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_plane[end_offset]))
+		return mach_msg_error(args, EINVAL);
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -715,30 +803,19 @@ mach_io_registry_entry_get_property(args)
 	int error;
 	vaddr_t va;
 	size_t size;
-	size_t len;
 	mach_port_t mn;
 	struct mach_right *mr;
 	struct mach_iokit_devclass *mid;
 	struct mach_iokit_property *mip;
+	int end_offset;
 
-#ifdef DEBUG_MACH
 	/* 
-	 * We do not handle non zero offset and multiple names,
-	 * but it seems that Darwin binaries just fold random values
-	 * in theses fields. We have yet to see a real use of 
-	 * non null offset / multiple names.
+	 * req_property_nameoffset is not used.
+	 * Sanity check req_property_namecount.
 	 */
-	if (req->req_property_nameoffset != 0) {
-		printf("pid %d.%d: mach_io_registry_entry_get_property "
-		    "offset = %d (ignoring)\n", l->l_proc->p_pid, l->l_lid,
-		    req->req_property_nameoffset);
-	}
-	if (req->req_property_namecount != 1) {
-		printf("pid %d.%d: mach_io_registry_entry_get_property "
-		    "count = %d (ignoring)\n", l->l_proc->p_pid, l->l_lid, 
-		    req->req_property_namecount);
-	}
-#endif
+	end_offset = req->req_property_namecount;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_property_name[end_offset]))
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 
 	/* Find the port */
 	mn = req->req_msgh.msgh_remote_port;
@@ -754,11 +831,11 @@ mach_io_registry_entry_get_property(args)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 
 	/* Lookup the property name */
-	for (mip = mid->mid_properties_array; mip->mip_name; mip++) {
-		len = strlen(mip->mip_name);
-		if (memcmp(mip->mip_name, req->req_propery_name, len) == 0)
+	for (mip = mid->mid_properties_array; mip->mip_name; mip++) 
+		if (memcmp(mip->mip_name, req->req_property_name, 
+		    req->req_property_namecount) == 0)
 			break;
-	}
+
 	if (mip->mip_value == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_ENOENT);
 
@@ -815,6 +892,15 @@ mach_io_registry_entry_get_path(args)
 	    "display0/AppleBacklightDisplay";
 	char *cp;
 	size_t len, plen;
+	int end_offset;
+
+	/* 
+	 * req_offset is not used.
+	 * Sanity check req_count.
+	 */
+	end_offset = req->req_count;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_plane[end_offset]))
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 
 	/* XXX Just return a dummy name for now */ 
 	len = req->req_count + strlen(location) - 1; 
@@ -916,6 +1002,17 @@ mach_io_connect_method_scalari_structo(args)
 	mach_port_t mn;
 	struct mach_right *mr;
 	struct mach_iokit_devclass *mid;
+	int end_offset;
+
+	/* Sanity check req_incount */
+	end_offset = req->req_incount +
+		     (sizeof(req->req_outcount) / sizeof(req->req_in[0]));
+	if (MACH_REQMSG_OVERFLOW(args, req->req_in[end_offset]))
+		return mach_msg_error(args, EINVAL);
+
+	/* Sanity check req_outcount */
+	if (req->req_outcount > 4096)
+		return mach_msg_error(args, EINVAL);
 
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
@@ -942,6 +1039,17 @@ mach_io_connect_method_structi_structo(args)
 	mach_port_t mn;
 	struct mach_right *mr;
 	struct mach_iokit_devclass *mid;
+	int end_offset;
+
+	/* Sanity check req_incount */
+	end_offset = req->req_incount +
+		     (sizeof(req->req_outcount) / sizeof(req->req_in[0]));
+	if (MACH_REQMSG_OVERFLOW(args, req->req_in[end_offset]))
+		return mach_msg_error(args, EINVAL);
+
+	/* Sanity check req_outcount */
+	if (req->req_outcount > 4096)
+		return mach_msg_error(args, EINVAL);
 
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
@@ -966,10 +1074,11 @@ mach_io_connect_set_properties(args)
 	mach_io_connect_set_properties_request_t *req = args->smsg;
 	mach_io_connect_set_properties_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize; 
-	struct lwp *l = args->l;
 
-	printf("pid %d.%d: mach_io_connect_set_properties\n",
-	    l->l_proc->p_pid, l->l_lid);
+#ifdef DEBUG_MACH
+	uprintf("Unimplemented mach_io_connect_set_properties\n");
+#endif
+
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
@@ -988,6 +1097,10 @@ mach_io_service_close(args)
 	mach_io_service_close_request_t *req = args->smsg;
 	mach_io_service_close_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize; 
+
+#ifdef DEBUG_MACH
+	uprintf("Unimplemented mach_io_service_close\n");
+#endif
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -1008,6 +1121,10 @@ mach_io_connect_add_client(args)
 	mach_io_connect_add_client_request_t *req = args->smsg;
 	mach_io_connect_add_client_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize; 
+
+#ifdef DEBUG_MACH
+	uprintf("Unimplemented mach_io_connect_add_client\n");
+#endif
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -1030,6 +1147,17 @@ mach_io_connect_method_scalari_structi(args)
 	mach_port_t mn;
 	struct mach_right *mr;
 	struct mach_iokit_devclass *mid;
+	int end_offset;
+	int scalar_size, struct_size;
+
+	/* Sanity check req_incount and req_instructcount */
+	scalar_size = sizeof(req->req_in[0]);
+	struct_size = sizeof(req->req_instruct[0]);
+	end_offset = req->req_incount +
+		     (sizeof(req->req_instructcount) / scalar_size) +
+		     (req->req_instructcount * struct_size / scalar_size);
+	if (MACH_REQMSG_OVERFLOW(args, req->req_in[end_offset]))
+		return mach_msg_error(args, EINVAL);
 
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
@@ -1059,6 +1187,15 @@ mach_io_registry_entry_from_path(args)
 	struct mach_right *mr;
 	struct mach_iokit_devclass *mid; 
 	int i, len;
+	int end_offset;
+
+	/* 
+	 * req_pathoffset is not used.
+	 * Sanity check req_pathcount.
+	 */
+	end_offset = req->req_pathcount;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_path[end_offset]))
+		return mach_msg_error(args, EINVAL);
 
 #ifdef DEBUG_MACH
 	printf("mach_io_registry_entry_from_path: path = %s\n", req->req_path);
@@ -1068,17 +1205,9 @@ mach_io_registry_entry_from_path(args)
 	mp->mp_flags |= MACH_MP_INKERNEL;
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 
-	if (sizeof(*req) - 512 + req->req_pathcount > args->ssize) {
-#ifdef DEBUG_MACH
-		printf("pathcount too big, truncating\n");
-#endif
-		req->req_pathcount = args->ssize - (sizeof(*req) - 512);
-	}
-
 	i = 0;
 	while ((mid = mach_iokit_devclasses[i++]) != NULL) {
 		len = strlen(mid->mid_name);
-		/* XXX sanity check req_pathcount */
 #ifdef DEBUG_MACH
 		printf("trying \"%s\" vs \"%s\"\n", 
 		    &req->req_path[req->req_pathcount - 1 - len], 
@@ -1122,14 +1251,20 @@ mach_io_registry_entry_get_parent_iterator(args)
 	mach_port_t mn;
 	int maxdev;
 	size_t size;
+	int end_offset;
+
+	/* 
+	 * req_offset is unused
+	 * Sanity check req_count 
+	 */
+	end_offset = req->req_count;
+	if (MACH_REQMSG_OVERFLOW(args, req->req_plane[end_offset]))
+		return mach_msg_error(args, EINVAL);
 
 #ifdef DEBUG_MACH
 	printf("mach_io_registry_entry_get_parent_iterator: plane = %s\n", 
 	    req->req_plane);
 #endif
-	/* Sanity check req->req_count */
-	if (MACH_REQMSG_OVERFLOW(args, req->req_plane[req->req_count]))
-		return mach_msg_error(args, EINVAL);
 
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)

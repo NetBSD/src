@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.17 2003/07/01 19:15:47 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.18 2003/11/13 13:40:39 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -207,12 +207,15 @@ typedef struct {
 } mach_msg_body_t;
 
 #define MACH_REQMSG_OVERFLOW(args, test) \
-    (((u_long)&test - (u_long)args->smsg + sizeof(test)) > args->ssize)
+    (((u_long)&test - (u_long)args->smsg) > args->ssize)
 
 struct mach_short_reply {
 	mach_msg_header_t sr_header;
 	mach_msg_trailer_t sr_trailer;
 };
+
+/* Kernel-private structures */
+
 struct mach_trap_args {
 	struct lwp *l;
 	void *smsg;
@@ -221,12 +224,14 @@ struct mach_trap_args {
 	size_t *rsize;
 };
 
-struct mach_subsystem_namemap {
-	int	map_id;
-	int	(*map_handler)(struct mach_trap_args *);
-	const char	*map_name;
+struct mach_service {
+	int	srv_id;
+	int	(*srv_handler)(struct mach_trap_args *);
+	const char	*srv_name;
+	size_t	srv_reqlen; /* Minimum length of the request message */
+	size_t	srv_replen; /* Maximum length of the reply message */
 };
-extern struct mach_subsystem_namemap mach_namemap[];
+extern struct mach_service mach_services_table[];
 
 
 /* In-kernel Mach messages description */

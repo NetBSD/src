@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.27 2003/06/29 22:29:34 fvdl Exp $ */
+/*	$NetBSD: mach_message.c,v 1.28 2003/11/13 13:40:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.27 2003/06/29 22:29:34 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.28 2003/11/13 13:40:39 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -116,7 +116,7 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 	 */
 	if (SCARG(uap, option) & MACH_SEND_MSG) {
 		mach_msg_header_t *sm;
-		struct mach_subsystem_namemap *map;
+		struct mach_service *srv;
 		mach_port_t ln;
 		mach_port_t rn;
 		struct mach_right *lr;
@@ -194,53 +194,93 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 			 * Look for the function that will handle it,
 			 * using the message id.
 			 */
-			for (map = mach_namemap; map->map_id; map++)
-				if (map->map_id == sm->msgh_id)
+			for (srv = mach_services_table; srv->srv_id; srv++)
+				if (srv->srv_id == sm->msgh_id)
 					break;
 			
 			/* 
 			 * If no match, give up, and display a warning.
 			 */
-			if (map->map_handler == NULL) {
-				uprintf("No mach trap handler for id = %d\n",
+			if (srv->srv_handler == NULL) {
+				uprintf("No mach server for id = %d\n",
 				    sm->msgh_id);
 				*retval = MACH_SEND_INVALID_DEST;
 				goto out1;
 			}
+
 #ifdef KTRACE
 			/*
 			 * It is convenient to record in kernel trace 
-			 * the name of the handler that has been used,
+			 * the name of the server that has been used,
 			 * it makes traces easier to read. The user
 			 * facility does not produce a perfect result,
 			 * but at least we have the information.
 			 */
-			ktruser(p, map->map_name, NULL, 0, 0);
+			ktruser(p, srv->srv_name, NULL, 0, 0);
 #endif
+			/*
+			 * Sanity check message length. We do not want the
+			 * server to: 
+			 * 1) use kernel memory located after
+			 *    the end of the request message.
+			 */
+			if (send_size < srv->srv_reqlen) {
+#ifdef DEBUG_MACH
+				printf("mach server %s: smsg overflow: "
+				    "send = %d, min = %d\n",
+				    srv->srv_name, send_size, srv->srv_reqlen);
+#endif
+				*retval = MACH_SEND_MSG_TOO_SMALL;
+				goto out1;
+			}
+
+			/*
+			 * 2) give away random kernel data to the user program
+			 *    when the reply message is copied out.
+			 */
+			if (rcv_size > srv->srv_replen) {
+#ifdef DEBUG_MACH
+				printf("mach server %s: rmsg overflow: "
+				    "recv = %d, max = %d\n",
+				    srv->srv_name, rcv_size, srv->srv_replen);
+#endif
+				rcv_size = srv->srv_replen;
+			}
+
+			/*
+			 * 3) Overwrite kernel memory after the end of the
+			 *    reply message buffer. This check is the
+			 *    responsability of the server.
+			 */
+
+
+
 			/* 
-			 * Invoke the handler. We give it the opportunity
+			 * Invoke the server. We give it the opportunity
 			 * to shorten rcv_size if there is less data in
 			 * the reply than what the sender expected.
 			 */
-			rm = malloc(rcv_size, M_EMULDATA, M_WAITOK | M_ZERO);
+			rm = malloc(srv->srv_replen, 
+			    M_EMULDATA, M_WAITOK | M_ZERO);
 
 			args.l = l;
 			args.smsg = sm;
 			args.rmsg = rm;
 			args.rsize = &rcv_size;
 			args.ssize = send_size;
-			if ((*retval = (*map->map_handler)(&args)) != 0) 
+			if ((*retval = (*srv->srv_handler)(&args)) != 0) 
 				goto out1;
 			
-#ifdef DEBUG_MACH
+#ifdef DIAGNOSTIC
 			/* 
-			 * Catch potential bug in the handler
+			 * Catch potential bug in the server (santity
+			 * check #3): did it output a larger message
+			 * then the one that was allocated?
 			 */
 			if ((SCARG(uap, option) & MACH_RCV_MSG) &&
-			    (rcv_size > SCARG(uap, rcv_size))) {
+			    (rcv_size > srv->srv_replen)) {
 				uprintf("mach_msg: reply too big in %s\n",
-				    map->map_name);
-				rcv_size = SCARG(uap, rcv_size);
+				    srv->srv_name);
 			}
 #endif
 
