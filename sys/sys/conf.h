@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.80 2000/07/21 19:41:57 jeffs Exp $	*/
+/*	$NetBSD: conf.h,v 1.81 2000/10/19 14:27:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -470,10 +470,10 @@ bdev_decl(uk);
 cdev_decl(uk);
 
 /*
- * [bc]dev_decl()s for Compaq RAID devices.
+ * [bc]dev_decl()s for logical storage units.
  */
-bdev_decl(ca);
-cdev_decl(ca);
+bdev_decl(lsu);
+cdev_decl(lsu);
 
 /*
  * cdev_decl()s for Brooktree 8[47][89] based TV cards.
