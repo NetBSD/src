@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.52 2003/12/06 14:16:11 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.53 2003/12/06 14:17:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.52 2003/12/06 14:16:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.53 2003/12/06 14:17:13 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -708,6 +708,8 @@ relookup(dvp, vpp, cnp)
 		panic("relookup: bad hash");
 	if (cnp->cn_namelen != cp - cnp->cn_nameptr)
 		panic ("relookup: bad len");
+	while (*cp == '/')
+		cp++;
 	if (*cp != 0)
 		panic("relookup: not last component");
 #endif /* DEBUG */
