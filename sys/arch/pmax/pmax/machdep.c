@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 1996/05/19 02:03:38 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 1996/05/19 17:58:25 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -109,7 +109,7 @@
 #include "dc.h"
 #include "dtop.h"
 #include "scc.h"
-#include "le.h"
+#include "le_pmax.h"
 #include "asc.h"
 
 #include <pmax/dev/sccvar.h>
@@ -639,7 +639,7 @@ mach_init(argc, argv, code, cv)
 
 	maxmem = physmem;
 
-#if NLE > 0
+#if NLE_IOASIC > 0
 	/*
 	 * Grab 128K at the top of physical memory for the lance chip
 	 * on machines where it does dma through the I/O ASIC.
@@ -650,7 +650,7 @@ mach_init(argc, argv, code, cv)
 		maxmem -= btoc(128 * 1024);
 		le_iomem = (maxmem << PGSHIFT);
 	}
-#endif /* NLE */
+#endif /* NLE_IOASIC */
 #if NASC > 0
 	/*
 	 * Ditto for the scsi chip. There is probably a way to make asc.c
@@ -737,6 +737,7 @@ mach_init(argc, argv, code, cv)
  * cpu_startup: allocate memory for variable-sized tables,
  * initialize cpu, and do autoconfiguration.
  */
+void
 cpu_startup()
 {
 	register unsigned i;
@@ -1081,6 +1082,7 @@ sys_sigreturn(p, v, retval)
 
 int	waittime = -1;
 
+void
 boot(howto)
 	register int howto;
 {
@@ -1128,6 +1130,7 @@ boot(howto)
 			dumpsys();
 		(*f)();	/* jump back to prom monitor and do 'auto' cmd */
 	}
+	while(1) ;	/* fool gcc */
 	/*NOTREACHED*/
 }
 
