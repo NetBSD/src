@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)sex_screen.c	8.30 (Berkeley) 12/23/93";
+/* from: static char sccsid[] = "@(#)sex_screen.c	8.30 (Berkeley) 12/23/93"; */
+static char *rcsid = "$Id: sex_screen.c,v 1.2 1994/01/24 06:41:04 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

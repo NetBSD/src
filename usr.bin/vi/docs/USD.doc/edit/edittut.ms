@@ -29,7 +29,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)edittut.ms	8.1 (Berkeley) 6/8/93
+.\"	from: @(#)edittut.ms	8.1 (Berkeley) 6/8/93
+.\"	$Id: edittut.ms,v 1.2 1994/01/24 06:39:43 cgd Exp $
 .\"
 .EH 'USD:11-%''Edit:  A Tutorial'
 .OH 'Edit:  A Tutorial''USD:11-%'

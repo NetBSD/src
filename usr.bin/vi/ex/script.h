@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)script.h	8.1 (Berkeley) 12/19/93
+ *	from: @(#)script.h	8.1 (Berkeley) 12/19/93
+ *	$Id: script.h,v 1.2 1994/01/24 06:40:57 cgd Exp $
  */
 
 struct _script {

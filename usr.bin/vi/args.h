@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)args.h	8.3 (Berkeley) 12/19/93
+ *	from: @(#)args.h	8.3 (Berkeley) 12/19/93
+ *	$Id: args.h,v 1.2 1994/01/24 06:38:45 cgd Exp $
  */
 
 /*
