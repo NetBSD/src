@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.69 1998/08/09 08:58:19 mrg Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.70 1998/09/09 04:57:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1131,8 +1131,9 @@ ip_forward(m, srcrt)
 	dest = 0;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf("forward: src %x dst %x ttl %x\n",
-		    ip->ip_src.s_addr, ip->ip_dst.s_addr, ip->ip_ttl);
+		printf("forward: src %2.2x dst %2.2x ttl %x\n",
+		    ntohl(ip->ip_src.s_addr),
+		    ntohl(ip->ip_dst.s_addr), ip->ip_ttl);
 #endif
 	if (m->m_flags & M_BCAST || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
