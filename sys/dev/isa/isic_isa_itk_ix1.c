@@ -26,7 +26,7 @@
  *	i4b_itk_ix1.c - ITK ix1 micro passive card driver for isdn4bsd
  *	--------------------------------------------------------------
  *
- *	$Id: isic_isa_itk_ix1.c,v 1.3 2001/06/13 10:46:03 wiz Exp $
+ *	$Id: isic_isa_itk_ix1.c,v 1.4 2001/06/19 13:42:17 wiz Exp $
  *
  *      last edit-date: [Fri Jan  5 12:31:50 2001]
  *
@@ -55,7 +55,7 @@
  *
  * The probe routine was derived by trial and error from a representative
  * sample of two cards ;-) The standard way (checking HSCX versions)
- * was extended by reading a zero from a non existant HSCX register (register
+ * was extended by reading a zero from a non existent HSCX register (register
  * 0xff). Reading the config register gives varying results, so this doesn't
  * seem to be used as an id register (like the Teles S0/16.3).
  *

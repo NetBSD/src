@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.125 2001/06/02 16:17:10 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.126 2001/06/19 13:42:19 wiz Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -3175,7 +3175,7 @@ abort:
 
 /*
  * This function is called when we get a RST for a
- * non-existant connection, so that we can see if the
+ * non-existent connection, so that we can see if the
  * connection is in the syn cache.  If it is, zap it.
  */
 
