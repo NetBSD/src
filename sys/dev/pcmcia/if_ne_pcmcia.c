@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.27 1998/11/18 18:34:53 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.28 1998/12/18 21:14:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -191,6 +191,12 @@ struct ne2000dev {
       PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_2,
       PCMCIA_CIS_DAYNA_COMMUNICARD_E_2,
       0, -1, { 0x00, 0x80, 0x19 } },
+
+    { PCMCIA_STR_COREGA_PCC_2,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_PCC_2,
+      PCMCIA_CIS_COREGA_PCC_2,
+      0, -1, { 0x00, 0x00, 0xf4 } },
+
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
