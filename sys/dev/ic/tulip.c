@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.101 2001/11/13 13:14:45 lukem Exp $	*/
+/*	$NetBSD: tulip.c,v 1.102 2001/11/22 05:03:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.101 2001/11/13 13:14:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.102 2001/11/22 05:03:04 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -2869,7 +2869,7 @@ tlp_al981_filter_setup(sc)
 			goto allmulti;
 		}
 
-		hash = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
+		hash = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x3f;
 		mchash[hash >> 5] |= 1 << (hash & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
 	}
