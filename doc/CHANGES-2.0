@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.533 2004/11/12 06:47:16 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.534 2004/11/12 06:48:59 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8057,3 +8057,8 @@ distrib/notes/common/contents			1.111-1.112
 	Update hp300 info, shifting info to correct location.
 	hp300 miniroot doesnt have sysinst -- only the ramdisk kernel has it.
 	[mbw, ticket #965]
+
+lib/libpthread/arch/i386/_getsetc.S		1.4
+
+	save&restore %fs and %gs registers for USER_LDT applications. PR#26900
+	[kent, ticket #969]
