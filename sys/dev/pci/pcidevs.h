@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.200 2000/03/04 13:24:24 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.201 2000/03/06 02:32:31 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.193 2000/03/04 13:23:26 tron Exp 
+ *	NetBSD: pcidevs,v 1.194 2000/03/06 02:31:19 mark Exp 
  */
 
 /*
@@ -1311,6 +1311,7 @@
 #define	PCI_PRODUCT_SYMPHONY_82C103	0x0103		/* 82C103 */
 #define	PCI_PRODUCT_SYMPHONY_82C105	0x0105		/* 82C105 */
 #define	PCI_PRODUCT_SYMPHONY2_82C101	0x0001		/* 82C101 */
+#define	PCI_PRODUCT_SYMPHONY_83C553	0x0565		/* 83C553 PCI-ISA Bridge */
 
 /* Tekram Technology products (1st PCI Vendor ID)*/
 #define	PCI_PRODUCT_TEKRAM_DC290	0xdc29		/* DC-290(M) */
@@ -1461,6 +1462,7 @@
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
 #define	PCI_PRODUCT_WINBOND_W89C840F	0x0840		/* W89C840F 10/100 Ethernet */
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* W89C940F Ethernet */
+#define	PCI_PRODUCT_WINBOND_W89C940F_1	0x5a5a		/* W89C940F Ethernet */
 
 /* Xircom products */
 /* is the `-3' here just indicating revision 3, or is it really part
