@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.12 2001/06/10 12:37:43 sato Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.13 2001/06/14 08:43:41 sato Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -377,7 +377,7 @@ vrpiu_ad_disable(v)
 	    vrpiu_write(sc, PIUCNT_REG_W, 0);
 
 	    /* mask clock to PIU */
-	    __vrcmu_supply(CMUMSKPIU, 1);
+	    __vrcmu_supply(CMUMSKPIU, 0);
 	}
 }
 
@@ -451,7 +451,7 @@ vrpiu_tp_disable(v)
 	    vrpiu_write(sc, PIUCNT_REG_W, 0);
 
 	    /* mask clock to PIU */
-	    __vrcmu_supply(CMUMSKPIU, 1);
+	    __vrcmu_supply(CMUMSKPIU, 0);
 	}
 }
 
