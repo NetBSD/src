@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.98 2000/12/10 19:36:32 chs Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.99 2001/01/22 12:17:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -84,11 +84,11 @@ int nfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
  * nfs vfs operations.
  */
 
-extern struct vnodeopv_desc nfsv2_vnodeop_opv_desc;
-extern struct vnodeopv_desc spec_nfsv2nodeop_opv_desc;
-extern struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc;
+extern const struct vnodeopv_desc nfsv2_vnodeop_opv_desc;
+extern const struct vnodeopv_desc spec_nfsv2nodeop_opv_desc;
+extern const struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc;
 
-struct vnodeopv_desc *nfs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const nfs_vnodeopv_descs[] = {
 	&nfsv2_vnodeop_opv_desc,
 	&spec_nfsv2nodeop_opv_desc,
 	&fifo_nfsv2nodeop_opv_desc,

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.37 2000/06/10 18:27:03 assar Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.38 2001/01/22 12:17:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -361,9 +361,9 @@ kernfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	return (EOPNOTSUPP);
 }
 
-extern struct vnodeopv_desc kernfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc kernfs_vnodeop_opv_desc;
 
-struct vnodeopv_desc *kernfs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const kernfs_vnodeopv_descs[] = {
 	&kernfs_vnodeop_opv_desc,
 	NULL,
 };
