@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: expr.c,v 1.5 1996/11/03 17:48:17 ws Exp $";
+static char rcsid[] = "$Id: expr.c,v 1.6 1997/03/09 20:49:06 pk Exp $";
 #endif
 
 #include <ctype.h>
@@ -521,6 +521,7 @@ register expressionS *expressionP;
 	    || (expressionP->X_subtract_symbol
 		&& expressionP->X_add_symbol
 		&& expressionP->X_subtract_symbol->sy_frag == expressionP->X_add_symbol->sy_frag
+		&& SEG_NORMAL (S_GET_SEGMENT (expressionP->X_add_symbol))
 		&& S_GET_VALUE(expressionP->X_subtract_symbol) == S_GET_VALUE(expressionP->X_add_symbol))) {
 	    expressionP->X_subtract_symbol	= NULL;
 	    expressionP->X_add_symbol		= NULL;
