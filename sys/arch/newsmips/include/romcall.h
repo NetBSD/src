@@ -1,4 +1,4 @@
-/*	$NetBSD: romcall.h,v 1.2 2002/04/13 02:43:43 tsutsui Exp $	*/
+/*	$NetBSD: romcall.h,v 1.3 2002/04/13 07:56:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -35,6 +35,8 @@
 #define SYS_lseek	19
 #define SYS_ioctl	54
 
+#define SYSIOCEJECT	11	/* eject floppy */
+
 #define BOOTDEV_MAG(x)	(((x) >> 28) & 0x0f)	/* MAGIC (5) */
 #define BOOTDEV_BUS(x)	(((x) >> 24) & 0x0f)	/* bus number */
 #define BOOTDEV_CTLR(x) (((x) >> 20) & 0x0f)
@@ -56,4 +58,5 @@ int rom_close(int);
 int rom_read(int, void *, int);
 int rom_write(int, void *, int);
 int rom_lseek(int, int, int);
+int rom_ioctl(int, int, void *);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: apcall.h,v 1.2 1999/12/23 06:52:30 tsubai Exp $	*/
+/*	$NetBSD: apcall.h,v 1.3 2002/04/13 07:56:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -44,6 +44,7 @@
 #define	APCALL_FLUSHCACHE	1006
 #define	APCALL_GETTIMEOFDAY	1012
 
+#define	APIOCEJECT		2003	/* eject floppy */
 #define	APIOCGIFHWADDR		9200	/* get hardware address */
 
 #define	apcall_exit(a)		APCALL(APCALL_EXIT,(a))

@@ -1,4 +1,4 @@
-/*	$NetBSD: romcalls.S,v 1.3 2002/04/13 02:43:44 tsutsui Exp $	*/
+/*	$NetBSD: romcalls.S,v 1.4 2002/04/13 07:56:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -117,7 +117,6 @@ rom_write:
 	j	ra
 	nop
 
-
 	.globl	rom_lseek
 rom_lseek:
 	addu	sp, sp, -32
@@ -128,6 +127,25 @@ rom_lseek:
 	sw	a2, 24(sp)
 
 	li	a0, SYS_lseek
+	addu	a1, sp, 16
+	syscall
+	nop
+
+	lw	ra, 28(sp)
+	addu	sp, sp, 32
+	j	ra
+	nop
+
+	.globl	rom_ioctl
+rom_ioctl:
+	addu	sp, sp, -32
+	sw	ra, 28(sp)
+
+	sw	a0, 16(sp)
+	sw	a1, 20(sp)
+	sw	a2, 24(sp)
+
+	li	a0, SYS_ioctl
 	addu	a1, sp, 16
 	syscall
 	nop
