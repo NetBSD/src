@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.2 2001/06/16 12:00:02 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.3 2001/06/21 18:46:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -188,7 +188,8 @@ static void pipe_free_kmem __P((struct pipe *cpipe));
 static int pipe_create __P((struct pipe **cpipep));
 static __inline int pipelock __P((struct pipe *cpipe, int catch));
 static __inline void pipeunlock __P((struct pipe *cpipe));
-static __inline void pipeselwakeup __P((struct pipe *cpipe));
+static __inline void pipeselwakeup __P((struct pipe *selp,
+			struct pipe *sigp));
 static int pipespace __P((struct pipe *cpipe, int size));
 
 #ifdef __FreeBSD__
@@ -522,30 +523,27 @@ pipeunlock(cpipe)
  * 'sigpipe' side of pipe.
  */
 static __inline void
-pipeselwakeup(cpipe)
-	struct pipe *cpipe;
+pipeselwakeup(selp, sigp)
+	struct pipe *selp, *sigp;
 {
-	if (!cpipe)
-		return;
-
-	if (cpipe->pipe_state & PIPE_SEL) {
-		cpipe->pipe_state &= ~PIPE_SEL;
-		selwakeup(&cpipe->pipe_sel);
+	if (selp->pipe_state & PIPE_SEL) {
+		selp->pipe_state &= ~PIPE_SEL;
+		selwakeup(&selp->pipe_sel);
 	}
 #ifdef __FreeBSD__
-	if ((cpipe->pipe_state & PIPE_ASYNC) && cpipe->pipe_sigio)
-		pgsigio(cpipe->pipe_sigio, SIGIO, 0);
-	KNOTE(&cpipe->pipe_sel.si_note, 0);
+	if (sigp && (sigp->pipe_state & PIPE_ASYNC) && sigp->pipe_sigio)
+		pgsigio(sigp->pipe_sigio, SIGIO, 0);
+	KNOTE(&selp->pipe_sel.si_note, 0);
 #endif
 
 #ifdef __NetBSD__
-	if (cpipe && (cpipe->pipe_state & PIPE_ASYNC)
-	    && cpipe->pipe_pgid != NO_PID){
+	if (sigp && (sigp->pipe_state & PIPE_ASYNC)
+	    && sigp->pipe_pgid != NO_PID){
 		struct proc *p;
 
-		if (cpipe->pipe_pgid < 0)
-			gsignal(-cpipe->pipe_pgid, SIGIO);
-		else if (cpipe->pipe_pgid > 0 && (p = pfind(cpipe->pipe_pgid)) != 0)
+		if (sigp->pipe_pgid < 0)
+			gsignal(-sigp->pipe_pgid, SIGIO);
+		else if (sigp->pipe_pgid > 0 && (p = pfind(sigp->pipe_pgid)) != 0)
 			psignal(p, SIGIO);
 	}
 #endif /* NetBSD */
@@ -686,7 +684,7 @@ pipe_read(fp, offset, uio, cred, flags)
 			/*
 			 * We want to read more, wake up select/poll.
 			 */
-			pipeselwakeup(rpipe->pipe_peer);
+			pipeselwakeup(rpipe, rpipe->pipe_peer);
 
 			rpipe->pipe_state |= PIPE_WANTR;
 			error = tsleep(rpipe, PRIBIO | PCATCH, "piperd", 0);
@@ -724,7 +722,7 @@ unlocked_error:
 	 */
 	if ((rpipe->pipe_buffer.size - rpipe->pipe_buffer.cnt) >= PIPE_BUF
 	    && (ocnt != rpipe->pipe_buffer.cnt || (rpipe->pipe_state & PIPE_SIGNALR))) {
-		pipeselwakeup(rpipe->pipe_peer);
+		pipeselwakeup(rpipe, rpipe->pipe_peer);
 		rpipe->pipe_state &= ~PIPE_SIGNALR;
 	}
 
@@ -920,7 +918,7 @@ retry:
 			pipelock(wpipe, 0);
 			pipe_destroy_write_buffer(wpipe);
 			pipeunlock(wpipe);
-			pipeselwakeup(wpipe);
+			pipeselwakeup(wpipe, wpipe);
 			error = EPIPE;
 			goto error1;
 		}
@@ -928,7 +926,7 @@ retry:
 			wpipe->pipe_state &= ~PIPE_WANTR;
 			wakeup(wpipe);
 		}
-		pipeselwakeup(wpipe);
+		pipeselwakeup(wpipe, wpipe);
 		error = tsleep(wpipe, PRIBIO | PCATCH, "pipdwt", 0);
 	}
 
@@ -1124,7 +1122,7 @@ retry:
 				wpipe->pipe_state &= ~PIPE_WANTR;
 				wakeup(wpipe);
 			}
-			pipeselwakeup(wpipe);
+			pipeselwakeup(wpipe, wpipe);
 			error = tsleep(wpipe, PRIBIO | PCATCH, "pipdwt", 0);
 		}
 
@@ -1138,7 +1136,7 @@ retry:
 	error:
 			/* XXX update uio ? */
 			if (error == EPIPE)
-				pipeselwakeup(wpipe);
+				pipeselwakeup(wpipe, wpipe);
 
 			wpipe->pipe_state &= ~PIPE_MOREW;
 			goto error1;
@@ -1218,6 +1216,7 @@ pipe_write(fp, offset, uio, cred, flags)
 			    && (wpipe->pipe_state & PIPE_WANTCLOSE)) {
 				wpipe->pipe_state &=
 				    ~(PIPE_WANTCLOSE | PIPE_WANTR);
+				wakeup(wpipe);
 			}
 
 			return (error);
@@ -1393,7 +1392,7 @@ pipe_write(fp, offset, uio, cred, flags)
 			 * We have no more space and have something to offer,
 			 * wake up select/poll.
 			 */
-			pipeselwakeup(wpipe);
+			pipeselwakeup(wpipe, wpipe);
 
 			wpipe->pipe_state |= PIPE_WANTW;
 			error = tsleep(wpipe, PRIBIO | PCATCH, "pipewr", 0);
@@ -1441,7 +1440,7 @@ pipe_write(fp, offset, uio, cred, flags)
 	 * is only done synchronously), so check wpipe->only pipe_buffer.cnt
 	 */
 	if (wpipe->pipe_buffer.cnt)
-		pipeselwakeup(wpipe);
+		pipeselwakeup(wpipe, wpipe);
 
 	/*
 	 * Arrange for next read(2) to do a signal.
@@ -1667,7 +1666,7 @@ pipeclose(cpipe)
 	if (!cpipe)
 		return;
 
-	pipeselwakeup(cpipe->pipe_peer);
+	pipeselwakeup(cpipe, cpipe);
 
 	/*
 	 * If the other side is blocked, wake it up saying that
@@ -1683,7 +1682,7 @@ pipeclose(cpipe)
 	 * Disconnect from peer
 	 */
 	if ((ppipe = cpipe->pipe_peer) != NULL) {
-		pipeselwakeup(ppipe);
+		pipeselwakeup(ppipe, ppipe);
 
 		ppipe->pipe_state |= PIPE_EOF;
 		wakeup(ppipe);
@@ -1695,16 +1694,17 @@ pipeclose(cpipe)
 	 */
 #ifdef _FreeBSD__
 	mtx_lock(&vm_mtx);
-#endif
 	pipe_free_kmem(cpipe);
-#ifdef __FreeBSD__
 	/* XXX: erm, doesn't zalloc already have its own locks and
 	 * not need the giant vm lock?
 	 */
 	zfree(pipe_zone, cpipe);
 	mtx_unlock(&vm_mtx);
 #endif /* FreeBSD */
+
 #ifdef __NetBSD__
+	pipe_free_kmem(cpipe);
+	(void) lockmgr(&cpipe->pipe_lock, LK_DRAIN, NULL);
 	pool_put(&pipe_pool, cpipe);
 #endif
 }
