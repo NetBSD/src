@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2003/02/23 23:25:50 simonb Exp $	 */
+/*	$NetBSD: conf.c,v 1.7 2003/04/11 11:36:28 dsl Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -53,17 +53,14 @@ int ndevs = sizeof(devsw) / sizeof(struct devsw);
 
 struct fs_ops file_system[] = {
 #ifdef SUPPORT_USTARFS
-	{ ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write, 
-		ustarfs_seek, ustarfs_stat },
+	FS_OPS(ustarfs),
 #endif
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
-	{ lfsv1_open, lfsv1_close, lfsv1_read, lfsv1_write, lfsv1_seek,
-		lfsv1_stat },
-	{ lfsv2_open, lfsv2_close, lfsv2_read, lfsv2_write, lfsv2_seek,
-		lfsv2_stat },
+	FS_OPS(ffsv2),
+	FS_OPS(ffsv1),
+	FS_OPS(lfsv1),
+	FS_OPS(lfsv2),
 #ifdef SUPPORT_DOSFS
-	{ dosfs_open, dosfs_close, dosfs_read, dosfs_write, dosfs_seek,
-		dosfs_stat },
+	FS_OPS(dosfs),
 #endif
 };
 int nfsys = sizeof(file_system) / sizeof(struct fs_ops);
