@@ -1,13 +1,13 @@
-#	$NetBSD: bsd.inc.mk,v 1.18 2001/10/30 15:17:17 wiz Exp $
+#	$NetBSD: bsd.inc.mk,v 1.19 2001/10/31 21:15:41 tv Exp $
 
 .PHONY:		incinstall
 includes:	${INCS} incinstall
 
 .if defined(INCS)
-incinstall:: ${INCS:@I@${DESTDIR}${INCSDIR_${I}:U${INCSDIR}}/${INCSNAME_${I}:U${INCSNAME:U${I:T}}}@}
-.PRECIOUS: ${INCS:@I@${DESTDIR}${INCSDIR_${I}:U${INCSDIR}}/${INCSNAME_${I}:U${INCSNAME:U${I:T}}}@}
+incinstall:: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
+.PRECIOUS: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .if !defined(UPDATE)
-.PHONY: ${INCS:@I@${DESTDIR}${INCSDIR_${I}:U${INCSDIR}}/${INCSNAME_${I}:U${INCSNAME:U${I:T}}}@}
+.PHONY: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .endif
 
 __incinstall: .USE
@@ -19,7 +19,7 @@ __incinstall: .USE
 		 -g ${BINGRP} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
 
 .for I in ${INCS:O:u}
-${DESTDIR}${INCSDIR_${I}:U${INCSDIR}}/${INCSNAME_${I}:U${INCSNAME:U${I:T}}}: ${I} __incinstall
+${DESTDIR}${INCSDIR}/$I: $I __incinstall
 .endfor
 .endif
 
