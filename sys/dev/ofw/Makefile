@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:22:53 cgd Exp $
+#	$NetBSD: Makefile,v 1.1.8.1 1999/05/06 19:11:50 perry Exp $
 
 INCSDIR= /usr/include/dev/ofw
 
-INCS=	openfirm.h
+INCS=	ofw_pci.h openfirm.h
 
 .include <bsd.kinc.mk>
