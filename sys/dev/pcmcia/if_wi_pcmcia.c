@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.15 2001/12/04 18:46:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.15 2001/12/04 18:46:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,6 +217,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_ELSA_XI800_IEEE,
 	  PCMCIA_CIS_ELSA_XI800_IEEE,
 	  PCMCIA_STR_ELSA_XI800_IEEE },
+
+	{ PCMCIA_VENDOR_SIMPLETECH,
+	  PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24_ALT,
+	  PCMCIA_CIS_SIMPLETECH_SPECTRUM24_ALT,
+	  PCMCIA_STR_SIMPLETECH_SPECTRUM24_ALT },
 
 	{ 0,
 	  0,
