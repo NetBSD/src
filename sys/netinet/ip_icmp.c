@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.82.2.1 2004/05/28 07:24:03 tron Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.82.2.2 2004/08/03 22:37:09 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.82.2.1 2004/05/28 07:24:03 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.82.2.2 2004/08/03 22:37:09 jmc Exp $");
 
 #include "opt_ipsec.h"
 
@@ -151,6 +151,8 @@ int	icmpmaskrepl = 0;
 int	icmpprintfs = 0;
 #endif
 int	icmpreturndatabytes = 8;
+
+struct icmpstat	icmpstat;
 
 /*
  * List of callbacks to notify when Path MTU changes are made.
@@ -671,7 +673,8 @@ icmp_reflect(m)
 	INADDR_TO_IA(t, ia);
 
 	/* look for packet sent to broadcast address */
-	if (ia == NULL && (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST)) {
+	if (ia == NULL && m->m_pkthdr.rcvif &&
+	    (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST)) {
 		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
@@ -693,7 +696,7 @@ icmp_reflect(m)
 	 * use that, if it's an address on the interface which
 	 * received the packet
 	 */
-	if (sin == (struct sockaddr_in *)0) {
+	if (sin == (struct sockaddr_in *)0 && m->m_pkthdr.rcvif) {
 		struct sockaddr_in sin_dst;
 		struct route icmproute;
 		int errornum;
@@ -728,7 +731,7 @@ icmp_reflect(m)
 	 * interface.  This can happen when routing is asymmetric, or
 	 * when the incoming packet was encapsulated
 	 */
-	if (sin == (struct sockaddr_in *)0) {
+	if (sin == (struct sockaddr_in *)0 && m->m_pkthdr.rcvif) {
 		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
@@ -841,7 +844,8 @@ icmp_reflect(m)
 	/*      
 	 * Clear any in-bound checksum flags for this packet.
 	 */
-	m->m_pkthdr.csum_flags = 0;
+	if (m->m_flags & M_PKTHDR)
+		m->m_pkthdr.csum_flags = 0;
 
 	icmp_send(m, opts);
 done:
