@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.45 2000/09/10 08:29:53 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.46 2000/09/21 03:19:57 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -59,7 +59,7 @@
  */
 TCHAR *version_string = 
 	TEXT("PocketBSD boot loader\r\n")
-	TEXT("Version 1.16.0 2000.09.10\r\n")
+	TEXT("Version 1.16.1 2000.09.21\r\n")
 #if ( _WIN32_WCE < 200 )
 	TEXT("Compiled for WinCE 1.01\r\n")
 #else
@@ -190,6 +190,9 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("MobileGearII MC-R320"), BIFB_D2_M2L_0,
 		640, 240, 160, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_320 },
+	{ TEXT("MobileGearII MC/R330"), BIFB_D2_M2L_0,
+		640, 240, 160, 0xa000000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_330 },
 	{ TEXT("MobileGearII MC/R430"), BIFB_D16_0000,
 		640, 240, 1280, 0xa180100,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_430 },
@@ -214,6 +217,9 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("MobileGearII MC/R530"), BIFB_D16_0000,
 		640, 240, 1280, 0xa180100,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_530 },
+	{ TEXT("DoCoMo sigmarion"), BIFB_D16_0000,
+		640, 240, 1280, 0xa000000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_SIGMARION },
 	{ TEXT("Mobile Pro 770"), BIFB_D16_0000,
 		640, 240, 1600, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_520A },
