@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.5 1998/03/30 09:52:11 jonathan Exp $	*/
+/*	$NetBSD: findcons.c,v 1.6 1998/04/19 01:27:02 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.5 1998/03/30 09:52:11 jonathan Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.6 1998/04/19 01:27:02 jonathan Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,7 @@ int	find_kbd	__P((int prom_slot));
 int	find_screen	__P((int prom_slot));
 int	find_serial	__P((int prom_slot));
 void	consinit	__P((void));
+
 
 
 /*
@@ -274,7 +275,7 @@ pm_screen(crtslot)
 
 
 /*
- * Look for MAXINE basboard video.
+ * Look for MAXINE baseboard video.
  * If selected as console, take it.
  */
 int
@@ -349,6 +350,9 @@ dc_ds_serial(comslot)
 	if (comslot == 4)
 		cd.cn_dev = makedev(DCDEV, DCCOMM_PORT);
 	else
+	if (comslot == 0) {
+		cd.cn_dev = makedev(DCDEV, 0);
+	} else
 		cd.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
 	return dc_ds_consinit(cd.cn_dev);
 #endif
@@ -383,14 +387,13 @@ scc_serial(comslot)
 	 * configures at the lower address.
 	 */
 	dev = (systype == DS_MAXINE) ? SCCCOMM2_PORT: SCCCOMM3_PORT;
+	cd.cn_dev = makedev(SCCDEV, dev);
 
 #ifdef notyet	/* no boot-time init entrypoint for scc */
-	cd.cn_dev = makedev(SCCDEV, DCPRINTER_PORT);
-	return dc_ioasic_consinit(cd.cn_dev);
+	return scc_consinit(cd.cn_dev);
 
 #else	/* !notyet */
 	printf("Using PROM serial output until serial drivers initialized.\n");
-	cd.cn_dev = makedev (SCCDEV, dev);
 	return(1);
 #endif	/* notyet */
 #endif /* NSCC */
@@ -408,6 +411,11 @@ find_serial(comslot)
 	switch(systype) {
 	case DS_PMAX:
 		return (dc_ds_serial(comslot));
+		break;
+
+	case DS_MIPSMATE:
+		/* console fixed on line 0 */
+		return (dc_ds_serial(0));
 		break;
 
 	case DS_3MAX:
