@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.22 2001/01/04 04:44:33 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.23 2001/01/04 04:59:41 thorpej Exp $	*/
 
 /*
  *
@@ -229,10 +229,11 @@
  * locking data structures
  */
 
+static simple_lock_data_t pvalloc_lock;
+static simple_lock_data_t pmaps_lock;
+
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-struct lock pmap_main_lock;
-simple_lock_data_t pvalloc_lock;
-simple_lock_data_t pmaps_lock;
+static struct lock pmap_main_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
      spinlockmgr(&pmap_main_lock, LK_SHARED, (void *) 0)
