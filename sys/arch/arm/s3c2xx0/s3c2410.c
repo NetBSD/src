@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2410.c,v 1.4 2003/08/27 03:46:05 bsh Exp $ */
+/*	$NetBSD: s3c2410.c,v 1.5 2004/06/22 11:18:32 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.4 2003/08/27 03:46:05 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.5 2004/06/22 11:18:32 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,13 +226,18 @@ s3c24x0_clock_freq(struct s3c2xx0_softc *sc)
 /*
  * Issue software reset command.
  * called with MMU off.
+ *
+ * S3C2410 doesn't have sowtware reset bit like S3C2800.
+ * use watch dog timer and make it fire immediately.
  */
 void
 s3c2410_softreset(void)
 {
-#ifdef notyet
-	*(volatile unsigned int *)(S3C2410_CLKMAN_BASE + CLKMAN_SWRCON)
-	    = SWRCON_SWR;
-#endif
+	disable_interrupts(I32_bit|F32_bit);
+
+	*(volatile unsigned int *)(S3C2410_WDT_BASE + WDT_WTCON)
+		= (0 << WTCON_PRESCALE_SHIFT) | WTCON_ENABLE |
+		WTCON_CLKSEL_16 | WTCON_ENRST;
 }
+
 
