@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/01/06 14:00:34 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.4 2001/01/08 08:24:17 garbled Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -7,7 +7,7 @@ PROG=	sushi
 SRCS=	sushi.c scandir.c menutree.c scanform.c run.c functions.c \
 	handlers.c blabel.c
 
-MKMAN=	no
+MAN=	sushi.8
 
 LIBINSTALL != cd ${.CURDIR}/../pkg_install/lib && ${PRINTOBJDIR}
 
