@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.22 1999/04/01 23:28:09 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.23 1999/04/12 00:25:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -141,6 +141,9 @@ lfs_update(v)
 	 * for our inode completes, if we are called with LFS_SYNC set.
 	 */
 	while((ap->a_waitfor & LFS_SYNC) && WRITEINPROG(vp)) {
+#ifdef DEBUG_LFS
+		printf("lfs_update: sleeping on inode %d\n",ip->i_number);
+#endif
 		tsleep(vp, (PRIBIO+1), "lfs_update", 0);
 	}
 	mod = ip->i_flag & IN_MODIFIED;

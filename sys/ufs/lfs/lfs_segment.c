@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.25 1999/04/12 00:11:01 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.26 1999/04/12 00:25:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1077,6 +1077,7 @@ lfs_writeseg(fs, sp)
 	struct vnode *devvp;
 	char *p;
 	struct vnode *vn;
+	struct inode *ip;
 #if defined(DEBUG) && defined(LFS_PROPELLER)
 	static int propeller;
 	char propstring[4] = "-\\|/";
@@ -1258,9 +1259,35 @@ lfs_writeseg(fs, sp)
 				bp->b_flags &= ~B_NEEDCOMMIT;
 				wakeup(bp);
 			}
+
+			bpp++;
+
+			/*
+			 * If this is the last block for this vnode, but
+			 * there are other blocks on its dirty list,
+			 * set IN_MODIFIED/IN_CLEANING depending on what
+			 * sort of block.  Only do this for our mount point,
+			 * not for, e.g., inode blocks that are attached to
+			 * the devvp.
+			 */
+			if(i>1 && vn && *bpp && (*bpp)->b_vp != vn
+			   && (*bpp)->b_vp && (bp=vn->v_dirtyblkhd.lh_first)!=NULL &&
+			   vn->v_mount == fs->lfs_ivnode->v_mount)
+			{
+				ip = VTOI(vn);
+#ifdef DEBUG_LFS
+				printf("lfs_writeseg: marking ino %d\n",ip->i_number);
+#endif
+		       		if(!(ip->i_flag & (IN_CLEANING|IN_MODIFIED))) {
+					fs->lfs_uinodes++;
+					if(bp->b_flags & B_CALL)
+						ip->i_flag |= IN_CLEANING;
+					else
+						ip->i_flag |= IN_MODIFIED;
+				}
+			}
 			/* if(vn->v_dirtyblkhd.lh_first == NULL) */
 				wakeup(vn);
-			bpp++;
 		}
 		++cbp->b_vp->v_numoutput;
 		splx(s);
