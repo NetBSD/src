@@ -370,6 +370,7 @@
 ./usr/share/man/cat4/ppp.0
 ./usr/share/man/cat4/pss.0
 ./usr/share/man/cat4/pty.0
+./usr/share/man/cat4/puc.0
 ./usr/share/man/cat4/rnd.0
 ./usr/share/man/cat4/route.0
 ./usr/share/man/cat4/rtfps.0
@@ -1376,6 +1377,7 @@
 ./usr/share/man/man4/ppp.4
 ./usr/share/man/man4/pss.4
 ./usr/share/man/man4/pty.4
+./usr/share/man/man4/puc.4
 ./usr/share/man/man4/rnd.4
 ./usr/share/man/man4/route.4
 ./usr/share/man/man4/rtfps.4
