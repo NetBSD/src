@@ -5,7 +5,7 @@ Frame lengths of control and bulk are 64, 512?
 Indicator light bit.
 Check 7.1.7.3
 */
-/*	$NetBSD: ehci.c,v 1.11 2001/11/20 13:49:07 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.12 2001/11/20 14:28:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ Check 7.1.7.3
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.11 2001/11/20 13:49:07 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.12 2001/11/20 14:28:44 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -814,7 +814,7 @@ ehci_dump_qtd(ehci_qtd_t *qtd)
 	u_int32_t s;
 
 	printf("  next="); ehci_dump_link(qtd->qtd_next);
-	printf("altnext="); ehci_dump_link(qtd->qtd_altnext);
+	printf(" altnext="); ehci_dump_link(qtd->qtd_altnext);
 	printf("\n");
 	s = qtd->qtd_status;
 	printf("  status=0x%08x: toggle=%d bytes=0x%x ioc=%d c_page=0x%x\n",
@@ -834,7 +834,8 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 	printf("QH(%p) at 0x%08x:\n", sqh, sqh->physaddr);
 	printf("  link="); ehci_dump_link(qh->qh_link); printf("\n");
 	printf("  endp=0x%08x endphub=0x%08x\n", qh->qh_endp, qh->qh_endphub);
-	printf("  curqtd="); ehci_dump_link(qh->qh_curqtd); printf("\n  ");
+	printf("  curqtd="); ehci_dump_link(qh->qh_curqtd); printf("\n");
+	printf("Overlay qTD:\n");
 	ehci_dump_qtd(&qh->qh_qtd);
 }
 
@@ -992,13 +993,19 @@ ehci_sync_hc(ehci_softc_t *sc)
 {
 	int s;
 
+	if (sc->sc_dying) {
+		DPRINTFN(2,("ehci_sync_hc: dying\n"));
+		return;
+	}
+	DPRINTFN(2,("ehci_sync_hc: enter\n"));
 	lockmgr(&sc->sc_doorbell_lock, LK_EXCLUSIVE, NULL); /* get doorbell */
 	s = splhardusb();
 	/* ask for doorbell */
 	EOWRITE4(sc, EHCI_USBCMD, EOREAD4(sc, EHCI_USBCMD) | EHCI_CMD_IAAD);
-	tsleep(&sc->sc_async_head, PZERO, "ehcidi", 0); /* wait for doorbell */
+	tsleep(&sc->sc_async_head, PZERO, "ehcidi", hz); /* wait for doorbell */
 	splx(s);
 	lockmgr(&sc->sc_doorbell_lock, LK_RELEASE, NULL); /* release doorbell */
+	DPRINTFN(2,("ehci_sync_hc: exit\n"));
 }
 
 /***********/
@@ -1770,6 +1777,8 @@ ehci_device_ctrl_transfer(usbd_xfer_handle xfer)
 {
 	usbd_status err;
 
+	return USBD_IOERROR;
+
 	/* Insert last in queue. */
 	err = usb_insert_transfer(xfer);
 	if (err)
@@ -1779,7 +1788,12 @@ ehci_device_ctrl_transfer(usbd_xfer_handle xfer)
 	return (ehci_device_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
 
-Static usbd_status	ehci_device_ctrl_start(usbd_xfer_handle xfer) { return USBD_IOERROR; }
+Static usbd_status
+ehci_device_ctrl_start(usbd_xfer_handle xfer)
+{
+	/* Not implemented */
+	return USBD_IOERROR;
+}
 
 void
 ehci_device_ctrl_done(usbd_xfer_handle xfer)
