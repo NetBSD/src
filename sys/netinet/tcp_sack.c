@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.5 2005/03/07 09:32:51 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.6 2005/03/07 09:40:35 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.5 2005/03/07 09:32:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.6 2005/03/07 09:40:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -305,7 +305,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 
 		/* Go through the list of holes. */
 		while (cur) {
-			if (SEQ_LEQ(sack->left, cur->start))
+			if (SEQ_LEQ(sack->right, cur->start))
 				/* SACKs data before the current hole */
 				break; /* No use going through more holes */
 
