@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.17 2003/12/23 08:40:55 hamajima Exp $
+# 	$NetBSD: LROUTER,v 1.17.2.1 2004/04/18 02:19:14 jmc Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -14,6 +14,7 @@ maxusers	32
 options 	MIPS3			# R4000/R4400/R4600 CPUs
 
 # Support for specific models of H/PC MIPS
+makeoptions	CPUFLAGS="-mips3"	# CPU codegen options
 options 	MIPS3_4100		# VR4100 core
 options 	VR41XX			# NEC VR41xx series
 options 	VR4122			# NEC VR4122
