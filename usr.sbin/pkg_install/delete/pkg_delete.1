@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.32 2004/01/29 01:56:17 reed Exp $
+.\" $NetBSD: pkg_delete.1,v 1.33 2004/11/02 00:38:23 erh Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -114,6 +114,10 @@ if it's set, otherwise it defaults to
 .It Fl n
 Don't actually deinstall a package, just report the steps that
 would be taken if it were.
+.It Fl N
+Remove the package's registration and its entries from the package database,
+but leave the files installed.  Don't run any deinstall scripts or @unexec lines
+either.
 .It Fl O
 Only delete the package's entries from the package database, do not
 touch the package or its files itself.
