@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.7 1999/03/22 09:43:12 mycroft Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.8 1999/03/22 10:00:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -80,9 +80,12 @@ wss_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	int variant;
+	int pri, variant;
 
-	return (isapnp_devmatch(aux, &isapnp_wss_devinfo, &variant));
+	pri = isapnp_devmatch(aux, &isapnp_wss_devinfo, &variant);
+	if (pri && variant > 1)
+		pri = 0;
+	return (pri);
 }
 
 

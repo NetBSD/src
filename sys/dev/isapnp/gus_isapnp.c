@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.12 1999/03/22 09:44:13 mycroft Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.13 1999/03/22 10:00:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -134,13 +134,12 @@ gus_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	int variant;
+	int pri, variant;
 
-	if (!isapnp_devmatch(aux, &isapnp_gus_devinfo, &variant))
-		return 0;
-
-	gus_0 = 1;
-	return 1;
+	pri = isapnp_devmatch(aux, &isapnp_gus_devinfo, &variant);
+	if (pri && variant > 0)
+		pri = 0;
+	return (pri);
 }
 
 
@@ -164,6 +163,7 @@ gus_isapnp_attach(parent, self, aux)
 
 	if (!gus_0)
 		return;
+	gus_0 = 0;
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
 		printf("%s: error in region allocation\n", 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.32 1999/03/22 09:44:14 mycroft Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.33 1999/03/22 10:00:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -83,9 +83,12 @@ sb_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	int variant;
+	int pri, variant;
 
-	return (isapnp_devmatch(aux, &isapnp_sb_devinfo, &variant));
+	pri = isapnp_devmatch(aux, &isapnp_sb_devinfo, &variant);
+	if (pri && variant > 0)
+		pri = 0;
+	return (pri);
 }
 
 
