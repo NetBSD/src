@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2003/03/01 13:08:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2003/06/01 02:08:08 thorpej Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -7,7 +7,7 @@ NOLINT=		# defined
 
 LIB=		stdc++
 
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
+.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	4
