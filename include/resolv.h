@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.27 2004/06/04 09:54:03 he Exp $	*/
+/*	$NetBSD: resolv.h,v 1.28 2004/06/09 18:04:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -180,6 +180,9 @@ struct __res_state {
 		struct in_addr	addr;
 		u_int32_t	mask;
 	} sort_list[MAXRESOLVSORT];
+#ifdef __OLD_RES_STATE
+	char lookups[4];
+#else
 	res_send_qhook qhook;		/* query hook */
 	res_send_rhook rhook;		/* response hook */
 	int	res_h_errno;		/* last one set for this context */
@@ -196,6 +199,7 @@ struct __res_state {
 			struct __res_state_ext *ext;	/* extention for IPv6 */
 		} _ext;
 	} _u;
+#endif
 };
 
 typedef struct __res_state *res_state;
