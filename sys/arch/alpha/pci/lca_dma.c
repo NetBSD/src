@@ -1,4 +1,4 @@
-/* $NetBSD: lca_dma.c,v 1.8 1998/05/07 20:09:37 thorpej Exp $ */
+/* $NetBSD: lca_dma.c,v 1.9 1998/05/13 21:21:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.8 1998/05/07 20:09:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.9 1998/05/13 21:21:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,14 +78,16 @@ int	lca_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
 void	lca_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
 /*
- * The 1G direct-mapped DMA window begins at this PCI address.
+ * Direct-mapped window: 1G at 1G
  */
-#define	LCA_DIRECT_MAPPED_BASE	0x40000000
+#define	LCA_DIRECT_MAPPED_BASE	(1*1024*1024*1024)
+#define	LCA_DIRECT_MAPPED_SIZE	(1*1024*1024*1024)
 
 /*
- * The 8M SGMAP-mapped DMA window begins at this PCI address.
+ * SGMAP window: 8M at 8M
  */
 #define	LCA_SGMAP_MAPPED_BASE	(8*1024*1024)
+#define	LCA_SGMAP_MAPPED_SIZE	(8*1024*1024)
 
 /*
  * Macro to flush LCA scatter/gather TLB.
@@ -109,6 +111,9 @@ lca_dma_init(lcp)
 	t = &lcp->lc_dmat_direct;
 	t->_cookie = lcp;
 	t->_wbase = LCA_DIRECT_MAPPED_BASE;
+	t->_wsize = LCA_DIRECT_MAPPED_SIZE;
+	t->_next_window = NULL;
+	t->_sgmap = NULL;
 	t->_get_tag = lca_dma_get_tag;
 	t->_dmamap_create = _bus_dmamap_create;
 	t->_dmamap_destroy = _bus_dmamap_destroy;
@@ -131,6 +136,9 @@ lca_dma_init(lcp)
 	t = &lcp->lc_dmat_sgmap;
 	t->_cookie = lcp;
 	t->_wbase = LCA_SGMAP_MAPPED_BASE;
+	t->_wsize = LCA_SGMAP_MAPPED_SIZE;
+	t->_next_window = NULL;
+	t->_sgmap = &lcp->lc_sgmap;
 	t->_get_tag = lca_dma_get_tag;
 	t->_dmamap_create = lca_bus_dmamap_create_sgmap;
 	t->_dmamap_destroy = lca_bus_dmamap_destroy_sgmap;
@@ -160,7 +168,7 @@ lca_dma_init(lcp)
 	 */
 	if (lcp->lc_mallocsafe) {
 		alpha_sgmap_init(t, &lcp->lc_sgmap, "lca_sgmap",
-		    LCA_SGMAP_MAPPED_BASE, 0, (8*1024*1024),
+		    LCA_SGMAP_MAPPED_BASE, 0, LCA_SGMAP_MAPPED_SIZE,
 		    sizeof(u_int64_t), NULL, 0);
 
 		/*
@@ -183,7 +191,6 @@ lca_dma_init(lcp)
 		/* Enble the scatter/gather TLB. */
 		REGVAL64(LCA_IOC_TB_ENA) = IOC_TB_ENA_TEN;
 		alpha_mb();
-
 
 		LCA_TLB_INVALIDATE();
 	}
@@ -244,7 +251,6 @@ lca_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 	int flags;
 	bus_dmamap_t *dmamp;
 {
-	struct lca_config *lcp = t->_cookie;
 	bus_dmamap_t map;
 	int error;
 
@@ -257,7 +263,7 @@ lca_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 
 	if (flags & BUS_DMA_ALLOCNOW) {
 		error = alpha_sgmap_alloc(map, round_page(size),
-		    &lcp->lc_sgmap, flags);
+		    t->_sgmap, flags);
 		if (error)
 			lca_bus_dmamap_destroy_sgmap(t, map);
 	}
@@ -273,10 +279,9 @@ lca_bus_dmamap_destroy_sgmap(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	struct lca_config *lcp = t->_cookie;
 
 	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
-		alpha_sgmap_free(map, &lcp->lc_sgmap);
+		alpha_sgmap_free(map, t->_sgmap);
 
 	_bus_dmamap_destroy(t, map);
 }
@@ -293,11 +298,10 @@ lca_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	struct lca_config *lcp = t->_cookie;
 	int error;
 
 	error = pci_sgmap_pte64_load(t, map, buf, buflen, p, flags,
-	    &lcp->lc_sgmap);
+	    t->_sgmap);
 	if (error == 0)
 		LCA_TLB_INVALIDATE();
 
@@ -314,10 +318,9 @@ lca_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
 	struct mbuf *m;
 	int flags;
 {
-	struct lca_config *lcp = t->_cookie;
 	int error;
 
-	error = pci_sgmap_pte64_load_mbuf(t, map, m, flags, &lcp->lc_sgmap);
+	error = pci_sgmap_pte64_load_mbuf(t, map, m, flags, t->_sgmap);
 	if (error == 0)
 		LCA_TLB_INVALIDATE();
 
@@ -334,10 +337,9 @@ lca_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct lca_config *lcp = t->_cookie;
 	int error;
 
-	error = pci_sgmap_pte64_load_uio(t, map, uio, flags, &lcp->lc_sgmap);
+	error = pci_sgmap_pte64_load_uio(t, map, uio, flags, t->_sgmap);
 	if (error == 0)
 		LCA_TLB_INVALIDATE();
 
@@ -356,11 +358,10 @@ lca_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
 	bus_size_t size;
 	int flags;
 {
-	struct lca_config *lcp = t->_cookie;
 	int error;
 
 	error = pci_sgmap_pte64_load_raw(t, map, segs, nsegs, size, flags,
-	    &lcp->lc_sgmap);
+	    t->_sgmap);
 	if (error == 0)
 		LCA_TLB_INVALIDATE();
 
@@ -375,13 +376,12 @@ lca_bus_dmamap_unload_sgmap(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	struct lca_config *lcp = t->_cookie;
 
 	/*
 	 * Invalidate any SGMAP page table entries used by this
 	 * mapping.
 	 */
-	pci_sgmap_pte64_unload(t, map, &lcp->lc_sgmap);
+	pci_sgmap_pte64_unload(t, map, t->_sgmap);
 	LCA_TLB_INVALIDATE();
 
 	/*

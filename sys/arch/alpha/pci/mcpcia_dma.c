@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_dma.c,v 1.2 1998/05/07 20:09:38 thorpej Exp $ */
+/* $NetBSD: mcpcia_dma.c,v 1.3 1998/05/13 21:21:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.2 1998/05/07 20:09:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.3 1998/05/13 21:21:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,20 @@ int	mcpcia_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
 
 void	mcpcia_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
-#define	MCPCIA_DIRECT_MAPPED_BASE	0x80000000
-#define	MCPCIA_SG_MAPPED_BASE		(8 << 20)
+/*
+ * Direct-mapped window: 1G at 2G
+ *
+ * XXX Should consider making this 2G at 2G, and creating a 1G at 1G
+ * XXX SGMAP window for fallback if we have more than 2G of RAM.
+ */
+#define	MCPCIA_DIRECT_MAPPED_BASE	(2UL*1024UL*1024UL*1024UL)
+#define	MCPCIA_DIRECT_MAPPED_SIZE	(1UL*1024UL*1024UL*1024UL)
+
+/*
+ * SGMAP window for ISA: 8M at 8M
+ */
+#define	MCPCIA_ISA_SG_MAPPED_BASE	(8*1024*1024)
+#define	MCPCIA_ISA_SG_MAPPED_SIZE	(8*1024*1024)
 
 #define	MCPCIA_SGTLB_INVALIDATE(mcp)	\
 	alpha_mb(),	\
@@ -99,6 +111,9 @@ mcpcia_dma_init(ccp)
 	t = &ccp->cc_dmat_direct;
 	t->_cookie = ccp;
 	t->_wbase = MCPCIA_DIRECT_MAPPED_BASE;
+	t->_wbase = MCPCIA_DIRECT_MAPPED_SIZE;
+	t->_next_window = NULL;			/* XXX See above. */
+	t->_sgmap = NULL;
 	t->_get_tag = mcpcia_dma_get_tag;
 	t->_dmamap_create = _bus_dmamap_create;
 	t->_dmamap_destroy = _bus_dmamap_destroy;
@@ -116,11 +131,14 @@ mcpcia_dma_init(ccp)
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
 	/*
-	 * Initialize the DMA tag used for sgmap-mapped DMA.
+	 * Initialize the DMA tag used for sgmap-mapped ISA DMA.
 	 */
 	t = &ccp->cc_dmat_sgmap;
 	t->_cookie = ccp;
-	t->_wbase = MCPCIA_SG_MAPPED_BASE;
+	t->_wbase = MCPCIA_ISA_SG_MAPPED_BASE;
+	t->_wsize = MCPCIA_ISA_SG_MAPPED_SIZE;
+	t->_next_window = NULL;
+	t->_sgmap = &ccp->cc_sgmap;
 	t->_get_tag = mcpcia_dma_get_tag;
 	t->_dmamap_create = mcpcia_bus_dmamap_create_sgmap;
 	t->_dmamap_destroy = mcpcia_bus_dmamap_destroy_sgmap;
@@ -147,6 +165,7 @@ mcpcia_dma_init(ccp)
 	 * S/G window at window 3. This seems overkill.
 	 *
 	 * We'll just go with the 8MB S/G window and one 1GB direct window.
+	 * XXX See comment above.
 	 */
 
 	/*
@@ -155,8 +174,8 @@ mcpcia_dma_init(ccp)
 	 * Must align page table to its size.
 	 */
 	alpha_sgmap_init(t, &ccp->cc_sgmap, "mcpcia_sgmap",
-	    MCPCIA_SG_MAPPED_BASE, 0, (8 << 20),
-	    sizeof(u_int64_t), NULL, 8 << 10);
+	    MCPCIA_ISA_SG_MAPPED_BASE, 0, MCPCIA_ISA_SG_MAPPED_SIZE,
+	    sizeof(u_int64_t), NULL, 0);
 
 	if (ccp->cc_sgmap.aps_ptpa & (1024-1)) {
 		panic("mcpcia_dma_init: bad page table address %x",
@@ -184,7 +203,7 @@ mcpcia_dma_init(ccp)
 	REGVAL(MCPCIA_T0_BASE(ccp->cc_sc)) =
 		ccp->cc_sgmap.aps_ptpa >> MCPCIA_TBASEX_SHIFT;
 	REGVAL(MCPCIA_W0_BASE(ccp->cc_sc)) =
-		MCPCIA_WBASE_EN | MCPCIA_WBASE_SG | MCPCIA_SG_MAPPED_BASE;
+		MCPCIA_WBASE_EN | MCPCIA_WBASE_SG | MCPCIA_ISA_SG_MAPPED_BASE;
 	alpha_mb();
 
 	MCPCIA_SGTLB_INVALIDATE(ccp->cc_sc);
@@ -223,8 +242,8 @@ mcpcia_dma_get_tag(t, bustype)
 	case ALPHA_BUS_PCI:
 	case ALPHA_BUS_EISA:
 		/*
-		 * As best as I can tell from the DU source, you can't
-		 * do DIRECT MAPPED and S/G at the same time.
+		 * Just always use direct-mapped for now; see comment
+		 * above about chaining with SGMAPs.
 		 */
 		return (&ccp->cc_dmat_direct);
 
@@ -255,7 +274,6 @@ mcpcia_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 	int flags;
 	bus_dmamap_t *dmamp;
 {
-	struct mcpcia_config *ccp = t->_cookie;
 	bus_dmamap_t map;
 	int error;
 
@@ -268,7 +286,7 @@ mcpcia_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 
 	if (flags & BUS_DMA_ALLOCNOW) {
 		error = alpha_sgmap_alloc(map, round_page(size),
-		    &ccp->cc_sgmap, flags);
+		    t->_sgmap, flags);
 		if (error)
 			mcpcia_bus_dmamap_destroy_sgmap(t, map);
 	}
@@ -284,10 +302,9 @@ mcpcia_bus_dmamap_destroy_sgmap(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	struct mcpcia_config *ccp = t->_cookie;
 
 	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
-		alpha_sgmap_free(map, &ccp->cc_sgmap);
+		alpha_sgmap_free(map, t->_sgmap);
 
 	_bus_dmamap_destroy(t, map);
 }
@@ -307,8 +324,8 @@ mcpcia_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
 	int error;
 	struct mcpcia_config *ccp = t->_cookie;
 
-	error = pci_sgmap_pte64_load(t, map, buf, buflen, p,
-		flags, &ccp->cc_sgmap);
+	error = pci_sgmap_pte64_load(t, map, buf, buflen, p, flags,
+	    t->_sgmap);
 	if (error == 0)
 		MCPCIA_SGTLB_INVALIDATE(ccp->cc_sc);
 	return (error);
@@ -327,7 +344,7 @@ mcpcia_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
 	int error;
 	struct mcpcia_config *ccp = t->_cookie;
 
-	error = pci_sgmap_pte64_load_mbuf(t, map, m, flags, &ccp->cc_sgmap);
+	error = pci_sgmap_pte64_load_mbuf(t, map, m, flags, t->_sgmap);
 	if (error == 0)
 		MCPCIA_SGTLB_INVALIDATE(ccp->cc_sc);
 	return (error);
@@ -346,7 +363,7 @@ mcpcia_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
 	int error;
 	struct mcpcia_config *ccp = t->_cookie;
 
-	error = pci_sgmap_pte64_load_uio(t, map, uio, flags, &ccp->cc_sgmap);
+	error = pci_sgmap_pte64_load_uio(t, map, uio, flags, t->_sgmap);
 	if (error == 0)
 		MCPCIA_SGTLB_INVALIDATE(ccp->cc_sc);
 	return (error);
@@ -367,8 +384,8 @@ mcpcia_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
 	int error;
 	struct mcpcia_config *ccp = t->_cookie;
 
-	error = pci_sgmap_pte64_load_raw(t, map, segs, nsegs,
-		size, flags, &ccp->cc_sgmap);
+	error = pci_sgmap_pte64_load_raw(t, map, segs, nsegs, size, flags,
+	    t->_sgmap);
 	if (error == 0)
 		MCPCIA_SGTLB_INVALIDATE(ccp->cc_sc);
 	return (error);
@@ -387,7 +404,7 @@ mcpcia_bus_dmamap_unload_sgmap(t, map)
 	/*
 	 * Invalidate any SGMAP page table entries used by this mapping.
 	 */
-	pci_sgmap_pte64_unload(t, map, &ccp->cc_sgmap);
+	pci_sgmap_pte64_unload(t, map, t->_sgmap);
 	MCPCIA_SGTLB_INVALIDATE(ccp->cc_sc);
 
 	/*

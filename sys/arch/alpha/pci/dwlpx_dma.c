@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.8 1998/05/07 20:09:37 thorpej Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.9 1998/05/13 21:21:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.8 1998/05/07 20:09:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.9 1998/05/13 21:21:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,26 @@ int	dwlpx_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
 
 void	dwlpx_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
-#define	DWLPx_DIRECT_MAPPED_BASE	0x80000000
-#define	DWLPx_SG_MAPPED_BASE		0x10000000
+/*
+ * Direct-mapped window: 2G at 2G
+ */
+#define	DWLPx_DIRECT_MAPPED_BASE	(2UL*1024UL*1024UL*1024UL)
+#define	DWLPx_DIRECT_MAPPED_SIZE	(2UL*1024UL*1024UL*1024UL)
+
+/*
+ * SGMAP window A: 256M or 1G at 1G
+ */
+#define	DWLPx_SG_MAPPED_BASE		(1*1024*1024*1024)
+#define	DWLPx_SG_MAPPED_SIZE(x)		((x) * PAGE_SIZE)
+
+/*
+ * Set this to always use SGMAPs.
+ */
+#ifdef DWLPX_ALWAYS_USE_SGMAP
+int	dwlpx_always_use_sgmap = 1;
+#else
+int	dwlpx_always_use_sgmap = 0;
+#endif
 
 void
 dwlpx_dma_init(ccp)
@@ -94,11 +112,28 @@ dwlpx_dma_init(ccp)
 	int i, lim, wmask;
 
 	/*
-	 * Initialize the DMA tag used for direct-mapped DMA.
+	 * Determine size of Window C based on the amount of SGMAP
+	 * page table SRAM available.
+	 */
+	if (ccp->cc_sc->dwlpx_sgmapsz == DWLPX_SG128K) {
+		lim = 128 * 1024;
+		wmask = PCIA_WMASK_1G;
+	} else {
+		lim = 32 * 1024;
+		wmask = PCIA_WMASK_256M;
+	}
+
+	/*
+	 * Initialize the DMA tag used for direct-mapped DMA.  Chain
+	 * this window to the SGMAP window, because we might have
+	 * a lot of memory in the machine.
 	 */
 	t = &ccp->cc_dmat_direct;
 	t->_cookie = ccp;
 	t->_wbase = DWLPx_DIRECT_MAPPED_BASE;
+	t->_wsize = DWLPx_DIRECT_MAPPED_SIZE;
+	t->_next_window = &ccp->cc_dmat_sgmap;
+	t->_sgmap = NULL;
 	t->_get_tag = dwlpx_dma_get_tag;
 	t->_dmamap_create = _bus_dmamap_create;
 	t->_dmamap_destroy = _bus_dmamap_destroy;
@@ -121,6 +156,9 @@ dwlpx_dma_init(ccp)
 	t = &ccp->cc_dmat_sgmap;
 	t->_cookie = ccp;
 	t->_wbase = DWLPx_SG_MAPPED_BASE;
+	t->_wsize = DWLPx_SG_MAPPED_SIZE(lim);
+	t->_next_window = NULL;
+	t->_sgmap = &ccp->cc_sgmap;
 	t->_get_tag = dwlpx_dma_get_tag;
 	t->_dmamap_create = dwlpx_bus_dmamap_create_sgmap;
 	t->_dmamap_destroy = dwlpx_bus_dmamap_destroy_sgmap;
@@ -158,6 +196,9 @@ dwlpx_dma_init(ccp)
 	 * 2G window direct-mapped mapped at 2G and the second
 	 * window is disabled and the third window is a 256M
 	 * or 1GB scatter/gather map at 1GB.
+	 *
+	 * We just punt on trying to support ISA DMA.  If you want
+	 * try that on a TurboLaser, well, you just lose.
 	 */
 
 	/*
@@ -165,13 +206,6 @@ dwlpx_dma_init(ccp)
 	 */
 	page_table =
 	    (u_int32_t *)ALPHA_PHYS_TO_K0SEG(PCIA_SGMAP_PT + ccp->cc_sysbase);
-	if (ccp->cc_sc->dwlpx_sgmapsz == DWLPX_SG128K) {
-		lim = 128 * 1024;
-		wmask = PCIA_WMASK_1G;
-	} else {
-		lim = 32 * 1024;
-		wmask = PCIA_WMASK_256M;
-	}
 	for (i = 0; i < lim; i++)
 		page_table[i * SGMAP_PTE_SPACING] = 0;
 	alpha_mb();
@@ -188,7 +222,8 @@ dwlpx_dma_init(ccp)
 		panic("dwlpx_dma_init");
 	sprintf(exname, "%s_sgmap_a", ccp->cc_sc->dwlpx_dev.dv_xname);
 	alpha_sgmap_init(t, &ccp->cc_sgmap, exname, DWLPx_SG_MAPPED_BASE,
-	    0, lim * NBPG, sizeof(u_int32_t), (void *)page_table, 0);
+	    0, DWLPx_SG_MAPPED_SIZE(lim), sizeof(u_int32_t),
+	    (void *)page_table, 0);
 
 	/*
 	 * Set up DMA windows for this DWLPx.
@@ -236,23 +271,27 @@ dwlpx_dma_get_tag(t, bustype)
 	switch (bustype) {
 	case ALPHA_BUS_PCI:
 	case ALPHA_BUS_EISA:
+		if (dwlpx_always_use_sgmap) {
+			/*
+			 * Always use SGMAPs (for testing purposes?)
+			 */
+			return (&ccp->cc_dmat_sgmap);
+		}
 		/*
-		 * As best as I can tell from the DU source, you can't
-		 * do DIRECT MAPPED and S/G at the same time.
+		 * Give these busses the direct-mapped window; if the
+		 * address crosses the threshold, it will fall back
+		 * onto the SGMAP window.
 		 */
-#ifndef	MSS3_DEBUG_SG
-		if (physmem <= btoc(2048LL << 20LL))
-			return (&ccp->cc_dmat_direct);
-#endif
-		/* FALLTHROUGH */
+		return (&ccp->cc_dmat_direct);
 
 	case ALPHA_BUS_ISA:
 		/*
-		 * ISA doesn't have enough address bits to use
-		 * the direct-mapped DMA window, so we must use
-		 * SGMAPs.
+		 * Don't even bother; it's not easy, given how the
+		 * page table is arranged, and it's not really worth
+		 * the trouble.
 		 */
-		return (&ccp->cc_dmat_sgmap);
+		panic("dwlpx_dma_get_tag: ISA DMA?  Forget it...");
+		/* NOTREACHED */
 
 	default:
 		panic("dwlpx_dma_get_tag: shouldn't be here, really...");
@@ -273,7 +312,6 @@ dwlpx_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 	int flags;
 	bus_dmamap_t *dmamp;
 {
-	struct dwlpx_config *ccp = t->_cookie;
 	bus_dmamap_t map;
 	int error;
 
@@ -286,7 +324,7 @@ dwlpx_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 
 	if (flags & BUS_DMA_ALLOCNOW) {
 		error = alpha_sgmap_alloc(map, round_page(size),
-		    &ccp->cc_sgmap, flags);
+		    t->_sgmap, flags);
 		if (error)
 			dwlpx_bus_dmamap_destroy_sgmap(t, map);
 	}
@@ -302,10 +340,9 @@ dwlpx_bus_dmamap_destroy_sgmap(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	struct dwlpx_config *ccp = t->_cookie;
 
 	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
-		alpha_sgmap_free(map, &ccp->cc_sgmap);
+		alpha_sgmap_free(map, t->_sgmap);
 
 	_bus_dmamap_destroy(t, map);
 }
@@ -322,10 +359,9 @@ dwlpx_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	struct dwlpx_config *ccp = t->_cookie;
 
 	return (pci_sgmap_pte32_load(t, map, buf, buflen, p, flags,
-	    &ccp->cc_sgmap));
+	    t->_sgmap));
 }
 
 /*
@@ -338,9 +374,8 @@ dwlpx_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
 	struct mbuf *m;
 	int flags;
 {
-	struct dwlpx_config *ccp = t->_cookie;
 
-	return (pci_sgmap_pte32_load_mbuf(t, map, m, flags, &ccp->cc_sgmap));
+	return (pci_sgmap_pte32_load_mbuf(t, map, m, flags, t->_sgmap));
 }
 
 /*
@@ -353,9 +388,8 @@ dwlpx_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct dwlpx_config *ccp = t->_cookie;
 
-	return (pci_sgmap_pte32_load_uio(t, map, uio, flags, &ccp->cc_sgmap));
+	return (pci_sgmap_pte32_load_uio(t, map, uio, flags, t->_sgmap));
 }
 
 /*
@@ -370,10 +404,9 @@ dwlpx_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
 	bus_size_t size;
 	int flags;
 {
-	struct dwlpx_config *ccp = t->_cookie;
 
 	return (pci_sgmap_pte32_load_raw(t, map, segs, nsegs, size, flags,
-	    &ccp->cc_sgmap));
+	    t->_sgmap));
 }
 
 /*
@@ -384,13 +417,12 @@ dwlpx_bus_dmamap_unload_sgmap(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	struct dwlpx_config *ccp = t->_cookie;
 
 	/*
 	 * Invalidate any SGMAP page table entries used by this
 	 * mapping.
 	 */
-	pci_sgmap_pte32_unload(t, map, &ccp->cc_sgmap);
+	pci_sgmap_pte32_unload(t, map, t->_sgmap);
 
 	/*
 	 * Do the generic bits of the unload.
