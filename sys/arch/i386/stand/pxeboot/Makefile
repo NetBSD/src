@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/03/11 15:01:51 drochner Exp $
+#	$NetBSD: Makefile,v 1.6 2003/04/01 21:25:35 mycroft Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -18,6 +18,8 @@ SRCS= main.c dev_net.c devopen.c conf.c exec.c pxe.c pxe_call.S
 # use our own nfs implementation
 .PATH: ${.CURDIR}/../libsa
 SRCS+= nfs.c
+
+CPPFLAGS+= -DSLOW	# for libz
 
 .if (${BASE} == "pxeboot_ia32")
 # Various serial line configurations
