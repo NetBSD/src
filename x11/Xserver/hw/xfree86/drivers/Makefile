@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2004/01/02 06:17:34 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/01/10 13:02:13 rtr Exp $
 
-SUBDIR=	mga nv radeon r128 ati s3 apm ark atimisc chips cirrus cyrix \
-	dummy fbdev glint i128 i740 i810 neomagic nsc rendition s3virge \
-	savage siliconmotion sis tdfx tga trident tseng vesa vga vmware \
-	newport imstt
+SUBDIR=	ati atimisc chips fbdev glint imstt mga newport nv r128 radeon \
+	s3 s3virge savage sis tdfx trident vga
+
+.if ${MACHINE} != "macppc"
+SUBDIR+=	apm ark cirrus cyrix dummy i128 i740 i810 neomagic nsc \
+		rendition siliconmotion tga tseng vesa vmware
+.endif
 
 .include <bsd.subdir.mk>
