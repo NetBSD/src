@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.8 2000/08/28 13:27:37 joda Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.9 2001/09/08 23:20:37 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -42,8 +42,8 @@
 #include <sys/rnd.h>
 
 typedef struct {
-	char *name;
-	u_int32_t   type;
+	char *a_name;
+	u_int32_t a_type;
 } arg_t;
 
 arg_t source_types[] = {
@@ -67,6 +67,7 @@ void do_stats(void);
 static void
 usage(void)
 {
+
 	fprintf(stderr, "usage: rndctl -CEce [-t devtype] [-d devname]\n");
 	fprintf(stderr, "       rndctl -ls [-t devtype] [-d devname]\n");
 	exit(1);
@@ -78,15 +79,15 @@ find_type(char *name)
 	arg_t *a;
 
 	a = source_types;
-	
-	while (a->name != NULL) {
-		if (strcmp(a->name, name) == 0)
-			return a->type;
+
+	while (a->a_name != NULL) {
+		if (strcmp(a->a_name, name) == 0)
+			return (a->a_type);
 		a++;
 	}
 
 	errx(1, "Error:  Device type %s unknown", name);
-	return 0;
+	return (0);
 }
 
 char *
@@ -95,15 +96,15 @@ find_name(u_int32_t type)
 	arg_t *a;
 
 	a = source_types;
-	
-	while (a->name != NULL) {
-		if (type == a->type)
-			return a->name;
+
+	while (a->a_name != NULL) {
+		if (type == a->a_type)
+			return (a->a_name);
 		a++;
 	}
 
 	errx(1, "Error:  Device type %u unknown", type);
-	return 0;
+	return (0);
 }
 
 void
@@ -131,9 +132,9 @@ strflags(u_int32_t fl)
 	str[0] = 0;
 	if (fl & RND_FLAG_NO_ESTIMATE)
 		;
-	else 
+	else
 		strcat(str, "estimate");
-	
+
 	if (fl & RND_FLAG_NO_COLLECT)
 		;
 	else {
@@ -141,8 +142,8 @@ strflags(u_int32_t fl)
 			strcat(str, ", ");
 		strcat(str, "collect");
 	}
-	
-	return str;
+
+	return (str);
 }
 
 #define HEADER "Source                 Bits Type      Flags\n"
@@ -150,11 +151,11 @@ strflags(u_int32_t fl)
 void
 do_list(int all, u_int32_t type, char *name)
 {
-	rndstat_t       rstat;
-	rndstat_name_t  rstat_name;
-	int             fd;
-	int             res;
-	u_int32_t	start;
+	rndstat_t rstat;
+	rndstat_name_t rstat_name;
+	int fd;
+	int res;
+	u_int32_t start;
 
 	fd = open("/dev/urandom", O_RDONLY, 0644);
 	if (fd < 0)
@@ -167,16 +168,16 @@ do_list(int all, u_int32_t type, char *name)
 			err(1, "ioctl(RNDGETSRCNAME)");
 		printf(HEADER);
 		printf("%-16s %10u %-4s %s\n",
-		       rstat_name.source.name,
-		       rstat_name.source.total,
-		       find_name(rstat_name.source.type),
-		       strflags(rstat_name.source.flags));
+		    rstat_name.source.name,
+		    rstat_name.source.total,
+		    find_name(rstat_name.source.type),
+		    strflags(rstat_name.source.flags));
 		close(fd);
 		return;
 	}
 
 	/*
-	 * run through all the devices present in the system, and either
+	 * Run through all the devices present in the system, and either
 	 * print out ones that match, or print out all of them.
 	 */
 	printf(HEADER);
@@ -187,18 +188,18 @@ do_list(int all, u_int32_t type, char *name)
 		res = ioctl(fd, RNDGETSRCNUM, &rstat);
 		if (res < 0)
 			err(1, "ioctl(RNDGETSRCNUM)");
-                        
+
 		if (rstat.count == 0)
 			break;
-                        
-		for (res = 0 ; res < rstat.count ; res++) {
-			if ((all != 0)
-			    || (type == rstat.source[res].type))
+
+		for (res = 0; res < rstat.count; res++) {
+			if (all != 0 ||
+			    type == rstat.source[res].type)
 				printf("%-16s %10u %-4s %s\n",
-				       rstat.source[res].name,
-				       rstat.source[res].total,
-				       find_name(rstat.source[res].type),
-				       strflags(rstat.source[res].flags));
+				    rstat.source[res].name,
+				    rstat.source[res].total,
+				    find_name(rstat.source[res].type),
+				    strflags(rstat.source[res].flags));
 		}
 		start += rstat.count;
 	}
@@ -211,11 +212,11 @@ do_stats()
 {
 	rndpoolstat_t rs;
 	int fd;
-	
+
 	fd = open("/dev/urandom", O_RDONLY, 0644);
 	if (fd < 0)
 		err(1, "open");
-	
+
 	if (ioctl(fd, RNDGETPOOLSTAT, &rs) < 0)
 		err(1, "ioctl(RNDGETPOOLSTAT)");
 
@@ -230,18 +231,13 @@ do_stats()
 	close(fd);
 }
 
-
 int
 main(int argc, char **argv)
 {
-	rndctl_t  rctl;
-	int       ch;
-	int       cmd;
-	int       lflag;
-	int       mflag;
-	int       sflag;
+	rndctl_t rctl;
+	int ch, cmd, lflag, mflag, sflag;
 	u_int32_t type;
-	char      name[16];
+	char name[16];
 
 	rctl.mask = 0;
 	rctl.flags = 0;
@@ -253,7 +249,7 @@ main(int argc, char **argv)
 	type = 0xff;
 
 	while ((ch = getopt(argc, argv, "CEcelt:d:s")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'C':
 			rctl.flags |= RND_FLAG_NO_COLLECT;
 			rctl.mask |= RND_FLAG_NO_COLLECT;
@@ -301,25 +297,25 @@ main(int argc, char **argv)
 		}
 
 	/*
-	 * cannot list and modify at the same time
+	 * Cannot list and modify at the same time.
 	 */
 	if ((lflag != 0 || sflag != 0) && mflag != 0)
 		usage();
 
 	/*
-	 * bomb out on no-ops
+	 * Bomb out on no-ops.
 	 */
 	if (lflag == 0 && mflag == 0 && sflag == 0)
 		usage();
 
 	/*
-	 * if not listing, we need a device name or a type
+	 * If not listing, we need a device name or a type.
 	 */
 	if (lflag == 0 && cmd == 0 && sflag == 0)
 		usage();
 
 	/*
-	 * modify request
+	 * Modify request.
 	 */
 	if (mflag != 0) {
 		rctl.type = type;
@@ -330,13 +326,13 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * list sources
+	 * List sources.
 	 */
 	if (lflag != 0)
 		do_list(cmd == 0, type, name);
 
 	if (sflag != 0)
 		do_stats();
-	
-	return 0;
+
+	exit(0);
 }
