@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.66 1999/11/15 18:49:13 fvdl Exp $	*/
+/*	$NetBSD: vnode.h,v 1.67 1999/11/17 22:53:47 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -234,7 +234,7 @@ extern int		vttoif_tab[];
  */
 #define REVOKEALL	0x0001		/* revoke: revoke all aliases */
 
-#define FSYNC_WAIT	0x0001		/* fsync: wait for completition */
+#define FSYNC_WAIT	0x0001		/* fsync: wait for completion */
 #define FSYNC_DATAONLY	0x0002		/* fsync: hint: sync file data only */
 #define FSYNC_RECLAIM	0x0004		/* fsync: hint: vnode is being reclaimed */
 #define FSYNC_LAZY	0x0008		/* fsync: lazy sync (trickle) */
