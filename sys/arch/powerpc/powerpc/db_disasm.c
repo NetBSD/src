@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.6 2001/05/06 16:11:17 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.7 2001/05/06 16:40:22 simonb Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/param.h>
@@ -572,8 +572,8 @@ disasm_fields(const struct opcode *popcode, instr_t instr, char *disasm_str)
 		u_int sprl;
 		u_int sprh;
 		char *reg;
-		sprh = extract_field(instr, 31 - 15, 5);
-		sprl = extract_field(instr, 31 - 20, 5);
+		sprl = extract_field(instr, 31 - 15, 5);
+		sprh = extract_field(instr, 31 - 20, 5);
 		spr = sprh << 5 | sprl;
 
 		/* this table could be written better */
@@ -735,9 +735,10 @@ disasm_fields(const struct opcode *popcode, instr_t instr, char *disasm_str)
 		u_int tbrl;
 		u_int tbrh;
 		char *reg;
-		tbrh = extract_field(instr, 31 - 15, 5);
-		tbrl = extract_field(instr, 31 - 20, 5);
+		tbrl = extract_field(instr, 31 - 15, 5);
+		tbrh = extract_field(instr, 31 - 20, 5);
 		tbr = tbrh << 5 | tbrl;
+
 		switch (tbr) {
 		case 268:
 			reg = "tbl";
