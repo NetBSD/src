@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.34 2002/04/18 15:44:22 wiz Exp $
+#	$NetBSD: files.bebox,v 1.34.2.1 2002/05/16 13:31:59 gehenna Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -149,3 +149,5 @@ file	arch/bebox/isa/joy_timer.c	joy
 
 # ISA Plug 'n Play support
 file	arch/bebox/isa/isapnp_machdep.c		isapnp
+
+include	"arch/bebox/conf/majors.bebox"

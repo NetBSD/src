@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.20 2002/04/16 20:50:23 thorpej Exp $
+#	$NetBSD: files.sgimips,v 1.20.2.1 2002/05/16 13:32:46 gehenna Exp $
 
 maxpartitions 16
 
@@ -104,3 +104,5 @@ include "dev/ata/files.ata"
 major {wd = 13}
 
 include "arch/sgimips/gio/files.gio"
+
+include "arch/sgimips/conf/majors.sgimips"

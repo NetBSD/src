@@ -1,4 +1,4 @@
-# $NetBSD: files.acorn26,v 1.2 2002/04/22 09:41:19 augustss Exp $
+# $NetBSD: files.acorn26,v 1.2.2.1 2002/05/16 13:31:48 gehenna Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -227,3 +227,5 @@ file	arch/acorn26/acorn26/vm_machdep.c
 file	arch/arm/arm/disksubr.c				disk
 file	arch/arm/arm/disksubr_acorn.c			disk
 file	arch/arm/arm/disksubr_mbr.c			disk
+
+include "arch/acorn26/conf/majors.acorn26"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.19 2002/04/16 20:50:19 thorpej Exp $
+#	$NetBSD: files.dreamcast,v 1.19.2.1 2002/05/16 13:32:04 gehenna Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 8
@@ -88,3 +88,5 @@ attach	gapspci at g2bus
 file	arch/dreamcast/dev/g2/gapspci.c			gapspci
 file	arch/dreamcast/dev/g2/gapspci_dma.c		gapspci
 file	arch/dreamcast/dev/g2/gapspci_pci.c		gapspci
+
+include "arch/dreamcast/conf/majors.dreamcast"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86_64,v 1.8 2002/04/16 20:50:24 thorpej Exp $
+#	$NetBSD: files.x86_64,v 1.8.2.1 2002/05/16 13:33:00 gehenna Exp $
 #
 # new style config file for x86_64 architecture
 #
@@ -194,3 +194,5 @@ include	"compat/ossaudio/files.ossaudio"
 include	"dev/usb/files.usb"
 
 include	"dev/ieee1394/files.ieee1394"
+
+include	"arch/x86_64/conf/majors.x86_64"

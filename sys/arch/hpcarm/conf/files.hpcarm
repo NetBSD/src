@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.42 2002/04/16 20:50:20 thorpej Exp $
+#	$NetBSD: files.hpcarm,v 1.42.2.1 2002/05/16 13:32:09 gehenna Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -144,3 +144,5 @@ include "dev/pci/files.pci"
 
 # Include USB stuff
 include "dev/usb/files.usb"
+
+include "arch/arm/conf/majors.arm32"
