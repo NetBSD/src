@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.7.2.2 1997/10/30 06:12:21 mellon Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.7.2.3 1997/11/02 20:42:51 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -194,8 +194,8 @@ message fspart
 
 message fspart_head
 {
-id:      Size    Offset FStype Bsize Fsize Mount point
----      ----    ------ ------ ----- ----- -----------
+id:      Size    Offset       End FStype Bsize Fsize Mount point
+---      ----    ------       --- ------ ----- ----- -----------
 
 }
 
@@ -409,8 +409,31 @@ message openmsgbuf
 {Could not open /kern/msgbuf.
 }
 
+message anonprog
+{sysinst: running "%s"
+}
+
+message anonprogfailed
+{
+The program "%s" failed unexpectedly with return code %s.
+
+This is probably due to choosing the incorrect top-level install
+option-- like trying to do an Upgrade on a bare disk, or doing a fresh
+Install on an already-running system.  Or it might be due to a
+mispackaged miniroot.  Whatever the cause, sysinst did not expect any
+errors here and the installation has almost certainly failed.
+
+Check the error messages above and proceed with *extreme* caution.
+Press <return> to continue.}
+
+message progdie
+{
+sysinst: Execution of "%s" failed unexpectedly with error code  %s.
+Cannot recover, aborting.
+}
+
 message createfstab
-{There is a big problem!  Can not create /mnt/etc/fstab.
+{There is a big problem!  Can not create /mnt/etc/fstab.  Bailing out!
 }
 
 message netnotup
