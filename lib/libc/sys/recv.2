@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.19 2001/10/16 20:09:59 kleink Exp $
+.\"	$NetBSD: recv.2,v 1.20 2001/10/22 20:59:03 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd October 16, 2001
+.Dd October 22, 2001
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@
 .Ft ssize_t
 .Fn recv "int s" "void *buf" "size_t len" "int flags"
 .Ft ssize_t
-.Fn recvfrom "int s" "void *buf" "size_t len" "int flags" "struct sockaddr *from" "socklen_t *fromlen"
+.Fn recvfrom "int s" "void * restrict buf" "size_t len" "int flags" "struct sockaddr * restrict from" "socklen_t * restrict fromlen"
 .Ft ssize_t
 .Fn recvmsg "int s" "struct msghdr *msg" "int flags"
 .Sh DESCRIPTION

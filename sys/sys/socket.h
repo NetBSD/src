@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.64 2001/10/22 17:53:44 kleink Exp $	*/
+/*	$NetBSD: socket.h,v 1.65 2001/10/22 20:59:04 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -514,16 +514,19 @@ __END_DECLS
 #ifndef	_KERNEL
 
 __BEGIN_DECLS
-int	accept __P((int, struct sockaddr *, socklen_t *));
+int	accept __P((int, struct sockaddr * __restrict, socklen_t * __restrict));
 int	bind __P((int, const struct sockaddr *, socklen_t));
 int	connect __P((int, const struct sockaddr *, socklen_t));
-int	getpeername __P((int, struct sockaddr *, socklen_t *));
-int	getsockname __P((int, struct sockaddr *, socklen_t *));
-int	getsockopt __P((int, int, int, void *, socklen_t *));
+int	getpeername __P((int, struct sockaddr * __restrict,
+	    socklen_t * __restrict));
+int	getsockname __P((int, struct sockaddr * __restrict,
+	    socklen_t * __restrict));
+int	getsockopt __P((int, int, int, void * __restrict,
+	    socklen_t * __restrict));
 int	listen __P((int, int));
 ssize_t	recv __P((int, void *, size_t, int));
-ssize_t	recvfrom __P((int, void *, size_t, int, struct sockaddr *,
-	    socklen_t *));
+ssize_t	recvfrom __P((int, void * __restrict, size_t, int,
+	    struct sockaddr * __restrict, socklen_t * __restrict));
 ssize_t	recvmsg __P((int, struct msghdr *, int));
 ssize_t	send __P((int, const void *, size_t, int));
 ssize_t	sendto __P((int, const void *,
