@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: omapi.c,v 1.3 2000/06/24 06:50:04 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: omapi.c,v 1.4 2000/07/08 20:52:20 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -82,8 +82,9 @@ void dhcp_db_objects_setup ()
 					     dhcp_lease_remove,
 #if defined (COMPACT_LEASES)
 					     dhcp_lease_free,
+					     dhcp_lease_get,
 #else
-					     0,
+					     0, 0,
 #endif
 					     0,
 					     sizeof (struct lease));
@@ -100,7 +101,7 @@ void dhcp_db_objects_setup ()
 					     dhcp_class_stuff_values,
 					     dhcp_class_lookup, 
 					     dhcp_class_create,
-					     dhcp_class_remove, 0, 0,
+					     dhcp_class_remove, 0, 0, 0,
 					     sizeof (struct class));
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register class object type: %s",
@@ -115,7 +116,7 @@ void dhcp_db_objects_setup ()
 					     dhcp_pool_stuff_values,
 					     dhcp_pool_lookup, 
 					     dhcp_pool_create,
-					     dhcp_pool_remove, 0, 0,
+					     dhcp_pool_remove, 0, 0, 0,
 					     sizeof (struct pool));
 
 	if (status != ISC_R_SUCCESS)
@@ -131,7 +132,7 @@ void dhcp_db_objects_setup ()
 					     dhcp_host_stuff_values,
 					     dhcp_host_lookup, 
 					     dhcp_host_create,
-					     dhcp_host_remove, 0, 0,
+					     dhcp_host_remove, 0, 0, 0,
 					     sizeof (struct host_decl));
 
 	if (status != ISC_R_SUCCESS)
@@ -149,7 +150,7 @@ void dhcp_db_objects_setup ()
 					     dhcp_failover_state_lookup, 
 					     dhcp_failover_state_create,
 					     dhcp_failover_state_remove,
-					     0, 0,
+					     0, 0, 0,
 					     sizeof (dhcp_failover_state_t));
 
 	if (status != ISC_R_SUCCESS)
@@ -163,7 +164,7 @@ void dhcp_db_objects_setup ()
 					     dhcp_failover_link_destroy,
 					     dhcp_failover_link_signal,
 					     dhcp_failover_link_stuff_values,
-					     0, 0, 0, 0, 0,
+					     0, 0, 0, 0, 0, 0,
 					     sizeof (dhcp_failover_link_t));
 
 	if (status != ISC_R_SUCCESS)
@@ -177,7 +178,7 @@ void dhcp_db_objects_setup ()
 					     dhcp_failover_listener_destroy,
 					     dhcp_failover_listener_signal,
 					     dhcp_failover_listener_stuff,
-					     0, 0, 0, 0, 0,
+					     0, 0, 0, 0, 0, 0,
 					     sizeof
 					     (dhcp_failover_listener_t));
 
@@ -345,8 +346,6 @@ isc_result_t dhcp_lease_destroy (omapi_object_t *h, const char *file, int line)
 		executable_statement_dereference (&lease -> on_release,
 						  file, line);
 	if (lease -> state) {
-		data_string_forget (&lease -> state -> parameter_request_list,
-				    file, line);
 		free_lease_state (lease -> state, file, line);
 		lease -> state = (struct lease_state *)0;
 

@@ -157,3 +157,9 @@
 /* Define this to change the logging facility used by dhcpd. */
 
 /* #define DHCPD_LOG_FACILITY LOG_DAEMON */
+
+/* Define this if you aren't debugging and you want to save memory
+   (potentially a _lot_ of memory) by allocating leases in chunks rather
+   than one at a time. */
+
+#define COMPACT_LEASES

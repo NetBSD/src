@@ -303,8 +303,6 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 			if (io -> readfd && io -> inner &&
 			    (desc = (*(io -> readfd)) (io -> inner)) >= 0) {
 			    FD_SET (desc, &r);
-			    log_error ("read check: %d %x %x",
-				       max, r.fds_bits [0], w.fds_bits [0]);
 			    count = select (desc + 1, &r, &w, &x, &t0);
 			   bogon:
 			    if (count < 0) {
@@ -330,9 +328,6 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 			if (io -> writefd && io -> inner &&
 			    (desc = (*(io -> writefd)) (io -> inner)) >= 0) {
 				FD_SET (desc, &w);
-				log_error ("write check: %d %x %x",
-					   max,
-					   r.fds_bits [0], w.fds_bits [0]);
 				count = select (desc + 1, &r, &w, &x, &t0);
 				if (count < 0)
 					goto bogon;

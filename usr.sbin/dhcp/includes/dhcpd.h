@@ -1660,6 +1660,8 @@ int write_failover_state (dhcp_failover_state_t *);
 #endif
 int db_printable PROTO ((const char *));
 int db_printable_len PROTO ((const unsigned char *, unsigned));
+void write_named_billing_class (const char *, unsigned, struct class *);
+void write_billing_classes (void);
 int write_billing_class PROTO ((struct class *));
 int commit_leases PROTO ((void));
 void db_startup PROTO ((int));
@@ -1786,8 +1788,9 @@ isc_result_t enter_tsig_key (struct tsig_key *);
 isc_result_t tsig_key_lookup (struct tsig_key **, const char *);
 int dns_zone_dereference PROTO ((struct dns_zone **, const char *, int));
 #if defined (NSUPDATE)
-int find_cached_zone (const char *, ns_class, char *,
-		      size_t, struct in_addr *, int, struct dns_zone **);
+ns_rcode find_cached_zone (const char *, ns_class, char *,
+			   size_t, struct in_addr *, int, int *,
+			   struct dns_zone **);
 void forget_zone (struct dns_zone **);
 void repudiate_zone (struct dns_zone **);
 #endif /* NSUPDATE */
@@ -1840,13 +1843,11 @@ void execute_statements_in_scope PROTO ((struct packet *,
 int executable_statement_dereference PROTO ((struct executable_statement **,
 					     const char *, int));
 void write_statements (FILE *, struct executable_statement *, int);
-struct executable_statement *find_matching_case PROTO ((struct packet *,
-							struct lease *,
-							struct option_state *,
-							struct option_state *,
-							struct binding_scope *,
-							struct expression *,
-					      struct executable_statement *));
+int find_matching_case (struct executable_statement **,
+			struct packet *, struct lease *,
+			struct option_state *, struct option_state *,
+			struct binding_scope *,
+			struct expression *, struct executable_statement *);
 
 /* auth.c */
 void enter_auth_key PROTO ((struct data_string *, struct auth_key *));
@@ -2122,6 +2123,7 @@ int find_host_for_network PROTO ((struct subnet **, struct host_decl **,
 void new_address_range PROTO ((struct iaddr, struct iaddr,
 			       struct subnet *, struct pool *));
 isc_result_t dhcp_lease_free (omapi_object_t *, const char *, int);
+isc_result_t dhcp_lease_get (omapi_object_t **, const char *, int);
 int find_grouped_subnet PROTO ((struct subnet **, struct shared_network *,
 				struct iaddr, const char *, int));
 int find_subnet (struct subnet **, struct iaddr, const char *, int);
