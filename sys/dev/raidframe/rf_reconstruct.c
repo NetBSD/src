@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.23 2000/05/28 00:48:30 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.24 2000/05/28 03:42:23 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -699,10 +699,11 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 			if (ProcessReconEvent(raidPtr, row, event))
 				reconDesc->numDisksDone++;
-			raidPtr->reconControl[row]->numRUsComplete = 
-				rf_UnitsLeftToReconstruct(mapPtr);
 			raidPtr->reconControl[row]->numRUsTotal = 
 				mapPtr->totalRUs;
+			raidPtr->reconControl[row]->numRUsComplete = 
+				mapPtr->totalRUs - 
+				rf_UnitsLeftToReconstruct(mapPtr);
 
 			raidPtr->reconControl[row]->percentComplete = 
 				100 - (raidPtr->reconControl[row]->numRUsComplete * 100 / raidPtr->reconControl[row]->numRUsTotal);
