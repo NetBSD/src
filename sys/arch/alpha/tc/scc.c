@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.5 1995/04/11 03:41:04 mycroft Exp $	*/
+/*	$NetBSD: scc.c,v 1.6 1995/04/22 12:35:17 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -177,7 +177,7 @@ struct cfdriver scccd =
     { NULL, "scc", sccmatch, sccattach, DV_TTY, sizeof (struct scc_softc) };
 
 int		sccGetc __P((dev_t));
-int		sccPutc __P((dev_t, int));
+void		sccPutc __P((dev_t, int));
 void		sccPollc __P((dev_t, int));
 int		sccparam __P((struct tty *, struct termios *));
 void		sccstart __P((struct tty *));
@@ -1172,7 +1172,7 @@ sccGetc(dev)
 /*
  * Send a char on a port, via a busy wait loop.
  */
-int
+void
 sccPutc(dev, c)
 	dev_t dev;
 	int c;
@@ -1205,7 +1205,7 @@ sccPutc(dev, c)
 	MB();
 	splx(s);
 
-	return 0;				/* XXX should be void */
+	return;
 }
 
 /*
