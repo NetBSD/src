@@ -33,10 +33,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fstab.c	5.15 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: fstab.c,v 1.3 1993/08/26 00:44:32 jtc Exp $";
+static char *rcsid = "$Id: fstab.c,v 1.3.2.1 1994/08/13 09:42:44 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
 #include <sys/errno.h>
+#include <sys/uio.h>
 #include <fstab.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -62,6 +64,8 @@ fstabscan()
 /* OLD_STYLE_FSTAB */
 		if (!strpbrk(cp, " \t")) {
 			_fs_fstab.fs_spec = strtok(cp, ":\n");
+			if (!_fs_fstab.fs_spec || *_fs_fstab.fs_spec == '#')
+				continue;
 			_fs_fstab.fs_file = strtok((char *)NULL, ":\n");
 			_fs_fstab.fs_type = strtok((char *)NULL, ":\n");
 			if (_fs_fstab.fs_type) {
@@ -190,11 +194,17 @@ static
 error(err)
 	int err;
 {
-	char *p;
+	struct iovec iov[5];
 
-	(void)write(STDERR_FILENO, "fstab: ", 7);
-	(void)write(STDERR_FILENO, _PATH_FSTAB, sizeof(_PATH_FSTAB) - 1);
-	p = strerror(err);
-	(void)write(STDERR_FILENO, p, strlen(p));
-	(void)write(STDERR_FILENO, "\n", 1);
+	iov[0].iov_base = "fstab: ";
+	iov[0].iov_len = 7;
+	iov[1].iov_base = _PATH_FSTAB;
+	iov[1].iov_len = sizeof(_PATH_FSTAB) - 1;
+	iov[2].iov_base =  ": ";
+	iov[2].iov_len = 2;
+	iov[3].iov_base = strerror(err);
+	iov[3].iov_len = strlen(iov[3].iov_base);
+	iov[4].iov_base = "\n";
+	iov[4].iov_len = 1;
+	(void)writev(STDERR_FILENO, iov, 5);
 }
