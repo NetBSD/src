@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.43 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: ebus.c,v 1.44 2004/03/21 12:50:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.43 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.44 2004/03/21 12:50:14 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -198,17 +198,20 @@ ebus_attach(parent, self, aux)
 	 */
 	sc->sc_intmap = NULL;
 	sc->sc_range = NULL;
+	sc->sc_nintmap = 0;
 	error = prom_getprop(node, "interrupt-map",
 			sizeof(struct ebus_interrupt_map),
 			&sc->sc_nintmap, &sc->sc_intmap);
 	switch (error) {
 	case 0:
 		immp = &sc->sc_intmapmask;
+		nmapmask = sizeof(*immp);
 		error = prom_getprop(node, "interrupt-map-mask",
 			    sizeof(struct ebus_interrupt_map_mask), &nmapmask,
 			    &immp);
 		if (error)
-			panic("could not get ebus interrupt-map-mask");
+			panic("could not get ebus interrupt-map-mask, error %d",
+			    error);
 		if (nmapmask != 1)
 			panic("ebus interrupt-map-mask is broken");
 		break;
@@ -252,6 +255,7 @@ ebus_setup_attach_args(sc, node, ea)
 	int	n, rv;
 
 	memset(ea, 0, sizeof(struct ebus_attach_args));
+	n = 0;
 	rv = prom_getprop(node, "name", 1, &n, &ea->ea_name);
 	if (rv != 0)
 		return (rv);
