@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/04/30 21:21:51 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2000/06/12 12:17:26 veego Exp $
 
 WARNS?=	0
 
@@ -30,6 +30,9 @@ PFIX_LIBEXECDIR=/usr/libexec/postfix
 PFIX_ETCDIR=	/etc/postfix
 PFIX_EXAMPLEDIR=/usr/share/examples/postfix
 PFIX_SBINDIR=	/usr/sbin
+
+# postfix check wants a lot of files to be owned by root
+BINOWN=	root
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
