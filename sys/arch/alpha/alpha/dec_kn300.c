@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.1 1998/04/15 00:53:53 mjacob Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.2 1998/04/15 21:29:03 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.1 1998/04/15 00:53:53 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.2 1998/04/15 21:29:03 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,9 +123,33 @@ dec_kn300_cons_init()
 		break;
 
 	case 3:
-		printf("I don't know how to do display consoles yet\n");
+	{
+		extern struct mcpcia_softc *mcpcias;
+		struct mcpcia_config *ccp;
+		struct mcpcia_softc *mcp = mcpcias;
+		/* display console ... */
+		/*
+		 * Pathetic, but works for now.
+		 * The Alpha4100 SRM won't let you put a vga in any pci
+		 * bus but what it considers PCI0 - for us that's the
+		 * *second* mcpcia.
+		 */
+		if (mcp && mcp->mcpcia_next) {
+			ccp = &mcp->mcpcia_next->mcpcia_cc;
+		
+			if ((ctb->ctb_turboslot & 0xffff) == 0)
+				isa_display_console(&ccp->cc_iot,
+				    &ccp->cc_memt);
+			else
+				pci_display_console(&ccp->cc_iot, &ccp->cc_memt,
+				    &ccp->cc_pc,
+				    (ctb->ctb_turboslot >> 8) & 0xff,
+				    ctb->ctb_turboslot & 0xff, 0);
+		} else {
+			printf("CANNOT DETERMINE CONSOLE'S PCI BUS\n");
+		}
 		break;
-
+	}
 	default:
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
