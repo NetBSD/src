@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.64 2004/10/17 08:20:15 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.65 2004/11/08 14:24:17 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.64 2004/10/17 08:20:15 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.65 2004/11/08 14:24:17 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ struct ac97_softc;
 struct ac97_source_info;
 static int	ac97_mixer_get_port(struct ac97_codec_if *, mixer_ctrl_t *);
 static int	ac97_mixer_set_port(struct ac97_codec_if *, mixer_ctrl_t *);
+static void	ac97_detach(struct ac97_codec_if *);
 static int	ac97_query_devinfo(struct ac97_codec_if *, mixer_devinfo_t *);
 static int	ac97_get_portnum_by_name(struct ac97_codec_if *, const char *,
 					 const char *, const char *);
@@ -346,6 +347,7 @@ static struct ac97_codec_if_vtbl ac97civ = {
 	ac97_get_extcaps,
 	ac97_set_rate,
 	ac97_set_clock,
+	ac97_detach,
 };
 
 static const struct ac97_codecid {
@@ -1157,6 +1159,18 @@ ac97_attach(struct ac97_host_if *host_if)
 	return 0;
 }
 
+static void
+ac97_detach(struct ac97_codec_if *codec_if)
+{
+	struct ac97_softc *as;
+
+	as = (struct ac97_softc *)codec_if;
+	ac97_write(as, AC97_REG_POWER, AC97_POWER_IN | AC97_POWER_OUT
+		   | AC97_POWER_MIXER | AC97_POWER_MIXER_VREF
+		   | AC97_POWER_ACLINK | AC97_POWER_CLK | AC97_POWER_AUX
+		   | AC97_POWER_EAMP);
+	free(as, M_DEVBUF);
+}
 
 static int
 ac97_query_devinfo(struct ac97_codec_if *codec_if, mixer_devinfo_t *dip)
