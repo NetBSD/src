@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.48 2000/06/28 03:01:16 mrg Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.49 2000/07/01 21:46:40 sommerfeld Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1002,12 +1002,20 @@ icmp_mtudisc_timeout(rt, r)
  */
 static int
 icmp_ratelimit(dst, type, code)
-	const struct in_addr *dst;	/* not used at this moment */
+	const struct in_addr *dst;
 	const int type;			/* not used at this moment */
 	const int code;			/* not used at this moment */
 {
 	static struct timeval icmperrratelim_last;
+	struct in_ifaddr *ia;
 
+	/*
+	 * Don't rate-limit if it's for us!  
+	 */
+	INADDR_TO_IA(*dst, ia);
+	if (ia != NULL)
+		return 0;
+	
 	/*
 	 * ratecheck() returns true if it is okay to send.  We return
 	 * true if it is not okay to send.
