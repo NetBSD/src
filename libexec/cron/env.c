@@ -1,4 +1,4 @@
-/* Copyright 1988,1990,1993 by Paul Vixie
+/* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
  * Distribute freely, except: don't remove my name from the source or
@@ -16,12 +16,11 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: env.c,v 1.1.1.2 1994/01/11 19:11:13 jtc Exp $";
+static char rcsid[] = "$Id: env.c,v 1.1.1.3 1994/01/12 18:37:43 jtc Exp $";
 #endif
 
 
 #include "cron.h"
-#include "externs.h"
 
 
 char **

@@ -1,4 +1,4 @@
-/* Copyright 1993 by Paul Vixie
+/* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
  *
  * Distribute freely, except: don't remove my name from the source or
