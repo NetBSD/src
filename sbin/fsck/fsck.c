@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.1 1996/09/11 20:27:14 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.2 1996/09/23 16:11:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -38,7 +38,7 @@
  *
  */
 
-static char rcsid[] = "$NetBSD: fsck.c,v 1.1 1996/09/11 20:27:14 christos Exp $";
+static char rcsid[] = "$NetBSD: fsck.c,v 1.2 1996/09/23 16:11:34 christos Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -55,74 +55,91 @@ static char rcsid[] = "$NetBSD: fsck.c,v 1.1 1996/09/11 20:27:14 christos Exp $"
 #include <unistd.h>
 
 #include "pathnames.h"
+#include "extern.h"
+#include "util.h"
 
-static enum { IN_LIST, NOT_IN_LIST } which;
+static enum { IN_LIST, NOT_IN_LIST } which = NOT_IN_LIST;
 
-TAILQ_HEAD(fstypelist, entry) head;
+TAILQ_HEAD(fstypelist, entry) opthead, selhead;
 
 struct entry {
 	char *type;
+	char *options;
 	TAILQ_ENTRY(entry) entries;
 };
 
-static int	preen = 0, verbose = 0, debug = 0;
-static struct fstypelist *typelist;
+static int preen = 0, maxrun = 0;
+int debug = 0, verbose = 0;
+static char *options = NULL;
 
-static int checkfs __P((const char *, const char *, const char *));
+int main __P((int, char *[]));
+
+static int checkfs __P((const char *, const char *, pid_t *));
 static int selected __P((const char *));
-static void addentry __P((const char *));
-static void rementry __P((const char *));
-static void unselect __P((const char *));
+static void addoption __P((char *));
+static const char *getoptions __P((const char *));
+static void addentry __P((struct fstypelist *, const char *, const char *));
 static void maketypelist __P((char *));
-static char *catopt __P((char *, const char *));
+static char *catopt __P((char *, const char *, int));
 static void mangle __P((char *, int *, const char **));
-static void *emalloc __P((size_t));
-static char *estrdup __P((const char *));
 static void usage __P((void));
+static int isok __P((struct fstab *));
 
 
 int
 main(argc, argv)
 	int argc;
-	char * const argv[];
+	char *argv[];
 {
 	struct fstab *fs;
 	int i, rval = 0;
-	char *options = NULL;
 	char *vfstype = NULL;
 
-	while ((i = getopt(argc, argv, "dvpnyt:o:")) != -1)
+	TAILQ_INIT(&selhead);
+	TAILQ_INIT(&opthead);
+
+	while ((i = getopt(argc, argv, "dvpnyl:t:T:")) != -1)
 		switch (i) {
+#ifdef DEBUG
+# define DEBUGOPT "d"
 		case 'd':
 			debug++;
 			break;
+#else
+# define DEBUGOPT ""
+#endif
 
 		case 'v':
 			verbose++;
 			break;
 
 		case 'y':
-			options = catopt(options, "-y");
+			options = catopt(options, "-y", 1);
+			break;
+
+		case 'l':
+			maxrun = atoi(optarg);
 			break;
 
 		case 'n':
-			options = catopt(options, "-n");
+			options = catopt(options, "-n", 1);
 			break;
 
-		case 'o':
+		case 'T':
 			if (*optarg)
-				options = catopt(options, optarg);
+				addoption(optarg);
 			break;
 
 		case 't':
-			if (typelist != NULL)
+			if (selhead.tqh_first != NULL)
 				errx(1, "only one -t option may be specified.");
+
 			maketypelist(optarg);
 			vfstype = optarg;
 			break;
 
 		case 'p':
-			options = catopt(options, "-p");
+			options = catopt(options, "-p", 1);
 			preen++;
 			break;
 
@@ -135,38 +152,13 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
+	if (argc == 0)
+		return checkfstab(preen, maxrun, isok, checkfs);
+
 #define	BADTYPE(type)							\
 	(strcmp(type, FSTAB_RO) &&					\
 	    strcmp(type, FSTAB_RW) && strcmp(type, FSTAB_RQ))
 
-	if (argc == 0) {
-		while ((fs = getfsent()) != NULL) {
-
-			if (fs->fs_passno == 0)
-				continue;
-
-			if (BADTYPE(fs->fs_type))
-				continue;
-
-			if (!selected(fs->fs_vfstype))
-				continue;
-
-			if (preen) {
-				rval |= checkfs(fs->fs_vfstype, NULL, options);
-				unselect(fs->fs_vfstype);
-			}
-			else
-				rval |= checkfs(fs->fs_vfstype, fs->fs_spec,
-				    options);
-		}
-		return rval;
-	}
-
-	/*
-	 * When we select specific filesystems, we cannot preen 
-	 */
-	if (preen)
-		usage();
 
 	for (; argc--; argv++) {
 		char *spec, *type;
@@ -188,15 +180,34 @@ main(argc, argv)
 				    *argv);
 		}
 
-		rval |= checkfs(type, spec, options);
+		rval |= checkfs(type, blockcheck(spec), NULL);
 	}
 
 	return rval;
 }
 
+
 static int
-checkfs(vfstype, spec, options)
-	const char *vfstype, *spec, *options;
+isok(fs)
+	struct fstab *fs;
+{
+	if (fs->fs_passno == 0)
+		return 0;
+
+	if (BADTYPE(fs->fs_type))
+		return 0;
+
+	if (!selected(fs->fs_vfstype))
+		return 0;
+
+	return 1;
+}
+
+
+static int
+checkfs(vfstype, spec, pidp)
+	const char *vfstype, *spec;
+	pid_t *pidp;
 {
 	/* List of directories containing fsck_xxx subcommands. */
 	static const char *edirs[] = {
@@ -208,6 +219,7 @@ checkfs(vfstype, spec, options)
 	pid_t pid;
 	int argc, i, status;
 	char *optbuf = NULL, execname[MAXPATHLEN + 1];
+	const char *extra = getoptions(vfstype);
 
 #ifdef __GNUC__
 	/* Avoid vfork clobbering */
@@ -216,19 +228,27 @@ checkfs(vfstype, spec, options)
 
 	argc = 0;
 	argv[argc++] = vfstype;
-	if (options)
-		mangle(optbuf = estrdup(options), &argc, argv);
-	if (spec)
-		argv[argc++] = spec;
-	argv[argc] = NULL;
+
+	if (options) {
+		if (extra != NULL)
+			optbuf = catopt(options, extra, 0);
+		else
+			optbuf = estrdup(options);
+	}
+	else if (extra)
+		optbuf = estrdup(extra);
+
+	if (optbuf)
+		mangle(optbuf, &argc, argv);
+
+	argv[argc++] = spec;
 
 	if (debug || verbose) {
-		(void)printf("fsck_%s", vfstype);
+		(void)printf("start %swait fsck_%s", vfstype,
+			pidp ? "no" : "");
 		for (i = 1; i < argc; i++)
 			(void)printf(" %s", argv[i]);
 		(void)printf("\n");
-		if (debug)
-			return (0);
 	}
 
 	switch (pid = vfork()) {
@@ -239,6 +259,11 @@ checkfs(vfstype, spec, options)
 		return (1);
 
 	case 0:					/* Child. */
+#ifdef DEBUG
+		if (debug)
+			_exit(0);
+#endif
+
 		/* Go find an executable. */
 		edir = edirs;
 		do {
@@ -263,6 +288,11 @@ checkfs(vfstype, spec, options)
 	default:				/* Parent. */
 		if (optbuf)
 			free(optbuf);
+
+		if (pidp) {
+			*pidp = pid;
+			return 0;
+		}
 
 		if (waitpid(pid, &status, 0) < 0) {
 			warn("waitpid");
@@ -291,10 +321,7 @@ selected(type)
 	struct entry *e;
 
 	/* If no type specified, it's always selected. */
-	if (typelist == NULL)
-		return (1);
-
-	for (e = typelist->tqh_first; e != NULL; e = e->entries.tqe_next)
+	for (e = selhead.tqh_first; e != NULL; e = e->entries.tqe_next)
 		if (!strncmp(e->type, type, MFSNAMELEN))
 			return which == IN_LIST ? 1 : 0;
 
@@ -302,50 +329,52 @@ selected(type)
 }
 
 
-static void
-addentry(type)
+static const char *
+getoptions(type)
 	const char *type;
+{
+	struct entry *e;
+
+	for (e = opthead.tqh_first; e != NULL; e = e->entries.tqe_next)
+		if (!strncmp(e->type, type, MFSNAMELEN))
+			return e->options;
+	return "";
+}
+
+
+static void
+addoption(optstr)
+	char *optstr;
+{
+	char *newoptions;
+	struct entry *e;
+
+	if ((newoptions = strchr(optstr, ':')) == NULL)
+		errx(1, "Invalid option string");
+
+	*newoptions++ = '\0';
+
+	for (e = opthead.tqh_first; e != NULL; e = e->entries.tqe_next)
+		if (!strncmp(e->type, optstr, MFSNAMELEN)) {
+			e->options = catopt(e->options, newoptions, 1);
+			return;
+		}
+	addentry(&opthead, optstr, newoptions);
+}
+
+
+static void
+addentry(list, type, opts)
+	struct fstypelist *list;
+	const char *type;
+	const char *opts;
 {
 	struct entry *e;
 
 	e = emalloc(sizeof(struct entry));
 	e->type = estrdup(type);
-
-	TAILQ_INSERT_TAIL(typelist, e, entries);
-}
-
-
-static void
-rementry(type)
-	const char *type;
-{
-	struct entry *e;
-
-	for (e = typelist->tqh_first; e != NULL; e = e->entries.tqe_next)
-		if (!strncmp(e->type, type, MFSNAMELEN)) {
-			TAILQ_REMOVE(typelist, e, entries);
-			free(e->type);
-			free(e);
-			return;
-		}
-}
-
-
-static void
-unselect(type)
-	const char *type;
-{
-	if (typelist == NULL) {
-		TAILQ_INIT(&head);
-		typelist = &head;
-		which = NOT_IN_LIST;
-		addentry(type);
-		return;
-	}
-	if (which == IN_LIST)
-		rementry(type);
-	else
-		addentry(type);
+	e->options = estrdup(opts);
+	TAILQ_INSERT_TAIL(list, e, entries);
 }
 
 
@@ -354,11 +383,6 @@ maketypelist(fslist)
 	char *fslist;
 {
 	char *ptr;
-
-	if (typelist == NULL) {
-		TAILQ_INIT(&head);
-		typelist = &head;
-	}
 
 	if ((fslist == NULL) || (fslist[0] == '\0'))
 		errx(1, "empty type list");
@@ -371,15 +395,16 @@ maketypelist(fslist)
 		which = IN_LIST;
 
 	while ((ptr = strsep(&fslist, ",")) != NULL)
-		addentry(ptr);
+		addentry(&selhead, ptr, "");
 
 }
 
 
 static char *
-catopt(s0, s1)
+catopt(s0, s1, fr)
 	char *s0;
 	const char *s1;
+	int fr;
 {
 	size_t i;
 	char *cp;
@@ -392,15 +417,15 @@ catopt(s0, s1)
 	else
 		cp = estrdup(s1);
 
-	if (s0)
+	if (s0 && fr)
 		free(s0);
 	return (cp);
 }
 
 
 static void
-mangle(options, argcp, argv)
-	char *options;
+mangle(opts, argcp, argv)
+	char *opts;
 	int *argcp;
 	const char **argv;
 {
@@ -408,7 +433,7 @@ mangle(options, argcp, argv)
 	int argc;
 
 	argc = *argcp;
-	for (s = options; (p = strsep(&s, ",")) != NULL;)
+	for (s = opts; (p = strsep(&s, ",")) != NULL;)
 		if (*p != '\0')
 			if (*p == '-') {
 				argv[argc++] = p;
@@ -427,35 +452,14 @@ mangle(options, argcp, argv)
 }
 
 
-static void *
-emalloc(s)
-	size_t s;
-{
-	void *p = malloc(s);
-	if (p == NULL)
-		err(1, "malloc failed");
-	return p;
-}
-
-
-static char *
-estrdup(s)
-	const char *s;
-{
-	char *p = strdup(s);
-	if (p == NULL)
-		err(1, "strdup failed");
-	return p;
-}
-
-
 static void
 usage()
 {
 	extern char *__progname;
-	static const char common[] = "dvYyNn] [-o fsoptions] [-t fstype]";
+	static const char common[] =
+	    "pvlyn] [-T fstype:fsoptions] [-t fstype]";
 
-	(void)fprintf(stderr, "Usage: %s [-p%s\n\t%s [-%s [special|node]...\n",
-		__progname, common, __progname, common);
+	(void)fprintf(stderr, "Usage: %s [-%s%s [special|node]...\n",
+	    __progname, DEBUGOPT, common);
 	exit(1);
 }
