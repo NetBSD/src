@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.22 2003/06/26 21:15:12 ichiro Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.23 2003/10/14 17:44:09 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.25 2003/06/26 21:14:44 ichiro Exp 
+ *	NetBSD: cardbusdevs,v 1.26 2003/10/14 17:43:55 ichiro Exp 
  */
 
 /*
@@ -236,6 +236,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "APA-1480",
 	},
 	{
+	    CARDBUS_VENDOR_ATHEROS, CARDBUS_PRODUCT_ATHEROS_AR5001,
+	    0,
+	    "Atheros Communications, Inc.",
+	    "AR5001 Wireless LAN 802.11a/b/g CardBus Card",
+	},
+	{
 	    CARDBUS_VENDOR_DEC, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Digital Equipment",
@@ -317,6 +323,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_PLANEX, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Planex Communications Inc",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_ATHEROS, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Atheros Communications, Inc.",
 	    NULL,
 	},
 	{
