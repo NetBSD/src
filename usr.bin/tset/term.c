@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.12 1999/11/09 15:06:37 drochner Exp $	*/
+/*	$NetBSD: term.c,v 1.13 2000/05/25 12:53:55 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: term.c,v 1.12 1999/11/09 15:06:37 drochner Exp $");
+__RCSID("$NetBSD: term.c,v 1.13 2000/05/25 12:53:55 blymn Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: term.c,v 1.12 1999/11/09 15:06:37 drochner Exp $");
 #include <unistd.h>
 #include "extern.h"
 
-char    tbuf[1024];      		/* Termcap entry. */
+char    *tbuf;      		/* Termcap entry. */
 
 const	char *askuser __P((const char *));
 char	*ttys __P((char *));
@@ -70,6 +70,8 @@ get_termcap_entry(userarg, tcapbufp)
 	int rval;
 	char *p, *ttypath;
 	const char *ttype;
+	char zz[1024], *zz_ptr;
+	char *ext_tc, *newptr;
 
 	if (userarg) {
 		ttype = userarg;
@@ -116,6 +118,11 @@ found:	if ((p = getenv("TERMCAP")) != NULL && *p != '/')
 			ttype = askuser(NULL);
 	}
 	/* Find the termcap entry.  If it doesn't exist, ask the user. */
+	if ((tbuf = (char *) malloc(1024)) == NULL) {
+		fprintf(stderr, "Could not malloc termcap buffer\n");
+		exit(1);
+	}
+	
 	while ((rval = tgetent(tbuf, ttype)) == 0) {
 		warnx("terminal type %s is unknown", ttype);
 		ttype = askuser(NULL);
@@ -125,6 +132,25 @@ found:	if ((p = getenv("TERMCAP")) != NULL && *p != '/')
 			errno = ENOENT;
 		err(1, NULL);
 	}
+
+	  /* check if we get a truncated termcap entry, fish back the full
+	   * one if need be
+	   */
+	zz_ptr = zz;
+	if (tgetstr("ZZ", &zz_ptr) != NULL) {
+			  /* it was, fish back the full termcap */
+		sscanf(zz, "%p", &ext_tc);
+		if ((newptr = (char *) realloc(tbuf, strlen(ext_tc) + 1))
+		    == NULL) {
+			fprintf(stderr,
+				"reallocate of termcap falied\n");
+			exit (1);
+		}
+
+		strcpy(newptr, ext_tc);
+		tbuf = newptr;
+	}
+	
 	*tcapbufp = tbuf;
 	return (ttype);
 }
