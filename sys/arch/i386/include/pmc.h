@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.3 2002/08/07 05:58:01 briggs Exp $	*/
+/*	$NetBSD: pmc.h,v 1.4 2002/08/08 18:37:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -32,6 +32,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _I386_PMC_H_
+#define	_I386_PMC_H_
+
+#define	PMC_TYPE_I586		0x10000		/* i586-compatible */
+#define	PMC_TYPE_I586_TSC	0x10001		/* cycle counter */
+#define	PMC_TYPE_I586_PMCx	0x10002		/* performance counter */
+
+#define	PMC_TYPE_I686		0x20000		/* i686-compatible */
+#define	PMC_TYPE_I686_TSC	0x20001		/* cycle counter */
+#define	PMC_TYPE_I686_PMCx	0x20002		/* performance counter */
+
+#define	PMC_TYPE_K7		0x30000		/* K7-compatible */
+#define	PMC_TYPE_K7_TSC		0x30001		/* cycle counter */
+#define	PMC_TYPE_K7_PMCx	0x30002		/* performance counter */
 
 #if defined(_KERNEL)
 /*
@@ -68,4 +83,6 @@ int	pmc_read(struct proc *, struct i386_pmc_read_args *,
 
 #define PMC_ENABLED(p)		(0)
 
-#endif
+#endif /* _KERNEL */
+
+#endif /* _I386_PMC_H_ */
