@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.12 1998/11/23 14:37:08 christos Exp $	*/
+/*	$NetBSD: func.c,v 1.13 2001/05/24 11:56:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: func.c,v 1.12 1998/11/23 14:37:08 christos Exp $");
+__RCSID("$NetBSD: func.c,v 1.13 2001/05/24 11:56:36 lukem Exp $");
 #endif
 
 #include <stdlib.h>
@@ -323,7 +323,7 @@ funcdef(fsym)
 	}
 
 	if (dcs->d_notyp)
-		/* return value is implizitly declared to be int */
+		/* return value is implicitly declared to be int */
 		fsym->s_rimpl = 1;
 
 	reached = 1;

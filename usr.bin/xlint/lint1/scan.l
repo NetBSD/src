@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.16 2001/05/07 09:02:55 lukem Exp $ */
+/* $NetBSD: scan.l,v 1.17 2001/05/24 11:56:36 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan.l,v 1.16 2001/05/07 09:02:55 lukem Exp $");
+__RCSID("$NetBSD: scan.l,v 1.17 2001/05/24 11:56:36 lukem Exp $");
 #endif
 
 #include <stdlib.h>
@@ -513,7 +513,7 @@ icon(base)
 		warning(252);
 
 	/*
-         * If the value is to big for the current type, we must choose
+	 * If the value is to big for the current type, we must choose
 	 * another type.
 	 */
 	ansiu = 0;
@@ -980,7 +980,8 @@ directive()
 		goto error;
 	if ((c = *(cp = eptr)) != ' ' && c != '\t' && c != '\0')
 		goto error;
-	while ((c = *cp++) == ' ' || c == '\t') ;
+	while ((c = *cp++) == ' ' || c == '\t')
+		continue;
 	if (c != '\0') {
 		if (c != '"')
 			goto error;
@@ -991,7 +992,8 @@ directive()
 			goto error;
 		if ((fnl = cp++ - fn) > PATH_MAX)
 			goto error;
-		while ((c = *cp++) == ' ' || c == '\t') ;
+		while ((c = *cp++) == ' ' || c == '\t')
+			continue;
 #if 0
 		if (c != '\0')
 			warning("extra character(s) after directive");
@@ -1071,7 +1073,8 @@ comment()
 	eoc = 0;
 
 	/* Skip white spaces after the start of the comment */
-	while ((c = inpc()) != EOF && isspace(c)) ;
+	while ((c = inpc()) != EOF && isspace(c))
+		continue;
 
 	/* Read the potential keyword to keywd */
 	l = 0;
