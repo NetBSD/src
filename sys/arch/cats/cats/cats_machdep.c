@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.12 2002/01/25 19:19:28 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.13 2002/02/09 12:14:02 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -733,6 +733,9 @@ initarm(bootargs)
 #ifdef DDB
 	db_machine_init();
 #ifdef __ELF__
+	/* ok this is really rather sick, in ELF what happens is that the
+	 * ELF symbol table is added after the text section.
+	 */
 	ddb_init(0, NULL, NULL);	/* XXX */
 #else
 	{
