@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.21 2001/02/04 22:12:47 christos Exp $	*/
+/*	$NetBSD: library.c,v 1.22 2001/07/13 20:30:22 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.21 2001/02/04 22:12:47 christos Exp $");
+__RCSID("$NetBSD: library.c,v 1.22 2001/07/13 20:30:22 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,19 +62,19 @@ __RCSID("$NetBSD: library.c,v 1.21 2001/02/04 22:12:47 christos Exp $");
 
 #include "clean.h"
 
-void	 add_blocks __P((FS_INFO *, BLOCK_INFO *, int *, SEGSUM *, caddr_t,
-	     daddr_t, daddr_t));
-void	 add_inodes __P((FS_INFO *, BLOCK_INFO *, int *, SEGSUM *, caddr_t,
-	     daddr_t));
-int	 bi_compare __P((const void *, const void *));
-int	 bi_toss __P((const void *, const void *, const void *));
-void	 get_ifile __P((FS_INFO *, int));
-int	 get_superblock __P((FS_INFO *, struct lfs *));
-int	 pseg_valid __P((FS_INFO *, SEGSUM *, daddr_t));
-int      pseg_size __P((daddr_t, FS_INFO *, SEGSUM *));
+void	 add_blocks(FS_INFO *, BLOCK_INFO *, int *, SEGSUM *, caddr_t,
+	     daddr_t, daddr_t);
+void	 add_inodes(FS_INFO *, BLOCK_INFO *, int *, SEGSUM *, caddr_t,
+	     daddr_t);
+int	 bi_compare(const void *, const void *);
+int	 bi_toss(const void *, const void *, const void *);
+void	 get_ifile(FS_INFO *, int);
+int	 get_superblock(FS_INFO *, struct lfs *);
+int	 pseg_valid(FS_INFO *, SEGSUM *, daddr_t);
+int      pseg_size(daddr_t, FS_INFO *, SEGSUM *);
 
 extern int debug;
-extern u_long cksum __P((void *, size_t));	/* XXX */
+extern u_long cksum(void *, size_t);	/* XXX */
 
 static int ifile_fd;
 static int dev_fd;
@@ -86,10 +86,7 @@ static int dev_fd;
  * a non-zero value is returned.
  */
 int
-fs_getmntinfo(buf, name, type)
-	struct	statfs	**buf;
-	char	*name;
-	const	char	*type;
+fs_getmntinfo(struct statfs **buf, char *name, const char *type)
 {
 	/* allocate space for the filesystem info */
 	*buf = (struct statfs *)malloc(sizeof(struct statfs));
@@ -123,9 +120,7 @@ fs_getmntinfo(buf, name, type)
  * Returns an pointer to an FS_INFO structure, NULL on error.
  */
 FS_INFO *
-get_fs_info (lstatfsp, use_mmap)
-	struct statfs *lstatfsp;	/* IN: pointer to statfs struct */
-	int use_mmap;			/* IN: mmap or read */
+get_fs_info (struct statfs *lstatfsp, int use_mmap)
 {
 	FS_INFO	*fsp;
 
@@ -139,8 +134,6 @@ get_fs_info (lstatfsp, use_mmap)
 		syslog(LOG_ERR, "Exiting: get_fs_info: get_superblock failed: %m");
                 exit(1);
         }
-	fsp->fi_daddr_shift =
-	     fsp->fi_lfs.lfs_bshift - fsp->fi_lfs.lfs_fsbtodb;
 	get_ifile (fsp, use_mmap);
 	return (fsp);
 }
@@ -151,9 +144,7 @@ get_fs_info (lstatfsp, use_mmap)
  * refresh the file system information (statfs) info.
  */
 void
-reread_fs_info(fsp, use_mmap)
-	FS_INFO *fsp;	/* IN: prointer fs_infos to reread */
-	int use_mmap;
+reread_fs_info(FS_INFO *fsp, int use_mmap)
 {
 	if (ifile_fd <= 0) {
 		if (fstatfs(ifile_fd, fsp->fi_statfsp)) {
@@ -171,12 +162,11 @@ reread_fs_info(fsp, use_mmap)
  * Gets the superblock from disk (possibly in face of errors)
  */
 int
-get_superblock (fsp, sbp)
-	FS_INFO *fsp;		/* local file system info structure */
-	struct lfs *sbp;
+get_superblock (FS_INFO *fsp, struct lfs *sbp)
 {
 	char mntfromname[MNAMELEN+1];
 	char buf[LFS_SBPAD];
+	static off_t sboff = LFS_LABELPAD;
 
 	strcpy(mntfromname, "/dev/r");
 	strcat(mntfromname, fsp->fi_statfsp->f_mntfromname+5);
@@ -189,9 +179,25 @@ get_superblock (fsp, sbp)
 	} else
 		lseek(dev_fd, 0, SEEK_SET);
 		
-	get(dev_fd, LFS_LABELPAD, buf, LFS_SBPAD);
-	memcpy(&(sbp->lfs_dlfs), buf, sizeof(struct dlfs));
+	do {
+		get(dev_fd, sboff, buf, LFS_SBPAD);
+		memcpy(&(sbp->lfs_dlfs), buf, sizeof(struct dlfs));
+		if (sboff == LFS_LABELPAD && fsbtob(sbp, 1) > LFS_LABELPAD)
+			sboff = fsbtob(sbp, (off_t)sbp->lfs_sboffs[0]);
+		else
+			break;
+	} while (1);
+	
 	/* close (fid); */
+
+	/* Compatibility */
+	if (sbp->lfs_version < 2) {
+		sbp->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
+		sbp->lfs_ibsize = sbp->lfs_bsize;
+		sbp->lfs_start = sbp->lfs_sboffs[0];
+		sbp->lfs_tstamp = sbp->lfs_otstamp;
+		sbp->lfs_fsbtodb = 0;
+	}
 
 	return (0);
 }
@@ -201,10 +207,7 @@ get_superblock (fsp, sbp)
  * fatal error on failure.
  */
 void
-get_ifile (fsp, use_mmap)
-	FS_INFO	*fsp;
-	int use_mmap;
-
+get_ifile (FS_INFO *fsp, int use_mmap)
 {
 	struct stat file_stat;
 	struct statfs statfsbuf;
@@ -306,19 +309,21 @@ redo_read:
  * Return the size of the partial segment, in bytes.
  */
 int
-pseg_size(pseg_addr, fsp, sp)
-	daddr_t pseg_addr;    /* base address of the segsum */
-	FS_INFO *fsp;         /* Filesystem info */
-	SEGSUM *sp;           /* the segsum */
+pseg_size(daddr_t pseg_addr, FS_INFO *fsp, SEGSUM *sp)
 {
 	int i, ssize = 0;
 	struct lfs *lfsp;
 	FINFO *fp;
 
 	lfsp = &fsp->fi_lfs;
-	ssize = LFS_SUMMARY_SIZE
-		+ howmany(sp->ss_ninos, INOPB(lfsp)) * lfsp->lfs_bsize;
-	for (fp = (FINFO *)(sp + 1), i = 0; i < sp->ss_nfinfo; ++i) {
+	ssize = lfsp->lfs_sumsize
+		+ howmany(sp->ss_ninos, INOPB(lfsp)) * lfsp->lfs_ibsize;
+
+	if (lfsp->lfs_version == 1)
+		fp = (FINFO *)(((char *)sp) + sizeof(SEGSUM_V1));
+	else
+		fp = (FINFO *)(sp + 1);
+	for (i = 0; i < sp->ss_nfinfo; ++i) {
 		ssize += (fp->fi_nblocks-1) * lfsp->lfs_bsize
 			+ fp->fi_lastlength;
 		fp = (FINFO *)(&fp->fi_blocks[fp->fi_nblocks]);
@@ -335,12 +340,7 @@ pseg_size(pseg_addr, fsp, sp)
  * pair will be listed at most once.
  */
 int
-lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
-	FS_INFO *fsp;		/* pointer to local file system information */
-	int seg;		/* the segment number */
-	caddr_t seg_buf;	/* the buffer containing the segment's data */
-	BLOCK_INFO **blocks;	/* OUT: array of block_info for live blocks */
-	int *bcount;		/* OUT: number of active blocks in segment */
+lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO **blocks, int *bcount)
 {
 	BLOCK_INFO *bip, *_bip;
 	SEGSUM *sp;
@@ -360,8 +360,9 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 
 	sup = SEGUSE_ENTRY(lfsp, fsp->fi_segusep, seg);
 	s = seg_buf + (sup->su_flags & SEGUSE_SUPERBLOCK ? LFS_SBPAD : 0);
-	seg_addr = sntoda(lfsp, seg);
-	pseg_addr = seg_addr + (sup->su_flags & SEGUSE_SUPERBLOCK ? btodb(LFS_SBPAD) : 0);
+	seg_addr = sntod(lfsp, seg);
+	pseg_addr = seg_addr + (sup->su_flags & SEGUSE_SUPERBLOCK ? 
+		btofsb(lfsp, LFS_SBPAD) : 0);
 
         if(debug > 1)
             syslog(LOG_DEBUG, "\tsegment buffer at: %p\tseg_addr 0x%x", s, seg_addr);
@@ -380,14 +381,19 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 
 #ifdef DIAGNOSTIC
 		/* Verify size of summary block */
-		sumsize = sizeof(SEGSUM) +
+		sumsize = (lfsp->lfs_version == 1 ? sizeof(SEGSUM_V1) :
+							sizeof(SEGSUM)) +
 		    (sp->ss_ninos + INOPB(lfsp) - 1) / INOPB(lfsp);
-		for (i = 0, fip = (FINFO *)(sp + 1); i < sp->ss_nfinfo; ++i) {
+		if (lfsp->lfs_version == 1)
+			fip = (FINFO *)(((char *)sp) + sizeof(SEGSUM_V1));
+		else
+			fip = (FINFO *)(sp + 1);
+		for (i = 0; i < sp->ss_nfinfo; ++i) {
 			sumsize += sizeof(FINFO) +
 			    (fip->fi_nblocks - 1) * sizeof(daddr_t);
 			fip = (FINFO *)(&fip->fi_blocks[fip->fi_nblocks]);
 		}
-		if (sumsize > LFS_SUMMARY_SIZE) {
+		if (sumsize > lfsp->lfs_sumsize) {
                         syslog(LOG_ERR,
 			    "Exiting: Segment %d summary block too big: %d\n",
 			    seg, sumsize);
@@ -406,7 +412,7 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 
 		ssize = pseg_size(pseg_addr, fsp, sp);
 		s += ssize;
-		pseg_addr += btodb(ssize); /* XXX was bytetoda(fsp,ssize) */
+		pseg_addr += btofsb(lfsp, ssize); 
 	}
 	if(nsegs < sup->su_nsums) {
 		syslog(LOG_WARNING,"only %d segment summaries in seg %d (expected %d)",
@@ -439,34 +445,34 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
  * blocks or inodes from files with new version numbers.
  */
 void
-add_blocks (fsp, bip, countp, sp, seg_buf, segaddr, psegaddr)
-	FS_INFO *fsp;		/* pointer to super block */
-	BLOCK_INFO *bip;	/* Block info array */
-	int *countp;		/* IN/OUT: number of blocks in array */
-	SEGSUM	*sp;		/* segment summmary pointer */
-	caddr_t seg_buf;	/* buffer containing segment */
-	daddr_t segaddr;	/* address of this segment */
-	daddr_t psegaddr;	/* address of this partial segment */
+add_blocks (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
+	    caddr_t seg_buf, daddr_t segaddr, daddr_t psegaddr)
 {
 	IFILE	*ifp;
 	FINFO	*fip;
 	caddr_t	bp;
 	daddr_t	*dp, *iaddrp;
-	int db_per_block, i, j;
-	int db_frag;
+	int fsb_per_block, i, j;
+	int fsb_frag;
 	u_long page_size;
+	struct lfs *lfsp;
 
         if(debug > 1)
             syslog(LOG_DEBUG, "FILE INFOS");
 
-	db_per_block = fsbtodb(&fsp->fi_lfs, 1);
+	lfsp = &fsp->fi_lfs;
+	fsb_per_block = fragstofsb(lfsp, lfsp->lfs_frag);
 	page_size = fsp->fi_lfs.lfs_bsize;
-	bp = seg_buf + datobyte(fsp, psegaddr - segaddr) + LFS_SUMMARY_SIZE;
+	bp = seg_buf + fsbtob(lfsp, psegaddr - segaddr) + lfsp->lfs_sumsize;
 	bip += *countp;
-	psegaddr += bytetoda(fsp, LFS_SUMMARY_SIZE);
-	iaddrp = (daddr_t *)((caddr_t)sp + LFS_SUMMARY_SIZE);
+	psegaddr += btofsb(lfsp, lfsp->lfs_sumsize);
+	iaddrp = (daddr_t *)((caddr_t)sp + lfsp->lfs_sumsize);
 	--iaddrp;
-	for (fip = (FINFO *)(sp + 1), i = 0; i < sp->ss_nfinfo;
+	if (lfsp->lfs_version == 1)
+		fip = (FINFO *)(((char *)sp) + sizeof(SEGSUM_V1));
+	else
+		fip = (FINFO *)(sp + 1);
+	for (i = 0; i < sp->ss_nfinfo;
 	    ++i, fip = (FINFO *)(&fip->fi_blocks[fip->fi_nblocks])) {
 
 		ifp = IFILE_ENTRY(&fsp->fi_lfs, fsp->fi_ifilep, fip->fi_ino);
@@ -477,14 +483,17 @@ add_blocks (fsp, bip, countp, sp, seg_buf, segaddr, psegaddr)
 		for (j = 0; j < fip->fi_nblocks; j++, dp++) {
 			/* Skip over intervening inode blocks */
 			while (psegaddr == *iaddrp) {
-				psegaddr += db_per_block;
+				psegaddr += fsb_per_block;
 				bp += page_size;
 				--iaddrp;
 			}
 			bip->bi_inode = fip->fi_ino;
 			bip->bi_lbn = *dp;
 			bip->bi_daddr = psegaddr;
-			bip->bi_segcreate = (time_t)(sp->ss_create);
+			if (lfsp->lfs_version == 1) 
+				bip->bi_segcreate = (time_t)(sp->ss_ident);
+			else
+				bip->bi_segcreate = (time_t)(sp->ss_create);
 			bip->bi_bp = bp;
 			bip->bi_version = ifp->if_version;
 
@@ -492,21 +501,21 @@ add_blocks (fsp, bip, countp, sp, seg_buf, segaddr, psegaddr)
 			    || fip->fi_lastlength == page_size)
 			{
 				bip->bi_size = page_size;
-				psegaddr += db_per_block;
+				psegaddr += fsb_per_block;
 				bp += page_size;
 			} else {
-				db_frag = fragstodb(&(fsp->fi_lfs),
+				fsb_frag = fragstofsb(&(fsp->fi_lfs),
 				    numfrags(&(fsp->fi_lfs),
 				    fip->fi_lastlength));
 
                                 if(debug > 1) {
 					syslog(LOG_DEBUG, "lastlength, frags: %d, %d",
-					       fip->fi_lastlength, db_frag);
+					       fip->fi_lastlength, fsb_frag);
 				}
 
 				bip->bi_size = fip->fi_lastlength;
 				bp += fip->fi_lastlength;
-				psegaddr += db_frag;
+				psegaddr += fsb_frag;
 			}
 			++bip;
 			++(*countp);
@@ -520,13 +529,8 @@ add_blocks (fsp, bip, countp, sp, seg_buf, segaddr, psegaddr)
  * actually added.
  */
 void
-add_inodes (fsp, bip, countp, sp, seg_buf, seg_addr)
-	FS_INFO *fsp;		/* pointer to super block */
-	BLOCK_INFO *bip;	/* block info array */
-	int *countp;		/* pointer to current number of inodes */
-	SEGSUM *sp;		/* segsum pointer */
-	caddr_t	seg_buf;	/* the buffer containing the segment's data */
-	daddr_t	seg_addr;	/* disk address of seg_buf */
+add_inodes (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
+	    caddr_t seg_buf, daddr_t seg_addr)
 {
 	struct dinode *di = NULL;	/* XXX gcc */
 	struct lfs *lfsp;
@@ -545,12 +549,12 @@ add_inodes (fsp, bip, countp, sp, seg_buf, seg_addr)
         if(debug > 1)
             syslog(LOG_DEBUG, "INODES:");
 
-	daddrp = (daddr_t *)((caddr_t)sp + LFS_SUMMARY_SIZE);
+	daddrp = (daddr_t *)((caddr_t)sp + lfsp->lfs_sumsize);
 	for (i = 0; i < sp->ss_ninos; ++i) {
 		if (i % INOPB(lfsp) == 0) {
 			--daddrp;
-			di = (struct dinode *)(seg_buf +
-			    ((*daddrp - seg_addr) << fsp->fi_daddr_shift));
+			di = (struct dinode *)(seg_buf + fsbtob(lfsp, 
+				*daddrp - seg_addr));
 		} else
 			++di;
 
@@ -559,7 +563,10 @@ add_inodes (fsp, bip, countp, sp, seg_buf, seg_addr)
 		bp->bi_inode = inum;
 		bp->bi_daddr = *daddrp;
 		bp->bi_bp = di;
-		bp->bi_segcreate = sp->ss_create;
+		if (lfsp->lfs_version == 1) 
+			bp->bi_segcreate = sp->ss_ident;
+		else
+			bp->bi_segcreate = sp->ss_create;
 		bp->bi_size = i; /* XXX KS - kludge */
 
 		if (inum == LFS_IFILE_INUM) {
@@ -586,10 +593,7 @@ add_inodes (fsp, bip, countp, sp, seg_buf, seg_addr)
  * the partial as well as whether or not the checksum is valid.
  */
 int
-pseg_valid (fsp, ssp, addr)
-	FS_INFO *fsp;   /* pointer to file system info */
-	SEGSUM *ssp;	/* pointer to segment summary block */
-	daddr_t addr;   /* address of the summary block on disk */
+pseg_valid (FS_INFO *fsp, SEGSUM *ssp, daddr_t addr)
 {
 	int nblocks;
 #if 0
@@ -610,7 +614,7 @@ pseg_valid (fsp, ssp, addr)
 #if 0
 	/* check data/inode block(s) checksum too */
 	datap = (u_long *)malloc(nblocks * sizeof(u_long));
-	p = (caddr_t)ssp + LFS_SUMMARY_SIZE;
+	p = (caddr_t)ssp + lfsp->lfs_sumsize;
 	for (i = 0; i < nblocks; ++i) {
 		datap[i] = *((u_long *)p);
 		p += fsp->fi_lfs.lfs_bsize;
@@ -630,11 +634,7 @@ pseg_valid (fsp, ssp, addr)
  * read a segment into a memory buffer
  */
 int
-mmap_segment (fsp, segment, segbuf, use_mmap)
-	FS_INFO *fsp;		/* file system information */
-	int segment;		/* segment number */
-	caddr_t *segbuf;	/* pointer to buffer area */
-	int use_mmap;		/* mmap instead of read */
+mmap_segment (FS_INFO *fsp, int segment, caddr_t *segbuf, int use_mmap)
 {
 	struct lfs *lfsp;
 	daddr_t seg_daddr;	/* base disk address of segment */
@@ -645,8 +645,8 @@ mmap_segment (fsp, segment, segbuf, use_mmap)
 	lfsp = &fsp->fi_lfs;
 
 	/* get the disk address of the beginning of the segment */
-	seg_daddr = sntoda(lfsp, segment);
-	seg_byte = datobyte(fsp, seg_daddr);
+	seg_daddr = sntod(lfsp, segment);
+	seg_byte = fsbtob(lfsp, (off_t)seg_daddr);
 	ssize = seg_size(lfsp);
 
 	strcpy(mntfromname, "/dev/r");
@@ -697,10 +697,7 @@ mmap_segment (fsp, segment, segbuf, use_mmap)
 }
 
 void
-munmap_segment (fsp, seg_buf, use_mmap)
-	FS_INFO *fsp;		/* file system information */
-	caddr_t seg_buf;	/* pointer to buffer area */
-	int use_mmap;		/* mmap instead of read/write */
+munmap_segment (FS_INFO *fsp, caddr_t seg_buf, int use_mmap)
 {
 	if (use_mmap)
 		munmap (seg_buf, seg_size(&fsp->fi_lfs));
@@ -712,10 +709,7 @@ munmap_segment (fsp, seg_buf, use_mmap)
  * USEFUL DEBUGGING TOOLS:
  */
 void
-print_SEGSUM (lfsp, p, addr)
-	struct lfs *lfsp;
-	SEGSUM	*p;
-	daddr_t addr;
+print_SEGSUM (struct lfs *lfsp, SEGSUM *p, daddr_t addr)
 {
 	if (p)
 		(void) dump_summary(lfsp, p, DUMP_ALL, NULL, addr);
@@ -724,9 +718,7 @@ print_SEGSUM (lfsp, p, addr)
 }
 
 int
-bi_compare(a, b)
-	const void *a;
-	const void *b;
+bi_compare(const void *a, const void *b)
 {
 	const BLOCK_INFO *ba, *bb;
 	int diff;
@@ -757,10 +749,7 @@ bi_compare(a, b)
 }
 
 int
-bi_toss(dummy, a, b)
-	const void *dummy;
-	const void *a;
-	const void *b;
+bi_toss(const void *dummy, const void *a, const void *b)
 {
 	const BLOCK_INFO *ba, *bb;
 
@@ -771,12 +760,7 @@ bi_toss(dummy, a, b)
 }
 
 void
-toss(p, nump, size, dotoss, client)
-	void *p;
-	int *nump;
-	size_t size;
-	int (*dotoss) __P((const void *, const void *, const void *));
-	void *client;
+toss(void *p, int *nump, size_t size, int (*dotoss)(const void *, const void *, const void *), void *client)
 {
 	int i;
 	char *p0, *p1;
