@@ -4,6 +4,8 @@
 ./usr/bin/asa
 ./usr/bin/c++
 ./usr/bin/cc
+./usr/bin/crunchgen
+./usr/bin/crunchide
 ./usr/bin/flex
 ./usr/bin/flex++
 ./usr/bin/fpr
@@ -36,6 +38,7 @@
 ./usr/include/ctype.h
 ./usr/include/curses.h
 ./usr/include/db.h
+./usr/include/dev/auconv.h
 ./usr/include/dev/audio_if.h
 ./usr/include/dev/audiovar.h
 ./usr/include/dev/ccdvar.h
@@ -83,6 +86,8 @@
 ./usr/include/dev/ic/ispmbox.h
 ./usr/include/dev/ic/ispreg.h
 ./usr/include/dev/ic/ispvar.h
+./usr/include/dev/ic/lemacreg.h
+./usr/include/dev/ic/lemacvar.h
 ./usr/include/dev/ic/mb86960reg.h
 ./usr/include/dev/ic/mc146818reg.h
 ./usr/include/dev/ic/midwayreg.h
@@ -933,10 +938,10 @@
 ./usr/lib/c++rt0.o
 ./usr/lib/crt0.o
 ./usr/lib/gcrt0.o
-./usr/lib/libc.a
-./usr/lib/libc_p.a
 ./usr/lib/libamu.a
 ./usr/lib/libamu_p.a
+./usr/lib/libc.a
+./usr/lib/libc_p.a
 ./usr/lib/libcompat.a
 ./usr/lib/libcompat_p.a
 ./usr/lib/libcrypt.a
@@ -1024,6 +1029,8 @@
 ./usr/share/man/cat1/c++.0
 ./usr/share/man/cat1/cc.0
 ./usr/share/man/cat1/cccp.0
+./usr/share/man/cat1/crunchgen.0
+./usr/share/man/cat1/crunchide.0
 ./usr/share/man/cat1/flex.0
 ./usr/share/man/cat1/fpr.0
 ./usr/share/man/cat1/g++.0
@@ -1643,8 +1650,8 @@
 ./usr/share/man/cat3/radixsort.0
 ./usr/share/man/cat3/raise.0
 ./usr/share/man/cat3/rand.0
-./usr/share/man/cat3/rand_r.0
 ./usr/share/man/cat3/rand48.0
+./usr/share/man/cat3/rand_r.0
 ./usr/share/man/cat3/random.0
 ./usr/share/man/cat3/rcmd.0
 ./usr/share/man/cat3/re_comp.0
