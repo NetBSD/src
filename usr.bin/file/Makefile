@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1993/11/03 05:56:58 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/12/22 12:29:47 cgd Exp $
 
 MAGIC=		/etc/magic
 MAGICOWN=	bin
@@ -9,8 +9,7 @@ PROG=		file
 SRCS=		file.c apprentice.c fsmagic.c softmagic.c ascmagic.c is_tar.c \
 		print.c compress.c
 CFLAGS+=	-DMAGIC='"$(MAGIC)"'
-MAN1=		file.0
-MAN5=		magic.0
+MAN=		file.1 magic.5
 
 CLEANFILES+=	magic
 all:		file magic

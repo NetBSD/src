@@ -33,11 +33,11 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.4 1994/02/09 15:02:19 deraadt Exp $
+#	$Id: Makefile,v 1.5 1994/12/22 12:30:24 cgd Exp $
 #
 
 PROG=	modstat
-MAN8=	modstat.0
+MAN=	modstat.8
 BINGRP=	kmem
 BINMODE=2555
 

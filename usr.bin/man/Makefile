@@ -2,7 +2,6 @@
 
 PROG=	man
 SRCS=	config.c man.c
-MAN1=	man.0
-MAN5=	man.conf.0
+MAN=	man.1 man.conf.5
 
 .include <bsd.prog.mk>
