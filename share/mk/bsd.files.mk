@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.31 2004/03/18 03:26:55 jmc Exp $
+#	$NetBSD: bsd.files.mk,v 1.32 2004/03/18 03:32:03 jmc Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -93,6 +93,7 @@ cleanbuildsymlinks: .PHONY
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	${TOOL_UUDECODE} ${UUDECODE_FILES_RENAME_${.TARGET}:?-p:} ${.IMPSRC} ${UUDECODE_FILES_RENAME_${.TARGET}:?>:} ${UUDECODE_FILES_RENAME_${.TARGET}:U}
+	${UUDECODE_FILES_RENAME_${.TARGET}:?touch ${.TARGET}:@true}
 
 realall: ${UUDECODE_FILES}
 
