@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: printf.c,v 1.12 1994/02/03 00:35:18 jtc Exp $";
+static char rcsid[] = "$Id: printf.c,v 1.13 1994/02/03 01:10:49 jtc Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -459,15 +459,11 @@ getlong()
 	if (!*gargv)
 		return(0L);
 
-	if (**gargv == '\"' || **gargv == '\'') {
-		val = gargv[0][1];
-		gargv++;
-		return val;
-	}
+	if (**gargv == '\"' || **gargv == '\'')
+		return (long) *((*gargv++)+1);
 
 	errno = 0;
 	val = strtol (*gargv, &ep, 0);
-
 	check_conversion(*gargv++, ep);
 	return val;
 }
@@ -479,17 +475,13 @@ getulong()
 	char *ep;
 
 	if (!*gargv)
-		return(0L);
+		return(0UL);
 
-	if (**gargv == '\"' || **gargv == '\'') {
-		val = gargv[0][1];
-		gargv++;
-		return val;
-	}
+	if (**gargv == '\"' || **gargv == '\'')
+		return (unsigned long) *((*gargv++)+1);
 
 	errno = 0;
 	val = strtoul (*gargv, &ep, 0);
-
 	check_conversion(*gargv++, ep);
 	return val;
 }
@@ -503,15 +495,11 @@ getdouble()
 	if (!*gargv)
 		return(0.0);
 
-	if (**gargv == '\"' || **gargv == '\'') {
-		val = gargv[0][1];
-		gargv++;
-		return val;
-	}
+	if (**gargv == '\"' || **gargv == '\'')
+		return (double) *((*gargv++)+1);
 
 	errno = 0;
 	val = strtod (*gargv, &ep);
-
 	check_conversion(*gargv++, ep);
 	return val;
 }
