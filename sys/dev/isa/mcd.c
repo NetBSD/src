@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.53 1997/04/04 18:59:35 christos Exp $	*/
+/*	$NetBSD: mcd.c,v 1.54 1997/06/14 08:55:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1436,17 +1436,17 @@ mcd_toc_entries(sc, te)
 		data.entries[n].track = bcd2bin(sc->toc[trk].toc.idx_no);
 		switch (te->address_format) {
 		case CD_MSF_FORMAT:
-			data.entries[n].addr[0] = 0;
-			data.entries[n].addr[1] = bcd2bin(sc->toc[trk].toc.absolute_pos[0]);
-			data.entries[n].addr[2] = bcd2bin(sc->toc[trk].toc.absolute_pos[1]);
-			data.entries[n].addr[3] = bcd2bin(sc->toc[trk].toc.absolute_pos[2]);
+			data.entries[n].addr.addr[0] = 0;
+			data.entries[n].addr.addr[1] = bcd2bin(sc->toc[trk].toc.absolute_pos[0]);
+			data.entries[n].addr.addr[2] = bcd2bin(sc->toc[trk].toc.absolute_pos[1]);
+			data.entries[n].addr.addr[3] = bcd2bin(sc->toc[trk].toc.absolute_pos[2]);
 			break;
 		case CD_LBA_FORMAT:
 			lba = msf2hsg(sc->toc[trk].toc.absolute_pos, 0);
-			data.entries[n].addr[0] = lba >> 24;
-			data.entries[n].addr[1] = lba >> 16;
-			data.entries[n].addr[2] = lba >> 8;
-			data.entries[n].addr[3] = lba;
+			data.entries[n].addr.addr[0] = lba >> 24;
+			data.entries[n].addr.addr[1] = lba >> 16;
+			data.entries[n].addr.addr[2] = lba >> 8;
+			data.entries[n].addr.addr[3] = lba;
 			break;
 		}
 		n++;
@@ -1556,14 +1556,14 @@ mcd_read_subchannel(sc, ch)
 		data.what.position.index_number = bcd2bin(q.current.idx_no);
 		switch (ch->address_format) {
 		case CD_MSF_FORMAT:
-			data.what.position.reladdr[0] = 0;
-			data.what.position.reladdr[1] = bcd2bin(q.current.relative_pos[0]);
-			data.what.position.reladdr[2] = bcd2bin(q.current.relative_pos[1]);
-			data.what.position.reladdr[3] = bcd2bin(q.current.relative_pos[2]);
-			data.what.position.absaddr[0] = 0;
-			data.what.position.absaddr[1] = bcd2bin(q.current.absolute_pos[0]);
-			data.what.position.absaddr[2] = bcd2bin(q.current.absolute_pos[1]);
-			data.what.position.absaddr[3] = bcd2bin(q.current.absolute_pos[2]);
+			data.what.position.reladdr.addr[0] = 0;
+			data.what.position.reladdr.addr[1] = bcd2bin(q.current.relative_pos[0]);
+			data.what.position.reladdr.addr[2] = bcd2bin(q.current.relative_pos[1]);
+			data.what.position.reladdr.addr[3] = bcd2bin(q.current.relative_pos[2]);
+			data.what.position.absaddr.addr[0] = 0;
+			data.what.position.absaddr.addr[1] = bcd2bin(q.current.absolute_pos[0]);
+			data.what.position.absaddr.addr[2] = bcd2bin(q.current.absolute_pos[1]);
+			data.what.position.absaddr.addr[3] = bcd2bin(q.current.absolute_pos[2]);
 			break;
 		case CD_LBA_FORMAT:
 			lba = msf2hsg(q.current.relative_pos, 1);
@@ -1574,15 +1574,15 @@ mcd_read_subchannel(sc, ch)
 			 */
 			if (data.what.position.index_number == 0x00)
 				lba = -lba;
-			data.what.position.reladdr[0] = lba >> 24;
-			data.what.position.reladdr[1] = lba >> 16;
-			data.what.position.reladdr[2] = lba >> 8;
-			data.what.position.reladdr[3] = lba;
+			data.what.position.reladdr.addr[0] = lba >> 24;
+			data.what.position.reladdr.addr[1] = lba >> 16;
+			data.what.position.reladdr.addr[2] = lba >> 8;
+			data.what.position.reladdr.addr[3] = lba;
 			lba = msf2hsg(q.current.absolute_pos, 0);
-			data.what.position.absaddr[0] = lba >> 24;
-			data.what.position.absaddr[1] = lba >> 16;
-			data.what.position.absaddr[2] = lba >> 8;
-			data.what.position.absaddr[3] = lba;
+			data.what.position.absaddr.addr[0] = lba >> 24;
+			data.what.position.absaddr.addr[1] = lba >> 16;
+			data.what.position.absaddr.addr[2] = lba >> 8;
+			data.what.position.absaddr.addr[3] = lba;
 			break;
 		}
 		break;
