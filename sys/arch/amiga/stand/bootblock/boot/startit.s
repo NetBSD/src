@@ -1,4 +1,4 @@
-/*	$NetBSD: startit.s,v 1.7 2001/03/01 21:32:53 is Exp $	*/
+/*	$NetBSD: startit.s,v 1.8 2001/03/02 16:43:26 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * From: $NetBSD: startit.s,v 1.7 2001/03/01 21:32:53 is Exp $
+ * From: $NetBSD: startit.s,v 1.8 2001/03/02 16:43:26 mhitch Exp $
  */
 #include <machine/asm.h>
 
@@ -49,7 +49,7 @@ ENTRY_NOPROFILE(startit)
 	moveb	#31,0x200003c9
 	moveb	#31,0x200003c9
 #endif
-	movel	%sp,a3
+	movel	%sp,%a3
 	movel	4:w,%a6
 	lea	%pc@(start_super:w),%a5
 	jmp	%a6@(-0x1e)		| supervisor-call
@@ -58,7 +58,7 @@ start_super:
 #if TESTONAMIGA
 	movew	#0x900,0xdff180		| dark red
 #endif
-	movew	#0x2700,sr
+	movew	#0x2700,%sr
 
 	| the BSD kernel wants values into the following registers:
 	| %a0:  fastmem-start
@@ -73,7 +73,7 @@ start_super:
 	| %a2:  Inhibit sync flags
 	| All other registers zeroed for possible future requirements.
 
-	lea	%pc@(_startit:w),%sp	| make sure we have a good stack ***
+	lea	%pc@(_C_LABEL(startit):w),%sp	| make sure we have a good stack ***
 
 	movel	%a3@(4),%a1		| loaded kernel
 	movel	%a3@(8),%d2		| length of loaded kernel
@@ -115,7 +115,7 @@ start_super:
 
 | Turn off 68040/060 MMU
 
-	subl	%a5,a5
+	subl	%a5,%a5
 	.word 0x4e7b,0xd003		| movec %a5,tc
 	.word 0x4e7b,0xd806		| movec %a5,urp
 	.word 0x4e7b,0xd807		| movec %a5,srp
@@ -127,10 +127,10 @@ start_super:
 
 not040:
 	lea	%pc@(zero:w),%a5
-	pmove	%a5@,tc			| Turn off MMU
+	pmove	%a5@,%tc		| Turn off MMU
 	lea	%pc@(nullrp:w),%a5
-	pmove	%a5@,crp			| Turn off MMU some more
-	pmove	%a5@,srp			| Really, really, turn off MMU
+	pmove	%a5@,%crp		| Turn off MMU some more
+	pmove	%a5@,%srp		| Really, really, turn off MMU
 
 | Turn off 68030 TT registers
 
@@ -158,45 +158,45 @@ nott:
 | removed Z flag
 |	tstl	%a3			| Can we load to fastmem?
 |	jeq	L0			| No, leave destination at 0
-	movl	%a0,a3			| Move to start of fastmem chunk
-	addl	%a0,a6			| relocate kernel entry point
+	movl	%a0,%a3			| Move to start of fastmem chunk
+	addl	%a0,%a6			| relocate kernel entry point
 
 	addl	#3,%d2
 	andl	#0xfffffffc,%d2		| round up.
 
 	| determine if the kernel need be copied upwards or downwards
 
-	cmpl	%a1,a3			| %a3-a1
+	cmpl	%a1,%a3			| %a3-a1
 	bcs	above			| source is above
 
-	movl	%a0,sp
-	addl	%d0,sp			| move the stack to the end of segment
+	movl	%a0,%sp
+	addl	%d0,%sp			| move the stack to the end of segment
 
 	| copy from below upwards requires copying from end to start.
 
-	addl	%d2,a3			| one long word past
-	addl	%d2,a1			| one long word past
+	addl	%d2,%a3			| one long word past
+	addl	%d2,%a1			| one long word past
 
 	subl	#4,%sp			| alloc space
-	movl	%a1,sp@-			| save source
-	movl	%a3,sp@-			| save destination
+	movl	%a1,%sp@-			| save source
+	movl	%a3,%sp@-			| save destination
 
 	| copy copier to end of segment
 
-	movl	%sp,a3
+	movl	%sp,%a3
 	subl	#256,%a3			| end of segment save our stack
 
-	lea	%pc@(_startit_end:w),%a1
-	movl	%a0,sp@-			| save segment start
+	lea	%pc@(_C_LABEL(startit_end):w),%a1
+	movl	%a0,%sp@-			| save segment start
 	lea	%pc@(below:w),%a0
 
 L0:	movw	%a1@-,%a3@-
-	cmpl	%a0,a1
+	cmpl	%a0,%a1
 	bne	L0
 	movl	%sp@,%a0			| restore segment start
-	movl	%a3,sp@			| address of relocated below
+	movl	%a3,%sp@			| address of relocated below
 	addl	#(ckend - below),%a3
-	movl	%a3,sp@(12)		| address of ckend for later
+	movl	%a3,%sp@(12)		| address of ckend for later
 | ---- switch off cache ----
 	bra	Lchoff			| and to relocated below
 
@@ -216,8 +216,8 @@ above:	movl	%a1@+,%a3@+
 	bne	above
 
 	lea	%pc@(ckend:w),%a1
-	movl	%a3,sp@-
-	pea	%pc@(_startit_end:w)
+	movl	%a3,%sp@-
+	pea	%pc@(_C_LABEL(startit_end):w)
 L2:
 	movl	%a1@+,%a3@+
 	cmpl	%sp@,%a1
@@ -238,9 +238,9 @@ L2:
 Lchoff:	btst	#3,%d5
 	jeq	L3c
 	.word	0xf4f8
-L3c:	movl	%d2,sp@-			| save %d2
+L3c:	movl	%d2,%sp@-			| save %d2
 	movql	#0,%d2			| switch off cache to ensure we use
-	movec	%d2,cacr			| valid kernel data
+	movec	%d2,%cacr			| valid kernel data
 	movl	%sp@+,%d2			| restore %d2
 	rts
 
@@ -257,14 +257,14 @@ ckend:
 	moveb	#63,0x200003c9
 #endif
 
-	movl	%d5,d2
+	movl	%d5,%d2
 	roll	#8,%d2
 	cmpb	#0x7D,%d2
 	jne	noDraCo
 
 | DraCo: switch off MMU now:
 
-	subl	%a5,a5
+	subl	%a5,%a5
 	.word 0x4e7b,0xd003		| movec %a5,tc
 	.word 0x4e7b,0xd806		| movec %a5,urp
 	.word 0x4e7b,0xd807		| movec %a5,srp
@@ -275,11 +275,11 @@ ckend:
 	
 noDraCo:
 	moveq	#0,%d2			| zero out unused registers
-	movel	%d2,a1			| (might make future compatibility
-	movel	%d2,a3			|  would have known contents)
-	movel	%d2,a5
-	movel	%a6,sp			| entry point into stack pointer
-	movel	%d2,a6
+	movel	%d2,%a1			| (might make future compatibility
+	movel	%d2,%a3			|  would have known contents)
+	movel	%d2,%a5
+	movel	%a6,%sp			| entry point into stack pointer
+	movel	%d2,%a6
 
 #if TESTONAMIGA
 	movew	#0x0F0,0xdff180		| green
