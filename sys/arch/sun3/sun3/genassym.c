@@ -33,7 +33,7 @@
  *
  *	from: @(#)genassym.c	8.3 (Berkeley) 1/4/94
  *	from: genassym.c,v 1.9 1994/05/23 06:14:19 mycroft
- *	$Id: genassym.c,v 1.19 1994/05/27 14:58:27 gwr Exp $
+ *	$Id: genassym.c,v 1.20 1994/06/01 15:37:05 gwr Exp $
  */
 
 #define KERNEL
@@ -79,7 +79,6 @@ def(what, val)
 main()
 {
 	struct pcb *pcb = (struct pcb *) 0;
-	struct vmmeter *vm = (struct vmmeter *)0;
 	struct proc *p = (struct proc *) 0;
 	struct vmspace *vms = (struct vmspace *) 0;
 	struct intersil7170 *intersil_addr = (struct intersil7170 *) 0;
@@ -187,14 +186,6 @@ main()
 	def("FR_SP", &fp->f_regs[15]);
 	def("FR_HW", &fp->f_sr);
 	def("FR_ADJ", &fp->f_stackadj);
-
-	/* vm statistics */
-	def("V_SWTCH", &vm->v_swtch);
-	def("V_TRAP", &vm->v_trap);
-	def("V_SYSCALL", &vm->v_syscall);
-	def("V_INTR", &vm->v_intr);
-	def("V_SOFT", &vm->v_soft);
-	def("V_FAULTS", &vm->v_faults);
 
 	exit(0);
 }
