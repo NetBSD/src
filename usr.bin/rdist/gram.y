@@ -1,4 +1,6 @@
 %{
+/*	$NetBSD: gram.y,v 1.3.8.1 1996/07/16 02:16:45 jtc Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)gram.y	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: gram.y,v 1.3 1994/03/07 05:05:30 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)gram.y	8.1 (Berkeley) 6/9/93";
+#else
+static char *rcsid = "$NetBSD: gram.y,v 1.3.8.1 1996/07/16 02:16:45 jtc Exp $";
+#endif
 #endif /* not lint */
 
 #include "defs.h"
@@ -163,13 +168,8 @@ cmd:		  INSTALL options opt_namelist SM = {
 			$$ = $1;
 		}
 		| PATTERN namelist SM = {
-			struct namelist *nl;
-			char *cp, *re_comp();
-
-			for (nl = $2; nl != NULL; nl = nl->n_next)
-				if ((cp = re_comp(nl->n_name)) != NULL)
-					yyerror(cp);
-			$1->sc_args = expand($2, E_VARS);
+			if ($2 != NULL)
+				$1->sc_args = expand($2, E_VARS);
 			$$ = $1;
 		}
 		| SPECIAL opt_namelist STRING SM = {
