@@ -1,25 +1,30 @@
 #
 # GENERIC_NS -- Generic 532 machine -- distribution
 #
-#	$Id: GENERIC_NS,v 1.4 1994/03/09 21:23:00 ws Exp $
+#	$Id: GENERIC_NS,v 1.5 1994/04/17 05:45:40 phil Exp $
 #
 machine		"pc532"
 cpu		"ns532"
 ident		GENERIC_NS
-timezone	8 dst
+timezone	0
 maxusers	20
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		FFS
-options		INET,NFS
+options		INET, NFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
+options		"COMDEF_SPEED=B19200"
+options		KTRACE
+options		"COMPAT_09"
 
-config		"netbsd"	root on as0 swap on as0
+options		SCSI
 
-controller	dp0
-disk		sd0	at dp0 flags 0 drive ? bio
-disk		sd1	at dp0 flags 0 drive ? bio
-tape		st0	at dp0 flags 1 drive ? bio
+config		"netbsd"	root on sd0 swap on sd0
+
+controller	ncr0
+disk		sd0	at ncr0 flags 0 drive ? bio
+disk		sd1	at ncr0 flags 0 drive ? bio
+tape		st0	at ncr0 flags 1 drive ? bio
 
 controller	scn0
 device		com0 	at scn0 port 0 tty
@@ -33,7 +38,7 @@ device		com7 	at scn0 port 7 tty
 
 pseudo-device	loop
 pseudo-device	ether
+pseudo-device	ppp	1
 pseudo-device	sl	2
 pseudo-device	log
-pseudo-device	pty	8
-
+pseudo-device	pty	32
