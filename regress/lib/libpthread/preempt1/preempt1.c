@@ -1,4 +1,4 @@
-/*	$NetBSD: preempt1.c,v 1.1 2003/01/31 20:14:25 skrll Exp $	*/
+/*	$NetBSD: preempt1.c,v 1.2 2003/06/27 13:27:58 skrll Exp $	*/
 
 #include <assert.h>
 #include <err.h>
@@ -38,6 +38,8 @@ main(int argc, char *argv[])
 	printf("1: preempt test\n");
 
 	pthread_cond_init(&cond, NULL);
+	pthread_mutex_init(&mutex, NULL);
+
 	pthread_mutex_lock(&mutex);
 
 	started = 0;
