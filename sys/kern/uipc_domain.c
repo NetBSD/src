@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_domain.c	7.9 (Berkeley) 3/4/91
- *	$Id: uipc_domain.c,v 1.8 1994/05/05 05:38:45 cgd Exp $
+ *	$Id: uipc_domain.c,v 1.9 1994/05/05 09:27:37 mycroft Exp $
  */
 
 #include <sys/cdefs.h>
@@ -95,8 +95,8 @@ if (max_linkhdr < 16)		/* XXX */
 max_linkhdr = 16;
 	max_hdr = max_linkhdr + max_protohdr;
 	max_datalen = MHLEN - max_hdr;
-	timeout(pffasttimo, (caddr_t)0, 1);
-	timeout(pfslowtimo, (caddr_t)0, 1);
+	timeout(pffasttimo, NULL, 1);
+	timeout(pfslowtimo, NULL, 1);
 }
 
 struct protosw *
@@ -169,7 +169,7 @@ pfslowtimo(arg)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_slowtimo)
 				(*pr->pr_slowtimo)();
-	timeout(pfslowtimo, (caddr_t)0, hz/2);
+	timeout(pfslowtimo, NULL, hz/2);
 }
 
 /* ARGSUSED */
@@ -184,5 +184,5 @@ pffasttimo(arg)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_fasttimo)
 				(*pr->pr_fasttimo)();
-	timeout(pffasttimo, (caddr_t)0, hz/5);
+	timeout(pffasttimo, NULL, hz/5);
 }
