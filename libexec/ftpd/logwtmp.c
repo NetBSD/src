@@ -1,3 +1,5 @@
+/*	$NetBSD: logwtmp.c,v 1.4 1995/04/11 02:44:58 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: logwtmp.c,v 1.3 1994/06/29 01:49:47 deraadt Exp $";
+#else
+static char rcsid[] = "$NetBSD: logwtmp.c,v 1.4 1995/04/11 02:44:58 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
