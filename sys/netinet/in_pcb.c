@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.95 2004/04/25 16:42:42 simonb Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.96 2004/09/29 21:30:00 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.95 2004/04/25 16:42:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.96 2004/09/29 21:30:00 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -447,7 +447,6 @@ in_pcbconnect(v, nam)
 			if (error == EAGAIN)
 				return (error);
 		}
-		inp->inp_laddr = ia->ia_addr.sin_addr;
 		inp->inp_laddr = ifaddr->sin_addr;
 	}
 	inp->inp_faddr = sin->sin_addr;
