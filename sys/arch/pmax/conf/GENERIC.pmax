@@ -2,7 +2,7 @@
 # GENERIC DECstation (3100 or 5000/xxx)
 #
 #	from: @(#)GENERIC.pmax	8.1 (Berkeley) 6/29/93
-# 	$Id: GENERIC.pmax,v 1.2 1994/05/27 08:57:42 glass Exp $
+# 	$Id: GENERIC.pmax,v 1.3 1994/06/21 23:10:13 glass Exp $
 #
 machine		pmax
 
@@ -84,6 +84,5 @@ tape		tz1	at asc0 drive 6 slave 0
 pseudo-device	sl		 4	# serial-line IP ports
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	bpfilter	16	# packet filter ports
-pseudo-device	ite
 pseudo-device	loop
 pseudo-device	ether
