@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.93 1997/09/12 10:36:04 drochner Exp $
+#	$NetBSD: rc,v 1.94 1997/10/07 12:11:48 lukem Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -128,6 +128,13 @@ if checkyesno syslogd; then
 	echo 'starting system logger'
 	rm -f /dev/log
 	syslogd $syslogd_flags
+fi
+
+# Enable ipmon (only useful if ipfilter is running)
+# NOTE: requires the IPFILTER_LOG kernel option.
+if checkyesno ipmon; then
+	echo 'starting ipmon'
+	ipmon $ipmon_flags &
 fi
 
 # /var/crash should be a directory or a symbolic link
