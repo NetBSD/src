@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/11/14 22:13:41 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2001/11/19 04:47:43 perry Exp $
 
 TIMESTAMP=	${TOOLDIR}/bin/nblorder
 
@@ -8,4 +8,4 @@ TIMESTAMP=	${TOOLDIR}/bin/nblorder
 
 install: ${TIMESTAMP}
 ${TIMESTAMP}: lorder.sh
-	${INSTALL_FILE:N-U} -m ${BINMODE} ${.ALLSRC} ${.TARGET}
+	${HOST_INSTALL_FILE} -m ${BINMODE} ${.ALLSRC} ${.TARGET}
