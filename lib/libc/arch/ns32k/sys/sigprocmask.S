@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.3 1997/05/08 13:39:08 matthias Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.4 1998/09/29 20:24:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,7 +24,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigprocmask.S,v 1.3 1997/05/08 13:39:08 matthias Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.4 1998/09/29 20:24:36 thorpej Exp $")
 #endif
 
 ENTRY(sigprocmask)
@@ -35,7 +35,7 @@ ENTRY(sigprocmask)
 	movqd	1,S_ARG0		/* SIG_BLOCK */
 	br	1f
 0:	movd	0(r1),S_ARG1		/* fetch indirect to new mask arg */
-1:	SYSTRAP(sigprocmask)
+1:	SYSTRAP(compat_13_sigprocmask13)
 	bcs	_ASM_LABEL(cerror)
 	movd	S_ARG2,r1		/* fetch old mask requested */
 	cmpqd	0,r1			/* test if old mask requested */
