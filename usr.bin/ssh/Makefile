@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.19 2004/05/16 09:53:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2005/01/03 06:04:08 lukem Exp $
 
 .include <bsd.own.mk>
 
 SSHDIST?= ${NETBSDSRCDIR}/crypto/dist/ssh
 
-SUBDIR=	libssh .WAIT ssh sshd ssh-add ssh-keygen ssh-agent scp sftp-server \
+SUBDIR=	ssh sshd ssh-add ssh-keygen ssh-agent scp sftp-server \
 	ssh-keysign ssh-keyscan sftp
 #SUBDIR+=scard
 
