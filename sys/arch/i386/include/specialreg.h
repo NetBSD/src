@@ -31,30 +31,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)specialreg.h	7.1 (Berkeley) 5/9/91
- *	$Id: specialreg.h,v 1.4 1993/12/20 05:25:46 mycroft Exp $
+ *	$Id: specialreg.h,v 1.5 1994/05/24 11:54:24 mycroft Exp $
  */
 
 /*
  * Bits in 386 special registers:
  */
-
 #define	CR0_PE	0x00000001	/* Protected mode Enable */
 #define	CR0_MP	0x00000002	/* "Math" Present (NPX or NPX emulator) */
-#ifdef notused
 #define	CR0_EM	0x00000004	/* EMulate non-NPX coproc. (trap ESC only) */
-#endif
 #define	CR0_TS	0x00000008	/* Task Switched (if MP, trap ESC and WAIT) */
-#ifdef notused
 #define	CR0_ET	0x00000010	/* Extension Type (387 (if set) vs 287) */
-#endif
 #define	CR0_PG	0x80000000	/* PaGing enable */
 
 /*
  * Bits in 486 special registers:
  */
-
 #define CR0_NE	0x00000020	/* Numeric Error enable (EX16 vs IRQ13) */
 #define CR0_WP	0x00010000	/* Write Protect (honor PG_RW in all modes) */
-#ifdef notyet
 #define CR0_AM	0x00040000	/* Alignment Mask (set to enable AC flag) */
-#endif
+#define	CR0_NW	0x20000000	/* Not Write-through */
+#define	CR0_CD	0x40000000	/* Cache Disable */
