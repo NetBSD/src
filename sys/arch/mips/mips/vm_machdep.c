@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.39 1999/05/26 22:19:36 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.40 1999/05/27 01:56:34 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39 1999/05/26 22:19:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.40 1999/05/27 01:56:34 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,8 +327,8 @@ vmapbuf(bp, len)
 	 */
 	fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
 	tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
-	pt_mask = (CPUISMIPS3) ? (MIPS3_PG_V|MIPS3_PG_G|MIPS3_PG_M) :
-				 (MIPS1_PG_V|MIPS1_PG_G|MIPS1_PG_M);
+	pt_mask = (CPUISMIPS3) ? (MIPS3_PG_V|MIPS3_PG_G|MIPS3_PG_D) :
+				 (MIPS1_PG_V|MIPS1_PG_G|MIPS1_PG_D);
 	do {
 		/* XXX should mark them PG_WIRED? */
 		tpte->pt_entry = fpte->pt_entry | pt_mask;
