@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.58 1999/02/07 17:29:26 drochner Exp $	*/
+/*	$NetBSD: clock.c,v 1.59 1999/02/13 16:45:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -524,7 +524,7 @@ clock_expandyear(clockyear)
 		cmoscentury = 0;
 	splx(s);
 	if (!cmoscentury) {
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		printf("clock: unknown CMOS layout\n");
 #endif
 		return (clockyear);
@@ -586,9 +586,10 @@ inittodr(base)
 		goto fstime;
 	}
 	splx(s);
-#ifdef DEBUG
-	printf("readclock: %x/%x/%x/%x/%x/%x\n", rtclk[MC_YEAR], rtclk[MC_MONTH],
-	       rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN], rtclk[MC_SEC]);
+#ifdef DEBUG_CLOCK
+	printf("readclock: %x/%x/%x %x:%x:%x\n", rtclk[MC_YEAR],
+	    rtclk[MC_MONTH], rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN],
+	    rtclk[MC_SEC]);
 #endif
 
 	dt.dt_sec = bcdtobin(rtclk[MC_SEC]);
@@ -618,8 +619,8 @@ inittodr(base)
 	}
 
 	time.tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
-#ifdef DEBUG
-	printf("=>%ld (%ld)\n", time.tv_sec, base);
+#ifdef DEBUG_CLOCK
+	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
 #endif
 
 	if (base < time.tv_sec - 5*SECYR)
@@ -672,9 +673,9 @@ resettodr()
 	rtclk[MC_MONTH] = bintobcd(dt.dt_mon);
 	rtclk[MC_DOM] = bintobcd(dt.dt_day);
 
-#ifdef DEBUG
-	printf("setclock: %x/%x/%x/%x/%x/%x\n", rtclk[MC_YEAR], rtclk[MC_MONTH],
-	       rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN], rtclk[MC_SEC]);
+#ifdef DEBUG_CLOCK
+	printf("setclock: %x/%x/%x %x:%x:%x\n", rtclk[MC_YEAR], rtclk[MC_MONTH],
+	   rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN], rtclk[MC_SEC]);
 #endif
 	s = splclock();
 	rtcput(&rtclk);
