@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.41 2001/11/20 12:56:43 lukem Exp $
+#	$NetBSD: files.x68k,v 1.42 2001/11/20 14:34:24 lukem Exp $
 #
 # new style config file for x68k architecture
 #
@@ -71,7 +71,7 @@ file	arch/x68k/dev/grf_machdep.c	grf|ite
 file	arch/x68k/dev/grf_tv.c		grf|ite
 file	arch/x68k/dev/grf_gv.c		grf|ite
 
-defopt	opt_ite.h	ITE_KERNEL_ATTR
+defparam opt_ite.h	ITE_KERNEL_ATTR
 device	ite: tty
 attach	ite at grf
 file	arch/x68k/dev/ite.c		ite needs-flag
@@ -107,7 +107,8 @@ device dmac
 attach	dmac at intio
 file	arch/x68k/dev/intio_dmac.c	dmac needs-flag
 
-defopt	opt_zsc.h	ZSCONSOLE ZSCN_SPEED
+defopt	opt_zsc.h	ZSCONSOLE
+defparam opt_zsc.h	ZSCN_SPEED
 device zsc {channel = -1}
 attach zsc at intio
 file arch/x68k/dev/zs.c			zsc needs-flag

@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.21 2001/11/20 12:56:37 lukem Exp $
+#	$NetBSD: files.prep,v 1.22 2001/11/20 14:34:23 lukem Exp $
 #
 # prep-specific configuration info
 #
@@ -178,9 +178,9 @@ include	"dev/mii/files.mii"
 include "dev/usb/files.usb"
 
 # PCMCIA drivers/support
-defopt	PCIC_ISA_ALLOC_IOBASE
-defopt	PCIC_ISA_ALLOC_IOSIZE
-defopt	PCIC_ISA_INTR_ALLOC_MASK
+defparam PCIC_ISA_ALLOC_IOBASE
+defparam PCIC_ISA_ALLOC_IOSIZE
+defparam PCIC_ISA_INTR_ALLOC_MASK
 
 device	pcic: pcmciabus
 file	dev/ic/i82365.c			pcic

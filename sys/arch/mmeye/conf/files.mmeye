@@ -1,4 +1,4 @@
-#	$NetBSD: files.mmeye,v 1.7 2001/11/20 12:56:33 lukem Exp $
+#	$NetBSD: files.mmeye,v 1.8 2001/11/20 14:34:22 lukem Exp $
 #
 # config file for mmeye
 
@@ -14,7 +14,7 @@ file	arch/mmeye/mmeye/autoconf.c
 file	arch/sh3/sh3/clock.c
 file	arch/sh3/sh3/disksubr.c			disk
 
-defopt	opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
+defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
 
 #
 # Machine-independent SCSI drivers

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.62 2001/11/18 08:19:39 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.63 2001/11/20 14:34:20 lukem Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -199,14 +199,14 @@ file arch/hpcmips/vr/vrc4173kiu.c		vrc4173kiu
 #
 #	TOSHIBA TX3912/3922
 #
-defopt TX39_DEBUG
-defopt TX39_WATCHDOGTIMER
-defopt TX39ICUDEBUG
-defopt TX39CLKDEBUG
-defopt TX39BIUDEBUG
-defopt TX39POWERDEBUG
-defopt TX39UARTDEBUG
-defopt USE_POLL
+defopt	TX39_DEBUG
+defopt	TX39_WATCHDOGTIMER
+defopt	TX39ICUDEBUG
+defopt	TX39CLKDEBUG
+defopt	TX39BIUDEBUG
+defopt	TX39POWERDEBUG
+defopt	TX39UARTDEBUG
+defopt	USE_POLL
 
 device txsim { }
 device txcsbusif {[platform = -1]}
@@ -367,9 +367,9 @@ include "dev/mii/files.mii"
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-defopt	PCIC_ISA_ALLOC_IOBASE
-defopt	PCIC_ISA_ALLOC_IOSIZE
-defopt	PCIC_ISA_INTR_ALLOC_MASK
+defparam PCIC_ISA_ALLOC_IOBASE
+defparam PCIC_ISA_ALLOC_IOSIZE
+defparam PCIC_ISA_INTR_ALLOC_MASK
 
 device	pcic: pcmciabus
 file	dev/ic/i82365.c			pcic

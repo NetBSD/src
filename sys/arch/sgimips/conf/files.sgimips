@@ -1,10 +1,10 @@
-#	$NetBSD: files.sgimips,v 1.15 2001/11/20 12:56:38 lukem Exp $
+#	$NetBSD: files.sgimips,v 1.16 2001/11/20 14:34:23 lukem Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
 
-defopt	opt_machtypes.h IP20 IP22 IP32
+defopt	opt_machtypes.h		IP20 IP22 IP32
 
 device mainbus {[addr = -1]}
 attach mainbus at root

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.469 2001/11/20 08:43:43 lukem Exp $
+#	$NetBSD: files,v 1.470 2001/11/20 14:34:25 lukem Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -7,9 +7,9 @@
 defopt	INSECURE
 defopt	KMEMSTATS
 defopt	KTRACE
-defopt	MAXUPRC
-defopt	RTC_OFFSET
-defopt	DEFCORENAME
+defparam MAXUPRC
+defparam RTC_OFFSET
+defparam DEFCORENAME
 defopt	UCONSOLE
 defopt	NEW_PIPE
 
@@ -18,22 +18,22 @@ defopt	MULTIPROCESSOR
 defopt	opt_callout.h	CALLWHEEL_STATS
 
 defopt	opt_sysv.h	SYSVMSG SYSVSEM	SYSVSHM
-defopt	opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
+defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
 
 defopt	opt_ntp.h	PPS_SYNC NTP 
 
 defopt	opt_nfs_boot.h	NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
-			NFS_BOOT_BOOTP_REQFILE
-			NFS_BOOT_GATEWAY
-			NFS_BOOT_TCP NFS_BOOT_OPTIONS NFS_BOOT_RWSIZE
+			NFS_BOOT_GATEWAY NFS_BOOT_TCP
+defparam opt_nfs_boot.h	NFS_BOOT_BOOTP_REQFILE NFS_BOOT_OPTIONS NFS_BOOT_RWSIZE
 defopt	opt_nfs.h	NFS_V2_ONLY
 defopt	NFSSERVER
 
-defopt	opt_kmempages.h	NKMEMPAGES NKMEMPAGES_MIN NKMEMPAGES_MAX
-defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
-defopt	opt_malloc_debug.h MALLOC_DEBUG
-defopt	opt_pool.h	POOL_DIAGNOSTIC
-defopt	opt_poollog.h	POOL_LOGSIZE
+defparam opt_kmempages.h	NKMEMPAGES KMEMPAGES_MIN NKMEMPAGES_MAX
+defopt	opt_malloclog.h		MALLOCLOG
+defparam opt_malloclog.h	MALLOCLOGSIZE
+defopt	opt_malloc_debug.h	MALLOC_DEBUG
+defopt	opt_pool.h		POOL_DIAGNOSTIC
+defparam opt_poollog.h		POOL_LOGSIZE
 
 defopt	opt_revcache.h	NAMECACHE_ENTER_REVERSE
 
@@ -61,32 +61,32 @@ defopt	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 				COMPAT_13 COMPAT_14 COMPAT_15 COMPAT_NOMID
 
 # networking protocols
-defopt	opt_tcp_debug.h	TCP_DEBUG TCP_NDEBUG
-defopt	opt_inet.h	INET INET6 INET6_MD_CKSUM
-defopt	opt_ipsec.h	IPSEC IPSEC_ESP
-defopt	opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
-defopt	opt_atalk.h	NETATALK
-defopt	opt_ns.h	NS NSIP		# NS network stack,
-					# XNS tunneled over IP
-defopt	opt_iso.h	ISO TPIP	# ISO network stack
-defopt	IPX				# IPX network stack
-defopt	EON				# ISO clnp over IP
-defopt	CCITT				# 
-defopt	HDLC				# CCITT over HDLC
-defopt	LLC				# CCITT over LLC2 (also IEEE LLC?)
-defopt	NATM				# "native" ATM protocols
-defopt	PFIL_HOOKS			# pfil(9)
-defopt	IPFILTER_LOG			# logging of ip packets
+defopt	opt_tcp_debug.h		TCP_DEBUG
+defparam opt_tcp_debug.h	TCP_NDEBUG
+defopt	opt_inet.h		INET INET6 INET6_MD_CKSUM
+defopt	opt_ipsec.h		IPSEC IPSEC_ESP
+defparam opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
+defopt	opt_atalk.h		NETATALK
+defopt	opt_ns.h		NS NSIP		# NS network stack,
+						# XNS tunneled over IP
+defopt	opt_iso.h		ISO TPIP	# ISO network stack
+defopt	IPX					# IPX network stack
+defopt	EON					# ISO clnp over IP
+defopt	CCITT					# 
+defopt	HDLC					# CCITT over HDLC
+defopt	LLC					# CCITT over LLC2 (& IEEE LLC?)
+defopt	NATM					# "native" ATM protocols
+defopt	PFIL_HOOKS				# pfil(9)
+defopt	IPFILTER_LOG				# logging of ip packets
 # Include deflate or bsd compression, enable pppd packet filtering support
-defopt	opt_ppp.h	PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
+defopt	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
 
 # networking options
 defopt	GATEWAY
 defopt	MROUTING
 defopt	TCP_COMPAT_42
 
-defopt	TCP_RECVSPACE
-defopt	TCP_SENDSPACE
+defparam opt_tcp_space.h	TCP_RECVSPACE TCP_SENDSPACE
 
 defopt	opt_inet_csum.h	INET_CSUM_COUNTERS TCP_CSUM_COUNTERS UDP_CSUM_COUNTERS
 
@@ -95,7 +95,7 @@ defopt	opt_altq.h	ALTQ_CBQ ALTQ_WFQ ALTQ_FIFOQ ALTQ_RED ALTQ_FLOWVALVE
 			ALTQ_RIO ALTQ_LOCALQ ALTQ_HFSC ALTQ_CDNR ALTQ_BLUE
 			ALTQ_PRIQ ALTQ_NOPCC ALTQ_DEBUG
 
-defopt	SB_MAX
+defparam SB_MAX
 
 # UVM options
 defopt	opt_uvmhist.h	UVMHIST UVMHIST_PRINT
@@ -127,7 +127,7 @@ defopt	RAID_AUTOCONFIG
 defopt	RAID_DIAGNOSTIC
 
 # buffer cache size options
-defopt	opt_bufcache.h	BUFCACHE BUFPAGES
+defparam opt_bufcache.h	BUFCACHE BUFPAGES
 
 # userconf
 defopt opt_userconf.h	USERCONF
@@ -139,8 +139,9 @@ defopt opt_userconf.h	USERCONF
 defopt	opt_mbr.h	COMPAT_386BSD_MBRPART
 
 # debugging options
-defopt	opt_ddb.h	DDB DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
-			DDB_BREAK_CHAR SYMTAB_SPACE
+defopt	opt_ddb.h	DDB
+defparam opt_ddb.h	DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
+			DDB_BREAK_CHAR DDB_KEYCODE SYMTAB_SPACE
 defopt	opt_kgdb.h 	KGDB
 defparam opt_kgdb.h	KGDB_DEV KGDB_DEVNAME
 			KGDB_DEVADDR KGDB_DEVRATE KGDB_DEVMODE
@@ -148,10 +149,11 @@ defopt	LOCKDEBUG
 defopt	SYSCALL_DEBUG
 
 # memory (ram) disk options
-defopt	opt_md.h	MEMORY_DISK_HOOKS MEMORY_DISK_SERVER
-			MEMORY_DISK_IS_ROOT MEMORY_DISK_DYNAMIC
+defopt	opt_md.h	MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
+			MEMORY_DISK_DYNAMIC
+defparam opt_md.h	MEMORY_DISK_SERVER
 
-defopt	opt_mdsize.h	MINIROOTSIZE
+defparam opt_mdsize.h	MINIROOTSIZE
 
 # device classes
 devclass disk
@@ -245,7 +247,8 @@ define	smc93cx6
 file	dev/ic/smc93cx6.c		smc93cx6
 
 # Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
-defopt	opt_ahc.h	AHC_DEBUG AHC_NO_TAGS
+defparam opt_ahc.h	AHC_DEBUG
+defopt	opt_ahc.h	AHC_NO_TAGS
 device	ahc: scsi
 define	ahc_seeprom
 define	ahc_aic77xx
@@ -597,7 +600,7 @@ define	wsmousedev {[mux = -1]}
 # attribute to pull in raster support
 define	wsrasteremulops
 # common PC display functions
-defopt	opt_pcdisplay.h	PCDISPLAY_SOFTCURSOR
+defopt	opt_pcdisplay.h		PCDISPLAY_SOFTCURSOR
 define	pcdisplayops
 file	dev/ic/pcdisplay_subr.c	pcdisplayops
 file	dev/ic/pcdisplay_chars.c	pcdisplayops

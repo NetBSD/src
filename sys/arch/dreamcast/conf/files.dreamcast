@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.13 2001/11/20 12:56:25 lukem Exp $
+#	$NetBSD: files.dreamcast,v 1.14 2001/11/20 14:34:20 lukem Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -22,9 +22,9 @@ file	arch/dreamcast/dreamcast/procfs_machdep.c	procfs
 file	arch/dreamcast/dreamcast/clock.c
 file	arch/sh3/sh3/disksubr.c				disk
 
-defopt	opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
-defopt	opt_led_addr.h	LED_ADDR
-defopt	opt_initbsc.h	BSC_BCR1_VAL BSC_BCR2_VAL BSC_WCR1_VAL BSC_WCR2_VAL
+defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
+defparam opt_led_addr.h	LED_ADDR
+defparam opt_initbsc.h	BSC_BCR1_VAL BSC_BCR2_VAL BSC_WCR1_VAL BSC_WCR2_VAL
 			BSC_WCR3_VAL BSC_MCR_VAL BSC_SDMR2_VAL BSC_SDMR3_VAL
 			BSC_RTCSR_VAL BSC_RTCNT_VAL BSC_RTCOR_VAL BSC_RFCR_VAL
 			BSC_PCR_VAL FRQCR_VAL PFC_SCPCR_VAL
