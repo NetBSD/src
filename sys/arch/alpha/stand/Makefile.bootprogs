@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.19 2001/10/31 17:20:45 thorpej Exp $
+# $NetBSD: Makefile.bootprogs,v 1.20 2001/12/30 16:32:29 lukem Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -29,7 +29,7 @@ realall: machine-links ${PROG}
 AFLAGS+=	-DASSEMBLER
 # -I${.CURDIR}/../.. done by Makefile.inc
 CPPFLAGS+=	-nostdinc -I${.OBJDIR} -D_STANDALONE -I${S}
-CFLAGS=		-Os -mno-fp-regs -g
+CFLAGS=		-mno-fp-regs -g
 
 NETBSD_VERS!=sh ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
@@ -117,6 +117,8 @@ SECONDARY_CPPFLAGS=	-DSECONDARY_BOOTBLOCK \
 STANDPROG_CPPFLAGS=	-DSTANDALONE_PROGRAM
 
 .include <bsd.prog.mk>
+
+COPTS+=-Os	# override -O supplied by user
 
 ### find out what to use for libkern
 KERN_AS=	library
