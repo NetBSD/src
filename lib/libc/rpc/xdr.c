@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.16 1998/07/26 12:37:18 mycroft Exp $	*/
+/*	$NetBSD: xdr.c,v 1.17 1998/07/26 12:47:38 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.16 1998/07/26 12:37:18 mycroft Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.17 1998/07/26 12:47:38 mycroft Exp $");
 #endif
 #endif
 
@@ -94,7 +94,7 @@ __weak_alias(xdr_wrapstring,_xdr_wrapstring);
 /*
  * for unit alignment
  */
-static char xdr_zero[BYTES_PER_XDR_UNIT] = { 0, 0, 0, 0 };
+static const char xdr_zero[BYTES_PER_XDR_UNIT] = { 0, 0, 0, 0 };
 
 /*
  * Free a data structure using XDR
