@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.3 1999/07/07 00:28:29 itojun Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.4 1999/09/03 04:31:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@ const char *inet6_n2a(p)
 {
 	static char buf[BUFSIZ];
 
-	if (IN6_IS_ADDR_ANY(p))
+	if (IN6_IS_ADDR_UNSPECIFIED(p))
 		return "*";
 	return inet_ntop(AF_INET6, (void *)p, buf, sizeof(buf));
 }
