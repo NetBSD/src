@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.100 2001/11/27 17:32:57 augustss Exp $	*/
+/*	$NetBSD: if.c,v 1.101 2001/12/02 19:44:25 abs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.100 2001/11/27 17:32:57 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.101 2001/12/02 19:44:25 abs Exp $");
 
 #include "opt_inet.h"
 
@@ -161,7 +161,10 @@ int if_clone_list __P((struct if_clonereq *));
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
 
+#if defined(INET) || defined(INET6) || defined(NETATALK) || defined(NS) || \
+    defined(ISO) || defined(CCITT) || defined(NATM)
 static void if_detach_queues __P((struct ifnet *, struct ifqueue *));
+#endif
 
 /*
  * Network interface utility routines.
