@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.13 2005/03/09 19:04:46 matt Exp $	*/
+/*	$NetBSD: bus.c,v 1.14 2005/04/01 11:59:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.13 2005/03/09 19:04:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.14 2005/04/01 11:59:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,7 +332,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	size = m68k_round_page(size);
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -394,8 +394,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 vaddr_t 
 _bus_dma_valloc_skewed(size_t size, u_long boundary, u_long align, u_long skew)
 {
-	size_t oversize;
-	vaddr_t va, sva;
+	vaddr_t va;
 
 	/*
 	 * Find a region of kernel virtual addresses that is aligned
@@ -423,30 +422,15 @@ _bus_dma_valloc_skewed(size_t size, u_long boundary, u_long align, u_long skew)
 #endif
 
 	/* XXX - Implement this! */
-	if (boundary)
+	if (boundary || skew)
 		panic("_bus_dma_valloc_skewed: not implemented");
 
 	/*
 	 * First, find a region large enough to contain any aligned chunk
 	 */
-	oversize = size + align - PAGE_SIZE;
-	sva = uvm_km_valloc(kernel_map, oversize);
-	if (sva == 0)
+	va = uvm_km_alloc(kernel_map, size, align, UVM_KMF_VAONLY);
+	if (va == 0)
 		return (ENOMEM);
-
-	/*
-	 * Compute start of aligned region
-	 */
-	va = sva;
-	va += (skew + align - va) & (align - 1);
-
-	/*
-	 * Return excess virtual addresses
-	 */
-	if (va != sva)
-		(void)uvm_unmap(kernel_map, sva, va);
-	if (va + size != sva + oversize)
-		(void)uvm_unmap(kernel_map, va + size, sva + oversize);
 
 	return (va);
 }
@@ -618,7 +602,8 @@ sun68k_bus_map(bus_space_tag_t t, bus_type_t iospace, bus_addr_t addr,
 	if (vaddr)
 		v = vaddr;
 	else
-		v = uvm_km_valloc_wait(kernel_map, size);
+		v = uvm_km_alloc(kernel_map, size, 0,
+		    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	if (v == 0)
 		panic("sun68k_bus_map: no memory");
 
@@ -664,7 +649,9 @@ sun68k_bus_unmap(bus_space_tag_t t, bus_space_handle_t bh, bus_size_t size)
 	if (va >= SUN_MONSTART && va < SUN_MONEND)
 		return (0);
 
-	uvm_km_free_wakeup(kernel_map, va, size);
+	pmap_remove(pmap_kernel(), va, va + size);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, va, size, UVM_KMF_VAONLY);
 	return (0);
 }
 
