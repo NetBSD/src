@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.135 2002/07/04 23:32:05 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.136 2002/07/26 00:43:55 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.135 2002/07/04 23:32:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.136 2002/07/26 00:43:55 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -214,6 +214,7 @@ struct pridtab {
 	int	cpu_cid;
 	int	cpu_pid;
 	int	cpu_rev;	/* -1 == wildcard */
+	int	cpu_copts;	/* -1 == wildcard */
 	int	cpu_isa;	/* -1 == probed (mips32/mips64) */
 	int	cpu_ntlb;	/* -1 == unknown, 0 == probed */
 	int	cpu_flags;
@@ -237,13 +238,13 @@ struct pridtab {
 static const struct pridtab *mycpu;
 
 static const struct pridtab cputab[] = {
-	{ 0, MIPS_R2000, -1,			CPU_ARCH_MIPS1, 64,
+	{ 0, MIPS_R2000, -1, -1,		CPU_ARCH_MIPS1, 64,
 	  0,					"MIPS R2000 CPU"	},
-	{ 0, MIPS_R3000, MIPS_REV_R3000,	CPU_ARCH_MIPS1, 64,
+	{ 0, MIPS_R3000, MIPS_REV_R3000, -1,	CPU_ARCH_MIPS1, 64,
 	  0,					"MIPS R3000 CPU"	},
-	{ 0, MIPS_R3000, MIPS_REV_R3000A,	CPU_ARCH_MIPS1, 64,
+	{ 0, MIPS_R3000, MIPS_REV_R3000A, -1,	CPU_ARCH_MIPS1, 64,
 	  0,					"MIPS R3000A CPU"	},
-	{ 0, MIPS_R6000, -1,			CPU_ARCH_MIPS2, 32,
+	{ 0, MIPS_R6000, -1, -1,		CPU_ARCH_MIPS2, 32,
 	  MIPS_NOT_SUPP,			"MIPS R6000 CPU"	},
 
 	/*
@@ -251,47 +252,47 @@ static const struct pridtab cputab[] = {
 	 * should we allow ranges and use 0x00 - 0x3f for R4000 and
 	 * 0x40 - 0xff for R4400?
 	 */
-	{ 0, MIPS_R4000, MIPS_REV_R4000_A,	CPU_ARCH_MIPS3, 48,
+	{ 0, MIPS_R4000, MIPS_REV_R4000_A, -1,	CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
 						"MIPS R4000 CPU"	},
-	{ 0, MIPS_R4000, MIPS_REV_R4000_B,	CPU_ARCH_MIPS3, 48,
+	{ 0, MIPS_R4000, MIPS_REV_R4000_B, -1,	CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
 						"MIPS R4000 CPU"	},
-	{ 0, MIPS_R4000, MIPS_REV_R4400_A,	CPU_ARCH_MIPS3, 48,
+	{ 0, MIPS_R4000, MIPS_REV_R4400_A, -1,	CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
 						"MIPS R4400 CPU"	},
-	{ 0, MIPS_R4000, MIPS_REV_R4400_B,	CPU_ARCH_MIPS3, 48,
+	{ 0, MIPS_R4000, MIPS_REV_R4400_B, -1,	CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
 						"MIPS R4400 CPU"	},
-	{ 0, MIPS_R4000, MIPS_REV_R4400_C,	CPU_ARCH_MIPS3, 48,
+	{ 0, MIPS_R4000, MIPS_REV_R4400_C, -1,	CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
 						"MIPS R4400 CPU"	},
 
-	{ 0, MIPS_R3LSI, -1,			CPU_ARCH_MIPS1, -1,
+	{ 0, MIPS_R3LSI, -1, -1,		CPU_ARCH_MIPS1, -1,
 	  MIPS_NOT_SUPP,			"LSI Logic R3000 derivative" },
-	{ 0, MIPS_R6000A, -1,			CPU_ARCH_MIPS2, 32,
+	{ 0, MIPS_R6000A, -1, -1,		CPU_ARCH_MIPS2, 32,
 	  MIPS_NOT_SUPP,			"MIPS R6000A CPU"	},
-	{ 0, MIPS_R3IDT, -1,			CPU_ARCH_MIPS1, -1,
+	{ 0, MIPS_R3IDT, -1, -1,		CPU_ARCH_MIPS1, -1,
 	  MIPS_NOT_SUPP,			"IDT R3041 or RC36100 CPU" },
-	{ 0, MIPS_R4100, -1,			CPU_ARCH_MIPS3, 32,
+	{ 0, MIPS_R4100, -1, -1,		CPU_ARCH_MIPS3, 32,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_NO_LLSC,	"NEC VR4100 CPU"	},
-	{ 0, MIPS_R4200, -1,			CPU_ARCH_MIPS3, -1,
+	{ 0, MIPS_R4200, -1, -1,		CPU_ARCH_MIPS3, -1,
 	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"NEC VR4200 CPU"	},
-	{ 0, MIPS_R4300, -1,			CPU_ARCH_MIPS3, 32,
+	{ 0, MIPS_R4300, -1, -1,		CPU_ARCH_MIPS3, 32,
 	  CPU_MIPS_R4K_MMU,			"NEC VR4300 CPU"	},
-	{ 0, MIPS_R4600, -1,			CPU_ARCH_MIPS3, 48,
+	{ 0, MIPS_R4600, -1, -1,		CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,			
 						"QED R4600 Orion CPU"	},
-	{ 0, MIPS_R4700, -1,			CPU_ARCH_MIPS3, 48,
+	{ 0, MIPS_R4700, -1, -1,		CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU,			"QED R4700 Orion CPU"	},
 
-	{ 0, MIPS_R8000, -1,			CPU_ARCH_MIPS4, 384,
+	{ 0, MIPS_R8000, -1, -1,		CPU_ARCH_MIPS4, 384,
 	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"MIPS R8000 Blackbird/TFP CPU" },
-	{ 0, MIPS_R10000, -1,			CPU_ARCH_MIPS4, 64,
+	{ 0, MIPS_R10000, -1, -1,		CPU_ARCH_MIPS4, 64,
 	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"MIPS R10000 CPU"	},
-	{ 0, MIPS_R12000, -1,			CPU_ARCH_MIPS4, 64,
+	{ 0, MIPS_R12000, -1, -1,		CPU_ARCH_MIPS4, 64,
 	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"MIPS R12000 CPU"	},
-	{ 0, MIPS_R14000, -1,			CPU_ARCH_MIPS4, 64,
+	{ 0, MIPS_R14000, -1, -1,		CPU_ARCH_MIPS4, 64,
 	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"MIPS R14000 CPU"	},
 
 	/* XXX
@@ -301,18 +302,18 @@ static const struct pridtab cputab[] = {
 	 * Or maybe put TX39 CPUs first if the revid doesn't overlap with
 	 * the 4650...
 	 */
-	{ 0, MIPS_R4650, 0,			CPU_ARCH_MIPS3, -1,
+	{ 0, MIPS_R4650, 0, -1,			CPU_ARCH_MIPS3, -1,
 	  MIPS_NOT_SUPP /* no MMU! */,		"QED R4650 CPU"	},
-	{ 0, MIPS_TX3900, MIPS_REV_TX3912,	CPU_ARCH_MIPS1, 32,
+	{ 0, MIPS_TX3900, MIPS_REV_TX3912, -1,	CPU_ARCH_MIPS1, 32,
 	  0,					"Toshiba TX3912 CPU"	},
-	{ 0, MIPS_TX3900, MIPS_REV_TX3922,	CPU_ARCH_MIPS1, 64,
+	{ 0, MIPS_TX3900, MIPS_REV_TX3922, -1,	CPU_ARCH_MIPS1, 64,
 	  0,					"Toshiba TX3922 CPU"	},
-	{ 0, MIPS_TX3900, MIPS_REV_TX3927,	CPU_ARCH_MIPS1, 64,
+	{ 0, MIPS_TX3900, MIPS_REV_TX3927, -1,	CPU_ARCH_MIPS1, 64,
 	  0,					"Toshiba TX3927 CPU"	},
-	{ 0, MIPS_R5000, -1,			CPU_ARCH_MIPS4, 48,
+	{ 0, MIPS_R5000, -1, -1,		CPU_ARCH_MIPS4, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,			
 						"MIPS R5000 CPU"	},
-	{ 0, MIPS_RM5200, -1,			CPU_ARCH_MIPS4, 48,
+	{ 0, MIPS_RM5200, -1, -1,		CPU_ARCH_MIPS4, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV | CPU_MIPS_DOUBLE_COUNT |
 	  CPU_MIPS_USE_WAIT,			"QED RM5200 CPU"	},
 
@@ -321,7 +322,7 @@ static const struct pridtab cputab[] = {
 	 *    "Migrating to the RM7000 from other MIPS Microprocessors"
 	 * for more details.
 	 */
-	{ 0, MIPS_RM7000, -1,			CPU_ARCH_MIPS4, 48,
+	{ 0, MIPS_RM7000, -1, -1,		CPU_ARCH_MIPS4, 48,
 	  MIPS_NOT_SUPP | CPU_MIPS_CAUSE_IV | CPU_MIPS_DOUBLE_COUNT |
 	  CPU_MIPS_USE_WAIT,			"QED RM7000 CPU"	},
 
@@ -335,58 +336,67 @@ static const struct pridtab cputab[] = {
 	 * for IC and DC (2^9 instead of 2^12).
 	 *
 	 */
-	{ 0, MIPS_RC32300, -1,			CPU_ARCH_MIPS3, 16,
+	{ 0, MIPS_RC32300, -1, -1,		CPU_ARCH_MIPS3, 16,
 	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"IDT RC32300 CPU"	},
-	{ 0, MIPS_RC32364, -1,			CPU_ARCH_MIPS3, 16,
+	{ 0, MIPS_RC32364, -1, -1,		CPU_ARCH_MIPS3, 16,
 	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"IDT RC32364 CPU"	},
-	{ 0, MIPS_RC64470, -1,			CPU_ARCH_MIPSx, -1,
+	{ 0, MIPS_RC64470, -1, -1,		CPU_ARCH_MIPSx, -1,
 	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"IDT RC64474/RC64475 CPU" },
 
-	{ 0, MIPS_R5400, -1,			CPU_ARCH_MIPSx, -1,
+	{ 0, MIPS_R5400, -1, -1,		CPU_ARCH_MIPSx, -1,
 	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"NEC VR5400 CPU"	},
-	{ 0, MIPS_R5900, -1,			CPU_ARCH_MIPS3, 48,
+	{ 0, MIPS_R5900, -1, -1,		CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU,			"Toshiba R5900 CPU"	},
 
 #if 0 /* ID collisions : can we use a CU1 test or similar? */
-	{ 0, MIPS_R3SONY, -1,			CPU_ARCH_MIPS1, -1,
+	{ 0, MIPS_R3SONY, -1, -1,		CPU_ARCH_MIPS1, -1,
 	  MIPS_NOT_SUPP,			"SONY R3000 derivative"	},	/* 0x21; crash R4700? */
-	{ 0, MIPS_R3NKK, -1,			CPU_ARCH_MIPS1, -1,
+	{ 0, MIPS_R3NKK, -1, -1,		CPU_ARCH_MIPS1, -1,
 	  MIPS_NOT_SUPP,			"NKK R3000 derivative"	},	/* 0x23; crash R5000? */
 #endif
 
-	{ MIPS_PRID_CID_MTI, MIPS_4Kc, -1,	-1, 0,
+	{ MIPS_PRID_CID_MTI, MIPS_4Kc, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4Kc"			},
-	{ MIPS_PRID_CID_MTI, MIPS_4KEc, -1,	-1, 0,
+	{ MIPS_PRID_CID_MTI, MIPS_4KEc, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KEc"			},
-	{ MIPS_PRID_CID_MTI, MIPS_4KSc, -1,	-1, 0,
+	{ MIPS_PRID_CID_MTI, MIPS_4KSc, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KSc"			},
-	{ MIPS_PRID_CID_MTI, MIPS_5Kc, -1,	-1, 0,
+	{ MIPS_PRID_CID_MTI, MIPS_5Kc, -1, -1,	-1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"5Kc"			},
-	{ MIPS_PRID_CID_MTI, MIPS_20Kc, -1,	-1, 0,
+	{ MIPS_PRID_CID_MTI, MIPS_20Kc, -1, -1,	-1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"20Kc"			},
 
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU1000_R1, -1, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1000 (Rev 1)"	},
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU1000_R2, -1, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1000 (Rev 2)" 	},
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, MIPS_AU1000, -1, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1000 (Rev 1 core)"	},
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, MIPS_AU1000, -1, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1000 (Rev 2 core)" 	},
+
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, MIPS_AU1500, -1, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1500 (Rev 1 core)"	},
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, MIPS_AU1500, -1, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1500 (Rev 2 core)" 	},
+
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, MIPS_AU1100, -1, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1100 (Rev 1 core)"	},
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, MIPS_AU1100, -1, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1100 (Rev 2 core)" 	},
 
 	/* The SB1 CPUs use a CCA of 5 - "Cacheable Coherent Shareable" */
-	{ MIPS_PRID_CID_SIBYTE, MIPS_SB1, -1,	-1, 0,
+	{ MIPS_PRID_CID_SIBYTE, MIPS_SB1, -1,	-1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_HAVE_SPECIAL_CCA | \
 	  (5 << CPU_MIPS_CACHED_CCA_SHIFT),	"SB1"			},
 
-	{ 0, 0, 0,				0, 64,
+	{ 0, 0, 0,				0, 0, 64,
 	  0,					NULL			}
 };
 
 static const struct pridtab fputab[] = {
-	{ 0, MIPS_SOFT,	-1, 0, 0, 0,	"software emulated floating point" },
-	{ 0, MIPS_R2360, -1, 0, 0, 0,	"MIPS R2360 Floating Point Board" },
-	{ 0, MIPS_R2010, -1, 0, 0, 0,	"MIPS R2010 FPC" },
-	{ 0, MIPS_R3010, -1, 0, 0, 0,	"MIPS R3010 FPC" },
-	{ 0, MIPS_R6010, -1, 0, 0, 0,	"MIPS R6010 FPC" },
-	{ 0, MIPS_R4010, -1, 0, 0, 0,	"MIPS R4010 FPC" },
-	{ 0, MIPS_R10000, -1, 0, 0, 0,	"built-in FPU" },
+	{ 0, MIPS_SOFT,	  -1, 0, 0, 0, 0, "software emulated floating point" },
+	{ 0, MIPS_R2360,  -1, 0, 0, 0, 0, "MIPS R2360 Floating Point Board" },
+	{ 0, MIPS_R2010,  -1, 0, 0, 0, 0, "MIPS R2010 FPC" },
+	{ 0, MIPS_R3010,  -1, 0, 0, 0, 0, "MIPS R3010 FPC" },
+	{ 0, MIPS_R6010,  -1, 0, 0, 0, 0, "MIPS R6010 FPC" },
+	{ 0, MIPS_R4010,  -1, 0, 0, 0, 0, "MIPS R4010 FPC" },
 };
 
 /*
@@ -744,6 +754,9 @@ mips_vector_init(void)
 			continue;
 		if (ct->cpu_rev >= 0 &&
 		    MIPS_PRID_REV(cpu_id) != ct->cpu_rev)
+			continue;
+		if (ct->cpu_copts >= 0 &&
+		    MIPS_PRID_COPTS(cpu_id) != ct->cpu_copts)
 			continue;
 
 		mycpu = ct;
