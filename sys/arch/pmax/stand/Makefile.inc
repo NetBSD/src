@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1999/01/30 12:57:58 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1999/02/22 11:57:18 simonb Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -15,10 +15,11 @@ machine:
 # Tailor C compilation for standalone environment.
 COPTS=	-O2		# -O2 gives smaller code
 
-C_MACHDEP=-mmemcpy -mno-abicalls -G 128	# may give smaller code
+C_MACHDEP=-mmemcpy -mno-abicalls -G 128	# even smaller code
 
-# We are so tight for space, ifdef away symlnks and spinning propellers.
-DEFS?=	-D_STANDALONE -DSMALL -DNO_TWIDDLE
+# We are reasonably tight for space, ifdef away symlnks
+DEFS?=	-DSMALL -D_STANDALONE -D_NO_PROM_DEFINES -DUFS_NOCLOSE -DUFS_NOSYMLINK \
+	-DSA_NOPUTCHAR -DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 INCL?=	-I. -I${.CURDIR} -I$S -I${.CURDIR}/../libsa -I$S/lib/libsa
 
 CFLAGS=	${COPTS} ${CWARN} ${INCPATH} ${DEFS} ${C_MACHDEP}
