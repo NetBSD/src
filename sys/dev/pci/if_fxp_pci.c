@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.5 2000/03/16 23:41:40 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.6 2000/05/12 03:37:40 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -94,11 +94,16 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/pci/if_fxp_pcivar.h>
+
 int	fxp_pci_match __P((struct device *, struct cfdata *, void *));
 void	fxp_pci_attach __P((struct device *, struct device *, void *));
 
+static void	fxp_pci_confreg_restore __P((struct fxp_pci_softc *psc));
+static void	fxp_pci_power __P((int why, void *arg));
+
 struct cfattach fxp_pci_ca = {
-	sizeof(struct fxp_softc), fxp_pci_match, fxp_pci_attach
+	sizeof(struct fxp_pci_softc), fxp_pci_match, fxp_pci_attach
 };
 
 const struct fxp_pci_product {
@@ -147,11 +152,78 @@ fxp_pci_match(parent, match, aux)
 	return (0);
 }
 
+/*
+ * Restore PCI configuration registers that may have been clobbered.
+ * This is necessary due to bugs on the Sony VAIO Z505-series on-board
+ * ethernet, after an APM suspend/resume, as well as after an ACPI
+ * D3->D0 transition.  We call this function from a power hook after
+ * APM resume events, as well as after the ACPI D3->D0 transition.
+ */
+static void
+fxp_pci_confreg_restore(psc)
+        struct fxp_pci_softc *psc;
+{
+	pcireg_t reg;
+
+#if 0
+	/*
+	 * Check to see if the command register is blank -- if so, then
+	 * we'll assume that all the clobberable-registers have been
+	 * clobbered.
+	 */
+
+	/*
+	 * In general, the above metric is accurate. Unfortunately,
+	 * it is inaccurate across a hibernation. Ideally APM/ACPI
+	 * code should take note of hibernation events and execute
+	 * a hibernation wakeup hook, but at present a hibernation wake
+	 * is indistinguishable from a suspend wake.
+	 */
+
+	if (((reg = pci_conf_read(psc->psc_pc, psc->psc_tag,
+	    PCI_COMMAND_STATUS_REG)) & 0xffff) != 0)
+		return;
+#endif
+
+	pci_conf_write(psc->psc_pc, psc->psc_tag,
+	    PCI_COMMAND_STATUS_REG,
+	    (reg & 0xffff0000) |
+	    (psc->psc_regs[PCI_COMMAND_STATUS_REG>>2] & 0xffff));
+	pci_conf_write(psc->psc_pc, psc->psc_tag, PCI_BHLC_REG,
+	    psc->psc_regs[PCI_BHLC_REG>>2]);
+	pci_conf_write(psc->psc_pc, psc->psc_tag, PCI_MAPREG_START+0x0,
+	    psc->psc_regs[(PCI_MAPREG_START+0x0)>>2]);
+	pci_conf_write(psc->psc_pc, psc->psc_tag, PCI_MAPREG_START+0x4,
+	    psc->psc_regs[(PCI_MAPREG_START+0x4)>>2]);
+	pci_conf_write(psc->psc_pc, psc->psc_tag, PCI_MAPREG_START+0x8,
+	    psc->psc_regs[(PCI_MAPREG_START+0x8)>>2]);
+}
+
+
+/*
+ * Power handler routine. Called when the system is transitioning into/out
+ * of power save modes. We restore the (bashed) PCI configuration registers
+ * on a resume.
+ */
+static void
+fxp_pci_power(why, arg)
+	int why;
+	void *arg;
+{
+	struct fxp_pci_softc *psc = arg;
+
+	if (why == PWR_RESUME)
+		fxp_pci_confreg_restore(psc);
+
+}
+
+	
 void
 fxp_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct fxp_pci_softc *psc = (struct fxp_pci_softc *)self;
 	struct fxp_softc *sc = (struct fxp_softc *)self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -164,6 +236,7 @@ fxp_pci_attach(parent, self, aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	int flags;
+ 	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
 
 	sc->sc_enabled = 1;
 	sc->sc_enable = NULL;
@@ -238,6 +311,49 @@ fxp_pci_attach(parent, self, aux)
 	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
 	    PCI_COMMAND_MASTER_ENABLE);
 
+  	/*
+	 * Under some circumstances (such as APM suspend/resume
+	 * cycles, and across ACPI power state changes), the
+	 * i82257-family can lose the contents of critical PCI
+	 * configuration registers, causing the card to be
+	 * non-responsive and useless.  This occurs on the Sony VAIO
+	 * Z505-series, among others.  Preserve them here so they can
+	 * be later restored (by fxp_pci_confreg_restore()).
+	 */
+	psc->psc_pc = pc;
+	psc->psc_tag = pa->pa_tag;
+	psc->psc_regs[PCI_COMMAND_STATUS_REG>>2] =
+	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	psc->psc_regs[PCI_BHLC_REG>>2] =
+	    pci_conf_read(pc, pa->pa_tag, PCI_BHLC_REG);
+	psc->psc_regs[(PCI_MAPREG_START+0x0)>>2] =
+	    pci_conf_read(pc, pa->pa_tag, PCI_MAPREG_START+0x0);
+	psc->psc_regs[(PCI_MAPREG_START+0x4)>>2] =
+	    pci_conf_read(pc, pa->pa_tag, PCI_MAPREG_START+0x4);
+	psc->psc_regs[(PCI_MAPREG_START+0x8)>>2] =
+	    pci_conf_read(pc, pa->pa_tag, PCI_MAPREG_START+0x8);
+
+	/*
+	 * Work around BIOS ACPI bugs where the chip is inadvertantly
+	 * left in ACPI D3 (lowest power state).  First confirm the device
+	 * supports ACPI power management, then move it to the D0 (fully
+	 * functional) state if it is not already there.
+	 */
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT,
+	    &pci_pwrmgmt_cap_reg, 0)) {
+		pcireg_t reg;
+
+		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + 4;
+		reg = pci_conf_read(pc, pa->pa_tag, pci_pwrmgmt_csr_reg);
+		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
+		    pci_conf_write(pc, pa->pa_tag, pci_pwrmgmt_csr_reg,
+			(reg & ~PCI_PMCSR_STATE_MASK) |
+			PCI_PMCSR_STATE_D0);
+		}
+	}
+	/* Restore PCI configuration registers. */
+	fxp_pci_confreg_restore(psc);
+
 	/*
 	 * Map and establish our interrupt.
 	 */
@@ -247,8 +363,8 @@ fxp_pci_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc);
-	if (sc->sc_ih == NULL) {
+	psc->psc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc);
+	if (psc->psc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
@@ -260,4 +376,11 @@ fxp_pci_attach(parent, self, aux)
 
 	/* Finish off the attach. */
 	fxp_attach(sc);
+
+	/* Add a suspend hook to restore PCI config state */
+	psc->psc_powerhook = powerhook_establish(fxp_pci_power, psc);
+	if (psc->psc_powerhook == NULL)
+		printf ("%s: WARNING: unable to establish pci power hook\n",
+		    sc->sc_dev.dv_xname);
+	
 }
