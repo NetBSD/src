@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.29 2004/04/02 14:05:47 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.30 2004/04/02 14:56:29 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -310,4 +310,16 @@ sys/arch/i386/stand/misc/rawrite.txt		delete
 
 	Convert to using UUDECODE_FILES instead of using -kb in the repository.
 	[lukem, ticket #47]
+
+sys/dev/mvme/vme_two.c				1.4
+
+	After re-checking the docs in response to a port-mvme68k question,
+	don't claim to support D8 local-bus->VMEbus transfers.
+	[scw, ticket #49]
+
+usr.bin/fstat/fstat.c				1.66
+
+	Fix fstat core dumps when some process holds a reference in a Linux
+	ext2fs filesystem.
+	[aymeric, ticket #50]
 
