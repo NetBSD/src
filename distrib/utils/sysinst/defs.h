@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7.2.1 1997/10/27 19:36:11 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.7.2.2 1997/10/30 06:07:47 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,6 +66,14 @@
 #define NUMSEC(size,sizemult,cylsize) \
 	((sizemult == 1) ? (size) : \
 	 (((size)*(sizemult)+(cylsize)-1)/(cylsize))*(cylsize))
+   
+/* Types */
+typedef struct distinfo {
+	char *name;
+	int   getit;
+	char *fdlast;
+	char *desc;
+} distinfo;
 
 /* variables */
 
@@ -221,3 +229,6 @@ void	extract_dist __P((void));
 void	run_makedev __P((void));
 int	get_via_floppy __P((void));
 int	get_via_cdrom __P((void));
+void	cd_dist_dir __P((char *));
+void	toggle_getit __P((int));
+void	show_cur_distsets __P((void));
