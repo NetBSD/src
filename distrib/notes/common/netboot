@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.19 2003/12/13 17:55:02 martin Exp $
+.\"	$NetBSD: netboot,v 1.20 2003/12/15 16:10:58 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -128,8 +128,9 @@ the bootstrap program,
 which has been linked to a file name appropriate to the client's
 architecture and IP address as described in the TFTP section below.
 JavaStations with OpenFirmware need a special bootstrap program,
-.Pa bootjs.elf ,
-which is in ELF format. It is not linked to the IP address.
+.Pa bootjs.net ,
+which is a version of boot.net in ELF format.
+It is not linked to the IP address.
 .\}
 .if \n[evbppc] \{\
 the kernel via the on-board Ethernet card by the firmware.
@@ -290,12 +291,17 @@ group {
                 #
                 filename                "netbsd-INSTALL_WALNUT.img"
 .\}
-.el .if !\n[sparc] \{\
-
+.el
                 #
                 # Name of the bootloader or kernel
                 # to download via tftp.
                 #
+.if \n[sparc] \{\
+
+                #
+                # Only needed for JavaStations with OpenFirmware!
+                #
+                filename                "bootjs.net";
 .\}
 .ie \n[hp700] \{\
                 filename                "SYSNBSD";
@@ -318,6 +324,13 @@ group {
                 #
                 always-reply-rfc1048 false;
 .\}
+
+                #
+                # If your DHCP server is not your NFS server, supply the
+                # address of the NFS server. Since we assume you run everything
+                # on one server, this is not needed.
+                #
+                # next-server server.test.net;
         }
  #you may paste another "host" entry here for additional 
  #clients on this network
@@ -329,7 +342,7 @@ the
 .(disp
 allow bootp;
 .disp)
-statement.
+statement, since this machines use real DHCP.
 .\}
 .Pp
 You will need to make sure that the
@@ -500,8 +513,10 @@ A
 .\} \" \n[sparc]
 .if \n[sparc] \{\
 For OpenFirmware based JavaStations you use the file
-.Pa /usr/mdec/bootjs.elf
-and do not create a symlink for the IP address.
+.Pa bootjs.net
+and do not create a symlink for the IP address. This machines do full
+DHCP autoconfiguration, so the bootstrap filename is provided by the
+DHCP server.
 .Pp
 .\}
 Just to be sure, let's make everything readable.

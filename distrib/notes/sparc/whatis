@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.18 2003/10/22 07:59:44 mbw Exp $
+.\"	$NetBSD: whatis,v 1.19 2003/12/15 16:10:58 martin Exp $
 .
 .Nx \*V
 is the seventh major release for the \*M.
@@ -19,6 +19,8 @@ XFree86 3.3.6 to Xfree86 4.3.0.
 Improvements in PCMCIA support.
 .It
 Support for ZX and TZX framebuffers (a.k.a leo).
+.It
+Support for JavaStations.
 .bullet)
 .Pp
 .Nx \*V
