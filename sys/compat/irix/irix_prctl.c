@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.19 2002/10/23 21:30:46 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.20 2003/01/22 21:04:50 rafal Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.19 2002/10/23 21:30:46 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.20 2003/01/22 21:04:50 rafal Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -68,18 +68,18 @@ __KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.19 2002/10/23 21:30:46 manu Exp $")
 #include <compat/irix/irix_syscallargs.h>
 
 struct irix_sproc_child_args {
-	struct proc **isc_proc; 
+	struct lwp **isc_lwp; 
 	void *isc_entry;
 	void *isc_arg;
 	size_t isc_len;
 	int isc_inh;
-	struct proc *isc_parent;
+	struct lwp *isc_parent_lwp;
 	struct irix_share_group *isc_share_group;
 	int isc_child_done;
 }; 
 static void irix_sproc_child __P((struct irix_sproc_child_args *));
 static int irix_sproc __P((void *, unsigned int, void *, caddr_t, size_t, 
-    pid_t, struct proc *, register_t *));
+    pid_t, struct lwp *, register_t *));
 static struct irix_shared_regions_rec *irix_isrr_create __P((vaddr_t, 
     vsize_t, int));
 #ifdef DEBUG_IRIX
@@ -88,8 +88,8 @@ static void irix_isrr_debug __P((struct proc *));
 static void irix_isrr_cleanup __P((struct proc *));
 
 int
-irix_sys_prctl(p, v, retval)
-	struct proc *p;
+irix_sys_prctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -97,6 +97,7 @@ irix_sys_prctl(p, v, retval)
 		syscallarg(int) option;
 		syscallarg(void *) arg1;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int option = SCARG(uap, option);
 
 #ifdef DEBUG_IRIX
@@ -207,8 +208,8 @@ irix_sys_prctl(p, v, retval)
 
 
 int
-irix_sys_pidsprocsp(p, v, retval)
-	struct proc *p;
+irix_sys_pidsprocsp(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -220,17 +221,17 @@ irix_sys_pidsprocsp(p, v, retval)
 		syscallarg(irix_size_t) len;
 		syscallarg(irix_pid_t) pid;
 	} */ *uap = v;
-	
+
 	/* pid is ignored for now */
 	printf("Warning: unsupported pid argument to IRIX sproc\n");
 
 	return irix_sproc(SCARG(uap, entry), SCARG(uap, inh), SCARG(uap, arg),
-	    SCARG(uap, sp), SCARG(uap, len), SCARG(uap, pid), p, retval);
+	    SCARG(uap, sp), SCARG(uap, len), SCARG(uap, pid), l, retval);
 }
 
 int
-irix_sys_sprocsp(p, v, retval)
-	struct proc *p;
+irix_sys_sprocsp(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -243,12 +244,12 @@ irix_sys_sprocsp(p, v, retval)
 	} */ *uap = v;
 
 	return irix_sproc(SCARG(uap, entry), SCARG(uap, inh), SCARG(uap, arg),
-	    SCARG(uap, sp), SCARG(uap, len), 0, p, retval);
+	    SCARG(uap, sp), SCARG(uap, len), 0, l, retval);
 }
 
 int
-irix_sys_sproc(p, v, retval)
-	struct proc *p;
+irix_sys_sproc(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -257,27 +258,30 @@ irix_sys_sproc(p, v, retval)
 		syscallarg(unsigned) inh;
 		syscallarg(void *) arg;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 
 	return irix_sproc(SCARG(uap, entry), SCARG(uap, inh), SCARG(uap, arg),
-	    NULL, p->p_rlimit[RLIMIT_STACK].rlim_cur, 0, p, retval);
+	    NULL, p->p_rlimit[RLIMIT_STACK].rlim_cur, 0, l, retval);
 }
 
 
 static int 
-irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
+irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 	void *entry;
 	unsigned int inh;
 	void *arg;
 	caddr_t sp;
 	size_t len;
 	pid_t pid;
-	struct proc *p;
+	struct lwp *l;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	int bsd_flags = 0;
 	struct exec_vmcmd vmc;
 	int error;
 	struct proc *p2;
+	struct lwp *l2;
 	struct irix_sproc_child_args *isc;	
 	struct irix_emuldata *ied;
 	struct irix_emuldata *iedp;
@@ -376,12 +380,12 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	 * This will be freed by the child.
 	 */
 	isc = malloc(sizeof(*isc), M_TEMP, M_WAITOK);
-	isc->isc_proc = &p2;
+	isc->isc_lwp = &l2;
 	isc->isc_entry = entry;
 	isc->isc_arg = arg;
 	isc->isc_len = len;
 	isc->isc_inh = inh;
-	isc->isc_parent = p;
+	isc->isc_parent_lwp = l;
 	isc->isc_share_group = isg;
 	isc->isc_child_done = 0;
 
@@ -389,7 +393,7 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 		ied->ied_shareaddr = 1;
 	}
 
-	if ((error = fork1(p, bsd_flags, SIGCHLD, (void *)sp, len, 
+	if ((error = fork1(l, bsd_flags, SIGCHLD, (void *)sp, len, 
 	    (void *)irix_sproc_child, (void *)isc, retval, &p2)) != 0)
 		return error;
 
@@ -412,11 +416,13 @@ static void
 irix_sproc_child(isc)
 	struct irix_sproc_child_args *isc;
 {
-	struct proc *p2 = *isc->isc_proc;
+	struct lwp *l2 = *isc->isc_lwp;
+	struct proc *p2 = l2->l_proc;
 	int inh = isc->isc_inh;
-	struct proc *parent = isc->isc_parent;
-	struct frame *tf = (struct frame *)p2->p_md.md_regs;
-	struct frame *ptf = (struct frame *)parent->p_md.md_regs;
+	struct lwp *lparent = isc->isc_parent_lwp;
+	struct proc *parent = lparent->l_proc;
+	struct frame *tf = (struct frame *)l2->l_md.md_regs;
+	struct frame *ptf = (struct frame *)lparent->l_md.md_regs;
 	struct pcred *pc;
 	struct plimit *pl;
 	struct irix_emuldata *ied;
@@ -454,7 +460,7 @@ irix_sproc_child(isc)
 				continue;
 
 			/* Copy the new mapping from the parent */
-			error = uvm_map_extract(&parent->p_vmspace->vm_map, 
+			error = uvm_map_extract(&parent->p_vmspace->vm_map,
 			    min, len, &p2->p_vmspace->vm_map, &min, 0);
 			if (error != 0) {
 #ifdef DEBUG_IRIX
@@ -550,8 +556,8 @@ irix_sproc_child(isc)
 }
 
 int
-irix_sys_procblk(p, v, retval)
-	struct proc *p;
+irix_sys_procblk(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -560,6 +566,8 @@ irix_sys_procblk(p, v, retval)
 		syscallarg(pid_t) pid;
 		syscallarg(int) count;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
+
 	int cmd = SCARG(uap, cmd);
 	struct irix_emuldata *ied;
 	struct irix_emuldata *iedp;
@@ -567,6 +575,7 @@ irix_sys_procblk(p, v, retval)
 	struct proc *target;
 	struct pcred *pc;
 	int oldcount;
+	struct lwp *ied_lwp;
 	int error, last_error;
 	struct irix_sys_procblk_args cup;
 
@@ -619,14 +628,15 @@ irix_sys_procblk(p, v, retval)
 		 */
 		if ((isg = ied->ied_share_group) == NULL) {
 			SCARG(&cup, pid) = SCARG(uap, pid);
-			return irix_sys_procblk(p, &cup, retval);
+			return irix_sys_procblk(l, &cup, retval);
 		}
 
 		(void)lockmgr(&isg->isg_lock, LK_SHARED, NULL);
 		LIST_FOREACH(iedp, &isg->isg_head, ied_sglist) {
 			/* Recall procblk for this process */
 			SCARG(&cup, pid) = iedp->ied_p->p_pid;
-			error = irix_sys_procblk(iedp->ied_p, &cup, retval);
+			ied_lwp = proc_representative_lwp(iedp->ied_p);
+			error = irix_sys_procblk(ied_lwp, &cup, retval);
 			if (error != 0) 
 				last_error = error;
 		}
