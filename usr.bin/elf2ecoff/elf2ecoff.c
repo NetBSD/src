@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.17 2002/03/23 17:18:42 bouyer Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.18 2002/03/23 17:44:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -42,7 +42,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <stdio.h>
 #include <sys/exec_ecoff.h>
