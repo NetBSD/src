@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.134 2003/07/18 01:02:31 matt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.135 2003/07/28 23:35:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.134 2003/07/18 01:02:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.135 2003/07/28 23:35:20 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -513,7 +513,7 @@ ltsleep(const void *ident, int priority, const char *wmesg, int timo,
 
 	l->l_flag &= ~L_SINTR;
 	if (l->l_flag & L_TIMEOUT) {
-		l->l_flag &= ~L_TIMEOUT;
+		l->l_flag &= ~(L_TIMEOUT|L_CANCELLED);
 		if (sig == 0) {
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_CSW))
@@ -525,16 +525,26 @@ ltsleep(const void *ident, int priority, const char *wmesg, int timo,
 		}
 	} else if (timo)
 		callout_stop(&l->l_tsleep_ch);
-	if (catch && (sig != 0 || (sig = CURSIG(l)) != 0)) {
+
+	if (catch) {
+		const int cancelled = l->l_flag & L_CANCELLED;
+		l->l_flag &= ~L_CANCELLED;
+		if (sig != 0 || (sig = CURSIG(l)) != 0 || cancelled) {
 #ifdef KTRACE
-		if (KTRPOINT(p, KTR_CSW))
-			ktrcsw(p, 0, 0);
+			if (KTRPOINT(p, KTR_CSW))
+				ktrcsw(p, 0, 0);
 #endif
-		if (relock && interlock != NULL)
-			simple_lock(interlock);
-		if ((SIGACTION(p, sig).sa_flags & SA_RESTART) == 0)
-			return (EINTR);
-		return (ERESTART);
+			if (relock && interlock != NULL)
+				simple_lock(interlock);
+			/*
+			 * If this sleep was canceled, don't let the syscall
+			 * restart.
+			 */
+			if (cancelled ||
+			    (SIGACTION(p, sig).sa_flags & SA_RESTART) == 0)
+				return (EINTR);
+			return (ERESTART);
+		}
 	}
 
 #ifdef KTRACE
