@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.84 2004/05/25 04:33:59 atatat Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.85 2004/06/25 15:24:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.84 2004/05/25 04:33:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.85 2004/06/25 15:24:41 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -665,7 +665,8 @@ icmp_reflect(m)
 	INADDR_TO_IA(t, ia);
 
 	/* look for packet sent to broadcast address */
-	if (ia == NULL && (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST)) {
+	if (ia == NULL && m->m_pkthdr.rcvif &&
+	    (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST)) {
 		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
