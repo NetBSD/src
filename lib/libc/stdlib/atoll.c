@@ -1,4 +1,4 @@
-/*	$NetBSD: atoll.c,v 1.2 2000/03/07 20:02:00 kleink Exp $	*/
+/*	$NetBSD: atoll.c,v 1.3 2003/06/03 03:16:48 uwe Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,17 +38,27 @@
 #if 0
 static char sccsid[] = "from: @(#)atol.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: atoll.c,v 1.2 2000/03/07 20:02:00 kleink Exp $");
+__RCSID("$NetBSD: atoll.c,v 1.3 2003/06/03 03:16:48 uwe Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#ifdef _LIBC
 #include "namespace.h"
+#endif
+
 #include <stdlib.h>
 
+#ifdef _LIBC
 #ifdef __weak_alias
 __weak_alias(atoll, _atoll)
 #endif
+#endif
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if !HAVE_ATOLL
 /* LONGLONG */
 long long int
 atoll(str)
@@ -56,3 +66,4 @@ atoll(str)
 {
 	return (strtoll(str, (char **)NULL, 10));
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.26 2003/03/13 04:30:39 thorpej Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.27 2003/06/03 03:16:48 uwe Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -115,6 +115,10 @@ typedef int socklen_t;
 #endif
 
 /* Prototypes for replacement functions. */
+
+#if !HAVE_ATOLL
+long long int atoll(const char *);
+#endif
 
 #if !HAVE_ASPRINTF
 int asprintf(char **, const char *, ...);
