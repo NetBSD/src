@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.96 2001/02/19 22:56:18 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.97 2001/03/29 12:18:32 drochner Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.96 2001/02/19 22:56:18 cgd Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.97 2001/03/29 12:18:32 drochner Exp $");
 #endif
 #endif	/* not lint */
 
@@ -642,8 +642,10 @@ readmbr(int f)
 
 	dp = (struct mbr_partition *)&mbr[MBR_PARTOFF];
 	if (lseek(f, (off_t)MBR_BBSECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
-	    read(f, mbr, sizeof(mbr)) != sizeof(mbr))
-		err(4, "can't read master boot record");
+	    read(f, mbr, sizeof(mbr)) != sizeof(mbr)) {
+		warn("can't read master boot record");
+		return (0);
+	}
 
 #if !defined(__i386__)
 	/* avoid alignment error */
