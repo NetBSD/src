@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.40 2002/03/25 16:42:30 thorpej Exp $
+#	$NetBSD: files.hpcarm,v 1.41 2002/04/13 19:15:52 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -32,7 +32,7 @@ file	arch/hpcarm/hpcarm/spl.S
 file	arch/hpcarm/hpcarm/stubs.c
 
 # HPCARM specific files
-file	arch/hpcarm/hpcarm/hpc_machdep.c	hpcarm
+file	arch/hpcarm/hpcarm/hpc_machdep.c
 
 # SA11[01]0 integrated peripherals
 # parent to sacom, gpio, fb, saost,  XXX
