@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.46 2000/12/08 22:03:23 wiz Exp $	*/
+/*	$NetBSD: savecore.c,v 1.47 2000/12/11 14:33:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.46 2000/12/08 22:03:23 wiz Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.47 2000/12/11 14:33:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,6 @@ __RCSID("$NetBSD: savecore.c,v 1.46 2000/12/08 22:03:23 wiz Exp $");
 #include <sys/mount.h>
 #include <sys/syslog.h>
 #include <sys/time.h>
-#include <sys/sysctl.h>
-#include <machine/cpu.h>
 
 #include <dirent.h>
 #include <errno.h>
@@ -144,11 +142,6 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
-#ifdef CPU_BOOTED_KERNEL
-	int mib[2];
-	size_t size;
-	char buf[MAXPATHLEN];
-#endif
 
 	dirname = NULL;
 	kernel = NULL;
@@ -188,24 +181,6 @@ main(int argc, char *argv[])
 
 	if (kernel == NULL) {
 		kernel = _PATH_UNIX;
-#ifdef CPU_BOOTED_KERNEL
-		/* find real boot-kernel name */
-		mib[0] = CTL_MACHDEP;
-		mib[1] = CPU_BOOTED_KERNEL;
-		size = sizeof(buf) - 1;
-		if (sysctl(mib, 2, buf + 1, &size, NULL, NULL) == 0) {
-			/*
-			 * traditionally, this sysctl returns the
-			 * relative path of the kernel with the
-			 * leading slash stripped -- could be empty,
-			 * though (e.g. when netbooting).
-			 */
-			if (buf[1] != '\0') {
-				buf[0] = '/';
-				kernel = buf;
-			}
-		}
-#endif
 	}
 
 	(void)time(&now);
