@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.35 1994/12/01 00:23:11 gwr Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.36 1994/12/10 11:48:12 pk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -815,8 +815,50 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 			vm_offset_t off;
 
 			/* locate and allocate the target address space */
-			rv = vm_map_find(map, NULL, (vm_offset_t)0,
-					 addr, size, fitit);
+			if (fitit) {
+				/*
+				 * We cannot call vm_map_find() because
+				 * a proposed address may be vetoed by
+				 * the pmap module.
+				 * So we look for space ourselves, validate
+				 * it and insert it into the map. 
+				 */
+				vm_map_lock(map);
+			again:
+				if (vm_map_findspace(map, *addr, size,
+						     addr) == 1) {
+					rv = KERN_NO_SPACE;
+				} else {
+					vm_object_prefer(object, foff, addr);
+					rv = vm_map_insert(map, NULL,
+							(vm_offset_t)0,
+							*addr, *addr+size);
+					if (rv == KERN_NO_SPACE)
+						/*
+						 * Modified address didn't fit
+						 * after all, the gap must
+						 * have been to small.
+						 */
+						goto again;
+				}
+				vm_map_unlock(map);
+			} else {
+				rv = vm_map_find(map, NULL, (vm_offset_t)0,
+					 addr, size, 0);
+
+				/*
+				 * Check against PMAP preferred address. If
+				 * there's a mismatch, these pages should not
+				 * be shared with others. <howto?>
+				 */
+				if (rv == KERN_SUCCESS) {
+					vm_offset_t	paddr = *addr;
+					vm_object_prefer(object, foff, &paddr);
+					if (paddr != *addr)
+						printf("vm_mmap: pmap botch!\n");
+				}
+			}
+
 			if (rv != KERN_SUCCESS) {
 				vm_object_deallocate(object);
 				goto out;
