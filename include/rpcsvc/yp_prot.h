@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_prot.h,v 1.8 1996/08/09 10:06:02 thorpej Exp $	*/
+/*	$NetBSD: yp_prot.h,v 1.9 1997/07/13 18:19:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -314,6 +314,9 @@ struct yppushresp_xfr {
 struct ypall_callback;
 
 __BEGIN_DECLS
+bool_t xdr_domainname __P((XDR *, char *));	/* obsolete */
+bool_t xdr_peername __P((XDR *, char *));	/* obsolete */
+bool_t xdr_mapname __P((XDR *, char *));	/* obsolete */
 bool_t xdr_datum __P((XDR *, datum *));
 bool_t xdr_ypdomain_wrap_string __P((XDR *, char **));
 bool_t xdr_ypmap_wrap_string __P((XDR *, char **));
