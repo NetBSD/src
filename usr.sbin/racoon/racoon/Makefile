@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/03/22 18:10:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2004/04/12 05:29:27 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -40,9 +40,11 @@ CPPFLAGS+=-DHAVE_GSSAPI
 YHEADER=1
 
 # debugging code with print-isakmp.c
-SRCS+=	print-isakmp.c
-CPPFLAGS+=-DRACOON_PKG_VERSION="\"${PKGVERSION}\""
-CPPFLAGS+=-I${TCPDUMPSRCDIR} -I${TCPDUMPSRCDIR}/lbl -DHAVE_PRINT_ISAKMP_C=1
+#SRCS+=	print-isakmp.c
+#CPPFLAGS+=-DRACOON_PKG_VERSION="\"${PKGVERSION}\""
+#CPPFLAGS+=-I${TCPDUMPSRCDIR} -I${TCPDUMPSRCDIR}/lbl -DHAVE_PRINT_ISAKMP_C=1
+
+# kerberos
 .if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
 .endif
