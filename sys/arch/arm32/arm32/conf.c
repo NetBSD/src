@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.3 1996/03/14 21:23:39 christos Exp $ */
+/* $NetBSD: conf.c,v 1.4 1996/03/27 21:42:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -66,9 +66,7 @@ int     lkmenodev();
 bdev_decl(wd);
 bdev_decl(sw);
 #include "fdc.h"
-#define fdopen  Fdopen  /* conflicts with fdopen() in kern_descrip.c */
 bdev_decl(fd);
-#undef  fdopen
 #include "rd.h"
 bdev_decl(rd);
 #include "sd.h"
@@ -105,9 +103,7 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 14: */
 	bdev_lkm_dummy(),		/* 15: */
 	bdev_disk_init(NWDC, wd),	/* 16: Internal IDE disk */
-#define fdopen  Fdopen
 	bdev_disk_init(NFDC, fd),	/* 17: floppy diskette */
-#undef  fdopen
 	bdev_disk_init(NRD, rd),	/* 18: ramdisk */
 	bdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	bdev_disk_init(NWCD, wcd),	/* 20: */
@@ -163,13 +159,6 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev, 0 }
 
 /* open, close, write, ioctl */
-#define cdev_qm_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, write, ioctl */
 #define cdev_cpu_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
@@ -219,9 +208,7 @@ cdev_decl(log);
 cdev_decl(com);
 #include "lpt.h"
 cdev_decl(lpt);
-#define fdopen  Fdopen
 cdev_decl(fd);
-#undef  fdopen
 dev_decl(filedesc,open);
 cdev_decl(rd);
 #include "bpfilter.h"
@@ -270,7 +257,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ptc_init(NPTY,ptc),        /*  6: pseudo-tty master */
 	cdev_tty_init(NPTY,pts),        /*  7: pseudo-tty slave */
 	cdev_lpt_init(NLPT,lpt),        /*  8: parallel printer */
-	cdev_qm_init(NQUADMOUSE,quadmouse),       /* 9: quadmouse driver */
+	cdev_mouse_init(NQUADMOUSE,quadmouse),       /* 9: quadmouse driver */
 	cdev_beep_init(NBEEP,beep),	/* 10: simple beep device */
 	cdev_kbd_init(NKBD,kbd),	/* 11: kbd device */
 	cdev_tty_init(NCOM,com),        /* 12: serial port */
@@ -278,9 +265,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 14: */
 	cdev_lkm_dummy(),		/* 15: */
 	cdev_disk_init(NWDC, wd),       /* 16: ST506/ESDI/IDE disk */
-#define fdopen  Fdopen
 	cdev_disk_init(NFDC, fd),       /* 17: floppy diskette */
-#undef  fdopen
 	cdev_disk_init(NRD, rd),        /* 18: ram disk driver */
 	cdev_disk_init(NVND,vnd),       /* 19: vnode disk driver */
 	cdev_disk_init(NWCD, wcd),	/* 20: */
@@ -302,6 +287,9 @@ struct cdevsw cdevsw[] = {
 	cdev_audio_init(NAUDIO,audio),	/* 36: generic audio I/O */
 	cdev_vidcvid_init(1,vidcvideo),	/* 37: vidcvideo device */
 	cdev_cpu_init(NCPU,cpu),	/* 38: cpu device */
+	cdev_lkm_dummy(),		/* 39 */
+	cdev_lkm_dummy(),		/* 40 */
+/*	cdev_mouse_init(NPMS,pms),     */ /* 40: PS2 mouse driver */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -372,6 +360,8 @@ static int chrtoblktbl[] = {
     /* 36 */        NODEV,
     /* 37 */        NODEV,
     /* 38 */        NODEV,
+    /* 39 */        NODEV,
+    /* 40 */        NODEV,
 };
 
 /*
