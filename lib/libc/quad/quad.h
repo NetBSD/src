@@ -1,3 +1,5 @@
+/*	$NetBSD: quad.h,v 1.3 1995/02/27 17:31:00 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)quad.h	8.1 (Berkeley) 6/4/93
- *	$Id: quad.h,v 1.2 1994/10/19 03:09:55 cgd Exp $
+ *	@(#)quad.h	8.1 (Berkeley) 6/4/93
  */
 
 /*

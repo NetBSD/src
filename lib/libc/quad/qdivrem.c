@@ -1,4 +1,4 @@
-/*	$NetBSD: qdivrem.c,v 1.3 1995/01/06 00:45:20 cgd Exp $	*/
+/*	$NetBSD: qdivrem.c,v 1.4 1995/02/27 17:30:53 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,9 +39,9 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #ifdef notdef
-static char *sccsid = "@(#)qdivrem.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)qdivrem.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char *rcsid = "$NetBSD: qdivrem.c,v 1.3 1995/01/06 00:45:20 cgd Exp $";
+static char rcsid[] = "$NetBSD: qdivrem.c,v 1.4 1995/02/27 17:30:53 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
