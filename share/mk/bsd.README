@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.121 2003/07/18 15:44:07 lukem Exp $
+#	$NetBSD: bsd.README,v 1.122 2003/07/20 14:27:57 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -174,7 +174,7 @@ MKOBJDIRS	If "no", don't create objdirs during a "make build".
 
 MKPIC		If "no", don't build or install shared libraries, and
 		also acts as "MKPICLIB=no"
-		Default: yes
+		Default: yes, except for ${MACHINE_ARCH} == "sh3"
 
 MKPICINSTALL	If "no", don't install the *_pic.a libraries.
 		Default: yes
@@ -217,6 +217,25 @@ MKUPDATE 	If not "no", 'make install' only installs targets that are
 MKYP		If "no", disables building of YP (NIS)
 		infrastructure (libraries and support programs).
 		Default: yes
+
+USE_HESIOD	If set to "no", disables building Hesiod support into
+		various system utilities/libraries that support it.
+		If MKHESIOD is set to "no", USE_HESIOD will also be
+		forced to "no".
+
+USE_KERBEROS	If set to "no", disables building Kerberos (v4 or v5)
+		support into various system utilities/libraries that
+		support it.  If MKKERBEROS is set to "no", USE_KERBEROS
+		will also be forced to "no".
+
+USE_SKEY	If set to "no", disables building S/key authentication
+		support into various system utilities/libraries that
+		support it.  If MKSKEY is set to "no", USE_SKEY will
+		also be forced to "no".
+
+USE_YP		If set to "no", disables building YP (NIS) support into
+		various system utilities/libraries that support it.  If
+		MKYP is set to "no", USE_YP will also be forced to "no".
 
 
 =-=-=-=-=   sys.mk   =-=-=-=-=
@@ -332,33 +351,6 @@ Additionally, the following variables may be set by bsd.own.mk or in a
 make configuration file to modify the behaviour of the system build
 process (default values are in brackets along with comments, if set by
 bsd.own.mk):
-
-USE_HESIOD	If set to "no", disables building Hesiod support into
-		various system utilities/libraries that support it.
-		If MKHESIOD is set to "no", USE_HESIOD will also be
-		forced to "no".
-
-USE_KERBEROS	If set to "no", disables building Kerberos (v4 or v5)
-		support into various system utilities/libraries that
-		support it.  If MKKERBEROS is set to "no", USE_KERBEROS
-		will also be forced to "no".
-
-USE_SKEY	If set to "no", disables building S/key authentication
-		support into various system utilities/libraries that
-		support it.  If MKSKEY is set to "no", USE_SKEY will
-		also be forced to "no".
-
-USE_YP		If set to "no", disables building YP (NIS) support into
-		various system utilities/libraries that support it.  If
-		MKYP is set to "no", USE_YP will also be forced to "no".
-
-NOPROFILE	Do not build profiled versions of system libraries
-
-NOPIC		Do not build PIC versions of system libraries, and
-		do not build shared libraries.  [set if ${MACHINE_ARCH}
-		is "sh3" and ${OBJECT_FMT} is "COFF", unset otherwise.]
-
-NOLINT		Do not build lint libraries.
 
 OBJECT_FMT	Object file format.  [set to "ELF" on architectures that
 		use ELF -- currently if ${MACHINE_ARCH} is "alpha",
