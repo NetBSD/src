@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.2 1999/01/15 01:23:14 castor Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.3 1999/01/16 08:45:53 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -87,7 +87,7 @@
 #include <machine/cdefs.h>
 #include <machine/endian.h>
 #include <mips/asm.h>
-#include <mips/cpuarch.h>
+#include <mips/cpuregs.h>
 #include <machine/param.h>
 #include "opt_ddb.h"
 
@@ -333,10 +333,11 @@ mips3_SlowFault:
  * trapframe is pointed to by the 5th arg 
  * and a dummy sixth argument is used to avoid alignment problems
  *	{
- *  	register_t cf_args[4+2];
- *  	register_t cf_sp;		
- *  	register_t cf_ra;		
- *  	mips_reg_t kf_regs[17];	- trapframe begins here
+ *  	register_t cf_args[4 + 1];
+ *	register_t cf_pad;		(for 8 word alignment)
+ *  	register_t cf_sp;
+ *  	register_t cf_ra;
+ *  	mips_reg_t kf_regs[17];		- trapframe begins here
  * 	mips_reg_t kf_sr;		-
  * 	mips_reg_t kf_mullo;		-
  * 	mips_reg_t kf_mulhi;		-
@@ -396,7 +397,7 @@ NESTED_NOPROFILE(mips3_KernGenException, KERNFRAME_SIZ, ra)
 	REG_S	v1, TF_BASE+TF_REG_MULHI(sp)
 	REG_S	a3, TF_BASE+TF_REG_EPC(sp)
 	addu	v0, sp, TF_BASE
-	sw	v0, KERNFRAME_ARG5(sp)
+	sw	v0, KERNFRAME_ARG5(sp)		# 5th arg is p. to trapframe
 /*
  * Call the trap handler.
  */
@@ -2112,7 +2113,7 @@ END(mips3_proc_trampoline)
  */
 LEAF_NOPROFILE(mips3_cpu_switch_resume)
 	li	s0, MIPS_KSEG2_START
-	blt	a0, s0, resume			# don't bother proc0/nullproc 
+	blt	a0, s0, resume			# don't bother proc0
 	nop
 
 	lw	s0, U_PCB_SEGTAB(a0)
@@ -2193,27 +2194,13 @@ LEAF_NOPROFILE(mips3_cpu_switch_resume)
 	tlbwi					# set TLB entry #0
 	nop
 	nop
+
+resume:
 	mtc0	a3, MIPS_COP_0_TLB_HI		# set current ASID
 	nop					# Required for QED 5230
 	nop					# Required for QED 5230
-
-resume:
-	REG_L	v0, U_PCB_CONTEXT+SF_REG_ST(a0)
-	REG_L	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
-	REG_L	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
-	REG_L	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
-	REG_L	s2, U_PCB_CONTEXT+SF_REG_S2(a0)
-	REG_L	s3, U_PCB_CONTEXT+SF_REG_S3(a0)
-	REG_L	s4, U_PCB_CONTEXT+SF_REG_S4(a0)
-	REG_L	s5, U_PCB_CONTEXT+SF_REG_S5(a0)
-	REG_L	s6, U_PCB_CONTEXT+SF_REG_S6(a0)
-	REG_L	s7, U_PCB_CONTEXT+SF_REG_S7(a0)
-	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
-	REG_L	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
-	nop
-	mtc0	v0, MIPS_COP_0_STATUS
 	j	ra
-	li	v0, 1				# possible return to 'savectx()'
+	nop
 END(mips3_cpu_switch_resume)
 
 LEAF(mips3_Set64bit)
