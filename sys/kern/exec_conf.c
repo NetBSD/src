@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.85 2004/07/03 00:14:30 manu Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.86 2004/09/14 17:20:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.85 2004/07/03 00:14:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.86 2004/09/14 17:20:29 jdolecek Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.85 2004/07/03 00:14:30 manu Exp $");
 #include "opt_compat_darwin.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
-#include "opt_compat_aout.h"
 #include "opt_compat_aout_m68k.h"
 #include "opt_compat_vax1k.h"
 #include "opt_compat_pecoff.h"
