@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.12 1999/02/09 04:51:30 dean Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.13 2000/02/10 12:34:42 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.12 1999/02/09 04:51:30 dean Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.13 2000/02/10 12:34:42 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -349,7 +349,7 @@ type1(msgvec, doign, page)
 		dot = mp;
 		if (value("quiet") == NOSTR)
 			fprintf(obuf, "Message %d:\n", *ip);
-		(void) send(mp, obuf, doign ? ignore : 0, NOSTR);
+		(void) sendmessage(mp, obuf, doign ? ignore : 0, NOSTR);
 	}
 close_pipe:
 	if (obuf != stdout) {
