@@ -1,4 +1,4 @@
-/*	$NetBSD: grp.h,v 1.6 1994/10/26 00:55:57 cgd Exp $	*/
+/*	$NetBSD: grp.h,v 1.7 1995/04/29 05:30:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,15 +57,16 @@ struct group {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-struct group *getgrgid __P((gid_t));
-struct group *getgrnam __P((const char *));
+struct group	*getgrgid __P((gid_t));
+struct group	*getgrnam __P((const char *));
 #ifndef _POSIX_SOURCE
-struct group *getgrent __P((void));
-void setgrent __P((void));
-void endgrent __P((void));
-void setgrfile __P((const char *));
+struct group	*getgrent __P((void));
+void		 setgrent __P((void));
+void		 endgrent __P((void));
+void		 setgrfile __P((const char *));
 #ifndef _XOPEN_SOURCE
-int setgroupent __P((int));
+char		*group_from_gid __P((gid_t, int));
+int		 setgroupent __P((int));
 #endif /* !_XOPEN_SOURCE */
 #endif /* !_POSIX_SOURCE */
 __END_DECLS
