@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.11 2000/06/29 09:02:57 mrg Exp $ */
+/* $NetBSD: db_machdep.h,v 1.12 2000/11/22 02:25:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -42,8 +42,8 @@ typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
-db_regs_t		ddb_regs;	/* register state */
-#define	DDB_REGS	(&ddb_regs)
+extern db_regs_t	*ddb_regp;	/* pointer to current register state */
+#define	DDB_REGS	(ddb_regp)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_regs[FRAME_PC])
 

@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.10 2000/11/22 02:03:48 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.11 2000/11/22 02:25:52 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -51,7 +51,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.10 2000/11/22 02:03:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11 2000/11/22 02:25:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -85,6 +85,8 @@ extern int trap_types;
 #endif
 
 int	db_active = 0;
+
+db_regs_t *ddb_regp;
 
 void	db_mach_halt __P((db_expr_t, int, db_expr_t, char *));
 void	db_mach_reboot __P((db_expr_t, int, db_expr_t, char *));
@@ -187,7 +189,8 @@ ddb_trap(a0, a1, a2, entry, regs)
 	 * alpha_debug() switches us to the debugger stack.
 	 */
 
-	ddb_regs = *regs;
+	/* Our register state is simply the trapframe. */
+	ddb_regp = regs;
 
 	s = splhigh();
 
@@ -201,7 +204,7 @@ ddb_trap(a0, a1, a2, entry, regs)
 
 	splx(s);
 
-	*regs = ddb_regs;
+	ddb_regp = NULL;
 
 	/*
 	 * Tell caller "We HAVE handled the trap."
