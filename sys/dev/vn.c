@@ -1,4 +1,4 @@
-/*	$NetBSD: vn.c,v 1.11 1994/06/29 06:31:35 cgd Exp $	*/
+/*	$NetBSD: vn.c,v 1.11.2.1 1994/08/24 18:19:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -432,7 +432,7 @@ vnioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		return(ENXIO);
+		return(ENOTTY);
 	}
 	return(0);
 }
