@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.35 2001/11/28 20:19:08 tv Exp $
+#	$NetBSD: bsd.nls.mk,v 1.36 2002/01/03 19:11:17 tv Exp $
 
 .include <bsd.init.mk>
 
@@ -54,6 +54,6 @@ ${_F}:		.MADE					# no build at install
 
 ##### Clean rules
 cleannls:
-.if !empty(NLS)
+.if ${MKNLS} != "no" && !empty(NLS)
 	rm -f ${NLSALL}
 .endif
