@@ -1,4 +1,4 @@
-.\"     $NetBSD: nls.7,v 1.9 2003/05/18 09:10:51 wiz Exp $
+.\"     $NetBSD: nls.7,v 1.10 2003/06/26 11:53:18 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@ worldwide operating system base.
 An internationalized system has no built-in assumptions or dependencies
 on language-specific or cultural-specific conventions such as:
 .Pp
-.Bl -bullet -indent -compact
+.Bl -bullet -offset indent -compact
 .It
 Character classifications
 .It
@@ -457,7 +457,7 @@ for details.
 Wide characters should be used for all I/O processing which may rely
 on locale-specific strings.
 The two primary issues requiring special use of wide characters are:
-.Bl -bullet -indent
+.Bl -bullet -offset indent
 .It
 All I/O is performed using multibyte characters.
 Input data is converted into wide characters immediately after
