@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.6 2002/11/25 02:46:10 thorpej Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.7 2003/02/07 04:46:10 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -325,7 +325,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				/* Store as integer */
 				ra = instr.i_x.i_ra;
 				rb = instr.i_x.i_rb;
-				DPRINTF(FPE_INSN, ("reg %d has %x reg %d has %x\n",
+				DPRINTF(FPE_INSN, ("reg %d has %lx reg %d has %lx\n",
 					ra, tf->fixreg[ra], rb, tf->fixreg[rb]));
 
 				addr = tf->fixreg[rb];
@@ -355,7 +355,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 			/* calculate EA of load/store */
 			ra = instr.i_x.i_ra;
 			rb = instr.i_x.i_rb;
-			DPRINTF(FPE_INSN, ("reg %d has %x reg %d has %x\n",
+			DPRINTF(FPE_INSN, ("reg %d has %lx reg %d has %lx\n",
 				ra, tf->fixreg[ra], rb, tf->fixreg[rb]));
 			addr = tf->fixreg[rb];
 			if (ra != 0)
@@ -372,7 +372,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 			/* calculate EA of load/store */
 			ra = instr.i_d.i_ra;
 			addr = instr.i_d.i_d;
-			DPRINTF(FPE_INSN, ("reg %d has %x displ %lx\n",
+			DPRINTF(FPE_INSN, ("reg %d has %lx displ %lx\n",
 				ra, tf->fixreg[ra], addr));
 			if (ra != 0)
 				addr += tf->fixreg[ra];
