@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.5 1993/06/27 06:02:54 andrew Exp $
+ *	$Id: pmap.c,v 1.6 1993/07/18 08:23:12 andrew Exp $
  */
 
 /*
@@ -454,7 +454,7 @@ pmap_pinit(pmap)
 
 	/* install self-referential address mapping entry */
 	*(int *)(pmap->pm_pdir+PTDPTDI) =
-		(int)pmap_extract(kernel_pmap, pmap->pm_pdir) | PG_V | PG_URKW;
+		(int)pmap_extract(kernel_pmap, pmap->pm_pdir) | PG_V | PG_KW;
 
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
@@ -834,7 +834,9 @@ pmap_protect(pmap, sva, eva, prot)
 
 		ix = 0;
 		i386prot = pte_prot(pmap, prot);
-		if(va < UPT_MAX_ADDRESS)
+		if (va < UPT_MAX_ADDRESS)	/* see also pmap_enter() */
+			/* what on earth is this?  2 == PG_RW !!! */
+			/* andrew@werple.apana.org.au */
 			i386prot |= 2 /*PG_u*/;
 		do {
 			/* clear VAC here if PG_RO? */
@@ -1033,10 +1035,19 @@ validate:
 	npte |= (*(int *)pte & (PG_M|PG_U));
 	if (wired)
 		npte |= PG_W;
-	if(va < UPT_MIN_ADDRESS)
+
+	if (va < VM_MAXUSER_ADDRESS)	/* i.e. below USRSTACK */
 		npte |= PG_u;
-	else if(va < UPT_MAX_ADDRESS)
+	else if (va < UPT_MAX_ADDRESS)
+		/* pagetables need to be user RW, for some reason, and the
+		 * user area must be writable too.  Anything above
+		 * VM_MAXUSER_ADDRESS is protected from user access by
+		 * the user data and code segment descriptors, so this is OK.
+		 *
+		 * andrew@werple.apana.org.au
+		 */
 		npte |= PG_u | PG_RW;
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("enter: new pte value %x ", npte);

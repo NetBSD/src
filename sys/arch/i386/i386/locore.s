@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.22 1993/07/04 05:49:17 andrew Exp $
+ *	$Id: locore.s,v 1.23 1993/07/18 08:22:59 andrew Exp $
  */
 
 
@@ -117,15 +117,14 @@
 	.set	PPDROFF,0x3F6
 	.set	PPTEOFF,0x400-UPAGES	# 0x3FE
 
-#define	ENTRY(name) \
-	.globl _/**/name; ALIGN_TEXT; _/**/name:
-#define	ALTENTRY(name)	ENTRY(name)
+#define	ENTRY(name)	.globl _/**/name; ALIGN_TEXT; _/**/name:
+#define	ALTENTRY(name)	.globl _/**/name; _/**/name:
 
 /*
  * Initialization
  */
 	.data
-	.globl	_cpu,_cold,_boothowto,_bootdev,_cyloffset,_atdevbase,_atdevphys
+	.globl	_cpu,_cold,_boothowto,_bootdev,_cyloffset,_atdevbase
 _cpu:	.long	0		# are we 386, 386sx, or 486
 _cold:	.long	1		# cold till we are not
 _atdevbase:	.long	0	# location of start of iomem in virtual
@@ -265,7 +264,10 @@ start:	movw	$0x1234,%ax
 	movl	%esi,%ecx		# this much memory,
 	shrl	$ PGSHIFT,%ecx		# for this many pte s
 	addl	$ UPAGES+4,%ecx		# including our early context
-	movl	$0xa0,%ecx		# XXX - cover debugger pages
+	cmpl	$0xa0,%ecx		# XXX - cover debugger pages
+	jae	1f
+	movl	$0xa0,%ecx
+1:
 	movl	$PG_V|PG_KW,%eax	#  having these bits set,
 	lea	(4*NBPG)(%esi),%ebx	#   physical address of KPT in proc 0,
 	movl	%ebx,_KPTphys-SYSTEM	#    in the kernel page table,
@@ -357,19 +359,15 @@ start:	movw	$0x1234,%ax
 	addl	$2*6,%esp
 	popal
 
-	/* load base of page directory, and enable mapping */
-	movl	%esi,%eax		# phys address of ptd in proc 0
- 	orl	$ I386_CR3PAT,%eax
-	movl	%eax,%cr3		# load ptd addr into mmu
-	movl	%cr0,%eax		# get control word
-#ifdef USE_486_WRITE_PROTECT
-	orl	$CR0_PE|CR0_PG|CR0_WP,%eax	# and let s page!
-#else
-	orl	$CR0_PE|CR0_PG,%eax	# and let s page!
-#endif
-	movl	%eax,%cr0		# NOW!
+	/* load base of page directory and enable mapping */
+	movl	%esi, %eax		# phys address of ptd in proc 0
+ 	orl	$ I386_CR3PAT, %eax
+	movl	%eax, %cr3		# load ptd addr into mmu
+	movl	%cr0, %eax		# get control word
+	orl	$ CR0_PE|CR0_PG, %eax	# enable paging
+	movl	%eax, %cr0		# and let's page NOW!
 
-	pushl	$begin				# jump to high mem!
+	pushl	$begin			# jump to high mem
 	ret
 
 begin: /* now running relocated at SYSTEM where the system is linked to run */
@@ -415,6 +413,19 @@ reloc_gdt:
 	call 	_main
 	popl	%esi
 
+#if defined(I486_CPU) || defined(I586_CPU)
+	/*
+	 * now we've run main() and determined what cpu-type we are, we can
+	 * enable WP mode on i486 cpus and above.
+	 */
+	cmpl	$ CPUCLASS_386, _cpu_class
+	je	1f			# 386s can't handle WP mode
+	movl	%cr0, %eax		# get control word
+	orl	$ CR0_WP, %eax		# enable ring 0 Write Protection
+	movl	%eax, %cr0
+1:
+#endif
+
 	.globl	__ucodesel,__udatasel
 	movl	__ucodesel,%eax
 	movl	__udatasel,%ecx
@@ -444,23 +455,28 @@ lretmsg1:
  * If the exec fails, process 1 exits.
  */
 ENTRY(icode)
-	# pushl	$argv-_icode	# gas fucks up again
-	movl	$argv,%eax
-	subl	$_icode,%eax
-	pushl	%eax
+	pushl	$0		/* envp for execve() */
 
-	# pushl	$init-_icode
-	movl	$init,%eax
-	subl	$_icode,%eax
-	pushl	%eax
-	pushl	%eax	# dummy out rta
+#	pushl	$argv-_icode	/* can't do this 'cos gas 1.38 is broken */
+	movl	$ argv, %eax
+	subl	$ _icode, %eax
+	pushl	%eax		/* argp for execve() */
 
-	movl	%esp,%ebp
-	movl	$exec,%eax
+#	pushl	$ (init-_icode)
+	movl	$ init, %eax
+	subl	$ _icode, %eax
+	pushl	%eax		/* fname for execve() */
+
+	pushl	%eax		/* dummy return address */
+
+	movl	%esp, %ebp
+	movl	$ exec, %eax
 	LCALL(0x7,0x0)
-	pushl	%eax
-	movl	$exit,%eax
-	pushl	%eax	# dummy out rta
+
+	/* exit if something botches up in the above exec */
+	pushl	%eax		/* exit code */
+	movl	$exit, %eax
+	pushl	%eax		/* dummy return address */
 	LCALL(0x7,0x0)
 
 init:
@@ -474,7 +490,7 @@ eicode:
 
 	.globl	_szicode
 _szicode:
-	.long	_szicode-_icode
+	.long	eicode-_icode
 
 #if 0	/* before bde */
 	.globl	_sigcode,_esigcode
@@ -772,187 +788,550 @@ ENTRY(ffs)
 1:	xorl	%eax,%eax		/* clear result */
 	ret
 
-#ifdef notdef
+/*
+ * copyout() originally written by ws@tools.de, and optimised by
+ *	by Christoph Robitschko <chmr@edvz.tu-graz.ac.at>.
+ *	Minor modifications by Andrew Herbert <andrew@werple.apana.org.au>
+ */
 ENTRY(copyout)
 	movl	_curpcb, %eax
-	movl	$cpyflt, PCB_ONFAULT(%eax) # in case we page/protection violate
+	movl	$copyout_fault, PCB_ONFAULT(%eax)
 	pushl	%esi
 	pushl	%edi
 	pushl	%ebx
 	movl	16(%esp), %esi
 	movl	20(%esp), %edi
 	movl	24(%esp), %ebx
+	orl	%ebx, %ebx	/* anything to do? */
+	jz	done_copyout
 
- 				/* first, check to see if "write fault" */
-1:	movl	%edi, %eax
-#ifdef notyet
-	shrl	$IDXSHIFT, %eax	/* fetch pte associated with address */
-	andb	$0xfc, %al
-	movl	_PTmap(%eax), %eax
+	pushl	%es
 
-	andb	$7, %al		/* if we are the one case that won't trap... */
-	cmpb	$5, %al
+#if defined(I386_CPU)
+
+#if defined(I486_CPU) || defined(I586_CPU)
+	cmpl	$ CPUCLASS_386, _cpu_class
+	jne	3f	/* fine, we're not a 386 so don't need this stuff */
+#endif	/* I486_CPU || I586_CPU */
+
+	/* we have to check each PTE for (write) permission */
+
+			/* compute number of pages */
+	movl	%edi, %ecx
+	andl	$0x0fff, %ecx
+	addl	%ebx, %ecx
+	decl	%ecx
+	shrl	$ IDXSHIFT+2, %ecx
+	incl	%ecx
+
+			/* compute PTE offset for start address */
+	movl	%edi, %edx
+	shrl	$ IDXSHIFT, %edx
+	andb	$0xfc, %dl
+
+1:			/* check PTE for each page */
+	movb	_PTmap(%edx), %al
+	andb	$0x07, %al	/* Pages must be VALID + USERACC + WRITABLE */
+	cmpb	$0x05, %al
 	jne	2f
-				/* ... then simulate the trap! */
-	pushl	%edi
+				
+			/* simulate a trap */
+	pushl	%edx
+	pushl	%ecx
+	shll	$ IDXSHIFT, %edx
+	pushl	%edx
 	call	_trapwrite	/* trapwrite(addr) */
 	popl	%edx
+	popl	%ecx
+	popl	%edx
 
-	cmpl	$0, %eax	/* if not ok, return */
-	jne	cpyflt
-				/* otherwise, continue with reference */
+	orl	%eax, %eax	/* if not ok, return EFAULT */
+	jnz	copyout_fault
+
 2:
-	movl	%edi, %eax	/* calculate remainder this pass */
-	andl	$0xfffff000, %eax
-	movl	$NBPG, %ecx
-	subl	%eax, %ecx
-	cmpl	%ecx, %ebx
-	jle	3f
+	addl	$4, %edx
+	decl	%ecx
+	jnz	1b		/* check next page */
+
+#endif /* I386_CPU */
+
+	/* If WP bit in CR0 is set (n/a on 386), the hardware does the
+	 * write check. We just have to load the right segment selector
+	 * This is of some use on a 386 too, as it gives us bounds
+	 * limiting.
+	 */
+3:
+	movl	__udatasel, %eax
+	movl	%ax, %es
+
+			/* bcopy (%esi, %edi, %ebx) */
+	cld
 	movl	%ebx, %ecx
-3:	subl	%ecx, %ebx
+	shrl	$2, %ecx
+	rep
+	movsl
+	movb	%bl, %cl
+	andb	$3, %cl	    /* XXX can we trust the rest of %ecx on clones? */
+	rep
+	movsb
+
+	popl	%es
+done_copyout:
+	popl	%ebx
+	popl	%edi
+	popl	%esi
+	xorl	%eax, %eax
+	movl	_curpcb, %edx
+	movl	%eax, PCB_ONFAULT(%edx)
+	ret
+
+copyout_fault:
+	popl	%es
+	popl	%ebx
+	popl	%edi
+	popl	%esi
+	movl	_curpcb, %edx
+	movl	$0, PCB_ONFAULT(%edx)
+	movl	$ EFAULT, %eax
+	ret
+
+ENTRY(copyin)
+	movl	_curpcb, %eax
+	movl	$copyin_fault, PCB_ONFAULT(%eax)
+	pushl	%esi
+	pushl	%edi
+	pushl	%ebx
+	movl	16(%esp), %esi
+	movl	20(%esp), %edi
+	movl	24(%esp), %ecx
 	movl	%ecx, %edx
-#else
-	movl	%ebx, %ecx
-	movl	%ebx, %edx
-#endif
+	pushl	%ds
+	movl	__udatasel, %eax	/* use the user segment descriptor */
+	movl	%ax, %ds
 
-	shrl	$2,%ecx			/* movem */
+	shrl	$2, %ecx
 	cld
 	rep
 	movsl
-	movl	%edx, %ecx		/* don't depend on ecx here! */
-	andl	$3, %ecx
+	movb	%dl, %cl
+	andb	$3, %cl
 	rep
 	movsb
 
-#ifdef notyet
-	cmpl	$0, %ebx
-	jl	1b
-#endif
-
+	popl	%ds
 	popl	%ebx
 	popl	%edi
 	popl	%esi
-	xorl	%eax,%eax
-	movl	_curpcb,%edx
-	movl	%eax,PCB_ONFAULT(%edx)
+	xorl	%eax, %eax
+	movl	_curpcb, %edx
+	movl	%eax, PCB_ONFAULT(%edx)
 	ret
 
-ENTRY(copyin)
-	movl	_curpcb,%eax
-	movl	$cpyflt,PCB_ONFAULT(%eax) # in case we page/protection violate
-	pushl	%esi
-	pushl	%edi
-	pushl	%ebx		# XXX - not used, but affects stack offsets
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
-	shrl	$2,%ecx
-	cld
-	rep
-	movsl
-	movl	20(%esp),%ecx
-	andl	$3,%ecx
-	rep
-	movsb
+copyin_fault:
+	popl	%ds
 	popl	%ebx
 	popl	%edi
 	popl	%esi
-	xorl	%eax,%eax
-	movl	_curpcb,%edx
-	movl	%eax,PCB_ONFAULT(%edx)
+	movl	_curpcb, %edx
+	movl	$0, PCB_ONFAULT(%edx)
+	movl	$ EFAULT, %eax
 	ret
 
-	ALIGN_TEXT
-cpyflt:
-	popl	%ebx
-	popl	%edi
-	popl	%esi
-	movl	_curpcb,%edx
-	movl	$0,PCB_ONFAULT(%edx)
-	movl	$ EFAULT,%eax
-	ret
-#else
-ENTRY(copyout)
-	movl	_curpcb,%eax
-	movl	$cpyflt,PCB_ONFAULT(%eax) # in case we page/protection violate
+/*
+ * copyoutstr(from, to, maxlen, int *lencopied)
+ *	copy a string from from to to, stop when a 0 character is reached.
+ *	return ENAMETOOLONG if string is longer than maxlen, and
+ *	EFAULT on protection violations. If lencopied is non-zero,
+ *	return the actual length in *lencopied.
+ *
+ *	by Christoph Robitschko <chmr@edvz.tu-graz.ac.at>
+ *	with modifications by Andrew Herbert <andrew@werple.apana.org.au>
+ */
+ENTRY(copyoutstr)
 	pushl	%esi
 	pushl	%edi
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
-	shrl	$2,%ecx
-	cld
-	rep
-	movsl
-	movl	20(%esp),%ecx
-	andl	$3,%ecx
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	xorl	%eax,%eax
-	movl	_curpcb,%edx
-	movl	%eax,PCB_ONFAULT(%edx)
-	ret
+	movl	_curpcb, %ecx
+	movl	$copystr_fault, PCB_ONFAULT(%ecx)
 
-ENTRY(copyin)
-	movl	_curpcb,%eax
-	movl	$cpyflt,PCB_ONFAULT(%eax) # in case we page/protection violate
+	movl	12(%esp), %esi			/* %esi = from */
+	movl	16(%esp), %edi			/* %edi = to */
+	movl	20(%esp), %edx			/* %edx = maxlen */
+	movl	__udatasel, %eax
+	movl	%ax, %gs
+
+#if defined(I386_CPU)
+
+#if defined(I486_CPU) || defined(I586_CPU)
+	cmpl	$ CPUCLASS_386, _cpu_class
+	jne	5f	/* fine, we're not a 386 so don't need this stuff */
+#endif	/* I486_CPU || I586_CPU */
+
+1:
+	movl	%edi, %eax
+	shrl	$ IDXSHIFT, %eax
+	andb	$0xfc, %al
+	movb	_PTmap(%eax), %al
+	andb	$7, %al
+	cmpb	$5, %al
+	jne	2f
+			/* simulate trap */
+	pushl	%edx
+	pushl	%edi
+	call	_trapwrite
+	popl	%edi
+	popl	%edx
+	orl	%eax, %eax
+	jnz	copystr_fault
+
+2:			/* copy up to end of this page */
+	movl	%edi, %eax
+	andl	$0x0fff, %eax
+	movl	$ NBPG, %ecx
+	subl	%eax, %ecx	/* ecx = NBPG - (src % NBPG) */
+	cmpl	%ecx, %edx
+	jge	3f
+	movl	%edx, %ecx	/* ecx = min (ecx, edx) */
+3:
+	orl	%ecx, %ecx
+	jz	4f
+	decl	%ecx
+	decl	%edx
+	lodsb
+	gs
+	stosb
+	orb	%al, %al
+	jnz	3b
+
+			/* Success -- 0 byte reached */
+	decl	%edx
+	xorl	%eax, %eax
+	jmp	7f
+
+4:			/* next page */
+	orl	%edx, %edx
+	jnz	1b
+			/* edx is zero -- return ENAMETOOLONG */
+	movl	$ ENAMETOOLONG, %eax
+	jmp	7f
+
+#endif /* I386_CPU */
+
+#if defined(I486_CPU) || defined(I586_CPU)
+5:
+	incl	%edx
+1:			/* aren't numeric labels wonderful ;-) */
+	decl	%edx
+	jz	2f
+	lodsb
+	gs
+	stosb
+	orb	%al, %al
+	jnz	1b
+			/* Success -- 0 byte reached */
+	decl	%edx
+	xorl	%eax, %eax
+	jmp	7f
+
+2:			/* edx is zero -- return ENAMETOOLONG */
+	movl	$ ENAMETOOLONG, %eax
+	jmp	7f
+
+#endif	/* I486_CPU || I586_CPU */
+
+/*
+ * copyinstr(from, to, maxlen, int *lencopied)
+ *	copy a string from from to to, stop when a 0 character is reached.
+ *	return ENAMETOOLONG if string is longer than maxlen, and
+ *	EFAULT on protection violations. If lencopied is non-zero,
+ *	return the actual length in *lencopied.
+ *
+ *	by Christoph Robitschko <chmr@edvz.tu-graz.ac.at>
+ */
+ENTRY(copyinstr)
 	pushl	%esi
 	pushl	%edi
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
-	shrl	$2,%ecx
-	cld
-	rep
-	movsl
-	movl	20(%esp),%ecx
-	andl	$3,%ecx
-	rep
-	movsb
+	movl	_curpcb, %ecx
+	movl	$copystr_fault, PCB_ONFAULT(%ecx)
+
+	movl	12(%esp), %esi			# %esi = from
+	movl	16(%esp), %edi			# %edi = to
+	movl	20(%esp), %edx			# %edx = maxlen
+	movl	__udatasel, %eax
+	movl	%ax, %gs
+	incl	%edx
+
+1:
+	decl	%edx
+	jz	4f
+	gs
+	lodsb
+	stosb
+	orb	%al,%al
+	jnz	1b
+			/* Success -- 0 byte reached */
+	decl	%edx
+	xorl	%eax, %eax
+	jmp	7f
+4:
+			/* edx is zero -- return ENAMETOOLONG */
+	movl	$ ENAMETOOLONG, %eax
+	jmp	7f
+
+copystr_fault:
+	movl	$ EFAULT, %eax
+7:		/* set *lencopied and return %eax */
+	movl	_curpcb, %ecx
+	movl	$0, PCB_ONFAULT(%ecx)
+	movl	20(%esp), %ecx
+	subl	%edx, %ecx
+	movl	24(%esp), %edx
+	orl	%edx, %edx
+	jz	8f
+	movl	%ecx, (%edx)
+8:
 	popl	%edi
 	popl	%esi
-	xorl	%eax,%eax
-	movl	_curpcb,%edx
-	movl	%eax,PCB_ONFAULT(%edx)
 	ret
 
-	ALIGN_TEXT
-cpyflt: popl	%edi
+
+/*
+ * copystr(from, to, maxlen, int *lencopied)
+ *
+ *	by Christoph Robitschko <chmr@edvz.tu-graz.ac.at>
+ */
+ENTRY(copystr)
+	pushl	%esi
+	pushl	%edi
+
+	movl	12(%esp), %esi			/* %esi = from */
+	movl	16(%esp), %edi			/* %edi = to */
+	movl	20(%esp), %edx			/* %edx = maxlen */
+	incl	%edx
+
+1:
+	decl	%edx
+	jz	4f
+	lodsb
+	stosb
+	orb	%al,%al
+	jnz	1b
+			/* Success -- 0 byte reached */
+	decl	%edx
+	xorl	%eax, %eax
+	jmp	6f
+4:
+			/* edx is zero -- return ENAMETOOLONG */
+	movl	$ ENAMETOOLONG, %eax
+
+6:			/* set *lencopied and return %eax */
+	movl	20(%esp), %ecx
+	subl	%edx, %ecx
+	movl	24(%esp), %edx
+	orl	%edx, %edx
+	jz	7f
+	movl	%ecx, (%edx)
+7:
+	popl	%edi
 	popl	%esi
-	movl	_curpcb,%edx
-	movl	$0,PCB_ONFAULT(%edx)
-	movl	$ EFAULT,%eax
 	ret
 
+/*
+ * {fu,su},{byte,word} - <ws@tools.de>.  Minor modifications - <andrew@werple>
+ */
+ENTRY(fuword)
+ALTENTRY(fuiword)
+	movl	__udatasel, %ax
+	movl	%ax, %gs
+	movl	_curpcb, %ecx
+	movl	$fusufault, PCB_ONFAULT(%ecx)
+	movl	4(%esp), %edx
+	gs
+	movl	(%edx), %eax
+	movl	$0, PCB_ONFAULT(%ecx)
+	ret
+	
+ENTRY(fusword)
+	movl	__udatasel, %ax
+	movl	%ax, %gs
+	movl	_curpcb, %ecx
+	movl	$fusufault, PCB_ONFAULT(%ecx)
+	movl	4(%esp), %edx
+	gs
+	movzwl	(%edx), %eax
+	movl	$0, PCB_ONFAULT(%ecx)
+	ret
+	
+ENTRY(fubyte)
+ALTENTRY(fuibyte)
+	movl	__udatasel, %ax
+	movl	%ax, %gs
+	movl	_curpcb, %ecx
+	movl	$fusufault, PCB_ONFAULT(%ecx)
+	movl	4(%esp), %edx
+	gs
+	movzbl	(%edx), %eax
+	movl	$0, PCB_ONFAULT(%ecx)
+	ret
+	
+fusufault:
+	movl	_curpcb, %ecx
+	xorl	%eax, %eax
+	movl	%eax, PCB_ONFAULT(%ecx)
+	decl	%eax
+	ret
+
+ENTRY(suword)
+ALTENTRY(suiword)
+	movl	__udatasel, %ax
+	movl	%ax, %gs
+	movl	_curpcb, %ecx
+	movl	$fusufault, PCB_ONFAULT(%ecx) #in case we page/protection violate
+	movl	4(%esp), %edx
+
+#if defined(I386_CPU)
+
+#if defined(I486_CPU) || defined(I586_CPU)
+	cmpl	$ CPUCLASS_386, _cpu_class
+	jne	2f	/* fine, we're not a 386 so don't need this stuff */
+#endif	/* I486_CPU || I586_CPU */
+
+	movl	%edx, %eax
+	shrl	$IDXSHIFT, %edx	/* fetch pte associated with address */
+	andb	$0xfc, %dl
+	movb	_PTmap(%edx), %dl
+
+	andb	$7, %dl		/* if we are the one case that won't trap... */
+	cmpb	$5, %dl
+	jne	1f
+				/* ... then simulate the trap! */
+	pushl	%eax
+	call	_trapwrite	/* trapwrite(addr) */
+	addl	$4, %esp	/* clear parameter from the stack */
+	movl	_curpcb, %ecx	# restore trashed registers
+	orl	%eax, %eax	/* if not ok, return */
+	jne	fusufault
+1:
+		/* XXX also need to check the following 3 bytes for validity! */
+
+	movl	4(%esp), %edx
 #endif
 
-	# insb(port,addr,cnt)
+2:
+	movl	8(%esp), %eax
+	gs
+	movl	%eax, (%edx)
+	xorl	%eax, %eax
+	movl	%eax, PCB_ONFAULT(%ecx) #in case we page/protection violate
+	ret
+	
+ENTRY(susword)
+	movl	__udatasel, %eax
+	movl	%ax, %gs
+	movl	_curpcb, %ecx
+	movl	$fusufault, PCB_ONFAULT(%ecx) #in case we page/protection violate
+	movl	4(%esp), %edx
+
+#if defined(I386_CPU)
+
+#if defined(I486_CPU) || defined(I586_CPU)
+	cmpl	$ CPUCLASS_386, _cpu_class
+	jne	2f	/* fine, we're not a 386 so don't need this stuff */
+#endif	/* I486_CPU || I586_CPU */
+
+	movl	%edx, %eax
+	shrl	$IDXSHIFT, %edx	/* calculate pte address */
+	andb	$0xfc, %dl
+	movb	_PTmap(%edx), %dl
+	andb	$7, %dl		/* if we are the one case that won't trap... */
+	cmpb	$5, %dl
+	jne	1f
+				/* ...then simulate the trap! */
+	pushl	%eax
+	call	_trapwrite	/* trapwrite(addr) */
+	addl	$4, %esp	/* clear parameter from the stack */
+	movl	_curpcb, %ecx	/* restore trashed registers */
+	orl	%eax, %eax
+	jne	fusufault
+1:
+		/* XXX also need to check the following byte for validity! */
+
+	movl	4(%esp), %edx
+#endif
+
+2:
+	movl	8(%esp), %eax
+	gs
+	movw	%ax, (%edx)
+	xorl	%eax, %eax
+	movl	%eax, PCB_ONFAULT(%ecx) #in case we page/protection violate
+	ret
+
+ENTRY(subyte)
+ALTENTRY(suibyte)
+	movl	__udatasel, %eax
+	movl	%ax, %gs
+	movl	_curpcb, %ecx
+	movl	$fusufault, PCB_ONFAULT(%ecx)
+	movl	4(%esp), %edx
+
+#if defined(I386_CPU)
+
+#if defined(I486_CPU) || defined(I586_CPU)
+	cmpl	$ CPUCLASS_386, _cpu_class
+	jne	2f	/* fine, we're not a 386 so don't need this stuff */
+#endif	/* I486_CPU || I586_CPU */
+
+	movl	%edx, %eax
+	shrl	$IDXSHIFT, %edx	/* calculate pte address */
+	andb	$0xfc, %dl
+	movb	_PTmap(%edx), %dl
+	andb	$7, %dl		/* if we are the one case that won't trap... */
+	cmpb	$5, %dl
+	jne	1f
+				/* ...then simulate the trap! */
+	pushl	%eax
+	call	_trapwrite	/* trapwrite(addr) */
+	addl	$4, %esp	/* clear parameter from the stack */
+	movl	_curpcb, %ecx	/* restore trashed registers */
+	orl	%eax, %eax
+	jne	fusufault
+1:
+	movl	4(%esp), %edx
+#endif
+
+2:
+	movl	8(%esp), %eax
+	gs
+	movb	%eax, (%edx)
+	xorl	%eax, %eax
+	movl	%eax, PCB_ONFAULT(%ecx) #in case we page/protection violate
+	ret
+
+	# insb(port, addr, cnt)
 ENTRY(insb)
 	pushl	%edi
-	movw	8(%esp),%dx
-	movl	12(%esp),%edi
-	movl	16(%esp),%ecx
+	movl	8(%esp), %edx
+	movl	12(%esp), %edi
+	movl	16(%esp), %ecx
 	cld
 	NOP
 	rep
 	insb
 	NOP
-	movl	%edi,%eax
+	movl	%edi, %eax
 	popl	%edi
 	ret
 
-	# insw(port,addr,cnt)
+	# insw(port, addr, cnt)
 ENTRY(insw)
 	pushl	%edi
-	movw	8(%esp),%dx
-	movl	12(%esp),%edi
-	movl	16(%esp),%ecx
+	movl	8(%esp), %dx
+	movl	12(%esp), %edi
+	movl	16(%esp), %ecx
 	cld
 	NOP
-	.byte 0x66,0xf2,0x6d	# rep insw
+	rep
+	insw
 	NOP
 	movl	%edi,%eax
 	popl	%edi
@@ -966,7 +1345,8 @@ ENTRY(outsw)
 	movl	16(%esp),%ecx
 	cld
 	NOP
-	.byte 0x66,0xf2,0x6f	# rep outsw
+	rep
+	outsw
 	NOP
 	movl	%esi,%eax
 	popl	%esi
@@ -996,9 +1376,7 @@ ENTRY(lgdt)
 	lgdt	(%eax)
 	/* flush the prefetch q */
 	jmp	1f
-#ifdef I386_CPU
 	nop
-#endif
 1:
 	/* reload "stale" selectors */
 	movl	$KDSEL,%eax
@@ -1095,134 +1473,6 @@ ENTRY(ssdtosd)
 	movl	%edx,(%ecx)
 	movl	%ebx,4(%ecx)
 	popl	%ebx
-	ret
-
-/*
- * {fu,su},{byte,word}
- */
-ALTENTRY(fuiword)
-ENTRY(fuword)
-	movl	_curpcb,%ecx
-	movl	$fusufault,PCB_ONFAULT(%ecx)
-	movl	4(%esp),%edx
-	.byte	0x65		# use gs
-	movl	(%edx),%eax
-	movl	$0,PCB_ONFAULT(%ecx)
-	ret
-	
-ENTRY(fusword)
-	movl	_curpcb,%ecx
-	movl	$fusufault,PCB_ONFAULT(%ecx) #in case we page/protection violate
-	movl	4(%esp),%edx
-	.byte	0x65		# use gs
-	movzwl	(%edx),%eax
-	movl	$0,PCB_ONFAULT(%ecx)
-	ret
-	
-ALTENTRY(fuibyte)
-ENTRY(fubyte)
-	movl	_curpcb,%ecx
-	movl	$fusufault,PCB_ONFAULT(%ecx) #in case we page/protection violate
-	movl	4(%esp),%edx
-	.byte	0x65		# use gs
-	movzbl	(%edx),%eax
-	movl	$0,PCB_ONFAULT(%ecx)
-	ret
-
-	ALIGN_TEXT
-fusufault:
-	movl	_curpcb,%ecx
-	xorl	%eax,%eax
-	movl	%eax,PCB_ONFAULT(%ecx) #in case we page/protection violate
-	decl	%eax
-	ret
-
-ALTENTRY(suiword)
-ENTRY(suword)
-	movl	_curpcb,%ecx
-	movl	$fusufault,PCB_ONFAULT(%ecx) #in case we page/protection violate
-	movl	4(%esp),%edx
-	movl	8(%esp),%eax
-
-#ifdef notdef
-	shrl	$IDXSHIFT, %edx	/* fetch pte associated with address */
-	andb	$0xfc, %dl
-	movl	_PTmap(%edx), %edx
-
-	andb	$7, %dl		/* if we are the one case that won't trap... */
-	cmpb	$5 , %edx
-	jne	1f
-				/* ... then simulate the trap! */
-	pushl	%edi
-	call	_trapwrite	/* trapwrite(addr) */
-	popl	%edx
-	cmpl	$0, %eax	/* if not ok, return */
-	jne	fusufault
-	movl	8(%esp),%eax	/* otherwise, continue with reference */
-1:
-	movl	4(%esp),%edx
-#endif
-	.byte	0x65		# use gs
-	movl	%eax,(%edx)
-	xorl	%eax,%eax
-	movl	%eax,PCB_ONFAULT(%ecx) #in case we page/protection violate
-	ret
-	
-ENTRY(susword)
-	movl	_curpcb,%ecx
-	movl	$fusufault,PCB_ONFAULT(%ecx) #in case we page/protection violate
-	movl	4(%esp),%edx
-	movl	8(%esp),%eax
-#ifdef notdef
-shrl	$IDXSHIFT, %edx	/* calculate pte address */
-andb	$0xfc, %dl
-movl	_PTmap(%edx), %edx
-andb	$7, %edx	/* if we are the one case that won't trap... */
-cmpb	$5 , %edx
-jne	1f
-/* ..., then simulate the trap! */
-	pushl	%edi
-	call	_trapwrite	/* trapwrite(addr) */
-	popl	%edx
-movl	_curpcb, %ecx	# restore trashed registers
-cmpl	$0, %eax	/* if not ok, return */
-jne	fusufault
-movl	8(%esp),%eax
-1: movl	4(%esp),%edx
-#endif
-	.byte	0x65		# use gs
-	movw	%ax,(%edx)
-	xorl	%eax,%eax
-	movl	%eax,PCB_ONFAULT(%ecx) #in case we page/protection violate
-	ret
-
-ALTENTRY(suibyte)
-ENTRY(subyte)
-	movl	_curpcb,%ecx
-	movl	$fusufault,PCB_ONFAULT(%ecx) #in case we page/protection violate
-	movl	4(%esp),%edx
-	movl	8(%esp),%eax
-#ifdef notdef
-shrl	$IDXSHIFT, %edx	/* calculate pte address */
-andb	$0xfc, %dl
-movl	_PTmap(%edx), %edx
-andb	$7, %edx	/* if we are the one case that won't trap... */
-cmpb	$5 , %edx
-jne	1f
-/* ..., then simulate the trap! */
-	pushl	%edi
-	call	_trapwrite	/* trapwrite(addr) */
-	popl	%edx
-movl	_curpcb, %ecx	# restore trashed registers
-cmpl	$0, %eax	/* if not ok, return */
-jne	fusufault
-movl	8(%esp),%eax
-1: movl	4(%esp),%edx
-#endif
-	.byte	0x65		# use gs
-	movb	%eax,(%edx)
-	xorl	%eax,%eax
-	movl	%eax,PCB_ONFAULT(%ecx) #in case we page/protection violate
 	ret
 
 ENTRY(setjmp)
@@ -1475,7 +1725,7 @@ swfnd:
 #if 0
 	call	_splx
 #endif
-	addl	$4,%esp
+	addl	$4, %esp
 /*
  * XXX - 0.0 gets here via swtch_to_inactive().  I think 0.1 gets here in the
  * same way.  Better return a value.
@@ -1484,8 +1734,9 @@ swfnd:
 	ret
 
 ENTRY(mvesp)
-	movl	%esp,%eax
+	movl	%esp, %eax
 	ret
+
 /*
  * struct proc *swtch_to_inactive(p) ; struct proc *p;
  *
