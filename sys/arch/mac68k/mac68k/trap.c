@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43 1996/11/09 15:36:14 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.44 1996/12/31 06:32:17 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -429,10 +429,8 @@ copyfault:
 		 * fpu operations.  So far, just ignore it, but
 		 * DONT trap on it.. 
 		 */
-		if (p->p_emul == &emul_sunos) {
-			userret(p, &frame, sticks, v, 1); 
-			return;
-		}
+		if (p->p_emul == &emul_sunos)
+			goto out;
 #endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
