@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.8 2000/05/11 22:44:45 jdc Exp $	*/
+/*	$NetBSD: attributes.c,v 1.9 2000/12/19 21:34:25 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.8 2000/05/11 22:44:45 jdc Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.9 2000/12/19 21:34:25 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -94,18 +94,18 @@ wattron(WINDOW *win, int attr)
 	__CTRACE ("wattron: win %0.2o, attr %08x\n", win, attr);
 #endif
 	/* If can enter modes, set the relevent attribute bits. */
-	if (ME != NULL) {
-		if ((attr_t) attr & __BLINK && MB != NULL)
+	if (__tc_me != NULL) {
+		if ((attr_t) attr & __BLINK && __tc_mb != NULL)
 			win->wattr |= __BLINK;
-		if ((attr_t) attr & __BOLD && MD != NULL)
+		if ((attr_t) attr & __BOLD && __tc_md != NULL)
 			win->wattr |= __BOLD;
-		if ((attr_t) attr & __DIM && MH != NULL)
+		if ((attr_t) attr & __DIM && __tc_mh != NULL)
 			win->wattr |= __DIM;
-		if ((attr_t) attr & __BLANK && MK != NULL)
+		if ((attr_t) attr & __BLANK && __tc_mk != NULL)
 			win->wattr |= __BLANK;
-		if ((attr_t) attr & __PROTECT && MP != NULL)
+		if ((attr_t) attr & __PROTECT && __tc_mp != NULL)
 			win->wattr |= __PROTECT;
-		if ((attr_t) attr & __REVERSE && MR != NULL)
+		if ((attr_t) attr & __REVERSE && __tc_mr != NULL)
 			win->wattr |= __REVERSE;
 	}
 	if ((attr_t) attr & __STANDOUT)
@@ -119,7 +119,7 @@ wattron(WINDOW *win, int attr)
 		/* If another color pair is set, turn that off first. */
 		win->wattr &= ~__COLOR;
 		/* If can do color video, set the color pair bits. */
-		if (cO != NULL) {
+		if (__tc_Co != NULL) {
 			win->wattr |= attr & __COLOR;
 			win->wattr &= ~__nca;
 		}
@@ -141,7 +141,7 @@ wattroff(WINDOW *win, int attr)
 	__CTRACE ("wattroff: win %0.2o, attr %08x\n", win, attr);
 #endif
 	/* If can do exit modes, unset the relevent attribute bits. */
-	if (ME != NULL) {
+	if (__tc_me != NULL) {
 		if ((attr_t) attr & __BLINK)
 			win->wattr &= ~__BLINK;
 		if ((attr_t) attr & __BOLD)
@@ -160,7 +160,7 @@ wattroff(WINDOW *win, int attr)
 	if ((attr_t) attr & __UNDERSCORE)
 		wunderend(win);
 	if ((attr_t) attr & __COLOR) {
-		if (cO != NULL)
+		if (__tc_Co != NULL)
 			win->wattr &= ~__COLOR;
 	}
 	return (OK);

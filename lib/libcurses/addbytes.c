@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.20 2000/04/28 22:44:33 mycroft Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.21 2000/12/19 21:34:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.20 2000/04/28 22:44:33 mycroft Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.21 2000/12/19 21:34:24 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -198,7 +198,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 			SYNCH_OUT;
 			wclrtoeol(win);
 			SYNCH_IN;
-			if (!NONL)
+			if (!__NONL)
 				x = 0;
 			goto newline;
 		case '\r':

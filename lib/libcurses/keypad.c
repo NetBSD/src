@@ -1,4 +1,4 @@
-/*	$NetBSD: keypad.c,v 1.6 2000/05/25 06:46:26 jdc Exp $  */
+/*	$NetBSD: keypad.c,v 1.7 2000/12/19 21:34:24 jdc Exp $  */
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keypad.c,v 1.6 2000/05/25 06:46:26 jdc Exp $");
+__RCSID("$NetBSD: keypad.c,v 1.7 2000/12/19 21:34:24 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -48,7 +48,7 @@ keypad(WINDOW *win, bool bf)
 	if (bf) {
 		win->flags |= __KEYPAD;
 		if (!(curscr->flags & __KEYPAD)) {
-			tputs (KS, 0, __cputchar);
+			tputs (__tc_ks, 0, __cputchar);
 			curscr->flags |= __KEYPAD;
 		}
 	} else
