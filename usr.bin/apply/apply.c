@@ -1,4 +1,4 @@
-/*	$NetBSD: apply.c,v 1.7 1998/11/06 22:28:15 christos Exp $	*/
+/*	$NetBSD: apply.c,v 1.8 2000/01/14 06:21:25 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: apply.c,v 1.7 1998/11/06 22:28:15 christos Exp $");
+__RCSID("$NetBSD: apply.c,v 1.8 2000/01/14 06:21:25 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ main(argc, argv)
 		 * there's enough space to build it.
 		 */
 		for (l = strlen(cmd), i = 0; i < nargs; i++)
-			l += strlen(argv[i]);
+			l += strlen(argv[i+1]);
 		if (l > clen && (c = realloc(c, clen = l)) == NULL)
 			err(1, "malloc");
 
