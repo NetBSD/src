@@ -1,4 +1,4 @@
-/*	$NetBSD: stty.h,v 1.8 1999/03/02 17:27:04 christos Exp $	*/
+/* $NetBSD: stty.h,v 1.9 2003/06/16 17:22:02 perry Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,6 +35,9 @@
  *	@(#)stty.h	8.1 (Berkeley) 5/31/93
  */
 
+#ifndef _STTY_H_
+#define _STTY_H_
+
 #include <sys/ioctl.h>
 #include <termios.h>
 
@@ -58,3 +61,5 @@ struct cchar {
 enum FMT { STTY_NOTSET, STTY_GFLAG, STTY_BSD, STTY_POSIX };
 
 #define	LINELENGTH	72
+
+#endif /* !_STTY_H_ */

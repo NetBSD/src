@@ -1,4 +1,4 @@
-/*	$NetBSD: modes.c,v 1.14 1998/07/28 11:40:59 mycroft Exp $	*/
+/* $NetBSD: modes.c,v 1.15 2003/06/16 17:22:01 perry Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,13 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: modes.c,v 1.14 1998/07/28 11:40:59 mycroft Exp $");
+__RCSID("$NetBSD: modes.c,v 1.15 2003/06/16 17:22:01 perry Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+
 #include <stddef.h>
 #include <string.h>
+
 #include "stty.h"
 #include "extern.h"
 
@@ -205,9 +207,7 @@ const struct modes omodes[] = {
 #define	CHK(s)	(!strcmp(name, s))
 
 int
-msearch(argvp, ip)
-	char ***argvp;
-	struct info *ip;
+msearch(char ***argvp, struct info *ip)
 {
 	const struct modes *mp;
 	char *name;

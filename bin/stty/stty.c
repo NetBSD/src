@@ -1,4 +1,4 @@
-/*	$NetBSD: stty.c,v 1.17 1999/03/02 17:30:05 christos Exp $	*/
+/* $NetBSD: stty.c,v 1.18 2003/06/16 17:22:02 perry Exp $ */
 
 /*-
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: stty.c,v 1.17 1999/03/02 17:30:05 christos Exp $");
+__RCSID("$NetBSD: stty.c,v 1.18 2003/06/16 17:22:02 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,16 +61,16 @@ __RCSID("$NetBSD: stty.c,v 1.17 1999/03/02 17:30:05 christos Exp $");
 #include "stty.h"
 #include "extern.h"
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
-main(argc, argv) 
-	int argc;
-	char *argv[];
+main(int argc, char *argv[]) 
 {
 	struct info i;
 	enum FMT fmt;
 	int ch;
+
+	setprogname(argv[0]);
 
 	fmt = STTY_NOTSET;
 	i.fd = STDIN_FILENO;
@@ -161,10 +161,10 @@ args:	argc -= optind;
 }
 
 void
-usage()
+usage(void)
 {
 
-	(void)fprintf(stderr, "usage: stty [-a|-e|-g] [-f file] [options]\n");
+	(void)fprintf(stderr, "usage: %s [-a|-e|-g] [-f file] [options]\n", getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
