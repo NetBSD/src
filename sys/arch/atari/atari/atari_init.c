@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.20 1996/10/13 04:10:36 christos Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.21 1996/10/15 20:51:59 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -96,7 +96,8 @@ pv_entry_t	pv_table;
 extern int	protostfree;
 #endif
 
-extern char	*esym;
+extern char		*esym;
+extern struct pcb	*curpcb;
 
 /*
  * This is the virtual address of physical page 0. Used by 'do_boot()'.
@@ -350,11 +351,6 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	map_io_areas(pt, ptsize, ptextra);
 
 	/*
-	 * Clear proc0 user-area
-	 */
-	bzero((u_char *)pstart, USPACE);
-
-	/*
 	 * Save KVA of proc0 user-area and allocate it
 	 */
 	proc0paddr = pstart;
@@ -489,6 +485,16 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	/* Is this to fool the optimizer?? */
 	i = *(int *)proc0paddr;
 	*(volatile int *)proc0paddr = i;
+
+	/*
+	 * Initialize the "u-area" pages.
+	 * Must initialize p_addr before autoconfig or the
+	 * fault handler will get a NULL reference.
+	 */
+	bzero((u_char *)proc0paddr, USPACE);
+	proc0.p_addr = (struct user *)proc0paddr;
+	curproc = &proc0;
+	curpcb  = &((struct user *)proc0paddr)->u_pcb;
 
 	ym2149_init();
 
