@@ -5,7 +5,7 @@ MAKEMAP(8)                                             MAKEMAP(8)
 
 
 NNAAMMEE
-       mmaakkeemmaapp - create database maps for sendmail
+       makemap - create database maps for sendmail
 
 SSYYNNOOPPSSIISS
        mmaakkeemmaapp  [--CC _f_i_l_e] [--NN] [--cc _c_a_c_h_e_s_i_z_e] [--dd] [--ee] [--ff] [--ll]
@@ -42,7 +42,7 @@ DDEESSCCRRIIPPTTIIOONN
        files will be owned by the specified _T_r_u_s_t_e_d_U_s_e_r_.
 
    FFllaaggss
-       --CC     Use  the  specified sendmail configuration file for
+       --CC     Use  the  specified sseennddmmaaiill configuration file for
               looking up the TrustedUser option.
 
        --NN     Include the null byte that  terminates  strings  in
@@ -61,7 +61,7 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-                        November 16, 1992                       1
+                   Date: 2000/12/29 18:12:20                 1
 
 
 
@@ -127,6 +127,6 @@ HHIISSTTOORRYY
 
 
 
-                        November 16, 1992                       2
+                   Date: 2000/12/29 18:12:20                 2
 
 

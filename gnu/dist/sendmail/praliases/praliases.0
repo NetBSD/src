@@ -5,7 +5,7 @@ PRALIASES(8)                                         PRALIASES(8)
 
 
 NNAAMMEE
-       pprraalliiaasseess - display system mail aliases
+       praliases - display system mail aliases
 
 SSYYNNOOPPSSIISS
        pprraalliiaasseess [--CC _f_i_l_e] [--ff _f_i_l_e] [_k_e_y _._._.]
@@ -61,6 +61,6 @@ SSEEEE AALLSSOO
 
 
 
-                          April 25, 1996                        1
+                   Date: 2000/12/15 19:50:45                 1
 
 

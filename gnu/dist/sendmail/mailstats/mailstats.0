@@ -5,7 +5,7 @@ MAILSTATS(1)                                         MAILSTATS(1)
 
 
 NNAAMMEE
-       mmaaiillssttaattss - display mail statistics
+       mailstats - display mail statistics
 
 SSYYNNOOPPSSIISS
        mmaaiillssttaattss [--oo] [--pp] [--CC _c_f_f_i_l_e] [--ff _s_t_f_i_l_e]
@@ -37,11 +37,11 @@ DDEESSCCRRIIPPTTIIOONN
        The options are as follows:
 
        --CC     Read  the  specified  file  instead  of the default
-              sseennddmmaaiill ``cf'' file.
+              sseennddmmaaiill configuration file.
 
        --ff     Read the specified statistics file instead  of  the
-              statistics  file  specified  in the sseennddmmaaiill ``cf''
-              file.
+              statistics  file specified in the sseennddmmaaiill configu-
+              ration file.
 
        --pp     Output information  in  program-readable  mode  and
               clear statistics.
@@ -52,15 +52,81 @@ DDEESSCCRRIIPPTTIIOONN
        error occurs.
 
 FFIILLEESS
-       /etc/mail/sendmail.cf    The default sseennddmmaaiill ``cf'' file.
+       /etc/mail/sendmail.cf    The  default  sseennddmmaaiill configura-
+                                tion file.
        /etc/mail/statistics     The default  sseennddmmaaiill  statistics
                                 file.
+
+
+
+
+
+                   Date: 2000/12/29 18:12:20                 1
+
+
+
+
+
+MAILSTATS(1)                                         MAILSTATS(1)
+
 
 SSEEEE AALLSSOO
        mailq(1), sendmail(8)
 
 
 
-                          April 25, 1996                        1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   Date: 2000/12/29 18:12:20                 2
 
 
