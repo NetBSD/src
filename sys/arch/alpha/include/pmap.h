@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 1995/11/23 02:36:25 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5 1996/07/02 22:22:20 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -39,6 +39,10 @@
  *
  *	@(#)pmap.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifdef OLD_PMAP
+#include <machine/pmap.old.h>
+#else
 
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
@@ -124,3 +128,5 @@ void	pmap_emulate_reference __P((struct proc *p, vm_offset_t v,
 #endif /* _KERNEL */
 
 #endif /* _PMAP_MACHINE_ */
+
+#endif /* OLD_PMAP */
