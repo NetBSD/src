@@ -24,17 +24,17 @@ begin again from scratch.
 	You should see the screen clear and some information about
 	your system as the kernel configures the hardware.  Then
 	you will be prompted for a root device.  At this time remove
-	the AmigaDOS kernel floppy from the drive if present and
-	insert the BSD boot floppy.  Now type `fd0' to boot off of
+	the AmigaDOS kernel boot floppy from the drive if present and
+	insert the BSD install floppy.  Now type `fd0' to boot off of
 	your floppy drive 0.
 
 	The system should continue to boot.  For now ignore WARNING:
 	messages about bad dates in clocks and swap space and about
 	a missing /etc/spwd.db (it didn't fit, *shrug*).  Eventually
-	you will be asked asked to enter the pathname of the shell,
-	just hit return.  After a short while you should see a
-	welcome message and a prompt, asking if you wish to proceed
-	with the installation.
+	you will be asked to enter the pathname of the shell, just
+	hit return.  After a short while you should see a welcome
+	message and a prompt, asking if you wish to proceed with the
+	installation.
 
 	If you wish to proceed, enter "y" and then return.
 
@@ -44,7 +44,7 @@ begin again from scratch.
 
 	YOU ARE NOW AT THE POINT OF NO RETURN.  If you confirm that
 	you want to install NetBSD, your hard drive will be modified,
-	and perhaps it contents scrambled at the whim of the install
+	and perhaps its contents scrambled at the whim of the install
 	program.
 
 	If you are sure you want to proceed, enter "yes" at the
@@ -58,7 +58,7 @@ begin again from scratch.
 		newfs: /dev/rsd0a: can't rewrite disk label
 
 	If there are any others, restart from the the beginning of
-	the installation process.  This error is ok as the amiga
+	the installation process.  This error is ok as the Amiga
 	does not write disklabels currently.  You should expect
 	this error whenever using newfs.
 
@@ -115,6 +115,10 @@ begin again from scratch.
 		and to extract the games distribution:
 
 			Extract game10
+
+		If the distribution sets are in different directories,
+		you will need to cd to each directory in turn, runing
+		"Set_tmp_dir" and the appropriate "Extract" command(s).
 
 		Continue this process until you've finished installing
 		all of the sets which you desire to have on your
@@ -260,14 +264,15 @@ command "Configure".
 Configure will ask for the machine's hostname, domain name, and other
 network configuration information.
 
-Once you have supplied configure all that it requests, your machine
+Once you have supplied `Configure' all that it requests, your machine
 will be configured well enough that when you reboot it it will
 almost be a completely functional NetBSD system.  Note you should
 ignore the errors from `chown' they will be corrected shortly.
 
 Once you are done with `Configure', halt the system with the "halt"
-command and reboot.  Then again boot NetBSD this time with the
-command:
+command (wait for "halted" to be displayed) and reboot.  Then again
+boot NetBSD this time with the command:
+
 
 	loadbsd netbsd
 
