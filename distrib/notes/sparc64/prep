@@ -1,59 +1,5 @@
-.\"	$NetBSD: prep,v 1.4 2000/10/29 14:08:11 lukem Exp $
+.\"	$NetBSD: prep,v 1.5 2000/11/03 23:15:57 lukem Exp $
 .
-Before you start you might need to consider your disk configuration
-to sort out a quirk in SCSI-ID to SD-UNIT mapping that exists on
-.Tn Sun
-SPARCstations.
-.Pp
-.\" XXX: is the following true for sparc64?
-Upon leaving the factory,
-.Tn SunOS
-and the OpenBoot PROM map according to
-this table:
-.Bl -column -offset indent SCSI-ID SunOS\ SD-Unit
-.It Tn Em SCSI-ID Ta Tn Em SunOS\ SD-Unit
-.It \~\~\~0 Ta \~\~\~sd3
-.It \~\~\~1 Ta \~\~\~sd1
-.It \~\~\~2 Ta \~\~\~sd2
-.It \~\~\~3 Ta \~\~\~sd0
-.It \~\~\~4 Ta \~\~\~sd4
-.It \~\~\~5 Ta \~\~\~sd5
-.It \~\~\~6 Ta \~\~\~sd6
-.El
-.Pp
-Unlike
-.Tn SunOS
-and the OpenBoot PROM, a
-.Li GENERIC
-.Nx
-kernel numbers
-SCSI drives sequentially as it finds them.  The drive with the
-lowest SCSI-ID will be called
-.Li sd0 ,
-the next one
-.Li sd1 ,
-etc.
-.Pp
-A truly generic
-.Nx
-kernel is also provided as
-.Pa /netbsd.GENERIC ,
-which will do the standard
-.Nx
-probe ordering. If your configuration
-differs from the default
-.Tn Sun
-setup, you can try to use this kernel to
-complete the installation.
-.Pp
-.(Note
-This is also a concern when you start building your own customised kernels.
-.Note)
-.Pp
-You cannot use the security modes of the SPARC OpenBoot PROM.
-.Pp
-.Dl ok Ic "setenv security-mode none"
-.Pp
 If you're installing
 .Nx*M
 for the first time it's a good idea
@@ -76,6 +22,10 @@ memory in your machine (though, unlike
 on the size of the swap partition that would render part of your memory
 unusable). A full binary installation including X11R6 takes about 150 MB in
 .Pa /usr .
+.Pp
+You cannot use the security modes of the SPARC OpenBoot PROM.
+.Pp
+.Dl ok Ic "setenv security-mode none"
 .Pp
 Some network devices (i.e. certain SBus cards)
 allow a choice between operating on a UTP or a AUI port. The
