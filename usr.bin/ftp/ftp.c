@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.124 2004/04/10 12:02:43 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.125 2004/04/10 12:21:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.124 2004/04/10 12:02:43 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.125 2004/04/10 12:21:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,10 +230,7 @@ hookup(char *host, char *port)
 			cause = "socket";
 			continue;
 		}
-		while ((error = xconnect(s, res->ai_addr, res->ai_addrlen)) < 0
-				&& errno == EINTR) {
-			;
-		}
+		error = xconnect(s, res->ai_addr, res->ai_addrlen);
 		if (error) {
 			/* this "if" clause is to prevent print warning twice */
 			if (res->ai_next) {
@@ -1546,8 +1543,6 @@ initconn(void)
 
 		while (xconnect(data, (struct sockaddr *)&data_addr.si_su,
 			    data_addr.su_len) < 0) {
-			if (errno == EINTR)
-				continue;
 			if (activefallback) {
 				(void)close(data);
 				data = -1;
