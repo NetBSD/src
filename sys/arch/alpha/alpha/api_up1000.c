@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.8 2001/06/05 04:53:11 thorpej Exp $ */
+/* $NetBSD: api_up1000.c,v 1.9 2001/12/02 22:54:26 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.8 2001/06/05 04:53:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.9 2001/12/02 22:54:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.8 2001/06/05 04:53:11 thorpej Exp $
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/ata/atavar.h>
+#include <dev/ata/wdvar.h>
 
 #include "pckbd.h"
 
@@ -272,7 +273,7 @@ api_up1000_device_register(dev, aux)
 	 * Support to boot from IDE drives.
 	 */
 	if ((ideboot || scsiboot) && !strcmp(cd->cd_name, "wd")) {
-		struct ata_atapi_attach *aa_link = aux;
+		struct ata_device *adev = aux;
 		if ((strncmp("pciide", parent->dv_xname, 6) != 0)) {
 			return;
 		} else {
@@ -280,11 +281,11 @@ api_up1000_device_register(dev, aux)
 				return;
 		}
 		DPRINTF(("\natapi info: drive %d, channel %d\n",
-		    aa_link->aa_drv_data->drive, aa_link->aa_channel));
+		    adev->adev_drv_data->drive, adev->adev_channel));
 		DPRINTF(("bootdev info: unit: %d, channel: %d\n",
 		    b->unit, b->channel));
-		if (b->unit != aa_link->aa_drv_data->drive ||
-		    b->channel != aa_link->aa_channel)
+		if (b->unit != adev->adev_drv_data->drive ||
+		    b->channel != adev->adev_channel)
 			return;
 
 		/* we've found it! */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.54 2001/10/05 21:52:43 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.55 2001/12/02 22:54:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -81,6 +81,7 @@
 #include <sparc64/sparc64/timerreg.h>
 
 #include <dev/ata/atavar.h>
+#include <dev/ata/wdvar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/sbus/sbusvar.h>
 
@@ -1260,9 +1261,9 @@ device_register(dev, aux)
 		}
 	} else if (strcmp("wd", dvname) == 0) {
 		/* IDE disks. */
-		struct ata_atapi_attach *aa = aux;
+		struct ata_device *adev = aux;
 
-		if (aa->aa_channel == bp->val[0]) {
+		if (adev->adev_channel == bp->val[0]) {
 			nail_bootdev(dev, bp);
 			DPRINTF(ACDB_BOOTDEV, ("\t-- found wd disk %s\n",
 			    dev->dv_xname));

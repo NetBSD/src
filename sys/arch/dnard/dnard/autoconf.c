@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2001/07/22 15:26:11 wiz Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2001/12/02 22:54:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -201,11 +201,12 @@ device_register(struct device *dev, void *aux)
 #endif
 #if NWD > 0
 		if (!strcmp(cd_name, "wd")) {
-			struct ata_atapi_attach *aa = aux;
+			struct ata_device *adev = aux;
 			char *cp = strchr(boot_component, '@');
 			if (cp != NULL
-			    && aa->aa_drv_data->drive == strtoul(cp+1, NULL, 16)
-			    && aa->aa_channel == 0) {
+			    && adev->adev_drv_data->drive ==
+				strtoul(cp+1, NULL, 16)
+			    && adev->adev_channel == 0) {
 				booted_device = dev;
 				return;
 			}
