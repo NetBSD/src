@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1998/06/12 23:22:35 cgd Exp $
+#	$NetBSD: Makefile,v 1.11 2003/01/06 17:40:31 lukem Exp $
 
 # Makefile for hp300 tags file and boot blocks
 
@@ -27,6 +27,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR= include stand
+SUBDIR=	compile include stand
 
 .include <bsd.subdir.mk>
