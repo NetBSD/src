@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.96 2003/09/10 10:22:45 itojun Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.97 2003/09/26 03:08:18 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.96 2003/09/10 10:22:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.97 2003/09/26 03:08:18 atatat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -86,44 +86,44 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.96 2003/09/10 10:22:45 itojun Exp
 const struct kern_target kern_targets[] = {
 /* NOTE: The name must be less than UIO_MX-16 chars in length */
      /*        name            data          tag           type  ro/rw */
-     { DT_DIR, N("."),         0,            Pkern,        VDIR, DIR_MODE   },
-     { DT_DIR, N(".."),        0,            Proot,        VDIR, DIR_MODE   },
-     { DT_REG, N("boottime"),  &boottime.tv_sec, Pint,     VREG, READ_MODE  },
+     { DT_DIR, N("."),         0,            Kern,        VDIR, DIR_MODE   },
+     { DT_DIR, N(".."),        0,            Kroot,        VDIR, DIR_MODE   },
+     { DT_REG, N("boottime"),  &boottime.tv_sec, Kint,     VREG, READ_MODE  },
 			/* XXX cast away const */
      { DT_REG, N("copyright"), (void *)copyright,
-     					     Pstring,      VREG, READ_MODE  },
-     { DT_REG, N("hostname"),  0,            Phostname,    VREG, WRITE_MODE },
-     { DT_REG, N("hz"),        &hz,          Pint,         VREG, READ_MODE  },
+     					     Kstring,      VREG, READ_MODE  },
+     { DT_REG, N("hostname"),  0,            Khostname,    VREG, WRITE_MODE },
+     { DT_REG, N("hz"),        &hz,          Kint,         VREG, READ_MODE  },
 #ifdef IPSEC
-     { DT_DIR, N("ipsecsa"),   0,	     Pipsecsadir,  VDIR, UDIR_MODE  },
-     { DT_DIR, N("ipsecsp"),   0,	     Pipsecspdir,  VDIR, UDIR_MODE  },
+     { DT_DIR, N("ipsecsa"),   0,	     Kipsecsadir,  VDIR, UDIR_MODE  },
+     { DT_DIR, N("ipsecsp"),   0,	     Kipsecspdir,  VDIR, UDIR_MODE  },
 #endif
-     { DT_REG, N("loadavg"),   0,            Pavenrun,     VREG, READ_MODE  },
-     { DT_REG, N("msgbuf"),    0,	     Pmsgbuf,      VREG, READ_MODE  },
-     { DT_REG, N("pagesize"),  &uvmexp.pagesize, Pint,     VREG, READ_MODE  },
-     { DT_REG, N("physmem"),   &physmem,     Pint,         VREG, READ_MODE  },
+     { DT_REG, N("loadavg"),   0,            Kavenrun,     VREG, READ_MODE  },
+     { DT_REG, N("msgbuf"),    0,	     Kmsgbuf,      VREG, READ_MODE  },
+     { DT_REG, N("pagesize"),  &uvmexp.pagesize, Kint,     VREG, READ_MODE  },
+     { DT_REG, N("physmem"),   &physmem,     Kint,         VREG, READ_MODE  },
 #if 0
-     { DT_DIR, N("root"),      0,            Pnull,        VDIR, DIR_MODE   },
+     { DT_DIR, N("root"),      0,            Knull,        VDIR, DIR_MODE   },
 #endif
-     { DT_BLK, N("rootdev"),   &rootdev,     Pdevice,      VBLK, READ_MODE  },
-     { DT_CHR, N("rrootdev"),  &rrootdev,    Pdevice,      VCHR, READ_MODE  },
-     { DT_REG, N("time"),      0,            Ptime,        VREG, READ_MODE  },
+     { DT_BLK, N("rootdev"),   &rootdev,     Kdevice,      VBLK, READ_MODE  },
+     { DT_CHR, N("rrootdev"),  &rrootdev,    Kdevice,      VCHR, READ_MODE  },
+     { DT_REG, N("time"),      0,            Ktime,        VREG, READ_MODE  },
 			/* XXX cast away const */
      { DT_REG, N("version"),   (void *)version,
-     					     Pstring,      VREG, READ_MODE  },
+     					     Kstring,      VREG, READ_MODE  },
 };
 #ifdef IPSEC
 const struct kern_target ipsecsa_targets[] = {
 /* NOTE: The name must be less than UIO_MX-16 chars in length */
      /*        name            data          tag           type  ro/rw */
-     { DT_DIR, N("."),         0,            Pipsecsadir,  VDIR, DIR_MODE   },
-     { DT_DIR, N(".."),        0,            Pkern,        VDIR, DIR_MODE   },
+     { DT_DIR, N("."),         0,            Kipsecsadir,  VDIR, DIR_MODE   },
+     { DT_DIR, N(".."),        0,            Kern,        VDIR, DIR_MODE   },
 };
 const struct kern_target ipsecsp_targets[] = {
 /* NOTE: The name must be less than UIO_MX-16 chars in length */
      /*        name            data          tag           type  ro/rw */
-     { DT_DIR, N("."),         0,            Pipsecspdir,  VDIR, DIR_MODE   },
-     { DT_DIR, N(".."),        0,            Pkern,        VDIR, DIR_MODE   },
+     { DT_DIR, N("."),         0,            Kipsecspdir,  VDIR, DIR_MODE   },
+     { DT_DIR, N(".."),        0,            Kern,        VDIR, DIR_MODE   },
 };
 #endif
 #undef N
@@ -246,7 +246,7 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 	kt = kfs->kfs_kt;
 
 	switch (kfs->kfs_type) {
-	case Ptime: {
+	case Ktime: {
 		struct timeval tv;
 
 		microtime(&tv);
@@ -254,21 +254,21 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 		break;
 	}
 
-	case Pint: {
+	case Kint: {
 		int *ip = kt->kt_data;
 
 		snprintf(*bufp, len, "%d\n", *ip);
 		break;
 	}
 
-	case Pstring: {
+	case Kstring: {
 		char *cp = kt->kt_data;
 
 		*bufp = cp;
 		break;
 	}
 
-	case Pmsgbuf: {
+	case Kmsgbuf: {
 		long n;
 
 		/*
@@ -302,7 +302,7 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 		return (0);
 	}
 
-	case Phostname: {
+	case Khostname: {
 		char *cp = hostname;
 		int xlen = hostnamelen;
 
@@ -316,7 +316,7 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 		break;
 	}
 
-	case Pavenrun:
+	case Kavenrun:
 		averunnable.fscale = FSCALE;
 		snprintf(*bufp, len, "%d %d %d %ld\n",
 		    averunnable.ldavg[0], averunnable.ldavg[1],
@@ -324,7 +324,7 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 		break;
 
 #ifdef IPSEC
-	case Pipsecsa:
+	case Kipsecsa:
 		/*
 		 * Note that SA configuration could be changed during the
 		 * read operation, resulting in garbled output.
@@ -344,7 +344,7 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 		m_freem(m);
 		return (0);
 
-	case Pipsecsp:
+	case Kipsecsp:
 		/*
 		 * Note that SP configuration could be changed during the
 		 * read operation, resulting in garbled output.
@@ -398,7 +398,7 @@ kernfs_xwrite(kfs, buf, len)
 {
 
 	switch (kfs->kfs_type) {
-	case Phostname:
+	case Khostname:
 		if (buf[len-1] == '\n')
 			--len;
 		memcpy(hostname, buf, len);
@@ -452,7 +452,7 @@ kernfs_lookup(v)
 	wantpunlock = (~cnp->cn_flags & (LOCKPARENT | ISLASTCN));
 	kfs = VTOKERN(dvp);
 	switch (kfs->kfs_type) {
-	case Pkern:
+	case Kern:
 		/*
 		 * Shouldn't get here with .. in the root node.
 		 */
@@ -476,7 +476,7 @@ kernfs_lookup(v)
 		return (error);
 
 #ifdef IPSEC
-	case Pipsecsadir:
+	case Kipsecsadir:
 		for (i = 0; i < nipsecsa_targets; i++) {
 			kt = &ipsecsa_targets[i];
 			if (cnp->cn_namelen == kt->kt_namlen &&
@@ -496,14 +496,14 @@ kernfs_lookup(v)
 		if (!ep || *ep || ep == pname)
 			break;
 
-		error = kernfs_allocvp(dvp->v_mount, vpp, Pipsecsa, NULL, id);
+		error = kernfs_allocvp(dvp->v_mount, vpp, Kipsecsa, NULL, id);
 		if ((error == 0) && wantpunlock) {
 			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (error);
 
-	case Pipsecspdir:
+	case Kipsecspdir:
 		for (i = 0; i < nipsecsp_targets; i++) {
 			kt = &ipsecsp_targets[i];
 			if (cnp->cn_namelen == kt->kt_namlen &&
@@ -523,7 +523,7 @@ kernfs_lookup(v)
 		if (!ep || *ep || ep == pname)
 			break;
 
-		error = kernfs_allocvp(dvp->v_mount, vpp, Pipsecsp, NULL, id);
+		error = kernfs_allocvp(dvp->v_mount, vpp, Kipsecsp, NULL, id);
 		if ((error == 0) && wantpunlock) {
 			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
@@ -556,7 +556,7 @@ kernfs_open(v)
 
 	switch (kfs->kfs_type) {
 #ifdef IPSEC
-	case Pipsecsa:
+	case Kipsecsa:
 		m = key_setdumpsa_spi(htonl(kfs->kfs_value));
 		if (m) {
 			m_freem(m);
@@ -564,7 +564,7 @@ kernfs_open(v)
 		} else
 			return (ENOENT);
 
-	case Pipsecsp:
+	case Kipsecsp:
 		sp = key_getspbyid(kfs->kfs_value);
 		if (sp) {
 			kfs->kfs_v = sp;
@@ -592,7 +592,7 @@ kernfs_close(v)
 
 	switch (kfs->kfs_type) {
 #ifdef IPSEC
-	case Pipsecsp:
+	case Kipsecsp:
 		key_freesp((struct secpolicy *)kfs->kfs_v);
 		break;
 #endif
@@ -668,7 +668,7 @@ kernfs_getattr(v)
 	vap->va_bytes = 0;
 
 	switch (kfs->kfs_type) {
-	case Pkern:
+	case Kern:
 #ifdef IPSEC
 		vap->va_nlink = 4; /* 2 extra subdirs */
 #else
@@ -677,22 +677,22 @@ kernfs_getattr(v)
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
 		break;
 
-	case Proot:
+	case Kroot:
 		vap->va_nlink = 1;
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
 		break;
 
-	case Pnull:
-	case Ptime:
-	case Pint:
-	case Pstring:
-	case Phostname:
-	case Pavenrun:
-	case Pdevice:
-	case Pmsgbuf:
+	case Knull:
+	case Ktime:
+	case Kint:
+	case Kstring:
+	case Khostname:
+	case Kavenrun:
+	case Kdevice:
+	case Kmsgbuf:
 #ifdef IPSEC
-	case Pipsecsa:
-	case Pipsecsp:
+	case Kipsecsa:
+	case Kipsecsp:
 #endif
 		vap->va_nlink = 1;
 		total = 0;
@@ -706,8 +706,8 @@ kernfs_getattr(v)
 		break;
 
 #ifdef IPSEC
-	case Pipsecsadir:
-	case Pipsecspdir:
+	case Kipsecsadir:
+	case Kipsecspdir:
 		vap->va_nlink = 2;
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
 		break;
@@ -830,7 +830,7 @@ kernfs_readdir(v)
 	ncookies = uio->uio_resid / UIO_MX;
 
 	switch (kfs->kfs_type) {
-	case Pkern:
+	case Kern:
 		if (i >= nkern_targets)
 			return (0);
 
@@ -844,7 +844,7 @@ kernfs_readdir(v)
 		n = 0;
 		for (; i < nkern_targets && uio->uio_resid >= UIO_MX; i++) {
 			kt = &kern_targets[i];
-			if (kt->kt_tag == Pdevice) {
+			if (kt->kt_tag == Kdevice) {
 				dev_t *dp = kt->kt_data;
 				struct vnode *fvp;
 
@@ -869,7 +869,7 @@ kernfs_readdir(v)
 		ncookies = n;
 		break;
 
-	case Proot:
+	case Kroot:
 		if (i >= 2)
 			return 0;
 
@@ -897,7 +897,7 @@ kernfs_readdir(v)
 		break;
 
 #ifdef IPSEC
-	case Pipsecsadir:
+	case Kipsecsadir:
 		/* count SA in the system */
 		n = 0;
 		TAILQ_FOREACH(sav, &satailq, tailq) {
@@ -969,7 +969,7 @@ kernfs_readdir(v)
 		ncookies = n;
 		break;
 
-	case Pipsecspdir:
+	case Kipsecspdir:
 		/* count SP in the system */
 		n = 0;
 		TAILQ_FOREACH(sp, &sptailq, tailq)
@@ -1059,14 +1059,14 @@ kernfs_inactive(v)
 	VOP_UNLOCK(vp, 0);
 	switch (kfs->kfs_type) {
 #ifdef IPSEC
-	case Pipsecsa:
+	case Kipsecsa:
 		m = key_setdumpsa_spi(htonl(kfs->kfs_value));
 		if (m)
 			m_freem(m);
 		else
 			vgone(vp);
 		break;
-	case Pipsecsp:
+	case Kipsecsp:
 		sp = key_getspbyid(kfs->kfs_value);
 		if (sp)
 			key_freesp(sp);
