@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.5 1996/02/06 22:47:20 jtc Exp $	*/
+/*	$NetBSD: dm.c,v 1.6 1997/04/21 11:11:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: dm.c,v 1.5 1996/02/06 22:47:20 jtc Exp $";
+static char rcsid[] = "$NetBSD: dm.c,v 1.6 1997/04/21 11:11:47 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,8 +101,10 @@ play(args)
 {
 	char pbuf[MAXPATHLEN];
 
-	(void)strcpy(pbuf, _PATH_HIDE);
-	(void)strcpy(pbuf + sizeof(_PATH_HIDE) - 1, game);
+	(void)strncpy(pbuf, _PATH_HIDE, sizeof(pbuf) - 1);
+	(void)strncpy(pbuf + sizeof(_PATH_HIDE) - 1, game,
+	    sizeof(pbuf) - sizeof(_PATH_HIDE) - 1);
+	pbuf[sizeof(pbuf) - 1] = '\0';
 	if (priority > 0)	/* < 0 requires root */
 		(void)setpriority(PRIO_PROCESS, 0, priority);
 	setgid(getgid());	/* we run setgid kmem; lose it */
