@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.10 2000/06/09 08:54:25 enami Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.11 2000/06/28 16:38:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
