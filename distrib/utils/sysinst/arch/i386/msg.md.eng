@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.eng,v 1.2.2.1 1997/11/25 20:37:42 phil Exp $	*/
+/*	$NetBSD: msg.md.eng,v 1.2.2.2 1997/11/29 21:56:58 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,26 +59,59 @@ disklabel: %d cylinders, %d heads, %d sectors
 real geom: %d cylinders, %d heads, %d sectors
 }
 
-message biosgeom
+message nobiosgeom
 {It appears that your disk, %s, did not have a valid Master Boot
-Record (MBR).  That is, NetBSD is using a geometry which is 
-incompatible with the BIOS.  This "sysinst" program gets the BIOS 
-fake geometry of your disk by reading the MBR.  Your options are:
-    -- Abort the install and initialize the MBR from some other OS
-    -- Enter the BIOS fake geometry and sysinst will initialize the MBR
+Record (MBR). This program gets the BIOS geometry of your disk by
+reading the MBR, so the BIOS geometry of your disk could not
+be determined in this case.  Your options are:
+    -- Abort the install. You can determine the actual BIOS
+       geometry in your BIOS setup and then come back and
+       enter the values. Or you can use another setup program to
+       initialize the MBR first.
+    -- Enter the BIOS geometry values yourself. Sysinst will initialize
+       the MBR for you.
 
-WARNING: Entering new geometry will cause this program to initialize
+WARNING: Entering a new geometry will cause this program to initialize
 your master boot record (MBR) and destroy any boot program you may
 have installed.
 
 }
 
-message part_head
-{No   Start(%s)    Size(%s)  Kind\n}
+message diagcyl
+{Some old BIOSs or old diagnostic programs may use the last cylinder of
+the disk for test purposes. This should no longer be the case with
+modern systems. If you have an old system and are uncertain if it
+may do this, you can exclude the last cylinder of your harddisk
+from use.
 
-message setfdiskgeom
+If you exclude the last cylinder, both the real and BIOS geometry will
+be adjusted, you do not need to reenter them.
+
+Do you wish to exclude the last cylinder?
+
+}
+
+message part_head
+{No   Start(%s)   Size(%s)   End(%s)  Kind\n}
+
+message setbiosgeom
 {You will be prompted for the geometry.  Please enter the values you
-want.  Remember, cylinders should be <= 1023 and sectors should <= 63.
+want.  The number of cylinders should be <= 1024 and the number of sectors
+should be <= 63. If you have the BIOS set up to use > 1024 cylinders just
+truncate that number to 1024 here; NetBSD will know about the rest of the
+cylinders.
+
+}
+
+message confirmbiosgeom
+{Please verify if the BIOS disk geometry below is correct. The value for
+the number of cylinders may have been truncated to 1024. This is ok as
+long as the other numbers are correct; only 1024 cylinders can be
+specified in the MBR, the rest will be found in a different way by NetBSD.
+
+If you re-enter the values, make sure that the values are correct and
+match those used by other systems on this disk. Values that do not match
+may result in data corruption.
 
 }
 
@@ -90,8 +123,8 @@ message badgeom
 message realgeom
 {real geom: %d cyl, %d heads, %d sec\n}
 
-message fdiskgeom
-{fdisk geom: %d cyl, %d heads, %d sec\n}
+message biosgeom
+{BIOS geom: %d cyl, %d heads, %d sec\n}
 
 message reentergeom
 {The values just entered for the geometry are not usable.  Please,
