@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.4 1996/10/13 03:06:29 christos Exp $ */
+/* $NetBSD: rtc.c,v 1.5 1996/10/15 19:28:01 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -344,12 +344,48 @@ rtcread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-/*	int unit = minor(dev);*/
-/*	struct rtc_softc *sc = rtc_cd.cd_devs[unit];*/
+	rtc_t rtc;
+	int s;
+	char buffer[32];
+	int length;
 
-	return(ENXIO);
+	s = splclock();
+	if (rtc_read(&rtc) == 0) {
+		(void)splx(s);
+		return(ENXIO);
+	}
+
+	(void)splx(s);
+
+	sprintf(buffer, "%02d:%02d:%02d.%02d%02d %02d/%02d/%02d%02d\n",
+	    rtc.rtc_hour, rtc.rtc_min, rtc.rtc_sec, rtc.rtc_centi,
+	    rtc.rtc_micro, rtc.rtc_day, rtc.rtc_mon, rtc.rtc_cen,
+	    rtc.rtc_year);
+
+	if (uio->uio_offset > strlen(buffer))
+		return 0;
+
+	length = strlen(buffer) - uio->uio_offset;
+	if (length > uio->uio_resid)
+		length = uio->uio_resid;
+
+	return(uiomove((caddr_t)buffer, length, uio));
 }
 
+
+static int
+twodigits(buffer, pos)
+	char *buffer;
+	int pos;
+{
+	int result = 0;
+
+	if (buffer[pos] >= '0' && buffer[pos] <= '9')
+		result = (buffer[pos] - '0') * 10;
+	if (buffer[pos+1] >= '0' && buffer[pos+1] <= '9')
+		result += (buffer[pos+1] - '0');
+	return(result);
+}
 
 int
 rtcwrite(dev, uio, flag)
@@ -357,10 +393,43 @@ rtcwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-/*	int unit = minor(dev);*/
-/*	struct rtc_softc *sc = rtc_cd.cd_devs[unit];*/
+	rtc_t rtc;
+	int s;
+	char buffer[25];
+	int length;
+	int error;
 
-	return(ENXIO);
+	/*
+	 * We require atomic updates!
+	 */
+	length = uio->uio_resid;
+	if (uio->uio_offset || (length != sizeof(buffer)
+	  && length != sizeof(buffer - 1)))
+		return(EINVAL);
+	
+	if ((error = uiomove((caddr_t)buffer, sizeof(buffer), uio)))
+		return(error);
+
+	if (length == sizeof(buffer) && buffer[sizeof(buffer) - 1] != '\n')
+		return(EINVAL);
+
+	printf("rtcwrite: %s\n", buffer);
+
+	rtc.rtc_micro = 0;
+	rtc.rtc_centi = twodigits(buffer, 9);
+	rtc.rtc_sec   = twodigits(buffer, 6);
+	rtc.rtc_min   = twodigits(buffer, 3);
+	rtc.rtc_hour  = twodigits(buffer, 0);
+	rtc.rtc_day   = twodigits(buffer, 14);
+	rtc.rtc_mon   = twodigits(buffer, 17);
+	rtc.rtc_year  = twodigits(buffer, 22); 
+	rtc.rtc_cen   = twodigits(buffer, 20); 
+
+	s = splclock();
+	rtc_write(&rtc);
+	(void)splx(s);
+
+	return(0);
 }
 
 
@@ -377,7 +446,7 @@ rtcioctl(dev, cmd, data, flag, p)
 /*	switch (cmd) {
 	case RTCIOC_READ:
 		return(0);
-	}   */
+	}*/
 
 	return(EINVAL);
 }
