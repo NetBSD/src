@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.8,v 1.11 1999/03/22 18:43:48 garbled Exp $
+.\"	$NetBSD: arp.8,v 1.11.10.1 2001/05/01 12:44:00 he Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,8 @@
 .Fl a
 .Nm ""
 .Op Fl v
-.Fl d Ar hostname
+.Fl d 
+.Op Ar -a|hostname
 .Nm ""
 .Fl s Ar hostname ether_addr
 .Op Ar temp
@@ -79,7 +80,11 @@ A super-user may delete an entry for the host called
 .Ar hostname
 with the
 .Fl d
-flag.
+flag.  If used with
+.Fl a
+instead of a
+.Ar hostname ,
+it will delete all arp entries.
 .It Fl n
 Show network addresses as numbers (normally
 .Nm
