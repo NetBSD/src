@@ -1,4 +1,4 @@
-/*	$NetBSD: lca.c,v 1.14 1996/12/05 01:39:35 cgd Exp $	*/
+/*	$NetBSD: lca.c,v 1.15 1996/12/08 00:22:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -48,11 +48,7 @@
 #include <alpha/pci/pci_axppci_33.h>
 #endif
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	lcamatch __P((struct device *, void *, void *));
-#else
 int	lcamatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	lcaattach __P((struct device *, struct device *, void *));
 
 struct cfattach lca_ca = {
@@ -72,11 +68,7 @@ struct lca_config lca_configuration;
 int
 lcamatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct confargs *ca = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
+/*	$NetBSD: sio.c,v 1.16 1996/12/08 00:22:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -51,11 +51,7 @@ struct sio_softc {
 	int		sc_haseisa;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	siomatch __P((struct device *, void *, void *));
-#else
 int	siomatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	sioattach __P((struct device *, struct device *, void *));
 
 struct cfattach sio_ca = {
@@ -66,11 +62,7 @@ struct cfdriver sio_cd = {
 	NULL, "sio", DV_DULL,
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	pcebmatch __P((struct device *, void *, void *));
-#else
 int	pcebmatch __P((struct device *, struct cfdata *, void *));
-#endif
 
 struct cfattach pceb_ca = {
 	sizeof(struct device), pcebmatch, sioattach,
@@ -99,11 +91,7 @@ void	sio_bridge_callback __P((void *));
 int
 siomatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
@@ -118,11 +106,7 @@ siomatch(parent, match, aux)
 int
 pcebmatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
