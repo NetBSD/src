@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.9 2001/09/03 19:20:29 matt Exp $
+#	$NetBSD: Makefile,v 1.10 2001/11/23 19:51:33 thorpej Exp $
 
 KDIR=	/sys/arch/hpcarm/include
 INCSDIR= /usr/include/hpcarm
 
 INCS=	ansi.h aout_machdep.h asm.h \
 	bootconfig.h bswap.h bus.h \
-	cdefs.h config_hook.h cpu.h cpufunc.h cpus.h \
+	cdefs.h config_hook.h cpu.h cpufunc.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h fp.h frame.h \
