@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3x.h,v 1.10 1999/02/18 07:13:21 gwr Exp $	*/
+/*	$NetBSD: vmparam3x.h,v 1.11 1999/04/05 14:35:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,7 +106,6 @@
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
-#define VM_PHYSSEG_MAX		4
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */
 
