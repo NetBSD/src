@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141 1997/04/08 05:27:28 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.142 1997/04/09 20:19:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -1284,75 +1284,13 @@ nmihand(frame)
 
 	if (nmihanddeep++)
 		return;
-/*	regdump(&frame, 128);
+/*	regdump((struct trapframe *)&frame, 128);
 	dumptrace(); */
 #if DDB
 	printf("Panic switch: PC is 0x%x.\n", frame.f_pc);
 	Debugger();
 #endif
 	nmihanddeep = 0;
-}
-
-void	dumpmem __P((u_int *, int));
-
-void
-regdump(frame, sbytes)
-	struct frame *frame;
-	int     sbytes;
-{
-	static int doingdump = 0;
-	register int i;
-	int     s;
-
-	if (doingdump)
-		return;
-	s = splhigh();
-	doingdump = 1;
-	printf("pid = %d, pc = 0x%08x, ", curproc->p_pid, frame->f_pc);
-	printf("ps = 0x%08x, ", frame->f_sr);
-	printf("sfc = 0x%08x, ", getsfc());
-	printf("dfc = 0x%08x\n", getdfc());
-	printf("Registers:\n     ");
-	for (i = 0; i < 8; i++)
-		printf("        %d", i);
-	printf("\ndreg:");
-	for (i = 0; i < 8; i++)
-		printf(" %08x", frame->f_regs[i]);
-	printf("\nareg:");
-	for (i = 0; i < 8; i++)
-		printf(" %08x", frame->f_regs[i + 8]);
-	if (sbytes > 0) {
-		if (1) {	/* (frame->f_sr & PSL_S) *//* BARF - BG */
-			printf("\n\nKernel stack (%08x):",
-			    (int) (((int *) frame) - 1));
-			dumpmem(((int *) frame) - 1, sbytes);
-		} else {
-			printf("\n\nUser stack (%08x):", frame->f_regs[15]);
-			dumpmem((int *) frame->f_regs[15], sbytes);
-		}
-	}
-	doingdump = 0;
-	splx(s);
-}
-
-void	dumpmem __P((u_int *, int));
-
-void
-dumpmem(ptr, sz)
-	register u_int *ptr;
-	int     sz;
-{
-	register int i;
-
-	sz /= 4;
-	for (i = 0; i < sz; i++) {
-		if ((i & 7) == 0)
-			printf("\n%08x: ", (u_int) ptr);
-		else
-			printf(" ");
-		printf("%08x ", *ptr++);
-	}
-	printf("\n");
 }
 
 /*
