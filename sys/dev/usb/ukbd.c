@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.43 1999/09/05 19:32:18 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.44 1999/09/12 08:21:49 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -394,6 +394,7 @@ ukbd_activate(self, act)
 	enum devact act;
 {
 	struct ukbd_softc *sc = (struct ukbd_softc *)self;
+	int rv = 0;
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -401,10 +402,12 @@ ukbd_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
+		if (sc->sc_wskbddev)
+			rv = config_deactivate(sc->sc_wskbddev);
 		sc->sc_dying = 1;
 		break;
 	}
-	return (0);
+	return (rv);
 }
 
 int
