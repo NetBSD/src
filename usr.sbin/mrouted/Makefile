@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2003/03/05 21:05:38 wiz Exp $
+#	$NetBSD: Makefile,v 1.13 2003/03/07 01:06:05 fvdl Exp $
 #	from: Id: Makefile,v 1.5 1993/06/24 05:11:16 deering Exp
 
 .include <bsd.own.mk>
@@ -10,5 +10,6 @@ MAN=	mrouted.8
 
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
+CPPFLAGS+= -I${.CURDIR}
 
 .include <bsd.prog.mk>
