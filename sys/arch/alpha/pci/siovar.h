@@ -1,4 +1,4 @@
-/* $NetBSD: siovar.h,v 1.7 1998/04/14 22:21:00 thorpej Exp $ */
+/* $NetBSD: siovar.h,v 1.8 1998/05/23 21:36:33 ross Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,6 +34,7 @@ const char *sio_intr_string __P((void *, int));
 void	*sio_intr_establish __P((void *, int, int, int, int (*)(void *),
 	    void *));
 void	sio_intr_disestablish __P((void *, void *));
+int	sio_intr_alloc __P((void *, int, int, int *));
 
 #ifdef EVCNT_COUNTERS
 extern struct evcnt sio_intr_evcnt;
