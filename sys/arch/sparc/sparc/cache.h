@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.16 1997/07/06 21:15:14 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.17 1998/07/26 23:37:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -173,6 +173,7 @@ void	ms1_cache_flush __P((caddr_t, u_int));
 void	viking_cache_flush __P((caddr_t, u_int));
 void	viking_pcache_flush_line __P((int, int));
 void	srmmu_pcache_flush_line __P((int, int));
+void	hypersparc_pure_vcache_flush __P((void));
 
 extern void sparc_noop __P((void));
 
@@ -188,6 +189,8 @@ extern void sparc_noop __P((void));
 	(void (*)__P((caddr_t, u_int))) sparc_noop
 #define noop_pcache_flush_line \
 	(void (*)__P((int, int))) sparc_noop
+#define noop_pure_vcache_flush \
+	(void (*)__P((void))) sparc_noop
 
 
 #define cache_flush_page(va)		cpuinfo.vcache_flush_page(va)
