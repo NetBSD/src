@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.3 2000/04/25 20:02:33 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.4 2000/04/26 20:00:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -284,16 +284,16 @@ siop_attach(sc)
 		    htole32(sc->cmds[i].dsa + 8);
 		sc->cmds[i].siop_table->t_extmsgin.count= htole32(2);
 		sc->cmds[i].siop_table->t_extmsgin.addr =
-		    htole32(htole32(sc->cmds[i].siop_table->t_msgin.addr) + 1);
+		    htole32(le32toh(sc->cmds[i].siop_table->t_msgin.addr) + 1);
 		sc->cmds[i].siop_table->t_status.count= htole32(1);
 		sc->cmds[i].siop_table->t_status.addr =
-		    htole32(htole32(sc->cmds[i].siop_table->t_msgin.addr) + 8);
+		    htole32(le32toh(sc->cmds[i].siop_table->t_msgin.addr) + 8);
 		TAILQ_INSERT_TAIL(&sc->free_list, &sc->cmds[i], next);
 #ifdef DEBUG
 		printf("tables[%d]: out=0x%x in=0x%x status=0x%x\n", i,
-		    sc->cmds[i].siop_table->t_msgin.addr,
-		    sc->cmds[i].siop_table->t_msgout.addr,
-		    sc->cmds[i].siop_table->t_status.addr);
+		    le32toh(sc->cmds[i].siop_table->t_msgin.addr),
+		    le32toh(sc->cmds[i].siop_table->t_msgout.addr),
+		    le32toh(sc->cmds[i].siop_table->t_status.addr));
 #endif
 	}
 	/* compute number of sheduler slots */
@@ -339,22 +339,28 @@ void
 siop_reset(sc)
 	struct siop_softc *sc;
 {
-	int i;
+	int i, j;
 	u_int32_t *scr;
 	bus_addr_t physaddr;
+
 	/* reset the chip */
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_ISTAT, ISTAT_SRST);
 	delay(1000);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_ISTAT, 0);
 
 	/* copy and patch the script */
-	memcpy(sc->sc_script, siop_script, sizeof(siop_script));
+	for (j = 0; j < (sizeof(siop_script) / sizeof(siop_script[0])); j++) {
+		sc->sc_script[j] = htole32(siop_script[j]);
+	}
 	/* copy the sheduler slots script */
 	for (i = 0; i < sc->sc_nshedslots; i++) {
 		scr = &sc->sc_script[Ent_sheduler / 4 + (Ent_nextslot / 4) * i];
 		physaddr = sc->sc_scriptdma->dm_segs[0].ds_addr + Ent_sheduler
 		    + Ent_nextslot * i;
-		memcpy(scr, slot_script, sizeof(slot_script));
+		for (j = 0; j < (sizeof(slot_script) / sizeof(slot_script[0]));
+		    j++) {
+			scr[j] = htole32(slot_script[j]);
+		}
 		/*
 		 * save current jump offset and patch MOVE MEMORY operands
 		 * to restore it.
@@ -373,7 +379,10 @@ siop_reset(sc)
 	/* Now the final JUMP */
 	scr = &sc->sc_script[Ent_sheduler / 4 +
 	    (Ent_nextslot / 4) * sc->sc_nshedslots];
-	memcpy(scr, endslot_script, sizeof(endslot_script));
+	for (j = 0; j < (sizeof(endslot_script) / sizeof(endslot_script[0]));
+	    j++) {
+		scr[j] = htole32(endslot_script[j]);
+	}
 	scr[E_endslot_abs_reselect_Used[0]] = 
 	    htole32(sc->sc_scriptdma->dm_segs[0].ds_addr + Ent_reselect);
 
@@ -400,19 +409,19 @@ siop_reset(sc)
 	/* start script */
 	siop_script_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
-	    htole32(sc->sc_scriptdma->dm_segs[0].ds_addr + Ent_reselect));
+	    sc->sc_scriptdma->dm_segs[0].ds_addr + Ent_reselect);
 }
 
 #if 0
 #define CALL_SCRIPT(ent) do {\
 	printf ("start script DSA 0x%lx DSP 0x%lx\n", \
-	    htole32(siop_cmd->dsa), \
-	    htole32(sc->sc_scriptdma->dm_segs[0].ds_addr + ent)); \
-bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP, htole32(sc->sc_scriptdma->dm_segs[0].ds_addr + ent)); \
+	    siop_cmd->dsa, \
+	    sc->sc_scriptdma->dm_segs[0].ds_addr + ent); \
+bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP, sc->sc_scriptdma->dm_segs[0].ds_addr + ent); \
 } while (0)
 #else
 #define CALL_SCRIPT(ent) do {\
-bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP, htole32(sc->sc_scriptdma->dm_segs[0].ds_addr + ent)); \
+bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP, sc->sc_scriptdma->dm_segs[0].ds_addr + ent); \
 } while (0)
 #endif
 
@@ -484,7 +493,8 @@ siop_intr(v)
 		p = sc->sc_script +
 		    (bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSP) -
 		    sc->sc_scriptdma->dm_segs[0].ds_addr - 8) / 4;
-		printf("0x%x 0x%x 0x%x 0x%x\n", p[0], p[1], p[2], p[3]);
+		printf("0x%x 0x%x 0x%x 0x%x\n", le32toh(p[0]), le32toh(p[1]),
+		    le32toh(p[2]), le32toh(p[3]));
 		if (siop_cmd)
 			printf("last msg_in=0x%x status=0x%x\n",
 			    siop_cmd->siop_table->msg_in[0],
@@ -537,7 +547,7 @@ siop_intr(v)
 				 * operation.
 				 */
 				bus_space_write_4(sc->sc_rt, sc->sc_rh,
-				    SIOP_DSA, htole32(siop_cmd->dsa));
+				    SIOP_DSA, siop_cmd->dsa);
 				switch (sstat1 & SSTAT1_PHASE_MASK) {
 				case SSTAT1_PHASE_STATUS:
 				/*
@@ -701,7 +711,7 @@ reset:
 			    htole32(siop_cmd->siop_table->msg_in[1] - 1);
 			siop_cmd->siop_table->t_extmsgdata.addr = 
 			    htole32(
-			    htole32(siop_cmd->siop_table->t_extmsgin.addr)
+			    le32toh(siop_cmd->siop_table->t_extmsgin.addr)
 			    + 2);
 			siop_table_sync(siop_cmd,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -772,8 +782,8 @@ reset:
 				    sc->sc_dev.dv_xname);
 				goto reset;
 			}
-			bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSA, \
-			    htole32(siop_cmd->dsa));
+			bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSA,
+			    siop_cmd->dsa);
 			/* no table to flush */
 			CALL_SCRIPT(Ent_selected);
 			return 1;
@@ -819,16 +829,16 @@ reset:
 #if 0
 			printf("done, taget id 0x%x last msg in=0x%x "
 			    "status=0x%x\n",
-			    siop_cmd->siop_table->id,
+			    le32toh(siop_cmd->siop_table->id),
 			    siop_cmd->siop_table->msg_in[0],
-			    htole32(siop_cmd->siop_table->status));
+			    le32toh(siop_cmd->siop_table->status));
 #endif
 			INCSTAT(siop_stat_intr_done);
 			if (siop_cmd->status == CMDST_SENSE_ACTIVE)
 				siop_cmd->status = CMDST_SENSE_DONE;
 			else
 				siop_cmd->status = CMDST_DONE;
-			switch(htole32(siop_cmd->siop_table->status)) {
+			switch(le32toh(siop_cmd->siop_table->status)) {
 			case SCSI_OK:
 				xs->error = (siop_cmd->status == CMDST_DONE) ?
 				    XS_NOERROR : XS_SENSE;
@@ -875,7 +885,7 @@ end:
 		TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
 	}
 	bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
-	    htole32(sc->sc_scriptdma->dm_segs[0].ds_addr + Ent_reselect));
+	    sc->sc_scriptdma->dm_segs[0].ds_addr + Ent_reselect);
 	siop_start(sc);
 	return 1;
 }
@@ -1307,7 +1317,7 @@ siop_sdp(siop_cmd)
 			CTEST3_CLF);
 	}
 	table->addr =
-	    htole32(htole32(table->addr) + htole32(table->count) - dbc);
+	    htole32(le32toh(table->addr) + le32toh(table->count) - dbc);
 	table->count = htole32(dbc);
 #ifdef DEBUG_DR
 	printf("now count=%d addr=0x%x\n", table->count, table->addr);
@@ -1321,11 +1331,11 @@ siop_dump_script(sc)
 	int i;
 	siop_script_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	for (i = 0; i < CMD_OFF / 4; i += 2) {
-		printf("0x%04x: 0x%08x 0x%08x", i * 4, sc->sc_script[i],
-		    sc->sc_script[i+1]);
-		if ((sc->sc_script[i] & 0xe0000000) == 0xc0000000) {
+		printf("0x%04x: 0x%08x 0x%08x", i * 4,
+		    le32toh(sc->sc_script[i]), le32toh(sc->sc_script[i+1]));
+		if ((le32toh(sc->sc_script[i]) & 0xe0000000) == 0xc0000000) {
 			i++;
-			printf(" 0x%08x", sc->sc_script[i+1]);
+			printf(" 0x%08x", le32toh(sc->sc_script[i+1]));
 		}
 		printf("\n");
 	}
