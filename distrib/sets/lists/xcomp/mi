@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.19 2004/01/30 08:44:11 lukem Exp $
+# $NetBSD: mi,v 1.20 2004/01/31 15:13:10 dan Exp $
 ./etc/mtree/set.xcomp			xcomp-sys-root
 ./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep
@@ -509,138 +509,138 @@
 ./usr/X11R6/lib/X11/config/xf86site.def
 ./usr/X11R6/lib/X11/config/xfree86.cf
 ./usr/X11R6/lib/libFS.a
-./usr/X11R6/lib/libFS_p.a
+./usr/X11R6/lib/libFS_p.a		-unknown-	profile
 ./usr/X11R6/lib/libFS_pic.a
 ./usr/X11R6/lib/libGL.a
 ./usr/X11R6/lib/libGLU.a
-./usr/X11R6/lib/libGLU_p.a
+./usr/X11R6/lib/libGLU_p.a		-unknown-	profile
 ./usr/X11R6/lib/libGLU_pic.a
-./usr/X11R6/lib/libGL_p.a
+./usr/X11R6/lib/libGL_p.a		-unknown-	profile
 ./usr/X11R6/lib/libGL_pic.a
 ./usr/X11R6/lib/libGLw.a
-./usr/X11R6/lib/libGLw_p.a
+./usr/X11R6/lib/libGLw_p.a		-unknown-	profile
 ./usr/X11R6/lib/libICE.a
-./usr/X11R6/lib/libICE_p.a
+./usr/X11R6/lib/libICE_p.a		-unknown-	profile
 ./usr/X11R6/lib/libICE_pic.a
 ./usr/X11R6/lib/libOSMesa.a
-./usr/X11R6/lib/libOSMesa_p.a
+./usr/X11R6/lib/libOSMesa_p.a		-unknown-	profile
 ./usr/X11R6/lib/libOSMesa_pic.a
 ./usr/X11R6/lib/libSM.a
-./usr/X11R6/lib/libSM_p.a
+./usr/X11R6/lib/libSM_p.a		-unknown-	profile
 ./usr/X11R6/lib/libSM_pic.a
 ./usr/X11R6/lib/libX11.a
-./usr/X11R6/lib/libX11_p.a
+./usr/X11R6/lib/libX11_p.a		-unknown-	profile
 ./usr/X11R6/lib/libX11_pic.a
 ./usr/X11R6/lib/libXRes.a
-./usr/X11R6/lib/libXRes_p.a
+./usr/X11R6/lib/libXRes_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXRes_pic.a
 ./usr/X11R6/lib/libXTrap.a
-./usr/X11R6/lib/libXTrap_p.a
+./usr/X11R6/lib/libXTrap_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXTrap_pic.a
 ./usr/X11R6/lib/libXau.a
-./usr/X11R6/lib/libXau_p.a
+./usr/X11R6/lib/libXau_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXaw.a
-./usr/X11R6/lib/libXaw_p.a
+./usr/X11R6/lib/libXaw_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXaw_pic.a
 ./usr/X11R6/lib/libXcursor.a
-./usr/X11R6/lib/libXcursor_p.a
+./usr/X11R6/lib/libXcursor_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXcursor_pic.a
 ./usr/X11R6/lib/libXdmcp.a
-./usr/X11R6/lib/libXdmcp_p.a
+./usr/X11R6/lib/libXdmcp_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXdmcp_pic.a
 ./usr/X11R6/lib/libXext.a
-./usr/X11R6/lib/libXext_p.a
+./usr/X11R6/lib/libXext_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXext_pic.a
 ./usr/X11R6/lib/libXfont.a
-./usr/X11R6/lib/libXfont_p.a
+./usr/X11R6/lib/libXfont_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXfont_pic.a
 ./usr/X11R6/lib/libXfontcache.a
-./usr/X11R6/lib/libXfontcache_p.a
+./usr/X11R6/lib/libXfontcache_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXfontcache_pic.a
 ./usr/X11R6/lib/libXft.a
-./usr/X11R6/lib/libXft_p.a
+./usr/X11R6/lib/libXft_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXft_pic.a
 ./usr/X11R6/lib/libXi.a
-./usr/X11R6/lib/libXi_p.a
+./usr/X11R6/lib/libXi_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXi_pic.a
 ./usr/X11R6/lib/libXinerama.a
-./usr/X11R6/lib/libXinerama_p.a
+./usr/X11R6/lib/libXinerama_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXinerama_pic.a
 ./usr/X11R6/lib/libXmu.a
-./usr/X11R6/lib/libXmu_p.a
+./usr/X11R6/lib/libXmu_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXmu_pic.a
 ./usr/X11R6/lib/libXmuu.a
-./usr/X11R6/lib/libXmuu_p.a
+./usr/X11R6/lib/libXmuu_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXmuu_pic.a
 ./usr/X11R6/lib/libXp.a
-./usr/X11R6/lib/libXp_p.a
+./usr/X11R6/lib/libXp_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXp_pic.a
 ./usr/X11R6/lib/libXpm.a
-./usr/X11R6/lib/libXpm_p.a
+./usr/X11R6/lib/libXpm_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXpm_pic.a
 ./usr/X11R6/lib/libXrandr.a
-./usr/X11R6/lib/libXrandr_p.a
+./usr/X11R6/lib/libXrandr_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXrandr_pic.a
 ./usr/X11R6/lib/libXrender.a
-./usr/X11R6/lib/libXrender_p.a
+./usr/X11R6/lib/libXrender_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXrender_pic.a
 ./usr/X11R6/lib/libXss.a
-./usr/X11R6/lib/libXss_p.a
+./usr/X11R6/lib/libXss_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXss_pic.a
 ./usr/X11R6/lib/libXt.a
-./usr/X11R6/lib/libXt_p.a
+./usr/X11R6/lib/libXt_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXt_pic.a
 ./usr/X11R6/lib/libXtst.a
-./usr/X11R6/lib/libXtst_p.a
+./usr/X11R6/lib/libXtst_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXtst_pic.a
 ./usr/X11R6/lib/libXv.a
 ./usr/X11R6/lib/libXvMC.a
-./usr/X11R6/lib/libXvMC_p.a
+./usr/X11R6/lib/libXvMC_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXvMC_pic.a
-./usr/X11R6/lib/libXv_p.a
+./usr/X11R6/lib/libXv_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXv_pic.a
 ./usr/X11R6/lib/libXxf86dga.a
-./usr/X11R6/lib/libXxf86dga_p.a
+./usr/X11R6/lib/libXxf86dga_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXxf86dga_pic.a
 ./usr/X11R6/lib/libXxf86misc.a
-./usr/X11R6/lib/libXxf86misc_p.a
+./usr/X11R6/lib/libXxf86misc_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXxf86misc_pic.a
 ./usr/X11R6/lib/libXxf86vm.a
-./usr/X11R6/lib/libXxf86vm_p.a
+./usr/X11R6/lib/libXxf86vm_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXxf86vm_pic.a
 ./usr/X11R6/lib/libdps.a
-./usr/X11R6/lib/libdps_p.a
+./usr/X11R6/lib/libdps_p.a		-unknown-	profile
 ./usr/X11R6/lib/libdps_pic.a
 ./usr/X11R6/lib/libdpstk.a
-./usr/X11R6/lib/libdpstk_p.a
+./usr/X11R6/lib/libdpstk_p.a		-unknown-	profile
 ./usr/X11R6/lib/libdpstk_pic.a
 ./usr/X11R6/lib/libexpat.a
-./usr/X11R6/lib/libexpat_p.a
+./usr/X11R6/lib/libexpat_p.a		-unknown-	profile
 ./usr/X11R6/lib/libexpat_pic.a
 ./usr/X11R6/lib/libfntstubs.a
-./usr/X11R6/lib/libfntstubs_p.a
+./usr/X11R6/lib/libfntstubs_p.a		-unknown-	profile
 ./usr/X11R6/lib/libfontconfig.a
-./usr/X11R6/lib/libfontconfig_p.a
+./usr/X11R6/lib/libfontconfig_p.a		-unknown-	profile
 ./usr/X11R6/lib/libfontconfig_pic.a
 ./usr/X11R6/lib/libfontenc.a
-./usr/X11R6/lib/libfontenc_p.a
+./usr/X11R6/lib/libfontenc_p.a		-unknown-	profile
 ./usr/X11R6/lib/libfontenc_pic.a
 ./usr/X11R6/lib/libfreetype.a
-./usr/X11R6/lib/libfreetype_p.a
+./usr/X11R6/lib/libfreetype_p.a		-unknown-	profile
 ./usr/X11R6/lib/libfreetype_pic.a
 ./usr/X11R6/lib/liblbxutil.a
-./usr/X11R6/lib/liblbxutil_p.a
+./usr/X11R6/lib/liblbxutil_p.a		-unknown-	profile
 ./usr/X11R6/lib/liboldX.a
-./usr/X11R6/lib/liboldX_p.a
+./usr/X11R6/lib/liboldX_p.a		-unknown-	profile
 ./usr/X11R6/lib/liboldX_pic.a
 ./usr/X11R6/lib/libpsres.a
-./usr/X11R6/lib/libpsres_p.a
+./usr/X11R6/lib/libpsres_p.a		-unknown-	profile
 ./usr/X11R6/lib/libpsres_pic.a
 ./usr/X11R6/lib/libxkbfile.a
-./usr/X11R6/lib/libxkbfile_p.a
+./usr/X11R6/lib/libxkbfile_p.a		-unknown-	profile
 ./usr/X11R6/lib/libxkbfile_pic.a
 ./usr/X11R6/lib/libxkbui.a
-./usr/X11R6/lib/libxkbui_p.a
+./usr/X11R6/lib/libxkbui_p.a		-unknown-	profile
 ./usr/X11R6/lib/libxkbui_pic.a
 ./usr/X11R6/lib/pkgconfig/fontconfig.pc
 ./usr/X11R6/lib/pkgconfig/xcursor.pc
