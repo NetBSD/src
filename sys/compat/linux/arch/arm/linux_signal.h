@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.3 2002/03/19 20:51:59 christos Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.4 2002/11/26 18:43:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -105,23 +105,23 @@ typedef struct {
 } linux_sigset_t;
 
 struct linux_old_sigaction {
-	linux_handler_t		sa_handler;
-	linux_old_sigset_t	sa_mask;
-	u_long			sa_flags;
-	void			(*sa_restorer) __P((void));
+	linux_handler_t		linux_sa_handler;
+	linux_old_sigset_t	linux_sa_mask;
+	u_long			linux_sa_flags;
+	void			(*linux_sa_restorer) __P((void));
 };
 
 /* Used in rt_* calls */
 struct linux_sigaction {
-	linux_handler_t		sa_handler;
-	u_long			sa_flags;
-	void			(*sa_restorer) __P((void));
-	linux_sigset_t		sa_mask;
+	linux_handler_t		linux_sa_handler;
+	u_long			linux_sa_flags;
+	void			(*linux_sa_restorer) __P((void));
+	linux_sigset_t		linux_sa_mask;
 };
 
 struct linux_k_sigaction {
 	struct linux_sigaction sa;
-#define k_sa_restorer	sa.sa_restorer
+#define k_sa_restorer	sa.linux_sa_restorer
 };
 
 #define	LINUX_SS_ONSTACK	1
