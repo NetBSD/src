@@ -1,10 +1,10 @@
-	$NetBSD: contents,v 1.1.2.4 1998/05/09 05:11:20 mycroft Exp $	
+	$NetBSD: contents,v 1.1.2.5 1998/05/29 04:12:29 mycroft Exp $	
 
 The alpha-specific portion of the NetBSD _VER release is found in the
-"alpha" subdirectory of the distribution.  That subdirectory is laid
-out as follows:
+"alpha" subdirectory of the distribution:
 
 .../NetBSD-_VER/alpha/
+
         INSTALL                 Installation notes; this file.
 
         binary/
@@ -21,9 +21,7 @@ out as follows:
                 floppy/         alpha boot and installation
                                 floppies; see below.
 
-        source/
-
-                toolchain/      Toolchain source code; see below.
+        source/			Toolchain source code; see below.
 
 Bootable installation/upgrade floppies:
 
