@@ -1,4 +1,4 @@
-/*	$NetBSD: clonetest.c,v 1.1 2001/07/17 23:58:30 thorpej Exp $	*/
+/*	$NetBSD: clonetest.c,v 1.2 2001/07/18 19:24:02 thorpej Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -26,6 +26,7 @@ int	main(int, char *[]);
 int
 main(int argc, char *argv[])
 {
+	sigset_t mask;
 	void *stack;
 	__volatile int frobme = 0;
 	pid_t pid;
@@ -44,13 +45,19 @@ main(int argc, char *argv[])
 	printf("parent: stack = %p\n", stack);
 	fflush(stdout);
 
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGUSR1);
+
+	if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
+		err(1, "sigprocmask (SIGUSR1)");
+
 	pid = __clone(newclone, stack,
-	    CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|SIGCHLD,
+	    CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|SIGUSR1,
 	    (void *) &frobme);
 	if (pid == -1)
 		err(1, "clone");
 
-	while (waitpid(pid, &stat, 0) != pid)
+	while (waitpid(pid, &stat, __WCLONE) != pid)
 		/* spin */ ;
 
 	if (WIFEXITED(stat) == 0)
