@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.10 2001/09/03 03:46:26 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.11 2001/11/09 19:20:19 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -322,7 +322,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 	busreg  =  parent->busno << PCI_BRIDGE_BUS_PRIMARY_SHIFT;
 	busreg |=      pb->busno << PCI_BRIDGE_BUS_SECONDARY_SHIFT;
 	busreg |= pb->last_busno << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT;
-	pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_BUS_REG, busreg);
+	pci_conf_write(parent->pc, pd->tag, PCI_BRIDGE_BUS_REG, busreg);
 
 	pb->swiz = parent->swiz + dev;
 
@@ -334,7 +334,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	pb->io_32bit = 0;
 	if (parent->io_32bit) {
-		io = pci_conf_read(pb->pc, pd->tag, PCI_BRIDGE_STATIO_REG);
+		io = pci_conf_read(parent->pc, pd->tag, PCI_BRIDGE_STATIO_REG);
 		if (PCI_BRIDGE_IO_32BITS(io)) {
 			pb->io_32bit = 1;
 		}
@@ -342,7 +342,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	pb->pmem_64bit = 0;
 	if (parent->pmem_64bit) {
-		pmem = pci_conf_read(pb->pc, pd->tag,
+		pmem = pci_conf_read(parent->pc, pd->tag,
 		    PCI_BRIDGE_PREFETCHMEM_REG);
 		if (PCI_BRIDGE_PREFETCHMEM_64BITS(pmem)) {
 			pb->pmem_64bit = 1;
