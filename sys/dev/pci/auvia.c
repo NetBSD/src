@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.6 2000/11/14 18:42:55 thorpej Exp $	*/
+/*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -289,17 +289,15 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * Driver works as okay on my VIA 694D Pro with auvia rev. H, even
-	 * through the bit won't get set. Earlier models probably need
-	 * the test as it is.
+	 * Print a warning if the codec doesn't support hardware variable
+	 * rate audio.
 	 */
 	if (auvia_read_codec(sc, AC97_REG_EXT_AUDIO_ID, &v)
-		|| (sc->sc_revision[0] < 'H' && !(v & AC97_CODEC_DOES_VRA))) {
+		|| !(v & AC97_CODEC_DOES_VRA)) {
 		/* XXX */
 
-		printf("%s: codec must support AC'97 2.0 Variable Rate Audio\n",
+		printf("%s: warning: codec doesn't support hardware AC'97 2.0 Variable Rate Audio\n",
 			sc->sc_dev.dv_xname);
-		return;
 	} else {
 		/* enable VRA */
 		auvia_write_codec(sc, AC97_REG_EXT_AUDIO_STAT,
