@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.153 2000/03/23 05:16:15 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.154 2000/03/30 02:12:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -76,7 +76,6 @@ static int change_utimes __P((struct vnode *vp, const struct timeval *,
 static int rename_files __P((const char *, const char *, struct proc *, int));
 
 void checkdirs __P((struct vnode *));
-int dounmount __P((struct mount *, int, struct proc *));
 
 int dovfsusermount = 0;
 
