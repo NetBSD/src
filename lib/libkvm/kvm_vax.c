@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_vax.c,v 1.13 2001/09/07 01:48:37 chuck Exp $ */
+/*	$NetBSD: kvm_vax.c,v 1.14 2001/11/29 23:32:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@ _kvm_initvtop(kd)
 {
 	struct vmstate *vm;
 	struct stat st;
-	struct nlist nlist[2];
+	struct nlist nl[2];
 
 	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
 	if (vm == 0)
@@ -93,13 +93,13 @@ _kvm_initvtop(kd)
 		return (-1);
 
 	/* Get end of kernel address */
-	nlist[0].n_name = "_end";
-	nlist[1].n_name = 0;
-	if (kvm_nlist(kd, nlist) != 0) {
+	nl[0].n_name = "_end";
+	nl[1].n_name = 0;
+	if (kvm_nlist(kd, nl) != 0) {
 		_kvm_err(kd, kd->program, "pmap_stod: no such symbol");
 		return (-1);
 	}
-	vm->end = (u_long)nlist[0].n_value;
+	vm->end = (u_long)nl[0].n_value;
 
 	return (0);
 }
