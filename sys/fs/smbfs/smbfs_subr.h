@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.4 2003/02/19 13:51:25 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.5 2003/02/23 18:47:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -127,9 +127,6 @@ struct smbfs_fctx {
 
 #define f_rq	f_urq.uf_rq
 #define f_t2	f_urq.uf_t2
-
-extern int smbfs_debuglevel;
-
 
 /*
  * smb level
