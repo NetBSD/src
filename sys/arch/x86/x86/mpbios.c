@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.17 2003/10/27 03:51:35 lukem Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.18 2003/10/29 03:40:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.17 2003/10/27 03:51:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.18 2003/10/29 03:40:56 mycroft Exp $");
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
@@ -763,6 +763,7 @@ static void mp_cfg_special_intr (entry, redir)
 	case MPS_INTTYPE_SMI:
 		*redir |= (IOAPIC_REDLO_DEL_SMI<<IOAPIC_REDLO_DEL_SHIFT);
 		break;
+
 	case MPS_INTTYPE_ExtINT:
 		/*
 		 * We are using the ioapic in "native" mode.
@@ -772,8 +773,6 @@ static void mp_cfg_special_intr (entry, redir)
 		*redir |= (IOAPIC_REDLO_DEL_EXTINT<<IOAPIC_REDLO_DEL_SHIFT);
 		*redir |= (IOAPIC_REDLO_MASK);
 		break;
-	default:
-		panic("unknown MPS interrupt type %d", entry->int_type);
 	}
 }
 
@@ -1043,7 +1042,7 @@ mpbios_int(ent, enttype, mpi)
 	struct ioapic_softc *sc = NULL, *sc2;
 
 	struct mp_intr_map *altmpi;
-	struct mp_bus *mpb = NULL;	/* XXX gcc */
+	struct mp_bus *mpb;
 
 	u_int32_t id = entry->dst_apic_id;
 	u_int32_t pin = entry->dst_apic_int;
@@ -1065,7 +1064,10 @@ mpbios_int(ent, enttype, mpi)
 	case MPS_INTTYPE_NMI:
 		mpb = &nmi_bus;
 		break;
+	default:
+		panic("unknown MPS interrupt type %d", entry->int_type);
 	}
+
 	mpi->next = mpb->mb_intrs;
 	mpb->mb_intrs = mpi;
 	mpi->bus = mpb;
