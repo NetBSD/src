@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.11 2000/12/12 11:16:02 simonb Exp $	*/
+/*	$NetBSD: ldd.c,v 1.12 2002/09/13 08:40:05 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -113,16 +113,16 @@ main(
 #ifdef DEBUG
     debug = 1;
 #endif
-    _rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH, true);
+    _rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
 
 
     _rtld_trust = geteuid() == getuid() && getegid() == getgid();
 
     if (_rtld_trust) {
-	_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"), true);
+	_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
     }
 
-    _rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS, true);
+    _rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
 
     for (argc--, argv++; argc != 0; argc--, argv++) {
 	int fd = open(*argv, O_RDONLY);
@@ -148,7 +148,7 @@ main(
 	_rtld_objtail = &_rtld_objmain->next;
 	++_rtld_objmain->refcount;
 
-	(void) _rtld_load_needed_objects(_rtld_objmain, 0, true);
+	(void) _rtld_load_needed_objects(_rtld_objmain, 0);
 
 	printf("%s:\n", _rtld_objmain->path);
 	print_needed(_rtld_objmain);
