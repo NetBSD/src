@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21040reg.h,v 1.12 1997/10/15 18:51:00 matt Exp $	*/
+/*	$NetBSD: dc21040reg.h,v 1.13 1997/10/17 09:26:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -434,6 +434,23 @@ typedef struct {
 #define TULIP_OUI_ASANTE_2		0x94
 #define TULIP_GP_ASANTE_PINS		0x000000bf	/* GP pin config */
 #define TULIP_GP_ASANTE_PHYRESET	0x00000008	/* Reset PHY */
+
+/*
+ * ACCTON EN1207 specialties
+ */
+
+#define TULIP_OUI_EN1207_0		0x00
+#define TULIP_OUI_EN1207_1		0x00
+#define TULIP_OUI_EN1207_2		0xE8
+
+#define TULIP_CSR8_EN1207		0x08
+#define TULIP_CSR9_EN1207		0x00
+#define TULIP_CSR10_EN1207		0x03
+#define TULIP_CSR11_EN1207		0x1F
+
+#define TULIP_GP_EN1207_BNC_INIT        0x0000011B
+#define TULIP_GP_EN1207_UTP_INIT        0x9E00000B
+#define TULIP_GP_EN1207_100_INIT        0x6D00031B
 
 /*
  * SROM definitions for the 21140 and 21041.
