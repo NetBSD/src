@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.15 2002/10/04 20:05:14 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.16 2002/10/11 02:10:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -229,8 +229,9 @@ struct RF_Raid_s {
 	/*
          * PSS (Parity Stripe Status) stuff
          */
-	RF_FreeList_t *pss_freelist;
 	long    pssTableSize;
+	struct pool pss_pool;
+	struct pool pss_issued_pool;
 
 	/*
          * Reconstruction stuff
