@@ -1,4 +1,4 @@
-.\" $NetBSD: upgrade,v 1.2 1999/05/04 03:37:09 simonb Exp $	
+.\" $NetBSD: upgrade,v 1.2.8.1 2000/10/02 01:27:06 minoura Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,6 +64,12 @@ the
 kernel as described in the
 .Sx Installing from an existing system
 section.
+.\}
+.ie r_x68k \{\
+As noted above, you must have the
+.Pa loadbsd.x
+utility and the installation kernel you chose, or, the
+boot floppy available to do the upgrade.
 .\}
 .el \{\
 To do the upgrade, you must have the boot floppy
