@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.5.4.7 2002/06/20 03:43:02 nathanw Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.5.4.8 2002/06/24 21:49:18 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.5.4.7 2002/06/20 03:43:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.5.4.8 2002/06/24 21:49:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,12 +99,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.5.4.7 2002/06/20 03:43:02 nathan
  * entry uses NetBSD's native setregs instead of linux_setregs
  */
 void
-linux_setregs(p, pack, stack) 
-	struct proc *p;
+linux_setregs(l, pack, stack) 
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {	
-	setregs(p, pack, stack);
+	setregs(l, pack, stack);
 }
 
 /*
@@ -124,7 +124,8 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_sigregs frame;
 	struct linux_pt_regs linux_regs;
@@ -133,7 +134,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	int onstack;
 	int i;
 
-	tf = trapframe(p);
+	tf = trapframe(l);
  
 	/* 
 	 * Do we need to jump onto the signal stack? 
@@ -197,8 +198,8 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	memset(&frame, 0, sizeof(frame));
 	memcpy(&frame.lgp_regs, &linux_regs, sizeof(linux_regs));
 
-	if (curproc == fpuproc)
-		save_fpu(curproc);
+	if (curlwp == fpuproc)
+		save_fpu(curlwp);
 	memcpy(&frame.lfp_regs, curpcb->pcb_fpu.fpr, sizeof(frame.lfp_regs));
 
 	/*
@@ -220,7 +221,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -233,7 +234,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -273,14 +274,15 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
  * XXX not tested
  */
 int
-linux_sys_rt_sigreturn(p, v, retval)
-	struct proc *p;
+linux_sys_rt_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sys_rt_sigreturn_args /* {
 		syscallarg(struct linux_rt_sigframe *) sfp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct linux_rt_sigframe *scp, sigframe;
 	struct linux_sigregs sregs;
 	struct linux_pt_regs *lregs;
@@ -304,8 +306,8 @@ linux_sys_rt_sigreturn(p, v, retval)
 	/*
 	 * Make sure, fpu is sync'ed
 	 */
-	if (curproc == fpuproc)
-		save_fpu(curproc);
+	if (curlwp == fpuproc)
+		save_fpu(curlwp);
 
 	/*
 	 *  Restore register context.
@@ -315,7 +317,7 @@ linux_sys_rt_sigreturn(p, v, retval)
 		return (EFAULT);
 	lregs = (struct linux_pt_regs *)&sregs.lgp_regs;
 
-	tf = trapframe(p);
+	tf = trapframe(l);
 #ifdef DEBUG_LINUX
 	printf("linux_sys_sigreturn: trapframe=0x%lx scp=0x%lx\n",
 	    (unsigned long)tf, (unsigned long)scp);
@@ -363,14 +365,15 @@ linux_sys_rt_sigreturn(p, v, retval)
  * The following needs code review for potential security issues
  */
 int
-linux_sys_sigreturn(p, v, retval)  
-	struct proc *p;
+linux_sys_sigreturn(l, v, retval)  
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sys_sigreturn_args /* {
 		syscallarg(struct linux_sigcontext *) scp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct linux_sigcontext *scp, context;
 	struct linux_sigregs sregs;
 	struct linux_pt_regs *lregs;
@@ -394,8 +397,8 @@ linux_sys_sigreturn(p, v, retval)
 	/*
 	 * Make sure, fpu is in sync
 	 */
-	if (curproc == fpuproc)
-		save_fpu(curproc);
+	if (curlwp == fpuproc)
+		save_fpu(curlwp);
 
 	/*
 	 *  Restore register context.
@@ -404,7 +407,7 @@ linux_sys_sigreturn(p, v, retval)
 		return (EFAULT);
 	lregs = (struct linux_pt_regs *)&sregs.lgp_regs;
 
-	tf = trapframe(p);
+	tf = trapframe(l);
 #ifdef DEBUG_LINUX
 	printf("linux_sys_sigreturn: trapframe=0x%lx scp=0x%lx\n",
 	    (unsigned long)tf, (unsigned long)scp);
@@ -504,7 +507,8 @@ linux_machdepioctl(p, v, retval)
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;
-	return sys_ioctl(p, &bia, retval);
+	/* XXX NJWLWP */
+	return sys_ioctl(curlwp, &bia, retval);
 }
 #if 0
 /*
@@ -513,8 +517,8 @@ linux_machdepioctl(p, v, retval)
  * to rely on I/O permission maps, which are not implemented.
  */
 int
-linux_sys_iopl(p, v, retval)
-	struct proc *p;
+linux_sys_iopl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -533,8 +537,8 @@ linux_sys_iopl(p, v, retval)
  * just let it have the whole range.
  */
 int
-linux_sys_ioperm(p, v, retval)
-	struct proc *p;
+linux_sys_ioperm(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -551,22 +555,22 @@ linux_sys_ioperm(p, v, retval)
  * wrapper linux_sys_new_uname() -> linux_sys_uname() 
  */
 int	
-linux_sys_new_uname(p, v, retval) 
-	struct proc *p;
+linux_sys_new_uname(l, v, retval) 
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	return linux_sys_uname(p, v, retval); 
+	return linux_sys_uname(l, v, retval); 
 }
 
 /*
  * wrapper linux_sys_new_select() -> linux_sys_select() 
  */
 int	
-linux_sys_new_select(p, v, retval) 
-	struct proc *p;
+linux_sys_new_select(l, v, retval) 
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	return linux_sys_select(p, v, retval); 
+	return linux_sys_select(l, v, retval); 
 }
