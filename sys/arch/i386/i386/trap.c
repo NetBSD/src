@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62 1994/11/14 05:53:51 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.63 1994/11/16 20:14:42 christos Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -577,15 +577,14 @@ syscall(frame)
 
 	default:
 	bad:
+#ifdef COMPAT_SVR4
+		if (p->p_emul == EMUL_IBCS2_ELF)
+			error = svr4_error[error];
+#endif
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
-
-#ifdef COMPAT_SVR4
-	if (p->p_emul == EMUL_IBCS2_ELF)
-		error = svr4_error[error];
-#endif
 
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval[0]);
