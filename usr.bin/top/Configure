@@ -494,7 +494,7 @@ sed -e "s|%topn%|$topn|" \
     -e "s|%install%|$Cmdinstall|" \
     -e "s|%shell%|$Cmdshell|" \
     -e "s|%osrev%|$osrev|" \
-	Makefile.X >Makefile
+	Makefile.X > /dev/null
 
 echo "Building top.local.h..."
 sed -e "s|%LoadMax%|$LoadMax|" \
