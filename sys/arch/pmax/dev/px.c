@@ -1,9 +1,6 @@
-/* 	$NetBSD: px.c,v 1.5 1999/04/26 04:37:33 ad Exp $ */
+/* 	$NetBSD: px.c,v 1.6 1999/04/26 12:05:11 ad Exp $ */
 
 /*
- * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
- * All rights reserved.
- *
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
  * All rights reserved.
  *
@@ -37,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.5 1999/04/26 04:37:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.6 1999/04/26 12:05:11 ad Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -113,6 +110,7 @@ static void	px_qvss_init __P((struct px_info *));
 static int	px_mmap_info  __P((struct proc *, dev_t, vm_offset_t *));
 static void	px_cursor_hack __P((struct fbinfo *, int, int));
 static int	px_probe_sram __P((struct px_info *));
+static void	px_bt459_flush __P((struct px_info *));
 
 struct cfattach px_ca = {
 	sizeof(struct px_softc),
@@ -124,8 +122,7 @@ struct cfattach px_ca = {
 static const char *px_types[] = {
 	"PMAG-CA ",
 	"PMAG-DA ",
-	"PMAG-F  ", /* XXX always -FA? */
-	"PMAG-FA ",
+	"PMAG-FA ",	/* XXX um, does this ever get reported? */
 };
 
 #define NUM_PX_TYPES (sizeof(px_types) / sizeof(px_types[0]))
@@ -387,14 +384,25 @@ px_init(fi, slotbase, unit, silent)
 		pxi->pxi_rbuf_size = 128*1024; /* XXX might have 256kB */
 	}
 
-	/* Get a font and lock */
+	/* 
+	 * Get a font and lock. If we're not the console, we don't care
+	 * about the bit/byte order; otherwise we'd have to panic.
+	 */
 	wsfont_init();
 
-	if ((i = wsfont_find(NULL, 0, 0, 2)) < 0)
-		panic("px_init: unable to get font");
-
-	if (wsfont_lock(i, &pxi->pxi_font, WSFONT_R2L, WSFONT_L2R) < 0)
-		panic("px_init: unable to lock font");
+	if (fi == NULL) {	
+		if ((i = wsfont_find(NULL, 0, 0, 2)) < 0)
+			panic("px_init: unable to get font");
+		
+		if (wsfont_lock(i, &pxi->pxi_font, WSFONT_R2L, WSFONT_L2R) < 0)
+			panic("px_init: unable to lock font");
+	} else {
+		/* Always works */
+		wsfont_find(NULL, 0, 0, 0);
+	
+		if (wsfont_lock(i, &pxi->pxi_font, 0, 0) < 0)
+			panic("px_init: unable to lock font");
+	}
 
 	/* Only now can we init the bt459... */
 	px_bt459_init(pxi);
@@ -678,10 +686,11 @@ px_init_stic(pxi, probe)
 	stic->hblank = (255 << 16) | 340;
 	stic->hsync2 = 245;
 	stic->hsync = (261 << 16) | 293;
-	stic->ipdvint = STIC_INT_CLR;
+	stic->ipdvint = STIC_INT_CLR | STIC_INT_WE;
 	stic->sticsr = 0x00000008;
 	tc_wmb();
-	
+
+#ifdef notdef	
 	/* Now enable the i860 and STIC interrupts (PXG only) */
 	if (pxi->pxi_option) {
 		slot = (volatile int32_t *)pxi->pxi_slotbase;
@@ -692,6 +701,7 @@ px_init_stic(pxi, probe)
 		stic->sticsr = STIC_INT_WE | STIC_INT_CLR;
 		tc_wmb();
 	}
+#endif
 }
 
 
@@ -764,6 +774,7 @@ px_load_cursor_data(pxi, pos, val)
 		
 	for (cnt = 10; cnt; cnt--) {
 		BT459_SELECT(vdac, BT459_REG_CRAM_BASE + pos);
+		BT459_WRITE_REG(vdac, val);
 
 		if ((BT459_READ_REG(vdac) & pxi->pxi_planemask) == val)
 			break;
@@ -830,6 +841,90 @@ px_load_cmap(pxi, index, num)
 
 
 /*
+ * Flush any pending updates to the bt459. This gets called during vblank
+ * on the PX to prevent shearing/snow. The PXG always has to flush.
+ */
+static void
+px_bt459_flush(pxi)
+	struct px_info *pxi;
+{
+	struct bt459_regs *vdac;
+	u_char *cp;
+	int i;
+	
+	vdac = pxi->pxi_vdac;
+
+	if (pxi->pxi_dirty & PX_DIRTY_CURSOR_POS) {
+		BT459_SELECT(vdac, BT459_REG_CURSOR_X_LOW);
+		BT459_WRITE_REG(vdac, DUPBYTE0(pxi->pxi_curx));
+		BT459_WRITE_REG(vdac, DUPBYTE1(pxi->pxi_curx));
+		BT459_WRITE_REG(vdac, DUPBYTE0(pxi->pxi_cury));
+		BT459_WRITE_REG(vdac, DUPBYTE1(pxi->pxi_cury));
+	}
+
+	if (pxi->pxi_dirty & PX_DIRTY_CURSOR)
+		px_load_cursor(pxi);
+
+	if (pxi->pxi_dirty & PX_DIRTY_CURSOR_CMAP) {
+		cp = pxi->pxi_curcmap;
+
+		BT459_SELECT(vdac, BT459_REG_CCOLOR_1);
+		BT459_WRITE_REG(vdac, DUPBYTE0(cp[3]));
+		BT459_WRITE_REG(vdac, DUPBYTE0(cp[4]));
+		BT459_WRITE_REG(vdac, DUPBYTE0(cp[5]));
+		BT459_WRITE_REG(vdac, DUPBYTE0(cp[0]));
+		BT459_WRITE_REG(vdac, DUPBYTE0(cp[1]));
+		BT459_WRITE_REG(vdac, DUPBYTE0(cp[2]));
+		BT459_WRITE_REG(vdac, DUPBYTE0(cp[3]));
+		BT459_WRITE_REG(vdac, DUPBYTE0(cp[4]));
+		BT459_WRITE_REG(vdac, DUPBYTE0(cp[5]));
+	}
+
+	if (pxi->pxi_dirty & PX_DIRTY_ENABLE) {
+		if (pxi->pxi_flg & PX_ENABLE) {
+			BT459_SELECT(vdac, BT459_REG_PRM);
+			BT459_WRITE_REG(vdac, 0xffffff);
+			px_load_cmap(pxi, 0, 1);
+			pxi->pxi_dirty |= PX_DIRTY_CURSOR_ENABLE;
+		} else {
+			BT459_SELECT(vdac, BT459_REG_PRM);
+			BT459_WRITE_REG(vdac, 0);
+
+			BT459_SELECT(vdac, 0);
+			BT459_WRITE_CMAP(vdac, 0);
+			BT459_WRITE_CMAP(vdac, 0);
+			BT459_WRITE_CMAP(vdac, 0);
+
+			BT459_SELECT(vdac, BT459_REG_CCR);
+			BT459_WRITE_REG(vdac, 0);
+		}
+	}
+
+	if (pxi->pxi_flg & PX_ENABLE) {
+		if (pxi->pxi_dirty & PX_DIRTY_CMAP)
+			px_load_cmap(pxi, pxi->pxi_cmap_idx,
+			    pxi->pxi_cmap_cnt);
+
+		if (pxi->pxi_dirty & PX_DIRTY_CURSOR_ENABLE) {
+			if (pxi->pxi_flg & PX_CURSOR_ENABLE) {
+				/* No flashing cursor for X */
+				if (pxi->pxi_flg & PX_OPEN)
+					i = 0x00c0c0c0;
+				else
+					i = 0x01c1c1c1;
+			} else
+				i = 0;
+
+			BT459_SELECT(vdac, BT459_REG_CCR);
+			BT459_WRITE_REG(vdac, i);
+		}
+	}
+
+	pxi->pxi_dirty = 0;
+}
+
+
+/*
  * PixelStamp board interrupt handler. We can get more than one interrupt
  * at a time (i.e. packet+vertical retrace) so we don't return after
  * handling each case.
@@ -840,20 +935,17 @@ px_intr(xxx_sc)
 {
 	struct px_cliplist *cl;
 	struct stic_regs *stic;
-	struct bt459_regs *vdac;
 	struct px_info *pxi;
-	int caught, i, state;
-	int32_t *hi;
+	int caught, state;
 
 	pxi = (struct px_info *)
 	   MIPS_PHYS_TO_KSEG1(((struct px_softc *)xxx_sc)->px_info);
 
 	stic = pxi->pxi_stic;
-	vdac = pxi->pxi_vdac;
 	caught = 0;
-
 	state = stic->ipdvint;
 	
+#ifdef notdef
 	/* Getting this from the i860? */
 	if (pxi->pxi_option) {
 		hi = (int32_t *)pxi->pxi_slotbase + (PXG_HOST_INTR_OFFSET>>2);
@@ -867,12 +959,8 @@ px_intr(xxx_sc)
 
 		if (i != 3) /* 3 == vblank */
 			state |= STIC_INT_V;
-#ifdef notdef 
-		/* Would cause race... */
-		else 
-			printf("px%d: intr(%d) from i860?\n", pxi->pxi_unit, i);
-#endif
 	}
+#endif
 
 	/* Vertical retrace interrupt. */
 	if (state & STIC_INT_V) {
@@ -880,79 +968,8 @@ px_intr(xxx_sc)
 		tc_wmb();
 		caught = 1;
 
-		/*
-		 * Update colormap, video enable, cursor and cursor
-		 * colormap on vertical retrace. If you don't to this here
-		 * (i.e. at vertical retrace time) you'll see shearing and
-		 * other nasty artifacts.
-		 */
-		if (pxi->pxi_dirty & PX_DIRTY_CURSOR_POS) {
-			BT459_SELECT(vdac, BT459_REG_CURSOR_X_LOW);
-			BT459_WRITE_REG(vdac, DUPBYTE0(pxi->pxi_curx));
-			BT459_WRITE_REG(vdac, DUPBYTE1(pxi->pxi_curx));
-			BT459_WRITE_REG(vdac, DUPBYTE0(pxi->pxi_cury));
-			BT459_WRITE_REG(vdac, DUPBYTE1(pxi->pxi_cury));
-		}
-
-		if (pxi->pxi_dirty & PX_DIRTY_CURSOR)
-			px_load_cursor(pxi);
-
-		if (pxi->pxi_dirty & PX_DIRTY_CURSOR_CMAP) {
-			u_char *cp = pxi->pxi_curcmap;
-
-			BT459_SELECT(vdac, BT459_REG_CCOLOR_1);
-			BT459_WRITE_REG(vdac, DUPBYTE0(cp[3]));
-			BT459_WRITE_REG(vdac, DUPBYTE0(cp[4]));
-			BT459_WRITE_REG(vdac, DUPBYTE0(cp[5]));
-			BT459_WRITE_REG(vdac, DUPBYTE0(cp[0]));
-			BT459_WRITE_REG(vdac, DUPBYTE0(cp[1]));
-			BT459_WRITE_REG(vdac, DUPBYTE0(cp[2]));
-			BT459_WRITE_REG(vdac, DUPBYTE0(cp[3]));
-			BT459_WRITE_REG(vdac, DUPBYTE0(cp[4]));
-			BT459_WRITE_REG(vdac, DUPBYTE0(cp[5]));
-		}
-
-		if (pxi->pxi_dirty & PX_DIRTY_ENABLE) {
-			if (pxi->pxi_flg & PX_ENABLE) {
-				BT459_SELECT(vdac, BT459_REG_PRM);
-				BT459_WRITE_REG(vdac, 0xffffff);
-				px_load_cmap(pxi, 0, 1);
-				pxi->pxi_dirty |= PX_DIRTY_CURSOR_ENABLE;
-			} else {
-				BT459_SELECT(vdac, BT459_REG_PRM);
-				BT459_WRITE_REG(vdac, 0);
-
-				BT459_SELECT(vdac, 0);
-				BT459_WRITE_CMAP(vdac, 0);
-				BT459_WRITE_CMAP(vdac, 0);
-				BT459_WRITE_CMAP(vdac, 0);
-
-				BT459_SELECT(vdac, BT459_REG_CCR);
-				BT459_WRITE_REG(vdac, 0);
-			}
-		}
-
-		if (pxi->pxi_flg & PX_ENABLE) {
-			if (pxi->pxi_dirty & PX_DIRTY_CMAP)
-				px_load_cmap(pxi, pxi->pxi_cmap_idx,
-				    pxi->pxi_cmap_cnt);
-
-			if (pxi->pxi_dirty & PX_DIRTY_CURSOR_ENABLE) {
-				if (pxi->pxi_flg & PX_CURSOR_ENABLE) {
-					/* No flashing cursor for X */
-					if (pxi->pxi_flg & PX_OPEN)
-						i = 0x00c0c0c0;
-					else
-						i = 0x01c1c1c1;
-				} else
-					i = 0;
-
-				BT459_SELECT(vdac, BT459_REG_CCR);
-				BT459_WRITE_REG(vdac, i);
-			}
-		}
-
-		pxi->pxi_dirty = 0;
+		if (pxi->pxi_dirty)
+			px_bt459_flush(pxi);
 	}
 
 	/* Packet interrupt. Clear packet done flag. */
@@ -1078,7 +1095,8 @@ px_alloc_pbuf(pxi)
 		return (int32_t *)((caddr_t)pxi->pxi_rbuf +
 		    ((pxi->pxi_lpw & 15) << 12));
 	}
-
+	
+#ifdef notdef
 	/* If this is a PXG, ask the damn i860 which buffer to use */
 	if (pxi->pxi_option) {
 		poll = (volatile int32_t *)pxi->pxi_slotbase;
@@ -1089,6 +1107,7 @@ px_alloc_pbuf(pxi)
 		 * "pause coprocessor and interrupt."
 		 */
 		*poll = 0x30;
+		tc_wmb();
 	
 		for (i = 1000000; i; i--) {
 			DELAY(4);
@@ -1115,6 +1134,7 @@ px_alloc_pbuf(pxi)
 			pxi->pxi_pbuf_select = 0;
 		}
 	}
+#endif
 
 	buf = (int32_t *)((u_long)pxi->pxi_rbuf + pxi->pxi_pbuf_select);
 	pxi->pxi_pbuf_select ^= 4096;
@@ -1164,6 +1184,7 @@ px_send_packet(pxi, buf)
 
 	for (c = STAMP_RETRIES; c; c--) {
 		if (*poll == STAMP_OK) {
+#ifdef notdef
 			/* Tell the i860 we are done */
 			if (pxi->pxi_option) {
 				poll = (volatile int32_t*)pxi->pxi_slotbase + 
@@ -1174,6 +1195,7 @@ px_send_packet(pxi, buf)
 				poll[2] = 0;
 				tc_wmb();
 			}
+#endif
 			return (0);
 		}
 		
@@ -1612,6 +1634,9 @@ px_cursor(cookie, on, row, col)
 		pxi->pxi_flg &= ~PX_CURSOR_ENABLE;
 
 	pxi->pxi_dirty |= (PX_DIRTY_CURSOR_ENABLE | PX_DIRTY_CURSOR_POS);
+
+	if (pxi->pxi_option)
+		px_bt459_flush(pxi);
 }
 
 
@@ -1629,6 +1654,9 @@ px_cursor_hack(fi, x, y)
 	pxi->pxi_curx = x + 370;
 	pxi->pxi_cury = y + 37;
 	pxi->pxi_dirty |= PX_DIRTY_CURSOR_POS;
+
+	if (pxi->pxi_option)
+		px_bt459_flush(pxi);
 }
 
 
@@ -1722,6 +1750,8 @@ pxclose(dev, flag, mode, p)
 	px_make_cursor(pxi);
 	px_rect(pxi, 0, 0, 1280, 1024, 0);
 	pxi->pxi_dirty |= PX_DIRTY_ENABLE; /* make sure video is enabled */
+	if (pxi->pxi_option)
+		px_bt459_flush(pxi);
 	return (0);
 }
 
