@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.23 1997/09/16 16:28:07 scottr Exp $	*/
+/*	$NetBSD: asc.c,v 1.24 1997/10/10 05:54:54 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Scott Reynolds for
- *      the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
