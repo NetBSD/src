@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.249 2000/03/09 22:27:09 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.250 2000/03/20 08:07:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1970,7 +1970,7 @@ struct intvid_info_t {
 	u_long	fbmask;
 	u_long	fblen;
 } intvid_info[] = {
-	{ MACH_MACCLASSICII,	0xfee09a80,	0x0,		21888 },
+	{ MACH_MACCLASSICII,	0x009f9a80,	0x0,		21888 },
 	{ MACH_MACPB140,	0xfee00000,	0x0,		32 * 1024 },
 	{ MACH_MACPB145,	0xfee00000,	0x0,		32 * 1024 },
 	{ MACH_MACPB170,	0xfee00000,	0x0,		32 * 1024 },
@@ -2087,7 +2087,6 @@ void	setmachdep __P((void));
 void
 setmachdep()
 {
-	int setup_mrg_vectors = 0;
 	struct cpu_model_info *cpui;
 
 	/*
@@ -2118,7 +2117,6 @@ setmachdep()
 		mac68k_machine.zs_chip = 0;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
-		setup_mrg_vectors = 1;
 		break;
 	case MACH_CLASSPB:
 		VIA2 = VIA2OFF;
@@ -2243,8 +2241,7 @@ setmachdep()
 	 * used later when we re-map the vectors from MacOS Address
 	 * Space to NetBSD Address Space.
 	 */
-	if ((mac68k_machine.serial_console & 0x03) == 0 || setup_mrg_vectors)
-		mrg_MacOSROMVectors = cpui->rom_vectors;
+	mrg_MacOSROMVectors = cpui->rom_vectors;
 }
 
 /*
