@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.27 2001/10/14 12:33:18 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.28 2001/11/11 00:16:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1069,7 +1069,7 @@ static void wi_setmulti(sc)
 allmulti:
 		ifp->if_flags |= IFF_ALLMULTI;
 		memset((char *)&mcast, 0, sizeof(mcast));
-		mcast.wi_type = WI_RID_MCAST;
+		mcast.wi_type = WI_RID_MCAST_LIST;
 		mcast.wi_len = ((ETHER_ADDR_LEN / 2) * 16) + 1;
 
 		wi_write_record(sc, (struct wi_ltv_gen *)&mcast);
@@ -1092,7 +1092,7 @@ allmulti:
 	}
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
-	mcast.wi_type = WI_RID_MCAST;
+	mcast.wi_type = WI_RID_MCAST_LIST;
 	mcast.wi_len = ((ETHER_ADDR_LEN / 2) * i) + 1;
 	wi_write_record(sc, (struct wi_ltv_gen *)&mcast);
 }
@@ -1868,7 +1868,7 @@ wi_get_id(sc)
 
 	/* getting chip identity */
 	memset(&ver, 0, sizeof(ver));
-	ver.wi_type = WI_RID_CARDID;
+	ver.wi_type = WI_RID_CARD_ID;
 	ver.wi_len = 5;
 	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
 	printf("%s: using ", sc->sc_dev.dv_xname);
@@ -1918,7 +1918,7 @@ wi_get_id(sc)
 	if (sc->sc_prism2) {
 		/* try to get prism2 firm version */
 		memset(&ver, 0, sizeof(ver));
-		ver.wi_type = WI_RID_IDENT;
+		ver.wi_type = WI_RID_STA_IDENTITY;
 		ver.wi_len = 5;
 		wi_read_record(sc, (struct wi_ltv_gen *)&ver);
 		LE16TOH(ver.wi_ver[1]);

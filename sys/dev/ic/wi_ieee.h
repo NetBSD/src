@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.4 2001/09/22 17:22:25 explorer Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.5 2001/11/11 00:16:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -200,21 +200,6 @@ struct wi_scan_results {
 };
 
 /*
- * These are all the LTV record types that we can read or write
- * from the WaveLAN. Not all of them are temendously useful, but I
- * list as many as I know about here for completeness.
- */
-
-#define WI_RID_DNLD_BUF		0xFD01
-#define WI_RID_MEMSZ		0xFD02
-#define WI_RID_CARDID		0xFD0B
-#define WI_RID_DOMAINS		0xFD11
-#define WI_RID_CIS		0xFD13
-#define WI_RID_COMMQUAL		0xFD43
-#define WI_RID_SCALETHRESH	0xFD46
-#define WI_RID_PCF		0xFD87
-
-/*
  * Network parameters, static configuration entities.
  */
 #define WI_RID_PORTTYPE		0xFC00 /* Connection control characteristics */
@@ -258,11 +243,15 @@ struct wi_scan_results {
 /*
  * Network parameters, dynamic configuration entities
  */
-#define WI_RID_MCAST_LIST	0xFC80 /* list of multicast addrs */
+#define WI_RID_MCAST_LIST	0xFC80 /* multicast addrs to put in filter */
 #define WI_RID_CREATE_IBSS	0xFC81 /* create IBSS */
 #define WI_RID_FRAG_THRESH	0xFC82 /* frag len, unicast msg xmit */
 #define WI_RID_RTS_THRESH	0xFC83 /* frame len for RTS/CTS handshake */
-#define WI_RID_TX_RATE		0xFC84 /* data rate for message xmit */
+#define WI_RID_TX_RATE		0xFC84 /* data rate for message xmit
+ 					* 0 == Fixed 1mbps
+ 					* 1 == Fixed 2mbps
+ 					* 2 == auto fallback
+					*/
 #define WI_RID_PROMISC		0xFC85 /* enable promisc mode */
 #define WI_RID_FRAG_THRESH0	0xFC90
 #define WI_RID_FRAG_THRESH1	0xFC91
@@ -287,7 +276,7 @@ struct wi_scan_results {
 #define WI_RID_TX_RATE6		0xFCA4
 #define WI_RID_DEFLT_CRYPT_KEYS	0xFCB0
 #define WI_RID_TX_CRYPT_KEY	0xFCB1
-#define WI_RID_TICK_TIME	0xFCE0
+#define WI_RID_TICK_TIME	0xFCE0 	/* Auxiliary Timer tick interval */
 #define WI_RID_SCAN_REQ		0xFCE1
 #define WI_RID_JOIN_REQ		0xFCE2
 
@@ -305,9 +294,11 @@ struct wi_ltv_keys {
 /*
  * NIC information
  */
-#define WI_RID_FIRM_ID		0xFD02 /* Primary func firmware ID. */
+#define WI_RID_DNLD_BUF		0xFD01
+#define WI_RID_MEMSZ		0xFD02 /* memory size info */
 #define WI_RID_PRI_SUP_RANGE	0xFD03 /* primary supplier compatibility */
 #define WI_RID_CIF_ACT_RANGE	0xFD04 /* controller sup. compatibility */
+#define WI_RID_SYSTEM_SCALE	0xFC06
 #define WI_RID_SERIALNO		0xFD0A /* card serial number */
 #define WI_RID_CARD_ID		0xFD0B /* card identification */
 #define WI_RID_MFI_SUP_RANGE	0xFD0C /* modem supplier compatibility */
@@ -320,6 +311,9 @@ struct wi_ltv_keys {
 #define WI_RID_STA_SUP_RANGE	0xFD21 /* station supplier compat */
 #define WI_RID_MFI_ACT_RANGE	0xFD22
 #define WI_RID_CFI_ACT_RANGE	0xFD33
+#define WI_RID_COMMQUAL		0xFD43
+#define WI_RID_SCALETHRESH	0xFD46
+#define WI_RID_PCF		0xFD87
 
 /*
  * MAC information
