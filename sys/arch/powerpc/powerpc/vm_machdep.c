@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33 2001/07/22 11:29:46 wiz Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.34 2001/08/04 07:42:07 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -192,7 +192,7 @@ pagemove(from, to, size)
 
 	for (va = (vaddr_t)from; size > 0; size -= NBPG) {
 		(void) pmap_extract(pmap_kernel(), va, &pa);
-		pmap_remove(pmap_kernel(), va, va + NBPG);
+		pmap_kremove(va, NBPG);
 		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
 		va += NBPG;
 		to += NBPG;
@@ -332,6 +332,7 @@ vunmaprange(kaddr, len)
 	addr = trunc_page(kaddr);
 	off = kaddr - addr;
 	len = round_page(off + len);
+	pmap_kremove(addr, len);
 	uvm_km_free_wakeup(phys_map, addr, len);
 }
 #endif /* PPC_IBM4XX */
@@ -389,6 +390,7 @@ vunmapbuf(bp, len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
+	pmap_kremove(addr, len);
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
