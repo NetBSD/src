@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.17 2000/10/02 15:11:43 bjh21 Exp $
+.\"	$NetBSD: vnconfig.8,v 1.18 2000/10/02 16:21:27 bjh21 Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -155,12 +155,6 @@ Print messages to stdout describing actions taken.
 If no action option is given,
 .Fl c
 is assumed.
-.Sh FILES
-.Bl -tag -width /etc/disktab -compact
-.It Pa /dev/rvnd??
-.It Pa /dev/vnd??
-.It Pa /etc/disktab
-.El
 .Sh EXAMPLES
 .Pp
 .Dl vnconfig /dev/vnd0c /tmp/diskimage
@@ -192,12 +186,23 @@ entry in
 Unconfigures the
 .Pa vnd0
 device.
-.Sh BUGS
-This command should really be named
-.Nm vndconfig .
+.Sh FILES
+.Bl -tag -width /etc/disktab -compact
+.It Pa /dev/rvnd??
+.It Pa /dev/vnd??
+.It Pa /etc/disktab
+.El
 .Sh SEE ALSO
 .Xr opendisk 3 ,
 .Xr vnd 4 ,
 .Xr swapctl 8 ,
 .Xr mount 8 ,
 .Xr umount 8
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Nx 1.0 .
+.Sh BUGS
+This command should really be named
+.Nm vndconfig .
