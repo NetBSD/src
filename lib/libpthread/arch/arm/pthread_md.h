@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.1 2001/11/16 23:57:26 thorpej Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.2 2002/08/06 05:39:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -58,5 +58,50 @@ pthread__sp(void)
  *    ../i386/pthread_switch.S about STACK_SWITCH.
  */
 #define	STACKSPACE		(6 * sizeof(long))
+
+/*
+ * Conversions between struct reg and struct mcontext.  Used by
+ * libpthread_dbg.
+ */
+
+#define	PTHREAD_UCONTEXT_TO_REG(reg, uc)				\
+do {									\
+	int _reg_;							\
+									\
+	for (_reg_ = 0; _reg_ <= 12; _reg_++)				\
+		(reg)->r[_reg_] =					\
+		    (uc)->uc_mcontext.__gregs[_REG_R0 + _reg_];		\
+	(reg)->r_sp = (uc)->uc_mcontext.__gregs[_REG_SP];		\
+	(reg)->r_lr = (uc)->uc_mcontext.__gregs[_REG_LR];		\
+	(reg)->r_pc = (uc)->uc_mcontext.__gregs[_REG_PC];		\
+	(reg)->r_cpsr = (uc)->uc_mcontext.__gregs[_REG_CPSR];		\
+} while (/*CONSTCOND*/0)
+
+#define	PTHREAD_REG_TO_UCONTEXT(uc, reg)				\
+do {									\
+	int _reg_;							\
+									\
+	for (_reg_ = 0; _reg_ <= 12; _reg_++)				\
+		(uc)->uc_mcontext.__gregs[_REG_R0 + _reg_] =		\
+		    (reg)->r[_reg_];					\
+	(uc)->uc_mcontext.__gregs[_REG_SP] = (reg)->r_sp;		\
+	(uc)->uc_mcontext.__gregs[_REG_LR] = (reg)->r_lr;		\
+	(uc)->uc_mcontext.__gregs[_REG_PC] = (reg)->r_pc;		\
+	(uc)->uc_mcontext.__gregs[_REG_CPSR] = (reg)->r_cpsr;		\
+} while (/*CONSTCOND*/0)
+
+#define	PTHREAD_UCONTEXT_TO_FPREG(freg, uc)				\
+do {									\
+	(freg)->fpr_fpsr = (uc)->uc_mcontext.__fpregs.__fp_fpsr;	\
+	memcpy((freg)->fpr, (uc)->uc_mcontext.__fpregs.__fp_fr,		\
+	    sizeof((freg)->fpr));					\
+} while (/*CONSTCOND*/0)
+
+#define	PTHREAD_FPREG_TO_UCONTEXT(uc, freg)				\
+do {									\
+	(uc)->uc_mcontext.__fpregs.__fp_fpsr = (freg)->fpr_fpsr;	\
+	memcpy((uc)->uc_mcontext.__fpregs.__fp_fr, (freg)->fpr,		\
+	    sizeof((uc)->uc_mcontext.__fpregs.__fp_fr));		\
+} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_ARM_MD_H */
