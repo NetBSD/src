@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.34 2002/12/16 18:16:40 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.35 2002/12/18 22:51:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -125,9 +125,6 @@ void pthread_init(void)
 	extern int __isthreaded;
 	extern pthread_ops_t *__libc_pthread_ops;
 
-#ifdef PTHREAD__DEBUG
-	pthread__debug_init();
-#endif
 	/* Basic data structure setup */
 	pthread_attr_init(&pthread_default_attr);
 	PTQ_INIT(&allqueue);
@@ -147,6 +144,9 @@ void pthread_init(void)
 	pthread__alarm_init();
 	pthread__signal_init();
 	PTHREAD_MD_INIT
+#ifdef PTHREAD__DEBUG
+	pthread__debug_init();
+#endif
 
 	/* Tell libc that we're here and it should role-play accordingly. */
 	__libc_pthread_ops = &pthread_ops;
