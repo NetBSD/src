@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.14 1998/07/07 03:05:17 mark Exp $	*/
+/*	$NetBSD: beep.c,v 1.15 1998/08/31 02:35:31 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the RiscBSD team.
+ *	This product includes software developed by Mark Brinicombe.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -49,14 +49,10 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/kernel.h>
-#include <sys/types.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/errno.h>
-#include <dev/cons.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -117,12 +113,10 @@ beepprobe(parent, cf, aux)
 /*	struct mainbus_attach_args *mb = aux;*/
 	int id;
 
-/* Make sure we have an IOMD we understand */
-
+	/* Make sure we have an IOMD we understand */
 	id = IOMD_ID;
 
-/* So far I only know about this IOMD */
-
+	/* So far I only know about this IOMD */
 	switch (id) {
 #ifdef CPU_ARM7500
 	case ARM7500_IOC_ID:
@@ -183,8 +177,7 @@ beepattach(parent, self, aux)
 	conv_jap((char *)sc->sc_buffer0, sizeof(beep_waveform));
 #endif
 
-/* Reset the sound DMA channel */
-
+	/* Reset the sound DMA channel */
 	IOMD_WRITE_WORD(IOMD_SD0CURA, sc->sc_sound_cur0);
 	IOMD_WRITE_WORD(IOMD_SD0ENDA, sc->sc_sound_end0 | 0xc0000000);
 	IOMD_WRITE_WORD(IOMD_SD0CURB, sc->sc_sound_cur1);
@@ -192,11 +185,10 @@ beepattach(parent, self, aux)
     
 	IOMD_WRITE_BYTE(IOMD_SD0CR, 0x90);
 
-/* Install an IRQ handler */
-
+	/* Install an IRQ handler */
 	sc->sc_ih.ih_func = beepintr;
 	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_NONE;
+	sc->sc_ih.ih_level = IPL_AUDIO;
 #ifdef RC7500
 	sc->sc_ih.ih_name = "serial snd dma";
 #else
@@ -208,21 +200,17 @@ beepattach(parent, self, aux)
 
 	disable_irq(sdma_channel);
 
-/*
-	printf(" [ buf0=%08x:%08x->%08x buf1=%08x:%08x->%08x ]",
+/*	printf(" [ buf0=%08x:%08x->%08x buf1=%08x:%08x->%08x ]",
 	    (u_int)sc->sc_buffer0, sc->sc_sound_cur0, sc->sc_sound_end0,
-	    (u_int)sc->sc_buffer1, sc->sc_sound_cur1, sc->sc_sound_end1);
-*/
+	    (u_int)sc->sc_buffer1, sc->sc_sound_cur1, sc->sc_sound_end1);*/
 	printf("\n");
 
-/* Set sample rate to 32us */
-
+	/* Set sample rate to 32us */
 	WriteWord(VIDC_BASE, VIDC_SFR | 32);
 /*	WriteWord(VIDC_BASE, VIDC_SCR | 0x05);*/
 
 #ifndef RC7500
-/* Set the stereo postions to centred for all channels */
-
+	/* Set the stereo postions to centred for all channels */
 	WriteWord(VIDC_BASE, VIDC_SIR0 | SIR_CENTRE);
 	WriteWord(VIDC_BASE, VIDC_SIR1 | SIR_CENTRE);
 	WriteWord(VIDC_BASE, VIDC_SIR2 | SIR_CENTRE);
@@ -276,8 +264,7 @@ beepopen(dev, flag, mode, p)
 	sc = beep_cd.cd_devs[unit];
 	if (!sc) return(ENXIO);
 
-/* HACK hack hack */
-
+	/* HACK hack hack */
 	s = splhigh();
 	if (sc->sc_open) {
 		(void)splx(s);
@@ -303,9 +290,8 @@ beepclose(dev, flag, mode, p)
 	int s;
 
 	if (sc->sc_open == 0) return(ENXIO);
-    
-/* HACK hack hack */
 
+	/* HACK hack hack */
 	s = splhigh();
 	--sc->sc_open;
 	(void)splx(s);
