@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.11 2004/03/16 22:58:54 jonathan Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.12 2004/03/17 00:21:43 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.11 2004/03/16 22:58:54 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.12 2004/03/17 00:21:43 jonathan Exp $");
 
 /*
  * IPsec output processing.
@@ -59,7 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.11 2004/03/16 22:58:54 jonathan E
 #include <netinet/in_var.h>
 #include <netinet/ip_ecn.h>
 #ifdef INET6
-#include <netinet6/ip6_ecn.h>
+#  ifdef __FreeBSD__
+#  include <netinet6/ip6_ecn.h>
+#  endif
 #endif
 
 #include <netinet/ip6.h>
