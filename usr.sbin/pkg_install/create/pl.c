@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.11 1999/03/02 10:32:23 agc Exp $	*/
+/*	$NetBSD: pl.c,v 1.12 1999/05/29 20:44:21 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.11 1999/03/02 10:32:23 agc Exp $");
+__RCSID("$NetBSD: pl.c,v 1.12 1999/05/29 20:44:21 christos Exp $");
 #endif
 #endif
 
@@ -163,7 +163,12 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			    }
 			}
 
-			(void) snprintf(name, sizeof(name), "%s/%s", srcdir ? srcdir : cwd, p->name);
+			if (p->name[0] == '/')
+				(void) snprintf(name, sizeof(name), "%s",
+				    p->name);
+			else
+				(void) snprintf(name, sizeof(name), "%s/%s",
+				    srcdir ? srcdir : cwd, p->name);
 			if (lstat(name, &st) < 0) {
 				warnx("can't stat `%s'", name);
 				continue;
