@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.7 2002/03/06 04:29:35 lukem Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.8 2002/03/06 13:11:34 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -28,6 +28,8 @@ LISTS+=		${DISTRIBDIR}/common/list.sysinst
 
 realall: ${IMAGE}
 
+release:
+
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=${DISTRIBDIR}/utils/libhack
@@ -38,9 +40,6 @@ HACKOBJS:=	${HACKOBJS:Ngethost.o}
 
 # This is listed in ramdiskbin.conf but is built here.
 ${CRUNCHBIN}: libhack.o
-
-
-release:
 
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
