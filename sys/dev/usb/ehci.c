@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.84 2004/10/24 22:11:05 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.85 2004/10/24 22:12:24 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.84 2004/10/24 22:11:05 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.85 2004/10/24 22:12:24 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1466,13 +1466,19 @@ ehci_rem_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 void
 ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
 {
-	/* Halt while we are messing. */
-	sqh->qh.qh_qtd.qtd_status |= htole32(EHCI_QTD_HALTED);
+	int i;
+
+	/* Set HALTED to make hw leave it alone. */
+	sqh->qh.qh_qtd.qtd_status =
+	    htole32(EHCI_QTD_SET_STATUS(EHCI_QTD_HALTED));
 	sqh->qh.qh_curqtd = 0;
 	sqh->qh.qh_qtd.qtd_next = htole32(sqtd->physaddr);
+	sqh->qh.qh_qtd.qtd_altnext = 0;
+	for (i = 0; i < EHCI_QTD_NBUFFERS; i++)
+		sqh->qh.qh_qtd.qtd_buffer[i] = 0;
 	sqh->sqtd = sqtd;
-	/* Clear halt */
-	sqh->qh.qh_qtd.qtd_status &= htole32(~EHCI_QTD_HALTED);
+	/* Set !HALTED && !ACTIVE to start execution. */
+	sqh->qh.qh_qtd.qtd_status = 0;
 }
 
 /*
