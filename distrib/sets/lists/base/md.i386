@@ -1,18 +1,9 @@
-# $NetBSD: md.i386,v 1.53 1999/05/18 23:18:17 tron Exp $
+# $NetBSD: md.i386,v 1.54 1999/07/04 20:07:51 fvdl Exp $
 ./sbin/fdisk
-./sbin/ldconfig
-./usr/bin/cursor
 ./usr/bin/fdformat
 ./usr/bin/fontedit
-./usr/bin/kcon
-./usr/bin/loadfont
-./usr/bin/mcon
-./usr/bin/scon
-./usr/bin/vt220keys
-./usr/bin/vttest
 ./usr/lib/libi386.so.0.2
-./usr/lib/libkeycap.so.0.0
-./usr/libexec/ld.so
+./usr/lib/libi386.so.0
 ./usr/lkm/adosfs.o
 ./usr/lkm/cd9660.o
 ./usr/lkm/coda.o
@@ -35,7 +26,6 @@
 ./usr/sbin/apm
 ./usr/sbin/apmd
 ./usr/sbin/bad144
-./usr/sbin/ispcvt
 ./usr/sbin/zzz
 ./usr/share/pcvt
 ./usr/share/pcvt/fonts
@@ -47,4 +37,3 @@
 ./usr/share/pcvt/fonts/vt220l.810
 ./usr/share/pcvt/fonts/vt220l.814
 ./usr/share/pcvt/fonts/vt220l.816
-./usr/share/pcvt/keycap.pcvt

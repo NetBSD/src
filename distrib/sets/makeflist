@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.17 1999/06/06 09:26:51 pk Exp $
+# $NetBSD: makeflist,v 1.18 1999/07/04 20:07:51 fvdl Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -64,7 +64,7 @@ fi
 arch=`echo $arch | sed s,^mipse.,mips,`
 
 # Compute toolchain  used on target cpu.
-if [ "$arch" = "mips" -o "$machine" = "alpha" -o "$arch" = "powerpc" -o "$arch" = "sparc" ]; then
+if [ "$arch" = "mips" -o "$machine" = "alpha" -o "$arch" = "powerpc" -o "$arch" = "sparc" -o "$arch" = "i386" ]; then
         shlib=elf
 else
         shlib=aout
