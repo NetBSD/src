@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.99 1998/02/05 04:57:47 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.100 1998/02/08 04:56:37 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1959,20 +1959,25 @@ pmap_init()
  * Map a range of kernel virtual address space.
  * This might be used for device mappings, or to
  * record the mapping for kernel text/data/bss.
+ * Return VA following the mapped range.
  */
 vm_offset_t
-pmap_map(virt, start, end, prot)
-	vm_offset_t	virt;
-	vm_offset_t	start;	/* physical */
-	vm_offset_t	end;	/* physical */
+pmap_map(va, pa, endpa, prot)
+	vm_offset_t	va;
+	vm_offset_t	pa;
+	vm_offset_t	endpa;
 	int		prot;
 {
-	while (start < end) {
-		pmap_enter(kernel_pmap, virt, start, prot, FALSE);
-		virt += NBPG;
-		start += NBPG;
-	}
-	return(virt);
+	int sz;
+
+	sz = endpa - pa;
+	do {
+		pmap_enter(kernel_pmap, va, pa, prot, FALSE);
+		va += NBPG;
+		pa += NBPG;
+		sz -= NBPG;
+	} while (sz > 0);
+	return(va);
 }
 
 void
