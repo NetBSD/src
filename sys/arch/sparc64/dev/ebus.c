@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.38 2003/05/03 18:11:01 wiz Exp $	*/
+/*	$NetBSD: ebus.c,v 1.39 2003/05/17 01:38:39 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -203,7 +203,7 @@ ebus_attach(parent, self, aux)
 		immp = &sc->sc_intmapmask;
 		error = PROM_getprop(node, "interrupt-map-mask",
 			    sizeof(struct ebus_interrupt_map_mask), &nmapmask,
-			    (void **)&immp);
+			    (void *)&immp);
 		if (error)
 			panic("could not get ebus interrupt-map-mask");
 		if (nmapmask != 1)
