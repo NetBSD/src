@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.3 1995/11/11 02:41:45 thorpej Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.4 1996/02/01 20:47:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -70,6 +70,7 @@ struct	flagval {
 } flagvaltab[] = {
 	{ "CCDF_SWAP",		CCDF_SWAP },
 	{ "CCDF_UNIFORM",	CCDF_UNIFORM },
+	{ "CCDF_MIRROR",	CCDF_MIRROR },
 	{ NULL,			0 },
 };
 

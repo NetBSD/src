@@ -1,7 +1,7 @@
-.\"	$NetBSD: ccd.4,v 1.5 1995/10/09 06:09:09 thorpej Exp $
+.\"	$NetBSD: ccd.4,v 1.6 1996/02/01 20:47:46 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
-.\" Copyright (c) 1994, 1995 Jason R. Thorpe.
+.\" Copyright (c) 1994, 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -89,13 +89,52 @@ Note that best performance is achieved if all compent disks have the same
 geometery and size.  Optimum striping cannot occur with different
 disk types.
 .Pp
+The
+.Nm ccd
+also supports primitive data mirroring.  To enable this mirroring support,
+the
+.Nm ccd
+must be configured with the
+.Nm CCDF_MIRROR
+flag set.  Note that the
+.Nm CCDF_MIRROR
+flag implies the
+.Nm CCDF_UNIFORM
+flag and requires an interleaved even number of components.
+.Pp
+Mirroring functions by making the second n/2 components exact duplicates
+of the first n/2.  For example, in a mirrored
+.Nm ccd
+with components sd0g, sd1g, sd2g, and sd3g, sd2g would mirror sd0g and
+sd3g would mirror sd1g.  Reads will come from the first n/2 components
+(in this example: sd0g and sd1g) while writes will go to all components.
+.Pp
+If a component of a mirrored
+.Nm ccd
+should fail, the
+.Nm ccd
+can be reconfigured as a non-mirrored
+.Nm ccd
+until the failed component can be replaced.  For example, using the
+hypothetical
+.Nm ccd
+above, the recovery process might look like this:
+.Bd -literal -offset indent
+* Component sd1g fails.  Reconfigure ccd without mirroring
+  using the same interleave factor with components sd0g and sd3g.
+  ccd can still be used until replacement drive arrives.
+* Replace failed component.  Using dd(1), copy the contents of
+  sd3g to the new sd1g.
+* Restore ccd configuration to that of before the component failure.
+.Ed
+.Pp
 There is a run-time utility that is used for configuring
 .Nm ccds .
 See
 .Xr ccdconfig 8
 for more information.
 .Sh WARNINGS
-If just one (or more) of the disks in a
+If just one (or more) of the disks in a non-mirrored
 .Nm ccd
 fails, the entire
 file system will be lost.
