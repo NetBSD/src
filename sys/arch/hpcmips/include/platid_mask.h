@@ -1,4 +1,4 @@
-/* $Id: platid_mask.h,v 1.14 2000/01/28 06:22:54 shin Exp $ */
+/* $Id: platid_mask.h,v 1.15 2000/02/06 08:47:18 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -421,7 +421,7 @@ extern platid_t platid_mask_MACH_IBM_WORKPAD_Z50;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define IBM_WORKPAD_Z50 ((int)&platid_mask_MACH_IBM_WORKPAD_Z50)
 #endif
-extern platid_t platid_mask_MACH_IBM_WORKPAD_2601_1AU;
+extern platid_t platid_mask_MACH_IBM_WORKPAD_Z5026011AU;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
-#  define IBM_WORKPAD_2601_1AU ((int)&platid_mask_MACH_IBM_WORKPAD_2601_1AU)
+#  define IBM_WORKPAD_Z5026011AU ((int)&platid_mask_MACH_IBM_WORKPAD_Z5026011AU)
 #endif
