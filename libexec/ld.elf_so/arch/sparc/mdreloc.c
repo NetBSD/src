@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.27 2002/09/25 07:27:54 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.28 2002/09/25 22:33:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -338,7 +338,7 @@ _rtld_bind(obj, reloff)
 	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+	Elf_Word *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	Elf_Addr value;
 
 	/* Fully resolve procedure addresses now */
