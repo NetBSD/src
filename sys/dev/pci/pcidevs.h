@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.499 2003/01/16 00:32:47 gendalia Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.500 2003/01/16 00:45:57 gendalia Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.495 2003/01/10 16:41:39 augustss Exp 
+ *	NetBSD: pcidevs,v 1.496 2003/01/16 00:32:46 gendalia Exp 
  */
 
 /*
