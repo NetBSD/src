@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.8.2.1 2005/03/19 17:56:29 tron Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.8.2.2 2005/04/04 17:55:13 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.8.2.1 2005/03/19 17:56:29 tron Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.8.2.2 2005/04/04 17:55:13 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -141,9 +141,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
 	const char **kfn, *passphrase, *user;
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	struct pam_ssh_key *psk;
 	int nkeys, pam_err, pass;
+	char pwbuf[1024];
 
 	/* PEM is not loaded by default */
 	OpenSSL_add_all_algorithms();
@@ -152,8 +153,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	pam_err = pam_get_user(pamh, &user, NULL);
 	if (pam_err != PAM_SUCCESS)
 		return (pam_err);
-	pwd = getpwnam(user);
-	if (pwd == NULL)
+	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
 		return (PAM_USER_UNKNOWN);
 	if (pwd->pw_dir == NULL)
 		return (PAM_AUTH_ERR);
@@ -399,10 +399,11 @@ PAM_EXTERN int
 pam_sm_open_session(pam_handle_t *pamh, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	const char *user;
 	void *data;
 	int pam_err = PAM_SUCCESS;
+	char pwbuf[1024];
 
 	/* no keys, no work */
 	if (pam_get_data(pamh, pam_ssh_have_keys, &data) != PAM_SUCCESS &&
@@ -413,8 +414,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags __unused,
 	pam_err = pam_get_user(pamh, &user, NULL);
 	if (pam_err != PAM_SUCCESS)
 		return (pam_err);
-	pwd = getpwnam(user);
-	if (pwd == NULL)
+	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
 		return (PAM_USER_UNKNOWN);
 
 	/* start the agent */
