@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_input.c	7.25 (Berkeley) 6/30/90
- *	$Id: tcp_input.c,v 1.5 1994/01/08 23:07:18 mycroft Exp $
+ *	$Id: tcp_input.c,v 1.6 1994/01/08 23:26:40 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -66,8 +66,6 @@ int	tcppreddat;	/* XXX # times header prediction ok for data packets */
 int	tcppcbcachemiss;
 struct	tcpiphdr tcp_saveti;
 struct	inpcb *tcp_last_inpcb = &tcb;
-
-struct	tcpcb *tcp_newtcpcb();
 
 /*
  * Insert segment ti into reassembly queue of tcp with

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_usrreq.c	7.15 (Berkeley) 6/28/90
- *	$Id: tcp_usrreq.c,v 1.6 1994/01/08 23:07:23 mycroft Exp $
+ *	$Id: tcp_usrreq.c,v 1.7 1994/01/08 23:26:42 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -64,7 +64,6 @@
  * TCP protocol interface to socket abstraction.
  */
 extern	char *tcpstates[];
-struct	tcpcb *tcp_newtcpcb();
 
 /*
  * Process a TCP user request for TCP tb.  If this is a send request
