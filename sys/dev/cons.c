@@ -36,50 +36,26 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cons.c	7.2 (Berkeley) 5/9/91
- *	$Id: cons.c,v 1.9 1994/01/27 05:30:38 cgd Exp $
+ *	$Id: cons.c,v 1.10 1994/01/27 07:55:44 cgd Exp $
  */
 
-
-#include "param.h"
-#include "proc.h"
-#include "user.h"
-#include "systm.h"
-#include "buf.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "file.h"
-#include "conf.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/file.h>
+#include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include "cons.h"
 
-/* XXX - all this could be autoconfig()ed */
-#include "pc.h"
-#if NPC > 0
-int pccnprobe(), pccninit(), pccngetc(), pccnputc();
-#endif
-#include "com.h"
-#if NCOM > 0
-int comcnprobe(), comcninit(), comcngetc(), comcnputc();
-#endif
+extern struct consdev constab[];
 
-struct	consdev constab[] = {
-#if NPC > 0
-	{ pccnprobe,	pccninit,	pccngetc,	pccnputc },
-#endif
-#if NCOM > 0
-	{ comcnprobe,	comcninit,	comcngetc,	comcnputc },
-#endif
-	{ 0 },
-};
-/* end XXX */
-
-struct	tty *constty = 0;	/* virtual console output device */
+struct	tty *constty = NULL;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
-
-void
-consinit()
-{
-}
 
 void
 cninit()
@@ -115,6 +91,12 @@ cnopen(dev, flag, mode, p)
 {
 	if (cn_tab == NULL)
 		return (0);
+
+	/*
+	 * always open the 'real' console device, so we don't get nailed
+	 * later.  This follows normal device semantics; they always get
+	 * open() calls.
+	 */
 	dev = cn_tab->cn_dev;
 	return ((*cdevsw[major(dev)].d_open)(dev, flag, mode, p));
 }
@@ -125,9 +107,19 @@ cnclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	struct vnode *vp;
+
 	if (cn_tab == NULL)
 		return (0);
+
+	/*
+	 * If the real console isn't otherwise open, close it.
+	 * If it's otherwise open, don't close it, because that'll
+	 * screw up others who have it open.
+	 */
 	dev = cn_tab->cn_dev;
+	if ((vfinddev(dev, VCHR, &vp) == 0) && vcount(vp))
+		return (0);
 	return ((*cdevsw[major(dev)].d_close)(dev, flag, mode, p));
 }
  
@@ -136,8 +128,18 @@ cnread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	if (cn_tab == NULL)
-		return (0);
+	/*
+	 * If we would redirect input, punt.  This will keep strange
+	 * things from happening to people who are using the real
+	 * console.  Nothing should be using /dev/console for
+	 * input (except a shell in single-user mode, but then,
+	 * one wouldn't TIOCCONS then).
+	 */
+	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
+		return 0;
+	else if (cn_tab == NULL)
+		return ENXIO;
+
 	dev = cn_tab->cn_dev;
 	return ((*cdevsw[major(dev)].d_read)(dev, uio, flag));
 }
@@ -147,10 +149,14 @@ cnwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	if (cn_tab == NULL)
-		return (0);
-	if (constty && cn_tab->cn_pri != CN_REMOTE)
+	/*
+	 * Redirect output, if that's appropriate.
+	 * If there's no real console, return ENXIO.
+	 */
+	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
 		dev = constty->t_dev;
+	else if (cn_tab == NULL)
+		return ENXIO;
 	else
 		dev = cn_tab->cn_dev;
 	return ((*cdevsw[major(dev)].d_write)(dev, uio, flag));
@@ -164,20 +170,30 @@ cnioctl(dev, cmd, data, flag, p)
 {
 	int error;
 
-	if (cn_tab == NULL)
-		return (0);
 	/*
 	 * Superuser can always use this to wrest control of console
 	 * output from the "virtual" console.
 	 */
-	if (cmd == TIOCCONS && constty) {
+	if (cmd == TIOCCONS && constty != NULL) {
 		error = suser(p->p_ucred, (u_short *) NULL);
 		if (error)
 			return (error);
 		constty = NULL;
 		return (0);
 	}
-	dev = cn_tab->cn_dev;
+
+	/*
+	 * Redirect the ioctl, if that's appropriate.
+	 * Note that strange things can happen, if a program does
+	 * ioctls on /dev/console, then the console is redirected
+	 * out from under it.
+	 */
+	if (constty != NULL && (cn_tab != NULL || cn_tab->cn_pri != CN_REMOTE))
+		dev = constty->t_dev;
+	else if (cn_tab == NULL)
+		return ENXIO;
+	else
+		dev = cn_tab->cn_dev;
 	return ((*cdevsw[major(dev)].d_ioctl)(dev, cmd, data, flag, p));
 }
 
@@ -188,8 +204,17 @@ cnselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
-	if (cn_tab == NULL)
-		return (1);
+	/*
+	 * Redirect the ioctl, if that's appropriate.
+	 * I don't want to think of the possible side effects
+	 * of console redirection here.
+	 */
+	if (constty != NULL && (cn_tab != NULL || cn_tab->cn_pri != CN_REMOTE))
+		dev = constty->t_dev;
+	else if (cn_tab == NULL)
+		return ENXIO;
+	else
+		dev = cn_tab->cn_dev;
 	return (ttselect(cn_tab->cn_dev, rw, p));
 }
 
@@ -212,14 +237,4 @@ cnputc(c)
 		if (c == '\n')
 			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
 	}
-}
-
-int pg_wait = 0;
-pg(p,q,r,s,t,u,v,w,x,y,z) char *p; {
-	printf(p,q,r,s,t,u,v,w,x,y,z);
-	if (pg_wait) {
-		printf("\n>");
-		return(cngetc());
-	} else
-		return 0;
 }
