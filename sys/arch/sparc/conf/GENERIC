@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.78 1999/04/14 09:48:37 pk Exp $
+# 	$NetBSD: GENERIC,v 1.79 1999/04/26 04:25:38 ad Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -23,9 +23,8 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 ## Use a faster console than the PROM's slow drawing routines.  Not needed
 ## for headless (no framebuffer) machines.
 options 	RASTERCONSOLE		# fast rasterop console
-options 	RASOPS1			# 1-bit operations (XXX)
-options 	RASOPS8			# 8-bit operations (XXX)
-options 	FONT_LUCIDA16x29	# the console font
+options 	FONT_GALLANT12x22	# the console font
+#options 	FONT_BOLD8x16		# a somewhat smaller font
 
 #### System options that are the same for all ports
 
