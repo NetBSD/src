@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.89 2000/01/26 10:15:40 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.90 2000/01/26 11:31:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.89 2000/01/26 10:15:40 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.90 2000/01/26 11:31:55 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -646,6 +646,7 @@ remotemodtime(file, noisy)
 	if (command("MDTM %s", file) == COMPLETE) {
 		struct tm timebuf;
 		char *timestr, *frac;
+		int yy, mo, day, hour, min, sec;
 
 		/*
 		 * time-val = 14DIGIT [ "." 1*DIGIT ]
@@ -678,11 +679,20 @@ remotemodtime(file, noisy)
 			fprintf(ttyout, "Converted to `%s'\n", timestr);
 		}
 		if (strlen(timestr) != 14 ||
-		    strptime(timestr, "%Y %m %d %H %M %S", &timebuf) == NULL) {
+		    sscanf(timestr, "%04d%02d%02d%02d%02d%02d",
+			&yy, &mo, &day, &hour, &min, &sec) != 6) {
  bad_parse_time:
-			fprintf(ttyout, "Can't parse time %s.\n", timestr);
+			fprintf(ttyout, "Can't parse time `%s'.\n", timestr);
 			goto cleanup_parse_time;
 		}
+		memset(&timebuf, 0, sizeof(timebuf));
+		timebuf.tm_sec = sec;
+		timebuf.tm_min = min;
+		timebuf.tm_hour = hour;
+		timebuf.tm_mday = day;
+		timebuf.tm_mon = mo - 1;
+		timebuf.tm_year = yy - TM_YEAR_BASE; 
+		timebuf.tm_isdst = -1;
 		rtime = timegm(&timebuf);
 		if (rtime == -1) {
 			if (noisy || debug != 0)
