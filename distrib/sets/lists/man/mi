@@ -366,6 +366,7 @@
 ./usr/share/man/cat5/core.0
 ./usr/share/man/cat5/crontab.0
 ./usr/share/man/cat5/daily.conf.0
+./usr/share/man/cat5/dhclient.conf.0
 ./usr/share/man/cat5/dhcpd.conf.0
 ./usr/share/man/cat5/dir.0
 ./usr/share/man/cat5/dirent.0
@@ -464,7 +465,9 @@
 ./usr/share/man/cat8/comsat.0
 ./usr/share/man/cat8/cron.0
 ./usr/share/man/cat8/dev_mkdb.0
+./usr/share/man/cat8/dhclient.0
 ./usr/share/man/cat8/dhcpd.0
+./usr/share/man/cat8/dhcrelay.0
 ./usr/share/man/cat8/disklabel.0
 ./usr/share/man/cat8/diskless.0
 ./usr/share/man/cat8/diskpart.0
@@ -662,7 +665,6 @@
 ./usr/share/man/cat9/arp_ifinit.0
 ./usr/share/man/cat9/arpintr.0
 ./usr/share/man/cat9/arpresolve.0
-./usr/share/man/cat9/boot.0
 ./usr/share/man/cat9/boottime.0
 ./usr/share/man/cat9/bounds_check_with_label.0
 ./usr/share/man/cat9/copy.0
