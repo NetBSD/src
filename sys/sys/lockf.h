@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.h,v 1.15 2004/04/25 16:42:43 simonb Exp $	*/
+/*	$NetBSD: lockf.h,v 1.16 2005/03/20 19:13:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -63,6 +63,7 @@ struct lockf {
 	struct	lockf *lf_next;	 /* Next lock on this vnode, or blocking lock */
 	struct  locklist lf_blkhd; /* List of requests blocked on this lock */
 	TAILQ_ENTRY(lockf) lf_block;/* A request waiting for a lock */
+	uid_t	lf_uid;		 /* User ID responsible */
 };
 
 /* Maximum length of sleep chains to traverse to try and detect deadlock. */
