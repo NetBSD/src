@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.8.2.13 1993/11/08 20:27:32 mycroft Exp $
+ *	$Id: pmap.c,v 1.8.2.14 1993/11/09 10:53:58 mycroft Exp $
  */
 
 /*
@@ -968,10 +968,8 @@ validate:
 	 */
 	npte = (pa & PG_FRAME) | pte_prot(pmap, prot) | PG_V;
 	npte |= *(int *)pte & (PG_M|PG_U);
-#if 0 /* nobody uses this bit; no point setting it */
 	if (wired)
 		npte |= PG_W;
-#endif
 
 	if (va < VM_MAXUSER_ADDRESS)	/* i.e. below USRSTACK */
 		npte |= PG_u;
