@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.18 2003/01/27 21:27:52 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.19 2003/09/23 09:19:22 mycroft Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.18 2003/01/27 21:27:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.19 2003/09/23 09:19:22 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -87,12 +87,12 @@ ata_get_params(drvp, flags, prms)
 	if (drvp->drive_flags & DRIVE_ATA) {
 		wdc_c.r_command = WDCC_IDENTIFY;
 		wdc_c.r_st_bmask = WDCS_DRDY;
-		wdc_c.r_st_pmask = WDCS_DRQ;
+		wdc_c.r_st_pmask = 0;
 		wdc_c.timeout = 3000; /* 3s */
 	} else if (drvp->drive_flags & DRIVE_ATAPI) {
 		wdc_c.r_command = ATAPI_IDENTIFY_DEVICE;
 		wdc_c.r_st_bmask = 0;
-		wdc_c.r_st_pmask = WDCS_DRQ;
+		wdc_c.r_st_pmask = 0;
 		wdc_c.timeout = 10000; /* 10s */
 	} else {
 		WDCDEBUG_PRINT(("wdc_ata_get_parms: no disks\n"),
@@ -162,7 +162,7 @@ ata_set_mode(drvp, mode, flags)
 	wdc_c.r_st_pmask = 0;
 	wdc_c.r_precomp = WDSF_SET_MODE;
 	wdc_c.r_count = mode;
-	wdc_c.flags = AT_READ | flags;
+	wdc_c.flags = flags;
 	wdc_c.timeout = 1000; /* 1s */
 	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE)
 		return CMD_AGAIN;
