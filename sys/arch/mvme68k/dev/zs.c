@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.28 2001/07/07 07:51:38 scw Exp $	*/
+/*	$NetBSD: zs.c,v 1.28.16.1 2002/05/19 08:14:14 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -73,8 +73,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-/* XXX Shouldn't hardcode the minor number... */
-int zs_major = 12;
 
 /* Flags from zscnprobe() */
 static int zs_hwflags[NZSC][2];
