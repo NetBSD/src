@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.34 2000/06/16 19:51:05 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.34.2.1 2000/07/26 23:45:22 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -70,10 +70,10 @@ typedef void    (*funcptr) __P((void));
 /*
  * Function declarations.
  */
-static void     _rtld_init __P((caddr_t));
+static void     _rtld_init __P((caddr_t, int));
 static void     _rtld_exit __P((void));
 
-Elf_Addr        _rtld __P((Elf_Word *));
+Elf_Addr        _rtld __P((Elf_Addr *));
 
 
 /*
@@ -157,15 +157,18 @@ _rtld_call_init_functions(first)
  * this function is to relocate the dynamic linker.
  */
 static void
-_rtld_init(mapbase)
+_rtld_init(mapbase, pagesz)
 	caddr_t mapbase;
+	int pagesz;
 {
 	Obj_Entry objself;/* The dynamic linker shared object */
+	const Elf_Ehdr *hdr = (Elf_Ehdr *) mapbase;
 #ifdef RTLD_RELOCATE_SELF
 	int dodebug = false;
 #else
 	int dodebug = true;
 #endif
+	int i;
 
 	memset(&objself, 0, sizeof objself);
 
@@ -173,6 +176,22 @@ _rtld_init(mapbase)
 	objself.path = NULL;
 	objself.rtld = true;
 	objself.mapbase = mapbase;
+	objself.phdr = (Elf_Phdr *) (mapbase + hdr->e_phoff);
+	for (i = 0; i < hdr->e_phnum; i++) {
+		if (objself.phdr[i].p_type == PT_LOAD) {
+#ifdef	VARPSZ
+			/* We can't touch _rtld_pagesz yet so we can't use round_*() */
+#define	_rnd_down(x)	((x) & ~((long)pagesz-1))
+#define	_rnd_up(x)	_rnd_down((x) + pagesz - 1)
+			objself.textsize = _rnd_up(objself.phdr[i].p_vaddr + objself.phdr[i].p_memsz) - _rnd_down(objself.phdr[i].p_vaddr);
+#undef	_rnd_down(x)
+#undef	_rnd_up(x)
+#else
+			objself.textsize = round_up(objself.phdr[i].p_vaddr + objself.phdr[i].p_memsz) - round_down(objself.phdr[i].p_vaddr);
+#endif
+			break;
+		}
+	}
 
 #if defined(__mips__)
 	/*
@@ -206,7 +225,7 @@ _rtld_init(mapbase)
 #endif
 	assert(objself.needed == NULL);
 
-#if !defined(__mips__) && !defined(__i386__)
+#if !defined(__mips__) && !defined(__i386__) && !defined(__vax__)
 	/* no relocation for mips/i386 */
 	assert(!objself.textrel);
 #endif
@@ -262,7 +281,7 @@ _rtld_exit()
  */
 Elf_Addr
 _rtld(sp)
-	Elf_Word *sp;
+	Elf_Addr *sp;
 {
 	const AuxInfo  *pAUX_base, *pAUX_entry, *pAUX_execfd, *pAUX_phdr,
 	               *pAUX_phent, *pAUX_phnum;
@@ -272,10 +291,11 @@ _rtld(sp)
 	char          **env;
 	const AuxInfo  *aux;
 	const AuxInfo  *auxp;
-	Elf_Word       *const osp = sp;
+	Elf_Addr       *const osp = sp;
 	bool            bind_now = 0;
 	const char     *ld_bind_now;
 	const char    **argv;
+	long		argc;
 	Obj_Entry	*obj;
 	const char **real___progname;
 	const Obj_Entry **real___mainprog_obj;
@@ -303,7 +323,12 @@ _rtld(sp)
 
 	sp += 2;		/* skip over return argument space */
 	argv = (const char **) &sp[1];
-	sp += sp[0] + 2;	/* Skip over argc, arguments, and NULL
+	argc = *(long *)sp;
+#ifdef __sparc_v9__
+	/* XXX Temporary hack for argc format conversion. */
+	argc = (argc >> 32) | (argc & 0xffffffff);
+#endif
+	sp += 2 + argc;		/* Skip over argc, arguments, and NULL
 				 * terminator */
 	env = (char **) sp;
 	while (*sp++ != 0) {	/* Skip over environment, and NULL terminator */
@@ -349,10 +374,14 @@ _rtld(sp)
 
 	/* Initialize and relocate ourselves. */
 	assert(pAUX_base != NULL);
-	_rtld_init((caddr_t) pAUX_base->a_v);
-
 #ifdef	VARPSZ
 	assert(pAUX_pagesz != NULL);
+	_rtld_init((caddr_t) pAUX_base->a_v, (int)pAUX_pagesz->a_v);
+#else
+	_rtld_init((caddr_t) pAUX_base->a_v, 0);
+#endif
+
+#ifdef	VARPSZ
 	_rtld_pagesz = (int)pAUX_pagesz->a_v;
 #endif
 
