@@ -637,7 +637,7 @@ pctty(Dev_t dev)
 int
 pcioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 {
-	register error;
+	register int error;
 	register struct tty *tp;
 
 	if((tp = get_pccons(dev)) == NULL)
