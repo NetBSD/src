@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Name: acobject.h - Definition of ACPI_OPERAND_OBJECT  (Internal object only)
- *       xRevision: 121 $
+ *       xRevision: 122 $
  *
  *****************************************************************************/
 
@@ -187,7 +187,7 @@
 #define ACPI_COMMON_NOTIFY_INFO \
     union acpi_operand_object       *SystemNotify;      /* Handler for system notifies */\
     union acpi_operand_object       *DeviceNotify;      /* Handler for driver notifies */\
-    union acpi_operand_object       *AddressSpace;      /* Handler for Address space */
+    union acpi_operand_object       *Handler;           /* Handler for Address space */
 
 
 /******************************************************************************
@@ -295,7 +295,7 @@ typedef struct acpi_object_region
     ACPI_OBJECT_COMMON_HEADER
 
     UINT8                           SpaceId;
-    union acpi_operand_object       *AddressSpace;      /* Handler for region access */
+    union acpi_operand_object       *Handler;           /* Handler for region access */
     ACPI_NAMESPACE_NODE             *Node;              /* containing object */
     union acpi_operand_object       *Next;
     UINT32                          Length;
