@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rm.c	4.26 (Berkeley) 3/10/91";*/
-static char rcsid[] = "$Id: rm.c,v 1.8 1993/10/25 19:28:19 jtc Exp $";
+static char rcsid[] = "$Id: rm.c,v 1.9 1993/10/25 19:50:23 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -116,7 +116,8 @@ main(argc, argv)
 		rmtree(argv);
 	else
 		rmfile(argv);
-	exit(fflag ? 0 : retval);
+
+	exit(retval);
 }
 
 void
@@ -141,10 +142,12 @@ rmtree(argv)
 
 	if (!(fts = fts_open(argv,
 	    needstat ? FTS_PHYSICAL : FTS_PHYSICAL|FTS_NOSTAT,
-	    (int (*)())NULL)) && !fflag) {
-		(void)fprintf(stderr, "rm: %s.\n", strerror(errno));
-		exit(1);
+		(int (*)())NULL))) {
+		if (!fflag)
+			(void)fprintf(stderr, "rm: %s.\n", strerror(errno));
+		exit (1);
 	}
+
 	while ((p = fts_read(fts)) != NULL) {
 		switch(p->fts_info) {
 		case FTS_DNR:
@@ -174,11 +177,12 @@ rmtree(argv)
 			if (p->fts_number == SKIPPED)
 				continue;
 			break;
-		}
 
-		if (!fflag &&
-		    !check(p->fts_path, p->fts_accpath, p->fts_statp))
-			continue;
+		default:
+			if (!fflag && !check(p->fts_path, p->fts_accpath,
+			    p->fts_statp)) 
+				continue;
+		}
 
 		/*
 		 * If we can't read or search the directory, may still be
@@ -217,7 +221,9 @@ rmfile(argv)
 		 *   to the standard error...
 		 */
 		if (lstat(f, &sb)) {
-			error(f, errno);
+			if (!fflag || errno != ENOENT) {
+				error(f, errno);
+			}
 			continue;
 		}
 
