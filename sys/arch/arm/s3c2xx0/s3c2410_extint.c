@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_extint.c,v 1.1 2003/08/29 12:57:50 bsh Exp $ */
+/* $NetBSD: s3c2410_extint.c,v 1.2 2003/09/24 11:57:45 mycroft Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.1 2003/08/29 12:57:50 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.2 2003/09/24 11:57:45 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,7 @@ ssextio_cascaded_intr(void *cookie)
 		break;
 
 	default:
-		panic("Bad cookie for " __FUNCTION__);
+		panic("Bad cookie for %s", __FUNCTION__);
 	}
 
 
