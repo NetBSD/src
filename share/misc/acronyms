@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.14 1999/07/16 09:13:38 christos Exp $
+$NetBSD: acronyms,v 1.15 1999/07/16 09:17:23 mycroft Exp $
 
 AFAICT	as far as I can tell
 AFAIK	as far as I know
@@ -19,6 +19,7 @@ ISTR	I seem to recall
 L8R	later
 LOL	laughing out loud
 OIC	oh, I see
+OTOH	on the other hand
 PPL	pretty please
 ROTFL	rolling on the floor laughing
 RTFB	read the fine book
@@ -28,6 +29,6 @@ RTFS	read the fine source
 SMOP	simple matter of programming
 SOL	shit out [of] luck
 UTSL	use the source, Luke
-WTF	what the fuck
-WTH	what the hell
+WTF	{what,where,who,why} the fuck
+WTH	{what,where,who,why} the hell
 YKWIM	you know what I mean
