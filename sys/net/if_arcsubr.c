@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.14 1997/03/17 16:56:34 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.15 1997/03/23 01:22:35 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -178,7 +178,10 @@ arc_output(ifp, m0, dst, rt0)
 		else
 			adst = *ar_tha(arph);
 
+		arph->ar_hrd = htons(ARPHRD_ARCNET);
+
 		switch(ntohs(arph->ar_op)) {
+
 		case ARPOP_REVREQUEST:
 		case ARPOP_REVREPLY:
 			if (!(ifp->if_flags & IFF_LINK0)) {
@@ -209,9 +212,8 @@ arc_output(ifp, m0, dst, rt0)
 		 * However, e.g., AmiTCP 3.0Beta used it... we make this
 		 * switchable for emergency cases. Not perfect, but...
 		 */
-		if (ifp->if_flags & IFF_LINK2) {
-			arph->ar_pro = atype;
-		}
+		if (ifp->if_flags & IFF_LINK2)
+			arph->ar_pro = atype - 1;
 #endif
 		break;
 #endif
@@ -524,6 +526,7 @@ arc_input(ifp, m)
 	register struct ifqueue *inq;
 	u_int8_t atype;
 	int s;
+	struct arphdr *arph;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -565,7 +568,7 @@ arc_input(ifp, m)
 		schednetisr(NETISR_ARP);
 		inq = &arpintrq;
 #ifdef ARCNET_ALLOW_BROKEN_ARP
-		mtod(m, struct arphdr *)->ar_pro = htons(ETHERTYPE_ARP);
+		mtod(m, struct arphdr *)->ar_pro = htons(ETHERTYPE_IP);
 #endif
 		break;
 
@@ -573,8 +576,9 @@ arc_input(ifp, m)
 		m_adj(m, ARC_HDRLEN);
 		schednetisr(NETISR_ARP);
 		inq = &arpintrq;
+		arph = mtod(m, struct arphdr *);
 #ifdef ARCNET_ALLOW_BROKEN_ARP
-		mtod(m, struct arphdr *)->ar_pro = htons(ETHERTYPE_ARP);
+		mtod(m, struct arphdr *)->ar_pro = htons(ETHERTYPE_IP);
 #endif
 		break;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.35 1997/03/15 18:12:31 is Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.36 1997/03/23 01:24:03 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -426,6 +426,7 @@ arpintr()
 		splx(s);
 		if (m == 0 || (m->m_flags & M_PKTHDR) == 0)
 			panic("arpintr");
+
 		if (m->m_len >= sizeof(struct arphdr) &&
 		    (ar = mtod(m, struct arphdr *)) &&
 		    /* XXX ntohs(ar->ar_hrd) == ARPHRD_ETHER && */
@@ -483,6 +484,7 @@ in_arpinput(m)
 		}
 	if (maybe_ia == 0)
 		goto out;
+
 	myaddr = ia ? ia->ia_addr.sin_addr : maybe_ia->ia_addr.sin_addr;
 	if (!bcmp((caddr_t)ar_sha(ah), LLADDR(ifp->if_sadl),
 	    ifp->if_data.ifi_addrlen))
@@ -499,7 +501,7 @@ in_arpinput(m)
  */
 	if (in_hosteq(isaddr, myaddr)) {
 		log(LOG_ERR,
-		   "duplicate IP address %08x sent from ethernet address %s\n",
+		   "duplicate IP address %08x sent from link address %s\n",
 		   ntohl(isaddr.s_addr), lla_snprintf(ar_sha(ah), ah->ar_hln));
 		itaddr = myaddr;
 		goto reply;
@@ -565,6 +567,7 @@ reply:
 	bcopy((caddr_t)&itaddr, (caddr_t)ar_spa(ah), ah->ar_pln);
 	ah->ar_op = htons(ARPOP_REPLY);
 	ah->ar_pro = htons(ETHERTYPE_IP); /* let's be sure! */
+	m->m_flags &= ~(M_BCAST|M_MCAST); /* never reply by broadcast */
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
