@@ -1,4 +1,4 @@
-/* $NetBSD: mountd.c,v 1.52 1999/01/12 15:11:53 christos Exp $	 */
+/* $NetBSD: mountd.c,v 1.52.2.1 1999/11/20 17:17:27 he Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.52 1999/01/12 15:11:53 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.52.2.1 1999/11/20 17:17:27 he Exp $");
 #endif
 #endif				/* not lint */
 
@@ -828,37 +828,9 @@ get_exportlist(n)
 	grphead = NULL;
 
 	/*
-	 * And delete exports that are in the kernel for all local
-	 * file systems.
-	 * XXX: Should know how to handle all local exportable file systems
-	 *      instead of just MOUNT_FFS.
+ 	 * save off the current export lists for later
 	 */
 	num = getmntinfo(&fsp, MNT_NOWAIT);
-	for (i = 0; i < num; i++) {
-		union {
-			struct ufs_args ua;
-			struct iso_args ia;
-			struct mfs_args ma;
-			struct msdosfs_args da;
-			struct adosfs_args aa;
-		} targs;
-
-		if (!strncmp(fsp->f_fstypename, MOUNT_MFS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_EXT2FS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_ADOSFS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
-			bzero((char *) &targs, sizeof(targs));
-			targs.ua.fspec = NULL;
-			targs.ua.export.ex_flags = MNT_DELEXPORT;
-			if (mount(fsp->f_fstypename, fsp->f_mntonname,
-			    fsp->f_flags | MNT_UPDATE, &targs) == -1)
-				syslog(LOG_ERR, "Can't delete exports for %s",
-				    fsp->f_mntonname);
-		}
-		fsp++;
-	}
 
 	/*
 	 * Read in the exports file and build the list, calling
@@ -1036,6 +1008,58 @@ nextline:
 		free(line);
 	}
 	(void)fclose(exp_file);
+
+	/*
+	 * Ok, remove any filesystems that existed before that should
+	 * not be there anymore.
+	 */
+	/*
+	 * XXX: Should know how to handle all local exportable file systems
+	 *      instead of just MOUNT_FFS.
+	 */
+	for (i = 0; i < num; i++, fsp++) {
+		union {
+			struct ufs_args ua;
+			struct iso_args ia;
+			struct mfs_args ma;
+			struct msdosfs_args da;
+			struct adosfs_args aa;
+		} targs;
+
+		if (debug)
+			(void)fprintf(stderr,
+			    "seeing if we want to delete %s.\n",
+			    fsp->f_mntonname);
+		/*
+		 * If we can find it in our internal list, we do not
+		 * want to delete it from the kernel.
+		 */
+		if (ex_search(&fsp->f_fsid))
+			continue;
+
+		if (!strncmp(fsp->f_fstypename, MOUNT_MFS, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_EXT2FS, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_ADOSFS, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_NULL, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_UMAP, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_UNION, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
+			if (debug)
+				(void)fprintf(stderr,
+				    "Deleting export for mount %s.\n",
+				    fsp->f_mntonname);
+
+			bzero((char *) &targs, sizeof(targs));
+			targs.ua.fspec = NULL;
+			targs.ua.export.ex_flags = MNT_DELEXPORT;
+			if (mount(fsp->f_fstypename, fsp->f_mntonname,
+			    fsp->f_flags | MNT_UPDATE, &targs) == -1)
+				syslog(LOG_ERR, "Can't delete exports for %s",
+				    fsp->f_mntonname);
+		}
+	}
 }
 
 /*
