@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/04/07 06:47:49 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1999/04/29 02:17:43 ross Exp $
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -6,7 +6,7 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
-MDEC=		${DESTDIR}/usr/mdec
+MDEC?=		${DESTDIR}/usr/mdec
 KERNEL=		${.CURDIR}/../../../sys/arch/alpha/compile/GENERIC/netbsd
 
 GZKERNEL=	netbsd
@@ -46,6 +46,9 @@ ${GZKERNEL}: ${KERNEL}
 
 unconfig:
 	-vnconfig -u ${VND_CDEV}
+
+disk: all
+	dd if=GENERIC.fs bs=18k of=/dev/rfd0a
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES} ${GZKERNEL} ${GZKERNEL}.gz *.tmp
