@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.330 1999/11/15 18:49:07 fvdl Exp $
+#	$NetBSD: files,v 1.331 1999/11/17 17:56:00 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -173,6 +173,12 @@ file	ipkdb/ipkdb_slip.c		ipkdbslip		needs-flag
 # Support for ppp	(for now only fake)
 file	ipkdb/ipkdb_ppp.c		ipkdbppp		needs-flag
 
+# Attribute for devices that read/write an IEEE 802.3u MII bus
+# using the bit-bang method.
+# XXX Can't be in dev/mii/files.mii because that file hasn't
+# XXX been included yet.
+define	mii_bitbang
+file	dev/mii/mii_bitbang.c		mii_bitbang
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>
@@ -228,7 +234,7 @@ device	ep: arp, ether, ifnet, mii
 file	dev/ic/elink3.c			ep
 
 # 3Com EtherLink XL Controller
-device	ex: arp, ether, ifnet, mii
+device	ex: arp, ether, ifnet, mii, mii_bitbang
 file	dev/ic/elinkxl.c		ex
 
 # DEC EtherWORKS III (LEMAC) Ethernet controllers
