@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.9.2.3 2000/11/22 16:03:31 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.9.2.4 2000/12/14 13:09:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -143,6 +143,8 @@ struct siop_target {
 	int status;	/* target status, see below */
 	int flags;	/* target flags, see below */
 	u_int32_t id;	/* for SELECT FROM */
+	int period;
+	int offset;
 	struct siop_lun *siop_lun[8]; /* per-lun state */
 	u_int reseloff; /* XXX */
 	struct siop_lunsw *lunsw; /* XXX */
@@ -190,13 +192,14 @@ int	siop_wdtr_neg __P((struct siop_cmd *));
 int	siop_sdtr_neg __P((struct siop_cmd *));
 void	siop_sdtr_msg __P((struct siop_cmd *, int, int, int));
 void	siop_wdtr_msg __P((struct siop_cmd *, int, int));
+void	siop_update_xfer_mode __P((struct siop_softc *, int));
 /* actions to take at return of siop_wdtr_neg() and siop_sdtr_neg() */
 #define SIOP_NEG_NOP	0x0
 #define SIOP_NEG_MSGOUT	0x1
 #define SIOP_NEG_ACK	0x2
 
 void	siop_minphys __P((struct buf *));
-int	siop_ioctl __P((struct scsipi_link *, u_long,
+int	siop_ioctl __P((struct scsipi_channel *, u_long,
 		caddr_t, int, struct proc *));
 void 	siop_sdp __P((struct siop_cmd *));
 void	siop_clearfifo __P((struct siop_softc *));
