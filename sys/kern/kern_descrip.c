@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.101 2003/02/01 06:23:42 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.102 2003/02/14 21:50:10 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.101 2003/02/01 06:23:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.102 2003/02/14 21:50:10 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,9 @@ int		nfiles;		/* actual number of open files */
 struct pool	file_pool;	/* memory pool for file structures */
 struct pool	cwdi_pool;	/* memory pool for cwdinfo structures */
 struct pool	filedesc0_pool;	/* memory pool for filedesc0 structures */
+
+/* Global file list lock */
+static struct simplelock filelist_slock = SIMPLELOCK_INITIALIZER;
 
 MALLOC_DEFINE(M_FILE, "file", "Open file structure");
 MALLOC_DEFINE(M_FILEDESC, "file desc", "Open file descriptor table");
@@ -757,8 +760,13 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 		}
 		return (error);
 	}
+
+	fp = pool_get(&file_pool, PR_WAITOK);
+	simple_lock(&filelist_slock);
 	if (nfiles >= maxfiles) {
 		tablefull("file", "increase kern.maxfiles or MAXFILES");
+		simple_unlock(&filelist_slock);
+		pool_put(&file_pool, fp);
 		return (ENFILE);
 	}
 	/*
@@ -768,7 +776,6 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	 * the list of open files.
 	 */
 	nfiles++;
-	fp = pool_get(&file_pool, PR_WAITOK);
 	memset(fp, 0, sizeof(struct file));
 	fp->f_iflags = FIF_LARVAL;
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
@@ -776,6 +783,7 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	} else {
 		LIST_INSERT_HEAD(&filehead, fp, f_list);
 	}
+	simple_unlock(&filelist_slock);
 	p->p_fd->fd_ofiles[i] = fp;
 	fp->f_count = 1;
 	fp->f_cred = p->p_ucred;
@@ -801,12 +809,14 @@ ffree(struct file *fp)
 		panic("ffree");
 #endif
 
+	simple_lock(&filelist_slock);
 	LIST_REMOVE(fp, f_list);
 	crfree(fp->f_cred);
 #ifdef DIAGNOSTIC
 	fp->f_count = 0;
 #endif
 	nfiles--;
+	simple_unlock(&filelist_slock);
 	pool_put(&file_pool, fp);
 }
 
