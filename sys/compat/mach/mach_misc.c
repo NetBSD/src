@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.1 2001/07/14 02:11:00 christos Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.2 2001/07/29 19:30:56 christos Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,20 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <compat/mach/mach_types.h>
+#include <compat/mach/mach_message.h>
 #include <compat/mach/mach_syscallargs.h>
+
+#ifdef DEBUG_MACH
+static void mach_print_msg_header_t(mach_msg_header_t *);
+
+static void
+mach_print_msg_header_t(mach_msg_header_t *mh) {
+	uprintf("msgh { bits=0x%x, size=%d, remote_port=%d, local_port=%d,"
+	    "reserved=%d,id=%d }\n",
+	    mh->msgh_bits, mh->msgh_size, mh->msgh_remote_port,
+	    mh->msgh_local_port, mh->msgh_reserved, mh->msgh_id);
+}
+#endif /* DEBUG_MACH */
 
 int
 mach_sys_reply_port(struct proc *p, void *vv, register_t *r) {
@@ -113,8 +126,34 @@ mach_sys_host_self_trap(struct proc *p, void *v, register_t *r) {
 
 int
 mach_sys_msg_overwrite_trap(struct proc *p, void *v, register_t *r) {
+	struct mach_sys_msg_overwrite_trap_args *ap = v;
+	int error;
 	*r = 0;
-	DPRINTF(("mach_sys_msg_overwrite_trap();\n"));
+
+	DPRINTF(("mach_sys_msg_overwrite_trap(%p, 0x%x,"
+	    " %d, %d, 0x%x, %d, 0x%x, %p, %d);\n",
+	    SCARG(ap, msg), SCARG(ap, option), SCARG(ap, send_size),
+	    SCARG(ap, rcv_size), SCARG(ap, rcv_name), SCARG(ap, timeout),
+	    SCARG(ap, notify), SCARG(ap, rcv_msg),
+	    SCARG(ap, scatter_list_size)));
+
+	switch (SCARG(ap, option)) {
+	case MACH_SEND_MSG|MACH_RCV_MSG:
+		if (SCARG(ap, msg)) {
+			mach_msg_header_t mh;
+			if ((error = copyin(SCARG(ap, msg), &mh,
+			    sizeof(mh))) != 0)
+				return error;
+#ifdef DEBUG_MACH
+			mach_print_msg_header_t(&mh);
+#endif /* DEBUG_MACH */
+		}
+		break;
+	default:
+		uprintf("unhandled sys_msg_override_trap option %x\n",
+		    SCARG(ap, option));
+		break;
+	}
 	return 0;
 }
 
