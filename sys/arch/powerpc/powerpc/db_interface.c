@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.1 1998/01/27 15:13:11 sakamoto Exp $ */
+/*	$NetBSD: db_interface.c,v 1.2 1998/02/23 03:23:05 mycroft Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/param.h>
@@ -25,11 +25,13 @@ ddb_trap_glue(frame)
 		    && (frame->srr1 & 0x20000))
 		|| frame->exc == EXC_BPT)) {
 
-		bzero(DDB_REGS, sizeof(db_regs_t));
-		bcopy(frame->fixreg, DDB_REGS, 32 * sizeof(u_int32_t));
-		PC_REGS(DDB_REGS) = frame->srr0;
+		bcopy(frame->fixreg, DDB_REGS->r, 32 * sizeof(u_int32_t));
+		DDB_REGS->iar = frame->srr0;
+		DDB_REGS->msr = frame->srr1;
 
 		db_trap(T_BREAKPOINT, 0);
+
+		bcopy(DDB_REGS->r, frame->fixreg, 32 * sizeof(u_int32_t));
 
 		return 1;
 	}
