@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.23 2000/07/28 19:17:02 drochner Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.24 2001/04/29 20:10:24 christos Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -297,7 +297,7 @@ pcmcia_print(arg, pnp)
 
 	if (pnp) {
 		pcmcia_devinfo(card, 1, devinfo, sizeof devinfo);
-		printf("%s at %s", devinfo, pnp);
+		printf("%s at %s, ", devinfo, pnp);
 	}
 	printf(" function %d", pa->pf->number);
 
@@ -314,7 +314,7 @@ pcmcia_devinfo(card, showhex, cp, cplen)
 	int i, n;
 
 	for (i = 0; i < 4 && card->cis1_info[i] != NULL && cplen > 0; i++) {
-		n = snprintf(cp, cplen, "%s%s", i ? ", " : "",
+		n = snprintf(cp, cplen, "%s%s", (i && i != 3) ? ", " : "",
 		        card->cis1_info[i]);
 		cp += n;
 		cplen -= n;
