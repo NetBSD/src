@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.79 2002/05/08 18:45:49 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.80 2002/05/12 23:16:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@ extern struct cpu_info cpu_info_store;
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-int	want_resched;		/* resched() was called */
+extern	int	want_resched;		/* resched() was called */
 #define	need_resched(ci)	(want_resched = 1, setsoftast())
 
 /*
