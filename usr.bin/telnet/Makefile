@@ -31,12 +31,12 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.3 1994/02/25 03:00:16 cgd Exp $
+#	$Id: Makefile,v 1.4 1995/04/24 07:39:57 cgd Exp $
 #
 
 PROG=	telnet
 
-CFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO
+CFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -Dunix
 CFLAGS+=-DENV_HACK
 CFLAGS+=-I${.CURDIR}/../../lib
 
