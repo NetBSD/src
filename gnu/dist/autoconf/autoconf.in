@@ -93,12 +93,7 @@ if test "${LC_MESSAGES+set}" = set; then LC_MESSAGES=C; export LC_MESSAGES; fi
 ac_LF_and_DOT=`echo; echo .`
 
 # Find GNU m4.
-# Handle the case that m4 has moved since we were configured.
-# It may have been found originally in a build directory.
 : ${M4=@M4@}
-case "$M4" in
-  [\\/]* | ?:[\\/]*) test -f "$M4" || M4=m4 ;;
-esac
 
 
 # Find a good AWK.
