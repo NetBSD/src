@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/09/27 10:14:49 minoura Exp $
+#	$NetBSD: Makefile,v 1.2 2001/09/27 13:27:54 minoura Exp $
 
 BOOT=	boot_ufs
 VERSION=1.0
@@ -18,6 +18,7 @@ OBJCOPY?=	objcopy
 
 LIBKERN=	${.CURDIR}/../../../../lib/libkern/arch/${MACHINE_ARCH}
 COMMONDIR=	${.CURDIR}/../common
+LIBIOCS=	${.CURDIR}/../libiocs
 .PATH:		${LIBKERN} ${COMMONDIR}
 SRCS=	boot.S bootmain.c readufs.c readufs_ffs.c #readufs_lfs.c
 SRCS+=	exec_image.S memset.S strcmp.S
@@ -29,7 +30,7 @@ CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
 CPPFLAGS+= -DSCSI_ADHOC_BOOTPART
 #CPPFLAGS+= -DBOOT_DEBUG
 CPPFLAGS+= -DUSE_FFS #-DUSE_LFS
-CPPFLAGS+= -I${COMMONDIR}
+CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS}
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 LDFLAGS=   -N -Bstatic -T ${.CURDIR}/${BOOT}.ldscript
 LDFLAGS+=  -noinhibit-exec	# XXX
