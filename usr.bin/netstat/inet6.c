@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.8 2000/05/17 11:54:48 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.9 2000/06/16 02:08:40 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.8 2000/05/17 11:54:48 itojun Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.9 2000/06/16 02:08:40 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -442,7 +442,7 @@ static	char *ip6nh[] = {
 	"#86",
 	"#87",
 	"#88",
-	"#89",	
+	"OSPF",	
 	"#80",
 	"#91",
 	"#92",
@@ -1137,6 +1137,8 @@ icmp6_stats(off, name)
 	p(icp6s_error, "\t%llu call%s to icmp6_error\n");
 	p(icp6s_canterror,
 	    "\t%llu error%s not generated because old message was icmp6 or so\n");
+	p(icp6s_toofreq,
+	    "\t%llu error%s not generated because rate limitation\n");
 	for (first = 1, i = 0; i < 256; i++)
 		if (icmp6stat.icp6s_outhist[i] != 0) {
 			if (first) {
