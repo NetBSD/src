@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.71 2001/01/08 02:03:46 fvdl Exp $	*/
+/*	$NetBSD: ccd.c,v 1.72 2001/07/07 17:04:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ ccdattach(num)
 		return;
 	}
 	numccd = num;
-	bzero(ccd_softc, num * sizeof(struct ccd_softc));
+	memset(ccd_softc, 0, num * sizeof(struct ccd_softc));
 
 	/* Initialize the component buffer pool. */
 	pool_init(&ccd_cbufpool, sizeof(struct ccdbuf), 0,
@@ -252,7 +252,7 @@ ccdinit(cs, cpaths, vpp, p)
 		/*
 		 * Copy in the pathname of the component.
 		 */
-		bzero(tmppath, sizeof(tmppath));	/* sanity */
+		memset(tmppath, 0, sizeof(tmppath));	/* sanity */
 		error = copyinstr(cpaths[ix], tmppath,
 		    MAXPATHLEN, &ci->ci_pathlen);
 		if (error) {
@@ -264,7 +264,7 @@ ccdinit(cs, cpaths, vpp, p)
 			goto out;
 		}
 		ci->ci_path = malloc(ci->ci_pathlen, M_DEVBUF, M_WAITOK);
-		bcopy(tmppath, ci->ci_path, ci->ci_pathlen);
+		memcpy(ci->ci_path, tmppath, ci->ci_pathlen);
 		path_alloced++;
 
 		/*
@@ -405,7 +405,7 @@ ccdinterleave(cs)
 	 */
 	size = (cs->sc_nccdisks + 1) * sizeof(struct ccdiinfo);
 	cs->sc_itable = (struct ccdiinfo *)malloc(size, M_DEVBUF, M_WAITOK);
-	bzero((caddr_t)cs->sc_itable, size);
+	memset((caddr_t)cs->sc_itable, 0, size);
 
 	/*
 	 * Trivial case: no interleave (actually interleave of disk size).
@@ -1340,7 +1340,7 @@ ccdgetdefaultlabel(cs, lp)
 {
 	struct ccdgeom *ccg = &cs->sc_geom;
 
-	bzero(lp, sizeof(*lp));
+	memset(lp, 0, sizeof(*lp));
 
 	lp->d_secperunit = cs->sc_size;
 	lp->d_secsize = ccg->ccg_secsize;
@@ -1380,7 +1380,7 @@ ccdgetdisklabel(dev)
 	struct disklabel *lp = cs->sc_dkdev.dk_label;
 	struct cpu_disklabel *clp = cs->sc_dkdev.dk_cpulabel;
 
-	bzero(clp, sizeof(*clp));
+	memset(clp, 0, sizeof(*clp));
 
 	ccdgetdefaultlabel(cs, lp);
 
