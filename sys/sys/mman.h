@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.29 2003/03/06 00:41:51 matt Exp $	*/
+/*	$NetBSD: mman.h,v 1.30 2003/04/10 21:35:20 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -90,7 +90,6 @@ typedef	__off_t		off_t;		/* file offset */
 #define	MAP_RENAME	 0x0020	/* Sun: rename private pages to file */
 #define	MAP_NORESERVE	 0x0040	/* Sun: don't reserve needed swap area */
 #define	MAP_INHERIT	 0x0080	/* region is retained after exec */
-#define	MAP_NOEXTEND	 0x0100	/* for MAP_FILE, don't change file size */
 #define	MAP_HASSEMAPHORE 0x0200	/* region may contain semaphores */
 
 /*
