@@ -1,5 +1,5 @@
 /*
-**	$Id: identd.c,v 1.5 1995/06/07 17:14:21 cgd Exp $
+**	$NetBSD: identd.c,v 1.6 1996/08/30 17:41:34 thorpej Exp $
 **
 ** identd.c                       A TCP/IP link identification protocol server
 **
