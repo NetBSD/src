@@ -1,4 +1,4 @@
-/*	$NetBSD: database.c,v 1.6 2002/11/16 04:34:13 itojun Exp $	*/
+/*	$NetBSD: database.c,v 1.7 2005/03/16 02:53:55 xtraeme Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: database.c,v 2.8 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: database.c,v 1.6 2002/11/16 04:34:13 itojun Exp $");
+__RCSID("$NetBSD: database.c,v 1.7 2005/03/16 02:53:55 xtraeme Exp $");
 #endif
 #endif
 
@@ -39,14 +39,13 @@ __RCSID("$NetBSD: database.c,v 1.6 2002/11/16 04:34:13 itojun Exp $");
 #define TMAX(a,b) ((a)>(b)?(a):(b))
 
 
-static	void		process_crontab __P((char *, char *, char *,
-					     struct stat *,
-					     cron_db *, cron_db *));
+static	void		process_crontab(const char *, const char *,
+					const char *, struct stat *,
+					cron_db *, cron_db *);
 
 
 void
-load_database(old_db)
-	cron_db		*old_db;
+load_database(cron_db *old_db)
 {
 	DIR		*dir;
 	struct stat	statbuf;
@@ -150,9 +149,7 @@ load_database(old_db)
 
 
 void
-link_user(db, u)
-	cron_db	*db;
-	user	*u;
+link_user(cron_db *db, user *u)
 {
 	if (db->head == NULL)
 		db->head = u;
@@ -165,9 +162,7 @@ link_user(db, u)
 
 
 void
-unlink_user(db, u)
-	cron_db	*db;
-	user	*u;
+unlink_user(cron_db *db, user *u)
 {
 	if (u->prev == NULL)
 		db->head = u->next;
@@ -182,9 +177,7 @@ unlink_user(db, u)
 
 
 user *
-find_user(db, name)
-	cron_db	*db;
-	char	*name;
+find_user(cron_db *db, const char *name)
 {
 	user	*u;
 
@@ -196,13 +189,8 @@ find_user(db, name)
 
 
 static void
-process_crontab(uname, fname, tabname, statbuf, new_db, old_db)
-	char		*uname;
-	char		*fname;
-	char		*tabname;
-	struct stat	*statbuf;
-	cron_db		*new_db;
-	cron_db		*old_db;
+process_crontab(const char *uname, const char *fname, const char *tabname,
+                struct stat *statbuf, cron_db *new_db, cron_db *old_db)
 {
 	struct passwd	*pw = NULL;
 	int		crontab_fd = OK - 1;
