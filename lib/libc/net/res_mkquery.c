@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.18 2000/04/25 13:57:08 itojun Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.19 2000/07/06 03:00:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.18 2000/04/25 13:57:08 itojun Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.19 2000/07/06 03:00:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -118,6 +118,7 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	/*
 	 * Initialize header fields.
 	 */
+	/*CONSTCOND*/
 	if (sizeof(HEADER) != HFIXEDSZ) {
 		/* XXX should raise compile time error, not runtime error */
 #ifdef DEBUG
