@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.41 2000/03/30 14:45:06 simonb Exp $	*/
+/*	$NetBSD: sii.c,v 1.42 2000/06/02 20:20:29 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,6 +41,7 @@
  *	v 9.2 89/09/14 13:37:41 jhh Exp $ SPRITE (DECWRL)";
  */
 
+#include "sii.h"
 /*
  * SCSI interface driver
  */
@@ -53,6 +54,13 @@
 
 #include <machine/locore.h>
 
+#if NXSII > 0
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/scsi_message.h>
+#endif
+
 /* old 4.4BSD/pmax scsi drivers */
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
@@ -62,27 +70,6 @@
 #include <pmax/pmax/machdep.h>		/* prom_scsiid prototype */
 
 extern struct cfdriver sii_cd;
-
-#ifdef USE_NEW_SCSI
-/* Glue to the machine-independent scsi */
-struct scsipi_adapter asc_switch = {
-	NULL, /* XXX - asc_scsi_cmd */
-#if 0
-/*XXX*/	minphys,		/* no max transfer size; DMA engine deals */
-#else
-	SII_MAX_DMA_XFER_LENGTH,
-#endif
-	NULL,			/* scsipi_ioctl */
-};
-
-struct scsipi_device sii_dev = {
-/*XXX*/	NULL,			/* Use default error handler */
-/*XXX*/	NULL,			/* have a queue, served by this */
-/*XXX*/	NULL,			/* have no async handler */
-/*XXX*/	NULL,			/* Use default 'done' routine */
-};
-#endif
-
 
 /*
  * MACROS for timing out spin loops.
@@ -156,13 +143,16 @@ static int	sii_GetByte __P((SIIRegs *regs, int phase, int ack));
 static void	sii_DoSync __P((SIIRegs *regs, State *state));
 static void	sii_StartDMA __P((SIIRegs *regs, int phase, u_short *dmaAddr,
 				  int size));
+#if NXSII == 0
 static void	siistart __P((ScsiCmd *scsicmd));
+#endif
 
 #ifdef DEBUG
 static void	sii_DumpLog __P((void));
 #endif
 
 
+#if NXSII == 0
 /*
  * Definition of the controller for the old-style, non-MI
  * pmax scsi drivers, and for autoconfiguring devices via those
@@ -171,13 +161,20 @@ static void	sii_DumpLog __P((void));
 struct	pmax_driver siidriver = {
 	"sii", NULL, siistart, 0,
 };
+#endif
 
 /*
  * Match driver based on name
  */
 void
+#if NXSII > 0
+siiattach(sc, dev)
+	struct siisoftc *sc;
+	struct scsipi_device *dev;
+#else
 siiattach(sc)
 	struct siisoftc *sc;
+#endif
 {
 	int i;
 
@@ -195,23 +192,89 @@ siiattach(sc)
 			SII_MAX_DMA_XFER_LENGTH;
 	}
 
+#if NXSII == 0
 	/* Hack for old-sytle SCSI-device probe */
 	(void) pmax_add_scsi(&siidriver, sc->sc_dev.dv_unit);
+#endif
 
 	sii_Reset(sc, RESET);
-#ifdef USE_NEW_SCSI
-	/* XXX probe SCSI bus and attach slave devices */
+	printf(": target %d\n", sc->sc_regs->id & SII_IDMSK);
+
+#if NXSII > 0
+	/*
+	 * fill in the prototype scsipi_link.
+	 */
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_regs->id * SII_IDMSK;
+	sc->sc_link.adapter = &sc->sc_adapter;
+	sc->sc_link.device = dev;
+	sc->sc_link.openings = 1;	/* driver can't queue requests yet */
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
+	sc->sc_link.type = BUS_SCSI;
+
+	/*
+	 * Now try to attach all the sub-devices
+	 */
+	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 #endif
-	printf(": target %d", sc->sc_regs->id & SII_IDMSK);
 }
-
-
 
 /*
  * Start activity on a SCSI device.
  * We maintain information on each device separately since devices can
  * connect/disconnect during an operation.
  */
+
+#if NXSII > 0
+int
+sii_scsi_cmd(xs)
+	struct scsipi_xfer *xs;
+{
+	int target = xs->sc_link->scsipi_scsi.target;
+	struct siisoftc *sc = xs->sc_link->adapter_softc;
+	int s;
+	int count;
+
+	s = splbio();
+	if (sc->sc_cmd[target]) {
+		splx(s);
+		printf("[busy at start]\n");
+		return (TRY_AGAIN_LATER);
+	}
+	/*
+	 * Build a ScsiCmd for this command and start it.
+	 */
+	sc->sc_xs[target] = xs;
+	sc->sc_cmd[target] = &sc->sc_cmd_fake[target];	/* XXX */
+	sc->sc_cmd[target]->unit = 0;
+	sc->sc_cmd[target]->flags = 0;
+	sc->sc_cmd[target]->buflen = xs->datalen;
+	sc->sc_cmd[target]->buf = xs->data;
+	sc->sc_cmd[target]->cmdlen = xs->cmdlen;
+	sc->sc_cmd[target]->cmd = (u_char *)xs->cmd;
+	sc->sc_cmd[target]->lun = xs->sc_link->scsipi_scsi.lun;
+	sii_StartCmd(sc, target);
+	splx(s);
+	if ((xs->xs_control & XS_CTL_POLL) == 0)
+		return (SUCCESSFULLY_QUEUED);
+	count = xs->timeout;
+	while (count) {
+		if ((xs->xs_status & XS_STS_DONE) != 0)
+			return(COMPLETE);
+		siiintr(sc);
+		/* XXX schedule another command? */
+		DELAY(1000);
+		--count;
+	}
+	xs->error = XS_TIMEOUT;
+	xs->xs_status |= XS_STS_DONE;
+	scsipi_done(xs);
+	return (COMPLETE);
+}
+#else
+
 static void
 siistart(scsicmd)
 	ScsiCmd *scsicmd;	/* command to start */
@@ -237,6 +300,7 @@ siistart(scsicmd)
 	sii_StartCmd(sc, sdp->sd_drive);
 	splx(s);
 }
+#endif
 
 /*
  * Check to see if any SII chips have pending interrupts
@@ -361,17 +425,19 @@ sii_StartCmd(sc, target)
 		state->dmaDataPhase = -1; /* illegal phase. shouldn't happen */
 		state->buf = (char *)0;
 	} else {
+#ifdef check_data_phase /* XXX Let device drive the data phase appropriately */
 		state->dmaDataPhase =
 			(scsicmd->flags & SCSICMD_DATA_TO_DEVICE) ?
 			SII_DATA_OUT_PHASE : SII_DATA_IN_PHASE;
+#endif
 		state->buf = scsicmd->buf;
 	}
 
 #ifdef DEBUG
 	if (sii_debug > 1) {
 		printf("sii_StartCmd: %s target %d cmd 0x%x addr %p size %d dma %d\n",
-			scsicmd->sd->sd_driver->d_name, target,
-			scsicmd->cmd[0], scsicmd->buf, scsicmd->buflen,
+			sc->sc_dev.dv_xname,
+			target, scsicmd->cmd[0], scsicmd->buf, scsicmd->buflen,
 			state->dmaDataPhase);
 	}
 	sii_debug_cmd = scsicmd->cmd[0];
@@ -431,7 +497,7 @@ sii_StartCmd(sc, target)
 #endif
 	{
 		/* do a chained, select with ATN and programmed I/O command */
-		regs->data = SCSI_DIS_REC_IDENTIFY;
+		regs->data = SCSI_DIS_REC_IDENTIFY | scsicmd->lun;
 		regs->slcsr = target;
 		regs->dmctrl = state->dmaReqAck;
 		regs->comm = SII_INXFER | SII_SELECT | SII_ATN | SII_CON |
@@ -862,12 +928,14 @@ again:
 #endif
 				break;
 			}
+#ifdef check_data_phase /* XXX Let the device drive the data phase appropriately */
 			if (state->dmaDataPhase != (dstat & SII_PHASE_MSK)) {
 				printf("%s: device %d: cmd %x: dma phase doesn't match\n",
 					sc->sc_dev.dv_xname, sc->sc_target,
 					sc->sc_cmd[sc->sc_target]->cmd[0]);
 				goto abort;
 			}
+#endif
 #ifdef DEBUG
 			if (sii_debug > 4) {
 				printf("Data %d ", state->dmaDataPhase);
@@ -1753,8 +1821,8 @@ sii_CmdDone(sc, target, error)
 #ifdef DEBUG
 	if (sii_debug > 1) {
 		printf("sii_CmdDone: %s target %d cmd %x err %d resid %d\n",
-			scsicmd->sd->sd_driver->d_name, target,
-			scsicmd->cmd[0], error, sc->sc_st[target].buflen);
+			sc->sc_dev.dv_xname,
+			target, scsicmd->cmd[0], error, sc->sc_st[target].buflen);
 	}
 #endif
 
@@ -1767,8 +1835,34 @@ sii_CmdDone(sc, target, error)
 		break;
 	}
 
+#if NXSII > 0
+	sc->sc_xs[target]->status = sc->sc_st[target].statusByte;
+	/*
+	 * Convert SII driver error code to MI SCSI XS_*.
+	 */
+	switch (error) {
+	case 0:
+		sc->sc_xs[target]->error = XS_NOERROR;
+		break;
+	case ENXIO:
+		sc->sc_xs[target]->error = XS_SELTIMEOUT;
+		break;
+	case EBUSY:
+		sc->sc_xs[target]->error = XS_BUSY;
+		break;
+	case EIO:
+		sc->sc_xs[target]->error = XS_DRIVER_STUFFUP;
+		break;
+	default:
+		sc->sc_xs[target]->error = XS_DRIVER_STUFFUP;
+	}
+	sc->sc_xs[target]->resid = sc->sc_st[target].buflen;
+	sc->sc_xs[target]->xs_status |= XS_STS_DONE;
+	scsipi_done(sc->sc_xs[target]);
+#else
 	(*scsicmd->sd->sd_driver->d_done)(scsicmd->unit, error,
 		sc->sc_st[target].buflen, sc->sc_st[target].statusByte);
+#endif
 }
 
 #ifdef DEBUG
