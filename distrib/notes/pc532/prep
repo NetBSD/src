@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.3 1999/01/13 07:30:07 ross Exp $	
+.\"	$NetBSD: prep,v 1.4 2000/10/10 12:55:21 lukem Exp $
 .
 The major preparation needed is to make sure you can recover any
 current bits stored on your pc532. If you don't care about your

@@ -1,6 +1,7 @@
-.\"	$NetBSD: whatis,v 1.13 1999/05/07 03:30:44 ender Exp $	
+.\"	$NetBSD: whatis,v 1.14 2000/10/10 12:55:19 lukem Exp $
+.
 .Nx \*V
-is the fifth 
+is the fifth
 .Dq real
 release of
 .Nx
@@ -9,13 +10,12 @@ for the 68k-based Macintosh.
 For the mac68k port,
 .Nx \*V
 brings a number of improvements:
-.Bl -bullet
-.It
+.(bullet
 A number of kernel changes enable support for several previously
 unsupported systems (such as the LC and Performa 470-series,
 570/580-series, and 630-series Macs).
 .It
-Support for 800KB floppy drives has been added (i.e. machines that
+Support for 800 KB floppy drives has been added (i.e. machines that
 include the IWM or SWIM, but not the SWIM II or SWIM III)
 .It
 IBM-compatible MBR handling has been integrated to enable MS-DOS
@@ -26,7 +26,7 @@ The
 driver has undergone a major revamp.
 .It
 A number of bugs affecting II-series systems have been fixed.
-.El
+.bullet)
 There is still a lot of work to be done and help is welcomed. Please jump in!
 .Nx \*V
 on mac68k is, as usual, also fully backward compatible with old

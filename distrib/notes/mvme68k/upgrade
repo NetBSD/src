@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.6 2000/10/03 23:23:56 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.7 2000/10/10 12:55:20 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,14 +31,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.
-It is possible to easily upgrade your existing NetBSD/mvme68k system
+It is possible to easily upgrade your existing
+.Nx*M
+system
 using the upgrade program in the miniroot. If you wish to upgrade
 your system by this method, simply select the `upgrade' option once
 the miniroot has booted. The upgrade program with then guide you
 through the procedure. The upgrade program will:
-.Bl -bullet
-.It
+.(bullet
 Enable the network based on your system's current
 network configuration.
 .It
@@ -53,22 +53,23 @@ edit the resulting file.
 Make new device nodes in your root filesystem.
 .It
 Copy a new kernel onto your root partition.
-NOTE: the existing kernel WILL NOT be backed up; doing
+.(Note
+The existing kernel WILL NOT be backed up; doing
 so would be pointless, since older kernels may not be
 capable of running
 .Nx \*V
 executables.
+.Note)
 .It
 Install a new boot block.
 .It
 Check your filesystems for integrity.
-.El
+.bullet)
 .Pp
 While using the miniroot's upgrade program is the preferred method
 of upgrading your system, it is possible to upgrade your system
 manually. To do this, follow the following procedure:
-.Bl -bullet
-.It
+.(bullet
 Place _at least_ the `base' binary set in a filesystem
 accessible to the target machine. A local filesystem
 is preferred, since the NFS subsystem in the
@@ -132,7 +133,7 @@ To extract these sets, use the following commands:
 .Pp
 .Dl Ic cd /
 .Dl Ic pax -zrvpe -f Ar path_to_set
-.El
+.bullet)
 .Pp
 .(Note
 You

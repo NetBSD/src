@@ -1,15 +1,19 @@
-.\"	$NetBSD: prep,v 1.21 2000/10/03 23:05:30 lukem Exp $	
-.Pp
+.\"	$NetBSD: prep,v 1.22 2000/10/10 12:55:16 lukem Exp $
+.
 You will need an AmigaDOS hard drive prep tool to prepare your hard
-drives for use with NetBSD/Amiga.  HDToolBox is provided with the
+drives for use with
+.Nx*M .
+HDToolBox is provided with the
 system software and on floppy installation disks since Release 2.0
 of AmigaDOS, so we will provide instructions for its use.
 .Pp
-Note that NetBSD can't currently be installed on disks with a sector
+Note that
+.Nx
+can't currently be installed on disks with a sector
 size other than 512 bytes (e.g., "640 MB" 90mm MO media). You can, however,
 mount ADOSFS partitions on such MOs.
 .
-.Ss2 "Preparing your hard disk with HDToolBox"
+.Ss2 Preparing your hard disk with HDToolBox
 .
 .Pp
 A full explanation of HDToolBox can be found with your
@@ -20,17 +24,17 @@ type so that you have working geometry parameters. To do this
 you enter the "Change drive type" menu, and either use "read
 parameters from drive" or set them manually.
 .Pp
-Note you will be modifying your HD's. If you mess something 
-up here you could lose everything on all the drives that 
+Note you will be modifying your HD's. If you mess something
+up here you could lose everything on all the drives that
 you configure.  It is therefore advised that you:
-.Bl -enum
-.It
+.(enum -offset indent
 Write down your current configurations.  Do this
 by examining each partition on the drive and the
 drives parameters (from Change drive type.)
 .It
 Back up the partitions you are keeping.
-.El
+.enum)
+.Pp
 What you need to do is partition your drives; creating at least
 root, swap and /usr partitions and possibly at least one more for
 /usr/local if you have the space.
@@ -39,32 +43,35 @@ This should be done as the HDToolBox manual describes.  One thing
 to note is that if you are not using a Commodore controller you
 will need to specify the device your SCSI controller uses, e.g.
 if you have a Warp Engine you would:
-.Pp
-from cli,
+.(tag From\ cli -offset indent
+.It From cli
 .Dl "hdtoolbox warpdrive.device"
-.Pp
-from wb set the tooltype,
+.It From wb
+Set the tooltype
 .Dl "SCSI_DEVICE_NAME=warpdrive.device"
+.tag)
 .Pp
 The important things you need to do above and beyond normal
 partitioning includes (from Partition Drive section):
-.Bl -enum
-.It
-Marking all NetBSD partitions as non-bootable, with
+.(enum
+Marking all
+.Nx
+partitions as non-bootable, with
 two exceptions: the root partition, if you want to boot
-NetBSD directly, or the swap partition, if you want
+.Nx
+directly, or the swap partition, if you want
 to boot the installation miniroot directly.
 .It
-Changing the file system parameters of the partitions
-to NetBSD ones.  This must be done from the
+Changing the file system parameters of the partitions to
+.Nx
+ones.  This must be done from the
 partitioning section and `Advanced options' must
 be enabled.
-.El
+.enum)
 .Pp
-To Make the needed changes:
+To make the needed changes:
 .Pp
-.Bl -bullet -compact
-.It
+.(enum -compact -offset indent
 Click the `Adv. Options' button
 .It
 Click the `Change file system' button
@@ -74,15 +81,17 @@ Choose `Custom File System'
 Turn off `Automount' if on.
 .It
 Set the dostype to one of these three choices:
-.Bd -literal -offset indent
+.(disp
 root partition  : 0x4e425207
 swap partition  : 0x4e425301
 other partitions: 0x4e425507
-.Ed
+.disp)
 .Pp
 Here `other' refers to other partitions you will
-format for reading and writing under NetBSD (e.g.
-/usr)
+format for reading and writing under
+.Nx
+(e.g.
+.Pa /usr )
 .Pp
 Make sure you press the return key to enter this value
 as some versions of HDToolBox will forget your entry
@@ -93,13 +102,12 @@ Turn custom boot code off
 Set Reserved Blocks start and end to 0.
 .It
 Click Ok.
-.El
+.enum)
 .Pp
 On the root (and, for installation, swap) partition,
 set instead this:
 .Pp
-.Bl -bullet -compact
-.It
+.(enum -compact -offset indent
 Turn custom boot code on
 .It
 Set Reserved Blocks start and end to 0.
@@ -110,37 +118,46 @@ Set Automount This Partition on
 .It
 Click Ok.
 .Pp
-Mask and maxtransfer are not used with NetBSD.
-.El
-.(tag Em Caveat:
+Mask and maxtransfer are not used with
+.Nx .
+.enum)
+.(tag Caveat:
+.It Em Caveat:
 The swap (for installation) and the root partition (if you plan to
 use the bootblocks) MUST BE WITHIN THE FIRST 4 gigabytes of the disk!
 The reason for the former is that xstreamtodev uses trackdisk.device
-compatible I/O-calls, the reason for the latter is that the bootblock 
+compatible I/O-calls, the reason for the latter is that the bootblock
 gets a 32bit partition offset from the operating system.
 .tag)
 .Pp
-Once this is done NetBSD/Amiga will be able to recognize your
+Once this is done
+.Nx*M
+will be able to recognize your
 disks and which partitions it should use.
 .
-.Ss2 "Transferring the miniroot file system"
+.Ss2 Transferring the miniroot file system
 .
-The NetBSD/Amiga installation or upgrade now uses a "miniroot"
+The
+.Nx*M
+installation or upgrade now uses a "miniroot"
 file system which is installed on the partition used by NetBSD
 for swapping.  This removes the requirement of using a floppy
 disk for the file system used by the installation or upgrade
 process.  It also allows more utilities to be present on the
-file system than would be available when using an 880K floppy
+file system than would be available when using an 880 KB floppy
 disk.
 .Pp
-Once the hard disk has been prepared for NetBSD, the miniroot
-file system (miniroot.fs) is transferred to the swap
+Once the hard disk has been prepared for
+.Nx ,
+the miniroot file system (miniroot.fs) is transferred to the swap
 partition configured during the hard disk prep (or the existing
 swap partition in the case of an upgrade).  The xstreamtodev
 utility provided in the "amiga/installation/misc" directory can
 be used on AmigaDOS to transfer the file system for either a new
 installation or an upgrade.  The file system can also be
-transferred on an existing NetBSD system for an update by
+transferred on an existing
+.Nx
+system for an update by
 using dd.  This should only be done after booting NetBSD
 into single-user state.  It may also be possible to shutdown
 to single-user, providing that the single-user state processes
@@ -157,8 +174,12 @@ option
 and/or
 .Dl --unit=\*<SCSI unit number\*>
 .Pp
-To transfer the miniroot using NetBSD, you should be booted up
-in single user state on the current NetBSD system, or use the
+To transfer the miniroot using
+.Nx ,
+you should be booted up
+in single user state on the current
+.Nx
+system, or use the
 "shutdown now" command to shutdown to single-user state.  Then
 copy the miniroot using dd:
 .Dl dd if=miniroot.fs of=/dev/rsd0b
@@ -167,7 +188,8 @@ where
 should be the device path of the swap partition
 your system is configured to use.  Once the file is copied,
 reboot back to AmigaDOS to boot the upgrade kernel.
-.(tag Em Caveat:
+.(tag Caveat:
+.It Em Caveat:
 Once you have started installation, if you abort it
 and want to retry you must reinstall the miniroot.fs on the swap
 partition.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.6 2000/10/05 08:54:55 lukem Exp $	
+.\"	$NetBSD: prep,v 1.7 2000/10/10 12:55:20 lukem Exp $
 .
 mvme68k machines usually need little or no preparation before installing
 .Nx "" ,
@@ -8,7 +8,7 @@ on any attached storage devices.
 .Pp
 The following instructions should make your machine "NetBSD Ready".
 .Pp
-Power-up your MVME147 board. You should have the 
+Power-up your MVME147 board. You should have the
 .Em bug No prompt:
 .(disp
 
@@ -17,8 +17,8 @@ COLD Start
 Onboard  RAM start = $00000000,  stop = $007FFFFF
 
 147-Bug\*>
-
 .disp)
+.Pp
 Or, if you have an MVME167 board:
 .(disp
 
@@ -30,10 +30,10 @@ Local Memory Found =02000000 (&33554432)
 MPU Clock Speed =33Mhz
 
 167-Bug\*>
-
 .disp)
-Make sure the RAM size looks ok (if you've got an 8Mb MVME147 or a
-32Mb MVME167 you should
+.Pp
+Make sure the RAM size looks ok (if you've got an 8 MB MVME147 or a
+32 MB MVME167 you should
 have the same value as I do). Also make sure the clock is ticking:
 .Pp
 .Dl 1x7-Bug\*> Ns Ic time
@@ -55,7 +55,7 @@ doesn't use it.
 Motorola has acknowledged a year 2000 bug in some versions of the MVME147
 whereby the day of the week
 doesn't get set correctly by the 147Bug PROM.
-.Em It does not affect
+.Em \It does not affect
 .Nx "" !
 .Pp
 Also make sure that your board's ethernet address is initialised to

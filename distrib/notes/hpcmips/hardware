@@ -1,101 +1,165 @@
-.\"	$NetBSD: hardware,v 1.8 2000/07/07 01:39:26 imp Exp $
+.\"	$NetBSD: hardware,v 1.9 2000/10/10 12:55:18 lukem Exp $
+.
 A H/PC machine contains a keyboard and a touch screen and
-generally has 8MB or more of RAM.  The port supports the HPC
+generally has 8 MB or more of RAM.  The port supports the HPC
 form factor, as well as the H/PC Pro and PsPC (Palmsized PC)
 form factors.
-
-The following WindowsCE hardware is supported:
-.de section
-.	El
-.	Pp
-.	It Em \\$*
-.	br
-.	Bl -bullet -compact
-..
-.de item
-.	It
-\\$*
-..
-.Bl -tag -width Disks
-.	It Em supported machines:
-.	br
-.	Bl -bullet -compact 
-.		section CASIO
-.			item CASSIOPEIA for DoCoMo
-.			item CASSIOPEIA E-55
-.		section Compaq
-.			item C Series 2010c
-.			item C Series 810
-.		section Everex
-.			item FreeStyle A-10 (optional memory card recommended)
-.			item FreeStyle A-15
-.			item FreeStyle A-20
-.		section Fujitsu
-.			item INTERTOP CX300
-.		section NEC
-.			item MobileGear MC-CS12
-.			item MobileGear MC-CS13
-.			item MobileGearII MC-R300
-.			item MobileGearII MC-R320
-.			item MobileGearII MC-R330
-.			item MobileGearII for DoCoMo (TypeI/II)
-.			item MobileGearII MC/R430
-.			item MobileGearII MC-R500
-.			item MobileGearII MC-R510
-.			item MobileGearII MC-R520
-.			item MobileGearII MC/R530
-.			item MobileGearII MC-R700
-.			item MobileGearII MC/R730
-.			item MobilePro 750C
-.			item MobilePro 770
-.			item MobilePro 780
-.			item MobilePro 800
-.			item MobilePro 880
-.		section IBM
-.			item WorkPad z50
-.		section Sharp
-.			item mobilon TRIPAD PV-6000
-.			item mobilon HC-4100
-.			item Telios HC-AJ1
-.			item Telios HC-AJ2
-.		section Vadem
-.			item Clio C-1000
-.			item Clio C-1050
-.	El
-
-.	It Em CPUs:
-.	br
-.	Bl -bullet -compact 
-.		item Vr4102-based: 
-.		item Vr4111-based: 
-.		item Vr4121-based: 
-.		item Vr4181-based:
-.		item TX3912-based: TX3912 machines are not supported with installation kernel. use special kernel for TX3912.
-.		item TX3922-based:  TX3922 machines are not supported with installation kernel. use special kernel for TX3922
-.	section RAM requirements
-.		item 8MB of RAM is required to run NetBSD/hpcmips.  4MB is insufficient for most purposes.
-.	section console device
-.		item built-in LCD screen
-.		item built-in keyboard
-.		item serial port (with kernel option 'h')
-.	section storage device
-.		item Flash ATA card, CF card (wd)
-.		item SCSI disk (sd)
-.		item Adaptec APA-1460[Slim SCSI](aic)
-.	section Network interfaces:
-.		item 3Com 3c589 and 3c562 Ethernet (ep)
-.		item MB8696x based Ethernet (mbe)
-.		item NE2000-compatible Ethernet (ne)
-.		item Megahertz Ethernet (sm)
-.	section Displays:
-.		item LCD Display
-.	section Input devices:
-.		item Keyboard. 
-.		item TouchPad. 
-.	section Miscellaneous:
-.		item Battery-backed real-time clock.
-.	El
-.El
-.Pp
-.Bl -tag -width (***)
-.El
+.
+.Ss2 Supported WindowsCE machines
+.(bullet -offset indent
+CASIO
+.(bullet -compact
+CASSIOPEIA for DoCoMo
+.It
+CASSIOPEIA E-55
+.bullet)
+.It
+Compaq
+.(bullet -compact
+C Series 2010c
+.It
+C Series 810
+.bullet)
+.It
+Everex
+.(bullet -compact
+FreeStyle A-10 (optional memory card recommended)
+.It
+FreeStyle A-15
+.It
+FreeStyle A-20
+.bullet)
+.It
+Fujitsu
+.(bullet -compact
+INTERTOP CX300
+.bullet)
+.It
+NEC
+.(bullet -compact
+MobileGear MC-CS12
+.It
+MobileGear MC-CS13
+.It
+MobileGearII MC-R300
+.It
+MobileGearII MC-R320
+.It
+MobileGearII MC-R330
+.It
+MobileGearII for DoCoMo (TypeI/II)
+.It
+MobileGearII MC/R430
+.It
+MobileGearII MC-R500
+.It
+MobileGearII MC-R510
+.It
+MobileGearII MC-R520
+.It
+MobileGearII MC/R530
+.It
+MobileGearII MC-R700
+.It
+MobileGearII MC/R730
+.It
+MobilePro 750C
+.It
+MobilePro 770
+.It
+MobilePro 780
+.It
+MobilePro 800
+.It
+MobilePro 880
+.bullet)
+.It
+IBM
+.(bullet -compact
+WorkPad z50
+.bullet)
+.It
+Sharp
+.(bullet -compact
+mobilon TRIPAD PV-6000
+.It
+mobilon HC-4100
+.It
+Telios HC-AJ1
+.It
+Telios HC-AJ2
+.bullet)
+.It
+Vadem
+.(bullet -compact
+Clio C-1000
+.It
+C-1050
+.bullet)
+.bullet)
+.
+.Ss2 Supported WindowsCE devices
+.(bullet -offset indent
+CPUs
+.(bullet -compact
+Vr4102-based
+.It
+Vr4111-based
+.It
+Vr4121-based
+.It
+Vr4181-based
+.It
+TX3912-based: TX3912 machines are not supported with installation kernel. use special kernel for TX3912.
+.It
+TX3922-based: TX3922 machines are not supported with installation kernel. use special kernel for TX3922
+.bullet)
+.It
+RAM requirements
+.(bullet -compact
+8 MB of RAM is required to run
+.Nx*M .
+4 MB is insufficient for most purposes.
+.bullet)
+.It
+Console devices
+.(bullet -compact
+built-in LCD screen
+.It
+built-in keyboard
+.It
+serial port (with kernel option 'h')
+.bullet)
+.It
+Storage devices
+.(bullet -compact
+Flash ATA card, CF card (wd)
+.It
+SCSI disk (sd)
+.It
+Adaptec APA-1460[Slim SCSI](aic)
+.bullet)
+.It
+Network interfaces
+.(bullet -compact
+3Com 3c589 and 3c562 Ethernet (ep)
+.It
+MB8696x based Ethernet (mbe)
+.It
+NE2000-compatible Ethernet (ne)
+.It
+Megahertz Ethernet (sm)
+.bullet)
+.It
+Input devices
+.(bullet -compact
+Keyboard.
+.It
+TouchPad.
+.bullet)
+.It
+Miscellaneous
+.(bullet -compact
+Battery-backed real-time clock.
+.bullet)
+.bullet)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.2 2000/10/03 22:43:37 lukem Exp $	
+.\"	$NetBSD: install,v 1.3 2000/10/10 12:55:20 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,8 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 Begin by creating an area in the server's filesystem for the
-NetBSD/next68k image.  This area must be exported read-write to the NeXT
+.Nx*M
+image.  This area must be exported read-write to the NeXT
 workstation.  In the simplest form of installation, the entire image is
 exported as a single partition, mounted on / by the target.  This
 corresponds to a local disk install with just one partition.  It is also
@@ -41,10 +42,11 @@ exported read-only, and multiple machines can all share the same /usr
 partition.
 .Pp
 To extract the sets into the exported area:
-.Bd -literal -offset indent
+.(disp
 cd /path/to/exported/filesystem
 pax -zrvpe -f /path/to/base.tgz
-.Ed
+.disp)
+.Pp
 and repeat for any other sets you wish to install.  You'll almost
 certainly need the etc.tgz set.
 .Pp
@@ -52,9 +54,10 @@ Edit the files in the etc directory to reflect reality.  rc.conf and
 fstab will certainly need to be edited.
 .Pp
 cd into the dev directory in the exported area and run
-.Bd -literal -offset indent
+.(disp
 sh ./MAKEDEV all
-.Ed
+.disp)
+.Pp
 to create the various device nodes.
 .Pp
 Create an empty swap file, and place it somewhere where it can also

@@ -1,4 +1,5 @@
-.\"	$NetBSD: prep,v 1.7 1999/01/13 07:30:04 ross Exp $
+.\"	$NetBSD: prep,v 1.8 2000/10/10 12:55:18 lukem Exp $
+.
 Currently, only installing the miniroot from the network is supported.
 This may change in a future release.
 .Pp
@@ -11,9 +12,12 @@ on 1024 byte sectors, while NetBSD's is based on 512 byte sectors.
 .Pp
 .Em A quick note about partitions:
 Since the target disk will become the boot
-disk for your new NetBSD/hp300 installation, you will need to treat the
+disk for your new
+.Nx*M
+installation, you will need to treat the
 `a' and `c' partitions in a special manner. Due to the size of the
-NetBSD/hp300 boot program (it spills into the area after the disklabel),
+.Nx*M
+boot program (it spills into the area after the disklabel),
 it is necessary to offset the `a' partition one cylinder from the beginning
 of the disk. Later, the `c' partition will be marked with the type
 `FS_BOOT' and may not be used for a filesystem. (For those unfamiliar
@@ -37,22 +41,24 @@ code 16, unit numers might be something like the following:
 .It HP-IB\ at\ 14,\ slave\ 5 Ta 13 Ta (disk:\ rd13)
 .It SCSI\ at\ 16,\ slave\ 0 Ta 0 Ta (disk:\ sd0)
 .El
+.
 .Ss2 Miniroot installation via network
-.(tag Em Note:
+.(Note
 Booting sys_inst via the network
 on early hp300 models
-.Em is only
-.Em possible if your bootrom
-.Em is No rev. c Em or later.
+.Em is only possible if your bootrom is
+rev. c
+.Em or later.
 When checking the
 revision of your BOOTROM, use what it printed on the console during
 the self-test, not what may be printed on a sticker on the chip itself.
-.tag)
+.Note)
 .Pp
 In order to complete this process, you will need the following from the
 .Pa \&.../installation/misc
 directory of the distribution:
 .(tag SYS_INST.gz
+.It Pa SYS_INST.gz
 The standalone disklabel and miniroot
 installation tool. This file must be un-gzipped before using.
 .tag)
@@ -62,6 +68,7 @@ the following from the
 .Pa \&.../installation/miniroot
 directory of of the distribution:
 .(tag miniroot.fs.gz
+.It Pa miniroot.fs.gz
 A miniroot filesystem image.
 .tag)
 .Pp
@@ -72,13 +79,13 @@ special note below.
 To boot SYS_INST from tape, you need only place SYS_INST on the tape as
 the first file.
 .
-.
-.(tag Em Loading\ SYS_INST\ via\ the\ network xxxxxxx
+.Ss2 Loading SYS_INST via the network
 .Pp
 If you wish to load the SYS_INST program via the network, you may need
 the following from the `.../installation/misc' directory in addition to the
 items listed above:
-.(tag Pa rbootd.tgz
+.(tag rbootd.tgz
+.It Pa rbootd.tgz
 Source code for the rbootd program included with
 NetBSD. It requires that the server has a
 Berkeley Packet Filter (bpf). You will need to
@@ -87,8 +94,15 @@ system does not have this utility already.
 .tag)
 .Pp
 First of all, configure your rbootd to handle boot requests from the
-client. NOTE: NetBSD's `rbootd' is slightly different from HP-UX's.
-To configure NetBSD's `rbootd', create a file called `/etc/rbootd.conf'
+client.
+.(Note
+NetBSD's
+.Cm rbootd
+is slightly different from HP-UX's.
+To configure NetBSD's
+.Cm rbootd ,
+create a file called
+.Pa /etc/rbootd.conf
 and place in it an entry like the following:
 .
 .Dl 08:00:09:04:AA:33 SYS_INST # thunder-egg
@@ -96,15 +110,17 @@ and place in it an entry like the following:
 The first column is the ethernet address of the client's network interface.
 The second column is the program to send to the client, and anything after
 the `#' is a comment. Once you have rbootd running, copy the SYS_INST
-program to the /usr/mdec/rbootd directory on your server. If this
+program to the
+.Pa /usr/mdec/rbootd
+directory on your server. If this
 directory doesn't exist already, you will need to create it.
+.Note)
 .Pp
-For information on configuring rbootd under HP-UX, see the rbootd(1M)
+For information on configuring rbootd under HP-UX, see the
+.Xr rbootd 1M
 manual page on your server system.
 .Pp
 Once `rbootd' is configured and running, you will be ready to continue.
-.tag)
-.
 .
 .Pp
 Make sure that the miniroot filesystem image has been un-gzipped, and
@@ -120,11 +136,11 @@ load and prompt you for a command.
 If this is a new NetBSD installation, you will need to place a disklabel
 on the disk.
 .Dl sys_inst\*> disklabel
-.(tag Em Note:
+.(Note
 It may be worth selecting the `zap' option initially to ensure that
 the disklabel area is clear. This may be especially important if an
 HP-UX boot block had been previously installed on the disk.
-.tag)
+.Note)
 .Pp
 Select the `edit' option, and answer the questions about your disk.
 There may be several questions which you may not be sure of the answers
@@ -142,7 +158,7 @@ to. Listed below are guidelines for SCSI and HP-IB disks:
 .El
 .Pp
 Next, you will be asked to fill out the partition map. You must provide
-responses for all 8 partitions. Remember, you must allocate at least 6M
+responses for all 8 partitions. Remember, you must allocate at least 6 MB
 for the `b' partition, or else the miniroot will not fit. Set the size and
 offset of any unused partition to 0. Note that sizes and offsets are
 expressed in `n sectors', assuming 512 byte sectors. Care should be taken
@@ -150,12 +166,12 @@ to ensure that partitions begin and end on cylinder boundaries (i.e. size
 and offset is an even multiple of the number of sectors per cylinder).
 While this is not technically necessary, it is generally encouraged.
 .Pp
-.(tag Em Note:
+.(Note
 When setting the partition type of the `b' partition, make sure to
 specify it as an `ffs' partition so that the miniroot can be mounted (even
 if this will be a swap partition). You will be given a chance to clean
 this up later in the installation process.
-.tag)
+.Note)
 .Pp
 Once you have edited the label, select the `show' option to verify that
 it is correct. If so, select `write' and `done'. Otherwise, you may

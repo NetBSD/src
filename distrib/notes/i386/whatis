@@ -1,6 +1,5 @@
-.\"	$NetBSD: whatis,v 1.11 2000/10/04 00:35:13 lukem Exp $
-.\"
-.Pp
+.\"	$NetBSD: whatis,v 1.12 2000/10/10 12:55:19 lukem Exp $
+.
 As is usual between releases, the i386 port has had many improvements
 made to it - too many to detail all of them here.
 .Pp
@@ -8,14 +7,11 @@ Numerous new drivers have been added. See the supported hardware list
 for details.
 .Pp
 Some (but not all!) notable i386-specific improvements include:
-.Pp
-.Bl -bullet
-.It
+.(bullet
 Migration to the ELF binary format from a.out.
 .It
 Preliminary support for MCA (MicroChannel Architecture)
-.El
-.Pp
+.bullet)
 .Nx \*V
 on i386 is, as usual, also fully backward compatible with old
 .Nx
