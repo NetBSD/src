@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/12/24 21:20:09 perry Exp $
+#	$NetBSD: Makefile,v 1.3 2002/12/25 07:45:35 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -26,9 +26,9 @@ FILES=	access.5.html aliases.5.html architecture.html \
 	spawn.8.html transport.5.html trivial-rewrite.8.html \
 	uce.html virtual.5.html virtual.8.html
 
-SYMLINKS= bounce.8.html ${DESTDIR}/${BINDIR}/defer.8.html
-SYMLINKS+=sendmail.1.html ${DESTDIR}/${BINDIR}/mailq.1.html
-SYMLINKS+=sendmail.1.html ${DESTDIR}/${BINDIR}/newaliases.1.html
+SYMLINKS= bounce.8.html ${BINDIR}/defer.8.html
+SYMLINKS+=sendmail.1.html ${BINDIR}/mailq.1.html
+SYMLINKS+=sendmail.1.html ${BINDIR}/newaliases.1.html
 
 # not installed:
 # qmqpd.8.html
