@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.83 1999/03/06 05:34:41 fair Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.83.2.1 1999/11/05 07:13:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -772,11 +772,11 @@ nfs_unmount(mp, mntflags, p)
 	}
 
 	/*
-	 * We are now committed to the unmount.
-	 * For NQNFS, let the server daemon free the nfsmount structure.
+	 * We are now committed to the unmount; mark the mount structure
+	 * as doomed so that any sleepers kicked awake by nfs_disconnect
+	 * will go away cleanly.
 	 */
-	if (nmp->nm_flag & (NFSMNT_NQNFS | NFSMNT_KERB))
-		nmp->nm_iflag |= NFSMNT_DISMNT;
+	nmp->nm_iflag |= NFSMNT_DISMNT;
 
 	/*
 	 * There are two reference counts to get rid of here.
@@ -787,6 +787,9 @@ nfs_unmount(mp, mntflags, p)
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
 
+	/*
+	 * For NQNFS, let the server daemon free the nfsmount structure.
+	 */
 	if ((nmp->nm_flag & (NFSMNT_NQNFS | NFSMNT_KERB)) == 0)
 		free((caddr_t)nmp, M_NFSMNT);
 	return (0);
