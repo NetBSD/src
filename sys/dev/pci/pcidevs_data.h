@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.66 1998/05/14 21:46:53 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.67 1998/05/25 22:32:24 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.61 1998/05/14 21:45:18 augustss Exp 
+ *	NetBSD: pcidevs,v 1.62 1998/05/25 22:31:11 mark Exp 
  */
 
 /*
@@ -148,10 +148,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "M1461 Host-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1543,
+	    0,
+	    "Acer Labs",
+	    "M1543 PCI-ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M4803,
 	    0,
 	    "Acer Labs",
 	    "M4803",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5229,
+	    0,
+	    "Acer Labs",
+	    "M5229 UDMA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5237,
+	    0,
+	    "Acer Labs",
+	    "M5237 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101,
+	    0,
+	    "Acer Labs",
+	    "M7101 Power Management Controller",
 	},
 	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7850,
@@ -1384,6 +1408,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "DC5030",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA33,
+	    0,
+	    "Promise Technology",
+	    "Ultra DMA/ATA Bus Master IDE Accelerator",
+	},
+	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
 	    0,
 	    "Q Logic",
@@ -1748,6 +1778,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Trident Microsystems",
 	    "TGUI 9682",
+	},
+	{
+	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202,
+	    0,
+	    "TriTech Microelectronics",
+	    "Pyramid3D TR25202",
 	},
 	{
 	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET4000_W32P_A,
@@ -4801,6 +4837,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ROCKWELL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Rockwell Semiconductor Systems",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_TRITECH, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "TriTech Microelectronics",
 	    NULL,
 	},
 	{
