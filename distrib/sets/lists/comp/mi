@@ -99,6 +99,7 @@
 ./usr/include/dev/ic/intersil7170.h
 ./usr/include/dev/ic/interwavereg.h
 ./usr/include/dev/ic/interwavevar.h
+./usr/include/dev/ic/isp_netbsd.h
 ./usr/include/dev/ic/ispmbox.h
 ./usr/include/dev/ic/ispreg.h
 ./usr/include/dev/ic/ispvar.h
