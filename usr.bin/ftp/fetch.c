@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.105 2000/02/14 21:46:26 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.106 2000/03/09 22:01:26 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.105 2000/02/14 21:46:26 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.106 2000/03/09 22:01:26 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -371,7 +371,7 @@ cleanup_parse_url:
 	if (*thost == '[') {
 		cp = thost + 1;
 		if ((ep = strchr(cp, ']')) == NULL ||
-		    (ep[1] != '\0' && ep[1] != '\0')) {
+		    (ep[1] != '\0' && ep[1] != ':')) {
 			warnx("Invalid address `%s' in %s `%s'",
 			    thost, desc, origurl);
 			goto cleanup_parse_url;
@@ -793,7 +793,11 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				fprintf(fin, "Pragma: no-cache\r\n");
 		} else {
 			fprintf(fin, "GET %s HTTP/1.1\r\n", path);
-			fprintf(fin, "Host: %s:%d\r\n", host, portnum);
+			if (strchr(host, ':')) {
+				fprintf(fin, "Host: [%s]:%d\r\n", host,
+				    portnum);
+			} else
+				fprintf(fin, "Host: %s:%d\r\n", host, portnum);
 			fprintf(fin, "Accept: */*\r\n");
 			fprintf(fin, "Connection: close\r\n");
 			if (restart_point) {
