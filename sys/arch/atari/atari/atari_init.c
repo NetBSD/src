@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.10 1996/03/10 21:54:44 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.11 1996/03/27 10:07:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -58,7 +58,6 @@
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <machine/scu.h>
-#include <machine/video.h>
 #include <machine/kcore.h>
 #include <atari/atari/misc.h>
 
@@ -481,12 +480,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	i = *(int *)proc0paddr;
 	*(volatile int *)proc0paddr = i;
 
-	/*
-	 * Initialize the sound-chip YM2149:
-	 *   All sounds off, both ports output.
-	 */
-	SOUND->sd_selr = YM_MFR;
-	SOUND->sd_wdat = 0xff;
+	ym2149_init();
 
 	/*
 	 * Initialize both MFP chips (if both present!) to generate
@@ -498,7 +492,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	MFP->mf_iera  = MFP->mf_ierb = 0;
 	MFP->mf_imra  = MFP->mf_imrb = 0;
-	MFP->mf_aer   = 0;
+	MFP->mf_aer   = MFP->mf_ddr  = 0;
 	MFP->mf_vr    = 0x40;
 	if(!badbaddr(&MFP2->mf_gpip)) {
 		machineid |= ATARI_TT;
