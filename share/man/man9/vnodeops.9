@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.22 2003/05/14 12:00:33 wiz Exp $
+.\"     $NetBSD: vnodeops.9,v 1.23 2003/06/09 13:30:44 yamt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 1, 2003
+.Dd June 6, 2003
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -221,7 +221,7 @@
 "int flags"
 .Ft int
 .Fn VOP_GETPAGES "struct vnode *vp" "voff_t offset" "struct vm_page **m" \
-"int *centeridx" "int access_type" "vm_prot_t advice" "int flags"
+"int *count" "int centeridx" "vm_prot_t access_type" "int advice" "int flags"
 .Ft int
 .Fn VOP_PUTPAGES "struct vnode *vp" "voff_t offlo" "voff_t offlo" \
 "int flags"
