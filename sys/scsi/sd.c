@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.49 1994/12/14 15:20:15 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.50 1994/12/16 04:38:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -580,9 +580,6 @@ sdioctl(dev, cmd, addr, flag)
 		return EIO;
 
 	switch (cmd) {
-	case DIOCSBAD:
-		return EINVAL;
-
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = sd->sc_dk.dk_label;
 		return 0;
