@@ -38,6 +38,16 @@
 
 #define PTRACE_ARG3_TYPE char*
 
+/* Macros for manipulating pid/lwpid/threadid aggregates in archnbsd-nat.c and
+   nbsd-thread.c */
+#define THREAD_FLAG		0x80000000
+#define IS_THREAD(ARG)		(((ARG) & THREAD_FLAG) != 0)
+#define GET_THREAD(PID)		(((PID) >> 16) & 0x7fff)
+#define GET_LWP(PID)		(((PID) >> 16) & 0x7fff)
+#define GET_PROCESS(PID)	((PID) & 0xffff)
+#define BUILD_THREAD(TID, PID)	((TID) << 16 | (PID) | THREAD_FLAG)
+#define BUILD_LWP(TID, PID)	((TID) << 16 | (PID))
+
 #if !defined(NO_SOLIB)
 #include "solib.h"		/* Support for shared libraries. */
 
