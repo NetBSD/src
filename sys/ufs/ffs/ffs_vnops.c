@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.40 2001/09/22 22:35:19 sommerfeld Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.41 2001/09/26 05:25:03 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -265,23 +265,25 @@ ffs_fsync(v)
 	if (ap->a_offhi % bsize != 0)
 		blk_high++;
 
-	s = splbio();
-
 	/*
 	 * First, flush all pages in range.
 	 */
 
-	simple_lock(&vp->v_uobj.vmobjlock);
-	error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
-	    ap->a_offlo, ap->a_offhi, PGO_CLEANIT|PGO_SYNCIO);
-	if (error) {
-		return error;
+	if (vp->v_uobj.uo_npages != 0) {
+		simple_lock(&vp->v_uobj.vmobjlock);
+		error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
+		    trunc_page(ap->a_offlo), round_page(ap->a_offhi),
+		    PGO_CLEANIT|PGO_SYNCIO);
+		if (error) {
+			return error;
+		}
 	}
 
 	/*
 	 * Then, flush indirect blocks.
 	 */
 
+	s = splbio();
 	if (!(ap->a_flags & FSYNC_DATAONLY) && blk_high >= NDADDR) {
 		error = ufs_getlbns(vp, blk_high, ia, &num);
 		if (error)
@@ -340,7 +342,7 @@ ffs_full_fsync(v)
 	 * Flush all dirty data associated with a vnode.
 	 */
 
-	if (vp->v_type == VREG) {
+	if (vp->v_uobj.uo_npages != 0) {
 		uobj = &vp->v_uobj;
 		simple_lock(&uobj->vmobjlock);
 		error = (uobj->pgops->pgo_put)(uobj, 0, 0,
