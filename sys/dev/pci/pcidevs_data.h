@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.590 2003/11/28 06:00:16 cube Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.591 2003/11/28 20:05:14 chs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.594 2003/11/28 05:59:41 cube Exp 
+ *	NetBSD: pcidevs,v 1.595 2003/11/28 20:04:16 chs Exp 
  */
 
 /*
@@ -8560,6 +8560,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Tamarack TC9021 Gigabit Ethernet (alt ID)",
 	},
 	{
+	    PCI_VENDOR_TANDEM, PCI_PRODUCT_TANDEM_SERVERNETII,
+	    0,
+	    "Tandem Computers",
+	    "ServerNet II VIA adapter",
+	},
+	{
 	    PCI_VENDOR_TEKRAM, PCI_PRODUCT_TEKRAM_DC290,
 	    0,
 	    "Tekram Technology (1st PCI Vendor ID)",
@@ -9100,16 +9106,22 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "CyberBlade",
 	},
 	{
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT343,
+	    0,
+	    "Triones Technologies",
+	    "HPT343/345 IDE Controller",
+	},
+	{
 	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT366,
 	    0,
 	    "Triones Technologies",
-	    "HPT366/370 IDE Controller",
+	    "HPT366/370/372 IDE Controller",
 	},
 	{
-	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT372,
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT372A,
 	    0,
 	    "Triones Technologies",
-	    "HPT372 IDE Controller",
+	    "HPT372A IDE Controller",
 	},
 	{
 	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT302,
@@ -9118,10 +9130,22 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "HPT302 IDE Controller",
 	},
 	{
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT371,
+	    0,
+	    "Triones Technologies",
+	    "HPT371 IDE Controller",
+	},
+	{
 	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT374,
 	    0,
 	    "Triones Technologies",
 	    "HPT374 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT372N,
+	    0,
+	    "Triones Technologies",
+	    "HPT372N IDE Controller",
 	},
 	{
 	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202,
