@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 1996/11/08 14:21:02 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 1996/12/14 13:52:01 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,8 +93,6 @@
 #include <machine/iomap.h>
 #include <machine/bus.h>
 #include <dev/cons.h>
-
-#include <atari/atari/m68k_intr.h>
 
 static void bootsync __P((void));
 static void call_sicallbacks __P((void));
@@ -376,11 +374,6 @@ again:
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/*
-	 * Initialize interrupt mapping.
-	 */
-	m68k_intr_init();
 
 	/*
 	 * Configure the system.
