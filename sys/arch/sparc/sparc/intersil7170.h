@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.h,v 1.1 1994/12/16 22:17:00 deraadt Exp $	*/
+/*	$NetBSD: intersil7170.h,v 1.2 1996/03/31 23:45:28 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -34,7 +34,7 @@
 /*
  * Driver support for the intersil7170 used in sun[34]s to provide
  * real time clock and time-of-day support.
- * 
+ *
  * Derived from: datasheet "ICM7170 a uP-Compatible Real-Time Clock"
  *                          document #301680-005, Dec 85
  */
@@ -58,7 +58,7 @@ struct intersil7170 {
 };
 
 /*  bit assignments for command register, p. 6 of 10, write-only */
-#define INTERSIL_CMD_FREQ_32K    0x0 
+#define INTERSIL_CMD_FREQ_32K    0x0
 #define INTERSIL_CMD_FREQ_1M     0x1
 #define INTERSIL_CMD_FREQ_2M     0x2
 #define INTERSIL_CMD_FREQ_4M     0x3

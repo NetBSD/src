@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.8 1996/03/30 21:13:02 christos Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.9 1996/03/31 23:45:07 pk Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -33,12 +33,12 @@
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
+#include <machine/instr.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
 #include <ddb/db_access.h>
-#include <machine/instr.h>
 
 /*
  * All Sparc instructions are 32-bits, with the one exception being
@@ -46,8 +46,8 @@
  * two instructions...
  *
  * There are 5 different fields that can be used to identify which
- * operation is encoded into a particular 32-bit insn. There are 3 
- * formats for instuctions, which one being used is determined by 
+ * operation is encoded into a particular 32-bit insn. There are 3
+ * formats for instuctions, which one being used is determined by
  * bits 30-31 of the insn. Here are the bit fields and their names:
  *
  * 1100 0000 0000 0000 0000 0000 0000 0000 op field, determines format
@@ -64,14 +64,13 @@
 
 /* various other fields */
 
-#define A(x)		(((x) & 0x1) << 29) 
-#define P(x)		(((x) & 0x1) << 19) 
-#define X(x)		(((x) & 0x1) << 12) 
+#define A(x)		(((x) & 0x1) << 29)
+#define P(x)		(((x) & 0x1) << 19)
+#define X(x)		(((x) & 0x1) << 12)
 #define FCN(x)		(((x) & 0x1f) << 25)
-#define OPF(x)		(((x) & 0x1ff) << 5)
 #define RCOND2(x)	(((x) & 0x7) << 25)
-#define RCOND34(x)	(((x) & 0x7) << 10) 
-#define COND(x)		(((x) & 0xf) << 25) 
+#define RCOND34(x)	(((x) & 0x7) << 10)
+#define COND(x)		(((x) & 0xf) << 25)
 #define SW_TRAP(x)	((x) & 0x7f)
 #define SHCNT32(x)	((x) & 0x1f)
 #define SHCNT64(x)	((x) & 0x3f)
@@ -83,7 +82,7 @@
 
 /* Register Operand Fields */
 #define RS1(x)		(((x) & 0x1f) << 14)
-#define RS2(x)		((x) & 0x1f)        
+#define RS2(x)		((x) & 0x1f)
 #define RD(x)		(((x) & 0x1f) << 25)
 
 /* FORMAT macros used in sparc_i table to decode each opcode */
