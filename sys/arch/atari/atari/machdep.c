@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2001/01/07 20:56:51 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 2001/01/07 20:59:29 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -716,7 +716,7 @@ straymfpint(pc, evec)
 int		pc;
 u_short	evec;
 {
-	printf("unexpected mfp-interrupt (vector offset %x) from %x\n",
+	printf("unexpected mfp-interrupt (vector offset 0x%x) from 0x%x\n",
 	       evec & 0xFFF, pc);
 }
 
