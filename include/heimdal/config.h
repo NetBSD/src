@@ -538,6 +538,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the `pidfile' function. */
 #define HAVE_PIDFILE 1
 
+/* Define to 1 if you have the `poll' function. */
+#define HAVE_POLL 1
+
 /* Define to 1 if you have the <pthread.h> header file. */
 /* #undef HAVE_PTHREAD_H */
 
@@ -867,6 +870,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
+
+/* Define to 1 if you have the <sys/poll.h> header file. */
+#define HAVE_SYS_POLL_H 1
 
 /* Define to 1 if you have the <sys/proc.h> header file. */
 #define HAVE_SYS_PROC_H 1
