@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.132 1998/02/02 22:54:55 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.133 1998/02/02 23:01:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -146,7 +146,7 @@ void	comcnpollc	__P((dev_t, int));
 #ifdef __GENERIC_SOFT_INTERRUPTS
 void 	comsoft		__P((void *));
 #else
-#ifndef alpha
+#ifndef __NO_SOFT_SERIAL_INTERRUPT
 void 	comsoft		__P((void));
 #else
 void 	comsoft		__P((void *));
@@ -180,7 +180,7 @@ static tcflag_t comconscflag;
 static u_char tiocm_xxx2mcr __P((int));
 
 #ifndef __GENERIC_SOFT_INTERRUPTS
-#ifdef alpha
+#ifdef __NO_SOFT_SERIAL_INTERRUPT
 volatile int	com_softintr_scheduled;
 #endif
 #endif
@@ -941,7 +941,7 @@ com_schedrx(sc)
 #ifdef __GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
 #else
-#ifndef alpha
+#ifndef __NO_SOFT_SERIAL_INTERRUPT
 	setsoftserial();
 #else
 	if (!com_softintr_scheduled) {
@@ -1573,7 +1573,7 @@ comsoft(arg)
 	{
 #else
 void
-#ifndef alpha
+#ifndef __NO_SOFT_SERIAL_INTERRUPT
 comsoft()
 #else
 comsoft(arg)
@@ -1583,7 +1583,7 @@ comsoft(arg)
 	struct com_softc	*sc;
 	struct tty	*tp;
 	int	unit;
-#ifdef alpha
+#ifdef __NO_SOFT_SERIAL_INTERRUPT
 	int s;
 
 	s = splsoftserial();
@@ -1621,7 +1621,7 @@ comsoft(arg)
 	}
 
 #ifndef __GENERIC_SOFT_INTERRUPTS
-#ifdef alpha
+#ifdef __NO_SOFT_SERIAL_INTERRUPT
 	splx(s);
 #endif
 #endif
@@ -1792,7 +1792,7 @@ comintr(arg)
 #ifdef __GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
 #else
-#ifndef alpha
+#ifndef __NO_SOFT_SERIAL_INTERRUPT
 	setsoftserial();
 #else
 	if (!com_softintr_scheduled) {

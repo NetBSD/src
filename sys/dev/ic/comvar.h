@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.21 1998/02/02 22:55:00 cgd Exp $	*/
+/*	$NetBSD: comvar.h,v 1.22 1998/02/02 23:01:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -126,7 +126,10 @@ int cominit __P((bus_space_tag_t, int, int, int, tcflag_t,
 	bus_space_handle_t *));
 
 #ifndef __GENERIC_SOFT_INTERRUPTS
-#ifdef alpha
+#if defined(alpha) || defined(arm32)
+#define	__NO_SOFT_SERIAL_INTERRUPT
+#endif
+#ifdef __NO_SOFT_SERIAL_INTERRUPT
 #define	IPL_SERIAL	IPL_TTY
 #define	splserial()	spltty()
 #define	IPL_SOFTSERIAL	IPL_TTY
