@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.7 2001/09/08 01:34:42 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.8 2001/12/26 02:11:22 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,40 +48,45 @@ system bootstrapping procedures
 .\" .Ar -- <boot string>
 .\" .Oc
 .Sh DESCRIPTION
-.Sy Power fail and crash recovery
+.Ss Power fail and crash recovery
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed
 as described in
 .Xr fsck 8 .
 and unless this fails, the system will resume multi-user operations.
-.Pp
-.Sy Cold starts
-A disk-boot program (/usr/mdec/ufsboot) will attempt to load
+.Ss Cold starts
+A disk-boot program
+.Pa ( /usr/mdec/ufsboot )
+will attempt to load
 .Pa netbsd
 from partition A of the boot device,
-which must currently be an ``sd'' disk.
-Alternatively, network boot program (/usr/mdec/netboot) will load
+which must currently be an
+.Dq sd
+disk.
+Alternatively, network boot program
+.Pa ( /usr/mdec/netboot )
+will load
 .Pa netbsd
 from the NFS root as determined by the procedure described in
 .Xr diskless 8 .
 .Pp
 The
-.Op Fl s
+.Fl s
 flag to the boot loader will bring the system up in single-user mode.
 The
-.Op Fl a
+.Fl a
 flag instructs the system to prompt for the location of the root filesystem
 and the primary swap partition.
 The
-.Op Fl d
+.Fl d
 flag to the boot loader will bring the system up in debug mode.
 Here it waits for a kernel debugger connect; see
 .Xr ddb 4 .
 The
-.Op Fl q
+.Fl q
 flag to the boot loader would boot the system in
 quiet mode,
-.Op Fl v
+.Fl v
 in verbose mode.
 Any extra flags or arguments, the after the -- separator,
 .Ar <boot string>
@@ -93,7 +98,6 @@ keys at the same time (if the console is a serial port the same is
 achieved by sending a `break').
 If you do this accidentally you can continue whatever was in progress
 by typing `c' followed by the return key.
-.Pp
 .Sh FILES
 .Bl -tag -width /usr/mdec/installboot -compact
 .It Pa /netbsd
