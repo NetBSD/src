@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.6 2002/12/04 22:55:11 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.7 2002/12/05 22:48:53 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -51,6 +51,9 @@
 #define MACH_QUERY_IS_SYSTEM_REGION	4
 #define MACH_SF_PREV_LOADED		1
 #define MACH_SYSTEM_REGION_BACKED	2
+
+#define MACH_VM_PROT_COW	0x8
+#define MACH_VM_PROT_ZF		0x10
 
 typedef struct mach_sf_mapping {
 	mach_vm_offset_t mapping_offset;
