@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.58.2.2 1999/12/20 15:48:26 he Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.58.2.3 2000/04/30 10:34:33 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -419,6 +419,8 @@ sendit:
 		m->m_data += max_linkhdr;
 		mhip = mtod(m, struct ip *);
 		*mhip = *ip;
+		/* we must inherit MCAST and BCAST flags */
+		m->m_flags |= m0->m_flags & (M_MCAST|M_BCAST);
 		if (hlen > sizeof (struct ip)) {
 			mhlen = ip_optcopy(ip, mhip) + sizeof (struct ip);
 			mhip->ip_hl = mhlen >> 2;
