@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.14 2001/04/06 02:52:53 he Exp $
+.\"	$NetBSD: main,v 1.61.2.15 2001/04/06 03:10:54 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -168,7 +168,7 @@ Trying to use the
 .Em will
 in all probability result in problems.
 .Pp
-Please also ntoe that it is not possible to do a direct ``version''
+Please also note that it is not possible to do a direct ``version''
 comparison between any of the intermediate development versions mentioned
 above and 1.5.1 to determine if a given feature is present or absent
 in 1.5.1.  The development of 1.5 and the subsequent ``point'' releases
@@ -242,7 +242,7 @@ has been updated to deal with a security issue (SA2000-017).
 A vulnerability on i386 related to USER_LDT has been fixed (SA2001-002).
 .It
 The Linux emulation has been enhanced to prepare for the support
-of using the Linux version ov VMware.
+of using the Linux version of VMware.
 .It
 IP checksumming speed has been improved on i386 compared to 1.5.
 .It
