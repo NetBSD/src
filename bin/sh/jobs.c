@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.36 2000/05/22 10:18:47 elric Exp $	*/
+/*	$NetBSD: jobs.c,v 1.37 2001/06/13 08:48:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.36 2000/05/22 10:18:47 elric Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.37 2001/06/13 08:48:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -552,7 +552,7 @@ makejob(node, nprocs)
 
 
 /*
- * Fork of a subshell.  If we are doing job control, give the subshell its
+ * Fork off a subshell.  If we are doing job control, give the subshell its
  * own process group.  Jp is a job structure that the job is to be added to.
  * N is the command that will be evaluated by the child.  Both jp and n may
  * be NULL.  The mode parameter can be one of the following:
