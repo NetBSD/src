@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.10 1999/03/31 00:44:48 fvdl Exp $ */
+/*	$NetBSD: mbr.c,v 1.11 1999/04/01 11:33:02 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -273,6 +273,9 @@ edit_mbr(partition)
 				process_menu(MENU_yesno);
 			}
 		} while (yesno && (numbsd != 1 || overlap));
+
+		if (activepart != -1)
+			part[activepart].mbrp_flag = 0x80;
 
 		if (numbsd == 0) {
 			msg_display(MSG_nobsdpart);
