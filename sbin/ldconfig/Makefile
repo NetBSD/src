@@ -1,8 +1,9 @@
-#	$Id: Makefile,v 1.1 1993/10/23 00:16:57 pk Exp $
+#	$Id: Makefile,v 1.2 1993/11/03 05:20:49 cgd Exp $
 
 PROG=	ldconfig
 SRCS=	ldconfig.c shlib.c etc.c
 LDDIR?= $(.CURDIR)/..
+LDFLAGS += -static
 CFLAGS += -I$(LDDIR) -I$(.CURDIR) -I$(LDDIR)/$(MACHINE) -O
 BINDIR= ${DESTDIR}/sbin
 MAN8 = ldconfig.0
