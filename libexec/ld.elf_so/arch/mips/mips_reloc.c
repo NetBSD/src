@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.11 2002/09/05 21:31:33 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.12 2002/09/06 03:05:36 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -38,6 +38,7 @@
 /*
  * _rtld_bind_mips(symbol_index, return_address, old_gp, stub_return_addr)
  */
+caddr_t _rtld_bind_mips(Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr);
 
 caddr_t
 _rtld_bind_mips(a0, a1, a2, a3)
@@ -61,7 +62,7 @@ _rtld_bind_mips(a0, a1, a2, a3)
 
 void
 _rtld_setup_pltgot(obj)
-	Obj_Entry *obj;
+	const Obj_Entry *obj;
 {
 	Elf_Addr *got = obj->pltgot;
 	const Elf_Sym *sym = obj->symtab;
@@ -218,11 +219,10 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 }
 
 int
-_rtld_relocate_plt_objects(obj, rela, addrp, bind_now, dodebug)
+_rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 	Obj_Entry *obj;
 	const Elf_Rela *rela;
 	caddr_t *addrp;
-	bool bind_now;
 	bool dodebug;
 {
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
@@ -238,17 +238,31 @@ _rtld_relocate_plt_objects(obj, rela, addrp, bind_now, dodebug)
 	} else {
 		return 0;
 	}
-	/*
-         * Since this page is probably copy-on-write, let's not write
-         * it unless we really really have to.
-         */
 	if (*where != new_value)
 		*where = new_value;
-	if (addrp != NULL) {
-		*addrp = *(caddr_t *)(obj->relocbase + rela->r_offset);
-#if defined(__vax__)
-		*addrp -= rela->r_addend;
-#endif
+
+	*addrp = (caddr_t)new_value;
+	return 0;
+}
+
+int
+_rtld_relocate_plt_lazy(obj, dodebug)
+	Obj_Entry *obj;
+	bool dodebug;
+{
+	const Elf_Rel *rel;
+
+	if (obj->mainprog)
+		return 0;
+
+	for (rel = obj->pltrel; rel < obj->pltrellim; rel++) {
+		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
+
+		/* Just relocate the GOT slots pointing into the PLT */
+		*where += (Elf_Addr)obj->relocbase;
+		rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
+		    (void *)*where));
 	}
+
 	return 0;
 }

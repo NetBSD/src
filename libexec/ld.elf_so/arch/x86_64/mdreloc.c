@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.11 2002/09/05 21:31:36 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.12 2002/09/06 03:05:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,56 +80,6 @@
 
 #include "debug.h"
 #include "rtld.h"
-
-extern Elf64_Addr _GLOBAL_OFFSET_TABLE_[];
-
-int
-_rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
-			  bool bind_now, bool dodebug)
-{
-	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-	Elf_Addr new_value;
-
-	/* Fully resolve procedure addresses now */
-
-	if (bind_now || obj->pltgot == NULL) {
-		const Elf_Sym  *def;
-		const Obj_Entry *defobj;
-
-		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT));
-
-		def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj,
-		    true);
-		if (def == NULL)
-			return -1;
-
-		new_value = (Elf_Addr)
-		    (defobj->relocbase + def->st_value + rela->r_addend);
-		rdbg(dodebug, ("bind now %d/fixup in %s --> old=%p new=%p",
-		    (int)bind_now,
-		    defobj->strtab + def->st_name,
-		    (void *)*where, (void *)new_value));
-	} else {
-		if (!obj->mainprog) {
-			/* Just relocate the GOT slots pointing into the PLT */
-			new_value = *where + (Elf_Addr) obj->relocbase;
-			rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
-			    (void *)(unsigned long)*where));
-		} else {
-			return 0;
-		}
-	}
-	/*
-         * Since this page is probably copy-on-write, let's not write
-         * it unless we really really have to.
-         */
-	if (*where != new_value)
-		*where = new_value;
-	if (addrp != NULL)
-		*addrp = *(caddr_t *)(obj->relocbase + rela->r_offset) -
-		    rela->r_addend;
-	return 0;
-}
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
@@ -242,5 +192,58 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj, bool dodebug)
 			return -1;
 		}
 	}
+	return 0;
+}
+
+int
+_rtld_relocate_plt_lazy(obj, dodebug)
+	Obj_Entry *obj;
+	bool dodebug;
+{
+	const Elf_Rela *rela;
+
+	if (obj->mainprog)
+		return 0;
+
+	for (rela = obj->pltrela; rela < obj->pltrelalim; rela++) {
+		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+
+		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT));
+
+		/* Just relocate the GOT slots pointing into the PLT */
+		*where += (Elf_Addr)obj->relocbase;
+		rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
+		    (void *)*where));
+	}
+
+	return 0;
+}
+
+int
+_rtld_relocate_plt_object(obj, rela, addrp, dodebug)
+	Obj_Entry *obj;
+	const Elf_Rela *rela;
+	caddr_t *addrp;
+	bool dodebug;
+{
+	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+	Elf_Addr new_value;
+	const Elf_Sym  *def;
+	const Obj_Entry *defobj;
+
+	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT));
+
+	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
+	if (def == NULL)
+		return -1;
+
+	new_value = (Elf_Addr)(defobj->relocbase + def->st_value +
+	    rela->r_addend);
+	rdbg(dodebug, ("bind now/fixup in %s --> old=%p new=%p",
+	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
+	if (*where != new_value)
+		*where = new_value;
+
+	*addrp = (caddr_t)(new_value - rela->r_addend);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.61 2002/09/05 21:21:06 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.62 2002/09/06 03:05:35 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -146,74 +146,6 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 	return (0);
 }
 
-
-#if !defined(__sparc__) && !defined(__x86_64__) && !defined(__mips__)
-
-#if !defined(__powerpc__) && !defined(__hppa__)
-
-int
-_rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
-	Obj_Entry *obj;
-	const Elf_Rela *rela;
-	caddr_t *addrp;
-	bool bind_now;
-	bool dodebug;
-{
-	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-	Elf_Addr new_value;
-
-	/* Fully resolve procedure addresses now */
-
-	if (bind_now || obj->pltgot == NULL) {
-		const Elf_Sym  *def;
-		const Obj_Entry *defobj;
-
-#if !defined(__arm__)
-		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
-#else
-		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT));
-#endif
-
-		def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj,
-		    true);
-		if (def == NULL)
-			return -1;
-
-		new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
-#if defined(__sh__) || defined(__vax__)
-		new_value += rela->r_addend;
-#endif
-		rdbg(dodebug, ("bind now %d/fixup in %s --> old=%p new=%p",
-		    (int)bind_now,
-		    defobj->strtab + def->st_name,
-		    (void *)*where, (void *)new_value));
-	} else if (!obj->mainprog) {
-		/* Just relocate the GOT slots pointing into the PLT */
-		new_value = *where + (Elf_Addr)(obj->relocbase);
-		rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
-		    (void *)*where));
-	} else {
-		return 0;
-	}
-	/*
-         * Since this page is probably copy-on-write, let's not write
-         * it unless we really really have to.
-         */
-	if (*where != new_value)
-		*where = new_value;
-	if (addrp != NULL) {
-		*addrp = *(caddr_t *)(obj->relocbase + rela->r_offset);
-#if defined(__vax__)
-		*addrp -= rela->r_addend;
-#endif
-	}
-	return 0;
-}
-
-#endif /* __powerpc__  || __hppa__ */
-
-#endif /* __sparc__ || __x86_64__ || __mips__ */
-
 caddr_t
 _rtld_bind(obj, reloff)
 	Obj_Entry *obj;
@@ -258,7 +190,7 @@ _rtld_bind(obj, reloff)
 #endif
 	}
 
-	if (_rtld_relocate_plt_object(obj, rela, &addr, true, true) < 0)
+	if (_rtld_relocate_plt_object(obj, rela, &addr, true) < 0)
 		_rtld_die();
 
 	return addr;
@@ -317,55 +249,13 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 				return -1;
 			}
 		}
-		/* Process the PLT relocations. */
-		if (obj->pltrel != NULL) {
-			const Elf_Rel  *rel;
-			for (rel = obj->pltrel; rel < obj->pltrellim; ++rel) {
-				Elf_Rela        ourrela;
-				ourrela.r_info = rel->r_info;
-				ourrela.r_offset = rel->r_offset;
-				ourrela.r_addend =
-				    *(Elf_Word *)(obj->relocbase +
-				    rel->r_offset);
-				if (_rtld_relocate_plt_object(obj, &ourrela,
-				    NULL, bind_now, dodebug) < 0)
-					ok = 0;
-			}
-		}
-		if (obj->pltrela != NULL) {
-			const Elf_Rela *rela;
-			for (rela = obj->pltrela; rela < obj->pltrelalim;
-			    ++rela) {
-#ifdef __sparc64__
-				if (ELF_R_TYPE(rela->r_info) !=
-					R_TYPE(JMP_SLOT)) {
-					/*
-					 * XXXX
-					 *
-					 * The first four PLT entries are
-					 * reserved.  There is some
-					 * disagreement whether they should
-					 * have associated relocation
-					 * entries.  Both the SPARC 32-bit
-					 * and 64-bit ELF specifications say
-					 * that they should have relocation
-					 * entries, but the 32-bit SPARC
-					 * binutils do not generate them,
-					 * and now the 64-bit SPARC binutils
-					 * have stopped generating them too.
-					 *
-					 * To provide binary compatibility, we
-					 * will skip any entries that are not
-					 * of type JMP_SLOT.  
-					 */
-					continue;
-				}
+		if (_rtld_relocate_plt_lazy(obj, dodebug) < 0)
+			ok = 0;
+#if 0
+		if (bind_now)
+			if (_rtld_relocate_plt_object(obj, dodebug) < 0)
+				ok = 0;
 #endif
-				if (_rtld_relocate_plt_object(obj, rela,
-				    NULL, bind_now, dodebug) < 0)
-					ok = 0;
-			}
-		}
 		if (!ok)
 			return -1;
 
