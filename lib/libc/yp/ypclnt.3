@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypclnt.3,v 1.14.2.3 2002/03/22 20:42:47 nathanw Exp $
+.\"	$NetBSD: ypclnt.3,v 1.14.2.4 2002/09/17 21:32:55 nathanw Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -239,7 +239,7 @@ returns YPERR_NOMORE, are that all key-value pairs in that map will be accessed
 exactly once, and if the entire procedure is repeated, the order will be
 the same.
 .Pp
-If the server is heaviliy loaded or the server fails for some reason, the
+If the server is heavily loaded or the server fails for some reason, the
 domain being used may become unbound.  If this happens, and the client process
 re-binds, the retrieval rules will break: some entries may be seen twice, and
 others not at all.  For this reason, the function

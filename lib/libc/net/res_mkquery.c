@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.21.2.1 2002/08/01 03:28:15 nathanw Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.21.2.2 2002/09/17 21:32:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.21.2.1 2002/08/01 03:28:15 nathanw Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.21.2.2 2002/09/17 21:32:50 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -230,7 +230,9 @@ res_opt(n0, buf, buflen, anslen)
 
 	__putshort(T_OPT, cp);	/* TYPE */
 	cp += INT16SZ;
-	__putshort(anslen & 0xffff, cp);	/* CLASS = UDP payload size */
+	if (anslen > 0xffff)
+		anslen = 0xffff;		/* limit to 16bit value */
+	__putshort(anslen, cp);	/* CLASS = UDP payload size */
 	cp += INT16SZ;
 	*cp++ = NOERROR;	/* extended RCODE */
 	*cp++ = 0;		/* EDNS version */
