@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.30 1996/09/07 14:30:56 mycroft Exp $	*/
+/*	$NetBSD: unistd.h,v 1.31 1996/09/07 17:48:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -103,7 +103,6 @@ ssize_t	 write __P((int, const void *, size_t));
 
 /* structure timeval required for select() */
 #include <sys/time.h>
-struct pollfd;
 
 int	 acct __P((const char *));
 char	*brk __P((const char *));
@@ -134,7 +133,6 @@ int	 mkstemp __P((char *));
 char	*mktemp __P((char *));
 int	 nfssvc __P((int, void *));
 int	 nice __P((int));
-int	 poll __P((struct pollfd *, u_int, int));
 void	 psignal __P((unsigned int, const char *));
 extern __const char *__const sys_siglist[];
 int	 profil __P((char *, size_t, u_long, u_int));
