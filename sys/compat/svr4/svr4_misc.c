@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.40 1996/09/25 04:37:13 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.41 1996/10/07 16:16:14 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -332,6 +332,9 @@ svr4_sys_mmap(p, v, retval)
          */
 	if (SCARG(uap, prot) & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
 		return EINVAL;	/* XXX still needed? */
+
+	if (SCARG(uap, len) == 0)
+		return EINVAL;
 
 	SCARG(&mm, prot) = SCARG(uap, prot);
 	SCARG(&mm, len) = SCARG(uap, len);
