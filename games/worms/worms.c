@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.7 1995/04/22 08:08:05 cgd Exp $	*/
+/*	$NetBSD: worms.c,v 1.8 1995/04/22 08:09:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: worms.c,v 1.7 1995/04/22 08:08:05 cgd Exp $";
+static char rcsid[] = "$NetBSD: worms.c,v 1.8 1995/04/22 08:09:22 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,10 +65,12 @@ static char rcsid[] = "$NetBSD: worms.c,v 1.7 1995/04/22 08:08:05 cgd Exp $";
  *
  */
 #include <sys/types.h>
+#include <sys/ioctl.h>
 
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <termios.h>
 #include <unistd.h>
 
 static struct options {
@@ -204,6 +206,10 @@ main(argc, argv)
 	char *AL, *BC, *CM, *EI, *HO, *IC, *IM, *IP, *SR;
 	char *field, tcb[100], *mp;
 	long random();
+	struct termios ti;
+#ifdef TIOCGWINSZ
+	struct winsize ws;
+#endif
 
 	length = 16;
 	number = 3;
