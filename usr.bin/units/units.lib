@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.8 2001/10/16 12:09:04 bjh21 Exp $
+/	$NetBSD: units.lib,v 1.9 2001/10/16 12:53:29 bjh21 Exp $
 
 / primitive units
 
@@ -232,9 +232,7 @@ lux			cd sr/m2
 $			dollar
 argentinapeso		$
 australiadollar		.66 $
-austriaschilling	.83 $
 bahraindinar		2.6522 $
-belgiumfranc		.028 $
 brazilcruzeiro		.000019 $
 britainpound		1.49 $
 canadadollar		.77 $
@@ -245,18 +243,12 @@ colombiapeso		.001495 $
 denmarkkrone		.15 $
 ecuadorsucre		.000539 $
 europeeuro		0.9142 $
-finlandmarkka		.17 $
-francefranc		.17 $
-germanymark		.58 $
 greatbritainpound	britainpound
-greecedrachma		.0043 $
 hongkongdollar		.13  $
 hungaryforint		.011 $
 indiarupee		.03211 $
 indonesiarupiah		.0004782 $
-irelandpunt		1.43 $
 israelshekel		.3642 $
-italylira		.00064 $
 japanyen		.0093 $
 jordandinar		1.4682 $
 kuwaitdinar		3.3173 $
@@ -264,20 +256,17 @@ lebanonpound		.000578 $
 malaysiaringgit		.338 $
 maltalira		2.6042 $
 mexicopeso		.3205128 $
-netherlandsguilder	.52 $
 newzealanddollar	.539 $
 norwaykrone		.139 $
 pakistanrupee		.037 $
 perunewsol		.5065 $
 philippinespeso		.03738 $
 polandzloty		.000059 $
-portugalescudo		.00617 $
 saudiarabiariyal	.26702 $
 singaporedollar		.6157 $
 slovakkoruna		.034 $
 southamericarand	.21 $
 southkoreawon		.001 $
-spainpeseta		.007 $
 swedenkrona		.13 $
 switzerlandfranc	.66 $
 taiwandollar		.038285 $
@@ -286,6 +275,21 @@ turkeylira		.0000929 $
 unitedarabdirham	.2723 $
 uruguaynewpeso		.246852 $
 venezuelabolivar	.011 $
+
+/ The following currencies are locked to the Euro:
+/ <URL:http://www.ecb.int/change/conversion.htm>
+belgiumfranc		1|40.3399 euro
+germanymark		1|1.95583 euro
+spainpeseta		1|166.386 euro
+francefranc		1|6.55957 euro
+irelandpunt		1|.787564 euro
+italylira		1|1936.27 euro
+luxembourgfranc		1|40.3399 euro
+netherlandsguilder	1|2.20371 euro
+austriaschilling	1|13.7603 euro
+portugalescudo		1|200.482 euro
+finlandmarkka		1|5.94573 euro
+greecedrachma		1|340.750 euro
 
 mark			germanymark
 euro			europeeuro
