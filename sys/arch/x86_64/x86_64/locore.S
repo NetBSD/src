@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1.14.1 2002/05/30 15:37:02 gehenna Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.14.2 2002/07/15 01:41:09 gehenna Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -546,7 +546,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	 * 1. Enable PAE (and SSE while here).
 	 */
 	movl	%cr4,%eax
-	orl	$(CR4_PAE|CR4_OSFXSR),%eax
+	orl	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT),%eax
 	movl	%eax,%cr4
 
 	/*
@@ -646,17 +646,13 @@ longmode_hi:
 	movq	%rsi,PCB_CR3(%rax)	# pcb->pcb_cr3
 	xorq	%rbp,%rbp               # mark end of frames
 
+	xorw	%ax,%ax
+	movw	%ax,%gs
+	movw	%ax,%fs
+
+	/* XXX merge these */
 	movq	$VM_MIN_KERNEL_ADDRESS,%rdi
 	call	_C_LABEL(init_x86_64)
-
-	/* Clear segment registers; always null in proc0. */
-	xorq	%rax,%rax
-	movq	$MSR_FSBASE,%rcx
-	wrmsr
-	movq	$MSR_GSBASE,%rcx
-	wrmsr
-	movq	$MSR_KERNELGSBASE,%rcx
-	wrmsr
 
 	call 	_C_LABEL(main)
 
@@ -680,9 +676,9 @@ NENTRY(sigcode)
 	movq	%rax,%rdi
 	pushq	%rax
 	movq	$SYS___sigreturn14,%rax
-	int	$0x80
+	syscall
 	movq	$SYS_exit,%rax
-	int     $0x80
+	syscall
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
 
@@ -1122,10 +1118,11 @@ ENTRY(switch_exit)
 
 	/* We're always in the kernel, so we don't need the LDT. */
 
-	/* Clear segment registers; always null in proc0. */
-	xorl	%ecx,%ecx
+#if 0
+	movl	$GSEL(GUDATA_SEL,SEL_KPL),%ecx
 	movl	%ecx,%fs
 	movl	%ecx,%gs
+#endif
 
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%rsi),%ecx

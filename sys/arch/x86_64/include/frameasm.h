@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.1.14.1 2002/05/30 15:36:51 gehenna Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.1.14.2 2002/07/15 01:41:08 gehenna Exp $	*/
 
 #ifndef _X86_64_MACHINE_FRAMEASM_H
 #define _X86_64_MACHINE_FRAMEASM_H
@@ -11,8 +11,8 @@
 /*
  * These are used on interrupt or trap entry or exit.
  */
-#define	INTRENTRY \
-	pushq	%rax		; \
+#define INTR_SAVEARGS \
+ 	pushq	%rax		; \
 	pushq	%rcx		; \
 	pushq	%rdx		; \
 	pushq	%rbx		; \
@@ -45,11 +45,18 @@
 	popq	%rcx		; \
 	popq	%rax
 
-#define INTRFASTEXIT \
-	INTR_RESTOREARGS ; \
-	addq	$16,%rsp	; \
-	iretq
+#define	INTRENTRY \
+	testq	$SEL_UPL,24(%rsp)	; \
+	je	98f			; \
+	swapgs				; \
+98:	INTR_SAVEARGS
 
-#define CPUPRIV(off) (cpu_private+CPRIV_/**/off)(%rip)
+#define INTRFASTEXIT \
+	INTR_RESTOREARGS 		; \
+	addq	$16,%rsp		; \
+	testq	$SEL_UPL,8(%rsp)	;\
+	je	99f			;\
+	swapgs				;\
+99:	iretq
 
 #endif /* _X86_64_MACHINE_FRAMEASM_H */
