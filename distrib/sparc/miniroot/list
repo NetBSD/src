@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 1996/05/30 07:00:45 leo Exp $
+#	$NetBSD: list,v 1.6 1996/06/26 19:26:39 pk Exp $
 
 # Sparc extra's
 LINK	instbin			sbin/disklabel
@@ -8,6 +8,7 @@ SYMLINK	../../instbin		usr/bin/basename
 SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
 SYMLINK ../../instbin		usr/bin/cut
 SYMLINK ../../instbin		usr/bin/gawk usr/bin/awk
+SYMLINK ../../instbin		usr/bin/getopt
 SYMLINK ../../instbin		usr/bin/grep usr/bin/egrep usr/bin/fgrep
 SYMLINK ../../instbin		usr/bin/netstat
 SYMLINK ../../instbin		usr/bin/rsh
@@ -15,10 +16,13 @@ SYMLINK ../../instbin		usr/bin/strings
 SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
 SYMLINK ../../instbin		usr/bin/vi
 SYMLINK	../../instbin		usr/bin/less usr/bin/more
+SYMLINK	../../instbin		usr/sbin/installboot
+SYMLINK	../../instbin		usr/sbin/sysctl
 
 # crunchgen source directory specials
 CRUNCHSPECIAL	vi srcdir usr.bin/vi/build
-CRUNCHSPECIAL	less srcdir /usr/src/usr.bin/less/less
+CRUNCHSPECIAL	less srcdir usr.bin/less/less
+CRUNCHSPECIAL	installboot srcdir sys/arch/sparc/stand/installboot
 
 
 # Minimize use of MFS
