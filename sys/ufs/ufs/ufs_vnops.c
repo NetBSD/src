@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.38 1998/03/18 15:57:29 bouyer Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.39 1998/05/08 18:31:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1541,7 +1541,7 @@ ufs_readdir(v)
 		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
 			panic("ufs_readdir: lost in space");
 		dpstart = (struct dirent *)
-		     (uio->uio_iov->iov_base - (uio->uio_offset - off));
+		    ((caddr_t)uio->uio_iov->iov_base - (uio->uio_offset - off));
 		offstart = off;
 		for (dp = dpstart, ncookies = 0; off < uio->uio_offset; ) {
 			if (dp->d_reclen == 0)
