@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.10 2000/07/13 06:15:03 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.11 2000/07/13 06:29:43 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.10 2000/07/13 06:15:03 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.11 2000/07/13 06:29:43 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: makewhatis.c,v 1.10 2000/07/13 06:15:03 tron Exp $");
 #include <fts.h>
 #include <locale.h>
 #include <paths.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -527,7 +528,9 @@ nroff(gzFile *in)
 		if (errno == 0)
 			errno = ENOMEM;
 		perror(__progname);
-		(void)close(pipefd[0]); /* Child will be killed by SIGPIPE. */
+		(void)close(pipefd[0]);
+		(void)kill(child, SIGTERM);
+		while (waitpid(child, NULL, 0) != child);
 		(void)unlink(tempname);
 		return NULL;
 	}
