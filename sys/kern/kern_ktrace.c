@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.67 2003/01/18 10:06:27 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.68 2003/02/23 14:37:34 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.67 2003/01/18 10:06:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.68 2003/02/23 14:37:34 pk Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -93,6 +93,7 @@ ktrderef(p)
 	p->p_traceflag = 0;
 	if (fp == NULL)
 		return;
+	simple_lock(&fp->f_slock);
 	FILE_USE(fp);
 
 	/*
@@ -692,6 +693,7 @@ ktrwrite(p, kth)
 		auio.uio_resid += kth->ktr_len;
 	}
 
+	simple_lock(&fp->f_slock);
 	FILE_USE(fp);
 
 	tries = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.56 2002/11/25 08:32:00 itojun Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.57 2003/02/23 14:37:34 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.56 2002/11/25 08:32:00 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.57 2003/02/23 14:37:34 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -973,11 +973,15 @@ unp_internalize(control, p)
 	rp = ((struct file **)CMSG_DATA(cm)) + nfds - 1;
 	for (i = 0; i < nfds; i++) {
 		fp = fdescp->fd_ofiles[*fdp--];
-		FILE_USE(fp);
+		simple_lock(&fp->f_slock);
+#ifdef DIAGNOSTIC
+		if (fp->f_iflags & FIF_WANTCLOSE)
+			panic("unp_internalize: file already closed");
+#endif
 		*rp-- = fp;
 		fp->f_count++;
 		fp->f_msgcount++;
-		FILE_UNUSE(fp, NULL);
+		simple_unlock(&fp->f_slock);
 		unp_rights++;
 	}
 	return (0);
@@ -1150,7 +1154,7 @@ unp_gc()
 	 * that are not otherwise accessible and then free the rights
 	 * that are stored in messages on them.
 	 *
-	 * The bug in the orginal code is a little tricky, so I'll describe
+	 * The bug in the original code is a little tricky, so I'll describe
 	 * what's wrong with it here.
 	 *
 	 * It is incorrect to simply unp_discard each entry for f_msgcount
@@ -1189,16 +1193,18 @@ unp_gc()
 	for (nunref = 0, fp = LIST_FIRST(&filehead), fpp = extra_ref; fp != 0;
 	    fp = nextfp) {
 		nextfp = LIST_NEXT(fp, f_list);
-		if (fp->f_count == 0)
-			continue;
-		if (fp->f_count == fp->f_msgcount && !(fp->f_flag & FMARK)) {
+		simple_lock(&fp->f_slock);
+		if (fp->f_count != 0 &&
+		    fp->f_count == fp->f_msgcount && !(fp->f_flag & FMARK)) {
 			*fpp++ = fp;
 			nunref++;
 			fp->f_count++;
 		}
+		simple_unlock(&fp->f_slock);
 	}
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
 		fp = *fpp;
+		simple_lock(&fp->f_slock);
 		FILE_USE(fp);
 		if (fp->f_type == DTYPE_SOCKET)
 			sorflush((struct socket *)fp->f_data);
@@ -1206,6 +1212,7 @@ unp_gc()
 	}
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
 		fp = *fpp;
+		simple_lock(&fp->f_slock);
 		FILE_USE(fp);
 		(void) closef(fp, (struct proc *)0);
 	}
@@ -1296,8 +1303,10 @@ unp_discard(fp)
 {
 	if (fp == NULL)
 		return;
-	FILE_USE(fp);
+	simple_lock(&fp->f_slock);
+	fp->f_usecount++;	/* i.e. FILE_USE(fp) sans locking */
 	fp->f_msgcount--;
+	simple_unlock(&fp->f_slock);
 	unp_rights--;
 	(void) closef(fp, (struct proc *)0);
 }
