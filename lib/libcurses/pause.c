@@ -1,4 +1,4 @@
-/*	$NetBSD: pause.c,v 1.3 2000/12/22 17:07:13 jdc Exp $	*/
+/*	$NetBSD: pause.c,v 1.4 2001/01/07 13:56:42 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pause.c,v 1.3 2000/12/22 17:07:13 jdc Exp $");
+__RCSID("$NetBSD: pause.c,v 1.4 2001/01/07 13:56:42 jdc Exp $");
 #endif				/* not lint */
 
 #include <stdarg.h>
@@ -83,5 +83,6 @@ delay_output(int ms)
 	if (asprintf(&delstr, "%d", ms) == -1)
 		return (ERR);
 	tputs (delstr, 0, __cputchar);
+	free(delstr);
 	return (OK);
 }
