@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.2 2000/05/08 02:44:32 mycroft Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.3 2000/05/08 03:09:56 mycroft Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -48,6 +48,7 @@
 
 #include <dev/ic/am7930reg.h>
 #include <dev/ic/am7930var.h>
+#include <sparc/dev/audioamdvar.h>
 
 #define AUDIO_ROM_NAME "audio"
 
@@ -77,20 +78,6 @@ int	am7930hwintr __P((void *));
 struct auio *auiop;
 #endif /* AUDIO_C_HANDLER */
 int	am7930swintr __P((void *));
-
-/*
- * pdma state
- */
-struct auio {
-	bus_space_tag_t		au_bt;	/* bus tag */
-	bus_space_handle_t	au_bh;	/* handle to chip registers */
-
-	u_int8_t	*au_rdata;	/* record data */
-	u_int8_t	*au_rend;	/* end of record data */
-	u_int8_t	*au_pdata;	/* play data */
-	u_int8_t	*au_pend;	/* end of play data */
-	struct  evcnt	au_intrcnt;	/* statistics */
-};
 
 /*
  * interrupt-handler status 
