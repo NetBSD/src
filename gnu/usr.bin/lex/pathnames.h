@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.1 (Berkeley) 6/18/90
- *	$Id: pathnames.h,v 1.2 1993/08/01 18:46:49 mycroft Exp $
+ *	pathnames.h,v 1.2 1993/08/01 18:46:49 mycroft Exp
  */
 
 #define	_PATH_SKELETONFILE	"/usr/share/misc/lex.skel"
