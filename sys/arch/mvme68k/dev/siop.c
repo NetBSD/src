@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.1 1999/02/20 00:12:00 scw Exp $ */
+/*	$NetBSD: siop.c,v 1.1.2.1 1999/04/13 20:24:09 scw Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -618,14 +618,18 @@ siopreset(sc)
 	 */
 	rp->siop_istat |= SIOP_ISTAT_ABRT;	/* abort current script */
 	rp->siop_istat |= SIOP_ISTAT_RST;		/* reset chip */
+	delay(1);
 	rp->siop_istat &= ~SIOP_ISTAT_RST;
+	delay(100);
+
 	/*
 	 * Reset SCSI bus (do we really want this?)
 	 */
 	rp->siop_sien = 0;
 	rp->siop_scntl1 |= SIOP_SCNTL1_RST;
-	delay(1);
+	delay(10);
 	rp->siop_scntl1 &= ~SIOP_SCNTL1_RST;
+	delay(5000);
 
 	/*
 	 * Set up various chip parameters
