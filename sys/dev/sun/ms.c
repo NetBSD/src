@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.21 2001/11/13 06:54:32 lukem Exp $	*/
+/*	$NetBSD: ms.c,v 1.21.8.1 2002/05/16 11:34:24 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.21 2001/11/13 06:54:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.21.8.1 2002/05/16 11:34:24 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,18 @@ __KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.21 2001/11/13 06:54:32 lukem Exp $");
 
 #include "locators.h"
 
-cdev_decl(ms);	/* open, close, read, write, ioctl, stop, ... */
-
 extern struct cfdriver ms_cd;
+
+dev_type_open(msopen);
+dev_type_close(msclose);
+dev_type_read(msread);
+dev_type_ioctl(msioctl);
+dev_type_poll(mspoll);
+
+const struct cdevsw ms_cdevsw = {
+	msopen, msclose, msread, nowrite, msioctl,
+	nostop, notty, mspoll, nommap,
+};
 
 /****************************************************************
  *  Entry points for /dev/mouse
@@ -155,17 +164,6 @@ msread(dev, uio, flags)
 
 	ms = ms_cd.cd_devs[minor(dev)];
 	return (ev_read(&ms->ms_events, uio, flags));
-}
-
-/* this routine should not exist, but is convenient to write here for now */
-int
-mswrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-
-	return (EOPNOTSUPP);
 }
 
 int
