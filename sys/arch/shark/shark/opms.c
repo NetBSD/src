@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.12 2004/12/14 02:32:02 chs Exp $        */
+/*      $NetBSD: opms.c,v 1.13 2004/12/15 03:56:20 jmc Exp $        */
 
 /*
  * Copyright 1997
@@ -91,12 +91,14 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.12 2004/12/14 02:32:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.13 2004/12/15 03:56:20 jmc Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
 #error Only one PS/2 style mouse may be configured into your system.
 #endif
+
+#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
