@@ -1989,6 +1989,8 @@
 ./usr/share/man/cat3/strftime.0
 ./usr/share/man/cat3/string.0
 ./usr/share/man/cat3/stringlist.0
+./usr/share/man/cat3/strlcat.0
+./usr/share/man/cat3/strlcpy.0
 ./usr/share/man/cat3/strlen.0
 ./usr/share/man/cat3/strmode.0
 ./usr/share/man/cat3/strncasecmp.0
@@ -3039,6 +3041,8 @@
 ./usr/share/man/man3/strftime.3
 ./usr/share/man/man3/string.3
 ./usr/share/man/man3/stringlist.3
+./usr/share/man/man3/strlcat.3
+./usr/share/man/man3/strlcpy.3
 ./usr/share/man/man3/strlen.3
 ./usr/share/man/man3/strmode.3
 ./usr/share/man/man3/strncasecmp.3
