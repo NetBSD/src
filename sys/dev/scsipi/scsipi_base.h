@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.h,v 1.13 2003/01/06 21:02:18 matt Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.14 2004/08/21 20:40:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,30 +39,22 @@
 #ifndef _DEV_SCSIPI_SCSIPI_BASE_H_
 #define _DEV_SCSIPI_SCSIPI_BASE_H_
 
-struct scsipi_xfer *scsipi_get_xs __P((struct scsipi_periph *, int));
-void	scsipi_put_xs __P((struct scsipi_xfer *));
+struct scsipi_xfer *scsipi_get_xs(struct scsipi_periph *, int);
+void	scsipi_put_xs(struct scsipi_xfer *);
 
-static __inline struct scsipi_xfer *scsipi_make_xs __P((struct scsipi_periph *,
+static __inline struct scsipi_xfer *scsipi_make_xs(struct scsipi_periph *,
 	    struct scsipi_generic *, int cmdlen, u_char *data_addr,
 	    int datalen, int retries, int timeout, struct buf *,
-	    int flags)) __attribute__ ((__unused__));
+	    int flags) __unused;
 
 /*
  * Make a scsipi_xfer, and return a pointer to it.
  */
 
-static __inline struct scsipi_xfer *
-scsipi_make_xs(periph, scsipi_cmd, cmdlen, data_addr, datalen,
-    retries, timeout, bp, flags)
-	struct scsipi_periph *periph;
-	struct scsipi_generic *scsipi_cmd;
-	int cmdlen;
-	u_char *data_addr;
-	int datalen;
-	int retries;
-	int timeout;
-	struct buf *bp;
-	int flags;
+static __inline struct scsipi_xfer * __unused
+scsipi_make_xs(struct scsipi_periph *periph, struct scsipi_generic *scsipi_cmd,
+    int cmdlen, u_char *data_addr, int datalen, int retries, int timeout,
+    struct buf *bp, int flags)
 {
 	struct scsipi_xfer *xs;
 
