@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.46.2.3 2001/06/21 20:10:49 nathanw Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.46.2.4 2001/09/21 22:37:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1120,7 +1120,6 @@ swstrategy(bp)
 		bp->b_blkno = bn;		/* swapdev block number */
 		vp = sdp->swd_vp;		/* swapdev vnode pointer */
 		bp->b_dev = sdp->swd_dev;	/* swapdev dev_t */
-		VHOLD(vp);			/* "hold" swapdev vp for i/o */
 
 		/*
 		 * if we are doing a write, we have to redirect the i/o on
@@ -1130,13 +1129,6 @@ swstrategy(bp)
 			vwakeup(bp);	/* kills one 'v_numoutput' on drum */
 			vp->v_numoutput++;	/* put it on swapdev */
 		}
-
-		/*
-		 * dissassocate buffer with /dev/drum vnode
-		 * [could be null if buf was from physio]
-		 */
-		if (bp->b_vp != NULL)
-			brelvp(bp);
 
 		/*
 		 * finally plug in swapdev vnode and start I/O
@@ -1262,7 +1254,10 @@ sw_reg_strategy(sdp, bp, bn)
 		nbp->vb_buf.b_blkno    = nbn + btodb(off);
 		nbp->vb_buf.b_rawblkno = nbp->vb_buf.b_blkno;
 		nbp->vb_buf.b_iodone   = sw_reg_iodone;
-		nbp->vb_buf.b_vp       = NULL;
+		nbp->vb_buf.b_vp       = vp;
+		if (vp->v_type == VBLK) {
+			nbp->vb_buf.b_dev = vp->v_rdev;
+		}
 		LIST_INIT(&nbp->vb_buf.b_dep);
 
 		nbp->vb_xfer = vnx;	/* patch it back in to vnx */
@@ -1276,9 +1271,6 @@ sw_reg_strategy(sdp, bp, bn)
 			goto out;
 		}
 		vnx->vx_pending++;
-
-		/* assoc new buffer with underlying vnode */
-		bgetvp(vp, &nbp->vb_buf);
 
 		/* sort it in and start I/O if we are not over our limit */
 		disksort_blkno(&sdp->swd_tab, &nbp->vb_buf);
@@ -1380,11 +1372,6 @@ sw_reg_iodone(bp)
 		/* pass error upward */
 		vnx->vx_error = vbp->vb_buf.b_error;
 	}
-
-	/*
-	 * disassociate this buffer from the vnode.
-	 */
-	brelvp(&vbp->vb_buf);
 
 	/*
 	 * kill vbp structure
@@ -1575,20 +1562,19 @@ uvm_swap_free(startslot, nslots)
  * uvm_swap_put: put any number of pages into a contig place on swap
  *
  * => can be sync or async
- * => XXXMRG: consider making it an inline or macro
  */
+
 int
 uvm_swap_put(swslot, ppsp, npages, flags)
 	int swslot;
 	struct vm_page **ppsp;
-	int	npages;
-	int	flags;
+	int npages;
+	int flags;
 {
-	int	result;
+	int result;
 
 	result = uvm_swap_io(ppsp, swslot, npages, B_WRITE |
 	    ((flags & PGO_SYNCIO) ? 0 : B_ASYNC));
-
 	return (result);
 }
 
@@ -1596,8 +1582,8 @@ uvm_swap_put(swslot, ppsp, npages, flags)
  * uvm_swap_get: get a single page from swap
  *
  * => usually a sync op (from fault)
- * => XXXMRG: consider making it an inline or macro
  */
+
 int
 uvm_swap_get(page, swslot, flags)
 	struct vm_page *page;
@@ -1610,29 +1596,18 @@ uvm_swap_get(page, swslot, flags)
 	if (swslot == SWSLOT_BAD) {
 		return EIO;
 	}
-
-	/*
-	 * this page is (about to be) no longer only in swap.
-	 */
-
-	simple_lock(&uvm.swap_data_lock);
-	uvmexp.swpgonly--;
-	simple_unlock(&uvm.swap_data_lock);
-
 	result = uvm_swap_io(&page, swslot, 1, B_READ |
 	    ((flags & PGO_SYNCIO) ? 0 : B_ASYNC));
-
-	if (result != 0) {
+	if (result == 0) {
 
 		/*
-		 * oops, the read failed so it really is still only in swap.
+		 * this page is no longer only in swap.
 		 */
 
 		simple_lock(&uvm.swap_data_lock);
-		uvmexp.swpgonly++;
+		uvmexp.swpgonly--;
 		simple_unlock(&uvm.swap_data_lock);
 	}
-
 	return (result);
 }
 
@@ -1648,7 +1623,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	daddr_t startblk;
 	struct	buf *bp;
 	vaddr_t kva;
-	int	error, s, mapinflags, pflag;
+	int	error, s, mapinflags;
 	boolean_t write, async;
 	UVMHIST_FUNC("uvm_swap_io"); UVMHIST_CALLED(pdhist);
 
@@ -1661,58 +1636,45 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * convert starting drum slot to block number
 	 */
+
 	startblk = btodb((u_int64_t)startslot << PAGE_SHIFT);
 
 	/*
-	 * first, map the pages into the kernel (XXX: currently required
-	 * by buffer system).
+	 * first, map the pages into the kernel.
 	 */
 
-	mapinflags = !write ? UVMPAGER_MAPIN_READ : UVMPAGER_MAPIN_WRITE;
-	if (!async)
-		mapinflags |= UVMPAGER_MAPIN_WAITOK;
+	mapinflags = !write ?
+		UVMPAGER_MAPIN_WAITOK|UVMPAGER_MAPIN_READ :
+		UVMPAGER_MAPIN_WAITOK|UVMPAGER_MAPIN_WRITE;
 	kva = uvm_pagermapin(pps, npages, mapinflags);
-	if (kva == 0)
-		return (EAGAIN);
 
 	/*
 	 * now allocate a buf for the i/o.
-	 * [make sure we don't put the pagedaemon to sleep...]
 	 */
-	s = splbio();
-	pflag = (async || curproc == uvm.pagedaemon_proc) ? 0 : PR_WAITOK;
-	bp = pool_get(&bufpool, pflag);
-	splx(s);
 
-	/*
-	 * if we failed to get a buf, return "try again"
-	 */
-	if (bp == NULL)
-		return (EAGAIN);
+	s = splbio();
+	bp = pool_get(&bufpool, PR_WAITOK);
+	splx(s);
 
 	/*
 	 * fill in the bp/sbp.   we currently route our i/o through
 	 * /dev/drum's vnode [swapdev_vp].
 	 */
+
 	bp->b_flags = B_BUSY | B_NOCACHE | (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
 	bp->b_vnbufs.le_next = NOLIST;
 	bp->b_data = (caddr_t)kva;
 	bp->b_blkno = startblk;
-	s = splbio();
-	VHOLD(swapdev_vp);
 	bp->b_vp = swapdev_vp;
-	splx(s);
-	/* XXXCDC: isn't swapdev_vp always a VCHR? */
-	/* XXXMRG: probably -- this is obviously something inherited... */
-	if (swapdev_vp->v_type == VBLK)
-		bp->b_dev = swapdev_vp->v_rdev;
+	bp->b_dev = swapdev_vp->v_rdev;
 	bp->b_bufsize = bp->b_bcount = npages << PAGE_SHIFT;
 	LIST_INIT(&bp->b_dep);
 
 	/*
 	 * bump v_numoutput (counter of number of active outputs).
 	 */
+
 	if (write) {
 		s = splbio();
 		swapdev_vp->v_numoutput++;
@@ -1722,10 +1684,9 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * for async ops we must set up the iodone handler.
 	 */
+
 	if (async) {
-		/* XXXUBC pagedaemon */
-		bp->b_flags |= B_CALL | (curproc == uvm.pagedaemon_proc ?
-					 B_PDAEMON : 0);
+		bp->b_flags |= B_CALL;
 		bp->b_iodone = uvm_aio_biodone;
 		UVMHIST_LOG(pdhist, "doing async!", 0, 0, 0, 0);
 	}
@@ -1736,6 +1697,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * now we start the I/O, and if async, return.
 	 */
+
 	VOP_STRATEGY(bp);
 	if (async)
 		return 0;
@@ -1743,27 +1705,24 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * must be sync i/o.   wait for it to finish
 	 */
+
 	error = biowait(bp);
 
 	/*
 	 * kill the pager mapping
 	 */
+
 	uvm_pagermapout(kva, npages);
 
 	/*
-	 * now dispose of the buf
+	 * now dispose of the buf and we're done.
 	 */
+
 	s = splbio();
-	if (bp->b_vp)
-		brelvp(bp);
 	if (write)
 		vwakeup(bp);
 	pool_put(&bufpool, bp);
 	splx(s);
-
-	/*
-	 * finally return.
-	 */
 	UVMHIST_LOG(pdhist, "<- done (sync)  error=%d", error, 0, 0, 0);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.14 2000/11/29 06:21:12 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.14.2.1 2001/09/21 22:34:58 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -111,6 +111,9 @@ void		__C(CHIP,_mem_free) __P((void *, bus_space_handle_t,
 
 /* get kernel virtual address */
 void *		__C(CHIP,_mem_vaddr) __P((void *, bus_space_handle_t));
+
+/* mmap for user */
+paddr_t		__C(CHIP,_mem_mmap) __P((void *, bus_addr_t, off_t, int, int));
 
 /* barrier */
 inline void	__C(CHIP,_mem_barrier) __P((void *, bus_space_handle_t,
@@ -242,6 +245,9 @@ __C(CHIP,_bus_mem_init)(t, v)
 	/* get kernel virtual address */
 	t->abs_vaddr =		__C(CHIP,_mem_vaddr);
 
+	/* mmap for user */
+	t->abs_mmap =		__C(CHIP,_mem_mmap);
+
 	/* barrier */
 	t->abs_barrier =	__C(CHIP,_mem_barrier);
 	
@@ -354,13 +360,7 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 	bus_space_handle_t *memhp;
 	int acct;
 {
-	int prefetchable = flags & BUS_SPACE_MAP_PREFETCHABLE;
-	int linear = flags & BUS_SPACE_MAP_LINEAR;
 	int error;
-
-	/* Requests for linear unprefetchable space can't be satisfied. */
-	if (linear && !prefetchable)
-		return (EOPNOTSUPP);
 
 	if (acct == 0)
 		goto mapit;
@@ -440,14 +440,8 @@ __C(CHIP,_mem_alloc)(v, rstart, rend, size, align, boundary, flags,
 	int flags;
 	bus_space_handle_t *bshp;
 {
-	int prefetchable = flags & BUS_SPACE_MAP_PREFETCHABLE;
-	int linear = flags & BUS_SPACE_MAP_LINEAR;
 	bus_addr_t memaddr;
 	int error;
-
-	/* Requests for linear unprefetchable space can't be satisfied. */
-	if (linear && !prefetchable)
-		return (EOPNOTSUPP);
 
 	/*
 	 * Do the requested allocation.
@@ -492,11 +486,20 @@ __C(CHIP,_mem_vaddr)(v, bsh)
 	void *v;
 	bus_space_handle_t bsh;
 {
-	/*
-	 * We get linear access only with BUS_SPACE_MAP_PREFETCHABLE,
-	 * so it should be OK if the caller doesn't use BWX instructions.
-	 */
+
 	return ((void *)bsh);
+}
+
+paddr_t
+__C(CHIP,_mem_mmap)(v, addr, off, prot, flags)
+	void *v;
+	bus_addr_t addr;
+	off_t off;
+	int prot;
+	int flags;
+{
+
+	return (alpha_btop(CHIP_MEM_SYS_START(v) + addr + off));
 }
 
 inline void

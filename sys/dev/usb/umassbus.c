@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.8.2.2 2001/06/21 20:06:24 nathanw Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.8.2.3 2001/09/21 22:36:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -245,7 +245,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 		    periph->periph_target, periph->periph_lun,
 		    xs, xs->cmd->opcode, xs->datalen,
 		    periph->periph_quirks, xs->xs_control & XS_CTL_POLL));
-#if defined(USB_DEBUG) && defined(SCSIDEBUG)
+#if defined(USB_DEBUG) && defined(SCSIPI_DEBUG)
 		if (umassdebug & UDMASS_SCSI)
 			show_scsipi_xs(xs);
 		else if (umassdebug & ~UDMASS_CMD)

@@ -1,4 +1,4 @@
-/* $NetBSD: tgavar.h,v 1.9.6.1 2001/08/24 00:10:23 nathanw Exp $ */
+/* $NetBSD: tgavar.h,v 1.9.6.2 2001/09/21 22:36:03 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -76,7 +76,6 @@ struct tga_devconfig {
 		    *dc_ramdac_cookie;	/* the RAMDAC type; see above */
 
 	vaddr_t dc_vaddr;		/* memory space virtual base address */
-	paddr_t dc_paddr;		/* memory space physical base address */
 
 	int	    dc_wid;		/* width of frame buffer */
 	int	    dc_ht;		/* height of frame buffer */

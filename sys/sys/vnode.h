@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.89.2.2 2001/06/21 20:10:00 nathanw Exp $	*/
+/*	$NetBSD: vnode.h,v 1.89.2.3 2001/09/21 22:37:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,6 @@
 #include <uvm/uvm_pglist.h>	/* XXX */
 #include <uvm/uvm_object.h>	/* XXX */
 #include <uvm/uvm_extern.h>	/* XXX */
-#include <uvm/uvm_vnode.h>	/* XXX */
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
@@ -85,14 +84,14 @@ LIST_HEAD(buflists, buf);
  *     locked by the v_interlock simple lock
  */
 struct vnode {
-	struct uvm_vnode v_uvm;			/* uvm data */
-#define	v_flag		v_uvm.u_flags
-#define	v_usecount	v_uvm.u_obj.uo_refs
-#define	v_interlock	v_uvm.u_obj.vmobjlock
-#define	v_numoutput	v_uvm.u_nio
+	struct uvm_object v_uobj;		/* the VM object */
+#define	v_usecount	v_uobj.uo_refs
+#define	v_interlock	v_uobj.vmobjlock
+	voff_t		v_size;			/* size of file */
+	int		v_flag;			/* flags */
+	int		v_numoutput;		/* number of pending writes */
 	long		v_writecount;		/* reference count of writers */
 	long		v_holdcnt;		/* page & buffer references */
-	daddr_t		v_lastr;		/* last read (read-ahead) */
 	u_long		v_id;			/* capability identifier */
 	struct mount	*v_mount;		/* ptr to vfs we are in */
 	int		(**v_op) __P((void *));	/* vnode operations vector */
@@ -101,7 +100,6 @@ struct vnode {
 	struct buflists	v_cleanblkhd;		/* clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* dirty blocklist head */
 	LIST_ENTRY(vnode) v_synclist;		/* vnodes with dirty buffers */
-	enum vtype	v_type;			/* vnode type */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
@@ -109,16 +107,10 @@ struct vnode {
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
 	} v_un;
 	struct nqlease	*v_lease;		/* Soft reference to lease */
-	daddr_t		v_lastw;		/* last write (write cluster) */
-	daddr_t		v_cstart;		/* start block of cluster */
-	daddr_t		v_lasta;		/* last allocation */
-	int		v_clen;			/* length of current cluster */
-	int		v_ralen;		/* Read-ahead length */
-	daddr_t		v_maxra;		/* last readahead block */
-	struct lock	v_lock;			/* lock for this vnode */
-	struct lock	v_glock;		/* getpage lock */
-	struct lock	*v_vnlock;		/* pointer to vnode lock */
+	enum vtype	v_type;			/* vnode type */
 	enum vtagtype	v_tag;			/* type of underlying data */
+	struct lock	v_lock;			/* lock for this vnode */
+	struct lock	*v_vnlock;		/* pointer to lock */
 	void 		*v_data;		/* private data for fs */
 };
 #define	v_mountedhere	v_un.vu_mountedhere

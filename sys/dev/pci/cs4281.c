@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.3.4.1 2001/06/21 20:04:32 nathanw Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.3.4.2 2001/09/21 22:35:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -1228,7 +1228,7 @@ cs4281_init(sc, init)
 		0x00 <<  0;    /* PLSS[4:0] Left  PCM Playback */
 	BA0WRITE4(sc, CS4281_SRCSA, dat32);
 	
-	/* Set interrupt to occured at Half and Full terminal
+	/* Set interrupt to occurred at Half and Full terminal
 	 * count interrupt enable for DMA channel 0 and 1.
 	 * To keep DMA stop, set MSK.
 	 */

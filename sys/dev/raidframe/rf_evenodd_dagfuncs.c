@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.7.2.1 2001/08/24 00:10:35 nathanw Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.7.2.2 2001/09/21 22:36:07 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -104,8 +104,12 @@ rf_RegularONEFunc(node)
 	char   *srcbuf, *destbuf;
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
-	RF_PhysDiskAddr_t *pda, *EPDA = (RF_PhysDiskAddr_t *) node->params[EpdaIndex].p;
-	int     ESUOffset = rf_StripeUnitOffset(layoutPtr, EPDA->startSector);	/* generally zero  */
+	RF_PhysDiskAddr_t *pda;
+#ifdef RAID_DIAGNOSTIC
+	RF_PhysDiskAddr_t *EPDA =
+	    (RF_PhysDiskAddr_t *) node->params[EpdaIndex].p;
+	int     ESUOffset = rf_StripeUnitOffset(layoutPtr, EPDA->startSector);
+#endif /* RAID_DIAGNOSTIC */
 
 	RF_ASSERT(EPDA->type == RF_PDA_TYPE_Q);
 	RF_ASSERT(ESUOffset == 0);

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.7.4.2 2001/08/24 00:08:27 nathanw Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.7.4.3 2001/09/21 22:35:02 nathanw Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -184,8 +184,8 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 # ISA bus support
-isa*	at mainbus?
-isa*	at pcib?
+isa0	at mainbus?
+isa0	at pcib?
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
@@ -369,7 +369,7 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
-ex*	at pci? dev ? function ?	# 3Com 90x[B]
+ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk* 	at pci? dev ? function ? 	# Realtek 8129/8139

@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.14 2000/01/22 22:46:56 mycroft Exp $	*/
+/*	$NetBSD: profile.h,v 1.14.8.1 2001/09/21 22:35:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,10 +67,6 @@ mcount()								\
 }
 
 #ifdef _KERNEL
-/*
- * Note that we assume splhigh() and splx() cannot call mcount()
- * recursively.
- */
-#define	MCOUNT_ENTER	s = splhigh()
-#define	MCOUNT_EXIT	splx(s)
+#define	MCOUNT_ENTER	(void)&s; __asm__("cli");
+#define	MCOUNT_EXIT	__asm__("sti");
 #endif /* _KERNEL */

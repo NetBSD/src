@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.3 2000/06/27 18:01:06 mrg Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.3.2.1 2001/09/21 22:36:31 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -88,5 +88,6 @@ __syncicache(from, len)
 		__asm__ __volatile ("icbi 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
 	} while ((len -= CACHELINESIZE) > 0);
+	__asm__ __volatile ("sync");	/* required on 7450 */
 	__asm__ __volatile ("isync");
 }

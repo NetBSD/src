@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.14.2.3 2001/08/24 00:09:59 nathanw Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.14.2.4 2001/09/21 22:35:50 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.27 2001/07/27 17:54:40 thorpej Exp 
+ *	NetBSD: miidevs,v 1.31 2001/08/25 05:55:19 thorpej Exp 
  */
 
 /*-
@@ -114,12 +114,14 @@
 /* Advanced Micro Devices PHYs */
 #define	MII_MODEL_xxAMD_79C873	0x0000
 #define	MII_STR_xxAMD_79C873	"Am79C873 10/100 media interface"
+#define	MII_MODEL_yyAMD_79C972_10T	0x0001
+#define	MII_STR_yyAMD_79C972_10T	"Am79C972 internal 10BASE-T interface"
 #define	MII_MODEL_yyAMD_79c973phy	0x0036
-#define	MII_STR_yyAMD_79c973phy	"Am79C973 internal PHY"
+#define	MII_STR_yyAMD_79c973phy	"Am79C973 internal 10/100 media interface"
 #define	MII_MODEL_yyAMD_79c901	0x0037
-#define	MII_STR_yyAMD_79c901	"Am79C901 10 PHY"
+#define	MII_STR_yyAMD_79c901	"Am79C901 10BASE-T interface"
 #define	MII_MODEL_yyAMD_79c901home	0x0039
-#define	MII_STR_yyAMD_79c901home	"Am79C901 HomePHY"
+#define	MII_STR_yyAMD_79c901home	"Am79C901 HomePNA 1.0 interface"
 
 /* Broadcom Corp. PHYs */
 #define	MII_MODEL_xxBROADCOM_3C905B	0x0012

@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.8.2.1 2001/03/05 22:49:52 nathanw Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.8.2.2 2001/09/21 22:36:40 nathanw Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -181,10 +181,9 @@ sched_sync(v)
 		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
 
 		while ((vp = LIST_FIRST(slp)) != NULL) {
-			if (VOP_ISLOCKED(vp) == 0) {
-				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
 				(void) VOP_FSYNC(vp, curproc->l_proc->p_ucred,
-				    FSYNC_LAZY, 0, 0, curproc->l_proc);
+				    FSYNC_LAZY, 0, 0, curproc);
 				VOP_UNLOCK(vp, 0);
 			}
 			s = splbio();

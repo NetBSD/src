@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.6.2.1 2001/08/24 00:10:36 nathanw Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.6.2.2 2001/09/21 22:36:07 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,10 +30,12 @@
  * rf_general.h -- some general-use definitions
  */
 
-/*#define NOASSERT*/
-
 #ifndef _RF__RF_GENERAL_H_
 #define _RF__RF_GENERAL_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_raid_diagnostic.h"
+#endif /* _KERNEL_OPT */
 
 /* error reporting and handling */
 
@@ -52,23 +54,20 @@ void rf_print_assert_panic_message(int, char *, char *);
 extern char rf_panicbuf[];
 #define RF_PANIC() {rf_print_panic_message(__LINE__,__FILE__); panic(rf_panicbuf);}
 
+#ifdef RAID_DIAGNOSTIC
 #ifdef _KERNEL
-#ifdef RF_ASSERT
-#undef RF_ASSERT
-#endif				/* RF_ASSERT */
-#ifndef NOASSERT
 #define RF_ASSERT(_x_) { \
   if (!(_x_)) { \
     rf_print_assert_panic_message(__LINE__, __FILE__, #_x_); \
     panic(rf_panicbuf); \
   } \
 }
-#else				/* !NOASSERT */
+#else /* _KERNEL */
 #define RF_ASSERT(x) {/*noop*/}
-#endif				/* !NOASSERT */
-#else				/* _KERNEL */
+#endif /* _KERNEL */
+#else /* RAID_DIAGNOSTIC */
 #define RF_ASSERT(x) {/*noop*/}
-#endif				/* _KERNEL */
+#endif /* RAID_DIAGNOSTIC */
 
 /* random stuff */
 #define RF_MAX(a,b) (((a) > (b)) ? (a) : (b))

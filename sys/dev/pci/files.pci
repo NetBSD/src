@@ -1,10 +1,11 @@
-#	$NetBSD: files.pci,v 1.123.2.3 2001/08/24 00:10:00 nathanw Exp $
+#	$NetBSD: files.pci,v 1.123.2.4 2001/09/21 22:35:55 nathanw Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
 defopt	opt_pci.h	PCIVERBOSE PCI_CONFIG_DUMP PCI_NETBSD_CONFIGURE
+			PCI_NETBSD_ENABLE_IDE
 
 defopt	opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
 			BKTR_OVERRIDE_MSP BKTR_SYSTEM_DEFAULT
@@ -20,6 +21,7 @@ file	dev/pci/pci.c			pci			needs-flag
 file	dev/pci/pci_map.c		pci
 file	dev/pci/pci_quirks.c		pci
 file	dev/pci/pci_subr.c		pci
+file	dev/pci/pci_usrreq.c		pci
 file	dev/pci/pciconf.c		pci_netbsd_configure
 
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
@@ -124,6 +126,12 @@ file	dev/pci/if_fpa.c		fpa
 attach	le at pci with le_pci: le32
 file	dev/pci/if_le_pci.c		le_pci
 
+# AMD PCnet-PCI Ethernet controller family
+# Supersedes if_le_pci.c
+device	pcn: ether, ifnet, arp, mii
+attach	pcn at pci
+file	dev/pci/if_pcn.c		pcn
+
 # common code for siop/esiop pci front end
 define	siop_pci_common
 file	dev/pci/siop_pci_common.c	siop_pci_common
@@ -163,6 +171,10 @@ file	dev/pci/if_fxp_pci.c		fxp_pci
 # Sun HME-network
 attach	hme at pci with hme_pci
 file	dev/pci/if_hme_pci.c		hme_pci
+
+# Sun GEM-network
+attach	gem at pci with gem_pci
+file	dev/pci/if_gem_pci.c		gem_pci
 
 # NE2000-compatible PCI Ethernet cards
 defparam opt_ipkdb.h	IPKDB_NE_PCISLOT	: IPKDB_NE_PCI
@@ -286,6 +298,12 @@ file	dev/pci/opl_sv.c		opl_sv
 device	cmpci { }: audio, auconv, mulaw
 attach	cmpci at pci
 file	dev/pci/cmpci.c			cmpci
+
+attach	opl at cmpci with opl_cmpci
+file	dev/pci/opl_cmpci.c		opl_cmpci
+
+attach	mpu at cmpci with mpu_cmpci
+file	dev/pci/mpu_cmpci.c		mpu_cmpci
 
 # Yamaha YMF724/740/744/754 PCI audio controller
 device	yds { }: audio, auconv, mulaw, ac97

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.41.2.2 2001/06/21 20:09:33 nathanw Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.41.2.3 2001/09/21 22:36:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,6 +72,15 @@ extern int prtactive;
 #define TRUE	1
 #define	FALSE	0
 
+void nfs_gop_size(struct vnode *, off_t, off_t *);
+int nfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
+
+struct genfs_ops nfs_genfsops = {
+	nfs_gop_size,
+	nfs_gop_alloc,
+	nfs_gop_write,
+};
+
 /*
  * Initialize hash links for nfsnodes
  * and build nfsnode free list.
@@ -88,6 +97,37 @@ nfs_nhinit()
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_NFSNODE);
 	pool_init(&nfs_vattr_pool, sizeof(struct vattr), 0, 0, 0, "nfsvapl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_NFSNODE);
+}
+
+/*
+ * Reinitialize inode hash table.
+ */
+
+void
+nfs_nhreinit()
+{
+	struct nfsnode *np;
+	struct nfsnodehashhead *oldhash, *hash;
+	u_long oldmask, mask, val;
+	int i;
+
+	hash = hashinit(desiredvnodes, HASH_LIST, M_NFSNODE, M_WAITOK,
+	    &mask);
+	
+	lockmgr(&nfs_hashlock, LK_EXCLUSIVE, NULL);
+	oldhash = nfsnodehashtbl;
+	oldmask = nfsnodehash;
+	nfsnodehashtbl = hash;
+	nfsnodehash = mask;
+	for (i = 0; i <= oldmask; i++) {
+		while ((np = LIST_FIRST(&oldhash[i])) != NULL) {
+			LIST_REMOVE(np, n_hash);
+			val = NFSNOHASH(nfs_hash(np->n_fhp, np->n_fhsize));
+			LIST_INSERT_HEAD(&hash[val], np, n_hash);
+		}
+	}
+	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
+	hashdone(oldhash, M_NFSNODE);
 }
 
 /*
@@ -139,9 +179,9 @@ nfs_nget(mntp, fhp, fhsize, npp)
 	struct vnode *nvp;
 	int error;
 
-	nhpp = NFSNOHASH(nfs_hash(fhp, fhsize));
+	nhpp = &nfsnodehashtbl[NFSNOHASH(nfs_hash(fhp, fhsize))];
 loop:
-	for (np = nhpp->lh_first; np != 0; np = np->n_hash.le_next) {
+	LIST_FOREACH(np, nhpp, n_hash) {
 		if (mntp != NFSTOV(np)->v_mount || np->n_fhsize != fhsize ||
 		    memcmp(fhp, np->n_fhp, fhsize))
 			continue;
@@ -165,10 +205,12 @@ loop:
 	lockinit(&np->n_commitlock, PINOD, "nfsclock", 0, 0);
 	vp->v_data = np;
 	np->n_vnode = vp;
+	genfs_node_init(vp, &nfs_genfsops);
 
 	/*
 	 * Insert the nfsnode in the hash queue for its new file handle
 	 */
+
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
 	if (fhsize > NFS_SMALLFH) {
 		np->n_fhp = malloc(fhsize, M_NFSBIGFH, M_WAITOK);
@@ -178,24 +220,15 @@ loop:
 	np->n_fhsize = fhsize;
 	np->n_accstamp = -1;
 	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
-
-	lockmgr(&vp->v_lock, LK_EXCLUSIVE, (struct simplelock *)0);
-
-	/*
-	 * XXXUBC doing this while holding the nfs_hashlock is bad,
-	 * but there's no alternative at the moment.
-	 */
-	error = VOP_GETATTR(vp, np->n_vattr, curproc->l_proc->p_ucred, 
+	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
+	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
+	error = VOP_GETATTR(vp, np->n_vattr, curproc->l_proc->_ucred, 
 	    curproc->l_proc);
 	if (error) {
-		lockmgr(&vp->v_lock, LK_RELEASE, 0);
-		lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 		vgone(vp);
 		return error;
 	}
 	uvm_vnp_setsize(vp, np->n_vattr->va_size);
-
-	lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 	*npp = np;
 	return (0);
 }
@@ -291,4 +324,17 @@ nfs_reclaim(v)
 	pool_put(&nfs_node_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
+}
+
+void
+nfs_gop_size(struct vnode *vp, off_t size, off_t *eobp)
+{
+	*eobp = MAX(size, vp->v_size);
+}
+
+int
+nfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
+    struct ucred *cred)
+{
+	return 0;
 }

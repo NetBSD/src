@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.27.2.3 2001/08/24 00:09:59 nathanw Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.27.2.4 2001/09/21 22:35:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -102,18 +102,18 @@ struct tlphy_softc {
 	int sc_need_acomp;
 };
 
-int	tlphymatch __P((struct device *, struct cfdata *, void *));
-void	tlphyattach __P((struct device *, struct device *, void *));
+int	tlphymatch(struct device *, struct cfdata *, void *);
+void	tlphyattach(struct device *, struct device *, void *);
 
 struct cfattach tlphy_ca = {
 	sizeof(struct tlphy_softc), tlphymatch, tlphyattach, mii_phy_detach,
 	    mii_phy_activate
 };
 
-int	tlphy_service __P((struct mii_softc *, struct mii_data *, int));
-int	tlphy_auto __P((struct tlphy_softc *, int));
-void	tlphy_acomp __P((struct tlphy_softc *));
-void	tlphy_status __P((struct mii_softc *));
+int	tlphy_service(struct mii_softc *, struct mii_data *, int);
+int	tlphy_auto(struct tlphy_softc *, int);
+void	tlphy_acomp(struct tlphy_softc *);
+void	tlphy_status(struct mii_softc *);
 
 const struct mii_phy_funcs tlphy_funcs = {
 	tlphy_service, tlphy_status, mii_phy_reset,
@@ -128,10 +128,7 @@ const struct mii_phydesc tlphys[] = {
 };
 
 int
-tlphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tlphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;       
 
@@ -142,9 +139,7 @@ tlphymatch(parent, match, aux)
 }
 
 void
-tlphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tlphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct tlphy_softc *sc = (struct tlphy_softc *)self;
 	struct tl_softc *tlsc = (struct tl_softc *)self->dv_parent;
@@ -207,10 +202,7 @@ tlphyattach(parent, self, aux)
 }
 
 int
-tlphy_service(self, mii, cmd)
-	struct mii_softc *self;
-	struct mii_data *mii;
-	int cmd;
+tlphy_service(struct mii_softc *self, struct mii_data *mii, int cmd)
 {
 	struct tlphy_softc *sc = (struct tlphy_softc *)self;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -311,8 +303,7 @@ tlphy_service(self, mii, cmd)
 }
 
 void
-tlphy_status(physc)
-	struct mii_softc *physc;
+tlphy_status(struct mii_softc *physc)
 {
 	struct tlphy_softc *sc = (void *) physc;
 	struct mii_data *mii = sc->sc_mii.mii_pdata;
@@ -361,9 +352,7 @@ tlphy_status(physc)
 }
 
 int
-tlphy_auto(sc, waitfor)
-	struct tlphy_softc *sc;
-	int waitfor;
+tlphy_auto(struct tlphy_softc *sc, int waitfor)
 {
 	int error;
 
@@ -389,8 +378,7 @@ tlphy_auto(sc, waitfor)
 }
 
 void
-tlphy_acomp(sc)
-	struct tlphy_softc *sc;
+tlphy_acomp(struct tlphy_softc *sc)
 {
 	int aner, anlpar;
 

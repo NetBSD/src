@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_cd.h,v 1.5 1998/02/13 08:28:51 enami Exp $	*/
+/*	$NetBSD: scsipi_cd.h,v 1.5.26.1 2001/09/21 22:36:14 nathanw Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -113,9 +113,7 @@ struct scsipi_read_cd_cap_data {
 /* mod pages common to scsi and atapi */
 struct cd_audio_page {
 	u_int8_t page_code;
-#define		CD_PAGE_CODE	0x3F
 #define		AUDIO_PAGE	0x0e
-#define		CD_PAGE_PS	0x80
 	u_int8_t param_len;
 	u_int8_t flags;
 #define		CD_PA_SOTC	0x02

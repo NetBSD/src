@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.26.2.1 2001/08/24 00:12:00 nathanw Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.26.2.2 2001/09/21 22:36:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -578,6 +578,7 @@ struct vfsops union_vfsops = {
 	union_fhtovp,
 	union_vptofh,
 	union_init,
+	NULL,
 	union_done,
 	union_sysctl,
 	NULL,				/* vfs_mountroot */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxvar.h,v 1.1.4.2 2001/08/24 00:09:32 nathanw Exp $	*/
+/*	$NetBSD: mlxvar.h,v 1.1.4.3 2001/09/21 22:35:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ struct mlx_softc {
 #define MLXF_FW_INITTED		0x0004	/* firmware init crap done */
 #define MLXF_PAUSEWORKS		0x0008	/* channel pause works as expected */
 #define MLXF_OPEN		0x0010	/* control device is open */
-#define	MLXF_INITOK		0x0020	/* controller initalised OK */
+#define	MLXF_INITOK		0x0020	/* controller initialised OK */
 #define	MLXF_PERIODIC_CTLR	0x0040	/* periodic check running */
 #define	MLXF_PERIODIC_DRIVE	0x0080	/* periodic check running */
 #define	MLXF_PERIODIC_REBUILD	0x0100	/* periodic check running */

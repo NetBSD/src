@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.63.2.1 2001/06/21 19:25:58 nathanw Exp $	*/
+/*	$NetBSD: icu.s,v 1.63.2.2 2001/09/21 22:35:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ IDTVEC(softserial)
 	addl	$4,%esp
 
 	movl	%ebx,_C_LABEL(cpl)
-	jmp	%esi
+	jmp	*%esi
 
 IDTVEC(softnet)
 	movl	_C_LABEL(imask) + IPL_SOFTNET * 4,%eax
@@ -169,7 +169,7 @@ IDTVEC(softnet)
 	addl	$4,%esp
 
 	movl	%ebx,_C_LABEL(cpl)
-	jmp	%esi
+	jmp	*%esi
 
 IDTVEC(softclock)
 	movl	_C_LABEL(imask) + IPL_SOFTCLOCK * 4,%eax
@@ -180,4 +180,4 @@ IDTVEC(softclock)
 	addl	$4,%esp
 
 	movl	%ebx,_C_LABEL(cpl)
-	jmp	%esi
+	jmp	*%esi

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.1 2001/01/19 01:31:25 manu Exp $ */
+/*	$NetBSD: linux_socket.h,v 1.1.4.1 2001/09/21 22:35:17 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -85,6 +85,6 @@
 
 #define LINUX_SO_PEERNAME     28
 #define LINUX_SO_TIMESTAMP    29
-#define LINUX_SCM_TIMESTAMP   SO_TIMESTAMP
+#define LINUX_SCM_TIMESTAMP   LINUX_SO_TIMESTAMP
 
-#endif /* !_I386_POWERPC_SOCKET_H */
+#endif /* !_POWERPC_LINUX_SOCKET_H */

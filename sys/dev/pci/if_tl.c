@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.39.2.1 2001/08/24 00:10:09 nathanw Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.39.2.2 2001/09/21 22:35:57 nathanw Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -128,7 +128,8 @@ static void tl_shutdown __P((void*));
 
 static void tl_ifstart __P((struct ifnet *));
 static void tl_reset __P((tl_softc_t*));
-static int  tl_init __P((tl_softc_t*));
+static int  tl_init __P((struct ifnet *));
+static void tl_stop __P((struct ifnet *, int));
 static void tl_restart __P((void  *));
 static int  tl_add_RxBuff __P((tl_softc_t*, struct Rx_list*, struct mbuf*));
 static void tl_read_stats __P((tl_softc_t*));
@@ -399,12 +400,23 @@ tl_pci_attach(parent, self, aux)
 	sc->Rx_list = NULL;
 	sc->Tx_list = NULL;
 
+	/* allocate DMA-safe memory for control structs */
+	if (bus_dmamem_alloc(sc->tl_dmatag,
+	        PAGE_SIZE, 0, PAGE_SIZE,
+	        &sc->ctrl_segs, 1, &sc->ctrl_nsegs, BUS_DMA_NOWAIT) != 0 ||
+	    bus_dmamem_map(sc->tl_dmatag, &sc->ctrl_segs,
+		sc->ctrl_nsegs, PAGE_SIZE, (caddr_t*)&sc->ctrl,
+		BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
+			printf("%s: can't allocate DMA memory for lists\n",
+			    sc->sc_dev.dv_xname);
+			return;
+	}
 	/*
 	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
 	 * doing do could allow DMA to corrupt kernel memory during the
 	 * reboot before the driver initializes.
 	 */
-	(void) shutdownhook_establish(tl_shutdown, sc);
+	(void) shutdownhook_establish(tl_shutdown, ifp);
 
 	/*
 	 * Initialize our media structures and probe the MII.
@@ -435,6 +447,8 @@ tl_pci_attach(parent, self, aux)
 	ifp->if_ioctl = tl_ifioctl;
 	ifp->if_start = tl_ifstart;
 	ifp->if_watchdog = tl_ifwatchdog;
+	ifp->if_init = tl_init;
+	ifp->if_stop = tl_stop;
 	ifp->if_timer = 0;
 	if_attach(ifp);
 	ether_ifattach(&(sc)->tl_if, (sc)->tl_enaddr);
@@ -484,11 +498,18 @@ tl_reset(sc)
 static void tl_shutdown(v)
 	void *v;
 {
-	tl_softc_t *sc = v;
+	tl_stop(v, 1);
+}
+
+static void tl_stop(ifp, disable)
+	struct ifnet *ifp;
+	int disable;
+{
+	tl_softc_t *sc = ifp->if_softc;
 	struct Tx_list *Tx;
 	int i;
 	
-	if ((sc->tl_if.if_flags & IFF_RUNNING) == 0)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 	/* disable interrupts */
 	TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_IntOff);
@@ -536,10 +557,10 @@ static void tl_shutdown(v)
 		sc->Tx_list = NULL;
 		bus_dmamap_unload(sc->tl_dmatag, sc->Tx_dmamap);
 		bus_dmamap_destroy(sc->tl_dmatag, sc->Tx_dmamap);
-		bus_dmamem_free(sc->tl_dmatag, &sc->ctrl_segs, sc->ctrl_nsegs);
 		sc->hw_Tx_list = NULL;
 	}
-	sc->tl_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
 	sc->tl_mii.mii_media_status &= ~IFM_ACTIVE;
 }
 
@@ -549,18 +570,17 @@ static void tl_restart(v)
 	tl_init(v);
 }
 
-static int tl_init(sc)
-	tl_softc_t *sc;
+static int tl_init(ifp)
+	struct ifnet *ifp;
 {
-	struct ifnet *ifp = &sc->tl_if;
+	tl_softc_t *sc = ifp->if_softc;
 	int i, s, error;
 	char *errstring;
-	char *ctrl;
 	char *nullbuf;
 
 	s = splnet();
 	/* cancel any pending IO */
-	tl_shutdown(sc);
+	tl_stop(ifp, 1);
 	tl_reset(sc);
 	if ((sc->tl_if.if_flags & IFF_UP) == 0) {
 		splx(s);
@@ -616,21 +636,11 @@ static int tl_init(sc)
 		errstring = "can't allocate DMA maps for lists";
 		goto bad;
 	}
-	error = bus_dmamem_alloc(sc->tl_dmatag,
-	    PAGE_SIZE, 0, PAGE_SIZE,
-	    &sc->ctrl_segs, 1, &sc->ctrl_nsegs, BUS_DMA_NOWAIT);
-	if (error == 0)
-		error = bus_dmamem_map(sc->tl_dmatag, &sc->ctrl_segs,
-		    sc->ctrl_nsegs, PAGE_SIZE, (caddr_t*)&ctrl,
-		    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
-	if (error) {
-		errstring = "can't allocate DMA memory for lists";
-		goto bad;
-	}
-	memset(ctrl, 0, PAGE_SIZE);
-	sc->hw_Rx_list = (void*)ctrl;
-	sc->hw_Tx_list = (void*)(ctrl + sizeof(struct tl_Rx_list) * TL_NBUF);
-	nullbuf = ctrl + sizeof(struct tl_Rx_list) * TL_NBUF +
+	memset(sc->ctrl, 0, PAGE_SIZE);
+	sc->hw_Rx_list = (void *)sc->ctrl;
+	sc->hw_Tx_list =
+	    (void *)(sc->ctrl + sizeof(struct tl_Rx_list) * TL_NBUF);
+	nullbuf = sc->ctrl + sizeof(struct tl_Rx_list) * TL_NBUF +
 	    sizeof(struct tl_Tx_list) * TL_NBUF;
 	error = bus_dmamap_load(sc->tl_dmatag, sc->Rx_dmamap,
 	    sc->hw_Rx_list, sizeof(struct tl_Rx_list) * TL_NBUF, NULL,
@@ -710,7 +720,6 @@ static int tl_init(sc)
 	return 0;
 bad:
 	printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);
-	sc->tl_if.if_flags &= ~IFF_UP;
 	splx(s);
 	return error;
 }
@@ -1187,117 +1196,16 @@ tl_ifioctl(ifp, cmd, data)
 	
 	s = splnet();
 	switch(cmd) {
-	case SIOCSIFADDR: {
-		struct ifaddr *ifa = (struct ifaddr *)data;
-		sc->tl_if.if_flags |= IFF_UP;
-		if ((error = tl_init(sc)) != NULL) {
-			sc->tl_if.if_flags &= ~IFF_UP;
-			break;
-		}
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			arp_ifinit(ifp, ifa);
-			break;
-#endif
-#ifdef NS
-		case AF_NS: {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host  = 
-				    *(union ns_host*) LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
-					ifp->if_addrlen);
-			break;
-		}
-#endif
-		default:
-			break;
-		}
-	break;
-	}
-	case SIOCSIFFLAGS:
-	{
-		u_int8_t reg;
-		/*
-		 * If interface is marked up and not running, then start it.
-		 * If it is marked down and running, stop it.
-		 */
-		if (ifp->if_flags & IFF_UP) {
-			if ((ifp->if_flags & IFF_RUNNING) == 0) {
-				error = tl_init(sc);
-				/* all flags have been handled by init */
-				break;
-			}
-			error = 0;
-			reg = tl_intreg_read_byte(sc,
-			    TL_INT_NET + TL_INT_NetCmd);
-			if (ifp->if_flags & IFF_PROMISC)
-				reg |= TL_NETCOMMAND_CAF;
-			else
-				reg &= ~TL_NETCOMMAND_CAF;
-			tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetCmd,
-			    reg);
-#ifdef TL_PRIV_STATS
-			if (ifp->if_flags & IFF_LINK0) {
-				ifp->if_flags &= ~IFF_LINK0;
-				printf("%s errors statistics\n",
-				    sc->sc_dev.dv_xname);
-				printf("    %4d RX buffer overrun\n",
-				    sc->ierr_overr);
-				printf("    %4d RX code error\n",
-				    sc->ierr_code);
-				printf("    %4d RX crc error\n",
-				    sc->ierr_crc);
-				printf("    %4d RX out of memory\n",
-				    sc->ierr_nomem);
-				printf("    %4d TX buffer underrun\n",
-				    sc->oerr_underr);
-				printf("    %4d TX deffered frames\n",
-				    sc->oerr_deffered);
-				printf("    %4d TX single collisions\n",
-				    sc->oerr_coll);
-				printf("    %4d TX multi collisions\n",
-				    sc->oerr_multicoll);
-				printf("    %4d TX exessive collisions\n",
-				    sc->oerr_exesscoll);
-				printf("    %4d TX late collisions\n",
-				    sc->oerr_latecoll);
-				printf("    %4d TX carrier loss\n",
-				    sc->oerr_carrloss);
-				printf("    %4d TX mbuf copy\n",
-				    sc->oerr_mcopy);
-			}
-#endif
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				tl_shutdown(sc);
-			error = 0;
-		}
-		break;
-	}
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		/*
-		 * Update multicast listeners
-		 */
-		if (cmd == SIOCADDMULTI)
-			error = ether_addmulti(ifr, &sc->tl_ec);
-		else
-			error = ether_delmulti(ifr, &sc->tl_ec);
-		if (error == ENETRESET) {
-			tl_addr_filter(sc);
-			error = 0;
-		}
-		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->tl_mii.mii_media, cmd);
 		break;
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
+		if (error == ENETRESET) {
+			tl_addr_filter(sc);
+			error = 0;
+		}
 	}
 	splx(s);
 	return error;
@@ -1488,7 +1396,7 @@ tl_ifwatchdog(ifp)
 		return;
 	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
-	tl_init(sc);
+	tl_init(ifp);
 }
 
 static int

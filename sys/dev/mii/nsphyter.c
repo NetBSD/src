@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.7.4.2 2001/06/21 20:04:24 nathanw Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.7.4.3 2001/09/21 22:35:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -91,16 +91,16 @@
 
 #include <dev/mii/nsphyterreg.h>
 
-int	nsphytermatch __P((struct device *, struct cfdata *, void *));
-void	nsphyterattach __P((struct device *, struct device *, void *));
+int	nsphytermatch(struct device *, struct cfdata *, void *);
+void	nsphyterattach(struct device *, struct device *, void *);
 
 struct cfattach nsphyter_ca = {
 	sizeof(struct mii_softc), nsphytermatch, nsphyterattach,
 	    mii_phy_detach, mii_phy_activate
 };
 
-int	nsphyter_service __P((struct mii_softc *, struct mii_data *, int));
-void	nsphyter_status __P((struct mii_softc *));
+int	nsphyter_service(struct mii_softc *, struct mii_data *, int);
+void	nsphyter_status(struct mii_softc *);
 
 const struct mii_phy_funcs nsphyter_funcs = {
 	nsphyter_service, nsphyter_status, mii_phy_reset,
@@ -118,10 +118,7 @@ const struct mii_phydesc nsphyters[] = {
 };
 
 int
-nsphytermatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+nsphytermatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -132,9 +129,7 @@ nsphytermatch(parent, match, aux)
 }
 
 void
-nsphyterattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+nsphyterattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -164,10 +159,7 @@ nsphyterattach(parent, self, aux)
 }
 
 int
-nsphyter_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+nsphyter_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -226,8 +218,7 @@ nsphyter_service(sc, mii, cmd)
 }
 
 void
-nsphyter_status(sc)
-	struct mii_softc *sc;
+nsphyter_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

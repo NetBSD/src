@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.13.4.1 2001/03/05 22:49:16 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.13.4.2 2001/09/21 22:35:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -54,9 +54,12 @@ struct mdlwp {
 
 struct mdproc {
 					/* Syscall handling function */
+	int	md_flags;
 	void	(*md_syscall) __P((struct trapframe));
 };
 
 #endif /* _I386_PROC_H_ */
 
-
+/* md_flags */
+#define	MDP_USEDFPU	0x0001	/* has used the FPU */
+#define MDP_USEDMTRR	0x0002	/* has set volatile MTRRs */

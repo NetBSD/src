@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.107.2.2 2001/08/24 00:12:03 nathanw Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.107.2.3 2001/09/21 22:36:43 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -309,7 +309,7 @@ msdosfs_getattr(v)
 	vap->va_gid = pmp->pm_gid;
 	vap->va_nlink = 1;
 	vap->va_rdev = 0;
-	vap->va_size = dep->de_FileSize;
+	vap->va_size = ap->a_vp->v_size;
 	dos2unixtime(dep->de_MDate, dep->de_MTime, 0, &vap->va_mtime);
 	if (dep->de_pmp->pm_flags & MSDOSFSMNT_LONGNAME) {
 		dos2unixtime(dep->de_ADate, 0, 0, &vap->va_atime);
@@ -479,7 +479,7 @@ msdosfs_read(v)
 
 			if (bytelen == 0)
 				break;
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
@@ -550,7 +550,6 @@ msdosfs_write(v)
 	void *win;
 	vsize_t bytelen;
 	off_t oldoff;
-	boolean_t rv;
 	struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
 	struct vnode *vp = ap->a_vp;
@@ -630,20 +629,9 @@ msdosfs_write(v)
 
 	do {
 		oldoff = uio->uio_offset;
-		if (de_cluster(pmp, oldoff) > lastcn) {
-			error = ENOSPC;
-			break;
-		}
-		bytelen = MIN(dep->de_FileSize - oldoff, uio->uio_resid);
+		bytelen = uio->uio_resid;
 
-		/*
-		 * XXXUBC if file is mapped and this is the last block,
-		 * process one page at a time.
-		 */
-
-		if (bytelen == 0)
-			break;
-		win = ubc_alloc(&vp->v_uvm.u_obj, oldoff, &bytelen, UBC_READ);
+		win = ubc_alloc(&vp->v_uobj, oldoff, &bytelen, UBC_WRITE);
 		error = uiomove(win, bytelen, uio);
 		ubc_release(win, 0);
 		if (error) {
@@ -655,20 +643,18 @@ msdosfs_write(v)
 		 * XXXUBC simplistic async flushing.
 		 */
 
-		if (ioflag & IO_SYNC) {
-			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj, oldoff,
-			    oldoff + bytelen, PGO_CLEANIT|PGO_SYNCIO);
-			simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
-		} else if (oldoff >> 16 != uio->uio_offset >> 16) {
-			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj, (oldoff >> 16) << 16,
+		if (oldoff >> 16 != uio->uio_offset >> 16) {
+			simple_lock(&vp->v_uobj.vmobjlock);
+			error = vp->v_uobj.pgops->pgo_put(
+			    &vp->v_uobj, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
-			simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 		}
 	} while (error == 0 && uio->uio_resid > 0);
+	if (error == 0 && ioflag & IO_SYNC) {
+		simple_lock(&vp->v_uobj.vmobjlock);
+		error = vp->v_uobj.pgops->pgo_put(&vp->v_uobj, oldoff,
+		    oldoff + bytelen, PGO_CLEANIT|PGO_SYNCIO);
+	}
 	dep->de_flag |= DE_UPDATE;
 
 	/*
@@ -677,18 +663,12 @@ msdosfs_write(v)
 	 */
 errexit:
 	if (error) {
-		if (ioflag & IO_UNIT) {
-			detrunc(dep, osize, ioflag & IO_SYNC, NOCRED, NULL);
-			uio->uio_offset -= resid - uio->uio_resid;
-			uio->uio_resid = resid;
-		} else {
-			detrunc(dep, dep->de_FileSize, ioflag & IO_SYNC, NOCRED,
-			    NULL);
-			if (uio->uio_resid != resid)
-				error = 0;
-		}
+		detrunc(dep, osize, ioflag & IO_SYNC, NOCRED, NULL);
+		uio->uio_offset -= resid - uio->uio_resid;
+		uio->uio_resid = resid;
 	} else if ((ioflag & IO_SYNC) == IO_SYNC)
 		error = deupdat(dep, 1);
+	KASSERT(vp->v_size == dep->de_FileSize);
 	return (error);
 }
 
@@ -954,7 +934,7 @@ abortit:
 	/*
 	 * If ".." must be changed (ie the directory gets a new
 	 * parent) then the source directory must not be in the
-	 * directory heirarchy above the target, as this would
+	 * directory hierarchy above the target, as this would
 	 * orphan everything below the source directory. Also
 	 * the user must have write permission in the source so
 	 * as to be able to change "..". We must repeat the call
@@ -1883,7 +1863,6 @@ const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
-	{ &vop_size_desc, genfs_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc msdosfs_vnodeop_opv_desc =

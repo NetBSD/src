@@ -1,4 +1,4 @@
-$NetBSD: IMPLEMENTATION,v 1.1.8.1 2001/06/21 20:03:35 nathanw Exp $
+$NetBSD: IMPLEMENTATION,v 1.1.8.2 2001/09/21 22:35:45 nathanw Exp $
 
 At time point in time, there are 3 controller drivers planned:
 
@@ -9,7 +9,7 @@ At time point in time, there are 3 controller drivers planned:
 (Though as of this time, Sony has declined to release documentation
 about the CXD1947A).
 
-The device heirarchy will look like (using fwohci as the example):
+The device hierarchy will look like (using fwohci as the example):
 
 #
 # The controller driver.  Handles the device-specific 1394 functions.

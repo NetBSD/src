@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.8 2001/01/20 18:56:43 manu Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.8.2.1 2001/09/21 22:35:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,6 @@ struct linux_termio {
 	unsigned char c_cc[LINUX_NCC];
 };
 
-#define LINUX_NCCS 19
 struct linux_termios {
 	linux_tcflag_t	c_iflag;
 	linux_tcflag_t	c_oflag;

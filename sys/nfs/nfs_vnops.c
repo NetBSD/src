@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.130.2.3 2001/08/24 00:12:58 nathanw Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.130.2.4 2001/09/21 22:36:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -140,7 +140,7 @@ const struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, nfs_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, nfs_getpages },		/* getpages */
-	{ &vop_putpages_desc, nfs_putpages },		/* putpages */
+	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
@@ -198,7 +198,6 @@ const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
-	{ &vop_size_desc, spec_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
@@ -2797,14 +2796,14 @@ nfs_bmap(v)
 		int *a_runp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	int bshift = vp->v_mount->mnt_fs_bshift - vp->v_mount->mnt_dev_bshift;
 
-	/*
-	 * XXX vpp should be returned unlocked?
-	 */
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = vp;
 	if (ap->a_bnp != NULL)
-		*ap->a_bnp = ap->a_bn * btodb(vp->v_mount->mnt_stat.f_iosize);
+		*ap->a_bnp = ap->a_bn << bshift;
+	if (ap->a_runp != NULL)
+		*ap->a_runp = 1024 * 1024; /* XXX */
 	return (0);
 }
 
@@ -2875,20 +2874,14 @@ nfs_flush(vp, cred, waitfor, p, commit)
 	struct proc *p;
 	int commit;
 {
-	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	struct uvm_object *uobj = &vp->v_uobj;
 	struct nfsnode *np = VTONFS(vp);
 	int error;
 	int flushflags = PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO;
-	int rv;
 	UVMHIST_FUNC("nfs_flush"); UVMHIST_CALLED(ubchist);
 
-	error = 0;
 	simple_lock(&uobj->vmobjlock);
-	rv = (uobj->pgops->pgo_flush)(uobj, 0, 0, flushflags);
-	simple_unlock(&uobj->vmobjlock);
-	if (!rv) {
-		error = EIO;
-	}
+	error = (uobj->pgops->pgo_put)(uobj, 0, 0, flushflags);
 	if (np->n_flag & NWRITEERR) {
 		error = np->n_error;
 		np->n_flag &= ~NWRITEERR;

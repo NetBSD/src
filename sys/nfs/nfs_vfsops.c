@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.101.2.3 2001/08/24 00:12:57 nathanw Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.101.2.4 2001/09/21 22:36:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -109,6 +109,7 @@ struct vfsops nfs_vfsops = {
 	nfs_fhtovp,
 	nfs_vptofh,
 	nfs_vfs_init,
+	nfs_vfs_reinit,
 	nfs_vfs_done,
 	nfs_sysctl,
 	nfs_mountroot,
@@ -688,8 +689,6 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 #else
 	mp->mnt_stat.f_type = 0;
 #endif
-	mp->mnt_fs_bshift = DEV_BSHIFT;
-	mp->mnt_dev_bshift = -1;
 	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_op->vfs_name,
 	    MFSNAMELEN);
 	memcpy(mp->mnt_stat.f_mntfromname, hst, MNAMELEN);
@@ -701,6 +700,9 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	nmp->nm_soproto = argp->proto;
 
 	nfs_decode_args(nmp, argp);
+
+	mp->mnt_fs_bshift = ffs(MIN(nmp->nm_rsize, nmp->nm_wsize)) - 1;
+	mp->mnt_dev_bshift = DEV_BSHIFT;
 
 	/*
 	 * For Connection based sockets (TCP,...) defer the connect until
@@ -882,11 +884,11 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) || 
+		if (waitfor == MNT_LAZY ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uvm.u_obj.uo_npages == 0))
+		     vp->v_uobj.uo_npages == 0))
 			continue;
-		if (vget(vp, LK_EXCLUSIVE))
+		if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT))
 			goto loop;
 		error = VOP_FSYNC(vp, cred,
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p);

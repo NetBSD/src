@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.8.2.1 2001/08/24 00:11:04 nathanw Exp $	*/
+/*	$NetBSD: stic.c,v 1.8.2.2 2001/09/21 22:36:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/callout.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -102,6 +103,7 @@
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/sticreg.h>
+#include <dev/tc/sticio.h>
 #include <dev/tc/sticvar.h>
 
 #define DUPBYTE0(x) ((((x)&0xff)<<16) | (((x)&0xff)<<8) | ((x)&0xff))
@@ -152,32 +154,37 @@
 	tc_wmb();				\
    } while (0)
 
-static int sticioctl(void *, u_long, caddr_t, int, struct proc *);
-static paddr_t sticmmap(void *, off_t, int);
-static int stic_alloc_screen(void *, const struct wsscreen_descr *,
-			     void **, int *, int *, long *);
-static void stic_free_screen(void *, void *);
-static int stic_show_screen(void *, void *, int,
-			    void (*) (void *, int, int), void *);
-static void stic_do_switch(void *);
-static void stic_setup_backing(struct stic_info *, struct stic_screen *);
-static void stic_setup_vdac(struct stic_info *si);
+int	sticioctl(void *, u_long, caddr_t, int, struct proc *);
+int	stic_alloc_screen(void *, const struct wsscreen_descr *, void **,
+			  int *, int *, long *);
+void	stic_free_screen(void *, void *);
+int	stic_show_screen(void *, void *, int, void (*)(void *, int, int),
+			 void *);
 
-static int stic_get_cmap(struct stic_info *, struct wsdisplay_cmap *);
-static int stic_set_cmap(struct stic_info *, struct wsdisplay_cmap *);
-static int stic_set_cursor(struct stic_info *, struct wsdisplay_cursor *);
-static int stic_get_cursor(struct stic_info *, struct wsdisplay_cursor *);
-static void stic_set_curpos(struct stic_info *, struct wsdisplay_curpos *);
-static void stic_set_hwcurpos(struct stic_info *);
+int	sticopen(dev_t, int, int, struct proc *);
+int	sticclose(dev_t, int, int, struct proc *);
+paddr_t	sticmmap(dev_t, off_t, int);
 
-static void stic_cursor(void *, int, int, int);
-static void stic_copycols(void *, int, int, int, int);
-static void stic_copyrows(void *, int, int, int);
-static void stic_erasecols(void *, int, int, int, long);
-static void stic_eraserows(void *, int, int, long);
-static int stic_mapchar(void *, int, u_int *);
-static void stic_putchar(void *, int, int, u_int, long);
-static int stic_alloc_attr(void *, int, int, int, long *);
+void	stic_do_switch(void *);
+void	stic_setup_backing(struct stic_info *, struct stic_screen *);
+void	stic_setup_vdac(struct stic_info *);
+void	stic_clear_screen(struct stic_info *);
+
+int	stic_get_cmap(struct stic_info *, struct wsdisplay_cmap *);
+int	stic_set_cmap(struct stic_info *, struct wsdisplay_cmap *);
+int	stic_set_cursor(struct stic_info *, struct wsdisplay_cursor *);
+int	stic_get_cursor(struct stic_info *, struct wsdisplay_cursor *);
+void	stic_set_curpos(struct stic_info *, struct wsdisplay_curpos *);
+void	stic_set_hwcurpos(struct stic_info *);
+
+void	stic_cursor(void *, int, int, int);
+void	stic_copycols(void *, int, int, int, int);
+void	stic_copyrows(void *, int, int, int);
+void	stic_erasecols(void *, int, int, int, long);
+void	stic_eraserows(void *, int, int, long);
+int	stic_mapchar(void *, int, u_int *);
+void	stic_putchar(void *, int, int, u_int, long);
+int	stic_alloc_attr(void *, int, int, int, long *);
 
 /* Colormap for wscons, matching WSCOL_*. Upper 8 are high-intensity. */
 static const u_int8_t stic_cmap[16*3] = {
@@ -244,11 +251,11 @@ static const u_int8_t shuffle[256] = {
 
 static const struct wsdisplay_accessops stic_accessops = {
 	sticioctl,
-	sticmmap,
+	NULL,			/* mmap */
 	stic_alloc_screen,
 	stic_free_screen,
 	stic_show_screen,
-	0 /* load_font */
+	NULL,			/* load_font */
 };
 
 static const struct wsdisplay_emulops stic_emulops = {
@@ -280,6 +287,8 @@ static const struct wsscreen_list stic_screenlist = {
 
 struct	stic_info stic_consinfo;
 static struct	stic_screen stic_consscr;
+static struct	stic_info *stic_info[STIC_MAXDV];
+static int	stic_unit;
 
 void
 stic_init(struct stic_info *si)
@@ -301,7 +310,7 @@ stic_init(struct stic_info *si)
 	tc_syncbus();
 	DELAY(1000);
 
-	/* Finish the initalization. */
+	/* Finish the initialization. */
 	SELECT(vdac, BT459_IREG_COMMAND_1);
 	REG(vdac, bt_reg) = 0x00000000; tc_wmb();
 	REG(vdac, bt_reg) = 0x00c2c2c2; tc_wmb();
@@ -345,6 +354,8 @@ stic_init(struct stic_info *si)
 #endif
 
 	stic_setup_vdac(si);
+	stic_clear_screen(si);
+	si->si_dispmode = WSDISPLAYIO_MODE_EMUL;
 }
 
 void
@@ -361,7 +372,7 @@ stic_reset(struct stic_info *si)
 	sr->sr_sticsr = 0x00000030;	/* Get the STIC's attention. */
 	tc_wmb();
 	tc_syncbus();
-	DELAY(4000);			/* wait 4ms for STIC to respond. */
+	DELAY(2000);			/* wait 2ms for STIC to respond. */
 	sr->sr_sticsr = 0x00000000;	/* Hit the STIC's csr again... */
 	tc_wmb();
 	sr->sr_buscsr = 0xffffffff;	/* and bash its bus-acess csr. */
@@ -390,14 +401,17 @@ stic_reset(struct stic_info *si)
 	}
 
 	/*
-	 * Initialize STIC video registers.
+	 * Initialize STIC video registers.  Enable error and vertical
+	 * retrace interrupts.  Set the packet done flag so the Xserver will
+	 * not time-out on the first packet submitted.
 	 */
 	sr->sr_vblank = (1024 << 16) | 1063;
 	sr->sr_vsync = (1027 << 16) | 1030;
 	sr->sr_hblank = (255 << 16) | 340;
 	sr->sr_hsync2 = 245;
 	sr->sr_hsync = (261 << 16) | 293;
-	sr->sr_ipdvint = STIC_INT_CLR | STIC_INT_WE | STIC_INT_P;
+	sr->sr_ipdvint =
+	    STIC_INT_WE | STIC_INT_P | STIC_INT_E_EN | STIC_INT_V_EN;
 	sr->sr_sticsr = 8;
 	tc_wmb();
 	tc_syncbus();
@@ -407,6 +421,12 @@ void
 stic_attach(struct device *self, struct stic_info *si, int console)
 {
 	struct wsemuldisplaydev_attach_args waa;
+
+	if (stic_unit < STIC_MAXDV) {
+		stic_info[stic_unit] = si;
+		si->si_unit = stic_unit++;
+	} else
+		si->si_unit = -1;
 
 	callout_init(&si->si_switch_callout);
 
@@ -423,6 +443,7 @@ stic_attach(struct device *self, struct stic_info *si, int console)
 	waa.scrdata = &stic_screenlist;
 	waa.accessops = &stic_accessops;
 	waa.accesscookie = si;
+
 	config_found(self, &waa, wsemuldisplaydevprint);
 }
 
@@ -445,26 +466,28 @@ stic_cnattach(struct stic_info *si)
 	wsdisplay_cnattach(&stic_stdscreen, ss, 0, 0, defattr);
 }
 
-static void
+void
 stic_setup_vdac(struct stic_info *si)
 {
 	u_int8_t *ip, *mp;
-	int r, c, o, b, i;
+	int r, c, o, b, i, s;
+
+	s = spltty();
 
 	ip = (u_int8_t *)si->si_cursor.cc_image;
 	mp = ip + (sizeof(si->si_cursor.cc_image) >> 1);
 	memset(ip, 0, sizeof(si->si_cursor.cc_image));
 
 	for (r = 0; r < si->si_fonth; r++) {
-		for (c = 0; c < si->si_fontw; c++) {
+		for (c = r & 1; c < si->si_fontw; c += 2) {
 			o = c >> 3;
 			b = 1 << (c & 7);
 			ip[o] |= b;
 			mp[o] |= b;
 		}
 
-		ip += 16;
-		mp += 16;
+		ip += 8;
+		mp += 8;
 	}
 
 	si->si_cursor.cc_size.x = 64;
@@ -488,13 +511,40 @@ stic_setup_vdac(struct stic_info *si)
 
 	si->si_flags |= SI_CMAP_CHANGED | SI_CURSHAPE_CHANGED |
 	    SI_CURCMAP_CHANGED;
+
+	splx(s);
 }
 
-static int
+void
+stic_clear_screen(struct stic_info *si)
+{
+	u_int32_t *pb;
+	int i;
+
+	/*
+	 * Do this twice, since the first packet after a reset may be
+	 * silently ignored.
+	 */
+	for (i = 0; i < 2; i++) {
+		pb = (*si->si_pbuf_get)(si);
+
+		pb[0] = STAMP_CMD_LINES | STAMP_RGB_CONST | STAMP_LW_PERPACKET;
+		pb[1] = 0x01ffffff;
+		pb[2] = 0;
+		pb[3] = STAMP_UPDATE_ENABLE | STAMP_METHOD_COPY;
+		pb[4] = (1024 << 2) - 1;
+		pb[5] = 0;
+		pb[6] = 0;
+		pb[7] = (1280 << 19) | ((1024 << 3) + pb[4]);
+
+		(*si->si_pbuf_post)(si, pb);
+	}
+}
+
+int
 sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct stic_info *si;
-	struct stic_xinfo *sxi;
 
 	si = v;
 
@@ -553,23 +603,18 @@ sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (stic_set_cursor(si, (struct wsdisplay_cursor *)data));
 
 	case WSDISPLAYIO_SMODE:
-		if (*(int *)data == WSDISPLAYIO_MODE_EMUL) {
+		si->si_dispmode = *(int *)data;
+		if (si->si_dispmode == WSDISPLAYIO_MODE_EMUL) {
+			(*si->si_ioctl)(si, STICIO_STOPQ, NULL, flag, p);
 			stic_setup_vdac(si);
 			stic_flush(si);
+			stic_clear_screen(si);
 			stic_do_switch(si->si_curscreen);
 		}
 		return (0);
 
 	case STICIO_RESET:
 		stic_reset(si);
-		return (0);
-
-	case STICIO_GXINFO:
-		sxi = (struct stic_xinfo *)data;
-		sxi->sxi_stampw = si->si_stampw;
-		sxi->sxi_stamph = si->si_stamph;
-		sxi->sxi_buf_size = si->si_buf_size;
-		sxi->sxi_buf_phys = (u_long)si->si_buf_phys;
 		return (0);
 	}
 
@@ -579,37 +624,7 @@ sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	return (ENOTTY);
 }
 
-static paddr_t
-sticmmap(void *v, off_t offset, int prot)
-{
-	struct stic_info *si;
-	struct stic_xmap sxm;
-	paddr_t pa;
-
-	si = v;
-
-	if (offset < 0)
-		return ((paddr_t)-1L);
-
-	if (offset < sizeof(sxm.sxm_stic)) {
-		pa = STIC_KSEG_TO_PHYS(si->si_stic);
-		return (machine_btop(pa + offset));
-	}
-	offset -= sizeof(sxm.sxm_stic);
-
-	if (offset < sizeof(sxm.sxm_poll)) {
-		pa = STIC_KSEG_TO_PHYS(si->si_slotbase);
-		return (machine_btop(pa + offset));
-	}
-	offset -= sizeof(sxm.sxm_poll);
-
-	if (offset < si->si_buf_size)
-		return (machine_btop(si->si_buf_phys + offset));
-
-	return ((paddr_t)-1L);
-}
-
-static void
+void
 stic_setup_backing(struct stic_info *si, struct stic_screen *ss)
 {
 	int size;
@@ -619,7 +634,7 @@ stic_setup_backing(struct stic_info *si, struct stic_screen *ss)
 	memset(ss->ss_backing, 0, size);
 }
 
-static int
+int
 stic_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		  int *curxp, int *curyp, long *attrp)
 {
@@ -647,7 +662,7 @@ stic_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	return (0);
 }
 
-static void
+void
 stic_free_screen(void *v, void *cookie)
 {
 	struct stic_screen *ss;
@@ -665,7 +680,7 @@ stic_free_screen(void *v, void *cookie)
 	free(ss, M_DEVBUF);
 }
 
-static int
+int
 stic_show_screen(void *v, void *cookie, int waitok,
 		 void (*cb)(void *, int, int), void *cbarg)
 {
@@ -687,7 +702,7 @@ stic_show_screen(void *v, void *cookie, int waitok,
 	return (0);
 }
 
-static void
+void
 stic_do_switch(void *cookie)
 {
 	struct stic_screen *ss;
@@ -704,7 +719,8 @@ stic_do_switch(void *cookie)
 #endif
 
 	/* Swap in the new screen, and temporarily disable its backing. */
-	si->si_curscreen->ss_flags ^= SS_ACTIVE;
+	if (si->si_curscreen != NULL)
+		si->si_curscreen->ss_flags ^= SS_ACTIVE;
 	si->si_curscreen = ss;
 	ss->ss_flags |= SS_ACTIVE;
 	sp = ss->ss_backing;
@@ -754,7 +770,7 @@ stic_do_switch(void *cookie)
 	}
 }
 
-static int
+int
 stic_alloc_attr(void *cookie, int fg, int bg, int flags, long *attr)
 {
 	long tmp;
@@ -775,7 +791,7 @@ stic_alloc_attr(void *cookie, int fg, int bg, int flags, long *attr)
 	return (0);
 }
 
-static void
+void
 stic_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct stic_info *si;
@@ -816,7 +832,7 @@ stic_erasecols(void *cookie, int row, int col, int num, long attr)
 	(*si->si_pbuf_post)(si, pb);
 }
 
-static void
+void
 stic_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct stic_info *si;
@@ -855,7 +871,7 @@ stic_eraserows(void *cookie, int row, int num, long attr)
 	(*si->si_pbuf_post)(si, pb);
 }
 
-static void
+void
 stic_copyrows(void *cookie, int src, int dst, int height)
 {
 	struct stic_info *si;
@@ -915,7 +931,7 @@ stic_copyrows(void *cookie, int src, int dst, int height)
 	}
 }
 
-static void
+void
 stic_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct stic_info *si;
@@ -967,7 +983,7 @@ stic_copycols(void *cookie, int row, int src, int dst, int num)
 	(*si->si_pbuf_post)(si, pbs);
 }
 
-static void
+void
 stic_putchar(void *cookie, int r, int c, u_int uc, long attr)
 {
 	struct wsdisplay_font *font;
@@ -1087,7 +1103,7 @@ stic_putchar(void *cookie, int r, int c, u_int uc, long attr)
 	(*si->si_pbuf_post)(si, pb);
 }
 
-static int
+int
 stic_mapchar(void *cookie, int c, u_int *cp)
 {
 	struct stic_info *si;
@@ -1108,17 +1124,20 @@ stic_mapchar(void *cookie, int c, u_int *cp)
 	return (5);
 }
 
-static void
+void
 stic_cursor(void *cookie, int on, int row, int col)
 {
 	struct stic_screen *ss;
 	struct stic_info *si;
+	int s;
 
 	ss = cookie;
 	si = ss->ss_si;
 
 	ss->ss_curx = col * si->si_fontw;
 	ss->ss_cury = row * si->si_fonth;
+
+	s = spltty();
 
 	if (on)
 		ss->ss_flags |= SS_CURENB;
@@ -1138,6 +1157,8 @@ stic_cursor(void *cookie, int on, int row, int col)
 		if (si->si_disptype == WSDISPLAY_TYPE_PXG)
 			stic_flush(si);
 	}
+
+	splx(s);
 }
 
 void
@@ -1185,30 +1206,18 @@ stic_flush(struct stic_info *si)
 		mp = (u_int8_t *)(si->si_cursor.cc_image + CURSOR_MAX_SIZE);
 
 		bcnt = 0;
-		SELECT(vdac, BT459_IREG_CRAM_BASE+0);
+		SELECT(vdac, BT459_IREG_CRAM_BASE);
 		/* 64 pixel scan line is consisted with 16 byte cursor ram */
-		while (bcnt < si->si_cursor.cc_size.y * 16) {
-			/* pad right half 32 pixel when smaller than 33 */
-			if ((bcnt & 0x8) && si->si_cursor.cc_size.x < 33) {
-				REG(vdac, bt_reg) = 0; tc_wmb();
-				REG(vdac, bt_reg) = 0; tc_wmb();
-			} else {
-				img = *ip++;
-				msk = *mp++;
-				img &= msk;	/* cookie off image */
-				u = (msk & 0x0f) << 4 | (img & 0x0f);
-				REG(vdac, bt_reg) = DUPBYTE0(shuffle[u]);
-				tc_wmb();
-				u = (msk & 0xf0) | (img & 0xf0) >> 4;
-				REG(vdac, bt_reg) = DUPBYTE0(shuffle[u]);
-				tc_wmb();
-			}
-			bcnt += 2;
-		}
-		/* pad unoccupied scan lines */
 		while (bcnt < CURSOR_MAX_SIZE * 16) {
-			REG(vdac, bt_reg) = 0; tc_wmb();
-			REG(vdac, bt_reg) = 0; tc_wmb();
+			img = *ip++;
+			msk = *mp++;
+			img &= msk;	/* cookie off image */
+			u = (msk & 0x0f) << 4 | (img & 0x0f);
+			REG(vdac, bt_reg) = DUPBYTE0(shuffle[u]);
+			tc_wmb();
+			u = (msk & 0xf0) | (img & 0xf0) >> 4;
+			REG(vdac, bt_reg) = DUPBYTE0(shuffle[u]);
+			tc_wmb();
 			bcnt += 2;
 		}
 	}
@@ -1232,7 +1241,7 @@ stic_flush(struct stic_info *si)
 	}
 }
 
-static int
+int
 stic_get_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 {
 	u_int index, count;
@@ -1254,10 +1263,11 @@ stic_get_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 	return (0);
 }
 
-static int
+int
 stic_set_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 {
 	u_int index, count;
+	int s;
 
 	index = p->index;
 	count = p->count;
@@ -1270,11 +1280,12 @@ stic_set_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 	    !uvm_useracc(p->blue, count, B_READ))
 		return (EFAULT);
 
+	s = spltty();
 	copyin(p->red, &si->si_cmap.r[index], count);
 	copyin(p->green, &si->si_cmap.g[index], count);
 	copyin(p->blue, &si->si_cmap.b[index], count);
-
 	si->si_flags |= SI_CMAP_CHANGED;
+	splx(s);
 
 	/*
 	 * XXX Since we don't yet receive vblank interrupts from the PXG, we
@@ -1286,12 +1297,13 @@ stic_set_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 	return (0);
 }
 
-static int
+int
 stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 {
 #define	cc (&si->si_cursor)
 	u_int v, index, count, icount;
 	struct stic_screen *ss;
+	int s;
 
 	v = p->which;
 	ss = si->si_curscreen;
@@ -1299,7 +1311,7 @@ stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 	if ((v & WSDISPLAY_CURSOR_DOCMAP) != 0) {
 		index = p->cmap.index;
 		count = p->cmap.count;
-		if (index >= 2 || (index + count) > 2)
+		if (index >= 2 || (index + count) > 2)			
 			return (EINVAL);
 		if (!uvm_useracc(p->cmap.red, count, B_READ) ||
 		    !uvm_useracc(p->cmap.green, count, B_READ) ||
@@ -1323,6 +1335,8 @@ stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 			stic_set_curpos(si, &p->pos);
 	}
 
+	s = spltty();
+
 	if ((v & WSDISPLAY_CURSOR_DOCUR) != 0) {
 		if (p->enable)
 			ss->ss_flags |= SS_CURENB;
@@ -1339,12 +1353,13 @@ stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 	}
 
 	if ((v & WSDISPLAY_CURSOR_DOSHAPE) != 0) {
-		cc->cc_size = p->size;
-		memset(cc->cc_image, 0, sizeof cc->cc_image);
+		memset(cc->cc_image, 0, sizeof(cc->cc_image));
 		copyin(p->image, cc->cc_image, icount);
-		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, icount);
+		copyin(p->mask, cc->cc_image + CURSOR_MAX_SIZE, icount);
 		si->si_flags |= SI_CURSHAPE_CHANGED;
 	}
+
+	splx(s);
 
 	/*
 	 * XXX Since we don't yet receive vblank interrupts from the PXG, we
@@ -1357,7 +1372,7 @@ stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 #undef cc
 }
 
-static int
+int
 stic_get_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 {
 
@@ -1365,7 +1380,7 @@ stic_get_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 	return (ENOTTY);
 }
 
-static void
+void
 stic_set_curpos(struct stic_info *si, struct wsdisplay_curpos *curpos)
 {
 	int x, y;
@@ -1387,7 +1402,7 @@ stic_set_curpos(struct stic_info *si, struct wsdisplay_curpos *curpos)
 	stic_set_hwcurpos(si);
 }
 
-static void
+void
 stic_set_hwcurpos(struct stic_info *si)
 {
 	volatile u_int32_t *vdac;
@@ -1407,4 +1422,88 @@ stic_set_hwcurpos(struct stic_info *si)
 	REG(vdac, bt_reg) = DUPBYTE0(y); tc_wmb();
 	REG(vdac, bt_reg) = DUPBYTE1(y); tc_wmb();
 	splx(s);
+}
+
+/*
+ * STIC control inteface.  We have a seperate device for mapping the board,
+ * because access to the DMA engine means that it's possible to circumvent
+ * the securelevel mechanism.  Given the way devices work in the BSD kernel,
+ * and given the unfortunate design of the mmap() call it's near impossible
+ * to protect against this using a shared device (i.e. wsdisplay).
+ *
+ * This is a gross hack... Hopefully not too many other devices will need
+ * it.
+ */
+int
+sticopen(dev_t dev, int flag, int mode, struct proc *p)
+{
+	struct stic_info *si;
+	int s;
+
+	if (securelevel > 0)
+		return (EPERM);
+	if (minor(dev) >= STIC_MAXDV)
+		return (ENXIO);
+	if ((si = stic_info[minor(dev)]) == NULL)
+		return (ENXIO);
+
+	s = spltty();
+	if ((si->si_flags & SI_DVOPEN) != 0) {
+		splx(s);
+		return (EBUSY);
+	}
+	si->si_flags |= SI_DVOPEN;
+	splx(s);
+
+	return (0);
+}
+
+int
+sticclose(dev_t dev, int flag, int mode, struct proc *p)
+{
+	struct stic_info *si;
+	int s;
+
+	si = stic_info[minor(dev)];
+	s = spltty();
+	si->si_flags &= ~SI_DVOPEN;
+	splx(s);
+
+	return (0);
+}
+
+paddr_t
+sticmmap(dev_t dev, off_t offset, int prot)
+{
+	struct stic_info *si;
+	struct stic_xmap *sxm;
+	paddr_t pa;
+
+	si = stic_info[minor(dev)];
+	sxm = NULL;
+
+	if (securelevel > 0)
+		return (-1L);
+	if (si->si_dispmode != WSDISPLAYIO_MODE_MAPPED)	
+		return (-1L);
+
+	if (offset < 0)
+		return ((paddr_t)-1L);
+
+	if (offset < sizeof(sxm->sxm_stic)) {
+		pa = STIC_KSEG_TO_PHYS(si->si_stic);
+		return (machine_btop(pa + offset));
+	}
+	offset -= sizeof(sxm->sxm_stic);
+
+	if (offset < sizeof(sxm->sxm_poll)) {
+		pa = STIC_KSEG_TO_PHYS(si->si_slotbase);
+		return (machine_btop(pa + offset));
+	}
+	offset -= sizeof(sxm->sxm_poll);
+
+	if (offset < si->si_buf_size)
+		return (machine_btop(si->si_buf_phys + offset));
+
+	return ((paddr_t)-1L);
 }

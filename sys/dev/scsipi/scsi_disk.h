@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.17 1998/10/30 02:07:15 thorpej Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.17.24.1 2001/09/21 22:36:13 nathanw Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -265,4 +265,36 @@ union scsi_disk_pages {
 		u_int8_t reserved3;
 		u_int8_t reserved4;
 	} flex_geometry;
+	struct page_caching {
+		u_int8_t pg_code;	/* page code (should be 8) */
+		u_int8_t pg_length;	/* page length (should be 0x0a) */
+		u_int8_t flags;		/* cache parameter flags */
+#define	CACHING_RCD	0x01		/* read cache disable */
+#define	CACHING_MF	0x02		/* multiplcation factor */
+#define	CACHING_WCE	0x04		/* write cache enable (write-back) */
+#define	CACHING_SIZE	0x08		/* use CACHE SEGMENT SIZE */
+#define	CACHING_DISC	0x10		/* pftch across time discontinuities */
+#define	CACHING_CAP	0x20		/* caching analysis permitted */
+#define	CACHING_ABPF	0x40		/* abort prefetch */
+#define	CACHING_IC	0x80		/* initiator control */
+		u_int8_t ret_prio;	/* retention priority */
+#define	READ_RET_PRIO_SHIFT 4
+#define	RET_PRIO_DONT_DISTINGUISH	0x0
+#define	RET_PRIO_REPLACE_READ_WRITE	0x1
+#define	RET_PRIO_REPLACE_PREFETCH	0xf
+		u_int8_t dis_prefetch_xfer_len[2];
+		u_int8_t min_prefetch[2];
+		u_int8_t max_prefetch[2];
+		u_int8_t max_prefetch_ceiling[2];
+		u_int8_t flags2;	/* additional cache param flags */
+#define	CACHING2_VS0	0x08		/* vendor specific bit */
+#define	CACHING2_VS1	0x10		/* vendor specific bit */
+#define	CACHING2_DRA	0x20		/* disable read ahead */
+#define	CACHING2_LBCSS	0x40		/* CACHE SEGMENT SIZE is blocks */
+#define	CACHING2_FSW	0x80		/* force sequential write */
+		u_int8_t num_cache_segments;
+		u_int8_t cache_segment_size[2];
+		u_int8_t reserved1;
+		u_int8_t non_cache_segment_size[2];
+	} caching_params;
 };

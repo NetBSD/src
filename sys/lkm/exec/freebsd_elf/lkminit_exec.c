@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.2.4.1 2001/06/21 20:07:28 nathanw Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.2.4.2 2001/09/21 22:36:33 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ static struct execsw exec_freebsd_elf =
 	  { ELFNAME2(freebsd,probe) },
 	  NULL, EXECSW_PRIO_ANY,
 	  FREEBSD_ELF_AUX_ARGSIZ,
-	  elf32_copyargs, freebsd_setregs };	/* FreeBSD 32bit ELF bins (not 64bit safe )*/
+	  elf32_copyargs };	/* FreeBSD 32bit ELF bins (not 64bit safe )*/
 
 
 /*

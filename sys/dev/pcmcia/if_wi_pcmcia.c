@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.3.2.3 2001/08/24 00:10:29 nathanw Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.3.2.4 2001/09/21 22:36:06 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -184,6 +184,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_EMTAC_WLAN,
 	  PCMCIA_CIS_EMTAC_WLAN,
 	  PCMCIA_STR_EMTAC_WLAN },
+
+	{ PCMCIA_VENDOR_INTERSIL,
+	  PCMCIA_PRODUCT_GEMTEK_WLAN,
+	  PCMCIA_CIS_GEMTEK_WLAN,
+	  PCMCIA_STR_GEMTEK_WLAN },
 
 	{ 0,
 	  0,

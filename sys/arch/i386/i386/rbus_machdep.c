@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.10.4.2 2001/08/24 00:08:33 nathanw Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.10.4.3 2001/09/21 22:35:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -51,6 +51,13 @@
 #include <dev/pci/pcivar.h>
 #ifdef PCIBIOS_ADDR_FIXUP
 #include <arch/i386/pci/pci_addr_fixup.h>
+#endif
+
+#ifndef RBUS_IO_BASE
+#define	RBUS_IO_BASE	0x4000
+#endif
+#ifndef RBUS_IO_SIZE
+#define	RBUS_IO_SIZE	0x2000
 #endif
 
 #ifndef RBUS_MIN_START
@@ -118,8 +125,8 @@ rbus_pccbb_parent_io(pa)
 	extern struct extent *ioport_ex;
 	ex = ioport_ex;
 #endif
-	start = 0x4000;
-	size  = 0x2000;
+	start = RBUS_IO_BASE;
+	size  = RBUS_IO_SIZE;
 
 	ret = rbus_new_root_share(pa->pa_iot, ex, start, size, 0);
 	if(ret == NULL) {

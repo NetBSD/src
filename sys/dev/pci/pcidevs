@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.306.2.4 2001/08/24 00:10:16 nathanw Exp $
+$NetBSD: pcidevs,v 1.306.2.5 2001/09/21 22:35:59 nathanw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -544,6 +544,7 @@ vendor ANTARES		0x1754	Antares Microsystems, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor LAVA		0x1407	Lava Semiconductor Manufacturing, Inc.
+vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
 vendor ADDTRON		0x4033	Addtron Technology
@@ -608,6 +609,7 @@ product 3DFX VOODOO	0x0001	Voodoo
 product 3DFX VOODOO2	0x0002	Voodoo2
 product 3DFX BANSHEE	0x0003	Banshee
 product 3DFX VOODOO3	0x0005	Voodoo3
+product 3DFX VOODOO5	0x0009	Voodoo 4/5
 
 /* 3D Labs products */
 product 3DLABS 300SX		0x0001	GLINT 300SX
@@ -723,10 +725,10 @@ product ALTEON ACENIC		0x0001	ACEnic 1000baseSX Gigabit Ethernet
 product ALTEON ACENIC_COPPER	0x0002	ACEnic 1000baseT Gigabit Ethernet
 
 /* AMD products */
-product AMD PCNET_PCI	0x2000	79c970 PCnet-PCI LANCE Ethernet
-product AMD PCNET_HOME	0x2001	79c978 PCnet-PCI Home
-product AMD PCSCSI_PCI	0x2020	53c974 PCscsi-PCI SCSI
-product AMD PCNETS_PCI	0x2040	79C974 PCnet-PCI Ethernet & SCSI
+product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
+product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
+product AMD PCSCSI_PCI	0x2020	PCscsi-PCI SCSI
+product AMD PCNETS_PCI	0x2040	PCnet-PCI Ethernet & SCSI
 product AMD SC751_SC	0x7006	AMD751 System Controller
 product AMD SC751_PPB	0x7007	AMD751 PCI-to-PCI Bridge
 product AMD PBC756_ISA	0x7408	AMD756 PCI-to-ISA Bridge
@@ -765,12 +767,14 @@ product APPLE GMAC		0x0021	GMAC Ethernet
 product APPLE KEYLARGO		0x0022	MAC-IO I/O Controller (KeyLargo)
 product APPLE GMAC2		0x0024	GMAC Ethernet
 product APPLE PANGEA_MACIO	0x0025	MAC-IO I/O Controller (Pangea)
+product APPLE PANGEA_USB	0x0026	Pangea USB Controller
 product APPLE PANGEA_AGP	0x0027	Pangea AGP Interface
 product APPLE PANGEA_PCI1	0x0028	Pangea Host-PCI Bridge
 product APPLE PANGEA_PCI2	0x0029	Pangea Host-PCI Bridge
-product APPLE UNIN_AGP		0x002d	Uni-N AGP Interface
-product APPLE UNIN_PCI1		0x002e	Uni-N Host-External PCI Bridge
-product APPLE UNIN_PCI2		0x002f	Uni-N Host-Internal PCI Bridge
+product APPLE UNINORTH_AGP2	0x002d	UniNorth AGP Interface
+product APPLE UNINORTH3		0x002e	UniNorth Host-PCI Bridge
+product APPLE UNINORTH4		0x002f	UniNorth Host-PCI Bridge
+product APPLE PANGEA_FW		0x0030	Pangea Firewire
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
@@ -854,6 +858,9 @@ product AUREAL AU8820		0x0001  AU8820 Vortex Digital Audio Processor
 /* Applied Micro Circuts products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
 product AMCIRCUITS LANAI	0x8043	Myrinet LANai Interface
+product AMCIRCUITS CAMAC	0x812d	FZJ/ZEL CAMAC controller
+product AMCIRCUITS VICBUS	0x812e	FZJ/ZEL VICBUS interface
+product AMCIRCUITS PCISYNC	0x812f	FZJ/ZEL Synchronisation module
 product AMCIRCUITS S5920	0x5920  S5920 PCI Target
 
 /* Atronics products */
@@ -1055,7 +1062,8 @@ product DLINK DFE530TXPLUS	0x1300	DFE-530TXPLUS 10/100 Ethernet
 product DLINK DL4000		0x4000	DL-4000 Gigabit Ethernet
 
 /* Distributed Processing Technology products */
-product DPT SC_RAID	0xa400	SmartCache/SmartRAID
+product DPT SC_RAID	0xa400	SmartCache/SmartRAID (EATA)
+product	DPT I960_PPB	0xa500	PCI-PCI Bridge
 product DPT RAID_I2O	0xa501	SmartRAID (I2O)
 product DPT MEMCTLR	0x1012	Memory Controller
 
@@ -1085,8 +1093,10 @@ product ESSTECH	MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
 product ESSTECH	MAESTRO2	0x1968	Maestro 2 PCI Audio Accelerator
 product ESSTECH	SOLO1		0x1969	Solo-1 PCI AudioDrive
 product ESSTECH	MAESTRO2E	0x1978	Maestro 2E PCI Audio Accelerator
+product ESSTECH	ALLEGRO1	0x1988	Allegro-1 PCI Audio Accelerator
 product ESSTECH	MAESTRO3	0x1998	Maestro 3 PCI Audio Accelerator
 product ESSTECH	MAESTRO3MODEM	0x1999	Maestro 3 Modem
+product ESSTECH MAESTRO3_2	0x199a	Maestro 3 PCI Audio Accelerator
 
 /* ESS Technology Inc products */
 product ESSTECH2 MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
@@ -1111,6 +1121,13 @@ product FORTEMEDIA	FM801	0x0801	Forte Media 801 Sound
 /* Future Domain products */
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
 
+/* FZ Juelich / ZEL products */
+product FZJZEL	GIGALINK	0x0001	Gigabit link / STR1100
+product FZJZEL	PLXHOTLINK	0x0002	HOTlink interface
+product FZJZEL	PLXCAMAC	0x0004	CAMAC controller
+product FZJZEL	PROFIBUS	0x0005	PROFIBUS interface
+product FZJZEL	AMCCHOTLINK	0x0006	old HOTlink interface
+
 /* Efficient Networks products */
 product EFFICIENTNETS ENI155PF	0x0000	155P-MF1 ATM (FPGA)
 product EFFICIENTNETS ENI155PA	0x0002	155P-MF1 ATM (ASIC)
@@ -1131,6 +1148,8 @@ product HP J2585A	0x1030	J2585A
 /* Hi/Fn products */
 product HIFN 7751	0x0005	7751
 product HIFN 6500	0x0006	6500
+product HIFN 7811	0x0007	7811
+product HIFN 7951	0x0012	7951
 
 /* IBM products */
 product IBM MCABRIDGE 	0x0002	MCA Bridge
@@ -1179,6 +1198,7 @@ product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL 82452		0x1000	PRO/1000 Gigabit Ethernet (i82452)
 product INTEL 82453		0x1001	PRO/1000 Gigabit Ethernet (i82453)
 product INTEL 82453_SC		0x1003	PRO/1000 Gigabit Ethernet (i82453-SC)
+product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
 product INTEL PRO_100_VE_0	0x1031	PRO/100 VE Network Controller
 product INTEL PRO_100_VE_1	0x1032	PRO/100 VE Network Controller
 product INTEL PRO_100_VM_0	0x1033	PRO/100 VM Network Controller
@@ -1197,17 +1217,8 @@ product INTEL 82815_NOGRAPH_AGP	0x1121	82815 AGP
 product INTEL 82815_FULL_HUB	0x1130	82815 Hub
 product INTEL 82815_FULL_AGP	0x1131	82815 AGP
 product INTEL 82815_FULL_GRAPH	0x1132	82815 Graphics
-product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
-product INTEL 82815_01		0x1101	82815 (Solano) PCI to AGP Bridge
-product INTEL 82815_02		0x1102	82815 (Solano) Internal GUI Accelerator
-product INTEL 82815_10		0x1110	82815 (Solano) Host to Hub Bridge, AGP Not Implemented
-product INTEL 82815_12		0x1112	82815 (Solano) Internal GUI Accelerator
-product INTEL 82815_20		0x1120	82815 (Solano) Host to Hub Bridge, AGP Implemented
-product INTEL 82815_21		0x1121	82815 (Solano) PCI to AGP Bridge
-product INTEL 82815_30		0x1130	82815 (Solano) Host to Hub Bridge (Fully featured chipset)
-product INTEL 82815_31		0x1131	82815 (Solano) PCI to AGP Bridge
-product INTEL 82815_32		0x1132	82815 (Solano) Interal GUI Accelerator
 product INTEL 82806AA		0x1161	82806AA PCI64 Hub Advanced Programmable Interrupt Controller
+product INTEL IXP1200		0x1200	IXP1200 Network Processor
 product INTEL 82559ER		0x1209	82559ER Fast Ethernet LAN Controller
 product INTEL 82092AA		0x1222	82092AA IDE controller
 product INTEL SAA7116		0x1223	SAA7116
@@ -1534,7 +1545,8 @@ product PROMISE DC5030	0x5300	DC5030
 product PROMISE ULTRA33	0x4d33	Ultra33/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA66	0x4d38	Ultra66/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA100 0x4d30	Ultra100/ATA Bus Master IDE Accelerator
-product PROMISE ULTRA100X 0x0d30 Ultra100/ATA Bus Master IDE Accelerator
+product PROMISE ULTRA100X 0x0d30 Ultra100X/ATA Bus Master IDE Accelerator
+product PROMISE ULTRA100TX2 0x4d68 Ultra100TX2/ATA Bus Master IDE Accelerator
 
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
@@ -1681,6 +1693,7 @@ product SUN EBUSIII	0x1100	PCIO Ebus2 (US III)
 product SUN ERINETWORK	0x1101	ERI Ethernet
 product SUN FIREWIRE	0x1102	FireWire controller
 product SUN USB		0x1103	USB controller
+product SUN GEMNETWORK	0x2bad	GEM Gigabit Ethernet
 product SUN SIMBA	0x5000	Simba PCI bridge
 product SUN PSYCHO	0x8000	psycho PCI controller
 product SUN MS_IIep	0x9000	microSPARC IIep PCI

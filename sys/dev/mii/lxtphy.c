@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.21.2.1 2001/06/21 20:04:20 nathanw Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.21.2.2 2001/09/21 22:35:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -88,19 +88,20 @@
 
 #include <dev/mii/lxtphyreg.h>
 
-int	lxtphymatch __P((struct device *, struct cfdata *, void *));
-void	lxtphyattach __P((struct device *, struct device *, void *));
+int	lxtphymatch(struct device *, struct cfdata *, void *);
+void	lxtphyattach(struct device *, struct device *, void *);
 
 struct cfattach lxtphy_ca = {
 	sizeof(struct mii_softc), lxtphymatch, lxtphyattach, mii_phy_detach,
 	    mii_phy_activate
 };
 
-int	lxtphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	lxtphy_status __P((struct mii_softc *));
-void	lxtphy_reset __P((struct mii_softc *));
-static void lxtphy_set_tp __P((struct mii_softc *));
-static void lxtphy_set_fx __P((struct mii_softc *));
+int	lxtphy_service(struct mii_softc *, struct mii_data *, int);
+void	lxtphy_status(struct mii_softc *);
+void	lxtphy_reset(struct mii_softc *);
+
+static void lxtphy_set_tp(struct mii_softc *);
+static void lxtphy_set_fx(struct mii_softc *);
 
 const struct mii_phy_funcs lxtphy_funcs = {
 	lxtphy_service, lxtphy_status, lxtphy_reset,
@@ -115,10 +116,7 @@ const struct mii_phydesc lxtphys[] = {
 };
 
 int
-lxtphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lxtphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -129,9 +127,7 @@ lxtphymatch(parent, match, aux)
 }
 
 void
-lxtphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lxtphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -173,10 +169,7 @@ lxtphyattach(parent, self, aux)
 }
 
 int
-lxtphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+lxtphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -243,8 +236,7 @@ lxtphy_service(sc, mii, cmd)
 }
 
 void
-lxtphy_status(sc)
-	struct mii_softc *sc;
+lxtphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -290,8 +282,7 @@ lxtphy_status(sc)
 }
 
 void
-lxtphy_reset(sc)
-	struct mii_softc *sc;
+lxtphy_reset(struct mii_softc *sc)
 {
 
 	mii_phy_reset(sc);
@@ -300,8 +291,7 @@ lxtphy_reset(sc)
 }
 
 static void
-lxtphy_set_tp(sc)
-	struct mii_softc *sc;
+lxtphy_set_tp(struct mii_softc *sc)
 {
 	int cfg;
 
@@ -311,8 +301,7 @@ lxtphy_set_tp(sc)
 }
 
 static void
-lxtphy_set_fx(sc)
-	struct mii_softc *sc;
+lxtphy_set_fx(struct mii_softc *sc)
 {
 	int cfg;
 

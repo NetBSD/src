@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.2 2001/06/21 20:06:57 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.3 2001/09/21 22:36:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -188,7 +188,6 @@ sys_clock_settime(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	clockid_t clock_id;
-	struct timeval atv;
 	struct timespec ats;
 	int error;
 
@@ -196,14 +195,27 @@ sys_clock_settime(l, v, retval)
 		return (error);
 
 	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
-		return (EINVAL);
 
 	if ((error = copyin(SCARG(uap, tp), &ats, sizeof(ats))) != 0)
 		return (error);
 
-	TIMESPEC_TO_TIMEVAL(&atv,&ats);
-	if ((error = settime(&atv)))
+	return (clock_settime1(clock_id, &ats));
+}
+
+
+int
+clock_settime1(clock_id, ats)
+	clockid_t clock_id;
+	struct timespec *ats;
+{
+	struct timeval atv;
+	int error;
+
+	if (clock_id != CLOCK_REALTIME)
+		return (EINVAL);
+
+	TIMESPEC_TO_TIMEVAL(&atv, ats);
+	if ((error = settime(&atv)) != 0)
 		return (error);
 
 	return 0;
@@ -347,26 +359,45 @@ sys_settimeofday(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct timeval atv;
 	struct timezone atz;
+	struct timeval *tv = NULL;
+	struct timezone *tzp = NULL;
 	int error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
+
 	/* Verify all parameters before changing time. */
-	if (SCARG(uap, tv) && (error = copyin(SCARG(uap, tv),
-	    &atv, sizeof(atv))))
-		return (error);
+	if (SCARG(uap, tv)) {
+		if ((error = copyin(SCARG(uap, tv), &atv, sizeof(atv))) != 0)
+			return (error);
+		tv = &atv;
+	}
 	/* XXX since we don't use tz, probably no point in doing copyin. */
-	if (SCARG(uap, tzp) && (error = copyin(SCARG(uap, tzp),
-	    &atz, sizeof(atz))))
-		return (error);
-	if (SCARG(uap, tv))
-		if ((error = settime(&atv)))
+	if (SCARG(uap, tzp)) {
+		if ((error = copyin(SCARG(uap, tzp), &atz, sizeof(atz))) != 0)
+			return (error);
+		tzp = &atz;
+	}
+
+	return settimeofday1(tv, tzp, p);
+}
+
+int
+settimeofday1(tv, tzp, p)
+	struct timeval *tv;
+	struct timezone *tzp;
+	struct proc *p;
+{
+	int error;
+
+	if (tv)
+		if ((error = settime(tv)) != 0)
 			return (error);
 	/*
 	 * NetBSD has no kernel notion of time zone, and only an
 	 * obsolete program would try to set it, so we log a warning.
 	 */
-	if (SCARG(uap, tzp))
+	if (tzp)
 		log(LOG_WARNING, "pid %d attempted to set the "
 		    "(obsolete) kernel time zone\n", p->p_pid); 
 	return (0);
@@ -389,8 +420,8 @@ sys_adjtime(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct timeval atv;
-	long ndelta, ntickdelta, odelta;
-	int s, error;
+	struct timeval *oatv = NULL;
+	int error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
@@ -398,10 +429,25 @@ sys_adjtime(l, v, retval)
 	error = copyin(SCARG(uap, delta), &atv, sizeof(struct timeval));
 	if (error)
 		return (error);
-	if (SCARG(uap, olddelta) != NULL &&
-	    uvm_useracc((caddr_t)SCARG(uap, olddelta), sizeof(struct timeval),
-	     B_WRITE) == FALSE)
-		return (EFAULT);
+
+	if (SCARG(uap, olddelta) != NULL) {
+		if (uvm_useracc((caddr_t)SCARG(uap, olddelta), 
+		    sizeof(struct timeval), B_WRITE) == FALSE)
+			return (EFAULT);
+		oatv = SCARG(uap, olddelta);
+	}
+
+	return adjtime1(&atv, oatv, p);
+}
+
+int
+adjtime1(delta, olddelta, p)
+	struct timeval *delta;
+	struct timeval *olddelta;
+	struct proc *p;
+{
+	long ndelta, ntickdelta, odelta;
+	int s;
 
 	/*
 	 * Compute the total correction and the rate at which to apply it.
@@ -410,7 +456,7 @@ sys_adjtime(l, v, retval)
 	 * hardclock(), tickdelta will become zero, lest the correction
 	 * overshoot and start taking us away from the desired final time.
 	 */
-	ndelta = atv.tv_sec * 1000000 + atv.tv_usec;
+	ndelta = delta->tv_sec * 1000000 + delta->tv_usec;
 	if (ndelta > bigadj || ndelta < -bigadj)
 		ntickdelta = 10 * tickadj;
 	else
@@ -431,11 +477,10 @@ sys_adjtime(l, v, retval)
 	tickdelta = ntickdelta;
 	splx(s);
 
-	if (SCARG(uap, olddelta)) {
-		atv.tv_sec = odelta / 1000000;
-		atv.tv_usec = odelta % 1000000;
-		(void) copyout(&atv, SCARG(uap, olddelta),
-		    sizeof(struct timeval));
+	if (olddelta) {
+		delta->tv_sec = odelta / 1000000;
+		delta->tv_usec = odelta % 1000000;
+		(void) copyout(delta, olddelta, sizeof(struct timeval));
 	}
 	return (0);
 }
@@ -522,7 +567,8 @@ sys_setitimer(l, v, retval)
 	if ((u_int)which > ITIMER_PROF)
 		return (EINVAL);
 	itvp = SCARG(uap, itv);
-	if (itvp && (error = copyin(itvp, &aitv, sizeof(struct itimerval))))
+	if (itvp && 
+	    (error = copyin(itvp, &aitv, sizeof(struct itimerval)) != 0))
 		return (error);
 	if (SCARG(uap, oitv) != NULL) {
 		SCARG(&getargs, which) = which;

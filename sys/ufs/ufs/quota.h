@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.9 2001/02/23 02:25:11 eeh Exp $	*/
+/*	$NetBSD: quota.h,v 1.9.2.1 2001/09/21 22:37:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -190,6 +190,7 @@ void	dqflush __P((struct vnode *));
 int	dqget __P((struct vnode *,
 	    u_long, struct ufsmount *, int, struct dquot **));
 void	dqinit __P((void));
+void	dqreinit __P((void));
 void	dqdone __P((void));
 void	dqref __P((struct dquot *));
 void	dqrele __P((struct vnode *, struct dquot *));

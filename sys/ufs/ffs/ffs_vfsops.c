@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.80.2.3 2001/08/24 00:13:18 nathanw Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.80.2.4 2001/09/21 22:37:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -104,11 +104,18 @@ struct vfsops ffs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	ffs_init,
+	ffs_reinit,
 	ffs_done,
 	ffs_sysctl,
 	ffs_mountroot,
 	ufs_check_export,
 	ffs_vnodeopv_descs,
+};
+
+struct genfs_ops ffs_genfsops = {
+	ffs_gop_size,
+	ffs_gop_alloc,
+	genfs_gop_write,
 };
 
 struct pool ffs_inode_pool;
@@ -395,6 +402,7 @@ ffs_reload(mountp, cred, p)
 {
 	struct vnode *vp, *nvp, *devvp;
 	struct inode *ip;
+	void *space;
 	struct buf *bp;
 	struct fs *fs, *newfs;
 	struct partinfo dpart;
@@ -445,8 +453,9 @@ ffs_reload(mountp, cred, p)
 	 * new superblock. These should really be in the ufsmount.	XXX
 	 * Note that important parameters (eg fs_ncg) are unchanged.
 	 */
-	memcpy(&newfs->fs_csp[0], &fs->fs_csp[0], sizeof(fs->fs_csp));
+	newfs->fs_csp = fs->fs_csp;
 	newfs->fs_maxcluster = fs->fs_maxcluster;
+	newfs->fs_contigdirs = fs->fs_contigdirs;
 	newfs->fs_ronly = fs->fs_ronly;
 	memcpy(fs, newfs, (u_int)fs->fs_sbsize);
 	if (fs->fs_sbsize < SBSIZE)
@@ -455,11 +464,18 @@ ffs_reload(mountp, cred, p)
 	free(newfs, M_UFSMNT);
 	mountp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
 	ffs_oldfscompat(fs);
+		/* An old fsck may have zeroed these fields, so recheck them. */
+	if (fs->fs_avgfilesize <= 0)
+		fs->fs_avgfilesize = AVFILESIZ;
+	if (fs->fs_avgfpdir <= 0)
+		fs->fs_avgfpdir = AFPDIR;
+
 	ffs_statfs(mountp, &mountp->mnt_stat, p);
 	/*
 	 * Step 3: re-read summary information from disk.
 	 */
 	blks = howmany(fs->fs_cssize, fs->fs_fsize);
+	space = fs->fs_csp;
 	for (i = 0; i < blks; i += fs->fs_frag) {
 		size = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
@@ -472,12 +488,12 @@ ffs_reload(mountp, cred, p)
 		}
 #ifdef FFS_EI
 		if (UFS_FSNEEDSWAP(fs))
-			ffs_csum_swap((struct csum*)bp->b_data,
-			    (struct csum*)fs->fs_csp[fragstoblks(fs, i)], size);
+			ffs_csum_swap((struct csum *)bp->b_data,
+			    (struct csum *)space, size);
 		else
 #endif
-			memcpy(fs->fs_csp[fragstoblks(fs, i)], bp->b_data,
-			    (size_t)size);
+			memcpy(space, bp->b_data, (size_t)size);
+		space = (char *)space + size;
 		brelse(bp);
 	}
 	if ((fs->fs_flags & FS_DOSOFTDEP))
@@ -556,7 +572,7 @@ ffs_mountfs(devvp, mp, p)
 	struct fs *fs;
 	dev_t dev;
 	struct partinfo dpart;
-	caddr_t base, space;
+	void *space;
 	int blks;
 	int error, i, size, ronly;
 #ifdef FFS_EI
@@ -662,7 +678,9 @@ ffs_mountfs(devvp, mp, p)
 	blks = howmany(size, fs->fs_fsize);
 	if (fs->fs_contigsumsize > 0)
 		size += fs->fs_ncg * sizeof(int32_t);
-	base = space = malloc((u_long)size, M_UFSMNT, M_WAITOK);
+	size += fs->fs_ncg * sizeof(*fs->fs_contigdirs);
+	space = malloc((u_long)size, M_UFSMNT, M_WAITOK);
+	fs->fs_csp = space;
 	for (i = 0; i < blks; i += fs->fs_frag) {
 		size = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
@@ -670,27 +688,36 @@ ffs_mountfs(devvp, mp, p)
 		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size,
 			      cred, &bp);
 		if (error) {
-			free(base, M_UFSMNT);
+			free(fs->fs_csp, M_UFSMNT);
 			goto out2;
 		}
 #ifdef FFS_EI
 		if (needswap)
-			ffs_csum_swap((struct csum*)bp->b_data,
-				(struct csum*)space, size);
+			ffs_csum_swap((struct csum *)bp->b_data,
+				(struct csum *)space, size);
 		else
 #endif
 			memcpy(space, bp->b_data, (u_int)size);
 			
-		fs->fs_csp[fragstoblks(fs, i)] = (struct csum *)space;
-		space += size;
+		space = (char *)space + size;
 		brelse(bp);
 		bp = NULL;
 	}
 	if (fs->fs_contigsumsize > 0) {
-		fs->fs_maxcluster = lp = (int32_t *)space;
+		fs->fs_maxcluster = lp = space;
 		for (i = 0; i < fs->fs_ncg; i++)
 			*lp++ = fs->fs_contigsumsize;
+		space = lp;
 	}
+	size = fs->fs_ncg * sizeof(*fs->fs_contigdirs);
+	fs->fs_contigdirs = space;
+	space = (char *)space + size;
+	memset(fs->fs_contigdirs, 0, size);
+		/* Compatibility for old filesystems - XXX */
+	if (fs->fs_avgfilesize <= 0)
+		fs->fs_avgfilesize = AVFILESIZ;
+	if (fs->fs_avgfpdir <= 0)
+		fs->fs_avgfpdir = AFPDIR;
 	mp->mnt_data = (qaddr_t)ump;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FFS);
@@ -719,7 +746,7 @@ ffs_mountfs(devvp, mp, p)
 	if (ronly == 0 && (fs->fs_flags & FS_DOSOFTDEP)) {
 		error = softdep_mount(devvp, mp, fs, cred);
 		if (error) {
-			free(base, M_UFSMNT);
+			free(fs->fs_csp, M_UFSMNT);
 			goto out;
 		}
 	}
@@ -808,7 +835,7 @@ ffs_unmount(mp, mntflags, p)
 	error = VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	vput(ump->um_devvp);
-	free(fs->fs_csp[0], M_UFSMNT);
+	free(fs->fs_csp, M_UFSMNT);
 	free(fs, M_UFSMNT);
 	free(ump, M_UFSMNT);
 	mp->mnt_data = (qaddr_t)0;
@@ -946,7 +973,7 @@ loop:
 		    ((ip->i_flag &
 		      (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uvm.u_obj.uo_npages == 0))
+		     vp->v_uobj.uo_npages == 0))
 		{
 			simple_unlock(&vp->v_interlock);
 			continue;
@@ -1030,6 +1057,7 @@ ffs_vget(mp, ino, vpp)
 	 * If someone beat us to it while sleeping in getnewvnode(),
 	 * push back the freshly allocated vnode we don't need, and return.
 	 */
+
 	do {
 		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
 			ungetnewvnode(vp);
@@ -1041,8 +1069,9 @@ ffs_vget(mp, ino, vpp)
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we
 	 * XXX create another pool for MFS inodes?
 	 */
+
 	ip = pool_get(&ffs_inode_pool, PR_WAITOK);
-	memset((caddr_t)ip, 0, sizeof(struct inode));
+	memset(ip, 0, sizeof(struct inode));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_fs = fs = ump->um_fs;
@@ -1057,12 +1086,14 @@ ffs_vget(mp, ino, vpp)
 			ip->i_dquot[i] = NODQUOT;
 	}
 #endif
+
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
 	 * this inode will block if they arrive while we are sleeping waiting
 	 * for old data structures to be purged or for the contents of the
 	 * disk portion of this inode to be read.
 	 */
+
 	ufs_ihashins(ip);
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 
@@ -1070,12 +1101,14 @@ ffs_vget(mp, ino, vpp)
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
 		      (int)fs->fs_bsize, NOCRED, &bp);
 	if (error) {
+
 		/*
 		 * The inode does not contain anything useful, so it would
 		 * be misleading to leave it on its hash chain. With mode
 		 * still zero, it will be unlinked and returned to the free
 		 * list by vput().
 		 */
+
 		vput(vp);
 		brelse(bp);
 		*vpp = NULL;
@@ -1098,27 +1131,27 @@ ffs_vget(mp, ino, vpp)
 	 * Initialize the vnode from the inode, check for aliases.
 	 * Note that the underlying vnode may have changed.
 	 */
-	error = ufs_vinit(mp, ffs_specop_p, ffs_fifoop_p, &vp);
-	if (error) {
-		vput(vp);
-		*vpp = NULL;
-		return (error);
-	}
+
+	ufs_vinit(mp, ffs_specop_p, ffs_fifoop_p, &vp);
+
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
+
+	genfs_node_init(vp, &ffs_genfsops);
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
+
 	/*
 	 * Ensure that uid and gid are correct. This is a temporary
 	 * fix until fsck has been changed to do the update.
 	 */
+
 	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
 		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;	/* XXX */
 		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;	/* XXX */
 	}							/* XXX */
 	uvm_vnp_setsize(vp, ip->i_ffs_size);
-
 	*vpp = vp;
 	return (0);
 }
@@ -1184,6 +1217,13 @@ ffs_init()
 }
 
 void
+ffs_reinit()
+{
+	softdep_reinitialize();
+	ufs_reinit();
+}
+
+void
 ffs_done()
 {
 	if (--ffs_initcount > 0)
@@ -1204,7 +1244,7 @@ ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	extern int doclusterread, doclusterwrite, doreallocblks, doasyncfree;
+	extern int doasyncfree;
 	extern int ffs_log_changeopt;
 
 	/* all sysctl names at this level are terminal */
@@ -1212,15 +1252,6 @@ ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
-	case FFS_CLUSTERREAD:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &doclusterread));
-	case FFS_CLUSTERWRITE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &doclusterwrite));
-	case FFS_REALLOCBLKS:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &doreallocblks));
 	case FFS_ASYNCFREE:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &doasyncfree));
 	case FFS_LOG_CHANGEOPT:
@@ -1294,12 +1325,12 @@ ffs_cgupdate(mp, waitfor)
 	struct fs *fs = mp->um_fs;
 	struct buf *bp;
 	int blks;
-	caddr_t space;
+	void *space;
 	int i, size, error = 0, allerror = 0;
 
 	allerror = ffs_sbupdate(mp, waitfor);
 	blks = howmany(fs->fs_cssize, fs->fs_fsize);
-	space = (caddr_t)fs->fs_csp[0];
+	space = fs->fs_csp;
 	for (i = 0; i < blks; i += fs->fs_frag) {
 		size = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
@@ -1313,7 +1344,7 @@ ffs_cgupdate(mp, waitfor)
 		else
 #endif
 			memcpy(bp->b_data, space, (u_int)size);
-		space += size;
+		space = (char *)space + size;
 		if (waitfor == MNT_WAIT)
 			error = bwrite(bp);
 		else

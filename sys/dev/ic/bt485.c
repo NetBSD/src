@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.3.4.1 2001/08/24 00:09:18 nathanw Exp $ */
+/* $NetBSD: bt485.c,v 1.3.4.2 2001/09/21 22:35:35 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -227,7 +227,7 @@ bt485_init(rc)
 	data->ramdac_wr(data->cookie, BT485_REG_PIXMASK, 0xff);
 
 	/*
-	 * Initalize the RAMDAC info struct to hold all of our
+	 * Initialize the RAMDAC info struct to hold all of our
 	 * data, and fill it in.
 	 */
 	data->changed = DATA_ALL_CHANGED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.15.6.1 2001/06/21 20:06:14 nathanw Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.15.6.2 2001/09/21 22:36:16 nathanw Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -21,11 +21,7 @@
 #include "opt_inet.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/syslog.h>
 #include <sys/socket.h>
-#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -36,38 +32,20 @@
 #include <netinet/if_inarp.h>
 #endif
 
-#include <dev/ic/lancereg.h>
 #include <dev/ic/lancevar.h>
-#include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
 #include <dev/tc/if_levar.h>
-#include <dev/tc/tcvar.h>
 #include <pmax/ibus/ibusvar.h>
 #include <pmax/pmax/kn01.h>
 
-extern void le_dec_copytobuf_gap2 __P((struct lance_softc *, void *,
-	    int, int));
-extern void le_dec_copyfrombuf_gap2 __P((struct lance_softc *, void *,
-	    int, int));
-
-#if defined(_KERNEL_OPT)
-#include "opt_ddb.h"
-#endif
-
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
-
-hide void le_dec_zerobuf_gap2 __P((struct lance_softc *, int, int));
+static void le_dec_copyfrombuf_gap2(struct lance_softc *, void *, int, int);
+static void le_dec_copytobuf_gap2(struct lance_softc *, void *, int, int);
+static void le_dec_zerobuf_gap2(struct lance_softc *, int, int);
 
 
-int	le_pmax_match __P((struct device *, struct cfdata *, void *));
-void	le_pmax_attach __P((struct device *, struct device *, void *));
+static int le_pmax_match(struct device *, struct cfdata *, void *);
+static void le_pmax_attach(struct device *, struct device *, void *);
 
 struct cfattach le_pmax_ca = {
 	sizeof(struct le_softc), le_pmax_match, le_pmax_attach
@@ -75,12 +53,9 @@ struct cfattach le_pmax_ca = {
 extern struct cfdriver ibus_cd;
 
 int
-le_pmax_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+le_pmax_match(struct device *parent, struct cfdata *match, void *aux)
 {
-  	struct ibus_attach_args *d = aux;
+	struct ibus_attach_args *d = aux;
 
 	if (parent->dv_cfdata->cf_driver != &ibus_cd)
 		return (0);
@@ -91,9 +66,7 @@ le_pmax_match(parent, match, aux)
 }
 
 void
-le_pmax_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_pmax_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct le_softc *lesc = (void *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
@@ -104,8 +77,8 @@ le_pmax_attach(parent, self, aux)
 	 * It's on the baseboard, with a dedicated interrupt line.
 	 */
 	lesc->sc_r1 = (struct lereg1 *)(ia->ia_addr);
-/*XXX*/	sc->sc_mem = (void *)TC_PHYS_TO_UNCACHED(KN01_SYS_LANCE_B_START);
-/*XXX*/	cp = (u_char *)(TC_PHYS_TO_UNCACHED(KN01_SYS_CLOCK) + 1);
+	sc->sc_mem = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_LANCE_B_START);
+	cp = (u_char *)(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK) + 1);
 
 	sc->sc_copytodesc = le_dec_copytobuf_gap2;
 	sc->sc_copyfromdesc = le_dec_copyfrombuf_gap2;
@@ -116,7 +89,7 @@ le_pmax_attach(parent, self, aux)
 	dec_le_common_attach(&lesc->sc_am7990, cp);
 
 	ibus_intr_establish(parent, (void*)ia->ia_cookie, IPL_NET,
-			  am7990_intr, sc);
+	    am7990_intr, sc);
 }
 
 /*
@@ -127,21 +100,17 @@ le_pmax_attach(parent, self, aux)
  */
 
 void
-le_dec_copytobuf_gap2(sc, fromv, boff, len)
-	struct lance_softc *sc;  
-	void *fromv;
-	int boff;
-	int len;
+le_dec_copytobuf_gap2(struct lance_softc *sc, void *fromv, int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t from = fromv;
-	volatile u_int16_t *bptr;  
+	volatile u_int16_t *bptr;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
 		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
 		*bptr = (*from++ << 8) | (*bptr & 0xff);
-		bptr += 2;  
+		bptr += 2;
 		len--;
 	} else
 		bptr = ((volatile u_int16_t *)buf) + boff;
@@ -156,10 +125,7 @@ le_dec_copytobuf_gap2(sc, fromv, boff, len)
 }
 
 void
-le_dec_copyfrombuf_gap2(sc, tov, boff, len)
-	struct lance_softc *sc;
-	void *tov;
-	int boff, len;
+le_dec_copyfrombuf_gap2(struct lance_softc *sc, void *tov, int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t to = tov;
@@ -185,10 +151,8 @@ le_dec_copyfrombuf_gap2(sc, tov, boff, len)
 		*to = *bptr & 0xff;
 }
 
-void
-le_dec_zerobuf_gap2(sc, boff, len)
-	struct lance_softc *sc;
-	int boff, len;
+static void
+le_dec_zerobuf_gap2(struct lance_softc *sc, int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	volatile u_int16_t *bptr;

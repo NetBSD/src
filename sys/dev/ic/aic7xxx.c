@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.66.2.3 2001/08/24 00:09:14 nathanw Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.66.2.4 2001/09/21 22:35:32 nathanw Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -4961,7 +4961,7 @@ ahc_abort_scbs(struct ahc_softc *ahc, int target, char channel,
 	 * Go through the pending CCB list and look for
 	 * commands for this target that are still active.
 	 * These are other tagged commands that were
-	 * disconnected when the reset occured.
+	 * disconnected when the reset occurred.
 	 */
 	{
 		struct scb *scb;

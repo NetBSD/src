@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.63.2.2 2001/08/24 00:11:21 nathanw Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.63.2.3 2001/09/21 22:36:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -105,7 +105,6 @@ cd9660_mknod(ndp, vap, cred, p)
 	struct vnode *vp;
 	struct iso_node *ip;
 	struct iso_dnode *dp;
-	int error;
 
 	vp = ndp->ni_vp;
 	ip = VTOI(vp);
@@ -119,12 +118,11 @@ cd9660_mknod(ndp, vap, cred, p)
 		return (EINVAL);
 	}
 
-	dp = iso_dmap(ip->i_dev,ip->i_number,1);
+	dp = iso_dmap(ip->i_dev, ip->i_number, 1);
 	if (ip->inode.iso_rdev == vap->va_rdev ||
 	    vap->va_rdev == (dev_t)VNOVAL) {
 		/* same as the unmapped one, delete the mapping */
-		dp->d_next->d_prev = dp->d_prev;
-		*dp->d_prev = dp->d_next;
+		LIST_REMOVE(dp, d_hash);
 		FREE(dp, M_CACHE);
 	} else
 		/* enter new mapping */
@@ -239,16 +237,6 @@ cd9660_getattr(v)
 	return (0);
 }
 
-#ifdef DEBUG
-extern int doclusterread;
-#else
-#define doclusterread 1
-#endif
-
-/* XXX until cluster routines can handle block sizes less than one page */
-#define cd9660_doclusterread \
-	(doclusterread && (ISO_DEFAULT_BLOCK_SIZE >= PAGE_SIZE))
-
 /*
  * Vnode op for reading.
  */
@@ -288,7 +276,7 @@ cd9660_read(v)
 
 			if (bytelen == 0)
 				break;
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
@@ -309,22 +297,13 @@ cd9660_read(v)
 			n = diff;
 		size = blksize(imp, ip, lbn);
 		rablock = lbn + 1;
-		if (cd9660_doclusterread) {
-			if (lblktosize(imp, rablock) <= ip->i_size)
-				error = cluster_read(vp, (off_t)ip->i_size,
-						     lbn, size, NOCRED, &bp);
-			else
-				error = bread(vp, lbn, size, NOCRED, &bp);
+		if (lblktosize(imp, rablock) < ip->i_size) {
+			rasize = blksize(imp, ip, rablock);
+			error = breadn(vp, lbn, size, &rablock,
+				       &rasize, 1, NOCRED, &bp);
 		} else {
-			if (vp->v_lastr + 1 == lbn &&
-			    lblktosize(imp, rablock) < ip->i_size) {
-				rasize = blksize(imp, ip, rablock);
-				error = breadn(vp, lbn, size, &rablock,
-					       &rasize, 1, NOCRED, &bp);
-			} else
-				error = bread(vp, lbn, size, NOCRED, &bp);
+			error = bread(vp, lbn, size, NOCRED, &bp);
 		}
-		vp->v_lastr = lbn;
 		n = MIN(n, size - bp->b_resid);
 		if (error) {
 			brelse(bp);
@@ -963,7 +942,7 @@ const struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_update_desc, cd9660_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
-	{ &vop_size_desc, genfs_size },			/* size */
+	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc cd9660_vnodeop_opv_desc =
@@ -1020,7 +999,6 @@ const struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
-	{ &vop_size_desc, spec_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc cd9660_specop_opv_desc =

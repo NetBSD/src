@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.24.2.1 2001/04/09 01:57:24 nathanw Exp $	*/
+/*	$NetBSD: be.c,v 1.24.2.2 2001/09/21 22:36:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -281,6 +281,7 @@ beattach(parent, self, aux)
 		return;
 	}
 
+	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_qec = qec;
 	sc->sc_qr = qec->sc_regs;
 

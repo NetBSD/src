@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_card.c,v 1.9 2000/12/30 16:52:36 wiz Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.9.2.1 2001/09/21 22:36:04 nathanw Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp */
 
@@ -1089,7 +1089,7 @@ checkTuner:
 	} /* end switch(card) */
 
 
-        /* At this point, a goto checkDBX has not occured */
+        /* At this point, a goto checkDBX has not occurred */
         /* We have not been able to select a Tuner */
         /* Some cards make use of the tuner address to */
         /* identify the make/model of tuner */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.38.2.1 2001/04/09 01:58:22 nathanw Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.38.2.2 2001/09/21 22:36:48 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -271,7 +271,7 @@ typedef	struct	frentry {
 #define	FR_RETRST	0x00080	/* Return TCP RST packet - reset connection */
 #define	FR_RETICMP	0x00100	/* Return ICMP unreachable packet */
 #define	FR_FAKEICMP	0x00180	/* Return ICMP unreachable with fake source */
-#define	FR_NOMATCH	0x00200	/* no match occured */
+#define	FR_NOMATCH	0x00200	/* no match occurred */
 #define	FR_ACCOUNT	0x00400	/* count packet bytes */
 #define	FR_KEEPFRAG	0x00800	/* keep fragment information */
 #define	FR_KEEPSTATE	0x01000	/* keep `connection' state information */

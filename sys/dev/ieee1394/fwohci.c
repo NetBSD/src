@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.16.2.3 2001/08/24 00:09:41 nathanw Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.16.2.4 2001/09/21 22:35:45 nathanw Exp $	*/
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -1020,6 +1020,15 @@ fwohci_ctx_free(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 	struct fwohci_buf *fb;
 	struct fwohci_handler *fh;
 
+#if DOUBLEBUF
+	if (TAILQ_FIRST(&fc->fc_buf) > TAILQ_FIRST(&fc->fc_buf2)) {
+		struct fwohci_buf_s fctmp;
+
+		fctmp = fc->fc_buf;
+		fc->fc_buf = fc->fc_buf2;
+		fc->fc_buf2 = fctmp;
+	}
+#endif
 	while ((fh = LIST_FIRST(&fc->fc_handler)) != NULL)
 		fwohci_handler_set(sc, fh->fh_tcode, fh->fh_key1, fh->fh_key2,
 		    NULL, NULL);
@@ -1725,7 +1734,7 @@ fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		while ((reg = OHCI_SYNC_RX_DMA_READ(sc, fc->fc_ctx, OHCI_SUBREG_ContextControlSet)) & OHCI_CTXCTL_ACTIVE) {
 			delay(10);
 			if (++i > 10000) {
-				printf("cannot stop dma engine 0x08x\n", reg);
+				printf("cannot stop dma engine 0x%08x\n", reg);
 				return;
 			}
 		}

@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.16.4.1 2001/08/24 00:09:35 nathanw Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.16.4.2 2001/09/21 22:35:43 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -52,9 +52,9 @@ pcdisplay_cursor_init(scr, existing)
 	
 	if (existing) {
 		/*
-		 * This is the first screen. At this point, scr->active is
-		 * false and scr->mem is NULL (no backing store), so we
-		 * can't use pcdisplay_cursor() to do this.
+		 * This is the first screen. At this point, scr->mem is NULL
+		 * (no backing store), so we can't use pcdisplay_cursor() to
+		 * do this.
 		 */
 		memt = scr->hdl->ph_memt;
 		memh = scr->hdl->ph_memh;
@@ -69,9 +69,14 @@ pcdisplay_cursor_init(scr, existing)
 	/*
 	 * Firmware might not have initialized the cursor shape.  Make
 	 * sure there's something we can see.
+	 * Don't touch the hardware if this is not the first screen.
 	 */
-	pcdisplay_6845_write(scr->hdl, curstart, 0x0b);
-	pcdisplay_6845_write(scr->hdl, curend, 0x10);
+	if (existing) {
+		pcdisplay_6845_write(scr->hdl, curstart,
+				     scr->type->fontheight - 2);
+		pcdisplay_6845_write(scr->hdl, curend,
+				     scr->type->fontheight - 1);
+	}
 #endif
 	scr->cursoron = 1;
 }
@@ -122,7 +127,7 @@ pcdisplay_cursor(id, on, row, col)
 
 	if (scr->active) {
 		if (!on)
-			pos = 0x1010;
+			pos = 0x3fff;
 		else
 			pos = scr->dispoffset / 2
 				+ row * scr->type->ncols + col;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.42 2001/01/18 13:12:13 jdolecek Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.42.2.1 2001/09/21 22:35:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -34,34 +34,31 @@
 
 /*
  * PCI autoconfiguration support functions.
+ *
+ * Note: This file is also built into a userland library (libpci).
+ * Pay attention to this when you make modifications.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_pci.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 
+#ifdef _KERNEL
 #include <machine/intr.h>
+#else
+#include <pci.h>
+#endif
 
 #include <dev/pci/pcireg.h>
+#ifdef _KERNEL
 #include <dev/pci/pcivar.h>
+#endif
 #ifdef PCIVERBOSE
 #include <dev/pci/pcidevs.h>
 #endif
-
-static void pci_conf_print_common __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs));
-static int pci_conf_print_bar __P((pci_chipset_tag_t, pcitag_t, 
-    const pcireg_t *regs, int, const char *, int));
-static void pci_conf_print_regs __P((const pcireg_t *regs, int first,
-    int pastlast));
-static void pci_conf_print_type0 __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs, int sizebars));
-static void pci_conf_print_type1 __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs, int sizebars));
-static void pci_conf_print_type2 __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs, int sizebars));
 
 /*
  * Descriptions of known PCI classes and subclasses.
@@ -70,7 +67,7 @@ static void pci_conf_print_type2 __P((pci_chipset_tag_t, pcitag_t,
  * NULL subclass pointer.
  */
 struct pci_class {
-	const char		*name;
+	const char	*name;
 	int		val;		/* as wide as pci_{,sub}class_t */
 	const struct pci_class *subclasses;
 };
@@ -297,8 +294,7 @@ struct pci_knowndev {
 #endif /* PCIVERBOSE */
 
 char *
-pci_findvendor(id_reg)
-	pcireg_t id_reg;
+pci_findvendor(pcireg_t id_reg)
 {
 #ifdef PCIVERBOSE
 	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
@@ -317,10 +313,7 @@ pci_findvendor(id_reg)
 }
 
 void
-pci_devinfo(id_reg, class_reg, showclass, cp)
-	pcireg_t id_reg, class_reg;
-	int showclass;
-	char *cp;
+pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp)
 {
 	pci_vendor_id_t vendor;
 	pci_product_id_t product;
@@ -414,7 +407,7 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
  *
  *	#ifdef MYDEV_DEBUG
  *		printf("%s: ", sc->sc_dev.dv_xname);
- *		pci_conf_print(pa->pa_pc, pa->pa_tag);
+ *		pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
  *	#endif
  */
 
@@ -424,10 +417,11 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 	printf("      %s: %s\n", (str), (rval & (bit)) ? "on" : "off");
 
 static void
-pci_conf_print_common(pc, tag, regs)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	const pcireg_t *regs;
+pci_conf_print_common(
+#ifdef _KERNEL
+    pci_chipset_tag_t pc, pcitag_t tag,
+#endif
+    const pcireg_t *regs)
 {
 #ifdef PCIVERBOSE
 	const struct pci_knowndev *kdp;
@@ -539,18 +533,23 @@ pci_conf_print_common(pc, tag, regs)
 }
 
 static int
-pci_conf_print_bar(pc, tag, regs, reg, name, sizebar)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	const pcireg_t *regs;
-	int reg;
-	const char *name;
-	int sizebar;
+pci_conf_print_bar(
+#ifdef _KERNEL
+    pci_chipset_tag_t pc, pcitag_t tag,
+#endif
+    const pcireg_t *regs, int reg, const char *name
+#ifdef _KERNEL
+    , int sizebar
+#endif
+    )
 {
-	int s, width;
-	pcireg_t mask, rval;
-	pcireg_t mask64h, rval64h;
-	
+	int width;
+	pcireg_t rval, rval64h;
+#ifdef _KERNEL
+	int s;
+	pcireg_t mask, mask64h;
+#endif
+
 	width = 4;
 
 	/*
@@ -563,7 +562,16 @@ pci_conf_print_bar(pc, tag, regs, reg, name, sizebar)
 	 * the bottom n bits of the address to 0.  As recommended,
 	 * we write all 1s and see what we get back.
 	 */
+
 	rval = regs[o2i(reg)];
+	if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM &&
+	    PCI_MAPREG_MEM_TYPE(rval) == PCI_MAPREG_MEM_TYPE_64BIT) {
+		rval64h = regs[o2i(reg + 4)];
+		width = 8;
+	} else
+		rval64h = 0;
+
+#ifdef _KERNEL
 	/* XXX don't size unknown memory type? */
 	if (rval != 0 && sizebar) {
 		/*
@@ -581,15 +589,14 @@ pci_conf_print_bar(pc, tag, regs, reg, name, sizebar)
 		pci_conf_write(pc, tag, reg, rval);
 		if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM &&
 		    PCI_MAPREG_MEM_TYPE(rval) == PCI_MAPREG_MEM_TYPE_64BIT) {
-			rval64h = regs[o2i(reg + 4)];
 			pci_conf_write(pc, tag, reg + 4, 0xffffffff);
 			mask64h = pci_conf_read(pc, tag, reg + 4);
 			pci_conf_write(pc, tag, reg + 4, rval64h);
-			width = 8;
 		}
 		splx(s);
 	} else
 		mask = 0;
+#endif /* _KERNEL */
 
 	printf("    Base address register at 0x%02x", reg);
 	if (name)
@@ -627,11 +634,13 @@ pci_conf_print_bar(pc, tag, regs, reg, name, sizebar)
 			printf("      base: 0x%016llx, ",
 			    PCI_MAPREG_MEM64_ADDR(
 				((((long long) rval64h) << 32) | rval)));
+#ifdef _KERNEL
 			if (sizebar)
 				printf("size: 0x%016llx",
 				    PCI_MAPREG_MEM64_SIZE(
 				      ((((long long) mask64h) << 32) | mask)));
 			else
+#endif /* _KERNEL */
 				printf("not sized");
 			printf("\n");
 			break;
@@ -640,22 +649,28 @@ pci_conf_print_bar(pc, tag, regs, reg, name, sizebar)
 		default:
 			printf("      base: 0x%08x, ",
 			    PCI_MAPREG_MEM_ADDR(rval));
+#ifdef _KERNEL
 			if (sizebar)
 				printf("size: 0x%08x",
 				    PCI_MAPREG_MEM_SIZE(mask));
 			else
+#endif /* _KERNEL */
 				printf("not sized");
 			printf("\n");
 			break;
 		}
 	} else {
+#ifdef _KERNEL
 		if (sizebar)
 			printf("%d-bit ", mask & ~0x0000ffff ? 32 : 16);
+#endif /* _KERNEL */
 		printf("i/o\n");
 		printf("      base: 0x%08x, ", PCI_MAPREG_IO_ADDR(rval));
+#ifdef _KERNEL
 		if (sizebar)
 			printf("size: 0x%08x", PCI_MAPREG_IO_SIZE(mask));
 		else
+#endif /* _KERNEL */
 			printf("not sized");
 		printf("\n");
 	}
@@ -664,9 +679,7 @@ pci_conf_print_bar(pc, tag, regs, reg, name, sizebar)
 }
 
 static void
-pci_conf_print_regs(regs, first, pastlast)
-	const pcireg_t *regs;
-	int first, pastlast;
+pci_conf_print_regs(const pcireg_t *regs, int first, int pastlast)
 {
 	int off, needaddr, neednl;
 
@@ -689,17 +702,26 @@ pci_conf_print_regs(regs, first, pastlast)
 }
 
 static void
-pci_conf_print_type0(pc, tag, regs, sizebars)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	const pcireg_t *regs;
-	int sizebars;
+pci_conf_print_type0(
+#ifdef _KERNEL
+    pci_chipset_tag_t pc, pcitag_t tag,
+#endif
+    const pcireg_t *regs
+#ifdef _KERNEL
+    , int sizebars
+#endif
+    )
 {
 	int off, width;
 	pcireg_t rval;
 
-	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += width)
+	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += width) {
+#ifdef _KERNEL
 		width = pci_conf_print_bar(pc, tag, regs, off, NULL, sizebars);
+#else
+		width = pci_conf_print_bar(regs, off, NULL);
+#endif
+	}
 
 	printf("    Cardbus CIS Pointer: 0x%08x\n", regs[o2i(0x28)]);
 
@@ -805,11 +827,15 @@ pci_conf_print_type0(pc, tag, regs, sizebars)
 }
 
 static void
-pci_conf_print_type1(pc, tag, regs, sizebars)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	const pcireg_t *regs;
-	int sizebars;
+pci_conf_print_type1(
+#ifdef _KERNEL
+    pci_chipset_tag_t pc, pcitag_t tag,
+#endif
+    const pcireg_t *regs
+#ifdef _KERNEL
+    , int sizebars
+#endif
+    )
 {
 	int off, width;
 	pcireg_t rval;
@@ -823,8 +849,13 @@ pci_conf_print_type1(pc, tag, regs, sizebars)
 	 * respect to various standards. (XXX)
 	 */
 
-	for (off = 0x10; off < 0x18; off += width)
+	for (off = 0x10; off < 0x18; off += width) {
+#ifdef _KERNEL
 		width = pci_conf_print_bar(pc, tag, regs, off, NULL, sizebars);
+#else
+		width = pci_conf_print_bar(regs, off, NULL);
+#endif
+	}
 
 	printf("    Primary bus number: 0x%02x\n",
 	    (regs[o2i(0x18)] >> 0) & 0xff);
@@ -931,11 +962,15 @@ pci_conf_print_type1(pc, tag, regs, sizebars)
 }
 
 static void
-pci_conf_print_type2(pc, tag, regs, sizebars)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	const pcireg_t *regs;
-	int sizebars;
+pci_conf_print_type2(
+#ifdef _KERNEL
+    pci_chipset_tag_t pc, pcitag_t tag,
+#endif
+    const pcireg_t *regs
+#ifdef _KERNEL
+    , int sizebars
+#endif
+    )
 {
 	pcireg_t rval;
 
@@ -948,8 +983,12 @@ pci_conf_print_type2(pc, tag, regs, sizebars)
 	 * respect to various standards. (XXX)
 	 */
 
+#ifdef _KERNEL
 	pci_conf_print_bar(pc, tag, regs, 0x10,
 	    "CardBus socket/ExCA registers", sizebars);
+#else
+	pci_conf_print_bar(regs, 0x10, "CardBus socket/ExCA registers");
+#endif
 
 	printf("    Reserved @ 0x14: 0x%04x\n",
 	    (regs[o2i(0x14)] >> 0) & 0xffff);
@@ -1050,38 +1089,63 @@ pci_conf_print_type2(pc, tag, regs, sizebars)
 	printf("    Subsystem vendor ID: 0x%04x\n", PCI_VENDOR(rval));
 	printf("    Subsystem ID: 0x%04x\n", PCI_PRODUCT(rval));
 
+#ifdef _KERNEL
 	pci_conf_print_bar(pc, tag, regs, 0x44, "legacy-mode registers",
 	    sizebars);
+#else
+	pci_conf_print_bar(regs, 0x44, "legacy-mode registers");
+#endif
 }
 
 void
-pci_conf_print(pc, tag, printfn)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	void (*printfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *);
+pci_conf_print(
+#ifdef _KERNEL
+    pci_chipset_tag_t pc, pcitag_t tag,
+    void (*printfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *)
+#else
+    int pcifd, u_int bus, u_int dev, u_int func
+#endif
+    )
 {
 	pcireg_t regs[o2i(256)];
 	int off, endoff, hdrtype;
 	const char *typename;
+#ifdef _KERNEL
 	void (*typeprintfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *, int);
 	int sizebars;
+#else
+	void (*typeprintfn)(const pcireg_t *);
+#endif
 
 	printf("PCI configuration registers:\n");
 
-	for (off = 0; off < 256; off += 4)
+	for (off = 0; off < 256; off += 4) {
+#ifdef _KERNEL
 		regs[o2i(off)] = pci_conf_read(pc, tag, off);
+#else
+		if (pcibus_conf_read(pcifd, bus, dev, func, off,
+		    &regs[o2i(off)]) == -1)
+			regs[o2i(off)] = 0;
+#endif
+	}
 
+#ifdef _KERNEL
 	sizebars = 1;
 	if (PCI_CLASS(regs[o2i(PCI_CLASS_REG)]) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(regs[o2i(PCI_CLASS_REG)]) == PCI_SUBCLASS_BRIDGE_HOST)
 		sizebars = 0;
+#endif
 
 	/* common header */
 	printf("  Common header:\n");
 	pci_conf_print_regs(regs, 0, 16);
 
 	printf("\n");
+#ifdef _KERNEL
 	pci_conf_print_common(pc, tag, regs);
+#else
+	pci_conf_print_common(regs);
+#endif
 	printf("\n");
 
 	/* type-dependent header */
@@ -1117,13 +1181,18 @@ pci_conf_print(pc, tag, printfn)
 	printf("header:\n");
 	pci_conf_print_regs(regs, 16, endoff);
 	printf("\n");
-	if (typeprintfn)
+	if (typeprintfn) {
+#ifdef _KERNEL
 		(*typeprintfn)(pc, tag, regs, sizebars);
-	else
+#else
+		(*typeprintfn)(regs);
+#endif
+	} else
 		printf("    Don't know how to pretty-print type %d header.\n",
 		    hdrtype);
 	printf("\n");
 
+#ifdef _KERNEL
 	/* device-dependent header */
 	printf("  Device-dependent header:\n");
 	pci_conf_print_regs(regs, endoff, 256);
@@ -1133,4 +1202,5 @@ pci_conf_print(pc, tag, printfn)
 	else
 		printf("    Don't know how to pretty-print device-dependent header.\n");
 	printf("\n");
+#endif /* _KERNEL */
 }

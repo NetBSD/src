@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.18.2.2 2001/06/21 20:06:37 nathanw Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.18.2.3 2001/09/21 22:36:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.18.2.2 2001/06/21 20:06:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.18.2.3 2001/09/21 22:36:21 nathanw Exp $");
 
 #include "opt_wsfont.h"
 
@@ -294,6 +294,28 @@ wsfont_find0(cookie)
 	return (NULL);
 }
 
+int
+wsfont_matches(font, name, width, height, stride)
+	struct wsdisplay_font *font;
+	char *name;
+	int width, height, stride;
+{
+
+	if (height != 0 && font->fontheight != height)
+		return (0);
+
+	if (width != 0 && font->fontwidth != width)
+		return (0);
+
+	if (stride != 0 && font->stride != stride)
+		return (0);
+		
+	if (name != NULL && strcmp(font->name, name) != 0)
+		return (0);
+
+	return (1);
+}
+
 /*
  * Find a font.
  */
@@ -308,20 +330,10 @@ wsfont_find(name, width, height, stride)
 	s = splhigh();
 	
 	for (ent = list; ent != NULL; ent = ent->next) {
-		if (height != 0 && ent->font->fontheight != height)
-			continue;
-
-		if (width != 0 && ent->font->fontwidth != width)
-			continue;
-
-		if (stride != 0 && ent->font->stride != stride)
-			continue;
-		
-		if (name != NULL && strcmp(ent->font->name, name) != 0)
-			continue;
-
-		splx(s);
-		return (ent->cookie);
+		if (wsfont_matches(ent->font, name, width, height, stride)) {
+			splx(s);
+			return (ent->cookie);
+		}
 	}
 
 	splx(s);
@@ -331,7 +343,6 @@ wsfont_find(name, width, height, stride)
 /*
  * Add a font to the list.
  */
-#ifdef notyet
 int
 wsfont_add(font, copy)
 	struct wsdisplay_font *font;
@@ -348,7 +359,7 @@ wsfont_add(font, copy)
 	if (wsfont_find(font->name, font->fontwidth, font->fontheight, 
 	    font->stride) >= 0) {
 		splx(s);
-		return (-1);
+		return (EEXIST);
 	}
 	
 	MALLOC(ent, struct font *, sizeof *ent, M_DEVBUF, M_WAITOK);
@@ -371,6 +382,9 @@ wsfont_add(font, copy)
 		size = font->fontheight * font->numchars * font->stride;
 		MALLOC(ent->font->data, void *, size, M_DEVBUF, M_WAITOK);
 		memcpy(ent->font->data, font->data, size);
+		MALLOC(ent->font->name, char *, strlen(font->name) + 1,
+		       M_DEVBUF, M_WAITOK);
+		strcpy(ent->font->name, font->name);
 		ent->flg = 0;
 	}
 	
@@ -379,12 +393,10 @@ wsfont_add(font, copy)
 	splx(s);	
 	return (0);
 }
-#endif
 			
 /*
  * Remove a font.
  */
-#ifdef notyet
 int
 wsfont_remove(cookie)
 	int cookie;
@@ -396,17 +408,18 @@ wsfont_remove(cookie)
 
 	if ((ent = wsfont_find0(cookie)) == NULL) {
 		splx(s);
-		return (-1);
+		return (ENOENT);
 	}
 	
 	if ((ent->flg & WSFONT_BUILTIN) != 0 || ent->lockcount != 0) {
 		splx(s);
-		return (-1);
+		return (EBUSY);
 	}
 	
 	/* Don't free statically allocated font data */
 	if ((ent->flg & WSFONT_STATIC) != 0) {
 		FREE(ent->font->data, M_DEVBUF);
+		FREE(ent->font->name, M_DEVBUF);
 		FREE(ent->font, M_DEVBUF);
 	}
 		
@@ -423,7 +436,6 @@ wsfont_remove(cookie)
 	splx(s);
 	return (0);
 }
-#endif
 
 /*
  * Lock a given font and return new lockcount. This fails if the cookie

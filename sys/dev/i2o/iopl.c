@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.3.2.2 2001/08/24 00:09:09 nathanw Exp $	*/
+/*	$NetBSD: iopl.c,v 1.3.2.3 2001/09/21 22:35:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,18 +37,17 @@
  */
 
 /*
- * This is a rough and untested driver for I2O LAN interfaces.  It has at
- * least these issues:
+ * This is an untested driver for I2O LAN interfaces.  It has at least these
+ * issues:
  *
- * - Media selection isn't done, although media status is.
- * - Doesn't handle token-ring or FDDI.
- * - The multicast filter doesn't get programmed.
- * - Hardware checksumming on the receive side is never enabled.
- * - Block I/O and network device driver IPLs differ.
- * - Will leak descriptors & mbufs on transport failure.
+ * - Will leak rx/tx descriptors & mbufs on transport failure.
+ * - Doesn't handle token-ring, but that's not a big deal.
+ * - Interrupts run at IPL_BIO.
  */
 
 #include "opt_i2o.h"
+#include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -73,9 +72,21 @@
 #include <net/if_ether.h>
 #include <net/if_fddi.h>
 #include <net/if_token.h>
-
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#ifdef NS
+#include <netns/ns.h>
+#include <netns/ns_if.h>
+#endif
+
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <dev/i2o/i2o.h>
@@ -96,6 +107,9 @@ static void	iopl_intr_tx(struct device *, struct iop_msg *, void *);
 static void	iopl_tick(void *);
 static void	iopl_tick_sched(struct iopl_softc *);
 
+static int	iopl_filter_ether(struct iopl_softc *);
+static int	iopl_filter_generic(struct iopl_softc *, u_int64_t *);
+
 static int	iopl_rx_alloc(struct iopl_softc *, int);
 static void	iopl_rx_free(struct iopl_softc *);
 static void	iopl_rx_post(struct iopl_softc *);
@@ -104,6 +118,9 @@ static void	iopl_tx_free(struct iopl_softc *);
 
 static int	iopl_ifmedia_change(struct ifnet *);
 static void	iopl_ifmedia_status(struct ifnet *, struct ifmediareq *);
+
+static void	iopl_munge_ether(struct mbuf *, u_int8_t *);
+static void	iopl_munge_fddi(struct mbuf *, u_int8_t *);
 
 static int	iopl_init(struct ifnet *);
 static int	iopl_ioctl(struct ifnet *, u_long, caddr_t);
@@ -154,7 +171,12 @@ static const struct iopl_media iopl_ether_media[] = {
 	{ I2O_LAN_CONNECTION_ETHERNET_1000BASET,	IFM_1000_T },
 	{ I2O_LAN_CONNECTION_DEFAULT,			IFM_10_T }
 };
- 
+
+static const struct iopl_media iopl_fddi_media[] = {
+	{ I2O_LAN_CONNECTION_FDDI_125MBIT,		IFM_FDDI_SMF },
+	{ I2O_LAN_CONNECTION_DEFAULT,			IFM_FDDI_SMF },
+};
+
 /*
  * Match a supported device.
  */
@@ -175,7 +197,7 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	struct iopl_softc *sc;
 	struct iop_softc *iop;
 	struct ifnet *ifp;
-	int rv, iff, ifcap, prepad, orphanlimit, maxpktsize;
+	int rv, iff, ifcap, orphanlimit, maxpktsize;
 	struct {
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
@@ -185,11 +207,14 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 			struct	i2o_param_lan_receive_info ri;
 			struct	i2o_param_lan_operation lo;
 			struct	i2o_param_lan_batch_control bc;
+			struct	i2o_param_lan_mac_address lma;
 		} p;
 	} __attribute__ ((__packed__)) param;
 	const char *typestr, *addrstr;
 	char wwn[20];
+	u_int8_t hwaddr[8];
 	u_int tmp;
+	u_int32_t tmp1, tmp2, tmp3;
 
 	sc = (struct iopl_softc *)self;
 	iop = (struct iop_softc *)parent;
@@ -203,13 +228,10 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	iop_print_ident(iop, ia->ia_tid);
 	printf("\n");
 
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 0, I2O_PARAM_LAN_DEVICE_INFO,
-	    &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		   self->dv_xname, I2O_PARAM_LAN_DEVICE_INFO, rv);
+	rv = iop_field_get_all(iop, ia->ia_tid, I2O_PARAM_LAN_DEVICE_INFO,
+	    &param, sizeof(param), NULL);
+	if (rv != 0)
 		return;
-	}
 
 	sc->sc_ms_pg = -1;
 
@@ -218,29 +240,35 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 		typestr = "Ethernet";
 		addrstr = ether_sprintf(param.p.ldi.hwaddr);
 		sc->sc_ms_pg = I2O_PARAM_LAN_802_3_STATS;
-		iff = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-		prepad = 2;
+		sc->sc_rx_prepad = 2;
+		sc->sc_munge = iopl_munge_ether;
 		orphanlimit = sizeof(struct ether_header);
+		iff = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 		break;
 
 	case I2O_LAN_TYPE_100BASEVG:
 		typestr = "100VG-AnyLAN";
 		addrstr = ether_sprintf(param.p.ldi.hwaddr);
 		sc->sc_ms_pg = I2O_PARAM_LAN_802_3_STATS;
-		iff = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-		prepad = 2;
+		sc->sc_rx_prepad = 2;
+		sc->sc_munge = iopl_munge_ether;
 		orphanlimit = sizeof(struct ether_header);
-		break;
-
-	case I2O_LAN_TYPE_TOKEN_RING:
-		typestr = "token ring";
-		addrstr = token_sprintf(param.p.ldi.hwaddr);
-		iff = IFF_BROADCAST | IFF_MULTICAST;
+		iff = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 		break;
 
 	case I2O_LAN_TYPE_FDDI:
 		typestr = "FDDI";
 		addrstr = fddi_sprintf(param.p.ldi.hwaddr);
+		sc->sc_ms_pg = I2O_PARAM_LAN_FDDI_STATS;
+		sc->sc_rx_prepad = 0;
+		sc->sc_munge = iopl_munge_fddi;
+		orphanlimit = sizeof(struct fddi_header);
+		iff = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+		break;
+
+	case I2O_LAN_TYPE_TOKEN_RING:
+		typestr = "token ring";
+		addrstr = token_sprintf(param.p.ldi.hwaddr);
 		iff = IFF_BROADCAST | IFF_MULTICAST;
 		break;
 
@@ -259,6 +287,7 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
+	memcpy(hwaddr, param.p.ldi.hwaddr, sizeof(hwaddr));
 	printf("%s: %s, address %s, %d Mb/s maximum\n", self->dv_xname,
 	    typestr, addrstr,
 	    (int)(le64toh(param.p.ldi.maxrxbps) / 1000*1000));
@@ -308,13 +337,10 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	 * much buffer context we'll need to transmit frames (some adapters
 	 * may need the destination address in the buffer context).
 	 */
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 0,
-	    I2O_PARAM_LAN_TRANSMIT_INFO, &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		   self->dv_xname, I2O_PARAM_LAN_TRANSMIT_INFO, rv);
+	rv = iop_field_get_all(iop, ia->ia_tid, I2O_PARAM_LAN_TRANSMIT_INFO,
+	    &param, sizeof(param), NULL);
+	if (rv != 0);
 		return;
-	}
 
 	tmp = le32toh(param.p.ti.txmodes);
 
@@ -344,13 +370,10 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tx_maxout = le32toh(param.p.ti.maxpktsout);
 	sc->sc_tx_maxreq = le32toh(param.p.ti.maxpktsreq);
 
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 0,
-	    I2O_PARAM_LAN_RECEIVE_INFO, &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		   self->dv_xname, I2O_PARAM_LAN_RECEIVE_INFO, rv);
+	rv = iop_field_get_all(iop, ia->ia_tid, I2O_PARAM_LAN_RECEIVE_INFO,
+	    &param, sizeof(param), NULL);
+	if (rv != 0)
 		return;
-	}
 
 	sc->sc_rx_maxbkt = le32toh(param.p.ri.maxbuckets);
 
@@ -374,56 +397,54 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	 * interested in most errors (e.g. excessive collisions), but others
 	 * are of more concern.
 	 */
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 0,
-	    I2O_PARAM_LAN_OPERATION, &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		   self->dv_xname, I2O_PARAM_LAN_OPERATION, rv);
-		return;
-	}
+	tmp1 = htole32(sc->sc_rx_prepad);
+	tmp2 = htole32(orphanlimit);
+	tmp3 = htole32(1);				/* XXX */
 
-	param.p.lo.pktprepad = htole32(prepad);
-	param.p.lo.pktorphanlimit = htole32(orphanlimit);
-	param.p.lo.userflags = 1;				/* XXX */
-
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 1,
-	    I2O_PARAM_LAN_OPERATION, &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to set parameters (0x%04x; %d)\n",
-		   self->dv_xname, I2O_PARAM_LAN_OPERATION, rv);
+	if (iop_field_set(iop, ia->ia_tid, I2O_PARAM_LAN_OPERATION,
+	    &tmp1, sizeof(tmp1), I2O_PARAM_LAN_OPERATION_pktprepad))
 		return;
-	}
+	if (iop_field_set(iop, ia->ia_tid, I2O_PARAM_LAN_OPERATION,
+	    &tmp2, sizeof(tmp2), I2O_PARAM_LAN_OPERATION_pktorphanlimit))
+		return;
+	if (iop_field_set(iop, ia->ia_tid, I2O_PARAM_LAN_OPERATION,
+	    &tmp3, sizeof(tmp3), I2O_PARAM_LAN_OPERATION_userflags))
+		return;
 
 	/*
 	 * Set the batching parameters.
 	 */
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 0,
-	    I2O_PARAM_LAN_BATCH_CONTROL, &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		   self->dv_xname, I2O_PARAM_LAN_BATCH_CONTROL, rv);
-		return;
-	}
-
 #if IOPL_BATCHING_ENABLED
 	/* Select automatic batching, and specify the maximum packet count. */
-	param.p.bc.batchflags = 0;
-	param.p.bc.maxrxbatchcount = IOPL_MAX_BATCH;
-	param.p.bc.maxtxbatchcount = IOPL_MAX_BATCH;
+	tmp1 = htole32(0);
+	tmp2 = htole32(IOPL_MAX_BATCH);
+	tmp3 = htole32(IOPL_MAX_BATCH);
 #else
 	/* Force batching off. */
-	param.p.bc.batchflags = 1;				/* XXX */
-	param.p.bc.maxrxbatchcount = 1;
-	param.p.bc.maxtxbatchcount = 1;
+	tmp1 = htole32(1);				/* XXX */
+	tmp2 = htole32(1);
+	tmp3 = htole32(1);
 #endif
-
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 1,
-	    I2O_PARAM_LAN_BATCH_CONTROL, &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to set parameters (0x%04x; %d)\n",
-		   self->dv_xname, I2O_PARAM_LAN_BATCH_CONTROL, rv);
+	if (iop_field_set(iop, ia->ia_tid, I2O_PARAM_LAN_BATCH_CONTROL,
+	    &tmp1, sizeof(tmp1), I2O_PARAM_LAN_BATCH_CONTROL_batchflags))
 		return;
-	}
+	if (iop_field_set(iop, ia->ia_tid, I2O_PARAM_LAN_BATCH_CONTROL,
+	    &tmp2, sizeof(tmp2), I2O_PARAM_LAN_BATCH_CONTROL_maxrxbatchcount))
+		return;
+	if (iop_field_set(iop, ia->ia_tid, I2O_PARAM_LAN_BATCH_CONTROL,
+	    &tmp3, sizeof(tmp3), I2O_PARAM_LAN_BATCH_CONTROL_maxtxbatchcount))
+		return;
+
+	/*
+	 * Get multicast parameters.
+	 */
+	rv = iop_field_get_all(iop, ia->ia_tid, I2O_PARAM_LAN_MAC_ADDRESS,
+	    &param, sizeof(param), NULL);
+	if (rv != 0)
+		return;
+
+	sc->sc_mcast_max = le32toh(param.p.lma.maxmcastaddr);
+	sc->sc_mcast_max = min(IOPL_MAX_MULTI, sc->sc_mcast_max);
 
 	/*
 	 * Allocate transmit and receive descriptors.
@@ -438,6 +459,15 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dv.dv_xname);
 		return;
 	}
+
+	/*
+	 * Claim the device so that we don't get any nasty surprises.  Allow
+	 * failure.
+	 */
+	iop_util_claim(iop, &sc->sc_ii_evt, 0,
+	    I2O_UTIL_CLAIM_NO_PEER_SERVICE |
+	    I2O_UTIL_CLAIM_NO_MANAGEMENT_SERVICE |
+	    I2O_UTIL_CLAIM_PRIMARY_USER);
 
 	/*
 	 * Attach the interface.
@@ -461,7 +491,11 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 		if (maxpktsize >= ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN)
 			sc->sc_if.sci_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
-		ether_ifattach(ifp, (u_char *)param.p.ldi.hwaddr);
+		ether_ifattach(ifp, (u_char *)hwaddr);
+		break;
+
+	case I2O_LAN_TYPE_FDDI:
+		fddi_ifattach(ifp, (u_char *)hwaddr);
 		break;
 	}
 
@@ -502,7 +536,6 @@ iopl_tx_alloc(struct iopl_softc *sc, int count)
 		tx->tx_ident = i;
 		SLIST_INSERT_HEAD(&sc->sc_tx_free, tx, tx_chain);
 		sc->sc_tx_freecnt++;
-		sc->sc_tx_cnt++;
 	}
 
 	return (0);
@@ -524,7 +557,6 @@ iopl_tx_free(struct iopl_softc *sc)
 	free(sc->sc_tx, M_DEVBUF);
 	sc->sc_tx = NULL;
 	sc->sc_tx_freecnt = 0;
-	sc->sc_tx_cnt = 0;
 }
 
 /*
@@ -557,14 +589,14 @@ iopl_rx_alloc(struct iopl_softc *sc, int count)
 			goto bad;
 		}
 
+		state++;
+
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
 			rv = ENOBUFS;
 			goto bad;
 		}
-
-		state++;
 
 		rv = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE,
 		    sc->sc_tx_maxsegs, PAGE_SIZE, 0,
@@ -582,7 +614,6 @@ iopl_rx_alloc(struct iopl_softc *sc, int count)
 		rx->rx_ident = i;
 		SLIST_INSERT_HEAD(&sc->sc_rx_free, rx, rx_chain);
 		sc->sc_rx_freecnt++;
-		sc->sc_rx_cnt++;
 	}
 
  bad:
@@ -606,12 +637,12 @@ iopl_rx_free(struct iopl_softc *sc)
 	while ((rx = SLIST_FIRST(&sc->sc_rx_free)) != NULL) {
 		SLIST_REMOVE_HEAD(&sc->sc_rx_free, rx_chain);
 		bus_dmamap_destroy(sc->sc_dmat, rx->rx_dmamap);
+		m_freem(rx->rx_mbuf);
 	}
 
 	free(sc->sc_rx, M_DEVBUF);
 	sc->sc_rx = NULL;
 	sc->sc_rx_freecnt = 0;
-	sc->sc_rx_cnt = 0;
 }
 
 /*
@@ -622,47 +653,73 @@ iopl_rx_post(struct iopl_softc *sc)
 {
 	struct i2o_lan_receive_post *mf;
 	struct iopl_rx *rx;
-	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)], *p;
-	int i, cnt;
+	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)], *sp, *p, *ep, *lp;
+	bus_dmamap_t dm;
+	bus_dma_segment_t *ds;
+	bus_addr_t saddr, eaddr;
+	u_int i, slen, tlen;
+
+	mf = (struct i2o_lan_receive_post *)mb;
+	mf->msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_LAN_RECEIVE_POST);
+	mf->msgictx = sc->sc_ii_rx.ii_ictx;
+
+	ep = mb + (sizeof(mb) >> 2);
+	sp = (u_int32_t *)(mf + 1);
 
 	while (sc->sc_rx_freecnt != 0) {
-		/*
-		 * Prepare the message frame header, and determine how many
-		 * buckets can we post with this message.
-		 */
-		mf = (struct i2o_lan_receive_post *)mb;
 		mf->msgflags = I2O_MSGFLAGS(i2o_lan_receive_post);
-		mf->msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_LAN_RECEIVE_POST);
-		mf->msgictx = sc->sc_ii_rx.ii_ictx;
-		mf->bktcnt =
-		    min(sizeof(mb) - sizeof(*mf) / 12, sc->sc_rx_freecnt);
+		mf->bktcnt = 0;
+		p = sp;
 
 		/*
 		 * Remove RX descriptors from the list, sync their DMA maps,
 		 * and add their buckets to the scatter/gather list for
 		 * posting.
 		 */
-		p = mb + sizeof(*mf);
-		for (i = 0; i < mf->bktcnt; i++, p += 3) {
+		for (;;) {
 			rx = SLIST_FIRST(&sc->sc_rx_free);
 			SLIST_REMOVE_HEAD(&sc->sc_rx_free, rx_chain);
+			dm = rx->rx_dmamap;
 
-			bus_dmamap_sync(sc->sc_dmat, rx->rx_dmamap, 0,
-			    rx->rx_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
+			bus_dmamap_sync(sc->sc_dmat, dm, 0, dm->dm_mapsize,
+			    BUS_DMASYNC_PREREAD);
 
-			p[0] = rx->rx_dmamap->dm_mapsize | I2O_SGL_PAGE_LIST |
+			lp = p;
+			*p++ = dm->dm_mapsize | I2O_SGL_PAGE_LIST |
 			    I2O_SGL_END_BUFFER | I2O_SGL_BC_32BIT;
-			p[1] = rx->rx_ident;
-			p[2] = (u_int32_t)rx->rx_dmamap->dm_segs[0].ds_addr;
+			*p++ = rx->rx_ident;
+
+			for (i = dm->dm_nsegs, ds = dm->dm_segs; i > 0; i--) {
+				slen = ds->ds_len;
+				saddr = ds->ds_addr;
+				ds++;
+
+				/*
+				 * XXX This should be done with a bus_space
+				 * flag.
+				 */
+				while (slen > 0) {
+					eaddr = (saddr + PAGE_SIZE) &
+					    ~(PAGE_SIZE - 1);
+					tlen = min(eaddr - saddr, slen);
+					slen -= tlen;
+					*p++ = le32toh(saddr);
+					saddr = eaddr;
+				}
+			}
+
+			if (p + 2 + IOPL_MAX_SEGS >= ep)
+				break;
+			if (--sc->sc_rx_freecnt <= 0) 
+				break;
 		}
 
 		/*
 		 * Terminate the scatter/gather list and fix up the message
 		 * frame size and free RX descriptor count.
 		 */
-		p[-3] |= I2O_SGL_END;
-		mb[0] += ((cnt * 3) << 16);
-		sc->sc_rx_freecnt -= mf->bktcnt;
+		*lp |= I2O_SGL_END;
+		mb[0] += ((p - sp) << 16);
 
 		/*
 		 * Finally, post the message frame to the device.
@@ -746,6 +803,10 @@ iopl_intr_pg(struct device *dv, struct iop_msg *im, void *reply)
 
 		sc->sc_next_pg = -1;
 		break;
+
+	case I2O_PARAM_LAN_FDDI_STATS:
+		sc->sc_next_pg = -1;
+		break;
 	}
 
 	iopl_tick_sched(sc);
@@ -807,7 +868,7 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 	struct mbuf *m, *m0;
 	u_int32_t *p;
 	int off, err, flg, first, lastpkt, lastbkt, rv;
-	int len, i, pkt, pktlen[IOPL_MAX_BATCH];
+	int len, i, pkt, pktlen[IOPL_MAX_BATCH], csumflgs[IOPL_MAX_BATCH];
 	struct mbuf *head[IOPL_MAX_BATCH], *tail[IOPL_MAX_BATCH];
 
 	rb = (struct i2o_lan_receive_reply *)reply;
@@ -822,6 +883,7 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 
 	memset(head, 0, sizeof(head));
 	memset(pktlen, 0, sizeof(pktlen));
+	memset(csumflgs, 0, sizeof(csumflgs));
 
 	/*
 	 * Scan through the transaction reply list.  The TRL takes this
@@ -857,9 +919,17 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 		    rx->rx_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 		/*
-		 * Go through the bucket's entries and re-assemble all the
-		 * packet fragments that we find.
+		 * If this is a valid receive, go through the PDB entries
+		 * and re-assemble all the packet fragments that we find. 
+		 * Otherwise, just free up the buckets that we had posted -
+		 * we have probably received this reply because the
+		 * interface has been reset or suspended.
 		 */
+		if ((rb->trlflags & I2O_LAN_RECEIVE_REPLY_PDB) == 0) {
+			lastbkt = (--rb->trlcount == 0);
+			continue;
+		}
+
 		m = rx->rx_mbuf;
 
 		for (lastpkt = 0, first = 1, pkt = 0; !lastpkt; pkt++) {
@@ -891,18 +961,30 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 
 			/*
 			 * If the packet was received with errors, then
-			 * arrange to dump it.
+			 * arrange to dump it.  We allow bad L3 and L4
+			 * checksums through for accounting purposes.
 			 */
 			if (pktlen[pkt] == -1)
 				continue;
-			if ((off & 0x03) == 0x01 || err != 0) {	/* XXX */
+			if ((off & 0x03) == 0x01) {	/* XXX */
+				pktlen[pkt] = -1;
+				continue;
+			}
+			if ((err & I2O_LAN_PDB_ERROR_CKSUM_MASK) != 0) {
+				if ((err & I2O_LAN_PDB_ERROR_L3_CKSUM_BAD) != 0)
+					csumflgs[pkt] |= M_CSUM_IPv4_BAD;
+				if ((err & I2O_LAN_PDB_ERROR_L4_CKSUM_BAD) != 0)
+					csumflgs[pkt] |= M_CSUM_TCP_UDP_BAD;
+				err &= ~I2O_LAN_PDB_ERROR_CKSUM_MASK;
+			}
+			if (err != I2O_LAN_PDB_ERROR_NONE) {
 				pktlen[pkt] = -1;
 				continue;
 			}
 
-			if (len <= (MHLEN - 2)) {
+			if (len <= (MHLEN - sc->sc_rx_prepad)) {
 				/*
-				 * The packet is small enough to fit in a
+				 * The fragment is small enough to fit in a
 				 * single header mbuf - allocate one and
 				 * copy the data into it.  This greatly
 				 * reduces memory consumption when we
@@ -914,9 +996,8 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 					m_freem(m);
 					continue;
 				}
-				m0->m_data += 2;
-				m0->m_pkthdr.len = m0->m_len = len;
-				m_copydata(m, 0, len, mtod(m0, caddr_t));
+				m0->m_data += sc->sc_rx_prepad;
+				m_copydata(m, 0, len, mtod(m0, caddr_t) + off);
 				off = 0;
 			} else if (!first) {
 				/*
@@ -935,11 +1016,14 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 				 * continue.
 				 */
 				MGETHDR(m0, M_DONTWAIT, MT_DATA);
-				if (m0 == NULL)  
+				if (m0 == NULL) {
+					pktlen[pkt] = -1;
 					continue;
+				}
 
 				MCLGET(m0, M_DONTWAIT);
 				if ((m0->m_flags & M_EXT) == 0) {
+					pktlen[pkt] = -1;
 					m_freem(m0);
 					continue;
 				}
@@ -958,6 +1042,7 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 					    sc->sc_dv.dv_xname, rv);
 					SLIST_REMOVE_HEAD(&sc->sc_rx_free,
 					    rx_chain);
+					sc->sc_rx_freecnt--;
 				}
 
 				rx->rx_mbuf = m0;
@@ -997,11 +1082,12 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 
 		/*
 		 * Otherwise, fix up the header, feed a copy to BPF, and
-		 * pass it on up.
+		 * then pass it on up.
 		 */
 		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
+		m->m_pkthdr.csum_flags = csumflgs[pkt] | sc->sc_rx_csumflgs;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -1125,7 +1211,7 @@ iopl_tick_sched(struct iopl_softc *sc)
 	int s;
 
 	if (sc->sc_next_pg == -1) {
-		s = splnet();
+		s = splbio();
 		if ((sc->sc_flags & IOPL_MEDIA_CHANGE) != 0) {
 			sc->sc_next_pg = I2O_PARAM_LAN_MEDIA_OPERATION;
 			sc->sc_flags &= ~IOPL_MEDIA_CHANGE;
@@ -1144,15 +1230,9 @@ iopl_tick_sched(struct iopl_softc *sc)
 static void
 iopl_getpg(struct iopl_softc *sc, int pg)
 {
-	int rv;
 
-	rv = iop_param_op((struct iop_softc *)sc->sc_dv.dv_parent, sc->sc_tid,
-	    &sc->sc_ii_pg, 0, pg, &sc->sc_pb, sizeof(sc->sc_pb));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		    sc->sc_dv.dv_xname, pg, rv);
-		/* The callout stops. */
-	}
+	iop_field_get_all((struct iop_softc *)sc->sc_dv.dv_parent, sc->sc_tid,
+	    pg, &sc->sc_pb, sizeof(sc->sc_pb), &sc->sc_ii_pg);
 }
 
 /*
@@ -1167,7 +1247,7 @@ iopl_ifmedia_status(struct ifnet *ifp, struct ifmediareq *req)
 
 	sc = ifp->if_softc;
 
-	s = splnet();
+	s = splbio();
 	conntype = sc->sc_conntype;
 	splx(s);
 
@@ -1180,6 +1260,11 @@ iopl_ifmedia_status(struct ifnet *ifp, struct ifmediareq *req)
 	case I2O_LAN_TYPE_ETHERNET:
 		ilm = iopl_ether_media;
 		req->ifm_active = IFM_ETHER;
+		break;
+
+	case I2O_LAN_TYPE_FDDI:
+		ilm = iopl_fddi_media;
+		req->ifm_active = IFM_FDDI;
 		break;
 	}
 
@@ -1199,13 +1284,72 @@ iopl_ifmedia_status(struct ifnet *ifp, struct ifmediareq *req)
 static int
 iopl_ifmedia_change(struct ifnet *ifp)
 {
+	struct iop_softc *iop;
+	struct iopl_softc *sc;
+	const struct iopl_media *ilm;
+	u_int subtype;
+	u_int32_t ciontype;
+	u_int8_t fdx;
 
-	/* XXX */
-	return (EOPNOTSUPP);
+	sc = ifp->if_softc;
+	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+
+	subtype = IFM_SUBTYPE(sc->sc_ifmedia.ifm_cur->ifm_media);
+	if (subtype == IFM_AUTO)
+		ciontype = I2O_LAN_CONNECTION_DEFAULT;
+	else {
+		switch (sc->sc_mtype) {
+		case I2O_LAN_TYPE_100BASEVG:
+		case I2O_LAN_TYPE_ETHERNET:
+			ilm = iopl_ether_media;
+			break;
+
+		case I2O_LAN_TYPE_FDDI:
+			ilm = iopl_fddi_media;
+			break;
+		}
+
+		for (; ilm->ilm_i2o != I2O_LAN_CONNECTION_DEFAULT; ilm++)
+			if (ilm->ilm_ifmedia == subtype)
+				break;
+		if (ilm->ilm_i2o == I2O_LAN_CONNECTION_DEFAULT)
+			return (EINVAL);
+		ciontype = le32toh(ilm->ilm_i2o);
+	}
+
+	if ((sc->sc_ifmedia.ifm_cur->ifm_media & IFM_FDX) != 0)
+		fdx = 1;
+	else if ((sc->sc_ifmedia.ifm_cur->ifm_media & IFM_HDX) != 0)
+		fdx = 0;
+	else {
+		/*
+		 * XXX Not defined as auto-detect, but as "default".
+		 */
+		fdx = 0xff;
+	}
+
+	/*
+	 * XXX Can we set all these independently?  Will omitting the
+	 * connector type screw us up?
+	 */
+	iop_field_set(iop, sc->sc_tid, I2O_PARAM_LAN_MEDIA_OPERATION,
+	    &ciontype, sizeof(ciontype),
+	    I2O_PARAM_LAN_MEDIA_OPERATION_connectiontarget);
+#if 0
+	iop_field_set(iop, sc->sc_tid, I2O_PARAM_LAN_MEDIA_OPERATION,
+	    &certype, sizeof(certype),
+	    I2O_PARAM_LAN_MEDIA_OPERATION_connectertarget);
+#endif
+	iop_field_set(iop, sc->sc_tid, I2O_PARAM_LAN_MEDIA_OPERATION,
+	    &fdx, sizeof(fdx),
+	    I2O_PARAM_LAN_MEDIA_OPERATION_duplextarget);
+
+	ifp->if_baudrate = ifmedia_baudrate(sc->sc_ifmedia.ifm_cur->ifm_media);
+	return (0);
 }
 
 /*
- * Initalize the interface.
+ * Initialize the interface.
  */
 static int
 iopl_init(struct ifnet *ifp)
@@ -1213,84 +1357,126 @@ iopl_init(struct ifnet *ifp)
 	struct i2o_lan_reset mf;
 	struct iopl_softc *sc;
 	struct iop_softc *iop;
-	struct {
-		struct	i2o_param_op_results pr;
-		struct	i2o_param_read_results prr;
-		struct	i2o_param_lan_operation lo;
-	} __attribute__ ((__packed__)) param;
-	int rv, s;
+	int rv, s, flg;
+	u_int8_t hwaddr[8];
+	u_int32_t txmode, rxmode;
 
 	sc = ifp->if_softc;
 	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
 
-	/*
-	 * Reset the interface hardware.
-	 */
-	mf.msgflags = I2O_MSGFLAGS(i2o_lan_reset);
-	mf.msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_LAN_RESET);
-	mf.msgictx = sc->sc_ii_null.ii_ictx;
-	mf.reserved = 0;
-	mf.resrcflags = 0;
-	iop_post(iop, (u_int32_t *)&mf);
-	DELAY(5000);
-
-	/*
-	 * Register to receive events from the device.
-	 */
-	if (iop_util_eventreg(iop, &sc->sc_ii_evt, 0xffffffff))
-		printf("%s: unable to register for events\n",
-		    sc->sc_dv.dv_xname);
-
-	/*
-	 * Trigger periodic parameter group retrievals.
-	 */
-	s = splnet();
-	sc->sc_flags |= IOPL_MEDIA_CHANGE;
+	s = splbio();
+	flg = sc->sc_flags;
 	splx(s);
 
-	callout_init(&sc->sc_pg_callout);
+	if ((flg & IOPL_INITTED) == 0) {
+		/*
+		 * Reset the interface hardware.
+		 */
+		mf.msgflags = I2O_MSGFLAGS(i2o_lan_reset);
+		mf.msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_LAN_RESET);
+		mf.msgictx = sc->sc_ii_null.ii_ictx;
+		mf.reserved = 0;
+		mf.resrcflags = 0;
+		iop_post(iop, (u_int32_t *)&mf);
+		DELAY(5000);
 
-	sc->sc_next_pg = -1;
-	iopl_tick_sched(sc);
+		/*
+		 * Register to receive events from the device.
+		 */
+		if (iop_util_eventreg(iop, &sc->sc_ii_evt, 0xffffffff))
+			printf("%s: unable to register for events\n",
+			    sc->sc_dv.dv_xname);
+
+		/*
+		 * Trigger periodic parameter group retrievals.
+		 */
+		s = splbio();
+		sc->sc_flags |= (IOPL_MEDIA_CHANGE | IOPL_INITTED);
+		splx(s);
+
+		callout_init(&sc->sc_pg_callout);
+
+		sc->sc_next_pg = -1;
+		iopl_tick_sched(sc);
+	}
 
 	/*
 	 * Enable or disable hardware checksumming.
 	 */
-	rv = iop_param_op(iop, sc->sc_tid, NULL, 0,
-	    I2O_PARAM_LAN_OPERATION, &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		   sc->sc_dv.dv_xname, I2O_PARAM_LAN_OPERATION, rv);
-		return (0);
+	s = splbio();
+#ifdef IOPL_ENABLE_BATCHING
+	sc->sc_tx_tcw = I2O_LAN_TCW_REPLY_BATCH;
+#else
+	sc->sc_tx_tcw = I2O_LAN_TCW_REPLY_IMMEDIATELY;
+#endif
+	sc->sc_rx_csumflgs = 0;
+	rxmode = 0;
+	txmode = 0;
+
+	if ((ifp->if_capenable & IFCAP_CSUM_IPv4) != 0) {
+		sc->sc_tx_tcw |= I2O_LAN_TCW_CKSUM_NETWORK;
+		sc->sc_rx_csumflgs |= M_CSUM_IPv4;
+		txmode |= I2O_LAN_MODES_IPV4_CHECKSUM;
+		rxmode |= I2O_LAN_MODES_IPV4_CHECKSUM;
 	}
 
-	if ((ifp->if_capenable & IFCAP_CSUM_IPv4) != 0)
-		param.lo.txmodesenable |= I2O_LAN_MODES_IPV4_CHECKSUM;
-	else
-		param.lo.txmodesenable &= ~I2O_LAN_MODES_IPV4_CHECKSUM;
+	if ((ifp->if_capenable & IFCAP_CSUM_TCPv4) != 0) {
+		sc->sc_tx_tcw |= I2O_LAN_TCW_CKSUM_TRANSPORT;
+		sc->sc_rx_csumflgs |= M_CSUM_TCPv4;
+		txmode |= I2O_LAN_MODES_TCP_CHECKSUM;
+		rxmode |= I2O_LAN_MODES_TCP_CHECKSUM;
+	}
 
-	if ((ifp->if_capenable & IFCAP_CSUM_TCPv4) != 0)
-		param.lo.txmodesenable |= I2O_LAN_MODES_TCP_CHECKSUM;
-	else
-		param.lo.txmodesenable &= ~I2O_LAN_MODES_TCP_CHECKSUM;
+	if ((ifp->if_capenable & IFCAP_CSUM_UDPv4) != 0) {
+		sc->sc_tx_tcw |= I2O_LAN_TCW_CKSUM_TRANSPORT;
+		sc->sc_rx_csumflgs |= M_CSUM_UDPv4;
+		txmode |= I2O_LAN_MODES_UDP_CHECKSUM;
+		rxmode |= I2O_LAN_MODES_TCP_CHECKSUM;
+	}
 
-	if ((ifp->if_capenable & IFCAP_CSUM_UDPv4) != 0)
-		param.lo.txmodesenable |= I2O_LAN_MODES_UDP_CHECKSUM;
-	else
-		param.lo.txmodesenable &= ~I2O_LAN_MODES_UDP_CHECKSUM;
+	splx(s);
 
 	/* We always want a copy of the checksum. */
-	param.lo.rxmodesenable |= I2O_LAN_MODES_FCS_RECEPTION;
+	rxmode |= I2O_LAN_MODES_FCS_RECEPTION;
+	rxmode = htole32(rxmode);
+	txmode = htole32(txmode);
 
-	rv = iop_param_op(iop, sc->sc_tid, NULL, 1,
-	    I2O_PARAM_LAN_OPERATION, &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to set parameters (0x%04x; %d)\n",
-		   sc->sc_dv.dv_xname, I2O_PARAM_LAN_OPERATION, rv);
-		return (0);
-	}
+	rv = iop_field_set(iop, sc->sc_tid, I2O_PARAM_LAN_OPERATION,
+	    &txmode, sizeof(txmode), I2O_PARAM_LAN_OPERATION_txmodesenable);
+	if (rv == 0)
+		rv = iop_field_set(iop, sc->sc_tid, I2O_PARAM_LAN_OPERATION,
+		    &txmode, sizeof(txmode),
+		    I2O_PARAM_LAN_OPERATION_rxmodesenable);
+	if (rv != 0)
+		return (rv);
+
+	/*
+	 * Try to set the active MAC address.
+	 */
+	memset(hwaddr, 0, sizeof(hwaddr));
+	memcpy(hwaddr, LLADDR(ifp->if_sadl), ifp->if_addrlen);
+	iop_field_set(iop, sc->sc_tid, I2O_PARAM_LAN_MAC_ADDRESS,
+	    hwaddr, sizeof(hwaddr), I2O_PARAM_LAN_MAC_ADDRESS_localaddr);
 
 	ifp->if_flags = (ifp->if_flags | IFF_RUNNING) & ~IFF_OACTIVE;
+
+	/*
+	 * Program the receive filter.
+	 */
+	switch (sc->sc_mtype) {
+	case I2O_LAN_TYPE_ETHERNET:
+	case I2O_LAN_TYPE_100BASEVG:
+	case I2O_LAN_TYPE_FDDI:
+		iopl_filter_ether(sc);
+		break;
+	}
+
+	/*
+	 * Post any free receive buckets to the interface.
+	 */
+	s = splbio();
+	iopl_rx_post(sc);
+	splx(s);
 	return (0);
 }
 
@@ -1303,21 +1489,32 @@ iopl_stop(struct ifnet *ifp, int disable)
 	struct i2o_lan_suspend mf;
 	struct iopl_softc *sc;
 	struct iop_softc *iop;
+	int flg, s;
 
 	sc = ifp->if_softc;
 	iop = (struct iop_softc *)sc->sc_dv.dv_xname;
 
-	/*
-	 * Block reception of events from the device.
-	 */
-	if (iop_util_eventreg(iop, &sc->sc_ii_evt, 0))
-		printf("%s: unable to register for events\n",
-		    sc->sc_dv.dv_xname);
+	s = splbio();
+	flg = sc->sc_flags;
+	splx(s);
 
-	/*
-	 * Stop parameter group retrival.
-	 */
-	callout_stop(&sc->sc_pg_callout);
+	if ((flg & IOPL_INITTED) != 0) {
+		/*
+		 * Block reception of events from the device.
+		 */
+		if (iop_util_eventreg(iop, &sc->sc_ii_evt, 0))
+			printf("%s: unable to register for events\n",
+			    sc->sc_dv.dv_xname);
+
+		/*
+		 * Stop parameter group retrival.
+		 */
+		callout_stop(&sc->sc_pg_callout);
+
+		s = splbio();
+		sc->sc_flags &= ~IOPL_INITTED;
+		splx(s);
+	}
 
 	/*
 	 * If requested, suspend the interface.
@@ -1345,15 +1542,13 @@ iopl_start(struct ifnet *ifp)
 	struct iopl_softc *sc;
 	struct iop_softc *iop;
 	struct i2o_lan_packet_send *mf;
-	struct ether_header *eh;
 	struct iopl_tx *tx;
 	struct mbuf *m;
 	bus_dmamap_t dm;
 	bus_dma_segment_t *ds;
 	bus_addr_t saddr, eaddr;
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)], *p, *lp;
-	u_int8_t *sp, *dp;
-	u_int rv, i, nsegs, slen, tlen, size;
+	u_int rv, i, slen, tlen, size;
 	int frameleft, nxmits;
 	SLIST_HEAD(,iopl_tx) pending;
 
@@ -1366,6 +1561,13 @@ iopl_start(struct ifnet *ifp)
 	frameleft = -1;
 	nxmits = 0;
 	SLIST_INIT(&pending);
+
+	/*
+	 * Set static fields in the message frame header.
+	 */
+	mf->msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_LAN_PACKET_SEND);
+	mf->msgictx = sc->sc_ii_rx.ii_ictx;
+	mf->tcw = sc->sc_tx_tcw;
 
 	for (;;) {
 		/*
@@ -1435,20 +1637,10 @@ iopl_start(struct ifnet *ifp)
 			 * Prepare a new message frame.
 			 */
 			mf->msgflags = I2O_MSGFLAGS(i2o_lan_packet_send);
-			mf->msgfunc =
-			    I2O_MSGFUNC(I2O_TID_IOP, I2O_LAN_PACKET_SEND);
-			mf->msgictx = sc->sc_ii_rx.ii_ictx;
-#ifdef IOPL_ENABLE_BATCHING
-			mf->tcw = I2O_LAN_TCW_REPLY_BATCH;
-#else
-			mf->tcw = I2O_LAN_TCW_REPLY_IMMEDIATELY;
-#endif
 			p = (u_int32_t *)(mf + 1);
 			frameleft = (sizeof(mb) - sizeof(*mf)) >> 2;
 			nxmits = 0;
 		}
-		frameleft -= (sc->sc_tx_ohead + nsegs);
-		nxmits++;
 
 		/*
 		 * Fill the scatter/gather list.  The interface may have
@@ -1461,18 +1653,7 @@ iopl_start(struct ifnet *ifp)
 			*p++ = dm->dm_mapsize | I2O_SGL_PAGE_LIST |
 			    I2O_SGL_BC_96BIT | I2O_SGL_END_BUFFER;
 			*p++ = tx->tx_ident;
-			switch (sc->sc_mtype) {
-			case I2O_LAN_TYPE_ETHERNET:
-			case I2O_LAN_TYPE_100BASEVG:
-				eh = mtod(m, struct ether_header *);
-				sp = (u_int8_t *)eh->ether_dhost;
-				dp = (u_int8_t *)p;
-				for (i = 6; i > 0; i--)
-					*dp++ = *sp++;
-				*dp++ = 0;
-				*dp++ = 0;
-				break;
-			}
+			(*sc->sc_munge)(m, (u_int8_t *)p);
 			p += 2;
 		} else {
 			*p++ = dm->dm_mapsize | I2O_SGL_PAGE_LIST |
@@ -1491,13 +1672,15 @@ iopl_start(struct ifnet *ifp)
 				slen -= tlen;
 				*p++ = le32toh(saddr);
 				saddr = eaddr;
-				nsegs++;
 			}
 		}
 
+		frameleft -= (p - lp);
+		nxmits++;
+
 #if NBPFILTER > 0
 		/*
-		 * If BPF is enabled on this interface, hand off a copy of
+		 * If BPF is enabled on this interface, feed it a copy of
 		 * the packet.
 		 */
 		if (ifp->if_bpf)
@@ -1507,12 +1690,12 @@ iopl_start(struct ifnet *ifp)
 
 	/*
 	 * Flush any waiting message frame.  If it's sent successfully, then
-	 * clear the pending TX list.
+	 * return straight away.
 	 */
 	if (frameleft >= 0) {
 		*lp |= I2O_SGL_END;
 		if (iop_post(iop, mb) == 0)
-			SLIST_INIT(&pending);
+			return;
 	}
 
 	/*
@@ -1530,37 +1713,269 @@ iopl_start(struct ifnet *ifp)
 }
 
 /*
+ * Munge an Ethernet address into buffer context.
+ */
+static void
+iopl_munge_ether(struct mbuf *m, u_int8_t *dp)
+{
+	struct ether_header *eh;
+	u_int8_t *sp;
+	int i;
+
+	eh = mtod(m, struct ether_header *);
+	sp = (u_int8_t *)eh->ether_dhost;
+	for (i = ETHER_ADDR_LEN; i > 0; i--)
+		*dp++ = *sp++;
+	*dp++ = 0;
+	*dp++ = 0;
+}
+
+/*
+ * Munge an FDDI address into buffer context.
+ */
+static void
+iopl_munge_fddi(struct mbuf *m, u_int8_t *dp)
+{
+	struct fddi_header *fh;
+	u_int8_t *sp;
+	int i;
+
+	fh = mtod(m, struct fddi_header *);
+	sp = (u_int8_t *)fh->fddi_dhost;
+	for (i = 6; i > 0; i--)
+		*dp++ = *sp++;
+	*dp++ = 0;
+	*dp++ = 0;
+}
+
+/*
+ * Program the receive filter for an Ethernet interface.
+ */
+static int
+iopl_filter_ether(struct iopl_softc *sc)
+{
+	struct ifnet *ifp;
+	struct ethercom *ec;
+	struct ether_multi *enm;
+	u_int64_t *tbl;
+	int i, rv, size;
+	struct ether_multistep step;
+
+	ec = &sc->sc_if.sci_ec;
+	ifp = &ec->ec_if;
+
+	/*
+	 * If there are more multicast addresses than will fit into the
+	 * filter table, or we fail to allocate memory for the table, then
+	 * enable reception of all multicast packets.
+	 */
+	if (ec->ec_multicnt > sc->sc_mcast_max)
+		goto allmulti;
+
+	size = sizeof(*tbl) * sc->sc_mcast_max;
+	if ((tbl = malloc(size, M_DEVBUF, M_WAITOK)) == NULL)
+		goto allmulti;
+	memset(tbl, 0, size);
+
+	ETHER_FIRST_MULTI(step, ec, enm)
+	for (i = 0; enm != NULL; i++) {
+		/*
+		 * For the moment, if a range of multicast addresses was
+		 * specified, then just accept all multicast packets.
+		 */
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			free(tbl, M_DEVBUF);
+			goto allmulti;
+		}
+
+		/*
+		 * Add the address to the table.
+		 */
+		memset(&tbl[i], 0, sizeof(tbl[i]));
+		memcpy(&tbl[i], enm->enm_addrlo, ETHER_ADDR_LEN);
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
+	sc->sc_mcast_cnt = i;
+	ifp->if_flags &= ~IFF_ALLMULTI;
+ 	rv = iopl_filter_generic(sc, tbl);
+ 	free(tbl, M_DEVBUF);
+ 	return (0);
+
+ allmulti:
+	sc->sc_mcast_cnt = 0;
+	ifp->if_flags |= IFF_ALLMULTI;
+	return (iopl_filter_generic(sc, NULL));
+}
+
+/*
+ * Generic receive filter programming.
+ */
+static int
+iopl_filter_generic(struct iopl_softc *sc, u_int64_t *tbl)
+{
+	struct iop_softc *iop;
+	struct ifnet *ifp;
+	int i, rv;
+	u_int32_t tmp1;
+
+	ifp = &sc->sc_if.sci_if;
+	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+
+	/*
+	 * Clear out the existing multicast table and set in the new one, if
+	 * any.
+	 */
+	if (sc->sc_mcast_max != 0) {
+		iop_table_clear(iop, sc->sc_tid,
+		    I2O_PARAM_LAN_MCAST_MAC_ADDRESS);
+
+		for (i = 0; i < sc->sc_mcast_cnt; i++) {
+			rv = iop_table_add_row(iop, sc->sc_tid,
+			    I2O_PARAM_LAN_MCAST_MAC_ADDRESS,
+			    &tbl[i], sizeof(tbl[i]), i);
+			if (rv != 0) {
+				ifp->if_flags |= IFF_ALLMULTI;
+				break;
+			}
+		}
+	}
+
+	/*
+	 * Set the filter mask.
+	 */
+	if ((ifp->if_flags & IFF_PROMISC) != 0)
+		tmp1 = I2O_LAN_FILTERMASK_PROMISC_ENABLE;
+	else  {
+		if ((ifp->if_flags & IFF_ALLMULTI) != 0)
+			tmp1 = I2O_LAN_FILTERMASK_PROMISC_MCAST_ENABLE;
+		else
+			tmp1 = 0;
+
+		if ((ifp->if_flags & IFF_BROADCAST) == 0)
+			tmp1 |= I2O_LAN_FILTERMASK_BROADCAST_DISABLE;
+	}
+	tmp1 = htole32(tmp1);
+
+	return (iop_field_set(iop, sc->sc_tid, I2O_PARAM_LAN_MAC_ADDRESS,
+	    &tmp1, sizeof(tmp1), I2O_PARAM_LAN_MAC_ADDRESS_filtermask));
+}
+
+/*
  * Handle control operations.
  */
 static int
 iopl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct iopl_softc *sc;
+	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, rv;
+#ifdef NS
+	struct ns_addr *ina;
+#endif
 
 	ifr = (struct ifreq *)data;
 	sc = ifp->if_softc;
 	s = splnet();
+	rv = 0;
 
 	switch (cmd) {
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		rv = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, cmd);
-		break;
+		goto out;
+	}
 
-	default:
+	switch (sc->sc_mtype) {
+	case I2O_LAN_TYPE_ETHERNET:
+	case I2O_LAN_TYPE_100BASEVG:
 		rv = ether_ioctl(ifp, cmd, data);
 		if (rv == ENETRESET) {
 			/*
-			 * XXX Multicast list has changed; need to set the
-			 * hardware filter accordingly.
+			 * Flags and/or multicast list has changed; need to
+			 * set the hardware filter accordingly.
 			 */
-			rv = 0;
+			rv = iopl_filter_ether(sc);
 		}
 		break;
+
+	case I2O_LAN_TYPE_FDDI:
+		/*
+		 * XXX This should be shared.
+		 */
+		switch (cmd) {
+		case SIOCSIFADDR:
+			ifa = (struct ifaddr *)data;
+			ifp->if_flags |= IFF_UP;
+
+			switch (ifa->ifa_addr->sa_family) {
+#if defined(INET)
+			case AF_INET:
+				iopl_init(ifp);
+				arp_ifinit(ifp, ifa);
+				break;
+#endif /* INET */
+
+#if defined(NS)
+			case AF_NS:
+				ina = &(IA_SNS(ifa)->sns_addr);
+				if (ns_nullhost(*ina))
+					ina->x_host = *(union ns_host *)
+					    LLADDR(ifp->if_sadl);
+				else {
+					ifp->if_flags &= ~IFF_RUNNING;
+					memcpy(LLADDR(ifp->if_sadl),
+					    ina->x_host.c_host, 6);
+				}
+				iopl_init(ifp);
+				break;
+#endif /* NS */
+			default:
+				iopl_init(ifp);
+				break;
+			}
+			break;
+
+		case SIOCGIFADDR:
+			ifr = (struct ifreq *)data;
+			memcpy(((struct sockaddr *)&ifr->ifr_data)->sa_data,
+			    LLADDR(ifp->if_sadl), 6);
+			break;
+
+		case SIOCSIFFLAGS:
+			iopl_init(ifp);
+			break;
+
+		case SIOCADDMULTI:
+		case SIOCDELMULTI:
+			ifr = (struct ifreq *)data;
+			if (cmd == SIOCADDMULTI)
+				rv = ether_addmulti(ifr, &sc->sc_if.sci_ec);
+			else
+				rv = ether_delmulti(ifr, &sc->sc_if.sci_ec);
+			if (rv == ENETRESET &&
+			    (ifp->if_flags & IFF_RUNNING) != 0)
+				rv = iopl_filter_ether(sc);
+			break;
+
+		case SIOCSIFMTU:
+			ifr = (struct ifreq *)data;
+			if (ifr->ifr_mtu > FDDIMTU) {
+				rv = EINVAL;
+				break;
+			}
+			ifp->if_mtu = ifr->ifr_mtu;
+			break;
+
+		default:
+			rv = ENOTTY;
+			break;
+		}
 	}
 
+ out:
 	splx(s);
 	return (rv);
 }

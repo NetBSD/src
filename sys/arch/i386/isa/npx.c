@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.74.2.4 2001/08/24 04:20:01 nathanw Exp $	*/
+/*	$NetBSD: npx.c,v 1.74.2.5 2001/09/21 22:35:10 nathanw Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -519,10 +519,7 @@ npxdna_s87(struct lwp *l)
 	npxproc = l;
 
 	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
-		if (i386_use_fxsave)
-		    fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
-		else
-		    fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_87.sv_env.en_cw);
+		fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_87.sv_env.en_cw);
 		l->l_md.md_flags |= MDP_USEDFPU;
 	} else {
 		/*

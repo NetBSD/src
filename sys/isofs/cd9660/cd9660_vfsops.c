@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.52.2.4 2001/08/24 00:11:21 nathanw Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.52.2.5 2001/09/21 22:36:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -94,11 +94,16 @@ struct vfsops cd9660_vfsops = {
 	cd9660_fhtovp,
 	cd9660_vptofh,
 	cd9660_init,
+	cd9660_reinit,
 	cd9660_done,
 	cd9660_sysctl,
 	cd9660_mountroot,
 	cd9660_check_export,
 	cd9660_vnodeopv_descs,
+};
+
+struct genfs_ops cd9660_genfsops = {
+	genfs_size,
 };
 
 /*
@@ -743,6 +748,9 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 {
 	struct iso_mnt *imp;
 	struct iso_node *ip;
+#ifdef ISODEVMAP
+	struct iso_dnode *dp;
+#endif
 	struct buf *bp;
 	struct vnode *vp, *nvp;
 	dev_t dev;
@@ -892,7 +900,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		 * if device, look at device number table for translation
 		 */
 #ifdef	ISODEVMAP
-		if (dp = iso_dmap(dev, ino, 0))
+		if ((dp = iso_dmap(dev, ino, 0)) != NULL)
 			ip->inode.iso_rdev = dp->d_dev;
 #endif
 		vp->v_op = cd9660_specop_p;
@@ -934,6 +942,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	 * XXX need generation number?
 	 */
 	
+	genfs_node_init(vp, &cd9660_genfsops);
 	*vpp = vp;
 	return (0);
 }

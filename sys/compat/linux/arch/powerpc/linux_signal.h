@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.1 2001/01/19 01:31:25 manu Exp $ */
+/* $NetBSD: linux_signal.h,v 1.1.4.1 2001/09/21 22:35:17 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -136,6 +136,6 @@ struct linux_sigaltstack {
 	int ss_flags;
 	size_t ss_size;
 };
-typedef struct sigaltstack linux_stack_t;
+typedef struct linux_sigaltstack linux_stack_t;
 
 #endif /* !_POWERPC_LINUX_SIGNAL_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.94.2.2 2001/06/21 20:03:28 nathanw Exp $ */
+/*	$NetBSD: wdc.c,v 1.94.2.3 2001/09/21 22:35:45 nathanw Exp $ */
 
 
 /*
@@ -1519,7 +1519,9 @@ wdc_get_xfer(flags)
 	xfer = pool_get(&wdc_xfer_pool,
 	    ((flags & WDC_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
 	splx(s);
-	memset(xfer, 0, sizeof(struct wdc_xfer));
+	if (xfer != NULL) {
+		memset(xfer, 0, sizeof(struct wdc_xfer));
+	}
 	return xfer;
 }
 

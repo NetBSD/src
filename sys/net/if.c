@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.86.2.3 2001/08/24 00:12:06 nathanw Exp $	*/
+/*	$NetBSD: if.c,v 1.86.2.4 2001/09/21 22:36:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -406,7 +406,8 @@ if_attach(ifp)
 	ifp->if_link_state = LINK_STATE_UNKNOWN;
 
 	ifp->if_capenable = 0;
-	ifp->if_csum_flags = 0;
+	ifp->if_csum_flags_tx = 0;
+	ifp->if_csum_flags_rx = 0;
 
 #ifdef ALTQ
 	ifp->if_snd.altq_type = 0;
@@ -1304,17 +1305,34 @@ ifioctl(so, cmd, data, p)
 			ifp->if_capenable = ifcr->ifcr_capenable;
 
 			/* Pre-compute the checksum flags mask. */
-			ifp->if_csum_flags = 0;
-			if (ifp->if_capenable & IFCAP_CSUM_IPv4)
-				ifp->if_csum_flags |= M_CSUM_IPv4;
-			if (ifp->if_capenable & IFCAP_CSUM_TCPv4)
-				ifp->if_csum_flags |= M_CSUM_TCPv4;
-			if (ifp->if_capenable & IFCAP_CSUM_UDPv4)
-				ifp->if_csum_flags |= M_CSUM_UDPv4;
-			if (ifp->if_capenable & IFCAP_CSUM_TCPv6)
-				ifp->if_csum_flags |= M_CSUM_TCPv6;
-			if (ifp->if_capenable & IFCAP_CSUM_UDPv6)
-				ifp->if_csum_flags |= M_CSUM_UDPv6;
+			ifp->if_csum_flags_tx = 0;
+			ifp->if_csum_flags_rx = 0;
+			if (ifp->if_capenable & IFCAP_CSUM_IPv4) {
+				ifp->if_csum_flags_tx |= M_CSUM_IPv4;
+				ifp->if_csum_flags_rx |= M_CSUM_IPv4;
+			}
+
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv4) {
+				ifp->if_csum_flags_tx |= M_CSUM_TCPv4;
+				ifp->if_csum_flags_rx |= M_CSUM_TCPv4;
+			} else if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx)
+				ifp->if_csum_flags_rx |= M_CSUM_TCPv4;
+
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv4) {
+				ifp->if_csum_flags_tx |= M_CSUM_UDPv4;
+				ifp->if_csum_flags_rx |= M_CSUM_UDPv4;
+			} else if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx)
+				ifp->if_csum_flags_rx |= M_CSUM_UDPv4;
+
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv6) {
+				ifp->if_csum_flags_tx |= M_CSUM_TCPv6;
+				ifp->if_csum_flags_rx |= M_CSUM_TCPv6;
+			}
+
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv6) {
+				ifp->if_csum_flags_tx |= M_CSUM_UDPv6;
+				ifp->if_csum_flags_rx |= M_CSUM_UDPv6;
+			}
 
 			/*
 			 * Only kick the interface if it's up.  If it's

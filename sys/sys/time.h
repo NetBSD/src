@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.30.2.1 2001/06/21 20:09:59 nathanw Exp $	*/
+/*	$NetBSD: time.h,v 1.30.2.2 2001/09/21 22:37:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -165,6 +165,9 @@ void	microtime __P((struct timeval *tv));
 int	settime __P((struct timeval *));
 int	ratecheck __P((struct timeval *, const struct timeval *));
 int	ppsratecheck __P((struct timeval *, int *, int));
+int	settimeofday1 __P((struct timeval *, struct timezone *, struct proc *));
+int	adjtime1 __P((struct timeval *, struct timeval *, struct proc *));
+int	clock_settime1 __P((clockid_t, struct timespec *));
 #else /* !_KERNEL */
 
 #ifndef _STANDALONE

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:40 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.1.4.1 2001/09/21 22:36:34 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ int exec_linux_aout_lkmentry __P((struct lkm_table *, int, int));
 static struct execsw exec_linux_aout =
 	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, { NULL },
 	  NULL, EXECSW_PRIO_ANY,
-	  LINUX_AOUT_AUX_ARGSIZ, linux_aout_copyargs, linux_setregs }; /* linux a.out */
+	  LINUX_AOUT_AUX_ARGSIZ, linux_aout_copyargs }; /* linux a.out */
 
 /*
  * declare the exec

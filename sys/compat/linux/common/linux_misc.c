@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.83.2.4 2001/08/24 00:08:49 nathanw Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.83.2.5 2001/09/21 22:35:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -395,7 +395,7 @@ linux_sys_mmap(l, v, retval)
 		syscallarg(int) prot;
 		syscallarg(int) flags;
 		syscallarg(int) fd;
-		syscallarg(off_t) offset;
+		syscallarg(linux_off_t) offset;
 	} */ *uap = v;
 	struct sys_mmap_args cma;
 	int flags;
@@ -415,7 +415,7 @@ linux_sys_mmap(l, v, retval)
 	SCARG(&cma,flags) = flags;
 	SCARG(&cma,fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
 	SCARG(&cma,pad) = 0;
-	SCARG(&cma,pos) = SCARG(uap, offset);
+	SCARG(&cma,pos) = (off_t)SCARG(uap, offset);
 
 	return sys_mmap(l, &cma, retval);
 }

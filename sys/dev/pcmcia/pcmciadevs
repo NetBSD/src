@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.121.2.3 2001/08/24 00:10:31 nathanw Exp $
+$NetBSD: pcmciadevs,v 1.121.2.4 2001/09/21 22:36:06 nathanw Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -76,6 +76,7 @@ vendor FARALLON			0x0200  Farallon Communications
 vendor TELECOMDEVICE		0x021b  Telecom Device
 vendor NOKIA			0x023d	Nokia Communications
 vendor SAMSUNG			0x0250	Samsung
+vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor IODATA2			0x028a	I-O DATA
 vendor LASAT			0x3401	Lasat Communications A/S
@@ -285,6 +286,9 @@ product RATOC REX_R280		0x1	RATOC REX-R280
 /* Samsung */
 product	SAMSUNG SWL_2000N	0x02	Samsung MagicLAN SWL-2000N
 
+/* Symbol */
+product	SYMBOL LA4100		0x0001	Symbol Spectrum24 LA4100 Series WLAN
+
 /* Telecom Device */
 product TELECOMDEVICE TCD_HPC100	0x0202 Telecom Device TCD-HPC100
 
@@ -375,3 +379,4 @@ product NEC CMZ_RT_WP		{ "NEC", "Wireless&spCard&spCMZ-RT-WP", "Version&sp01.01"
 product NTT_ME WLAN		{ "NTT-ME", "11Mbps&spWireless&spLAN&spPC&spCard", NULL, NULL } NTT-ME 11Mbps Wireless LAN PC Card
 product SYNERGY21 S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" } Synergy 21 S21810+ NE2000 Compatible Card
 product CNET NE2000		{ "CNet", "CN40BC&spEthernet", "D", "NE2000" } CNet CN40BC NE2000 Compatible
+product GEMTEK WLAN		{ "Intersil", "PRISM&sp2_5&spPCMCIA&spADAPTER", "ISL37300P", "Eval-RevA" } GEMTEK Prism2_5 WaveLAN Card

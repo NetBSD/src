@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.5 2001/07/03 03:09:00 nathanw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.6 2001/09/21 22:37:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -200,12 +200,12 @@ uvm_chgkprot(addr, len, rw)
 			panic("chgkprot: invalid page");
 		pmap_enter(pmap_kernel(), sva, pa, prot, PMAP_WIRED);
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 #endif
 
 /*
- * vslock: wire user memory for I/O
+ * uvm_vslock: wire user memory for I/O
  *
  * - called from physio and sys___sysctl
  * - XXXCDC: consider nuking this (or making it a macro?)
@@ -230,7 +230,7 @@ uvm_vslock(p, addr, len, access_type)
 }
 
 /*
- * vslock: wire user memory for I/O
+ * uvm_vsunlock: unwire user memory wired by uvm_vslock()
  *
  * - called from physio and sys___sysctl
  * - XXXCDC: consider nuking this (or making it a macro?)
@@ -259,9 +259,9 @@ uvm_proc_fork(p1, p2, shared)
 
 	if (shared == TRUE) {
 		p2->p_vmspace = NULL;
-		uvmspace_share(p1, p2);			/* share vmspace */
+		uvmspace_share(p1, p2);
 	} else {
-		p2->p_vmspace = uvmspace_fork(p1->p_vmspace); /* fork vmspace */
+		p2->p_vmspace = uvmspace_fork(p1->p_vmspace);
 	}
 }
 
@@ -303,7 +303,7 @@ uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	error = uvm_fault_wire(kernel_map, (vaddr_t)up,
 	    (vaddr_t)up + USPACE, VM_PROT_READ | VM_PROT_WRITE);
 	if (error)
-		panic("uvm_fork: uvm_fault_wire failed: %d", error);
+		panic("uvm_lwp_fork: uvm_fault_wire failed: %d", error);
 
 	/*
 	 * cpu_fork() copy and update the pcb, and make the child ready
@@ -384,12 +384,15 @@ uvm_swapin(l)
 	struct lwp *l;
 {
 	vaddr_t addr;
-	int s;
+	int s, error;
 
 	addr = (vaddr_t)l->l_addr;
 	/* make L_INMEM true */
-	uvm_fault_wire(kernel_map, addr, addr + USPACE,
+	error = uvm_fault_wire(kernel_map, addr, addr + USPACE,
 	    VM_PROT_READ | VM_PROT_WRITE);
+	if (error) {
+		panic("uvm_swapin: rewiring stack failed: %d", error);
+	}
 
 	/*
 	 * Some architectures need to be notified when the user area has

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.107.2.3 2001/08/24 00:12:31 nathanw Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.107.2.4 2001/09/21 22:36:50 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -194,7 +194,6 @@ int	tcp_syn_cache_size = TCP_SYN_HASH_SIZE;
 int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
 int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
 struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
-int	tcp_syn_cache_interval = 1;	/* runs timer twice a second */
 
 int	tcp_freeq __P((struct tcpcb *));
 
@@ -239,7 +238,6 @@ tcp_init()
 #ifdef INET6
 	tcb6.in6p_next = tcb6.in6p_prev = &tcb6;
 #endif
-	LIST_INIT(&tcp_delacks);
 
 	hlen = sizeof(struct ip) + sizeof(struct tcphdr);
 #ifdef INET6
@@ -257,6 +255,9 @@ tcp_init()
 #ifdef INET6
 	icmp6_mtudisc_callback_register(tcp6_mtudisc_callback);
 #endif
+
+	/* Initialize timer state. */
+	tcp_timer_init();
 
 	/* Initialize the compressed state engine. */
 	syn_cache_init();
@@ -782,6 +783,7 @@ tcp_newtcpcb(family, aux)
 	void *aux;
 {
 	struct tcpcb *tp;
+	int i;
 
 	switch (family) {
 	case PF_INET:
@@ -805,6 +807,10 @@ tcp_newtcpcb(family, aux)
 	tp->t_ourmss = tcp_mssdflt;
 	tp->t_segsz = tcp_mssdflt;
 	LIST_INIT(&tp->t_sc);
+
+	callout_init(&tp->t_delack_ch);
+	for (i = 0; i < TCPT_NTIMERS; i++)
+		TCP_TIMER_INIT(tp, i);
 
 	tp->t_flags = 0;
 	if (tcp_do_rfc1323 && tcp_do_win_scale)
@@ -1014,6 +1020,7 @@ tcp_close(tp)
 	(void) tcp_freeq(tp);
 	TCP_REASS_UNLOCK(tp);
 
+	tcp_canceltimers(tp);
 	TCP_CLEAR_DELACK(tp);
 	syn_cache_cleanup(tp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmcioctl.h,v 1.2.20.1 2001/06/21 20:04:47 nathanw Exp $	*/
+/*	$NetBSD: if_lmcioctl.h,v 1.2.20.2 2001/09/21 22:35:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -310,6 +310,6 @@ lmc_intrfunc_t lmc_intr_normal(void *);
 int lmc_read_macaddr(lmc_softc_t * const sc);
 void lmc_attach(lmc_softc_t * const sc);
 void lmc_initring(lmc_softc_t * const sc, lmc_ringinfo_t * const ri,
-		  tulip_desc_t *descs, int ndescs);
+		  lmc_desc_t *descs, int ndescs);
 
 #endif /* LMC_IS_KERNEL */

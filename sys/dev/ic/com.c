@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.183.2.3 2001/08/24 00:09:19 nathanw Exp $	*/
+/*	$NetBSD: com.c,v 1.183.2.4 2001/09/21 22:35:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -129,8 +129,6 @@
 #define	com_lcr	com_cfcr
 #include <dev/cons.h>
 
-#include "com.h"
-
 #ifdef COM_HAYESP
 int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
 #endif
@@ -143,7 +141,6 @@ int	comspeed	__P((long, long));
 static	u_char	cflag2lcr __P((tcflag_t));
 int	comparam	__P((struct tty *, struct termios *));
 void	comstart	__P((struct tty *));
-void	comstop		__P((struct tty *, int));
 int	comhwiflow	__P((struct tty *, int));
 
 void	com_loadchannelregs __P((struct com_softc *));
@@ -157,9 +154,11 @@ void	com_iflush	__P((struct com_softc *));
 int	com_common_getc	__P((dev_t, bus_space_tag_t, bus_space_handle_t));
 void	com_common_putc	__P((dev_t, bus_space_tag_t, bus_space_handle_t, int));
 
-/* XXX: These belong elsewhere */
+int cominit		__P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t,
+			     bus_space_handle_t *));
+
+/* XXX: This belongs elsewhere */
 cdev_decl(com);
-bdev_decl(com);
 
 int	comcngetc	__P((dev_t));
 void	comcnputc	__P((dev_t, int));
@@ -443,6 +442,8 @@ com_attach_subr(sc)
 	}
 
 #ifdef COM_HAYESP
+	sc->sc_prescaler = 0;			/* set prescaler to x1. */
+
 	/* Look for a Hayes ESP board. */
 	for (hayespp = hayesp_ports; *hayespp != 0; hayespp++) {
 		bus_space_handle_t hayespioh;
@@ -1357,12 +1358,32 @@ comparam(tp, t)
 	struct termios *t;
 {
 	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
-	int ospeed = comspeed(t->c_ospeed, sc->sc_frequency);
+	int ospeed;
 	u_char lcr;
 	int s;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
+
+#ifdef COM_HAYESP
+	if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
+		int prescaler, speed;
+
+		/*
+		 * Calculate UART clock prescaler.  It should be in
+		 * range of 0 .. 3.
+		 */
+		for (prescaler = 0, speed = t->c_ospeed; prescaler < 4;
+		    prescaler++, speed /= 2)
+			if ((ospeed = comspeed(speed, sc->sc_frequency)) > 0)
+				break;
+
+		if (prescaler == 4)
+			return (EINVAL);
+		sc->sc_prescaler = prescaler;
+	} else
+#endif
+	ospeed = comspeed(t->c_ospeed, sc->sc_frequency);
 
 	/* Check requested parameters. */
 	if (ospeed < 0)
@@ -1576,6 +1597,14 @@ com_loadchannelregs(sc)
 	bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr);
 	bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr_active = sc->sc_mcr);
 	bus_space_write_1(iot, ioh, com_fifo, sc->sc_fifo);
+#ifdef COM_HAYESP
+	if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD1,
+		    HAYESP_SETPRESCALER);
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+		    sc->sc_prescaler);
+	}
+#endif
 
 	bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 }
@@ -2007,7 +2036,7 @@ comintr(arg)
 	put = sc->sc_rbput;
 	cc = sc->sc_rbavail;
 
-	do {
+again:	do {
 		u_char	msr, delta;
 
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
@@ -2085,7 +2114,6 @@ comintr(arg)
 				bus_space_write_1(iot, ioh, com_ier, 0);
 				delay(10);
 				bus_space_write_1(iot, ioh, com_ier,sc->sc_ier);
-				iir = IIR_NOPEND;
 				continue;
 			}
 		}
@@ -2158,7 +2186,8 @@ comintr(arg)
 
 			sc->sc_st_check = 1;
 		}
-	} while (!ISSET((iir = bus_space_read_1(iot, ioh, com_iir)), IIR_NOPEND));
+	} while (ISSET((iir = bus_space_read_1(iot, ioh, com_iir)), IIR_RXRDY)
+	    || ((iir & IIR_IMASK) == 0));
 
 	/*
 	 * Done handling any receive interrupts. See if data can be
@@ -2199,6 +2228,10 @@ comintr(arg)
 			}
 		}
 	}
+
+	if (!ISSET((iir = bus_space_read_1(iot, ioh, com_iir)), IIR_NOPEND))
+		goto again;
+
 	COM_UNLOCK(sc);
 
 	/* Wake up the poller. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.6.4.1 2001/06/21 19:25:24 nathanw Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.6.4.2 2001/09/21 22:35:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -314,7 +314,7 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 				pmap_update_pg(va);
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
  
 	return 0;
 }
@@ -455,6 +455,29 @@ i386_memio_subregion(t, bsh, offset, size, nbshp)
 
 	*nbshp = bsh + offset;
 	return (0);
+}
+
+paddr_t
+i386_memio_mmap(t, addr, off, prot, flags)
+	bus_space_tag_t t;
+	bus_addr_t addr;
+	off_t off;
+	int prot;
+	int flags;
+{
+
+	/* Can't mmap I/O space. */
+	if (t == I386_BUS_SPACE_IO)
+		return (EOPNOTSUPP);
+
+	/*
+	 * "addr" is the base address of the device we're mapping.
+	 * "off" is the offset into that device.
+	 *
+	 * Note we are called for each "page" in the device that
+	 * the upper layers want to map.
+	 */
+	return (i386_btop(addr + off));
 }
 
 /*
@@ -795,7 +818,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return (0);
 }

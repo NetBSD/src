@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.27.2.1 2001/08/24 00:12:00 nathanw Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.27.2.2 2001/09/21 22:36:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -305,6 +305,7 @@ struct vfsops umapfs_vfsops = {
 	layerfs_fhtovp,
 	layerfs_vptofh,
 	layerfs_init,
+	NULL,
 	layerfs_done,
 	layerfs_sysctl,
 	NULL,				/* vfs_mountroot */

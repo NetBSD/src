@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.15.6.1 2001/06/21 20:05:54 nathanw Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.15.6.2 2001/09/21 22:36:13 nathanw Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -110,7 +110,7 @@ struct scsipi_mode_select {
 	u_int8_t opcode;
 	u_int8_t byte2;
 #define	SMS_SP	0x01		/* save page */
-#define	SMS_PF	0x10
+#define	SMS_PF	0x10		/* page format (0 = SCSI-1, 1 = SCSI-2) */
 	u_int8_t unused;
 	union {
 		struct {
@@ -311,5 +311,14 @@ struct scsipi_mode_header_big {
 	u_int8_t blk_desc_len[2];	/* unused on ATAPI */
 } __attribute__((packed));
 
+/*
+ * This part is common to all mode pages.
+ */
+struct scsipi_mode_page_header {
+	u_int8_t pg_code;		/* page code */
+#define	PGCODE_MASK	0x3f		/* page code mask */
+#define	PGCODE_PS	0x80		/* page is savable */
+	u_int8_t pg_length;		/* page length (not including hdr) */
+} __attribute__((__packed__));
 
 #endif /* _DEV_SCSIPI_SCSIPI_ALL_H_ */

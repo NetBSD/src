@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.47.4.2 2001/06/21 19:25:34 nathanw Exp $	*/
+/*	$NetBSD: mem.c,v 1.47.4.3 2001/09/21 22:35:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -143,13 +143,13 @@ mmrw(dev, uio, flags)
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, PMAP_WIRED|prot);
-			pmap_update();
+			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
-			pmap_update();
+			pmap_update(pmap_kernel());
 			break;
 
 /* minor device 1 is kernel memory */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.7 2001/08/30 23:23:56 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.8 2001/09/21 22:35:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -161,12 +161,12 @@
 	pushl	%edi		; \
 	pushl	%ds		; \
 	pushl	%es		; \
-	movl	%ax,%ds		; \
-	movl	%ax,%es		; \
+	movw	%ax,%ds		; \
+	movw	%ax,%es		; \
 	pushl	%fs		; \
 	pushl	%gs		; \
-	movl	%ax,%fs		; \
-	movl	%ax,%gs		; \
+	movw	%ax,%fs		; \
+	movw	%ax,%gs		; \
 
 #define	INTRFASTEXIT \
 	popl	%gs		; \
@@ -329,8 +329,8 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	/* Clear segment registers; always null in proc0. */
 	xorl	%eax,%eax
-	movl	%ax,%fs
-	movl	%ax,%gs
+	movw	%ax,%fs
+	movw	%ax,%gs
 	/* Find out our CPU type. */
 
 try386:	/* Try to toggle alignment check flag; does not exist on 386. */
@@ -712,7 +712,7 @@ begin:
 /* LINTSTUB: Func: void proc_trampoline(void) */
 NENTRY(proc_trampoline)
 	pushl	%ebx
-	call	%esi
+	call	*%esi
 	addl	$4,%esp
 	INTRFASTEXIT
 	/* NOTREACHED */
@@ -729,7 +729,7 @@ NENTRY(proc_trampoline)
  */
 /* LINTSTUB: Var: char sigcode[1], esigcode[1]; */
 NENTRY(sigcode)
-	call	SIGF_HANDLER(%esp)
+	call	*SIGF_HANDLER(%esp)
 	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
 	pushl	%eax
@@ -1084,11 +1084,11 @@ ENTRY(i386_copyin)
 #endif /* I386_CPU || I486_CPU || I586_CPU || I686_CPU */
 
 /* LINTSTUB: Ignore */
-ENTRY(copy_efault)
+NENTRY(copy_efault)
 	movl	$EFAULT,%eax
 
 /* LINTSTUB: Ignore */
-ENTRY(copy_fault)
+NENTRY(copy_fault)
 	movl	_C_LABEL(curpcb),%edx
 	popl	PCB_ONFAULT(%edx)
 	popl	%edi
@@ -1264,11 +1264,11 @@ ENTRY(copyinstr)
 	jmp	copystr_return
 
 /* LINTSTUB: Ignore */
-ENTRY(copystr_efault)
+NENTRY(copystr_efault)
 	movl	$EFAULT,%eax
 
 /* LINTSTUB: Ignore */
-ENTRY(copystr_fault)
+NENTRY(copystr_fault)
 copystr_return:
 	/* Set *lencopied and return %eax. */
 	movl	_C_LABEL(curpcb),%ecx
@@ -1398,7 +1398,7 @@ ENTRY(fubyte)
  * Handle faults from [fs]u*().  Clean up and return -1.
  */
 /* LINTSTUB: Ignore */
-ENTRY(fusufault)
+NENTRY(fusufault)
 	movl	$0,PCB_ONFAULT(%ecx)
 	movl	$-1,%eax
 	ret
@@ -1409,7 +1409,7 @@ ENTRY(fusufault)
  * than trying to page fault.
  */
 /* LINTSTUB: Ignore */
-ENTRY(fusubail)
+NENTRY(fusubail)
 	movl	$0,PCB_ONFAULT(%ecx)
 	movl	$-1,%eax
 	ret
@@ -1418,7 +1418,7 @@ ENTRY(fusubail)
  * Handle earlier faults from [fs]u*(), due to our of range addresses.
  */
 /* LINTSTUB: Ignore */
-ENTRY(fusuaddrfault)
+NENTRY(fusuaddrfault)
 	movl	$-1,%eax
 	ret
 
@@ -1622,9 +1622,9 @@ NENTRY(lgdt)
 	nop
 1:	/* Reload "stale" selectors. */
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%ax,%ds
-	movl	%ax,%es
-	movl	%ax,%ss
+	movw	%ax,%ds
+	movw	%ax,%es
+	movw	%ax,%ss
 	/* Reload code selector by doing intersegment return. */
 	popl	%eax
 	pushl	$GSEL(GCODE_SEL, SEL_KPL)
@@ -2265,8 +2265,8 @@ ENTRY(switch_exit)
 
 	/* Clear segment registers; always null in proc0. */
 	xorl	%ecx,%ecx
-	movl	%cx,%fs
-	movl	%cx,%gs
+	movw	%cx,%fs
+	movw	%cx,%gs
 
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx
@@ -2534,17 +2534,17 @@ NENTRY(resume_iret)
 NENTRY(resume_pop_ds)
 	pushl	%es
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%ax,%es
+	movw	%ax,%es
 /* LINTSTUB: Var: char resume_pop_es[1]; */
 NENTRY(resume_pop_es)
 	pushl	%fs
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%ax,%fs
+	movw	%ax,%fs
 /* LINTSTUB: Var: char resume_pop_fs[1]; */
 NENTRY(resume_pop_fs)
 	pushl	%gs	
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%ax,%gs
+	movw	%ax,%gs
 /* LINTSTUB: Var: char resume_pop_gs[1]; */
 NENTRY(resume_pop_gs)
 	movl	$T_PROTFLT,TF_TRAPNO(%esp)
@@ -2704,7 +2704,7 @@ syscall1:
 #endif /* DIAGNOSTIC */
 	movl	%esp,L_MD_REGS(%edx)	# save pointer to frame
 	movl	L_PROC(%edx),%edx
-	call	P_MD_SYSCALL(%edx)	# get pointer to syscall() function
+	call	*P_MD_SYSCALL(%edx)	# get pointer to syscall() function
 2:	/* Check for ASTs on exit to user mode. */
 	cli
 	cmpb	$0,_C_LABEL(astpending)

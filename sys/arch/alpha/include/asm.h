@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.23 2000/06/23 12:18:45 kleink Exp $ */
+/* $NetBSD: asm.h,v 1.23.2.1 2001/09/21 22:34:57 nathanw Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -82,7 +82,7 @@
 #define t9	$23
 #define t10	$24
 #define t11	$25
-#define ra	$26	/* (T)		return address		*/
+#define ra	$26	/* (S)		return address		*/
 #define t12	$27	/* (T)		another temporary	*/
 #define at_reg	$28	/* (T)		assembler scratch	*/
 #define	gp	$29	/* (T)		(local) data pointer	*/

@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.21.2.1 2001/06/21 20:01:30 nathanw Exp $
+$NetBSD: eisadevs,v 1.21.2.2 2001/09/21 22:35:29 nathanw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -169,6 +169,8 @@ product TCM 5091	3C509 Ethernet
 product TCM 5092	3C579-TP Ethernet
 product TCM 5093	3C579 Ethernet
 product TCM 5094	3C509 Ethernet Combo
+product TCM 5095	3C509-TP Ethernet
+product TCM 5098	3C509-TP Ethernet
 product	TCM 5920 	3C592 Etherlink III
 product	TCM 5970 	3C597 Fast Etherlink TX
 product	TCM 5971 	3C597 Fast Etherlink T4 

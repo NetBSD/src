@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.2.4.1 2001/06/21 18:12:48 nathanw Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.2.4.2 2001/09/21 22:34:52 nathanw Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -705,7 +705,7 @@ cbq_ifdetach(ifacep)
  *
  *	Assumptions:	called in splnet
  *	Returns:	0 if the queueing is successful.
- *			ENOBUFS if a packet dropping occured as a result of
+ *			ENOBUFS if a packet dropping occurred as a result of
  *			the queueing.
  */
 
