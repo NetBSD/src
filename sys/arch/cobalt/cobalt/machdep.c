@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2000/04/28 15:55:51 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2000/04/28 17:23:40 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -416,19 +416,26 @@ microtime(tvp)
 {
 	int s = splclock();
 	static struct timeval lasttime;
+	u_int32_t counter0;
 
 	*tvp = time;
 
+	counter0 = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x14000850);
+
 	/*
-	 * Make sure that the time returned is always greater
-	 * than that returned by the previous call.
+	 * XXX
 	 */
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
+
+	counter0 /= 50;
+	counter0 %= 10000;
+
+	if (counter0 > 9999) {
+		counter0 = 9999;
 	}
+
+	tvp->tv_usec -= tvp->tv_usec % 10000;
+	tvp->tv_usec += 10000 - counter0;
+
 	lasttime = *tvp;
 	splx(s);
 }
