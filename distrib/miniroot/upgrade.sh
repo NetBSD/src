@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.18 1999/04/13 19:14:47 pk Exp $
+#	$NetBSD: upgrade.sh,v 1.19 1999/11/02 06:11:25 sjg Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -59,11 +59,20 @@ MODE="upgrade"
 #	md_not_going_to_install() - display friendly message
 #	md_congrats()		- display friendly message
 
+# we need to make sure .'s below work if this directory is not in $PATH
+# dirname may not be available but expr is
+Mydir=`expr $0 : '^\(.*\)/[^/]*$'`
+Mydir=`cd ${Mydir:-.}; pwd`
+
+# this is the most likely place to find the binary sets
+# so save them having to type it in
+Default_sets_dir=$Mydir/../../binary/sets
+
 # include machine dependent subroutines
-. install.md
+. $Mydir/install.md
 
 # include common subroutines
-. install.sub
+. $Mydir/install.sub
 
 # which sets?
 THESETS="$UPGRSETS $MDSETS"
