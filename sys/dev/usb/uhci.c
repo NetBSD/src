@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.177 2003/12/29 08:17:10 toshii Exp $	*/
+/*	$NetBSD: uhci.c,v 1.178 2004/03/02 16:32:05 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.177 2003/12/29 08:17:10 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.178 2004/03/02 16:32:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1258,7 +1258,7 @@ void
 uhci_softintr(void *v)
 {
 	uhci_softc_t *sc = v;
-	uhci_intr_info_t *ii;
+	uhci_intr_info_t *ii, *nextii;
 
 	DPRINTFN(10,("%s: uhci_softintr (%d)\n", USBDEVNAME(sc->sc_bus.bdev),
 		     sc->sc_bus.intr_context));
@@ -1276,8 +1276,10 @@ uhci_softintr(void *v)
 	 * We scan all interrupt descriptors to see if any have
 	 * completed.
 	 */
-	for (ii = LIST_FIRST(&sc->sc_intrhead); ii; ii = LIST_NEXT(ii, list))
+	for (ii = LIST_FIRST(&sc->sc_intrhead); ii; ii = nextii) {
+		nextii = LIST_NEXT(ii, list);
 		uhci_check_intr(sc, ii);
+	}
 
 #ifdef USB_USE_SOFTINTR
 	if (sc->sc_softwake) {
