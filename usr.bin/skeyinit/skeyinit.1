@@ -1,7 +1,7 @@
-.\"	$NetBSD: skeyinit.1,v 1.11 2001/04/09 12:35:00 wiz Exp $
+.\"	$NetBSD: skeyinit.1,v 1.12 2004/12/01 12:01:05 wiz Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
-.Dd June 7, 2000
+.Dd December 1, 2004
 .Dt SKEYINIT 1
 .Os
 .Sh NAME
@@ -9,10 +9,9 @@
 .Nd change password or add user to S/Key authentication system
 .Sh SYNOPSIS
 .Nm
+.Op Fl sxz
 .Op Fl n Ar count
-.Op Fl s
 .Op Fl t Ar hash
-.Op Fl z
 .Op Ar user
 .Sh DESCRIPTION
 .Nm
@@ -28,26 +27,33 @@ requires you to type a secret password, so it should be used
 only on a secure terminal.
 .Sh OPTIONS
 .Bl -tag -width Ds
-.It Fl s
-allows the user to set the seed and count for complete control
-of the parameters.
-To do this run skeyinit in one window and put in your count and seed;
-then run
-.Xr skey 1
-in another window to generate the correct 6 english words
-for that count and seed.
-You can then "cut-and-paste" or type the words into the skeyinit window.
-.It Fl z
-Allows the user to zero their S/Key entry.
 .It Fl n Ar count
 Start the
-.Nm skey
+.Xr skey 1
 sequence at
 .Ar count
 (default is 100).
+.It Fl s
+allows the user to set the seed and count for complete control
+of the parameters.
+To do this run
+.Nm
+in one window and put in your count and seed; then run
+.Xr skey 1
+in another window to generate the correct 6 english words
+for that count and seed.
+You can then
+.Dq cut-and-paste
+or type the words into the
+.Nm
+window.
 .It Fl t Ar hash
 Selects the hash algorithm to use.
-Available choices are md4 (the default), md5 or sha1.
+Available choices are md4 (the default), md5, or sha1.
+.It Fl x
+Displays one-time password in hexadecimal instead of ASCII.
+.It Fl z
+Allows the user to zero their S/Key entry.
 .It Ar user
 The username to be changed/added.
 By default the current user is operated on, only root may
@@ -56,7 +62,7 @@ change other user's entries.
 .Sh FILES
 .Bl -tag -width /etc/skeykeys
 .It Pa /etc/skeykeys
-data base of information for S/Key system.
+database of information for the S/Key system.
 .El
 .Sh SEE ALSO
 .Xr skey 1 ,
