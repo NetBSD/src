@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.26 1999/04/19 03:11:33 simonb Exp $
+# $NetBSD: md.x68k,v 1.27 1999/04/19 21:34:16 kleink Exp $
 ./usr/include/x68k
 ./usr/include/x68k/_G_config.h
 ./usr/include/x68k/ansi.h
@@ -44,6 +44,7 @@
 ./usr/include/x68k/signal.h
 ./usr/include/x68k/sram.h
 ./usr/include/x68k/stdarg.h
+./usr/include/x68k/svr4_machdep.h
 ./usr/include/x68k/trap.h
 ./usr/include/x68k/types.h
 ./usr/include/x68k/varargs.h
