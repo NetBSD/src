@@ -1,15 +1,15 @@
-#	$NetBSD: ramdiskbin.m4,v 1.2 2000/08/20 14:43:19 mrg Exp $
+#	$NetBSD: ramdiskbin.m4,v 1.1 2001/01/07 09:30:20 mrg Exp $
 #
 # ramdiskbin.conf - unified binary for the install ramdisk
 #
 
-srcdirs bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin sys/arch/MACHINE/stand
+srcdirs bin sbin libexec usr.bin/less usr.bin usr.sbin gnu/usr.bin sys/arch/MACHINE/stand
 
-progs cat chmod chown chroot cp dd df disklabel ed
+progs cat chmod chown chroot cp dd df disklabel dhclient ed
 progs fsck fsck_ffs ftp gzip ifconfig init installboot less
-progs ln ls mkdir mknod
-progs mount mount_cd9660 mount_ext2fs mount_ffs mount_msdos
-progs mount_nfs mount_kernfs mt mv newfs ping pwd reboot restore rm
+progs lfs_cleanerd ln ls mkdir mknod
+progs mount mount_cd9660 mount_ext2fs mount_ffs mount_lfs mount_msdos
+progs mount_nfs mount_kernfs mt mv newfs ping newfs_lfs pwd reboot restore rm
 progs route sed sh shutdown slattach stty swapctl sync test
 progs tip umount
 progs sysinst pax
@@ -34,6 +34,8 @@ ifelse(MACHINE,sparc64,special installboot srcdir sys/arch/sparc/stand/installbo
 # "special" gzip is actually larger assuming nothing else uses -lz..
 #special gzip srcdir distrib/utils/x_gzip
 
+special dhclient srcdir distrib/utils/x_dhclient
+
 ln pax tar
 ln chown chgrp
 ln gzip gzcat gunzip
@@ -47,6 +49,7 @@ ln mount_nfs nfs
 ln mount_kernfs kernfs
 ln reboot halt
 ln restore rrestore
+ln newfs mount_mfs
 
 # libhack.o is built by Makefile & included Makefile.inc
 libs libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -lbz2 -lcrypt -ll -lm ifelse(MACHINE,sparc64,-lpcap)
