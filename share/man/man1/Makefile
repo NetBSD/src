@@ -1,7 +1,7 @@
-#	from: @(#)Makefile	5.1 (Berkeley) 4/30/91
-#	$Id: Makefile,v 1.2 1993/07/31 15:29:10 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 1994/11/30 08:34:58 jtc Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
-MAN1=	intro.0
+MAN1=	cd.0 intro.0 wait.0
 
 .include <bsd.prog.mk>
 
