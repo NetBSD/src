@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbdmap.c,v 1.2 2001/07/20 04:28:50 hpeyerl Exp $	*/
+/*	$NetBSD: j720kbdmap.c,v 1.3 2002/01/18 15:27:26 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ static const keysym_t j720kbd_keydesc_jp[] = {
     KC(43),  KS_at,             KS_grave,
     KC(59),  KS_bracketleft,    KS_braceleft,
     KC(58),  KS_semicolon,      KS_plus,
+    KC(74),  KS_slash,		KS_question,
     KC(75),  KS_colon,          KS_asterisk,
     KC(12),  KS_Zenkaku_Hankaku, /* replace grave/tilde */
     KC(60),  KS_bracketright,   KS_braceright,
