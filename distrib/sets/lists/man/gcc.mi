@@ -1,0 +1,3 @@
+# $NetBSD: gcc.mi,v 1.1 2003/08/10 08:44:43 mrg Exp $
+./usr/share/man/cat8/dbsym.0			man-sysutil-catman
+./usr/share/man/man8/dbsym.8			man-sysutil-man

@@ -1,0 +1,2 @@
+# $NetBSD: gcc.mi,v 1.1 2003/08/10 08:44:41 mrg Exp $
+./usr/sbin/dbsym		base-sysutil-bin
