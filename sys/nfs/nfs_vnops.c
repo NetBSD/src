@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.141 2001/10/13 23:25:58 simonb Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.142 2001/11/07 20:04:52 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1209,7 +1209,7 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 		panic("writerpc readonly vp %p", vp);
 	}
 
-#ifndef DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (uiop->uio_iovcnt != 1)
 		panic("nfs: writerpc iovcnt > 1");
 #endif
