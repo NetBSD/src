@@ -845,3 +845,22 @@ netbsd32_md_ioctl(fp, com, data32, p)
 		free(memp, M_IOCTLOPS);
 	return (error);
 }
+
+
+int
+netbsd32_sysarch(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(netbsd32_voidp) parms;
+	} */ *uap = v;
+
+	switch (SCARG(uap, op)) {
+	default:
+		printf("(%s) netbsd32_sysarch(%d)\n", MACHINE, SCARG(uap, op));
+		return EINVAL;
+	}
+}
