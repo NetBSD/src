@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: dfa.c,v 1.11 1998/01/05 05:15:45 perry Exp $ */
+/* $NetBSD: dfa.c,v 1.12 1998/02/22 12:08:34 christos Exp $ */
 
 #include "flexdef.h"
 
@@ -396,7 +396,7 @@ void ntod()
 	{
 	int *accset, ds, nacc, newds;
 	int sym, hashval, numstates, dsize;
-	int num_full_table_rows;	/* used only for -f */
+	int num_full_table_rows = 0;	/* used only for -f; XXX: GCC warn */
 	int *nset, *dset;
 	int targptr, totaltrans, i, comstate, comfreq, targ;
 	int symlist[CSIZE + 1];
