@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.563 2003/05/02 16:11:45 ragge Exp $
+#	$NetBSD: mi,v 1.564 2003/05/08 07:14:11 uebayasi Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2544,6 +2544,15 @@
 ./usr/share/man/cat3/longname.0		comp-c-catman
 ./usr/share/man/cat3/lrand48.0	comp-c-catman
 ./usr/share/man/cat3/lsearch.0	comp-c-catman
+./usr/share/man/cat3/magic_buffer.0	comp-c-catman
+./usr/share/man/cat3/magic_check.0	comp-c-catman
+./usr/share/man/cat3/magic_close.0	comp-c-catman
+./usr/share/man/cat3/magic_compile.0	comp-c-catman
+./usr/share/man/cat3/magic_error.0	comp-c-catman
+./usr/share/man/cat3/magic_file.0	comp-c-catman
+./usr/share/man/cat3/magic_load.0	comp-c-catman
+./usr/share/man/cat3/magic_open.0	comp-c-catman
+./usr/share/man/cat3/magic_setflags.0	comp-c-catman
 ./usr/share/man/cat3/makecontext.0	comp-c-catman
 ./usr/share/man/cat3/malloc.0	comp-c-catman
 ./usr/share/man/cat3/math.0	comp-c-catman
