@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.29 2004/01/12 03:08:06 lukem Exp $
+# $NetBSD: mi,v 1.30 2004/01/13 06:13:21 lukem Exp $
 ./etc/fonts/fonts.conf
 ./etc/fonts/fonts.dtd
 ./usr/X11R6/bin/Xmark
@@ -375,7 +375,6 @@
 ./usr/X11R6/lib/X11/rstart/commands/ListGenericCommands
 ./usr/X11R6/lib/X11/rstart/commands/x
 ./usr/X11R6/lib/X11/rstart/commands/x11
-./usr/X11R6/lib/X11/rstart/commands/x11r6
 ./usr/X11R6/lib/X11/rstart/commands/x11r6/@List
 ./usr/X11R6/lib/X11/rstart/commands/x11r6/LoadMonitor
 ./usr/X11R6/lib/X11/rstart/commands/x11r6/Terminal
@@ -400,14 +399,12 @@
 ./usr/X11R6/lib/X11/xdm/Xsetup_0
 ./usr/X11R6/lib/X11/xdm/Xwilling
 ./usr/X11R6/lib/X11/xdm/chooser
-./usr/X11R6/lib/X11/xdm/pixmaps
 ./usr/X11R6/lib/X11/xdm/pixmaps/XFree86.xpm
 ./usr/X11R6/lib/X11/xdm/pixmaps/XFree86bw.xpm
 ./usr/X11R6/lib/X11/xdm/xdm-config
 ./usr/X11R6/lib/X11/xedit/lisp/fun.lsp	xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/xedit/lisp/indent.lsp
 ./usr/X11R6/lib/X11/xedit/lisp/lisp.lsp
-./usr/X11R6/lib/X11/xedit/lisp/progmodes
 ./usr/X11R6/lib/X11/xedit/lisp/progmodes/c.lsp
 ./usr/X11R6/lib/X11/xedit/lisp/progmodes/html.lsp
 ./usr/X11R6/lib/X11/xedit/lisp/progmodes/imake.lsp
@@ -591,7 +588,6 @@
 ./usr/X11R6/lib/X11/xkb/symbols/group
 ./usr/X11R6/lib/X11/xkb/symbols/guj
 ./usr/X11R6/lib/X11/xkb/symbols/gur
-./usr/X11R6/lib/X11/xkb/symbols/hp
 ./usr/X11R6/lib/X11/xkb/symbols/hp/us
 ./usr/X11R6/lib/X11/xkb/symbols/hr
 ./usr/X11R6/lib/X11/xkb/symbols/hu
@@ -635,7 +631,6 @@
 ./usr/X11R6/lib/X11/xkb/symbols/mm
 ./usr/X11R6/lib/X11/xkb/symbols/mt
 ./usr/X11R6/lib/X11/xkb/symbols/mt_us
-./usr/X11R6/lib/X11/xkb/symbols/nec
 ./usr/X11R6/lib/X11/xkb/symbols/nec/jp
 ./usr/X11R6/lib/X11/xkb/symbols/nl
 ./usr/X11R6/lib/X11/xkb/symbols/no
