@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.12 1996/11/19 05:23:07 cgd Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.13 1996/11/25 03:26:33 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -61,9 +61,21 @@
 #include <alpha/isa/spkrreg.h>
 #include <alpha/isa/timerreg.h>
 #include <machine/wsconsio.h>
+#include <alpha/isa/pcppivar.h>
 
 #include <alpha/wscons/wsconsvar.h>
 #include "wscons.h"
+
+#undef KBDATAP
+#undef KBOUTP
+#undef KBSTATP
+#undef KBCMDP
+#undef PITAUX_PORT
+#define	KBDATAP		0x0	/* kbd data port (I) */
+#define	KBOUTP		0x0	/* kbd data port (O) */
+#define	KBSTATP		0x4	/* kbd controller status port (I) */
+#define	KBCMDP		0x4	/* kbd controller port (O) */
+#define	PITAUX_PORT	0x1	/* port B of PPI */
 
 static volatile u_char ack, nak;	/* Don't ask. */
 static u_char async, kernel, polling;	/* Really, you don't want to know. */
@@ -75,12 +87,8 @@ static u_char lock_state = 0x00,	/* all off */
 bus_space_tag_t pckbd_iot;
 isa_chipset_tag_t pckbd_ic;
 
-bus_space_handle_t pckbd_data_ioh;
-#define	pckbd_out_ioh	pckbd_data_ioh
-bus_space_handle_t pckbd_status_ioh;
-#define	pckbd_cmd_ioh	pckbd_status_ioh
+bus_space_handle_t pckbd_ioh;
 bus_space_handle_t pckbd_timer_ioh;
-bus_space_handle_t pckbd_pitaux_ioh;
 bus_space_handle_t pckbd_delay_ioh;
 
 struct pckbd_softc {
@@ -159,7 +167,7 @@ kbd_wait_output()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_IBF)
+		if ((bus_space_read_1(pckbd_iot, pckbd_ioh, KBSTATP) & KBS_IBF)
 		    == 0) {
 			KBD_DELAY;
 			return 1;
@@ -173,7 +181,7 @@ kbd_wait_input()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_DIB)
+		if ((bus_space_read_1(pckbd_iot, pckbd_ioh, KBSTATP) & KBS_DIB)
 		    != 0) {
 			KBD_DELAY;
 			return 1;
@@ -187,11 +195,11 @@ kbd_flush_input()
 	u_int i;
 
 	for (i = 10; i; i--) {
-		if ((bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_DIB)
+		if ((bus_space_read_1(pckbd_iot, pckbd_ioh, KBSTATP) & KBS_DIB)
 		    == 0)
 			return;
 		KBD_DELAY;
-		(void) bus_space_read_1(pckbd_iot, pckbd_data_ioh, 0);
+		(void) bus_space_read_1(pckbd_iot, pckbd_ioh, KBDATAP);
 	}
 }
 
@@ -205,10 +213,10 @@ kbc_get8042cmd()
 
 	if (!kbd_wait_output())
 		return -1;
-	bus_space_write_1(pckbd_iot, pckbd_cmd_ioh, 0, K_RDCMDBYTE);
+	bus_space_write_1(pckbd_iot, pckbd_ioh, KBCMDP, K_RDCMDBYTE);
 	if (!kbd_wait_input())
 		return -1;
-	return bus_space_read_1(pckbd_iot, pckbd_data_ioh, 0);
+	return bus_space_read_1(pckbd_iot, pckbd_ioh, KBDATAP);
 }
 #endif
 
@@ -222,10 +230,10 @@ kbc_put8042cmd(val)
 
 	if (!kbd_wait_output())
 		return 0;
-	bus_space_write_1(pckbd_iot, pckbd_cmd_ioh, 0, K_LDCMDBYTE);
+	bus_space_write_1(pckbd_iot, pckbd_ioh, KBCMDP, K_LDCMDBYTE);
 	if (!kbd_wait_output())
 		return 0;
-	bus_space_write_1(pckbd_iot, pckbd_out_ioh, 0, val);
+	bus_space_write_1(pckbd_iot, pckbd_ioh, KBOUTP, val);
 	return 1;
 }
 
@@ -244,16 +252,16 @@ kbd_cmd(val, polling)
 		if (!kbd_wait_output())
 			return 0;
 		ack = nak = 0;
-		bus_space_write_1(pckbd_iot, pckbd_out_ioh, 0, val);
+		bus_space_write_1(pckbd_iot, pckbd_ioh, KBOUTP, val);
 		if (polling)
 			for (i = 100000; i; i--) {
 				if (bus_space_read_1(pckbd_iot,
-				    pckbd_status_ioh, 0) & KBS_DIB) {
+				    pckbd_ioh, KBSTATP) & KBS_DIB) {
 					register u_char c;
 
 					KBD_DELAY;
 					c = bus_space_read_1(pckbd_iot,
-					    pckbd_data_ioh, 0);
+					    pckbd_ioh, KBDATAP);
 					if (c == KBR_ACK || c == KBR_ECHO) {
 						ack = 1;
 						return 1;
@@ -271,7 +279,7 @@ kbd_cmd(val, polling)
 		else
 			for (i = 100000; i; i--) {
 				(void) bus_space_read_1(pckbd_iot,
-				    pckbd_status_ioh, 0);
+				    pckbd_ioh, KBSTATP);
 				if (ack)
 					return 1;
 				if (nak)
@@ -291,26 +299,27 @@ pckbdprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct isa_attach_args *ia = aux;
-	u_int i;
+	struct pcppi_attach_args *pa = aux;
+	u_int i, rv;
 
-	pckbd_iot = ia->ia_iot;
-	pckbd_ic = ia->ia_ic;
-
-	if (bus_space_map(pckbd_iot, KBDATAP, 1, 0, &pckbd_data_ioh) ||
-	    bus_space_map(pckbd_iot, KBSTATP, 1, 0, &pckbd_status_ioh) ||
-	    bus_space_map(pckbd_iot, IO_TIMER1, 4, 0, &pckbd_timer_ioh) ||
-	    bus_space_map(pckbd_iot, PITAUX_PORT, 1, 0, &pckbd_pitaux_ioh))
+	if (pa->pa_slot != PCPPI_KBD_SLOT)
 		return 0;
 
-	pckbd_delay_ioh = ia->ia_delaybah;
+	rv = 0;
+
+	pckbd_iot = pa->pa_iot;
+	pckbd_ic = pa->pa_ic;
+	pckbd_ioh = pa->pa_ioh;
+	pckbd_timer_ioh = pa->pa_pit_ioh;
+	pckbd_delay_ioh = pa->pa_delaybah;
 
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
 		printf("pcprobe: command error\n");
-		return 0;
+		goto lose;
 	}
 
+	rv = 1;			/* from here one out, we let it succeed */
 #if 1
 	/* Flush any garbage. */
 	kbd_flush_input();
@@ -320,12 +329,12 @@ pckbdprobe(parent, match, aux)
 		goto lose;
 	}
 	for (i = 600000; i; i--)
-		if ((bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_DIB)
+		if ((bus_space_read_1(pckbd_iot, pckbd_ioh, KBSTATP) & KBS_DIB)
 		    != 0) {
 			KBD_DELAY;
 			break;
 		}
-	if (i == 0 || bus_space_read_1(pckbd_iot, pckbd_data_ioh, 0)
+	if (i == 0 || bus_space_read_1(pckbd_iot, pckbd_ioh, KBDATAP)
 	    != KBR_RSTDONE) {
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
@@ -376,9 +385,7 @@ lose:
 	 */
 #endif
 
-	ia->ia_iobase = 16;
-	ia->ia_iosize = 0;
-	return 1;
+	return rv;
 }
 
 void
@@ -387,21 +394,16 @@ pckbdattach(parent, self, aux)
 	void *aux;
 {
 	struct pckbd_softc *sc = (void *)self;
-	struct isa_attach_args *ia = aux;
+	struct pcppi_attach_args *pa = aux;
 
-	pckbd_iot = ia->ia_iot;
-	pckbd_ic = ia->ia_ic;
+	pckbd_iot = pa->pa_iot;
+	pckbd_ic = pa->pa_ic;
+	pckbd_ioh = pa->pa_ioh;
+	pckbd_timer_ioh = pa->pa_pit_ioh;
+	pckbd_delay_ioh = pa->pa_delaybah;
 
-	if (bus_space_map(pckbd_iot, KBDATAP, 1, 0, &pckbd_data_ioh) ||
-	    bus_space_map(pckbd_iot, KBSTATP, 1, 0, &pckbd_status_ioh) ||
-	    bus_space_map(pckbd_iot, IO_TIMER1, 4, 0, &pckbd_timer_ioh) ||
-	    bus_space_map(pckbd_iot, PITAUX_PORT, 1, 0, &pckbd_pitaux_ioh))
-                panic("pckbdattach couldn't map");
-
-	pckbd_delay_ioh = ia->ia_delaybah;
-
-	sc->sc_ih = isa_intr_establish(pckbd_ic, ia->ia_irq, IST_EDGE,
-	    IPL_TTY, pckbdintr, sc);
+	sc->sc_ih = isa_intr_establish(pckbd_ic, 1, IST_EDGE, IPL_TTY,
+	    pckbdintr, sc);
 
 	sc->sc_bellactive = sc->sc_bellpitch = 0;
 
@@ -425,13 +427,13 @@ pckbdintr(arg)
 	u_char data;
 	static u_char last;
 
-	if ((bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_DIB) == 0)
+	if ((bus_space_read_1(pckbd_iot, pckbd_ioh, KBSTATP) & KBS_DIB) == 0)
 		return 0;
 	if (polling)
 		return 1;
 	do {
 		KBD_DELAY;
-		data = bus_space_read_1(pckbd_iot, pckbd_data_ioh, 0);
+		data = bus_space_read_1(pckbd_iot, pckbd_ioh, KBDATAP);
 
 		switch (data) {
 		case KBR_ACK:
@@ -450,7 +452,7 @@ pckbdintr(arg)
 #endif
 			break;
 		}
-	} while (bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_DIB);
+	} while (bus_space_read_1(pckbd_iot, pckbd_ioh, KBSTATP) & KBS_DIB);
 	return 1;
 }
 
@@ -861,12 +863,12 @@ pckbd_cngetc(dev)
 
         do {
 		/* wait for byte */
-                while ((bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_DIB)
+                while ((bus_space_read_1(pckbd_iot, pckbd_ioh, KBSTATP) & KBS_DIB)
 		    == 0)
 			KBD_DELAY;
 		KBD_DELAY;
 
-                data = bus_space_read_1(pckbd_iot, pckbd_data_ioh, 0);
+                data = bus_space_read_1(pckbd_iot, pckbd_ioh, KBDATAP);
 
                 if (data == KBR_ACK) {
                         ack = 1;
@@ -945,8 +947,8 @@ pckbd_bell(dev, wbd)
 		bus_space_write_1(pckbd_iot, pckbd_timer_ioh, TIMER_CNTR2,
 		    TIMER_DIV(pitch) / 256);
 		/* enable speaker */
-		bus_space_write_1(pckbd_iot, pckbd_pitaux_ioh, 0,
-	    	    bus_space_read_1(pckbd_iot, pckbd_pitaux_ioh, 0) |
+		bus_space_write_1(pckbd_iot, pckbd_ioh, PITAUX_PORT,
+	    	    bus_space_read_1(pckbd_iot, pckbd_ioh, PITAUX_PORT) |
 		      PIT_SPKR);
 		splx(s);
 	}
@@ -964,8 +966,8 @@ pckbd_bell_stop(arg)
 
 	/* disable bell */
 	s = splhigh();
-	bus_space_write_1(pckbd_iot, pckbd_pitaux_ioh, 0,
-	    bus_space_read_1(pckbd_iot, pckbd_pitaux_ioh, 0) & ~PIT_SPKR);
+	bus_space_write_1(pckbd_iot, pckbd_ioh, PITAUX_PORT,
+	    bus_space_read_1(pckbd_iot, pckbd_ioh, PITAUX_PORT) & ~PIT_SPKR);
 	sc->sc_bellactive = 0;
 	splx(s);
 }
