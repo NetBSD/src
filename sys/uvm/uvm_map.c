@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.31 1998/10/19 22:21:19 tron Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.32 1998/10/24 13:32:34 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -346,13 +346,11 @@ uvm_map_init()
  */
 
 void uvm_map_clip_start(map, entry, start)
-
-register vm_map_t       map;
-register vm_map_entry_t entry;
-register vaddr_t    start;
-
+	vm_map_t       map;
+	vm_map_entry_t entry;
+	vaddr_t    start;
 {
-				register vm_map_entry_t new_entry;
+	vm_map_entry_t new_entry;
 	vaddr_t new_adj;
 
 	/* uvm_map_simplify_entry(map, entry); */ /* XXX */
@@ -699,12 +697,12 @@ step3:
 
 boolean_t
 uvm_map_lookup_entry(map, address, entry)
-	register vm_map_t	map;
-	register vaddr_t	address;
+	vm_map_t	map;
+	vaddr_t	address;
 	vm_map_entry_t		*entry;		/* OUT */
 {
-	register vm_map_entry_t		cur;
-	register vm_map_entry_t		last;
+	vm_map_entry_t		cur;
+	vm_map_entry_t		last;
 	UVMHIST_FUNC("uvm_map_lookup_entry");
 	UVMHIST_CALLED(maphist);
 
