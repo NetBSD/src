@@ -665,7 +665,7 @@ struct client_config {
 	u_int32_t requested_lease;	/* Requested lease time, if user
 					   doesn't configure one. */
 	struct string_list *media;	/* Possible network media values. */
-	const char *script_name;	/* Name of config script. */
+	char *script_name;		/* Name of config script. */
 	enum policy bootp_policy;
 					/* Ignore, accept or prefer BOOTP
 					   responses. */
@@ -708,6 +708,8 @@ struct client_state {
 	struct iaddr requested_address;	    /* Address we would like to get. */
 
 	struct client_config *config;		    /* Client configuration. */
+	struct string_list *env;	       /* Client script environment. */
+	int envc;			/* Number of entries in environment. */
 };
 
 /* Information about each network interface. */
@@ -1636,13 +1638,16 @@ void destroy_client_lease PROTO ((struct client_lease *));
 void rewrite_client_leases PROTO ((void));
 int write_client_lease PROTO ((struct client_state *,
 			       struct client_lease *, int, int));
-char *dhcp_option_ev_name PROTO ((struct option *));
+int dhcp_option_ev_name (char *, size_t, struct option *);
 
 void script_init PROTO ((struct client_state *, const char *,
 			 struct string_list *));
 void script_write_params PROTO ((struct client_state *,
 				 const char *, struct client_lease *));
 int script_go PROTO ((struct client_state *));
+void client_envadd (struct client_state *,
+		    const char *, const char *, const char *, ...)
+	__attribute__((__format__(__printf__,4,5)));
 
 struct client_lease *packet_to_lease PROTO ((struct packet *));
 void go_daemon PROTO ((void));
