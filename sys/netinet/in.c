@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.64 2000/10/08 02:05:47 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.65 2000/10/08 09:15:28 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,16 +145,11 @@ int subnetsarelocal = SUBNETSARELOCAL;
 int hostzeroisbroadcast = HOSTZEROBROADCAST;
 
 /*
- * This structure is used to keep track of in6_multi chains which belong to
- * deleted interface addresses.
+ * This list is used to keep track of in_multi chains which belong to
+ * deleted interface addresses.  We use in_ifaddr so that a chain head
+ * won't be deallocated until all multicast address record are deleted.
  */
-static LIST_HEAD(, multi_kludge) in_mk; /* XXX BSS initialization */
-
-struct multi_kludge {
-	LIST_ENTRY(multi_kludge) mk_entry;
-	struct ifnet *mk_ifp;
-	LIST_HEAD(, in_multi) mk_head;
-};
+static TAILQ_HEAD(, in_ifaddr) in_mk = TAILQ_HEAD_INITIALIZER(in_mk);
 
 /*
  * Return 1 if an internet address is for a ``local'' host
@@ -569,19 +564,15 @@ in_purgeaddr(ifa, ifp)
 	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
 	IFAFREE(&ia->ia_ifa);
 	TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
-	if (LIST_FIRST(&ia->ia_multiaddrs) != NULL) {
-		/*
-		 * XXX thorpej@netbsd.org -- if the interface is going
-		 * XXX away, don't save the multicast entries, delete them!
-		 */
-		if (ia->ia_ifa.ifa_ifp->if_output == if_nulloutput) {
-			struct in_multi *inm;
-
-			while ((inm = LIST_FIRST(&ia->ia_multiaddrs)) != NULL)
-				in_delmulti(inm);
-		} else
-			in_savemkludge(ia);
-	}
+	if (ia->ia_allhosts != NULL)
+		in_delmulti(ia->ia_allhosts);
+	if (LIST_FIRST(&ia->ia_multiaddrs) != NULL &&
+	    /*
+	     * If the interface is going away, don't bother to save
+	     * the multicast entries.
+	     */
+	    ifp->if_output != if_nulloutput)
+		in_savemkludge(ia);
 	IFAFREE(&ia->ia_ifa);
 	in_setmaxmtu();
 }
@@ -898,11 +889,11 @@ in_ifinit(ifp, ia, sin, scrub)
 	 * If the interface supports multicast, join the "all hosts"
 	 * multicast group on that interface.
 	 */
-	if (ifp->if_flags & IFF_MULTICAST) {
+	if ((ifp->if_flags & IFF_MULTICAST) != 0 && ia->ia_allhosts == NULL) {
 		struct in_addr addr;
 
 		addr.s_addr = INADDR_ALLHOSTS_GROUP;
-		in_addmulti(&addr, ifp);
+		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
 	return (error);
 bad:
@@ -954,7 +945,7 @@ in_broadcast(in, ifp)
  * Multicast address kludge:
  * If there were any multicast addresses attached to this interface address,
  * either move them to another address on this interface, or save them until
- * such time as this interface is reconfigured for IPv6.
+ * such time as this interface is reconfigured for IPv4.
  */
 void
 in_savemkludge(oia)
@@ -973,25 +964,8 @@ in_savemkludge(oia)
 			LIST_INSERT_HEAD(&ia->ia_multiaddrs, inm, inm_list);
 		}
 	} else {	/* last address on this if deleted, save */
-		struct multi_kludge *mk;
-
-		mk = malloc(sizeof(*mk), M_IPMADDR, M_WAITOK);
-
-		LIST_INIT(&mk->mk_head);
-		mk->mk_ifp = oia->ia_ifp;
-
-		for (inm = oia->ia_multiaddrs.lh_first; inm; inm = next){
-			next = inm->inm_list.le_next;
-			IFAFREE(&inm->inm_ia->ia_ifa); /* release reference */
-			inm->inm_ia = NULL;
-			LIST_INSERT_HEAD(&mk->mk_head, inm, inm_list);
-		}
-
-		if (mk->mk_head.lh_first != NULL) {
-			LIST_INSERT_HEAD(&in_mk, mk, mk_entry);
-		} else {
-			FREE(mk, M_IPMADDR);
-		}
+		TAILQ_INSERT_TAIL(&in_mk, oia, ia_list);
+		IFAREF(&oia->ia_ifa);
 	}
 }
 
@@ -1005,21 +979,24 @@ in_restoremkludge(ia, ifp)
 	struct in_ifaddr *ia;
 	struct ifnet *ifp;
 {
-	struct multi_kludge *mk;
+	struct in_ifaddr *oia;
 
-	for (mk = in_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
-		if (mk->mk_ifp == ifp) {
+	for (oia = TAILQ_FIRST(&in_mk); oia != NULL;
+	    oia = TAILQ_NEXT(oia, ia_list)) {
+		if (oia->ia_ifp == ifp) {
 			struct in_multi *inm, *next;
 
-			for (inm = mk->mk_head.lh_first; inm; inm = next){
-				next = inm->inm_list.le_next;
-				inm->inm_ia = ia;
+			for (inm = LIST_FIRST(&oia->ia_multiaddrs);
+			    inm != NULL; inm = next) {
+				next = LIST_NEXT(inm, inm_list);
+				IFAFREE(&inm->inm_ia->ia_ifa);
 				IFAREF(&ia->ia_ifa);
+				inm->inm_ia = ia;
 				LIST_INSERT_HEAD(&ia->ia_multiaddrs,
-						 inm, inm_list);
+				    inm, inm_list);
 			}
-			LIST_REMOVE(mk, mk_entry);
-			free(mk, M_IPMADDR);
+	    		TAILQ_REMOVE(&in_mk, oia, ia_list);
+			IFAFREE(&oia->ia_ifa);
 			break;
 		}
 	}
@@ -1029,18 +1006,20 @@ void
 in_purgemkludge(ifp)
 	struct ifnet *ifp;
 {
-	struct multi_kludge *mk;
-	struct in_multi *inm;
+	struct in_ifaddr *oia;
 
-	for (mk = in_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
-		if (mk->mk_ifp != ifp)
+	for (oia = TAILQ_FIRST(&in_mk); oia != NULL;
+	    oia = TAILQ_NEXT(oia, ia_list)) {
+		if (oia->ia_ifp != ifp)
 			continue;
 
-		/* leave from all multicast groups joined */
-		while ((inm = LIST_FIRST(&mk->mk_head)) != NULL)
-			in_delmulti(inm);
-		LIST_REMOVE(mk, mk_entry);
-		free(mk, M_IPMADDR);
+		/*
+		 * Leaving from all multicast groups joined through
+		 * this interface is done via in_pcbpurgeif().
+		 */
+
+	    	TAILQ_REMOVE(&in_mk, oia, ia_list);
+		IFAFREE(&oia->ia_ifa);
 		break;
 	}
 }
