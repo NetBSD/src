@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.21 2001/07/10 16:34:08 ichiro Exp $
+#	$NetBSD: files.hpcarm,v 1.22 2001/07/10 18:10:46 ichiro Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -91,9 +91,9 @@ include	"dev/hpc/files.hpckbd"
 include	"dev/hpc/files.hpctp"
 
 # LCD
-device	salcd: hpcfbif
-attach	salcd at saip
-file	arch/hpcarm/sa11x0/sa11x0_lcd.c		salcd
+device	ipaqlcd: hpcfbif
+attach	ipaqlcd at ipaqbus
+file	arch/hpcarm/dev/ipaq_lcd.c		ipaqlcd
 
 device	sed: hpcfbif
 attach	sed at saip
