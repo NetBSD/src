@@ -1,13 +1,13 @@
-/*	$NetBSD: SYS.h,v 1.7.12.2 2002/06/21 18:18:01 nathanw Exp $	*/
+/*	$NetBSD: SYS.h,v 1.7.12.3 2002/08/01 03:27:59 nathanw Exp $	*/
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
 #ifdef __STDC__
-#define	_DOSYSCALL(x)		li	0,(SYS_ ## x)		;\
+#define	_DOSYSCALL(x)		li	%r0,(SYS_ ## x)		;\
 				sc
 #else
-#define	_DOSYSCALL(x)		li	0,(SYS_/**/x)		;\
+#define	_DOSYSCALL(x)		li	%r0,(SYS_/**/x)		;\
 				sc
 #endif /* __STDC__ */
 

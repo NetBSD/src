@@ -1,10 +1,10 @@
-/*	$NetBSD: _setjmp.S,v 1.1 1997/03/29 20:55:53 thorpej Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.1.14.1 2002/08/01 03:28:00 nathanw Exp $	*/
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$NetBSD: _setjmp.S,v 1.1 1997/03/29 20:55:53 thorpej Exp $"
+	.asciz "$NetBSD: _setjmp.S,v 1.1.14.1 2002/08/01 03:28:00 nathanw Exp $"
 #endif
 
 /*
@@ -18,21 +18,21 @@
  */
 
 ENTRY(_setjmp)
-	mflr	11
-	mfcr	12
-	mr	10,1
-	mr	9,2
-	stmw	9,8(3)
-	li	3,0
-	blr
+	mflr	%r11			/* save return address */
+	mfcr	%r12			/* save condition register */
+	mr	%r10,%r1		/* save stack pointer */
+	mr	%r9,%r2			/* save GPR2 (not needed) */
+	stmw	%r9,8(%r3)		/* save r9..r31 */
+	li	%r3,0			/* indicate success */
+	blr				/* return */
 
 ENTRY(_longjmp)
-	lmw	9,8(3)
-	mtlr	11
-	mtcr	12
-	mr	2,9
-	mr	1,10
-	or.	3,4,4
-	bnelr
-	li	3,1
-	blr
+	lmw	%r9,8(%r3)		/* save r9..r31 */
+	mtlr	%r11			/* restore LR */
+	mtcr	%r12			/* restore CR */
+	mr	%r2,%r9			/* restore GPR2 (not needed) */
+	mr	%r1,%r10		/* restore stack */
+	or.	%r3,%r4,%r4		/* get return value */
+	bnelr				/* return if not 0 */
+	li	%r3,1			/* what's the point? */
+	blr				/* return */

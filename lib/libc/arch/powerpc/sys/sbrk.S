@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.8 2000/06/26 06:25:44 kleink Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.8.2.1 2002/08/01 03:28:02 nathanw Exp $	*/
 
 #include "SYS.h"
 
@@ -16,26 +16,26 @@ _C_LABEL(__curbrk):
 
 ENTRY(_sbrk)
 #ifdef PIC
-	mflr	10
+	mflr	%r10
 	bl	_GLOBAL_OFFSET_TABLE_@local-4
-	mflr	5
-	mtlr	10
-	lwz	5,_C_LABEL(__curbrk)@got(5)
-	lwz	6,0(5)
+	mflr	%r5
+	mtlr	%r10
+	lwz	%r5,_C_LABEL(__curbrk)@got(%r5)
+	lwz	%r6,0(%r5)
 #else
-	lis	5,_C_LABEL(__curbrk)@ha
-	lwz	6,_C_LABEL(__curbrk)@l(5)	# r6 = old break
+	lis	%r5,_C_LABEL(__curbrk)@ha
+	lwz	%r6,_C_LABEL(__curbrk)@l(%r5)	# r6 = old break
 #endif
-	add	3,3,6
-	mr	7,3				# r7 = new break
-	li	0,SYS_break
+	add	%r3,%r3,%r6
+	mr	%r7,%r3				# r7 = new break
+	li	%r0,SYS_break
 	sc					# break(new_break)
 	bso	1f
-	mr	3,6				# set return value
+	mr	%r3,%r6				# set return value
 #ifdef PIC
-	stw	7,0(5)
+	stw	%r7,0(%r5)
 #else
-	stw	7,_C_LABEL(__curbrk)@l(5)	# record new break
+	stw	%r7,_C_LABEL(__curbrk)@l(%r5)	# record new break
 #endif
 	blr
 1:

@@ -1,11 +1,11 @@
-/*	$NetBSD: byte_swap_2.S,v 1.1.2.1 2002/08/01 03:27:55 nathanw Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.2.2.2 2002/08/01 03:28:02 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,17 +36,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
-_ENTRY(_C_LABEL(__bswap16))
-_ENTRY(_C_LABEL(ntohs))
-_ENTRY(_C_LABEL(htons))
-_PROF_PROLOGUE
-	and		r1, r0, #0xff
-	mov		r0, r0, lsr #8
-	orr		r0, r0, r1, lsl #8
-#ifdef __APCS_26__
-	movs		pc, lr
-#else
-	mov		pc, lr  
-#endif
+/*
+ * On entry, stack and registers look like:
+ *
+ *	r3	signal number
+ *	r4	signal specific code
+ *	r5	pointer to sigcontext structure
+ *	lr	address of handler
+ *
+ *	sp->	sigcontext structure
+ */
+ENTRY_NOPROFILE(__sigtramp_sigcontext_1)
+	addi	%r1,%r1,-16		/* space for callee */
+	blrl				/* call handler */
+	addi	%r3,%r1,16		/* compute address of sigcontext */
+	_DOSYSCALL(__sigreturn14)	/* and call sigreturn */
+	_DOSYSCALL(exit)		/* or exit with errno if failed */

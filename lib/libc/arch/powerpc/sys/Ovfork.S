@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.3 1998/12/02 19:29:57 thorpej Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.3.12.1 2002/08/01 03:28:01 nathanw Exp $	*/
 
 /*
  * pid = vfork();
@@ -13,6 +13,6 @@ WARN_REFERENCES(vfork, \
     "warning: reference to compatibility vfork(); include <unistd.h> for correct reference")
 
 SYSCALL(vfork)
-	addi	4,4,-1		# from 1 to 0 in child, 0 to -1 in parent
-	and	3,3,4		# return 0 in child, pid in parent
+	addi	%r4,%r4,-1	# from 1 to 0 in child, 0 to -1 in parent
+	and	%r3,%r3,%r4	# return 0 in child, pid in parent
 	blr

@@ -1,11 +1,11 @@
-/*	$NetBSD: byte_swap_2.S,v 1.1.2.1 2002/08/01 03:27:55 nathanw Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.1.2.2 2002/08/01 03:27:55 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,17 +36,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
-_ENTRY(_C_LABEL(__bswap16))
-_ENTRY(_C_LABEL(ntohs))
-_ENTRY(_C_LABEL(htons))
-_PROF_PROLOGUE
-	and		r1, r0, #0xff
-	mov		r0, r0, lsr #8
-	orr		r0, r0, r1, lsl #8
-#ifdef __APCS_26__
-	movs		pc, lr
-#else
-	mov		pc, lr  
-#endif
+/*
+ * The ARM signal trampoline is invoked only to return from
+ * the signal; the kernel calls the signal handler directly.
+ *
+ * On entry, the stack looks like:
+ *
+ *	sp->	sigcontext structure
+ */
+ENTRY_NP(__sigtramp_sigcontext_1)
+	mov	r0, sp			/* get pointer to sigcontext */
+	SYSTRAP(__sigreturn14)		/* and call sigreturn */
+
+	/* If that failed, exit with the error code. */
+	SYSTRAP(exit)

@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.3 1998/10/03 12:30:38 tsubai Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.3.12.1 2002/08/01 03:28:00 nathanw Exp $	*/
 
 #include <sys/syscall.h>
 
@@ -6,7 +6,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$NetBSD: setjmp.S,v 1.3 1998/10/03 12:30:38 tsubai Exp $"
+	.asciz "$NetBSD: setjmp.S,v 1.3.12.1 2002/08/01 03:28:00 nathanw Exp $"
 #endif
 
 /*
@@ -20,32 +20,32 @@
  */
 
 ENTRY(setjmp)
-	mr	6,3
-	li	3,1			# SIG_BLOCK
-	li	4,0
-	li	0,SYS_compat_13_sigprocmask13
+	mr	%r6,%r3
+	li	%r3,1			# SIG_BLOCK
+	li	%r4,0
+	li	%r0,SYS_compat_13_sigprocmask13
 	sc				# assume no error	XXX
-	mflr	11
-	mfcr	12
-	mr	10,1
-	mr	9,2
-	mr	8,3
-	stmw	8,4(6)
-	li	3,0
+	mflr	%r11
+	mfcr	%r12
+	mr	%r10,%r1
+	mr	%r9,%r2
+	mr	%r8,%r3
+	stmw	%r8,4(%r6)
+	li	%r3,0
 	blr
 
 ENTRY(longjmp)
-	lmw	8,4(3)
-	mr	6,4
-	mtlr	11
-	mtcr	12
-	mr	2,9
-	mr	1,10
-	mr	4,8
-	li	3,3			# SIG_SETMASK
-	li	0,SYS_compat_13_sigprocmask13
+	lmw	%r8,4(%r3)
+	mr	%r6,%r4
+	mtlr	%r11
+	mtcr	%r12
+	mr	%r2,%r9
+	mr	%r1,%r10
+	mr	%r4,%r8
+	li	%r3,3			# SIG_SETMASK
+	li	%r0,SYS_compat_13_sigprocmask13
 	sc				# assume no error	XXX
-	or.	3,6,6
+	or.	%r3,%r6,%r6
 	bnelr
-	li	3,1
+	li	%r3,1
 	blr
