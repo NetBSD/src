@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.13 2000/05/27 04:52:35 thorpej Exp $	*/
+/*	$NetBSD: mscp.c,v 1.14 2001/04/12 20:03:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -71,7 +71,7 @@ mscp_getcp(mi, canwait)
 #define mri	(&mi->mi_cmd)
 	struct mscp *mp;
 	int i;
-	int s = splimp();
+	int s = splbio();
 
 again:
 	/*
