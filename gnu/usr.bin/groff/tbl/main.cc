@@ -721,7 +721,7 @@ format *process_format(table_input &in, options *opt,
       free_input_entry_format_list(list);
       return 0;
     }
-    format_type t;
+    entry_format::format_type t;
     switch (c) {
     case 'n':
     case 'N':

@@ -7,7 +7,7 @@ PROG=		troff
 HYPHENDIR=	/usr/share/misc
 SRCS=		column.cc dictionary.cc div.cc env.cc input.cc \
 		node.cc number.cc reg.cc symbol.cc
-LDADD+=		$(.CURDIR)/../libgroff/obj/libgroff.a
+LDADD+=		$(.CURDIR)/../libgroff/obj/libgroff.a -lm
 # Delete the -Ig++-include after we fix libg++ and install it
 GXXFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libgroff \
 		-I$(.CURDIR)/../../../lib/libg++/g++-include \
