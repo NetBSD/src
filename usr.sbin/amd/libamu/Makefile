@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/11/20 01:58:43 wiz Exp $
+#	$NetBSD: Makefile,v 1.14 2001/01/04 14:21:09 itojun Exp $
 
 LIB=	amu
 
@@ -9,7 +9,7 @@ MKLINKLIB=	no
 DIST=	${IDIST}/libamu
 .PATH:	${DIST} ${IDIST}/conf/mtab ${IDIST}/conf/transp ${IDIST}/conf/umount
 
-SRCS=	clnt_sperrno.c hasmntopt.c misc_rpc.c mount_fs.c mtab.c mtab_bsd.c \
+SRCS=	hasmntopt.c misc_rpc.c mount_fs.c mtab.c mtab_bsd.c \
 	nfs_prot_xdr.c transp_sockets.c ualarm.c umount_bsd44.c util.c wire.c \
 	xdr_func.c xutil.c
 
