@@ -1,5 +1,5 @@
-/*	$NetBSD: pf.c,v 1.6 2004/11/21 17:57:52 peter Exp $	*/
-/*	$OpenBSD: pf.c,v 1.457.2.2 2004/11/13 23:46:26 brad Exp $ */
+/*	$NetBSD: pf.c,v 1.7 2004/11/21 17:59:24 peter Exp $	*/
+/*	$OpenBSD: pf.c,v 1.457.2.3 2004/11/13 23:48:51 brad Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3927,12 +3927,12 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			pf_send_tcp((*state)->rule.ptr, pd->af, pd->dst,
 			    pd->src, th->th_dport, th->th_sport,
 			    ntohl(th->th_ack), ntohl(th->th_seq) + 1,
-			    TH_ACK, (*state)->src.max_win, 0, 0, 1,
+			    TH_ACK, (*state)->src.max_win, 0, 0, 0,
 			    NULL, NULL);
 			pf_send_tcp((*state)->rule.ptr, pd->af, &src->addr,
 			    &dst->addr, src->port, dst->port,
 			    (*state)->src.seqhi + 1, (*state)->src.seqlo + 1,
-			    TH_ACK, (*state)->dst.max_win, 0, 0, 0,
+			    TH_ACK, (*state)->dst.max_win, 0, 0, 1,
 			    NULL, NULL);
 			(*state)->src.seqdiff = (*state)->dst.seqhi -
 			    (*state)->src.seqlo;
