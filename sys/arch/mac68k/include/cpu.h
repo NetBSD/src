@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 1996/05/05 16:33:46 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34.4.1 1996/06/01 03:35:16 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -208,8 +208,10 @@ extern unsigned char ssir;
 #define MACH_CLASSIIvx	0x0006	/* Similar to IIsi -- different via2 emul? */
 #define MACH_CLASSLC	0x0007	/* Low-Cost/Performa/Wal-Mart Macs. */
 #define MACH_CLASSPB	0x0008	/* Powerbooks.  Power management. */
+#define MACH_CLASSDUO	0x0009	/* Powerbooks Duos.  More integration/Docks. */
 #define MACH_CLASSIIfx	0x0080	/* The IIfx is in a class by itself. */
-#define MACH_CLASSQ	0x0100	/* Centris/Quadras. */
+#define MACH_CLASSQ	0x0100	/* non-A/V Centris/Quadras. */
+#define MACH_CLASSAV	0x0101	/* A/V Centris/Quadras. */
 
 #define MACH_68020	0
 #define MACH_68030	1
@@ -270,8 +272,8 @@ extern	unsigned long		load_addr;
 
 /* physical memory sections */
 #define	ROMBASE		(0x40800000)
-#define	ROMLEN		(0x00100000)		/* 1MB will work for all 68k */
-#define	ROMMAPSIZE	btoc(ROMLEN)		/* 16k of page tables.  */
+#define	ROMLEN		(0x00200000)		/* 2MB will work for all 68k */
+#define	ROMMAPSIZE	btoc(ROMLEN)		/* 32k of page tables.  */
 
 #define IIOMAPSIZE	btoc(0x00100000)	/* 1MB should be enough */
 
