@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.58 2002/06/16 16:28:36 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.59 2002/06/21 23:15:35 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.58 2002/06/16 16:28:36 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.59 2002/06/21 23:15:35 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3419,7 +3419,7 @@ ipsec_findaux(m)
 
 	n = m_aux_find(m, AF_INET, IPPROTO_ESP);
 #ifdef DIAGNOSTIC
-	if (n && n->m_len < sizeof(struct socket *))
+	if (n && n->m_len < sizeof(struct ipsecaux))
 		panic("invalid ipsec m_aux");
 #endif
 	return n;
