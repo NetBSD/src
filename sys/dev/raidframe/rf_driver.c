@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.79 2003/12/29 06:30:42 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.80 2003/12/30 19:28:26 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.79 2003/12/29 06:30:42 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.80 2003/12/30 19:28:26 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -207,8 +207,7 @@ rf_UnconfigureArray()
  * Called to shut down an array.
  */
 int 
-rf_Shutdown(raidPtr)
-	RF_Raid_t *raidPtr;
+rf_Shutdown(RF_Raid_t *raidPtr)
 {
 
 	if (!raidPtr->valid) {
@@ -286,10 +285,7 @@ rf_Shutdown(raidPtr)
 }
 
 int 
-rf_Configure(raidPtr, cfgPtr, ac)
-	RF_Raid_t *raidPtr;
-	RF_Config_t *cfgPtr;
-	RF_AutoConfig_t *ac;
+rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 {
 	RF_RowCol_t col;
 	int     rc;
@@ -431,15 +427,13 @@ rf_Configure(raidPtr, cfgPtr, ac)
 }
 
 static void 
-rf_ShutdownRDFreeList(ignored)
-	void   *ignored;
+rf_ShutdownRDFreeList(void *ignored)
 {
 	pool_destroy(&rf_rad_pool);
 }
 
 static int 
-rf_ConfigureRDFreeList(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureRDFreeList(RF_ShutdownList_t **listp)
 {
 	int     rc;
 
@@ -457,15 +451,10 @@ rf_ConfigureRDFreeList(listp)
 }
 
 RF_RaidAccessDesc_t *
-rf_AllocRaidAccDesc(
-    RF_Raid_t * raidPtr,
-    RF_IoType_t type,
-    RF_RaidAddr_t raidAddress,
-    RF_SectorCount_t numBlocks,
-    caddr_t bufPtr,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AccessState_t * states)
+rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
+		    RF_RaidAddr_t raidAddress, RF_SectorCount_t numBlocks,
+		    caddr_t bufPtr, void *bp, RF_RaidAccessFlags_t flags,
+		    RF_AccessState_t *states)
 {
 	RF_RaidAccessDesc_t *desc;
 
@@ -511,7 +500,7 @@ rf_AllocRaidAccDesc(
 }
 
 void 
-rf_FreeRaidAccDesc(RF_RaidAccessDesc_t * desc)
+rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *desc)
 {
 	RF_Raid_t *raidPtr = desc->raidPtr;
 
@@ -530,22 +519,15 @@ rf_FreeRaidAccDesc(RF_RaidAccessDesc_t * desc)
  * Accesses are retried until a DAG can not be selected.  This occurs
  * when either the DAG library is incomplete or there are too many
  * failures in a parity group.
+ *
+ * type should be read or write async_flag should be RF_TRUE or
+ * RF_FALSE bp_in is a buf pointer.  void * to facilitate ignoring it
+ * outside the kernel
  ********************************************************************/
 int 
-rf_DoAccess(
-    RF_Raid_t * raidPtr,
-    RF_IoType_t type,
-    int async_flag,
-    RF_RaidAddr_t raidAddress,
-    RF_SectorCount_t numBlocks,
-    caddr_t bufPtr,
-    void *bp_in,
-    RF_RaidAccessFlags_t flags)
-/*
-type should be read or write
-async_flag should be RF_TRUE or RF_FALSE
-bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
-*/
+rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, int async_flag,
+	    RF_RaidAddr_t raidAddress, RF_SectorCount_t numBlocks,
+	    caddr_t bufPtr, void *bp_in, RF_RaidAccessFlags_t flags)
 {
 	RF_RaidAccessDesc_t *desc;
 	caddr_t lbufPtr = bufPtr;
@@ -597,9 +579,7 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 #if 0
 /* force the array into reconfigured mode without doing reconstruction */
 int 
-rf_SetReconfiguredMode(raidPtr, col)
-	RF_Raid_t *raidPtr;
-	int     col;
+rf_SetReconfiguredMode(RF_Raid_t *raidPtr, int col)
 {
 	if (!(raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE)) {
 		printf("Can't set reconfigured mode in dedicated-spare array\n");
@@ -620,10 +600,7 @@ rf_SetReconfiguredMode(raidPtr, col)
 #endif
 
 int 
-rf_FailDisk(
-    RF_Raid_t * raidPtr,
-    int fcol,
-    int initRecon)
+rf_FailDisk(RF_Raid_t *raidPtr, int fcol, int initRecon)
 {
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	if (raidPtr->Disks[fcol].status != rf_ds_failed) {
@@ -661,8 +638,7 @@ rf_FailDisk(
  * access_suspend_mutex should be locked upon calling this
  */
 void 
-rf_SignalQuiescenceLock(raidPtr)
-	RF_Raid_t *raidPtr;
+rf_SignalQuiescenceLock(RF_Raid_t *raidPtr)
 {
 #if RF_DEBUG_QUIESCE
 	if (rf_quiesceDebug) {
@@ -678,8 +654,7 @@ rf_SignalQuiescenceLock(raidPtr)
 }
 /* suspends all new requests to the array.  No effect on accesses that are in flight.  */
 int 
-rf_SuspendNewRequestsAndWait(raidPtr)
-	RF_Raid_t *raidPtr;
+rf_SuspendNewRequestsAndWait(RF_Raid_t *raidPtr)
 {
 #if RF_DEBUG_QUIESCE
 	if (rf_quiesceDebug)
@@ -705,8 +680,7 @@ rf_SuspendNewRequestsAndWait(raidPtr)
 }
 /* wake up everyone waiting for quiescence to be released */
 void 
-rf_ResumeNewRequests(raidPtr)
-	RF_Raid_t *raidPtr;
+rf_ResumeNewRequests(RF_Raid_t *raidPtr)
 {
 	RF_CallbackDesc_t *t, *cb;
 
@@ -738,9 +712,7 @@ rf_ResumeNewRequests(raidPtr)
  ****************************************************************************************/
 
 static void 
-set_debug_option(name, val)
-	char   *name;
-	long    val;
+set_debug_option(char *name, long val)
 {
 	RF_DebugName_t *p;
 
@@ -758,8 +730,7 @@ set_debug_option(name, val)
 /* would like to use sscanf here, but apparently not available in kernel */
 /*ARGSUSED*/
 static void 
-rf_ConfigureDebug(cfgPtr)
-	RF_Config_t *cfgPtr;
+rf_ConfigureDebug(RF_Config_t *cfgPtr)
 {
 	char   *val_p, *name_p, *white_p;
 	long    val;
@@ -790,10 +761,8 @@ rf_ConfigureDebug(cfgPtr)
  */
 
 static int 
-rf_InitThroughputStats(
-    RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+rf_InitThroughputStats(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		       RF_Config_t *cfgPtr)
 {
 	int     rc;
 
@@ -806,7 +775,7 @@ rf_InitThroughputStats(
 }
 
 void 
-rf_StartThroughputStats(RF_Raid_t * raidPtr)
+rf_StartThroughputStats(RF_Raid_t *raidPtr)
 {
 	RF_LOCK_MUTEX(raidPtr->throughputstats.mutex);
 	raidPtr->throughputstats.num_ios++;
@@ -817,7 +786,7 @@ rf_StartThroughputStats(RF_Raid_t * raidPtr)
 }
 
 static void 
-rf_StopThroughputStats(RF_Raid_t * raidPtr)
+rf_StopThroughputStats(RF_Raid_t *raidPtr)
 {
 	struct timeval diff;
 
@@ -832,7 +801,7 @@ rf_StopThroughputStats(RF_Raid_t * raidPtr)
 }
 
 static void 
-rf_PrintThroughputStats(RF_Raid_t * raidPtr)
+rf_PrintThroughputStats(RF_Raid_t *raidPtr)
 {
 	RF_ASSERT(raidPtr->throughputstats.num_out_ios == 0);
 	if (raidPtr->throughputstats.sum_io_us != 0) {
@@ -843,7 +812,7 @@ rf_PrintThroughputStats(RF_Raid_t * raidPtr)
 #endif				/* !KERNEL && !SIMULATE */
 
 void 
-rf_StartUserStats(RF_Raid_t * raidPtr)
+rf_StartUserStats(RF_Raid_t *raidPtr)
 {
 	RF_GETTIME(raidPtr->userstats.start);
 	raidPtr->userstats.sum_io_us = 0;
@@ -852,16 +821,15 @@ rf_StartUserStats(RF_Raid_t * raidPtr)
 }
 
 void 
-rf_StopUserStats(RF_Raid_t * raidPtr)
+rf_StopUserStats(RF_Raid_t *raidPtr)
 {
 	RF_GETTIME(raidPtr->userstats.stop);
 }
 
+/* rt: resp time in us 
+   numsect: number of sectors for this access */
 void 
-rf_UpdateUserStats(raidPtr, rt, numsect)
-	RF_Raid_t *raidPtr;
-	int     rt;		/* resp time in us */
-	int     numsect;	/* number of sectors for this access */
+rf_UpdateUserStats(RF_Raid_t *raidPtr, int rt, int numsect)
 {
 	raidPtr->userstats.sum_io_us += rt;
 	raidPtr->userstats.num_ios++;
@@ -869,7 +837,7 @@ rf_UpdateUserStats(raidPtr, rt, numsect)
 }
 
 void 
-rf_PrintUserStats(RF_Raid_t * raidPtr)
+rf_PrintUserStats(RF_Raid_t *raidPtr)
 {
 	long    elapsed_us, mbs, mbs_frac;
 	struct timeval diff;
@@ -914,9 +882,7 @@ rf_PrintUserStats(RF_Raid_t * raidPtr)
 
 
 void
-rf_print_panic_message(line,file)
-	int line;
-	char *file;
+rf_print_panic_message(int line, char *file)
 {
 	sprintf(rf_panicbuf,"raidframe error at line %d file %s",
 		line, file);
@@ -924,10 +890,7 @@ rf_print_panic_message(line,file)
 
 #ifdef RAID_DIAGNOSTIC
 void
-rf_print_assert_panic_message(line,file,condition)
-	int line;
-	char *file;
-	char *condition;
+rf_print_assert_panic_message(int line,	char *file, char *condition)
 {
 	sprintf(rf_panicbuf,
 		"raidframe error at line %d file %s (failed asserting %s)\n",
@@ -936,30 +899,21 @@ rf_print_assert_panic_message(line,file,condition)
 #endif
 
 void
-rf_print_unable_to_init_mutex(file,line,rc)
-	char *file;
-	int line;
-	int rc;
+rf_print_unable_to_init_mutex(char *file, int line, int rc)
 {
 	RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n",
 		     file, line, rc);
 }
 
 void
-rf_print_unable_to_init_cond(file,line,rc)
-	char *file;
-	int line;
-	int rc;
+rf_print_unable_to_init_cond(char *file, int line, int rc)
 {
 	RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n",
 		     file, line, rc);
 }
 
 void
-rf_print_unable_to_add_shutdown(file,line,rc)
-	char *file;
-	int line;
-	int rc;
+rf_print_unable_to_add_shutdown(char *file, int line, int rc)
 {
 	RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
 		     file, line, rc);
