@@ -87,7 +87,15 @@ unsigned kbd_8042cmd(int);
 
 #define IO_COM2		0x2f8		/* COM2 i/o address */
 
-					/* 0x300 - 0x36F Open */
+					/* 0x300 - 0x32F Open */
+
+#define	IO_BT0		0x330		/* bustek 742a default addr. */
+#define	IO_AHA0		0x330		/* adaptec 1542 default addr. */
+#define	IO_UHA0		0x330		/* ultrastore 14f default addr. */
+#define	IO_BT1          0x334		/* bustek 742a default addr. */
+#define IO_AHA1         0x334		/* adaptec 1542 default addr. */
+
+					/* 0x338 - 0x36F Open */
 
 #define IO_FD2		0x370		/* secondary base i/o address */
 #define IO_LPT1		0x378		/* Parallel Port #1 */
