@@ -1,7 +1,7 @@
-/* $NetBSD: asc_ioasic.c,v 1.1.2.11 1999/09/06 03:48:47 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.1.2.12 1999/09/09 01:50:46 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.11 1999/09/06 03:48:47 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.12 1999/09/09 01:50:46 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,11 +92,11 @@ asc_ioasic_match(parent, cfdata, aux)
 	struct ioasicdev_attach_args *d = aux;
 	
 	if (strncmp("asc", d->iada_modname, TC_ROM_LLEN))
-		return (0);
+		return 0;
 	if (tc_badaddr(d->iada_addr))
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
@@ -233,16 +233,10 @@ asc_ioasic_intr(sc)
 	NCR_DMA(("ioasic_intr: tcl=%d, tcm=%d; trans=%d, resid=%d\n",
 	    tcl, tcm, trans, resid));
 
-#if 1
-	/*
-	 * following is supposedly to fixup irregular sized transfers.
-	 * I'm not sure whether this is doing things correctly, indeed,
-	 * failed to cure any of erroneous symptoms I'm experiencing.
-	 */
 	scr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR);
 	if (asc->sc_ispullup && scr != 0) {
 		u_int32_t ptr;
-		u_int16_t *addr;
+		u_int16_t *p;
 		union {
 			u_int32_t sdr[2];
 			u_int16_t half[4];
@@ -254,8 +248,7 @@ asc_ioasic_intr(sc)
 		ptr = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
 						IOASIC_SCSI_DMAPTR);
 		ptr = (ptr >> 3) & 0x1ffffffc;
-printf("SCSI_SCR: %x, DMAPTR: %p\n", scr, (void *)ptr);
-		addr = (u_int16_t *)MIPS_PHYS_TO_KSEG0(ptr);
+		p = (u_int16_t *)MIPS_PHYS_TO_KSEG0(ptr);
 		/*
 		 * scr
 		 *	1 -> half[0]
@@ -263,13 +256,12 @@ printf("SCSI_SCR: %x, DMAPTR: %p\n", scr, (void *)ptr);
 		 *	3 -> half[0] + half[1] + half[2]
 		 */
 		scr &= IOASIC_SCR_WORD;
-		addr[0] = scratch.half[0];
+		p[0] = scratch.half[0];
 		if (scr > 1)
-			addr[1] = scratch.half[1];
+			p[1] = scratch.half[1];
 		if (scr > 2)
-			addr[2] = scratch.half[2];
+			p[2] = scratch.half[2];
 	}
-#endif
 
 	*asc->sc_dmalen -= trans;
 	*asc->sc_dmaaddr += trans;
@@ -277,7 +269,8 @@ printf("SCSI_SCR: %x, DMAPTR: %p\n", scr, (void *)ptr);
 	return 0;
 }
 
-/* XXX mips XXX */
+#define	TWOPAGE(a)	(NBPG*2 - ((a) & (NBPG-1)))
+
 int
 asc_ioasic_setup(sc, addr, len, datain, dmasize)
 	struct ncr53c9x_softc *sc;
@@ -287,11 +280,11 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 	size_t *dmasize;
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
-	unsigned phys, nphys;
-	u_int32_t ssr;
+	u_int32_t ssr, scr;
 	size_t size;
+	vaddr_t cp;
+	paddr_t ptr0, ptr1;
 	extern paddr_t kvtophys __P((vaddr_t));
-#define	MIPS_KVA_TO_PHYS(x) (unsigned)kvtophys((vaddr_t)(x))
 
 	asc->sc_dmaaddr = addr;
 	asc->sc_dmalen = len;
@@ -300,9 +293,8 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 	NCR_DMA(("ioasic_setup: start %d@%p %s\n",
 		*asc->sc_dmalen, *asc->sc_dmaaddr, datain ? "IN" : "OUT"));
 
-	/* IOASIC DMA can handle upto 64KB transfer at a time */
-	/* XXX but, at most 2 pages due to current implementation XXX */
-	size = min(*dmasize, 2 * NBPG - ((size_t)*addr & (NBPG - 1)));
+	/* upto two 4KB pages */
+	size = min(*dmasize, TWOPAGE((size_t)*addr));
 	*dmasize = asc->sc_dmasize = size;
 
 	NCR_DMA(("ioasic_setup: dmasize = %d\n", asc->sc_dmasize));
@@ -311,37 +303,47 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
 	ssr &= ~IOASIC_CSR_DMAEN_SCSI;
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
-#if 1	/* !@$#%! */
-	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, 0);
-#endif
 
 	/* If R4K, writeback and invalidate the buffer */
 	if (CPUISMIPS3)
 		mips3_HitFlushDCache((vaddr_t)*addr, size);
 
-	/* XXX only the next page can be handled with single operation XXX */
-	phys = MIPS_KVA_TO_PHYS(*addr);
-	if ((unsigned)*addr + size <= mips_trunc_page(*addr) + NBPG)
-		nphys = ~0;
-	else
-		nphys = MIPS_KVA_TO_PHYS(mips_trunc_page(*addr) + NBPG);
+	cp = (vaddr_t)*addr;
+	ptr0 = kvtophys(cp);
+	cp = mips_trunc_page(cp + NBPG);
+	ptr1 = ((vaddr_t)*addr + size > cp) ? kvtophys(cp) : ~0;
 
 	/* If not R4K, need to invalidate cache lines for physical segments */
 	if (!CPUISMIPS3 && datain) {
-		if (nphys == ~0)
-			MachFlushDCache(MIPS_PHYS_TO_KSEG0(phys), size);
+		if (ptr1 == ~0)
+			MachFlushDCache(MIPS_PHYS_TO_KSEG0(ptr0), size);
 		else {
-			int size0 = NBPG - (phys & (NBPG - 1));
+			int size0 = NBPG - (ptr0 & (NBPG - 1));
 			int size1 = size - size0;
-			MachFlushDCache(MIPS_PHYS_TO_KSEG0(phys), size0);
-			MachFlushDCache(MIPS_PHYS_TO_KSEG0(nphys), size1);
+			MachFlushDCache(MIPS_PHYS_TO_KSEG0(ptr0), size0);
+			MachFlushDCache(MIPS_PHYS_TO_KSEG0(ptr1), size1);
 		}
 	}
 
+	cp = (vaddr_t)*addr;
+	if ((cp & 07) == 0)
+		scr = 0;
+	else {
+		u_int32_t *p;
+
+		scr = ((asc->sc_ispullup == 0) << 2) | ((cp >> 1) & 3);
+		p = (u_int32_t *)(cp & ~07);
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+					IOASIC_SCSI_SDR0, p[0]);
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+					IOASIC_SCSI_SDR1, p[1]);
+		ptr0 &= ~07;
+	}
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, scr);
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-				IOASIC_SCSI_DMAPTR, IOASIC_DMA_ADDR(phys));
+				IOASIC_SCSI_DMAPTR, IOASIC_DMA_ADDR(ptr0));
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-				IOASIC_SCSI_NEXTPTR, IOASIC_DMA_ADDR(nphys));
+				IOASIC_SCSI_NEXTPTR, IOASIC_DMA_ADDR(ptr1));
 	return 0;
 }
 
@@ -382,12 +384,12 @@ asc_read_reg(sc, reg)
 	int reg;
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
-	u_char v;
+	u_int32_t v;
 
-	v = bus_space_read_4(asc->sc_bst, asc->sc_scsi_bsh,
-	    reg * sizeof(u_int32_t)) & 0xff;
+	v = bus_space_read_4(asc->sc_bst,
+		asc->sc_scsi_bsh, reg * sizeof(u_int32_t));
 
-	return (v);
+	return v & 0xff;
 }
 
 static void
@@ -398,8 +400,8 @@ asc_write_reg(sc, reg, val)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
-	bus_space_write_4(asc->sc_bst, asc->sc_scsi_bsh,
-	    reg * sizeof(u_int32_t), val);
+	bus_space_write_4(asc->sc_bst,
+		asc->sc_scsi_bsh, reg * sizeof(u_int32_t), val);
 }
 
 static int
@@ -415,7 +417,7 @@ asc_dma_isactive(sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
-	return (asc->sc_active);
+	return asc->sc_active;
 }
 
 static void
