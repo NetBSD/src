@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.6 2000/12/03 07:21:50 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.7 2000/12/03 07:44:43 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -217,7 +217,7 @@ SRCS+=	${MIPS}/mips/fp.S
 
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S
 .if !empty(IDENT:M-DMIPS1)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore_mips1.S
 .endif
