@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.21 2003/03/03 06:41:51 wiz Exp $
+.\"	$NetBSD: security.conf.5,v 1.22 2003/03/31 17:49:27 perry Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -56,7 +56,7 @@ file for inconsistencies.
 .It Sy check_group
 This checks the
 .Pa /etc/group
-file for inconsistancies.
+file for inconsistencies.
 .It Sy check_rootdotfiles
 This checks the root users startup files for sane settings of $PATH
 and umask.
@@ -165,7 +165,7 @@ phase, instruct mtree to follow symbolic links.
 If
 .Sy check_passwd
 is enabled, most warnings will be suppressed for entries whose shells
-are listed in this space-seperated list.
+are listed in this space-separated list.
 This is of particular value when those shells are not in
 .Pa /etc/shells .
 .It Sy check_passwd_nowarn_users
