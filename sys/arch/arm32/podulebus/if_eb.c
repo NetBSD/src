@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.28 2001/03/17 18:46:25 bjh21 Exp $ */
+/* $NetBSD: if_eb.c,v 1.29 2001/03/17 20:34:44 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -95,7 +95,7 @@
 
 #include <arm32/podulebus/if_ebreg.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 #ifndef EB_TIMEOUT
 #define EB_TIMEOUT	60

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.5 2001/03/17 18:46:26 bjh21 Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.6 2001/03/17 20:34:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,8 +78,9 @@
 #include <dev/ic/ne2000var.h>
 
 #include <arch/arm32/podulebus/podulebus.h>
-#include <arch/arm32/podulebus/podules.h>
 #include <arch/arm32/podulebus/if_ne_pbusreg.h>
+
+#include <dev/podulebus/podules.h>
 
 /*
  * ne_pbus_softc: ne2000_softc plus podule, interrupt and bs tag info

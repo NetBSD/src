@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.1 2000/05/09 21:56:03 bjh21 Exp $ */
+/* $NetBSD: dtide.c,v 1.2 2001/03/17 20:34:43 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: dtide.c,v 1.1 2000/05/09 21:56:03 bjh21 Exp $");
+__RCSID("$NetBSD: dtide.c,v 1.2 2001/03/17 20:34:43 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: dtide.c,v 1.1 2000/05/09 21:56:03 bjh21 Exp $");
 #include <machine/irq.h>
 
 #include <arch/arm26/podulebus/podulebus.h>
-#include <arch/arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 #include <arch/arm26/podulebus/dtidereg.h>
 
 #include <dev/ata/atavar.h>

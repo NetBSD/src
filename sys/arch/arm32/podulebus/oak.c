@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.19 2001/03/17 18:46:26 bjh21 Exp $	*/
+/*	$NetBSD: oak.c,v 1.20 2001/03/17 20:34:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 #include <machine/bootconfig.h>
 
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 void oak_attach __P((struct device *, struct device *, void *));
 int  oak_match  __P((struct device *, struct cfdata *, void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.8 2001/03/17 18:46:25 bjh21 Exp $	*/
+/*	$NetBSD: csa.c,v 1.9 2001/03/17 20:34:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 #include <machine/bootconfig.h>
 
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 #define CSA_NCR5380_OFFSET	0x2100
 #define CSA_CTRL_OFFSET		0x2000 - 2308

@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.9 2001/03/17 18:46:25 bjh21 Exp $	*/
+/*	$NetBSD: csc.c,v 1.10 2001/03/17 20:34:44 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 #include <arm32/podulebus/sfasvar.h>
 #include <arm32/podulebus/cscreg.h>
 #include <arm32/podulebus/cscvar.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 void cscattach   __P((struct device *, struct device *, void *));
 int  cscmatch    __P((struct device *, struct cfdata *, void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.14 2001/03/17 18:46:26 bjh21 Exp $	*/
+/*	$NetBSD: rapide.c,v 1.15 2001/03/17 20:34:45 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -80,11 +80,11 @@
 #include <arm32/iomd/iomdreg.h>
 #include <arm32/iomd/iomdvar.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/rapidereg.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
+#include <dev/podulebus/podules.h>
 
 
 /*

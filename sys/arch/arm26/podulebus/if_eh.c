@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.13 2001/02/13 18:20:57 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.14 2001/03/17 20:34:43 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.13 2001/02/13 18:20:57 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.14 2001/03/17 20:34:43 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.13 2001/02/13 18:20:57 bjh21 Exp $");
 #include <dev/ic/dp8390var.h>
 
 #include <arch/arm26/podulebus/podulebus.h>
-#include <arch/arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 #include <arch/arm26/podulebus/if_ehreg.h>
 
 #if BYTE_ORDER == BIG_ENDIAN

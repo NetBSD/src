@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.27 2001/03/17 18:46:25 bjh21 Exp $	*/
+/*	$NetBSD: asc.c,v 1.28 2001/03/17 20:34:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -68,7 +68,7 @@
 #include <arm32/podulebus/sbicvar.h>
 #include <arm32/podulebus/ascreg.h>
 #include <arm32/podulebus/ascvar.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 void ascattach	__P((struct device *, struct device *, void *));
 int ascmatch	__P((struct device *, struct cfdata *, void *));
