@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.44 2002/10/22 00:01:57 fair Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.45 2003/04/29 08:47:29 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.44 2002/10/22 00:01:57 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.45 2003/04/29 08:47:29 scw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -165,7 +165,7 @@ const char *smc91cxx_idstrs[] = {
 	NULL,				/* 6 */
 	"SMC91C100",			/* 7 */
 	"SMC91C100FD",			/* 8 */
-	NULL,				/* 9 */
+	"SMC91C111",			/* 9 */
 	NULL,				/* 10 */
 	NULL,				/* 11 */
 	NULL,				/* 12 */
@@ -245,7 +245,7 @@ smc91cxx_attach(sc, myea)
 	u_int32_t miicapabilities;
 	u_int16_t tmp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
-	int i, aui, mult, memsize;
+	int i, aui, mult, scale, memsize;
 	char pbuf[9];
 
 	/* Make sure the chip is stopped. */
@@ -268,10 +268,19 @@ smc91cxx_attach(sc, myea)
 	printf("revision %d, ", RR_REV(tmp));
 
 	SMC_SELECT_BANK(sc, 0);
-	mult = MCR_MEM_MULT(bus_space_read_2(bst, bsh, MEM_CFG_REG_W));
+	switch (sc->sc_chipid) {
+	default:
+		mult = MCR_MEM_MULT(bus_space_read_2(bst, bsh, MEM_CFG_REG_W));
+		scale = MIR_SCALE_91C9x;
+		break;
+
+	case CHIP_91C111:
+		mult = MIR_MULT_91C111;
+		scale = MIR_SCALE_91C111;
+	}
 	memsize = bus_space_read_2(bst, bsh, MEM_INFO_REG_W) & MIR_TOTAL_MASK;
 	if (memsize == 255) memsize++;
-	memsize *= 256 * mult;
+	memsize *= scale * mult;
 
 	format_bytes(pbuf, sizeof(pbuf), memsize);
 	printf("buffer size: %s\n", pbuf);
@@ -325,8 +334,15 @@ smc91cxx_attach(sc, myea)
 		 */
 		miicapabilities &= ~(BMSR_100TXFDX | BMSR_10TFDX);
 	case CHIP_91100FD:
+	case CHIP_91C111:
 		if (tmp & CR_MII_SELECT) {
-			printf("default media MII\n");
+			printf("default media MII");
+			if (sc->sc_chipid == CHIP_91C111) {
+				printf(" (%s PHY)\n", (tmp & CR_AUI_SELECT) ?
+				    "external" : "internal");
+				sc->sc_internal_phy = !(tmp & CR_AUI_SELECT);
+			} else
+				printf("\n");
 			mii_attach(&sc->sc_dev, &sc->sc_mii, miicapabilities,
 			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
@@ -340,6 +356,14 @@ smc91cxx_attach(sc, myea)
 			}
 			sc->sc_flags |= SMC_FLAGS_HAS_MII;
 			break;
+		} else
+		if (sc->sc_chipid == CHIP_91C111) {
+			/*
+			 * XXX: Should bring it out of low-power mode
+			 */
+			printf("EPH interface in low power mode\n");
+			sc->sc_internal_phy = 0;
+			return;
 		}
 		/*FALLTHROUGH*/
 	default:
@@ -511,6 +535,19 @@ smc91cxx_init(sc)
 	bus_space_write_1(bst, bsh, INTR_MASK_REG_B, 0);
 
 	/*
+	 * On the 91c111, enable auto-negotiation, and set the LED
+	 * status pins to something sane.
+	 * XXX: Should be some way for MD code to decide the latter.
+	 */
+	SMC_SELECT_BANK(sc, 0);
+	if (sc->sc_chipid == CHIP_91C111) {
+		bus_space_write_2(bst, bsh, RX_PHY_CONTROL_REG_W,
+		    RPC_ANEG |
+		    (RPC_LS_LINK_DETECT << RPC_LSA_SHIFT) |
+		    (RPC_LS_TXRX << RPC_LSB_SHIFT));
+	}
+
+	/*
 	 * Set current media.
 	 */
 	smc91cxx_set_media(sc, sc->sc_mii.mii_media.ifm_cur->ifm_media);
@@ -551,8 +588,14 @@ smc91cxx_init(sc)
 	 */
 	SMC_SELECT_BANK(sc, 2);
 
-	bus_space_write_1(bst, bsh, INTR_MASK_REG_B,
-	    IM_EPH_INT | IM_RX_OVRN_INT | IM_RCV_INT | IM_TX_INT);
+	if (sc->sc_chipid == CHIP_91C111 && sc->sc_internal_phy) {
+		bus_space_write_1(bst, bsh, INTR_MASK_REG_B,
+		    IM_EPH_INT | IM_RX_OVRN_INT |
+		    IM_RCV_INT | IM_TX_INT | IM_MD_INT);
+	} else {
+		bus_space_write_1(bst, bsh, INTR_MASK_REG_B,
+		    IM_EPH_INT | IM_RX_OVRN_INT | IM_RCV_INT | IM_TX_INT);
+	}
 
 	/* Interface is now running, with no output active. */
 	ifp->if_flags |= IFF_RUNNING;
@@ -994,6 +1037,14 @@ smc91cxx_intr(arg)
 		SMC_SELECT_BANK(sc, 2);
 
 		ifp->if_timer = 0;
+	}
+
+	if (sc->sc_chipid == CHIP_91C111 && sc->sc_internal_phy &&
+	    (status & IM_MD_INT)) {
+		/*
+		 * Internal PHY status change
+		 */
+		mii_tick(&sc->sc_mii);
 	}
 
 	/*
