@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.3 1993/10/26 12:10:01 mycroft Exp $
+ *	$Id: intr.c,v 1.4 1993/10/26 14:22:41 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -164,7 +164,7 @@ isa_intrmaskwickedness()
 	}
 
 	impmask = netmask | ttymask;
-	printf("biomask %x ttymask %x netmask %x impmask %x astmask %s\n",
+	printf("biomask %x ttymask %x netmask %x impmask %x astmask %x\n",
 	       biomask, ttymask, netmask, impmask, astmask);
 }
 
