@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.46 1999/12/01 18:36:18 thorpej Exp $
+# $NetBSD: shl.mi,v 1.47 1999/12/13 01:44:30 itojun Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libbfd.so.3.0
 ./usr/lib/libbz2.so.0.0
@@ -15,7 +15,7 @@
 ./usr/lib/libntp.so.0.0
 ./usr/lib/libobjc.so.0.0
 ./usr/lib/libossaudio.so.0.0
-./usr/lib/libpcap.so.1.0
+./usr/lib/libpcap.so.1.1
 ./usr/lib/libposix.so.0.1
 ./usr/lib/libresolv.so.1.0
 ./usr/lib/libskey.so.0.0
