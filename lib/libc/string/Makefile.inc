@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.18 1993/12/06 03:10:35 cgd Exp $
+#	$Id: Makefile.inc,v 1.19 1993/12/06 23:22:15 mycroft Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -8,10 +8,10 @@ SRCS+=	memccpy.c strcasecmp.c strcoll.c strdup.c strerror.c \
 	strftime.c strmode.c strtok.c strxfrm.c 
 
 .if   (${MACHINE_ARCH} == "m68k")
-SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.c memcmp.c memset.c \
+SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.c memcmp.S memset.S \
 	rindex.S strcat.c strcmp.S strcpy.S strcspn.c strlen.S \
 	strncat.c strncmp.S strncpy.S strpbrk.c strsep.c \
-	strspn.c strstr.c swab.c
+	strspn.c strstr.c swab.S
 .elif (${MACHINE_ARCH} == "i386")
 SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.S memcmp.S memset.S \
 	rindex.S strcat.S strcmp.S strcpy.S strcspn.c strlen.S \
