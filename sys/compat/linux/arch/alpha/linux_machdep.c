@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.13 2000/12/22 22:58:57 jdolecek Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.14 2000/12/27 23:47:58 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,9 @@
 #include <sys/ioctl.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
 #endif
+#ifdef DEBUG
+#include <machine/sigdebug.h>
+#endif
 
 /*
  * Deal with some alpha-specific things in the Linux emulation code.
@@ -130,7 +133,7 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 	sfp = (struct linux_rt_sigframe *)((caddr_t)sfp - rndfsize);
 
 #ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid = sigpid)
+	if ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid))
 		printf("linux_sendsig(%d): sig %d ssp %p usp %p\n", p->p_pid,
 		    sig, &onstack, sfp);
 #endif /* DEBUG */
@@ -234,7 +237,7 @@ void setup_linux_sigframe(tf, sig, mask)
 	sfp = (struct linux_sigframe *)((caddr_t)sfp - rndfsize);
 
 #ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid = sigpid)
+	if ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid))
 		printf("linux_sendsig(%d): sig %d ssp %p usp %p\n", p->p_pid,
 		    sig, &onstack, sfp);
 #endif /* DEBUG */
@@ -402,7 +405,7 @@ linux_restore_sigcontext(struct proc *p, struct linux_sigcontext context,
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("linux_rt_sigreturn(%d): returns\n", p->pid);
+		printf("linux_rt_sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.228 2000/12/22 22:58:52 jdolecek Exp $ */
+/* $NetBSD: machdep.c,v 1.229 2000/12/27 23:47:59 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228 2000/12/22 22:58:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.229 2000/12/27 23:47:59 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228 2000/12/22 22:58:52 jdolecek Exp $
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
+#endif
+
+#ifdef DEBUG
+#include <machine/sigdebug.h>
 #endif
 
 #include <machine/alpha.h>
@@ -1464,12 +1468,6 @@ regdump(framep)
 	printregs(&reg);
 }
 
-#ifdef DEBUG
-int sigdebug = 0;
-int sigpid = 0;
-#define	SDB_FOLLOW	0x01
-#define	SDB_KSTACK	0x02
-#endif
 
 /*
  * Send an interrupt to process.
