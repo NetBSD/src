@@ -60,24 +60,34 @@ list_set_files $setname | \
 		print $1
 	}' | sort -u > $filename
 
-SELECTDIRS="-maxdepth 0 -type d"
-SELECTNONDIRS="-maxdepth 0 ! -type d"
+SELECTDIRS="-prune -type d"
+SELECTNONDIRS="! -type d -print -o ( -type d -prune )"
 
 cd $prefix
 #
-# match the directories
+# Match the directories.  Use find(1) to avoid repeat calls to
+# 'test -d'.
+#
+# This is a little clever.  I cannot use 'xargs find', because
+# find wants for the option arguments to follow the path arguments.
+# So I use 'xargs echo $SELECTDIRS' to make a maximum-length proto-command
+# line.  I use 'read' to peel the options off the front of the
+# command-line, and 'find $args $SELECTDIRS' to put them at the end.
 #
 xargs echo $SELECTDIRS < $filename | \
-while read ignore ignore ignore ignore args; do
+while read ignore ignore ignore args; do
 	[ -z "$args" ] && break 
 	find $args $SELECTDIRS
 done | awk '{ print "@dirrm " $1; }' > $dfilename
 
 #
-# match the non-directories
+# Match the non-directories.  Use find(1) to avoid repeat calls to
+# 'test ! -d'.  See 'Match the directories' for an explanation of the
+# cleverness.
 #
 xargs echo $SELECTNONDIRS < $filename | \
-while read ignore ignore ignore ignore ignore args; do
+while read ignore ignore ignore ignore ignore ignore ignore ignore ignore \
+    ignore args; do
 	[ -z "$args" ] && break 
 	find $args $SELECTNONDIRS
 done > $ffilename
