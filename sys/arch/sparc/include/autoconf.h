@@ -42,7 +42,7 @@
  *	@(#)autoconf.h	8.2 (Berkeley) 9/30/93
  *
  * from: Header: autoconf.h,v 1.11 93/09/28 05:26:41 leres Exp (LBL)
- * $Id: autoconf.h,v 1.3 1994/05/19 08:23:00 deraadt Exp $
+ * $Id: autoconf.h,v 1.4 1994/09/17 23:46:32 deraadt Exp $
  */
 
 /*
@@ -72,6 +72,18 @@ struct romaux {
 	int	ra_nintr;		/* number of interrupt info elements */
 	struct	bootpath *ra_bp;	/* used for locating boot device */
 };
+
+
+struct confargs {
+	int	ca_bustype;
+	struct	romaux ca_ra;
+	int	ca_slot;
+	int	ca_offset;
+};
+#define BUS_MAIN	0
+#define	BUS_SBUS	1
+#define	BUS_OBIO	2
+#define	BUS_VME		3
 
 /*
  * The various getprop* functions obtain `properties' from the ROMs.
