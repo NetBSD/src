@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.30 2001/01/14 11:17:30 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.31 2001/02/18 04:55:38 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,6 +52,8 @@ bdev_decl(sd);
 bdev_decl(st);
 #include "cd.h"
 bdev_decl(cd);
+#include "ld.h"
+bdev_decl(ld);
 #include "md.h"
 bdev_decl(md);
 #include "wd.h"
@@ -71,6 +73,7 @@ struct bdevsw bdevsw[] = {
 	bdev_disk_init(NWD,wd),		/* 10: IDE disk driver */
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_disk_init(NRAID,raid),	/* 12: RAIDframe disk driver */
+	bdev_disk_init(NLD,ld),		/* 13: logical disk */
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 
@@ -268,6 +271,7 @@ struct cdevsw cdevsw[] = {
 	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 56: i4b raw b-channel access */
 	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 57: i4b trace device */
 	cdev_i4btel_init(NI4BTEL, i4btel),	/* 58: i4b phone device */
+	cdev_disk_init(NLD,ld),		/* 59: logical disk driver */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
