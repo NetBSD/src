@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$Id: strip.c,v 1.7 1993/11/18 21:09:10 mycroft Exp $";
+static char rcsid[] = "$Id: strip.c,v 1.8 1993/11/19 02:24:40 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,8 +59,8 @@ typedef struct nlist NLIST;
 #define	strx	n_un.n_strx
 
 void err __P((const char *fmt, ...));
-int s_stab __P((const char *, int, EXEC *));
-int s_sym __P((const char *, int, EXEC *));
+int s_stab __P((const char *, int, EXEC *, struct stat *));
+int s_sym __P((const char *, int, EXEC *, struct stat *));
 void usage __P((void));
 
 int xflag = 0;
@@ -70,8 +70,9 @@ main(argc, argv)
 	char *argv[];
 {
 	register int fd, nb;
-	EXEC head;
-	int (*sfcn)__P((const char *, int, EXEC *));
+	EXEC *ep;
+	struct stat sb;
+	int (*sfcn)__P((const char *, int, EXEC *, struct stat *));
 	int ch, errors;
 	char *fn;
 
@@ -92,92 +93,102 @@ main(argc, argv)
 	argv += optind;
 
 	errors = 0;
+#define	ERROR(x) errors |= 1; err("%s: %s", fn, strerror(x)); continue;
 	while (fn = *argv++) {
 		if ((fd = open(fn, O_RDWR)) < 0) {
-			errors |= 1;
-			err("%s: %s", fn, strerror(errno));
-			continue;
+			ERROR(errno);
 		}
-		if ((nb = read(fd, &head, sizeof(EXEC))) == -1) {
-			errors |= 1;
-			err("%s: %s", fn, strerror(errno));
+        	if (fstat(fd, &sb)) {
 			(void)close(fd);
-			continue;
+			ERROR(errno);
 		}
-		if (nb != sizeof(EXEC) || N_BADMAG(head)) {
-			errors |= 1;
-			err("%s: %s", fn, strerror(EFTYPE));
+		if (sb.st_size < sizeof(EXEC)) {
 			(void)close(fd);
-			continue;
+			ERROR(EFTYPE);
 		}
-		errors |= sfcn(fn, fd, &head);
+		if ((ep = (EXEC *)mmap(NULL, sb.st_size, PROT_READ | PROT_WRITE,
+		    MAP_FILE | MAP_SHARED, fd, (off_t)0)) == (EXEC *)-1) {
+			(void)close(fd);
+			ERROR(errno);
+		}
+		if (N_BADMAG(*ep)) {
+			munmap((caddr_t)ep, sb.st_size);
+			(void)close(fd);
+			ERROR(EFTYPE);
+		}
+		errors |= sfcn(fn, fd, ep, &sb);
+		munmap((caddr_t)ep, sb.st_size);
 		if (close(fd)) {
-			errors |= 1;
-			err("%s: %s", fn, strerror(errno));
+			ERROR(errno);
 		}
 	}
+#undef ERROR
 	exit(errors);
 }
 
 int
-s_sym(fn, fd, ep)
+s_sym(fn, fd, ep, sp)
 	const char *fn;
 	int fd;
 	register EXEC *ep;
+	struct stat *sp;
 {
-	register off_t fsize;
+	register char *fileend, *minend;
 
+#if 0
 	/* If no symbols or data/text relocation info, quit. */
 	if (!ep->a_syms && !ep->a_trsize && !ep->a_drsize)
 		return 0;
+#endif
 
 	/*
 	 * New file size is the header plus text and data segments; OMAGIC
 	 * and NMAGIC formats have the text/data immediately following the
 	 * header.  ZMAGIC format wastes the rest of of header page.
 	 */
-	fsize = N_RELOFF(*ep);
+	fileend = (char *)ep + N_RELOFF(*ep);
+
+	if (ep->a_data &&
+	    (N_GETMAGIC(*ep) == ZMAGIC || N_GETMAGIC(*ep) == QMAGIC)) {
+		/*
+		 * Get rid of unneeded zeroes at the end of the data segment
+		 * to reduce the file size even more.
+		 */
+		minend = (char *)ep + N_DATOFF(*ep);
+		while (fileend > minend && fileend[-1] == '\0')
+			fileend--;
+	}
 
 	/* Set symbol size and relocation info values to 0. */
 	ep->a_syms = ep->a_trsize = ep->a_drsize = 0;
 
-	/* Rewrite the header and truncate the file. */
-	if (lseek(fd, 0L, SEEK_SET) == -1 ||
-	    write(fd, ep, sizeof(EXEC)) != sizeof(EXEC) ||
-	    ftruncate(fd, fsize)) {
-		err("%s: %s", fn, strerror(errno)); 
+	/* Truncate the file. */
+	if (ftruncate(fd, fileend - (char *)ep)) {
+		err("%s: %s", fn, strerror(errno));
 		return 1;
 	}
+
 	return 0;
 }
 
 int
-s_stab(fn, fd, ep)
+s_stab(fn, fd, ep, sp)
 	const char *fn;
 	int fd;
 	EXEC *ep;
+	struct stat *sp;
 {
 	register int cnt, len, nsymcnt;
 	register char *nstr, *nstrbase, *p, *strbase;
 	register NLIST *sym, *nsym;
-	struct stat sb;
 	NLIST *symbase;
 
 	/* Quit if no symbols. */
 	if (ep->a_syms == 0)
 		return 0;
 
-	/* Map the file. */
-	if (fstat(fd, &sb) ||
-	    (ep = (EXEC *)mmap(NULL, sb.st_size, PROT_READ | PROT_WRITE,
-	    MAP_FILE | MAP_SHARED, fd, (off_t)0)) == (EXEC *)-1) {
-		err("%s: %s", fn, strerror(errno));
-		return 1;
-	}
-
-	if (N_SYMOFF(*ep) >= sb.st_size) {
+	if (N_SYMOFF(*ep) >= sp->st_size) {
 		err("%s: bad symbol table", fn);
-		munmap((caddr_t)ep, sb.st_size);
 		return 1;
 	}
 
@@ -196,7 +207,6 @@ s_stab(fn, fd, ep)
 	strbase = (char *)ep + N_STROFF(*ep);
 	if ((nstrbase = malloc((u_int)*(u_long *)strbase)) == NULL) {
 		err("%s", strerror(ENOMEM));
-		munmap((caddr_t)ep, sb.st_size);
 		return 1;
 	}
 	nstr = nstrbase + sizeof(u_long);
@@ -240,12 +250,10 @@ s_stab(fn, fd, ep)
 
 	/* Truncate to the current length. */
 	if (ftruncate(fd, (char *)nsym + len - (char *)ep)) {
-		munmap((caddr_t)ep, sb.st_size);
 		err("%s: %s", fn, strerror(errno));
 		return 1;
 	}
 
-	munmap((caddr_t)ep, sb.st_size);
 	return 0;
 }
 
