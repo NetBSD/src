@@ -35,14 +35,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.14 1993/06/18 06:19:16 cgd Exp $
+ *	$Id: fd.c,v 1.15 1993/06/20 08:42:05 deraadt Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
  */
 /*
  * $Log: fd.c,v $
- * Revision 1.14  1993/06/18 06:19:16  cgd
+ * Revision 1.15  1993/06/20 08:42:05  deraadt
+ * if the floppy does not exist, say nothing.
+ *
+ * Revision 1.14  1993/06/18  06:19:16  cgd
  * new floppy driver, merged from patchkit patch #153
  *
  * Revision 1.1.1.1  1993/06/12  14:58:02  rgrimes
@@ -305,8 +308,8 @@ struct isa_device *dev;
 
 	switch(fdt & 0xf0) {
 	case RTCFDT_NONE:
-		printf("fd%d at fdc%d targ %d: nonexistant device\n",
-			dev->id_unit, dev->id_masunit, dev->id_physid);
+		/*printf("fd%d at fdc%d targ %d: nonexistant device\n",
+			dev->id_unit, dev->id_masunit, dev->id_physid);*/
 		fd->type = 0;
 		break;
 	case RTCFDT_12M:
