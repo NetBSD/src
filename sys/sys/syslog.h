@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)syslog.h	7.20 (Berkeley) 2/23/91
- *	$Id: syslog.h,v 1.3 1993/05/20 16:23:17 cgd Exp $
+ *	$Id: syslog.h,v 1.4 1994/05/12 10:30:42 mycroft Exp $
  */
 
 #ifndef _SYS_SYSLOG_H_
@@ -178,6 +178,12 @@ int	setlogmask __P((int));
 void	syslog __P((int, const char *, ...));
 void	vsyslog __P((int, const char *, va_list));
 __END_DECLS
+
+#else /* !KERNEL */
+
+void	logpri __P((int);
+void	log __P((int, const char *, ...));
+void	addlog __P((const char *, ...));
 
 #endif /* !KERNEL */
 
