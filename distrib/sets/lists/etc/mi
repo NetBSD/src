@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.142 2004/06/22 18:24:06 itojun Exp $
+# $NetBSD: mi,v 1.143 2004/06/29 04:53:43 itojun Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -163,6 +163,8 @@
 ./etc/rc.d/nfslocking				etc-nfsserver-rc
 ./etc/rc.d/ntpd					etc-ntp-rc
 ./etc/rc.d/ntpdate				etc-ntp-rc
+./etc/rc.d/pf					etc-net-rc
+./etc/rc.d/pflogd				etc-net-rc
 ./etc/rc.d/poffd				etc-sys-rc
 ./etc/rc.d/postfix				etc-postfix-rc
 ./etc/rc.d/powerd				etc-sysutil-rc
