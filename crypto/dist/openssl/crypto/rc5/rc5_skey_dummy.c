@@ -64,12 +64,14 @@
 #include <stdlib.h>
 
 __warn_references(RC5_32_set_key,
-    "RC5 is a patented algorithm; use libcrypto_rc5.a")
+    "RC5 is a patented algorithm; link against libcrypto_rc5.a")
 
 void RC5_32_set_key(RC5_32_KEY *key, int len, unsigned char *data,
 	     int rounds)
 {
 
-	fprintf(stderr, "RC5 is a patented algorithm; use libcrypto_rc5.a\n");
+	fprintf(stderr,
+	    "RC5 is a patented algorithm; link against libcrypto_rc5.a. "
+	    "Aborting...\n");
 	exit(1);
 }
