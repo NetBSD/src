@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.163.2.1 2002/12/18 01:06:06 gmcgarry Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.163.2.2 2002/12/19 05:22:11 gmcgarry Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.163.2.1 2002/12/18 01:06:06 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.163.2.2 2002/12/19 05:22:11 gmcgarry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -366,7 +366,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 */
 	p->p_flag |= P_INEXEC;
 
-	cred = p->p_ucred;
 	base_vcp = NULL;
 	/*
 	 * Init the namei data to point the file user's program name.
@@ -662,21 +661,14 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	}
 
 	/*
-	 * Copy credentials so other references do not see our changes.
-	 */
-	p->p_ucred = crcopy(cred);
-
-	/*
 	 * deal with set[ug]id.
 	 * MNT_NOSUID has already been used to disable s[ug]id.
 	 */
+	cred = p->p_ucred;
 	if ((p->p_flag & P_TRACED) == 0 &&
 
-	    (((attr.va_mode & S_ISUID) != 0 &&
-	      p->p_ucred->cr_uid != attr.va_uid) ||
-
-	     ((attr.va_mode & S_ISGID) != 0 &&
-	      p->p_ucred->cr_gid != attr.va_gid))) {
+	    (((attr.va_mode & S_ISUID) != 0 && cred->cr_uid != attr.va_uid) ||
+	     ((attr.va_mode & S_ISGID) != 0 && cred->cr_gid != attr.va_gid))) {
 		/*
 		 * Mark the process as SUGID before we do
 		 * anything that might block.
@@ -695,14 +687,19 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		if (p->p_tracep && !(p->p_traceflag & KTRFAC_ROOT))
 			ktrderef(p);
 #endif
+		p->p_ucred = cred = crcopy(p->p_ucred);
 		if (attr.va_mode & S_ISUID)
-			p->p_ucred->cr_uid = attr.va_uid;
+			cred->cr_uid = attr.va_uid;
 		if (attr.va_mode & S_ISGID)
-			p->p_ucred->cr_gid = attr.va_gid;
+			cred->cr_gid = attr.va_gid;
 	} else
 		p->p_flag &= ~P_SUGID;
-	p->p_ucred->cr_svuid = p->p_ucred->cr_uid;
-	p->p_ucred->cr_svgid = p->p_ucred->cr_gid;
+
+	if (cred->cr_svuid != cred->cr_uid || cred->cr_svgid != cred->cr_gid) {
+		p->p_ucred = cred = crcopy(cred);
+		cred->cr_svuid = cred->cr_uid;
+		cred->cr_svgid = cred->cr_gid;
+	}
 
 #if defined(__HAVE_RAS)
 	/*
