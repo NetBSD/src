@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.58 2000/06/15 14:27:07 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.59 2000/06/15 14:42:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -942,14 +942,6 @@ si_vme_dma_start(ncr_sc)
 	/* Set it anyway, even though dma_count hits it? */
 	si->fifo_cnt_hi = (u_short)(xlen >> 16);
 	si->fifo_count  = (u_short)(xlen & 0xFFFF);
-#endif
-
-#ifdef DEBUG
-	if (si->fifo_count != xlen) {
-		printf("si_dma_start: Fifo_count=0x%x, xlen=0x%x\n",
-		    si->fifo_count, xlen);
-		Debugger();
-	}
 #endif
 
 	/*
