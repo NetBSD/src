@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.18 2002/02/08 07:27:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.19 2002/02/08 22:29:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -198,7 +198,8 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 		victim->preempts++;
 #endif
 		victim->pt_uc = sas[i]->sa_context;
-		SDPRINTF(("(fi %p) victim %d %p", self, i, victim));
+		SDPRINTF(("(fi %p) victim %d %p(%d)", self, i, victim,
+		    victim->pt_type));
 		if (victim->pt_type == PT_THREAD_UPCALL) {
 			/* Case 1: Upcall */
 			/* Must be resumed. */
@@ -219,7 +220,7 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 				}
 			}
 		} else {
-			/* Case 2: Plain thread. */
+			/* Case 2: Normal or idle thread. */
 			if (victim->pt_spinlocks > 0) {
 				/* Case 2A: Lockholder */
 				/* Must be resumed. */
@@ -352,7 +353,7 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 					 */
 					prev = victim;
 				}
-			} else {
+			} else if (victim->pt_type == PT_THREAD_UPCALL) {
 				SDPRINTF((" upcall"));
 				/* Okay, an upcall. */
 				if (victim->pt_state == PT_STATE_RECYCLABLE) {
@@ -370,7 +371,34 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 					 */
 					prev = victim;
 				}
+			} else {
+				SDPRINTF((" idle"));
+				/* Idle threads should be given an opportunity
+				 * to put themselves on the reidle queue. 
+				 * We know that they're done when they have no
+				 * locks and PT_FLAG_IDLED is set 
+				 */
+				if (victim->pt_spinlocks != 0) {
+					/* Still holding locks.
+					 */
+					SDPRINTF((" spinlocks: %d", 
+					    victim->pt_spinlocks));
+					prev = victim;
+				} else if (!(victim->pt_flags & PT_FLAG_IDLED)) {
+					/* Hasn't yet put itself on the
+					 * reidle queue. 
+					 */
+					SDPRINTF((" not done"));
+					prev = victim;
+				} else {
+					/* Done! */
+					if (prev)
+						prev->pt_next = next;
+					else
+						intqueue = next;
+				}
 			}
+
 			if (switchto) {
 				assert(switchto->pt_spinlocks == 0);
 				/* Threads can have switchto set to themselves
@@ -393,11 +421,11 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			 * chain, and we will continue here, having
 			 * returned from the switch.
 			 */
-			SDPRINTF(("(rl %p) chain switching to %p (pc: %lx sp: %lx)\n",
+			SDPRINTF(("(rl %p) starting chain %p (pc: %lx sp: %lx)\n",
 			    self, intqueue, pthread__uc_pc(intqueue->pt_uc), 
 			    pthread__uc_sp(intqueue->pt_uc)));
 			pthread__switch(self, intqueue);
-			SDPRINTF(("(rl %p) returned from chain switch\n",
+			SDPRINTF(("(rl %p) returned from chain\n",
 			    self));
 		}
 
@@ -407,6 +435,10 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			 * will resume us here after a pass around its
 			 * interrupted queue.
 			 */
+			SDPRINTF(("(rl %p) upcall chain switch to %p (pc: %lx sp: %lx)\n",
+			    self, self->pt_next, 
+			    pthread__uc_pc(self->pt_next->pt_uc), 
+			    pthread__uc_sp(self->pt_next->pt_uc)));
 			pthread__switch(self, self->pt_next);
 		}
 
@@ -440,6 +472,7 @@ pthread__recycle_bulk(pthread_t self, pthread_t qhead)
 			recyclable[my_side][recycle_count] = upcall->pt_stack;
 			recycle_count++;
 		}
+		SDPRINTF(("(recycle_bulk %p) count %d\n", self, recycle_count));
 		if (recycle_count == recycle_threshold) {
 			recycle_side = 1 - recycle_side;
 			recycle_count = 0;
@@ -447,6 +480,8 @@ pthread__recycle_bulk(pthread_t self, pthread_t qhead)
 		}
 		pthread_spinunlock(self, &recycle_lock);
 		if (do_recycle) {
+			SDPRINTF(("(recycle_bulk %p) recycled %d stacks\n", self, recycle_threshold));
+
 			ret = sa_stacks(recycle_threshold, 
 			    recyclable[my_side]);
 			if (ret != recycle_threshold) {
@@ -476,6 +511,8 @@ pthread__sa_recycle(pthread_t old, pthread_t new)
 	my_side = recycle_side;
 	recyclable[my_side][recycle_count] = old->pt_stack;
 	recycle_count++;
+	SDPRINTF(("(recycle %p) count %d\n", new, recycle_count));
+
 	if (recycle_count == recycle_threshold) {
 		/* Switch */
 		recycle_side = 1 - recycle_side;
@@ -486,7 +523,7 @@ pthread__sa_recycle(pthread_t old, pthread_t new)
 
 	if (do_recycle) {
 		ret = sa_stacks(recycle_threshold, recyclable[my_side]);
-		SDPRINTF(("recycled %d stacks\n", recycle_threshold));
+		SDPRINTF(("(recycle %p) recycled %d stacks\n", new, recycle_threshold));
 		if (ret != recycle_threshold)
 			assert(0);
 	}
