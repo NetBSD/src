@@ -1,14 +1,13 @@
-/*	$NetBSD: mem.c,v 1.25 1995/04/10 01:57:50 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.26 1995/04/10 04:17:12 mycroft Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
- * Science Department, and code derived from software contributed to
- * Berkeley by William Jolitz.
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,9 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah Hdr: mem.c 1.13 89/10/08
- *
- *	@(#)mem.c 7.2 (Berkeley) 5/9/91
+ *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
 /*
@@ -133,7 +130,7 @@ mmrw(dev, uio, flags)
 		case 0:
 			v = uio->uio_offset;
 			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
-			    trunc_page(v), uio->uio_rw == UIO_READ ? 
+			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = (int)uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (u_int)(NBPG - o));
@@ -148,7 +145,7 @@ mmrw(dev, uio, flags)
 			c = min(iov->iov_len, MAXPHYS);
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return(EFAULT);
+				return (EFAULT);
 			error = uiomove(v, (int)c, uio);
 			continue;
 
@@ -192,27 +189,27 @@ mmrw(dev, uio, flags)
 }
 
 int
-mmmmap(dev, offset)
+mmmmap(dev, off, prot)
 	dev_t dev;
-	int offset;
+	int off, prot;
 {
 	struct proc *p = curproc;	/* XXX */
-	struct pcred *pc = p->p_cred;
 
 	switch (minor(dev)) {
 /* minor device 0 is physical memory */
 	case 0:
-		if (offset > ctob(physmem) &&
-		    suser(pc->pc_ucred, &p->p_acflag) != 0)
+		if (off > ctob(physmem) &&
+		    suser(p->p_ucred, &p->p_acflag) != 0)
 			return -1;
-		return i386_btop(offset);
+		return i386_btop(off);
 
 /* minor device 1 is kernel memory */
 	case 1:
 		/* XXX - writability, executability checks? */
-		if (!kernacc((caddr_t)offset, NBPG, B_READ))
+		if (!kernacc((caddr_t)off, NBPG, B_READ))
 			return -1;
-		return i386_btop(vtophys(offset));
+		return i386_btop(vtophys(off));
+
 	default:
 		return -1;
 	}
