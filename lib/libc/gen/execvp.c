@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.9 1998/09/11 21:03:18 kleink Exp $	*/
+/*	$NetBSD: execvp.c,v 1.10 1998/11/12 16:09:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.9 1998/09/11 21:03:18 kleink Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.10 1998/11/12 16:09:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,13 +67,14 @@ execvp(name, argv)
 	char * const *argv;
 {
 	static size_t memsize;
-	static char **memp;
+	static const char **memp;
 	int cnt;
 	size_t lp, ln;
 	char *p;
 	int eacces = 0;
 	unsigned int etxtbsy = 0;
-	char *bp, *cur, *path, buf[PATH_MAX];
+	char *cur, *path, buf[PATH_MAX];
+	const char *bp;
 
 	/* "" is not a valid filename; check this before traversing PATH. */
 	if (name[0] == '\0') {
@@ -83,7 +84,7 @@ execvp(name, argv)
 	}
 	/* If it's an absolute or relative path name, it's easy. */
 	if (strchr(name, '/')) {
-		bp = (char *)name;
+		bp = name;
 		cur = path = NULL;
 		goto retry;
 	}
@@ -144,7 +145,7 @@ retry:		rwlock_rdlock(&__environ_lock);
 			memp[1] = bp;
 			memmove(memp + 2, argv + 1, cnt * sizeof(char *));
 			rwlock_rdlock(&__environ_lock);
-			(void)execve(_PATH_BSHELL, memp, environ);
+			(void)execve(_PATH_BSHELL, (char * const *)memp, environ);
 			rwlock_unlock(&__environ_lock);
 			goto done;
 		case ETXTBSY:
