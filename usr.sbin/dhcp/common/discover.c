@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.9 2000/11/27 17:33:02 mycroft Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.10 2000/11/27 17:36:19 mycroft Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -703,7 +703,7 @@ isc_result_t got_one (h)
 		   into the category of being forgiving. */
 		if (result <
 		    DHCP_FIXED_NON_UDP - DHCP_SNAME_LEN - DHCP_FILE_LEN)
-			return ISC_R_UNEXPECTED;
+			continue;
 
 		if (bootp_packet_handler) {
 			ifrom.len = 4;
