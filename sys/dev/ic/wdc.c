@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.66.2.7 2000/01/23 12:30:20 he Exp $ */
+/*	$NetBSD: wdc.c,v 1.66.2.8 2000/02/01 23:30:28 he Exp $ */
 
 
 /*
@@ -903,6 +903,7 @@ wdc_probe_caps(drvp)
 			break;
 		}
 		if (params.atap_extensions & WDC_EXT_UDMA_MODES) {
+			printed = 0;
 			for (i = 7; i >= 0; i--) {
 				if ((params.atap_udmamode_supp & (1 << i))
 				    == 0)
@@ -912,8 +913,11 @@ wdc_probe_caps(drvp)
 					if (ata_set_mode(drvp, 0x40 | i,
 					    AT_POLL) != CMD_OK)
 						continue;
-				printf("%s Ultra-DMA mode %d", sep, i);
-				sep = ",";
+				if (!printed) {
+					printf("%s Ultra-DMA mode %d", sep, i);
+					sep = ",";
+					printed = 1;
+				}
 				if (wdc->cap & WDC_CAPABILITY_UDMA) {
 					if ((wdc->cap & WDC_CAPABILITY_MODE) &&
 					    wdc->UDMA_cap < i)
