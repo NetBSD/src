@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.18 2000/05/13 03:07:17 lukem Exp $
+# $NetBSD: rc.subr,v 1.19 2000/05/13 08:23:45 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -445,6 +445,22 @@ run_rc_script()
 		;;
 	esac
 }
+
+#
+# load_rc_config
+#	Source in the configuration file for a given command.
+#	Currently just uses /etc/rc.conf.
+#
+load_rc_config()
+{
+	_command=$1
+	if [ -z "$_command" ]; then
+		err 3 'USAGE: load_rc_config command'
+	fi
+
+	. /etc/rc.conf
+}
+
 
 #
 # rc_usage commands
