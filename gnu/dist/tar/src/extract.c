@@ -22,6 +22,7 @@
 #include "system.h"
 #include <quotearg.h>
 
+#if !HAVE_LUTIMES
 #if HAVE_UTIME_H
 # include <utime.h>
 #else
@@ -30,6 +31,7 @@ struct utimbuf
     long actime;
     long modtime;
   };
+#endif
 #endif
 
 #include "common.h"
@@ -128,6 +130,26 @@ extr_init (void)
     }
 }
 
+static int
+set_time (char const *file_name, time_t atime, time_t mtime)
+{
+#if HAVE_LUTIMES
+  struct timeval tv[2];
+
+  tv[0].tv_sec = atime;
+  tv[0].tv_usec = 0;
+  tv[1].tv_sec = mtime;
+  tv[1].tv_usec = 0;
+  return lutimes (file_name, tv);
+#else
+  struct utimbuf utimbuf;
+
+  utimbuf.actime = atime;
+  utimbuf.modtime = mtime;
+  return utime (file_name, &utimbuf);
+#endif
+}
+
 /* If restoring permissions, restore the mode for FILE_NAME from
    information given in *STAT_INFO (where *CURRENT_STAT_INFO gives
    the current status if CURRENT_STAT_INFO is nonzero); otherwise invert the
@@ -180,7 +202,11 @@ set_mode (char const *file_name, struct stat const *stat_info,
       mode = current_stat_info->st_mode ^ invert_permissions;
     }
 
+#if HAVE_LCHMOD
+  if (lchmod (file_name, mode) != 0)
+#else
   if (chmod (file_name, mode) != 0)
+#endif
     chmod_error_details (file_name, mode);
 }
 
@@ -214,9 +240,11 @@ set_stat (char const *file_name, struct stat const *stat_info,
 	  mode_t invert_permissions, enum permstatus permstatus,
 	  char typeflag)
 {
-  struct utimbuf utimbuf;
+  time_t atime;
 
+#if !HAVE_LUTIMES
   if (typeflag != SYMTYPE)
+#endif
     {
       /* We do the utime before the chmod because some versions of utime are
 	 broken and trash the modes of the file.  */
@@ -230,13 +258,11 @@ set_stat (char const *file_name, struct stat const *stat_info,
 	  /* FIXME: incremental_option should set ctime too, but how?  */
 
 	  if (incremental_option)
-	    utimbuf.actime = stat_info->st_atime;
+	    atime = stat_info->st_atime;
 	  else
-	    utimbuf.actime = start_time;
+	    atime = start_time;
 
-	  utimbuf.modtime = stat_info->st_mtime;
-
-	  if (utime (file_name, &utimbuf) < 0)
+	  if (set_time (file_name, atime, stat_info->st_mtime) < 0)
 	    utime_error (file_name);
 	  else
 	    {
@@ -244,7 +270,12 @@ set_stat (char const *file_name, struct stat const *stat_info,
 	      check_time (file_name, stat_info->st_mtime);
 	    }
 	}
+    }
 
+#if !HAVE_LCHMOD
+  if (typeflag != SYMTYPE)
+#endif
+    {
       /* Some systems allow non-root users to give files away.  Once this
 	 done, it is not possible anymore to change file permissions, so we
 	 have to set permissions prior to possibly giving files away.  */
