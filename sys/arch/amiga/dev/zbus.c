@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.33 1997/03/27 23:50:39 veego Exp $	*/
+/*	$NetBSD: zbus.c,v 1.34 1997/09/15 21:37:35 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -153,7 +153,13 @@ static struct aconfdata aconftab[] = {
 	/* Masoboshi */
 	{ "mcsc",	8535,	4 },	/* Masoboshi Mastercard 702 */
 	/* Apollo */
-	{ "apssc",	8738,	35 }	/* Apollo '060 scsi */
+	{ "apssc",	8738,	35 },	/* Apollo '060 scsi */
+	/* KATO development */
+	{ "aumld",	2145,	128 },	/* Melody MPEG layer 2 audio board */
+	/* VMC Harald Frank */
+	{ "blst",	5001,	1},	/* ISDN Blaster */
+	{ "hyper4",	5001,	2},	/* Hypercom4-Zbus */
+	{ "hyper3",	5001,	3}	/* Hypercom3-Zbus */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
