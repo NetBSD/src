@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiuvar.h,v 1.4 2001/09/16 05:32:21 uch Exp $	*/
+/*	$NetBSD: vrgiuvar.h,v 1.5 2001/12/16 09:58:34 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,31 +33,6 @@
  * SUCH DAMAGE.
  *
  */
-#define MAX_GPIO_OUT 50    /* port 32:49 are output only port */
-#define MAX_GPIO_INOUT 32  /* input/output port(0:31) */
-
-struct vrgiu_intr_entry {
-	int ih_port;
-	int (*ih_fun)(void *);
-	void *ih_arg;
-	TAILQ_ENTRY(vrgiu_intr_entry) ih_link;
-};
-
-struct hpcio_ops;
-struct vrgiu_softc {
-	struct	device sc_dev;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	/* Interrupt */
-	vrip_chipset_tag_t sc_vc;
-	void *sc_ih;
-	u_int32_t sc_intr_mask;
-	u_int32_t sc_intr_mode[MAX_GPIO_INOUT];
-	TAILQ_HEAD(, vrgiu_intr_entry) sc_intr_head[MAX_GPIO_INOUT]; 
-	struct hpcio_chip sc_iochip;
-	/* Platform dependent port mapping XXX Should not be in here? */
-	int sc_gpio_map[MAX_GPIO_OUT];
-};
 
 /* Before autoconfiguration */
 void __vrgiu_out(int, int);
