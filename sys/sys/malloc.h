@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.75 2002/01/07 00:21:56 deberg Exp $	*/
+/*	$NetBSD: malloc.h,v 1.76 2002/01/07 01:02:19 deberg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -54,7 +54,7 @@
 #define	M_CANFAIL	0x0004	/* can fail if requested memory can't ever
 				 * be allocated */
 /*
- * Types of memory to be allocated
+ * Types of memory to be allocated (don't forget to update malloc.9)
  */
 #define	M_FREE		0	/* should be on free list */
 #define	M_MBUF		1	/* mbuf */
@@ -184,13 +184,14 @@
 #define	M_SMBDATA	125	/* Misc netsmb data */
 #define	M_SMBSTR	126	/* netsmb string data */
 #define	M_SMBTEMP	127	/* Temp netsmb data */
-#define	M_NSMBDEV	128	/* NET/SMB device */
-#define	M_ICONV		129	/* ICONV data */
-#define	M_SMBNODE	130	/* SMBFS node */
-#define	M_SMBNODENAME	131	/* SMBFS node name */
-#define	M_SMBFSDATA	132	/* SMBFS private data */
-#define	M_SMBFSHASH	133	/* SMBFS hash table */
-#define	M_LAST		134	/* Must be last type + 1 */
+#define	M_ICONV		128	/* ICONV data */
+#define	M_SMBNODE	129	/* SMBFS node */
+#define	M_SMBNODENAME	130	/* SMBFS node name */
+#define	M_SMBFSDATA	131	/* SMBFS private data */
+#define	M_SMBFSHASH	132	/* SMBFS hash table */
+#define	M_LAST		133	/* Must be last type + 1 */
+
+/* added something?  don't forget to update malloc.9 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -321,13 +322,12 @@
 	"smbdata",	/* 125 M_SMBDATA */ \
 	"smbstr",	/* 126 M_SMBDATA */ \
 	"smbtemp",	/* 127 M_SMBTEMP */ \
-	"nsmbdev",	/* 128 M_NSMBDEV */ \
-	"iconv",	/* 129 M_ICONV */ \
-	"smbnode",	/* 130 M_SMBNODE */ \
-	"smbnodename",	/* 131 M_SMBNODENAME */ \
-	"smbfsdata",	/* 132 M_SMBFSDATA */ \
-	"smbfshash",	/* 133 M_SMBFSHASH */ \
-	NULL,		/* 134 */ \
+	"iconv",	/* 128 M_ICONV */ \
+	"smbnode",	/* 129 M_SMBNODE */ \
+	"smbnodename",	/* 130 M_SMBNODENAME */ \
+	"smbfsdata",	/* 131 M_SMBFSDATA */ \
+	"smbfshash",	/* 132 M_SMBFSHASH */ \
+	NULL,		/* 133 */ \
 }
 
 struct kmemstats {
