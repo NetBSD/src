@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)map.h	8.3 (Berkeley) 1/26/94
- *	$Id: map.h,v 1.4 1994/05/24 00:50:19 cgd Exp $
+ *	$Id: map.h,v 1.5 1994/05/24 01:42:47 cgd Exp $
  */
 
 /*
@@ -73,8 +73,8 @@ struct mapent {
 };
 
 #ifdef KERNEL
-extern struct map	*swapmap;
-extern int		nswapmap;
+struct	map *swapmap;
+int	nswapmap;
 
 long	rmalloc __P((struct map *, long));
 void	rmfree __P((struct map *, long, long));
