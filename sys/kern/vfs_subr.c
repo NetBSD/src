@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.110 1999/08/20 22:21:25 wrstuden Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.111 1999/10/01 21:57:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -927,7 +927,7 @@ vput(vp)
 {
 	struct proc *p = curproc;	/* XXX */
 
-#ifdef DIGANOSTIC
+#ifdef DIAGNOSTIC
 	if (vp == NULL)
 		panic("vput: null vp");
 #endif
