@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbd.c,v 1.5 1998/08/01 17:46:22 augustss Exp $	*/
+/*      $NetBSD: ukbd.c,v 1.6 1998/08/01 18:16:19 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -267,6 +267,7 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 			return;
 		}
 	}
+	/* Ignore if SETIDLE fails since it is not crucial. */
 	usbd_set_idle(iface, 0, 0);
 
 	sc->sc_ep_addr = ed->bEndpointAddress;
@@ -384,7 +385,7 @@ ukbd_intr(reqh, addr, status)
 
 	if (sc->sc_polling) {
 		if (nkeys > 0)
-			sc->sc_pollchar = ibuf[0];
+			sc->sc_pollchar = ibuf[0]; /* XXX lost keys? */
 		return;
 	}
 	for (i = 0; i < nkeys; i++) {
@@ -453,21 +454,18 @@ ukbd_cngetc(v, type, data)
 {
 	struct ukbd_softc *sc = v;
 	usbd_lock_token s;
-	extern int usbd_use_polling;
 	int c;
 
 	DPRINTFN(1,("ukbd_cngetc: enter\n"));
 	s = usbd_lock();
-	usbd_use_polling = 1;
 	sc->sc_polling = 1;
 	sc->sc_pollchar = -1;
 	while(sc->sc_pollchar == -1)
 		usbd_dopoll(sc->sc_iface);
 	sc->sc_polling = 0;
-	usbd_use_polling = 0;
 	c = sc->sc_pollchar;
-	*type = c & 0x80 ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
-	*data = c & 0x7f;
+	*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
+	*data = c & 0xff;
 	usbd_unlock(s);
 	DPRINTFN(1,("ukbd_cngetc: return 0x%02x\n", c));
 }
@@ -477,5 +475,9 @@ ukbd_cnpollc(v, on)
 	void *v;
         int on;
 {
+	struct ukbd_softc *sc = v;
+
 	DPRINTFN(1,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
+
+	usbd_set_polling(sc->sc_iface, on);
 }
