@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.52 2002/10/02 16:02:16 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.53 2002/12/06 16:04:11 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -694,7 +694,7 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 	if ((flags & BUS_INTR_ESTABLISH_FASTTRAP) != 0)
 		intr_fasttrap(pil, (void (*)__P((void)))handler);
 	else
-		intr_establish(pil, ih);
+		intr_establish(pil, level, ih);
 	return (ih);
 }
 
