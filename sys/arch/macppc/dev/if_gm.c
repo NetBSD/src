@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.21 2003/07/15 02:43:29 lukem Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.22 2003/08/24 18:02:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.21 2003/07/15 02:43:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.22 2003/08/24 18:02:00 chs Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -144,7 +144,8 @@ gmac_match(parent, match, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2))
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC3))
 		return 1;
 
 	return 0;
