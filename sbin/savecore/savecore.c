@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)savecore.c	8.3 (Berkeley) 1/2/94";*/
-static char *rcsid = "$Id: savecore.c,v 1.17 1994/09/23 14:28:15 mycroft Exp $";
+static char *rcsid = "$Id: savecore.c,v 1.18 1994/10/31 04:37:32 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,6 +58,8 @@ static char *rcsid = "$Id: savecore.c,v 1.17 1994/09/23 14:28:15 mycroft Exp $";
 #include <string.h>
 #include <tzfile.h>
 #include <unistd.h>
+
+extern FILE *zopen __P((const char *fname, const char *mode, int bits));
 
 #define ok(number) ((number) - KERNBASE)
 
