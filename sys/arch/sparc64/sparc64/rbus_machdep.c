@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.1 2003/03/22 06:36:19 nakayama Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.2 2003/04/20 00:29:37 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -183,6 +183,8 @@ pccbb_attach_hook(parent, self, pa)
 	/*
 	 * interrupt fixup:
 	 *	fake interrupt line not for giving up the probe.
+	 *	interrupt numbers assigned by OBP are [0x00,0x3f],
+	 *	so they map to [0x40,0x7f] due to inhibit the value 0x00.
 	 */
 	len = OF_getproplen(node, "interrupts");
 	if (len < sizeof(intr))
@@ -193,7 +195,7 @@ pccbb_attach_hook(parent, self, pa)
 	else if (OF_mapintr(node, &intr, sizeof(intr), sizeof(intr)) < 0)
 		printf("pccbb_attach_hook: OF_mapintr failed\n");
 	else {
-		pa->pa_intrline = intr;
+		pa->pa_intrline = intr | 0x40;
 		DPRINTF("pccbb_attach_hook: interrupt line %d\n", intr);
 	}
 }
