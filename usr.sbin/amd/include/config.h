@@ -1,3 +1,5 @@
+/*	$NetBSD: config.h,v 1.9 1998/01/09 08:08:59 perry Exp $	*/
+
 /* config.h.  Generated automatically by configure.  */
 /* aux/config.h.in.  Generated automatically from ./aux/configure.in by autoheader.  */
 /*

@@ -1,5 +1,7 @@
 #! /bin/sh
 #
+#	$NetBSD: makewhatis.sh,v 1.11 1998/01/09 08:03:44 perry Exp $
+#
 # written by matthew green <mrg@eterna.com.au>, based on the
 # original by J.T. Conklin <jtc@netbsd.org> and Thorsten
 # Frueauf <frueauf@ira.uka.de>.

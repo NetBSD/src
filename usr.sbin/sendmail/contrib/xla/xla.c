@@ -1,3 +1,5 @@
+/*	$NetBSD: xla.c,v 1.5 1998/01/09 08:10:20 perry Exp $	*/
+
 /*
  * (C) Copyright 1993-94, Herve Schauer Consultants
  *

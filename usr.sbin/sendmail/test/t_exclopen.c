@@ -1,3 +1,5 @@
+/*	$NetBSD: t_exclopen.c,v 1.2 1998/01/09 08:11:42 perry Exp $	*/
+
 /*
 **  This program tests your system to see if you have the lovely
 **  security-defeating semantics that an open with O_CREAT|O_EXCL

@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile.dist,v 1.4 1998/01/09 08:10:16 perry Exp $
+#
 #
 #  Makefile for configuration files.
 #

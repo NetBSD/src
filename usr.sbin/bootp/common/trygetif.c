@@ -1,3 +1,5 @@
+/*	$NetBSD: trygetif.c,v 1.3 1998/01/09 08:09:17 perry Exp $	*/
+
 /*
  * trygetif.c - test program for getif.c
  */

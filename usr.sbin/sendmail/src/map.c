@@ -1,3 +1,5 @@
+/*	$NetBSD: map.c,v 1.17 1998/01/09 08:11:17 perry Exp $	*/
+
 /*
  * Copyright (c) 1992, 1995-1997 Eric P. Allman.
  * Copyright (c) 1992, 1993

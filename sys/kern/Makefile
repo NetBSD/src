@@ -1,4 +1,6 @@
-#	@(#)Makefile	8.2 (Berkeley) 3/21/94
+#	$NetBSD: Makefile,v 1.6 1998/01/09 08:05:20 perry Exp $
+#
+#	from: @(#)Makefile	8.2 (Berkeley) 3/21/94
 
 # Makefile for kernel tags files, init_sysent, etc.
 

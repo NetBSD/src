@@ -1,3 +1,5 @@
+/*	$NetBSD: conf.c,v 1.22 1998/01/09 08:11:02 perry Exp $	*/
+
 /*
  * Copyright (c) 1983, 1995-1997 Eric P. Allman
  * Copyright (c) 1988, 1993
@@ -1973,7 +1975,7 @@ getla()
 
 /* Non Apollo stuff removed by Don Lewis 11/15/93 */
 #ifndef lint
-static char  rcsid[] = "@(#)$Id: conf.c,v 1.21 1997/11/09 22:26:22 cjs Exp $";
+static char  rcsid[] = "@(#)$Id: conf.c,v 1.22 1998/01/09 08:11:02 perry Exp $";
 #endif /* !lint */
 
 #ifdef apollo
@@ -2939,7 +2941,7 @@ vsprintf(s, fmt, ap)
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: conf.c,v 1.21 1997/11/09 22:26:22 cjs Exp $";*/
+/*static char _id[] = "$Id: conf.c,v 1.22 1998/01/09 08:11:02 perry Exp $";*/
 static void	sm_dopr();
 static char	*DoprEnd;
 static int	SnprfOverflow;

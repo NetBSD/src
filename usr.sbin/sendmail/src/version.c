@@ -1,3 +1,5 @@
+/*	$NetBSD: version.c,v 1.25 1998/01/09 08:11:41 perry Exp $	*/
+
 /*
  * Copyright (c) 1983 Eric P. Allman
  * Copyright (c) 1988, 1993

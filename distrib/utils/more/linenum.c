@@ -1,3 +1,5 @@
+/*	$NetBSD: linenum.c,v 1.2 1998/01/09 08:03:29 perry Exp $	*/
+
 /*
  * Copyright (c) 1988 Mark Nudleman
  * Copyright (c) 1988, 1993

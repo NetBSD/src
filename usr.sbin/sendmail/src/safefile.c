@@ -1,3 +1,5 @@
+/*	$NetBSD: safefile.c,v 1.2 1998/01/09 08:11:28 perry Exp $	*/
+
 /*
  * Copyright (c) 1983, 1995-1997 Eric P. Allman
  * Copyright (c) 1988, 1993

@@ -1,3 +1,5 @@
+/*	$NetBSD: strerror.c,v 1.2 1998/01/09 08:09:20 perry Exp $	*/
+
 /*
  * strerror() - for those systems that don't have it yet.
  */

@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.2 1998/01/09 08:10:23 perry Exp $
+#
 #	@(#)Makefile	8.1 (Berkeley) 4/13/94
 
 DIR=	smm/09.sendmail

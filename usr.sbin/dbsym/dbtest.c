@@ -1,3 +1,5 @@
+/*	$NetBSD: dbtest.c,v 1.2 1998/01/09 08:09:21 perry Exp $	*/
+
 
 #include <stdio.h>
 #include <a.out.h>

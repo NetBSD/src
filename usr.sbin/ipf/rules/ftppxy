@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+#	$NetBSD: ftppxy,v 1.2 1998/01/09 08:09:39 perry Exp $
+#
 # The proxy bit is as follows:
 # proxy [port <portname>] <tag>/<protocol>
 # the <tag> should match a tagname in the proxy table, as does the protocol.

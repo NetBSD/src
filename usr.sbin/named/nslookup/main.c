@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.3 1998/01/09 08:10:08 perry Exp $	*/
+
 /*
  * ++Copyright++ 1985, 1989
  * -
@@ -61,7 +63,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)main.c	5.42 (Berkeley) 3/3/91";
-static char rcsid[] = "$Id: main.c,v 1.2 1997/04/13 10:52:14 mrg Exp $";
+static char rcsid[] = "$Id: main.c,v 1.3 1998/01/09 08:10:08 perry Exp $";
 #endif /* not lint */
 
 /*

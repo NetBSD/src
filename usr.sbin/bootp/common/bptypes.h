@@ -1,3 +1,5 @@
+/*	$NetBSD: bptypes.h,v 1.3 1998/01/09 08:09:05 perry Exp $	*/
+
 /* bptypes.h */
 
 #ifndef	BPTYPES_H

@@ -1,3 +1,5 @@
+/*	$NetBSD: readelf.c,v 1.3 1998/01/09 08:05:34 perry Exp $	*/
+
 
 #ifdef BUILTIN_ELF
 #include <sys/types.h>

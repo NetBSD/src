@@ -1,3 +1,5 @@
+/*	$NetBSD: ex_extern.h,v 1.2 1998/01/09 08:08:19 perry Exp $	*/
+
 int ex __P((SCR **));
 int ex_cmd __P((SCR *));
 int ex_range __P((SCR *, EXCMD *, int *));

@@ -1,3 +1,5 @@
+/*	$NetBSD: ns_validate.c,v 1.4 1998/01/09 08:09:58 perry Exp $	*/
+
 /**************************************************************************
  * ns_validate.c (was security.c in original ISI contribution)
  * author: anant kumar

@@ -1,3 +1,5 @@
+/*	$NetBSD: named.h,v 1.4 1998/01/09 08:09:57 perry Exp $	*/
+
 /* named.h - include the local definitions in the right order
  * vix 28aug93 [original]
  *

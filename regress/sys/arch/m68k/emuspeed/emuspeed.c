@@ -1,3 +1,5 @@
+/*	$NetBSD: emuspeed.c,v 1.2 1998/01/09 08:03:56 perry Exp $	*/
+
 #include <setjmp.h>
 #include <signal.h>
 #include <stdlib.h>

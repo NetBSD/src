@@ -1,3 +1,5 @@
+/*	$NetBSD: skip.c,v 1.3 1998/01/09 08:10:12 perry Exp $	*/
+
 /*
  * ++Copyright++ 1985, 1989
  * -
@@ -55,7 +57,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)skip.c	5.12 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: skip.c,v 1.2 1997/04/13 10:52:20 mrg Exp $";
+static char rcsid[] = "$Id: skip.c,v 1.3 1998/01/09 08:10:12 perry Exp $";
 #endif /* not lint */
 
 /*

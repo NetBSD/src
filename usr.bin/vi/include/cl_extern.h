@@ -1,3 +1,5 @@
+/*	$NetBSD: cl_extern.h,v 1.2 1998/01/09 08:08:17 perry Exp $	*/
+
 #ifndef HAVE_CURSES_ADDNSTR
 int addnstr __P((char *, int));
 #endif

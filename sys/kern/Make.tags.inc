@@ -1,4 +1,6 @@
-#	@(#)Make.tags.inc	8.1 (Berkeley) 6/11/93
+#	$NetBSD: Make.tags.inc,v 1.4 1998/01/09 08:05:19 perry Exp $
+#
+#	from: @(#)Make.tags.inc	8.1 (Berkeley) 6/11/93
 
 # Common files for "make tags".
 # Included by the Makefile for each architecture.

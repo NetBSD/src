@@ -1,3 +1,5 @@
+/*	$NetBSD: makemap.c,v 1.13 1998/01/09 08:10:46 perry Exp $	*/
+
 /*
  * Copyright (c) 1992 Eric P. Allman.
  * Copyright (c) 1992, 1993

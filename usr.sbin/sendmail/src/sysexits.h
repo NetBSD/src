@@ -1,3 +1,5 @@
+/*	$NetBSD: sysexits.h,v 1.4 1998/01/09 08:11:36 perry Exp $	*/
+
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.

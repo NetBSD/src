@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile.boot,v 1.2 1998/01/09 08:04:02 perry Exp $
+#
 ###################################################################
 #
 # Everything below is solely intented for maintenance.

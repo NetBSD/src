@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.22 1998/01/09 08:10:15 perry Exp $
+#
 #	@(#)Makefile	8.19 (Berkeley) 1/14/97
 
 #

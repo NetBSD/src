@@ -1,3 +1,5 @@
+/*	$NetBSD: trylook.c,v 1.2 1998/01/09 08:09:17 perry Exp $	*/
+
 /*
  * trylook.c - test program for lookup.c
  */

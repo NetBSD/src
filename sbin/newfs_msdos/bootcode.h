@@ -1,3 +1,5 @@
+/*	$NetBSD: bootcode.h,v 1.2 1998/01/09 08:04:03 perry Exp $	*/
+
 #ifndef BOOTCODE_H
 #define BOOTCODE_H 1
 

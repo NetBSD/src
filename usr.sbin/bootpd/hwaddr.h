@@ -1,3 +1,5 @@
+/*	$NetBSD: hwaddr.h,v 1.2 1998/01/09 08:09:11 perry Exp $	*/
+
 /* hwaddr.h */
 #ifndef	HWADDR_H
 #define HWADDR_H

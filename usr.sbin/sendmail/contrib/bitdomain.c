@@ -1,3 +1,5 @@
+/*	$NetBSD: bitdomain.c,v 1.6 1998/01/09 08:10:18 perry Exp $	*/
+
 /*
  * By John G. Myers, jgm+@cmu.edu
  * Version 1.2

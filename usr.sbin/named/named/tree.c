@@ -1,3 +1,5 @@
+/*	$NetBSD: tree.c,v 1.4 1998/01/09 08:09:59 perry Exp $	*/
+
 /* tree - balanced binary tree library
  *
  * vix 05apr94 [removed vixie.h dependencies; cleaned up formatting, names]

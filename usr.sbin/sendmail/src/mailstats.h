@@ -1,3 +1,5 @@
+/*	$NetBSD: mailstats.h,v 1.5 1998/01/09 08:11:14 perry Exp $	*/
+
 /*
  * Copyright (c) 1983 Eric P. Allman
  * Copyright (c) 1988, 1993

@@ -1,3 +1,5 @@
+/*	$NetBSD: smrsh.c,v 1.4 1998/01/09 08:10:55 perry Exp $	*/
+
 /*
  * Copyright (c) 1993 Eric P. Allman
  * Copyright (c) 1993

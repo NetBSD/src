@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.2 1998/01/09 08:07:20 perry Exp $
+#
 #	@(#)Makefile	8.5 (Berkeley) 7/16/94
 
 SRCS=	vi.1

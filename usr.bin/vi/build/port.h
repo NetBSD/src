@@ -1,3 +1,5 @@
+/*	$NetBSD: port.h,v 1.2 1998/01/09 08:06:14 perry Exp $	*/
+
 /* @(#)port.h.in	8.12 (Berkeley) 5/16/96 */
 
 /*

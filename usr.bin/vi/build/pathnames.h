@@ -1,3 +1,5 @@
+/*	$NetBSD: pathnames.h,v 1.2 1998/01/09 08:06:13 perry Exp $	*/
+
 /* @(#)pathnames.h.in	8.3 (Berkeley) 4/22/96 */
 
 #ifndef	_PATH_BSHELL

@@ -1,3 +1,5 @@
+/*	$NetBSD: v_txt.c,v 1.2 1998/01/09 08:08:41 perry Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: pathnames.h,v 1.3 1998/01/09 08:10:09 perry Exp $	*/
+
 /*
  * ++Copyright++ 1990
  * -
@@ -55,7 +57,7 @@
 
 /*
  *	@(#)pathnames.h	5.1 (Berkeley) 5/28/90
- *	$Id: pathnames.h,v 1.2 1997/04/13 10:52:16 mrg Exp $
+ *	$Id: pathnames.h,v 1.3 1998/01/09 08:10:09 perry Exp $
  */
 
 #define	_PATH_NSLOOKUPRC	"/.nslookuprc"

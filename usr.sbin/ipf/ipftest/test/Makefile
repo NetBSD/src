@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.2 1998/01/09 08:09:27 perry Exp $
+#
 #
 # (C)opyright 1993-1996 by Darren Reed.
 #

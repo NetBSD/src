@@ -1,3 +1,5 @@
+/*	$NetBSD: mime.c,v 1.7 1998/01/09 08:11:19 perry Exp $	*/
+
 /*
  * Copyright (c) 1994, 1996-1997 Eric P. Allman
  * Copyright (c) 1994

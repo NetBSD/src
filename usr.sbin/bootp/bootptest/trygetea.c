@@ -1,3 +1,5 @@
+/*	$NetBSD: trygetea.c,v 1.2 1998/01/09 08:09:16 perry Exp $	*/
+
 /*
  * trygetea.c - test program for getether.c
  */

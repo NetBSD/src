@@ -1,3 +1,5 @@
+/*	$NetBSD: t_pathconf.c,v 1.2 1998/01/09 08:11:43 perry Exp $	*/
+
 /*
 **  The following test program tries the pathconf(2) routine.  It should
 **  be run in a non-NFS-mounted directory (e.g., /tmp) and on remote (NFS)

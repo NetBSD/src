@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile.dist,v 1.2 1998/01/09 08:10:53 perry Exp $
+#
 #
 #  This Makefile is designed to work on the old "make" program.  It does
 #  not use the obj subdirectory.  It also does not install documentation

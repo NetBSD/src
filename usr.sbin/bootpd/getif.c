@@ -1,3 +1,5 @@
+/*	$NetBSD: getif.c,v 1.3 1998/01/09 08:09:08 perry Exp $	*/
+
 /*
  * getif.c : get an interface structure
  */

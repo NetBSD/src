@@ -1,3 +1,5 @@
+/*	$NetBSD: cl_bsd.c,v 1.2 1998/01/09 08:06:19 perry Exp $	*/
+
 /*-
  * Copyright (c) 1995, 1996
  *	Keith Bostic.  All rights reserved.

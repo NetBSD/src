@@ -1,3 +1,5 @@
+/*	$NetBSD: recover.c,v 1.4 1998/01/09 08:07:04 perry Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
