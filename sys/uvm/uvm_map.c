@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.158 2004/02/07 10:05:52 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.159 2004/02/07 13:22:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.158 2004/02/07 10:05:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.159 2004/02/07 13:22:19 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -316,7 +316,10 @@ uvm_rb_remove(struct vm_map *map, struct vm_map_entry *entry)
 }
 
 #ifdef DEBUG
-#define uvm_tree_sanity(x,y) _uvm_tree_sanity(x,y)
+int uvm_debug_check_rbtree = 0;
+#define uvm_tree_sanity(x,y)		\
+	if (uvm_debug_check_rbtree)	\
+		_uvm_tree_sanity(x,y)
 #else
 #define uvm_tree_sanity(x,y)
 #endif
