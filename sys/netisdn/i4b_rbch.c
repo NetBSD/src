@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.12 2002/11/26 19:49:00 christos Exp $
+ *	$Id: i4b_rbch.c,v 1.13 2002/12/10 13:50:10 drochner Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.12 2002/11/26 19:49:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.13 2002/12/10 13:50:10 drochner Exp $");
 
 #include "isdnbchan.h"
 
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.12 2002/11/26 19:49:00 christos Exp $
 #endif
 
 #if defined (__NetBSD__) || defined (__OpenBSD__)
-extern cc_t ttydefchars;
 #define termioschars(t) memcpy((t)->c_cc, &ttydefchars, sizeof((t)->c_cc))
 #endif
 
