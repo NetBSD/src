@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.2.2.1 1997/11/10 19:22:54 thorpej Exp $ */
+/*	$NetBSD: factor.c,v 1.2.2.2 1997/12/20 23:49:04 perry Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,7 +47,7 @@
  * about 19K of space on the binary image.  
  */
 
-long primes[4800] = {2, 3};
+long primes[4800];
 int  num_primes = 2;
 
 static void build_primes (long max)
@@ -56,6 +56,12 @@ static void build_primes (long max)
 	int j;
 	long rem;
  
+	/*
+	 * Initialise primes at run-time rather than compile time
+	 * so it's put in bss rather than data.
+	 */
+	primes[0] = 2;
+	primes[1] = 3;
 	
 	for (pc = primes[num_primes-1]; pc < 46345 && pc*pc < max; pc+=2) {
 		j = 0;
