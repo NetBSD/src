@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpcireg.h,v 1.1 2003/03/05 22:08:22 matt Exp $	*/
+/*	$NetBSD: gtpcireg.h,v 1.2 2003/03/24 17:03:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -600,10 +600,10 @@
  * 28:24 DevNum		The PCI interface's device number.
  * 31:29 Reserved	Reserved.
  */
-#define	PCI_P2PCFG_2ndBusL_GET(v)	PCI_EXT(v,  0, 8)
-#define	PCI_P2PCFG_2ndBusH_GET(v)	PCI_EXT(v,  8, 8)
-#define	PCI_P2PCFG_BusNum_GET(v)	PCI_EXT(v, 16, 8)
-#define	PCI_P2PCFG_DevNum_GET(v)	PCI_EXT(v, 24, 5)
+#define	PCI_P2PCFG_2ndBusL_GET(v)	PCI__EXT(v,  0, 8)
+#define	PCI_P2PCFG_2ndBusH_GET(v)	PCI__EXT(v,  8, 8)
+#define	PCI_P2PCFG_BusNum_GET(v)	PCI__EXT(v, 16, 8)
+#define	PCI_P2PCFG_DevNum_GET(v)	PCI__EXT(v, 24, 5)
 
 /*
  * Table 268: PCI P2P Swap Control
@@ -677,7 +677,9 @@
 #define PCI_ACCCTLBASEL_RdLinePrefetch	PCI__BIT(17)
 #define PCI_ACCCTLBASEL_RdMulPrefetch	PCI__BIT(18)
 #define PCI_ACCCTLBASEL_WBurst		PCI__EXT(v, 20, 2)
+#define PCI_ACCCTLBASEL_WBurst_8_QW	PCI__INS(20, PCI_WBURST_8_QW)
 #define PCI_ACCCTLBASEL_PCISwap		PCI__EXT(v, 24, 2)
+#define PCI_ACCCTLBASEL_PCISwap_NoSwap	PCI__INS(24, PCI_PCISWAP_NoSwap)
 #define PCI_ACCCTLBASEL_MBZ0_26		PCI__BIT(26)
 #define PCI_ACCCTLBASEL_AccProt		PCI__BIT(28)
 #define PCI_ACCCTLBASEL_WrProt		PCI__BIT(29)
