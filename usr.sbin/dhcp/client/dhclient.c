@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.37 2001/04/06 19:01:06 mellon Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.38 2001/05/26 00:37:45 christos Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -139,11 +139,9 @@ int main (argc, argv, envp)
 		log_fatal ("Can't initialize OMAPI: %s",
 			   isc_result_totext (status));
 
-#if !defined (SMALL)
 	/* Set up the OMAPI wrappers for various server database internal
 	   objects. */
 	dhcp_common_objects_setup ();
-#endif
 
 	dhcp_interface_discovery_hook = dhclient_interface_discovery_hook;
 	dhcp_interface_shutdown_hook = dhclient_interface_shutdown_hook;
