@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.2 1995/04/11 04:27:02 cgd Exp $
+#	$NetBSD: ttys,v 1.3 1995/07/30 19:22:42 cgd Exp $
 #
 # name	getty				type	status		comments
 
@@ -7,11 +7,18 @@
 # enabled for the correct 'real' device (e.g. one of the serial ports).
 
 # console pseudo-device
-console	"/usr/libexec/getty Pc"		unknown	on secure
+console	"/usr/libexec/getty std.9600"	unknown on secure
 
-# DEC 3000 on-board zs8530-based serial ports
-tty00	"/usr/libexec/getty std.9600"	unknown	off secure
-tty01	"/usr/libexec/getty std.9600"	unknown	off secure
+# Workstation console (framebuffer) ttys
+ttyE0	"/usr/libexec/getty std.9600"	unknown off secure
+
+# DEC 3000 Z8530 ("scc") serial ports
+ttyB0	"/usr/libexec/getty std.9600"	unknown off secure
+ttyB1	"/usr/libexec/getty std.9600"	unknown off secure
+
+# AlphaStation NS16550 ("com") serial ports
+ttyC0	"/usr/libexec/getty std.9600"	unknown off secure
+ttyC1	"/usr/libexec/getty std.9600"	unknown off secure
 
 # pseudo-ttys
 ttyp0	none				network
