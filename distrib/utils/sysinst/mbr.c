@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.18 1999/07/10 23:07:15 fvdl Exp $ */
+/*	$NetBSD: mbr.c,v 1.19 1999/07/30 20:46:10 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -469,7 +469,7 @@ write_mbr(disk, buf, len, convert)
 				    &mbrp[i].mbrp_ssect, pstart);
 				convert_mbr_chs(bcyl, bhead, bsec,
 				    &mbrp[i].mbrp_ecyl, &mbrp[i].mbrp_ehd,
-				    &mbrp[i].mbrp_esect, pstart + psize);
+				    &mbrp[i].mbrp_esect, pstart + psize - 1);
 			}
 		}
 	}
