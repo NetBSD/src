@@ -29,10 +29,10 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: umount.c,v 1.1 1994/04/18 08:47:45 cgd Exp $";
+static char rcsid[] = "$Id: umount.c,v 1.2 1994/06/14 01:19:50 cgd Exp $";
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mount.h>
 
 #include <stdlib.h>
@@ -42,7 +42,7 @@ static char rcsid[] = "$Id: umount.c,v 1.1 1994/04/18 08:47:45 cgd Exp $";
 
 #define errprint(x)	write(STDERR_FILENO, x, strlen(x))
 
-int	eval, fflag = MNT_NOFORCE;
+int	eval, fflag;
 
 int
 main(argc, argv)
@@ -61,7 +61,7 @@ main(argc, argv)
 		_exit(1);
 	}
 	for (eval = 0; *argv; ++argv)
-		if (unmount(*argv, MNT_NOFORCE)) {
+		if (unmount(*argv, fflag)) {
 			errprint(*argv);
 			errprint(": couldn't unmount");
 			eval = 1;
