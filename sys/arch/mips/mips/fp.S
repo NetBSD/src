@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.24 2003/01/17 23:36:12 thorpej Exp $	*/
+/*	$NetBSD: fp.S,v 1.25 2003/06/27 08:25:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2668,7 +2668,7 @@ END(MachEmulateFP)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_fs_int)
+STATIC_LEAF(get_fs_int)
 #ifdef SOFTFLOAT
 	srl	t2, a0, 11-2
 	lw	t0, _C_LABEL(curpcb)		# get pcb of current process
@@ -2781,7 +2781,7 @@ END(get_fs_int)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_ft_fs_s)
+STATIC_LEAF(get_ft_fs_s)
 #ifdef SOFTFLOAT
 	srl	ta0, a0, 16-2
 	lw	ta1, _C_LABEL(curpcb)		# get pcb of current process
@@ -2898,7 +2898,7 @@ get_ft_s_done:
  *
  *----------------------------------------------------------------------------
  */
-XLEAF(get_fs_s)
+STATIC_XLEAF(get_fs_s)
 #ifdef SOFTFLOAT
 	srl	t0, a0, 11-2
 	lw	t1, _C_LABEL(curpcb)		# get pcb of current process
@@ -3021,7 +3021,7 @@ END(get_ft_fs_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_ft_fs_d)
+STATIC_LEAF(get_ft_fs_d)
 #ifdef SOFTFLOAT
 	srl	ta3, a0, 16-2
 	lw	ta0, _C_LABEL(curpcb)		# get pcb of current process
@@ -3156,7 +3156,7 @@ get_ft_d_done:
  *
  *----------------------------------------------------------------------------
  */
-XLEAF(get_fs_d)
+STATIC_XLEAF(get_fs_d)
 #ifdef SOFTFLOAT
 	srl	t3, a0, 11-2
 	lw	t0, _C_LABEL(curpcb)		# get pcb of current process
@@ -3294,7 +3294,7 @@ END(get_ft_fs_d)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_cmp_s)
+STATIC_LEAF(get_cmp_s)
 #ifdef SOFTFLOAT
 	srl	t1, a0, 11-2
 	lw	ta2, _C_LABEL(curpcb)		# get pcb of current process
@@ -3498,7 +3498,7 @@ END(get_cmp_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_cmp_d)
+STATIC_LEAF(get_cmp_d)
 #ifdef SOFTFLOAT
 	srl	t1, a0, 11-2
 	lw	ta2, _C_LABEL(curpcb)		# get pcb of current process
@@ -3740,12 +3740,12 @@ END(get_cmp_d)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(set_fd_s)
+STATIC_LEAF(set_fd_s)
 	sll	t0, t0, 31			# position sign
 	sll	t1, t1, 23			# position exponent
 	or	t2, t2, t0
 	or	t2, t2, t1
-XLEAF(set_fd_word)
+STATIC_XLEAF(set_fd_word)
 #ifdef SOFTFLOAT
 	srl	t1, a0, 6-2
 	lw	t0, _C_LABEL(curpcb)		# get pcb of current process
@@ -3846,7 +3846,7 @@ END(set_fd_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(set_fd_d)
+STATIC_LEAF(set_fd_d)
 #ifdef SOFTFLOAT
 	sll	t0, t0, 31			# set sign
 	sll	t1, t1, 20			# set exponent
@@ -3967,7 +3967,7 @@ END(set_fd_d)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(renorm_fs_s)
+STATIC_LEAF(renorm_fs_s)
 /*
  * Find out how many leading zero bits are in t2 and put in t9.
  */
@@ -4016,7 +4016,7 @@ END(renorm_fs_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(renorm_fs_d)
+STATIC_LEAF(renorm_fs_d)
 /*
  * Find out how many leading zero bits are in t2,t3 and put in t9.
  */
@@ -4080,7 +4080,7 @@ END(renorm_fs_d)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(renorm_ft_s)
+STATIC_LEAF(renorm_ft_s)
 /*
  * Find out how many leading zero bits are in ta2 and put in t9.
  */
@@ -4129,7 +4129,7 @@ END(renorm_ft_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(renorm_ft_d)
+STATIC_LEAF(renorm_ft_d)
 /*
  * Find out how many leading zero bits are in ta2,ta3 and put in t9.
  */
@@ -4197,7 +4197,7 @@ END(renorm_ft_d)
  * Args are same as MachEmulateFP.
  * It should be used to emulate instruction in branch delay slot.
  */
-LEAF(bcemul_delay_slot)
+STATIC_LEAF(bcemul_delay_slot)
 	REG_PROLOGUE
 	REG_S	zero, FRAME_ZERO(a1)		# ensure zero has value 0
 	REG_EPILOGUE
@@ -4957,9 +4957,9 @@ END(bcemul_delay_slot)
  * Send SIGILL, SIGFPE.
  * Args are same as MachEmulateFP.
  */
-LEAF(fpemul_sigill)
+STATIC_LEAF(fpemul_sigill)
 #ifdef SOFTFLOAT
-XLEAF(bcemul_sigill)
+STATIC_XLEAF(bcemul_sigill)
 #endif
 	li	t0, 0xFFFFFF00
 	and	a2, a2, t0
@@ -4974,7 +4974,7 @@ XLEAF(bcemul_sigill)
 	j	_C_LABEL(trapsignal)
 END(fpemul_sigill)
 
-LEAF(fpemul_sigfpe)
+STATIC_LEAF(fpemul_sigfpe)
 	li	t0, 0xFFFFFF00
 	and	a2, a2, t0
 	ori	a2, a2, T_FPE << MIPS_CR_EXC_CODE_SHIFT
@@ -4989,7 +4989,7 @@ LEAF(fpemul_sigfpe)
 END(fpemul_sigfpe)
 
 #ifdef SOFTFLOAT
-LEAF(bcemul_sigfpe)
+STATIC_LEAF(bcemul_sigfpe)
 	li	t0, 0xFFFFFF00
 	and	a2, a2, t0
 	ori	a2, a2, T_OVFLOW << MIPS_CR_EXC_CODE_SHIFT
