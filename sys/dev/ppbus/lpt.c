@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.11 2004/02/03 19:57:00 jdolecek Exp $ */
+/* $NetBSD: lpt.c,v 1.12 2004/02/03 21:15:03 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.11 2004/02/03 19:57:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.12 2004/02/03 21:15:03 jdolecek Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -179,6 +179,9 @@ lpt_attach(struct device * parent, struct device * self, void * aux)
 	bitmask_snprintf(ppbdev->ctx.mode, "\20\1COMPATIBLE\2NIBBLE"
 		"\3PS2\4EPP\5ECP\6FAST_CENTR", buf, sizeof(buf));
 	printf(": port mode = %s\n", buf);
+
+	/* Initialize the device on open by default */
+	sc->sc_flags = LPT_PRIME;
 
 	lpt_release_ppbus(sc, 0);
 }
@@ -408,7 +411,7 @@ lpt_logstatus(const struct device * const dev, const unsigned char status)
 int
 lptopen(dev_t dev_id, int flags, int fmt, struct proc *p)
 {
-	int trys, err, val;
+	int trys, err;
 	u_int8_t status;
 	struct device * dev;
 	struct lpt_softc * lpt;
@@ -434,36 +437,11 @@ lptopen(dev_t dev_id, int flags, int fmt, struct proc *p)
 		return (err);
 	}
 
-	/* Get device flags */
-	lpt->sc_flags = LPTFLAGS(dev_id);
-        
 	/* Update bus mode */
 	ppbus_dev->ctx.mode = ppbus_get_mode(ppbus);
 	
-	/* Configure interrupts/polling */
-	if(lpt->sc_flags & LPT_NOINTR) {
-		val = 0;
-		err = ppbus_write_ivar(ppbus, PPBUS_IVAR_INTR, &val);
-		if(err) {
-			lpt_release_ppbus(lpt, PPBUS_WAIT); 
-			return err;
-		}
-	}
-	else {
-		val = 1;
-		err = ppbus_write_ivar(ppbus, PPBUS_IVAR_INTR, &val);
-		if(err) {
-			lpt_release_ppbus(lpt, PPBUS_WAIT);
-			return err;
-		}
-	}
-	if(err) {
-		lpt_release_ppbus(lpt, PPBUS_WAIT);
-		return err;
-	}
-
 	/* init printer */
-	if(!(lpt->sc_flags & LPT_NOPRIME)) {
+	if ((lpt->sc_flags & LPT_PRIME) && !LPTCTL(dev_id)) {
 		LPT_VPRINTF(("%s(%s): initializing printer.\n", __func__, 
 			dev->dv_xname));
 		lpt->sc_state |= LPTINIT;
@@ -506,14 +484,13 @@ lptopen(dev_t dev_id, int flags, int fmt, struct proc *p)
 				dev->dv_xname));
 	}
 	
-	/* Set autolinefeed */
-	if(lpt->sc_flags & LPT_AUTOLF) {
-		lpt->sc_control |= LPC_AUTOL;
-	}
+	/* Set autolinefeed if requested */
+	if (lpt->sc_flags & LPT_AUTOLF)
+		ppbus_wctr(ppbus, LPC_AUTOL);
+	else
+		ppbus_wctr(ppbus, 0);
 
-	/* Write out the control register */
-	ppbus_wctr(ppbus, lpt->sc_control);
-
+	/* ready now */
 	lpt->sc_state |= OPEN;
 
 	return 0;
@@ -633,8 +610,8 @@ lptwrite(dev_t dev_id, struct uio * uio, int ioflag)
 int
 lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
-	struct device * dev = device_lookup(&lpt_cd, LPTUNIT(dev_id));
-        struct lpt_softc * sc = (struct lpt_softc *) dev;
+	struct device *dev = device_lookup(&lpt_cd, LPTUNIT(dev_id));
+	struct lpt_softc *sc = (struct lpt_softc *) dev;
 	int val, fl;
 	int error=0;
 
@@ -708,17 +685,29 @@ lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case LPTGFLAGS:
 		fl = 0;
 
+		/* DMA */
 		error = ppbus_read_ivar(dev->dv_parent, PPBUS_IVAR_DMA, &val);
 		if (error)
 			break;
 		if (val)
 			fl |= LPT_DMA;
-		
+
+		/* IEEE mode negotiation */	
 		error = ppbus_read_ivar(dev->dv_parent, PPBUS_IVAR_IEEE, &val);
 		if (error)
 			break;
 		if (val)
 			fl |= LPT_IEEE;
+
+		/* interrupts */
+		error = ppbus_read_ivar(dev->dv_parent, PPBUS_IVAR_INTR, &val);
+		if (error)
+			break;
+		if (val)
+			fl |= LPT_INTR;
+
+		/* lpt-only flags */
+		fl |= sc->sc_flags;
 
 		*(int *)data = fl;
 		break;
@@ -726,13 +715,27 @@ lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case LPTSFLAGS:
 		fl = *(int *)data;
 
+		/* DMA */
 		val = (fl & LPT_DMA);
 		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_DMA, &val);
 		if (error)
 			break;
 
+		/* IEEE mode negotiation */
 		val = (fl & LPT_IEEE);
 		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_IEEE, &val);
+		if (error)
+			break;
+
+		/* interrupts */
+		val = (fl & LPT_INTR);
+		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_INTR, &val);
+		if (error)
+			break;
+
+		/* lpt-only flags */
+		sc->sc_flags = fl & (LPT_PRIME|LPT_AUTOLF);
+
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/* $NetBSD: lptvar.h,v 1.5 2004/02/03 18:48:39 jdolecek Exp $ */
+/* $NetBSD: lptvar.h,v 1.6 2004/02/03 21:15:03 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -49,8 +49,8 @@
 #define LPPRI           (PZERO+8)
 #define BUFSIZE		PAGE_SIZE 
 
-#define	LPTUNIT(s)	(minor(s) & 0x1f)
-#define	LPTFLAGS(s)	(minor(s) & 0xe0)
+#define	LPTUNIT(s)	(minor(s) & 0xff)
+#define	LPTCTL(s)	(minor(s) & 0x100)
 
 /* Wait up to 16 seconds for a ready */
 #define	LPT_TIMEOUT		((hz)*16)	
@@ -71,15 +71,7 @@ struct lpt_softc {
 #define INTERRUPTED     (unsigned)(1<<7)  /* write call was interrupted */
 #define HAVEBUS         (unsigned)(1<<8)  /* the driver owns the bus */
 
-	/* 
-	 * default case: negative prime, negative ack, handshake strobe,
-	 * prime once
-	 */
-	u_char  sc_control;
-	char sc_flags;
-#define	LPT_AUTOLF	0x20	/* automatic LF on CR */
-#define	LPT_NOPRIME	0x40	/* don't prime on open */
-#define	LPT_NOINTR	0x80	/* do not use interrupt */
+	int sc_flags;		/* flags from lptio.h */
 
 	char *sc_inbuf;
 	char *sc_outbuf;

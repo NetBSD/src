@@ -1,4 +1,4 @@
-/* $NetBSD: lptio.h,v 1.5 2004/02/03 19:57:00 jdolecek Exp $ */
+/* $NetBSD: lptio.h,v 1.6 2004/02/03 21:15:03 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -59,5 +59,8 @@ enum lpt_mode_t {
 /* flags for LPT[GS]FLAGS */
 #define	LPT_DMA		0x01	/* enabled DMA */
 #define LPT_IEEE	0x02	/* enabled IEEE 1284 negotiation */
+#define	LPT_INTR	0x04	/* enabled interrupts (not polling) */
+#define	LPT_PRIME	0x08	/* enabled printer initialization on open */
+#define	LPT_AUTOLF	0x10	/* Automatic LF on CR */
 
 #endif /* __DEV_PPBUS_LPTIO_H_ */
