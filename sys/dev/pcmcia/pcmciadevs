@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.188 2003/11/07 15:58:58 hamajima Exp $
+$NetBSD: pcmciadevs,v 1.189 2003/12/07 10:37:11 ichiro Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -85,6 +85,7 @@ vendor FARALLON			0x0200  Farallon Communications
 vendor TELECOMDEVICE		0x021b  Telecom Device
 vendor NOKIA			0x023d	Nokia Communications
 vendor SAMSUNG			0x0250	Samsung
+vendor ANYCOM			0x0264	Anycom
 vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor LINKSYS2			0x0274  The Linksys Group
@@ -141,6 +142,10 @@ product AIRONET 350		0x000a Aironet 350 Wireless LAN Adapter
 
 /* Allied Telesis K.K. */
 product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
+
+/* Anycom */
+product ANYCOM LSE041		0x0004 AnyCom BlueCard LSE041 R1B
+product ANYCOM LSE039		0x0008 Anycom Bluetooth CF Card LSE039
 
 /* Archos */
 product	ARCHOS ARC_ATAPI	0x0043 MiniCD
