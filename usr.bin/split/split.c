@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.14 2003/06/26 22:49:53 bjh21 Exp $	*/
+/*	$NetBSD: split.c,v 1.15 2003/06/26 23:06:52 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.14 2003/06/26 22:49:53 bjh21 Exp $");
+__RCSID("$NetBSD: split.c,v 1.15 2003/06/26 23:06:52 bjh21 Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -81,7 +81,7 @@ main(int argc, char *argv[])
 	size_t namelen;
 	long name_max;
 
-	while ((ch = getopt(argc, argv, "-0123456789b:l:a:")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789b:l:a:")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -99,11 +99,6 @@ main(int argc, char *argv[])
 				if (numlines == 0 || *ep != '\0')
 					errx(1, "%s: illegal line count.", p);
 			}
-			break;
-		case '-':		/* stdin flag. */
-			if (ifd != -1)
-				usage();
-			ifd = 0;
 			break;
 		case 'b':		/* Byte count. */
 			if (!isdigit((unsigned char)optarg[0]) ||
@@ -135,14 +130,13 @@ main(int argc, char *argv[])
 	argv += optind;
 	argc -= optind;
 
-	if (*argv != NULL)
-		if (ifd == -1) {		/* Input file. */
-			if (strcmp(*argv, "-") == 0)
-				ifd = STDIN_FILENO;
-			else if ((ifd = open(*argv, O_RDONLY, 0)) < 0)
-				err(1, "%s", *argv);
-			++argv;
-		}
+	if (*argv != NULL) {
+		if (strcmp(*argv, "-") == 0)
+			ifd = STDIN_FILENO;
+		else if ((ifd = open(*argv, O_RDONLY, 0)) < 0)
+			err(1, "%s", *argv);
+		++argv;
+	}
 
 	errno = 0;
 	if ((name_max = pathconf(".", _PC_NAME_MAX)) == -1 &&
