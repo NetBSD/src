@@ -1,4 +1,4 @@
-/*	$NetBSD: wcschr.c,v 1.1 2000/12/23 23:14:36 itojun Exp $	*/
+/*	$NetBSD: wcschr.c,v 1.2 2001/01/03 14:29:36 lukem Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,9 +30,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcschr.c,v 1.1 2000/12/23 23:14:36 itojun Exp $");
+__RCSID("$NetBSD: wcschr.c,v 1.2 2001/01/03 14:29:36 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <wchar.h>
 
 wchar_t *
@@ -41,6 +42,8 @@ wcschr(s, c)
 	wchar_t c;
 {
 	const wchar_t *p;
+
+	_DIAGASSERT(s != NULL);
 
 	p = s;
 	while (*p) {
