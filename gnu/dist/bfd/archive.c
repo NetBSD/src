@@ -1207,6 +1207,8 @@ _bfd_archive_bsd44_construct_extended_name_table (abfd, tabloc, tablen, name)
   unsigned int maxname = abfd->xvec->ar_max_namelen;
   bfd *current;
 
+  /* 4.4BSD does not align ar(1) headers on a word. */
+  bfd_get_file_flags (abfd) |= BFD_DATA_MISALIGN;
   for (current = abfd->archive_head; current != NULL; current = current->next)
     {
       const char *normal;
@@ -1719,17 +1721,12 @@ _bfd_write_archive_contents (arch)
 	    return false;
 	  remaining -= amt;
 	}
-#if 0
-      /*
-       * XXX.  This is not compatible with 4.4BSD ar(1).
-       * Do we *need* to be word aligned?
-       */
-      if ((arelt_size (current) % 2) == 1)
+      if (((arelt_size (current) % 2) == 1) &&
+	  ((bfd_get_file_flags (arch) & BFD_DATA_MISALIGN) == 0))
 	{
 	  if (bfd_write ("\012", 1, 1, arch) != 1)
 	    return false;
 	}
-#endif
     }
 
   if (makemap && hasobjects)
