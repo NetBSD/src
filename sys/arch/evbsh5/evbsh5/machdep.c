@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2002/10/07 14:48:14 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2002/10/14 14:21:35 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -171,13 +171,11 @@ evbsh5_init(void)
 	bus_space_map(&_sh5_bus_space_tag, EVBSH5_PBRIDGE_PHYS_ADDR,
 	    EVBSH5_PBRIDGE_LEN, 0, &_evbsh5_bh_pbridge);
 
-#ifdef notyet
 	/*
 	 * Map the system FPGA/Super IO area
 	 */
 	bus_space_map(&_sh5_bus_space_tag, EVBSH5_SYSFPGA_PHYS_ADDR,
 	    EVBSH5_SYSFPGA_LEN, 0, &_evbsh5_bh_sysfpga);
-#endif
 
 #ifndef SH5_CPU_SPEED
 	compute_ctc_tick_per_us();
