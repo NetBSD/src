@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 1996/02/17 19:23:03 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.21 1996/02/19 05:20:54 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -472,7 +472,12 @@ mac68k_calibrate_delay()
 	int n;
 	int sum;
 
+	/* Disable VIA1 timer 1 interrupts and set up service routine */
+	via_reg(VIA1, vIER) = V1IF_T1;
 	mac68k_register_via1_t1_irq(delay_timer1_irq);
+
+	/* Set the timer for one-shot mode and enable interrupts */
+	via_reg(VIA1, vACR) &= ~ACR_T1LATCH;
 	via_reg(VIA1, vIER) = 0x80 | V1IF_T1;
 
 	for (sum = 0, n = 8; n > 0; n--) {
@@ -482,9 +487,8 @@ mac68k_calibrate_delay()
 		sum += dummy_delay(1);
 	}
 
+	/* Disable timer interrupts and reset service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
-	via_reg(VIA1, vT1C) = 0;
-	via_reg(VIA1, vT1CH) = 0;
 	mac68k_register_via1_t1_irq(NULL);
 
 	/*
