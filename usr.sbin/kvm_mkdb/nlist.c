@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nlist.c	5.4 (Berkeley) 4/27/91";*/
-static char rcsid[] = "$Id: nlist.c,v 1.6 1993/08/02 18:17:24 mycroft Exp $";
+static char rcsid[] = "$Id: nlist.c,v 1.7 1993/12/02 20:55:52 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,6 +54,11 @@ typedef struct nlist NLIST;
 
 static char *kfile;
 
+extern void	cleanup();
+static void	badread();
+static void	badfmt();
+
+void
 create_knlist(name, db)
 	char *name;
 	DB *db;
@@ -139,6 +144,12 @@ create_knlist(name, db)
 #ifdef vax
 			rel_off = nbuf.n_value & ~KERNBASE;
 #endif
+#ifdef sparc
+			/*
+			 * On sparc, first 0x4000 is reserved for ?
+			 */
+			rel_off = (nbuf.n_value & ~KERNBASE) - 0x4000;
+#endif
 #ifdef i386
 			/*
 			 * XXX: This is a KLUGE to handle the kernel being
@@ -154,7 +165,8 @@ create_knlist(name, db)
 			 * When loaded, data is rounded to next page cluster
 			 * after text, but not in file.
 			 */
-			rel_off -= CLBYTES - (ebuf.a_text % CLBYTES);
+			if (ebuf.a_text % CLBYTES)
+				rel_off -= CLBYTES - (ebuf.a_text % CLBYTES);
 			vers_off = N_TXTOFF(ebuf) + rel_off;
 
 			cur_off = ftell(fp);
@@ -186,6 +198,7 @@ create_knlist(name, db)
 	(void)fclose(fp);
 }
 
+static void
 badread(nr, p)
 	int nr;
 	char *p;
@@ -195,10 +208,12 @@ badread(nr, p)
 	badfmt(p);
 }
 
+static void
 badfmt(p)
 	char *p;
 {
 	(void)fprintf(stderr,
 	    "kvm_mkdb: %s: %s: %s\n", kfile, p, strerror(EFTYPE));
+	cleanup();
 	exit(1);
 }
