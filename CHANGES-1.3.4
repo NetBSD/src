@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.3.4,v 1.1.2.9 1999/02/01 04:55:43 cgd Exp $
+#	$NetBSD: CHANGES-1.3.4,v 1.1.2.10 1999/02/01 06:10:28 cgd Exp $
 
 Changes from NetBSD 1.3.3 to NetBSD 1.3.4:
 
@@ -133,7 +133,7 @@ distrib/sparc/Makefile                         1.1-1.2 (new)
 distrib/sparc/Makefile.inc                     1.1-1.3 (new)
 distrib/sparc/bootfs/Makefile                  1.1-1.9 (new)
 distrib/sparc/bootfs/list                      1.1 (new)
-distrib/sparc/ramdisk/Makefile                 1.1-1.6 (new)
+distrib/sparc/ramdisk/Makefile                 1.1-1.7 (new)
 distrib/sparc/ramdisk/disktab.preinstall       1.1 (new)
 distrib/sparc/ramdisk/dot.profile              1.1-1.3 (new)
 distrib/sparc/ramdisk/list                     patch (new)
@@ -159,3 +159,10 @@ sys/arch/pmax/tc/scc.c				1.45
 
   Fix scc speedtab handling and enable 78.6k and 115.2k
   (PR#6848).  (jonathan)
+
+etc/etc.sparc/disktab				1.5-1.8
+
+  Give floppy entry a BSD partition type in partition a.  Add an
+  "instfs" entry used to build the ramdisk.  (mrg)
+
+
