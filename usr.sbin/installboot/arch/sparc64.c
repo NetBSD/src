@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.12 2002/05/14 06:40:33 lukem Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.13 2002/05/15 02:18:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,11 +66,10 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.12 2002/05/14 06:40:33 lukem Exp $");
+__RCSID("$NetBSD: sparc64.c,v 1.13 2002/05/15 02:18:24 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
-#include <sys/stat.h>
 
 #include <assert.h>
 #include <err.h>
@@ -132,7 +131,6 @@ sparc64_clearboot(ib_params *params)
 int
 sparc64_setboot(ib_params *params)
 {
-	struct stat	bootstrapsb;
 	char		bb[SPARC64_BOOT_BLOCK_MAX_SIZE];
 	int		retval;
 	ssize_t		rv;
@@ -148,15 +146,6 @@ sparc64_setboot(ib_params *params)
 	if (params->flags & (IB_STAGE1START | IB_STAGE2START)) {
 		warnx("`-b bno' and `-B bno' are not supported for %s",
 		    params->machine->name);
-		goto done;
-	}
-
-	if (fstat(params->s1fd, &bootstrapsb) == -1) {
-		warn("Examining `%s'", params->stage1);
-		goto done;
-	}
-	if (!S_ISREG(bootstrapsb.st_mode)) {
-		warnx("`%s' must be a regular file", params->stage1);
 		goto done;
 	}
 
