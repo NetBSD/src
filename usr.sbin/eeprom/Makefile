@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$NetBSD: Makefile,v 1.3 1997/07/23 20:58:36 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1997/09/24 07:22:39 jeremy Exp $
 
-.if ${MACHINE} == "sun3" || ${MACHINE} == "sparc"
+.if ${MACHINE} == "sun3" || ${MACHINE} == "sun3x" || ${MACHINE} == "sparc"
 PROG=	eeprom
 
 YFLAGS+=-pgetdate_
