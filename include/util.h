@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.19 2000/12/06 13:47:10 tron Exp $	*/
+/*	$NetBSD: util.h,v 1.20 2001/04/06 16:24:25 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -62,6 +62,7 @@ struct winsize;
 
 pid_t		forkpty(int *, char *, struct termios *, struct winsize *);
 char	       *fparseln(FILE *, size_t *, size_t *, const char[3], int);
+const char     *getbootfile(void);
 int		getmaxpartitions(void);
 int		getrawpartition(void);
 void		login(const struct utmp *);
