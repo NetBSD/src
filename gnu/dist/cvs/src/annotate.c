@@ -110,7 +110,6 @@ annotate (argc, argv)
 	option_with_arg ("-r", tag);
 	if (date)
 	    client_senddate (date);
-	send_arg ("--");
 	if (is_rannotate)
 	{
 	    int i;

@@ -165,6 +165,126 @@ static const char spacetab[] = {
 static char *rcs_lockfile;
 static int rcs_lockfd = -1;
 
+
+
+/*
+ * char *
+ * locate_rcs ( const char* file, const char *repository , int *inattic )
+ *
+ * Find an RCS file in the repository, case insensitively when the cased name
+ * doesn't exist, we are running as the server, and a client has asked us to
+ * ignore case.
+ *
+ * Most parts of CVS will want to rely instead on RCS_parse which calls this
+ * function and is called by recurse.c which then puts the result in useful
+ * places like the rcs field of struct file_info.
+ *
+ * INPUTS
+ *
+ *  repository		the repository (including the directory)
+ *  file		the filename within that directory (without RCSEXT).
+ *  inattic		NULL or a pointer to the output boolean
+ *
+ * GLOBALS
+ *  ign_case		Whether the client has requested case insensitive mode.
+ *
+ * OUTPUTS
+ *
+ *  inattic		If this input was non-null, the destination will be
+ *  			set to true if the file was found in the attic or
+ *  			false if not.  If no RCS file is found, this value
+ *  			is undefined.
+ *
+ * RETURNS
+ *
+ *  a newly-malloc'd array containing the absolute pathname of the RCS
+ *  file that was found or NULL when none was found.
+ *
+ * ERRORS
+ *
+ *  errno can be set by the return value of the final call to
+ *  locate_file_in_dir().  This should resolve to the system's existence error
+ *  value (sometime ENOENT) if the Attic directory did not exist and ENOENT if
+ *  the Attic was found but no matching files were found in the Attic or its
+ *  parent.
+ */
+static char *
+locate_rcs (repository, file, inattic)
+    const char *repository;
+    const char *file;
+    int *inattic;
+{
+    char *rcsfile;
+    char *dir;
+    char *retval;
+
+    /* First, try to find the file as cased. */
+    retval = xmalloc (strlen (repository)
+                      + sizeof (CVSATTIC)
+                      + strlen (file)
+                      + sizeof (RCSEXT)
+                      + 3);
+    sprintf (retval, "%s/%s%s", repository, file, RCSEXT);
+    if (isreadable (retval))
+    {
+	if (inattic)
+	    *inattic = 0;
+	return retval;
+    }
+    sprintf (retval, "%s/%s/%s%s", repository, CVSATTIC, file, RCSEXT);
+    if (isreadable (retval))
+    {
+	if (inattic)
+	    *inattic = 1;
+	return retval;
+    }
+    free (retval);
+
+#if defined (SERVER_SUPPORT) && !defined (FILENAMES_CASE_INSENSITIVE)
+    /* We didn't find the file as cased, so try again case insensitively if the
+     * client has requested that mode.
+     */
+    if (ign_case)
+    {
+	/* Allocate space and add the RCS extension */
+	rcsfile = xmalloc (strlen (file)
+	                   + sizeof (RCSEXT));
+	sprintf (rcsfile, "%s%s", file, RCSEXT);
+
+
+	/* Search in the top dir given */
+	if ((retval = locate_file_in_dir (repository, rcsfile)) != NULL)
+	{
+	    if (inattic)
+		*inattic = 0;
+	    goto out;
+	}
+
+	/* Search in the Attic */
+	dir = xmalloc (strlen (repository)
+	               + sizeof (CVSATTIC)
+	               + 2);
+	sprintf (dir, "%s/%s", repository, CVSATTIC);
+
+	if ((retval = locate_file_in_dir (dir, rcsfile)) != NULL
+	    && inattic)
+	    *inattic = 1;
+
+	free (dir);
+
+    out:
+	free (rcsfile);
+	return retval;
+    }
+    else /* !ign_case */
+#endif /* SERVER_SUPPORT && !FILENAMES_CASE_INSENSITIVE */
+    {
+	return NULL;
+    }
+}
+
+
+
 /* A few generic thoughts on error handling, in particular the
    printing of unexpected characters that we find in the RCS file
    (that is, why we use '\x%x' rather than %c or some such).
@@ -195,110 +315,36 @@ RCS_parse (file, repos)
 {
     RCSNode *rcs;
     FILE *fp;
-    RCSNode *retval;
+    RCSNode *retval = NULL;
     char *rcsfile;
+    int inattic;
 
     /* We're creating a new RCSNode, so there is no hope of finding it
        in the cache.  */
     rcsbuf_cache_close ();
 
-    rcsfile = xmalloc (strlen (repos) + strlen (file)
-		       + sizeof (RCSEXT) + sizeof (CVSATTIC) + 10);
-    (void) sprintf (rcsfile, "%s/%s%s", repos, file, RCSEXT);
-    if ((fp = CVS_FOPEN (rcsfile, FOPEN_BINARY_READ)) != NULL) 
+    if ( ( rcsfile = locate_rcs ( repos, file, &inattic ) ) == NULL )
     {
-        rcs = RCS_parsercsfile_i(fp, rcsfile);
-	if (rcs != NULL) 
-	    rcs->flags |= VALID;
-
-	retval = rcs;
-	goto out;
+	/* Handle the error cases */
     }
-    else if (! existence_error (errno))
-    {
-	error (0, errno, "cannot open %s", rcsfile);
-	retval = NULL;
-	goto out;
-    }
-
-    (void) sprintf (rcsfile, "%s/%s/%s%s", repos, CVSATTIC, file, RCSEXT);
-    if ((fp = CVS_FOPEN (rcsfile, FOPEN_BINARY_READ)) != NULL) 
+    else if ((fp = CVS_FOPEN (rcsfile, FOPEN_BINARY_READ)) != NULL) 
     {
         rcs = RCS_parsercsfile_i(fp, rcsfile);
 	if (rcs != NULL)
-	{
-	    rcs->flags |= INATTIC;
+	{	
 	    rcs->flags |= VALID;
+	    if ( inattic )
+		rcs->flags |= INATTIC;
 	}
 
+	free ( rcsfile );
 	retval = rcs;
-	goto out;
     }
     else if (! existence_error (errno))
     {
+	free ( rcsfile );
 	error (0, errno, "cannot open %s", rcsfile);
-	retval = NULL;
-	goto out;
     }
-#if defined (SERVER_SUPPORT) && !defined (FILENAMES_CASE_INSENSITIVE)
-    else if (ign_case)
-    {
-	int status;
-	char *found_path;
-
-	/* The client might be asking for a file which we do have
-	   (which the client doesn't know about), but for which the
-	   filename case differs.  We only consider this case if the
-	   regular CVS_FOPENs fail, because fopen_case is such an
-	   expensive call.  */
-	(void) sprintf (rcsfile, "%s/%s%s", repos, file, RCSEXT);
-	status = fopen_case (rcsfile, "rb", &fp, &found_path);
-	if (status == 0)
-	{
-	    rcs = RCS_parsercsfile_i (fp, rcsfile);
-	    if (rcs != NULL) 
-		rcs->flags |= VALID;
-
-	    free (rcs->path);
-	    rcs->path = found_path;
-	    retval = rcs;
-	    goto out;
-	}
-	else if (! existence_error (status))
-	{
-	    error (0, status, "cannot open %s", rcsfile);
-	    retval = NULL;
-	    goto out;
-	}
-
-	(void) sprintf (rcsfile, "%s/%s/%s%s", repos, CVSATTIC, file, RCSEXT);
-	status = fopen_case (rcsfile, "rb", &fp, &found_path);
-	if (status == 0)
-	{
-	    rcs = RCS_parsercsfile_i (fp, rcsfile);
-	    if (rcs != NULL)
-	    {
-		rcs->flags |= INATTIC;
-		rcs->flags |= VALID;
-	    }
-
-	    free (rcs->path);
-	    rcs->path = found_path;
-	    retval = rcs;
-	    goto out;
-	}
-	else if (! existence_error (status))
-	{
-	    error (0, status, "cannot open %s", rcsfile);
-	    retval = NULL;
-	    goto out;
-	}
-    }
-#endif
-    retval = NULL;
-
- out:
-    free (rcsfile);
 
     return retval;
 }
@@ -308,7 +354,7 @@ RCS_parse (file, repos)
  */
 RCSNode *
 RCS_parsercsfile (rcsfile)
-    char *rcsfile;
+    const char *rcsfile;
 {
     FILE *fp;
     RCSNode *rcs;
@@ -2999,8 +3045,10 @@ RCS_getdate (rcs, date, force_tag_match)
 	p = findnode (rcs->versions, "1.1.1.1");
 	if (p)
 	{
+	    char *date_1_1 = vers->date;
+
 	    vers = (RCSVers *) p->data;
-	    if (RCS_datecmp (vers->date, date) != 0)
+	    if (RCS_datecmp (vers->date, date_1_1) != 0)
 		return xstrdup ("1.1");
 	}
     }
@@ -3158,23 +3206,26 @@ RCS_getrevtime (rcs, rev, date, fudge)
     vers = (RCSVers *) p->data;
 
     /* split up the date */
-    ftm = &xtm;
-    (void) sscanf (vers->date, SDATEFORM, &ftm->tm_year, &ftm->tm_mon,
-		   &ftm->tm_mday, &ftm->tm_hour, &ftm->tm_min,
-		   &ftm->tm_sec);
+    if (sscanf (vers->date, SDATEFORM, &xtm.tm_year, &xtm.tm_mon,
+		&xtm.tm_mday, &xtm.tm_hour, &xtm.tm_min, &xtm.tm_sec) != 6)
+	error (1, 0, "%s: invalid date for revision %s (%s)", rcs->path,
+	       rev, vers->date);
 
     /* If the year is from 1900 to 1999, RCS files contain only two
        digits, and sscanf gives us a year from 0-99.  If the year is
        2000+, RCS files contain all four digits and we subtract 1900,
        because the tm_year field should contain years since 1900.  */
 
-    if (ftm->tm_year > 1900)
-	ftm->tm_year -= 1900;
+    if (xtm.tm_year >= 100 && xtm.tm_year < 2000)
+	error (0, 0, "%s: non-standard date format for revision %s (%s)",
+	       rcs->path, rev, vers->date);
+    if (xtm.tm_year >= 1900)
+	xtm.tm_year -= 1900;
 
     /* put the date in a form getdate can grok */
-    (void) sprintf (tdate, "%d/%d/%d GMT %d:%d:%d", ftm->tm_mon,
-		    ftm->tm_mday, ftm->tm_year + 1900, ftm->tm_hour,
-		    ftm->tm_min, ftm->tm_sec);
+    (void) sprintf (tdate, "%d/%d/%d GMT %d:%d:%d", xtm.tm_mon,
+		    xtm.tm_mday, xtm.tm_year + 1900, xtm.tm_hour,
+		    xtm.tm_min, xtm.tm_sec);
 
     /* turn it into seconds since the epoch */
     revdate = get_date (tdate, (struct timeb *) NULL);
@@ -4070,14 +4121,14 @@ expand_keywords (rcs, ver, name, log, loglen, expand, buf, len, retbuf, retlen)
 
 int
 RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
-     RCSNode *rcs;
-     char *workfile;
-     char *rev;
-     char *nametag;
-     char *options;
-     char *sout;
-     RCSCHECKOUTPROC pfn;
-     void *callerdat;
+    RCSNode *rcs;
+    char *workfile;
+    char *rev;
+    char *nametag;
+    char *options;
+    char *sout;
+    RCSCHECKOUTPROC pfn;
+    void *callerdat;
 {
     int free_rev = 0;
     enum kflag expand;
@@ -4104,7 +4155,7 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 
     if (trace)
     {
-	(void) fprintf (stderr, "%s-> checkout (%s, %s, %s, %s)\n",
+	(void) fprintf (stderr, "%s-> RCS_checkout (%s, %s, %s, %s, %s)\n",
 #ifdef SERVER_SUPPORT
 			server_active ? "S" : " ",
 #else
@@ -4112,6 +4163,7 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 #endif
 			rcs->path,
 			rev != NULL ? rev : "",
+			nametag != NULL ? nametag : "",
 			options != NULL ? options : "",
 			(pfn != NULL ? "(function)"
 			 : (workfile != NULL
@@ -4376,7 +4428,7 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 		       workfile, info->data);
 	}
     }
-#endif
+#endif /* PRESERVE_PERMISSIONS_SUPPORT */
 
     if (expand != KFLAG_O && expand != KFLAG_B)
     {
@@ -5548,22 +5600,22 @@ struct cmp_file_data
     int different;
 };
 
-/* Compare the contents of revision REV of RCS file RCS with the
-   contents of the file FILENAME.  OPTIONS is a string for the keyword
+/* Compare the contents of revision REV1 of RCS file RCS with the
+   contents of REV2 if given, otherwise, compare with the contents of
+   the file FILENAME.  OPTIONS is a string for the keyword
    expansion options.  Return 0 if the contents of the revision are
    the same as the contents of the file, 1 if they are different.  */
 
 int
-RCS_cmp_file (rcs, rev, options, filename)
+RCS_cmp_file ( rcs, rev1, rev1_cache, rev2, options, filename )
      RCSNode *rcs;
-     char *rev;
+     char *rev1;
+     char **rev1_cache;
+     char *rev2;
      char *options;
      const char *filename;
 {
     int binary;
-    FILE *fp;
-    struct cmp_file_data data;
-    int retcode;
 
     if (options != NULL && options[0] != '\0')
 	binary = STREQ (options, "-kb");
@@ -5591,6 +5643,7 @@ RCS_cmp_file (rcs, rev, options, filename)
     if (preserve_perms)
     {
 	char *tmp;
+	int retcode;
 
 	tmp = cvs_temp_name();
 	retcode = RCS_checkout(rcs, NULL, rev, NULL, options, tmp, NULL, NULL);
@@ -5606,18 +5659,43 @@ RCS_cmp_file (rcs, rev, options, filename)
     else
 #endif
     {
-        fp = CVS_FOPEN (filename, binary ? FOPEN_BINARY_READ : "r");
+	FILE *fp;
+	struct cmp_file_data data;
+	const char *use_file1;
+	char *tmpfile = NULL;
+
+	if( rev2 != NULL )
+	{
+	    /* Open & cache rev1 */
+	    tmpfile = cvs_temp_name();
+	    if( RCS_checkout( rcs, NULL, rev1, NULL, options, tmpfile,
+	                      (RCSCHECKOUTPROC)0, NULL ) )
+		error( 1, errno,
+		       "cannot check out revision %s of %s",
+		       rev1, rcs->path );
+	    use_file1 = tmpfile;
+	    if( rev1_cache != NULL )
+		*rev1_cache = tmpfile;
+	}
+	else
+	    use_file1 = filename;
+
+        fp = CVS_FOPEN( use_file1, binary ? FOPEN_BINARY_READ : "r" );
 	if (fp == NULL)
 	    /* FIXME-update-dir: should include update_dir in message.  */
 	    error (1, errno, "cannot open file %s for comparing", filename);
 	
-        data.filename = filename;
+        data.filename = use_file1;
         data.fp = fp;
         data.different = 0;
 	
-        retcode = RCS_checkout (rcs, (char *) NULL, rev, (char *) NULL,
+        if( RCS_checkout( rcs, (char *) NULL, rev2 ? rev2 : rev1,
+	                        (char *) NULL,
 				options, RUN_TTY, cmp_file_buffer,
-				(void *) &data);
+				(void *) &data ) )
+		error( 1, errno,
+		       "cannot check out revision %s of %s",
+		       rev2 ? rev2 : rev1, rcs->path );
 
         /* If we have not yet found a difference, make sure that we are at
            the end of the file.  */
@@ -5628,10 +5706,13 @@ RCS_cmp_file (rcs, rev, options, filename)
         }
 	
         fclose (fp);
+	if( rev1_cache == NULL && tmpfile )
+	{
+	    if( CVS_UNLINK( tmpfile ) < 0 )
+		error( 0, errno, "cannot remove %s", tmpfile );
+	    free( tmpfile );
+	}
 
-	if (retcode != 0)
-	    return 1;
-	
         return data.different;
     }
 }
@@ -6450,7 +6531,7 @@ RCS_delete_revs (rcs, tag1, tag2, inclusive)
 	char *diffbuf;
 	size_t bufsize, len;
 
-#if defined (__CYGWIN32__) || defined (_WIN32)
+#if defined (WOE32) && !defined (__CYGWIN32__)
 	/* FIXME: This is an awful kludge, but at least until I have
 	   time to work on it a little more and test it, I'd rather
 	   give a fatal error than corrupt the file.  I think that we
@@ -6463,7 +6544,7 @@ RCS_delete_revs (rcs, tag1, tag2, inclusive)
 		error (1, 0,
 		   "admin -o not implemented yet for binary on this system");
 	}
-#endif
+#endif /* WOE32 */
 
 	afterfile = cvs_temp_name();
 	status = RCS_checkout (rcs, NULL, after, NULL, "-ko", afterfile,
@@ -8551,15 +8632,17 @@ make_file_label (path, rev, rcs)
     else
     {
 	struct stat sb;
-	struct tm *wm = NULL;
+	struct tm *wm;
 
 	if (strcmp(DEVNULL, path))
 	{
 	    char *file = last_component (path);
 	    if (CVS_STAT (file, &sb) < 0)
-		error (0, 1, "could not get info for `%s'", path);
-	    else
-		wm = gmtime (&sb.st_mtime);
+		/* Assume that if the stat fails,then the later read for the
+		 * diff will too.
+		 */
+		error (1, errno, "could not get info for `%s'", path);
+	    wm = gmtime (&sb.st_mtime);
 	}
 	else
 	{
@@ -8567,11 +8650,13 @@ make_file_label (path, rev, rcs)
 	    wm = gmtime(&t);
 	}
 
-	if (wm)
-	{
-	    (void) tm_to_internet (datebuf, wm);
-	    (void) sprintf (label, "-L%s\t%s", path, datebuf);
-	}
+	(void) tm_to_internet (datebuf, wm);
+	(void) sprintf (label, "-L%s\t%s", path, datebuf);
     }
     return label;
 }
+
+
+
+/* vim:tabstop=8:shiftwidth=4
+ */

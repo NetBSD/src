@@ -1470,10 +1470,16 @@ stdio_buffer_shutdown (buf)
 	       current_parsed_root->hostname);
 
     /* If we were talking to a process, make sure it exited */
-    if (bc->child_pid
-	&& waitpid (bc->child_pid, (int *) 0, 0) == -1)
-	error (1, errno, "waiting for process %d", bc->child_pid);
+    if (bc->child_pid)
+    {
+	int w;
 
+	do
+	    w = waitpid (bc->child_pid, (int *) 0, 0);
+	while (w == -1 && errno == EINTR);
+	if (w == -1)
+	    error (1, errno, "waiting for process %d", bc->child_pid);
+    }
     return 0;
 }
 

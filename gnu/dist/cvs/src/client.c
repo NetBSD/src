@@ -1,5 +1,3 @@
-/* JT thinks BeOS is worth the trouble. */
-
 /* CVS client-related stuff.
 
    This program is free software; you can redistribute it and/or modify
@@ -26,7 +24,7 @@
 
 # include "md5.h"
 
-# if defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS || defined(SOCK_ERRNO) || defined(SOCK_STRERROR)
+# if defined(AUTH_CLIENT_SUPPORT) || defined(HAVE_KERBEROS) || defined(HAVE_GSSAPI) || defined(SOCK_ERRNO) || defined(SOCK_STRERROR)
 #   ifdef HAVE_WINSOCK_H
 #     include <winsock.h>
 #   else /* No winsock.h */
@@ -123,8 +121,6 @@ static void handle_set_static_directory PROTO((char *, int));
 static void handle_clear_static_directory PROTO((char *, int));
 static void handle_set_sticky PROTO((char *, int));
 static void handle_clear_sticky PROTO((char *, int));
-static void handle_set_checkin_prog PROTO((char *, int));
-static void handle_set_update_prog PROTO((char *, int));
 static void handle_module_expansion PROTO((char *, int));
 static void handle_wrapper_rcs_option PROTO((char *, int));
 static void handle_m PROTO((char *, int));
@@ -1794,15 +1790,16 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	       several causes: (1) something/someone creates the file
 	       during the time that CVS is running, (2) the repository
 	       has two files whose names clash for the client because
-	       of case-insensitivity or similar causes, (3) a special
-	       case of this is that a file gets renamed for example
-	       from a.c to A.C.  A "cvs update" on a case-insensitive
-	       client will get this error.  Repeating the update takes
-	       care of the problem, but is it clear to the user what
-	       is going on and what to do about it?, (4) the client
-	       has a file which the server doesn't know about (e.g. "?
-	       foo" file), and that name clashes with a file the
-	       server does know about, (5) classify.c will print the same
+	       of case-insensitivity or similar causes, See 3 for
+	       additional notes.  (3) a special case of this is that a
+	       file gets renamed for example from a.c to A.C.  A
+	       "cvs update" on a case-insensitive client will get this
+	       error.  In this case and in case 2, the filename
+	       (short_pathname) printed in the error message will likely _not_
+	       have the same case as seen by the user in a directory listing.
+	       (4) the client has a file which the server doesn't know
+	       about (e.g. "? foo" file), and that name clashes with a file
+	       the server does know about, (5) classify.c will print the same
 	       message for other reasons.
 
 	       I hope the above paragraph makes it clear that making this
@@ -2127,9 +2124,8 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	struct utimbuf t;
 
 	memset (&t, 0, sizeof (t));
-	/* There is probably little point in trying to preserved the
-	   actime (or is there? What about Checked-in?).  */
-	t.modtime = t.actime = stored_modtime;
+	t.modtime = stored_modtime;
+	(void) time (&t.actime);
 
 #ifdef UTIME_EXPECTS_WRITABLE
 	if (!iswritable (filename))
@@ -2143,7 +2139,7 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	    error (0, errno, "cannot set time on %s", filename);
 
 #ifdef UTIME_EXPECTS_WRITABLE
-	if (change_it_back == 1)
+	if (change_it_back)
 	{
 	    xchmod (filename, 0);
 	    change_it_back = 0;
@@ -2529,9 +2525,12 @@ template (data, ent_list, short_pathname, filename)
     char *short_pathname;
     char *filename;
 {
-    /* FIXME: should be computing second argument from CVSADM_TEMPLATE
-       and short_pathname.  */
-    read_counted_file (CVSADM_TEMPLATE, "<CVS/Template file>");
+    char *buf = xmalloc ( strlen ( short_pathname )
+	    		  + strlen ( CVSADM_TEMPLATE )
+			  + 2 );
+    sprintf ( buf, "%s/%s", short_pathname, CVSADM_TEMPLATE );
+    read_counted_file ( CVSADM_TEMPLATE, buf );
+    free ( buf );
 }
 
 static void handle_template PROTO ((char *, int));
@@ -2544,109 +2543,8 @@ handle_template (pathname, len)
     call_in_directory (pathname, template, NULL);
 }
 
-
-struct save_prog {
-    char *name;
-    char *dir;
-    struct save_prog *next;
-};
 
-static struct save_prog *checkin_progs;
-static struct save_prog *update_progs;
 
-/*
- * Unlike some responses this doesn't include the repository.  So we can't
- * just call call_in_directory and have the right thing happen; we save up
- * the requests and do them at the end.
- */
-static void
-handle_set_checkin_prog (args, len)
-    char *args;
-    int len;
-{
-    char *prog;
-    struct save_prog *p;
-
-    read_line (&prog);
-    if (strcmp (command_name, "export") == 0)
-	return;
-
-    p = (struct save_prog *) xmalloc (sizeof (struct save_prog));
-    p->next = checkin_progs;
-    p->dir = xstrdup (args);
-    p->name = prog;
-    checkin_progs = p;
-}
-    
-static void
-handle_set_update_prog (args, len)
-    char *args;
-    int len;
-{
-    char *prog;
-    struct save_prog *p;
-
-    read_line (&prog);
-    if (strcmp (command_name, "export") == 0)
-	return;
-
-    p = (struct save_prog *) xmalloc (sizeof (struct save_prog));
-    p->next = update_progs;
-    p->dir = xstrdup (args);
-    p->name = prog;
-    update_progs = p;
-}
-
-static void do_deferred_progs PROTO((void));
-
-static void
-do_deferred_progs ()
-{
-    struct save_prog *p;
-    struct save_prog *q;
-
-    char *fname;
-    FILE *f;
-
-    if (toplevel_wd != NULL)
-    {
-	if (CVS_CHDIR (toplevel_wd) < 0)
-	    error (1, errno, "could not chdir to %s", toplevel_wd);
-    }
-    for (p = checkin_progs; p != NULL; )
-    {
-	xasprintf (&fname, "%s/%s", p->dir, CVSADM_CIPROG);
-	f = open_file (fname, "w");
-	if (fprintf (f, "%s\n", p->name) < 0)
-	    error (1, errno, "writing %s", fname);
-	if (fclose (f) == EOF)
-	    error (1, errno, "closing %s", fname);
-	free (p->name);
-	free (p->dir);
-	q = p->next;
-	free (p);
-	p = q;
-	free (fname);
-    }
-    checkin_progs = NULL;
-    for (p = update_progs; p != NULL; )
-    {
-	xasprintf (&fname, "%s/%s", p->dir, CVSADM_UPROG);
-	f = open_file (fname, "w");
-	if (fprintf (f, "%s\n", p->name) < 0)
-	    error (1, errno, "writing %s", fname);
-	if (fclose (f) == EOF)
-	    error (1, errno, "closing %s", fname);
-	free (p->name);
-	free (p->dir);
-	q = p->next;
-	free (p);
-	p = q;
-	free (fname);
-    }
-    update_progs = NULL;
-}
-
 struct save_dir {
     char *dir;
     struct save_dir *next;
@@ -2845,76 +2743,6 @@ send_repository (dir, repos, update_dir)
 	    }
 	    if (nl == NULL)
                 send_to_server ("\012", 1);
-	    if (fclose (f) == EOF)
-		error (0, errno, "closing %s", adm_name);
-	}
-    }
-    if (supported_request ("Checkin-prog"))
-    {
-	FILE *f;
-	if (dir[0] == '\0')
-	    strcpy (adm_name, CVSADM_CIPROG);
-	else
-	    sprintf (adm_name, "%s/%s", dir, CVSADM_CIPROG);
-
-	f = CVS_FOPEN (adm_name, "r");
-	if (f == NULL)
-	{
-	    if (! existence_error (errno))
-		error (1, errno, "reading %s", adm_name);
-	}
-	else
-	{
-	    char line[80];
-	    char *nl = NULL;
-
-	    send_to_server ("Checkin-prog ", 0);
-
-	    while (fgets (line, sizeof (line), f) != NULL)
-	    {
-		send_to_server (line, 0);
-
-		nl = strchr (line, '\n');
-		if (nl != NULL)
-		    break;
-	    }
-	    if (nl == NULL)
-		send_to_server ("\012", 1);
-	    if (fclose (f) == EOF)
-		error (0, errno, "closing %s", adm_name);
-	}
-    }
-    if (supported_request ("Update-prog"))
-    {
-	FILE *f;
-	if (dir[0] == '\0')
-	    strcpy (adm_name, CVSADM_UPROG);
-	else
-	    sprintf (adm_name, "%s/%s", dir, CVSADM_UPROG);
-
-	f = CVS_FOPEN (adm_name, "r");
-	if (f == NULL)
-	{
-	    if (! existence_error (errno))
-		error (1, errno, "reading %s", adm_name);
-	}
-	else
-	{
-	    char line[80];
-	    char *nl = NULL;
-
-	    send_to_server ("Update-prog ", 0);
-
-	    while (fgets (line, sizeof (line), f) != NULL)
-	    {
-		send_to_server (line, 0);
-
-		nl = strchr (line, '\n');
-		if (nl != NULL)
-		    break;
-	    }
-	    if (nl == NULL)
-		send_to_server ("\012", 1);
 	    if (fclose (f) == EOF)
 		error (0, errno, "closing %s", adm_name);
 	}
@@ -3404,10 +3232,6 @@ struct response responses[] =
        rs_optional),
     RSP_LINE("Template", handle_template, response_type_normal,
        rs_optional),
-    RSP_LINE("Set-checkin-prog", handle_set_checkin_prog, response_type_normal,
-       rs_optional),
-    RSP_LINE("Set-update-prog", handle_set_update_prog, response_type_normal,
-       rs_optional),
     RSP_LINE("Notified", handle_notified, response_type_normal, rs_optional),
     RSP_LINE("Module-expansion", handle_module_expansion, response_type_normal,
        rs_optional),
@@ -3598,7 +3422,19 @@ get_responses_and_close ()
 	last_entries = NULL;
     }
 
-    do_deferred_progs ();
+    /* The following is necessary when working with multiple cvsroots, at least
+     * with commit.  It used to be buried nicely in do_deferred_progs() before
+     * that function was removed.  I suspect it wouldn't be necessary if
+     * call_in_directory() saved its working directory via save_cwd() before
+     * changing its directory and restored the saved working directory via
+     * restore_cwd() before exiting.  Of course, calling CVS_CHDIR only once,
+     * here, may be more efficient.
+     */
+    if( toplevel_wd != NULL )
+    {
+	if( CVS_CHDIR( toplevel_wd ) < 0 )
+	    error( 1, errno, "could not chdir to %s", toplevel_wd );
+    }
 
     if (client_prune_dirs)
 	process_prune_candidates ();
@@ -3650,7 +3486,7 @@ supported_request (name)
 
 
 
-#if defined (AUTH_CLIENT_SUPPORT) || defined (HAVE_KERBEROS)
+#if defined (AUTH_CLIENT_SUPPORT) || defined (HAVE_KERBEROS) || defined (HAVE_GSSAPI)
 static struct hostent *init_sockaddr PROTO ((struct sockaddr_in *, char *,
 					     unsigned int));
 
@@ -3676,11 +3512,7 @@ init_sockaddr (name, hostname, port)
     return hostinfo;
 }
 
-#endif /* defined (AUTH_CLIENT_SUPPORT) || defined (HAVE_KERBEROS) */
 
-
-
-#ifdef AUTH_CLIENT_SUPPORT
 
 /* Generic function to do port number lookup tasks.
  *
@@ -3746,13 +3578,19 @@ get_cvs_port_number (root)
 
     switch (root->method)
     {
+# ifdef HAVE_GSSAPI
 	case gserver_method:
+# endif /* HAVE_GSSAPI */
+# ifdef AUTH_CLIENT_SUPPORT
 	case pserver_method:
+# endif /* AUTH_CLIENT_SUPPORT */
+# if defined (AUTH_CLIENT_SUPPORT) || defined (HAVE_GSSAPI)
 	    return get_port_number ("CVS_CLIENT_PORT", "cvspserver", CVS_AUTH_PORT);
-#ifdef HAVE_KERBEROS
+# endif /* defined (AUTH_CLIENT_SUPPORT) || defined (HAVE_GSSAPI) */
+# ifdef HAVE_KERBEROS
 	case kserver_method:
 	    return get_port_number ("CVS_CLIENT_PORT", "cvs", CVS_PORT);
-#endif
+# endif /* HAVE_KERBEROS */
 	default:
 	    error(1, EINVAL, "internal error: get_cvs_port_number called for invalid connection method (%s)",
 		    method_names[root->method]);
@@ -3776,7 +3614,7 @@ make_bufs_from_fds (tofd, fromfd, child_pid, to_server, from_server, is_sock)
     FILE *to_server_fp;
     FILE *from_server_fp;
 
-#ifdef NO_SOCKET_TO_FD
+# ifdef NO_SOCKET_TO_FD
     if (is_sock)
     {
 	assert (tofd == fromfd);
@@ -3786,7 +3624,7 @@ make_bufs_from_fds (tofd, fromfd, child_pid, to_server, from_server, is_sock)
 						(BUFMEMERRPROC) NULL);
     }
     else
-#endif /* NO_SOCKET_TO_FD */
+# endif /* NO_SOCKET_TO_FD */
     {
 	/* todo: some OS's don't need these calls... */
 	close_on_exec (tofd);
@@ -3821,43 +3659,11 @@ make_bufs_from_fds (tofd, fromfd, child_pid, to_server, from_server, is_sock)
 					       (BUFMEMERRPROC) NULL);
     }
 }
+#endif /* defined (AUTH_CLIENT_SUPPORT) || defined (HAVE_KERBEROS) || defined(HAVE_GSSAPI) */
 
 
 
-/* Connect to a forked server process. */
-
-void
-connect_to_forked_server (to_server, from_server)
-    struct buffer **to_server;
-    struct buffer **from_server;
-{
-    int tofd, fromfd;
-    int child_pid;
-
-    /* This is pretty simple.  All we need to do is choose the correct
-       cvs binary and call piped_child. */
-
-    char *command[3];
-
-    command[0] = getenv ("CVS_SERVER");
-    if (! command[0])
-	command[0] = program_path;
-    
-    command[1] = "server";
-    command[2] = NULL;
-
-    if (trace)
-    {
-	fprintf (stderr, " -> Forking server: %s %s\n", command[0], command[1]);
-    }
-
-    child_pid = piped_child (command, &tofd, &fromfd);
-    if (child_pid < 0)
-	error (1, 0, "could not fork server process");
-
-    make_bufs_from_fds (tofd, fromfd, child_pid, to_server, from_server, 0);
-}
-
+#if defined (AUTH_CLIENT_SUPPORT) || defined(HAVE_GSSAPI)
 /* Connect to the authenticating server.
 
    If VERIFY_ONLY is non-zero, then just verify that the password is
@@ -3982,7 +3788,7 @@ auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi)
     /* Run the authorization mini-protocol before anything else. */
     if (do_gssapi)
     {
-#ifdef HAVE_GSSAPI
+# ifdef HAVE_GSSAPI
 	FILE *fp = stdio_buffer_get_file(lto_server);
 	int fd = fp ? fileno(fp) : -1;
 	struct stat s;
@@ -3998,12 +3804,13 @@ auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi)
 		    "authorization failed: server %s rejected access to %s",
 		    root->hostname, root->directory);
 	}
-#else
-	error (1, 0, "This client does not support GSSAPI authentication");
-#endif
+# else /* ! HAVE_GSSAPI */
+	error (1, 0, "INTERNAL ERROR: This client does not support GSSAPI authentication");
+# endif /* HAVE_GSSAPI */
     }
-    else
+    else /* ! do_gssapi */
     {
+# ifdef AUTH_CLIENT_SUPPORT
 	char *begin      = NULL;
 	char *password   = NULL;
 	char *end        = NULL;
@@ -4049,7 +3856,10 @@ auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi)
 
         /* Paranoia. */
         memset (password, 0, strlen (password));
-    }
+# else /* ! AUTH_CLIENT_SUPPORT */
+	error (1, 0, "INTERNAL ERROR: This client does not support pserver authentication");
+# endif /* AUTH_CLIENT_SUPPORT */
+    } /* if (do_gssapi) */
 
     {
 	char *read_buf;
@@ -4124,12 +3934,53 @@ auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi)
 	}
     }
 }
-#endif /* AUTH_CLIENT_SUPPORT */
+#endif /* defined (AUTH_CLIENT_SUPPORT) || defined(HAVE_GSSAPI) */
+
+
+
+#ifdef CLIENT_SUPPORT
+/* void
+ * connect_to_forked_server ( struct buffer **to_server,
+ *                            struct buffer **from_server )
+ *
+ * Connect to a forked server process.
+ */
+void
+connect_to_forked_server (to_server, from_server)
+    struct buffer **to_server;
+    struct buffer **from_server;
+{
+    int tofd, fromfd;
+    int child_pid;
+
+    /* This is pretty simple.  All we need to do is choose the correct
+       cvs binary and call piped_child. */
+
+    char *command[3];
+
+    command[0] = getenv ("CVS_SERVER");
+    if (! command[0])
+	command[0] = program_path;
+    
+    command[1] = "server";
+    command[2] = NULL;
+
+    if (trace)
+    {
+	fprintf (stderr, " -> Forking server: %s %s\n", command[0], command[1]);
+    }
+
+    child_pid = piped_child (command, &tofd, &fromfd);
+    if (child_pid < 0)
+	error (1, 0, "could not fork server process");
+
+    make_bufs_from_fds (tofd, fromfd, child_pid, to_server, from_server, 0);
+}
+#endif /* CLIENT_SUPPORT */
 
 
 
 #ifdef HAVE_KERBEROS
-
 /* This function has not been changed to deal with NO_SOCKET_TO_FD
    (i.e., systems on which sockets cannot be converted to file
    descriptors).  The first person to try building a kerberos client
@@ -4402,32 +4253,32 @@ start_server ()
 	     */
 	    connect_to_pserver (current_parsed_root, &to_server, &from_server, 0, 0);
 	    break;
-#endif
+#endif /* AUTH_CLIENT_SUPPORT */
 
 #if HAVE_KERBEROS
 	case kserver_method:
 	    start_tcp_server (current_parsed_root, &to_server, &from_server);
 	    break;
-#endif
+#endif /* HAVE_KERBEROS */
 
 #ifdef HAVE_GSSAPI
 	case gserver_method:
 	    /* GSSAPI authentication is handled by the pserver.  */
 	    connect_to_pserver (current_parsed_root, &to_server, &from_server, 0, 1);
 	    break;
-#endif
+#endif /* HAVE_GSSAPI */
 
 	case ext_method:
-#if defined (NO_EXT_METHOD)
+#ifdef NO_EXT_METHOD
 	    error (0, 0, ":ext: method not supported by this port of CVS");
 	    error (1, 0, "try :server: instead");
-#else
+#else /* ! NO_EXT_METHOD */
 	    start_rsh_server (current_parsed_root, &to_server, &from_server);
-#endif
+#endif /* NO_EXT_METHOD */
 	    break;
 
 	case server_method:
-#if defined(START_SERVER)
+#ifdef START_SERVER
 	    {
 	    int tofd, fromfd;
 	    START_SERVER (&tofd, &fromfd, getcaller (),
@@ -4435,17 +4286,17 @@ start_server ()
 			  current_parsed_root->directory);
 # ifdef START_SERVER_RETURNS_SOCKET
 	    make_bufs_from_fds (tofd, fromfd, 0, &to_server, &from_server, 1);
-# else
+# else /* ! START_SERVER_RETURNS_SOCKET */
 	    make_bufs_from_fds (tofd, fromfd, 0, &to_server, &from_server, 0);
 # endif /* START_SERVER_RETURNS_SOCKET */
 	    }
-#else
+#else /* ! START_SERVER */
 	    /* FIXME: It should be possible to implement this portably,
 	       like pserver, which would get rid of the duplicated code
 	       in {vms,windows-NT,...}/startserver.c.  */
 	    error (1, 0,
 "the :server: access method is not supported by this port of CVS");
-#endif
+#endif /* START_SERVER */
 	    break;
 
         case fork_method:
@@ -4623,16 +4474,6 @@ start_server ()
 	    else
 		error (1, 0,
 		       "This server does not support the global -t option.");
-	}
-	if (logoff)
-	{
-	    if (have_global)
-	    {
-		send_to_server ("Global_option -l\012", 0);
-	    }
-	    else
-		error (1, 0,
-		       "This server does not support the global -l option.");
 	}
     }
 
@@ -5635,7 +5476,8 @@ send_files (argc, argv, local, aflag, flags)
     err = start_recursion
 	(send_fileproc, send_filesdoneproc,
 	 send_dirent_proc, send_dirleave_proc, (void *) &args,
-	 argc, argv, local, W_LOCAL, aflag, CVS_LOCK_NONE, (char *)NULL, 0);
+	 argc, argv, local, W_LOCAL, aflag, CVS_LOCK_NONE, (char *) NULL, 0,
+	 (char *) NULL);
     if (err)
 	error_exit ();
     if (toplevel_repos == NULL)
