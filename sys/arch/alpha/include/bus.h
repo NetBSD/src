@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.35 2000/02/26 18:53:12 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.36 2000/02/26 20:12:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@
 
 #ifndef _ALPHA_BUS_H_
 #define	_ALPHA_BUS_H_
+
+#include <sys/types.h>
 
 #ifdef _KERNEL
 /*
