@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.8 1994/10/27 04:17:07 cgd Exp $	*/
+/*	$NetBSD: dma.c,v 1.9 1994/11/04 19:25:34 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,17 +183,17 @@ isa_dmadone(flags, addr, nbytes, chan)
 		/* XXX probably should panic or something */
 		log(LOG_ERR, "dma channel %d not finished\n", chan);
 
-	/* copy bounce buffer on read */
-	if (bounced[chan]) {
-		bcopy(dma_bounce[chan], addr, nbytes);
-		bounced[chan] = 0;
-	}
-
 	/* mask channel */
 	if ((chan & 4) == 0)
 		outb(DMA1_SMSK, DMA37SM_SET | chan);
 	else
 		outb(DMA2_SMSK, DMA37SM_SET | (chan & 3));
+
+	/* copy bounce buffer on read */
+	if (bounced[chan]) {
+		bcopy(dma_bounce[chan], addr, nbytes);
+		bounced[chan] = 0;
+	}
 }
 
 /*
