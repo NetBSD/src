@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.41 2000/03/30 02:37:40 simonb Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.42 2000/08/25 13:35:06 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -188,6 +188,8 @@ extern int   ip_mtudisc;		/* mtu discovery */
 extern u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
 extern int   anonportmin;		/* minimum ephemeral port */
 extern int   anonportmax;		/* maximum ephemeral port */
+extern int   lowportmin;		/* minimum reserved port */
+extern int   lowportmax;		/* maximum reserved port */
 extern struct rttimer_queue *ip_mtudisc_timeout_q;
 #ifdef GATEWAY
 extern int ip_maxflows;
