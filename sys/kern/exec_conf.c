@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.37 1999/09/13 10:31:36 itojun Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.38 1999/10/25 13:55:06 kleink Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -133,10 +133,10 @@ struct execsw execsw[] = {
 #endif
 #endif
 #ifdef EXEC_ELF32
-	{ ELF32_HDR_SIZE, exec_elf32_makecmds, },	/* 32bit ELF bins */
+	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds, },	/* 32bit ELF bins */
 #endif
 #ifdef EXEC_ELF64
-	{ ELF64_HDR_SIZE, exec_elf64_makecmds, },	/* 64bit ELF bins */
+	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds, },	/* 64bit ELF bins */
 #endif
 #ifdef COMPAT_SUNOS
 	{ SUNOS_AOUT_HDR_SIZE, exec_sunos_aout_makecmds, }, /* SunOS a.out */
