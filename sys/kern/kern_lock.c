@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.84 2004/10/23 21:27:34 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.85 2004/10/26 00:14:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.84 2004/10/23 21:27:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.85 2004/10/26 00:14:46 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -110,6 +110,10 @@ int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 #include <ddb/db_command.h>
 #include <ddb/db_interface.h>
 #endif
+#endif /* defined(LOCKDEBUG) */
+
+#if defined(MULTIPROCESSOR)
+struct simplelock kernel_lock; 
 #endif
 
 /*
@@ -1346,6 +1350,10 @@ simple_lock_only_held(volatile struct simplelock *lp, const char *where)
 	TAILQ_FOREACH(alp, &simplelock_list, list) {
 		if (alp == lp)
 			continue;
+#if defined(MULTIPROCESSOR)
+		if (alp == &kernel_lock)
+			continue;
+#endif /* defined(MULTIPROCESSOR) */
 		if (alp->lock_holder == cpu_id)
 			break;
 	}
@@ -1369,13 +1377,19 @@ simple_lock_only_held(volatile struct simplelock *lp, const char *where)
  * so that they show up in profiles.
  */
 
-struct lock kernel_lock; 
+/*
+ * splbiglock: block IPLs which need to grab kernel_lock.
+ * XXX splvm or splaudio should be enough.
+ */
+#if !defined(__HAVE_SPLBIGLOCK)
+#define	splbiglock()	splclock()
+#endif
 
 void
 _kernel_lock_init(void)
 {
 
-	spinlockinit(&kernel_lock, "klock", 0);
+	simple_lock_init(&kernel_lock);
 }
 
 /*
@@ -1385,16 +1399,39 @@ _kernel_lock_init(void)
 void
 _kernel_lock(int flag)
 {
+	struct cpu_info *ci = curcpu();
 
 	SCHED_ASSERT_UNLOCKED();
-	spinlockmgr(&kernel_lock, flag, 0);
+
+	if (ci->ci_data.cpu_biglock_count > 0) {
+		LOCK_ASSERT(simple_lock_held(&kernel_lock));
+		ci->ci_data.cpu_biglock_count++;
+	} else {
+		int s;
+
+		s = splbiglock();
+		while (!simple_lock_try(&kernel_lock)) {
+			splx(s);
+			SPINLOCK_SPIN_HOOK;
+			s = splbiglock();
+		}
+		ci->ci_data.cpu_biglock_count++;
+		splx(s);
+	}
 }
 
 void
 _kernel_unlock(void)
 {
+	struct cpu_info *ci = curcpu();
+	int s;
 
-	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
+	KASSERT(ci->ci_data.cpu_biglock_count > 0);
+
+	s = splbiglock();
+	if ((--ci->ci_data.cpu_biglock_count) == 0)
+		simple_unlock(&kernel_lock);
+	splx(s);
 }
 
 /*
@@ -1406,25 +1443,32 @@ _kernel_proc_lock(struct lwp *l)
 {
 
 	SCHED_ASSERT_UNLOCKED();
-	spinlockmgr(&kernel_lock, LK_EXCLUSIVE, 0);
+	_kernel_lock(0);
 }
 
 void
 _kernel_proc_unlock(struct lwp *l)
 {
 
-	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
+	_kernel_unlock();
 }
 
 int
 _kernel_lock_release_all()
 {
+	struct cpu_info *ci = curcpu();
 	int hold_count;
 
-	if (lockstatus(&kernel_lock) == LK_EXCLUSIVE)
-		hold_count = spinlock_release_all(&kernel_lock);
-	else
-		hold_count = 0;
+	hold_count = ci->ci_data.cpu_biglock_count;
+
+	if (hold_count) {
+		int s;
+
+		s = splbiglock();
+		ci->ci_data.cpu_biglock_count = 0;
+		simple_unlock(&kernel_lock);
+		splx(s);
+	}
 
 	return hold_count;
 }
@@ -1433,15 +1477,28 @@ void
 _kernel_lock_acquire_count(int hold_count)
 {
 
-	if (hold_count != 0)
-		spinlock_acquire_count(&kernel_lock, hold_count);
+	KASSERT(curcpu()->ci_data.cpu_biglock_count == 0);
+
+	if (hold_count != 0) {
+		struct cpu_info *ci = curcpu();
+		int s;
+
+		s = splbiglock();
+		while (!simple_lock_try(&kernel_lock)) {
+			splx(s);
+			SPINLOCK_SPIN_HOOK;
+			s = splbiglock();
+		}
+		ci->ci_data.cpu_biglock_count = hold_count;
+		splx(s);
+	}
 }
 #if defined(DEBUG)
 void
 _kernel_lock_assert_locked()
 {
 
-	KDASSERT(lockstatus(&kernel_lock) == LK_EXCLUSIVE);
+	LOCK_ASSERT(simple_lock_held(&kernel_lock));
 }
 #endif
 #endif /* MULTIPROCESSOR */
