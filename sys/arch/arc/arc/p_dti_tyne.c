@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_tyne.c,v 1.3 2003/06/14 08:09:47 tsutsui Exp $	*/
+/*	$NetBSD: p_dti_tyne.c,v 1.4 2003/06/14 08:11:56 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ struct platform platform_desktech_tyne = {
 	"",
 	"DeskStation Tyne",
 	"DESKTECH",
-	150, /* MHz ?? */
+	133, /* MHz */
 	p_dti_tyne_mainbusdevs,
 	platform_generic_match,
 	p_dti_tyne_init,
