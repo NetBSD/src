@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.47 2004/07/17 10:55:03 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.48 2004/11/11 20:17:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -455,27 +455,8 @@ void
 process_f_flag(char *f_name)
 {
 	char *buffer;
-	struct stat statinfo;
 	int fd;
-
-	/* stat the file (error reported) */
-
-	if (stat(f_name, &statinfo) < 0) {
-		perror(f_name);			/* XXX -- better message? */
-		exit(1);
-	}
-
-	if ((statinfo.st_mode & S_IFMT) != S_IFREG) {
-		fprintf(stderr, msg_string(MSG_not_regular_file), f_name);
-		exit(1);
-	}
-
-	/* allocate buffer (error reported) */
-	buffer = malloc((size_t)statinfo.st_size + 1);
-	if (buffer == NULL) {
-		fprintf(stderr, msg_string(MSG_out_of_memory));
-		exit(1); 
-	}
+	int fsize;
 
 	/* open the file */
 	fd = open(f_name, O_RDONLY, 0);
@@ -484,19 +465,33 @@ process_f_flag(char *f_name)
 		exit(1);
 	}
 
+	/* get file size */
+	fsize = lseek(fd, 0, SEEK_END);
+	lseek(fd, 0, SEEK_SET);
+	if (fsize == -1) {
+		fprintf(stderr, msg_string(MSG_not_regular_file), f_name);
+		exit(1);
+	}
+
+	/* allocate buffer (error reported) */
+	buffer = malloc(fsize + 1);
+	if (buffer == NULL) {
+		fprintf(stderr, msg_string(MSG_out_of_memory));
+		exit(1); 
+	}
+
 	/* read the file */
-	if (read(fd,buffer, (size_t)statinfo.st_size)
-						!= (size_t)statinfo.st_size) {
+	if (read(fd,buffer, fsize) != fsize) {
 		fprintf(stderr, msg_string(MSG_config_read_error), f_name);
 		exit(1);
 	}
-	buffer[(size_t)statinfo.st_size] = 0;
+	buffer[fsize] = 0;
 
 	/* close the file */
 	close(fd);
 
 	/* Walk the buffer */
-	walk(buffer, (size_t)statinfo.st_size, fflagopts,
+	walk(buffer, fsize, fflagopts,
 	    sizeof(fflagopts)/sizeof(struct lookfor));
 
 	/* free the buffer */
