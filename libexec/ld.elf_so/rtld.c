@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.58 2002/09/12 17:45:41 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.59 2002/09/12 19:43:03 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -197,8 +197,7 @@ _rtld_init(mapbase, relocbase, pagesz)
 #endif
 	assert(objself.needed == NULL);
 
-#if !defined(__arm__) && !defined(__mips__) && !defined(__i386__) && \
-    !defined(__sh__) && !defined(__vax__)
+#if !defined(__mips__) && !defined(__sh__)
 	/* no relocation for mips/i386 */
 	assert(!objself.textrel);
 #endif
