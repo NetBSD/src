@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.4 2004/02/20 17:35:01 yamt Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.5 2004/05/12 20:03:06 yamt Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -65,6 +65,9 @@
 	movl	%eax,%fs	; \
 	TLOG
 
+/*
+ * INTRFASTEXIT should be in sync with trap(), resume_iret and friends.
+ */
 #define	INTRFASTEXIT \
 	movl	TF_GS(%esp),%gs	; \
 	movl	TF_FS(%esp),%fs	; \
