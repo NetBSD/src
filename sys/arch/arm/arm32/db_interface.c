@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.25 2003/04/29 13:27:21 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.26 2003/05/03 17:29:27 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -378,29 +378,6 @@ static struct undefined_handler db_uh;
 void
 db_machine_init(void)
 {
-#ifndef __ELF__
-	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
-	int len;
-
-	/*
-	 * The boot loader currently loads the kernel with the a.out
-	 * header still attached.
-	 */
-
-	if (kernexec->a_syms == 0) {
-		printf("ddb: No symbol table\n");
-	} else {
-		/* cover the symbols themselves (what is the int for?? XXX) */
-		esym = (int)&end + kernexec->a_syms + sizeof(int);
-
-		/*
-		 * and the string table.  (int containing size of string
-		 * table is included in string table size).
-		 */
-		len = *((u_int *)esym);
-		esym += (len + (sizeof(u_int) - 1)) & ~(sizeof(u_int) - 1);
-	}
-#endif
 
 	/*
 	 * We get called before malloc() is available, so supply a static
