@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.55 2001/04/26 17:57:47 thorpej Exp $	*/
+/*	$NetBSD: pss.c,v 1.56 2001/07/18 20:39:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -700,7 +700,7 @@ pssprobe(parent, match, aux)
 {
     struct pss_softc probesc, *sc = &probesc;
 
-    bzero(sc, sizeof *sc);
+    memset(sc, 0, sizeof *sc);
     sc->sc_dev.dv_cfdata = match;
     strcpy(sc->sc_dev.dv_xname, "pas");
     return pssfind(parent, sc, aux);
@@ -813,7 +813,7 @@ spprobe(parent, match, aux)
 {
     struct ad1848_isa_softc probesc, *sc = &probesc;
 
-    bzero(sc, sizeof *sc);
+    memset(sc, 0, sizeof *sc);
     sc->sc_ad1848.sc_dev.dv_cfdata = match;
     return spfind(parent, sc, aux);
 }

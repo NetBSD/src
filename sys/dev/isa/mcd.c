@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.70 2001/02/10 12:16:34 taca Exp $	*/
+/*	$NetBSD: mcd.c,v 1.71 2001/07/18 20:39:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -761,7 +761,7 @@ mcdgetdefaultlabel(sc, lp)
 	struct disklabel *lp;
 {
 
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 
 	lp->d_secsize = sc->blksize;
 	lp->d_ntracks = 1;
@@ -802,7 +802,7 @@ mcdgetdisklabel(sc)
 {
 	struct disklabel *lp = sc->sc_dk.dk_label;
 	
-	bzero(sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+	memset(sc->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
 	mcdgetdefaultlabel(sc, lp);
 }

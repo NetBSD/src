@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.48 2001/05/15 15:00:04 lukem Exp $	*/
+/*	$NetBSD: pas.c,v 1.49 2001/07/18 20:39:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -273,7 +273,7 @@ pasprobe(parent, match, aux)
 {
 	struct pas_softc probesc, *sc = &probesc;
 
-	bzero(sc, sizeof *sc);
+	memset(sc, 0, sizeof *sc);
 	sc->sc_sbdsp.sc_dev.dv_cfdata = match;
 	strcpy(sc->sc_sbdsp.sc_dev.dv_xname, "pas");
 	return pasfind(parent, sc, aux, PASPROBE);
