@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.12 2001/02/15 05:21:26 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.13 2001/03/25 12:32:53 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -115,6 +115,7 @@ _formi_pos_first_field(FORM *form)
 		}
 	}
 
+	  /* then scan for a field we can use */
 	cur = form->fields[form->page_starts[form->page].first];
 	while ((cur->opts & (O_VISIBLE | O_ACTIVE))
 	       != (O_VISIBLE | O_ACTIVE)) {
@@ -268,7 +269,8 @@ _formi_wrap_field(FIELD *field, unsigned int pos)
 			  /* line is too long, split it - maybe */
 			  /* split on first whitespace before current word */
 			pos = sol + width;
-			if (!isblank(str[pos]))
+			if ((!isblank(str[pos])) &&
+			    ((field->opts & O_WRAP) == O_WRAP))
 				pos = find_sow(str, pos);
 
 			if (pos != sol) {
@@ -354,13 +356,6 @@ _formi_join_line(FIELD *field, char *str, unsigned int pos, int direction)
 	}
 	
 	
-	  /* if we cannot wrap and the length of the resultant line
-	   * is bigger than our field width we shall deny the request.
-	   */
-	if (((field->opts & O_WRAP) != O_WRAP) && /* XXXXX check for dynamic field */
-	    ((sol + eol - 1) > field->cols))
-		return E_REQUEST_DENIED;
-
 	bcopy(&str[start], &str[dest], (unsigned) len);
 
 	  /* wrap the field if required, if this fails undo the change */
@@ -681,7 +676,7 @@ _formi_redraw_field(FORM *form, int field)
 	start = 0;
 	end = 0;
 
-	wmove(form->subwin, (int) cur->form_row, (int) cur->form_col);
+	wmove(form->scrwin, (int) cur->form_row, (int) cur->form_col);
 	for (row = 1; row <= cur->row_count; row++) {
 		if (str == NULL) {
 			start = end = 0;
@@ -698,33 +693,48 @@ _formi_redraw_field(FORM *form, int field)
 			slen = end - start + 1;
 		} else
 			slen = 0;
-		
-		switch (cur->justification) {
-		case JUSTIFY_RIGHT:
-			post = 0;
-			if (flen < slen)
-				pre = 0;
-			else
-				pre = flen - slen;
-				
-			break;
 
-		case JUSTIFY_CENTER:
-			if (flen < slen) {
-				pre = 0;
+		if ((cur->opts & O_STATIC) == O_STATIC) {
+			switch (cur->justification) {
+			case JUSTIFY_RIGHT:
 				post = 0;
-			} else {
-				pre = flen - slen;
-				post = pre = pre / 2;
-				  /* get padding right if centring is not even */
-				if ((post + pre + slen) < flen)
-					post++;
-			}
-			break;
+				if (flen < slen)
+					pre = 0;
+				else
+					pre = flen - slen;
+				break;
 
-		case NO_JUSTIFICATION:
-		case JUSTIFY_LEFT:
-		default:
+			case JUSTIFY_CENTER:
+				if (flen < slen) {
+					pre = 0;
+					post = 0;
+				} else {
+					pre = flen - slen;
+					post = pre = pre / 2;
+					  /* get padding right if
+                                             centring is not even */
+					if ((post + pre + slen) < flen)
+						post++;
+				}
+				break;
+
+			case NO_JUSTIFICATION:
+			case JUSTIFY_LEFT:
+			default:
+				pre = 0;
+				if (flen <= slen)
+					post = 0;
+				else {
+					post = flen - slen;
+					if (post > flen)
+						post = flen;
+				}
+				break;
+			}
+
+			offset = 0;
+		} else {
+			  /* dynamic fields are not justified */
 			pre = 0;
 			if (flen <= slen)
 				post = 0;
@@ -733,28 +743,40 @@ _formi_redraw_field(FORM *form, int field)
 				if (post > flen)
 					post = flen;
 			}
-			break;
-		}
 
-		if (pre > cur->hscroll - start)
-			pre = pre - cur->hscroll + start;
-		else
-			pre = 0;
+			  /* but they do scroll.... */
+			
+			if (pre > cur->hscroll - start)
+				pre = pre - cur->hscroll + start;
+			else
+				pre = 0;
 		
-		if (slen > cur->hscroll) {
-			slen -= cur->hscroll;
-			post += cur->hscroll;
-			if (post > flen)
-				post = flen;
-		} else {
-			slen = 0;
-			post = flen - pre;
-		}
+			if (slen > cur->hscroll) {
+				slen -= cur->hscroll;
+				post += cur->hscroll;
+				if (post > flen)
+					post = flen;
+			} else {
+				slen = 0;
+				post = flen - pre;
+			}
+			
+			offset = cur->hscroll;
+			if (cur->start_char > 0)
+				offset += cur->start_char - 1;
 
+			if (flen > cur->hscroll + 1) {
+				if (flen > slen)
+					flen -= cur->hscroll + 1;
+			} else
+				flen = 0;
+		
+		}
+			
 		if (form->cur_field == field)
-			wattrset(form->subwin, cur->fore);
+			wattrset(form->scrwin, cur->fore);
 		else
-			wattrset(form->subwin, cur->back);
+			wattrset(form->scrwin, cur->back);
 
 #ifdef DEBUG
 		if (_formi_create_dbg_file() == E_OK) {
@@ -772,36 +794,29 @@ _formi_redraw_field(FORM *form, int field)
 #endif
 		
 		for (i = start + cur->hscroll; i < pre; i++)
-			waddch(form->subwin, cur->pad);
+			waddch(form->scrwin, cur->pad);
 
-		offset = cur->hscroll;
-		if (cur->start_char > 0)
-			offset += cur->start_char - 1;
-
-		if (flen > cur->hscroll + 1) {
-			if (flen > slen)
-				flen -= cur->hscroll + 1;
-		} else
-			flen = 0;
-		
 #ifdef DEBUG
 		fprintf(dbg, "redraw_field: will add %d chars, offset is %d\n",
 			min(slen, flen), offset);
 #endif
-		for (i = 0;
-		     i < min(slen, flen); i++) 
+		for (i = 0; i < min(slen, flen); i++) 
 		{
 #ifdef DEBUG
 			fprintf(dbg, "adding char str[%d]=%c\n",
 				i + offset, str[i + offset]);
 #endif
-			waddch(form->subwin,
-			       ((cur->opts & O_PUBLIC) == O_PUBLIC)?
-			       str[i + offset] : cur->pad);
+			if (((cur->opts & O_PUBLIC) != O_PUBLIC)) {
+				waddch(form->scrwin, cur->pad);
+			} else if ((cur->opts & O_VISIBLE) == O_VISIBLE) {
+				waddch(form->scrwin, str[i + offset]);
+			} else {
+				waddch(form->scrwin, ' ');
+			}
 		}
 
 		for (i = 0; i < post; i++)
-			waddch(form->subwin, cur->pad);
+			waddch(form->scrwin, cur->pad);
 	}
 	
 	return;
@@ -820,7 +835,7 @@ _formi_draw_page(FORM *form)
 	if (form->page_starts[form->page].in_use == 0)
 		return E_BAD_ARGUMENT;
 
-	wclear(form->subwin);
+	wclear(form->scrwin);
 	
 	for (i = form->page_starts[form->page].first;
 	     i <= form->page_starts[form->page].last; i++)
@@ -865,7 +880,8 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	fprintf(dbg, "add_char enter: buf0_status=%d\n", field->buf0_status);
 #endif
 	if (((field->opts & O_BLANK) == O_BLANK) &&
-	    (field->buf0_status == FALSE)) {
+	    (field->buf0_status == FALSE) &&
+	    ((field->cursor_xpos + field->hscroll) == 0)) {
 		field->buffers[0].length = 0;
 		field->buffers[0].string[0] = '\0';
 		pos = 0;
@@ -884,7 +900,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 		if ((((field->opts & O_STATIC) == O_STATIC) &&
 		     (field->buffers[0].length >= field->cols)) ||
 		    (((field->opts & O_STATIC) != O_STATIC) &&
-		     ((field->max > 0) &&
+/*XXXXX this is wrong - should check max row or col */		     ((field->max > 0) &&
 		      (field->buffers[0].length >= field->max))))
 			return E_REQUEST_DENIED;
 		
@@ -933,9 +949,9 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	} else {
 		field->buf0_status = TRUE;
 		field->cursor_xpos++;
-		if (field->cursor_xpos > field->cols - 1) {
+		if (field->cursor_xpos > field->cols) {
 			field->start_char++;
-			field->cursor_xpos = field->cols - 1;
+			field->cursor_xpos = field->cols;
 		}
 	}
 	
