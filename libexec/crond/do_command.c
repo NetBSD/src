@@ -1,13 +1,16 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/do_command.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/do_command.c,v 1.2 1993/03/28 17:24:44 glass Exp $";
 #endif
 
 /* $Source: /cvsroot/src/libexec/crond/Attic/do_command.c,v $
- * $Revision: 1.1.1.1 $
+ * $Revision: 1.2 $
  * $Log: do_command.c,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
- * initial import of 386bsd-0.1 sources
+ * Revision 1.2  1993/03/28 17:24:44  glass
+ * cleanup so that crond compiles quietly
  *
+ * Revision 1.1.1.1  93/03/21  09:52:52  cgd
+ * initial import of 386bsd-0.1 sources
+ * 
  * Revision 2.1  90/07/18  00:23:38  vixie
  * Baseline for 4.4BSD release
  * 
@@ -100,7 +103,7 @@ do_command(cmd, u)
 }
 
 
-static void
+void
 child_process(cmd, u)
 	char	*cmd;
 	user	*u;
@@ -427,7 +430,7 @@ child_process(cmd, u)
 			if (mailto)
 			{
 				extern FILE	*popen();
-				extern char	*sprintf(), *print_cmd();
+				extern char	*print_cmd();
 				register char	**env;
 				auto char	mailcmd[MAX_COMMAND];
 				auto char	hostname[MAXHOSTNAMELEN];
@@ -516,7 +519,7 @@ child_process(cmd, u)
 
 		Debug(DPROC, ("[%d] waiting for grandchild #%d to finish\n",
 			getpid(), children))
-		pid = wait(&waiter);
+		pid = wait((int *) &waiter);
 		if (pid < OK) {
 			Debug(DPROC, ("[%d] no more grandchildren--mail written?\n",
 				getpid()))
