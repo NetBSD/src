@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.49 2003/02/18 14:55:05 dsl Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.50 2003/05/15 01:00:07 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.49 2003/02/18 14:55:05 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.50 2003/05/15 01:00:07 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -268,7 +268,7 @@ fetchvmstat(void)
 	time_t now;
 
 	time(&now);
-	strcpy(buf, ctime(&now));
+	strlcpy(buf, ctime(&now), sizeof(buf));
 	buf[19] = '\0';
 	getinfo(&s, state);
 }

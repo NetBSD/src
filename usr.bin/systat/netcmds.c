@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.17 2000/12/01 02:19:44 simonb Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.18 2003/05/15 01:00:07 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.17 2000/12/01 02:19:44 simonb Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.18 2003/05/15 01:00:07 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -397,7 +397,7 @@ showhosts(void)
 		sa = (struct sockaddr *)&p->addr;
 		if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
 				flags) != 0)
-			strcpy(hbuf, "(invalid)");
+			strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 		if (!p->onoff)
 			addch('!');
 		printw("%s ", hbuf);
