@@ -1,4 +1,4 @@
-/*	$NetBSD: divrem.m4,v 1.3 1995/08/14 02:20:07 cgd Exp $	*/
+/*	$NetBSD: divrem.m4,v 1.4 1995/09/30 02:14:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -40,7 +40,7 @@
  * M4 Parameters
  * NAME		name of function to generate
  * OP		OP=div: t10 / t11 -> t12; OP=rem: t10 % t11 -> t12
- * S		S=true: signed; S=false: unsigned [XXX NOT YET]
+ * S		S=true: signed; S=false: unsigned
  * WORDSIZE	total number of bits
  */
 
@@ -97,7 +97,7 @@ ifelse(WORDSIZE, `32', `
 ')' )
 
 	/* kill the special cases. */
-	beq	B, Ldotrap			/* division by zero! XXX */
+	beq	B, Ldotrap			/* division by zero! */
 
 1:	cmpult	A, B, CC			/* A < B? */
 	/* RESULT is already zero, from above.  A is untouched. */
