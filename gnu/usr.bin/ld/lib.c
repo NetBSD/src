@@ -1,5 +1,5 @@
 /*
- * $Id: lib.c,v 1.1 1993/10/16 21:52:32 pk Exp $	- library routines
+ * $Id: lib.c,v 1.2 1993/10/21 00:52:58 pk Exp $	- library routines
  */
 
 #include <sys/param.h>
@@ -549,12 +549,12 @@ read_shared_object (desc, entry)
 	entry->symbols = (struct localsymbol *)
 			xmalloc(entry->nsymbols * sizeof(struct localsymbol));
 	lseek(desc, text_offset (entry) + dyn2.ld_symbols, L_SET);
-	if (read(desc, (char *)np, n) != n) {
+	if (read(desc, (char *)nzp, n) != n) {
 		fatal_with_file(
 			"premature eof while reading dyn syms ", entry);
 	}
 	if (has_nz)
-		md_swapin_zsymbols(np, entry->nsymbols);
+		md_swapin_zsymbols(nzp, entry->nsymbols);
 	else
 		md_swapin_symbols(np, entry->nsymbols);
 
