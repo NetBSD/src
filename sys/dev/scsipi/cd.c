@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.213 2005/01/30 23:39:42 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.214 2005/01/30 23:42:58 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.213 2005/01/30 23:39:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.214 2005/01/30 23:42:58 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -1786,14 +1786,14 @@ cd_load_toc(struct cd_softc *cd, struct cd_toc *toc, int flags)
 {
 	int ntracks, len, error;
 
-	if ((error = cd_read_toc(cd, 0, 0, toc, sizeof(toc->header),
+	if ((error = cd_read_toc_f0(cd, 0, 0, toc, sizeof(toc->header),
 	    flags, 0)) != 0)
 		return (error);
 
 	ntracks = toc->header.ending_track - toc->header.starting_track + 1;
 	len = (ntracks + 1) * sizeof(struct cd_toc_entry) +
 	    sizeof(toc->header);
-	if ((error = cd_read_toc(cd, CD_MSF_FORMAT, 0, toc, len,
+	if ((error = cd_read_toc_f0(cd, CD_MSF_FORMAT, 0, toc, len,
 	    flags, 0)) != 0)
 		return (error);
 	return (0);
