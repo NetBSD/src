@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: logwtmp.c,v 1.3 1994/05/04 10:56:03 cgd Exp $";
+static char *rcsid = "$Id: logwtmp.c,v 1.4 1995/06/05 19:43:59 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,17 +41,19 @@ static char *rcsid = "$Id: logwtmp.c,v 1.3 1994/05/04 10:56:03 cgd Exp $";
 #include <sys/time.h>
 #include <sys/stat.h>
 
+#include <string.h>
 #include <unistd.h>
 #include <utmp.h>
 
+void logwtmp __P((char *, char *, char *));
+
+void
 logwtmp(line, name, host)
 	char *line, *name, *host;
 {
 	struct utmp ut;
 	struct stat buf;
 	int fd;
-	time_t time();
-	char *strncpy();
 
 	if ((fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) < 0)
 		return;
