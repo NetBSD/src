@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.66 2000/08/19 10:44:02 pk Exp $	*/
+/*	$NetBSD: vnd.c,v 1.67 2000/08/20 11:51:52 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -537,7 +537,7 @@ vndstart(vnd)
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
 			printf("vndstart(%ld): bp %p vp %p blkno 0x%x"
-				" flags %lx addr %p cnt 0x%lx flags %lx\n",
+				" flags %lx addr %p cnt 0x%lx\n",
 			    (long) (vnd-vnd_softc), bp, bp->b_vp, bp->b_blkno,
 			    bp->b_flags, bp->b_data, bp->b_bcount);
 #endif
