@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 1997/01/09 20:20:20 tls Exp $
+#	$NetBSD: Makefile,v 1.7 1997/09/09 11:07:43 drochner Exp $
 
 PROG=	ipcrm
+
+WARNS= 1
 
 .include <bsd.prog.mk>
