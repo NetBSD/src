@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.31 1998/02/09 02:30:49 scottb Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.32 1998/02/14 20:52:47 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -1340,7 +1340,7 @@ ibcs2_sys_chown(p, v, retval)
         caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	return sys_chown(p, uap, retval);
+	return sys___posix_chown(p, uap, retval);
 }
 
 int
@@ -1405,7 +1405,7 @@ ibcs2_sys_rename(p, v, retval)
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
 	IBCS2_CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
-	return sys_posix_rename(p, uap, retval);
+	return sys___posix_rename(p, uap, retval);
 }
 
 int
