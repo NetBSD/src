@@ -1,4 +1,4 @@
-/* $NetBSD: wsqmsvar.h,v 1.4 2002/06/19 23:49:14 bjh21 Exp $ */
+/* $NetBSD: wsqmsvar.h,v 1.5 2002/06/20 19:33:36 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -55,8 +55,8 @@ struct wsqms_softc {
 
 	struct callout sc_callout;
 
-	int lastx;
-	int lasty;
+	u_int16_t lastx;
+	u_int16_t lasty;
 	int lastb;
 };
 
