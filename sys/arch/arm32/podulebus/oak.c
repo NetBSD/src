@@ -1,8 +1,11 @@
-/* $NetBSD: oak.c,v 1.12 1998/01/13 02:10:35 thorpej Exp $ */
+/*	$NetBSD: oak.c,v 1.13 1998/03/14 17:06:17 mark Exp $	*/
 
 /*
- * Copyright (c) 1995 Melvin Tang-Richardson 1996.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Mark Brinicombe of Causality Limited.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,128 +17,117 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by RiscBSD.
- * 4. The name of the company nor the name of the author may be used to
- *    endorse or promote products derived from this software without specific
- *    prior written permission.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY RISCBSD ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL RISCBSD OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
- * Oak SCSI Driver using the NCR5380 generic driver
+ * Oak SCSI 1 driver using the generic NCR5380 driver
  */
 
-#undef USE_OWN_PIO_ROUTINES
-
-/* Some system includes *****************************************************/
-
-#include <sys/types.h>
-#include <sys/cdefs.h>
-#include <sys/time.h>
-#include <sys/systm.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-
-/* SCSI bus includes */
-
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-/* Hardware related include chip/card/bus ***********************************/
+#include <dev/ic/ncr5380reg.h>
+#include <dev/ic/ncr5380var.h>
 
 #include <machine/io.h>
-#include <machine/irqhandler.h>
-#include <machine/katelib.h>
+#include <machine/bootconfig.h>
+
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/dev/ncr5380reg.h>
-#include <arm32/dev/ncr5380var.h>
 #include <arm32/podulebus/podules.h>
 
-/****************************************************************************/
-/* Some useful definitions **************************************************/
-/****************************************************************************/
+void oak_attach __P((struct device *, struct device *, void *));
+int  oak_match  __P((struct device *, struct cfdata *, void *));
+static void oak_minphys __P((struct buf *bp));
 
-#define MAX_DMA_LEN	(0xe000)
+struct scsipi_adapter oak_scsiswitch = {
+	ncr5380_scsi_cmd,	/* scsi_cmd() */
+	oak_minphys,		/* scsi_minphys() */
+	0,			/* no lun support */
+	0,			/* no lun support */
+};
 
-/****************************************************************************/
-/* Prototype internal data structures ***************************************/
-/****************************************************************************/
+struct scsipi_device oak_scsidev = {
+	NULL,		/* use default error handler */
+	NULL,		/* do not have a start functio */
+	NULL,		/* have no async handler */
+	NULL,		/* Use default done routine */
+};
+
+/*
+ * Oak SCSI 1 softc structure.
+ *
+ * Contains the generic ncr5380 device node, podule information and global information
+ * required by the driver.
+ */
 
 struct oak_softc {
-	struct ncr5380_softc ncr_sc;
-	int sc_podule_number;
-	podule_t *sc_podule;
-	int sc_base;
+	struct ncr5380_softc	sc_ncr5380;
+	int			sc_podule_number;
+	podule_t		*sc_podule;
 };
 
-/****************************************************************************/
-/* Function and data prototypes *********************************************/
-/****************************************************************************/
-
-int  oakprobe 	__P((struct device *, struct cfdata *, void *));
-void oakattach 	__P((struct device *, struct device *, void *));
-void oakminphys __P((struct buf *));
-
-#ifdef USE_OWN_PIO_ROUTINES
-int oak_pio_in  __P((struct ncr5380_softc *, int, int, unsigned char *));
-int oak_pio_out __P((struct ncr5380_softc *, int, int, unsigned char *));
-#endif
-
-struct scsipi_adapter oak_adapter = {
-	ncr5380_scsi_cmd,
-	oakminphys,
-	NULL,
-	NULL,
+struct cfattach oak_ca = {
+	sizeof(struct oak_softc), oak_match, oak_attach
 };
 
-struct scsipi_device oak_device = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-};
+/*
+ * Card probe function
+ *
+ * Just match the manufacturer and podule ID's
+ */
 
 int
-oakprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+oak_match(parent, cf, aux)
+	struct device	*parent;
+	struct cfdata	*cf;
+	void		*aux;
 {
-	struct podule_attach_args *pa = (void *) aux;
-
-/* Look for the card */
+	struct podule_attach_args *pa = aux;
 
 	if (matchpodule(pa, MANUFACTURER_OAK, PODULE_OAK_SCSI, -1) == 0)
 		return(0);
 
-	return 1;
+	return(1);
 }
 
+/*
+ * Card attach function
+ *
+ */
+
 void
-oakattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+oak_attach(parent, self, aux)
+	struct device	*parent, *self;
+	void		*aux;
 {
-	struct oak_softc *sc = (void *) self;
-	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
-	struct podule_attach_args *pa = (void *)aux;
+	struct oak_softc *sc = (struct oak_softc *)self;
+	struct podule_attach_args *pa = aux;
+	u_char *iobase;
+
+	/* Note the podule number and validate */
 
 	if (pa->pa_podule_number == -1)
 		panic("Podule has disappeared !");
@@ -143,230 +135,56 @@ oakattach(parent, self, aux)
 	sc->sc_podule_number = pa->pa_podule_number;
 	sc->sc_podule = pa->pa_podule;
 	podules[sc->sc_podule_number].attached = 1;
-	sc->sc_base = sc->sc_podule->mod_base;
 
-	printf(" 16-bit");
+	sc->sc_ncr5380.sc_flags |= NCR5380_FORCE_POLLING;
+	sc->sc_ncr5380.sc_min_dma_len = 0;
+	sc->sc_ncr5380.sc_no_disconnect = 0xff;
+	sc->sc_ncr5380.sc_parity_disable = 0xff;
 
-	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	ncr_sc->sc_link.adapter_softc = sc;
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_link.adapter = &oak_adapter;
-	ncr_sc->sc_link.device = &oak_device;
-	ncr_sc->sc_link.type = BUS_SCSI;
+	sc->sc_ncr5380.sc_dma_alloc = NULL;
+	sc->sc_ncr5380.sc_dma_free = NULL;
+	sc->sc_ncr5380.sc_dma_poll = NULL;
+	sc->sc_ncr5380.sc_dma_setup = NULL;
+	sc->sc_ncr5380.sc_dma_start = NULL;
+	sc->sc_ncr5380.sc_dma_eop = NULL;
+	sc->sc_ncr5380.sc_dma_stop = NULL;
+	sc->sc_ncr5380.sc_intr_on = NULL;
+	sc->sc_ncr5380.sc_intr_off = NULL;
 
-	ncr_sc->sci_r0 = (volatile u_char *)sc->sc_base + 0x00;
-	ncr_sc->sci_r1 = (volatile u_char *)sc->sc_base + 0x04;
-	ncr_sc->sci_r2 = (volatile u_char *)sc->sc_base + 0x08;
-	ncr_sc->sci_r3 = (volatile u_char *)sc->sc_base + 0x0c;
-	ncr_sc->sci_r4 = (volatile u_char *)sc->sc_base + 0x10;
-	ncr_sc->sci_r5 = (volatile u_char *)sc->sc_base + 0x14;
-	ncr_sc->sci_r6 = (volatile u_char *)sc->sc_base + 0x18;
-	ncr_sc->sci_r7 = (volatile u_char *)sc->sc_base + 0x1c;
+	iobase = (u_char *)pa->pa_podule->mod_base;
+	sc->sc_ncr5380.sci_r0 = iobase + 0;
+	sc->sc_ncr5380.sci_r1 = iobase + 4;
+	sc->sc_ncr5380.sci_r2 = iobase + 8;
+	sc->sc_ncr5380.sci_r3 = iobase + 12;
+	sc->sc_ncr5380.sci_r4 = iobase + 16;
+	sc->sc_ncr5380.sci_r5 = iobase + 20;
+	sc->sc_ncr5380.sci_r6 = iobase + 24;
+	sc->sc_ncr5380.sci_r7 = iobase + 28;
+	
+	sc->sc_ncr5380.sc_pio_in = ncr5380_pio_in;
+	sc->sc_ncr5380.sc_pio_out = ncr5380_pio_out;
+	
+	sc->sc_ncr5380.sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_ncr5380.sc_link.adapter_softc = sc;
+	sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target = 7;
+	sc->sc_ncr5380.sc_link.adapter = &oak_scsiswitch;
+	sc->sc_ncr5380.sc_link.device = &oak_scsidev;
 
-#ifdef USE_OWN_PIO_ROUTINES
- 	printf ( ", my pio" );
-	ncr_sc->sc_pio_out = oak_pio_out;
-	ncr_sc->sc_pio_in  = oak_pio_in;
-#else
-	printf ( ", normal pio" );
-	ncr_sc->sc_pio_out = ncr5380_pio_out;
-	ncr_sc->sc_pio_in  = ncr5380_pio_in;
-#endif
+	/* Provide an override for the host id */
+	(void)get_bootconf_option(boot_args, "oak.hostid",
+	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
 
-	ncr_sc->sc_dma_alloc = NULL;
-	ncr_sc->sc_dma_free  = NULL;
-	ncr_sc->sc_dma_poll  = NULL;
-	ncr_sc->sc_dma_setup  = NULL;
-	ncr_sc->sc_dma_start  = NULL;
-	ncr_sc->sc_dma_eop  = NULL;
-	ncr_sc->sc_dma_stop  = NULL;
+	printf(" host=%d, using 8 bit PIO\n",
+	    sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
 
-	printf(", polling");
-	ncr_sc->sc_intr_on   = NULL;
-	ncr_sc->sc_intr_off  = NULL;
-
-	ncr_sc->sc_flags  = NCR5380_FORCE_POLLING;
-
-	ncr5380_init(ncr_sc);
-	ncr5380_reset_scsibus(ncr_sc);
-
-	printf(" UNDER DEVELOPMENT\n");
-
-	config_found(self, &(ncr_sc->sc_link), scsiprint);
+	ncr5380_init(&sc->sc_ncr5380);
+	ncr5380_reset_scsibus(&sc->sc_ncr5380);
+	config_found(&sc->sc_ncr5380.sc_dev, &sc->sc_ncr5380.sc_link, scsiprint);
 }
 
-
-void
-oakminphys(bp)
+static void
+oak_minphys(bp)
 	struct buf *bp;
 {
-	if (bp->b_bcount > MAX_DMA_LEN) {
-		printf("oak: DEBUG reducing dma length\n");
-		bp->b_bcount = MAX_DMA_LEN;
-	}
-	minphys(bp);
+	return(minphys(bp));
 }
-
-struct cfattach oak_ca = {
-	sizeof(struct oak_softc), oakprobe, oakattach
-};
-
-#ifdef USE_OWN_PIO_ROUTINES
-
-/****************************************************************************/
-/* Copyright (c) 1996 Melvin Tang-Richardson				    */
-/* Copyright (c) 1995 David Jones, Gordon W. Rose			    */
-/* Copyright (c) 1994 Jarle Greipsland					    */
-/****************************************************************************/
-
-static ncr5380_wait_req_timo = 1000 * 50;	/* X2 = 100 mS */
-static ncr5380_wait_nrq_timo = 1000 * 25;	/* X2 =  50 mS */
-
-/* Return zero on success. */
-static __inline__ int ncr5380_wait_req(sc)
-	struct ncr5380_softc *sc;
-{
-	register int timo = ncr5380_wait_req_timo;
-	for (;;) {
-		if (*sc->sci_bus_csr & SCI_BUS_REQ) {
-			timo = 0;	/* return 0 */
-			break;
-		}
-		if (--timo < 0)
-			break;	/* return -1 */
-		delay(2);
-	}
-	return (timo);
-}
-
-/* Return zero on success. */
-static __inline__ int ncr5380_wait_not_req(sc)
-	struct ncr5380_softc *sc;
-{
-	register int timo = ncr5380_wait_nrq_timo;
-	for (;;) {
-		if ((*sc->sci_bus_csr & SCI_BUS_REQ) == 0) {
-			timo = 0;	/* return 0 */
-			break;
-		}
-		if (--timo < 0)
-			break;	/* return -1 */
-		delay(2);
-	}
-	return (timo);
-}
-
-int
-oak_pio_out(sc, phase, count, data)
-	struct ncr5380_softc *sc;
-	int phase, count;
-	unsigned char		*data;
-{
-	register u_char 	icmd;
-	register int		resid;
-	register int		error;
-
-	printf("oak: pio_out %d %d\n", phase, count);
-
-	icmd = *(sc->sci_icmd) & SCI_ICMD_RMASK;
-
-	icmd |= SCI_ICMD_DATA;
-	*sc->sci_icmd = icmd;
-
-	resid = count;
-	while (resid > 0) {
-		if (!SCI_BUSY(sc)) {
-			NCR_TRACE("pio_out: lost BSY, resid=%d\n", resid);
-			break;
-		}
-		if (ncr5380_wait_req(sc)) {
-			NCR_TRACE("pio_out: no REQ, resid=%d\n", resid);
-			break;
-		}
-		if (SCI_BUS_PHASE(*sc->sci_bus_csr) != phase)
-			break;
-
-		/* Put the data on the bus. */
-		*sc->sci_odata = *data++;
-
-		/* Tell the target it's there. */
-		icmd |= SCI_ICMD_ACK;
-		*sc->sci_icmd = icmd;
-
-		/* Wait for target to get it. */
-		error = ncr5380_wait_not_req(sc);
-
-		/* OK, it's got it (or we gave up waiting). */
-		icmd &= ~SCI_ICMD_ACK;
-		*sc->sci_icmd = icmd;
-
-		if (error) {
-			NCR_TRACE("pio_out: stuck REQ, resid=%d\n", resid);
-			break;
-		}
-
-		--resid;
-	}
-
-	/* Stop driving the data bus. */
-	icmd &= ~SCI_ICMD_DATA;
-	*sc->sci_icmd = icmd;
-
-	return (count - resid);
-}
-
-int
-oak_pio_in(sc, phase, count, data)
-	struct ncr5380_softc *sc;
-	int phase, count;
-	unsigned char	*data;
-{
-	register u_char 	icmd;
-	register int		resid;
-	register int		error;
-
-	printf("oak: pio_in %d %d\n", phase, count);
-
-	icmd = *(sc->sci_icmd) & SCI_ICMD_RMASK;
-
-	resid = count;
-	while (resid > 0) {
-		if (!SCI_BUSY(sc)) {
-			NCR_TRACE("pio_in: lost BSY, resid=%d\n", resid);
-			break;
-		}
-		if (ncr5380_wait_req(sc)) {
-			NCR_TRACE("pio_in: no REQ, resid=%d\n", resid);
-			break;
-		}
-		/* A phase change is not valid until AFTER REQ rises! */
-		if (SCI_BUS_PHASE(*sc->sci_bus_csr) != phase)
-			break;
-
-		/* Read the data bus. */
-		*data++ = *sc->sci_data;
-
-		/* Tell target we got it. */
-		icmd |= SCI_ICMD_ACK;
-		*sc->sci_icmd = icmd;
-
-		/* Wait for target to drop REQ... */
-		error = ncr5380_wait_not_req(sc);
-
-		/* OK, we can drop ACK. */
-		icmd &= ~SCI_ICMD_ACK;
-		*sc->sci_icmd = icmd;
-
-		if (error) {
-			NCR_TRACE("pio_in: stuck REQ, resid=%d\n", resid);
-			break;
-		}
-
-		--resid;
-	}
-
-	return (count - resid);
-}
-
-#endif /* USE_OWN_PIO_ROUTINES */
-
