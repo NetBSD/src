@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 2001/06/10 15:32:57 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100 2001/06/12 16:29:07 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -834,10 +834,14 @@ struct usb_kbd_ihandles {
 void
 cninit_kd()
 {
-	int stdin, akbd;
-	int node;
-	struct usb_kbd_ihandles *ukbds;
+	int stdin, node;
 	char name[16];
+#if NAKBD > 0
+	int akbd;
+#endif
+#if NUKBD > 0
+	struct usb_kbd_ihandles *ukbds;
+#endif
 
 	/*
 	 * Attach the console output now (so we can see debugging messages,
