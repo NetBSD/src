@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.31.4.4 2002/06/26 16:54:46 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.31.4.5 2003/03/15 20:11:56 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.31.4.4 2002/06/26 16:54:46 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.31.4.5 2003/03/15 20:11:56 he Exp $");
 #endif
 #endif
 
@@ -53,7 +53,7 @@ pkg_do(char *pkg)
 	int     code = 0;
 
 	if (IS_URL(pkg)) {
-		if ((cp = fileGetURL(NULL, pkg)) != NULL) {
+		if ((cp = fileGetURL(pkg)) != NULL) {
 			strcpy(fname, cp);
 			isTMP = TRUE;
 		}
@@ -63,7 +63,7 @@ pkg_do(char *pkg)
 		if (*pkg != '/') {
 			if (!getcwd(fname, FILENAME_MAX)) {
 				cleanup(0);
-				err(1, "fatal error during execution: getcwd");
+				err(EXIT_FAILURE, "fatal error during execution: getcwd");
 			}
 			len = strlen(fname);
 			(void) snprintf(&fname[len], sizeof(fname) - len, "/%s", pkg);
@@ -72,7 +72,7 @@ pkg_do(char *pkg)
 		}
 		cp = fname;
 	} else {
-		if ((cp = fileFindByPath(NULL, pkg)) != NULL) {
+		if ((cp = fileFindByPath(pkg)) != NULL) {
 			strncpy(fname, cp, FILENAME_MAX);
 		}
 	}
@@ -88,7 +88,7 @@ pkg_do(char *pkg)
 				 */
 				char *cp2;
 
-				if ((cp2 = fileGetURL(NULL, cp)) != NULL) {
+				if ((cp2 = fileGetURL(cp)) != NULL) {
 					strcpy(fname, cp2);
 					isTMP = TRUE;
 				}
@@ -175,6 +175,9 @@ pkg_do(char *pkg)
 		/* Start showing the package contents */
 		if (!Quiet) {
 			printf("%sInformation for %s:\n\n", InfoPrefix, pkg);
+			if (fexists(PRESERVE_FNAME)) {
+				printf("*** PACKAGE MAY NOT BE DELETED ***\n");
+			}
 		}
 		if (Flags & SHOW_COMMENT) {
 			show_file("Comment:\n", COMMENT_FNAME);
@@ -225,6 +228,9 @@ pkg_do(char *pkg)
 			show_file("Size in bytes including required pkgs: ", SIZE_ALL_FNAME);
 		}
 		if (!Quiet) {
+			if (fexists(PRESERVE_FNAME)) {
+				printf("*** PACKAGE MAY NOT BE DELETED ***\n\n");
+			}
 			puts(InfoPrefix);
 		}
 		free_plist(&plist);
@@ -323,8 +329,8 @@ pkg_perform(lpkg_head_t *pkghead)
 			char   *file, *pkg;
 
 			/* pkg_info -Fa => Dump pkgdb */
-			if (pkgdb_open(1) == -1) {
-				err(1, "cannot open pkgdb");
+			if (!pkgdb_open(ReadOnly)) {
+				err(EXIT_FAILURE, "cannot open pkgdb");
 			}
 			while ((file = pkgdb_iter())) {
 				pkg = pkgdb_retrieve(file);
