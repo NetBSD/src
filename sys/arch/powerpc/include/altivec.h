@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.4 2002/07/28 07:07:44 chs Exp $	*/
+/*	$NetBSD: altivec.h,v 1.5 2002/11/03 22:36:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_ALTIVEC_H_
-#define	_MACHINE_ALTIVEC_H_
+#ifndef	_POWERPC_ALTIVEC_H_
+#define	_POWERPC_ALTIVEC_H_
 
 #define	VSCR_SA		0x00000001	/* Saturation happended (sticky) */
 #define	VSCR_NJ		0x00010000	/* Non Java-IEEE-C9X FP mode */
@@ -55,4 +55,4 @@ void vcopypage(paddr_t, paddr_t);	/* dst, src */
 extern struct pool vecpool;
 #endif
 
-#endif	/* _MACHINE_ALTIVEC_H_ */
+#endif	/* _POWERPC_ALTIVEC_H_ */

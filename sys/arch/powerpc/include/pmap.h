@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27 2002/09/22 07:53:47 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.28 2002/11/03 22:36:23 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,8 +31,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_PMAP_H_
-#define	_MACHINE_PMAP_H_
+#ifndef	_POWERPC_PMAP_H_
+#define	_POWERPC_PMAP_H_
 
 #include <machine/pte.h>
 
@@ -119,4 +119,4 @@ vtophys(va)
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
 
-#endif	/* _MACHINE_PMAP_H_ */
+#endif	/* _POWERPC_PMAP_H_ */

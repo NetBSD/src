@@ -1,8 +1,8 @@
-/*	$NetBSD: cdefs.h,v 1.5 1999/03/20 01:40:26 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.6 2002/11/03 22:36:22 matt Exp $	*/
 
-#ifndef	_MACHINE_CDEFS_H_
-#define	_MACHINE_CDEFS_H_
+#ifndef	_POWERPC_CDEFS_H_
+#define	_POWERPC_CDEFS_H_
 
 /* No arch-specific cdefs. */
 
-#endif /* !_MACHINE_CDEFS_H_ */
+#endif /* !_POWERPC_CDEFS_H_ */
