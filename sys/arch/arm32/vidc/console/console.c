@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.7 1996/04/26 20:56:04 mark Exp $ */
+/* $NetBSD: console.c,v 1.8 1996/05/12 21:40:21 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -883,13 +883,13 @@ physconinit(cp)
 	test = (int *) vconsole_master->render_engine;
 	for ( counter=0; counter<(sizeof(struct render_engine)/4)-1; counter++ )
 		if (test[counter]==0)
-			panic ( "Render engine %i is missins a routine",
+			panic ( "Render engine %s is missins a routine",
 			    vconsole_master->render_engine->name );
   
 	test = (int *) vconsole_master->terminal_emulator;
 	for ( counter=0; counter<(sizeof(struct terminal_emulator)/4)-1; counter++ )
 		if (test[counter]==0)
-			panic ( "Render engine %i is missing a routine",
+			panic ( "Render engine %s is missing a routine",
 			    vconsole_master->terminal_emulator->name );
 }
 
