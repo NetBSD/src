@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37 1997/05/26 00:27:43 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.38 1997/10/11 06:38:49 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -283,59 +283,62 @@ extern vm_map_t phys_map;
  * is a total crock, the multiple mappings of these physical pages should
  * be reflected in the higher-level VM structures to avoid problems.
  */
-/*ARGSUSED*/
 void
-vmapbuf(bp, sz)
+vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t sz;
+	vm_size_t len;
 {
-	int npf;
-	caddr_t addr;
-	long flags = bp->b_flags;
-	struct proc *p;
-	int off;
-	vm_offset_t kva;
-	vm_offset_t pa;
+	struct pmap *upmap, *kpmap;
+	vm_offset_t uva;	/* User VA (map from) */
+	vm_offset_t kva;	/* Kernel VA (new to) */
+	vm_offset_t pa; 	/* physical address */
+	vm_size_t off;
 
-	if ((flags & B_PHYS) == 0)
+	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	addr = bp->b_saveaddr = bp->b_data;
-	off = (int)addr & PGOFSET;
-	p = bp->b_proc;
-	npf = btoc(round_page(bp->b_bcount + off));
-	kva = kmem_alloc_wait(phys_map, ctob(npf));
+
+	uva = m68k_trunc_page(bp->b_saveaddr = bp->b_data);
+	off = (vm_offset_t)bp->b_data - uva;
+	len = m68k_round_page(off + len);
+	kva = kmem_alloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(kva + off);
-	while (npf--) {
-		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
-		    (vm_offset_t)addr);
+
+	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	kpmap = vm_map_pmap(phys_map);
+	do {
+		pa = pmap_extract(upmap, uva);
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
-		addr += PAGE_SIZE;
+		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
-	}
+		len -= PAGE_SIZE;
+	} while (len);
 }
 
 /*
  * Free the io map PTEs associated with this IO operation.
  */
-/*ARGSUSED*/
 void
-vunmapbuf(bp, sz)
+vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t sz;
+	vm_size_t len;
 {
-	caddr_t addr;
-	int npf;
 	vm_offset_t kva;
+	vm_size_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	addr = bp->b_data;
-	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
-	kva = (vm_offset_t)((int)addr & ~PGOFSET);
-	kmem_free_wakeup(phys_map, kva, ctob(npf));
+
+	kva = m68k_trunc_page(bp->b_data);
+	off = (vm_offset_t)bp->b_data - kva;
+	len = m68k_round_page(off + len);
+
+	/*
+	 * pmap_remove() is unnecessary here, as kmem_free_wakeup()
+	 * will do it for us.
+	 */
+	kmem_free_wakeup(phys_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
-	bp->b_saveaddr = NULL;
+	bp->b_saveaddr = 0;
 }
