@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.65 1999/09/18 00:20:17 hubertf Exp $
+# $NetBSD: md_share,v 1.66 1999/09/20 00:30:41 hubertf Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -258,6 +258,8 @@
 ./usr/share/man/cat8/hp300/crash.0
 ./usr/share/man/cat8/hp300/format.0
 ./usr/share/man/cat8/hp300/makedev.0
+./usr/share/man/cat8/hpcmips/MAKEDEV.0
+./usr/share/man/cat8/hpcmips/makedev.0
 ./usr/share/man/cat8/i386/MAKEDEV.0
 ./usr/share/man/cat8/i386/apm.0
 ./usr/share/man/cat8/i386/apmd.0
@@ -574,6 +576,8 @@
 ./usr/share/man/man8/hp300/crash.8
 ./usr/share/man/man8/hp300/format.8
 ./usr/share/man/man8/hp300/makedev.8
+./usr/share/man/man8/hpcmips/MAKEDEV.8
+./usr/share/man/man8/hpcmips/makedev.8
 ./usr/share/man/man8/i386/MAKEDEV.8
 ./usr/share/man/man8/i386/apm.8
 ./usr/share/man/man8/i386/apmd.8
