@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 1999/04/19 21:23:00 kleink Exp $	*/
+/*	$NetBSD: conf.c,v 1.19 1999/09/18 09:26:00 scw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -184,8 +184,8 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
 	cdev_rnd_init(NRND,rnd),	/* 35: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 36: SCSI bus */
-	cdev_disk_init(NRAID,raid)	/* 37: RAIDframe disk driver */
-	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 38: svr4 net pseudo-device */
+	cdev_disk_init(NRAID,raid),	/* 37: RAIDframe disk driver */
+	cdev_svr4_net_init(NSVR4_NET,svr4_net) /* 38: svr4 net pseudo-device */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
