@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.12 1997/09/10 06:09:15 mikel Exp $
+#	$NetBSD: special,v 1.13 1997/09/20 04:02:01 mikel Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -32,10 +32,10 @@ ftpusers	type=file mode=0644 uname=root gname=wheel
 group		type=file mode=0644 uname=root gname=wheel
 hosts.equiv	type=file mode=0600 uname=root gname=wheel optional
 inetd.conf	type=file mode=0644 uname=root gname=wheel
-kerberosIV	type=dir mode=0755 uname=root gname=wheel ignore
+kerberosIV	type=dir mode=0755 uname=root gname=wheel ignore optional
 ..	#kerberosIV
 ld.so.conf	type=file mode=0644 uname=root gname=wheel optional
-lkm.conf	type=file mode=0644 uname=root gname=wheel
+lkm.conf	type=file mode=0644 uname=root gname=wheel optional
 mail.rc		type=file mode=0644 uname=root gname=wheel
 master.passwd	type=file mode=0600 uname=root gname=wheel
 monthly		type=file mode=0644 uname=root gname=wheel
@@ -105,7 +105,7 @@ sbin		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/sbin
 share		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/share
-src		type=dir mode=0755 uname=root gname=wheel ignore
+src		type=dir mode=0755 uname=root gname=wheel ignore optional
 ..	#usr/src
 ..	#usr
 
