@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.10 2002/12/02 14:25:38 ichiro Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.11 2002/12/08 13:22:32 ichiro Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002
@@ -295,28 +295,6 @@ cpu_reboot(howto, bootstr)
 	printf("RESET FAILED!\n");
 	for (;;);
 }
-
-/*
- * pmap table
- */
-/*
- * IXM1200 specific I/O registers mapping table
- */
-static struct pmap_ent	map_tbl_ixm1200[] = {
-	{ "IXM1200 SlowPort I/O Registers",
-	  IXM1200_LED_VADDR, IXM1200_LED_ADDR,
-	  IXM1200_LED_ADDR_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ NULL,
-	  0,
-	  0,
-	  0,
-	  0,
-	  0,
-	}
-};
 
 /*
  * Initial entry point on startup. This gets called before main() is
@@ -622,7 +600,6 @@ initarm(void *arg)
 	 */
 
 	ixp12x0_pmap_io_reg(l1pagetable);
-	ixp12x0_pmap_chunk_table(l1pagetable, map_tbl_ixm1200);
 
 	printf("done.\n");
 
