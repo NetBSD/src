@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.10 1998/07/06 14:54:05 mrg Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.11 1998/07/26 22:21:02 mycroft Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -29,7 +29,6 @@
 #define NAMELEN 2
 
 int main __P((int, char **));
-int skeylookup __ARGS((struct skey * mp, char *name));
 
 int
 main(argc, argv)
@@ -41,10 +40,11 @@ main(argc, argv)
 	char	hostname[MAXHOSTNAMELEN + 1];
 	char    seed[18], tmp[80], key[8], defaultseed[17];
 	char    passwd[256], passwd2[256], tbuf[27], buf[60];
-	char    lastc, me[80], *salt, *p, *pw;
-	struct skey skey;
-	struct passwd *pp;
-	struct tm *tm;
+	char    lastc, me[80], *p, *pw;
+	const	char *salt;
+	struct	skey skey;
+	struct	passwd *pp;
+	struct	tm *tm;
 
 	time(&now);
 	tm = localtime(&now);
