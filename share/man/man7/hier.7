@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.51 2003/03/30 21:11:53 wiz Exp $
+.\"	$NetBSD: hier.7,v 1.52 2003/03/30 21:15:08 perry Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,13 +81,13 @@ see
 .Xr makedev 8
 .It Sy console
 the computer's console device
+.It Sy drum
+system swap space; see
+.Xr drum 4
 .It Sy fd/
 file descriptor files;
 see
 .Xr fd 4
-.It Sy drum
-system swap space; see
-.Xr drum 4
 .It Sy klog
 kernel logging device; see
 .Xr syslog 3
@@ -101,15 +101,15 @@ domain datagram log socket; see
 .It Sy mem
 kernel physical memory device; see
 .Xr mem 4
+.It Sy null
+the null device; see
+.Xr null 4
 .It Sy stderr
 .It Sy stdin
 .It Sy stdout
 file descriptor files;
 see
 .Xr fd 4
-.It Sy null
-the null device; see
-.Xr null 4
 .It Sy tty
 process' controlling terminal device; see
 .Xr tty 4
@@ -223,11 +223,8 @@ configuration file for
 see
 .Xr man.conf 5
 .It Sy master.passwd
-.It Sy passwd
-.It Sy pwd.db
-.It Sy spwd.db
-password files and their databases; see
-.Xr pwd_mkdb 8
+Main password file, readable only by root; see
+.Xr passwd 5
 .It Sy mk.conf
 optional file containing
 .Xr make 1
@@ -259,6 +256,10 @@ network startup script
 .It Sy networks
 network name data base; see
 .Xr networks 5
+.It Sy passwd
+World readable password file generated from master.passwd; see
+.Xr passwd 5 ,
+.Xr pwd_mkdb 8
 .It Sy phones
 remote host phone number data base; see
 .Xr phones 5
@@ -268,6 +269,9 @@ system printer configuration; see
 .It Sy protocols
 protocol name database; see
 .Xr protocols 5
+.It Sy pwd.db
+database form of passwd file; see
+.Xr pwd_mkdb 8
 .It Sy rc
 .It Sy rc.shutdown
 .It Sy rc.local
@@ -300,6 +304,9 @@ list of permitted shells; see
 .Tn SLIP
 login/logout scripts; see
 .Xr sliplogin 8
+.It Sy spwd.db
+database form of master.passwd file; see
+.Xr pwd_mkdb 8
 .It Sy syslog.conf
 .Xr syslogd 8
 configuration file; see
@@ -457,6 +464,8 @@ system daemons \*[Am] system utilities (executed by other programs)
 UUCP binaries and scripts (historically placed; to be moved)
 .El
 .Pp
+.It Sy lkm/
+loadable kernel modules
 .It Sy mdec/
 boot blocks, etc.
 .It Sy pkg/
