@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.526 2004/11/12 06:33:50 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.527 2004/11/12 06:37:28 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8014,3 +8014,8 @@ lib/libpthread/arch/x86_64/_context_u.S		1.4
 
 	Fix thread context switching to take the stack ABI into account.
 	[fvdl, ticket #956]
+
+usr.sbin/pppd/pppd/cbcp.c			1.8-1.10
+
+	If the cbcp option length is too long, stop parsing.
+	[christos, ticket #957]
