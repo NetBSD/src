@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.20 1996/10/10 23:31:24 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.21 1996/10/13 01:39:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -644,7 +644,7 @@ nfssvc_nfsd(nsd, argp, p)
 				m = m->m_next;
 			}
 			if (siz <= 0 || siz > NFS_MAXPACKET) {
-				kprintf("mbuf siz=%d\n",siz);
+				printf("mbuf siz=%d\n",siz);
 				panic("Bad nfs svc reply");
 			}
 			m = mreq;

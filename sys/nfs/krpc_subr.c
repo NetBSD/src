@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.17 1996/10/10 23:31:17 christos Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.18 1996/10/13 01:39:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -258,7 +258,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 			 tport > IPPORT_RESERVED / 2);
 	m_freem(m);
 	if (error) {
-		kprintf("bind failed\n");
+		printf("bind failed\n");
 		goto out;
 	}
 
@@ -320,7 +320,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 		}
 		error = sosend(so, nam, NULL, m, NULL, 0);
 		if (error) {
-			kprintf("krpc_call: sosend: %d\n", error);
+			printf("krpc_call: sosend: %d\n", error);
 			goto out;
 		}
 		m = NULL;
@@ -329,7 +329,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 		if (timo < MAX_RESEND_DELAY)
 			timo++;
 		else
-			kprintf("RPC timeout for server 0x%x\n",
+			printf("RPC timeout for server 0x%x\n",
 			       ntohl(sin->sin_addr.s_addr));
 
 		/*
@@ -374,14 +374,14 @@ krpc_call(sa, prog, vers, func, data, from_p)
 			/* Was RPC accepted? (authorization OK) */
 			if (reply->rp_astatus != 0) {
 				error = fxdr_unsigned(u_int32_t, reply->rp_errno);
-				kprintf("rpc denied, error=%d\n", error);
+				printf("rpc denied, error=%d\n", error);
 				continue;
 			}
 
 			/* Did the call succeed? */
 			if (reply->rp_status != 0) {
 				error = fxdr_unsigned(u_int32_t, reply->rp_status);
-				kprintf("rpc denied, status=%d\n", error);
+				printf("rpc denied, status=%d\n", error);
 				continue;
 			}
 
