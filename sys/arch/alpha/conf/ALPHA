@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.157 2001/11/20 12:56:18 lukem Exp $
+# $NetBSD: ALPHA,v 1.158 2001/12/28 17:37:02 augustss Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.157 $"
+ident		"ALPHA-$Revision: 1.158 $"
 
 maxusers 32
 
@@ -451,16 +451,19 @@ usb*	at ohci?
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB Mice
-ums*	at uhub? port ? configuration ? interface ?
+ums*	at uhidev? reportid ?
 wsmouse*	at ums?
 
 # USB Keyboards
-ukbd*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
+uhid*	at uhidev? reportid ?
 
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?

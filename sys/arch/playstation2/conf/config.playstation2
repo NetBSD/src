@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.5 2001/11/20 12:56:36 lukem Exp $
+# 	$NetBSD: config.playstation2,v 1.6 2001/12/28 17:37:05 augustss Exp $
 #
 
 maxusers	16
@@ -56,12 +56,15 @@ usb*	at ohci?
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB Mice
-ums*	at uhub? port ? configuration ? interface ?
+ums*	at uhidev? reportid ?
 wsmouse*	at ums? mux 0
 
 # USB Keyboards
-ukbd*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
 # USB Generic driver
