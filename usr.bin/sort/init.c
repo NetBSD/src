@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.3 2000/10/16 21:41:05 jdolecek Exp $	*/
+/*	$NetBSD: init.c,v 1.4 2001/01/12 19:30:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.3 2000/10/16 21:41:05 jdolecek Exp $");
+__RCSID("$NetBSD: init.c,v 1.4 2001/01/12 19:30:22 jdolecek Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -53,6 +53,11 @@ int setfield __P((const char *, struct field *, int));
 extern struct coldesc clist[(ND+1)*2];
 extern int ncols;
 u_char gweights[NBINS];
+
+/*
+ * masks of ignored characters.  Alltable is 256 ones.
+ */
+static u_char alltable[NBINS], dtable[NBINS], itable[NBINS];
 
 /*
  * clist (list of columns which correspond to one or more icol or tcol)
@@ -153,10 +158,13 @@ setfield(pos, cur_fld, gflag)
 {
 	static int nfields = 0;
 	int tmp;
+
 	if (++nfields == ND)
 		errx(2, "too many sort keys. (Limit is %d)", ND-1);
+
 	cur_fld->weights = ascii;
 	cur_fld->mask = alltable;
+
 	pos = setcolumn(pos, cur_fld, gflag);
 	if (*pos == '\0')			/* key extends to EOL. */
 		cur_fld->tcol.num = 0;
@@ -174,19 +182,22 @@ setfield(pos, cur_fld, gflag)
 	 * If the global weights are reversed, the local field
 	 * must be "re-reversed".
 	 */
-	if (((tmp & R) ^ (gflag & R)) && tmp & F)
+	if (((tmp & R) ^ (gflag & R)) && (tmp & F))
 		cur_fld->weights = RFtable;
 	else if (tmp & F)
 		cur_fld->weights = Ftable;
 	else if ((tmp & R) ^ (gflag & R))
 		cur_fld->weights = Rascii;
+
 	if (tmp & I)
 		cur_fld->mask = itable;
 	else if (tmp & D)
 		cur_fld->mask = dtable;
+
 	cur_fld->flags |= (gflag & (BI | BT));
 	if (!cur_fld->tcol.indent)	/* BT has no meaning at end of field */
-		cur_fld->flags &= (D|F|I|N|R|BI);
+		cur_fld->flags &= ~BT;
+
 	if (cur_fld->tcol.num && !(!(cur_fld->flags & BI)
 	    && cur_fld->flags & BT) && (cur_fld->tcol.num <= cur_fld->icol.num
 	    && cur_fld->tcol.indent < cur_fld->icol.indent))
@@ -289,8 +300,8 @@ settables(gflags)
 		else
 			Rascii[i] = 255 - i;
 		if (islower(i)) {
-			Ftable[i] = Ftable[i- ('a' -'A')];
-			RFtable[i] = RFtable[i - ('a' - 'A')];
+			Ftable[i] = Ftable[toupper(i)];
+			RFtable[i] = RFtable[toupper(i)];
 		} else if (REC_D>= 'A' && REC_D < 'Z' && i < 'a' && i > REC_D) {
 			Ftable[i] = i + 1;
 			RFtable[i] = Rascii[i] - 1;
@@ -299,30 +310,37 @@ settables(gflags)
 			RFtable[i] = Rascii[i];
 		}
 		alltable[i] = 1;
+
 		if (i == '\n' || isprint(i))
 			itable[i] = 1;
-		else itable[i] = 0;
+		else
+			itable[i] = 0;
+
 		if (i == '\n' || i == '\t' || i == ' ' || isalnum(i))
 			dtable[i] = 1;
-		else dtable[i] = 0;
+		else
+			dtable[i] = 0;
 	}
+
 	Rascii[REC_D] = RFtable[REC_D] = REC_D;
-	if (REC_D >= 'A' && REC_D < 'Z')
-		++Ftable[REC_D + ('a' - 'A')];
-	if (gflags & R && (!(gflags & F) || !SINGL_FLD))
+	if (isupper(REC_D))
+		Ftable[tolower(REC_D)]++;
+
+	if ((gflags & R) && !((gflags & F) && SINGL_FLD))
 		wts = Rascii;
-	else if (!(gflags & F) || !SINGL_FLD)
+	else if (!((gflags & F) && SINGL_FLD))
 		wts = ascii;
 	else if (gflags & R)
 		wts = RFtable;
 	else
 		wts = Ftable;
+
 	memmove(gweights, wts, sizeof(gweights));
 	incr = (gflags & R) ? -1 : 1;
 	for (i = 0; i < REC_D; i++)
 		gweights[i] += incr;
 	gweights[REC_D] = ((gflags & R) ? 255 : 0);
-	if (SINGL_FLD && gflags & F) {
+	if (SINGL_FLD && (gflags & F)) {
 		for (i = 0; i < REC_D; i++) {
 			ascii[i] += incr;
 			Rascii[i] += incr;
