@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/09/24 14:29:30 takemura Exp $
+#	$NetBSD: Makefile,v 1.5 2003/05/04 06:36:37 lukem Exp $
 
 HOST_CC ?= /usr/bin/cc
 
@@ -7,7 +7,8 @@ test: platid_test
 	diff  platid_test.out  platid_test.canon
 
 platid_test: platid.c platid_mask.c platid_test.c platid_name.c
-	ln -sf ../../hpcmips/include ./machine
+	-rm -f machine
+	ln -s ../../hpcmips/include machine
 	$(HOST_CC) -Dhpcmips -Dhpcarm -Dhpcsh -I/usr/include -I. -I../.. -DPLATID_TEST \
 	    platid.c platid_mask.c platid_name.c platid_test.c -o $@
 
