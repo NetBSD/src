@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.13 1999/01/13 16:21:02 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.14 1999/01/26 13:43:00 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -153,6 +153,8 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_VSXXX	1	/* DEC TC(?) serial */
 #define		WSMOUSE_TYPE_PS2	2	/* PS/2-compatible */
 #define		WSMOUSE_TYPE_USB	3	/* USB mouse */
+#define		WSMOUSE_TYPE_LMS	4	/* Logitech busmouse */
+#define		WSMOUSE_TYPE_MMS	5	/* Microsoft InPort mouse */
 
 /*
  * Display ioctls (64 - 95)
