@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.76 2004/05/27 19:19:00 jonathan Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.77 2004/06/04 09:49:12 he Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,6 +39,7 @@
 
 #if !defined(_KERNEL) || defined(LKM)
 struct uio;
+struct proc;
 #endif
 
 TAILQ_HEAD(soqhead, socket);
