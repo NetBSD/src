@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.6 2001/03/22 00:16:50 cgd Exp $ */
+/* $NetBSD: mkdep.c,v 1.7 2001/03/22 02:33:47 cgd Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mkdep.c,v 1.6 2001/03/22 00:16:50 cgd Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.7 2001/03/22 02:33:47 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -99,7 +99,7 @@ findcc(progname)
 			*next++ = '\0';
 
 		if (snprintf(buffer, sizeof(buffer),
-			     "%s/%s", dir, progname) < sizeof(buffer)) {
+		    "%s/%s", dir, progname) < sizeof(buffer)) {
 			if (!access(buffer, X_OK)) {
 				free(path);
 				return strdup(buffer);
@@ -132,19 +132,19 @@ main(argc, argv)
 	aflag = 0;
 	pflag = 0;
 	filename = DEFAULT_FILENAME;
-	for (index=1; index< argc; index++)
+
+	/* XXX should use getopt(). */
+	for (index = 1; index < argc; index++) {
 		if (strcmp(argv[index], "-a") == 0)
 			aflag = 1;
+		else if (strcmp(argv[index], "-f") == 0) {
+			if (++index < argc)
+				filename = argv[index];
+		} else if (strcmp(argv[index], "-p") == 0)
+			pflag = 1;
 		else
-			if (strcmp(argv[index], "-f") == 0) {
-				if (++index < argc)
-					filename = argv[index];
-			}
-			else
-				if (strcmp(argv[index], "-p") == 0)
-					pflag = 1;
-				else
-					break;
+			break;
+	}
 
 	argc -= index;
 	argv += index;
@@ -158,7 +158,7 @@ main(argc, argv)
 			pathname = findcc(CC);
 	if (pathname == NULL) {
 		(void)fprintf(stderr, "%s: %s: not found\n", getprogname(), CC);
-		return EXIT_FAILURE;
+		exit(EXIT_FAILURE);
 	}
 
 	if ((args = malloc((argc + 3) * sizeof(char *))) == NULL) {
@@ -175,51 +175,51 @@ main(argc, argv)
 	    "mkdepXXXXXX");
 	if ((tmpfd = mkstemp (tmpfilename)) < 0) {
 		warn("unable to create temporary file %s", tmpfilename);
-		return EXIT_FAILURE;
+		exit(EXIT_FAILURE);
 	}
 
 	switch (cpid = vfork()) {
 	case 0:
-	    (void)dup2(tmpfd, STDOUT_FILENO);
-	    (void)close(tmpfd);
+		(void)dup2(tmpfd, STDOUT_FILENO);
+		(void)close(tmpfd);
 
-	    (void)execv(pathname, args);
-	    _exit(EXIT_FAILURE);
-	    /* NOTREACHED */
+		(void)execv(pathname, args);
+		_exit(EXIT_FAILURE);
+		/* NOTREACHED */
 
 	case -1:
-	    (void)fprintf(stderr, "%s: unable to fork.\n", getprogname());
-	    (void)close(tmpfd);
-	    (void)unlink(tmpfilename);
-	    return EXIT_FAILURE;
+		(void)fprintf(stderr, "%s: unable to fork.\n", getprogname());
+		(void)close(tmpfd);
+		(void)unlink(tmpfilename);
+		exit(EXIT_FAILURE);
 	}
 
-	while (((pid = wait(&status)) != cpid) && (pid >= 0));
+	while (((pid = wait(&status)) != cpid) && (pid >= 0))
+		continue;
 
 	if (status) {
-	    (void)fprintf(stderr, "%s: compile failed.\n", getprogname());
-	    (void)close(tmpfd);
-	    (void)unlink(tmpfilename);
-	    return EXIT_FAILURE;
+		(void)fprintf(stderr, "%s: compile failed.\n", getprogname());
+		(void)close(tmpfd);
+		(void)unlink(tmpfilename);
+		exit(EXIT_FAILURE);
 	}
 
 	(void)lseek(tmpfd, (off_t)0, SEEK_SET);
 	if ((tmpfile = fdopen(tmpfd, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "%s: unable to read temporary file %s\n",
-			  getprogname(), tmpfilename);
-	    (void)close(tmpfd);
-	    (void)unlink(tmpfilename);
-	    return EXIT_FAILURE;
+		(void)fprintf(stderr,
+		    "%s: unable to read temporary file %s\n",
+		    getprogname(), tmpfilename);
+		(void)close(tmpfd);
+		(void)unlink(tmpfilename);
+		exit(EXIT_FAILURE);
 	}
 
 	if ((dependfile = fopen(filename, aflag ? "a" : "w")) == NULL) {
 		(void)fprintf(stderr, "%s: unable to %s to file %s\n",
-			      getprogname(), aflag ? "append" : "write",
-			      filename);
+		    getprogname(), aflag ? "append" : "write", filename);
 		(void)fclose(tmpfile);
 		(void)unlink(tmpfilename);
-		return EXIT_FAILURE;
+		exit(EXIT_FAILURE);
 	}
 
 	while (fgets(buffer, sizeof(buffer), tmpfile) != NULL) {
@@ -235,10 +235,11 @@ main(argc, argv)
 		}
 
 		ptr = buffer;
-		while (*ptr)
+		while (*ptr) {
 			if (isspace(*ptr++))
 				if ((ptr[0] == '.') && (ptr[1] == '/'))
 					(void)strcpy(ptr, ptr + 2);
+		}
 
 		(void)fputs(buffer, dependfile);
 	}
@@ -247,5 +248,5 @@ main(argc, argv)
 	(void)fclose(tmpfile);
 	(void)unlink(tmpfilename);
 
-	return EXIT_SUCCESS;
+	exit(EXIT_SUCCESS);
 }
