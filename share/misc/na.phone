@@ -1,5 +1,5 @@
-# Area Code : City : State/Province : State/Province Abbrev.
 #	@(#)na.phone	5.1 (Berkeley) 2/12/90
+# Area Code : City : State/Province : State/Province Abbrev.
 201:Ashbury Park:New Jersey:NJ
 201:Newark:New Jersey:NJ
 202::District of Columbia:DC
@@ -23,19 +23,19 @@
 215:Philadelphia:Pennsylvania:PA
 216:Akron:Ohio:OH
 216:Canton:Ohio:OH
-216:Massillon:Ohio:OH
 216:Cleveland:Ohio:OH
+216:Massillon:Ohio:OH
 216:Youngstown:Ohio:OH
 217:Champaign:Illinois:IL
 217:Springfield:Illinois:IL
 218:Duluth:Minnesota:MN
+219:Fort Wayne:Indiana:IN
 219:Gary:Indiana:IN
 219:Hammond:Indiana:IN
-219:Fort Wayne:Indiana:IN
 219:South Bend:Indiana:IN
 281:Houston:Texas:TX
-301:Silver Spring:Maryland:MD
 301:Frederick:Maryland:MD
+301:Silver Spring:Maryland:MD
 302::Deleware:DE
 303:Aspen:Colorado:CO
 303:Boulder:Colorado:CO
@@ -45,8 +45,8 @@
 304::West Virginia:WV
 305:Cape Canaveral:Florida:FL
 305:Cape Kennedy:Florida:FL
-305:Key West:Florida:FL
 305:Fort Lauderdale:Florida:FL
+305:Key West:Florida:FL
 305:Miami Beach:Florida:FL
 305:Miami:Florida:FL
 306::Saskatchewan:SK
@@ -55,8 +55,8 @@
 308:North Platte:Nebraska:NE
 309:Bloomington:Illinois:IL
 309:Moline:Illinois:IL
-309:Rock Island:Illinois:IL
 309:Peoria:Illinois:IL
+309:Rock Island:Illinois:IL
 310:Los Angeles:California:CA
 312:Arlington Heights:Illinois:IL
 312:Broadview:Illinois:IL
@@ -64,22 +64,22 @@
 312:Chicago:Illinois:IL
 313:Ann Arbor:Michigan:MI
 313:Detroit:Michigan:MI
+314:Columbia:Missouri:MO
 314:Jefferson City:Missouri:MO
 314:St. Louis:Missouri:MO
-314:Columbia:Missouri:MO
+315:Oswego:New York:NY
 315:Syracuse:New York:NY
 315:Utica:New York:NY
-315:Oswego:New York:NY
+316:Dodge City:Kansas:KS
 316:Hutchinson:Kansas:KS
 316:Wichita:Kansas:KS
-316:Dodge City:Kansas:KS
 317:Indianapolis:Indiana:IN
 317:Kokomo:Indiana:IN
 318:Alexandria:Louisiana:LA
 318:Lake Charles:Louisiana:LA
 318:Shreveport:Louisiana:LA
-319:Dubuque:Iowa:IA
 319:Cedar Rapids:Iowa:IA
+319:Dubuque:Iowa:IA
 319:Iowa City:Iowa:IA
 334:Montgomery:Alabama:AL
 360:Bellingham:Washington:WA
@@ -106,13 +106,13 @@
 408:Sunnyvale:California:CA
 409:Galveston:Texas:TX
 409:Port Arthur:Texas:TX
-410:Baltimore:Maryland:MD
 410:Annapolis:Maryland:MD
+410:Baltimore:Maryland:MD
 412:Pittsburgh:Pennsylvania:PA
 413:Greenfield:Massachusetts:MA
-413:Springfield:Massachusetts:MA
-413:Pittsfield:Massachusetts:MA
 413:New Castle:Massachusetts:MA
+413:Pittsfield:Massachusetts:MA
+413:Springfield:Massachusetts:MA
 414:Green Bay:Wisconsin:WI
 414:Milwaukee:Wisconsin:WI
 414:Racine:Wisconsin:WI
@@ -121,8 +121,8 @@
 417:Joplin:Missouri:MO
 417:Springfield:Missouri:MO
 418:Quebec:Quebec:PQ
+419:Lima:Ohio:OH
 419:Toledo:Ohio:OH
-419:Lima:Ohih:OH
 501::Arkansas:AR
 502:Louisville:Kentucky:KY
 502:Paducah:Kentucky:KY
@@ -151,6 +151,8 @@
 518:Albany:New York:NY
 518:Schenectady:New York:NY
 519:London:Ontario:ON
+540:Blacksburg:Virginia:VA
+540:Roanoke:Virginia:VA
 601::Mississippi:MS
 602::Arizona:AZ
 603::New Hampshire:NH
@@ -167,8 +169,8 @@
 609:Camden:New Jersey:NJ
 609:Trenton:New Jersey:NJ
 610:Allentown:Pennsylvania:PA
-610:Reading:Pennsylvania:PA
 610:Chester:Pennsylvania:PA
+610:Reading:Pennsylvania:PA
 612:Minneapolis:Minnesota:MN
 612:St. Cloud:Minnesota:MN
 612:St. Louis Park:Minnesota:MN
@@ -185,12 +187,12 @@
 617:Boston:Massachusetts:MA
 617:Cambridge:Massachusetts:MA
 617:Winchester:Massachusetts:MA
-618:Madison:Illinois:IL
 618:Alton:Illinois:IL
 618:Centralia:Illinois:IL
-619:San Diego:California:CA
-619:Palm Springs:California:CA
+618:Madison:Illinois:IL
 619:Imperial Valley:California:CA
+619:Palm Springs:California:CA
+619:San Diego:California:CA
 630:Chicago:Illinois:IL
 701::North Dakota:ND
 702::Nevada:NV
@@ -239,18 +241,18 @@
 804:Norfolk:Virginia:VA
 804:Richmond:Virginia:VA
 805:Bakersfield:California:CA
-805:Ventura:California:CA
 805:Simi Valley:California:CA
+805:Ventura:California:CA
 806:Amarillo:Texas:TX
-807:Thunder Bay:Ontario:ON
 807:Fort William:Ontario:ON
+807:Thunder Bay:Ontario:ON
 808::Hawaii:HI
 809::Puerto Rico:PR
 809::Virgin Islands:VI
 810:Flint:Michigan:MI
 810:Pontiac:Michigan:MI
-812:Evansville:Indiana:IN
 812:Bloomington:Indiana:IN
+812:Evansville:Indiana:IN
 812:Terre Haute:Indiana:IN
 813:Bowling Green:Florida:FL
 813:Clearwater:Florida:FL
@@ -273,12 +275,12 @@
 818:Van Nuys:California:CA
 819:Hull:Quebec:PQ
 819:Sherbrooke:Quebec:PQ
-901:Memphis:Tennessee:TN
 901:Jackson:Tennessee:TN
-902::Prince Edward Island:PE
+901:Memphis:Tennessee:TN
 902::Nova Scotia:NS
-903:Texarkana:Texas:TX
+902::Prince Edward Island:PE
 903:Paris:Texas:TX
+903:Texarkana:Texas:TX
 904:Apalachicola:Florida:FL
 904:Atlantic Beach:Florida:FL
 904:Jacksonville:Florida:FL
@@ -286,16 +288,16 @@
 904:Tallahassee:Florida:FL
 905:Hamilton:Ontario:ON
 905:Niagara Falls:Ontario:ON
-906:Sault Ste. Marie:Michigan:MI
 906:Marquette:Michigan:MI
+906:Sault Ste. Marie:Michigan:MI
 907::Alaska:AK
 908:Elizabeth:New Jersey:NJ
 908:New Brunswick:New Jersey:NJ
 909:Riverside:California:CA
 909:San Bernardino:California:CA
-910:Winston-Salem:North Carolina:NC
-910:Greensboro:North Carolina:NC
 910:Fayetteville:North Carolina:NC
+910:Greensboro:North Carolina:NC
+910:Winston-Salem:North Carolina:NC
 912:Macon:Georgia:GA
 912:Savannah:Georgia:GA
 913:Kansas City:Kansas:KS
@@ -307,8 +309,8 @@
 914:White Plains:New York:NY
 915:Abilene:Texas:TX
 915:El Paso:Texas:TX
-916:Sacramento:California:CA
 916:Davis:California:CA
+916:Sacramento:California:CA
 918:Bartlesville:Oklahoma:OK
 918:Muscoga:Oklahoma:OK
 918:Tulsa:Oklahoma:OK
