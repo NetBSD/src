@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.46 1998/03/22 05:46:02 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.47 1998/03/22 07:26:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.46 1998/03/22 05:46:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.47 1998/03/22 07:26:32 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -161,6 +161,15 @@ Lstart1: LDGP(pv)
  * Pull in the PALcode function stubs.
  */
 #include <alpha/alpha/pal.s>
+
+/**************************************************************************/
+
+/**************************************************************************/
+
+/*
+ * Pull in the atomic primitives.
+ */
+#include <alpha/alpha/atomic.s>
 
 /**************************************************************************/
 
