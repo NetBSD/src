@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.255 2000/08/21 09:13:02 haya Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.256 2000/08/21 15:33:45 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.249 2000/08/21 08:58:51 haya Exp 
+ *	NetBSD: pcidevs,v 1.250 2000/08/21 15:28:17 enami Exp 
  */
 
 /*
@@ -1293,6 +1293,7 @@
 #define	PCI_PRODUCT_PROMISE_ULTRA33	0x4d33		/* Ultra33/ATA Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_ULTRA66	0x4d38		/* Ultra66/ATA Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_ULTRA100	0x4d30		/* Ultra100/ATA Bus Master IDE Accelerator */
+#define	PCI_PRODUCT_PROMISE_ULTRA100X	0x0d30		/* Ultra100/ATA Bus Master IDE Accelerator */
 
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020		/* ISP1020 */
