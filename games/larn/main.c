@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.5 1995/03/23 08:33:46 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.6 1995/04/22 07:34:07 cgd Exp $";
 #endif /* not lint */
 
 /*	main.c		*/
@@ -798,7 +798,7 @@ while (1)
 				iven[i-'a']=0;
 				if (!c[BLINDCOUNT])
 					{
-					if (p=fortune(fortfile))
+					if (p=fortune())
 						{
 						lprcat("  Inside you find a scrap of paper that says:\n");
 						lprcat(p);
