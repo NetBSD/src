@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.76 1997/10/01 01:19:24 enami Exp $	*/
+/*	$NetBSD: st.c,v 1.77 1997/10/01 18:45:02 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1861,7 +1861,13 @@ st_rdpos(st, hard, blkptr)
 	 * First flush any pending writes...
 	 */
 	error = st_write_filemarks(st, 0, SCSI_SILENT);
-	if (error)
+
+	/*
+	 * The latter case is for 'write protected' tapes
+	 * which are too stupid to recognize a zero count
+	 * for writing filemarks as a no-op.
+	 */
+	if (error != 0 && error != EACCES)
 		return (error);
 
 	bzero(&cmd, sizeof(cmd));
@@ -1875,7 +1881,6 @@ st_rdpos(st, hard, blkptr)
 	    sizeof(posdata), ST_RETRIES, 30000, NULL, SCSI_DATA_IN);
 
 	if (error == 0) {
-
 #if	0
 		printf("posdata:");
 		for (hard = 0; hard < sizeof(posdata); hard++)
@@ -1901,10 +1906,18 @@ st_setpos(st, hard, blkptr)
 	struct scsipi_generic cmd;
 
 	/*
-	 * First flush any pending writes...
+	 * First flush any pending writes. Strictly speaking,
+	 * we're not supposed to have to worry about this,
+	 * but let's be untrusting.
 	 */
 	error = st_write_filemarks(st, 0, SCSI_SILENT);
-	if (error)
+
+	/*
+	 * The latter case is for 'write protected' tapes
+	 * which are too stupid to recognize a zero count
+	 * for writing filemarks as a no-op.
+	 */
+	if (error != 0 && error != EACCES)
 		return (error);
 
 	bzero(&cmd, sizeof(cmd));
