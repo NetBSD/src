@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.20 1999/09/05 16:52:33 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.21 1999/09/10 23:38:06 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -255,4 +255,76 @@ sbin/mount_union/mount_union.c			1.6
   Regularize error reporting of mount_* commands for failure of
   mount(2) to the form "mount_xxx: dev on dir: reason for failure"
   (as opposed to the old "mount_xxx: : reason for failure").
+  This is related to PR#7592, but not a complete fix for that PR.
   (perseant)
+
+distrib/sets/lists/xbase/mi                     1.14-1.16
+distrib/sets/lists/xcomp/mi                     1.7-1.8
+distrib/sets/lists/xserver/md.arm32             1.5-1.7
+distrib/sets/lists/xserver/md.atari             1.4-1.5
+distrib/sets/lists/xserver/md.i386              1.10-1.11
+distrib/sets/lists/xserver/md.vax               1.3 (resurrected)
+
+  Various changes to sync these files with xsrc.  Specifically:
+   o Update for XFree86 3.3.4
+   o Update for XFree86 3.3.5
+   o Add Vax X11 server
+   o RCS Id policy conformance
+  (tron)
+
+distrib/sets/makeflist				1.16
+
+  Cope with #-comments in distrib set files.  (he)
+
+etc/security					1.40
+
+  Don't try to grab disklabels from CDs.  (perry)
+
+sys/nfs/nfs_subs.c				1.71
+
+  Don't truncate minor numbers > 255 on a NFS client.  (is)
+
+sys/arch/i386/i386/locore.s			1.212
+
+  Make kernels configured without npx link again, fixing PR#8262.
+  (kleink)
+
+sbin/disklabel/interact.c			1.10
+
+  'Label disk?' prompt should check for 'Y' as well as 'y'.  (abs)
+
+sys/dev/isa/files.isa				1.89
+
+  The nca driver mistakenly detects an i82585tx as its hardware.
+  Move the nca driver probe after the iy probe (which is more
+  friendly to other hardware).  (is)
+
+share/mk/bsd.doc.mk				1.43
+share/mk/bsd.files.mk				1.10
+share/mk/bsd.kmod.mk				1.32
+share/mk/bsd.lib.mk				1.157
+share/mk/bsd.man.mk				1.48
+share/mk/bsd.nls.mk				1.19
+share/mk/bsd.prog.mk				1.103
+
+  Allow natural use of multiple "make" targets within the main tree
+  without setting BUILD in /etc/mk.conf, or anywhere else.
+  Particularly, permit "make all install" and "make file install"
+  (where file is installed by "make install"). Behavior with BUILD
+  set is unchanged.  Fixes PR#8313 and PR#3894.  (fredb)
+
+sys/dev/ic/i82586.c				1.24
+
+  Remove a spurious printf() from the interrupt handler which got
+  triggered when sharing the interrupt level with other devices.  (pk)
+
+gnu/dist/gdb/config/arm/tm-armnbsd.h		1.5
+
+  Make single-stepping over conditional instructions work on the
+  ARM32, fixing PR#7565 and possibly PR#8156.  (is)
+
+sys/dev/ic/clmpccreg.h				1.2
+sys/dev/ic/clmpccvar.h				1.3
+sys/dev/ic/clmpcc.c				1.6
+
+  Fix panics seen by some people during mvme167 installation.  (scw)
