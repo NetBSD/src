@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.53 2002/03/21 22:08:08 ragge Exp $	   */
+/*	$NetBSD: pmap.h,v 1.54 2002/05/13 21:11:23 matt Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -96,7 +96,8 @@ struct pv_entry {
 	struct pmap	*pv_pmap;	/* pmap this entry belongs to */
 	int		 pv_attr;	/* write/modified bits */
 };
-struct  pv_entry *pv_table;
+
+extern	struct  pv_entry *pv_table;
 
 /* Mapping macros used when allocating SPT */
 #define MAPVIRT(ptr, count)				\
