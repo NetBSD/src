@@ -1,4 +1,4 @@
-/*	$Id: pmap.new.h,v 1.1 1998/02/06 07:41:33 mrg Exp $	*/
+/*	$NetBSD: pmap.new.h,v 1.2 1998/02/06 22:26:16 thorpej Exp $	*/
 
 /*
  *
