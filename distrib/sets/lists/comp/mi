@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.729 2004/09/07 12:28:34 taca Exp $
+#	$NetBSD: mi,v 1.730 2004/09/13 21:44:54 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1461,6 +1461,7 @@
 ./usr/include/utime.h				comp-c-include
 ./usr/include/utmp.h				comp-c-include
 ./usr/include/utmpx.h				comp-c-include
+./usr/include/uuid.h				comp-c-include
 ./usr/include/uvm/uvm.h				comp-c-include
 ./usr/include/uvm/uvm_amap.h			comp-c-include
 ./usr/include/uvm/uvm_amap_i.h			comp-c-include
@@ -4427,6 +4428,19 @@
 ./usr/share/man/cat3/util.0			comp-c-catman		.cat
 ./usr/share/man/cat3/utime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/utmpxname.0		comp-c-catman		.cat
+./usr/share/man/cat3/uuid.0			comp-c-catman		.cat
+./usr/share/man/cat3/uuid_compare.0		comp-c-catman		.cat
+./usr/share/man/cat3/uuid_create.0		comp-c-catman		.cat
+./usr/share/man/cat3/uuid_create_nil.0		comp-c-catman		.cat
+./usr/share/man/cat3/uuid_dec_be.0		comp-c-catman		.cat
+./usr/share/man/cat3/uuid_dec_le.0		comp-c-catman		.cat
+./usr/share/man/cat3/uuid_enc_be.0		comp-c-catman		.cat
+./usr/share/man/cat3/uuid_enc_le.0		comp-c-catman		.cat
+./usr/share/man/cat3/uuid_equal.0		comp-c-catman		.cat
+./usr/share/man/cat3/uuid_from_string.0		comp-c-catman		.cat
+./usr/share/man/cat3/uuid_hash.0		comp-c-catman		.cat
+./usr/share/man/cat3/uuid_is_nil.0		comp-c-catman		.cat
+./usr/share/man/cat3/uuid_to_string.0		comp-c-catman		.cat
 ./usr/share/man/cat3/va_arg.0			comp-c-catman		.cat
 ./usr/share/man/cat3/va_copy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/va_end.0			comp-c-catman		.cat
@@ -8174,6 +8188,19 @@
 ./usr/share/man/man3/util.3			comp-c-man		.man
 ./usr/share/man/man3/utime.3			comp-c-man		.man
 ./usr/share/man/man3/utmpxname.3		comp-c-man		.man
+./usr/share/man/man3/uuid.0			comp-c-man		.man
+./usr/share/man/man3/uuid_compare.0		comp-c-man		.man
+./usr/share/man/man3/uuid_create.0		comp-c-man		.man
+./usr/share/man/man3/uuid_create_nil.0		comp-c-man		.man
+./usr/share/man/man3/uuid_dec_be.0		comp-c-man		.man
+./usr/share/man/man3/uuid_dec_le.0		comp-c-man		.man
+./usr/share/man/man3/uuid_enc_be.0		comp-c-man		.man
+./usr/share/man/man3/uuid_enc_le.0		comp-c-man		.man
+./usr/share/man/man3/uuid_equal.0		comp-c-man		.man
+./usr/share/man/man3/uuid_from_string.0		comp-c-man		.man
+./usr/share/man/man3/uuid_hash.0		comp-c-man		.man
+./usr/share/man/man3/uuid_is_nil.0		comp-c-man		.man
+./usr/share/man/man3/uuid_to_string.0		comp-c-man		.man
 ./usr/share/man/man3/va_arg.3			comp-c-man		.man
 ./usr/share/man/man3/va_copy.3			comp-c-man		.man
 ./usr/share/man/man3/va_end.3			comp-c-man		.man
