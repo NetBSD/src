@@ -1,4 +1,4 @@
-.\" $NetBSD: flex.1,v 1.9 2001/12/01 16:43:17 wiz Exp $
+.\" $NetBSD: flex.1,v 1.10 2002/02/08 01:36:26 ross Exp $
 .\"
 .TH FLEX 1 "April 1995" "Version 2.5"
 .SH NAME
@@ -67,7 +67,7 @@ manual includes both tutorial and reference sections:
         scanner classes
 
     Incompatibilities With Lex And POSIX
-        how flex differs from AT&T lex and the POSIX lex
+        how flex differs from AT\*[Am]T lex and the POSIX lex
         standard
 
     Diagnostics
@@ -173,7 +173,7 @@ A somewhat more complicated example:
 
     %{
     /* need this for the call to atof() below */
-    #include <math.h>
+    #include \*[Lt]math.h\*[Gt]
     %}
 
     DIGIT    [0-9]
@@ -212,7 +212,7 @@ A somewhat more complicated example:
     char **argv;
         {
         ++argv, --argc;  /* skip over program name */
-        if ( argc > 0 )
+        if ( argc \*[Gt] 0 )
                 yyin = fopen( argv[0], "r" );
         else
                 yyin = stdin;
@@ -405,16 +405,16 @@ expressions.  These are:
                input yourself, or explicitly use r/\\r\\n for "r$".
 
 
-    <s>r       an r, but only in start condition s (see
+    \*[Lt]s\*[Gt]r       an r, but only in start condition s (see
                  below for discussion of start conditions)
-    <s1,s2,s3>r
+    \*[Lt]s1,s2,s3\*[Gt]r
                same, but in any of start conditions s1,
                  s2, or s3
-    <*>r       an r in any start condition, even an exclusive one.
+    \*[Lt]*\*[Gt]r       an r in any start condition, even an exclusive one.
 
 
-    <<EOF>>    an end-of-file
-    <s1,s2><<EOF>>
+    \*[Lt]\*[Lt]EOF\*[Gt]\*[Gt]    an end-of-file
+    \*[Lt]s1,s2\*[Gt]\*[Lt]\*[Lt]EOF\*[Gt]\*[Gt]
                an end-of-file when in start condition s1 or s2
 
 .fi
@@ -520,7 +520,7 @@ Matching newlines means that a pattern like [^"]* can match the entire
 input unless there's another quote in the input.
 .IP -
 A rule can have at most one instance of trailing context (the '/' operator
-or the '$' operator).  The start condition, '^', and "<<EOF>>" patterns
+or the '$' operator).  The start condition, '^', and "\*[Lt]\*[Lt]EOF\*[Gt]\*[Gt]" patterns
 can only occur at the beginning of a pattern, and, as well as with '/' and '$',
 cannot be grouped inside parentheses.  A '^' which does not occur at
 the beginning of a rule or a '$' which does not occur at the end of
@@ -530,7 +530,7 @@ The following are illegal:
 .nf
 
     foo/bar$
-    <sc1>foo<sc2>bar
+    \*[Lt]sc1\*[Gt]foo\*[Lt]sc2\*[Gt]bar
 
 .fi
 Note that the first of these, can be written "foo/bar\\n".
@@ -902,7 +902,7 @@ to be rescanned enclosed in parentheses.
     /* Copy yytext because unput() trashes yytext */
     char *yycopy = strdup( yytext );
     unput( ')' );
-    for ( i = yyleng - 1; i >= 0; --i )
+    for ( i = yyleng - 1; i \*[Ge] 0; --i )
         unput( yycopy[i] );
     unput( '(' );
     free( yycopy );
@@ -948,7 +948,7 @@ the following is one way to eat up C comments:
 
                 for ( ; ; )
                     {
-                    while ( (c = input()) != '*' &&
+                    while ( (c = input()) != '*' \*[Am]\*[Am]
                             c != EOF )
                         ;    /* eat up text of comment */
 
@@ -1028,7 +1028,7 @@ to give the scanning routine the name
 .I lexscan,
 returning a float, and taking two floats as arguments.  Note that
 if you give arguments to the scanning routine using a
-K&R-style/non-prototyped function declaration, you must terminate
+K\*[Am]R-style/non-prototyped function declaration, you must terminate
 the definition with a semi-colon (;).
 .PP
 Whenever
@@ -1167,11 +1167,11 @@ pointer.
 .SH START CONDITIONS
 .I flex
 provides a mechanism for conditionally activating rules.  Any rule
-whose pattern is prefixed with "<sc>" will only be active when
+whose pattern is prefixed with "\*[Lt]sc\*[Gt]" will only be active when
 the scanner is in the start condition named "sc".  For example,
 .nf
 
-    <STRING>[^"]*        { /* eat up the string body ... */
+    \*[Lt]STRING\*[Gt][^"]*        { /* eat up the string body ... */
                 ...
                 }
 
@@ -1180,7 +1180,7 @@ will be active only when the scanner is in the "STRING" start
 condition, and
 .nf
 
-    <INITIAL,STRING,QUOTE>\\.        { /* handle an escape ... */
+    \*[Lt]INITIAL,STRING,QUOTE\*[Gt]\\.        { /* handle an escape ... */
                 ...
                 }
 
@@ -1230,7 +1230,7 @@ connection between the two.  The set of rules:
     %s example
     %%
 
-    <example>foo   do_something();
+    \*[Lt]example\*[Gt]foo   do_something();
 
     bar            something_else();
 
@@ -1241,20 +1241,20 @@ is equivalent to
     %x example
     %%
 
-    <example>foo   do_something();
+    \*[Lt]example\*[Gt]foo   do_something();
 
-    <INITIAL,example>bar    something_else();
+    \*[Lt]INITIAL,example\*[Gt]bar    something_else();
 
 .fi
 Without the
-.B <INITIAL,example>
+.B \*[Lt]INITIAL,example\*[Gt]
 qualifier, the
 .I bar
 pattern in the second example wouldn't be active (i.e., couldn't match)
 when in start condition
 .B example.
 If we just used
-.B <example>
+.B \*[Lt]example\*[Gt]
 to qualify
 .I bar,
 though, then it would only be active in
@@ -1270,7 +1270,7 @@ startion condition is an
 start condition.
 .PP
 Also note that the special start-condition specifier
-.B <*>
+.B \*[Lt]*\*[Gt]
 matches every start condition.  Thus, the above example could also
 have been written;
 .nf
@@ -1278,9 +1278,9 @@ have been written;
     %x example
     %%
 
-    <example>foo   do_something();
+    \*[Lt]example\*[Gt]foo   do_something();
 
-    <*>bar    something_else();
+    \*[Lt]*\*[Gt]bar    something_else();
 
 .fi
 .PP
@@ -1290,7 +1290,7 @@ any unmatched character) remains active in start conditions.  It
 is equivalent to:
 .nf
 
-    <*>.|\\n     ECHO;
+    \*[Lt]*\*[Gt].|\\n     ECHO;
 
 .fi
 .PP
@@ -1321,7 +1321,7 @@ is true:
             if ( enter_special )
                 BEGIN(SPECIAL);
 
-    <SPECIAL>blahblahblah
+    \*[Lt]SPECIAL\*[Gt]blahblahblah
     ...more rules follow...
 
 .fi
@@ -1337,18 +1337,18 @@ it will treat it as a single token, the floating-point number
 .nf
 
     %{
-    #include <math.h>
+    #include \*[Lt]math.h\*[Gt]
     %}
     %s expect
 
     %%
     expect-floats        BEGIN(expect);
 
-    <expect>[0-9]+"."[0-9]+      {
+    \*[Lt]expect\*[Gt][0-9]+"."[0-9]+      {
                 printf( "found a float, = %f\\n",
                         atof( yytext ) );
                 }
-    <expect>\\n           {
+    \*[Lt]expect\*[Gt]\\n           {
                 /* that's the end of the line, so
                  * we need another "expect-number"
                  * before we'll recognize any more
@@ -1375,10 +1375,10 @@ maintaining a count of the current input line.
 
     "/*"         BEGIN(comment);
 
-    <comment>[^*\\n]*        /* eat anything that's not a '*' */
-    <comment>"*"+[^*/\\n]*   /* eat up '*'s not followed by '/'s */
-    <comment>\\n             ++line_num;
-    <comment>"*"+"/"        BEGIN(INITIAL);
+    \*[Lt]comment\*[Gt][^*\\n]*        /* eat anything that's not a '*' */
+    \*[Lt]comment\*[Gt]"*"+[^*/\\n]*   /* eat up '*'s not followed by '/'s */
+    \*[Lt]comment\*[Gt]\\n             ++line_num;
+    \*[Lt]comment\*[Gt]"*"+"/"        BEGIN(INITIAL);
 
 .fi
 This scanner goes to a bit of trouble to match as much
@@ -1403,15 +1403,15 @@ following fashion:
 
     ...
 
-    <foo>"/*"    {
+    \*[Lt]foo\*[Gt]"/*"    {
                  comment_caller = foo;
                  BEGIN(comment);
                  }
 
-    <comment>[^*\\n]*        /* eat anything that's not a '*' */
-    <comment>"*"+[^*/\\n]*   /* eat up '*'s not followed by '/'s */
-    <comment>\\n             ++line_num;
-    <comment>"*"+"/"        BEGIN(comment_caller);
+    \*[Lt]comment\*[Gt][^*\\n]*        /* eat anything that's not a '*' */
+    \*[Lt]comment\*[Gt]"*"+[^*/\\n]*   /* eat up '*'s not followed by '/'s */
+    \*[Lt]comment\*[Gt]\\n             ++line_num;
+    \*[Lt]comment\*[Gt]"*"+"/"        BEGIN(comment_caller);
 
 .fi
 Furthermore, you can access the current start condition using
@@ -1429,7 +1429,7 @@ Flex provides
 .B YYSTATE
 as an alias for
 .B YY_START
-(since that is what's used by AT&T
+(since that is what's used by AT\*[Am]T
 .I lex).
 .PP
 Note that start conditions do not have their own name-space; %s's and %x's
@@ -1449,7 +1449,7 @@ not including checking for a string that's too long):
 
     \\"      string_buf_ptr = string_buf; BEGIN(str);
 
-    <str>\\"        { /* saw closing quote - all done */
+    \*[Lt]str\*[Gt]\\"        { /* saw closing quote - all done */
             BEGIN(INITIAL);
             *string_buf_ptr = '\\0';
             /* return string constant token type and
@@ -1457,38 +1457,38 @@ not including checking for a string that's too long):
              */
             }
 
-    <str>\\n        {
+    \*[Lt]str\*[Gt]\\n        {
             /* error - unterminated string constant */
             /* generate error message */
             }
 
-    <str>\\\\[0-7]{1,3} {
+    \*[Lt]str\*[Gt]\\\\[0-7]{1,3} {
             /* octal escape sequence */
             int result;
 
-            (void) sscanf( yytext + 1, "%o", &result );
+            (void) sscanf( yytext + 1, "%o", \*[Am]result );
 
-            if ( result > 0xff )
+            if ( result \*[Gt] 0xff )
                     /* error, constant is out-of-bounds */
 
             *string_buf_ptr++ = result;
             }
 
-    <str>\\\\[0-9]+ {
+    \*[Lt]str\*[Gt]\\\\[0-9]+ {
             /* generate error - bad escape sequence; something
              * like '\\48' or '\\0777777'
              */
             }
 
-    <str>\\\\n  *string_buf_ptr++ = '\\n';
-    <str>\\\\t  *string_buf_ptr++ = '\\t';
-    <str>\\\\r  *string_buf_ptr++ = '\\r';
-    <str>\\\\b  *string_buf_ptr++ = '\\b';
-    <str>\\\\f  *string_buf_ptr++ = '\\f';
+    \*[Lt]str\*[Gt]\\\\n  *string_buf_ptr++ = '\\n';
+    \*[Lt]str\*[Gt]\\\\t  *string_buf_ptr++ = '\\t';
+    \*[Lt]str\*[Gt]\\\\r  *string_buf_ptr++ = '\\r';
+    \*[Lt]str\*[Gt]\\\\b  *string_buf_ptr++ = '\\b';
+    \*[Lt]str\*[Gt]\\\\f  *string_buf_ptr++ = '\\f';
 
-    <str>\\\\(.|\\n)  *string_buf_ptr++ = yytext[1];
+    \*[Lt]str\*[Gt]\\\\(.|\\n)  *string_buf_ptr++ = yytext[1];
 
-    <str>[^\\\\\\n\\"]+        {
+    \*[Lt]str\*[Gt][^\\\\\\n\\"]+        {
             char *yptr = yytext;
 
             while ( *yptr )
@@ -1505,14 +1505,14 @@ start condition
 A start condition scope is begun with:
 .nf
 
-    <SCs>{
+    \*[Lt]SCs\*[Gt]{
 
 .fi
 where
 .I SCs
 is a list of one or more start conditions.  Inside the start condition
 scope, every rule automatically has the prefix
-.I <SCs>
+.I \*[Lt]SCs\*[Gt]
 applied to it, until a
 .I '}'
 which matches the initial
@@ -1520,7 +1520,7 @@ which matches the initial
 So, for example,
 .nf
 
-    <ESC>{
+    \*[Lt]ESC\*[Gt]{
         "\\\\n"   return '\\n';
         "\\\\r"   return '\\r';
         "\\\\f"   return '\\f';
@@ -1531,10 +1531,10 @@ So, for example,
 is equivalent to:
 .nf
 
-    <ESC>"\\\\n"  return '\\n';
-    <ESC>"\\\\r"  return '\\r';
-    <ESC>"\\\\f"  return '\\f';
-    <ESC>"\\\\0"  return '\\0';
+    \*[Lt]ESC\*[Gt]"\\\\n"  return '\\n';
+    \*[Lt]ESC\*[Gt]"\\\\r"  return '\\r';
+    \*[Lt]ESC\*[Gt]"\\\\f"  return '\\f';
+    \*[Lt]ESC\*[Gt]"\\\\0"  return '\\0';
 
 .fi
 Start condition scopes may be nested.
@@ -1674,7 +1674,7 @@ handle to the current buffer.
 .PP
 Here is an example of using these features for writing a scanner
 which expands include files (the
-.B <<EOF>>
+.B \*[Lt]\*[Lt]EOF\*[Gt]\*[Gt]
 feature is discussed below):
 .nf
 
@@ -1695,9 +1695,9 @@ feature is discussed below):
     [a-z]+              ECHO;
     [^a-z\\n]*\\n?        ECHO;
 
-    <incl>[ \\t]*      /* eat the whitespace */
-    <incl>[^ \\t\\n]+   { /* got the include file name */
-            if ( include_stack_ptr >= MAX_INCLUDE_DEPTH )
+    \*[Lt]incl\*[Gt][ \\t]*      /* eat the whitespace */
+    \*[Lt]incl\*[Gt][^ \\t\\n]+   { /* got the include file name */
+            if ( include_stack_ptr \*[Ge] MAX_INCLUDE_DEPTH )
                 {
                 fprintf( stderr, "Includes nested too deeply" );
                 exit( 1 );
@@ -1717,8 +1717,8 @@ feature is discussed below):
             BEGIN(INITIAL);
             }
 
-    <<EOF>> {
-            if ( --include_stack_ptr < 0 )
+    \*[Lt]\*[Lt]EOF\*[Gt]\*[Gt] {
+            if ( --include_stack_ptr \*[Lt] 0 )
                 {
                 yyterminate();
                 }
@@ -1791,7 +1791,7 @@ The type
 is an integral type to which you can cast an integer expression
 reflecting the size of the buffer.
 .SH END-OF-FILE RULES
-The special rule "<<EOF>>" indicates
+The special rule "\*[Lt]\*[Lt]EOF\*[Gt]\*[Gt]" indicates
 actions which are to be taken when an end-of-file is
 encountered and yywrap() returns non-zero (i.e., indicates
 no further files to process).  The action must finish
@@ -1816,16 +1816,16 @@ or, switching to a new buffer using
 .B yy_switch_to_buffer()
 as shown in the example above.
 .PP
-<<EOF>> rules may not be used with other
+\*[Lt]\*[Lt]EOF\*[Gt]\*[Gt] rules may not be used with other
 patterns; they may only be qualified with a list of start
-conditions.  If an unqualified <<EOF>> rule is given, it
+conditions.  If an unqualified \*[Lt]\*[Lt]EOF\*[Gt]\*[Gt] rule is given, it
 applies to
 .I all
-start conditions which do not already have <<EOF>> actions.  To
-specify an <<EOF>> rule for only the initial start condition, use
+start conditions which do not already have \*[Lt]\*[Lt]EOF\*[Gt]\*[Gt] actions.  To
+specify an \*[Lt]\*[Lt]EOF\*[Gt]\*[Gt] rule for only the initial start condition, use
 .nf
 
-    <INITIAL><<EOF>>
+    \*[Lt]INITIAL\*[Gt]\*[Lt]\*[Lt]EOF\*[Gt]\*[Gt]
 
 .fi
 .PP
@@ -1838,11 +1838,11 @@ An example:
 
     ...other rules for dealing with quotes...
 
-    <quote><<EOF>>   {
+    \*[Lt]quote\*[Gt]\*[Lt]\*[Lt]EOF\*[Gt]\*[Gt]   {
              error( "unterminated quote" );
              yyterminate();
              }
-    <<EOF>>  {
+    \*[Lt]\*[Lt]EOF\*[Gt]\*[Gt]  {
              if ( *++filelist )
                  yyin = fopen( *filelist, "r" );
              else
@@ -2143,7 +2143,7 @@ matched text given in
 will have the preserved case (i.e., it will not be folded).
 .TP
 .B \-l
-turns on maximum compatibility with the original AT&T
+turns on maximum compatibility with the original AT\*[Am]T
 .I lex
 implementation.  Note that this does not mean
 .I full
@@ -2526,7 +2526,7 @@ faster-executing scanners at the cost of larger tables with
 the following generally being true:
 .nf
 
-    slowest & smallest
+    slowest \*[Am] smallest
           -Cem
           -Cm
           -Ce
@@ -2534,7 +2534,7 @@ the following generally being true:
           -C{f,F}e
           -C{f,F}
           -C{f,F}a
-    fastest & largest
+    fastest \*[Am] largest
 
 .fi
 Note that scanners with the smallest tables are usually generated and
@@ -3029,10 +3029,10 @@ for the action.  Recall the scanner for C comments:
 
     "/*"         BEGIN(comment);
 
-    <comment>[^*\\n]*
-    <comment>"*"+[^*/\\n]*
-    <comment>\\n             ++line_num;
-    <comment>"*"+"/"        BEGIN(INITIAL);
+    \*[Lt]comment\*[Gt][^*\\n]*
+    \*[Lt]comment\*[Gt]"*"+[^*/\\n]*
+    \*[Lt]comment\*[Gt]\\n             ++line_num;
+    \*[Lt]comment\*[Gt]"*"+"/"        BEGIN(INITIAL);
 
 .fi
 This could be sped up by writing it as:
@@ -3044,11 +3044,11 @@ This could be sped up by writing it as:
 
     "/*"         BEGIN(comment);
 
-    <comment>[^*\\n]*
-    <comment>[^*\\n]*\\n      ++line_num;
-    <comment>"*"+[^*/\\n]*
-    <comment>"*"+[^*/\\n]*\\n ++line_num;
-    <comment>"*"+"/"        BEGIN(INITIAL);
+    \*[Lt]comment\*[Gt][^*\\n]*
+    \*[Lt]comment\*[Gt][^*\\n]*\\n      ++line_num;
+    \*[Lt]comment\*[Gt]"*"+[^*/\\n]*
+    \*[Lt]comment\*[Gt]"*"+[^*/\\n]*\\n ++line_num;
+    \*[Lt]comment\*[Gt]"*"+"/"        BEGIN(INITIAL);
 
 .fi
 Now instead of each newline requiring the processing of another
@@ -3421,20 +3421,20 @@ Here is an example of a simple C++ scanner:
                 }
             }
 
-    {number}  cout << "number " << YYText() << '\\n';
+    {number}  cout \*[Lt]\*[Lt] "number " \*[Lt]\*[Lt] YYText() \*[Lt]\*[Lt] '\\n';
 
     \\n        mylineno++;
 
-    {name}    cout << "name " << YYText() << '\\n';
+    {name}    cout \*[Lt]\*[Lt] "name " \*[Lt]\*[Lt] YYText() \*[Lt]\*[Lt] '\\n';
 
-    {string}  cout << "string " << YYText() << '\\n';
+    {string}  cout \*[Lt]\*[Lt] "string " \*[Lt]\*[Lt] YYText() \*[Lt]\*[Lt] '\\n';
 
     %%
 
     int main( int /* argc */, char** /* argv */ )
         {
         FlexLexer* lexer = new yyFlexLexer;
-        while(lexer->yylex() != 0)
+        while(lexer-\*[Gt]yylex() != 0)
             ;
         return 0;
         }
@@ -3448,7 +3448,7 @@ option) to rename each
 to some other
 .B xxFlexLexer.
 You then can include
-.B <FlexLexer.h>
+.B \*[Lt]FlexLexer.h\*[Gt]
 in your other sources once per lexer class, first renaming
 .B yyFlexLexer
 as follows:
@@ -3456,11 +3456,11 @@ as follows:
 
     #undef yyFlexLexer
     #define yyFlexLexer xxFlexLexer
-    #include <FlexLexer.h>
+    #include \*[Lt]FlexLexer.h\*[Gt]
 
     #undef yyFlexLexer
     #define yyFlexLexer zzFlexLexer
-    #include <FlexLexer.h>
+    #include \*[Lt]FlexLexer.h\*[Gt]
 
 .fi
 if, for example, you used
@@ -3474,7 +3474,7 @@ IMPORTANT: the present form of the scanning class is
 and may change considerably between major releases.
 .SH INCOMPATIBILITIES WITH LEX AND POSIX
 .I flex
-is a rewrite of the AT&T Unix
+is a rewrite of the AT\*[Am]T Unix
 .I lex
 tool (the two implementations do not share any code, though),
 with some extensions and incompatibilities, both of which
@@ -3490,11 +3490,11 @@ destroys the contents of
 which is counter to the POSIX specification.
 .PP
 In this section we discuss all of the known areas of incompatibility
-between flex, AT&T lex, and the POSIX specification.
+between flex, AT\*[Am]T lex, and the POSIX specification.
 .PP
 .I flex's
 .B \-l
-option turns on maximum compatibility with the original AT&T
+option turns on maximum compatibility with the original AT\*[Am]T
 .I lex
 implementation, at the cost of a major loss in the generated scanner's
 performance.  We note below which incompatibilities can be overcome
@@ -3623,9 +3623,9 @@ then it is
 .I not
 expanded with parentheses, to allow these operators to appear in
 definitions without losing their special meanings.  But the
-.B <s>, /,
+.B \*[Lt]s\*[Gt], /,
 and
-.B <<EOF>>
+.B \*[Lt]\*[Lt]EOF\*[Gt]\*[Gt]
 operators cannot be used in a
 .I flex
 definition.
@@ -3645,7 +3645,7 @@ has trailing whitespace:
 .nf
 
     %%
-    foo|bar<space here>
+    foo|bar\*[Lt]space here\*[Gt]
       { foobar_action(); }
 
 .fi
@@ -3735,8 +3735,8 @@ or the POSIX specification:
     yy_set_interactive()
     yy_set_bol()
     YY_AT_BOL()
-    <<EOF>>
-    <*>
+    \*[Lt]\*[Lt]EOF\*[Gt]\*[Gt]
+    \*[Lt]*\*[Gt]
     YY_DECL
     YY_START
     YY_USER_ACTION
@@ -3874,8 +3874,8 @@ reentering the scanner, use:
 .fi
 or, as noted above, switch to using the C++ scanner class.
 .PP
-.I too many start conditions in <> construct! -
-you listed more start conditions in a <> construct than exist (so
+.I too many start conditions in \*[Lt]\*[Gt] construct! -
+you listed more start conditions in a \*[Lt]\*[Gt] construct than exist (so
 you must have listed at least one of them twice).
 .SH FILES
 .TP
@@ -3891,7 +3891,7 @@ on some systems).
 generated C++ scanner class, when using
 .B -+.
 .TP
-.I <FlexLexer.h>
+.I \*[Lt]FlexLexer.h\*[Gt]
 header file defining the C++ scanner base class,
 .B FlexLexer,
 and its derived class,
@@ -3952,7 +3952,7 @@ Dynamic resizing of the input buffer is slow, as it entails rescanning
 all the text matched so far by the current (generally huge) token.
 .PP
 Due to both buffering of input and read-ahead, you cannot intermix
-calls to <stdio.h> routines, such as, for example,
+calls to \*[Lt]stdio.h\*[Gt] routines, such as, for example,
 .B getchar(),
 with
 .I flex
@@ -3983,7 +3983,7 @@ internal algorithms need documentation.
 lex(1), yacc(1), sed(1), awk(1).
 .PP
 John Levine, Tony Mason, and Doug Brown,
-.I Lex & Yacc,
+.I Lex \*[Am] Yacc,
 O'Reilly and Associates.  Be sure to get the 2nd edition.
 .PP
 M. E. Lesk and E. Schmidt,

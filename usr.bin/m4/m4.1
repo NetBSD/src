@@ -1,4 +1,4 @@
-.\"	$NetBSD: m4.1,v 1.13 2001/12/01 16:43:19 wiz Exp $
+.\"	$NetBSD: m4.1,v 1.14 2002/02/08 01:36:27 ross Exp $
 .\"	@(#) $OpenBSD: m4.1,v 1.23 2001/09/29 11:56:18 espie Exp $
 .\"
 .\"
@@ -277,7 +277,7 @@ included.
 .It Ic patsubst
 Substitutes a regular expression in a string with a replacement string.
 Usual substitution patterns apply: an ampersand
-.Pq Ql &
+.Pq Ql \*[Am]
 is replaced by the string matching the regular expression.
 The string
 .Ql \e# ,
@@ -395,5 +395,5 @@ For portability, one should not use the macros
 All builtins do expand without arguments in many other
 .Nm "" .
 .Sh AUTHORS
-Ozan Yigit <oz@sis.yorku.ca> and Richard A. O'Keefe (ok@cs.rmit.edu.au).
-GNU-m4 compatibility extensions by Marc Espie <espie@cvs.openbsd.org>.
+Ozan Yigit \*[Lt]oz@sis.yorku.ca\*[Gt] and Richard A. O'Keefe (ok@cs.rmit.edu.au).
+GNU-m4 compatibility extensions by Marc Espie \*[Lt]espie@cvs.openbsd.org\*[Gt].

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.17 2002/02/08 01:20:15 ross Exp $
+.\"	$NetBSD: sed.1,v 1.18 2002/02/08 01:36:32 ross Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -395,11 +395,11 @@ a literal character if it is preceded by a backslash.
 .Pp
 An ampersand
 .Po
-.Dq &
+.Dq \*[Am]
 .Pc
 appearing in the replacement is replaced by the string matching the RE.
 The special meaning of
-.Dq &
+.Dq \*[Am]
 in this context can be suppressed by preceding it by a backslash.
 The string
 .Dq \e# ,
@@ -500,7 +500,7 @@ option on the command line.
 .Pp
 The
 .Nm
-utility exits 0 on success and >0 if an error occurs.
+utility exits 0 on success and \*[Gt]0 if an error occurs.
 .Sh SEE ALSO
 .Xr awk 1 ,
 .Xr ed 1 ,

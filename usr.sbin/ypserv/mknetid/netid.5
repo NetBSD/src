@@ -1,4 +1,4 @@
-.\"	$NetBSD: netid.5,v 1.5 2002/02/02 02:20:31 wiz Exp $
+.\"	$NetBSD: netid.5,v 1.6 2002/02/08 01:38:58 ross Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -49,12 +49,12 @@ there are three kind of records.
 .Pp
 The first type is information about which gids a uid has:
 .Bd -literal
-unix.<uid>@<yp-domain> <uid>:<gid>,<gid>
+unix.\*[Lt]uid\*[Gt]@\*[Lt]yp-domain\*[Gt] \*[Lt]uid\*[Gt]:\*[Lt]gid\*[Gt],\*[Lt]gid\*[Gt]
 .Ed
 .Pp
 The second type has informations about hosts:
 .Bd -literal
-unix.<hostname>@<yp-domain> 0:<hostname>
+unix.\*[Lt]hostname\*[Gt]@\*[Lt]yp-domain\*[Gt] 0:\*[Lt]hostname\*[Gt]
 .Ed
 .Pp
 The third type is records from a

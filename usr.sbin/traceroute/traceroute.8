@@ -1,4 +1,4 @@
-.\" $NetBSD: traceroute.8,v 1.16 2002/02/04 10:49:19 fair Exp $
+.\" $NetBSD: traceroute.8,v 1.17 2002/02/08 01:38:57 ross Exp $
 .\"
 .\" Copyright (c) 1989, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -217,7 +217,7 @@ packets with a small ttl (time to live) then listening for an
 ICMP "time exceeded" reply from a gateway.  We start our probes
 with a ttl of one and increase by one until we get an ICMP "port
 unreachable" (which means we got to "host") or hit a max (which
-defaults to 30 hops & can be changed with the
+defaults to 30 hops \*[Am] can be changed with the
 .B \-m
 flag).  Three
 probes (change with
@@ -259,7 +259,7 @@ traceroute to nis.nsf.net (35.1.1.48), 30 hops max, 38 byte packet
 .fi
 .RE
 
-Note that lines 2 & 3 are the same.  This is due to a buggy
+Note that lines 2 \*[Am] 3 are the same.  This is due to a buggy
 kernel on the 2nd hop system \- lbl-csam.arpa \- that forwards
 packets with a zero ttl (a bug in the distributed version
 of 4.3BSD).  Note that you have to guess what path
@@ -293,14 +293,14 @@ traceroute to allspice.lcs.mit.edu (18.26.0.115), 30 hops max
 .fi
 .RE
 
-Note that the gateways 12, 14, 15, 16 & 17 hops away
+Note that the gateways 12, 14, 15, 16 \*[Am] 17 hops away
 either don't send ICMP "time exceeded" messages or send them
 with a ttl too small to reach us.  14 \- 17 are running the
 MIT C Gateway code that doesn't send "time exceeded"s.  God
 only knows what's going on with 12.
 .PP
 The silent gateway 12 in the above may be the result of a bug in
-the 4.[23]BSD network code (and its derivatives):  4.x (x <= 3)
+the 4.[23]BSD network code (and its derivatives):  4.x (x \*[Le] 3)
 sends an unreachable message using whatever ttl remains in the
 original datagram.  Since, for gateways, the remaining ttl is
 zero, the ICMP "time exceeded" is guaranteed to not make it back
@@ -334,7 +334,7 @@ ICMP reply.  So, the reply will time out on the return path
 ICMP's) until we probe with a ttl that's at least twice the path
 length.  I.e., rip is really only 7 hops away.  A reply that
 returns with a ttl of 1 is a clue this problem exists.
-Traceroute prints a "!" after the time if the ttl is <= 1.
+Traceroute prints a "!" after the time if the ttl is \*[Le] 1.
 Since vendors ship a lot of obsolete (DEC's Ultrix, Sun 3.x) or
 non-standard (HPUX) software, expect to see this problem
 frequently and/or take care picking the target host of your
@@ -353,7 +353,7 @@ or
 ever occur and the associated gateway is busted if you see one),
 .B !X
 (communication administratively prohibited), or
-.B !<N>
+.B !\*[Lt]N\*[Gt]
 (ICMP unreachable code N).
 If almost all the probes result in some kind of unreachable, traceroute
 will give up and exit.

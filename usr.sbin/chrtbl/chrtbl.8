@@ -1,4 +1,4 @@
-.\"	$NetBSD: chrtbl.8,v 1.5 2002/01/19 03:08:12 wiz Exp $
+.\"	$NetBSD: chrtbl.8,v 1.6 2002/02/08 01:38:47 ross Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas
 .\" All rights reserved.
@@ -33,14 +33,14 @@
 .Os
 .Sh NAME
 .Nm chrtbl
-.Nd create character classification and upper <-> lower conversion tables
+.Nd create character classification and upper \*[Lt]-\*[Gt] lower conversion tables
 .Sh SYNOPSIS
 .Nm
 .Op Fl o Ar ofile
 .Ar ifile
 .Sh DESCRIPTION
 .Nm
-creates character classification and upper <-> lower conversion tables for
+creates character classification and upper \*[Lt]-\*[Gt] lower conversion tables for
 single byte files. The
 .Nm
 command is modelled after the Solaris/SVR4 command. The input file is similar
@@ -67,7 +67,7 @@ Set the attribute of the specified characters range(s) to be control.
 Set the attribute of the specified characters range(s) to be hexadecimal digits.
 .It Nm isblank Ar begin-char Op - Ar end-char
 Set the attribute of the specified characters range(s) to be blank.
-.It Nm ul Ar <upper-char lower-char> ...
+.It Nm ul Ar \*[Lt]upper-char lower-char\*[Gt] ...
 Specify a case correspondance between upper and lower char.
 .It Nm cswidth Ar n1,s1:n2,s2:n3,s3
 Specify the character set byte width (n1,n2,n3) and the screen width(s1,s2,s3)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: window.1,v 1.9 2001/12/08 19:26:45 wiz Exp $
+.\"	$NetBSD: window.1,v 1.10 2002/02/08 01:36:38 ross Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -352,7 +352,7 @@ be included in strings by quoting them in ``"'' or escaping them
 with ``\\''.  In addition, the ``\\'' sequences of C are supported,
 both inside and outside quotes (e.g., ``\\n'' is a new line,
 ``\\r'' a carriage return).  For example, these are legal strings:
-abcde01234, "&#$^*&#", ab"$#"cd, ab\\$\\#cd, "/usr/ucb/window".
+abcde01234, "\*[Am]#$^*\*[Am]#", ab"$#"cd, ab\\$\\#cd, "/usr/ucb/window".
 .Pp
 A number is an integer value in one of three forms:
 a decimal number, an octal number preceded by ``0'',
@@ -373,14 +373,14 @@ has a single control structure:
 the fully bracketed if statement in the form
 .Pp
 .Bd -literal -offset indent -compact
-if <expr> then
-\t<statement>
+if \*[Lt]expr\*[Gt] then
+\t\*[Lt]statement\*[Gt]
 \t...
-elsif <expr> then
-\t<statement>
+elsif \*[Lt]expr\*[Gt] then
+\t\*[Lt]statement\*[Gt]
 \t...
 else
-\t<statement>
+\t\*[Lt]statement\*[Gt]
 \t...
 endif
 .Ed
@@ -391,7 +391,7 @@ and
 .Ic elsif
 parts are optional, and the latter can
 be repeated any number of times.
-<Expr>
+\*[Lt]Expr\*[Gt]
 must be numeric.
 .Ss Expressions
 Expressions in
@@ -458,7 +458,7 @@ evaluates true, then
 is not evaluated).
 .It Xo
 .Aq Va expr1
-.Ic \&&\&&
+.Ic \&\*[Am]\&\*[Am]
 .Aq Va expr2
 .Xc
 Logical and with short circuit evaluation.  Numeric values only.
@@ -476,7 +476,7 @@ Bitwise or.  Numeric values only.
 Bitwise exclusive or.  Numeric values only.
 .It Xo
 .Aq Va expr1
-.Ic \&&
+.Ic \&\*[Am]
 .Aq Va expr2
 .Xc
 Bitwise and.  Numeric values only.
@@ -494,13 +494,13 @@ operands can be numeric or string valued.  One string operand
 forces the other to be converted to a string in necessary.
 .It Xo
 .Aq Va expr1
-.Ic <
+.Ic \*[Lt]
 .Aq Va expr2 ,
 .Aq Va expr1
-.Ic >
+.Ic \*[Gt]
 .Aq Va expr2 ,
 .Aq Va expr1
-.Ic <=
+.Ic \*[Le]
 .Aq Va expr2 ,
 .Xc
 Less than, greater than, less than or equal to,
@@ -508,10 +508,10 @@ greater than or equal to.  Both numeric and string values, with
 automatic conversion as above.
 .It Xo
 .Aq Va expr1
-.Ic <<
+.Ic \*[Lt]\*[Lt]
 .Aq Va expr2 ,
 .Aq Va expr1
-.Ic >>
+.Ic \*[Gt]\*[Gt]
 .Aq Va expr2
 .Xc
 If both operands are numbers,
@@ -588,8 +588,8 @@ function,
 .Aq Ar arglist
 can be in one of two forms:
 .Bd -literal -offset indent
-<expr1>, <expr2>, ...
-argname1 = <expr1>, argname2 = <expr2>, ...
+\*[Lt]expr1\*[Gt], \*[Lt]expr2\*[Gt], ...
+argname1 = \*[Lt]expr1\*[Gt], argname2 = \*[Lt]expr2\*[Gt], ...
 .Ed
 .Pp
 The two forms can in fact be intermixed, but the result is
@@ -618,7 +618,7 @@ order.  Optional arguments are in square brackets
 .Sq Op .
 Arguments
 that have no names are in angle brackets
-.Sq <> .
+.Sq \*[Lt]\*[Gt] .
 An argument meant to be a boolean flag (often named
 .Ar flag )
 can be one of
@@ -642,7 +642,7 @@ listed.  Otherwise,
 .Aq Ar string
 is defined as an alias,
 with expansion
-.Aq Ar string\-list > .
+.Aq Ar string\-list \*[Gt] .
 The previous definition of
 .Aq Ar string ,
 if any, is returned.  Default for
