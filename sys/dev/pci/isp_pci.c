@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.53 2000/08/01 23:55:14 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.54 2000/08/02 17:39:50 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  * Matthew Jacob (mjacob@nas.nasa.gov)
@@ -451,12 +451,14 @@ isp_pci_attach(parent, self, aux)
 	isp->isp_dblev |= ISP_LOGINFO;
 #endif
 #endif
+#ifdef	DEBUG
 	if (oneshot) {
 		oneshot = 0;
 		isp_prt(isp, ISP_LOGCONFIG, vstring,
 		    ISP_PLATFORM_VERSION_MAJOR, ISP_PLATFORM_VERSION_MINOR,
 		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);
 	}
+#endif
 
 	isp->isp_revision = rev;
 
