@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.32 2004/02/13 11:36:08 wiz Exp $	*/
+/*	$NetBSD: pax.c,v 1.33 2004/02/13 23:10:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.32 2004/02/13 11:36:08 wiz Exp $");
+__RCSID("$NetBSD: pax.c,v 1.33 2004/02/13 23:10:14 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -342,6 +342,9 @@ sig_cleanup(int which_sig)
 	else
 		tty_warn(0, "Signal caught, cleaning up.");
 
+	/* delete any open temporary file */
+	if (xtmp_name)
+		(void)unlink(xtmp_name);
 	ar_close();
 	proc_dir();
 	if (tflag)
