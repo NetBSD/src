@@ -49,8 +49,11 @@
 .Ft void
 .Fn regsub "const regexp *prog" "const char *source" "char *dest"
 .Sh DESCRIPTION
+.Bf -symbolic
 This interface is made obsolete by
 .Xr regex 3 .
+It is available from the compatibility library, libcompat.
+.Ef
 .Pp
 The
 .Fn regcomp ,
