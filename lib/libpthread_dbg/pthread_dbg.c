@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.14 2004/02/03 20:26:16 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.15 2004/02/11 21:07:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.14 2004/02/03 20:26:16 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.15 2004/02/11 21:07:18 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -414,12 +414,23 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 
 		switch (regset) {
 		case 0:
+			if ((uc.uc_flags & _UC_CPU) == 0)
+				return TD_ERR_ERR;
 			PTHREAD_UCONTEXT_TO_REG((struct reg *)buf, &uc);
 			break;
 		case 1:
+			if ((uc.uc_flags & _UC_FPU) == 0)
+				return TD_ERR_ERR;
 			PTHREAD_UCONTEXT_TO_FPREG((struct fpreg *)buf, &uc);
 			break;
+#ifdef PTHREAD_UCONTEXT_XREG_FLAG
 		case 2:
+			if ((uc.uc_flags & PTHREAD_UCONTEXT_XREG_FLAG) == 0)
+				return TD_ERR_ERR;
+			PTHREAD_UCONTEXT_TO_XREG(buf, &uc);
+			break;
+#endif
+		default:
 			return TD_ERR_INVAL;
 		}
 		break;
@@ -509,7 +520,12 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 			PTHREAD_FPREG_TO_UCONTEXT(&uc,
 			    (struct fpreg *)(void *)buf);
 			break;
+#ifdef PTHREAD_UCONTEXT_XREG_FLAG
 		case 2:
+			PTHREAD_XREG_TO_UCONTEXT(&uc, buf);
+			break;
+#endif
+		default: 
 			return TD_ERR_INVAL;
 		}
 
