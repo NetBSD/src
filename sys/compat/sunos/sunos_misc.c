@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.74 1996/10/13 01:16:19 christos Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.75 1996/12/28 22:37:03 cjs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,7 +111,7 @@ sunos_sys_stime(p, v, retval)
 	struct sunos_sys_stime_args *uap = v;
 	struct sys_settimeofday_args ap;
 	caddr_t sg = stackgap_init(p->p_emul);
-	struct timeval tv;
+	struct timeval tv, *sgtvp;
 	int error;
 
 	error = copyin(SCARG(uap, tp), &tv.tv_sec, sizeof(tv.tv_sec));
@@ -119,10 +119,10 @@ sunos_sys_stime(p, v, retval)
 		return error;
 	tv.tv_usec = 0;
 
-	SCARG(&ap, tv) = stackgap_alloc(&sg, sizeof(struct timeval));
+	SCARG(&ap, tv) = sgtvp = stackgap_alloc(&sg, sizeof(struct timeval));
 	SCARG(&ap, tzp) = NULL;
 
-	error = copyout(&tv, SCARG(&ap, tv), sizeof(struct timeval));
+	error = copyout(&tv, sgtvp, sizeof(struct timeval));
 	if (error)
 		return error;
 
