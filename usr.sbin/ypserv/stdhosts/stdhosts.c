@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.10 1999/01/17 07:01:26 lukem Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.11 1999/07/25 09:01:05 lukem Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdhosts.c,v 1.10 1999/01/17 07:01:26 lukem Exp $");
+__RCSID("$NetBSD: stdhosts.c,v 1.11 1999/07/25 09:01:05 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -64,7 +64,7 @@ main(argc, argv)
 	FILE	*data_file;
 	size_t	 line_no;
 	size_t	 len;
-	char	*k, *v, *addr_string, *fname;
+	char	*line, *k, *v, *addr_string, *fname;
 
 	addr_string = NULL;		/* XXX gcc -Wuninitialized */
 
@@ -83,11 +83,13 @@ main(argc, argv)
 
 	line_no = 0;
 	for (;
-	    (v = fparseln(data_file, &len, &line_no, NULL, FPARSELN_UNESCALL));
-	    free(v)) {
+	    (line = fparseln(data_file, &len, &line_no, NULL,
+		FPARSELN_UNESCALL));
+	    free(line)) {
 		if (len == 0)
 			continue;
 
+		v = line;
 		for (k = v; *v && !isspace(*v); v++)
 			;
 		while (*v && isspace(*v))
