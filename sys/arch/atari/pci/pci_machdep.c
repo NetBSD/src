@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.25 2000/09/28 06:32:10 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.26 2000/09/28 06:39:52 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -112,11 +112,24 @@ struct device	*pdp;
 struct cfdata	*cfp;
 void		*auxp;
 {
+	static int	nmatched = 0;
+
 	if(atari_realconfig == 0)
 		return (0);
-	if (strcmp((char *)auxp, "pcibus") || cfp->cf_unit != 0)
-		return(0);
-	return(machineid & ATARI_HADES ? 1 : 0);
+
+	if (strcmp((char *)auxp, "pcibus"))
+		return (0);	/* Wrong number... */
+
+	if (machineid & ATARI_HADES) {
+		/*
+		 * The Hades has only one pci bus
+		 */
+		if (nmatched)
+			return (0);
+		nmatched++;
+		return (1);
+	}
+	return (0);
 }
 
 void
