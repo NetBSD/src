@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.8 1996/10/12 00:49:19 cgd Exp $	*/
+/*	$NetBSD: paths.h,v 1.9 1997/04/15 05:29:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,6 +47,7 @@
 #define	_PATH_BSHELL	"/bin/sh"
 #define	_PATH_CONSOLE	"/dev/console"
 #define	_PATH_CSHELL	"/bin/csh"
+#define _PATH_DEFTAPE	"/dev/rst0"
 #define	_PATH_DEVDB	"/var/run/dev.db"
 #define	_PATH_DEVNULL	"/dev/null"
 #define	_PATH_DRUM	"/dev/drum"
