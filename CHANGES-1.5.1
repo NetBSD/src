@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.27 2001/02/26 23:13:18 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.28 2001/02/27 16:20:21 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -1532,3 +1532,15 @@ sys/netinet6/dest6.c				1.9-1.10 via patch
 sys/netinet6/nd6.c				1.40 via patch
 
   Tighten IPv6 ND6/dest6 option chasing bounds check.
+
+distrib/sets/lists/man/mi			patch
+distrib/sets/lists/comp/mi			patch
+distrib/sets/lists/misc/mi			patch
+
+  Bring into sync with reality, mostly by adding missing manual
+  pages.
+
+etc/mtree/NetBSD.dist				1.123
+
+  /usr/share/examples/usermgmt and /usr/share/skel are replaced by
+  /etc/skel.
