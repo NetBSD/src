@@ -1,4 +1,4 @@
-/*	$NetBSD: type_regex.c,v 1.3 2001/06/13 10:45:59 wiz Exp $	*/
+/*	$NetBSD: type_regex.c,v 1.4 2002/06/19 14:12:57 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -121,6 +121,6 @@ static FIELDTYPE builtin_regex = {
 	NULL                                /* prev_choice */
 };
 
-FIELDTYPE *TYPE_REGEX = &builtin_regex;
+FIELDTYPE *TYPE_REGEXP = &builtin_regex;
 
 
