@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.3 1993/09/29 05:20:37 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.4 1993/10/07 14:50:17 mycroft Exp $
  */
 
 /*
@@ -55,6 +55,7 @@
 #incldue "sys/device.h"
 #include "machine/cpufunc.h"
 #include "machine/pc/display.h"
+#include "machine/pccons.h"
 #include "i386/i386/cons.h"
 #include "i386/isa/isa.h"
 #include "i386/isa/isavar.h"
@@ -138,8 +139,9 @@ int	pcparam();
 int	ttrstrt();
 char	partab[];
 
+static void set_typematic __P((u_char));
+extern int pcopen __P((dev_t, int, int, struct proc *));
 
-extern pcopen(dev_t, int, int, struct proc *);
 /*
  * Wait for CP to accept last CP command sent
  * before setting up next command.
@@ -156,8 +158,9 @@ extern pcopen(dev_t, int, int, struct proc *);
 /*
  * Pass command to keyboard controller (8042)
  */
-static int kbc_8042cmd(val)
-int val;
+static int
+kbc_8042cmd(val)
+	int val;
 {
 	unsigned timeo;
 
@@ -172,8 +175,9 @@ int val;
 /*
  * Pass command to keyboard itself
  */
-int kbd_cmd(val)
-int val;
+int
+kbd_cmd(val)
+	int val;
 {
 	unsigned timeo;
 
@@ -188,7 +192,8 @@ int val;
 /*
  * Read response from keyboard
  */
-int kbd_response()
+int
+kbd_response()
 {
 	unsigned timeo;
 
@@ -202,6 +207,7 @@ int kbd_response()
 /*
  * these are both bad jokes
  */
+int
 pcprobe(dev)
 struct isa_device *dev;
 {
@@ -260,8 +266,9 @@ struct isa_device *dev;
 	return (16);
 }
 
+void
 pcattach(dev)
-struct isa_device *dev;
+	struct isa_device *dev;
 {
 	u_short *cp = Crtat + (CGA_BUF-MONO_BUF)/CHR;
 	u_short was;
@@ -275,15 +282,11 @@ struct isa_device *dev;
 	cursor(0);
 }
 
-/* ARGSUSED */
-#ifdef __STDC__
-pcopen(dev_t dev, int flag, int mode, struct proc *p)
-#else
+int
 pcopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
-#endif
 {
 	register struct tty *tp;
 
@@ -314,6 +317,7 @@ pcopen(dev, flag, mode, p)
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
 
+int
 pcclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -326,7 +330,7 @@ pcclose(dev, flag, mode, p)
 	return(0);
 }
 
-/*ARGSUSED*/
+int
 pcread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -336,7 +340,7 @@ pcread(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
-/*ARGSUSED*/
+int
 pcwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -351,6 +355,7 @@ pcwrite(dev, uio, flag)
  * the console processor wants to give us a character.
  * Catch the character, and see who it goes to.
  */
+void
 pcrint(dev, irq, cpl)
 	dev_t dev;
 {
@@ -376,12 +381,7 @@ pcrint(dev, irq, cpl)
 	} while (*cp);
 }
 
-#ifdef XSERVER
-#define CONSOLE_X_MODE_ON _IO('t',121)
-#define CONSOLE_X_MODE_OFF _IO('t',122)
-#define CONSOLE_X_BELL _IOW('t',123,int[2])
-#endif /* XSERVER */
-
+int
 pcioctl(dev, cmd, data, flag)
 	dev_t dev;
 	caddr_t data;
@@ -389,14 +389,15 @@ pcioctl(dev, cmd, data, flag)
 	register struct tty *tp = pc_tty[0];
 	register error;
 
+	switch (cmd) {
 #ifdef XSERVER
-	if (cmd == CONSOLE_X_MODE_ON) {
+	    case CONSOLE_X_MODE_ON:
 		pc_xmode_on ();
 		return (0);
-	} else if (cmd == CONSOLE_X_MODE_OFF) {
+	    case CONSOLE_X_MODE_OFF:
 		pc_xmode_off ();
 		return (0);
-	} else if (cmd == CONSOLE_X_BELL) {
+	    case CONSOLE_X_BELL:
 		/* if set, data is a pointer to a length 2 array of
 		   integers. data[0] is the pitch in Hz and data[1]
 		   is the duration in msec.  */
@@ -407,8 +408,23 @@ pcioctl(dev, cmd, data, flag)
 			sysbeep(BEEP_FREQ, BEEP_TIME);
 		}
 		return (0);
-	}
 #endif /* XSERVER */
+	    case CONSOLE_SET_TYPEMATIC_RATE: {
+		u_char	rate;
+
+		if (!data)
+			return (EINVAL);
+		rate = *((u_char *)data);
+		/*
+		 * Check that it isn't too big (which would case it to be
+		 * confused with a command).
+		 */
+		if (rate & 0x80)
+			return (EINVAL);
+		set_typematic(rate);		/* set new rate and delay */
+		return (0);
+	    }
+	}
  
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
 	if (error >= 0)
@@ -1391,20 +1407,44 @@ static Scan_def	scan_codes[] =
 };
 
 
-
+void
 update_led()
 {
+#if 0
 	int response;
+#endif
 
-	if (kbd_cmd(KBC_STSIND) != 0)
-		printf("Timeout for keyboard LED command\n");
+	if (kbd_cmd(KBC_MODEIND) != 0)
+		printf("Timeout for keyboard %s\n", "LED command");
 	else if (kbd_cmd(scroll | (num << 1) | (caps << 2)) != 0)
-		printf("Timeout for keyboard LED data\n");
+		printf("Timeout for keyboard %s\n", "LED data");
 #if 0
 	else if ((response = kbd_response()) < 0)
-		printf("Timeout for keyboard LED ack\n");
+		printf("Timeout for keyboard %s\n", "LED ack");
 	else if (response != KBR_ACK)
-		printf("Unexpected keyboard LED ack %d\n", response);
+		printf("Unexpected keyboard %s ack %d\n", "LED", response);
+#else
+	/*
+	 * Skip waiting for and checking the response.  The waiting
+	 * would be too long (about 3 msec) and the checking might eat
+	 * fresh keystrokes.  The waiting should be done using timeout()
+	 * and the checking should be done in the interrupt handler.
+	 */
+#endif
+}
+
+static void
+set_typematic(u_char data)
+{
+	if (kbd_cmd(KBD_TYPEMATIC) != 0)
+		printf("Timeout for keyboard %s\n", "typematic command");
+	else if (kbd_cmd(data) != 0)
+		printf("Timeout for keyboard %s\n", "typematic data");
+#if 0
+	else if ((response = kbd_response()) < 0)
+		printf("Timeout for keyboard %s\n", "typematic ack");
+	else if (response != KBR_ACK)
+		printf("Unexpected keyboard %s ack %d\n", "typematic", response);
 #else
 	/*
 	 * Skip waiting for and checking the response.  The waiting
