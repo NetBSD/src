@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.4 1998/10/04 00:02:37 fvdl Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.5 1998/10/07 23:06:17 erh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@
 
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_mmap.h>
-#include <compat/linux/common/linux_oldmmap.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_mmap.h>
 /*
@@ -71,5 +70,23 @@
 #else
 #error Undefined linux_mmap.h machine type.
 #endif
+
+/*
+ * Ensure the linux_sys_mmap syscall appears to exist:
+ */
+struct linux_sys_mmap_args {
+	syscallarg(unsigned long) addr;
+	syscallarg(size_t) len;
+	syscallarg(int) prot;
+	syscallarg(int) flags;
+	syscallarg(int) fd;
+	syscallarg(off_t) offset;
+};
+
+#ifdef _KERNEL
+__BEGIN_DECLS
+int linux_sys_mmap __P((struct proc *p, void *v, register_t *retval));
+__END_DECLS
+#endif /* !_KERNEL */
 
 #endif /* !_LINUX_MMAP_H */
