@@ -1,4 +1,4 @@
-.\"	$NetBSD: minherit.2,v 1.4 2000/06/25 16:28:41 sommerfeld Exp $
+.\"	$NetBSD: minherit.2,v 1.5 2000/06/25 22:37:30 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@ The
 system call
 changes the specified range of virtual addresses to have the specified
 fork-time inheritance characteristic
-.Fa inherit .
+.Fa inherit ,
 which can be set to VM_INHERIT_NONE, VM_INHERIT_COPY, or VM_INHERIT_SHARE.
 Not all implementations will guarantee that the inheritance characteristic
 can be set on a page basis;
