@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.14 1996/03/26 17:06:46 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.15 1996/04/08 20:11:46 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -1064,7 +1064,6 @@ copytobuf_gap2(sc, fromv, boff, len)
 	volatile caddr_t buf = sc->sc_mem;
 	register caddr_t from = fromv;
 	register volatile u_int16_t *bptr;
-	register int xfer;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -1094,7 +1093,6 @@ copyfrombuf_gap2(sc, tov, boff, len)
 	register caddr_t to = tov;
 	register volatile u_int16_t *bptr;
 	register u_int16_t tmp;
-	register int xfer;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
