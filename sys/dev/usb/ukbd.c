@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.35 1999/06/14 17:09:57 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.36 1999/06/26 03:14:25 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,6 @@
 #include <dev/usb/usbhid.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
-#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/hid.h>
