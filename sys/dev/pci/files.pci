@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.21 1996/11/12 23:58:03 thorpej Exp $
+#	$NetBSD: files.pci,v 1.22 1997/03/12 06:39:47 cgd Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -19,6 +19,11 @@ file	dev/ic/smc93cx6.c		ahc_pci
 # device declaration in sys/dev/isa/files.isa
 attach	bha at pci with bha_pci
 file	dev/pci/bha_pci.c		bha_pci
+
+# Qlogic ISP 10x0 (PCI) family
+# device declaration in sys/conf/files
+attach	isp at pci with isp_pci
+file	dev/pci/isp_pci.c		isp_pci
 
 # Ethernet driver for DC21040-based boards
 device	de: ether, ifnet
