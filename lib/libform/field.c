@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.10 2001/05/11 14:04:48 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.11 2001/06/04 11:42:09 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -287,7 +287,24 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 	if (((field->opts & O_STATIC) == O_STATIC) && (len > field->cols)
 	    && ((field->rows + field->nrows) == 1))
 		len = field->cols;
-		
+
+#ifdef DEBUG
+	if (_formi_create_dbg_file() != E_OK)
+		return E_SYSTEM_ERROR;
+
+	fprintf(dbg,
+		"set_field_buffer: entry: len = %d, value = %s, buffer=%d\n",
+		len, value, buffer);
+	fprintf(dbg, "set_field_buffer: entry: string = ");
+	if (field->buffers[buffer].string != NULL)
+		fprintf(dbg, "%s, len = %d\n", field->buffers[buffer].string,
+			field->buffers[buffer].length);
+	else
+		fprintf(dbg, "(null), len = 0\n");
+	fprintf(dbg, "set_field_buffer: entry: lines.len = %d\n",
+		field->lines[0].length);
+#endif
+	
 	if ((field->buffers[buffer].string =
 	     (char *) realloc(field->buffers[buffer].string, len + 1)) == NULL)
 		return E_SYSTEM_ERROR;
@@ -295,22 +312,34 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 	strlcpy(field->buffers[buffer].string, value, len + 1);
 	field->buffers[buffer].length = len;
 	field->buffers[buffer].allocated = len + 1;
-	field->row_count = 1; /* must be at least one row */
-	field->lines[0].start = 0;
-	field->lines[0].end = (len > 0)? (len - 1) : 0;
-	field->lines[0].length = len;
-	
-	  /* we have to hope the wrap works - if it does not then the
-	     buffer is pretty much borked */
-	status = _formi_wrap_field(field, 0);
-	if (status != E_OK)
-		return status;
 
-	  /* redraw the field to reflect the new contents. If the field
-	   * is attached....
-	   */
-	if (field->parent != NULL)
-		_formi_redraw_field(field->parent, field->index);
+	if (buffer == 0) {
+		field->row_count = 1; /* must be at least one row */
+		field->lines[0].start = 0;
+		field->lines[0].end = (len > 0)? (len - 1) : 0;
+		field->lines[0].length = len;
+	
+		  /* we have to hope the wrap works - if it does not then the
+		     buffer is pretty much borked */
+		status = _formi_wrap_field(field, 0);
+		if (status != E_OK)
+			return status;
+
+		  /* redraw the field to reflect the new contents. If the field
+		   * is attached....
+		   */
+		if (field->parent != NULL)
+			_formi_redraw_field(field->parent, field->index);
+	}
+
+#ifdef DEBUG
+	fprintf(dbg, "set_field_buffer: exit: len = %d, value = %s\n",
+		len, value);
+	fprintf(dbg, "set_field_buffer: exit: string = %s, len = %d\n",
+		field->buffers[buffer].string, field->buffers[buffer].length);
+	fprintf(dbg, "set_field_buffer: exit: lines.len = %d\n",
+		field->lines[0].length);
+#endif
 
 	return E_OK;
 }
