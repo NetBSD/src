@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.540 2003/10/08 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.541 2003/10/25 18:40:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.540 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.541 2003/10/25 18:40:37 christos Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1723,7 +1723,7 @@ init386(first_avail)
 	 * Steal memory for the message buffer (at end of core).
 	 */
 	{
-		struct vm_physseg *vps;
+		struct vm_physseg *vps = NULL;
 		psize_t sz = round_page(MSGBUFSIZE);
 		psize_t reqsz = sz;
 
