@@ -2,12 +2,12 @@
 # Mycroft's WorkPad z50
 
 #
-# 	$NetBSD: MURUROA,v 1.10 2000/09/24 15:59:32 jdolecek Exp $
+# 	$NetBSD: MURUROA,v 1.11 2000/09/27 10:21:23 shin Exp $
 # 	From: GENERIC,v 1.29 2000/02/12 03:21:06 shin Exp
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"MURUROA-$Revision: 1.10 $"
+#ident 		"MURUROA-$Revision: 1.11 $"
 
 maxusers	8
 
@@ -103,6 +103,7 @@ vrbcu*	at vrip? addr 0x0b000000 size 0x20
 vrrtc*	at vrip? addr 0x0b0000c0 size 0x20 intr 2
 
 vrkiu*  at vrip? addr 0x0b000180 size 0x20 intr 7
+hpckbd*	at vrkiu?
 options 	__NO_SOFT_SERIAL_INTERRUPT
 com*	at vrip? addr 0x0c000000 size 0x20 intr 9 pwctl PWCTL_COM0
 vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
@@ -114,7 +115,7 @@ vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 intr 5
 bivideo0	at	mainbus0
 hpcfb*		at	bivideo0
 wsdisplay*	at	hpcfb?
-wskbd*		at	vrkiu? mux 1
+wskbd*		at	hpckbd? mux 1
 wsmouse*	at	vrpiu? mux 0
 btnmgr*		at	mainbus0
 

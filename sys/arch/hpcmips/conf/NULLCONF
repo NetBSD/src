@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: NULLCONF,v 1.7 2000/03/16 01:45:51 shin Exp $
+# 	$NetBSD: NULLCONF,v 1.8 2000/09/27 10:21:23 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 maxusers	8
@@ -26,6 +26,7 @@ vrcmu*	at vrip? addr 0x0b000060 size 0x20
 vrbcu*	at vrip? addr 0x0b000000 size 0x20
 vrrtc*	at vrip? addr 0x0b0000c0 size 0x20 intr 2
 vrkiu*  at vrip? addr 0x0b000180 size 0x20 intr 7
+hpckbd*	at vrkiu?
 options __NO_SOFT_SERIAL_INTERRUPT
 com*	at vrip? addr 0x0c000000 size 0x20 intr 9
 vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
@@ -37,6 +38,6 @@ isa2	at vrisab2
 bivideo0	at	mainbus0
 hpcfb*		at	bivideo0
 wsdisplay*	at	hpcfb?
-wskbd*		at	vrkiu? mux 1
+wskbd*		at	hpckbd? mux 1
 
 pseudo-device	biconsdev	1	# build-in console device
