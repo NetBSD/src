@@ -1,4 +1,4 @@
-/*	$NetBSD: sprint.c,v 1.15 2003/08/07 11:13:46 agc Exp $	*/
+/*	$NetBSD: sprint.c,v 1.16 2004/11/16 04:52:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sprint.c,v 1.15 2003/08/07 11:13:46 agc Exp $");
+__RCSID("$NetBSD: sprint.c,v 1.16 2004/11/16 04:52:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ sflag_print()
 	 * short format --
 	 *	login name
 	 *	real name
-	 *	terminal name (the XX of ttyXX)
+	 *	terminal name
 	 *	if terminal writable (add an '*' to the terminal name
 	 *		if not)
 	 *	if logged in show idle time and day logged in, else
@@ -91,9 +91,9 @@ sflag_print()
 	 *		office location
 	 *		office phone
 	 */
-#define	MAXREALNAME	20
+#define	MAXREALNAME	18
 	(void)printf("%-*s %-*s %s %s\n", maxname, "Login", MAXREALNAME,
-	    "Name", "Tty  Idle  Login Time  ", (gflag) ? "" :
+	    "Name", " Tty      Idle  Login Time  ", (gflag) ? "" :
 	    (oflag) ? "Office     Office Phone" : "Where");
 
 	for (sflag = R_FIRST;; sflag = R_NEXT) {
@@ -117,11 +117,9 @@ sflag_print()
 			(void)putchar(w->info == LOGGEDIN && !w->writable ?
 			    '*' : ' ');
 			if (*w->tty)
-				(void)printf("%-2.2s ",
-				    w->tty[0] != 't' || w->tty[1] != 't' ||
-				    w->tty[2] != 'y' ? w->tty : w->tty + 3);
+				(void)printf("%-7.7s ", w->tty);
 			else
-				(void)printf("   ");
+				(void)printf("        ");
 			if (w->info == LOGGEDIN) {
 				stimeprint(w);
 				(void)printf("  ");
