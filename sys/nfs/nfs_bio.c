@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.116 2004/03/12 16:52:14 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.116.2.1 2004/06/21 10:10:09 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.116 2004/03/12 16:52:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.116.2.1 2004/06/21 10:10:09 tron Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -931,12 +931,12 @@ nfs_doio_read(bp, uiop)
 		nfsstats.readdir_bios++;
 		uiop->uio_offset = bp->b_dcookie;
 		if (nmp->nm_flag & NFSMNT_RDIRPLUS) {
-			error = nfs_readdirplusrpc(vp, uiop, curproc->p_ucred);
+			error = nfs_readdirplusrpc(vp, uiop, np->n_rcred);
 			if (error == NFSERR_NOTSUPP)
 				nmp->nm_flag &= ~NFSMNT_RDIRPLUS;
 		}
 		if ((nmp->nm_flag & NFSMNT_RDIRPLUS) == 0)
-			error = nfs_readdirrpc(vp, uiop, curproc->p_ucred);
+			error = nfs_readdirrpc(vp, uiop, np->n_rcred);
 		if (!error) {
 			bp->b_dcookie = uiop->uio_offset;
 		}
