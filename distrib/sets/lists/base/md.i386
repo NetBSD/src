@@ -1,4 +1,5 @@
-# $NetBSD: md.i386,v 1.78 2001/09/10 11:05:38 fvdl Exp $
+# $NetBSD: md.i386,v 1.79 2001/09/20 21:50:10 wiz Exp $
+./dev/agpgart				base-sys-devlinks
 ./dev/audio				base-sys-devlinks
 ./dev/audioctl				base-sys-devlinks
 ./dev/bktr				base-sys-devlinks
