@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fseek.c	5.7 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: fseek.c,v 1.5 1993/08/26 00:46:56 jtc Exp $";
+static char *rcsid = "$Id: fseek.c,v 1.6 1994/01/04 05:38:13 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -190,7 +190,7 @@ fseek(fp, offset, whence)
 	 * If the target offset is within the current buffer,
 	 * simply adjust the pointers, clear EOF, undo ungetc(),
 	 * and return.  (If the buffer was modified, we have to
-	 * skip this; see fgetline.c.)
+	 * skip this; see fgetln.c.)
 	 */
 	if ((fp->_flags & __SMOD) == 0 &&
 	    target >= curoff && target < curoff + n) {

@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getcap.c	5.15 (Berkeley) 3/19/93";*/
-static char *rcsid = "$Id: getcap.c,v 1.5 1993/12/22 07:10:58 cgd Exp $";
+static char *rcsid = "$Id: getcap.c,v 1.6 1994/01/04 05:36:22 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -658,7 +658,7 @@ cgetnext(bp, db_array)
 			gottoprec = 1;
 			line = toprec;
 		} else {
-			line = fgetline(pfp, &len);
+			line = fgetln(pfp, &len);
 			if (line == NULL && pfp) {
 				(void)fclose(pfp);
 				if (ferror(pfp)) {
@@ -717,7 +717,7 @@ cgetnext(bp, db_array)
 				*np = '\0';
 				break;
 			} else { /* name field extends beyond the line */
-				line = fgetline(pfp, &len);
+				line = fgetln(pfp, &len);
 				if (line == NULL && pfp) {
 					(void)fclose(pfp);
 					if (ferror(pfp)) {

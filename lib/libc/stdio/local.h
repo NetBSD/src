@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)local.h	5.3 (Berkeley) 5/6/93
- *	$Id: local.h,v 1.3 1993/08/01 18:39:01 mycroft Exp $
+ *	$Id: local.h,v 1.4 1994/01/04 05:38:22 cgd Exp $
  */
 
 /*
@@ -79,7 +79,7 @@ extern int __sdidinit;
 }
 
 /*
- * test for an fgetline() buffer.
+ * test for an fgetln() buffer.
  */
 #define	HASLB(fp) ((fp)->_lb._base != NULL)
 #define	FREELB(fp) { \
