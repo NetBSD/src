@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.2 1998/02/10 00:25:41 perry Exp $	*/
+/*	$NetBSD: pool.h,v 1.3 1998/02/19 23:51:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -50,13 +50,18 @@ typedef struct pool {
 #define PR_MALLOCOK	1
 #define PR_WAITOK	2
 #define PR_WANTED	4
+#define PR_STATIC	8
 	struct simplelock	pr_lock;
 } *pool_handle_t;
 
-pool_handle_t	pool_create __P((size_t, int, char *, int));
+pool_handle_t	pool_create __P((size_t, int, char *, int, caddr_t));
 void		pool_destroy __P((pool_handle_t));
 void	 	*pool_get __P((pool_handle_t, int));
 void	 	pool_put __P((pool_handle_t, void *));
-int	 	pool_prime __P((pool_handle_t, int));
+int	 	pool_prime __P((pool_handle_t, int, caddr_t));
+
+#define POOL_ITEM_STORAGE_SIZE(size, nitems) (ALIGN(size) * nitems)
+#define POOL_STORAGE_SIZE(size, nitems) \
+	(ALIGN(sizeof(struct pool)) + POOL_ITEM_STORAGE_SIZE(size, nitems))
 
 #endif /* _SYS_POOL_H_ */
