@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.5 1997/10/13 19:59:26 explorer Exp $	*/
+/*	$NetBSD: rnd.h,v 1.6 1997/10/15 07:22:59 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -165,10 +165,10 @@ typedef struct {
 
 #define RNDGETENTCNT	_IOR('R',  101, u_int32_t) /* get entropy count */
 #define RNDSETENTCNT	_IOW('R',  102, u_int32_t) /* set the entropy count */
-#define RNDGETPOOL      _IOR('R',  103, u_int32_t) /* get whole pool */
+#define RNDGETPOOL      _IOR('R',  103, u_char *)  /* get whole pool */
 #define RNDADDTOENTCNT	_IOW('R',  104, u_int32_t) /* add to entropy count */
 #define RNDGETSRCNUM	_IOWR('R', 105, rndstat_t) /* get rnd source info */
-#define RNDGETSRCNAME	_IOWR('R', 106, rndstat_t) /* get src by name */
+#define RNDGETSRCNAME	_IOWR('R', 106, rndstat_name_t) /* get src by name */
 #define RNDCTL		_IOW('R',  107, rndctl_t)  /* set/clear source flags */
 #define RNDADDDATA	_IOW('R',  108, rnddata_t) /* add data to the pool */
 
