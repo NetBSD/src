@@ -1,4 +1,4 @@
-/*	$KAME: localconf.c,v 1.28 2000/12/15 13:43:56 sakane Exp $	*/
+/*	$KAME: localconf.c,v 1.29 2001/02/21 05:19:11 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -129,6 +129,7 @@ setdefault()
 	lcconf->retry_checkph1 = LC_DEFAULT_RETRY_CHECKPH1;
 	lcconf->wait_ph2complete = LC_DEFAULT_WAIT_PH2COMPLETE;
 	lcconf->strict_address = FALSE;
+	lcconf->complex_bundle = TRUE; /*XXX FALSE;*/
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.c,v 1.48 2001/01/25 03:22:39 sakane Exp $	*/
+/*	$KAME: crypto_openssl.c,v 1.49 2001/01/31 06:21:05 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1657,10 +1657,7 @@ eay_dh_compute(prime, g, pub, priv, pub2, key)
 	BIGNUM *dh_pub = NULL;
 	DH *dh = NULL;
 	int l;
-	caddr_t v;
-#if 0
-	vchar_t *gv = 0;
-#endif
+	caddr_t v = NULL;
 	int error = -1;
 
 	/* make public number to compute */
@@ -1678,35 +1675,27 @@ eay_dh_compute(prime, g, pub, priv, pub2, key)
 		goto end;
 	dh->length = pub2->l * 8;
 
-#if 1
 	dh->g = NULL;
 	if ((dh->g = BN_new()) == NULL)
 		goto end;
 	if (!BN_set_word(dh->g, g))
 		goto end;
-#else
-	if ((gv = vmalloc(sizeof(g))) == 0)
-		goto end;
-	memcpy(gv->v, (caddr_t)&g, sizeof(g));
-	if (eay_v2bn(&dh->g, gv) < 0)
-		goto end;
-#endif
 
-	v = (caddr_t)calloc(prime->l, sizeof(u_char));
-	l = DH_compute_key(v, dh_pub, dh); 
+	if ((v = (caddr_t)calloc(prime->l, sizeof(u_char))) == NULL)
+		goto end;
+	if ((l = DH_compute_key(v, dh_pub, dh)) == -1)
+		goto end;
 	memcpy((*key)->v + (prime->l - l), v, l);
-	free(v);
 
 	error = 0;
 
 end:
-#if 0
-	if (gv) vfree(gv);
-#endif
 	if (dh_pub != NULL)
 		BN_free(dh_pub);
 	if (dh != NULL)
 		DH_free(dh);
+	if (v != NULL)
+		free(v);
 	return(error);
 }
 

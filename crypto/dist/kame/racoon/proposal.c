@@ -1,4 +1,4 @@
-/*	$KAME: proposal.c,v 1.24 2000/12/15 13:43:57 sakane Exp $	*/
+/*	$KAME: proposal.c,v 1.28 2001/02/22 00:59:03 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -49,6 +49,8 @@
 #include "sockmisc.h"
 #include "debug.h"
 
+#include "policy.h"
+#include "pfkey.h"
 #include "isakmp_var.h"
 #include "isakmp.h"
 #include "ipsec_doi.h"
@@ -108,7 +110,7 @@ inssaprop(head, new)
 	return;
 }
 
-/* set saproto to last part of the proto tree in saprop */
+/* set saproto to the end of the proto tree in saprop */
 void
 inssaproto(pp, new)
 	struct saprop *pp;
@@ -124,6 +126,18 @@ inssaproto(pp, new)
 		p->next = new;
 
 	return;
+}
+
+/* set saproto to the top of the proto tree in saprop */
+void
+inssaprotorev(pp, new)
+      struct saprop *pp;
+      struct saproto *new;
+{
+      new->next = pp->head;
+      pp->head = new;
+
+      return;
 }
 
 struct satrns *
@@ -797,12 +811,12 @@ printsaproto(pri, pr)
 		return;
 
 	plog(pri, LOCATION, NULL,
-		" (proto_id=%s spisize=%d spi=%08x spi_p=%08x "
+		" (proto_id=%s spisize=%d spi=%08lx spi_p=%08lx "
 		"encmode=%s reqid=%d:%d)\n",
 		s_ipsecdoi_proto(pr->proto_id),
 		pr->spisize,
-		(u_int32_t)ntohl(pr->spi),
-		(u_int32_t)ntohl(pr->spi_p),
+		(unsigned long)ntohl(pr->spi),
+		(unsigned long)ntohl(pr->spi_p),
 		s_ipsecdoi_attr_v(IPSECDOI_ATTR_ENC_MODE, pr->encmode),
 		pr->reqid_in, pr->reqid_out);
 
@@ -879,3 +893,119 @@ print_proppair(pri, p)
 	print_proppair0(pri, p, 1);
 }
 
+int
+set_proposal_from_policy(iph2, sp_in, sp_out)
+	struct ph2handle *iph2;
+	struct secpolicy *sp_in, *sp_out;
+{
+	struct saprop *newpp;
+	struct ipsecrequest *req;
+	int encmodesv;
+
+	newpp = newsaprop();
+	if (newpp == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to allocate saprop.\n");
+		goto err;
+	}
+	newpp->prop_no = 1;
+	newpp->lifetime = iph2->sainfo->lifetime;
+	newpp->lifebyte = iph2->sainfo->lifebyte;
+	newpp->pfs_group = iph2->sainfo->pfs_group;
+
+	encmodesv = IPSECDOI_ATTR_ENC_MODE_ANY;
+
+	if (lcconf->complex_bundle)
+		goto skip1;
+
+	/* decide encryption mode */
+	for (req = sp_out->req; req; req = req->next) {
+		if (req->saidx.mode == IPSEC_MODE_TUNNEL) {
+			encmodesv = pfkey2ipsecdoi_mode(req->saidx.mode);
+			break;
+		}
+		encmodesv = pfkey2ipsecdoi_mode(req->saidx.mode);
+	}
+
+    skip1:
+	for (req = sp_out->req; req; req = req->next) {
+		struct saproto *newpr;
+		struct sockaddr *psaddr = NULL;
+		struct sockaddr *pdaddr = NULL;
+
+		/* XXX check if SA bundle ? */
+		if (req->saidx.src.ss_len && req->saidx.dst.ss_len) {
+
+			psaddr = (struct sockaddr *)&req->saidx.src;
+			pdaddr = (struct sockaddr *)&req->saidx.dst;
+
+			/* check end addresses of SA */
+			if (memcmp(iph2->src, psaddr, iph2->src->sa_len)
+			 || memcmp(iph2->dst, pdaddr, iph2->dst->sa_len)){
+				/*
+				 * XXX nested SAs with each destination
+				 * address are different.
+				 *       me +--- SA1 ---+ peer1
+				 *       me +--- SA2 --------------+ peer2
+				 */
+				plog(LLV_ERROR, LOCATION, NULL,
+					"not supported nested SA. Ignore.\n");
+				break;
+			}
+		}
+
+		/* allocate ipsec sa protocol */
+		newpr = newsaproto();
+		if (newpr == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to allocate saproto.\n");
+			goto err;
+		}
+
+		newpr->proto_id = ipproto2doi(req->saidx.proto);
+		newpr->spisize = 4;
+		if (lcconf->complex_bundle)
+			newpr->encmode = pfkey2ipsecdoi_mode(req->saidx.mode);
+		else
+			newpr->encmode = encmodesv;
+
+		if (iph2->side == INITIATOR)
+			newpr->reqid_out = req->saidx.reqid;
+		else
+			newpr->reqid_in = req->saidx.reqid;
+
+		if (set_satrnsbysainfo(newpr, iph2->sainfo) < 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to get algorithms.\n");
+			goto err;
+		}
+
+		/* set new saproto */
+		inssaprotorev(newpp, newpr);
+	}
+
+	/* get reqid_in from inbound policy */
+	if (sp_in) {
+		struct saproto *pr;
+
+		req = sp_in->req;
+		pr = newpp->head;
+		while (req && pr) {
+			pr->reqid_in = req->saidx.reqid;
+			pr = pr->next;
+			req = req->next;
+		}
+		if (pr || req) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"There is a difference "
+				"between the in/out bound policies.\n");
+			goto err;
+		}
+	}
+
+	iph2->proposal = newpp;
+
+	return 0;
+err:
+	return -1;
+}

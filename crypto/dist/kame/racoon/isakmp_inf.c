@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_inf.c,v 1.63 2000/12/15 13:43:55 sakane Exp $	*/
+/*	$KAME: isakmp_inf.c,v 1.64 2001/02/06 16:27:52 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -950,16 +950,6 @@ info_recv_initialcontact(iph1)
 	struct ph2handle *iph2;
 
 	if (f_local)
-		goto step_ph1;
-
-	/*
-	 * if the initial contact is acceptable.  when both ends are using
-	 * "use" as the policy level, both ends initiate the phase 1 and
-	 * send initial-contacts under each phase 1 SA.  In this case, each
-	 * phase 1 SA will be banished by the another initial-contact.
-	 * Simply calling getcontacted() is the solution to avoid the case.
-	 */
-	if (getcontacted(iph1->remote))
 		return;
 
 	/* purge IPsec-SA(s) */
@@ -1037,11 +1027,7 @@ info_recv_initialcontact(iph1)
 		msg = next;
 	}
 
-	if (buf)
-		vfree(buf);
-
-    step_ph1:
-	purgeph1(iph1);
+	vfree(buf);
 }
 
 /*
