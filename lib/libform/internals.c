@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.13 2001/03/25 12:32:53 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.14 2001/04/06 05:03:22 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -198,7 +198,7 @@ find_cur_line(FIELD *cur)
 	const char *str;
 
 	str = cur->buffers[0].string;
-	pos = cur->start_char + cur->hscroll + cur->cursor_xpos;
+	pos = cur->start_char + cur->cursor_xpos;
 	
 	start = 0;
 	end = 0;
@@ -328,12 +328,11 @@ _formi_wrap_field(FIELD *field, unsigned int pos)
 static int
 _formi_join_line(FIELD *field, char *str, unsigned int pos, int direction)
 {
-	unsigned int len, sol, eol, npos, start, dest;
+	unsigned int len, eol, npos, start, dest;
 
 	npos = pos;
 
 	if ((direction == JOIN_NEXT) || (direction == JOIN_NEXT_NW)) {
-		sol = _formi_find_bol(str, pos);
 		npos++;
 		  /* see if there is another line following... */
 		if (str[npos] == '\0')
@@ -348,8 +347,6 @@ _formi_join_line(FIELD *field, char *str, unsigned int pos, int direction)
 			return E_REQUEST_DENIED;
 		eol = _formi_find_eol(str, pos);
 		npos--;
-		sol = _formi_find_bol(str, npos);
-
 		start = pos;
 		dest = npos;
 		len = eol - pos;
@@ -581,19 +578,14 @@ _formi_hscroll_fwd(FIELD *field, int unsigned amt)
 	int end, scroll_amt;
 
 	end = _formi_find_eol(field->buffers[0].string,
-		       field->start_char + field->hscroll
-		       + field->cursor_xpos) - field->start_char
-		- field->hscroll - field->cursor_xpos;
+		       field->start_char + field->cursor_xpos)
+		- field->start_char - field->cursor_xpos;
 	
 	scroll_amt = min(amt, end);
 	if (scroll_amt < 0)
 		scroll_amt = 0;
 
-	field->hscroll += scroll_amt;
-	if (amt > field->cursor_xpos)
-		field->cursor_xpos = 0;
-	else
-		field->cursor_xpos -= scroll_amt;
+	field->start_char += scroll_amt;
 }
 	
 /*
@@ -602,16 +594,7 @@ _formi_hscroll_fwd(FIELD *field, int unsigned amt)
 void
 _formi_hscroll_back(FIELD *field, unsigned int amt)
 {
-	int flen, sa;
-
-	sa = min(field->hscroll, amt);
-	field->hscroll -= sa;
-	field->cursor_xpos += sa;
-	flen = field->cols;
-	if (field->start_char > 0)
-		flen--;
-	if (field->cursor_xpos > flen)
-		field->cursor_xpos = flen;
+	field->start_char -= min(field->start_char, amt);
 }
 	
 /*
@@ -662,7 +645,7 @@ _formi_find_pages(FORM *form)
 void
 _formi_redraw_field(FORM *form, int field)
 {
-	unsigned int pre, post, flen, slen, i, row, start, end, offset;
+	unsigned int pre, post, flen, slen, i, row, start, end;
 	char *str;
 	FIELD *cur;
 #ifdef DEBUG
@@ -731,8 +714,6 @@ _formi_redraw_field(FORM *form, int field)
 				}
 				break;
 			}
-
-			offset = 0;
 		} else {
 			  /* dynamic fields are not justified */
 			pre = 0;
@@ -746,31 +727,20 @@ _formi_redraw_field(FORM *form, int field)
 
 			  /* but they do scroll.... */
 			
-			if (pre > cur->hscroll - start)
-				pre = pre - cur->hscroll + start;
+			if (pre > cur->start_char - start)
+				pre = pre - cur->start_char + start;
 			else
 				pre = 0;
 		
-			if (slen > cur->hscroll) {
-				slen -= cur->hscroll;
-				post += cur->hscroll;
+			if (slen > cur->start_char) {
+				slen -= cur->start_char;
+				post += cur->start_char;
 				if (post > flen)
 					post = flen;
 			} else {
 				slen = 0;
 				post = flen - pre;
 			}
-			
-			offset = cur->hscroll;
-			if (cur->start_char > 0)
-				offset += cur->start_char - 1;
-
-			if (flen > cur->hscroll + 1) {
-				if (flen > slen)
-					flen -= cur->hscroll + 1;
-			} else
-				flen = 0;
-		
 		}
 			
 		if (form->cur_field == field)
@@ -781,8 +751,8 @@ _formi_redraw_field(FORM *form, int field)
 #ifdef DEBUG
 		if (_formi_create_dbg_file() == E_OK) {
 			fprintf(dbg,
-     "redraw_field: start=%d, pre=%d, slen=%d, flen=%d, post=%d, hscroll=%d\n",
-				start, pre, slen, flen, post, cur->hscroll);
+  "redraw_field: start=%d, pre=%d, slen=%d, flen=%d, post=%d, start_char=%d\n",
+				start, pre, slen, flen, post, cur->start_char);
 			if (str != NULL) {
 				strncpy(buffer, &str[cur->start_char], flen);
 			} else {
@@ -793,23 +763,23 @@ _formi_redraw_field(FORM *form, int field)
 		}
 #endif
 		
-		for (i = start + cur->hscroll; i < pre; i++)
+		for (i = start + cur->start_char; i < pre; i++)
 			waddch(form->scrwin, cur->pad);
 
 #ifdef DEBUG
-		fprintf(dbg, "redraw_field: will add %d chars, offset is %d\n",
-			min(slen, flen), offset);
+		fprintf(dbg, "redraw_field: will add %d chars\n",
+			min(slen, flen));
 #endif
 		for (i = 0; i < min(slen, flen); i++) 
 		{
 #ifdef DEBUG
 			fprintf(dbg, "adding char str[%d]=%c\n",
-				i + offset, str[i + offset]);
+				i + cur->start_char, str[i + cur->start_char]);
 #endif
 			if (((cur->opts & O_PUBLIC) != O_PUBLIC)) {
 				waddch(form->scrwin, cur->pad);
 			} else if ((cur->opts & O_VISIBLE) == O_VISIBLE) {
-				waddch(form->scrwin, str[i + offset]);
+				waddch(form->scrwin, str[i + cur->start_char]);
 			} else {
 				waddch(form->scrwin, ' ');
 			}
@@ -881,13 +851,12 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 #endif
 	if (((field->opts & O_BLANK) == O_BLANK) &&
 	    (field->buf0_status == FALSE) &&
-	    ((field->cursor_xpos + field->hscroll) == 0)) {
+	    ((field->cursor_xpos + field->start_char) == 0)) {
 		field->buffers[0].length = 0;
 		field->buffers[0].string[0] = '\0';
 		pos = 0;
 		field->start_char = 0;
 		field->start_line = 0;
-		field->hscroll = 0;
 		field->row_count = 1;
 		field->cursor_xpos = 0;
 		field->cursor_ypos = 0;
@@ -948,7 +917,11 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 		field->buffers[0].length--;
 	} else {
 		field->buf0_status = TRUE;
-		field->cursor_xpos++;
+
+		if ((field->cursor_xpos < (field->cols - 1)) ||
+		    ((field->opts & O_STATIC) != O_STATIC))
+			field->cursor_xpos++;
+		
 		if (field->cursor_xpos > field->cols) {
 			field->start_char++;
 			field->cursor_xpos = field->cols;
@@ -1001,19 +974,24 @@ _formi_manipulate_field(FORM *form, int c)
 	
 	switch (c) {
 	case REQ_NEXT_CHAR:
-		if ((cur->cursor_xpos + cur->start_char
-		     - ((cur->start_char > 0)? 1 : 0) + cur->hscroll + 1)
-		    > cur->buffers[0].length) {
+		  /* for a dynamic field allow an offset of one more
+		   * char so we can insert chars after end of string.
+		   * Static fields cannot do this so deny request if
+		   * cursor is at the end of the field.
+		   */
+		if (((cur->opts & O_STATIC) == O_STATIC) &&
+		    (cur->cursor_xpos == cur->cols - 1))
 			return E_REQUEST_DENIED;
-		}
+								
+		if ((cur->cursor_xpos + cur->start_char + 1)
+		    > cur->buffers[0].length)
+			return E_REQUEST_DENIED;
+
 		cur->cursor_xpos++;
-		if (cur->cursor_xpos >= cur->cols - cur->hscroll - 1) {
-			if (cur->cols < (cur->hscroll  + 1))
-				cur->cursor_xpos = 0;
-			else
-				cur->cursor_xpos = cur->cols
-					- cur->hscroll - 1;
-			cur->start_char++;
+		if (cur->cursor_xpos >= cur->cols - 1) {
+			cur->cursor_xpos = cur->cols - 1;
+			if ((cur->opts & O_STATIC) != O_STATIC)
+				cur->start_char++;
 		}
 		break;
 			
@@ -1021,8 +999,6 @@ _formi_manipulate_field(FORM *form, int c)
 		if (cur->cursor_xpos == 0) {
 			if (cur->start_char > 0)
 				cur->start_char--;
-			else if (cur->hscroll > 0)
-				cur->hscroll--;
 			else
 				return E_REQUEST_DENIED;
 		} else
@@ -1104,34 +1080,6 @@ _formi_manipulate_field(FORM *form, int c)
 		cur->cursor_ypos = 0;
 		break;
 		
-	case REQ_END_FIELD:
-		if (cur->row_count > cur->rows) {
-			cur->start_line = cur->row_count - cur->rows;
-			cur->cursor_ypos = cur->rows - 1;
-		} else {
-			cur->start_line = 0;
-			cur->cursor_ypos = cur->row_count - 1;
-		}
-		
-		if ((str = rindex(cur->buffers[0].string, '\n')) == NULL) {
-			cur->cursor_xpos = cur->cols - 1;
-			if (cur->start_char < (cur->buffers[0].length +
-					       cur->cols)) {
-				cur->start_char = 0;
-				cur->cursor_xpos = cur->buffers[0].length;
-			} else {
-				cur->start_char = cur->buffers[0].length -
-					cur->cols;
-			}
-		} else {
-			cur->start_char = (str - cur->buffers[0].string);
-			if (strlen(str) > cur->cols)
-				cur->cursor_xpos = cur->cols;
-			else
-				cur->cursor_xpos = strlen(str);
-		}
-		break;
-		
 	case REQ_BEG_LINE:
 		start = cur->start_char + cur->cursor_xpos;
 		if (cur->buffers[0].string[start] == '\n') {
@@ -1152,6 +1100,29 @@ _formi_manipulate_field(FORM *form, int c)
 		cur->cursor_xpos = 0;
 		break;
 			
+	case REQ_END_FIELD:
+		if (cur->row_count > cur->rows) {
+			cur->start_line = cur->row_count - cur->rows;
+			cur->cursor_ypos = cur->rows - 1;
+		} else {
+			cur->start_line = 0;
+			cur->cursor_ypos = cur->row_count - 1;
+		}
+		
+		if ((str = rindex(cur->buffers[0].string, '\n')) == NULL) {
+			cur->start_char = 0;
+			
+		} else {
+			cur->start_char = (str - cur->buffers[0].string) + 1;
+		}
+
+		cur->cursor_xpos = 0;
+		  /* we fall through here deliberately, we are on the
+		   * correct row, now we need to get to the end of the
+		   * line.
+		   */
+		  /* FALLTHRU */
+		
 	case REQ_END_LINE:
 		start = cur->start_char + cur->cursor_xpos;
 		end = _formi_find_eol(cur->buffers[0].string, start);
@@ -1159,9 +1130,15 @@ _formi_manipulate_field(FORM *form, int c)
 
 		if (end - start > cur->cols - 1) {
 			cur->cursor_xpos = cur->cols - 1;
-			cur->start_char = end - cur->cols + 3;
+			cur->start_char = end - cur->cols;
+			if ((cur->opts & O_STATIC) != O_STATIC)
+				cur->start_char++;
 		} else {
 			cur->cursor_xpos = end - start + 1;
+			if (((cur->opts & O_STATIC) == O_STATIC) &&
+			    ((end - start) == (cur->cols - 1)))
+				cur->cursor_xpos--;
+				
 			cur->start_char = start;
 		}
 		break;
