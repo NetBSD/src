@@ -1,4 +1,4 @@
-#	$NetBSD: std.iq80310,v 1.13 2003/01/02 23:38:01 thorpej Exp $
+#	$NetBSD: std.iq80310,v 1.14 2003/01/03 02:16:28 thorpej Exp $
 #
 # standard NetBSD/evbarm for IQ80310 options
 
@@ -16,6 +16,7 @@ options 	ARM32
 
 makeoptions	LOADADDRESS="0xa0200000"
 makeoptions	BOARDTYPE="iq80310"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.iq80310"
 
 options 	ARM_INTR_IMPL="<arch/evbarm/iq80310/iq80310_intr.h>"
 

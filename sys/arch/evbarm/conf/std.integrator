@@ -1,4 +1,4 @@
-#	$NetBSD: std.integrator,v 1.7 2003/01/02 23:38:01 thorpej Exp $
+#	$NetBSD: std.integrator,v 1.8 2003/01/03 02:16:28 thorpej Exp $
 #
 # standard NetBSD/integrator options
 
@@ -19,3 +19,4 @@ options		__OLD_INTERRUPT_CODE	# XXX for now
 makeoptions	LOADADDRESS="0xa0100000"
 makeoptions	LINKENTRY="-e 0x10000"
 makeoptions	BOARDTYPE="integrator"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.integrator"

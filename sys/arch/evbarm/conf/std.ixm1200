@@ -1,4 +1,4 @@
-#	$NetBSD: std.ixm1200,v 1.4 2003/01/03 01:08:04 thorpej Exp $
+#	$NetBSD: std.ixm1200,v 1.5 2003/01/03 02:16:29 thorpej Exp $
 #
 # standard NetBSD/evbarm for IXM1200 options
 
@@ -16,6 +16,7 @@ options 	ARM32
 
 makeoptions	LOADADDRESS="0xC0200000"
 makeoptions	BOARDTYPE="ixm1200"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.ixm1200"
 
 options 	ARM_INTR_IMPL="<arch/arm/ixp12x0/ixp12x0_intr.h>"
 
