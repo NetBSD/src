@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.4 2003/04/01 15:09:56 thorpej Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.5 2003/05/11 00:06:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1026,6 +1026,7 @@ mpbios_int(ent, enttype, mpi)
 	mpb->mb_intrs = mpi;
 	mpi->bus = mpb;
 	mpi->bus_pin = dev;
+	mpi->global_int = -1;
 
 	mpi->ioapic_ih = APIC_INT_VIA_APIC |
 	    ((id<<APIC_INT_APIC_SHIFT) | ((pin<<APIC_INT_PIN_SHIFT)));
