@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.6 2000/12/27 22:13:42 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.7 2001/01/07 15:27:37 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.6 2000/12/27 22:13:42 bjh21 Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.7 2001/01/07 15:27:37 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -67,30 +67,27 @@ __RCSID("$NetBSD: arcvideo.c,v 1.6 2000/12/27 22:13:42 bjh21 Exp $");
 
 #include "ioc.h"
 
-static int arcvideo_match __P((struct device *parent, struct cfdata *cf,
-			       void *aux));
-static void arcvideo_attach __P((struct device *parent, struct device *self,
-				 void *aux));
+static int arcvideo_match(struct device *parent, struct cfdata *cf, void *aux);
+static void arcvideo_attach(struct device *parent, struct device *self,
+				 void *aux);
 #if 0
-static int arcvideo_setmode __P((struct device *self,
-				 struct arcvideo_mode *mode));
-static void arcvideo_await_vsync __P((struct device *self));
+static int arcvideo_setmode(struct device *self, struct arcvideo_mode *mode);
+static void arcvideo_await_vsync(struct device *self);
 #endif
-static int arcvideo_intr __P((void *cookie));
-static int arcvideo_ioctl __P((void *cookie, u_long cmd, caddr_t data,
-			       int flag, struct proc *p));
-static paddr_t arcvideo_mmap __P((void *cookie, off_t off, int prot));
-static int arcvideo_alloc_screen __P((void *cookie,
-				      const struct wsscreen_descr *scr,
+static int arcvideo_intr(void *cookie);
+static int arcvideo_ioctl(void *cookie, u_long cmd, caddr_t data,
+			       int flag, struct proc *p);
+static paddr_t arcvideo_mmap(void *cookie, off_t off, int prot);
+static int arcvideo_alloc_screen(void *cookie, const struct wsscreen_descr *scr,
 				      void **scookiep, int *curxp, int *curyp,
-				      long *defattrp));
-static void arcvideo_free_screen __P((void *cookie, void *scookie));
-static void arcvideo_show_screen __P((void *cookie, void *scookie, int waitok,
+				      long *defattrp);
+static void arcvideo_free_screen(void *cookie, void *scookie);
+static void arcvideo_show_screen(void *cookie, void *scookie, int waitok,
 				      void (*cb)(void *, int, int),
-				      void *cbarg));
-static int arcvideo_load_font __P((void *cookie, void *scookie,
-				   struct wsdisplay_font *));
-static void arccons_8bpp_hack __P((struct rasops_info *ri));
+				      void *cbarg);
+static int arcvideo_load_font(void *cookie, void *scookie,
+				   struct wsdisplay_font *);
+static void arccons_8bpp_hack(struct rasops_info *ri);
 
 struct arcvideo_softc {
 	struct device		sc_dev;
@@ -124,10 +121,7 @@ static struct wsdisplay_accessops arcvideo_accessops = {
 static int arcvideo_isconsole = 0;
 
 static int
-arcvideo_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+arcvideo_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	/* A system can't sensibly have more than one VIDC. */
@@ -138,10 +132,7 @@ arcvideo_match(parent, cf, aux)
 }
 
 static void
-arcvideo_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+arcvideo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wsemuldisplaydev_attach_args da;
 	struct wsscreen_list scrdata;
@@ -192,9 +183,7 @@ arcvideo_attach(parent, self, aux)
 
 #if 0
 static int
-arcvideo_setmode(self, mode)
-	struct device *self;
-	struct arcvideo_mode *mode;
+arcvideo_setmode(struct device *self, struct arcvideo_mode *mode)
 {
 	struct arcvideo_softc *sc = (void *)self;
 	u_int32_t newctl, ctlmask;
@@ -297,8 +286,7 @@ arcvideo_setmode(self, mode)
 }
 
 static void
-arcvideo_await_vsync(self)
-	struct device *self;
+arcvideo_await_vsync(struct device *self)
 {
 
 	panic("arcvideo_await_vsync not implemented");
@@ -306,8 +294,7 @@ arcvideo_await_vsync(self)
 #endif
 
 static int
-arcvideo_intr(cookie)
-	void *cookie;
+arcvideo_intr(void *cookie)
 {
 /*	struct arcvideo_softc *sc = cookie; */
 
@@ -329,7 +316,7 @@ static u_int8_t rasops_cmap_8bpp[] = {
 };
 
 void
-arccons_init()
+arccons_init(void)
 {
 	long defattr;
 	int clear = 0;
@@ -401,8 +388,7 @@ arccons_init()
  */
 
 static void
-arccons_8bpp_hack(ri)
-	struct rasops_info *ri;
+arccons_8bpp_hack(struct rasops_info *ri)
 {
 	int i, c;
 
@@ -416,12 +402,8 @@ arccons_8bpp_hack(ri)
 /* wsdisplay access functions */
 
 static int
-arcvideo_ioctl(cookie, cmd, data, flag, p)
-	void *cookie;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+arcvideo_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 	struct arcvideo_softc *sc = cookie;
 
@@ -454,49 +436,37 @@ arcvideo_ioctl(cookie, cmd, data, flag, p)
 }
 
 static paddr_t
-arcvideo_mmap(cookie, off, prot)
-	void *cookie;
-	off_t off;
-	int prot;
+arcvideo_mmap(void *cookie, off_t off, int prot)
 {
 
 	return ENODEV;
 }
 
 static int
-arcvideo_alloc_screen(cookie, scr, scookiep, curxp, curyp, defattrp)
-	void *cookie, **scookiep;
-	const struct wsscreen_descr *scr;
-	int *curxp, *curyp;
-	long *defattrp;
+arcvideo_alloc_screen(void *cookie, const struct wsscreen_descr *scr,
+    void **scookiep, int *curxp, int *curyp, long *defattrp)
 {
 
 	return ENODEV;
 }
 
 static void
-arcvideo_free_screen(cookie, scookie)
-	void *cookie, *scookie;
+arcvideo_free_screen(void *cookie, void *scookie)
 {
 
 	panic("arcvideo_free_screen not implemented");
 }
 
 static void
-arcvideo_show_screen(cookie, scookie, waitok, cb, cbarg)
-	void *cookie, *scookie;
-	int waitok;
-	void (*cb) __P((void *cbarg, int error, int waitok));
-	void *cbarg;
+arcvideo_show_screen(void *cookie, void *scookie, int waitok,
+    void (*cb)(void *cbarg, int error, int waitok), void *cbarg)
 {
 
 	panic("arcvideo_show_screen not implemented");
 }
 
 static int
-arcvideo_load_font(cookie, emulcookie, font)
-	void *cookie, *emulcookie;
-	struct wsdisplay_font *font;
+arcvideo_load_font(void *cookie, void *emulcookie, struct wsdisplay_font *font)
 {
 
 	return ENODEV;
