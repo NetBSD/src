@@ -548,21 +548,21 @@ edit(char *name, int ask_logical_size)
 	case 'H':
 	case 'h':
 	    printf("Commands are:\n");
-	    printf("  h    help\n");
-	    printf("  p    print the partition table\n");
-	    printf("  P    (print ordered by base address)\n");
-	    printf("  i    initialize partition map\n");
-	    printf("  s    change size of partition map\n");
-	    printf("  c    create new partition (standard unix root)\n");
 	    printf("  C    (create with type also specified)\n");
-	    printf("  n    (re)name a partition\n");
+	    printf("  c    create new partition (standard unix root)\n");
 	    printf("  d    delete a partition\n");
+	    printf("  h    help\n");
+	    printf("  i    initialize partition map\n");
+	    printf("  n    (re)name a partition\n");
+	    printf("  P    (print ordered by base address)\n");
+	    printf("  p    print the partition table\n");
+	    printf("  q    quit editing\n");
 	    printf("  r    reorder partition entry in map\n");
+	    printf("  s    change size of partition map\n");
 	    printf("  t    change a partition's type\n");
 	    if (!rflag) {
 		printf("  w    write the partition table\n");
 	    }
-	    printf("  q    quit editing\n");
 	    if (dflag) {
 		printf("  x    extra extensions for experts\n");
 	    }
