@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.8 1999/02/05 09:13:32 thorpej Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.9 1999/02/05 18:17:27 thorpej Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -170,10 +170,6 @@ int main (argc, argv, envp)
 	sockaddr_broadcast.sin_len = sizeof sockaddr_broadcast;
 #endif
 	inaddr_any.s_addr = INADDR_ANY;
-
-	/* Set up cleanup function. */
-	if (atexit (cleanup))
-		error ("Unable to register cleanup function.");
 
 	/* Set up SIGHUP and SIGTERM handlers. */
 	sa.sa_handler = catch_sighup;
@@ -2128,6 +2124,7 @@ void catch_sigterm (sig)
 	/* Treat this like RELEASE_CURRENT_DHCP_LEASES; release
 	   leases.  Then exit. */
 	client_reinit (0);
+	cleanup();
 	exit (0);
 }
 
