@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.61 1999/10/17 15:31:00 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.62 1999/10/23 00:21:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -846,12 +846,15 @@ uhci_intr(arg)
 	}
 #endif
 
+	status = UREAD2(sc, UHCI_STS);
+	if (status == 0)	/* The interrupt was not for us. */
+		return (0);
+
 #if defined(DIAGNOSTIC) && defined(__NetBSD__)
 	if (sc->sc_suspend != PWR_RESUME)
 		printf("uhci_intr: suspended sts=0x%x\n", status);
 #endif
 
-	status = UREAD2(sc, UHCI_STS);
 	ack = 0;
 	if (status & UHCI_STS_USBINT)
 		ack |= UHCI_STS_USBINT;
