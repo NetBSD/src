@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.7 2004/01/25 00:28:01 bjh21 Exp $ */
+/* $NetBSD: atppc.c,v 1.8 2004/01/25 11:41:17 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.7 2004/01/25 00:28:01 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.8 2004/01/25 11:41:17 jdolecek Exp $");
 
 #include "opt_atppc.h"
 
@@ -152,14 +152,7 @@ atppc_sc_attach(struct atppc_softc * lsc)
 {
 	/* Adapter used to configure ppbus device */
 	struct parport_adapter sc_parport_adapter;
-#ifdef ATPPC_DEBUG
-	struct device * dev = (struct device *) lsc;
-#endif
-#ifdef ATPPC_VERBOSE
 	char buf[64];
-#endif
-
-	printf("\n");
 
 	/* Probe and set up chipset */
 	if(atppc_detect_chipset(lsc) != 0) {
@@ -170,18 +163,16 @@ atppc_sc_attach(struct atppc_softc * lsc)
 	}
 
 	/* Probe and setup FIFO queue */
-	if(atppc_detect_fifo(lsc) == 0) {
-		ATPPC_VPRINTF(("%s: FIFO <depth,wthr,rthr>=<%d,%d,%d>\n", 
-			dev->dv_xname, lsc->sc_fifo, lsc->sc_wthr, 
-			lsc->sc_rthr));
+	if (atppc_detect_fifo(lsc) == 0) {
+		printf("%s: FIFO <depth,wthr,rthr>=<%d,%d,%d>\n", 
+			lsc->sc_dev.dv_xname, lsc->sc_fifo, lsc->sc_wthr, 
+			lsc->sc_rthr);
 	}
 
-#ifdef ATPPC_VERBOSE
         /* Print out chipset capabilities */
 	bitmask_snprintf(lsc->sc_has, "\20\1INTR\2DMA\3FIFO\4PS2\5ECP\6EPP",
 		buf, sizeof(buf)); 
-	ATPPC_VPRINTF(("%s: capabilities=%s\n", dev->dv_xname, buf)); 
-#endif
+	printf("%s: capabilities=%s\n", lsc->sc_dev.dv_xname, buf); 
 
 	/* Initialize device's buffer pointers */
 	lsc->sc_outb = lsc->sc_outbstart = lsc->sc_inb = lsc->sc_inbstart 
@@ -191,7 +182,7 @@ atppc_sc_attach(struct atppc_softc * lsc)
 	/* Last configuration step: set mode to standard mode */
 	if(atppc_setmode(&(lsc->sc_dev), PPBUS_COMPATIBLE) != 0) {
 		ATPPC_DPRINTF(("%s: unable to initialize mode.\n", 
-			dev->dv_xname));
+			lsc->sc_dev.dv_xname));
 	}
 
 #if defined (MULTIPROCESSOR) || defined (LOCKDEBUG)
