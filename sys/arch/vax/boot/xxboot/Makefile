@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2003/12/09 04:54:54 matt Exp $
+#	$NetBSD: Makefile,v 1.20 2003/12/11 17:34:10 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -9,7 +9,6 @@ LINKS=	${BINDIR}/xxboot ${BINDIR}/raboot
 LINKS+=	${BINDIR}/xxboot ${BINDIR}/rdboot
 LINKS+=	${BINDIR}/xxboot ${BINDIR}/sdboot
 LINKS+=	${BINDIR}/xxboot ${BINDIR}/hpboot
-WARNS?=	1
 
 SRCS=	start.S bootxx.c romread.S str.S
 
@@ -23,7 +22,6 @@ CPPFLAGS+=-D_STANDALONE -DLIBSA_NO_FD_CHECKING -DLIBSA_NO_RAW_ACCESS \
 # Use small daddr_t to avoid code bloat
 CPPFLAGS+=-D__daddr_t=int32_t
 BINDIR=	/usr/mdec
-NOMAN=	# defined
 
 CFLAGS=	-Os
 LIBC=
@@ -36,18 +34,8 @@ KERN_AS=library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=${KERNLIB}
 
-.if ${MACHINE} == "vax"
-.PHONY: machine-links
-beforedepend: machine-links
-machine-links:
-	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
-	@[ -h ${MACHINE_ARCH} ] || ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
-.NOPATH: machine ${MACHINE_ARCH}
-CLEANFILES+= machine ${MACHINE_ARCH}
-.endif
 CLEANFILES+= ${PROG}.out
 
-${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 ${PROG}: ${OBJS} ${LIBSA} ${LIBKERN}
 	${LD} -N -Ttext 100000 -o ${PROG}.out ${OBJS} ${LIBSA} ${LIBKERN}
 	${SIZE} ${PROG}.out
