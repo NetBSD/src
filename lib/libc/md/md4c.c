@@ -1,4 +1,4 @@
-/*	$NetBSD: md4c.c,v 1.3 1998/07/26 11:44:11 mycroft Exp $	*/
+/*	$NetBSD: md4c.c,v 1.4 1998/10/20 17:04:45 kleink Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -27,6 +27,8 @@
  * These notices must be retained in any copies of any part of this
  * documentation and/or software.
  */
+
+#include "namespace.h"
 
 #include <sys/types.h>
 #include <string.h>
@@ -93,6 +95,12 @@ static const unsigned char PADDING[64] = {
 	(a) += H ((b), (c), (d)) + (x) + (UINT4)0x6ed9eba1; \
 	(a) = ROTATE_LEFT ((a), (s)); \
 }
+
+#ifdef __weak_alias
+__weak_alias(MD4Init,_MD4Init);
+__weak_alias(MD4Update,_MD4Update);
+__weak_alias(MD4Final,_MD4Final);
+#endif
 
 /*
  * MD4 initialization. Begins an MD4 operation, writing a new context.

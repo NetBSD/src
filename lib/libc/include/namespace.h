@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.30 1998/10/18 13:56:22 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.31 1998/10/20 17:04:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,12 @@
 #define warnx		_warnx
 
 #ifdef __weak_alias
+#define MD4Final		_MD4Final
+#define MD4Init			_MD4Init
+#define MD4Update		_MD4Update
+#define MD5Final		_MD5Final
+#define MD5Init			_MD5Init
+#define MD5Update		_MD5Update
 #define a64l			_a64l
 #define asctime_r		_asctime_r
 #define alarm			_alarm
