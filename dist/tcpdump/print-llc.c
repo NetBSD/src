@@ -1,4 +1,4 @@
-/*	$NetBSD: print-llc.c,v 1.4 2002/02/18 09:37:08 itojun Exp $	*/
+/*	$NetBSD: print-llc.c,v 1.5 2002/05/31 09:45:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,9 +28,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-llc.c,v 1.43 2001/10/08 21:25:22 fenner Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-llc.c,v 1.45 2002/04/07 09:50:33 guy Exp";
 #else
-__RCSID("$NetBSD: print-llc.c,v 1.4 2002/02/18 09:37:08 itojun Exp $");
+__RCSID("$NetBSD: print-llc.c,v 1.5 2002/05/31 09:45:45 itojun Exp $");
 #endif
 #endif
 
@@ -103,6 +103,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		 * such as an 802.11 network; this has appeared in at
 		 * least one capture file.)
 		 */
+		printf("(NOV-802.3) ");
 		ipx_print(p, length);
 		return (1);
 	}
@@ -121,6 +122,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		 *
 		 * Skip DSAP, LSAP, and control field.
 		 */
+		printf("(NOV-802.2) ");
 		p += 3;
 		length -= 3;
 		caplen -= 3;
@@ -231,11 +233,78 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 			break;
 
 		case OUI_CISCO:
-			if (et == ETHERTYPE_CISCO_CDP) {
+			if (et == PID_CISCO_CDP) {
 				cdp_print(p, length, caplen, esrc, edst);
 				return 1;
 			}
 			break;
+
+		case OUI_RFC2684:
+			switch (et) {
+
+			case PID_RFC2684_ETH_FCS:
+			case PID_RFC2684_ETH_NOFCS:
+				/*
+				 * XXX - remove the last two bytes for
+				 * PID_RFC2684_ETH_FCS?
+				 */
+				/*
+				 * Skip the padding.
+				 */
+				caplen -= 2;
+				length -= 2;
+				p += 2;
+
+				/*
+				 * What remains is an Ethernet packet.
+				 */
+				ether_print(p, length, caplen);
+				return (1);
+
+			case PID_RFC2684_802_5_FCS:
+			case PID_RFC2684_802_5_NOFCS:
+				/*
+				 * XXX - remove the last two bytes for
+				 * PID_RFC2684_ETH_FCS?
+				 */
+				/*
+				 * Skip the padding, but not the Access
+				 * Control field.
+				 */
+				caplen -= 2;
+				length -= 2;
+				p += 2;
+
+				/*
+				 * What remains is an 802.5 Token Ring
+				 * packet.
+				 */
+				token_print(p, length, caplen);
+				return (1);
+
+			case PID_RFC2684_FDDI_FCS:
+			case PID_RFC2684_FDDI_NOFCS:
+				/*
+				 * XXX - remove the last two bytes for
+				 * PID_RFC2684_ETH_FCS?
+				 */
+				/*
+				 * Skip the padding.
+				 */
+				caplen -= 3;
+				length -= 3;
+				p += 3;
+
+				/*
+				 * What remains is an FDDI packet.
+				 */
+				fddi_print(p, length, caplen);
+				return (1);
+
+			case PID_RFC2684_BPDU:
+				stp_print(p, length);
+				return (1);
+			}
 		}
 	}
 

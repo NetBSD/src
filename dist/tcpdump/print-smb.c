@@ -1,4 +1,4 @@
-/*	$NetBSD: print-smb.c,v 1.3 2002/02/18 09:37:09 itojun Exp $	*/
+/*	$NetBSD: print-smb.c,v 1.4 2002/05/31 09:45:46 itojun Exp $	*/
 
 /*
  * Copyright (C) Andrew Tridgell 1995-1999
@@ -16,15 +16,17 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-     "@(#) Header: /tcpdump/master/tcpdump/print-smb.c,v 1.20 2002/01/17 04:38:29 guy Exp";
+     "@(#) Header: /tcpdump/master/tcpdump/print-smb.c,v 1.23 2002/04/30 09:09:41 guy Exp";
 #else
-__RCSID("$NetBSD: print-smb.c,v 1.3 2002/02/18 09:37:09 itojun Exp $");
+__RCSID("$NetBSD: print-smb.c,v 1.4 2002/05/31 09:45:46 itojun Exp $");
 #endif
 #endif
 
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+
+#include <netinet/in.h>
 
 #include "interface.h"
 #include "extract.h"
@@ -180,7 +182,7 @@ print_trans2(const u_char *words, const u_char *dat, const u_char *buf, const u_
     static struct smbfnsint *fn = &trans2_fns[0];
     const u_char *data, *param;
     const u_char *w = words + 1;
-    const u_char *f1 = NULL, *f2 = NULL;
+    const char *f1 = NULL, *f2 = NULL;
     int pcnt, dcnt;
 
     TCHECK(words[0]);
@@ -231,8 +233,8 @@ print_trans2(const u_char *words, const u_char *dat, const u_char *buf, const u_
     if (fn->descript.fn)
 	(*fn->descript.fn)(param, data, pcnt, dcnt);
     else {
-	smb_fdata(param, f1 ? f1 : (u_char *)"Paramaters=\n", param + pcnt);
-	smb_fdata(data, f2 ? f2 : (u_char *)"Data=\n", data + dcnt);
+	smb_fdata(param, f1 ? f1 : "Parameters=\n", param + pcnt);
+	smb_fdata(data, f2 ? f2 : "Data=\n", data + dcnt);
     }
     return;
 trunc:
@@ -336,7 +338,7 @@ print_ipc(const u_char *param, int paramlen, const u_char *data, int datalen)
 static void
 print_trans(const u_char *words, const u_char *data1, const u_char *buf, const u_char *maxbuf)
 {
-    const u_char *f1, *f2, *f3, *f4;
+    const char *f1, *f2, *f3, *f4;
     const u_char *data, *param;
     const u_char *w = words + 1;
     int datalen, paramlen;
@@ -390,7 +392,7 @@ trunc:
 static void
 print_negprot(const u_char *words, const u_char *data, const u_char *buf, const u_char *maxbuf)
 {
-    u_char *f1 = NULL, *f2 = NULL;
+    const char *f1 = NULL, *f2 = NULL;
 
     TCHECK(words[0]);
     if (request)
@@ -425,7 +427,7 @@ static void
 print_sesssetup(const u_char *words, const u_char *data, const u_char *buf, const u_char *maxbuf)
 {
     int wcnt;
-    u_char *f1 = NULL, *f2 = NULL;
+    const char *f1 = NULL, *f2 = NULL;
 
     TCHECK(words[0]);
     wcnt = words[0];
@@ -769,7 +771,7 @@ print_smb(const u_char *buf, const u_char *maxbuf)
     TCHECK(words[0]);
 
     for (;;) {
-	const u_char *f1, *f2;
+	const char *f1, *f2;
 	int wct;
 	int bcc;
 
@@ -864,9 +866,9 @@ nbt_tcp_print(const u_char *data, int length)
 	return;
 
     if (vflag > 1)
-	printf ("\n>>> ");
+	printf ("\n>>>");
 
-    printf("NBT Packet");
+    printf(" NBT Packet");
 
     if (vflag < 2)
 	return;
@@ -956,7 +958,7 @@ nbt_udp137_print(const u_char *data, int length)
     int name_trn_id, response, opcode, nm_flags, rcode;
     int qdcount, ancount, nscount, arcount;
     char *opcodestr;
-    const char *p;
+    const u_char *p;
     int total, i;
 
     TCHECK2(data[10], 2);
@@ -1085,14 +1087,14 @@ nbt_udp137_print(const u_char *data, int length)
 			p += 2;
 		    }
 		} else {
-		    print_data(p, min(rdlen, length - ((const u_char *)p - data)));
+		    print_data(p, min(rdlen, length - (p - data)));
 		    p += rdlen;
 		}
 	    }
 	}
     }
 
-    if ((u_char*)p < maxbuf)
+    if (p < maxbuf)
 	smb_fdata(p, "AdditionalData:\n", maxbuf);
 
 out:

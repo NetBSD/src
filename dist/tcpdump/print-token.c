@@ -1,4 +1,4 @@
-/*	$NetBSD: print-token.c,v 1.3 2002/02/18 09:37:10 itojun Exp $	*/
+/*	$NetBSD: print-token.c,v 1.4 2002/05/31 09:45:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -29,9 +29,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-token.c,v 1.13 2001/09/18 15:46:37 fenner Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-token.c,v 1.15 2002/05/29 10:06:27 guy Exp";
 #else
-__RCSID("$NetBSD: print-token.c,v 1.3 2002/02/18 09:37:10 itojun Exp $");
+__RCSID("$NetBSD: print-token.c,v 1.4 2002/05/31 09:45:46 itojun Exp $");
 #endif
 #endif
 
@@ -68,7 +68,7 @@ extract_token_addrs(const struct token_header *trp, char *fsrc, char *fdst)
  * Print the TR MAC header
  */
 static inline void
-token_print(register const struct token_header *trp, register u_int length,
+token_hdr_print(register const struct token_header *trp, register u_int length,
 	   register const u_char *fsrc, register const u_char *fdst)
 {
 	const char *srcname, *dstname;
@@ -108,30 +108,19 @@ static const char *largest_frame[] = {
 	"??"
 };
 
-/*
- * This is the top level routine of the printer.  'p' is the points
- * to the TR header of the packet, 'tvp' is the timestamp,
- * 'length' is the length of the packet off the wire, and 'caplen'
- * is the number of bytes actually captured.
- */
-void
-token_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
+u_int
+token_print(const u_char *p, u_int length, u_int caplen)
 {
-	u_int caplen = h->caplen;
-	u_int length = h->len;
 	const struct token_header *trp;
 	u_short extracted_ethertype;
 	struct ether_header ehdr;
-	u_int route_len = 0, seg;
+	u_int route_len = 0, hdr_len = TOKEN_HDRLEN, seg;
 
 	trp = (const struct token_header *)p;
 
-	++infodelay;
-	ts_print(&h->ts);
-
 	if (caplen < TOKEN_HDRLEN) {
 		printf("[|token-ring]");
-		goto out;
+		return hdr_len;
 	}
 	/*
 	 * Get the TR addresses into a canonical form
@@ -157,7 +146,7 @@ token_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		*ESRC(&ehdr) &= 0x7f;
 
 		if (eflag)
-			token_print(trp, length, ESRC(&ehdr), EDST(&ehdr));
+			token_hdr_print(trp, length, ESRC(&ehdr), EDST(&ehdr));
 
 		route_len = RIF_LENGTH(trp);
 		if (vflag) {
@@ -176,13 +165,14 @@ token_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		printf(" (%s) ", largest_frame[LARGEST_FRAME(trp)]);
 	} else {
 		if (eflag)
-			token_print(trp, length, ESRC(&ehdr), EDST(&ehdr));
+			token_hdr_print(trp, length, ESRC(&ehdr), EDST(&ehdr));
 	}
 
 	/* Skip over token ring MAC header and routing information */
-	length -= TOKEN_HDRLEN + route_len;
-	p += TOKEN_HDRLEN + route_len;
-	caplen -= TOKEN_HDRLEN + route_len;
+	hdr_len += route_len;
+	length -= hdr_len;
+	p += hdr_len;
+	caplen -= hdr_len;
 
 	/* Frame Control field determines interpretation of packet */
 	extracted_ethertype = 0;
@@ -192,7 +182,7 @@ token_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		    &extracted_ethertype) == 0) {
 			/* ether_type not known, print raw packet */
 			if (!eflag)
-				token_print(trp,
+				token_hdr_print(trp,
 				    length + TOKEN_HDRLEN + route_len,
 				    ESRC(&ehdr), EDST(&ehdr));
 			if (extracted_ethertype) {
@@ -206,15 +196,41 @@ token_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		/* Some kinds of TR packet we cannot handle intelligently */
 		/* XXX - dissect MAC packets if frame type is 0 */
 		if (!eflag)
-			token_print(trp, length + TOKEN_HDRLEN + route_len,
+			token_hdr_print(trp, length + TOKEN_HDRLEN + route_len,
 			    ESRC(&ehdr), EDST(&ehdr));
 		if (!xflag && !qflag)
 			default_print(p, caplen);
 	}
-	if (xflag)
-		default_print(p, caplen);
-out:
+	return (hdr_len);
+}
+
+/*
+ * This is the top level routine of the printer.  'p' is the points
+ * to the TR header of the packet, 'tvp' is the timestamp,
+ * 'length' is the length of the packet off the wire, and 'caplen'
+ * is the number of bytes actually captured.
+ */
+void
+token_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
+{
+	u_int caplen = h->caplen;
+	u_int length = h->len;
+	u_int hdr_len;
+
+	++infodelay;
+	ts_print(&h->ts);
+
+	hdr_len = token_print(p, length, caplen);
+
+	/*
+	 * If "-x" was specified, print stuff past the Token Ring header,
+	 * if there's anything to print.
+	 */
+	if (xflag && caplen > hdr_len)
+		default_print(p + hdr_len, caplen - hdr_len);
+
 	putchar('\n');
+
 	--infodelay;
 	if (infoprint)
 		info(0);
