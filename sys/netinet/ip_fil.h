@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.3 1997/02/18 20:49:34 mrg Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.4 1997/02/19 23:07:59 scottr Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -14,7 +14,7 @@
 #ifndef	__IP_FIL_H__
 #define	__IP_FIL_H__
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(_LKM)
 #include "ipfilter.h"
 #endif
 
