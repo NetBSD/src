@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.277 2000/10/19 15:00:58 ad Exp $
+# $NetBSD: mi,v 1.278 2000/10/25 00:01:06 thorpej Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -275,6 +275,7 @@
 ./usr/share/man/cat1/postmap.0
 ./usr/share/man/cat1/postsuper.0
 ./usr/share/man/cat1/pr.0
+./usr/share/man/cat1/pmc.0
 ./usr/share/man/cat1/printenv.0
 ./usr/share/man/cat1/printf.0
 ./usr/share/man/cat1/ps.0
@@ -1693,6 +1694,7 @@
 ./usr/share/man/man1/postmap.1
 ./usr/share/man/man1/postsuper.1
 ./usr/share/man/man1/pr.1
+./usr/share/man/man1/pmc.1
 ./usr/share/man/man1/printenv.1
 ./usr/share/man/man1/printf.1
 ./usr/share/man/man1/ps.1
