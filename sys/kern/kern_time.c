@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.52 2000/07/13 17:33:39 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.53 2000/08/02 12:24:11 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -705,7 +705,9 @@ ppsratecheck(lasttime, curpps, maxpps)
 		*lasttime = tv;
 		*curpps = 0;
 		rv = 1;
-	} else if (*curpps < maxpps)
+	} else if (maxpps < 0)
+		rv = 1;
+	else if (*curpps < maxpps)
 		rv = 1;
 	else
 		rv = 0;
