@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.175 2002/07/23 23:11:04 rjs Exp $
+$NetBSD: pcmciadevs,v 1.176 2002/09/04 00:04:03 mason Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -42,6 +42,7 @@ $NetBSD: pcmciadevs,v 1.175 2002/07/23 23:11:04 rjs Exp $
  */
 
 vendor FUJITSU			0x0004  Fujitsu Corporation
+vendor NETGEAR_2		0x000b  Netgear
 vendor PANASONIC		0x0032	Matsushita Electric Industrial Co.
 vendor SANDISK			0x0045	Sandisk Corporation
 vendor NEWMEDIA			0x0057	New Media Corporation
@@ -279,6 +280,7 @@ product NEWMEDIA2 BUSTOASTER	0x0001 NewMedia BusToaster
 product NETGEAR FA410TX		0x0230 Netgear FA410TX
 product NETGEAR FA410TXC	0x4530 Netgear FA410TXC
 product NETGEAR FA411		0x0411 Netgear FA411
+product NETGEAR_2 MA401		0x7300 Netgear MA401
 
 /* National Instruments */
 product NI PCMCIA_GPIB	 	0x4882 National Instruments PCMCIA-GPIB
