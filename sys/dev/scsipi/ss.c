@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.36 2001/07/18 18:25:41 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.37 2001/11/13 06:56:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.37 2001/11/13 06:56:41 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

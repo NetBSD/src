@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.46 2001/09/26 20:53:14 eeh Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.47 2001/11/13 06:58:17 lukem Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,6 +57,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.47 2001/11/13 06:58:17 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

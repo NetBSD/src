@@ -1,4 +1,4 @@
-/*	$NetBSD: xbox.c,v 1.5 2001/09/26 20:53:16 eeh Exp $ */
+/*	$NetBSD: xbox.c,v 1.6 2001/11/13 06:58:18 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Sbus expansion box.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.6 2001/11/13 06:58:18 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

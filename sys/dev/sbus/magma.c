@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.11 2001/09/26 20:53:15 eeh Exp $	*/
+/*	$NetBSD: magma.c,v 1.12 2001/11/13 06:58:17 lukem Exp $	*/
 /*
  * magma.c
  *
@@ -31,14 +31,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#if 0
-#define MAGMA_DEBUG
-#endif
 
 /*
  * Driver for Magma SBus Serial/Parallel cards using the Cirrus Logic
  * CD1400 & CD1190 chips
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.12 2001/11/13 06:58:17 lukem Exp $");
+
+#if 0
+#define MAGMA_DEBUG
+#endif
 
 #include "magma.h"
 #if NMAGMA > 0
