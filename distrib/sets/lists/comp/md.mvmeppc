@@ -1,4 +1,4 @@
-# $NetBSD: md.mvmeppc,v 1.9 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.mvmeppc,v 1.10 2005/02/17 02:24:00 briggs Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mvmeppc				comp-c-include
 ./usr/include/mvmeppc/_G_config.h		comp-obsolete		obsolete
@@ -50,6 +50,7 @@
 ./usr/include/mvmeppc/reloc.h			comp-c-include
 ./usr/include/mvmeppc/setjmp.h			comp-c-include
 ./usr/include/mvmeppc/signal.h			comp-c-include
+./usr/include/mvmeppc/spr.h			comp-c-include
 ./usr/include/mvmeppc/stdarg.h			comp-c-include
 ./usr/include/mvmeppc/trap.h			comp-c-include
 ./usr/include/mvmeppc/types.h			comp-c-include
