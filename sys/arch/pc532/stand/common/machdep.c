@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2003/12/06 13:09:01 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2003/12/06 14:02:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip L. Budne.
@@ -72,7 +72,7 @@ scsi_tt_write(int ctlr, int slave, void *buf, u_int len, daddr_t blk,
 }
 
 void
-machdep_start(char *entry, int howto, char *loadaddr, char *ssym, char *esym)
+machdep_start(char *entry, int how_to, char *loadaddr, char *ssym, char *esym)
 {
 	char *load;
 	extern u_int opendev;
@@ -90,7 +90,7 @@ machdep_start(char *entry, int howto, char *loadaddr, char *ssym, char *esym)
 
 	printf("\n");
 
-	run_prog((u_long)howto,		/* r7 */
+	run_prog((u_long)how_to,	/* r7 */
 		 (u_long)opendev,	/* r6 */
 		 (u_long)load,		/* r5 */
 		 (u_long)esym,		/* r4 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2003/12/06 13:09:01 simonb Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 2003/12/06 14:02:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -99,7 +99,7 @@ main(void)
 }
 
 void
-getbootdev(int *howto)
+getbootdev(int *how_to)
 {
 	char c, *ptr = line;
 
@@ -114,7 +114,7 @@ getbootdev(int *howto)
 				return;
 			if (c == '-')
 				while ((c = *++ptr) && c != ' ')
-					BOOT_FLAG(c, *howto);
+					BOOT_FLAG(c, *how_to);
 			else {
 				name = ptr;
 				while ((c = *++ptr) && c != ' ');
