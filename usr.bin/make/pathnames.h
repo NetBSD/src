@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.3 1995/06/14 15:19:52 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.4 1996/03/06 00:15:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,10 +33,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.2 (Berkeley) 6/1/90
- *	$Id: pathnames.h,v 1.3 1995/06/14 15:19:52 christos Exp $
+ *	$Id: pathnames.h,v 1.4 1996/03/06 00:15:26 christos Exp $
  */
 
 #define	_PATH_OBJDIR		"obj"
 #define	_PATH_DEFSHELLDIR	"/bin"
-#define	_PATH_DEFSYSMK		"/usr/share/mk/sys.mk"
+#define	_PATH_DEFSYSMK		"sys.mk"
 #define	_PATH_DEFSYSPATH	"/usr/share/mk"
