@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.27 2000/10/10 20:24:51 is Exp $	*/
+/*	$NetBSD: utilities.c,v 1.28 2001/01/09 09:08:35 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.27 2000/10/10 20:24:51 is Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.28 2001/01/09 09:08:35 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -689,7 +689,7 @@ swap_cg(o, n)
 			n32 = (u_int32_t*)((u_int8_t*)n + o->cg_clustersumoff);
 			o32 = (u_int32_t*)((u_int8_t*)o + o->cg_clustersumoff);
 		}
-		for (i = 0; i < sblock->fs_contigsumsize + 1; i++)
+		for (i = 1; i < sblock->fs_contigsumsize + 1; i++)
 			n32[i] = bswap32(o32[i]);
 	}
 }
