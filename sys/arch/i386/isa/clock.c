@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.44 1997/02/13 00:59:15 jonathan Exp $	*/
+/*	$NetBSD: clock.c,v 1.45 1998/02/05 19:59:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -106,8 +106,11 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <i386/isa/timerreg.h>
 #include <i386/isa/spkrreg.h>
 
+static void initrtclock __P((void));
 void	spinwait __P((int));
+#if 0
 void	findcpuspeed __P((void));
+#endif
 int	clockintr __P((void *));
 int	gettick __P((void));
 void	sysbeepstop __P((void *));
@@ -148,6 +151,32 @@ mc146818_write(sc, reg, datum)
 	outb(IO_RTC+1, datum);
 }
 
+static u_long rtclock_tval;
+
+/* minimal initialization, enough for delay() */
+static void
+initrtclock()
+{
+	u_long tval;
+
+	/*
+	 * Compute timer_count, the count-down count the timer will be
+	 * set to.  Also, correctly round
+	 * this by carrying an extra bit through the division.
+	 */
+	tval = (TIMER_FREQ * 2) / (u_long) hz;
+	tval = (tval / 2) + (tval & 0x1);
+
+	/* initialize 8253 clock */
+	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
+
+	/* Correct rounding will buy us a better precision in timekeeping */
+	outb(IO_TIMER1, tval % 256);
+	outb(IO_TIMER1, tval / 256);
+
+	rtclock_tval = tval;
+}
+
 /*
  * microtime() makes use of the following globals.  Note that isa_timer_tick
  * may be redundant to the `tick' variable, but is kept here for stability.
@@ -171,8 +200,12 @@ startrtclock()
 	u_long tval;
 	u_long t, msb, lsb, quotient, remainder;
 
+#if 0
 	findcpuspeed();		/* use the clock (while it's free)
 					to find the cpu speed */
+#endif
+	if (!rtclock_tval)
+		initrtclock();
 
 	/*
 	 * Compute timer_tick from hz.  We truncate this value (i.e.
@@ -182,13 +215,10 @@ startrtclock()
 	isa_timer_tick = 1000000 / (u_long) hz;
 
 	/*
-	 * Compute timer_count, the count-down count the timer will be
-	 * set to.  We can't stand any number with an MSB larger than
-	 * TIMER_MSB_TABLE_SIZE will accomodate.  Also, correctly round
-	 * this by carrying an extra bit through the division.
+	 * We can't stand any number with an MSB larger than
+	 * TIMER_MSB_TABLE_SIZE will accomodate.
 	 */
-	tval = (TIMER_FREQ * 2) / (u_long) hz;
-	tval = (tval / 2) + (tval & 0x1);
+	tval = rtclock_tval;
 	if ((tval / 256) >= ISA_TIMER_MSB_TABLE_SIZE
 	    || TIMER_FREQ > (8*1024*1024)) {
 		panic("startrtclock: TIMER_FREQ/HZ unsupportable");
@@ -243,13 +273,6 @@ startrtclock()
 		}
 	}
 
-	/* initialize 8253 clock */
-	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
-
-	/* Correct rounding will buy us a better precision in timekeeping */
-	outb(IO_TIMER1, isa_timer_count % 256);
-	outb(IO_TIMER1, isa_timer_count / 256);
-
 	/* Check diagnostic status */
 	if ((s = mc146818_read(NULL, NVRAM_DIAG)) != 0) { /* XXX softc */
 		char bits[128];
@@ -271,15 +294,17 @@ clockintr(arg)
 int
 gettick()
 {
+	u_long ef;
 	u_char lo, hi;
 
 	/* Don't want someone screwing with the counter while we're here. */
+	ef = read_eflags();
 	disable_intr();
 	/* Select counter 0 and latch it. */
 	outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 	lo = inb(TIMER_CNTR0);
 	hi = inb(TIMER_CNTR0);
-	enable_intr();
+	write_eflags(ef);
 	return ((hi << 8) | lo);
 }
 
@@ -295,6 +320,10 @@ delay(n)
 	int n;
 {
 	int limit, tick, otick;
+
+	/* allow DELAY() to be used before startrtclock() */
+	if (!rtclock_tval)
+		initrtclock();
 
 	/*
 	 * Read the counter first, so that the rest of the setup overhead is
@@ -387,6 +416,7 @@ sysbeep(pitch, period)
 	timeout(sysbeepstop, 0, period);
 }
 
+#if 0
 unsigned int delaycount;	/* calibrated loop variable (1 millisecond) */
 
 #define FIRST_GUESS   0x2000
@@ -411,6 +441,7 @@ findcpuspeed()
 	 */
 	delaycount = (FIRST_GUESS * TIMER_DIV(1000)) / (0xffff-remainder);
 }
+#endif
 
 void
 cpu_initclocks()
