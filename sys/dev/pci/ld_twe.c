@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.4 2001/01/22 17:44:28 ad Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.5 2001/01/22 21:56:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@ struct ld_twe_softc {
 };
 
 static void	ld_twe_attach(struct device *, struct device *, void *);
-static int	ld_twe_dobio(struct ld_twe_softc *, int, void *, int, int,
-			     int, struct buf *);
+static int	ld_twe_dobio(struct ld_twe_softc *, void *, int, int, int,
+			     struct buf *);
 static int	ld_twe_dump(struct ld_softc *, void *, int, int);
 static void	ld_twe_handler(struct twe_ccb *, int);
 static int	ld_twe_match(struct device *, struct cfdata *, void *);
@@ -123,8 +123,8 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-ld_twe_dobio(struct ld_twe_softc *sc, int unit, void *data, int datasize,
-	     int blkno, int dowrite, struct buf *bp)
+ld_twe_dobio(struct ld_twe_softc *sc, void *data, int datasize, int blkno,
+	     int dowrite, struct buf *bp)
 {
 	struct twe_ccb *ccb;
 	struct twe_cmd *tc;
@@ -143,7 +143,7 @@ ld_twe_dobio(struct ld_twe_softc *sc, int unit, void *data, int datasize,
 
 	/* Build the command. */
 	tc->tc_size = 3;
-	tc->tc_unit = unit;
+	tc->tc_unit = sc->sc_hwunit;
 	tc->tc_count = htole16(datasize / TWE_SECTOR_SIZE);
 	tc->tc_args.io.lba = htole32(blkno);
 
@@ -183,12 +183,9 @@ ld_twe_dobio(struct ld_twe_softc *sc, int unit, void *data, int datasize,
 static int
 ld_twe_start(struct ld_softc *ld, struct buf *bp)
 {
-	struct ld_twe_softc *sc;
 
-	sc = (struct ld_twe_softc *)ld;
-
-	return (ld_twe_dobio(sc, sc->sc_hwunit, bp->b_data, bp->b_bcount,
-	    bp->b_rawblkno, (bp->b_flags & B_READ) == 0, bp));
+	return (ld_twe_dobio((struct ld_twe_softc *)ld, bp->b_data,
+	    bp->b_bcount, bp->b_rawblkno, (bp->b_flags & B_READ) == 0, bp));
 }
 
 static void
@@ -220,10 +217,7 @@ ld_twe_handler(struct twe_ccb *ccb, int error)
 static int
 ld_twe_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 {
-	struct ld_twe_softc *sc;
 
-	sc = (struct ld_twe_softc *)ld;
-
-	return (ld_twe_dobio(sc, sc->sc_hwunit, data, blkcnt * ld->sc_secsize,
-	    blkno, 1, NULL));
+	return (ld_twe_dobio((struct ld_twe_softc *)ld, data,
+	    blkcnt * ld->sc_secsize, blkno, 1, NULL));
 }
