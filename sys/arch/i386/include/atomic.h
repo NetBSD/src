@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.1.2.5 2001/12/11 23:52:07 sommerfeld Exp $ */
+/* $NetBSD: atomic.h,v 1.1.2.6 2002/05/03 13:40:52 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #ifndef _LOCORE
 
-static __inline u_int32_t
+static __inline unsigned long
 i386_atomic_testset_ul (volatile u_int32_t *ptr, unsigned long val) {
     __asm__ volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
     return val;
