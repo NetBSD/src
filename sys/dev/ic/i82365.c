@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.28 2000/01/13 09:00:30 joda Exp $	*/
+/*	$NetBSD: i82365.c,v 1.29 2000/01/25 09:14:27 enami Exp $	*/
 
 #define	PCICDEBUG
 
@@ -437,13 +437,17 @@ pcic_event_thread(arg)
 {
 	struct pcic_handle *h = arg;
 	struct pcic_event *pe;
-	int s;
+	int s, first = 1;
 	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
 
 	while (h->shutdown == 0) {
 		s = splhigh();
 		if ((pe = SIMPLEQ_FIRST(&h->events)) == NULL) {
 			splx(s);
+			if (first) {
+				first = 0;
+				config_pending_decr();
+			}
 			(void) tsleep(&h->events, PWAIT, "pcicev", 0);
 			continue;
 		} else {
@@ -533,6 +537,7 @@ pcic_init_socket(h)
 	if (h->event_thread != NULL)
 		panic("pcic_attach_socket: event thread");
 #endif
+	config_pending_incr();
 	kthread_create(pcic_create_event_thread, h);
 
 	/* set up the card to interrupt on card detect */
@@ -568,7 +573,7 @@ pcic_init_socket(h)
 
 	if ((reg & PCIC_IF_STATUS_CARDDETECT_MASK) ==
 	    PCIC_IF_STATUS_CARDDETECT_PRESENT) {
-		pcic_attach_card(h);
+		pcic_queue_event(h, PCIC_EVENT_INSERTION);
 		h->laststate = PCIC_LASTSTATE_PRESENT;
 	} else {
 		h->laststate = PCIC_LASTSTATE_EMPTY;
