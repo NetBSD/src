@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11 2001/09/29 23:36:54 mycroft Exp $ */
+/*	$NetBSD: mem.c,v 1.12 2001/09/30 01:23:47 mycroft Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -157,5 +157,5 @@ mmmmap(dev, off, prot)
 
 	if (atop(off) >= physmem && suser(p->p_ucred, &p->p_acflag) != 0)
 		return (-1);
-	return (atop(off));
+	return (trunc_page((paddr_t)off));
 }
