@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.44 1996/05/06 01:08:35 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.45 1996/05/07 01:08:15 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -111,7 +111,7 @@ void aeattach __P((struct device *, struct device *, void *));
 void aeintr __P((void *, int));
 int aeioctl __P((struct ifnet *, u_long, caddr_t));
 void aestart __P((struct ifnet *));
-void aewatchdog __P((int));
+void aewatchdog __P((struct ifnet *));
 void aereset __P((struct ae_softc *));
 void aeinit __P((struct ae_softc *));
 void aestop __P((struct ae_softc *));
@@ -424,8 +424,8 @@ aeattach(parent, self, aux)
 	aestop(sc);
 
 	/* Initialize ifnet structure. */
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = ae_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = aestart;
 	ifp->if_ioctl = aeioctl;
 	ifp->if_watchdog = aewatchdog;
@@ -499,10 +499,10 @@ aestop(sc)
 static int aeintr_ctr = 0;
 
 void
-aewatchdog(unit)
-	int     unit;
+aewatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct ae_softc *sc = ae_cd.cd_devs[unit];
+	struct ae_softc *sc = ifp->if_softc;
 
 #if 1
 /*
@@ -517,7 +517,8 @@ aewatchdog(unit)
 	(*via2itab[1]) ((void *) 1);
 
 	if (i != aeintr_ctr) {
-		log(LOG_ERR, "ae%d: device timeout, recovered\n", unit);
+		log(LOG_ERR, "%s: device timeout, recovered\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 #endif
@@ -689,7 +690,7 @@ void
 aestart(ifp)
 	struct ifnet *ifp;
 {
-	struct ae_softc *sc = ae_cd.cd_devs[ifp->if_unit];
+	struct ae_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
 	caddr_t buffer;
 	int     len;
@@ -1037,7 +1038,7 @@ aeioctl(ifp, cmd, data)
 	u_long  cmd;
 	caddr_t data;
 {
-	struct ae_softc *sc = ae_cd.cd_devs[ifp->if_unit];
+	struct ae_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	int     s, error = 0;
