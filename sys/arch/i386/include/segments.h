@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.24 1996/08/25 23:39:54 jtk Exp $	*/
+/*	$NetBSD: segments.h,v 1.25 1996/09/08 15:46:09 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -220,7 +220,9 @@ void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
 #define	GAPM32CODE_SEL	6
 #define	GAPM16CODE_SEL	7
 #define	GAPMDATA_SEL	8
-#define	NGDT		9
+#define	GBIOSCODE_SEL	9
+#define	GBIOSDATA_SEL	10
+#define	NGDT		11
 
 /*
  * Entries in the Local Descriptor Table (LDT)
