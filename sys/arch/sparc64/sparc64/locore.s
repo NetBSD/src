@@ -55,6 +55,7 @@
 #undef TRAPS_USE_IG
 #undef LOCKED_PCB
 #define HWREF
+#define MMUDEBUG
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -693,15 +694,17 @@ ufast_IMMU_miss:			! 063 = fast instr access MMU miss
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	!				Load IMMU 8K TSB pointer
 	ldxa	[%g0] ASI_IMMU, %g1	! Hard coded for unified 8K TSB		Load IMMU tag target register
 	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
+#ifdef MMUDEBUG
 	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
 	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
 	btst	PSTATE_MG, %g7				! DEBUG
 	bz	0f					! DEBUG
-	 set	_C_LABEL(missmmu), %g7			! DEBUG
-	lduw	[%g7], %g6				! DEBUG
+	 sethi	%hi(_C_LABEL(missmmu)), %g7		! DEBUG
+	lduw	[%g7+%lo(_C_LABEL(missmmu))], %g6	! DEBUG
 	inc	%g6					! DEBUG
-	stw	%g6, [%g7]				! DEBUG
+	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
 0:							! DEBUG
+#endif
 	brgez,pn %g5, instr_miss	!					Entry invalid?  Punt
 	 xor	%g1, %g4, %g4		!					Compare TLB tags
 	brnz,pn %g4, instr_miss		!					Got right tag?
@@ -717,15 +720,17 @@ ufast_DMMU_miss:			! 068 = fast data access MMU miss
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2!					Load DMMU 8K TSB pointer
 	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
 	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
+#ifdef MMUDEBUG
 	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
 	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
 	btst	PSTATE_MG, %g7				! DEBUG
 	bz	0f					! DEBUG
-	 set	_C_LABEL(missmmu), %g7			! DEBUG
-	lduw	[%g7], %g6				! DEBUG
+	 sethi	%hi(_C_LABEL(missmmu)), %g7		! DEBUG
+	lduw	[%g7+%lo(_C_LABEL(missmmu))], %g6	! DEBUG
 	inc	%g6					! DEBUG
-	stw	%g6, [%g7]				! DEBUG
+	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
 0:							! DEBUG
+#endif
 	brgez,pn %g5, data_miss		!					Entry invalid?  Punt
 	 xor	%g1, %g4, %g4		!					Compare TLB tags
 	brnz,pn	%g4, data_miss		!					Got right tag?
@@ -750,15 +755,17 @@ ufast_DMMU_protection:			! 06c = fast data access MMU protection
 	inc	%g2
 	stw	%g2, [%g1+%lo(_C_LABEL(udprot))]
 #endif
+#ifdef MMUDEBUG
 	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
 	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
 	btst	PSTATE_MG, %g7				! DEBUG
 	bz	0f					! DEBUG
-	 set	_C_LABEL(protmmu), %g7			! DEBUG
-	lduw	[%g7], %g6				! DEBUG
+	 sethi	%hi(_C_LABEL(protmmu)), %g7		! DEBUG
+	lduw	[%g7+%lo(_C_LABEL(protmmu))], %g6	! DEBUG
 	inc	%g6					! DEBUG
-	stw	%g6, [%g7]				! DEBUG
+	stw	%g6, [%g7+%lo(_C_LABEL(protmmu))]	! DEBUG
 0:							! DEBUG
+#endif
 #ifdef HWREF
 	ba,a,pt	%xcc, dmmu_write_fault
 #else
@@ -940,15 +947,17 @@ kfast_IMMU_miss:			! 063 = fast instr access MMU miss
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	!				Load IMMU 8K TSB pointer
 	ldxa	[%g0] ASI_IMMU, %g1	! Hard coded for unified 8K TSB		Load IMMU tag target register
 	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
+#ifdef MMUDEBUG
 	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
 	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
 	btst	PSTATE_MG, %g7				! DEBUG
 	bz	0f					! DEBUG
-	 set	_C_LABEL(missmmu), %g7			! DEBUG
-	lduw	[%g7], %g6				! DEBUG
+	 sethi	%hi(_C_LABEL(missmmu)), %g7		! DEBUG
+	lduw	[%g7+%lo(_C_LABEL(missmmu))], %g6	! DEBUG
 	inc	%g6					! DEBUG
-	stw	%g6, [%g7]				! DEBUG
+	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
 0:							! DEBUG
+#endif
 	brgez,pn %g5, instr_miss	!					Entry invalid?  Punt
 	 xor	%g1, %g4, %g4		!					Compare TLB tags
 	brnz,pn %g4, instr_miss		!					Got right tag?
@@ -964,15 +973,17 @@ kfast_DMMU_miss:			! 068 = fast data access MMU miss
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2!					Load DMMU 8K TSB pointer
 	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
 	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
+#ifdef MMUDEBUG
 	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
 	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
 	btst	PSTATE_MG, %g7				! DEBUG
 	bz	0f					! DEBUG
-	 set	_C_LABEL(missmmu), %g7			! DEBUG
-	lduw	[%g7], %g6				! DEBUG
+	 sethi	%hi(_C_LABEL(missmmu)), %g7		! DEBUG
+	lduw	[%g7+%lo(_C_LABEL(missmmu))], %g6	! DEBUG
 	inc	%g6					! DEBUG
-	stw	%g6, [%g7]				! DEBUG
+	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
 0:							! DEBUG
+#endif
 	brgez,pn %g5, data_miss		!					Entry invalid?  Punt
 	 xor	%g1, %g4, %g4		!					Compare TLB tags
 	brnz,pn	%g4, data_miss		!					Got right tag?
@@ -997,15 +1008,17 @@ kfast_DMMU_protection:			! 06c = fast data access MMU protection
 	inc	%g2
 	stw	%g2, [%g1+%lo(_C_LABEL(kdprot))]
 #endif
+#ifdef MMUDEBUG
 	rdpr	%tstate, %g7				! DEBUG record if we're on MMU globals
 	srlx	%g7, TSTATE_PSTATE_SHIFT, %g7		! DEBUG
 	btst	PSTATE_MG, %g7				! DEBUG
 	bz	0f					! DEBUG
-	 set	_C_LABEL(protmmu), %g7			! DEBUG
-	lduw	[%g7], %g6				! DEBUG
+	 sethi	%hi(_C_LABEL(protmmu)), %g7		! DEBUG
+	lduw	[%g7+%lo(_C_LABEL(protmmu))], %g6	! DEBUG
 	inc	%g6					! DEBUG
-	stw	%g6, [%g7]				! DEBUG
+	stw	%g6, [%g7+%lo(_C_LABEL(protmmu))]	! DEBUG
 0:							! DEBUG
+#endif
 #ifdef HWREF
 	ba,a,pt	%xcc, dmmu_write_fault
 #else
@@ -1981,9 +1994,6 @@ data_miss:
 	 * Try to parse our page table. 
 	 */
 Ludata_miss:
-	set	8, %g6		! debug
-	stb	%g6, [%g7+0x20]	! debug
-	
 	srax	%g3, HOLESHIFT, %g5			! Check for valid address
 	brz,pt	%g5, 0f					! Should be zero or -1
 	 inc	%g5					! Make -1 -> 0
@@ -1995,19 +2005,12 @@ Ludata_miss:
 	add	%g5, %g4, %g4
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
 
-	stx	%g4, [%g7+16]	! DEBUG
-
 	srlx	%g3, PDSHIFT, %g5
 	and	%g5, PDMASK, %g5
 	sll	%g5, 3, %g5
 	brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g4
-	stx	%g4, [%g7]	! DEBUG
-	stx	%g5, [%g7+8]	! DEBUG
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
-	
-	set	9, %g6		! debug
-	stb	%g6, [%g7+0x20]	! debug
 	
 	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
 	and	%g5, PTMASK, %g5
@@ -2833,13 +2836,10 @@ instr_miss:
 	 * Try to parse our page table. 
 	 */
 Lutext_miss:
-	set	8, %g6		! debug
-	stb	%g6, [%g7+0x20]	! debug
-	
 	srax	%g3, HOLESHIFT, %g5			! Check for valid address
 	brz,pt	%g5, 0f					! Should be zero or -1
 	 inc	%g5					! Make -1 -> 0
-	brnz,pn	%g5, prom_textfault			! Error!
+	brnz,pn	%g5, textfault				! Error!
 0:	
 	srlx	%g3, STSHIFT, %g5
 	and	%g5, STMASK, %g5
@@ -2850,20 +2850,17 @@ Lutext_miss:
 	srlx	%g3, PDSHIFT, %g5
 	and	%g5, PDMASK, %g5
 	sll	%g5, 3, %g5
-	brz,pn	%g4, prom_textfault			! NULL entry? check somewhere else
+	brz,pn	%g4, textfault				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g4
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
-	
-	set	9, %g6		! debug
-	stb	%g6, [%g7+0x20]	! debug
-	
+
 	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
 	and	%g5, PTMASK, %g5
 	sll	%g5, 3, %g5
-	brz,pn	%g4, prom_textfault			! NULL entry? check somewhere else
+	brz,pn	%g4, textfault				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
-	brgez,pn %g4, prom_textfault			
+	brgez,pn %g4, textfault			
 	 bset	TTE_ACCESS, %g4				! Update accessed bit
 	stxa	%g4, [%g6] ASI_PHYS_CACHED		!  and store it
 	stx	%g1, [%g2]				! Update TSB entry tag
@@ -2892,58 +2889,7 @@ Lutext_miss:
 	!!  Check our prom mappings -- temporary
 	!!
 #endif
-	
-/*
- * Each memory data access fault from a fast access handler comes here.
- * We will quickly check if this is an original prom mapping before going
- * to the generic fault handler
- *
- * We will assume that %pil is not lost so we won't bother to save it
- * unless we're in an interrupt handler.
- *
- * On entry:
- *	We are on one of the alternate set of globals
- *	%g1 = MMU tag target
- *	%g2 = %tl
- *	%g3 = %tl - 1
- *
- * On return:
- *
- */
 
-prom_textfault:
-	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
-	ldxa	[%g3] ASI_IMMU, %g3			! from tag access register
-! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
-#if 0
-	!!
-	!!  Check our prom mappings -- temporary
-	!! 
-	sll	%g3, (32-13), %g6			! Check context
-	brnz,pt	%g6, textfault				! not kernel context -- not prom mapping
-	 set	prom_map, %g4
-	lduw	[%g4], %g4
-!	andn	%g3, 0x0fff, %g5			! save va
-	srlx	%g3, 13, %g5				! save va
-	sllx	%g5, 13, %g5
-2:	
-	ldx	[%g4], %g6				! Load entry addr
-	subcc	%g5, %g6, %g6				
-	bl,a,pt	%xcc, 2b				! No match; next entry
-	 inc	(3*8), %g4
-	ldx	[%g4+8], %g7				! Load entry size
-	cmp	%g7, %g6
-	blt,pt	%xcc, textfault				! In range?
-	 ldx	[%g4+(2*8)], %g7
-	add	%g7, %g6, %g6				! Add in page offset into region
-!	stx	%g1, [%g2]				! Update TSB entry tag
-!	stx	%g6, [%g2+8]				! Update TSB entry data
-	stxa	%g6, [%g0] ASI_IMMU_DATA_IN		! Yes, store and retry
-	membar	#Sync
-	CLRTT
-	retry
-	NOTREACHED
-#endif
 /*
  * Each memory text access fault, from user or kernel mode,
  * comes here. 
