@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.26 2005/01/05 12:49:44 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.27 2005/01/08 18:34:09 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.26 2005/01/05 12:49:44 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.27 2005/01/08 18:34:09 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1696,15 +1696,17 @@ uio_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
 		error = uiomove(p->inp, size, this->uio);
 		if (error)
 			return error;
+		p->inp = audio_stream_add_inp(p, p->inp, size);
 	} else {
 		error = uiomove(p->inp, stream_space, this->uio);
 		if (error)
 			return error;
+		p->inp = audio_stream_add_inp(p, p->inp, stream_space);
 		error = uiomove(p->start, size - stream_space, this->uio);
 		if (error)
 			return error;
+		p->inp = audio_stream_add_inp(p, p->inp, size - stream_space);
 	}
-	p->inp = audio_stream_add_inp(p, p->inp, size);
 	this->last_used = audio_stream_get_used(p);
 	return 0;
 }
@@ -2411,7 +2413,13 @@ audio_pint(void *v)
 #endif
 
 	used = audio_stream_get_used(&cb->s);
-	if (used < blksize && !cb->copying && sc->sc_npfilters > 0) {
+	/*
+	 * "used <= cb->usedlow" should be "used < blksize" ideally.
+	 * Some HW drivers such as uaudio(4) does not call audio_pint()
+	 * at accurate timing.  If used < blksize, uaudio(4) already
+	 * request transfer of garbage data.
+	 */
+	if (used <= cb->usedlow && !cb->copying && sc->sc_npfilters > 0) {
 		/* we might have data in filter pipeline */
 		null_fetcher.fetch_to = null_fetcher_fetch_to;
 		fetcher = &sc->sc_pfilters[sc->sc_npfilters - 1]->base;
