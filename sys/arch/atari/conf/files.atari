@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.29 1997/01/21 09:39:20 thorpej Exp $
+#	$NetBSD: files.atari,v 1.30 1997/02/26 12:26:36 leo Exp $
 #
 
 maxpartitions 16
@@ -17,6 +17,7 @@ file	arch/atari/dev/event.c		event
 
 device	clock
 attach	clock at mainbus
+file	dev/clock_subr.c
 file	arch/atari/dev/clock.c
 
 # keyboard
