@@ -172,12 +172,13 @@ lock_name (repository, name)
 
 	/* The interesting part of the repository is the part relative
 	   to CVSROOT.  */
-	assert (CVSroot_directory != NULL);
-	assert (strncmp (repository, CVSroot_directory,
-			 strlen (CVSroot_directory)) == 0);
-	short_repos = repository + strlen (CVSroot_directory) + 1;
+	assert (current_parsed_root != NULL);
+	assert (current_parsed_root->directory != NULL);
+	assert (strncmp (repository, current_parsed_root->directory,
+			 strlen (current_parsed_root->directory)) == 0);
+	short_repos = repository + strlen (current_parsed_root->directory) + 1;
 
-	if (strcmp (repository, CVSroot_directory) == 0)
+	if (strcmp (repository, current_parsed_root->directory) == 0)
 	    short_repos = ".";
 	else
 	    assert (short_repos[-1] == '/');
@@ -290,6 +291,9 @@ Lock_Cleanup ()
     /* FIXME-reentrancy: the workaround isn't reentrant.  */
     static int in_lock_cleanup = 0;
 
+    if (trace)
+	(void) fprintf (stderr, "%s-> Lock_Cleanup()\n", CLIENT_SERVER_STR);
+
     if (in_lock_cleanup)
 	return;
     in_lock_cleanup = 1;
@@ -396,6 +400,13 @@ Reader_Lock (xrepository)
     char *tmp;
 
     if (nolock)
+	return (0);
+
+    if (trace)
+	(void) fprintf (stderr, "%s-> Reader_Lock(%s)\n", CLIENT_SERVER_STR,
+                        xrepository);
+
+    if (noexec)
 	return (0);
 
     /* we only do one directory at a time for read locks! */
@@ -553,6 +564,10 @@ write_lock (lock)
     FILE *fp;
     char *tmp;
 
+    if (trace)
+	(void) fprintf (stderr, "%s-> write_lock(%s)\n",
+                        CLIENT_SERVER_STR, lock->repository);
+
     if (writelock == NULL)
     {
 	writelock = xmalloc (strlen (hostname) + sizeof (CVSWFL) + 40);
@@ -633,7 +648,7 @@ again:
 	error (1, 0, "cannot open directory %s", repository);
 
     errno = 0;
-    while ((dp = readdir (dirp)) != NULL)
+    while ((dp = CVS_READDIR (dirp)) != NULL)
     {
 	if (CVS_FNMATCH (CVSRFLPAT, dp->d_name, 0) == 0)
 	{
@@ -654,7 +669,7 @@ again:
 		 */
 		if (now >= (sb.st_ctime + CVSLCKAGE) && CVS_UNLINK (line) != -1)
 		{
-		    (void) closedir (dirp);
+		    (void) CVS_CLOSEDIR (dirp);
 		    free (line);
 		    goto again;
 		}
@@ -680,7 +695,7 @@ again:
     if (errno != 0)
 	error (0, errno, "error reading directory %s", repository);
 
-    closedir (dirp);
+    CVS_CLOSEDIR (dirp);
     return (ret);
 }
 
@@ -890,10 +905,11 @@ lock_filesdoneproc (callerdat, err, repository, update_dir, entries)
 }
 
 void
-lock_tree_for_write (argc, argv, local, aflag)
+lock_tree_for_write (argc, argv, local, which, aflag)
     int argc;
     char **argv;
     int local;
+    int which;
     int aflag;
 {
     int err;
@@ -904,7 +920,7 @@ lock_tree_for_write (argc, argv, local, aflag)
     lock_tree_list = getlist ();
     err = start_recursion ((FILEPROC) NULL, lock_filesdoneproc,
 			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL, argc,
-			   argv, local, W_LOCAL, aflag, 0, (char *) NULL, 0);
+			   argv, local, which, aflag, 0, (char *) NULL, 0);
     sortlist (lock_tree_list, fsortcmp);
     if (Writer_Lock (lock_tree_list) != 0)
 	error (1, 0, "lock failed - giving up");
