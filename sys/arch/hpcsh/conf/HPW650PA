@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.13 2003/10/08 11:09:26 bouyer Exp $
+#	$NetBSD: HPW650PA,v 1.14 2003/10/18 08:30:14 lukem Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -80,7 +80,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCMCIA IDE disk
 wdc*	at pcmcia? function ?
-atabus* at wdc? channel ?
+atabus* at ata?
 wd*	at atabus? drive ? flags 0x0000
 
 # Pseudo-Devices

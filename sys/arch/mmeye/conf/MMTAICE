@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.22 2003/10/08 11:13:02 bouyer Exp $
+#	$NetBSD: MMTAICE,v 1.23 2003/10/18 08:30:14 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -182,14 +182,14 @@ com*	at pcmcia? function ?		# Modems and serial cards
 
 wdc* at pcmcia? function ?
 
-# ATA bus support
-atabus* at wdc? channel ?
+# ATA (IDE) bus support
+atabus* at ata?
 
 # IDE drives
 wd*	at atabus? drive ?
 
 # ATAPI bus support
-#atapibus* at atabus?
+#atapibus* at atapi?
 
 # ATAPI devices
 #cd*	at atapibus? drive ?		# ATAPI CD-ROM drives

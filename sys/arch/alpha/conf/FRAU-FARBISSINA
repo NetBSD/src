@@ -1,4 +1,4 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.25 2003/10/08 11:55:43 bouyer Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.26 2003/10/18 08:30:12 lukem Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
@@ -7,7 +7,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.25 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.26 $"
 
 maxusers 64
 
@@ -339,26 +339,14 @@ ses*	at	scsibus? target ? lun ?		# SCSI Enclosure Services
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 uk*	at	scsibus? target ? lun ?		# SCSI unknown devices
 
-# ATA bus support
-#atabus* at pciide? channel ?
-#atabus* at acardide? channel ?
-#atabus* at aceride? channel ?
-#atabus* at cmdide? channel ?
-#atabus* at cypide? channel ?
-#atabus* at hptide? channel ?
-#atabus* at optiide? channel ?
-#atabus* at piixide? channel ?
-#atabus* at pdcide? channel ?
-#atabus* at siside? channel ?
-#atabus* at slide? channel ?
-#atabus* at viaide? channel ?
-#atabus* at wdc? channel ?
+# ATA (IDE) bus support
+#atabus* at ata?
 
-# ST506/ESDI/IDE devices
+# IDE drives
 #wd*	at	atabus? drive ?
 
 # ATAPI bus support
-#atapibus* at	atabus?
+#atapibus* at	atapi?
 
 # ATAPI devices
 #sd*	at	atapibus? drive ?		# ATAPI disk devices

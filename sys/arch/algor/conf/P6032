@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.15 2003/10/08 11:55:43 bouyer Exp $
+#	$NetBSD: P6032,v 1.16 2003/10/18 08:30:13 lukem Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.15 $"
+#ident 		"P6032-$Revision: 1.16 $"
 
 maxusers 32
 
@@ -280,27 +280,14 @@ fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 #sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 #st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
-# ATA bus support
-atabus*	at pciide? channel ?
-atabus* at acardide? channel ?
-atabus* at aceride? channel ?
-atabus* at cmdide? channel ?
-atabus* at cypide? channel ?
-atabus* at hptide? channel ?
-atabus* at optiide? channel ?
-atabus* at piixide? channel ?
-atabus* at pdcide? channel ?
-atabus* at siside? channel ?
-atabus* at slide? channel ?
-atabus* at viaide? channel ?
-#atabus* at wdc? channel ?
+# ATA (IDE) bus support
+atabus* at ata?
 
-# ST506/ESDI/IDE devices
+# IDE drives
 wd*	at	atabus? drive ?
-#wd*	at	atabus? drive ?
 
 # ATAPI bus support
-atapibus* at	atabus?
+atapibus* at	atapi?
 
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices

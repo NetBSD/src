@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.48 2003/10/11 01:06:48 shin Exp $
+#	$NetBSD: TX3912,v 1.49 2003/10/18 08:30:14 lukem Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -198,11 +198,15 @@ pcmcia* at it8368e? controller ? socket ?
 
 # PCMCIA IDE disk
 wdc*	at pcmcia? function ?
-atabus* at wdc? channel ?
+
+# ATA (IDE) bus support
+atabus* at ata?
+
+# IDE drives
 wd*	at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at atabus?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.

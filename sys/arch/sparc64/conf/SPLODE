@@ -1,4 +1,4 @@
-# 	$NetBSD: SPLODE,v 1.20 2003/10/08 11:55:44 bouyer Exp $
+# 	$NetBSD: SPLODE,v 1.21 2003/10/18 08:30:14 lukem Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
@@ -6,7 +6,7 @@ include "arch/sparc64/conf/std.sparc64"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.20 $"
+#ident 		"GENERIC-$Revision: 1.21 $"
 
 maxusers	256
 
@@ -297,20 +297,9 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 #siside* at pci? dev ? function ?	# SiS IDE controllers
 #slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
 #viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
-#atabus* at pciide? channel ?
-#atabus* at acardide? channel ?
-#atabus* at aceride? channel ? 
-#atabus* at cmdide? channel ? 
-#atabus* at cypide? channel ?
-#atabus* at hptide? channel ?
-#atabus* at optiide? channel ?
-#atabus* at piixide? channel ?
-#atabus* at pdcide? channel ?
-#atabus* at siside? channel ?
-#atabus* at slide? channel ?
-#atabus* at viaide? channel ?
+#atabus* at ata?
 #wd*	at atabus? drive ? flags 0x0000
-#atapibus* at atabus?
+#atapibus* at atapi?
 
 #cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 #sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives

@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.14 2003/10/08 11:09:09 bouyer Exp $
+# $NetBSD: VR41XX,v 1.15 2003/10/18 08:30:14 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.14 $"
+#ident 		"GENERIC-$Revision: 1.15 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -370,7 +370,11 @@ pcmcia*	at pcic? controller 0 socket ?
 
 # PCMCIA IDE disk
 wdc*	at pcmcia? function ?
-atabus* at wdc? channel ?
+
+# ATA (IDE) bus support
+atabus* at ata?
+
+# IDE drives
 wd*	at atabus? drive ? flags 0x0000
 
 # PCMCIA network interfaces
@@ -391,7 +395,7 @@ aic*	at pcmcia? function ?
 esp*	at pcmcia? function ?		# NCR53c406 SCSI
 
 # ATAPI bus support
-atapibus* at atabus?
+atapibus* at atapi?
 cd*	at atapibus? drive ? flags 0x0000 # ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000 # ATAPI disk drives
 

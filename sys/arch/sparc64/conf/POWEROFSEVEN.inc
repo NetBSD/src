@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.21 2003/10/08 11:55:44 bouyer Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.22 2003/10/18 08:30:14 lukem Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -302,20 +302,9 @@ pdcide* at pci? dev ? function ?	# Promise IDE controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
-atabus* at pciide? channel ?
-atabus* at acardide? channel ?
-atabus* at aceride? channel ? 
-atabus* at cmdide? channel ? 
-atabus* at cypide? channel ?
-atabus* at hptide? channel ?
-atabus* at optiide? channel ?
-atabus* at piixide? channel ?
-atabus* at pdcide? channel ?
-atabus* at siside? channel ?
-atabus* at slide? channel ?
-atabus* at viaide? channel ?
+atabus* at ata?
 wd*	at atabus? drive ? flags 0x0000
-atapibus* at atabus?
+atapibus* at atapi?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives

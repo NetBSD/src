@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.54 2003/10/08 11:55:43 bouyer Exp $
+# $NetBSD: GENERIC,v 1.55 2003/10/18 08:30:13 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -263,22 +263,8 @@ siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
-# ATA bus support
-atabus* at pciide? channel ?
-atabus* at acardide? channel ?
-atabus* at aceride? channel ?
-atabus* at cmdide? channel ?
-atabus* at cypide? channel ?
-atabus* at hptide? channel ?
-atabus* at optiide? channel ?
-atabus* at piixide? channel ?
-atabus* at pdcide? channel ?
-atabus* at siside? channel ?
-atabus* at slide? channel ?
-atabus* at viaide? channel ?
-
-# ATA bus support
-atabus* at pciide? channel ?
+# ATA (IDE) bus support
+atabus* at ata?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -294,7 +280,7 @@ atabus* at pciide? channel ?
 wd*	at atabus? drive ? flags 0x0000	# the drives themselves
 
 # ATAPI bus support
-atapibus* at atabus?
+atapibus* at atapi?
 
 # ATAPI devices
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
