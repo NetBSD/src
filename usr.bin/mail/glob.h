@@ -1,3 +1,5 @@
+/*	$NetBSD: glob.h,v 1.4 1996/06/08 19:48:25 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)glob.h	8.1 (Berkeley) 6/6/93
- *	$Id: glob.h,v 1.3 1994/06/29 05:09:26 deraadt Exp $
+ *	$NetBSD: glob.h,v 1.4 1996/06/08 19:48:25 christos Exp $
  */
 
 /*

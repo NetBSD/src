@@ -1,3 +1,5 @@
+/*	$NetBSD: collect.c,v 1.6 1996/06/08 19:48:16 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)collect.c	8.2 (Berkeley) 4/19/94";
-static char rcsid[] = "$Id: collect.c,v 1.5 1995/02/08 16:15:52 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
+#else
+static char rcsid[] = "$NetBSD: collect.c,v 1.6 1996/06/08 19:48:16 christos Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -80,15 +85,23 @@ collect(hp, printheaders)
 	char linebuf[LINESIZE], *cp;
 	extern char *tempMail;
 	char getsub;
-	int omask;
-	void collint(), collhup(), collstop();
+	sigset_t oset, nset;
+#if __GNUC__
+	/* Avoid longjmp clobbering */
+	(void) &escape;
+	(void) &eofcount;
+	(void) &getsub;
+#endif
 
 	collf = NULL;
 	/*
 	 * Start catching signals from here, but we're still die on interrupts
 	 * until we're in the main loop.
 	 */
-	omask = sigblock(sigmask(SIGINT) | sigmask(SIGHUP));
+	sigemptyset(&nset);
+	sigaddset(&nset, SIGINT);
+	sigaddset(&nset, SIGHUP);
+	sigprocmask(SIG_BLOCK, &nset, &oset);
 	if ((saveint = signal(SIGINT, SIG_IGN)) != SIG_IGN)
 		signal(SIGINT, collint);
 	if ((savehup = signal(SIGHUP, SIG_IGN)) != SIG_IGN)
@@ -100,7 +113,7 @@ collect(hp, printheaders)
 		rm(tempMail);
 		goto err;
 	}
-	sigsetmask(omask & ~(sigmask(SIGINT) | sigmask(SIGHUP)));
+	sigprocmask(SIG_SETMASK, &oset, NULL);
 
 	noreset++;
 	if ((collf = Fopen(tempMail, "w+")) == NULL) {
@@ -191,7 +204,7 @@ cont:
 			/*
 			 * Dump core.
 			 */
-			core();
+			core(NULL);
 			break;
 		case '!':
 			/*
@@ -375,13 +388,16 @@ out:
 	if (collf != NULL)
 		rewind(collf);
 	noreset--;
-	sigblock(sigmask(SIGINT) | sigmask(SIGHUP));
+	sigemptyset(&nset);
+	sigaddset(&nset, SIGINT);
+	sigaddset(&nset, SIGHUP);
+	sigprocmask(SIG_BLOCK, &nset, &oset);
 	signal(SIGINT, saveint);
 	signal(SIGHUP, savehup);
 	signal(SIGTSTP, savetstp);
 	signal(SIGTTOU, savettou);
 	signal(SIGTTIN, savettin);
-	sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &oset, NULL);
 	return collf;
 }
 
@@ -561,10 +577,13 @@ collstop(s)
 	int s;
 {
 	sig_t old_action = signal(s, SIG_DFL);
+	sigset_t nset;
 
-	sigsetmask(sigblock(0) & ~sigmask(s));
+	sigemptyset(&nset);
+	sigaddset(&nset, s);
+	sigprocmask(SIG_UNBLOCK, &nset, NULL);
 	kill(0, s);
-	sigblock(sigmask(s));
+	sigprocmask(SIG_BLOCK, &nset, NULL);
 	signal(s, old_action);
 	if (colljmp_p) {
 		colljmp_p = 0;
