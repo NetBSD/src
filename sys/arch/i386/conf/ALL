@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.25 1993/09/07 00:25:50 mycroft Exp $
+#	$Id: ALL,v 1.26 1993/09/07 00:36:27 mycroft Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -14,6 +14,9 @@ cpu		"I486_CPU"
 
 # floating point emulation
 options		MATH_EMULATE
+
+# make the kernel a little faster; will break on some machines
+#options		DUMMY_NOPS
 
 # temporary kluge while adding support for non-contiguous physical memory
 options		MACHINE_NONCONTIG
@@ -57,7 +60,13 @@ options		NFSCLIENT
 # ISO 9660 file system, with Rock Ridge
 options		ISOFS
 
+# MS-DOS file system
+options		MSDOSFS
+
+# /dev/fd
 options		FDESC
+
+# kernel file system; RECOMMENDED
 options		KERNFS
 
 # various types of networks and protocols
@@ -84,16 +93,6 @@ config		netbsd	at 0xfe100000 root on wd0 swap on wd0 and sd0
 #buses
 controller	isa0
 
-#non-scsi disk controllers
-controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
-disk		wd0	at wdc0 drive 0
-disk		wd1	at wdc0 drive 1
-
-#floppy controller
-controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
-disk		fd0	at fdc0 drive 0
-disk		fd1	at fdc0 drive 1
-
 #console
 device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 
@@ -103,6 +102,13 @@ device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 #serial ports
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
+#device		com2	at isa? port "IO_COM3" tty irq 5 vector comintr
+#device		com3	at isa? port "IO_COM4" tty irq 9 vector comintr
+
+#parallel ports
+device		lpt0	at isa? port "IO_LPT1" tty irq 7 vector lptintr
+device		lpa0	at isa? port "IO_LPT2" tty
+device		lpa1	at isa? port "IO_LPT3" tty
 
 #bus mice
 # Microft InPort
@@ -112,9 +118,20 @@ device		lms0	at isa? port "IO_BMS1" tty irq 5 vector lmsintr
 # PS/2 auxiliary port; BROKEN
 #device		pms0	at isa? port "IO_KBD" tty irq 5 vector pmsintr
 
-#scsi
-controller	scbus0
+#non-scsi disk controllers
+controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
+disk		wd0	at wdc0 drive 0
+disk		wd1	at wdc0 drive 1
 
+#non-scsi floppy controllers
+controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
+disk		fd0	at fdc0 drive 0
+disk		fd1	at fdc0 drive 1
+
+#non-scsi tape drives
+device		wt0	at isa? port 0x300 bio irq 5 drq 1 vector wtintr
+
+#scsi
 controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
 device		sd0	at aha0 flags 0 drive ?
 device		sd1	at aha0 flags 0 drive ?
@@ -180,6 +197,9 @@ pseudo-device loop
 
 # ethernet; REQUIRED if using any ethernet device
 pseudo-device ether #XXX
+
+# used by kernel for logging messages; gateway to syslogd
+pseudo-device log
 
 # packet filter
 pseudo-device bpfilter	4
