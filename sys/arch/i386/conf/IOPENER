@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.38 2003/09/09 07:14:01 itojun Exp $
+#	$NetBSD: IOPENER,v 1.39 2003/10/08 11:10:04 bouyer Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.38 $"
+#ident 		"IOPENER-$Revision: 1.39 $"
 
 maxusers	32		# estimated number of users
 
@@ -258,6 +258,9 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 # a machine hang with some controllers.
 pciide* at pci? dev ? function ? flags 0x0000
 
+# ATA bus support
+atabus* at pciide? channel ?
+
 # IDE drives
 # Flags are used only with controllers that support DMA operations
 # and mode settings (e.g. some pciide controllers)
@@ -269,7 +272,7 @@ pciide* at pci? dev ? function ? flags 0x0000
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd*	at pciide? channel ? drive ? flags 0x0000
+wd*	at atabus? drive ? flags 0x0000
 
 # Network Interfaces
 
