@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3 1996/02/26 23:38:38 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.4 1996/03/17 00:58:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -84,7 +84,7 @@
 #endif
 #if CAN_HAVE_MAINBUS
 #include <pmax/pmax/kn01.h>
-extern struct cfdriver mainbuscd; /* XXX */
+extern struct cfdriver mainbus_cd; /* XXX */
 #endif
 
 #include <dev/tc/if_levar.h>
@@ -105,15 +105,19 @@ void lewritereg();
 
 extern caddr_t le_iomem;
 
-#define	LE_SOFTC(unit)	lecd.cd_devs[unit]
+#define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
 #define	LE_DELAY(x)	DELAY(x)
 
-int lematch __P((struct device *, void *, void *));
-void leattach __P((struct device *, struct device *, void *));
+int le_tc_match __P((struct device *, void *, void *));
+void le_tc_attach __P((struct device *, struct device *, void *));
 int leintr __P((void *));
 
-struct cfdriver lecd = {
-	NULL, "le", lematch, leattach, DV_IFNET, sizeof (struct le_softc)
+struct cfattach le_tc_ca = {
+	sizeof(struct le_softc), le_tc_match, le_tc_attach
+};
+
+struct cfdriver le_cd = {
+	NULL, "le", DV_IFNET
 };
 
 integrate void
@@ -141,7 +145,7 @@ lerdcsr(sc, port)
 }
 
 int
-lematch(parent, match, aux)
+le_tc_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -176,7 +180,7 @@ lematch(parent, match, aux)
 }
 
 void
-leattach(parent, self, aux)
+le_tc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -256,7 +260,7 @@ leattach(parent, self, aux)
 	} else
 #endif /* MAINBUS */
 
-		panic("leattach: can't be here");
+		panic("le_tc_attach: can't be here");
 
 	sc->sc_conf3 = 0;
 	sc->sc_addr = 0;
@@ -270,7 +274,7 @@ leattach(parent, self, aux)
 		cp += 4;
 	}
 
-	sc->sc_arpcom.ac_if.if_name = lecd.cd_name;
+	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
 	leconfig(sc);
 
 	(*ie_fn)(parent, sc->sc_cookie, TC_IPL_NET, leintr, sc);
