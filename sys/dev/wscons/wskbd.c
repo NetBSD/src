@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.18 1999/01/17 15:59:17 drochner Exp $ */
+/* $NetBSD: wskbd.c,v 1.19 1999/01/26 17:08:37 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.18 1999/01/17 15:59:17 drochner Exp $";
+    "$NetBSD: wskbd.c,v 1.19 1999/01/26 17:08:37 drochner Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -921,7 +921,7 @@ internal_command(sc, type, ksym)
 #ifdef DDB
 	case KS_Cmd_Debugger:
 		if (sc->sc_isconsole)
-			Debugger();
+			console_debugger();
 		/* discard this key (ddb discarded command modifiers) */
 		*type = WSCONS_EVENT_KEY_UP;
 		return (1);
