@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9 1998/02/19 16:17:18 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.10 1998/03/10 11:43:11 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -47,6 +47,8 @@
 #include <machine/cpu.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
+#include <machine/bus.h>
+
 #include <atari/atari/device.h>
 
 /*
@@ -92,6 +94,7 @@ void		*auxp;
 	pba.pba_iot     = PCI_IO_PHYS;
 	pba.pba_memt    = PCI_MEM_PHYS;
 	pba.pba_flags	= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_dmat	= BUS_PCI_DMA_TAG;
 
 	MFP2->mf_aer &= ~(0x27); /* PCI interrupts: HIGH -> LOW */
 
