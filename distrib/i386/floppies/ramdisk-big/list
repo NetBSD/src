@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.20 2004/04/18 20:04:26 dsl Exp $
+#	$NetBSD: list,v 1.21 2004/04/29 20:45:07 gendalia Exp $
 #
 
 SRCDIRS	usr.bin/less
@@ -43,6 +43,7 @@ PROG	sbin/mount_ntfs
 PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
 PROG	sbin/ping6
+PROG	sbin/raidctl
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/restore	sbin/rrestore
 PROG	sbin/route
