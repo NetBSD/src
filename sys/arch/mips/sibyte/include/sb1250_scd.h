@@ -68,18 +68,72 @@
 #define V_SYS_REVISION(x)           _SB_MAKEVALUE(x,S_SYS_REVISION)
 #define G_SYS_REVISION(x)           _SB_GETVALUE(x,S_SYS_REVISION,M_SYS_REVISION)
 
-#define K_SYS_REVISION_PASS1	    1
-#define K_SYS_REVISION_PASS2	    3
-#define K_SYS_REVISION_PASS2_2	    16
-#define K_SYS_REVISION_PASS3	    32
+#if SIBYTE_HDR_FEATURE_CHIP(1250)
+#define K_SYS_REVISION_BCM1250_PASS1	1
+#define K_SYS_REVISION_BCM1250_PASS2	3
+#define K_SYS_REVISION_BCM1250_PASS2_2	16
+#define K_SYS_REVISION_BCM1250_PASS3	32
 
+/* XXX: discourage people from using these constants.  */
+#define K_SYS_REVISION_PASS1	    K_SYS_REVISION_BCM1250_PASS1
+#define K_SYS_REVISION_PASS2	    K_SYS_REVISION_BCM1250_PASS2
+#define K_SYS_REVISION_PASS2_2	    K_SYS_REVISION_BCM1250_PASS2_2
+#define K_SYS_REVISION_PASS3	    K_SYS_REVISION_BCM1250_PASS3
+#endif /* 1250 */
+
+#if SIBYTE_HDR_FEATURE_CHIP(112x)
+#define K_SYS_REVISION_BCM112x_PASS1	32
+#endif /* 112x */
+
+/* XXX: discourage people from using these constants.  */
 #define S_SYS_PART                  _SB_MAKE64(16)
 #define M_SYS_PART                  _SB_MAKEMASK(16,S_SYS_PART)
 #define V_SYS_PART(x)               _SB_MAKEVALUE(x,S_SYS_PART)
 #define G_SYS_PART(x)               _SB_GETVALUE(x,S_SYS_PART,M_SYS_PART)
 
+/* XXX: discourage people from using these constants.  */
 #define K_SYS_PART_SB1250           0x1250
-#define K_SYS_PART_SB1125           0x1125 
+#define K_SYS_PART_BCM1120          0x1121
+#define K_SYS_PART_BCM1125          0x1123
+#define K_SYS_PART_BCM1125H         0x1124
+
+/* The "peripheral set" (SOC type) is the low 4 bits of the "part" field.  */
+#define S_SYS_SOC_TYPE              _SB_MAKE64(16)
+#define M_SYS_SOC_TYPE              _SB_MAKEMASK(4,S_SYS_SOC_TYPE)
+#define V_SYS_SOC_TYPE(x)           _SB_MAKEVALUE(x,S_SYS_SOC_TYPE)
+#define G_SYS_SOC_TYPE(x)           _SB_GETVALUE(x,S_SYS_SOC_TYPE,M_SYS_SOC_TYPE)
+
+#define K_SYS_SOC_TYPE_BCM1250      0x0
+#define K_SYS_SOC_TYPE_BCM1120      0x1
+#define K_SYS_SOC_TYPE_BCM1250_ALT  0x2		/* 1250pass2 w/ 1/4 L2.  */
+#define K_SYS_SOC_TYPE_BCM1125      0x3
+#define K_SYS_SOC_TYPE_BCM1125H     0x4
+#define K_SYS_SOC_TYPE_BCM1250_ALT2 0x5		/* 1250pass2 w/ 1/2 L2.  */
+
+/*
+ * Calculate correct SOC type given a copy of system revision register.
+ *
+ * (For the assembler version, sysrev and dest may be the same register.
+ * Also, it clobbers AT.)
+ */
+#ifdef __ASSEMBLER__
+#define SYS_SOC_TYPE(dest, sysrev)					\
+	.set push ;							\
+	.set reorder ;							\
+	dsrl	dest, sysrev, S_SYS_SOC_TYPE ;				\
+	andi	dest, dest, (M_SYS_SOC_TYPE >> S_SYS_SOC_TYPE);		\
+	beq	dest, K_SYS_SOC_TYPE_BCM1250_ALT, 991f ;		\
+	beq	dest, K_SYS_SOC_TYPE_BCM1250_ALT2, 991f	 ;		\
+	b	992f ;							\
+991:	li	dest, K_SYS_SOC_TYPE_BCM1250 ;				\
+992:									\
+	.set pop
+#else
+#define SYS_SOC_TYPE(sysrev)						\
+	((G_SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1250_ALT		\
+	  || G_SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1250_ALT2)	\
+	 ? K_SYS_SOC_TYPE_BCM1250 : G_SYS_SOC_TYPE(sysrev))
+#endif
 
 #define S_SYS_WID                   _SB_MAKE64(32)
 #define M_SYS_WID                   _SB_MAKEMASK(32,S_SYS_WID)
@@ -171,7 +225,9 @@
 #define M_SYS_MISR_MODE             _SB_MAKEMASK1(61)
 #define M_SYS_MISR_RESET            _SB_MAKEMASK1(62)
 
-#define M_SYS_SW_FLAG		    _SB_MAKEMASK1(63)	/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define M_SYS_SW_FLAG		    _SB_MAKEMASK1(63)
+#endif /* 1250 PASS2 || 112x PASS1 */
 
 
 /*
@@ -265,48 +321,48 @@
 #define V_SCD_BERR_RID(x)         _SB_MAKEVALUE(x,S_SCD_BERR_RID)
 #define G_SCD_BERR_RID(x)         _SB_GETVALUE(x,S_SCD_BERR_RID,M_SCD_BERR_RID)
 
-#define S_SCD_BERR_DCODE            22
-#define M_SCD_BERR_DCODE            _SB_MAKEMASK(3,S_SCD_BERR_DCODE)
-#define V_SCD_BERR_DCODE(x)         _SB_MAKEVALUE(x,S_SCD_BERR_DCODE)
-#define G_SCD_BERR_DCODE(x)         _SB_GETVALUE(x,S_SCD_BERR_DCODE,M_SCD_BERR_DCODE)
+#define S_SCD_BERR_DCODE          22
+#define M_SCD_BERR_DCODE          _SB_MAKEMASK(3,S_SCD_BERR_DCODE)
+#define V_SCD_BERR_DCODE(x)       _SB_MAKEVALUE(x,S_SCD_BERR_DCODE)
+#define G_SCD_BERR_DCODE(x)       _SB_GETVALUE(x,S_SCD_BERR_DCODE,M_SCD_BERR_DCODE)
 
-#define M_SCD_BERR_MULTERRS	_SB_MAKEMASK1(30)
+#define M_SCD_BERR_MULTERRS       _SB_MAKEMASK1(30)
 
 
-#define S_SCD_L2ECC_CORR_D            0
-#define M_SCD_L2ECC_CORR_D            _SB_MAKEMASK(8,S_SCD_L2ECC_CORR_D)
-#define V_SCD_L2ECC_CORR_D(x)         _SB_MAKEVALUE(x,S_SCD_L2ECC_CORR_D)
-#define G_SCD_L2ECC_CORR_D(x)         _SB_GETVALUE(x,S_SCD_L2ECC_CORR_D,M_SCD_L2ECC_CORR_D)
+#define S_SCD_L2ECC_CORR_D        0
+#define M_SCD_L2ECC_CORR_D        _SB_MAKEMASK(8,S_SCD_L2ECC_CORR_D)
+#define V_SCD_L2ECC_CORR_D(x)     _SB_MAKEVALUE(x,S_SCD_L2ECC_CORR_D)
+#define G_SCD_L2ECC_CORR_D(x)     _SB_GETVALUE(x,S_SCD_L2ECC_CORR_D,M_SCD_L2ECC_CORR_D)
 
-#define S_SCD_L2ECC_BAD_D            8
-#define M_SCD_L2ECC_BAD_D            _SB_MAKEMASK(8,S_SCD_L2ECC_BAD_D)
-#define V_SCD_L2ECC_BAD_D(x)         _SB_MAKEVALUE(x,S_SCD_L2ECC_BAD_D)
-#define G_SCD_L2ECC_BAD_D(x)         _SB_GETVALUE(x,S_SCD_L2ECC_BAD_D,M_SCD_L2ECC_BAD_D)
+#define S_SCD_L2ECC_BAD_D         8
+#define M_SCD_L2ECC_BAD_D         _SB_MAKEMASK(8,S_SCD_L2ECC_BAD_D)
+#define V_SCD_L2ECC_BAD_D(x)      _SB_MAKEVALUE(x,S_SCD_L2ECC_BAD_D)
+#define G_SCD_L2ECC_BAD_D(x)      _SB_GETVALUE(x,S_SCD_L2ECC_BAD_D,M_SCD_L2ECC_BAD_D)
 
-#define S_SCD_L2ECC_CORR_T            16
-#define M_SCD_L2ECC_CORR_T            _SB_MAKEMASK(8,S_SCD_L2ECC_CORR_T)
-#define V_SCD_L2ECC_CORR_T(x)         _SB_MAKEVALUE(x,S_SCD_L2ECC_CORR_T)
-#define G_SCD_L2ECC_CORR_T(x)         _SB_GETVALUE(x,S_SCD_L2ECC_CORR_T,M_SCD_L2ECC_CORR_T)
+#define S_SCD_L2ECC_CORR_T        16
+#define M_SCD_L2ECC_CORR_T        _SB_MAKEMASK(8,S_SCD_L2ECC_CORR_T)
+#define V_SCD_L2ECC_CORR_T(x)     _SB_MAKEVALUE(x,S_SCD_L2ECC_CORR_T)
+#define G_SCD_L2ECC_CORR_T(x)     _SB_GETVALUE(x,S_SCD_L2ECC_CORR_T,M_SCD_L2ECC_CORR_T)
 
-#define S_SCD_L2ECC_BAD_T            24
-#define M_SCD_L2ECC_BAD_T            _SB_MAKEMASK(8,S_SCD_L2ECC_BAD_T)
-#define V_SCD_L2ECC_BAD_T(x)         _SB_MAKEVALUE(x,S_SCD_L2ECC_BAD_T)
-#define G_SCD_L2ECC_BAD_T(x)         _SB_GETVALUE(x,S_SCD_L2ECC_BAD_T,M_SCD_L2ECC_BAD_T)
+#define S_SCD_L2ECC_BAD_T         24
+#define M_SCD_L2ECC_BAD_T         _SB_MAKEMASK(8,S_SCD_L2ECC_BAD_T)
+#define V_SCD_L2ECC_BAD_T(x)      _SB_MAKEVALUE(x,S_SCD_L2ECC_BAD_T)
+#define G_SCD_L2ECC_BAD_T(x)      _SB_GETVALUE(x,S_SCD_L2ECC_BAD_T,M_SCD_L2ECC_BAD_T)
 
-#define S_SCD_MEM_ECC_CORR            0
-#define M_SCD_MEM_ECC_CORR            _SB_MAKEMASK(8,S_SCD_MEM_ECC_CORR)
-#define V_SCD_MEM_ECC_CORR(x)         _SB_MAKEVALUE(x,S_SCD_MEM_ECC_CORR)
-#define G_SCD_MEM_ECC_CORR(x)         _SB_GETVALUE(x,S_SCD_MEM_ECC_CORR,M_SCD_MEM_ECC_CORR)
+#define S_SCD_MEM_ECC_CORR        0
+#define M_SCD_MEM_ECC_CORR        _SB_MAKEMASK(8,S_SCD_MEM_ECC_CORR)
+#define V_SCD_MEM_ECC_CORR(x)     _SB_MAKEVALUE(x,S_SCD_MEM_ECC_CORR)
+#define G_SCD_MEM_ECC_CORR(x)     _SB_GETVALUE(x,S_SCD_MEM_ECC_CORR,M_SCD_MEM_ECC_CORR)
 
-#define S_SCD_MEM_ECC_BAD            16
-#define M_SCD_MEM_ECC_BAD            _SB_MAKEMASK(8,S_SCD_MEM_ECC_BAD)
-#define V_SCD_MEM_ECC_BAD(x)         _SB_MAKEVALUE(x,S_SCD_MEM_ECC_BAD)
-#define G_SCD_MEM_ECC_BAD(x)         _SB_GETVALUE(x,S_SCD_MEM_ECC_BAD,M_SCD_MEM_ECC_BAD)
+#define S_SCD_MEM_ECC_BAD         8
+#define M_SCD_MEM_ECC_BAD         _SB_MAKEMASK(8,S_SCD_MEM_ECC_BAD)
+#define V_SCD_MEM_ECC_BAD(x)      _SB_MAKEVALUE(x,S_SCD_MEM_ECC_BAD)
+#define G_SCD_MEM_ECC_BAD(x)      _SB_GETVALUE(x,S_SCD_MEM_ECC_BAD,M_SCD_MEM_ECC_BAD)
 
-#define S_SCD_MEM_BUSERR            24
-#define M_SCD_MEM_BUSERR            _SB_MAKEMASK(8,S_SCD_MEM_BUSERR)
-#define V_SCD_MEM_BUSERR(x)         _SB_MAKEVALUE(x,S_SCD_MEM_BUSERR)
-#define G_SCD_MEM_BUSERR(x)         _SB_GETVALUE(x,S_SCD_MEM_BUSERR,M_SCD_MEM_BUSERR)
+#define S_SCD_MEM_BUSERR          16
+#define M_SCD_MEM_BUSERR          _SB_MAKEMASK(8,S_SCD_MEM_BUSERR)
+#define V_SCD_MEM_BUSERR(x)       _SB_MAKEVALUE(x,S_SCD_MEM_BUSERR)
+#define G_SCD_MEM_BUSERR(x)       _SB_GETVALUE(x,S_SCD_MEM_BUSERR,M_SCD_MEM_BUSERR)
 
 
 /*
@@ -367,7 +423,9 @@
 #define M_SCD_TRACE_CFG_FREEZE_FULL     _SB_MAKEMASK1(5)
 #define M_SCD_TRACE_CFG_DEBUG_FULL      _SB_MAKEMASK1(6)
 #define M_SCD_TRACE_CFG_FULL            _SB_MAKEMASK1(7)
-#define M_SCD_TRACE_CFG_FORCECNT        _SB_MAKEMASK1(8)	/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define M_SCD_TRACE_CFG_FORCECNT        _SB_MAKEMASK1(8)
+#endif /* 1250 PASS2 || 112x PASS1 */
 
 #define S_SCD_TRACE_CFG_CUR_ADDR        10
 #define M_SCD_TRACE_CFG_CUR_ADDR        _SB_MAKEMASK(8,S_SCD_TRACE_CFG_CUR_ADDR)
