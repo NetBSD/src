@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslotvar.h,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
+/*	$NetBSD: cardslotvar.h,v 1.3 1999/11/15 06:08:02 haya Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -95,6 +95,11 @@ struct cardslot_softc {
 #define CARDSLOT_STATUS_WORK_MASK     0x08
 #define CARDSLOT_STATUS_WORKING	      0x08  /* at least one function works */
 #define CARDSLOT_STATUS_NOTWORK	      0x00  /* no functions are working */
+
+#define CARDSLOT_WORK(x) ((x) & CARDSLOT_STATUS_WORK_MASK)
+#define CARDSLOT_SET_WORK(x, type) \
+	do {(x) &= ~CARDSLOT_STATUS_WORK_MASK;\
+	    (x) |= (CARDSLOT_STATUS_WORK_MASK & (type));} while(0)
 
 
 struct cardslot_event {
