@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.43 2003/07/07 12:55:48 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.44 2003/07/07 21:26:32 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1174,7 +1174,7 @@ edit_mbr(mbr_info_t *mbri)
 			ptsize = bsdsize;
 		}
 
-		if (ptstart == NULL) {
+		if (ptstart == 0) {
 			if (bsdstart == 0)
 				msg_display(MSG_nobsdpart);
 			else
