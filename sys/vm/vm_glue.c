@@ -541,7 +541,7 @@ thread_wakeup(event)
 	splx(s);
 }
 
-#if	defined(DDB) || #defined(DEBUG)
+#if	defined(DDB) || defined(DEBUG)
 /*
  * DEBUG stuff
  */
