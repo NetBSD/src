@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.33 2002/11/29 02:07:34 grant Exp $	*/
+/*	$NetBSD: verify.c,v 1.34 2003/01/04 13:10:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.33 2002/11/29 02:07:34 grant Exp $");
+__RCSID("$NetBSD: verify.c,v 1.34 2003/01/04 13:10:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -236,7 +236,7 @@ miss(NODE *p, char *tail)
 					create = 1;
 				break;
 			case F_DIR:
-				if (mkdir(path, S_IRWXU))
+				if (mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO))
 					printf(" (not created: %s)",
 					    strerror(errno));
 				else
