@@ -225,9 +225,6 @@ void des_ofb64_encrypt(const unsigned char *in,unsigned char *out,long length,
 		       des_key_schedule schedule,des_cblock *ivec,int *num);
 int des_read_pw(char *buf,char *buff,int size,const char *prompt,int verify);
 
-/* Extra functions from Mark Murray <mark@grondar.za> */
-void des_cblock_print_file(const_des_cblock *cb, FILE *fp);
-
 /* The following functions are not in the normal unix build or the
  * SSLeay build.  When using the SSLeay build, use RAND_seed()
  * and RAND_bytes() instead. */
