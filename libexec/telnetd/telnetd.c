@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.17 1999/07/11 03:00:07 thorpej Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.18 1999/07/11 03:04:14 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.17 1999/07/11 03:00:07 thorpej Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.18 1999/07/11 03:04:14 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -404,11 +404,11 @@ main(argc, argv)
 		case '4':
 			family = AF_INET;
 			break;
-			
+
 		case '6':
 			family = AF_INET6;
 			break;
-			
+
 		default:
 			fprintf(stderr, "telnetd: %c: unknown option\n", ch);
 			/* FALLTHROUGH */
