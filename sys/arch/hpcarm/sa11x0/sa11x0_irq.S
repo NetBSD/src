@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.3 2001/02/24 12:43:52 toshii Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.4 2001/03/11 14:37:03 toshii Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -89,10 +89,10 @@ ASENTRY_NP(irq_entry)
 	/* Load r8 with the SAIPIC interrupt requests */
 
 	ldr	r10, [pc, #_C_LABEL(saipic_base) - . - 8]
-	ldr	r8, [r10, #(SAIPIC_IP << 2)]	/* Load IRQ pending register */
+	ldr	r8, [r10, #(SAIPIC_IP)]	/* Load IRQ pending register */
 
 #ifdef INTR_DEBUG
-	ldr	r2, [r10, #(SAIPIC_MR << 2)]
+	ldr	r2, [r10, #(SAIPIC_MR)]
 	add	r0, pc, #Ldbg_str - . - 8
 	mov	r1, r8
 	bl	_C_LABEL(printf)
@@ -259,7 +259,7 @@ nextirq:
 #ifdef INTR_DEBUG
 	add	r0, pc, #Ldbg_str - . - 8
 	mov	r1, #3
-	ldr	r2, [r10, #(SAIPIC_MR << 2)]
+	ldr	r2, [r10, #(SAIPIC_MR)]
 	bl	_C_LABEL(printf)
 #endif
 
@@ -337,7 +337,7 @@ ENTRY(irq_setmasks)
 	bic	r1, r1, r2
 
 	ldr	r0, [pc, #_C_LABEL(saipic_base) - . - 8]
-	str	r1, [r0, #(SAIPIC_MR << 2)]	/* Set mask register */
+	str	r1, [r0, #(SAIPIC_MR)]	/* Set mask register */
 
 	/* Restore old cpsr and exit */
 	msr	cpsr_all, r3
