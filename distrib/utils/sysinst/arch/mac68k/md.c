@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 1999/04/09 10:24:41 bouyer Exp $ */
+/*	$NetBSD: md.c,v 1.4 1999/04/09 10:43:59 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -709,7 +709,7 @@ md_copy_filesystem(void)
 
 	/* Copy the instbin(s) to the disk */
 	msg_display(MSG_dotar);
-	if (run_prog (0, 0, "pax -X -r -w -pe / /mnt") != 0)
+	if (run_prog (0, 0, NULL, "pax -X -r -w -pe / /mnt") != 0)
 		return 1;
 
 	/* Copy next-stage install profile into target /.profile. */
@@ -806,7 +806,7 @@ md_make_bsd_partitions(void)
 	strcpy (bsddiskname, diskdev);
 
 	/* Create the disktab.preinstall */
-	run_prog (0, 0, "cp /etc/disktab.preinstall /etc/disktab");
+	run_prog (0, 0, NULL, "cp /etc/disktab.preinstall /etc/disktab");
 #ifdef DEBUG
 	f = fopen ("/tmp/disktab", "a");
 #else
@@ -880,9 +880,9 @@ md_cleanup_install(void)
 		(void)fprintf(script, "%s\n", sedcmd);
 	do_system(sedcmd);
 
-	run_prog(1, 0, "mv -f %s %s", realto, realfrom);
-	run_prog(0, 0, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, 0, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, 0, "rm -f %s", target_expand("/.profile"));
+	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 1999/04/09 10:24:42 bouyer Exp $	*/
+/*	$NetBSD: md.c,v 1.10 1999/04/09 10:44:00 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -138,9 +138,9 @@ md_post_newfs()
 {
 
 	printf(msg_string(MSG_dobootblks), diskdev);
-	if (run_prog(0, 1, "/sbin/disklabel -W %s", diskdev) != 0)
+	if (run_prog(0, 1, NULL, "/sbin/disklabel -W %s", diskdev) != 0)
 		return 0;
-	run_prog(0, 1, "/usr/mdec/binstall ffs /mnt") ;
+	run_prog(0, 1, NULL, "/usr/mdec/binstall ffs /mnt") ;
 	return 0;
 }
 
