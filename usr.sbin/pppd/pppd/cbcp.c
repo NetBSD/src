@@ -1,4 +1,4 @@
-/*	$NetBSD: cbcp.c,v 1.8 2004/10/28 07:45:21 itojun Exp $	*/
+/*	$NetBSD: cbcp.c,v 1.9 2004/10/28 07:50:34 itojun Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -25,7 +25,7 @@
 #if 0
 #define RCSID	"Id: cbcp.c,v 1.11 2001/03/08 05:11:10 paulus Exp "
 #else
-__RCSID("$NetBSD: cbcp.c,v 1.8 2004/10/28 07:45:21 itojun Exp $");
+__RCSID("$NetBSD: cbcp.c,v 1.9 2004/10/28 07:50:34 itojun Exp $");
 #endif
 #endif
 
@@ -169,12 +169,10 @@ cbcp_input(unit, inpacket, pktlen)
     GETCHAR(id, inp);
     GETSHORT(len, inp);
 
-#if 0
     if (len > pktlen) {
         error("CBCP packet: invalid length");
         return;
     }
-#endif
 
     len -= CBCP_MINLEN;
  
