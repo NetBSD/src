@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.4 2003/10/25 18:31:11 christos Exp $	*/
+/*	$NetBSD: hptide.c,v 1.5 2003/10/29 01:54:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -98,7 +98,7 @@ static void
 hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
-	int i, compatchan = -1, revision; /* XXX: gcc */
+	int i, compatchan, revision;
 	pcireg_t interface;
 	bus_size_t cmdsize, ctlsize;
 
@@ -163,22 +163,8 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
 	    revision == HPT366_REV) {
-		sc->sc_wdcdev.UDMA_cap = 4;
-		/*
-		 * The 366 has 2 PCI IDE functions, one for primary and one
-		 * for secondary. So we need to call pciide_mapregs_compat()
-		 * with the real channel
-		 */
-		if (pa->pa_function == 0) {
-			compatchan = 0;
-		} else if (pa->pa_function == 1) {
-			compatchan = 1;
-		} else {
-			aprint_error("%s: unexpected PCI function %d\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, pa->pa_function);
-			return;
-		}
 		sc->sc_wdcdev.nchannels = 1;
+		sc->sc_wdcdev.UDMA_cap = 4;
 	} else {
 		sc->sc_wdcdev.nchannels = 2;
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374 ||
@@ -200,6 +186,21 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 				    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 				cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 				continue;
+			}
+		} else {
+			/*
+			 * The 366 has 2 PCI IDE functions, one for primary and
+			 * one for secondary. So we need to call
+			 * pciide_mapregs_compat() with the real channel.
+			 */
+			if (pa->pa_function == 0)
+				compatchan = 0;
+			else if (pa->pa_function == 1)
+				compatchan = 1;
+			else {
+				aprint_error("%s: unexpected PCI function %d\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname, pa->pa_function);
+				return;
 			}
 		}
 		if (pciide_chansetup(sc, i, interface) == 0)
