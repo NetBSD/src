@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.42 1998/08/17 15:04:51 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.43 1998/09/15 16:09:44 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -77,6 +77,7 @@
 #define	   NUBUS_DRHW_RPC8XJ	0x040B	/* Radius PrecisionColor 8xj */
 #define	   NUBUS_DRHW_FIILX	0x0417	/* Futura II LX */
 #define	   NUBUS_DRHW_FIISXDSP	0x042F	/* Futura II SX/DSP */
+#define	   NUBUS_DRHW_MC2124NB	0x0462	/* MicroConversions 2124NB II */
 
 /* False DrHW values for video cards masquerading as other cards */
 #define    NUBUS_DRHW_SAM768	0x10000	/* Cornerstone/Samsung 768x1006 */
