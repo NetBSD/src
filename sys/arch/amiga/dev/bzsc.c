@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.21 1998/05/23 20:51:06 is Exp $	*/
+/*	$NetBSD: bzsc.c,v 1.22 1998/05/24 19:32:34 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -40,8 +40,6 @@
  * Initial amiga Blizzard 1230-II driver by Daniel Widenfalk.  Conversion to
  * 53c9x MI driver by Michael L. Hitch (mhitch@montana.edu).
  */
-
-#include "opt_m68kcpu.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
