@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.46 2003/04/16 21:44:28 christos Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.47 2003/04/22 13:18:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.46 2003/04/16 21:44:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.47 2003/04/22 13:18:52 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -321,7 +321,7 @@ mfs_mount(mp, path, data, ndp, p)
 	error = set_statfs_info(path, UIO_USERSPACE, args.fspec,
 	    UIO_USERSPACE, mp, p);
 	(void)memcpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
-	    sizeof(fs->fs_fsmnt));
+	    sizeof(mp->mnt_stat.f_mntonname));
 	return error;
 }
 
