@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tar.h,v 1.6 1997/05/08 06:40:29 mikel Exp $
+	$Id: tar.h,v 1.7 1997/06/06 07:59:57 jeremy Exp $
 */
 
 /* major() and minor() macros (among other things) defined here for hpux */
@@ -236,6 +236,7 @@ TAR_EXTERN int f_atime_preserve;/* --atime-preserve */
 TAR_EXTERN int f_compress_block; /* --compress-block */
 TAR_EXTERN int f_norecurse;	/* --norecurse */
 TAR_EXTERN int f_unlink;	/* --unlink */
+TAR_EXTERN int f_fast_read;	/* --fast-read */
 
 /*
  * We default to Unix Standard format rather than 4.2BSD tar format.
@@ -278,6 +279,10 @@ TAR_EXTERN char *gnu_dumpfile;
  */
 TAR_EXTERN char read_error_flag;
 
+/*
+ * global boolean, see name_match in tar.c
+ */
+extern int	nlpsfreed;
 
 /*
  * Declarations of functions available to the world.

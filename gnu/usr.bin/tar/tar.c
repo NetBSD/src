@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: tar.c,v 1.9 1997/05/08 06:40:28 mikel Exp $";
+static char rcsid[] = "$NetBSD: tar.c,v 1.10 1997/06/06 07:59:55 jeremy Exp $";
 #endif /* not lint */
 
 /*
@@ -88,6 +88,7 @@ void name_add ();
 void name_init ();
 void options ();
 char *un_quote_string ();
+int nlpsfreed = 0;
 
 #ifndef S_ISLNK
 #define lstat stat
@@ -187,6 +188,7 @@ struct option long_options[] =
 
   {"norecurse", 0, &f_norecurse, 1},
   {"unlink", 0, &f_unlink, 1},
+  {"fast-read", 0, &f_fast_read, 1},
 
   {0, 0, 0, 0}
 };
@@ -766,6 +768,7 @@ Other options:\n\
 -[0-7][lmh]		specify drive and density\n\
 --norecurse		don't recurse into subdirectories when creating\n\
 --unlink		unlink files before creating them\n\
+--fast-read 		stop after desired names in archive have been found\n\
 ", stdout);
 }
 
@@ -1127,6 +1130,7 @@ name_match (p)
      register char *p;
 {
   register struct name *nlp;
+  struct name *tmpnlp;
   register int len;
 
 again:
@@ -1178,7 +1182,36 @@ again:
 	    }
 	  if (nlp->change_dir && chdir (nlp->change_dir))
 	    msg_perror ("Can't change to directory %s", nlp->change_dir);
+	  if (f_fast_read) {
+	      if (strcmp(p, nlp->name) == 0) {
+		  /* remove the current entry, since we found a match */
+		  /* use brute force, this code is a mess anyways */
+		  if (namelist->next == NULL) {
+		      /* the list contains one element */
+		      free(namelist);
+		      namelist = NULL;
+		  } else {
+		      if (nlp == namelist) {
+			  /* the first element is the one */
+			  tmpnlp = namelist->next;
+			  free(namelist);
+			  namelist = tmpnlp;
+		      } else {
+			  tmpnlp = namelist;
+			  while (tmpnlp->next != nlp) {
+			      tmpnlp = tmpnlp->next;
+			  }
+			  tmpnlp->next = nlp->next;
+			  free(nlp);
+		      }
+		  }
+		  /* set a boolean to decide whether we started with a */
+		  /* non-empty namelist, that was emptied */
+		  nlpsfreed = 1;
+	      }
+	  }
 	  return 1;		/* We got a match */
+
 	}
     }
 
