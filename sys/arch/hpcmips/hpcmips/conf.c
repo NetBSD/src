@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2000/03/25 19:05:45 uch Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 2000/04/09 08:26:15 takemura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -218,27 +218,11 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMOUSE,
 	    wsmouse),			/* 32: mice */
 	cdev_rnd_init(NRND,rnd),	/* 33: random source pseudo-device */
-#if NBICONSDEV > 0
-	cdev_tty_init(1,biconsdev),	/* 34: bicons pseudo-dev */	
-#else 
-	cdev_notdef(),
-#endif
-#if NTX39UART > 0
+	cdev_tty_init(NBICONSDEV,biconsdev),	/* 34: bicons pseudo-dev */
 	cdev_tty_init(NTX39UART,txcom),	/* 35: TX39 internal UART */
-#else
-	cdev_notdef(),
-#endif
-#if NUCBSND > 0
 	cdev_audio_init(NUCBSND,ucbsnd),/* 36: UCB1200 Codec (TX39 companion chip) */
-#else
-	cdev_notdef(),
-#endif
 	cdev_tty_init(NUCOM, ucom),	/* 37: USB tty */
-#if NWSMUX > 0
 	cdev_mouse_init(NWSMUX,	wsmux), /* 38: ws multiplexor */
-#else
-	cdev_notdef(),
-#endif
 };
 
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
