@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd-bpf.c,v 1.6 2003/07/15 12:32:07 itojun Exp $	*/
+/*	$NetBSD: ndbootd-bpf.c,v 1.7 2004/04/10 17:53:05 darrenr Exp $	*/
 
 /* ndbootd-bpf.c - the Sun Network Disk (nd) daemon BPF component: */
 
@@ -48,7 +48,7 @@
 #if o
 static const char _ndbootd_bpf_c_rcsid[] = "<<Id: ndbootd-bpf.c,v 1.4 2001/05/23 02:35:49 fredette Exp >>";
 #else
-__RCSID("$NetBSD: ndbootd-bpf.c,v 1.6 2003/07/15 12:32:07 itojun Exp $");
+__RCSID("$NetBSD: ndbootd-bpf.c,v 1.7 2004/04/10 17:53:05 darrenr Exp $");
 #endif
 
 /* includes: */
@@ -108,6 +108,7 @@ ndbootd_raw_open(struct ndbootd_interface * interface)
 	char dev_bpf_filename[sizeof(DEV_BPF_FORMAT) + (sizeof(int) * 3) + 1];
 	int minor;
 	int saved_errno;
+	u_int bufsize;
 	u_int bpf_opt;
 	struct bpf_version version;
 	u_int packet_buffer_size;
@@ -162,6 +163,12 @@ ndbootd_raw_open(struct ndbootd_interface * interface)
 			dev_bpf_filename, strerror(errno)));
 		_NDBOOTD_RAW_OPEN_ERROR(close(network_fd));
 		return (-1);
+	}
+	/* set a reasonable sized buffer for the BPF device */
+	bufsize = 32768;
+	if (ioctl(network_fd, BIOCSBLEN, &bufsize) < 0) {
+		_NDBOOTD_DEBUG((fp, "bpf: failed set buffer size to %d: %s",
+			bufsize, strerror(errno)));
 	}
 	/* tell the BPF device we're providing complete Ethernet headers: */
 	bpf_opt = TRUE;

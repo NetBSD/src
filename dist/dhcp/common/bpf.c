@@ -47,7 +47,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.6 2003/02/18 17:08:40 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.7 2004/04/10 17:53:05 darrenr Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -100,6 +100,7 @@ int if_register_bpf (info)
 	int sock;
 	char filename[50];
 	int b;
+	u_int bufsize;
 
 	/* Open a BPF device */
 	for (b = 0; 1; b++) {
@@ -124,6 +125,11 @@ int if_register_bpf (info)
 			break;
 		}
 	}
+
+	/* Set the BPF buffer size to 32k */
+	bufsize = 32768;
+	if (ioctl (sock, BIOCSBLEN, &bufsize) < 0)
+		log_error ("Can't set bpf buffer to %d: %m", bufsize);
 
 	/* Set the BPF device to point at this interface. */
 	if (ioctl (sock, BIOCSETIF, info -> ifp) < 0)
