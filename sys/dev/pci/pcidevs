@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.553 2003/07/17 11:44:27 hannken Exp $
+$NetBSD: pcidevs,v 1.554 2003/07/23 10:16:16 kleink Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1799,6 +1799,12 @@ product NS DP83810	0x0001	DP83810 10/100 Ethernet
 product NS DP83815	0x0020	DP83815 10/100 Ethernet
 product NS DP83820	0x0022	DP83820 10/100/1000 Ethernet
 product NS NS87410	0xd001	NS87410
+
+/* Philips products */
+product PHILIPS SAA7130HL	0x7130	SAA7130HL PCI video broadcast decoder
+product PHILIPS SAA7133HL	0x7133	SAA7133HL PCI A/V broadcast decoder
+product PHILIPS SAA7134HL	0x7134	SAA7134HL PCI A/V broadcast decoder
+product PHILIPS SAA7135HL	0x7135	SAA7135HL PCI A/V broadcast decoder
 
 /* NCR/Symbios Logic products */
 product SYMBIOS 810	0x0001	53c810
