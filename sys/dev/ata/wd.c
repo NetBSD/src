@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.198 1999/11/10 14:11:34 leo Exp $ */
+/*	$NetBSD: wd.c,v 1.199 1999/12/23 21:23:19 leo Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -153,6 +153,7 @@ struct wd_softc {
 #define WDF_LOADED	  0x10 /* parameters loaded */
 #define WDF_WAIT	0x20 /* waiting for resources */
 #define WDF_LBA	 0x40 /* using LBA mode */
+#define WDF_KLABEL	 0x80 /* retain label after 'full' close */
 	int sc_capacity;
 	int cyl; /* actual drive parameters */
 	int heads;
@@ -816,6 +817,9 @@ wdclose(dev, flag, fmt, p)
 		wd_flushcache(wd, AT_WAIT);
 		/* XXXX Must wait for I/O to complete! */
 
+		if (! (wd->sc_flags & WDF_KLABEL))
+			wd->sc_flags &= ~WDF_LOADED;
+
 		wdc_ata_delref(wd->drvp);
 	}
 
@@ -969,6 +973,13 @@ wdioctl(dev, xfer, addr, flag, p)
 		wd->sc_flags &= ~WDF_LABELLING;
 		wdunlock(wd);
 		return error;
+
+	case DIOCKLABEL:
+		if (*(int *)addr)
+			wd->sc_flags |= WDF_KLABEL;
+		else
+			wd->sc_flags &= ~WDF_KLABEL;
+		return 0;
 	
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
