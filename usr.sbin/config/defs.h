@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.6 2002/09/11 06:20:09 enami Exp $	*/
+/*	$NetBSD: defs.h,v 1.7 2002/09/26 04:07:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -156,6 +156,20 @@ struct attr {
 };
 
 /*
+ * Parent specification.  Multiple device instances may share a
+ * given parent spec.  Parent specs are emitted only if there are
+ * device instances which actually reference it.
+ */
+struct pspec {
+	TAILQ_ENTRY(pspec) p_list;	/* link on parent spec list */
+	struct	attr *p_iattr;		/* interface attribute of parent */
+	struct	devbase *p_atdev;	/* optional parent device base */
+	int	p_atunit;		/* optional parent device unit */
+	struct	nvlist *p_devs;		/* children using it */
+	int	p_inst;			/* parent spec instance */
+};
+
+/*
  * The "base" part (struct devbase) of a device ("uba", "sd"; but not
  * "uba2" or "sd0").  It may be found "at" one or more attributes,
  * including "at root" (this is represented by a NULL attribute), as
@@ -225,22 +239,16 @@ struct devi {
 	struct	devi *i_asame;	/* list on same base attachment */
 	struct	devi *i_alias;	/* other aliases of this instance */
 	const char *i_at;	/* where this is "at" (NULL if at root) */
-	struct	attr *i_atattr;	/* attr that allowed attach */
-	struct	devbase *i_atdev;/* if "at <devname><unit>", else NULL */
+	struct	pspec *i_pspec;	/* parent spec (NULL if at root) */
 	struct	deva *i_atdeva;
-	const char **i_locs;	/* locators (as given by i_atattr) */
-	int	i_atunit;	/* unit from "at" */
+	const char **i_locs;	/* locators (as given by pspec's iattr) */
 	int	i_cfflags;	/* flags from config line */
 	int	i_lineno;	/* line # in config, for later errors */
 
 	/* created during packing or ioconf.c generation */
-/* 		i_loclen	   via i_atattr->a_loclen */
 	short	i_collapsed;	/* set => this alias no longer needed */
 	short	i_cfindex;	/* our index in cfdata */
-	short	i_pvlen;	/* number of parents */
-	short	i_pvoff;	/* offset in parents.vec */
 	short	i_locoff;	/* offset in locators.vec */
-	struct	devi **i_parents;/* the parents themselves */
 
 };
 /* special units */
@@ -375,7 +383,9 @@ TAILQ_HEAD(, config)	allcf;		/* list of configured kernels */
 TAILQ_HEAD(, devi)	alldevi,	/* list of all instances */
 			allpseudo;	/* list of all pseudo-devices */
 TAILQ_HEAD(, devm)	alldevms;	/* list of all device-majors */
+TAILQ_HEAD(, pspec)	allpspecs;	/* list of all parent specs */
 int	ndevi;				/* number of devi's (before packing) */
+int	npspecs;			/* number of parent specs */
 int	maxbdevm;			/* max number of block major */
 int	maxcdevm;			/* max number of character major */
 int	do_devsw;			/* 0 if pre-devsw config */
@@ -390,10 +400,6 @@ SLIST_HEAD(, prefix)	prefixes,	/* prefix stack */
 struct	devi **packed;		/* arrayified table for packed devi's */
 int	npacked;		/* size of packed table, <= ndevi */
 
-struct {			/* pv[] table for config */
-	short	*vec;
-	int	used;
-} parents;
 struct {			/* loc[] table for config */
 	const char **vec;
 	int	used;
