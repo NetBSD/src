@@ -1,4 +1,4 @@
-.\"	$NetBSD: basename.3,v 1.8 2002/10/17 02:06:04 thorpej Exp $
+.\"	$NetBSD: basename.3,v 1.9 2002/10/17 08:41:48 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,19 +52,25 @@ The
 function takes the pathname pointed to by
 .Ar path
 and returns a pointer to the final component of the pathname,
-deleting and trailing '/' characters.
+deleting any trailing
+.Sq /
+characters.
 .Pp
 If
 .Ar path
-consists entirely of '/' characters,
+consists entirely of
+.Sq /
+characters,
 .Fn basename
-returns a pointer to the string "/".
+returns a pointer to the string
+.Dq / .
 .Pp
 If
 .Ar path
 is a null pointer or points to an empty string,
 .Fn basename
-returns a pointer to the string ".".
+returns a pointer to the string
+.Dq \&. .
 .Sh RETURN VALUES
 The
 .Fn basename
@@ -91,5 +97,5 @@ The
 function returns a pointer to static storage that may be overwritten
 by subsequent calls to
 .Fn basename .
-This is not strictly a bug; it is explcitly allowed by
+This is not strictly a bug; it is explicitly allowed by
 .St -p1003.1-2001 .
