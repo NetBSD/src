@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.75 1998/07/22 17:43:11 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.76 1998/07/25 11:57:52 explorer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1496,6 +1496,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Realtek Semiconductor",
 	    "Ethernet",
+	},
+	{
+	    PCI_VENDOR_RISCOM, PCI_PRODUCT_RISCOM_N2,
+	    0,
+	    "RISCom",
+	    "N2",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE,
@@ -4939,6 +4945,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_KOFAX, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Kofax Image Products",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_RISCOM, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "RISCom",
 	    NULL,
 	},
 	{
