@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.7 1996/10/04 07:27:55 leo Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.8 1997/04/25 19:25:39 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -547,6 +547,7 @@ u_char	depth;
 	bm->bytes_per_row = (width * depth) / NBBY;
 	bm->rows          = height;
 	bm->depth         = depth;
+	bm->phys_mappable = (depth * width * height) / NBBY;
 	bm->regs = bm->hw_regs = NULL;
 	bm->reg_size = 0;
 
