@@ -1,4 +1,4 @@
-/*	$NetBSD: lca.c,v 1.4 1996/04/12 06:08:33 cgd Exp $	*/
+/*	$NetBSD: lca.c,v 1.5 1996/04/23 14:00:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -96,10 +96,29 @@ lca_init(lcp)
 	apecs_lca_bus_mem_init(&lcp->lc_bc, lcp);
 	lca_pci_init(&lcp->lc_pc, lcp);
 
-/*
-printf("lca_init: before IOC_HAE=0x%x\n", REGVAL(LCA_IOC_HAE));
-	REGVAL(LCA_IOC_HAE) = 0; */
+	/*
+	 * Refer to ``DECchip 21066 and DECchip 21068 Alpha AXP Microprocessors
+	 * Hardware Reference Manual''.
+	 * ...
+	 */
 
+	/*
+	 * According to section 6.4.1, all bits of the IOC_HAE register are
+	 * undefined after reset.  Bits <31:27> are write-only.  However, we
+	 * cannot blindly set it to zero.  The serial ROM code that initializes
+	 * the PCI devices' address spaces, allocates sparse memory blocks in
+	 * the range that must use the IOC_HAE register for address translation,
+	 * and sets this register accordingly (see section 6.4.14).
+	 *
+	 *	IOC_HAE left AS IS.
+	 */
+
+	/* According to section 6.4.2, all bits of the IOC_CONF register are
+	 * undefined after reset.  Bits <1:0> are write-only.  Set them to
+	 * 0x00 for PCI Type 0 configuration access.
+	 *
+	 *	IOC_CONF set to ZERO.
+	 */
 	REGVAL(LCA_IOC_CONF) = 0;
 
 	/* Turn off DMA window enables in Window Base Registers */
