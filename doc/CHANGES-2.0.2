@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.2,v 1.1.2.1 2005/03/16 11:52:19 tron Exp $
+#	$NetBSD: CHANGES-2.0.2,v 1.1.2.2 2005/03/16 12:12:59 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.1 release to the NetBSD 2.0.2
 release.
@@ -17,4 +17,34 @@ sys/arch/i386/i386/locore.S			1.33
 	Check the passed in address as well as determining the maximum length
 	using VM_MAXUSER_ADDRESS in copyinstr and copyoutstr.
 	[fvdl, ticket #1317]
+
+sys/nfs/nfs_subs.c				1.146
+
+	nfs_clearcommit: don't attempt to clear commit info (n_pushlo, etc)
+	unless the vnode is of VREG. union members used to keep commit info
+	are used for other purposes in the case of !VREG.
+	[yamt, ticket #1148]
+
+sys/dist/ipf/netinet/ip_state.c			patch
+
+	Disable the oow test because it is broken. It is killing valid packets.
+	[martti, ticket #1110]
+
+sys/arch/sparc/stand/common/mmu.c		1.5
+
+	Make pmap_map() work on sun4 machines.
+	[pk, ticket #1118]
+
+sys/nfs/nfs_vnops.c				1.206
+
+	nfs_commit: use NAC_NOTRUNC when loading an attribute
+	as we're called holding pages locked.
+	[yamt, ticket #1134]
+
+sys/uvm/uvm_amap.c				1.57
+sys/uvm/uvm_pdaemon.c				1.61
+
+	Hack around a UVM problem that causes hangs when large processes fork.
+	See PR 26908 for details.
+	[chs, ticket #1137]
 
