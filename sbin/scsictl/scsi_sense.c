@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_sense.c,v 1.4 2003/05/17 23:03:28 itojun Exp $	*/
+/*	$NetBSD: scsi_sense.c,v 1.5 2003/06/23 11:53:42 agc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,12 @@
  *
  * XXX THESE SHOULD BE IN A LIBRARY!
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: scsi_sense.c,v 1.5 2003/06/23 11:53:42 agc Exp $");
+#endif
+
 
 #include <sys/param.h>
 #include <sys/device.h>

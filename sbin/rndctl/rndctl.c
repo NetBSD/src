@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.14 2003/05/17 23:16:47 itojun Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.15 2003/06/23 11:53:42 agc Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -28,6 +28,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: rndctl.c,v 1.15 2003/06/23 11:53:42 agc Exp $");
+#endif
+
 
 #include <sys/types.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.19 2002/09/26 06:15:38 petrov Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.20 2003/06/23 11:53:43 agc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,12 @@
 /*
  * scsictl(8) - a program to manipulate SCSI devices and busses.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: scsictl.c,v 1.20 2003/06/23 11:53:43 agc Exp $");
+#endif
+
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

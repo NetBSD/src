@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_subr.c,v 1.7 2002/10/08 20:17:06 soren Exp $	*/
+/*	$NetBSD: scsi_subr.c,v 1.8 2003/06/23 11:53:43 agc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,12 @@
  *
  * XXX THESE SHOULD BE IN A LIBRARY!
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: scsi_subr.c,v 1.8 2003/06/23 11:53:43 agc Exp $");
+#endif
+
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

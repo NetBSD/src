@@ -1,4 +1,4 @@
-/*	$NetBSD: clockgen.c,v 1.1 1999/03/25 04:05:37 explorer Exp $	*/
+/*	$NetBSD: clockgen.c,v 1.2 2003/06/23 11:53:38 agc Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -35,6 +35,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: clockgen.c,v 1.2 2003/06/23 11:53:38 agc Exp $");
+#endif
+
 
 #include <stdio.h>
 #include <stdlib.h>

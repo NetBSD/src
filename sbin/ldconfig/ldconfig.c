@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.35 2003/01/05 22:28:41 kristerw Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.36 2003/06/23 11:53:37 agc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: ldconfig.c,v 1.36 2003/06/23 11:53:37 agc Exp $");
+#endif
+
 
 #include <sys/param.h>
 #include <sys/types.h>
