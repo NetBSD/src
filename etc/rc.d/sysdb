@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.9 2002/03/22 04:34:00 thorpej Exp $
+# $NetBSD: sysdb,v 1.10 2002/09/16 02:23:31 perry Exp $
 #
 
 # PROVIDE: sysdb
@@ -24,11 +24,13 @@ sysdb_start()
 	kvm_mkdb "${booted_kernel:-/netbsd}"
 	dev_mkdb
 
-	#	Re-create /var/run/utmp, which is deleted by mountcritlocal
-	#	but can't be recreated by it because install and chown may
-	#	not be available then (possibly no /usr).
+	#	Re-create /var/run/utmp and /var/run/utmpx, which are
+	#	deleted by mountcritlocal but can't be recreated by it
+	#	because install and chown may not be available then
+	#	(possibly no /usr).
 	#
 	install -c -m 664 -g utmp /dev/null /var/run/utmp
+	install -c -m 664 -g utmp /dev/null /var/run/utmpx
 }
 
 load_rc_config $name
