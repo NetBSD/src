@@ -15,7 +15,7 @@
  *
  *  October 1992
  *
- *	$Id: pcfs_vnops.c,v 1.3 1993/05/20 03:34:24 cgd Exp $
+ *	$Id: pcfs_vnops.c,v 1.4 1993/08/02 23:15:14 mycroft Exp $
  */
 
 #include "param.h"
@@ -1540,7 +1540,7 @@ pcfs_strategy(bp)
 	return 0;
 }
 
-int
+void
 pcfs_print(vp)
 	struct vnode *vp;
 {
