@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc,v 1.21 1999/03/16 01:19:56 mycroft Exp $
+.\"	$NetBSD: doc,v 1.22 1999/03/23 06:44:38 mycroft Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -824,7 +824,7 @@
 .					ie \\n(nS>1 .br
 .					el \{\
 .						if \\n(iS==0 \{\
-.							sW \\$1
+.							sw \\$1
 .					nr iS ((\\n(sWu+1)*\\n(fW)u
 .						\}
 .					\}
@@ -2019,7 +2019,6 @@
 .	tm .It \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8
 .\}
 .\" .tm Here is L[\\n(lC]==\\*(L\\n(lC
-.ne 3v
 .ie \\n(.$>0 \{\
 .	ds mN It
 .	ds b1
