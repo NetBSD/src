@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.170 2003/07/03 05:03:53 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.171 2003/07/14 16:39:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.170 2003/07/03 05:03:53 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.171 2003/07/14 16:39:43 itojun Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -223,7 +223,6 @@ struct	in_ifaddrhead in_ifaddr;
 struct	in_ifaddrhashhead *in_ifaddrhashtbl;
 u_long	in_multihash;				/* size of hash table - 1 */
 int	in_multientries;			/* total number of addrs */
-struct	in_multihead in_multi;
 struct	in_multihashhead *in_multihashtbl;
 struct	ifqueue ipintrq;
 struct	ipstat	ipstat;
