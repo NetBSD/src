@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.8 2001/06/10 15:43:56 wiz Exp $
+.\" $NetBSD: wsdisplay.4,v 1.9 2001/09/11 23:18:56 wiz Exp $
 .Dd March 20, 1999
 .Os
 .Dt WSDISPLAY 4
@@ -93,6 +93,15 @@ Control device.
 .It
 .Pa /usr/include/dev/wscons/wsconsio.h
 .El
+.Sh SEE ALSO
+.Xr ega 4 ,
+.Xr pcdisplay 4 ,
+.Xr tty 4 ,
+.Xr vga 4 ,
+.Xr wscons 4 ,
+.Xr wsconscfg 8 ,
+.Xr wsconsctl 8 ,
+.Xr wsfontload 8
 .Sh BUGS
 The
 .Nm
@@ -106,12 +115,3 @@ are not cleanly distinguished in the code and in manual pages.
 .Pp
 .Dq non-emulating
 display devices are not tested.
-.Sh SEE ALSO
-.Xr ega 4 ,
-.Xr pcdisplay 4 ,
-.Xr tty 4 ,
-.Xr vga 4 ,
-.Xr wscons 4 ,
-.Xr wsconscfg 8 ,
-.Xr wsconsctl 8 ,
-.Xr wsfontload 8

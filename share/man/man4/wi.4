@@ -1,4 +1,4 @@
-.\"     $NetBSD: wi.4,v 1.16 2001/09/11 00:08:32 wiz Exp $
+.\"     $NetBSD: wi.4,v 1.17 2001/09/11 23:18:56 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wi.4,v 1.16 2001/09/11 00:08:32 wiz Exp $
+.\"	$Id: wi.4,v 1.17 2001/09/11 23:18:56 wiz Exp $
 .\"
 .Dd January 11, 2001
 .Dt WI 4
@@ -140,12 +140,6 @@ command.
 One reason can be that the board is mis-configured, see
 .Xr wiconfig 8 .
 .El
-.Sh BUGS
-The IBSS mode is not supported.
-.Pp
-The execution of
-.Xr wiconfig 8
-while the interface is down can produce some error messages.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -166,3 +160,9 @@ The
 .Nm
 driver was written by
 .An Bill Paul Aq wpaul@ctr.columbia.edu .
+.Sh BUGS
+The IBSS mode is not supported.
+.Pp
+The execution of
+.Xr wiconfig 8
+while the interface is down can produce some error messages.

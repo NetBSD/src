@@ -1,4 +1,4 @@
-.\" $NetBSD: uaudio.4,v 1.10 2001/09/11 22:52:54 wiz Exp $
+.\" $NetBSD: uaudio.4,v 1.11 2001/09/11 23:18:55 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,6 @@
 .Sh SYNOPSIS
 .Cd "uaudio* at uhub?"
 .Cd "audio*  at uaudio?"
-.Pp
 .Sh DESCRIPTION
 The
 .Nm
@@ -111,11 +110,6 @@ For more information the
 .Tn USB
 Audio class specification is indispensable
 reading.
-.Sh BUGS
-The mixer interface is really incomplete.
-.Pp
-There should be some heuristics that allows important controls,
-e.g., volume, to be identified and given its traditional name.
 .Sh SEE ALSO
 The
 .Tn USB
@@ -130,3 +124,8 @@ The
 driver
 appeared in
 .Nx 1.5 .
+.Sh BUGS
+The mixer interface is really incomplete.
+.Pp
+There should be some heuristics that allows important controls,
+e.g., volume, to be identified and given its traditional name.
