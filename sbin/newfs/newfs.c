@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.28 1997/09/29 05:18:00 enami Exp $	*/
+/*	$NetBSD: newfs.c,v 1.29 1997/10/01 02:21:34 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.28 1997/09/29 05:18:00 enami Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.29 1997/10/01 02:21:34 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,8 +189,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
 	int ch;
 	struct partition *pp;
 	struct disklabel *lp;
