@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.4 (Berkeley) 2/19/91
+#	from: @(#)Makefile	5.4 (Berkeley) 2/19/91
+#	$Id: Makefile,v 1.2 1993/07/31 15:19:07 mycroft Exp $
 
 MAN1=	mkdep.0
 

@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.14 (Berkeley) 6/25/90
+#	from: @(#)Makefile	5.14 (Berkeley) 6/25/90
+#	$Id: Makefile,v 1.2 1993/07/31 15:24:21 mycroft Exp $
 
 # USERMEM should be the amount of available user memory in bytes.
 # Set it to zero, for physical memory less than 1 Meg.

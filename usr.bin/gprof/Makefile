@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.17 (Berkeley) 5/11/90
+#	from: @(#)Makefile	5.17 (Berkeley) 5/11/90
+#	$Id: Makefile,v 1.4 1993/07/31 15:22:23 mycroft Exp $
 
 PROG=	gprof
 SRCS=	gprof.c arcs.c dfn.c lookup.c ${MACHINE}.c hertz.c \

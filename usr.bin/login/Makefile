@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.6 (Berkeley) 6/24/90
+#	from: @(#)Makefile	5.6 (Berkeley) 6/24/90
+#	$Id: Makefile,v 1.5 1993/07/31 15:20:28 mycroft Exp $
 
 CFLAGS+=#-DKERBEROS
 PROG=	login
