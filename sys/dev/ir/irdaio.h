@@ -1,4 +1,4 @@
-/*	$NetBSD: irdaio.h,v 1.4 2001/12/12 15:34:49 augustss Exp $	*/
+/*	$NetBSD: irdaio.h,v 1.5 2001/12/13 00:33:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,9 +40,9 @@
 #define _SYS_DEV_IRDAIO_H_
 
 struct irda_params {
-	u_int speed;
-	u_int ebofs;
-	u_int maxsize;
+	unsigned int speed;
+	unsigned int ebofs;
+	unsigned int maxsize;
 };
 
 /* SIR speeds */
