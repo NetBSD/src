@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.27 1999/01/16 07:47:18 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.28 1999/01/16 14:44:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.27 1999/01/16 07:47:18 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.28 1999/01/16 14:44:33 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -241,7 +241,8 @@ _dns_grscan(rv, cb_data, ap)
 			if (name)
 				strncpy(line, name, sizeof(line));
 			else
-				snprintf(line, sizeof(line), "%u", gid);
+				snprintf(line, sizeof(line), "%u",
+				    (unsigned int)gid);
 		} else {
 			snprintf(line, sizeof(line), "group-%u", __gr_hesnum);
 			__gr_hesnum++;
@@ -309,7 +310,7 @@ _nis_grscan(rv, cb_data, ap)
 		if (name)
 			strncpy(line, name, sizeof(line));
 		else
-			snprintf(line, sizeof(line), "%u", gid);
+			snprintf(line, sizeof(line), "%u", (unsigned int)gid);
 		line[sizeof(line) - 1] = '\0';
 		data = NULL;
 		r = yp_match(__ypdomain,
