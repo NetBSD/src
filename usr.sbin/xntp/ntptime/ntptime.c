@@ -103,7 +103,7 @@ main(argc, argv)
 
   memset((char *)&ntx, 0, sizeof(ntx));
   progname = argv[0];
-  while ((c = ntp_getopt(argc, argv, optargs)) != EOF) switch (c) {
+  while ((c = ntp_getopt(argc, argv, optargs)) != -1) switch (c) {
   case 'c':
     cost++;
     break;

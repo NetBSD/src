@@ -238,7 +238,7 @@ main(argc, argv)
   /*
    * Decode argument list
    */
-  while ((c = ntp_getopt(argc, argv, "a:bBde:k:o:p:qr:st:uv")) != EOF)
+  while ((c = ntp_getopt(argc, argv, "a:bBde:k:o:p:qr:st:uv")) != -1)
     switch (c)
       {
       case 'a':

@@ -248,7 +248,7 @@ char *argv[];
 	delay_time.l_uf = DEFDELAY;
 
 	progname = argv[0];
-	while ((c = ntp_getopt(argc, argv, "c:dilnps")) != EOF)
+	while ((c = ntp_getopt(argc, argv, "c:dilnps")) != -1)
 		switch (c) {
 		case 'c':
 			ADDCMD(ntp_optarg);
