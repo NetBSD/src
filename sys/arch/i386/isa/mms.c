@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.6.2.10 1993/10/17 05:33:36 mycroft Exp $
+ *	$Id: mms.c,v 1.6.2.11 1993/10/31 16:55:30 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -99,10 +99,9 @@ mmsprobe(parent, cf, aux)
 		ia->ia_irq = isa_discoverintr(mmsforceintr, aux);
 		if (ia->ia_irq == IRQNONE)
 			return 0;
+		/* reset again to disable interrupts */
+		outb(iobase + MMS_ADDR, 0x87);
 	}
-
-	/* reset again to disable interrupts */
-	outb(iobase + MMS_ADDR, 0x87);
 
 	ia->ia_iosize = MMS_NPORTS;
 	ia->ia_drq = DRQUNK;
