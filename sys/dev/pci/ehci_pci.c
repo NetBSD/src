@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.8 2002/02/14 21:58:30 augustss Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.9 2002/08/22 02:54:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.8 2002/02/14 21:58:30 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.9 2002/08/22 02:54:18 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
-		printf("%s: can't map i/o space\n", devname);
+		printf("%s: can't map memory space\n", devname);
 		return;
 	}
 
