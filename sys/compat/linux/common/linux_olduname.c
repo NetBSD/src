@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.32 1997/08/04 09:48:08 bouyer Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.33 1997/10/10 01:44:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -769,7 +769,7 @@ linux_sys_getdents(p, v, retval)
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag, nbytes, oldcall;
 	struct vattr va;
-	u_long *cookiebuf, *cookie;
+	off_t *cookiebuf, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -793,11 +793,14 @@ linux_sys_getdents(p, v, retval)
 		oldcall = 1;
 	} else {
 		buflen = min(MAXBSIZE, nbytes);
+		if (buflen < va.va_blocksize)
+			buflen = va.va_blocksize;
 		oldcall = 0;
 	}
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	ncookies = buflen / 16;
 	cookiebuf = malloc(ncookies * sizeof(*cookiebuf), M_TEMP, M_WAITOK);
+
 	VOP_LOCK(vp);
 	off = fp->f_offset;
 again:
@@ -822,7 +825,7 @@ again:
 	inp = buf;
 	outp = SCARG(uap, dent);
 	resid = nbytes;
-	if ((len = buflen - auio.uio_resid) == 0)
+	if (eofflag || (len = buflen - auio.uio_resid) == 0)
 		goto eof;
 
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
@@ -854,6 +857,11 @@ again:
 			idb.d_off = (linux_off_t)linux_reclen;
 			idb.d_reclen = (u_short)bdp->d_namlen;
 		} else {
+			if (sizeof (linux_off_t) < 4 && (off >> 32) != 0) {
+				compat_offseterr(vp, "linux_getdents");
+				error = EINVAL;
+				goto out;
+			}
 			idb.d_off = (linux_off_t)off;
 			idb.d_reclen = (u_short)linux_reclen;
 		}
