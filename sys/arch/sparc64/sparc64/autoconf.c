@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.52 2001/09/26 20:53:12 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.53 2001/10/05 15:28:28 pooka Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -72,6 +72,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/bsd_openprom.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
@@ -949,7 +950,7 @@ romgetcursoraddr(rowp, colp)
 	rominterpret(buf);
 	return (*rowp == NULL || *colp == NULL);
 }
-#endif
+#endif /* RASTERCONSOLE */
 
 void
 callrom()
