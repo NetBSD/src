@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.85 2003/02/02 02:22:14 christos Exp $	*/
+/*	$NetBSD: malloc.h,v 1.86 2003/02/14 21:51:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -148,6 +148,8 @@ struct kmembuckets {
 #define	btokmemx(addr)	(((caddr_t)(addr) - kmembase) / NBPG)
 #define	btokup(addr)	(&kmemusage[((caddr_t)(addr) - kmembase) >> PGSHIFT])
 
+extern struct simplelock malloc_slock;
+
 /*
  * Macro versions for the usual cases of malloc/free
  */
@@ -162,12 +164,15 @@ struct kmembuckets {
 do {									\
 	register struct kmembuckets *__kbp = &bucket[BUCKETINDX((size))]; \
 	long __s = splvm();						\
+	simple_lock(&malloc_slock);					\
 	if (__kbp->kb_next == NULL) {					\
+		simple_unlock(&malloc_slock);				\
 		(space) = (cast)malloc((u_long)(size), (type), (flags)); \
 		splx(__s);						\
 	} else {							\
 		(space) = (cast)__kbp->kb_next;				\
 		__kbp->kb_next = *(caddr_t *)(space);			\
+		simple_unlock(&malloc_slock);				\
 		splx(__s);						\
 		if ((flags) & M_ZERO)					\
 			memset((space), 0, (size));			\
@@ -182,6 +187,7 @@ do {									\
 	if (1 << __kup->ku_indx > MAXALLOCSAVE) {			\
 		free((caddr_t)(addr), (type));				\
 	} else {							\
+		simple_lock(&malloc_slock);				\
 		__kbp = &bucket[__kup->ku_indx];			\
 		if (__kbp->kb_next == NULL)				\
 			__kbp->kb_next = (caddr_t)(addr);		\
@@ -189,6 +195,7 @@ do {									\
 			*(caddr_t *)(__kbp->kb_last) = (caddr_t)(addr);	\
 		*(caddr_t *)(addr) = NULL;				\
 		__kbp->kb_last = (caddr_t)(addr);			\
+		simple_unlock(&malloc_slock);				\
 	}								\
 	splx(__s);							\
 } while(/* CONSTCOND */ 0)
