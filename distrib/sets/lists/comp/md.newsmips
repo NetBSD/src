@@ -1,9 +1,10 @@
-# $NetBSD: md.newsmips,v 1.7 2000/04/29 03:46:29 thorpej Exp $
+# $NetBSD: md.newsmips,v 1.7.4.1 2000/09/12 13:48:09 tsutsui Exp $
 ./usr/include/newsmips	comp-c-include
 ./usr/include/newsmips/_G_config.h	comp-c-include
 ./usr/include/newsmips/adrsmap.h	comp-c-include
 ./usr/include/newsmips/ansi.h	comp-c-include
 ./usr/include/newsmips/aout_machdep.h	comp-c-include
+./usr/include/newsmips/asm.h	comp-c-include
 ./usr/include/newsmips/autoconf.h	comp-c-include
 ./usr/include/newsmips/bsd-aout.h	comp-c-include
 ./usr/include/newsmips/bswap.h	comp-c-include
