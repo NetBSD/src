@@ -29,21 +29,23 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: catman.c,v 1.5 1994/04/26 20:39:22 chopps Exp $";
+static char rcsid[] = "$Id: catman.c,v 1.6 1994/04/27 22:37:12 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <dirent.h>
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h>
 #include <unistd.h>
-#include <limits.h>
-#include <errno.h>
-#include <err.h>
+#include <paths.h>
 
+#include "pathnames.h"
 
 int f_nowhatis;
 int f_noaction;
@@ -53,10 +55,8 @@ int f_noprint;
 
 int dowhatis;
 
-char manpath[] = "/usr/share/man";
-char sections[] = "12345678lnop";
-char *mp = manpath;
-char *sp = sections;
+char *mp = _PATH_MAN;
+char *sp = _MAN_SECTIONS;
 
 void usage __P((void));
 void catman __P((const char *, char *));
@@ -70,7 +70,7 @@ main(argc, argv)
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "knpwM:")) != EOF) {
+	while ((c = getopt(argc, argv, "knpswM:")) != EOF) {
 		switch (c) {
 		case 'k':
 			f_ignerr = 1;
@@ -103,9 +103,10 @@ main(argc, argv)
 	if (f_noprint && f_noaction)
 		f_noprint = 0;
 
-	if (argc == 0)
-		usage ();
-	sp = *argv;
+	if (argc > 1)
+		usage();
+	if (argc == 1)
+		sp = *argv;
 
 	if (f_noformat == 0 || f_nowhatis == 0)
 		catman(mp, sp);
@@ -134,6 +135,7 @@ catman(path, section)
 	int sectlen, error;
 
 	for (s = section; *s; s += sectlen) {
+#ifdef notdef
 		tmp = s;
 		sectlen = 0;
 		if (isdigit(*tmp)) {
@@ -144,11 +146,14 @@ catman(path, section)
 				tmp++;
 			}
 		}
+#else
+		sectlen = 1;
+#endif
 		if (sectlen == 0)
 			errx(1, "malformed section string");
 
-		sprintf(mandir, "%s/man%.*s", path, sectlen, s);
-		sprintf(catdir, "%s/cat%.*s", path, sectlen, s);
+		sprintf(mandir, "%s/%s%.*s", path, _PATH_MANPAGES, sectlen, s);
+		sprintf(catdir, "%s/%s%.*s", path, _PATH_CATPAGES, sectlen, s);
 
 		if ((dirp = opendir(mandir)) == 0) {
 			warn("can't open %s", mandir);
@@ -227,7 +232,7 @@ makewhatis(path)
 {
 	char sysbuf[1024];
 
-	sprintf(sysbuf, "/usr/libexec/makewhatis %s", path);
+	sprintf(sysbuf, "%s %s", _PATH_MAKEWHATIS, path);
 	if (f_noprint == 0)
 		printf("%s\n", sysbuf);
 	if (f_noaction == 0)
@@ -257,7 +262,7 @@ dosystem(cmd)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: catman [-knpw] [-M manpath]"
-	    " [sections]\n");
+	(void)fprintf(stderr,
+	    "usage: catman [-knpsw] [-M manpath] [sections]\n");
 	exit(1);
 }
