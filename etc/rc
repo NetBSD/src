@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.98 1998/01/09 21:57:17 perry Exp $
+#	$NetBSD: rc,v 1.99 1998/01/24 19:12:55 veego Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -117,6 +117,15 @@ for fs in /usr /var $critical_filesystems; do
 		fi
 	)
 done
+
+# Network Address Translation...
+if [ "$ipnat" != NO ] && [ -f /etc/ipnat.conf ]; then
+	echo 'installing NAT rules ... '
+	if [ "$ipfilter" = NO ] || [ ! -f /etc/ipf.conf ]; then
+		ipf -E -Fa
+	fi
+	ipnat -F -f /etc/ipnat.conf
+fi
 
 # "Critical" file systems are now mounted.  Go ahead and swap
 # to files now, since they will be residing in the critical file
