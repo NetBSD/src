@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.182 2001/10/10 06:58:56 chs Exp $
+#	$NetBSD: Makefile,v 1.183 2001/10/12 05:18:23 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -82,7 +82,7 @@ _J= -j${NBUILDJOBS}
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
+BIN1+=	bootptab csh.cshrc csh.login csh.logout daily \
 	daily.conf dm.conf floppytab ftpchroot ftpusers ftpwelcome \
 	gettytab group hosts hosts.lpd inetd.conf lkm.conf \
 	mailer.conf man.conf monthly monthly.conf mrouted.conf \
