@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.3 2003/09/26 22:25:21 wiz Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.4 2003/11/01 22:42:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
 #define _MVME_CLOCKVAR_H
 
 #include <dev/clock_subr.h>
-#include <dev/ic/mk48txxreg.h>
 
 /*
  * Definitions exported to ASIC-specific clock attachment.
