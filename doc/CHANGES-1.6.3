@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.16 2004/03/15 04:10:33 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.17 2004/03/15 04:12:52 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -85,7 +85,13 @@ gnu/dist/cvs/src/filesubr.c			1.4
 
 	Implement proper group membership testing. PR#24021
 	[christos, ticket #1592]
+
 sys/arch/arm/arm/syscall.c			1.21-1.22
 
 	Fix up some unitialised variables to avoid a possible crash.
 	[skrll, ticket #1552]
+
+sys/arch/amiga/dev/toccata.c			1.7
+
+	Remove forgotten debug printf from development.
+	[is, ticket #1593]
