@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.21 2003/04/07 19:31:01 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.22 2003/04/08 17:09:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.21 2003/04/07 19:31:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.22 2003/04/08 17:09:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,12 +289,12 @@ smbfs_closel(struct vop_close_args *ap)
 	struct smbnode *np = VTOSMB(vp);
 	struct proc *p = ap->a_p;
 	struct smb_cred scred;
-	struct vattr vattr;
 	int error;
 
 	SMBVDEBUG("name=%.*s, pid=%d, c=%d\n",
 		(int)np->n_nmlen, np->n_name, p->p_pid, np->n_opencount);
 
+	smbfs_attr_cacheremove(vp);
 	smb_makescred(&scred, p, ap->a_cred);
 
 	if (np->n_opencount == 0) {
@@ -314,6 +314,7 @@ smbfs_closel(struct vop_close_args *ap)
 			smbfs_findclose(np->n_dirseq, &scred);
 			np->n_dirseq = NULL;
 		}
+		simple_unlock(&vp->v_interlock);
 		if (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_NT_SMBS) {
 			error = smbfs_smb_close(ssp, np->n_fid,
 				&np->n_mtime, &scred);
@@ -323,11 +324,11 @@ smbfs_closel(struct vop_close_args *ap)
 		error = smbfs_vinvalbuf(vp, V_SAVE, ap->a_cred, p, 1);
 		if (np->n_opencount)
 			return error;
-		VOP_GETATTR(vp, &vattr, ap->a_cred, p);
+		simple_unlock(&vp->v_interlock);
+
 		error = smbfs_smb_close(np->n_mount->sm_share, np->n_fid, 
 			   &np->n_mtime, &scred);
 	}
-	smbfs_attr_cacheremove(vp);
 	return error;
 }
 
@@ -348,9 +349,8 @@ smbfs_close(v)
 	struct vnode *vp = ap->a_vp;
 	int error;
 
-	simple_lock(&(vp)->v_interlock);
+	simple_lock(&vp->v_interlock);
 	error = smbfs_closel(ap);
-	simple_unlock(&(vp)->v_interlock);
 
 	return error;
 }
