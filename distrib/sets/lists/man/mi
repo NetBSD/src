@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.393 2001/08/18 00:02:59 wiz Exp $
+# $NetBSD: mi,v 1.394 2001/08/23 01:41:37 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1380,6 +1380,8 @@
 ./usr/share/man/cat8/ndp.0			man-netutil-catman
 ./usr/share/man/cat8/netbsd32.0			man-sys-catman
 ./usr/share/man/cat8/netgroup_mkdb.0		man-nis-catman
+./usr/share/man/cat8/netwinder/MAKEDEV.0	man-sysutil-catman
+./usr/share/man/cat8/netwinder/makedev.0	man-sysutil-catman
 ./usr/share/man/cat8/newbtconf.0		man-sysutil-catman
 ./usr/share/man/cat8/newfs.0			man-sysutil-catman
 ./usr/share/man/cat8/newfs_lfs.0		man-sysutil-catman
@@ -2955,6 +2957,8 @@
 ./usr/share/man/man8/ndp.8			man-netutil-man
 ./usr/share/man/man8/netbsd32.8			man-sys-man
 ./usr/share/man/man8/netgroup_mkdb.8		man-nis-man
+./usr/share/man/man8/netwinder/MAKEDEV.8	man-sysutil-man
+./usr/share/man/man8/netwinder/makedev.8	man-sysutil-man
 ./usr/share/man/man8/newbtconf.8		man-sysutil-man
 ./usr/share/man/man8/newfs.8			man-sysutil-man
 ./usr/share/man/man8/newfs_lfs.8		man-sysutil-man
