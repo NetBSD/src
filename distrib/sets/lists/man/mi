@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.681 2004/04/04 15:59:44 mrg Exp $
+# $NetBSD: mi,v 1.682 2004/04/04 17:34:43 uwe Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -806,6 +806,8 @@
 ./usr/share/man/cat4/hp300/rtc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/tc.0			man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/topcat.0		man-sys-catman		.cat
+./usr/share/man/cat4/hpcsh/intro.0		man-sys-catman		.cat
+./usr/share/man/cat4/hpcsh/j6x0lcd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/j6x0tp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hptide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/PCIBIOS.0		man-sys-catman		.cat
@@ -2887,6 +2889,8 @@
 ./usr/share/man/man4/hp300/rtc.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/tc.4			man-obsolete		obsolete
 ./usr/share/man/man4/hp300/topcat.4		man-sys-man		.man
+./usr/share/man/man4/hpcsh/intro.4		man-sys-man		.man
+./usr/share/man/man4/hpcsh/j6x0lcd.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/j6x0tp.4		man-sys-man		.man
 ./usr/share/man/man4/hptide.4			man-sys-man		.man
 ./usr/share/man/man4/i386/PCIBIOS.4		man-sys-man		.man
