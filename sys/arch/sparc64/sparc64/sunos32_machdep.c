@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.14 2003/10/26 08:05:27 christos Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.15 2003/11/09 16:41:53 martin Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.14 2003/10/26 08:05:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.15 2003/11/09 16:41:53 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -147,7 +147,7 @@ sunos32_setregs(l, pack, stack)
 		free((void *)fs, M_SUBPROC);
 		l->l_md.md_fpstate = NULL;
 	}
-	bzero((caddr_t)tf, sizeof *tf);
+	memset(tf, 0, sizeof *tf);
 	tf->tf_tstate = tstate;
 	tf->tf_global[1] = (u_int)(u_long)p->p_psstr;
 	tf->tf_pc = pack->ep_entry & ~3;
