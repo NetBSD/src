@@ -1,0 +1,454 @@
+.\"	$NetBSD: mk.conf.5,v 1.1 1999/02/17 00:08:42 lukem Exp $
+.\"
+.\"  Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\"  All rights reserved.
+.\" 
+.\"  This code is derived from software contributed to The NetBSD Foundation
+.\"  by Luke Mewburn.
+.\" 
+.\"  Redistribution and use in source and binary forms, with or without
+.\"  modification, are permitted provided that the following conditions
+.\"  are met:
+.\"  1. Redistributions of source code must retain the above copyright
+.\"     notice, this list of conditions and the following disclaimer.
+.\"  2. Redistributions in binary form must reproduce the above copyright
+.\"     notice, this list of conditions and the following disclaimer in the
+.\"     documentation and/or other materials provided with the distribution.
+.\"  3. All advertising materials mentioning features or use of this software
+.\"     must display the following acknowledgement:
+.\"  	This product includes software developed by Luke Mewburn.
+.\"  4. The name of the author may not be used to endorse or promote products
+.\"     derived from this software without specific prior written permission.
+.\"  
+.\"  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\"  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\"  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\"  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\"  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\"  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+.\"  OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\"  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+.\"  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+.\"  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 17, 1999
+.Dt MK.CONF 5
+.Os NetBSD
+.\" turn off hyphenation
+.hym 999
+.Sh NAME
+.Nm mk.conf
+.Nd make configuration file
+.Sh DESCRIPTION
+The
+.Nm
+file overrides various parameters used during the build of the system.
+.Pp
+Listed below are the
+.Nm
+variables that may be set, the values to which each may be set,
+a brief description of what each variable does, and a reference to
+relevant manual pages.
+.Pp
+.Ss NetBSD System variables
+.Bl -tag -width OBJMACHINE
+.It Sy BSDOBJDIR
+The real path to the system
+.Sq obj
+tree, so that
+.Sq "make obj"
+will work correctly.
+Default:
+.Pa /usr/obj .
+.It Sy BSDSRCDIR
+The real path to the system sources, so that
+.Sq "make obj"
+will work correctly.
+Default:
+.Pa /usr/src .
+.It Sy BUILD
+If defined,
+.Sq "make install"
+checks that the targets in the source directories are up-to-date and
+remakes them if they are out of date, instead of blindly trying to install
+out of date or non-existant targets.
+.It Sy COPTS
+Extra options for the C compiler.
+Should be appended to (e.g.,
+.Sy COPTS+=-g ) ,
+rather than explicitly set.
+.It Sy MANZ
+Install manual pages compressed with 
+.Xr gzip 1 .
+.It Sy MKCATPAGES
+If
+.Sq no ,
+don't build or install the formatted manual pages.
+.It Sy MKDOC
+If
+.Sq no ,
+don't build or install the miscellaneous documentation.
+.It Sy MKINFO
+If
+.Sq no ,
+don't build or install the TeXinfo Info documentation.
+.It Sy MKLINT
+If
+.Sq no ,
+don't build or install the lint libraries.
+.It Sy MKMAN
+If
+.Sq no ,
+don't build or install the manual pages.
+Sets
+.Sy MKCATPAGES=no .
+.It Sy MKNLS
+If
+.Sq no ,
+don't build or install the NLS files.
+.It Sy MKOBJ
+If
+.Sq no ,
+don't create objdirs.
+.It Sy MKPIC
+If
+.Sq no ,
+don't build or install shared libraries.
+.It Sy MKPICINSTALL
+If
+.Sq no ,
+don't install the
+.Sq *_pic.a
+libraries.
+.It Sy MKPROFILE
+If
+.Sq no ,
+don't build or install the
+.Sq *_p.a
+profiling libraries.
+.It Sy MKSHARE
+If
+.Sq no ,
+set
+.Sy MKCATPAGES=no ,
+.Sy MKDOC=no ,
+.Sy MKINFO=no ,
+.Sy MKMAN=no ,
+.Sy MKNLS=no .
+.It Sy OBJMACHINE
+If defined, creates objdirs of the form
+.Pa obj.<arch> ,
+where
+.Sq <arch>
+is the current architecture (as per
+.Sq "uname -m" ) .
+.It Sy UPDATE
+If defined,
+.Sq "make install"
+only installs targets that are more recently modified in the source
+directories that their installed counterparts.
+.It Sy UVM
+The system is using the new UVM virtual memory subsystem.
+.El
+.Pp
+.Ss Pkgsrc system variables
+.Bl -tag -width OBJMACHINE
+.It Sy ACCEPTABLE_LICENSES
+Whitespace-delimited list of the types of license which are acceptable for
+installation (apart from standard "free" licenses such as Berkeley/CMU
+and GPL).
+Possible values:
+.Bl -item -compact -offset indent
+.It
+shareware
+.It
+no-commercial-use
+.It
+fee-based-commercial-use
+.El
+Default: none
+.It Sy CROSSBASE
+Directory where
+.Dq cross
+category packages will be installed.
+Default:
+.Pa ${LOCALBASE}/cross .
+.It Sy FAILOVER_FETCH
+If defined, perform a checksum at
+.Sq make fetch
+time.
+If the checksum doesn't match the stored value, try to retrieve the
+file from the next site in the list.
+Default: not defined.
+.It Sy LOCALBASE
+Directory where non-X-based packages will be installed.
+Default:
+.Pa /usr/pkg .
+.It Sy PACKAGES
+Directories to store generated packages in.
+Default:
+.Pa /usr/pkgsrc/packages .
+.It Sy PASSIVE_FETCH
+If defined, use passive mode
+.Xr ftp 1
+when fetching files.
+Default: not defined.
+.It Sy USE_LOCALBASE_FOR_X11
+If defined, use the value of
+.Sy LOCALBASE ,
+not
+.Sy X11BASE
+for installing X11-dependent pkgs (requires X11R6.1, or NetBSD's X sets).
+Default: not defined
+.It Sy USETBL
+If defined, run raw manual pages through
+.Xr tbl 1
+before
+.Xr troff 1
+when formatting manual pages.
+.It Sy WRKOBJDIR
+If defined, build in the specified directory instead of the pkgsrc tree.
+.It Sy X11BASE
+Directory where X11 is installed.
+Default:
+.Pa /usr/X11R6 .
+.El
+.Ss Variables only used by the packages collection
+.Bl -tag -width OBJMACHINE
+.It Sy AMANDA_USER
+Used by
+.Sq amanda
+to specify the login user and group responsible for backups.
+Default:
+.Sq backup .
+.It Sy BOOTSTRAP_EGCS
+If defined, enable the
+.Sq egcs-current
+package's bootstrap compile (two-stage) mode.
+Default: not defined.
+.It Sy DOMAIN_NAME
+Used by
+.Sq knews
+to set the domain name.
+Default: none.
+.It Sy DONT_USE_IDEA
+Used by
+.Sq ssh
+to stop IDEA encryption.
+Default: not defined.
+.It Sy EXTRA_DICT
+Used by
+.Sq ispell
+to specify an extra national dictionary.
+Default: not defined.
+.It Sy GIMP_SMALL_DATA
+Used by
+.Sq gimp
+to specify installation of the small data set only.
+.It Sy ISPELL_FR
+Used by
+.Sq ispell
+to specify a French/English dictionary.
+.It Sy LANG
+Used by
+.Sq ispell
+to specify a national dictionary.
+Possible values:
+.Sq british ,
+not defined.
+Default: not defined.
+.It Sy LIBWRAP_FWD
+If defined, make
+.Sq libwrap
+also compare against forwards.
+Possible values:
+.Sq YES ,
+not defined.
+Default: not defined.
+.It Sy M68060
+Used by packages such as
+.Sq pgp2
+and
+.Sq ssh
+which have fast 68020/030/040 assembler routines for multiprecision arithmetic,
+use the 32/64bit mul/div instruction.
+These instructions are software emulated on the 68060, thus very slow.
+Set this variable to
+.Sq YES
+when compiling for the 68060 CPU.
+Possible values:
+.Sq YES ,
+not defined.
+Default: not defined.
+.It Sy MAKE_EBONES
+If defined,
+.Sq fetchmail
+and
+.Sq zephyr
+use the non-USA Kerberos-compatible subsystem.
+Default: not defined.
+.It Sy MAKE_KERBEROS4
+If defined,
+.Sq fetchmail
+uses the Kerberos subsystem.
+Default: not defined.
+.It Sy MUTT_INTERNATIONAL
+If defined,
+.Sq mutt
+is installeduse the Kerberos subsystem.
+Possible values:
+.Sq YES ,
+not defined.
+Default: not defined.
+.It Sy NMH_MTA
+Define which MTA that
+.Sq nmh
+uses.
+Possible values:
+.Sq sendmail ,
+.Sq smtp .
+Default:
+.Sq smtp .
+.It Sy NOPORTDOCS
+If defined, prevent installation of any documentation.
+Default: not defined.
+.It Sy NOMANINSTALL
+If defined, don't install manual pages for
+.Sq expect .
+Default: not defined.
+.It Sy PAPERSIZE
+Default paper size for packages.
+Possible values:
+.Sq A4 ,
+.Sq Letter ,
+.Sq Letterdj .
+Default: none
+.It Sy PATCH_DEBUG
+If defined, enable debugging in 
+.Sq exmh .
+Default: not defined
+.It Sy PGGROUP
+Used by
+.Sq postgresql
+as the group name of the database administrator.
+Possible values: any group
+Default:
+.Sq ingres .
+.It Sy PGUSER
+Used by
+.Sq postgresql
+as the user name of the database administrator.
+Possible values: any user
+Default:
+.Sq pgsql .
+.It Sy RCS_LOCALID
+Used by
+.Sq cvs-current
+as the value to expand
+.Xo
+.Sq $ Ns Local Ns $
+.Xc
+to.
+Default: none
+.It Sy SSH_CONF_DIR
+Define the location of the
+.Sq ssh
+configuration directory.
+Default:
+.Pa /etc .
+.It Sy SSH_SUID
+Used by
+.Sq ssh
+to enable setuid installation.
+Possible values:
+.Sq YES ,
+.Sq NO .
+Default:
+.Sq NO .
+.It Sy USE_MENUS
+If defined, build in support for menus in
+.Sq xvile .
+Defined: not defined.
+.It Sy USE_MULE
+If defined, build the MULE extensions in
+.Sq xemacs .
+Defined: not defined.
+.It Sy USE_RSAREF2
+Use the RSA reference package.
+Possible values:
+.Sq YES
+(USA domestic only),
+.Sq NO .
+Default: not defined.
+.It Sy USE_SOCKS
+If defined, specify version of SOCKS firewall to support.
+Possible values:
+.Sq 4 ,
+.Sq 5 ,
+not defined.
+Default: not defined.
+.It Sy USE_XFACE
+If defined, build in support for
+.Sq xface
+into
+.Sq xemacs.
+Default: not defined.
+.It Sy WINDOWMAKER_THEMES
+Used by
+.Sq wm-themes
+to specify which themes to install.
+Possible values: refer to
+.Sq http://wm.themes.org .
+Default:
+.Sq FreeBSD-theme .
+.It Sy ZIP_ENCRYPTION
+If defined, add encryption code to
+.Sq zip ,
+.Sq zip1 ,
+and
+.Sq unzip .
+Default: not defined.
+.El
+.Ss Variables to override default package repositories
+.Pp
+The following variables define a space separated list of mirror sites to
+be used instead of the defaults to retrieve packages from (usually if
+there's a closer or cheaper site).
+.Pp
+.Sq %SUBDIR%
+and
+.Sq ${DIST_SUBDIR}
+are replaced by a package specific strings.
+.Pp
+.Bl -tag -width OBJMACHINE
+.It Sy MASTER_SITE_BACKUP
+Backup sites for packages that are maintained in
+.Sq ftp.netbsd.org:/pub/NetBSD/packages/distfiles/${DIST_SUBDIR} .
+.It Sy MASTER_SITE_GNU
+GNU source mirror.
+.It Sy MASTER_SITE_LOCAL
+Local package source distributions that are maintained in
+.Sq ftp.netbsd.org:/pub/NetBSD/packages/distfiles/LOCAL_PORTS/ .
+.It Sy MASTER_SITE_PERL_CPAN
+Perl CPAN mirror.
+.It Sy MASTER_SITE_TEX_CTAN
+TeX CTAN mirror.
+.It Sy MASTER_SITE_SUNSITE
+sunsite.unc.edu mirror.
+.It Sy MASTER_SITE_XCONTRIB
+X Window System contributed source mirror.
+.El
+.Sh FILES
+.Bl -tag -width /etc/mk.conf
+.It Pa /etc/mk.conf
+This file.
+.It Pa /usr/pkgsrc/mk/mk.conf.example
+Further documentation of the pkgsrc overrides.
+.El
+.Sh SEE ALSO
+.Xr make 1
+.Sh HISTORY
+The
+.Nm
+file appeared in
+.Nx 1.2 .
