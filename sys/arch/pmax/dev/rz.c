@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.33 1997/11/13 03:56:49 mhitch Exp $	*/
+/*	$NetBSD: rz.c,v 1.34 1998/02/19 23:04:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.33 1997/11/13 03:56:49 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.34 1998/02/19 23:04:41 thorpej Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -1330,15 +1330,15 @@ rz_cdsize(cd, flags)
 }
 
 /*
- * Send a SCSI command to a target drive, using
- * the 4.4bsd/pmax driver formatting support  RZ_ALTCMD machinery.
- * Used as a substitute for the  MI scsi scsipi_command().
+ * Send a SCSI command to a target drive, using the 4.4bsd/pmax driver
+ * formatting support RZ_ALTCMD machinery.
  * 
- * Returns byte count returned by cmd, computed as datalen - resid.
-*/
+ * Returns byte count returned by cmd, computed as datalen - resid
+ * or -1 on failure.
+ */
 int
-rz_command (sc, scsi_cmd, cmdlen, data_addr, datalen, 
-	    nretries, timeout, bp, flags)
+rz_command(sc, scsi_cmd, cmdlen, data_addr, datalen, nretries, timeout,
+    bp, flags)
 	struct rz_softc *sc;
 	struct scsipi_generic *scsi_cmd;
 	int cmdlen;
@@ -1352,34 +1352,41 @@ rz_command (sc, scsi_cmd, cmdlen, data_addr, datalen,
 	int retried = 0;
 	register int recvlen, savedflags;
 
-
-	/* check command and expected response fit in sc format-cmd fields */
-	if (cmdlen > sizeof(sc->sc_cdb) ||
-	   datalen > sizeof(sc->sc_capbuf)) {
-	  printf("rz: size %d %d too big for %d %d\n",
-	      sizeof(sc->sc_cdb), sizeof(sc->sc_capbuf), 
-	      cmdlen, datalen);
-		return(-1);	/* XXX */
+	/*
+	 * Make sure the command will fit.
+	 */
+	if (cmdlen > sizeof(sc->sc_cdb)) {
+		printf("%s: rz_commamd: command too large (%d > %d)\n",
+		    sc->sc_dev.dv_xname, cmdlen, sizeof(sc->sc_cdb));
+		return (-1);
 	}
 
-	/* map NetBSD MI scsi command  flags onto 4.4bsd SCSI (rz) flags */
+	/*
+	 * Map NetBSD MI scsi command flags onto 4.4bsd SCSI (rz)
+	 * flags.
+	 */
 	savedflags = sc->sc_flags;
-	if (flags & SCSI_SILENT) {
+	if (flags & SCSI_SILENT)
 		sc->sc_flags |= RZF_NOERR;
-	}
 
-	bzero(sc->sc_capbuf, datalen);
+	/*
+	 * Zero out the data buffer.
+	 */
+	bzero(data_addr, datalen);
 
-again:
+ again:
 	/* copy request into cdb */
 	bcopy(scsi_cmd, &sc->sc_cdb.cdb, cmdlen);
 	sc->sc_cdb.len = cmdlen;
 
-	/* stolen from the old rz get-drive-size code. */
-
-	sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_READ;
-	sc->sc_buf.b_bcount = /*sizeof(sc->sc_capbuf)*/ datalen;
-	sc->sc_buf.b_un.b_addr = (caddr_t)sc->sc_capbuf;
+	/*
+	 * Send the command to the drive and wait for it to
+	 * complete.
+	 */
+	sc->sc_buf.b_flags = B_BUSY | B_PHYS |
+	    (flags & SCSI_DATA_IN) ? B_READ : B_WRITE;
+	sc->sc_buf.b_bcount = datalen;
+	sc->sc_buf.b_un.b_addr = (caddr_t)data_addr;
 	sc->sc_buf.b_actf = (struct buf *)0;
 	sc->sc_tab.b_actf = &sc->sc_buf;
 	sc->sc_flags |= RZF_ALTCMD;
@@ -1392,26 +1399,20 @@ again:
 	}
 
 	recvlen = datalen - sc->sc_buf.b_resid;
-	/* XXX old test was sc->sc_buf.b_resid != 0 */
-	if (recvlen == 0) {
 
+	if (recvlen == 0) {
+		/*
+		 * Gack, command didn't work; try again.
+		 */
 		DELAY(timeout);
 		if (retried++ < nretries) 
 			goto again;	
-		/* give up, return 0 */
-		goto done;
-
 	}
 
-	/* Any result is in capbuf. Copy to caller's buf. */
-	bcopy(&sc->sc_capbuf, data_addr, recvlen);
-done:
-	sc->sc_flags = savedflags;	/* undo MI scsi flags */
-	return(recvlen);
+ done:
+	sc->sc_flags = savedflags;	/* Restore flags. */
+	return (recvlen);
 }
-
-
-
 
 /*
  * mode-sense code,  lifted from dev/scsipi/sd.c.
@@ -1626,8 +1627,6 @@ rzgetdefaultlabel(sc, lp)
 
 /*
  * Non-interrupt driven, non-dma dump routine.
- * XXX 
- *  Still an old-style dump function:  arguments after "dev" are ignored.
  */
 int
 rzdump(dev, blkno, va, size)
@@ -1636,76 +1635,110 @@ rzdump(dev, blkno, va, size)
 	caddr_t va;
 	size_t size;
 {
-	int part = rzpart(dev);
-	int unit = rzunit(dev);
-	register struct rz_softc *sc = &rz_softc[unit];
-	register daddr_t baddr;
-	register int maddr;
-	register int pages, i;
-	extern int lowram;
-#ifdef later
-	register struct pmax_scsi_device *sd = sc->sc_sd;
-	int stat;
-#endif
+	static int rzdoingadump;/* mutex */
+	int sectorsize;		/* size of a disk sector */
+	int nsects;		/* number of sectors in partition */
+	int sectoff;		/* sector offset of partition */
+	int nwrt, totwrt;	/* total number of sectors left to write */
+	int unit, part;
+	int error;
+	struct rz_softc *sc;
+	struct disklabel *lp;
+	extern int cold;
+
+	/* Check for recursive dump; if so, punt. */
+	if (rzdoingadump)
+		return (EFAULT);
+	rzdoingadump = 1;
+
+	/* Decompose unit and partition. */
+	unit = rzunit(dev);
+	part = rzpart(dev);
+
+	if (unit >= NRZ)
+		return (ENXIO);
+	sc = &rz_softc[unit];
+	if ((sc->sc_flags & RZF_ALIVE) == 0)
+		return (ENXIO);
+
+	if (rzready(sc) == 0) {
+		/* Drive didn't reset. */
+		return (ENXIO);
+	}
 
 	/*
-	 * Hmm... all vax drivers dump maxfree pages which is physmem minus
-	 * the message buffer.  Is there a reason for not dumping the
-	 * message buffer?  Savecore expects to read 'dumpsize' pages of
-	 * dump, where dumpsys() sets dumpsize to physmem!
+	 * Convert to disk sectors.  Request must be a multiple of size.
 	 */
-	pages = physmem;
+	lp = sc->sc_label;
+	sectorsize = lp->d_secsize;
+	if ((size % sectorsize) != 0)
+		return (EFAULT);
+	totwrt = size / sectorsize;
+	blkno = dbtob(blkno) / sectorsize;	/* blkno in DEV_BSIZE units */
 
-	/* is drive ok? */
-	if (unit >= NRZ || (sc->sc_flags & RZF_ALIVE) == 0)
-		return (ENXIO);
-	/* dump parameters in range? */
-	if (dumplo < 0 || dumplo >= sc->sc_label->d_partitions[part].p_size)
+	nsects = lp->d_partitions[part].p_size;
+	sectoff = lp->d_partitions[part].p_offset;
+
+	/* Check transfer bounds against partition size. */
+	if ((blkno < 0) || (blkno + totwrt) > nsects)
 		return (EINVAL);
-	if (dumplo + ctod(pages) > sc->sc_label->d_partitions[part].p_size)
-		pages = dtoc(sc->sc_label->d_partitions[part].p_size - dumplo);
-	maddr = lowram;
-	baddr = dumplo + sc->sc_label->d_partitions[part].p_offset;
 
-#ifdef notdef	/*XXX -- bogus code, from Mach perhaps? */
-	/* scsi bus idle? */
-	if (!scsireq(&sc->sc_dq)) {
-		scsireset(sd->sd_ctlr);
-		sc->sc_stats.rzresets++;
-		printf("[ drive %d reset ] ", unit);
+	/* Offset block number to start of partition. */
+	blkno += sectoff;
+
+	/*
+	 * XXX Prevent the tsleep() done in biowait() below
+	 * XXX from performing a switch.
+	 */
+	cold = 1;
+
+	while (totwrt > 0) {
+		nwrt = totwrt;		/* XXX */
+#ifndef RZ_DUMP_NOT_TRUSTED
+		/*
+		 * Create the SCSI command.
+		 */
+		sc->sc_rwcmd.command = SCSI_WRITE_EXT;
+		sc->sc_rwcmd.highAddr = blkno >> 24;
+		sc->sc_rwcmd.midHighAddr = blkno >> 16;
+		sc->sc_rwcmd.midLowAddr = blkno >> 8;
+		sc->sc_rwcmd.lowAddr = blkno;
+
+		sc->sc_rwcmd.highBlockCount = nwrt >> 8;
+		sc->sc_rwcmd.lowBlockCount = nwrt;
+
+		/*
+		 * ...and send it to the device.
+		 */
+		sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_WRITE;
+		sc->sc_buf.b_bcount = nwrt * sectorsize;
+		sc->sc_buf.b_un.b_addr = va;
+		sc->sc_buf.b_actf = (struct buf *)0;
+		sc->sc_tab.b_actf = &sc->sc_buf;
+
+		sc->sc_cmd.flags = SCSICMD_DATA_TO_DEVICE;
+		sc->sc_cmd.cmd = (u_char *)&sc->sc_rwcmd;
+		sc->sc_cmd.cmdlen = sizeof(sc->sc_rwcmd);
+		sc->sc_cmd.buf = va;
+		sc->sc_cmd.buflen = nwrt * sectorsize;
+
+		disk_busy(&sc->sc_dkdev);	/* XXX */
+		(*sc->sc_sd->sd_cdriver->d_start)(&sc->sc_cmd);
+		if ((error = biowait(&sc->sc_buf)) != 0)
+			return (error);
+#else /* RZ_DUMP_NOT_TRUSTED */
+		/* Let's just talk about it first. */
+		printf("%s: dump addr %p, blk %d\n", sc->sc_dev.dv_xname,
+		    va, blkno);
+		delay(500 * 1000);	/* half a second */
+#endif /* RZ_DUMP_NOT_TRUSTED */
+
+		/* update block count */
+		totwrt -= nwrt;
+		blkno += nwrt;
+		va += sectorsize * nwrt;
 	}
-#else
-	if (!rzready(sc)) {
-		printf("[ drive %d did not reset ] ", unit);
-		return(ENXIO);
-	}
-#endif
-	printf("[..untested..] dumping %d pages\n", pages);
-
-
-	for (i = 0; i < pages; i++) {
-#define NPGMB	(1024*1024/NBPG)
-		/* print out how many Mbs we have dumped */
-		if (i && (i % NPGMB) == 0)
-			printf("%d ", i / NPGMB);
-#undef NPBMG
-#ifdef later
-	        /*XXX*/
-		/*mapin(mmap, (u_int)vmmap, btop(maddr), PG_URKR|PG_CI|PG_V);*/
-		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
-		   VM_PROT_READ, TRUE);
-
-		stat = scsi_tt_write(sd->sd_ctlr, sd->sd_drive, sd->sd_slave,
-				     vmmap, NBPG, baddr, sc->sc_bshift);
-		if (stat) {
-			printf("rzdump: scsi write error 0x%x\n", stat);
-			return (EIO);
-		}
-#endif
-
-		maddr += NBPG;
-		baddr += ctod(1);
-	}
+	rzdoingadump = 0;
 	return (0);
 }
 #endif /* NRZ */
