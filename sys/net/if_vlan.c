@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.35 2003/01/17 08:11:56 itojun Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.36 2003/09/09 14:22:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.35 2003/01/17 08:11:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.36 2003/09/09 14:22:19 drochner Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -740,6 +740,7 @@ vlan_start(struct ifnet *ifp)
 				continue;
 			}
 			*(u_int *)(mtag + 1) = ifv->ifv_tag;
+			m_tag_prepend(m, mtag);
 		} else {
 			/*
 			 * insert the tag ourselves
