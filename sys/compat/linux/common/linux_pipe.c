@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.16 1995/08/21 23:15:51 fvdl Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.17 1995/08/23 20:17:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -678,19 +678,45 @@ linux_utime(p, uap, retval)
 }
 
 /*
+ * The old Linux readdir was only able to read one entry at a time,
+ * even though it had a 'count' argument. In fact, the emulation
+ * of the old call was better than the original, because it did handle
+ * the count arg properly. Don't bother with it anymore now, and use
+ * it to distinguish between old and new. The difference is that the
+ * newer one actually does multiple entries, and the reclen field
+ * really is the reclen, not the namelength.
+ */
+int
+linux_readdir(p, uap, retval)
+	struct proc *p;
+	struct linux_readdir_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct linux_dirent *) dent;
+		syscallarg(unsigned int) count;
+	} */ *uap;
+	register_t *retval;
+{
+
+	SCARG(uap, count) = 1;
+	return linux_getdents(p, uap, retval);
+}
+
+/*
  * Linux 'readdir' call. This code is mostly taken from the
  * SunOS getdents call (see compat/sunos/sunos_misc.c), though
  * an attempt has been made to keep it a little cleaner (failing
  * miserably, because of the cruft needed if count 1 is passed).
  *
+ * The d_off field should contain the offset of the next valid entry,
+ * but in Linux it has the offset of the entry itself. We emulate
+ * that bug here.
+ *
  * Read in BSD-style entries, convert them, and copy them out.
- * Note that the Linux d_reclen is actually the name length,
- * and d_off is the reclen.
  *
  * Note that this doesn't handle union-mounted filesystems.
  */
 int
-linux_readdir(p, uap, retval)
+linux_getdents(p, uap, retval)
 	struct proc *p;
 	struct linux_readdir_args /* {
 		syscallarg(int) fd;
@@ -711,7 +737,7 @@ linux_readdir(p, uap, retval)
 	struct linux_dirent idb;
 	off_t off;		/* true file offset */
 	linux_off_t soff;	/* Linux file offset */
-	int buflen, error, eofflag, nbytes, justone;
+	int buflen, error, eofflag, nbytes, oldcall;
 	struct vattr va;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -729,13 +755,13 @@ linux_readdir(p, uap, retval)
 		return error;
 
 	nbytes = SCARG(uap, count);
-	if (nbytes == 1) {	/* Need this for older Linux libs, apparently */
+	if (nbytes == 1) {	/* emulating old, broken behaviour */
 		nbytes = sizeof (struct linux_dirent);
 		buflen = max(va.va_blocksize, nbytes);
-		justone = 1;
+		oldcall = 1;
 	} else {
 		buflen = min(MAXBSIZE, nbytes);
-		justone = 0;
+		oldcall = 0;
 	}
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	VOP_LOCK(vp);
@@ -769,7 +795,6 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("linux_readdir");
-		off += reclen;	/* each entry points to next */
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			continue;
@@ -786,17 +811,21 @@ again:
 		 * the copyout() call).
 		 */
 		idb.d_ino = (long)bdp->d_fileno;
-		idb.d_off = (linux_off_t)linuxreclen;
-		idb.d_reclen = (u_short)bdp->d_namlen;
+		idb.d_off = off;
+		/*
+		 * The old readdir() call used the reclen field as namlen.
+		 */
+		idb.d_reclen = oldcall ? (u_short)bdp->d_namlen : linuxreclen;
 		strcpy(idb.d_name, bdp->d_name);
 		if ((error = copyout((caddr_t)&idb, outp, linuxreclen)))
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
+		off += reclen;
 		/* advance output past Linux-shaped entry */
 		outp += linuxreclen;
 		resid -= linuxreclen;
-		if (justone)
+		if (oldcall)
 			break;
 	}
 
@@ -805,7 +834,7 @@ again:
 		goto again;
 	fp->f_offset = off;	/* update the vnode offset */
 
-	if (justone)
+	if (oldcall)
 		nbytes = resid + linuxreclen;
 
 eof:
@@ -817,38 +846,80 @@ out:
 }
 
 /*
- * Out of register error once more.. Also, Linux copies the amount of
- * time left into the user-supplied timeval structure.
+ * Not sure why the arguments to this older version of select() were put
+ * into a structure, because there are 5, and that can all be handled
+ * in registers on the i386 like Linux wants to.
  */
 int
-linux_select(p, uap, retval)
+linux_oldselect(p, uap, retval)
 	struct proc *p;
-	struct linux_select_args /* {
+	struct linux_oldselect_args /* {
 		syscallarg(struct linux_select *) lsp;
 	} */ *uap;
 	register_t *retval;
 {
 	struct linux_select ls;
-	struct select_args bsa;
-	struct timeval tv0, tv1, utv, *tvp;
-	caddr_t sg;
 	int error;
 
 	if ((error = copyin(SCARG(uap, lsp), &ls, sizeof(ls))))
 		return error;
 
-	SCARG(&bsa, nd) = ls.nfds;
-	SCARG(&bsa, in) = ls.readfds;
-	SCARG(&bsa, ou) = ls.writefds;
-	SCARG(&bsa, ex) = ls.exceptfds;
-	SCARG(&bsa, tv) = ls.timeout;
+	return linux_select1(p, retval, ls.nfds, ls.readfds, ls.writefds,
+	    ls.exceptfds, ls.timeout);
+}
+
+/*
+ * Even when just using registers to pass arguments to syscalls you can
+ * have 5 of them on the i386. So this newer version of select() does
+ * this.
+ */
+int
+linux_select(p, uap, retval)
+	struct proc *p;
+	struct linux_select_args /* {
+		syscallarg(int) nfds;
+		syscallarg(fd_set *) readfds;
+		syscallarg(fd_set *) writefds;
+		syscallarg(fd_set *) exceptfds;
+		syscallarg(struct timeval *) timeout;
+	} */ *uap;
+	register_t *retval;
+{
+	return linux_select1(p, retval, SCARG(uap, nfds), SCARG(uap, readfds),
+	    SCARG(uap, writefds), SCARG(uap, exceptfds), SCARG(uap, timeout));
+}
+
+/*
+ * Common code for the old and new versions of select(). A couple of
+ * things are important:
+ * 1) return the amount of time left in the 'timeout' parameter
+ * 2) select never returns ERESTART on Linux, always return EINTR
+ */
+int
+linux_select1(p, retval, nfds, readfds, writefds, exceptfds, timeout)
+	struct proc *p;
+	register_t *retval;
+	int nfds;
+	fd_set *readfds, *writefds, *exceptfds;
+	struct timeval *timeout;
+{
+	struct select_args bsa;
+	struct timeval tv0, tv1, utv, *tvp;
+	caddr_t sg;
+	int error;
+
+	SCARG(&bsa, nd) = nfds;
+	SCARG(&bsa, in) = readfds;
+	SCARG(&bsa, ou) = writefds;
+	SCARG(&bsa, ex) = exceptfds;
+	SCARG(&bsa, tv) = timeout;
 
 	/*
 	 * Store current time for computation of the amount of
 	 * time left.
 	 */
-	if (ls.timeout) {
-		if ((error = copyin(ls.timeout, &utv, sizeof(utv))))
+	if (timeout) {
+		if ((error = copyin(timeout, &utv, sizeof(utv))))
 			return error;
 		if (itimerfix(&utv)) {
 			/*
@@ -883,7 +954,7 @@ linux_select(p, uap, retval)
 		return error;
 	}
 
-	if (ls.timeout) {
+	if (timeout) {
 		if (*retval) {
 			/*
 			 * Compute how much time was left of the timeout,
@@ -898,7 +969,7 @@ linux_select(p, uap, retval)
 				timerclear(&utv);
 		} else
 			timerclear(&utv);
-		if ((error = copyout(&utv, ls.timeout, sizeof(utv))))
+		if ((error = copyout(&utv, timeout, sizeof(utv))))
 			return error;
 	}
 
