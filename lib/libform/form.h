@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.5 2001/01/20 11:03:43 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.6 2001/01/23 01:59:29 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -49,6 +49,11 @@
 /* Options for the fields */
 typedef unsigned int Form_Options;
 
+/* form options */
+#define O_BS_OVERLOAD (0x001)
+#define O_NL_OVERLOAD (0x002)
+
+/* field options */
 #define O_VISIBLE  0x001  /* Field is visible */
 #define O_ACTIVE   0x002  /* Field is active in the form */
 #define O_PUBLIC   0x004  /* The contents entered into the field is echoed */
