@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.68 2003/01/09 04:58:59 mrg Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.69 2003/01/09 05:27:09 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -260,7 +260,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		p2->p_md.md_fpstate = NULL;
 
 	p2->p_md.md_fpu = NULL;
-	p2->p_md.md_cpuset = 0;
 
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child
