@@ -1,4 +1,4 @@
-/* $NetBSD: db_instruction.h,v 1.3 1997/09/16 19:03:22 thorpej Exp $ */
+/* $NetBSD: db_instruction.h,v 1.4 1997/09/16 22:53:32 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -179,7 +179,7 @@ typedef union {
 #define	op_pal19	0x19		/* reserved for pal code */
 #define	op_j		0x1a		/* see JUMP sub-table */
 #define	op_pal1b	0x1b		/* reserved for pal code */
-					/* reserved */
+#define	op_intmisc	0x1c		/* see INTMISC sub-table */
 #define	op_pal1d	0x1d		/* reserved for pal code */
 #define	op_pal1e	0x1e		/* reserved for pal code */
 #define	op_pal1f	0x1f		/* reserved for pal code */
@@ -326,6 +326,28 @@ typedef union {
 #define	op_ret		0x2
 #define	op_jcr		0x3
 
+		/* INTMISC, "function" opcodes (operate format) */
+
+#define	op_sextb	0x00
+#define	op_sextw	0x01
+#define	op_ctpop	0x30
+#define	op_perr		0x31
+#define	op_ctlz		0x32
+#define	op_cttz		0x33
+#define	op_unpkbw	0x34
+#define	op_unpkbl	0x35
+#define	op_pkwb		0x36
+#define	op_pklb		0x37
+#define	op_minsb8	0x38
+#define	op_minsw4	0x39
+#define	op_minub8	0x3a
+#define	op_minuw4	0x3b
+#define	op_maxub8	0x3c
+#define	op_maxuw4	0x3d
+#define	op_maxsb8	0x3e
+#define	op_maxsw4	0x3f
+#define	op_ftoit	0x70
+#define	op_ftois	0x78
 
 /*
  *
