@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotactl.2,v 1.14 2000/05/29 21:57:05 jdolecek Exp $
+.\"	$NetBSD: quotactl.2,v 1.15 2000/06/17 19:33:34 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -164,9 +164,8 @@ or the command type is invalid.
 .It Bq Er EACCES
 In
 .Dv Q_QUOTAON ,
-the quota file is not a plain file.
-.It Bq Er EACCES
-Search permission is denied for a component of a path prefix.
+the quota file is not a plain file, or
+search permission is denied for a component of a path prefix.
 .It Bq Er ENOTDIR
 A component of a path prefix was not a directory.
 .It Bq Er ENAMETOOLONG
@@ -189,13 +188,12 @@ An
 error occurred while reading from or writing
 to a file containing quotas.
 .It Bq Er EFAULT
-An invalid
+.Fa path
+points outside the process's allocated address space, or
+an invalid
 .Fa addr
 was supplied; the associated structure could not be copied in or out
-of the kernel.
-.It Bq Er EFAULT
-.Fa path
-points outside the process's allocated address space.
+of the kernel. 
 .It Bq Er EPERM
 The call was privileged and the caller was not the super-user.
 .El
