@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.50 2000/01/13 06:52:47 mjl Exp $       */
+/*     $NetBSD: login.c,v 1.51 2000/01/13 12:43:20 mjl Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.50 2000/01/13 06:52:47 mjl Exp $");
+__RCSID("$NetBSD: login.c,v 1.51 2000/01/13 12:43:20 mjl Exp $");
 #endif /* not lint */
 
 /*
@@ -607,11 +607,16 @@ main(argc, argv)
 	(void)setenv("TERM", term, 0);
 	(void)setenv("LOGNAME", pwd->pw_name, 1);
 	(void)setenv("USER", pwd->pw_name, 1);
+
 #ifdef LOGIN_CAP
-	setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH);
+	if(lc)
+		setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH);
+	else
+		(void)setenv("PATH", _PATH_DEFPATH, 0);
 #else
 	(void)setenv("PATH", _PATH_DEFPATH, 0);
 #endif
+
 #ifdef KERBEROS
 	if (krbtkfile_env)
 		(void)setenv("KRBTKFILE", krbtkfile_env, 1);
@@ -640,15 +645,16 @@ main(argc, argv)
 #endif
 
 	if (!quietlog) {
-		char    *fname;
+		char *fname;
 #ifdef LOGIN_CAP
-
 		fname = login_getcapstr(lc, "copyright", NULL, NULL);
 		if (fname && access(fname, F_OK) == 0)
 			motd(fname);
 		else
-#endif
 			(void)printf(copyrightstr);
+#else
+		(void)printf(copyrightstr);
+#endif
 
 #ifdef LOGIN_CAP
                 fname = login_getcapstr(lc, "welcome", NULL, NULL);
