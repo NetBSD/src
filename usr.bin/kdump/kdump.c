@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.65 2003/11/16 14:51:26 dsl Exp $	*/
+/*	$NetBSD: kdump.c,v 1.66 2003/11/16 21:52:33 manu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.65 2003/11/16 14:51:26 dsl Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.66 2003/11/16 21:52:33 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: kdump.c,v 1.65 2003/11/16 14:51:26 dsl Exp $");
 #include <sys/syscall.h>
 
 int timestamp, decimal, plain, tail, maxdata = -1, numeric;
-int word_size;
+int word_size = 0;
 pid_t do_pid = -1;
 const char *tracefile = NULL;
 struct ktr_header ktr_header;
@@ -128,7 +128,7 @@ main(argc, argv)
 	int col;
 	char *cp;
 
-	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:x:")) != -1)
+	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:xX:")) != -1)
 		switch (ch) {
 		case 'e':
 			emul_name = strdup(optarg); /* it's safer to copy it */
@@ -167,10 +167,18 @@ main(argc, argv)
 				errx(1, "unknown trace point in %s", optarg);
 			break;
 		case 'x':
+			if (word_size != 0)
+				errx(1, "-x and -X are mutually exclusive");
+			word_size = 1;
+			break;
+		case 'X':
+			if (word_size != 0)
+				errx(1, "-x and -X are mutually exclusive");
 			word_size = strtoul(optarg, &cp, 0);
 			if (*cp != 0 || word_size & (word_size - 1) ||
 			    word_size > 16 || word_size == 0)
-				errx(1, "argument to -x must be 1, 2, 4, 8 or 16");
+				errx(1, "argument to -X must be "
+				    "1, 2, 4, 8 or 16");
 			break;
 		default:
 			usage();
@@ -887,6 +895,6 @@ usage()
 
 	(void)fprintf(stderr, "usage: kdump [-dlNnRT] [-e emulation] "
 	   "[-f file] [-m maxdata] [-p pid]\n             [-t trstr] "
-	   "[-x [size]] [file]\n");
+	   "[-x | -X size] [file]\n");
 	exit(1);
 }
