@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.2 1998/08/14 18:04:05 mark Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.3 1999/02/10 13:14:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -218,8 +218,10 @@ filecore_lookup(v)
 		goto found;
 
 	error = filecore_dbread(dp, &bp);
-	if (error)
+	if (error) {
+		brelse(bp);
 		return error;
+	}
 
 	de = fcdirentry(bp->b_data, i);
 	
