@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.16 2002/07/06 00:18:48 wiz Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.17 2002/07/06 00:31:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.16 2002/07/06 00:18:48 wiz Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.17 2002/07/06 00:31:07 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -69,8 +69,6 @@ int deny_severity = LOG_DAEMON | LOG_WARNING;
 const char *clientstr;
 const char *svcname;
 #endif /* LIBWRAP */
-
-#define SIG_PF void(*)(int)
 
 int	usedns;
 #ifdef DEBUG
