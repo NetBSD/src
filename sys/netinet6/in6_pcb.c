@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.16 2000/02/02 23:28:10 thorpej Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.17 2000/02/03 12:50:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -118,14 +118,10 @@ in6_pcballoc(so, head)
 	in6p->in6p_socket = so;
 	in6p->in6p_hops = -1;	/* use kernel default */
 	in6p->in6p_icmp6filt = NULL;
-#if 0
-	insque(in6p, head);
-#else
 	in6p->in6p_next = head->in6p_next;
 	head->in6p_next = in6p;
 	in6p->in6p_prev = head;
 	in6p->in6p_next->in6p_prev = in6p;
-#endif
 #ifndef INET6_BINDV6ONLY
 	if (ip6_bindv6only)
 		in6p->in6p_flags |= IN6P_BINDV6ONLY;
@@ -750,13 +746,9 @@ in6_pcbdetach(in6p)
 	if (in6p->in6p_route.ro_rt)
 		rtfree(in6p->in6p_route.ro_rt);
 	ip6_freemoptions(in6p->in6p_moptions);
-#if 0
-	remque(in6p);
-#else
 	in6p->in6p_next->in6p_prev = in6p->in6p_prev;
 	in6p->in6p_prev->in6p_next = in6p->in6p_next;
 	in6p->in6p_prev = NULL;
-#endif
 	FREE(in6p, M_PCB);
 }
 
