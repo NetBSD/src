@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.21 2000/10/11 11:05:03 fvdl Exp $	*/
+/*	$NetBSD: md.h,v 1.22 2000/10/19 15:08:01 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -94,11 +94,11 @@ EXTERN distinfo dist_list[]
 /*
  * Disk names accepted as valid targets for a from-scratch installation.
  *
- * On  i386, we allow "wd"  ST-506/IDE disks,  "sd" scsi disks, "ca" arrays.
+ * On  i386, we allow "wd"  ST-506/IDE disks,  "sd" scsi disks, "lsu" arrays.
  */
 EXTERN	char *disk_names[]
 #ifdef MAIN
-= {"wd", "sd", "ca", NULL}
+= {"wd", "sd", "lsu", NULL}
 #endif
 ;
 
