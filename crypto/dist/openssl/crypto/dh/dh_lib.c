@@ -96,16 +96,15 @@ DH *DH_new(void)
 DH *DH_new_method(DH_METHOD *meth)
 	{
 	DH *ret;
-	ret=(DH *)Malloc(sizeof(DH));
+	ret=(DH *)OPENSSL_malloc(sizeof(DH));
 
 	if (ret == NULL)
 		{
 		DHerr(DH_F_DH_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
-	if(!default_DH_method) default_DH_method = DH_OpenSSL();
 	if(meth) ret->meth = meth;
-	else ret->meth = default_DH_method;
+	else ret->meth = DH_get_default_method();
 	ret->pad=0;
 	ret->version=0;
 	ret->p=NULL;
@@ -121,13 +120,13 @@ DH *DH_new_method(DH_METHOD *meth)
 	ret->method_mont_p=NULL;
 	ret->references = 1;
 	ret->flags=ret->meth->flags;
+	CRYPTO_new_ex_data(dh_meth,ret,&ret->ex_data);
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
-		Free(ret);
+		CRYPTO_free_ex_data(dh_meth,ret,&ret->ex_data);
+		OPENSSL_free(ret);
 		ret=NULL;
 		}
-	else
-		CRYPTO_new_ex_data(dh_meth,ret,&ret->ex_data);
 	return(ret);
 	}
 
@@ -148,19 +147,19 @@ void DH_free(DH *r)
 	}
 #endif
 
-	CRYPTO_free_ex_data(dh_meth, r, &r->ex_data);
-
 	if(r->meth->finish) r->meth->finish(r);
+
+	CRYPTO_free_ex_data(dh_meth, r, &r->ex_data);
 
 	if (r->p != NULL) BN_clear_free(r->p);
 	if (r->g != NULL) BN_clear_free(r->g);
 	if (r->q != NULL) BN_clear_free(r->q);
 	if (r->j != NULL) BN_clear_free(r->j);
-	if (r->seed) Free(r->seed);
+	if (r->seed) OPENSSL_free(r->seed);
 	if (r->counter != NULL) BN_clear_free(r->counter);
 	if (r->pub_key != NULL) BN_clear_free(r->pub_key);
 	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
-	Free(r);
+	OPENSSL_free(r);
 	}
 
 int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
