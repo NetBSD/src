@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.7 2003/11/23 17:09:29 chs Exp $	*/
+/*	$NetBSD: asp.c,v 1.8 2004/09/19 23:03:34 chs Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.7 2003/11/23 17:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.8 2004/09/19 23:03:34 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,6 +163,7 @@ asp_fix_args(void *_sc, struct gsc_attach_args *ga)
 	ASP_IRQ(0x25000, 9);	/* osiop */
 	ASP_IRQ(0x26000, 8);	/* ie */
 	ASP_IRQ(0x30000, 3);	/* siop */
+	ASP_IRQ(0x800000, 13);	/* harmony */
 #undef ASP_IRQ
 }      
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.31 2004/09/04 23:29:47 manu Exp $
+# $NetBSD: GENERIC,v 1.32 2004/09/19 23:03:34 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.31 $"
+#ident 		"GENERIC-$Revision: 1.32 $"
 
 maxusers	32		# estimated number of users
 
@@ -505,9 +505,9 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # GSC audio devices
 #aone*	at gsc?				# Audio Type 1 (PSB 2160-N)
-#harmony* at gsc?			# Audio Type 2 (CS4215)
+harmony* at gsc?			# Audio Type 2 (CS4215)
 #com*	at harmony?			# Telephone add-in card
-#audio*	at audiobus?
+audio*	at audiobus?
 
 # Pseudo-Devices
 
