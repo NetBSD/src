@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.354 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.355 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -98,3 +98,6 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 		[mrg 20040731]
 	/etc/postinstall: check for obsolete minor/teeny shared libraries.
 		[lukem 20040812]
+	kernel: Add extensions to the autoconf(9) framework to allow device
+		detachment and bus rescans in a bus independant way, and
+		for better support of driver LKMs.  [drochner 20040819]
