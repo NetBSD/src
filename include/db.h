@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.18 2002/05/30 14:13:01 itojun Exp $	*/
+/*	$NetBSD: db.h,v 1.19 2003/07/09 01:59:34 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -220,7 +220,7 @@ DB *dbopen __P((const char *, int, mode_t, DBTYPE, const void *));
 DB	*__bt_open __P((const char *, int, mode_t, const BTREEINFO *, int));
 DB	*__hash_open __P((const char *, int, mode_t, const HASHINFO *, int));
 DB	*__rec_open __P((const char *, int, mode_t, const RECNOINFO *, int));
-void	 __dbpanic __P((DB *dbp));
+void	 __dbpanic __P((DB *));
 #endif
 __END_DECLS
 #endif /* !_DB_H_ */
