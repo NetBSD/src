@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.27 2003/04/28 23:16:31 bjh21 Exp $	*/
+/*	$NetBSD: unistd.h,v 1.28 2003/05/31 11:50:15 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -132,6 +132,10 @@
 #define	_PC_FILESIZEBITS	11
 
 /* configurable system variables */
+/*
+ * XXX The value of _SC_CLK_TCK is embedded in <time.h>.
+ * XXX The value of _SC_PAGESIZE is embedded in <sys/shm.h>.
+ */
 #define	_SC_ARG_MAX		 1
 #define	_SC_CHILD_MAX		 2
 #define	_O_SC_CLK_TCK		 3 /* Old version, always 100 */
