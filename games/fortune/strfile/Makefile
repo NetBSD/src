@@ -1,17 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 1997/05/07 15:59:10 mycroft Exp $
+#	$NetBSD: Makefile,v 1.8 2000/04/14 04:12:19 simonb Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
-PROG=	strfile
-MAN=	strfile.8
+HOSTPROG=	strfile
+MAN=		strfile.8
 
-# only needed during build
-proginstall::
-
-# Override these rules for cross-compilation
-.c.o:
-	${HOST_COMPILE.c} ${.IMPSRC}
-
-${PROG}: ${OBJS}
-	${HOST_LINK.c} -o ${.TARGET} ${OBJS}
-
-.include <bsd.prog.mk>
+.include <bsd.hostprog.mk>
