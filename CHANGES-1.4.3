@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.59 2000/09/20 18:19:53 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.60 2000/09/25 16:21:42 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1347,3 +1347,12 @@ sys/conf/osrelease.sh				patch
 gnu/usr.bin/send-pr/Makefile			patch
 
   Mark this as 1.4.3.
+
+distrib/sparc/ramdisk/Makefile			patch
+
+  Fix build problem caused by double use of ${.CURDIR}.
+
+sys/arch/hp300/stand/mkboot/Makefile		patch
+
+  Fix build problem during ``make release'', caused by missing
+  just-cleaned executable in the release phase.
