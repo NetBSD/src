@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.25 1995/04/10 06:30:52 mycroft Exp $	*/
+/*	$NetBSD: cons.c,v 1.26 1995/04/11 10:06:38 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,33 +60,6 @@ extern struct consdev constab[];
 struct	tty *constty = NULL;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
 struct	vnode *cn_devvp;	/* vnode for underlying device. */
-
-
-void
-cninit()
-{
-	register struct consdev *cp;
-
-	/*
-	 * Collect information about all possible consoles
-	 * and find the one with highest priority
-	 */
-	for (cp = constab; cp->cn_probe; cp++) {
-		(*cp->cn_probe)(cp);
-		if (cp->cn_pri > CN_DEAD &&
-		    (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri))
-			cn_tab = cp;
-	}
-	/*
-	 * No console, we can handle it
-	 */
-	if ((cp = cn_tab) == NULL)
-		return;
-	/*
-	 * Turn on console
-	 */
-	(*cp->cn_init)(cp);
-}
 
 int
 cnopen(dev, flag, mode, p)
