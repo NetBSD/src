@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.87 2004/10/22 09:44:42 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.88 2004/10/30 18:10:06 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.87 2004/10/22 09:44:42 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.88 2004/10/30 18:10:06 thorpej Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1616,10 +1616,12 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			ether_addmulti(ifr, &sc->aue_ec) :
 			ether_delmulti(ifr, &sc->aue_ec);
 		if (error == ENETRESET) {
-			aue_init(sc);
+			if (ifp->if_flags & IFF_RUNNING) {
+				aue_init(sc);
+				aue_setmulti(sc);
+			}
+			error = 0;
 		}
-		aue_setmulti(sc);
-		error = 0;
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:

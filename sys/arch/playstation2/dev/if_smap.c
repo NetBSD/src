@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.5 2003/07/15 02:54:36 lukem Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.6 2004/10/30 18:08:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.5 2003/07/15 02:54:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.6 2004/10/30 18:08:35 thorpej Exp $");
 
 #include "debug_playstation2.h"
 
@@ -293,7 +293,8 @@ smap_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = ether_ioctl(ifp, command, data);
 
 		if (error == ENETRESET) {
-			emac3_setmulti(&sc->emac3, &sc->ethercom);
+			if (ifp->if_flags & IFF_RUNNING)
+				emac3_setmulti(&sc->emac3, &sc->ethercom);
 			error = 0;
 		}
 		break;

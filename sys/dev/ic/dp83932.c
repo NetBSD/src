@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.9 2003/10/29 18:01:20 tsutsui Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.10 2004/10/30 18:08:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.9 2003/10/29 18:01:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.10 2004/10/30 18:08:36 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -559,7 +559,8 @@ sonic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			(void) sonic_init(ifp);
+			if (ifp->if_flags & IFF_RUNNING)
+				(void) sonic_init(ifp);
 			error = 0;
 		}
 		break;

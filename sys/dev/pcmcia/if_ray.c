@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.53 2004/08/10 18:43:49 mycroft Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.54 2004/10/30 18:10:06 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.53 2004/08/10 18:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.54 2004/10/30 18:10:06 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -984,8 +984,9 @@ ray_ioctl(ifp, cmd, data)
 		else
 			error = ether_delmulti(ifr, &sc->sc_ec);
 		if (error == ENETRESET) {
+			if (ifp->if_flags & IFF_RUNNING)
+				ray_update_mcast(sc);
 			error = 0;
-			ray_update_mcast(sc);
 		}
 		break;
 	case SIOCSIFMEDIA:

@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.5 2003/11/02 11:07:45 wiz Exp $ */
+/* $NetBSD: mtd803.c,v 1.6 2004/10/30 18:08:37 thorpej Exp $ */
 
 /*-
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.5 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.6 2004/10/30 18:08:37 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -606,7 +606,8 @@ mtd_ioctl(ifp, cmd, data)
 				 * Multicast list has changed; set the hardware
 				 * filter accordingly.
 				 */
-				 mtd_setmulti(sc);
+				 if (ifp->if_flags & IFF_RUNNING)
+					 mtd_setmulti(sc);
 				 error = 0;
 			}
 			break;

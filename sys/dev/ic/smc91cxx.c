@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.48 2004/08/09 13:52:21 mycroft Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.49 2004/10/30 18:08:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.48 2004/08/09 13:52:21 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.49 2004/10/30 18:08:40 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -1363,7 +1363,8 @@ smc91cxx_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			smc91cxx_reset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				smc91cxx_reset(sc);
 			error = 0;
 		}
 		break;

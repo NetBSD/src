@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.1 2004/09/23 14:45:20 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.2 2004/10/30 18:08:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.1 2004/09/23 14:45:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.2 2004/10/30 18:08:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -1115,7 +1115,10 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			error = mec_init(ifp);
+			if (ifp->if_flags & IFF_RUNNING)
+				error = mec_init(ifp);
+			else
+				error = 0;
 		}
 		break;
 	}

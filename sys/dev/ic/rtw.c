@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.1 2004/09/26 02:29:15 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.2 2004/10/30 18:08:38 thorpej Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.1 2004/09/26 02:29:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.2 2004/10/30 18:08:38 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -1791,7 +1791,7 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		else
 			rc = ether_delmulti(ifr, &sc->sc_ic.ic_ec);
 		if (rc == ENETRESET) {
-			if ((sc->sc_flags & RTW_F_ENABLED) != 0)
+			if (ifp->if_flags & IFF_RUNNING)
 				rtw_pktfilt_load(sc);
 			rc = 0;
 		}

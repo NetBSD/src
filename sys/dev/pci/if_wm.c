@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.82 2004/10/06 05:29:51 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.83 2004/10/30 18:09:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.82 2004/10/06 05:29:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.83 2004/10/30 18:09:22 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1908,7 +1908,8 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			wm_set_filter(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				wm_set_filter(sc);
 			error = 0;
 		}
 		break;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.7 2004/07/01 08:34:24 is Exp $ */
+/* $NetBSD: if_txp.c,v 1.8 2004/10/30 18:09:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.7 2004/07/01 08:34:24 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.8 2004/10/30 18:09:22 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1312,7 +1312,8 @@ txp_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			txp_set_filter(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				txp_set_filter(sc);
 			error = 0;
 		}
 		break;
