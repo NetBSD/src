@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.27 1997/06/30 22:09:01 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.28 1997/07/20 03:57:18 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -481,12 +481,12 @@ mfbPosCursor(fi, x, y)
 #ifdef MELLON
 	if (y < 0)
 	  y = 0;
-	else if (y > fi -> fi_type.fb_width - fi -> fi_cursor.width - 1)
-	  y = fi -> fi_type.fb_width - fi -> fi_cursor.width - 1;
+	else if (y > fi -> fi_type.fb_height - fi -> fi_cursor.height - 1)
+	  y = fi -> fi_type.fb_height - fi -> fi_cursor.height - 1;
 	if (x < 0)
 	  x = 0;
-	else if (x > fi -> fi_type.fb_height - fi -> fi_cursor.height - 1)
-	  x = fi -> fi_type.fb_height - fi -> fi_cursor.height - 1;
+	else if (x > fi -> fi_type.fb_width - fi -> fi_cursor.width - 1)
+	  x = fi -> fi_type.fb_width - fi -> fi_cursor.width - 1;
 
 #else /* old-style pmax glass tty */
  	if (y < fi->fi_fbu->scrInfo.min_cur_y ||
