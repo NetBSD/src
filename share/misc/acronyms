@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.90 2001/08/29 18:24:17 jsm Exp $
+$NetBSD: acronyms,v 1.91 2001/10/25 13:56:07 christos Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -100,6 +100,7 @@ PITA	pain in the ass
 PNG	persona non grata
 POC	point of contact
 POLA	principle of least astonishment
+POS	piece of shit
 PPL	pretty please
 QED	quod erat demonstrandum
 RFC	request for comments
