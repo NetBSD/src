@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.5 1994/07/03 09:52:24 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.5.2.1 1994/07/18 20:18:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -284,7 +284,7 @@ cd9660_read(ap)
 		return (0);
 	if (uio->uio_offset < 0)
 		return (EINVAL);
-	ip->i_flag |= IACC;
+	ip->i_flag |= IN_ACCESS;
 	imp = ip->i_mnt;
 	do {
 		lbn = iso_lblkno(imp, uio->uio_offset);
@@ -418,7 +418,7 @@ struct isoreaddir {
 	int ncookies;
 };
 
-static int
+int
 iso_uiodir(idp,dp,off)
 	struct isoreaddir *idp;
 	struct dirent *dp;
@@ -450,7 +450,7 @@ iso_uiodir(idp,dp,off)
 	return (0);
 }
 
-static int
+int
 iso_shipdir(idp)
 	struct isoreaddir *idp;
 {
@@ -501,8 +501,6 @@ iso_shipdir(idp)
 
 /*
  * Vnode op for readdir
- * XXX make sure everything still works now that eofflagp and cookies
- * are no longer args.
  */
 int
 cd9660_readdir(ap)
@@ -530,9 +528,14 @@ cd9660_readdir(ap)
 	ip = VTOI(ap->a_vp);
 	imp = ip->i_mnt;
 
-	MALLOC(idp,struct isoreaddir *,sizeof(*idp),M_TEMP,M_WAITOK);
-	idp->saveent.d_namlen = 0;
-	idp->assocent.d_namlen = 0;
+	MALLOC(idp, struct isoreaddir *, sizeof(*idp), M_TEMP, M_WAITOK);
+	idp->saveent.d_namlen = idp->assocent.d_namlen = 0;
+	/*
+	 * XXX
+	 * Is it worth trying to figure out the type?
+	 */
+	idp->saveent.d_type = idp->assocent.d_type = idp->current.d_type =
+	    DT_UNKNOWN;
 	idp->uio = uio;
 	idp->eofflag = 1;
 	idp->cookies = ap->a_cookies;
@@ -546,8 +549,7 @@ cd9660_readdir(ap)
 			return (error);
 		}
 	}
-
-	endsearch = ip->i_size;
+	endsearch = roundup(ip->i_size, imp->logical_block_size);
 
 	while (idp->curroff < endsearch) {
 		/*
@@ -555,7 +557,6 @@ cd9660_readdir(ap)
 		 * read the next directory block.
 		 * Release previous if it exists.
 		 */
-
 		if (iso_blkoff(imp, idp->curroff) == 0) {
 			if (bp != NULL)
 				brelse(bp);
@@ -566,15 +567,14 @@ cd9660_readdir(ap)
 		/*
 		 * Get pointer to next entry.
 		 */
-
 		ep = (struct iso_directory_record *)
 			(bp->b_data + entryoffsetinblock);
 
 		reclen = isonum_711 (ep->length);
 		if (reclen == 0) {
 			/* skip to next block, if any */
-			idp->curroff = roundup (idp->curroff,
-						imp->logical_block_size);
+			idp->curroff =
+				roundup(idp->curroff, imp->logical_block_size);
 			continue;
 		}
 
@@ -590,12 +590,7 @@ cd9660_readdir(ap)
 			break;
 		}
 
-		idp->current.d_namlen = isonum_711 (ep->name_len);
-		if (isonum_711(ep->flags)&2)
-			isodirino(&idp->current.d_fileno,ep,imp);
-		else
-			idp->current.d_fileno = dbtob(bp->b_blkno) +
-				idp->curroff;
+		idp->current.d_namlen = isonum_711(ep->name_len);
 
 		if (reclen < ISO_DIRECTORY_RECORD_SIZE + idp->current.d_namlen) {
 			error = EINVAL;
@@ -603,10 +598,14 @@ cd9660_readdir(ap)
 			break;
 		}
 
+		if (isonum_711(ep->flags)&2)
+			isodirino(&idp->current.d_fileno,ep,imp);
+		else
+			idp->current.d_fileno = dbtob(bp->b_blkno) +
+				entryoffsetinblock;
+
 		idp->curroff += reclen;
-		/*
-		 *
-		 */
+
 		switch (imp->iso_ftype) {
 		case ISO_FTYPE_RRIP:
 			cd9660_rrip_getname(ep,idp->current.d_name, &elen,
@@ -788,9 +787,42 @@ cd9660_lock(ap)
 		struct vnode *a_vp;
 	} */ *ap;
 {
-	register struct iso_node *ip = VTOI(ap->a_vp);
+	register struct vnode *vp = ap->a_vp;
+	register struct iso_node *ip;
+	struct proc *p = curproc;	/* XXX */
 
-	ISO_ILOCK(ip);
+start:
+	while (vp->v_flag & VXLOCK) {
+		vp->v_flag |= VXWANT;
+		sleep((caddr_t)vp, PINOD);
+	}
+	if (vp->v_tag == VT_NON)
+		return (ENOENT);
+	ip = VTOI(vp);
+	if (ip->i_flag & IN_LOCKED) {
+		ip->i_flag |= IN_WANTED;
+#ifdef DIAGNOSTIC
+		if (p) {
+			if (p->p_pid == ip->i_lockholder)
+				panic("locking against myself");
+			ip->i_lockwaiter = p->p_pid;
+		} else
+			ip->i_lockwaiter = -1;
+#endif
+		(void) sleep((caddr_t)ip, PINOD);
+	}
+#ifdef DIAGNOSTIC
+	ip->i_lockwaiter = 0;
+	if (ip->i_lockholder != 0)
+		panic("lockholder (%d) != 0", ip->i_lockholder);
+	if (p && p->p_pid == 0)
+		printf("locking by process 0\n");
+	if (p)
+		ip->i_lockholder = p->p_pid;
+	else
+		ip->i_lockholder = -1;
+#endif
+	ip->i_flag |= IN_LOCKED;
 	return (0);
 }
 
@@ -804,10 +836,24 @@ cd9660_unlock(ap)
 	} */ *ap;
 {
 	register struct iso_node *ip = VTOI(ap->a_vp);
+	struct proc *p = curproc;	/* XXX */
 
-	if (!(ip->i_flag & ILOCKED))
-		panic("cd9660_unlock NOT LOCKED");
-	ISO_IUNLOCK(ip);
+#ifdef DIAGNOSTIC
+	if ((ip->i_flag & IN_LOCKED) == 0) {
+		vprint("ufs_unlock: unlocked inode", ap->a_vp);
+		panic("ufs_unlock NOT LOCKED");
+	}
+	if (p && p->p_pid != ip->i_lockholder && p->p_pid > -1 &&
+	    ip->i_lockholder > -1/* && lockcount++ < 100*/)
+		panic("unlocker (%d) != lock holder (%d)",
+		    p->p_pid, ip->i_lockholder);
+	ip->i_lockholder = 0;
+#endif
+	ip->i_flag &= ~IN_LOCKED;
+	if (ip->i_flag & IN_WANTED) {
+		ip->i_flag &= ~IN_WANTED;
+		wakeup((caddr_t)ip);
+	}
 	return (0);
 }
 
@@ -821,7 +867,7 @@ cd9660_islocked(ap)
 	} */ *ap;
 {
 
-	if (VTOI(ap->a_vp)->i_flag & ILOCKED)
+	if (VTOI(ap->a_vp)->i_flag & IN_LOCKED)
 		return (1);
 	return (0);
 }
