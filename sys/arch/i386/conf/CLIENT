@@ -1,7 +1,7 @@
 #
 #	CLIENT -- an NFS client machine
 #
-#	$Id: CLIENT,v 1.12 1993/09/13 14:22:47 brezak Exp $
+#	$Id: CLIENT,v 1.13 1994/01/06 12:07:48 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -9,6 +9,7 @@ cpu		"I486_CPU"
 ident		CLIENT
 timezone	8 dst
 maxusers	10
+maxfdescs	2048
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET,NFSCLIENT,MFS
 options		"COMPAT_43"

@@ -1,7 +1,7 @@
 #
 # SCSITEST -- Generic ISA machine -- scsi test kernel -ultrastore 14f adapter
 #
-#	$Id: UHATEST,v 1.15 1993/09/13 14:22:54 brezak Exp $
+#	$Id: UHATEST,v 1.16 1994/01/06 12:07:59 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -9,6 +9,7 @@ cpu		"I486_CPU"
 ident		UHATEST
 timezone	8 dst
 maxusers	10
+maxfdescs	2048
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET,ISOFS,NFSSERVER,NFSCLIENT
 options		"COMPAT_43"
