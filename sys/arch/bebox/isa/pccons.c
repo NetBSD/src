@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.3 1997/12/12 03:08:31 sakamoto Exp $	*/
+/*	$NetBSD: pccons.c,v 1.4 1998/01/12 18:18:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -126,9 +126,7 @@ struct cfattach pc_ca = {
 	sizeof(struct pc_softc), (cfmatch_t)pcprobe, pcattach
 };
 
-struct cfdriver pc_cd = {
-	NULL, "pc", DV_TTY
-};
+extern struct cfdriver pc_cd;
 
 #define	COL		80
 #define	ROW		25

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.2 1997/11/27 10:19:43 sakamoto Exp $	*/
+/*	$NetBSD: joy.c,v 1.3 1998/01/12 18:18:06 thorpej Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -85,10 +85,7 @@ int		joyopen __P((dev_t, int, int, struct proc *));
 int		joyclose __P((dev_t, int, int, struct proc *));
 static int	get_tick __P((void));
 
-struct cfdriver joy_cd = {
-	NULL, "joy", DV_DULL
-};
-
+extern struct cfdriver joy_cd;
 
 void
 joyattach(sc)
