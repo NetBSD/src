@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.19 2002/04/17 15:23:47 drochner Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.19.2.1 2002/05/16 03:54:50 gehenna Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.19 2002/04/17 15:23:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.19.2.1 2002/05/16 03:54:50 gehenna Exp $");
 
 #include "isdn.h"
 
@@ -192,6 +192,13 @@ i4b_drvinit(void *unused)
 SYSINIT(i4bdev,SI_SUB_DRIVERS,SI_ORDER_MIDDLE+CDEV_MAJOR,i4b_drvinit,NULL)
 
 #endif /* BSD > 199306 && defined(__FreeBSD__) */
+
+#ifdef __NetBSD__
+const struct cdevsw isdn_cdevsw = {
+	isdnopen, isdnclose, isdnread, nowrite, isdnioctl,
+	nostop, notty, isdnpoll, nommap,
+};
+#endif /* __NetBSD__ */
 
 #ifdef __bsdi__
 #include <sys/device.h>

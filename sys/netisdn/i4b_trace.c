@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.9 2002/03/24 20:36:03 martin Exp $
+ *	$Id: i4b_trace.c,v 1.9.2.1 2002/05/16 03:54:51 gehenna Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -35,7 +35,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.9 2002/03/24 20:36:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.9.2.1 2002/05/16 03:54:51 gehenna Exp $");
 
 #include "isdntrc.h"
 
@@ -86,6 +86,13 @@ int isdntrcopen __P((dev_t dev, int flag, int fmt, struct proc *p));
 int isdntrcclose __P((dev_t dev, int flag, int fmt, struct proc *p));
 int isdntrcread __P((dev_t dev, struct uio * uio, int ioflag));
 int isdntrcioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+
+#ifdef __NetBSD__
+const struct cdevsw isdntrc_cdevsw = {
+	isdntrcopen, isdntrcclose, isdntrcread, nowrite, isdntrcioctl,
+	nostop, notty, nopoll, nommap,
+};
+#endif /* __NetBSD__ */
 
 /*---------------------------------------------------------------------------*
  *	interface attach routine
