@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.13 1998/08/15 04:49:50 mycroft Exp $ */
+/* $NetBSD: pckbd.c,v 1.14 1998/09/02 20:01:15 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -310,12 +310,17 @@ pckbdattach(parent, self, aux)
 		sc->id = &pckbd_consdata;
 		sc->sc_enabled = 1;
 	} else {
+		u_char cmd[1];
+
 		sc->id = malloc(sizeof(struct pckbd_internal),
 				M_DEVBUF, M_WAITOK);
 		(void) pckbd_init(sc->id, pa->pa_tag, pa->pa_slot, 0);
 
 		/* no interrupts until enabled */
-		pckbd_enable(sc, 0);
+		cmd[0] = KBC_DISABLE;
+		(void) pckbc_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+				      cmd, 1, 0, 0, 0);
+		sc->sc_enabled = 0;
 	}
 
 	sc->id->t_sc = sc;
