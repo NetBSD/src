@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.7 2003/06/13 10:56:41 abs Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.8 2003/10/28 04:59:18 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.7 2003/06/13 10:56:41 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.8 2003/10/28 04:59:18 junyoung Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -157,13 +157,13 @@ enter_s4_with_bios(void)
 	 * write the value to command port and wait until we enter sleep state
 	 */
 	do {
-			AcpiOsStall(1000000);
-			AcpiOsWritePort(AcpiGbl_FADT->SmiCmd,
-					AcpiGbl_FADT->S4BiosReq, 8);
-			status = AcpiGetRegister(ACPI_BITREG_WAKE_STATUS,
-						 &ret, ACPI_MTX_LOCK);
-			if (ACPI_FAILURE(status))
-				break;
+		AcpiOsStall(1000000);
+		AcpiOsWritePort(AcpiGbl_FADT->SmiCmd,
+				AcpiGbl_FADT->S4BiosReq, 8);
+		status = AcpiGetRegister(ACPI_BITREG_WAKE_STATUS,
+					&ret, ACPI_MTX_LOCK);
+		if (ACPI_FAILURE(status))
+			break;
 	} while (!ret);
 
 	AcpiHwEnableNonWakeupGpes();
