@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.64 1998/07/27 11:14:37 mycroft Exp $	*/
+/*	$NetBSD: unistd.h,v 1.65 1998/07/28 00:28:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,9 +92,9 @@
 #endif
 
 __BEGIN_DECLS
-__dead void	 _exit __P((int)) __attribute__((noreturn));
+__dead	 void _exit __P((int)) __attribute__((noreturn));
 int	 access __P((const char *, int));
-unsigned int	 alarm __P((unsigned int));
+unsigned int alarm __P((unsigned int));
 int	 chdir __P((const char *));
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 int	chown __P((const char *, uid_t, gid_t)) __RENAME(__posix_chown);
@@ -205,7 +205,7 @@ int	 rename __P((const char *, const char *)) __RENAME(__posix_rename);
     (_XOPEN_SOURCE - 0) >= 4
 __aconst char *crypt __P((const char *, const char *));
 int	 encrypt __P((char *, int));
-__aconst char *getpass __P((const char *));
+char	*getpass __P((const char *));
 pid_t	 getsid __P((pid_t));
 #endif
 
