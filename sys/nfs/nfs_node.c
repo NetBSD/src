@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.61 2003/02/17 23:48:12 perseant Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.62 2003/04/02 15:14:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.61 2003/02/17 23:48:12 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.62 2003/04/02 15:14:19 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -262,7 +262,7 @@ nfs_inactive(v)
 		FREE(sp, M_NFSREQ);
 	}
 
-	if ((nmp->nm_flag & NFSMNT_NQNFS) && np->n_timer.cqe_next != 0) {
+	if ((nmp->nm_flag & NFSMNT_NQNFS) && CIRCLEQ_NEXT(np, n_timer) != 0) {
 		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 	}
 
