@@ -1,9 +1,9 @@
-/*	$NetBSD: machtype.h,v 1.2 2001/06/14 01:06:08 rafal Exp $	*/
+/*	$NetBSD: machtype.h,v 1.3 2002/03/13 13:12:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -34,7 +34,7 @@
  * SGI machine types and known subtypes.  Info cribbed from ../README.IPn
  */
 #define MACH_SGI_IP2		2	/* IRIS 3000 */
-#define MACH_SGI_IP4		4  	/* Generic 4D/50-85 */
+#define MACH_SGI_IP4		4	/* Generic 4D/50-85 */
 #define MACH_SGI_IP5		5	/* 4D/1x0 */
 #define MACH_SGI_IP6		6	/* 4D/20 */
 #define MACH_SGI_IP7		7	/* 4D/2x0, 4D/3x0, 4D/4x0 */
@@ -55,7 +55,7 @@
 #define MACH_SGI_IP35		35	/* SN1 (?) */
 
 /*
- * SGI machine subtypes 
+ * SGI machine subtypes
  */
 #define MACH_SGI_IP4_4D_50_70		40	/* 4D/50, 4D/70 */
 #define MACH_SGI_IP4_4D_60_80_85	45	/* 4D/60, 4D/80, 4D/85 */

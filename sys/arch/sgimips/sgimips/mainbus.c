@@ -1,9 +1,9 @@
-/*	$NetBSD: mainbus.c,v 1.5 2001/07/09 02:00:19 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 2002/03/13 13:12:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -84,9 +84,9 @@ mainbus_attach(parent, self, aux)
 static int
 mainbus_search(parent, cf, aux)
 	struct device *parent;
-	struct cfdata *cf; 
+	struct cfdata *cf;
 	void *aux;
-{ 
+{
 	struct mainbus_attach_args *ma = aux;
 
 	do {
