@@ -1,4 +1,4 @@
-/* $NetBSD: ahdilabel.c,v 1.3 2001/03/04 20:49:27 jdc Exp $ */
+/* $NetBSD: ahdilabel.c,v 1.4 2001/07/26 22:53:13 wiz Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -174,7 +174,7 @@ main (argc, argv)
 				if (rv == -6)
 					printf ("Partitions overlap!\n");
 				if (rv == -7)
-					printf ("Partition overlaps auxilliary root!\n");
+					printf ("Partition overlaps auxiliary root!\n");
 				if (rv == -8)
 					printf ("More than 4 partitions in root sector!\n");
 				if (rv == -9)

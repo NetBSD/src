@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahdilabel.8,v 1.3 2001/04/21 14:38:53 wiz Exp $
+.\"	$NetBSD: ahdilabel.8,v 1.4 2001/07/26 22:53:13 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -125,12 +125,12 @@ Make this partition extend to the end of the disk.
 .Pp
 The sector holding the primary AHDI partition table only has space for four
 partitions.  Thus, if a disk has more than four partitions, the extra
-partition information is held in auxilliary root sectors.  There is one
-auxilliary root for each additional partition (and also for the fourth
+partition information is held in auxiliary root sectors.  There is one
+auxiliary root for each additional partition (and also for the fourth
 partition, if the disk has more than four partitions).
 .It Ar r
-Recalculate the root sectors.  This will automatically assign auxilliary
-root sectors if the disk has more than 4 partitions.  The auxilliary root
+Recalculate the root sectors.  This will automatically assign auxiliary
+root sectors if the disk has more than 4 partitions.  The auxiliary root
 sectors will be positioned in a default location preceeding the relevant
 partition.
 .It Ar s
@@ -168,7 +168,7 @@ removed.
 .Pp
 Creating an AHDI partition table on a disk that previously did not have
 one will almost certainly overwrite any existing partition information
-and/or data on that disk.  This is especially the case if auxilliary root
+and/or data on that disk.  This is especially the case if auxiliary root
 sectors are needed for the AHDI partition table.
 .Pp
 As soon as a disk contains at least one NBD partition, you are allowed to
