@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.33 1998/07/28 18:37:47 thorpej Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.34 1998/07/31 22:50:48 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -188,7 +188,7 @@ ELFNAME(copyargs)(pack, arginfo, stack, argp)
 	a->au_v = 0;
 	a++;
 
-	len = (a - ai) * sizeof (AuxInfo);
+	len = (a - ai) * sizeof(AuxInfo);
 	if (copyout(ai, stack, len))
 		return NULL;
 	(caddr_t)stack += len;
@@ -543,7 +543,7 @@ ELFNAME2(exec,makecmds)(p, epp)
 	 * interp[] with a changed path (/emul/xxx/<path>), and also
 	 * set the ep_emul field in the exec package structure.
 	 */
-	n = sizeof ELFNAME(probe_funcs) / sizeof ELFNAME(probe_funcs)[0];
+	n = sizeof(ELFNAME(probe_funcs)) / sizeof(ELFNAME(probe_funcs)[0]);
 	if (n != 0) {
 		error = ENOEXEC;
 		for (i = 0; i < n && error; i++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.15 1998/03/01 02:22:35 fvdl Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.16 1998/07/31 22:50:53 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -187,8 +187,8 @@ cache_enter(dvp, vp, cnp)
 	 */
 	if (numcache < desiredvnodes) {
 		ncp = (struct namecache *)
-			malloc((u_long)sizeof *ncp, M_CACHE, M_WAITOK);
-		bzero((char *)ncp, sizeof *ncp);
+			malloc((u_long)sizeof(*ncp), M_CACHE, M_WAITOK);
+		bzero((char *)ncp, sizeof(*ncp));
 		numcache++;
 	} else if ((ncp = nclruhead.tqh_first) != NULL) {
 		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
