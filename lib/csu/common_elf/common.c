@@ -1,4 +1,4 @@
-/* $NetBSD: common.c,v 1.14 2003/11/28 23:25:54 fvdl Exp $ */
+/* $NetBSD: common.c,v 1.15 2004/08/26 20:57:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -39,8 +39,7 @@
  */
 
 static char *
-_strrchr(p, ch)
-char *p, ch;
+_strrchr(char *p, char ch)
 {
 	char *save;
 
@@ -50,7 +49,7 @@ char *p, ch;
 		if (!*p)
 			return(save);
 	}
-/* NOTREACHED */
+	/* NOTREACHED */
 }
 
 #ifdef MCRT0
@@ -64,9 +63,7 @@ asm ("_eprol:");
 #ifdef DYNAMIC
 
 void
-_rtld_setup(cleanup, obj)
-	void (*cleanup) __P((void));
-	const Obj_Entry *obj;
+_rtld_setup(void (*cleanup)(void), const Obj_Entry *obj)
 {
 
 	if ((obj == NULL) || (obj->magic != RTLD_MAGIC))
