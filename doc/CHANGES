@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.135 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.136 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -144,11 +144,11 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[augustss 20021008]
 	tar(1): upgrade to GNU tar 1.13.25 for security fixes
 		[itojun 20021010]
-	Allow pseudo-devices to be parents of "real" devices.
+	config(9): Allow pseudo-devices to be parents of "real" devices.
 		[thorpej 20021009]
-	Allow options to register dependencies on attributes (the way it already
-		can for other options).  [thorpej 20021010]
-	Allow devices to be orphaned in the kernel config file, but
+	config(9): Allow options to register dependencies on attributes
+		(the way it already can for other options).  [thorpej 20021010]
+	config(9): Allow devices to be orphaned in the kernel config file, but
 		emit an informational message when this happens.
 		[thorpej 20021010]
 	tar(1), cpio(1): We are now using pax(1) for those instead of
@@ -270,7 +270,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	arc: Add support for the Cirrus Logic GD5428 ISA VGA console on
 		Express5800/240 R4400 EISA (NEC-J96A) and RISCserver2200
 		(NEC-R96).  [tsutsui 20030131]
-	Add extensible kernel malloc types, adapted from FreeBSD.
+	malloc(9): Add extensible kernel malloc types, adapted from FreeBSD.
 		[thorpej 20030131]
 	kernel: Added a sysctl(8) flag to control whether the kernel dumps
 		to the dump device on panic.  [atatat 20030210]
@@ -280,7 +280,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		from check_passwd and check_mtree.  [jhawk 20030213]
 	grep(1): upgraded to 2.5.1.  [wiz 20030213]
 	texinfo(1): upgraded to 4.5.  [wiz 20030213]
-	usb: add uax(4), a driver for the AX88172 Ethernet adapter chip.
+	usb(4): add uax(4), a driver for the AX88172 Ethernet adapter chip.
 		The chip supports 10/100 and USB 2.0.  [augustss 20030216]
 	bridge(4), brconfig(8): add ipf support.  [perseant 20030216]
 	kernel: SMBFS support, ported from FreeBSD.  [jdolecek 20030218]
@@ -315,20 +315,20 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	kernel: Use common code for set{u,g}id functions. [dsl 20030305]
 	sysctl: Make hw.physmem and hw.usermem saturate if they are used
 		on a system with >=4G RAM.  [thorpej 20030306]
-	postfix: update to 2.0.6 [perry 20030308]
+	postfix(1): update to 2.0.6 [perry 20030308]
 	kernel: let LFS use the UBC system natively.  This should provide
 		complete coherency between mmap(2) and read(2)/write(2) on
 		LFS, in addition to allowing it to use much more memory for
 		its buffers.  [perseant 20030308]
-	amd: update to 6.1b2 [christos 20030309]
+	am-utils: update to 6.1b2 [christos 20030309]
 	evbppc: Add support for the NCD Explora451 ThinClient.
 		[hannken 20030311]
 	kernel: New pid allocator - avoids all the searching in pfind() etc.
 		Bump version to 1.6Q.  [dsl 20030319]
-	pciide: Add support for the Intel i31244 and Silicon Image 3112
+	pciide(4): Add support for the Intel i31244 and Silicon Image 3112
 		Serial ATA controllers.  [thorpej 20030319]
 	sparc64: Add support for PCI-CardBus bridge.  [nakayama 20030322]
-	pppoectl: Add a "-f configfile" option.  [mrg 20030322]
+	pppoectl(8): Add a "-f configfile" option.  [mrg 20030322]
 	sendmail(8): update to 8.12.8.  [atatat 20030324]
 	vax: Add device driver for RX01/RX02 floppies (rfc/rf).
 		From Jochen Kunz. [ragge 20030323]
@@ -343,7 +343,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		is now used to notify operators.  [lukem 20030327]
 	vnd(4), vnconfig(8): add read-only configuration support.
 		[yamt 20030327]
-	Move default cron log from /var/cron/log to /var/log/cron
+	cron(8): Move default cron log from /var/cron/log to /var/log/cron
 		[perry 20030402]
 	kernel and userland: UFS2 support from Kirk McKusick via FreeBSD.
 		[fvdl 20030402]
