@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.33 1996/05/31 00:03:05 mrg Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.34 1996/08/14 05:43:19 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -500,7 +500,7 @@ lkmenodev()
 
 /*
  * A placeholder function for load/unload/stat calls; simply returns zero.
- * Used where people don't wnat tp specify a special function.
+ * Used where people don't want to specify a special function.
  */
 int
 lkm_nofunc(lkmtp, cmd)
