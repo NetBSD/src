@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 1997/02/13 22:16:53 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 1997/02/14 20:09:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -788,103 +788,7 @@ straytrap(frame)
 /* peek_byte(), peek_word() moved to autoconf.c */
 
 /* XXX: parityenable() ? */
-
-static void dumpmem __P((int *, int, int));
-static char *hexstr __P((int, int));
-
-/*
- * Print a register and stack dump.
- */
-void
-regdump(tf, sbytes)
-	struct trapframe *tf; /* must not be register */
-	int sbytes;
-{
-	static int doingdump = 0;
-	register int i;
-	int s;
-
-	if (doingdump)
-		return;
-	s = splhigh();
-	doingdump = 1;
-	printf("pid = %d, pc = %s, ",
-	       curproc ? curproc->p_pid : -1, hexstr(tf->tf_pc, 8));
-	printf("ps = %s, ", hexstr(tf->tf_sr, 4));
-	printf("sfc = %s, ", hexstr(getsfc(), 4));
-	printf("dfc = %s\n", hexstr(getdfc(), 4));
-	printf("Registers:\n     ");
-	for (i = 0; i < 8; i++)
-		printf("        %d", i);
-	printf("\ndreg:");
-	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(tf->tf_regs[i], 8));
-	printf("\nareg:");
-	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(tf->tf_regs[i+8], 8));
-	if (sbytes > 0) {
-		if (tf->tf_sr & PSL_S) {
-			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&tf)-1), 8));
-			dumpmem(((int *)&tf)-1, sbytes, 0);
-		} else {
-			printf("\n\nUser stack (%s):", hexstr(tf->tf_regs[SP], 8));
-			dumpmem((int *)tf->tf_regs[SP], sbytes, 1);
-		}
-	}
-	doingdump = 0;
-	splx(s);
-}
-
-#define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
-
-static void
-dumpmem(ptr, sz, ustack)
-	register int *ptr;
-	int sz, ustack;
-{
-	register int i, val;
-
-	for (i = 0; i < sz; i++) {
-		if ((i & 7) == 0)
-			printf("\n%s: ", hexstr((int)ptr, 6));
-		else
-			printf(" ");
-		if (ustack == 1) {
-			if ((val = fuword(ptr++)) == -1)
-				break;
-		} else {
-			if (curproc == 0)
-				break;
-			if (ustack == 0 &&
-			    (ptr < KSADDR || ptr > KSADDR+(NBPG/4-1)))
-				break;
-			val = *ptr++;
-		}
-		printf("%s", hexstr(val, 8));
-	}
-	printf("\n");
-}
-
-static char *
-hexstr(val, len)
-	register int val;
-	int len;
-{
-	static char nbuf[9];
-	register int x, i;
-
-	if (len > 8)
-		return("");
-	nbuf[len] = '\0';
-	for (i = len-1; i >= 0; --i) {
-		x = val & 0xF;
-		/* Isn't this a cool trick? */
-		nbuf[i] = "0123456789ABCDEF"[x];
-		val >>= 4;
-	}
-	return(nbuf);
-}
+/* regdump() moved to regdump.c */
 
 /*
  * cpu_exec_aout_makecmds():
