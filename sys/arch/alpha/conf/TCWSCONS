@@ -1,10 +1,10 @@
-# $NetBSD: TCWSCONS,v 1.12 2000/09/24 15:59:27 jdolecek Exp $
+# $NetBSD: TCWSCONS,v 1.13 2000/10/17 08:58:42 nisimura Exp $
 #
 # TURBOchannel Alpha DEC3000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.12 $"
+#ident 		"GENERIC-$Revision: 1.13 $"
 
 maxusers 32
 
@@ -133,9 +133,9 @@ le*	at	tc? slot ? offset ?
 fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
 options 	NEW_SCC_DRIVER
-zstty*	at	zsc? channel 1			# serial ports on B channels
-lkkbd0	at	zsc1 channel 0			# keyboard port on A channels
-vsms0	at	zsc0 channel 0			# mouse port on A channels
+zstty*	at	zsc? channel ?			# serial ports on B channels
+lkkbd0	at	zsc1 channel ?			# keyboard port on A channels
+vsms0	at	zsc0 channel ?			# mouse port on A channels
 
 # SCSI bus support
 scsibus* at	asc?
