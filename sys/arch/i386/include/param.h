@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.40 2000/02/11 19:25:15 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.40.2.1 2000/02/20 17:42:21 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	2*NBPG		/* default message buffer size */
+#define MSGBUFSIZE	4*NBPG		/* default message buffer size */
 #endif
 
 /*
