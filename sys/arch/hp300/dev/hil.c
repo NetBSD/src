@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.17 1994/10/26 07:24:11 cgd Exp $	*/
+/*	$NetBSD: hil.c,v 1.18 1995/04/10 00:58:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -664,7 +664,7 @@ hpuxhilioctl(dev, cmd, data, flag)
 #endif
 
 /* ARGSUSED */
-hilmap(dev, off, prot)
+hilmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
