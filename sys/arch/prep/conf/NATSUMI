@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.21 2002/09/18 02:44:07 lukem Exp $
+#	$NetBSD: NATSUMI,v 1.22 2003/01/16 06:59:20 matt Exp $
 #
 #	for development
 #
@@ -10,6 +10,7 @@ include "arch/prep/conf/std.prep"
 maxusers	32
 
 # Platform support
+options 	PLATFORM_IBM_6040		# IBM ThinkPad 820
 options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
 options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133
 options 	PLATFORM_IBM_7043_140		# IBM RS/6000 43P 7043-140
