@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.10 1998/10/24 01:36:10 jonathan Exp $	*/
+/*	$NetBSD: trap.h,v 1.11 1999/01/06 04:11:27 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,22 +43,6 @@
  */
 
 /*
- * special trap-handling support
- */
-
-/* Return the resulting PC as if the branch was executed.  */
-extern u_int MachEmulateBranch  __P((u_int* regs, u_int instPC,
-				     u_int fpcCSR, int allowNonBranch));
-
-#ifdef DEBUG
-extern int cpu_singlestep __P((register struct proc *p)); 
-#endif
-#if defined(DEBUG) || defined(DDB)
-extern int kdbpeek __P((vm_offset_t addr));
-#endif
-
-
-/*
  * Trap codes
  * also known in trap.c for name strings
  */
@@ -88,12 +72,10 @@ extern int kdbpeek __P((vm_offset_t addr));
 
 #define	T_USER			0x20	/* user-mode flag or'ed with type */
 
-#ifdef _KERNEL
-extern	int (*mips_hardware_intr) __P((u_int mask, u_int pc, u_int statusReg,
-		u_int causeReg));
-#endif /* _KERNEL */
 
-#ifdef _KERNEL
-extern	int (*mips_hardware_intr) __P((u_int mask, u_int pc, u_int statusReg,
-		u_int causeReg));
-#endif /* _KERNEL */
+#ifdef DEBUG
+extern int cpu_singlestep __P((struct proc *));
+#endif
+#if defined(DEBUG) || defined(DDB)
+extern int kdbpeek __P((vaddr_t addr));
+#endif

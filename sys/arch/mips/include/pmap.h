@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 1998/11/29 03:18:32 jonathan Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 1999/01/06 04:11:25 nisimura Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -66,8 +66,8 @@
  * dynamically allocated at boot time.
  */
 
-#define mips_trunc_seg(x)	((vm_offset_t)(x) & ~SEGOFSET)
-#define mips_round_seg(x)	(((vm_offset_t)(x) + SEGOFSET) & ~SEGOFSET)
+#define mips_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
+#define mips_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
 #define pmap_segmap(m, v)	((m)->pm_segtab->seg_tab[((v) >> SEGSHIFT)])
 
 #define PMAP_SEGTABSIZE		512
@@ -98,7 +98,7 @@ typedef struct pmap {
 typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
+	vaddr_t	pv_va;			/* virtual address for mapping */
 	int		pv_flags;	/* some flags for the mapping */
 } *pv_entry_t;
 
@@ -121,8 +121,8 @@ struct pmap kernel_pmap_store;
  */
 void	pmap_bootstrap __P((void));
 
-void	pmap_set_modified __P((vm_offset_t));
-void	pmap_set_referenced __P((vm_offset_t));
+void	pmap_set_modified __P((paddr_t));
+void	pmap_set_referenced __P((paddr_t));
 
 /*
  * pmap_prefer()  helps reduce virtual-coherency exceptions in
@@ -130,7 +130,7 @@ void	pmap_set_referenced __P((vm_offset_t));
  */
 #ifdef MIPS3
 #define PMAP_PREFER(pa, va)             pmap_prefer((pa), (va))
-void	pmap_prefer __P((vm_offset_t, vm_offset_t *));
+void	pmap_prefer __P((vaddr_t, vaddr_t *));
 #endif /* MIPS3 */
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
@@ -144,9 +144,9 @@ void	pmap_prefer __P((vm_offset_t, vm_offset_t *));
 /*
  * Kernel cache operations for the user-space API 
  */
-int mips_user_cacheflush __P((struct proc *p, vm_offset_t va, int nbytes,
+int mips_user_cacheflush __P((struct proc *p, vaddr_t va, int nbytes,
 	int whichcache));
-int mips_user_cachectl   __P((struct proc *p, vm_offset_t va, int nbytes,
+int mips_user_cachectl   __P((struct proc *p, vaddr_t va, int nbytes,
 	int ctl));
 
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.13 1998/02/25 21:41:56 perry Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.14 1999/01/06 04:11:30 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@ vtrace(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct vtrace_args /* {
+	struct vtrace_args /* {
 		syscallarg(int) request;
 		syscallarg(int) value;
 	} */ *uap = v;
@@ -107,7 +107,7 @@ void
 vdoualarm(arg)
 	int arg;
 {
-	register struct proc *p;
+	struct proc *p;
 
 	p = pfind(arg);
 	if (p)
@@ -162,8 +162,8 @@ sys_sysarch(p, v, retval)
 int
 mips_user_cacheflush(p, va, nbytes, whichcache)
 	struct proc *p;
-	vm_offset_t va;
-	register int nbytes, whichcache;
+	vaddr_t va;
+	int nbytes, whichcache;
 {
 
 	/* validate the cache we're going to  flush. */
@@ -183,7 +183,7 @@ mips_user_cacheflush(p, va, nbytes, whichcache)
 
 #else
 	void * uncached_physaddr;
-	register u_int len;
+	u_int len;
 
 	/*
 	 * Invalidate each page in the virtual-address range,
@@ -209,8 +209,8 @@ mips_user_cacheflush(p, va, nbytes, whichcache)
 int
 mips_user_cachectl(p, va, nbytes, cachectl)
 	struct proc *p;
-	vm_offset_t va;
-	register int nbytes, cachectl;
+	vaddr_t va;
+	int nbytes, cachectl;
 {
 	/* validate the cache we're going to  flush. */
 	switch (cachectl) {
@@ -234,4 +234,3 @@ mips_user_cachectl(p, va, nbytes, cachectl)
 	 */
 #endif
 }
-

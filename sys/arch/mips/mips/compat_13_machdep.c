@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.5 1998/12/03 06:28:46 nisimura Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.6 1999/01/06 04:11:31 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.5 1998/12/03 06:28:46 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6 1999/01/06 04:11:31 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ compat_13_sys_sigreturn(p, v, retval)
 	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
 		return (error);
 
-	if (ksc.sc_regs[ZERO] != 0xACEDBADE)		/* magic number */
+	if ((int)ksc.sc_regs[ZERO] != 0xACEDBADE)	/* magic number */
 		return (EINVAL);
 
 	/* Resture the register context. */
