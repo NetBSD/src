@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.16 1998/05/09 22:47:53 briggs Exp $	*/
+/*	$NetBSD: esp.c,v 1.17 1998/09/05 15:15:35 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -33,7 +33,6 @@
 
 /*
  * Copyright (c) 1994 Peter Galbavy
- * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
