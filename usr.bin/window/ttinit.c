@@ -1,4 +1,4 @@
-/*	$NetBSD: ttinit.c,v 1.7 2003/08/07 11:17:31 agc Exp $	*/
+/*	$NetBSD: ttinit.c,v 1.8 2003/08/13 15:13:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ttinit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttinit.c,v 1.7 2003/08/07 11:17:31 agc Exp $");
+__RCSID("$NetBSD: ttinit.c,v 1.8 2003/08/13 15:13:46 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,8 @@ ttinit(void)
 	 * Set output buffer size to about 1 second of output time.
 	 */
 	i = MIN(wwbaud/10, 512);
+	if (i == 0)
+		i = 512;
 	if ((tt_ob = malloc((unsigned) i)) == 0) {
 		wwerrno = WWE_NOMEM;
 		return -1;
