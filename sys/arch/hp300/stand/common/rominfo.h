@@ -1,4 +1,4 @@
-/*	$NetBSD: rominfo.h,v 1.1 1997/02/04 03:52:49 thorpej Exp $	*/
+/*	$NetBSD: rominfo.h,v 1.2 2001/05/27 05:30:41 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
 struct jmpvec {
 	short op;	/* jmp instruction */
 	long  addr;	/* address */
-};
+} __attribute__((__packed__));
 
 struct rominfo {
 	char p1[0xDC0];
@@ -65,4 +65,4 @@ struct rominfo {
 	char  p6;		/* ??				(FFFFFEDB) */
 	long  msus;		/* ??				(FFFFFEDC) */
 	struct jmpvec jvec[48];	/* jump vectors			(FFFFFEE0) */
-};
+} __attribute__((__packed__));
