@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.1.4.1 1994/07/24 03:17:16 cgd Exp $
+#	$Id: Makefile,v 1.1.4.2 1994/07/24 03:47:33 cgd Exp $
 #
 
 SRCS=kernfsmod.c

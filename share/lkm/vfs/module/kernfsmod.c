@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfsmod.c,v 1.1.4.1 1994/07/24 03:17:24 cgd Exp $
+ *	$Id: kernfsmod.c,v 1.1.4.2 1994/07/24 03:47:36 cgd Exp $
  */
 #define printf I_HATE_ANSI
 #include <stdio.h>
