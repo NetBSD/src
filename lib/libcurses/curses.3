@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.29 2000/06/04 21:07:22 simonb Exp $
+.\"	$NetBSD: curses.3,v 1.30 2001/01/01 10:36:12 simonb Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -106,7 +106,7 @@ and applies this rendition to
 .It clrtoeol()	clear to end of line on
 .Em stdscr
 .It color_content(c, r, g, b)	get rgb values of color
-.It copywin(srcwin,dstwin,sminrow,smincol,dminrow,dmincol,dmaxrow,dmaxcol,overlay)
+.It copywin(srcwin, dstwin, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, overlay)
  Copy rectangle from
 .Em srcwin 
 to 
@@ -169,6 +169,12 @@ relative to
 .It idlok(win,boolf)	set insert/deleteln flags for
 .Em win
 .It inch()	get char at current (y,x) co-ordinates
+.It inchnstr(chstr, n)	get an array of characters from
+.Em stdscr
+.It inchstr(chstr)	get an array of characters from
+.Em stdscr
+.It innstr(str, n)	get a string of characters from
+.Em stdscr
 .It init_color(c, r, g, b)	set rgb values of color
 .It init_pair(p, f, b)	set foreground and background colors of pair
 .It initscr()	initialize screens
@@ -176,6 +182,8 @@ relative to
 .It insdelln(n)	insert/delete n lines on
 .Em stdstr
 .It insertln()	insert a line
+.It instr(str)	get a string of characters from
+.Em stdscr
 .It intrflush(win,boolf)	set flush on interrupt terminal mode
 .It is_linetouched(win, line)	check if line has been modified since
 last refresh.
@@ -331,11 +339,19 @@ on window
 .Em win .
 .It winch(win)	get char at current (y,x) in
 .Em win
+.It winchnstr(win, chstr, n)	get an array of characters from
+.Em win
+.It winchstr(win, chstr)	get an array of characters from
+.Em win
+.It winnstr(win, str, n)	get a string of characters from
+.Em win
 .It winsch(win,c)	insert char into
 .Em win
 .It winsdelln(win,n)	insert/delete n lines on
 .Em win
 .It winsertln(win)	insert line into
+.Em win
+.It winstr(win,str)	get a string of characters from
 .Em win
 .It wmove(win,y,x)	set current (y,x) co-ordinates on
 .Em win
