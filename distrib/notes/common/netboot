@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.4.2.3 2002/06/19 00:56:52 lukem Exp $
+.\"	$NetBSD: netboot,v 1.4.2.4 2002/06/24 04:59:55 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -257,6 +257,7 @@ group {
                 # Name of the bootloader or kernel
                 # to download via tftp.
                 #
+.\}
 .ie \n[macppc] \{\ 
                 filename                "ofwboot.xcf";
 .\}
