@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.49 1999/03/24 05:51:28 mrg Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.50 1999/03/30 12:01:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1456,7 +1456,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 		else
 			vput(nd.ni_dvp);
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (va.va_size != -1) {
+		if (!error && va.va_size != -1) {
 			error = nfsrv_access(vp, VWRITE, cred,
 			    (nd.ni_cnd.cn_flags & RDONLY), procp, 0);
 			if (!error) {
@@ -1467,9 +1467,9 @@ nfsrv_create(nfsd, slp, procp, mrq)
 				error = VOP_SETATTR(vp, &va, cred,
 					 procp);
 			}
-			if (error)
-				vput(vp);
 		}
+		if (error)
+			vput(vp);
 	}
 	if (!error) {
 		memset((caddr_t)fhp, 0, sizeof(nfh));
