@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.3 1996/03/17 01:24:43 thorpej Exp $ */
+/* $NetBSD: if_ea.c,v 1.4 1996/03/27 21:49:26 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -319,6 +319,7 @@ eaattach(parent, self, aux)
 	sc->sc_ih.ih_func = eaintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NET;
+	sc->sc_ih.ih_name = "net: ea";
 
 /* Claim either a network slot interrupt or a podule interrupt */
 
