@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.86 2004/08/21 21:30:29 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.87 2004/09/09 19:35:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -237,7 +237,7 @@ struct scsipi_adapter {
 struct scsipi_bustype {
 	int	bustype_type;		/* symbolic name of type */
 	
-	int	(*bustype_cmd)(struct scsipi_periph *,
+	int	(*bustype_cmd)(struct scsipi_periph *, struct scsipi_xfer *,
 		    struct scsipi_generic *, int, void *, size_t, int,
 		    int, struct buf *, int);
 	int	(*bustype_interpret_sense)(struct scsipi_xfer *);
@@ -626,7 +626,7 @@ struct scsi_quirk_inquiry_pattern {
 
 #ifdef _KERNEL
 void	scsipi_init(void);
-int	scsipi_command(struct scsipi_periph *,
+int	scsipi_command(struct scsipi_periph *, struct scsipi_xfer *,
 	    struct scsipi_generic *, int, u_char *, int,
 	    int, int, struct buf *, int);
 void	scsipi_create_completion_thread(void *);
