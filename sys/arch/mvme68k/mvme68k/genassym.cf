@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 1997/03/13 04:37:20 mycroft Exp $
+#	$NetBSD: genassym.cf,v 1.3 1997/05/13 18:01:11 gwr Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -129,7 +129,7 @@ define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
 # VM structure fields
-define	VM_PMAP			offsetof(struct vmspace, vm_pmap)
+define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
 define	PM_STCHG		offsetof(struct pmap, pm_stchanged)
 
 # interrupt/fault metering

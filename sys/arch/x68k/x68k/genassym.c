@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.6 1997/01/20 15:15:20 oki Exp $	*/
+/*	$NetBSD: genassym.c,v 1.7 1997/05/13 18:01:16 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -149,7 +149,7 @@ main()
 	def("SRUN", SRUN);
 
 	/* VM structure fields */
-	off("VM_PMAP", struct vmspace, vm_pmap);
+	off("VM_PMAP", struct vmspace, vm_map.pmap);
 	off("PM_STCHG", struct pmap, pm_stchanged);
 
 	/* interrupt/fault metering */
