@@ -1,10 +1,10 @@
-# $NetBSD: TCWSCONS,v 1.14 2000/11/19 13:46:29 tsutsui Exp $
+# $NetBSD: TCWSCONS,v 1.15 2000/11/19 14:14:32 tsutsui Exp $
 #
 # TURBOchannel Alpha DEC3000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.14 $"
+#ident 		"GENERIC-$Revision: 1.15 $"
 
 maxusers 32
 
@@ -166,7 +166,5 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	sequencer	1	# MIDI sequencer
-
-# rnd is EXPERIMENTAL
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
