@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.12 2003/03/28 08:09:54 perseant Exp $	 */
+/* $NetBSD: pass5.c,v 1.13 2004/05/14 10:41:12 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ void
 pass5()
 {
 	SEGUSE *su;
-	struct ubuf *bp, *cbp;
+	struct ubuf *bp;
 	int i;
 	unsigned long bb;	/* total number of used blocks (lower bound) */
 	unsigned long ubb;	/* upper bound number of used blocks */
@@ -155,9 +155,7 @@ pass5()
 			sbdirty();
 		}
 	}
-	if (avail != fs->lfs_avail &&
-	    !(fsdirty && (cbp->b_flags & B_DELWRI) && avail +
-	    btofsb(fs, fs->lfs_bsize) != fs->lfs_avail)) {
+	if (avail != fs->lfs_avail) {
 		pwarn("avail given as %d, should be %ld\n", fs->lfs_avail,
 		    avail);
 		if (preen || reply("fix")) {
