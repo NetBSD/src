@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.5 2004/12/19 08:19:25 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.6 2004/12/20 00:16:21 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.5 2004/12/19 08:19:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.6 2004/12/20 00:16:21 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1386,7 +1386,7 @@ rtw_txbufs_release(bus_dma_tag_t dmat, struct ieee80211com *ic,
 	while ((stx = SIMPLEQ_FIRST(&stc->stc_dirtyq)) != NULL) {
 		rtw_txbuf_release(dmat, ic, stx);
 		SIMPLEQ_REMOVE_HEAD(&stc->stc_dirtyq, stx_q);
-		SIMPLEQ_INSERT_HEAD(&stc->stc_dirtyq, stx, stx_q);
+		SIMPLEQ_INSERT_TAIL(&stc->stc_freeq, stx, stx_q);
 	}
 }
 
@@ -1437,6 +1437,8 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txctl_blk *stc,
 		if (stx->stx_last < stx->stx_first)
 			ndesc += htc->htc_ndesc;
 
+		KASSERT(ndesc > 0);
+
 		rtw_txdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap, htc,
 		    stx->stx_first, ndesc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1447,7 +1449,7 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txctl_blk *stc,
 
 		rtw_collect_txpkt(sc, htc, stx, ndesc);
 		SIMPLEQ_REMOVE_HEAD(&stc->stc_dirtyq, stx_q);
-		SIMPLEQ_INSERT_HEAD(&stc->stc_freeq, stx, stx_q);
+		SIMPLEQ_INSERT_TAIL(&stc->stc_freeq, stx, stx_q);
 		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 	}
 	if (stx == NULL)
@@ -2477,6 +2479,9 @@ rtw_start(struct ifnet *ifp)
 
 		SIMPLEQ_REMOVE_HEAD(&stc->stc_freeq, stx_q);
 		SIMPLEQ_INSERT_TAIL(&stc->stc_dirtyq, stx, stx_q);
+
+		stc->stc_tx_timer = 5;
+		ifp->if_timer = 1;
 
 		/* TBD poke just one txmtr? */
 		RTW_WRITE8(&sc->sc_regs, RTW_TPPOLL,
