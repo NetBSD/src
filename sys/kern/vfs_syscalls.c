@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.89 1997/05/08 16:20:12 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.90 1997/05/18 19:56:50 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,6 +61,7 @@
 
 static int change_dir __P((struct nameidata *, struct proc *));
 static int change_owner __P((struct vnode *, uid_t, gid_t, struct proc *));
+static int rename_files __P((const char *, const char *, struct proc *, int));
 
 void checkdirs __P((struct vnode *));
 int dounmount __P((struct mount *, int, struct proc *));
@@ -1775,8 +1776,7 @@ sys_fsync(p, v, retval)
 }
 
 /*
- * Rename files.  Source and destination must either both be directories,
- * or both not be directories.  If target is a directory, it must be empty.
+ * Rename files, (standard) BSD semantics frontend.
  */
 /* ARGSUSED */
 int
@@ -1789,17 +1789,55 @@ sys_rename(p, v, retval)
 		syscallarg(const char *) from;
 		syscallarg(const char *) to;
 	} */ *uap = v;
+
+	return (rename_files(SCARG(uap, from), SCARG(uap, to), p, 0));
+}
+
+/*
+ * Rename files, POSIX semantics frontend.
+ */
+/* ARGSUSED */
+int
+sys_posix_rename(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_posix_rename_args /* {
+		syscallarg(const char *) from;
+		syscallarg(const char *) to;
+	} */ *uap = v;
+
+	return (rename_files(SCARG(uap, from), SCARG(uap, to), p, 1));
+}
+
+/*
+ * Rename files.  Source and destination must either both be directories,
+ * or both not be directories.  If target is a directory, it must be empty.
+ * If `from' and `to' refer to the same object, the value of the `retain'
+ * argument is used to determine whether `from' will be
+ *
+ * (retain == 0)	deleted unless `from' and `to' refer to the same
+ *			object in the file system's name space (BSD).
+ * (retain == 1)	always retained (POSIX).
+ */
+static int
+rename_files(from, to, p, retain)
+	const char *from, *to;
+	struct proc *p;
+	int retain;
+{
 	register struct vnode *tvp, *fvp, *tdvp;
 	struct nameidata fromnd, tond;
 	int error;
 
 	NDINIT(&fromnd, DELETE, WANTPARENT | SAVESTART, UIO_USERSPACE,
-	    SCARG(uap, from), p);
+	    from, p);
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
 	fvp = fromnd.ni_vp;
 	NDINIT(&tond, RENAME, LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART,
-	    UIO_USERSPACE, SCARG(uap, to), p);
+	    UIO_USERSPACE, to, p);
 	if ((error = namei(&tond)) != 0) {
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
@@ -1808,6 +1846,7 @@ sys_rename(p, v, retval)
 	}
 	tdvp = tond.ni_dvp;
 	tvp = tond.ni_vp;
+
 	if (tvp != NULL) {
 		if (fvp->v_type == VDIR && tvp->v_type != VDIR) {
 			error = ENOTDIR;
@@ -1817,18 +1856,24 @@ sys_rename(p, v, retval)
 			goto out;
 		}
 	}
+
 	if (fvp == tdvp)
 		error = EINVAL;
+
 	/*
-	 * If source is the same as the destination (that is the
-	 * same inode number with the same name in the same directory),
-	 * then there is nothing to do.
+	 * Source and destination refer to the same object.
 	 */
-	if (fvp == tvp && fromnd.ni_dvp == tdvp &&
-	    fromnd.ni_cnd.cn_namelen == tond.ni_cnd.cn_namelen &&
-	    !bcmp(fromnd.ni_cnd.cn_nameptr, tond.ni_cnd.cn_nameptr,
-	      fromnd.ni_cnd.cn_namelen))
+	if (fvp == tvp) {
+		if (retain)
+			error = -1;
+		else if (fromnd.ni_dvp == tdvp &&
+		    fromnd.ni_cnd.cn_namelen == tond.ni_cnd.cn_namelen &&
+		    !bcmp(fromnd.ni_cnd.cn_nameptr,
+		          tond.ni_cnd.cn_nameptr,
+		          fromnd.ni_cnd.cn_namelen))
 		error = -1;
+	}
+
 out:
 	if (!error) {
 		VOP_LEASE(tdvp, p, p->p_ucred, LEASE_WRITE);
