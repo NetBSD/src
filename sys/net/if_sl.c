@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.66 2001/01/10 23:29:42 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.67 2001/01/11 21:15:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -362,9 +362,9 @@ sltioctl(tp, cmd, data, flag)
 
 /*
  * Queue a packet.  Start transmission if not active.
- * Compression happens in slstart; if we do it here, IP TOS
+ * Compression happens in slintr(); if we do it here, IP TOS
  * will cause us to not compress "background" packets, because
- * ordering gets trashed.  It can be done for all packets in slstart.
+ * ordering gets trashed.  It can be done for all packets in slintr().
  */
 int
 sloutput(ifp, m, dst, rtp)
@@ -454,221 +454,28 @@ void
 slstart(tp)
 	struct tty *tp;
 {
-	struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
-	struct mbuf *m;
-	u_char *cp;
-	struct ip *ip;
 	int s;
-	struct mbuf *m2;
-#if NBPFILTER > 0
-	u_char *bpfbuf;
-	int len = 0;
-#endif
-#ifndef __NetBSD__					/* XXX - cgd */
-	extern int cfreecount;
-#endif
-#if NBPFILTER > 0
-	MALLOC(bpfbuf, u_char *, SLMAX + SLIP_HDRLEN, M_DEVBUF, M_NOWAIT);
-#endif
 
-	for (;;) {
-		/*
-		 * If there is more in the output queue, just send it now.
-		 * We are being called in lieu of ttstart and must do what
-		 * it would.
-		 */
-		if (tp->t_outq.c_cc != 0) {
-			(*tp->t_oproc)(tp);
-			if (tp->t_outq.c_cc > SLIP_HIWAT) {
-#if NBPFILTER > 0
-				if (bpfbuf != NULL) FREE(bpfbuf, M_DEVBUF);
-#endif
-				return;
-			}
-		}
-		/*
-		 * This happens briefly when the line shuts down.
-		 */
-		if (sc == NULL) {
-#if NBPFILTER > 0
-			if (bpfbuf != NULL) FREE(bpfbuf, M_DEVBUF);
-#endif
+	/*
+	 * If there is more in the output queue, just send it now.
+	 * We are being called in lieu of ttstart and must do what
+	 * it would.
+	 */
+	if (tp->t_outq.c_cc != 0) {
+		(*tp->t_oproc)(tp);
+		if (tp->t_outq.c_cc > SLIP_HIWAT)
 			return;
-		}
-
-#ifdef __NetBSD__					/* XXX - cgd */
-		/*
-		 * Do not remove the packet from the IP queue if it
-		 * doesn't look like the packet will fit into the
-		 * current serial output queue, with a packet full of
-		 * escapes this could be as bad as MTU*2+2.
-		 */
-		if (tp->t_outq.c_cn - tp->t_outq.c_cc < 2*sc->sc_if.if_mtu+2) {
-#if NBPFILTER > 0
-			if (bpfbuf != NULL) FREE(bpfbuf, M_DEVBUF);
-#endif
-			return;
-		}
-#endif /* __NetBSD__ */
-
-		/*
-		 * Get a packet and send it to the interface.
-		 */
-		s = splimp();
-		IF_DEQUEUE(&sc->sc_fastq, m);
-		if (m)
-			sc->sc_if.if_omcasts++;		/* XXX */
-		else
-			IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
-		splx(s);
-		if (m == NULL) {
-#if NBPFILTER > 0
-			if (bpfbuf != NULL) FREE(bpfbuf, M_DEVBUF);
-#endif
-			return;
-		}
-
-		/*
-		 * We do the header compression here rather than in sloutput
-		 * because the packets will be out of order if we are using TOS
-		 * queueing, and the connection id compression will get
-		 * munged when this happens.
-		 */
-#if NBPFILTER > 0
-		if (sc->sc_if.if_bpf && bpfbuf != NULL) {
-			/*
-			 * We need to save the TCP/IP header before it's
-			 * compressed.  To avoid complicated code, we just
-			 * copy the entire packet into a stack buffer (since
-			 * this is a serial line, packets should be short
-			 * and/or the copy should be negligible cost compared
-			 * to the packet transmission time).
-			 */
-			struct mbuf *m1 = m;
-			u_char *cp = bpfbuf + SLIP_HDRLEN;
-
-			len = 0;
-			do {
-				int mlen = m1->m_len;
-
-				bcopy(mtod(m1, caddr_t), cp, mlen);
-				cp += mlen;
-				len += mlen;
-			} while ((m1 = m1->m_next) != NULL);
-		}
-#endif
-		if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
-			if (sc->sc_if.if_flags & SC_COMPRESS)
-				*mtod(m, u_char *) |= sl_compress_tcp(m, ip,
-				    &sc->sc_comp, 1);
-		}
-#if NBPFILTER > 0
-		if (sc->sc_if.if_bpf && bpfbuf != NULL) {
-			/*
-			 * Put the SLIP pseudo-"link header" in place.  The
-			 * compressed header is now at the beginning of the
-			 * mbuf.
-			 */
-			bpfbuf[SLX_DIR] = SLIPDIR_OUT;
-			bcopy(mtod(m, caddr_t), &bpfbuf[SLX_CHDR], CHDR_LEN);
-			bpf_tap(sc->sc_if.if_bpf, bpfbuf, len + SLIP_HDRLEN);
-		}
-#endif
-		sc->sc_if.if_lastchange = time;
-
-#ifndef __NetBSD__					/* XXX - cgd */
-		/*
-		 * If system is getting low on clists, just flush our
-		 * output queue (if the stuff was important, it'll get
-		 * retransmitted).
-		 */
-		if (cfreecount < CLISTRESERVE + SLMTU) {
-			m_freem(m);
-			sc->sc_if.if_collisions++;
-			continue;
-		}
-#endif /* !__NetBSD__ */
-		/*
-		 * The extra FRAME_END will start up a new packet, and thus
-		 * will flush any accumulated garbage.  We do this whenever
-		 * the line may have been idle for some time.
-		 */
-		if (tp->t_outq.c_cc == 0) {
-			++sc->sc_if.if_obytes;
-			(void) putc(FRAME_END, &tp->t_outq);
-		}
-
-		while (m) {
-			u_char *ep;
-
-			cp = mtod(m, u_char *); ep = cp + m->m_len;
-			while (cp < ep) {
-				/*
-				 * Find out how many bytes in the string we can
-				 * handle without doing something special.
-				 */
-				u_char *bp = cp;
-
-				while (cp < ep) {
-					switch (*cp++) {
-					case FRAME_ESCAPE:
-					case FRAME_END:
-						--cp;
-						goto out;
-					}
-				}
-				out:
-				if (cp > bp) {
-					/*
-					 * Put n characters at once
-					 * into the tty output queue.
-					 */
-#ifdef __NetBSD__					/* XXX - cgd */
-					if (b_to_q((u_char *)bp, cp - bp,
-#else
-					if (b_to_q((char *)bp, cp - bp,
-#endif
-					    &tp->t_outq))
-						break;
-					sc->sc_if.if_obytes += cp - bp;
-				}
-				/*
-				 * If there are characters left in the mbuf,
-				 * the first one must be special..
-				 * Put it out in a different form.
-				 */
-				if (cp < ep) {
-					if (putc(FRAME_ESCAPE, &tp->t_outq))
-						break;
-					if (putc(*cp++ == FRAME_ESCAPE ?
-					   TRANS_FRAME_ESCAPE : TRANS_FRAME_END,
-					   &tp->t_outq)) {
-						(void) unputc(&tp->t_outq);
-						break;
-					}
-					sc->sc_if.if_obytes += 2;
-				}
-			}
-			MFREE(m, m2);
-			m = m2;
-		}
-
-		if (putc(FRAME_END, &tp->t_outq)) {
-			/*
-			 * Not enough room.  Remove a char to make room
-			 * and end the packet normally.
-			 * If you get many collisions (more than one or two
-			 * a day) you probably do not have enough clists
-			 * and you should increase "nclist" in param.c.
-			 */
-			(void) unputc(&tp->t_outq);
-			(void) putc(FRAME_END, &tp->t_outq);
-			sc->sc_if.if_collisions++;
-		} else {
-			++sc->sc_if.if_obytes;
-			sc->sc_if.if_opackets++;
-		}
 	}
+
+	/*
+	 * This happens briefly when the line shuts down.
+	 */
+	if (tp->t_sc == NULL)
+		return;
+
+	s = splimp();
+	schednetisr(NETISR_SLIP);
+	splx(s);
 }
 
 /*
@@ -818,6 +625,7 @@ void
 slintr(void)
 {
 	struct sl_softc *sc;
+	struct tty *tp;
 	struct mbuf *m;
 	int i, s, len;
 	u_char *pktstart, c;
@@ -827,6 +635,200 @@ slintr(void)
 
 	for (i = 0; i < NSL; i++) {
 		sc = &sl_softc[i];
+		tp = sc->sc_ttyp;
+
+		if (tp == NULL)
+			continue;
+
+		/*
+		 * Output processing loop.
+		 */
+		for (;;) {
+			struct ip *ip;
+			struct mbuf *m2;
+#if NBPFILTER > 0
+			struct mbuf *bpf_m;
+#endif
+
+			/*
+			 * Do not remove the packet from the queue if it
+			 * doesn't look like it will fit into the current
+			 * serial output queue.  With a packet full of
+			 * escapes, this could be as bad as MTU*2+2.
+			 */
+			s = spltty();
+			if (tp->t_outq.c_cn - tp->t_outq.c_cc <
+			    2*sc->sc_if.if_mtu+2) {
+				splx(s);
+				break;
+			}
+			splx(s);
+
+			/*
+			 * Get a packet and send it to the interface.
+			 */
+			s = splimp();
+			IF_DEQUEUE(&sc->sc_fastq, m);
+			if (m)
+				sc->sc_if.if_omcasts++;	/* XXX */
+			else
+				IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
+			splx(s);
+
+			if (m == NULL)
+				break;
+
+			/*
+			 * We do the header compression here rather than in
+			 * sloutput() because the packets will be out of order
+			 * if we are using TOS queueing, and the connection
+			 * ID compression will get munged when this happens.
+			 */
+#if NBPFILTER > 0
+			if (sc->sc_if.if_bpf) {
+				/*
+				 * We need to save the TCP/IP header before
+				 * it's compressed.  To avoid complicated
+				 * code, we just make a deep copy of the
+				 * entire packet (since this is a serial
+				 * line, packets should be short and/or the
+				 * copy should be negligible cost compared
+				 * to the packet transmission time).
+				 */
+				bpf_m = m_dup(m, 0, M_COPYALL, M_DONTWAIT);
+			} else
+				bpf_m = NULL;
+#endif
+			if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
+				if (sc->sc_if.if_flags & SC_COMPRESS)
+					*mtod(m, u_char *) |=
+					    sl_compress_tcp(m, ip,
+					    &sc->sc_comp, 1);
+			}
+#if NBPFILTER > 0
+			if (sc->sc_if.if_bpf && bpf_m != NULL) {
+				/*
+				 * Put the SLIP pseudo-"link header" in
+				 * place.  The compressed header is now
+				 * at the beginning of the mbuf.
+				 */
+				struct mbuf n;
+				u_char *hp;
+
+				n.m_next = bpf_m;
+				n.m_data = n.m_dat;
+				n.m_len = SLIP_HDRLEN;
+
+				hp = mtod(&n, u_char *);
+
+				hp[SLX_DIR] = SLIPDIR_OUT;
+				memcpy(&hp[SLX_CHDR], mtod(m, caddr_t),
+				    CHDR_LEN);
+
+				s = splnet();
+				bpf_mtap(sc->sc_if.if_bpf, &n);
+				splx(s);
+				m_freem(bpf_m);
+			}
+#endif
+			sc->sc_if.if_lastchange = time;
+
+			s = spltty();
+
+			/*
+			 * The extra FRAME_END will start up a new packet,
+			 * and thus will flush any accumulated garbage.  We
+			 * do this whenever the line may have been idle for
+			 * some time.
+			 */
+			if (tp->t_outq.c_cc == 0) {
+				sc->sc_if.if_obytes++;
+				(void) putc(FRAME_END, &tp->t_outq);
+			}
+
+			while (m) {
+				u_char *bp, *cp, *ep;
+
+				bp = cp = mtod(m, u_char *);
+				ep = cp + m->m_len;
+				while (cp < ep) {
+					/*
+					 * Find out how many bytes in the
+					 * string we can handle without
+					 * doing something special.
+					 */
+					while (cp < ep) {
+						switch (*cp++) {
+						case FRAME_ESCAPE:
+						case FRAME_END:
+							cp--;
+							goto out;
+						}
+					}
+					out:
+					if (cp > bp) {
+						/*
+						 * Put N characters at once
+						 * into the tty output queue.
+						 */
+						if (b_to_q(bp, cp - bp,
+						    &tp->t_outq))
+							break;
+						sc->sc_if.if_obytes += cp - bp;
+					}
+					/*
+					 * If there are characters left in
+					 * the mbuf, the first one must be
+					 * special..  Put it out in a different
+					 * form.
+					 */
+					if (cp < ep) {
+						if (putc(FRAME_ESCAPE,
+						    &tp->t_outq))
+							break;
+						if (putc(*cp++ == FRAME_ESCAPE ?
+						    TRANS_FRAME_ESCAPE :
+						    TRANS_FRAME_END,
+						    &tp->t_outq)) {
+							(void)
+							   unputc(&tp->t_outq);
+							break;
+						}
+						sc->sc_if.if_obytes += 2;
+					}
+				}
+				MFREE(m, m2);
+				m = m2;
+			}
+
+			if (putc(FRAME_END, &tp->t_outq)) {
+				/*
+				 * Not enough room.  Remove a char to make
+				 * room and end the packet normally.  If
+				 * you get many collisions (more than one
+				 * or two a day), you probably do not have
+				 * enough clists and you should increase
+				 * "nclist" in param.c
+				 */
+				(void) unputc(&tp->t_outq);
+				(void) putc(FRAME_END, &tp->t_outq);
+				sc->sc_if.if_collisions++;
+			} else {
+				sc->sc_if.if_obytes++;
+				sc->sc_if.if_opackets++;
+			}
+
+			/*
+			 * We now have characters in the output queue,
+			 * kick the serial port.
+			 */
+			(*tp->t_oproc)(tp);
+			splx(s);
+		}
+
+		/*
+		 * Input processing loop.
+		 */
 		for (;;) {
 			s = spltty();
 			IF_DEQUEUE(&sc->sc_inq, m);
