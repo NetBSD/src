@@ -1,0 +1,52 @@
+# $NetBSD: form,v 1.1 2001/08/02 05:41:19 garbled Exp $
+list:yes,no				Restart sshd now?
+script:script2,AFSTokenPassing		Pass AFS Tokens to server?
+escript:50,script4,AllowGroups		Space separated list of groups to allow
+script:script2,AllowTcpForwarding	TCP forwarding permitted?
+escript:50,script4,AllowUsers		Space separated list of users to allow
+escript:50,script1,AuthorizedKeysFile	File that contains the public RSA keys
+escript:50,script1,Banner		File containing warning banner
+script:script2,ChallengeResponseAuthentication	Challenge response authentication allowed?
+script:script2,CheckMail		Check new mail on login?
+escript:60,script1,Ciphers		Comma separated list of ciphers to use
+escript:4,script1,ClientAliveInterval	Timeout interval in seconds
+escript:4,script1,ClientAliveCountMax	Maximum number of timeouts allowed
+escript:50,script4,DenyGroups		Space separated list of groups to deny
+escript:50,script4,DenyUsers		Space separated list of users to deny
+script:script2,GatewayPorts		Allow hosts to connect to forwarded ports
+script:script2,HostbasedAuthentication	Allow rhosts authentication?
+escript:50,script3,HostKey,1		RSA1 host key file
+escript:50,script3,HostKey,2		RSA V2 host key file
+escript:50,script3,HostKey,3		DSA host key file
+script:script2,IgnoreRhosts		Ignore .rhosts and .shosts files?
+script:script2,IgnoreUserKnownHosts	Ignore user's known_hosts file?
+script:script2,KeepAlive		Send keepalive messages?
+script:script2,KerberosAuthentication	Allow kerberos authentication?
+script:script2,KerberosOrLocalPasswd	Allow passwd auth if kerb. fails?
+script:script2,KerberosTgtPassing	Forward kerberos tickets to server?
+script:script2,KerberosTicketCleanup	Destroy user's ticket on logout?
+escript:6,script1,KeyRegenerationInterval	Key regeneration frequency in seconds
+escript:6,script1,LoginGraceTime	Grace time before disconnect during login
+script:script5,LogLevel			Verbosity of logging
+escript:60,script1,MACs			Comma separated list of MACs to use
+escript:8,script1,MaxStartups		Max. number of unauth. conn. to sshd
+script:script2,PasswordAuthentication	Password authentication allowed?
+script:script2,PermitEmptyPasswords	Permit empty passwords on login?
+script:script2,PermitRootLogin		Permit root logins?
+escript:50,script1,PidFile		File that contains the PID of sshd
+escript:5,script1,Port			Port for sshd to listen on
+script:script2,PrintLastLog		Print last time user logged on?
+script:script2,PrintMotd		Print /etc/motd at login?
+escript:5,script1,Protocol		Comma separated list of protocols to support
+script:script2,PubkeyAuthentication	Allow public key authentication?
+script:script2,ReverseMappingCheck	Perform reverse DNS map verification?
+script:script2,RhostsAuthentication	Allow .rhosts authentication?
+script:script2,RhostsRSAAuthentication	Allow .rhosts auth. with RSA?
+script:script2,RSAAuthentication	Allow pure RSA authentication?
+escript:5,script1,ServerKeyBits		Bits to use in the V1 server key
+script:script2,StrictModes		Strict file permission checking?
+script:script6,SyslogFacility		Facility to log messages via
+script:script2,UseLogin			Use login(1) for login sessions
+escript:5,script1,X11DisplayOffset	Offset for X11 forwarding
+script:script2,X11Forwarding		Allow X11 forwarding?
+escript:50,script1,XAuthLocation	Location of xauth(1) program
