@@ -551,6 +551,7 @@ int warn_nested_externs = 0;
 /* Warn about *printf or *scanf format/argument anomalies.  */
 
 int warn_format;
+int warn_format_y2k;
 
 /* Warn about a subscript that has type char.  */
 
@@ -753,9 +754,11 @@ c_decode_option (argc, argv)
   else if (!strcmp (p, "-Wno-traditional"))
     warn_traditional = 0;
   else if (!strcmp (p, "-Wformat"))
-    warn_format = 1;
+    warn_format = warn_format_y2k = 1;
   else if (!strcmp (p, "-Wno-format"))
-    warn_format = 0;
+    warn_format = warn_format_y2k = 0;
+  else if (!strcmp (p, "-Wno-format-y2k"))
+    warn_format_y2k = 0;
   else if (!strcmp (p, "-Wchar-subscripts"))
     warn_char_subscripts = 1;
   else if (!strcmp (p, "-Wno-char-subscripts"))
@@ -826,7 +829,7 @@ c_decode_option (argc, argv)
       warn_return_type = 1;
       warn_unused = 1;
       warn_switch = 1;
-      warn_format = 1;
+      warn_format = warn_format_y2k = 1;
       warn_char_subscripts = 1;
       warn_parentheses = 1;
       warn_missing_braces = 1;
