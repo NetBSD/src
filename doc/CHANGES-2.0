@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.80 2004/04/11 04:03:52 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.81 2004/04/11 11:27:45 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -802,3 +802,38 @@ sys/arch/sgimips/sgimips/machdep.c		1.82
 
 	Tidy up total/avail memory message as well as other ports.
 	[tsutsui, ticket #122]
+
+sys/dev/raidframe/rf_aselect.c			1.20
+sys/dev/raidframe/rf_dag.h			1.16
+sys/dev/raidframe/rf_dagdegwr.c			1.24
+sys/dev/raidframe/rf_dagffwr.c			1.27
+sys/dev/raidframe/rf_dagutils.c			1.44
+sys/dev/raidframe/rf_dagutils.h			1.17
+sys/dev/raidframe/rf_desc.h			1.13
+sys/dev/raidframe/rf_driver.c			1.99
+sys/dev/raidframe/rf_netbsd.h			1.20
+sys/dev/raidframe/rf_raid.h			1.33
+
+	These changes complete the effective removal of malloc() from all
+	write paths within RAIDframe.  They also resolve the "panics with
+	RAID 5 sets with more than 3 components" issue which was present
+	(briefly) in the commits which were previously supposed to address
+	the malloc() issue. With this new code the 5-component RAID 5 set
+	panics are now gone. It is also now also possible to swap to RAID 5.
+	Fixes PR#20191
+	[oster, ticket #123]
+
+sys/dev/raidframe/rf_driver.c			1.100
+
+	Allocating emergency buffer space is all fine and well, but one should
+	really remember to return the memory when unconfiguring the array.
+	Same thing goes	for the pool elements used to build the list!
+	[oster, ticket #124]
+
+lib/libc/gen/sysctl.c				1.25
+
+	Avoid using preprocessing conditionals in a macro argument list at
+	least as long as all ports have not yet been converted to using
+	gcc 3.3.3.
+	[he, ticket #128]
+
