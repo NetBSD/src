@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.65 2002/07/01 16:16:37 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.66 2002/10/22 00:01:56 fair Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.65 2002/07/01 16:16:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.66 2002/10/22 00:01:56 fair Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -382,7 +382,7 @@ ex_config(sc)
 	sc->ex_mii.mii_readreg = ex_mii_readreg;
 	sc->ex_mii.mii_writereg = ex_mii_writereg;
 	sc->ex_mii.mii_statchg = ex_mii_statchg;
-	ifmedia_init(&sc->ex_mii.mii_media, 0, ex_media_chg,
+	ifmedia_init(&sc->ex_mii.mii_media, IFM_IMASK, ex_media_chg,
 	    ex_media_stat);
 
 	if (sc->ex_conf & EX_CONF_MII) {

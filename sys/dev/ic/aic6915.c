@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.6 2002/05/03 00:04:07 thorpej Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.7 2002/10/22 00:01:55 fair Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.6 2002/05/03 00:04:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.7 2002/10/22 00:01:55 fair Exp $");
 
 #include "bpfilter.h"
 
@@ -273,7 +273,7 @@ sf_attach(struct sf_softc *sc)
 	sc->sc_mii.mii_readreg = sf_mii_read;
 	sc->sc_mii.mii_writereg = sf_mii_write;
 	sc->sc_mii.mii_statchg = sf_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, sf_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, sf_mediachange,
 	    sf_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);

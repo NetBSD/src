@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.66 2002/06/06 17:20:50 he Exp $	*/
+/*	$NetBSD: i82557.c,v 1.67 2002/10/22 00:01:56 fair Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.66 2002/06/06 17:20:50 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.67 2002/10/22 00:01:56 fair Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -457,7 +457,7 @@ fxp_mii_initmedia(struct fxp_softc *sc)
 	sc->sc_mii.mii_readreg = fxp_mdi_read;
 	sc->sc_mii.mii_writereg = fxp_mdi_write;
 	sc->sc_mii.mii_statchg = fxp_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_mii_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, fxp_mii_mediachange,
 	    fxp_mii_mediastatus);
 
 	flags = MIIF_NOISOLATE;

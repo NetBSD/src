@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.49 2001/11/13 13:14:44 lukem Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.50 2002/10/22 00:01:57 fair Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.49 2001/11/13 13:14:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.50 2002/10/22 00:01:57 fair Exp $");
 
 #include "bpfilter.h"
 
@@ -235,7 +235,7 @@ epic_attach(sc)
 	sc->sc_mii.mii_readreg = epic_mii_read;
 	sc->sc_mii.mii_writereg = epic_mii_write;
 	sc->sc_mii.mii_statchg = epic_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, epic_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, epic_mediachange,
 	    epic_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, miiflags);
