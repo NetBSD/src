@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.45 2003/07/15 02:59:31 lukem Exp $	*/
+/*	$NetBSD: esp.c,v 1.46 2003/09/27 20:16:59 cl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.45 2003/07/15 02:59:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.46 2003/09/27 20:16:59 cl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -591,12 +591,8 @@ esp_dma_intr(sc)
 				ndidx = stat->nd_idx;
 				splx(s);
 
-				goto loop;
-
-			loop:
 			}
-			goto out;
-		out:
+		out: ;
 
 #ifdef ESP_DEBUG
 /* 			esp_dma_nest--; */
