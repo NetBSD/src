@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.7.2.1 1995/11/10 19:29:54 chopps Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.7.2.2 1996/03/04 18:32:00 is Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -273,10 +273,7 @@ ul_load_code(gp)
 
 	/* font info was uploaded in ite_ul.c(ite_ulinit). */
 
-	/* unflush cache, unhalt cpu -> nmi starts to run */
-	ba->ctrl &= ~(HLT|CF);	
-
-#if 0
+#if 1
 	/* XXX load image palette with some initial values, slightly hacky */
 
 	ba->hstadrh = 0xfe80;
@@ -293,16 +290,49 @@ ul_load_code(gp)
 
 	/* 
 	 * XXX load shadow overlay palette with what the TMS code will load 
-	 * into the real one some time after the TMS code is started above. 
-	 * This is a rude hack.
+	 * into the real one some time after the TMS code is started below. 
+	 * This might be considered a rude hack.
 	 */ 
 	bcopy(ul_ovl_palette, gup->gus_ovcmap, 3*4);
+
+	/* 
+	 * Unflush cache, unhalt cpu -> nmi starts to run. This MUST NOT BE 
+	 * DONE before the image color map initialization above, to guarantee
+	 * the index register in the bt478 is not used by more than one CPU
+	 * at once.
+	 *
+	 * XXX For the same reason, we'll have to rething ul_putcmap(). For
+	 * details, look at comment there.
+	 */
+	ba->ctrl &= ~(HLT|CF);	
+
 #else
-	/* XXX This version will work for the overlay, if our queue codes 
+	/*
+	 * XXX I wonder why this partially ever worked. 
+	 *
+	 * This can't possibly work this way, as we are copyin()ing data in
+	 * ul_putcmap.
+	 *
+	 * I guess this partially worked because SFC happened to point to 
+	 * to supervisor data space on 68030 machines coming from the old 
+	 * boot loader.
+	 *
+	 * While this looks more correct than the hack in the other part of the
+	 * loop, we would have to do our own version of the loop through 
+	 * colormap entries, set up command buffer, and call gsp_write(), or
+	 * factor out some code.
+	 */
+
+	/*
+	 * XXX This version will work for the overlay, if our queue codes 
 	 * initial conditions are set at load time (not start time).
 	 * It further assumes that ul_putcmap only uses the 
 	 * GRFIMDEV/GRFOVDEV bits of the dev parameter.
 	 */
+
+
+	/* unflush cache, unhalt cpu first -> nmi starts to run */
+	ba->ctrl &= ~(HLT|CF);	
 
 	gcm.index = 0;
 	gcm.count = 16;
@@ -440,7 +470,7 @@ grfulmatch(pdp, cfp, auxp)
 #ifdef ULOWELLCONSOLE
 	if (amiga_realconfig == 0 || ulconunit != cfp->cf_unit) {
 #endif
-		if ((unsigned)ulowell_default_mon >= ulowell_mon_max)
+		if ((unsigned)ulowell_default_mon > ulowell_mon_max)
 			ulowell_default_mon = 1;
 
 		current_mon = ul_monitor_defs + ulowell_default_mon - 1;
