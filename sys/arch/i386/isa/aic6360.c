@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.16 1994/11/29 20:08:27 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.17 1994/11/29 20:57:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -2151,9 +2151,9 @@ aicintr(aic)
 			 */
 			if (aic->state == AIC_SELECTING) {
 				AIC_MISC(("backoff selector  "));
+				aic->nexus = NULL;
 				TAILQ_INSERT_HEAD(&aic->ready_list, aic->nexus,
 				    chain);
-				aic->nexus = NULL;
 			}
 
 			/*
@@ -2322,7 +2322,8 @@ aicintr(aic)
 #if AIC_DEBUG
 			if ((aic_debug & AIC_SHOWMISC) != 0) {
 				acb = aic->nexus;
-				printf("cmd=0x%02x+%d  ", acb->cmd.opcode, acb->clen-1);
+				printf("cmd=0x%02x+%d  ",
+				    acb->cmd.opcode, acb->clen-1);
 			}
 #endif
 			n = aic_dataout_pio(aic, aic->cp, aic->cleft);
