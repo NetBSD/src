@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.42 1996/09/20 22:38:37 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.43 1996/10/10 19:58:23 christos Exp $	*/
 
 /**************************************************************************
 **
@@ -265,7 +265,7 @@ extern PRINT_ADDR();
 #undef assert
 #define	assert(expression) { \
 	if (!(expression)) { \
-		(void)printf(\
+		(void)kprintf(\
 			"assertion \"%s\" failed: file \"%s\", line %d\n", \
 			#expression, \
 			__FILE__, __LINE__); \
@@ -1332,7 +1332,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.42 1996/09/20 22:38:37 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.43 1996/10/10 19:58:23 christos Exp $\n";
 #endif
 
 u_long	ncr_version = NCR_VERSION	* 11
@@ -1430,7 +1430,7 @@ struct scsi_device ncr_dev =
 static char *ncr_name (ncb_p np)
 {
 	static char name[10];
-	sprintf(name, "ncr%d", np->unit);
+	ksprintf(name, "ncr%d", np->unit);
 	return (name);
 }
 #endif
@@ -3111,13 +3111,13 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 		*/
 
 		if (opcode == 0) {
-			printf ("%s: ERROR0 IN SCRIPT at %d.\n",
+			kprintf ("%s: ERROR0 IN SCRIPT at %d.\n",
 				ncr_name(np), src-start-1);
 			DELAY (1000000);
 		};
 
 		if (DEBUG_FLAGS & DEBUG_SCRIPT)
-			printf ("%p:  <%x>\n", (src-1), (unsigned)opcode);
+			kprintf ("%p:  <%x>\n", (src-1), (unsigned)opcode);
 
 		/*
 		**	We don't have to decode ALL commands
@@ -3136,7 +3136,7 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 			if ((tmp2 & RELOC_MASK) == RELOC_KVAR)
 				tmp2 = 0;
 			if ((tmp1 ^ tmp2) & 3) {
-				printf ("%s: ERROR1 IN SCRIPT at %d.\n",
+				kprintf ("%s: ERROR1 IN SCRIPT at %d.\n",
 					ncr_name(np), src-start-1);
 				DELAY (1000000);
 			};
@@ -3357,28 +3357,28 @@ ncr_attach(parent, self, aux)
 	const char *intrstr;
 	ncb_p np = (void *)self;
 
-	printf(": NCR ");
+	kprintf(": NCR ");
 	switch (pa->pa_id) {
 	case NCR_810_ID:
-		printf("53c810");
+		kprintf("53c810");
 		break;
 	case NCR_810AP_ID:
-		printf("53c810ap");
+		kprintf("53c810ap");
 		break;
 	case NCR_815_ID:
-		printf("53c815");
+		kprintf("53c815");
 		break;
 	case NCR_825_ID:
-		printf("53c825 Wide");
+		kprintf("53c825 Wide");
 		break;
 	case NCR_860_ID:
-		printf("53c860");
+		kprintf("53c860");
 		break;
 	case NCR_875_ID:
-		printf("53c875 Wide");
+		kprintf("53c875 Wide");
 		break;
 	}
-	printf(" SCSI\n");
+	kprintf(" SCSI\n");
 
 	np->sc_bc = bc;
 	np->sc_pc = pc;
@@ -3391,14 +3391,14 @@ ncr_attach(parent, self, aux)
 	retval = pci_mem_find(pc, pa->pa_tag, 0x14, &np->paddr,
 	    &memsize, &cacheable);
 	if (retval) {
-		printf("%s: couldn't find memory region\n", self->dv_xname);
+		kprintf("%s: couldn't find memory region\n", self->dv_xname);
 		return;
 	}
 
 	/* Map the memory.  Note that we never want it to be cacheable. */
 	retval = bus_mem_map(pa->pa_bc, np->paddr, memsize, 0, &np->sc_memh);
 	if (retval) {
-		printf("%s: couldn't map memory region\n", self->dv_xname);
+		kprintf("%s: couldn't map memory region\n", self->dv_xname);
 		return;
 	}
 
@@ -3408,21 +3408,21 @@ ncr_attach(parent, self, aux)
 	retval = pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &intrhandle);
 	if (retval) {
-		printf("%s: couldn't map interrupt\n", self->dv_xname);
+		kprintf("%s: couldn't map interrupt\n", self->dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, intrhandle);
 	np->sc_ih = pci_intr_establish(pc, intrhandle, IPL_BIO,
 	    ncr_intr, np);
 	if (np->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", self->dv_xname);
+		kprintf("%s: couldn't establish interrupt", self->dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			kprintf(" at %s", intrstr);
+		kprintf("\n");
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
+		kprintf("%s: interrupting at %s\n", self->dv_xname, intrstr);
 
 #else /* !__NetBSD__ */
 
@@ -3548,9 +3548,9 @@ static	void ncr_attach (pcici_t config_id, int unit)
 		u_long config_id = pa->pa_tag;
 #endif /* __NetBSD__ */
 		for (reg=0; reg<256; reg+=4) {
-			if (reg%16==0) printf ("reg[%2x]", reg);
-			printf (" %08x", (int)pci_conf_read (config_id, reg));
-			if (reg%16==12) printf ("\n");
+			if (reg%16==0) kprintf ("reg[%2x]", reg);
+			kprintf (" %08x", (int)pci_conf_read (config_id, reg));
+			if (reg%16==12) kprintf ("\n");
 		}
 	}
 
@@ -3569,7 +3569,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	*/
 
 	if (ncr_snooptest (np)) {
-		printf ("CACHE INCORRECTLY CONFIGURED.\n");
+		kprintf ("CACHE INCORRECTLY CONFIGURED.\n");
 		return;
 	};
 
@@ -3579,7 +3579,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	*/
 
 	if (!pci_map_int (config_id, ncr_intr, np, &bio_imask))
-		printf ("\tinterruptless mode: reduced performance.\n");
+		kprintf ("\tinterruptless mode: reduced performance.\n");
 #endif /* __NetBSD__ */
 
 	/*
@@ -3636,14 +3636,14 @@ static	void ncr_attach (pcici_t config_id, int unit)
 		unsigned myaddr = np->myaddr;
 
 		char *txt_and = "";
-		printf ("%s scanning for targets ", ncr_name (np));
+		kprintf ("%s scanning for targets ", ncr_name (np));
 		if (t_from < myaddr) {
-			printf ("%d..%d ", t_from, myaddr -1);
+			kprintf ("%d..%d ", t_from, myaddr -1);
 			txt_and = "and ";
 		}
 		if (myaddr < t_to)
-			printf ("%s%d..%d ", txt_and, myaddr +1, t_to);
-		printf ("(V%d " NCR_DATE ")\n", NCR_VERSION);
+			kprintf ("%s%d..%d ", txt_and, myaddr +1, t_to);
+		kprintf ("(V%d " NCR_DATE ")\n", NCR_VERSION);
 	}
 		
 	scsi_attachdevs (scbus);
@@ -3690,7 +3690,7 @@ ncr_intr(np)
 	int n = 0;
 	int oldspl = splbio();
 
-	if (DEBUG_FLAGS & DEBUG_TINY) printf ("[");
+	if (DEBUG_FLAGS & DEBUG_TINY) kprintf ("[");
 
 	if (INB(nc_istat) & (INTF|SIP|DIP)) {
 		/*
@@ -3704,7 +3704,7 @@ ncr_intr(np)
 		np->ticks = 100;
 	};
 
-	if (DEBUG_FLAGS & DEBUG_TINY) printf ("]\n");
+	if (DEBUG_FLAGS & DEBUG_TINY) kprintf ("]\n");
 
 	splx (oldspl);
 	return (n);
@@ -3783,7 +3783,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 		case 0x2a:  /* WRITE_BIG (10) */
 		case 0xaa:  /* WRITE_HUGE(12) */
 			PRINT_ADDR(xp);
-			printf ("access to partial disk block refused.\n");
+			kprintf ("access to partial disk block refused.\n");
 			xp->error = XS_DRIVER_STUFFUP;
 			return(COMPLETE);
 		};
@@ -3791,7 +3791,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 
 	if (DEBUG_FLAGS & DEBUG_TINY) {
 		PRINT_ADDR(xp);
-		printf ("CMD=%x F=%x L=%x ", cmd->opcode,
+		kprintf ("CMD=%x F=%x L=%x ", cmd->opcode,
 			(unsigned)xp->flags, (unsigned) xp->datalen);
 	}
 
@@ -3805,12 +3805,12 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 
 	flags = xp->flags;
 	if (!(flags & INUSE)) {
-		printf("%s: ?INUSE?\n", ncr_name (np));
+		kprintf("%s: ?INUSE?\n", ncr_name (np));
 		xp->flags |= INUSE;
 	};
 
 	if(flags & ITSDONE) {
-		printf("%s: ?ITSDONE?\n", ncr_name (np));
+		kprintf("%s: ?ITSDONE?\n", ncr_name (np));
 		xp->flags &= ~ITSDONE;
 	};
 
@@ -3827,7 +3827,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	oldspl = splbio();
 
 	if (!(cp=ncr_get_ccb (np, flags, xp->sc_link->target, xp->sc_link->lun))) {
-		printf ("%s: no ccb.\n", ncr_name (np));
+		kprintf ("%s: no ccb.\n", ncr_name (np));
 		xp->error = XS_DRIVER_STUFFUP;
 		splx(oldspl);
 		return(TRY_AGAIN_LATER);
@@ -3864,7 +3864,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 #ifndef NCR_GETCC_WITHMSG
 		if (tp->quirks) {
 			PRINT_ADDR(xp);
-			printf ("quirks=%x.\n", tp->quirks);
+			kprintf ("quirks=%x.\n", tp->quirks);
 		};
 #endif
 	};
@@ -3894,7 +3894,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 				tp->period  =0xffff;
 				tp->sval = 0xe0;
 				PRINT_ADDR(xp);
-				printf ("asynchronous.\n");
+				kprintf ("asynchronous.\n");
 			};
 		};
 
@@ -3930,7 +3930,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 			cp->tag=lp->lasttag;
 			if (DEBUG_FLAGS & DEBUG_TAGS) {
 				PRINT_ADDR(xp);
-				printf ("using tag #%d.\n", cp->tag);
+				kprintf ("using tag #%d.\n", cp->tag);
 			};
 		};
 	} else {
@@ -3998,9 +3998,9 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 		cp -> scsi_smsg [msglen++] = tp->maxoffs;
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
-			printf ("sync msgout: ");
+			kprintf ("sync msgout: ");
 			ncr_show_msg (&cp->scsi_smsg [msglen-5]);
-			printf (".\n");
+			kprintf (".\n");
 		};
 		break;
 	case NS_WIDE:
@@ -4010,9 +4010,9 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 		cp -> scsi_smsg [msglen++] = tp->usrwide;
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
-			printf ("wide msgout: ");
+			kprintf ("wide msgout: ");
 			ncr_show_msg (&cp->scsi_smsg [msglen-4]);
-			printf (".\n");
+			kprintf (".\n");
 		};
 		break;
 	};
@@ -4159,7 +4159,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	np->squeueput = ptr;
 
 	if(DEBUG_FLAGS & DEBUG_QUEUE)
-		printf ("%s: queuepos=%d tryoffset=%d.\n", ncr_name (np),
+		kprintf ("%s: queuepos=%d tryoffset=%d.\n", ncr_name (np),
 		np->squeueput,
 		(unsigned)(np->script->startpos[0]- 
 			   (NCB_SCRIPT_PHYS (np, tryloop))));
@@ -4186,7 +4186,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	if (!(flags & SCSI_NOMASK)) {
 #endif /* __NetBSD__ */
 		if (np->lasttime) {
-			if(DEBUG_FLAGS & DEBUG_TINY) printf ("Q");
+			if(DEBUG_FLAGS & DEBUG_TINY) kprintf ("Q");
 			return(SUCCESSFULLY_QUEUED);
 		};
 	};
@@ -4198,11 +4198,11 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	**----------------------------------------------------
 	*/
 
-	if (DEBUG_FLAGS & DEBUG_POLL) printf("P");
+	if (DEBUG_FLAGS & DEBUG_POLL) kprintf("P");
 
 	for (i=xp->timeout; i && !(xp->flags & ITSDONE);i--) {
 		if ((DEBUG_FLAGS & DEBUG_POLL) && (cp->host_status))
-			printf ("%c", (cp->host_status & 0xf) + '0');
+			kprintf ("%c", (cp->host_status & 0xf) + '0');
 		DELAY (1000);
 		ncr_exception (np);
 	};
@@ -4211,7 +4211,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	**	Abort if command not done.
 	*/
 	if (!(xp->flags & ITSDONE)) {
-		printf ("%s: aborting job ...\n", ncr_name (np));
+		kprintf ("%s: aborting job ...\n", ncr_name (np));
 		OUTB (nc_istat, CABRT);
 		DELAY (100000);
 		OUTB (nc_istat, SIGP);
@@ -4219,7 +4219,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	};
 
 	if (!(xp->flags & ITSDONE)) {
-		printf ("%s: abortion failed at %x.\n",
+		kprintf ("%s: abortion failed at %x.\n",
 			ncr_name (np), (unsigned) INL(nc_dsp));
 		ncr_init (np, "timeout", HS_TIMEOUT);
 	};
@@ -4230,7 +4230,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	};
 
 	if (DEBUG_FLAGS & DEBUG_RESULT) {
-		printf ("%s: result: %x %x.\n",
+		kprintf ("%s: result: %x %x.\n",
 			ncr_name (np), cp->host_status, cp->scsi_status);
 	};
 #ifdef __NetBSD__
@@ -4286,7 +4286,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	ncb_profile (np, cp);
 
 	if (DEBUG_FLAGS & DEBUG_TINY)
-		printf ("CCB=%lx STAT=%x/%x\n", (unsigned long)cp & 0xfff,
+		kprintf ("CCB=%lx STAT=%x/%x\n", (unsigned long)cp & 0xfff,
 			cp->host_status,cp->scsi_status);
 
 	xp = cp->xfer;
@@ -4300,7 +4300,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 
 	if (cp->parity_status) {
 		PRINT_ADDR(xp);
-		printf ("%d parity error(s), fallback.\n", cp->parity_status);
+		kprintf ("%d parity error(s), fallback.\n", cp->parity_status);
 		/*
 		**	fallback to asynch transfer.
 		*/
@@ -4316,13 +4316,13 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		PRINT_ADDR(xp);
 		switch (cp->xerr_status) {
 		case XE_EXTRA_DATA:
-			printf ("extraneous data discarded.\n");
+			kprintf ("extraneous data discarded.\n");
 			break;
 		case XE_BAD_PHASE:
-			printf ("illegal scsi phase (4/5).\n");
+			kprintf ("illegal scsi phase (4/5).\n");
 			break;
 		default:
-			printf ("extended error %d.\n", cp->xerr_status);
+			kprintf ("extended error %d.\n", cp->xerr_status);
 			break;
 		};
 		if (cp->host_status==HS_COMPLETE)
@@ -4418,9 +4418,9 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		if (DEBUG_FLAGS & (DEBUG_RESULT|DEBUG_TINY)) {
 			u_char * p = (u_char*) & xp->sense;
 			int i;
-			printf ("\n%s: sense data:", ncr_name (np));
-			for (i=0; i<14; i++) printf (" %x", *p++);
-			printf (".\n");
+			kprintf ("\n%s: sense data:", ncr_name (np));
+			for (i=0; i<14; i++) kprintf (" %x", *p++);
+			kprintf (".\n");
 		};
 
 	} else if ((cp->host_status == HS_COMPLETE)
@@ -4445,7 +4445,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		**  Other protocol messes
 		*/
 		PRINT_ADDR(xp);
-		printf ("COMMAND FAILED (%x %x) @%p.\n",
+		kprintf ("COMMAND FAILED (%x %x) @%p.\n",
 			cp->host_status, cp->scsi_status, cp);
 
 		xp->error = XS_TIMEOUT;
@@ -4461,27 +4461,27 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		u_char * p;
 		int i;
 		PRINT_ADDR(xp);
-		printf (" CMD:");
+		kprintf (" CMD:");
 		p = (u_char*) &xp->cmd->opcode;
-		for (i=0; i<xp->cmdlen; i++) printf (" %x", *p++);
+		for (i=0; i<xp->cmdlen; i++) kprintf (" %x", *p++);
 
 		if (cp->host_status==HS_COMPLETE) {
 			switch (cp->scsi_status) {
 			case S_GOOD:
-				printf ("  GOOD");
+				kprintf ("  GOOD");
 				break;
 			case S_CHECK_COND:
-				printf ("  SENSE:");
+				kprintf ("  SENSE:");
 				p = (u_char*) &xp->sense;
 				for (i=0; i<xp->req_sense_length; i++)
-					printf (" %x", *p++);
+					kprintf (" %x", *p++);
 				break;
 			default:
-				printf ("  STAT: %x\n", cp->scsi_status);
+				kprintf ("  STAT: %x\n", cp->scsi_status);
 				break;
 			};
-		} else printf ("  HOSTERROR: %x", cp->host_status);
-		printf ("\n");
+		} else kprintf ("  HOSTERROR: %x", cp->host_status);
+		kprintf ("\n");
 	};
 
 	/*
@@ -4523,7 +4523,7 @@ void ncr_wakeup (ncb_p np, u_long code)
 			break;
 
 		case HS_DISCONNECT:
-			if(DEBUG_FLAGS & DEBUG_TINY) printf ("D");
+			if(DEBUG_FLAGS & DEBUG_TINY) kprintf ("D");
 			/* fall through */
 
 		case HS_BUSY:
@@ -4568,7 +4568,7 @@ void ncr_init (ncb_p np, char * msg, u_long code)
 	**	Message.
 	*/
 
-	if (msg) printf ("%s: restart (%s).\n", ncr_name (np), msg);
+	if (msg) kprintf ("%s: restart (%s).\n", ncr_name (np), msg);
 
 	/*
 	**	Clear Start Queue
@@ -4770,11 +4770,11 @@ static void ncr_setsync (ncb_p np, ccb_p cp, u_char sxfer)
 		**  Disable extended Sreq/Sack filtering
 		*/
 		if (tp->period <= 200) OUTB (nc_stest2, 0);
-		printf ("%s%dns (%d Mb/sec) offset %d.\n",
+		kprintf ("%s%dns (%d Mb/sec) offset %d.\n",
 			tp->period<200 ? "FAST SCSI-2 ":"",
 			tp->period, (1000+tp->period/2)/tp->period,
 			sxfer & 0x0f);
-	} else  printf ("asynchronous.\n");
+	} else  kprintf ("asynchronous.\n");
 
 	/*
 	**	set actual value and sync_status
@@ -4824,9 +4824,9 @@ static void ncr_setwide (ncb_p np, ccb_p cp, u_char wide)
 	*/
 	PRINT_ADDR(xp);
 	if (scntl3 & EWS)
-		printf ("WIDE SCSI (16 bit) enabled.\n");
+		kprintf ("WIDE SCSI (16 bit) enabled.\n");
 	else
-		printf ("WIDE SCSI disabled.\n");
+		kprintf ("WIDE SCSI disabled.\n");
 
 	/*
 	**	set actual value and sync_status
@@ -5065,7 +5065,7 @@ static void ncr_timeout (ncb_p np)
 			cp->jump_ccb.l_cmd = (SCR_JUMP);
 			if (cp->phys.header.launch.l_paddr ==
 				NCB_SCRIPT_PHYS (np, select)) {
-				printf ("%s: timeout ccb=%p (skip)\n",
+				kprintf ("%s: timeout ccb=%p (skip)\n",
 					ncr_name (np), cp);
 				cp->phys.header.launch.l_paddr
 				= NCB_SCRIPT_PHYS (np, skip);
@@ -5105,9 +5105,9 @@ static void ncr_timeout (ncb_p np)
 		*/
 
 		int	oldspl	= splbio ();
-		if (DEBUG_FLAGS & DEBUG_TINY) printf ("{");
+		if (DEBUG_FLAGS & DEBUG_TINY) kprintf ("{");
 		ncr_exception (np);
-		if (DEBUG_FLAGS & DEBUG_TINY) printf ("}");
+		if (DEBUG_FLAGS & DEBUG_TINY) kprintf ("}");
 		splx (oldspl);
 	};
 }
@@ -5132,7 +5132,7 @@ void ncr_exception (ncb_p np)
 	**	interrupt on the fly ?
 	*/
 	while ((istat = INB (nc_istat)) & INTF) {
-		if (DEBUG_FLAGS & DEBUG_TINY) printf ("F");
+		if (DEBUG_FLAGS & DEBUG_TINY) kprintf ("F");
 		OUTB (nc_istat, INTF);
 		np->profile.num_fly++;
 		ncr_wakeup (np, 0);
@@ -5150,7 +5150,7 @@ void ncr_exception (ncb_p np)
 	np->profile.num_int++;
 
 	if (DEBUG_FLAGS & DEBUG_TINY)
-		printf ("<%d|%x:%x|%x:%x>",
+		kprintf ("<%d|%x:%x|%x:%x>",
 			INB(nc_scr0),
 			dstat,sist,
 			(unsigned)INL(nc_dsp),
@@ -5279,7 +5279,7 @@ void ncr_exception (ncb_p np)
 
 	script_ofs = dsp - np->p_script;
 
-	printf ("%s:%d: ERROR (%x:%x) (%x-%x-%x) (%x/%x) @ (%x:%08x).\n",
+	kprintf ("%s:%d: ERROR (%x:%x) (%x-%x-%x) (%x/%x) @ (%x:%08x).\n",
 		ncr_name (np), INB (nc_ctest0)&0x0f, dstat, sist,
 		INB (nc_socl), INB (nc_sbcl), INB (nc_sbdl),
 		INB (nc_sxfer),INB (nc_scntl3), script_ofs,
@@ -5287,14 +5287,14 @@ void ncr_exception (ncb_p np)
 
 	if (((script_ofs & 3) == 0) &&
 	    (unsigned)script_ofs < sizeof(struct script)) {
-		printf ("\tscript cmd = %08x\n", 
+		kprintf ("\tscript cmd = %08x\n", 
 			*(ncrcmd *)((char*)np->script +script_ofs));
 	}
 
-	printf ("\treg:\t");
+	kprintf ("\treg:\t");
 	for (i=0; i<16;i++)
-		printf (" %02x", INB_OFF(i));
-	printf (".\n");
+		kprintf (" %02x", INB_OFF(i));
+	kprintf (".\n");
 
 	/*----------------------------------------
 	**	clean up the dma fifo
@@ -5305,7 +5305,7 @@ void ncr_exception (ncb_p np)
 	     (INB(nc_sstat1) & (FF3210)	) ||
 	     (INB(nc_sstat2) & (ILF1|ORF1|OLF1)) ||	/* wide .. */
 	     !(dstat & DFE)) {
-		printf ("%s: have to clear fifos.\n", ncr_name (np));
+		kprintf ("%s: have to clear fifos.\n", ncr_name (np));
 		OUTB (nc_stest3, TE|CSF);	/* clear scsi fifo */
 		OUTB (nc_ctest3, CLF);		/* clear dma fifo  */
 	}
@@ -5316,7 +5316,7 @@ void ncr_exception (ncb_p np)
 	*/
 
 	if (sist & HTH) {
-		printf ("%s: handshake timeout\n", ncr_name(np));
+		kprintf ("%s: handshake timeout\n", ncr_name(np));
 		OUTB (nc_scntl1, CRST);
 		DELAY (1000);
 		OUTB (nc_scntl1, 0x00);
@@ -5359,11 +5359,11 @@ void ncr_exception (ncb_p np)
 			/*
 			**	info message
 			*/
-			printf ("%s: INFO: LDSC while IID.\n",
+			kprintf ("%s: INFO: LDSC while IID.\n",
 				ncr_name (np));
 			return;
 		};
-		printf ("%s: target %d doesn't release the bus.\n",
+		kprintf ("%s: target %d doesn't release the bus.\n",
 			ncr_name (np), INB (nc_ctest0)&0x0f);
 		/*
 		**	return without restarting the NCR.
@@ -5407,23 +5407,23 @@ void ncr_exception (ncb_p np)
 			switch (i%16) {
 
 			case 0:
-				printf ("%s: reg[%d0]: ",
+				kprintf ("%s: reg[%d0]: ",
 					ncr_name(np),i/16);
 				break;
 			case 4:
 			case 8:
 			case 12:
-				printf (" ");
+				kprintf (" ");
 				break;
 			};
 			val = INB_OFF(i);
-			printf (" %x%x", val/16, val%16);
-			if (i%16==15) printf (".\n");
+			kprintf (" %x%x", val/16, val%16);
+			if (i%16==15) kprintf (".\n");
 		};
 
 		untimeout (TIMEOUT ncr_timeout, (caddr_t) np);
 
-		printf ("%s: halted!\n", ncr_name(np));
+		kprintf ("%s: halted!\n", ncr_name(np));
 		/*
 		**	don't restart controller ...
 		*/
@@ -5435,7 +5435,7 @@ void ncr_exception (ncb_p np)
 	/*
 	**	Freeze system to be able to read the messages.
 	*/
-	printf ("ncr: fatal error: system halted - press reset to reboot ...");
+	kprintf ("ncr: fatal error: system halted - press reset to reboot ...");
 	(void) splhigh();
 	for (;;);
 #endif
@@ -5467,7 +5467,7 @@ void ncr_int_sto (ncb_p np)
 {
 	u_long dsa, scratcha, diff;
 	ccb_p cp;
-	if (DEBUG_FLAGS & DEBUG_TINY) printf ("T");
+	if (DEBUG_FLAGS & DEBUG_TINY) kprintf ("T");
 
 	/*
 	**	look for ccb and set the status.
@@ -5565,12 +5565,12 @@ static void ncr_int_ma (ncb_p np)
 		cp = cp->link_ccb;
 
 	if (!cp) {
-	    printf ("%s: SCSI phase error fixup: CCB already dequeued (0x%08lx)\n", 
+	    kprintf ("%s: SCSI phase error fixup: CCB already dequeued (0x%08lx)\n", 
 		    ncr_name (np), (u_long) np->header.cp);
 	    return;
 	}
 	if (cp != np->header.cp) {
-	    printf ("%s: SCSI phase error fixup: CCB address mismatch (0x%08lx != 0x%08lx)\n", 
+	    kprintf ("%s: SCSI phase error fixup: CCB address mismatch (0x%08lx != 0x%08lx)\n", 
 		    ncr_name (np), (u_long) cp, (u_long) np->header.cp);
 	    return;
 	}
@@ -5595,12 +5595,12 @@ static void ncr_int_ma (ncb_p np)
 	**	log the information
 	*/
 	if (DEBUG_FLAGS & (DEBUG_TINY|DEBUG_PHASE)) {
-		printf ("P%x%x ",cmd&7, sbcl&7);
-		printf ("RL=%d D=%d SS0=%x ",
+		kprintf ("P%x%x ",cmd&7, sbcl&7);
+		kprintf ("RL=%d D=%d SS0=%x ",
 			(unsigned) rest, (unsigned) delta, ss0);
 	};
 	if (DEBUG_FLAGS & DEBUG_PHASE) {
-		printf ("\nCP=%p CP2=%p DSP=%x NXT=%x VDSP=%p CMD=%x ",
+		kprintf ("\nCP=%p CP2=%p DSP=%x NXT=%x VDSP=%p CMD=%x ",
 			cp, np->header.cp, (unsigned)dsp,
 			(unsigned)nxtdsp, vdsp, cmd);
 	};
@@ -5621,7 +5621,7 @@ static void ncr_int_ma (ncb_p np)
 	};
 
 	if (DEBUG_FLAGS & DEBUG_PHASE) {
-		printf ("OCMD=%x\nTBLP=%p OLEN=%x OADR=%x\n",
+		kprintf ("OCMD=%x\nTBLP=%p OLEN=%x OADR=%x\n",
 			(unsigned) (vdsp[0] >> 24),
 			tblp,
 			(unsigned) olen,
@@ -5634,14 +5634,14 @@ static void ncr_int_ma (ncb_p np)
 
 	if (cmd != (vdsp[0] >> 24)) {
 		PRINT_ADDR(cp->xfer);
-		printf ("internal error: cmd=%02x != %02x=(vdsp[0] >> 24)\n",
+		kprintf ("internal error: cmd=%02x != %02x=(vdsp[0] >> 24)\n",
 			(unsigned)cmd, (unsigned)vdsp[0] >> 24);
 		
 		return;
 	}
 	if (cmd & 0x06) {
 		PRINT_ADDR(cp->xfer);
-		printf ("phase change %x-%x %d@%08x resid=%d.\n",
+		kprintf ("phase change %x-%x %d@%08x resid=%d.\n",
 			cmd&7, sbcl&7, (unsigned)olen,
 			(unsigned)oadr, (unsigned)rest);
 
@@ -5668,7 +5668,7 @@ static void ncr_int_ma (ncb_p np)
 
 	if (DEBUG_FLAGS & DEBUG_PHASE) {
 		PRINT_ADDR(cp->xfer);
-		printf ("newcmd[%d] %x %x %x %x.\n",
+		kprintf ("newcmd[%d] %x %x %x %x.\n",
 			newcmd - cp->patch,
 			(unsigned)newcmd[0],
 			(unsigned)newcmd[1],
@@ -5696,15 +5696,15 @@ static void ncr_int_ma (ncb_p np)
 static int ncr_show_msg (u_char * msg)
 {
 	u_char i;
-	printf ("%x",*msg);
+	kprintf ("%x",*msg);
 	if (*msg==M_EXTENDED) {
 		for (i=1;i<8;i++) {
 			if (i-1>msg[1]) break;
-			printf ("-%x",msg[i]);
+			kprintf ("-%x",msg[i]);
 		};
 		return (i+1);
 	} else if ((*msg & 0xf0) == 0x20) {
-		printf ("-%x",msg[1]);
+		kprintf ("-%x",msg[1]);
 		return (2);
 	};
 	return (1);
@@ -5719,7 +5719,7 @@ void ncr_int_sir (ncb_p np)
 	u_char	target = INB (nc_ctest0) & 7;
 	tcb_p	tp     = &np->target[target];
 	int     i;
-	if (DEBUG_FLAGS & DEBUG_TINY) printf ("I#%d", num);
+	if (DEBUG_FLAGS & DEBUG_TINY) kprintf ("I#%d", num);
 
 	switch (num) {
 	case SIR_SENSE_RESTART:
@@ -5760,25 +5760,25 @@ void ncr_int_sir (ncb_p np)
 		*/
 
 		if (DEBUG_FLAGS & DEBUG_RESTART)
-			printf ("%s: int#%d",ncr_name (np),num);
+			kprintf ("%s: int#%d",ncr_name (np),num);
 		cp = (ccb_p) 0;
 		for (i=0; i<MAX_TARGET; i++) {
-			if (DEBUG_FLAGS & DEBUG_RESTART) printf (" t%d", i);
+			if (DEBUG_FLAGS & DEBUG_RESTART) kprintf (" t%d", i);
 			tp = &np->target[i];
-			if (DEBUG_FLAGS & DEBUG_RESTART) printf ("+");
+			if (DEBUG_FLAGS & DEBUG_RESTART) kprintf ("+");
 			cp = tp->hold_cp;
 			if (!cp) continue;
-			if (DEBUG_FLAGS & DEBUG_RESTART) printf ("+");
+			if (DEBUG_FLAGS & DEBUG_RESTART) kprintf ("+");
 			if ((cp->host_status==HS_BUSY) &&
 				(cp->scsi_status==S_CHECK_COND))
 				break;
-			if (DEBUG_FLAGS & DEBUG_RESTART) printf ("- (remove)");
+			if (DEBUG_FLAGS & DEBUG_RESTART) kprintf ("- (remove)");
 			tp->hold_cp = cp = (ccb_p) 0;
 		};
 
 		if (cp) {
 			if (DEBUG_FLAGS & DEBUG_RESTART)
-				printf ("+ restart job ..\n");
+				kprintf ("+ restart job ..\n");
 			OUTL (nc_dsa, CCB_PHYS (cp, phys));
 			OUTL (nc_dsp, NCB_SCRIPT_PHYS (np, getcc));
 			return;
@@ -5787,7 +5787,7 @@ void ncr_int_sir (ncb_p np)
 		/*
 		**	no job, resume normal processing
 		*/
-		if (DEBUG_FLAGS & DEBUG_RESTART) printf (" -- remove trap\n");
+		if (DEBUG_FLAGS & DEBUG_RESTART) kprintf (" -- remove trap\n");
 		np->script->start0[0] =  SCR_INT ^ IFFALSE (0);
 		break;
 
@@ -5800,7 +5800,7 @@ void ncr_int_sir (ncb_p np)
 		*/
 		if (DEBUG_FLAGS & DEBUG_RESTART) {
 			PRINT_ADDR(cp->xfer);
-			printf ("in getcc reselect by t%d.\n",
+			kprintf ("in getcc reselect by t%d.\n",
 				INB(nc_ssid) & 0x0f);
 		}
 
@@ -5900,7 +5900,7 @@ void ncr_int_sir (ncb_p np)
 
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
-			printf ("negotiation failed sir=%x status=%x.\n",
+			kprintf ("negotiation failed sir=%x status=%x.\n",
 				num, cp->nego_status);
 		};
 
@@ -5932,9 +5932,9 @@ void ncr_int_sir (ncb_p np)
 
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
-			printf ("sync msgin: ");
+			kprintf ("sync msgin: ");
 			(void) ncr_show_msg (np->msgin);
-			printf (".\n");
+			kprintf (".\n");
 		};
 
 		/*
@@ -5974,7 +5974,7 @@ void ncr_int_sir (ncb_p np)
 
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
-			printf ("sync: per=%d ofs=%d fak=%d chg=%d.\n",
+			kprintf ("sync: per=%d ofs=%d fak=%d chg=%d.\n",
 				per, ofs, fak, chg);
 		}
 
@@ -6024,9 +6024,9 @@ void ncr_int_sir (ncb_p np)
 
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
-			printf ("sync msgout: ");
+			kprintf ("sync msgout: ");
 			(void) ncr_show_msg (np->msgin);
-			printf (".\n");
+			kprintf (".\n");
 		}
 
 		if (!ofs) {
@@ -6043,9 +6043,9 @@ void ncr_int_sir (ncb_p np)
 		*/
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
-			printf ("wide msgin: ");
+			kprintf ("wide msgin: ");
 			(void) ncr_show_msg (np->msgin);
-			printf (".\n");
+			kprintf (".\n");
 		};
 
 		/*
@@ -6072,7 +6072,7 @@ void ncr_int_sir (ncb_p np)
 
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
-			printf ("wide: wide=%d chg=%d.\n", wide, chg);
+			kprintf ("wide: wide=%d chg=%d.\n", wide, chg);
 		}
 
 		if (INB (HS_PRT) == HS_NEGOTIATE) {
@@ -6122,9 +6122,9 @@ void ncr_int_sir (ncb_p np)
 
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
-			printf ("wide msgout: ");
+			kprintf ("wide msgout: ");
 			(void) ncr_show_msg (np->msgin);
-			printf (".\n");
+			kprintf (".\n");
 		}
 		break;
 
@@ -6144,7 +6144,7 @@ void ncr_int_sir (ncb_p np)
 		*/
 
 		PRINT_ADDR(cp->xfer);
-		printf ("M_REJECT received (%x:%x).\n",
+		kprintf ("M_REJECT received (%x:%x).\n",
 			(unsigned)np->lastmsg, np->msgout[0]);
 		break;
 
@@ -6157,9 +6157,9 @@ void ncr_int_sir (ncb_p np)
 		*/
 
 		PRINT_ADDR(cp->xfer);
-		printf ("M_REJECT sent for ");
+		kprintf ("M_REJECT sent for ");
 		(void) ncr_show_msg (np->msgin);
-		printf (".\n");
+		kprintf (".\n");
 		break;
 
 /*--------------------------------------------------------------------
@@ -6179,7 +6179,7 @@ void ncr_int_sir (ncb_p np)
 		*/
 
 		PRINT_ADDR(cp->xfer);
-		printf ("M_IGN_RESIDUE received, but not yet implemented.\n");
+		kprintf ("M_IGN_RESIDUE received, but not yet implemented.\n");
 		break;
 
 	case SIR_MISSING_SAVE:
@@ -6192,7 +6192,7 @@ void ncr_int_sir (ncb_p np)
 		*/
 
 		PRINT_ADDR(cp->xfer);
-		printf ("M_DISCONNECT received, but datapointer not saved:\n"
+		kprintf ("M_DISCONNECT received, but datapointer not saved:\n"
 			"\tdata=%x save=%x goal=%x.\n",
 			(unsigned) INL (nc_temp),
 			(unsigned) np->header.savep,
@@ -6224,7 +6224,7 @@ void ncr_int_sir (ncb_p np)
 		**-----------------------------------------------
 		*/
 		PRINT_ADDR(cp->xfer);
-		printf ("queue full.\n");
+		kprintf ("queue full.\n");
 
 		np->script->start1[0] =  SCR_INT;
 
@@ -6273,7 +6273,7 @@ void ncr_int_sir (ncb_p np)
 		**	else remove the interrupt.
 		*/
 
-		printf ("%s: queue empty.\n", ncr_name (np));
+		kprintf ("%s: queue empty.\n", ncr_name (np));
 		np->script->start1[0] =  SCR_INT ^ IFFALSE (0);
 		break;
 	};
@@ -6472,7 +6472,7 @@ static	void ncr_alloc_ccb (ncb_p np, struct scsi_xfer * xp)
 
 	if (DEBUG_FLAGS & DEBUG_ALLOC) {
 		PRINT_ADDR(xp);
-		printf ("new ccb @%p.\n", cp);
+		kprintf ("new ccb @%p.\n", cp);
 	}
 
 	/*
@@ -6551,7 +6551,7 @@ static void ncr_opennings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
 #endif /* __NetBSD__ */
 		lp->actlink		-= diff;
 		if (DEBUG_FLAGS & DEBUG_TAGS)
-			printf ("%s: actlink: diff=%d, new=%d, req=%d\n",
+			kprintf ("%s: actlink: diff=%d, new=%d, req=%d\n",
 				ncr_name(np), diff, lp->actlink, lp->reqlink);
 		return;
 	};
@@ -6570,7 +6570,7 @@ static void ncr_opennings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
 		lp->actlink		+= diff;
 		wakeup ((caddr_t) xp->sc_link);
 		if (DEBUG_FLAGS & DEBUG_TAGS)
-			printf ("%s: actlink: diff=%d, new=%d, req=%d\n",
+			kprintf ("%s: actlink: diff=%d, new=%d, req=%d\n",
 				ncr_name(np), diff, lp->actlink, lp->reqlink);
 	};
 }
@@ -6627,7 +6627,7 @@ static	int	ncr_scatter
 			chunk /= 2;
 
 	if(DEBUG_FLAGS & DEBUG_SCATTER)
-		printf("ncr?:\tscattering virtual=0x%x size=%d chunk=%d.\n",
+		kprintf("ncr?:\tscattering virtual=0x%x size=%d chunk=%d.\n",
 			(unsigned) vaddr, (unsigned) datalen, (unsigned) chunk);
 
 	/*
@@ -6667,7 +6667,7 @@ static	int	ncr_scatter
 		};
 
 		if(DEBUG_FLAGS & DEBUG_SCATTER)
-			printf ("\tseg #%d  addr=%x  size=%d  (rest=%d).\n",
+			kprintf ("\tseg #%d  addr=%x  size=%d  (rest=%d).\n",
 			segment,
 			(unsigned) segaddr,
 			(unsigned) segsize,
@@ -6679,7 +6679,7 @@ static	int	ncr_scatter
 	}
 
 	if (datalen) {
-		printf("ncr?: scatter/gather failed (residue=%d).\n",
+		kprintf("ncr?: scatter/gather failed (residue=%d).\n",
 			(unsigned) datalen);
 		return (-1);
 	};
@@ -6715,7 +6715,7 @@ static int ncr_regtest (struct ncb* np)
 #else
 	if ((data & 0xe2f0fffd) != 0x02000080) {
 #endif
-		printf ("CACHE TEST FAILED: reg dstat-sstat2 readback %x.\n",
+		kprintf ("CACHE TEST FAILED: reg dstat-sstat2 readback %x.\n",
 			(unsigned) data);
 		return (0x10);
 	};
@@ -6772,31 +6772,31 @@ static int ncr_snooptest (struct ncb* np)
 	**	check for timeout
 	*/
 	if (i>=NCR_SNOOP_TIMEOUT) {
-		printf ("CACHE TEST FAILED: timeout.\n");
+		kprintf ("CACHE TEST FAILED: timeout.\n");
 		return (0x20);
 	};
 	/*
 	**	Check termination position.
 	*/
 	if (pc != NCB_SCRIPT_PHYS (np, snoopend)+8) {
-		printf ("CACHE TEST FAILED: script execution failed.\n");
+		kprintf ("CACHE TEST FAILED: script execution failed.\n");
 		return (0x40);
 	};
 	/*
 	**	Show results.
 	*/
 	if (host_wr != ncr_rd) {
-		printf ("CACHE TEST FAILED: host wrote %d, ncr read %d.\n",
+		kprintf ("CACHE TEST FAILED: host wrote %d, ncr read %d.\n",
 			(int) host_wr, (int) ncr_rd);
 		err |= 1;
 	};
 	if (host_rd != ncr_wr) {
-		printf ("CACHE TEST FAILED: ncr wrote %d, host read %d.\n",
+		kprintf ("CACHE TEST FAILED: ncr wrote %d, host read %d.\n",
 			(int) ncr_wr, (int) host_rd);
 		err |= 2;
 	};
 	if (ncr_bk != ncr_wr) {
-		printf ("CACHE TEST FAILED: ncr wrote %d, read back %d.\n",
+		kprintf ("CACHE TEST FAILED: ncr wrote %d, read back %d.\n",
 			(int) ncr_wr, (int) ncr_bk);
 		err |= 4;
 	};
@@ -6974,7 +6974,7 @@ static void ncr_getclock (ncb_p np)
 	np -> ns_async = (ns_clock * tbl[f]) / 2;
 	np -> rv_scntl3 |= f;
 	if (DEBUG_FLAGS & DEBUG_TIMING)
-		printf ("%s: sclk=%d async=%d sync=%d (ns) scntl3=0x%x\n",
+		kprintf ("%s: sclk=%d async=%d sync=%d (ns) scntl3=0x%x\n",
 		ncr_name (np), ns_clock, np->ns_async, np->ns_sync, np->rv_scntl3);
 }
 
