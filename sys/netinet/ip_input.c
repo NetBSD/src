@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.67 1998/06/01 00:39:37 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.68 1998/07/17 00:28:00 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -329,7 +329,10 @@ next:
 			rv = pfh->pfil_func(ip, hlen, m->m_pkthdr.rcvif, 0, &m0);
 			if (rv)
 				goto next;
-			ip = mtod(m = m0, struct ip *);
+			m = m0;
+			if (m == NULL)
+				goto next;
+			ip = mtod(m, struct ip *);
 		}
 #endif /* PFIL_HOOKS */
 

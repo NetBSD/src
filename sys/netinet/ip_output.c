@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.48 1998/04/28 15:26:00 matt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.49 1998/07/17 00:28:01 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -356,7 +356,10 @@ ip_output(m0, va_alist)
 				error = EHOSTUNREACH;
 				goto done;
 			}
-			ip = mtod(m = m1, struct ip *);
+			m = m1;
+			if (m == NULL)
+				goto done;
+			ip = mtod(m, struct ip *);
 		}
 #endif /* PFIL_HOOKS */
 sendit:
