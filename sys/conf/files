@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.261 1998/12/10 15:07:01 christos Exp $
+#	$NetBSD: files,v 1.262 1998/12/20 14:26:44 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -410,10 +410,10 @@ file ddb/db_watch.c			ddb
 file ddb/db_write_cmd.c			ddb
 file ddb/db_xxx.c			ddb
 file dev/auconv.c			auconv
-file dev/audio.c			audio | midi		needs-flag
+file dev/audio.c			audio | midi | midibus	needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/md.c				md			needs-count
-file dev/midi.c				midi			needs-flag
+file dev/midi.c				midi | midibus		needs-flag
 file dev/midisyn.c			midisyn
 file dev/mulaw.c			mulaw
 file dev/sequencer.c			sequencer		needs-flag

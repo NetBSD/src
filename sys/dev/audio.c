@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.107 1998/11/25 13:44:13 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.108 1998/12/20 14:26:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2796,7 +2796,7 @@ mixer_ioctl(dev, cmd, addr, flag, p)
 
 #include "midi.h"
 
-#if NAUDIO == 0 && NMIDI > 0
+#if NAUDIO == 0 && (NMIDI > 0 || NMIDIBUS > 0)
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -2804,7 +2804,7 @@ mixer_ioctl(dev, cmd, addr, flag, p)
 #include <dev/audio_if.h>
 #endif
 
-#if NAUDIO > 0 || NMIDI > 0
+#if NAUDIO > 0 || (NMIDI > 0 || NMIDIBUS > 0)
 int
 audioprint(aux, pnp)
 	void *aux;
@@ -2835,4 +2835,4 @@ audioprint(aux, pnp)
 	return (UNCONF);
 }
 
-#endif /* NAUDIO > 0 || NMIDI > 0 */
+#endif /* NAUDIO > 0 || (NMIDI > 0 || NMIDIBUS > 0) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.9 1998/12/15 18:03:07 augustss Exp $	*/
+/*	$NetBSD: midi.c,v 1.10 1998/12/20 14:26:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,8 +37,6 @@
  */
 
 #include "midi.h"
-#if NMIDI > 0
-
 #include "sequencer.h"
 
 #include <sys/param.h>
@@ -61,6 +59,8 @@
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
 #include <dev/midivar.h>
+
+#if NMIDI > 0
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (mididebug) printf x
@@ -727,6 +727,10 @@ midi_getinfo(dev, mi)
 	sc->hw_if->getinfo(sc->hw_hdl, mi);
 }
 
+#endif /* NMIDI > 0 */
+
+#if NMIDI > 0 || NMIDIBUS > 0
+
 int	audioprint __P((void *, const char *));
 
 void
@@ -749,4 +753,4 @@ midi_attach_mi(mhwp, hdlp, dev)
 	(void)config_found(dev, &arg, audioprint);
 }
 
-#endif /* NMIDI > 0 */
+#endif /* NMIDI > 0 || NMIDIBUS > 0 */
