@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.11 1998/06/05 11:22:19 frueauf Exp $	*/
+/*	$NetBSD: perform.c,v 1.12 1998/07/05 21:15:55 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.11 1998/06/05 11:22:19 frueauf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.12 1998/07/05 21:15:55 tron Exp $");
 #endif
 #endif
 
@@ -88,7 +88,7 @@ pkg_do(char *pkg)
 	fgets(playpen, FILENAME_MAX, stdin);
 	playpen[strlen(playpen) - 1] = '\0'; /* pesky newline! */
 	if (chdir(playpen) == FAIL) {
-	    warnx("pkg_add in SLAVE mode can't chdir to %s", playpen);
+	    warnx("add in SLAVE mode can't chdir to %s", playpen);
 	    return 1;
 	}
 	read_plist(&Plist, stdin);
@@ -272,6 +272,11 @@ pkg_do(char *pkg)
 				++code;
 			}
 		    }
+		else
+		   warnx("add of dependency `%s' failed%s",
+			    p->name, Force ? " (proceeding anyway)" : "!");
+		   if (!Force)
+			++code;
 		}
 		else if ((cp = fileGetURL(pkg, p->name)) != NULL) {
 		    if (Verbose)
@@ -283,7 +288,7 @@ pkg_do(char *pkg)
 			    ++code;
 		    }
 		    else if (vsystem("(pwd; cat %s) | pkg_add %s-S", CONTENTS_FNAME, Verbose ? "-v " : "")) {
-			warnx("pkg_add of dependency `%s' failed%s",
+			warnx("add of dependency `%s' failed%s",
 				p->name, Force ? " (proceeding anyway)" : "!");
 			if (!Force)
 			    ++code;
