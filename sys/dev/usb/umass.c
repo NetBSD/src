@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.3 1999/08/29 18:13:26 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.4 1999/08/29 18:56:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -106,8 +106,6 @@ typedef struct umass_softc {
 
 #define USBD_COMMAND_FAILED	USBD_INVAL	/* redefine some errors for */
 
-#define UPROTO_MASS_ZIP		0x50		/* letter 'P' for protoype */
-
 #define UMASS_SCSIID_HOST	0x00
 #define UMASS_SCSIID_DEVICE	0x01
 
@@ -188,9 +186,8 @@ USB_MATCH(umass)
 	if (id
 	    && id->bInterfaceClass == UCLASS_MASS
 	    && id->bInterfaceSubClass == USUBCLASS_SCSI
-	    && id->bInterfaceProtocol == UPROTO_MASS_ZIP)
-	    	/* probe the Iomega USB Zip 100 drive */
-		return(UMATCH_VENDOR_IFACESUBCLASS_IFACEPROTO);
+	    && id->bInterfaceProtocol == UPROTO_MASS_BULK)
+		return(UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 
 	return(UMATCH_NONE);
 }
