@@ -1,12 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: DAEMON,v 1.2.2.2 2000/08/23 12:34:34 lukem Exp $
+# $NetBSD: DAEMON,v 1.2.2.3 2000/10/02 01:09:22 lukem Exp $
 #
 
 # PROVIDE: DAEMON
-# REQUIRE: accounting aftermountlkm amd cleartmp databases dmesg ipmon
+# REQUIRE: accounting aftermountlkm amd cleartmp dmesg ipmon
 # REQUIRE: ipnat ipsec ldconfig named network nonlocalswap nfslocking
-# REQUIRE: pwcheck quota savecore securelevel sysctl virecover ypbind
+# REQUIRE: pwcheck quota savecore securelevel sysctl sysdb virecover ypbind
 
 #	This is a dummy dependancy, to ensure that general purpose daemons
 #	are run _after_ the above are.
