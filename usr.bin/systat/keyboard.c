@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.10 1999/12/20 23:11:50 jwise Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.11 2000/04/11 01:01:26 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.10 1999/12/20 23:11:50 jwise Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.11 2000/04/11 01:01:26 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -80,7 +80,6 @@ keyboard()
 				continue;
 			}
 			rch = ch;
-			ch = tolower(ch);
 			if (col == 0) {
 				switch(ch) {
 				    case '\n':
@@ -99,9 +98,13 @@ keyboard()
 					sigprocmask(SIG_UNBLOCK, &set, NULL);
 					break;
 				    case '?':
+				    case 'H':
 				    case 'h':
 					command("help");
 					move(CMDLINE, 0);
+					break;
+				    case 'Q':
+					command("quit");
 					break;
 				    case ':':
 					move(CMDLINE, 0);

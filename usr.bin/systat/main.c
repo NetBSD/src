@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2000/01/07 04:47:24 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2000/04/11 01:01:26 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.23 2000/01/07 04:47:24 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2000/04/11 01:01:26 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -136,7 +136,7 @@ main(argc, argv)
 		}
 
 		for (p = modes; p->c_name ; p++) {
-			if (strcmp(argv[0], p->c_name) == 0) {
+			if (strstr(p->c_name, argv[0]) == p->c_name) {
 				curmode = p;
 				modefound++;
 				break;
