@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.225 2000/11/22 08:39:48 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.226 2000/11/24 02:21:56 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225 2000/11/22 08:39:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.226 2000/11/24 02:21:56 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2006,6 +2006,7 @@ delay(n)
 #if defined(COMPAT_OSF1) || 1		/* XXX */
 void	cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
 	    u_long));
+#endif
 
 #if 1		/* XXX */
 void
