@@ -1,4 +1,4 @@
-.\"	$NetBSD: lastlogin.8,v 1.8 2004/11/11 20:17:36 christos Exp $
+.\"	$NetBSD: lastlogin.8,v 1.9 2004/11/12 02:39:21 wiz Exp $
 .\"
 .\" Copyright (c) 1996 John M. Vinopal
 .\" All rights reserved.
@@ -70,22 +70,17 @@ The following options are available:
 .It Fl f Ar filename
 Process input from
 .Ar filename .
-If the file ends with an 
+If the file ends with an
 .Dq x ,
 then it is assumed that it is a
-.Xr lastlogx 5 ,
-else it is assumed to be a
-.Xr lastlog
+.Xr lastlogx 5
+file, else it is assumed to be a
+.Xr lastlog 5
 file.
 .It Fl H Ar hostlen
 Set the field width for host output to
 .Ar hostlen
 characters.
-.It Fl n
-Attempt to print numeric host addresses. This option is only supported
-with 
-.Xr lastlogx 5
-format files.
 .It Fl L Ar linelen
 Set the field width for line output to
 .Ar linelen
@@ -94,6 +89,11 @@ characters.
 Set the field width for name output to
 .Ar namelen
 characters.
+.It Fl n
+Attempt to print numeric host addresses.
+This option is only supported with
+.Xr lastlogx 5
+format files.
 .It Fl r
 Reverse the order of the sort.
 .It Fl t
@@ -110,7 +110,7 @@ last login database
 .Xr lastlogx 5 ,
 .Xr ac 8
 .Sh AUTHORS
-John M. Vinopal wrote this program in January 1996 and contributed it
-to the
+.An John M. Vinopal
+wrote this program in January 1996 and contributed it to the
 .Nx
 project.
