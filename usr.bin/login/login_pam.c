@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.3 2005/02/28 16:11:36 christos Exp $       */
+/*     $NetBSD: login_pam.c,v 1.4 2005/03/03 02:06:16 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.3 2005/02/28 16:11:36 christos Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.4 2005/03/03 02:06:16 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -308,10 +308,12 @@ main(int argc, char *argv[])
 } while (/*CONSTCOND*/0)
 
 		/* 
-		 * Fill hostname and tty
+		 * Fill hostname tty, and nested user
 		 */
 		PAM_SET_ITEM(PAM_RHOST, hostname);
 		PAM_SET_ITEM(PAM_TTY, tty); 
+		if (nested)
+			PAM_SET_ITEM(PAM_NUSER, nested); 
 		if (have_ss)
 			PAM_SET_ITEM(PAM_SOCKADDR, &ss); 
 
@@ -460,6 +462,9 @@ skip_auth:
 
 	(void)chown(ttyn, pwd->pw_uid,
 	    (gr = getgrnam(TTYGRPNAME)) ? gr->gr_gid : pwd->pw_gid);
+
+	if (ttyaction(ttyn, "login", pwd->pw_name))
+		(void)printf("Warning: ttyaction failed.\n");
 
 	/* Nothing else left to fail -- really log in. */
         update_db(quietlog);
@@ -750,7 +755,6 @@ update_db(int quietlog)
 			syslog(LOG_NOTICE, "%s to %s on tty %s", nested,
 			    pwd->pw_name, tty);
 
-		return;
 	}
 	if (hostname != NULL && have_ss == 0) {
 		socklen_t len = sizeof(ss);
