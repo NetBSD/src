@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.87 2003/10/27 07:07:35 chs Exp $ */
+/* $NetBSD: trap.c,v 1.88 2003/10/29 05:16:26 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2003/10/27 07:07:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88 2003/10/29 05:16:26 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 	struct lwp *l;
 	struct proc *p;
 	ksiginfo_t ksi;
-	vm_prot_t ftype = VM_PROT_NONE;
+	vm_prot_t ftype;
 	u_int64_t ucode;
 	int i, user;
 #if defined(DDB)
@@ -426,6 +426,13 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			case 1:			/* store instruction */
 				ftype = VM_PROT_WRITE;
 				break;
+			default:
+#ifdef DIAGNOSTIC
+				panic("trap: bad fault type");
+#else
+				ftype = VM_PROT_NONE;
+				break;
+#endif
 			}
 	
 			if (user) {
