@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.25 1996/12/24 15:08:39 christos Exp $	 */
+/*	$NetBSD: yplib.c,v 1.26 1997/01/21 20:40:07 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yplib.c,v 1.25 1996/12/24 15:08:39 christos Exp $";
+static char rcsid[] = "$NetBSD: yplib.c,v 1.26 1997/01/21 20:40:07 thorpej Exp $";
 #endif
 
 #include <sys/param.h>
@@ -56,7 +56,12 @@ static char rcsid[] = "$NetBSD: yplib.c,v 1.25 1996/12/24 15:08:39 christos Exp 
 struct dom_binding *_ypbindlist;
 char _yp_domain[MAXHOSTNAMELEN];
 
-struct timeval _yplib_timeout = { 10, 0 };
+#define YPLIB_TIMEOUT		10
+#define YPLIB_RPC_RETRIES	4
+
+struct timeval _yplib_timeout = { YPLIB_TIMEOUT, 0 };
+struct timeval _yplib_rpc_timeout = { YPLIB_TIMEOUT / YPLIB_RPC_RETRIES,
+	1000000 * (YPLIB_TIMEOUT % YPLIB_RPC_RETRIES) / YPLIB_RPC_RETRIES };
 int _yplib_nerrs = 5;
 
 void _yp_unbind __P((struct dom_binding *));
@@ -222,8 +227,7 @@ gotit:
 		clnt_destroy(ysd->dom_client);
 	ysd->dom_socket = RPC_ANYSOCK;
 	ysd->dom_client = clntudp_create(&ysd->dom_server_addr,
-				      YPPROG, YPVERS, _yplib_timeout,
-				      &ysd->dom_socket);
+	    YPPROG, YPVERS, _yplib_rpc_timeout, &ysd->dom_socket);
 	if (ysd->dom_client == NULL) {
 		clnt_pcreateerror("clntudp_create");
 		ysd->dom_vers = -1;
