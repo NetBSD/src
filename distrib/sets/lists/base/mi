@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.194 2000/12/11 13:48:52 ad Exp $
+# $NetBSD: mi,v 1.195 2000/12/11 15:49:07 is Exp $
 .
 ./altroot
 ./bin
@@ -523,7 +523,6 @@
 ./usr/libexec/telnetd
 ./usr/libexec/tftpd
 ./usr/libexec/uucp
-./usr/libexec/uucp/uuchk
 ./usr/libexec/uucp/uucico
 ./usr/libexec/uucp/uuconv
 ./usr/libexec/uucp/uuxqt
@@ -733,6 +732,7 @@
 ./usr/sbin/userdel
 ./usr/sbin/userinfo
 ./usr/sbin/usermod
+./usr/sbin/uuchk
 ./usr/sbin/vipw
 ./usr/sbin/vnconfig
 ./usr/sbin/wiconfig
