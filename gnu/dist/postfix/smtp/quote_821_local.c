@@ -67,7 +67,7 @@ static int is_821_dot_string(char *local_part, char *end)
      */
     if (local_part[0] == 0 || local_part[0] == '.')
 	return (NO);
-    for (cp = local_part; cp < end && (ch = *cp) != 0; cp++) {
+    for (cp = local_part; cp < end && (ch = *(unsigned char *) cp) != 0; cp++) {
 	if (ch == '.' && cp[1] == '.')
 	    return (NO);
 	if (ch > 127)

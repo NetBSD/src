@@ -19,6 +19,8 @@
 /*
 /*	void	watchdog_destroy(watchdog)
 /*	WATCHDOG *watchdog;
+/*
+/*	void	watchdog_pat()
 /* DESCRIPTION
 /*	This module implements watchdog timers that are based on ugly
 /*	UNIX alarm timers. The module is designed to survive systems
@@ -38,6 +40,8 @@
 /*
 /*	watchdog_destroy() stops the watchdog timer, and resumes the
 /*	watchdog timer instance that was suspended by watchdog_create().
+/*
+/*	watchdog_pat() pats the watchdog, so it stays quiet.
 /*
 /*	Arguments:
 /* .IP timeout
@@ -77,6 +81,7 @@
 #include <sys_defs.h>
 #include <unistd.h>
 #include <signal.h>
+#include <posix_signals.h>
 
 /* Utility library. */
 
@@ -212,6 +217,18 @@ void    watchdog_stop(WATCHDOG *wp)
 	msg_info("%s: %p", myname, (char *) wp);
 }
 
+/* watchdog_pat - pat the dog so it stays quiet */
+
+void    watchdog_pat(void)
+{
+    char   *myname = "watchdog_pat";
+
+    if (watchdog_curr)
+	watchdog_curr->trip_run = 0;
+    if (msg_verbose)
+	msg_info("%s: %p", myname, (char *) watchdog_curr);
+}
+
 #ifdef TEST
 
 #include <vstream.h>
@@ -223,8 +240,9 @@ main(int unused_argc, char **unused_argv)
     msg_verbose = 1;
 
     wp = watchdog_create(10, (WATCHDOG_FN) 0, (char *) 0);
+    watchdog_start(wp);
     do {
-	watchdog_start(wp);
+	watchdog_pat();
     } while (VSTREAM_GETCHAR() != VSTREAM_EOF);
     watchdog_destroy(wp);
 }

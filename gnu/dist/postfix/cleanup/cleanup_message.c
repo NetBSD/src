@@ -321,8 +321,7 @@ static void cleanup_missing_headers(void)
     }
 
     /*
-     * Add a missing (Resent-)From: header. If a (Resent-)From: header is
-     * present, see if we need a (Resent-)Sender: header.
+     * Add a missing (Resent-)From: header.
      */
 #define NOT_SPECIAL_SENDER(addr) (*(addr) != 0 \
 	   && strcasecmp(addr, mail_addr_double_bounce()) != 0)
@@ -340,15 +339,6 @@ static void cleanup_missing_headers(void)
 	    vstring_strcat(cleanup_temp2, ")");
 	}
 	CLEANUP_OUT_BUF(REC_TYPE_NORM, cleanup_temp2);
-    } else if ((cleanup_headers_seen & (1 << (cleanup_resent[0] ?
-				      HDR_RESENT_SENDER : HDR_SENDER))) == 0
-	       && NOT_SPECIAL_SENDER(cleanup_sender)) {
-	from = (cleanup_resent[0] ? cleanup_resent_from : cleanup_from);
-	if (from == 0 || strcasecmp(cleanup_sender, from) != 0) {
-	    quote_822_local(cleanup_temp1, cleanup_sender);
-	    cleanup_out_format(REC_TYPE_NORM, "%sSender: %s",
-			       cleanup_resent, vstring_str(cleanup_temp1));
-	}
     }
 
     /*
@@ -497,11 +487,14 @@ void    cleanup_message(void)
 	    if ((xtra_offset = vstream_ftell(cleanup_dst)) < 0)
 		msg_fatal("%s: vstream_ftell %s: %m", myname, cleanup_path);
 	    if (vstream_fseek(cleanup_dst, mesg_offset, SEEK_SET) < 0) {
-		msg_warn("%s: write queue file: %m", cleanup_queue_id);
-		if (errno == EFBIG)
+		if (errno == EFBIG) {
+		    msg_warn("%s: queue file size limit exceeded",
+			     cleanup_queue_id);
 		    cleanup_errs |= CLEANUP_STAT_SIZE;
-		else
+		} else {
+		    msg_warn("%s: write queue file: %m", cleanup_queue_id);
 		    cleanup_errs |= CLEANUP_STAT_WRITE;
+		}
 		break;
 	    }
 	    cleanup_out_format(REC_TYPE_MESG, REC_TYPE_MESG_FORMAT, xtra_offset);

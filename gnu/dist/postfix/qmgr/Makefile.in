@@ -23,7 +23,7 @@ $(PROG):	$(OBJS) $(LIBS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
 
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs; cat $?) >$@
+	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs && cat $?) >$@
 
 test:	$(TESTPROG)
 
@@ -92,6 +92,7 @@ qmgr_active.o: ../include/vstring.h
 qmgr_active.o: ../include/recipient_list.h
 qmgr_active.o: ../include/bounce.h
 qmgr_active.o: ../include/defer.h
+qmgr_active.o: ../include/abounce.h
 qmgr_active.o: ../include/rec_type.h
 qmgr_active.o: qmgr.h
 qmgr_active.o: ../include/scan_dir.h

@@ -141,10 +141,8 @@ static void dict_dbm_update(DICT *dict, const char *name, const char *value)
 	&& (dict->flags & DICT_FLAG_TRY0NULL)) {
 #ifdef DBM_NO_TRAILING_NULL
 	dict->flags &= ~DICT_FLAG_TRY1NULL;
-	dict->flags |= DICT_FLAG_TRY0NULL;
 #else
 	dict->flags &= ~DICT_FLAG_TRY0NULL;
-	dict->flags |= DICT_FLAG_TRY1NULL;
 #endif
     }
 
@@ -186,35 +184,12 @@ static void dict_dbm_update(DICT *dict, const char *name, const char *value)
 
 /* dict_dbm_delete - delete one entry from the dictionary */
 
-static int dict_dbm_delete(DICT *dict, const char *key)
+static int dict_dbm_delete(DICT *dict, const char *name)
 {
     DICT_DBM *dict_dbm = (DICT_DBM *) dict;
     datum   dbm_key;
-    int     status;
+    int     status = 1;
     int     flags = 0;
-
-    dbm_key.dptr = (void *) key;
-    dbm_key.dsize = strlen(key);
-
-    /*
-     * If undecided about appending a null byte to key and value, choose a
-     * default depending on the platform.
-     */
-    if ((dict->flags & DICT_FLAG_TRY1NULL)
-	&& (dict->flags & DICT_FLAG_TRY0NULL)) {
-#ifdef DBM_NO_TRAILING_NULL
-	dict->flags = DICT_FLAG_TRY0NULL;
-#else
-	dict->flags = DICT_FLAG_TRY1NULL;
-#endif
-    }
-
-    /*
-     * Optionally append a null byte to key and value.
-     */
-    if (dict->flags & DICT_FLAG_TRY1NULL) {
-	dbm_key.dsize++;
-    }
 
     /*
      * Acquire an exclusive lock.
@@ -223,10 +198,38 @@ static int dict_dbm_delete(DICT *dict, const char *key)
 	msg_fatal("%s: lock dictionary: %m", dict_dbm->path);
 
     /*
-     * Do the delete operation.
+     * See if this DBM file was written with one null byte appended to key
+     * and value.
      */
-    if ((status = dbm_delete(dict_dbm->dbm, dbm_key)) < 0)
-	msg_fatal("error deleting %s: %m", dict_dbm->path);
+    if (dict->flags & DICT_FLAG_TRY1NULL) {
+	dbm_key.dptr = (void *) name;
+	dbm_key.dsize = strlen(name) + 1;
+	dbm_clearerr(dict_dbm->dbm);
+	if ((status = dbm_delete(dict_dbm->dbm, dbm_key)) < 0) {
+	    if (dbm_error(dict_dbm->dbm) != 0)	/* fatal error */
+		msg_fatal("error deleting from %s: %m", dict_dbm->path);
+	    status = 1;				/* not found */
+	} else {
+	    dict->flags &= ~DICT_FLAG_TRY0NULL;	/* found */
+	}
+    }
+
+    /*
+     * See if this DBM file was written with no null byte appended to key and
+     * value.
+     */
+    if (status > 0 && (dict->flags & DICT_FLAG_TRY0NULL)) {
+	dbm_key.dptr = (void *) name;
+	dbm_key.dsize = strlen(name);
+	dbm_clearerr(dict_dbm->dbm);
+	if ((status = dbm_delete(dict_dbm->dbm, dbm_key)) < 0) {
+	    if (dbm_error(dict_dbm->dbm) != 0)	/* fatal error */
+		msg_fatal("error deleting from %s: %m", dict_dbm->path);
+	    status = 1;				/* not found */
+	} else {
+	    dict->flags &= ~DICT_FLAG_TRY1NULL;	/* found */
+	}
+    }
 
     /*
      * Release the exclusive lock.
