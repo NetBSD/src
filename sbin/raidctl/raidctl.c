@@ -57,6 +57,8 @@
 #include <string.h>
 #include <sys/disklabel.h>
 #include <machine/disklabel.h>
+#include <unistd.h>
+
 #include "rf_raidframe.h"
 
 extern  char *__progname;
