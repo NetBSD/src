@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.59 2001/02/21 00:32:31 minoura Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.60 2001/02/21 21:39:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -293,7 +293,7 @@ pcicbbmatch(parent, match, aux)
 #define MAKEID(vendor, prod) (((vendor) << PCI_VENDOR_SHIFT) \
                               | ((prod) << PCI_PRODUCT_SHIFT))
 
-struct yenta_chipinfo {
+const struct yenta_chipinfo {
 	pcireg_t yc_id;		       /* vendor tag | product tag */
 	int yc_chiptype;
 	int yc_flags;
@@ -363,7 +363,7 @@ cb_chipset(pci_id, flagp)
 	u_int32_t pci_id;
 	int *flagp;
 {
-	struct yenta_chipinfo *yc;
+	const struct yenta_chipinfo *yc;
 
 	/* Loop over except the last default entry. */
 	for (yc = yc_chipsets; yc < yc_chipsets +

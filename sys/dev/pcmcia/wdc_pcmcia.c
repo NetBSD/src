@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.39 2001/01/06 14:55:50 takemura Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.40 2001/02/21 21:39:56 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ struct cfattach wdc_pcmcia_ca = {
 	wdc_pcmcia_detach, wdcactivate
 };
 
-struct wdc_pcmcia_product {
+const struct wdc_pcmcia_product {
 	u_int32_t	wpp_vendor;	/* vendor ID */
 	u_int32_t	wpp_product;	/* product ID */
 	int		wpp_quirk_flag;	/* Quirk flags */
@@ -150,18 +150,18 @@ struct wdc_pcmcia_product {
 	{ 0, 0, 0, { NULL, NULL, NULL, NULL}, NULL }
 };
 
-struct wdc_pcmcia_product *
+const struct wdc_pcmcia_product *
 	wdc_pcmcia_lookup __P((struct pcmcia_attach_args *));
 
 int	wdc_pcmcia_enable __P((void *, int));
 
 
 
-struct wdc_pcmcia_product *
+const struct wdc_pcmcia_product *
 wdc_pcmcia_lookup(pa)
 	struct pcmcia_attach_args *pa;
 {
-	struct wdc_pcmcia_product *wpp;
+	const struct wdc_pcmcia_product *wpp;
 	int i, cis_match;
 
 	for (wpp = wdc_pcmcia_products; wpp->wpp_name != NULL; wpp++)
@@ -212,7 +212,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	struct wdc_pcmcia_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	struct wdc_pcmcia_product *wpp;
+	const struct wdc_pcmcia_product *wpp;
 	int quirks;
 
 	sc->sc_pf = pa->pf;
