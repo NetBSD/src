@@ -1,4 +1,4 @@
-/* $NetBSD: tcbus.c,v 1.5 2000/01/09 03:56:11 simonb Exp $ */
+/*	$NetBSD: tcbus.c,v 1.6 2000/01/09 23:12:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.5 2000/01/09 03:56:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.6 2000/01/09 23:12:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
