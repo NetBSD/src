@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.5 1999/10/25 10:16:49 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.6 1999/11/01 18:12:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2103,8 +2103,8 @@ uaudio_set_params(addr, setmode, usemode, p, r)
         	break;
         case AUDIO_ENCODING_ULINEAR_BE:
         	if (p->precision == 16) {
-			pswcode = swap_bytes_change_sign16;
-			rswcode = change_sign16_swap_bytes;
+			pswcode = swap_bytes_change_sign16_le;
+			rswcode = change_sign16_swap_bytes_le;
 			enc = AUDIO_ENCODING_SLINEAR_LE;
 		} else if (p->precision == 8 && !(flags & HAS_8U)) {
 			pswcode = rswcode = change_sign8;
@@ -2113,7 +2113,7 @@ uaudio_set_params(addr, setmode, usemode, p, r)
 		break;
         case AUDIO_ENCODING_ULINEAR_LE:
         	if (p->precision == 16) {
-			pswcode = rswcode = change_sign16;
+			pswcode = rswcode = change_sign16_le;
 			enc = AUDIO_ENCODING_SLINEAR_LE;
 		} else if (p->precision == 8 && !(flags & HAS_8U)) {
 			pswcode = rswcode = change_sign8;
