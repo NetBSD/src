@@ -1,4 +1,4 @@
-/* 	$NetBSD: vt220l8x8.h,v 1.3 2000/01/05 18:44:25 ad Exp $	*/
+/* 	$NetBSD: vt220l8x8.h,v 1.4 2001/02/02 05:59:55 marcus Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
@@ -42,7 +42,7 @@ struct wsdisplay_font vt220l8x8 = {
 	"vt220l",			/* typeface name */
 	'\0',				/* firstchar */
 	256,				/* numchars */
-	WSDISPLAY_FONTENC_ISO,		/* encoding */
+	WSDISPLAY_FONTENC_IBM,		/* encoding */
 	8,				/* width */
 	8,				/* height */
 	1,				/* stride */
