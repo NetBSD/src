@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.10 1999/06/06 03:35:36 thorpej Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.11 2001/02/19 23:22:47 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.10 1999/06/06 03:35:36 thorpej Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.11 2001/02/19 23:22:47 cgd Exp $");
 #endif
 
 #include <sys/types.h>
@@ -87,8 +87,6 @@ struct	dev_stat {
 	time_t	ds_mtime;		/* time device last modified */
 };
 LIST_HEAD(ds_list, dev_stat) ds_list;
-
-extern	char *__progname;
 
 int	main __P((int, char *[]));
 static	void add_dev __P((const char *, int));
@@ -377,6 +375,6 @@ usage()
 {
 
 	fprintf(stderr, "usage: %s [-k | -m] [-d timeout] [-e timeout] %s\n",
-	    __progname, "[-f framebuffer]");
+	    getprogname(), "[-f framebuffer]");
 	exit(1);
 }

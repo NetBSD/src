@@ -1,4 +1,4 @@
-/*	$NetBSD: chrtbl.c,v 1.4 1998/02/03 04:39:14 perry Exp $	*/
+/*	$NetBSD: chrtbl.c,v 1.5 2001/02/19 23:22:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -92,10 +92,9 @@ static const struct toklist {
 static void
 usage()
 {
-	extern char *__progname;
 
 	(void) fprintf(stderr, "Usage: %s [-o <filename>] <description>\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 

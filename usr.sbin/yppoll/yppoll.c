@@ -1,4 +1,4 @@
-/*	$NetBSD: yppoll.c,v 1.8 2000/07/04 20:27:41 matt Exp $	*/
+/*	$NetBSD: yppoll.c,v 1.9 2001/02/19 23:22:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppoll.c,v 1.8 2000/07/04 20:27:41 matt Exp $");
+__RCSID("$NetBSD: yppoll.c,v 1.9 2001/02/19 23:22:50 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,8 +60,6 @@ __RCSID("$NetBSD: yppoll.c,v 1.8 2000/07/04 20:27:41 matt Exp $");
 int	main __P((int, char *[]));
 int	get_remote_info __P((char *, char *, char *, int *, char **));
 void	usage __P((void));
-
-extern	char *__progname;
 
 int
 main(argc, argv)
@@ -194,6 +192,6 @@ usage()
 {
 
 	fprintf(stderr, "usage: %s [-h host] [-d domainname] mapname\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }

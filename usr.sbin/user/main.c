@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.1 1999/12/24 09:08:50 agc Exp $ */
+/* $NetBSD: main.c,v 1.2 2001/02/19 23:22:49 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -74,8 +74,6 @@ static cmd_t	cmds[] = {
 	{	0	}
 };
 
-extern char	*__progname;
-
 int
 main(int argc, char **argv)
 {
@@ -86,7 +84,7 @@ main(int argc, char **argv)
 	for (cmdp = cmds ; cmdp->c_wc > 0 ; cmdp++) {
 		for (matched = i = 0 ; i < cmdp->c_wc && i < MaxCmdWords ; i++) {
 			if (argc > i) {
-				if (strcmp((i == 0) ? __progname : argv[i],
+				if (strcmp((i == 0) ? getprogname() : argv[i],
 						cmdp->c_word[i]) == 0) {
 					matched += 1;
 				} else {
@@ -98,7 +96,7 @@ main(int argc, char **argv)
 			return (*cmdp->c_func)(argc - (matched - 1), argv + (matched - 1));
 		}
 	}
-	usermgmt_usage(__progname);
-	errx(EXIT_FAILURE, "Program `%s' not recognised", __progname);
+	usermgmt_usage(getprogname());
+	errx(EXIT_FAILURE, "Program `%s' not recognised", getprogname());
 	/* NOTREACHED */
 }

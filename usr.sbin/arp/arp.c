@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.27 2001/01/05 19:34:13 christos Exp $ */
+/*	$NetBSD: arp.c,v 1.28 2001/02/19 23:22:42 cgd Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.27 2001/01/05 19:34:13 christos Exp $");
+__RCSID("$NetBSD: arp.c,v 1.28 2001/02/19 23:22:42 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,8 +98,6 @@ void	usage __P((void));
 static int pid;
 static int nflag, vflag;
 static int s = -1;
-
-extern char *__progname;
 
 int
 main(argc, argv)
@@ -499,13 +497,14 @@ atosdl(s, sdl)
 void
 usage()
 {
+	const char *progname = getprogname();
 
-	(void)fprintf(stderr, "usage: %s [-n] hostname\n", __progname);
-	(void)fprintf(stderr, "usage: %s [-n] -a\n", __progname);
-	(void)fprintf(stderr, "usage: %s -d hostname\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-n] hostname\n", progname);
+	(void)fprintf(stderr, "usage: %s [-n] -a\n", progname);
+	(void)fprintf(stderr, "usage: %s -d hostname\n", progname);
 	(void)fprintf(stderr,
-	    "usage: %s -s hostname ether_addr [temp] [pub]\n", __progname);
-	(void)fprintf(stderr, "usage: %s -f filename\n", __progname);
+	    "usage: %s -s hostname ether_addr [temp] [pub]\n", progname);
+	(void)fprintf(stderr, "usage: %s -f filename\n", progname);
 	exit(1);
 }
 

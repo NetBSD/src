@@ -19,12 +19,12 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: hilinfo.c 1.3 94/04/04$
- *	$NetBSD: hilinfo.c,v 1.3 1999/01/11 22:40:01 kleink Exp $
+ *	$NetBSD: hilinfo.c,v 1.4 2001/02/19 23:22:43 cgd Exp $
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hilinfo.c,v 1.3 1999/01/11 22:40:01 kleink Exp $");
+__RCSID("$NetBSD: hilinfo.c,v 1.4 2001/02/19 23:22:43 cgd Exp $");
 #endif
 
 #include <sys/types.h>
@@ -33,6 +33,7 @@ __RCSID("$NetBSD: hilinfo.c,v 1.3 1999/01/11 22:40:01 kleink Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 int aflg = 0;
@@ -155,8 +156,7 @@ tname()
 void
 usage()
 {
-	extern char *__progname;	/* from crt0.o */
 
-	fprintf(stderr, "usage: %s [-at] device\n", __progname);
+	fprintf(stderr, "usage: %s [-at] device\n", getprogname());
 	exit(1);
 }
