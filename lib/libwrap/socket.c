@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.14 2002/06/07 01:39:07 itojun Exp $	*/
+/*	$NetBSD: socket.c,v 1.15 2002/07/20 14:18:45 mjl Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -22,7 +22,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: socket.c,v 1.14 2002/06/07 01:39:07 itojun Exp $");
+__RCSID("$NetBSD: socket.c,v 1.15 2002/07/20 14:18:45 mjl Exp $");
 #endif
 #endif
 
@@ -109,7 +109,7 @@ struct request_info *request;
 	    return;				/* give up */
 	}
 #ifdef really_paranoid
-	memset(buf, 0 sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 #endif
     }
     request->client->sin = (struct sockaddr *)&client;
