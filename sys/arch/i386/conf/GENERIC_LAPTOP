@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.119 2004/10/23 14:00:51 augustss Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.120 2004/11/10 17:25:21 christos Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.119 $"
+#ident 		"GENERIC-$Revision: 1.120 $"
 
 maxusers	32		# estimated number of users
 
@@ -107,6 +107,7 @@ options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_MACH	# binary compatibility with Mach binaries
 #options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

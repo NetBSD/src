@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.9 2004/09/04 23:29:45 manu Exp $
+#	$NetBSD: SIMICS,v 1.10 2004/11/10 17:25:21 christos Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -76,6 +76,7 @@ options 	USERCONF	# userconf(4) support
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #options 	COMPAT_NETBSD32
 options 	EXEC_ELF32

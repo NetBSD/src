@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.51 2004/10/23 14:00:52 augustss Exp $
+#	$NetBSD: IOPENER,v 1.52 2004/11/10 17:25:22 christos Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.51 $"
+#ident 		"IOPENER-$Revision: 1.52 $"
 
 maxusers	32		# estimated number of users
 
@@ -77,6 +77,7 @@ options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
