@@ -1,4 +1,5 @@
-/* NetBSD $Id: ptrace.h,v 1.16 1994/06/27 19:31:48 cgd Exp $ */
+/*	$NetBSD: ptrace.h,v 1.17 1994/06/29 06:44:56 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1984, 1993
  *	The Regents of the University of California.  All rights reserved.

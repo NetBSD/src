@@ -1,4 +1,5 @@
-/* NetBSD $Id: exec_script.h,v 1.4 1994/06/27 19:31:08 cgd Exp $ */
+/*	$NetBSD: exec_script.h,v 1.5 1994/06/29 06:44:07 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.

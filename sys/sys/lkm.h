@@ -1,4 +1,5 @@
-/* NetBSD $Id: lkm.h,v 1.6 1994/06/27 19:31:26 cgd Exp $ */
+/*	$NetBSD: lkm.h,v 1.7 1994/06/29 06:44:31 cgd Exp $	*/
+
 /*
  * Header file used by loadable kernel modules and loadable kernel module
  * utilities.

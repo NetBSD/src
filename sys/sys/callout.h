@@ -1,4 +1,5 @@
-/* NetBSD $Id: callout.h,v 1.8 1994/06/27 19:30:41 cgd Exp $ */
+/*	$NetBSD: callout.h,v 1.9 1994/06/29 06:43:38 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.

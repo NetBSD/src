@@ -1,4 +1,5 @@
-/* NetBSD $Id: core.h,v 1.2 1994/06/27 19:30:51 cgd Exp $ */
+/*	$NetBSD: core.h,v 1.3 1994/06/29 06:43:48 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Paul Kranenburg
  * All rights reserved.

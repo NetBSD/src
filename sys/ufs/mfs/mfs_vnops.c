@@ -1,3 +1,5 @@
+/*	$NetBSD: mfs_vnops.c,v 1.3 1994/06/29 06:47:13 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mfs_vnops.c	8.3 (Berkeley) 9/21/93
- *	$Id: mfs_vnops.c,v 1.2 1994/06/18 18:28:36 cgd Exp $
+ *	@(#)mfs_vnops.c	8.3 (Berkeley) 9/21/93
  */
 
 #include <sys/param.h>

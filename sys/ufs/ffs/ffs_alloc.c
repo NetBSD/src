@@ -1,3 +1,5 @@
+/*	$NetBSD: ffs_alloc.c,v 1.2 1994/06/29 06:46:26 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ffs_alloc.c	8.8 (Berkeley) 2/21/94
- *	$Id: ffs_alloc.c,v 1.1 1994/06/08 11:41:58 mycroft Exp $
+ *	@(#)ffs_alloc.c	8.8 (Berkeley) 2/21/94
  */
 
 #include <sys/param.h>

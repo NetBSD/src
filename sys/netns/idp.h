@@ -1,3 +1,5 @@
+/*	$NetBSD: idp.h,v 1.5 1994/06/29 06:41:28 cgd Exp $	*/
+
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)idp.h	8.1 (Berkeley) 6/10/93
- *	$Id: idp.h,v 1.4 1994/05/13 06:11:02 mycroft Exp $
+ *	@(#)idp.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

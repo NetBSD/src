@@ -1,3 +1,5 @@
+/*	$NetBSD: ufs_readwrite.c,v 1.3 1994/06/29 06:47:32 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs_readwrite.c	8.7 (Berkeley) 1/21/94
- *	$Id: ufs_readwrite.c,v 1.2 1994/06/14 22:56:33 mycroft Exp $
+ *	@(#)ufs_readwrite.c	8.7 (Berkeley) 1/21/94
  */
 
 #ifdef LFS_READWRITE

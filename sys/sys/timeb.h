@@ -1,4 +1,5 @@
-/* NetBSD $Id: timeb.h,v 1.6 1994/06/27 19:32:20 cgd Exp $ */
+/*	$NetBSD: timeb.h,v 1.7 1994/06/29 06:45:46 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,4 +1,5 @@
-/* NetBSD $Id: mtio.h,v 1.9 1994/06/27 19:31:40 cgd Exp $ */
+/*	$NetBSD: mtio.h,v 1.10 1994/06/29 06:44:46 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,4 +1,5 @@
-/* NetBSD $Id: ioccom.h,v 1.2 1994/06/27 19:31:18 cgd Exp $ */
+/*	$NetBSD: ioccom.h,v 1.3 1994/06/29 06:44:19 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

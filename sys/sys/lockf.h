@@ -1,4 +1,5 @@
-/* NetBSD $Id: lockf.h,v 1.4 1994/06/27 19:31:27 cgd Exp $ */
+/*	$NetBSD: lockf.h,v 1.5 1994/06/29 06:44:33 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

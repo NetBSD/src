@@ -1,3 +1,5 @@
+/*	$NetBSD: ffs_inode.c,v 1.5 1994/06/29 06:46:32 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ffs_inode.c	8.5 (Berkeley) 12/30/93
- *	$Id: ffs_inode.c,v 1.4 1994/06/15 15:35:06 mycroft Exp $
+ *	@(#)ffs_inode.c	8.5 (Berkeley) 12/30/93
  */
 
 #include <sys/param.h>

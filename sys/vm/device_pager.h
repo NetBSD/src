@@ -1,4 +1,5 @@
-/* NetBSD $Id: device_pager.h,v 1.8 1994/06/27 04:55:46 cgd Exp $ */
+/*	$NetBSD: device_pager.h,v 1.9 1994/06/29 06:47:41 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990 University of Utah.
  * Copyright (c) 1991, 1993

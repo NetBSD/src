@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_tape.h,v 1.5 1994/06/29 06:43:08 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
@@ -25,8 +27,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: scsi_tape.h,v 1.4 1994/04/13 05:43:19 mycroft Exp $
  */
 
 /*

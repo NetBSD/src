@@ -1,3 +1,5 @@
+/*	$NetBSD: iso_var.h,v 1.5 1994/06/29 06:39:54 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1988, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)iso_var.h	8.1 (Berkeley) 6/10/93
- *	$Id: iso_var.h,v 1.4 1994/05/13 06:09:04 mycroft Exp $
+ *	@(#)iso_var.h	8.1 (Berkeley) 6/10/93
  */
 
 /***********************************************************
