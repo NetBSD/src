@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13 2002/01/24 20:14:19 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.14 2002/01/27 14:43:47 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -250,41 +250,38 @@ identify_master_cpu(dv, cpu_number)
 }
 
 static const char *generic_steppings[16] = {
-	"rev 0",
-	"rev 1",
-	"rev 2",
-	"rev 3",
-	"rev 4",
-	"rev 5",
-	"rev 6",
-	"rev 7",
-	"rev 8",
-	"rev 9",
-	"rev 10",
-	"rev 11",
-	"rev 12",
-	"rev 13",
-	"rev 14",
-	"rev 15",
+	"rev 0",	"rev 1",	"rev 2",	"rev 3",
+	"rev 4",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+static const char *sa110_steppings[16] = {
+	"rev 0",	"step J",	"step K",	"step S",
+	"step T",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+static const char *sa1100_steppings[16] = {
+	"rev 0",	"step B",	"step C",	"rev 3",
+	"rev 4",	"rev 5",	"rev 6",	"rev 7",
+	"step D",	"step E",	"rev 10"	"step G",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+static const char *sa1110_steppings[16] = {
+	"step A-0",	"rev 1",	"rev 2",	"rev 3",
+	"step B-0",	"step B-1",	"step B-2",	"step B-3",
+	"step B-4",	"step B-5",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
 static const char *i80200_steppings[16] = {
-	"step A-0",
-	"step A-1",
-	"step B-0",
-	"step C-0",
-	"rev 4",
-	"rev 5",
-	"rev 6",
-	"rev 7",
-	"rev 8",
-	"rev 9",
-	"rev 10",
-	"rev 11",
-	"rev 12",
-	"rev 13",
-	"rev 14",
-	"rev 15",
+	"step A-0",	"step A-1",	"step B-0",	"step C-0",
+	"rev 4",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
 struct cpuidtab {
@@ -346,11 +343,11 @@ const struct cpuidtab cpuids[] = {
 	  generic_steppings },
 
 	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110",
-	  generic_steppings },
+	  sa110_steppings },
 	{ CPU_ID_SA1100,	CPU_CLASS_SA1,		"SA-1100",
-	  generic_steppings },
+	  sa1100_steppings },
 	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110",
-	  generic_steppings },
+	  sa1110_steppings },
 
 	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"i80200",
 	  i80200_steppings },
