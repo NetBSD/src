@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.2 2003/08/07 16:29:04 agc Exp $	*/
+/*	$NetBSD: tgets.c,v 1.3 2003/12/06 13:09:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,12 +36,11 @@
 #include <pc532/stand/common/samachdep.h>
 
 int
-tgets(buf)
-	char *buf;
+tgets(char *buf)
 {
-	register int c;
+	int c;
 	int i;
-	register char *lp = buf;
+	char *lp = buf;
 
 	for (i = 2400000; i > 0; i--) {
 		c = tgetchar() & 0177;
@@ -69,7 +68,7 @@ tgets(buf)
 					break;
 
 				case 'r' & 037: {
-					register char *p;
+					char *p;
 
 					putchar('\n');
 					for (p = buf; p < lp; ++p)
