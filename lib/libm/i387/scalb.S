@@ -28,11 +28,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Written by:
+ *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
+ */
+
 #include <machine/asm.h>
 
 ENTRY(scalb)
 	fildl	12(%esp)
 	fldl	4(%esp)
 	fscale
+	fstpl	%st(1)				/* fixup stack */
 	ret
-

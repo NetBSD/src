@@ -28,6 +28,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Written by:
+ *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
+ */
+
 #include <machine/asm.h>
 
 ENTRY(rint)

@@ -35,8 +35,13 @@
 
 #include <machine/asm.h>
 
-ENTRY(logb)
+ENTRY(cos)
 	fldl	4(%esp)
-	fxtract
-	fstpl	%st
-	ret
+	fcos
+	fstsw	%ax
+	sahf
+	jp	1f
+
+	/* handle infinity, range reduction, etc. here */
+
+1:	ret

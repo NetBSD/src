@@ -35,8 +35,10 @@
 
 #include <machine/asm.h>
 
-ENTRY(logb)
-	fldl	4(%esp)
-	fxtract
-	fstpl	%st
+ENTRY(finite)
+	movl	8(%esp),%eax
+	andl	$0x7ff00000, %eax
+	cmpl	$0x7ff00000, %eax
+	setnel	%al
+	andl	$0x000000ff, %eax
 	ret
