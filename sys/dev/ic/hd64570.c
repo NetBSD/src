@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.8 2000/01/04 06:36:29 chopps Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.9 2000/01/08 20:46:29 chopps Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,6 +65,8 @@
  */
 
 #include "bpfilter.h"
+#include "opt_inet.h"
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,10 +80,18 @@
 #include <net/if_types.h>
 #include <net/netisr.h>
 
+#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+#endif
+
+#ifdef ISO
+#include <net/if_llc.h>
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
+#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -432,7 +442,7 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 	ifp->if_softc = scp;
 	ifp->if_mtu = SCA_MTU;
 	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
-	ifp->if_type = IFT_OTHER;  /* Should be HDLC, but... */
+	ifp->if_type = IFT_PTPSERIAL;
 	ifp->if_hdrlen = HDLC_HDRLEN;
 	ifp->if_ioctl = sca_ioctl;
 	ifp->if_output = sca_output;
@@ -778,21 +788,15 @@ sca_dmac_rxinit(sca_port_t *scp)
  */
 static int
 sca_output(ifp, m, dst, rt0)
-     struct ifnet *ifp;
-     struct mbuf *m;
-     struct sockaddr *dst;
-     struct rtentry *rt0;
+	struct ifnet *ifp;
+	struct mbuf *m;
+	struct sockaddr *dst;
+	struct rtentry *rt0;
 {
-	int error;
-	int s;
-	u_int16_t protocol;
-	hdlc_header_t *hdlc;
+	struct hdlc_llc_header *llc;
+	struct hdlc_header *hdlc;
 	struct ifqueue *ifq;
-#ifdef SCA_USE_FASTQ
-	struct ip *ip;
-	sca_port_t *scp = ifp->if_softc;
-	int highpri;
-#endif
+	int s, error;
 
 	error = 0;
 	ifp->if_lastchange = time;
@@ -802,24 +806,45 @@ sca_output(ifp, m, dst, rt0)
 		goto bad;
 	}
 
-#ifdef SCA_USE_FASTQ
-	highpri = 0;
-#endif
+	ifq = &ifp->if_snd;
 
 	/*
 	 * determine address family, and priority for this packet
 	 */
 	switch (dst->sa_family) {
+#ifdef INET
 	case AF_INET:
-		protocol = HDLC_PROTOCOL_IP;
-
 #ifdef SCA_USE_FASTQ
-		ip = mtod(m, struct ip *);
-		if ((ip->ip_tos & IPTOS_LOWDELAY) == IPTOS_LOWDELAY)
-			highpri = 1;
+		if ((mtod(m, struct ip *)->ip_tos & IPTOS_LOWDELAY)
+		    == IPTOS_LOWDELAY)
+			ifq = &((sca_port_t *)ifp->if_softc)->fastq;
 #endif
+		/*
+		 * Add cisco serial line header. If there is no
+		 * space in the first mbuf, allocate another.
+		 */     
+		M_PREPEND(m, sizeof(struct hdlc_header), M_DONTWAIT);
+		if (m == 0)
+			return (ENOBUFS);
+		hdlc = mtod(m, struct hdlc_header *);
+		hdlc->h_proto = htons(HDLC_PROTOCOL_IP);
+		break;  
+#endif
+#ifdef ISO     
+       case AF_ISO:
+               /*
+                * Add cisco llc serial line header. If there is no
+                * space in the first mbuf, allocate another.
+                */
+		M_PREPEND(m, sizeof(struct hdlc_llc_header), M_DONTWAIT);
+		if (m == 0)
+			return (ENOBUFS);
+		hdlc = mtod(m, struct hdlc_header *);
+		llc = mtod(m, struct hdlc_llc_header *);
+		llc->hl_dsap = llc->hl_ssap = LLC_ISO_LSAP;
+		llc->hl_control = 0;	/* XXX */
 		break;
-
+#endif
 	default:
 		printf("%s: address family %d unsupported\n",
 		       ifp->if_xname, dst->sa_family);
@@ -827,35 +852,17 @@ sca_output(ifp, m, dst, rt0)
 		goto bad;
 	}
 
-	if (M_LEADINGSPACE(m) < HDLC_HDRLEN) {
-		m = m_prepend(m, HDLC_HDRLEN, M_DONTWAIT);
-		if (m == NULL) {
-			error = ENOBUFS;
-			goto bad;
-		}
-		m->m_len = 0;
-	} else {
-		m->m_data -= HDLC_HDRLEN;
-	}
-
-	hdlc = mtod(m, hdlc_header_t *);
+	/* finish */
 	if ((m->m_flags & (M_BCAST | M_MCAST)) != 0)
-		hdlc->addr = CISCO_MULTICAST;
+		hdlc->h_addr = CISCO_MULTICAST;
 	else
-		hdlc->addr = CISCO_UNICAST;
-	hdlc->control = 0;
-	hdlc->protocol = htons(protocol);
-	m->m_len += HDLC_HDRLEN;
+		hdlc->h_addr = CISCO_UNICAST;
+	hdlc->h_resv = 0;
 
 	/*
 	 * queue the packet.  If interactive, use the fast queue.
 	 */
 	s = splnet();
-#ifdef SCA_USE_FASTQ
-	ifq = (highpri == 1 ? &scp->fastq : &ifp->if_snd);
-#else
-	ifq = &ifp->if_snd;
-#endif
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		ifp->if_oerrors++;
@@ -902,15 +909,22 @@ sca_ioctl(ifp, cmd, addr)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		if (ifa->ifa_addr->sa_family == AF_INET)
+#ifdef INET
+		if (ifa->ifa_addr->sa_family == AF_INET) {
+			ifp->if_flags |= IFF_UP;
 			sca_port_up(ifp->if_softc);
-		else
+		} else
+#endif
 			error = EAFNOSUPPORT;
 		break;
 
 	case SIOCSIFDSTADDR:
+#ifdef INET
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			error = EAFNOSUPPORT;
+#else
+		error = EAFNOSUPPORT;
+#endif
 		break;
 
 	case SIOCADDMULTI:
@@ -920,12 +934,10 @@ sca_ioctl(ifp, cmd, addr)
 			break;
 		}
 		switch (ifr->ifr_addr.sa_family) {
-
 #ifdef INET
 		case AF_INET:
 			break;
 #endif
-
 		default:
 			error = EAFNOSUPPORT;
 			break;
@@ -933,10 +945,13 @@ sca_ioctl(ifp, cmd, addr)
 		break;
 
 	case SIOCSIFFLAGS:
-		if (ifr->ifr_flags & IFF_UP)
+		if (ifr->ifr_flags & IFF_UP) {
+			ifp->if_flags |= IFF_UP;
 			sca_port_up(ifp->if_softc);
-		else
+		} else {
+			ifp->if_flags &= ~IFF_UP;
 			sca_port_down(ifp->if_softc);
+		}
 
 		break;
 
@@ -1497,8 +1512,9 @@ static void
 sca_frame_process(sca_port_t *scp)
 {
 	struct ifqueue *ifq;
-	hdlc_header_t *hdlc;
-	cisco_pkt_t *cisco;
+	struct hdlc_header *hdlc;
+	struct hdlc_llc_header *llc;
+	struct cisco_pkt *cisco;
 	sca_desc_t *desc;
 	struct mbuf *m;
 	u_int8_t *bufp;
@@ -1521,24 +1537,24 @@ sca_frame_process(sca_port_t *scp)
 	/*
 	 * skip packets that are too short
 	 */
-	if (len < sizeof(hdlc_header_t))
+	if (len < sizeof(struct hdlc_header)) {
+		scp->sp_if.if_ierrors++;
 		return;
+	}
 
 	m = sca_mbuf_alloc(scp->sca, bufp, len);
 	if (m == NULL) {
 		SCA_DPRINTF(SCA_DEBUG_RX, ("RX: no mbuf!\n"));
-		scp->sp_if.if_iqdrops++;
 		return;
 	}
 
 	/*
 	 * read and then strip off the HDLC information
 	 */
-	m = m_pullup(m, sizeof(hdlc_header_t));
+	m = m_pullup(m, sizeof(struct hdlc_header));
 	if (m == NULL) {
 		SCA_DPRINTF(SCA_DEBUG_RX, ("RX: no m_pullup!\n"));
-		scp->sp_if.if_ierrors++;
-		scp->sp_if.if_iqdrops++;
+		return;
 	}
 
 #if NBPFILTER > 0
@@ -1549,31 +1565,40 @@ sca_frame_process(sca_port_t *scp)
 	scp->sp_if.if_ipackets++;
 	scp->sp_if.if_lastchange = time;
 
-	hdlc = mtod(m, hdlc_header_t *);
-	switch (ntohs(hdlc->protocol)) {
+	hdlc = mtod(m, struct hdlc_header *);
+	switch (ntohs(hdlc->h_proto)) {
+#ifdef INET
 	case HDLC_PROTOCOL_IP:
 		SCA_DPRINTF(SCA_DEBUG_RX, ("Received IP packet\n"));
-
 		m->m_pkthdr.rcvif = &scp->sp_if;
-
-		if (IF_QFULL(&ipintrq)) {
-			IF_DROP(&ipintrq);
-			scp->sp_if.if_ierrors++;
-			scp->sp_if.if_iqdrops++;
-			m_freem(m);
-		} else {
-			/*
-			 * strip off the HDLC header and hand off to IP stack
-			 */
-			m->m_pkthdr.len -= HDLC_HDRLEN;
-			m->m_data += HDLC_HDRLEN;
-			m->m_len -= HDLC_HDRLEN;
-			IF_ENQUEUE(&ipintrq, m);
-			schednetisr(NETISR_IP);
-		}
-
+		m->m_pkthdr.len -= sizeof(struct hdlc_header);
+		m->m_data += sizeof(struct hdlc_header);
+		m->m_len -= sizeof(struct hdlc_header);
+		ifq = &ipintrq;
+		schednetisr(NETISR_IP);
 		break;
-
+#endif	/* INET */
+#ifdef ISO
+	case HDLC_PROTOCOL_ISO:
+		if (m->m_pkthdr.len < sizeof(struct hdlc_llc_header)) 
+                       goto dropit;
+		/* if not a std iso pdu drop it */
+		llc = (struct hdlc_llc_header *)hdlc;
+#if 0
+		/* XXX cisco puts either 0 or the iso irpd here */
+		if (llc->hl_control != LLC_UI) {
+			scp->sp_if.if_noproto++;
+			goto dropit;
+		}
+#endif
+		m->m_pkthdr.rcvif = &scp->sp_if;
+		m->m_pkthdr.len -= sizeof(struct hdlc_llc_header);
+		m->m_data += sizeof(struct hdlc_llc_header);
+		m->m_len -= sizeof(struct hdlc_llc_header);
+		ifq = &clnlintrq;
+		schednetisr(NETISR_ISO);
+		break;
+#endif	/* ISO */
 	case CISCO_KEEPALIVE:
 		SCA_DPRINTF(SCA_DEBUG_CISCO,
 			    ("Received CISCO keepalive packet\n"));
@@ -1582,31 +1607,30 @@ sca_frame_process(sca_port_t *scp)
 			SCA_DPRINTF(SCA_DEBUG_CISCO,
 				    ("short CISCO packet %d, wanted %d\n",
 				     len, CISCO_PKT_LEN));
-			m_freem(m);
+			scp->sp_if.if_ierrors++;
+			goto dropit;
+		}
+
+		m = m_pullup(m, sizeof(struct cisco_pkt));
+		if (m == NULL) {
+			SCA_DPRINTF(SCA_DEBUG_RX, ("RX: no m_pullup!\n"));
 			return;
 		}
 
-		m = m_pullup(m, sizeof(cisco_pkt_t));
-		if (m == NULL) {
-			SCA_DPRINTF(SCA_DEBUG_RX, ("RX: no m_pullup!\n"));
-			scp->sp_if.if_ierrors++;
-			scp->sp_if.if_iqdrops++;
-			break;
-		}
-
-		cisco = (cisco_pkt_t *)(mtod(m, u_int8_t *) + HDLC_HDRLEN);
+		cisco = (struct cisco_pkt *)
+		    (mtod(m, u_int8_t *) + HDLC_HDRLEN);
 		m->m_pkthdr.rcvif = &scp->sp_if;
 
 		switch (ntohl(cisco->type)) {
 		case CISCO_ADDR_REQ:
 			printf("Got CISCO addr_req, ignoring\n");
-			m_freem(m);
-			break;
+			scp->sp_if.if_ierrors++;
+			goto dropit;
 
 		case CISCO_ADDR_REPLY:
 			printf("Got CISCO addr_reply, ignoring\n");
-			m_freem(m);
-			break;
+			scp->sp_if.if_ierrors++;
+			goto dropit;
 
 		case CISCO_KEEPALIVE_REQ:
 
@@ -1632,8 +1656,7 @@ sca_frame_process(sca_port_t *scp)
 			ifq = &scp->linkq;
 			if (IF_QFULL(ifq)) {
 				IF_DROP(ifq);
-				m_freem(m);
-				return;
+				goto dropit;
 			}
 			IF_ENQUEUE(ifq, m);
 
@@ -1645,25 +1668,37 @@ sca_frame_process(sca_port_t *scp)
 				    scp->sp_rxdesc_p);
 				scp->sca->scu_page_on(scp->sca);
 			}
-
-			break;
-
+			return;
 		default:
-			m_freem(m);
 			SCA_DPRINTF(SCA_DEBUG_CISCO,
 				    ("Unknown CISCO keepalive protocol 0x%04x\n",
 				     ntohl(cisco->type)));
-			return;
+			
+			scp->sp_if.if_noproto++;
+			goto dropit;
 		}
-
-		break;
-
+		return;
 	default:
 		SCA_DPRINTF(SCA_DEBUG_RX,
 			    ("Unknown/unexpected ethertype 0x%04x\n",
-			     ntohs(hdlc->protocol)));
-		m_freem(m);
+			     ntohs(hdlc->h_proto)));
+		scp->sp_if.if_noproto++;
+		goto dropit;
 	}
+
+	/* queue the packet */
+	if (!IF_QFULL(ifq)) {
+		IF_ENQUEUE(ifq, m);
+	} else {
+		IF_DROP(ifq);
+		scp->sp_if.if_iqdrops++;
+		goto dropit;
+	}
+	return;
+dropit:
+	if (m)
+		m_freem(m);
+	return;
 }
 
 #if SCA_DEBUG_LEVEL > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570reg.h,v 1.3 2000/01/04 06:36:29 chopps Exp $	*/
+/*	$NetBSD: hd64570reg.h,v 1.4 2000/01/08 20:46:30 chopps Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -49,24 +49,33 @@
 #define CISCO_ADDR_REPLY        1       /* Cisco address reply */
 #define CISCO_KEEPALIVE_REQ     2       /* Cisco keepalive request */
 
-typedef struct cisco_pkt {
+struct cisco_pkt {
         u_int32_t	type;
         u_int32_t	par1;
         u_int32_t	par2;
         u_int16_t	rel;
         u_int16_t	time0;
         u_int16_t	time1;
-} cisco_pkt_t;
+};
 #define CISCO_PKT_LEN	18	/* sizeof doesn't work right... */
 
 #define HDLC_PROTOCOL_IP	0x0800	/* IP */
+#define HDLC_PROTOCOL_ISO	0xfefe	/* LLC_ISO_LSAP dsap,ssap */
 
-typedef struct hdlc_header {
-	u_int8_t	addr;
-	u_int8_t	control;
-	u_int16_t	protocol;
-} hdlc_header_t;
+struct hdlc_header {
+	u_int8_t	h_addr;
+	u_int8_t	h_resv;
+	u_int16_t	h_proto;
+};
 #define HDLC_HDRLEN	4
+
+struct hdlc_llc_header {
+	u_int8_t	hl_addr;
+	u_int8_t	hl_resv;
+	u_int8_t	hl_dsap;
+	u_int8_t	hl_ssap;
+	u_int8_t	hl_control;
+};
 
 /*
  * Hitachi HD64570  defininitions 
