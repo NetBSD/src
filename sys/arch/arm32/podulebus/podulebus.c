@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.26 1998/02/21 02:44:42 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.27 1998/02/21 23:02:34 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -51,6 +51,7 @@
 #include <machine/katelib.h>
 #include <machine/irqhandler.h>
 #include <machine/bootconfig.h>
+#include <machine/pte.h>
 #include <arm32/iomd/iomdreg.h>
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/podules.h>
@@ -69,7 +70,7 @@ extern struct bus_space podulebus_bs_tag;
 
 /* Declare prototypes */
 
-void map_section __P((vm_offset_t, vm_offset_t, vm_offset_t));
+void map_section __P((vm_offset_t, vm_offset_t, vm_offset_t, int cacheable));
 int poduleirqhandler __P((void *arg));
 u_int poduleread __P((u_int address, int offset, int slottype));
 
@@ -528,7 +529,7 @@ podulebusattach(parent, self, aux)
 	/* Map the FAST and SYNC simple podules */
 
 	map_section(PAGE_DIRS_BASE, SYNC_PODULE_BASE & 0xfff00000,
-	    SYNC_PODULE_HW_BASE & 0xfff00000);
+	    SYNC_PODULE_HW_BASE & 0xfff00000, 0);
 	cpu_tlb_flushD();
 
 	/* Now map the EASI space */
@@ -536,8 +537,10 @@ podulebusattach(parent, self, aux)
 	for (loop = 0; loop < MAX_PODULES; ++loop) {
 		int loop1;
         
-		for (loop1 = loop * EASI_SIZE; loop1 < ((loop + 1) * EASI_SIZE); loop1 += (1 << 20))
-		map_section(PAGE_DIRS_BASE, EASI_BASE + loop1, EASI_HW_BASE + loop1);
+		for (loop1 = loop * EASI_SIZE; loop1 < ((loop + 1) * EASI_SIZE);
+		    loop1 += L1_SEC_SIZE)
+		map_section(PAGE_DIRS_BASE, EASI_BASE + loop1,
+		    EASI_HW_BASE + loop1, 0);
 	}
 	cpu_tlb_flushD();
 
