@@ -30,17 +30,17 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(keysId, "$Id: rcskeys.c,v 1.4 1994/09/19 02:34:22 mycroft Exp $")
+libId(keysId, "$Id: rcskeys.c,v 1.5 1994/10/07 14:41:18 mycroft Exp $")
 
 
 char const *const Keyword[] = {
     /* This must be in the same order as rcsbase.h's enum markers type. */
 	nil,
 	AUTHOR, DATE, HEADER, IDH,
-	LOCKER, LOG,
 #ifdef LOCALID
 	LOCALID,
 #endif
+	LOCKER, LOG,
 	RCSFILE, REVISION, SOURCE, STATE
 };
 
