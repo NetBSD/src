@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)union_vfsops.c	8.10 (Berkeley) 5/24/94
- *	$Id: union_vfsops.c,v 1.2 1994/06/15 23:08:02 mycroft Exp $
+ *	$Id: union_vfsops.c,v 1.3 1994/06/17 15:21:37 mycroft Exp $
  */
 
 /*
@@ -297,6 +297,7 @@ union_unmount(mp, mntflags, p)
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	struct vnode *um_rootvp;
 	int error;
+	int freeing;
 	int flags = 0;
 	extern int doforce;
 
@@ -318,17 +319,48 @@ union_unmount(mp, mntflags, p)
 
 	if (error = union_root(mp, &um_rootvp))
 		return (error);
+
+	/*
+	 * Keep flushing vnodes from the mount list.
+	 * This is needed because of the un_pvp held
+	 * reference to the parent vnode.
+	 * If more vnodes have been freed on a given pass,
+	 * the try again.  The loop will iterate at most
+	 * (d) times, where (d) is the maximum tree depth
+	 * in the filesystem.
+	 */
+	for (freeing = 0; vflush(mp, um_rootvp, flags) != 0;) {
+		struct vnode *vp;
+		int n;
+
+		/* count #vnodes held on mount list */
+		for (n = 0, vp = mp->mnt_vnodelist.lh_first;
+				vp != NULLVP;
+				vp = vp->v_mntvnodes.le_next)
+			n++;
+
+		/* if this is unchanged then stop */
+		if (n == freeing)
+			break;
+
+		/* otherwise try once more time */
+		freeing = n;
+	}
+
+	/* At this point the root vnode should have a single reference */
 	if (um_rootvp->v_usecount > 1) {
 		vput(um_rootvp);
 		return (EBUSY);
 	}
+#ifdef notneeded
 	if (error = vflush(mp, um_rootvp, flags)) {
 		vput(um_rootvp);
 		return (error);
 	}
+#endif
 
 #ifdef UNION_DIAGNOSTIC
-	vprint("alias root of lower", um_rootvp);
+	vprint("union root", um_rootvp);
 #endif	 
 	/*
 	 * Discard references to upper and lower target vnodes.
