@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.95 2001/01/17 06:07:32 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.96 2001/01/17 06:10:37 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.95 2001/01/17 06:07:32 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.96 2001/01/17 06:10:37 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2563,8 +2563,10 @@ in_getaddr(s, which)
 
 	if (which == ADDR) {
 		char *p = NULL;
-		if ((p = strrchr(s, '/')) != NULL)
-			in6_getprefix(p + 1, MASK);
+		if ((p = strrchr(s, '/')) != NULL) {
+			*p = '\0';
+			in_getprefix(p + 1, MASK);
+		}
 	}
 
 	if (inet_aton(s, &sin->sin_addr) == 0) {
