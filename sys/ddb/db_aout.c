@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.17 1997/06/26 01:11:00 thorpej Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.18 1997/11/30 15:49:34 drochner Exp $	*/
 
 /* 
  * Mach Operating System
@@ -114,7 +114,7 @@ X_db_sym_init(vsymtab, vesymtab, name)
 	(((vm_offset_t)(x) + sizeof(vm_size_t) - 1) & ~(sizeof(vm_size_t) - 1))
 
 	if (round_to_size(estrtab) != round_to_size(esymtab)) {
-	    db_printf("[ %s symbol table not valid ]\n", name);
+	    printf("[ %s symbol table not valid ]\n", name);
 	    return;
         }
 #undef	round_to_size
@@ -126,7 +126,7 @@ X_db_sym_init(vsymtab, vesymtab, name)
 	    strx = sp->n_un.n_strx;
 	    if (strx != 0) {
 		if (strx > slen) {
-		    db_printf("Bad string table index (%#x)\n", strx);
+		    printf("Bad string table index (%#x)\n", strx);
 		    sp->n_un.n_name = 0;
 		    continue;
 		}
@@ -137,8 +137,8 @@ X_db_sym_init(vsymtab, vesymtab, name)
 	if (db_add_symbol_table((char *)sym_start, (char *)sym_end, name,
 	    (char *)symtab) !=  -1) {
 #ifndef	SYMTAB_SPACE
-                db_printf("[ preserving %d bytes of %s symbol table ]\n",
-                          esymtab - (char *)symtab, name);
+                printf("[ preserving %d bytes of %s symbol table ]\n",
+		       esymtab - (char *)symtab, name);
 #endif
         }
 }
