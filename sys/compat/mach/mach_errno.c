@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.c,v 1.2 2002/11/12 05:18:31 manu Exp $ */
+/*	$NetBSD: mach_errno.c,v 1.3 2002/11/12 06:14:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.2 2002/11/12 05:18:31 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.3 2002/11/12 06:14:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ int native_to_mach_errno[] = {
 	MACH_KERN_FAILURE,			/* EBADF */
 	MACH_KERN_FAILURE,			/* ECHILD */	/* 10 */
 	MACH_KERN_FAILURE,			/* EDEADLK */
-	MACH_KERN_FAILURE,			/* ENOMEM */
+	MACH_KERN_NO_SPACE,			/* ENOMEM */
 	MACH_KERN_FAILURE,			/* EACCES */
 	MACH_KERN_INVALID_ADDRESS,		/* EFAULT */
 	MACH_KERN_FAILURE,			/* ENOTBLK */	/* 15 */

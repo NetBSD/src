@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.6 2002/11/11 09:28:00 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.7 2002/11/12 06:14:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.6 2002/11/11 09:28:00 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.7 2002/11/12 06:14:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -86,8 +86,8 @@ mach_host_info(p, msgh)
 		info->max_cpus = 1; /* XXX fill this  accurately */
 		info->avail_cpus = 1;
 		info->memory_size = uvmexp.active + uvmexp.inactive;
-		info->cpu_type = 0;
-		info->cpu_subtype = 0;
+		info->cpu_type = 12;
+		info->cpu_subtype = 9;
 		break;
 	}
 
