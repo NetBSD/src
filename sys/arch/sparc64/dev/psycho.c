@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.9 2000/05/17 02:31:12 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.10 2000/05/17 10:17:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -365,7 +365,7 @@ sabre_init(sc, pba)
 			  0,
 			  &bh))
 		panic("could not map sabre PCI configuration space");
-	sc->sc_configaddr = (paddr_t)bh;
+	sc->sc_configaddr = bh;
 }
 
 /*
@@ -836,6 +836,10 @@ static int pci_ino_to_ipl_table[] = {
 	14,		/* power management */
 };
 
+#ifdef NOT_DEBUG
+static struct psycho_pbm *ppbm;
+#endif
+
 int
 psycho_intr_map(tag, pin, line, ihp)
 	pcitag_t tag;
@@ -869,6 +873,10 @@ psycho_intr_establish(t, level, flags, handler, arg)
 	int ino;
 	long vec = level; 
 
+#ifdef NOT_DEBUG
+	if (!ppbm)
+		ppbm = pp;
+#endif
 	ih = (struct intrhand *)
 		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
@@ -928,7 +936,7 @@ psycho_intr_establish(t, level, flags, handler, arg)
 		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx",
 		    (intrmap = *intrmapptr)));
 	}
-#ifdef DEBUG
+#ifdef NOT_DEBUG
 	if (psycho_debug & PDB_INTR) {
 		long i;
 
@@ -977,8 +985,8 @@ psycho_dmamap_unload(t, map)
 }
 
 int
-psycho_dmamap_load_raw(tag, map, segs, nsegs, size, flags)
-	bus_dma_tag_t tag;
+psycho_dmamap_load_raw(t, map, segs, nsegs, size, flags)
+	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	bus_dma_segment_t *segs;
 	int nsegs;
@@ -988,7 +996,7 @@ psycho_dmamap_load_raw(tag, map, segs, nsegs, size, flags)
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	return (iommu_dvmamap_load_raw(tag, &sc->sc_is, segs, nsegs, size, flags));
+	return (iommu_dvmamap_load_raw(t, &sc->sc_is, map, segs, nsegs, size, flags));
 }
 
 void
@@ -1062,3 +1070,46 @@ psycho_dmamem_unmap(t, kva, size)
 
 	iommu_dvmamem_unmap(t, &sc->sc_is, kva, size);
 }
+
+#if NOT_DEBUG
+void
+psycho_print_intr_state(void)
+{
+	pcitag_t tag;
+	bus_space_handle_t bh;
+	u_int64_t data, diag;
+	struct psycho_softc *sc = ppbm->pp_sc;
+
+	if (!ppbm) {
+		printf("psycho_print_intr_state: no ppbm configured\n");
+		return;
+	}
+	printf("psycho_print_intr_state: ");
+
+	bh = sc->sc_basepaddr;
+	bh = (bus_space_handle_t)(u_long)sc->sc_regs;
+	diag = bus_space_read_8(sc->sc_configtag, bh, 0xa800);
+	printf("all PCI diags is %qx\n", diag);
+#if 0
+	for (tag = 0xc00; tag < 0xc40; tag += 0x8) {
+		data = bus_space_read_8(sc->sc_configtag, bh, tag);
+		
+		printf(" - PCI slot at %qx reads as %qx", bh + tag, data);
+		printf(": diag %x\n", (int)(diag & 0xff));
+		diag >>= 8;
+	}
+#endif
+
+	diag = bus_space_read_8(sc->sc_configtag, bh, 0xa808);
+	printf("\t\tall OBIO diags is %qx\n", diag);
+#define START_TAG	0x1000	/* 0x1000 */
+#define END_TAG		0x1018	/* 0x1088 */
+	for (tag = START_TAG; tag < END_TAG; tag += 0x8) {
+		data = bus_space_read_8(sc->sc_configtag, bh + tag, 0);
+		
+		printf(" - OBIO slot at %qx reads as %qx", bh + tag, data);
+		printf(": diag %x\n", (int)(diag & 0x3));
+		diag >>= 2;
+	}
+}
+#endif
