@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.3 2002/08/29 17:41:03 he Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.4 2002/09/04 00:29:19 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1238,3 +1238,7 @@ usr.bin/openssl/Makefile			1.8-1.10
 lib/libkrb5/Makefile                            1.11
 
   Use libc md4, not openssl md4.
+
+usr.sbin/rpcbind/util.c				1.5
+  Move routines which fill in tbuf in addrmerge(), making sure tbuf is always
+  initialised.
