@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.21 2001/04/30 19:49:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -58,14 +58,17 @@
 
 /*
  * Media to register setting conversion table.  Order matters.
+ * XXX 802.3 doesn't specify ANAR or ANLPAR bits for 1000base.
  */
 const struct mii_media mii_media_table[] = {
 	{ BMCR_ISO,		ANAR_CSMA },		/* None */
-	{ 0,			ANAR_CSMA|ANAR_10 },	/* 10baseT */
-	{ BMCR_FDX,		ANAR_CSMA|ANAR_10_FD },	/* 10baseT-FDX */
+	{ BMCR_S10,		ANAR_CSMA|ANAR_10 },	/* 10baseT */
+	{ BMCR_S10|BMCR_FDX,	ANAR_CSMA|ANAR_10_FD },	/* 10baseT-FDX */
 	{ BMCR_S100,		ANAR_CSMA|ANAR_T4 },	/* 100baseT4 */
 	{ BMCR_S100,		ANAR_CSMA|ANAR_TX },	/* 100baseTX */
 	{ BMCR_S100|BMCR_FDX,	ANAR_CSMA|ANAR_TX_FD },	/* 100baseTX-FDX */
+	{ BMCR_S1000,		ANAR_CSMA },		/* 1000base */
+	{ BMCR_S1000|BMCR_FDX,	ANAR_CSMA },		/* 1000base-FDX */
 };
 
 void	mii_phy_auto_timeout __P((void *));
@@ -339,11 +342,6 @@ mii_phy_add_media(sc)
 	if (sc->mii_capabilities & BMSR_10THDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, sc->mii_inst),
 		    MII_MEDIA_10_T);
-#if 0
-		if ((sc->mii_flags & MIIF_NOLOOP) == 0)
-			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_LOOP,
-			    sc->mii_inst), MII_MEDIA_10_T);
-#endif
 		PRINT("10baseT");
 	}
 	if (sc->mii_capabilities & BMSR_10TFDX) {
@@ -354,11 +352,6 @@ mii_phy_add_media(sc)
 	if (sc->mii_capabilities & BMSR_100TXHDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, sc->mii_inst),
 		    MII_MEDIA_100_TX);
-#if 0
-		if ((sc->mii_flags & MIIF_NOLOOP) == 0)
-			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP,
-			    sc->mii_inst), MII_MEDIA_100_TX);
-#endif
 		PRINT("100baseTX");
 	}
 	if (sc->mii_capabilities & BMSR_100TXFDX) {
@@ -369,13 +362,36 @@ mii_phy_add_media(sc)
 	if (sc->mii_capabilities & BMSR_100T4) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, 0, sc->mii_inst),
 		    MII_MEDIA_100_T4);
-#if 0
-		if ((sc->mii_flags & MIIF_NOLOOP) == 0)
-			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, IFM_LOOP,
-			    sc->mii_inst), MII_MEDIA_100_T4);
-#endif
 		PRINT("100baseT4");
 	}
+
+	if (sc->mii_extcapabilities & EXTSR_MEDIAMASK) {
+		/*
+		 * XXX Right now only handle 1000SX and 1000TX.  Need
+		 * XXX to hnalde 1000LX and 1000CX some how.
+		 */
+		if (sc->mii_extcapabilities & EXTSR_1000XHDX) {
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, 0,
+			    sc->mii_inst), MII_MEDIA_1000);
+			PRINT("1000baseSX");
+		}
+		if (sc->mii_extcapabilities & EXTSR_1000XFDX) {
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, IFM_FDX,
+			    sc->mii_inst), MII_MEDIA_1000_FDX);
+			PRINT("1000baseSX-FDX");
+		}
+		if (sc->mii_extcapabilities & EXTSR_1000THDX) {
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, 0,
+			    sc->mii_inst), MII_MEDIA_1000);
+			PRINT("1000baseTX");
+		}
+		if (sc->mii_extcapabilities & EXTSR_1000TFDX) {
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, IFM_FDX,
+			    sc->mii_inst), MII_MEDIA_1000_FDX);
+			PRINT("1000baseTX-FDX");
+		}
+	}
+
 	if (sc->mii_capabilities & BMSR_ANEG) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst),
 		    MII_NMEDIA);	/* intentionally invalid index */
