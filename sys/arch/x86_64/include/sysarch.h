@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.2 2002/06/18 08:31:43 fvdl Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.3 2002/07/04 10:49:33 fvdl Exp $	*/
 
 #ifndef _X86_64_SYSARCH_H_
 #define _X86_64_SYSARCH_H_
@@ -21,6 +21,7 @@
 /*
  * XXXfvdl todo.
  */
+
 #if 0
 
 struct x86_64_get_ldt_args {
@@ -35,9 +36,13 @@ struct x86_64_set_ldt_args {
 	int num;
 };
 
+#endif
+
 struct x86_64_iopl_args {
 	int iopl;
 };
+
+#if 0
 
 struct x86_64_get_ioperm_args {
 	u_long *iomap;
