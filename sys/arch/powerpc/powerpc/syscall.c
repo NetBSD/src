@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.12 2002/11/04 00:01:03 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.13 2002/11/13 09:36:10 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -65,7 +65,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.12 2002/11/04 00:01:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2002/11/13 09:36:10 matt Exp $");
 
 void
 child_return(void *arg)
@@ -114,7 +114,7 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	n = NARGREG;
 
 #ifdef COMPAT_MACH
-	if ((callp = mach_syscall_dispatch(code)) == NULL)
+	if ((callp = mach_syscall_dispatch(&code)) == NULL)
 #endif /* COMPAT_MACH */
 	{
 		switch (code) {
@@ -217,7 +217,7 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	n = NARGREG;
 
 #ifdef COMPAT_MACH
-	if ((callp = mach_syscall_dispatch(code)) == NULL)
+	if ((callp = mach_syscall_dispatch(&code)) == NULL)
 #endif /* COMPAT_MACH */
 	{
 		switch (code) {
@@ -240,8 +240,8 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 			break;
 		}
 
-		callp = p->p_emul->e_sysent +
-		    (code & (EMULNAMEU(SYS_NSYSENT)-1));
+		code &= EMULNAMEU(SYS_NSYSENT) - 1;
+		callp = p->p_emul->e_sysent + code;
 	}
 
 	argsize = callp->sy_argsize;
