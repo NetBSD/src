@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.309 2002/03/05 23:57:49 wiz Exp $
+# $NetBSD: mi,v 1.310 2002/03/14 06:48:28 simonb Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -58,6 +58,7 @@
 ./etc/rc.d		base-sys-root
 ./etc/skel		base-sys-root
 ./etc/sliphome		base-slip-root
+./etc/ssh		base-sys-root
 ./etc/uucp		base-uucp-root
 ./home			base-sys-root
 ./mnt			base-sys-root
