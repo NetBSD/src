@@ -304,7 +304,7 @@ copyfault:
 		if (ssir & SIR_CLOCK) {
 			siroff(SIR_CLOCK);
 			cnt.v_soft++;
-			softclock((caddr_t)frame.f_pc, (int)frame.f_sr);
+			softclock(&frame.f_stackadj);
 		}
 		/*
 		 * If this was not an AST trap, we are all done.
