@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1 1995/02/13 23:06:58 cgd Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.2 1995/06/28 02:45:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -42,7 +42,8 @@ struct logout {
 	/* Unspecified. */
 };
 
-void		machine_check __P((struct trapframe *, struct logout *));
+void		machine_check __P((struct trapframe *, struct logout *,
+		    u_int64_t));
 static void	nullintr __P((void *, int));
 
 static void	(*iointr) __P((void *, int)) = nullintr;
@@ -61,7 +62,7 @@ interrupt(framep, type, vec, logoutp)
 	else if (type == 3)		/* I/O device interrupt */
 		(*iointr)(framep, vec);
 	else if (type == 2)
-		machine_check(framep, logoutp);
+		machine_check(framep, logoutp, vec);
 	else
 		panic("unexpected interrupt: type %ld, vec %ld\n",
 		    (long)type, (long)vec);
@@ -97,13 +98,15 @@ set_iointr(niointr)
 }
 
 void
-machine_check(framep, logoutp)
+machine_check(framep, logoutp, vec)
 	struct trapframe *framep;
 	struct logout *logoutp;
+	u_int64_t vec;
 {
 
 	if (!mc_expected)
-		panic("machine check");
+		panic("machine check: vec %lx, pc = 0x%lx, ra = 0x%lx",
+		    vec, framep->tf_pc, framep->tf_regs[FRAME_RA]);
 
 	mc_expected = 0;
 	mc_received = 1;

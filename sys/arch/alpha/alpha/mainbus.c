@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 1995/03/08 00:38:51 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -81,8 +81,9 @@ mbattach(parent, self, aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
-	int i;
-	extern int cputype;
+	struct pcs *pcsp;
+	int i, cpuattachcnt;
+	extern int cputype, ncpus;
 
 	printf("\n");
 
@@ -93,11 +94,28 @@ mbattach(parent, self, aux)
 	sc->sc_bus.ab_cvtaddr = mb_cvtaddr;
 	sc->sc_bus.ab_matchname = mb_matchname;
 
-	nca.ca_name = "cpu";
-	nca.ca_slot = 0;
-	nca.ca_offset = 0;
-	nca.ca_bus = &sc->sc_bus;
-	config_found(self, &nca, mbprint);
+	/*
+	 * Try to find and attach all of the CPUs in the machine.
+	 */
+	cpuattachcnt = 0;
+	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
+		struct pcs *pcsp;
+
+		pcsp = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
+		    (i * hwrpb->rpb_pcs_size));
+		if ((pcsp->pcs_flags & PCS_PP) == 0)
+			continue;
+
+		nca.ca_name = "cpu";
+		nca.ca_slot = 0;
+		nca.ca_offset = 0;
+		nca.ca_bus = &sc->sc_bus;
+		if (config_found(self, &nca, mbprint))
+			cpuattachcnt++;
+	}
+	if (ncpus != cpuattachcnt)
+		printf("WARNING: %d cpus in machine, %d attached\n",
+			ncpus, cpuattachcnt);
 
 #if defined(DEC_3000_500) || defined(DEC_3000_300)
 	if (cputype == ST_DEC_3000_500 || cputype == ST_DEC_3000_300) {
@@ -109,8 +127,32 @@ mbattach(parent, self, aux)
 		config_found(self, &nca, mbprint);
 	}
 #endif
+#if defined(DEC_2000_300)
+	if (cputype == ST_DEC_2000_300) {
+		/* we have an EISA bus! */
+		nca.ca_name = "eisa";
+		/*
+		 * XXX XXX NO, WE HAVE An "ibus", with EISA and the
+		 * combo chip attached.  "engineers."
+		 */
+		nca.ca_slot = 0;
+		nca.ca_offset = 0;
+		nca.ca_bus = &sc->sc_bus;
+		config_found(self, &nca, mbprint);
+	}
+#endif
+#if defined(DEC_2100_A50)
+	if (cputype == ST_DEC_2100_A50) {
+		/* we have an APECS chip, to which a PCI bus is attached! */
+		nca.ca_name = "apecs";
+		nca.ca_slot = 0;
+		nca.ca_offset = 0;
+		nca.ca_bus = &sc->sc_bus;
+		config_found(self, &nca, mbprint);
+	}
+#endif
 
-	/* XXX EISA, PCI busses. */
+	/* WEIRD: Note that the "LCA" CPU attches the PCI bus directly... */
 }
 
 static int

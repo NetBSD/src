@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 1995/03/03 01:35:21 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 1995/06/28 02:44:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,21 +49,30 @@
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
-#include <machine/pte.h>		/* XXX */
 
-#include <alpha/alpha/clockreg.h>
-#include <alpha/tc/asic.h>
+#include <alpha/alpha/clockvar.h>
+#include <alpha/tc/asic.h>			/* XXX */
+#include <dev/isa/isavar.h>			/* XXX */
 
 /* Definition of the driver for autoconfig. */
 static int	clockmatch __P((struct device *, void *, void *));
 static void	clockattach __P((struct device *, struct device *, void *));
 struct cfdriver clockcd =
-    { NULL, "clock", clockmatch, clockattach, DV_DULL, sizeof(struct device) };
+    { NULL, "clock", clockmatch, clockattach, DV_DULL,
+	sizeof(struct clock_softc) };
 
-static void	clock_startintr __P((void *));
-static void	clock_stopintr __P((void *));
+#if defined(DEC_3000_500) || defined(DEC_3000_300) || \
+    defined(DEC_2000_300) || defined(DEC_2100_A50)
+void	mcclock_attach __P((struct device *parent,
+	    struct device *self, void *aux));
+#endif
 
-volatile struct chiptime *clock_addr;
+#define	SECMIN	((unsigned)60)			/* seconds per minute */
+#define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
+#define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
+#define	SECYR	((unsigned)(365*SECDAY))	/* seconds per common year */
+
+#define	LEAPYEAR(year)	(((year) % 4) == 0)
 
 static int
 clockmatch(parent, cfdata, aux)
@@ -73,30 +82,58 @@ clockmatch(parent, cfdata, aux)
 {
 	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
-#ifdef notdef /* XXX */
-	struct tc_cfloc *asic_locp = (struct asic_cfloc *)cf->cf_loc;
-#endif
-	register volatile struct chiptime *c;
-	int64_t vec, ipl;
-	int nclocks;
-
-	/* make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "dallas_rtc"))
-		return (0);
 
 	/* See how many clocks this system has */	
 	switch (hwrpb->rpb_type) {
-	case ST_DEC_3000_500:
-	case ST_DEC_3000_300:
-		nclocks = 1;
-		break;
-	default:
-		nclocks = 0;
-	}
+#if defined(DEC_3000_500) || defined(DEC_3000_300)
 
-	/* if it can't have the one mentioned, reject it */
-	if (cf->cf_unit >= nclocks)
-		return (0);
+#if defined(DEC_3000_500)
+	case ST_DEC_3000_500:
+#endif
+#if defined(DEC_3000_300)
+	case ST_DEC_3000_300:
+#endif
+		/* make sure that we're looking for this type of device. */
+		if (!BUS_MATCHNAME(ca, "dallas_rtc"))
+			return (0);
+
+		if (cf->cf_unit >= 1)
+			return (0);
+
+		break;
+#endif
+
+#if defined(DEC_2100_A50)
+	case ST_DEC_2100_A50:
+		/* Just say yes.  XXX */
+
+		if (cf->cf_unit >= 1)
+			return 0;
+
+		/* XXX XXX XXX */
+		{
+			struct isa_attach_args *ia = aux;
+
+			if (ia->ia_iobase != 0x70 &&		/* XXX */
+			    ia->ia_iobase != -1)		/* XXX */
+				return (0);
+
+			ia->ia_iobase = 0x70;			/* XXX */
+			ia->ia_iosize = 2;			/* XXX */
+			ia->ia_msize = 0;
+		}
+
+		break;
+#endif
+
+#if defined(DEC_2000_300)
+	case ST_DEC_2000_300:
+		panic("clockmatch on jensen");
+#endif
+
+	default:
+		panic("unknown CPU");
+	}
 
 	return (1);
 }
@@ -107,19 +144,37 @@ clockattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register volatile struct chiptime *c;
-	struct confargs *ca = aux;
+
+	switch (hwrpb->rpb_type) {
+#if defined(DEC_3000_500) || defined(DEC_3000_300) || \
+    defined(DEC_2000_300) || defined(DEC_2100_A50)
+#if defined(DEC_3000_500)
+	case ST_DEC_3000_500:
+#endif
+#if defined(DEC_2000_300)
+	case ST_DEC_2000_300:
+#endif
+#if defined(DEC_3000_300)
+	case ST_DEC_3000_300:
+#endif
+#if defined(DEC_2100_A50)
+	case ST_DEC_2100_A50:
+#endif
+		mcclock_attach(parent, self, aux);
+		break;
+#endif /* defined(at least one of lots of system types) */
+
+	default:
+		panic("clockattach: it didn't get here.  really.");
+	}
+
+
+	/*
+	 * establish the clock interrupt; it's a special case
+	 */
+	set_clockintr(hardclock);
 
 	printf("\n");
-
-	clock_addr = (struct chiptime *)BUS_CVTADDR(ca);
-
-	/* Turn interrupts off, just in case. */
-	c = clock_addr;
-	c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	MB();
-
-	BUS_INTR_ESTABLISH(ca, (intr_handler_t)hardclock, NULL);
 }
 
 /*
@@ -141,12 +196,9 @@ clockattach(parent, self, aux)
  */
 cpu_initclocks()
 {
-	register volatile struct chiptime *c;
 	extern int tickadj;
+	struct clock_softc *csc = (struct clock_softc *)clockcd.cd_devs[0];
 	int fractick;
-
-	if (clock_addr == NULL)
-		panic("cpu_initclocks: no clock to initialize");
 
 	hz = 1024;		/* 1024 Hz clock */
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
@@ -159,10 +211,10 @@ cpu_initclocks()
 		tickfixinterval = hz >> (ftp - 1);
         }
 
-	c = clock_addr;
-	c->rega = REGA_TIME_BASE | RATE_1024_HZ;
-	c->regb = REGB_PER_INT_ENA | REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	MB();
+	/*
+	 * Get the clock started.
+	 */
+	(*csc->sc_init)(csc);
 }
 
 /*
@@ -174,6 +226,7 @@ void
 setstatclockrate(newhz)
 	int newhz;
 {
+
 	/* nothing we can do */
 }
 
@@ -194,9 +247,9 @@ void
 inittodr(base)
 	time_t base;
 {
-	register volatile struct chiptime *c;
+	struct clock_softc *csc = (struct clock_softc *)clockcd.cd_devs[0];
 	register int days, yr;
-	int sec, min, hour, day, mon, year;
+	struct clocktime ct;
 	long deltat;
 	int badbase, s;
 
@@ -208,22 +261,13 @@ inittodr(base)
 	} else
 		badbase = 0;
 
-	c = clock_addr;
-	/* don't read clock registers while they are being updated */
-	s = splclock();
-	while ((c->rega & REGA_UIP) == 1)
-		;
-	sec = c->sec;
-	min = c->min;
-	hour = c->hour;
-	day = c->day;
-	mon = c->mon;
-	year = c->year + 24; /* must be multiple of 4 because chip knows leap */
-	splx(s);
+	(*csc->sc_get)(csc, base, &ct);
+
+	csc->sc_initted = 1;
 
 	/* simple sanity checks */
-	if (year < 70 || mon < 1 || mon > 12 || day < 1 || day > 31 ||
-	    hour > 23 || min > 59 || sec > 59) {
+	if (ct.year < 70 || ct.mon < 1 || ct.mon > 12 || ct.day < 1 ||
+	    ct.day > 31 || ct.hour > 23 || ct.min > 59 || ct.sec > 59) {
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the TODR.
@@ -236,13 +280,14 @@ inittodr(base)
 		goto bad;
 	}
 	days = 0;
-	for (yr = 70; yr < year; yr++)
+	for (yr = 70; yr < ct.year; yr++)
 		days += LEAPYEAR(yr) ? 366 : 365;
-	days += dayyr[mon - 1] + day - 1;
-	if (LEAPYEAR(yr) && mon > 2)
+	days += dayyr[ct.mon - 1] + ct.day - 1;
+	if (LEAPYEAR(yr) && ct.mon > 2)
 		days++;
 	/* now have days since Jan 1, 1970; the rest is easy... */
-	time.tv_sec = days * SECDAY + hour * 3600 + min * 60 + sec;
+	time.tv_sec =
+	    days * SECDAY + ct.hour * SECHOUR + ct.min * SECMIN + ct.sec;
 
 	if (!badbase) {
 		/*
@@ -270,56 +315,48 @@ bad:
  */
 resettodr()
 {
-	register volatile struct chiptime *c;
+	struct clock_softc *csc = (struct clock_softc *)clockcd.cd_devs[0];
 	register int t, t2;
-	int sec, min, hour, day, mon, year;
+	struct clocktime ct;
 	int s;
 
-	/* compute the year */
+	if (!csc->sc_initted)
+		return;
+
+	/* compute the day of week. */
 	t2 = time.tv_sec / SECDAY;
-	year = 69;
+	ct.dow = (t2 + 4) % 7;	/* 1/1/1970 was thursday */
+
+	/* compute the year */
+	ct.year = 69;
 	while (t2 >= 0) {	/* whittle off years */
 		t = t2;
-		year++;
-		t2 -= LEAPYEAR(year) ? 366 : 365;
+		ct.year++;
+		t2 -= LEAPYEAR(ct.year) ? 366 : 365;
 	}
 
 	/* t = month + day; separate */
-	t2 = LEAPYEAR(year);
-	for (mon = 1; mon < 12; mon++)
-		if (t < dayyr[mon] + (t2 && mon > 1))
+	t2 = LEAPYEAR(ct.year);
+	for (ct.mon = 1; ct.mon < 12; ct.mon++)
+		if (t < dayyr[ct.mon] + (t2 && ct.mon > 1))
 			break;
 
-	day = t - dayyr[mon - 1] + 1;
-	if (t2 && mon > 2)
-		day--;
+	ct.day = t - dayyr[ct.mon - 1] + 1;
+	if (t2 && ct.mon > 2)
+		ct.day--;
 
 	/* the rest is easy */
 	t = time.tv_sec % SECDAY;
-	hour = t / 3600;
+	ct.hour = t / SECHOUR;
 	t %= 3600;
-	min = t / 60;
-	sec = t % 60;
+	ct.min = t / SECMIN;
+	ct.sec = t % SECMIN;
 
-	c = clock_addr;
-	s = splclock();
-	t = c->regb;
-	c->regb = t | REGB_SET_TIME;
-	MB();
-	c->sec = sec;
-	c->min = min;
-	c->hour = hour;
-	c->day = day;
-	c->mon = mon;
-	c->year = year - 24; /* must be multiple of 4 because chip knows leap */
-	c->regb = t;
-	MB();
-	splx(s);
+	(*csc->sc_set)(csc, &ct);
 }
 
-
 /*
- * Wait "n" microseconds.
+ * Wait "n" microseconds.  This doesn't belong here.  XXX.
  */
 void
 delay(n)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 1995/04/11 05:30:22 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4 1995/06/28 02:45:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -260,6 +260,28 @@ cpu_swapin(p)
 	ptep = kvtopte(up);
 	p->p_md.md_pcbpaddr =
 	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
+}
+
+/*
+ * cpu_swapout is called immediately before a process's 'struct user'
+ * and kernel stack are unwired (which are in turn done immediately
+ * before it's P_INMEM flag is cleared).  If the process is the
+ * current owner of the floating point unit, the FP state has to be
+ * saved, so that it goes out with the pcb, which is in the user area.
+ */
+void
+cpu_swapout(p)
+	struct proc *p;
+{
+	extern struct proc *fpcurproc;
+
+	if (p != fpcurproc)
+		return;
+
+	pal_wrfen(1);
+	savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
+	pal_wrfen(0);
+	fpcurproc = NULL;
 }
 
 /*

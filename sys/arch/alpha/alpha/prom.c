@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.2 1995/04/22 12:42:51 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.3 1995/06/28 02:45:18 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995 Carnegie Mellon University
@@ -38,7 +38,7 @@ void promcnputc __P((dev_t, int));
 int promcngetc __P((dev_t));
 void promcnpollc __P((dev_t, int));
 struct consdev promcons = { NULL, NULL, promcngetc, promcnputc,
-			    promcnpollc, makedev(12,0), 1 };
+			    promcnpollc, makedev(23,0), 1 };
 
 struct rpb	*hwrpb;			/* NOT in BSS! */
 int		alpha_console;
@@ -81,6 +81,7 @@ promcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
+        prom_return_t ret;
 	unsigned char *to = (unsigned char *)0x20000000;
 	int s;
 
@@ -96,7 +97,11 @@ promcnputc(dev, c)
 		TBIA();						/* XXX */
 	}							/* XXX */
 	*to = c;
-	prom_dispatch(PROM_R_PUTS, alpha_console, to, 1);
+
+	do {
+		ret.bits = prom_dispatch(PROM_R_PUTS, alpha_console, to, 1);
+	} while ((ret.u.retval & 1) == 0);
+
 	if (!prom_mapped) {					/* XXX */
 		*rom_ptep = saved_pte;				/* XXX */
 		TBIA();						/* XXX */
@@ -235,7 +240,7 @@ prom_halt(halt)
 	 * we want to happen when we halt.
 	 */
 	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
-	p->pcs_flags = PCS_OH | PCS_PL;
+	p->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
 	if (halt)
 		p->pcs_flags |= PCS_HALT_STAY_HALTED;
 	else
