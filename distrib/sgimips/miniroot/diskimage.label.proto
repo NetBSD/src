@@ -1,0 +1,24 @@
+# /dev/rvnd1c:
+type: SCSI
+disk: install diskimag
+label: 
+flags:
+bytes/sector: 512
+sectors/track: 16
+tracks/cylinder: 16
+sectors/cylinder: 256
+cylinders: 64
+total sectors: 16384
+rpm: 3600
+interleave: 1
+trackskew: 0
+cylinderskew: 0
+headswitch: 0           # microseconds
+track-to-track seek: 0  # microseconds
+drivedata: 0 
+
+4 partitions:
+#        size    offset     fstype  [fsize bsize cpg/sgs]
+ a:     14336      2048     4.2BSD   1024  8192     0   # (Cyl.    2 - 63)
+ c:     16384         0     4.2BSD   1024  8192    32   # (Cyl.    0 - 63)
+ d:      2048         0       boot                      # (Cyl.    0 - 1)

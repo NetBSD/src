@@ -1,0 +1,24 @@
+#	$NetBSD: Makefile.inc.xxx,v 1.1 2002/05/21 20:51:34 rafal Exp $
+
+DBG=		-Os -Wa,-xgot # XXX -xgot workaround for objcopy-crunchide
+
+IMAGESIZE=	7m
+MAKEFS_FLAGS=	-f 15
+IMAGEENDIAN?=	be
+MAKEDEVTARGETS=	all
+LISTS+=		${DISTRIBDIR}/common/list.sysinst
+MTREECONF+=	${.CURDIR}/mtree.usr.install
+IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/termcap.iris-ansi \
+		${DESTDIR}/.profile \
+		${DESTDIR}/etc/disktab \
+		${KERNOBJDIR}/GENERIC_INDY/netbsd.ecoff \
+		${KERNOBJDIR}/GENERIC_INDY/netbsd
+#		${KERNOBJDIR}/NETBOOT_INDY/netbsd \
+
+# Write preliminary Label so that newfs succeeds when updating label.
+PRELABEL=${DESTDIR}/sbin/disklabel -w ${VND} ${DISKTYPE} ; \
+	${DESTDIR}/usr/mdec/sgivol -if ${VND} ;\
+	${DESTDIR}/usr/mdec/sgivol -wf boot /usr/mdec/boot ${VND} ; \
+	${DESTDIR}/usr/mdec/sgivol -wf boot.elf /usr/mdec/boot.elf ${VND}
+
+image_md_post:
