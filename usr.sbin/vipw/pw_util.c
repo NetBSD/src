@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pw_util.c	5.4 (Berkeley) 5/21/91";*/
-static char rcsid[] = "$Id: pw_util.c,v 1.3 1993/08/07 07:53:57 cgd Exp $";
+static char rcsid[] = "$Id: pw_util.c,v 1.4 1994/03/29 02:21:11 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -42,8 +42,9 @@ static char rcsid[] = "$Id: pw_util.c,v 1.3 1993/08/07 07:53:57 cgd Exp $";
  */
 
 #include <sys/param.h>
-#include <sys/wait.h>
+#include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 #include <sys/resource.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -53,10 +54,14 @@ static char rcsid[] = "$Id: pw_util.c,v 1.3 1993/08/07 07:53:57 cgd Exp $";
 #include <paths.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 extern char *progname;
 extern char *tempname;
 
+void pw_error __P((char *, int, int));
+
+void
 pw_init()
 {
 	struct rlimit rlim;
@@ -87,9 +92,11 @@ pw_init()
 	(void)umask(0);
 }
 
-static int lockfd;
+int
 pw_lock()
 {
+	int lockfd;
+
 	/* 
 	 * If the master password file doesn't exist, the system is hosed.
 	 * Might as well try to build one.  Set the close-on-exec bit so
@@ -110,13 +117,14 @@ pw_lock()
 	return(lockfd);
 }
 
+int
 pw_tmp()
 {
 	static char path[MAXPATHLEN] = _PATH_MASTERPASSWD;
 	int fd;
 	char *p;
 
-	if (p = rindex(path, '/'))
+	if ((p = strrchr(path, '/')) != NULL)
 		++p;
 	else
 		p = path;
@@ -130,9 +138,10 @@ pw_tmp()
 	return(fd);
 }
 
+int
 pw_mkdb()
 {
-	union wait pstat;
+	int pstat;
 	pid_t pid;
 
 	(void)printf("%s: rebuilding the database...\n", progname);
@@ -141,23 +150,24 @@ pw_mkdb()
 		execl(_PATH_PWD_MKDB, "pwd_mkdb", "-p", tempname, NULL);
 		pw_error(_PATH_PWD_MKDB, 1, 1);
 	}
-	pid = waitpid(pid, (int *)&pstat, 0);
-	if (pid == -1 || pstat.w_status)
+	pid = waitpid(pid, &pstat, 0);
+	if (pid == -1 || !WIFEXITED(pstat) || WEXITSTATUS(pstat) != 0)
 		return(0);
 	(void)printf("%s: done\n", progname);
 	return(1);
 }
 
+void
 pw_edit(notsetuid)
 	int notsetuid;
 {
-	union wait pstat;
+	int pstat;
 	pid_t pid;
 	char *p, *editor;
 
 	if (!(editor = getenv("EDITOR")))
 		editor = _PATH_VI;
-	if (p = rindex(editor, '/'))
+	if ((p = strrchr(editor, '/')) != NULL)
 		++p;
 	else 
 		p = editor;
@@ -170,11 +180,12 @@ pw_edit(notsetuid)
 		execlp(editor, p, tempname, NULL);
 		_exit(1);
 	}
-	pid = waitpid(pid, (int *)&pstat, 0);
-	if (pid == -1 || pstat.w_status)
+	pid = waitpid(pid, &pstat, 0);
+	if (pid == -1 || !WIFEXITED(pstat) || WEXITSTATUS(pstat) != 0)
 		pw_error(editor, 1, 1);
 }
 
+void
 pw_prompt()
 {
 	register int c;
@@ -191,6 +202,7 @@ pw_prompt()
 	}
 }
 
+void
 pw_error(name, err, eval)
 	char *name;
 	int err, eval;
