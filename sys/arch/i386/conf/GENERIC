@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.354.2.4 2000/07/27 02:10:48 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.354.2.5 2000/08/01 22:35:52 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.354.2.4 $"
+#ident 		"GENERIC-$Revision: 1.354.2.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -753,6 +753,7 @@ mpu*	at sb?
 mpu*	at ym?
 
 # MIDI support
+midi*	at clcs?		# Cirrus Logic CS4280 MIDI port
 #midi*	at cms?			# Creative Music System
 midi*	at eap?			# 137[01] MIDI port
 midi*	at mpu?			# MPU 401
