@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.3 1995/02/13 00:43:23 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.4 1995/07/05 08:22:21 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -32,7 +32,7 @@
 
  /* All bugs are subject to removal without further notice */
 
-#if !defined(_VAX_MACROS_H_)&&!defined(ASSEMBLER)
+#if !defined(_VAX_MACROS_H_)&&!defined(ASSEMBLER)&&defined(_VAX_INLINE_)
 #define	_VAX_MACROS_H_
 
 /* Here general macros are supposed to be stored */
@@ -216,34 +216,5 @@ static __inline__ void blkclr(void *blk, int len) {
 			: "g" (blk), "g" (len)
 			: "r0","r1","r2","r3","r4","r5", "r6" );
 }
-
-static __inline__ unsigned long htonl(unsigned long x){
-	register unsigned long ret;
-
-	asm __volatile("rotl	$-8,%1,%0
-			insv	%0,$16,$8,%0
-			rotl	$8,%1,r1
-			movb	r1,%0"
-			: "&=r" (ret)
-			: "r" (x)
-			: "r1","cc" );
-	return	ret;
-}
-
-static __inline__ unsigned short htons(unsigned short x){
-	register unsigned short ret;
-
-	asm __volatile("rotl    $8,%1,%0
-			rotl    $-8,%1,r1
-			movb    r1,%0
-			movzwl  %0,%0" 
-			: "&=r" (ret)
-			: "r" (x)
-			: "r1","cc" );
-	return ret;
-}
-#define	ntohl(x)	htonl(x)
-#define	ntohs(x)	htons(x)
-
 
 #endif	/* _VAX_MACROS_H_ */
