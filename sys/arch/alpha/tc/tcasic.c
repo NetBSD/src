@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.29 2000/06/04 19:14:30 cgd Exp $ */
+/* $NetBSD: tcasic.c,v 1.30 2000/06/05 21:47:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.29 2000/06/04 19:14:30 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.30 2000/06/05 21:47:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.29 2000/06/04 19:14:30 cgd Exp $");
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
 #include <machine/alpha.h>
-#include <machine/intrcnt.h>
 
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tc_conf.h>

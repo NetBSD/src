@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb66.c,v 1.6 2000/06/04 19:14:24 cgd Exp $ */
+/* $NetBSD: pci_eb66.c,v 1.7 2000/06/05 21:47:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.6 2000/06/04 19:14:24 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.7 2000/06/05 21:47:26 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.6 2000/06/04 19:14:24 cgd Exp $");
 #include <alpha/pci/lcavar.h>
 
 #include <alpha/pci/pci_eb66.h>
-
-#include <machine/intrcnt.h>
 
 #include "sio.h"
 #if NSIO
@@ -122,6 +120,7 @@ pci_eb66_pickintr(lcp)
 {
 	bus_space_tag_t iot = &lcp->lc_iot;
 	pci_chipset_tag_t pc = &lcp->lc_pc;
+	char *cp;
 	int i;
 
         pc->pc_intr_v = lcp;
@@ -141,10 +140,17 @@ pci_eb66_pickintr(lcp)
 	for (i = 0; i < EB66_MAX_IRQ; i++)
 		eb66_intr_disable(i);	
 
-	eb66_pci_intr = alpha_shared_intr_alloc(EB66_MAX_IRQ);
-	for (i = 0; i < EB66_MAX_IRQ; i++)
+	eb66_pci_intr = alpha_shared_intr_alloc(EB66_MAX_IRQ, 8);
+	for (i = 0; i < EB66_MAX_IRQ; i++) {
 		alpha_shared_intr_set_maxstrays(eb66_pci_intr, i,
 			PCI_STRAY_MAX);
+		
+		cp = alpha_shared_intr_string(eb66_pci_intr, i);
+		sprintf(cp, "irq %d", i);
+		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
+		    eb66_pci_intr, i), EVCNT_TYPE_INTR, NULL,
+		    "eb66", cp);
+	}
 
 #if NSIO
 	sio_intr_setup(pc, iot);
@@ -212,8 +218,9 @@ dec_eb66_intr_evcnt(lcv, ih)
 	pci_intr_handle_t ih;
 {
 
-	/* XXX for now, no evcnt parent reported */
-	return (NULL);
+	if (ih >= EB66_MAX_IRQ)
+		panic("dec_eb66_intr_string: bogus eb66 IRQ 0x%lx\n", ih);
+	return (alpha_shared_intr_evcnt(eb66_pci_intr, ih));
 }
 
 void *
@@ -268,10 +275,6 @@ eb66_iointr(framep, vec)
 		if (vec >= 0x900 + (EB66_MAX_IRQ << 4))
 			panic("eb66_iointr: vec 0x%lx out of range\n", vec);
 		irq = (vec - 0x900) >> 4;
-
-		if (EB66_MAX_IRQ != INTRCNT_EB66_IRQ_LEN)
-			panic("eb66 interrupt counter sizes inconsistent");
-		intrcnt[INTRCNT_EB66_IRQ + irq]++;
 
 		if (!alpha_shared_intr_dispatch(eb66_pci_intr, irq)) {
 			alpha_shared_intr_stray(eb66_pci_intr, irq,
