@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.60 2003/11/14 10:27:10 dsl Exp $	*/
+/*	$NetBSD: jobs.c,v 1.61 2003/11/27 21:16:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.60 2003/11/14 10:27:10 dsl Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.61 2003/11/27 21:16:14 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -874,10 +874,8 @@ forkparent(struct job *jp, union node *n, int mode, pid_t pid)
 		ps->pid = pid;
 		ps->status = -1;
 		ps->cmd[0] = 0;
-#ifndef SMALL
 		if (/* iflag && rootshell && */ n)
 			commandtext(ps, n);
-#endif
 	}
 	TRACE(("In parent shell:  child = %d\n", pid));
 	return pid;
@@ -1210,7 +1208,7 @@ commandtext(struct procstat *ps, union node *n)
 	int len;
 
 	cmdnextc = ps->cmd;
-	if (iflag || mflag)
+	if (iflag || mflag || sizeof ps->cmd < 100)
 		len = sizeof(ps->cmd);
 	else
 		len = sizeof(ps->cmd) / 10;
