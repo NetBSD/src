@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.40 1996/02/01 00:41:05 jtc Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.41 1996/02/09 21:48:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,6 +50,7 @@
 #include <sys/buf.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/systm.h>
 
 #include <net/if.h>
@@ -65,6 +66,7 @@
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsdiskless.h>
 #include <nfs/nqnfs.h>
+#include <nfs/nfs_var.h>
 
 /*
  * nfs vfs operations.
@@ -116,7 +118,7 @@ nfs_statfs(mp, sbp, p)
 
 	nmp = VFSTONFS(mp);
 	isnq = (nmp->nm_flag & NFSMNT_NQNFS);
-	if (error = nfs_nget(mp, &nmp->nm_fh, &np))
+	if ((error = nfs_nget(mp, &nmp->nm_fh, &np)) != 0)
 		return (error);
 	vp = NFSTOV(np);
 	nfsstats.rpccnt[NFSPROC_STATFS]++;
@@ -171,7 +173,6 @@ nfs_mountroot()
 	struct mount *mp;
 	struct vnode *vp;
 	struct proc *procp;
-	struct ucred *cred;
 	long n;
 	int error;
 
@@ -197,7 +198,7 @@ nfs_mountroot()
 	 * Create the root mount point.
 	 */
 	mp = nfs_mount_diskless(&nd.nd_root, "/", 0, &vp);
-	printf("root on %s\n", &nd.nd_root.ndm_host);
+	printf("root on %s\n", nd.nd_root.ndm_host);
 
 	/*
 	 * Link it into the mount list.
@@ -248,7 +249,7 @@ nfs_mountroot()
 	 * swap file can be on a different server from the rootfs.
 	 */
 	mp = nfs_mount_diskless(&nd.nd_swap, "/swap", 0, &vp);
-	printf("swap on %s\n", &nd.nd_swap.ndm_host);
+	printf("swap on %s\n", nd.nd_swap.ndm_host);
 
 	/*
 	 * Since the swap file is not the root dir of a file system,
@@ -327,7 +328,8 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 	bcopy((caddr_t)args.addr, mtod(m, caddr_t),
 	      (m->m_len = args.addr->sa_len));
 
-	if (error = mountnfs(&args, mp, m, mntname, args.hostname, vpp))
+	error = mountnfs(&args, mp, m, mntname, args.hostname, vpp);
+	if (error)
 		panic("nfs_mountroot: mount %s failed: %d", mntname);
 
 	return (mp);
@@ -444,7 +446,8 @@ nfs_mount(mp, path, data, ndp, p)
 	size_t len;
 	nfsv2fh_t nfh;
 
-	if (error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args)))
+	error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args));
+	if (error)
 		return (error);
 	if (mp->mnt_flag & MNT_UPDATE) {
 		register struct nfsmount *nmp = VFSTONFS(mp);
@@ -454,17 +457,19 @@ nfs_mount(mp, path, data, ndp, p)
 		nfs_decode_args(nmp, &args);
 		return (0);
 	}
-	if (error = copyin((caddr_t)args.fh, (caddr_t)&nfh, sizeof (nfsv2fh_t)))
+	error = copyin((caddr_t)args.fh, (caddr_t)&nfh, sizeof (nfsv2fh_t));
+	if (error)
 		return (error);
-	if (error = copyinstr(path, pth, MNAMELEN-1, &len))
+	if ((error = copyinstr(path, pth, MNAMELEN-1, &len)) != 0)
 		return (error);
 	bzero(&pth[len], MNAMELEN - len);
-	if (error = copyinstr(args.hostname, hst, MNAMELEN-1, &len))
+	if ((error = copyinstr(args.hostname, hst, MNAMELEN-1, &len)) != 0)
 		return (error);
 	bzero(&hst[len], MNAMELEN - len);
 	/* sockargs() call must be after above copyin() calls */
-	if (error = sockargs(&nam, (caddr_t)args.addr,
-		args.addrlen, MT_SONAME))
+	error = sockargs(&nam, (caddr_t)args.addr,
+			 args.addrlen, MT_SONAME);
+	if (error)
 		return (error);
 	args.fh = &nfh;
 	error = mountnfs(&args, mp, nam, pth, hst, &vp);
@@ -561,7 +566,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	 * this problem, because one can identify root inodes by their
 	 * number == ROOTINO (2).
 	 */
-	if (error = nfs_nget(mp, &nmp->nm_fh, &np))
+	if ((error = nfs_nget(mp, &nmp->nm_fh, &np)) != 0)
 		goto bad;
 	*vpp = NFSTOV(np);
 
@@ -586,7 +591,6 @@ nfs_unmount(mp, mntflags, p)
 	struct nfsnode *np;
 	struct vnode *vp;
 	int error, flags = 0;
-	extern int doforce;
 
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
@@ -605,7 +609,7 @@ nfs_unmount(mp, mntflags, p)
 	 * the remote root.  See comment in mountnfs().  The VFS unmount()
 	 * has done vput on this vnode, otherwise we would get deadlock!
 	 */
-	if (error = nfs_nget(mp, &nmp->nm_fh, &np))
+	if ((error = nfs_nget(mp, &nmp->nm_fh, &np)) != 0)
 		return(error);
 	vp = NFSTOV(np);
 	if (vp->v_usecount > 2) {
@@ -619,7 +623,7 @@ nfs_unmount(mp, mntflags, p)
 	nmp->nm_flag |= NFSMNT_DISMINPROG;
 	while (nmp->nm_inprog != NULLVP)
 		(void) tsleep((caddr_t)&lbolt, PSOCK, "nfsdism", 0);
-	if (error = vflush(mp, vp, flags)) {
+	if ((error = vflush(mp, vp, flags)) != 0) {
 		vput(vp);
 		nmp->nm_flag &= ~NFSMNT_DISMINPROG;
 		return (error);
@@ -660,7 +664,7 @@ nfs_root(mp, vpp)
 	int error;
 
 	nmp = VFSTONFS(mp);
-	if (error = nfs_nget(mp, &nmp->nm_fh, &np))
+	if ((error = nfs_nget(mp, &nmp->nm_fh, &np)) != 0)
 		return (error);
 	vp = NFSTOV(np);
 	vp->v_type = VDIR;
@@ -702,7 +706,7 @@ loop:
 			continue;
 		if (vget(vp, 1))
 			goto loop;
-		if (error = VOP_FSYNC(vp, cred, waitfor, p))
+		if ((error = VOP_FSYNC(vp, cred, waitfor, p)) != 0)
 			allerror = error;
 		vput(vp);
 	}
