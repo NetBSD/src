@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.ahdi.s,v 1.3 1996/12/28 23:38:04 leo Exp $	*/
+/*	$NetBSD: xxboot.ahdi.s,v 1.4 1997/01/08 12:57:22 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -195,6 +195,6 @@ m_key:	.asciz	"\007\r\npress any key... @\r\n"
 
 regsav:	.long	0
 
-fill:	.space	50		| 510-(fill-start)
+fill:	.space	54		| 510-(fill-start)
 	.word	0		| checksum
 end:
