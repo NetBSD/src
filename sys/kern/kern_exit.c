@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.85 2000/08/22 17:28:28 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.86 2000/11/07 12:41:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -319,6 +319,12 @@ exit1(struct proc *p, int rv)
 	curproc = NULL;
 	limfree(p->p_limit);
 	p->p_limit = NULL;
+
+	/*
+	 * If emulation has process exit hook, call it now.
+	 */
+	if (p->p_emul->e_proc_exit)
+		(*p->p_emul->e_proc_exit)(p);
 
 	/* This process no longer needs to hold the kernel lock. */
 	KERNEL_PROC_UNLOCK(p);
