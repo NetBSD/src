@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.38 1999/07/03 13:52:29 kleink Exp $	*/
+/*	$NetBSD: if.h,v 1.39 1999/09/21 22:16:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -320,6 +320,7 @@ struct	ifreq {
 		short	ifru_flags;
 		int	ifru_metric;
 		int	ifru_mtu;
+		u_int	ifru_value;
 		caddr_t	ifru_data;
 	} ifr_ifru;
 #define	ifr_addr	ifr_ifru.ifru_addr	/* address */
@@ -328,6 +329,7 @@ struct	ifreq {
 #define	ifr_flags	ifr_ifru.ifru_flags	/* flags */
 #define	ifr_metric	ifr_ifru.ifru_metric	/* metric */
 #define	ifr_mtu		ifr_ifru.ifru_mtu	/* mtu */
+#define	ifr_value	ifr_ifru.ifru_value	/* generic value */
 #define	ifr_media	ifr_ifru.ifru_metric	/* media options (overload) */
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
 };
