@@ -1,4 +1,4 @@
-/*	$NetBSD: kcmd.c,v 1.8 2002/06/02 13:50:17 itojun Exp $	*/
+/*	$NetBSD: kcmd.c,v 1.9 2002/06/14 00:55:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 static char Xsccsid[] = "derived from @(#)rcmd.c 5.17 (Berkeley) 6/27/88";
 static char sccsid[] = "@(#)kcmd.c	8.2 (Berkeley) 8/19/93";
 #else
-__RCSID("$NetBSD: kcmd.c,v 1.8 2002/06/02 13:50:17 itojun Exp $");
+__RCSID("$NetBSD: kcmd.c,v 1.9 2002/06/14 00:55:47 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ __RCSID("$NetBSD: kcmd.c,v 1.8 2002/06/02 13:50:17 itojun Exp $");
 
 #define	START_PORT	5120	 /* arbitrary */
 
-int	getport __P((int *));
+int	getport(int *);
 
 int
 kcmd(sock, ahost, rport, locuser, remuser, cmd, fd2p, ticket, service, realm,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.25 2001/02/19 23:03:51 cgd Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.26 2002/06/14 00:55:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.25 2001/02/19 23:03:51 cgd Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.26 2002/06/14 00:55:48 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,18 +68,13 @@ __RCSID("$NetBSD: rlogin.c,v 1.25 2001/02/19 23:03:51 cgd Exp $");
 #include <netdb.h>
 #include <pwd.h>
 #include <setjmp.h>
-#include <termios.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef KERBEROS
 #include <kerberosIV/des.h>
@@ -125,38 +120,36 @@ struct winsize {
 #endif
 struct	winsize winsize;
 
-void		catch_child __P((int));
-void		copytochild __P((int));
-void		doit __P((sigset_t *));
-void		done __P((int));
-void		echo __P((int));
-u_int		getescape __P((char *));
-void		lostpeer __P((int));
-int		main __P((int, char **));
-void		mode __P((int));
-void		msg __P((char *));
-void		oob __P((int));
-int		reader __P((sigset_t *));
-void		sendwindow __P((void));
-void		setsignal __P((int));
-int		speed __P((int));
-void		sigwinch __P((int));
-void		stop __P((int));
-void		usage __P((void));
-void		writer __P((void));
-void		writeroob __P((int));
+void		catch_child(int);
+void		copytochild(int);
+void		doit(sigset_t *);
+void		done(int);
+void		echo(int);
+u_int		getescape(char *);
+void		lostpeer(int);
+int		main(int, char **);
+void		mode(int);
+void		msg(char *);
+void		oob(int);
+int		reader(sigset_t *);
+void		sendwindow(void);
+void		setsignal(int);
+int		speed(int);
+void		sigwinch(int);
+void		stop(int);
+void		usage(void);
+void		writer(void);
+void		writeroob(int);
 
 #ifdef	KERBEROS
-void		warning __P((const char *, ...));
+void		warning(const char *, ...);
 #endif
 #ifdef OLDSUN
-int		get_window_size __P((int, struct winsize *));
+int		get_window_size(int, struct winsize *);
 #endif
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct passwd *pw;
 	struct servent *sp;
@@ -438,8 +431,7 @@ try_connect:
 }
 
 int
-speed(fd)
-	int fd;
+speed(int fd)
 {
 	struct termios tt;
 
@@ -453,8 +445,7 @@ struct termios deftt;
 struct termios nott;
 
 void
-doit(smask)
-	sigset_t *smask;
+doit(sigset_t *smask)
 {
 	int i;
 	struct sigaction sa;
@@ -504,8 +495,7 @@ doit(smask)
 
 /* trap a signal, unless it is being ignored. */
 void
-setsignal(sig)
-	int sig;
+setsignal(int sig)
 {
 	struct sigaction sa;
 	sigset_t sigs;
@@ -525,8 +515,7 @@ setsignal(sig)
 }
 
 void
-done(status)
-	int status;
+done(int status)
 {
 	pid_t w;
 	int wstatus;
@@ -553,8 +542,7 @@ int dosigwinch;
  * request to turn on the window-changing protocol.
  */
 void
-writeroob(signo)
-	int signo;
+writeroob(int signo)
 {
 	struct sigaction sa;
 
@@ -569,8 +557,7 @@ writeroob(signo)
 }
 
 void
-catch_child(signo)
-	int signo;
+catch_child(int signo)
 {
 	int status;
 	pid_t pid;
@@ -593,7 +580,7 @@ catch_child(signo)
  * ~<delayed-suspend char>	suspend rlogin process, but leave reader alone.
  */
 void
-writer()
+writer(void)
 {
 	int bol, local, n;
 	char c;
@@ -672,8 +659,7 @@ writer()
 }
 
 void
-echo(i)
-	int i;
+echo(int i)
 {
 	char c = (char)i;
 	char *p;
@@ -696,8 +682,7 @@ echo(i)
 }
 
 void
-stop(all)
-	int all;
+stop(int all)
 {
 	struct sigaction sa;
 
@@ -714,8 +699,7 @@ stop(all)
 }
 
 void
-sigwinch(signo)
-	int signo;
+sigwinch(int signo)
 {
 	struct winsize ws;
 
@@ -730,7 +714,7 @@ sigwinch(signo)
  * Send the window size to the server via the magic escape
  */
 void
-sendwindow()
+sendwindow(void)
 {
 	struct winsize *wp;
 	char obuf[4 + sizeof (struct winsize)];
@@ -765,8 +749,7 @@ int rcvcnt, rcvstate;
 char rcvbuf[8 * 1024];
 
 void
-oob(signo)
-	int signo;
+oob(int signo)
 {
 	struct termios tty;
 	int atmark, n, rcvd;
@@ -847,8 +830,7 @@ oob(signo)
 
 /* reader: read from remote: line -> 1 */
 int
-reader(smask)
-	sigset_t *smask;
+reader(sigset_t *smask)
 {
 	pid_t pid;
 	int n, remaining;
@@ -901,8 +883,7 @@ reader(smask)
 }
 
 void
-mode(f)
-	int f;
+mode(int f)
 {
 	struct termios tty;
 
@@ -933,8 +914,7 @@ mode(f)
 }
 
 void
-lostpeer(signo)
-	int signo;
+lostpeer(int signo)
 {
 	struct sigaction sa;
 	sa.sa_flags = SA_RESTART;
@@ -946,16 +926,14 @@ lostpeer(signo)
 
 /* copy SIGURGs to the child process. */
 void
-copytochild(signo)
-	int signo;
+copytochild(int signo)
 {
 
 	(void)kill(child, SIGURG);
 }
 
 void
-msg(str)
-	char *str;
+msg(char *str)
 {
 
 	(void)fprintf(stderr, "rlogin: %s\r\n", str);
@@ -964,22 +942,12 @@ msg(str)
 #ifdef KERBEROS
 /* VARARGS */
 void
-#if __STDC__
 warning(const char *fmt, ...)
-#else
-warning(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
 	(void)fprintf(stderr, "rlogin: warning, using standard rlogin: ");
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, ".\n");
@@ -987,7 +955,7 @@ warning(fmt, va_alist)
 #endif
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: rlogin [ -%s]%s[-e char] [ -l username ] [username@]host\n",
@@ -1027,8 +995,7 @@ get_window_size(fd, wp)
 #endif
 
 u_int
-getescape(p)
-	char *p;
+getescape(char *p)
 {
 	long val;
 	int len;
