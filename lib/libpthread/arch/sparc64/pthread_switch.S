@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.5 2002/09/19 23:08:34 petrov Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.1.2.6 2002/09/20 21:04:59 petrov Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -151,7 +151,6 @@ ENTRY(pthread__upcall_switch)
 	mov	%l0, %i1
 	ba	pthread__switch_away
 	 mov	1, %i2
-	NOTREACHED
 	
 	/* No old-upcall-preemption */
 1:	mov	%i0, %o0
@@ -210,7 +209,7 @@ ENTRY(pthread__locked_switch)
 #ifdef PIC
 	PICCY_SET(locked_return_point,%l1,%l5)
 #else
-	set _C_LABEL(locked_return_point), %l1
+	set locked_return_point, %l1
 #endif
 	stx %l1, [%l3 + UC_GREGS + _REG_PC * 8]
 
@@ -247,7 +246,6 @@ ENTRY(pthread__locked_switch)
 	mov	%l4, %i1
 	ba	pthread__switch_away
 	 mov	1, %i2
-	NOTREACHED
 
 	/* No locked old-preemption */
 1:	/* We've moved to the new stack, and the old context has been 
@@ -279,7 +277,6 @@ ENTRY(pthread__locked_switch)
 	mov	%l0, %i1
 	ba	pthread__switch_away
 	 mov	%g0, %i2
-	NOTREACHED
 
 2:	/* %l2 points to next thread's ucontext */
 	call	_C_LABEL(_setcontext_u)
