@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.26 2003/02/09 22:33:18 pk Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.27 2003/03/08 15:17:23 tsutsui Exp $	*/
 
 /*
  *
@@ -207,7 +207,7 @@ do { \
 	splx(_s_); \
 	if (!cold) \
 		microtime(&(NAME).e[_i_].tv); \
-	(NAME).e[_i_].cpunum = curcpu()->ci_cpuid; \
+	(NAME).e[_i_].cpunum = cpu_number(); \
 	(NAME).e[_i_].fmt = (FMT); \
 	(NAME).e[_i_].fmtlen = strlen((NAME).e[_i_].fmt); \
 	(NAME).e[_i_].fn = _uvmhist_name; \
