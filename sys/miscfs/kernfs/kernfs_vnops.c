@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.99 2004/04/29 16:10:55 jrf Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.100 2004/05/07 14:56:48 cl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.99 2004/04/29 16:10:55 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.100 2004/05/07 14:56:48 cl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -477,18 +477,16 @@ kernfs_lookup(v)
 
 #ifdef IPSEC
 	case KFSipsecsadir:
-		for (i = 0; i < nipsecsa_targets; i++) {
+		if (cnp->cn_flags & ISDOTDOT) {
+			kt = &kern_targets[0];
+			goto found;
+		}
+
+		for (i = 2; i < nipsecsa_targets; i++) {
 			kt = &ipsecsa_targets[i];
 			if (cnp->cn_namelen == kt->kt_namlen &&
-			    memcmp(kt->kt_name, pname, cnp->cn_namelen) == 0) {
-				error = kernfs_allocvp(dvp->v_mount, vpp,
-				    kt->kt_tag, kt, 0);
-				if ((error == 0) && wantpunlock) {
-					VOP_UNLOCK(dvp, 0);
-					cnp->cn_flags |= PDIRUNLOCK;
-				}
-				return (error);
-			}
+			    memcmp(kt->kt_name, pname, cnp->cn_namelen) == 0)
+				goto found;
 		}
 
 		ep = NULL;
@@ -504,18 +502,16 @@ kernfs_lookup(v)
 		return (error);
 
 	case KFSipsecspdir:
-		for (i = 0; i < nipsecsp_targets; i++) {
+		if (cnp->cn_flags & ISDOTDOT) {
+			kt = &kern_targets[0];
+			goto found;
+		}
+
+		for (i = 2; i < nipsecsp_targets; i++) {
 			kt = &ipsecsp_targets[i];
 			if (cnp->cn_namelen == kt->kt_namlen &&
-			    memcmp(kt->kt_name, pname, cnp->cn_namelen) == 0) {
-				error = kernfs_allocvp(dvp->v_mount, vpp,
-				    kt->kt_tag, kt, 0);
-				if ((error == 0) && wantpunlock) {
-					VOP_UNLOCK(dvp, 0);
-					cnp->cn_flags |= PDIRUNLOCK;
-				}
-				return (error);
-			}
+			    memcmp(kt->kt_name, pname, cnp->cn_namelen) == 0)
+				goto found;
 		}
 
 		ep = NULL;
