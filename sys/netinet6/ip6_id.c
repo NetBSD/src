@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_id.c,v 1.12 2003/12/26 19:04:56 wiz Exp $	*/
+/*	$NetBSD: ip6_id.c,v 1.13 2004/03/23 05:31:54 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -76,13 +76,13 @@
  * The transaction id is determined by:
  * id[n] = seed xor (g^X[n] mod n)
  *
- * Effectivly the id is restricted to the lower (bits - 1) bits, thus
+ * Effectively the id is restricted to the lower (bits - 1) bits, thus
  * yielding two different cycles by toggling the msb on and off.
  * This avoids reuse issues caused by reseeding.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.12 2003/12/26 19:04:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.13 2004/03/23 05:31:54 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
