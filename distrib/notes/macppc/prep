@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.16 2001/05/19 05:43:29 mbw Exp $
+.\"	$NetBSD: prep,v 1.17 2001/05/22 04:09:41 mbw Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -101,7 +101,7 @@ Firmware 2.4, Open Firmware 3)
 (Open Firmware 3)
 .Pp
 Open Firmware 3 systems have a rewritable BootROM. Go to the
-.Sq Apple Software Updates
+.Sq "Apple Software Updates"
 web site at
 .Lk http://asu.info.apple.com/
 and search for
@@ -164,7 +164,7 @@ The version of Open Firmware in the
 Apple Network Servers can only use a serial console.
 You must first hook up a serial console
 (38400 bps, 8 bits, no parity, 1 stop bit, no handshaking) to 
-.Sq Port 2
+.Sq "Port 2"
 (the
 .Sq Li ttya
 device in Open Firmware).
@@ -240,7 +240,7 @@ Make sure you click the
 button, or the patches will not be saved to NVRAM.
 .(Note
 NVRAM patches and Open Firmware settings will be erased if you
-.Sq zap your PRAM
+.Sq "zap your PRAM"
 by holding down
 .Key COMMAND-OPTION-P-R
 keys during the boot chimes, or if you accidentally boot into 
@@ -339,7 +339,7 @@ port of your system
 (38400 bps, 8 bits, no parity, 1 stop bit, no handshaking).
 .(Note
 The
-.Dq Stop Boot at Open Firmware prompt
+.Dq "Stop Boot at Open Firmware prompt"
 setting is persistent.  It is equivalent to the Open Firmware command
 .Pp
 .Dl 0 > Ic "setenv auto-boot? false
@@ -395,7 +395,7 @@ Launch the
 BootVars tool.  Click on the
 .Dq auto-boot?
 checkbox, then click on the
-.Dq All Variables
+.Dq "All Variables"
 checkbox and type
 .Ic kbd
 into the
@@ -666,7 +666,7 @@ which knows how to load the
 kernel.  There are two approaches, the 
 .Pa ofwboot.xcf
 bootloader and the
-.Sq partition zero
+.Sq "partition zero"
 bootloader.  In the former case, the user tells Open Firmware to
 load
 .Pa ofwboot.xcf
@@ -762,7 +762,7 @@ Only on Open Firmware 2.4 or Open Firmware 3 systems.
 .bullet)
 .Pp
 The boot floppy image provided with the distribution sets has a
-.Sq partition zero
+.Sq "partition zero"
 bootloader and a
 .Nx
 file system with an installation kernel.
@@ -917,7 +917,7 @@ You can use the instructions in this section to partition a disk that may
 also be used with 
 .Tn MacOS No Ns ,
 although a disk prepared in this way 
-.Em will not boot 
+.Em "will not boot"
 .Em Nx No Ns .
 That means, your root partition
 .No ( Ns Pa / No Ns )
@@ -978,10 +978,12 @@ one hard drive (such as the iBook, iMac, PowerBook, and PowerMacintosh Cube
 systems).
 .bullet)
 .Pp
-.Em Using the 
-.Em Nx installer to install a disklabel or bootloader will
-.Em render your disk unusable by Tn MacOS No Ns .
-.Em Either will also prevent Open Firmware 3 machines from booting
+.Em "Using the"
+.Em Nx 
+.Em "installer to install a disklabel or bootloader will"
+.Em "render your disk unusable by"
+.Tn MacOS No Ns .
+.Em "Either will also prevent Open Firmware 3 machines from booting"
 .Pa ofwboot.xcf Ns .
 .Pp
 Unfortunately, the partitioning tools for
@@ -1002,7 +1004,7 @@ Must be large enough to hold the bootloader, over 100 KB.  May be as large
 as you desire for 
 .Tn MacOS
 usage.
-.It Em A/UX Root
+.It Em "A/UX Root"
 Must be at least 20 MB. Alternatively, you may decide to use one partition for
 your entire
 .Nx
@@ -1010,24 +1012,24 @@ installation, in which case it should be at least 200 MB without X, or 250
 MB with X.
 .Nx
 interprets an
-.Em A/UX Root
+.Em "A/UX Root"
 partition as the first partition 
 .No ( Ns Em a No Ns )
 on the disk.  
 This partition is not readable from
 .Tn MacOS No Ns .
-.It Em A/UX Swap
+.It Em "A/UX Swap"
 Any size. The recommenation is 1.5 times your RAM, although this is not
 strictly necessary for machines with a lot of RAM.
 .Nx
 interprets an
-.Em A/UX Swap
+.Em "A/UX Swap"
 partition as the second partition
 .No ( Ns Em b No Ns )
 on the disk.
 This partition is not readable from
 .Tn MacOS No Ns .
-.It Em A/UX User, A/UX Free1, A/UX Free2, A/UX Free3
+.It Em "A/UX User, A/UX Free1, A/UX Free2, A/UX Free3"
 Use these for any additional partitions you may want to use under
 .Nx Ns ,
 such as 
@@ -1158,12 +1160,12 @@ will load
 which will load the installation kernel.
 .Pp
 .(bullet -compact
-.Em From a UNIX machine
+.Em "From a UNIX machine"
 .Pp
 .Dl # Ic "dd if=boot.fs of=/dev/rfd0a bs=36k"
 .Pp
 .It
-.Em From a Windows machine
+.Em "From a Windows machine"
 .Pp
 Get either the
 .Ic rawrite.exe
@@ -1173,7 +1175,7 @@ from
 .Lk http://www.duskware.com/rawrite32/
 .Pp
 .It
-.Em From a MacOS machine
+.Em "From a MacOS machine"
 .Pp
 Get
 .Ic suntar
@@ -1189,7 +1191,7 @@ menu and pick
 Open the 
 .Sq Special
 menu and pick
-.Sq Overwrite Sectors ...
+.Sq "Overwrite Sectors ..."
 .Pp
 .It
 Insert a floppy disk
@@ -1241,7 +1243,7 @@ Skip forward to
 .Sx Installing the NetBSD System
 .
 .It
-.Em Boot off the official NetBSD/\*M-\*V CD-R image
+.Em "Boot off the official NetBSD/\*M-\*V CD-R image"
 .br
 (All Open Firmware versions)
 .Pp
@@ -1252,7 +1254,7 @@ CD-R image.
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#cdr151
 .Pp
 .(bullet
-.Em From a UNIX machine
+.Em "From a UNIX machine"
 .Pp
 Get and install cdrecord.
 .Nx 
@@ -1271,13 +1273,13 @@ correct device for your system (for i386 it would be
 .Pa /dev/cd1d No Ns ). 
 .Pp
 .It
-.Em From a MacOS machine (using Toast)
+.Em "From a MacOS machine (using Toast)"
 .Pp
 .(enum
 Open the
 .Sq Format
 menu and pick
-.Sq Disk Image
+.Sq "Disk Image"
 .Pp
 .It
 Click the
@@ -1286,7 +1288,7 @@ button and select the disk image you downloaded.
 .Pp
 .It
 Click the
-.Dq Write CD...
+.Dq "Write CD..."
 button
 .enum)
 .bullet)
@@ -1319,7 +1321,7 @@ Have Open Firmware load
 from the disk, and it will then load the installation kernel.
 .Pp
 .(bullet
-.Em From a UNIX machine
+.Em "From a UNIX machine"
 .Pp
 Get and install mkhybrid.  This is now part of the cdrecord package.
 .Nx 
@@ -1343,13 +1345,13 @@ Bootable CD-ROM HOW-TO for more detail:
 .Lk http://www.netbsd.org/Documentation/bootcd.html
 .Pp
 .It
-.Em From a MacOS machine (using Toast)
+.Em "From a MacOS machine (using Toast)"
 .Pp
 .(enum
 Open the
 .Sq Format
 menu and pick
-.Sq ISO 9660
+.Sq "ISO 9660"
 .Pp
 .It
 Click the
@@ -1366,7 +1368,7 @@ Click the
 tab, open the 
 .Dq Naming
 popup menu, and pick
-.Dq Macintosh Names
+.Dq "Macintosh Names"
 .Pp
 .It
 Click the 
@@ -1375,7 +1377,7 @@ button
 .Pp
 .It
 Click the
-.Dq Write CD...
+.Dq "Write CD..."
 button
 .enum)
 .bullet)
@@ -1410,7 +1412,7 @@ from the HFS partition, and it will load the installation kernel from the
 ISO partition.
 .Pp
 .(bullet
-.Em From a UNIX machine
+.Em "From a UNIX machine"
 .Pp
 Get and install mkhybrid.  This is now part of the cdrecord package.
 .Nx 
@@ -1434,19 +1436,19 @@ Bootable CD-ROM HOW-TO for more detail:
 .Lk http://www.netbsd.org/Documentation/bootcd.html
 .Pp
 .It
-.Em From a MacOS machine (using Toast)
+.Em "From a MacOS machine (using Toast)"
 .Pp
 .(enum
 Open the
 .Sq Format
 menu and pick
-.Sq Mac/ISO Hybrid
+.Sq "Mac/ISO Hybrid"
 .Pp
 .It
 Open the
 .Sq Utilities
 menu and pick
-.Sq Create Temporary Partition...
+.Sq "Create Temporary Partition..."
 .Pp
 .It
 Make this temporary partition large enough for all of the files you will
@@ -1479,7 +1481,7 @@ Click the
 tab, open the 
 .Dq Naming
 popup menu, and pick
-.Dq Macintosh Names
+.Dq "Macintosh Names"
 .Pp
 .It
 Click the 
@@ -1488,7 +1490,7 @@ button
 .Pp
 .It
 Click the
-.Dq Write CD...
+.Dq "Write CD..."
 button
 .enum)
 .bullet)
@@ -1634,7 +1636,7 @@ process.  Otherwise, you need to run:
 .Pp
 Now, you need to place the files your netboot client will need.
 As noted above in the section
-.Pa Preparing your System for NetBSD Installation
+.Sx Preparing your System for NetBSD Installation
 you have several options when choosing a location to store the
 distribution
 filesets. However, the easiest way is to put the distribution
@@ -1666,24 +1668,24 @@ the floppy disk image
 to your spare drive, and boot from that drive.  For example, you could use 
 a Zip drive, a Jaz drive, a Compact Flash drive, or even a spare hard 
 drive. The floppy image has a
-.Sq partition zero
+.Sq "partition zero"
 bootloader which ultimately loads the installation kernel from the FFS
 filesystem from the disk image.
 .Pp
 .(bullet -compact
-.Em From a UNIX machine
+.Em "From a UNIX machine"
 .Pp
 .Dl # Ic "dd if=boot.fs of=/dev/rsd0c"
 .Pp
 where 
 .Pa /dev/rsd0c
 is the 
-.Sq whole disk
+.Sq "whole disk"
 partition for the drive you will be using.  Be certain you have typed this
 correctly, as it will erase the disk.
 .Pp
 .It
-.Em From a Windows machine
+.Em "From a Windows machine"
 .Pp
 Get
 .Ic rawrite32.exe
@@ -1694,7 +1696,7 @@ Be certain you have selected the correct disk, as it will erase the
 contents.
 .Pp
 .It
-.Em From a MacOS machine
+.Em "From a MacOS machine"
 .Pp
 Get
 .Ic suntar
@@ -1704,17 +1706,17 @@ from
 Open the 
 .Sq Preferences
 menu and pick
-.Sq Expert Mode
+.Sq "Expert Mode"
 .Pp
 .It
 Open the 
 .Sq File
 menu and pick
-.Sq Open Device ...
+.Sq "Open Device ..."
 .Pp
 .It
 Click on the
-.Dq scan SCSI
+.Dq "scan SCSI"
 button to get a list of which drives are attached.
 .Pp
 .It
@@ -1725,7 +1727,7 @@ it will erase the contents.
 Open the
 .Sq Special
 menu and pick
-.Sq Overwrite Sectors ...
+.Sq "Overwrite Sectors ..."
 .Pp
 .It
 Hit return (i.e. start at sector number zero)
@@ -1740,7 +1742,7 @@ and click
 Open the
 .Sq File
 menu and pick
-.Sq Close Device
+.Sq "Close Device"
 .enum)
 .bullet)
 .bullet)
