@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.41 2001/03/08 02:21:44 thorpej Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.42 2001/03/14 06:58:25 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -83,14 +83,13 @@
 #define	LMAP_FLAGS	BUS_DMA_NOWAIT
 #endif
 
-static int isp_sbus_intr __P((void *));
-static u_int16_t isp_sbus_rd_reg __P((struct ispsoftc *, int));
-static void isp_sbus_wr_reg __P((struct ispsoftc *, int, u_int16_t));
-static int isp_sbus_mbxdma __P((struct ispsoftc *));
-static int isp_sbus_dmasetup __P((struct ispsoftc *, struct scsipi_xfer *,
-	ispreq_t *, u_int16_t *, u_int16_t));
-static void isp_sbus_dmateardown __P((struct ispsoftc *, struct scsipi_xfer *,
-	u_int32_t));
+static int isp_sbus_intr(void *);
+static u_int16_t isp_sbus_rd_reg(struct ispsoftc *, int);
+static void isp_sbus_wr_reg (struct ispsoftc *, int, u_int16_t);
+static int isp_sbus_mbxdma(struct ispsoftc *);
+static int isp_sbus_dmasetup(struct ispsoftc *, XS_T *, ispreq_t *, u_int16_t *,
+    u_int16_t);
+static void isp_sbus_dmateardown(struct ispsoftc *, XS_T *, u_int16_t);
 
 #ifndef	ISP_1000_RISC_CODE
 #define	ISP_1000_RISC_CODE	NULL
@@ -125,17 +124,14 @@ struct isp_sbussoftc {
 };
 
 
-static int isp_match __P((struct device *, struct cfdata *, void *));
-static void isp_sbus_attach __P((struct device *, struct device *, void *));
+static int isp_match(struct device *, struct cfdata *, void *);
+static void isp_sbus_attach(struct device *, struct device *, void *);
 struct cfattach isp_sbus_ca = {
 	sizeof (struct isp_sbussoftc), isp_match, isp_sbus_attach
 };
 
 static int
-isp_match(parent, cf, aux)
-        struct device *parent;
-        struct cfdata *cf;
-        void *aux;
+isp_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	int rv;
 #ifdef DEBUG
@@ -162,9 +158,7 @@ isp_match(parent, cf, aux)
 
 
 static void
-isp_sbus_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	int freq, ispburst, sbusburst;
 	struct sbus_attach_args *sa = aux;
@@ -311,8 +305,7 @@ isp_sbus_attach(parent, self, aux)
 }
 
 static int
-isp_sbus_intr(arg)
-	void *arg;
+isp_sbus_intr(void *arg)
 {
 	int rv;
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *)arg;
@@ -325,9 +318,7 @@ isp_sbus_intr(arg)
 }
 
 static u_int16_t
-isp_sbus_rd_reg(isp, regoff)
-	struct ispsoftc *isp;
-	int regoff;
+isp_sbus_rd_reg(struct ispsoftc *isp, int regoff)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	int offset = sbc->sbus_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
@@ -336,10 +327,7 @@ isp_sbus_rd_reg(isp, regoff)
 }
 
 static void
-isp_sbus_wr_reg(isp, regoff, val)
-	struct ispsoftc *isp;
-	int regoff;
-	u_int16_t val;
+isp_sbus_wr_reg(struct ispsoftc *isp, int regoff, u_int16_t val)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	int offset = sbc->sbus_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
@@ -348,8 +336,7 @@ isp_sbus_wr_reg(isp, regoff, val)
 }
 
 static int
-isp_sbus_mbxdma(isp)
-	struct ispsoftc *isp;
+isp_sbus_mbxdma(struct ispsoftc *isp)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dma_tag_t dmatag = sbc->sbus_dmatag;
@@ -494,12 +481,8 @@ dmafail:
  */
 
 static int
-isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
-	struct ispsoftc *isp;
-	struct scsipi_xfer *xs;
-	ispreq_t *rq;
-	u_int16_t *iptrp;
-	u_int16_t optr;
+isp_sbus_dmasetup(struct ispsoftc *isp, XS_T *xs, ispreq_t *rq,
+    u_int16_t *iptrp, u_int16_t optr)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmap;
@@ -565,10 +548,7 @@ mbxsync:
 }
 
 static void
-isp_sbus_dmateardown(isp, xs, handle)
-	struct ispsoftc *isp;
-	struct scsipi_xfer *xs;
-	u_int32_t handle;
+isp_sbus_dmateardown(struct ispsoftc *isp, XS_T *xs, u_int16_t handle)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmap;
