@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.72 2000/10/11 23:47:56 fvdl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.73 2000/10/17 19:44:28 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -796,4 +796,21 @@ message swapdelfailed
 chose for installation. Please reboot and try again.}
 
 message rootpw
-{Do you want to set a root password for the system now?}
+{The root password of the newly installed system has not yet been initialized,
+and is thus empty.  Do you want to set a root password for the system now?}
+
+message label_size_special
+{
+Special values that can be entered for the size value:
+    -1:   use until the end of the NetBSD part of the disk
+   a-%c:   end this partition where partition X starts
+
+}
+
+message label_offset_special
+{
+Special values that can be entered for the offset value:
+    -1:   start at the beginning of the NetBSD part of the disk
+   a-%c:   start at the end of partition X
+
+}
