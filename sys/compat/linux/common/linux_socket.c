@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.41 2002/11/29 01:34:55 itojun Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.42 2002/11/29 14:32:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.41 2002/11/29 01:34:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.42 2002/11/29 14:32:27 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -79,6 +79,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.41 2002/11/29 01:34:55 itojun Exp
 #include <sys/syslog.h>
 
 #include <sys/syscallargs.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_util.h>
@@ -215,44 +220,41 @@ linux_sys_socket(p, v, retval)
 		syscallarg(int) protocol;
 	} */ *uap = v;
 	struct sys_socket_args bsa;
-	int s;
+	int error;
 
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
 	SCARG(&bsa, type) = SCARG(uap, type);
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
-	s = sys_socket(p, &bsa, retval);
+	error = sys_socket(p, &bsa, retval);
 
 #ifdef INET6
 	/*
-	 * Linux AF_INET6 socket has IPV6_V6ONLY setsockopt set to 0 by default.
-	 * XXX interaction with native sysctl net.inet6.ip6.v6only?
+	 * Linux AF_INET6 socket has IPV6_V6ONLY setsockopt set to 0 by
+	 * default and some apps depend on this. So, set V6ONLY to 0
+	 * for Linux apps if the sysctl value is set to 1.
 	 */
-	if (SCARG(&bsa, domain) == PF_INET6) {
-		struct sys_setsockopt_args bsoa;
-		struct sys_close_args bca;
-		caddr_t sg;
-		const int off = 0;
+	if (!error && ip6_v6only && SCARG(&bsa, domain) == PF_INET6) {
+		struct file *fp;
 
-		SCARG(&bsoa, s) = s;
-		SCARG(&bsoa, level) = IPPROTO_IPV6;
-		SCARG(&bsoa, name) = IPV6_V6ONLY;
-		sg = stackgap_init(p, 0);
-		SCARG(&bsoa, val) = stackgap_alloc(p, &sg, sizeof(off));
-		SCARG(&bsoa, valsize) = sizeof(off);
-		/* LINTED const cast */
-		if (copyout(&off, (void *)SCARG(&bsoa, val), sizeof(off)) ||
-		    sys_setsockopt(p, &bsoa, retval)) {
-			SCARG(&bca, fd) = s;
-			sys_close(p, &bca, retval);
-			*retval = -1;
-			return (EINVAL);	/*XXX*/
+		if (getsock(p->p_fd, *retval, &fp) == 0) {
+			struct mbuf *m;
+
+			m = m_get(M_WAIT, MT_SOOPTS);
+			m->m_len = sizeof(int);
+			*mtod(m, int *) = 0;
+
+			/* ignore error */
+			(void) sosetopt((struct socket *)fp->f_data,
+				IPPROTO_IPV6, IPV6_V6ONLY, m);
+
+			FILE_UNUSE(fp, p);
 		}
 	}
 #endif
 
-	return s;
+	return (error);
 }
 
 int
