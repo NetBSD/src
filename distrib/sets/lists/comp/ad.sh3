@@ -1,3 +1,4 @@
+# $NetBSD: ad.sh3,v 1.4 2000/04/21 13:13:47 tsubai Exp $
 ./usr/include/sh3	comp-c-include
 ./usr/include/sh3/ansi.h	comp-c-include
 ./usr/include/sh3/aout_machdep.h	comp-c-include
@@ -13,11 +14,12 @@
 ./usr/include/sh3/cpu.h	comp-c-include
 ./usr/include/sh3/cpufunc.h	comp-c-include
 ./usr/include/sh3/cputypes.h	comp-c-include
+./usr/include/sh3/db_disasm.h	comp-c-include
 ./usr/include/sh3/db_machdep.h	comp-c-include
 ./usr/include/sh3/disklabel.h	comp-c-include
 ./usr/include/sh3/elf_machdep.h	comp-c-include
 ./usr/include/sh3/endian.h	comp-c-include
-./usr/include/sh3/exec_coff.h	comp-c-include
+./usr/include/sh3/endian_machdep.h	comp-c-include
 ./usr/include/sh3/float.h	comp-c-include
 ./usr/include/sh3/frame.h	comp-c-include
 ./usr/include/sh3/ieee.h	comp-c-include
@@ -55,4 +57,5 @@
 ./usr/include/sh3/va-sh.h	comp-c-include
 ./usr/include/sh3/varargs.h	comp-c-include
 ./usr/include/sh3/vmparam.h	comp-c-include
+./usr/include/sh3/wdogvar.h	comp-c-include
 ./usr/include/sh3/wdtreg.h	comp-c-include
