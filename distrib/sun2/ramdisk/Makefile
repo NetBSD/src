@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/04/02 10:39:20 fvdl Exp $
+#	$NetBSD: Makefile,v 1.16 2003/10/29 11:50:53 jdolecek Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -15,7 +15,7 @@ CRUNCHBIN=	rd_bin
 LISTS=		${.CURDIR}/list
 MTREECONF=	${.CURDIR}/mtree.conf
 IMAGEENDIAN=	be
-MAKEDEVTARGETS=	__ramdisk std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0
+MAKEDEVTARGETS=	std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab fstab passwd protocols services sshrc welcome \
 		${NETBSDSRCDIR}/etc/netconfig
