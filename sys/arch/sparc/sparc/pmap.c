@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 1996/02/28 22:44:42 gwr Exp $ */
+/*	$NetBSD: pmap.c,v 1.52 1996/02/29 22:15:13 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -3617,19 +3617,23 @@ pmap_count_ptes(pm)
  * (This will just seg-align mappings.)
  */
 void
-pmap_prefer(foff, va)
+pmap_prefer(foff, vap)
 	register vm_offset_t foff;
-	register vm_offset_t *va;
+	register vm_offset_t *vap;
 {
-	register long	d, m;
+	register vm_offset_t va = *vap;
+	register long d, m;
+
+	if (VA_INHOLE(va))
+		va = MMU_HOLE_END;
 
 	m = CACHE_ALIAS_DIST;
 	if (m == 0)		/* m=0 => no cache aliasing */
 		return;
 
-	d = foff - *va;
-	d &= (m - 1)
-	*va += d;
+	d = foff - va;
+	d &= (m - 1);
+	*vap = va + d;
 }
 
 pmap_redzone()
