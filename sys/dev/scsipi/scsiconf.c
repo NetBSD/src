@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.101 1998/06/22 13:19:09 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.102 1998/07/30 00:00:06 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -558,6 +558,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "RICOH   ", "IS60            ", "1R08"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "Astra 1200S     ", "V2.9"}, SDEV_NOLUNS},
+	{{T_SCANNER, T_FIXED,
+	 "UMAX    ", "Astra 1220S     ", "V1.2"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UMAX S-6E       ", "V2.0"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
