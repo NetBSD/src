@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.84 2003/01/18 10:06:33 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.85 2003/02/23 21:25:19 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.84 2003/01/18 10:06:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.85 2003/02/23 21:25:19 pk Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -329,7 +329,7 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 		pool_allocator_free(pp, ph->ph_page);
 		if ((pp->pr_roflags & PR_PHINPAGE) == 0) {
 			LIST_REMOVE(ph, ph_hashlist);
-			s = splhigh();
+			s = splvm();
 			pool_put(&phpool, ph);
 			splx(s);
 		}
@@ -611,7 +611,7 @@ pool_alloc_item_header(struct pool *pp, caddr_t storage, int flags)
 	if ((pp->pr_roflags & PR_PHINPAGE) != 0)
 		ph = (struct pool_item_header *) (storage + pp->pr_phoffset);
 	else {
-		s = splhigh();
+		s = splvm();
 		ph = pool_get(&phpool, flags);
 		splx(s);
 	}
@@ -1322,7 +1322,7 @@ pool_reclaim(struct pool *pp)
 			continue;
 		}
 		LIST_REMOVE(ph, ph_hashlist);
-		s = splhigh();
+		s = splvm();
 		pool_put(&phpool, ph);
 		splx(s);
 	}
