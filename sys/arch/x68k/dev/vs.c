@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.9 2001/11/13 09:06:00 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.10 2001/11/13 09:27:06 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -168,6 +168,13 @@ struct {
 
 #define NUM_RATE	(sizeof(vs_l2r)/sizeof(vs_l2r[0]))
 
+struct audio_encoding vs_encodings[] = {
+	{0, AudioEadpcm, AUDIO_ENCODING_ADPCM, 4, 0},
+	{1, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8,
+	    AUDIO_ENCODINGFLAG_EMULATED},
+	{2, AudioEmulaw, AUDIO_ENCODING_ULAW, 8, AUDIO_ENCODINGFLAG_EMULATED},
+};
+
 static int
 vs_match(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -323,28 +330,11 @@ static int
 vs_query_encoding(void *hdl, struct audio_encoding *fp)
 {
 	DPRINTF(1, ("vs_query_encoding\n"));
-	switch (fp->index) {
-	case 0:
-		strcpy(fp->name, AudioEadpcm);
-		fp->encoding = AUDIO_ENCODING_ADPCM;
-		fp->precision = 4;
-		fp->flags = 0;
-		break;
-	case 1:
-		strcpy(fp->name, AudioEulinear);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	default:
+
+	if (fp->index >= sizeof(vs_encodings) / sizeof(vs_encodings[0]))
 		return EINVAL;
-	}
+
+	*fp = vs_encodings[fp->index];
 	return 0;
 }
 
