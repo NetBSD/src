@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.8 2002/09/25 22:21:09 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.9 2002/10/01 12:56:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.8 2002/09/25 22:21:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.9 2002/10/01 12:56:48 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

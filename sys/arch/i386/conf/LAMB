@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.28 2002/09/18 02:44:01 lukem Exp $
+#	$NetBSD: LAMB,v 1.29 2002/10/01 12:56:44 fvdl Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -25,7 +25,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	DUMMY_NOPS
 
 options 	MTRR		# memory-type range register syscall support
-options 	PERFCTRS	# performance-monitoring counters support
+#options 	PERFCTRS	# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -67,7 +67,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
-options 	USERCONF	# userconf(4) support
+#options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 options 	TIMER_FREQ=1189200	# LAMB uses nonstandard timer freq
@@ -197,7 +197,7 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
-
+cpu0	at mainbus0
 #apm0	at mainbus0			# Advanced power management
 
 # Tuning for power management, see apm(4) for more details.

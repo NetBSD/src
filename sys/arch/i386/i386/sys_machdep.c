@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.64 2002/08/06 22:47:44 itojun Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.65 2002/10/01 12:57:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.64 2002/08/06 22:47:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.65 2002/10/01 12:57:00 fvdl Exp $");
 
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"

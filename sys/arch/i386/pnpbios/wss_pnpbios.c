@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.8 2002/09/27 20:33:11 thorpej Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.9 2002/10/01 12:57:18 fvdl Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.8 2002/09/27 20:33:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.9 2002/10/01 12:57:18 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,8 @@ void wss_pnpbios_attach __P((struct device *, struct device *, void *));
 int wss_pnpbios_hints_index __P((const char *));
 
 
-const struct cfattach wss_pnpbios_ca = {
-	sizeof(struct wss_softc), wss_pnpbios_match, wss_pnpbios_attach
-};
+CFATTACH_DECL(wss_pnpbios, sizeof(struct wss_softc), wss_pnpbios_match,
+    wss_pnpbios_attach, NULL, NULL)
 
 struct wss_pnpbios_hint {
 	char idstr[8];
