@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.111 2003/04/05 13:37:36 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.112 2003/04/12 10:35:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.111 2003/04/05 13:37:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.112 2003/04/12 10:35:58 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -743,16 +743,16 @@ ffs_mountfs(devvp, mp, p)
 			fsblockloc = bswap64(fs->fs_sblockloc);
 			needswap = 1;
 #endif
-		} else {
-			brelse(bp);
-			bp = NULL;
-			continue;
-		}
+		} else
+			goto next_sblock;
 
 		if ((fsblockloc == sblockloc ||
 		     (fs->fs_old_flags & FS_FLAGS_UPDATED) == 0)
 		    && sbsize <= MAXBSIZE && sbsize >= sizeof(struct fs))
 			break;
+
+next_sblock:
+		bp->b_flags |= B_NOCACHE;
 		brelse(bp);
 		bp = NULL;
 	}
