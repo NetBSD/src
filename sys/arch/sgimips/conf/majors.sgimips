@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sgimips,v 1.8 2003/10/05 08:04:26 jdolecek Exp $
+#	$NetBSD: majors.sgimips,v 1.9 2003/10/10 21:21:27 jdolecek Exp $
 #
 # Device majors for sgimips
 #
@@ -69,6 +69,6 @@ device-major	ksyms		char 77			ksyms
 device-major	pf		char 78			pf
 device-major	crypto		char 79			opencrypto
 
-# Majors up to 191 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
 # sys/dev/majors.

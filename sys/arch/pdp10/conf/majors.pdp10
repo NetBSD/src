@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pdp10,v 1.2 2003/10/05 08:04:25 jdolecek Exp $
+#	$NetBSD: majors.pdp10,v 1.3 2003/10/10 21:21:26 jdolecek Exp $
 #
 # Device majors for pdp10
 #
@@ -9,6 +9,6 @@ device-major	hp		char 3	block 0		hp
 device-major	ht		char 4	block 1		ht
 device-major	swap		char 5	block 3
 
-# Majors up to 191 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
 # sys/dev/majors.
