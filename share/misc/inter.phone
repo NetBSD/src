@@ -1,6 +1,6 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.3 1996/04/07 00:53:41 neil Exp $
-#	From: @(#)inter.phone	5.3 (Berkeley) 3/5/90
+#	$NetBSD: inter.phone,v 1.4 1997/03/26 06:30:57 mikel Exp $
+#	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
 20:66:Port Said:Egypt, Arab Rep. of
