@@ -1,4 +1,4 @@
-.\"	$NetBSD: semctl.2,v 1.12 2002/10/01 18:10:45 wiz Exp $
+.\"	$NetBSD: semctl.2,v 1.13 2002/10/02 10:42:34 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -52,7 +52,7 @@ and
 The operation to be performed is specified in
 .Fa cmd
 (see below).
-The fourth argument is optional and depends upon the opration requested.
+The fourth argument is optional and depends upon the operation requested.
 If required, it is a union of the following fields:
 .Bd -literal
     int     val;            /* value for SETVAL */
@@ -101,7 +101,7 @@ Set the value of the semaphore to
 .Fa arg.val ,
 where
 .Fa arg
-is the fourth arument to
+is the fourth argument to
 .Fn semctl .
 .It Dv GETPID
 Return the pid of the last process that did an operation on this semaphore.
