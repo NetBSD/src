@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.21 1996/09/07 12:41:05 mycroft Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.22 1997/03/24 21:44:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -360,7 +360,7 @@ vn_stat(vp, sb, p)
 	sb->st_ctimespec = va.va_ctime;
 	sb->st_blksize = va.va_blocksize;
 	sb->st_flags = va.va_flags;
-	sb->st_gen = va.va_gen;
+	sb->st_gen = 0;
 	sb->st_blocks = va.va_bytes / S_BLKSIZE;
 	return (0);
 }
