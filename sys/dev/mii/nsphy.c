@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.39.2.1 2004/08/03 10:48:49 skrll Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.39.2.2 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.39.2.1 2004/08/03 10:48:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.39.2.2 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,21 +90,21 @@ __KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.39.2.1 2004/08/03 10:48:49 skrll Exp $")
 
 #include <dev/mii/nsphyreg.h>
 
-int	nsphymatch(struct device *, struct cfdata *, void *);
-void	nsphyattach(struct device *, struct device *, void *);
+static int	nsphymatch(struct device *, struct cfdata *, void *);
+static void	nsphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(nsphy, sizeof(struct mii_softc),
     nsphymatch, nsphyattach, mii_phy_detach, mii_phy_activate);
 
-int	nsphy_service(struct mii_softc *, struct mii_data *, int);
-void	nsphy_status(struct mii_softc *);
-void	nsphy_reset(struct mii_softc *sc);
+static int	nsphy_service(struct mii_softc *, struct mii_data *, int);
+static void	nsphy_status(struct mii_softc *);
+static void	nsphy_reset(struct mii_softc *sc);
 
-const struct mii_phy_funcs nsphy_funcs = {
+static const struct mii_phy_funcs nsphy_funcs = {
 	nsphy_service, nsphy_status, nsphy_reset,
 };
 
-const struct mii_phydesc nsphys[] = {
+static const struct mii_phydesc nsphys[] = {
 	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83840,
 	  MII_STR_xxNATSEMI_DP83840 },
 
@@ -112,7 +112,7 @@ const struct mii_phydesc nsphys[] = {
 	  NULL },
 };
 
-int
+static int
 nsphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -123,7 +123,7 @@ nsphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 nsphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -154,7 +154,7 @@ nsphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -251,7 +251,7 @@ nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 nsphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
@@ -328,7 +328,7 @@ nsphy_status(struct mii_softc *sc)
 		mii->mii_media_active = ife->ifm_media;
 }
 
-void
+static void
 nsphy_reset(struct mii_softc *sc)
 {
 	int reg, i;
@@ -365,4 +365,3 @@ nsphy_reset(struct mii_softc *sc)
 		PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 	}
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: acphy.c,v 1.13 2003/04/29 01:49:33 thorpej Exp $	*/
+/*	$NetBSD: acphy.c,v 1.13.2.1 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.13 2003/04/29 01:49:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.13.2.1 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,20 +58,20 @@ __KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.13 2003/04/29 01:49:33 thorpej Exp $");
 
 #include <dev/mii/acphyreg.h>
 
-int	acphymatch(struct device *, struct cfdata *, void *);
-void	acphyattach(struct device *, struct device *, void *);
+static int	acphymatch(struct device *, struct cfdata *, void *);
+static void	acphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(acphy, sizeof(struct mii_softc),
     acphymatch, acphyattach, mii_phy_detach, mii_phy_activate);
 
-int	acphy_service(struct mii_softc *, struct mii_data *, int);
-void	acphy_status(struct mii_softc *);
+static int	acphy_service(struct mii_softc *, struct mii_data *, int);
+static void	acphy_status(struct mii_softc *);
 
-const struct mii_phy_funcs acphy_funcs = {
+static const struct mii_phy_funcs acphy_funcs = {
 	acphy_service, acphy_status, mii_phy_reset,
 };
 
-const struct mii_phydesc acphys[] = {
+static const struct mii_phydesc acphys[] = {
 	{ MII_OUI_ALTIMA,		MII_MODEL_ALTIMA_AC101,
 	  MII_STR_ALTIMA_AC101 },
 	{ MII_OUI_ALTIMA,		MII_MODEL_ALTIMA_AC101L,
@@ -89,7 +89,7 @@ const struct mii_phydesc acphys[] = {
 	  NULL },
 };
 
-int
+static int
 acphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -100,7 +100,7 @@ acphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 acphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -147,7 +147,7 @@ acphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 acphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -206,7 +206,7 @@ acphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 acphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;

@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.64.6.1 2004/08/03 10:56:26 skrll Exp $ */
+/* $NetBSD: device.h,v 1.64.6.2 2004/08/25 06:59:14 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -113,6 +113,7 @@ struct device {
 	struct	device *dv_parent;	/* pointer to parent device
 					   (NULL if pesudo- or root node) */
 	int	dv_flags;		/* misc. flags; see below */
+	int	*dv_locators;		/* our actual locators (optional) */
 };
 
 /* dv_flags */
@@ -215,6 +216,18 @@ TAILQ_HEAD(cftablelist, cftable);
 typedef int (*cfmatch_t)(struct device *, struct cfdata *, void *);
 
 /*
+ * XXX the "locdesc_t" is unnecessary; the len is known to "config" and
+ * should be made available through cfdata->cf_pspec->cfp_iattr.
+ * So just an "int *" should do it.
+ */
+typedef struct {
+	int len;
+	int locs[1];
+} locdesc_t;
+typedef int (*cfmatch_loc_t)(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
+
+/*
  * `configuration' attachment and driver (what the machine-independent
  * autoconf uses).  As devices are found, they are applied against all
  * the potential matches.  The one with the best match is taken, and a
@@ -237,12 +250,23 @@ struct cfattach {
 	void	(*ca_attach)(struct device *, struct device *, void *);
 	int	(*ca_detach)(struct device *, int);
 	int	(*ca_activate)(struct device *, enum devact);
+	/* technically, the next 2 belong into "struct cfdriver" */
+	int	(*ca_rescan)(struct device *, const char *,
+			     const int *); /* scan for new children */
+	void	(*ca_childdetached)(struct device *, struct device *);
 };
 LIST_HEAD(cfattachlist, cfattach);
 
 #define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
 struct cfattach __CONCAT(name,_ca) = {					\
-	___STRING(name), { 0 }, ddsize, matfn, attfn, detfn, actfn	\
+	___STRING(name), { 0 }, ddsize, matfn, attfn, detfn, actfn, 0, 0 \
+}
+
+#define	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, \
+	rescanfn, chdetfn) \
+struct cfattach __CONCAT(name,_ca) = {					\
+	___STRING(name), { 0 }, ddsize, matfn, attfn, detfn, actfn, \
+		rescanfn, chdetfn \
 }
 
 /* Flags given to config_detach(), and the ca_detach function. */
@@ -272,6 +296,14 @@ struct cfdriver __CONCAT(name,_cd) = {					\
 struct cfattachinit {
 	const char *cfai_name;		 /* driver name */
 	struct cfattach * const *cfai_list;/* list of attachments */
+};
+/*
+ * the same, but with a non-constant list so it can be modified
+ * for LKM bookkeeping
+ */
+struct cfattachlkminit {
+	const char *cfai_name;		/* driver name */
+	struct cfattach **cfai_list;	/* list of attachments */
 };
 
 /*
@@ -317,15 +349,24 @@ int	config_cfdriver_detach(struct cfdriver *);
 int	config_cfattach_attach(const char *, struct cfattach *);
 int	config_cfattach_detach(const char *, struct cfattach *);
 
+int	config_cfdata_attach(struct cfdata *, int);
+int	config_cfdata_detach(struct cfdata *);
+
 struct cfdriver *config_cfdriver_lookup(const char *);
 struct cfattach *config_cfattach_lookup(const char *, const char *);
 
 struct cfdata *config_search(cfmatch_t, struct device *, void *);
+struct cfdata *config_search_loc(cfmatch_loc_t, struct device *,
+				 const char *, const locdesc_t *, void *);
 struct cfdata *config_rootsearch(cfmatch_t, const char *, void *);
 struct device *config_found_sm(struct device *, void *, cfprint_t, cfmatch_t);
+struct device *config_found_sm_loc(struct device *,
+				   const char *, const locdesc_t *, void *,
+				   cfprint_t, cfmatch_loc_t);
 struct device *config_rootfound(const char *, void *);
-struct device *config_attach(struct device *, struct cfdata *, void *,
-    cfprint_t);
+struct device *config_attach_loc(struct device *, struct cfdata *,
+    const locdesc_t *, void *, cfprint_t);
+#define config_attach(p, cf, aux, pr) config_attach_loc(p, cf, 0, aux, pr)
 int config_match(struct device *, struct cfdata *, void *);
 
 struct device *config_attach_pseudo(const char *, int);

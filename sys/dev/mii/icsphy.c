@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.33 2003/07/01 22:51:13 msaitoh Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.33.2.1 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.33 2003/07/01 22:51:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.33.2.1 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,21 +89,21 @@ __KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.33 2003/07/01 22:51:13 msaitoh Exp $");
 
 #include <dev/mii/icsphyreg.h>
 
-int	icsphymatch(struct device *, struct cfdata *, void *);
-void	icsphyattach(struct device *, struct device *, void *);
+static int	icsphymatch(struct device *, struct cfdata *, void *);
+static void	icsphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(icsphy, sizeof(struct mii_softc),
     icsphymatch, icsphyattach, mii_phy_detach, mii_phy_activate);
 
-int	icsphy_service(struct mii_softc *, struct mii_data *, int);
-void	icsphy_status(struct mii_softc *);
-void	icsphy_reset(struct mii_softc *);
+static int	icsphy_service(struct mii_softc *, struct mii_data *, int);
+static void	icsphy_status(struct mii_softc *);
+static void	icsphy_reset(struct mii_softc *);
 
-const struct mii_phy_funcs icsphy_funcs = {
+static const struct mii_phy_funcs icsphy_funcs = {
 	icsphy_service, icsphy_status, icsphy_reset,
 };
 
-const struct mii_phydesc icsphys[] = {
+static const struct mii_phydesc icsphys[] = {
 	{ MII_OUI_ICS,		MII_MODEL_ICS_1889,
 	  MII_STR_ICS_1889 },
 
@@ -120,7 +120,7 @@ const struct mii_phydesc icsphys[] = {
 	  NULL },
 };
 
-int
+static int
 icsphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -131,7 +131,7 @@ icsphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 icsphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -163,7 +163,7 @@ icsphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 icsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -225,7 +225,7 @@ icsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 icsphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
@@ -272,9 +272,8 @@ icsphy_status(struct mii_softc *sc)
 		mii->mii_media_active = ife->ifm_media;
 }
 
-void
-icsphy_reset(sc)
-	struct mii_softc *sc;
+static void
+icsphy_reset(struct mii_softc *sc)
 {
 
 	mii_phy_reset(sc);

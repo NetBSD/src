@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.6.6.1 2004/08/03 10:46:21 skrll Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.6.6.2 2004/08/25 06:57:35 skrll Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.6.6.1 2004/08/03 10:46:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.6.6.2 2004/08/25 06:57:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,9 +49,10 @@ static void wdc_upc_attach(struct device *, struct device *, void *);
 
 struct wdc_upc_softc {
 	struct wdc_softc sc_wdc;
-	struct wdc_channel *sc_chanlist[1];
-	struct wdc_channel sc_channel;
+	struct ata_channel *sc_chanlist[1];
+	struct ata_channel sc_channel;
 	struct ata_queue sc_chqueue;
+	struct wdc_regs sc_wdc_regs;
 };
 
 CFATTACH_DECL(wdc_upc, sizeof(struct wdc_upc_softc),
@@ -69,28 +70,31 @@ static void
 wdc_upc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_upc_softc *sc = (struct wdc_upc_softc *)self;
+	struct wdc_regs *wdr;
 	struct upc_attach_args *ua = aux;
 	int i;
 
-	sc->sc_wdc.cap = WDC_CAPABILITY_DATA16;
-	sc->sc_wdc.PIO_cap = 1; /* XXX ??? */
-	sc->sc_wdc.DMA_cap = 0;
-	sc->sc_wdc.UDMA_cap = 0;
-	sc->sc_wdc.nchannels = 1;
+	sc->sc_wdc.regs = wdr = &sc->sc_wdc_regs;
+
+	sc->sc_wdc.sc_atac.atac_cap = ATAC_CAP_DATA16;
+	sc->sc_wdc.sc_atac.atac_pio_cap = 1; /* XXX ??? */
+	sc->sc_wdc.sc_atac.atac_dma_cap = 0;
+	sc->sc_wdc.sc_atac.atac_udma_cap = 0;
+	sc->sc_wdc.sc_atac.atac_nchannels = 1;
 	sc->sc_chanlist[0] = &sc->sc_channel;
-	sc->sc_wdc.channels = sc->sc_chanlist;
-	sc->sc_channel.cmd_iot = ua->ua_iot;
-	sc->sc_channel.cmd_baseioh = ua->ua_ioh;
-	sc->sc_channel.ctl_iot = ua->ua_iot;
-	sc->sc_channel.ctl_ioh = ua->ua_ioh2;
+	sc->sc_wdc.sc_atac.atac_channels = sc->sc_chanlist;
+	wdr->cmd_iot = ua->ua_iot;
+	wdr->cmd_baseioh = ua->ua_ioh;
+	wdr->ctl_iot = ua->ua_iot;
+	wdr->ctl_ioh = ua->ua_ioh2;
 	sc->sc_channel.ch_channel = 0;
-	sc->sc_channel.ch_wdc = &sc->sc_wdc;
+	sc->sc_channel.ch_atac = &sc->sc_wdc.sc_atac;
 	sc->sc_channel.ch_queue = &sc->sc_chqueue;
 	for (i = 0; i < WDC_NREG; i++) {
 		if (bus_space_subregion(ua->ua_iot, ua->ua_ioh, i,
-		    i == 0 ? 4 : 1, &sc->sc_channel.cmd_iohs[i]) != 0) {
+		    i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
 			aprint_error("%s: can't subregion I/O space\n",
-			    sc->sc_wdc.sc_dev.dv_xname);
+			    sc->sc_wdc.sc_atac.atac_dev.dv_xname);
 			return;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.5.2.2 2004/08/12 11:42:19 skrll Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.5.2.3 2004/08/25 06:58:58 skrll Exp $	*/
 
 /*
  * TODO:
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.5.2.2 2004/08/12 11:42:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.5.2.3 2004/08/25 06:58:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,8 @@ int	uisdatadebug = 0;
 
 int  uisdata_bio(struct ata_drive_datas *, struct ata_bio *);
 int  uisdata_bio1(struct ata_drive_datas *, struct ata_bio *);
-void uisdata_reset_channel(struct ata_drive_datas *, int);
+void uisdata_reset_drive(struct ata_drive_datas *, int);
+void uisdata_reset_channel(struct ata_channel *, int);
 int  uisdata_exec_command(struct ata_drive_datas *, struct ata_command *);
 int  uisdata_get_params(struct ata_drive_datas *, u_int8_t, struct ataparams *);
 int  uisdata_addref(struct ata_drive_datas *);
@@ -127,6 +128,7 @@ int  uwdprint(void *, const char *);
 const struct ata_bustype uisdata_bustype = {
 	SCSIPI_BUSTYPE_ATA,
 	uisdata_bio,
+	uisdata_reset_drive,
 	uisdata_reset_channel,
 	uisdata_exec_command,
 	uisdata_get_params,
@@ -377,7 +379,14 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 }
 
 void
-uisdata_reset_channel(struct ata_drive_datas *drv, int flags)
+uisdata_reset_drive(struct ata_drive_datas *drv, int flags)
+{
+	DPRINTFN(-1,("%s\n", __func__));
+	/* XXX what? */
+}
+
+void
+uisdata_reset_channel(struct ata_channel *chp, int flags)
 {
 	DPRINTFN(-1,("%s\n", __func__));
 	/* XXX what? */
@@ -392,6 +401,8 @@ uisdata_exec_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	if (status != STATUS_CMD_OK)
 		cmd->flags |= AT_DF; /* XXX */
 	cmd->flags |= AT_DONE;
+	if (cmd->flags & (AT_READ | AT_WRITE))
+		cmd->flags |= AT_XFDONE;
 	if (cmd->flags & (AT_POLL | AT_WAIT)) {
 		DPRINTF(("%s: wakeup %p\n", __func__, cmd));
 		wakeup(cmd);

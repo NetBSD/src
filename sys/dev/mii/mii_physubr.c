@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.36.2.1 2004/08/03 10:48:49 skrll Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.36.2.2 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.36.2.1 2004/08/03 10:48:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.36.2.2 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.36.2.1 2004/08/03 10:48:49 skrll E
 /*
  * Media to register setting conversion table.  Order matters.
  */
-const struct mii_media mii_media_table[MII_NMEDIA] = {
+static const struct mii_media mii_media_table[MII_NMEDIA] = {
 	/* None */
 	{ BMCR_ISO,		ANAR_CSMA,
 	  0, },
@@ -104,7 +104,7 @@ const struct mii_media mii_media_table[MII_NMEDIA] = {
 	  GTCR_ADV_1000TFDX },
 };
 
-void	mii_phy_auto_timeout(void *);
+static void	mii_phy_auto_timeout(void *);
 
 void
 mii_phy_setmedia(struct mii_softc *sc)
@@ -258,7 +258,7 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 	return (EJUSTRETURN);
 }
 
-void
+static void
 mii_phy_auto_timeout(void *arg)
 {
 	struct mii_softc *sc = arg;

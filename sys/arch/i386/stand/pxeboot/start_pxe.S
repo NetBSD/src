@@ -1,4 +1,4 @@
-/*	$NetBSD: start_pxe.S,v 1.2.4.2 2004/08/03 10:36:25 skrll Exp $	*/
+/*	$NetBSD: start_pxe.S,v 1.2.4.3 2004/08/25 06:57:19 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -52,8 +52,8 @@ ENTRY(start)
 	jmp	1f
 	.balign 4
 	.long	X86_BOOT_MAGIC_PXE
-bootparams:
-	.long	1f - bootparams
+boot_params:
+	.long	1f - boot_params
 #include <boot_params.S>
 	.space	4 * 4			/* some spare */
 1:

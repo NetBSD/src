@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.22.2.1 2003/07/02 15:26:09 darrenr Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.22.2.2 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.22.2.1 2003/07/02 15:26:09 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.22.2.2 2004/08/25 06:58:05 skrll Exp $");
 
 #include "rnd.h"
 #include "locators.h"
@@ -72,12 +72,12 @@ __KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.22.2.1 2003/07/02 15:26:09 darrenr Exp 
 #include <dev/mca/edvar.h>
 #include <dev/mca/edcvar.h>
 
-/* #define WDCDEBUG */
+/* #define ATADEBUG */
 
-#ifdef WDCDEBUG
-#define WDCDEBUG_PRINT(args, level)  printf args
+#ifdef ATADEBUG
+#define ATADEBUG_PRINT(args, level)  printf args
 #else
-#define WDCDEBUG_PRINT(args, level)
+#define ATADEBUG_PRINT(args, level)
 #endif
 
 #define	EDLABELDEV(dev) (MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART))
@@ -216,7 +216,7 @@ edmcastrategy(bp)
 	struct disklabel *lp = ed->sc_dk.dk_label;
 	daddr_t blkno;
 
-	WDCDEBUG_PRINT(("edmcastrategy (%s)\n", ed->sc_dev.dv_xname),
+	ATADEBUG_PRINT(("edmcastrategy (%s)\n", ed->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 
 	/* Valid request?  */
@@ -283,7 +283,7 @@ edmcaread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	WDCDEBUG_PRINT(("edread\n"), DEBUG_XFERS);
+	ATADEBUG_PRINT(("edread\n"), DEBUG_XFERS);
 	return (physio(edmcastrategy, NULL, dev, B_READ, minphys, uio));
 }
 
@@ -293,7 +293,7 @@ edmcawrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	WDCDEBUG_PRINT(("edwrite\n"), DEBUG_XFERS);
+	ATADEBUG_PRINT(("edwrite\n"), DEBUG_XFERS);
 	return (physio(edmcastrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
@@ -307,7 +307,7 @@ ed_lock(ed)
 	int error;
 	int s;
 
-	WDCDEBUG_PRINT(("ed_lock\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("ed_lock\n"), DEBUG_FUNCS);
 
 	s = splbio();
 	error = lockmgr(&ed->sc_lock, LK_EXCLUSIVE, NULL);
@@ -323,7 +323,7 @@ static void
 ed_unlock(ed)
 	struct ed_softc *ed;
 {
-	WDCDEBUG_PRINT(("ed_unlock\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("ed_unlock\n"), DEBUG_FUNCS);
 
 	(void) lockmgr(&ed->sc_lock, LK_RELEASE, NULL);
 }
@@ -337,7 +337,7 @@ edmcaopen(dev, flag, fmt, l)
 	struct ed_softc *wd;
 	int part, error;
 
-	WDCDEBUG_PRINT(("edopen\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("edopen\n"), DEBUG_FUNCS);
 	wd = device_lookup(&ed_cd, DISKUNIT(dev));
 	if (wd == NULL || (wd->sc_flags & EDF_INIT) == 0)
 		return (ENXIO);
@@ -415,7 +415,7 @@ edmcaclose(dev, flag, fmt, l)
 	int part = DISKPART(dev);
 	int error;
 
-	WDCDEBUG_PRINT(("edmcaclose\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("edmcaclose\n"), DEBUG_FUNCS);
 	if ((error = ed_lock(wd)) != 0)
 		return error;
 
@@ -450,7 +450,7 @@ edgetdefaultlabel(ed, lp)
 	struct ed_softc *ed;
 	struct disklabel *lp;
 {
-	WDCDEBUG_PRINT(("edgetdefaultlabel\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("edgetdefaultlabel\n"), DEBUG_FUNCS);
 	memset(lp, 0, sizeof(struct disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
@@ -490,7 +490,7 @@ edgetdisklabel(dev, ed)
 	struct disklabel *lp = ed->sc_dk.dk_label;
 	const char *errstring;
 
-	WDCDEBUG_PRINT(("edgetdisklabel\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("edgetdisklabel\n"), DEBUG_FUNCS);
 
 	memset(ed->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
@@ -529,7 +529,7 @@ edmcaioctl(dev, xfer, addr, flag, l)
 	struct ed_softc *ed = device_lookup(&ed_cd, DISKUNIT(dev));
 	int error;
 
-	WDCDEBUG_PRINT(("edioctl\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("edioctl\n"), DEBUG_FUNCS);
 
 	if ((ed->sc_flags & WDF_LOADED) == 0)
 		return EIO;
@@ -643,7 +643,7 @@ edmcasize(dev)
 	int part, omask;
 	int size;
 
-	WDCDEBUG_PRINT(("edsize\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("edsize\n"), DEBUG_FUNCS);
 
 	wd = device_lookup(&ed_cd, DISKUNIT(dev));
 	if (wd == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.54.2.2 2004/08/03 10:57:00 skrll Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.54.2.3 2004/08/25 06:59:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.54.2.2 2004/08/03 10:57:00 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.54.2.3 2004/08/25 06:59:15 skrll Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -43,6 +43,7 @@ __KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.54.2.2 2004/08/03 10:57:00 skrll
 #define	WRITE			lfs_write
 #define	WRITE_S			"lfs_write"
 #define	fs_bsize		lfs_bsize
+#define	fs_bmask		lfs_bmask
 #define	fs_maxfilesize		lfs_maxfilesize
 #else
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -79,9 +80,11 @@ READ(void *v)
 	long size, xfersize, blkoffset;
 	int error;
 	boolean_t usepc = FALSE;
+	struct ufsmount *ump;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
+	ump = ip->i_ump;
 	uio = ap->a_uio;
 	error = 0;
 
@@ -90,21 +93,19 @@ READ(void *v)
 		panic("%s: mode", READ_S);
 
 	if (vp->v_type == VLNK) {
-		if ((int)ip->i_size < vp->v_mount->mnt_maxsymlinklen ||
-		    (vp->v_mount->mnt_maxsymlinklen == 0 &&
-		     DIP(ip, blocks) == 0))
+		if (ip->i_size < ump->um_maxsymlinklen ||
+		    (ump->um_maxsymlinklen == 0 && DIP(ip, blocks) == 0))
 			panic("%s: short symlink", READ_S);
 	} else if (vp->v_type != VREG && vp->v_type != VDIR)
 		panic("%s: type %d", READ_S, vp->v_type);
 #endif
 	fs = ip->I_FS;
-	if ((u_int64_t)uio->uio_offset > fs->fs_maxfilesize)
+	if ((u_int64_t)uio->uio_offset > ump->um_maxfilesize)
 		return (EFBIG);
 	if (uio->uio_resid == 0)
 		return (0);
-	if (uio->uio_offset >= ip->i_size) {
+	if (uio->uio_offset >= ip->i_size)
 		goto out;
-	}
 
 #ifdef LFS_READWRITE
 	usepc = (vp->v_type == VREG && ip->i_number != LFS_IFILE_INUM);
@@ -119,7 +120,7 @@ READ(void *v)
 				break;
 
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, UBC_READ);
+			    &bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
 			if (error)
@@ -202,7 +203,7 @@ WRITE(void *v)
 	daddr_t lbn;
 	off_t osize, origoff, oldoff, preallocoff, endallocoff, nsize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
-	int bsize, aflag;
+	int aflag;
 	int ubc_alloc_flags;
 	int extended=0;
 	void *win;
@@ -212,6 +213,7 @@ WRITE(void *v)
 #ifdef LFS_READWRITE
 	boolean_t need_unreserve = FALSE;
 #endif
+	struct ufsmount *ump;
 
 	cred = ap->a_cred;
 	ioflag = ap->a_ioflag;
@@ -219,6 +221,7 @@ WRITE(void *v)
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	gp = VTOG(vp);
+	ump = ip->i_ump;
 
 	KASSERT(vp->v_size == ip->i_size);
 #ifdef DIAGNOSTIC
@@ -245,7 +248,7 @@ WRITE(void *v)
 
 	fs = ip->I_FS;
 	if (uio->uio_offset < 0 ||
-	    (u_int64_t)uio->uio_offset + uio->uio_resid > fs->fs_maxfilesize)
+	    (u_int64_t)uio->uio_offset + uio->uio_resid > ump->um_maxfilesize)
 		return (EFBIG);
 #ifdef LFS_READWRITE
 	/* Disallow writes to the Ifile, even if noschg flag is removed */
@@ -253,7 +256,6 @@ WRITE(void *v)
 	if (vp == fs->lfs_ivnode)
 		return (EPERM);
 #endif
-
 	/*
 	 * Maybe this should be above the vnode op call, but so long as
 	 * file servers have no limits, I don't think it matters.
@@ -273,7 +275,6 @@ WRITE(void *v)
 	origoff = uio->uio_offset;
 	resid = uio->uio_resid;
 	osize = ip->i_size;
-	bsize = fs->fs_bsize;
 	error = 0;
 
 	usepc = vp->v_type == VREG;
@@ -288,9 +289,8 @@ WRITE(void *v)
 	}
 	lfs_check(vp, LFS_UNUSED_LBN, 0);
 #endif /* !LFS_READWRITE */
-	if (!usepc) {
+	if (!usepc)
 		goto bcache;
-	}
 
 	preallocoff = round_page(blkroundup(fs, MAX(osize, uio->uio_offset)));
 	aflag = ioflag & IO_SYNC ? B_SYNC : 0;
@@ -305,16 +305,17 @@ WRITE(void *v)
 	if (nsize > osize && lblkno(fs, osize) < NDADDR &&
 	    lblkno(fs, osize) != lblkno(fs, nsize) &&
 	    blkroundup(fs, osize) != osize) {
-		error = ufs_balloc_range(vp, osize, blkroundup(fs, osize) -
-		    osize, cred, aflag);
-		if (error) {
+		off_t eob;
+
+		eob = blkroundup(fs, osize);
+		error = ufs_balloc_range(vp, osize, eob - osize, cred, aflag);
+		if (error)
 			goto out;
-		}
 		if (flags & B_SYNC) {
-			vp->v_size = blkroundup(fs, osize);
+			vp->v_size = eob;
 			simple_lock(&vp->v_interlock);
-			VOP_PUTPAGES(vp, trunc_page(osize & ~(bsize - 1)),
-			    round_page(vp->v_size), PGO_CLEANIT | PGO_SYNCIO);
+			VOP_PUTPAGES(vp, trunc_page(osize & fs->fs_bmask),
+			    round_page(eob), PGO_CLEANIT | PGO_SYNCIO);
 		}
 	}
 
@@ -340,18 +341,16 @@ WRITE(void *v)
 		if (!extending) {
 			error = ufs_balloc_range(vp, uio->uio_offset, bytelen,
 			    cred, aflag);
-			if (error) {
+			if (error)
 				break;
-			}
 			ubc_alloc_flags &= ~UBC_FAULTBUSY;
 		} else {
 			lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
 			error = GOP_ALLOC(vp, uio->uio_offset, bytelen,
 			    aflag, cred);
 			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
-			if (error) {
+			if (error)
 				break;
-			}
 			ubc_alloc_flags |= UBC_FAULTBUSY;
 		}
 
@@ -386,9 +385,8 @@ WRITE(void *v)
 			extended = 1;
 		}
 
-		if (error) {
+		if (error)
 			break;
-		}
 
 		/*
 		 * flush what we just wrote if necessary.
@@ -399,14 +397,13 @@ WRITE(void *v)
 			simple_lock(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
-			if (error) {
+			if (error)
 				break;
-			}
 		}
 	}
 	if (error == 0 && ioflag & IO_SYNC) {
 		simple_lock(&vp->v_interlock);
-		error = VOP_PUTPAGES(vp, trunc_page(origoff & ~(bsize - 1)),
+		error = VOP_PUTPAGES(vp, trunc_page(origoff & fs->fs_bmask),
 		    round_page(blkroundup(fs, uio->uio_offset)),
 		    PGO_CLEANIT | PGO_SYNCIO);
 	}

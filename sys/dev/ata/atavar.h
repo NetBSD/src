@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.26.6.2 2004/08/12 11:41:22 skrll Exp $	*/
+/*	$NetBSD: atavar.h,v 1.26.6.3 2004/08/25 06:57:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -35,6 +35,15 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 
+/* XXX For scsipi_adapter and scsipi_channel. */
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/atapiconf.h>
+
+/*
+ * Max number of drives per channel.
+ */
+#define	ATA_MAXDRIVES		2
+
 /*
  * Description of a command to be handled by an ATA controller.  These
  * commands are queued in a list.
@@ -43,7 +52,7 @@ struct ata_xfer {
 	__volatile u_int c_flags;	/* command state flags */
 	
 	/* Channel and drive that are to process the request. */
-	struct wdc_channel *c_chp;
+	struct ata_channel *c_chp;
 	int	c_drive;
 
 	void	*c_cmd;			/* private request structure pointer */
@@ -56,9 +65,9 @@ struct ata_xfer {
 	TAILQ_ENTRY(ata_xfer) c_xferchain;
 
 	/* Low-level protocol handlers. */
-	void	(*c_start)(struct wdc_channel *, struct ata_xfer *);
-	int	(*c_intr)(struct wdc_channel *, struct ata_xfer *, int);
-	void	(*c_kill_xfer)(struct wdc_channel *, struct ata_xfer *, int);
+	void	(*c_start)(struct ata_channel *, struct ata_xfer *);
+	int	(*c_intr)(struct ata_channel *, struct ata_xfer *, int);
+	void	(*c_kill_xfer)(struct ata_channel *, struct ata_xfer *, int);
 };
 
 /* vlags in c_flags */
@@ -81,7 +90,7 @@ struct ata_queue {
 /* ATA bus instance state information. */
 struct atabus_softc {
 	struct device sc_dev;
-	struct wdc_channel *sc_chan;	/* XXXwdc */
+	struct ata_channel *sc_chan;
 	int sc_flags;
 #define ATABUSCF_OPEN	0x01
 };
@@ -261,8 +270,9 @@ struct ata_command {
 struct ata_bustype {
 	int	bustype_type;	/* symbolic name of type */
 	int	(*ata_bio)(struct ata_drive_datas *, struct ata_bio *);
-	void	(*ata_reset_channel)(struct ata_drive_datas *, int);
-/* extra flags for ata_reset_channel(), in addition to AT_* */
+	void	(*ata_reset_drive)(struct ata_drive_datas *, int);
+	void	(*ata_reset_channel)(struct ata_channel *, int);
+/* extra flags for ata_reset_*(), in addition to AT_* */
 #define AT_RST_EMERG 0x10000 /* emergency - e.g. for a dump */
 #define	AT_RST_NOCMD 0x20000 /* XXX has to go - temporary until we have tagged queuing */
 
@@ -296,11 +306,110 @@ struct ata_device {
 	struct ata_drive_datas *adev_drv_data;
 };
 
+/*
+ * Per-channel data
+ */
+struct ata_channel {
+	struct callout ch_callout;	/* callout handle */
+	int ch_channel;			/* location */
+	struct atac_softc *ch_atac;	/* ATA controller softc */
+
+	/* Our state */
+	volatile int ch_flags;
+#define ATACH_SHUTDOWN 0x02	/* channel is shutting down */
+#define ATACH_IRQ_WAIT 0x10	/* controller is waiting for irq */
+#define ATACH_DMA_WAIT 0x20	/* controller is waiting for DMA */
+#define	ATACH_DISABLED 0x80	/* channel is disabled */
+#define ATACH_TH_RUN   0x100	/* the kenrel thread is working */
+#define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
+	u_int8_t ch_status;	/* copy of status register */
+	u_int8_t ch_error;	/* copy of error register */
+
+	/* for the reset callback */
+	int ch_reset_flags;
+
+	/* per-drive info */
+	int ch_ndrive;
+	struct ata_drive_datas ch_drive[ATA_MAXDRIVES];
+
+	struct device *atabus;	/* self */
+
+	/* ATAPI children */
+	struct device *atapibus;
+	struct scsipi_channel ch_atapi_channel;
+
+	/* ATA children */
+	struct device *ata_drives[ATA_MAXDRIVES];
+
+	/*
+	 * Channel queues.  May be the same for all channels, if hw
+	 * channels are not independent.
+	 */
+	struct ata_queue *ch_queue;
+
+	/* The channel kernel thread */
+	struct proc *ch_thread;
+};
+
+/*
+ * ATA controller softc.
+ *
+ * This contains a bunch of generic info that all ATA controllers need
+ * to have.
+ *
+ * XXX There is still some lingering wdc-centricity here.
+ */
+struct atac_softc {
+	struct device atac_dev;		/* generic device info */
+
+	int	atac_cap;		/* controller capabilities */
+
+#define	ATAC_CAP_DATA16	0x0001		/* can do 16-bit data access */
+#define	ATAC_CAP_DATA32	0x0002		/* can do 32-bit data access */
+#define	ATAC_CAP_DMA	0x0008		/* can do ATA DMA modes */
+#define	ATAC_CAP_UDMA	0x0010		/* can do ATA Ultra DMA modes */
+#define	ATAC_CAP_ATA_NOSTREAM 0x0040	/* don't use stream funcs on ATA */
+#define	ATAC_CAP_ATAPI_NOSTREAM 0x0080	/* don't use stream funcs on ATAPI */
+#define	ATAC_CAP_NOIRQ	0x1000		/* controller never interrupts */
+#define	ATAC_CAP_RAID	0x4000		/* controller "supports" RAID */
+
+	uint8_t	atac_pio_cap;		/* highest PIO mode supported */
+	uint8_t	atac_dma_cap;		/* highest DMA mode supported */
+	uint8_t	atac_udma_cap;		/* highest UDMA mode supported */
+
+	/* Array of pointers to channel-specific data. */
+	struct ata_channel **atac_channels;
+	int		     atac_nchannels;
+
+	const struct ata_bustype *atac_bustype_ata;
+
+	/*
+	 * Glue between ATA and SCSIPI for the benefit of ATAPI.
+	 *
+	 * Note: The reference count here is used for both ATA and ATAPI
+	 * devices.
+	 */
+	struct atapi_adapter atac_atapi_adapter;
+	void (*atac_atapibus_attach)(struct atabus_softc *);
+
+	/* Driver callback to probe for drives. */
+	void (*atac_probe)(struct ata_channel *);
+
+	/* Optional callbacks to lock/unlock hardware. */
+	int  (*atac_claim_hw)(struct ata_channel *, int);
+	void (*atac_free_hw)(struct ata_channel *);
+
+	/*
+	 * Optional callbacks to set drive mode.  Required for anything
+	 * but basic PIO operation.
+	 */
+	void (*atac_set_modes)(struct ata_channel *);
+};
+
 #ifdef _KERNEL
+void	ata_channel_attach(struct ata_channel *);
 int	atabusprint(void *aux, const char *);
 int	ataprint(void *aux, const char *);
-
-int	wdc_downgrade_mode(struct ata_drive_datas *, int);
 
 struct ataparams;
 int	ata_get_params(struct ata_drive_datas *, u_int8_t, struct ataparams *);
@@ -309,6 +418,22 @@ int	ata_set_mode(struct ata_drive_datas *, u_int8_t, u_int8_t);
 #define CMD_OK    0
 #define CMD_ERR   1
 #define CMD_AGAIN 2
+
+struct ata_xfer *ata_get_xfer(int);
+void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
+#define	ATAXF_CANSLEEP	0x00
+#define	ATAXF_NOSLEEP	0x01
+
+void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
+void	ata_kill_pending(struct ata_drive_datas *);
+void	ata_reset_channel(struct ata_channel *, int);
+
+int	ata_addref(struct ata_channel *);
+void	ata_delref(struct ata_channel *);
+void	atastart(struct ata_channel *);
+void	ata_print_modes(struct ata_channel *);
+int	ata_downgrade_mode(struct ata_drive_datas *, int);
+void	ata_probe_caps(struct ata_drive_datas *);
 
 void	ata_dmaerr(struct ata_drive_datas *, int);
 #endif /* _KERNEL */

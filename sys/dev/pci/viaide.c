@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.12.2.2 2004/08/03 10:49:12 skrll Exp $	*/
+/*	$NetBSD: viaide.c,v 1.12.2.3 2004/08/25 06:58:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -43,7 +43,7 @@ static int	via_pcib_match(struct pci_attach_args *);
 static void	via_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void	via_sata_chip_map(struct pciide_softc *,
 		    struct pci_attach_args *);
-static void	via_setup_channel(struct wdc_channel *);
+static void	via_setup_channel(struct ata_channel *);
 
 static int	viaide_match(struct device *, struct cfdata *, void *);
 static void	viaide_attach(struct device *, struct device *, void *);
@@ -202,87 +202,87 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		pcib_id = pcib_pa.pa_id;
 		pcib_class = pcib_pa.pa_class;
 		aprint_normal("%s: VIA Technologies ",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		switch (PCI_PRODUCT(pcib_id)) {
 		case PCI_PRODUCT_VIATECH_VT82C586_ISA:
 			aprint_normal("VT82C586 (Apollo VP) ");
 			if(PCI_REVISION(pcib_class) >= 0x02) {
 				aprint_normal("ATA33 controller\n");
-				sc->sc_wdcdev.UDMA_cap = 2;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
 			} else {
 				aprint_normal("controller\n");
-				sc->sc_wdcdev.UDMA_cap = 0;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 0;
 			}
 			break;
 		case PCI_PRODUCT_VIATECH_VT82C596A:
 			aprint_normal("VT82C596A (Apollo Pro) ");
 			if (PCI_REVISION(pcib_class) >= 0x12) {
 				aprint_normal("ATA66 controller\n");
-				sc->sc_wdcdev.UDMA_cap = 4;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
 			} else {
 				aprint_normal("ATA33 controller\n");
-				sc->sc_wdcdev.UDMA_cap = 2;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
 			}
 			break;
 		case PCI_PRODUCT_VIATECH_VT82C686A_ISA:
 			aprint_normal("VT82C686A (Apollo KX133) ");
 			if (PCI_REVISION(pcib_class) >= 0x40) {
 				aprint_normal("ATA100 controller\n");
-				sc->sc_wdcdev.UDMA_cap = 5;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 			} else {
 				aprint_normal("ATA66 controller\n");
-				sc->sc_wdcdev.UDMA_cap = 4;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
 			}
 			break;
 		case PCI_PRODUCT_VIATECH_VT8231:
 			aprint_normal("VT8231 ATA100 controller\n");
-			sc->sc_wdcdev.UDMA_cap = 5;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 			break;
 		case PCI_PRODUCT_VIATECH_VT8233:
 			aprint_normal("VT8233 ATA100 controller\n");
-			sc->sc_wdcdev.UDMA_cap = 5;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 			break;
 		case PCI_PRODUCT_VIATECH_VT8233A:
 			aprint_normal("VT8233A ATA133 controller\n");
-			sc->sc_wdcdev.UDMA_cap = 6;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		case PCI_PRODUCT_VIATECH_VT8235:
 			aprint_normal("VT8235 ATA133 controller\n");
-			sc->sc_wdcdev.UDMA_cap = 6;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		case PCI_PRODUCT_VIATECH_VT8237:
 			aprint_normal("VT8237 ATA133 controller\n");
-			sc->sc_wdcdev.UDMA_cap = 6;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		default:
 unknown:
 			aprint_normal("unknown VIA ATA controller\n");
-			sc->sc_wdcdev.UDMA_cap = 0;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 0;
 		}
 		sc->sc_apo_regbase = APO_VIA_REGBASE;
 		break;
 	case PCI_VENDOR_AMD:
 		switch (sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_AMD_PBC8111_IDE:
-			sc->sc_wdcdev.UDMA_cap = 6;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		case PCI_PRODUCT_AMD_PBC766_IDE:
 		case PCI_PRODUCT_AMD_PBC768_IDE:
-			sc->sc_wdcdev.UDMA_cap = 5;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 			break;
 		default:
-			sc->sc_wdcdev.UDMA_cap = 4;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
 		}
 		sc->sc_apo_regbase = APO_AMD_REGBASE;
 		break;
 	case PCI_VENDOR_NVIDIA:
 		switch (sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_NVIDIA_NFORCE_ATA100:
-			sc->sc_wdcdev.UDMA_cap = 5;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 			break;
 		case PCI_PRODUCT_NVIDIA_NFORCE2_ATA133:
 		case PCI_PRODUCT_NVIDIA_NFORCE3_ATA133:
-			sc->sc_wdcdev.UDMA_cap = 6;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		}
 		sc->sc_apo_regbase = APO_NVIDIA_REGBASE;
@@ -292,24 +292,25 @@ unknown:
 	}
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		if (sc->sc_wdcdev.UDMA_cap > 0)
-			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+		if (sc->sc_wdcdev.sc_atac.atac_udma_cap > 0)
+			sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
 	}
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.set_modes = via_setup_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = via_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 
-	WDCDEBUG_PRINT(("via_chip_map: old APO_IDECONF=0x%x, "
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
+	ATADEBUG_PRINT(("via_chip_map: old APO_IDECONF=0x%x, "
 	    "APO_CTLMISC=0x%x, APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF(sc)),
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_CTLMISC(sc)),
@@ -318,15 +319,16 @@ unknown:
 	    DEBUG_PROBE);
 
 	ideconf = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF(sc));
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 
 		if ((ideconf & APO_IDECONF_EN(channel)) == 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
@@ -335,15 +337,15 @@ unknown:
 }
 
 static void
-via_setup_channel(struct wdc_channel *chp)
+via_setup_channel(struct ata_channel *chp)
 {
 	u_int32_t udmatim_reg, datatim_reg;
 	u_int8_t idedma_ctl;
-	int mode, drive;
+	int mode, drive, s;
 	struct ata_drive_datas *drvp;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
-	struct wdc_softc *wdc = &sc->sc_wdcdev;
+	struct atac_softc *atac = chp->ch_atac;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 #ifndef PCIIDE_AMD756_ENABLEDMA
 	int rev = PCI_REVISION(
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
@@ -369,27 +371,29 @@ via_setup_channel(struct wdc_channel *chp)
 			mode = drvp->PIO_mode;
 			goto pio;
 		}
-		if ((wdc->cap & WDC_CAPABILITY_UDMA) &&
+		if ((atac->atac_cap & ATAC_CAP_UDMA) &&
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			udmatim_reg |= APO_UDMA_EN(chp->ch_channel, drive) |
 			    APO_UDMA_EN_MTH(chp->ch_channel, drive);
 			switch (PCI_VENDOR(sc->sc_pci_id)) {
 			case PCI_VENDOR_VIATECH:
-				if (sc->sc_wdcdev.UDMA_cap == 6) {
+				if (sc->sc_wdcdev.sc_atac.atac_udma_cap == 6) {
 					/* 8233a */
 					udmatim_reg |= APO_UDMA_TIME(
 					    chp->ch_channel,
 					    drive,
 					    via_udma133_tim[drvp->UDMA_mode]);
-				} else if (sc->sc_wdcdev.UDMA_cap == 5) {
+				} else if (sc->sc_wdcdev.sc_atac.atac_udma_cap == 5) {
 					/* 686b */
 					udmatim_reg |= APO_UDMA_TIME(
 					    chp->ch_channel,
 					    drive,
 					    via_udma100_tim[drvp->UDMA_mode]);
-				} else if (sc->sc_wdcdev.UDMA_cap == 4) {
+				} else if (sc->sc_wdcdev.sc_atac.atac_udma_cap == 4) {
 					/* 596b or 686a */
 					udmatim_reg |= APO_UDMA_CLK66(
 					    chp->ch_channel);
@@ -415,7 +419,9 @@ via_setup_channel(struct wdc_channel *chp)
 			mode = drvp->PIO_mode;
 		} else {
 			/* use Multiword DMA, but only if revision is OK */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_UDMA;
+			splx(s);
 #ifndef PCIIDE_AMD756_ENABLEDMA
 			/*
 			 * The workaround doesn't seem to be necessary
@@ -430,10 +436,12 @@ via_setup_channel(struct wdc_channel *chp)
 				aprint_normal(
 				    "%s:%d:%d: multi-word DMA disabled due "
 				    "to chip revision\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname,
+				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
 				    chp->ch_channel, drive);
 				mode = drvp->PIO_mode;
+				s = splbio();
 				drvp->drive_flags &= ~DRIVE_DMA;
+				splx(s);
 				goto pio;
 			}
 #endif
@@ -467,7 +475,7 @@ pio:		/* setup PIO mode */
 	}
 	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_DATATIM(sc), datatim_reg);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_UDMA(sc), udmatim_reg);
-	WDCDEBUG_PRINT(("via_chip_map: APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
+	ATADEBUG_PRINT(("via_chip_map: APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM(sc)),
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA(sc))), DEBUG_PROBE);
 }
@@ -484,33 +492,34 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	if (interface == 0) {
-		WDCDEBUG_PRINT(("via_sata_chip_map interface == 0\n"),
+		ATADEBUG_PRINT(("via_sata_chip_map interface == 0\n"),
 		    DEBUG_PROBE);
 		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 	}
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA | WDC_CAPABILITY_DMA |
-		    WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA | ATAC_CAP_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 6;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
-	sc->sc_wdcdev.set_modes = sata_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = sata_setup_channel;
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.17.6.2 2004/08/12 11:41:25 skrll Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.17.6.3 2004/08/25 06:57:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -86,8 +86,7 @@ struct pcic_handle {
 #define	PCIC_FLAG_CARDP		0x0002
 #define	PCIC_FLAG_ENABLED	0x0004
 
-#define PCIC_LASTSTATE_PRESENT	0x0002
-#define PCIC_LASTSTATE_HALF	0x0001
+#define PCIC_LASTSTATE_PRESENT	0x0001
 #define PCIC_LASTSTATE_EMPTY	0x0000
 
 #define	C0SA	0

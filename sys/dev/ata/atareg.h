@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.9.6.2 2004/08/12 11:41:22 skrll Exp $	*/
+/*	$NetBSD: atareg.h,v 1.9.6.3 2004/08/25 06:57:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -141,9 +141,51 @@
 #define	WDCC_READDMA_EXT	0x25	/* read 48-bit addressing with DMA */
 #define	WDCC_WRITEDMA_EXT	0x35	/* write 48-bit addressing with DMA */
 
+#ifdef _KERNEL
+/* Convert a 32-bit command to a 48-bit command. */
+static __inline int __unused
+atacmd_to48(int cmd32)
+{
+	switch (cmd32) {
+	case WDCC_READ:
+		return WDCC_READ_EXT;
+	case WDCC_WRITE:
+		return WDCC_WRITE_EXT;
+	case WDCC_READMULTI:
+		return WDCC_READMULTI_EXT;
+	case WDCC_WRITEMULTI:
+		return WDCC_WRITEMULTI_EXT;
+	case WDCC_READDMA:
+		return WDCC_READDMA_EXT;
+	case WDCC_WRITEDMA:
+		return WDCC_WRITEDMA_EXT;
+	default:
+		panic("atacmd_to48: illegal 32-bit command: %d", cmd32);
+		/* NOTREACHED */
+	}
+}
+#endif /* _KERNEL */
+
 /* Native SATA command queueing */
 #define	WDCC_READ_FPDMA_QUEUED	0x60	/* SATA native queued read (48bit) */
 #define	WDCC_WRITE_FPDMA_QUEUED	0x61	/* SATA native queued write (48bit) */
+
+#ifdef _KERNEL
+/* Convert a 32-bit command to a Native SATA Queued command. */
+static __inline int __unused
+atacmd_tostatq(int cmd32)
+{
+	switch (cmd32) {
+	case WDCC_READDMA:
+		return WDCC_READ_FPDMA_QUEUED;
+	case WDCC_WRITEDMA:
+		return WDCC_WRITE_FPDMA_QUEUED;
+	default:
+		panic("atacmd_tosataq: illegal 32-bit command: %d", cmd32);
+		/* NOTREACHED */
+	}
+}
+#endif /* _KERNEL */
 
 /* Subcommands for SET_FEATURES (features register) */
 #define	WDSF_WRITE_CACHE_EN	0x02

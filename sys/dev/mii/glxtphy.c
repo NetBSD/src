@@ -1,4 +1,4 @@
-/*	$NetBSD: glxtphy.c,v 1.9.2.1 2004/08/03 10:48:49 skrll Exp $	*/
+/*	$NetBSD: glxtphy.c,v 1.9.2.2 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.9.2.1 2004/08/03 10:48:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.9.2.2 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,20 +89,20 @@ __KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.9.2.1 2004/08/03 10:48:49 skrll Exp $"
 
 #include <dev/mii/glxtphyreg.h>
 
-int	glxtphymatch(struct device *, struct cfdata *, void *);
-void	glxtphyattach(struct device *, struct device *, void *);
+static int	glxtphymatch(struct device *, struct cfdata *, void *);
+static void	glxtphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(glxtphy, sizeof(struct mii_softc),
     glxtphymatch, glxtphyattach, mii_phy_detach, mii_phy_activate);
 
-int	glxtphy_service(struct mii_softc *, struct mii_data *, int);
-void	glxtphy_status(struct mii_softc *);
+static int	glxtphy_service(struct mii_softc *, struct mii_data *, int);
+static void	glxtphy_status(struct mii_softc *);
 
-const struct mii_phy_funcs glxtphy_funcs = {
+static const struct mii_phy_funcs glxtphy_funcs = {
 	glxtphy_service, glxtphy_status, mii_phy_reset,
 };
 
-const struct mii_phydesc glxtphys[] = {
+static const struct mii_phydesc glxtphys[] = {
 	{ MII_OUI_LEVEL1,		MII_MODEL_LEVEL1_LXT1000_OLD,
 	  MII_STR_LEVEL1_LXT1000_OLD },
 
@@ -113,7 +113,7 @@ const struct mii_phydesc glxtphys[] = {
 	  NULL },
 };
 
-int
+static int
 glxtphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -124,7 +124,7 @@ glxtphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 glxtphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -159,7 +159,7 @@ glxtphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 glxtphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -218,7 +218,7 @@ glxtphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 glxtphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;

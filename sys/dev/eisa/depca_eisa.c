@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_eisa.c,v 1.5 2002/10/02 16:33:46 thorpej Exp $	*/
+/*	$NetBSD: depca_eisa.c,v 1.5.6.1 2004/08/25 06:57:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.5 2002/10/02 16:33:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.5.6.1 2004/08/25 06:57:34 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -76,8 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.5 2002/10/02 16:33:46 thorpej Exp $
 #include <dev/ic/depcareg.h>
 #include <dev/ic/depcavar.h>
 
-int	depca_eisa_match(struct device *, struct cfdata *, void *);
-void	depca_eisa_attach(struct device *, struct device *, void *);
+static int	depca_eisa_match(struct device *, struct cfdata *, void *);
+static void	depca_eisa_attach(struct device *, struct device *, void *);
 
 struct depca_eisa_softc {
 	struct depca_softc sc_depca;
@@ -90,9 +90,10 @@ struct depca_eisa_softc {
 CFATTACH_DECL(depca_eisa, sizeof(struct depca_eisa_softc),
     depca_eisa_match, depca_eisa_attach, NULL, NULL);
 
-void	*depca_eisa_intr_establish(struct depca_softc *, struct lance_softc *);
+static void	*depca_eisa_intr_establish(struct depca_softc *,
+					   struct lance_softc *);
 
-int
+static int
 depca_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
@@ -103,7 +104,7 @@ depca_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 #define	DEPCA_ECU_FUNC_NETINTR	0
 #define	DEPCA_ECU_FUNC_NETBUF	1
 
-void
+static void
 depca_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct depca_softc *sc = (void *) self;
@@ -157,7 +158,7 @@ depca_eisa_attach(struct device *parent, struct device *self, void *aux)
 	depca_attach(sc);
 }
 
-void *
+static void *
 depca_eisa_intr_establish(struct depca_softc *parent, struct lance_softc *child)
 {
 	struct depca_eisa_softc *esc = (void *) parent;

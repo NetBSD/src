@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.19 2003/03/01 19:49:45 mjacob Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.19.2.1 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.19 2003/03/01 19:49:45 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.19.2.1 2004/08/25 06:58:05 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -266,49 +266,49 @@ do {									\
 
 #define STGE_TIMEOUT 1000
 
-void	stge_start(struct ifnet *);
-void	stge_watchdog(struct ifnet *);
-int	stge_ioctl(struct ifnet *, u_long, caddr_t);
-int	stge_init(struct ifnet *);
-void	stge_stop(struct ifnet *, int);
+static void	stge_start(struct ifnet *);
+static void	stge_watchdog(struct ifnet *);
+static int	stge_ioctl(struct ifnet *, u_long, caddr_t);
+static int	stge_init(struct ifnet *);
+static void	stge_stop(struct ifnet *, int);
 
-void	stge_shutdown(void *);
+static void	stge_shutdown(void *);
 
-void	stge_reset(struct stge_softc *);
-void	stge_rxdrain(struct stge_softc *);
-int	stge_add_rxbuf(struct stge_softc *, int);
+static void	stge_reset(struct stge_softc *);
+static void	stge_rxdrain(struct stge_softc *);
+static int	stge_add_rxbuf(struct stge_softc *, int);
 #if 0
-void	stge_read_eeprom(struct stge_softc *, int, uint16_t *);
+static void	stge_read_eeprom(struct stge_softc *, int, uint16_t *);
 #endif
-void	stge_tick(void *);
+static void	stge_tick(void *);
 
-void	stge_stats_update(struct stge_softc *);
+static void	stge_stats_update(struct stge_softc *);
 
-void	stge_set_filter(struct stge_softc *);
+static void	stge_set_filter(struct stge_softc *);
 
-int	stge_intr(void *);
-void	stge_txintr(struct stge_softc *);
-void	stge_rxintr(struct stge_softc *);
+static int	stge_intr(void *);
+static void	stge_txintr(struct stge_softc *);
+static void	stge_rxintr(struct stge_softc *);
 
-int	stge_mii_readreg(struct device *, int, int);
-void	stge_mii_writereg(struct device *, int, int, int);
-void	stge_mii_statchg(struct device *);
+static int	stge_mii_readreg(struct device *, int, int);
+static void	stge_mii_writereg(struct device *, int, int, int);
+static void	stge_mii_statchg(struct device *);
 
-int	stge_mediachange(struct ifnet *);
-void	stge_mediastatus(struct ifnet *, struct ifmediareq *);
+static int	stge_mediachange(struct ifnet *);
+static void	stge_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int	stge_match(struct device *, struct cfdata *, void *);
-void	stge_attach(struct device *, struct device *, void *);
+static int	stge_match(struct device *, struct cfdata *, void *);
+static void	stge_attach(struct device *, struct device *, void *);
 
 int	stge_copy_small = 0;
 
 CFATTACH_DECL(stge, sizeof(struct stge_softc),
     stge_match, stge_attach, NULL, NULL);
 
-uint32_t stge_mii_bitbang_read(struct device *);
-void	stge_mii_bitbang_write(struct device *, uint32_t);
+static uint32_t stge_mii_bitbang_read(struct device *);
+static void	stge_mii_bitbang_write(struct device *, uint32_t);
 
-const struct mii_bitbang_ops stge_mii_bitbang_ops = {
+static const struct mii_bitbang_ops stge_mii_bitbang_ops = {
 	stge_mii_bitbang_read,
 	stge_mii_bitbang_write,
 	{
@@ -323,7 +323,7 @@ const struct mii_bitbang_ops stge_mii_bitbang_ops = {
 /*
  * Devices supported by this driver.
  */
-const struct stge_product {
+static const struct stge_product {
 	pci_vendor_id_t		stge_vendor;
 	pci_product_id_t	stge_product;
 	const char		*stge_name;
@@ -370,7 +370,7 @@ stge_lookup(const struct pci_attach_args *pa)
 	return (NULL);
 }
 
-int
+static int
 stge_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -381,7 +381,7 @@ stge_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (0);
 }
 
-void
+static void
 stge_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct stge_softc *sc = (struct stge_softc *) self;
@@ -739,7 +739,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
  *
  *	Make sure the interface is stopped at reboot time.
  */
-void
+static void
 stge_shutdown(void *arg)
 {
 	struct stge_softc *sc = arg;
@@ -768,7 +768,7 @@ stge_dma_wait(struct stge_softc *sc)
  *
  *	Start packet transmission on the interface.
  */
-void
+static void
 stge_start(struct ifnet *ifp)
 {
 	struct stge_softc *sc = ifp->if_softc;
@@ -989,7 +989,7 @@ stge_start(struct ifnet *ifp)
  *
  *	Watchdog timer handler.
  */
-void
+static void
 stge_watchdog(struct ifnet *ifp)
 {
 	struct stge_softc *sc = ifp->if_softc;
@@ -1014,7 +1014,7 @@ stge_watchdog(struct ifnet *ifp)
  *
  *	Handle control requests from the operator.
  */
-int
+static int
 stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct stge_softc *sc = ifp->if_softc;
@@ -1054,7 +1054,7 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  *
  *	Interrupt service routine.
  */
-int
+static int
 stge_intr(void *arg)
 {
 	struct stge_softc *sc = arg;
@@ -1151,7 +1151,7 @@ stge_intr(void *arg)
  *
  *	Helper; handle transmit interrupts.
  */
-void
+static void
 stge_txintr(struct stge_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1199,7 +1199,7 @@ stge_txintr(struct stge_softc *sc)
  *
  *	Helper; handle receive interrupts.
  */
-void
+static void
 stge_rxintr(struct stge_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1398,7 +1398,7 @@ stge_rxintr(struct stge_softc *sc)
  *
  *	One second timer, used to tick the MII.
  */
-void
+static void
 stge_tick(void *arg)
 {
 	struct stge_softc *sc = arg;
@@ -1417,7 +1417,7 @@ stge_tick(void *arg)
  *
  *	Read the TC9021 statistics counters.
  */
-void
+static void
 stge_stats_update(struct stge_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1452,7 +1452,7 @@ stge_stats_update(struct stge_softc *sc)
  *
  *	Perform a soft reset on the TC9021.
  */
-void
+static void
 stge_reset(struct stge_softc *sc)
 {
 	uint32_t ac;
@@ -1490,7 +1490,7 @@ stge_reset(struct stge_softc *sc)
  *
  *	Initialize the interface.  Must be called at splnet().
  */
-int
+static int
 stge_init(struct ifnet *ifp)
 {
 	struct stge_softc *sc = ifp->if_softc;
@@ -1685,7 +1685,7 @@ stge_init(struct ifnet *ifp)
  *
  *	Drain the receive queue.
  */
-void
+static void
 stge_rxdrain(struct stge_softc *sc)
 {
 	struct stge_descsoft *ds;
@@ -1707,7 +1707,7 @@ stge_rxdrain(struct stge_softc *sc)
  *
  *	Stop transmission on the interface.
  */
-void
+static void
 stge_stop(struct ifnet *ifp, int disable)
 {
 	struct stge_softc *sc = ifp->if_softc;
@@ -1784,7 +1784,7 @@ stge_eeprom_wait(struct stge_softc *sc)
  *
  *	Read data from the serial EEPROM.
  */
-void
+static void
 stge_read_eeprom(struct stge_softc *sc, int offset, uint16_t *data)
 {
 
@@ -1806,7 +1806,7 @@ stge_read_eeprom(struct stge_softc *sc, int offset, uint16_t *data)
  *
  *	Add a receive buffer to the indicated descriptor.
  */
-int
+static int
 stge_add_rxbuf(struct stge_softc *sc, int idx)
 {
 	struct stge_descsoft *ds = &sc->sc_rxsoft[idx];
@@ -1852,7 +1852,7 @@ stge_add_rxbuf(struct stge_softc *sc, int idx)
  *
  *	Set up the receive filter.
  */
-void
+static void
 stge_set_filter(struct stge_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
@@ -1948,7 +1948,7 @@ stge_set_filter(struct stge_softc *sc)
  *
  *	Read a PHY register on the MII of the TC9021.
  */
-int
+static int
 stge_mii_readreg(struct device *self, int phy, int reg)
 {
 
@@ -1960,7 +1960,7 @@ stge_mii_readreg(struct device *self, int phy, int reg)
  *
  *	Write a PHY register on the MII of the TC9021.
  */
-void
+static void
 stge_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 
@@ -1972,7 +1972,7 @@ stge_mii_writereg(struct device *self, int phy, int reg, int val)
  *
  *	Callback from MII layer when media changes.
  */
-void
+static void
 stge_mii_statchg(struct device *self)
 {
 	struct stge_softc *sc = (struct stge_softc *) self;
@@ -1992,7 +1992,7 @@ stge_mii_statchg(struct device *self)
  *
  *	Read the MII serial port for the MII bit-bang module.
  */
-uint32_t
+static uint32_t
 stge_mii_bitbang_read(struct device *self)
 {
 	struct stge_softc *sc = (void *) self;
@@ -2005,7 +2005,7 @@ stge_mii_bitbang_read(struct device *self)
  *
  *	Write the MII serial port for the MII bit-bang module.
  */
-void
+static void
 stge_mii_bitbang_write(struct device *self, uint32_t val)
 {
 	struct stge_softc *sc = (void *) self;
@@ -2019,7 +2019,7 @@ stge_mii_bitbang_write(struct device *self, uint32_t val)
  *
  *	Get the current interface media status.
  */
-void
+static void
 stge_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct stge_softc *sc = ifp->if_softc;
@@ -2034,7 +2034,7 @@ stge_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
  *
  *	Set hardware to newly-selected media.
  */
-int
+static int
 stge_mediachange(struct ifnet *ifp)
 {
 	struct stge_softc *sc = ifp->if_softc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.5 2003/05/21 13:39:01 briggs Exp $	*/
+/*	$NetBSD: trap.h,v 1.5.2.1 2004/08/25 06:57:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -59,6 +59,7 @@
 #define GDB_BREAKPOINT		0xe6000011	/* Used by GDB 4.x */
 #define IPKDB_BREAKPOINT	0xe6000010	/* Used by IPKDB */
 #define GDB5_BREAKPOINT		0xe7ffdefe	/* Used by GDB 5.0 */
+#define GDB_THUMB_BREAKPOINT	0xdefe		/* Thumb in GDB */
 #define KERNEL_BREAKPOINT	0xe7ffffff	/* Used by DDB */
 
 #define KBPT_ASM		".word 0xe7ffdefe"

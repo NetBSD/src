@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.19.6.1 2004/08/03 10:54:19 skrll Exp $	*/
+/*	$NetBSD: radix.c,v 1.19.6.2 2004/08/25 06:58:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.19.6.1 2004/08/03 10:54:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.19.6.2 2004/08/25 06:58:59 skrll Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.19.6.1 2004/08/03 10:54:19 skrll Exp $")
 #include <sys/malloc.h>
 #define	M_DONTWAIT M_NOWAIT
 #include <sys/domain.h>
+#include <netinet/ip_encap.h>
 #else
 #include <stdlib.h>
 #endif
@@ -947,6 +948,7 @@ rn_init()
 	for (dom = domains; dom; dom = dom->dom_next)
 		if (dom->dom_maxrtkey > max_keylen)
 			max_keylen = dom->dom_maxrtkey;
+	encap_setkeylen();
 #endif
 	if (max_keylen == 0) {
 		log(LOG_ERR,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.15.2.2 2004/08/03 10:39:37 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.15.2.3 2004/08/25 06:57:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15.2.2 2004/08/03 10:39:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15.2.3 2004/08/25 06:57:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,6 +195,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
+		sgsize = min(sgsize, map->_dm_maxsegsz);
 
 		/*
 		 * Make sure we don't cross any boundaries.
@@ -546,7 +547,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			 * them from the cache.  Note: some implementation
 			 * implement dcbi identically to dcbf.  Thus if the
 			 * cacheline has data, it will be written to memory.
-			 * If the DMA is updaing the same cacheline at the
+			 * If the DMA is updating the same cacheline at the
 			 * time, bad things can happen.
 			 */
 			dcbi(addr, seglen, dcache_line_size);

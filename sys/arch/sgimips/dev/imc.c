@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.8.2.1 2004/08/03 10:40:00 skrll Exp $	*/
+/*	$NetBSD: imc.c,v 1.8.2.2 2004/08/25 06:57:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.8.2.1 2004/08/03 10:40:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.8.2.2 2004/08/25 06:57:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -153,8 +153,21 @@ imc_attach(parent, self, aux)
 	/* Setup the MC write buffer depth */
 	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_CPUCTRL1);
 	reg = (reg & ~IMC_CPUCTRL1_MCHWMSK) | 13;
-	if (mach_type == MACH_SGI_IP20)
-		reg = (reg & ~IMC_CPUCTRL1_HPCLITTLE) | IMC_CPUCTRL1_HPCFX;
+
+	/*
+	 * Force endianness on the onboard HPC and both slots.
+	 * This should be safe for Fullhouse, but leave it conditional
+	 * for now.
+	 */
+	if (mach_type == MACH_SGI_IP20 || (mach_type == MACH_SGI_IP22 &&
+	    mach_subtype == MACH_SGI_IP22_GUINESS)) {
+		reg |=  IMC_CPUCTRL1_HPCFX;
+		reg |=  IMC_CPUCTRL1_EXP0FX;
+		reg |=  IMC_CPUCTRL1_EXP1FX;
+		reg &= ~IMC_CPUCTRL1_HPCLITTLE;
+		reg &= ~IMC_CPUCTRL1_EXP0LITTLE;
+		reg &= ~IMC_CPUCTRL1_EXP1LITTLE;
+	}
 	bus_space_write_4(isc.iot, isc.ioh, IMC_CPUCTRL1, reg);
 
 
@@ -168,26 +181,31 @@ imc_attach(parent, self, aux)
 	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_GIO64ARB);
 	reg &= (IMC_GIO64ARB_GRX64 | IMC_GIO64ARB_GRXRT | IMC_GIO64ARB_GRXMST);
 
-	/* GIO64 invariant for all IP22 platforms: one GIO bus, HPC1 @ 64 */
-	reg |= IMC_GIO64ARB_ONEGIO | IMC_GIO64ARB_HPC64;
-
 	/* Rest of settings are machine/board dependant */
 	if (mach_type == MACH_SGI_IP20)
 	{
-	        reg |= (IMC_GIO64ARB_ONEGIO |
-			 IMC_GIO64ARB_EXP1RT | IMC_GIO64ARB_EXP0RT);
-                reg &= ~(IMC_GIO64ARB_HPC64 |
-                         IMC_GIO64ARB_HPCEXP64 | IMC_GIO64ARB_EISA64 |
-                         IMC_GIO64ARB_EXP064   | IMC_GIO64ARB_EXP164 |
-                         IMC_GIO64ARB_EXP0PIPE | IMC_GIO64ARB_EXP1PIPE |
-                         IMC_GIO64ARB_EXP0MST | IMC_GIO64ARB_EXP1MST);
-/* XXX second ethernet adapter */
-                reg |= IMC_GIO64ARB_EXP0MST;
+		reg |=   IMC_GIO64ARB_ONEGIO;
+	        reg |=  (IMC_GIO64ARB_EXP0RT	| IMC_GIO64ARB_EXP1RT);
+		reg |=  (IMC_GIO64ARB_EXP0MST	| IMC_GIO64ARB_EXP1MST);
+                reg &= ~(IMC_GIO64ARB_HPC64	|
+                         IMC_GIO64ARB_HPCEXP64	| IMC_GIO64ARB_EISA64 |
+                         IMC_GIO64ARB_EXP064	| IMC_GIO64ARB_EXP164 |
+                         IMC_GIO64ARB_EXP0PIPE	| IMC_GIO64ARB_EXP1PIPE);
 	}
 	else
 	{
+		/*
+		 * GIO64 invariant for all IP22 platforms: one GIO bus,
+		 * HPC1 @ 64
+		 */
+		reg |= IMC_GIO64ARB_ONEGIO | IMC_GIO64ARB_HPC64;
+
 		switch (mach_subtype) {
 		case MACH_SGI_IP22_GUINESS:
+			/* XXX is MST mutually exclusive? */
+	        	reg |=  (IMC_GIO64ARB_EXP0RT	| IMC_GIO64ARB_EXP1RT);
+			reg |=  (IMC_GIO64ARB_EXP0MST	| IMC_GIO64ARB_EXP1MST);
+
 			/* EISA can bus-master, is 64-bit */
 			reg |= (IMC_GIO64ARB_EISAMST | IMC_GIO64ARB_EISA64);
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.9.2.1 2004/08/03 10:46:07 skrll Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.9.2.2 2004/08/25 06:57:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.9.2.1 2004/08/03 10:46:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.9.2.2 2004/08/25 06:57:35 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -76,33 +76,33 @@ __KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.9.2.1 2004/08/03 10:46:07 skrll Exp $"
 #include <dev/ic/aic6915reg.h>
 #include <dev/ic/aic6915var.h>
 
-void	sf_start(struct ifnet *);
-void	sf_watchdog(struct ifnet *);
-int	sf_ioctl(struct ifnet *, u_long, caddr_t);
-int	sf_init(struct ifnet *);
-void	sf_stop(struct ifnet *, int);
+static void	sf_start(struct ifnet *);
+static void	sf_watchdog(struct ifnet *);
+static int	sf_ioctl(struct ifnet *, u_long, caddr_t);
+static int	sf_init(struct ifnet *);
+static void	sf_stop(struct ifnet *, int);
 
-void	sf_shutdown(void *);
+static void	sf_shutdown(void *);
 
-void	sf_txintr(struct sf_softc *);
-void	sf_rxintr(struct sf_softc *);
-void	sf_stats_update(struct sf_softc *);
+static void	sf_txintr(struct sf_softc *);
+static void	sf_rxintr(struct sf_softc *);
+static void	sf_stats_update(struct sf_softc *);
 
-void	sf_reset(struct sf_softc *);
-void	sf_macreset(struct sf_softc *);
-void	sf_rxdrain(struct sf_softc *);
-int	sf_add_rxbuf(struct sf_softc *, int);
-uint8_t	sf_read_eeprom(struct sf_softc *, int);
-void	sf_set_filter(struct sf_softc *);
+static void	sf_reset(struct sf_softc *);
+static void	sf_macreset(struct sf_softc *);
+static void	sf_rxdrain(struct sf_softc *);
+static int	sf_add_rxbuf(struct sf_softc *, int);
+static uint8_t	sf_read_eeprom(struct sf_softc *, int);
+static void	sf_set_filter(struct sf_softc *);
 
-int	sf_mii_read(struct device *, int, int);
-void	sf_mii_write(struct device *, int, int, int);
-void	sf_mii_statchg(struct device *);
+static int	sf_mii_read(struct device *, int, int);
+static void	sf_mii_write(struct device *, int, int, int);
+static void	sf_mii_statchg(struct device *);
 
-void	sf_tick(void *);
+static void	sf_tick(void *);
 
-int	sf_mediachange(struct ifnet *);
-void	sf_mediastatus(struct ifnet *, struct ifmediareq *);
+static int	sf_mediachange(struct ifnet *);
+static void	sf_mediastatus(struct ifnet *, struct ifmediareq *);
 
 #define	sf_funcreg_read(sc, reg)					\
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh_func, (reg))
@@ -339,7 +339,7 @@ sf_attach(struct sf_softc *sc)
  *
  *	Shutdown hook -- make sure the interface is stopped at reboot.
  */
-void
+static void
 sf_shutdown(void *arg)
 {
 	struct sf_softc *sc = arg;
@@ -352,7 +352,7 @@ sf_shutdown(void *arg)
  *
  *	Start packet transmission on the interface.
  */
-void
+static void
 sf_start(struct ifnet *ifp)
 {
 	struct sf_softc *sc = ifp->if_softc;
@@ -504,7 +504,7 @@ sf_start(struct ifnet *ifp)
  *
  *	Watchdog timer handler.
  */
-void
+static void
 sf_watchdog(struct ifnet *ifp)
 {
 	struct sf_softc *sc = ifp->if_softc;
@@ -523,7 +523,7 @@ sf_watchdog(struct ifnet *ifp)
  *
  *	Handle control requests from the operator.
  */
-int
+static int
 sf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct sf_softc *sc = ifp->if_softc;
@@ -635,7 +635,7 @@ sf_intr(void *arg)
  *
  *	Helper -- handle transmit completion interrupts.
  */
-void
+static void
 sf_txintr(struct sf_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -703,7 +703,7 @@ sf_txintr(struct sf_softc *sc)
  *
  *	Helper -- handle receive interrupts.
  */
-void
+static void
 sf_rxintr(struct sf_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -837,7 +837,7 @@ sf_rxintr(struct sf_softc *sc)
  *
  *	One second timer, used to tick the MII and update stats.
  */
-void
+static void
 sf_tick(void *arg)
 {
 	struct sf_softc *sc = arg;
@@ -856,7 +856,7 @@ sf_tick(void *arg)
  *
  *	Read the statitistics counters.
  */
-void
+static void
 sf_stats_update(struct sf_softc *sc)
 {
 	struct sf_stats stats;
@@ -893,7 +893,7 @@ sf_stats_update(struct sf_softc *sc)
  *
  *	Perform a soft reset on the Starfire.
  */
-void
+static void
 sf_reset(struct sf_softc *sc)
 {
 	int i;
@@ -923,7 +923,7 @@ sf_reset(struct sf_softc *sc)
  *
  *	Reset the MAC portion of the Starfire.
  */
-void
+static void
 sf_macreset(struct sf_softc *sc)
 {
 
@@ -937,7 +937,7 @@ sf_macreset(struct sf_softc *sc)
  *
  *	Initialize the interface.  Must be called at splnet().
  */
-int
+static int
 sf_init(struct ifnet *ifp)
 {
 	struct sf_softc *sc = ifp->if_softc;
@@ -1129,7 +1129,7 @@ sf_init(struct ifnet *ifp)
  *
  *	Drain the receive queue.
  */
-void
+static void
 sf_rxdrain(struct sf_softc *sc)
 {
 	struct sf_descsoft *ds;
@@ -1150,7 +1150,7 @@ sf_rxdrain(struct sf_softc *sc)
  *
  *	Stop transmission on the interface.
  */
-void
+static void
 sf_stop(struct ifnet *ifp, int disable)
 {
 	struct sf_softc *sc = ifp->if_softc;
@@ -1196,7 +1196,7 @@ sf_stop(struct ifnet *ifp, int disable)
  *
  *	Read from the Starfire EEPROM.
  */
-uint8_t
+static uint8_t
 sf_read_eeprom(struct sf_softc *sc, int offset)
 {
 	uint32_t reg;
@@ -1211,7 +1211,7 @@ sf_read_eeprom(struct sf_softc *sc, int offset)
  *
  *	Add a receive buffer to the indicated descriptor.
  */
-int
+static int
 sf_add_rxbuf(struct sf_softc *sc, int idx)
 {
 	struct sf_descsoft *ds = &sc->sc_rxsoft[idx];
@@ -1282,7 +1282,7 @@ sf_set_filter_hash(struct sf_softc *sc, uint8_t *enaddr)
  *
  *	Set the Starfire receive filter.
  */
-void
+static void
 sf_set_filter(struct sf_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
@@ -1372,7 +1372,7 @@ sf_set_filter(struct sf_softc *sc)
  *
  *	Read from the MII.
  */
-int
+static int
 sf_mii_read(struct device *self, int phy, int reg)
 {
 	struct sf_softc *sc = (void *) self;
@@ -1400,7 +1400,7 @@ sf_mii_read(struct device *self, int phy, int reg)
  *
  *	Write to the MII.
  */
-void
+static void
 sf_mii_write(struct device *self, int phy, int reg, int val)
 {
 	struct sf_softc *sc = (void *) self;
@@ -1423,7 +1423,7 @@ sf_mii_write(struct device *self, int phy, int reg, int val)
  *
  *	Callback from the PHY when the media changes.
  */
-void
+static void
 sf_mii_statchg(struct device *self)
 {
 	struct sf_softc *sc = (void *) self;
@@ -1448,7 +1448,7 @@ sf_mii_statchg(struct device *self)
  *
  *	Callback from ifmedia to request current media status.
  */
-void
+static void
 sf_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct sf_softc *sc = ifp->if_softc;
@@ -1463,7 +1463,7 @@ sf_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
  *
  *	Callback from ifmedia to request new media setting.
  */
-int
+static int
 sf_mediachange(struct ifnet *ifp)
 {
 	struct sf_softc *sc = ifp->if_softc;

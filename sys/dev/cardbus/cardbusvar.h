@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.24.16.1 2004/08/03 10:45:46 skrll Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.24.16.2 2004/08/25 06:57:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -190,7 +190,7 @@ struct cardbus_softc {
 #define PCCARD_XXV  0x04
 #define PCCARD_YYV  0x08
 	int sc_poweron_func;
-  struct cardbus_devfunc *sc_funcs;	/* list of cardbus device functions */
+  struct cardbus_devfunc *sc_funcs[8];	/* list of cardbus device functions */
 };
 
 
@@ -219,8 +219,6 @@ typedef struct cardbus_devfunc {
 	/* u_int32_t ct_cisreg; */	/* CIS reg: is it needed??? */
 
 	struct device *ct_device;	/* pointer to the device */
-
-	struct cardbus_devfunc *ct_next;
 
 	/* some data structure needed for tuple??? */
 } *cardbus_devfunc_t;
@@ -251,7 +249,6 @@ struct cardbus_cis_info {
 };
 
 struct cardbus_attach_args {
-	int ca_unit;
 	cardbus_devfunc_t ca_ct;
 
 	bus_space_tag_t ca_iot;		/* CardBus I/O space tag */
@@ -306,17 +303,6 @@ struct cardbus_attach_args {
 #define CARDBUS_VPP_0V  0x0040
 #define CARDBUS_VPPMASK 0x00f0
 
-
-#include "locators.h"
-
-/*
- * Locators devices that attach to 'cardbus', as specified to config.
- */
-#define cardbuscf_dev cf_loc[CARDBUSCF_DEV]
-#define CARDBUS_UNK_DEV CARDBUSCF_DEV_DEFAULT
-
-#define cardbuscf_function cf_loc[CARDBUSCF_FUNCTION]
-#define CARDBUS_UNK_FUNCTION CARDBUSCF_FUNCTION_DEFAULT
 
 int cardbus_attach_card __P((struct cardbus_softc *));
 void cardbus_detach_card __P((struct cardbus_softc *));

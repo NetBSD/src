@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_arch.cpp,v 1.9.16.1 2004/08/12 11:41:05 skrll Exp $	*/
+/*	$NetBSD: sh_arch.cpp,v 1.9.16.2 2004/08/25 06:57:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <hpcmenu.h>
 #include <sh3/sh_arch.h>
 
+SH_BOOT_FUNC_(7707);
 SH_BOOT_FUNC_(7709);
 SH_BOOT_FUNC_(7709A);
 SH_BOOT_FUNC_(7750);

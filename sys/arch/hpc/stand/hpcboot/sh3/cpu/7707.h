@@ -1,7 +1,7 @@
-/*	$NetBSD: 7707.h,v 1.1.18.1 2004/08/12 11:41:06 skrll Exp $	*/
+/*	$NetBSD: 7707.h,v 1.1.18.2 2004/08/25 06:57:19 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -50,4 +50,31 @@
 #define	SH7707_LCDAR_LCDDMR3	0x3
 #define	SH7707_LCDAR_LCDDMR4	0x4
 
+#define	SH7707_CACHE_LINESZ		16
+#define	SH7707_CACHE_ENTRY		128
+#define	SH7707_CACHE_WAY		4	/* 2-way in RAM mode */
+#define	SH7707_CACHE_SIZE						\
+	(SH7707_CACHE_LINESZ * SH7707_CACHE_ENTRY * SH7707_CACHE_WAY)
+
+#define	SH7707_CACHE_ENTRY_SHIFT	4
+#define	SH7707_CACHE_ENTRY_MASK		0x000007f0
+#define	SH7707_CACHE_WAY_SHIFT		11
+#define	SH7707_CACHE_WAY_MASK		0x00001800
+
+#define	SH7707_CACHE_FLUSH()						\
+__BEGIN_MACRO								\
+	u_int32_t __e, __w, __wa, __a;					\
+									\
+	for (__w = 0; __w < SH7707_CACHE_WAY; __w++) {			\
+		__wa = SH3_CCA | __w << SH7707_CACHE_WAY_SHIFT;		\
+		for (__e = 0; __e < SH7707_CACHE_ENTRY; __e++) {	\
+			__a = __wa |(__e << SH7707_CACHE_ENTRY_SHIFT);	\
+			_reg_read_4(__a) &= ~0x3; /* Clear U,V bit */	\
+		}							\
+	}								\
+__END_MACRO
+
+#define	SH7707_MMU_DISABLE	SH3_MMU_DISABLE
+
 #endif // _HPCBOOT_SH_CPU_7707_H_
+

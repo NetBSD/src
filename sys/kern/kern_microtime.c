@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.4.2.2 2004/08/12 11:42:19 skrll Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.4.2.3 2004/08/25 06:58:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.4.2.2 2004/08/12 11:42:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.4.2.3 2004/08/25 06:58:58 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -208,7 +208,7 @@ cc_microset(struct cpu_info *ci)
 	} else {
 #ifdef DIAGNOSTIC
 		printf("cc_microset[%lu]: delta %" PRId64 ", resetting state\n",
-		       ci->ci_cpuid, delta);
+		       (u_long)ci->ci_cpuid, delta);
 #endif
 		ci->ci_cc_ms_delta = 1000000;
 		ci->ci_cc_denom = cpu_frequency(ci);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.34 2003/04/29 01:49:34 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.34.2.1 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.34 2003/04/29 01:49:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.34.2.1 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,25 +90,25 @@ __KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.34 2003/04/29 01:49:34 thorpej Exp $");
 
 #include <dev/mii/sqphyreg.h>
 
-int	sqphymatch(struct device *, struct cfdata *, void *);
-void	sqphyattach(struct device *, struct device *, void *);
+static int	sqphymatch(struct device *, struct cfdata *, void *);
+static void	sqphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sqphy, sizeof(struct mii_softc),
     sqphymatch, sqphyattach, mii_phy_detach, mii_phy_activate);
 
-int	sqphy_service(struct mii_softc *, struct mii_data *, int);
-void	sqphy_status(struct mii_softc *);
-void	sqphy_84220_reset(struct mii_softc *);
+static int	sqphy_service(struct mii_softc *, struct mii_data *, int);
+static void	sqphy_status(struct mii_softc *);
+static void	sqphy_84220_reset(struct mii_softc *);
 
-const struct mii_phy_funcs sqphy_funcs = {
+static const struct mii_phy_funcs sqphy_funcs = {
 	sqphy_service, sqphy_status, mii_phy_reset,
 };
 
-const struct mii_phy_funcs sqphy_84220_funcs = {
+static const struct mii_phy_funcs sqphy_84220_funcs = {
 	sqphy_service, sqphy_status, sqphy_84220_reset,
 };
 
-const struct mii_phydesc sqphys[] = {
+static const struct mii_phydesc sqphys[] = {
 	{ MII_OUI_SEEQ,			MII_MODEL_SEEQ_80220,
 	  MII_STR_SEEQ_80220 },
 
@@ -122,7 +122,7 @@ const struct mii_phydesc sqphys[] = {
 	  NULL },
 };
 
-int
+static int
 sqphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -133,7 +133,7 @@ sqphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 sqphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -174,7 +174,7 @@ sqphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 sqphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -236,7 +236,7 @@ sqphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 sqphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
@@ -283,7 +283,7 @@ sqphy_status(struct mii_softc *sc)
 		mii->mii_media_active = ife->ifm_media;
 }
 
-void
+static void
 sqphy_84220_reset(struct mii_softc *sc)
 {
 	int reg;

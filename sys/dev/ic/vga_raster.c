@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.11.2.1 2004/08/03 10:46:21 skrll Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.11.2.2 2004/08/25 06:57:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.11.2.1 2004/08/03 10:46:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.11.2.2 2004/08/25 06:57:35 skrll Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -490,10 +490,6 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 		    0x4000);
 
 		vga_restore_screen(scr, type, scr->mem);
-
-		/* Delay to prevent the boot screen from being too
-		   fast scrolled up. */
-		delay(1000000);
 	} else {
 		cpos = 0;
 		scr->dispoffset = scr->mindispoffset;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.39.2.2 2004/08/03 10:57:00 skrll Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.39.2.3 2004/08/25 06:59:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.39.2.2 2004/08/03 10:57:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.39.2.3 2004/08/25 06:59:14 skrll Exp $");
 
 #include "opt_quota.h"
 
@@ -113,8 +113,7 @@ ufs_inactive(v)
 		vn_finished_write(mp, V_LOWER);
 	}
 
-	if (ip->i_flag &
-	    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) {
+	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 		VOP_UPDATE(vp, NULL, NULL, 0);
 		vn_finished_write(mp, V_LOWER);
@@ -139,14 +138,23 @@ ufs_reclaim(vp, l)
 	struct vnode *vp;
 	struct lwp *l;
 {
-	struct inode *ip;
+	struct inode *ip = VTOI(vp);
+	struct mount *mp;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ufs_reclaim: pushing active", vp);
+#ifdef DIAGNOSTIC
+	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED))
+		panic("ufs_reclaim: inactive inode has been touched");
+#endif
+	if (ip->i_flag & (IN_ACCESS | IN_MODIFY | IN_ACCESSED)) {
+		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
+		VOP_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
+		vn_finished_write(mp, V_LOWER);
+	}
 	/*
 	 * Remove the inode from its hash chain.
 	 */
-	ip = VTOI(vp);
 	ufs_ihashrem(ip);
 	/*
 	 * Purge old data structures associated with the inode.

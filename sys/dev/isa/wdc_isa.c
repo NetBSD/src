@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.31.2.1 2004/08/03 10:48:00 skrll Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.31.2.2 2004/08/25 06:58:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.31.2.1 2004/08/03 10:48:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.31.2.2 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,35 +65,35 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.31.2.1 2004/08/03 10:48:00 skrll Exp $
 
 struct wdc_isa_softc {
 	struct	wdc_softc sc_wdcdev;
-	struct	wdc_channel *wdc_chanlist[1];
-	struct	wdc_channel wdc_channel;
+	struct	ata_channel *wdc_chanlist[1];
+	struct	ata_channel ata_channel;
 	struct	ata_queue wdc_chqueue;
+	struct	wdc_regs wdc_regs;
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
 	int	sc_drq;
 };
 
-int	wdc_isa_probe	__P((struct device *, struct cfdata *, void *));
-void	wdc_isa_attach	__P((struct device *, struct device *, void *));
+static int	wdc_isa_probe(struct device *, struct cfdata *, void *);
+static void	wdc_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(wdc_isa, sizeof(struct wdc_isa_softc),
     wdc_isa_probe, wdc_isa_attach, NULL, NULL);
 
 #if 0
-static void	wdc_isa_dma_setup __P((struct wdc_isa_softc *));
-static int	wdc_isa_dma_init __P((void*, int, int, void *, size_t, int));
-static void 	wdc_isa_dma_start __P((void*, int, int));
-static int	wdc_isa_dma_finish __P((void*, int, int, int));
+static void	wdc_isa_dma_setup(struct wdc_isa_softc *);
+static int	wdc_isa_dma_init(void*, int, int, void *, size_t, int);
+static void 	wdc_isa_dma_start(void*, int, int);
+static int	wdc_isa_dma_finish(void*, int, int, int);
 #endif
 
-int
-wdc_isa_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+wdc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct wdc_channel ch;
+	struct ata_channel ch;
 	struct isa_attach_args *ia = aux;
+	struct wdc_softc wdc;
+	struct wdc_regs wdr;
 	int result = 0, i;
 
 	if (ia->ia_nio < 1)
@@ -111,24 +111,27 @@ wdc_isa_probe(parent, match, aux)
 	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
 		ia->ia_ndrq = 0;
 
+	memset(&wdc, 0, sizeof(wdc));
 	memset(&ch, 0, sizeof(ch));
+	ch.ch_atac = &wdc.sc_atac;
+	wdc.regs = &wdr;
 
-	ch.cmd_iot = ia->ia_iot;
+	wdr.cmd_iot = ia->ia_iot;
 
-	if (bus_space_map(ch.cmd_iot, ia->ia_io[0].ir_addr,
-	    WDC_ISA_REG_NPORTS, 0, &ch.cmd_baseioh))
+	if (bus_space_map(wdr.cmd_iot, ia->ia_io[0].ir_addr,
+	    WDC_ISA_REG_NPORTS, 0, &wdr.cmd_baseioh))
 		goto out;
 
 	for (i = 0; i < WDC_ISA_REG_NPORTS; i++) {
-		if (bus_space_subregion(ch.cmd_iot, ch.cmd_baseioh, i,
-		    i == 0 ? 4 : 1, &ch.cmd_iohs[i]) != 0)
+		if (bus_space_subregion(wdr.cmd_iot, wdr.cmd_baseioh, i,
+		    i == 0 ? 4 : 1, &wdr.cmd_iohs[i]) != 0)
 			goto outunmap;
 	}
 	wdc_init_shadow_regs(&ch);
 
-	ch.ctl_iot = ia->ia_iot;
-	if (bus_space_map(ch.ctl_iot, ia->ia_io[0].ir_addr +
-	    WDC_ISA_AUXREG_OFFSET, WDC_ISA_AUXREG_NPORTS, 0, &ch.ctl_ioh))
+	wdr.ctl_iot = ia->ia_iot;
+	if (bus_space_map(wdr.ctl_iot, ia->ia_io[0].ir_addr +
+	    WDC_ISA_AUXREG_OFFSET, WDC_ISA_AUXREG_NPORTS, 0, &wdr.ctl_ioh))
 		goto outunmap;
 
 	result = wdcprobe(&ch);
@@ -141,56 +144,52 @@ wdc_isa_probe(parent, match, aux)
 		ia->ia_niomem = 0;
 	}
 
-	bus_space_unmap(ch.ctl_iot, ch.ctl_ioh, WDC_ISA_AUXREG_NPORTS);
+	bus_space_unmap(wdr.ctl_iot, wdr.ctl_ioh, WDC_ISA_AUXREG_NPORTS);
 outunmap:
-	bus_space_unmap(ch.cmd_iot, ch.cmd_baseioh, WDC_ISA_REG_NPORTS);
+	bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh, WDC_ISA_REG_NPORTS);
 out:
 	return (result);
 }
 
-void
-wdc_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+wdc_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_isa_softc *sc = (void *)self;
+	struct wdc_regs *wdr;
 	struct isa_attach_args *ia = aux;
 	int wdc_cf_flags = self->dv_cfdata->cf_flags;
 	int i;
 
-	sc->wdc_channel.cmd_iot = ia->ia_iot;
-	sc->wdc_channel.ctl_iot = ia->ia_iot;
+	sc->sc_wdcdev.regs = wdr = &sc->wdc_regs;
+	wdr->cmd_iot = ia->ia_iot;
+	wdr->ctl_iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
-	if (bus_space_map(sc->wdc_channel.cmd_iot, ia->ia_io[0].ir_addr,
-	    WDC_ISA_REG_NPORTS, 0, &sc->wdc_channel.cmd_baseioh) ||
-	    bus_space_map(sc->wdc_channel.ctl_iot,
+	if (bus_space_map(wdr->cmd_iot, ia->ia_io[0].ir_addr,
+	    WDC_ISA_REG_NPORTS, 0, &wdr->cmd_baseioh) ||
+	    bus_space_map(wdr->ctl_iot,
 	      ia->ia_io[0].ir_addr + WDC_ISA_AUXREG_OFFSET,
-	      WDC_ISA_AUXREG_NPORTS, 0, &sc->wdc_channel.ctl_ioh)) {
+	      WDC_ISA_AUXREG_NPORTS, 0, &wdr->ctl_ioh)) {
 		printf(": couldn't map registers\n");
 		return;
 	}
 
 	for (i = 0; i < WDC_ISA_REG_NPORTS; i++) {
-		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
-		      sc->wdc_channel.cmd_baseioh, i, i == 0 ? 4 : 1,
-		      &sc->wdc_channel.cmd_iohs[i]) != 0) {
+		if (bus_space_subregion(wdr->cmd_iot,
+		      wdr->cmd_baseioh, i, i == 0 ? 4 : 1,
+		      &wdr->cmd_iohs[i]) != 0) {
 			printf(": couldn't subregion registers\n");
 			return;
 		}
 	}
-	wdc_init_shadow_regs(&sc->wdc_channel);
 
-	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
-	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
-
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-	    IST_EDGE, IPL_BIO, wdcintr, &sc->wdc_channel);
+	wdr->data32iot = wdr->cmd_iot;
+	wdr->data32ioh = wdr->cmd_iohs[0];
 
 #if 0
 	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT) {
 		sc->sc_drq = ia->ia_drq[0].ir_drq;
 
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		sc->sc_wdcdev.dma_arg = sc;
 		sc->sc_wdcdev.dma_init = wdc_isa_dma_init;
 		sc->sc_wdcdev.dma_start = wdc_isa_dma_start;
@@ -198,45 +197,49 @@ wdc_isa_attach(parent, self, aux)
 		wdc_isa_dma_setup(sc);
 	}
 #endif
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_PREATA;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_PREATA;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
 	if (wdc_cf_flags & WDC_OPTIONS_32)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA32;
 	if (wdc_cf_flags & WDC_OPTIONS_ATA_NOSTREAM)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_ATA_NOSTREAM;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_ATA_NOSTREAM;
 	if (wdc_cf_flags & WDC_OPTIONS_ATAPI_NOSTREAM)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_ATAPI_NOSTREAM;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_ATAPI_NOSTREAM;
 
-	sc->sc_wdcdev.PIO_cap = 0;
-	sc->wdc_chanlist[0] = &sc->wdc_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanlist;
-	sc->sc_wdcdev.nchannels = 1;
-	sc->wdc_channel.ch_channel = 0;
-	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
+	sc->wdc_chanlist[0] = &sc->ata_channel;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanlist;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
+	sc->ata_channel.ch_channel = 0;
+	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
+	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
+	wdc_init_shadow_regs(&sc->ata_channel);
 
 	printf("\n");
 
-	wdcattach(&sc->wdc_channel);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_BIO, wdcintr, &sc->ata_channel);
+
+	wdcattach(&sc->ata_channel);
 }
 
 #if 0
 static void
-wdc_isa_dma_setup(sc)
-	struct wdc_isa_softc *sc;
+wdc_isa_dma_setup(struct wdc_isa_softc *sc)
 {
 	bus_size_t maxsize;
 
 	if ((maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq)) < MAXPHYS) {
 		printf("%s: max DMA size %lu is less than required %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, (u_long)maxsize, MAXPHYS);
-		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap &= ~ATAC_CAP_DMA;
 		return;
 	}
 
 	if (isa_drq_alloc(sc->sc_ic, sc->sc_drq) != 0) {
 		printf("%s: can't reserve drq %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, sc->sc_drq);
-		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap &= ~ATAC_CAP_DMA;
 		return;
 	}
 
@@ -244,16 +247,13 @@ wdc_isa_dma_setup(sc)
 	    MAXPHYS, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, sc->sc_drq);
-		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap &= ~ATAC_CAP_DMA;
 	}
 }
 
 static int
-wdc_isa_dma_init(v, channel, drive, databuf, datalen, read)
-	void *v;
-	void *databuf;
-	size_t datalen;
-	int read;
+wdc_isa_dma_init(void *v, int channel, int drive, void *databuf,
+    size_t datalen, int read)
 {
 	struct wdc_isa_softc *sc = v;
 
@@ -264,18 +264,13 @@ wdc_isa_dma_init(v, channel, drive, databuf, datalen, read)
 }
 
 static void
-wdc_isa_dma_start(v, channel, drive)
-	void *v;
-	int channel, drive;
+wdc_isa_dma_start(void *v, int channel, int drive)
 {
 	/* nothing to do */
 }
 
 static int
-wdc_isa_dma_finish(v, channel, drive, read)
-	void *v;
-	int channel, drive;
-	int read;
+wdc_isa_dma_finish(void *v, int channel, int drive, int read)
 {
 	struct wdc_isa_softc *sc = v;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.21 1998/08/15 10:51:17 mycroft Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.21.46.1 2004/08/25 06:57:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_IC_AM7990VAR_H_
+#define	_DEV_IC_AM7990VAR_H_
+
 /*
  * Ethernet software status per device.
  *
@@ -50,5 +53,7 @@ struct am7990_softc {
 	struct lance_softc lsc;
 };
 
-void am7990_config __P((struct am7990_softc *));
-int am7990_intr __P((void *));
+void	am7990_config(struct am7990_softc *);
+int	am7990_intr(void *);
+
+#endif /* _DEV_IC_AM7990VAR_H_ */

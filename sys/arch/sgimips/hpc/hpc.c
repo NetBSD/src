@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.12.6.1 2004/08/03 10:40:06 skrll Exp $	*/
+/*	$NetBSD: hpc.c,v 1.12.6.2 2004/08/25 06:57:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.12.6.1 2004/08/03 10:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.12.6.2 2004/08/25 06:57:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,14 +55,21 @@ __KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.12.6.1 2004/08/03 10:40:06 skrll Exp $");
 
 #include "locators.h"
 
+#define HPC_REVISION_MASK	0x3
+#define HPC_REVISION_1		0x1
+#define HPC_REVISION_15		0x2
+#define HPC_REVISION_3		0x3
+
 const struct hpc_device {
 	const char *hd_name;
+	bus_addr_t hd_base;
 	bus_addr_t hd_devoff;
 	bus_addr_t hd_dmaoff;
 	int hd_irq;
 	int hd_sysmask;
 } hpc_devices[] = {
 	{ "zsc",
+	  HPC_BASE_ADDRESS_0,
 	  /* XXX Magic numbers */
 	  HPC_PBUS_CH6_DEVREGS + IOC_SERIAL_REGS, 0,
 	  29,
@@ -71,61 +78,97 @@ const struct hpc_device {
 	/* probe order is important for IP20 zsc */
 
 	{ "zsc",        /* serial 0/1 duart 1 */
+	  HPC_BASE_ADDRESS_0,
 	  0x0d10, 0,
 	  5,
 	  HPCDEV_IP12 | HPCDEV_IP20 },
 
-	{ "zsc",        /* serial 0/1 duart 0 */
+	{ "zsc",        /* kbd/ms duart 0 */
+	  HPC_BASE_ADDRESS_0,
 	  0x0d00, 0,
 	  5,
 	  HPCDEV_IP12 | HPCDEV_IP20 },
 
 	{ "pckbc",
+	  HPC_BASE_ADDRESS_0,
 	  HPC_PBUS_CH6_DEVREGS + IOC_KB_REGS, 0,
 	  28,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ "sq",
+	  HPC_BASE_ADDRESS_0,
 	  HPC_ENET_DEVREGS, HPC_ENET_REGS,
 	  3,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ "sq",
+	  HPC_BASE_ADDRESS_0,
 	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
 	  3,
 	  HPCDEV_IP12 | HPCDEV_IP20 },
 
+	{ "sq",
+	  HPC_BASE_ADDRESS_1,
+	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
+	  6,
+	  HPCDEV_IP12 | HPCDEV_IP20 },
+
+	{ "sq",
+	  HPC_BASE_ADDRESS_1,
+	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
+	  22,
+	  HPCDEV_IP24 }, 
+
+	{ "sq",
+	  HPC_BASE_ADDRESS_2,
+	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
+	  15,
+	  HPCDEV_IP12 | HPCDEV_IP20 },
+
+	{ "sq",
+	  HPC_BASE_ADDRESS_2,
+	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
+	  23,
+	  HPCDEV_IP24 },
+
 	{ "wdsc",
+	  HPC_BASE_ADDRESS_0,
 	  HPC_SCSI0_DEVREGS, HPC_SCSI0_REGS,
 	  1,	/* XXX 1 = IRQ_LOCAL0 + 1 */
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ "wdsc",
+	  HPC_BASE_ADDRESS_0,
 	  HPC_SCSI1_DEVREGS, HPC_SCSI1_REGS,
 	  2,	/* XXX 2 = IRQ_LOCAL0 + 2 */
 	  HPCDEV_IP22 },
 
 	{ "wdsc",
+	  HPC_BASE_ADDRESS_0,
 	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
 	  2,    /* XXX 1 = IRQ_LOCAL0 + 2 */    
 	  HPCDEV_IP12 | HPCDEV_IP20 },
 
 	{ "dpclock",
+	  HPC_BASE_ADDRESS_0,
 	  HPC1_PBUS_BBRAM, 0,
 	  -1,
 	  HPCDEV_IP12 | HPCDEV_IP20 },
 
 	{ "dsclock",
+	  HPC_BASE_ADDRESS_0,
 	  HPC_PBUS_BBRAM, 0,
 	  -1,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ "haltwo",
+	  HPC_BASE_ADDRESS_0,
 	  HPC_PBUS_CH0_DEVREGS, HPC_PBUS_DMAREGS,
 	  8 + 4, /* XXX IRQ_LOCAL1 + 4 */
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ NULL,
+	  0,
 	  0, 0,
 	  0,
 	  0
@@ -287,6 +330,8 @@ int	hpc_match(struct device *, struct cfdata *, void *);
 void	hpc_attach(struct device *, struct device *, void *);
 int	hpc_print(void *, const char *);
 
+int	hpc_revision(struct hpc_softc *, struct gio_attach_args *);
+
 int	hpc_submatch(struct device *, struct cfdata *, void *);
 
 int	hpc_power_intr(void *);
@@ -323,17 +368,14 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (mach_type) {
 	case MACH_SGI_IP12:
-		hpctype = 1;
 		sysmask = HPCDEV_IP12;
 		break;
 
 	case MACH_SGI_IP20:
-		hpctype = 15;
 		sysmask = HPCDEV_IP20;
 		break;
 
 	case MACH_SGI_IP22:
-		hpctype = 3;
 		if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
 			sysmask = HPCDEV_IP22;
 		else
@@ -344,26 +386,12 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		panic("hpc_attach: can't handle HPC on an IP%d", mach_type);
 	};
 
-	/*
-	 * Verify HPC1 or HPC1.5
-	 *
-	 * For some reason the endian register isn't mapped on all
-	 * machines (HPC1 machines?).
-	 */
-	if (hpctype != 3 &&
-	    !badaddr((void *)MIPS_PHYS_TO_KSEG1(ga->ga_addr+HPC1_BIGENDIAN),4)){
-		hpctype = *(uint32_t *)
-		    MIPS_PHYS_TO_KSEG1(ga->ga_addr + HPC1_BIGENDIAN);
+	if ((hpctype = hpc_revision(sc, ga)) == 0)
+		panic("hpc_attach: could not identify HPC revision\n");
 
-		if (((hpctype >> HPC1_REVSHIFT) & HPC1_REVMASK) == HPC1_REV15)
-			hpctype = 15;
-		else
-			hpctype = 1;
-
-		/* force big-endian mode */
-		*(uint32_t *)MIPS_PHYS_TO_KSEG1(ga->ga_addr + HPC1_BIGENDIAN)
-		    = hpctype & 0xe0;
-	}
+	/* force big-endian mode */
+	if (hpctype == 15)
+		*(uint32_t *)MIPS_PHYS_TO_KSEG1(ga->ga_addr+HPC1_BIGENDIAN) = 0;
 	
 	printf(": SGI HPC%d%s\n", (hpctype ==  3) ? 3 : 1,
 				  (hpctype == 15) ? ".5" : "");
@@ -374,7 +402,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_base = ga->ga_addr;
 
 	for (hd = hpc_devices; hd->hd_name != NULL; hd++) {
-		if (!(hd->hd_sysmask & sysmask))
+		if (!(hd->hd_sysmask & sysmask) || hd->hd_base != sc->sc_base)
 			continue;
 
 		ha.ha_name = hd->hd_name;
@@ -412,6 +440,67 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20)
 		hpc_blink(sc);
 #endif
+}
+
+int
+hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
+{
+	int hpctype;
+
+	/* Allow forcing of our hpc revision. */ 
+	switch (sc->sc_dev.dv_cfdata->cf_flags & HPC_REVISION_MASK) {
+	case HPC_REVISION_1:
+		return (1);
+
+	case HPC_REVISION_15:
+		return (15);
+
+	case HPC_REVISION_3:
+		return (3);
+	}
+
+	/* XXX We should really come up with an autodetect mechanism */	
+	switch (mach_type) {
+	case MACH_SGI_IP12:
+		hpctype = 1;
+		break;
+
+	case MACH_SGI_IP20:
+		hpctype = 15;
+		break;
+
+	case MACH_SGI_IP22:
+		hpctype = 3;
+		break;
+
+	default:
+		return (0);
+	}
+
+	/*
+	 * Verify HPC1 or HPC1.5
+	 *
+	 * For some reason the endian register isn't mapped on all
+	 * machines (HPC1 machines?).
+	 */
+	if (hpctype == 1 || hpctype == 15) {
+		u_int32_t reg;
+
+		if (!badaddr((void *)MIPS_PHYS_TO_KSEG1(ga->ga_addr +
+		    HPC1_BIGENDIAN), 4)) {
+			reg = *(uint32_t *)MIPS_PHYS_TO_KSEG1(ga->ga_addr +
+			    HPC1_BIGENDIAN);
+
+			if (((reg >> HPC1_REVSHIFT) & HPC1_REVMASK) ==
+			    HPC1_REV15)
+				hpctype = 15;
+			else
+				hpctype = 1;
+		} else
+			hpctype = 1;
+	}
+
+	return (hpctype);
 }
 
 int

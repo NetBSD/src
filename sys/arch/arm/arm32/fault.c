@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.30.2.2 2004/08/12 11:41:03 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.30.2.3 2004/08/25 06:57:17 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.30.2.2 2004/08/12 11:41:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.30.2.3 2004/08/25 06:57:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,8 +195,18 @@ data_abort_fixup(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l)
 	 */
 	printf("data_abort_fixup: fixup for %s mode data abort failed.\n",
 	    TRAP_USERMODE(tf) ? "user" : "kernel");
-	printf("pc = 0x%08x, opcode 0x%08x, insn = ", tf->tf_pc,
-	    *((u_int *)tf->tf_pc));
+#ifdef THUMB_CODE
+	if (tf->tf_spsr & PSR_T_bit) {
+		printf("pc = 0x%08x, opcode 0x%04x, 0x%04x, insn = ",
+		    tf->tf_pc, *((u_int16 *)(tf->tf_pc & ~1),
+		    *((u_int16 *)((tf->tf_pc + 2) & ~1));
+	}
+	else
+#endif
+	{
+		printf("pc = 0x%08x, opcode 0x%08x, insn = ", tf->tf_pc,
+		    *((u_int *)tf->tf_pc));
+	}
 	disassemble(tf->tf_pc);
 
 	/* Die now if this happened in kernel mode */
@@ -285,8 +295,18 @@ data_abort_handler(trapframe_t *tf)
 	 * someone executing Thumb code, in which case the PC might not
 	 * be word-aligned. This would cause a kernel alignment fault
 	 * further down if we have to decode the current instruction.
-	 * XXX: It would be nice to be able to support Thumb at some point.
 	 */
+#ifdef THUMB_CODE
+	/* 
+	 * XXX: It would be nice to be able to support Thumb in the kernel
+	 * at some point.
+	 */
+	if (__predict_false(!user && (tf->tf_pc & 3) != 0)) {
+		printf("\ndata_abort_fault: Misaligned Kernel-mode "
+		    "Program Counter\n");
+		dab_fatal(tf, fsr, far, l, NULL);
+	}
+#else
 	if (__predict_false((tf->tf_pc & 3) != 0)) {
 		if (user) {
 			/*
@@ -308,6 +328,7 @@ data_abort_handler(trapframe_t *tf)
 		    "Program Counter\n");
 		dab_fatal(tf, fsr, far, l, NULL);
 	}
+#endif
 
 	/* See if the CPU state needs to be fixed up */
 	switch (data_abort_fixup(tf, fsr, far, l)) {
@@ -379,17 +400,39 @@ data_abort_handler(trapframe_t *tf)
 	if (IS_PERMISSION_FAULT(fsr))
 		ftype = VM_PROT_WRITE; 
 	else {
-		u_int insn = ReadWord(tf->tf_pc);
+#ifdef THUMB_CODE
+		/* Fast track the ARM case.  */
+		if (__predict_false(tf->tf_spsr & PSR_T_bit)) {
+			u_int insn = fusword((void *)(tf->tf_pc & ~1));
+			u_int insn_f8 = insn & 0xf800;
+			u_int insn_fe = insn & 0xfe00;
 
-		if (((insn & 0x0c100000) == 0x04000000) ||	/* STR/STRB */
-		    ((insn & 0x0e1000b0) == 0x000000b0) ||	/* STRH/STRD */
-		    ((insn & 0x0a100000) == 0x08000000))	/* STM/CDT */
-			ftype = VM_PROT_WRITE; 
+			if (insn_f8 == 0x6000 || /* STR(1) */
+			    insn_f8 == 0x7000 || /* STRB(1) */
+			    insn_f8 == 0x8000 || /* STRH(1) */
+			    insn_f8 == 0x9000 || /* STR(3) */
+			    insn_f8 == 0xc000 || /* STM */
+			    insn_fe == 0x5000 || /* STR(2) */
+			    insn_fe == 0x5200 || /* STRH(2) */
+			    insn_fe == 0x5400)   /* STRB(2) */
+				ftype = VM_PROT_WRITE;
+			else
+				ftype = VM_PROT_READ;
+		}
 		else
-		if ((insn & 0x0fb00ff0) == 0x01000090)		/* SWP */
-			ftype = VM_PROT_READ | VM_PROT_WRITE; 
-		else
-			ftype = VM_PROT_READ; 
+#endif
+		{
+			u_int insn = ReadWord(tf->tf_pc);
+
+			if (((insn & 0x0c100000) == 0x04000000) || /* STR[B] */
+			    ((insn & 0x0e1000b0) == 0x000000b0) || /* STR[HD]*/
+			    ((insn & 0x0a100000) == 0x08000000))   /* STM/CDT*/
+				ftype = VM_PROT_WRITE; 
+			else if ((insn & 0x0fb00ff0) == 0x01000090)/* SWP */
+				ftype = VM_PROT_READ | VM_PROT_WRITE; 
+			else
+				ftype = VM_PROT_READ; 
+		}
 	}
 
 	/*
@@ -626,6 +669,11 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
 			 */
 			tf->tf_spsr |= PSR_USR32_MODE;
 			tf->tf_pc = tf->tf_usr_lr;
+#ifdef THUMB_CODE
+			tf->tf_spsr &= ~PSR_T_bit;
+			if (tf->tf_usr_lr & 1)
+				tf->tf_spsr |= PSR_T_bit;
+#endif
 		}
 	}
 
@@ -679,8 +727,18 @@ prefetch_abort_fixup(trapframe_t *tf)
 	printf(
 	    "prefetch_abort_fixup: fixup for %s mode prefetch abort failed.\n",
 	    TRAP_USERMODE(tf) ? "user" : "kernel");
-	printf("pc = 0x%08x, opcode 0x%08x, insn = ", tf->tf_pc,
-	    *((u_int *)tf->tf_pc));
+#ifdef THUMB_CODE
+	if (tf->tf_spsr & PSR_T_bit) {
+		printf("pc = 0x%08x, opcode 0x%04x, 0x%04x, insn = ",
+		    tf->tf_pc, *((u_int16 *)(tf->tf_pc & ~1),
+		    *((u_int16 *)((tf->tf_pc + 2) & ~1));
+	}
+	else
+#endif
+	{
+		printf("pc = 0x%08x, opcode 0x%08x, insn = ", tf->tf_pc,
+		    *((u_int *)tf->tf_pc));
+	}
 	disassemble(tf->tf_pc);
 
 	/* Die now if this happened in kernel mode */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.64.2.1 2004/08/03 10:56:57 skrll Exp $	*/
+/*	$NetBSD: lfs.h,v 1.64.2.2 2004/08/25 06:59:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -268,7 +268,7 @@ struct lfid {
 #define	T_INDIR(fs)	(D_INDIR(fs) - NINDIR(fs) * NINDIR(fs) - 1)
 
 /* For convenience */
-#define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_ACCESSED|IN_CLEANING)
+#define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_MODIFY|IN_ACCESSED|IN_CLEANING)
 
 #define LFS_SET_UINO(ip, flags) do {					\
 	simple_lock(&(ip)->i_lfs->lfs_interlock);			\
@@ -316,19 +316,22 @@ struct lfid {
 			LFS_SET_UINO(ip, IN_ACCESSED);			\
 		}							\
 	}								\
-	if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE)) {			\
-		if ((ip)->i_flag & IN_UPDATE) {				\
+	if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFY)) {	\
+		if ((ip)->i_flag & (IN_UPDATE | IN_MODIFY)) {		\
 			(ip)->i_ffs1_mtime = (mod)->tv_sec;		\
 			(ip)->i_ffs1_mtimensec = (mod)->tv_nsec;	\
 			(ip)->i_modrev++;				\
 		}							\
-		if ((ip)->i_flag & IN_CHANGE) {				\
+		if ((ip)->i_flag & (IN_CHANGE | IN_MODIFY)) {		\
 			(ip)->i_ffs1_ctime = (cre)->tv_sec;		\
 			(ip)->i_ffs1_ctimensec = (cre)->tv_nsec;	\
 		}							\
-		LFS_SET_UINO(ip, IN_MODIFIED);				\
+		if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE))		\
+			LFS_SET_UINO(ip, IN_MODIFIED);			\
+		if ((ip)->i_flag & IN_MODIFY)				\
+			LFS_SET_UINO(ip, IN_ACCESSED);			\
 	}								\
-	(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);		\
+	(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);\
 } while (0)
 
 /*
