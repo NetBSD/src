@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.28 2000/04/11 02:30:17 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.29 2000/04/11 04:53:57 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,7 +84,7 @@ VECTOR(mips1_UTLBMiss, unknown)
 	mfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	lw	k1, 0(k1)			# get pointer to segment map
 	srl	k0, k0, PGSHIFT - 2		# compute segment map index
-	andi	k0, k0, (NPTEPG - 1) << 2
+	and	k0, k0, (NPTEPG - 1) << 2
 	beq	k1, zero, 2f			# invalid segment map
 	addu	k1, k1, k0			# index into segment map
 	lw	k0, 0(k1)			# get page PTE
@@ -302,7 +302,7 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
  */
 	lw	k1, _C_LABEL(curpcb)
 	nop
-	addiu	k1, k1, USPACE - FRAME_SIZ
+	addu	k1, k1, USPACE - FRAME_SIZ
 	sw	AT, FRAME_AST(k1)
 	sw	v0, FRAME_V0(k1)
 	sw	v1, FRAME_V1(k1)
@@ -361,7 +361,7 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
  */
-	addiu	a1, sp, CALLFRAME_SIZ
+	addu	a1, sp, CALLFRAME_SIZ
 	lw	a0, FRAME_SR(a1)
 	lw	t0, FRAME_MULLO(a1)
 	lw	t1, FRAME_MULHI(a1)
@@ -419,7 +419,7 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
  */
 	lw	k1, _C_LABEL(curpcb)
 	nop
-	addiu	k1, k1, USPACE - FRAME_SIZ
+	addu	k1, k1, USPACE - FRAME_SIZ
 	sw	AT, FRAME_AST(k1)
 	sw	v0, FRAME_V0(k1)
 	sw	v1, FRAME_V1(k1)
@@ -458,7 +458,7 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	sw	v0, FRAME_MULLO(k1)
 	sw	v1, FRAME_MULHI(k1)
 	sw	a2, FRAME_EPC(k1)
-	addiu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
+	addu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
@@ -477,7 +477,7 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
  */
-	addiu	a1, sp, CALLFRAME_SIZ
+	addu	a1, sp, CALLFRAME_SIZ
 	lw	a0, FRAME_SR(a1)
 	lw	t0, FRAME_MULLO(a1)
 	lw	t1, FRAME_MULHI(a1)
@@ -636,7 +636,7 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
  */
 	lw	k1, _C_LABEL(curpcb)
 	nop
-	addiu	k1, k1, USPACE - FRAME_SIZ
+	addu	k1, k1, USPACE - FRAME_SIZ
 	sw	AT, FRAME_AST(k1)
 	sw	v0, FRAME_V0(k1)
 	sw	v1, FRAME_V1(k1)
@@ -667,7 +667,7 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 	sw	v1, FRAME_MULHI(k1)
 	and	a3, a0, a1			# 4th is STATUS & CAUSE
 	sw	a2, FRAME_EPC(k1)
-	addiu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
+	addu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
@@ -686,7 +686,7 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchoronous traps.
  */
-	addiu	a1, sp, CALLFRAME_SIZ
+	addu	a1, sp, CALLFRAME_SIZ
 	lw	a0, FRAME_SR(a1)
 	lw	v0, _C_LABEL(astpending)	# any pending ast?
 	mtc0	a0, MIPS_COP_0_STATUS		# restore SR, disable intrs
@@ -710,7 +710,7 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 	jal	_C_LABEL(ast)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts (spl0)
 
-	addiu	a1, sp, CALLFRAME_SIZ
+	addu	a1, sp, CALLFRAME_SIZ
 	lw	a0, FRAME_SR(a1)
 	lw	s0, FRAME_S0(a1)
 	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
@@ -1423,7 +1423,7 @@ LEAF(mips1_FlushCache)
 4:	
 	lw	t2, 0(t0)
 	bne	t1, t0, 4b
-	addiu	t0, t0, 4
+	addu	t0, t0, 4
 
 	# Enable I-cache
 	nop
@@ -1460,7 +1460,7 @@ LEAF(mips1_proc_trampoline)
 	jal	ra, s0
 	move	a0, s1
 	.set	noat
-	addiu	a1, sp, CALLFRAME_SIZ	# a1 points exception frame
+	addu	a1, sp, CALLFRAME_SIZ	# a1 points exception frame
 	lw	a0, FRAME_SR(a1)
 	lw	t0, FRAME_MULLO(a1)
 	lw	t1, FRAME_MULHI(a1)
@@ -1615,7 +1615,7 @@ LEAF(mips1_TBIAP)
 	tlbr					# obtain an entry
 	mfc0	a0, MIPS_COP_0_TLB_LOW
 	nop
-	andi	a0, a0, MIPS1_PG_G		# check to see it has G bit
+	and	a0, a0, MIPS1_PG_G		# check to see it has G bit
 	bnez	a0, 2f
 	nop
 	mtc0	v0, MIPS_COP_0_TLB_HI		# make entryHi invalid
