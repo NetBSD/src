@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.20 2004/08/21 17:40:25 thorpej Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.21 2004/08/27 20:37:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.20 2004/08/21 17:40:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.21 2004/08/27 20:37:28 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +218,7 @@ atapi_scsipi_cmd(struct scsipi_periph *periph,
     int retries, int timeout, struct buf *bp, int flags)
 {
 	struct scsipi_xfer *xs;
-	int error, s;
+	int error;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("atapi_cmd\n"));
 
@@ -229,13 +229,7 @@ atapi_scsipi_cmd(struct scsipi_periph *periph,
 
 	if ((xs = scsipi_make_xs(periph, scsipi_cmd, cmdlen, data,
 	    datalen, retries, timeout, bp, flags)) == NULL) {
-		if (bp != NULL) {
-			s = splbio();
-			bp->b_flags |= B_ERROR;
-			bp->b_error = ENOMEM;
-			biodone(bp);
-			splx(s);
-		}
+		/* let the caller deal with this */
 		return (ENOMEM);
 	}
 
