@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1999/04/15 00:52:58 simonb Exp $
 
 LIB=	z
 MKPIC=	no
@@ -8,12 +8,12 @@ CPPFLAGS=	-I. ${ZCPPFLAGS} ${ZMISCCPPFLAGS} -D_ZLIB_PRIVATE
 
 # files to be copied down from libz.
 LIBZSRCS= adler32.c crc32.c infblock.c infcodes.c inffast.c \
-        inflate.c inftrees.c infutil.c
+        inflate.c inftrees.c infutil.c uncompr.c
 LIBZHDRS= infblock.h infcodes.h inffast.h inftrees.h infutil.h \
 	zconf.h zlib.h zutil.h
 
 # Other stuff
-SRCS=	${LIBZSRCS}
+SRCS=	${LIBZSRCS} zalloc.c
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o
