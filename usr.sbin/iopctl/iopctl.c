@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.6 2001/01/04 06:16:02 itojun Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.7 2001/02/20 23:56:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.6 2001/01/04 06:16:02 itojun Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.7 2001/02/20 23:56:40 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -160,10 +160,9 @@ main(int argc, char **argv)
 void
 usage(void)
 {
-	extern char *__progname;
 
 	(void)fprintf(stderr, "usage: %s [-f dev] <command> [target]\n",
-	    __progname);
+	    getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }

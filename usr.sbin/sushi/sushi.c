@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.8 2001/01/22 07:12:49 garbled Exp $       */
+/*      $NetBSD: sushi.c,v 1.9 2001/02/20 23:57:50 cgd Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,8 +59,6 @@ MTREE_ENTRY *navigate_menu __P((struct cqMenu *, char *, char *));
 MTREE_ENTRY *navigate_submenu __P((MTREE_ENTRY *));
 MTREE_ENTRY *display_menu __P((struct cqMenu *, char *, char *));
 void parse_config __P((void));
-
-extern char *__progname;
 
 CDKSCREEN	*cdkscreen;
 int		scripting;
@@ -382,7 +380,7 @@ bailout(const char *fmt, ...)
 
 	destroyCDKScreen(cdkscreen);
 	endCDK();
-	fprintf(stderr, "%s: ", __progname);
+	fprintf(stderr, "%s: ", getprogname());
 	if (fmt != NULL)
 		vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");

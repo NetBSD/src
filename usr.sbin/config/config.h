@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.51 2000/10/11 20:23:49 is Exp $	*/
+/*	$NetBSD: config.h,v 1.52 2001/02/21 00:03:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,6 +82,10 @@
                                  (((y) << 12) & 0xfff00000) | \
                                  (((y) <<  0) & 0x000000ff)))
 #define __attribute__(x)
+
+extern const char *progname;
+#define	setprogname(s)	((void)(progname = (s)))
+#define	getprogname()	(progname)
 #endif	/* MAKE_BOOTSTRAP */
 
 #define ARRCHR '#'
