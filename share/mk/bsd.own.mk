@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.144 2000/09/30 12:21:52 itojun Exp $
+#	$NetBSD: bsd.own.mk,v 1.145 2000/12/06 03:21:33 sommerfeld Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -167,6 +167,8 @@ depend:		.NOTMAIN realdepend subdir-depend
 subdir-depend:	.NOTMAIN
 realdepend:	.NOTMAIN
 .endif
+
+PRINTOBJDIR=	${MAKE} ${_M} -B print-objdir
 
 # Define MKxxx variables (which are either yes or no) for users
 # to set in /etc/mk.conf and override on the make commandline.
