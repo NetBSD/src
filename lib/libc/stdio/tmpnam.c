@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpnam.c,v 1.11 1998/10/13 14:19:21 kleink Exp $	*/
+/*	$NetBSD: tmpnam.c,v 1.12 2002/08/10 16:28:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tmpnam.c	8.3 (Berkeley) 3/28/94";
 #else
-__RCSID("$NetBSD: tmpnam.c,v 1.11 1998/10/13 14:19:21 kleink Exp $");
+__RCSID("$NetBSD: tmpnam.c,v 1.12 2002/08/10 16:28:51 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,7 +63,7 @@ tmpnam(s)
 
 	if (s == NULL)
 		s = buf;
-	(void)snprintf(s, L_tmpnam, "%stmp.%lu.XXXXXX", P_tmpdir, tmpcount);
+	(void)snprintf(s, L_tmpnam, "%stmp.%lu.XXXXXXXXXX", P_tmpdir, tmpcount);
 	++tmpcount;
 	return (_mktemp(s));
 }
