@@ -1,4 +1,4 @@
-#	$NetBSD: UNDERWORLD,v 1.3 1999/06/07 14:43:34 mrg Exp $
+#	$NetBSD: UNDERWORLD,v 1.4 1999/07/05 09:14:10 fvdl Exp $
 #
 #	UNDERWORLD - Convenient config for our ol' Pentium boxes (abs)
 #
@@ -85,9 +85,6 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-
-# Executable format options
-options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
 # File systems
 file-system 	FFS		# UFS

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.118 1999/06/09 01:47:14 christos Exp $
+#	$NetBSD: INSTALL,v 1.119 1999/07/05 09:14:09 fvdl Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -95,9 +95,6 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-
-# Executable format options
-options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
 # File systems
 file-system 	FFS		# UFS
