@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 1998/03/22 23:12:15 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 1998/05/06 21:53:53 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 1998/03/22 23:12:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 1998/05/06 21:53:53 mhitch Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1205,6 +1205,12 @@ pmap_enter(pmap, va, pa, prot, wired)
 				if (mips_pg_wired(pte->pt_entry))
 					panic("pmap_enter: kernel wired");
 #endif
+				if (pfn_to_vad(pte->pt_entry) !=  pa) {
+					pmap_remove(pmap, va, va  + NBPG);
+#ifdef DEBUG
+					enter_stats.mchange++;
+#endif
+				}
 			}
 			/*
 			 * Update the same virtual address entry.
@@ -1276,6 +1282,11 @@ pmap_enter(pmap, va, pa, prot, wired)
 	do {
 		if (!mips_pg_v(pte->pt_entry)) {
 			pmap->pm_stats.resident_count++;
+		} else if (pfn_to_vad(pte->pt_entry) != pa) {
+			pmap_remove(pmap, va,  va + NBPG);
+#ifdef DEBUG
+			enter_stats.mchange++;
+#endif
 		}
 		pte->pt_entry = npte;
 		if (pmap->pm_tlbgen == tlbpid_gen)
