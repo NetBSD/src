@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.27 1996/02/09 22:41:14 christos Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.28 1996/02/13 13:13:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -58,42 +58,42 @@
  * Global vfs data structures
  */
 
-int union_lookup __P((void *));
-int union_create __P((void *));
-int union_whiteout __P((void *));
-int union_mknod __P((void *));
-int union_open __P((void *));
-int union_close __P((void *));
-int union_access __P((void *));
-int union_getattr __P((void *));
-int union_setattr __P((void *));
-int union_read __P((void *));
-int union_write __P((void *));
-int union_lease __P((void *));
-int union_ioctl __P((void *));
-int union_select __P((void *));
-int union_mmap __P((void *));
-int union_fsync __P((void *));
-int union_seek __P((void *));
-int union_remove __P((void *));
-int union_link __P((void *));
-int union_rename __P((void *));
-int union_mkdir __P((void *));
-int union_rmdir __P((void *));
-int union_symlink __P((void *));
-int union_readdir __P((void *));
-int union_readlink __P((void *));
-int union_abortop __P((void *));
-int union_inactive __P((void *));
-int union_reclaim __P((void *));
-int union_lock __P((void *));
-int union_unlock __P((void *));
-int union_bmap __P((void *));
-int union_print __P((void *));
-int union_islocked __P((void *));
-int union_pathconf __P((void *));
-int union_advlock __P((void *));
-int union_strategy __P((void *));
+int union_lookup	__P((void *));
+int union_create	__P((void *));
+int union_whiteout	__P((void *));
+int union_mknod		__P((void *));
+int union_open		__P((void *));
+int union_close		__P((void *));
+int union_access	__P((void *));
+int union_getattr	__P((void *));
+int union_setattr	__P((void *));
+int union_read		__P((void *));
+int union_write		__P((void *));
+int union_lease		__P((void *));
+int union_ioctl		__P((void *));
+int union_select	__P((void *));
+int union_mmap		__P((void *));
+int union_fsync		__P((void *));
+int union_seek		__P((void *));
+int union_remove	__P((void *));
+int union_link		__P((void *));
+int union_rename	__P((void *));
+int union_mkdir		__P((void *));
+int union_rmdir		__P((void *));
+int union_symlink	__P((void *));
+int union_readdir	__P((void *));
+int union_readlink	__P((void *));
+int union_abortop	__P((void *));
+int union_inactive	__P((void *));
+int union_reclaim	__P((void *));
+int union_lock		__P((void *));
+int union_unlock	__P((void *));
+int union_bmap		__P((void *));
+int union_print		__P((void *));
+int union_islocked	__P((void *));
+int union_pathconf	__P((void *));
+int union_advlock	__P((void *));
+int union_strategy	__P((void *));
 
 int (**union_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc union_vnodeop_entries[] = {
