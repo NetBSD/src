@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.9 1999/09/20 04:48:06 lukem Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.10 2000/07/05 11:46:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.9 1999/09/20 04:48:06 lukem Exp $");
+__RCSID("$NetBSD: fparseln.c,v 1.10 2000/07/05 11:46:40 ad Exp $");
 #endif
 
 #include <assert.h>
@@ -41,16 +41,14 @@ __RCSID("$NetBSD: fparseln.c,v 1.9 1999/09/20 04:48:06 lukem Exp $");
 #include <stdlib.h>
 #include <util.h>
 
-static int isescaped __P((const char *, const char *, int));
+static int isescaped(const char *, const char *, int);
 
 /* isescaped():
  *	Return true if the character in *p that belongs to a string
  *	that starts in *sp, is escaped by the escape character esc.
  */
 static int
-isescaped(sp, p, esc)
-	const char *sp, *p;
-	int esc;
+isescaped(const char *sp, const char *p, int esc)
 {
 	const char     *cp;
 	size_t		ne;
@@ -77,12 +75,7 @@ isescaped(sp, p, esc)
  *	the comment char.
  */
 char *
-fparseln(fp, size, lineno, str, flags)
-	FILE		*fp;
-	size_t		*size;
-	size_t		*lineno;
-	const char	 str[3];
-	int		 flags;
+fparseln(FILE *fp, size_t *size, size_t *lineno, const char str[3], int flags)
 {
 	static const char dstr[3] = { '\\', '\\', '#' };
 
@@ -196,12 +189,10 @@ fparseln(fp, size, lineno, str, flags)
 
 #ifdef TEST
 
-int main __P((int, char **));
+int main(int, char **);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char   *ptr;
 	size_t	size, line;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.8 1999/09/20 04:48:08 lukem Exp $ */
+/*	$NetBSD: pidlock.c,v 1.9 2000/07/05 11:46:42 ad Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@netbsd.org>.
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.8 1999/09/20 04:48:08 lukem Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.9 2000/07/05 11:46:42 ad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -45,11 +45,7 @@ __RCSID("$NetBSD: pidlock.c,v 1.8 1999/09/20 04:48:08 lukem Exp $");
  * Create a lockfile. Return 0 when locked, -1 on error.
  */
 int
-pidlock(lockfile, flags, locker, info)
-	const char *lockfile;
-	int flags;
-	pid_t *locker;
-	const char *info;
+pidlock(const char *lockfile, int flags, pid_t *locker, const char *info)
 {
 	char	tempfile[MAXPATHLEN];
 	char	hostname[MAXHOSTNAMELEN + 1];
@@ -195,10 +191,7 @@ lockfailed:
 
 /*ARGSUSED*/
 int
-ttylock(tty, flags, locker)
-	const char *tty;
-	int flags;
-	pid_t *locker;
+ttylock(const char *tty, int flags, pid_t *locker)
 {
 	char	lockfile[MAXPATHLEN];
 	char	ttyfile[MAXPATHLEN];
@@ -224,8 +217,7 @@ ttylock(tty, flags, locker)
 }
 
 int
-ttyunlock(tty)
-	const char *tty;
+ttyunlock(const char *tty)
 {
 	char	lockfile[MAXPATHLEN];
 	char	ttyfile[MAXPATHLEN];

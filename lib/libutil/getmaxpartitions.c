@@ -1,4 +1,4 @@
-/*	$NetBSD: getmaxpartitions.c,v 1.3 1997/07/31 00:01:18 jtc Exp $	*/
+/*	$NetBSD: getmaxpartitions.c,v 1.4 2000/07/05 11:46:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getmaxpartitions.c,v 1.3 1997/07/31 00:01:18 jtc Exp $");
+__RCSID("$NetBSD: getmaxpartitions.c,v 1.4 2000/07/05 11:46:40 ad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: getmaxpartitions.c,v 1.3 1997/07/31 00:01:18 jtc Exp $");
 #include <util.h>
 
 int
-getmaxpartitions()
+getmaxpartitions(void)
 {
 	int maxpart, mib[2];
 	size_t varlen;
