@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.415 2004/04/13 12:37:29 rtr Exp $
+#	$NetBSD: bsd.own.mk,v 1.416 2004/04/30 08:10:22 skrll Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -401,6 +401,7 @@ NOPIC=		# defined
 .if ${MACHINE_ARCH} == "hppa"
 NOLINT=		# defined
 NOPROFILE=	# defined
+MKGDB=		no
 .endif
 
 #
