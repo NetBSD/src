@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.22 2002/09/11 02:46:44 itojun Exp $	*/
+/*	$NetBSD: frag6.c,v 1.23 2002/11/02 07:30:55 perry Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.22 2002/09/11 02:46:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.23 2002/11/02 07:30:55 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,14 +114,14 @@ do {									\
 		printf("%s:%d: ip6q already locked\n", __FILE__, __LINE__); \
 		panic("ip6q_lock");					\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #define	IP6Q_LOCK_CHECK()						\
 do {									\
 	if (ip6q_locked == 0) {						\
 		printf("%s:%d: ip6q lock not held\n", __FILE__, __LINE__); \
 		panic("ip6q lock check");				\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else
 #define	IP6Q_LOCK()		(void) ip6q_lock_try()
 #define	IP6Q_LOCK_CHECK()	/* nothing */
