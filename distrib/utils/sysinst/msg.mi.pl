@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.42 2004/08/20 21:23:08 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.43 2004/11/11 21:24:41 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -354,18 +354,12 @@ message disksetupdone
 {Okej, pierwsza czesc procedury zostala zakonczona. Sysinst zapisal
 disklabel na dysk doceloway, oraz utworzyl system plikow i sprawdzil
 nowe partycje, ktore podales jako docelowe.
-
-Kolejny krok to sciagniecie i rozpakowanie pakietow dystrybucji. 
-Nacisnij <enter> aby kontynuowac.
 }
 
 message disksetupdoneupdate
 {Okej, pierwsza czesc procedury zostala zakonczona. Sysinst zapisal
 disklabel na dysk docelowy, oraz sprawdzil nowe partycje, ktore
 podales jako docelowe.
-
-Kolejny krok to sciagniecie i rozpakowanie pakietow dystrybucji. 
-Nacisnij <enter> aby kontynuowac.
 }
 
 message openfail
@@ -466,7 +460,7 @@ wszystkie (Pelna instalacja) lub wybrac z opcjonalnych pakietow.
 }
 
 message ftpsource
-{Ponizej masz site ftp, katalog, uzytkownika, oraz haslo gotowe do uzycia.
+{Ponizej masz site %s, katalog, uzytkownika, oraz haslo gotowe do uzycia.
 Jesli "uzytkownik" to "ftp", wtedy haslo nie jest wymagane.
 
 host:		%s 
@@ -638,7 +632,10 @@ message delete_dist_files
 (Mozesz je zachowac aby zainstalowac/zaktualizowac kolejny system.)}
 
 message verboseextract
-{Czy w trakcie rozpakowywania plikow, chcesz widziec nazwe aktualnie
+{
+Kolejny krok to sciagniecie i rozpakowanie pakietow dystrybucji. 
+
+Czy w trakcie rozpakowywania plikow, chcesz widziec nazwe aktualnie
 wypakowywanego pliku ?
 }
 
@@ -969,6 +966,7 @@ message Cylinders {Cylindry}
 message Sectors {Sektory}
 message Select_medium {Wybierz medium}
 message ftp {FTP}
+message http {HTTP}
 message nfs {NFS}
 message cdrom {CD-ROM / DVD}
 message floppy {Dyskietka}

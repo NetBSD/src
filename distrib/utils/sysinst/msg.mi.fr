@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.81 2004/08/20 21:23:08 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.82 2004/11/11 21:24:40 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -362,18 +362,12 @@ message disksetupdone
 {La première partie de la procédure est terminée.
 Sysinst a écrit, sur votre disque de destination, un disklabel,
 créé (via newfs) et testé (via fsck) vos nouvelles partitions.
-
-L'étape suivant consiste a recopier les différents composants. 
-Appuyer sur <entrée> pour continuer.
 }
 
 message disksetupdoneupdate
 {La première partie de la procédure est terminée.
 Sysinst a écrit, sur votre disque de destination, un disklabel
 et testé (via fsck) vos nouvelles partitions.
-
-L'étape suivant consiste a recopier les différents composants. 
-Appuyer sur <entrée> pour continuer.
 }
 
 message openfail
@@ -479,7 +473,7 @@ composants optionnels.
 }
 
 message ftpsource
-{Vous trouverez ci dessous le site ftp, le répertoire, le code utilisateur
+{Vous trouverez ci dessous le site %s, le répertoire, le code utilisateur
 et le mot de passe prêt à l'emplois actuellement.
 Si l'utilisateur est ftp, alors le mot de passe n'est pas nécessaire.
 Le répertoire des composants est relatif au répertoire de base, et
@@ -662,7 +656,10 @@ message delete_dist_files
 Vous pouvez les conserver pour installer ou mettre a jour d'autre systèmes.}
 
 message verboseextract
-{Pendant la procédure d'extraction des fichiers,
+{
+L'étape suivant consiste a recopier les différents composants. 
+
+Pendant la procédure d'extraction des fichiers,
 voulez-vous voir les noms de fichiers au fur et à mesure ?
 voir pendant qu'ils seront extraits ?
 }
@@ -1009,6 +1006,7 @@ message Cylinders {Cylindres}
 message Sectors {Secteurs}
 message Select_medium {Sélection du media d'installation}
 message ftp {FTP}
+message http {HTTP}
 message nfs {NFS}
 message cdrom {CD-ROM / DVD}
 message floppy {Disquette}
