@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.260 2003/06/28 09:51:04 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.261 2003/06/28 10:02:13 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1469,6 +1469,7 @@ mmu_setup4m_L3(pagtblptd, sp)
 
 /*----------------------------------------------------------------*/
 
+#if defined(SUN4) || defined(SUN4C)
 /*
  * MMU management.
  */
@@ -1477,19 +1478,7 @@ void		me_free(struct pmap *, u_int);
 struct mmuentry	*region_alloc(struct mmuhd *, struct pmap *, int);
 void		region_free(struct pmap *, u_int);
 
-/*
- * Change contexts.  We need the old context number as well as the new
- * one.  If the context is changing, we must write all user windows
- * first, lest an interrupt cause them to be written to the (other)
- * user whose context we set here.
- */
-#define	CHANGE_CONTEXTS(old, new) \
-	if ((old) != (new)) { \
-		write_user_windows(); \
-		setcontext(new); \
-	}
 
-#if defined(SUN4) || defined(SUN4C) /* This is old sun MMU stuff */
 /*
  * Allocate an MMU entry (i.e., a PMEG).
  * If necessary, steal one from someone else.
@@ -6540,20 +6529,8 @@ pmap_extract4_4c(pm, va, pap)
 	}
 	sp = &rp->rg_segmap[vs];
 
-	if (sp->sg_pmeg != seginval) {
-		int ctx = getcontext4();
-
-		if (CTX_USABLE(pm,rp)) {
-			CHANGE_CONTEXTS(ctx, pm->pm_ctxnum);
-			tpte = getpte4(va);
-		} else {
-			CHANGE_CONTEXTS(ctx, 0);
-			if (HASSUN4_MMU3L)
-				setregmap(0, tregion);
-			setsegmap(0, sp->sg_pmeg);
-			tpte = getpte4(VA_VPG(va) << PGSHIFT);
-		}
-		setcontext4(ctx);
+	if (pm == pmap_kernel() && sp->sg_pmeg != seginval) {
+		tpte = getpte4(va);
 	} else {
 		int *pte = sp->sg_pte;
 
