@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
- *	$Id: asm.h,v 1.4 1994/01/07 00:46:20 pk Exp $
+ *	$Id: asm.h,v 1.5 1994/03/12 01:23:21 jtc Exp $
  */
 
 #ifndef _I386_ASM_H_
@@ -86,5 +86,7 @@
 #define	ASENTRY(y)	_BEGIN_ENTRY; _ENTRY(_ASM_FUNC(y)); _END_ENTRY
 
 #define	ASMSTR		.asciz
+
+#define RCSID(x)	.text; .asciz x
 
 #endif /* !_I386_ASM_H_ */
