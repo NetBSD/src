@@ -20,10 +20,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	Vermont and State Agricultural College and Garrett A. Wollman,
- *	by William F. Jolitz, by the University of California,
- *	Berkeley, by Larwence Berkeley Laboratory, and its contributors.
+ *	This product includes software developed by Charles Hannum, by the
+ *	University of Vermont and State Agricultural College and Garrett A.
+ *	Wollman, by William F. Jolitz, and by the University of California,
+ *	Berkeley, Lawrence Berkeley Laboratory, and its contributors.
  * 4. Neither the names of the Universities nor the names of the authors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -40,18 +40,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.4 1994/02/16 19:04:41 mycroft Exp $
+ *	$Id: if_ie.c,v 1.5 1994/02/16 20:52:37 mycroft Exp $
  */
 
 /*
  * Intel 82586 Ethernet chip
  * Register, bit, and structure definitions.
  *
- * Written by GAW with reference to the Clarkson Packet Driver code for this
- * chip written by Russ Nelson and others.
+ * Original StarLAN driver written by Garrett Wollman with reference to the
+ * Clarkson Packet Driver code for this chip written by Russ Nelson and others.
  *
- * BPF support code stolen directly from hpdev/if_le.c, supplied with
- * tcpdump.
+ * BPF support code taken from hpdev/if_le.c, supplied with tcpdump.
+ *
+ * 3C507 support is loosely based on code donated to NetBSD by Rafal Boni.
  *
  * Majorly cleaned up and 3C507 code merged by Charles Hannum.
  */
@@ -60,8 +61,7 @@
  * The i82586 is a very versatile chip, found in many implementations.
  * Programming this chip is mostly the same, but certain details differ
  * from card to card.  This driver is written so that different cards 
- * can be automatically detected at run-time.  Currently, only the
- * AT&T EN100/StarLAN 10 series are supported.
+ * can be automatically detected at run-time.
  */
 
 /*
