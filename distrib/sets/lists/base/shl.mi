@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.261.2.1 2004/04/21 04:50:59 jmc Exp $
+# $NetBSD: shl.mi,v 1.261.2.2 2004/05/06 05:41:20 jmc Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.114				base-sys-shlib
 ./lib/libcrypt.so.0.1				base-sys-shlib
@@ -11,7 +11,7 @@
 ./lib/libtermcap.so.0.5				base-sys-shlib
 ./lib/libtermlib.so.0.5				base-sys-shlib
 ./lib/libutil.so.7.3				base-sys-shlib
-./lib/libz.so.0.4				base-sys-shlib
+./lib/libz.so.0.3				base-sys-shlib
 ./usr/lib/i18n/libBIG5.so.4.3			base-i18n-shlib
 ./usr/lib/i18n/libEUC.so.4.3			base-i18n-shlib
 ./usr/lib/i18n/libEUCTW.so.4.3			base-i18n-shlib
@@ -77,4 +77,4 @@
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib
 ./usr/lib/libutil.so.7.3			base-sys-shlib
 ./usr/lib/libwrap.so.0.2			base-net-shlib
-./usr/lib/libz.so.0.4				base-sys-shlib
+./usr/lib/libz.so.0.3				base-sys-shlib
