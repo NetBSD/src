@@ -1,7 +1,8 @@
-/* $NetBSD: kvm86.h,v 1.3 2002/10/01 12:57:07 fvdl Exp $ */
+/* $NetBSD: kvm86.h,v 1.4 2002/10/02 14:54:43 drochner Exp $ */
 
 void kvm86_init(void);
 void kvm86_gpfault(struct trapframe *);
+extern int kvm86_incall;
 
 void *kvm86_bios_addpage(u_int32_t);
 void kvm86_bios_delpage(u_int32_t, void *);
