@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.29 1998/04/25 17:32:24 matt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.30 1998/06/30 05:33:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -233,8 +233,10 @@ struct stat;
 /*
  * File operations on sockets.
  */
-int	soo_read __P((struct file *fp, struct uio *uio, struct ucred *cred));
-int	soo_write __P((struct file *fp, struct uio *uio, struct ucred *cred));
+int	soo_read __P((struct file *fp, off_t *offset, struct uio *uio,
+	    struct ucred *cred, int flags));
+int	soo_write __P((struct file *fp, off_t *offset, struct uio *uio,
+	    struct ucred *cred, int flags));
 int	soo_ioctl __P((struct file *fp, u_long cmd, caddr_t data,
 	    struct proc *p));
 int	soo_poll __P((struct file *fp, int events, struct proc *p));

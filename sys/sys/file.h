@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.14 1998/03/01 02:24:12 fvdl Exp $	*/
+/*	$NetBSD: file.h,v 1.15 1998/06/30 05:33:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -61,10 +61,12 @@ struct file {
 	short	f_msgcount;	/* references from message queue */
 	struct	ucred *f_cred;	/* credentials associated with descriptor */
 	struct	fileops {
-		int	(*fo_read)	__P((struct file *fp, struct uio *uio,
-					    struct ucred *cred));
-		int	(*fo_write)	__P((struct file *fp, struct uio *uio,
-					    struct ucred *cred));
+		int	(*fo_read)	__P((struct file *fp, off_t *offset,
+					    struct uio *uio,
+					    struct ucred *cred, int flags));
+		int	(*fo_write)	__P((struct file *fp, off_t *offset,
+					    struct uio *uio,
+					    struct ucred *cred, int flags));
 		int	(*fo_ioctl)	__P((struct file *fp, u_long com,
 					    caddr_t data, struct proc *p));
 		int	(*fo_poll)	__P((struct file *fp, int events,
@@ -74,6 +76,11 @@ struct file {
 	off_t	f_offset;
 	caddr_t	f_data;		/* vnode or socket */
 };
+
+/*
+ * Flags for fo_read and fo_write.
+ */
+#define	FOF_UPDATE_OFFSET	0x01	/* update the file offset */
 
 LIST_HEAD(filelist, file);
 extern struct filelist filehead;	/* head of list of open files */
