@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.17 1999/04/10 14:02:11 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.18 1999/09/19 21:48:08 ad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -408,6 +408,11 @@ vga_init_screen(vc, scr, type, existing, attrp)
 		if (scr->pcs.dispoffset < scr->mindispoffset ||
 		    scr->pcs.dispoffset > scr->maxdispoffset)
 			scr->pcs.dispoffset = scr->mindispoffset;
+#ifdef PCDISPLAY_SOFTCURSOR
+		/* disable hardware cursor */
+		vga_6845_write(&vc->hdl, curstart, 0x10);
+		vga_6845_write(&vc->hdl, curend, 0x10);
+#endif
 	} else {
 		cpos = 0;
 		scr->pcs.dispoffset = scr->mindispoffset;
@@ -866,6 +871,10 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 
 	if (scr->pcs.active) {
 		if (dstrow == 0 && (srcrow + nrows == scr->pcs.type->nrows)) {
+#ifdef PCDISPLAY_SOFTCURSOR
+			pcdisplay_cursor(&scr->pcs, 0, scr->pcs.vc_crow, 
+			    scr->pcs.vc_ccol);
+#endif
 			/* scroll up whole screen */
 			if ((scr->pcs.dispoffset + srcrow * ncols * 2)
 			    <= scr->maxdispoffset) {
@@ -881,6 +890,10 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 				       scr->pcs.dispoffset >> 9);
 			vga_6845_write(&scr->cfg->hdl, startadrl,
 				       scr->pcs.dispoffset >> 1);
+#ifdef PCDISPLAY_SOFTCURSOR
+			pcdisplay_cursor(&scr->pcs, scr->pcs.cursoron,
+			    scr->pcs.vc_crow, scr->pcs.vc_ccol);
+#endif
 		} else {
 			bus_space_copy_region_2(memt, memh,
 					scr->pcs.dispoffset + srcoff * 2,
