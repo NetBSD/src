@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide_io_asm.S,v 1.4 1997/10/17 06:46:32 mark Exp $	*/
+/*	$NetBSD: rapide_io_asm.S,v 1.5 1998/06/28 07:27:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 	.text
 
-ENTRY(rapide_rm_4)
+ENTRY(rapide_bs_rm_4)
 	add	r0, r1, r2
 	mov	r1, r3
 
@@ -110,7 +110,7 @@ rapide_rm_4_m128_loop:
 
 	ldmfd	sp!, {r4-r12, pc}
 
-ENTRY(rapide_wm_4)
+ENTRY(rapide_bs_wm_4)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]

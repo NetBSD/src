@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_io_asm.S,v 1.2 1998/03/26 20:05:13 mark Exp $	*/
+/*	$NetBSD: iomd_io_asm.S,v 1.3 1998/06/28 07:27:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -43,17 +43,17 @@
  * read single
  */
 
-ENTRY(iomd_r_1)
+ENTRY(iomd_bs_r_1)
 	ldrb	r0, [r1, r2, lsl #2]
 	mov	pc, lr
 
-ENTRY(iomd_r_2)
+ENTRY(iomd_bs_r_2)
 	ldr	r0, [r1, r2, lsl #2]
 	bic	r0, r0, #0xff000000
 	bic	r0, r0, #0x00ff0000
 	mov	pc, lr
 
-ENTRY(iomd_r_4)
+ENTRY(iomd_bs_r_4)
 	ldr	r0, [r1, r2, lsl #2]
 	mov	pc, lr
 
@@ -61,17 +61,17 @@ ENTRY(iomd_r_4)
  * write single
  */
 
-ENTRY(iomd_w_1)
+ENTRY(iomd_bs_w_1)
 	strb	r3, [r1, r2, lsl #2]
 	mov	pc, lr
 
-ENTRY(iomd_w_2)
+ENTRY(iomd_bs_w_2)
 	mov	r3, r3, lsl #16
 	orr	r3, r3, r3, lsr #16
 	str	r3, [r1, r2, lsl #2]
 	mov	pc, lr
 
-ENTRY(iomd_w_4)
+ENTRY(iomd_bs_w_4)
 	str	r3, [r1, r2, lsl #2]
 	mov	pc, lr
 
@@ -80,7 +80,7 @@ ENTRY(iomd_w_4)
  * read multiple
  */
 
-ENTRY(iomd_rm_2)
+ENTRY(iomd_bs_rm_2)
 	add	r0, r1, r2, lsl #2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
@@ -90,7 +90,7 @@ ENTRY(iomd_rm_2)
  * write multiple
  */
 
-ENTRY(iomd_wm_2)
+ENTRY(iomd_bs_wm_2)
 	add	r0, r1, r2, lsl #2
 	mov	r1, r3
 	ldr	r2, [sp, #0]

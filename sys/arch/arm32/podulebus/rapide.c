@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.7 1998/01/18 04:09:52 mark Exp $	*/
+/*	$NetBSD: rapide.c,v 1.8 1998/06/28 07:27:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -225,8 +225,8 @@ rapide_attach(parent, self, aux)
 	 */
 
 	rapide_bs_tag = *pa->pa_iot;
-	rapide_bs_tag.bs_rm_4 = rapide_rm_4;
-	rapide_bs_tag.bs_wm_4 = rapide_wm_4;
+	rapide_bs_tag.bs_rm_4 = rapide_bs_rm_4;
+	rapide_bs_tag.bs_wm_4 = rapide_bs_wm_4;
 	sc->sc_iot = iot = &rapide_bs_tag;
 
 	if (bus_space_map(iot, pa->pa_podule->easi_base +

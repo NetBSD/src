@@ -1,4 +1,4 @@
-/*	$NetBSD: simide_io_asm.S,v 1.2 1997/10/17 06:46:34 mark Exp $	*/
+/*	$NetBSD: simide_io_asm.S,v 1.3 1998/06/28 07:27:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -42,7 +42,7 @@
  * Fast read multiple
  */
 
-ENTRY(simide_rm_2)
+ENTRY(simide_bs_rm_2)
 	add	r0, r1, r2, lsl r0
 	mov	r1, r3
 	ldr	r2, [sp, #0]
@@ -52,7 +52,7 @@ ENTRY(simide_rm_2)
  * Fast write multiple
  */
 
-ENTRY(simide_wm_2)
+ENTRY(simide_bs_wm_2)
 	add	r0, r1, r2, lsl r0
 	mov	r1, r3
 	ldr	r2, [sp, #0]

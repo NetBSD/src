@@ -1,4 +1,4 @@
-/*	$NetBSD: icside_io_asm.S,v 1.4 1997/10/17 06:46:27 mark Exp $	*/
+/*	$NetBSD: icside_io_asm.S,v 1.5 1998/06/28 07:27:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -42,17 +42,17 @@
  * read single
  */
 
-ENTRY(icside_r_1)
+ENTRY(icside_bs_r_1)
 	ldrb	r0, [r1, r2, lsl #6]
 	mov	pc, lr
 
-ENTRY(icside_r_2)
+ENTRY(icside_bs_r_2)
 	ldr	r0, [r1, r2, lsl #6]
 	bic	r0, r0, #0xff000000
 	bic	r0, r0, #0x00ff0000
 	mov	pc, lr
 
-ENTRY(icside_r_4)
+ENTRY(icside_bs_r_4)
 	ldr	r0, [r1, r2, lsl #6]
 	mov	pc, lr
 
@@ -60,17 +60,17 @@ ENTRY(icside_r_4)
  * write single
  */
 
-ENTRY(icside_w_1)
+ENTRY(icside_bs_w_1)
 	strb	r3, [r1, r2, lsl #6]
 	mov	pc, lr
 
-ENTRY(icside_w_2)
+ENTRY(icside_bs_w_2)
 	mov	r3, r3, lsl #16
 	orr	r3, r3, r3, lsr #16
 	str	r3, [r1, r2, lsl #6]
 	mov	pc, lr
 
-ENTRY(icside_w_4)
+ENTRY(icside_bs_w_4)
 	str	r3, [r1, r2, lsl #6]
 	mov	pc, lr
 
@@ -78,7 +78,7 @@ ENTRY(icside_w_4)
  * read multiple
  */
 
-ENTRY(icside_rm_2)
+ENTRY(icside_bs_rm_2)
 	add	r0, r1, r2, lsl #6
 	mov	r1, r3
 	ldr	r2, [sp, #0]
@@ -88,7 +88,7 @@ ENTRY(icside_rm_2)
  * write multiple
  */
 
-ENTRY(icside_wm_2)
+ENTRY(icside_bs_wm_2)
 	add	r0, r1, r2, lsl #6
 	mov	r1, r3
 	ldr	r2, [sp, #0]
