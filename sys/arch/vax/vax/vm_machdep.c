@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 1994/10/26 08:03:38 cgd Exp $	*/
+/*      $NetBSD: vm_machdep.c,v 1.5 1994/11/25 19:10:07 ragge Exp $       */
 
 #undef SWDEBUG
 /*
@@ -74,65 +74,133 @@ pagemove(from, to, size)
 #define VIRT2PHYS(x) \
 	(((*(int *)((((((int)x)&0x7fffffff)>>9)*4)+(unsigned int)Sysmap))&0x1fffff)<<9)
 
+
 volatile unsigned int ustat,uofset;
 
 cpu_fork(p1, p2)
-	struct proc *p1, *p2;
+        struct proc *p1, *p2;
 {
-	unsigned int *i,ksp,uorig,uchld;
-	struct pcb *nyproc;
-	struct pte *ptep;
-	extern int sigsida;
+        unsigned int *i,ksp,uorig,uchld;
+        struct pcb *nyproc;
+        struct pte *ptep;
+        extern int sigsida;
+	struct pmap *pmap;
 
-	uorig=(unsigned int)p1->p_addr;
-	nyproc=uchld=(unsigned int)p2->p_addr;
-	uofset=uchld-uorig;
+        uorig=(unsigned int)p1->p_addr;
+	pmap=&p2->p_vmspace->vm_pmap;
+        nyproc=uchld=(unsigned int)p2->p_addr;
+        uofset=uchld-uorig;
 /*
  * Kopiera stacken. pcb skiter vi i, eftersom det ordnas fr}n savectx.
  * OBS! Vi k|r p} kernelstacken!
  */
 
-	splhigh();
-	ksp=mfpr(PR_KSP);
-#define	UAREA	(NBPG*UPAGES)
-#define	size	(uorig+UAREA-ksp)
+        splhigh();
+        ksp=mfpr(PR_KSP);
+#define UAREA   (NBPG*UPAGES)
+#define size    (uorig+UAREA-ksp)
 #if 0
 printf("cpu_fork: uorig %x, uchld %x, UAREA %x\n",uorig, uchld, UAREA);
 printf("cpu_fork: ksp: %x, usp: %x, size: %x\n",ksp,(uchld+UAREA-size),size);
 printf("cpu_fork: pid %d, namn %s\n",p1->p_pid,p1->p_comm);
 #endif
-	bcopy(ksp,(uchld+UAREA-size),size);
-	ustat=(uchld+UAREA-size)-8; /* Kompensera f|r PC + PSL */
+        bcopy(ksp,(uchld+UAREA-size),size);
+        ustat=(uchld+UAREA-size)-8; /* Kompensera f|r PC + PSL */
 /*
  * Ett VIDRIGT karpen-s{tt att s{tta om s} att sp f}r r{tt adress...
  */
 
-	for(i=ustat;i<uchld+UAREA;i++)
-		if(*i<(uorig+UAREA)&& *i>ksp)
-			*i = *i+(uchld-uorig);
-		
-	
-/*
- * Det som nu skall g|ras {r:
- *	1: synka stackarna
- *	2: l{gga r{tt v{rde f|r R0 i nya PCB.
- */
-
+        for(i=ustat;i<uchld+UAREA;i++)
+                if(*i<(uorig+UAREA)&& *i>ksp)
+                        *i = *i+(uchld-uorig);
 
 
 /* Set up page table registers, map sigreturn page into user space */
-	ptep=p2->p_vmspace->vm_pmap.pm_ptab;
 
-/*	*(int *)((int)ptep+USRPTSIZE*4-4)=(0xa0000000|(sigsida>>9)); */
+        nyproc->P0BR=nyproc->P0LR=nyproc->P1BR=0;
+        nyproc->P1LR=0x200000;
+	pmap->pm_pcb=uchld;
 
-        nyproc->P0BR=ptep;
-	nyproc->P0LR=(((MAXTSIZ+MAXDSIZ)>>PG_SHIFT));
-	nyproc->P1BR=(((int)ptep+USRPTSIZE*4)-0x800000);
-	nyproc->P1LR=(0x200000-((MAXSSIZ>>PG_SHIFT)));
+        mtpr(VIRT2PHYS(uchld),PR_PCBB);
+        mtpr(uchld,PR_ESP); /* Kan ev. faulta ibland XXX */
+
+        asm("movpsl  -(sp)");
+        asm("jsb _savectx");
+        asm("movl r0,_ustat");
+
+        spl0();
+        if (ustat){
+                /*
+                 * Return 1 in child.
+                 */
+                return (0);
+        }
+        return (1);
+}
+
+
+#if 0
+volatile unsigned int ustat,tmpsp;
+
+cpu_fork(p1,p2)
+	struct proc *p1, *p2;
+{
+	unsigned int *i,ksp,uchld,j,uorig;
+	struct pmap	*pmap;
+	struct pcb *nyproc;
+	struct pte *ptep;
+	extern int sigsida,proc0paddr;
+	extern vm_map_t        pte_map;
+
+
+	(u_int)nyproc=uchld=(unsigned int)p2->p_addr;
+	uorig=(unsigned int)p1->p_addr;
+	pmap=&p2->p_vmspace->vm_pmap;
 /*
-printf("P0BR %x, P1BR %x, P1BR+0x800000 %x\n",ptep,((int)ptep+USRPTSIZE*4),
-		(((int)ptep+USRPTSIZE*4)-0x800000));
-*/
+ * Kopiera stacken. pcb skiter vi i, eftersom det ordnas fr}n savectx.
+ * OBS! Vi k|r p} kernelstacken!
+ */
+	splhigh();
+	ksp=mfpr(PR_KSP);
+#define	UAREA	(NBPG*UPAGES)
+#define	size	(uorig+UAREA-ksp)
+#if 1
+printf("cpu_fork: p1 %x, p2 %x, p1->vmspace %x, p2->vmspac %x\n",
+		p1, p2, p1->p_vmspace, p2->p_vmspace);
+printf("cpu_fork: uorig %x, uchld %x, UAREA %x\n",proc0paddr, uchld, UAREA);
+printf("cpu_fork: ksp: %x, usp: %x, size: %x\n",ksp,(uchld+UAREA-size),size);
+printf("cpu_fork: pid %d, namn %s\n",p1->p_pid,p1->p_comm);
+#endif
+	bcopy(ksp,(uchld+UAREA-size),size);
+
+/*	pmap->pm_stack=kmem_alloc_wait(pte_map, PAGE_SIZE); */
+	pmap->pm_pcb=uchld;
+/*	bzero(pmap->pm_stack,PAGE_SIZE); */
+	tmpsp=uchld+UAREA-size-8;
+
+/*
+ * Ett VIDRIGT karpen-s{tt att s{tta om s} att sp f}r r{tt adress...
+ */
+
+        for(i=tmpsp;i<uchld+UAREA;i++)
+                if(*i<(uorig+UAREA)&& *i>ksp)
+                        *i = *i+(uchld-uorig);
+#if 0
+	nyproc->P1BR=pmap->pm_stack-0x800000+PAGE_SIZE;
+	nyproc->P1LR=0x200000-(PAGE_SIZE>>2);
+        for(j=2;j<16;j++){
+                *(struct pte *)((u_int)pmap->pm_stack+PAGE_SIZE-16*4+j*4)=
+                        Sysmap[((uchld&0x7fffffff)>>PG_SHIFT)+j];
+        }
+printf("kjahsgd: p1plats %x, Sysmap[] %x, &Sysp[] %x,\n1br %x lr %x, sp %x\n",
+		((u_int)pmap->pm_stack+PAGE_SIZE-16*4),
+		Sysmap[((uchld&0x7fffffff)>>PG_SHIFT)],
+		&Sysmap[((uchld&0x7fffffff)>>PG_SHIFT)],
+		nyproc->P1BR, nyproc->P1LR,tmpsp);
+#endif
+	nyproc->P1BR=0; nyproc->P1LR=0x200000;
+	nyproc->P0BR=nyproc->P0LR=0;
+asm("halt");
 	mtpr(VIRT2PHYS(uchld),PR_PCBB);
 	mtpr(uchld,PR_ESP); /* Kan ev. faulta ibland XXX */
 
@@ -145,12 +213,12 @@ printf("P0BR %x, P1BR %x, P1BR+0x800000 %x\n",ptep,((int)ptep+USRPTSIZE*4),
 		/*
 		 * Return 1 in child.
 		 */
-/*		printf("F|r{lder!\n"); */
 		return (0);
 	}
-/*	printf("Forkad process!\n"); */
 	return (1);
 }
+#endif
+
 
 void 
 setrunqueue(p)
@@ -388,6 +456,7 @@ cpu_exit(p)
 {
 	extern unsigned int scratch;
 
+/* printf("cpu_exit: p %x, p->p_pid %d\n",p,p->p_pid); */
         vmspace_free(p->p_vmspace);
 
         (void) splimp();
@@ -414,4 +483,18 @@ suword(ptr,val)
 	int *ptr,val;
 {
 	*ptr=val;
+}
+
+/*
+ * Dump the machine specific header information at the start of a core dump.
+ */
+int
+cpu_coredump(p, vp, cred)
+        struct proc *p;
+        struct vnode *vp;
+        struct ucred *cred;
+{
+        return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
+            (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL,
+            p));
 }
