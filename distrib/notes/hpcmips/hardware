@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.9 2000/10/10 12:55:18 lukem Exp $
+.\"	$NetBSD: hardware,v 1.10 2000/10/15 12:33:03 shin Exp $
 .
 A H/PC machine contains a keyboard and a touch screen and
 generally has 8 MB or more of RAM.  The port supports the HPC
@@ -16,9 +16,9 @@ CASSIOPEIA E-55
 .It
 Compaq
 .(bullet -compact
-C Series 2010c
+C Series 2010c (TX3912)
 .It
-C Series 810
+C Series 810 (TX3912)
 .bullet)
 .It
 Everex
@@ -83,18 +83,18 @@ Sharp
 .(bullet -compact
 mobilon TRIPAD PV-6000
 .It
-mobilon HC-4100
+mobilon HC-4100 (TX3912)
 .It
-Telios HC-AJ1
+Telios HC-AJ1 (TX3922)
 .It
-Telios HC-AJ2
+Telios HC-AJ2 (TX3922)
 .bullet)
 .It
 Vadem
 .(bullet -compact
 Clio C-1000
 .It
-C-1050
+Clio C-1050
 .bullet)
 .bullet)
 .
@@ -108,11 +108,11 @@ Vr4111-based
 .It
 Vr4121-based
 .It
-Vr4181-based
+TX3912-based: TX3912 machines are not supported with installation kernel and
+GENERIC kernel. Use special kernel for TX3912 (netbsd.TX3912.gz).
 .It
-TX3912-based: TX3912 machines are not supported with installation kernel. use special kernel for TX3912.
-.It
-TX3922-based: TX3922 machines are not supported with installation kernel. use special kernel for TX3922
+TX3922-based: TX3922 machines are not supported with installation kernel and
+GENERIC kernel. Use special kernel for TX3922 (netbsd.TX3922.gz).
 .bullet)
 .It
 RAM requirements
@@ -128,7 +128,7 @@ built-in LCD screen
 .It
 built-in keyboard
 .It
-serial port (with kernel option 'h')
+serial port (with boot option 'h')
 .bullet)
 .It
 Storage devices
@@ -155,7 +155,7 @@ Input devices
 .(bullet -compact
 Keyboard.
 .It
-TouchPad.
+Touchscreen.
 .bullet)
 .It
 Miscellaneous
