@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.34 2003/11/30 14:36:43 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.35 2004/01/29 08:48:23 lukem Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -824,6 +824,9 @@ message set_X11		/* XXX translate */
 
 message set_X11_base	/* XXX translate */
 {X11 base and clients}
+
+message set_X11_etc	/* XXX translate */
+{X11 configuration}
 
 message set_X11_fonts	/* XXX translate */
 {X11 fonts}

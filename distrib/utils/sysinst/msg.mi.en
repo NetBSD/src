@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.123 2003/11/30 14:36:43 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.124 2004/01/29 08:48:23 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -839,6 +839,9 @@ message set_X11
 
 message set_X11_base
 {X11 base and clients}
+
+message set_X11_etc
+{X11 configuration}
 
 message set_X11_fonts
 {X11 fonts}
