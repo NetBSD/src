@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.2.2.3 2003/01/03 16:38:38 thorpej Exp $	*/
+/*	$NetBSD: boot32.c,v 1.2.2.4 2003/01/06 15:21:39 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -542,8 +542,9 @@ void add_initvectors(void) {
 
 
 void create_configuration(int argc, char **argv, int start_args) {
-	int i, root_specified, id_low, id_high;
-
+	int   i, root_specified, id_low, id_high;
+	char *pos;
+	
 	bconfig_new_phys = kernel_free_vm_start - pv_offset;
 	bconfig_page = get_relocated_page(bconfig_new_phys, nbpp);
 	bconfig = (struct bootconfig *) (bconfig_page->logical);
@@ -561,8 +562,21 @@ void create_configuration(int argc, char **argv, int start_args) {
 	bconfig->version		= BOOTCONFIG_VERSION;
 	strcpy(bconfig->kernelname, booted_file);
 
+	/* get the kernel base name and update the RiscOS name to a Unix name */
+	i = strlen(bconfig->kernelname);
+	while ((i >= 0) && (bconfig->kernelname[i] != '.')) i--;
+	if (i) memcpy(bconfig->kernelname, bconfig->kernelname+i+1, strlen(booted_file)-i);
+
+	pos = bconfig->kernelname;
+	while (*pos) {
+		if (*pos == '/') *pos = '.';
+		pos++;
+	};
+
+	/* set the machine_id */
 	memcpy(&(bconfig->machine_id), &id_low, 4);
 
+	/* check if the `root' is specified */
 	root_specified = 0;
 	strcpy(bconfig->args, "");
 	for (i = start_args; i < argc; i++) {
@@ -574,12 +588,14 @@ void create_configuration(int argc, char **argv, int start_args) {
 		strcat(bconfig->args, DEFAULT_ROOT);
 	};
 
+	/* mark kernel pointers */
 	bconfig->kernvirtualbase	= marks[MARK_START];
 	bconfig->kernphysicalbase	= kernel_physical_start;
 	bconfig->kernsize		= kernel_free_vm_start - marks[MARK_START];
 	bconfig->ksym_start		= marks[MARK_SYM];
 	bconfig->ksym_end		= marks[MARK_SYM] + marks[MARK_NSYM];
 
+	/* setup display info */
 	bconfig->display_phys		= videomem_start;
 	bconfig->display_start		= videomem_start;
 	bconfig->display_size		= display_size;
@@ -588,6 +604,7 @@ void create_configuration(int argc, char **argv, int start_args) {
 	bconfig->log2_bpp		= vdu_var(os_MODEVAR_LOG2_BPP);
 	bconfig->framerate		= 56;		/* XXX why? better guessing possible? XXX */
 
+	/* fill in memory info */
 	bconfig->pagesize		= nbpp;
 	bconfig->drampages		= total_dram_pages + total_podram_pages;	/* XXX */
 	bconfig->vrampages		= total_vram_pages;
