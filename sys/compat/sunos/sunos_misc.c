@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.128 2004/04/25 06:02:20 matt Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.129 2004/04/25 06:25:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.128 2004/04/25 06:02:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.129 2004/04/25 06:25:52 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1178,13 +1178,13 @@ sunos_sys_setrlimit(l, v, retval)
 #define PT_SETFPREGS -1
 #endif
 
-static int sreq2breq[] = {
+static const int sreq2breq[] = {
 	PT_TRACE_ME,    PT_READ_I,      PT_READ_D,      -1,
 	PT_WRITE_I,     PT_WRITE_D,     -1,             PT_CONTINUE,
 	PT_KILL,        -1,             PT_ATTACH,      PT_DETACH,
 	PT_GETREGS,     PT_SETREGS,     PT_GETFPREGS,   PT_SETFPREGS
 };
-static int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
+static const int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
 
 int
 sunos_sys_ptrace(l, v, retval)
