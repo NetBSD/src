@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 1995/09/14 02:49:11 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70 1995/09/16 12:35:53 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1456,7 +1456,12 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40807704,	/* ADBReInit */
 		(caddr_t) 0x408072fa,	/* ADBOp */
 		0,		/* PMgrOp */
+		(caddr_t) 0x4080d6d0,	/* WriteParam */
+		(caddr_t) 0x4080d6fa,	/* SetDateTime */
+		(caddr_t) 0x4080dbe8,	/* InitUtil */
 		(caddr_t) 0x4080dd78,	/* ReadXPRam */
+		(caddr_t) 0x4080dd82,	/* WriteXPRam */
+		(caddr_t) 0x4080ddd6,	/* jClkNoMem */
 		0,			/* ADBAlternateInit */
 		0,			/* InitEgret */
 	},
@@ -1476,7 +1481,12 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a752,	/* ADBReInit */
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0x408888ec,	/* PMgrOp */
-		0,		/* ReadXParam */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
@@ -1495,7 +1505,12 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a752,	/* ADBReInit */
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0,	/* PMgrOp */
-		0,		/* ReadXParam */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
@@ -1515,15 +1530,20 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40a0a752,	/* ADBReInit */
 		(caddr_t) 0x40a0a3dc,	/* ADBOp */
 		(caddr_t) 0,	/* PMgrOp */
-		0,		/* ReadXParam */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x0,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
 	/*
-	 * Vectors verified for IIci
+	 * Vectors verified for IIci, Q700
 	 */
 	{			/* 4 */
-		"Mac IIci ROMs",
+		"Mac IIci/Q700 ROMs",
 		(caddr_t) 0x4080a700,	/* ADB interrupt */
 		(caddr_t) 0,	/* PM ADB interrupt */
 		(caddr_t) 0x4080a5aa,	/* ADBBase + 130 interrupt; whatzit? */
@@ -1534,7 +1554,12 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a752,	/* ADBReInit */
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0,	/* PMgrOp */
-		0,		/* ReadXParam */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
@@ -1554,20 +1579,25 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a752,	/* ADBReInit */
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0x408888ec,	/* PMgrOp */
-		(caddr_t) 0x4080B186,	/* ReadXPRam */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x0,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
 	/*
-	 * Quadra, Centris merged table (C650, 610, Q700, 800)
+	 * Quadra, Centris merged table (C650, 610, Q800?)
 	 * (BG - this is a mish-mash of various sources, none complete,
 	 *  so this may not work.)
 	 */
 	{			/* 6 */
 		"Quadra/Centris ROMs",
-		(caddr_t) 0x4080a700,	/* ADB int */
-		0,		/* PM intr */
-		(caddr_t) 0x4080a5aa,	/* ADBBase + 130 */
+		(caddr_t) 0x408b2dea,	/* ADB int */
+		0,			/* PM intr */
+ 		(caddr_t) 0x408b2c72,	/* ADBBase + 130 */
 		(caddr_t) 0x4080a360,	/* CountADBs */
 		(caddr_t) 0x4080a37a,	/* GetIndADB */
 		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
@@ -1575,7 +1605,12 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a752,	/* ADBReInit */
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0x40809ae6,	/* PMgrOp */
-		(caddr_t) 0x4080b186,	/* ReadXParam */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
@@ -1595,7 +1630,12 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x408397b8,	/* ADBReInit */
 		(caddr_t) 0x4083967c,	/* ADBOp */
 		0,		/* PMgrOp */
-		0,		/* ReadXParam */
+		(caddr_t) 0x0,	/* WriteParam */
+		(caddr_t) 0x0,	/* SetDateTime */
+		(caddr_t) 0x0,	/* InitUtil */
+		(caddr_t) 0x0,	/* ReadXPRam */
+		(caddr_t) 0x0,	/* WriteXPRam */
+		(caddr_t) 0x0,	/* jClkNoMem */
 		0,			/* ADBAlternateInit */
 		0,			/* InitEgret */
 	},
@@ -1615,7 +1655,12 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4000a752,	/* ADBReInit */
 		(caddr_t) 0x4000a3dc,	/* ADBOp */
 		 /* !?! */ 0,	/* PmgrOp */
-		0,		/* ReadXParam */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x0,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
@@ -1634,7 +1679,12 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a752,	/* ADBReInit */
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		0,		/* PmgrOp */
-		0,		/* ReadXParam */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x0,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
@@ -1653,7 +1703,12 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a752,	/* ADBReInit */
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0x408888ec,	/* PMgrOp */
-		0,		/* ReadXParam */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x0,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
@@ -1677,7 +1732,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACIIFX, "IIfx ", "", MACH_CLASSIIfx, NULL},
 
 /* The Centris/Quadra series. */
-	{MACH_MACQ700, "Quadra", " 700 ", MACH_CLASSQ, &romvecs[6]},
+	{MACH_MACQ700, "Quadra", " 700 ", MACH_CLASSQ, &romvecs[4]},
 	{MACH_MACQ900, "Quadra", " 900 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ950, "Quadra", " 950 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ800, "Quadra", " 800 ", MACH_CLASSQ, &romvecs[6]},
@@ -1881,6 +1936,8 @@ getenvvars()
 	HwCfgFlags  = getenv("HWCFGFLAGS");
 	HwCfgFlags2 = getenv("HWCFGFLAG2");
 	HwCfgFlags3 = getenv("HWCFGFLAG3");
+ 	HwCfgFlags4 = getenv("HWCFGFLAG4");
+ 	mrg_ADBIntrPtr = (caddr_t) getenv("ADBINTERRUPT");
 }
 
 struct cpu_model_info *current_mac_model;

@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.5 1995/09/03 14:54:35 briggs Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.6 1995/09/16 12:36:01 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -62,38 +62,43 @@
  */
 	loglob(ADBBase, 0xcf8)		/* ptr to ADB driver variables */
 	loglob(ADBYMM, 0xd18)		/* Yet more memory used by ADB/PM */
-	loglob(ADBDelay, 0xcea)		/* 8s of dbras per ADB delay */
+	loglob(ADBDelay, 0xcea) 	/* 8s of dbras per ADB delay */
 	loglob(ROMBase, 0x2ae)		/* ptr to ROM Base */
 	loglob(Lvl1DT, 0x192)		/* VIA 1 interrupt table */
 	loglob(Lvl2DT, 0x1b2)		/* VIA 2 interrupt table? */
-	loglob(JADBProc, 0x6b8)		/* ADBReinit pre/post-processing */
+	loglob(JADBProc, 0x6b8) 	/* ADBReinit pre/post-processing */
 	loglob(jADBOp, 0x5f0)		/* pointer to ADBOp */
 	loglob(DeviceList, 0x8a8)	/* ptr to first device entry */
 	loglob(KbdLast, 0x218)		/* ptr to first device entry */
 	loglob(KbdType, 0x21E)		/* ptr to first device entry */
 	loglob(JKybdTask, 0x21A)	/* keyboard task jump ptr? */
-	loglob(Lo3Bytes, 0x31a)		/* contains 0x00ffffff */
-	loglob(MinusOne, 0xa06)		/* contains 0xffffffff */
-	loglob(MMU32Bit, 0xcb2)		/* MMU mode (uh-oh) 1 = 32 bit? */
+	loglob(Lo3Bytes, 0x31a) 	/* contains 0x00ffffff */
+	loglob(MinusOne, 0xa06) 	/* contains 0xffffffff */
+	loglob(MMU32Bit, 0xcb2) 	/* MMU mode (uh-oh) 1 = 32 bit? */
 	loglob(CPUFlag, 0x12f)		/* CPU type */
 	loglob(MacJmp, 0x120)		/* ?? */
-	loglob(Scratch8, 0x9fa)		/* 8-byte scratch area */
+	loglob(Scratch8, 0x9fa) 	/* 8-byte scratch area */
 	loglob(Scratch20, 0x1e4)	/* 20-byte scratch area */
 	loglob(Ticks, 0x16a)		/* ticks since system startup */
 	loglob(Time, 0x20c)		/* Sec since midnight, 1-1-1904 */
-	loglob(TimeDBRA, 0xd00)		/* dbra's per millisecond (short) */
+	loglob(TimeDBRA, 0xd00) 	/* dbra's per millisecond (short) */
 	loglob(ToolScratch, 0x9ce)	/* another 8-byte scratch area */
 	loglob(VIA, 0x1d4)		/* VIA1 base address */
-	loglob(mrg_VIA2, 0xcec)		/* VIA2 base address */
+	loglob(mrg_VIA2, 0xcec) 	/* VIA2 base address */
 	loglob(SCCRd, 0x1d8)		/* SCC read base address */
 	loglob(FinderName, 0x2e0)	/* Name of finder */
-	loglob(jSwapMMU, 0xdbc)		/* ptr to MMU swap routine */
-	loglob(ADBState, 0xde0)		/* ptr to ADB state information? */
+	loglob(jSwapMMU, 0xdbc) 	/* ptr to MMU swap routine */
+	loglob(ADBState, 0xde0) 	/* ptr to ADB state information? */
 	loglob(jUnimplTrap, 0x61c)	/* ptr to UnimplTrap routine */
 	loglob(jEgret, 0x648)		/* ptr to Egret trap routine */
 	loglob(HwCfgFlags , 0xb22)	/* 2 bytes, h/w config flags */
 	loglob(HwCfgFlags2, 0xdd0)	/* 4 bytes, more h/w config flags */
 	loglob(HwCfgFlags3, 0xdd4)	/* 4 bytes, more h/w config flags */
+	loglob(HwCfgFlags4, 0xdd8)	/* 4 bytes, pointer to patch table */
+	loglob(jClkNoMem, 0x54c)	/* Pointer to ClkNoMem function */
+	loglob(PramTransfer, 0x1e4)	/* Transfer buffer used with PRam */
+	loglob(SysParam, 0x1f8) 	/* Place where PRam data gets stored */
+
 
 #if 0
 	/* I wish I knew what these things were */
@@ -106,8 +111,8 @@
 
 	.text
 	.even
-	.global	_panic
-	.global	_printf
+	.global _panic
+	.global _printf
 
 /*
  * Most of the following glue just takes C function calls, converts
@@ -134,7 +139,7 @@ _ADBReInit:
 /* Set the ADB device info for a device; routine handler and so on ---------*/
 	.global _SetADBInfo
 	/*
-	 * sp@(4)	ADBSetInfoBlock	*info
+	 * sp@(4)	ADBSetInfoBlock *info
 	 * sp@(8)	int		adbAddr
 	 */
 _SetADBInfo:
@@ -158,7 +163,7 @@ _CountADBs:
 	.global _GetIndADB
 	/*
 	 * sp@(4)	ADBDataBlock	*info
-	 * sp@(8)	u_short		devTableIndex
+	 * sp@(8)	u_short 	devTableIndex
 	 */
 _GetIndADB:
 	movl	sp@(4), a0
@@ -170,7 +175,7 @@ _GetIndADB:
 /* Get ADB device information ----------------------------------------------*/
 	.global _GetADBInfo /*
 	/*
-	 * sp@(4)	ADBSetInfoBlock	*info
+	 * sp@(4)	ADBSetInfoBlock *info
 	 * sp@(8)	int		adbAddr
 	 */
 _GetADBInfo:
@@ -256,7 +261,7 @@ _KnownRTS:
 
 /* Resource manager */
 	.data
-	.global	_mrg_ResErr
+	.global _mrg_ResErr
 _mrg_ResErr:
 	.word	0
 
@@ -272,7 +277,7 @@ _mrg_ResErr:
 	.word	0xa9af			| ResError
 	movw	sp@+, d0
 	movl	sp@+, d2		| restore d2
-	rts	
+	rts     
 
 	/* pascal */ function(mrg_ResError)
 	/*
@@ -332,7 +337,7 @@ LRE_enter:
 	clrl	d0			| okay to change d0 ?
 	movl	d0, sp@(10)		| return value is NIL
 	movl	#-192, d0		| resNotFound; that's pretty accurate.
-	movw	d0, _mrg_ResErr		| set current ResMan error
+	movw	d0, _mrg_ResErr 	| set current ResMan error
 	pascalret(6)			| I hate Pascal.
 
 /*
@@ -341,7 +346,7 @@ LRE_enter:
  * page 8-16, "About the Trap Manager," states that ToolBox routines
  * may alter D0-D2 and A0-A1.  However, a crucial bit of code in
  * ADBReInit on the Mac II, 0x40807834, does not save its own D1 or A1
- * before calling GetResource.  Therefore, it is imperative that our
+ * before calling GetResource.	Therefore, it is imperative that our
  * MacBSD ToolBox trap handler save at least D1, D2, A0, and A1.  I
  * believe that the system uses D0 in most places to hold the function's
  * return value, as in "movl	sp@+, d0", and so I don't think it's
@@ -353,7 +358,7 @@ LRE_enter:
  * piece of code which uses global offsets, doesn't save registers, and
  * makes assumptions.  If only it was consistent, Mac ROMs would be a
  * true example to programmers everywhere.  As it stands, it is an example
- * of a different kind.		-Brad Grantham, September 5th, 1994
+ * of a different kind. 	-Brad Grantham, September 5th, 1994
  */
 
 LGR_enter:
@@ -365,8 +370,8 @@ LGR_enter:
  * 1010 line emulator; A-line trap
  * (we fake MacOS traps from here)
  */
-	.global	_mrg_aline_user
-	.global	_mrg_aline_super
+	.global _mrg_aline_user
+	.global _mrg_aline_super
 	.global _mrg_ToolBoxtraps
 	.global _alinetrap
 _alinetrap:
@@ -382,8 +387,8 @@ _alinetrap:
 Lalnosup:
 #define FR_PC (FR_HW+2)
 	movl	sp@(FR_PC + 4), a0	| retrieve PC
-	movw	a0@, d0		| retrieve trap word
-	btst	#11, d0		| ToolBox trap?
+	movw	a0@, d0 	| retrieve trap word
+	btst	#11, d0 	| ToolBox trap?
 	bne	Laltoolbox	| branch if ToolBox
 	jbsr	_mrg_aline_super	| supervisor a-line trap
 Lalrts:
@@ -396,12 +401,12 @@ Lalrts:
 	addql	#8, sp		| pop alignment long, make stack look like
 				| ordinary jbsr
 	tstw	d0		| Gotta do this because call might depend on it
-	rts 			| Go home (God, this is ugly.)
+	rts			| Go home (God, this is ugly.)
 Laltoolbox:
 	addql	#4, sp		| pop frame ptr
 #if defined(MRG_DEBUG)
 		movml	#0xC0C0, sp@-	| better save
-		pea	LalP1		
+		pea	LalP1	        
 		jbsr	_printf
 			| printf ("Toolbox trap\n"); 
 		lea	sp@(4), sp	| pop
@@ -419,7 +424,7 @@ Laltoolbox:
 		lea	sp@(8), sp	| pop
 		movml	sp@+, #0x0303	| restore
 #endif
-	btst	#10, d0		| auto-pop the jump address?
+	btst	#10, d0 	| auto-pop the jump address?
 	beq	Lalnoauto	| branch if no auto-pop
 	pea	Lalautopanic	| I really don't know how to handle this
 	jbsr	_panic
@@ -450,7 +455,7 @@ Lalnoauto:
 	lea	_mrg_ToolBoxtraps, a0
 	addl	d0, a0		| get trap address
 	movl	a0@, a0
-	bne	Laltbok		| branch on trap addr non-zero
+	bne	Laltbok 	| branch on trap addr non-zero
 	movl	d1, sp@+	| trap word
 	pea	Laltbnotrap
 	jbsr	_printf
@@ -508,7 +513,7 @@ _mrg_tracetrap:
 	movl	a0, sp@-		| save a0
 	movl	sp@(0x10), d0		| address of instruction
 		| sp@	old a0
-		|sp@(4)	old d0
+		|sp@(4) old d0
 		|sp@(8) old sr
 		|sp@(10) old PC
 		|sp@(14) exception vector
@@ -517,7 +522,7 @@ _mrg_tracetrap:
 		movml	#0xc0c0, sp@-
 		movl	d0, sp@-
 		pea	Ltraceprint
-		jbsr	_printf		| printf("PC is %x\n", pc);
+		jbsr	_printf 	| printf("PC is %x\n", pc);
 		addql	#8, sp
 		movml	sp@+,#0x0303
 		tstl	d0
