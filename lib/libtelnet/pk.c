@@ -1,6 +1,6 @@
 /*-
  * Copyright (c) 1991, 1993
- *      Dave Safford.  All rights reserved.
+ *	Dave Safford.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,15 +33,15 @@
 #ifdef notdef
 __FBSDID("$FreeBSD: src/contrib/telnet/libtelnet/pk.c,v 1.10 2002/08/22 06:19:07 nsayer Exp $");
 #else
-__RCSID("$NetBSD: pk.c,v 1.2 2005/02/19 22:47:10 christos Exp $");
+__RCSID("$NetBSD: pk.c,v 1.3 2005/02/19 22:47:51 christos Exp $");
 #endif
 
 /* public key routines */
 /* functions:
 	genkeys(char *public, char *secret)
 	common_key(char *secret, char *public, desData *deskey)
-        pk_encode(char *in, *out, DesData *deskey);
-        pk_decode(char *in, *out, DesData *deskey);
+	pk_encode(char *in, *out, DesData *deskey);
+	pk_decode(char *in, *out, DesData *deskey);
       where
 	char public[HEXKEYBYTES + 1];
 	char secret[HEXKEYBYTES + 1];
@@ -65,31 +65,31 @@ static void adjust(char keyout[HEXKEYBYTES+1], char *keyin);
 static void
 extractideakey(BIGNUM *ck, IdeaData *ideakey)
 {
-        BIGNUM *a = BN_new();
-        BIGNUM *z = BN_new();
+	BIGNUM *a = BN_new();
+	BIGNUM *z = BN_new();
 	BIGNUM *base = BN_new();
 	BN_CTX *ctx = BN_CTX_new();
-        int i;
-        char *k;
+	int i;
+	char *k;
 
-        (void)BN_zero(a);
+	(void)BN_zero(a);
 	(void)BN_zero(z);
 	(void)BN_set_word(base, 1 << 8);
 	BN_add(a, ck, z);
 
-        for (i = 0; i < ((KEYSIZE - 128) / 8); i++)
+	for (i = 0; i < ((KEYSIZE - 128) / 8); i++)
 		BN_div(a, z, a, base, ctx);
 
-        k = (char *)ideakey;
-        for (i = 0; i < 16; i++) {
+	k = (char *)ideakey;
+	for (i = 0; i < 16; i++) {
 		BN_div(a, z, a, base, ctx);
-                *k++ = (char)BN_get_word(z);
-        }
+		*k++ = (char)BN_get_word(z);
+	}
 
 	BN_CTX_free(ctx);
 	BN_free(base);
 	BN_free(z);
-        BN_free(a);
+	BN_free(a);
 }
 
 /*
@@ -99,31 +99,31 @@ extractideakey(BIGNUM *ck, IdeaData *ideakey)
 static void
 extractdeskey(BIGNUM *ck, DesData *deskey)
 {
-        BIGNUM *a = BN_new();
-        BIGNUM *z = BN_new();
-        BIGNUM *base = BN_new();
+	BIGNUM *a = BN_new();
+	BIGNUM *z = BN_new();
+	BIGNUM *base = BN_new();
 	BN_CTX *ctx = BN_CTX_new();
-        int i;
-        char *k;
+	int i;
+	char *k;
 
-        (void)BN_zero(z);
-        (void)BN_zero(a);
+	(void)BN_zero(z);
+	(void)BN_zero(a);
 	(void)BN_set_word(base, 1 << 8);
 	BN_add(a, ck, z);
 
-        for (i = 0; i < ((KEYSIZE - 64) / 2) / 8; i++)
+	for (i = 0; i < ((KEYSIZE - 64) / 2) / 8; i++)
 		BN_div(a, z, a, base, ctx);
 
-        k = (char *)deskey;
-        for (i = 0; i < 8; i++) {
+	k = (char *)deskey;
+	for (i = 0; i < 8; i++) {
 		BN_div(a, z, a, base, ctx);
-                *k++ = (char)BN_get_word(z);
-        }
+		*k++ = (char)BN_get_word(z);
+	}
 
 	BN_CTX_free(ctx);
 	BN_free(base);
 	BN_free(z);
-        BN_free(a);
+	BN_free(a);
 }
 
 /*
@@ -132,26 +132,26 @@ extractdeskey(BIGNUM *ck, DesData *deskey)
 void
 common_key(char *xsecret, char *xpublic, IdeaData *ideakey, DesData *deskey)
 {
-        BIGNUM *public = BN_new();
-        BIGNUM *secret = BN_new();
-        BIGNUM *common = BN_new();
-	BIGNUM *modulus  = BN_new();
+	BIGNUM *public = BN_new();
+	BIGNUM *secret = BN_new();
+	BIGNUM *common = BN_new();
+	BIGNUM *modulus	 = BN_new();
 	BN_CTX *ctx = BN_CTX_new();
 
 	(void)BN_hex2bn(&modulus, HEXMODULUS);
-        (void)BN_hex2bn(&public, xpublic);
-        (void)BN_hex2bn(&secret, xsecret);
-        (void)BN_zero(common);
+	(void)BN_hex2bn(&public, xpublic);
+	(void)BN_hex2bn(&secret, xsecret);
+	(void)BN_zero(common);
 
-        BN_mod_exp(common, public, secret, modulus, ctx);
-        extractdeskey(common, deskey);
-        extractideakey(common, ideakey);
+	BN_mod_exp(common, public, secret, modulus, ctx);
+	extractdeskey(common, deskey);
+	extractideakey(common, ideakey);
 	des_set_odd_parity(deskey);
 
 	BN_CTX_free(ctx);
-        BN_free(common);
-        BN_free(secret);
-        BN_free(public);
+	BN_free(common);
+	BN_free(secret);
+	BN_free(public);
 	BN_free(modulus);
 }
 
@@ -173,21 +173,21 @@ getseed(char *seed, int seedsize)
 void
 genkeys(char *public, char *secret)
 {
-        size_t i;
+	size_t i;
  
-#       define BASEBITS (8*sizeof(short) - 1)
-#       define BASE (1 << BASEBITS)
+#	define BASEBITS (8*sizeof(short) - 1)
+#	define BASE (1 << BASEBITS)
  
-        BIGNUM *pk = BN_new();
-        BIGNUM *sk = BN_new();
-        BIGNUM *tmp = BN_new();
-        BIGNUM *base = BN_new();
-        BIGNUM *root = BN_new();
-        BIGNUM *modulus = BN_new();
+	BIGNUM *pk = BN_new();
+	BIGNUM *sk = BN_new();
+	BIGNUM *tmp = BN_new();
+	BIGNUM *base = BN_new();
+	BIGNUM *root = BN_new();
+	BIGNUM *modulus = BN_new();
 	BN_CTX *ctx = BN_CTX_new();
-        short r;
-        unsigned short seed[KEYSIZE/BASEBITS + 1];
-        char *xkey;
+	short r;
+	unsigned short seed[KEYSIZE/BASEBITS + 1];
+	char *xkey;
 
 	(void)BN_zero(pk);
 	(void)BN_zero(sk);
@@ -195,30 +195,30 @@ genkeys(char *public, char *secret)
 	(void)BN_set_word(root, PROOT);
 	(void)BN_hex2bn(&modulus, HEXMODULUS);
 
-        getseed((char *)seed, sizeof(seed));    
-        for (i = 0; i < KEYSIZE/BASEBITS + 1; i++) {
-                r = seed[i] % BASE;
+	getseed((char *)seed, sizeof(seed));	
+	for (i = 0; i < KEYSIZE/BASEBITS + 1; i++) {
+		r = seed[i] % BASE;
 		(void)BN_set_word(tmp, r);
 		BN_mul(sk, tmp, sk, ctx);
 		BN_add(sk, tmp, sk);
-        }
+	}
 
-        (void)BN_zero(tmp);
+	(void)BN_zero(tmp);
 	BN_div(tmp, sk, sk, modulus, ctx);
-        BN_mod_exp(pk, root, sk, modulus, ctx);
+	BN_mod_exp(pk, root, sk, modulus, ctx);
 
-        xkey = BN_bn2hex(sk);   
-        adjust(secret, xkey);
-        xkey = BN_bn2hex(pk);
-        adjust(public, xkey);
+	xkey = BN_bn2hex(sk);	
+	adjust(secret, xkey);
+	xkey = BN_bn2hex(pk);
+	adjust(public, xkey);
 
 	BN_CTX_free(ctx);
-        BN_free(sk);
-        BN_free(base);
-        BN_free(pk);
-        BN_free(tmp);
-        BN_free(root);
-        BN_free(modulus);
+	BN_free(sk);
+	BN_free(base);
+	BN_free(pk);
+	BN_free(tmp);
+	BN_free(root);
+	BN_free(modulus);
 } 
 
 /*
@@ -227,17 +227,17 @@ genkeys(char *public, char *secret)
 static void
 adjust(char keyout[HEXKEYBYTES+1], char *keyin)
 {
-        char *p;
-        char *s;
+	char *p;
+	char *s;
 
-        for (p = keyin; *p; p++) 
-                ;
-        for (s = keyout + HEXKEYBYTES; p >= keyin; p--, s--) {
-                *s = *p;
-        }
-        while (s >= keyout) {
-                *s-- = '0';
-        }
+	for (p = keyin; *p; p++) 
+		;
+	for (s = keyout + HEXKEYBYTES; p >= keyin; p--, s--) {
+		*s = *p;
+	}
+	while (s >= keyout) {
+		*s-- = '0';
+	}
 }
 
 static char hextab[17] = "0123456789ABCDEF";
