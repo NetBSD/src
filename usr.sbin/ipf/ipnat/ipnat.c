@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.1.1.9 1998/05/17 16:29:52 veego Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.1.1.10 1998/05/29 20:14:21 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -64,7 +64,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 2.0.2.21.2.5 1998/05/05 13:35:31 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 2.0.2.21.2.6 1998/05/23 19:07:02 darrenr Exp ";
 #endif
 
 
@@ -75,14 +75,14 @@ static const char rcsid[] = "@(#)Id: ipnat.c,v 2.0.2.21.2.5 1998/05/05 13:35:31 
 extern	char	*optarg;
 
 ipnat_t	*parse __P((char *));
-u_long	hostnum __P((char *, int *));
-u_long	hostmask __P((char *));
+u_32_t	hostnum __P((char *, int *));
+u_32_t	hostmask __P((char *));
 u_short	portnum __P((char *, char *));
 void	dostats __P((int, int)), flushtable __P((int, int));
 void	printnat __P((ipnat_t *, int, void *));
 void	parsefile __P((int, char *, int));
 void	usage __P((char *));
-int	countbits __P((u_long));
+int	countbits __P((u_32_t));
 char	*getnattype __P((ipnat_t *));
 int	main __P((int, char*[]));
 
@@ -164,9 +164,9 @@ char *argv[];
  * of bits.
  */
 int	countbits(ip)
-u_long	ip;
+u_32_t	ip;
 {
-	u_long	ipn;
+	u_32_t	ipn;
 	int	cnt = 0, i, j;
 
 	ip = ipn = ntohl(ip);
@@ -419,18 +419,18 @@ char	*name, *proto;
 }
 
 
-u_long	hostmask(msk)
+u_32_t	hostmask(msk)
 char	*msk;
 {
 	int	bits = -1;
-	u_long	mask;
+	u_32_t	mask;
 
 	if (!isdigit(*msk))
-		return (u_long)-1;
+		return (u_32_t)-1;
 	if (strchr(msk, '.'))
 		return inet_addr(msk);
 	if (strchr(msk, 'x'))
-		return (u_long)strtol(msk, NULL, 0);
+		return (u_32_t)strtol(msk, NULL, 0);
 	/*
 	 * set x most significant bits
 	 */
@@ -447,7 +447,7 @@ char	*msk;
  * returns an ip address as a long var as a result of either a DNS lookup or
  * straight inet_addr() call
  */
-u_long	hostnum(host, resolved)
+u_32_t	hostnum(host, resolved)
 char	*host;
 int	*resolved;
 {

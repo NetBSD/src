@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.1.1.9 1998/05/17 16:29:51 veego Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.1.1.10 1998/05/29 20:14:21 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1997 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29.2.6 1998/05/01 13:18:49 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29.2.9 1998/05/23 14:29:45 darrenr Exp ";
 #endif
 
 #include <stdio.h>
@@ -20,6 +20,7 @@ static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29.2.6 1998/05/01 13:18:49 
 #include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
+#include <signal.h>
 #include <sys/dir.h>
 #else
 #include <sys/filio.h>
@@ -105,6 +106,8 @@ char	*hostname __P((int, struct in_addr));
 char	*portname __P((int, char *, u_short));
 int	main __P((int, char *[]));
 
+static	void	logopts __P((int, char *));
+
 
 #define	OPT_SYSLOG	0x001
 #define	OPT_RESOLVE	0x002
@@ -127,9 +130,10 @@ static void handlehup()
 {
 	FILE	*fp;
 
-	donehup = 1;
+	signal(SIGHUP, handlehup);
 	if (logfile && (fp = fopen(logfile, "a")))
 		newlog = fp;
+	donehup = 1;
 }
 
 
@@ -197,7 +201,7 @@ int	len;
 			*t++ = '\n';
 			*t = '\0';
 			if (!(opts & OPT_SYSLOG))
-				fputs(line, stdout);
+				fputs(line, log);
 			else
 				syslog(LOG_INFO, "%s", line);
 			t = (u_char *)line;
@@ -233,8 +237,8 @@ int	len;
 		*t = '\0';
 	}
 	if (!(opts & OPT_SYSLOG)) {
-		fputs(line, stdout);
-		fflush(stdout);
+		fputs(line, log);
+		fflush(log);
 	} else
 		syslog(LOG_INFO, "%s", line);
 }
@@ -248,19 +252,21 @@ int	blen;
 	iplog_t	*ipl = (iplog_t *)buf;
 	char	*t = line;
 	struct	tm	*tm;
-	int	res;
+	int	res, i, len;
 
 	nl = (struct natlog *)((char *)ipl + sizeof(*ipl));
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = localtime((time_t *)&ipl->ipl_sec);
+	len = sizeof(line);
 	if (!(opts & OPT_SYSLOG)) {
-		(void) sprintf(t, "%2d/%02d/%4d ",
-			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
-		t += strlen(t);
+		(void) strftime(t, len, "%d/%m/%Y ", tm);
+		i = strlen(t);
+		len -= i;
+		t += i;
 	}
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld @%hd ",
-		tm->tm_hour, tm->tm_min, tm->tm_sec, ipl->ipl_usec,
-		nl->nl_rule+1);
+	(void) strftime(t, len, "%T", tm);
+	t += strlen(t);
+	(void) sprintf(t, ".%-.6ld @%hd ", ipl->ipl_usec, nl->nl_rule + 1);
 	t += strlen(t);
 
 	if (nl->nl_type == NL_NEWMAP)
@@ -311,18 +317,21 @@ int	blen;
 	struct	protoent *pr;
 	char	*t = line, *proto, pname[6];
 	struct	tm	*tm;
-	int	res;
+	int	res, i, len;
 
 	sl = (struct ipslog *)((char *)ipl + sizeof(*ipl));
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = localtime((time_t *)&ipl->ipl_sec);
+	len = sizeof(line);
 	if (!(opts & OPT_SYSLOG)) {
-		(void) sprintf(t, "%2d/%02d/%4d ",
-			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
-		t += strlen(t);
+		(void) strftime(t, len, "%d/%m/%Y ", tm);
+		i = strlen(t);
+		len -= i;
+		t += i;
 	}
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld ",
-		tm->tm_hour, tm->tm_min, tm->tm_sec, ipl->ipl_usec);
+	(void) strftime(t, len, "%T", tm);
+	t += strlen(t);
+	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
 	t += strlen(t);
 
 	if (sl->isl_type == ISL_NEW)
@@ -418,7 +427,6 @@ int	logtype, blen;
 		blen -= psize;
 		buf += psize;
 	}
-finishbuf:
 	if (bp)
 		free(bp);
 	return;
@@ -454,13 +462,16 @@ int	blen;
 	ip->ip_len = ntohs(ip->ip_len);
 #endif
 
+	len = sizeof(line);
 	if (!(opts & OPT_SYSLOG)) {
-		(void) sprintf(t, "%2d/%02d/%4d ",
-			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
-		t += strlen(t);
+		(void) strftime(t, len, "%d/%m/%Y ", tm);
+		i = strlen(t);
+		len -= i;
+		t += i;
 	}
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld ", tm->tm_hour, tm->tm_min,
-		tm->tm_sec, ipl->ipl_usec);
+	(void) strftime(t, len, "%T", tm);
+	t += strlen(t);
+	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
 	t += strlen(t);
 	if (ipl->ipl_count > 1) {
 		(void) sprintf(t, "%dx ", ipl->ipl_count);
@@ -823,6 +834,8 @@ char *argv[];
 		close(2);
 		setsid();
 	}
+
+	signal(SIGHUP, handlehup);
 
 	for (doread = 1; doread; ) {
 		nr = 0;

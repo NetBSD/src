@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.c,v 1.1.1.6 1998/05/17 16:29:54 veego Exp $	*/
+/*	$NetBSD: ipsend.c,v 1.1.1.7 1998/05/29 20:14:23 veego Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1997 Darren Reed
@@ -14,7 +14,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipsend.c	1.5 12/10/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipsend.c,v 2.0.2.19 1997/10/12 09:48:38 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipsend.c,v 2.0.2.19.2.1 1998/05/14 14:01:19 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -359,7 +359,7 @@ char	**argv;
 	    }
 
 	if (ip->ip_p == IPPROTO_TCP)
-		for (s = argv[optind]; (c = *s); s++)
+		for (s = argv[optind]; s && (c = *s); s++)
 			switch(c)
 			{
 			case 'S' : case 's' :
