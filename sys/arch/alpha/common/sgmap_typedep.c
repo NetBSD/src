@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.1.2.4 1997/06/04 05:45:57 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.1.2.5 1997/06/05 02:33:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.1.2.4 1997/06/04 05:45:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.1.2.5 1997/06/05 02:33:02 thorpej Exp $");
 
 int
 __C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
@@ -72,14 +72,20 @@ __C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
 	dmaoffset = ((u_long)buf) & PGOFSET;
 	dmalen = buflen;
 
+#ifdef SGMAP_DEBUG
+	printf("sgmap_load: ----- buf = %p -----\n", buf);
+	printf("sgmap_load: dmaoffset = 0x%lx, dmalen = 0x%lx\n",
+	    dmaoffset, dmalen);
+#endif
+
 	/*
 	 * Allocate the necessary virtual address space for the
 	 * mapping.  Round the size, since we deal with whole pages.
 	 */
 	endva = round_page(va + buflen);
+	va = trunc_page(va);
 	if ((a->apdc_flags & APDC_HAS_SGMAP) == 0) {
-		error = alpha_sgmap_alloc(map, endva - trunc_page(va),
-		    sgmap, flags);
+		error = alpha_sgmap_alloc(map, endva - va, sgmap, flags);
 		if (error)
 			return (error);
 	}
@@ -87,12 +93,23 @@ __C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
 	pteidx = a->apdc_sgva >> PGSHIFT;
 	pte = &page_table[pteidx * SGMAP_PTE_SPACING];
 
+#ifdef SGMAP_DEBUG
+	printf("sgmap_load: sgva = 0x%lx, pteidx = %d, pte = %p (pt = %p)\n",
+	    a->apdc_sgva, pteidx, pte, page_table);
+#endif
+
 	/*
 	 * Generate the DMA address.
 	 */
 	map->dm_segs[0].ds_addr = sgmap->aps_wbase |
 	    (pteidx << SGMAP_ADDR_PTEIDX_SHIFT) | dmaoffset;
 	map->dm_segs[0].ds_len = dmalen;
+
+#ifdef SGMAP_DEBUG
+	printf("sgmap_load: wbase = 0x%lx, vpage = 0x%x, dma addr = 0x%lx\n",
+	    sgmap->aps_wbase, (pteidx << SGMAP_ADDR_PTEIDX_SHIFT),
+	    map->dm_segs[0].ds_addr);
+#endif
 
 	a->apdc_pteidx = pteidx;
 	a->apdc_ptecnt = 0;
@@ -102,14 +119,19 @@ __C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		pa = pmap_extract(p != NULL ? &p->p_vmspace->vm_pmap :
-		    pmap_kernel(), va);
-		pa = trunc_page(pa);
+		if (p != NULL)
+			pa = pmap_extract(&p->p_vmspace->vm_pmap, va);
+		else
+			pa = vtophys(va);
 
 		/*
 		 * Load the current PTE with this page.
 		 */
 		*pte = (pa >> SGPTE_PGADDR_SHIFT) | SGPTE_VALID;
+#ifdef SGMAP_DEBUG
+		printf("sgmap_load:     pa = 0x%lx, pte = %p, *pte = 0x%lx\n",
+		    pa, pte, (u_long)(*pte));
+#endif
 	}
 
 	alpha_mb();
@@ -171,8 +193,13 @@ __C(SGMAP_TYPE,_sgmap_unload)(t, map, sgmap)
 	 */
 	for (ptecnt = a->apdc_ptecnt,
 	    pte = &page_table[a->apdc_pteidx * SGMAP_PTE_SPACING];
-	    ptecnt != 0; ptecnt--, pte += SGMAP_PTE_SPACING)
+	    ptecnt != 0; ptecnt--, pte += SGMAP_PTE_SPACING) {
+#ifdef SGMAP_DEBUG
+		printf("sgmap_unload:     pte = %p, *pte = 0x%lx\n",
+		    pte, (u_long)(*pte));
+#endif
 		*pte = 0;
+	}
 
 	/*
 	 * Free the virtual address space used by the mapping
