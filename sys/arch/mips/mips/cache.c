@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.7 2001/12/28 04:06:07 shin Exp $	*/
+/*	$NetBSD: cache.c,v 1.8 2002/01/19 04:25:36 shin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -451,6 +451,16 @@ primary_cache_is_2way:
 			    r4600v2_pdcache_inv_range_32;
 			mips_cache_ops.mco_pdcache_wb_range =
 			    r4600v2_pdcache_wb_range_32;
+		}
+
+		/*
+		 * Deal with VR4131 chip bugs.
+		 */
+		if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100 &&
+		    MIPS_PRID_REV_MAJ(cpu_id) == 8) {
+			KASSERT(mips_pdcache_line_size == 16);
+			mips_cache_ops.mco_pdcache_wbinv_range =
+			    vr4131v1_pdcache_wbinv_range_16;
 		}
 
 		/* Virtually-indexed cache; no use for colors. */
