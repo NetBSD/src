@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.7 2001/09/22 15:29:20 bjh21 Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.8 2001/09/22 15:33:53 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.7 2001/09/22 15:29:20 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.8 2001/09/22 15:33:53 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -366,7 +366,6 @@ eca_init_rx_hard(struct eca_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct fiq_regs *fr = &sc->sc_fiqstate.efs_rx_fiqregs;
 
-	eca_init_rx_soft(sc);
 	sc->sc_fiqstate.efs_fiqhandler = eca_fiqhandler_rx;
 	sc->sc_transmitting = 0;
 	sc->sc_cr1 = MC6854_CR1_RIE;
