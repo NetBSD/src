@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.94 2005/01/15 15:19:53 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.95 2005/01/16 06:02:19 dsainty Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.94 2005/01/15 15:19:53 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.95 2005/01/16 06:02:19 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2134,8 +2134,8 @@ uaudio_open(void *addr, int flags)
 {
 	struct uaudio_softc *sc;
 
-	DPRINTF(("uaudio_open: sc=%p\n", sc));
 	sc = addr;
+	DPRINTF(("uaudio_open: sc=%p\n", sc));
 	if (sc->sc_dying)
 		return EIO;
 
