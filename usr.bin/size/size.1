@@ -1,4 +1,4 @@
-.\"	$NetBSD: size.1,v 1.6 1996/01/14 23:07:11 pk Exp $
+.\"	$NetBSD: size.1,v 1.7 1997/01/16 22:23:13 perry Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 .Nd display object file segment sizes (text, data and bss)
 .Sh SYNOPSIS
 .Nm size
+.Op Fl t
 .Op Fl w
 .Ar
 .Sh DESCRIPTION
@@ -59,6 +60,9 @@ is specified
 attempts to report on the file
 .Pa a.out .
 .Bl -tag -width flag
+.It Fl t
+At the end of the output print a total of the
+sizes of all the object files processed.
 .It Fl w
 Warn about non-object archive members.
 Normally,
