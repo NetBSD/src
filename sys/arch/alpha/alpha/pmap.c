@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.144 2000/08/26 03:32:36 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.145 2000/08/26 06:58:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.144 2000/08/26 03:32:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.145 2000/08/26 06:58:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,13 +442,13 @@ struct pmap_tlb_shootdown_q {
 	struct simplelock pq_slock;	/* spin lock on queue */
 } pmap_tlb_shootdown_q[ALPHA_MAXPROCS];
 
-#define	PJSQ_LOCK(pq, s)						\
+#define	PSJQ_LOCK(pq, s)						\
 do {									\
 	s = splimp();							\
 	simple_lock(&(pq)->pq_slock);					\
 } while (0)
 
-#define	PJSQ_UNLOCK(pq, s)						\
+#define	PSJQ_UNLOCK(pq, s)						\
 do {									\
 	simple_unlock(&(pq)->pq_slock);					\
 	splx(s);							\
@@ -3967,7 +3967,7 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 
 		pq = &pmap_tlb_shootdown_q[i];
 
-		PJSQ_LOCK(pq, s);
+		PSJQ_LOCK(pq, s);
 
 		pj = pmap_tlb_shootdown_job_get(pq);
 		pq->pq_pte |= pte;
@@ -3991,7 +3991,7 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 
 		alpha_send_ipi(i, ipinum);
 
-		PJSQ_UNLOCK(pq, s);
+		PSJQ_UNLOCK(pq, s);
 	}
 }
 
@@ -4009,7 +4009,7 @@ pmap_do_tlb_shootdown(void)
 	struct pmap_tlb_shootdown_job *pj;
 	int s;
 
-	PJSQ_LOCK(pq, s);
+	PSJQ_LOCK(pq, s);
 
 	while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
 		TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
@@ -4020,7 +4020,7 @@ pmap_do_tlb_shootdown(void)
 	}
 	pq->pq_pte = 0;
 
-	PJSQ_UNLOCK(pq, s);
+	PSJQ_UNLOCK(pq, s);
 }
 
 /*
@@ -4038,7 +4038,7 @@ pmap_tlb_shootdown_q_drain(u_long cpu_id, boolean_t all)
 	pt_entry_t npte = 0;
 	int s;
 
-	PJSQ_LOCK(pq, s);
+	PSJQ_LOCK(pq, s);
 
 	for (pj = TAILQ_FIRST(&pq->pq_head); pj != NULL; pj = npj) {
 		npj = TAILQ_NEXT(pj, pj_list);
@@ -4050,7 +4050,7 @@ pmap_tlb_shootdown_q_drain(u_long cpu_id, boolean_t all)
 	}
 	pq->pq_pte = npte;
 
-	PJSQ_UNLOCK(pq, s);
+	PSJQ_UNLOCK(pq, s);
 }
 
 /*
