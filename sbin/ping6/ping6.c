@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.57 2003/08/07 10:04:36 agc Exp $	*/
+/*	$NetBSD: ping6.c,v 1.58 2004/04/22 01:39:20 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.57 2003/08/07 10:04:36 agc Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.58 2004/04/22 01:39:20 itojun Exp $");
 #endif
 #endif
 
@@ -710,7 +710,7 @@ main(argc, argv)
 		for (i = ICMP6ECHOLEN; i < packlen; ++i)
 			*datap++ = i;
 
-	ident = getpid() & 0xFFFF;
+	ident = htons(arc4random() & 0xFFFF);
 	memset(nonce, 0, sizeof(nonce));
 	for (i = 0; i < sizeof(nonce); i += sizeof(u_int32_t))
 		*((u_int32_t *)&nonce[i]) = arc4random();
