@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.1 2000/07/30 04:29:22 takemura Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.1.6.1 2001/10/01 12:39:04 fvdl Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -309,24 +309,24 @@ struct bioscallregs;
 
 extern struct apm_connect_info apminfo;	/* in locore */
 extern int apmpresent;
-extern int apmcall __P((int function, struct bioscallregs *regs));
-extern void bioscall __P((int function, struct bioscallregs *regs));
-extern void apm_cpu_busy __P((void));
-extern void apm_cpu_idle __P((void));
-extern void apminit __P((void));
-int apm_set_powstate __P((u_int devid, u_int powstate));
-extern int apm_busprobe __P((void));
-extern int apmprint __P((void *, const char *));
+extern int apmcall(int, struct bioscallregs *);
+extern void bioscall(int, struct bioscallregs *);
+extern void apm_cpu_busy(void);
+extern void apm_cpu_idle(void);
+extern void apminit(void);
+int apm_set_powstate(u_int, u_int);
+extern int apm_busprobe(void);
+extern int apmprint(void *, const char *);
 
 struct apm_accessops {
-	void	(*disconnect) __P((void *));
-	void	(*enable) __P((void *, int));
-	int	(*set_powstate) __P((void *, u_int, u_int));
-	int	(*get_powstat) __P((void *, struct apm_power_info *));
-	int	(*get_event) __P((void *, u_int *, u_int *));
-	void	(*cpu_busy) __P((void *));
-	void	(*cpu_idle) __P((void *));
-	void	(*get_capabilities) __P((void *, u_int *, u_int *));
+	void	(*disconnect)(void *);
+	void	(*enable)(void *, int);
+	int	(*set_powstate)(void *, u_int, u_int);
+	int	(*get_powstat)(void *, struct apm_power_info *);
+	int	(*get_event)(void *, u_int *, u_int *);
+	void	(*cpu_busy)(void *);
+	void	(*cpu_idle)(void *);
+	void	(*get_capabilities)(void *, u_int *, u_int *);
 };
 
 struct apmdev_attach_args {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.24 2001/07/07 16:51:47 thorpej Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.24.4.1 2001/10/01 12:46:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -154,6 +154,19 @@ pcmcia_scan_cis(dev, fct, arg)
 
 	while (1) {
 		while (1) {
+			/*
+			 * Perform boundary check for insane cards.
+			 * If CIS is too long, simulate CIS end.
+			 * (This check may not be sufficient for
+			 * malicious cards.)
+			 */
+			if (tuple.mult * tuple.ptr >= PCMCIA_CIS_SIZE - 1
+			    - 32 /* ad hoc value */ ) {
+				DPRINTF(("CISTPL_END (too long CIS)\n"));
+				tuple.code = PCMCIA_CISTPL_END;
+				goto cis_end;
+			}
+
 			/* get the tuple code */
 
 			DELAY(1000);
@@ -167,6 +180,7 @@ pcmcia_scan_cis(dev, fct, arg)
 				continue;
 			} else if (tuple.code == PCMCIA_CISTPL_END) {
 				DPRINTF(("CISTPL_END\n ff\n"));
+			cis_end:
 				/* Call the function for the END tuple, since
 				   the CIS semantics depend on it */
 				if ((*fct) (&tuple, arg)) {

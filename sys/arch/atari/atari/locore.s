@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.83 2001/07/22 13:34:03 wiz Exp $	*/
+/*	$NetBSD: locore.s,v 1.83.2.1 2001/10/01 12:38:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,7 +70,6 @@
  */
 	.text
 	GLOBAL(kernel_text)
-_kernel_text:
 
 /*
  * Clear & skip page zero, it will not be mapped
@@ -96,7 +95,6 @@ ENTRY_NOPROFILE(doadump)
 #include <m68k/m68k/trap_subr.s>
 
 #if defined(M68040) || defined(M68060)
-	.globl _C_LABEL(addrerr4060)
 ENTRY_NOPROFILE(addrerr4060)
 	clrl	%sp@-			| stack adjust count
 	moveml	#0xFFFF,%sp@-		| save user registers
@@ -127,7 +125,7 @@ ENTRY_NOPROFILE(buserr60)
 Lnobpe:
 | we need to adjust for misaligned addresses
 	movl	%sp@(FR_HW+8),%d1	| grab VA
-	btst	#27,d0			| check for mis-aligned access
+	btst	#27,%d0			| check for mis-aligned access
 	jeq	Lberr3			| no, skip
 	addl	#28,%d1			| yes, get into next page
 					| operand case: 3,
@@ -206,8 +204,8 @@ Lbe4:
 	jeq	Lbe10			| no, all done
 	subql	#2,%d1			| yes, adjust address
 Lbe10:
-	movl	%d1,sp@-		| push fault VA
-	movl	%d0,sp@-		| and padded SSW
+	movl	%d1,%sp@-		| push fault VA
+	movl	%d0,%sp@-		| and padded SSW
 	movw	%sp@(FR_HW+8+6),%d0	| get frame format/vector offset
 	andw	#0x0FFF,%d0		| clear out frame format
 	cmpw	#12,%d0			| address error vector?
@@ -217,7 +215,7 @@ Lbe10:
 	btst	#8,%d0			| data fault?
 	jne	Lbe10a
 	movql	#1,%d0			| user program access FC
-					| (we dont separate data/program)
+					| (we dont seperate data/program)
 	btst	#5,%sp@(FR_HW+8)	| supervisor mode?
 	jeq	Lbe10a			| if no, done
 	movql	#5,%d0			| else supervisor program access
@@ -283,7 +281,6 @@ ENTRY_NOPROFILE(fpfline)
 	cmpw	#0x202c,%sp@(6)		|  format type 2?
 	jne	_C_LABEL(illinst)	|  no, not an FP emulation
 #ifdef FPSP
-	.globl fpsp_unimp
 	jmp	_ASM_LABEL(fpsp_unimp)	|  yes, go handle it
 #endif
 fpfline_not40:
@@ -474,7 +471,7 @@ ENTRY_NOPROFILE(badmfpint)
 	moveml	#0xC0C0,%sp@-		|  save scratch regs
 	movw	%sp@(22),%sp@-		|  push exception vector info
 	clrw	%sp@-
-	movl	%sp@(22),sp@-		|  and PC
+	movl	%sp@(22),%sp@-		|  and PC
 	jbsr	_C_LABEL(straymfpint)	|  report
 	addql	#8,%sp			|  pop args
 	moveml	%sp@+,#0x0303		|  restore regs
@@ -588,8 +585,8 @@ Lbrkpt2:
 #endif
 #ifdef DDB
 	| Let DDB handle it
-	movl	%a2,sp@-		| push frame ptr
-	movl	%d2,sp@-		| push trap type
+	movl	%a2,%sp@-		| push frame ptr
+	movl	%d2,%sp@-		| push trap type
 	jbsr	_C_LABEL(kdb_trap)	| handle the trap
 	addql	#8,%sp			| pop args
 #if 0	/* not needed on atari */
@@ -698,7 +695,7 @@ ASENTRY_NOPROFILE(mfp2_5380)
 	movw	%sp@(16),%sp@-		|  push previous SR value
 	clrw	%sp@-			|     padded to longword
 	jbsr	_C_LABEL(scsi_ctrl)	|  handle interrupt
-	addql	#4,sp			|  pop SR
+	addql	#4,%sp			|  pop SR
 	moveml	%sp@+,%d0-%d1/%a0-%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
@@ -1425,7 +1422,7 @@ Lsldone:
 ENTRY(copyseg)
 	movl	_C_LABEL(curpcb),%a1	|  current pcb 
 	movl	#Lcpydone,%a1@(PCB_ONFAULT) |  where to return to on a fault 
-	movl	sp@(8),%d0		|  destination page number 
+	movl	%sp@(8),%d0		|  destination page number 
 	moveq	#PGSHIFT,%d1
 	lsll	%d1,%d0			|  convert to address 
 	orl	#PG_CI+PG_RW+PG_V,%d0	|  make sure valid and writable 
@@ -1493,7 +1490,7 @@ Lmc68851b:
 	pflushs	#0,#0,%a0@		|  flush address from both sides
 	rts
 Ltbis040:
-	moveq	#FC_SUPERD,d0		|  select supervisor
+	moveq	#FC_SUPERD,%d0		|  select supervisor
 	movc	%d0,%dfc
 	.word	0xf508			|  pflush a0@
 	moveq	#FC_USERD,%d0		|  select user
@@ -1522,13 +1519,11 @@ ENTRY(ecacheoff)
  * doesn't work because callee saved registers may be outside the stack frame
  * defined by A6 (e.g. GCC generated code).
  */
-	.globl	_C_LABEL(getsp)
 ENTRY_NOPROFILE(getsp)
 	movl	%sp,%d0			|  get current SP
 	addql	#4,%d0			|  compensate for return address
 	rts
 
-	.globl	_C_LABEL(getsfc), _C_LABEL(getdfc)
 ENTRY_NOPROFILE(getsfc)
 	movc	%sfc,%d0
 	rts
@@ -1597,7 +1592,7 @@ ENTRY(flushustp)
 	jeq	Lnot68851
 	tstl	_C_LABEL(mmutype)	|  68851 PMMU?
 	jle	Lnot68851		|  no, nothing to do
-	movl	sp@(4),%d0		|  get USTP to flush
+	movl	%sp@(4),%d0		|  get USTP to flush
 	moveq	#PGSHIFT,%d1
 	lsll	%d1,%d0			|  convert to address
 	movl	%d0,_C_LABEL(protorp)+4	|  stash USTP

@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.14 2001/07/28 13:08:34 tsutsui Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.14.2.1 2001/10/01 12:40:25 fvdl Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -118,7 +118,7 @@ mappedcopyin(f, t, count)
 		len = min(count, (PAGE_SIZE - off));
 		pmap_enter(pmap_kernel(), kva, upa,
 		    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
-		pmap_update();
+		pmap_update(pmap_kernel());
 		if (len == PAGE_SIZE && alignable && off == 0)
 			copypage((caddr_t)kva, top);
 		else
@@ -129,7 +129,7 @@ mappedcopyin(f, t, count)
 		off = 0;
 	}
 	pmap_remove(pmap_kernel(), kva, kva + PAGE_SIZE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return (0);
 #undef CADDR1
 }
@@ -178,7 +178,7 @@ mappedcopyout(f, t, count)
 		pmap_enter(pmap_kernel(), kva, upa,
 		    VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-		pmap_update();
+		pmap_update(pmap_kernel());
 		if (len == PAGE_SIZE && alignable && off == 0)
 			copypage(fromp, (caddr_t)kva);
 		else
@@ -189,7 +189,7 @@ mappedcopyout(f, t, count)
 		off = 0;
 	}
 	pmap_remove(pmap_kernel(), kva, kva + PAGE_SIZE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return (0);
 #undef CADDR2
 }

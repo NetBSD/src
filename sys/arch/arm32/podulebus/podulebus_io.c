@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io.c,v 1.9 2001/03/19 23:56:45 bjh21 Exp $	*/
+/*	$NetBSD: podulebus_io.c,v 1.9.4.1 2001/10/01 12:37:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -62,6 +62,9 @@ struct bus_space podulebus_bs_tag = {
 
 	/* get kernel virtual address */
 	0, /* there is no linear mapping */
+
+	/* mmap bus space for userland */
+	bs_notimpl_bs_mmap, /* there is no bus mapping ... well maybe EASI space? */
 
 	/* barrier */
 	podulebus_bs_barrier,

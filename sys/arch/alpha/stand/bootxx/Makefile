@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2000/09/26 05:13:37 simonb Exp $
+# $NetBSD: Makefile,v 1.23.6.1 2001/10/01 12:37:07 fvdl Exp $
 
 PROG = bootxx.old
 
@@ -13,7 +13,7 @@ CLEANFILES+= ${PROG}.sym ${PROG}.trunc
 
 ${PROG}: ${PROG}.sym
 	@echo creating ${PROG} from ${PROG}.sym...
-	@objcopy --output-target=binary ${PROG}.sym ${PROG}.trunc
+	@${OBJCOPY} --output-target=binary ${PROG}.sym ${PROG}.trunc
 	@chmod 644 ${PROG}.trunc
 	@dd if=${PROG}.trunc of=${PROG} obs=`expr 15 \* 512` conv=osync
 	@ls -l ${PROG}

@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.38 2001/08/22 15:39:05 hubertf Exp $
+#	$NetBSD: CARDBUS,v 1.38.2.1 2001/10/01 12:39:32 fvdl Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.38 $"
+#ident		"CARDBUS-$Revision: 1.38.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -254,9 +254,9 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 #eisa*	at pceb?
 
 # ISA bus support
-isa*	at mainbus?
-isa*	at pceb?
-isa*	at pcib?
+isa0	at mainbus?
+isa0	at pceb?
+isa0	at pcib?
 
 # PCMCIA bus support
 #pcmcia*	at pcic? controller ? socket ?

@@ -1,31 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.8 2001/04/24 04:30:58 thorpej Exp $	*/
-
-/*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- */
-/*	$NetBSD: bus_space.c,v 1.8 2001/04/24 04:30:58 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8.4.1 2001/10/01 12:39:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,12 +40,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <mips/cpuregs.h>
 #include <mips/pte.h>
 #include <machine/bus.h>
 
@@ -84,25 +55,45 @@
 
 #define MAX_BUSSPACE_TAG 10
 
-static  struct hpcmips_bus_space sys_bus_space[MAX_BUSSPACE_TAG];
-static int bus_space_index = 0;
-bus_space_handle_t __hpcmips_cacheable __P((bus_space_tag_t, bus_addr_t, bus_size_t, int));
+static  struct hpcmips_bus_space __bus_space[MAX_BUSSPACE_TAG];
+static int __bus_space_index;
+static struct hpcmips_bus_space __sys_bus_space;
+static bus_space_tag_t __sys_bus_space_tag;
+
+bus_space_handle_t __hpcmips_cacheable(bus_space_tag_t, bus_addr_t, bus_size_t,
+    int);
+
+bus_space_tag_t
+hpcmips_system_bus_space()
+{
+
+	if (__sys_bus_space_tag != 0)
+		return (__sys_bus_space_tag);
+
+	strcpy(__sys_bus_space.t_name, "whole bus space");
+	__sys_bus_space.t_base = 0x0;
+	__sys_bus_space.t_size = 0xffffffff;
+	__sys_bus_space.t_extent = 0; /* No extent for bootstraping */
+	__sys_bus_space_tag = &__sys_bus_space;
+
+	return (__sys_bus_space_tag);
+}
 
 bus_space_tag_t
 hpcmips_alloc_bus_space_tag()
 {
 	bus_space_tag_t	t;
 
-	if (bus_space_index >= MAX_BUSSPACE_TAG) {
+	if (__bus_space_index >= MAX_BUSSPACE_TAG) {
 		panic("hpcmips_internal_alloc_bus_space_tag: tag full.");
 	}
-	t = &sys_bus_space[bus_space_index++];
-	return t;
+	t = &__bus_space[__bus_space_index++];
+
+	return (t);
 }
 
 void
-hpcmips_init_bus_space_extent(t)
-	bus_space_tag_t t;
+hpcmips_init_bus_space_extent(bus_space_tag_t t)
 {
 	u_int32_t pa, endpa;
 	vaddr_t va;
@@ -116,32 +107,31 @@ hpcmips_init_bus_space_extent(t)
 		endpa = mips_round_page(t->t_base + t->t_size);
 
 		if (!(va = uvm_km_valloc(kernel_map, endpa - pa))) {
-			panic("hpcmips_init_bus_space_extent: can't allocate kernel virtual");
+			panic("hpcmips_init_bus_space_extent:"
+			    "can't allocate kernel virtual");
 		}
-		DPRINTF(("pa:0x%08x -> kv:0x%08x+0x%08x", (unsigned int)t->t_base, 
-		       (unsigned int)va, t->t_size));
+		DPRINTF(("pa:0x%08x -> kv:0x%08x+0x%08x",
+		    (unsigned int)t->t_base, (unsigned int)va, t->t_size));
 		t->t_base = va; /* kseg2 addr */
 				
 		for (; pa < endpa; pa += NBPG, va += NBPG) {
 			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 		}
-		pmap_update();
+		pmap_update(pmap_kernel());
 	}
 
 	t->t_extent = (void*)extent_create(t->t_name, t->t_base, 
-					   t->t_base + t->t_size, M_DEVBUF,
-					   0, 0, EX_NOWAIT);
+	    t->t_base + t->t_size, M_DEVBUF,
+	    0, 0, EX_NOWAIT);
 	if (!t->t_extent) {
-		panic("hpcmips_init_bus_space_extent: unable to allocate %s map", t->t_name);
+		panic("hpcmips_init_bus_space_extent:"
+		    "unable to allocate %s map", t->t_name);
 	}
 }
 
 bus_space_handle_t
-__hpcmips_cacheable(t, bpa, size, cacheable)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
+__hpcmips_cacheable(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
+    int cacheable)
 {
 	vaddr_t va, endva;
 	pt_entry_t *pte;
@@ -167,50 +157,44 @@ __hpcmips_cacheable(t, bpa, size, cacheable)
 			 */
 			MachTLBUpdate(va, opte);
 		}
-		return bpa;
+		return (bpa);
 	}
 
-	return cacheable ? MIPS_PHYS_TO_KSEG0(bpa) : MIPS_PHYS_TO_KSEG1(bpa);
+	return (cacheable ? MIPS_PHYS_TO_KSEG0(bpa) : MIPS_PHYS_TO_KSEG1(bpa));
 }
 
 /* ARGSUSED */
 int
-bus_space_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
+    bus_space_handle_t *bshp)
 {
 	int err;
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
 
 	if (!t->t_extent) { /* Before autoconfiguration, can't use extent */
-		DPRINTF(("bus_space_map: map temporary region:0x%08x-0x%08x\n", bpa, bpa+size));
+		DPRINTF(("bus_space_map: map temporary region:"
+		    "0x%08x-0x%08x\n", bpa, bpa+size));
 		bpa += t->t_base;
 	} else {
 		bpa += t->t_base;
 		if ((err = extent_alloc_region(t->t_extent, bpa, size, 
-					       EX_NOWAIT|EX_MALLOCOK))) {
-			return err;
+		    EX_NOWAIT|EX_MALLOCOK))) {
+			return (err);
 		}
 	}
 	*bshp = __hpcmips_cacheable(t, bpa, size, cacheable);
-	DPRINTF(("\tbus_space_map:%#x(%#x)+%#x\n", bpa, bpa - t->t_base, size));
 
-	return 0;
+	DPRINTF(("\tbus_space_map:%#x(%#x)+%#x\n",
+	    bpa, bpa - t->t_base, size));
+
+	return (0);
 }
 
 /* ARGSUSED */
 int
-bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags,
-		bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int flags;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
+    bus_size_t size, bus_size_t alignment, bus_size_t boundary, int flags,
+    bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
 	u_long bpa;
@@ -222,9 +206,8 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags,
 	rstart += t->t_base;
 	rend += t->t_base;
 	if ((err = extent_alloc_subregion(t->t_extent, rstart, rend, size,
-					  alignment, boundary, 
-					  EX_FAST|EX_NOWAIT|EX_MALLOCOK, &bpa))) {
-		return err;
+	    alignment, boundary, EX_FAST|EX_NOWAIT|EX_MALLOCOK, &bpa))) {
+		return (err);
 	}
 
 	*bshp = __hpcmips_cacheable(t, bpa, size, cacheable);
@@ -233,27 +216,22 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags,
 		*bpap = bpa;
 	}
 
-	DPRINTF(("\tbus_space_alloc:%#x(%#x)+%#x\n", (unsigned)bpa, (unsigned)(bpa - t->t_base), size));
+	DPRINTF(("\tbus_space_alloc:%#x(%#x)+%#x\n", (unsigned)bpa,
+	    (unsigned)(bpa - t->t_base), size));
 
-	return 0;
+	return (0);
 }
 
 /* ARGSUSED */
 void
-bus_space_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	/* bus_space_unmap() does all that we need to do. */
 	bus_space_unmap(t, bsh, size);
 }
 
 void
-bus_space_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	int err;
 	u_int32_t addr;
@@ -270,19 +248,17 @@ bus_space_unmap(t, bsh, size)
 
 	if ((err = extent_free(t->t_extent, addr, size, EX_NOWAIT))) {
 		DPRINTF(("warning: %#x-%#x of %s space lost\n",
-		       bsh, bsh+size, t->t_name));
+		    bsh, bsh+size, t->t_name));
 	}
 }
 
 /* ARGSUSED */
 int
-bus_space_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
+
 	*nbshp = bsh + offset;
 
-	return 0;
+	return (0);
 }

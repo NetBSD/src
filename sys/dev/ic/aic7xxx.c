@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.79 2001/07/19 16:25:24 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.79.2.1 2001/10/01 12:45:28 fvdl Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -3546,12 +3546,12 @@ ahc_init(struct ahc_softc *ahc)
 
 #ifdef AHC_DEBUG
 	if (ahc_debug & AHC_SHOWMISC) {
-		printf("%s: hardware scb %d bytes; kernel scb %d bytes; "
-		       "ahc_dma %d bytes\n",
+		printf("%s: hardware scb %lu bytes; kernel scb %lu bytes; "
+		       "ahc_dma %lu bytes\n",
 			ahc_name(ahc),
-		        sizeof(struct hardware_scb),
-			sizeof(struct scb),
-			sizeof(struct ahc_dma_seg));
+		        (unsigned long) sizeof(struct hardware_scb),
+			(unsigned long) sizeof(struct scb),
+			(unsigned long) sizeof(struct ahc_dma_seg));
 	}
 #endif /* AHC_DEBUG */
 
@@ -4176,6 +4176,12 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 			    ((xs->xs_control & XS_CTL_DATA_IN) ?
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 		if (error) {
+#ifdef AHC_DEBUG
+			printf("%s: in ahc_setup_data(): bus_dmamap_load() "
+			    "= %d\n",
+			    ahc_name(ahc),
+			    error);
+#endif
 			if (!ahc_istagged_device(ahc, xs, 0))
 				ahc_index_busy_tcl(ahc, hscb->tcl, TRUE);
 			xs->error = XS_RESOURCE_SHORTAGE;	/* XXX fvdl */
@@ -4961,7 +4967,7 @@ ahc_abort_scbs(struct ahc_softc *ahc, int target, char channel,
 	 * Go through the pending CCB list and look for
 	 * commands for this target that are still active.
 	 * These are other tagged commands that were
-	 * disconnected when the reset occured.
+	 * disconnected when the reset occurred.
 	 */
 	{
 		struct scb *scb;

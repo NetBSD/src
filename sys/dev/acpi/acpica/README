@@ -1,0 +1,47 @@
+#	$NetBSD: README,v 1.2.2.2 2001/10/01 12:44:18 fvdl Exp $
+
+This is the Intel ACPI Component Architecture, Intel's reference
+implementation of the core operating system ACPI support.  The
+portion in the Osd/ subdirectory is provided by the oprerating
+system as the glue between the OS and the ACPICA.
+
+Please, do not import an updated ACPI CA snapshot from Intel unless
+you absolutely know what you're doing -- The Intel directory layout
+changes from release to release, and we must munge it (by hand) into
+something sane that we can use.
+
+The routines that the operating system must provide are documented
+in the following document:
+
+	ACPI Component Architecture Programmer Reference
+	Intel Corp.
+
+Machine-dependent code must provide the following routines for Osd:
+
+ACPI_STATUS	acpi_md_OsInitialize(void);
+ACPI_STATUS	acpi_md_OsTerminate(void);
+ACPI_STATUS	acpi_md_OsGetRootPointer(UINT32 Flags,
+		    ACPI_PHYSICAL_ADDRESS *PhysicalAddress);
+
+UINT8		acpi_md_OsIn8(ACPI_IO_ADDRESS InPort);
+UINT16		acpi_md_OsIn16(ACPI_IO_ADDRESS InPort);
+UINT32		acpi_md_OsIn32(ACPI_IO_ADDRESS InPort);
+
+void		acpi_md_OsOut8(ACPI_IO_ADDRESS OutPort, UINT8 Value);
+void		acpi_md_OsOut16(ACPI_IO_ADDRESS OutPort, UINT16 Value);
+void		acpi_md_OsOut32(ACPI_IO_ADDRESS OutPort, UINT32 Value);
+
+ACPI_STATUS	acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
+		    OSD_HANDLER ServiceRoutine, void *Context, void **cookiep);
+void		acpi_md_OsRemoveInterruptHandler(void *cookie);
+
+ACPI_STATUS	acpi_md_OsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress,
+		    UINT32 Length, void **LogicalAddress);
+void		acpi_md_OsUnmapMemory(void *LogicalAddress, UINT32 Length);
+ACPI_STATUS	acpi_md_OsGetPhysicalAddress(void *LogicalAddress,
+		    ACPI_PHYSICAL_ADDRESS *PhysicalAddress);
+
+BOOLEAN		acpi_md_OsReadable(void *Pointer, UINT32 Length);
+BOOLEAN		acpi_md_OsWritable(void *Pointer, UINT32 Length);
+
+	-- Jason R. Thorpe <thorpej@wasabisystems.com>

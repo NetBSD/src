@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.56 2001/07/07 14:21:00 simonb Exp $	*/
+/*	$NetBSD: dtop.c,v 1.56.4.1 2001/10/01 12:41:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56 2001/07/07 14:21:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56.4.1 2001/10/01 12:41:28 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -118,7 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56 2001/07/07 14:21:00 simonb Exp $");
 #include <machine/dc7085cons.h>		/*  mdmctl bits same on dtop and dc? */
 
 #include <machine/pmioctl.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 
 #include <pmax/dev/dtopreg.h>

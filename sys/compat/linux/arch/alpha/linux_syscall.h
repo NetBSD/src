@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.39 2001/07/04 10:26:28 jdolecek Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.39.4.1 2001/10/01 12:43:32 fvdl Exp $ */
 
 /*
  * System call numbers.
@@ -133,7 +133,7 @@
 /* syscall: "lstat" ret: "int" args: "const char *" "struct linux_stat *" */
 #define	LINUX_SYS_lstat	68
 
-/* syscall: "mmap" ret: "int" args: "unsigned long" "size_t" "int" "int" "int" "off_t" */
+/* syscall: "mmap" ret: "int" args: "unsigned long" "size_t" "int" "int" "int" "linux_off_t" */
 #define	LINUX_SYS_mmap	71
 
 /* syscall: "munmap" ret: "int" args: "void *" "size_t" */

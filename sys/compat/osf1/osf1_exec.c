@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.25 2001/06/18 02:00:53 christos Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.25.4.1 2001/10/01 12:43:53 fvdl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
+#include <sys/exec.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscall.h>
@@ -63,6 +64,7 @@ const struct emul emul_osf1 = {
 	trapsignal,
 	osf1_sigcode,
 	osf1_esigcode,
+	setregs,
 	NULL,
 	NULL,
 	NULL,

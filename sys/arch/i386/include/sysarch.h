@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.10 2000/09/13 04:47:01 thorpej Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.10.8.1 2001/10/01 12:40:03 fvdl Exp $	*/
 
 #ifndef _I386_SYSARCH_H_
 #define _I386_SYSARCH_H_
@@ -15,6 +15,8 @@
 #define	I386_PMC_INFO	8
 #define	I386_PMC_STARTSTOP 9
 #define	I386_PMC_READ	10
+#define I386_GET_MTRR	11
+#define I386_SET_MTRR	12
 
 struct i386_get_ldt_args {
 	int start;
@@ -26,6 +28,16 @@ struct i386_set_ldt_args {
 	int start;
 	union descriptor *desc;
 	int num;
+};
+
+struct i386_get_mtrr_args {
+	struct mtrr *mtrrp;
+	int *n;
+};
+
+struct i386_set_mtrr_args {
+	struct mtrr *mtrrp;
+	int *n;
 };
 
 struct i386_iopl_args {
@@ -73,6 +85,8 @@ struct i386_pmc_read_args {
 	u_int64_t time;
 };
 
+struct mtrr;
+
 #ifndef _KERNEL
 int i386_get_ldt __P((int, union descriptor *, int));
 int i386_set_ldt __P((int, union descriptor *, int));
@@ -82,6 +96,8 @@ int i386_set_ioperm __P((u_long *));
 int i386_pmc_info __P((struct i386_pmc_info_args *));
 int i386_pmc_startstop __P((struct i386_pmc_startstop_args *));
 int i386_pmc_read __P((struct i386_pmc_read_args *));
+int i386_set_mtrr __P((struct mtrr *, int *));
+int i386_get_mtrr __P((struct mtrr *, int *));
 int sysarch __P((int, void *));
 #endif
 

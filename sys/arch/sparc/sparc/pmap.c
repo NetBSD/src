@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.197 2001/07/10 15:12:59 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.197.2.1 2001/10/01 12:42:14 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -918,7 +918,7 @@ pgt_page_alloc(sz, flags, mtype)
 	/* Map the page */
 	pmap_kenter_pa(va, pa | (cacheit ? 0 : PMAP_NC),
 	    VM_PROT_READ | VM_PROT_WRITE);
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return ((void *)va);
 }
@@ -3644,11 +3644,9 @@ pmap_globalize_boot_cpuinfo(cpi)
 	off = 0;
 	for (va = (vaddr_t)cpi; off < sizeof(*cpi); va += NBPG, off += NBPG) {
 		paddr_t pa = VA2PA((caddr_t)CPUINFO_VA + off);
-		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -3719,14 +3717,13 @@ pmap_alloc_cpu(sc)
 
 	/* Map the pages */
 	while (size != 0) {
-		pmap_enter(pmap_kernel(), va, pa | (cachebit ? 0 : PMAP_NC),
-		    VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa(va, pa | (cachebit ? 0 : PMAP_NC),
+		    VM_PROT_READ | VM_PROT_WRITE);
 		va += pagesz;
 		pa += pagesz;
 		size -= pagesz;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Store the region table pointer (and its corresponding physical
@@ -3849,11 +3846,11 @@ pmap_map(va, pa, endpa, prot)
 	int pgsize = PAGE_SIZE;
 
 	while (pa < endpa) {
-		pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+		pmap_kenter_pa(va, pa, prot);
 		va += pgsize;
 		pa += pgsize;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return (va);
 }
 
@@ -6526,7 +6523,7 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 			src_addr += NBPG;
 			dst_addr += NBPG;
 		}
-		pmap_update();
+		pmap_update(dst_pmap);
 	}
 #endif
 }

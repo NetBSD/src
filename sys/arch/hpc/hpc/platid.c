@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.c,v 1.1 2001/01/28 02:52:21 uch Exp $	*/
+/*	$NetBSD: platid.c,v 1.1.4.1 2001/10/01 12:38:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -47,6 +47,7 @@ platid_t platid = {{ PLATID_UNKNOWN, PLATID_UNKNOWN }};
 void
 platid_ntoh(platid_t *pid)
 {
+
 	pid->dw.dw0 = ntohl(pid->dw.dw0);
 	pid->dw.dw1 = ntohl(pid->dw.dw1);
 }
@@ -54,6 +55,7 @@ platid_ntoh(platid_t *pid)
 void
 platid_hton(platid_t *pid)
 {
+
 	pid->dw.dw0 = htonl(pid->dw.dw0);
 	pid->dw.dw1 = htonl(pid->dw.dw1);
 }
@@ -63,6 +65,7 @@ platid_dump(char *name, void* pxx)
 {
 	int i;
 	unsigned char* p = (unsigned char*)pxx;
+
 	printf("%14s: ", name);
 
 	for (i = 0; i < 8; i++) {
@@ -74,7 +77,8 @@ platid_dump(char *name, void* pxx)
 int
 platid_match(platid_t *platid, platid_mask_t *mask)
 {
-	return platid_match_sub(platid, mask, 0);
+
+	return (platid_match_sub(platid, mask, 0));
 }
 
 int
@@ -111,31 +115,43 @@ platid_match_sub(platid_t *platid, platid_mask_t *mask, int unknown_is_match)
 tchar*
 platid_name(platid_t *platid)
 {
-	int match_level;
-	struct platid_name *p, *match, *pe;
+	struct platid_name *match;
 
-	match_level = 0;
-	pe = &platid_name_table[platid_name_table_size];
-	for (p = platid_name_table; p < pe; p++) {
-		int res = platid_match(platid, p->mask);
-		if (match_level < res) {
-			match = p;
-			match_level = res;
-		}
-	}
-	if (0 < match_level)
-		return (match->name);
-	else
-		return (TEXT("UNKNOWN"));
+	match = platid_search(platid,
+	    platid_name_table, platid_name_table_size,
+	    sizeof(struct platid_name));
+
+	return ((match != NULL) ? match->name : TEXT("UNKNOWN"));
 }
 
 struct platid_data *
-platid_search(platid_t *platid, struct platid_data *datap)
+platid_search_data(platid_t *platid, struct platid_data *datap)
 {
 
 	while (datap->mask != NULL && !platid_match(platid, datap->mask))
 		datap++;
 	if (datap->mask == NULL && datap->data == NULL)
-		return NULL;
-	return datap;
+		return (NULL);
+
+	return (datap);
+}
+
+void *
+platid_search(platid_t *platid, void *base, int nmemb, int size)
+{
+	int i, match_level, res;
+	void *match;
+
+	match_level = 0;
+	match = NULL;
+	for (i = 0; i < nmemb; i++) {
+		res = platid_match(platid, *(platid_mask_t**)base);
+		if (match_level < res) {
+			match_level = res;
+			match = base;
+		}
+		(char *)base += size;
+	}
+
+	return (match);
 }

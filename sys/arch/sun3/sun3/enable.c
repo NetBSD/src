@@ -1,4 +1,4 @@
-/*	$NetBSD: enable.c,v 1.2 1998/02/05 04:57:32 gwr Exp $	*/
+/*	$NetBSD: enable.c,v 1.2.26.1 2001/10/01 12:42:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/param.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <sun3/dev/fbvar.h>
 
 #include <sun3/sun3/control.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: m38813c.c,v 1.4 2001/02/22 18:38:00 uch Exp $ */
+/*	$NetBSD: m38813c.c,v 1.4.2.1 2001/10/01 12:38:53 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -75,12 +75,12 @@ struct m38813c_softc {
 	void			*sc_ih;
 };
 
-int	m38813c_match __P((struct device*, struct cfdata*, void*));
-void	m38813c_attach __P((struct device*, struct device*, void*));
-int	m38813c_intr __P((void*));
-int	m38813c_poll __P((void*));
-void	m38813c_ifsetup __P((struct m38813c_chip*));
-int	m38813c_input_establish __P((void*, struct hpckbd_if*));
+int	m38813c_match(struct device *, struct cfdata *, void *);
+void	m38813c_attach(struct device *, struct device *, void *);
+int	m38813c_intr(void *);
+int	m38813c_poll(void *);
+void	m38813c_ifsetup(struct m38813c_chip *);
+int	m38813c_input_establish(void *, struct hpckbd_if *);
 
 struct m38813c_chip m38813c_chip;
 
@@ -89,19 +89,14 @@ struct cfattach m38813c_ca = {
 };
 
 int
-m38813c_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+m38813c_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 1;
+
+	return (1);
 }
 
 void
-m38813c_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+m38813c_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cs_attach_args *ca = aux;
 	struct m38813c_softc *sc = (void*)self;
@@ -112,7 +107,7 @@ m38813c_attach(parent, self, aux)
 	sc->sc_chip->scc_cst = ca->ca_csio.cstag;
 
 	if (bus_space_map(sc->sc_chip->scc_cst, ca->ca_csio.csbase, 
-			  ca->ca_csio.cssize, 0, &sc->sc_chip->scc_csh)) {
+	    ca->ca_csio.cssize, 0, &sc->sc_chip->scc_csh)) {
 		printf(": can't map i/o space\n");
 	}
 
@@ -120,8 +115,8 @@ m38813c_attach(parent, self, aux)
 #error options USE_POLL requied.
 #endif
 	if (!(sc->sc_ih = tx39_poll_establish(sc->sc_tc, 1,
-					      IPL_TTY, m38813c_intr,
-					      sc))) {
+	    IPL_TTY, m38813c_intr,
+	    sc))) {
 		printf(": can't establish interrupt\n");
 	}
 
@@ -136,9 +131,9 @@ m38813c_attach(parent, self, aux)
 }
 
 void
-m38813c_ifsetup(scc)
-	struct m38813c_chip *scc;
+m38813c_ifsetup(struct m38813c_chip *scc)
 {
+
 	scc->scc_if.hii_ctx		= scc;
 
 	scc->scc_if.hii_establish	= m38813c_input_establish;
@@ -146,8 +141,7 @@ m38813c_ifsetup(scc)
 }
 
 int
-m38813c_cnattach(addr)
-	paddr_t addr;
+m38813c_cnattach(paddr_t addr)
 {
 	struct m38813c_chip *scc = &m38813c_chip;
 	
@@ -157,13 +151,11 @@ m38813c_cnattach(addr)
 
 	hpckbd_cnattach(&scc->scc_if);
 
-	return 0;
+	return (0);
 }
 
 int
-m38813c_input_establish(ic, kbdif)
-	void *ic;
-	struct hpckbd_if *kbdif;
+m38813c_input_establish(void *ic, struct hpckbd_if *kbdif)
 {
 	struct m38813c_chip *scc = ic;
 
@@ -172,24 +164,22 @@ m38813c_input_establish(ic, kbdif)
 
 	scc->scc_enabled = 1;
 
-	return 0;
+	return (0);
 }
 
 #define	KBR_EXTENDED0	0xE0	/* extended key sequence */
 #define	KBR_EXTENDED1	0xE1	/* extended key sequence */
 
 int
-m38813c_intr(arg)
- 	void *arg;
+m38813c_intr(void *arg)
 {
 	struct m38813c_softc *sc = arg;
 
-	return m38813c_poll(sc->sc_chip);
+	return (m38813c_poll(sc->sc_chip));
 }
 
 int
-m38813c_poll(arg)
- 	void *arg;
+m38813c_poll(void *arg)
 {
 	struct m38813c_chip *scc = arg;
 	bus_space_tag_t t = scc->scc_cst;
@@ -197,7 +187,7 @@ m38813c_poll(arg)
 	int datain, type, key;
 
 	if (!scc->scc_enabled) {
-		return 0;
+		return (0);
 	}
 
 	datain= bus_space_read_1(t, h, 0);
@@ -206,10 +196,10 @@ m38813c_poll(arg)
 
 	if (datain == KBR_EXTENDED0) {
 		scc->t_extended = 1;
-		return 0;
+		return (0);
 	} else if (datain == KBR_EXTENDED1) {
 		scc->t_extended1 = 2;
-		return 0;
+		return (0);
 	}
 
  	/* map extended keys to (unused) codes 128-254 */
@@ -222,9 +212,9 @@ m38813c_poll(arg)
 	 */
 	if (scc->t_extended1 == 2 && (datain == 0x1d || datain == 0x9d)) {
 		scc->t_extended1 = 1;
-		return 0;
+		return (0);
 	} else if (scc->t_extended1 == 1 &&
-		   (datain == 0x45 || datain == 0xc5)) {
+	    (datain == 0x45 || datain == 0xc5)) {
 		scc->t_extended1 = 0;
 		key = 0x7f;
 	} else if (scc->t_extended1 > 0) {
@@ -244,5 +234,5 @@ m38813c_poll(arg)
 
 	hpckbd_input(scc->scc_hpckbd, type, key);
 
-	return 0;
+	return (0);
 }

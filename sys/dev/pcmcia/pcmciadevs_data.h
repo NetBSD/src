@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.135 2001/08/21 16:13:14 pooka Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.135.2.1 2001/10/01 12:46:11 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.134 2001/08/07 13:57:24 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.139 2001/09/29 13:59:16 augustss Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -753,6 +753,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Samsung MagicLAN SWL-2000N"	},
 	},
 	{
+	    PCMCIA_VENDOR_SYMBOL, PCMCIA_PRODUCT_SYMBOL_LA4100,
+	    PCMCIA_CIS_SYMBOL_LA4100,
+	    0,
+	    "Symbol",
+	    "Symbol Spectrum24 LA4100 Series WLAN"	},
+	},
+	{
 	    PCMCIA_VENDOR_TELECOMDEVICE, PCMCIA_PRODUCT_TELECOMDEVICE_TCD_HPC100,
 	    PCMCIA_CIS_TELECOMDEVICE_TCD_HPC100,
 	    0,
@@ -1096,6 +1103,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "CNet CN40BC NE2000 Compatible"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_GEMTEK_WLAN,
+	    PCMCIA_CIS_GEMTEK_WLAN,
+	    0,
+	    "",
+	    "GEMTEK Prism2_5 WaveLAN Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_EIGERLABS_EPX_AA2000,
+	    PCMCIA_CIS_EIGERLABS_EPX_AA2000,
+	    0,
+	    "Eiger labs,Inc.",
+	    "EPX-AA2000 PC Sound Card"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1338,6 +1359,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Samsung",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SYMBOL, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Symbol",
 	    NULL,
 	},
 	{
@@ -1590,6 +1618,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "CNet",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_EIGERLABS, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Eiger labs,Inc.",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }

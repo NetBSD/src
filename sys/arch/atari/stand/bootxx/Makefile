@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 1999/04/22 07:17:01 leo Exp $
+#	$NetBSD: Makefile,v 1.7.14.1 2001/10/01 12:38:12 fvdl Exp $
+
+# for OBJECT_FMT
+.include <bsd.own.mk>
 
 PROG=	bootxx
 SRCS=	bootxx.c bsdstart.s filesystem.c
@@ -14,8 +17,12 @@ DEFS=	-D_STANDALONE
 INCL=	-I. -I${S_LIBTOS} -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
 
 CPPFLAGS+=	${DEFS} ${INCL}
-CFLAGS+=	-fomit-frame-pointer -Wall
-LDFLAGS=	-static -nostdlib -Wl,-N,-T${LOADADDR}
+CFLAGS+=	-fomit-frame-pointer -Wall -fno-function-cse -fstrength-reduce
+.if ${OBJECT_FMT} == "ELF"
+LDFLAGS=	-static -nostdlib -Wl,-x,-N,-e,bootxx,-Ttext,${LOADADDR}
+.else
+LDFLAGS=	-static -nostdlib -Wl,-N,-Ttext,${LOADADDR}
+.endif
 
 # logically src/sys
 S=${.CURDIR}/../../../..
@@ -37,15 +44,13 @@ LIBSA=${S_MACHSA}/obj.${MACHINE}/libsa.a
 DPADD=	${LIBSA}
 LDADD=	${LIBSA}
 
-
 beforeinstall:
 	@len=`size ${PROG} | awk 'NR==2 { print $$1+$$2 }'`;	\
 	 if [ $$len -gt 6656 ]; then				\
 		size ${PROG};					\
 		false;						\
 	 fi;							\
-	 dd if=${PROG} of=${PROG}XX bs=1 skip=32		\
-			count=$$len  2>/dev/null
+	${OBJCOPY} -O binary ${PROG} ${PROG}XX
 	@cat ${PROG}XX /dev/zero | dd of=${PROG}X		\
 			bs=1 count=6656  2>/dev/null
 	@mv -f ${PROG} ${PROG}XX
@@ -56,6 +61,12 @@ afterinstall:
 
 .s.o:
 	${CPP} ${CPPFLAGS} ${.IMPSRC} | ${AS} ${ASFLAGS} -o ${.TARGET}
+
+.c.o:
+	${CC} ${CFLAGS} ${CPPFLAGS} -c ${.IMPSRC} -o ${.TARGET}
+
+${PROG}:
+	${CC} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
 
 ${PROG}: ../xxboot/LOADADDR
 

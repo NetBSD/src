@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.3 2001/09/02 07:26:11 manu Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.3.2.1 2001/10/01 12:43:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
 #define _MIPS_LINUX_MMAP_H
 
 /* 
- * LINUX_PROT_* defined in common/linux_mmap.h */
- * LINUX_MAP_SHARED/PRIVATE defined in common/linux_mmap.h */
+ * LINUX_PROT_* defined in common/linux_mmap.h
+ * LINUX_MAP_SHARED/PRIVATE defined in common/linux_mmap.h
  */
 
 /*

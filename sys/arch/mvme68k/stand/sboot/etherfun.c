@@ -1,4 +1,4 @@
-/*	$NetBSD: etherfun.c,v 1.4 2001/07/07 09:06:45 scw Exp $	*/
+/*	$NetBSD: etherfun.c,v 1.4.4.1 2001/10/01 12:41:04 fvdl Exp $	*/
 
 /*
  *
@@ -161,7 +161,7 @@ do_get_file ()
 
   do_send_tftp( READ );
   while (1) {
-    if ( le_get(buf, sizeof(buf), 5) == 0) { /* timeout occured */
+    if ( le_get(buf, sizeof(buf), 5) == 0) { /* timeout occurred */
       if ( last_ack ) {                          
 	do_send_tftp( last_ack );
       } else {

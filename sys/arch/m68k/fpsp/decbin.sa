@@ -1,4 +1,4 @@
-*	$NetBSD: decbin.sa,v 1.2 1994/10/26 07:48:59 cgd Exp $
+*	$NetBSD: decbin.sa,v 1.2.44.1 2001/10/01 12:40:21 fvdl Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -95,7 +95,7 @@
 *	in an inex2 exception.  If so, set inex1 in the fpsr and 
 *	check if the inex1 exception is enabled.  If so, set d7 upper
 *	word to $0100.  This will signal unimp.sa that an enabled inex1
-*	exception occured.  Unimp will fix the stack.
+*	exception occurred.  Unimp will fix the stack.
 *	
 
 DECBIN    IDNT    2,1 Motorola 040 Floating Point Software Package

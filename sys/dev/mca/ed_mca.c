@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.8.2.2 2001/09/26 15:28:14 fvdl Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.8.2.3 2001/10/01 12:45:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -781,7 +781,7 @@ edmcaioctl(devvp, xfer, addr, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = wd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		  &wd->sc_dk.dk_label->d_partitions[DISKPART(vdev_rdev(devvpv)];
+		  &wd->sc_dk.dk_label->d_partitions[DISKPART(vdev_rdev(devvp))];
 		return 0;
 
 	case DIOCWDINFO:

@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.7.4.2 2001/09/26 15:28:14 fvdl Exp $	*/
+/*	$NetBSD: mly.c,v 1.7.4.3 2001/10/01 12:45:56 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -2275,7 +2275,7 @@ mlyopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 	if ((mly = device_lookup(&mly_cd, minor(vdev_rdev(devvp)))) == NULL)
 		return (ENXIO);
 
-	vdev_setprivdata(devvp, mly)'
+	vdev_setprivdata(devvp, mly);
 
 	if ((mly->mly_state & MLY_STATE_INITOK) == 0)
 		return (ENXIO);

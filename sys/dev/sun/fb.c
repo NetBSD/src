@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.3 2001/06/24 15:47:45 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.3.4.1 2001/10/01 12:46:24 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,7 +112,7 @@ fb_is_console(node)
 		if (prom_stdout() != PROMDEV_SCREEN)
 			return (0);
 
-		fbnode = getpropint(findroot(), "fb", 0);
+		fbnode = PROM_getpropint(findroot(), "fb", 0);
 		return (fbnode == 0 || node == fbnode);
 
 	case PROM_OBP_V2:
@@ -256,9 +256,9 @@ fb_setsize_obp(fb, depth, def_width, def_height, node)
 	struct fbdevice *fb;
 	int depth, def_width, def_height, node;
 {
-	fb->fb_type.fb_width = getpropint(node, "width", def_width);
-	fb->fb_type.fb_height = getpropint(node, "height", def_height);
-	fb->fb_linebytes = getpropint(node, "linebytes",
+	fb->fb_type.fb_width = PROM_getpropint(node, "width", def_width);
+	fb->fb_type.fb_height = PROM_getpropint(node, "height", def_height);
+	fb->fb_linebytes = PROM_getpropint(node, "linebytes",
 				     (fb->fb_type.fb_width * depth) / 8);
 }
 
@@ -388,9 +388,9 @@ fbrcons_init(fb)
 #endif /* SUN4 */
 	if (!CPU_ISSUN4) {
 		maxcol =
-		    a2int(getpropstring(optionsnode, "screen-#columns"), 80);
+		    a2int(PROM_getpropstring(optionsnode, "screen-#columns"), 80);
 		maxrow =
-		    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
+		    a2int(PROM_getpropstring(optionsnode, "screen-#rows"), 34);
 	}
 #endif /* !RASTERCONS_FULLSCREEN */
 	/*

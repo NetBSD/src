@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2001/08/11 14:47:56 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18.2.1 2001/10/01 12:37:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2001/08/11 14:47:56 chris Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18.2.1 2001/10/01 12:37:35 fvdl Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -258,6 +258,8 @@ vsize_t npages;
 
 static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, vaddr_t, boolean_t));
 static struct vm_page	*pmap_get_ptp __P((struct pmap *, vaddr_t, boolean_t));
+__inline static void pmap_clearbit __P((paddr_t, unsigned int));
+__inline static boolean_t pmap_testbit __P((paddr_t, unsigned int));
 
 extern paddr_t physical_start;
 extern paddr_t physical_freestart;
@@ -369,7 +371,7 @@ pmap_debug(level)
 }
 #endif	/* PMAP_DEBUG */
 
-__inline boolean_t
+__inline static boolean_t
 pmap_is_curpmap(struct pmap *pmap)
 {
     if ((curproc && curproc->p_vmspace->vm_map.pmap == pmap)
@@ -561,35 +563,21 @@ pmap_alloc_pvpage(pmap, mode)
 	 * if not, try to allocate one.
 	 */
 
-	s = splvm();   /* must protect kmem_map/kmem_object with splvm! */
+
 	if (pv_cachedva == 0) {
-		pv_cachedva = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
+		s = splvm();
+		pv_cachedva = uvm_km_kmemalloc(kmem_map, NULL,
 		    PAGE_SIZE, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
+		splx(s);
 		if (pv_cachedva == 0) {
-			splx(s);
 			return (NULL);
 		}
 	}
 
-	/*
-	 * we have a VA, now let's try and allocate a page in the object
-	 * note: we are still holding splvm to protect kmem_object
-	 */
-
-	if (!simple_lock_try(&uvmexp.kmem_object->vmobjlock)) {
-		splx(s);
-		return (NULL);
-	}
-
-	pg = uvm_pagealloc(uvmexp.kmem_object, pv_cachedva -
-			   vm_map_min(kernel_map),
-			   NULL, UVM_PGA_USERESERVE);
+	pg = uvm_pagealloc(NULL, pv_cachedva - vm_map_min(kernel_map), NULL,
+	    UVM_PGA_USERESERVE);
 	if (pg)
 		pg->flags &= ~PG_BUSY;	/* never busy */
-
-	simple_unlock(&uvmexp.kmem_object->vmobjlock);
-	splx(s);
-	/* splvm now dropped */
 
 	if (pg == NULL)
 		return (NULL);
@@ -602,7 +590,7 @@ pmap_alloc_pvpage(pmap, mode)
 	 */
 
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = 0;
 	return (pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
@@ -984,11 +972,11 @@ pmap_map(va, spa, epa, prot)
 	int prot;
 {
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
+		pmap_kenter_pa(va, spa, prot);
 		va += NBPG;
 		spa += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return(va);
 }
 
@@ -1378,8 +1366,7 @@ pmap_alloc_l1pt(void)
 	while (m && va < (pt->pt_va + PD_SIZE)) {
 		pa = VM_PAGE_TO_PHYS(m);
 
-		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 
 		/* Revoke cacheability and bufferability */
 		/* XXX should be done better than this */
@@ -1389,7 +1376,7 @@ pmap_alloc_l1pt(void)
 		m = m->pageq.tqe_next;
 	}
 	pmap_unmap_ptes(pmap_kernel());
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 #ifdef DIAGNOSTIC
 	if (m)
@@ -1408,8 +1395,8 @@ pmap_free_l1pt(pt)
 	struct l1pt *pt;
 {
 	/* Separate the physical memory for the virtual space */
-	pmap_remove(pmap_kernel(), pt->pt_va, pt->pt_va + PD_SIZE);
-	pmap_update();
+	pmap_kremove(pt->pt_va, PD_SIZE);
+	pmap_update(pmap_kernel());
 
 	/* Return the physical memory */
 	uvm_pglistfree(&pt->pt_plist);
@@ -1548,7 +1535,7 @@ pmap_pinit(pmap)
 	/* Map zero page for the pmap. This will also map the L2 for it */
 	pmap_enter(pmap, 0x00000000, systempage.pv_pa,
 	    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap);
 }
 
 
@@ -1607,7 +1594,7 @@ pmap_destroy(pmap)
 	
 	/* Remove the zero page mapping */
 	pmap_remove(pmap, 0x00000000, 0x00000000 + NBPG);
-	pmap_update();
+	pmap_update(pmap);
 
 	/*
 	 * Free any page tables still mapped
@@ -1771,6 +1758,7 @@ pmap_clean_page(pv, is_src)
 			/* This doesn't work, because pmap_protect
 			   doesn't flush changes on pages that it
 			   has write-protected.  */
+
 			/* If the page is not writeable and this
 			   is the source, then there is no need
 			   to flush it from the cache.  */
@@ -1809,11 +1797,6 @@ pmap_find_pvh(phys)
 	int bank, off;
 	struct pv_head *pvh;
 
-#ifdef DIAGNOSTIC
-	if (!pmap_initialized)
-		panic("pmap_find_pv: !pmap_initialized");
-#endif
-
 	if ((bank = vm_physseg_find(atop(phys), &off)) == -1)
 		panic("pmap_find_pv: not a real page, phys=%lx\n", phys);
 	pvh = &vm_physmem[bank].pmseg.pvhead[off];
@@ -1835,12 +1818,10 @@ pmap_zero_page(phys)
 	struct pv_head *pvh;
 
 	/* Get an entry for this page, and clean it it. */
-	PMAP_HEAD_TO_MAP_LOCK();
 	pvh = pmap_find_pvh(phys);
 	simple_lock(&pvh->pvh_lock);
 	pmap_clean_page(pvh->pvh_list, FALSE);
 	simple_unlock(&pvh->pvh_lock);
-	PMAP_HEAD_TO_MAP_UNLOCK();
 	
 	/*
 	 * Hook in the page, zero it, and purge the cache for that
@@ -1917,20 +1898,21 @@ pmap_copy_page(src, dest)
 	paddr_t dest;
 {
 	struct pv_head *src_pvh, *dest_pvh;
+	boolean_t cleanedcache;
 	
-	PMAP_HEAD_TO_MAP_LOCK();
 	/* Get PV entries for the pages, and clean them if needed. */
 	src_pvh = pmap_find_pvh(src);
-	simple_lock(&src_pvh->pvh_lock);
-	dest_pvh = pmap_find_pvh(dest);
-	simple_lock(&dest_pvh->pvh_lock);
-	if (!pmap_clean_page(src_pvh->pvh_list, TRUE))
-		pmap_clean_page(dest_pvh->pvh_list, FALSE);
 	
-	simple_unlock(&dest_pvh->pvh_lock);
+	simple_lock(&src_pvh->pvh_lock);
+	cleanedcache = pmap_clean_page(src_pvh->pvh_list, TRUE);
 	simple_unlock(&src_pvh->pvh_lock);
-	PMAP_HEAD_TO_MAP_UNLOCK();
 
+	if (cleanedcache == 0) { 
+		dest_pvh = pmap_find_pvh(dest);
+		simple_lock(&dest_pvh->pvh_lock);
+		pmap_clean_page(dest_pvh->pvh_list, FALSE);
+		simple_unlock(&dest_pvh->pvh_lock);
+	}
 	/*
 	 * Map the pages into the page hook points, copy them, and purge
 	 * the cache for the appropriate page. Invalidate the TLB
@@ -2556,6 +2538,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * pte pointer is NULL then we are missing the L2 page table
 	 * so we need to create one.
 	 */
+	/* XXX horrible hack to get us working with lockdebug */
+	simple_lock(&pmap->pm_obj.vmobjlock);
 	pte = pmap_pte(pmap, va);
 	if (!pte) {
 		struct vm_page *ptp;
@@ -2731,6 +2715,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	cpu_tlb_flushID_SE(va);
 	error = 0;
 out:
+	simple_unlock(&pmap->pm_obj.vmobjlock);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 	PDEBUG(5, printf("pmap_enter: pte = V%p %08x\n", pte, *pte));
 
@@ -2755,6 +2740,8 @@ pmap_kenter_pa(va, pa, prot)
 		 * kernel as required.
 		 */
 
+	    	/* must lock the pmap */
+	    	simple_lock(&(pmap_kernel()->pm_obj.vmobjlock));
 		/* Allocate a page table */
 		pg = uvm_pagealloc(&(pmap_kernel()->pm_obj), 0, NULL,
 		    UVM_PGA_USERESERVE | UVM_PGA_ZERO);
@@ -2765,6 +2752,7 @@ pmap_kenter_pa(va, pa, prot)
 
 		/* Wire this page table into the L1. */
 		pmap_map_in_l1(pmap, va, VM_PAGE_TO_PHYS(pg), TRUE);
+		simple_unlock(&(pmap_kernel()->pm_obj.vmobjlock));
 	}
 	pte = vtopte(va);
 	KASSERT(!pmap_pte_v(pte));
@@ -3075,10 +3063,10 @@ pmap_dump_pvlist(phys, m)
 
 #endif	/* PMAP_DEBUG */
 
-boolean_t
+__inline static boolean_t
 pmap_testbit(pa, setbits)
 	paddr_t pa;
-	int setbits;
+	unsigned int setbits;
 {
 	int bank, off;
 
@@ -3159,19 +3147,22 @@ pmap_unmap_ptes(pmap)
  * constants and the latter would require an extra inversion at run-time.
  */
 
-void
+static void
 pmap_clearbit(pa, maskbits)
 	paddr_t pa;
-	int maskbits;
+	unsigned int maskbits;
 {
 	struct pv_entry *pv;
 	struct pv_head *pvh;
 	pt_entry_t *pte;
 	vaddr_t va;
-	int bank, off;
+	int bank, off, tlbentry;
 
 	PDEBUG(1, printf("pmap_clearbit: pa=%08lx mask=%08x\n",
 	    pa, maskbits));
+
+	tlbentry = 0;
+	
 	if ((bank = vm_physseg_find(atop(pa), &off)) == -1)
 		return;
 	PMAP_HEAD_TO_MAP_LOCK();
@@ -3194,27 +3185,50 @@ pmap_clearbit(pa, maskbits)
 	 */
 	for (pv = pvh->pvh_list; pv; pv = pv->pv_next) {
 		va = pv->pv_va;
-
-		/*
-		 * XXX don't write protect pager mappings
-		 */
-		if (va >= uvm.pager_sva && va < uvm.pager_eva) {
-			printf("pmap_clearbit: found page VA on pv_list\n");
-			continue;
-		}
-
 		pv->pv_flags &= ~maskbits;
 		pte = pmap_pte(pv->pv_pmap, va);
 		KASSERT(pte != NULL);
 		if (maskbits & (PT_Wr|PT_M))
-			*pte &= ~PT_AP(AP_W);
+		{
+		    if ((pv->pv_flags & PT_NC))
+		    {
+			/*
+			 * entry is not cacheable, so reenable the cache,
+			 * nothing to flush
+			 */
+			*pte |= (PT_C | PT_B);
+			pv->pv_flags &= ~PT_NC;
+		    } else {
+			/*
+			 * entry is cacheable check if pmap is current if it
+			 * is flush it, otherwise it won't be in the cache
+			 */
+			if (pmap_is_curpmap(pv->pv_pmap))
+			{
+			    /* entry is in current pmap purge it */
+			    cpu_cache_purgeID_rng(pv->pv_va, NBPG);
+			}
+		    }
+
+		    /* make the pte read only */
+	    	    *pte &= ~PT_AP(AP_W);
+		  
+	    	    if (pmap_is_curpmap(pv->pv_pmap))
+			/* 
+			 * if we had cacheable pte's we'd clean the pte out to
+			 * memory here
+			 */
+    			/* 
+			 * flush tlb entry as it's in the current pmap
+			 */
+			cpu_tlb_flushID_SE(pv->pv_va); 
+
+		}
 		if (maskbits & PT_H)
 			*pte = (*pte & ~L2_MASK) | L2_INVAL;
 	}
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
-	cpu_tlb_flushID();
-
 }
 
 

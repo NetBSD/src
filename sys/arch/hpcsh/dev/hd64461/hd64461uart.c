@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.3 2001/07/13 16:21:39 uch Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.3.2.1 2001/10/01 12:39:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -215,6 +215,7 @@ hd64461uart_info(struct hd64461uart_softc *sc)
 {
 	const char name[] = __FUNCTION__;
 
+	printf("\n");
 	dbg_banner_start(name, sizeof name);
 	dbg_banner_end();
 }

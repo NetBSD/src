@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.50 2001/07/07 14:21:00 simonb Exp $	*/
+/*	$NetBSD: rcons.c,v 1.50.4.1 2001/10/01 12:41:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -53,7 +53,7 @@
 #include <dev/rasops/rasops.h>
 #include <dev/rcons/rcons.h>
 
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 #include <machine/conf.h>
 
@@ -100,7 +100,7 @@ rcons_connect (info)
 	int cookie, epwf, bior;
 
 	/* XXX */
-	switch (info->fi_type.fb_boardtype) {
+	switch (info->fi_type.fb_type) {
 	case PMAX_FBTYPE_MFB:
 		ri.ri_depth = 8;
 		ri.ri_flg = RI_CLEAR | RI_FORCEMONO;
@@ -141,7 +141,7 @@ rcons_connect (info)
 	if (rasops_init(&ri, 5000, 80))
 		panic("rcons_connect: rasops_init failed");
 
-	if (ri.ri_depth == 8 && info->fi_type.fb_boardtype != PMAX_FBTYPE_MFB)
+	if (ri.ri_depth == 8 && info->fi_type.fb_type != PMAX_FBTYPE_MFB)
 		info->fi_driver->fbd_putcmap(info, rasops_cmap, 0, 256);
 
 	fbconstty = &rcons_tty [0];

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_fcntl.h,v 1.3 2001/02/04 22:59:26 christos Exp $ */
+/* $NetBSD: linux_fcntl.h,v 1.3.8.1 2001/10/01 12:43:41 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -84,5 +84,9 @@
 
 #define LINUX_LOCK_EX		4  /* F_EXLCK in Linux, and comment "or 3 " */
 #define LINUX_LOCK_SH		8  /* F_SHLCK in Linux, and comment "or 4'  */
+
+#define LINUX_F_GETLK64		12
+#define LINUX_F_SETLK64		13
+#define LINUX_F_SETLKW64	14
 
 #endif /* !_POWERPC_LINUX_FCNTL_H */

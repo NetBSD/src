@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.18 2000/08/23 12:08:16 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.18.2.1 2001/10/01 12:42:21 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
 #include <sys/conf.h>
 
 #include <machine/autoconf.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/kbd.h>
 #include <machine/fbvar.h>
 #include <machine/conf.h>
@@ -203,9 +203,9 @@ fb_setsize(fb, depth, def_width, def_height, node)
 	struct fbdevice *fb;
 	int depth, def_width, def_height, node;
 {
-	fb->fb_type.fb_width = getpropint(node, "width", def_width);
-	fb->fb_type.fb_height = getpropint(node, "height", def_height);
-	fb->fb_linebytes = getpropint(node, "linebytes",
+	fb->fb_type.fb_width = PROM_getpropint(node, "width", def_width);
+	fb->fb_type.fb_height = PROM_getpropint(node, "height", def_height);
+	fb->fb_linebytes = PROM_getpropint(node, "linebytes",
 				     (fb->fb_type.fb_width * depth) / 8);
 }
 
@@ -262,8 +262,8 @@ fbrcons_init(fb)
 	maxcol = 0;
 
 #if !defined(RASTERCONS_FULLSCREEN)
-	maxcol = a2int(getpropstring(optionsnode, "screen-#columns"), 80);
-	maxrow = a2int(getpropstring(optionsnode, "screen-#rows"), 34);
+	maxcol = a2int(PROM_getpropstring(optionsnode, "screen-#columns"), 80);
+	maxrow = a2int(PROM_getpropstring(optionsnode, "screen-#rows"), 34);
 #endif /* !RASTERCONS_FULLSCREEN */
 	/* 
 	 * XXX until somebody actually sets the colormap after a call to 

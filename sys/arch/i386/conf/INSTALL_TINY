@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.38 2001/07/30 19:59:06 ad Exp $
+#	$NetBSD: INSTALL_TINY,v 1.38.4.1 2001/10/01 12:39:38 fvdl Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -188,13 +188,13 @@ pcic0   at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 pcic1   at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
 
 # EISA bus support
-#eisa*	at mainbus?
-#eisa*	at pceb?
+#eisa0	at mainbus?
+#eisa0	at pceb?
 
 # ISA bus support
-isa*	at mainbus?
-#eisa*	at pceb?
-#isa*	at pcib?
+isa0	at mainbus?
+#isa0	at pceb?
+#isa0	at pcib?
 
 # ISA Plug-and-Play bus support
 #isapnp0	at isa?
@@ -255,6 +255,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #iop*	at pci? dev ? function ?	# I/O processor
 #iopsp*	at iop? tid ?			# SCSI/FC-AL ports
 #ld*	at iop? tid ?			# block devices
+#dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
 # SCSI Controllers and Devices
 

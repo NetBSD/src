@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.4 2000/09/11 02:23:14 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.4.6.1 2001/10/01 12:46:12 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,6 +32,7 @@
  */
 
 #include "rf_types.h"
+#include "rf_archs.h"
 #include "rf_threadstuff.h"
 #include "rf_mcpair.h"
 #include "rf_debugMem.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 2001/08/31 18:06:13 martin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18.2.1 2001/10/01 12:42:30 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -157,17 +157,18 @@ extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 
 int pmap_count_res __P((pmap_t pmap));
-/* int pmap_change_wiring __P((pmap_t pm, vaddr_t va, boolean_t wired)); */
-#define pmap_resident_count(pm)		pmap_count_res((pm))
-#define pmap_from_phys_address(x,f)	((x)>>PGSHIFT)
-#define	pmap_phys_address(x)		((((paddr_t)(x))<<PGSHIFT)|PMAP_NC)
-#define	pmap_update()			/* nothing (yet) */
+int pmap_count_wired __P((pmap_t pmap));
+#define	pmap_resident_count(pm)		pmap_count_res((pm))
+#define	pmap_wired_count(pm)		pmap_count_wired((pm))
+#define	pmap_from_phys_address(x,f)	((x)&~PGOFSET)
+#define	pmap_phys_address(x)		(x)
+#define	pmap_update(pmap)		/* nothing (yet) */
 
 void pmap_bootstrap __P((u_long kernelstart, u_long kernelend, u_int numctx));
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
-#define PMAP_PREFER(pa, va)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT+1))))
+#define	PMAP_PREFER(pa, va)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT+1))))
 
-#define PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
+#define	PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
 
 /* SPARC specific? */
 void		pmap_redzone __P((void));

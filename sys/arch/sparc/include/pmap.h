@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.57 2001/06/18 15:42:06 mrg Exp $ */
+/*	$NetBSD: pmap.h,v 1.57.4.1 2001/10/01 12:42:05 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -258,7 +258,7 @@ vaddr_t		pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 paddr_t		pmap_phys_address __P((int));
 void		pmap_reference __P((pmap_t));
 void		pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
-#define		pmap_update()		/* nothing (yet) */
+#define		pmap_update(pmap)		/* nothing (yet) */
 void		pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 void		pmap_redzone __P((void));
 void		kvm_uncache __P((caddr_t, int));

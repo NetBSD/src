@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.2 2001/07/30 10:46:08 rjs Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.2.2.1 2001/10/01 12:37:42 fvdl Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ sacpcic_attach(parent, self, aux)
 	sc->sc_pc.sc_iot = psc->sc_iot;
 	sc->sc_ioh = psc->sc_ioh;
 #ifdef hpcarm
-	p = platid_search(&platid, sacpcic_platid_table);
+	p = platid_search_data(&platid, sacpcic_platid_table);
 #endif
 
 	for(i = 0; i < 2; i++) {

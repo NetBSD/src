@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.2 2001/08/01 14:02:58 rjs Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.2.2.1 2001/10/01 12:37:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ sacc_attach(parent, self, aux)
 	sc->sc_piot = psc->sc_iot;
 	sc->sc_gpioh = psc->sc_gpioh;
 #ifdef hpcarm
-	if ((p = platid_search(&platid, sacc_platid_table)) == NULL)
+	if ((p = platid_search_data(&platid, sacc_platid_table)) == NULL)
 		return;
 
 	gpiopin = (int) p->data;

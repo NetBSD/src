@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.58 2001/07/14 02:06:34 christos Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.58.2.1 2001/10/01 12:46:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -167,7 +167,7 @@ const struct execsw execsw_builtin[] = {
 #ifdef COMPAT_NETBSD32
 	{ sizeof(struct netbsd32_exec), exec_netbsd32_makecmds, { NULL },
 	  &emul_netbsd32, EXECSW_PRIO_FIRST,
-	  0, netbsd32_copyargs, netbsd32_setregs }, /* sparc 32 bit */
+	  0, netbsd32_copyargs, NULL }, /* sparc 32 bit */
 #endif
 	{ sizeof(struct exec), exec_aout_makecmds, { NULL },
 #ifdef COMPAT_AOUT
@@ -178,12 +178,12 @@ const struct execsw execsw_builtin[] = {
 	  &emul_netbsd,
 #endif /* COMPAT_AOUT */
 	  EXECSW_PRIO_ANY,
-	  0, copyargs, setregs },	/* a.out binaries */
+	  0, copyargs, NULL },	/* a.out binaries */
 #endif
 #ifdef EXEC_COFF
 	{ COFF_HDR_SIZE, exec_coff_makecmds, { NULL },
 	  &emul_netbsd, EXECSW_PRIO_ANY,
-	  0, copyargs, setregs },	/* coff binaries */
+	  0, copyargs, NULL },	/* coff binaries */
 #endif
 #ifdef EXEC_ECOFF
 #ifdef COMPAT_OSF1
@@ -212,61 +212,61 @@ const struct execsw execsw_builtin[] = {
 	  { ELF32NAME2(netbsd32,probe) },
 	  &emul_netbsd32, EXECSW_PRIO_FIRST,
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
-	  netbsd32_elf32_copyargs, netbsd32_setregs }, /* NetBSD32 32bit ELF bins */
+	  netbsd32_elf32_copyargs, NULL }, /* NetBSD32 32bit ELF bins */
 	  /* This one should go first so it matches instead of netbsd */
 #endif
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
 	  { ELF32NAME2(netbsd,probe) },
 	  &emul_netbsd, EXECSW_PRIO_ANY,
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
-	  elf32_copyargs, setregs },	/* NetBSD 32bit ELF bins */
+	  elf32_copyargs, NULL },	/* NetBSD 32bit ELF bins */
 #ifdef COMPAT_FREEBSD
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
 	  { ELF32NAME2(freebsd,probe) },
 	  &emul_freebsd, EXECSW_PRIO_ANY,
 	  FREEBSD_ELF_AUX_ARGSIZ,
-	  elf32_copyargs, freebsd_setregs },	/* FreeBSD 32bit ELF bins (not 64bit safe )*/
+	  elf32_copyargs, NULL },	/* FreeBSD 32bit ELF bins (not 64bit safe )*/
 #endif
 #ifdef COMPAT_LINUX
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
 	  { ELF32NAME2(linux,probe) },
 	  &emul_linux, EXECSW_PRIO_ANY,
 	  LINUX_ELF_AUX_ARGSIZ,
-	  LINUX_COPYARGS_FUNCTION, setregs },	/* Linux 32bit ELF bins */
+	  LINUX_COPYARGS_FUNCTION, NULL },	/* Linux 32bit ELF bins */
 #endif
 #if defined(EXEC_MACHO) && defined(COMPAT_MACH)
 	{ sizeof (struct exec_macho_fat_header), exec_macho_makecmds,
 	  { .mach_probe_func = exec_mach_probe },
 	  &emul_mach, EXECSW_PRIO_ANY,
 	  MAXPATHLEN + 1,
-	  exec_mach_copyargs, setregs },	/* Mach 32bit MACH-O bins */
+	  exec_mach_copyargs, NULL },	/* Mach 32bit MACH-O bins */
 #endif
 #ifdef COMPAT_SVR4_32
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
 	  { ELF32NAME2(svr4_32,probe) },
 	  &emul_svr4_32, EXECSW_PRIO_ANY,
 	  SVR4_32_AUX_ARGSIZ,
-	  svr4_32_copyargs, svr4_32_setregs },	/* SVR4 32bit ELF bins (not 64bit safe) */
+	  svr4_32_copyargs, NULL }, /* SVR4 32bit ELF bins (not 64bit safe) */
 #endif
 #ifdef COMPAT_SVR4
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
 	  { ELF32NAME2(svr4,probe) },
 	  &emul_svr4, EXECSW_PRIO_ANY,
 	  SVR4_AUX_ARGSIZ,
-	  svr4_copyargs, svr4_setregs },	/* SVR4 32bit ELF bins (not 64bit safe) */
+	  svr4_copyargs, NULL },   /* SVR4 32bit ELF bins (not 64bit safe) */
 #endif
 #ifdef COMPAT_IBCS2
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
 	  { ELF32NAME2(ibcs2,probe) },
 	  &emul_ibcs2, EXECSW_PRIO_ANY,
-	  IBCS2_ELF_AUX_ARGSIZ, elf32_copyargs, setregs },
+	  IBCS2_ELF_AUX_ARGSIZ, elf32_copyargs, NULL },
 				/* SCO 32bit ELF bins (not 64bit safe) */
 #endif
 #ifdef EXEC_ELF_CATCHALL
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds, { NULL },
 	  &emul_netbsd, EXECSW_PRIO_LAST,
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
-	  elf32_copyargs, setregs },  /* catch all - run as NetBSD 32bit ELF */
+	  elf32_copyargs, NULL }, /* catch all - run as NetBSD 32bit ELF */
 #endif
 #endif /* EXEC_ELF32 */
 #ifdef EXEC_ELF64
@@ -275,77 +275,77 @@ const struct execsw execsw_builtin[] = {
 	  { ELF64NAME2(netbsd,probe) },
 	  &emul_netbsd, EXECSW_PRIO_ANY,
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
-	  elf64_copyargs, setregs }, /* NetBSD 64bit ELF bins */
+	  elf64_copyargs, NULL }, 	/* NetBSD 64bit ELF bins */
 #ifdef COMPAT_LINUX
 	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds,
 	  { ELF64NAME2(linux,probe) },
 	  &emul_linux, EXECSW_PRIO_ANY,
 	  LINUX_ELF_AUX_ARGSIZ,
-	  linux_elf64_copyargs, setregs }, /* Linux 64bit ELF bins */
+	  linux_elf64_copyargs, NULL },	/* Linux 64bit ELF bins */
 #endif
 #ifdef COMPAT_SVR4
 	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds,
 	  { ELF64NAME2(svr4,probe) },
 	  &emul_svr4, EXECSW_PRIO_ANY,
 	  SVR4_AUX_ARGSIZ64,
-	  svr4_copyargs64, svr4_setregs },	/* SVR4 64bit ELF bins (not 64bit safe) */
+	  svr4_copyargs64, NULL },	/* SVR4 64bit ELF bins (not 64bit safe) */
 #endif
 #ifdef EXEC_ELF_CATCHALL
 	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds, { NULL },
 	  &emul_netbsd, EXECSW_PRIO_ANY,
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
-	  elf64_copyargs, setregs }, /* catch all - run as NetBSD 64bit ELF */
+	  elf64_copyargs, NULL }, /* catch all - run as NetBSD 64bit ELF */
 #endif
 #endif /* EXEC_ELF64 */
 #ifdef COMPAT_SUNOS
 #ifdef COMPAT_NETBSD32
 	{ SUNOS32_AOUT_HDR_SIZE, exec_sunos32_aout_makecmds, { NULL },
 	  &emul_sunos, EXECSW_PRIO_ANY,
-	  0, netbsd32_copyargs, netbsd32_setregs }, /* SunOS a.out, 64-bit kernel */
+	  0, netbsd32_copyargs, NULL }, 	/* SunOS a.out, 64-bit kernel */
 #else
 	{ SUNOS_AOUT_HDR_SIZE, exec_sunos_aout_makecmds, { NULL },
 	  &emul_sunos, EXECSW_PRIO_ANY,
-	  0, copyargs, setregs }, /* SunOS a.out */
+	  0, copyargs, NULL }, 		/* SunOS a.out */
 #endif
 #endif
 #if defined(COMPAT_LINUX) && defined(EXEC_AOUT)
 	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, { NULL },
 	  &emul_linux, EXECSW_PRIO_ANY,
-	  LINUX_AOUT_AUX_ARGSIZ, linux_aout_copyargs, linux_setregs }, /* linux a.out */
+	  LINUX_AOUT_AUX_ARGSIZ, linux_aout_copyargs, NULL }, /* linux a.out */
 #endif
 #ifdef COMPAT_IBCS2
 	{ COFF_HDR_SIZE, exec_ibcs2_coff_makecmds, { NULL },
 	  &emul_ibcs2, EXECSW_PRIO_ANY,
-	  0, copyargs, ibcs2_setregs },	/* coff binaries */
+	  0, copyargs, NULL },	/* coff binaries */
 	{ XOUT_HDR_SIZE, exec_ibcs2_xout_makecmds, { NULL },
 	  &emul_ibcs2, EXECSW_PRIO_ANY,
-	  0, copyargs, ibcs2_setregs },	/* x.out binaries */
+	  0, copyargs, NULL },	/* x.out binaries */
 #endif
 #if defined(COMPAT_FREEBSD) && defined(EXEC_AOUT)
 	{ FREEBSD_AOUT_HDR_SIZE, exec_freebsd_aout_makecmds, { NULL },
 	  &emul_freebsd, EXECSW_PRIO_ANY,
-	  0, copyargs, freebsd_setregs },	/* a.out */
+	  0, copyargs, NULL },	/* a.out */
 #endif
 #ifdef COMPAT_HPUX
 	{ HPUX_EXEC_HDR_SIZE, exec_hpux_makecmds, { NULL },
 	  &emul_hpux, EXECSW_PRIO_ANY,
-	  0, copyargs, hpux_setregs },	/* HP-UX a.out */
+	  0, copyargs, NULL },	/* HP-UX a.out */
 #endif
 #ifdef COMPAT_M68K4K
 	{ sizeof(struct exec), exec_m68k4k_makecmds, { NULL },
 	  &emul_netbsd, EXECSW_PRIO_ANY,
-	  0, copyargs, setregs },	/* m68k4k a.out */
+	  0, copyargs, NULL },	/* m68k4k a.out */
 #endif
 #ifdef COMPAT_VAX1K
 	{ sizeof(struct exec), exec_vax1k_makecmds, { NULL },
 	  &emul_netbsd, EXECSW_PRIO_ANY,
-	  0, copyargs, setregs },	/* vax1k a.out */
+	  0, copyargs, NULL },	/* vax1k a.out */
 #endif
 #ifdef COMPAT_PECOFF
 	{ sizeof(struct exec), exec_pecoff_makecmds, { NULL },
 	  &emul_netbsd, EXECSW_PRIO_ANY, /* XXX emul_pecoff once it's different */
 	  howmany(sizeof(struct pecoff_args), sizeof(char *)),
-	  pecoff_copyargs, setregs },	/* Win32/CE PE/COFF */
+	  pecoff_copyargs, NULL },	/* Win32/CE PE/COFF */
 #endif
 };
 int nexecs_builtin = (sizeof(execsw_builtin) / sizeof(struct execsw));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.25 2001/02/03 12:48:43 tsutsui Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.25.6.1 2001/10/01 12:46:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -62,13 +62,13 @@
 /*
  * Structures associated with iso_node caching.
  */
-struct iso_node **isohashtbl;
+LIST_HEAD(ihashhead, iso_node) *isohashtbl;
 u_long isohash;
 #define	INOHASH(device, inum)	(((device) + ((inum)>>12)) & isohash)
 struct simplelock cd9660_ihash_slock;
 
 #ifdef ISODEVMAP
-struct iso_node **idvhashtbl;
+LIST_HEAD(idvhashhead, iso_dnode) *idvhashtbl;
 u_long idvhash;
 #define	DNOHASH(device, inum)	(((device) + ((inum)>>12)) & idvhash)
 #endif
@@ -98,6 +98,62 @@ cd9660_init()
 }
 
 /*
+ * Reinitialize inode hash table.
+ */
+
+void
+cd9660_reinit()
+{
+	struct iso_node *ip;
+	struct ihashhead *oldhash1, *hash1;
+	u_long oldmask1, mask1, val;
+#ifdef ISODEVMAP
+	struct iso_dnode *dp;
+	struct idvhashhead *oldhash2, *hash2;
+	u_long oldmask2, mask2;
+#endif
+	int i;
+
+	hash1 = hashinit(desiredvnodes, HASH_LIST, M_ISOFSMNT, M_WAITOK,
+	    &mask1);
+#ifdef ISODEVMAP
+	hash2 = hashinit(desiredvnodes / 8, HASH_LIST, M_ISOFSMNT, M_WAITOK,
+	    &mask2);
+#endif
+
+	simple_lock(&cd9660_ihash_slock);
+	oldhash1 = isohashtbl;
+	oldmask1 = isohash;
+	isohashtbl = hash1;
+	isohash = mask1;
+#ifdef ISODEVMAP
+	oldhash2 = idvhashtbl;
+	oldmask2 = idvhash;
+	idvhashtbl = hash2;
+	idvhash = mask2;
+	for (i = 0; i <= oldmask2; i++) {
+		while ((dp = LIST_FIRST(&oldhash2[i])) != NULL) {
+			LIST_REMOVE(dp, d_hash);
+			val = DNOHASH(dp->i_dev, dp->i_number);
+			LIST_INSERT_HEAD(&hash2[val], dp, d_hash);
+		}
+	}
+#endif
+	for (i = 0; i <= oldmask1; i++) {
+		while ((ip = LIST_FIRST(&oldhash1[i])) != NULL) {
+			LIST_REMOVE(ip, i_hash);
+			val = INOHASH(ip->i_dev, ip->i_number);
+			LIST_INSERT_HEAD(&hash1[val], ip, i_hash);
+		}
+	}
+	simple_unlock(&cd9660_ihash_slock);
+	hashdone(oldhash1, M_ISOFSMNT);
+#ifdef ISODEVMAP
+	hashdone(oldhash2, M_ISOFSMNT);
+#endif
+}
+
+/*
  * Destroy node pool and hash table.
  */
 void
@@ -120,29 +176,23 @@ iso_dmap(device, inum, create)
 	ino_t	inum;
 	int	create;
 {
-	struct iso_dnode **dpp, *dp, *dq;
+	struct iso_dnode *dp;
+	struct idvhashhead *hp;
 
-	dpp = &idvhashtbl[DNOHASH(device, inum)];
-	for (dp = *dpp;; dp = dp->d_next) {
-		if (dp == NULL)
-			return (NULL);
+	hp = &idvhashtbl[DNOHASH(device, inum)];
+	LIST_FOREACH(dp, hp, d_hash) {
 		if (inum == dp->i_number && device == dp->i_dev)
 			return (dp);
+	}
 
 	if (!create)
 		return (NULL);
 
 	MALLOC(dp, struct iso_dnode *, sizeof(struct iso_dnode), M_CACHE,
 	       M_WAITOK);
-	dp->i_dev = dev;
-	dp->i_number = ino;
-
-	if (dq = *dpp)
-		dq->d_prev = dp->d_next;
-	dp->d_next = dq;
-	dp->d_prev = dpp;
-	*dpp = dp;
-
+	dp->i_dev = device;
+	dp->i_number = inum;
+	LIST_INSERT_HEAD(hp, dp, d_hash);
 	return (dp);
 }
 
@@ -150,15 +200,14 @@ void
 iso_dunmap(device)
 	dev_t device;
 {
-	struct iso_dnode **dpp, *dp, *dq;
+	struct idvhashhead *dpp;
+	struct iso_dnode *dp, *dq;
 	
 	for (dpp = idvhashtbl; dpp <= idvhashtbl + idvhash; dpp++) {
-		for (dp = *dpp; dp != NULL; dp = dq)
-			dq = dp->d_next;
+		for (dp = LIST_FIRST(dpp); dp != NULL; dp = dq) {
+			dq = LIST_NEXT(dp, d_hash);
 			if (device == dp->i_dev) {
-				if (dq)
-					dq->d_prev = dp->d_prev;
-				*dp->d_prev = dq;
+				LIST_REMOVE(dp, d_hash);
 				FREE(dp, M_CACHE);
 			}
 		}
@@ -180,7 +229,7 @@ cd9660_ihashget(dev, inum)
 
 loop:
 	simple_lock(&cd9660_ihash_slock);
-	for (ip = isohashtbl[INOHASH(dev, inum)]; ip; ip = ip->i_next) {
+	LIST_FOREACH(ip, &isohashtbl[INOHASH(dev, inum)], i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
 			simple_lock(&vp->v_interlock);
@@ -203,15 +252,11 @@ void
 cd9660_ihashins(ip)
 	struct iso_node *ip;
 {
-	struct iso_node **ipp, *iq;
+	struct ihashhead *ipp;
 
 	simple_lock(&cd9660_ihash_slock);
 	ipp = &isohashtbl[INOHASH(ip->i_dev, ip->i_number)];
-	if ((iq = *ipp) != NULL)
-		iq->i_prev = &ip->i_next;
-	ip->i_next = iq;
-	ip->i_prev = ipp;
-	*ipp = ip;
+	LIST_INSERT_HEAD(ipp, ip, i_hash);
 	simple_unlock(&cd9660_ihash_slock);
 
 	lockmgr(&ip->i_vnode->v_lock, LK_EXCLUSIVE, &ip->i_vnode->v_interlock);
@@ -224,16 +269,8 @@ void
 cd9660_ihashrem(ip)
 	struct iso_node *ip;
 {
-	struct iso_node *iq;
-
 	simple_lock(&cd9660_ihash_slock);
-	if ((iq = ip->i_next) != NULL)
-		iq->i_prev = ip->i_prev;
-	*ip->i_prev = iq;
-#ifdef DIAGNOSTIC
-	ip->i_next = NULL;
-	ip->i_prev = NULL;
-#endif
+	LIST_REMOVE(ip, i_hash);
 	simple_unlock(&cd9660_ihash_slock);
 }
 

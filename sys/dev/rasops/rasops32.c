@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.8 2000/06/13 13:36:59 ad Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.8.8.1 2001/10/01 12:46:15 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.8 2000/06/13 13:36:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.8.8.1 2001/10/01 12:46:15 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.8 2000/06/13 13:36:59 ad Exp $");
 static void 	rasops32_putchar __P((void *, int, int, u_int, long attr));
 
 /*
- * Initalize a 'rasops_info' descriptor for this depth.
+ * Initialize a 'rasops_info' descriptor for this depth.
  */
 void
 rasops32_init(ri)

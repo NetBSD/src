@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26.4.2 2001/09/26 15:28:09 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.26.4.3 2001/10/01 12:44:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -380,7 +380,7 @@ mdioctl(devvp, cmd, data, flag, proc)
 	struct md_softc *sc;
 	struct md_conf *umd;
 
-	sc = vdev_getprivdata(devvp);
+	sc = vdev_privdata(devvp);
 
 	/* If this is not the raw partition, punt! */
 	if (DISKPART(vdev_rdev(devvp)) != RAW_PART)

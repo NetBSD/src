@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 2001/03/22 12:47:11 minoura Exp $
+#	$NetBSD: genassym.cf,v 1.16.4.1 2001/10/01 12:43:12 fvdl Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -59,6 +59,8 @@ include <machine/cpu.h>
 include <machine/psl.h>
 include <machine/reg.h>
 include <machine/pte.h>
+
+include <machine/bootinfo.h>
 
 # values for mmutype
 define	MMU_68060		MMU_68060
@@ -224,3 +226,6 @@ define SVR4_SYS_context		SVR4_SYS_context
 define SVR4_SYS_exit		SVR4_SYS_exit
 define SVR4_SETCONTEXT		SVR4_SETCONTEXT
 endif
+
+# Bootloader / kernel interface
+define X68K_BOOTIF_VERS		X68K_BOOTIF_VERS

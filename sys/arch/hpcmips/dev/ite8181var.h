@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181var.h,v 1.5 2001/03/26 09:40:45 sato Exp $	*/
+/*	$NetBSD: ite8181var.h,v 1.5.4.1 2001/10/01 12:38:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -67,5 +67,5 @@ struct ite8181_softc {
 	int			sc_lcd; /* lcd on/off */
 };
 
-int	ite8181_probe	__P((bus_space_tag_t, bus_space_handle_t));
-void	ite8181_attach	__P((struct ite8181_softc *));
+int	ite8181_probe(bus_space_tag_t, bus_space_handle_t);
+void	ite8181_attach(struct ite8181_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.6 2001/02/28 14:52:48 mrg Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.6.6.1 2001/10/01 12:46:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ hmeattach_sbus(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	burst = getpropint(node, "burst-sizes", -1);
+	burst = PROM_getpropint(node, "burst-sizes", -1);
 	if (burst == -1)
 		/* take SBus burst sizes */
 		burst = sbusburst;

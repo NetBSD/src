@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1 2001/07/28 13:28:03 chris Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.1.4.1 2001/10/01 12:37:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -489,7 +489,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	pt_entry_t *ptep/*, pte*/;
 
 #ifdef DEBUG_DMA
-	printf("dmamem_map: t=%p segs=%p nsegs=%x size=%x flags=%x\n", t, segs, nsegs, size, flags);
+	printf("dmamem_map: t=%p segs=%p nsegs=%x size=%lx flags=%x\n", t,
+	    segs, nsegs, (unsigned long)size, flags);
 #endif	/* DEBUG_DMA */
 
 	size = round_page(size);
@@ -533,7 +534,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 #endif	/* DEBUG_DMA */
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 #ifdef DEBUG_DMA
 	printf("dmamem_map: =%p\n", *kvap);
 #endif	/* DEBUG_DMA */
@@ -552,7 +553,8 @@ _bus_dmamem_unmap(t, kva, size)
 {
 
 #ifdef DEBUG_DMA
-	printf("dmamem_unmap: t=%p kva=%p size=%x\n", t, kva, size);
+	printf("dmamem_unmap: t=%p kva=%p size=%lx\n", t, kva,
+	    (unsigned long)size);
 #endif	/* DEBUG_DMA */
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)

@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.1 2001/09/02 05:53:38 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.1.2.1 2001/10/01 12:42:20 fvdl Exp $
 #
 # from: $NetBSD: POWEROFSEVEN32,v 1.10 2001/08/25 15:04:26 mrg Exp
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
@@ -90,11 +90,11 @@ makeoptions 	DEBUG="-g"
 ## Adds code to the kernel that does internal consistency checks, and will
 ## cause the kernel to panic if corruption of internal data structures
 ## is detected.
-options 	DIAGNOSTIC	# extra kernel sanity checking
+#options 	DIAGNOSTIC	# extra kernel sanity checking
 
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
-options 	DEBUG
+#options 	DEBUG
 
 ## Make SCSI/PCI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE
@@ -145,7 +145,7 @@ options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
-#file-system	NULLFS		# NULL layered filesystem
+file-system	NULLFS		# NULL layered filesystem
 file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem
 #file-system	UMAPFS		# uid/gid remapping filesystem
@@ -160,13 +160,13 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
+#options 	SOFTDEP         # FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
-options 	INET6		# IPV6
-options 	IPSEC		# IP security
-options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
@@ -283,22 +283,22 @@ ms0	at com?					# mouse
 #scsibus* at fas?
 
 ## GLM support
-siop*	at pci? dev ? function ?			# 53C875 "glm" compatible
-scsibus* at siop?
+#siop*	at pci? dev ? function ?			# 53C875 "glm" compatible
+#scsibus* at siop?
 
 # PCI SCSI cards
-ahc*	at pci? dev ? function ?
-scsibus* at ahc?
+#ahc*	at pci? dev ? function ?
+#scsibus* at ahc?
 
 ## These entries find devices on all SCSI busses and assign
 ## unit numbers dynamically.
-sd*	at scsibus? target ? lun ?		# SCSI disks
-st*	at scsibus? target ? lun ?		# SCSI tapes
-cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
-ch*	at scsibus? target ? lun ?		# SCSI changer devices
-ss*	at scsibus? target ? lun ?		# SCSI scanners
-ses*	at scsibus? target ? lun ?		# SCSI SES/SAF-TE devices
-uk*	at scsibus? target ? lun ?		# unknown SCSI
+#sd*	at scsibus? target ? lun ?		# SCSI disks
+#st*	at scsibus? target ? lun ?		# SCSI tapes
+#cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
+#ch*	at scsibus? target ? lun ?		# SCSI changer devices
+#ss*	at scsibus? target ? lun ?		# SCSI scanners
+#ses*	at scsibus? target ? lun ?		# SCSI SES/SAF-TE devices
+#uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 # PCI IDE.
 pciide* at pci ? dev ? function ? flags 0x0000
@@ -370,14 +370,14 @@ options 	TLP_MATCH_21140
 options 	TLP_MATCH_21142
 
 # MII/PHY support
-exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
-inphy*	at mii? phy ?			# Intel 82555 PHYs
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+#exphy*	at mii? phy ?			# 3Com internal PHYs
+#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+#inphy*	at mii? phy ?			# Intel 82555 PHYs
+#lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
-qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
-tlphy*	at mii? phy ?			# ThunderLAN PHYs
+#qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+#sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+#tlphy*	at mii? phy ?			# ThunderLAN PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 ## Loopback network interface; required

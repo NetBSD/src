@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200var.h,v 1.6 2001/03/26 09:40:45 sato Exp $	*/
+/*	$NetBSD: mq200var.h,v 1.6.4.1 2001/10/01 12:38:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -85,5 +85,5 @@ struct mq200_softc {
 	} sc_regctxs[MQ200_I_MAX];
 };
 
-int	mq200_probe	__P((bus_space_tag_t, bus_space_handle_t));
-void	mq200_attach	__P((struct mq200_softc *));
+int	mq200_probe(bus_space_tag_t, bus_space_handle_t);
+void	mq200_attach(struct mq200_softc *);

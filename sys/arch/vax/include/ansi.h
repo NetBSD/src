@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.15 2001/07/28 07:43:07 matt Exp $	*/
+/*	$NetBSD: ansi.h,v 1.15.2.1 2001/10/01 12:42:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,6 @@
 #else
 #define	_BSD_VA_LIST_		char *		/* va_list */
 #endif
-#define	_BSD_WCHAR_T_		int		/* wchar_t */
 #define	_BSD_WINT_T_		int		/* wint_t */
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
 #define	_BSD_TIMER_T_		int		/* timer_t */

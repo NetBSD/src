@@ -1,4 +1,4 @@
-/*	$NetBSD: upa.c,v 1.7 2000/06/29 07:37:55 mrg Exp $ */
+/*	$NetBSD: upa.c,v 1.7.2.1 2001/10/01 12:42:25 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ upa_attach_mainbus(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	upa_attach(sc, "upa", node, NULL);
@@ -256,7 +256,7 @@ upa_attach_iommu(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	upa_attach(sc, "upa", node, NULL);
@@ -282,7 +282,7 @@ upa_attach_xbox(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	upa_attach(sc, "upa", node, NULL);
@@ -306,12 +306,12 @@ upa_attach(sc, busname, busnode, specials)
 	/*
 	 * Get the Upa burst transfer size if burst transfers are supported
 	 */
-	sc->sc_burst = getpropint(busnode, "burst-sizes", 0);
+	sc->sc_burst = PROM_getpropint(busnode, "burst-sizes", 0);
 
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = getprop(busnode, "ranges", sizeof(struct rom_range),
+	error = PROM_getprop(busnode, "ranges", sizeof(struct rom_range),
 			 &sc->sc_nrange, (void **)&sc->sc_range);
 	switch (error) {
 	case 0:
@@ -390,7 +390,7 @@ upa_attach(sc, busname, busnode, specials)
 	}
 
 	for (node = node0; node; node = nextsibling(node)) {
-		char *name = getpropstring(node, "name");
+		char *name = PROM_getpropstring(node, "name");
 		for (ssp = specials, sp = NULL;
 		     ssp != NULL && (sp = *ssp) != NULL;
 		     ssp++)
@@ -466,12 +466,12 @@ upa_setup_attach_args(sc, bustag, dmatag, node, ua)
 	int	error;
 
 	bzero(ua, sizeof(struct upa_attach_args));
-	ua->ua_name = getpropstring(node, "name");
+	ua->ua_name = PROM_getpropstring(node, "name");
 	ua->ua_bustag = bustag;
 	ua->ua_dmatag = dmatag;
 	ua->ua_node = node;
 
-	if ((error = getprop_reg1(node, &romreg)) != 0)
+	if ((error = PROM_getprop_reg1(node, &romreg)) != 0)
 		return (error);
 
 	/* We pass only the first "reg" property */
@@ -488,7 +488,7 @@ upa_setup_attach_args(sc, bustag, dmatag, node, ua)
 	if ((error = upa_get_intr(sc, node, &ua->ua_pri)) != 0)
 		return (error);
 
-	if ((error = getprop_address1(node, &ua->ua_promvaddr)) != 0)
+	if ((error = PROM_getprop_address1(node, &ua->ua_promvaddr)) != 0)
 		return (error);
 
 	return (0);
@@ -747,7 +747,7 @@ upa_get_intr(sc, node, ip)
 	 * The `interrupts' property contains the Upa interrupt level.
 	 */
 	ipl = NULL;
-	if (getprop(node, "interrupts", sizeof(int), &n, (void **)&ipl) == 0) {
+	if (PROM_getprop(node, "interrupts", sizeof(int), &n, (void **)&ipl) == 0) {
 		*ip = ipl[0];
 		free(ipl, M_DEVBUF);
 		return (0);
@@ -757,7 +757,7 @@ upa_get_intr(sc, node, ip)
 	 * Fall back on `intr' property.
 	 */
 	rip = NULL;
-	switch (getprop(node, "intr", sizeof(*rip), &n, (void **)&rip)) {
+	switch (PROM_getprop(node, "intr", sizeof(*rip), &n, (void **)&rip)) {
 	case 0:
 		*ip = (rip[0].int_pri & 0xf) | UPA_INTR_COMPAT;
 		free(rip, M_DEVBUF);

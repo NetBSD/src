@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.15 2001/06/02 18:09:25 chs Exp $	*/
+/*	$NetBSD: db_watch.c,v 1.15.4.1 2001/10/01 12:44:08 fvdl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -229,7 +229,7 @@ db_set_watchpoints()
 
 	    db_watchpoints_inserted = TRUE;
 	}
-	pmap_update();
+	pmap_update(watch->map->pmap);
 }
 
 void

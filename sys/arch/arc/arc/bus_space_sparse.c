@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.5 2001/08/13 19:08:13 soda Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.5.2.1 2001/10/01 12:37:23 fvdl Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -133,7 +133,7 @@ arc_sparse_bus_space_compose_handle(bst, addr, size, flags, bshp)
 			      start, end);
 		for (va = vaddr; start < end; start += NBPG, va += NBPG)
 			pmap_kenter_pa(va, start, VM_PROT_READ|VM_PROT_WRITE);
-		pmap_update();
+		pmap_update(pmap_kernel());
 		vaddr += (offset & PGOFSET);
 		if (cacheable)
 			arc_kseg2_make_cacheable(vaddr, size);

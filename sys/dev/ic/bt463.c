@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.4 2001/08/05 11:09:51 jdolecek Exp $ */
+/* $NetBSD: bt463.c,v 1.4.2.1 2001/10/01 12:45:31 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -292,7 +292,7 @@ bt463_init(rc)
 	BTWREG(data, BT463_IREG_TEST, 0);
 
 	/*
-	 * Initalize the RAMDAC info struct to hold all of our
+	 * Initialize the RAMDAC info struct to hold all of our
 	 * data, and fill it in.
 	 */
 	data->changed = DATA_ALL_CHANGED;

@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.34 2000/02/03 04:09:18 nisimura Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.34.6.1 2001/10/01 12:41:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -91,7 +91,7 @@ xcfb needs dtop device
 
 #include <machine/autoconf.h>
 #include <machine/pmioctl.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 
 #include <pmax/pmax/maxine.h>
@@ -231,7 +231,7 @@ xcfbinit(fi, base, unit, silent)
 	fi->fi_blanked = 0;
 
 	/* Fill in Frame Buffer Type struct. */
-	fi->fi_type.fb_boardtype = PMAX_FBTYPE_XCFB;
+	fi->fi_type.fb_type = PMAX_FBTYPE_XCFB;
 	fi->fi_type.fb_width = 1024;
 	fi->fi_type.fb_height = 768;
 	fi->fi_type.fb_depth = 8;

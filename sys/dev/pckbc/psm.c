@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
+/* $NetBSD: psm.c,v 1.11.8.1 2001/10/01 12:46:07 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -44,6 +44,7 @@ struct pms_softc {		/* driver status information */
 	int sc_kbcslot;
 
 	int sc_enabled;		/* input enabled? */
+	void *sc_powerhook;	/* cookie from power hook */
 	int inputstate;
 	u_int buttons, oldbuttons;	/* mouse button status */
 	signed char dx;
@@ -59,9 +60,12 @@ struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach,
 };
 
+static void	do_enable __P((struct pms_softc *));
+static void	do_disable __P((struct pms_softc *));
 int	pms_enable __P((void *));
 int	pms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 void	pms_disable __P((void *));
+void	pms_power __P((int, void *));
 
 const struct wsmouse_accessops pms_accessops = {
 	pms_enable,
@@ -162,20 +166,17 @@ pmsattach(parent, self, aux)
 	if (res)
 		printf("pmsattach: disable error\n");
 	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
+
+	sc->sc_powerhook = powerhook_establish(pms_power, sc);
 }
 
-int
-pms_enable(v)
-	void *v;
+static void
+do_enable(sc)
+	struct pms_softc *sc;
 {
-	struct pms_softc *sc = v;
 	u_char cmd[1];
 	int res;
 
-	if (sc->sc_enabled)
-		return EBUSY;
-
-	sc->sc_enabled = 1;
 	sc->inputstate = 0;
 	sc->oldbuttons = 0;
 
@@ -210,15 +211,12 @@ pms_enable(v)
 			printf("pms_enable: setup error3 (%d)\n", res);
 	}
 #endif
-
-	return 0;
 }
 
-void
-pms_disable(v)
-	void *v;
+static void
+do_disable(sc)
+	struct pms_softc *sc;
 {
-	struct pms_softc *sc = v;
 	u_char cmd[1];
 	int res;
 
@@ -228,9 +226,58 @@ pms_disable(v)
 		printf("pms_disable: command error\n");
 
 	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
+}
+
+int
+pms_enable(v)
+	void *v;
+{
+	struct pms_softc *sc = v;
+
+	if (sc->sc_enabled)
+		return EBUSY;
+
+	sc->sc_enabled = 1;
+
+	do_enable(sc);
+
+	return 0;
+}
+
+void
+pms_disable(v)
+	void *v;
+{
+	struct pms_softc *sc = v;
+
+	do_disable(sc);
 
 	sc->sc_enabled = 0;
 }
+
+void
+pms_power(why, v)
+	int why;
+	void *v;
+{
+	struct pms_softc *sc = v;
+
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		if (sc->sc_enabled)
+			do_disable(sc);
+		break;
+	case PWR_RESUME:
+		if (sc->sc_enabled)
+			do_enable(sc);
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+}
+
 
 int
 pms_ioctl(v, cmd, data, flag, p)

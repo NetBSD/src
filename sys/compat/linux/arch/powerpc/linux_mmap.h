@@ -1,4 +1,4 @@
-/* $NetBSD: linux_mmap.h,v 1.2 2001/01/19 01:31:25 manu Exp $   */
+/* $NetBSD: linux_mmap.h,v 1.2.6.1 2001/10/01 12:43:41 fvdl Exp $   */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -55,21 +55,5 @@
 #define LINUX_MAP_GROWSDOWN	0x0100
 #define LINUX_MAP_DENYWRITE	0x0800
 #define	LINUX_MAP_EXECUTABLE	0x1000
-
-/* 
- * On the PowerPC, we have a problem with the offset argument. It's 32 bit
- * long on Linux and 64 bit long on NetBSD. Therefore we use a wrapper
- * function linux_sys_powerpc_mmap() to linux_sys_mmap()
- * 
- * Linux's off_t is __kernel_off_t (include/linux/types.h) which in turn
- * is a long (include/asm-ppc/posix_types.h)
- */
-#define linux_off_t long
-
-#ifdef _KERNEL
-__BEGIN_DECLS 
-int linux_sys_powerpc_mmap(struct proc *, void *, register_t *);
-__END_DECLS
-#endif /* !_KERNEL */ 
 
 #endif /* !_POWERPC_LINUX_MMAP_H */

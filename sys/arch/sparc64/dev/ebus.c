@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
+/*	$NetBSD: ebus.c,v 1.24.2.1 2001/10/01 12:42:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -98,8 +98,7 @@ int	ebus_find_node __P((struct pci_attach_args *));
 /*
  * here are our bus space and bus dma routines.
  */
-static int ebus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-				int, bus_space_handle_t *));
+static paddr_t ebus_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
 static int _ebus_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 				bus_size_t, int, vaddr_t,
 				bus_space_handle_t *));
@@ -137,6 +136,13 @@ ebus_match(parent, match, aux)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUS &&
+		strcmp(name, "ebus") == 0)
+		return (1);
+
+	/* Or a real ebus III */
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUSIII &&
 		strcmp(name, "ebus") == 0)
 		return (1);
 
@@ -188,13 +194,13 @@ ebus_attach(parent, self, aux)
 	 */
 	sc->sc_intmap = NULL;
 	sc->sc_range = NULL;
-	error = getprop(node, "interrupt-map",
+	error = PROM_getprop(node, "interrupt-map",
 			sizeof(struct ebus_interrupt_map),
 			&sc->sc_nintmap, (void **)&sc->sc_intmap);
 	switch (error) {
 	case 0:
 		immp = &sc->sc_intmapmask;
-		error = getprop(node, "interrupt-map-mask",
+		error = PROM_getprop(node, "interrupt-map-mask",
 			    sizeof(struct ebus_interrupt_map_mask), &nmapmask,
 			    (void **)&immp);
 		if (error)
@@ -209,7 +215,7 @@ ebus_attach(parent, self, aux)
 		break;
 	}
 
-	error = getprop(node, "ranges", sizeof(struct ebus_ranges),
+	error = PROM_getprop(node, "ranges", sizeof(struct ebus_ranges),
 	    &sc->sc_nrange, (void **)&sc->sc_range);
 	if (error)
 		panic("ebus ranges: error %d", error);
@@ -219,7 +225,7 @@ ebus_attach(parent, self, aux)
 	 */
 	DPRINTF(EDB_CHILD, ("ebus node %08x, searching children...\n", node));
 	for (node = firstchild(node); node; node = nextsibling(node)) {
-		char *name = getpropstring(node, "name");
+		char *name = PROM_getpropstring(node, "name");
 
 		if (ebus_setup_attach_args(sc, node, &eba) != 0) {
 			printf("ebus_attach: %s: incomplete\n", name);
@@ -242,7 +248,7 @@ ebus_setup_attach_args(sc, node, ea)
 	int	n, rv;
 
 	bzero(ea, sizeof(struct ebus_attach_args));
-	rv = getprop(node, "name", 1, &n, (void **)&ea->ea_name);
+	rv = PROM_getprop(node, "name", 1, &n, (void **)&ea->ea_name);
 	if (rv != 0)
 		return (rv);
 	ea->ea_name[n] = '\0';
@@ -251,12 +257,12 @@ ebus_setup_attach_args(sc, node, ea)
 	ea->ea_bustag = sc->sc_childbustag;
 	ea->ea_dmatag = sc->sc_dmatag;
 
-	rv = getprop(node, "reg", sizeof(struct ebus_regs), &ea->ea_nregs,
+	rv = PROM_getprop(node, "reg", sizeof(struct ebus_regs), &ea->ea_nregs,
 	    (void **)&ea->ea_regs);
 	if (rv)
 		return (rv);
 
-	rv = getprop(node, "address", sizeof(u_int32_t), &ea->ea_nvaddrs,
+	rv = PROM_getprop(node, "address", sizeof(u_int32_t), &ea->ea_nvaddrs,
 	    (void **)&ea->ea_vaddrs);
 	if (rv != ENOENT) {
 		if (rv)
@@ -268,7 +274,7 @@ ebus_setup_attach_args(sc, node, ea)
 	} else
 		ea->ea_nvaddrs = 0;
 
-	if (getprop(node, "interrupts", sizeof(u_int32_t), &ea->ea_nintrs,
+	if (PROM_getprop(node, "interrupts", sizeof(u_int32_t), &ea->ea_nintrs,
 	    (void **)&ea->ea_intrs))
 		ea->ea_nintrs = 0;
 	else
@@ -501,13 +507,13 @@ _ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	return (EINVAL);
 }
 
-static int
-ebus_bus_mmap(t, btype, paddr, flags, hp)
+static paddr_t
+ebus_bus_mmap(t, paddr, off, prot, flags)
 	bus_space_tag_t t;
-	bus_type_t btype;
 	bus_addr_t paddr;
+	off_t off;
+	int prot;
 	int flags;
-	bus_space_handle_t *hp;
 {
 	bus_addr_t offset = paddr;
 	struct ebus_softc *sc = t->cookie;
@@ -522,8 +528,8 @@ ebus_bus_mmap(t, btype, paddr, flags, hp)
 
 		DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_mmap: mapping paddr %qx\n",
 		    (unsigned long long)paddr));
-		return (bus_space_mmap(sc->sc_memtag, 0, paddr,
-				       flags, hp));
+		return (bus_space_mmap(sc->sc_memtag, paddr, off,
+				       prot, flags));
 	}
 
 	return (-1);
