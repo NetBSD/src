@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 1998/02/04 11:08:47 christos Exp $	 */
+/*	$NetBSD: extern.h,v 1.2 1999/10/18 20:28:32 pk Exp $	 */
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -93,7 +93,7 @@ void strtcpy __P((char *, char *, int));
 void put_line __P((void));
 void flush __P((void));
 void purge __P((void));
-void putchr __P((int));
+int  putchr __P((int));
 void putstr __P((char *));
 void error __P((char *));
 void ierror __P((char *));
