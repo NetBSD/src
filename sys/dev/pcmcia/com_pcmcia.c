@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.2 1997/10/16 23:27:18 thorpej Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.3 1998/02/01 23:50:52 marc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -80,6 +80,9 @@ int com_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void com_pcmcia_attach __P((struct device *, struct device *, void *));
 void com_pcmcia_cleanup __P((void *));
 
+int com_pcmcia_enable __P((struct com_softc *));
+void com_pcmcia_disable __P((struct com_softc *));
+
 struct com_pcmcia_softc {
 	struct com_softc sc_com;		/* real "com" softc */
 
@@ -94,6 +97,39 @@ struct cfattach com_pcmcia_ca = {
 	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach
 };
 
+struct com_dev {
+    char *name;
+    int manufacturer;
+    int product;
+    char *cis1_info0;
+    char *cis1_info1;
+    int function;
+} com_devs[] = {
+    { "3Com 3C562 Modem",
+      PCMCIA_MANUFACTURER_3COM, PCMCIA_PRODUCT_3COM_3C562,
+      NULL, NULL, 1 },
+    { "Motorola Power 14.4 Modem",
+      PCMCIA_MANUFACTURER_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_POWER144,
+      NULL, NULL, 0 },
+    { "IBM Home and Away Modem",
+      PCMCIA_MANUFACTURER_IBM, PCMCIA_PRODUCT_IBM_HOME_AND_AWAY,
+      NULL, NULL, 0 },
+    { "Megahertz XJ2288 Modem",
+      0xffffffff, 0xffff, "MEGAHERTZ", "XJ2288", 0 },
+};
+
+#define com_dev_match(card, fct, n) \
+(((((com_devs[(n)].cis1_info0 == NULL) && \
+    (com_devs[(n)].cis1_info1 == NULL) && \
+    (com_devs[(n)].manufacturer == (card)->manufacturer) && \
+    (com_devs[(n)].product == (card)->product)) || \
+   ((com_devs[(n)].cis1_info0) && \
+    (com_devs[(n)].cis1_info1) && \
+    (strcmp(com_devs[(n)].cis1_info0, (card)->cis1_info[0]) == 0) && \
+    (strcmp(com_devs[(n)].cis1_info1, (card)->cis1_info[1]) == 0))) && \
+  (com_devs[(n)].function == fct)) \
+ ?&com_devs[(n)]:NULL)
+
 int
 com_pcmcia_match(parent, match, aux)
 	struct device *parent;
@@ -106,21 +142,12 @@ com_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
+	int i;
 
-	if ((pa->manufacturer == PCMCIA_MANUFACTURER_3COM) &&
-	    (pa->product == PCMCIA_PRODUCT_3COM_3C562) &&
-	    (pa->pf->number == 1))
-		return(1);
-
-	if ((pa->manufacturer == PCMCIA_MANUFACTURER_MOTOROLA) &&
-	    (pa->product == PCMCIA_PRODUCT_MOTOROLA_POWER144) &&
-	    (pa->pf->number == 0))
-		return(1);
-
-	if ((pa->manufacturer == PCMCIA_MANUFACTURER_IBM) &&
-	    (pa->product == PCMCIA_PRODUCT_IBM_HOME_AND_AWAY) &&
-	    (pa->pf->number == 1))
-		return(1);
+	for (i=0; i<(sizeof(com_devs)/sizeof(com_devs[0])); i++) {
+		if (com_dev_match(pa->card, pa->pf->number, i))
+			return(1);
+	}
 
 	/* find a cfe we can use (if it matches a standard COM port) */
 
@@ -145,7 +172,8 @@ com_pcmcia_attach(parent, self, aux)
 	struct com_softc *sc = &psc->sc_com;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	char *model;
+	int i;
+	struct com_dev *comdev;
 
 	psc->sc_pf = pa->pf;
 
@@ -184,17 +212,10 @@ com_pcmcia_attach(parent, self, aux)
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
-	if (pcmcia_function_enable(pa->pf))
+	if (com_pcmcia_enable(sc))
 		printf(": function enable failed\n");
 
-	/* turn off the bit which disables the ethernet */
-	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
-		int reg;
-
-		reg = pcmcia_ccr_read(pa->pf, PCMCIA_CCR_OPTION);
-		reg &= ~0x08;
-		pcmcia_ccr_write(pa->pf, PCMCIA_CCR_OPTION, reg);
-	}
+	sc->enabled = 1;
 
 	/* map in the io space */
 
@@ -208,28 +229,59 @@ com_pcmcia_attach(parent, self, aux)
 	sc->sc_iobase = -1;
 	sc->sc_frequency = COM_FREQ;
 
+	sc->enable = com_pcmcia_enable;
+	sc->disable = com_pcmcia_disable;
+
 	com_attach_subr(sc);
 
-	switch (pa->product) {
-	case PCMCIA_PRODUCT_3COM_3C562:
-		model = "3Com 3C562 Modem";
-		break;
-	case PCMCIA_PRODUCT_MOTOROLA_POWER144:
-		model = "Motorola Power 14.4 Modem";
-		break;
-	default:
-		model = NULL;
-		break;
+	for (i=0; i<(sizeof(com_devs)/sizeof(com_devs[0])); i++) {
+		if ((comdev = com_dev_match(pa->card, pa->pf->number, i))) {
+			printf(": %s\n", comdev->name);
+		}
 	}
 
-	if (model != NULL)
-		printf(": %s\n", model);
+	sc->enabled = 0;
+	
+	com_pcmcia_disable(sc);
+}
+
+int com_pcmcia_enable(struct com_softc *sc)
+{
+	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
+	struct pcmcia_function *pf = psc->sc_pf;
+	int ret;
 
 	/* establish the interrupt. */
-	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_SERIAL, comintr, sc);
+	psc->sc_ih = pcmcia_intr_establish(pf, IPL_SERIAL, comintr, sc);
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		       sc->sc_dev.dv_xname);
-		return;
+		return (1);
 	}
+
+	if ((ret = pcmcia_function_enable(pf)))
+	    return(ret);
+
+	if (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3C562) {
+		int reg;
+
+		/* turn off the ethernet-disable bit */
+
+		reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
+		if (reg & 0x08) {
+		    reg &= ~0x08;
+		    pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
+		}
+	}
+
+	return(ret);
+}
+
+void com_pcmcia_disable(struct com_softc *sc)
+{
+	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
+
+	pcmcia_function_disable(psc->sc_pf);
+
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 }
