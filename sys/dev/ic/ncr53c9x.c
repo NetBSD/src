@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.43 2000/03/18 22:18:57 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.44 2000/03/19 21:25:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -205,11 +205,6 @@ ncr53c9x_attach(sc, dev)
 	/* CCF register only has 3 bits; 0 is actually 8 */
 	sc->sc_ccf &= 7;
 
-	/* Reset state & bus */
-	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
-	sc->sc_state = 0;
-	ncr53c9x_init(sc, 1);
-
 	/*
 	 * fill in the prototype scsipi_link.
 	 */
@@ -223,22 +218,60 @@ ncr53c9x_attach(sc, dev)
 	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
+	/* Initialize CFG4 and CFG5, and disable interrupts. */
+	if ((sc->sc_rev == NCR_VARIANT_ESP406) ||
+	    (sc->sc_rev == NCR_VARIANT_FAS408)) {
+		NCR_WRITE_REG(sc, NCR_CFG5, sc->sc_cfg5);
+		NCR_WRITE_REG(sc, NCR_CFG4, sc->sc_cfg4);
+	}
+
+	/*
+	 * Add reference to adapter so that we drop the reference after
+	 * config_found() to make sure the adatper is disabled.
+	 */
+	if (scsipi_adapter_addref(&sc->sc_link) != 0) {
+		printf("%s: unable to enable controller\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	/* Reset state & bus */
+	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
+	sc->sc_state = 0;
+	ncr53c9x_init(sc, 1);
+
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 
-	/*
-	 * Enable interupts from the SCSI core
-	 */
+	scsipi_adapter_delref(&sc->sc_link);
+
+	/* Enable interrupts. */
 	if ((sc->sc_rev == NCR_VARIANT_ESP406) ||
 	    (sc->sc_rev == NCR_VARIANT_FAS408)) {
-		NCR_PIOREGS(sc);
-		NCR_WRITE_REG(sc, NCR_CFG5, NCRCFG5_SINT |
-		    NCR_READ_REG(sc, NCR_CFG5));
-		NCR_SCSIREGS(sc);
+		NCR_WRITE_REG(sc, NCR_CFG5, sc->sc_cfg5 | NCRCFG5_SINT);
+		NCR_WRITE_REG(sc, NCR_CFG4, sc->sc_cfg4);
+	}
+}
+
+int
+ncr53c9x_detach(sc, flags)
+	struct ncr53c9x_softc *sc;
+	int flags;
+{
+	int error;
+
+	if (sc->sc_child) {
+		error = config_detach(sc->sc_child, flags);
+		if (error)
+			return (error);
 	}
 
+	free(sc->sc_imess, M_DEVBUF);
+	free(sc->sc_omess, M_DEVBUF);
+
+	return (0);
 }
 
 /*
