@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.22 1995/05/21 13:38:29 mycroft Exp $	*/
+/*	$NetBSD: print.c,v 1.23 1995/05/25 04:13:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.22 1995/05/21 13:38:29 mycroft Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.23 1995/05/25 04:13:17 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -158,6 +158,8 @@ command(ki, ve)
 			fmt_puts(KI_PROC(ki)->p_comm, &left);
 		}
 	}
+	if (ve->next && left > 0)
+		printf("%*s", left, "");
 }
 
 void
