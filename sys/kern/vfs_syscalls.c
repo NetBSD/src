@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.193 2003/09/11 17:33:42 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.194 2003/09/13 08:32:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.193 2003/09/11 17:33:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.194 2003/09/13 08:32:14 jdolecek Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1096,14 +1096,14 @@ sys_open(l, v, retval)
 		return (error);
 	cmode = ((SCARG(uap, mode) &~ cwdi->cwdi_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
-	p->p_dupfd = -indx - 1;			/* XXX check for fdopen */
+	l->l_dupfd = -indx - 1;			/* XXX check for fdopen */
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
 		FILE_UNUSE(fp, p);
 		ffree(fp);
 		if ((error == ENODEV || error == ENXIO) &&
-		    p->p_dupfd >= 0 &&			/* XXX from fdopen */
+		    l->l_dupfd >= 0 &&			/* XXX from fdopen */
 		    (error =
-			dupfdopen(p, indx, p->p_dupfd, flags, error)) == 0) {
+			dupfdopen(p, indx, l->l_dupfd, flags, error)) == 0) {
 			*retval = indx;
 			return (0);
 		}
@@ -1112,7 +1112,7 @@ sys_open(l, v, retval)
 		fdremove(fdp, indx);
 		return (error);
 	}
-	p->p_dupfd = 0;
+	l->l_dupfd = 0;
 	vp = nd.ni_vp;
 	fp->f_flag = flags & FMASK;
 	fp->f_type = DTYPE_VNODE;

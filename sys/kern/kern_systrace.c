@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.31 2003/08/25 09:12:44 cb Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.32 2003/09/13 08:32:14 jdolecek Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.31 2003/08/25 09:12:44 cb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.32 2003/09/13 08:32:14 jdolecek Exp $");
 
 #include "opt_systrace.h"
 
@@ -600,7 +600,7 @@ systraceopen(dev_t dev, int flag, int mode, struct proc *p)
 	fp->f_ops = &systracefops;
 	fp->f_data = (caddr_t) fst;
 
-	p->p_dupfd = fd;
+	curlwp->l_dupfd = fd;	/* XXX */
 	FILE_SET_MATURE(fp);
 	FILE_UNUSE(fp, p);
 

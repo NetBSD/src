@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.111 2003/08/07 16:31:43 agc Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.112 2003/09/13 08:32:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.111 2003/08/07 16:31:43 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.112 2003/09/13 08:32:13 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1294,14 +1294,14 @@ filedescopen(dev_t dev, int mode, int type, struct proc *p)
 {
 
 	/*
-	 * XXX Kludge: set p->p_dupfd to contain the value of the
+	 * XXX Kludge: set dupfd to contain the value of the
 	 * the file descriptor being sought for duplication. The error
 	 * return ensures that the vnode for this device will be released
 	 * by vn_open. Open will detect this special error and take the
 	 * actions in dupfdopen below. Other callers of vn_open or VOP_OPEN
 	 * will simply report the error.
 	 */
-	p->p_dupfd = minor(dev);
+	curlwp->l_dupfd = minor(dev);	/* XXX */
 	return (ENODEV);
 }
 

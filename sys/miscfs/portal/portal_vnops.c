@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.49 2003/09/04 04:30:25 matt Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.50 2003/09/13 08:32:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.49 2003/09/04 04:30:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.50 2003/09/13 08:32:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,9 +334,9 @@ portal_open(v)
 	/*
 	 * Can't be opened unless the caller is set up
 	 * to deal with the side effects.  Check for this
-	 * by testing whether the p_dupfd has been set.
+	 * by testing whether the dupfd has been set.
 	 */
-	if (p->p_dupfd >= 0)
+	if (curlwp->l_dupfd >= 0)	/* XXX */
 		return (ENODEV);
 
 	pt = VTOPORTAL(vp);
@@ -513,7 +513,7 @@ portal_open(v)
 	 * special error code (ENXIO) which causes magic things to
 	 * happen in vn_open.  The whole concept is, well, hmmm.
 	 */
-	p->p_dupfd = fd;
+	curlwp->l_dupfd = fd;	/* XXX */
 	error = ENXIO;
 
 bad:;

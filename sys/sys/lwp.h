@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.9 2003/09/13 07:56:03 jdolecek Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.10 2003/09/13 08:32:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@ struct	lwp {
 	const char *l_wmesg;	/* Reason for sleep. */
 	int	l_holdcnt;	/* If non-zero, don't swap. */
 	void	*l_ctxlink;	/* uc_link {get,set}context */
+	int	l_dupfd;	/* Sideways return value from cloning devices XXX */
 
 #define l_endzero l_priority
 
