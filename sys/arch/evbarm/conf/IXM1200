@@ -1,4 +1,4 @@
-#	$NetBSD: IXM1200,v 1.3 2002/09/18 02:43:57 lukem Exp $
+#	$NetBSD: IXM1200,v 1.4 2003/02/27 04:06:07 igy Exp $
 #
 #	IXM1200 -- Intel IXM1200 Evaluation Board Kernel
 #
@@ -143,10 +143,10 @@ cpu0		at mainbus?
 ixpsip0		at mainbus?
 
 #Timer
-ixpclk*		at ixpsip? addr 0xf0010300 size 0x10
+ixpclk*		at ixpsip? addr 0x42000300 size 0x10
 
 # Serial
-ixpcom*		at ixpsip? addr 0xf0000000 size 0x4000
+ixpcom*		at ixpsip? addr 0x90000000 size 0x4000
 
 # IXP12x0 fast bus
 ixpio0		at mainbus?
