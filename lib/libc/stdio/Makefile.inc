@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.12 1997/10/22 23:14:22 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.13 1998/07/27 13:36:43 mycroft Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -10,12 +10,14 @@ SRCS+=	clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	fgetln.c fgetpos.c fgets.c fileno.c findfp.c flags.c fopen.c \
 	fprintf.c fpurge.c fputc.c fputs.c fread.c freopen.c fscanf.c \
 	fseek.c fsetpos.c ftell.c funopen.c fvwrite.c fwalk.c fwrite.c \
-	getc.c getchar.c gets.c getw.c makebuf.c mktemp.c perror.c printf.c \
-	putc.c putchar.c puts.c putw.c refill.c remove.c rewind.c rget.c \
-	scanf.c setbuf.c setbuffer.c setvbuf.c snprintf.c sprintf.c sscanf.c \
-	stdio.c tempnam.c tmpfile.c tmpnam.c ungetc.c vfprintf.c \
-	vfscanf.c vprintf.c vscanf.c vsnprintf.c vsprintf.c vsscanf.c \
-	wbuf.c wsetup.c
+	getc.c getchar.c gettemp.c getw.c makebuf.c mkstemp.c perror.c \
+	printf.c putc.c putchar.c puts.c putw.c refill.c remove.c rewind.c \
+	rget.c scanf.c setbuf.c setbuffer.c setvbuf.c snprintf.c sscanf.c \
+	stdio.c tmpfile.c ungetc.c vfprintf.c vfscanf.c vprintf.c vscanf.c \
+	vsnprintf.c vsscanf.c wbuf.c wsetup.c
+.if !defined(AUDIT)
+SRCS+=	gets.c sprintf.c vsprintf.c tempnam.c tmpnam.c mktemp.c
+.endif
 
 MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 fopen.3 fputs.3 \
 	fread.3 fseek.3 funopen.3 getc.3 mktemp.3 perror.3 printf.3 putc.3 \
