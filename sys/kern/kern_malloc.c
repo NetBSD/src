@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.22 1996/10/13 02:32:32 christos Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.23 1997/01/30 06:50:46 tls Exp $	*/
 
 /*
  * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
@@ -460,7 +460,9 @@ realloc(curaddr, newsize, type, flags)
 void
 kmeminit()
 {
+#ifdef KMEMSTATS
 	register long indx;
+#endif
 	int npg;
 
 #if	((MAXALLOCSAVE & (MAXALLOCSAVE - 1)) != 0)
