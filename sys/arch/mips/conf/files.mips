@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.29 2000/10/31 22:46:35 jeffs Exp $
+#	$NetBSD: files.mips,v 1.30 2001/01/16 06:01:26 thorpej Exp $
 #
 
 defopt 	opt_cputype.h		NOTYET	# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
@@ -20,6 +20,7 @@ file	arch/mips/mips/kgdb_machdep.c	kgdb
 file	arch/mips/mips/mem.c
 file	arch/mips/mips/mips_mcclock.c	mcclock	# CPU speed via mcclock
 file	arch/mips/mips/pmap.c
+file	arch/mips/mips/syscall.c		# syscalls
 file	arch/mips/mips/trap.c			# interrupt, trap handlers
 file	arch/mips/mips/vm_machdep.c
 file	arch/mips/mips/mips_machdep.c		# shared mips machdep.c
