@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.9 1998/02/12 01:57:49 lukem Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.10 1998/02/13 05:52:37 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_simple.c 1.18 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_simple.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_simple.c,v 1.9 1998/02/12 01:57:49 lukem Exp $");
+__RCSID("$NetBSD: svc_simple.c,v 1.10 1998/02/13 05:52:37 lukem Exp $");
 #endif
 #endif
 
@@ -47,13 +47,18 @@ __RCSID("$NetBSD: svc_simple.c,v 1.9 1998/02/12 01:57:49 lukem Exp $");
  */
 
 #include "namespace.h"
+
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <err.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
-#include <sys/socket.h>
-#include <netdb.h>
 
 #ifdef __weak_alias
 __weak_alias(registerrpc,_registerrpc);
@@ -79,27 +84,25 @@ registerrpc(prognum, versnum, procnum, progname, inproc, outproc)
 {
 	
 	if (procnum == NULLPROC) {
-		(void) fprintf(stderr,
-		    "can't reassign procedure number %ld\n", NULLPROC);
+		warnx("can't reassign procedure number %ld", NULLPROC);
 		return (-1);
 	}
 	if (transp == 0) {
 		transp = svcudp_create(RPC_ANYSOCK);
 		if (transp == NULL) {
-			(void) fprintf(stderr, "couldn't create an rpc server\n");
+			warnx("couldn't create an rpc server");
 			return (-1);
 		}
 	}
 	(void) pmap_unset((u_long)prognum, (u_long)versnum);
 	if (!svc_register(transp, (u_long)prognum, (u_long)versnum, 
 	    universal, IPPROTO_UDP)) {
-	    	(void) fprintf(stderr, "couldn't register prog %d vers %d\n",
-		    prognum, versnum);
+	    	warnx("couldn't register prog %d vers %d", prognum, versnum);
 		return (-1);
 	}
 	pl = (struct proglst *)malloc(sizeof(struct proglst));
 	if (pl == NULL) {
-		(void) fprintf(stderr, "registerrpc: out of memory\n");
+		warnx("registerrpc: out of memory");
 		return (-1);
 	}
 	pl->p_progname = progname;
@@ -127,7 +130,7 @@ universal(rqstp, transp)
 	 */
 	if (rqstp->rq_proc == NULLPROC) {
 		if (svc_sendreply(transp, xdr_void, NULL) == FALSE) {
-			(void) fprintf(stderr, "xxx\n");
+			errx(1, "svc_sendreply failed");
 			exit(1);
 		}
 		return;
@@ -147,17 +150,13 @@ universal(rqstp, transp)
 			    pl->p_outproc != xdr_void)
 				/* there was an error */
 				return;
-			if (!svc_sendreply(transp, pl->p_outproc, outdata)) {
-				(void) fprintf(stderr,
-				    "trouble replying to prog %d\n",
+			if (!svc_sendreply(transp, pl->p_outproc, outdata))
+				errx(1, "trouble replying to prog %d",
 				    pl->p_prognum);
-				exit(1);
-			}
 			/* free the decoded arguments */
 			(void)svc_freeargs(transp, pl->p_inproc, xdrbuf);
 			return;
 		}
-	(void) fprintf(stderr, "never registered prog %d\n", prog);
-	exit(1);
+	errx(1, "never registered prog %d", prog);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.10 1998/02/12 01:57:31 lukem Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.11 1998/02/13 05:52:17 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.10 1998/02/12 01:57:31 lukem Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.11 1998/02/13 05:52:17 lukem Exp $");
 #endif
 #endif
 
@@ -51,8 +51,11 @@ __RCSID("$NetBSD: clnt_raw.c,v 1.10 1998/02/12 01:57:31 lukem Exp $");
  */
 
 #include "namespace.h"
+
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <rpc/rpc.h>
 
 #ifdef __weak_alias
@@ -99,7 +102,7 @@ clntraw_create(prog, vers)
 	u_long prog;
 	u_long vers;
 {
-	register struct clntraw_private *clp = clntraw_private;
+	struct clntraw_private *clp = clntraw_private;
 	struct rpc_msg call_msg;
 	XDR *xdrs = &clp->xdr_stream;
 	CLIENT	*client = &clp->client_object;
@@ -111,16 +114,15 @@ clntraw_create(prog, vers)
 		clntraw_private = clp;
 	}
 	/*
-	 * pre-serialize the staic part of the call msg and stash it away
+	 * pre-serialize the static part of the call msg and stash it away
 	 */
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
 	call_msg.rm_call.cb_prog = prog;
 	call_msg.rm_call.cb_vers = vers;
 	xdrmem_create(xdrs, clp->mashl_callmsg, MCALL_MSG_SIZE, XDR_ENCODE); 
-	if (! xdr_callhdr(xdrs, &call_msg)) {
-		perror("clnt_raw.c - Fatal header serialization error.");
-	}
+	if (! xdr_callhdr(xdrs, &call_msg))
+		warnx("clntraw_create - Fatal header serialization error.");
 	clp->mcnt = XDR_GETPOS(xdrs);
 	XDR_DESTROY(xdrs);
 
@@ -147,8 +149,8 @@ clntraw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
 	caddr_t resultsp;
 	struct timeval timeout;
 {
-	register struct clntraw_private *clp = clntraw_private;
-	register XDR *xdrs = &clp->xdr_stream;
+	struct clntraw_private *clp = clntraw_private;
+	XDR *xdrs = &clp->xdr_stream;
 	struct rpc_msg msg;
 	enum clnt_stat status;
 	struct rpc_err error;
@@ -242,8 +244,8 @@ clntraw_freeres(cl, xdr_res, res_ptr)
 	xdrproc_t xdr_res;
 	caddr_t res_ptr;
 {
-	register struct clntraw_private *clp = clntraw_private;
-	register XDR *xdrs = &clp->xdr_stream;
+	struct clntraw_private *clp = clntraw_private;
+	XDR *xdrs = &clp->xdr_stream;
 	bool_t rval;
 
 	if (clp == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getmaps.c,v 1.7 1998/02/12 01:57:38 lukem Exp $	*/
+/*	$NetBSD: pmap_getmaps.c,v 1.8 1998/02/13 05:52:25 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getmaps.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getmaps.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getmaps.c,v 1.7 1998/02/12 01:57:38 lukem Exp $");
+__RCSID("$NetBSD: pmap_getmaps.c,v 1.8 1998/02/13 05:52:25 lukem Exp $");
 #endif
 #endif
 
@@ -48,16 +48,21 @@ __RCSID("$NetBSD: pmap_getmaps.c,v 1.7 1998/02/12 01:57:38 lukem Exp $");
  */
 
 #include "namespace.h"
+
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+
+#include <errno.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <errno.h>
-#include <unistd.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
 
 #ifdef __weak_alias
 __weak_alias(pmap_getmaps,_pmap_getmaps);
@@ -77,7 +82,7 @@ pmap_getmaps(address)
 	struct pmaplist *head = (struct pmaplist *)NULL;
 	int socket = -1;
 	struct timeval minutetimeout;
-	register CLIENT *client;
+	CLIENT *client;
 
 	minutetimeout.tv_sec = 60;
 	minutetimeout.tv_usec = 0;

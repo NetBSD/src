@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.13 1998/02/12 01:57:31 lukem Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.14 1998/02/13 05:52:16 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_perror.c,v 1.13 1998/02/12 01:57:31 lukem Exp $");
+__RCSID("$NetBSD: clnt_perror.c,v 1.14 1998/02/13 05:52:16 lukem Exp $");
 #endif
 #endif
 
@@ -46,9 +46,11 @@ __RCSID("$NetBSD: clnt_perror.c,v 1.13 1998/02/12 01:57:31 lukem Exp $");
  *
  */
 #include "namespace.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <rpc/rpc.h>
 #include <rpc/types.h>
 #include <rpc/auth.h>
@@ -178,7 +180,7 @@ clnt_perror(rpch, s)
 	CLIENT *rpch;
 	char *s;
 {
-	(void) fprintf(stderr,"%s\n",clnt_sperror(rpch,s));
+	(void) fprintf(stderr, "%s\n", clnt_sperror(rpch,s));
 }
 
 static const char *const rpc_errlist[] = {
@@ -222,7 +224,7 @@ void
 clnt_perrno(num)
 	enum clnt_stat num;
 {
-	(void) fprintf(stderr,"%s\n",clnt_sperrno(num));
+	(void) fprintf(stderr, "%s\n", clnt_sperrno(num));
 }
 
 
@@ -276,7 +278,7 @@ void
 clnt_pcreateerror(s)
 	char *s;
 {
-	(void) fprintf(stderr,"%s\n",clnt_spcreateerror(s));
+	(void) fprintf(stderr, "%s\n", clnt_spcreateerror(s));
 }
 
 static const char *const auth_errlist[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getport.c,v 1.6 1998/02/12 01:57:39 lukem Exp $	*/
+/*	$NetBSD: pmap_getport.c,v 1.7 1998/02/13 05:52:26 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getport.c 1.9 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getport.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getport.c,v 1.6 1998/02/12 01:57:39 lukem Exp $");
+__RCSID("$NetBSD: pmap_getport.c,v 1.7 1998/02/13 05:52:26 lukem Exp $");
 #endif
 #endif
 
@@ -47,12 +47,17 @@ __RCSID("$NetBSD: pmap_getport.c,v 1.6 1998/02/12 01:57:39 lukem Exp $");
  */
 
 #include "namespace.h"
+
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+
+#include <unistd.h>
+
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
-#include <sys/socket.h>
-#include <net/if.h>
-#include <unistd.h>
 
 #ifdef __weak_alias
 __weak_alias(pmap_getport,_pmap_getport);
@@ -75,7 +80,7 @@ pmap_getport(address, program, version, protocol)
 {
 	u_short port = 0;
 	int socket = -1;
-	register CLIENT *client;
+	CLIENT *client;
 	struct pmap parms;
 
 	address->sin_port = htons(PMAPPORT);
