@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)Ovfork.s	5.1 (Berkeley) 4/23/90
- *	$Id: Ovfork.S,v 1.3 1993/10/21 02:19:25 jtc Exp $
+ *	$Id: Ovfork.S,v 1.4 1994/01/24 19:24:36 jtc Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: Ovfork.S,v 1.3 1993/10/21 02:19:25 jtc Exp $"
+	.asciz "$Id: Ovfork.S,v 1.4 1994/01/24 19:24:36 jtc Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -58,7 +58,7 @@ ENTRY(vfork)
 	LCALL(7,0)
 	jb	verror
 vforkok:
-	cmpl	$0,%edx		/* child process? */
+	testl	%edx,%edx	/* child process? */
 	jne	child		/* yes */
 	jmp 	parent
 .globl	_errno
@@ -74,6 +74,6 @@ verror:
 	movl	$-1,%eax
 	jmp	%ecx
 child:
-	movl	$0,%eax
+	xorl	%eax,%eax
 parent:
 	jmp	%ecx

@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)brk.s	5.2 (Berkeley) 12/17/90
- *	$Id: brk.S,v 1.3 1993/12/06 23:28:08 pk Exp $
+ *	$Id: brk.S,v 1.4 1994/01/24 19:24:38 jtc Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: brk.S,v 1.3 1993/12/06 23:28:08 pk Exp $"
+	.asciz "$Id: brk.S,v 1.4 1994/01/24 19:24:38 jtc Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -68,7 +68,7 @@ ok:
 	jb	err
 	movl	4(%esp),%eax
 	movl	%eax,(%edx)
-	movl	$0,%eax
+	xorl	%eax,%eax
 	ret
 err:
 	jmp	PIC_PLT(cerror)
@@ -86,7 +86,7 @@ ok:
 	jb	err
 	movl	4(%esp),%eax
 	movl	%eax,curbrk
-	movl	$0,%eax
+	xorl	%eax,%eax
 	ret
 err:
 	jmp	cerror
