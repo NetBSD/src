@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.19 2003/09/12 10:10:39 kleink Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.20 2003/09/12 15:31:00 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.19 2003/09/12 10:10:39 kleink Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.20 2003/09/12 15:31:00 drochner Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -906,7 +906,7 @@ pthread__signal_tramp(void (*handler)(int, siginfo_t *, void *),
     siginfo_t *info, ucontext_t *uc)
 {
 	SDPRINTF(("(tramp %p) sig %d uc %p oldmask %08x\n", 
-	    pthread__self(), si->si_signo, uc, uc->uc_stack.ss_mask->__bits[0]));
+	    pthread__self(), info->si_signo, uc, uc->uc_sigmask.__bits[0]));
 
 #ifdef __HAVE_SIGINFO
 	(*handler)(info->si_signo, info, uc);
