@@ -1,4 +1,4 @@
-.\"	$NetBSD: isfinite.3,v 1.2 2004/01/15 19:43:45 kleink Exp $
+.\"	$NetBSD: signbit.3,v 1.1 2004/01/15 19:43:45 kleink Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,50 +35,48 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd October 29, 2003
-.Dt ISFINITE 3
+.Dt SIGNBIT 3
 .Os
 .Sh NAME
-.Nm isfinite
-.Nd test for finite value
+.Nm signbit
+.Nd test sign
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
 .In math.h
 .Ft int
-.Fn isfinite "real-floating x"
+.Fn signbit "real-floating x"
 .Sh DESCRIPTION
 The
-.Fn isfinite
-determines whether its argument
+.Fn signbit
+macro determines whether the sign of its argument value
 .Fa x
-has a finite value.
+is negative.
 An argument represented in a format wider than its semantic type is
 converted to its semantic type first.
 The determination is then based on the type of the argument.
-.Ss IEEE 754
-It is determined whether the value of
-.Fa x
-is zero, subnormal, or normal, and neither infinite nor NaN.
+.Ss IEEE754
+The sign is determined for all values, including inifities, zeroes,
+and NaNs
 .Ss VAX
-It is determined whether the value of
-.Fa x
-is true zero or finite, and neither dirty zero nor ROP.
+The sign is determined for finites, true zeros, and dirty zeroes;
+for ROPs the sign is reported negative.
 .Sh RETURN VALUES
 The
-.Fn isfinite
-macro returns a non-zero value if the value of
+.Fn signbit
+macro returns a non-zero value if the sign of its value
 .Fa x
-is finite.
+is negative.
 Otherwise 0 is returned.
 .Sh ERRORS
 No errors are defined.
 .Sh SEE ALSO
 .Xr fpclassify 3 ,
+.Xr isfinite 3 ,
 .Xr isnormal 3 ,
-.Xr math 3 ,
-.Xr signbit 3
+.Xr math 3
 .Sh STANDARDS
 The
-.Fn isfinite
+.Fn signbit
 macro conforms to
 .St -isoC-99 .
