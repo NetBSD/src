@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.14 2003/07/16 05:08:08 itojun Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.15 2003/07/16 05:27:49 itojun Exp $	*/
 
 /**
  * rijndael-api-fst.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.14 2003/07/16 05:08:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.15 2003/07/16 05:27:49 itojun Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -213,7 +213,6 @@ int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 			outBuffer += 16;
 		}
 		padLen = 16 - (inputOctets - 16*numBlocks);
-		assert(padLen > 0 && padLen <= 16);
 		memcpy(block, input, 16 - padLen);
 		memset(block + 16 - padLen, padLen, padLen);
 		rijndaelEncrypt(key->rk, key->Nr, block, outBuffer);
@@ -232,7 +231,6 @@ int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 			outBuffer += 16;
 		}
 		padLen = 16 - (inputOctets - 16*numBlocks);
-		assert(padLen > 0 && padLen <= 16);
 		for (i = 0; i < 16 - padLen; i++) {
 			block[i] = input[i] ^ iv[i];
 		}
