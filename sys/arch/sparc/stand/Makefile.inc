@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.3 1995/09/30 21:43:36 pk Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1995/10/09 23:25:55 pk Exp $
 
 .if !defined(__stand_makefile_inc)
 __stand_makefile_inc=1
 
 S= ${.CURDIR}/../../../${R}
 
-.if !make(libdep)
+.if !make(libdep) && !make(sadep) && !make(salibdir) && !make(kernlibdir)
 .BEGIN:
 	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
 .endif
