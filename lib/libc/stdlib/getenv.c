@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.7 1996/12/20 20:32:54 cgd Exp $	*/
+/*	$NetBSD: getenv.c,v 1.8 1997/07/13 20:16:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -33,16 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char *sccsid = "from: @(#)getenv.c	5.8 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: getenv.c,v 1.7 1996/12/20 20:32:54 cgd Exp $";
+__RCSID("$NetBSD: getenv.c,v 1.8 1997/07/13 20:16:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 #include <string.h>
+#include "local.h"
 
 /*
  * getenv --
@@ -53,7 +55,6 @@ getenv(name)
 	const char *name;
 {
 	int offset;
-	char *__findenv();
 
 	return(__findenv(name, &offset));
 }

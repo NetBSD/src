@@ -1,4 +1,4 @@
-/*	$NetBSD: rand.c,v 1.5 1995/12/28 08:52:40 thorpej Exp $	*/
+/*	$NetBSD: rand.c,v 1.6 1997/07/13 20:16:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char *sccsid = "from: @(#)rand.c	5.6 (Berkeley) 6/24/91";
 #else
-static char *rcsid = "$NetBSD: rand.c,v 1.5 1995/12/28 08:52:40 thorpej Exp $";
+__RCSID("$NetBSD: rand.c,v 1.6 1997/07/13 20:16:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
