@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137 2002/09/27 15:36:56 provos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.138 2002/10/20 02:37:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@
 #include <machine/pmap.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
+#include <m68k/cacheops.h>
 
 #include <sun3/sun3/cache.h>
 #include <sun3/sun3/control.h>

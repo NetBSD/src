@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1 2001/05/14 18:23:04 drochner Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.2 2002/10/20 02:37:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -53,6 +53,7 @@
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
+#include <m68k/cacheops.h>
 
 /* XXX should be in an include file somewhere */
 #define CC_PURGE	1
