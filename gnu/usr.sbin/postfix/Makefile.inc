@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2001/03/13 18:13:16 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2001/03/13 18:34:22 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,8 @@ IDIST=	${.CURDIR}/../../../dist/postfix
 CPPFLAGS+= -DNETBSD1 -I${DIST} \
 	-I${IDIST}/src/dns -I${IDIST}/src/global -I${IDIST}/src/master \
 	-I${IDIST}/src/util
+# IPv6
+CPPFLAGS+= -DINET6
 
 DOBJDIR!=	cd $(.CURDIR)/../dns && ${PRINTOBJDIR}
 LIBPDNS=	${DOBJDIR}/libdns.a

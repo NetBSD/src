@@ -63,6 +63,11 @@
 
 #include "master.h"
 
+#ifdef INET6
+#include <netdb.h>
+#include <stdio.h>
+#endif 
+
 /* master_listen_init - enable connection requests */
 
 void    master_listen_init(MASTER_SERV *serv)
@@ -70,6 +75,10 @@ void    master_listen_init(MASTER_SERV *serv)
     char   *myname = "master_listen_init";
     char   *end_point;
     int     n;
+#ifdef INET6
+    char hbuf[NI_MAXHOST];
+    SOCKADDR_SIZE salen;
+#endif
 
     /*
      * Find out what transport we should use, then create one or more
@@ -113,8 +122,21 @@ void    master_listen_init(MASTER_SERV *serv)
 	    close_on_exec(serv->listen_fd[0], CLOSE_ON_EXEC);
 	} else {				/* virtual */
 	    for (n = 0; n < serv->listen_fd_count; n++) {
+#ifdef INET6
+#ifndef HAS_SA_LEN					
+		salen = SA_LEN((struct sockaddr *)&serv->addr_list.inet->addrs[n]);
+#else			
+		salen = ((struct sockaddr *)&serv->addr_list.inet->addrs[n])->sa_len;
+#endif			
+		if (getnameinfo((struct sockaddr *)&serv->addr_list.inet->addrs[n],
+			salen, hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST)) {
+		    strncpy(hbuf, "?????", sizeof(hbuf));
+		}
+		end_point = concatenate(hbuf, ":", serv->name, (char *) 0);
+#else
 		end_point = concatenate(inet_ntoa(serv->addr_list.inet->addrs[n]),
 					":", serv->name, (char *) 0);
+#endif
 		serv->listen_fd[n]
 		    = inet_listen(end_point, serv->max_proc > var_proc_limit ?
 			     serv->max_proc : var_proc_limit, NON_BLOCKING);
