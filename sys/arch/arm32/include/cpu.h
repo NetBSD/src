@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.8 1996/04/27 02:04:39 mark Exp $ */
+/* $NetBSD: cpu.h,v 1.9 1996/06/12 19:48:48 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -94,6 +94,10 @@
 #define PSR_SVC32_MODE	0x00000013
 #define PSR_ABT32_MODE	0x00000017
 #define PSR_UND32_MODE	0x0000001b
+#define PSR_32_MODE	0x00000010
+
+#define PSR_IN_USR_MODE(psr)	(!((psr) & 3))		/* XXX */
+#define PSR_IN_32_MODE(psr)	((psr) & PSR_32_MODE)
 
 #define CPU_ID_DESIGNER_MASK	0xff000000
 #define CPU_ID_ARM_LTD		0x41000000
@@ -176,7 +180,7 @@
  
 #define CLKF_USERMODE(frame) ((frame->if_spsr & PSR_MODE) == PSR_USR32_MODE)
 
-#define CLKF_BASEPRI(frame) (1)
+#define CLKF_BASEPRI(frame) (0) /* Always set a soft clock interrupt */
 
 #define CLKF_PC(frame) (frame->if_pc)
 
