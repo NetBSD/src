@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.h,v 1.2 1994/11/25 15:28:26 ragge Exp $ */
+/*	$NetBSD: gencons.h,v 1.3 1995/06/05 16:26:38 ragge Exp $ */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -50,3 +50,6 @@
 #define	GC_ERR	0x8000	/* received character error */
 #define	GC_CON	0xf00	/* mfpr($PR_RXDB)&GC_CON==0 then console chr */
 
+/* PR_TXDB */
+#define	GC_BOOT	0xf02	/* boot machine */
+#define	GC_CCF	0xf04	/* clear cold start flag */

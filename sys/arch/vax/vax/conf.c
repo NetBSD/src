@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 1995/05/03 19:20:09 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 1995/06/05 16:26:34 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -445,7 +445,7 @@ iskmemdev(dev)
 	dev_t dev;
 {
 
-	return (major(dev) == 2 && minor(dev) < 2);
+	return (major(dev) == 3 && minor(dev) < 2);
 }
 
 /*
@@ -456,5 +456,5 @@ iszerodev(dev)
 	dev_t dev;
 {
 
-	return (major(dev) == 2 && minor(dev) == 12);
+	return (major(dev) == 3 && minor(dev) == 12);
 }

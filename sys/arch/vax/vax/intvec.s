@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.9 1995/05/03 19:20:12 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.10 1995/06/05 16:26:43 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -57,11 +57,19 @@
 	.long	label+stack;
 		.text
 
-		.globl	_kernbase
+	.globl	_kernbase,_rpb
 _kernbase:
+_rpb:	
+/*
+ * First page in memory we have rpb; so that we know where :-)
+ * Second page contain scb, and thereafter uba vectors.
+ * Virtual adress is 0x80000000.
+ */
+	.space	512	/* rpb takes one page */
+
 	INTVEC(stray00, ISTACK)	# Unused., 0
 	INTVEC(mcheck, ISTACK)		# Machine Check., 4
-	INTVEC(stray08, ISTACK)	# Kernel Stack Invalid., 8
+	INTVEC(invkstk, ISTACK)	# Kernel Stack Invalid., 8
 	INTVEC(stray0C, ISTACK)	# Power Failed., C
 	INTVEC(privinflt, KSTACK)	# Privileged/Reserved Instruction.
 	INTVEC(stray14, ISTACK)	# Customer Reserved Instruction, 14
@@ -69,8 +77,8 @@ _kernbase:
 	INTVEC(resadflt, KSTACK)	# # Reserved Address Mode., 1C
 	INTVEC(access_v, KSTACK)	# Access Control Violation, 20
 	INTVEC(transl_v, KSTACK)	# Translation Invalid, 24
-	INTVEC(stray28, ISTACK)	# Trace Pending, 28
-	INTVEC(stray2C, ISTACK)	# Breakpoint Instruction, 2C
+	INTVEC(tracep, KSTACK)	# Trace Pending, 28
+	INTVEC(breakp, KSTACK)	# Breakpoint Instruction, 2C
 	INTVEC(stray30, ISTACK)	# Compatibility Exception, 30
 	INTVEC(arithflt, KSTACK)	# Arithmetic Fault, 34
 	INTVEC(stray38, ISTACK)	# Unused, 38
@@ -147,7 +155,7 @@ _V_DEVICE_VEC:  .space 0x100
 #
 mcheck:	.globl	mcheck
 	tstl	_cold		# Ar we still in coldstart?
-	bneq	1f		# Yes.
+	bneq	L4		# Yes.
 
 	pushr	$0x3f
 	pushab	24(sp)
@@ -157,7 +165,7 @@ mcheck:	.globl	mcheck
 
         rei
 
-1:	addl2	(sp)+,sp	# remove info pushed on stack
+L4:	addl2	(sp)+,sp	# remove info pushed on stack
 	mtpr	$0xF,$PR_MCESR	# clear the bus error bit
 	movl	_memtest,(sp)	# REI to new adress
 	rei
@@ -174,29 +182,28 @@ mcheck:	.globl	mcheck
 	TRAPCALL(resadflt, T_RESADFLT)
 
 		.align	2
-transl_v:	.globl	transl_v	# Translation violation
+transl_v:	.globl	transl_v	# Translation violation, 20
 	pushl	$T_TRANSFLT
-3:	bbc	$1,4(sp),1f
+L3:	bbc	$1,4(sp),L1
 	bisl2	$T_PTEFETCH, (sp)
-1:	bbc	$2,4(sp),2f
+L1:	bbc	$2,4(sp),L2
 	bisl2	$T_WRITE, (sp)
-2:	movl	(sp), 4(sp)
+L2:	movl	(sp), 4(sp)
 	addl2	$4, sp
 	jbr	trap
 
 
 		.align  2
-access_v:.globl	access_v	# Access cntrl viol fault
+access_v:.globl	access_v	# Access cntrl viol fault, 	24
 	blbs	(sp), ptelen
 	pushl	$T_ACCFLT
-	jbr	3b
+	jbr	L3
 
 ptelen:	movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
 	jbr trap;
 
-
-	STRAY(0, 28)
-	STRAY(0, 2C)
+	TRAPCALL(tracep, T_TRCTRAP)
+	TRAPCALL(breakp, T_BPTFLT)
 	STRAY(0, 30)
 
 	TRAPARGC(arithflt, T_ARITHFLT)
@@ -223,6 +230,23 @@ syscall:
 	addl2	$8,sp
 	mtpr	$0x1f,$PR_IPL	# Be sure we can REI
 	rei
+
+        .align 2                # Main system call
+        .globl  invkstk
+invkstk:
+        pushl   $0
+        pushl   $0
+        pushr   $0xfff
+        pushl   ap
+        pushl   fp
+        pushl   sp              # pointer to syscall frame; defined in trap.h
+        calls   $1,_invkstk
+        movl    (sp)+,fp
+        movl    (sp)+,ap
+        popr    $0xfff
+        addl2   $8,sp
+        mtpr    $0x1f,$PR_IPL   # Be sure we can REI
+        rei
 
 
 	STRAY(0, 44)
