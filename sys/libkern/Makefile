@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1993/09/10 23:32:17 jtc Exp $
+#	$Id: Makefile,v 1.7 1993/09/13 19:53:18 jtc Exp $
 
 LIB=	kern
 LIBDIR=	${.CURDIR}/../arch/${MACHINE}/compile
@@ -24,5 +24,9 @@ LIBC=	${.CURDIR}/../../lib/libc
 .PATH: ${LIBC}/stdlib ${LIBC}/${MACHINE}/stdlib
 .PATH: ${LIBC}/sys ${LIBC}/${MACHINE}/sys
 AINC+=	-I${LIBC}/${MACHINE}
+
+install:
+	install ${COPY} lib${LIB}.a ${LIBDIR}
+	${RANLIB} -t ${LIBDIR}/lib${LIB}.a
 
 .include <bsd.lib.mk>
