@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.2.4.1 2000/07/19 14:04:46 mrg Exp $	*/
+/*	$NetBSD: bzero.S,v 1.2.4.2 2000/07/26 23:55:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1999
@@ -51,7 +51,7 @@
 #if 0
 	.asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: bzero.S,v 1.2.4.1 2000/07/19 14:04:46 mrg Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.2.4.2 2000/07/26 23:55:00 mycroft Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -132,7 +132,7 @@ Lbzero_internal:
 	bl,a,pn	%icc, Lbzero_cleanup	! Less than 8 left
 	 dec	8, %o1			! Fixup count -8
 2:
-	!! Now we're 64-bit aligned
+	!! Now we are 64-bit aligned
 	cmp	%o1, 256		! Use block clear if len > 256
 	bge,pt	%xcc, Lbzero_block	! use block store insns
 	 deccc	8, %o1
@@ -199,17 +199,12 @@ Lbzero_block:
  * See locore.s for the kernel version.
  *
  */	
-	save	%sp, -(CC64FSZ+32*8+BLOCK_SIZE), %sp	! Allocate an fpstate
-	add	%sp, (CC64FSZ+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
-	btst	1, %sp
-	add	%l0, BIAS, %l1				! Fixup 64-bit stack pointers
-	movnz	%xcc, %l1, %l0
+	save	%sp, -(CC64FSZ+16*4+BLOCK_SIZE), %sp	! Allocate an fpstate
+	add	%sp, (CC64FSZ+BLOCK_SIZE-1+BIAS), %l0	! Calculate pointer to fpstate
 	andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
 
 !	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
-	stda	%f0, [%l0] ASI_BLK_P
-	add	%l0, BLOCK_SIZE, %l1
-	stda	%f16, [%l1] ASI_BLK_COMMIT_P		! We only need two banks
+	stda	%f0, [%l0] ASI_BLK_COMMIT_P
 
 	!! We are now 8-byte aligned.  We need to become 64-byte aligned.
 	btst	63, %i0
@@ -223,22 +218,10 @@ Lbzero_block:
 	 dec	8, %i1
 
 2:
-	brz,pt	%i2, 4f					! Do we have a pattern to load?
-	 fzero	%f0					! Set up FPU
+	stx	%i2, [%sp + BIAS + 0x50]		! Flush this puppy to RAM
+	membar	#StoreLoad
+	ldd	[%sp + BIAS + 0x50], %f0
 
-	btst	1, %fp
-	bnz,pt	%icc, 3f				! 64-bit stack?
-	 nop
-	stw	%i2, [%fp + 0x28]			! Flush this puppy to RAM
-	membar	#StoreLoad
-	ld	[%fp + 0x28], %f0
-	ba,pt	%icc, 4f
-	 fmovsa	%icc, %f0, %f1
-3:	
-	stx	%i2, [%fp + BIAS + 0x50]		! Flush this puppy to RAM
-	membar	#StoreLoad
-	ldd	[%fp + BIAS + 0x50], %f0
-4:	
 	fmovda	%icc, %f0, %f2				! Duplicate the pattern
 	fmovda	%icc, %f0, %f4
 	fmovda	%icc, %f0, %f6
@@ -246,14 +229,6 @@ Lbzero_block:
 	fmovda	%icc, %f0, %f10
 	fmovda	%icc, %f0, %f12
 	fmovda	%icc, %f0, %f14
-	fmovda	%icc, %f0, %f16				! And second bank
-	fmovda	%icc, %f0, %f18
-	fmovda	%icc, %f0, %f20
-	fmovda	%icc, %f0, %f22
-	fmovda	%icc, %f0, %f24
-	fmovda	%icc, %f0, %f26
-	fmovda	%icc, %f0, %f28
-	fmovda	%icc, %f0, %f30
 	
 	!! Remember: we were 8 bytes too far
 	dec	56, %i1			! Go one iteration too far
@@ -273,8 +248,6 @@ Lbzero_block:
  * we put it.
  */
 	ldda	[%l0] ASI_BLK_P, %f0
-	add	%l0, BLOCK_SIZE, %l1
-	ldda	[%l1] ASI_BLK_P, %f16
 	addcc	%i1, 56, %i1		! Restore the count
 	ba,pt	%xcc, Lbzero_longs	! Finish up the remainder
 	 restore

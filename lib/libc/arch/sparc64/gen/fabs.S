@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.S,v 1.1 1998/09/11 04:56:22 eeh Exp $	*/
+/*	$NetBSD: fabs.S,v 1.1.10.1 2000/07/26 23:55:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)fabs.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: fabs.S,v 1.1 1998/09/11 04:56:22 eeh Exp $")
+	RCSID("$NetBSD: fabs.S,v 1.1.10.1 2000/07/26 23:55:00 mycroft Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,7 @@
 
 
 ENTRY(fabs)
-	stx	%o0, [%sp + 32]		! return value => %f0:f1
-	ldd	[%sp + 32], %f0		! (via kernel %o0/%o1 slot)
+	stx	%o0, [%sp + BIAS + 32]	! return value => %f0:f1
+	ldd	[%sp + BIAS + 32], %f0	! (via kernel %o0/%o1 slot)
 	retl
 	 fabss	%f0, %f0		! return absolute value
