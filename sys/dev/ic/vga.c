@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.79 2004/08/08 19:21:27 christos Exp $ */
+/* $NetBSD: vga.c,v 1.80 2004/08/13 04:03:38 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.79 2004/08/08 19:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.80 2004/08/13 04:03:38 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1005,7 +1005,7 @@ vga_doswitch(struct vga_config *vc)
 	vga_setfont(vc, scr);
 	/* XXX swich colours! */
 
-	scr->pcs.dispoffset = scr->mindispoffset;
+	scr->pcs.visibleoffset = scr->pcs.dispoffset = scr->mindispoffset;
 	if (!oldscr || (scr->pcs.dispoffset != oldscr->pcs.dispoffset)) {
 		vga_6845_write(vh, startadrh, scr->pcs.dispoffset >> 9);
 		vga_6845_write(vh, startadrl, scr->pcs.dispoffset >> 1);
@@ -1396,12 +1396,6 @@ vga_scroll(void *v, void *cookie, int lines)
 void
 vga_putchar(void *c, int row, int col, u_int uc, long attr)
 {
-#ifdef WSDISPLAY_SCROLLSUPPORT
-	struct vgascreen *scr = c;
-
-	if (scr->pcs.visibleoffset != scr->pcs.dispoffset)
-		vga_scroll(scr->cfg, scr, WSDISPLAY_SCROLL_BACKWARD);
-#endif
 
 	pcdisplay_putchar(c, row, col, uc, attr);
 }
