@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.26 2000/11/22 22:17:39 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.27 2000/11/23 23:01:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.26 2000/11/22 22:17:39 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.27 2000/11/23 23:01:55 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -811,7 +811,7 @@ add_segment(fsp, slp, sbp)
 	}
 
 	/* Compress segment buffer, if necessary */
-	if (slp->sl_bytes < seg_size(lfsp) / 2) {
+	if (!do_mmap && slp->sl_bytes < seg_size(lfsp) / 2) {
 		if (debug > 1)
 			syslog(LOG_DEBUG, "compressing: %d < %d",
 				(int)slp->sl_bytes, seg_size(lfsp) / 2);
