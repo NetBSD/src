@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raidframe.h,v 1.3 1999/02/05 00:06:16 oster Exp $	*/
+/*	$NetBSD: rf_raidframe.h,v 1.4 1999/02/23 23:57:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -91,13 +91,9 @@ typedef struct RF_DeviceConfig_s {
 	RF_RaidDisk_t spares[RF_MAX_DISKS];
 }       RF_DeviceConfig_t;
 
-
 /* flags that can be put in the rf_recon_req structure */
 #define RF_FDFLAGS_NONE   0x0	/* just fail the disk */
 #define RF_FDFLAGS_RECON  0x1	/* fail and initiate recon */
-
-#define RF_SCSI_DISK_MAJOR   8	/* the device major number for disks in the
-				 * system */
 
 #define RAIDFRAME_CONFIGURE         _IOW ('r',  1, void *)	/* configure the driver */
 #define RAIDFRAME_SHUTDOWN          _IO  ('r',  2)	/* shutdown the driver */
@@ -136,5 +132,11 @@ typedef struct RF_DeviceConfig_s {
 									 * for device */
 #define RAIDFRAME_KEEP_ACCTOTALS    _IOW ('r', 18, int)	/* turn AccTotals on or
 							 * off for device */
+#define RAIDFRAME_GET_COMPONENT_LABEL _IOWR ('r', 19, RF_ComponentLabel_t *) 
+#define RAIDFRAME_SET_COMPONENT_LABEL _IOW ('r', 20, RF_ComponentLabel_t) 
+
+#define RAIDFRAME_INIT_LABELS _IOW ('r', 21, RF_ComponentLabel_t)
+#define RAIDFRAME_ADD_HOT_SPARE     _IOW ('r', 22, RF_HotSpare_t)
+#define RAIDFRAME_REMOVE_HOT_SPARE  _IOW ('r', 23, RF_HotSpare_t)
 
 #endif				/* !_RF__RF_RAIDFRAME_H_ */
