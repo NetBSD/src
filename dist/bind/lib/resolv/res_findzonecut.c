@@ -1,7 +1,7 @@
-/*	$NetBSD: res_findzonecut.c,v 1.1.1.1.2.3 2000/10/10 21:19:32 he Exp $	*/
+/*	$NetBSD: res_findzonecut.c,v 1.1.1.1.2.4 2001/01/28 17:09:19 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: res_findzonecut.c,v 8.8 1999/10/15 19:49:11 vixie Exp";
+static const char rcsid[] = "Id: res_findzonecut.c,v 8.12 2000/11/22 01:20:44 marka Exp";
 #endif /* not lint */
 
 /*
@@ -131,8 +131,6 @@ static void	dprintf(const char *, ...)
  *	match our dname (since that would have been returned in the answer
  *	section).  an authority section SOA has to be "above" our dname.
  *
- *	we cannot fail to find an SOA in this way.  ultimately we'll return
- *	a zname indicating the root zone if that's the closest enclosing zone.
  *	however, since authority section SOA's were once optional, it's
  *	possible that we'll have to go hunting for the enclosing SOA by
  *	ripping labels off the front of our dname -- this is known as "doing
@@ -402,10 +400,15 @@ get_glue(res_state statp, ns_class class, rrset_ns *nsrrsp) {
 		if (EMPTY(nsrr->addrs)) {
 			n = do_query(statp, nsrr->name, class, ns_t_a,
 				     resp, &msg);
-			if (n != 0) {
+			if (n < 0) {
 				DPRINTF(("get_glue: do_query('%s', %s') failed",
 					 nsrr->name, p_class(class)));
 				return (-1);
+			}
+			if (n > 0) {
+				DPRINTF((
+			"get_glue: do_query('%s', %s') CNAME or DNAME found",
+					 nsrr->name, p_class(class)));
 			}
 			if (save_a(statp, &msg, ns_s_an, nsrr->name, class,
 				   &nsrr->addrs) < 0) {
@@ -469,6 +472,7 @@ save_ns(res_state statp, ns_msg *msg, ns_sect sect,
 				free(nsrr);
 				return (-1);
 			}
+			INIT_LINK(nsrr, link);
 			INIT_LIST(nsrr->addrs);
 			APPEND(*nsrrsp, nsrr, link);
 		}
@@ -508,6 +512,7 @@ save_a(res_state statp, ns_msg *msg, ns_sect sect,
 			DPRINTF(("save_a: malloc failed"));
 			return (-1);
 		}
+		INIT_LINK(arr, link);
 		memcpy(&arr->addr, ns_rr_rdata(rr), NS_INADDRSZ);
 		APPEND(*arrsp, arr, link);
 	}
