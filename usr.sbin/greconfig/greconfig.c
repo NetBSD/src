@@ -37,7 +37,7 @@
 /*
  * greconfig - frontend to set/query tunnel endpoints
  *
- * $NetBSD: greconfig.c,v 1.1 1998/09/13 20:50:55 hwr Exp $
+ * $NetBSD: greconfig.c,v 1.2 1998/09/17 07:41:11 hwr Exp $
  */
 
 #include <stdio.h>
@@ -68,7 +68,7 @@ char* sa2name(struct sockaddr *sa);
 
 int verbose;
 
-void
+int
 main(int argc, char **argv)
 {
 	int i,s,err;
@@ -160,6 +160,8 @@ main(int argc, char **argv)
 			printf("running IP-Proto %d\n",ifr.ifr_flags);
 	}
 	close(s);
+
+	exit(0);
 }
 
 void
