@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.8 2003/11/07 06:03:52 thorpej Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.9 2004/01/14 14:29:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -98,13 +98,10 @@ typedef struct wiseman_rxdesc {
  * The transmit descriptor ring must be aligned to a 4K boundary,
  * and there must be an even multiple of 8 descriptors in the ring.
  */
-typedef union wiseman_tx_fields {
-	uint32_t	wtxu_bits;	/* bits; see below; */
-	struct {
-		uint8_t wtxu_status;		/* Tx status */
-		uint8_t wtxu_options;		/* options */
-		uint16_t wtxu_vlan;		/* VLAN info */
-	} __attribute__((__packed__)) wtxu_fields;
+typedef struct wiseman_tx_fields {
+	uint8_t wtxu_status;		/* Tx status */
+	uint8_t wtxu_options;		/* options */
+	uint16_t wtxu_vlan;		/* VLAN info */
 } __attribute__((__packed__)) wiseman_txfields_t;
 typedef struct wiseman_txdesc {
 	wiseman_addr_t	wtx_addr;	/* buffer address */
@@ -112,6 +109,7 @@ typedef struct wiseman_txdesc {
 	wiseman_txfields_t wtx_fields;	/* fields; see below */
 } __attribute__((__packed__)) wiseman_txdesc_t;
 
+/* Commands for wtx_cmdlen */
 #define	WTX_CMD_EOP	(1U << 24)	/* end of packet */
 #define	WTX_CMD_IFCS	(1U << 25)	/* insert FCS */
 #define	WTX_CMD_RS	(1U << 27)	/* report status */
@@ -121,7 +119,7 @@ typedef struct wiseman_txdesc {
 #define	WTX_CMD_IDE	(1U << 31)	/* interrupt delay enable */
 
 /* Descriptor types (if DEXT is set) */
-#define	WTX_DTYP_C	(0 << 20)	/* context */
+#define	WTX_DTYP_C	(0U << 20)	/* context */
 #define	WTC_DTYP_D	(1U << 20)	/* data */
 
 /* wtx_fields status bits */
@@ -130,9 +128,9 @@ typedef struct wiseman_txdesc {
 #define	WTX_ST_LC	(1U << 2)	/* late collision */
 #define	WTX_ST_TU	(1U << 3)	/* transmit underrun */
 
-/* wtx_fields bits for IP/TCP/UDP checksum offload */
-#define	WTX_IXSM	(1U << 8)	/* IP checksum offload */
-#define	WTX_TXSM	(1U << 9)	/* TCP/UDP checksum offload */
+/* wtx_fields option bits for IP/TCP/UDP checksum offload */
+#define	WTX_IXSM	(1U << 0)	/* IP checksum offload */
+#define	WTX_TXSM	(1U << 1)	/* TCP/UDP checksum offload */
 
 /*
  * The Livengood TCP/IP context descriptor.
