@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.1 2001/06/04 17:08:36 uch Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.2 2001/06/05 17:24:48 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -309,15 +309,18 @@ setup_hpcfbif(struct hd64461video_chip *hvc)
 	fb->hf_conf_index	= 0;	/* configuration index		*/
 	fb->hf_nconfs		= 1;   	/* how many configurations	*/
 	strncpy(fb->hf_name, "HD64461 video module", HPCFB_MAXNAMELEN);
-	/* frame buffer name		*/
+
+	/* frame buffer name */
 	strncpy(fb->hf_conf_name, "LCD", HPCFB_MAXNAMELEN);
-	/* configuration name		*/
+
+	/* configuration name */
 	fb->hf_height		= height;
 	fb->hf_width		= width;
 	fb->hf_baseaddr		= (u_long)fbvaddr;
 	fb->hf_offset		= (u_long)fbvaddr - 
 	    sh3_ptob(sh3_btop(fbvaddr));
-	/* frame buffer start offset	*/
+
+	/* frame buffer start offset */
 	fb->hf_bytes_per_line	= (width * depth) / NBBY;
 	fb->hf_nplanes		= 1;
 	fb->hf_bytes_per_plane	= height * fb->hf_bytes_per_line;
@@ -325,6 +328,10 @@ setup_hpcfbif(struct hd64461video_chip *hvc)
 	fb->hf_access_flags |= HPCFB_ACCESS_BYTE;
 	fb->hf_access_flags |= HPCFB_ACCESS_WORD;
 	fb->hf_access_flags |= HPCFB_ACCESS_DWORD;
+
+	/* frame buffer access method */
+	fb->hf_swap_flags = HPCFB_SWAP_BYTE;
+
 	if (vc->vc_reverse)
 		fb->hf_access_flags |= HPCFB_ACCESS_REVERSE;
 
