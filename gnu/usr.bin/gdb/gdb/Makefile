@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 1994/01/28 12:38:45 pk Exp $
+# $Id: Makefile,v 1.2 1994/01/28 21:37:23 cgd Exp $
 
 # Paths to libraries
 #
@@ -46,7 +46,7 @@ LDADD=		$(LIBBFD) $(LIBREADLINE) $(LIBIBERTY)
 DPADD=		$(LIBBFD) $(LIBREADLINE) $(LIBIBERTY)
 
 LDADD+=		-ltermcap
-DPADD+=		/usr/lib/libtermcap.a
+DPADD+=		$(LIBTERMCAP)
 
 
 .include "arch/$(MACHINE_ARCH)/Makefile.inc"
