@@ -1,5 +1,5 @@
 #	from: @(#)symbols.raw	7.6 (Berkeley) 5/8/91
-#	$Id: symbols.raw,v 1.2 1993/05/22 07:57:45 cgd Exp $
+#	$Id: symbols.raw,v 1.3 1994/04/15 07:04:13 cgd Exp $
 
 	_version
 #dmesg
@@ -29,9 +29,8 @@
 #	_ndh11
 #vmstat
 	_cp_time
-	_rate
 	_total
-	_sum
+	_cnt
 #	_rectime
 #	_pgintime
 	_dk_xfer

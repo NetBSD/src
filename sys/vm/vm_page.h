@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_page.h,v 1.9 1994/03/17 02:52:29 cgd Exp $
+ *	$Id: vm_page.h,v 1.10 1994/04/15 07:04:58 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -95,19 +95,21 @@
  *	queues (P).
  */
 
+TAILQ_HEAD(pglist, vm_page);
+
 struct vm_page {
-	queue_chain_t	pageq;		/* queue info for FIFO
-					 * queue or free list (P) */
-	queue_chain_t	hashq;		/* hash table links (O)*/
-	queue_chain_t	listq;		/* all pages in same object (O)*/
+	TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
+						 * queue or free list (P) */
+	TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
+	TAILQ_ENTRY(vm_page)	listq;		/* pages in same object (O)*/
 
-	vm_object_t	object;		/* which object am I in (O,P)*/
-	vm_offset_t	offset;		/* offset into that object (O,P) */
+	vm_object_t		object;		/* which object am I in (O,P)*/
+	vm_offset_t		offset;		/* offset into object (O,P) */
 
-	u_short		wire_count;	/* number wired down maps use me? (P) */
-	u_short		flags;		/* flags; see below */
+	u_short			wire_count;	/* wired down maps refs (P) */
+	u_short			flags;		/* see below */
 
-	vm_offset_t	phys_addr;	/* physical address of page */
+	vm_offset_t		phys_addr;	/* physical address of page */
 };
 
 /*
@@ -172,11 +174,11 @@ struct vm_page {
  */
 
 extern
-queue_head_t	vm_page_queue_free;	/* memory free queue */
+struct pglist	vm_page_queue_free;	/* memory free queue */
 extern
-queue_head_t	vm_page_queue_active;	/* active memory queue */
+struct pglist	vm_page_queue_active;	/* active memory queue */
 extern
-queue_head_t	vm_page_queue_inactive;	/* inactive memory queue */
+struct pglist	vm_page_queue_inactive;	/* inactive memory queue */
 
 extern
 vm_page_t	vm_page_array;		/* First resident page in table */
@@ -199,26 +201,6 @@ u_long		first_page;		/* first physical page number */
 extern
 int		vm_page_count;		/* How many pages do we manage? */
 #endif	/* MACHINE_NONCONTIG */
-
-/* XXX -- do these belong here? */
-extern
-int	vm_page_free_count;	/* How many pages are free? */
-extern
-int	vm_page_active_count;	/* How many pages are active? */
-extern
-int	vm_page_inactive_count;	/* How many pages are inactive? */
-extern
-int	vm_page_wire_count;	/* How many pages are wired? */
-extern
-int	vm_page_free_target;	/* How many do we want free? */
-extern
-int	vm_page_free_min;	/* When to wakeup pageout */
-extern
-int	vm_page_inactive_target;/* How many do we want inactive? */
-extern
-int	vm_page_free_reserved;	/* How many pages reserved to do pageout */
-extern
-int	vm_page_laundry_count;	/* How many pages being laundered? */
 
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
 
