@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.10 1996/07/01 20:48:58 ragge Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.11 1996/07/20 18:08:20 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -52,6 +52,9 @@
 
 #include "hp.h"
 #include "ra.h"
+#include "hdc.h"
+#include "sd.h"
+#include "st.h"
 
 void	gets __P((char *));
 
@@ -75,6 +78,9 @@ int (*mountroot) __P((void)) = ffs_mountroot;
 
 extern	struct cfdriver hp_cd;
 extern	struct cfdriver ra_cd;
+extern	struct cfdriver rd_cd;
+extern	struct cfdriver sd_cd;
+extern	struct cfdriver st_cd;
 
 struct	ngcconf {
 	struct	cfdriver *ng_cf;
@@ -85,6 +91,15 @@ struct	ngcconf {
 #endif
 #if NRA > 0
 	{ &ra_cd,	makedev(9, 0), },
+#endif
+#if NHDC > 0
+	{ &rd_cd,	makedev(19, 0), },
+#endif
+#if NSD > 0
+	{ &sd_cd,	makedev(20, 0), },
+#endif
+#if NST > 0
+	{ &st_cd,	makedev(21, 0), },
 #endif
 	{ 0 },
 };
