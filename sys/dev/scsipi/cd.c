@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.157 2001/09/02 13:11:53 tsutsui Exp $	*/
+/*	$NetBSD: cd.c,v 1.158 2001/10/22 16:16:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -1860,7 +1860,7 @@ dvd_auth(cd, a)
 		dvd_copy_challenge(&buf[4], a->hsc.chal);
 		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 16,
 		    CDRETRIES, 30000, NULL,
-		    XS_CTL_DATA_OUT|XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
+		    XS_CTL_DATA_OUT|XS_CTL_DATA_ONSTACK);
 		if (error)
 			return (error);
 		a->type = DVD_LU_SEND_KEY1;
@@ -1874,7 +1874,7 @@ dvd_auth(cd, a)
 		dvd_copy_key(&buf[4], a->hsk.key);
 		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 12,
 		    CDRETRIES, 30000, NULL,
-		    XS_CTL_DATA_OUT|XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
+		    XS_CTL_DATA_OUT|XS_CTL_DATA_ONSTACK);
 		if (error) {
 			a->type = DVD_AUTH_FAILURE;
 			return (error);
