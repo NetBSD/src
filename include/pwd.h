@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.17 1998/07/27 09:33:44 mycroft Exp $	*/
+/*	$NetBSD: pwd.h,v 1.18 1998/07/27 11:14:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -91,8 +91,6 @@ struct passwd {
 	__aconst char *pw_shell;	/* default shell */
 	time_t	    pw_expire;		/* account expiration */
 };
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 struct passwd	*getpwuid __P((uid_t));

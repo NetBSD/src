@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.h,v 1.7 1998/07/27 09:09:25 mycroft Exp $	*/
+/*	$NetBSD: fstab.h,v 1.8 1998/07/27 11:14:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -69,8 +69,6 @@ struct fstab {
 	int	fs_freq;		/* dump frequency, in days */
 	int	fs_passno;		/* pass number on parallel fsck */
 };
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 struct fstab *getfsent __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.63 1998/07/27 09:58:49 mycroft Exp $	*/
+/*	$NetBSD: unistd.h,v 1.64 1998/07/27 11:14:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,10 +75,9 @@
 #define	_UNISTD_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sys/types.h>
 #include <sys/unistd.h>
-
-#include <sys/featuretest.h>
 
 
 /*

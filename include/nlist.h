@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.h,v 1.8 1998/07/27 09:09:25 mycroft Exp $	*/
+/*	$NetBSD: nlist.h,v 1.9 1998/07/27 11:14:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -82,8 +82,6 @@ struct nlist {
 
 #define	N_FORMAT	"%08x"	/* namelist value format; XXX */
 #define	N_STAB		0x0e0	/* mask for debugger symbols -- stab(5) */
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int nlist __P((const char *, struct nlist *));

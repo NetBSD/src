@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.36 1998/07/27 09:58:49 mycroft Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.37 1998/07/27 11:14:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,6 +38,7 @@
 #ifndef _STDLIB_H_
 #define _STDLIB_H_
 
+#include <sys/cdefs.h>
 #include <sys/featuretest.h>
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
@@ -91,8 +92,6 @@ extern int __mb_cur_max;
 #else
 #define	MB_CUR_MAX	1	/* XXX */
 #endif
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 __dead void

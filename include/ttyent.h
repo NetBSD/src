@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyent.h,v 1.9 1998/07/27 09:09:27 mycroft Exp $	*/
+/*	$NetBSD: ttyent.h,v 1.10 1998/07/27 11:14:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -67,8 +67,6 @@ struct ttyent {
 	__aconst char *ty_window;/* command to start up window manager */
 	__aconst char *ty_comment;/* comment field */
 };
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 struct ttyent *getttyent __P((void));
