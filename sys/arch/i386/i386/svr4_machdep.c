@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.26 1996/10/13 03:19:51 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.27 1996/10/13 18:28:49 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -39,6 +39,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
+#include <sys/exec.h>
 
 #include <sys/syscallargs.h>
 #include <compat/svr4/svr4_types.h>
