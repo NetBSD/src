@@ -29,10 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)timed.8	6.6 (Berkeley) 4/27/91
-.\"	$Id: timed.8,v 1.2 1993/08/01 07:23:23 mycroft Exp $
+.\"     @(#)timed.8	6.7 (Berkeley) 5/11/93
 .\"
-.Dd April 27, 1991
+.Dd May 11, 1993
 .Dt TIMED 8
 .Os BSD 4.3
 .Sh NAME
@@ -42,11 +41,13 @@
 .Nm timed
 .Op Fl M
 .Op Fl t
+.Op Fl d
 .Op Fl i Ar network
 .Op Fl n Ar network
+.Op Fl F Ar host1 host2 ...
 .Sh DESCRIPTION
 This
-is the time server daemon and is normally invoked
+is a time server daemon and is normally invoked
 at boot time from the
 .Xr rc 8
 file.  
@@ -87,7 +88,9 @@ A
 .Nm timed
 running without the
 .Fl M
-flag will remain a slave.
+or
+.Fl F
+flags will remain a slave.
 The 
 .Fl t
 flag enables
@@ -97,6 +100,10 @@ file
 .Pa /var/log/timed.log .
 Tracing can be turned on or off by the program
 .Xr timedc 8 .
+The
+.Fl d
+flag is for debugging the daemon.
+It causes the program to not put itself into the background.
 Normally
 .Nm timed
 checks for a master time server on each network to which
@@ -134,6 +141,59 @@ The
 and 
 .Fl i
 flags are meaningless if used together.
+.Pp
+.Nm Timed
+checks for a master time server on each network to which
+it is connected, except as modified by the
+.Fl n
+and
+.Fl i
+options described above.
+If it finds masters on more than one network, it chooses one network
+on which to be a "slave," and then periodically checks the other
+networks to see if the masters there have disappeared.
+.Pp
+One way to synchronize a group of machines is to use an NTP daemon to 
+synchronize the clock of one machine to a distant standard or a radio
+receiver and 
+.Fl F Ar hostname
+to tell its timed daemon to trust only itself.
+.Pp
+Messages printed by the kernel on the system console occur with
+interrupts disabled. 
+This means that the clock stops while they are printing.
+A machine with many disk or network hardware problems and consequent
+messages cannot keep good time by itself.  Each message typically causes
+the clock to lose a dozen milliseconds.  A time daemon can
+correct the result.
+.Pp
+Messages in the system log about machines that failed to respond
+usually indicate machines that crashed or were turned off.
+Complaints about machines that failed to respond to initial time
+settings are often associated with "multi-homed" machines
+that looked for time masters on more than one network and eventually
+chose to become a slave on the other network.
+.SH WARNING
+If two or more time daemons, whether 
+.Nm timed ,
+.Xr NTP ,
+try to adjust the same clock, temporal chaos will result.
+If both 
+.Nm
+and another time daemon are run on the same machine,
+ensure that the 
+.Fl F
+flag is used, so that 
+.Nm timed
+never attempts to adjust the local clock.
+.Pp 
+The protocol is based on UDP/IP broadcasts.  All machines within
+the range of a broadcast that are using the TSP protocol must cooperate.
+There cannot be more than a single administrative domain using the
+.Fl F
+flag among all machines reached by a broadcast packet.
+Failure to follow this rule is usually indicated by complaints concerning
+"untrusted" machines in the system log.
 .Sh FILES
 .Bl -tag -width /var/log/timed.masterlog -compact
 .It Pa /var/log/timed.log
