@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2002/05/09 12:36:17 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 2002/05/10 20:14:40 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -589,9 +589,6 @@ intc_intr(int ssr, int spc, int ssp)
 	} else {
 		(*ih->ih_func)(ih->ih_arg);
 	}
-
-	/* Return to old interrupt level. */
-	_cpu_intr_resume(ssr & 0xf0);
 }
 
 void *
