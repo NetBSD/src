@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 1995/04/10 11:54:47 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.4 1995/06/28 02:45:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,6 +56,7 @@
 #include <vm/vm.h>
 
 caddr_t zeropage;
+extern int firstusablepage, lastusablepage;
 
 /*ARGSUSED*/
 int
@@ -104,7 +105,8 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 #ifndef DEBUG
 			/* allow reads only in RAM (except for DEBUG) */
-			if (v >= ctob(physmem))
+			if (v < ctob(firstusablepage) ||
+			    v >= ctob(lastusablepage + 1))
 				return (EFAULT);
 #endif
 			o = uio->uio_offset & PGOFSET;
@@ -187,7 +189,8 @@ mmmmap(dev, off, prot)
 	/*
 	 * Allow access only in RAM.
 	 */
-	if (off > ctob(physmem))
+	if (off < ctob(firstusablepage) ||
+	    off >= ctob(lastusablepage + 1))
 		return (-1);
 	return (alpha_btop(off));
 }
