@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.4 2001/09/27 16:31:23 uch Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.5 2002/01/13 14:00:39 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -44,12 +44,16 @@ enum config_hook_mode {
 };
 
 typedef void *config_hook_tag;
+typedef void *config_call_tag;
 
 void	config_hook_init(void);
 config_hook_tag config_hook(int, long, enum config_hook_mode,
     int (*func)(void *, int, long, void *), void *);
 void	config_unhook(config_hook_tag);
 int	config_hook_call(int, long, void *);
+config_call_tag config_connect(int, long);
+void	config_disconnect(config_call_tag crx);
+int	config_connected_call(config_call_tag, void *);
 
 /*
  * hook types and IDs
@@ -124,10 +128,7 @@ int	config_hook_call(int, long, void *);
 #define CONFIG_HOOK_ACADAPTER			49
 #define CONFIG_HOOK_CHARGE			50
 
-#define CONFIG_HOOK_MAX_ID			CONFIG_HOOK_CHARGE
-
-/* old type events */
-
+/* power control type */
 #define CONFIG_HOOK_POWERCONTROL	3
 #define CONFIG_HOOK_POWERCONTROL_COM0		CONFIG_HOOK_POWER_COM0
 #define CONFIG_HOOK_POWERCONTROL_COM1		CONFIG_HOOK_POWER_COM1
@@ -138,6 +139,7 @@ int	config_hook_call(int, long, void *);
 #define CONFIG_HOOK_POWERCONTROL_SPEAKER	CONFIG_HOOK_POWER_SPEAKER
 #define CONFIG_HOOK_POWERCONTROL_LED		CONFIG_HOOK_LED
 
+/* button event type */
 #define CONFIG_HOOK_BUTTONEVENT		4
 #define CONFIG_HOOK_BUTTONEVENT_POWER		CONFIG_HOOK_BUTTON_POWER
 #define CONFIG_HOOK_BUTTONEVENT_OK		CONFIG_HOOK_BUTTON_OK
@@ -159,20 +161,31 @@ int	config_hook_call(int, long, void *);
 #define CONFIG_HOOK_BUTTONEVENT_LIGHT_UP	CONFIG_HOOK_BUTTON_LIGHT_UP
 #define CONFIG_HOOK_BUTTONEVENT_LIGHT_DOWN	CONFIG_HOOK_BUTTON_LIGHT_DOWN
 
-#define CONFIG_HOOK_NTYPES 		5
+/* PCI interrupt type */
+#define CONFIG_HOOK_PCIINTR		5
+#define CONFIG_HOOK_PCIINTR_ID(bus, dev, func) \
+	(((bus) << 16) | ((dev) << 11) | ((func) << 8))
+#define CONFIG_HOOK_PCIINTR_BUS(id)		(((id) >> 16) & 0xff)
+#define CONFIG_HOOK_PCIINTR_DEVICE(id)		(((id) >> 11) & 0x1f)
+#define CONFIG_HOOK_PCIINTR_FUNCTION(id)	(((id) >>  8) & 0x07)
+
+#define CONFIG_HOOK_NTYPES 		6
 
 /*
  * nicknames for including from configration file.
  */
 #ifdef CONFIG_HOOK_DEFINE_NICKNAME
+/* type nicknames */
 #define PMEVENT		CONFIG_HOOK_PMEVENT
 #define SET		CONFIG_HOOK_SET
 #define EVENT		CONFIG_HOOK_EVENT
 #define GET		CONFIG_HOOK_GET
-/* old event type */
 #define POWER		CONFIG_HOOK_POWERCONTROL
 #define BUTTON		CONFIG_HOOK_BUTTONEVENT
+#define PCIINTR		CONFIG_HOOK_PCIINTR
 
+/* ID nicknames */
+/* power contorol */
 #define PWCTL_COM0	CONFIG_HOOK_POWER_COM0
 #define PWCTL_COM1	CONFIG_HOOK_POWER_COM1
 #define PWCTL_COM2	CONFIG_HOOK_POWER_COM2
@@ -181,6 +194,7 @@ int	config_hook_call(int, long, void *);
 #define PWCTL_LCD	CONFIG_HOOK_POWER_LCD
 #define PWCTL_SPEAKER	CONFIG_HOOK_POWER_SPEAKER
 #define PWCTL_LED	CONFIG_HOOK_LED
+/* buttons */
 #define BTN_POWER	CONFIG_HOOK_BUTTON_POWER
 #define BTN_OK		CONFIG_HOOK_BUTTON_OK
 #define BTN_CANCEL	CONFIG_HOOK_BUTTON_CANCEL
@@ -206,7 +220,7 @@ int	config_hook_call(int, long, void *);
 #define PME_HARDPOWER	CONFIG_HOOK_PMEVENT_HARDPOWER
 #define	PME_BATTERY	CONFIG_HOOK_PMEVENT_BATTERY
 #define	PME_AC		CONFIG_HOOK_PMEVENT_AC
-/* new one */
+/* set/get */
 #define POWER_COM0	CONFIG_HOOK_POWER_COM0	
 #define POWER_COM1	CONFIG_HOOK_POWER_COM1	
 #define POWER_COM2	CONFIG_HOOK_POWER_COM2	
@@ -258,6 +272,10 @@ int	config_hook_call(int, long, void *);
 #define BATTERYVAL	CONFIG_HOOK_BATTERYVAL
 #define ACADAPTER	CONFIG_HOOK_ACADAPTER
 #define CHARGE		CONFIG_HOOK_CHARGE
+/* PCI interrupt */
+#define PCIINTR_ID(bus, dev, func)	CONFIG_HOOK_PCIINTR_ID(bus, dev, func)
+#define PCIINTR_00_12_00	PCIINTR_ID(0, 12, 0)
+#define PCIINTR_00_19_00	PCIINTR_ID(0, 19, 0)
 #endif /* CONFIG_HOOK_DEFINE_NICKNAME */
 
 /*
