@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.11 1994/10/30 21:48:05 cgd Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.12 1996/02/04 02:17:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -40,16 +40,18 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
 
+#include <kern/kern_conf.h>
+
 #define cttyvp(p) ((p)->p_flag & P_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
 
 /*ARGSUSED*/
+int
 cttyopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -80,6 +82,7 @@ cttyopen(dev, flag, mode, p)
 }
 
 /*ARGSUSED*/
+int
 cttyread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -97,6 +100,7 @@ cttyread(dev, uio, flag)
 }
 
 /*ARGSUSED*/
+int
 cttywrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -114,6 +118,7 @@ cttywrite(dev, uio, flag)
 }
 
 /*ARGSUSED*/
+int
 cttyioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
@@ -138,6 +143,7 @@ cttyioctl(dev, cmd, addr, flag, p)
 }
 
 /*ARGSUSED*/
+int
 cttyselect(dev, flag, p)
 	dev_t dev;
 	int flag;
