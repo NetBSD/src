@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.179 2002/10/22 03:38:21 simonb Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.180 2002/10/23 06:45:49 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.179 2002/10/22 03:38:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.180 2002/10/23 06:45:49 gmcgarry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -171,6 +171,8 @@ struct pool vnode_pool;				/* memory pool for vnodes */
 void insmntque __P((struct vnode *, struct mount *));
 int getdevvp __P((dev_t, struct vnode **, enum vtype));
 void vgoneall __P((struct vnode *));
+
+void vclean(struct vnode *, int, struct proc *);
 
 static int vfs_hang_addrlist __P((struct mount *, struct netexport *,
 				  struct export_args *));
