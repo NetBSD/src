@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.31 2000/11/13 21:43:12 jdolecek Exp $	*/
+/*	$NetBSD: kdump.c,v 1.32 2000/12/17 16:09:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.31 2000/11/13 21:43:12 jdolecek Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.32 2000/12/17 16:09:40 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,6 +104,7 @@ void	ktremul __P((char *, int, int));
 void	ktrgenio __P((struct ktr_genio *, int));
 void	ktrpsig __P((struct ktr_psig *));
 void	ktrcsw __P((struct ktr_csw *));
+void	ktruser __P((char *, int));
 void	usage __P((void));
 void	eprint __P((int));
 char	*ioctlname __P((long));
@@ -206,6 +207,9 @@ main(argc, argv)
 		case KTR_EMUL:
 			ktremul(m, ktrlen, size);
 			break;
+		case KTR_USER:
+			ktruser(m, ktrlen);
+			break;
 		}
 		if (tail)
 			(void)fflush(stdout);
@@ -256,6 +260,9 @@ dumpheader(kth)
 		break;
 	case KTR_EMUL:
 		type = "EMUL";
+		break;
+	case KTR_USER:
+		type = "USER";
 		break;
 	default:
 		(void)sprintf(unknown, "UNKNOWN(%d)", kth->ktr_type);
@@ -557,6 +564,18 @@ ktrcsw(cs)
 
 	(void)printf("%s %s\n", cs->out ? "stop" : "resume",
 	    cs->user ? "user" : "kernel");
+}
+
+void
+ktruser(name, len)
+	char *name;
+	int len;
+{
+	int i;
+	printf("\"%d, ", len);
+	for(i=0; i < len; i++)
+		printf("%x", name[i]);
+	printf("\"\n");
 }
 
 void
