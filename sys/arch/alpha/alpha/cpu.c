@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 1996/11/13 23:18:07 cgd Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16 1996/12/05 01:39:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,11 @@
 #include <machine/rpb.h>
 
 /* Definition of the driver for autoconfig. */
+#ifdef __BROKEN_INDIRECT_CONFIG
 static int	cpumatch(struct device *, void *, void *);
+#else
+static int	cpumatch(struct device *, struct cfdata *, void *);
+#endif
 static void	cpuattach(struct device *, struct device *, void *);
 
 struct cfattach cpu_ca = {
@@ -49,7 +53,11 @@ struct cfdriver cpu_cd = {
 static int
 cpumatch(parent, cfdata, aux)
 	struct device *parent;
+#ifdef __BROKEN_INDIRECT_CONFIG
 	void *cfdata;
+#else
+	struct cfdata *cfdata;
+#endif
 	void *aux;
 {
 	struct confargs *ca = aux;

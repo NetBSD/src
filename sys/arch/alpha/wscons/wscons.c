@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.9 1996/11/19 05:23:12 cgd Exp $	*/
+/*	$NetBSD: wscons.c,v 1.10 1996/12/05 01:39:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -64,7 +64,11 @@ struct wscons_softc {
 	wscons_mmap_t		sc_mmap;
 };
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	wsconsmatch __P((struct device *, void *, void *));
+#else
+int	wsconsmatch __P((struct device *, struct cfdata *, void *));
+#endif
 void	wsconsattach __P((struct device *, struct device *, void *));
 
 struct cfattach wscons_ca = {
@@ -109,13 +113,23 @@ int	wsconsparam __P((struct tty *, struct termios *));
  */
 
 int
+#ifdef __BROKEN_INDIRECT_CONFIG
 wsconsmatch(parent, cfdata, aux)
+#else
+wsconsmatch(parent, cf, aux)
+#endif
 	struct device *parent;
+#ifdef __BROKEN_INDIRECT_CONFIG
 	void *cfdata;
+#else
+	struct cfdata *cf;
+#endif
 	void *aux;
 {
 	struct wscons_attach_args *waa = aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
 	struct cfdata *cf = cfdata;
+#endif
 
 	if (waa->waa_isconsole && wscons_console_unit != -1)
 		panic("wsconsmatch: multiple consoles?");
