@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.12 1999/06/30 15:07:45 drochner Exp $	*/
+/*	$NetBSD: xy.c,v 1.13 1999/07/28 06:35:06 christos Exp $	*/
 
 /*
  *
@@ -260,7 +260,7 @@ xygetdisklabel(xy, b)
 	if (sdl->sl_magic == SUN_DKMAGIC) {
 		xy->pcyl = sdl->sl_pcylinders;
 	} else
-#endif
+#else
 	{
 		printf("%s: WARNING: no `pcyl' in disk label.\n",
 			xy->sc_dev.dv_xname);
