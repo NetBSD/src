@@ -1,4 +1,4 @@
-/*	$NetBSD: sel_subs.c,v 1.10 1998/07/27 16:43:26 mycroft Exp $	*/
+/*	$NetBSD: sel_subs.c,v 1.11 1998/11/04 19:38:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sel_subs.c,v 1.10 1998/07/27 16:43:26 mycroft Exp $");
+__RCSID("$NetBSD: sel_subs.c,v 1.11 1998/11/04 19:38:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -608,7 +608,7 @@ str_sec(p, tval)
 	int yearset, len;
 
 	for (t = p, dot = NULL; *t; ++t) {
-		if (isdigit(*t))
+		if (isdigit((unsigned char)*t))
 			continue;
 		if (*t == '.' && dot == NULL) {
 			dot = t;
