@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.47 1994/05/27 13:00:27 cgd Exp $
+ *	$Id: fd.c,v 1.48 1994/06/16 01:08:18 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -874,10 +874,10 @@ again:
 #endif
 		read = bp->b_flags & B_READ;
 #ifdef NEWCONFIG
-		at_dma(read, bp->b_un.b_addr + fd->sc_skip, nblks * FDC_BSIZE,
+		at_dma(read, bp->b_data + fd->sc_skip, nblks * FDC_BSIZE,
 		       fdc->sc_drq);
 #else
-		isa_dmastart(read, bp->b_un.b_addr + fd->sc_skip, nblks * FDC_BSIZE,
+		isa_dmastart(read, bp->b_data + fd->sc_skip, nblks * FDC_BSIZE,
 		       fdc->sc_drq);
 #endif
 		outb(iobase + fdctl, type->rate);
@@ -952,7 +952,7 @@ again:
 #ifdef NEWCONFIG
 		at_dma_terminate(fdc->sc_drq);
 #else
-		isa_dmadone(bp->b_flags & B_READ, bp->b_un.b_addr + fd->sc_skip,
+		isa_dmadone(bp->b_flags & B_READ, bp->b_data + fd->sc_skip,
 		    nblks * FDC_BSIZE, fdc->sc_drq);
 #endif
 		fd->sc_skip += nblks * FDC_BSIZE;

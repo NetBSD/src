@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt_isa.c,v 1.21 1994/05/27 08:54:52 mycroft Exp $
+ *	$Id: lpt_isa.c,v 1.22 1994/06/16 01:08:21 mycroft Exp $
  */
 
 /*
@@ -474,7 +474,7 @@ lptwrite(dev, uio)
 	int error = 0;
 
 	while (n = min(LPT_BSIZE, uio->uio_resid)) {
-		uiomove(sc->sc_cp = sc->sc_inbuf->b_un.b_addr, n, uio);
+		uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
 		sc->sc_count = n;
 		error = pushbytes(sc);
 		if (error) {
