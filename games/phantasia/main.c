@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2004/04/11 13:35:06 he Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2004/12/09 05:15:59 jmc Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -27,6 +27,7 @@
  * AT&T is in no way connected with this game.
  */
 
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <pwd.h>
 
@@ -271,6 +272,8 @@ main(argc, argv)
 void
 initialstate()
 {
+	struct stat sb;
+
 	Beyond = FALSE;
 	Marsh = FALSE;
 	Throne = FALSE;
@@ -302,6 +305,16 @@ initialstate()
 
 	if ((Energyvoidfp = fopen(_PATH_VOID, "r+")) == NULL)
 		error(_PATH_VOID);
+	if (fstat(fileno(Energyvoidfp), &sb) == -1)
+		error("stat");
+	if (sb.st_size == 0) {
+		/* initialize grail to new location */
+		Enrgyvoid.ev_active = TRUE;
+		Enrgyvoid.ev_x = ROLL(-1.0e6, 2.0e6);
+		Enrgyvoid.ev_y = ROLL(-1.0e6, 2.0e6);
+		writevoid(&Enrgyvoid, 0L);
+	}
+
 	/* NOTREACHED */
 
 	srandom((unsigned) time(NULL));	/* prime random numbers */
