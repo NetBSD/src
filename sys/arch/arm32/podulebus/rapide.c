@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.6 1998/01/13 02:10:38 thorpej Exp $	*/
+/*	$NetBSD: rapide.c,v 1.7 1998/01/18 04:09:52 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -206,7 +206,6 @@ rapide_attach(parent, self, aux)
 	struct rapide_attach_args ra;
 	bus_space_tag_t iot;
 	bus_space_handle_t ctl_ioh;
-	int dummy;
 
 	/* Note the podule number and validate */
 
