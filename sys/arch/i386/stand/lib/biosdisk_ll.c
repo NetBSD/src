@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.7 1999/03/30 17:55:49 drochner Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.7.2.1 1999/05/02 21:40:36 perry Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -78,6 +78,7 @@ set_geometry(d, ed)
 	d->sec = SPT(diskinfo);
 	d->head = HEADS(diskinfo);
 	d->cyl = CYL(diskinfo);
+	d->chs_sectors = d->sec * d->head * d->cyl;
 
 	d->flags = 0;
 	if ((d->dev & 0x80) && int13_extension(d->dev)) {
@@ -119,7 +120,9 @@ do_read(d, dblk, num, buf)
 		int64_t	sec;
 	}		ext;
 
-	if (d->flags & BIOSDISK_EXT13) {
+	if ((dblk + num) >= d->chs_sectors) {
+		if (!(d->flags & BIOSDISK_EXT13))
+			return -1;
 		ext.size = sizeof(ext);
 		ext.resvd = 0;
 		ext.cnt = num;
