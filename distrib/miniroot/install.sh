@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.6 1996/05/27 12:39:02 leo Exp $
+#	$NetBSD: install.sh,v 1.7 1996/05/30 06:57:13 leo Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -69,18 +69,6 @@ MODE="install"
 
 # include common subroutines
 . install.sub
-
-# include version number
-. VERSION
-
-# decide upon an editor
-if [ X$EDITOR = X ]; then
-	if [ -x /usr/bin/vi ]; then
-		EDITOR=vi
-	else
-		EDITOR=ed
-	fi
-fi
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
