@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.6 1999/06/22 15:00:37 cgd Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.7 1999/06/23 09:19:33 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,6 +40,7 @@ static WINDOW *msg_win = NULL;
 static char *cbuffer;
 static size_t cbuffersize;
 static int do_echo = 1;
+
 
 /* Routines */
 
@@ -103,9 +104,9 @@ void msg_display(int msg_no, ...)
 {
 	va_list ap;
 
+	msg_clear();
+
 	va_start(ap, msg_no);
-	wclear (msg_win);
-	wmove (msg_win, 0, 0);
 	(void)msg_vprintf (msg_list[msg_no], ap);
 	va_end(ap);
 }
@@ -124,9 +125,9 @@ int msg_printf (char *fmt, ...)
 	va_list ap;
 	int  res;
 
+	msg_clear();
+
 	va_start (ap, fmt);
-	wclear (msg_win);
-	wmove (msg_win, 0, 0);
 	res = msg_vprintf (fmt, ap);
 	va_end (ap);
 	return res;
@@ -227,9 +228,9 @@ void msg_prompt_str (char *msg, char *def, char *val, int max_chars, ...)
 {
 	va_list ap;
 
+	msg_clear();
+
 	va_start (ap, max_chars);
-	wclear (msg_win);
-	wmove (msg_win, 0, 0);
 	msg_vprompt (msg, def, val, max_chars, ap);
 	va_end (ap);
 }
@@ -238,9 +239,9 @@ void msg_prompt (int msg_no, char *def, char *val, int max_chars, ...)
 {
 	va_list ap;
 
+	msg_clear();
+
 	va_start (ap, max_chars);
-	wclear (msg_win);
-	wmove (msg_win, 0, 0);
 	msg_vprompt (msg_list[msg_no], def, val, max_chars, ap);
 	va_end (ap);
 }
