@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17.10.8 2001/01/07 22:12:41 sommerfeld Exp $
+#	$NetBSD: genassym.cf,v 1.17.10.9 2001/01/10 04:38:32 sommerfeld Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -232,18 +232,17 @@ endif
 
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 
-ifdef MULTIPROCESSOR
-
 define	CPU_INFO_CURPROC	offsetof(struct cpu_info, ci_curproc)
 define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CPU_INFO_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
 define  CPU_INFO_IDLE_TSS_SEL	offsetof(struct cpu_info, ci_idle_tss_sel)
-define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_level)
+define	CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
+
+define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_cpuid_level)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
 define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
 define	CPU_INFO_FEATURES	offsetof(struct cpu_info, ci_feature_flags)
-define	CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
+define	CPU_INFO_BRAND		offsetof(struct cpu_info, ci_brand_id)
 
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
 
-endif

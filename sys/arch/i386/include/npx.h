@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.14 1999/01/26 14:25:02 christos Exp $	*/
+/*	$NetBSD: npx.h,v 1.14.16.1 2001/01/10 04:38:34 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -132,6 +132,7 @@ struct	emcsts {
 void probeintr __P((void));
 void probetrap __P((void));
 int npx586bug1 __P((int, int));
+void npxinit __P((struct cpu_info *));
 
 #endif
 

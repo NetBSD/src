@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.63.2.2 2000/06/25 19:37:12 sommerfeld Exp $	*/
+/*	$NetBSD: clock.c,v 1.63.2.3 2001/01/10 04:38:34 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -146,7 +146,6 @@ void	rtcput __P((mc_todregs *));
 int 	bcdtobin __P((int));
 int	bintobcd __P((int));
 
-static void check_clock_bug __P((void));
 static inline int gettick_broken_latch __P((void));
 
 
@@ -174,34 +173,17 @@ mc146818_write(sc, reg, datum)
 }
 
 u_long rtclock_tval;
-static int clock_broken_latch = 0;
+int clock_broken_latch = 0;
 
 #ifdef CLOCK_PARANOIA
 static int ticks[6];
 #endif
-
 /*
  * i8254 latch check routine:
- *     National Geode (formerly Cyrix MediaGX) has a sirious bug in
+ *     National Geode (formerly Cyrix MediaGX) has a serious bug in
  *     its built-in i8254-compatible clock module.
- *     Set the variable 'clock_broken_latch' to indicate it.
- *     XXX check only cpu_id
+ *     machdep sets the variable 'clock_broken_latch' to indicate it.
  */
-static void
-check_clock_bug()
-{
-	extern int cpu_id;
-
-	switch (cpu_id) {
-	case 0x440:     /* Cyrix MediaGX */
-	case 0x540:     /* GXm */
-		clock_broken_latch = 1;
-		break;
-	default:
-		clock_broken_latch = 0;
-		break;
-	}
-}
 
 int
 gettick_broken_latch()
@@ -296,8 +278,6 @@ initrtclock()
 	outb(IO_TIMER1, tval / 256);
 
 	rtclock_tval = tval;
-
-	check_clock_bug();
 }
 
 /*
