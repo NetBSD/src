@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.20 2002/09/26 01:41:51 wiz Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.21 2003/09/02 07:34:52 jlam Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -37,6 +37,12 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl V
+.Bk -words
+.Op Fl K Ar pkg_dbdir
+.Ek
+.Bk -words
+.Op Fl s Ar sfx_pattern
+.Ek
 .Ar command Op args ...
 .Sh DESCRIPTION
 This command performs various administrative tasks around the
@@ -45,8 +51,24 @@ Packages System.
 Available commands are:
 .Pp
 .Bl -tag -width check
+.It Fl K Ar pkg_dbdir
+Set
+.Ar pkg_dbdir
+as the package database directory.
+If this option isn't specified, then the package database directory is
+taken from the value of the environment variable
+.Ev PKG_DBDIR
+if it's set, otherwise it defaults to
+.Pa /var/db/pkg .
 .It Fl V
 Print version number and exit.
+.It Fl s Ar sfx_pattern
+Set the shell glob pattern for package suffices when matching package
+names for
+.Cm lsall
+and
+.Cm lsbest .
+The default pattern is ".t[bg]z".
 .It Cm check Op Ar pkg ...
 Use this command to check the files belonging to some or all of the
 packages installed on the local machine against their MD5 checksum
@@ -84,15 +106,15 @@ yui# cd /usr/pkgsrc/packages/i386ELF/All/
 yui# ls unzip*
 unzip-5.40.tgz  unzip-5.41.tgz
 yui# pkg_admin lsall 'unzip*'
-unzip-5.40.tgz
-unzip-5.41.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.40.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.41.tgz
 yui# pkg_admin lsall 'unzip\*[Ge]5.40'
-unzip-5.40.tgz
-unzip-5.41.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.40.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.41.tgz
 yui# pkg_admin lsall 'unzip\*[Ge]5.41'
-unzip-5.41.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.41.tgz
 yui# pkg_admin lsbest 'unzip\*[Ge]5.40'
-unzip-5.41.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.41.tgz
 yui# pkg_admin lsall /usr/pkgsrc/packages/i386ELF/All/'{mit,unproven}-pthread*'
 /usr/pkgsrc/packages/i386ELF/All/mit-pthreads-1.60b6.tgz
 /usr/pkgsrc/packages/i386ELF/All/unproven-pthreads-0.15.tgz
@@ -120,9 +142,14 @@ Needs to be run as root.
 .Pp
 .El
 .Sh ENVIRONMENT
-.Bl -tag -width PKG_DBDIR -compact
+.Bl -tag -width indent -compact
 .It Ev PKG_DBDIR
-Where to register packages instead of
+If the
+.Fl K
+flag isn't given, then
+.Ev PKG_DBDIR
+is the location of the package database directory.
+The default package database directory is
 .Pa /var/db/pkg .
 .El
 .Sh FILES

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2003/08/24 21:10:47 tron Exp $
+# $NetBSD: Makefile,v 1.21 2003/09/02 07:34:59 jlam Exp $
 # Original from FreeBSD, no rcs id.
 
 NOLINT=		# defined

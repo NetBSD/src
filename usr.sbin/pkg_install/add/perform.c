@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.85 2003/08/25 10:35:28 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.86 2003/09/02 07:34:50 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.85 2003/08/25 10:35:28 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.86 2003/09/02 07:34:50 jlam Exp $");
 #endif
 #endif
 
@@ -37,7 +37,6 @@ __RCSID("$NetBSD: perform.c,v 1.85 2003/08/25 10:35:28 tron Exp $");
 
 #include <signal.h>
 #include <string.h>
-#include <sys/wait.h>
 
 static char LogDir[FILENAME_MAX];
 static int zapLogDir;		/* Should we delete LogDir? */
@@ -73,9 +72,14 @@ installprereq(const char *name, int *errc)
 	if (Verbose)
 		printf("Loading it from %s.\n", name);
 	path_setenv("PKG_PATH");
-	if (vsystem("%s/pkg_add -s %s %s%s%s %s%s",
+	if (vsystem("%s/pkg_add -s %s %s%s%s %s%s %s%s%s %s%s",
 			BINDIR,
 			get_verification(),
+			NoView ? "-L " : "",
+			View ? "-w " : "",
+			View ? View : "",
+			Viewbase ? "-W " : "",
+			Viewbase ? Viewbase : "",
 			Force ? "-f " : "",
 			Prefix ? "-p " : "",
 			Prefix ? Prefix : "",
@@ -105,7 +109,7 @@ pkg_do(const char *pkg)
 	char    replace_via[FILENAME_MAX];
 	char    replace_to[FILENAME_MAX];
 	int	replacing = 0;
-	char   *where_to, *tmp, *extract;
+	char   *where_to, *extract;
 	char   *dbdir;
 	const char *exact;
 	FILE   *cfile;
@@ -114,22 +118,13 @@ pkg_do(const char *pkg)
 	struct stat sb;
 	int     inPlace;
 	int	rc;
+	Boolean	is_depoted_pkg = FALSE;
 
 	errc = 0;
 	zapLogDir = 0;
 	LogDir[0] = '\0';
 	strlcpy(playpen, FirstPen, sizeof(playpen));
 	inPlace = 0;
-	dbdir = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
-
-	/* make sure dbdir actually exists! */
-	if (!(isdir(dbdir) || islinktodir(dbdir))) {
-		if (fexec("mkdir", "-m", "755", "-p", dbdir, NULL)) {
-			errx(EXIT_FAILURE,
-			    "Database-dir %s cannot be generated, aborting.",
-			    dbdir);
-		}
-	}
 
 	/* Are we coming in for a second pass, everything already extracted?
 	 * (Slave mode) */
@@ -167,8 +162,7 @@ pkg_do(const char *pkg)
 				warnx("Package %s will not be extracted", pkg);
 				goto bomb;
 			}
-		}
-		else { /* local */
+		} else { /* local */
 			if (!IS_STDIN(pkg)) {
 			        /* not stdin */
 				if (!ispkgpattern(pkg)) {
@@ -286,8 +280,33 @@ pkg_do(const char *pkg)
 	/* Protect against old packages with bogus @name fields */
 	PkgName = (p = find_plist(&Plist, PLIST_NAME)) ? p->name : "anonymous";
 
-	/* See if this package (exact version) is already registered */
+	if (fexists(VIEWS_FNAME))
+		is_depoted_pkg = TRUE;
+	
+	dbdir = _pkgdb_getPKGDB_DIR();
 	(void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
+
+	/* check if the dbdir is wrong because this is a depoted package */
+	if (is_depoted_pkg) {
+		if ((p = find_plist(&Plist, PLIST_CWD))) {
+			if (strcmp(p->name, LogDir) != 0) {
+				warnx("%s is not the depot directory for %s.",
+					dbdir, PkgName);
+				goto success;
+			}
+		}
+	}
+
+	/* make sure dbdir actually exists! */
+	if (!(isdir(dbdir) || islinktodir(dbdir))) {
+		if (fexec("mkdir", "-m", "755", "-p", dbdir, NULL)) {
+			errx(EXIT_FAILURE,
+			    "Database-dir %s cannot be generated, aborting.",
+			    dbdir);
+		}
+	}
+
+	/* See if this package (exact version) is already registered */
 	if ((isdir(LogDir) || islinktodir(LogDir)) && !Force) {
 		warnx("package `%s' already recorded as installed", PkgName);
 		goto success;	/* close enough for government work */
@@ -426,10 +445,17 @@ ignore_replace_depends_check:
 						replacing = 1;
 					}
 
-					if (Verbose)
-						printf("pkg_delete '%s'\n", installed);
-					(void) fexec("pkg_delete", installed, NULL);
-					
+					if (Verbose) {
+						printf("%s/pkg_delete -K %s '%s'\n",
+							BINDIR,
+							dbdir,
+							installed);
+					}
+					vsystem("%s/pkg_delete -K %s '%s'\n",
+						BINDIR,
+						dbdir,
+						installed);
+
 				} else {
 					warnx("other version '%s' already installed", installed);
 
@@ -448,7 +474,6 @@ ignore_replace_depends_check:
 			continue;
 		if (Verbose)
 			printf("Package `%s' conflicts with `%s'.\n", PkgName, p->name);
-
 		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) > 0) {
 			warnx("Conflicting package `%s'installed, please use\n"
 			      "\t\"pkg_delete %s\" first to remove it!", installed, installed);
@@ -680,6 +705,10 @@ ignore_replace_depends_check:
 			move_file(".", DISPLAY_FNAME, LogDir);
 		if (fexists(PRESERVE_FNAME))
 			move_file(".", PRESERVE_FNAME, LogDir);
+		if (fexists(VIEWS_FNAME)) {
+			is_depoted_pkg = TRUE;
+			move_file(".", VIEWS_FNAME, LogDir);
+		}
 
 		/* register dependencies */
 		/* we could save some cycles here if we remembered what we
@@ -737,6 +766,28 @@ ignore_replace_depends_check:
 			(void) fclose(fp);
 		} else
 			warnx("cannot open %s as display file", buf);
+	}
+
+	/* Add the package to a default view. */
+	if (!Fake && !NoView && is_depoted_pkg) {
+		if (Verbose) {
+			printf("%s/pkg_view %s%s %s%s %sadd %s\n",
+				BINDIR,
+				View ? "-w " : "",
+				View ? View : "",
+				Viewbase ? "-W " : "",
+				Viewbase ? Viewbase : "",
+				Verbose ? "-v " : "",
+				PkgName);
+		}
+		vsystem("%s/pkg_view %s%s %s%s %sadd %s",
+				BINDIR,
+				View ? "-w " : "",
+				View ? View : "",
+				Viewbase ? "-W " : "",
+				Viewbase ? Viewbase : "",
+				Verbose ? "-v " : "",
+				PkgName);
 	}
 
 	goto success;

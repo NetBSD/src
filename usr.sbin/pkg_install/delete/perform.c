@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.42 2003/09/01 17:43:23 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.43 2003/09/02 07:34:55 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.42 2003/09/01 17:43:23 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.43 2003/09/02 07:34:55 jlam Exp $");
 #endif
 #endif
 
@@ -114,12 +114,10 @@ undepend(const char *deppkgname, void *vp)
 	char    fname[FILENAME_MAX], ftmp[FILENAME_MAX];
 	char    fbuf[FILENAME_MAX];
 	FILE   *fp, *fpwr;
-	char   *tmp;
 	int     s;
 
 	(void) snprintf(fname, sizeof(fname), "%s/%s/%s",
-	    (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-	    deppkgname, REQUIRED_BY_FNAME);
+	    _pkgdb_getPKGDB_DIR(), deppkgname, REQUIRED_BY_FNAME);
 	fp = fopen(fname, "r");
 	if (fp == NULL) {
 		warnx("couldn't open dependency file `%s'", fname);
@@ -166,6 +164,92 @@ undepend(const char *deppkgname, void *vp)
 }
 
 /*
+ * Remove the current view's package dbdir from the +VIEWS file of the
+ * depoted package named by pkgname.
+ */
+static int
+unview(const char *pkgname)
+{
+	char  fname[FILENAME_MAX], ftmp[FILENAME_MAX];
+	char  fbuf[FILENAME_MAX];
+	char  dbdir[FILENAME_MAX];
+	FILE *fp, *fpwr;
+	int  s;
+	int  cc;
+
+	(void) snprintf(dbdir, sizeof(dbdir), "%s", _pkgdb_getPKGDB_DIR());
+
+	/* Get the depot directory. */
+	(void) snprintf(fname, sizeof(fname), "%s/%s/%s",
+	    dbdir, pkgname, DEPOT_FNAME);
+	if ((fp = fopen(fname, "r")) == NULL) {
+		warnx("unable to open `%s' file", fname);
+		return -1;
+	}
+	if (fgets(fbuf, sizeof(fbuf), fp) == NULL) {
+		(void) fclose(fp);
+		warnx("empty depot file `%s'", fname);
+		return -1;
+	}
+	if (fbuf[cc = strlen(fbuf) - 1] == '\n') {
+		fbuf[cc] = 0;
+	}
+	fclose(fp);
+
+	/*
+	 * Copy the contents of the +VIEWS file into a temp file, but
+	 * skip copying the name of the current view's package dbdir.
+	 */
+	(void) snprintf(fname, sizeof(fname), "%s/%s", fbuf, VIEWS_FNAME);
+	if ((fp = fopen(fname, "r")) == NULL) {
+		warnx("unable to open `%s' file", fname);
+		return -1;
+	}
+	(void) snprintf(ftmp, sizeof(ftmp), "%s.XXXXXX", fname);
+	if ((s = mkstemp(ftmp)) == -1) {
+		(void) fclose(fp);
+		warnx("unable to open `%s' temp file", ftmp);
+		return -1;
+	}
+	if ((fpwr = fdopen(s, "w")) == NULL) {
+		(void) close(s);
+		(void) remove(ftmp);
+		(void) fclose(fp);
+		warnx("unable to fdopen `%s' temp file", ftmp);
+		return -1;
+	}
+	while (fgets(fbuf, sizeof(fbuf), fp) != NULL) {
+		if (fbuf[cc = strlen(fbuf) - 1] == '\n') {
+			fbuf[cc] = 0;
+		}
+		if (strcmp(fbuf, dbdir) != 0) {
+			(void) fputs(fbuf, fpwr);
+			(void) putc('\n', fpwr);
+		}
+	}
+	(void) fclose(fp);
+	if (fchmod(s, 0644) == FAIL) {
+		(void) fclose(fpwr);
+		(void) remove(ftmp);
+		warnx("unable to change permissions of `%s' temp file", ftmp);
+		return -1;
+	}
+	if (fclose(fpwr) == EOF) {
+		(void) remove(ftmp);
+		warnx("unable to close `%s' temp file", ftmp);
+		return -1;
+	}
+
+	/* Rename the temp file to the +VIEWS file */
+	if (rename(ftmp, fname) == -1) {
+		(void) remove(ftmp);
+		warnx("unable to rename `%s' to `%s'", ftmp, fname);
+		return -1;
+	}
+	return 0;
+}
+
+/*
  * Delete from directory 'home' all packages on lpkg_list. 
  * If tryall is set, ignore errors from pkg_delete(1).
  */
@@ -174,7 +258,6 @@ require_delete(char *home, int tryall)
 {
 	lpkg_t *lpp;
 	int     rv, fail;
-	char   *tmp;
 	int     oldcwd;
 
 	/* save cwd */
@@ -182,8 +265,7 @@ require_delete(char *home, int tryall)
 	if (oldcwd == -1)
 		err(EXIT_FAILURE, "cannot open \".\"");
 
-	(void) snprintf(pkgdir, sizeof(pkgdir), "%s",
-	    (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
+	(void) snprintf(pkgdir, sizeof(pkgdir), "%s", _pkgdb_getPKGDB_DIR());
 
 	/* walk list of things to delete */
 	fail = 0;
@@ -275,7 +357,7 @@ require_find_recursive_up(lpkg_t *thislpp)
 	lpkg_head_t reqq;
 	lpkg_t *lpp = NULL;
 	FILE   *cfile;
-	char   *nl, *tmp;
+	char   *nl;
 
 	/* see if we are on the find queue -- circular dependency */
 	if ((lpp = find_on_queue(&lpfindq, thislpp->lp_name))) {
@@ -286,7 +368,7 @@ require_find_recursive_up(lpkg_t *thislpp)
 	TAILQ_INIT(&reqq);
 
 	(void) snprintf(pkgdir, sizeof(pkgdir), "%s/%s",
-	    (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR, thislpp->lp_name);
+	    _pkgdb_getPKGDB_DIR(), thislpp->lp_name);
 
 	/* change to package's dir */
 	if (chdir(pkgdir) == FAIL) {
@@ -390,7 +472,6 @@ require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 	while ((lpp = TAILQ_FIRST(&reqq))) {
 		FILE   *cfile;
 		package_t rPlist;
-		char   *tmp;
 
 		/* remove a direct req from our queue */
 		TAILQ_REMOVE(&reqq, lpp, lp_link);
@@ -400,7 +481,7 @@ require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 		rPlist.tail = NULL;
 
 		/* prepare for recursion */
-		chdir ((tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
+		chdir(_pkgdb_getPKGDB_DIR());
 		if (ispkgpattern(lpp->lp_name)) {
 			char installed[FILENAME_MAX];
 			if (findmatchingname(".", lpp->lp_name, note_whats_installed, installed) != 1) {
@@ -512,17 +593,20 @@ require_print(void)
 static int
 pkg_do(char *pkg)
 {
-	FILE   *cfile;
-	char    home[FILENAME_MAX];
-	plist_t *p;
-	char   *tmp;
+	plist_t	       *p;
+	FILE	       *cfile;
+	FILE	       *fp;
+	char    	home[FILENAME_MAX];
+	char    	view[FILENAME_MAX];
+	int		cc;
+	Boolean		is_depoted_pkg = FALSE;
 
 	/* Reset some state */
 	if (Plist.head)
 		free_plist(&Plist);
 
-	(void) snprintf(LogDir, sizeof(LogDir), "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-	    pkg);
+	(void) snprintf(LogDir, sizeof(LogDir), "%s/%s",
+	    _pkgdb_getPKGDB_DIR(), pkg);
 	if (!fexists(LogDir) || !isdir(LogDir)) {
 		{
 			/* Check if the given package name matches something
@@ -547,6 +631,11 @@ pkg_do(char *pkg)
 	if (chdir(LogDir) == FAIL) {
 		warnx("unable to change directory to %s! deinstall failed", LogDir);
 		return 1;
+	}
+	if (!fexists(CONTENTS_FNAME)) {
+		warnx("package '%s' is not installed, %s missing", pkg, CONTENTS_FNAME);
+		if (!Force)
+			return 1;
 	}
 	if (fexists(PRESERVE_FNAME)) {
 		printf("Package `%s' is marked as not for deletion\n", pkg);
@@ -573,6 +662,28 @@ pkg_do(char *pkg)
 				return 1;
 		} else
 			require_delete(home, 0);
+	}
+	if (!isemptyfile(VIEWS_FNAME)) {
+		/* This package has instances in other views */
+		/* Delete them from the views */
+		if ((fp = fopen(VIEWS_FNAME, "r")) == NULL) {
+			warnx("unable to open '%s' file", VIEWS_FNAME);
+			return 1;
+		}
+		while (fgets(view, sizeof(view), fp) != NULL) {
+			if (view[cc = strlen(view) - 1] == '\n') {
+				view[cc] = 0;
+			}
+			if (Verbose) {
+				printf("Deleting package %s instance from `%s' view\n", pkg, view);
+			}
+			if (vsystem("%s -K %s %s", ProgramPath, view, pkg) != 0) {
+				warnx("unable to delete package %s from view %s", pkg, view);
+				(void) fclose(fp);
+				return 1;
+			}
+		}
+		(void) fclose(fp);
 	}
 	sanity_check(LogDir);
 	cfile = fopen(CONTENTS_FNAME, "r");
@@ -602,7 +713,24 @@ pkg_do(char *pkg)
 				return 1;
 		}
 	}
-	if (!NoDeInstall && fexists(DEINSTALL_FNAME)) {
+	/*
+	 * Ensure that we don't do VIEW-DEINSTALL action for old packages
+	 * or for the package in its depot directory.
+	 */
+	if (!NoDeInstall && fexists(DEINSTALL_FNAME) && fexists(DEPOT_FNAME)) {
+		if (Fake) {
+			printf("Would execute view de-install script at this point (arg: VIEW-DEINSTALL).\n");
+		} else {
+			vsystem("%s +x %s", CHMOD_CMD, DEINSTALL_FNAME);	/* make sure */
+			if (vsystem("./%s %s VIEW-DEINSTALL", DEINSTALL_FNAME, pkg)) {
+				warnx("view deinstall script returned error status");
+				if (!Force) {
+					return 1;
+				}
+			}
+		}
+	}
+	if (!NoDeInstall && fexists(DEINSTALL_FNAME) && !fexists(DEPOT_FNAME)) {
 		if (Fake)
 			printf("Would execute de-install script at this point (arg: DEINSTALL).\n");
 		else {
@@ -621,15 +749,26 @@ pkg_do(char *pkg)
 		"couldn't entirely delete package `%s'\n"
 		"(perhaps the packing list is incorrectly specified?)", pkg);
 	}
-	/* Remove this package from the +REQUIRED_BY list of the packages this depends on */
-	for (p = Plist.head; p; p = p->next) {
-		if (p->type != PLIST_PKGDEP)
-			continue;
+	if (!isemptyfile(DEPOT_FNAME)) {
 		if (Verbose)
-			printf("Attempting to remove dependency on package `%s'\n", p->name);
+			printf("Attempting to remove the %s registration on package `%s'\n", VIEWS_FNAME, pkg);
 		if (!Fake)
-			findmatchingname((tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-			    p->name, undepend, pkg);
+			(void) unview(pkg);
+	}
+	/*
+	 * If this isn't a package in a view, then remove this package
+	 * from the +REQUIRED_BY list of the packages this depends on.
+	 */
+	if (!fexists(DEPOT_FNAME)) {
+		for (p = Plist.head; p; p = p->next) {
+			if (p->type != PLIST_PKGDEP)
+				continue;
+			if (Verbose)
+				printf("Attempting to remove dependency on package `%s'\n", p->name);
+			if (!Fake)
+				findmatchingname(_pkgdb_getPKGDB_DIR(),
+				    p->name, undepend, pkg);
+		}
 	}
 	if (Recurse_down) {
 		/* Also remove the packages further down, now that there's
@@ -641,7 +780,7 @@ pkg_do(char *pkg)
 
 		require_delete(home, 1);
 	}
-	if (!NoDeInstall && fexists(DEINSTALL_FNAME)) {
+	if (!NoDeInstall && fexists(DEINSTALL_FNAME) && !fexists(DEPOT_FNAME)) {
 		if (Fake)
 			printf("Would execute post-de-install script at this point (arg: POST-DEINSTALL).\n");
 		else {
@@ -653,16 +792,28 @@ pkg_do(char *pkg)
 			}
 		}
 	}
+	if (fexists(VIEWS_FNAME))
+		is_depoted_pkg = TRUE;
+
 	/* Change out of LogDir before we remove it.
 	 * Do not fail here, as the package is not yet completely deleted! */
 	if (chdir(home) == FAIL)
 		warnx("Oops - removed current working directory.  Oh, well.");
 	if (!Fake) {
 		/* Finally nuke the +-files and the pkgdb-dir (/var/db/pkg/foo) */
-		if (fexec(REMOVE_CMD, "-r", LogDir, NULL)) {
-			warnx("couldn't remove log entry in %s, deinstall failed", LogDir);
-			if (!Force)
-				return 1;
+		if (is_depoted_pkg) {
+			(void) vsystem("%s %s/+*", REMOVE_CMD, LogDir);
+			if (isemptydir(LogDir))
+				(void) vsystem("%s %s", RMDIR_CMD, LogDir);
+			else
+				warnx("%s is not empty", LogDir);
+			return 0;
+		} else {
+			if (fexec(REMOVE_CMD, "-r", LogDir, NULL)) {
+				warnx("couldn't remove log entry in %s, deinstall failed", LogDir);
+				if (!Force)
+					return 1;
+			}
 		}
 	}
 	return 0;

@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.52 2003/07/14 06:17:56 itojun Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.53 2003/09/02 07:35:01 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.52 2003/07/14 06:17:56 itojun Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.53 2003/09/02 07:35:01 jlam Exp $");
 #endif
 
 /*

@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.36 2003/06/26 10:09:05 wiz Exp $
+.\" $NetBSD: pkg_create.1,v 1.37 2003/09/02 07:34:54 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -32,7 +32,7 @@
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl hlORUVv
+.Op Fl EhlORUVv
 .Bk -words
 .Op Fl B Ar build-info-file
 .Ek
@@ -43,6 +43,9 @@
 .Op Fl D Ar displayfile
 .Ek
 .Bk -words
+.Op Fl K Ar pkg_dbdir
+.Ek
+.Bk -words
 .Op Fl P Ar dpkgs
 .Ek
 .Bk -words
@@ -50,9 +53,6 @@
 .Ek
 .Bk -words
 .Op Fl b Ar build-version-file
-.Ek
-.Bk -words
-.Op Fl f Ar contents
 .Ek
 .Bk -words
 .Op Fl i Ar iscript
@@ -156,13 +156,15 @@ Fetch long description for package from file
 or, if preceded by
 .Cm - ,
 the argument itself.
-.It Fl f Ar packinglist
+.It Fl E
+Add an empty views file to the package.
+.It Fl f Ar packlist
 Fetch ``packing list'' for package from the file
-.Ar packinglist
+.Ar packlist
 or
 .Cm stdin
 if
-.Ar packinglist
+.Ar packlist
 is a
 .Cm -
 (dash).
@@ -178,6 +180,15 @@ Set
 to be the install procedure for the package.
 This can be any executable program (or shell script).
 It will be invoked automatically when the package is later installed.
+.It Fl K Ar pkg_dbdir
+Set
+.Ar pkg_dbdir
+as the package database directory.
+If this option isn't specified, then the package database directory is
+taken from the value of the environment variable
+.Ev PKG_DBDIR
+if it's set, otherwise it defaults to
+.Pa /var/db/pkg .
 .It Fl k Ar dscript
 Set
 .Ar dscript

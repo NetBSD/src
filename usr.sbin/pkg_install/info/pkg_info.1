@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.32 2002/11/14 09:40:23 agc Exp $
+.\" $NetBSD: pkg_info.1,v 1.33 2003/09/02 07:34:58 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,9 +25,12 @@
 .Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm
-.Op Fl BbcDdFfhIikLmnpqRrSsVv
+.Op Fl BbcDdFfhIikLmNnpqRrSsVv
 .Bk -words
 .Op Fl e Ar package
+.Ek
+.Bk -words
+.Op Fl K Ar pkg_dbdir
 .Ek
 .Bk -words
 .Op Fl l Ar prefix
@@ -152,6 +155,15 @@ Show the packing list instructions for each package.
 Show the index entry for each package.
 .It Fl i
 Show the install script (if any) for each package.
+.It Fl K Ar pkg_dbdir
+Set
+.Ar pkg_dbdir
+as the package database directory.
+If this option isn't specified, then the package database directory is
+taken from the value of the environment variable
+.Ev PKG_DBDIR
+if it's set, otherwise it defaults to
+.Pa /var/db/pkg .
 .It Fl k
 Show the de-install script (if any) for each package.
 .It Fl L
@@ -170,6 +182,8 @@ organize it.
 This lets you add a special token to the start of each field.
 .It Fl m
 Show the mtree file (if any) for each package.
+.It Fl N
+Show which packages each package was built with (exact dependencies), if any.
 .It Fl n
 Show which packages each package needs (depends upon), if any.
 .It Fl p
@@ -195,11 +209,13 @@ Turn on verbose output.
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DBDIR
 .It Ev PKG_DBDIR
-The standard package database directory,
-.Pa /var/db/pkg ,
-can be overridden by specifying an alternative directory in the
+If the
+.Fl K
+flag isn't given, then
 .Ev PKG_DBDIR
-environment variable.
+is the location of the package database directory.
+The default package database directory is
+.Pa /var/db/pkg .
 .It Ev PKG_PATH
 This can be used to specify a semicolon-separated list of paths and URLs to search for
 package files.
