@@ -1,21 +1,34 @@
-#	$NetBSD: std.sun3,v 1.9 1994/11/21 21:26:52 gwr Exp $
+#	$NetBSD: std.sun3,v 1.10 1994/12/12 18:58:49 gwr Exp $
 
 # Standard information for sun3's.
-
 machine	sun3 m68k
 
-options NEWCONFIG
-options FPCOPROC
-
+# The root node:
 mainbus0 at root
-
-obio0 at mainbus?
-obmem0 at mainbus?
+# control space hack...
 obctl0 at mainbus?
+# main memory
+obmem0 at mainbus?
+# device space
+obio0  at mainbus?
+# VME D16 space
+vmes0 at mainbus?
+# VME D32 space
+vmel0 at mainbus?
 
-clock0 at obio? addr ? level 5
+# Devices that should be present in any Sun3 kernel.
 
-# Standard options
-options		"COMPAT_43"
-options		"TCP_COMPAT_42"
+# OBIO
+zs0 at obio? addr ?
+zs1 at obio? addr ?
+eeprom0 at obio? addr ?
+clock0 at obio? addr ?
+
+# OBCTL
+idprom0 at obctl? addr ?
+
+# Standard defines
+
+options 	NEWCONFIG
+options 	FPCOPROC
 options		"MACHINE_NONCONTIG"

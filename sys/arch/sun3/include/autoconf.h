@@ -1,6 +1,7 @@
-/*	$NetBSD: autoconf.h,v 1.6 1994/11/23 06:58:36 gwr Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.7 1994/12/12 18:59:39 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
@@ -31,7 +32,29 @@
  * SUCH DAMAGE.
  */
 
-int always_match __P((struct device *, void *, void *));
+/*
+ * Autoconfiguration information.
+ */
 
-#define DEVICE_UNIT(device) (device->dv_unit)
-#define CFDATA_LOC(cfdata) (cfdata->cf_loc)
+/* These are the "bus" types: */
+#define	BUS_OBMEM	0	/* "obmem" */
+#define	BUS_OBIO	1	/* "obio"  */
+#define	BUS_VME16	2	/* "vmes"  */
+#define	BUS_VME32	3	/* "vmel"  */
+/* These are pseudo buses: */
+#define	BUS_OBCTL	4
+
+/*
+ * This is the "args" parameter to the bus match/attach functions.
+ */
+struct confargs {
+	int ca_bustype;		/* BUS_OBIO, ... */
+	int ca_paddr;		/* physical address */
+	int ca_intpri;		/* interrupt priority level */
+	int ca_intvec;		/* interrupt vector index */
+};
+
+int always_match __P((struct device *, void *, void *));
+void bus_scan __P((struct device *, void *, int));
+int  bus_print __P((void *, char *));
+int  bus_peek __P((struct confargs *, int off, int sz, int *));

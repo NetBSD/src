@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.h,v 1.7 1994/11/21 21:39:21 gwr Exp $	*/
+/*	$NetBSD: vector.h,v 1.8 1994/12/12 19:00:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -34,8 +34,7 @@
 #define COPY_ENTRY 0
 #define NVECTORS 256
 
-#define VEC_INTERRUPT_BASE 0x18
-#define VEC_LEVEL_7_INT    0x1F
+#define AUTO_VECTOR_BASE 0x18
 
 extern void (*vector_table[])();
 

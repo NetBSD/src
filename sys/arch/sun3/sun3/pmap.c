@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 1994/11/30 22:02:47 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 1994/12/12 19:00:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -960,26 +960,6 @@ pv_print(pa)
 }
 #endif	/* PMAP_DEBUG */
 
-static int
-pv_compute_cache(head)
-	pv_entry_t head;
-{
-	pv_entry_t pv;
-	int cread, cwrite, ccache, clen;
-
-	if (!pv_initialized) return 0;
-	cread = cwrite = ccache = clen = 0;
-	if (!head->pv_pmap) return 0;
-	for (pv = head; pv != NULL; pv=pv->pv_next) {
-		cread++;
-		pv->pv_flags & PV_WRITE ? cwrite++ : 0 ;
-		pv->pv_flags & PV_WRITE ? ccache++ : 0 ;
-		if (ccache) return PV_NC;
-	}
-	if ((cread==1) || (cwrite ==0)) return 0;
-	return PV_NC;
-}
-
 /*
  * Set or clear bits in all PTEs mapping a page.
  * Also does syncflags work while we are there...
@@ -1216,10 +1196,10 @@ pv_remove_all(pa)
 }
 
 /*
- * The pmap system is asked to look all mappings that point to a
+ * The pmap system is asked to lookup all mappings that point to a
  * given physical memory address.  This function adds a new element
  * to the list of mappings maintained for the given physical address.
- * Returns PG_NC if the (new) pvlist says that the address cannot
+ * Returns PV_NC if the (new) pvlist says that the address cannot
  * be cached.
  */
 static int
