@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/07/05 03:11:42 enami Exp $
+#	$NetBSD: Makefile,v 1.9 2000/07/05 03:30:08 enami Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -42,10 +42,10 @@ clean cleandir distclean:
 realdepend:
 
 distribution: netbsd-proto.cf
-	${INSTALL} -c -o root -g wheel -m 444 netbsd-proto.cf \
-	    ${DESTDIR}/etc/mail/sendmail.cf
-	${INSTALL} -c -o root -g wheel -m 444 netbsd-proto-IPv4only.cf \
-	    ${DESTDIR}/etc/mail/sendmail-IPv4only.cf
+	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 444 \
+	    netbsd-proto.cf ${DESTDIR}/etc/mail/sendmail.cf
+	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 444 \
+	    netbsd-proto-IPv4only.cf ${DESTDIR}/etc/mail/sendmail-IPv4only.cf
 
 # this is overkill, but....
 M4FILES=	${CFDIR}/domain/Berkeley.EDU.m4 \
