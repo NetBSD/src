@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.2 1997/06/28 21:36:28 leo Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.2.8.1 1998/10/30 17:21:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -65,7 +65,7 @@ bootxx(readsector, disklabel, autoboot)
 
 	bzero(edata, end - edata);
 
-	printf("\033v\nNetBSD/Atari boot loader ($Revision: 1.2 $)\n\n");
+	printf("\033v\nNetBSD/Atari boot loader ($Revision: 1.2.8.1 $)\n\n");
 
 	if (init_dskio(readsector, disklabel, -1))
 		return(-1);
@@ -141,6 +141,9 @@ sys_info(od)
 						break;
 					case 40:
 						od->cputype |= ATARI_68040;
+						break;
+					case 60:
+						od->cputype |= ATARI_68060;
 						break;
 				}
 			}
