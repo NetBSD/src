@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.40 1997/08/29 00:57:28 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.41 1997/08/29 00:57:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -62,13 +62,7 @@ void	if_slowtimo __P((void *arg));
 void
 ifinit()
 {
-#if 0
-	register struct ifnet *ifp;
 
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
-		if (ifp->if_snd.ifq_maxlen == 0)
-			ifp->if_snd.ifq_maxlen = ifqmaxlen;
-#endif
 	if_slowtimo(NULL);
 }
 
