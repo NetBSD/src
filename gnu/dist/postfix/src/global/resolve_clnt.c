@@ -48,6 +48,8 @@
 /*	After address resolution the recipient localpart contains further
 /*	routing information, so the resolved next-hop destination is not
 /*	the final destination.
+/* .IP RESOLVE_FLAG_ERROR
+/*	The address resolved to something that has invalid syntax.
 /* DIAGNOSTICS
 /*	Warnings: communication failure. Fatal error: mail system is down.
 /* SEE ALSO

@@ -23,6 +23,7 @@
 
 #define RESOLVE_FLAG_FINAL	(1<<0)	/* final delivery */
 #define RESOLVE_FLAG_ROUTED	(1<<1)	/* routed destination */
+#define RESOLVE_FLAG_ERROR	(1<<2)	/* bad destination */
 
 typedef struct RESOLVE_REPLY {
     VSTRING *transport;
