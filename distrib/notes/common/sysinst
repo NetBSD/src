@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.59 2002/07/26 15:41:55 rafal Exp $
+.\"	$NetBSD: sysinst,v 1.60 2002/08/07 02:49:03 fredb Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -554,9 +554,9 @@ button on the right will become active.
 Use it to locate and
 select the Installation Kernel file appropiate for your hardware.
 This will be either
-.Pa netbsd-GENERIC.gz
+.Pa netbsd-INSTALL.gz
 or
-.Pa netbsd-GENERICSBC.gz .
+.Pa netbsd-INSTALLSBC.gz .
 Close the window using the
 .Ic Close
 button.
