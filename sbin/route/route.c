@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.53 2002/02/21 15:44:25 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.54 2002/05/20 23:01:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.53 2002/02/21 15:44:25 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.54 2002/05/20 23:01:32 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ static void set_metric __P((char *, int));
 static int newroute __P((int, char **));
 static void inet_makenetandmask __P((u_int32_t, struct sockaddr_in *));
 #ifdef INET6
-static void inet6_makenetandmask __P((struct sockaddr_in6 *));
+static int inet6_makenetandmask __P((struct sockaddr_in6 *));
 #endif
 static int getaddr __P((int, char *, struct hostent **));
 static int flushroutes __P((int, char *[]));
@@ -1093,7 +1093,7 @@ inet_makenetandmask(net, isin)
 /*
  * XXX the function may need more improvement...
  */
-static void
+static int
 inet6_makenetandmask(sin6)
 	struct sockaddr_in6 *sin6;
 {
@@ -1115,8 +1115,10 @@ inet6_makenetandmask(sin6)
 
 	if (plen) {
 		rtm_addrs |= RTA_NETMASK;
-		prefixlen(plen);
+		return prefixlen(plen);
 	}
+
+	return -1;
 }
 #endif
 
@@ -1210,9 +1212,10 @@ getaddr(which, s, hpp)
 			su->sin6.sin6_scope_id = 0;
 		}
 #endif
-		if (which == RTA_DST)
-			inet6_makenetandmask(&su->sin6);
 		freeaddrinfo(res);
+		if (which == RTA_DST)
+			if (inet6_makenetandmask(&su->sin6) == 128)
+				return 1;
 		return 0;
 	    }
 #endif
