@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.68 1996/08/31 20:39:23 mycroft Exp $
+#	$NetBSD: PAIN,v 1.69 1996/08/31 20:44:01 mycroft Exp $
 #
 #	PAIN -- mail server and test machine
 #
@@ -127,6 +127,7 @@ scsibus* at aic?
 #bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bha1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bha*	at eisa? slot ?
+#bha*	at pci? dev ? function ?
 #scsibus* at bha?
 #ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at ncr?

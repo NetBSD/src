@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.28 1996/08/31 20:39:16 mycroft Exp $
+#	$NetBSD: DISKLESS,v 1.29 1996/08/31 20:43:55 mycroft Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -125,6 +125,7 @@ mms1	at isa? port 0x238 irq 5
 #bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bha1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bha*	at eisa? slot ?
+#bha*	at pci? dev ? function ?
 #scsibus* at bha?
 #ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at ncr?
