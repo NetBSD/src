@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.443 2001/05/30 17:50:46 itojun Exp $
+#	$NetBSD: files,v 1.444 2001/06/02 16:17:07 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -80,6 +80,8 @@ defopt	TCP_COMPAT_42
 
 defopt	TCP_RECVSPACE
 defopt	TCP_SENDSPACE
+
+defopt	opt_inet_csum.h	INET_CSUM_COUNTERS TCP_CSUM_COUNTERS UDP_CSUM_COUNTERS
 
 defopt	opt_altq_enabled.h ALTQ
 defopt	opt_altq.h	ALTQ_CBQ ALTQ_WFQ ALTQ_FIFOQ ALTQ_RED ALTQ_FLOWVALVE

@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.49 2001/05/10 22:57:44 fvdl Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.50 2001/06/02 16:17:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -445,6 +445,13 @@ ex_config(sc)
 	 * We can support 802.1Q VLAN-sized frames.
 	 */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
+
+	/*
+	 * The 3c90xB has hardware IPv4/TCPv4/UDPv4 checksum support.
+	 */
+	if (sc->ex_conf & EX_CONF_90XB)
+		sc->sc_ethercom.ec_if.if_capabilities |= IFCAP_CSUM_IPv4 |
+		    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
 	if_attach(ifp);
 	ether_ifattach(ifp, macaddr);
@@ -943,6 +950,7 @@ ex_start(ifp)
 	struct mbuf *mb_head;
 	bus_dmamap_t dmamap;
 	int offset, totlen, segment, error;
+	u_int32_t csum_flags;
 
 	if (sc->tx_head || sc->tx_free == NULL)
 		return;
@@ -1044,6 +1052,25 @@ ex_start(ifp)
 		dpd = txp->tx_dpd;
 		dpd->dpd_nextptr = 0;
 		dpd->dpd_fsh = htole32(totlen);
+
+		/* Byte-swap constants to compiler can optimize. */
+
+		if (sc->ex_conf & EX_CONF_90XB) {
+			csum_flags = 0;
+
+			if (mb_head->m_pkthdr.csum_flags & M_CSUM_IPv4)
+				csum_flags |= htole32(EX_DPD_IPCKSUM);
+
+			if (mb_head->m_pkthdr.csum_flags & M_CSUM_TCPv4)
+				csum_flags |= htole32(EX_DPD_TCPCKSUM);
+			else if (mb_head->m_pkthdr.csum_flags & M_CSUM_UDPv4)
+				csum_flags |= htole32(EX_DPD_UDPCKSUM);
+
+			dpd->dpd_fsh |= csum_flags;
+		} else {
+			KDASSERT((mb_head->m_pkthdr.csum_flags &
+			    (M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4)) == 0);
+		}
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 		    ((caddr_t)dpd - (caddr_t)sc->sc_dpd),
@@ -1249,6 +1276,26 @@ ex_intr(arg)
 					if (ifp->if_bpf)
 						bpf_mtap(ifp->if_bpf, m);
 #endif
+		/*
+		 * Set the incoming checksum information for the packet.
+		 */
+		if ((sc->ex_conf & EX_CONF_90XB) != 0 &&
+		    (pktstat & EX_UPD_IPCHECKED) != 0) {
+			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+			if (pktstat & EX_UPD_IPCKSUMERR)
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
+			if (pktstat & EX_UPD_TCPCHECKED) {
+				m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
+				if (pktstat & EX_UPD_TCPCKSUMERR)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_TCP_UDP_BAD;
+			} else if (pktstat & EX_UPD_UDPCHECKED) {
+				m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
+				if (pktstat & EX_UPD_UDPCKSUMERR)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_TCP_UDP_BAD;
+			}
+		}
 					(*ifp->if_input)(ifp, m);
 				}
 				goto rcvloop;
