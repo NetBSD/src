@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.12 2002/06/30 23:30:07 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.13 2002/07/16 14:20:04 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -477,7 +477,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lpt_init(NULPT,ulpt),		/* 66: USB printer */
 	cdev_lkm_dummy(),			/* 67: reserved */
 	cdev_lkm_dummy(),			/* 68: reserved */
-	cdev_lkm_dummy(),			/* 69: reserved */
+	cdev_tty_init(NIXPCOM,ixpcom),		/* 69: IXP1200 serial port */
 	cdev_scsibus_init(NSCSIBUS,scsibus),	/* 70: SCSI bus */
 	cdev_disk_init(NRAID,raid),    		/* 71: RAIDframe disk driver */
 	cdev_ugen_init(NUGEN,ugen),		/* 72: USB generic driver */

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.7 2002/04/19 01:04:39 wiz Exp $	*/
+/*	$NetBSD: conf.h,v 1.8 2002/07/16 14:20:04 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -125,5 +125,6 @@ cdev_decl(ld);
 cdev_decl(mlx);
 cdev_decl(mly);
 cdev_decl(plcom);
+cdev_decl(ixpcom);
 
 #endif	/* _ARM_CONF_H_ */
