@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.3 2003/10/27 01:11:47 kleink Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.4 2003/10/27 02:30:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
 #define	DBL_FRACBITS	52
 
 struct ieee_single {
-#ifdef _BYTE_ORDER == _BIG_ENDIAN
+#if _BYTE_ORDER == _BIG_ENDIAN
 	u_int	sng_sign:1;
 	u_int	sng_exp:8;
 	u_int	sng_frac:23;
@@ -101,7 +101,7 @@ struct ieee_single {
 };
 
 struct ieee_double {
-#ifdef _BYTE_ORDER == _BIG_ENDIAN
+#if _BYTE_ORDER == _BIG_ENDIAN
 	u_int	dbl_sign:1;
 	u_int	dbl_exp:11;
 	u_int	dbl_frach:20;
