@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.172 1999/12/10 23:23:01 jlam Exp $
+# $NetBSD: mi,v 1.173 1999/12/12 11:20:03 itojun Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -3274,6 +3274,20 @@
 ./usr/share/man/man3/ilogbf.3
 ./usr/share/man/man3/index.3
 ./usr/share/man/man3/inet.3
+./usr/share/man/man3/inet6_option_alloc.3
+./usr/share/man/man3/inet6_option_append.3
+./usr/share/man/man3/inet6_option_find.3
+./usr/share/man/man3/inet6_option_init.3
+./usr/share/man/man3/inet6_option_next.3
+./usr/share/man/man3/inet6_option_space.3
+./usr/share/man/man3/inet6_rthdr_add.3
+./usr/share/man/man3/inet6_rthdr_getaddr.3
+./usr/share/man/man3/inet6_rthdr_getflags.3
+./usr/share/man/man3/inet6_rthdr_init.3
+./usr/share/man/man3/inet6_rthdr_lasthop.3
+./usr/share/man/man3/inet6_rthdr_reverse.3
+./usr/share/man/man3/inet6_rthdr_segments.3
+./usr/share/man/man3/inet6_rthdr_space.3
 ./usr/share/man/man3/inet_addr.3
 ./usr/share/man/man3/inet_aton.3
 ./usr/share/man/man3/inet_lnaof.3
