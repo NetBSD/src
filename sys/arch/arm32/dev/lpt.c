@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.12 1996/10/15 15:51:56 mark Exp $ */
+/* $NetBSD: lpt.c,v 1.13 1996/11/23 03:56:02 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -369,7 +369,7 @@ lptattach(parent, self, aux)
 	if (mb->mb_irq != IRQUNK) {
 	 	sc->sc_ih.ih_func = lptintr;
  		sc->sc_ih.ih_arg = sc;
- 		sc->sc_ih.ih_level = IPL_NONE;
+ 		sc->sc_ih.ih_level = IPL_TTY;
  		sc->sc_ih.ih_name = "lpt";
  
 		if (irq_claim(mb->mb_irq, &sc->sc_ih))
