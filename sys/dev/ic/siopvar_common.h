@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.3.2.1 2000/07/24 16:51:38 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.3.2.2 2000/12/15 04:50:33 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -45,25 +45,38 @@ typedef struct scr_table {
 /* Number of scatter/gather entries */
 #define SIOP_NSG	(MAXPHYS/NBPG + 1)
 
+/* Number of tag */
+#define SIOP_NTAG 16
+
 /*
  * This structure interfaces the SCRIPT with the driver; it describes a full
- * transfer. It lives in the same chunk of DMA-safe memory as the script.
+ * transfer. 
  */
-struct siop_xfer {
+struct siop_xfer_common {
 	u_int8_t msg_out[8];	/* 0 */
 	u_int8_t msg_in[8];	/* 8 */
-	int status;		/* 16 */
+	u_int32_t status;	/* 16 */
 	u_int32_t pad1;		/* 20 */
 	u_int32_t id;		/* 24 */
 	u_int32_t pad2;		/* 28 */
 	scr_table_t t_msgin;	/* 32 */
 	scr_table_t t_extmsgin;	/* 40 */
 	scr_table_t t_extmsgdata; /* 48 */
-	scr_table_t t_msgtag;	/* 56 */
-	scr_table_t t_msgout;	/* 64 */
-	scr_table_t cmd;	/* 72 */
-	scr_table_t t_status;	/* 80 */
-	scr_table_t data[SIOP_NSG]; /* 88 */
+	scr_table_t t_msgout;	/* 56 */
+	scr_table_t cmd;	/* 64 */
+	scr_table_t t_status;	/* 72 */
+	scr_table_t data[SIOP_NSG]; /* 80 */
+} __attribute__((__packed__));
+
+/* status can hold the SCSI_* status values, and 2 additionnal values: */
+#define SCSI_SIOP_NOCHECK	0xfe	/* don't check the scsi status */
+#define SCSI_SIOP_NOSTATUS	0xff	/* device didn't report status */
+
+/* xfer description of the script: tables and reselect script */
+struct siop_xfer {
+	struct siop_xfer_common tables;
+	/* u_int32_t resel[sizeof(load_dsa) / sizeof(load_dsa[0])]; */
+	u_int32_t resel[24];
 } __attribute__((__packed__));
 
 /*
@@ -73,16 +86,20 @@ struct siop_xfer {
  */
 struct siop_cmd {
 	TAILQ_ENTRY (siop_cmd) next;
+	struct siop_softc *siop_sc; /* points back to our adapter */
 	struct siop_target *siop_target; /* pointer to our target def */
 	struct scsipi_xfer *xs; /* xfer from the upper level */
-	struct siop_xfer *siop_table; /* tables dealing with this xfer */
+	struct siop_xfer *siop_xfer; /* tables dealing with this xfer */
+#define siop_tables siop_xfer->tables
 	struct siop_cbd *siop_cbdp; /* pointer to our siop_cbd */
 	bus_addr_t	dsa; /* DSA value to load */
 	bus_dmamap_t	dmamap_cmd;
 	bus_dmamap_t	dmamap_data;
 	struct scsipi_sense rs_cmd; /* request sense command buffer */
-	int       status;
-	int       flags;
+	int status;
+	int flags;
+	int reselslot; /* the reselect slot used */
+	int tag;	/* tag used for tagged command queuing */
 };
 
 /* command block descriptors: an array of siop_cmd + an array of siop_xfer */
@@ -104,14 +121,31 @@ struct siop_cbd {
 #define CMDST_DONE		6 /* cmd slot has been processed */
 /* flags defs */
 #define CMDFL_TIMEOUT	0x0001 /* cmd timed out */
+#define CMDFL_TAG	0x0002 /* tagged cmd */
+
+/* per-tag struct */
+struct siop_tag {
+	struct siop_cmd *active; /* active command */
+	u_int reseloff; /* XXX */
+};
+
+/* per lun struct */
+struct siop_lun {
+	struct siop_tag siop_tag[SIOP_NTAG]; /* tag array */
+	int lun_flags; /* per-lun flags, see below */
+	u_int reseloff; /* XXX */
+};
+
+#define SIOP_LUNF_FULL 0x01 /* queue full message */
 
 /* per-target struct */
 struct siop_target {
 	int status;	/* target status, see below */
 	int flags;	/* target flags, see below */
 	u_int32_t id;	/* for SELECT FROM */
-	struct cmd_list active_list[8]; /* per-lun active cmds */
-	struct siop_softc *siop_sc; /* points back to our adapter */
+	struct siop_lun *siop_lun[8]; /* per-lun state */
+	u_int reseloff; /* XXX */
+	struct siop_lunsw *lunsw; /* XXX */
 };
 
 /* target status */
@@ -122,14 +156,40 @@ struct siop_target {
 #define TARST_OK	4 /* sync/wide agreement is valid */
 
 /* target flags */
-#define TARF_SYNC	0x00 /* target is sync */
-#define TARF_WIDE	0x01 /* target is wide */
+#define TARF_SYNC	0x01 /* target can do sync */
+#define TARF_WIDE	0x02 /* target can do wide */
+#define TARF_TAG	0x04 /* target can do tags */
+#define TARF_ISWIDE	0x08 /* target is wide */
+
+struct siop_lunsw {
+	TAILQ_ENTRY (siop_lunsw) next;
+	u_int32_t lunsw_off; /* offset of this lun sw, from sc_scriptaddr*/
+	u_int32_t lunsw_size; /* size of this lun sw */
+};
+
+static __inline__ void siop_table_sync __P((struct siop_cmd *, int));
+static __inline__ void
+siop_table_sync(siop_cmd, ops)
+	struct siop_cmd *siop_cmd;
+	int ops;
+{
+	struct siop_softc *sc  = siop_cmd->siop_sc;
+	bus_addr_t offset;
+	
+	offset = siop_cmd->dsa -
+	    siop_cmd->siop_cbdp->xferdma->dm_segs[0].ds_addr;
+	bus_dmamap_sync(sc->sc_dmat, siop_cmd->siop_cbdp->xferdma, offset,
+	    sizeof(struct siop_xfer), ops);
+}
 
 void	siop_common_reset __P((struct siop_softc *));
+void	siop_setuptables __P((struct siop_cmd *));
 int	siop_modechange __P((struct siop_softc *));
 
-int	siop_wdtr_neg __P((struct siop_cmd *siop_cmd));
-int	siop_sdtr_neg __P((struct siop_cmd *siop_cmd));
+int	siop_wdtr_neg __P((struct siop_cmd *));
+int	siop_sdtr_neg __P((struct siop_cmd *));
+void	siop_sdtr_msg __P((struct siop_cmd *, int, int, int));
+void	siop_wdtr_msg __P((struct siop_cmd *, int, int));
 /* actions to take at return of siop_wdtr_neg() and siop_sdtr_neg() */
 #define SIOP_NEG_NOP	0x0
 #define SIOP_NEG_MSGOUT	0x1
@@ -141,3 +201,6 @@ int	siop_ioctl __P((struct scsipi_link *, u_long,
 void 	siop_sdp __P((struct siop_cmd *));
 void	siop_clearfifo __P((struct siop_softc *));
 void	siop_resetbus __P((struct siop_softc *));
+/* XXXX should be  callbacks */
+void	siop_add_dev __P((struct siop_softc *, int, int));
+void	siop_del_dev __P((struct siop_softc *, int, int));
