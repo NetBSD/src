@@ -145,9 +145,11 @@ nb_encname_len(const char *str)
 static void
 memsetw(char *dst, int n, u_short word)
 {
+	unsigned char c2 = word & 0x00ff;
+	unsigned char c1 = (word>>8) & 0x00ff;
 	while (n--) {
-		*(u_short*)dst = word;
-		dst += 2;
+		*dst++ = c1;
+		*dst++ = c2;
 	}
 }
 
@@ -157,22 +159,27 @@ nb_name_encode(struct nb_name *np, u_char *dst)
 	u_char *name, *plen;
 	u_char *cp = dst;
 	int i, lblen;
+	u_int16_t ch;
 
 	*cp++ = NB_ENCNAMELEN;
 	name = np->nn_name;
 	if (name[0] == '*' && name[1] == 0) {
-		*(u_short*)cp = NBENCODE('*');
+		ch = NBENCODE('*');
+		memcpy(cp, &ch, 2);
 		memsetw(cp + 2, NB_NAMELEN - 1, NBENCODE(' '));
 		cp += NB_ENCNAMELEN;
 	} else {
-		for (i = 0; *name && i < NB_NAMELEN; i++, cp += 2, name++)
-			*(u_short*)cp = NBENCODE(toupper(*name));
+		for (i = 0; *name && i < NB_NAMELEN; i++, cp += 2, name++) {
+			ch = NBENCODE(toupper(*name));
+			memcpy(cp, &ch, 2);
+		}
 		i = NB_NAMELEN - i - 1;
 		if (i > 0) {
 			memsetw(cp, i, NBENCODE(' '));
 			cp += i * 2;
 		}
-		*(u_short*)cp = NBENCODE(np->nn_type);
+		ch = NBENCODE(np->nn_type);
+		memcpy(cp, &ch, 2);
 		cp += 2;
 	}
 	*cp = 0;
