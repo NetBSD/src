@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.31 2002/04/10 04:01:27 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.32 2002/04/15 15:05:58 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -235,6 +235,7 @@
 #define WI_CMD_INQUIRE		0x0011
 #define WI_CMD_ACCESS		0x0021
 #define WI_CMD_PROGRAM		0x0022
+#define WI_CMD_READEE		0x0030
 
 #define WI_CMD_CODE_MASK	0x003F
 
@@ -329,6 +330,21 @@
 #define WI_AUX_PAGE		0x3A
 #define WI_AUX_OFFSET		0x3C
 #define WI_AUX_DATA		0x3E
+
+#define WI_AUX_PGSZ		128
+#define WI_AUX_KEY0		0xfe01
+#define WI_AUX_KEY1		0xdc23
+#define WI_AUX_KEY2		0xba45
+
+#define WI_COR			0x40	/* only for Symbol */
+#define WI_COR_RESET		0x0080
+#define WI_COR_IOMODE		0x0041
+
+#define WI_HCR			0x42	/* only for Symbol */
+#define WI_HCR_4WIRE		0x0010
+#define WI_HCR_RUN		0x0007
+#define WI_HCR_HOLD		0x000f
+#define WI_HCR_EEHOLD		0x00ce
 
 /*
  * PCI Host Interface Registers (HFA3842 Specific)

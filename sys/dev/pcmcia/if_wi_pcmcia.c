@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.16 2002/01/17 09:56:44 joda Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.17 2002/04/15 15:05:59 onoe Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,12 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.16 2002/01/17 09:56:44 joda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.17 2002/04/15 15:05:59 onoe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 #include <sys/socket.h>
 
 #include <net/if.h>
@@ -66,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.16 2002/01/17 09:56:44 joda Exp $
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
+#include <dev/microcode/wi/spectrum24t_cf.h>
+
 static int	wi_pcmcia_match __P((struct device *, struct cfdata *, void *));
 static void	wi_pcmcia_attach __P((struct device *, struct device *, void *));
 static int	wi_pcmcia_detach __P((struct device *, int));
@@ -73,6 +76,12 @@ static int	wi_pcmcia_enable __P((struct wi_softc *));
 static void	wi_pcmcia_disable __P((struct wi_softc *));
 static void	wi_pcmcia_powerhook __P((int, void *));
 static void	wi_pcmcia_shutdown __P((void *));
+
+/* support to download firmware for symbol CF card */
+static int	wi_pcmcia_load_firm __P((struct wi_softc *, const void *, int, const void *, int));
+static int	wi_pcmcia_write_firm __P((struct wi_softc *, const void *, int, const void *, int));
+static int	wi_pcmcia_set_hcr __P((struct wi_softc *, int));
+
 
 static const struct wi_pcmcia_product
 		*wi_pcmcia_lookup __P((struct pcmcia_attach_args *pa));
@@ -86,7 +95,7 @@ struct wi_pcmcia_softc {
 	struct pcmcia_function *sc_pf;		/* PCMCIA function */
 	void *sc_powerhook;			/* power hook descriptor */
 	void *sc_sdhook;			/* shutdown hook */
-
+	int sc_symbol_cf;			/* Spectrum24t CF card */
 };
 
 static int wi_pcmcia_find __P((struct wi_pcmcia_softc *,
@@ -228,6 +237,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_CIS_ERICSSON_WIRELESSLAN,
 	  PCMCIA_STR_ERICSSON_WIRELESSLAN },
 
+	{ PCMCIA_VENDOR_SYMBOL,
+	  PCMCIA_PRODUCT_SYMBOL_LA4100,
+	  PCMCIA_CIS_SYMBOL_LA4100,
+	  PCMCIA_STR_SYMBOL_LA4100 },
+
 	{ 0,
 	  0,
 	  { NULL, NULL, NULL, NULL },
@@ -296,6 +310,16 @@ wi_pcmcia_enable(sc)
 		return (EIO);
 	}
 	DELAY(1000);
+	if (psc->sc_symbol_cf) {
+		if (wi_pcmcia_load_firm(sc,
+		    spectrum24t_primsym, sizeof(spectrum24t_primsym),
+		    spectrum24t_secsym, sizeof(spectrum24t_secsym))) {
+			printf("%s: couldn't load firmware\n",
+			    sc->sc_dev.dv_xname);
+			wi_pcmcia_disable(sc);
+			return (EIO);
+		}
+	}
 	return (0);
 }
 
@@ -394,6 +418,17 @@ wi_pcmcia_attach(parent, self, aux)
 	sc->sc_enabled = 1;
 	sc->sc_enable = wi_pcmcia_enable;
 	sc->sc_disable = wi_pcmcia_disable;
+	if (pp->pp_vendor == PCMCIA_VENDOR_SYMBOL &&
+	    pp->pp_product == PCMCIA_PRODUCT_SYMBOL_LA4100) {
+		psc->sc_symbol_cf = 1;
+		if (wi_pcmcia_load_firm(sc,
+		    spectrum24t_primsym, sizeof(spectrum24t_primsym),
+		    spectrum24t_secsym, sizeof(spectrum24t_secsym))) {
+			printf("%s: couldn't load firmware\n",
+				sc->sc_dev.dv_xname);
+			goto no_interrupt;
+		}
+	}
 
 	/* establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, wi_intr, sc);
@@ -477,4 +512,144 @@ wi_pcmcia_shutdown(arg)
 	struct wi_softc *sc = &psc->sc_wi;
 
 	wi_shutdown(sc);  
+}
+
+/*
+ * Special routines to download firmware for Symbol CF card.
+ * XXX: This should be modified generic into any PRISM-2 based card.
+ */
+
+#define	WI_SBCF_PDIADDR		0x3100
+
+/* unaligned load little endian */
+#define	GETLE32(p)	((p)[0] | ((p)[1]<<8) | ((p)[2]<<16) | ((p)[3]<<24))
+#define	GETLE16(p)	((p)[0] | ((p)[1]<<8))
+
+static int
+wi_pcmcia_load_firm(sc, primsym, primlen, secsym, seclen)
+	struct wi_softc *sc;
+	const void *primsym, *secsym;
+	int primlen, seclen;
+{
+	u_int8_t ebuf[256];
+	int i;
+
+	/* load primary code and run it */
+	wi_pcmcia_set_hcr(sc, WI_HCR_EEHOLD);
+	if (wi_pcmcia_write_firm(sc, primsym, primlen, NULL, 0))
+		return EIO;
+	wi_pcmcia_set_hcr(sc, WI_HCR_RUN);
+	for (i = 0; ; i++) {
+		if (i == 10)
+			return ETIMEDOUT;
+		tsleep(sc, PWAIT, "wiinit", 1);
+		if (CSR_READ_2(sc, WI_CNTL) == WI_CNTL_AUX_ENA_STAT)
+			break;
+		/* write the magic key value to unlock aux port */
+		CSR_WRITE_2(sc, WI_PARAM0, WI_AUX_KEY0);
+		CSR_WRITE_2(sc, WI_PARAM1, WI_AUX_KEY1);
+		CSR_WRITE_2(sc, WI_PARAM2, WI_AUX_KEY2);
+		CSR_WRITE_2(sc, WI_CNTL, WI_CNTL_AUX_ENA_CNTL);
+	}
+
+	/* issue read EEPROM command: XXX copied from wi_cmd() */
+	CSR_WRITE_2(sc, WI_PARAM0, 0);
+	CSR_WRITE_2(sc, WI_PARAM1, 0);
+	CSR_WRITE_2(sc, WI_PARAM2, 0);
+	CSR_WRITE_2(sc, WI_COMMAND, WI_CMD_READEE);
+        for (i = 0; i < WI_TIMEOUT; i++) {
+                if (CSR_READ_2(sc, WI_EVENT_STAT) & WI_EV_CMD)
+                        break;
+                DELAY(1);
+        }
+        CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_CMD);
+
+	CSR_WRITE_2(sc, WI_AUX_PAGE, WI_SBCF_PDIADDR / WI_AUX_PGSZ);
+	CSR_WRITE_2(sc, WI_AUX_OFFSET, WI_SBCF_PDIADDR % WI_AUX_PGSZ);
+	CSR_READ_MULTI_STREAM_2(sc, WI_AUX_DATA,
+	    (u_int16_t *)ebuf, sizeof(ebuf) / 2);
+	if (GETLE16(ebuf) > sizeof(ebuf))
+		return EIO;
+	if (wi_pcmcia_write_firm(sc, secsym, seclen, ebuf + 4, GETLE16(ebuf)))
+		return EIO;
+	return 0;
+}
+
+static int
+wi_pcmcia_write_firm(sc, buf, buflen, ebuf, ebuflen)
+	struct wi_softc *sc;
+	const void *buf, *ebuf;
+	int buflen, ebuflen;
+{
+	const u_int8_t *p, *ep, *q, *eq;
+	u_int32_t addr, id, eid;
+	int i, len, elen, nblk, pdrlen;
+
+	/*
+	 * Parse the header of the firmware image.
+	 */
+	p = buf;
+	ep = p + buflen;
+	while (p < ep && *p++ != ' ');	/* FILE: */
+	while (p < ep && *p++ != ' ');	/* filename */
+	while (p < ep && *p++ != ' ');	/* type of the firmware */
+	nblk = strtoul(p, (char **)&p, 10);
+	pdrlen = strtoul(p + 1, (char **)&p, 10);
+	while (p < ep && *p++ != 0x1a);	/* skip rest of header */
+
+	/*
+	 * Block records: address[4], length[2], data[length];
+	 */
+	for (i = 0; i < nblk; i++) {
+		addr = GETLE32(p);	p += 4;
+		len  = GETLE16(p);	p += 2;
+		CSR_WRITE_2(sc, WI_AUX_PAGE, addr / WI_AUX_PGSZ);
+		CSR_WRITE_2(sc, WI_AUX_OFFSET, addr % WI_AUX_PGSZ);
+		CSR_WRITE_MULTI_STREAM_2(sc, WI_AUX_DATA,
+		    (const u_int16_t *)p, len / 2);
+		p += len;
+	}
+	
+	/*
+	 * PDR: id[4], address[4], length[4];
+	 */
+	for (i = 0; i < pdrlen; ) {
+		id   = GETLE32(p);	p += 4; i += 4;
+		addr = GETLE32(p);	p += 4; i += 4;
+		len  = GETLE32(p);	p += 4; i += 4;
+		/* replace PDR entry with the values from EEPROM, if any */
+		for (q = ebuf, eq = q + ebuflen; q < eq; q += elen * 2) {
+			elen = GETLE16(q);	q += 2;
+			eid  = GETLE16(q);	q += 2;
+			elen--;		/* elen includes eid */
+			if (eid == 0)
+				break;
+			if (eid != id)
+				continue;
+			CSR_WRITE_2(sc, WI_AUX_PAGE, addr / WI_AUX_PGSZ);
+			CSR_WRITE_2(sc, WI_AUX_OFFSET, addr % WI_AUX_PGSZ);
+			CSR_WRITE_MULTI_STREAM_2(sc, WI_AUX_DATA,
+			    (const u_int16_t *)q, len / 2);
+			break;
+		}
+	}
+	return 0;
+}
+
+static int
+wi_pcmcia_set_hcr(sc, mode)
+	struct wi_softc *sc;
+	int mode;
+{
+	u_int16_t hcr;
+
+	CSR_WRITE_2(sc, WI_COR, WI_COR_RESET);
+	tsleep(sc, PWAIT, "wiinit", 1);
+	hcr = CSR_READ_2(sc, WI_HCR);
+	hcr = (hcr & WI_HCR_4WIRE) | (mode & ~WI_HCR_4WIRE);
+	CSR_WRITE_2(sc, WI_HCR, hcr);
+	tsleep(sc, PWAIT, "wiinit", 1);
+	CSR_WRITE_2(sc, WI_COR, WI_COR_IOMODE);
+	tsleep(sc, PWAIT, "wiinit", 1);
+	return 0;
 }
