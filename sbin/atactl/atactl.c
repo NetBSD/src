@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.28 2004/03/14 20:11:24 wiz Exp $	*/
+/*	$NetBSD: atactl.c,v 1.29 2004/03/28 01:23:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.28 2004/03/14 20:11:24 wiz Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.29 2004/03/28 01:23:15 mycroft Exp $");
 #endif
 
 
@@ -94,7 +94,7 @@ void	device_idle(int, char *[]);
 void	device_checkpower(int, char *[]);
 void	device_smart(int, char *[]);
 
-void	smart_temp(struct ata_smart_attr *, int64_t);
+void	smart_temp(struct ata_smart_attr *, uint64_t);
 
 struct command commands[] = {
 	{ "identify",	"",			device_identify },
@@ -188,7 +188,7 @@ struct bitinfo ata_cmd_ext[] = {
 static const struct {
 	const int	id;
 	const char	*name;
-	void (*special)(struct ata_smart_attr *, int64_t);
+	void (*special)(struct ata_smart_attr *, uint64_t);
 } smart_attrs[] = {
 	{ 1,		"Raw read error rate" },
 	{ 2,		"Throughput performance" },
@@ -341,13 +341,12 @@ print_bitinfo(const char *bf, const char *af, u_int bits, struct bitinfo *binfo)
  */
 
 void
-smart_temp(struct ata_smart_attr *attr, int64_t raw_value)
+smart_temp(struct ata_smart_attr *attr, uint64_t raw_value)
 {
-	printf("\t%d", (int)attr->raw[0]);
+	printf("%" PRIu8, attr->raw[0]);
 	if (attr->raw[0] != raw_value)
-		printf(" Lifetime max/min %d/%d", 
-		    (int)attr->raw[2],
-		    (int)attr->raw[4]);
+		printf(" Lifetime max/min %" PRIu8 "/%" PRIu8, 
+		    attr->raw[2], attr->raw[4]);
 }
 
 
@@ -361,7 +360,7 @@ print_smart_status(void *vbuf, void *tbuf)
 	struct ata_smart_attributes *value_buf = vbuf;
 	struct ata_smart_thresholds *threshold_buf = tbuf;
 	struct ata_smart_attr *attr;
-	int64_t raw_value;
+	uint64_t raw_value;
 	int flags;
 	int i, j;
 	int aid;
@@ -411,7 +410,7 @@ print_smart_status(void *vbuf, void *tbuf)
 
 		flags = attr->flags;
 
-		printf("%3d %3d  %3d     %-3s %-7s %stive    %-24s",
+		printf("%3d %3d  %3d     %-3s %-7s %stive    %-24s\t",
 		    i, attr->value, thresh,
 		    flags & WDSM_ATTR_ADVISORY ? "yes" : "no",
 		    flags & WDSM_ATTR_COLLECTIVE ? "online" : "offline",
@@ -419,10 +418,12 @@ print_smart_status(void *vbuf, void *tbuf)
 		    smart_attrs[aid].name);
 
 		for (j = 0, raw_value = 0; j < 6; j++)
-			raw_value += ((int64_t)attr->raw[j]) << (8*j);
+			raw_value += ((uint64_t)attr->raw[j]) << (8*j);
 
 		if (smart_attrs[aid].special)
 			(*smart_attrs[aid].special)(attr, raw_value);
+		else
+			printf("%" PRIu64, raw_value);
 		printf("\n");
 		}
 	}
