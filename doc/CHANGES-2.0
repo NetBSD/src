@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.240 2004/05/31 21:00:53 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.241 2004/06/01 04:31:05 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3414,3 +3414,9 @@ share/man/man4/fss.4				1.6
 	The fss command appeared -> The fss device appeared
 	[bouyer, ticket #426]
 
+
+sys/arch/x86/x86/acpi_machdep.c			1.6
+sys/arch/x86/x86/mpacpi.c			1.20-1.29
+
+	Lots of fixes to prevents panic's on HT motherboards
+	[kochi, ticket #427]
