@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/05/08 21:44:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2003/04/08 21:06:08 thorpej Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,7 +6,11 @@
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
-MDSETTARGETS=		TEAMASA_NPWR_INSTALL ${RAMDISK} -
+MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-	\
+			INTEGRATOR_INSTALL	${RAMDISK}	-	\
+			IQ80310_INSTALL		${RAMDISK}	-	\
+			IQ80321_INSTALL		${RAMDISK}	-	\
+			TEAMASA_NPWR_INSTALL	${RAMDISK}	-
 MDSET_RELEASEDIR=	installation/instkernel
 
 MDSET_SUFFIXES.-=	srec create-srec  bin create-bin
