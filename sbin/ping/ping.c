@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.37 1998/07/28 19:22:56 mycroft Exp $	*/
+/*	$NetBSD: ping.c,v 1.38 1998/09/14 12:52:47 tv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.37 1998/07/28 19:22:56 mycroft Exp $");
+__RCSID("$NetBSD: ping.c,v 1.38 1998/09/14 12:52:47 tv Exp $");
 #endif
 
 #include <stdio.h>
@@ -72,7 +72,6 @@ __RCSID("$NetBSD: ping.c,v 1.37 1998/07/28 19:22:56 mycroft Exp $");
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/file.h>
-#include <termios.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
@@ -179,10 +178,6 @@ double tmax = 0;
 double tsum = 0;			/* sum of all times */
 double maxwait = 0;
 
-#ifdef SIGINFO
-int reset_kerninfo;
-#endif
-
 int bufspace = 60*1024;
 
 struct timeval now, clear_cache, last_tx, next_tx, first_tx;
@@ -225,18 +220,7 @@ main(int argc, char *argv[])
 	u_char ttl = 0;
 	u_long tos = 0;
 	char *p;
-#ifdef SIGINFO
-	struct termios ts;
-#endif
 
-
-#if defined(SIGINFO) && defined(NOKERNINFO)
-	if (tcgetattr (0, &ts) != -1) {
-		reset_kerninfo = !(ts.c_lflag & NOKERNINFO);
-		ts.c_lflag |= NOKERNINFO;
-		(void)tcsetattr(0, TCSANOW, &ts);
-	}
-#endif
 	while ((c = getopt(argc, argv,
 			   "c:dDfg:h:i:I:l:Lnop:PqQrRs:t:T:vw:")) != -1) {
 		switch (c) {
@@ -1148,13 +1132,7 @@ prefinish(int s)
 static void
 finish(int s)
 {
-#if defined(SIGINFO) && defined(NOKERNINFO)
-	struct termios ts;
-
-	if (reset_kerninfo && tcgetattr (0, &ts) != -1) {
-		ts.c_lflag &= ~NOKERNINFO;
-		(void)tcsetattr(0, TCSANOW, &ts);
-	}
+#if defined(SIGINFO)
 	(void)signal(SIGINFO, SIG_IGN);
 #else
 	(void)signal(SIGQUIT, SIG_DFL);
