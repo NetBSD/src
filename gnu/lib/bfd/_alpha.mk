@@ -1,7 +1,7 @@
-#	$NetBSD: _alpha.mk,v 1.4 1998/08/22 19:02:10 tv Exp $
+#	$NetBSD: _alpha.mk,v 1.5 1999/02/02 22:16:57 tv Exp $
 
 BFD_ARCH_SRCS=	cpu-alpha.c \
-		elf64-alpha.c elf64.c elf.c elflink.c \
+		elf64-alpha.c elf64.c elf.c elflink.c dwarf2.c \
 		coff-alpha.c ecoff.c ecofflink.c \
 		alpha-dis.c alpha-opc.c
 
