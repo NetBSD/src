@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.6 1999/01/01 14:05:18 christos Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.7 1999/01/21 07:43:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -52,6 +52,7 @@ struct pcic_handle {
 	int	vendor;
 	int	sock;
 	int	flags;
+	int laststate;
 	int	memalloc;
 	struct {
 		bus_addr_t	addr;
@@ -75,6 +76,10 @@ struct pcic_handle {
 
 #define	PCIC_FLAG_SOCKETP	0x0001
 #define	PCIC_FLAG_CARDP		0x0002
+
+#define PCIC_LASTSTATE_PRESENT	0x0002
+#define PCIC_LASTSTATE_HALF		0x0001
+#define PCIC_LASTSTATE_EMPTY	0x0000
 
 #define	C0SA PCIC_CHIP0_BASE+PCIC_SOCKETA_INDEX
 #define	C0SB PCIC_CHIP0_BASE+PCIC_SOCKETB_INDEX

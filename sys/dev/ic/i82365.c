@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.19 1999/01/01 14:05:18 christos Exp $	*/
+/*	$NetBSD: i82365.c,v 1.20 1999/01/21 07:43:32 msaitoh Exp $	*/
 
 #define	PCICDEBUG
 
@@ -36,6 +36,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/extent.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/kthread.h>
 
@@ -190,6 +191,7 @@ pcic_attach(sc)
 	} else {
 		sc->handle[0].flags = 0;
 	}
+	sc->handle[0].laststate = PCIC_LASTSTATE_EMPTY;
 
 	DPRINTF((" 0x%02x", reg));
 
@@ -201,6 +203,7 @@ pcic_attach(sc)
 	} else {
 		sc->handle[1].flags = 0;
 	}
+	sc->handle[1].laststate = PCIC_LASTSTATE_EMPTY;
 
 	DPRINTF((" 0x%02x", reg));
 
@@ -220,6 +223,7 @@ pcic_attach(sc)
 		} else {
 			sc->handle[2].flags = 0;
 		}
+		sc->handle[2].laststate = PCIC_LASTSTATE_EMPTY;
 
 		DPRINTF((" 0x%02x", reg));
 
@@ -232,6 +236,7 @@ pcic_attach(sc)
 		} else {
 			sc->handle[3].flags = 0;
 		}
+		sc->handle[3].laststate = PCIC_LASTSTATE_EMPTY;
 
 		DPRINTF((" 0x%02x\n", reg));
 	}
@@ -386,17 +391,60 @@ pcic_event_thread(arg)
 			splx(s);
 			(void) tsleep(&h->events, PWAIT, "pcicev", 0);
 			continue;
+		} else {
+			splx(s);
+			/* sleep .25s to be enqueued chatterling interrupts */
+			(void) tsleep((caddr_t)pcic_event_thread, PWAIT, "pcicss", hz/4);
 		}
+		s = splhigh();
 		SIMPLEQ_REMOVE_HEAD(&h->events, pe, pe_q);
 		splx(s);
 
 		switch (pe->pe_type) {
 		case PCIC_EVENT_INSERTION:
+			s = splhigh();
+			while (1) {
+				struct pcic_event *pe1, *pe2;
+
+				if ((pe1 = SIMPLEQ_FIRST(&h->events)) == NULL)
+					break;
+				if (pe1->pe_type != PCIC_EVENT_REMOVAL)
+					break;
+				if ((pe2 = SIMPLEQ_NEXT(pe1, pe_q)) == NULL)
+					break;
+				if (pe2->pe_type == PCIC_EVENT_INSERTION) {
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe1, pe_q);
+					free(pe1, M_TEMP);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe2, pe_q);
+					free(pe2, M_TEMP);
+				}
+			}
+			splx(s);
+				
 			DPRINTF(("%s: insertion event\n", h->sc->dev.dv_xname));
 			pcic_attach_card(h);
 			break;
 
 		case PCIC_EVENT_REMOVAL:
+			s = splhigh();
+			while (1) {
+				struct pcic_event *pe1, *pe2;
+
+				if ((pe1 = SIMPLEQ_FIRST(&h->events)) == NULL)
+					break;
+				if (pe1->pe_type != PCIC_EVENT_INSERTION)
+					break;
+				if ((pe2 = SIMPLEQ_NEXT(pe1, pe_q)) == NULL)
+					break;
+				if (pe2->pe_type == PCIC_EVENT_REMOVAL) {
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe1, pe_q);
+					free(pe1, M_TEMP);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe2, pe_q);
+					free(pe2, M_TEMP);
+				}
+			}
+			splx(s);
+
 			DPRINTF(("%s: removal event\n", h->sc->dev.dv_xname));
 			pcic_detach_card(h, DETACH_FORCE);
 			break;
@@ -455,8 +503,12 @@ pcic_init_socket(h)
 	reg = pcic_read(h, PCIC_IF_STATUS);
 
 	if ((reg & PCIC_IF_STATUS_CARDDETECT_MASK) ==
-	    PCIC_IF_STATUS_CARDDETECT_PRESENT)
+	    PCIC_IF_STATUS_CARDDETECT_PRESENT) {
 		pcic_attach_card(h);
+		h->laststate = PCIC_LASTSTATE_PRESENT;
+	} else {
+		h->laststate = PCIC_LASTSTATE_EMPTY;
+	}
 }
 
 int
@@ -596,22 +648,25 @@ pcic_intr_socket(h)
 
 		if ((statreg & PCIC_IF_STATUS_CARDDETECT_MASK) ==
 		    PCIC_IF_STATUS_CARDDETECT_PRESENT) {
-			if (!(h->flags & PCIC_FLAG_CARDP)) {
+			if (h->laststate != PCIC_LASTSTATE_PRESENT) {
 				DPRINTF(("%s: enqueing INSERTION event\n",
-				    h->sc->dev.dv_xname));
+						 h->sc->dev.dv_xname));
 				pcic_queue_event(h, PCIC_EVENT_INSERTION);
 			}
+			h->laststate = PCIC_LASTSTATE_PRESENT;
 		} else {
-			if (h->flags & PCIC_FLAG_CARDP) {
+			if (h->laststate == PCIC_LASTSTATE_PRESENT) {
 				/* Deactivate the card now. */
 				DPRINTF(("%s: deactivating card\n",
-				    h->sc->dev.dv_xname));
+						 h->sc->dev.dv_xname));
 				pcic_deactivate_card(h);
 
 				DPRINTF(("%s: enqueing REMOVAL event\n",
-				    h->sc->dev.dv_xname));
+						 h->sc->dev.dv_xname));
 				pcic_queue_event(h, PCIC_EVENT_REMOVAL);
 			}
+			h->laststate = ((statreg & PCIC_IF_STATUS_CARDDETECT_MASK) == 0)
+				? PCIC_LASTSTATE_EMPTY : PCIC_LASTSTATE_HALF;
 		}
 	}
 	if (cscreg & PCIC_CSC_READY) {
@@ -651,13 +706,14 @@ pcic_attach_card(h)
 	struct pcic_handle *h;
 {
 
-	if (h->flags & PCIC_FLAG_CARDP)
-		panic("pcic_attach_card: already attached");
+	if (!(h->flags & PCIC_FLAG_CARDP)) {
+		/* call the MI attach function */
+		pcmcia_card_attach(h->pcmcia);
 
-	/* call the MI attach function */
-	pcmcia_card_attach(h->pcmcia);
-
-	h->flags |= PCIC_FLAG_CARDP;
+		h->flags |= PCIC_FLAG_CARDP;
+	} else {
+		DPRINTF(("pcic_attach_card: already attached"));
+	}
 }
 
 void
@@ -666,22 +722,20 @@ pcic_detach_card(h, flags)
 	int flags;		/* DETACH_* */
 {
 
-	if (!(h->flags & PCIC_FLAG_CARDP))
-		panic("pcic_detach_card: already detached");
+	if (h->flags & PCIC_FLAG_CARDP) {
+		h->flags &= ~PCIC_FLAG_CARDP;
 
-	h->flags &= ~PCIC_FLAG_CARDP;
-
-	/* call the MI detach function */
-	pcmcia_card_detach(h->pcmcia, flags);
+		/* call the MI detach function */
+		pcmcia_card_detach(h->pcmcia, flags);
+	} else {
+		DPRINTF(("pcic_detach_card: already detached"));
+	}
 }
 
 void
 pcic_deactivate_card(h)
 	struct pcic_handle *h;
 {
-
-	if (!(h->flags & PCIC_FLAG_CARDP))
-		 panic("pcic_deactivate_card: already detached");
 
 	/* call the MI deactivate function */
 	pcmcia_card_deactivate(h->pcmcia);
@@ -1208,9 +1262,9 @@ pcic_chip_socket_enable(pch)
 	 * stable (Tsu(Vcc)).
 	 *
 	 * some machines require some more time to be settled
-	 * (another 200ms is added here).
+	 * (300ms is added here).
 	 */
-	delay((100 + 20 + 200) * 1000);
+	delay((100 + 20 + 300) * 1000);
 
 	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV | PCIC_PWRCTL_OE
 			   | PCIC_PWRCTL_PWR_ENABLE);
@@ -1230,6 +1284,13 @@ pcic_chip_socket_enable(pch)
 	delay(20000);
 
 	/* wait for the chip to finish initializing */
+
+#ifdef DIAGNOSTIC
+	reg = pcic_read(h, PCIC_IF_STATUS);
+	if (!(reg & PCIC_IF_STATUS_POWERACTIVE)) {
+		printf("pcic_chip_socket_enable: status %x", reg);
+	}
+#endif
 
 	pcic_wait_ready(h);
 
