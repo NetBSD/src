@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.29 2004/11/18 15:30:55 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.30 2004/11/18 15:33:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.29 2004/11/18 15:30:55 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.30 2004/11/18 15:33:28 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1726,7 +1726,8 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 		    "Warning: `%s' space or tab before the log facility",
 		    line);
 		/* Fix: strip all spaces/tabs before the log facility */
-		while (*q++ && isblank((unsigned char)*q));
+		while (*q++ && isblank((unsigned char)*q))
+			/* skip blanks */;
 		line = q; 
 	}
 
@@ -1846,8 +1847,7 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 	} else
 		syncfile = 1;
 
-	switch (*p)
-	{
+	switch (*p) {
 	case '@':
 		(void)strlcpy(f->f_un.f_forw.f_hname, ++p,
 		    sizeof(f->f_un.f_forw.f_hname));
