@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.6 2003/04/08 18:57:09 jdc Exp $
+.\"	$NetBSD: curses_screen.3,v 1.7 2003/04/08 21:19:15 wiz Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -64,10 +64,9 @@
 .Fn resizeterm "int lines" "int cols"
 .Ft int
 .Fn setterm "char *name"
-.Ft extern int
-.Dv LINES
-.Ft extern int
-.Dv COLS
+.Va extern int LINES ;
+.br
+.Va extern int COLS ;
 .Sh DESCRIPTION
 These functions initialize terminals and screens.
 .Pp
@@ -123,9 +122,9 @@ size and then the
 .Xr termcap 5
 entries for the terminal type.
 If the environment variables
-.Dv LINES
+.Va LINES
 or
-.Dv COLS
+.Va COLS
 are set, then these will be used instead.
 .Pp
 The
@@ -167,7 +166,7 @@ An error occurred in the function.
 .El
 .Sh SEE ALSO
 .Xr curses_window 3 ,
-.Xr tty 4
+.Xr tty 4 ,
 .Xr termcap 5
 .Sh STANDARDS
 The
