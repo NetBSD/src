@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.9 1999/03/27 07:11:36 explorer Exp $
+#	$NetBSD: CATS,v 1.10 1999/03/27 23:27:57 nathanw Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -267,12 +267,8 @@ ugen* at uhub? port ? configuration ? interface ?
 # PCI audio devices
 #eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 
-# USB Audio devices
-#uaudio*	at uhub? port ?
-
 # Audio support
 #audio*	at eap?
-#audio*	at uaudio?
 
 vga*		at pci?
 wsdisplay*	at vga? console ?
