@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.134 2002/12/07 07:33:20 toshii Exp $	*/
+/*	$NetBSD: ohci.c,v 1.135 2002/12/10 14:07:37 toshii Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.134 2002/12/07 07:33:20 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.135 2002/12/10 14:07:37 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1411,15 +1411,15 @@ ohci_softintr(void *v)
 			for (i = 0, sitd = xfer->hcpriv;;
 			    sitd = next) {
 				next = sitd->nextitd;
-				if (OHCI_ITD_GET_CC(sitd->itd.itd_flags)
-				    != OHCI_CC_NO_ERROR)
+				if (OHCI_ITD_GET_CC(le32toh(sitd->
+				    itd.itd_flags)) != OHCI_CC_NO_ERROR)
 					xfer->status = USBD_IOERROR;
 				/* For input, update frlengths with actual */
 				/* XXX anything necessary for output? */
 				if (uedir == UE_DIR_IN &&
 				    xfer->status == USBD_NORMAL_COMPLETION) {
-					iframes = OHCI_ITD_GET_FC(sitd->
-					    itd.itd_flags);
+					iframes = OHCI_ITD_GET_FC(le32toh(
+					    sitd->itd.itd_flags));
 					for (j = 0; j < iframes; i++, j++) {
 						len = le16toh(sitd->
 						    itd.itd_offset[j]);
