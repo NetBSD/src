@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 1997/03/15 16:36:17 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.35 1997/03/22 12:50:56 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -88,6 +88,8 @@ vm_offset_t   avail_start, avail_end;
 vm_offset_t   virtual_avail, virtual_end; /* Available virtual memory	*/
 
 /*
+ * THIS INFORMATION IS OUTDATED. It's left here just inform curious people.
+ *
  * badaddr() doesn't work on some VAXstations 
  * (I've checked KA410 and KA43, don't know about others yet).
  *
@@ -132,48 +134,34 @@ pmap_bootstrap()
 	p0pmap = &vmspace0.vm_pmap;
 
 	/*
-	 * Because of the badaddr() problem with some VAXstations we
-	 * compare the first page of memory (the SCB) with the new
-	 * counted up pages for equality. It's very unlikely that
-	 * another page will hold the same info as the SCB.
-	 * This is neccessary only if badaddr() doesn't work, but on other
-	 * machines checking the pattern doesn't hurt anyway...
+	 * Machines older than MicroVAX II have their boot blocks
+	 * loaded directly or the boot program loaded from console
+	 * media, so we need to figure out their memory size.
+	 * This is not easily done on MicroVAXen, so we get it from
+	 * VMB instead.
 	 */
+	if (avail_end == 0)
+		while (badaddr((caddr_t)avail_end, 4) == 0)
+			avail_end += NBPG * 128;
 
-	/* Kickoff for memory checking */
-	avail_end = 0x200000;	/* 2 MB */
+	avail_end = TRUNC_PAGE(avail_end); /* be sure */
 
-	while (badaddr((caddr_t)avail_end, 4) == 0) {
-#if VAX410 || VAX420 || VAX43 || VAX46 || VAX49 || VAX50
-		if (bcmp(0, (caddr_t)avail_end, NBPG) == 0)
-			break;
-#endif
-		avail_end += NBPG * 128;/* Memory is checked in 64K hunks */
-	}
-#if VAX410
-	if (vax_boardtype == VAX_BTYP_410)
-		avail_end -= NBPG * 24; /* ??? */
-#endif
 	/*
 	 * Calculation of the System Page Table is somewhat a pain,
 	 * because it must be in contiguous physical memory and all
 	 * size calculations must be done now.
+	 * Remember: sysptsize is in PTEs and nothing else!
 	 */
 
 	/* Kernel alloc area */
 	sysptsize = (((0x100000 * maxproc) >> PGSHIFT) / 4);
 	/* reverse mapping struct */
-	sysptsize += avail_end >> PGSHIFT;
+	sysptsize += (avail_end >> PGSHIFT);
 	/* User Page table area. This may grow big */
 #define	USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / NBPG)
 	sysptsize += ((USRPTSIZE * 4) / NBPG) * maxproc;
 	/* Kernel stacks per process */
 	sysptsize += UPAGES * maxproc;
-
-
-#if VAX410 || VAX420 || VAX43 || VAX46 || VAX49 || VAX50
-	sysptsize += ((16 * 1024) >> PGSHIFT);  /* guc->uc_sysptSpace ?? */
-#endif
 
 	/*
 	 * Virtual_* and avail_* is used for mapping of system page table.
@@ -280,10 +268,6 @@ pmap_bootstrap()
 	 */
 	mtpr(sysptsize, PR_SLR);
 	mtpr(1, PR_MAPEN);
-#ifdef VAX410
-	if (vax_boardtype == VAX_BTYP_410)
-		dzcons_vminit(); /* XXX */
-#endif
 }
 
 

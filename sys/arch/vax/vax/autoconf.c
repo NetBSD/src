@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 1997/03/15 16:32:20 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 1997/03/22 12:51:00 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -94,9 +94,6 @@ configure()
 
 	setroot(booted_device, booted_partition, vax_nam2blk);
 
-#if VAX410 || VAX43
-	dzcnslask(); /* XXX inte g|ras h{r */
-#endif
 	swapconf();
 	dumpconf();
 	cold = 0;
