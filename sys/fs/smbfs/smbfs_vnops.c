@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.15 2003/02/25 10:33:19 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.16 2003/03/02 22:06:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.15 2003/02/25 10:33:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.16 2003/03/02 22:06:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,6 +160,7 @@ static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
 	{ &vop_write_desc,		smbfs_write },
 	{ &vop_mmap_desc,		genfs_mmap },		/* mmap */
 	{ &vop_seek_desc,		genfs_seek },		/* seek */
+	{ &vop_kqfilter_desc,		smbfs_kqfilter},	/* kqfilter */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc smbfs_vnodeop_opv_desc =
