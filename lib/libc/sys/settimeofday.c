@@ -1,4 +1,4 @@
-/*	$NetBSD: settimeofday.c,v 1.5 2003/07/16 19:42:11 cb Exp $ */
+/*	$NetBSD: settimeofday.c,v 1.6 2004/04/27 01:12:44 kleink Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -56,7 +56,7 @@ int __clockctl_fd = -2;
 int
 settimeofday(tv, tzp)
 	const struct timeval *tv;
-	const struct timezone *tzp;
+	const void *tzp;
 {
 	struct sys_settimeofday_args args;
 	int error;

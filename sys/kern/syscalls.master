@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.140 2004/04/25 22:18:08 kleink Exp $
+	$NetBSD: syscalls.master,v 1.141 2004/04/27 01:12:44 kleink Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -250,7 +250,7 @@
 			    osendmsg
 115	OBSOL		vtrace
 116	STD		{ int sys_gettimeofday(struct timeval *tp, \
-			    struct timezone *tzp); }
+			    void *tzp); }
 117	STD		{ int sys_getrusage(int who, struct rusage *rusage); }
 118	STD		{ int sys_getsockopt(int s, int level, int name, \
 			    void *val, unsigned int *avalsize); }
@@ -260,7 +260,7 @@
 121	STD		{ ssize_t sys_writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
 122	STD		{ int sys_settimeofday(const struct timeval *tv, \
-			    const struct timezone *tzp); }
+			    const void *tzp); }
 123	STD		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	STD		{ int sys_fchmod(int fd, mode_t mode); }
 125	COMPAT_43	{ int sys_recvfrom(int s, caddr_t buf, size_t len, \

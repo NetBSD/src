@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettimeofday.2,v 1.22 2003/08/07 16:43:59 agc Exp $
+.\"	$NetBSD: gettimeofday.2,v 1.23 2004/04/27 01:12:44 kleink Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)gettimeofday.2	8.2 (Berkeley) 5/26/95
 .\"
-.Dd May 26, 1995
+.Dd April 26.2004
 .Dt GETTIMEOFDAY 2
 .Os
 .Sh NAME
@@ -41,9 +41,9 @@
 .Sh SYNOPSIS
 .In sys/time.h
 .Ft int
-.Fn gettimeofday "struct timeval *tp" "struct timezone *tzp"
+.Fn gettimeofday "struct timeval * restrict tp" "void * restrict tzp"
 .Ft int
-.Fn settimeofday "const struct timeval *tp" "const struct timezone *tzp"
+.Fn settimeofday "const struct timeval * restrict tp" "const void * restrict tzp"
 .Sh DESCRIPTION
 .Bf -symbolic
 Note: time zone information is no longer provided by this interface.
@@ -64,6 +64,12 @@ and the time may be updated continuously or in ``ticks.''
 If
 .Fa tp
 is NULL, the time will not be returned or set.
+Despite being declared
+.Fa void * ,
+the objects pointed to by
+.Fa tzp
+shall be of type
+.Fa struct timezone .
 .Pp
 The structures pointed to by
 .Fa tp
