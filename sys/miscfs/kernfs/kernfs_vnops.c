@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.29 1994/10/20 04:26:28 cgd Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.30 1994/11/14 06:06:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -300,6 +300,7 @@ kernfs_open(ap)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
+		struct file *a_fp;
 	} */ *ap;
 {
 
