@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.341 2002/07/27 01:02:26 grant Exp $
+# $NetBSD: mi,v 1.342 2002/07/28 22:43:13 christos Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -552,6 +552,7 @@
 ./usr/libexec/ssh-keysign	base-secsh-bin
 ./usr/libexec/telnetd		base-netutil-bin
 ./usr/libexec/tftpd		base-netutil-bin
+./usr/libexec/utmp_update	base-sysutil-bin
 ./usr/libexec/uucp		base-uucp-bin
 ./usr/libexec/uucp/uucico	base-uucp-bin
 ./usr/libexec/uucp/uuconv	base-uucp-bin
