@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.8 2003/03/21 21:13:55 dsl Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.9 2003/05/30 11:37:47 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.8 2003/03/21 21:13:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.9 2003/05/30 11:37:47 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -315,6 +315,7 @@ dmio_read(struct file *fp, off_t *offp, struct uio *uio,
 					error = progress ? 0 : EWOULDBLOCK;
 					goto out;
 				}
+				ds->ds_flags |= DMIO_STATE_READ_WAIT;
 				error = ltsleep(&ds->ds_complete,
 				    PRIBIO | PCATCH, "dmvrrd", 0,
 				    &ds->ds_slock);
