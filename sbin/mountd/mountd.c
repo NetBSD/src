@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.32 1996/05/22 03:50:06 mrg Exp $	*/
+/*	$NetBSD: mountd.c,v 1.33 1996/09/19 04:25:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.32 1996/05/22 03:50:06 mrg Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.33 1996/09/19 04:25:08 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -334,7 +334,8 @@ mntsrv(rqstp, transp)
 	u_long saddr;
 	u_short sport;
 	char rpcpath[RPCMNT_PATHLEN+1], dirpath[MAXPATHLEN];
-	int bad = ENOENT, defset, hostset;
+	long bad = ENOENT;
+	int defset, hostset;
 	sigset_t sighup_mask;
 
 	sigemptyset(&sighup_mask);
