@@ -189,13 +189,50 @@
 ;;  ""
 ;;  "movh %1,%0")
 
-(define_insn "movdi"
-  [(set (match_operand:DI 0 "vax_lvalue_operand" "=g,g")
-	(match_operand:DI 1 "general_operand" "I,g"))]
+(define_insn "*clrdi"
+  [(set (match_operand:DI 0 "vax_lvalue_operand" "=g")
+        (const_int 0))]
   ""
-  "@
-   clrq %0
-   movq %D1,%0")
+  "clrq %0")
+
+(define_insn "movdi"
+  [(set (match_operand:DI 0 "vax_lvalue_operand" "=g")
+	(match_operand:DI 1 "general_operand" "g"))]
+  ""
+  "*
+{
+  if (GET_CODE (operands[1]) == CONST_INT)
+    {
+      rtx lo, hi;
+
+      if (operands[1] == const0_rtx)
+	return \"clrq %0\";
+      lo = operand_subword (operands[1], 0, 0, DImode);
+      hi = operand_subword (operands[1], 1, 0, DImode);
+      if (hi == const0_rtx && (unsigned int) INTVAL (lo) < 64)
+	return \"movq %D1,%0\";
+      if (push_operand (operands[0], DImode))
+	{
+	  /* If this isn't a 32bit quantity, punt!
+	   */
+	  if (hi != const0_rtx && hi != constm1_rtx)
+	    return \"movq %D1,%0\";
+	  if (hi == const0_rtx && lo == const0_rtx)
+	    return \"clrq %0\";
+	  if (hi == const0_rtx)
+	    output_asm_insn(\"pushl $0\", operands);
+	  else if (hi == constm1_rtx)
+	    output_asm_insn(\"mnegl $1,-(sp)\", operands);
+
+	  /* push the low 32bits
+	   */
+	  operands[0] = operand_subword (operands[0], 0, 0, DImode);
+	  operands[1] = lo;
+	  return OUT_FCN (CODE_FOR_pushimmsi) (operands, insn);
+	}
+    }
+  return \"movq %D1,%0\";
+}")
 
 ;; General case of fullword move.
 ;;
@@ -240,25 +277,33 @@
   ""
   "clrl %0")
 
-(define_insn "*pushimmsi"
-  [(set (match_operand:SI 0 "push_operand" "=g,g")
-	(match_operand:SI 1 "const_int_operand" "I,g"))]
+(define_insn "pushimmsi"
+  [(set (match_operand:SI 0 "push_operand" "=g")
+	(match_operand:SI 1 "const_int_operand" "i"))]
   ""
-  "@
-   pushl $0
-   pushl %1")
+  "*
+{
+   int val = INTVAL (operands[1]);
+   if (     0 <= val && val <    64)	return \"pushl %1\";
+   if (   -63 <= val && val <     0)	return \"mnegl $%n1,%0\";
+   if (     0 <= val && val <   256)	return \"movzbl %1,%0\";
+   if (  -128 <= val && val <   128)	return \"cvtbl %1,%0\";
+   if (     0 <= val && val < 65536)	return \"movzwl %1,%0\";
+   if (-32768 <= val && val < 32768)	return \"cvtwl %1,%0\";
+   return \"pushl %1\";
+}")
 
 (define_insn "*movimmsi2"
   [(set (match_operand:SI 0 "vax_lvalue_operand" "=g,g,g,g,g,g,g,g")
-	(match_operand:SI 1 "const_int_operand" "I,J,O,K,L,M,N,i"))]
+	(match_operand:SI 1 "const_int_operand" "I,J,O,K,M,L,N,i"))]
   ""
   "@
    clrl %0
    movl %1,%0
    mnegl $%n1,%0
    cvtbl %1,%0
-   cvtwl %1,%0
    movzbl %1,%0
+   cvtwl %1,%0
    movzwl %1,%0
    movl %1,%0")
 
@@ -2733,7 +2778,8 @@
         (const_int 0))
    (set (match_dup 0)
         (match_operand:SI 1 "immediate_operand" "i"))]
-   "GET_CODE (operands[1]) == CONST_INT"
+   "GET_CODE (operands[1]) == CONST_INT
+    && (unsigned int) INTVAL (operands[1]) < 64"
    "*
 {
   if (operands[1] == const0_rtx)
