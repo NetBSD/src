@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.14 1996/02/13 23:43:53 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.15 1996/12/10 18:20:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -594,7 +594,7 @@ void
 tcp_setpersist(tp)
 	register struct tcpcb *tp;
 {
-	register t = ((tp->t_srtt >> 2) + tp->t_rttvar) >> 1;
+	register t = ((tp->t_srtt >> 2) + tp->t_rttvar) >> (1 + 2);
 
 	if (tp->t_timer[TCPT_REXMT])
 		panic("tcp_output REXMT");
