@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
+/* $NetBSD: if_bce.c,v 1.4 2004/04/23 16:03:33 joda Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -467,7 +467,7 @@ bce_attach(parent, self, aux)
 	bce_mii_write((struct device *) sc, 1, 26,	 /* MAGIC */
 	    bce_mii_read((struct device *) sc, 1, 26) & 0x7fff);	 /* MAGIC */
 	/* enable traffic meter led mode */
-	bce_mii_write((struct device *) sc, 1, 26,	 /* MAGIC */
+	bce_mii_write((struct device *) sc, 1, 27,	 /* MAGIC */
 	    bce_mii_read((struct device *) sc, 1, 27) | (1 << 6));	 /* MAGIC */
 
 
