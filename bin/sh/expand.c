@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.67 2004/07/13 15:05:59 seb Exp $	*/
+/*	$NetBSD: expand.c,v 1.68 2005/02/14 20:46:26 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.67 2004/07/13 15:05:59 seb Exp $");
+__RCSID("$NetBSD: expand.c,v 1.68 2005/02/14 20:46:26 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -462,7 +462,8 @@ expbackq(union node *cmd, int quoted, int flag)
 	}
 
 	/* Eat all trailing newlines */
-	for (p--; lastc == '\n'; lastc = *--p)
+	p = stackblock() + startloc;
+	while (dest > p && dest[-1] == '\n')
 		STUNPUTC(dest);
 
 	if (in.fd >= 0)
