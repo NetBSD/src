@@ -1272,18 +1272,21 @@ override the use of the name in the host declaration.
  \fBnot authoritative;\fR
 .PP
 The DHCP server will normally assume that the configuration
-information about a given network segment is known to be correct and
-is authoritative.   So if a client requests an IP address on a given
-network segment that the server knows is not valid for that segment,
-the server will respond with a DHCPNAK message, causing the client to
-forget its IP address and try to get a new one.
+information about a given network segment is not known to be correct
+and is not authoritative.  This is so that if a naive user installs a
+DHCP server not fully understanding how to configure it, it does not
+send spurious DHCPNAK messages to clients that have obtained addresses
+from a legitimate DHCP server on the network.
 .PP
-If a DHCP server is being configured by somebody who is not the
-network administrator and who therefore does not wish to assert this
-level of authority, then the statement "not authoritative" should be
-written in the appropriate scope in the configuration file.
+Network administrators setting up authoritative DHCP servers for their
+networks should always write \fBauthoritative;\fR at the top of their
+configuration file to indicate that the DHCP server \fIshould\fR send
+DHCPNAK messages to misconfigured clients.   If this is not done,
+clients will be unable to get a correct IP address after changing
+subnets until their old lease has expired, which could take quite a
+long time.
 .PP
-Usually, writing \fBnot authoritative;\fR at the top level of the file
+Usually, writing \fBauthoritative;\fR at the top level of the file
 should be sufficient.   However, if a DHCP server is to be set up so
 that it is aware of some networks for which it is authoritative and
 some networks for which it is not, it may be more appropriate to

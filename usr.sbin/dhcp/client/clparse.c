@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.2 2000/04/23 18:39:00 thorpej Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.3 2000/06/10 18:17:18 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -97,11 +97,11 @@ isc_result_t read_client_conf ()
 	top_level_config.script_name = "/etc/dhclient-script";
 	top_level_config.requested_options = default_requested_options;
 
-	top_level_config.on_receipt = new_group (MDL);
+	group_allocate (&top_level_config.on_receipt, MDL);
 	if (!top_level_config.on_receipt)
 		log_fatal ("no memory for top-level on_receipt group");
 
-	top_level_config.on_transmission = new_group (MDL);
+	group_allocate (&top_level_config.on_transmission, MDL);
 	if (!top_level_config.on_transmission)
 		log_fatal ("no memory for top-level on_transmission group");
 
@@ -291,7 +291,7 @@ void parse_client_statement (cfile, ip, config)
 				return;
 			}
 			config -> auth_policy = policy;
-		} else if (token != BOOTP) {
+		} else if (token != TOKEN_BOOTP) {
 			if (policy != P_PREFER &&
 			    policy != P_IGNORE &&
 			    policy != P_ACCEPT) {
@@ -643,7 +643,7 @@ void parse_interface_declaration (cfile, outer_config, name)
 		return;
 	}
 
-	ip = interface_or_dummy (val);
+	interface_or_dummy (&ip, val);
 
 	/* If we were given a name, this is a pseudo-interface. */
 	if (name) {
@@ -688,37 +688,49 @@ void parse_interface_declaration (cfile, outer_config, name)
 	token = next_token (&val, cfile);
 }
 
-struct interface_info *interface_or_dummy (name)
-	const char *name;
+int interface_or_dummy (struct interface_info **pi, const char *name)
 {
-	struct interface_info *ip;
+	struct interface_info *i;
+	struct interface_info *ip = (struct interface_info *)0;
 
 	/* Find the interface (if any) that matches the name. */
-	for (ip = interfaces; ip; ip = ip -> next) {
-		if (!strcmp (ip -> name, name))
+	for (i = interfaces; i; i = i -> next) {
+		if (!strcmp (i -> name, name)) {
+			interface_reference (&ip, i, MDL);
 			break;
+		}
 	}
 
 	/* If it's not a real interface, see if it's on the dummy list. */
 	if (!ip) {
 		for (ip = dummy_interfaces; ip; ip = ip -> next) {
-			if (!strcmp (ip -> name, name))
+			if (!strcmp (ip -> name, name)) {
+				interface_reference (&ip, i, MDL);
 				break;
+			}
 		}
 	}
 
 	/* If we didn't find an interface, make a dummy interface as
 	   a placeholder. */
 	if (!ip) {
-		ip = (struct interface_info *)dmalloc (sizeof *ip, MDL);
-		if (!ip)
-			log_fatal ("No memory to record interface %s", name);
-		memset (ip, 0, sizeof *ip);
+		isc_result_t status;
+		status = interface_allocate (&ip, MDL);
+		if (status != ISC_R_SUCCESS)
+			log_fatal ("Can't record interface %s: %s",
+				   name, isc_result_totext (status));
 		strcpy (ip -> name, name);
-		ip -> next = dummy_interfaces;
-		dummy_interfaces = ip;
+		if (dummy_interfaces) {
+			interface_reference (&ip -> next,
+					     dummy_interfaces, MDL);
+			interface_dereference (&dummy_interfaces, MDL);
+		}
+		interface_reference (&dummy_interfaces, ip, MDL);
 	}
-	return ip;
+	if (pi)
+		interface_reference (pi, ip, MDL);
+	interface_dereference (&ip, MDL);
+	return 1;
 }
 
 void make_client_state (state)
@@ -739,10 +751,11 @@ void make_client_config (client, config)
 	if (!client -> config)
 		log_fatal ("no memory for client config\n");
 	memcpy (client -> config, config, sizeof *config);
-	client -> config -> on_receipt =
-		clone_group (config -> on_receipt, MDL);
-	client -> config -> on_transmission =
-		clone_group (config -> on_transmission, MDL);
+	if (!clone_group (&client -> config -> on_receipt,
+			  config -> on_receipt, MDL) ||
+	    !clone_group (&client -> config -> on_transmission,
+			  config -> on_transmission, MDL))
+		log_fatal ("no memory for client state groups.");
 }
 
 /* client-lease-statement :==
@@ -907,7 +920,7 @@ void parse_client_lease_declaration (cfile, lease, ipp, clientp)
 			parse_warn (cfile, "unknown key %s", val);
 		parse_semi (cfile);
 		break;
-	      case BOOTP:
+	      case TOKEN_BOOTP:
 		lease -> is_bootp = 1;
 		break;
 
@@ -919,8 +932,7 @@ void parse_client_lease_declaration (cfile, lease, ipp, clientp)
 			skip_to_semi (cfile);
 			break;
 		}
-		ip = interface_or_dummy (val);
-		*ipp = ip;
+		interface_or_dummy (ipp, val);
 		break;
 
 	      case NAME:

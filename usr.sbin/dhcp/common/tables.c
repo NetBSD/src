@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tables.c,v 1.4 2000/05/13 03:44:51 thorpej Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tables.c,v 1.5 2000/06/10 18:17:20 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -888,9 +888,9 @@ void initialize_common_option_spaces()
 		log_fatal ("Can't allocate dhcp option hash table.");
 	for (i = 0; i < 256; i++) {
 		dhcp_universe.options [i] = &dhcp_options [i];
-		add_hash (dhcp_universe.hash,
-			  (const unsigned char *)dhcp_options [i].name, 0,
-			  (unsigned char *)&dhcp_options [i]);
+		option_hash_add (dhcp_universe.hash,
+				 dhcp_options [i].name, 0,
+				 &dhcp_options [i], MDL);
 	}
 
 	/* Set up the Novell option universe (for option 63)... */
@@ -914,17 +914,17 @@ void initialize_common_option_spaces()
 		log_fatal ("Can't allocate dhcp option hash table.");
 	for (i = 0; i < 256; i++) {
 		nwip_universe.options [i] = &dhcp_options [i];
-		add_hash (nwip_universe.hash,
-			  (const unsigned char *)dhcp_options [i].name, 0,
-			  (unsigned char *)&dhcp_options [i]);
+		option_hash_add (nwip_universe.hash,
+				 dhcp_options [i].name, 0,
+				 &dhcp_options [i], MDL);
 	}
 
 	/* Set up the hash of universes. */
 	universe_hash = new_hash (0, 0, 1);
-	add_hash (universe_hash,
-		  (const unsigned char *)dhcp_universe.name, 0,
-		  (unsigned char *)&dhcp_universe);
-	add_hash (universe_hash,
-		  (const unsigned char *)nwip_universe.name, 0,
-		  (unsigned char *)&nwip_universe);
+	universe_hash_add (universe_hash,
+			   dhcp_universe.name, 0,
+			   &dhcp_universe, MDL);
+	universe_hash_add (universe_hash,
+			   nwip_universe.name, 0,
+			   &nwip_universe, MDL);
 }

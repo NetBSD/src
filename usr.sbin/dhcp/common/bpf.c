@@ -47,7 +47,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.2 2000/05/28 01:27:52 matt Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.3 2000/06/10 18:17:20 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -515,18 +515,16 @@ int can_receive_unicast_unconfigured (ip)
 void maybe_setup_fallback ()
 {
 	isc_result_t status;
-	struct interface_info *fbi;
-	fbi = setup_fallback ();
-	if (fbi) {
+	struct interface_info *fbi = (struct interface_info *)0;
+	if (setup_fallback (&fbi, MDL)) {
 		if_register_fallback (fbi);
-		fbi -> refcnt = 1;
-		fbi -> type = dhcp_type_interface;
 		status = omapi_register_io_object ((omapi_object_t *)fbi,
 						   if_readsocket, 0,
 						   fallback_discard, 0, 0);
 		if (status != ISC_R_SUCCESS)
 			log_fatal ("Can't register I/O handle for %s: %s",
 				   fbi -> name, isc_result_totext (status));
+		interface_dereference (&fbi, MDL);
 	}
 }
 #endif

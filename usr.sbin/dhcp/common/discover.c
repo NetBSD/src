@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.3 2000/05/28 01:27:52 matt Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.4 2000/06/10 18:17:20 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -52,6 +52,13 @@ static char copyright[] =
 struct interface_info *interfaces, *dummy_interfaces, *fallback_interface;
 extern int interfaces_invalidated;
 int quiet_interface_discovery;
+u_int16_t local_port;
+u_int16_t remote_port;
+int (*dhcp_interface_setup_hook) (struct interface_info *, struct iaddr *);
+int (*dhcp_interface_discovery_hook) (struct interface_info *);
+
+struct in_addr limited_broadcast;
+struct in_addr local_address;
 
 void (*bootp_packet_handler) PROTO ((struct interface_info *,
 				     struct dhcp_packet *, unsigned,
@@ -59,6 +66,8 @@ void (*bootp_packet_handler) PROTO ((struct interface_info *,
 				     struct iaddr, struct hardware *));
 
 omapi_object_type_t *dhcp_type_interface;
+
+OMAPI_OBJECT_ALLOC (interface, struct interface_info, dhcp_type_interface)
 
 /* Use the SIOCGIFCONF ioctl to get a list of all the attached interfaces.
    For each interface that's of type INET and not the loopback interface,
@@ -92,7 +101,8 @@ void discover_interfaces (state)
 			(&dhcp_type_interface, "interface",
 			 interface_set_value, interface_get_value,
 			 interface_destroy, interface_signal_handler,
-			 interface_stuff_values, 0, 0, 0);
+			 interface_stuff_values, 0, 0, 0, 0, 0,
+			 sizeof (struct interface_info));
 		if (status != ISC_R_SUCCESS)
 			log_fatal ("Can't create interface object type: %s",
 				   isc_result_totext (status));
@@ -167,44 +177,30 @@ void discover_interfaces (state)
 		/* If there isn't already an interface by this name,
 		   allocate one. */
 		if (!tmp) {
-			tmp = ((struct interface_info *) dmalloc (sizeof *tmp,
-								  MDL));
-			if (!tmp)
-				log_fatal ("Insufficient memory to %s %s",
-				       "record interface", ifp -> ifr_name);
-			memset (tmp, 0, sizeof *tmp);
+			tmp = (struct interface_info *)0;
+			status = interface_allocate (&tmp, MDL);
+			if (status != ISC_R_SUCCESS)
+				log_fatal ("Error allocating interface %s: %s",
+					   ifp -> ifr_name,
+					   isc_result_totext (status));
 			strcpy (tmp -> name, ifp -> ifr_name);
 			tmp -> circuit_id = (u_int8_t *)tmp -> name;
 			tmp -> circuit_id_len = strlen (tmp -> name);
 			tmp -> remote_id = 0;
 			tmp -> remote_id_len = 0;
-			tmp -> next = interfaces;
 			tmp -> flags = ir;
-			interfaces = tmp;
+			if (interfaces) {
+				interface_reference (&tmp -> next,
+						     interfaces, MDL);
+				interface_dereference (&interfaces, MDL);
+			}
+			interface_reference (&interfaces, tmp, MDL);
+			interface_dereference (&tmp, MDL);
+			tmp = interfaces;
 		}
 
-		/* See if we can find the client from dummy_interfaces */
-		last = 0;
-		for (ip = dummy_interfaces; ip; ip = ip -> next) {
-			if (!strcmp (ip -> name, tmp -> name)) {
-				/* Remove from dummy_interfaces */
-				if (last)
-					last -> next = ip -> next;
-				else
-					dummy_interfaces = ip -> next;
-				/* Copy "client" to tmp */
-				if (ip -> client) {
-					tmp -> client = ip -> client;
-					tmp -> client -> interface = tmp;
-				}
-				/* free up the dummy_interface */
-				if (ip -> ifp)
-					free (ip -> ifp);
-				dfree (ip, MDL);
-				break;
-			}
-			last = ip;
-		}
+		if (dhcp_interface_discovery_hook)
+			(*dhcp_interface_discovery_hook) (tmp);
 
 		/* If we have the capability, extract link information
 		   and record it in a linked list. */
@@ -269,56 +265,17 @@ void discover_interfaces (state)
 			addr.len = 4;
 			memcpy (addr.iabuf, &foo.sin_addr.s_addr,
 				addr.len);
-
-			/* If there's a registered subnet for this address,
-			   connect it together... */
-			if ((subnet = find_subnet (addr))) {
-				/* If this interface has multiple aliases
-				   on the same subnet, ignore all but the
-				   first we encounter. */
-				if (!subnet -> interface) {
-					subnet -> interface = tmp;
-					subnet -> interface_address = addr;
-				} else if (subnet -> interface != tmp) {
-					log_error ("Multiple %s %s: %s %s", 
-					      "interfaces match the",
-					      "same subnet",
-					      subnet -> interface -> name,
-					      tmp -> name);
-				}
-				share = subnet -> shared_network;
-				if (tmp -> shared_network &&
-				    tmp -> shared_network != share) {
-					log_fatal ("Interface %s matches %s",
-						   tmp -> name,
-						   "multiple shared networks");
-				} else {
-					tmp -> shared_network = share;
-				}
-
-				if (!share -> interface) {
-					share -> interface = tmp;
-				} else if (share -> interface != tmp) {
-					log_error ("Multiple %s %s: %s %s", 
-					      "interfaces match the",
-					      "same shared network",
-					      share -> interface -> name,
-					      tmp -> name);
-				}
-			}
+			if (dhcp_interface_setup_hook)
+				(*dhcp_interface_setup_hook) (tmp, &addr);
 		}
 	}
 
 #if defined (LINUX_SLASHPROC_DISCOVERY)
-	/* On Linux, interfaces that don't have IP addresses don't show up
-	   in the SIOCGIFCONF syscall.   We got away with this prior to
-	   Linux 2.1 because we would give each interface an IP address of
-	   0.0.0.0 before trying to boot, but that doesn't work after 2.1
-	   because we're using LPF, because we can't configure interfaces
-	   with IP addresses of 0.0.0.0 anymore (grumble).   This only
-	   matters for the DHCP client, of course - the relay agent and
-	   server should only care about interfaces that are configured
-	   with IP addresses anyway.
+	/* On Linux, interfaces that don't have IP addresses don't
+	   show up in the SIOCGIFCONF syscall.  This only matters for
+	   the DHCP client, of course - the relay agent and server
+	   should only care about interfaces that are configured with
+	   IP addresses anyway.
 
 	   The PROCDEV_DEVICE (/proc/net/dev) is a kernel-supplied file
 	   that, when read, prints a human readable network status.   We
@@ -326,8 +283,7 @@ void discover_interfaces (state)
 	   two lines (which are header) and then parsing off everything
 	   up to the colon in each subsequent line - these lines start
 	   with the interface name, then a colon, then a bunch of
-	   statistics.   Yes, Virgina, this is a kludge, but you work
-	   with what you have. */
+	   statistics. */
 
 	if (state == DISCOVER_UNCONFIGURED) {
 		FILE *proc_dev;
@@ -366,38 +322,21 @@ void discover_interfaces (state)
 				continue;
 
 			/* Otherwise, allocate one. */
-			tmp = ((struct interface_info *)
-			       dmalloc (sizeof *tmp, MDL));
-			if (!tmp)
-				log_fatal ("Insufficient memory to %s %s",
-					   "record interface", name);
-			memset (tmp, 0, sizeof *tmp);
-			strcpy (tmp -> name, name);
-
+			tmp = (struct interface_info *)0;
+			status = interface_allocate (&tmp, MDL);
+			if (status != ISC_R_SUCCESS)
+				log_fatal ("Can't allocate interface %s: %s",
+					   name, isc_result_totext (status));
 			tmp -> flags = ir;
-			tmp -> next = interfaces;
-			interfaces = tmp;
-			/* See if we can find the client from dummy_interfaces */
-			last = 0;
-			for (ip = dummy_interfaces; ip; ip = ip -> next) {
-				if (!strcmp (ip -> name, tmp -> name)) {
-					/* remove from dummy_interfaces */
-					if (last)
-						last -> next = ip -> next;
-					else
-						dummy_interfaces = ip -> next;
-					/* copy "client" to tmp */
-					if (ip -> client)
-						tmp -> client = ip -> client;
-					/* free up the dummy_interface */
-					if (ip -> ifp)
-						free (ip -> ifp);
-					dfree (ip, MDL);
-					ip = 0;
-					break;
-				}
-				last = ip;
-			}
+			interface_reference (&tmp -> next, interfaces, MDL);
+			interface_dereference (&interfaces, MDL);
+			interface_reference (&interfaces, tmp, MDL);
+			interface_dereference (&tmp, MDL);
+			tmp = interfaces;
+
+			if (dhcp_interface_discovery_hook)
+				(*dhcp_interface_discovery_hook) (tmp);
+
 		}
 		fclose (proc_dev);
 	}
@@ -507,9 +446,14 @@ void discover_interfaces (state)
 	}
 
 	/* Weed out the interfaces that did not have IP addresses. */
-	last = (struct interface_info *)0;
-	for (tmp = interfaces; tmp; tmp = next) {
-		next = tmp -> next;
+	tmp = last = next = (struct interface_info *)0;
+	if (interfaces)
+		interface_reference (&tmp, interfaces, MDL);
+	while (tmp) {
+		if (next)
+			interface_dereference (&next, MDL);
+		if (tmp -> next)
+			interface_reference (&next, tmp -> next, MDL);
 		/* skip interfaces that are running already */
 		if (tmp -> flags & INTERFACE_RUNNING)
 			continue;
@@ -520,15 +464,29 @@ void discover_interfaces (state)
 		if (!tmp -> ifp || !(tmp -> flags & INTERFACE_REQUESTED)) {
 			if ((tmp -> flags & INTERFACE_REQUESTED) != ir)
 				log_fatal ("%s: not found", tmp -> name);
-			if (!last)
-				interfaces = interfaces -> next;
-			else
-				last -> next = tmp -> next;
+			if (!last) {
+				if (interfaces)
+					interface_dereference (&interfaces,
+							       MDL);
+				interface_reference (&interfaces, next, MDL);
+			} else {
+				interface_dereference (&last -> next, MDL);
+				interface_reference (&last -> next, next, MDL);
+			}
+			if (tmp -> next)
+				interface_dereference (&tmp -> next, MDL);
 
 			/* Remember the interface in case we need to know
 			   about it later. */
-			tmp -> next = dummy_interfaces;
-			dummy_interfaces = tmp;
+			if (dummy_interfaces) {
+				interface_reference (&tmp -> next,
+						     dummy_interfaces, MDL);
+				interface_dereference (&dummy_interfaces, MDL);
+			}
+			interface_reference (&dummy_interfaces, tmp, MDL);
+			interface_dereference (&tmp, MDL);
+			if (next)
+				interface_reference (&tmp, next, MDL);
 			continue;
 		}
 		last = tmp;
@@ -574,6 +532,9 @@ void discover_interfaces (state)
 					   tmp -> name);
 		}
 #endif
+		interface_dereference (&tmp, MDL);
+		if (next)
+			interface_reference (&tmp, next, MDL);
 	}
 
 	/* Now register all the remaining interfaces as protocols. */
@@ -581,8 +542,6 @@ void discover_interfaces (state)
 		/* not if it's been registered before */
 		if (tmp -> flags & INTERFACE_RUNNING)
 			continue;
-		tmp -> refcnt = 1;
-		tmp -> type = dhcp_type_interface;
 		status = omapi_register_io_object ((omapi_object_t *)tmp,
 						   if_readsocket, 0,
 						   got_one, 0, 0);
@@ -621,21 +580,20 @@ int if_readsocket (h)
 	return ip -> rfdesc;
 }
 
-struct interface_info *setup_fallback ()
+int setup_fallback (struct interface_info **fp, const char *file, int line)
 {
-	fallback_interface = ((struct interface_info *)
-			      dmalloc (sizeof *fallback_interface, MDL));
-	if (!fallback_interface)
-		log_fatal ("No memory to record fallback interface.");
-	memset (fallback_interface, 0, sizeof *fallback_interface);
+	isc_result_t status;
+
+	status = interface_allocate (&fallback_interface, file, line);
+	if (status != ISC_R_SUCCESS)
+		log_fatal ("Error allocating fallback interface: %s",
+			   isc_result_totext (status));
 	strcpy (fallback_interface -> name, "fallback");
-	fallback_interface -> shared_network = new_shared_network (MDL);
-	if (!fallback_interface -> shared_network)
-		log_fatal ("No memory for shared subnet");
-	memset (fallback_interface -> shared_network, 0,
-		sizeof (struct shared_network));
-	fallback_interface -> shared_network -> name = "fallback-net";
-	return fallback_interface;
+	if (dhcp_interface_setup_hook)
+		(*dhcp_interface_setup_hook) (fallback_interface,
+					      (struct iaddr *)0);
+	status = interface_reference (fp, fallback_interface, file, line);
+	return status == ISC_R_SUCCESS;
 }
 
 void reinitialize_interfaces ()
