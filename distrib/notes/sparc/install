@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.19 1999/02/06 08:36:05 mrg Exp $	
+.\"	$NetBSD: install,v 1.20 1999/06/27 11:24:35 mrg Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -225,11 +225,20 @@ mount
 by hand now:
 .Dl netbsd# Ic mount /usr
 .Pp
+.Em NOTE:
+.Em For floppy installs, the text editor provided is ed.
+.Em For miniroot installs, the text editor is vi.
+When using
+.Xr disklabel 8
+to edit disklabels the -e switch will invoke the editor on the
+label.  The -i switch will run an interactive session.
+.Pp
 At this point, it's worth checking the disk label and partition sizes on
 the disk you want to install NetBSD onto. NetBSD understands SunOS-style
 disklabels, so if your disk was previously used by SunOS there will be
-a usable label on it. Use `disklabel -e \*<disk\*>' (where \*<disk\*> is the
-device name assigned by the NetBSD kernel, e.g. `sd0') to view and
+a usable label on it. Use `disklabel -e \*<disk\*>' or `disklabel -i
+\*<disk\*>' (where \*<disk\*> is the device name assigned by the NetBSD
+kernel, e.g. `sd0') to view and
 modify the partition sizes. See the section
 .Sx Preparing your System for NetBSD Installation
 above for suggestions about disk partition sizes.
@@ -241,8 +250,8 @@ NetBSD label on it, you may still be able to use disklabel(8) but you'll
 have to create all partitions from scratch. If your disk is listed in
 `/etc/disktab', you may use the entry (which in most cases only defines
 a `c' partition to describe the whole disk) to put an initial label on
-the disk. Then proceed with `disklabel -e \*<disk\*>' to create a partition
-layout that suits your needs.
+the disk. Then proceed with `disklabel -e \*<disk\*>' or `disklabel -i
+\*<disk\*>' to create a partition layout that suits your needs.
 .(Note
 Because of the built-in compatibility with SunOS-style labels,
 .Em Always make sure all your partitions
