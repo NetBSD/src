@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.14 1993/12/07 04:47:41 cgd Exp $
+ *	$Id: nfs_vnops.c,v 1.15 1993/12/16 16:43:36 pk Exp $
  */
 
 /*
@@ -1557,9 +1557,7 @@ nfs_strategy(bp)
 
 /*
  * Fun and games with i/o
- * Essentially play ubasetup() and disk interrupt service routine by
- * mapping the data buffer into kernel virtual space and doing the
- * nfs read or write rpc's from it.
+ *
  * If the nfsiod's are not running, this is just called from nfs_strategy(),
  * otherwise it is called by the nfsiods to do what would normally be
  * partially disk interrupt driven.
@@ -1574,14 +1572,6 @@ nfs_doio(bp)
 	int error;
 	struct uio uio;
 	struct iovec io;
-#if !defined(hp300) && !defined(i386)
-	register struct pte *pte, *ppte;
-	register caddr_t vaddr;
-	int npf, npf2;
-	int reg, o;
-	caddr_t vbase;
-	unsigned v;
-#endif
 
 	vp = bp->b_vp;
 	np = VTONFS(vp);
@@ -1589,41 +1579,41 @@ nfs_doio(bp)
 	uiop->uio_iov = &io;
 	uiop->uio_iovcnt = 1;
 	uiop->uio_segflg = UIO_SYSSPACE;
-	uiop->uio_procp = (struct proc *)0;
+	/*
+	 * Not to worry, `b_proc' will have been set to NULL
+	 * for asynchronous IO.
+	 */
+	uiop->uio_procp = bp->b_proc;
 
 	/*
-	 * For phys i/o, map the b_addr into kernel virtual space using
-	 * the Nfsiomap pte's
-	 * Also, add a temporary b_rcred for reading using the process's uid
-	 * and a guess at a group
+	 * Always use credentials passed in the buffer header.
 	 */
 	if (bp->b_flags & B_PHYS) {
+#if 0
+		/*
+		 * This cannot happen in the current (12/16/93) NetBSD kernel
+		 * Is this an artifact of the pager implementation in
+		 * previous incarnations of BSD ??
+		 */
 		if (bp->b_flags & B_DIRTY)
 			uiop->uio_procp = pageproc;
-		cr = crcopy(uiop->uio_procp->p_ucred);
+#endif
+
 		/* mapping was already done by vmapbuf */
 		io.iov_base = bp->b_un.b_addr;
-
-		/*
-		 * And do the i/o rpc
-		 */
 		io.iov_len = uiop->uio_resid = bp->b_bcount;
 		uiop->uio_offset = bp->b_blkno * DEV_BSIZE;
 		if (bp->b_flags & B_READ) {
 			uiop->uio_rw = UIO_READ;
 			nfsstats.read_physios++;
-			bp->b_error = error = nfs_readrpc(vp, uiop, cr);
-			(void) vnode_pager_uncache(vp);
+			bp->b_error = error = nfs_readrpc(vp, uiop, bp->b_rcred);
 		} else {
+			(void) vnode_pager_uncache(vp);
 			uiop->uio_rw = UIO_WRITE;
 			nfsstats.write_physios++;
-			bp->b_error = error = nfs_writerpc(vp, uiop, cr);
+			bp->b_error = error = nfs_writerpc(vp, uiop, bp->b_wcred);
 		}
 
-		/*
-		 * Finally, release pte's used by physical i/o
-		 */
-		crfree(cr);
 	} else {
 		if (bp->b_flags & B_READ) {
 			io.iov_len = uiop->uio_resid = bp->b_bcount;
