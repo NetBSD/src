@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.15 1993/10/17 05:34:29 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.16 1993/10/18 09:30:37 mycroft Exp $
  */
 
 /*
@@ -239,12 +239,13 @@ struct	intrhand *intrhand[NIRQ];
  * Register an interrupt handler.
  */
 void
-intr_establish(intr, handler, class)
+intr_establish(intr, ih, class)
 	int intr;
-	struct intrhand *handler;
+	struct intrhand *ih;
 	enum devclass class;
 {
 	int irqnum = ffs(intr) - 1;
+	register struct intrhand **p, *q;
 
 #ifdef DIAGNOSTIC
 	if (intr == IRQUNK || intr == IRQNONE ||
@@ -270,9 +271,16 @@ intr_establish(intr, handler, class)
 		panic("intrhand: weird devclass");
 	}
 
-	handler->ih_count = 0;
-	handler->ih_next = intrhand[irqnum];
-	intrhand[irqnum] = handler;
+	ih->ih_count = 0;
+	ih->ih_next = NULL;
+
+	/*
+	 * This is O(N^2), but we want to preserve the order, and N is
+	 * always small.
+	 */
+	for (p = &intrhand[intr]; (q = *p) != NULL; p = &q->ih_next)
+		;
+	*p = ih;
 
 	intr_enable(intr);
 }
