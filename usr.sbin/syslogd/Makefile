@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.7 (Berkeley) 9/30/90
+#	from: @(#)Makefile	5.7 (Berkeley) 9/30/90
+#	$Id: Makefile,v 1.3 1993/07/30 20:50:51 mycroft Exp $
 
 PROG=	syslogd
 SRCS=	syslogd.c ttymsg.c

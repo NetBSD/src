@@ -7,7 +7,8 @@
 #
 #  This has been tested on Ultrix.
 #
-#	@(#)Makefile.dist	6.5 (Berkeley) 2/26/93
+#	from: @(#)Makefile.dist	6.5 (Berkeley) 2/26/93
+#	$Id: Makefile.OSF1,v 1.2 1993/07/30 21:40:21 mycroft Exp $
 #
 
 # use O=-O (usual) or O=-g (debugging)

@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.11 (Berkeley) 6/29/90
+#	from: @(#)Makefile	5.11 (Berkeley) 6/29/90
+#	$Id: Makefile,v 1.4 1993/07/30 20:50:46 mycroft Exp $
 #
 # optional flags are: MEASURE TESTING DEBUG
 
