@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.196 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.197 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -463,3 +463,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	alpha: Switch to GCC 3.3.1.  [mrg 20030919]
 	sgimips: Add haltwo(4), a driver for the SGI HAL2 audio controller
 		[lonewolf 20030925]
+	isdncapi(4): Add a support layer for CAPI to i4b.  [pooka 20030925]
+	iavc(4): Add support for AVM B1 PCI CAPI-compatible ISDN adapters.
+		[pooka 20030925]
