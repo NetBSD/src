@@ -1,4 +1,4 @@
-.\"     $NetBSD: sa_yield.2,v 1.2 2004/03/14 10:22:06 snj Exp $
+.\"     $NetBSD: sa_yield.2,v 1.3 2004/03/14 20:57:49 wiz Exp $
 .\"
 .\" Copyright (c)2004 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -52,7 +52,7 @@ beforehand.
 On success,
 .Fn sa_yield
 will not return to userland in the normal way.
-it returns into an upcall hander with an upcall.
+It returns into an upcall hander with an upcall.
 Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
