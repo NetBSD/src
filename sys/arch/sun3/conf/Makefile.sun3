@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.84 2000/12/17 15:52:44 jdolecek Exp $
+# $NetBSD: Makefile.sun3,v 1.85 2001/02/04 01:26:44 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -50,7 +50,7 @@ TEXTADDR=0E004000
 # Keep -nostdinc before all -I flags, similar for -undef ...
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
-XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000
+XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000 -D__m68k__
 DEFINES=	-D_KERNEL -Dsun3
 CPPFLAGS=	${INCLUDES} ${XDEFS} ${DEFINES} ${IDENT} ${PARAM}
 # Make it easy to override this on the command line...
