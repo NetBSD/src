@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.29 2004/08/24 01:45:54 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.30 2004/10/12 22:17:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ struct	__pthread_st {
 	stack_t		pt_stack;	/* Our stack */
 	ucontext_t	*pt_uc;		/* Saved context when we're stopped */
 	ucontext_t	*pt_trapuc;   	/* Kernel-saved context */
-	ucontext_t	*pt_blockuc;   	/* Kernel-saved context when blocked */
+	ucontext_t	*__pt_blockuc;  /* Kernel-saved context when blocked */
 
 	sigset_t	pt_sigmask;	/* Signals we won't take. */
 	sigset_t	pt_siglist;	/* Signals pending for us. */

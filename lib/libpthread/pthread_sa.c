@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.32 2004/07/20 12:40:53 he Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.33 2004/10/12 22:17:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.32 2004/07/20 12:40:53 he Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.33 2004/10/12 22:17:56 mycroft Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -132,7 +132,6 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		SDPRINTF(("(up %p) blocker %d %p(%d)\n", self,
 			     sas[1]->sa_id, t, t->pt_type));
 		pthread__assert(t->pt_vpid == sas[1]->sa_cpu);
-		t->pt_blockuc = sas[1]->sa_context;
 		t->pt_blockedlwp = sas[1]->sa_id;
 		t->pt_blockgen += 2;
 		if (t->pt_cancel)
