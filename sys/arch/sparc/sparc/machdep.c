@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 1996/05/19 04:12:56 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.65 1996/06/12 23:48:51 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -326,11 +326,16 @@ allocsys(v)
 
 	/*
 	 * Determine how many buffers to allocate (enough to
-	 * hold 5% of total physical memory, but at least 16).
+	 * hold 5% of total physical memory, but at least 16 and at
+	 * most 1/2 of available kernel virtual memory).
 	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
-	if (bufpages == 0)
+	if (bufpages == 0) {
+		int bmax = btoc(VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS)/2;
 		bufpages = (physmem / 20) / CLSIZE;
+		if (bufpages > bmax)
+			bufpages = bmax;
+	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
