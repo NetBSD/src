@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.2 2002/05/14 01:18:50 lukem Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.3 2002/05/14 02:41:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define SPARC_BOOT_BLOCK_BLOCKSIZE	512
 #define SPARC_BOOT_BLOCK_MAX_SIZE	(512 * 15)
 
-	/* Maximum # of 8KB blocks, enough for a 2MB boot program */
+	/* Maximum # of blocks in bbi_block_table, each bbi_block_size long */
 #define	SPARC_BBINFO_MAXBLOCKS		256
 
 	/* Magic string -- 32 bytes long (including the NUL) */
@@ -79,7 +79,7 @@ struct sparc_bbinfo {
 #define SUN68K_BOOT_BLOCK_BLOCKSIZE	512
 #define SUN68K_BOOT_BLOCK_MAX_SIZE	(512 * 15)
 
-	/* Maximum # of 512 byte blocks, enough for a 32K boot program */
+	/* Maximum # of blocks in bbi_block_table, each bbi_block_size long */
 #define	SUN68K_BBINFO_MAXBLOCKS		64
 
 	/* Magic string -- 32 bytes long (including the NUL) */
