@@ -53,6 +53,9 @@ static boolean elf_vax_finish_dynamic_symbol
 	   Elf_Internal_Sym *));
 static boolean elf_vax_finish_dynamic_sections
   PARAMS ((bfd *, struct bfd_link_info *));
+static void elf_vax_post_process_headers
+  PARAMS ((bfd *, struct bfd_link_info *));
+
 
 static boolean elf32_vax_set_private_flags
   PARAMS ((bfd *, flagword));
@@ -2148,10 +2151,27 @@ elf_vax_finish_dynamic_sections (output_bfd, info)
   return true;
 }
 
-#define TARGET_LITTLE_SYM		bfd_elf32_vax_vec
-#define TARGET_LITTLE_NAME		"elf32-vax"
-#define ELF_MACHINE_CODE		EM_VAX
-#define ELF_MAXPAGESIZE			0x1000
+/* Tweak the OSABI field of the elf header.  */
+
+static void
+elf_vax_post_process_headers (abfd, link_info)
+     bfd *abfd;
+     struct bfd_link_info *link_info ATTRIBUTE_UNUSED;
+{
+  Elf_Internal_Ehdr * i_ehdrp;
+
+  i_ehdrp = elf_elfheader (abfd);
+
+  if (strcmp (bfd_get_target (abfd), "elf32-vax-linux") == 0)
+    {
+      i_ehdrp->e_ident[EI_OSABI] = ELFOSABI_LINUX;
+    }
+  else
+    {
+      i_ehdrp->e_ident[EI_OSABI] = ELFOSABI_NETBSD;
+    }
+}
+
 #define elf_backend_create_dynamic_sections \
 					_bfd_elf_create_dynamic_sections
 #define bfd_elf32_bfd_link_hash_table_create \
@@ -2170,6 +2190,8 @@ elf_vax_finish_dynamic_sections (output_bfd, info)
 					elf_vax_finish_dynamic_sections
 #define elf_backend_gc_mark_hook	elf_vax_gc_mark_hook
 #define elf_backend_gc_sweep_hook	elf_vax_gc_sweep_hook
+#define elf_backend_post_process_headers \
+					elf_vax_post_process_headers
 #define bfd_elf32_bfd_copy_private_bfd_data \
                                         elf32_vax_copy_private_bfd_data
 #define bfd_elf32_bfd_merge_private_bfd_data \
@@ -2179,10 +2201,23 @@ elf_vax_finish_dynamic_sections (output_bfd, info)
 #define bfd_elf32_bfd_print_private_bfd_data \
                                         elf32_vax_print_private_bfd_data
 
-#define elf_backend_can_gc_sections 1
-#define elf_backend_want_got_plt 1
-#define elf_backend_plt_readonly 1
-#define elf_backend_want_plt_sym 0
+#define elf_backend_can_gc_sections	1
+#define elf_backend_want_got_plt	1
+#define elf_backend_plt_readonly	1
+#define elf_backend_want_plt_sym	0
 #define elf_backend_got_header_size	16
 
+#define TARGET_LITTLE_SYM		bfd_elf32_vax_vec
+#define TARGET_LITTLE_NAME		"elf32-vax"
+#define ELF_MACHINE_CODE		EM_VAX
+#define ELF_MAXPAGESIZE			0x1000
+
+#include "elf32-target.h"
+
+#undef TARGET_LITTLE_SYM
+#define TARGET_LITTLE_SYM		bfd_elf32_vax_linux_vec
+#undef TARGET_LITTLE_NAME
+#define TARGET_LITTLE_NAME		"elf32-vax-linux"
+
+#define INCLUDED_TARGET_FILE 1
 #include "elf32-target.h"
