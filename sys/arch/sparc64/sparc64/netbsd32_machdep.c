@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.19 2001/12/08 00:35:25 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.20 2002/01/03 02:29:40 mrg Exp $	*/
 
 /*
- * Copyright (c) 1998 Matthew R. Green
+ * Copyright (c) 1998, 2001 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,11 +53,14 @@
 #include <machine/netbsd32_machdep.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_ioctl.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <dev/sun/event_var.h>
 
 static int ev_out32 __P((struct firm_event *, int, struct uio *));
+
+#include <sys/ioctl.h>
 
 /*
  * Set up registers on exec.
@@ -349,6 +352,7 @@ compat_13_netbsd32_sigreturn(p, v, retval)
 	return (EJUSTRETURN);
 }
 #endif
+
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -625,6 +629,205 @@ ev_out32(e, n, uio)
 		e32.time.tv_usec = e->time.tv_usec;
 		error = uiomove((caddr_t)&e32, sizeof(e32), uio);
 		e++;
+	}
+	return (error);
+}
+
+/*
+ * ioctl code
+ */
+
+#include <machine/fbio.h>
+#include <machine/openpromio.h>
+
+/* from arch/sparc/include/fbio.h */
+#if 0
+/* unused */
+#define	FBIOGINFO	_IOR('F', 2, struct fbinfo)
+#endif
+
+struct netbsd32_fbcmap {
+	int	index;		/* first element (0 origin) */
+	int	count;		/* number of elements */
+	netbsd32_u_charp	red;		/* red color map elements */
+	netbsd32_u_charp	green;		/* green color map elements */
+	netbsd32_u_charp	blue;		/* blue color map elements */
+};
+#if 1
+#define	FBIOPUTCMAP32	_IOW('F', 3, struct netbsd32_fbcmap)
+#define	FBIOGETCMAP32	_IOW('F', 4, struct netbsd32_fbcmap)
+#endif
+
+struct netbsd32_fbcursor {
+	short set;		/* what to set */
+	short enable;		/* enable/disable cursor */
+	struct fbcurpos pos;	/* cursor's position */
+	struct fbcurpos hot;	/* cursor's hot spot */
+	struct netbsd32_fbcmap cmap;	/* color map info */
+	struct fbcurpos size;	/* cursor's bit map size */
+	netbsd32_charp image;	/* cursor's image bits */
+	netbsd32_charp mask;	/* cursor's mask bits */
+};
+#if 1
+#define FBIOSCURSOR32	_IOW('F', 24, struct netbsd32_fbcursor)
+#define FBIOGCURSOR32	_IOWR('F', 25, struct netbsd32_fbcursor)
+#endif
+
+/* from arch/sparc/include/openpromio.h */
+struct netbsd32_opiocdesc {
+	int	op_nodeid;		/* passed or returned node id */
+	int	op_namelen;		/* length of op_name */
+	netbsd32_charp op_name;		/* pointer to field name */
+	int	op_buflen;		/* length of op_buf (value-result) */
+	netbsd32_charp op_buf;		/* pointer to field value */
+};
+#if 1
+#define	OPIOCGET32	_IOWR('O', 1, struct netbsd32_opiocdesc) /* get openprom field */
+#define	OPIOCSET32	_IOW('O', 2, struct netbsd32_opiocdesc) /* set openprom field */
+#define	OPIOCNEXTPROP32	_IOWR('O', 3, struct netbsd32_opiocdesc) /* get next property */
+#endif
+
+/* prototypes for the converters */
+static __inline void
+netbsd32_to_fbcmap(struct netbsd32_fbcmap *, struct fbcmap *, u_long);
+static __inline void
+netbsd32_to_fbcursor(struct netbsd32_fbcursor *, struct fbcursor *, u_long);
+static __inline void
+netbsd32_to_opiocdesc(struct netbsd32_opiocdesc *, struct opiocdesc *, u_long);
+
+static __inline void
+netbsd32_from_fbcmap(struct fbcmap *, struct netbsd32_fbcmap *);
+static __inline void
+netbsd32_from_fbcursor(struct fbcursor *, struct netbsd32_fbcursor *);
+static __inline void
+netbsd32_from_opiocdesc(struct opiocdesc *, struct netbsd32_opiocdesc *);
+
+/* convert to/from different structures */
+static __inline void
+netbsd32_to_fbcmap(s32p, p, cmd)
+	struct netbsd32_fbcmap *s32p;
+	struct fbcmap *p;
+	u_long cmd;
+{
+
+	p->index = s32p->index;
+	p->count = s32p->count;
+	p->red = (u_char *)(u_long)s32p->red;
+	p->green = (u_char *)(u_long)s32p->green;
+	p->blue = (u_char *)(u_long)s32p->blue;
+}
+
+static __inline void
+netbsd32_to_fbcursor(s32p, p, cmd)
+	struct netbsd32_fbcursor *s32p;
+	struct fbcursor *p;
+	u_long cmd;
+{
+
+	p->set = s32p->set;
+	p->enable = s32p->enable;
+	p->pos = s32p->pos;
+	p->hot = s32p->hot;
+	netbsd32_to_fbcmap(&s32p->cmap, &p->cmap, cmd);
+	p->size = s32p->size;
+	p->image = (char *)(u_long)s32p->image;
+	p->mask = (char *)(u_long)s32p->mask;
+}
+
+static __inline void
+netbsd32_to_opiocdesc(s32p, p, cmd)
+	struct netbsd32_opiocdesc *s32p;
+	struct opiocdesc *p;
+	u_long cmd;
+{
+
+	p->op_nodeid = s32p->op_nodeid;
+	p->op_namelen = s32p->op_namelen;
+	p->op_name = (char *)(u_long)s32p->op_name;
+	p->op_buflen = s32p->op_buflen;
+	p->op_buf = (char *)(u_long)s32p->op_buf;
+}
+
+static __inline void
+netbsd32_from_fbcmap(p, s32p)
+	struct fbcmap *p;
+	struct netbsd32_fbcmap *s32p;
+{
+
+	s32p->index = p->index;
+	s32p->count = p->count;
+/* filled in */
+#if 0
+	s32p->red = (netbsd32_u_charp)p->red;
+	s32p->green = (netbsd32_u_charp)p->green;
+	s32p->blue = (netbsd32_u_charp)p->blue;
+#endif
+}
+
+static __inline void
+netbsd32_from_fbcursor(p, s32p)
+	struct fbcursor *p;
+	struct netbsd32_fbcursor *s32p;
+{
+
+	s32p->set = p->set;
+	s32p->enable = p->enable;
+	s32p->pos = p->pos;
+	s32p->hot = p->hot;
+	netbsd32_from_fbcmap(&p->cmap, &s32p->cmap);
+	s32p->size = p->size;
+/* filled in */
+#if 0
+	s32p->image = (netbsd32_charp)p->image;
+	s32p->mask = (netbsd32_charp)p->mask;
+#endif
+}
+
+static __inline void
+netbsd32_from_opiocdesc(p, s32p)
+	struct opiocdesc *p;
+	struct netbsd32_opiocdesc *s32p;
+{
+
+	s32p->op_nodeid = p->op_nodeid;
+	s32p->op_namelen = p->op_namelen;
+	s32p->op_name = (netbsd32_charp)(u_long)p->op_name;
+	s32p->op_buflen = p->op_buflen;
+	s32p->op_buf = (netbsd32_charp)(u_long)p->op_buf;
+}
+
+int
+netbsd32_md_ioctl(fp, com, data32, p)
+	struct file *fp;
+	netbsd32_u_long com;
+	caddr_t data32;
+	struct proc *p;
+{
+	u_int size;
+	caddr_t data;
+#define STK_PARAMS	128
+	stkbuf[STK_PARAMS/sizeof(u_long)];
+	stkbuf32[STK_PARAMS/sizeof(u_long)];
+
+	switch (SCARG(uap, com)) {
+	case FBIOPUTCMAP32:
+		IOCTL_STRUCT_CONV_TO(FBIOPUTCMAP, fbcmap);
+	case FBIOGETCMAP32:
+		IOCTL_STRUCT_CONV_TO(FBIOGETCMAP, fbcmap);
+
+	case FBIOSCURSOR32:
+		IOCTL_STRUCT_CONV_TO(FBIOSCURSOR, fbcursor);
+	case FBIOGCURSOR32:
+		IOCTL_STRUCT_CONV_TO(FBIOGCURSOR, fbcursor);
+
+	case OPIOCGET32:
+		IOCTL_STRUCT_CONV_TO(OPIOCGET, opiocdesc);
+	case OPIOCSET32:
+		IOCTL_STRUCT_CONV_TO(OPIOCSET, opiocdesc);
+	case OPIOCNEXTPROP32:
+		IOCTL_STRUCT_CONV_TO(OPIOCNEXTPROP, opiocdesc);
+	default:
+		error = (*fp->f_ops->fo_ioctl)(fp, com, data32, p);
 	}
 	return (error);
 }
