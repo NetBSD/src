@@ -1,5 +1,4 @@
-
-/*	$NetBSD: machdep.c,v 1.72 1996/05/05 06:02:23 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 1996/06/17 15:27:16 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -769,10 +768,14 @@ static void reboot_sync()
 	vfs_shutdown();
 }
 
+__dead void reboot2 __P((int, char *))
+    __attribute__((__noreturn__));
+
 /*
  * Common part of the BSD and SunOS reboot system calls.
  */
-int reboot2(howto, user_boot_string)
+__dead void
+reboot2(howto, user_boot_string)
 	int howto;
 	char *user_boot_string;
 {
@@ -840,6 +843,7 @@ int reboot2(howto, user_boot_string)
 	}
 	printf("Kernel rebooting...\n");
 	sun3_mon_reboot(bs);
+	for (;;) ;
 	/*NOTREACHED*/
 }
 
@@ -850,10 +854,11 @@ int reboot2(howto, user_boot_string)
  * that specifies a machine-dependent boot string that
  * is passed to the boot program if RB_STRING is set.
  */
-void boot(howto)
+__dead void
+boot(howto)
 	int howto;
 {
-	(void) reboot2(howto, NULL);
+	reboot2(howto, NULL);
 }
 
 /*
