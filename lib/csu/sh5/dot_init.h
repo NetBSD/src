@@ -1,4 +1,4 @@
-/*	$NetBSD: dot_init.h,v 1.2 2002/07/10 13:13:48 scw Exp $	*/
+/*	$NetBSD: dot_init.h,v 1.3 2002/12/06 17:05:14 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -83,11 +83,13 @@
 #define	MD_SECTION_PROLOGUE(sect, entry_pt)		\
 		__asm (					\
 		".section "#sect",\"ax\",@progbits	\n"\
+		".align 4				\n"\
 		#entry_pt":				\n"\
 		"	addi	r15, -16, r15		\n"\
 		"	st.q	r15, 0, r14		\n"\
 		"	st.q	r15, 8, r18		\n"\
 		"	add	r15, r63, r14		\n"\
+		"	nop; nop; nop; nop		\n"\
 		"	/* fall thru */			\n"\
 		".previous")
 
