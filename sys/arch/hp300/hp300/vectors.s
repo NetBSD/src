@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.14 1998/09/30 23:13:58 thorpej Exp $
+|	$NetBSD: vectors.s,v 1.15 1998/10/04 23:38:56 thorpej Exp $
 
 | Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 | Copyright (c) 1988 University of Utah
@@ -92,7 +92,7 @@ GLOBAL(vectab)
 	VECTOR(illinst)
 #endif
 	VECTOR(trap2)		/* 34: trace */
-	VECTOR(trap3)		/* 35: special handling syscalls */
+	VECTOR(trap3)		/* 35: sigreturn special syscall */
 	VECTOR(illinst)		/* 36: TRAP instruction vector */
 	VECTOR(illinst)		/* 37: TRAP instruction vector */
 	VECTOR(illinst)		/* 38: TRAP instruction vector */
