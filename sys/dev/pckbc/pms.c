@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.4.2.1 2002/05/24 22:49:08 perry Exp $ */
+/* $NetBSD: pms.c,v 1.4.2.2 2002/06/01 22:59:59 tv Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.4.2.1 2002/05/24 22:49:08 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.4.2.2 2002/06/01 22:59:59 tv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,12 +75,6 @@ struct pms_softc {		/* driver status information */
 #ifndef PMS_DISABLE_POWERHOOK
 	void *sc_powerhook;	/* cookie from power hook */
 #endif /* !PMS_DISABLE_POWERHOOK */
-	/*
-	 * Some devices (trackballs) seem to use the standard 3 byte protocol,
-	 * but send arbitrary (uninterpreted) bytes following the packet.
-	 * We set inputstate to -1 to indicate we are looking for a start
-	 * of packet (and discard input in this state).
-	 */
 	int inputstate;		/* number of bytes received for this packet */
 	u_int buttons;		/* mouse button status */
 	enum pms_type protocol;
@@ -133,13 +127,13 @@ pms_protocol(tag, slot)
 		cmd[0] = PMS_SET_SAMPLE;
 		for (i = 0; i < 3; i++) {
 			cmd[1] = p->rates[i];
-			res = pckbc_poll_cmd(tag, slot, cmd, 2, 0, 0, 0);
+			res = pckbc_enqueue_cmd(tag, slot, cmd, 2, 0, 1, 0);
 			if (res)
 				return PMS_STANDARD;
 		}
 
 		cmd[0] = PMS_SEND_DEV_ID;
-		res = pckbc_poll_cmd(tag, slot, cmd, 1, 1, resp, 0);
+		res = pckbc_enqueue_cmd(tag, slot, cmd, 1, 1, 1, resp);
 		if (res)
 			return 0;
 		if (resp[0] == p->response) {
@@ -223,6 +217,7 @@ pmsattach(parent, self, aux)
 #endif
 	sc->inputstate = 0;
 	sc->buttons = 0;
+	sc->protocol = PMS_UNKNOWN;
 
 	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
 			       pmsinput, sc, sc->sc_dev.dv_xname);
@@ -272,11 +267,10 @@ do_enable(sc)
 	if (res)
 		printf("pms_enable: command error %d\n", res);
 
-	sc->protocol = pms_protocol(sc->sc_kbctag, sc->sc_kbcslot);
+	if (sc->protocol == PMS_UNKNOWN)
+		sc->protocol = pms_protocol(sc->sc_kbctag, sc->sc_kbcslot);
 	DPRINTF(("pms_enable: using %s protocol\n",
 	    pms_protocols[sc->protocol].name));
-	if (sc->protocol == PMS_STANDARD)
-		sc->inputstate = -1;	/* need to sync */
 #if 0
 	{
 		u_char scmd[2];
@@ -343,10 +337,13 @@ pms_disable(v)
 	void *v;
 {
 	struct pms_softc *sc = v;
+	int s;
 
 	do_disable(sc);
 
+	s = spltty();
 	sc->sc_enabled = 0;
+	splx(s);
 }
 
 #ifndef PMS_DISABLE_POWERHOOK
@@ -364,8 +361,10 @@ pms_power(why, v)
 			do_disable(sc);
 		break;
 	case PWR_RESUME:
-		if (sc->sc_enabled)
+		if (sc->sc_enabled) {
+			sc->protocol = PMS_UNKNOWN;	/* recheck protocol & init mouse */
 			do_enable(sc);
+		}
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
 	case PWR_SOFTRESUME:
@@ -449,6 +448,7 @@ pms_reset_thread(arg)
 		if (res)
 			DPRINTF(("%s: reset error %d\n", sc->sc_dev.dv_xname, 
 			    res));
+		sc->protocol = PMS_UNKNOWN;	/* reprobe protocol */
 		pms_enable(sc);
 	}
 }
@@ -504,10 +504,14 @@ pmsinput(vsc, data)
 	}
 	sc->last = sc->current;
 
-	if (sc->inputstate < 0) {
+	if (sc->inputstate == 0) {
+		/*
+		 * Some devices (seen on trackballs anytime, and on some mice shortly after
+		 * reset) output garbage bytes between packets.
+		 * Just ignore them.
+		 */
 		if ((data & 0xc0) != 0)
 			return;	/* not in sync yet, discard input */
-		sc->inputstate = 0;
 	}
 
 	sc->packet[sc->inputstate++] = data & 0xff;
@@ -517,6 +521,15 @@ pmsinput(vsc, data)
 		break;
 
 	case 1:
+		/*
+		 * Why should we test for bit 0x8 and insist on it here?
+		 * The old (psm.c and psm_intelli.c) drivers didn't do
+		 * it, and there are devices where it does harm (that's
+		 * why it is not used if using PMS_STANDARD protocol).
+		 * Anyway, it does not to cause any harm to accept packets
+		 * without this bit.
+		 */
+#if 0
 		if (sc->protocol == PMS_STANDARD)
 			break;
 		if (!(sc->packet[0] & 0x8)) {
@@ -527,6 +540,7 @@ pmsinput(vsc, data)
 			wakeup(&sc->sc_enabled);
 			return;
 		}
+#endif
 		break;
 
 	case 2:
@@ -577,10 +591,7 @@ pmsinput(vsc, data)
 		if (dy == -128)
 			dy = -127;
 		
-		if (sc->protocol == PMS_STANDARD)
-			sc->inputstate = -1;	/* may need to sync again */
-		else
-			sc->inputstate = 0;
+		sc->inputstate = 0;
 		changed = (sc->buttons ^ newbuttons);
 		sc->buttons = newbuttons;
 
