@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.10.1 2001/03/11 19:17:14 hubertf Exp $
+#	$NetBSD: Makefile,v 1.4.10.2 2001/03/11 21:19:44 hubertf Exp $
 #
 #	@(#)Makefile	8.2 (Berkeley) 6/1/94
 
@@ -6,11 +6,9 @@ DIR=	psd/05.sysman
 SRCS=	0.t 1.0.t 1.1.t 1.2.t 1.3.t 1.4.t 1.5.t 1.6.t 1.7.t \
 	2.0.t 2.1.t 2.2.t 2.3.t 2.4.t 2.5.t a.t
 MACROS=	-ms
-CLEANFILES+=Toc
+CLEANFILES+=toc
 
 paper.ps: ${SRCS}
-	# Format twice to (only) generate Toc in the first run:
-	( ${SOELIM} -I${.CURDIR} ${.ALLSRC} | ${TBL} | ${ROFF} 2>&1 ) >/dev/null
 	${SOELIM} -I${.CURDIR} ${.ALLSRC} | ${TBL} | ${ROFF} > ${.TARGET}
 
 .include <bsd.doc.mk>
