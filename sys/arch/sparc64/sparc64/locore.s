@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.187 2004/01/06 09:38:19 petrov Exp $	*/
+/*	$NetBSD: locore.s,v 1.188 2004/01/06 21:35:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -8085,7 +8085,7 @@ cpu_loadproc:
 #endif
 	 STPTR	%l4, [%l7 + %lo(CURLWP)]	! restore old proc so we can save it
 
-	cmp	%l3, %l4			! p == lastproc?
+	cmp	%l3, %l4			! new lwp == curlwp?
 	be,a,pt	%xcc, Lsw_sameproc		! yes, go return 0
 	 clr	%i0
 	mov	1, %i0
@@ -8216,8 +8216,8 @@ Lsw_load:
 	 * can talk about user space stuff.  (Its pcb_uw is currently
 	 * zero so it is safe to have interrupts going here.)
 	 */
-	LDPTR	[%l3 + L_PROC], %l3	! now %l3 points to p
-	LDPTR	[%l3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
+	LDPTR	[%l3 + L_PROC], %l4	! now %l4 points to p
+	LDPTR	[%l4 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	sethi	%hi(_C_LABEL(kernel_pmap_)), %o1
 	mov	CTX_SECONDARY, %l5		! Recycle %l5
 	LDPTR	[%o3 + VM_PMAP], %o2		! if (vm->vm_pmap.pm_ctx != NULL)
@@ -8316,6 +8316,24 @@ Lsw_havectx:
 1:
 #endif
 
+#ifdef __arch64__
+	/*
+	 * Check for restartable atomic sequences (RAS)
+	 */
+	mov	%l4, %o0		! p is first arg to ras_lookup
+	ldx	[%o0 + P_RASLIST], %o1	! any RAS in p?
+	brz,pt	%o1, Lsw_noras		! no, skip RAS check
+	 ldx	[%l3 + L_TF], %l3	! pointer to trap frame
+	call	_C_LABEL(ras_lookup)
+	 ldx	[%l3 + TF_PC], %o1
+	cmp	%o0, -1
+	be,pt	%xcc, Lsw_noras
+	 add	%o0, 4, %o1
+	stx	%o0, [%l3 + TF_PC]	! store rewound %pc
+	stx	%o1, [%l3 + TF_NPC]	! and %npc
+
+Lsw_noras:
+#endif
 
 Lsw_sameproc:
 	/*
