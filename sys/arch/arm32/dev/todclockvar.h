@@ -1,4 +1,4 @@
-/*	$NetBSD: todclockvar.h,v 1.2 1998/02/21 03:12:32 mark Exp $	*/
+/*	$NetBSD: todclockvar.h,v 1.3 1998/04/19 03:51:44 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -44,11 +44,12 @@
  */
 
 struct todclock_attach_args {
-	const char	*ta_name;		/* device name */
-	int	(*ta_rtc_write) __P((rtc_t *));	/* function to write rtc */
-	int	(*ta_rtc_read)  __P((rtc_t *));	/* function to read rtc */
-	int	ta_flags;			/* flags */
-#define TODCLOCK_FLAG_FAKE	0x01		/* tod service is faked */
+	const char	*ta_name;			/* device name */
+	void	*ta_rtc_arg;				/* arg to read/write */
+	int	(*ta_rtc_write) __P((void *, rtc_t *));	/* function to write rtc */
+	int	(*ta_rtc_read)  __P((void *, rtc_t *));	/* function to read rtc */
+	int	ta_flags;				/* flags */
+#define TODCLOCK_FLAG_FAKE	0x01			/* tod service is faked */
 };
 
 /* End of todclockvar.h */
