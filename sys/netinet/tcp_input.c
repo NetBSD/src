@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.23 1997/07/11 06:33:10 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.24 1997/07/11 08:29:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -474,16 +474,16 @@ findpcb:
 					    (struct socket *)(-1)) {
 						/*
 						 * We were unable to create
-						 * the socket for this
-						 * connection and we have
-						 * aborted by sending ACK,RST
-						 * to the peer.  mbuf is being
-						 * used to send the response
-						 * so do not free it.
+						 * the connection.  If the
+						 * 3-way handshake was
+						 * completeed, and RST has
+						 * been sent to the peer.
+						 * Since the mbuf might be
+						 * in use for the reply,
+						 * do not free it.
 						 */
 						m = NULL;
-					} else if (so !=
-					    (struct socket *)(-2)) {
+					} else {
 						/*
 						 * We have created a
 						 * full-blown connection.
@@ -493,15 +493,6 @@ findpcb:
 						tiwin <<= tp->snd_scale;
 						goto after_listen;
 					}
-					/*
-					 * Remaining case is a return value
-					 * of -2.  This indicates that there
-					 * was some error in the creation of
-					 * the connection.  However, we were
-					 * able to create the socket, so
-					 * we just drop the data and let the
-					 * peer send another ACK.
-					 */
   				}
   			} else {
 				/*
@@ -520,7 +511,7 @@ after_listen:
 #ifdef DIAGNOSTIC
 	/*
 	 * Should not happen now that all embryonic connections
-	 * are handed with compressed state.
+	 * are handled with compressed state.
 	 */
 	if (tp->t_state == TCPS_LISTEN)
 		panic("tcp_input: TCPS_LISTEN");
@@ -1917,17 +1908,12 @@ syn_cache_lookup(ti, prevp, headp)
  *	NULL	SYN was not found in cache; caller should drop the
  *		packet and send an RST.
  *
- *	-1	We were unable to create a new socket, and are aborting
- *		the connection, and sending ACK,RST to the peer.  Do not
- *		free the mbuf, since it is being used to send the packet
- *		to the peer.
- *
- *	-2	We have a resource shortage or other error, and have
- *		aborted the connection.  However, we _were_ able to
- *		create a new socket, so, even though we are aborting,
- *		we are going to let the peer send another ACK to try
- *		again.  Since we are not sending a response, the caller
- *		should free the mbuf.
+ *	-1	We were unable to create the new connection, and are
+ *		aborting it.  An ACK,RST is being sent to the peer
+ *		(unless we got screwey sequence numbners; see below),
+ *		because the 3-way handshake has been completed.  Caller
+ *		should not free the mbuf, since we may be using it.  If
+ *		we are not, we will free it.
  *
  *	Otherwise, the return value is a pointer to the new socket
  *	associated with the connection.
@@ -1980,13 +1966,8 @@ syn_cache_get(so, m)
 	 * the connection, abort it.
 	 */
 	so = sonewconn(so, SS_ISCONNECTED);
-	if (so == NULL) {
-		(void) tcp_respond(NULL, ti, m, ti->ti_seq+ti->ti_len,
-		    (tcp_seq)0, TH_RST|TH_ACK);
-		so = (struct socket *)(-1);
-		tcpstat.tcps_sc_aborted++;
-		goto done;
-	}
+	if (so == NULL)
+		goto resetandabort;
 
 	inp = sotoinpcb(so);
 	inp->inp_laddr = sc->sc_dst;
@@ -1997,8 +1978,10 @@ syn_cache_get(so, m)
 #endif
 
 	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
-	if (am == NULL)
-		goto abortandretry;
+	if (am == NULL) {
+		m_freem(m);
+		goto resetandabort;
+	}
 	am->m_len = sizeof(struct sockaddr_in);
 	sin = mtod(am, struct sockaddr_in *);
 	sin->sin_family = AF_INET;
@@ -2008,7 +1991,8 @@ syn_cache_get(so, m)
 	bzero((caddr_t)sin->sin_zero, sizeof(sin->sin_zero));
 	if (in_pcbconnect(inp, am)) {
 		(void) m_free(am);
-		goto abortandretry;
+		m_freem(m);
+		goto resetandabort;
 	}
 	(void) m_free(am);
 
@@ -2026,10 +2010,9 @@ syn_cache_get(so, m)
 	tp->t_template = tcp_template(tp);
 	if (tp->t_template == 0) {
 		tp = tcp_drop(tp, ENOBUFS);	/* destroys socket */
-		so = (struct socket *)(-1);
+		so = NULL;
 		m_freem(m);
-		tcpstat.tcps_sc_aborted++;
-		goto done;
+		goto abort;
 	}
 
 	tp->iss = sc->sc_iss;
@@ -2056,14 +2039,18 @@ syn_cache_get(so, m)
 	tp->last_ack_sent = tp->rcv_nxt;
 
 	tcpstat.tcps_sc_completed++;
-done:
 	FREE(sc, M_PCB);
 	return (so);
 
-abortandretry:
-	(void) soabort(so);
-	syn_cache_insert(sc, &sc_prev, &head);
-	return ((struct socket *)(-2));
+resetandabort:
+	(void) tcp_respond(NULL, ti, m, ti->ti_seq+ti->ti_len,
+	    (tcp_seq)0, TH_RST|TH_ACK);
+abort:
+	if (so != NULL)
+		(void) soabort(so);
+	FREE(sc, M_PCB);
+	tcpstat.tcps_sc_aborted++;
+	return ((struct socket *)(-1));
 }
 
 /*
