@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.64 1999/10/20 15:22:26 enami Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.65 1999/10/30 00:58:32 enami Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -269,8 +269,6 @@ aicattach(sc)
 	sc->sc_minsync = (2 * 250) / sc->sc_freq;
 	sc->sc_maxsync = (9 * 250) / sc->sc_freq;
 
-	aic_init(sc, 1);	/* Init chip and driver */
-
 	/*
 	 * Fill in the adapter.
 	 */
@@ -291,9 +289,22 @@ aicattach(sc)
 	sc->sc_link.type = BUS_SCSI;
 
 	/*
-	 * ask the adapter what subunits are present
+	 * Add reference to adapter so that we drop the reference after
+	 * config_found() to make sure the adatper is disabled.
+	 */
+	if (scsipi_adapter_addref(&sc->sc_link) != 0) {
+		printf("%s: unable to enable controller\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	aic_init(sc, 1);	/* Init chip and driver */
+
+	/*
+	 * Ask the adapter what subunits are present
 	 */
 	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	scsipi_adapter_delref(&sc->sc_link);
 }
 
 int
