@@ -1,4 +1,4 @@
-/*	$NetBSD: eisadevs_data.h,v 1.17 1998/07/01 21:59:21 kleink Exp $	*/
+/*	$NetBSD: eisadevs_data.h,v 1.17.8.1 1999/08/22 17:05:54 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -163,6 +163,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "TCM5093",
 	    EISA_PRODUCT_TCM5093,
+	},
+	{
+	    0,
+	    "TCM5094",
+	    EISA_PRODUCT_TCM5094,
 	},
 	{
 	    0,
