@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.19 1998/01/28 02:23:04 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.20 1998/01/29 21:11:58 ross Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.19 1998/01/28 02:23:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.20 1998/01/29 21:11:58 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,41 @@ init_prom_interface()
 	cn_tab = &promcons;
 }
 
+static int  enter_prom __P((void));
+static void leave_prom __P((int));
+static void prom_cache_sync __P((void));
+
+static int
+enter_prom __P((void))
+{
+int	s = splhigh();
+
+	if (!prom_mapped) {			/* XXX */
+		saved_pte = *rom_ptep;		/* XXX */
+		*rom_ptep = rom_pte;		/* XXX */
+		prom_cache_sync();		/* XXX */
+	}
+	return s;
+}
+
+static void
+leave_prom __P((s))
+	int s;
+{
+	if (!prom_mapped) {
+		*rom_ptep = saved_pte;		/* XXX */
+		prom_cache_sync();		/* XXX */
+	}
+	splx(s);
+}
+
+static void
+prom_cache_sync __P((void))
+{
+	ALPHA_TBIA();
+	alpha_pal_imb();
+}
+
 /*
  * promcnputc:
  *
@@ -96,28 +131,14 @@ promcnputc(dev, c)
 	unsigned char *to = (unsigned char *)0x20000000;
 	int s;
 
-#ifdef notdef /* XXX */
-	if (!prom_mapped)
-		return;
-#endif
-
-	s = splhigh();
-	if (!prom_mapped) {					/* XXX */
-		saved_pte = *rom_ptep;				/* XXX */
-		*rom_ptep = rom_pte;				/* XXX */
-		ALPHA_TBIA();					/* XXX */
-	}							/* XXX */
+	s = enter_prom();	/* splhigh() and map prom */
 	*to = c;
 
 	do {
 		ret.bits = prom_putstr(alpha_console, to, 1);
 	} while ((ret.u.retval & 1) == 0);
 
-	if (!prom_mapped) {					/* XXX */
-		*rom_ptep = saved_pte;				/* XXX */
-		ALPHA_TBIA();					/* XXX */
-	}							/* XXX */
-	splx(s);
+	leave_prom(s);		/* unmap prom and splx(s) */
 }
 
 /*
@@ -132,24 +153,10 @@ promcngetc(dev)
         prom_return_t ret;
 	int s;
 
-#ifdef notdef /* XXX */
-	if (!prom_mapped)
-		return (-1);
-#endif
-
         for (;;) {
-		s = splhigh();
-		if (!prom_mapped) {				/* XXX */
-			saved_pte = *rom_ptep;			/* XXX */
-			*rom_ptep = rom_pte;			/* XXX */
-			ALPHA_TBIA();				/* XXX */
-		}						/* XXX */
+		s = enter_prom();
                 ret.bits = prom_getc(alpha_console);
-		if (!prom_mapped) {				/* XXX */
-			*rom_ptep = saved_pte;			/* XXX */
-			ALPHA_TBIA();				/* XXX */
-		}						/* XXX */
-		splx(s);
+		leave_prom(s);
                 if (ret.u.status == 0 || ret.u.status == 1)
                         return (ret.u.retval);
         }
@@ -168,23 +175,9 @@ promcnlookc(dev, cp)
         prom_return_t ret;
 	int s;
 
-#ifdef notdef /* XXX */
-	if (!prom_mapped)
-		return (-1);
-#endif
-
-	s = splhigh();
-	if (!prom_mapped) {					/* XXX */
-		saved_pte = *rom_ptep;				/* XXX */
-		*rom_ptep = rom_pte;				/* XXX */
-		ALPHA_TBIA();					/* XXX */
-	}							/* XXX */
+	s = enter_prom();
 	ret.bits = prom_getc(alpha_console);
-	if (!prom_mapped) {					/* XXX */
-		*rom_ptep = saved_pte;				/* XXX */
-		ALPHA_TBIA();					/* XXX */
-	}
-	splx(s);
+	leave_prom(s);
 	if (ret.u.status == 0 || ret.u.status == 1) {
 		*cp = ret.u.retval;
 		return 1;
@@ -201,24 +194,10 @@ prom_getenv(id, buf, len)
 	prom_return_t ret;
 	int s;
 
-#ifdef notdef /* XXX */
-	if (!prom_mapped)
-		return (-1);
-#endif
-
-	s = splhigh();
-	if (!prom_mapped) {					/* XXX */
-		saved_pte = *rom_ptep;				/* XXX */
-		*rom_ptep = rom_pte;				/* XXX */
-		ALPHA_TBIA();					/* XXX */
-	}							/* XXX */
+	s = enter_prom();
 	ret.bits = prom_getenv_disp(id, to, len);
 	bcopy(to, buf, len);
-	if (!prom_mapped) {					/* XXX */
-		*rom_ptep = saved_pte;				/* XXX */
-		ALPHA_TBIA();					/* XXX */
-	}							/* XXX */
-	splx(s);
+	leave_prom(s);
 
 	if (ret.u.status & 0x4)
 		ret.u.retval = 0;
