@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.14 2001/12/06 03:54:05 itojun Exp $	*/
+/*	$NetBSD: servconf.c,v 1.15 2002/02/10 16:23:34 bjh21 Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -63,8 +63,8 @@ initialize_server_options(ServerOptions *options)
 	options->xauth_location = NULL;
 	options->strict_modes = -1;
 	options->keepalives = -1;
-	options->log_facility = (SyslogFacility) - 1;
-	options->log_level = (LogLevel) - 1;
+	options->log_facility = SYSLOG_FACILITY_NOT_SET;
+	options->log_level = SYSLOG_LEVEL_NOT_SET;
 	options->rhosts_authentication = -1;
 	options->rhosts_rsa_authentication = -1;
 	options->hostbased_authentication = -1;
@@ -156,9 +156,9 @@ fill_default_server_options(ServerOptions *options)
 		options->strict_modes = 1;
 	if (options->keepalives == -1)
 		options->keepalives = 1;
-	if (options->log_facility == (SyslogFacility) (-1))
+	if (options->log_facility == SYSLOG_FACILITY_NOT_SET)
 		options->log_facility = SYSLOG_FACILITY_AUTH;
-	if (options->log_level == (LogLevel) (-1))
+	if (options->log_level == SYSLOG_LEVEL_NOT_SET)
 		options->log_level = SYSLOG_LEVEL_INFO;
 	if (options->rhosts_authentication == -1)
 		options->rhosts_authentication = 0;
@@ -685,7 +685,7 @@ parse_flag:
 			intptr = (int *) &options->log_facility;
 			arg = strdelim(&cp);
 			value = log_facility_number(arg);
-			if (value == (SyslogFacility) - 1)
+			if (value == SYSLOG_FACILITY_NOT_SET)
 				fatal("%.200s line %d: unsupported log facility '%s'",
 				    filename, linenum, arg ? arg : "<NONE>");
 			if (*intptr == -1)
@@ -696,7 +696,7 @@ parse_flag:
 			intptr = (int *) &options->log_level;
 			arg = strdelim(&cp);
 			value = log_level_number(arg);
-			if (value == (LogLevel) - 1)
+			if (value == SYSLOG_LEVEL_NOT_SET)
 				fatal("%.200s line %d: unsupported log level '%s'",
 				    filename, linenum, arg ? arg : "<NONE>");
 			if (*intptr == -1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.3 2001/09/27 03:24:03 itojun Exp $	*/
+/*	$NetBSD: log.h,v 1.4 2002/02/10 16:23:34 bjh21 Exp $	*/
 /*	$OpenBSD: log.h,v 1.4 2001/06/26 17:27:24 markus Exp $	*/
 
 /*
@@ -28,7 +28,8 @@ typedef enum {
 	SYSLOG_FACILITY_LOCAL4,
 	SYSLOG_FACILITY_LOCAL5,
 	SYSLOG_FACILITY_LOCAL6,
-	SYSLOG_FACILITY_LOCAL7
+	SYSLOG_FACILITY_LOCAL7,
+	SYSLOG_FACILITY_NOT_SET = -1,
 }       SyslogFacility;
 
 typedef enum {
@@ -39,7 +40,8 @@ typedef enum {
 	SYSLOG_LEVEL_VERBOSE,
 	SYSLOG_LEVEL_DEBUG1,
 	SYSLOG_LEVEL_DEBUG2,
-	SYSLOG_LEVEL_DEBUG3
+	SYSLOG_LEVEL_DEBUG3,
+	SYSLOG_LEVEL_NOT_SET = -1,
 }       LogLevel;
 
 void     log_init(char *, LogLevel, SyslogFacility, int);
