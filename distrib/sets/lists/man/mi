@@ -540,11 +540,9 @@
 ./usr/share/man/cat8/ftpd.0
 ./usr/share/man/cat8/genassym.sh.0
 ./usr/share/man/cat8/getNAME.0
-./usr/share/man/cat8/gettable.0
 ./usr/share/man/cat8/getty.0
 ./usr/share/man/cat8/halt.0
 ./usr/share/man/cat8/hlfsd.0
-./usr/share/man/cat8/htable.0
 ./usr/share/man/cat8/identd.0
 ./usr/share/man/cat8/ifconfig.0
 ./usr/share/man/cat8/inetd.0
@@ -712,6 +710,7 @@
 ./usr/share/man/cat8/umount.0
 ./usr/share/man/cat8/update.0
 ./usr/share/man/cat8/uucico.0
+./usr/share/man/cat8/uugetty.0
 ./usr/share/man/cat8/uuxqt.0
 ./usr/share/man/cat8/vipw.0
 ./usr/share/man/cat8/vmstat.0
@@ -1473,11 +1472,9 @@
 ./usr/share/man/man8/ftpd.8
 ./usr/share/man/man8/genassym.sh.8
 ./usr/share/man/man8/getNAME.8
-./usr/share/man/man8/gettable.8
 ./usr/share/man/man8/getty.8
 ./usr/share/man/man8/halt.8
 ./usr/share/man/man8/hlfsd.8
-./usr/share/man/man8/htable.8
 ./usr/share/man/man8/identd.8
 ./usr/share/man/man8/ifconfig.8
 ./usr/share/man/man8/inetd.8
@@ -1645,6 +1642,7 @@
 ./usr/share/man/man8/umount.8
 ./usr/share/man/man8/update.8
 ./usr/share/man/man8/uucico.8
+./usr/share/man/man8/uugetty.8
 ./usr/share/man/man8/uuxqt.8
 ./usr/share/man/man8/vipw.8
 ./usr/share/man/man8/vmstat.8
