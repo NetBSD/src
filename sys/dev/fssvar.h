@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.1 2003/12/10 11:40:11 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.2 2004/01/11 19:05:27 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -60,8 +60,62 @@ struct fss_get {
 #ifdef _KERNEL
 
 #define FSS_CLUSTER_MAX	(1<<24)		/* Upper bound of clusters. The
-					   sc_copied map uses
+					   sc_copied map uses up to
 					   FSS_CLUSTER_MAX/NBBY bytes */
+
+#define FSS_LOCK(sc, s) \
+	do { \
+		(s) = splbio(); \
+		simple_lock(&(sc)->sc_slock); \
+	} while (/*CONSTCOND*/0)
+
+#define FSS_UNLOCK(sc, s) \
+	do { \
+		simple_unlock(&(sc)->sc_slock); \
+		splx((s)); \
+	} while (/*CONSTCOND*/0)
+
+/* Device to softc, NULL on error */
+#define FSS_DEV_TO_SOFTC(dev) \
+	(minor((dev)) < 0 || minor((dev)) >= NFSS ? NULL : \
+	    &fss_softc[minor((dev))])
+
+/* Check if still valid */
+#define FSS_ISVALID(sc) \
+	(((sc)->sc_flags & (FSS_ACTIVE|FSS_ERROR)) == FSS_ACTIVE)
+
+/* Offset to cluster */
+#define FSS_BTOCL(sc, off) \
+	((off) >> (sc)->sc_clshift)
+
+/* Cluster to offset */
+#define FSS_CLTOB(sc, cl) \
+	((off_t)(cl) << (sc)->sc_clshift)      
+
+/* Offset from start of cluster */
+#define FSS_CLOFF(sc, off) \
+	((off) & (sc)->sc_clmask)
+
+/* Size of cluster */
+#define FSS_CLSIZE(sc) \
+	(1 << (sc)->sc_clshift)
+
+/* Offset to backing store block */
+#define FSS_BTOFSB(sc, off) \
+	((off) >> (sc)->sc_bs_bshift)
+
+/* Backing store block to offset */
+#define FSS_FSBTOB(sc, blk) \
+	((off_t)(blk) << (sc)->sc_bs_bshift)
+
+/* Offset from start of backing store block */
+#define FSS_FSBOFF(sc, off) \
+	((off) & (sc)->sc_bs_bmask)
+
+/* Size of backing store block */
+#define FSS_FSBSIZE(sc) \
+	(1 << (sc)->sc_bs_bshift)
+
 typedef enum {
 	FSS_CACHE_FREE	= 0,		/* Cache entry is free */
 	FSS_CACHE_BUSY	= 1,		/* Cache entry is read from device */
@@ -78,23 +132,28 @@ struct fss_cache {
 
 struct fss_softc {
 	int		sc_unit;	/* Logical unit number */
-	struct lock	sc_lock;	/* Get exclusive access to device */
+	struct simplelock sc_slock;	/* Protect this softc */
 	volatile int	sc_flags;	/* Flags */
 #define FSS_ACTIVE	0x01		/* Snapshot is active */
 #define FSS_ERROR	0x02		/* I/o error occured */
 #define FSS_BS_THREAD	0x04		/* Kernel thread is running */
+#define FSS_EXCL	0x08		/* Exclusive access granted */
+#define FSS_BS_ALLOC	0x10		/* Allocate backing store */
 	struct mount	*sc_mount;	/* Mount point */
 	char		sc_mntname[MNAMELEN]; /* Mount point */
 	struct timeval	sc_time;	/* Time this snapshot was taken */
 	dev_t		sc_bdev;	/* Underlying block device */
 	void		(*sc_strategy)(struct buf *); /* And its strategy */
 	struct vnode	*sc_bs_vp;	/* Our backing store */
-	int		sc_bs_bsize;	/* Its bsize */
+	off_t		sc_bs_size;	/* Its size in bytes */
+	int		sc_bs_bshift;	/* Shift of backing store block */
+	u_int32_t	sc_bs_bmask;	/* Mask of backing store block */
 	struct proc	*sc_bs_proc;	/* Our kernel thread */
-	u_int32_t	sc_clsize;	/* Size of cluster */
+	int		sc_clshift;	/* Shift of cluster size */
+	u_int32_t	sc_clmask;	/* Mask of cluster size */
 	u_int32_t	sc_clcount;	/* # clusters in file system */
 	u_int8_t	*sc_copied;	/* Map of clusters already copied */
-	long		sc_cllast;	/* Bytes in last cluster */
+	long		sc_clresid;	/* Bytes in last cluster */
 	int		sc_cowcount;	/* Number of cow in progress */
 	int		sc_cache_size;	/* Number of entries in sc_cache */
 	struct fss_cache *sc_cache;	/* Cluster cache */
@@ -111,25 +170,6 @@ struct fss_softc fss_softc[NFSS];
 
 void fss_copy_on_write(struct fss_softc *, struct buf *);
 int fss_umount_hook(struct mount *, int);
-
-/*
- * Get this dev's softc if it is a valid device.
- * Return a pointer to its softc.
- */
-static inline int
-fss_dev_to_softc(dev_t dev, struct fss_softc **scp)
-{
-	int unit;
-	struct fss_softc *sc;
-
-	unit = minor(dev);
-	if (unit < 0 || unit >= NFSS)
-		return ENODEV;
-	sc = &fss_softc[unit];
-	*scp = sc;
-
-	return 0;
-}
 
 /*
  * Check if this buf needs to be copied on write.
