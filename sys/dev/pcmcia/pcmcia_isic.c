@@ -33,7 +33,7 @@
  *	pcmcia_isic.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: pcmcia_isic.c,v 1.4 2001/02/03 22:44:23 martin Exp $ 
+ *	$Id: pcmcia_isic.c,v 1.5 2001/02/10 22:44:36 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -230,10 +230,10 @@ pcmcia_isic_attach(parent, self, aux)
 	s = splhigh();
 	
 	/* MI initilization */
-	pcmcia_isicattach(sc);
-
-	/* setup interrupt */
-	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, isicintr, sc);
+	if (pcmcia_isicattach(sc) == 0) {
+		/* setup interrupt */
+		psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, isicintr, sc);
+	}
 
 	splx(s);
 }
@@ -290,8 +290,7 @@ pcmcia_isicattach(struct l1_softc *sc)
 		default:
 			printf(ISIC_FMT "Error, ISAC version %d unknown!\n",
 				ISIC_PARM, sc->sc_isac_version);
-			return(0);
-			break;
+			return(EIO);
 	}
 
 	sc->sc_hscx_version = HSCX_READ(0, H_VSTR) & 0xf;
@@ -307,8 +306,7 @@ pcmcia_isicattach(struct l1_softc *sc)
 		default:
 			printf(ISIC_FMT "Error, HSCX version %d unknown!\n",
 				ISIC_PARM, sc->sc_hscx_version);
-			return(0);
-			break;
+			return(EIO);
 	};
 
 	/* ISAC setup */
@@ -383,6 +381,6 @@ pcmcia_isicattach(struct l1_softc *sc)
 				HSCXversion[sc->sc_hscx_version]);
 	}
 
-	return(1);
+	return(0);
 }
 
