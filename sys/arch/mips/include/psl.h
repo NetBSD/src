@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.13 2000/05/15 08:36:32 nisimura Exp $	*/
+/*	$NetBSD: psl.h,v 1.13.4.1 2000/07/18 22:01:47 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,8 +52,7 @@
 #define	MIPS3_PSL_LOWIPL	(MIPS3_INT_MASK | MIPS_SR_INT_IE)
 
 #if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_API_LP32
-#define MIPS3_PSL_XFLAGS	\
-		(MIPS3_SR_XX | MIPS3_SR_KX | MIPS3_SR_UX | MIPS3_SR_SX)
+#define MIPS3_PSL_XFLAGS	(MIPS3_SR_XX | MIPS3_SR_UX)
 #else
 #define MIPS3_PSL_XFLAGS	(0)
 #endif
