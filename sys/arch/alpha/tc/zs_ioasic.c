@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.8 2000/02/03 08:13:45 nisimura Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.9 2000/03/06 21:36:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.8 2000/02/03 08:13:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.9 2000/03/06 21:36:05 thorpej Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -94,7 +94,7 @@ void	zs_ioasic_cnpollc __P((dev_t, int));
 
 struct consdev zs_ioasic_cons = {
 	NULL, NULL, zs_ioasic_cngetc, zs_ioasic_cnputc,
-	zs_ioasic_cnpollc, NODEV, CN_NORMAL,
+	zs_ioasic_cnpollc, NULL, NODEV, CN_NORMAL,
 };
 
 tc_offset_t zs_ioasic_console_offset;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.13 1999/10/11 01:57:43 eeh Exp $	*/
+/*	$NetBSD: zs.c,v 1.14 2000/03/06 21:36:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -933,6 +933,7 @@ struct consdev consdev_zs = {
 	zscngetc,
 	zscnputc,
 	zscnpollc,
+	NULL,
 };
 
 static void

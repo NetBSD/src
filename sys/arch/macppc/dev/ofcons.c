@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.2 1998/07/28 23:43:33 thorpej Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.3 2000/03/06 21:36:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -360,6 +360,7 @@ struct consdev consdev_ofcons = {
 	ofccngetc,
 	ofccnputc,
 	ofccnpollc,
+	NULL,
 };
 
 struct consdev *cn_tab = &consdev_ofcons;

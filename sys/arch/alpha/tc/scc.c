@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.49 2000/02/09 00:33:03 thorpej Exp $ */
+/* $NetBSD: scc.c,v 1.50 2000/03/06 21:36:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.49 2000/02/09 00:33:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.50 2000/03/06 21:36:05 thorpej Exp $");
 
 #include "opt_ddb.h"
 #ifdef alpha
@@ -250,7 +250,7 @@ void	scc_alphaintr __P((int));
 scc_regmap_t *scc_cons_addr = 0;
 static struct scc_softc coldcons_softc;
 static struct consdev scccons = {
-	NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
+	NULL, NULL, sccGetc, sccPutc, sccPollc, NULL, NODEV, 0
 };
 void		scc_consinit __P((dev_t dev, scc_regmap_t *sccaddr));
 

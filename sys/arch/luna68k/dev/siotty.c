@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.3 2000/01/12 01:59:45 nisimura Exp $ */
+/* $NetBSD: siotty.c,v 1.4 2000/03/06 21:36:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.3 2000/01/12 01:59:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.4 2000/03/06 21:36:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -561,6 +561,7 @@ struct consdev syscons = {
 	syscngetc,
 	syscnputc,
 	nullcnpollc,
+	NULL,
 	NODEV,
 	CN_REMOTE,
 };

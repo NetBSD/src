@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.168 2000/02/07 02:17:18 jonathan Exp $	*/
+/*	$NetBSD: com.c,v 1.169 2000/03/06 21:36:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -2235,7 +2235,8 @@ comcnattach(iot, iobase, rate, frequency, cflag)
 {
 	int res;
 	static struct consdev comcons = {
-		NULL, NULL, comcngetc, comcnputc, comcnpollc, NODEV, CN_NORMAL
+		NULL, NULL, comcngetc, comcnputc, comcnpollc, NULL,
+		    NODEV, CN_NORMAL
 	};
 
 	res = cominit(iot, iobase, rate, frequency, cflag, &comconsioh);
