@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.11 2001/03/08 16:33:43 thorpej Exp $	*/
+/*	$NetBSD: an.c,v 1.12 2001/05/24 08:06:04 itojun Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1182,6 +1182,19 @@ static int an_ioctl(ifp, command, data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
 		break;
 #endif
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (command == SIOCADDMULTI) ?
+			ether_addmulti(ifr, &sc->arpcom) :
+			ether_delmulti(ifr, &sc->arpcom);
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed.  Should set the
+			 * hardware filter accordingly here.
+			 */
+			error = 0;
+		}
+		break;
 	default:
 		error = ether_ioctl(ifp, command, data);
 		break;
