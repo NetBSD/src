@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.80 2003/01/01 17:26:13 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.81 2003/01/02 08:35:58 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2768,4 +2768,12 @@ crypto/dist/krb4/lib/krb/krb.h.in		1.4
 	   extern "C" {}
 	so remove it from __END_DECLS.
 	[kristerw, ticket #1052]
+
+sys/dev/usb/umass.c				1.93
+
+	Assign NULL to sc_pipe after closing, so that usbd_close_pipe isn't
+	called twice. At least in NetBSD, the detach function is called when
+	the device is removed, even if the attach function has failed.
+	This is probably the cause of panics reported in kern/19326.
+	[toshii, ticket #1054]
 
