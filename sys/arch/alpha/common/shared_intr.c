@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.16 2001/07/27 00:25:19 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.16.36.1 2005/03/30 10:21:43 tron Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.16 2001/07/27 00:25:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.16.36.1 2005/03/30 10:21:43 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -242,6 +242,18 @@ alpha_shared_intr_set_maxstrays(struct alpha_shared_intr *intr,
 	intr[num].intr_maxstrays = newmaxstrays;
 	intr[num].intr_nstrays = 0;
 	splx(s);
+}
+
+void
+alpha_shared_intr_reset_strays(struct alpha_shared_intr *intr,
+    unsigned int num)
+{
+
+	/*
+	 * Don't bother blocking interrupts; this doesn't have to be
+	 * precise, but it does need to be fast.
+	 */
+	intr[num].intr_nstrays = 0;
 }
 
 void
