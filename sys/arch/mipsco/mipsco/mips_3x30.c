@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.2 2000/08/15 04:56:46 wdk Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.3 2000/08/16 21:00:41 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ extern void MachFPInterrupt __P((u_int, u_int, u_int, struct frame *));
 /* Local functions */
 void pizazz_intr __P((u_int, u_int, u_int, u_int));
 int  pizazz_level0_intr __P((void *));
+void pizazz_level5_intr __P((int, int, int));
 void pizazz_intr_establish  __P((int, int (*)(void *), void *));
 
 void
@@ -101,16 +102,12 @@ pizazz_intr(status, cause, pc, ipending)
 	/* If clock interrupts were enabled, re-enable them ASAP. */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
+	if (ipending & MIPS_INT_MASK_5)		/* level 5 interrupt */
+		pizazz_level5_intr(pc, cause, status);
+
 	HANDLE_INTR(SYS_INTR_FDC,	MIPS_INT_MASK_4);
 	HANDLE_INTR(SYS_INTR_SCSI,	MIPS_INT_MASK_1);
 	HANDLE_INTR(SYS_INTR_LEVEL0,	MIPS_INT_MASK_0);
-
-	if (ipending & MIPS_INT_MASK_5) {		/* level 5 interrupt */
-	    printf("level 5 interrupt: PC %x CR %x SR %x\n",
-		   pc, cause, status);
-	    /* cause &= ~MIPS_INT_MASK_5; */
-	    /* panic("level 5 interrupt"); */
-	}
 
 	/* XXX:  Keep FDC interrupt masked off */
 	cause &= ~(MIPS_INT_MASK_0 | MIPS_INT_MASK_1 | MIPS_INT_MASK_5);
@@ -149,6 +146,24 @@ pizazz_level0_intr(arg)
 		CALL_INTR(SYS_INTR_SCC0);
 
 	return 0;
+}
+
+/*
+ * Motherboard Parity Error
+ */
+void
+pizazz_level5_intr(pc, cause, status)
+	int pc;
+	int cause;
+	int status;
+{
+	u_int32_t ereg;
+
+	ereg = *(u_int32_t *)RAMBO_ERREG;
+
+	printf("interrupt: pc=%p cr=%x sr=%x\n", (void *)pc, cause, status);
+	printf("parity error: %p mask: 0x%x\n", (void *)ereg, ereg & 0xf);
+	panic("memory fault");
 }
 
 void
