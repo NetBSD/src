@@ -1,4 +1,4 @@
-/* $NetBSD: systfloat.c,v 1.3 2001/03/13 07:39:58 ross Exp $ */
+/* $NetBSD: systfloat.c,v 1.4 2001/03/22 12:00:06 ross Exp $ */
 
 /* This is a derivative work. */
 
@@ -62,10 +62,31 @@ this code that are retained.
 ===============================================================================
 */
 
+#include <sys/cdefs.h>
+#ifndef __lint
+__RCSID("$NetBSD: systfloat.c,v 1.4 2001/03/22 12:00:06 ross Exp $");
+#endif
+
 #include <math.h>
+#include <ieeefp.h>
 #include "milieu.h"
 #include "softfloat.h"
 #include "systfloat.h"
+#include "systflags.h"
+#include "systmodes.h"
+
+fp_except
+syst_float_flags_clear(void)
+{
+    return fpsetsticky(0) & ~FP_X_DNML;
+}
+
+void
+syst_float_set_rounding_mode(fp_rnd direction)
+{
+    fpsetround(direction);
+    fpsetmask(0);
+}
 
 float32 syst_int32_to_float32( int32 a )
 {
