@@ -66,7 +66,7 @@ $ EPIPE
 $ EDOM
 33 Numerical argument out of domain
 $ ERANGE
-34 Result too large
+34 Result too large or too small
 $ EAGAIN, EWOULDBLOCK
 35 Resource temporarily unavailable
 $ EINPROGRESS

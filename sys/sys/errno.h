@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.29 2002/11/12 13:52:28 kleink Exp $	*/
+/*	$NetBSD: errno.h,v 1.30 2003/04/09 21:36:29 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -83,7 +83,7 @@
 
 /* math software */
 #define	EDOM		33		/* Numerical argument out of domain */
-#define	ERANGE		34		/* Result too large */
+#define	ERANGE		34		/* Result too large or too small */
 
 /* non-blocking and interrupt i/o */
 #define	EAGAIN		35		/* Resource temporarily unavailable */
