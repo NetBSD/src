@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.23 1996/03/17 00:53:22 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.24 1996/04/11 22:29:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -416,8 +416,8 @@ egattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, egintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_NET, egintr, sc);
 }
 
 void

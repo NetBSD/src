@@ -1128,8 +1128,8 @@ feattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, feintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_NET, feintr, sc);
 }
 
 /*

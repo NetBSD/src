@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.30 1996/03/17 00:54:05 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.31 1996/04/11 22:30:49 cgd Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -253,8 +253,8 @@ wtattach(parent, self, aux)
 	sc->flags = TPSTART;		/* tape is rewound */
 	sc->dens = -1;			/* unknown density */
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, wtintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_BIO, wtintr, sc);
 }
 
 int

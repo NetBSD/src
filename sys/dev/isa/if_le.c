@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.40 1996/03/27 04:03:10 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.41 1996/04/11 22:29:34 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -406,8 +406,8 @@ leattach(parent, self, aux)
 		if (ia->ia_drq != DRQUNK)
 			isa_dmacascade(ia->ia_drq);
 
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET,
-		    leintredge, sc);
+		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+		    IPL_NET, leintredge, sc);
 	}
 #endif
 
