@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.6 1999/11/12 20:49:54 kleink Exp $
+# $NetBSD: obsolete.mi,v 1.7 1999/12/04 10:32:18 veego Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -16,6 +16,7 @@
 /usr/include/dev/isa/if_ieatt.h
 /usr/include/dev/isa/if_iee16.h
 /usr/include/dev/isa/lptreg.h
+/usr/include/dev/isa/pckbcvar.h
 /usr/include/dev/isa/wdlink.h
 /usr/include/dev/isa/wdreg.h
 /usr/include/dev/mii/generic_phy.h
