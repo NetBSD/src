@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.139 1999/04/29 16:43:33 bad Exp $
+# $NetBSD: mi,v 1.140 1999/04/29 20:15:30 simonb Exp $
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
 ./usr/share/info/cpp.info
@@ -274,6 +274,7 @@
 ./usr/share/man/cat1/sum.0
 ./usr/share/man/cat1/sup.0
 ./usr/share/man/cat1/suspend.0
+./usr/share/man/cat1/sysstat.0
 ./usr/share/man/cat1/systat.0
 ./usr/share/man/cat1/tail.0
 ./usr/share/man/cat1/talk.0

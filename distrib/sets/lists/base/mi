@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.113 1999/04/19 03:11:32 simonb Exp $
+# $NetBSD: mi,v 1.114 1999/04/29 20:15:30 simonb Exp $
 .
 ./altroot
 ./bin
@@ -319,6 +319,7 @@
 ./usr/bin/strings
 ./usr/bin/su
 ./usr/bin/sum
+./usr/bin/sysstat
 ./usr/bin/systat
 ./usr/bin/tail
 ./usr/bin/talk
