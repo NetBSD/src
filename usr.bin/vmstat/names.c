@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)names.c	8.1 (Berkeley) 6/6/93
- *	$Id: names.c,v 1.11 1994/05/21 10:08:27 chopps Exp $
+ *	$Id: names.c,v 1.12 1994/05/30 17:10:14 hpeyerl Exp $
  */
 
 #if !defined(hp300) && !defined(tahoe) && !defined(vax) && \
@@ -65,7 +65,7 @@ read_names()
 
 #if defined(hp300) || defined(luna68k)
 #if defined(hp300)
-#include <hp/dev/device.h>
+#include <hp300/dev/device.h>
 #else
 #include <luna68k/dev/device.h>
 #endif
