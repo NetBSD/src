@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154.2.17 2002/11/25 21:41:13 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.154.2.18 2002/12/03 23:21:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.17 2002/11/25 21:41:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.18 2002/12/03 23:21:20 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -718,6 +718,8 @@ startlwp(arg)
 	}
 #endif
 	pool_put(&lwp_uc_pool, uc);
+
+	KERNEL_PROC_UNLOCK(l);
 
 	userret(l);
 }
