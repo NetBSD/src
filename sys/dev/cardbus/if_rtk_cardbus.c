@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.9 2002/09/27 20:37:44 thorpej Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.10 2002/09/30 20:52:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.9 2002/09/27 20:37:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.10 2002/09/30 20:52:28 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -136,11 +136,8 @@ struct rtk_cardbus_softc {
 	int sc_intrline;
 };
 
-const struct cfattach rtk_cardbus_ca = {
-	sizeof(struct rtk_cardbus_softc), 
-	rtk_cardbus_match, rtk_cardbus_attach,
-	rtk_cardbus_detach, rtk_activate,
-};
+CFATTACH_DECL(rtk_cardbus, sizeof(struct rtk_cardbus_softc),
+    rtk_cardbus_match, rtk_cardbus_attach, rtk_cardbus_detach, rtk_activate)
 
 const struct rtk_type *rtk_cardbus_lookup
 	__P((const struct cardbus_attach_args *));
