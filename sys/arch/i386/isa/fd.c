@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.66 1995/01/13 07:57:01 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.67 1995/01/13 08:29:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -154,6 +154,7 @@ struct fd_softc {
 	struct dkdevice sc_dk;
 
 	struct fd_type *sc_deftype;	/* default type descriptor */
+	struct fd_type *sc_type;	/* current type descriptor */
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	struct buf sc_q;		/* head of buf chain */
 	int sc_drive;			/* unit number on this controller */
@@ -458,6 +459,8 @@ fd_dev_to_type(fd, dev)
 {
 	int type = FDTYPE(dev);
 
+	if (type > (sizeof(fd_types) / sizeof(fd_types[0])))
+		return NULL;
 	return type ? &fd_types[type - 1] : fd->sc_deftype;
 }
 
@@ -467,7 +470,6 @@ fdstrategy(bp)
 {
 	struct fd_softc *fd;
 	int unit = FDUNIT(bp->b_dev);
-	struct fd_type *type;
 	int nblks;
 	daddr_t blkno;
  	int s;
@@ -486,7 +488,7 @@ fdstrategy(bp)
 		goto done;
 
 	blkno = bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
- 	nblks = type->size;
+ 	nblks = fd->sc_type->size;
 	if (blkno + (bp->b_bcount / FDC_BSIZE) > nblks) {
 		if (blkno == nblks) {
 			/* If exactly at end of disk, return EOF. */
@@ -501,8 +503,7 @@ fdstrategy(bp)
 		bp->b_bcount = (nblks - blkno) * FDC_BSIZE;
 	}
 
-	type = fd_dev_to_type(fd, bp->b_dev);
- 	bp->b_cylin = blkno / type->seccyl;
+ 	bp->b_cylin = blkno / fd->sc_type->seccyl;
 
 #ifdef DEBUG
 	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d nblks %d\n",
@@ -685,13 +686,16 @@ Fdopen(dev, flags)
 	fd = fdcd.cd_devs[unit];
 	if (fd == 0)
 		return ENXIO;
+	type = fd_dev_to_type(fd, bp->b_dev);
+	if (type == NULL)
+		return ENXIO;
 
-	type = FDTYPE(dev);
-	if (type > (sizeof(fd_types) / sizeof(fd_types[0])))
-		return EINVAL;
+	if ((fd->sc_flags & FD_OPEN) != 0 &&
+	    fd->sc_type != type)
+		return EBUSY;
 
+	fd->sc_type = type;
 	fd->sc_cylin = -1;
-	/* XXX disallow multiple opens? */
 	fd->sc_flags |= FD_OPEN;
 
 	return 0;
@@ -860,15 +864,13 @@ loop:
 		if (fd->sc_cylin == bp->b_cylin)
 			goto doio;
 
-		type = fd_dev_to_type(fd, bp->b_dev);
-
 		out_fdc(iobase, NE7CMD_SPECIFY);/* specify command */
 		out_fdc(iobase, type->steprate);
 		out_fdc(iobase, 6);		/* XXX head load time == 6ms */
 
 		out_fdc(iobase, NE7CMD_SEEK);	/* seek function */
 		out_fdc(iobase, fd->sc_drive);	/* drive number */
-		out_fdc(iobase, bp->b_cylin * type->step);
+		out_fdc(iobase, bp->b_cylin * fd->sc_type->step);
 
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
@@ -877,7 +879,7 @@ loop:
 
 	case DOIO:
 	doio:
-		type = fd_dev_to_type(fd, bp->b_dev);
+		type = fd->sc_type;
 		sec = fd->sc_blkno % type->seccyl;
 		nblks = type->seccyl - sec;
 		nblks = min(nblks, (bp->b_bcount - fd->sc_skip) / FDC_BSIZE);
@@ -934,11 +936,10 @@ loop:
 		return 1;
 		
 	case SEEKCOMPLETE:
-		type = fd_dev_to_type(fd, bp->b_dev);
-		/* make sure seek really happened */
+		/* Make sure seek really happened. */
 		out_fdc(iobase, NE7CMD_SENSEI);
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 ||
-		    cyl != bp->b_cylin * type->step) {
+		    cyl != bp->b_cylin * fd->sc_type->step) {
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 2, "seek failed");
 #endif
@@ -994,8 +995,7 @@ loop:
 		if (fd->sc_skip < bp->b_bcount) {
 			/* set up next transfer */
 			blkno = fd->sc_blkno += nblks;
-			type = fd_dev_to_type(fd, bp->b_dev);
-			bp->b_cylin = blkno / type->seccyl;
+			bp->b_cylin = blkno / fd->sc_type->seccyl;
 			goto doseek;
 		} else {
 			fdfinish(fd, bp);
@@ -1129,7 +1129,6 @@ fdioctl(dev, cmd, addr, flag)
 	int flag;
 {
 	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
-	struct fd_type *type;
 	struct disklabel buffer;
 	int error;
 
@@ -1137,8 +1136,7 @@ fdioctl(dev, cmd, addr, flag)
 	case DIOCGDINFO:
 		bzero(&buffer, sizeof(buffer));
 		
-		type = fd_dev_to_type(fd, dev);
-		buffer.d_secpercyl = type->size / type->tracks;
+		buffer.d_secpercyl = fs->sc_type->seccyl;
 		buffer.d_type = DTYPE_FLOPPY;
 		buffer.d_secsize = FDC_BSIZE;
 
