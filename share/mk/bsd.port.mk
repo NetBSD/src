@@ -2,10 +2,13 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.4 1997/09/25 19:09:32 thorpej Exp $
+#	$NetBSD: bsd.port.mk,v 1.5 1997/09/28 00:44:15 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
+#
+# FreeBSD Id: bsd.port.mk,v 1.264 1996/12/25 02:27:44 imp Exp
+# OpenBSD Id: bsd.port.mk,v 1.14 1997/09/21 10:58:41 niklas Exp 
 #
 # Please view me with 4 column tabs!
 
@@ -30,6 +33,9 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #
 # Variables that typically apply to all ports:
 # 
+# ONLY_FOR_ARCHS - If a port only makes sense to certain architectures, this
+#				  is a list containing the names for them.  It is checked
+#				  against the predefined ${MACHINE} value
 # ARCH			- The architecture, as returned by "uname -m".
 # OPSYS			- Portability clause.  This is the operating system the
 #				  makefile is being used on.  Automatically set to
@@ -60,6 +66,12 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # MAINTAINER	- The e-mail address of the contact person for this port
 #				  (default: ports@FreeBSD.ORG).
 # CATEGORIES	- A list of descriptive categories into which this port falls.
+# WRKOBJDIR		- A top level directory where, if defined, the separate working
+#				  directories will get created, and symbolically linked to from
+#				  ${WRKDIR} (see below).  This is useful for building ports on
+#				  several architectures, then ${PORTSDIR} can be NFS-mounted
+#				  while ${WRKOBJDIR} is local to every arch.
+
 #
 # Variables that typically apply to an individual port.  Non-Boolean
 # variables without defaults are *mandatory*.
@@ -191,9 +203,12 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # REQUIRES_MOTIF - Set this in your port if it requires Motif.  It will  be
 #				  built only if HAVE_MOTIF is set.
 # HAVE_MOTIF	- If set, means system has Motif.  Typically set in
-#				  /etc/make.conf.
+#				  /etc/make.conf (FreeBSD) or
+#				  /etc/mk.conf (NetBSD, OpenBSD).
 # MOTIF_STATIC	- If set, link libXm statically; otherwise, link it
-#				  dynamically.  Typically set in /etc/make.conf.
+#				  dynamically.  Typically set in
+#				  /etc/make.conf (FreeBSD) or
+#				  /etc/mk.conf (NetBSD, OpenBSD).
 # MOTIFLIB		- Set automatically to appropriate value depending on
 #				  ${MOTIF_STATIC}.  Substitute references to -lXm with 
 #				  patches to make your port conform to our standards.
@@ -259,6 +274,24 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # NEVER override the "regular" targets unless you want to open
 # a major can of worms.
 
+.if defined(ONLY_FOR_ARCHS)
+.for __ARCH in ${ONLY_FOR_ARCHS}
+.if ${MACHINE} == "${__ARCH}"
+__ARCH_OK=	1
+.endif
+.endfor
+.else
+__ARCH_OK=	1
+.endif
+
+.if !defined(__ARCH_OK)
+.MAIN:	all
+
+fetch fetch-list extract patch configure build install reinstall package describe checkpatch checksum makesum all:
+	@echo "This port is only for ${ONLY_FOR_ARCHS},"
+	@echo "and you are running ${MACHINE}."
+.else
+
 # Get the architecture
 ARCH!=	uname -m
 
@@ -267,6 +300,16 @@ OPSYS!=	uname -s
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
+.endif
+
+.if (${OPSYS} == "OpenBSD")
+NOMANCOMPRESS?=	yes
+DEF_UMASK?=		022
+.elif (${OPSYS} == "NetBSD")
+NOMANCOMPRESS?=	no			# XXX should be yes(?) - hubertf
+DEF_UMASK?=		0022
+.else
+DEF_UMASK?=		0022
 .endif
 
 .if exists(${.CURDIR}/Makefile.${ARCH}-${OPSYS})
@@ -293,7 +336,11 @@ _DISTDIR?=		${DISTDIR}/${DIST_SUBDIR}
 PACKAGES?=		${PORTSDIR}/packages
 TEMPLATES?=		${PORTSDIR}/templates
 .if !defined(NO_WRKDIR)
+.if defined(OBJMACHINE)
+WRKDIR?=		${.CURDIR}/work.${MACHINE}
+.else
 WRKDIR?=		${.CURDIR}/work
+.endif
 .else
 WRKDIR?=		${.CURDIR}
 .endif
@@ -301,6 +348,13 @@ WRKDIR?=		${.CURDIR}
 WRKSRC?=		${WRKDIR}
 .else
 WRKSRC?=		${WRKDIR}/${DISTNAME}
+.endif
+
+.if defined(WRKOBJDIR)
+# XXX Is pwd -P available in FreeBSD's /bin/sh?
+__canonical_PORTSDIR!=	cd ${PORTSDIR}; pwd -P
+__canonical_CURDIR!=	cd ${.CURDIR}; pwd -P
+PORTSUBDIR=		${__canonical_CURDIR:S,${__canonical_PORTSDIR}/,,}
 .endif
 
 .if exists(${.CURDIR}/patches.${ARCH}-${OPSYS})
@@ -455,6 +509,12 @@ MTREE_FILE=	/etc/mtree/BSD.local.dist
 MTREE_CMD?=	/usr/sbin/mtree
 MTREE_ARGS?=	-U -f ${MTREE_FILE} -d -e -p
 
+.if (${OPSYS} == "OpenBSD")
+.include <bsd.own.mk>
+# XXX Do we need this? - hubertf
+#MAKE_ENV+=	EXTRA_SYS_MK_INCLUDES="<bsd.own.mk>"
+.endif
+
 # A few aliases for *-install targets
 INSTALL_PROGRAM= \
 	${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}
@@ -526,6 +586,7 @@ GZCAT?=		/usr/bin/gzcat
 GZIP?=		-9
 GZIP_CMD?=	/usr/bin/gzip -nf ${GZIP}
 LDCONFIG?=	/sbin/ldconfig
+LN?=		/bin/ln
 MKDIR?=		/bin/mkdir -p
 MV?=		/bin/mv
 RM?=		/bin/rm
@@ -797,7 +858,11 @@ all: build
 .endif
 
 .if !defined(DEPENDS_TARGET)
+.if make(reinstall)
+DEPENDS_TARGET=	reinstall
+.else
 DEPENDS_TARGET=	install
+.endif
 .endif
 
 ################################################################
@@ -929,8 +994,16 @@ do-fetch:
 .if !target(do-extract)
 do-extract:
 .if !defined(NO_WRKDIR)
+.if defined(WRKOBJDIR)
+	@${RM} -rf ${WRKOBJDIR}/${PORTSUBDIR}
+	@${MKDIR} -p ${WRKOBJDIR}/${PORTSUBDIR}
+	@echo "${WRKDIR} -> ${WRKOBJDIR}/${PORTSUBDIR}"
+	@# XXX whatif a build is going on right now?  Is this wise?
+	@${LN} -sf ${WRKOBJDIR}/${PORTSUBDIR} ${WRKDIR}
+.else
 	@${RM} -rf ${WRKDIR}
 	@${MKDIR} ${WRKDIR}
+.endif
 .endif
 	@for file in ${EXTRACT_ONLY}; do \
 		if ! (cd ${WRKDIR} && ${EXTRACT_CMD} ${EXTRACT_BEFORE_ARGS} ${_DISTDIR}/$$file ${EXTRACT_AFTER_ARGS});\
@@ -1109,7 +1182,7 @@ _PORT_USE: .USE
 		exit 1; \
 	fi
 .endif
-	@if [ `${SH} -c umask` != 0022 ]; then \
+	@if [ `${SH} -c umask` != ${DEF_UMASK} ]; then \
 		${ECHO_MSG} "===>  Warning: your umask is \"`${SH} -c umask`"\".; \
 		${ECHO_MSG} "      If this is not desired, set it to an appropriate value"; \
 		${ECHO_MSG} "      and install this port again by \`\`make reinstall''."; \
@@ -1119,7 +1192,13 @@ _PORT_USE: .USE
 .if make(real-install)
 .if !defined(NO_MTREE)
 	@if [ `id -u` = 0 ]; then \
-		${MTREE_CMD} ${MTREE_ARGS} ${PREFIX}/; \
+		if [ ! -f ${MTREE_FILE} ]; then \
+			${ECHO_MSG} "Error: mtree file \"${MTREE_FILE}\" is missing."; \
+			${ECHO_MSG} "Copy it from a suitable location (e.g., /usr/src/etc/mtree) and try again."; \
+			exit 1; \
+		else \
+			${MTREE_CMD} ${MTREE_ARGS} ${PREFIX}/; \
+		fi; \
 	else \
 		${ECHO_MSG} "Warning: not superuser, can't run mtree."; \
 		${ECHO_MSG} "Become root and try again to ensure correct permissions."; \
@@ -1258,7 +1337,7 @@ checkpatch:
 .if !target(reinstall)
 reinstall:
 	@${RM} -f ${INSTALL_COOKIE} ${PACKAGE_COOKIE}
-	@${MAKE} install
+	@DEPENDS_TARGET=${DEPENDS_TARGET} ${MAKE} install
 .endif
 
 ################################################################
@@ -1715,4 +1794,6 @@ depend:
 # Same goes for tags
 .if !target(tags)
 tags:
+.endif
+
 .endif
