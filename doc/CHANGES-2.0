@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.66 2004/04/09 18:34:37 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.67 2004/04/09 20:13:36 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -702,3 +702,15 @@ sys/conf/files					1.664
 	opposed to an option to *exclude* them.
 
 	[atatat, ticket #107]
+
+usr.bin/netstat/mbuf.c				1.23
+
+	sysctl(3) no longer returns ENOPROTOOPT in this case, but ENOENT,
+	which is a more generic "that's not in the tree" response.
+
+	ENOPROTOOPT was specific to the net subtree under the old framework,
+	and didn't add much value (other than letting the caller know they
+	were looking up something under the net subtree, which they presumably
+	ought to have known already).
+
+	[atatat, ticket #108]
