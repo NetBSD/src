@@ -33,7 +33,7 @@
  */
 /*
  * The console device driver for Alice.
- * $Id: console.c,v 1.14 1994/07/04 23:05:34 briggs Exp $
+ * $Id: console.c,v 1.15 1994/07/05 03:48:56 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -739,7 +739,7 @@ static scrollup(int vtnum)
   register int i, j, x, maxx;
   register long *from, *to;
   register struct vt *v = &vt[vtnum];
-  char tempbuf[132];
+  char tempbuf[133];
   int buflen, s;
 
   /* Save the top line: */
