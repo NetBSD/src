@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.14 2000/03/23 07:01:36 thorpej Exp $	*/
+/*	$NetBSD: ym.c,v 1.15 2000/07/04 10:02:45 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,6 +124,10 @@
 #define YM_VOL_OPL3		184
 #endif
 
+#ifndef YM_VOL_EQUAL
+#define YM_VOL_EQUAL		128
+#endif
+
 #ifdef __i386__		/* XXX */
 # include "joy.h"
 #else
@@ -202,6 +206,7 @@ ym_attach(sc)
 	static struct ad1848_volume vol_master = {YM_VOL_MASTER, YM_VOL_MASTER};
 	static struct ad1848_volume vol_dac    = {YM_VOL_DAC,    YM_VOL_DAC};
 	static struct ad1848_volume vol_opl3   = {YM_VOL_OPL3,   YM_VOL_OPL3};
+	mixer_ctrl_t mctl;
 	struct audio_attach_args arg;
 
 	callout_init(&sc->sc_powerdown_ch);
@@ -233,6 +238,14 @@ ym_attach(sc)
 	/* Override ad1848 settings. */
 	ad1848_set_channel_gain(ac, AD1848_DAC_CHANNEL, &vol_dac);
 	ad1848_set_channel_gain(ac, AD1848_AUX2_CHANNEL, &vol_opl3);
+
+	/* Set tone control to middle position. */
+	mctl.un.value.num_channels = 1;
+	mctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = YM_VOL_EQUAL;
+	mctl.dev = YM_MASTER_BASS;
+	ym_mixer_set_port(sc, &mctl);
+	mctl.dev = YM_MASTER_TREBLE;
+	ym_mixer_set_port(sc, &mctl);
 
 	/*
 	 * Mute all external sources.  If you change this, you must
