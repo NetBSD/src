@@ -1,4 +1,4 @@
-/* $NetBSD: ym_pnpbios.c,v 1.1 1999/11/12 18:36:46 drochner Exp $ */
+/* $NetBSD: ym_pnpbios.c,v 1.2 1999/11/14 02:15:51 thorpej Exp $ */
 /*
  * Copyright (c) 1999
  *	Matthias Drochner.  All rights reserved.
@@ -130,7 +130,10 @@ ym_pnpbios_attach(parent, self, aux)
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 1, &sc->ym_recdrq))
 		sc->ym_recdrq = -1;
 
-	printf("\n%s", self->dv_xname);
+	printf("\n");
+	pnpbios_print_devres(self, aa);
+
+	printf("%s", self->dv_xname);
 
 	ac->sc_iot = sc->sc_iot;
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, WSS_CODEC, AD1848_NPORT,

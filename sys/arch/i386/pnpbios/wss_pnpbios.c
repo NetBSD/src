@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.1 1999/11/12 18:36:46 drochner Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.2 1999/11/14 02:15:51 thorpej Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -110,7 +110,10 @@ wss_pnpbios_attach(parent, self, aux)
 	bus_space_subregion(sc->sc_iot, sc->sc_ioh, WSS_CODEC, 4,
 			    &sc->sc_ad1848.sc_ad1848.sc_ioh);
 
-	printf("\n%s", self->dv_xname);
+	printf("\n");
+	pnpbios_print_devres(self, aa);
+
+	printf("%s", self->dv_xname);
 
 	if (!ad1848_isa_probe(&sc->sc_ad1848)) {
 		printf("%s: ad1848 probe failed\n", self->dv_xname);
