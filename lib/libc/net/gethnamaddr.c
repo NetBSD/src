@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.15 1999/04/18 02:27:53 lukem Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.16 1999/05/03 15:20:28 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.15 1999/04/18 02:27:53 lukem Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.16 1999/05/03 15:20:28 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -998,9 +998,8 @@ _dns_gethtbyname(rv, cb_data, ap)
 
 	name = va_arg(ap, char *);
 	len = va_arg(ap, int);
-#if defined(__GNUC__) || defined(lint)	/* to shut up gcc warnings */
-	/*LINTED*/
-	(void)(len ? &len : &len);
+#ifdef __GNUC__	/* to shut up gcc warnings */
+	(void)&len;
 #endif
 	af = va_arg(ap, int);
 
@@ -1048,7 +1047,7 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 
 	uaddr = va_arg(ap, unsigned char *);
 	len = va_arg(ap, int);
-#ifdef __GNUC__                 /* to shut up gcc warnings */
+#ifdef __GNUC__ /* to shut up gcc warnings */
 	(void)&len;
 #endif
 	af = va_arg(ap, int);
@@ -1201,9 +1200,8 @@ _yp_gethtbyaddr(rv, cb_data, ap)
 
 	uaddr = va_arg(ap, unsigned char *);
 	len = va_arg(ap, int);
-#if defined(__GNUC__) || defined(lint)	/* to shut up gcc warnings */
-	/*LINTED*/
-	(void)(len ? &len : &len);
+#ifdef __GNUC__	/* to shut up gcc warnings */
+	(void)&len;
 #endif
 	af = va_arg(ap, int);
 	
@@ -1251,9 +1249,8 @@ _yp_gethtbyname(rv, cb_data, ap)
 
 	name = va_arg(ap, char *);
 	len = va_arg(ap, int);
-#if defined(__GNUC__) || defined(lint)	/* to shut up gcc warnings */
-	/*LINTED*/
-	(void)(len ? &len : &len);
+#ifdef __GNUC__ /* to shut up gcc warnings */
+	(void)&len;
 #endif
 	af = va_arg(ap, int);
 
