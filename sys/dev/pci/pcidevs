@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.123 1999/05/27 02:51:19 mrg Exp $
+$NetBSD: pcidevs,v 1.124 1999/05/29 01:28:52 fvdl Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -539,6 +539,7 @@ product	3COM 3C905TX	0x9050	3c905-TX 10/100 Ethernet
 product	3COM 3C905T4	0x9051	3c905-T4 10/100 Ethernet
 product 3COM 3C900BTPO	0x9004	3c900B-TPO Ethernet
 product 3COM 3C900BCOMBO 0x9005	3c900B-COMBO Ethernet
+product 3COM 3C900BTPC	0x9006	3c900B-TPC Ethernet
 product 3COM 3C905BTX	0x9055	3c905B-TX 10/100 Ethernet
 product 3COM 3C905BT4	0x9056	3c905B-T4 10/100 Ethernet
 product 3COM 3C905BFX	0x905a	3c905B-FX 10/100 Ethernet
