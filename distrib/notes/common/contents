@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.113 2004/11/14 04:54:25 mbw Exp $
+.\"	$NetBSD: contents,v 1.114 2004/11/15 00:23:13 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1264,10 +1264,17 @@ This includes the Xmac68k
 server with man pages.
 .\}
 .if \n[macppc] \{\
-This includes the Xmacppc server which supports all on-board video and Open 
-Firmware-compatible video cards with man pages.  Acceleration and depths 
-greater than 256 colors are not supported.  See the X11 FAQ for help 
-installing and using the XFree86 server.
+This includes both the XFree86 and Xmacppc servers.
+.br
+The XFree86 server supports acceleration, switchable resolutions and 
+bit-depths.  This server supports only known video cards, such as
+ATI and Nvidia and can be difficult to configure.
+.br
+The Xmacppc server supports all on-board video and Open 
+Firmware-compatible video cards.  Acceleration and depths 
+greater than 256 colors are not supported.  
+.Pp
+See the X11 FAQ for help using X on macppc systems.
 .Lk http://www.NetBSD.org/Ports/macppc/x11.html
 .\}
 .if \n[pmax] \{\
