@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.79 2002/09/19 08:31:08 jmc Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.80 2002/10/04 03:41:50 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.79 2002/09/19 08:31:08 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.80 2002/10/04 03:41:50 soren Exp $");
 
 #include "opt_scsi.h"
 
@@ -1018,11 +1018,8 @@ scsipi_size(periph, flags)
 	if (scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(scsipi_cmd), (u_char *)&rdcap, sizeof(rdcap),
 	    SCSIPIRETRIES, 20000, NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK) != 0) {
-		scsipi_printaddr(periph);
-		printf("could not get size\n");
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
 		return (0);
-	}
 
 	return (_4btol(rdcap.addr) + 1);
 }
