@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)ar.5.5	6.3 (Berkeley) 5/10/91
+.\"     @(#)ar.5.5	8.1 (Berkeley) 6/9/93
 .\"
-.Dd May 10, 1991
+.Dd June 9, 1993
 .Dt AR 5
 .Os
 .Sh NAME
@@ -137,8 +137,7 @@ names longer than 16 characters were truncated, and names with embedded
 spaces (and often trailing spaces) were not supported.
 It has been extended for these reasons,
 as described above.
-This format is
-.Ud .
+This format first appeared in 4.4BSD.
 .Sh COMPATIBILITY
 No archive format is currently specified by any standard.
 .At V

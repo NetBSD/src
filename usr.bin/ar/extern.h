@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,17 +30,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	5.1 (Berkeley) 4/3/91
+ *	@(#)extern.h	8.3 (Berkeley) 4/2/94
  */
 
-#include <sys/cdefs.h>
+int	append __P((char **));
+void	badfmt __P((void));
+int	compare __P((char *));
+int	contents __P((char **));
+int	delete __P((char **));
+void	error __P((char *));
+int	extract __P((char **));
+char   *files __P((char **argv));
+int	move __P((char **));
+void	orphans __P((char **argv));
+int	print __P((char **));
+int	replace __P((char **));
+char   *rname __P((char *));
+int	tmp __P((void));
 
-__BEGIN_DECLS
-void	 badfmt __P((void));
-void	 error __P((char *));
-void	 orphans __P((char **argv));
-int	 compare __P((char *));
-int	 tmp __P((void));
-char	*files __P((char **argv));
-char	*rname __P((char *));
-__END_DECLS
+extern char *archive;
+extern char *posarg, *posname;		/* positioning file name */
+extern char *tname;                     /* temporary file "name" */
+extern CHDR chdr;			/* converted header */
