@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.54 1999/03/25 02:17:38 perry Exp $	*/
+/*	$NetBSD: lpt.c,v 1.55 1999/03/29 21:50:06 perry Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -389,15 +389,9 @@ lptintr(arg)
 		u_char control = sc->sc_control;
 		/* send char */
 		bus_space_write_1(iot, ioh, lpt_data, *sc->sc_cp++);
-#ifdef BROKEN_LPT_DELAY
-		/* Kludge to prevent mysterious hangs and reboots. */
-		DELAY(BROKEN_LPT_DELAY);
-#endif
+		DELAY(1);
 		bus_space_write_1(iot, ioh, lpt_control, control | LPC_STROBE);
-#ifdef BROKEN_LPT_DELAY
-		/* Kludge to prevent mysterious hangs and reboots. */
-		DELAY(BROKEN_LPT_DELAY);
-#endif
+		DELAY(1);
 		sc->sc_count--;
 		bus_space_write_1(iot, ioh, lpt_control, control);
 		sc->sc_state |= LPT_OBUSY;
