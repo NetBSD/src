@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_fault.c,v 1.15 1994/06/29 06:47:55 cgd Exp $	*/
+/*	$NetBSD: vm_fault.c,v 1.15.2.1 1994/10/06 05:05:09 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -488,7 +488,6 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			 */
 
 			vm_page_lock_queues();
-			vm_page_activate(m);
 			vm_page_deactivate(m);
 			pmap_page_protect(VM_PAGE_TO_PHYS(m), VM_PROT_NONE);
 			vm_page_unlock_queues();

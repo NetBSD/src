@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.17 1994/06/29 06:48:26 cgd Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.17.2.1 1994/10/06 05:05:17 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -875,13 +875,17 @@ vm_page_deactivate(m)
 	 */
 
 	if (m->flags & PG_ACTIVE) {
-		pmap_clear_reference(VM_PAGE_TO_PHYS(m));
 		TAILQ_REMOVE(&vm_page_queue_active, m, pageq);
-		TAILQ_INSERT_TAIL(&vm_page_queue_inactive, m, pageq);
 		m->flags &= ~PG_ACTIVE;
-		m->flags |= PG_INACTIVE;
 		cnt.v_active_count--;
+		goto deact;
+	}
+	if ((m->flags & PG_INACTIVE) == 0) {
+	deact:
+		TAILQ_INSERT_TAIL(&vm_page_queue_inactive, m, pageq);
+		m->flags |= PG_INACTIVE;
 		cnt.v_inactive_count++;
+		pmap_clear_reference(VM_PAGE_TO_PHYS(m));
 		if (pmap_is_modified(VM_PAGE_TO_PHYS(m)))
 			m->flags &= ~PG_CLEAN;
 		if (m->flags & PG_CLEAN)
@@ -906,8 +910,8 @@ vm_page_activate(m)
 
 	if (m->flags & PG_INACTIVE) {
 		TAILQ_REMOVE(&vm_page_queue_inactive, m, pageq);
-		cnt.v_inactive_count--;
 		m->flags &= ~PG_INACTIVE;
+		cnt.v_inactive_count--;
 	}
 	if (m->wire_count == 0) {
 		if (m->flags & PG_ACTIVE)

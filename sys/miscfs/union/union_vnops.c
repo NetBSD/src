@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.4 1994/06/29 06:35:26 cgd Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.4.2.1 1994/10/06 05:12:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -1158,7 +1158,7 @@ union_readdir(ap)
 
 	FIXUP(un);
 	ap->a_vp = uvp;
-	return (VOCALL(uvp->v_op, VOFFSET(vop_readdir), ap));
+	return (VCALL(uvp, VOFFSET(vop_readdir), ap));
 }
 
 int
@@ -1419,9 +1419,10 @@ union_advlock(ap)
 		int  a_flags;
 	} */ *ap;
 {
+	register struct vnode *ovp = OTHERVP(ap->a_vp);
 
-	return (VOP_ADVLOCK(OTHERVP(ap->a_vp), ap->a_id, ap->a_op,
-				ap->a_fl, ap->a_flags));
+	ap->a_vp = ovp;
+	return (VCALL(ovp, VOFFSET(vop_advlock), ap));
 }
 
 
