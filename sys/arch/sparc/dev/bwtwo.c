@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.9 1995/04/10 07:04:20 mycroft Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.10 1995/08/29 22:20:01 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,9 @@
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
+#if defined(SUN4)
+#include <machine/eeprom.h>
+#endif
 
 #include <sparc/dev/bwtworeg.h>
 #include <sparc/dev/sbusvar.h>
@@ -110,11 +113,17 @@ bwtwomatch(parent, vcf, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
+#if defined(SUN4)
+	if (cputyp == CPU_SUN4 && cf->cf_unit != 0)
+		return (0);
+#endif
+
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 	if (ca->ca_bustype == BUS_SBUS)
 		return(1);
 	ra->ra_len = NBPG;
+
 	return (probeget(ra->ra_vaddr, 4) != -1);
 }
 
@@ -150,17 +159,45 @@ bwtwoattach(parent, self, args)
 		sbus = node = 0;
 		sc->sc_fb.fb_type.fb_width = 1152;
 		sc->sc_fb.fb_type.fb_height = 900;
-		sc->sc_fb.fb_linebytes = 1152;
+		sc->sc_fb.fb_linebytes = 144;
 		nam = "bwtwo";
 
-		/*
-		 * XXX: some frame buffers can be in 1600x1280 or
-		 * 1024x1024 mode, and we need to figure out how
-		 * to determine which.
-		 */
 #if defined(SUN4)
 		if (cputyp==CPU_SUN4) {
-			/* XXX: need code to find sun4 (oldrom) screen size */
+			struct eeprom *eep = (struct eeprom *)eeprom_va;
+			if (eep != NULL) {
+				switch (eep->eeScreenSize) {
+				case EE_SCR_1152X900:
+					/* Handled above. */
+					break;
+
+				case EE_SCR_1024X1024:
+					sc->sc_fb.fb_type.fb_width = 1024;
+					sc->sc_fb.fb_type.fb_height = 1024;
+					sc->sc_fb.fb_linebytes = 128;
+					break;
+
+				case EE_SCR_1600X1280:
+					sc->sc_fb.fb_type.fb_width = 1600;
+					sc->sc_fb.fb_type.fb_height = 1280;
+					sc->sc_fb.fb_linebytes = 200;
+					break;
+
+				case EE_SCR_1440X1440:
+					sc->sc_fb.fb_type.fb_width = 1440;
+					sc->sc_fb.fb_type.fb_height = 1440;
+					sc->sc_fb.fb_linebytes = 180;
+					break;
+
+				default:
+					/*
+					 * XXX: Do nothing, I guess.
+					 * Should we print a warning about
+					 * an unknown value? --thorpej
+					 */
+					break;
+				}
+			}
 		}
 #endif
 #if defined(SUN4M)
@@ -170,6 +207,7 @@ bwtwoattach(parent, self, args)
 #endif
 
 		break;
+
 	case BUS_SBUS:
 		sc->sc_fb.fb_type.fb_width = getpropint(node, "width", 1152);
 		sc->sc_fb.fb_type.fb_height = getpropint(node, "height", 900);
@@ -191,7 +229,23 @@ bwtwoattach(parent, self, args)
 	 * registers ourselves.  We only need the video RAM if we are
 	 * going to print characters via rconsole.
 	 */
-	isconsole = node == fbnode && fbconstty != NULL;
+#if defined(SUN4)
+	if (cputyp == CPU_SUN4) {
+		struct eeprom *eep = (struct eeprom *)eeprom_va;
+		/*
+		 * Assume this is the console if there's no eeprom info
+		 * to be found.
+		 */
+		if (eep == NULL || eep->eeConsole == EE_CONS_BW)
+			isconsole = (fbconstty != NULL);
+		else
+			isconsole = 0;
+	}
+#endif
+#if defined(SUN4C) || defined(SUN4M)
+	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+		isconsole = node == fbnode && fbconstty != NULL;
+#endif
 	p = (struct bwtwo_all *)ca->ca_ra.ra_paddr;
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
@@ -207,13 +261,21 @@ bwtwoattach(parent, self, args)
 	if (isconsole) {
 		printf(" (console)\n");
 #ifdef RCONSOLE
-		rcons_init(&sc->sc_fb);
+		/* XXX: doesn't work (??) on Sun 4 yet. */
+		if (cputyp != CPU_SUN4)
+			rcons_init(&sc->sc_fb);
 #endif
 	} else
 		printf("\n");
+#if defined(SUN4C) || defined(SUN4M)
 	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
-	if (node == fbnode)
+#endif
+	/*
+	 * XXX: this could cause a panic in fb_attach() if more
+	 * than one frame buffer device is found on a Sun 4.
+	 */
+	if (node == fbnode || cputyp == CPU_SUN4)
 		fb_attach(&sc->sc_fb);
 }
 
