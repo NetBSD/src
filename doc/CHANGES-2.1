@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.7 2005/01/11 06:39:31 jmc Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.8 2005/01/11 06:42:33 jmc Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -128,4 +128,11 @@ sys/nfs/nfsm_subs.h				patch
 
 	Don't do kludge for a reply to a retransmitted request
 	unless we actually retransmitted the request.
-	[yamy, ticket #1078]
+	[yamt, ticket #1078]
+
+sys/nfs/nfs_subs.c				1.140
+sys/nfs/nfsnode.h				1.53
+
+	Invalidate cache if filesize is changed besides our activity
+	because it means that were out of sync with the server.
+	[yamt, ticket #1079]
