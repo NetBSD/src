@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.5 2000/01/03 18:24:04 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.6 2000/01/16 21:47:00 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
@@ -57,7 +57,7 @@
 #else
 #define	DPRINTF(arg)
 #endif
-u_int32_t tx39intrvec; /* debug use */
+u_int32_t tx39intrvec;
 
 /* IRQHIGH lines list */
 static const struct irqhigh_list {
@@ -357,10 +357,19 @@ tx39icu_intr(mask, pc, status, cause)
 		}
 	}
 #ifdef TX39_WATCHDOGTIMER
-	/* Bus error (If watch dog timer is enabled)*/
-	if (mask & MIPS_INT_MASK_1) {
-		tx39biu_intr(0); /* Clear bus error */
+	{
+		extern int	tx39biu_intr __P((void*));
+		/* Bus error (If watch dog timer is enabled)*/
+		if (mask & MIPS_INT_MASK_1) {
+			tx39biu_intr(0); /* Clear bus error */
+		}
 	}
+#endif
+#if 0
+	/* reset priority mask */
+	reg = tx_conf_read(tc, TX39_INTRENABLE6_REG);
+	reg = TX39_INTRENABLE6_PRIORITYMASK_SET(reg, 0xffff);
+	tx_conf_write(tc, TX39_INTRENABLE6_REG, reg);
 #endif
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
@@ -466,7 +475,7 @@ tx39_irqhigh_establish(tc, set, bit, pri, ih_fun, ih_arg)
 
 	sc = tc->tc_intrt;
 	/*
-	 *	Add new entry to `pri' priority.
+	 *	Add new entry to `pri' priority
 	 */
 	if (!(he = malloc(sizeof(struct txintr_high_entry), 
 			  M_DEVBUF, M_NOWAIT))) {
@@ -580,42 +589,17 @@ tx_intr_disestablish(tc, arg)
 	}
 }
 
-void
-tx39_intr_dump(sc)
-	struct tx39icu_softc *sc;
+u_int32_t
+tx_intr_status(tc, r)
+	tx_chipset_tag_t tc;
+	int r;
 {
-	tx_chipset_tag_t tc = sc->sc_tc;
-	int i, j, ofs;
-	txreg_t reg;
-	char msg[16];
-
-	for (i = 1; i <= TX39_INTRSET_MAX; i++) {
-#ifdef TX392X		
-		if (i == 6)
-			continue;
-#endif /* TX392X */
-		for (reg = j = 0; j < 32; j++) {
-			if (tx39_irqhigh(i, j)) {
-				reg |= (1 << j);
-			}
-		}
-		sprintf(msg, "%d high", i);
-		__bitdisp(reg, 32, 0, msg, 1);
-		sprintf(msg, "%d status", i);
-		__bitdisp(sc->sc_regs[i], 0, 31, msg, 1);
-		ofs = TX39_INTRENABLE_REG(i);
-		reg = tx_conf_read(tc, ofs);
-		sprintf(msg, "%d enable", i);
-		__bitdisp(reg, 0, 31, msg, 1);
-	}
-	reg = sc->sc_regs[0];
-	printf("<%s><%s> vector=%2d\t\t[6 status]\n",
-	       reg & TX39_INTRSTATUS6_IRQHIGH ? "HI" : "--",
-	       reg & TX39_INTRSTATUS6_IRQLOW ? "LO" : "--",
-	       TX39_INTRSTATUS6_INTVECT(reg));
-	reg = tx_conf_read(tc, TX39_INTRENABLE6_REG);
-	__bitdisp(reg, 0, 18, "6 enable", 1);
-
+	struct tx39icu_softc *sc = tc->tc_intrt;
+	
+	if (r < 0 || r >= TX39_INTRSET_MAX + 1)
+		panic("tx_intr_status: invalid index %d", r);
+	
+	return (u_int32_t)(sc->sc_regs[r]);
 }
 
 #ifdef USE_POLL
@@ -731,3 +715,41 @@ tx39_poll_intr(arg)
 	return 0;
 }
 #endif /* USE_POLL */
+
+void
+tx39_intr_dump(sc)
+	struct tx39icu_softc *sc;
+{
+	tx_chipset_tag_t tc = sc->sc_tc;
+	int i, j, ofs;
+	txreg_t reg;
+	char msg[16];
+
+	for (i = 1; i <= TX39_INTRSET_MAX; i++) {
+#ifdef TX392X		
+		if (i == 6)
+			continue;
+#endif /* TX392X */
+		for (reg = j = 0; j < 32; j++) {
+			if (tx39_irqhigh(i, j)) {
+				reg |= (1 << j);
+			}
+		}
+		sprintf(msg, "%d high", i);
+		__bitdisp(reg, 32, 0, msg, 1);
+		sprintf(msg, "%d status", i);
+		__bitdisp(sc->sc_regs[i], 0, 31, msg, 1);
+		ofs = TX39_INTRENABLE_REG(i);
+		reg = tx_conf_read(tc, ofs);
+		sprintf(msg, "%d enable", i);
+		__bitdisp(reg, 0, 31, msg, 1);
+	}
+	reg = sc->sc_regs[0];
+	printf("<%s><%s> vector=%2d\t\t[6 status]\n",
+	       reg & TX39_INTRSTATUS6_IRQHIGH ? "HI" : "--",
+	       reg & TX39_INTRSTATUS6_IRQLOW ? "LO" : "--",
+	       TX39_INTRSTATUS6_INTVECT(reg));
+	reg = tx_conf_read(tc, TX39_INTRENABLE6_REG);
+	__bitdisp(reg, 0, 18, "6 enable", 1);
+
+}

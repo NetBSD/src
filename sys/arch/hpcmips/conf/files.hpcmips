@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.18 2000/01/13 17:53:39 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.19 2000/01/16 21:47:00 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -175,6 +175,7 @@ device txcomif {[slot = -1]}
 device txsibif {[slot = -1]}
 device ucbif { }
 device irif { }
+device txiomanif {[platform = -1]}
 
 attach txsim at mainbus
 file arch/hpcmips/tx/txsim.c		txsim
@@ -204,9 +205,13 @@ device tx3912video: mainbus	# XXX crazy XXX
 attach tx3912video at txsim
 file arch/hpcmips/tx/tx3912video.c	tx3912video
 
-device tx39io
+device tx39io: txiomanif
 attach tx39io at txsim
 file arch/hpcmips/tx/tx39io.c		tx39io
+
+device txioman
+attach txioman at txiomanif
+file arch/hpcmips/tx/txioman.c		txioman
 
 device tx39sib: txsibif
 attach tx39sib at txsim
@@ -249,8 +254,7 @@ device m38813c: skbdif
 attach m38813c at txcsbus
 file arch/hpcmips/dev/m38813c.c		m38813c		needs-flag
 
-#	TOSHIBA TC5165BTFS buffer driver (keyboard)
-#	PHILIPS 74ALVC16241 buffer driver (keyboard)
+#	PHILIPS 74ALVC16241 / TOSHIBA TC5165BTFS buffer driver (keyboard)
 device tc5165buf: skbdif
 attach tc5165buf at txcsbus
 file arch/hpcmips/dev/tc5165buf.c	tc5165buf	needs-flag

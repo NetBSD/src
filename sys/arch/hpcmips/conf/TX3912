@@ -2,7 +2,7 @@
 # Distribution kernel (TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.8 2000/01/13 17:53:40 uch Exp $
+#	$NetBSD: TX3912,v 1.9 2000/01/16 21:47:00 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -31,9 +31,11 @@ options		__NO_SOFT_SERIAL_INTERRUPT
 options		SERIALCONSSLOT=0	# UARTA 0, UARTB 1
 
 options		DDB			# in-kernel debugger
+#options 	DDB_ONPANIC=0		# don't enter debugger on panic
 options		DIAGNOSTIC		# extra kernel debugging checks
 options		DEBUG			# extra kernel debugging support
 options		KTRACE			# system call tracing support
+#options 	SYSCALL_DEBUG		# for debug
 options		NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 #options	 MINIROOTSIZE=10000
 
@@ -58,6 +60,7 @@ options		INET		# Internet protocols
 config		netbsd		root on ? type ?
 
 txsim*	at	mainbus0
+
 #
 # System Internal Modules
 #
@@ -66,7 +69,6 @@ tx39icu*	at	txsim?
 tx39clock*	at	txsim?
 tx39power*	at	txsim?
 tx3912video*	at	txsim?
-#options COMPAQ_LOCAL_INTR
 tx39io*		at	txsim?
 tx39sib*	at	txsim?
 tx39uart*	at	txsim?
@@ -77,15 +79,21 @@ tx39ir*		at	txcom1
 #
 # TX39 external modules. (Platform dependent)
 #
-options USE_POLL	# keyboard device requires this
+options USE_POLL	# keyboard / touchpanel device  requires this
 
+# IO module manager (Don't delete)
+txioman3	at	tx39io? platform COMPAQ_C
+txioman4	at	tx39io? platform PHILIPS_NINO
+txioman5	at	tx39io? platform SHARP_MOBILON
+txioman*	at	tx39io?	# misc unknown.
+
+# Chip select manager
 txcsbus3	at	tx39biu? platform COMPAQ_C
 txcsbus4	at	tx39biu? platform PHILIPS_NINO
 txcsbus5	at	tx39biu? platform SHARP_MOBILON
 txcsbus*	at	tx39biu?	# misc unknown.
 
 # PHILIPS 74ALVC*1624? / TOSHIBA TC5165BFTS buffer chip (keyboard)
-#
 tc5165buf*	at	txcsbus3 iocs 3 iocsbase 0 iocssize 0x100 iocswidth 16
 tc5165buf*	at	txcsbus5 iocs 4 iocsbase 0 iocssize 0x100 iocswidth 16
 skbd*		at	tc5165buf?
@@ -150,3 +158,4 @@ pseudo-device	pty		64	# pseudo ptys
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
+pseudo-device	btnmgr		1	# button event handler
