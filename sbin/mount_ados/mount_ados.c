@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: mount_ados.c,v 1.1 1994/06/03 00:33:12 chopps Exp $";
+static char rcsid[] = "$Id: mount_ados.c,v 1.1.2.1 1994/08/03 03:22:46 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -45,9 +45,11 @@ static char rcsid[] = "$Id: mount_ados.c,v 1.1 1994/06/03 00:33:12 chopps Exp $"
 #include <string.h>
 #include <unistd.h>
 
+#ifndef LETS_GET_SMALL
 gid_t	a_gid __P((char *));
 uid_t	a_uid __P((char *));
 mode_t	a_mask __P((char *));
+#endif
 void	usage __P((void));
 		
 int
@@ -68,6 +70,7 @@ main(argc, argv)
 		case 'F':
 			opts |= atoi(optarg);
 			break;
+#ifndef LETS_GET_SMALL
 		case 'u':
 			args.uid = a_uid(optarg);
 			set_uid = 1;
@@ -80,6 +83,7 @@ main(argc, argv)
 			args.mask = a_mask(optarg);
 			set_mask = 1;
 			break;
+#endif
 		case '?':
 		default:
 			usage();
@@ -121,6 +125,7 @@ main(argc, argv)
 	exit (0);
 }
 
+#ifndef LETS_GET_SMALL
 gid_t
 a_gid(s)
 	char *s;
@@ -184,3 +189,13 @@ usage()
 	fprintf(stderr, "usage: mount_ados [-F flags] [-u user] [-g group] [-m mask] bdev dir\n");
 	exit(1);
 }
+
+#else
+
+void
+usage()
+{
+	fprintf(stderr, "usage: mount_ados [-F flags] bdev dir\n");
+	exit(1);
+}
+#endif
