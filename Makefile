@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 1999/07/12 21:53:52 thorpej Exp $
+#	$NetBSD: Makefile,v 1.99 1999/09/14 01:32:43 perry Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -108,21 +108,21 @@ build: beforeinstall
 	@false
 .else
 	(cd ${.CURDIR}/gnu/usr.bin/egcs && \
-	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no && \
+	    ${MAKE} ${_J} dependall MKMAN=no && \
 	    ${MAKE} MKMAN=no install && ${MAKE} cleandir)
 .endif
 .endif
 	${MAKE} includes
 	(cd ${.CURDIR}/lib/csu && \
-	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no && \
+	    ${MAKE} ${_J} dependall MKMAN=no && \
 	    ${MAKE} MKMAN=no install)
 	(cd ${.CURDIR}/lib && \
-	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no && \
+	    ${MAKE} ${_J} dependall MKMAN=no && \
 	    ${MAKE} MKMAN=no install)
 	(cd ${.CURDIR}/gnu/lib && \
-	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no MKINFO=no && \
+	    ${MAKE} ${_J} dependall MKMAN=no MKINFO=no && \
 	    ${MAKE} MKMAN=no MKINFO=no install)
-	${MAKE} depend && ${MAKE} ${_J} && ${MAKE} _BUILD= install
+	${MAKE} ${_J} dependall && ${MAKE} _BUILD= install
 .if defined(DOMESTIC) && !defined(EXPORTABLE_SYSTEM)
 	(cd ${.CURDIR}/${DOMESTIC} && ${MAKE} ${_J} _SLAVE_BUILD= build)
 .endif
