@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.25.2.4 1999/01/31 05:40:36 minoura Exp $
+#	$NetBSD: GENERIC,v 1.25.2.5 1999/01/31 10:34:25 minoura Exp $
 
 #
 #	GENERIC
@@ -179,6 +179,7 @@ options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 ## Fundamental devices; see also std.x68k
 dmac0	at intio0 addr 0xe84000		# DMA controler
 xel0	at intio0
+opm0	at intio0 addr 0xe90000		# OPM: required for fdc
 
 ## Display devices and console
 grfbus0	at mainbus0			# bitmapped displays
