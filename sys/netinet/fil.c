@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.61.2.3 2004/05/30 11:24:37 tron Exp $	*/
+/*	$NetBSD: fil.c,v 1.61.2.4 2004/05/30 11:26:27 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.61.2.3 2004/05/30 11:24:37 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.61.2.4 2004/05/30 11:26:27 tron Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.7 2004/03/23 12:06:56 darrenr Exp";
@@ -2657,7 +2657,7 @@ void *l4hdr;
 		ip6 = (ip6_t *)ip;
 		hlen = sizeof(*ip6);
 		slen = ntohs(ip6->ip6_plen);
-		sum = htons((u_short)ip6->ip6_nxt);
+		sum = htons((u_short)l4proto);
 		sum += htons(slen);
 		sp = (u_short *)&ip6->ip6_src;
 		sum += *sp++;	/* ip6_src */
@@ -2669,6 +2669,7 @@ void *l4hdr;
 		sum += *sp++;
 		sum += *sp++;
 		sum += *sp++;	/* ip6_dst */
+		sum += *sp++;
 		sum += *sp++;
 		sum += *sp++;
 		sum += *sp++;
