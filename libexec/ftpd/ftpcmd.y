@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.30 1999/05/24 21:57:19 ross Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.31 1999/05/26 13:30:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.30 1999/05/24 21:57:19 ross Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.31 1999/05/26 13:30:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -195,6 +195,11 @@ cmd
 	    "Total traffic for this session was %qd byte%s in %qd transfer%s.",
 				    (qdfmt_t)total_bytes, PLURAL(total_bytes),
 				    (qdfmt_t)total_xfers, PLURAL(total_xfers));
+			}
+			reply(221,
+			    "Thank you for using the FTP service on %s.",
+			    hostname);
+			if (logged_in) {
 				syslog(LOG_INFO,
 				    "Data traffic: %qd byte%s in %qd file%s",
 				    (qdfmt_t)total_data, PLURAL(total_data),
@@ -204,9 +209,7 @@ cmd
 				    (qdfmt_t)total_bytes, PLURAL(total_bytes),
 				    (qdfmt_t)total_xfers, PLURAL(total_xfers));
 			}
-			reply(221,
-			    "Thank you for using the FTP service on %s.",
-			    hostname);
+
 			dologout(0);
 		}
 
