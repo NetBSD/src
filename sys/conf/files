@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.510 2002/04/02 10:11:50 jmc Exp $
+#	$NetBSD: files,v 1.511 2002/04/07 06:54:35 martin Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1196,7 +1196,7 @@ file	net/if_bridge.c			bridge			needs-flag
 file	net/bridgestp.c			bridge
 file	net/if_ecosubr.c		eco
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
-					    wlan | vlan | pppoe
+					    wlan
 file	net/if_faith.c			faith & inet & inet6	needs-flag
 file	net/if_fddisubr.c		fddi			needs-flag
 file	net/if_gif.c			gif			needs-flag
