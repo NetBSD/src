@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.5 1998/02/03 19:12:40 perry Exp $	*/
+/*	$NetBSD: map.c,v 1.6 1998/03/30 01:30:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.5 1998/02/03 19:12:40 perry Exp $");
+__RCSID("$NetBSD: map.c,v 1.6 1998/03/30 01:30:14 mrg Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1000,7 +1000,7 @@ map_init_meta(el)
 	    key_add(el, buf, key_map_cmd(el, (int) map[i]), XK_CMD);
 	    break;
 	}
-    map[buf[0]] = ED_SEQUENCE_LEAD_IN;
+    map[(int)buf[0]] = ED_SEQUENCE_LEAD_IN;
 }
 
 
