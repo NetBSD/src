@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.c,v 1.12 2002/09/13 14:32:12 itojun Exp $	*/
+/*	$NetBSD: chap_ms.c,v 1.13 2004/10/30 15:07:15 dsl Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -46,7 +46,7 @@
 #if 0
 #define RCSID	"Id: chap_ms.c,v 1.15 1999/08/13 06:46:12 paulus Exp "
 #else
-__RCSID("$NetBSD: chap_ms.c,v 1.12 2002/09/13 14:32:12 itojun Exp $");
+__RCSID("$NetBSD: chap_ms.c,v 1.13 2004/10/30 15:07:15 dsl Exp $");
 #endif
 #endif
 
@@ -316,7 +316,7 @@ ChapMS_LANMan(rchallenge, rchallenge_len, secret, secret_len, response)
     /* LANMan password is case insensitive */
     BZERO(UcasePassword, sizeof(UcasePassword));
     for (i = 0; i < secret_len; i++)
-       UcasePassword[i] = (u_char)toupper(secret[i]);
+       UcasePassword[i] = (u_char)toupper((unsigned char)secret[i]);
     DesEncrypt( StdText, UcasePassword + 0, PasswordHash + 0 );
     DesEncrypt( StdText, UcasePassword + 7, PasswordHash + 8 );
     ChallengeResponse(rchallenge, PasswordHash, response->LANManResp);
