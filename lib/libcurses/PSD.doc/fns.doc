@@ -559,6 +559,30 @@ when updating the window.
 Returns the character at the current position on the given window.
 This does not make any changes to the window.
 .Ds
+.Fn inchnstr "chtype *chstr" "int n"
+.De
+Get an array of at most
+.Vn n
+characters and renditions starting at the current cursor position and
+ending at the end of the line and put it in the location pointed to by
+.Vn chstr .
+.Ds
+.Fn inchstr "chtype *chstr"
+.De
+Get an array of characters and renditions starting at the current cursor
+position and ending at the end of the line and put it in the location
+pointed to by
+.Vn chstr ,
+which is assumed to be large enough to handle it.
+.Ds
+.Fn innstr "char *str" "int n"
+.De
+Get a string of at most
+.Vn n
+characters starting at the current cursor position and ending at the end
+of the line and put it in the location pointed to by
+.Vn str .
+.Ds
 .Fn init_color "short color" "short red" "short green" "short blue"
 .De
 Set the red, green and blue values of color
@@ -633,6 +657,13 @@ will be shifted down,
 and the bottom line will disappear.
 The current line will become blank,
 and the current \*y will remain unchanged.
+.Ds
+.Fn instr "char *str"
+.De
+Get an string starting at the current cursor position and ending at the
+end of the line and put it in the location pointed to by
+.Vn str ,
+which is assumed to be large enough to handle it.
 .Ds
 .Fn is_linetouched "WINDOW *win" "int line"
 .De
@@ -1310,10 +1341,10 @@ specification of a window, rather than the use of the default
 .Vn stdscr.\fP
 .Ds
 .Fn waddch "WINDOW *win" "chtype ch"
-.Fn waddstr "WINDOW *win" "char *str"
 .Fn waddnstr "WINDOW *win" "char *str" "int len"
-.Fn wattron "WINDOW *win" "int attr"
+.Fn waddstr "WINDOW *win" "char *str"
 .Fn wattroff "WINDOW *win" "int attr"
+.Fn wattron "WINDOW *win" "int attr"
 .Fn wattrset "WINDOW *win" "int attr"
 .Fn wbkgd "WINDOW *win" "chtype ch"
 .Fn wbkgdset "WINDOW *win" "chtype ch"
@@ -1328,9 +1359,13 @@ specification of a window, rather than the use of the default
 .Fn wgetstr "WINDOW *win" "char *str"
 .Fn whline "WINDOW *win" "chtype ch" "int count"
 .Fn winch "WINDOW *win" \(dg
+.Fn winchnstr "WINDOW *win" "chtype *chstr" "int n"
+.Fn winchstr "WINDOW *win" "chtype *chstr"
+.Fn winnstr "WINDOW *win" "char *str" "int n"
 .Fn winsch "WINDOW *win" "char c"
 .Fn winsdelln "WINDOW *win" "int n"
 .Fn winsertln "WINDOW *win"
+.Fn winstr "WINDOW *win" "char *str"
 .Fn wmove "WINDOW *win" "int y" int x"
 .Fn wprintw "WINDOW *win" "char *fmt" "..."
 .Fn wrefresh "WINDOW *win"
@@ -1342,4 +1377,5 @@ specification of a window, rather than the use of the default
 .Fn wunderend "WINDOW *win"
 .Fn wunderscore "WINDOW *win"
 .Fn wvline "WINDOW *win" "chtype ch" "int count"
+
 .Dg
