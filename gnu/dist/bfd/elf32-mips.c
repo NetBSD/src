@@ -168,6 +168,7 @@ static const char * const mips_elf_dynsym_sec_names[] =
   ".sdata",
   ".sbss",
   ".bss",
+  ".gcc_except_table",
   NULL
 };
 
