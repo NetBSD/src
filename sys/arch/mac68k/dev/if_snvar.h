@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.10 1997/06/26 21:08:13 scottr Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.10.8.1 1997/11/15 01:13:30 mellon Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -62,10 +62,10 @@ extern int	kvtop(caddr_t addr);
  * total space in page 0 = NTDA * 92 + NRRA * 16 + NRDA * 28 + 68
  */
 
-#define NRBA    8		/* # receive buffers < NRRA */
+#define NRBA    32		/* # receive buffers < NRRA */
 #define RBAMASK (NRBA-1)
-#define NTDA    8		/* # transmit descriptors */
-#define NRRA    16		/* # receive resource descriptors */
+#define NTDA    16		/* # transmit descriptors */
+#define NRRA    64		/* # receive resource descriptors */
 #define RRAMASK (NRRA-1)	/* the reason why NRRA must be power of two */
 
 #define FCSSIZE 4		/* size of FCS appended to packets */
