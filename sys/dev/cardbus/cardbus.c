@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.55 2004/08/23 18:21:51 drochner Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.56 2004/10/10 21:58:46 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.55 2004/08/23 18:21:51 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.56 2004/10/10 21:58:46 enami Exp $");
 
 #include "opt_cardbus.h"
 
@@ -74,7 +74,7 @@ STATIC int cardbusmatch(struct device *, struct cfdata *, void *);
 int cardbus_rescan(struct device *, const char *, const int *);
 void cardbus_childdetached(struct device *, struct device *);
 static int cardbussubmatch(struct device *, struct cfdata *,
-			   const locdesc_t *, void *);
+    const locdesc_t *, void *);
 static int cardbusprint(void *, const char *);
 
 typedef void (*tuple_decode_func)(u_int8_t*, int, void*);
@@ -130,7 +130,7 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 	printf(": bus %d device %d", sc->sc_bus, sc->sc_device);
 	if (bootverbose)
 		printf(" cacheline 0x%x, lattimer 0x%x", sc->sc_cacheline,
-		       sc->sc_lattimer);
+		    sc->sc_lattimer);
 	printf("\n");
 
 	sc->sc_iot = cba->cba_iot;	/* CardBus I/O space tag */
@@ -426,8 +426,8 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 	cf = sc->sc_cf;
 
 	/* XXX what a nonsense */
-	if ((locators[CARDBUSCF_DEV] != CARDBUSCF_DEV_DEFAULT) &&
-	    (locators[CARDBUSCF_DEV] != sc->sc_device))
+	if (locators[CARDBUSCF_DEV] != CARDBUSCF_DEV_DEFAULT &&
+	    locators[CARDBUSCF_DEV] != sc->sc_device)
 		return (0);
 
 	/* inspect initial voltage */
@@ -480,8 +480,9 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		int help[3];
 		locdesc_t *ldesc = (void *)&help; /* XXX */
 
-		if ((locators[CARDBUSCF_FUNCTION] != CARDBUSCF_FUNCTION_DEFAULT)
-		    && (locators[CARDBUSCF_FUNCTION] != function))
+		if (locators[CARDBUSCF_FUNCTION] !=
+		    CARDBUSCF_FUNCTION_DEFAULT &&
+		    locators[CARDBUSCF_FUNCTION] != function)
 			continue;
 
 		if (sc->sc_funcs[function])
@@ -520,17 +521,21 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		    function, bhlc));
 		bhlc &= ~((CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT) |
 		    (CARDBUS_CACHELINE_MASK << CARDBUS_CACHELINE_SHIFT));
-		bhlc |= ((sc->sc_cacheline & CARDBUS_CACHELINE_MASK) << CARDBUS_CACHELINE_SHIFT);
-		bhlc |= ((sc->sc_lattimer & CARDBUS_LATTIMER_MASK) << CARDBUS_LATTIMER_SHIFT);
+		bhlc |= (sc->sc_cacheline & CARDBUS_CACHELINE_MASK) <<
+		    CARDBUS_CACHELINE_SHIFT;
+		bhlc |= (sc->sc_lattimer & CARDBUS_LATTIMER_MASK) <<
+		    CARDBUS_LATTIMER_SHIFT;
 
 		cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
 		bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
 		DPRINTF(("0x%08x\n", bhlc));
 		
 		if (CARDBUS_LATTIMER(bhlc) < 0x10) {
-			bhlc &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
+			bhlc &= ~(CARDBUS_LATTIMER_MASK <<
+			    CARDBUS_LATTIMER_SHIFT);
 			bhlc |= (0x10 << CARDBUS_LATTIMER_SHIFT);
-			cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
+			cardbus_conf_write(cc, cf, tag,
+			    CARDBUS_BHLC_REG, bhlc);
 		}
 
 		/*
@@ -588,7 +593,7 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		ldesc->locs[CARDBUSCF_FUNCTION] = function;
 
 		if ((csc = config_found_sm_loc((void *)sc, "cardbus", ldesc,
-			&ca, cardbusprint, cardbussubmatch)) == NULL) {
+		    &ca, cardbusprint, cardbussubmatch)) == NULL) {
 			/* do not match */
 			disable_function(sc, function);
 			sc->sc_funcs[function] = NULL;
@@ -643,8 +648,8 @@ cardbusprint(void *aux, const char *pnp)
 			aprint_normal("%s", ca->ca_cis.cis1_info[i]);
 		}
 		aprint_verbose("%s(manufacturer 0x%x, product 0x%x)",
-		       i ? " " : "",
-		       ca->ca_cis.manufacturer, ca->ca_cis.product);
+		    i ? " " : "",
+		    ca->ca_cis.manufacturer, ca->ca_cis.product);
 		aprint_normal(" %s at %s", devinfo, pnp);
 	}
 	aprint_normal(" dev %d function %d", ca->ca_device, ca->ca_function);
@@ -675,7 +680,7 @@ cardbus_detach_card(struct cardbus_softc *sc)
 		    ct->ct_device->dv_xname));
 		/* call device detach function */
 
-		if (0 != config_detach(ct->ct_device, 0)) {
+		if (config_detach(ct->ct_device, 0) != 0) {
 			printf("%s: cannot detach dev %s, function %d\n",
 			    sc->sc_dev.dv_xname, ct->ct_device->dv_xname,
 			    ct->ct_func);
