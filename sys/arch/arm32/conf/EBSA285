@@ -1,4 +1,4 @@
-#	$NetBSD: EBSA285,v 1.11 2000/01/17 17:47:05 augustss Exp $
+#	$NetBSD: EBSA285,v 1.12 2000/02/13 05:26:04 mark Exp $
 #
 #	EBSA285 -- EBSA285 Architecture Kernel
 #
@@ -220,19 +220,38 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3C590 ethernet cards
+#ex*	at pci? dev ? function ?	# 3Com 90x[B]
 #epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #esh*	at pci? dev ? function ?	# Essential HIPPI card
 #fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 #fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000 compat ethernet
+#ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
+#sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+#tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
+#options 	TLP_MATCH_21040
+#options 	TLP_MATCH_21041
+#options 	TLP_MATCH_21140
+#options 	TLP_MATCH_21142
+#vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+#lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+rl*	at pci? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support
+#exphy*	at mii? phy ?			# 3Com internal PHYs
+#icsphy* at mii? phy ?			# Integrated Circuit Systems ICS1890
 #inphy*	at mii? phy ?			# Intel 82555 PHYs
+#iophy*	at mii? phy ?			# Intel 82553 PHYs
+#lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 #nsphy*	at mii? phy ?			# NS83840 PHYs
+#nsphyter* at mii? phy ?		# NS83843 PHYs
 #qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+#sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #tlphy*	at mii? phy ?			# ThunderLAN PHYs
+#tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Controller and Devices
 
@@ -260,14 +279,22 @@ ne*	at pci? dev ? function ?	# NE2000 compat ethernet
 # USB Printer
 #ulpt* at uhub? port ?
 
+# USB Modem
+#umodem*	at uhub? port ? configuration ?
+#ucom*	at umodem?
+
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
 #scsibus* at umass? channel ?
 
+# USB audio
+#uaudio*	at uhub? port ? configuration ?
+#audio*	at uaudio?
+
 # USB Ethernet adapters
-aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
-cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
-kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+#cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+#kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
 # USB Generic driver
 #ugen*        at uhub? port ?
@@ -276,9 +303,12 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
 # PCI audio devices
 #eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+#sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # Audio support
 #audio*	at eap?
+#audio*	at sv?
+#audio*	at uaudio?
 
 # Pseudo-Devices
 
