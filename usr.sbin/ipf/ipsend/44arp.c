@@ -1,4 +1,4 @@
-/*	$NetBSD: 44arp.c,v 1.3 1997/05/27 23:10:46 thorpej Exp $	*/
+/*	$NetBSD: 44arp.c,v 1.4 1997/09/21 18:02:03 veego Exp $	*/
 
 /*
  * Based upon 4.4BSD's /usr/sbin/arp
@@ -15,11 +15,7 @@
 #include <net/if_types.h>
 #include <net/route.h>
 #include <netinet/in.h>
-#if defined(__NetBSD__)
-#include <netinet/if_inarp.h>
-#else
 #include <netinet/if_ether.h>
-#endif
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <errno.h>
