@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.8 2004/09/19 23:00:29 chs Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.9 2005/01/19 03:30:21 chs Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.21 2003/12/22 23:39:06 mickey Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.8 2004/09/19 23:00:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.9 2005/01/19 03:30:21 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.8 2004/09/19 23:00:29 chs Exp $");
 /* gecko optional graphics */
 #define	STI_GOPT1_REV	0x17
 #define	STI_GOPT2_REV	0x70
+#define	STI_GOPT3_REV	0xd0
+#define	STI_GOPT4_REV	0x00
 
 /* internal EG */
 #define	STI_INEG_REV	0x60
@@ -82,42 +84,40 @@ CFATTACH_DECL(sti_phantomas, sizeof(struct sti_softc), sti_sgc_probe,
     sti_sgc_attach, NULL, NULL);
 
 
-paddr_t sti_sgc_getrom(int, struct confargs *);
-
+paddr_t sti_sgc_getrom(struct confargs *);
 
 /*
  * Locate STI ROM.
  * On some machines it may not be part of the HPA space.
  */
 paddr_t
-sti_sgc_getrom(int unit, struct confargs *ca)
+sti_sgc_getrom(struct confargs *ca)
 {
 	paddr_t rom;
 	int pagezero_cookie;
 
-	pagezero_cookie = hp700_pagezero_map();
-	rom = PAGE0->pd_resv2[1];
+	rom = ca->ca_hpa;
 
-	if (unit) {
-		if (ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC &&
-		    (ca->ca_type.iodc_revision == STI_GOPT1_REV ||
-		     ca->ca_type.iodc_revision == STI_GOPT2_REV))
-			/* these two share the onboard's prom */ ;
-		else
-			rom = 0;
+	if (ca->ca_type.iodc_sv_model != HPPA_FIO_GSGC) {
+		return rom;
 	}
 
-	if (rom < HPPA_IOBEGIN) {
-		if (unit == 0 &&
-		    ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC &&
-		    ca->ca_type.iodc_revision == STI_INEG_REV)
-			rom = STI_INEG_PROM;
-		else
-			rom = ca->ca_hpa;
-	}
+	switch (ca->ca_type.iodc_revision) {
+	case STI_GOPT1_REV:
+	case STI_GOPT2_REV:
+	case STI_GOPT3_REV:
+	case STI_GOPT4_REV:
+		/* these share the onboard's prom */
+		pagezero_cookie = hp700_pagezero_map();
+		rom = PAGE0->pd_resv2[1];
+		hp700_pagezero_unmap(pagezero_cookie);
+		break;
 
-	hp700_pagezero_unmap(pagezero_cookie);
-	return (rom);
+	case STI_INEG_REV:
+		rom = STI_INEG_PROM;
+		break;
+	}
+	return rom;
 }
 
 int
@@ -138,7 +138,7 @@ sti_sgc_probe(struct device *parent, struct cfdata *cf, void *aux)
 	    ca->ca_type.iodc_sv_model != HPPA_FIO_SGC)
 		return 0;
 
-	rom = sti_sgc_getrom(cf->cf_unit, ca);
+	rom = sti_sgc_getrom(ca);
 #ifdef STIDEBUG
 	printf ("sti: hpa=%x, rom=%x\n", (uint)ca->ca_hpa, (uint)rom);
 #endif
