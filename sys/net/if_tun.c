@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.68.2.1 2004/05/15 13:42:19 tron Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.68.2.2 2004/05/20 12:28:17 grant Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.68.2.1 2004/05/15 13:42:19 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.68.2.2 2004/05/20 12:28:17 grant Exp $");
 
 #include "tun.h"
 
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.68.2.1 2004/05/15 13:42:19 tron Exp $")
 #include <machine/cpu.h>
 
 #include <net/if.h>
-#include <net/if_ether.h>
+#include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/route.h>
 
@@ -212,6 +212,7 @@ tunattach0(tp)
 	ifp->if_start = tunstart;
 #endif
 	ifp->if_flags = IFF_POINTOPOINT;
+	ifp->if_type = IFT_TUNNEL;
 	ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	ifp->if_collisions = 0;
 	ifp->if_ierrors = 0;
