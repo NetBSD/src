@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.239 2005/01/09 03:11:48 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.240 2005/01/12 21:51:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.239 2005/01/09 03:11:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.240 2005/01/12 21:51:52 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -617,7 +617,7 @@ getnewvnode(tag, mp, vops, vpp)
 	*vpp = vp;
 	vp->v_usecount = 1;
 	vp->v_data = 0;
-	simple_lock_init(&vp->v_uobj.vmobjlock);
+	simple_lock_init(&vp->v_interlock);
 
 	/*
 	 * initialize uvm_object within vnode.
