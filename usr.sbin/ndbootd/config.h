@@ -68,5 +68,5 @@
 #define PACKAGE "ndbootd"
 
 /* Version number of package */
-#define VERSION "0.3"
+#define VERSION "0.4"
 
