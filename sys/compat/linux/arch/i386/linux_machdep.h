@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.26 2003/07/03 21:24:28 christos Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.27 2003/09/06 22:09:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -153,12 +153,6 @@ struct linux_sigframe {
 	struct	linux_sigcontext sf_sc;
 	sig_t	sf_handler;
 };
-
-#ifdef _KERNEL
-__BEGIN_DECLS
-void linux_sendsig __P((int, sigset_t *, u_long));
-__END_DECLS
-#endif /* _KERNEL */
 
 /*
  * Major device numbers of VT device on both Linux and NetBSD. Used in
