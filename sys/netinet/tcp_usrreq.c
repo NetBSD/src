@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.15 1995/06/12 00:48:00 mycroft Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.16 1995/08/12 23:59:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -96,7 +96,7 @@ tcp_usrreq(so, req, m, nam, control)
 		return (EINVAL);
 	}
 
-	s = splnet();
+	s = splsoftnet();
 	inp = sotoinpcb(so);
 	/*
 	 * When a TCP is attached to a socket, then there will be
@@ -350,7 +350,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 	register struct mbuf *m;
 	register int i;
 
-	s = splnet();
+	s = splsoftnet();
 	inp = sotoinpcb(so);
 	if (inp == NULL) {
 		splx(s);

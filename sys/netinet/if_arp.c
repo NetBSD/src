@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.26 1995/06/12 00:47:23 mycroft Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.27 1995/08/12 23:59:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -112,7 +112,7 @@ arptimer(arg)
 	int s;
 	register struct llinfo_arp *la, *nla;
 
-	s = splnet();
+	s = splsoftnet();
 	timeout(arptimer, NULL, arpt_prune * hz);
 	for (la = llinfo_arp.lh_first; la != 0; la = nla) {
 		register struct rtentry *rt = la->la_rt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.12 1995/03/08 02:57:11 cgd Exp $	*/
+/*	$NetBSD: route.c,v 1.13 1995/08/12 23:59:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -101,7 +101,7 @@ rtalloc1(dst, report)
 	register struct radix_node *rn;
 	struct rtentry *newrt = 0;
 	struct rt_addrinfo info;
-	int  s = splnet(), err = 0, msgtype = RTM_MISS;
+	int  s = splsoftnet(), err = 0, msgtype = RTM_MISS;
 
 	if (rnh && (rn = rnh->rnh_matchaddr((caddr_t)dst, rnh)) &&
 	    ((rn->rn_flags & RNF_ROOT) == 0)) {
@@ -174,7 +174,7 @@ ifafree(ifa)
  * Normally called as a result of a routing redirect
  * message from the network layer.
  *
- * N.B.: must be called at splnet
+ * N.B.: must be called at splsoftnet
  */
 int
 rtredirect(dst, gateway, netmask, flags, src, rtp)
@@ -330,7 +330,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 	struct sockaddr *dst, *gateway, *netmask;
 	struct rtentry **ret_nrt;
 {
-	int s = splnet(); int error = 0;
+	int s = splsoftnet(); int error = 0;
 	register struct rtentry *rt;
 	register struct radix_node *rn;
 	register struct radix_node_head *rnh;

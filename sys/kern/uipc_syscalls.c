@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.13 1995/06/24 20:34:27 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.14 1995/08/12 23:59:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -158,7 +158,7 @@ accept(p, uap, retval)
 		return (error);
 	if (error = getsock(p->p_fd, SCARG(uap, s), &fp))
 		return (error);
-	s = splnet();
+	s = splsoftnet();
 	so = (struct socket *)fp->f_data;
 	if ((so->so_options & SO_ACCEPTCONN) == 0) {
 		splx(s);
@@ -247,7 +247,7 @@ connect(p, uap, retval)
 		m_freem(nam);
 		return (EINPROGRESS);
 	}
-	s = splnet();
+	s = splsoftnet();
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0)
 		if (error = tsleep((caddr_t)&so->so_timeo, PSOCK | PCATCH,
 		    netcon, 0))

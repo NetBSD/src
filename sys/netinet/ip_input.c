@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.23 1995/06/12 06:46:36 mycroft Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.24 1995/08/12 23:59:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -594,7 +594,7 @@ void
 ip_slowtimo()
 {
 	register struct ipq *fp;
-	int s = splnet();
+	int s = splsoftnet();
 
 	fp = ipq.next;
 	if (fp == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.20 1995/06/02 19:50:11 mycroft Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.21 1995/08/13 00:00:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -220,7 +220,7 @@ nfs_connect(nmp, rep)
 		 * connect system call but with the wait timing out so
 		 * that interruptible mounts don't hang here for a long time.
 		 */
-		s = splnet();
+		s = splsoftnet();
 		while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
 			(void) tsleep((caddr_t)&so->so_timeo, PSOCK,
 				"nfscon", 2 * hz);
@@ -1181,7 +1181,7 @@ nfs_timer(arg)
 	static long lasttime = 0;
 	int s, error;
 
-	s = splnet();
+	s = splsoftnet();
 	for (rep = nfs_reqq.tqh_first; rep != 0; rep = rep->r_chain.tqe_next) {
 		nmp = rep->r_nmp;
 		if (rep->r_mrep || (rep->r_flags & R_SOFTTERM))

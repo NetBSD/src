@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.12 1994/10/30 21:47:52 cgd Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -141,7 +141,7 @@ soo_select(fp, which, p)
 	struct proc *p;
 {
 	register struct socket *so = (struct socket *)fp->f_data;
-	register int s = splnet();
+	register int s = splsoftnet();
 
 	switch (which) {
 

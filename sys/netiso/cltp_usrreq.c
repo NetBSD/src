@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.7 1995/06/13 07:13:24 mycroft Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.8 1995/08/12 23:59:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -342,7 +342,7 @@ cltp_usrreq(so, req, m, nam, control)
 			/*
 			 * Must block input while temporarily connected.
 			 */
-			s = splnet();
+			s = splsoftnet();
 			error = iso_pcbconnect(isop, nam);
 			if (error) {
 				splx(s);

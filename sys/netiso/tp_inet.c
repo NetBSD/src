@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.8 1995/06/13 07:13:40 mycroft Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.9 1995/08/12 23:59:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -468,7 +468,7 @@ tpip_input(m, iplen)
 {
 	struct sockaddr_in 	src, dst;
 	register struct ip 		*ip;
-	int						s = splnet(), hdrlen;
+	int						s = splsoftnet(), hdrlen;
 
 	IncStat(ts_pkt_rcvd);
 

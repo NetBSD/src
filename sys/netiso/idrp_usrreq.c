@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.3 1995/06/13 07:13:26 mycroft Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.4 1995/08/12 23:59:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,7 +109,7 @@ idrp_output(m, addr)
 	struct mbuf *m, *addr;
 {
 	register struct sockaddr_iso *siso = mtod(addr, struct sockaddr_iso *);
-	int s = splnet(), i;
+	int s = splsoftnet(), i;
 
 	bcopy((caddr_t)&(siso->siso_addr),
 	      (caddr_t)&idrp_isop.isop_sfaddr.siso_addr, 1 + siso->siso_nlen);

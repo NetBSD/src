@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.22 1995/06/12 02:22:13 mycroft Exp $	*/
+/*	$NetBSD: if.c,v 1.23 1995/08/12 23:59:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -318,7 +318,7 @@ link_rtrequest(cmd, rt, sa)
 /*
  * Mark an interface down and notify protocols of
  * the transition.
- * NOTE: must be called at splnet or eqivalent.
+ * NOTE: must be called at splsoftnet or equivalent.
  */
 void
 if_down(ifp)
@@ -336,7 +336,7 @@ if_down(ifp)
 /*
  * Mark an interface up and notify protocols of
  * the transition.
- * NOTE: must be called at splnet or equivalent.
+ * NOTE: must be called at splsoftnet or equivalent.
  */
 void
 if_up(ifp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.22 1995/07/04 06:28:20 paulus Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.23 1995/08/12 23:59:21 mycroft Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -174,11 +174,6 @@ struct compressor *ppp_compressors[8] = {
     NULL
 };
 #endif /* PPP_COMPRESS */
-
-#ifndef splsoftnet
-#define splsoftnet splnet	/* some ports may not have this */
-#endif
-
 
 /*
  * Called from boot code to establish ppp interfaces.

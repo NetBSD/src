@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.19 1995/05/23 00:19:30 cgd Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.20 1995/08/12 23:59:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -106,7 +106,7 @@ sobind(so, nam)
 	struct socket *so;
 	struct mbuf *nam;
 {
-	int s = splnet();
+	int s = splsoftnet();
 	int error;
 
 	error =
@@ -121,7 +121,7 @@ solisten(so, backlog)
 	register struct socket *so;
 	int backlog;
 {
-	int s = splnet(), error;
+	int s = splsoftnet(), error;
 
 	error =
 	    (*so->so_proto->pr_usrreq)(so, PRU_LISTEN,
@@ -165,7 +165,7 @@ int
 soclose(so)
 	register struct socket *so;
 {
-	int s = splnet();		/* conservative */
+	int s = splsoftnet();		/* conservative */
 	int error = 0;
 
 	if (so->so_options & SO_ACCEPTCONN) {
@@ -210,7 +210,7 @@ discard:
 }
 
 /*
- * Must be called at splnet...
+ * Must be called at splsoftnet...
  */
 int
 soabort(so)
@@ -227,7 +227,7 @@ soaccept(so, nam)
 	register struct socket *so;
 	struct mbuf *nam;
 {
-	int s = splnet();
+	int s = splsoftnet();
 	int error;
 
 	if ((so->so_state & SS_NOFDREF) == 0)
@@ -249,7 +249,7 @@ soconnect(so, nam)
 
 	if (so->so_options & SO_ACCEPTCONN)
 		return (EOPNOTSUPP);
-	s = splnet();
+	s = splsoftnet();
 	/*
 	 * If protocol is connection-based, can only connect once.
 	 * Otherwise, if connected, try to disconnect first.
@@ -272,7 +272,7 @@ soconnect2(so1, so2)
 	register struct socket *so1;
 	struct socket *so2;
 {
-	int s = splnet();
+	int s = splsoftnet();
 	int error;
 
 	error = (*so1->so_proto->pr_usrreq)(so1, PRU_CONNECT2,
@@ -285,7 +285,7 @@ int
 sodisconnect(so)
 	register struct socket *so;
 {
-	int s = splnet();
+	int s = splsoftnet();
 	int error;
 
 	if ((so->so_state & SS_ISCONNECTED) == 0) {
@@ -362,7 +362,7 @@ restart:
 	if (error = sblock(&so->so_snd, SBLOCKWAIT(flags)))
 		goto out;
 	do {
-		s = splnet();
+		s = splsoftnet();
 		if (so->so_state & SS_CANTSENDMORE)
 			snderr(EPIPE);
 		if (so->so_error)
@@ -455,7 +455,7 @@ nopages:
 		    } while (space > 0 && atomic);
 		    if (dontroute)
 			    so->so_options |= SO_DONTROUTE;
-		    s = splnet();				/* XXX */
+		    s = splsoftnet();				/* XXX */
 		    error = (*so->so_proto->pr_usrreq)(so,
 			(flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
 			top, addr, control);
@@ -547,7 +547,7 @@ bad:
 restart:
 	if (error = sblock(&so->so_rcv, SBLOCKWAIT(flags)))
 		return (error);
-	s = splnet();
+	s = splsoftnet();
 
 	m = so->so_rcv.sb_mb;
 	/*
@@ -698,7 +698,7 @@ dontblock:
 		if (mp == 0) {
 			splx(s);
 			error = uiomove(mtod(m, caddr_t) + moff, (int)len, uio);
-			s = splnet();
+			s = splsoftnet();
 		} else
 			uio->uio_resid -= len;
 		if (len == m->m_len - moff) {

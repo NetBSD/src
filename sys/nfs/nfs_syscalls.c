@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.13 1994/10/20 04:28:10 cgd Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.14 1995/08/13 00:00:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -368,7 +368,7 @@ nfssvc_addsock(fp, mynam)
 	slp->ns_nam = mynam;
 	fp->f_count++;
 	slp->ns_fp = fp;
-	s = splnet();
+	s = splsoftnet();
 	so->so_upcallarg = (caddr_t)slp;
 	so->so_upcall = nfsrv_rcv;
 	slp->ns_flag = (SLP_VALID | SLP_NEEDQ);
@@ -398,7 +398,7 @@ nfssvc_nfsd(nsd, argp, p)
 	int error, cacherep, s;
 	int sotype;
 
-	s = splnet();
+	s = splsoftnet();
 	if (nd == (struct nfsd *)0) {
 		nsd->nsd_nfsd = nd = (struct nfsd *)
 			malloc(sizeof (struct nfsd), M_NFSD, M_WAITOK);
@@ -608,7 +608,7 @@ nfssvc_nfsd(nsd, argp, p)
 				nfs_sndunlock(solockp);
 			if (error == EINTR || error == ERESTART) {
 				nfsrv_slpderef(slp);
-				s = splnet();
+				s = splsoftnet();
 				goto done;
 			}
 			break;
@@ -619,7 +619,7 @@ nfssvc_nfsd(nsd, argp, p)
 			m_freem(nam2);
 			break;
 		};
-		s = splnet();
+		s = splsoftnet();
 		if (nfsrv_dorec(slp, nd)) {
 			nd->nd_flag &= ~NFSD_REQINPROG;
 			nd->nd_slp = (struct nfssvc_sock *)0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.23 1995/06/12 03:05:12 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.24 1995/08/12 23:59:38 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -336,7 +336,7 @@ get_sg_cnt(req)
 	register struct mfc *rt;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 	MFCFIND(req->src.s_addr, req->grp.s_addr, rt);
 	splx(s);
 	if (rt != NULL) {
@@ -424,7 +424,7 @@ ip_mrouter_done()
 	int i;
 	int s;
 	
-	s = splnet();
+	s = splsoftnet();
 
 	/* Clear out all the vifs currently in use. */
 	for (vifi = 0; vifi < numvifs; vifi++) {
@@ -575,7 +575,7 @@ add_vif(m)
 			return (error);
 	}
 	
-	s = splnet();
+	s = splsoftnet();
 	/* Define parameters for the tbf structure. */
 	vifp->v_tbf.q_len = 0;
 	vifp->v_tbf.n_tok = 0;
@@ -660,7 +660,7 @@ del_vif(m)
 	if (vifp->v_lcl_addr.s_addr == 0)
 		return (EADDRNOTAVAIL);
 	
-	s = splnet();
+	s = splsoftnet();
 	
 	reset_vif(vifp);
 	
@@ -730,7 +730,7 @@ add_mfc(m)
 
 	mfccp = mtod(m, struct mfcctl *);
 
-	s = splnet();
+	s = splsoftnet();
 	MFCFIND(mfccp->mfcc_origin.s_addr, mfccp->mfcc_mcastgrp.s_addr, rt);
 
 	/* If an entry already exists, just update the fields */
@@ -872,7 +872,7 @@ del_mfc(m)
 		log(LOG_DEBUG, "del_mfc origin %x mcastgrp %x",
 		    ntohl(mfccp->mfcc_origin.s_addr), ntohl(mfccp->mfcc_mcastgrp.s_addr));
 
-	s = splnet();
+	s = splsoftnet();
 
 	MFCFIND(mfccp->mfcc_origin.s_addr, mfccp->mfcc_mcastgrp.s_addr, rt);
 	if (rt == NULL) {
@@ -993,7 +993,7 @@ ip_mforward(m, ifp)
     /*
      * Determine forwarding vifs from the forwarding cache table
      */
-    s = splnet();
+    s = splsoftnet();
     MFCFIND(ip->ip_src.s_addr, ip->ip_dst.s_addr, rt);
 
     /* Entry exists, so forward if necessary */
@@ -1152,7 +1152,7 @@ expire_upcalls()
 	int i;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 
 	for (i = 0; i < MFCTBLSIZ; i++) {
 		register struct mfc *rt, *nrt;
@@ -1546,7 +1546,7 @@ tbf_queue(vifp, m, ip)
 {
     register u_int32_t ql;
     register int index = (vifp - viftable);
-    register int s = splnet();
+    register int s = splsoftnet();
 
     ql = vifp->v_tbf.q_len;
 
@@ -1569,7 +1569,7 @@ tbf_process_q(vifp)
     register struct mbuf *m;
     register struct pkt_queue pkt_1;
     register int index = (vifp - viftable);
-    register int s = splnet();
+    register int s = splsoftnet();
 
     /* loop through the queue at the interface and send as many packets
      * as possible
@@ -1644,7 +1644,7 @@ tbf_dq_sel(vifp, ip)
     register struct ip *ip;
 {
     register int i;
-    register int s = splnet();
+    register int s = splsoftnet();
     register u_int p;
 
     p = priority(vifp, ip);
@@ -1669,7 +1669,7 @@ tbf_send_packet(vifp,m)
 {
     register struct mbuf *mcp;
     int error;
-    int s = splnet();
+    int s = splsoftnet();
 
     if (vifp->v_flags & VIFF_TUNNEL) {
 	/* If tunnel options */
@@ -1705,7 +1705,7 @@ tbf_update_tokens(vifp)
     struct timeval tp;
     register u_int32_t t;
     register u_int32_t elapsed;
-    register int s = splnet();
+    register int s = splsoftnet();
 
     microtime(&tp);
 
@@ -1794,7 +1794,7 @@ ip_rsvp_vif_init(so, m)
     if (rsvpdebug)
 	printf("ip_rsvp_vif_init: vif = %d rsvp_on = %d\n",i,rsvp_on);
 
-    s = splnet();
+    s = splsoftnet();
 
     /* Check vif. */
     if (!legal_vif_num(i)) {
@@ -1842,7 +1842,7 @@ ip_rsvp_vif_done(so, m)
     }
     i = *(mtod(m, int *));
 
-    s = splnet();
+    s = splsoftnet();
 
     /* Check vif. */
     if (!legal_vif_num(i)) {
@@ -1877,7 +1877,7 @@ ip_rsvp_force_done(so)
     if (so->so_type != SOCK_RAW || so->so_proto->pr_protocol != IPPROTO_RSVP)
 	return;
 
-    s = splnet();
+    s = splsoftnet();
 
     /* The socket may be attached to more than one vif...this
      * is perfectly legal.
@@ -1930,7 +1930,7 @@ rsvp_input(m, ifp)
 	return;
     }
 
-    s = splnet();
+    s = splsoftnet();
 
     if (rsvpdebug)
 	printf("rsvp_input: check vifs\n");

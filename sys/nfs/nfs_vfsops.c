@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.37 1995/06/18 14:48:04 cgd Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.38 1995/08/13 00:00:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -341,7 +341,7 @@ nfs_decode_args(nmp, argp)
 	int s;
 	int adjsock;
 
-	s = splnet();
+	s = splsoftnet();
 
 	/* Re-bind if rsrvd port requested and wasn't on one */
 	adjsock = !(nmp->nm_flag & NFSMNT_RESVPORT)

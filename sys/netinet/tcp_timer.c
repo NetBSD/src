@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.12 1995/06/18 20:01:17 cgd Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.13 1995/08/12 23:59:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -74,7 +74,7 @@ tcp_fasttimo()
 	register struct tcpcb *tp;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 	inp = tcbtable.inpt_queue.cqh_first;
 	if (inp)						/* XXX */
 	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
@@ -103,7 +103,7 @@ tcp_slowtimo()
 	int s;
 	register long i;
 
-	s = splnet();
+	s = splsoftnet();
 	tcp_maxidle = TCPTV_KEEPCNT * tcp_keepintvl;
 	/*
 	 * Search through tcb's and update active timers.
