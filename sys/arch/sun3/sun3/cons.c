@@ -101,6 +101,7 @@ cninit()
 	 */
 	cn_tty = cp->cn_tp;
 	(*cp->cn_init)(cp);
+	cn_tty = cp->cn_tp;
 }
 
 cnopen(dev, flag, mode, p)
