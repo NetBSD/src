@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.26 2003/09/13 13:30:06 chris Exp $
+#	$NetBSD: IQ80310,v 1.27 2003/10/06 16:06:06 thorpej Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -157,6 +157,10 @@ com1		at obio? addr 0xfe800000 xint3 2
 
 # i80312 Companion I/O support
 iopxs*		at mainbus?
+
+iopiic*		at iopxs? 			# I2C Controller Unit
+iic*		at iopiic?
+
 pci0		at iopxs? bus ?
 
 # PCI-PCI bridges
