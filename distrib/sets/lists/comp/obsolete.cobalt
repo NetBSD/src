@@ -1,2 +1,3 @@
-# $NetBSD: obsolete.cobalt,v 1.2 2002/11/17 02:48:03 lukem Exp $
+# $NetBSD: obsolete.cobalt,v 1.3 2003/10/25 22:26:08 mycroft Exp $
+./usr/include/cobalt/_G_config.h
 ./usr/include/cobalt/conf.h

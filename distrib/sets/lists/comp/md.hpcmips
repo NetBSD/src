@@ -1,8 +1,7 @@
-# $NetBSD: md.hpcmips,v 1.17 2003/01/18 17:50:24 thorpej Exp $
+# $NetBSD: md.hpcmips,v 1.18 2003/10/25 22:26:08 mycroft Exp $
 ./usr/include/dev/hpc	comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h	comp-c-include
 ./usr/include/hpcmips	comp-c-include
-./usr/include/hpcmips/_G_config.h	comp-c-include
 ./usr/include/hpcmips/ansi.h	comp-c-include
 ./usr/include/hpcmips/aout_machdep.h	comp-c-include
 ./usr/include/hpcmips/apmvar.h	comp-c-include
