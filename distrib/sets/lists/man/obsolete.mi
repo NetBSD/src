@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.46.2.2 2002/06/27 08:59:38 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.46.2.3 2002/06/30 08:13:38 lukem Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/g711conv.0
 /usr/share/man/cat1/i386
@@ -72,6 +72,7 @@
 /usr/share/man/cat5/uuencode.format.0
 /usr/share/man/cat5/ypserv.acl.0
 /usr/share/man/cat7/miscellaneous.0
+/usr/share/man/cat8/alpha/installboot.0
 /usr/share/man/cat8/alpha/installboot.old.0
 /usr/share/man/cat8/gettable.0
 /usr/share/man/cat8/htable.0
@@ -92,12 +93,16 @@
 /usr/share/man/cat8/portmap.0
 /usr/share/man/cat8/pppd.cbcp.0
 /usr/share/man/cat8/rdconfig.0
+/usr/share/man/cat8/sparc/installboot.0
+/usr/share/man/cat8/sparc64/installboot.0
 /usr/share/man/cat8/statmsg.0
+/usr/share/man/cat8/sun3/installboot.0
 /usr/share/man/cat8/sun3x
 /usr/share/man/cat8/sun3x/installboot.0
 /usr/share/man/cat8/sysconfd.0
 /usr/share/man/cat8/update.0
 /usr/share/man/cat8/usbd.0
+/usr/share/man/cat8/vax/installboot.0
 /usr/share/man/cat8/vmstat.0
 /usr/share/man/cat8/xntpd.0
 /usr/share/man/cat8/xntpdc.0
@@ -174,6 +179,7 @@
 /usr/share/man/man5/securenet.5
 /usr/share/man/man5/uuencode.format.5
 /usr/share/man/man5/ypserv.acl.5
+/usr/share/man/man8/alpha/installboot.8
 /usr/share/man/man8/alpha/installboot.old.8
 /usr/share/man/man8/gettable.8
 /usr/share/man/man8/htable.8
@@ -194,12 +200,16 @@
 /usr/share/man/man8/portmap.8
 /usr/share/man/man8/pppd.cbcp.8
 /usr/share/man/man8/rdconfig.8
+/usr/share/man/man8/sparc/installboot.8
+/usr/share/man/man8/sparc64/installboot.8
 /usr/share/man/man8/statmsg.8
+/usr/share/man/man8/sun3/installboot.8
 /usr/share/man/man8/sun3x
 /usr/share/man/man8/sun3x/installboot.8
 /usr/share/man/man8/sysconfd.8
 /usr/share/man/man8/update.8
 /usr/share/man/man8/usbd.8
+/usr/share/man/man8/vax/installboot.8
 /usr/share/man/man8/vmstat.8
 /usr/share/man/man8/xntpd.8
 /usr/share/man/man8/xntpdc.8
