@@ -1,4 +1,4 @@
-/*	$NetBSD: properties.h,v 1.2 2001/10/05 19:05:06 eeh Exp $	*/
+/*	$NetBSD: properties.h,v 1.3 2003/07/04 07:41:18 itojun Exp $	*/
 
 /*  
  * Copyright (c) 2001 Eduardo Horvath.
@@ -52,15 +52,11 @@ typedef struct propdb *propdb_t;
 propdb_t propdb_create(const char *name);
 void propdb_destroy(propdb_t db);
 
-int prop_set(propdb_t db, opaque_t object, const char *name,
-	void *val, size_t len, int type, int wait);
-size_t prop_objs(propdb_t db, opaque_t *objects, size_t len);
-size_t prop_list(propdb_t db, opaque_t object, char *names,
-	size_t len);
-size_t prop_get(propdb_t db, opaque_t object,	const char *name,
-	void *val, size_t len, int *type);
-int prop_delete(propdb_t db, opaque_t object, const char *name);
-int prop_copy(propdb_t db, opaque_t source, opaque_t dest,
-	int wait);
+int prop_set(propdb_t, opaque_t, const char *, void *, size_t, int, int);
+size_t prop_objs(propdb_t, opaque_t *, size_t);
+size_t prop_list(propdb_t, opaque_t, char *, size_t);
+size_t prop_get(propdb_t, opaque_t, const char *, void *, size_t, int *);
+int prop_delete(propdb_t, opaque_t, const char *);
+int prop_copy(propdb_t, opaque_t, opaque_t, int);
 
 #endif
