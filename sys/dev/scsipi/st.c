@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.90 1998/07/04 01:50:20 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.91 1998/07/15 20:13:57 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -2049,9 +2049,9 @@ st_setpos(st, hard, blkptr)
 
 
 /*
- * Look at the returned sense and act on the error and detirmine
- * The unix error number to pass back... (0 = report no error)
- *                            (-1 = continue processing)
+ * Look at the returned sense and act on the error and determine
+ * the unix error number to pass back..., 0 (== report no error),
+ * -1 = retry the operation, -2 continue error processing.
  */
 int
 st_interpret_sense(xs)
@@ -2061,7 +2061,7 @@ st_interpret_sense(xs)
 	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
 	struct buf *bp = xs->bp;
 	struct st_softc *st = sc_link->device_softc;
-	int retval = -1;
+	int retval = SCSIRET_CONTINUE;
 	int doprint = ((xs->flags & SCSI_SILENT) == 0);
 	u_int8_t key;
 	int32_t info;
@@ -2070,7 +2070,7 @@ st_interpret_sense(xs)
 	 * If the device is not open yet, let generic handle
 	 */
 	if ((sc_link->flags & SDEV_OPEN) == 0) {
-		return (-1);
+		return (retval);
 	}
 
 	/*
@@ -2079,7 +2079,7 @@ st_interpret_sense(xs)
 	 */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70 &&
 	    (sense->error_code & SSD_ERRCODE) != 0x71) {	/* DEFFERRED */
-		return (-1);
+		return (retval);
 	}
 
 	if (sense->error_code & SSD_ERRCODE_VALID)
@@ -2131,7 +2131,7 @@ st_interpret_sense(xs)
 			if (st->flags & ST_AT_FILEMARK) {
 				if (bp)
 					bp->b_resid = xs->resid;
-				return (0);
+				return (SCSIRET_NOERROR);
 			}
 		}
 	} else {		/* must be variable mode */
@@ -2151,7 +2151,7 @@ st_interpret_sense(xs)
 				doprint = 0;
 			}
 		} else if (sense->flags & SSD_FILEMARK) {
-			retval = 0;
+			retval = SCSIRET_NOERROR;
 		} else if (sense->flags & SSD_ILI) {
 			if (info < 0) {
 				/*
@@ -2166,7 +2166,7 @@ st_interpret_sense(xs)
 				}
 				retval = EIO;
 			} else {
-				retval = 0;
+				retval = SCSIRET_NOERROR;
 			}
 		}
 		xs->resid = info;
@@ -2175,7 +2175,7 @@ st_interpret_sense(xs)
 	}
 
 #ifndef	SCSIDEBUG
-	if (retval == 0 && key == SKEY_NO_SENSE) {
+	if (retval == SCSIRET_NOERROR && key == SKEY_NO_SENSE) {
 		doprint = 0;
 	}
 #endif
@@ -2197,7 +2197,7 @@ st_interpret_sense(xs)
 				bp->b_resid = xs->resid;
 				/* return an EOF */
 			}
-			retval = 0;
+			retval = SCSIRET_NOERROR;
 		}
 	}
 #ifdef	SCSIVERBOSE
