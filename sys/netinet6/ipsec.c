@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.48 2002/05/25 10:01:01 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.49 2002/06/08 20:06:45 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.48 2002/05/25 10:01:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.49 2002/06/08 20:06:45 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3658,7 +3658,7 @@ ipsec_clearhist(m)
 
 	n = ipsec_findaux(m);
 	if ((n) && n->m_len > sizeof(struct ipsecaux))
-		n->m_len = sizeof(struct ipsecaux); 
+		n->m_len = sizeof(struct ipsecaux);
 	ipsec_optaux(m, n);
 }
 

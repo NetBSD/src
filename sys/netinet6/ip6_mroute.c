@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.33 2002/06/07 18:19:05 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.34 2002/06/08 20:06:45 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.33 2002/06/07 18:19:05 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.34 2002/06/08 20:06:45 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -1795,7 +1795,7 @@ pim6_input(mp, offp, proto)
 		}
 #endif
 
- 		rc = looutput(mif6table[reg_mif_num].m6_ifp, m,
+		rc = looutput(mif6table[reg_mif_num].m6_ifp, m,
 			      (struct sockaddr *) &dst,
 			      (struct rtentry *) NULL);
 
