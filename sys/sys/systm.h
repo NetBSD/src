@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.70 1997/07/28 23:25:06 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.71 1997/10/19 02:29:20 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -45,8 +45,8 @@
  * It can only be decreased by process 1 (/sbin/init).
  *
  * Security levels are as follows:
- *   -1	permannently insecure mode - always run system in level 0 mode.
- *    0	insecure mode - immutable and append-only flags make be turned off.
+ *   -1	permanently insecure mode - always run system in level 0 mode.
+ *    0	insecure mode - immutable and append-only flags may be turned off.
  *	All devices may be read or written subject to permission modes.
  *    1	secure mode - immutable and append-only flags may not be changed;
  *	raw disks of mounted filesystems, /dev/mem, and /dev/kmem are
@@ -59,7 +59,7 @@
  * In normal operation, the system runs in level 0 mode while single user
  * and in level 1 mode while multiuser. If level 2 mode is desired while
  * running multiuser, it can be set in the multiuser startup script
- * (/etc/rc.local) using sysctl(1). If it is desired to run the system
+ * (/etc/rc.local) using sysctl(8). If it is desired to run the system
  * in level 0 mode while multiuser, initialize the variable securelevel
  * in /sys/kern/kern_sysctl.c to -1. Note that it is NOT initialized to
  * zero as that would allow the vmunix binary to be patched to -1.
