@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.16 1998/01/12 18:31:05 thorpej Exp $	*/
+/*	$NetBSD: ppi.c,v 1.17 1999/08/05 18:08:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -344,7 +344,7 @@ again:
 		/*
 		 * Check if we timed out during sleep or uiomove
 		 */
-		(void) splsoftclock();
+		(void) spllowersoftclock();
 		if ((sc->sc_flags & PPIF_UIO) == 0) {
 #ifdef DEBUG
 			if (ppidebug & PDB_IO)

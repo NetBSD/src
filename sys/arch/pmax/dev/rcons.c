@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.29 1999/05/23 17:59:39 ad Exp $	*/
+/*	$NetBSD: rcons.c,v 1.30 1999/08/05 18:08:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -442,7 +442,7 @@ rconsstart(tp)
 		tp->t_state |= TS_BUSY;
 		if (0 /* hardware prio */) {
 			/* called at level zero - update screen now. */
-			(void) splsoftclock();
+			(void) spllowersoftclock();
 			/*kd_putfb(tp);*/
 			(void) spltty();
 			tp->t_state &= ~TS_BUSY;

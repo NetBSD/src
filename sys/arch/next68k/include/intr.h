@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 1999/08/04 07:14:13 dbj Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 1999/08/05 18:08:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -36,48 +36,8 @@
 /* Probably want to dealwith IPL's here @@@ */
 
 #ifdef _KERNEL
-/*
- * spl functions; all but spl0 are done in-line
- */
-
-#define _spl(s)								\
-({									\
-        register int _spl_r;						\
-									\
-        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" :		\
-                "&=d" (_spl_r) : "di" (s));				\
-        _spl_r;								\
-})
-
-#define _splraise(s)							\
-({									\
-	int _spl_r;							\
-									\
-	__asm __volatile ("						\
-		clrl	d0					;	\
-		movw	sr,d0					;	\
-		movl	d0,%0					;	\
-		andw	#0x700,d0				;	\
-		movw	%1,d1					;	\
-		andw	#0x700,d1				;	\
-		cmpw	d0,d1					;	\
-		jle	1f					;	\
-		movw	%1,sr					;	\
-	    1:"							:	\
-		    "&=d" (_spl_r)				:	\
-		    "di" (s)					:	\
-		    "d0", "d1");					\
-	_spl_r;								\
-})
 
 /* spl0 requires checking for software interrupts */
-#define spl1()  _spl(PSL_S|PSL_IPL1)
-#define spl2()  _spl(PSL_S|PSL_IPL2)
-#define spl3()  _spl(PSL_S|PSL_IPL3)
-#define spl4()  _spl(PSL_S|PSL_IPL4)
-#define spl5()  _spl(PSL_S|PSL_IPL5)
-#define spl6()  _spl(PSL_S|PSL_IPL6)
-#define spl7()  _spl(PSL_S|PSL_IPL7)
 
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
@@ -94,7 +54,8 @@
 #define splbio()        _splraise(PSL_S|PSL_IPL3)
 #define splnet()        _splraise(PSL_S|PSL_IPL3)
 #define splsoftnet()    _splraise(PSL_S|PSL_IPL2)
-#define splsoftclock()  spl1()
+#define	splsoftclock()	splraise1()
+#define spllowersoftclock() spl1()
 
 #define spldma()        _splraise(PSL_S|PSL_IPL6)
 

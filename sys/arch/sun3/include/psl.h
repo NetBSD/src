@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.14 1998/11/24 17:07:54 kleink Exp $	*/
+/*	$NetBSD: psl.h,v 1.15 1999/08/05 18:08:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,19 +36,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	PSL_C
+#ifndef _SUN3_PSL_H_
+#define	_SUN3_PSL_H_
+
 #include <m68k/psl.h>
 
 /* Could define this in the common <m68k/psl.h> instead. */
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
-#ifndef __GNUC__
-/* No inline, use the real functions in locore.s */
-extern int _getsr __P((void));
-extern int _spl __P((int new));
-extern int _splraise __P((int new));
-#else	/* GNUC */
 /*
  * Define inline functions for PSL manipulation.
  * These are as close to macros as one can get.
@@ -59,8 +55,6 @@ extern int _splraise __P((int new));
  */
 
 static __inline int _getsr __P((void));
-static __inline int _spl __P((int));
-static __inline int _splraise __P((int));
 
 /* Get current sr value. */
 static __inline int
@@ -72,38 +66,6 @@ _getsr(void)
 	return (rv);
 }
 
-/* Set the current sr and return the old value. */
-static __inline int
-_spl(int new)
-{
-	register int old;
-
-	__asm __volatile (
-		"clrl %0; movew sr,%0; movew %1,sr" :
-			"&=d" (old) : "di" (new));
-	return (old);
-}
-
-/*
- * Like _spl() but can be used in places where the
- * interrupt priority may already have been raised,
- * without risk of enabling interrupts by accident.
- * The comparison includes the "S" bit (always on)
- * because that generates more efficient code.
- */
-static __inline int
-_splraise(int new)
-{
-	register int old;
-
-	__asm __volatile ("clrl %0; movew sr,%0" : "&=d" (old));
-	if ((old & PSL_HIGHIPL) < new) {
-		__asm __volatile ("movew %0,sr;" : : "di" (new));
-	}
-	return (old);
-}
-#endif	/* GNUC */
-
 /*
  * The rest of this is sun3 specific, because other ports may
  * need to do special things in spl0() (i.e. simulate SIR).
@@ -111,28 +73,22 @@ _splraise(int new)
  * have no need to check for any simulated interrupts, etc.
  */
 
-#define spl0()  _spl(PSL_S|PSL_IPL0)
-#define spl1()  _spl(PSL_S|PSL_IPL1)
-#define spl2()  _spl(PSL_S|PSL_IPL2)
-#define spl3()  _spl(PSL_S|PSL_IPL3)
-#define spl4()  _spl(PSL_S|PSL_IPL4)
-#define spl5()  _spl(PSL_S|PSL_IPL5)
-#define spl6()  _spl(PSL_S|PSL_IPL6)
-#define spl7()  _spl(PSL_S|PSL_IPL7)
+#define spl0()  _spl0()		/* we have real software interrupts */
 #define splx(x)	_spl(x)
 
 /* IPL used by soft interrupts: netintr(), softclock() */
-#define splsoftclock()  spl1()
-#define splsoftnet()    spl1()
+#define	spllowersoftclock() spl1()
+#define splsoftclock()  splraise1()
+#define splsoftnet()    splraise1()
 
 /* Highest block device (strategy) IPL. */
-#define splbio()        spl2()
+#define splbio()        splraise2()
 
 /* Highest network interface IPL. */
-#define splnet()        spl3()
+#define splnet()        splraise3()
 
 /* Highest tty device IPL. */
-#define spltty()        spl4()
+#define spltty()        splraise4()
 
 /*
  * Requirement: imp >= (highest network, tty, or disk IPL)
@@ -144,7 +100,7 @@ _splraise(int new)
 #define splimp()        _splraise(PSL_S|PSL_IPL4)
 
 /* Intersil clock hardware interrupts (hard-wired at 5) */
-#define splclock()      spl5()
+#define splclock()      splraise5()
 #define splstatclock()  splclock()
 
 /* Block out all interrupts (except NMI of course). */
@@ -152,4 +108,4 @@ _splraise(int new)
 #define splsched()      spl7()
 
 #endif	/* KERNEL && !_LOCORE */
-#endif	/* PSL_C */
+#endif /* _SUN3_PSL_H_ */

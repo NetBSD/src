@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.26 1998/02/26 16:02:02 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.27 1999/08/05 18:08:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -298,7 +298,7 @@ kdstart(tp)
 			tp->t_state |= TS_BUSY;
 			if ((s & PSL_IPL) == 0) {
 				/* called at level zero - update screen now. */
-				(void) splsoftclock();
+				(void) spllowersoftclock();
 				kd_putfb(tp);
 				(void) spltty();
 				tp->t_state &= ~TS_BUSY;
