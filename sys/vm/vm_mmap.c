@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.53.2.1 1998/03/09 22:05:14 mellon Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.53.2.2 1998/05/10 14:30:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,6 +55,7 @@
 #include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/conf.h>
+#include <sys/stat.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -130,6 +131,7 @@ sys_mmap(p, v, retval)
 		syscallarg(long) pad;
 		syscallarg(off_t) pos;
 	} */ *uap = v;
+	struct vattr va;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct vnode *vp;
@@ -263,8 +265,21 @@ sys_mmap(p, v, retval)
 		else if (prot & PROT_READ)
 			return (EACCES);
 		if (flags & MAP_SHARED) {
-			if (fp->f_flag & FWRITE)
-				maxprot |= VM_PROT_WRITE;
+			/*
+			 * if the file is writable, only add PROT_WRITE to
+			 * maxprot if the file is not immutable, append-only.
+			 * otherwise, if we have asked for PROT_WRITE, return
+			 * EPERM.
+			 */
+			if (fp->f_flag & FWRITE) {
+				if ((error =
+				    VOP_GETATTR(vp, &va, p->p_ucred, p)))
+					return (error);
+				if ((va.va_flags & (IMMUTABLE|APPEND)) == 0)
+					maxprot |= VM_PROT_WRITE;
+				else if (prot & PROT_WRITE)
+					return (EPERM);
+			}
 			else if (prot & PROT_WRITE)
 				return (EACCES);
 		} else
