@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.1.2.1 1998/12/23 16:47:29 minoura Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.1.2.2 1998/12/27 14:13:04 minoura Exp $	*/
 
 /*
  *
@@ -54,6 +54,7 @@ struct intio_attach_args {
 	bus_space_tag_t	ia_bst;	/* bus_space tag */
 	bus_dma_tag_t	ia_dmat; /* bus_dma tag */
 
+	char		*ia_name; /* device name */
 	int		ia_addr; /* addr */
 	int		ia_size;
 	int		ia_intr; /* interrupt vector */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.1.2.1 1998/12/23 16:47:29 minoura Exp $	*/
+/*	$NetBSD: intio.c,v 1.1.2.2 1998/12/27 14:13:04 minoura Exp $	*/
 
 /*
  *
@@ -135,6 +135,7 @@ static struct intio_attach_args initial_ia = {
 	&intio_bus,
 	0/*XXX*/,
 
+	"mfp",			/* ia_name */
 	MFP_ADDR,		/* ia_addr */
 	MFP_INTR,		/* ia_intr */
 	-1,			/* ia_errintr */
@@ -187,6 +188,7 @@ intio_search(parent, cf, aux)
 
 	ia->ia_bst = sc->sc_bst;
 	ia->ia_dmat = sc->sc_dmat;
+	ia->ia_name = cf->cf_driver->cd_name;
 	ia->ia_addr = cf->cf_addr;
 	ia->ia_intr = cf->cf_intr;
 	ia->ia_errintr = cf->cf_errintr;
