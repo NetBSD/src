@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.15 1999/01/19 08:30:48 lukem Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.16 1999/01/20 13:11:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.15 1999/01/19 08:30:48 lukem Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.16 1999/01/20 13:11:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -89,6 +89,7 @@ getusershell()
 
 	if (curshell == NULL)
 		curshell = initshells();
+	/*LINTED*/
 	ret = (__aconst char *)*curshell;
 	if (ret != NULL)
 		curshell++;
@@ -114,6 +115,7 @@ setusershell()
 
 static int	_local_initshells __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _local_initshells(rv, cb_data, ap)
 	void	*rv;
@@ -150,6 +152,7 @@ _local_initshells(rv, cb_data, ap)
 #ifdef HESIOD
 static int	_dns_initshells __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _dns_initshells(rv, cb_data, ap)
 	void	*rv;
@@ -184,13 +187,13 @@ _dns_initshells(rv, cb_data, ap)
 			free(hp);
 		}
 	}
-	return NS_SUCCESS;
 }
 #endif /* HESIOD */
 
 #ifdef YP
 static int	_nis_initshells __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _nis_initshells(rv, cb_data, ap)
 	void	*rv;
@@ -216,7 +219,7 @@ _nis_initshells(rv, cb_data, ap)
 
 	for (;;) {
 		char	*ypcur = NULL;
-		int	 ypcurlen;
+		int	 ypcurlen = 0;	/* XXX: GCC */
 		char	*key, *data;
 		int	 keylen, datalen;
 		int	 r;
@@ -250,7 +253,6 @@ _nis_initshells(rv, cb_data, ap)
 		data[datalen] = '\0';		/* clear trailing \n */
 		sl_add(sl, data);
 	}
-	return NS_SUCCESS;
 }
 #endif /* YP */
 
