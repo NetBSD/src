@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_glue.c	7.8 (Berkeley) 5/15/91
+ *	from: @(#)vm_glue.c	7.8 (Berkeley) 5/15/91
+ *	$Id: vm_glue.c,v 1.3 1993/05/20 03:59:22 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -59,7 +60,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_glue.c,v 1.2 1993/05/07 07:03:50 cgd Exp $";
 
 #include "param.h"
 #include "systm.h"

@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_init.c	7.3 (Berkeley) 4/21/91
+ *	from: @(#)vm_init.c	7.3 (Berkeley) 4/21/91
+ *	$Id: vm_init.c,v 1.2 1993/05/20 03:59:24 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

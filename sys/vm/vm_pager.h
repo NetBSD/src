@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_pager.h	7.2 (Berkeley) 4/20/91
+ *	from: @(#)vm_pager.h	7.2 (Berkeley) 4/20/91
+ *	$Id: vm_pager.h,v 1.3 1993/05/20 03:59:43 cgd Exp $
  */
 
 #ifndef _VM_VM_PAGER_H_

@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: vm_unix.c 1.1 89/11/07$
  *
- *	@(#)vm_unix.c	7.2 (Berkeley) 4/20/91
+ *	from: @(#)vm_unix.c	7.2 (Berkeley) 4/20/91
+ *	$Id: vm_unix.c,v 1.2 1993/05/20 03:59:49 cgd Exp $
  */
 
 /*
