@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.h,v 1.3 1996/04/19 19:51:48 mark Exp $ */
+/*	$NetBSD: rtc.h,v 1.4 1997/10/14 09:20:32 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.

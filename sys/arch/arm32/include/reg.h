@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.3 1996/10/15 00:21:36 mark Exp $ */
+/*	$NetBSD: reg.h,v 1.4 1997/10/14 09:20:31 mark Exp $	*/
 
 /*
  * Copyright (C) 1994, 1995 Frank Lancaster

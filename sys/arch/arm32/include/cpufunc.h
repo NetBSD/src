@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.3 1997/07/29 01:18:29 mark Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.4 1997/10/14 09:20:07 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -54,7 +54,7 @@ struct cpu_functions {
 
 	/* MMU functions */
 
-	void	(*cf_control)		__P((u_int control));
+	u_int	(*cf_control)		__P((u_int bic, u_int eor));
 	void	(*cf_domains)		__P((u_int domains));
 	void	(*cf_setttb)		__P((u_int ttb));
 	u_int	(*cf_faultstatus)	__P((void));
@@ -110,6 +110,8 @@ struct cpu_functions {
 	int	(*cf_prefetchabt_fixup)	__P((void *arg));
 
 	void	(*cf_context_switch)	__P((void));
+
+	void	(*cf_setup)		__P((char *string));
 };
 
 extern struct cpu_functions cpufuncs;
@@ -117,7 +119,7 @@ extern u_int cputype;
 
 #define cpu_id()		cpufuncs.cf_id()
 
-#define cpu_control(c)		cpufuncs.cf_control(c)
+#define cpu_control(c, e)	cpufuncs.cf_control(c, e)
 #define cpu_domains(d)		cpufuncs.cf_domains(d)
 #define cpu_setttb(t)		cpufuncs.cf_setttb(t)
 #define cpu_faultstatus()	cpufuncs.cf_faultstatus()
@@ -161,14 +163,19 @@ extern u_int cputype;
 
 #define cpu_dataabt_fixup(a)		cpufuncs.cf_dataabt_fixup(a)
 #define cpu_prefetchabt_fixup(a)	cpufuncs.cf_prefetchabt_fixup(a)
+#define ABORT_FIXUP_OK		0	/* fixup suceeded */
+#define ABORT_FIXUP_FAILED	1	/* fixup failed */
+#define ABORT_FIXUP_RETURN	2	/* abort handler should return */
+
+#define cpu_setup(a)			cpufuncs.cf_setup(a)
 
 int	set_cpufuncs		__P(());
-#define ARCHITECTURE_NOT_PRESENT	1
-#define ARCHITECTURE_NOT_SUPPORTED	2
+#define ARCHITECTURE_NOT_PRESENT	1	/* known but not configured */
+#define ARCHITECTURE_NOT_SUPPORTED	2	/* not known */
 
 void	cpufunc_nullop		__P((void));
 u_int	cpufunc_id		__P((void));
-void	cpufunc_control		__P((u_int control));
+u_int	cpufunc_control		__P((u_int clear, u_int bic));
 void	cpufunc_domains		__P((u_int domains));
 u_int	cpufunc_faultstatus	__P((void));
 u_int	cpufunc_faultaddress	__P((void));
@@ -179,21 +186,50 @@ void	arm67_tlb_flush		__P((void));
 void	arm67_tlb_purge		__P((u_int va));
 void	arm67_cache_flush	__P((void));
 void	arm67_context_switch	__P((void));
-#endif
+#endif	/* CPU_ARM6 || CPU_ARM7 */
 
 #ifdef CPU_ARM6
 int	arm6_dataabt_fixup	__P((void *arg));
 int	arm6_prefetchabt_fixup	__P((void *arg));
-#endif
+void	arm6_setup		__P((char *string));
+#endif	/* CPU_ARM6 */
 
 #ifdef CPU_ARM7
 int	arm7_dataabt_fixup	__P((void *arg));
 int	arm7_prefetchabt_fixup	__P((void *arg));
+void	arm7_setup		__P((char *string));
+#endif	/* CPU_ARM7 */
+
+#ifdef CPU_ARM8
+void	arm8_setttb		__P((u_int ttb));
+void	arm8_tlb_flushID	__P((void));
+void	arm8_tlb_flushID_SE	__P((u_int va));
+void	arm8_cache_flushID	__P((void));
+void	arm8_cache_flushID_E	__P((u_int entry));
+void	arm8_cache_cleanID	__P((void));
+void	arm8_cache_cleanID_E	__P((u_int entry));
+void	arm8_cache_purgeID	__P((void));
+void	arm8_cache_purgeID_E	__P((u_int entry));
+
+void	arm8_cache_syncI	__P((void));
+void	arm8_cache_cleanID_rng	__P((u_int start, u_int end));
+void	arm8_cache_cleanD_rng	__P((u_int start, u_int end));
+void	arm8_cache_purgeID_rng	__P((u_int start, u_int end));
+void	arm8_cache_purgeD_rng	__P((u_int start, u_int end));
+void	arm8_cache_syncI_rng	__P((u_int start, u_int end));
+
+int	arm8_dataabt_fixup	__P((void *arg));
+int	arm8_prefetchabt_fixup	__P((void *arg));
+
+void	arm8_context_switch	__P((void));
+
+void	arm8_setup		__P((char *string));
 #endif
 
 #ifdef CPU_SA110
 void	sa110_setttb		__P((u_int ttb));
 void	sa110_tlb_flushID	__P((void));
+void	sa110_tlb_flushID_SE	__P((u_int va));
 void	sa110_tlb_flushI	__P((void));
 void	sa110_tlb_flushD	__P((void));
 void	sa110_tlb_flushD_SE	__P((u_int va));
@@ -225,7 +261,9 @@ int	sa110_dataabt_fixup	__P((void *arg));
 int	sa110_prefetchabt_fixup	__P((void *arg));
 
 void	sa110_context_switch	__P((void));
-#endif
+
+void	sa110_setup		__P((char *string));
+#endif	/* CPU_SA110 */
 
 #define tlb_flush	cpu_tlb_flushID
 #define setttb		cpu_setttb

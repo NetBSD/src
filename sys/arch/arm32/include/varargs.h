@@ -1,4 +1,4 @@
-/* $NetBSD: varargs.h,v 1.2 1996/03/14 23:11:53 mark Exp $ */
+/*	$NetBSD: varargs.h,v 1.3 1997/10/14 09:20:37 mark Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

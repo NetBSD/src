@@ -1,4 +1,4 @@
-/* $NetBSD: iic.h,v 1.2 1997/01/03 23:13:05 mark Exp $ */
+/*	$NetBSD: iic.h,v 1.3 1997/10/14 09:20:18 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.

@@ -1,4 +1,4 @@
-/* $NetBSD: fp.h,v 1.3 1996/10/15 00:15:37 mark Exp $ */
+/*	$NetBSD: fp.h,v 1.4 1997/10/14 09:20:13 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.

@@ -1,4 +1,4 @@
-/* $NetBSD: vconsole.h,v 1.3 1996/10/14 22:35:03 mark Exp $ */
+/*	$NetBSD: vconsole.h,v 1.4 1997/10/14 09:20:38 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Melvyn Tang-Richardson
@@ -40,6 +40,11 @@
  * Virtual console header
  *
  * Created      : 18/09/94
+ */
+
+/*
+ * Hopefully this file has a short life with the new console coming just
+ * round the corner
  */
 
 #ifdef _KERNEL

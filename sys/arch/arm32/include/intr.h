@@ -1,7 +1,7 @@
-/*	$NetBSD: trap.h,v 1.3 1997/10/14 09:20:35 mark Exp $	*/
+/* 	$NetBSD: intr.h,v 1.1 1997/10/14 09:20:19 mark Exp $	*/
 
 /*
- * Copyright (c) 1995 Mark Brinicombe.
+ * Copyright (c) 1997 Mark Brinicombe.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,29 +30,30 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * RiscBSD kernel project
- *
- * trap.h
- *
- * Various trap definitions
  */
 
-/*
- * Instructions used for breakpoints.
- *
- * These are an undefined instructions.
- * Technically the userspace breakpoint could be a SWI
- * but we want to keep this the same as IPKDB which
- * needs an undefined instruction as a break point.
- * Ideally ARM would define several standard instruction
- * sequences for use as breakpoints.
- */
+#ifndef _ARM32_INTR_H_
+#define _ARM32_INTR_H_
 
-#define GDB_BREAKPOINT		0xe6000011	/* Used by GDB */
-#define IPKDB_BREAKPOINT	0xe6000010	/* Used by IPKDB */
-#define KERNEL_BREAKPOINT	0xe7ffffff	/* Used by DDB */
+/* Define the various Interrupt Priority Levels */
 
-#define USER_BREAKPOINT		GDB_BREAKPOINT
+/* Interrupt Priority Levels are not mutually exclusive. */
 
-/* End of trap.h */
+#define IPL_BIO        0	/* block I/O */
+#define IPL_NET        1	/* network */
+#define IPL_TTY        2	/* terminal */
+#define IPL_CLOCK      3	/* clock */
+#define IPL_IMP        4	/* memory allocation */
+#define IPL_NONE       5
+
+#define IPL_LEVELS     6
+
+#define	IST_UNUSABLE	-1	/* interrupt cannot be used */
+#define	IST_NONE	0	/* none (dummy) */
+#define	IST_PULSE	1	/* pulsed */
+#define	IST_EDGE	2	/* edge-triggered */
+#define	IST_LEVEL	3	/* level-triggered */
+
+#include <machine/irqhandler.h>
+
+#endif	/* _ARM32_INTR_H */

@@ -1,4 +1,4 @@
-/* $NetBSD: profile.h,v 1.5 1997/07/31 00:22:15 mark Exp $ */
+/*	$NetBSD: profile.h,v 1.6 1997/10/14 09:20:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe
@@ -36,39 +36,16 @@
  * pushes a trapframe. Pity we cannot insert assembly before the function
  * prologue.
  */
-#if 0
-#define	MCOUNT \
-extern void mcount() asm("mcount");					\
-void									\
-mcount()								\
-{									\
-	register int selfpc, frompcindex;				\
-	/*								\
-	 * find the return address for mcount,				\
-	 * and the return address for mcount's caller.			\
-	 *								\
-	 * selfpc = pc pushed by mcount call				\
-	 */								\
-	asm("stmfd\tsp!, {r0-r3}");					\
-	asm("mov\t%0, lr" : "=r" (selfpc));				\
-	/*								\
-	 * frompcindex = pc pushed by call into self.			\
-	 */								\
-	asm("mov\t%0, ip" : "=r" (frompcindex));			\
-	_mcount(frompcindex, selfpc);					\
-	asm("ldmfd\tsp!, {r0-r3}");					\
-}
-#else
 #define	MCOUNT								\
 	asm(".text");							\
 	asm(".align	0");						\
-	asm(".type	mcount, @function");				\
+	asm(".type	mcount,@function");				\
 	asm(".global	mcount");					\
 	asm("mcount:");							\
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
-	asm("stmfd	sp!, {r0-r3,lr}");				\
+	asm("stmfd	sp!, {r0-r3, lr}");				\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
@@ -87,8 +64,7 @@ mcount()								\
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	asm("ldmfd	sp!, {r0-r3,pc}");
-#endif
+	asm("ldmfd	sp!, {r0-r3, pc}");
 
 #ifdef _KERNEL
 /*

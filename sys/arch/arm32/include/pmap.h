@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.7 1997/10/05 22:59:36 mark Exp $ */
+/*	$NetBSD: pmap.h,v 1.8 1997/10/14 09:20:26 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -50,16 +50,27 @@
 #define vtophys(va) \
 	((*vtopte(va) & PG_FRAME) | ((unsigned int)(va) & ~PG_FRAME))
 
+/* Structure that describes a Level 1 page table */
+struct l1pt {
+	SIMPLEQ_ENTRY(l1pt)	pt_queue;	/* Queue pointers */
+	struct pglist		pt_plist;	/* Allocated page list */
+	vm_offset_t		pt_va;		/* Allocated virtual address */
+	int			pt_flags;	/* Flags */
+#define	PTFLAG_STATIC		1		/* Statically allocated */
+#define PTFLAG_KPT		2		/* Kernel pt's are mapped */
+#define PTFLAG_CLEAN		4		/* L1 is clean */
+};
+
 /*
  * Pmap stuff
  */
 struct pmap {
 	pd_entry_t		*pm_pdir;	/* KVA of page directory */
-	void			*pm_unused0;	/* Reserved for future */
-	void			*pm_unused1;	/* Reserved for future */
+	struct l1pt		*pm_l1pt;	/* L1 descriptor */
+	void			*pm_unused1;	/* Reserved for l2 map */
 	vm_offset_t		pm_pptpt;	/* PA of pt's page table */
 	vm_offset_t		pm_vptpt;	/* VA of pt's page table */
-	boolean_t		pm_pdchanged;	/* pdir changed */
+/*	boolean_t		pm_pdchanged;*/	/* pdir changed */
 	short			pm_dref;	/* page directory ref count */
 	short			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
@@ -116,7 +127,7 @@ extern pmap_t	kernel_pmap;
 extern struct pmap	kernel_pmap_store;
 
 #define pmap_kernel()	(&kernel_pmap_store)
-#define pmap_update()	tlb_flush()
+#define pmap_update()	cpu_tlb_flushID()
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 boolean_t pmap_testbit __P((vm_offset_t, int));

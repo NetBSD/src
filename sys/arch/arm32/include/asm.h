@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.4 1997/10/05 22:51:05 mark Exp $ */
+/*	$NetBSD: asm.h,v 1.5 1997/10/14 09:20:01 mark Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
