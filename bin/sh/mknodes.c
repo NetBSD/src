@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mknodes.c	5.1 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: mknodes.c,v 1.4 1993/08/01 18:58:08 mycroft Exp $";
+static char rcsid[] = "$Id: mknodes.c,v 1.5 1993/09/05 17:32:07 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -101,11 +101,15 @@ char *savestr();
 
 main(argc, argv)
 	char **argv;
-	{
-	if (argc != 3)
+{
+	if (argc != 3) {
 		error("usage: mknodes file\n");
-	if ((infp = fopen(argv[1], "r")) == NULL)
+		return(1);
+	}
+	if ((infp = fopen(argv[1], "r")) == NULL) {
 		error("Can't open %s", argv[1]);
+		return(1);
+	}
 	while (readline()) {
 		if (line[0] == ' ' || line[0] == '\t')
 			parsefield();
@@ -113,6 +117,7 @@ main(argc, argv)
 			parsenode();
 	}
 	output(argv[2]);
+	return(0);
 }
 
 
