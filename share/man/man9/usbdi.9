@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.2 2001/06/19 13:20:53 wiz Exp $
+.\"	$NetBSD: usbdi.9,v 1.3 2001/12/26 01:08:56 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,7 +98,7 @@ usbd_status
 .It Dv usbd_status usbd_interface_count(usbd_device_handle dev, u_int8_t *count)
 .It Dv usbd_status usbd_interface2device_handle(usbd_interface_handle iface, usbd_device_handle *dev)
 .It Dv usbd_status usbd_device2interface_handle(usbd_device_handle dev, u_int8_t ifaceno, usbd_interface_handle *iface)
-
+.Pp
 .It Dv usbd_device_handle usbd_pipe2device_handle(usbd_pipe_handle)
 .It Dv void *usbd_alloc_buffer(usbd_xfer_handle req, u_int32_t size)
 .It Dv void usbd_free_buffer(usbd_xfer_handle req)
@@ -181,9 +181,6 @@ through
 .It Dv void usb_detach_wait(device_ptr_t)
 .It Dv void usb_detach_wakeup(device_ptr_t)
 .El
-.Sh BUGS
-This man page is under development, so its biggest shortcoming is
-incompleteness.
 .Sh SEE ALSO
 .Xr usb 4
 .Sh HISTORY
@@ -196,3 +193,6 @@ within the USB organisation.  Right after this definition the OpenUSBDI
 development got closed for open source developers, so this interface
 has not followed the further changes.
 The OpenUSBDI specification is now available again, but looks different.
+.Sh BUGS
+This man page is under development, so its biggest shortcoming is
+incompleteness.
