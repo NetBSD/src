@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.24 2000/12/22 08:37:17 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.25 2000/12/25 10:09:31 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.24 2000/12/22 08:37:17 sato Exp $";
+    "$Id: hpcfb.c,v 1.25 2000/12/25 10:09:31 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ struct hpcfb_devconfig {
 	int dc_scrno;
 	int	dc_memsize;
 #endif /* HPCFB_MULTI */
+	u_char *dc_fbaddr;
 };
 
 #define HPCFB_MAX_SCREEN 5
@@ -333,6 +334,8 @@ hpcfbattach(parent, self, aux)
 		if (hpcfb_init(&ha->ha_fbconflist[0], sc->sc_dc) != 0) {
 			return;
 		}
+		sc->sc_dc->dc_tvram = hpcfb_console_tvram;
+		bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
 		sc->sc_dc->dc_state |= HPCFB_DC_CURRENT;
 		sc->sc_dc->dc_sc = sc;
 	}
@@ -357,6 +360,12 @@ hpcfbattach(parent, self, aux)
 		sc->sc_accessops->setclut(sc->sc_accessctx, 
 					  &hpcfb_console_dc.dc_rinfo);
 	}
+
+	/* set font for hardware accel */
+	if (sc->sc_accessops->font) {
+		sc->sc_accessops->font(sc->sc_accessctx, 
+					sc->sc_dc->dc_rinfo.ri_font);
+	}	
 
 	/* Add a power hook to power management */
 	sc->sc_powerhook = powerhook_establish(hpcfb_power, sc);
@@ -408,13 +417,13 @@ hpcfb_thread(arg)
 	 * Loop forever, doing a periodic check for APM events.
 	 */
 	for (;;) {
-		/* HPCFB_LOCK(apmsc); */
+		/* HPCFB_LOCK(sc); */
 		sc->sc_dc->dc_state |= HPCFB_DC_SCRTHREAD;	
-		if (sc->sc_mapping)
+		if (!sc->sc_mapping)
 			hpcfb_scroll_update(sc->sc_dc);
 		sc->sc_dc->dc_state &= ~HPCFB_DC_SCRTHREAD;	
-		/* APM_UNLOCK(apmsc); */
-		(void) tsleep(sc, PWAIT, "hpcfb",  (8 * hz) / 7);
+		/* APM_UNLOCK(sc); */
+		(void) tsleep(sc, PWAIT, "hpcfb",  (8 * hz) / 7 / 10);
 	}
 }
 #endif /* HPCFB_JUMP */
@@ -438,7 +447,6 @@ hpcfb_cnattach(fbconf)
 	struct hpcfb_fbconf __fbconf __attribute__((__unused__));
 	long defattr;
 
-	bzero(&hpcfb_console_dc, sizeof(struct hpcfb_devconfig));
 #if NBIVIDEO > 0
 	if (fbconf == 0) {
 		memset(&__fbconf, 0, sizeof(struct hpcfb_fbconf));
@@ -447,8 +455,12 @@ hpcfb_cnattach(fbconf)
 		fbconf = &__fbconf;
 	}
 #endif /* NBIVIDEO > 0 */
+	bzero(&hpcfb_console_dc, sizeof(struct hpcfb_devconfig));
 	if (hpcfb_init(fbconf, &hpcfb_console_dc) != 0)
 		return (ENXIO);
+
+	hpcfb_console_dc.dc_tvram = hpcfb_console_tvram;
+	bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
 
 	hpcfb_console_wsscreen = hpcfb_stdscreen;
 	hpcfb_console_wsscreen.nrows = hpcfb_console_dc.dc_rows;
@@ -471,6 +483,7 @@ hpcfb_init(fbconf, dc)
 	vaddr_t fbaddr;
 
 	fbaddr = (vaddr_t)fbconf->hf_baseaddr;
+	dc->dc_fbaddr = (u_char *)fbaddr;
 
 	/* init rasops */
 	ri = &dc->dc_rinfo;
@@ -502,8 +515,6 @@ hpcfb_init(fbconf, dc)
 	dc->dc_scroll = 0;
 	callout_init(&dc->dc_scroll_ch);
 #endif /* HPCFB_JUMP */
-	dc->dc_tvram = hpcfb_console_tvram;
-	bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
 #if defined(HPCFB_MULTI)
 	dc->dc_memsize = ri->ri_stride * ri->ri_height;
 #endif /*  defined(HPCFB_MULTI) */
@@ -608,13 +619,14 @@ hpcfb_ioctl(v, cmd, data, flag, p)
 			if (sc->sc_mapping)
 				hpcfb_refresh_screen(sc);
 			sc->sc_mapping = 0;
-		} else {
 #ifdef HPCFB_JUMP
 			if (!sc->sc_mapping)
 				hpcfb_check_scroll(dc);
 #endif /* HPCFB_JUMP */
 			sc->sc_mapping = 1;
 		}
+		if (sc && sc->sc_accessops->iodone)
+			(*sc->sc_accessops->iodone)(sc->sc_accessctx);
 		return 0;	
 
 	case WSDISPLAYIO_GETCMAP:
@@ -744,13 +756,22 @@ hpcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	}
 	dc = sc->screens[sc->nscreens];
 	dc->dc_sc = sc;
+
+	/* copy master raster info */
 	dc->dc_rinfo = sc->sc_dc->dc_rinfo;
+	if (sc->sc_accessops->font) {
+		sc->sc_accessops->font(sc->sc_accessctx, 
+					sc->sc_dc->dc_rinfo.ri_font);
+	}	
+
+	dc->dc_fbaddr = dc->dc_rinfo.ri_bits;
+	dc->dc_rows = dc->dc_rinfo.ri_rows;
+	dc->dc_cols = dc->dc_rinfo.ri_cols;
+	dc->dc_memsize = dc->dc_rinfo.ri_stride * dc->dc_rinfo.ri_height;
+
 	dc->dc_scrno = sc->nscreens;
 	dc->dc_curx = -1;
 	dc->dc_cury = -1;
-	dc->dc_rows = sc->sc_dc->dc_rinfo.ri_rows;
-	dc->dc_cols = sc->sc_dc->dc_rinfo.ri_cols;
-	dc->dc_memsize = sc->sc_dc->dc_rinfo.ri_stride * sc->sc_dc->dc_rinfo.ri_height;
 	if (dc->dc_tvram == NULL){
 		dc->dc_tvram = 
 			malloc(sizeof(struct hpcfb_tvrow)*dc->dc_rows,
@@ -830,15 +851,13 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 
 	if (odc->dc_curx >= 0 && odc->dc_cury >= 0)
 		hpcfb_cursor_raw(odc, 0,  odc->dc_cury, odc->dc_curx); /* disable cursor */
-	/* switch screen image from old to new */
-	dc->dc_rinfo.ri_bits = odc->dc_rinfo.ri_bits;
-
 	/* disable old screen */
 	odc->dc_state &= ~HPCFB_DC_CURRENT;
 	odc->dc_rinfo.ri_bits = NULL;
 
-	/* switch screen */
+	/* switch screen to new one */
 	dc->dc_state |= HPCFB_DC_CURRENT;
+	dc->dc_rinfo.ri_bits = dc->dc_fbaddr;
 	sc->sc_dc = dc;
 
 	/* redraw screen image */
@@ -863,6 +882,8 @@ hpcfb_pollc(v, on)
 	struct hpcfb_softc *sc = v;
 
 	sc->sc_polling = on;
+	if (sc && sc->sc_accessops->iodone 
+		(*sc->sc_accessops->iodone)(sc->sc_accessctx);
 
 	return;
 }
@@ -1010,6 +1031,7 @@ hpcfb_putchar(cookie, row, col, uc, attr)
 	dc->dc_state |= HPCFB_DC_DRAWING;
 	if (sc && sc->sc_accessops->putchar 
 	       && (dc->dc_state&HPCFB_DC_CURRENT)) {
+		font = ri->ri_font;
 		yoff = row * ri->ri_font->fontheight;
 		xoff =  col * ri->ri_font->fontwidth;
 		fclr = ri->ri_devcmap[((u_int)attr >> 24) & 15];
@@ -1289,7 +1311,7 @@ hpcfb_scroll_update(v)
 	/* callout_stop(&dc->dc_scroll_ch); */
 	dc->dc_state &= ~HPCFB_DC_SCROLLPENDING;
 	if (dc->dc_curx > 0 && dc->dc_cury > 0)
-		hpcfb_cursor(dc, 0,  dc->dc_cury, dc->dc_curx); 
+		hpcfb_cursor_raw(dc, 0,  dc->dc_cury, dc->dc_curx); 
 	if ((dc->dc_state&HPCFB_DC_UPDATE)) {
 		hpcfb_redraw(dc, dc->dc_min_row, 
 				dc->dc_max_row - dc->dc_min_row, 0);
@@ -1297,7 +1319,7 @@ hpcfb_scroll_update(v)
 		hpcfb_redraw(dc, dc->dc_scroll_dst, dc->dc_scroll_num, 0);
 	}
 	if (dc->dc_curx > 0 && dc->dc_cury > 0)
-		hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); 
+		hpcfb_cursor_raw(dc, 1,  dc->dc_cury, dc->dc_curx); 
 }
 
 void
@@ -1309,6 +1331,8 @@ hpcfb_do_scroll(v)
 	dc->dc_state |= HPCFB_DC_SCRTHREAD;	
 	if (dc->dc_state&(HPCFB_DC_DRAWING|HPCFB_DC_TDRAWING))
 		dc->dc_state |= HPCFB_DC_SCRDELAY;
+	else if (dc->dc_thread)
+		wakeup(dc->dc_sc);
 	else if (!dc->dc_sc->sc_mapping)
 		hpcfb_scroll_update(v);
 	dc->dc_state &= ~HPCFB_DC_SCRTHREAD;	
