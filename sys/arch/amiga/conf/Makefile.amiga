@@ -1,5 +1,5 @@
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.amiga,v 1.8 1994/02/13 21:14:32 chopps Exp $
+#	$Id: Makefile.amiga,v 1.9 1994/02/17 09:09:57 chopps Exp $
 #
 # Makefile for 4.4 BSD
 #
@@ -35,7 +35,7 @@ AMIGA=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys 
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Dmc68020 -Damiga -DREFBIT
-CFLAGS=	-O -mc68020 -m68881 ${COPTS}
+CFLAGS=	-O2 -mc68020 -m68881 ${COPTS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
