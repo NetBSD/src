@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.20 2004/07/16 02:36:58 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.20 2004/07/16 02:36:58 dyoung Exp $");
 #endif
 
 /*
@@ -103,6 +103,9 @@ SYSCTL_INT(_debug, OID_AUTO, ieee80211, CTLFLAG_RW, &ieee80211_debug,
 
 int	ieee80211_inact_max = IEEE80211_INACT_MAX;
 static int ieee80211_inact_max_nodenum;
+
+struct ieee80211com_head ieee80211com_head =
+    LIST_HEAD_INITIALIZER(ieee80211com_head);
 
 static void ieee80211_set11gbasicrates(struct ieee80211_rateset *,
 		enum ieee80211_phymode);
