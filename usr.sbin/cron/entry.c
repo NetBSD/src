@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: entry.c,v 1.1.1.3 1994/01/12 18:37:40 jtc Exp $";
+static char rcsid[] = "$Id: entry.c,v 1.1.1.4 1994/01/20 02:47:23 jtc Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -63,6 +63,9 @@ free_entry(e)
 }
 
 
+/* return NULL if eof or syntax error occurs;
+ * otherwise return a pointer to a new entry.
+ */
 entry *
 load_entry(file, error_func, pw, envp)
 	FILE		*file;
@@ -290,35 +293,13 @@ load_entry(file, error_func, pw, envp)
 	 */
 	return e;
 
-eof:	/* if we want to return EOF, we have to jump down here and
-	 * free the entry we've been building.
-	 *
-	 * now, in some cases, a parse routine will have returned EOF to
-	 * indicate an error, but the file is not actually done.  since, in
-	 * that case, we only want to skip the line with the error on it,
-	 * we'll do that here.
-	 *
-	 * many, including the author, see what's below as evil programming
-	 * practice: since I didn't want to change the structure of this
-	 * whole function to support this error recovery, I recurse.  Cursed!
-	 * (At least it's tail-recursion, as if it matters in C - vix/8feb88)
-	 * I'm seriously considering using (another) GOTO...   argh!
-	 * (this does not get less disgusting over time.  vix/15nov88)
-	 * (indeed not.  vix/20dec93)
-	 */
-
-	(void) free(e);
-
-	if (feof(file))
-		return NULL;
-
-	if (error_func)
+ eof:
+	free(e);
+	if (ecode != e_none && error_func)
 		(*error_func)(ecodes[(int)ecode]);
-	do  {ch = get_char(file);}
-	while (ch != EOF && ch != '\n');
-	if (ch == EOF)
-		return NULL;
-	return load_entry(file, error_func, pw, envp);
+	while (ch != EOF && ch != '\n')
+		ch = get_char(file);
+	return NULL;
 }
 
 
