@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.8 2002/01/10 05:31:07 lukem Exp $	*/
+/*	$NetBSD: makefs.c,v 1.9 2002/01/18 08:39:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: makefs.c,v 1.8 2002/01/10 05:31:07 lukem Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.9 2002/01/18 08:39:24 lukem Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -92,8 +92,27 @@ main(int argc, char *argv[])
 	debug = 0;
 	if ((fstype = get_fstype(DEFAULT_FSTYPE)) == NULL)
 		errx(1, "Unknown default fs type `%s'.", DEFAULT_FSTYPE);
+
+		/* set default fsoptions */
 	(void)memset(&fsoptions, 0, sizeof(fsoptions));
 	fsoptions.fd = -1;
+	fsoptions.sectorsize = -1;
+	fsoptions.bsize= -1;
+	fsoptions.fsize= -1;
+	fsoptions.cpg= -1;
+	fsoptions.density= -1;
+	fsoptions.ntracks= -1;
+	fsoptions.nsectors= -1;
+	fsoptions.rpm= -1;
+	fsoptions.minfree= -1;
+	fsoptions.optimization= -1;
+	fsoptions.maxcontig= -1;
+	fsoptions.rotdelay= -1;
+	fsoptions.maxbpg= -1;
+	fsoptions.nrpos= -1;
+	fsoptions.avgfilesize= -1;
+	fsoptions.avgfpdir= -1;
+
 	specfile = NULL;
 	if (gettimeofday(&start, NULL) == -1)
 		err(1, "Unable to get system time");
