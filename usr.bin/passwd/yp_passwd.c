@@ -1,3 +1,5 @@
+/*	$NetBSD: yp_passwd.c,v 1.9 1996/08/09 09:19:42 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -30,13 +32,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
 #ifndef lint
-/*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$Id: yp_passwd.c,v 1.8 1995/02/08 19:54:12 phil Exp $";
+#if 0
+static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";
+#else
+static char rcsid[] = "$NetBSD: yp_passwd.c,v 1.9 1996/08/09 09:19:42 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #ifdef	YP
 
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <netdb.h>
@@ -54,7 +61,8 @@ static char rcsid[] = "$Id: yp_passwd.c,v 1.8 1995/02/08 19:54:12 phil Exp $";
 #define _PASSWORD_LEN PASS_MAX
 #endif
 
-extern char *progname;
+extern	char *__progname;		/* from crt0.o */
+
 static char *getnewpasswd();
 static struct passwd *ypgetpwnam();
 
@@ -70,16 +78,15 @@ pw_error(name, err, eval)
 
 	if (err) {
 		sverrno = errno;
-		(void)fprintf(stderr, "%s: ", progname);
+		(void)fprintf(stderr, "%s: ", __progname);
 		if (name)
 			(void)fprintf(stderr, "%s: ", name);
 		(void)fprintf(stderr, "%s\n", strerror(sverrno));
 	}
-	(void)fprintf(stderr,
-	    "%s: YP passwd database unchanged\n", progname);
-	exit(eval);
+	errx(eval, "YP passwd database unchanged");
 }
 
+int
 yp_passwd(username)
 	char *username;
 {
@@ -96,57 +103,39 @@ yp_passwd(username)
 	/*
 	 * Get local domain
 	 */
-	if (r = yp_get_default_domain(&domain)) {
-		fprintf(stderr, "%s: can't get local YP domain. Reason: %s\n",
-		    progname, yperr_string(r));
-		exit(1);
-	}
+	if (r = yp_get_default_domain(&domain))
+		errx(1, "can't get local YP domain.  Reason: %s",
+		    yperr_string(r));
 
 	/*
 	 * Find the host for the passwd map; it should be running
 	 * the daemon.
 	 */
-	if ((r = yp_master(domain, "passwd.byname", &master)) != 0) {
-		fprintf(stderr,
-		    "%s: can't find the master YP server. Reason: %s\n",
-		    progname, yperr_string(r));
-		exit(1);
-	}
+	if ((r = yp_master(domain, "passwd.byname", &master)) != 0)
+		errx(1, "can't find the master YP server.  Reason: %s",
+		    yperr_string(r));
 
 	/*
 	 * Ask the portmapper for the port of the daemon.
 	 */
 	if ((rpcport = getrpcport(master, YPPASSWDPROG,
-	    YPPASSWDPROC_UPDATE, IPPROTO_UDP)) == 0) {
-		fprintf(stderr,
-		    "%s: master YP server not running yppasswd daemon.\n",
-		    progname);
-		fprintf(stderr, "\tCan't change password.\n");
-		exit(1);
-	}
+	    YPPASSWDPROC_UPDATE, IPPROTO_UDP)) == 0)
+		errx(1, "master YP server not running yppasswd daemon.\n\t%s\n",
+		    "Can't change password.");
 
 	/*
 	 * Be sure the port is priviledged
 	 */
-	if (rpcport >= IPPORT_RESERVED) {
-		fprintf(stderr, "%s: yppasswd daemon is on an invalid port.\n",
-		    progname);
-		exit(1);
-	}
+	if (rpcport >= IPPORT_RESERVED)
+		errx(1, "yppasswd daemon is on an invalid port.");
 
 	/* Get user's login identity */
-	if (!(pw = ypgetpwnam(username))) {
-		(void)fprintf(stderr, "%s: unknown user %s.\n",
-		    progname, username);
-		exit(1);
-	}
-		
-	if (uid && uid != pw->pw_uid) {
-		fprintf(stderr,
-		    "%s: you may only change your own password: %s\n",
-		    progname, strerror(EACCES));
-		exit(1);
-	}
+	if (!(pw = ypgetpwnam(username)))
+		errx(1, "unknown user %s", username);
+
+	if (uid && uid != pw->pw_uid)
+		errx(1, "you may only change your own password: %s",
+		    strerror(EACCES));
 
 	/* prompt for new password */
 	yppasswd.newpw.pw_passwd = getnewpasswd(pw, &yppasswd.oldpass);
@@ -161,21 +150,23 @@ yp_passwd(username)
 	
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
 	if (client==NULL) {
-		fprintf(stderr, "cannot contact yppasswdd on %s: Reason: %s\n",
+		warnx("cannot contact yppasswdd on %s:  Reason: %s",
 		    master, yperr_string(YPERR_YPBIND));
 		return(YPERR_YPBIND);
 	}
+
 	client->cl_auth = authunix_create_default();
 	tv.tv_sec = 2;
 	tv.tv_usec = 0;
 	r = clnt_call(client, YPPASSWDPROC_UPDATE,
-		      xdr_yppasswd, &yppasswd, xdr_int, &status, tv);
+	    xdr_yppasswd, &yppasswd, xdr_int, &status, tv);
 	if (r)
-		fprintf(stderr, "%s: rpc to yppasswdd failed.\n", progname);
+		errx(1, "rpc to yppasswdd failed.");
 	else if (status)
 		printf("Couldn't change YP password.\n");
 	else
-		printf("The YP password has been changed on %s, the master YP passwd server.\n", master);
+		printf("The YP password has been changed on %s, %s\n",
+		    master, "the master YP passwd server.");
 	exit(0);
 }
 

@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.13 1996/08/09 09:19:33 thorpej Exp $
 #	from: @(#)Makefile	5.11 (Berkeley) 2/19/91
-#	$Id: Makefile,v 1.12 1996/05/15 21:55:25 jtc Exp $
 
 PROG=	passwd
 SRCS=	local_passwd.c yp_passwd.c passwd.c getpwent.c
