@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.12 2003/04/16 13:35:31 wiz Exp $
+.\"     $NetBSD: pci.9,v 1.13 2003/06/30 19:12:34 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -288,10 +288,7 @@ The argument
 .Fa tag
 is the PCI tag for the current device attached to PCI chipset
 .Fa pc .
-.It Fo pci_mapreg_map
-.Fa "pa" "reg" "type"  "busflags" "tagp" "handlep"
-.Fa "basep" "sizep"
-.Fc
+.It Fn pci_mapreg_map "pa" "reg" "type"  "busflags" "tagp" "handlep" "basep" "sizep"
 Maps the register windows for the device into kernel virtual address
 space.
 This function is generally only called during the driver attach step

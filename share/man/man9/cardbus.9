@@ -1,4 +1,4 @@
-.\"     $NetBSD: cardbus.9,v 1.9 2003/04/16 13:35:25 wiz Exp $
+.\"     $NetBSD: cardbus.9,v 1.10 2003/06/30 19:12:33 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -201,10 +201,7 @@ Disables device function
 .Fa function
 on the card.
 When no device functions are enabled, the turn is turned off.
-.It Fo cardbus_mapreg_map
-.Fa "csc" "cf" "reg" "type" "busflags"
-.Fa "tagp" "handlep" "basep" "sizep"
-.Fc
+.It Fn cardbus_mapreg_map "csc" "cf" "reg" "type" "busflags" "tagp" "handlep" "basep" "sizep"
 Maps bus-space on the value of Base Address Register (BAR) indexed by
 .Fa reg
 for device function
