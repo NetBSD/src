@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.71 2000/09/13 01:53:01 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.72 2000/10/31 21:21:11 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.71 2000/09/13 01:53:01 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.72 2000/10/31 21:21:11 jeffs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,9 +257,7 @@ pagemove(from, to, size)
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
 #ifdef MIPS3
-	if (CPUISMIPS3 &&
-	    ((int)from & mips_CacheAliasMask) !=
-	    ((int)to & mips_CacheAliasMask)) {
+	if (CPUISMIPS3 && (mips_indexof(from) != mips_indexof(to))) {
 		MachHitFlushDCache((vaddr_t)from, size);
 	}
 #endif
