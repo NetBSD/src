@@ -1,4 +1,4 @@
-/*	$NetBSD: pickup.c,v 1.1.1.8 2004/05/31 00:24:41 heas Exp $	*/
+/*	$NetBSD: pickup.c,v 1.1.1.9 2004/07/28 22:49:23 heas Exp $	*/
 
 /*++
 /* NAME
@@ -37,7 +37,7 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	As the pickup daemon is a relatively long-running process, up
+/*	As the pickup(8) daemon is a relatively long-running process, up
 /*	to an hour may pass before a \fBmain.cf\fR change takes effect.
 /*	Use the command "\fBpostfix reload\fR" command to speed up a change.
 /*

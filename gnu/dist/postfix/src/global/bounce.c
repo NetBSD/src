@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce.c,v 1.1.1.6 2004/05/31 00:24:29 heas Exp $	*/
+/*	$NetBSD: bounce.c,v 1.1.1.7 2004/07/28 22:49:14 heas Exp $	*/
 
 /*++
 /* NAME
@@ -259,10 +259,11 @@ int     vbounce_append(int flags, const char *id, const char *orig_rcpt,
 			     ATTR_TYPE_STR, MAIL_ATTR_WHY, vstring_str(why),
 				ATTR_TYPE_END) == 0
 	    && ((flags & DEL_REQ_FLAG_RECORD) == 0
-		|| vtrace_append(flags, id, orig_rcpt, recipient, relay,
-			      entry, dsn_code, dsn_action, fmt, ap) == 0)) {
-	    vlog_adhoc(id, orig_rcpt, recipient, relay,
-		       entry, log_status, fmt, ap);
+		|| trace_append(flags, id, orig_rcpt, recipient, relay,
+				entry, dsn_code, dsn_action,
+				"%s", vstring_str(why)) == 0)) {
+	    log_adhoc(id, orig_rcpt, recipient, relay,
+		      entry, log_status, "%s", vstring_str(why));
 	    status = (var_soft_bounce ? -1 : 0);
 	} else if ((flags & BOUNCE_FLAG_CLEAN) == 0) {
 	    status = defer_append(flags, id, orig_rcpt, recipient, offset,
@@ -386,10 +387,11 @@ int     vbounce_one(int flags, const char *queue, const char *id,
 			     ATTR_TYPE_STR, MAIL_ATTR_WHY, vstring_str(why),
 				ATTR_TYPE_END) == 0
 	    && ((flags & DEL_REQ_FLAG_RECORD) == 0
-		|| vtrace_append(flags, id, orig_rcpt, recipient, relay,
-				 entry, "5.0.0", "failed", fmt, ap) == 0)) {
-	    vlog_adhoc(id, orig_rcpt, recipient, relay,
-		       entry, "bounced", fmt, ap);
+		|| trace_append(flags, id, orig_rcpt, recipient, relay,
+				entry, "5.0.0", "failed",
+				"%s", vstring_str(why)) == 0)) {
+	    log_adhoc(id, orig_rcpt, recipient, relay,
+		      entry, "bounced", "%s", vstring_str(why));
 	    status = 0;
 	} else if ((flags & BOUNCE_FLAG_CLEAN) == 0) {
 	    status = defer_append(flags, id, orig_rcpt, recipient, offset,

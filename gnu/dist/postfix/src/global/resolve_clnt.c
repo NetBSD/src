@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve_clnt.c,v 1.1.1.7 2004/05/31 00:24:35 heas Exp $	*/
+/*	$NetBSD: resolve_clnt.c,v 1.1.1.8 2004/07/28 22:49:19 heas Exp $	*/
 
 /*++
 /* NAME
@@ -129,6 +129,7 @@
   */
 extern CLNT_STREAM *rewrite_clnt_stream;
 
+static VSTRING *last_class;
 static VSTRING *last_addr;
 static RESOLVE_REPLY last_reply;
 
@@ -153,6 +154,7 @@ void    resolve_clnt(const char *class, const char *addr, RESOLVE_REPLY *reply)
      * One-entry cache.
      */
     if (last_addr == 0) {
+	last_class = vstring_alloc(10);
 	last_addr = vstring_alloc(100);
 	resolve_clnt_init(&last_reply);
     }
@@ -171,7 +173,8 @@ void    resolve_clnt(const char *class, const char *addr, RESOLVE_REPLY *reply)
      */
 #define IFSET(flag, text) ((reply->flags & (flag)) ? (text) : "")
 
-    if (*addr && strcmp(addr, STR(last_addr)) == 0) {
+    if (*addr && strcmp(addr, STR(last_addr)) == 0
+	&& strcmp(class, STR(last_class)) == 0) {
 	vstring_strcpy(reply->transport, STR(last_reply.transport));
 	vstring_strcpy(reply->nexthop, STR(last_reply.nexthop));
 	vstring_strcpy(reply->recipient, STR(last_reply.recipient));
@@ -248,6 +251,7 @@ void    resolve_clnt(const char *class, const char *addr, RESOLVE_REPLY *reply)
     /*
      * Update the cache.
      */
+    vstring_strcpy(last_class, class);
     vstring_strcpy(last_addr, addr);
     vstring_strcpy(last_reply.transport, STR(reply->transport));
     vstring_strcpy(last_reply.nexthop, STR(reply->nexthop));

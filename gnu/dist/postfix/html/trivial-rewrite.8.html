@@ -156,13 +156,13 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
               destination).
 
 <b>ADDRESS VERIFICATION CONTROLS</b>
-       Postfix version 2.1 introduces sender and address  verifi-
-       cation.   This  feature  is  implemented  by sending probe
-       email  messages  that  are  not  actually  delivered.   By
-       default, address verification probes use the same route as
-       regular mail. To  override  specific  aspects  of  message
-       routing  for  address  verification probes, specify one or
-       more of the following:
+       Postfix  version  2.1  introduces  sender  and   recipient
+       address  verification.   This  feature  is  implemented by
+       sending probe email messages that are not actually  deliv-
+       ered.   By  default,  address  verification probes use the
+       same route as regular mail. To override  specific  aspects
+       of  message routing for address verification probes, spec-
+       ify one or more of the following:
 
        <b><a href="postconf.5.html#address_verify_local_transport">address_verify_local_transport</a> ($<a href="postconf.5.html#local_transport">local_transport</a>)</b>
               Overrides the <a href="postconf.5.html#local_transport">local_transport</a> parameter setting for

@@ -303,9 +303,9 @@
 #        exploit.
 # 
 #        /etc/postfix/main.cf:
-#            header_checks = regexp:/etc/postfix/header_checks
+#            body_checks = regexp:/etc/postfix/body_checks
 # 
-#        /etc/postfix/header_checks:
+#        /etc/postfix/body_checks:
 #            /^<iframe src=(3D)?cid:.* height=(3D)?0 width=(3D)?0>$/
 #                REJECT IFRAME vulnerability exploit
 # 
