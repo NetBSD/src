@@ -1,4 +1,4 @@
-/*	$NetBSD: bitstring.h,v 1.4 1994/10/26 00:55:45 cgd Exp $	*/
+/*	$NetBSD: bitstring.h,v 1.5 1997/05/14 15:49:55 pk Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -54,7 +54,7 @@ typedef	unsigned char bitstr_t;
 
 				/* allocate a bitstring on the stack */
 #define	bit_decl(name, nbits) \
-	(name)[bitstr_size(nbits)]
+	((name)[bitstr_size(nbits)])
 
 				/* is bit N of bitstring name set? */
 #define	bit_test(name, bit) \
@@ -62,34 +62,34 @@ typedef	unsigned char bitstr_t;
 
 				/* set bit N of bitstring name */
 #define	bit_set(name, bit) \
-	(name)[_bit_byte(bit)] |= _bit_mask(bit)
+	((name)[_bit_byte(bit)] |= _bit_mask(bit))
 
 				/* clear bit N of bitstring name */
 #define	bit_clear(name, bit) \
-	(name)[_bit_byte(bit)] &= ~_bit_mask(bit)
+	((name)[_bit_byte(bit)] &= ~_bit_mask(bit))
 
 				/* clear bits start ... stop in bitstring */
-#define	bit_nclear(name, start, stop) { \
+#define	bit_nclear(name, start, stop) do { \
 	register bitstr_t *_name = name; \
 	register int _start = start, _stop = stop; \
 	while (_start <= _stop) { \
 		bit_clear(_name, _start); \
 		_start++; \
 		} \
-}
+} while(0)
 
 				/* set bits start ... stop in bitstring */
-#define	bit_nset(name, start, stop) { \
+#define	bit_nset(name, start, stop) do { \
 	register bitstr_t *_name = name; \
 	register int _start = start, _stop = stop; \
 	while (_start <= _stop) { \
 		bit_set(_name, _start); \
 		_start++; \
 		} \
-}
+} while(0)
 
 				/* find first bit clear in name */
-#define	bit_ffc(name, nbits, value) { \
+#define	bit_ffc(name, nbits, value) do { \
 	register bitstr_t *_name = name; \
 	register int _bit, _nbits = nbits, _value = -1; \
 	for (_bit = 0; _bit < _nbits; ++_bit) \
@@ -98,10 +98,10 @@ typedef	unsigned char bitstr_t;
 			break; \
 		} \
 	*(value) = _value; \
-}
+} while(0)
 
 				/* find first bit set in name */
-#define	bit_ffs(name, nbits, value) { \
+#define	bit_ffs(name, nbits, value) do { \
 	register bitstr_t *_name = name; \
 	register int _bit, _nbits = nbits, _value = -1; \
 	for (_bit = 0; _bit < _nbits; ++_bit) \
@@ -110,6 +110,6 @@ typedef	unsigned char bitstr_t;
 			break; \
 		} \
 	*(value) = _value; \
-}
+} while(0)
 
 #endif /* !_BITSTRING_H_ */
