@@ -100,3 +100,18 @@
 >>20	belong			!0		executable
 >>20	belong			=0		object file
 >16	belong			>0		not stripped
+
+0	belong&0377777777	041400507	NetBSD/i386 core
+>12	string			>\0		from '%s'
+
+0	belong&0377777777	041600507	NetBSD/m68k core
+>12	string			>\0		from '%s'
+
+0	belong&0377777777	042000507	NetBSD/m68k4k core
+>12	string			>\0		from '%s'
+
+0	belong&0377777777	042200507	NetBSD/ns32532 core
+>12	string			>\0		from '%s'
+
+0	belong&0377777777	042400507	NetBSD/sparc core
+>12	string			>\0		from '%s'
