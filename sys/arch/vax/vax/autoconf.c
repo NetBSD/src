@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.74 2002/09/27 20:36:52 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.75 2002/10/01 05:19:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -168,9 +168,8 @@ mainbus_attach(parent, self, hej)
 
 }
 
-const struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbus_match, mainbus_attach, NULL, NULL)
 
 #include "sd.h"
 #include "cd.h"
