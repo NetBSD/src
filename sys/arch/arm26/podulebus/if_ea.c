@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.8 2000/08/10 23:03:04 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.9 2000/08/10 23:06:38 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -52,7 +52,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.8 2000/08/10 23:03:04 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.9 2000/08/10 23:06:38 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -500,7 +500,7 @@ ea_reinit(struct ea_softc *sc)
 	s = splnet();
 	ea_stop(sc);
 	ea_init(sc);
-	(void)splx(s);
+	splx(s);
 }
 
 
@@ -885,7 +885,7 @@ ea_init(struct ea_softc *sc)
 	/* And start output. */
 	ea_start(ifp);
 
-	(void)splx(s);
+	splx(s);
 	return(0);
 }
 
@@ -919,7 +919,7 @@ ea_start(struct ifnet *ifp)
 	/* tx packets */
 
 	eatxpacket(sc);
-	(void)splx(s);
+	splx(s);
 }
 
 
@@ -1117,7 +1117,7 @@ eaintr(void *arg)
 
 			s = splnet();
 			eatxpacket(sc);
-			(void)splx(s);
+			splx(s);
 		}
 	}
 
@@ -1479,7 +1479,7 @@ ea_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 	return error;
 }
 
