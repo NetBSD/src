@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mainbus.c,v 1.2 2001/06/10 05:26:59 thorpej Exp $	*/
+/*	$NetBSD: lpt_mainbus.c,v 1.3 2001/06/15 04:01:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_mainbus.c,v 1.2 2001/06/10 05:26:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mainbus.c,v 1.3 2001/06/15 04:01:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_mainbus.c,v 1.2 2001/06/10 05:26:59 thorpej Exp 
 
 #include <dev/ic/lptreg.h>
 #include <dev/ic/lptvar.h>
-
-#if defined(ALGOR_P4032)
-#include <algor/algor/algor_p4032var.h>
-#endif
 
 struct lpt_mainbus_softc {
 	struct lpt_softc sc_lpt;	/* real "lpt" softc */
@@ -112,11 +108,7 @@ lpt_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	lpt_attach_subr(sc);
 
-#if defined(ALGOR_P4032)
-	sc->sc_ih = algor_p4032_intr_establish(&p4032_irqmap[ma->ma_irq],
-	    lptintr, sc);
-#endif
-
+	sc->sc_ih = (*algor_intr_establish)(ma->ma_irq, lptintr, sc);
 	if (msc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt\n",
 		    sc->sc_dev.dv_xname);
