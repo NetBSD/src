@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.6 2002/02/21 21:58:03 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.7 2002/02/22 04:49:22 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -1198,7 +1198,6 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	pv_addr_t proc0_pt_io[KERNEL_IO_PTS];
 	pv_addr_t msgbuf;
 	vm_offset_t L1pagetable;
-	vm_offset_t L2pagetable;
 	struct mem_translation *tp;
 
 	/* Set-up the system page. */
@@ -1250,6 +1249,23 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	ofw_claimpages(&virt_freeptr, &msgbuf, MSGBUFSIZE);
 	msgbufphys = msgbuf.pv_pa;
 
+	/* Construct the proc0 L1 pagetable. */
+	L1pagetable = proc0_pagedir.pv_va;
+
+	pmap_link_l2pt(L1pagetable, 0x0, &proc0_pt_sys);
+	pmap_link_l2pt(L1pagetable, KERNEL_BASE, &proc0_pt_kernel);
+	pmap_link_l2pt(L1pagetable, PROCESS_PAGE_TBLS_BASE,
+	    &proc0_pt_pte);
+	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
+		pmap_link_l2pt(L1pagetable, KERNEL_VM_BASE + i * 0x00400000,
+		    &proc0_pt_vmdata[i]);
+	for (i = 0; i < KERNEL_OFW_PTS; i++)
+		pmap_link_l2pt(L1pagetable, OFW_VIRT_BASE + i * 0x00400000,
+		    &proc0_pt_ofw[i]);
+	for (i = 0; i < KERNEL_IO_PTS; i++)
+		pmap_link_l2pt(L1pagetable, IO_VIRT_BASE + i * 0x00400000,
+		    &proc0_pt_io[i]);
+
 	/*
 	 * OK, we're done allocating.
 	 * Get a dump of OFW's translations, and make the appropriate
@@ -1271,8 +1287,6 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 		/* Make an entry for each page in the appropriate table. */
 		for (va = tp->virt, pa = tp->phys; npages > 0;
 		    va += NBPG, pa += NBPG, npages--) {
-			vm_offset_t L2pagetable;
-
 			/*
 			 * Map the top bits to the appropriate L2 pagetable.
 			 * The only allowable regions are page0, the
@@ -1281,12 +1295,10 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 			switch (va >> (PDSHIFT + 2)) {
 			case 0:
 				/* page0 */
-				L2pagetable = proc0_pt_sys.pv_va;
 				break;
 
 			case (KERNEL_BASE >> (PDSHIFT +	2)):
 				/* kernel static area */
-				L2pagetable = proc0_pt_kernel.pv_va;
 				break;
 
 			case ( OFW_VIRT_BASE               >> (PDSHIFT + 2)):
@@ -1294,8 +1306,6 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 			case ((OFW_VIRT_BASE + 0x00800000) >> (PDSHIFT + 2)):
 			case ((OFW_VIRT_BASE + 0x00C00000) >> (PDSHIFT + 2)):
 				/* ofw area */
-				L2pagetable = proc0_pt_ofw[(va >> (PDSHIFT + 2))
-				    & 0x3].pv_va;
 				break;
 
 			case ( IO_VIRT_BASE               >> (PDSHIFT + 2)):
@@ -1303,27 +1313,16 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 			case ((IO_VIRT_BASE + 0x00800000) >> (PDSHIFT + 2)):
 			case ((IO_VIRT_BASE + 0x00C00000) >> (PDSHIFT + 2)):
 				/* io area */
-				L2pagetable = proc0_pt_io[(va >> (PDSHIFT + 2))
-				    & 0x3].pv_va;
 				break;
 
 			default:
 				/* illegal */
-				panic("illegal ofw translation (addr) %#lx", va);
-			}
-
-			/* Sanity.  The current entry should be null. */
-			{
-				pt_entry_t pte;
-				pte = ReadWord(L2pagetable + ((va >> 10)
-				    & 0x00000FFC));
-				if (pte != 0)
-					panic("illegal ofw translation (%#lx, %#lx, %#lx, %x)",
-					    L2pagetable, va, pa, pte);
+				panic("illegal ofw translation (addr) %#lx",
+				    va);
 			}
 
 			/* Make the entry. */
-			pmap_map_entry(L2pagetable, va, pa,
+			pmap_map_entry(L1pagetable, va, pa,
 			    VM_PROT_READ|VM_PROT_WRITE,
 			    (tp->mode & 0xC) == 0xC ? PTE_CACHE
 						    : PTE_NOCACHE);
@@ -1358,11 +1357,10 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	 * cached ...
 	 * Really these should be uncached when allocated.
 	 */
-	pmap_map_entry(proc0_pt_kernel.pv_va, proc0_pt_pte.pv_va,
-	    proc0_pt_pte.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	pmap_map_entry(L1pagetable, proc0_pt_pte.pv_va,
+	    proc0_pt_pte.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (i = 0; i < (PD_SIZE / NBPG); ++i)
-		pmap_map_entry(proc0_pt_kernel.pv_va,
+		pmap_map_entry(L1pagetable,
 		    proc0_pagedir.pv_va + NBPG * i,
 		    proc0_pagedir.pv_pa + NBPG * i,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
@@ -1372,45 +1370,33 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	 */
 
 	/* Map entries in the L2pagetable used to map L2PTs. */
-	L2pagetable = proc0_pt_pte.pv_va;
-	pmap_map_entry(L2pagetable, (0x00000000 >> (PGSHIFT-2)),
+	pmap_map_entry(L1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    proc0_pt_sys.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	pmap_map_entry(L2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
+	pmap_map_entry(L1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
 	    proc0_pt_kernel.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	pmap_map_entry(L2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	pmap_map_entry(L1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
 	    proc0_pt_pte.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
-		pmap_map_entry(L2pagetable, ((KERNEL_VM_BASE + i * 0x00400000)
+		pmap_map_entry(L1pagetable,
+		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_VM_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_vmdata[i].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
-		pmap_map_entry(L2pagetable, ((OFW_VIRT_BASE + i * 0x00400000)
+		pmap_map_entry(L1pagetable,
+		    PROCESS_PAGE_TBLS_BASE + ((OFW_VIRT_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_ofw[i].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (i = 0; i < KERNEL_IO_PTS; i++)
-		pmap_map_entry(L2pagetable, ((IO_VIRT_BASE + i * 0x00400000)
+		pmap_map_entry(L1pagetable,
+		    PROCESS_PAGE_TBLS_BASE + ((IO_VIRT_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_io[i].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-
-	/* Construct the proc0 L1 pagetable. */
-	L1pagetable = proc0_pagedir.pv_va;
-
-	pmap_link_l2pt(L1pagetable, 0x0, &proc0_pt_sys);
-	pmap_link_l2pt(L1pagetable, KERNEL_BASE, &proc0_pt_kernel);
-	pmap_link_l2pt(L1pagetable, PROCESS_PAGE_TBLS_BASE,
-	    &proc0_pt_pte);
-	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
-		pmap_link_l2pt(L1pagetable, KERNEL_VM_BASE + i * 0x00400000,
-		    &proc0_pt_vmdata[i]);
-	for (i = 0; i < KERNEL_OFW_PTS; i++)
-		pmap_link_l2pt(L1pagetable, OFW_VIRT_BASE + i * 0x00400000,
-		    &proc0_pt_ofw[i]);
-	for (i = 0; i < KERNEL_IO_PTS; i++)
-		pmap_link_l2pt(L1pagetable, IO_VIRT_BASE + i * 0x00400000,
-		    &proc0_pt_io[i]);
 
 	/* 
          * gross hack for the sake of not thrashing the TLB and making

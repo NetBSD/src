@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.22 2002/02/21 21:58:00 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.23 2002/02/22 04:49:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -57,7 +57,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rpc_machdep.c,v 1.22 2002/02/21 21:58:00 thorpej Exp $");
+__RCSID("$NetBSD: rpc_machdep.c,v 1.23 2002/02/22 04:49:19 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -472,7 +472,6 @@ initarm(void *cookie)
 	u_int logical;
 	u_int kerneldatasize;
 	u_int l1pagetable;
-	u_int l2pagetable;
 	extern char page0[], page0_end[];
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 	pv_addr_t kernel_l1pt;
@@ -703,7 +702,6 @@ initarm(void *cookie)
 #endif
 
 	/* Now we fill in the L2 pagetable for the kernel code/data */
-	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL].pv_pa;
 
 	/*
 	 * The defines are a workaround for a recent problem that occurred
@@ -753,7 +751,7 @@ initarm(void *cookie)
 	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
-	pmap_map_entry(l2pagetable, kernel_ptpt.pv_pa - physical_start,
+	pmap_map_entry(l1pagetable, kernel_ptpt.pv_pa - physical_start,
 	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 
@@ -778,20 +776,24 @@ initarm(void *cookie)
 	 * Basically every kernel page table gets mapped here
 	 */
 	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
-	l2pagetable = kernel_ptpt.pv_pa;
-	pmap_map_entry(l2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
 	    PTE_NOCACHE);
-	pmap_map_entry(l2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	pmap_map_entry(l2pagetable, (VMEM_VBASE >> (PGSHIFT-2)),
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (VMEM_VBASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_VMEM].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
 	    PTE_NOCACHE);
-	pmap_map_entry(l2pagetable, (0x00000000 >> (PGSHIFT-2)),
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE+ (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
 	    PTE_NOCACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop) {
-		pmap_map_entry(l2pagetable, ((KERNEL_VM_BASE +
+		pmap_map_entry(l1pagetable,
+		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
@@ -801,8 +803,7 @@ initarm(void *cookie)
 	 * Map the system page in the kernel page table for the bottom 1Meg
 	 * of the virtual memory map.
 	 */
-	l2pagetable = kernel_pt_table[KERNEL_PT_SYS].pv_pa;
-	pmap_map_entry(l2pagetable, 0x0000000, systempage.pv_pa,
+	pmap_map_entry(l1pagetable, 0x0000000, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map the core memory needed before autoconfig */
