@@ -47,6 +47,9 @@ struct ne2000dev {
     { "National Semiconductor InfoMover",
       0x00a4, 0x0002, NULL, NULL, 0,
       0x0ff0, { 0x08, 0x00, 0x5a } },
+    { "DEC DEPCM-BA", 
+      0x0000, 0x0000, "DIGITAL", "DEPCM-XX", 0,
+      0x0ff0, { 0x00, 0x00, 0xe8 } },
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
