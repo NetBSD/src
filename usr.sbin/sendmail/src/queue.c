@@ -1210,7 +1210,7 @@ printqueue()
 			if (gidset[n] == st.st_gid)
 				break;
 		}
-		if (n < 0)
+		if (n < 0 && RealGid != st.st_gid)
 # else
 		if (RealGid != st.st_gid)
 # endif
