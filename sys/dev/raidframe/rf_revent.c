@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.15 2004/02/29 04:03:50 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.16 2004/03/02 15:55:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.15 2004/02/29 04:03:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.16 2004/03/02 15:55:56 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -190,8 +190,6 @@ GetReconEventDesc(RF_RowCol_t col, void *arg, RF_Revent_t type)
 	RF_ReconEvent_t *t;
 
 	t = pool_get(&rf_revent_pool, PR_WAITOK);
-	if (t == NULL)
-		return (NULL);
 	t->col = col;
 	t->arg = arg;
 	t->type = type;
