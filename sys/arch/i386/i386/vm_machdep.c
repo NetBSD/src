@@ -121,6 +121,7 @@ cpu_exit(p)
 	register struct proc *p;
 {
 	extern int _default_ldt, currentldt;
+	struct vmspace *vm;
 #if NNPX > 0
 	extern struct proc *npxproc;
 	
@@ -135,6 +136,13 @@ cpu_exit(p)
 		    (p->p_addr->u_pcb.pcb_ldt_len * sizeof(union descriptor)));
 	}
 #endif
+
+	vm = p->p_vmspace;
+	if (vm->vm_refcnt == 1) {
+		vm_map_lock(&vm->vm_map);
+		vm_map_delete(&vm->vm_map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
+		vm_map_unlock(&vm->vm_map);
+	}
 
 	swtch_exit(p);
 }
