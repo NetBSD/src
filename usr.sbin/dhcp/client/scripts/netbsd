@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: netbsd,v 1.14 2001/04/11 21:53:26 christos Exp $
+# $NetBSD: netbsd,v 1.15 2001/04/17 23:25:38 kleink Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
@@ -133,7 +133,7 @@ BOUND|RENEW|REBIND|REBOOT)
 		    \( "x$new_host_name" = "x$old_hostname" \) ]; then
 			current_hostname=`hostname`
 		fi
-		if [ \( -z $current_hostname \) -o \
+		if [ \( -z "$current_hostname" \) -o \
 		    \( "x$new_host_name" != "x$old_hostname" \) ]; then
 			hostname $new_host_name
 		fi
