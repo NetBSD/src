@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 1998/03/29 09:27:40 christos Exp $
+#	$NetBSD: Makefile,v 1.39 1998/03/30 10:07:16 mrg Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -34,13 +34,13 @@ builtins.c builtins.h: mkbuiltins shell.h builtins.def
 	sh ${.ALLSRC} ${.OBJDIR}
 
 init.c: mkinit ${SHSRCS}
-	${.ALLSRC}
+	./${.ALLSRC}
 
 nodes.c nodes.h: mknodes nodetypes nodes.c.pat
-	${.ALLSRC}
+	$./{.ALLSRC}
 
 syntax.c syntax.h: mksyntax
-	${.ALLSRC}
+	$./{.ALLSRC}
 
 .include <bsd.prog.mk>
 
