@@ -869,6 +869,7 @@ getsc__()
 					s = source;
 					/* avoid reading eof twice */
 					s->str = NULL;
+					break;
 				}
 			}
 			continue;

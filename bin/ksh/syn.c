@@ -121,6 +121,9 @@ c_list()
 
 	t = andor();
 	if (t != NULL) {
+		/* Token has always been read/rejected at this point, so
+		 * we don't worray about what flags to pass token()
+		 */
 		while ((c = token(0)) == ';' || c == '&' || c == COPROC ||
 		       (c == '\n' && (multiline.on || inalias(source))))
 		{
@@ -206,7 +209,10 @@ get_command(cf)
 	XPinit(args, 16);
 	XPinit(vars, 16);
 
-	if (multiline.on)
+	/* Don't want to pass CONTIN if reading interactively as just hitting
+	 * return would print PS2 instead of PS1.
+	 */
+	if (multiline.on || inalias(source))
 		cf = CONTIN;
 	syniocf = KEYWORD|ALIAS;
 	switch (c = token(cf|KEYWORD|ALIAS|VARASN)) {

@@ -1822,9 +1822,10 @@ If the input line ends in a backslash and the \fB\-r\fP option was not used, the
 backslash and newline are stripped and more input is read.
 If no input is read, \fBread\fP exits with a non-zero status.
 .sp
-A prompt, which is printed to standard error before any input is read, may be
-specified by appending and question mark and the prompt to the
-first parameter (\fIe.g.\fP, \fBread nfoo?'number of foos: '\fP).
+The first parameter may have a question mark and a string appended to it, in
+which case the string is used as a prompt (printed to standard error before
+any input is read) if the input is a tty
+(\fIe.g.\fP, \fBread nfoo?'number of foos: '\fP).
 .sp
 The \fB\-u\fP\fIn\fP and \fB\-p\fP options cause input to be read
 from file descriptor \fIn\fP or the current co-process (see Co-Processes above

@@ -32,7 +32,7 @@ static int	dbteste_eval ARGS((Test_env *te, Test_op op, const char *opnd1,
 static void	dbteste_error ARGS((Test_env *te, int offset, const char *msg));
 #endif /* KSH */
 #ifdef OS2
-static int	search_access1 ARGS((const char *path, int mode));
+static int	search_access1 ARGS((const char *path, int mode, int *errnop));
 #endif /* OS2 */
 
 
@@ -415,6 +415,7 @@ execute(t, flags)
 			}
 #endif
 		restoresigs();
+		cleanup_proc_env();
 		ksh_execve(t->str, t->args, ap);
 		if (errno == ENOEXEC)
 			scriptexec(t, ap);

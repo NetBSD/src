@@ -766,6 +766,12 @@ c_typeset(wp)
 	    for (l = e->loc; l; l = l->next) {
 		for (p = tsort(&l->vars); (vp = *p++); )
 		    for (; vp; vp = vp->u.array) {
+			/* Report an unset param only if the user has
+			 * explicitly given it some attribute (like export);
+			 * otherwise, after "echo $FOO", we would report FOO...
+			 */
+			if (!(vp->flag & ISSET) && !(vp->flag & USERATTRIB))
+			    continue;
 			if (flag && (vp->flag & flag) == 0)
 			    continue;
 			/* no arguments */
