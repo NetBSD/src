@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.6 2002/04/24 08:18:53 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.7 2002/05/04 21:56:50 bjh21 Exp $
 
 realall: ${MAP}
 
@@ -8,5 +8,3 @@ ${MAP}: ${HOSTPROG}
 CLEANFILES+=${MAP}
 FILES=${MAP}
 FILESDIR=/usr/share/keymaps/atari
-
-.include <bsd.prog.mk>
