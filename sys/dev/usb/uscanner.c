@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.8 2000/11/03 04:00:15 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.9 2000/11/14 13:57:16 augustss Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -338,6 +338,8 @@ uscanneropen(dev, flag, mode, p)
 	if (sc->sc_state & USCANNER_OPEN)
 		return (EBUSY);
 
+	sc->sc_state |= USCANNER_OPEN;
+
 	sc->sc_bulkin_buffer = malloc(USCANNER_BUFFERSIZE, M_USBDEV, M_WAITOK);
 	sc->sc_bulkout_buffer = malloc(USCANNER_BUFFERSIZE, M_USBDEV, M_WAITOK);
 	/* No need to check buffers for NULL since we have WAITOK */
@@ -400,7 +402,7 @@ uscannerclose(dev, flag, mode, p)
 
 	uscanner_do_close(sc);
 
-	return 0;
+	return (0);
 }
 
 void
