@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.128 2003/11/08 05:35:11 dbj Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.129 2003/12/01 18:57:07 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.128 2003/11/08 05:35:11 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.129 2003/12/01 18:57:07 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1126,7 +1126,7 @@ ffs_unmount(mp, mntflags, p)
 	if (ump->um_devvp->v_type != VBAD)
 		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
+	(void)VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	vput(ump->um_devvp);
 	free(fs->fs_csp, M_UFSMNT);
@@ -1138,7 +1138,7 @@ ffs_unmount(mp, mntflags, p)
 	free(ump, M_UFSMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
-	return (error);
+	return (0);
 }
 
 /*
