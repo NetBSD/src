@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.38 1999/02/14 12:48:02 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.39 1999/02/27 16:13:59 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -337,6 +337,7 @@ nmi_soft()
 		cpuinfo.sp_vcache_flush_context();
 		setcontext(ctx);
 		}
+		break;
 	case XPMSG_VCACHE_FLUSH_RANGE: {
 		struct xpmsg_flush_range *p = &cpuinfo.msg.u.xpmsg_flush_range;
 		int ctx = getcontext();
