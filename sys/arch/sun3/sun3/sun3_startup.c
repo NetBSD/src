@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.38 1995/04/08 04:46:59 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.39 1995/04/13 22:07:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -67,6 +67,7 @@ vm_offset_t virtual_avail, virtual_end;
 vm_offset_t avail_start, avail_end;
 /* used to skip the Sun3/50 video RAM */
 vm_offset_t hole_start, hole_size;
+int cache_size;
 
 /*
  * Now our own stuff.
@@ -584,6 +585,7 @@ void sun3_verify_hardware()
 		cpu_string = "260";
 		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
 		cpu_has_vme = TRUE;
+		cache_size = 0x10000;	/* 64K */
 		break;
 
 	case SUN3_MACH_E  :

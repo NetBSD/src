@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 1995/04/10 16:49:11 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 1995/04/13 22:05:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -98,7 +98,14 @@
 
 #include <setjmp.h>
 
+#include "cache.h"
+
 extern char *cpu_string;
+extern char version[];
+extern char kstack[];
+extern short exframesize[];
+extern vm_offset_t u_area_va;
+extern vm_offset_t vmmap;	/* XXX - poor name.  See mem.c */
 
 int physmem;
 int cold;
@@ -109,9 +116,6 @@ int fpu_type;
  * during autoconfiguration or after a panic.
  */
 int	safepri = PSL_LOWIPL;
-
-extern char kstack[];
-extern short exframesize[];
 
 #ifdef COMPAT_SUNOS
 void sun_sendsig();
@@ -134,8 +138,6 @@ int	bufpages = 0;
 #endif
 int *nofault;
 
-extern vm_offset_t u_area_va;
-extern	char version[];
 caddr_t allocsys __P((caddr_t));
 
 /*
@@ -143,7 +145,6 @@ caddr_t allocsys __P((caddr_t));
  */
 char	machine[] = "sun3";		/* cpu "architecture" */
 char	cpu_model[120];
-vm_offset_t vmmap;
 
 
 void
@@ -204,7 +205,9 @@ load_u_area()
 
 	do {
 #ifdef	HAVECACHE
-		cache_flush_page(va);
+		/* flush write-back before changing mapping */
+		if (cache_size)
+			cache_flush_page(va);
 #endif
 		pte = *ptep;
 		set_pte(va, pte);
@@ -316,7 +319,7 @@ void cpu_startup()
 	   nbuf, bufpages * CLBYTES);
 
 	/*
-	 * Allocate vmmap (for use by /dev/mem)
+	 * Allocate a virtual page (for use by /dev/mem)
 	 * This page is handed to pmap_enter() therefore
 	 * it has to be in the normal kernel VA range.
 	 */
@@ -335,6 +338,10 @@ void cpu_startup()
     configure();
 
 	cold = 0;
+
+#ifdef	HAVECACHE
+	cache_enable();
+#endif
 
 #ifdef	COMPAT_SUNOS
 	hack_sun_reboot();	/* XXX - Temporary hack... */
