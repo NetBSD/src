@@ -225,7 +225,8 @@ MASTER_SERV *get_master_ent()
     MASTER_SERV *serv;
     char   *cp;
     char   *name;
-    char   *addr, *port;
+    char   *host;
+    char   *port;
     char   *transport;
     int     private;
     int     unprivileged;		/* passed on to child */
@@ -275,28 +276,27 @@ MASTER_SERV *get_master_ent()
     transport = get_str_ent(&bufp, "transport type", (char *) 0);
     if (STR_SAME(transport, MASTER_XPORT_NAME_INET)) {
 	serv->type = MASTER_SERV_TYPE_INET;
-	atmp = inet_parse(name, &addr, &port);
-	if (addr && *addr) {
-	    serv->addr_list.inet = serv->addr_list_buf.inet =
-	        (INET_ADDR_LIST *) mymalloc(sizeof(*serv->addr_list_buf.inet));
-	    inet_addr_list_init(serv->addr_list.inet);
-	    inet_addr_host(serv->addr_list.inet, addr);
-	    serv->listen_fd_count = serv->addr_list.inet->used;
-	    /* avoid issue with free, assume strlen(name) > strlen(port) */
-	    strcpy(name, port);
+	atmp = inet_parse(name, &host, &port);
+	if (*host) {
+	    serv->flags |= MASTER_FLAG_INETHOST;/* host:port */
+	    MASTER_INET_ADDRLIST(serv) = (INET_ADDR_LIST *)
+		mymalloc(sizeof(*MASTER_INET_ADDRLIST(serv)));
+	    inet_addr_list_init(MASTER_INET_ADDRLIST(serv));
+	    inet_addr_host(MASTER_INET_ADDRLIST(serv), host);
+	    serv->listen_fd_count = MASTER_INET_ADDRLIST(serv)->used;
 	} else if (strcasecmp(var_inet_interfaces, DEF_INET_INTERFACES) == 0) {
 #ifdef INET6
-	    serv->addr_list.inet = wildcard_inet_addr_list();
-	    serv->addr_list_buf.inet = NULL;
-	    serv->listen_fd_count = serv->addr_list.inet->used;
+	    MASTER_INET_ADDRLIST(serv) = wildcard_inet_addr_list();
+	    serv->listen_fd_count = MASTER_INET_ADDRLIST(serv)->used;
 #else
-	    serv->addr_list.inet = 0;		/* wild-card */
+	    MASTER_INET_ADDRLIST(serv) = 0;	/* wild-card */
 	    serv->listen_fd_count = 1;
 #endif
 	} else {
-	    serv->addr_list.inet = own_inet_addr_list();	/* virtual */
-	    serv->listen_fd_count = serv->addr_list.inet->used;
+	    MASTER_INET_ADDRLIST(serv) = own_inet_addr_list();	/* virtual */
+	    serv->listen_fd_count = MASTER_INET_ADDRLIST(serv)->used;
 	}
+	MASTER_INET_PORT(serv) = mystrdup(port);
 	myfree(atmp);
     } else if (STR_SAME(transport, MASTER_XPORT_NAME_UNIX)) {
 	serv->type = MASTER_SERV_TYPE_UNIX;
@@ -470,8 +470,12 @@ void    free_master_ent(MASTER_SERV *serv)
     /*
      * Undo what get_master_ent() created.
      */
-    if (serv->type == MASTER_SERV_TYPE_INET && serv->addr_list_buf.inet)
-	myfree((char *)serv->addr_list_buf.inet);
+    if (serv->flags & MASTER_FLAG_INETHOST) {
+	inet_addr_list_free(MASTER_INET_ADDRLIST(serv));
+	myfree((char *) MASTER_INET_ADDRLIST(serv));
+    }
+    if (serv->type == MASTER_SERV_TYPE_INET)
+	myfree(MASTER_INET_PORT(serv));
     myfree(serv->name);
     myfree(serv->path);
     argv_free(serv->args);

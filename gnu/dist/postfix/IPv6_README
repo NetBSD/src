@@ -1,6 +1,6 @@
 IPv6-ready postfix
 KAME project
-$KAME: IPv6_README,v 1.1 2001/01/17 14:22:26 itojun Exp $
+$KAME: IPv6_README,v 1.2 2001/04/03 01:04:31 itojun Exp $
 
 
 IPv4 mapped address is not supported.
@@ -19,3 +19,4 @@ TODO:
   at this moment, we simply filter out address that is not supported by the
   kernel.  this leads to wrong behavior in some cases.
 - use sockaddr everywhere, not just 4/16byte address (util/inet_addr_host.c).
+- update source address selection on virtual host configuration, outbound.

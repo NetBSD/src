@@ -487,6 +487,8 @@ DNS_RR *smtp_domain_addr(char *name, VSTRING *why, int *found_myself)
 		} else if (*var_bestmx_transp != 0) {	/* we're best MX */
 		    smtp_errno = SMTP_OK;
 		} else {
+		    msg_warn("mailer loop: best MX host for %s is local",
+			     name);
 		    vstring_sprintf(why, "mail for %s loops back to myself",
 				    name);
 		    smtp_errno = SMTP_FAIL;

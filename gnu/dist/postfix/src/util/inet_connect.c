@@ -55,6 +55,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#ifdef INET6
+#include <netdb.h>
+#endif
 
 /* Utility library. */
 
@@ -73,7 +76,12 @@ int     inet_connect(const char *addr, int block_mode, int timeout)
     char   *buf;
     char   *host;
     char   *port;
+#ifdef INET6
+    struct addrinfo hints, *res, *res0;
+    int    error;
+#else
     struct sockaddr_in sin;
+#endif
     int     sock;
 
     /*
@@ -81,14 +89,58 @@ int     inet_connect(const char *addr, int block_mode, int timeout)
      * the local host.
      */
     buf = inet_parse(addr, &host, &port);
+#ifdef INET6
+    if (*host == 0)
+	host = NULL;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_NUMERICHOST;	/* find_inet_addr is numeric only */
+    if (getaddrinfo(host, port, &hints, &res0))
+	msg_fatal("host not found: %s", host);
+#else
     if (*host == 0)
 	host = "localhost";
     memset((char *) &sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = find_inet_addr(host);
     sin.sin_port = find_inet_port(port, "tcp");
+#endif
     myfree(buf);
 
+#ifdef INET6
+    sock = -1;
+    for (res = res0; res; res = res->ai_next) {
+	if ((res->ai_family != AF_INET) && (res->ai_family != AF_INET6))
+	    continue;
+
+	sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (sock < 0)
+	    continue;
+	if (timeout > 0) {
+	    non_blocking(sock, NON_BLOCKING);
+	    if (timed_connect(sock, res->ai_addr, res->ai_addrlen, timeout) < 0) {
+		close(sock);
+		sock = -1;
+		continue;
+	    }
+	    if (block_mode != NON_BLOCKING)
+		non_blocking(sock, block_mode);
+	    break;
+	} else {
+	    non_blocking(sock, block_mode);
+	    if (connect(sock, res->ai_addr, res->ai_addrlen) < 0
+		&& errno != EINPROGRESS) {
+		close(sock);
+		sock = -1;
+		continue;
+	    }
+	    break;
+	}
+    }
+    freeaddrinfo(res0);
+    return sock;
+#else
     /*
      * Create a client socket.
      */
@@ -121,4 +173,5 @@ int     inet_connect(const char *addr, int block_mode, int timeout)
 	}
 	return (sock);
     }
+#endif
 }
