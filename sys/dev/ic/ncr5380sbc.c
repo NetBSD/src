@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.16 1997/02/26 20:31:16 gwr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.17 1997/02/26 22:23:48 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -1782,9 +1782,8 @@ ncr5380_msg_out(sc)
 	register struct ncr5380_softc *sc;
 {
 	struct sci_req *sr = sc->sc_current;
-	int n, phase, resel;
-	int progress, act_flags;
-	register u_char icmd;
+	int act_flags, n, phase, progress;
+	register u_char icmd, msg;
 
 	/* acknowledge phase change */
 	*sc->sci_tcmd = PHASE_MSG_OUT;
@@ -1842,9 +1841,17 @@ nextmsg:
 			NCR_BREAK();
 			goto noop;
 		}
-		resel = (sc->sc_flags & NCR5380_PERMIT_RESELECT) ? 1 : 0;
-		resel &= (sr->sr_flags & (SR_IMMED | SR_SENSE)) ? 0 : 1;
-		sc->sc_omess[0] = MSG_IDENTIFY(sr->sr_lun, resel);
+		/*
+		 * The identify message we send determines whether 
+		 * disconnect/reselect is allowed for this command.
+		 * 0xC0+LUN: allows it, 0x80+LUN disallows it.
+		 */
+		msg = 0xc0;	/* MSG_IDENTIFY(0,1) */
+		if (sc->sc_no_disconnect & (1 << sr->sr_target))
+			msg = 0x80;
+		if (sr->sr_flags & (SR_IMMED | SR_SENSE))
+			msg = 0x80;
+		sc->sc_omess[0] = msg | sr->sr_lun;
 		n = 1;
 		break;
 
