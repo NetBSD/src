@@ -83,7 +83,5 @@ Contents of section \.data:
  1538 00001584 00001584 00000000 00001580  .*
  1548 00001580 00000000 00001576 00000000  .*
  1558 0000156c                             .*
-Contents of section \.ctors:
-Contents of section \.dtors:
-Contents of section \.sbss:
 Contents of section \.stack:
+ 80000 deaddead                            .*

@@ -20,6 +20,7 @@
 ;                  r2 - result address
 
         .text
+	.syntax no_register_prefix
         .word   0
 main:   move.d  stack,sp
         moveq   0,r1

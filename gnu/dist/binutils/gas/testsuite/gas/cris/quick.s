@@ -6,6 +6,7 @@
  .set mtwenty2, -22
 
  .text
+ .syntax no_register_prefix
 start:
 
 ;;;;;;;;;;;;;;;;;

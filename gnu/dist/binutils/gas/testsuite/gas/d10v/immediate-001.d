@@ -22,4 +22,3 @@ Disassembly of section .text:
   34:	c7 00 ff ff 	tst0i	r0, -0x1
   38:	cf 00 7f ff 	tst1i	r0, 0x7fff
   3c:	cf 00 ff ff 	tst1i	r0, -0x1
-Disassembly of section .data:

@@ -1,20 +1,20 @@
-There are 13 section headers, starting at offset 0x17c:
+There are 13 section headers, starting at offset 0x220:
 
 Section Headers:
   \[Nr\] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
   \[ 0\]                   NULL            00000000 000000 000000 00      0   0  0
-  \[ 1\] \.init             PROGBITS        00001000 000080 000004 00 AXp  0   0  4
-  \[ 2\] \.text             PROGBITS        00001004 000084 00005c 00 AXp  0   0  4
-  \[ 3\] \.data             PROGBITS        000010e0 0000e0 000000 00  WA  0   0  1
-  \[ 4\] \.ctors            PROGBITS        000010e0 0000e0 000000 00   W  0   0  1
-  \[ 5\] \.dtors            PROGBITS        000010e0 0000e0 000000 00   W  0   0  1
-  \[ 6\] \.sbss             PROGBITS        000010e0 0000e0 000000 00   W  0   0  1
-  \[ 7\] \.bss              NOBITS          000010e0 0000e0 000000 00  WA  0   0  1
-  \[ 8\] \.stack            PROGBITS        00080000 0000e0 000000 00   W  0   0  1
-  \[ 9\] \.cranges          LOUSER\+1        00000000 0000e0 000046 00   W  0   0  1
-  \[10\] \.shstrtab         STRTAB          00000000 000126 000056 00      0   0  1
-  \[11\] \.symtab           SYMTAB          00000000 000384 0001c0 10     12  12  4
-  \[12\] \.strtab           STRTAB          00000000 000544 000078 00      0   0  1
+  \[ 1\] \.init             PROGBITS        00001000 000100 000004 00 AXp  0   0  4
+  \[ 2\] \.text             PROGBITS        00001004 000104 00005c 00 AXp  0   0  4
+  \[ 3\] \.data             PROGBITS        000010e0 000160 000000 00  WA  0   0  1
+  \[ 4\] \.ctors            PROGBITS        000010e0 000184 000000 00   W  0   0  1
+  \[ 5\] \.dtors            PROGBITS        000010e0 000184 000000 00   W  0   0  1
+  \[ 6\] \.sbss             PROGBITS        000010e0 000184 000000 00   W  0   0  1
+  \[ 7\] \.bss              NOBITS          000010e0 000160 000000 00  WA  0   0  1
+  \[ 8\] \.stack            PROGBITS        00080000 000180 000004 00  WA  0   0  1
+  \[ 9\] \.cranges          LOUSER\+1        00000000 000184 000046 00   W  0   0  1
+  \[10\] \.shstrtab         STRTAB          00000000 0001ca 000056 00      0   0  1
+  \[11\] \.symtab           SYMTAB          00000000 000428 0001c0 10     12  12  4
+  \[12\] \.strtab           STRTAB          00000000 0005e8 000078 00      0   0  1
 Key to Flags:
   W \(write\), A \(alloc\), X \(execute\), M \(merge\), S \(strings\)
   I \(info\), L \(link order\), G \(group\), x \(unknown\)

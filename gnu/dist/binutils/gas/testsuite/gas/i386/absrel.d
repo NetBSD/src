@@ -11,7 +11,7 @@ Disassembly of section \.text:
 0+005 <glob>:
    5:	a1 00 00 00 00[	 ]*mov    0x0,%eax	6: (R_386_|dir)?32	ext
    a:	a1 00 00 00 00[	 ]*mov    0x0,%eax	b: (R_386_|dir)?32	weak
-   f:	(a1 00 00 00 00[	 ]*mov    0x0,%eax	10: (R_386_)?32	comm|a1 04 00 00 00[	 ]*mov    0x4,%eax	10: dir32	comm.*)
+   f:	(a1 00 00 00 00[	 ]*mov    0x0,%eax	10: (R_386_|dir)?32	comm.*|a1 04 00 00 00[	 ]*mov    0x4,%eax	10: dir32	comm.*)
   14:	a1 00 00 00 00[	 ]*mov    0x0,%eax	15: (R_386_|dir)?32	\.text
   19:	(a1 00 00 00 00[	 ]*mov    0x0,%eax	1a: R_386_32	glob|a1 05 00 00 00[	 ]*mov    0x5,%eax	1a: (dir)?32	\.text)
   1e:	a1 76 98 00 00[	 ]*mov    0x9876,%eax
@@ -22,7 +22,7 @@ Disassembly of section \.text:
   37:	a1 00 00 00 00[	 ]*mov    0x0,%eax
   3c:	a1 cc ed ff ff[	 ]*mov    0xffffedcc,%eax	3d: (R_386_|dir)?32	ext
   41:	a1 cc ed ff ff[	 ]*mov    0xffffedcc,%eax	42: (R_386_|dir)?32	weak
-  46:	(a1 cc ed ff ff[	 ]*mov    0xffffedcc,%eax	47: (R_386_)?32	comm|a1 d0 ed ff ff[	 ]*mov    0xffffedd0,%eax	47: dir32	comm.*)
+  46:	(a1 cc ed ff ff[	 ]*mov    0xffffedcc,%eax	47: (R_386_|dir)?32	comm.*|a1 d0 ed ff ff[	 ]*mov    0xffffedd0,%eax	47: dir32	comm.*)
   4b:	a1 cc ed ff ff[	 ]*mov    0xffffedcc,%eax	4c: (R_386_|dir)?32	\.text
   50:	(a1 cc ed ff ff[	 ]*mov    0xffffedcc,%eax	51: R_386_32	glob|a1 d1 ed ff ff[	 ]*mov    0xffffedd1,%eax	51: (dir)?32	\.text)
   55:	a1 42 86 00 00[	 ]*mov    0x8642,%eax
@@ -33,7 +33,7 @@ Disassembly of section \.text:
   6e:	a1 be 79 ff ff[	 ]*mov    0xffff79be,%eax
   73:	a1 8a 67 ff ff[	 ]*mov    0xffff678a,%eax	74: (R_386_|dir)?32	ext
   78:	a1 8a 67 ff ff[	 ]*mov    0xffff678a,%eax	79: (R_386_|dir)?32	weak
-  7d:	(a1 8a 67 ff ff[	 ]*mov    0xffff678a,%eax	7e: (R_386_)?32	comm|a1 8e 67 ff ff[	 ]*mov    0xffff678e,%eax	7e: dir32	comm.*)
+  7d:	(a1 8a 67 ff ff[	 ]*mov    0xffff678a,%eax	7e: (R_386_|dir)?32	comm.*|a1 8e 67 ff ff[	 ]*mov    0xffff678e,%eax	7e: dir32	comm.*)
   82:	a1 8a 67 ff ff[	 ]*mov    0xffff678a,%eax	83: (R_386_|dir)?32	\.text
   87:	(a1 8a 67 ff ff[	 ]*mov    0xffff678a,%eax	88: R_386_32	glob|a1 8f 67 ff ff[	 ]*mov    0xffff678f,%eax	88: (dir)?32	\.text)
   8c:	a1 00 00 00 00[	 ]*mov    0x0,%eax

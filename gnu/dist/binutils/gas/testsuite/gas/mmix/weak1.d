@@ -1,4 +1,4 @@
-#as: -x
+#as: -x --no-pushj-stubs
 #objdump: -str
 
 # Relaxation thought a weak symbol was within reach.
@@ -20,4 +20,4 @@ OFFSET           TYPE              VALUE
 Contents of section \.text:
  0000 f8010000 f20f0000 fd000000 fd000000  .*
  0010 fd000000 fd000000 00000000 00000000  .*
-Contents of section \.data:
+

@@ -277,4 +277,8 @@ if [istarget h8300*-*-elf] then {
 
     # Now some random tests
     run_dump_test "ffxx1-elf"
+
+    run_dump_test h8sx_disp2
+    run_dump_test h8sx_rtsl
+    run_dump_test h8sx_mov_imm
 }

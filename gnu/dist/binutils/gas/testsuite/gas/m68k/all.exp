@@ -34,6 +34,7 @@ if [istarget m68*-*-*] then {
     run_dump_test bitfield
     run_dump_test link
     run_dump_test fmoveml
+    run_dump_test mcf-mov3q
 
     set testname "68000 operands"
     gas_run "operands.s" "-m68000" "2>err.out"

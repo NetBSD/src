@@ -29,7 +29,7 @@ if { ![istarget hppa*64*-*-hpux*] \
      && ![istarget ia64-*-linux*] \
      && ![istarget m68k-*-linux*] \
      && ![istarget mips*-*-linux*] \
-     && ![istarget powerpc-*-linux*] \
+     && ![istarget powerpc*-*-linux*] \
      && ![istarget arm*-*-linux*] \
      && ![istarget alpha*-*-linux*] \
      && ![istarget sparc*-*-linux*] \
@@ -91,7 +91,7 @@ set support_protected "no"
 
 if [istarget *-*-linux*] {
     if [ld_compile "$CC -g $CFLAGS -DPROTECTED_CHECK" $srcdir/$subdir/main.c $tmpdir/main.o] {
-      if [ld_link $ld $tmpdir/main "$tmpdir/main.o"] {
+      if [ld_simple_link $CC $tmpdir/main "$tmpdir/main.o"] {
 	catch "exec $tmpdir/main" support_protected
       }
     }
@@ -99,7 +99,7 @@ if [istarget *-*-linux*] {
 
 # The test procedure.
 proc visibility_test { visibility progname testname main sh1 sh2 dat args } {
-    global ld
+    global CC
     global srcdir
     global subdir
     global exec_output
@@ -115,7 +115,7 @@ proc visibility_test { visibility progname testname main sh1 sh2 dat args } {
     if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
 	set shared "-bM:SRE -bE:$tmpdir/xcoff.exp"
     }
-    if {![ld_simple_link $ld $tmpdir/$progname.so "$shared $shldflags $tmpdir/$sh1 $tmpdir/$sh2"]} {
+    if {![ld_simple_link $CC $tmpdir/$progname.so "$shared $shldflags $tmpdir/$sh1 $tmpdir/$sh2"]} {
 	if { [ string match $visibility "hidden_undef" ]
 	     && [regexp ".*/sh1.c.*: undefined reference to \`visibility\'" $link_output]
 	     && [regexp ".*/sh1.c.*: undefined reference to \`visibility_var\'" $link_output] } {
@@ -138,7 +138,7 @@ proc visibility_test { visibility progname testname main sh1 sh2 dat args } {
     if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
 	set rpath /lib:$tmpdir
     }
-    if ![ld_link $ld $tmpdir/$progname "-rpath $rpath $tmpdir/$main $tmpdir/$progname.so"] {
+    if ![ld_simple_link $CC $tmpdir/$progname "-Wl,-rpath,$rpath $tmpdir/$main $tmpdir/$progname.so"] {
 	if { [ string match $visibility "hidden" ]
 	     && [regexp ".*/main.c.*: undefined reference to \`visibility\'" $link_output]
 	     && [regexp ".*/main.c.*: undefined reference to \`visibility_var\'" $link_output] } {
@@ -247,10 +247,6 @@ proc visibility_run {visibility} {
 	    } else {
 		setup_xfail "*-*-sunos4*"
 	    }
-	    if { [ string match $visibility "hidden_weak" ]
-		 || [ string match $visibility "protected_weak" ] } {
-		setup_xfail "powerpc-*-linux*"
-	    }
 
 	    # Non-pic code uses name binding rules for applications to
 	    # reference variables by gp-relative relocs, which can't be
@@ -267,6 +263,9 @@ proc visibility_run {visibility} {
 		setup_xfail "s390x-*-linux*"
 	    }
 	    setup_xfail "x86_64-*-linux*"
+	    if { ![istarget hppa*64*-*-linux*] } {
+		setup_xfail "hppa*-*-linux*"
+	    }
 
 	    visibility_test $visibility vnp "visibility ($visibility) (non PIC)" mainnp.o sh1np.o sh2np.o elfvsb
 
@@ -298,6 +297,10 @@ proc visibility_run {visibility} {
 		setup_xfail "mips*-*-linux*"
 	    }
 	    setup_xfail "x86_64-*-linux*"
+	    if { ![istarget hppa*64*-*-linux*] } {
+		setup_xfail "hppa*-*-linux*"
+	    }
+
 	    visibility_test $visibility vnp "visibility ($visibility) (non PIC, load offset)" \
 		mainnp.o sh1np.o sh2np.o elfvsb \
 		"-T $srcdir/$subdir/elf-offset.ld"
@@ -345,10 +348,6 @@ proc visibility_run {visibility} {
 		} else {
 		    setup_xfail "*-*-sunos4*"
 		}
-		if { [ string match $visibility "hidden_weak" ]
-		     || [ string match $visibility "protected_weak" ] } {
-		    setup_xfail "powerpc-*-linux*"
-		}
 		if { ![ string match $visibility "hidden_undef" ]
 		     && ![ string match $visibility "protected_undef" ] } {
 		    setup_xfail "ia64-*-linux*"
@@ -361,6 +360,10 @@ proc visibility_run {visibility} {
 		    setup_xfail "s390x-*-linux*"
 		}
 		setup_xfail "x86_64-*-linux*"
+		if { ![istarget hppa*64*-*-linux*] } {
+		    setup_xfail "hppa*-*-linux*"
+		}
+
 		visibility_test $visibility vmpnp "visibility ($visibility) (PIC main, non PIC so)" mainp.o sh1np.o sh2np.o elfvsb
 	    }
 	} else {

@@ -24,13 +24,9 @@ GAS for MMIX .*/reloclab\.s 			page 1
   10      FD000000 
   10      FD000000 
   11 004c F2070000 		PUSHJ \$7,foobar
-  11      FD000000 
-  11      FD000000 
-  11      FD000000 
-  11      FD000000 
-  12 0060 F1FFFFF7 		JMP there
-  13 0064 F558FFF6 		GETA \$88,there
-  14 0068 476FFFF5 		BOD \$111,there
+  12 0050 F1FFFFFB 		JMP there
+  13 0054 F558FFFA 		GETA \$88,there
+  14 0058 476FFFF9 		BOD \$111,there
 GAS for MMIX .*/reloclab\.s 			page 2
 
 

@@ -20,6 +20,7 @@ if { [istarget alpha*-*-*] } then {
     set elf [expr [istarget *-*-elf*] \
 		  || [istarget *-*-linux*] \
 		  || [istarget *-*-freebsd*] \
+		  || [istarget *-*-kfreebsd*-gnu] \
 		  || [istarget *-*-netbsd*] ]
 
     if $elf {
@@ -34,6 +35,8 @@ if { [istarget alpha*-*-*] } then {
 	run_dump_test "elf-tls-1"
 	run_list_test "elf-tls-2" ""
 	run_list_test "elf-tls-3" ""
+	run_dump_test "elf-usepv-1"
+	run_list_test "elf-usepv-2" ""
     }
 
     run_dump_test "fp"

@@ -2,7 +2,7 @@
 #source: gregpsj1.s
 #source: start.s
 #source: a.s
-#as: -x
+#as: -x --no-pushj-stubs
 #ld: -m mmo
 #objdump: -dt
 

@@ -17,6 +17,7 @@
  .set six5535, 65535
 
  .text
+ .syntax no_register_prefix
 notstart:
  .dword 0
 

@@ -4,7 +4,7 @@
 .*: +file format .*
 
 RELOCATION RECORDS FOR \[\.text\]:
-OFFSET           TYPE              VALUE 
-0000000000000000 LTOFF22X          foo
+OFFSET[ 	]+TYPE[ 	]+VALUE 
+0+000 LTOFF22X          foo
 
 

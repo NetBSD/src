@@ -34,8 +34,8 @@ Disassembly of section \.text:
 			24: R_MIPS_GOT_LO16	dg1
 			24: R_MIPS_NONE	\*ABS\*
 			24: R_MIPS_NONE	\*ABS\*
-0000000000000028 <fn\+0x28> 3c010002 	lui	at,0x2
-000000000000002c <fn\+0x2c> 6421e240 	daddiu	at,at,-7616
+0000000000000028 <fn\+0x28> 3c010001 	lui	at,0x1
+000000000000002c <fn\+0x2c> 3421e240 	ori	at,at,0xe240
 0000000000000030 <fn\+0x30> 00a1282d 	daddu	a1,a1,at
 0000000000000034 <fn\+0x34> 3c050000 	lui	a1,0x0
 			34: R_MIPS_GOT_HI16	dg1
@@ -67,8 +67,8 @@ Disassembly of section \.text:
 			60: R_MIPS_GOT_LO16	dg1
 			60: R_MIPS_NONE	\*ABS\*
 			60: R_MIPS_NONE	\*ABS\*
-0000000000000064 <fn\+0x64> 3c010002 	lui	at,0x2
-0000000000000068 <fn\+0x68> 6421e240 	daddiu	at,at,-7616
+0000000000000064 <fn\+0x64> 3c010001 	lui	at,0x1
+0000000000000068 <fn\+0x68> 3421e240 	ori	at,at,0xe240
 000000000000006c <fn\+0x6c> 00a1282d 	daddu	a1,a1,at
 0000000000000070 <fn\+0x70> 00b1282d 	daddu	a1,a1,s1
 0000000000000074 <fn\+0x74> 3c050000 	lui	a1,0x0
@@ -144,8 +144,8 @@ Disassembly of section \.text:
 			ec: R_MIPS_GOT_LO16	dg1
 			ec: R_MIPS_NONE	\*ABS\*
 			ec: R_MIPS_NONE	\*ABS\*
-00000000000000f0 <fn\+0xf0> 88250000 	lwl	a1,0\(at\)
-00000000000000f4 <fn\+0xf4> 98250003 	lwr	a1,3\(at\)
+00000000000000f0 <fn\+0xf0> 8825000[03] 	lwl	a1,[03]\(at\)
+00000000000000f4 <fn\+0xf4> 9825000[03] 	lwr	a1,[03]\(at\)
 00000000000000f8 <fn\+0xf8> 3c010000 	lui	at,0x0
 			f8: R_MIPS_GOT_HI16	dg1
 			f8: R_MIPS_NONE	\*ABS\*
@@ -156,8 +156,8 @@ Disassembly of section \.text:
 			100: R_MIPS_NONE	\*ABS\*
 			100: R_MIPS_NONE	\*ABS\*
 0000000000000104 <fn\+0x104> 6421000c 	daddiu	at,at,12
-0000000000000108 <fn\+0x108> 88250000 	lwl	a1,0\(at\)
-000000000000010c <fn\+0x10c> 98250003 	lwr	a1,3\(at\)
+0000000000000108 <fn\+0x108> 8825000[03] 	lwl	a1,[03]\(at\)
+000000000000010c <fn\+0x10c> 9825000[03] 	lwr	a1,[03]\(at\)
 0000000000000110 <fn\+0x110> 3c010000 	lui	at,0x0
 			110: R_MIPS_GOT_HI16	dg1
 			110: R_MIPS_NONE	\*ABS\*
@@ -168,8 +168,8 @@ Disassembly of section \.text:
 			118: R_MIPS_NONE	\*ABS\*
 			118: R_MIPS_NONE	\*ABS\*
 000000000000011c <fn\+0x11c> 0031082d 	daddu	at,at,s1
-0000000000000120 <fn\+0x120> 88250000 	lwl	a1,0\(at\)
-0000000000000124 <fn\+0x124> 98250003 	lwr	a1,3\(at\)
+0000000000000120 <fn\+0x120> 8825000[03] 	lwl	a1,[03]\(at\)
+0000000000000124 <fn\+0x124> 9825000[03] 	lwr	a1,[03]\(at\)
 0000000000000128 <fn\+0x128> 3c010000 	lui	at,0x0
 			128: R_MIPS_GOT_HI16	dg1
 			128: R_MIPS_NONE	\*ABS\*
@@ -181,8 +181,8 @@ Disassembly of section \.text:
 			130: R_MIPS_NONE	\*ABS\*
 0000000000000134 <fn\+0x134> 6421000c 	daddiu	at,at,12
 0000000000000138 <fn\+0x138> 0031082d 	daddu	at,at,s1
-000000000000013c <fn\+0x13c> 88250000 	lwl	a1,0\(at\)
-0000000000000140 <fn\+0x140> 98250003 	lwr	a1,3\(at\)
+000000000000013c <fn\+0x13c> 8825000[03] 	lwl	a1,[03]\(at\)
+0000000000000140 <fn\+0x140> 9825000[03] 	lwr	a1,[03]\(at\)
 0000000000000144 <fn\+0x144> 3c010000 	lui	at,0x0
 			144: R_MIPS_GOT_HI16	dg1
 			144: R_MIPS_NONE	\*ABS\*
@@ -194,8 +194,8 @@ Disassembly of section \.text:
 			14c: R_MIPS_NONE	\*ABS\*
 0000000000000150 <fn\+0x150> 64210022 	daddiu	at,at,34
 0000000000000154 <fn\+0x154> 0025082d 	daddu	at,at,a1
-0000000000000158 <fn\+0x158> 88250000 	lwl	a1,0\(at\)
-000000000000015c <fn\+0x15c> 98250003 	lwr	a1,3\(at\)
+0000000000000158 <fn\+0x158> 8825000[03] 	lwl	a1,[03]\(at\)
+000000000000015c <fn\+0x15c> 9825000[03] 	lwr	a1,[03]\(at\)
 0000000000000160 <fn\+0x160> 3c010000 	lui	at,0x0
 			160: R_MIPS_GOT_HI16	dg1
 			160: R_MIPS_NONE	\*ABS\*
@@ -207,8 +207,8 @@ Disassembly of section \.text:
 			168: R_MIPS_NONE	\*ABS\*
 000000000000016c <fn\+0x16c> 64210038 	daddiu	at,at,56
 0000000000000170 <fn\+0x170> 0025082d 	daddu	at,at,a1
-0000000000000174 <fn\+0x174> a8250000 	swl	a1,0\(at\)
-0000000000000178 <fn\+0x178> b8250003 	swr	a1,3\(at\)
+0000000000000174 <fn\+0x174> a825000[03] 	swl	a1,[03]\(at\)
+0000000000000178 <fn\+0x178> b825000[03] 	swr	a1,[03]\(at\)
 000000000000017c <fn\+0x17c> df850000 	ld	a1,0\(gp\)
 			17c: R_MIPS_GOT_PAGE	\.data\+0x3c
 			17c: R_MIPS_NONE	\*ABS\*\+0x3c
@@ -320,8 +320,8 @@ Disassembly of section \.text:
 			1fc: R_MIPS_GOT_OFST	\.data\+0x3c
 			1fc: R_MIPS_NONE	\*ABS\*\+0x3c
 			1fc: R_MIPS_NONE	\*ABS\*\+0x3c
-0000000000000200 <fn\+0x200> 88250000 	lwl	a1,0\(at\)
-0000000000000204 <fn\+0x204> 98250003 	lwr	a1,3\(at\)
+0000000000000200 <fn\+0x200> 8825000[03] 	lwl	a1,[03]\(at\)
+0000000000000204 <fn\+0x204> 9825000[03] 	lwr	a1,[03]\(at\)
 0000000000000208 <fn\+0x208> df810000 	ld	at,0\(gp\)
 			208: R_MIPS_GOT_PAGE	\.data\+0x48
 			208: R_MIPS_NONE	\*ABS\*\+0x48
@@ -330,8 +330,8 @@ Disassembly of section \.text:
 			20c: R_MIPS_GOT_OFST	\.data\+0x48
 			20c: R_MIPS_NONE	\*ABS\*\+0x48
 			20c: R_MIPS_NONE	\*ABS\*\+0x48
-0000000000000210 <fn\+0x210> 88250000 	lwl	a1,0\(at\)
-0000000000000214 <fn\+0x214> 98250003 	lwr	a1,3\(at\)
+0000000000000210 <fn\+0x210> 8825000[03] 	lwl	a1,[03]\(at\)
+0000000000000214 <fn\+0x214> 9825000[03] 	lwr	a1,[03]\(at\)
 0000000000000218 <fn\+0x218> df810000 	ld	at,0\(gp\)
 			218: R_MIPS_GOT_PAGE	\.data\+0x3c
 			218: R_MIPS_NONE	\*ABS\*\+0x3c
@@ -341,8 +341,8 @@ Disassembly of section \.text:
 			21c: R_MIPS_NONE	\*ABS\*\+0x3c
 			21c: R_MIPS_NONE	\*ABS\*\+0x3c
 0000000000000220 <fn\+0x220> 0031082d 	daddu	at,at,s1
-0000000000000224 <fn\+0x224> 88250000 	lwl	a1,0\(at\)
-0000000000000228 <fn\+0x228> 98250003 	lwr	a1,3\(at\)
+0000000000000224 <fn\+0x224> 8825000[03] 	lwl	a1,[03]\(at\)
+0000000000000228 <fn\+0x228> 9825000[03] 	lwr	a1,[03]\(at\)
 000000000000022c <fn\+0x22c> df810000 	ld	at,0\(gp\)
 			22c: R_MIPS_GOT_PAGE	\.data\+0x48
 			22c: R_MIPS_NONE	\*ABS\*\+0x48
@@ -352,8 +352,8 @@ Disassembly of section \.text:
 			230: R_MIPS_NONE	\*ABS\*\+0x48
 			230: R_MIPS_NONE	\*ABS\*\+0x48
 0000000000000234 <fn\+0x234> 0031082d 	daddu	at,at,s1
-0000000000000238 <fn\+0x238> 88250000 	lwl	a1,0\(at\)
-000000000000023c <fn\+0x23c> 98250003 	lwr	a1,3\(at\)
+0000000000000238 <fn\+0x238> 8825000[03] 	lwl	a1,[03]\(at\)
+000000000000023c <fn\+0x23c> 9825000[03] 	lwr	a1,[03]\(at\)
 0000000000000240 <fn\+0x240> df810000 	ld	at,0\(gp\)
 			240: R_MIPS_GOT_PAGE	\.data\+0x5e
 			240: R_MIPS_NONE	\*ABS\*\+0x5e
@@ -363,8 +363,8 @@ Disassembly of section \.text:
 			244: R_MIPS_NONE	\*ABS\*\+0x5e
 			244: R_MIPS_NONE	\*ABS\*\+0x5e
 0000000000000248 <fn\+0x248> 0025082d 	daddu	at,at,a1
-000000000000024c <fn\+0x24c> 88250000 	lwl	a1,0\(at\)
-0000000000000250 <fn\+0x250> 98250003 	lwr	a1,3\(at\)
+000000000000024c <fn\+0x24c> 8825000[03] 	lwl	a1,[03]\(at\)
+0000000000000250 <fn\+0x250> 9825000[03] 	lwr	a1,[03]\(at\)
 0000000000000254 <fn\+0x254> df810000 	ld	at,0\(gp\)
 			254: R_MIPS_GOT_PAGE	\.data\+0x74
 			254: R_MIPS_NONE	\*ABS\*\+0x74
@@ -374,8 +374,8 @@ Disassembly of section \.text:
 			258: R_MIPS_NONE	\*ABS\*\+0x74
 			258: R_MIPS_NONE	\*ABS\*\+0x74
 000000000000025c <fn\+0x25c> 0025082d 	daddu	at,at,a1
-0000000000000260 <fn\+0x260> a8250000 	swl	a1,0\(at\)
-0000000000000264 <fn\+0x264> b8250003 	swr	a1,3\(at\)
+0000000000000260 <fn\+0x260> a825000[03] 	swl	a1,[03]\(at\)
+0000000000000264 <fn\+0x264> b825000[03] 	swr	a1,[03]\(at\)
 0000000000000268 <fn\+0x268> 3c050000 	lui	a1,0x0
 			268: R_MIPS_GOT_HI16	fn
 			268: R_MIPS_NONE	\*ABS\*
@@ -465,8 +465,8 @@ Disassembly of section \.text:
 			2d8: R_MIPS_GOT_LO16	dg2
 			2d8: R_MIPS_NONE	\*ABS\*
 			2d8: R_MIPS_NONE	\*ABS\*
-00000000000002dc <fn\+0x2dc> 3c010002 	lui	at,0x2
-00000000000002e0 <fn\+0x2e0> 6421e240 	daddiu	at,at,-7616
+00000000000002dc <fn\+0x2dc> 3c010001 	lui	at,0x1
+00000000000002e0 <fn\+0x2e0> 3421e240 	ori	at,at,0xe240
 00000000000002e4 <fn\+0x2e4> 00a1282d 	daddu	a1,a1,at
 00000000000002e8 <fn\+0x2e8> 3c050000 	lui	a1,0x0
 			2e8: R_MIPS_GOT_HI16	dg2
@@ -498,8 +498,8 @@ Disassembly of section \.text:
 			314: R_MIPS_GOT_LO16	dg2
 			314: R_MIPS_NONE	\*ABS\*
 			314: R_MIPS_NONE	\*ABS\*
-0000000000000318 <fn\+0x318> 3c010002 	lui	at,0x2
-000000000000031c <fn\+0x31c> 6421e240 	daddiu	at,at,-7616
+0000000000000318 <fn\+0x318> 3c010001 	lui	at,0x1
+000000000000031c <fn\+0x31c> 3421e240 	ori	at,at,0xe240
 0000000000000320 <fn\+0x320> 00a1282d 	daddu	a1,a1,at
 0000000000000324 <fn\+0x324> 00b1282d 	daddu	a1,a1,s1
 0000000000000328 <fn\+0x328> 3c050000 	lui	a1,0x0
@@ -575,8 +575,8 @@ Disassembly of section \.text:
 			3a0: R_MIPS_GOT_LO16	dg2
 			3a0: R_MIPS_NONE	\*ABS\*
 			3a0: R_MIPS_NONE	\*ABS\*
-00000000000003a4 <fn\+0x3a4> 88250000 	lwl	a1,0\(at\)
-00000000000003a8 <fn\+0x3a8> 98250003 	lwr	a1,3\(at\)
+00000000000003a4 <fn\+0x3a4> 8825000[03] 	lwl	a1,[03]\(at\)
+00000000000003a8 <fn\+0x3a8> 9825000[03] 	lwr	a1,[03]\(at\)
 00000000000003ac <fn\+0x3ac> 3c010000 	lui	at,0x0
 			3ac: R_MIPS_GOT_HI16	dg2
 			3ac: R_MIPS_NONE	\*ABS\*
@@ -587,8 +587,8 @@ Disassembly of section \.text:
 			3b4: R_MIPS_NONE	\*ABS\*
 			3b4: R_MIPS_NONE	\*ABS\*
 00000000000003b8 <fn\+0x3b8> 6421000c 	daddiu	at,at,12
-00000000000003bc <fn\+0x3bc> 88250000 	lwl	a1,0\(at\)
-00000000000003c0 <fn\+0x3c0> 98250003 	lwr	a1,3\(at\)
+00000000000003bc <fn\+0x3bc> 8825000[03] 	lwl	a1,[03]\(at\)
+00000000000003c0 <fn\+0x3c0> 9825000[03] 	lwr	a1,[03]\(at\)
 00000000000003c4 <fn\+0x3c4> 3c010000 	lui	at,0x0
 			3c4: R_MIPS_GOT_HI16	dg2
 			3c4: R_MIPS_NONE	\*ABS\*
@@ -599,8 +599,8 @@ Disassembly of section \.text:
 			3cc: R_MIPS_NONE	\*ABS\*
 			3cc: R_MIPS_NONE	\*ABS\*
 00000000000003d0 <fn\+0x3d0> 0031082d 	daddu	at,at,s1
-00000000000003d4 <fn\+0x3d4> 88250000 	lwl	a1,0\(at\)
-00000000000003d8 <fn\+0x3d8> 98250003 	lwr	a1,3\(at\)
+00000000000003d4 <fn\+0x3d4> 8825000[03] 	lwl	a1,[03]\(at\)
+00000000000003d8 <fn\+0x3d8> 9825000[03] 	lwr	a1,[03]\(at\)
 00000000000003dc <fn\+0x3dc> 3c010000 	lui	at,0x0
 			3dc: R_MIPS_GOT_HI16	dg2
 			3dc: R_MIPS_NONE	\*ABS\*
@@ -612,8 +612,8 @@ Disassembly of section \.text:
 			3e4: R_MIPS_NONE	\*ABS\*
 00000000000003e8 <fn\+0x3e8> 6421000c 	daddiu	at,at,12
 00000000000003ec <fn\+0x3ec> 0031082d 	daddu	at,at,s1
-00000000000003f0 <fn\+0x3f0> 88250000 	lwl	a1,0\(at\)
-00000000000003f4 <fn\+0x3f4> 98250003 	lwr	a1,3\(at\)
+00000000000003f0 <fn\+0x3f0> 8825000[03] 	lwl	a1,[03]\(at\)
+00000000000003f4 <fn\+0x3f4> 9825000[03] 	lwr	a1,[03]\(at\)
 00000000000003f8 <fn\+0x3f8> 3c010000 	lui	at,0x0
 			3f8: R_MIPS_GOT_HI16	dg2
 			3f8: R_MIPS_NONE	\*ABS\*
@@ -625,8 +625,8 @@ Disassembly of section \.text:
 			400: R_MIPS_NONE	\*ABS\*
 0000000000000404 <fn\+0x404> 64210022 	daddiu	at,at,34
 0000000000000408 <fn\+0x408> 0025082d 	daddu	at,at,a1
-000000000000040c <fn\+0x40c> 88250000 	lwl	a1,0\(at\)
-0000000000000410 <fn\+0x410> 98250003 	lwr	a1,3\(at\)
+000000000000040c <fn\+0x40c> 8825000[03] 	lwl	a1,[03]\(at\)
+0000000000000410 <fn\+0x410> 9825000[03] 	lwr	a1,[03]\(at\)
 0000000000000414 <fn\+0x414> 3c010000 	lui	at,0x0
 			414: R_MIPS_GOT_HI16	dg2
 			414: R_MIPS_NONE	\*ABS\*
@@ -638,8 +638,8 @@ Disassembly of section \.text:
 			41c: R_MIPS_NONE	\*ABS\*
 0000000000000420 <fn\+0x420> 64210038 	daddiu	at,at,56
 0000000000000424 <fn\+0x424> 0025082d 	daddu	at,at,a1
-0000000000000428 <fn\+0x428> a8250000 	swl	a1,0\(at\)
-000000000000042c <fn\+0x42c> b8250003 	swr	a1,3\(at\)
+0000000000000428 <fn\+0x428> a825000[03] 	swl	a1,[03]\(at\)
+000000000000042c <fn\+0x42c> b825000[03] 	swr	a1,[03]\(at\)
 0000000000000430 <fn\+0x430> df850000 	ld	a1,0\(gp\)
 			430: R_MIPS_GOT_PAGE	\.data\+0xb4
 			430: R_MIPS_NONE	\*ABS\*\+0xb4
@@ -726,14 +726,14 @@ Disassembly of section \.text:
 			490: R_MIPS_NONE	\*ABS\*\+0xc0
 			490: R_MIPS_NONE	\*ABS\*\+0xc0
 0000000000000494 <fn\+0x494> df810000 	ld	at,0\(gp\)
-			494: R_MIPS_GOT_PAGE	\.data\+0xb4
-			494: R_MIPS_NONE	\*ABS\*\+0xb4
-			494: R_MIPS_NONE	\*ABS\*\+0xb4
+			494: R_MIPS_GOT_PAGE	\.data\+0xd6
+			494: R_MIPS_NONE	\*ABS\*\+0xd6
+			494: R_MIPS_NONE	\*ABS\*\+0xd6
 0000000000000498 <fn\+0x498> 0025082d 	daddu	at,at,a1
 000000000000049c <fn\+0x49c> dc250000 	ld	a1,0\(at\)
-			49c: R_MIPS_GOT_OFST	\.data\+0xb4
-			49c: R_MIPS_NONE	\*ABS\*\+0xb4
-			49c: R_MIPS_NONE	\*ABS\*\+0xb4
+			49c: R_MIPS_GOT_OFST	\.data\+0xd6
+			49c: R_MIPS_NONE	\*ABS\*\+0xd6
+			49c: R_MIPS_NONE	\*ABS\*\+0xd6
 00000000000004a0 <fn\+0x4a0> df810000 	ld	at,0\(gp\)
 			4a0: R_MIPS_GOT_PAGE	\.data\+0xec
 			4a0: R_MIPS_NONE	\*ABS\*\+0xec
@@ -751,8 +751,8 @@ Disassembly of section \.text:
 			4b0: R_MIPS_GOT_OFST	\.data\+0xb4
 			4b0: R_MIPS_NONE	\*ABS\*\+0xb4
 			4b0: R_MIPS_NONE	\*ABS\*\+0xb4
-00000000000004b4 <fn\+0x4b4> 88250000 	lwl	a1,0\(at\)
-00000000000004b8 <fn\+0x4b8> 98250003 	lwr	a1,3\(at\)
+00000000000004b4 <fn\+0x4b4> 8825000[03] 	lwl	a1,[03]\(at\)
+00000000000004b8 <fn\+0x4b8> 9825000[03] 	lwr	a1,[03]\(at\)
 00000000000004bc <fn\+0x4bc> df810000 	ld	at,0\(gp\)
 			4bc: R_MIPS_GOT_PAGE	\.data\+0xc0
 			4bc: R_MIPS_NONE	\*ABS\*\+0xc0
@@ -761,8 +761,8 @@ Disassembly of section \.text:
 			4c0: R_MIPS_GOT_OFST	\.data\+0xc0
 			4c0: R_MIPS_NONE	\*ABS\*\+0xc0
 			4c0: R_MIPS_NONE	\*ABS\*\+0xc0
-00000000000004c4 <fn\+0x4c4> 88250000 	lwl	a1,0\(at\)
-00000000000004c8 <fn\+0x4c8> 98250003 	lwr	a1,3\(at\)
+00000000000004c4 <fn\+0x4c4> 8825000[03] 	lwl	a1,[03]\(at\)
+00000000000004c8 <fn\+0x4c8> 9825000[03] 	lwr	a1,[03]\(at\)
 00000000000004cc <fn\+0x4cc> df810000 	ld	at,0\(gp\)
 			4cc: R_MIPS_GOT_PAGE	\.data\+0xb4
 			4cc: R_MIPS_NONE	\*ABS\*\+0xb4
@@ -772,8 +772,8 @@ Disassembly of section \.text:
 			4d0: R_MIPS_NONE	\*ABS\*\+0xb4
 			4d0: R_MIPS_NONE	\*ABS\*\+0xb4
 00000000000004d4 <fn\+0x4d4> 0031082d 	daddu	at,at,s1
-00000000000004d8 <fn\+0x4d8> 88250000 	lwl	a1,0\(at\)
-00000000000004dc <fn\+0x4dc> 98250003 	lwr	a1,3\(at\)
+00000000000004d8 <fn\+0x4d8> 8825000[03] 	lwl	a1,[03]\(at\)
+00000000000004dc <fn\+0x4dc> 9825000[03] 	lwr	a1,[03]\(at\)
 00000000000004e0 <fn\+0x4e0> df810000 	ld	at,0\(gp\)
 			4e0: R_MIPS_GOT_PAGE	\.data\+0xc0
 			4e0: R_MIPS_NONE	\*ABS\*\+0xc0
@@ -783,8 +783,8 @@ Disassembly of section \.text:
 			4e4: R_MIPS_NONE	\*ABS\*\+0xc0
 			4e4: R_MIPS_NONE	\*ABS\*\+0xc0
 00000000000004e8 <fn\+0x4e8> 0031082d 	daddu	at,at,s1
-00000000000004ec <fn\+0x4ec> 88250000 	lwl	a1,0\(at\)
-00000000000004f0 <fn\+0x4f0> 98250003 	lwr	a1,3\(at\)
+00000000000004ec <fn\+0x4ec> 8825000[03] 	lwl	a1,[03]\(at\)
+00000000000004f0 <fn\+0x4f0> 9825000[03] 	lwr	a1,[03]\(at\)
 00000000000004f4 <fn\+0x4f4> df810000 	ld	at,0\(gp\)
 			4f4: R_MIPS_GOT_PAGE	\.data\+0xd6
 			4f4: R_MIPS_NONE	\*ABS\*\+0xd6
@@ -794,8 +794,8 @@ Disassembly of section \.text:
 			4f8: R_MIPS_NONE	\*ABS\*\+0xd6
 			4f8: R_MIPS_NONE	\*ABS\*\+0xd6
 00000000000004fc <fn\+0x4fc> 0025082d 	daddu	at,at,a1
-0000000000000500 <fn\+0x500> 88250000 	lwl	a1,0\(at\)
-0000000000000504 <fn\+0x504> 98250003 	lwr	a1,3\(at\)
+0000000000000500 <fn\+0x500> 8825000[03] 	lwl	a1,[03]\(at\)
+0000000000000504 <fn\+0x504> 9825000[03] 	lwr	a1,[03]\(at\)
 0000000000000508 <fn\+0x508> df810000 	ld	at,0\(gp\)
 			508: R_MIPS_GOT_PAGE	\.data\+0xec
 			508: R_MIPS_NONE	\*ABS\*\+0xec
@@ -805,8 +805,8 @@ Disassembly of section \.text:
 			50c: R_MIPS_NONE	\*ABS\*\+0xec
 			50c: R_MIPS_NONE	\*ABS\*\+0xec
 0000000000000510 <fn\+0x510> 0025082d 	daddu	at,at,a1
-0000000000000514 <fn\+0x514> a8250000 	swl	a1,0\(at\)
-0000000000000518 <fn\+0x518> b8250003 	swr	a1,3\(at\)
+0000000000000514 <fn\+0x514> a825000[03] 	swl	a1,[03]\(at\)
+0000000000000518 <fn\+0x518> b825000[03] 	swr	a1,[03]\(at\)
 000000000000051c <fn\+0x51c> 3c050000 	lui	a1,0x0
 			51c: R_MIPS_GOT_HI16	fn2
 			51c: R_MIPS_NONE	\*ABS\*

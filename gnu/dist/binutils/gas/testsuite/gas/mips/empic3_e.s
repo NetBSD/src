@@ -1,5 +1,5 @@
-# Check PC-relative HI/LO relocs relocs for -membedded-pic when HI and
-# LO are split over a 32K boundary.
+# Check PC-relative HI/LO relocs for -membedded-pic when HI and LO are
+# split over a 32K boundary.
 
         .text
         .set noreorder

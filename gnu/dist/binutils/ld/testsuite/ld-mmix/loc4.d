@@ -31,4 +31,3 @@ Contents of section \.text:
  1000 fd030303 e3fd0001                    .*
 Contents of section \.data:
  2000000000000000 00000000 00001030                    .*
-Contents of section \.sbss:

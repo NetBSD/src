@@ -9,6 +9,7 @@ if [istarget m32r-*-*] {
     dg-runtest "$srcdir/$subdir/wrongsize.s" "" ""
     dg-runtest "$srcdir/$subdir/interfere.s" "" ""
     dg-runtest "$srcdir/$subdir/outofrange.s" "" ""
+    dg-runtest "$srcdir/$subdir/parallel.s" "" ""
 
     dg-finish
 

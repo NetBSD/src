@@ -1,5 +1,5 @@
 #objdump: -srt
-#as: -x
+#as: -x --no-stubs
 
 .*:     file format elf64-mmix
 
@@ -25,4 +25,4 @@ Contents of section \.text:
  0010 fd000000 f4070000 fd000000 fd000000  .*
  0020 fd000000 f2080000 fd000000 fd000000  .*
  0030 fd000000 fd000000                    .*
-Contents of section \.data:
+

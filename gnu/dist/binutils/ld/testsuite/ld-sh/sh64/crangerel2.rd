@@ -1,4 +1,4 @@
-There are 10 section headers, starting at offset 0x11c:
+There are 11 section headers, starting at offset 0x128:
 
 Section Headers:
   \[Nr\] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
@@ -7,11 +7,12 @@ Section Headers:
   \[ 2\] \.text\.mixed       PROGBITS        00000000 000034 00005c 00 AXp  0   0  4
   \[ 3\] \.data             PROGBITS        00000000 000090 000000 00  WA  0   0  1
   \[ 4\] \.bss              NOBITS          00000000 000090 000000 00  WA  0   0  1
-  \[ 5\] \.cranges          PROGBITS        00000000 000090 000046 00   W  0   0  1
-  \[ 6\] \.rela\.cranges     RELA            00000000 0002ac 000054 0c      8   5  4
-  \[ 7\] \.shstrtab         STRTAB          00000000 0000d6 000046 00      0   0  1
-  \[ 8\] \.symtab           SYMTAB          00000000 000300 000100 10      9   f  4
-  \[ 9\] \.strtab           STRTAB          00000000 000400 000027 00      0   0  1
+  \[ 5\] \.stack            PROGBITS        00000000 000090 000004 00  WA  0   0  1
+  \[ 6\] \.cranges          PROGBITS        00000000 000094 000046 00   W  0   0  1
+  \[ 7\] \.rela\.cranges     RELA            00000000 0002e0 000054 0c      9   6  4
+  \[ 8\] \.shstrtab         STRTAB          00000000 0000da 00004d 00      0   0  1
+  \[ 9\] \.symtab           SYMTAB          00000000 000334 000110 10     10  10  4
+  \[10\] \.strtab           STRTAB          00000000 000444 000027 00      0   0  1
 Key to Flags:
   W \(write\), A \(alloc\), X \(execute\), M \(merge\), S \(strings\)
   I \(info\), L \(link order\), G \(group\), x \(unknown\)
@@ -27,7 +28,7 @@ Relocation section '\.rela\.cranges' at offset 0x[0-9a-f]+ contains 7 entries:
 0*00000032 +0+0201 R_SH_DIR32 +00000000 +\.text\.mixed +\+ 0
 0*0000003c +0+0201 R_SH_DIR32 +00000000 +\.text\.mixed +\+ 0
 
-Symbol table '\.symtab' contains 16 entries:
+Symbol table '\.symtab' contains 17 entries:
    Num:    Value  Size Type    Bind   Vis      Ndx Name
      0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
      1: 00000000     0 SECTION LOCAL  DEFAULT    1 
@@ -39,12 +40,13 @@ Symbol table '\.symtab' contains 16 entries:
      7: 00000000     0 SECTION LOCAL  DEFAULT    7 
      8: 00000000     0 SECTION LOCAL  DEFAULT    8 
      9: 00000000     0 SECTION LOCAL  DEFAULT    9 
-    10: 00000000     0 NOTYPE  LOCAL  DEFAULT    2 start2
-    11: 00000018     0 NOTYPE  LOCAL  DEFAULT    2 sec1
-    12: 00000028     0 NOTYPE  LOCAL  DEFAULT    2 sec2
-    13: 0000003c     0 NOTYPE  LOCAL  DEFAULT    2 sec3
-    14: 00000044     0 NOTYPE  LOCAL  DEFAULT    2 sec4
-    15: 00000000     0 NOTYPE  GLOBAL DEFAULT    2 diversion2
+    10: 00000000     0 SECTION LOCAL  DEFAULT   10 
+    11: 00000000     0 NOTYPE  LOCAL  DEFAULT    2 start2
+    12: 00000018     0 NOTYPE  LOCAL  DEFAULT    2 sec1
+    13: 00000028     0 NOTYPE  LOCAL  DEFAULT    2 sec2
+    14: 0000003c     0 NOTYPE  LOCAL  DEFAULT    2 sec3
+    15: 00000044     0 NOTYPE  LOCAL  DEFAULT    2 sec4
+    16: 00000000     0 NOTYPE  GLOBAL DEFAULT    2 diversion2
 
 Hex dump of section '\.text\.mixed':
   0x00000000 6ff0fff0 6ff0fff0 6ff0fff0 0000002a .*

@@ -175,7 +175,7 @@ if ![regexp "start address (\[0-9a-fA-FxX\]+)" $got all origstart] then {
     perror "objdump can not recognize bintest.o"
     set origstart ""
 } else {
-    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec $tempfile ${copyfile}.srec --set-start 0x7654"]
+    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec --set-start 0x7654 $tempfile ${copyfile}.srec"]
     if ![string match "" $got] then {
 	fail "objcopy --set-start"
     } else {
@@ -192,7 +192,7 @@ if ![regexp "start address (\[0-9a-fA-FxX\]+)" $got all origstart] then {
 	}
     }
 
-    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec $tempfile ${copyfile}.srec --adjust-start 0x123"]
+    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec --adjust-start 0x123 $tempfile ${copyfile}.srec"]
     if ![string match "" $got] then {
 	fail "objcopy --adjust-start"
     } else {
@@ -237,7 +237,7 @@ while {[regexp $headers_regexp $got all name size vma rest]} {
 if {$low == "" || $origstart == ""} then {
     perror "objdump can not recognize bintest.o"
 } else {
-    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec $tempfile ${copyfile}.srec --adjust-vma 0x123"]
+    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec --adjust-vma 0x123 $tempfile ${copyfile}.srec"]
     if ![string match "" $got] then {
         fail "objcopy --adjust-vma"
     } else {
@@ -271,7 +271,7 @@ if {$low == "" || $origstart == ""} then {
 	set got $rest
     }
 
-    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec $tempfile ${copyfile}.srec $arg"]
+    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec $arg $tempfile ${copyfile}.srec"]
     if ![string match "" $got] then {
 	fail "objcopy --adjust-section-vma +"
     } else {
@@ -291,7 +291,7 @@ if {$low == "" || $origstart == ""} then {
     }
 
     regsub -all "\\+4" $arg "=[expr $low + 4]" argeq
-    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec $tempfile ${copyfile}.srec $argeq"]
+    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec $argeq $tempfile ${copyfile}.srec"]
     if ![string match "" $got] then {
 	fail "objcopy --adjust-section-vma ="
     } else {
@@ -425,10 +425,17 @@ strip_test_with_saving_a_symbol
 
 # Build a final executable.
 
+if { [istarget *-*-cygwin] || [istarget *-*-mingw32] } {
+    set test_prog "testprog.exe"
+} else {
+    set test_prog "testprog"
+}
+
 proc copy_setup { } {
     global srcdir
     global subdir
     global gcc_gas_flag
+    global test_prog
     
     set res [build_wrapper testglue.o];
     set flags { debug };
@@ -445,11 +452,11 @@ proc copy_setup { } {
 	    set flags "additional_flags=$i $flags"
 	}
     }
-    if { [target_compile "$srcdir/$subdir/testprog.c $add_libs" tmpdir/testprog executable $flags]  != "" } {
+    if { [target_compile "$srcdir/$subdir/testprog.c $add_libs" tmpdir/$test_prog executable $flags]  != "" } {
 	return 2
     }
 
-    set result [remote_load target tmpdir/testprog];
+    set result [remote_load target tmpdir/$test_prog];
     set status [lindex $result 0];
 
     if { $status != "pass"  } {
@@ -463,12 +470,13 @@ proc copy_setup { } {
 # Test copying an executable.
 
 proc copy_executable { prog flags test1 test2 } {
+    global test_prog
 
     if [is_remote host] {
-	set testfile [remote_download host tmpdir/testprog];
+	set testfile [remote_download host tmpdir/$test_prog];
 	set testcopy copyprog
     } else {
-	set testfile tmpdir/testprog
+	set testfile tmpdir/$test_prog
 	set testcopy tmpdir/copyprog
     }
     remote_file host delete $testcopy;
@@ -485,7 +493,7 @@ proc copy_executable { prog flags test1 test2 } {
 	remote_upload host $testcopy tmpdir/copyprog
     }
 
-    set status [remote_exec build "cmp" "tmpdir/testprog tmpdir/copyprog"]
+    set status [remote_exec build "cmp" "tmpdir/$test_prog tmpdir/copyprog"]
     set exec_output [lindex $status 1];
 
     if [string match "" $exec_output] then {
@@ -605,8 +613,8 @@ proc strip_executable_with_saving_a_symbol { prog flags test } {
 	regsub "^\[0-9a-fA-F\]+\[ \]+T Main\[\n\r\]+" $exec_output "" exec_output
     }
 
-    if {![regexp {^[0-9a-fA-F]+ T main} $exec_output] \
-         && ![regexp {^[0-9a-fA-F]+ T _main} $exec_output]} {
+    if {![regexp {^([0-9a-fA-F]+)?[ ]+[TD] main} $exec_output] \
+         && ![regexp {^([0-9a-fA-F]+)?[ ]+[TD] _main} $exec_output]} {
 	fail $test
 	return
     }

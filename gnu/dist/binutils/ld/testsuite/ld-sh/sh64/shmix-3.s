@@ -17,6 +17,7 @@ compactlabel2:
 	nop
 compactlabel3:
 	nop
+	.align 2
 	.long medialabel1
 	.long medialabel4
 

@@ -9,4 +9,3 @@ Disassembly of section .text:
 
 00000000 <foo>:
    0:	20 01 5e 00 	mv	r0, r1	||	nop	
-Disassembly of section .data:

@@ -6,7 +6,7 @@
 
 Disassembly of section \.text:
 
-0000000000000000 <start>:
+0+000 <start>:
    0:	0a 00 00 02 34 04 	\[MMI\]       ptc\.e r1;;
    6:	00 00 00 60 00 00 	            srlz\.d
    c:	00 00 04 00       	            nop\.i 0x0

@@ -1,10 +1,10 @@
 ; Check the push and pop builtin "macros".
  .text
+ .syntax no_register_prefix
 start:
  push r1
  push r0
  push r4
-
  ; Check that there is no recognition of invalid offsets.
  move.b r5,[sp=sp-8]
  move.w r5,[sp=sp-8]

@@ -27,6 +27,13 @@ if [istarget sh64-*-linux*] {
     set oformat32 "elf32-sh64-linux"
     set startsym "_start"
     set doabi64 0
+} elseif { [istarget sh64*-*-netbsd*] || [istarget sh5*-*-netbsd*] } then {
+    set emul32 "shelf32_nbsd"
+    set oformat32 "elf32-sh64-nbsd"
+    set startsym "__start"
+    set doabi64 1
+    set emul64 "shelf64_nbsd"
+    set oformat64 "elf64-sh64-nbsd"
 } else {
     set emul32 "shelf32"
     set oformat32 "elf32-sh64"

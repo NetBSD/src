@@ -16,8 +16,6 @@ OFFSET  *TYPE  *VALUE
 0+30 R_SH_64           externsym3\+0x0+2b
 
 
-Contents of section \.text:
-Contents of section \.data:
 Contents of section \.rodata:
  0000 01234567 89abcdef 2a4a2143 b1abcd00  .*
  0010 00000301 2c456d89 ab1d0f00 00000000  .*

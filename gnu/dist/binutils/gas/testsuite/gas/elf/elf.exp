@@ -2,19 +2,20 @@
 # elf tests
 #
 
-proc run_list_test { name suffix opts } {
+proc run_list_test { name suffix opts readelf_pipe } {
     global READELF
     global srcdir subdir
     set testname "elf $name list"
     set file $srcdir/$subdir/$name
     gas_run ${name}.s "$opts -o dump.o" ">&dump.out"
-    if { [regexp_diff "dump.out" "${file}.l"] } then {
+    if { ![string match "" $opts]
+	  && [regexp_diff "dump.out" "${file}.l"] } then {
 	fail $testname
 	verbose "output is [file_contents "dump.out"]" 2
 	return
     }
     send_log "$READELF -s dump.o > dump.out\n"
-    catch "exec $READELF -s dump.o > dump.out\n" comp_output
+    catch "exec $READELF -s dump.o $readelf_pipe > dump.out\n" comp_output
     if ![string match "" $comp_output] then {
 	send_log "$comp_output\n"
 	fail $testname
@@ -46,12 +47,11 @@ if { ([istarget "*-*-elf*"]
     if {[istarget m32r*-*-*]} then {
 	set target_machine -m32r
     }
-    if {[istarget xscale*-*-elf]} then {
-	set target_machine -miwmmxt
-    }
     run_dump_test "ehopt0"
     run_dump_test "section0" 
     run_dump_test "section1" 
-    run_list_test "section2" "$target_machine" "-al"
+    run_list_test "section2" "$target_machine" "-al" ""
+    run_dump_test "section3" 
     run_dump_test "symver" 
+    run_list_test "type" "" "" "| grep \"1 \\\[FONT\\\]\""
 }

@@ -5,7 +5,7 @@
 
 Disassembly of section \.text:
 
-0000000000000000 <_start>:
+0+000 <_start>:
    0:	00 00 00 00 01 00 	\[MII\]       nop\.m 0x0
    6:	40 28 18 8c 38 80 	            pmpyshr2 r4=r5,r6,0
    c:	50 30 68 71       	            pmpyshr2\.u r4=r5,r6,16

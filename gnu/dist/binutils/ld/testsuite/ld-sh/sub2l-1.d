@@ -4,7 +4,7 @@
 #objdump: -st
 #target: sh*-*-elf
 
-.*/dump:     file format elf32-shl
+.*/dump:     file format elf32-sh.*
 
 SYMBOL TABLE:
 #...
@@ -19,5 +19,5 @@ Contents of section \.text:
  1010 09000900 09000900 09000900 09000900  .*
  1020 09000900 09000900 0b000900 d8ffffff  .*
  1030 daffffff 02100000 28100000 24100000  .*
-Contents of section \.data:
+Contents of section \..*:
 #pass

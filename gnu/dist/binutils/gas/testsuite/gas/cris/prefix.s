@@ -1,7 +1,7 @@
 ; See that prefix insns are assembled right.
  .text
+ .syntax no_register_prefix
 start:
-
 ;
 ; bdap (8-bit signed offset).
 ;

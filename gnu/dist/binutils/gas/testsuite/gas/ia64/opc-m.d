@@ -5,7 +5,7 @@
 
 Disassembly of section \.text:
 
-0000000000000000 <_start>:
+0+000 <_start>:
        0:	18 20 00 0a 00 10 	\[MMB\]       ld1 r4=\[r5\]
        6:	40 30 14 00 24 00 	            ld1 r4=\[r5\],r6
        c:	00 00 00 20       	            nop\.b 0x0

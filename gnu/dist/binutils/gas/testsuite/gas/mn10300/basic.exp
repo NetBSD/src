@@ -1,4 +1,4 @@
-# Copyright (C) 1996, 2000, 2002 Free Software Foundation, Inc.
+# Copyright (C) 1996, 2000, 2002, 2004 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -497,6 +497,40 @@ proc do_mov4 {} {
 
     # Did we find what we were looking for?  If not, flunk it.
     if [expr $x==16] then { pass $testname } else { fail $testname }
+}
+
+proc do_mov5 {} {
+    set testname "mov5.s: mov5 tests"
+    set x 0
+
+    gas_start "mov5.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 FBF80008\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0004 FDF80000\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +4 +0100\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000a FDF800FF\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +5 +FF7F\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0010 FEF80080\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +6 +FFFFFF\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0017 FEF80000\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +7 +0080FF\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==9] then { pass $testname } else { fail $testname }
 }
 
 proc do_movbu {} {
@@ -1762,6 +1796,7 @@ if [istarget mn10300*-*-*] then {
     do_mov2
     do_mov3
     do_mov4
+    do_mov5
     do_movbu
     do_movhu
     do_movm
@@ -1780,4 +1815,6 @@ if [istarget mn10300*-*-*] then {
     do_am33_8
 
     run_list_test "movpc" ""
+
+    run_dump_test "am33-2"
 }

@@ -5,7 +5,7 @@
 
 Disassembly of section \.text:
 
-0000000000000000 <_start>:
+0+000 <_start>:
    0:	00 28 9b cf 00 60 	\[MII\]       add r101=r102,r103
    6:	80 4e ab 01 40 60 	      \(p01\) add r104=r105,r106
    c:	cd 6e 07 80       	            add r107=r108,r109,1

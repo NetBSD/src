@@ -12,7 +12,5 @@ Contents of section \.text:
 Contents of section \.data:
  10e8 000010f4 0000100d 0000105d 000010e8  .*
  10f8 000010e8 0000100d                    .*
-Contents of section \.ctors:
-Contents of section \.dtors:
-Contents of section \.sbss:
 Contents of section \.stack:
+ 80000 deaddead                            .*

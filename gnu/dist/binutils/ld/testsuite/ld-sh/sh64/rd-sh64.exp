@@ -27,4 +27,15 @@ foreach sh64test $rd_test_list {
     # We need to strip the ".d", but can leave the dirname.
     verbose [file rootname $sh64test]
     run_dump_test [file rootname $sh64test]
+    if [string match $srcdir/$subdir/*-dso.d $sh64test] {
+	# Copy the output of the DSO-createing test to .so file.
+	# Notice that a DSO-creating test must preceed the tests
+	# which need that DSO in sort-order by name.
+	set cmd "cp tmpdir/dump \
+		    tmpdir/[file rootname [file tail $sh64test]].so"
+	send_log "$cmd\n"
+	set cmdret [catch "exec $cmd" comp_output]
+	send_log "$comp_output\n"
+	# FIXME: What if it fails?  Need we do something?
+    }
 }

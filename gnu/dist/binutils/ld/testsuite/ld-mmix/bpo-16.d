@@ -25,7 +25,5 @@ SYMBOL TABLE:
 
 Contents of section \.text:
  0000 e3fd0001 234dfe00 234dfe00 fd040810  .*
-Contents of section \.data:
-Contents of section \.sbss:
 Contents of section \.MMIX\.reg_contents:
  07f0 00000000 00000007                    .*

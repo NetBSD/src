@@ -29,6 +29,5 @@ OFFSET           TYPE              VALUE
 Contents of section \.text:
  0000 fd000000 232a0000 232b0000 232c000c  .*
  0010 232d0000                             .*
-Contents of section \.data:
 Contents of section \.MMIX\.reg_contents:
  0000 00000000 00000000 00000000 00000000  .*

@@ -55,4 +55,4 @@ Contents of section \.text:
  0270 3c7e6f2d 00000000 3c7e7209 307a730d  .*
  0280 307a7f0d 00000000 307a7f0d 00000000  .*
  0290 307a0000                             .*
-Contents of section \.data:
+

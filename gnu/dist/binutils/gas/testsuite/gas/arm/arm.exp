@@ -15,9 +15,18 @@ proc run_errors_test { name opts tname} {
 }
 
 if {[istarget *arm*-*-*] || [istarget "xscale-*-*"]} then {
-    run_dump_test "inst"
 
-    run_dump_test "ldconst"
+    if {[istarget *-wince-*]} then {
+	run_dump_test "wince_inst"
+	run_dump_test "wince_ldconst"
+	run_dump_test "wince_arm7t"
+	run_dump_test "wince_copro"
+    } else {
+	run_dump_test "inst"
+	run_dump_test "ldconst"
+	run_dump_test "arm7t"
+	run_dump_test "copro"
+    }
 
     run_dump_test "armv1"
 
@@ -29,9 +38,7 @@ if {[istarget *arm*-*-*] || [istarget "xscale-*-*"]} then {
 
     gas_test "arm7dm.s" "-mcpu=arm7dm" $stdoptlist "Arm 7DM instructions"
 
-    run_dump_test "arm7t"
-
-    if {! [istarget arm*-*-aout]} then {
+    if {! [istarget arm*-*-aout] && ![istarget arm-*-pe]} then {
 	# The arm-aout port does not support Thumb mode.
 	gas_test "thumb.s" "-mcpu=arm7t" $stdoptlist "Thumb instructions"
     }
@@ -40,11 +47,9 @@ if {[istarget *arm*-*-*] || [istarget "xscale-*-*"]} then {
 
     run_dump_test "arch5tej"
 
-    gas_test "copro.s" "" $stdoptlist "Co processor instructions"
-
     gas_test "immed.s" "" $stdoptlist "immediate expressions"
 
-    gas_test "float.s" "-mcpu=arm7tdmi" $stdoptlist "Core floating point instructions"
+    gas_test "float.s" "-mcpu=arm7tdmi -mfpu=fpa" $stdoptlist "Core floating point instructions"
 
     run_dump_test "fpa-monadic"
 
@@ -56,19 +61,33 @@ if {[istarget *arm*-*-*] || [istarget "xscale-*-*"]} then {
 
     run_dump_test "vfp1"
 
+    run_dump_test "vfp2"
+
     run_errors_test "vfp-bad" "-mfpu=vfp" "VFP errors"
 
     run_dump_test "xscale"
 
     run_dump_test "adrl"
+    
+    run_errors_test "req" "-mcpu=arm7m" ".req errors"
 
     run_dump_test "maverick"
     
+    run_dump_test "archv6"
+
+    run_dump_test "thumbv6"
+
+    run_errors_test "r15-bad" "" "Invalid use of r15 errors"
+
     if {[istarget *-*-elf*] || [istarget *-*-linux*]} then {
 	run_dump_test "pic"
+
+	run_dump_test "mapping"
     }
 
     gas_test "offset.s" "" $stdoptlist "OFFSET_IMM regression"
+
+    run_errors_test "undefined" "" "Undefined local label error"
 }
 
 # Not all arm targets are bi-endian, so only run this test on ones
@@ -83,4 +102,5 @@ if [istarget arm-*-pe] {
 
 if [istarget xscale-*] {
     run_dump_test "iwmmxt"
+    run_errors_test "iwmmxt-bad" "-mcpu=iwmmxt" "iWMMXt errors"
 }

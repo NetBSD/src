@@ -4,7 +4,6 @@
 
 .*: +file format .*sparc.*
 
-Disassembly of section .text:
 Disassembly of section .data:
 
 0+ <foo>:

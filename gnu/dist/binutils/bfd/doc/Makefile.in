@@ -1,4 +1,4 @@
-# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p6 from Makefile.am
 
 # Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
@@ -68,6 +68,7 @@ AS = @AS@
 BFD_HOST_64BIT_LONG = @BFD_HOST_64BIT_LONG@
 BFD_HOST_64_BIT = @BFD_HOST_64_BIT@
 BFD_HOST_64_BIT_DEFINED = @BFD_HOST_64_BIT_DEFINED@
+BFD_HOST_LONG_LONG = @BFD_HOST_LONG_LONG@
 BFD_HOST_U_64_BIT = @BFD_HOST_U_64_BIT@
 CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
@@ -116,8 +117,10 @@ WIN32LIBADD = @WIN32LIBADD@
 all_backends = @all_backends@
 bfd_backends = @bfd_backends@
 bfd_default_target_size = @bfd_default_target_size@
+bfd_file_ptr = @bfd_file_ptr@
 bfd_libs = @bfd_libs@
 bfd_machines = @bfd_machines@
+bfd_ufile_ptr = @bfd_ufile_ptr@
 bfd_version = @bfd_version@
 bfd_version_string = @bfd_version_string@
 bfdincludedir = @bfdincludedir@
@@ -254,7 +257,7 @@ DIST_COMMON =  ChangeLog Makefile.am Makefile.in
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
-TAR = gtar
+TAR = tar
 GZIP_ENV = --best
 all: all-redirect
 .SUFFIXES:
@@ -469,7 +472,7 @@ mostlyclean distclean maintainer-clean
 
 
 $(MKDOC): chew.o
-	$(CC_FOR_BUILD) -o $(MKDOC) chew.o $(LOADLIBES) $(LDFLAGS)
+	$(CC_FOR_BUILD) -o $(MKDOC) chew.o $(CFLAGS) $(LOADLIBES) $(LDFLAGS)
 
 chew.o: chew.c
 	$(CC_FOR_BUILD) -c -I.. -I$(srcdir)/.. -I$(srcdir)/../../include -I$(srcdir)/../../intl -I../../intl $(H_CFLAGS) $(CFLAGS) $(srcdir)/chew.c

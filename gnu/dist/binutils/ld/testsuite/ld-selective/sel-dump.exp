@@ -17,24 +17,15 @@
 
 # Test for ELF here, so we don't have to qualify on ELF specifically
 # in every .d-file.
-
-if { ![istarget *-*-linux*]
-     && ![istarget *-*-gnu]
-     && ![istarget hppa*64*-*-hpux*]
-     && ![istarget *-*-elf] } {
+if ![is_elf_format] {
     return
 }
-
-if { [istarget *-*-linux*aout*] \
-     || [istarget *-*-linux*oldld*] } {
-    return
-}
-
-load_lib ld-lib.exp
 
 set test_list [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
 for { set i 0 } { $i < [llength $test_list] } { incr i } {
     # We need to strip the ".d", but can leave the dirname.
     verbose [file rootname [lindex $test_list $i]]
+    setup_xfail "alpha*-*" "arc*-*" "d30v*-*" "dlx*-*" "i370*-*" "i860*-*"
+    setup_xfail "i960*-*" "ia64*-*" "mn10200-*" "or32-*" "pj-*" "sparc64*-*"
     run_dump_test [file rootname [lindex $test_list $i]]
 }

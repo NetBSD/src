@@ -6,10 +6,10 @@
 #...
  Line Number Statements:
   Extended opcode 2: set Address to 0x0
-  Special opcode 8: advance Address by 0 to 0x0 and Line by 3 to 4
-  Special opcode 34: advance Address by 4 to 0x4 and Line by 1 to 5
-  Special opcode 34: advance Address by 4 to 0x8 and Line by 1 to 6
-  Special opcode 36: advance Address by 4 to 0xc and Line by 3 to 9
+  Special opcode 9: advance Address by 0 to 0x0 and Line by 4 to 5
+  Special opcode 34: advance Address by 4 to 0x4 and Line by 1 to 6
+  Special opcode 34: advance Address by 4 to 0x8 and Line by 1 to 7
+  Special opcode 35: advance Address by 4 to 0xc and Line by 2 to 9
   Special opcode 34: advance Address by 4 to 0x10 and Line by 1 to 10
   Special opcode 34: advance Address by 4 to 0x14 and Line by 1 to 11
   Special opcode 35: advance Address by 4 to 0x18 and Line by 2 to 13

@@ -154,6 +154,7 @@ proc default_ld_link { ld target objects } {
 proc default_ld_simple_link { ld target objects } {
     global host_triplet
     global link_output
+    global gcc_ld_flag
 
     if { [which $ld] == 0 } then {
 	perror "$ld does not exist"
@@ -164,6 +165,19 @@ proc default_ld_simple_link { ld target objects } {
 	set flags [big_or_little_endian]
     } else {
 	set flags ""
+    }
+
+    # If we are compiling with gcc, we want to add gcc_ld_flag to
+    # flags.  Rather than determine this in some complex way, we guess
+    # based on the name of the compiler.
+    set ldexe $ld
+    set ldparm [string first " " $ld]
+    if { $ldparm > 0 } then {
+	set ldexe [string range $ld 0 $ldparm]
+    }
+    set ldexe [string replace $ldexe 0 [string last "/" $ldexe] ""]
+    if {[string match "*gcc*" $ldexe] || [string match "*++*" $ldexe]} then {
+	set flags "$gcc_ld_flag $flags"
     }
 
     verbose -log "$ld $flags -o $target $objects"
@@ -210,7 +224,13 @@ proc default_ld_compile { cc source object } {
     # If we are compiling with gcc, we want to add gcc_gas_flag to
     # flags.  Rather than determine this in some complex way, we guess
     # based on the name of the compiler.
-    if {[string match "*gcc*" $cc] || [string match "*++*" $cc]} then {
+    set ccexe $cc
+    set ccparm [string first " " $cc]
+    if { $ccparm > 0 } then {
+	set ccexe [string range $cc 0 $ccparm]
+    }
+    set ccexe [string replace $ccexe 0 [string last "/" $ccexe] ""]
+    if {[string match "*gcc*" $ccexe] || [string match "*++*" $ccexe]} then {
 	set flags "$gcc_gas_flag $flags"
     }
 
@@ -341,7 +361,9 @@ proc is_elf_format {} {
 	 && ![istarget *-*-unixware*] \
 	 && ![istarget *-*-elf*] \
 	 && ![istarget *-*-eabi*] \
+	 && ![istarget hppa*64*-*-hpux*] \
 	 && ![istarget *-*-linux*] \
+	 && ![istarget frv-*-uclinux*] \
 	 && ![istarget *-*-irix5*] \
 	 && ![istarget *-*-irix6*] \
 	 && ![istarget *-*-netbsd*] \
@@ -366,6 +388,32 @@ proc is_elf_format {} {
     	return 0
     }
     return 1
+}
+
+#
+# is_elf64
+#	true if the object format is known to be 64bit ELF
+proc is_elf64 { binary_file } {
+    global READELF
+    global READELFFLAGS
+
+    set readelf_size ""
+    catch "exec $READELF $READELFFLAGS -h $binary_file > readelf.out" got
+
+    if ![string match "" $got] then {
+	return 0
+    }
+
+    if { ![regexp "\n\[ \]*Class:\[ \]*ELF(\[0-9\]+)\n" \
+	   [file_contents readelf.out] nil readelf_size] } {
+	return 0
+    }
+
+    if { $readelf_size == "64" } {
+	return 1
+    }
+
+    return 0
 }
 
 #

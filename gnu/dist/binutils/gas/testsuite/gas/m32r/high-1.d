@@ -7,10 +7,10 @@
 Disassembly of section .text:
 
 0* <foo>:
- *0:	d4 c0 00 01 	seth r4,[#]*0x1
-[ 	]*0: R_M32R_HI16_ULO	.text
+ *0:	d4 c0 00 00 	seth r4,[#]*0x0
+[ 	]*0: R_M32R_HI16_ULO_RELA	.text\+0x10000
  *4:	84 e4 00 00 	or3 r4,r4,[#]*0x0
-[ 	]*4: R_M32R_LO16	.text
+[ 	]*4: R_M32R_LO16_RELA	.text\+0x10000
  *8:	d4 c0 12 34 	seth r4,[#]*0x1234
  *c:	84 e4 87 65 	or3 r4,r4,[#]*0x8765
  *10:	d4 c0 12 35 	seth r4,[#]*0x1235

@@ -20,5 +20,3 @@ Idx Name          Size      VMA               LMA               File off  Algn
                   ALLOC
 Contents of section \.text:
  0000 fd030201 e3fd0001                    .*
-Contents of section \.data:
-Contents of section \.sbss:

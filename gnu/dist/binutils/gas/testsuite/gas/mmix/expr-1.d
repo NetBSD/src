@@ -4,4 +4,4 @@
 
 Contents of section \.text:
  0000 000000ab 00000100                    .*
-Contents of section \.data:
+

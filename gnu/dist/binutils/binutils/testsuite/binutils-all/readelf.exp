@@ -303,25 +303,8 @@ proc readelf_wi_test {} {
 }
 
 
-# Only ELF based toolchains need readelf.
-# For now be paranoid and assume that if ELF is not mentioned
-# in the target string, then the target is not an ELF based port.
-
-if { ![istarget *-*-elf*] \
-     && ![istarget *-*-linux*] \
-     && ![istarget i?86-*-sysv4*] \
-     && ![istarget i?86-*-unixware] \
-     && ![istarget mips*-*-irix5*] \
-     && ![istarget mips*-*-irix6*] \
-     && ![istarget powerpc-*-sysv4*] \
-     && ![istarget powerpc-*-eabi*] \
-     && ![istarget sparc*-*-solaris2*] } {
-    verbose "$READELF is only intended for ELF targets" 2
-    return
-}
-
-if { [istarget *-*-linux*oldld*] \
-     || [istarget *-*-linux*aout*] } {
+# Exclude non-ELF targets.
+if ![is_elf_format] {
     verbose "$READELF is only intended for ELF targets" 2
     return
 }

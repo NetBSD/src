@@ -3,7 +3,6 @@
 
 .*: +file format .*
 
-Contents of section .text:
 Contents of section .data:
  0+000 00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00.*
 # The MIPS includes a 'section .reginfo' and such here.

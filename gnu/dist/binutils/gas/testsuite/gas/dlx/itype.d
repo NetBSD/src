@@ -16,7 +16,7 @@ Disassembly of section .text:
 			12: R_DLX_RELOC_16	.text
   14:	35 4c 00 78 	ori     r12,r10,0x0078
   18:	39 af 00 00 	xori    r15,r13,0x0000
-			1a: R_DLX_RELOC_16	.text
+			1a: R_DLX_RELOC_16_LO	.text
   1c:	da 30 00 1c 	slli    r16,r17,0x001c
 			1e: R_DLX_RELOC_16	.text
   20:	e2 93 00 0f 	srai    r19,r20,0x000f

@@ -9,4 +9,4 @@ SYMBOL TABLE:
 
 Contents of section \.text:
  0+ 00000026 0000001f 0000000d 0000001e  .*
-Contents of section \.data:
+

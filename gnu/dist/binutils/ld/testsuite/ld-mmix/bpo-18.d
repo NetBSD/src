@@ -32,4 +32,3 @@ Contents of section \.text\.away:
 Contents of section \.MMIX\.reg_contents:
  07e0 00000000 00001168 00000000 0000a514  .*
  07f0 40000000 00001070                    .*
-Contents of section \.data:

@@ -1,6 +1,7 @@
 #objdump: -dr --prefix-addresses --show-raw-insn
 #name: MIPS MIPS64 MIPS-3D ASE instructions
 #source: mips64-mips3d.s
+#stderr: mips64-mips3d.l
 
 # Check MIPS64 MIPS-3D ASE instruction assembly and disassembly
 # Same as mips64-mips3d.d, but does not need -mips3d assembler
@@ -137,4 +138,12 @@ Disassembly of section .text:
 0+01f4 <[^>]*> 4633411f 	rsqrt2\.d	\$f4,\$f8,\$f19
 0+01f8 <[^>]*> 4613411f 	rsqrt2\.s	\$f4,\$f8,\$f19
 0+01fc <[^>]*> 46d3411f 	rsqrt2\.ps	\$f4,\$f8,\$f19
+0+0200 <[^>]*> 4524ff7f 	bc1any2f	\$fcc1,0+0000 <text_label>
+0+0204 <[^>]*> 00000000 	nop
+0+0208 <[^>]*> 452dff7d 	bc1any2t	\$fcc3,0+0000 <text_label>
+0+020c <[^>]*> 00000000 	nop
+0+0210 <[^>]*> 4544ff7b 	bc1any4f	\$fcc1,0+0000 <text_label>
+0+0214 <[^>]*> 00000000 	nop
+0+0218 <[^>]*> 4549ff79 	bc1any4t	\$fcc2,0+0000 <text_label>
+0+021c <[^>]*> 00000000 	nop
 	\.\.\.

@@ -53,3 +53,7 @@ if ![ld_simple_link $ld tmpdir/def "-T $srcdir/$subdir/defined.t tmpdir/def.o"] 
 	}
     }
 }
+
+set prms_id 0
+run_dump_test "defined2"
+run_dump_test "defined3"

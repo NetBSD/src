@@ -12,4 +12,4 @@ Contents of section \.text:
  0050 01e13e7e 00e13e7e ffe13e7e fee13e7e  .*
  0060 fde13e7e fce13e7e fbe13e7e f8e13e7e  .*
  0070 fee17e7e 3e7e3e7e fee17e7e           .*
-Contents of section \.data:
+

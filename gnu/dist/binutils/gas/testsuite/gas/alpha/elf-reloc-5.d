@@ -1,7 +1,7 @@
 #objdump: -dr
 #name: alpha elf-reloc-5
 
-.*:     file format elf64-alpha
+.*:     file format elf64-alpha.*
 
 Disassembly of section \.text:
 

@@ -113,7 +113,7 @@ Disassembly of section .text:
 0+19c <[^>]*> ed9e0b00 	fldd	d0, \[lr\]
 0+1a0 <[^>]*> ed900b00 	fldd	d0, \[r0\]
 0+1a4 <[^>]*> ed900bff 	fldd	d0, \[r0, #1020\]
-0+1a8 <[^>]*> ed100bff 	fldd	d0, \[r0, -#1020\]
+0+1a8 <[^>]*> ed100bff 	fldd	d0, \[r0, #-1020\]
 0+1ac <[^>]*> ed901b00 	fldd	d1, \[r0\]
 0+1b0 <[^>]*> ed902b00 	fldd	d2, \[r0\]
 0+1b4 <[^>]*> ed90fb00 	fldd	d15, \[r0\]

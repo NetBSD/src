@@ -30,4 +30,3 @@ Disassembly of section .text:
   50:	f4 02 80 00 	st	r0, @\(-0x8000, r2\)
   54:	f5 02 80 00 	st2w	r0, @\(-0x8000, r2\)
   58:	26 0d 5e 00 	jmp	r13	||	nop	
-Disassembly of section .data:

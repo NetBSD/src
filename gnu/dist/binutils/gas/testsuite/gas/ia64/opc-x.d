@@ -5,7 +5,7 @@
 
 Disassembly of section .text:
 
-0000000000000000 <_start>:
+0+000 <_start>:
    0:	04 00 00 00 01 00 	\[MLX\]       nop\.m 0x0
    6:	00 00 00 00 00 00 	            break\.x 0x0
    c:	00 00 00 00 

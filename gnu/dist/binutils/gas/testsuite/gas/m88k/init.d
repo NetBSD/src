@@ -3,7 +3,6 @@
 
 .*: +file format .*
 
-Disassembly of section .text:
 Disassembly of section .init:
 00000000 <.init> subu        r31,r31,0x10
 00000004 <.init\+0x4> st          r13,r31,0x20

@@ -22,4 +22,3 @@ Disassembly of section .text:
   24:	24 7f c0 03 	bra.s	20 <L1>	||	ldi.s	r0, 0x1
   28:	2f a0 40 03 	rte		||	ldi.s	r0, 0x1
   2c:	20 01 de 00 	ldi.s	r0, 0x1	||	nop	
-Disassembly of section .data:

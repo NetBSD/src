@@ -82,7 +82,7 @@ visibility ()
 static int
 main_visibility_check ()
 {
-  return visibility_funptr () != visibility;
+  return ((int (*) (void)) visibility_funptr ()) != visibility;
 }
 
 int visibility_var = 1;
@@ -117,7 +117,7 @@ main_visibility_check ()
 #ifdef WEAK_TEST
   return visibility_funptr () == NULL;
 #else
-  return visibility_funptr () == visibility;
+  return ((int (*) (void)) visibility_funptr ()) == visibility;
 #endif
 }
 
@@ -164,6 +164,37 @@ int
 main_visibility_checkweak ()
 {
   return 1;
+}
+#elif defined (HIDDEN_WEAK_TEST)
+int
+main_visibility_checkcom ()
+{
+  return 1;
+}
+
+#pragma weak visibility_undef_var_weak
+extern int visibility_undef_var_weak;
+asm (".hidden visibility_undef_var_weak");
+
+#pragma weak visibility_undef_func_weak
+extern int visibility_undef_func_weak ();
+asm (".hidden visibility_undef_func_weak");
+
+#pragma weak visibility_var_weak
+extern int visibility_var_weak;
+asm (".hidden visibility_var_weak");
+
+#pragma weak visibility_func_weak
+extern int visibility_func_weak ();
+asm (".hidden visibility_func_weak");
+
+int
+main_visibility_checkweak ()
+{
+  return &visibility_undef_var_weak == NULL
+	 && &visibility_undef_func_weak == NULL
+	 && &visibility_func_weak == NULL
+	 && &visibility_var_weak == NULL;
 }
 #elif defined (HIDDEN_UNDEF_TEST)
 extern int visibility_def;

@@ -85,28 +85,40 @@ Disassembly of section .text:
   64:	54 81 f0 00 	rach a1,a0,#0x2 \|\| nop
 
 0+0068 <bc__add>:
-  68:	7c e6 8d ad 	bc 0 <bcl> \|\| add fp,fp
-  6c:	7c e5 0d ad 	bc 0 <bcl> -> add fp,fp
+  68:	7c 00 8d ad 	bc 68 <bc__add> \|\| add fp,fp
+			68: R_M32R_10_PCREL_RELA	bcl
+  6c:	7c 00 0d ad 	bc 6c <bc__add\+0x4> -> add fp,fp
+			6c: R_M32R_10_PCREL_RELA	bcl
 
 0+0070 <bcl__addi>:
-  70:	78 e4 cd 4d 	bcl 0 <bcl> \|\| addi fp,#77
-  74:	78 e3 cd 4d 	bcl 0 <bcl> \|\| addi fp,#77
+  70:	78 00 cd 4d 	bcl 70 <bcl__addi> \|\| addi fp,#77
+			70: R_M32R_10_PCREL_RELA	bcl
+  74:	78 00 cd 4d 	bcl 74 <bcl__addi\+0x4> \|\| addi fp,#77
+			74: R_M32R_10_PCREL_RELA	bcl
 
 0+0078 <bl__addv>:
-  78:	7e e2 8d 8d 	bl 0 <bcl> \|\| addv fp,fp
-  7c:	7e e1 8d 8d 	bl 0 <bcl> \|\| addv fp,fp
+  78:	7e 00 8d 8d 	bl 78 <bl__addv> \|\| addv fp,fp
+			78: R_M32R_10_PCREL_RELA	bcl
+  7c:	7e 00 8d 8d 	bl 7c <bl__addv\+0x4> \|\| addv fp,fp
+			7c: R_M32R_10_PCREL_RELA	bcl
 
 0+0080 <bnc__addx>:
-  80:	7d e0 8d 9d 	bnc 0 <bcl> \|\| addx fp,fp
-  84:	7d df 0d 9d 	bnc 0 <bcl> -> addx fp,fp
+  80:	7d 00 8d 9d 	bnc 80 <bnc__addx> \|\| addx fp,fp
+			80: R_M32R_10_PCREL_RELA	bcl
+  84:	7d 00 0d 9d 	bnc 84 <bnc__addx\+0x4> -> addx fp,fp
+			84: R_M32R_10_PCREL_RELA	bcl
 
 0+0088 <bncl__and>:
-  88:	79 de 8d cd 	bncl 0 <bcl> \|\| and fp,fp
-  8c:	0d cd 79 dd 	and fp,fp -> bncl 0 <bcl>
+  88:	79 00 8d cd 	bncl 88 <bncl__and> \|\| and fp,fp
+			88: R_M32R_10_PCREL_RELA	bcl
+  8c:	79 00 8d cd 	bncl 8c <bncl__and\+0x4> \|\| and fp,fp
+			8c: R_M32R_10_PCREL_RELA	bcl
 
 0+0090 <bra__cmp>:
-  90:	7f dc 8d 4d 	bra 0 <bcl> \|\| cmp fp,fp
-  94:	7f db 8d 4d 	bra 0 <bcl> \|\| cmp fp,fp
+  90:	7f 00 8d 4d 	bra 90 <bra__cmp> \|\| cmp fp,fp
+			90: R_M32R_10_PCREL_RELA	bcl
+  94:	7f 00 8d 4d 	bra 94 <bra__cmp\+0x4> \|\| cmp fp,fp
+			94: R_M32R_10_PCREL_RELA	bcl
 
 0+0098 <jl__cmpeq>:
   98:	1e cd 8d 6d 	jl fp \|\| cmpeq fp,fp

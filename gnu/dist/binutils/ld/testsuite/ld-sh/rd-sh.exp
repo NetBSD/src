@@ -29,10 +29,19 @@ if ![istarget sh*-*-*] {
 }
 
 global ASFLAGS
+global LDFLAGS
 set asflags_save "$ASFLAGS"
+set ldflags_save "$LDFLAGS"
 
 if {[istarget sh64*-*-*] || [istarget sh5*-*-*]} then {
     set ASFLAGS "$ASFLAGS -isa=SHcompact"
+    if [istarget sh64*-*-linux*] {
+        set LDFLAGS "$LDFLAGS -mshlelf32_linux"
+    } elseif { [istarget sh64*-*-netbsd*] || [istarget sh5*-*-netbsd*] } {
+        set LDFLAGS "$LDFLAGS -mshlelf32_nbsd -e_start"
+    } else {
+        set LDFLAGS "$LDFLAGS -mshlelf32"
+    }
 }
 
 set rd_test_list [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
@@ -52,3 +61,4 @@ foreach shtest $rd_test_list {
     }
 }
 set ASFLAGS "$asflags_save"
+set LDFLAGS "$ldflags_save"

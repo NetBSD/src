@@ -1,5 +1,5 @@
 #objdump: -dr
-#as: -x
+#as: -x --no-stubs
 
 .*:     file format elf64-mmix
 

@@ -126,7 +126,7 @@ Disassembly of section .text:
 0+1d0 <[^>]*> ed9e0a00 	flds	s0, \[lr\]
 0+1d4 <[^>]*> ed900a00 	flds	s0, \[r0\]
 0+1d8 <[^>]*> ed900aff 	flds	s0, \[r0, #1020\]
-0+1dc <[^>]*> ed100aff 	flds	s0, \[r0, -#1020\]
+0+1dc <[^>]*> ed100aff 	flds	s0, \[r0, #-1020\]
 0+1e0 <[^>]*> edd00a00 	flds	s1, \[r0\]
 0+1e4 <[^>]*> ed901a00 	flds	s2, \[r0\]
 0+1e8 <[^>]*> edd0fa00 	flds	s31, \[r0\]

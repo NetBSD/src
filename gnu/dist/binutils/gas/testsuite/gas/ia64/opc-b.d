@@ -5,7 +5,7 @@
 
 Disassembly of section .text:
 
-0000000000000000 <.text>:
+0+000 <.text>:
        0:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
        6:	00 f8 15 00 20 00 	      \(p02\) br\.cond\.sptk\.few 0x2bf0
        c:	00 00 00 40       	            br\.few 0x0;;

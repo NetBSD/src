@@ -56,6 +56,9 @@ if [expr ([istarget "i*86-*-*"] ||  [istarget "x86_64-*-*"]) && [gas_32_check]] 
     run_dump_test "absrel"
     run_dump_test "pcrel"
     run_dump_test "sub"
+    run_dump_test "prescott"
+    run_dump_test "divide"
+    run_dump_test "padlock"
 
     # PIC is only supported on ELF targets.
     if { ([istarget "*-*-elf*"] || [istarget "*-*-linux*"] )

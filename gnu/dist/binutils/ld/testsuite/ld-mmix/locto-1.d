@@ -23,5 +23,3 @@ SYMBOL TABLE:
 
 Contents of section \.text:
  1008 00000000 00001008 e3fd0001           .*
-Contents of section \.data:
-Contents of section \.sbss:

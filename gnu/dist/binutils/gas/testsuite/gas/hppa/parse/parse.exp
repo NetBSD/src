@@ -222,5 +222,8 @@ if [istarget hppa*-*-*] then {
     # Check for bogus registers in single precision fmpyadd/fmpysub
     # instructions
     gas_test_error "badfmpyadd.s" "" "Check for error on bad fmpyadd insn"
+
+    # Make sure we grok spaces in directives.
+    gas_test "space.s" "" "" "Test acceptance of spaces in directives"
 }
 

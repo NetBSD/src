@@ -1,5 +1,5 @@
 ELF Header:
-  Magic:   7f 45 4c 46 0[12] 0[12] 01 .. 00 00 00 00 00 00 00 00 
+  Magic:   7f 45 4c 46 0[12] 0[12] 01 .. .. 00 00 00 00 00 00 00 
   Class:                             ELF[36][24]
   Data:                              2's complement,.* endian
   Version:                           1 \(current\)

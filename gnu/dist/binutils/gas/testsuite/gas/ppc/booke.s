@@ -72,6 +72,9 @@ branch_target_6:
 	tlbivaxe 9, 10	
 	tlbsx	11, 12
 	tlbsxe	13, 14
+	tlbwe
+	tlbwe	0,0,0
+	tlbwe	1,1,1
 
 branch_target_7:
 	adde64	1, 2, 3
@@ -128,4 +131,6 @@ branch_target_8:
 	mtdcr	432, 8
 	msync
 	dcba	9, 10
+	mbar
 	mbar	0
+	mbar	1

@@ -1,7 +1,7 @@
 #source: tlsbinpic.s
 #source: tlsbin.s
 #as:
-#ld: -shared -melf64_ia64
+#ld: -shared
 #readelf: -WSsrl
 #target: ia64-*-*
 
@@ -17,14 +17,14 @@ Section Headers:
   \[ 5\] .rela.dyn +.*
   \[ 6\] .rela.IA_64.pltof +.*
   \[ 7\] .plt +.*
-  \[ 8\] .text +PROGBITS +40+1000 0+1000 0+1070 00 +AX +0 +0 4096
+  \[ 8\] .text +PROGBITS +40+1000 0+1000 0+140 00 +AX +0 +0 4096
   \[ 9\] .IA_64.unwind_inf +.*
   \[10\] .IA_64.unwind +.*
   \[11\] .data +.*
-  \[12\] .tdata +PROGBITS +60+3000 0+3000 0+60 00 WAT +0 +0 +4
-  \[13\] .tbss +NOBITS +60+3060 0+3060 0+40 00 WAT +0 +0 +1
-  \[14\] .dynamic +DYNAMIC +60+3060 0+3060 0+150 10 +WA +4 +0 +8
-  \[15\] .got +PROGBITS +60+31b0 0+31b0 0+48 00 WAp +0 +0 +8
+  \[12\] .tdata +PROGBITS +60+2000 0+2000 0+60 00 WAT +0 +0 +4
+  \[13\] .tbss +NOBITS +60+2060 0+2060 0+40 00 WAT +0 +0 +1
+  \[14\] .dynamic +DYNAMIC +60+2060 0+2060 0+150 10 +WA +4 +0 +8
+  \[15\] .got +PROGBITS +60+21b0 0+21b0 0+48 00 WAp +0 +0 +8
   \[16\] .IA_64.pltoff +.*
   \[17\] .sbss +.*
   \[18\] .bss +.*
@@ -34,7 +34,7 @@ Section Headers:
 #...
 
 Elf file type is EXEC \(Executable file\)
-Entry point 0x40+2000
+Entry point 0x40+10d0
 There are 7 program headers, starting at offset [0-9]+
 
 Program Headers:
@@ -42,33 +42,33 @@ Program Headers:
   PHDR +0x0+40 0x40+40 0x40+40 0x0+188 0x0+188 R E 0x8
   INTERP +0x0+1c8 0x40+1c8 0x40+1c8 0x[0-9a-f]+ 0x[0-9a-f]+ R +0x1
 .*Requesting program interpreter.*
-  LOAD +0x0+ 0x40+ 0x40+ 0x0+20a0 0x0+20a0 R E 0x10000
-  LOAD +0x0+3000 0x60+3000 0x60+3000 0x0+210 0x0+210 RW +0x10000
-  DYNAMIC +0x0+3060 0x60+3060 0x60+3060 0x0+150 0x0+150 RW +0x8
-  TLS +0x0+3000 0x60+3000 0x60+3000 0x0+60 0x0+a0 R +0x4
+  LOAD +0x0+ 0x40+ 0x40+ 0x0+1170 0x0+1170 R E 0x10000
+  LOAD +0x0+2000 0x60+2000 0x60+2000 0x0+210 0x0+210 RW +0x10000
+  DYNAMIC +0x0+2060 0x60+2060 0x60+2060 0x0+150 0x0+150 RW +0x8
+  TLS +0x0+2000 0x60+2000 0x60+2000 0x0+60 0x0+a0 R +0x4
   IA_64_UNWIND .* R +0x8
 #...
 
 Relocation section '.rela.dyn' at offset 0x[0-9a-f]+ contains 3 entries:
  +Offset +Info +Type +Symbol's Value  Symbol's Name \+ Addend
-60+31c8  0+200000097 R_IA64_TPREL64LSB +0+ sG2 \+ 0
-60+31d0  0+5000000a7 R_IA64_DTPMOD64LSB +0+ sG1 \+ 0
-60+31d8  0+5000000b7 R_IA64_DTPREL64LSB +0+ sG1 \+ 0
+60+21c8  0+200000097 R_IA64_TPREL64LSB +0+ sG2 \+ 0
+60+21d0  0+5000000a7 R_IA64_DTPMOD64LSB +0+ sG1 \+ 0
+60+21d8  0+5000000b7 R_IA64_DTPREL64LSB +0+ sG1 \+ 0
 
 Relocation section '.rela.IA_64.pltoff' at offset 0x[0-9a-f]+ contains 1 entries:
  +Offset +Info +Type +Symbol's Value  Symbol's Name \+ Addend
-60+3200  0+300000081 R_IA64_IPLTLSB +0+ __tls_get_addr \+ 0
+60+2200  0+300000081 R_IA64_IPLTLSB +0+ __tls_get_addr \+ 0
 
 Symbol table '.dynsym' contains 9 entries:
  +Num: +Value +Size Type +Bind +Vis +Ndx Name
  +0: 0+ +0 NOTYPE +LOCAL +DEFAULT +UND *
- +1: 60+3060 +0 OBJECT +GLOBAL DEFAULT +ABS _DYNAMIC
+ +1: 60+2060 +0 OBJECT +GLOBAL DEFAULT +ABS _DYNAMIC
  +2: 0+ +0 TLS +GLOBAL DEFAULT +UND sG2
  +3: 0+ +16 FUNC +GLOBAL DEFAULT +UND __tls_get_addr
  +4: [0-9a-f]+ +0 NOTYPE +GLOBAL DEFAULT +ABS __bss_start
  +5: 0+ +0 TLS +GLOBAL DEFAULT +UND sG1
  +6: [0-9a-f]+ +0 NOTYPE +GLOBAL DEFAULT +ABS _edata
- +7: 60+31b0 +0 OBJECT +GLOBAL DEFAULT +ABS _GLOBAL_OFFSET_TABLE_
+ +7: 60+21b0 +0 OBJECT +GLOBAL DEFAULT +ABS _GLOBAL_OFFSET_TABLE_
  +8: [0-9a-f]+ +0 NOTYPE +GLOBAL DEFAULT +ABS _end
 
 Symbol table '.symtab' contains 72 entries:
@@ -115,7 +115,7 @@ Symbol table '.symtab' contains 72 entries:
  +39: 0+7c +0 TLS +GLOBAL DEFAULT +13 bg8
  +40: 0+74 +0 TLS +GLOBAL DEFAULT +13 bg6
  +41: 0+68 +0 TLS +GLOBAL DEFAULT +13 bg3
- +42: 60+3060 +0 OBJECT +GLOBAL DEFAULT +ABS _DYNAMIC
+ +42: 60+2060 +0 OBJECT +GLOBAL DEFAULT +ABS _DYNAMIC
  +43: 0+8 +0 TLS +GLOBAL DEFAULT +12 sg3
  +44: 0+48 +0 TLS +GLOBAL HIDDEN +12 sh3
  +45: 0+ +0 TLS +GLOBAL DEFAULT +UND sG2
@@ -126,7 +126,7 @@ Symbol table '.symtab' contains 72 entries:
  +50: 0+58 +0 TLS +GLOBAL HIDDEN +12 sh7
  +51: 0+5c +0 TLS +GLOBAL HIDDEN +12 sh8
  +52: 0+ +0 TLS +GLOBAL DEFAULT +12 sg1
- +53: 40+2000 +112 FUNC +GLOBAL DEFAULT +8 _start
+ +53: 40+10d0 +112 FUNC +GLOBAL DEFAULT +8 _start
  +54: 0+4c +0 TLS +GLOBAL HIDDEN +12 sh4
  +55: 0+78 +0 TLS +GLOBAL DEFAULT +13 bg7
  +56: 0+50 +0 TLS +GLOBAL HIDDEN +12 sh5

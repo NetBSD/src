@@ -1,11 +1,11 @@
 #objdump: -dr
 #name: ia64 ldxmov-1
 
-.*:     file format elf64-ia64-little
+.*: +file format .*
 
 Disassembly of section \.text:
 
-0*0000000 <\.text>:
+0+000 <\.text>:
    0:	18 10 00 06 18 10 	\[MMB\]       ld8 r2=\[r3\]
 			0: LDXMOV	foo
 			1: LDXMOV	\.data

@@ -9,4 +9,4 @@ Contents of section \.text:
  0020 696e6522 20617420 74686520 27656e64  .*
  0030 274d6567 6174726f 69640a41 582d466f  .*
  0040 6f0d0a00                             .*
-Contents of section \.data:
+

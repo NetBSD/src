@@ -17,7 +17,19 @@ start:
 	rfi
 
 // unconditional compares generate a mutex
-(p3)	cmp.eq.unc p1, p2 = r1, r2
+(p3)	cmp.eq.unc p1, p2 = r1, r2;;
+(p1)	mov r4 = 2
+(p2)	mov r4 = 4
+	rfi
+
+// non-predicated compares don't remove mutex
+	cmp.eq p1, p2 = r1, r2;;
+(p1)	mov r4 = 2
+(p2)	mov r4 = 4
+	rfi
+
+// predicated compares don't remove mutex
+(p3)	cmp.eq p1, p2 = r1, r2;;
 (p1)	mov r4 = 2
 (p2)	mov r4 = 4
 	rfi

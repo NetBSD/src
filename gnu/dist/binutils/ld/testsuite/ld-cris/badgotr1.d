@@ -1,5 +1,5 @@
 #source: gotrel1.s
-#as: --pic
+#as: --pic --underscore
 #ld: -m crislinux -shared
 #objdump: -dr
 #error: ^[^c][^h][^i][^l][^d].* uses _-prefixed .* failed to merge .* no GOT .* Bad value$

@@ -2070,6 +2070,13 @@ proc do_h8300s_multiple {} {
 	    -re " +\[0-9\]+ 000c 01106DF0\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0010 01206DF0\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0014 01306DF0\[^\n\]*\n"   { set x [expr $x+1] }
+            -re " +\[0-9\]+ 0018 01106D73\[^\n\]*\n"   { set x [expr $x+1] }
+            -re " +\[0-9\]+ 001c 01106DF2\[^\n\]*\n"   { set x [expr $x+1] }
+            -re " +\[0-9\]+ 0020 01106D75\[^\n\]*\n"   { set x [expr $x+1] }
+            -re " +\[0-9\]+ 0024 01206D76\[^\n\]*\n"   { set x [expr $x+1] }
+            -re " +\[0-9\]+ 0028 01106DF4\[^\n\]*\n"   { set x [expr $x+1] }
+            -re " +\[0-9\]+ 002c 01206DF4\[^\n\]*\n"   { set x [expr $x+1] }
+
 	    eof					{ break }
 	}
     }
@@ -2079,7 +2086,7 @@ proc do_h8300s_multiple {} {
     gas_finish
 
     # Did we find what we were looking for?  If not, flunk it.
-    if [expr $x == 6] then { pass $testname } else { fail $testname }
+    if [expr $x == 12] then { pass $testname } else { fail $testname }
 }
 
 proc do_h8300h_mov32bug {} {

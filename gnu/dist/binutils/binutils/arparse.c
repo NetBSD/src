@@ -26,7 +26,8 @@
 
 /* arparse.y - Stange script language parser */
 
-/*   Copyright 1992, 1993, 1995, 1997, 1999 Free Software Foundation, Inc.
+/*   Copyright 1992, 1993, 1995, 1997, 1999, 2003
+     Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -54,10 +55,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bucomm.h"
 #include "arsup.h"
 extern int verbose;
-extern int yylex PARAMS ((void));
-static int yyerror PARAMS ((const char *));
+extern int yylex (void);
+static int yyerror (const char *);
 
-#line 36 "arparse.y"
+#line 37 "arparse.y"
 #ifndef YYSTYPE
 typedef union {
   char *name;
@@ -142,11 +143,11 @@ static const short yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined. */
 static const short yyrline[] =
 {
-       0,    66,    66,    70,    72,    75,    79,    81,    82,    83,
-      84,    85,    86,    87,    88,    89,    90,    91,    92,    93,
-      94,    95,    99,   104,   109,   114,   118,   123,   128,   135,
-     140,   146,   150,   157,   160,   163,   166,   170,   177,   181,
-     183,   187
+       0,    67,    67,    71,    73,    76,    80,    82,    83,    84,
+      85,    86,    87,    88,    89,    90,    91,    92,    93,    94,
+      95,    96,   100,   105,   110,   115,   119,   124,   129,   136,
+     141,   147,   151,   158,   161,   164,   167,   171,   178,   182,
+     184,   188
 };
 #endif
 
@@ -952,83 +953,83 @@ yyreduce:
   switch (yyn) {
 
 case 1:
-#line 67 "arparse.y"
+#line 68 "arparse.y"
 { prompt(); }
     break;
 case 5:
-#line 76 "arparse.y"
+#line 77 "arparse.y"
 { prompt(); }
     break;
 case 18:
-#line 92 "arparse.y"
+#line 93 "arparse.y"
 { ar_end(); return 0; }
     break;
 case 20:
-#line 94 "arparse.y"
+#line 95 "arparse.y"
 { yyerror("foo"); }
     break;
 case 22:
-#line 101 "arparse.y"
+#line 102 "arparse.y"
 { ar_extract(yyvsp[0].list); }
     break;
 case 23:
-#line 106 "arparse.y"
+#line 107 "arparse.y"
 { ar_replace(yyvsp[0].list); }
     break;
 case 24:
-#line 111 "arparse.y"
+#line 112 "arparse.y"
 { ar_clear(); }
     break;
 case 25:
-#line 116 "arparse.y"
+#line 117 "arparse.y"
 { ar_delete(yyvsp[0].list); }
     break;
 case 26:
-#line 120 "arparse.y"
+#line 121 "arparse.y"
 { ar_addmod(yyvsp[0].list); }
     break;
 case 27:
-#line 125 "arparse.y"
+#line 126 "arparse.y"
 { ar_list(); }
     break;
 case 28:
-#line 130 "arparse.y"
+#line 131 "arparse.y"
 { ar_save(); }
     break;
 case 29:
-#line 137 "arparse.y"
+#line 138 "arparse.y"
 { ar_open(yyvsp[0].name,0); }
     break;
 case 30:
-#line 142 "arparse.y"
+#line 143 "arparse.y"
 { ar_open(yyvsp[0].name,1); }
     break;
 case 31:
-#line 148 "arparse.y"
+#line 149 "arparse.y"
 { ar_addlib(yyvsp[-1].name,yyvsp[0].list); }
     break;
 case 32:
-#line 152 "arparse.y"
+#line 153 "arparse.y"
 { ar_directory(yyvsp[-2].name, yyvsp[-1].list, yyvsp[0].name); }
     break;
 case 33:
-#line 159 "arparse.y"
+#line 160 "arparse.y"
 { yyval.name = yyvsp[0].name; }
     break;
 case 34:
-#line 160 "arparse.y"
+#line 161 "arparse.y"
 { yyval.name = 0; }
     break;
 case 35:
-#line 165 "arparse.y"
+#line 166 "arparse.y"
 { yyval.list = yyvsp[-1].list; }
     break;
 case 36:
-#line 167 "arparse.y"
+#line 168 "arparse.y"
 { yyval.list = 0; }
     break;
 case 37:
-#line 172 "arparse.y"
+#line 173 "arparse.y"
 { 	struct list *n  = (struct list *) malloc(sizeof(struct list));
 			n->next = yyvsp[-2].list; 
 			n->name = yyvsp[0].name;
@@ -1036,11 +1037,11 @@ case 37:
 		 }
     break;
 case 38:
-#line 177 "arparse.y"
+#line 178 "arparse.y"
 { yyval.list = 0; }
     break;
 case 41:
-#line 189 "arparse.y"
+#line 190 "arparse.y"
 { verbose = !verbose; }
     break;
 }
@@ -1276,12 +1277,11 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 193 "arparse.y"
+#line 194 "arparse.y"
 
 
 static int
-yyerror (x)
-     const char *x ATTRIBUTE_UNUSED;
+yyerror (const char *x ATTRIBUTE_UNUSED)
 {
   extern int linenumber;
 

@@ -10,14 +10,14 @@ Disassembly of section .text:
 [ 	]+0:	66 0f e0 c1[ 	]+pavgb[ 	]+%xmm1,%xmm0
 [ 	]+4:	66 0f e0 0a[ 	]+pavgb[ 	]+\(%edx\),%xmm1
 [ 	]+8:	66 0f e3 d3[ 	]+pavgw[ 	]+%xmm3,%xmm2
-[ 	]+c:	66 0f e3 1c 24[ 	]+pavgw[ 	]+\(%esp,1\),%xmm3
+[ 	]+c:	66 0f e3 1c 24[ 	]+pavgw[ 	]+\(%esp\),%xmm3
 [ 	]+11:	66 0f c5 c1 00[ 	]+pextrw \$0x0,%xmm1,%eax
 [ 	]+16:	66 0f c4 09 01[ 	]+pinsrw \$0x1,\(%ecx\),%xmm1
 [ 	]+1b:	66 0f c4 d2 02[ 	]+pinsrw \$0x2,%edx,%xmm2
 [ 	]+20:	66 0f ee c1[ 	]+pmaxsw %xmm1,%xmm0
 [ 	]+24:	66 0f ee 0a[ 	]+pmaxsw \(%edx\),%xmm1
 [ 	]+28:	66 0f de d2[ 	]+pmaxub %xmm2,%xmm2
-[ 	]+2c:	66 0f de 1c 24[ 	]+pmaxub \(%esp,1\),%xmm3
+[ 	]+2c:	66 0f de 1c 24[ 	]+pmaxub \(%esp\),%xmm3
 [ 	]+31:	66 0f ea e5[ 	]+pminsw %xmm5,%xmm4
 [ 	]+35:	66 0f ea 2e[ 	]+pminsw \(%esi\),%xmm5
 [ 	]+39:	66 0f da f7[ 	]+pminub %xmm7,%xmm6
@@ -85,4 +85,4 @@ Disassembly of section .text:
  1f1:	66 0f fc 90 90 90 90 90 	paddb[ 	]+0x90909090\(%eax\),%xmm2
  1f9:	66 0f fd 90 90 90 90 90 	paddw[ 	]+0x90909090\(%eax\),%xmm2
  201:	66 0f fe 90 90 90 90 90 	paddd[ 	]+0x90909090\(%eax\),%xmm2
- 209:	8d b4 26 00 00 00 00 	lea[ 	]+0x0\(%esi,1\),%esi
+ 209:	8d b4 26 00 00 00 00 	lea[ 	]+0x0\(%esi\),%esi

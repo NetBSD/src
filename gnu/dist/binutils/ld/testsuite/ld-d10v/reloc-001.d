@@ -10,5 +10,3 @@ Disassembly of section .text:
 
 01014000 <_start>:
  1014000:	65 20 cc 1a 	brf0f.s	1014104 <foo>	->	jmp	r13
-Disassembly of section .data:
-

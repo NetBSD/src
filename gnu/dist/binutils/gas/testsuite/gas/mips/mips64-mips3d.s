@@ -147,5 +147,14 @@ text_label:
 	rsqrt2.s	$f4, $f8, $f19
 	rsqrt2.ps	$f4, $f8, $f19
 
+	bc1any2f	$fcc1, text_label	# warns
+	nop
+	bc1any2t	$fcc3, text_label	# warns
+	nop
+	bc1any4f	$fcc1, text_label	# warns
+	nop
+	bc1any4t	$fcc2, text_label	# warns
+	nop
+
 # Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
       .space  8

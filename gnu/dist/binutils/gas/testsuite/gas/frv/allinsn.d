@@ -37,10 +37,10 @@ Disassembly of section .text:
   24:	82 04 13 c1 	nudiv sp,sp,sp
 
 00000028 <smul>:
-  28:	82 00 12 01 	smul sp,sp,sp
+  28:	84 00 22 02 	smul fp,fp,fp
 
 0000002c <umul>:
-  2c:	82 00 12 81 	umul sp,sp,sp
+  2c:	84 00 22 82 	umul fp,fp,fp
 
 00000030 <sll>:
   30:	82 04 12 01 	sll sp,sp,sp
@@ -76,7 +76,7 @@ Disassembly of section .text:
   58:	83 68 00 c1 	cnot sp,sp,cc0,0x0
 
 0000005c <csmul>:
-  5c:	83 60 10 81 	csmul sp,sp,sp,cc0,0x0
+  5c:	85 60 20 82 	csmul fp,fp,fp,cc0,0x0
 
 00000060 <csdiv>:
   60:	83 60 10 c1 	csdiv sp,sp,sp,cc0,0x0
@@ -118,10 +118,10 @@ Disassembly of section .text:
   90:	82 04 13 41 	sracc sp,sp,sp,icc0
 
 00000094 <smulcc>:
-  94:	82 00 12 41 	smulcc sp,sp,sp,icc0
+  94:	84 00 22 42 	smulcc fp,fp,fp,icc0
 
 00000098 <umulcc>:
-  98:	82 00 12 c1 	umulcc sp,sp,sp,icc0
+  98:	84 00 22 c2 	umulcc fp,fp,fp,icc0
 
 0000009c <caddcc>:
   9c:	83 64 10 01 	caddcc sp,sp,sp,cc0,0x0
@@ -130,7 +130,7 @@ Disassembly of section .text:
   a0:	83 64 10 41 	csubcc sp,sp,sp,cc0,0x0
 
 000000a4 <csmulcc>:
-  a4:	83 64 10 81 	csmulcc sp,sp,sp,cc0,0x0
+  a4:	85 64 20 82 	csmulcc fp,fp,fp,cc0,0x0
 
 000000a8 <candcc>:
   a8:	83 6c 10 01 	candcc sp,sp,sp,cc0,0x0
@@ -190,10 +190,10 @@ Disassembly of section .text:
   f0:	82 bc 10 00 	nudivi sp,0,sp
 
 000000f4 <smuli>:
-  f4:	82 60 10 00 	smuli sp,0,sp
+  f4:	84 60 20 00 	smuli fp,0,fp
 
 000000f8 <umuli>:
-  f8:	82 68 10 00 	umuli sp,0,sp
+  f8:	84 68 20 00 	umuli fp,0,fp
 
 000000fc <slli>:
   fc:	82 a0 10 00 	slli sp,0,sp
@@ -223,10 +223,10 @@ Disassembly of section .text:
  11c:	82 94 10 00 	xoricc sp,0,sp,icc0
 
 00000120 <smulicc>:
- 120:	82 64 10 00 	smulicc sp,0,sp,icc0
+ 120:	84 64 20 00 	smulicc fp,0,fp,icc0
 
 00000124 <umulicc>:
- 124:	82 6c 10 00 	umulicc sp,0,sp,icc0
+ 124:	84 6c 20 00 	umulicc fp,0,fp,icc0
 
 00000128 <sllicc>:
  128:	82 a4 10 00 	sllicc sp,0,sp,icc0
@@ -310,7 +310,7 @@ Disassembly of section .text:
  190:	80 08 1a 81 	nldf @\(sp,sp\),fr0
 
 00000194 <ldd>:
- 194:	82 08 11 41 	ldd @\(sp,sp\),sp
+ 194:	84 08 11 41 	ldd @\(sp,sp\),fp
 
 00000198 <lddf>:
  198:	80 08 12 c1 	lddf @\(sp,sp\),fr0
@@ -319,7 +319,7 @@ Disassembly of section .text:
  19c:	80 08 13 81 	lddc @\(sp,sp\),cpr0
 
 000001a0 <nldd>:
- 1a0:	82 08 19 41 	nldd @\(sp,sp\),sp
+ 1a0:	84 08 19 41 	nldd @\(sp,sp\),fp
 
 000001a4 <nlddf>:
  1a4:	80 08 1a c1 	nlddf @\(sp,sp\),fr0
@@ -391,10 +391,10 @@ Disassembly of section .text:
  1fc:	80 08 1e 81 	nldfu @\(sp,sp\),fr0
 
 00000200 <lddu>:
- 200:	82 08 15 41 	lddu @\(sp,sp\),sp
+ 200:	84 08 15 41 	lddu @\(sp,sp\),fp
 
 00000204 <nlddu>:
- 204:	82 08 1d 41 	nlddu @\(sp,sp\),sp
+ 204:	84 08 1d 41 	nlddu @\(sp,sp\),fp
 
 00000208 <lddfu>:
  208:	80 08 16 c1 	lddfu @\(sp,sp\),fr0
@@ -469,13 +469,13 @@ Disassembly of section .text:
  264:	81 28 10 00 	nldfi @\(sp,0\),fr0
 
 00000268 <lddi>:
- 268:	82 cc 10 00 	lddi @\(sp,0\),sp
+ 268:	84 cc 10 00 	lddi @\(sp,0\),fp
 
 0000026c <lddfi>:
  26c:	80 ec 10 00 	lddfi @\(sp,0\),fr0
 
 00000270 <nlddi>:
- 270:	83 14 10 00 	nlddi @\(sp,0\),sp
+ 270:	85 14 10 00 	nlddi @\(sp,0\),fp
 
 00000274 <nlddfi>:
  274:	81 2c 10 00 	nlddfi @\(sp,0\),fr0
@@ -486,8 +486,8 @@ Disassembly of section .text:
 0000027c <ldqfi>:
  27c:	80 f0 10 00 	ldqfi @\(sp,0\),fr0
 
-00000280 <nldqi>:
- 280:	83 18 10 00 	nldqi @\(sp,0\),sp
+00000280 <nop>:
+ 280:	80 88 00 00 	nop
 
 00000284 <nldqfi>:
  284:	81 30 10 00 	nldqfi @\(sp,0\),fr0
@@ -532,7 +532,7 @@ Disassembly of section .text:
  2b8:	80 0c 1a 81 	rstf fr0,@\(sp,sp\)
 
 000002bc <std>:
- 2bc:	82 0c 10 c1 	std sp,@\(sp,sp\)
+ 2bc:	84 0c 10 c1 	std fp,@\(sp,sp\)
 
 000002c0 <stdf>:
  2c0:	80 0c 12 c1 	stdf fr0,@\(sp,sp\)
@@ -541,7 +541,7 @@ Disassembly of section .text:
  2c4:	80 0c 19 81 	stdc cpr0,@\(sp,sp\)
 
 000002c8 <rstd>:
- 2c8:	82 0c 18 c1 	rstd sp,@\(sp,sp\)
+ 2c8:	84 0c 18 c1 	rstd fp,@\(sp,sp\)
 
 000002cc <rstdf>:
  2cc:	80 0c 1a c1 	rstdf fr0,@\(sp,sp\)
@@ -583,7 +583,7 @@ Disassembly of section .text:
  2fc:	80 0c 1b 41 	stcu cpr0,@\(sp,sp\)
 
 00000300 <stdu>:
- 300:	82 0c 14 c1 	stdu sp,@\(sp,sp\)
+ 300:	84 0c 14 c1 	stdu fp,@\(sp,sp\)
 
 00000304 <stdfu>:
  304:	80 0c 16 c1 	stdfu fr0,@\(sp,sp\)
@@ -625,7 +625,7 @@ Disassembly of section .text:
  334:	81 80 10 81 	cldf @\(sp,sp\),fr0,cc0,0x0
 
 00000338 <cldd>:
- 338:	83 7c 10 41 	cldd @\(sp,sp\),sp,cc0,0x0
+ 338:	85 7c 10 41 	cldd @\(sp,sp\),fp,cc0,0x0
 
 0000033c <clddf>:
  33c:	81 80 10 c1 	clddf @\(sp,sp\),fr0,cc0,0x0
@@ -658,7 +658,7 @@ Disassembly of section .text:
  360:	81 8c 10 81 	cldfu @\(sp,sp\),fr0,cc0,0x0
 
 00000364 <clddu>:
- 364:	83 88 10 41 	clddu @\(sp,sp\),sp,cc0,0x0
+ 364:	85 88 10 41 	clddu @\(sp,sp\),fp,cc0,0x0
 
 00000368 <clddfu>:
  368:	81 8c 10 c1 	clddfu @\(sp,sp\),fr0,cc0,0x0
@@ -685,7 +685,7 @@ Disassembly of section .text:
  384:	81 98 10 81 	cstf fr0,@\(sp,sp\),cc0,0x0
 
 00000388 <cstd>:
- 388:	83 90 10 c1 	cstd sp,@\(sp,sp\),cc0,0x0
+ 388:	85 90 10 c1 	cstd fp,@\(sp,sp\),cc0,0x0
 
 0000038c <cstdf>:
  38c:	81 98 10 c1 	cstdf fr0,@\(sp,sp\),cc0,0x0
@@ -712,7 +712,7 @@ Disassembly of section .text:
  3a8:	81 a0 10 81 	cstfu fr0,@\(sp,sp\),cc0,0x0
 
 000003ac <cstdu>:
- 3ac:	83 9c 10 c1 	cstdu sp,@\(sp,sp\),cc0,0x0
+ 3ac:	85 9c 10 c1 	cstdu fp,@\(sp,sp\),cc0,0x0
 
 000003b0 <cstdfu>:
  3b0:	81 a0 10 c1 	cstdfu fr0,@\(sp,sp\),cc0,0x0
@@ -736,7 +736,7 @@ Disassembly of section .text:
  3c8:	81 54 10 00 	stfi fr0,@\(sp,0\)
 
 000003cc <stdi>:
- 3cc:	83 4c 10 00 	stdi sp,@\(sp,0\)
+ 3cc:	85 4c 10 00 	stdi fp,@\(sp,0\)
 
 000003d0 <stdfi>:
  3d0:	81 58 10 00 	stdfi fr0,@\(sp,0\)

@@ -8,7 +8,5 @@ Contents of section \.text:
 Contents of section \.data:
  10b0 000010bc 00001005 00001029 000010b0  .*
  10c0 000010b0 00001005                    .*
-Contents of section \.ctors:
-Contents of section \.dtors:
-Contents of section \.sbss:
 Contents of section \.stack:
+ 80000 deaddead                            .*

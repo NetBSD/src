@@ -209,7 +209,7 @@ Disassembly of section .text:
 
 0+010c <ld24>:
  10c:	ed 00 00 00 	ld24 fp,[#]*0 <add>
-			10c: R_M32R_24	.data
+			10c: R_M32R_24_RELA	.data
 
 0+0110 <ldi8>:
  110:	6d 00 f0 00 	ldi fp,[#]*0 \|\| nop
