@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1998/02/28 12:16:56 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1999/07/02 15:09:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.8 1998/02/28 12:16:56 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 1999/07/02 15:09:10 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,10 @@ __RCSID("$NetBSD: main.c,v 1.8 1998/02/28 12:16:56 enami Exp $");
 
 #if 0
 #define FORWARD
+#endif
+
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
+char *ipsec_policy = NULL;
 #endif
 
 int main P((int, char *[]));
@@ -106,7 +110,11 @@ usage()
 #else
 	    "[-r] ",
 #endif
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
+	    "[-P policy] [host-name [port]]"
+#else
 	    "[host-name [port]]"
+#endif
 	);
 	exit(1);
 }
@@ -146,7 +154,14 @@ main(argc, argv)
 	rlogin = (strncmp(prompt, "rlog", 4) == 0) ? '~' : _POSIX_VDISABLE;
 	autologin = -1;
 
-	while ((ch = getopt(argc, argv, "8EKLS:X:acde:fFk:l:n:rt:x")) != -1) {
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
+#define IPSECOPT	"P:"
+#else
+#define IPSECOPT
+#endif
+	while ((ch = getopt(argc, argv, "8EKLS:X:acde:fFk:l:n:rt:x"
+			IPSECOPT)) != -1) {
+#undef IPSECOPT
 		switch(ch) {
 		case '8':
 			eight = 3;	/* binary output and input */
@@ -278,6 +293,11 @@ main(argc, argv)
 			    "%s: Warning: -x ignored, no ENCRYPT support.\n",
 								prompt);
 			break;
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
+		case 'P':
+			ipsec_policy = strdup(optarg);
+			break;
+#endif
 		case '?':
 		default:
 			usage();
