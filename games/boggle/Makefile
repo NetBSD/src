@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1997/04/01 15:25:52 christos Exp $
+#	$NetBSD: Makefile,v 1.10 1997/04/30 20:07:40 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/11/93
 
 SUBDIR=	boggle mkdict mkindex
@@ -9,7 +9,7 @@ MKDICT!=cd $(.CURDIR)/mkdict; \
 MKINDEX!=cd $(.CURDIR)/mkindex; \
 	printf "xxx:\n\techo \$${.OBJDIR}/mkindex\n" | \
 	${MAKE} -r -s -f - xxx | grep mkindex
-WORDS=${.CURDIR}/../../share/dict/web2a
+WORDS=${.CURDIR}/../../share/dict/web2
 FILES=dictionary dictindex
 FILESDIR=/usr/share/games/boggle
 CLEANFILES+=${FILES}
