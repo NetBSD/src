@@ -1,4 +1,4 @@
-/*	$KAME: eaytest.c,v 1.43 2004/04/08 09:15:10 sakane Exp $	*/
+/*	$KAME: eaytest.c,v 1.45 2004/06/16 11:55:36 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: eaytest.c,v 1.5 2004/04/12 03:34:06 itojun Exp $");
+__RCSID("$NetBSD: eaytest.c,v 1.6 2004/06/17 03:42:55 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: eaytest.c,v 1.5 2004/04/12 03:34:06 itojun Exp $");
 u_int32_t loglevel = 4;
 
 /* prototype */
+void plog __P((int, const char *, struct sockaddr *, const char *, ...));
 
 void rsatest __P((int, char **));
 #if 0
@@ -82,6 +83,16 @@ void md5test __P((int, char **));
 void dhtest __P((int, char **));
 void bntest __P((int, char **));
 void Usage __P((void));
+
+void
+plog(int pri, const char *func, struct sockaddr *sa, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
 
 /* test */
 
@@ -285,7 +296,7 @@ certtest(ac, av)
 		}
 	    }
 
-		error = eay_check_x509cert(&c, certpath);
+		error = eay_check_x509cert(&c, certpath, 1);
 		if (error)
 			printf("ERROR: cert is invalid.\n");
 		printf("\n");
