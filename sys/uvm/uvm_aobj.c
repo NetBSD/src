@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.2 1998/02/06 22:31:37 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.3 1998/02/07 02:32:37 chs Exp $	*/
 
 /* copyright here */
 
@@ -67,17 +67,12 @@
 	((AOBJ)->u_pages > UAO_SWHASH_THRESHOLD)	/* use hash? */
 
 /*
- * the number of buckets in a swhash, with and upper bound
+ * the number of buckets in a swhash, with an upper bound
  */
 #define UAO_SWHASH_MAXBUCKETS 256
 #define UAO_SWHASH_BUCKETS(AOBJ) \
 	(min((AOBJ)->u_pages >> UAO_SWHASH_CLUSTER_SHIFT, \
 	     UAO_SWHASH_MAXBUCKETS))
-
-
-/* XXXCHS until the deadlock is fixed */
-#undef UAO_USES_SWHASH
-#define UAO_USES_SWHASH(AOBJ) 0
 
 
 /*
@@ -218,9 +213,10 @@ boolean_t create;
    * malloc a new entry for the bucket and init/insert it in
    */
   MALLOC(elt, struct uao_swhash_elt *, sizeof(*elt), M_UVMAOBJ, M_WAITOK);
-  elt->tag = page_tag;
-  bzero(elt->slots, sizeof(elt->slots));
   LIST_INSERT_HEAD(swhash, elt, list);
+  elt->tag = page_tag;
+  elt->count = 0;
+  bzero(elt->slots, sizeof(elt->slots));
 
   return(elt);
 }
@@ -466,19 +462,22 @@ int flags;
    *
    * note: in the KERNSWAP case no need to worry about locking since
    * we are still booting we should be the only thread around.
-   *
-   * XXXCHS: WAITOK is wrong for kernel object - we should panic rather
-   * than wait... but hashinit() doesn't take a malloc wait flag.
    */
 
   if (flags == 0 || (flags & UAO_FLAG_KERNSWAP) != 0) {
 
+    int mflags = (flags & UAO_FLAG_KERNSWAP) != 0 ? M_NOWAIT : M_WAITOK;
+
     /* allocate hash table or array depending on object size */
-    if (UAO_USES_SWHASH(aobj)) {
-      aobj->u_swhash = hashinit(UAO_SWHASH_BUCKETS(aobj), M_UVMAOBJ, 
+      if (UAO_USES_SWHASH(aobj)) {
+      aobj->u_swhash = hashinit(UAO_SWHASH_BUCKETS(aobj), M_UVMAOBJ, mflags,
 					&aobj->u_swhashmask);
+      if (aobj->u_swhash == NULL)
+	panic("uao_create: hashinit swhash failed");
     } else {
-      MALLOC(aobj->u_swslots, int *, pages * sizeof(int), M_UVMAOBJ, M_WAITOK);
+      MALLOC(aobj->u_swslots, int *, pages * sizeof(int), M_UVMAOBJ, mflags);
+      if (aobj->u_swslots == NULL)
+	panic("uao_create: malloc swslots failed");
       bzero(aobj->u_swslots, pages * sizeof(int));
     }
 
@@ -610,16 +609,18 @@ struct uvm_object *uobj;
       continue;
     }
 
-    /* zap the mappings, free the page, free the swap slot (if any) */
+
+    /* zap the mappings, free the swap slot, free the page */
     pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
-    uvm_lock_pageq();
-    uvm_pagefree(pg);
-    uvm_unlock_pageq();
 
     swslot = uao_set_swslot(&aobj->u_obj, pg->offset / PAGE_SIZE, 0);
     if (swslot)	{
       uvm_swap_free(swslot, 1);
     }
+
+    uvm_lock_pageq();
+    uvm_pagefree(pg);
+    uvm_unlock_pageq();
   }
 
   /*
@@ -699,7 +700,7 @@ vm_prot_t access_type;
   boolean_t done;
   UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);
 
-  UVMHIST_LOG(pdhist, "aobj=%p flags=%d", aobj, flags,0,0);
+  UVMHIST_LOG(pdhist, "aobj=%p offset=%d, flags=%d", aobj, offset, flags,0);
   
   /*
    * get number of pages
@@ -966,22 +967,18 @@ struct vm_page **nextpgp;	/* OUT */
 #endif
   
   /*
-   * dispose of the page [caller handles PG_WANTED]
+   * dispose of the page [caller handles PG_WANTED] and swap slot.
    */
   pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
+  slot = uao_set_swslot(&aobj->u_obj, pg->offset / PAGE_SIZE, 0);
+  if (slot)
+    uvm_swap_free(slot, 1);
   uvm_lock_pageq();
   if (nextpgp)
     *nextpgp = pg->pageq.tqe_next;	/* next page for daemon */
   uvm_pagefree(pg);
   if (!nextpgp)
     uvm_unlock_pageq();			/* keep locked for daemon */
-
-  /*
-   * free the swap slot for this page, if any.
-   */
-  slot = uao_set_swslot(&aobj->u_obj, pg->offset / PAGE_SIZE, 0);
-  if (slot)
-    uvm_swap_free(slot, 1);
 
   /*
    * if we're not killing the object, we're done.
