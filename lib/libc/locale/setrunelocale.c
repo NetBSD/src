@@ -1,4 +1,4 @@
-/*	$NetBSD: setrunelocale.c,v 1.11 2002/03/18 22:58:44 tshiozak Exp $	*/
+/*	$NetBSD: setrunelocale.c,v 1.12 2002/04/17 13:40:35 kleink Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -100,10 +100,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setrunelocale.c,v 1.11 2002/03/18 22:58:44 tshiozak Exp $");
+__RCSID("$NetBSD: setrunelocale.c,v 1.12 2002/04/17 13:40:35 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-/*#include "namespace.h"*/
+#include "namespace.h"
 
 #include "rune.h"
 #include <assert.h>
