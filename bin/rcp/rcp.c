@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.11 1997/05/26 15:18:52 mrg Exp $	*/
+/*	$NetBSD: rcp.c,v 1.12 1997/05/27 07:09:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: rcp.c,v 1.11 1997/05/26 15:18:52 mrg Exp $";
+static char rcsid[] = "$NetBSD: rcp.c,v 1.12 1997/05/27 07:09:51 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -195,13 +195,11 @@ main(argc, argv)
 
 	if (fflag) {			/* Follow "protocol", send data. */
 		(void)response();
-		(void)setuid(userid);
 		source(argc, argv);
 		exit(errs);
 	}
 
 	if (tflag) {			/* Receive data. */
-		(void)setuid(userid);
 		sink(argc, argv);
 		exit(errs);
 	}
@@ -245,7 +243,7 @@ toremote(targ, argc, argv)
 	char *targ, *argv[];
 	int argc;
 {
-	int i, len, tos;
+	int i, len;
 	char *bp, *host, *src, *suser, *thost, *tuser;
 
 	*targ++ = 0;
@@ -295,7 +293,7 @@ toremote(targ, argc, argv)
 				    _PATH_RSH, argv[i], cmd, src,
 				    tuser ? tuser : "", tuser ? "@" : "",
 				    thost, targ);
-			(void)susystem(bp, userid);
+			(void)susystem(bp);
 			(void)free(bp);
 		} else {			/* local to remote */
 			if (rem == -1) {
@@ -311,19 +309,14 @@ toremote(targ, argc, argv)
 					    tuser ? tuser : pwd->pw_name);
 				else
 #endif
-					rem = orcmd(&host, port, pwd->pw_name,
+					rem = rcmd(&host, port, pwd->pw_name,
 					    tuser ? tuser : pwd->pw_name,
 					    bp, 0);
 				if (rem < 0)
 					exit(1);
-				tos = IPTOS_THROUGHPUT;
-				if (setsockopt(rem, IPPROTO_IP, IP_TOS,
-				    &tos, sizeof(int)) < 0)
-					warn("TOS (ignored)");
 				if (response() < 0)
 					exit(1);
 				(void)free(bp);
-				(void)setuid(userid);
 			}
 			source(1, argv+i);
 		}
@@ -335,7 +328,7 @@ tolocal(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int i, len, tos;
+	int i, len;
 	char *bp, *host, *src, *suser;
 
 	for (i = 0; i < argc - 1; i++) {
@@ -347,7 +340,7 @@ tolocal(argc, argv)
 			(void)snprintf(bp, len, "exec %s%s%s %s %s", _PATH_CP,
 			    iamrecursive ? " -r" : "", pflag ? " -p" : "",
 			    argv[i], argv[argc - 1]);
-			if (susystem(bp, userid))
+			if (susystem(bp))
 				++errs;
 			(void)free(bp);
 			continue;
@@ -375,18 +368,13 @@ tolocal(argc, argv)
 		    use_kerberos ? 
 			kerberos(&host, bp, pwd->pw_name, suser) : 
 #endif
-			orcmd(&host, port, pwd->pw_name, suser, bp, 0);
+			rcmd(&host, port, pwd->pw_name, suser, bp, 0);
 		(void)free(bp);
 		if (rem < 0) {
 			++errs;
 			continue;
 		}
-		(void)seteuid(userid);
-		tos = IPTOS_THROUGHPUT;
-		if (setsockopt(rem, IPPROTO_IP, IP_TOS, &tos, sizeof(int)) < 0)
-			warn("TOS (ignored)");
 		sink(1, argv + argc - 1);
-		(void)seteuid(0);
 		(void)close(rem);
 		rem = -1;
 	}
@@ -809,7 +797,7 @@ again:
 			errx(1,
 			   "the -x option requires Kerberos authentication");
 #endif
-		rem = orcmd(host, port, locuser, user, bp, 0);
+		rem = rcmd(host, port, locuser, user, bp, 0);
 	}
 	return (rem);
 }
