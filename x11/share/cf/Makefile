@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:42:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/20 06:20:53 lukem Exp $
 
 XTODO=	acts as #define InstallEmptyHostDef
 
@@ -30,7 +30,8 @@ FILES=	Amoeba.cf DGUX.cf FreeBSD.cf Imake.cf Imake.rules Imake.tmpl \
 
 FILES+=	host.def
 
-LNFILES=${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xf86Version.h version.def \
+BUILDSYMLINKS=\
+	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xf86Version.h version.def \
         ${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xf86Date.h	date.def
 
 .include <bsd.prog.mk>

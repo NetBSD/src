@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/20 06:20:45 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ SRCS=		XKBAlloc.c XKBGAlloc.c XKBMAlloc.c XKBMisc.c ddxBeep.c \
 		xkbPrOtherEv.c xkbSwap.c xkbUtils.c xkbconfig.c xkberrs.c \
 		xkbfmisc.c xkbout.c xkbtext.c xkmread.c
 
-LNFILES+=	xkbmisc.c xkbfmisc.c
+BUILDSYMLINKS+=	xkbmisc.c xkbfmisc.c
 
 XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
@@ -36,7 +36,7 @@ CPPFLAGS.xkbInit.c=	-DXKB_BASE_DIRECTORY=\"${X11LIBDIR}/xkb\" \
 .for _S _T in	ddxKillSrv.c xf86KillSrv.c \
 		ddxVT.c xf86VT.c \
 		ddxPrivate.c xf86Private.c
-LNFILES+=		${_S} ${_T}
+BUILDSYMLINKS+=		${_S} ${_T}
 BUILDOBJS+=		${_T:R}.o
 CPPFLAGS.${_T}=		-DXF86DDXACTIONS
 .endfor
