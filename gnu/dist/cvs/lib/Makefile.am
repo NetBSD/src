@@ -84,6 +84,7 @@ EXTRA_DIST = \
 	.cvsignore \
 	ChangeLog.fsf \
 	build_lib.com \
+	libcvs.dep libcvs.dsp libcvs.mak \
 	xgssapi.h
 
 # Until Automake gets its act together

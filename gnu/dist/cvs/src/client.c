@@ -4821,7 +4821,6 @@ start_rsh_server (root, to_server, from_server)
 	const char **p = argv;
 
 	*p++ = cvs_rsh;
-	*p++ = root->hostname;
 
 	/* If the login names differ between client and server
 	 * pass it on to rsh.
@@ -4832,6 +4831,7 @@ start_rsh_server (root, to_server, from_server)
 	    *p++ = root->username;
 	}
 
+	*p++ = root->hostname;
 	*p++ = command;
 	*p++ = NULL;
 
