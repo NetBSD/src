@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.33 2002/10/15 16:16:29 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.34 2002/10/16 03:46:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -295,7 +295,7 @@ u_int st_hash(char *, int, int);
 /*
  * tar.c
  */
-extern int is_oldgnutar;
+extern int is_gnutar;
 int tar_endwr(void);
 off_t tar_endrd(void);
 int tar_trail(char *, int, int *);
