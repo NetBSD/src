@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.2,v 1.1.2.12 2005/03/16 23:02:20 tron Exp $
+#	$NetBSD: CHANGES-2.0.2,v 1.1.2.13 2005/03/17 00:04:08 he Exp $
 
 A complete list of changes from the NetBSD 2.0.1 release to the NetBSD 2.0.2
 release.
@@ -150,3 +150,10 @@ sys/netinet6/ipsec.c				1.101
 	Fix possible remote DoS via IPSec AH packets.
 	[itojun, ticket #1327]
 
+sys/arch/prep/prep/ibm_7043_140.c		1.4
+sys/arch/prep/prep/machdep.c			1.52
+
+	Ensure that the OpenPIC register window is mapped during
+	the startup; only parts of the PCI memory space is mapped
+	already.  Move initialization since it requires UVM.
+	[jkunz, ticket 1152]
