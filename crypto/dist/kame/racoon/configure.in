@@ -82,9 +82,9 @@ AC_MSG_RESULT(${gc_dir})
 if test "$gc_dir" != "no"; then
 	AC_DEFINE(GC)
 	if test "x$gc_dir" = "x"; then
-		RACOON_PATH_LIBS(GC_malloc, gc)
+		RACOON_PATH_LIBS(GC_malloc, leak)
 	else
-		RACOON_PATH_LIBS(GC_malloc, gc, $gc_dir)
+		RACOON_PATH_LIBS(GC_malloc, leak, $gc_dir)
 	fi
 fi
 
@@ -151,28 +151,13 @@ fi
 dnl for some reason, past version of freebsd port requires us to set -I for
 dnl BOTH openssl/cast.h and cast.h.  who should I blame (or am I mistaken?)
 RACOON_PATH_LIBS(CAST_cfb64_encrypt, crypto, ${crypto_dir}/lib)
-RACOON_SEARCH_OPENSSL(${crypto_dir}/include)
-if test "x$include_path_openssl" = "x"; then
-	RACOON_SEARCH_HEADER(cast.h,
-		/usr/include/openssl /usr/include/ssleay ${crypto_dir}/include ${crypto_dir}/include/openssl ${crypto_dir}/include/ssleay)
-	RACOON_SEARCH_HEADER(openssl/cast.h,
-		/usr/include/openssl /usr/include/ssleay ${crypto_dir}/include ${crypto_dir}/include/openssl ${crypto_dir}/include/ssleay)
-	AC_TRY_COMPILE([#include <sys/types.h>
-#include <stdio.h>
-#include <bn.h>
-#include <dh.h>
-#include <md5.h>
-#include <sha.h>
-#include <des.h>], [], [], [openssl_compile_failed=yes])
-else
-	AC_TRY_COMPILE([#include <sys/types.h>
+AC_TRY_COMPILE([#include <sys/types.h>
 #include <stdio.h>
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 #include <openssl/des.h>], [], [], [openssl_compile_failed=yes])
-fi
 
 if test "x$openssl_compile_failed" = "xyes"; then
 	echo
@@ -192,23 +177,13 @@ fi
 dnl AC_MSG_RESULT("$ssleay_lib and $ssleay_include")
 
 AC_MSG_CHECKING(openssl version)
-if test "x$include_path_openssl" = "x"; then
-	AC_EGREP_CPP(yes, [#include <opensslv.h>
-#if OPENSSL_VERSION_NUMBER >= 0x00090581L
-yes
-#endif], [AC_MSG_RESULT(ok)], [AC_MSG_RESULT(too old)
-		echo
-		echo "FATAL: OpenSSL version must be 0.9.4 or higher."
-		exit 1])
-else
-	AC_EGREP_CPP(yes, [#include <openssl/opensslv.h>
+AC_EGREP_CPP(yes, [#include <openssl/opensslv.h>
 #if OPENSSL_VERSION_NUMBER >= 0x00904100L
 yes
 #endif], [AC_MSG_RESULT(ok)], [AC_MSG_RESULT(too old)
-		echo
-		echo "FATAL: OpenSSL version must be 0.9.4 or higher."
-		exit 1])
-fi
+	echo
+	echo "FATAL: OpenSSL version must be 0.9.4 or higher."
+	exit 1])
 
 dnl AC_MSG_CHECKING(for libssl)
 AC_CHECK_LIB(ssl, ssl_ok, [], [], -lcrypto)
@@ -581,45 +556,24 @@ AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(limits.h sys/time.h unistd.h stdarg.h varargs.h)
 signing=yes
-if test "x$include_path_openssl" = "x"; then
-	if test "$enable_rc5" = "yes"; then
-		rc5header=rc5.h
-	else
-		rc5header=
-	fi
-	if test "$enable_idea" = "yes"; then
-		ideaheader=idea.h
-	else
-		ideaheader=
-	fi
-	AC_CHECK_HEADERS($ideaheader $rc5header rsa.h pem.h evp.h x509.h,
-		[], [nosymbol=`echo $ac_hdr | sed -e 's/.h$//' -e 's/^/NO_/' | tr 'a-z' 'A-Z'`
-		CPPFLAGS="$CPPFLAGS -D$nosymbol=1"
-		signing=no])
+if test "$enable_rc5" = "yes"; then
+	rc5header=openssl/rc5.h
 else
-	if test "$enable_rc5" = "yes"; then
-		rc5header=openssl/rc5.h
-	else
-		rc5header=
-	fi
-	if test "$enable_idea" = "yes"; then
-		ideaheader=openssl/idea.h
-	else
-		ideaheader=
-	fi
-	AC_CHECK_HEADERS($ideaheader $rc5header openssl/rsa.h openssl/pem.h openssl/evp.h openssl/x509.h,
-		[], [nosymbol=`echo $ac_hdr | sed -e 's/.h$//' -e 's/^openssl.//' -e 's/^/NO_/' | tr 'a-z' 'A-Z'`
-		CPPFLAGS="$CPPFLAGS -D$nosymbol=1"
-		signing=no])
+	rc5header=
 fi
+if test "$enable_idea" = "yes"; then
+	ideaheader=openssl/idea.h
+else
+	ideaheader=
+fi
+AC_CHECK_HEADERS($ideaheader $rc5header openssl/rsa.h openssl/pem.h openssl/evp.h openssl/x509.h,
+	[], [nosymbol=`echo $ac_hdr | sed -e 's/.h$//' -e 's/^openssl.//' -e 's/^/NO_/' | tr 'a-z' 'A-Z'`
+	CPPFLAGS="$CPPFLAGS -D$nosymbol=1"
+	signing=no])
 if test $signing = "yes"; then
 	AC_DEFINE(HAVE_SIGNING_C)
 fi
-if test "x$include_path_openssl" = "x"; then
-	AC_CHECK_HEADERS(cversion.h opensslv.h)
-else
-	AC_CHECK_HEADERS(openssl/cversion.h openssl/opensslv.h)
-fi
+AC_CHECK_HEADERS(openssl/cversion.h openssl/opensslv.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

@@ -1,4 +1,4 @@
-/*	$KAME: logger.c,v 1.7 2000/10/04 17:41:01 itojun Exp $	*/
+/*	$KAME: logger.c,v 1.8 2001/04/03 15:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -54,6 +54,7 @@
 
 #include "logger.h"
 #include "var.h"
+#include "gcmalloc.h"
 
 struct log *
 log_open(siz, fname)
@@ -62,22 +63,22 @@ log_open(siz, fname)
 {
 	struct log *p;
 
-	p = (struct log *)malloc(sizeof(*p));
+	p = (struct log *)racoon_malloc(sizeof(*p));
 	if (p == NULL)
 		return NULL;
 	memset(p, 0, sizeof(*p));
 
-	p->buf = (char **)malloc(sizeof(char *) * siz);
+	p->buf = (char **)racoon_malloc(sizeof(char *) * siz);
 	if (p->buf == NULL) {
-		free(p);
+		racoon_free(p);
 		return NULL;
 	}
 	memset(p->buf, 0, sizeof(char *) * siz);
 
-	p->tbuf = (time_t *)malloc(sizeof(time_t *) * siz);
+	p->tbuf = (time_t *)racoon_malloc(sizeof(time_t *) * siz);
 	if (p->tbuf == NULL) {
-		free(p);
-		free(p->buf);
+		racoon_free(p);
+		racoon_free(p->buf);
 		return NULL;
 	}
 	memset(p->tbuf, 0, sizeof(time_t *) * siz);
@@ -101,7 +102,7 @@ log_add(p, str)
 {
 	/* syslog if p->fname == NULL? */
 	if (p->buf[p->head])
-		free(p->buf[p->head]);
+		racoon_free(p->buf[p->head]);
 	p->buf[p->head] = strdup(str);
 	p->tbuf[p->head] = time(NULL);
 	p->head++;
@@ -210,12 +211,12 @@ log_free(p)
 	int i;
 
 	for (i = 0; i < p->siz; i++)
-		free(p->buf[i]);
-	free(p->buf);
-	free(p->tbuf);
+		racoon_free(p->buf[i]);
+	racoon_free(p->buf);
+	racoon_free(p->tbuf);
 	if (p->fname)
-		free(p->fname);
-	free(p);
+		racoon_free(p->fname);
+	racoon_free(p);
 }
 
 #ifdef TEST
