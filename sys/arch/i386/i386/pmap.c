@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.134 2002/03/08 20:48:30 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.135 2002/03/23 18:39:46 thorpej Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134 2002/03/08 20:48:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135 2002/03/23 18:39:46 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -817,7 +817,8 @@ pmap_bootstrap(kva_start)
 	virtual_avail += PAGE_SIZE; pte++;
 
 	msgbuf_vaddr = virtual_avail;			/* don't need pte */
-	virtual_avail += round_page(MSGBUFSIZE); pte++;
+	virtual_avail += round_page(MSGBUFSIZE);
+	pte += i386_btop(round_page(MSGBUFSIZE));
 
 	idt_vaddr = virtual_avail;			/* don't need pte */
 	virtual_avail += PAGE_SIZE; pte++;
