@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.20 1997/07/31 04:08:22 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.21 1997/08/01 19:38:42 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -106,7 +106,7 @@ all)
 
 floppy)
 	sh MAKEDEV std st0 ttye0 ttye1 ttye2 grf0 grf1 grf2 kbd tun0 tun1
-	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 wd0 wd1 cd0 fd0 md0 rtc
+	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 wd0 wd1 cd0 fd0 md0 md1 rtc
 	;;
 
 std)
@@ -214,9 +214,10 @@ fd*)
 	umask 77
 	;;
 
-md0)	# Memory disk, only useful for boot-floppy
-	umask 2; rm -f md0
-	mknod md0 b 1 0
+md*)	# Memory disk, only useful for boot-floppy
+	unit=${i#md}
+	umask 2; rm -f md${unit}
+	mknod md${unit} b 1 $(($unit * 16))
 	umask 77
 	;;
 

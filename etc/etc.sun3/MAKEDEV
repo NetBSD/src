@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.14 1997/07/31 04:08:38 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.15 1997/08/01 19:38:48 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -226,9 +226,9 @@ cgfour*)
 	;;
 
 md*)
-	mk  md$unit b 13 $unit
-#	mk rmd$unit b 13 `expr $unit + 16`
-	mk md${unit}c b 13 `expr $unit + 16`
+	mknod md${unit} b 13 $(($unit * 8))
+#	mknod rmd${unit} b 13 $((($unit + 16) * 8))
+	mknod md${unit}c b 13 $((($unit + 16) * 8))
 	;;
 
 local)
