@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.2 2003/12/16 12:22:24 keihan Exp $
+# $NetBSD: WSCONS,v 1.3 2003/12/19 11:39:30 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -30,11 +30,11 @@
 include		"arch/pmax/conf/std.pmax"
 include		"arch/pmax/conf/files.pmax_wscons"
 
-options		WSCONS
+options 	WSCONS
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.2 $"
+#ident		"GENERIC-$Revision: 1.3 $"
 
 maxusers	64
 
@@ -76,7 +76,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM			# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
@@ -139,21 +139,22 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 # NetBSD backwards compatibility
 #options 	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
 #options 	COMPAT_11	# NetBSD 1.1, EXEC_ELF_NOTELESS
-options 	COMPAT_12	# Netbsd 1.2 reboot(), EXEC_ELF_NOTELESS
-options 	COMPAT_13	# Netbsd 1.3
-options 	COMPAT_14	# Netbsd 1.4
+options 	COMPAT_12	# NetBSD 1.2 reboot(), EXEC_ELF_NOTELESS
+options 	COMPAT_13	# NetBSD 1.3
+options 	COMPAT_14	# NetBSD 1.4
+options 	COMPAT_16	# NetBSD 1.6
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Workstation console options
 options 	FONT_BOLD8x16
 options 	FONT_GALLANT12x22
 
-options		WSEMUL_VT100
-options		WS_KERNEL_FG=WSCOL_GREEN
-options		WS_KERNEL_BG=WSCOL_BLACK
+options 	WSEMUL_VT100
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
 
 # Disable kernel security levels.  Needed for X with a PX or PXG.
-#options	INSECURE
+#options 	INSECURE
 
 # pmax specific
 options 	COMPAT_ULTRIX	# Ultrix compatibility
@@ -276,7 +277,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 pseudo-device	vnd		 4	# virtual disk ick
 pseudo-device	ccd		 4	# concatenated disks
@@ -284,13 +285,13 @@ pseudo-device	ccd		 4	# concatenated disks
 pseudo-device	raid		 8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
-# options	RF_INCLUDE_EVENODD=1
-# options	RF_INCLUDE_RAID5_RS=1
-# options	RF_INCLUDE_PARITYLOGGING=1
-# options	RF_INCLUDE_CHAINDECLUSTER=1
-# options	RF_INCLUDE_INTERDECLUSTER=1
-# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
-# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
