@@ -1,4 +1,4 @@
-/* $NetBSD: irqhandler.c,v 1.13 1997/01/06 02:30:21 mark Exp $ */
+/* $NetBSD: irqhandler.c,v 1.14 1997/04/02 21:52:19 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -90,6 +90,7 @@ extern void set_spl_masks	__P((void));
 
 extern void arpintr	__P((void));
 extern void ipintr	__P((void));
+extern void atintr	__P((void));
 extern void pppintr	__P((void));
 extern void plipintr	__P((void));
 
@@ -630,6 +631,12 @@ dosoftints()
 		if (netisr & (1 << NETISR_IP)) {
 			atomic_clear_bit(&netisr, (1 << NETISR_IP));
 			ipintr();
+		}
+#endif
+#ifdef NETATALK
+		if (netisr & (1 << NETISR_ATALK)) {
+			atomic_clear_bit(&netisr, (1 << NETISR_ATALK));
+			atintr();
 		}
 #endif
 #ifdef NS

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 1997/03/27 21:01:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70 1997/04/02 21:48:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -99,6 +99,9 @@
 #endif
 #ifdef NATM
 #include <netnatm/natm.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
 #endif
 #include "ppp.h"
 #if NPPP > 0
@@ -1432,6 +1435,9 @@ netintr()
 #ifdef INET
 	DONETISR(NETISR_ARP, arpintr());
 	DONETISR(NETISR_IP, ipintr());
+#endif
+#ifdef NETATALK
+	DONETISR(NETISR_ATALK, atintr());
 #endif
 #ifdef NS
 	DONETISR(NETISR_NS, nsintr());
