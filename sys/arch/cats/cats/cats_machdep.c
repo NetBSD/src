@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.13 2002/02/09 12:14:02 chris Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.14 2002/02/10 11:31:47 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -357,7 +357,7 @@ initarm(bootargs)
 /*	fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);*/
 
 	/* Talk to the user */
-	printf("NetBSD/arm32 booting ...\n");
+	printf("NetBSD/cats booting ...\n");
 
 	if (ebsabootinfo.bt_magic != BT_MAGIC_NUMBER_EBSA
 	    && ebsabootinfo.bt_magic != BT_MAGIC_NUMBER_CATS)
