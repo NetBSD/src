@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.40 2002/12/10 12:24:06 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.41 2002/12/10 13:44:52 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ struct sparc_bus_space_tag {
 	paddr_t	(*sparc_bus_mmap) __P((bus_space_tag_t,	bus_addr_t, off_t, 
 		int, int));
 
-	void	*(*sparc_intr_establish) __P((bus_space_tag_t, int, int, int,
+	void	*(*sparc_intr_establish) __P((bus_space_tag_t, int, int,
 		int (*) __P((void *)), void *, void (*)__P((void))));
 
 };
@@ -233,7 +233,6 @@ static void	*bus_intr_establish __P((
 				int,			/*bus-specific intr*/
 				int,			/*device class level,
 							  see machine/intr.h*/
-				int,			/*flags*/
 				int (*) __P((void *)),	/*handler*/
 				void *));		/*handler arg*/
 
@@ -311,15 +310,14 @@ bus_space_mmap(t, a, o, p, f)
 }
 
 __inline__ void *
-bus_intr_establish(t, p, l, f, h, a)
+bus_intr_establish(t, p, l, h, a)
 	bus_space_tag_t t;
 	int	p;
 	int	l;
-	int	f;
 	int	(*h)__P((void *));
 	void	*a;
 {
-	_BS_CALL(t, sparc_intr_establish)(t, p, l, f, h, a, NULL);
+	_BS_CALL(t, sparc_intr_establish)(t, p, l, h, a, NULL);
 }
 
 /* XXXX Things get complicated if we use unmapped register accesses. */
