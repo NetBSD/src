@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.134 2001/08/07 13:57:41 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.135 2001/08/21 16:13:14 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -450,6 +450,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Matsushita Electric Industrial Co.",
 	    "Panasonic 8X CD-ROM Interface Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_PSION, PCMCIA_PRODUCT_PSION_GOLDCARD,
+	    PCMCIA_CIS_PSION_GOLDCARD,
+	    0,
+	    "Psion",
+	    "Psion Gold Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_USROBOTICS, PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144,
@@ -1254,6 +1261,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Aironet Wireless Communications",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_PSION, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Psion",
 	    NULL,
 	},
 	{
