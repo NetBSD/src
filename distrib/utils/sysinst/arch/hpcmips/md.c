@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.21 2003/05/07 10:20:21 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.22 2003/05/15 08:09:51 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,11 +62,8 @@ struct disklist *disklist = NULL;
 struct nativedisk_info *nativedisk;
 struct biosdisk_info *biosdisk = NULL;
 int netbsd_mbr_installed = 0;
-int netbsd_bootsel_installed = 0;
 
 static void md_upgrade_mbrtype (void);
-
-int defbootselpart, defbootseldisk;
 
 
 /* prototypes */
@@ -364,7 +361,7 @@ md_upgrade_mbrtype()
 	if (read_mbr(diskdev, &mbr, sizeof mbr) < 0)
 		return;
 
-	mbrp = &mbr/mbr_parts[0];
+	mbrp = &mbr.mbr_parts[0];
 
 	for (i = 0; i < NMBRPART; i++) {
 		if (mbrp[i].mbrp_typ == MBR_PTYPE_386BSD) {
