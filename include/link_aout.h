@@ -1,4 +1,4 @@
-/*	$NetBSD: link_aout.h,v 1.11 1997/01/03 22:39:03 scottr Exp $	*/
+/*	$NetBSD: link_aout.h,v 1.12 1998/05/12 21:21:21 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -171,7 +171,8 @@ struct ld_entry {
 	void	*(*dlsym) __P((void *, const char *));
 	int	(*dlctl) __P((void *, int, void *));
 	void	(*dlexit) __P((void));
-	void	(*dlrsrvd[3]) __P((void));
+	int	(*dladdr) __P((void *, Dl_info *));
+	void	(*dlrsrvd[2]) __P((void));
 };
 
 /*
