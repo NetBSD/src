@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 2000/06/01 15:38:23 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34 2000/06/06 11:09:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -42,7 +42,7 @@
 #include <machine/cpu.h>
 #include <atari/atari/device.h>
 
-static void findroot __P((struct device **, int *));
+static void findroot __P((void));
 void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, struct cfdata *, void *));
