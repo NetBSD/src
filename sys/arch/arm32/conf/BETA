@@ -110,12 +110,12 @@ vt4     at mainbus?
 vt5     at mainbus?
 
 # IDE disk controller
-wdc0    at mainbus? base 0x002107c0
+wdc0    at mainbus? base 0x002107c0 irq 9
 wd0     at wdc? drive ?
 wd1     at wdc? drive ?
 
 # Floppy disk controller
-fdc0    at mainbus? base 0x00210fc0 dack 0x00002000
+fdc0    at mainbus? base 0x00210fc0 irq 12 dack 0x00002000
 fd0     at fdc? drive ?
 
 # Ramdisk
@@ -128,7 +128,7 @@ kbd0	at mainbus? base 0x00000000
 quadmouse0	at mainbus? base 0x00000000
 
 # Serial ports
-com0    at mainbus? base 0x00210fe0
+com0    at mainbus? base 0x00210fe0 irq 10
 #com1    at mainbus? base 0x00210be0
 
 # Parallel ports
@@ -140,8 +140,8 @@ beep0	at mainbus? base 0x00000000
 # Podule bus device
 podulebus0	at root
 
-#asc0	at podulebus?			# Acorn SCSI card
-#scsibus* at asc?
+asc0	at podulebus?			# Acorn SCSI card
+scsibus* at asc?
 
 csc0	at podulebus?			# Cumana SCSI II card
 scsibus* at csc?
