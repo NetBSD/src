@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.29 1999/03/26 23:41:27 mycroft Exp $ */
+/* $NetBSD: bus_dma.c,v 1.29.2.1 2000/02/06 17:26:59 he Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.29 1999/03/26 23:41:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.29.2.1 2000/02/06 17:26:59 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,8 @@ _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
 			map->dm_segs[seg].ds_len = sgsize;
 			first = 0;
 		} else {
-			if (curaddr == lastaddr &&
+			if ((map->_dm_flags & DMAMAP_NO_COALESCE) == 0 &&
+			    curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
 			     map->_dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
