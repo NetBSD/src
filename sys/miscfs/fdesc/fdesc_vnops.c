@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: fdesc_vnops.c,v 1.2 1993/03/25 06:00:19 cgd Exp $
+ *	$Id: fdesc_vnops.c,v 1.3 1993/03/30 05:16:56 cgd Exp $
  */
 
 /*
@@ -309,15 +309,43 @@ fdesc_readdir(vp, uio, cred, eofflagp)
 	int *eofflagp;
 {
 	struct filedesc *fdp;
-	int i;
+	int ind, i;
 	int error;
 
 #define UIO_MX 16
 
 	fdp = uio->uio_procp->p_fd;
-	i = uio->uio_offset / UIO_MX;
+	ind = uio->uio_offset / UIO_MX;
 	error = 0;
 	while (uio->uio_resid > 0) {
+		struct direct d;
+		struct direct *dp = &d;
+
+	        if (ind < 2) { /* . or .. */
+		  bzero((caddr_t) dp, UIO_MX);
+		  if (ind == 0) {
+		    strcpy(dp->d_name, ".");
+		    dp->d_namlen = 1;
+		  } else if (ind == 1) {
+		    strcpy(dp->d_name, "..");
+		    dp->d_namlen = 2;
+		  } else
+		    panic("fdesc: ind is negative!");
+
+		  dp->d_reclen = UIO_MX;
+		  dp->d_ino = 2;
+
+		  /*
+		   * And ship to userland
+		   */
+		  error = uiomove((caddr_t) dp, UIO_MX, uio);
+		  if (error)
+		    break;
+
+		  ind++;
+		  continue;
+		}
+	        i = ind - 2;
 		if (i >= fdp->fd_nfiles) {
 			*eofflagp = 1;
 			break;
@@ -373,10 +401,10 @@ fdesc_readdir(vp, uio, cred, eofflagp)
 			if (error)
 				break;
 		}
-		i++;
+		ind++;
 	}
 
-	uio->uio_offset = i * UIO_MX;
+	uio->uio_offset = ind * UIO_MX;
 	return (error);
 }
 
