@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.65 1994/05/05 05:35:46 cgd Exp $
+ *	$Id: locore.s,v 1.66 1994/05/05 08:44:53 mycroft Exp $
  */
 
 /*
@@ -1824,6 +1824,13 @@ ENTRY(proffault)
 /*
  * Trap and fault vector routines
  *
+ * On exit from the kernel to user mode, we always need to check for ASTs.  In
+ * addition, we need to do this atomically; otherwise an interrupt may occur
+ * which causes an AST, but it won't get processed until the next kernel entry
+ * (possibly the next clock tick).  Thus, we disable interrupt before checking,
+ * and only enable them again on the final `iret' or before calling the AST
+ * handler.
+ *
  * XXX - debugger traps are now interrupt gates so at least bdb doesn't lose
  * control.  The sti's give the standard losing behaviour for ddb and kgdb.
  */ 
@@ -1961,13 +1968,15 @@ calltrap:
 	movl	_cpl,%ebx
 #endif
 	call	_trap
-	/*
+2:	/*
 	 * Check for ASTs.
 	 */
+	cli
 	testb	$SEL_RPL_MASK,TF_CS(%esp)
 	jz	1f
 	btrl	$0,_astpending
 	jnc	1f
+	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_trap
 #ifndef DIAGNOSTIC
@@ -1975,8 +1984,9 @@ calltrap:
 #else
 1:	cmpl	_cpl,%ebx
 	jne	3f
-2:	INTRFASTEXIT
-3:	pushl	$4f
+	INTRFASTEXIT
+3:	sti
+	pushl	$4f
 	call	_printf
 	addl	$4,%esp
 #ifdef DDB
@@ -2016,12 +2026,14 @@ IDTVEC(syscall)
 	movl	_cpl,%ebx
 #endif
 	call	_syscall
-	/*
+2:	/*
 	 * Check for ASTs.
 	 */
+	cli
 	/* Always returning to user mode here. */
 	btrl	$0,_astpending
 	jnc	1f
+	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_trap
 #ifndef DIAGNOSTIC
@@ -2029,8 +2041,9 @@ IDTVEC(syscall)
 #else
 1:	cmpl	_cpl,%ebx
 	jne	3f
-2:	INTRFASTEXIT
-3:	pushl	$4f
+	INTRFASTEXIT
+3:	sti
+	pushl	$4f
 	call	_printf
 	addl	$4,%esp
 #ifdef DDB

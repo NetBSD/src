@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.32 1994/04/25 04:59:24 mycroft Exp $
+ *	$Id: icu.s,v 1.33 1994/05/05 08:44:57 mycroft Exp $
  */
 
 /*
@@ -107,11 +107,13 @@ IDTVEC(doreti)
 	btrl    %eax,_ipending
 	jnc     1b			# some intr cleared the in-memory bit
 	jmp	*_Xresume(,%eax,4)
-2:	/* Check for ASTs only on exit to user mode. */
+2:	/* Check for ASTs on exit to user mode. */
+	cli
 	testb   $SEL_RPL_MASK,TF_CS(%esp)
 	jz	3f
 	btrl	$0,_astpending
 	jnc	3f
+	sti
 	/* Pushed T_ASTFLT into TF_TRAPNO on interrupt entry. */
 	call	_trap
 3:	INTRFASTEXIT
@@ -165,9 +167,6 @@ IDTVEC(softnet)
 IDTVEC(softclock)
 	leal	SIR_CLOCKMASK(%ebx),%eax
 	movl	%eax,_cpl
-	pushl   %ebx			# XXX previous cpl (not used)
-	pushl	%esp			# XXX pointer to frame
 	call	_softclock
-	addl	$8,%esp			# XXX discard dummies
 	movl	%ebx,_cpl
 	jmp	%esi
