@@ -1,10 +1,11 @@
-/*	$NetBSD: menus.md.eng,v 1.2.2.4 1997/11/13 05:53:44 simonb Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.1.2.2 1997/11/13 05:53:34 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
  *
- * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ * Based on code written by Philip A. Nelson for Piermont Information
+ * Systems Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,12 +37,12 @@
  *
  */
 
-/* pmax machine dependent menus, english */
+/* arm32 machine dependent menus, english */
 
 menu editfsparts, y=13, exit;
 	display action  {
 			ask_sizemult();
-			msg_display(MSG_fspart, multname);
+			msg_display(MSG_arm32fspart, disk->name, multname);
 			disp_cur_fspart(-1, 1);
 		};
 	option "Change a", action { editpart = A;}, sub menu edfspart;
