@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.127 2003/07/23 13:38:18 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.128 2003/07/23 13:44:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.127 2003/07/23 13:38:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.128 2003/07/23 13:44:55 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.127 2003/07/23 13:38:18 yamt Exp $"
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
+
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
 static boolean_t lfs_issequential_hole(const struct ufsmount *,
     daddr_t, daddr_t);
