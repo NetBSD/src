@@ -17,11 +17,29 @@ You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
-#include <stdlib.h>
+#include <math.h>
+#include <errno.h>
 
-#define FATAL_ERROR_EXIT_CODE 3
+#ifdef HAVE_STRUCT_EXCEPTION
+#ifdef TLOSS
 
-void fatal_error_exit()
+int matherr(exc)
+struct exception *exc;
 {
-  exit(FATAL_ERROR_EXIT_CODE);
+  switch (exc->type) {
+  case SING:
+  case DOMAIN:
+    errno = EDOM;
+    break;
+  case OVERFLOW:
+  case UNDERFLOW:
+  case TLOSS:
+  case PLOSS:
+    errno = ERANGE;
+    break;
+  }
+  return 1;
 }
+
+#endif /* TLOSS */
+#endif /* HAVE_STRUCT_EXCEPTION */

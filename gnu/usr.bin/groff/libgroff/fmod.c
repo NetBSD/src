@@ -17,11 +17,12 @@ You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
-#include <stdlib.h>
+#include <math.h>
 
-#define FATAL_ERROR_EXIT_CODE 3
-
-void fatal_error_exit()
+double fmod(x, y)
+     double x, y;
 {
-  exit(FATAL_ERROR_EXIT_CODE);
+  double quot = x/y;
+  return x - (quot < 0.0 ? ceil(quot) : floor(quot)) * y;
 }
+

@@ -17,11 +17,27 @@ You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
-#include <stdlib.h>
+#define INT_DIGITS 19		/* enough for 64 bit integer */
 
-#define FATAL_ERROR_EXIT_CODE 3
-
-void fatal_error_exit()
+char *itoa(i)
+     int i;
 {
-  exit(FATAL_ERROR_EXIT_CODE);
+  /* Room for INT_DIGITS digits, - and '\0' */
+  static char buf[INT_DIGITS + 2];
+  char *p = buf + INT_DIGITS + 1;	/* points to terminating '\0' */
+  if (i >= 0) {
+    do {
+      *--p = '0' + (i % 10);
+      i /= 10;
+    } while (i != 0);
+    return p;
+  }
+  else {			/* i < 0 */
+    do {
+      *--p = '0' - (i % 10);
+      i /= 10;
+    } while (i != 0);
+    *--p = '-';
+  }
+  return p;
 }
