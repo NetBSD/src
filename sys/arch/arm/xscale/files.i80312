@@ -1,0 +1,6 @@
+#	$NetBSD: files.i80312,v 1.1 2001/11/05 23:38:55 thorpej Exp $
+#
+# Configuration info for Intel i80312 Companion I/O support
+#
+
+file	arch/arm/xscale/i80312_mem.c
