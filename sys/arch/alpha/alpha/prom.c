@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.25 1998/09/24 00:30:19 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.26 1998/09/24 03:39:24 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.25 1998/09/24 00:30:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.26 1998/09/24 03:39:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,12 +311,6 @@ hwrpb_restart_setup()
 	/* when 'c'ontinuing from console halt, do a dump */
 	hwrpb->rpb_rest_term = (u_int64_t)&XentRestart;
 	hwrpb->rpb_rest_term_val = 0x1;
-
-#if 0
-	/* don't know what this is really used by, so don't mess with it. */
-	hwrpb->rpb_restart = (u_int64_t)&XentRestart;
-	hwrpb->rpb_restart_val = 0x2;
-#endif
 
 	hwrpb->rpb_checksum = hwrpb_checksum();
 
