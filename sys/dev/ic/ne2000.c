@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.19 1999/09/27 04:07:24 enami Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.20 1999/09/27 04:14:06 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 		}
 	}
 
-	useword = (nsc->sc_type == NE2000_TYPE_NE2000);
+	useword = NE2000_USE_WORD(nsc->sc_type);
 
 	dsc->cr_proto = ED_CR_RD2;
 
@@ -138,7 +138,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 	 * NE1000 gets byte-wide DMA, NE2000 gets word-wide DMA.
 	 */
 	dsc->dcr_reg = ED_DCR_FT1 | ED_DCR_LS |
-	    (nsc->sc_type == NE2000_TYPE_NE2000 ? ED_DCR_WTS : 0);
+	    (NE2000_USE_WORD(nsc->sc_type) ? ED_DCR_WTS : 0);
 
 	dsc->test_mem = ne2000_test_mem;
 	dsc->ring_copy = ne2000_ring_copy;
@@ -575,7 +575,7 @@ ne2000_ring_copy(sc, src, dst, amount)
 	bus_space_tag_t asict = nsc->sc_asict;
 	bus_space_handle_t asich = nsc->sc_asich;
 	u_short tmp_amount;
-	int useword = (nsc->sc_type == NE2000_TYPE_NE2000);
+	int useword = NE2000_USE_WORD(nsc->sc_type);
 
 	/* Does copy wrap to lower addr in ring buffer? */
 	if (src + amount > sc->mem_end) {
@@ -606,7 +606,7 @@ ne2000_read_hdr(sc, buf, hdr)
 
 	ne2000_readmem(sc->sc_regt, sc->sc_regh, nsc->sc_asict, nsc->sc_asich,
 	    buf, (u_int8_t *)hdr, sizeof(struct dp8390_ring),
-	    (nsc->sc_type == NE2000_TYPE_NE2000));
+	    NE2000_USE_WORD(nsc->sc_type));
 #if BYTE_ORDER == BIG_ENDIAN
 	hdr->count = bswap16(hdr->count);
 #endif
