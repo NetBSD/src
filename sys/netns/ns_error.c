@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_error.c,v 1.6 1996/02/13 22:13:53 christos Exp $	*/
+/*	$NetBSD: ns_error.c,v 1.7 1996/10/10 23:25:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -121,7 +121,7 @@ ns_error(om, type, param)
 
 #ifdef NS_ERRPRINTFS
 	if (ns_errprintfs)
-		printf("ns_err_error(%x, %d, %d)\n", oip, type, param);
+		kprintf("ns_err_error(%x, %d, %d)\n", oip, type, param);
 #endif
 	/*
 	 * Don't Generate error packets in response to multicasts.
@@ -182,7 +182,7 @@ ns_printhost(p)
 register struct ns_addr *p;
 {
 
-	printf("<net:%x%x,host:%x%x%x,port:%x>",
+	kprintf("<net:%x%x,host:%x%x%x,port:%x>",
 			p->x_net.s_net[0],
 			p->x_net.s_net[1],
 			p->x_host.s_host[0],
@@ -212,9 +212,9 @@ ns_err_input(m)
 	 */
 #ifdef NS_ERRPRINTFS
 	if (ns_errprintfs) {
-		printf("ns_err_input from ");
+		kprintf("ns_err_input from ");
 		ns_printhost(&epidp->ns_ep_idp.idp_sna);
-		printf("len %d\n", ntohs(epidp->ns_ep_idp.idp_len));
+		kprintf("len %d\n", ntohs(epidp->ns_ep_idp.idp_len));
 	}
 #endif
 	i = sizeof (struct ns_epidp);
@@ -233,7 +233,7 @@ ns_err_input(m)
 	 * Message type specific processing.
 	 */
 	if (ns_errprintfs)
-		printf("ns_err_input, type %d param %d\n", type, param);
+		kprintf("ns_err_input, type %d param %d\n", type, param);
 #endif
 	if (type >= NS_ERR_TOO_BIG) {
 		goto badcode;
@@ -274,8 +274,8 @@ ns_err_input(m)
 		 */
 #ifdef NS_ERRPRINTFS
 		if (ns_errprintfs)
-			printf("deliver to protocol %d\n",
-				       ep->ns_err_idp.idp_pt);
+			kprintf("deliver to protocol %d\n",
+			    ep->ns_err_idp.idp_pt);
 #endif
 		switch(ep->ns_err_idp.idp_pt) {
 		case NSPROTO_SPP:
