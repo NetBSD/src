@@ -1,7 +1,7 @@
-/*	$NetBSD: lessecho.c,v 1.4 2002/03/05 12:28:37 mrg Exp $	*/
+/*	$NetBSD: lessecho.c,v 1.5 2003/04/14 02:56:48 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -30,12 +30,13 @@
 
 #include "less.h"
 
-static char *version = "$Revision: 1.4 $";
+static char *version = "$Revision: 1.5 $";
 
 static int quote_all = 0;
 static char openquote = '"';
 static char closequote = '"';
 static char *meta_escape = "\\";
+static char meta_escape_buf[2];
 static char metachars[64] = "";
 static int num_metachars = 0;
 
@@ -48,7 +49,7 @@ static long lstrtol __P((char *, int, char **));
 pr_usage()
 {
 	fprintf(stderr,
-		"usage: lessecho [-ox] [-cx] [-pn] [-dn] [-mx] [-nn] [-a] file ...\n");
+		"usage: lessecho [-ox] [-cx] [-pn] [-dn] [-mx] [-nn] [-ex] [-fn] [-a] file ...\n");
 }
 
 	static void
@@ -196,6 +197,12 @@ main(argc, argv)
 				meta_escape = "";
 			else
 				meta_escape = arg;
+			break;
+		case 'f':
+			meta_escape_buf[0] = lstrtol(++arg, 0, &s);
+			meta_escape = meta_escape_buf;
+			if (s == arg)
+				pr_error("Missing number after -f");
 			break;
 		case 'o':
 			openquote = *++arg;

@@ -1,7 +1,7 @@
-/*	$NetBSD: mark.c,v 1.4 2001/07/26 13:43:45 mrg Exp $	*/
+/*	$NetBSD: mark.c,v 1.5 2003/04/14 02:56:47 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -33,7 +33,6 @@ struct mark {
 #define	NMARKS		((2*26)+1)	/* a-z, A-Z, lastmark */
 #define	LASTMARK	(NMARKS-1)
 static struct mark marks[NMARKS];
-
 
 /*
  * Initialize the mark table to show no marks are set.

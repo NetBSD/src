@@ -1,7 +1,7 @@
-/*	$NetBSD: decode.c,v 1.5 2002/03/05 12:28:32 mrg Exp $	*/
+/*	$NetBSD: decode.c,v 1.6 2003/04/14 02:56:46 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
