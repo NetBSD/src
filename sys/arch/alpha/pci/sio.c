@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.32 2000/07/12 21:02:14 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.33 2000/07/29 23:18:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,10 +65,11 @@
 
 #include "opt_dec_2100_a500.h"
 #include "opt_dec_2100a_a500.h"
+#include "eisa.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.32 2000/07/12 21:02:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.33 2000/07/29 23:18:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +319,9 @@ sio_eisa_attach_hook(parent, self, eba)
 	struct eisabus_attach_args *eba;
 {
 
-	/* Nothing to do. */
+#if NEISA > 0
+	eisa_init();
+#endif
 }
 
 int
