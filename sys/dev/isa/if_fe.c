@@ -1,3 +1,5 @@
+/*	$NetBSD: if_fe.c,v 1.19 1998/01/05 07:31:08 perry Exp $	*/
+
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_message.h,v 1.3 1998/01/05 07:31:13 perry Exp $	*/
+
 /* Messages (1 byte) */		     /* I/T (M)andatory or (O)ptional */
 #define MSG_CMDCOMPLETE		0x00 /* M/M */
 #define MSG_EXTENDED		0x01 /* O/O */

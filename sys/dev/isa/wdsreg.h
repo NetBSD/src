@@ -1,3 +1,5 @@
+/*	$NetBSD: wdsreg.h,v 1.5 1998/01/05 07:31:11 perry Exp $	*/
+
 typedef u_char physaddr[3];
 typedef u_char physlen[3];
 #define	ltophys	_lto3b

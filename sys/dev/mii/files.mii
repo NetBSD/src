@@ -1,3 +1,4 @@
+#	$NetBSD: files.mii,v 1.2 1998/01/05 07:31:12 perry Exp $
 
 device mii {dev = -1}
 attach mii at miibus

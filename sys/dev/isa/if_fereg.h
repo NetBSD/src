@@ -1,3 +1,5 @@
+/*	$NetBSD: if_fereg.h,v 1.2 1998/01/05 07:31:09 perry Exp $	*/
+
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
  *

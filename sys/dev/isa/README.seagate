@@ -1,3 +1,5 @@
+#	$NetBSD: README.seagate,v 1.2 1998/01/05 07:31:07 perry Exp $
+
 The hardware:
 
 The ST01/02, and Future Domain 950 are very simple SCSI controllers. They are

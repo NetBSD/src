@@ -1,3 +1,5 @@
+/*	$NetBSD: if_iee16.h,v 1.2 1998/01/05 07:31:09 perry Exp $	*/
+
 
 /*
  * Copyright (c) 1993, 1994, 1995

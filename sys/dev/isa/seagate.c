@@ -1,3 +1,5 @@
+/*	$NetBSD: seagate.c,v 1.24 1998/01/05 07:31:10 perry Exp $	*/
+
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
  *

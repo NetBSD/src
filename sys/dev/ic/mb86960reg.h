@@ -1,3 +1,5 @@
+/*	$NetBSD: mb86960reg.h,v 1.2 1998/01/05 07:31:05 perry Exp $	*/
+
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
  *
