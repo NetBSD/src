@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.8 2004/01/01 17:18:53 thorpej Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.9 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -48,13 +48,13 @@ CFATTACH_DECL(cmdide, sizeof(struct pciide_softc),
 
 static void cmd_chip_map(struct pciide_softc*, struct pci_attach_args*);
 static void cmd0643_9_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void cmd0643_9_setup_channel(struct channel_softc*);
+static void cmd0643_9_setup_channel(struct wdc_channel*);
 static void cmd_channel_map(struct pci_attach_args *, struct pciide_softc *,
 			    int);
 static int  cmd_pci_intr(void *);
-static void cmd646_9_irqack(struct channel_softc *);
+static void cmd646_9_irqack(struct wdc_channel *);
 static void cmd680_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void cmd680_setup_channel(struct channel_softc*);
+static void cmd680_setup_channel(struct wdc_channel*);
 static void cmd680_channel_map(struct pci_attach_args *, struct pciide_softc *,
 			       int);
 
@@ -201,7 +201,7 @@ cmd_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct channel_softc *wdc_cp;
+	struct wdc_channel *wdc_cp;
 	int i, rv, crv; 
 	u_int32_t priirq, secirq;
 
@@ -353,7 +353,7 @@ cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-cmd0643_9_setup_channel(struct channel_softc *chp)
+cmd0643_9_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	u_int8_t tim;
@@ -431,7 +431,7 @@ cmd0643_9_setup_channel(struct channel_softc *chp)
 }
 
 static void
-cmd646_9_irqack(struct channel_softc *chp)
+cmd646_9_irqack(struct wdc_channel *chp)
 {
 	u_int32_t priirq, secirq;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
@@ -532,7 +532,7 @@ cmd680_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 }
 
 static void
-cmd680_setup_channel(struct channel_softc *chp)
+cmd680_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	u_int8_t mode, off, scsc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
+/*	$NetBSD: slide.c,v 1.3 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <dev/pci/pciide_sl82c105_reg.h>
 
 static void sl82c105_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void sl82c105_setup_channel(struct channel_softc*);
+static void sl82c105_setup_channel(struct wdc_channel*);
 
 static int  slide_match(struct device *, struct cfdata *, void *);
 static void slide_attach(struct device *, struct device *, void *);
@@ -183,7 +183,7 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-sl82c105_setup_channel(struct channel_softc *chp)
+sl82c105_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;

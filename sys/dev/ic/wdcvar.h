@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.51 2004/01/01 20:25:22 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.52 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #define WDC_NREG	8 /* number of command registers */
 
-struct channel_softc { /* Per channel data */
+struct wdc_channel { /* Per channel data */
 	/* Our timeout callout */
 	struct callout ch_callout;
 	/* Our location */
@@ -119,7 +119,7 @@ struct wdc_softc { /* Per controller state */
 	u_int8_t      DMA_cap; /* highest DMA mode supported */
 	u_int8_t      UDMA_cap; /* highest UDMA mode supported */
 	int nchannels;	/* Number of channels on this controller */
-	struct channel_softc **channels;  /* channels-specific datas (array) */
+	struct wdc_channel **channels;  /* channels-specific datas (array) */
 
 	/*
 	 * The reference count here is used for both IDE and ATAPI devices.
@@ -127,7 +127,7 @@ struct wdc_softc { /* Per controller state */
 	struct atapi_adapter sc_atapi_adapter;
 
 	/* Function used to probe for drives. */
-	void		(*drv_probe)(struct channel_softc *);
+	void		(*drv_probe)(struct wdc_channel *);
 
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void            *dma_arg;
@@ -149,13 +149,13 @@ struct wdc_softc { /* Per controller state */
 	void            (*free_hw)(void *);
 
 	/* if WDC_CAPABILITY_MODE set in 'cap' */
-	void 		(*set_modes)(struct channel_softc *);
+	void 		(*set_modes)(struct wdc_channel *);
 
 	/* if WDC_CAPABILITY_SELECT set in 'cap' */
-	void		(*select)(struct channel_softc *,int);
+	void		(*select)(struct wdc_channel *,int);
 
 	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
-	void		(*irqack)(struct channel_softc *);
+	void		(*irqack)(struct wdc_channel *);
 };
 
 /*
@@ -163,37 +163,37 @@ struct wdc_softc { /* Per controller state */
  * or bus-specific backends.
  */
 
-int	wdcprobe(struct channel_softc *);
-void	wdcattach(struct channel_softc *);
+int	wdcprobe(struct wdc_channel *);
+void	wdcattach(struct wdc_channel *);
 int	wdcdetach(struct device *, int);
 int	wdcactivate(struct device *, enum devact);
 int	wdcintr(void *);
-void	wdc_exec_xfer(struct channel_softc *, struct ata_xfer *);
+void	wdc_exec_xfer(struct wdc_channel *, struct ata_xfer *);
 
 struct ata_xfer *wdc_get_xfer(int); /* int = WDC_NOSLEEP/CANSLEEP */
 #define WDC_CANSLEEP 0x00
 #define WDC_NOSLEEP 0x01
 
-void	wdc_free_xfer (struct channel_softc *, struct ata_xfer *);
-void	wdcstart(struct channel_softc *);
+void	wdc_free_xfer (struct wdc_channel *, struct ata_xfer *);
+void	wdcstart(struct wdc_channel *);
 void	wdcrestart(void*);
 
-int	wdcreset(struct channel_softc *, int);
+int	wdcreset(struct wdc_channel *, int);
 #define RESET_POLL 1 
 #define RESET_SLEEP 0 /* wdcreset will use tsleep() */
 
-int	wdcwait(struct channel_softc *, int, int, int, int);
+int	wdcwait(struct wdc_channel *, int, int, int, int);
 #define WDCWAIT_OK	0  /* we have what we asked */
 #define WDCWAIT_TOUT	-1 /* timed out */
 #define WDCWAIT_THR	1  /* return, the kernel thread has been awakened */
 
-int	wdc_dmawait(struct channel_softc *, struct ata_xfer *, int);
-void	wdcbit_bucket( struct channel_softc *, int);
-void	wdccommand(struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
+int	wdc_dmawait(struct wdc_channel *, struct ata_xfer *, int);
+void	wdcbit_bucket( struct wdc_channel *, int);
+void	wdccommand(struct wdc_channel *, u_int8_t, u_int8_t, u_int16_t,
 		   u_int8_t, u_int8_t, u_int8_t, u_int8_t);
-void	wdccommandext(struct channel_softc *, u_int8_t, u_int8_t, u_int64_t,
+void	wdccommandext(struct wdc_channel *, u_int8_t, u_int8_t, u_int64_t,
 		      u_int16_t);
-void	wdccommandshort(struct channel_softc *, int, int);
+void	wdccommandshort(struct wdc_channel *, int, int);
 void	wdctimeout(void *arg);
 void	wdc_reset_channel(struct ata_drive_datas *, int);
 
@@ -202,11 +202,11 @@ int	wdc_exec_command(struct ata_drive_datas *, struct wdc_command*);
 #define WDC_QUEUED   0x02
 #define WDC_TRY_AGAIN 0x03
 
-int	wdc_addref(struct channel_softc *);
-void	wdc_delref(struct channel_softc *);
-void	wdc_kill_pending(struct channel_softc *);
+int	wdc_addref(struct wdc_channel *);
+void	wdc_delref(struct wdc_channel *);
+void	wdc_kill_pending(struct wdc_channel *);
 
-void	wdc_print_modes (struct channel_softc *);
+void	wdc_print_modes (struct wdc_channel *);
 void	wdc_probe_caps(struct ata_drive_datas*);
 
 /*	

@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.5 2004/01/01 17:18:53 thorpej Exp $	*/
+/*	$NetBSD: cypide.c,v 1.6 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -42,7 +42,7 @@
 #include <dev/pci/cy82c693var.h>
 
 static void cy693_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void cy693_setup_channel(struct channel_softc*);
+static void cy693_setup_channel(struct wdc_channel*);
 
 static int  cypide_match(struct device *, struct cfdata *, void *);
 static void cypide_attach(struct device *, struct device *, void *);
@@ -174,7 +174,7 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-cy693_setup_channel(struct channel_softc *chp)
+cy693_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;

@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.24 2004/01/01 17:18:54 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.25 2004/01/03 01:50:53 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.24 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.25 2004/01/03 01:50:53 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -83,7 +83,7 @@ extern int wdcdebug_mask; /* init'ed in wdc.c */
 int
 atabusprint(void *aux, const char *pnp)
 {
-	struct channel_softc *chan = aux;
+	struct wdc_channel *chan = aux;
 	
 	if (pnp)
 		aprint_normal("atabus at %s", pnp);
@@ -118,7 +118,7 @@ static void
 atabus_thread(void *arg)
 {
 	struct atabus_softc *sc = arg;
-	struct channel_softc *chp = sc->sc_chan;
+	struct wdc_channel *chp = sc->sc_chan;
 	struct ata_xfer *xfer;
 	int s;
 
@@ -178,7 +178,7 @@ static void
 atabus_create_thread(void *arg)
 {
 	struct atabus_softc *sc = arg;
-	struct channel_softc *chp = sc->sc_chan;
+	struct wdc_channel *chp = sc->sc_chan;
 	int error;
 
 	if ((error = kthread_create1(atabus_thread, sc, &chp->thread,
@@ -195,7 +195,7 @@ atabus_create_thread(void *arg)
 static int
 atabus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct channel_softc *chp = aux;
+	struct wdc_channel *chp = aux;
 
 	if (chp == NULL)
 		return (0);
@@ -216,7 +216,7 @@ static void
 atabus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct atabus_softc *sc = (void *) self;
-	struct channel_softc *chp = aux;
+	struct wdc_channel *chp = aux;
 	struct atabus_initq *initq;
 
 	sc->sc_chan = chp;
@@ -240,7 +240,7 @@ static int
 atabus_activate(struct device *self, enum devact act)
 {
 	struct atabus_softc *sc = (void *) self;
-	struct channel_softc *chp = sc->sc_chan;
+	struct wdc_channel *chp = sc->sc_chan;
 	struct device *dev = NULL;
 	int s, i, error = 0;
 
@@ -298,7 +298,7 @@ static int
 atabus_detach(struct device *self, int flags)
 {
 	struct atabus_softc *sc = (void *) self;
-	struct channel_softc *chp = sc->sc_chan;
+	struct wdc_channel *chp = sc->sc_chan;
 	struct device *dev = NULL;
 	int i, error = 0;
 
