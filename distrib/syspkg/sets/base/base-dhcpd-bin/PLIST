@@ -1,0 +1,4 @@
+@cwd /
+./usr/sbin/dhcpd
+./usr/sbin/dhcrelay
+./usr/sbin/omshell

@@ -1,0 +1,9 @@
+@cwd /
+./usr/share/locale/sv
+./usr/share/locale/sv/LC_MESSAGES
+./usr/share/locale/sv_SE.ISO8859-1
+./usr/share/locale/sv_SE.ISO8859-1/LC_CTYPE
+./usr/share/locale/sv_SE.ISO8859-15
+./usr/share/locale/sv_SE.ISO8859-15/LC_CTYPE
+./usr/share/nls/sv
+./usr/share/nls/sv/libc.cat
