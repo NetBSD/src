@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.7 2002/08/04 01:21:48 gmcgarry Exp $
+#	$NetBSD: list,v 1.8 2002/09/14 02:00:25 mycroft Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -36,7 +36,7 @@ PROG	sbin/umount
 PROG	usr/bin/ftp
 PROG	usr/bin/gzip	usr/bin/gzcat usr/bin/gunzip
 PROG	usr/bin/sed
-PROC	usr/bin/tset
+PROG	usr/bin/tset
 
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
