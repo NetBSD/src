@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.624 2003/10/25 19:58:20 mycroft Exp $
+# $NetBSD: mi,v 1.625 2003/10/30 08:22:45 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -990,6 +990,8 @@
 ./usr/share/man/cat4/sparc/openprom.0		man-sys-catman
 ./usr/share/man/cat4/sparc/tcx.0		man-sys-catman
 ./usr/share/man/cat4/sparc/zx.0			man-sys-catman
+./usr/share/man/cat4/sparc64/sab.0			man-sys-catman
+./usr/share/man/cat4/sparc64/sabtty.0			man-sys-catman
 ./usr/share/man/cat4/spc.0			man-sys-catman
 ./usr/share/man/cat4/speaker.0			man-sys-catman
 ./usr/share/man/cat4/spic.0			man-sys-catman
@@ -2739,6 +2741,8 @@
 ./usr/share/man/man4/sparc/openprom.4		man-sys-man
 ./usr/share/man/man4/sparc/tcx.4		man-sys-man
 ./usr/share/man/man4/sparc/zx.4			man-sys-man
+./usr/share/man/man4/sparc64/sab.4			man-sys-man
+./usr/share/man/man4/sparc64/sabtty.4			man-sys-man
 ./usr/share/man/man4/spc.4			man-sys-man
 ./usr/share/man/man4/speaker.4			man-sys-man
 ./usr/share/man/man4/spic.4			man-sys-man
