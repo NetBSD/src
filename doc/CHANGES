@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.289 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.290 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -618,6 +618,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	sh3: Switch to GCC 3.3. [uwe 20040222]
 	hpcsh: Enable building of Xhpc server for hpcsh. [uwe 20040222]
 	amiga: Add wsfont pseudo-device to amidisplaycc(4). [jandberg 20040223]
+	GCC: Import GCC 3.3.3.  [mrg 20040301]
 	progress(1): Allow printing custom text before (left of) the progress
 		bar. [hubertf 20040309]
 	dge(4): add support for Intel PRO/10GbE ethernet adapter.
@@ -640,3 +641,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	sysctl: Update dynamic implementation.  Solves netbsd32 compat issue
 		and adds support for descriptions.  [atatat 20040324]
 	sendmail(8): update to 8.12.11.  [atatat 20040325]
+	gzip(1):  Switch to non GPL gzip.  [mrg 20040326]
