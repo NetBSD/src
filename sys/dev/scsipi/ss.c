@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.51 2004/03/14 00:17:37 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.51.2.1 2004/09/11 12:56:41 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.51 2004/03/14 00:17:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.51.2.1 2004/09/11 12:56:41 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,6 +163,8 @@ ssattach(struct device *parent, struct device *self, void *aux)
 	 */
 	bufq_alloc(&ss->buf_queue, BUFQ_FCFS);
 
+	callout_init(&ss->sc_callout);
+
 	/*
 	 * look for non-standard scanners with help of the quirk table
 	 * and install functions for special handling
@@ -189,6 +191,9 @@ ssdetach(struct device *self, int flags)
 
 	/* locate the major number */
 	cmaj = cdevsw_lookup_major(&ss_cdevsw);
+
+	/* kill any pending restart */
+	callout_stop(&ss->sc_callout);
 
 	s = splbio();
 
@@ -500,7 +505,7 @@ ssstart(periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_GET(&ss->buf_queue)) == NULL)
+		if ((bp = BUFQ_PEEK(&ss->buf_queue)) == NULL)
 			return;
 
 		if (ss->special && ss->special->read) {
@@ -511,6 +516,15 @@ ssstart(periph)
 		}
 	}
 }
+
+void
+ssrestart(void *v)
+{
+	int s = splbio();
+	ssstart((struct scsipi_periph *)v);
+	splx(s);
+}
+
 
 /*
  * Perform special action on behalf of the user;
