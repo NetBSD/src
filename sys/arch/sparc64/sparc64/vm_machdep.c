@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.57 2004/09/17 14:11:22 skrll Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.57.6.1 2005/01/26 11:55:08 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.57 2004/09/17 14:11:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.57.6.1 2005/01/26 11:55:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ vmapbuf(bp, len)
 	uva = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
 	len = round_page(off + len);
-	kva = uvm_km_valloc_wait(kernel_map, len);
+	kva = uvm_km_alloc(kernel_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (caddr_t)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
@@ -130,7 +130,7 @@ vunmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - kva;
 	len = round_page(off + len);
 	pmap_kremove(kva, len);
-	uvm_km_free_wakeup(kernel_map, kva, len);
+	uvm_km_free(kernel_map, kva, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
