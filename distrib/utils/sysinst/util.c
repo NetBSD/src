@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 1997/09/27 00:09:30 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.3 1997/10/01 05:04:30 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -108,18 +108,35 @@ extract_dist (void)
 	printf ("chdir (%s)\n", "/mnt");
 #endif
 
-	if (verbose)
-		endwin();
+	endwin();
 	p = strtok (files, " \n");
 	while (p != NULL) {
+		(void)printf (msg_string(MSG_extracting), p);
 		run_prog ("/usr/bin/tar --unlink -xpz%s -f %s",
 			  verbose ? "v":"", p);
 		p= strtok (NULL, " \n");
 	}
-	if (verbose) {
-		(void)fprintf(stderr, msg_string(MSG_endtar));
-		getchar();
-		puts(CL);
-		wrefresh(stdscr);
+	(void)printf(msg_string(MSG_endtar));
+	getchar();
+	puts(CL);
+	wrefresh(stdscr);
+}
+
+
+void run_makedev (void)
+{
+	endwin();
+	(void)printf (msg_string(MSG_makedev));
+#ifndef DEBUG
+	if (chdir("/mnt/dev")) {
+		(void)fprintf(stderr, msg_string(MSG_realdir), "/mnt");
+		exit(1);
 	}
+#else
+	printf ("chdir (%s)\n", "/mnt/dev");
+#endif
+	run_prog ("/bin/sh MAKEDEV all");
+	getchar();
+	puts(CL);
+	wrefresh(stdscr);
 }

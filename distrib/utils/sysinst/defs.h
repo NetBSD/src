@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.2 1997/09/27 00:09:22 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.3 1997/10/01 05:04:24 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -146,6 +146,11 @@ EXTERN char net_mask[STRSIZE] INIT("");
 EXTERN char net_namesvr[STRSIZE] INIT("");
 EXTERN char net_defroute[STRSIZE] INIT("");
 
+/* Variables for upgrade. */
+#define MAXFS 16
+EXTERN char fs_dev[MAXFS][STRSIZE];
+EXTERN char fs_mount[MAXFS][STRSIZE];
+EXTERN int  fs_num;
 
 /* needed prototypes */
 
@@ -183,9 +188,10 @@ void	make_bsd_partitions (void);
 void	write_disklabel (void);
 void	make_filesystems (void);
 void	make_fstab (void);
-void	fsck_disks(void);
+int	fsck_disks(void);
 
 /* from util.c */
 void	ask_sizemult (void);
 int	ask_ynquestion (char *quest, char def, ...);
 void	extract_dist (void);
+void	run_makedev (void);

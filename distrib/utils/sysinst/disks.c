@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.1.1.1 1997/09/26 23:02:54 phil Exp $	*/
+/*	$NetBSD: disks.c,v 1.2 1997/10/01 05:04:25 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,6 +46,11 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
+/* Local prototypes */
+static void do_fsck(char *disk, char *part);
+void foundffs (struct data *list, int num);
+
+
 struct lookfor msgbuf[] = {
 	{"real mem", "real mem = %d", "a $0", (void *)&ramsize, NULL},
 	{"wd0:", "%i, %d cyl, %d head, %d sec, %d",
@@ -74,7 +79,7 @@ int find_disks_and_mem_size(void)
 	textsize = collect (T_FILE, &textbuf, "/kern/msgbuf");
 	if (textsize < 0) {
 		endwin();
-		fprintf (stderr, "Could not open /kern/msgbuf\n");
+		fprintf (stderr, msg_string(MSG_openmsgbuf));
 		exit(1);
 	}
 
@@ -298,8 +303,7 @@ void make_fstab (void)
 	f = fopen ("/mnt/etc/fstab", "w");
 	if (f == NULL) {
 #ifndef DEBUG
-		(void)fprintf (stderr, "There is a big problem!  "
-			       "Can not create /mnt/etc/fstab\n");
+		(void)fprintf (stderr, msg_string (MSG_createfstab));
 		exit(1);
 #else
 		f = stdout;
@@ -319,7 +323,49 @@ void make_fstab (void)
 #endif
 }
 
-void
-fsck_disks (void)
+/* Get information on the file systems mounted from the root filesystem.
+ * Offer to convert them into 4.4BSD inodes if they are not 4.4BSD
+ * inodes.  Fsck them.  Mount them.
+ */
+
+struct lookfor fstabbuf[] = {
+	{"/dev/", "/dev/%s %s ffs", "c", NULL, foundffs},
+	{"/dev/", "/dev/%s %s ufs", "c", NULL, foundffs},
+};
+int numfstabbuf = sizeof(fstabbuf) / sizeof(struct lookfor);
+
+void foundffs (struct data *list, int num)
 {
+}
+
+static void
+do_fsck(char *disk, char *part)
+{
+
+}
+
+int
+fsck_disks (void)
+{	char *fstab;
+	int   fstabsize;
+
+	/* First the root device. */
+	do_fsck (diskdev, "a");
+
+	if (run_prog ("/sbin/mount /dev/%sa /mnt", diskdev)) {
+		/* error! */
+		return 0;
+	}
+
+	/* Get the fstab. */
+	fs_num = 0;
+	fstabsize = collect (T_FILE, &fstab, "/mnt/etc/fstab");
+	if (fstabsize < 0) {
+		/* error ! */
+		return 0;
+	}
+	walk (fstab, fstabsize, fstabbuf, numfstabbuf);
+	free(fstab);
+
+	return 1;
 }

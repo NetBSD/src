@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.2 1997/09/27 00:09:26 phil Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.3 1997/10/01 05:04:28 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -290,13 +290,13 @@ message netinfo
 }
 
 message net_domain
-{Domain (e.g. netbsd.org) }
+{Your domain }
 
 message net_host
-{Host name (e.g. ftp) }
+{Your host name }
 
 message net_ip
-{IP number (e.g. 127.0.0.1) }
+{Your IP number }
 
 message net_mask
 {Netmask }
@@ -353,4 +353,26 @@ message endtar
 message abortinst
 {The distribution was not successfully loaded.  You will need to proceed
 by hand.  Installation aborted.
+}
+
+message openmsgbuf
+{Could not open /kern/msgbuf.
+}
+
+message createfstab
+{There is a big problem!  Can not create /mnt/etc/fstab.
+}
+
+message netnotup
+{There was a problem in setting up the network.  Either your gateway
+or your nameserver was not reachable by a ping.  Do you want to
+configure your network again?  (No aborts the install process.)
+}
+
+message extracting
+{Extracting file %s ...
+}
+
+message makedev
+{Making device files ...
 }

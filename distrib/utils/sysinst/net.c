@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.2 1997/09/27 00:09:28 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.3 1997/10/01 05:04:29 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,7 +70,7 @@ int numnetbuf = sizeof(netbuf) / sizeof(struct lookfor);
 static void found_net (struct data* list, int num)
 {
 	int i;
-	strncat (net_devices, list[0].u.s_val, 253-strlen(net_devices));
+	strncat (net_devices, list[0].u.s_val, STRSIZE-strlen(net_devices));
 	i = strlen(net_devices);
 	net_devices[i] = ' ';
 	net_devices[i+1] = '\0';
@@ -84,18 +84,21 @@ static void get_ifconfig_info (void)
 	/* Get ifconfig information */
 	
 	textsize = collect (T_OUTPUT, &textbuf,
-			    "/sbin/ifconfig -a 2>/dev/null");
+			    "/sbin/ifconfig -l 2>/dev/null");
 	if (textsize < 0) {
 		endwin();
 		(void) fprintf (stderr, "Could not run ifconfig.");
 		exit (1);
 	}
-	walk (textbuf, textsize, netbuf, numnetbuf);
+/*	walk (textbuf, textsize, netbuf, numnetbuf);  */
+	(void) strtok(textbuf,"\n");
+	strncpy (net_devices, textbuf, textsize<STRSIZE ? textsize : STRSIZE);
+	net_devices[STRSIZE] = 0;
 	free (textbuf);
 }
 
 
-static void config_network (void)
+static int config_network (void)
 {	char *tp;
 	char defname[255];
 	int  octet0;
@@ -175,7 +178,11 @@ static void config_network (void)
 	run_prog ("/sbin/ifconfig lo0 127.0.0.1");
 	run_prog ("/sbin/ifconfig %s inet %s netmask %s", net_dev, net_ip,
 		  net_mask);
-	run_prog ("/sbin/route add default %s > /dev/null", net_defroute);
+	run_prog ("/sbin/route -f 2> /dev/null");
+	run_prog ("/sbin/route add default %s 2> /dev/null", net_defroute);
+
+	return run_prog ("/sbin/ping -c 2 %s > /dev/null", net_defroute)
+		|| run_prog ("/sbin/ping -c 2 %s > /dev/null", net_namesvr);
 }
 
 int
@@ -185,7 +192,13 @@ get_via_ftp (void)
 	char realdir[STRSIZE];
 	int  ret;
 
-	config_network ();
+	while (config_network ()) {
+		msg_display (MSG_netnotup);
+		process_menu (MENU_yesno);
+		if (!yesno)
+			return 0;
+	}
+		
 	strncat (ftp_dir, ftp_prefix, STRSIZE-strlen(ftp_dir));
 	process_menu (MENU_ftpsource);
 	msg_prompt (MSG_netdir, dist_dir, dist_dir, STRSIZE, "ftp");
