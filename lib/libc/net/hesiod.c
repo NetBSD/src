@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.3 1999/01/15 22:03:57 thorpej Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.4 1999/01/20 13:04:27 christos Exp $	*/
 
 /* This file is part of the Hesiod library.
  *
@@ -68,12 +68,12 @@ static u_char	*Hes_eoM;
 #define DEF_RETRANS 4
 #define DEF_RETRY 3
 
-static	caddr_t	_hes_rr_scan __P((u_char *, rr_t *));
+static	void   *_hes_rr_scan __P((u_char *, rr_t *));
 static	nsmsg_p	_hes_res_scan __P((u_char *));
 static	nsmsg_p	_hes_res __P((u_char *, int, int));
 	int	hes_init __P((void));
 
-static caddr_t
+static void *
 _hes_rr_scan(cp, rr)
 	u_char *cp;
 	rr_t *rr;
@@ -82,7 +82,7 @@ _hes_rr_scan(cp, rr)
 
 	if ((n = dn_skipname(cp, Hes_eoM)) < 0) {
 		errno = EINVAL;
-		return((u_char *)NULL);
+		return NULL;
 	}
 
 	cp += n;
@@ -95,7 +95,7 @@ _hes_rr_scan(cp, rr)
 	rr->dlen = (int)_getshort(cp);
 	rr->data = cp + sizeof(u_int16_t /*dlen*/);
 
-	return(rr->data + rr->dlen);
+	return (rr->data + rr->dlen);
 }
 
 
@@ -111,9 +111,9 @@ _hes_res_scan(msg)
 	HEADER		*hp;
 	u_char		*data = datmess;
 	int	 	 n, n_an, n_ns, n_ar, nrec;
-	nsmsg_t		*mess = (nsmsg_t *)bigmess;
+	nsmsg_t		*mess = (nsmsg_t *)(void *)bigmess;
 
-	hp = (HEADER *)msg;
+	hp = (HEADER *)(void *)msg;
 	cp = msg + sizeof(HEADER);
 	n_an = ntohs(hp->ancount);
 	n_ns = ntohs(hp->nscount);
@@ -128,56 +128,40 @@ _hes_res_scan(msg)
 	rp = &mess->rr;
 
 	/* skip over questions */
-	if ((n = ntohs(hp->qdcount) != 0)) {
+	if ((n = ntohs(hp->qdcount)) != 0) {
 		while (--n >= 0) {
 			int i;
 			if ((i = dn_skipname(cp, Hes_eoM)) < 0)
-				return((nsmsg_t *)NULL);
+				return NULL;
 			cp += i + (sizeof(u_int16_t /*type*/)
 				+ sizeof(u_int16_t /*class*/));
 		}
 	}
+#define GRABDATA \
+		while (--n >= 0) { \
+			if ((cp = _hes_rr_scan(cp, rp)) == NULL) \
+				return NULL; \
+			(void)strncpy((char *)data, (char *)rp->data, \
+			    (size_t)rp->dlen); \
+			rp->data = data; \
+			data += rp->dlen; \
+			*data++ = '\0'; \
+			rp++; \
+		}
 
 	/* scan answers */
-	if ((n = n_an) != 0) {
-		while (--n >= 0) {
-			if ((cp = _hes_rr_scan(cp, rp)) == NULL)
-				return((nsmsg_t *)NULL);
-			(void) strncpy(data, rp->data, rp->dlen);
-			rp->data = data;
-			data += rp->dlen;
-			*data++ = '\0';
-			rp++;
-		}
-	}
+	if ((n = n_an) != 0)
+		GRABDATA
 
 	/* scan name servers */
-	if ((n = n_ns) != 0) {
-		while (--n >= 0) {
-			if ((cp = _hes_rr_scan(cp, rp)) == NULL)
-				return((nsmsg_t *)NULL);
-			(void) strncpy(data, rp->data, rp->dlen);
-			rp->data = data;
-			data += rp->dlen;
-			*data++ = '\0';
-			rp++;
-		}
-	}
+	if ((n = n_ns) != 0)
+		GRABDATA
 
 	/* scan additional records */
-	if ((n = n_ar) != 0) {
-		while (--n >= 0) {
-			if ((cp = _hes_rr_scan(cp, rp)) == NULL)
-				return((nsmsg_t *)NULL);
-			(void) strncpy(data, rp->data, rp->dlen);
-			rp->data = data;
-			data += rp->dlen;
-			*data++ = '\0';
-			rp++;
-		}
-	}
+	if ((n = n_ar) != 0)
+		GRABDATA
 
-	mess->len = (long)cp - (long)msg;
+	mess->len = (int)((long)cp - (long)msg);
 
 	return(mess);
 }
@@ -193,7 +177,7 @@ _hes_res(name, class, type)
 {
 	static u_char		qbuf[PACKETSZ], abuf[PACKETSZ];
 	int			n;
-	u_int32_t		res_options = _res.options;
+	u_int32_t		res_options = (u_int32_t)_res.options;
 	int			res_retrans = _res.retrans;
 	int			res_retry = _res.retry;
 
@@ -209,7 +193,7 @@ _hes_res(name, class, type)
 
 	_res.options |= RES_IGNTC;
 
-	n = res_mkquery(QUERY, name, class, type, (u_char *)NULL, 0,
+	n = res_mkquery(QUERY, (char *)name, class, type, NULL, 0,
 	    NULL, qbuf, PACKETSZ);
 	if (n < 0) {
 		errno = EMSGSIZE;
@@ -362,7 +346,7 @@ hes_resolve(HesiodName, HesiodNameType)
 	if (cp == NULL)
 		return(NULL);
 	errno = 0;
-	ns = _hes_res(cp, C_HS, T_TXT);
+	ns = _hes_res((u_char *)cp, C_HS, T_TXT);
 	if (errno == ETIMEDOUT || errno == ECONNREFUSED) {
 		Hes_Errno = HES_ER_NET;
 		return(NULL);
@@ -373,16 +357,16 @@ hes_resolve(HesiodName, HesiodNameType)
 	}
 	for(i = 0, rp = &ns->rr; i < ns->ns_off; rp++, i++) {
 		if (rp->class == C_HS && rp->type == T_TXT) {
-			dst = calloc(rp->dlen + 1, sizeof(char));
+			dst = calloc((size_t)(rp->dlen + 1), sizeof(char));
 			if (dst == NULL) {
 				sl_free(sl, 1);
 				return NULL;
 			}
 			sl_add(sl, dst);
-			ocp = cp = rp->data;
+			ocp = cp = (char *)rp->data;
 			while (cp < ocp + rp->dlen) {
 				n = (unsigned char) *cp++;
-				(void) memmove(dst, cp, n);
+				(void) memmove(dst, cp, (size_t)n);
 				cp += n;
 				dst += n;
 			}
