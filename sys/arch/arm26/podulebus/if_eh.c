@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.17 2001/04/19 13:47:07 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.18 2001/06/28 23:01:55 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.17 2001/04/19 13:47:07 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.18 2001/06/28 23:01:55 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -156,7 +156,7 @@ eh_match(struct device *parent, struct cfdata *cf, void *aux)
 	return 0;
 }
 
-/* XXX 10baseFL on E513 */
+/* XXX 10BASE-FL on E513 */
 static int media_only2[] = { IFM_ETHER | IFM_10_2 };
 static int media_onlyt[] = { IFM_ETHER | IFM_10_T };
 static int media_2andt[] =
@@ -259,11 +259,11 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 		mautype = eh_identifymau(sc);
 		switch (mautype) {
 		case EH200_MAUID_10_2:
-			printf(", 10base2 MAU");
+			printf(", 10BASE2 MAU");
 			mediaset = EH_MEDIA_2;
 			break;
 		case EH200_MAUID_10_T:
-			printf(", 10baseT MAU");
+			printf(", 10BASE-T MAU");
 			mediaset = EH_MEDIA_T;
 			break;
 		default:
@@ -275,13 +275,13 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 		mediaset = eh_availmedia(sc);
 		switch (mediaset) {
 		case EH_MEDIA_2:
-			printf(", 10base2 only");
+			printf(", 10BASE2 only");
 			break;
 		case EH_MEDIA_T:
-			printf(", 10baseT only");
+			printf(", 10BASE-T only");
 			break;
 		case EH_MEDIA_2_T:
-			printf(", combo 10base2/T");
+			printf(", combo 10BASE2/-T");
 			break;
 		}
 	}
@@ -704,7 +704,7 @@ eh_writemem(struct eh_softc *sc, u_int8_t *src, int dst, size_t len)
 /*
  * Work out the media types available on the current card.
  *
- * We try to switch to each of 10base2 and 10baseT in turn.  If the card
+ * We try to switch to each of 10BASE2 and 10BASE-T in turn.  If the card
  * only supports one type, the media select line will be tied to select
  * that, so it won't move when we push it.
  *
@@ -716,7 +716,7 @@ int
 eh_availmedia(struct eh_softc *sc)
 {
 
-	/* Set the card to use AUI (10b2 or 10bFL) */
+	/* Set the card to use AUI (10BASE2 or 10BASE-FL) */
 	bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0,
 	    sc->sc_ctrl & ~EH_CTRL_MEDIA);
 	/* Check whether that worked */
@@ -726,7 +726,7 @@ eh_availmedia(struct eh_softc *sc)
 		return EH_MEDIA_T;
 	}
 
-	/* Try 10bT and see if that works */
+	/* Try 10BASE-T and see if that works */
 	bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0,
 	    sc->sc_ctrl | EH_CTRL_MEDIA);
 	if ((bus_space_read_1(sc->sc_ctl2t, sc->sc_ctl2h, 0) &
@@ -833,7 +833,7 @@ eh_mediastatus(struct dp8390_softc *dsc, struct ifmediareq *ifmr)
 	struct eh_softc *sc = (struct eh_softc *)dsc;
 	int ctrl2;
 
-	/* XXX 10baseFL on E513? */
+	/* XXX 10BASE-FL on E513? */
 	/* Read the actual medium currently in use. */
 	ctrl2 = bus_space_read_1(sc->sc_ctl2t, sc->sc_ctl2h, 0);
 	if (ctrl2 & EH_CTRL2_10B2) {
