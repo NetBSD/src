@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.23 2000/06/03 16:59:36 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.24 2000/08/19 19:51:17 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -767,6 +767,7 @@ check_parity( fd, do_rewrite, dev_name )
 					 "RAIDFRAME_CHECK_PARITYREWRITE_STATUS"
 					 );
 				while( percent_done < 100 ) {
+					sleep(3); /* wait a bit... */
 					do_ioctl(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS, 
 						 &percent_done, "RAIDFRAME_CHECK_PARITYREWRITE_STATUS");
 				}
