@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.51 1995/08/12 20:31:50 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.52 1995/08/12 21:36:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -979,6 +979,7 @@ stread(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
+	struct st_softc *st = stcd.cd_devs[STUNIT(dev)];
 
 	return (physio(ststrategy, NULL, dev, B_READ,
 		       st->sc_link->adapter->scsi_minphys, uio));
@@ -989,6 +990,7 @@ stwrite(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
+	struct st_softc *st = stcd.cd_devs[STUNIT(dev)];
 
 	return (physio(ststrategy, NULL, dev, B_WRITE,
 		       st->sc_link->adapter->scsi_minphys, uio));
