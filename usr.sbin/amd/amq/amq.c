@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
+ *	@(#)amq.c	8.1 (Berkeley) 6/7/93
  *
- * $Id: amq.c,v 1.2 1993/12/07 21:44:57 mycroft Exp $
+ * $Id: amq.c,v 1.3 1994/06/13 19:48:13 mycroft Exp $
  *
  */
 
@@ -49,17 +49,17 @@
 char copyright[] = "\
 @(#)Copyright (c) 1990 Jan-Simon Pendry\n\
 @(#)Copyright (c) 1990 Imperial College of Science, Technology & Medicine\n\
-@(#)Copyright (c) 1990 The Regents of the University of California.\n\
-@(#)All rights reserved.\n";
+@(#)Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: amq.c,v 1.2 1993/12/07 21:44:57 mycroft Exp $";
-static char sccsid[] = "%W% (Berkeley) %G%";
+static char rcsid[] = "$Id: amq.c,v 1.3 1994/06/13 19:48:13 mycroft Exp $";
+static char sccsid[] = "@(#)amq.c	8.1 (Berkeley) 6/7/93";
 #endif /* not lint */
 
 #include "am.h"
-#include <rpcsvc/amq.h>
+#include "amq.h"
 #include <stdio.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -211,10 +211,16 @@ int *twid;
 						mi->mi_up > 0 ? "up" :
 						mi->mi_up < 0 ? "starting" : "down");
 			if (mi->mi_error > 0) {
+#ifdef HAS_STRERROR
+				printf(" (%s)", strerror(mi->mi_error));
+#else
+				extern char *sys_errlist[];
+				extern int sys_nerr;
 				if (mi->mi_error < sys_nerr)
 					printf(" (%s)", sys_errlist[mi->mi_error]);
 				else
 					printf(" (Error %d)", mi->mi_error);
+#endif
 			} else if (mi->mi_error < 0) {
 				fputs(" (in progress)", stdout);
 			}
