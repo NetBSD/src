@@ -1,8 +1,11 @@
-#	$Id: Makefile,v 1.10 1994/05/21 05:20:25 cgd Exp $
+#	$Id: Makefile,v 1.11 1994/07/06 04:08:28 mycroft Exp $
 
 LIB=	compat
 CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS
-AINC=	-I${.CURDIR}/../libc/${MACHINE_ARCH}
+AINC=	-I${.CURDIR}/../libc/arch/${MACHINE_ARCH}
+.if defined(DESTDIR)
+AINC+=	-nostdinc -idirafter ${DESTDIR}/usr/include
+.endif
 NOPIC=	nopic
 
 .PATH:	${.CURDIR}/4.1/${MACHINE_ARCH} ${.CURDIR}/4.1 \
