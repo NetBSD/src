@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.389.2.6 2001/06/25 16:11:34 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.389.2.7 2003/08/16 20:03:03 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -975,8 +975,14 @@ sendsig(catcher, sig, mask, code)
 	if (onstack)
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
 						  psp->ps_sigstk.ss_size);
-	else
-		fp = (struct sigframe *)tf->tf_esp;
+	else {
+#ifdef VM86
+		if (tf->tf_eflags & PSL_VM)
+			fp = (struct sigframe *)(tf->tf_esp + (tf->tf_ss << 4));
+		else
+#endif
+			fp = (struct sigframe *)tf->tf_esp;
+	}
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
