@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.10 1995/03/08 02:57:17 cgd Exp $	*/
+/*	$NetBSD: slcompress.c,v 1.11 1995/03/28 20:01:15 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -61,7 +61,7 @@
 
 #define BCMP(p1, p2, n) bcmp((char *)(p1), (char *)(p2), (int)(n))
 #define BCOPY(p1, p2, n) bcopy((char *)(p1), (char *)(p2), (int)(n))
-#ifndef KERNEL
+#ifndef _KERNEL
 #define ovbcopy bcopy
 #endif
 

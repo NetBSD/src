@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_text.c,v 1.2 1994/11/20 20:53:48 deraadt Exp $ */
+/*	$NetBSD: raster_text.c,v 1.3 1995/03/28 20:00:38 jtc Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
  * Text routines for raster library.
  */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #include <sys/param.h>
 #include <sparc/rcons/raster.h>
 #ifdef COLORFONT_CACHE

@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_op.c,v 1.2 1994/11/20 20:53:47 deraadt Exp $ */
+/*	$NetBSD: raster_op.c,v 1.3 1995/03/28 20:00:30 jtc Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,7 +63,7 @@
 ** logical operations.  With this variable set, the only operations implemented
 ** are: RAS_SRC, RAS_CLEAR, RAS_SET, RAS_INVERT, RAS_XOR, RAS_INVERTSRC.
 */
-#ifdef KERNEL
+#ifdef _KERNEL
 #define PARTIAL_LOGICAL_OPS
 #endif
 

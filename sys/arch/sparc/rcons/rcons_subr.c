@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.3 1994/11/20 20:53:53 deraadt Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.4 1995/03/28 20:00:41 jtc Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -44,7 +44,7 @@
  *	@(#)rcons_subr.c	8.1 (Berkeley) 6/11/93
  */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #include <sys/param.h>
 #include <sys/device.h>
 #include <machine/fbio.h>
