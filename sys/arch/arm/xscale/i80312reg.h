@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312reg.h,v 1.4 2001/11/04 01:23:49 thorpej Exp $	*/
+/*	$NetBSD: i80312reg.h,v 1.5 2001/11/04 19:32:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,8 +48,8 @@
  * Mapped Registers.
  */
 
-#define	I80312_PMMR_BASE	0x00001000
-#define	I80312_PMMR_SIZE	0x00001000
+#define	I80312_PMMR_BASE	0x00001000UL
+#define	I80312_PMMR_SIZE	0x00001000UL
 
 /*
  * PCI-to-PCI Bridge Unit
@@ -302,5 +302,29 @@
 #define	I80312_AAU_SA7		0x34	/* i80200 Source Address 7 */
 #define	I80312_AAU_SA8		0x38	/* i80200 Source Address 8 */
      /* not used		0x3c .. 0xfc */
+
+/*
+ * Physical addresses 0x00002000..0x7fffffff are used by the
+ * ATU Outbound Direct Addressing Window.
+ */
+#define	I80312_PCI_DIRECT_BASE	0x00002000UL
+#define	I80312_PCI_DIRECT_SIZE	0x7fffe000UL
+
+/*
+ * Physical addresses 0x80000000..0x9001ffff are used by the
+ * ATU Outbound Transaction Windows.
+ */
+#define	I80312_PCI_XLATE_BASE	0x80000000UL
+#define	I80312_PCI_XLATE_SIZE	0x1001ffffUL
+
+#define	I80312_PCI_XLATE_MSIZE	0x03ffffffUL
+#define	I80312_PCI_XLATE_IOSIZE	0x0000ffffUL
+
+#define	I80312_PCI_XLATE_PMW_BASE  (I80312_PCI_XLATE_BASE)
+#define	I80312_PCI_XLATE_PDW_BASE  (I80312_PCI_XLATE_BASE + 0x04000000UL)
+#define	I80312_PCI_XLATE_SMW_BASE  (I80312_PCI_XLATE_BASE + 0x08000000UL)
+#define	I80312_PCI_XLATE_SDW_BASE  (I80312_PCI_XLATE_BASE + 0x0c000000UL)
+#define	I80312_PCI_XLATE_PIOW_BASE (I80312_PCI_XLATE_BASE + 0x10000000UL)
+#define	I80312_PCI_XLATE_SIOW_BASE (I80312_PCI_XLATE_BASE + 0x10010000UL)
 
 #endif /* _ARM_XSCALE_I80312REG_H_ */
