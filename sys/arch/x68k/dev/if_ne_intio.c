@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.7 2003/09/07 04:24:06 isaki Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.8 2004/02/13 10:05:49 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.7 2003/09/07 04:24:06 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.8 2004/02/13 10:05:49 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -189,7 +189,7 @@ ne_intio_attach(struct device *parent, struct device *self, void *aux)
 	case NE2000_TYPE_NE2000:
 		typestr = "NE2000";
 		/*
-		 * Check for a RealTek 8019.
+		 * Check for a Realtek 8019.
 		 */
 		bus_space_write_1(iot, ioh, ED_P0_CR,
 			ED_CR_PAGE_0 | ED_CR_STP);
