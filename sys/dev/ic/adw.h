@@ -1,4 +1,4 @@
-/*      $NetBSD: adw.h,v 1.7 2000/05/08 17:21:34 dante Exp $        */
+/*      $NetBSD: adw.h,v 1.8 2000/05/10 21:22:34 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -54,31 +54,32 @@ typedef void (* ADW_ASYNC_CALLBACK) (ADW_SOFTC *, u_int8_t);
 struct adw_carrier {
 /* ---------- the microcode wants the field below ---------- */
 	u_int32_t	carr_id;  /* Carrier ID */
-	u_int32_t	carr_pa;  /* Carrier Physical Address */
-	u_int32_t	areq_vpa; /* ADW_SCSI_REQ_Q Physical Address */
+	u_int32_t	carr_ba;  /* Carrier Bus Address */
+	u_int32_t	areq_ba;  /* ADW_SCSI_REQ_Q Bus Address */
 	/*
 	 * next_vpa [31:4]	Carrier Physical Next Pointer
 	 *
 	 * next_vpa [3:1]	Reserved Bits
 	 * next_vpa [0]		Done Flag set in Response Queue.
 	 */
-	u_int32_t	next_vpa;
+	u_int32_t	next_ba;  /* see next_ba flags below */
 /* ----------                                     ---------- */
 };
 
 typedef struct adw_carrier ADW_CARRIER;
 
-
 /*
- * Mask used to eliminate low 4 bits of carrier 'next_vpa' field.
+ * next_ba flags
  */
-#define ASC_NEXT_VPA_MASK	0xFFFFFFF0
-
 #define ASC_RQ_DONE		0x00000001
 #define ASC_RQ_GOOD		0x00000002
 #define ASC_CQ_STOPPER		0x00000000
 
-#define ASC_GET_CARRP(carrp) ((carrp) & ASC_NEXT_VPA_MASK)
+/*
+ * Mask used to eliminate low 4 bits of carrier 'next_vpa' field.
+ */
+#define ASC_NEXT_BA_MASK	0xFFFFFFF0
+#define ASC_GET_CARRP(carrp)	((carrp) & ASC_NEXT_BA_MASK)
 
 
 /*

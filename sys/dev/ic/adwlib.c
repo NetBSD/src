@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.11 2000/05/08 17:21:34 dante Exp $        */
+/* $NetBSD: adwlib.c,v 1.12 2000/05/10 21:22:34 dante Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -684,17 +684,17 @@ ADW_SOFTC      *sc;
 		return ASC_IERR_NO_CARRIER;
 	}
 	sc->carr_freelist = adw_carrier_phys_kv(sc,
-			ASC_GET_CARRP(sc->icq_sp->next_vpa));
+			ASC_GET_CARRP(sc->icq_sp->next_ba));
 
 	/*
 	 * The first command issued will be placed in the stopper carrier.
 	 */
-	sc->icq_sp->next_vpa = ASC_CQ_STOPPER;
+	sc->icq_sp->next_ba = ASC_CQ_STOPPER;
 
 	/*
 	 * Set RISC ICQ physical address start value.
 	 */
-	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_ICQ, sc->icq_sp->carr_pa);
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_ICQ, sc->icq_sp->carr_ba);
 
 	/*
 	 * Set-up the RISC->Host Initiator Response Queue (IRQ).
@@ -703,21 +703,21 @@ ADW_SOFTC      *sc;
 		return ASC_IERR_NO_CARRIER;
 	}
 	sc->carr_freelist = adw_carrier_phys_kv(sc,
-			ASC_GET_CARRP(sc->irq_sp->next_vpa));
+			ASC_GET_CARRP(sc->irq_sp->next_ba));
 
 	/*
 	 * The first command completed by the RISC will be placed in
 	 * the stopper.
 	 *
-	 * Note: Set 'next_vpa' to ASC_CQ_STOPPER. When the request is
+	 * Note: Set 'next_ba' to ASC_CQ_STOPPER. When the request is
 	 * completed the RISC will set the ASC_RQ_STOPPER bit.
 	 */
-	sc->irq_sp->next_vpa = ASC_CQ_STOPPER;
+	sc->irq_sp->next_ba = ASC_CQ_STOPPER;
 
 	/*
 	 * Set RISC IRQ physical address start value.
 	 */
-	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_IRQ, sc->irq_sp->carr_pa);
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_IRQ, sc->irq_sp->carr_ba);
 	sc->carr_pending_cnt = 0;
 
 	ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_INTR_ENABLES,
@@ -1206,18 +1206,17 @@ ADW_SOFTC      *sc;
 		return ASC_IERR_NO_CARRIER;
 	}
 	sc->carr_freelist = adw_carrier_phys_kv(sc,
-			ASC_GET_CARRP(sc->icq_sp->next_vpa));
-
+			ASC_GET_CARRP(sc->icq_sp->next_ba));
 
 	/*
 	 * The first command issued will be placed in the stopper carrier.
 	 */
-	sc->icq_sp->next_vpa = ASC_CQ_STOPPER;
+	sc->icq_sp->next_ba = ASC_CQ_STOPPER;
 
 	/*
 	 * Set RISC ICQ physical address start value.
 	 */
-	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_ICQ, sc->icq_sp->carr_pa);
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_ICQ, sc->icq_sp->carr_ba);
 
 	/*
 	 * Set-up the RISC->Host Initiator Response Queue (IRQ).
@@ -1226,30 +1225,26 @@ ADW_SOFTC      *sc;
 		return ASC_IERR_NO_CARRIER;
 	}
 	sc->carr_freelist = adw_carrier_phys_kv(sc,
-			ASC_GET_CARRP(sc->irq_sp->next_vpa));
+			ASC_GET_CARRP(sc->irq_sp->next_ba));
 
 	/*
 	 * The first command completed by the RISC will be placed in
 	 * the stopper.
 	 *
-	 * Note: Set 'next_vpa' to ASC_CQ_STOPPER. When the request is
+	 * Note: Set 'next_ba' to ASC_CQ_STOPPER. When the request is
 	 * completed the RISC will set the ASC_RQ_STOPPER bit.
 	 */
-	sc->irq_sp->next_vpa = ASC_CQ_STOPPER;
+	sc->irq_sp->next_ba = ASC_CQ_STOPPER;
 
 	/*
 	 * Set RISC IRQ physical address start value.
 	 */
-	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_IRQ, sc->irq_sp->carr_pa);
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_IRQ, sc->irq_sp->carr_ba);
 	sc->carr_pending_cnt = 0;
 
 	ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_INTR_ENABLES,
 		(ADW_INTR_ENABLE_HOST_INTR | ADW_INTR_ENABLE_GLOBAL_INTR));
-	/*
-	 * Note: Don't remove the use of a temporary variable in
-	 * the following code, otherwise some C compiler
-	 * might turn the following lines into a no-op.
-	 */
+
 	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CODE_BEGIN_ADDR, word);
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_PC, word);
 
@@ -1740,20 +1735,20 @@ ADW_SOFTC      *sc;
 		return ASC_IERR_NO_CARRIER;
 	}
 	sc->carr_freelist = adw_carrier_phys_kv(sc,
-			ASC_GET_CARRP(sc->icq_sp->next_vpa));
+			ASC_GET_CARRP(sc->icq_sp->next_ba));
 
 	/*
 	 * The first command issued will be placed in the stopper carrier.
 	 */
-	sc->icq_sp->next_vpa = ASC_CQ_STOPPER;
+	sc->icq_sp->next_ba = ASC_CQ_STOPPER;
 
 	/*
 	 * Set RISC ICQ physical address start value. Initialize the
 	 * COMMA register to the same value otherwise the RISC will
 	 * prematurely detect a command is available.
 	 */
-	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_ICQ, sc->icq_sp->carr_pa);
-	ADW_WRITE_DWORD_REGISTER(iot, ioh, IOPDW_COMMA, sc->icq_sp->carr_pa);
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_ICQ, sc->icq_sp->carr_ba);
+	ADW_WRITE_DWORD_REGISTER(iot, ioh, IOPDW_COMMA, sc->icq_sp->carr_ba);
 
 	/*
 	 * Set-up the RISC->Host Initiator Response Queue (IRQ).
@@ -1762,21 +1757,21 @@ ADW_SOFTC      *sc;
 		return ASC_IERR_NO_CARRIER;
 	}
 	sc->carr_freelist = adw_carrier_phys_kv(sc,
-			ASC_GET_CARRP(sc->irq_sp->next_vpa));
+			ASC_GET_CARRP(sc->irq_sp->next_ba));
 
 	/*
 	 * The first command completed by the RISC will be placed in
 	 * the stopper.
 	 *
-	 * Note: Set 'next_vpa' to ASC_CQ_STOPPER. When the request is
+	 * Note: Set 'next_ba' to ASC_CQ_STOPPER. When the request is
 	 * completed the RISC will set the ASC_RQ_STOPPER bit.
 	 */
-	sc->irq_sp->next_vpa = ASC_CQ_STOPPER;
+	sc->irq_sp->next_ba = ASC_CQ_STOPPER;
 
 	/*
 	 * Set RISC IRQ physical address start value.
 	 */
-	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_IRQ, sc->irq_sp->carr_pa);
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_IRQ, sc->irq_sp->carr_ba);
 	sc->carr_pending_cnt = 0;
 
 	ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_INTR_ENABLES,
@@ -2826,15 +2821,15 @@ ADW_SCSI_REQ_Q	*scsiq;
 		return ADW_BUSY;
 	}
 	sc->carr_freelist = adw_carrier_phys_kv(sc,
-			ASC_GET_CARRP(new_carrp->next_vpa));
+			ASC_GET_CARRP(new_carrp->next_ba));
 	sc->carr_pending_cnt++;
 
 	/*
-	 * Set the carrier to be a stopper by setting 'next_vpa'
+	 * Set the carrier to be a stopper by setting 'next_ba'
 	 * to the stopper value. The current stopper will be changed
 	 * below to point to the new stopper.
 	 */
-	new_carrp->next_vpa = ASC_CQ_STOPPER;
+	new_carrp->next_ba = ASC_CQ_STOPPER;
 
 	req_size = sizeof(ADW_SCSI_REQ_Q);
 	req_paddr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
@@ -2844,26 +2839,33 @@ ADW_SCSI_REQ_Q	*scsiq;
 	scsiq->scsiq_rptr = req_paddr;
 
 	/*
-	 * Every ADV_CARR_T.carr_pa is byte swapped to little-endian
+	 * Every ADV_CARR_T.carr_ba is byte swapped to little-endian
 	 * order during initialization.
 	 */
-	scsiq->carr_pa = sc->icq_sp->carr_pa;
-	scsiq->carr_va = sc->icq_sp->carr_pa;
+	scsiq->carr_ba = sc->icq_sp->carr_ba;
+	scsiq->carr_va = sc->icq_sp->carr_ba;
 
 	/*
 	 * Use the current stopper to send the ADW_SCSI_REQ_Q command to
 	 * the microcode. The newly allocated stopper will become the new
 	 * stopper.
 	 */
-	sc->icq_sp->areq_vpa = req_paddr;
+	sc->icq_sp->areq_ba = req_paddr;
 
 	/*
-	 * Set the 'next_vpa' pointer for the old stopper to be the
+	 * Set the 'next_ba' pointer for the old stopper to be the
 	 * physical address of the new stopper. The RISC can only
 	 * follow physical addresses.
 	 */
-	sc->icq_sp->next_vpa = new_carrp->carr_pa;
+	sc->icq_sp->next_ba = new_carrp->carr_ba;
 
+#if ADW_DEBUG
+	printf("icq 0x%x, 0x%x, 0x%x, 0x%x\n",
+			sc->icq_sp->carr_id,
+			sc->icq_sp->carr_ba,
+			sc->icq_sp->areq_ba,
+			sc->icq_sp->next_ba);
+#endif
 	/*
 	 * Set the host adapter stopper pointer to point to the new carrier.
 	 */
@@ -2891,7 +2893,7 @@ ADW_SCSI_REQ_Q	*scsiq;
 		 * address of the new carrier stopper to the COMMA register.
 		 */
 		ADW_WRITE_DWORD_REGISTER(iot, ioh, IOPDW_COMMA,
-				new_carrp->carr_pa);
+				new_carrp->carr_ba);
 	}
 
 	/*
@@ -3136,21 +3138,28 @@ ADW_SOFTC	*sc;
 	/*
 	 * Check if the IRQ stopper carrier contains a completed request.
 	 */
-	while (((irq_next_pa = sc->irq_sp->next_vpa) & ASC_RQ_DONE) != 0)
+	while (((irq_next_pa = sc->irq_sp->next_ba) & ASC_RQ_DONE) != 0)
 	{
+#if ADW_DEBUG
+		printf("irq 0x%x, 0x%x, 0x%x, 0x%x\n",
+				sc->irq_sp->carr_id,
+				sc->irq_sp->carr_ba,
+				sc->irq_sp->areq_ba,
+				sc->irq_sp->next_ba);
+#endif
 		/*
 		 * Get a pointer to the newly completed ADW_SCSI_REQ_Q
 		 * structure.
-		 * The RISC will have set 'areq_vpa' to a virtual address.
+		 * The RISC will have set 'areq_ba' to a virtual address.
 		 *
 		 * The firmware will have copied the ASC_SCSI_REQ_Q.ccb_ptr
-		 * field to the carrier ADV_CARR_T.areq_vpa field.
+		 * field to the carrier ADV_CARR_T.areq_ba field.
 		 * The conversion below complements the conversion of
 		 * ASC_SCSI_REQ_Q.scsiq_ptr' in AdvExeScsiQueue().
 		 */
-		ccb = adw_ccb_phys_kv(sc, sc->irq_sp->areq_vpa);
+		ccb = adw_ccb_phys_kv(sc, sc->irq_sp->areq_ba);
 		scsiq = &ccb->scsiq;
-		scsiq->ccb_ptr = sc->irq_sp->areq_vpa;
+		scsiq->ccb_ptr = sc->irq_sp->areq_ba;
 
 		/*
 		 * Request finished with good status and the queue was not
@@ -3171,7 +3180,7 @@ ADW_SOFTC	*sc;
 		free_carrp = sc->irq_sp;
 		sc->irq_sp = adw_carrier_phys_kv(sc, ASC_GET_CARRP(irq_next_pa));
 
-		free_carrp->next_vpa = sc->carr_freelist->carr_pa;
+		free_carrp->next_ba = sc->carr_freelist->carr_ba;
 		sc->carr_freelist = free_carrp;
 		sc->carr_pending_cnt--;
 

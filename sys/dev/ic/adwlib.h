@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.9 2000/05/08 17:21:34 dante Exp $        */
+/*      $NetBSD: adwlib.h,v 1.10 2000/05/10 21:22:34 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -1068,15 +1068,15 @@ typedef struct adw_scsi_req_q {
 	u_int32_t	data_addr;	/* Data buffer physical address. */
 	u_int32_t	data_cnt;	/* Data count. Ucode sets to residual. */
 	u_int32_t	sense_addr;	/* Sense buffer physical address. */
-	u_int32_t	carr_pa;	/* Carrier p-address */
+	u_int32_t	carr_ba;	/* Carrier p-address */
 	u_int8_t	mflag;		/* Adv Library flag field. */
 	u_int8_t	sense_len;	/* Auto-sense length. uCode sets to residual. */
 	u_int8_t	cdb_len;	/* SCSI CDB length. Must <= 16 bytes. */
 	u_int8_t	scsi_cntl;
-	u_int8_t	done_status;	/* Completion status. */
+	u_int8_t	done_status;	/* Completion status. (see below) */
 	u_int8_t	scsi_status;	/* SCSI status byte. (see below) */
-	u_int8_t	host_status;	/* Ucode host status. */
-	u_int8_t	sg_working_ix;	/* Ucode working SG variable. */
+	u_int8_t	host_status;	/* ,uCode host status. (see below) */
+	u_int8_t	sg_working_ix;	/* ,uCode working SG variable. */
 	u_int8_t	cdb[12];	/* SCSI CDB bytes 0-11. */
 	u_int32_t	sg_real_addr;	/* SG list physical address. */
 	u_int32_t	scsiq_rptr;	/* Iternal pointer to ADW_SCSI_REQ_Q */
@@ -1090,6 +1090,60 @@ typedef struct adw_scsi_req_q {
 	struct scsipi_sense_data *vsense_addr;	/* Sense buffer virtual address. */
 	u_char		*vdata_addr;	/* Data buffer virtual address. */
 } ADW_SCSI_REQ_Q;
+
+/*
+ * ASC_SCSI_REQ_Q 'done_status' return values.
+ */
+#define QD_NO_STATUS         0x00       /* Request not completed yet. */
+#define QD_NO_ERROR          0x01
+#define QD_ABORTED_BY_HOST   0x02
+#define QD_WITH_ERROR        0x04
+
+/*
+ * ASC_SCSI_REQ_Q 'host_status' return values.
+ */
+#define QHSTA_NO_ERROR              0x00
+#define QHSTA_M_SEL_TIMEOUT         0x11
+#define QHSTA_M_DATA_OVER_RUN       0x12
+#define QHSTA_M_UNEXPECTED_BUS_FREE 0x13
+#define QHSTA_M_QUEUE_ABORTED       0x15
+#define QHSTA_M_SXFR_SDMA_ERR       0x16 /* SXFR_STATUS SCSI DMA Error */
+#define QHSTA_M_SXFR_SXFR_PERR      0x17 /* SXFR_STATUS SCSI Bus Parity Error */
+#define QHSTA_M_RDMA_PERR           0x18 /* RISC PCI DMA parity error */
+#define QHSTA_M_SXFR_OFF_UFLW       0x19 /* SXFR_STATUS Offset Underflow */
+#define QHSTA_M_SXFR_OFF_OFLW       0x20 /* SXFR_STATUS Offset Overflow */
+#define QHSTA_M_SXFR_WD_TMO         0x21 /* SXFR_STATUS Watchdog Timeout */
+#define QHSTA_M_SXFR_DESELECTED     0x22 /* SXFR_STATUS Deselected */
+/* Note: QHSTA_M_SXFR_XFR_OFLW is identical to QHSTA_M_DATA_OVER_RUN. */
+#define QHSTA_M_SXFR_XFR_OFLW       0x12 /* SXFR_STATUS Transfer Overflow */
+#define QHSTA_M_SXFR_XFR_PH_ERR     0x24 /* SXFR_STATUS Transfer Phase Error */
+#define QHSTA_M_SXFR_UNKNOWN_ERROR  0x25 /* SXFR_STATUS Unknown Error */
+#define QHSTA_M_SCSI_BUS_RESET      0x30 /* Request aborted from SBR */
+#define QHSTA_M_SCSI_BUS_RESET_UNSOL 0x31 /* Request aborted from unsol. SBR */
+#define QHSTA_M_BUS_DEVICE_RESET    0x32 /* Request aborted from BDR */
+#define QHSTA_M_DIRECTION_ERR       0x35 /* Data Phase mismatch */
+#define QHSTA_M_DIRECTION_ERR_HUNG  0x36 /* Data Phase mismatch and bus hang */
+#define QHSTA_M_WTM_TIMEOUT         0x41
+#define QHSTA_M_BAD_CMPL_STATUS_IN  0x42
+#define QHSTA_M_NO_AUTO_REQ_SENSE   0x43
+#define QHSTA_M_AUTO_REQ_SENSE_FAIL 0x44
+#define QHSTA_M_INVALID_DEVICE      0x45 /* Bad target ID */
+#define QHSTA_M_FROZEN_TIDQ         0x46 /* TID Queue frozen. */
+#define QHSTA_M_SGBACKUP_ERROR      0x47 /* Scatter-Gather backup error */
+
+/*
+ * ASC_SCSI_REQ_Q 'scsi_status' return values.
+ */
+#define SS_GOOD              0x00
+#define SS_CHK_CONDITION     0x02
+#define SS_CONDITION_MET     0x04
+#define SS_TARGET_BUSY       0x08
+#define SS_INTERMID          0x10
+#define SS_INTERMID_COND_MET 0x14
+#define SS_RSERV_CONFLICT    0x18
+#define SS_CMD_TERMINATED    0x22
+#define SS_QUEUE_FULL        0x28
+
 
 /*
  * Microcode idle loop commands
@@ -1262,47 +1316,8 @@ do { \
 #define ADW_TID_TO_TIDMASK(tid)   (0x01 << ((tid) & ADW_MAX_TID))
 
 /*
- * ASC_SCSI_REQ_Q 'done_status' and 'host_status' return values.
- */
-
-#define QD_NO_STATUS         0x00       /* Request not completed yet. */
-#define QD_NO_ERROR          0x01
-#define QD_ABORTED_BY_HOST   0x02
-#define QD_WITH_ERROR        0x04
-
-#define QHSTA_NO_ERROR              0x00
-#define QHSTA_M_SEL_TIMEOUT         0x11
-#define QHSTA_M_DATA_OVER_RUN       0x12
-#define QHSTA_M_UNEXPECTED_BUS_FREE 0x13
-#define QHSTA_M_QUEUE_ABORTED       0x15
-#define QHSTA_M_SXFR_SDMA_ERR       0x16 /* SXFR_STATUS SCSI DMA Error */
-#define QHSTA_M_SXFR_SXFR_PERR      0x17 /* SXFR_STATUS SCSI Bus Parity Error */
-#define QHSTA_M_RDMA_PERR           0x18 /* RISC PCI DMA parity error */
-#define QHSTA_M_SXFR_OFF_UFLW       0x19 /* SXFR_STATUS Offset Underflow */
-#define QHSTA_M_SXFR_OFF_OFLW       0x20 /* SXFR_STATUS Offset Overflow */
-#define QHSTA_M_SXFR_WD_TMO         0x21 /* SXFR_STATUS Watchdog Timeout */
-#define QHSTA_M_SXFR_DESELECTED     0x22 /* SXFR_STATUS Deselected */
-/* Note: QHSTA_M_SXFR_XFR_OFLW is identical to QHSTA_M_DATA_OVER_RUN. */
-#define QHSTA_M_SXFR_XFR_OFLW       0x12 /* SXFR_STATUS Transfer Overflow */
-#define QHSTA_M_SXFR_XFR_PH_ERR     0x24 /* SXFR_STATUS Transfer Phase Error */
-#define QHSTA_M_SXFR_UNKNOWN_ERROR  0x25 /* SXFR_STATUS Unknown Error */
-#define QHSTA_M_SCSI_BUS_RESET      0x30 /* Request aborted from SBR */
-#define QHSTA_M_SCSI_BUS_RESET_UNSOL 0x31 /* Request aborted from unsol. SBR */
-#define QHSTA_M_BUS_DEVICE_RESET    0x32 /* Request aborted from BDR */
-#define QHSTA_M_DIRECTION_ERR       0x35 /* Data Phase mismatch */
-#define QHSTA_M_DIRECTION_ERR_HUNG  0x36 /* Data Phase mismatch and bus hang */
-#define QHSTA_M_WTM_TIMEOUT         0x41
-#define QHSTA_M_BAD_CMPL_STATUS_IN  0x42
-#define QHSTA_M_NO_AUTO_REQ_SENSE   0x43
-#define QHSTA_M_AUTO_REQ_SENSE_FAIL 0x44
-#define QHSTA_M_INVALID_DEVICE      0x45 /* Bad target ID */
-#define QHSTA_M_FROZEN_TIDQ         0x46 /* TID Queue frozen. */
-#define QHSTA_M_SGBACKUP_ERROR      0x47 /* Scatter-Gather backup error */
-
-/*
  * SCSI Iquiry structure
  */
-
 #define INQ_CLOCKING_ST_ONLY    0x0
 #define INQ_CLOCKING_DT_ONLY    0x1
 #define INQ_CLOCKING_ST_AND_DT  0x3
@@ -1344,71 +1359,6 @@ typedef struct {
 	u_int8_t	res5	 : 4;		/* reserved */
 	u_int8_t	res6;			/* reserved */
 } ADW_SCSI_INQUIRY; /* 58 bytes */
-
-#define SS_GOOD              0x00
-#define SS_CHK_CONDITION     0x02
-#define SS_CONDITION_MET     0x04
-#define SS_TARGET_BUSY       0x08
-#define SS_INTERMID          0x10
-#define SS_INTERMID_COND_MET 0x14
-#define SS_RSERV_CONFLICT    0x18
-#define SS_CMD_TERMINATED    0x22
-#define SS_QUEUE_FULL        0x28
-#define MS_CMD_DONE    0x00
-#define MS_EXTEND      0x01
-#define MS_SDTR_LEN    0x03
-#define MS_SDTR_CODE   0x01
-#define MS_WDTR_LEN    0x02
-#define MS_WDTR_CODE   0x03
-#define MS_MDP_LEN    0x05
-#define MS_MDP_CODE   0x00
-#define M1_SAVE_DATA_PTR        0x02
-#define M1_RESTORE_PTRS         0x03
-#define M1_DISCONNECT           0x04
-#define M1_INIT_DETECTED_ERR    0x05
-#define M1_ABORT                0x06
-#define M1_MSG_REJECT           0x07
-#define M1_NO_OP                0x08
-#define M1_MSG_PARITY_ERR       0x09
-#define M1_LINK_CMD_DONE        0x0A
-#define M1_LINK_CMD_DONE_WFLAG  0x0B
-#define M1_BUS_DVC_RESET        0x0C
-#define M1_ABORT_TAG            0x0D
-#define M1_CLR_QUEUE            0x0E
-#define M1_INIT_RECOVERY        0x0F
-#define M1_RELEASE_RECOVERY     0x10
-#define M1_KILL_IO_PROC         0x11
-#define M2_QTAG_MSG_SIMPLE      0x20
-#define M2_QTAG_MSG_HEAD        0x21
-#define M2_QTAG_MSG_ORDERED     0x22
-#define M2_IGNORE_WIDE_RESIDUE  0x23
-
-
-#define ASC_MAX_SENSE_LEN   32
-#define ASC_MIN_SENSE_LEN   14
-
-typedef struct asc_req_sense {
-	u_int8_t	err_code:7;
-	u_int8_t	info_valid:1;
-	u_int8_t	segment_no;
-	u_int8_t	sense_key:4;
-	u_int8_t	reserved_bit:1;
-	u_int8_t	sense_ILI:1;
-	u_int8_t	sense_EOM:1;
-	u_int8_t	file_mark:1;
-	u_int8_t	info1[4];
-	u_int8_t	add_sense_len;
-	u_int8_t	cmd_sp_info[4];
-	u_int8_t	asc;
-	u_int8_t	ascq;
-	u_int8_t	fruc;
-	u_int8_t	sks_byte0:7;
-	u_int8_t	sks_valid:1;
-	u_int8_t	sks_bytes[2];
-	u_int8_t	notused[2];
-	u_int8_t	ex_sense_code;
-	u_int8_t	info2[4];
-} ASC_REQ_SENSE;
 
 
 /*

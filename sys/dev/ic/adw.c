@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.19 2000/05/08 17:21:33 dante Exp $	 */
+/* $NetBSD: adw.c,v 1.20 2000/05/10 21:22:34 dante Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -231,10 +231,10 @@ adw_create_carriers(sc)
 	for(i=0; i < ADW_MAX_CARRIER; i++) {
 		carr = (ADW_CARRIER *)(((u_int8_t *)sc->sc_control->carriers) +
 				(sizeof(ADW_CARRIER) * i));
-		carr->carr_pa = ADW_CARRIER_BADDR(sc, carr);
+		carr->carr_ba = ADW_CARRIER_BADDR(sc, carr);
 		carr->carr_id = i;
-		carr->next_vpa = carr_next;
-		carr_next = carr->carr_pa;
+		carr->next_ba = carr_next;
+		carr_next = carr->carr_ba;
 	}
 	sc->carr_freelist = carr;
 	return (i);
@@ -1015,15 +1015,12 @@ adw_timeout(arg)
 
 	s = splbio();
 
-	/*
-         * If it has been through before, then previous aborts failed,
-         * don't try abort again, reset the bus instead.
-         */
 	if (ccb->flags & CCB_ABORTED) {
 	/*
 	 * Abort Timed Out
 	 *
-	 * No more opportunities. Lets try resetting the bus!
+	 * No more opportunities. Lets try resetting the bus and
+	 * reinitialize the host adapter.
 	 */
 		callout_stop(&xs->xs_callout);
 
@@ -1041,7 +1038,7 @@ adw_timeout(arg)
 		return;
 	} else if (ccb->flags & CCB_ABORTING) {
 	/*
-	 * Abort the operation that has timed out
+	 * Abort the operation that has timed out.
 	 *
 	 * Second opportunity.
 	 */
@@ -1070,12 +1067,11 @@ adw_timeout(arg)
 		 * by hand so the next time a timeout event will occour
 		 * we will reset the bus.
 		 */
-		callout_stop(&xs->xs_callout);
 		callout_reset(&xs->xs_callout,
 			    (ccb->timeout * hz) / 1000, adw_timeout, ccb);
 	} else {
 	/*
-	 * Abort the operation that has timed out
+	 * Abort the operation that has timed out.
 	 *
 	 * First opportunity.
 	 */
@@ -1101,10 +1097,9 @@ adw_timeout(arg)
 #endif
 		/*
 		 * waiting for multishot callout_reset() let's restart it
-		 * by hand so the next time a timeout event will occour
-		 * we will reset the bus.
+		 * by hand so to give a second opportunity to the command
+		 * which timed-out.
 		 */
-		callout_stop(&xs->xs_callout);
 		callout_reset(&xs->xs_callout,
 			    (ccb->timeout * hz) / 1000, adw_timeout, ccb);
 	}
@@ -1127,7 +1122,11 @@ adw_print_info(sc, tid)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int16_t wdtr_able, wdtr_done, wdtr;
     	u_int16_t sdtr_able, sdtr_done, sdtr, period;
-	int wdtr_reneg = 0, sdtr_reneg = 0;
+	static int wdtr_reneg = 0, sdtr_reneg = 0;
+
+	if (tid == 0){
+		wdtr_reneg = sdtr_reneg = 0;
+	}
 
 	printf("%s: target %d ", sc->sc_dev.dv_xname, tid);
 
@@ -1226,37 +1225,32 @@ adw_isr_callback(sc, scsiq)
 			 BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(dmat, ccb->dmamap_xfer);
 	}
+
 	if ((ccb->flags & CCB_ALLOC) == 0) {
 		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
 		Debugger();
 		return;
 	}
-	/*
-	 * Check for an underrun condition.
-	 */
-	/*
-	 * if (xs->request_bufflen != 0 && scsiqp->data_cnt != 0) {
-	 * ASC_DBG1(1, "adw_isr_callback: underrun condition %lu bytes\n",
-	 * scsiqp->data_cnt); underrun = ASC_TRUE; }
-	 */
+
 	/*
 	 * 'done_status' contains the command's ending status.
+	 * 'host_status' conatins the host adapter status.
+	 * 'scsi_status' contains the scsi peripheral status.
 	 */
 	switch (scsiq->done_status) {
 	case QD_NO_ERROR:
-		switch (scsiq->host_status) {
-		case QHSTA_NO_ERROR:
-			xs->error = XS_NOERROR;
-			xs->resid = 0;
-			if (scsiq->cdb[0] == INQUIRY &&
-			    scsiq->target_lun == 0) {
-				adw_print_info(sc, scsiq->target_id);
-			}
-			break;
-		default:
-			/* QHSTA error occurred. */
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
+		xs->error = XS_NOERROR;
+		xs->resid = scsiq->data_cnt;
+#ifdef ADW_DEBUG
+		/* Check for an underrun condition. */
+		if ((xs->datalen != 0) && (scsiq->data_cnt != 0) &&
+		    (scsiq->data_cnt <= xs->datalen)) {
+			printf("%s: underrun condition %d bytes\n",
+				sc->sc_dev.dv_xname, scsiq->data_cnt);
+		}
+#endif
+		if ((scsiq->cdb[0] == INQUIRY) && (scsiq->target_lun == 0)) {
+			adw_print_info(sc, scsiq->target_id);
 		}
 		break;
 
@@ -1265,44 +1259,66 @@ adw_isr_callback(sc, scsiq)
 		case QHSTA_NO_ERROR:
 			switch(scsiq->scsi_status) {
 			case SS_CHK_CONDITION:
-			case SS_CMD_TERMINATED:
 				s1 = &ccb->scsi_sense;
 				s2 = &xs->sense.scsi_sense;
 				*s2 = *s1;
 				xs->error = XS_SENSE;
 				break;
-			case SS_TARGET_BUSY:
-			case SS_RSERV_CONFLICT:
-			case SS_QUEUE_FULL:
+
+			default:
 				xs->error = XS_DRIVER_STUFFUP;
-				break;
-			case SS_CONDITION_MET:
-			case SS_INTERMID:
-			case SS_INTERMID_COND_MET:
-				xs->error = XS_DRIVER_STUFFUP;
-				break;
-			case SS_GOOD:
+#ifdef ADW_DEBUG
+				printf("%s: Command %d completed with error."
+					" SCSI Status = %d\n",
+					sc->sc_dev.dv_xname, scsiq->cdb[0],
+					scsiq->scsi_status);
+#endif
 				break;
 			}
 			break;
 
-		case QHSTA_M_SEL_TIMEOUT:
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
+		case QHSTA_M_SXFR_SDMA_ERR:
+			/*
+			 * SCSI DMA Error. This should *NEVER* happen!
+			 *
+			 * Lets try resetting the bus and reinitialize
+			 * the host adapter.
+			 */
+			AdvResetSCSIBus(sc);
+			while((ccb = TAILQ_LAST(&sc->sc_pending_ccb,
+					adw_pending_ccb)) != NULL) {
+				callout_stop(&ccb->xs->xs_callout);
+				TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
+				TAILQ_INSERT_HEAD(&sc->sc_waiting_ccb, ccb, chain);
+			}
+			adw_queue_ccb(sc, TAILQ_FIRST(&sc->sc_waiting_ccb), 1);
+			return;
 
 		default:
-			/* Some other QHSTA error occurred. */
 			xs->error = XS_DRIVER_STUFFUP;
+#ifdef ADW_DEBUG
+			printf("%s: Command %d completed with error."
+				" Host Status = %d\n",
+				sc->sc_dev.dv_xname, scsiq->cdb[0],
+				scsiq->host_status);
+#endif
 			break;
 		}
 		break;
 
 	case QD_ABORTED_BY_HOST:
 		xs->error = XS_DRIVER_STUFFUP;
+		printf("%s: Command aborted by host.\n", sc->sc_dev.dv_xname);
 		break;
 
 	default:
 		xs->error = XS_DRIVER_STUFFUP;
+#ifdef ADW_DEBUG
+		printf("%s: Command %d completed with error."
+			" Done Status = %d\n",
+			sc->sc_dev.dv_xname, scsiq->cdb[0],
+			scsiq->done_status);
+#endif
 		break;
 	}
 
@@ -1334,6 +1350,8 @@ adw_async_callback(sc, code)
 		 * Handle RDMA failure by resetting the SCSI Bus and
 		 * possibly the chip if it is unresponsive.
 		 */
+		printf("%s: RDMA failure. Resetting the SCSI Bus and"
+				" the adapter\n", sc->sc_dev.dv_xname);
 		AdvResetSCSIBus(sc);
 		break;
 
