@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.11 1999/12/31 12:58:12 tron Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.12 2000/01/04 15:12:42 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.11 1999/12/31 12:58:12 tron Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.12 2000/01/04 15:12:42 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: netcmds.c,v 1.11 1999/12/31 12:58:12 tron Exp $");
 static	struct hitem {
 	struct	in_addr addr;
 	int	onoff;
-} *hosts;
+} *hosts = NULL;
 
 int nports, nhosts, protos;
 
@@ -294,10 +294,12 @@ selecthost(in, onoff)
 			p->onoff = onoff;
 			return (0);
 		}
-	if (nhosts == 0)
-		hosts = (struct hitem *)malloc(sizeof (*p));
-	else
-		hosts = (struct hitem *)realloc(hosts, (nhosts+1)*sizeof (*p));
+	p = (struct hitem *)realloc(hosts, (nhosts+1)*sizeof (*p));
+	if (p == NULL) {
+		error("malloc failed");
+		die(0);
+	}
+	hosts = p;
 	p = &hosts[nhosts++];
 	p->addr = *in;
 	p->onoff = onoff;
