@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd13.c,v 1.10 2000/04/13 08:34:40 mrg Exp $	*/
+/*	$NetBSD: m_netbsd13.c,v 1.11 2000/05/26 00:44:58 thorpej Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		matthew green <mrg@eterna.com.au>
  *
  *
- * $Id: m_netbsd13.c,v 1.10 2000/04/13 08:34:40 mrg Exp $
+ * $Id: m_netbsd13.c,v 1.11 2000/05/26 00:44:58 thorpej Exp $
  */
 #define UVM
 
@@ -130,12 +130,12 @@ static struct nlist nlst[] = {
  */
 
 static char header[] =
-  "  PID X        PRI NICE   SIZE   RES STATE   TIME   WCPU    CPU COMMAND";
+  "  PID X        PRI NICE   SIZE   RES STATE     TIME   WCPU    CPU COMMAND";
 /* 0123456   -- field to fill in starts at header+6 */
 #define UNAME_START 6
 
 #define Proc_format \
-	"%5d %-8.8s %3d %4d%7s %5s %-5s%7s %5.2f%% %5.2f%% %.14s"
+	"%5d %-8.8s %3d %4d%7s %5s %-7s%7s %5.2f%% %5.2f%% %.12s"
 
 
 /* process state names for the "STATE" column of the display */
@@ -147,6 +147,9 @@ char *state_abbrev[] =
     "", "start", "run\0\0\0", "sleep", "stop", "zomb"
 #ifdef SDEAD
     , "dead"
+#endif
+#ifdef SONPROC
+    , "onproc"
 #endif
 };
 
@@ -176,10 +179,10 @@ static long cp_diff[CPUSTATES];
 
 /* these are for detailing the process states */
 
-int process_states[7];
+int process_states[8];
 char *procstatenames[] = {
-    "", " starting, ", " running, ", " sleeping, ", " stopped, ",
-    " zombie, ", " ABANDONED, ",
+    "", " starting, ", " runnable, ", " sleeping, ", " stopped, ",
+    " zombie, ", " dead, ", " on processor, ",
     NULL
 };
 
@@ -491,7 +494,11 @@ get_process_info(si, sel, compare)
 		PP(pp, p_stat) != SDEAD &&
 #endif
 		(show_idle || (PP(pp, p_pctcpu) != 0) || 
-		 (PP(pp, p_stat) == SRUN)) &&
+		 (PP(pp, p_stat) == SRUN
+#ifdef SONPROC
+		  || PP(pp, p_stat) == SONPROC
+#endif
+		 )) &&
 		(!show_uid || EP(pp, e_pcred.p_ruid) == (uid_t)sel->uid))
 	    {
 		*prefp++ = pp;
@@ -559,9 +566,6 @@ format_next_process(handle, get_userid)
 
     /* calculate the base for cpu percentages */
     pct = pctdouble(PP(pp, p_pctcpu));
-
-#define Proc_format \
-	"%5d %-8.8s %3d %4d%7s %5s %-5s%7s %5.2f%% %5.2f%% %.14s"
 
     /* format this entry */
     sprintf(fmt,
@@ -700,15 +704,17 @@ getkval(offset, ptr, size, refstr)
 
 static int sorted_state[] = {
     0,	/*  (not used)	  ?	*/
-    5,	/* "start"	SIDL	*/
+    6,	/* "start"	SIDL	*/
     4,	/* "run"	SRUN	*/
     3,	/* "sleep"	SSLEEP	*/
     3,	/* "stop"	SSTOP	*/
+    1,	/* "zomb"	SZOMB	*/
 #ifdef SDEAD
     2,	/* "dead"	SDEAD	*/
 #endif
-    1,	/* "zomb"	SZOMB	*/
-
+#ifdef SONPROC
+    5,	/* "onproc"	SONPROC	*/
+#endif
 };
 
 /* compare_cpu - the comparison function for sorting by cpu percentage */
