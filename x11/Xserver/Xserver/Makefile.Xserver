@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.10 2004/01/07 13:07:20 minoura Exp $
+#	$NetBSD: Makefile.Xserver,v 1.11 2004/01/10 04:34:33 fredb Exp $
 
 .PATH:		${NETBSDSRCDIR}/x11/Xserver/Xserver
 
@@ -10,7 +10,7 @@
 		dix/xpstubs hw/sun hw/xfree86/xf86 hw/xfree86/xf86_os \
 		hw/xfree86/xf86config hw/xfree86/loader \
 		\
-		hw/netbsd/macppc hw/netbsd/hpc hw/netbsd/x68k
+		hw/netbsd/macppc hw/netbsd/hpc hw/netbsd/x68k hw/netbsd/mac68k
 
 .if !defined(LIBDIR.${_SL})
 LIBDIR.${_SL}!=	cd ${NETBSDSRCDIR}/x11/Xserver/${_SL} && ${PRINTOBJDIR}
