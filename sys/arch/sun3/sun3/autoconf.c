@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.50 1998/02/05 04:57:25 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.51 1998/02/08 05:02:51 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -86,6 +86,78 @@ configure()
 	printf("enabling interrupts\n");
 	(void)spl0();
 	cold = 0;
+}
+
+/*
+ * bus_scan:
+ * This function is passed to config_search() by the attach function
+ * for each of the "bus" drivers (obctl, obio, obmem, vme, ...).
+ * The purpose of this function is to copy the "locators" into our
+ * confargs structure, so child drivers may use the confargs both
+ * as match parameters and as temporary storage for the defaulted
+ * locator values determined in the child_match and preserved for
+ * the child_attach function.  If the bus attach functions just
+ * used config_found, then we would not have an opportunity to
+ * setup the confargs for each child match and attach call.
+ */
+int bus_scan(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct confargs *ca = aux;
+	cfmatch_t mf;
+
+#ifdef	DIAGNOSTIC
+	if (cf->cf_fstate == FSTATE_STAR)
+		panic("bus_scan: FSTATE_STAR");
+#endif
+
+	/*
+	 * Copy the locators into our confargs.
+	 * Our parent set ca->ca_bustype already.
+	 */
+	ca->ca_paddr  = cf->cf_paddr;
+	ca->ca_intpri = cf->cf_intpri;
+	ca->ca_intvec = cf->cf_intvec;
+
+	/*
+	 * Note that this allows the match function to save
+	 * defaulted locators in the confargs that will be
+	 * preserved for the related attach call.
+	 * XXX - This is a hack...
+	 */
+	mf = cf->cf_attach->ca_match;
+	if ((*mf)(parent, cf, ca) > 0) {
+		config_attach(parent, cf, ca, bus_print);
+	}
+	return (0);
+}
+
+/*
+ * bus_print:
+ * Just print out the final (non-default) locators.
+ * The parent name is non-NULL when there was no match
+ * found by config_found().
+ */
+int
+bus_print(args, name)
+	void *args;
+	const char *name;
+{
+	struct confargs *ca = args;
+
+	if (name)
+		printf("%s:", name);
+
+	if (ca->ca_paddr != -1)
+		printf(" addr 0x%x", ca->ca_paddr);
+	if (ca->ca_intpri != -1)
+		printf(" ipl %d", ca->ca_intpri);
+	if (ca->ca_intvec != -1)
+		printf(" vect 0x%x", ca->ca_intvec);
+
+	return(UNCONF);
 }
 
 /****************************************************************/
@@ -264,4 +336,100 @@ find_dev_byname(name)
 		}
 	}
 	return (NULL);
+}
+
+/*
+ * Misc. helpers used by driver match/attach functions.
+ */
+
+/*
+ * Read addr with size len (1,2,4) into val.
+ * If this generates a bus error, return -1
+ *
+ *	Create a temporary mapping,
+ *	Try the access using peek_*
+ *	Clean up temp. mapping
+ */
+int
+bus_peek(bustype, pa, sz)
+	int bustype, pa, sz;
+{
+	caddr_t va;
+	int rv;
+
+	va = bus_tmapin(bustype, pa);
+	switch (sz) {
+	case 1:
+		rv = peek_byte(va);
+		break;
+	case 2:
+		rv = peek_word(va);
+		break;
+	case 4:
+		rv = peek_long(va);
+		break;
+	default:
+		printf(" bus_peek: invalid size=%d\n", sz);
+		rv = -1;
+	}
+	bus_tmapout(va);
+
+	return (rv);
+}
+
+/* from hp300: badbaddr() */
+int
+peek_byte(addr)
+	register caddr_t addr;
+{
+	label_t 	faultbuf;
+	register int x;
+
+	nofault = &faultbuf;
+	if (setjmp(&faultbuf))
+		x = -1;
+	else
+		x = *(volatile u_char *)addr;
+
+	nofault = NULL;
+	return(x);
+}
+
+int
+peek_word(addr)
+	register caddr_t addr;
+{
+	label_t		faultbuf;
+	register int x;
+
+	nofault = &faultbuf;
+	if (setjmp(&faultbuf))
+		x = -1;
+	else
+		x = *(volatile u_short *)addr;
+
+	nofault = NULL;
+	return(x);
+}
+
+int
+peek_long(addr)
+	register caddr_t addr;
+{
+	label_t		faultbuf;
+	register int x;
+
+	nofault = &faultbuf;
+	if (setjmp(&faultbuf))
+		x = -1;
+	else {
+		x = *(volatile int *)addr;
+		if (x == -1) {
+			printf("peek_long: uh-oh, actually read -1!\n");
+			x &= 0x7FFFffff; /* XXX */
+		}
+	}
+
+	nofault = NULL;
+	return(x);
 }
