@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.95 2002/07/25 20:04:02 jdolecek Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.96 2002/08/02 22:45:57 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.95 2002/07/25 20:04:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.96 2002/08/02 22:45:57 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -310,6 +310,12 @@ exit1(struct proc *p, int rv)
 	sigactsfree(p);
 
 	/*
+	 * If emulation has process exit hook, call it now.
+	 */
+	if (p->p_emul->e_proc_exit)
+		(*p->p_emul->e_proc_exit)(p);
+
+	/*
 	 * Clear curproc after we've done all operations
 	 * that could block, and before tearing down the rest
 	 * of the process state that might be used from clock, etc.
@@ -322,12 +328,6 @@ exit1(struct proc *p, int rv)
 	curproc = NULL;
 	limfree(p->p_limit);
 	p->p_limit = NULL;
-
-	/*
-	 * If emulation has process exit hook, call it now.
-	 */
-	if (p->p_emul->e_proc_exit)
-		(*p->p_emul->e_proc_exit)(p);
 
 	/* This process no longer needs to hold the kernel lock. */
 	KERNEL_PROC_UNLOCK(p);
