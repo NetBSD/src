@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.36 2000/06/05 00:09:20 matt Exp $	 */
+/*	$NetBSD: clock.c,v 1.37 2000/06/12 11:13:15 ragge Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,20 +43,7 @@
 #include <machine/cpu.h>
 #include <machine/uvax.h>
 
-#include "opt_vax750.h"
-#include "opt_vax780.h"
-#include "opt_vax630.h"
-#include "opt_vax650.h"
-#include "opt_vax660.h"
-#include "opt_vax670.h"
-#include "opt_vax680.h"
-#include "opt_vax8500.h"
-#include "opt_vax8200.h"
-#include "opt_vax410.h"
-#include "opt_vax43.h"
-#include "opt_vax46.h"
-#include "opt_vax48.h"
-#include "opt_vax49.h"
+#include "opt_cputype.h"
 
 int	yeartonum __P((int));
 int	numtoyear __P((int));
