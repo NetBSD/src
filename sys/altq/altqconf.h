@@ -1,7 +1,10 @@
-/*	$NetBSD: altqconf.h,v 1.3 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: altqconf.h,v 1.4 2002/09/22 20:09:15 jdolecek Exp $	*/
+
+#ifdef _KERNEL
 
 #if defined(_KERNEL_OPT)
 #include "opt_altq_enabled.h"
+#endif
 
 #include <sys/conf.h>
 
@@ -11,4 +14,4 @@
 #define	NALTQ	0
 #endif
 
-#endif /* _KERNEL_OPT */
+#endif /* _KERNEL */
