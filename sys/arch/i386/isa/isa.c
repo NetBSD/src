@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.52 1994/04/24 01:34:09 mycroft Exp $
+ *	$Id: isa.c,v 1.53 1994/05/03 08:23:55 mycroft Exp $
  */
 
 /*
@@ -270,51 +270,4 @@ isa_configure()
 	    (u_short)imask[IPL_TTY]);
 
 	spl0();
-}
-
-static int beeping;
-
-static void
-sysbeepstop(int f)
-{
-	int s = splhigh();
-
-	/* disable counter 2 */
-	disable_intr();
-	outb(PITAUX_PORT, inb(PITAUX_PORT) & ~PIT_SPKR);
-	enable_intr();
-	if (f)
-		timeout((timeout_t)sysbeepstop, (caddr_t)0, f);
-	else
-		beeping = 0;
-
-	splx(s);
-}
-
-void
-sysbeep(int pitch, int period)
-{
-	int s = splhigh();
-	static int last_pitch, last_period;
-
-	if (beeping) {
-		untimeout((timeout_t)sysbeepstop, (caddr_t)(last_period/2));
-		untimeout((timeout_t)sysbeepstop, (caddr_t)0);
-	}
-	if (!beeping || last_pitch != pitch) {
-		/*
-	 	* XXX - move timer stuff to clock.c.
-	 	*/
-		disable_intr();
-		outb(TIMER_MODE, TIMER_SEL2|TIMER_16BIT|TIMER_SQWAVE);
-		outb(TIMER_CNTR2, TIMER_DIV(pitch)%256);
-		outb(TIMER_CNTR2, TIMER_DIV(pitch)/256);
-		outb(PITAUX_PORT, inb(PITAUX_PORT) | PIT_SPKR);	/* enable counter 2 */
-		enable_intr();
-	}
-	last_pitch = pitch;
-	beeping = last_period = period;
-	timeout((timeout_t)sysbeepstop, (caddr_t)(period/2), period);
-
-	splx(s);
 }
