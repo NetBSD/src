@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.1.1.1 1997/03/13 16:27:27 gwr Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.2 1997/03/13 17:52:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -47,7 +47,6 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 
-#include <machine/control.h>
 #include <machine/idprom.h>
 #include <machine/mon.h>
 #include <machine/saio.h>
@@ -61,11 +60,12 @@
 #include "promdev.h"
 
 #define	PKT_BUF_SIZE 2048
+#define	IDPROM_BASE	0xFEF047D8	/* XXX - should not be defined here */
 
 int debug;
 int errno;
 
-static void sun3_getether __P((u_char *));
+static void _getether __P((u_char *));
 
 struct iodesc sockets[SOPEN_MAX];
 
@@ -80,26 +80,23 @@ static struct devdata {
 	char dd_myea[6];
 } prom_dd;
 
-static struct idprom sun3_idprom;
+static struct idprom _idprom;
 
 
 void
-sun3_getether(ea)
+_getether(ea)
 	u_char *ea;
 {
 	u_char *src, *dst;
 	int len, x;
 
-	if (sun3_idprom.idp_format == 0) {
-		dst = (char*)&sun3_idprom;
+	if (_idprom.idp_format == 0) {
+		dst = (char*)&_idprom;
 		src = (char*)IDPROM_BASE;
 		len = IDPROM_SIZE;
-		do {
-			x = get_control_byte(src++);
-			*dst++ = x;
-		} while (--len > 0);
+		bcopy(src, dst, len);
 	}
-	MACPY(sun3_idprom.idp_etheraddr, ea);
+	MACPY(_idprom.idp_etheraddr, ea);
 }
 
 
@@ -173,7 +170,7 @@ netif_init(aux)
 #endif
 
 	/* Record our ethernet address. */
-	sun3_getether(dd->dd_myea);
+	_getether(dd->dd_myea);
 	dd->dd_opens = 0;
 
 	return(dd);

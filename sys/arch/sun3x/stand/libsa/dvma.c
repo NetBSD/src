@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.1.1.1 1997/03/13 16:27:28 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.2 1997/03/13 17:52:49 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -42,32 +42,37 @@
 
 #include <sys/param.h>
 #include <machine/pte.h>
-#include <machine/control.h>
+#include <machine/mon.h>
+#include <arch/sun3x/sun3x/iommu.h>
 #include "stand.h"
+#include "iommu.h"
+#include "mmu.h"
 
-
-#define	DVMA_BASE 0xFFf00000
-#define DVMA_MAPLEN  0xE0000	/* 1 MB - 128K (save MONSHORTSEG) */
+void iommu_init();
 
 #define SA_MIN_VA	0x200000
-#define SA_MAX_VA	(SA_MIN_VA + DVMA_MAPLEN)
+#define SA_MAX_VA	((SA_MIN_VA + MON_DVMA_SIZE) - NBPG)
+
+#define	MON_DVMA_MAPLEN	(MON_DVMA_SIZE - NBPG)
 
 /* This points to the end of the free DVMA space. */
-u_int dvma_end = DVMA_BASE + DVMA_MAPLEN;
+u_int dvma_end = MON_DVMA_BASE + MON_DVMA_MAPLEN;
 
 void
 dvma_init()
 {
-	int segva, dmava, sme;
+	u_int va, pa;
 
-	segva = SA_MIN_VA;
-	dmava = DVMA_BASE;
+	iommu_init();
 
-	while (segva < SA_MAX_VA) {
-		sme = get_segmap(segva);
-		set_segmap(dmava, sme);
-		segva += NBSG;
-		dmava += NBSG;
+	pa = SA_MIN_VA;
+	va = MON_DVMA_BASE;
+
+	while (pa < SA_MAX_VA) {
+		set_pte(va, pa | MMU_DT_PAGE | MMU_SHORT_PTE_CI);
+		set_iommupde(va, pa | IOMMU_PDE_DT_VALID | IOMMU_PDE_CI);
+		va += NBPG;
+		pa += NBPG;
 	}
 }
 
@@ -82,7 +87,7 @@ dvma_mapin(char *addr, int len)
 		panic("dvma_mapin");
 
 	va -= SA_MIN_VA;
-	va += DVMA_BASE;
+	va += MON_DVMA_BASE;
 
 	return ((char *) va);
 }
@@ -94,10 +99,10 @@ dvma_mapout(char *addr, int len)
 	int va = (int)addr;
 
 	/* Make sure the address is in the DVMA map. */
-	if ((va < DVMA_BASE) || (va >= (DVMA_BASE + DVMA_MAPLEN)))
+	if ((va < MON_DVMA_BASE) || (va >= (MON_DVMA_BASE + MON_DVMA_MAPLEN)))
 		panic("dvma_mapout");
 
-	va -= DVMA_BASE;
+	va -= MON_DVMA_BASE;
 	va += SA_MIN_VA;
 
 	return ((char *) va);
