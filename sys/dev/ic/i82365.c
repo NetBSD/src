@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.7 1998/01/12 09:23:25 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.8 1998/02/01 23:36:23 marc Exp $	*/
 
 #define	PCICDEBUG
 
@@ -87,6 +87,8 @@ void	pcic_detach_card __P((struct pcic_handle *));
 
 void	pcic_chip_do_mem_map __P((struct pcic_handle *, int));
 void	pcic_chip_do_io_map __P((struct pcic_handle *, int));
+
+static void	pcic_wait_ready __P((struct pcic_handle *));
 
 int
 pcic_ident_ok(ident)
@@ -1030,6 +1032,29 @@ pcic_chip_io_unmap(pch, window)
 	pcic_write(h, PCIC_ADDRWIN_ENABLE, reg);
 
 	h->ioalloc &= ~(1 << window);
+}
+
+static void
+pcic_wait_ready(h)
+	struct pcic_handle *h;
+{
+	int i;
+
+	for (i = 0; i < 10000; i++) {
+		if (pcic_read(h, PCIC_IF_STATUS) & PCIC_IF_STATUS_READY)
+			return;
+		delay(500);
+#ifdef PCICDEBUG
+		if (pcic_debug) {
+			if ((i>5000) && (i%100 == 99))
+				printf(".");
+		}
+#endif
+	}
+
+#ifdef DIAGNOSTIC
+	printf("pcic_wait_ready ready never happened\n");
+#endif
 }
 
 void
