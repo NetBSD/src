@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxvar.h,v 1.4 1997/06/06 23:54:29 thorpej Exp $ */
+/* $NetBSD: dwlpxvar.h,v 1.5 1997/09/02 12:40:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -42,8 +42,8 @@
  */
 struct dwlpx_config {
 	int				cc_initted;
-	bus_space_tag_t			cc_iot;
-	bus_space_tag_t			cc_memt;
+	struct alpha_bus_space		cc_iot;
+	struct alpha_bus_space		cc_memt;
 	struct extent *			cc_io_ex;
 	struct extent *			cc_d_mem_ex;
 	struct extent *			cc_s_mem_ex;
@@ -71,8 +71,8 @@ void	dwlpx_init __P((struct dwlpx_softc *));
 void	dwlpx_pci_init __P((pci_chipset_tag_t, void *));
 void	dwlpx_dma_init __P((struct dwlpx_config *));
 
-bus_space_tag_t	dwlpx_bus_io_init __P((void *));
-bus_space_tag_t	dwlpx_bus_mem_init __P((void *));
+void	dwlpx_bus_io_init __P((bus_space_tag_t, void *));
+void	dwlpx_bus_mem_init __P((bus_space_tag_t, void *));
 
 #define	DWLPX_MAXPCI	1
 
