@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.1.1.1.2.9 2002/10/28 17:59:44 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.1.1.1.2.10 2003/08/05 10:22:34 msaitoh Exp $	*/
 /*	$KAME: esp_input.c,v 1.33 2000/09/12 08:51:49 itojun Exp $	*/
 
 /*
@@ -325,8 +325,8 @@ noreplaycheck:
 	nxt = esptail.esp_nxt;
 	taillen = esptail.esp_padlen + sizeof(esptail);
 
-	if (m->m_pkthdr.len < taillen
-	 || m->m_pkthdr.len - taillen < hlen) {	/*?*/
+	if (m->m_pkthdr.len < taillen ||
+	    m->m_pkthdr.len - taillen < off + esplen + ivlen + sizeof(esptail)) {
 		ipseclog((LOG_WARNING,
 		    "bad pad length in IPv4 ESP input: %s %s\n",
 		    ipsec4_logpacketstr(ip, spi), ipsec_logsastr(sav)));
