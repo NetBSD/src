@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.6 2000/08/02 02:54:41 soda Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -189,7 +189,7 @@ pciaddr_resource_manage(pc, tag, func)
 	pcireg_t val, mask;
 	bus_addr_t addr;
 	bus_size_t size;
-	int error, useport, usemem, mapreg, type, reg_start, reg_end;
+	int error, useport, usemem, mapreg, type, reg_start, reg_end, width;
 
 	val = pci_conf_read(pc, tag, PCI_BHLC_REG);
 	switch (PCI_HDRTYPE_TYPE(val)) {
@@ -212,7 +212,7 @@ pciaddr_resource_manage(pc, tag, func)
 	}
 	error = useport = usemem = 0;
     
-	for (mapreg = reg_start; mapreg < reg_end; mapreg += 4) {
+	for (mapreg = reg_start; mapreg < reg_end; mapreg += width) {
 		/* inquire PCI device bus space requirement */
 		val = pci_conf_read(pc, tag, mapreg);
 		pci_conf_write(pc, tag, mapreg, ~0);
@@ -221,7 +221,21 @@ pciaddr_resource_manage(pc, tag, func)
 		pci_conf_write(pc, tag, mapreg, val);
 	
 		type = PCI_MAPREG_TYPE(val);
+		width = 4;
 		if (type == PCI_MAPREG_TYPE_MEM) {
+			if (PCI_MAPREG_MEM_TYPE(val) == 
+			    PCI_MAPREG_MEM_TYPE_64BIT) {
+				/* XXX We could examine the upper 32 bits
+				 * XXX of the BAR here, but we are totally 
+				 * XXX unprepared to handle a non-zero value, 
+				 * XXX either here or anywhere else in 
+				 * XXX i386-land. 
+				 * XXX So just arrange to not look at the
+				 * XXX upper 32 bits, lest we misinterpret
+				 * XXX it as a 32-bit BAR set to zero. 
+				 */
+			    width = 8;
+			}
 			size = PCI_MAPREG_MEM_SIZE(mask);
 			ex = pciaddr.extent_mem;
 		} else {
