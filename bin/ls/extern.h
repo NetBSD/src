@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 1998/10/10 07:38:22 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 1999/02/12 14:35:48 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,6 +51,7 @@ void	 printacol __P((DISPLAY *));
 void	 printcol __P((DISPLAY *));
 void	 printlong __P((DISPLAY *));
 void	 printscol __P((DISPLAY *));
+void	 printstream __P((DISPLAY *));
 void	 usage __P((void));
 
 #include "stat_flags.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.34 1998/11/04 18:53:17 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.35 1999/02/12 14:35:49 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.34 1998/11/04 18:53:17 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.35 1999/02/12 14:35:49 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,6 +104,7 @@ int f_sectime;			/* print the real time for all files */
 int f_singlecol;		/* use single column output */
 int f_size;			/* list size in short listing */
 int f_statustime;		/* use time of last mode change */
+int f_stream;			/* stream format */
 int f_type;			/* add type character for non-regular files */
 int f_whiteout;			/* show whiteout entries */
 
@@ -134,27 +135,33 @@ main(argc, argv)
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1ACFLRSTWacdfgiklnoqrstux")) != -1) {
+	while ((ch = getopt(argc, argv, "1ACFLRSTWacdfgiklmnoqrstux")) != -1) {
 		switch (ch) {
 		/*
-		 * The -1, -C, -l and -x options all override each other so
+		 * The -1, -C, -l, -m and -x options all override each other so
 		 * shell aliasing works correctly.
 		 */
 		case '1':
 			f_singlecol = 1;
-			f_column = f_columnacross = f_longform = 0;
+			f_column = f_columnacross = f_longform = f_stream = 0;
 			break;
 		case 'C':
 			f_column = 1;
-			f_columnacross = f_longform = f_singlecol = 0;
+			f_columnacross = f_longform = f_singlecol = f_stream =
+			    0;
 			break;
 		case 'l':
 			f_longform = 1;
-			f_column = f_columnacross = f_singlecol = 0;
+			f_column = f_columnacross = f_singlecol = f_stream = 0;
+			break;
+		case 'm':
+			f_stream = 1;
+			f_column = f_columnacross = f_longform = f_singlecol =
+			    0;
 			break;
 		case 'x':
 			f_columnacross = 1;
-			f_column = f_longform = f_singlecol = 0;
+			f_column = f_longform = f_singlecol = f_stream = 0;
 			break;
 		/* The -c and -u options override each other. */
 		case 'c':
@@ -307,6 +314,8 @@ main(argc, argv)
 		printfcn = printacol;
 	else if (f_longform)
 		printfcn = printlong;
+	else if (f_stream)
+		printfcn = printstream;
 	else
 		printfcn = printcol;
 
@@ -314,7 +323,7 @@ main(argc, argv)
 		traverse(argc, argv, fts_options);
 	else
 		traverse(1, dotav, fts_options);
-	exit(0);
+	exit(EXIT_SUCCESS);
 	/* NOTREACHED */
 }
 
@@ -337,7 +346,7 @@ traverse(argc, argv, options)
 
 	if ((ftsp =
 	    fts_open(argv, options, f_nosort ? NULL : mastercmp)) == NULL)
-		err(1, "%s", "");
+		err(EXIT_FAILURE, "%s", "");
 
 	display(NULL, fts_children(ftsp, 0));
 	if (f_listdir)
@@ -383,7 +392,7 @@ traverse(argc, argv, options)
 			break;
 		}
 	if (errno)
-		err(1, "fts_read");
+		err(EXIT_FAILURE, "fts_read");
 }
 
 /*
@@ -510,7 +519,7 @@ display(p, list)
 
 				if ((np = malloc(sizeof(NAMES) +
 				    ulen + glen + flen + 3)) == NULL)
-					err(1, "%s", "");
+					err(EXIT_FAILURE, "%s", "");
 
 				np->user = &np->data[0];
 				(void)strcpy(np->user, user);
