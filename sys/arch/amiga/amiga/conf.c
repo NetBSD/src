@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.15 1994/05/28 07:53:03 cgd Exp $
+ *	$Id: conf.c,v 1.16 1994/05/29 01:44:28 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -259,8 +259,8 @@ dev_type_open(Fdopen);
 #define	cdev_floppy_init(c) { \
 	dev_init(c,Fd,open), \
 	dev_init(c,fd,close), \
-	(dev_type_read((*)))rawread, \
-	(dev_type_write((*))) rawwrite, \
+	dev_init(c,fd,read), \
+	dev_init(c,fd,write), \
 	dev_init(c,fd,ioctl), \
 	(dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, \
