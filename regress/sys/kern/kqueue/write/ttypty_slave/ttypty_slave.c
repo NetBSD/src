@@ -1,4 +1,4 @@
-/*	$NetBSD: ttypty_slave.c,v 1.1.1.1 2002/10/03 07:46:03 jdolecek Exp $	*/
+/*	$NetBSD: ttypty_slave.c,v 1.2 2002/12/06 02:09:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ main(int argc, char **argv)
 	if (event[0].filter != EVFILT_WRITE)
 		printf("tty: incorrect filter, expecting EVFILT_READ\n");
 
-	printf("tty: wrote 'f00\\n'\n", n, buffer);
+	printf("tty: wrote 'f00\\n'\n");
 	n = write(aslave, "f00\n", 128);
 
 	(void) waitpid(child, &status, 0);
