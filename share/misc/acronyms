@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.71 2000/12/01 02:33:32 wiz Exp $
+$NetBSD: acronyms,v 1.72 2000/12/08 15:17:23 briggs Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -15,6 +15,7 @@ BIAB	back in a bit
 BIAF	back in a few
 BIAS	back in a second
 BIAW	back in a while
+BOFH	bastard operator from hell
 BRB	[I'll] be right back
 BTDT	been there, done that
 BTTH	butt to the head
@@ -64,6 +65,7 @@ KISS	keep it simple, stupid
 KITA	kick in the ass
 KNF	kernel normal form
 L8R	later
+LART	luser attitude readjustment tool (ie, hammer)
 LMSO	laughing my socks off
 LOL	laughing out loud
 LTNS	long time no see
