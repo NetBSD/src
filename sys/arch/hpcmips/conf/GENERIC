@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.4 1999/10/24 08:37:28 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.5 1999/10/30 11:29:19 enami Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -126,7 +126,7 @@ pcic0	at isa0 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00090003
 #    |         |
 #20 +|   LCD   |+ 4
 #    |         | + 6
-# 8 +|	       |+ 5
+# 8 +|         |+ 5
 #    |         |
 #    |         |+----Power On/Off (not connected to GPIO?)
 #    +---------+
