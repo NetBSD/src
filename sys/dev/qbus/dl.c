@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.9 1999/05/27 16:00:45 ragge Exp $	*/
+/*	$NetBSD: dl.c,v 1.10 1999/06/06 19:14:49 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -97,10 +97,9 @@
 #include <machine/bus.h>
 #include <machine/scb.h>
 
-#include <dev/dec/qbus/ubareg.h>
-#include <dev/dec/qbus/ubavar.h>
+#include <dev/qbus/ubavar.h>
 
-#include <dev/dec/qbus/dlreg.h>
+#include <dev/qbus/dlreg.h>
 
 #include "ioconf.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.15 1999/05/28 20:17:29 ragge Exp $	*/
+/*	$NetBSD: dhu.c,v 1.16 1999/06/06 19:14:48 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -71,10 +71,11 @@ struct	dhu_softc {
 	int		sc_type;	/* controller type, DHU or DHV */
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_dma_tag_t	sc_dmat;
 	struct {
 		struct	tty *dhu_tty;	/* what we work on */
+		bus_dmamap_t dhu_dmah;
 		int	dhu_state;	/* to manage TX output status */
-		int	dhu_txaddr;	/* UBA map address to TX buf */
 		short	dhu_cc;		/* character count on TX */
 		short	dhu_modem;	/* modem bits state */
 	} sc_dhu[NDHULINE];
@@ -207,10 +208,11 @@ dhu_attach(parent, self, aux)
 	register struct dhu_softc *sc = (void *)self;
 	register struct uba_attach_args *ua = aux;
 	register unsigned c;
-	register int n;
+	register int n, i;
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
+	sc->sc_dmat = ua->ua_dmat;
 	/* Process the 8 bytes of diagnostic info put into */
 	/* the FIFO following the master reset operation. */
 
@@ -232,6 +234,18 @@ dhu_attach(parent, self, aux)
 
 	sc->sc_type = (c & DHU_STAT_DHU)? IS_DHU: IS_DHV;
 	printf("\n%s: DH%s-11\n", self->dv_xname, (c & DHU_STAT_DHU)?"U":"V");
+
+	for (i = 0; i < sc->sc_type; i++) {
+		struct tty *tp;
+		tp = sc->sc_dhu[i].dhu_tty = ttymalloc();
+		sc->sc_dhu[i].dhu_state = STATE_IDLE;
+		bus_dmamap_create(sc->sc_dmat, tp->t_outq.c_cn, 1, 
+		    tp->t_outq.c_cn, 0, BUS_DMA_ALLOCNOW|BUS_DMA_NOWAIT,
+		    &sc->sc_dhu[i].dhu_dmah);
+		bus_dmamap_load(sc->sc_dmat, sc->sc_dhu[i].dhu_dmah,
+		    tp->t_outq.c_cs, tp->t_outq.c_cn, 0, BUS_DMA_NOWAIT);
+			
+	}
 
 	/* Now stuff TX interrupt handler in place */
 	scb_vecalloc(ua->ua_cvec + 4, dhuxint, self->dv_unit, SCB_ISTACK);
@@ -365,24 +379,12 @@ dhuopen(dev, flag, mode, p)
 	if (line >= sc->sc_type)
 		return ENXIO;
 
+	s = spltty();
+	DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE | line);
+	sc->sc_dhu[line].dhu_modem = DHU_READ_WORD(DHU_UBA_STAT);
+	(void) splx(s);
+
 	tp = sc->sc_dhu[line].dhu_tty;
-	if (tp == NULL) {
-
-		tp = sc->sc_dhu[line].dhu_tty = ttymalloc();
-		if (tp == NULL)
-			return ENXIO;
-
-		sc->sc_dhu[line].dhu_state = STATE_IDLE;
-
-		sc->sc_dhu[line].dhu_txaddr =
-		    uballoc((struct uba_softc *)sc->sc_dev.dv_parent,
-		    tp->t_outq.c_cs, tp->t_outq.c_cn, 0);
-
-		s = spltty();
-		DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE | line);
-		sc->sc_dhu[line].dhu_modem = DHU_READ_WORD(DHU_UBA_STAT);
-		(void) splx(s);
-	}
 
 	tp->t_oproc   = dhustart;
 	tp->t_param   = dhuparam;
@@ -634,7 +636,7 @@ dhustart(tp)
 
 		sc->sc_dhu[line].dhu_state = STATE_DMA_RUNNING;
 
-		addr = UBAI_ADDR(sc->sc_dhu[line].dhu_txaddr) +
+		addr = sc->sc_dhu[line].dhu_dmah->dm_segs[0].ds_addr +
 			(tp->t_outq.c_cf - tp->t_outq.c_cs);
 
 		DHU_WRITE_WORD(DHU_UBA_TBUFCNT, cc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.24 1999/05/27 16:04:48 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.25 1999/06/06 19:14:49 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -44,10 +44,6 @@
  * Each unibus device has a uba_device structure.
  */
 
-#include <sys/buf.h>
-#include <sys/device.h>
-
-#include <machine/trap.h> /* For struct ivec_dsp */
 /*
  * Per-uba structure.
  *
@@ -72,38 +68,20 @@
 struct	uba_softc {
 	struct	device uh_dev;		/* Device struct, autoconfig */
 	SIMPLEQ_HEAD(, uba_unit) uh_resq;	/* resource wait chain */
-	int	uh_type;		/* type of adaptor */
-	struct	uba_regs *uh_uba;	/* virt addr of uba adaptor regs */
-	struct	pte *uh_mr;		/* start of page map */
-	int	uh_memsize;		/* size of uba memory, pages */
-	caddr_t	uh_iopage;		/* start of uba io page */
 	void	(**uh_reset) __P((int));/* UBA reset function array */
 	int	*uh_resarg;		/* array of ubareset args */
 	int	uh_resno;		/* Number of devices to reset */
-	short	uh_mrwant;		/* someone is waiting for map reg */
-	short	uh_bdpwant;		/* someone awaits bdp's */
-	int	uh_bdpfree;		/* free bdp's */
-	int	uh_zvcnt;		/* number of recent 0 vectors */
-	long	uh_zvtime;		/* time over which zvcnt accumulated */
-	int	uh_zvtotal;		/* total number of 0 vectors */
 	int	uh_lastiv;		/* last free interrupt vector */
-	short	uh_users;		/* transient bdp use count */
-	short	uh_xclu;		/* an rk07 is using this uba! */
-	int	uh_lastmem;		/* limit of any unibus memory */
-	struct	map *uh_map;		/* register free map */
 	int	(*uh_errchk) __P((struct uba_softc *));
 	void	(*uh_beforescan) __P((struct uba_softc *));
 	void	(*uh_afterscan) __P((struct uba_softc *));
 	void	(*uh_ubainit) __P((struct uba_softc *));
 	void	(*uh_ubapurge) __P((struct uba_softc *, int));
 	short	uh_nr;			/* Unibus sequential number */
-	short	uh_nbdp;		/* # of BDP's */
-	int	uh_ibase;		/* Base address for vectors */
 	bus_space_tag_t	uh_iot;		/* Tag for this Unibus */
 	bus_space_handle_t uh_ioh;	/* Handle for I/O space */
+	bus_dma_tag_t	uh_dmat;
 };
-
-#define	UAMSIZ	100
 
 /*
  * Per-controller structure.
@@ -114,9 +92,9 @@ struct	uba_softc {
 struct	uba_unit {
 	SIMPLEQ_ENTRY(uba_unit) uu_resq;/* Queue while waiting for resources */
 	void	*uu_softc;	/* Pointer to units softc */
-	int	uu_ubinfo;	/* save unibus registers, etc */
 	int	uu_bdp;		/* for controllers that hang on to bdp's */
 	int    (*uu_ready) __P((struct uba_unit *));
+	void	*uu_ref;	/* Buffer this is related to */
 	short   uu_xclu;        /* want exclusive use of bdp's */
 	short   uu_keepbdp;     /* hang on to bdp's once allocated */
 };
@@ -128,6 +106,7 @@ struct	uba_unit {
 struct uba_attach_args {
 	bus_space_tag_t	ua_iot;		/* Tag for this bus I/O-space */
 	bus_addr_t	ua_ioh;		/* I/O regs addr */
+	bus_dma_tag_t	ua_dmat;
 		    /* Pointer to int routine, filled in by probe*/
 	void		(*ua_ivec) __P((int));
 		    /* UBA reset routine, filled in by probe */
@@ -144,44 +123,21 @@ struct uba_attach_args {
 #define	UBA_CANTWAIT	0x02		/* don't block me */
 #define	UBA_NEED16	0x04		/* need 16 bit addresses only */
 #define	UBA_HAVEBDP	0x08		/* use bdp specified in high bits */
+#define	UBA_DONTQUE	0x10		/* Do not enqueue xfer */
 
 /*
- * Macros to bust return word from map allocation routines.
- * SHOULD USE STRUCTURE TO STORE UBA RESOURCE ALLOCATION:
+ * Some common defines for all subtypes of U/Q-buses/adapters.
  */
-#ifdef notyet
-struct ubinfo {
-	long	ub_addr;	/* unibus address: mr + boff */
-	int	ub_nmr;		/* number of registers, 0 if empty */
-	int	ub_bdp;		/* bdp number, 0 if none */
-};
-#define	UBAI_MR(i)	(((i) >> 9) & 0x7ff)	/* starting map register */
-#define	UBAI_BOFF(i)	((i)&0x1ff)		/* page offset */
-#else
-#define	UBAI_BDP(i)	((int)(((unsigned)(i)) >> 28))
-#define	BDPMASK		0xf0000000
-#define	UBAI_NMR(i)	((int)((i) >> 20) & 0xff)	/* max 255 (=127.5K) */
-#define	UBA_MAXNMR	255
-#define	UBAI_MR(i)	((int)((i) >> 9) & 0x7ff)	/* max 2047 */
-#define	UBA_MAXMR	2047
-#define	UBAI_BOFF(i)	((int)((i) & 0x1ff))
-#define	UBAI_ADDR(i)	((int)((i) & 0xfffff))	/* uba addr (boff+mr) */
-#define	UBAI_INFO(off, mr, nmr, bdp) \
-	(((bdp) << 28) | ((nmr) << 20) | ((mr) << 9) | (off))
-#endif
+#define	MAXUBAXFER	(63*1024)	/* Max transfer size in bytes */
+#define	UBAIOSIZE	(8*1024)	/* 8K I/O space */
+#define ubdevreg(addr) ((addr) & 017777)
 
-#ifndef _LOCORE
 #ifdef _KERNEL
-#define	ubago(ui)	ubaqueue(ui)
 #define b_forw  b_hash.le_next	/* Nice to have when handling uba queues */
 
 void	uba_attach __P((struct uba_softc *, unsigned long));
-int	uballoc __P((struct uba_softc *, caddr_t, int, int));
-void	ubarelse __P((struct uba_softc *, int *));
-int	ubaqueue __P((struct uba_unit *, struct buf *));
-void	ubadone __P((struct uba_unit *));
+void	uba_enqueue __P((struct uba_unit *));
+void	uba_done __P((struct uba_softc *));
 void	ubareset __P((int));
-int	ubasetup __P((struct uba_softc *, struct buf *, int));
 
 #endif /* _KERNEL */
-#endif !_LOCORE
