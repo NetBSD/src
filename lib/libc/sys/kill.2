@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)kill.2	6.6 (Berkeley) 3/10/91
-.\"	$Id: kill.2,v 1.4 1993/11/29 21:25:16 jtc Exp $
+.\"	$Id: kill.2,v 1.5 1993/12/15 20:40:35 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt KILL 2
@@ -39,7 +39,8 @@
 .Nm kill
 .Nd send signal to a process
 .Sh SYNOPSIS
-.Fd #include <sys/signal.h>
+.Fd #include <sys/types.h>
+.Fd #include <signal.h>
 .Ft int
 .Fn kill "pid_t pid" "int sig"
 .Sh DESCRIPTION
