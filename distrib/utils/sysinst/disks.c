@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.31.4.1 2000/10/18 17:51:14 tv Exp $ */
+/*	$NetBSD: disks.c,v 1.31.4.2 2000/11/01 02:51:23 tv Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -436,7 +436,7 @@ do_fsck(const char *diskpart)
 		msg_display(MSG_upgrinode, raw);
 		process_menu(MENU_yesno);
 		if (yesno)
-			upgr = "-c ";
+			upgr = "-c 3 ";
 	}
 
 	/*endwin();*/
