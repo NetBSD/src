@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.475 2001/11/28 17:39:22 christos Exp $
+#	$NetBSD: files,v 1.476 2001/11/28 17:40:57 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -93,7 +93,7 @@ defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
 #
 defflag				GATEWAY
 defflag				MROUTING
-defflag				CP_COMPAT_42
+defflag				TCP_COMPAT_42
 
 defparam opt_tcp_space.h	TCP_RECVSPACE TCP_SENDSPACE
 
