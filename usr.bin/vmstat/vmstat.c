@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.100.2.2 2002/12/12 22:12:09 he Exp $ */
+/* $NetBSD: vmstat.c,v 1.100.2.3 2003/10/02 09:37:52 tron Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.100.2.2 2002/12/12 22:12:09 he Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.100.2.3 2003/10/02 09:37:52 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -1027,7 +1027,7 @@ domem(void)
 	}
 
 	(void)printf(
-	    "\nMemory statistics by type                        Type  Kern\n");
+	    "\nMemory statistics by type                           Type  Kern\n");
 	(void)printf(
 "         Type  InUse MemUse HighUse  Limit Requests Limit Limit Size(s)\n");
 	for (i = 0, ks = &kmemstats[0]; i < M_LAST; i++, ks++) {
