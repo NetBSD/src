@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.28 2000/07/26 07:28:56 onoe Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.29 2000/07/31 03:25:11 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -171,6 +171,7 @@ static int wi_write_ssid __P((struct wi_softc *, int, struct wi_req *,
     struct ieee80211_nwid *));
 static int wi_set_nwkey __P((struct wi_softc *, struct ieee80211_nwkey *));
 static int wi_get_nwkey __P((struct wi_softc *, struct ieee80211_nwkey *));
+static int wi_sync_media __P((struct wi_softc *, int, int));
 
 struct cfattach wi_ca = {
 	sizeof(struct wi_softc), wi_match, wi_attach, wi_detach, wi_activate
@@ -434,6 +435,7 @@ wi_attach(parent, self, aux)
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11, 0, 0), 0);
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
 	    IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_MANUAL, 0, 0), 0);
 #undef ADD
 	ifmedia_set(&sc->sc_media, IFM_AUTOADHOC);
 
@@ -1152,10 +1154,10 @@ wi_setdef(sc, wreq)
 		bcopy((char *)&wreq->wi_val, LLADDR(sdl), ETHER_ADDR_LEN);
 		break;
 	case WI_RID_PORTTYPE:
-		sc->wi_ptype = wreq->wi_val[0];
+		error = wi_sync_media(sc, wreq->wi_val[0], sc->wi_tx_rate);
 		break;
 	case WI_RID_TX_RATE:
-		sc->wi_tx_rate = wreq->wi_val[0];
+		error = wi_sync_media(sc, sc->wi_ptype, wreq->wi_val[0]);
 		break;
 	case WI_RID_MAX_DATALEN:
 		sc->wi_max_data_len = wreq->wi_val[0];
@@ -1850,6 +1852,54 @@ wi_write_ssid(sc, type, wreq, ws)
 	wreq->wi_type = type;
 	wi_request_fill_ssid(wreq, ws);
 	return (wi_write_record(sc, (struct wi_ltv_gen *)wreq));
+}
+
+static int
+wi_sync_media(sc, ptype, txrate)
+	struct wi_softc *sc;
+	int ptype;
+	int txrate;
+{
+	int media = sc->sc_media.ifm_cur->ifm_media;
+	int options = IFM_OPTIONS(media);
+	int subtype;
+
+	switch (txrate) {
+	case 1:
+		subtype = IFM_IEEE80211_DS1;
+		break;
+	case 2:
+		subtype = IFM_IEEE80211_DS2;
+		break;
+	case 3:
+		subtype = IFM_AUTO;
+		break;
+	case 11:
+		subtype = IFM_IEEE80211_DS11;
+		break;
+	default:
+		subtype = IFM_MANUAL;		/* Unable to represent */
+		break;
+	}
+	switch (ptype) {
+	case WI_PORTTYPE_ADHOC:
+		options |= IFM_IEEE80211_ADHOC;
+		break;
+	case WI_PORTTYPE_BSS:
+		options &= ~IFM_IEEE80211_ADHOC;
+		break;
+	default:
+		subtype = IFM_MANUAL;		/* Unable to represent */
+		break;
+	}
+	media = IFM_MAKEWORD(IFM_TYPE(media), subtype, options,
+	    IFM_INST(media));
+	if (ifmedia_match(&sc->sc_media, media, sc->sc_media.ifm_mask) == NULL)
+		return (EINVAL);
+	ifmedia_set(&sc->sc_media, media);
+	sc->wi_ptype = ptype;
+	sc->wi_tx_rate = txrate;
+	return (0);
 }
 
 static int
