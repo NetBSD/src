@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.2 2001/02/28 18:15:43 bjh21 Exp $	*/
+/*	$NetBSD: proc.h,v 1.3 2002/08/07 05:15:00 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -40,6 +40,9 @@
  */
 struct mdproc {
 	struct trapframe *__spare0;
-	int	__spare1;
+	int		__spare1;
+	int		pmc_enabled;	/* bitfield of enabled counters */
+	void		*pmc_state;	/* port-specific pmc state */
 };
+
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.96 2002/08/02 22:45:57 manu Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.97 2002/08/07 05:16:24 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,9 +78,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.96 2002/08/02 22:45:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.97 2002/08/07 05:16:24 briggs Exp $");
 
 #include "opt_ktrace.h"
+#include "opt_perfctrs.h"
 #include "opt_systrace.h"
 #include "opt_sysv.h"
 
@@ -103,6 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.96 2002/08/02 22:45:57 manu Exp $");
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/resourcevar.h>
+#include <sys/pmc.h>
 #include <sys/ptrace.h>
 #include <sys/acct.h>
 #include <sys/filedesc.h>
@@ -286,6 +288,17 @@ exit1(struct proc *p, int rv)
 	*p->p_ru = p->p_stats->p_ru;
 	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
 	ruadd(p->p_ru, &p->p_stats->p_cru);
+
+#if PERFCTRS
+	/*
+	 * Save final PMC information in parent process & clean up.
+	 */
+	if (PMC_ENABLED(p)) {
+		pmc_save_context(p);
+		pmc_accumulate(p->p_pptr, p);
+		pmc_process_exit(p);
+	}
+#endif
 
 	/*
 	 * Notify parent that we're gone.  If parent has the P_NOCLDWAIT
