@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.186 2001/10/19 15:55:52 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.187 2001/10/25 19:32:15 nathanw Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -129,9 +129,7 @@ APICFLAGS ?= -KPIC
 
 .else
 
-# Platform-independent flags for NetBSD a.out shared libraries (and PowerPC)
-SHLIB_LDSTARTFILE=
-SHLIB_LDENDFILE=
+# Platform-independent flags for NetBSD a.out shared libraries
 SHLIB_SOVERSION=${SHLIB_FULLVERSION}
 SHLIB_SHFLAGS=
 FPICFLAGS ?= -fPIC
