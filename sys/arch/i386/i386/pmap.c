@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.21 1994/09/08 21:03:43 mycroft Exp $
+ *	$Id: pmap.c,v 1.22 1994/09/09 23:58:48 mycroft Exp $
  */
 
 /*
@@ -166,7 +166,6 @@ int pmapdebug = 0 /* 0xffff */;
 pt_entry_t	protection_codes[8];
 
 struct pmap	kernel_pmap_store;
-pmap_t		kernel_pmap;
 
 vm_offset_t    	avail_start;	/* PA of first available physical page */
 vm_offset_t	avail_end;	/* PA of last available physical page */
@@ -228,13 +227,6 @@ pmap_bootstrap(virtual_start)
 	 * Initialize protection array.
 	 */
 	i386_protection_init();
-
-	/*
-	 * The kernel's pmap is statically allocated so we don't
-	 * have to use pmap_create, which is unlikely to work
-	 * correctly at this part of the boot sequence.
-	 */
-	kernel_pmap = &kernel_pmap_store;
 
 #ifdef notdef
 	/*
@@ -728,12 +720,12 @@ pmap_activate(pmap, pcb)
 	struct pcb *pcb;
 {
 
-	if (pmap /*&& pmap->pm_pdchanged */) {  \
-		pcb->pcb_cr3 = \
-		    pmap_extract(kernel_pmap, (vm_offset_t)pmap->pm_pdir); \
-		if (pmap == &curproc->p_vmspace->vm_pmap) \
-			lcr3(pcb->pcb_cr3); \
-		pmap->pm_pdchanged = FALSE; \
+	if (pmap /*&& pmap->pm_pdchanged */) {
+		pcb->pcb_cr3 =
+		    pmap_extract(kernel_pmap, (vm_offset_t)pmap->pm_pdir);
+		if (pmap == &curproc->p_vmspace->vm_pmap)
+			lcr3(pcb->pcb_cr3);
+		pmap->pm_pdchanged = FALSE;
 	}
 }
 
@@ -753,8 +745,7 @@ pmap_deactivate(pmap, pcb)
 void
 pmap_remove(pmap, sva, eva)
 	struct pmap *pmap;
-	register vm_offset_t sva;
-	register vm_offset_t eva;
+	register vm_offset_t sva, eva;
 {
 	register pt_entry_t *pte;
 	vm_offset_t pa;
@@ -1391,6 +1382,30 @@ pmap_collect(pmap)
 
 }
 
+#if 0
+void
+pmap_dump_pvlist(phys, m)
+	vm_offset_t phys;
+	char *m;
+{
+	register struct pv_entry *pv;
+
+	if (!pmap_initialized)
+		return;
+	printf("%s %08x:", m, phys);
+	pv = &pv_table[pmap_page_index(phys)];
+	if (pv->pv_pmap == NULL) {
+		printf(" no mappings\n");
+		return;
+	}
+	for (; pv; pv = pv->pv_next)
+		printf(" pmap %08x va %08x", pv->pv_pmap, pv->pv_va);
+	printf("\n");
+}
+#else
+#define	pmap_dump_pvlist(a,b)
+#endif
+
 /*
  *	pmap_zero_page zeros the specified by mapping it into
  *	virtual memory and using bzero to clear its contents.
@@ -1405,6 +1420,7 @@ pmap_zero_page(phys)
 		printf("pmap_zero_page(%x)", phys);
 #endif
 
+	pmap_dump_pvlist(phys, "pmap_zero_page: phys");
 	*CMAP2 = (phys & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
 	pmap_update();
 	bzero(CADDR2, NBPG);
@@ -1425,6 +1441,8 @@ pmap_copy_page(src, dst)
 		printf("pmap_copy_page(%x, %x)", src, dst);
 #endif
 
+	pmap_dump_pvlist(src, "pmap_copy_page: src");
+	pmap_dump_pvlist(dst, "pmap_copy_page: dst");
 	*CMAP1 = (src & PG_FRAME) | PG_V | PG_KW;
 	*CMAP2 = (dst & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
 	pmap_update();
