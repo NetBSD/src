@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.4 2002/11/26 03:27:49 fvdl Exp $
+# $NetBSD: GENERIC,v 1.5 2002/11/29 22:17:12 fvdl Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/x86_64/conf/std.x86_64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -79,6 +79,12 @@ options 	USERCONF	# userconf(4) support
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+
+#
+# Because gcc omits the frame pointer for any -O level, the line below
+# is needed to make backtraces in DDB work.
+#
+#makeoptions 	COPTS="-O -fno-omit-frame-pointer"
 #options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
