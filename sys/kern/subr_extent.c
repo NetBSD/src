@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.39 2000/12/06 18:05:57 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.40 2001/04/27 00:06:11 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -557,8 +557,8 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 		panic("extent_alloc_subregion: bad alignment");
 	if (boundary && (boundary < size)) {
 		printf(
-		    "extent_alloc_subregion: extent `%s', size 0x%lx,
-		    boundary 0x%lx\n", ex->ex_name, size, boundary);
+		    "extent_alloc_subregion: extent `%s', size 0x%lx, "
+		    "boundary 0x%lx\n", ex->ex_name, size, boundary);
 		panic("extent_alloc_subregion: bad boundary");
 	}
 #endif
