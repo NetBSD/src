@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.7 1999/08/07 12:33:04 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.8 1999/10/01 10:15:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -512,6 +512,16 @@ ip6_input(m)
 			ip6stat.ip6s_toomanyhdr++;
 			goto bad;
 		}
+
+		/*
+		 * protection against faulty packet - there should be
+		 * more sanity checks in header chain processing.
+		 */
+		if (m->m_pkthdr.len < off) {
+			ip6stat.ip6s_tooshort++;
+			goto bad;
+		}
+
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
 	return;
@@ -587,6 +597,7 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 			 optlen = *(opt + 1) + 2;
 			 break;
 		 case IP6OPT_RTALERT:
+			 /* XXX may need check for alignment */
 			 if (hbhlen < IP6OPT_RTALERT_LEN) {
 				 ip6stat.ip6s_toosmall++;
 				 goto bad;
@@ -600,6 +611,7 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 			 *rtalertp = ntohs(rtalert_val);
 			 break;
 		 case IP6OPT_JUMBO:
+			 /* XXX may need check for alignment */
 			 if (hbhlen < IP6OPT_JUMBO_LEN) {
 				 ip6stat.ip6s_toosmall++;
 				 goto bad;
@@ -615,7 +627,12 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 			  * We can simply cast because of the alignment
 			  * requirement of the jumbo payload option.
 			  */
+#if 0
 			 *plenp = ntohl(*(u_int32_t *)(opt + 2));
+#else
+			 bcopy(opt + 2, plenp, sizeof(*plenp));
+			 *plenp = htonl(*plenp);
+#endif
 			 if (*plenp <= IPV6_MAXPACKET) {
 				 /*
 				  * jumbo payload length must be larger
