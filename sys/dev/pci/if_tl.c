@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.41 2001/07/07 16:40:24 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.42 2001/07/07 16:46:35 thorpej Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -631,7 +631,7 @@ static int tl_init(sc)
 		splx(s);
 		return ENOMEM;
 	}
-	bzero(nullbuf, ETHER_MIN_TX);
+	memset(nullbuf, 0, ETHER_MIN_TX);
 
 	/* set media */
 	mii_mediachg(&sc->tl_mii);
@@ -1252,7 +1252,7 @@ txloop:
 	 * and size of the mbuf.
 	 */
 tbdinit:
-	bzero(Tx, sizeof(struct Tx_list));
+	memset(Tx, 0, sizeof(struct Tx_list));
 	Tx->m = mb_head;
 	size = 0;
 	for (m = mb_head, segment = 0; m != NULL ; m = m->m_next) {
