@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.106 2000/05/09 00:56:24 hubertf Exp $
+#	$NetBSD: Makefile.i386,v 1.107 2000/09/07 06:39:36 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -63,6 +63,11 @@ LINKFLAGS=	-Ttext c0100000 -e start
 .else
 LINKFLAGS+=	-z
 .endif
+
+.if defined(KERN_LDSCRIPT)
+LINKFLAGS+=	-T ${I386}/conf/${KERN_LDSCRIPT}
+.endif
+
 STRIPFLAGS=	-g
 
 %INCLUDES
