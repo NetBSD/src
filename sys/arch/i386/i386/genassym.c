@@ -78,6 +78,7 @@ main()
 
 	def("V_TRAP", &vm->v_trap);
 	def("V_INTR", &vm->v_intr);
+	def("V_SWTCH", &vm->v_swtch);
 
 	def("PCB_CR3", &pcb->pcb_tss.tss_cr3);
 	def("PCB_EBP", &pcb->pcb_tss.tss_ebp);
