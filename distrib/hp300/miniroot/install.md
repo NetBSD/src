@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.3 1996/08/22 03:24:17 mrg Exp $
+#	$NetBSD: install.md,v 1.4 1996/08/26 02:34:40 thorpej Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,6 +40,9 @@
 #
 # machine dependent section of installation/upgrade script
 #
+
+# Machine-dependent install sets
+MDSETS=""
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
@@ -485,6 +488,10 @@ you boot from the root disk.
 __congratulations_1
 }
 
-md_native_fstype() {}
-md_native_fsopts() {}
-md_install_sets() {}
+md_native_fstype() {
+	# Nothing to do.
+}
+
+md_native_fsopts() {
+	# Nothing to do.
+}
