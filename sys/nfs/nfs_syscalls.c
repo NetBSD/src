@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.66 2003/06/25 14:37:50 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.67 2003/06/26 13:38:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.66 2003/06/25 14:37:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.67 2003/06/26 13:38:53 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -160,13 +160,13 @@ sys_nfssvc(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	int error;
-	int s;
 #ifdef NFS
 	struct nameidata nd;
 	struct nfsmount *nmp;
 	struct nfsd_cargs ncd;
 #endif
 #ifdef NFSSERVER
+	int s;
 	struct file *fp;
 	struct mbuf *nam;
 	struct nfsd_args nfsdarg;
@@ -182,6 +182,7 @@ sys_nfssvc(l, v, retval)
 	error = suser(p->p_ucred, &p->p_acflag);
 	if(error)
 		return (error);
+#ifdef NFSSERVER
 	s = splsoftnet();
 	simple_lock(&nfsd_slock);
 	while (nfssvc_sockhead_flag & SLP_INIT) {
@@ -191,6 +192,7 @@ sys_nfssvc(l, v, retval)
 	}
 	simple_unlock(&nfsd_slock);
 	splx(s);
+#endif
 	if (SCARG(uap, flag) & NFSSVC_BIOD) {
 #if defined(NFS) && defined(COMPAT_14)
 		error = nfssvc_iod(l);
