@@ -1,0 +1,1404 @@
+This is binutils.info, produced by makeinfo version 4.0 from
+binutils.texi.
+
+START-INFO-DIR-ENTRY
+* Binutils: (binutils).         The GNU binary utilities.
+* ar: (binutils)ar.               Create, modify, and extract from archives
+* nm: (binutils)nm.               List symbols from object files
+* objcopy: (binutils)objcopy.	  Copy and translate object files
+* objdump: (binutils)objdump.     Display information from object files
+* ranlib: (binutils)ranlib.       Generate index to archive contents
+* readelf: (binutils)readelf.	  Display the contents of ELF format files.
+* size: (binutils)size.           List section sizes and total size
+* strings: (binutils)strings.     List printable strings from files
+* strip: (binutils)strip.         Discard symbols
+* c++filt: (binutils)c++filt.	  Filter to demangle encoded C++ symbols
+* cxxfilt: (binutils)c++filt.     MS-DOS name for c++filt
+* addr2line: (binutils)addr2line. Convert addresses to file and line
+* nlmconv: (binutils)nlmconv.     Converts object code into an NLM
+* windres: (binutils)windres.	  Manipulate Windows resources
+* dlltool: (binutils)dlltool.	  Create files needed to build and use DLLs
+END-INFO-DIR-ENTRY
+
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
+Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: binutils.info,  Node: size,  Next: strings,  Prev: readelf,  Up: Top
+
+size
+****
+
+     size [ -A | -B | --format=COMPATIBILITY ]
+          [ --help ]  [ -d | -o | -x | --radix=NUMBER ]
+          [ --target=BFDNAME ]  [ -V | --version ]
+          [ OBJFILE... ]
+
+   The GNU `size' utility lists the section sizes--and the total
+size--for each of the object or archive files OBJFILE in its argument
+list.  By default, one line of output is generated for each object file
+or each module in an archive.
+
+   OBJFILE... are the object files to be examined.  If none are
+specified, the file `a.out' will be used.
+
+   The command line options have the following meanings:
+
+`-A'
+`-B'
+`--format=COMPATIBILITY'
+     Using one of these options, you can choose whether the output from
+     GNU `size' resembles output from System V `size' (using `-A', or
+     `--format=sysv'), or Berkeley `size' (using `-B', or
+     `--format=berkeley').  The default is the one-line format similar
+     to Berkeley's.
+
+     Here is an example of the Berkeley (default) format of output from
+     `size':
+          $ size --format=Berkeley ranlib size
+          text    data    bss     dec     hex     filename
+          294880  81920   11592   388392  5ed28   ranlib
+          294880  81920   11888   388688  5ee50   size
+
+     This is the same data, but displayed closer to System V
+     conventions:
+
+          $ size --format=SysV ranlib size
+          ranlib  :
+          section         size         addr
+          .text         294880         8192
+          .data          81920       303104
+          .bss           11592       385024
+          Total         388392
+          
+          
+          size  :
+          section         size         addr
+          .text         294880         8192
+          .data          81920       303104
+          .bss           11888       385024
+          Total         388688
+
+`--help'
+     Show a summary of acceptable arguments and options.
+
+`-d'
+`-o'
+`-x'
+`--radix=NUMBER'
+     Using one of these options, you can control whether the size of
+     each section is given in decimal (`-d', or `--radix=10'); octal
+     (`-o', or `--radix=8'); or hexadecimal (`-x', or `--radix=16').
+     In `--radix=NUMBER', only the three values (8, 10, 16) are
+     supported.  The total size is always given in two radices; decimal
+     and hexadecimal for `-d' or `-x' output, or octal and hexadecimal
+     if you're using `-o'.
+
+`--target=BFDNAME'
+     Specify that the object-code format for OBJFILE is BFDNAME.  This
+     option may not be necessary; `size' can automatically recognize
+     many formats.  *Note Target Selection::, for more information.
+
+`-V'
+`--version'
+     Display the version number of `size'.
+
+
+File: binutils.info,  Node: strings,  Next: strip,  Prev: size,  Up: Top
+
+strings
+*******
+
+     strings [-afov] [-MIN-LEN] [-n MIN-LEN] [-t RADIX] [-]
+             [--all] [--print-file-name] [--bytes=MIN-LEN]
+             [--radix=RADIX] [--target=BFDNAME]
+             [--help] [--version] FILE...
+
+   For each FILE given, GNU `strings' prints the printable character
+sequences that are at least 4 characters long (or the number given with
+the options below) and are followed by an unprintable character.  By
+default, it only prints the strings from the initialized and loaded
+sections of object files; for other types of files, it prints the
+strings from the whole file.
+
+   `strings' is mainly useful for determining the contents of non-text
+files.
+
+`-a'
+`--all'
+`-'
+     Do not scan only the initialized and loaded sections of object
+     files; scan the whole files.
+
+`-f'
+`--print-file-name'
+     Print the name of the file before each string.
+
+`--help'
+     Print a summary of the program usage on the standard output and
+     exit.
+
+`-MIN-LEN'
+`-n MIN-LEN'
+`--bytes=MIN-LEN'
+     Print sequences of characters that are at least MIN-LEN characters
+     long, instead of the default 4.
+
+`-o'
+     Like `-t o'.  Some other versions of `strings' have `-o' act like
+     `-t d' instead.  Since we can not be compatible with both ways, we
+     simply chose one.
+
+`-t RADIX'
+`--radix=RADIX'
+     Print the offset within the file before each string.  The single
+     character argument specifies the radix of the offset--`o' for
+     octal, `x' for hexadecimal, or `d' for decimal.
+
+`--target=BFDNAME'
+     Specify an object code format other than your system's default
+     format.  *Note Target Selection::, for more information.
+
+`-v'
+`--version'
+     Print the program version number on the standard output and exit.
+
+
+File: binutils.info,  Node: strip,  Next: c++filt,  Prev: strings,  Up: Top
+
+strip
+*****
+
+     strip [ -F BFDNAME | --target=BFDNAME ]
+           [ -I BFDNAME | --input-target=BFDNAME ]
+           [ -O BFDNAME | --output-target=BFDNAME ]
+           [ -s | --strip-all ] [ -S | -g | --strip-debug ]
+           [ -K SYMBOLNAME | --keep-symbol=SYMBOLNAME ]
+           [ -N SYMBOLNAME | --strip-symbol=SYMBOLNAME ]
+           [ -x | --discard-all ] [ -X | --discard-locals ]
+           [ -R SECTIONNAME | --remove-section=SECTIONNAME ]
+           [ -o FILE ] [ -p | --preserve-dates ]
+           [ -v | --verbose ]  [ -V | --version ]  [ --help ]
+           OBJFILE...
+
+   GNU `strip' discards all symbols from object files OBJFILE.  The
+list of object files may include archives.  At least one object file
+must be given.
+
+   `strip' modifies the files named in its argument, rather than
+writing modified copies under different names.
+
+`-F BFDNAME'
+`--target=BFDNAME'
+     Treat the original OBJFILE as a file with the object code format
+     BFDNAME, and rewrite it in the same format.  *Note Target
+     Selection::, for more information.
+
+`--help'
+     Show a summary of the options to `strip' and exit.
+
+`-I BFDNAME'
+`--input-target=BFDNAME'
+     Treat the original OBJFILE as a file with the object code format
+     BFDNAME.  *Note Target Selection::, for more information.
+
+`-O BFDNAME'
+`--output-target=BFDNAME'
+     Replace OBJFILE with a file in the output format BFDNAME.  *Note
+     Target Selection::, for more information.
+
+`-R SECTIONNAME'
+`--remove-section=SECTIONNAME'
+     Remove any section named SECTIONNAME from the output file.  This
+     option may be given more than once.  Note that using this option
+     inappropriately may make the output file unusable.
+
+`-s'
+`--strip-all'
+     Remove all symbols.
+
+`-g'
+`-S'
+`--strip-debug'
+     Remove debugging symbols only.
+
+`--strip-unneeded'
+     Remove all symbols that are not needed for relocation processing.
+
+`-K SYMBOLNAME'
+`--keep-symbol=SYMBOLNAME'
+     Keep only symbol SYMBOLNAME from the source file.  This option may
+     be given more than once.
+
+`-N SYMBOLNAME'
+`--strip-symbol=SYMBOLNAME'
+     Remove symbol SYMBOLNAME from the source file. This option may be
+     given more than once, and may be combined with strip options other
+     than `-K'.
+
+`-o FILE'
+     Put the stripped output in FILE, rather than replacing the
+     existing file.  When this argument is used, only one OBJFILE
+     argument may be specified.
+
+`-p'
+`--preserve-dates'
+     Preserve the access and modification dates of the file.
+
+`-x'
+`--discard-all'
+     Remove non-global symbols.
+
+`-X'
+`--discard-locals'
+     Remove compiler-generated local symbols.  (These usually start
+     with `L' or `.'.)
+
+`-V'
+`--version'
+     Show the version number for `strip'.
+
+`-v'
+`--verbose'
+     Verbose output: list all object files modified.  In the case of
+     archives, `strip -v' lists all members of the archive.
+
+
+File: binutils.info,  Node: c++filt,  Next: addr2line,  Prev: strip,  Up: Top
+
+c++filt
+*******
+
+     c++filt [ -_ | --strip-underscores ]
+             [ -j | --java ]
+     	[ -n | --no-strip-underscores ]
+             [ -s FORMAT | --format=FORMAT ]
+             [ --help ]  [ --version ]  [ SYMBOL... ]
+
+   The C++ and Java languages provides function overloading, which means
+that you can write many functions with the same name (providing each
+takes parameters of different types).  All C++ and Java function names
+are encoded into a low-level assembly label (this process is known as
+"mangling"). The `c++filt' (1) program does the inverse mapping: it
+decodes ("demangles") low-level names into user-level names so that the
+linker can keep these overloaded functions from clashing.
+
+   Every alphanumeric word (consisting of letters, digits, underscores,
+dollars, or periods) seen in the input is a potential label.  If the
+label decodes into a C++ name, the C++ name replaces the low-level name
+in the output.
+
+   You can use `c++filt' to decipher individual symbols:
+
+     c++filt SYMBOL
+
+   If no SYMBOL arguments are given, `c++filt' reads symbol names from
+the standard input and writes the demangled names to the standard
+output.  All results are printed on the standard output.
+
+`-_'
+`--strip-underscores'
+     On some systems, both the C and C++ compilers put an underscore in
+     front of every name.  For example, the C name `foo' gets the
+     low-level name `_foo'.  This option removes the initial
+     underscore.  Whether `c++filt' removes the underscore by default
+     is target dependent.
+
+`-j'
+`--java'
+     Prints demangled names using Java syntax.  The default is to use
+     C++ syntax.
+
+`-n'
+`--no-strip-underscores'
+     Do not remove the initial underscore.
+
+`-s FORMAT'
+`--format=FORMAT'
+     GNU `nm' can decode three different methods of mangling, used by
+     different C++ compilers.  The argument to this option selects which
+     method it uses:
+
+    `gnu'
+          the one used by the GNU compiler (the default method)
+
+    `lucid'
+          the one used by the Lucid compiler
+
+    `arm'
+          the one specified by the C++ Annotated Reference Manual
+
+    `hp'
+          the one used by the HP compiler
+
+    `edg'
+          the one used by the EDG compiler
+
+`--help'
+     Print a summary of the options to `c++filt' and exit.
+
+`--version'
+     Print the version number of `c++filt' and exit.
+
+     _Warning:_ `c++filt' is a new utility, and the details of its user
+     interface are subject to change in future releases.  In particular,
+     a command-line option may be required in the the future to decode
+     a name passed as an argument on the command line; in other words,
+
+          c++filt SYMBOL
+
+     may in a future release become
+
+          c++filt OPTION SYMBOL
+
+   ---------- Footnotes ----------
+
+   (1) MS-DOS does not allow `+' characters in file names, so on MS-DOS
+this program is named `cxxfilt'.
+
+
+File: binutils.info,  Node: addr2line,  Next: nlmconv,  Prev: c++filt,  Up: Top
+
+addr2line
+*********
+
+     addr2line [ -b BFDNAME | --target=BFDNAME ]
+               [ -C | --demangle ]
+               [ -e FILENAME | --exe=FILENAME ]
+               [ -f | --functions ] [ -s | --basename ]
+               [ -H | --help ] [ -V | --version ]
+               [ addr addr ... ]
+
+   `addr2line' translates program addresses into file names and line
+numbers.  Given an address and an executable, it uses the debugging
+information in the executable to figure out which file name and line
+number are associated with a given address.
+
+   The executable to use is specified with the `-e' option.  The
+default is the file `a.out'.
+
+   `addr2line' has two modes of operation.
+
+   In the first, hexadecimal addresses are specified on the command
+line, and `addr2line' displays the file name and line number for each
+address.
+
+   In the second, `addr2line' reads hexadecimal addresses from standard
+input, and prints the file name and line number for each address on
+standard output.  In this mode, `addr2line' may be used in a pipe to
+convert dynamically chosen addresses.
+
+   The format of the output is `FILENAME:LINENO'.  The file name and
+line number for each address is printed on a separate line.  If the
+`-f' option is used, then each `FILENAME:LINENO' line is preceded by a
+`FUNCTIONNAME' line which is the name of the function containing the
+address.
+
+   If the file name or function name can not be determined, `addr2line'
+will print two question marks in their place.  If the line number can
+not be determined, `addr2line' will print 0.
+
+   The long and short forms of options, shown here as alternatives, are
+equivalent.
+
+`-b BFDNAME'
+`--target=BFDNAME'
+     Specify that the object-code format for the object files is
+     BFDNAME.
+
+`-C'
+`--demangle'
+     Decode ("demangle") low-level symbol names into user-level names.
+     Besides removing any initial underscore prepended by the system,
+     this makes C++ function names readable.  *Note c++filt::, for more
+     information on demangling.
+
+`-e FILENAME'
+`--exe=FILENAME'
+     Specify the name of the executable for which addresses should be
+     translated.  The default file is `a.out'.
+
+`-f'
+`--functions'
+     Display function names as well as file and line number information.
+
+`-s'
+`--basenames'
+     Display only the base of each file name.
+
+
+File: binutils.info,  Node: nlmconv,  Next: windres,  Prev: addr2line,  Up: Top
+
+nlmconv
+*******
+
+   `nlmconv' converts a relocatable object file into a NetWare Loadable
+Module.
+
+     _Warning:_ `nlmconv' is not always built as part of the binary
+     utilities, since it is only useful for NLM targets.
+
+     nlmconv [ -I BFDNAME | --input-target=BFDNAME ]
+             [ -O BFDNAME | --output-target=BFDNAME ]
+             [ -T HEADERFILE | --header-file=HEADERFILE ]
+             [ -d | --debug]  [ -l LINKER | --linker=LINKER ]
+             [ -h | --help ]  [ -V | --version ]
+             INFILE OUTFILE
+
+   `nlmconv' converts the relocatable `i386' object file INFILE into
+the NetWare Loadable Module OUTFILE, optionally reading HEADERFILE for
+NLM header information.  For instructions on writing the NLM command
+file language used in header files, see the `linkers' section,
+`NLMLINK' in particular, of the `NLM Development and Tools Overview',
+which is part of the NLM Software Developer's Kit ("NLM SDK"),
+available from Novell, Inc.  `nlmconv' uses the GNU Binary File
+Descriptor library to read INFILE; see *Note BFD: (ld.info)BFD, for
+more information.
+
+   `nlmconv' can perform a link step.  In other words, you can list
+more than one object file for input if you list them in the definitions
+file (rather than simply specifying one input file on the command line).
+In this case, `nlmconv' calls the linker for you.
+
+`-I BFDNAME'
+`--input-target=BFDNAME'
+     Object format of the input file.  `nlmconv' can usually determine
+     the format of a given file (so no default is necessary).  *Note
+     Target Selection::, for more information.
+
+`-O BFDNAME'
+`--output-target=BFDNAME'
+     Object format of the output file.  `nlmconv' infers the output
+     format based on the input format, e.g. for a `i386' input file the
+     output format is `nlm32-i386'.  *Note Target Selection::, for more
+     information.
+
+`-T HEADERFILE'
+`--header-file=HEADERFILE'
+     Reads HEADERFILE for NLM header information.  For instructions on
+     writing the NLM command file language used in header files, see
+     see the `linkers' section, of the `NLM Development and Tools
+     Overview', which is part of the NLM Software Developer's Kit,
+     available from Novell, Inc.
+
+`-d'
+`--debug'
+     Displays (on standard error) the linker command line used by
+     `nlmconv'.
+
+`-l LINKER'
+`--linker=LINKER'
+     Use LINKER for any linking.  LINKER can be an absolute or a
+     relative pathname.
+
+`-h'
+`--help'
+     Prints a usage summary.
+
+`-V'
+`--version'
+     Prints the version number for `nlmconv'.
+
+
+File: binutils.info,  Node: windres,  Next: dlltool,  Prev: nlmconv,  Up: Top
+
+windres
+*******
+
+   `windres' may be used to manipulate Windows resources.
+
+     _Warning:_ `windres' is not always built as part of the binary
+     utilities, since it is only useful for Windows targets.
+
+     windres [options] [input-file] [output-file]
+
+   `windres' reads resources from an input file and copies them into an
+output file.  Either file may be in one of three formats:
+
+`rc'
+     A text format read by the Resource Compiler.
+
+`res'
+     A binary format generated by the Resource Compiler.
+
+`coff'
+     A COFF object or executable.
+
+   The exact description of these different formats is available in
+documentation from Microsoft.
+
+   When `windres' converts from the `rc' format to the `res' format, it
+is acting like the Windows Resource Compiler.  When `windres' converts
+from the `res' format to the `coff' format, it is acting like the
+Windows `CVTRES' program.
+
+   When `windres' generates an `rc' file, the output is similar but not
+identical to the format expected for the input.  When an input `rc'
+file refers to an external filename, an output `rc' file will instead
+include the file contents.
+
+   If the input or output format is not specified, `windres' will guess
+based on the file name, or, for the input file, the file contents.  A
+file with an extension of `.rc' will be treated as an `rc' file, a file
+with an extension of `.res' will be treated as a `res' file, and a file
+with an extension of `.o' or `.exe' will be treated as a `coff' file.
+
+   If no output file is specified, `windres' will print the resources
+in `rc' format to standard output.
+
+   The normal use is for you to write an `rc' file, use `windres' to
+convert it to a COFF object file, and then link the COFF file into your
+application.  This will make the resources described in the `rc' file
+available to Windows.
+
+`-i FILENAME'
+`--input FILENAME'
+     The name of the input file.  If this option is not used, then
+     `windres' will use the first non-option argument as the input file
+     name.  If there are no non-option arguments, then `windres' will
+     read from standard input.  `windres' can not read a COFF file from
+     standard input.
+
+`-o FILENAME'
+`--output FILENAME'
+     The name of the output file.  If this option is not used, then
+     `windres' will use the first non-option argument, after any used
+     for the input file name, as the output file name.  If there is no
+     non-option argument, then `windres' will write to standard output.
+     `windres' can not write a COFF file to standard output.
+
+`-I FORMAT'
+`--input-format FORMAT'
+     The input format to read.  FORMAT may be `res', `rc', or `coff'.
+     If no input format is specified, `windres' will guess, as
+     described above.
+
+`-O FORMAT'
+`--output-format FORMAT'
+     The output format to generate.  FORMAT may be `res', `rc', or
+     `coff'.  If no output format is specified, `windres' will guess,
+     as described above.
+
+`-F TARGET'
+`--target TARGET'
+     Specify the BFD format to use for a COFF file as input or output.
+     This is a BFD target name; you can use the `--help' option to see
+     a list of supported targets.  Normally `windres' will use the
+     default format, which is the first one listed by the `--help'
+     option.  *Note Target Selection::.
+
+`--preprocessor PROGRAM'
+     When `windres' reads an `rc' file, it runs it through the C
+     preprocessor first.  This option may be used to specify the
+     preprocessor to use, including any leading arguments.  The default
+     preprocessor argument is `gcc -E -xc-header -DRC_INVOKED'.
+
+`--include-dir DIRECTORY'
+     Specify an include directory to use when reading an `rc' file.
+     `windres' will pass this to the preprocessor as an `-I' option.
+     `windres' will also search this directory when looking for files
+     named in the `rc' file.
+
+`-D TARGET'
+`--define SYM[=VAL]'
+     Specify a `-D' option to pass to the preprocessor when reading an
+     `rc' file.
+
+`-v'
+     Enable verbose mode.  This tells you what the preprocessor is if
+     you didn't specify one.
+
+`--language VAL'
+     Specify the default language to use when reading an `rc' file.
+     VAL should be a hexadecimal language code.  The low eight bits are
+     the language, and the high eight bits are the sublanguage.
+
+`--use-temp-file'
+     Use a temporary file to instead of using popen to read the output
+     of the preprocessor. Use this option if the popen implementation
+     is buggy on the host (eg., certain non-English language versions
+     of Windows 95 and Windows 98 are known to have buggy popen where
+     the output will instead go the console).
+
+`--no-use-temp-file'
+     Use popen, not a temporary file, to read the output of the
+     preprocessor.  This is the default behaviour.
+
+`--help'
+     Prints a usage summary.
+
+`--version'
+     Prints the version number for `windres'.
+
+`--yydebug'
+     If `windres' is compiled with `YYDEBUG' defined as `1', this will
+     turn on parser debugging.
+
+
+File: binutils.info,  Node: dlltool,  Next: Selecting The Target System,  Prev: windres,  Up: Top
+
+Create files needed to build and use DLLs
+*****************************************
+
+   `dlltool' may be used to create the files needed to build and use
+dynamic link libraries (DLLs).
+
+     _Warning:_ `dlltool' is not always built as part of the binary
+     utilities, since it is only useful for those targets which support
+     DLLs.
+
+     dlltool [-d|--input-def DEF-FILE-NAME]
+             [-b|--base-file BASE-FILE-NAME]
+             [-e|--output-exp EXPORTS-FILE-NAME]
+             [-z|--output-def DEF-FILE-NAME]
+             [-l|--output-lib LIBRARY-FILE-NAME]
+             [--export-all-symbols] [--no-export-all-symbols]
+             [--exclude-symbols LIST]
+             [--no-default-excludes]
+             [-S|--as PATH-TO-ASSEMBLER] [-f|--as-flags OPTIONS]
+             [-D|--dllname NAME] [-m|--machine MACHINE]
+             [-a|--add-indirect] [-U|--add-underscore] [-k|--kill-at]
+             [-A|--add-stdcall-alias]
+             [-x|--no-idata4] [-c|--no-idata5] [-i|--interwork]
+             [-n|--nodelete] [-v|--verbose] [-h|--help] [-V|--version]
+             [object-file ...]
+
+   `dlltool' reads its inputs, which can come from the `-d' and `-b'
+options as well as object files specified on the command line.  It then
+processes these inputs and if the `-e' option has been specified it
+creates a exports file.  If the `-l' option has been specified it
+creates a library file and if the `-z' option has been specified it
+creates a def file.  Any or all of the -e, -l and -z options can be
+present in one invocation of dlltool.
+
+   When creating a DLL, along with the source for the DLL, it is
+necessary to have three other files.  `dlltool' can help with the
+creation of these files.
+
+   The first file is a `.def' file which specifies which functions are
+exported from the DLL, which functions the DLL imports, and so on.  This
+is a text file and can be created by hand, or `dlltool' can be used to
+create it using the `-z' option.  In this case `dlltool' will scan the
+object files specified on its command line looking for those functions
+which have been specially marked as being exported and put entries for
+them in the .def file it creates.
+
+   In order to mark a function as being exported from a DLL, it needs to
+have an `-export:<name_of_function>' entry in the `.drectve' section of
+the object file.  This can be done in C by using the asm() operator:
+
+       asm (".section .drectve");
+       asm (".ascii \"-export:my_func\"");
+     
+       int my_func (void) { ... }
+
+   The second file needed for DLL creation is an exports file.  This
+file is linked with the object files that make up the body of the DLL
+and it handles the interface between the DLL and the outside world.
+This is a binary file and it can be created by giving the `-e' option to
+`dlltool' when it is creating or reading in a .def file.
+
+   The third file needed for DLL creation is the library file that
+programs will link with in order to access the functions in the DLL.
+This file can be created by giving the `-l' option to dlltool when it
+is creating or reading in a .def file.
+
+   `dlltool' builds the library file by hand, but it builds the exports
+file by creating temporary files containing assembler statements and
+then assembling these.  The `-S' command line option can be used to
+specify the path to the assembler that dlltool will use, and the `-f'
+option can be used to pass specific flags to that assembler.  The `-n'
+can be used to prevent dlltool from deleting these temporary assembler
+files when it is done, and if `-n' is specified twice then this will
+prevent dlltool from deleting the temporary object files it used to
+build the library.
+
+   Here is an example of creating a DLL from a source file `dll.c' and
+also creating a program (from an object file called `program.o') that
+uses that DLL:
+
+       gcc -c dll.c
+       dlltool -e exports.o -l dll.lib dll.o
+       gcc dll.o exports.o -o dll.dll
+       gcc program.o dll.lib -o program
+
+   The command line options have the following meanings:
+
+`-d FILENAME'
+`--input-def FILENAME'
+     Specifies the name of a .def file to be read in and processed.
+
+`-b FILENAME'
+`--base-file FILENAME'
+     Specifies the name of a base file to be read in and processed.  The
+     contents of this file will be added to the relocation section in
+     the exports file generated by dlltool.
+
+`-e FILENAME'
+`--output-exp FILENAME'
+     Specifies the name of the export file to be created by dlltool.
+
+`-z FILENAME'
+`--output-def FILENAME'
+     Specifies the name of the .def file to be created by dlltool.
+
+`-l FILENAME'
+`--output-lib FILENAME'
+     Specifies the name of the library file to be created by dlltool.
+
+`--export-all-symbols'
+     Treat all global and weak defined symbols found in the input object
+     files as symbols to be exported.  There is a small list of symbols
+     which are not exported by default; see the `--no-default-excludes'
+     option.  You may add to the list of symbols to not export by using
+     the `--exclude-symbols' option.
+
+`--no-export-all-symbols'
+     Only export symbols explicitly listed in an input .def file or in
+     `.drectve' sections in the input object files.  This is the default
+     behaviour.  The `.drectve' sections are created by `dllexport'
+     attributes in the source code.
+
+`--exclude-symbols LIST'
+     Do not export the symbols in LIST.  This is a list of symbol names
+     separated by comma or colon characters.  The symbol names should
+     not contain a leading underscore.  This is only meaningful when
+     `--export-all-symbols' is used.
+
+`--no-default-excludes'
+     When `--export-all-symbols' is used, it will by default avoid
+     exporting certain special symbols.  The current list of symbols to
+     avoid exporting is `DllMain@12', `DllEntryPoint@0', `impure_ptr'.
+     You may use the `--no-default-excludes' option to go ahead and
+     export these special symbols.  This is only meaningful when
+     `--export-all-symbols' is used.
+
+`-S PATH'
+`--as PATH'
+     Specifies the path, including the filename, of the assembler to be
+     used to create the exports file.
+
+`-f SWITCHES'
+`--as-flags SWITCHES'
+     Specifies any specific command line switches to be passed to the
+     assembler when building the exports file.  This option will work
+     even if the `-S' option is not used.  This option only takes one
+     argument, and if it occurs more than once on the command line,
+     then later occurrences will override earlier occurrences.  So if
+     it is necessary to pass multiple switches to the assembler they
+     should be enclosed in double quotes.
+
+`-D NAME'
+`--dll-name NAME'
+     Specifies the name to be stored in the .def file as the name of
+     the DLL when the `-e' option is used.  If this option is not
+     present, then the filename given to the `-e' option will be used
+     as the name of the DLL.
+
+`-m MACHINE'
+`-machine MACHINE'
+     Specifies the type of machine for which the library file should be
+     built.  `dlltool' has a built in default type, depending upon how
+     it was created, but this option can be used to override that.
+     This is normally only useful when creating DLLs for an ARM
+     processor, when the contents of the DLL are actually encode using
+     THUMB instructions.
+
+`-a'
+`--add-indirect'
+     Specifies that when `dlltool' is creating the exports file it
+     should add a section which allows the exported functions to be
+     referenced without using the import library.  Whatever the hell
+     that means!
+
+`-U'
+`--add-underscore'
+     Specifies that when `dlltool' is creating the exports file it
+     should prepend an underscore to the names of the exported
+     functions.
+
+`-k'
+`--kill-at'
+     Specifies that when `dlltool' is creating the exports file it
+     should not append the string `@ <number>'.  These numbers are
+     called ordinal numbers and they represent another way of accessing
+     the function in a DLL, other than by name.
+
+`-A'
+`--add-stdcall-alias'
+     Specifies that when `dlltool' is creating the exports file it
+     should add aliases for stdcall symbols without `@ <number>' in
+     addition to the symbols with `@ <number>'.
+
+`-x'
+`--no-idata4'
+     Specifies that when `dlltool' is creating the exports and library
+     files it should omit the .idata4 section.  This is for
+     compatibility with certain operating systems.
+
+`-c'
+`--no-idata5'
+     Specifies that when `dlltool' is creating the exports and library
+     files it should omit the .idata5 section.  This is for
+     compatibility with certain operating systems.
+
+`-i'
+`--interwork'
+     Specifies that `dlltool' should mark the objects in the library
+     file and exports file that it produces as supporting interworking
+     between ARM and THUMB code.
+
+`-n'
+`--nodelete'
+     Makes `dlltool' preserve the temporary assembler files it used to
+     create the exports file.  If this option is repeated then dlltool
+     will also preserve the temporary object files it uses to create
+     the library file.
+
+`-v'
+`--verbose'
+     Make dlltool describe what it is doing.
+
+`-h'
+`--help'
+     Displays a list of command line options and then exits.
+
+`-V'
+`--version'
+     Displays dlltool's version number and then exits.
+
+
+File: binutils.info,  Node: readelf,  Next: size,  Prev: ranlib,  Up: Top
+
+readelf
+*******
+
+     readelf [ -a | --all ]
+             [ -h | --file-header]
+             [ -l | --program-headers | --segments]
+             [ -S | --section-headers | --sections]
+             [ -e | --headers]
+             [ -s | --syms | --symbols]
+             [ -n | --notes]
+             [ -r | --relocs]
+             [ -d | --dynamic]
+             [ -V | --version-info]
+             [ -D | --use-dynamic]
+             [ -x <number> | --hex-dump=<number>]
+             [ -w[liapr] | --debug-dump[=info,=line,=abbrev,=pubnames,=ranges]]
+             [      --histogram]
+             [ -v | --version]
+             [ -H | --help]
+             ELFFILE...
+
+   `readelf' displays information about one or more ELF format object
+files.  The options control what particular information to display.
+
+   ELFFILE... are the object files to be examined.  At the moment,
+`readelf' does not support examining archives, nor does it support
+examing 64 bit ELF files.
+
+   The long and short forms of options, shown here as alternatives, are
+equivalent.  At least one option besides `-v' or `-H' must be given.
+
+`-a'
+`--all'
+     Equivalent to specifiying `--file-header', `--program-headers',
+     `--sections', `--symbols', `--relocs', `--dynamic', `--notes' and
+     `--version-info'.
+
+`-h'
+`--file-header'
+     Displays the information contained in the ELF header at the start
+     of the file.
+
+`-l'
+`--program-headers'
+`--segments'
+     Displays the information contained in the file's segment headers,
+     if it has any.
+
+`-S'
+`--sections'
+`--section-headers'
+     Displays the information contained in the file's section headers,
+     if it has any.
+
+`-s'
+`--symbols'
+`--syms'
+     Displays the entries in symbol table section of the file, if it
+     has one.
+
+`-e'
+`--headers'
+     Display all the headers in the file.  Equivalent to `-h -l -S'.
+
+`-n'
+`--notes'
+     Displays the contents of the NOTE segment, if it exists.
+
+`-r'
+`--relocs'
+     Displays the contents of the file's relocation section, if it ha
+     one.
+
+`-d'
+`--dynamic'
+     Displays the contents of the file's dynamic section, if it has one.
+
+`-V'
+`--version-info'
+     Displays the contents of the version sections in the file, it they
+     exist.
+
+`-D'
+`--use-dynamic'
+     When displaying symbols, this option makes `readelf' use the
+     symblol table in the file's dynamic section, rather than the one
+     in the symbols section.
+
+`-x <number>'
+`--hex-dump=<number>'
+     Displays the contents of the indicated section as a hexadecimal
+     dump.
+
+`-w[liapr]'
+`--debug-dump[=line,=info,=abbrev,=pubnames,=ranges]'
+     Displays the contents of the debug sections in the file, if any are
+     present.  If one of the optional letters or words follows the
+     switch then only data found in those specific sections will be
+     dumped.
+
+`--histogram'
+     Display a histogram of bucket list lengths when displaying the
+     contents of the symbol tables.
+
+`-v'
+`--version'
+     Display the version number of readelf.
+
+`-H'
+`--help'
+     Display the command line options understood by `readelf'.
+
+
+File: binutils.info,  Node: Selecting The Target System,  Next: Reporting Bugs,  Prev: dlltool,  Up: Top
+
+Selecting the target system
+***************************
+
+   You can specify three aspects of the target system to the GNU binary
+file utilities, each in several ways:
+
+   * the target
+
+   * the architecture
+
+   * the linker emulation (which applies to the linker only)
+
+   In the following summaries, the lists of ways to specify values are
+in order of decreasing precedence.  The ways listed first override those
+listed later.
+
+   The commands to list valid values only list the values for which the
+programs you are running were configured.  If they were configured with
+`--enable-targets=all', the commands list most of the available values,
+but a few are left out; not all targets can be configured in at once
+because some of them can only be configured "native" (on hosts with the
+same type as the target system).
+
+* Menu:
+
+* Target Selection::
+* Architecture Selection::
+* Linker Emulation Selection::
+
+
+File: binutils.info,  Node: Target Selection,  Next: Architecture Selection,  Up: Selecting The Target System
+
+Target Selection
+================
+
+   A "target" is an object file format.  A given target may be
+supported for multiple architectures (*note Architecture Selection::).
+A target selection may also have variations for different operating
+systems or architectures.
+
+   The command to list valid target values is `objdump -i' (the first
+column of output contains the relevant information).
+
+   Some sample values are: `a.out-hp300bsd', `ecoff-littlemips',
+`a.out-sunos-big'.
+
+   You can also specify a target using a configuration triplet.  This is
+the same sort of name that is passed to `configure' to specify a
+target.  When you use a configuration triplet as an argument, it must be
+fully canonicalized.  You can see the canonical version of a triplet by
+running the shell script `config.sub' which is included with the
+sources.
+
+   Some sample configuration triplets are: `m68k-hp-bsd',
+`mips-dec-ultrix', `sparc-sun-sunos'.
+
+`objdump' Target
+----------------
+
+   Ways to specify:
+
+  1. command line option: `-b' or `--target'
+
+  2. environment variable `GNUTARGET'
+
+  3. deduced from the input file
+
+`objcopy' and `strip' Input Target
+----------------------------------
+
+   Ways to specify:
+
+  1. command line options: `-I' or `--input-target', or `-F' or
+     `--target'
+
+  2. environment variable `GNUTARGET'
+
+  3. deduced from the input file
+
+`objcopy' and `strip' Output Target
+-----------------------------------
+
+   Ways to specify:
+
+  1. command line options: `-O' or `--output-target', or `-F' or
+     `--target'
+
+  2. the input target (see "`objcopy' and `strip' Input Target" above)
+
+  3. environment variable `GNUTARGET'
+
+  4. deduced from the input file
+
+`nm', `size', and `strings' Target
+----------------------------------
+
+   Ways to specify:
+
+  1. command line option: `--target'
+
+  2. environment variable `GNUTARGET'
+
+  3. deduced from the input file
+
+Linker Input Target
+-------------------
+
+   Ways to specify:
+
+  1. command line option: `-b' or `--format' (*note Options:
+     (ld.info)Options.)
+
+  2. script command `TARGET' (*note Option Commands: (ld.info)Option
+     Commands.)
+
+  3. environment variable `GNUTARGET' (*note Environment:
+     (ld.info)Environment.)
+
+  4. the default target of the selected linker emulation (*note Linker
+     Emulation Selection::)
+
+Linker Output Target
+--------------------
+
+   Ways to specify:
+
+  1. command line option: `-oformat' (*note Options: (ld.info)Options.)
+
+  2. script command `OUTPUT_FORMAT' (*note Option Commands:
+     (ld.info)Option Commands.)
+
+  3. the linker input target (see "Linker Input Target" above)
+
+
+File: binutils.info,  Node: Architecture Selection,  Next: Linker Emulation Selection,  Prev: Target Selection,  Up: Selecting The Target System
+
+Architecture selection
+======================
+
+   An "architecture" is a type of CPU on which an object file is to
+run.  Its name may contain a colon, separating the name of the
+processor family from the name of the particular CPU.
+
+   The command to list valid architecture values is `objdump -i' (the
+second column contains the relevant information).
+
+   Sample values: `m68k:68020', `mips:3000', `sparc'.
+
+`objdump' Architecture
+----------------------
+
+   Ways to specify:
+
+  1. command line option: `-m' or `--architecture'
+
+  2. deduced from the input file
+
+`objcopy', `nm', `size', `strings' Architecture
+-----------------------------------------------
+
+   Ways to specify:
+
+  1. deduced from the input file
+
+Linker Input Architecture
+-------------------------
+
+   Ways to specify:
+
+  1. deduced from the input file
+
+Linker Output Architecture
+--------------------------
+
+   Ways to specify:
+
+  1. script command `OUTPUT_ARCH' (*note Option Commands:
+     (ld.info)Option Commands.)
+
+  2. the default architecture from the linker output target (*note
+     Target Selection::)
+
+
+File: binutils.info,  Node: Linker Emulation Selection,  Prev: Architecture Selection,  Up: Selecting The Target System
+
+Linker emulation selection
+==========================
+
+   A linker "emulation" is a "personality" of the linker, which gives
+the linker default values for the other aspects of the target system.
+In particular, it consists of
+
+   * the linker script
+
+   * the target
+
+   * several "hook" functions that are run at certain stages of the
+     linking process to do special things that some targets require
+
+   The command to list valid linker emulation values is `ld -V'.
+
+   Sample values: `hp300bsd', `mipslit', `sun4'.
+
+   Ways to specify:
+
+  1. command line option: `-m' (*note Options: (ld.info)Options.)
+
+  2. environment variable `LDEMULATION'
+
+  3. compiled-in `DEFAULT_EMULATION' from `Makefile', which comes from
+     `EMUL' in `config/TARGET.mt'
+
+
+File: binutils.info,  Node: Reporting Bugs,  Next: Index,  Prev: Selecting The Target System,  Up: Top
+
+Reporting Bugs
+**************
+
+   Your bug reports play an essential role in making the binary
+utilities reliable.
+
+   Reporting a bug may help you by bringing a solution to your problem,
+or it may not.  But in any case the principal function of a bug report
+is to help the entire community by making the next version of the binary
+utilities work better.  Bug reports are your contribution to their
+maintenance.
+
+   In order for a bug report to serve its purpose, you must include the
+information that enables us to fix the bug.
+
+* Menu:
+
+* Bug Criteria::                Have you found a bug?
+* Bug Reporting::               How to report bugs
+
+
+File: binutils.info,  Node: Bug Criteria,  Next: Bug Reporting,  Up: Reporting Bugs
+
+Have you found a bug?
+=====================
+
+   If you are not sure whether you have found a bug, here are some
+guidelines:
+
+   * If a binary utility gets a fatal signal, for any input whatever,
+     that is a bug.  Reliable utilities never crash.
+
+   * If a binary utility produces an error message for valid input,
+     that is a bug.
+
+   * If you are an experienced user of binary utilities, your
+     suggestions for improvement are welcome in any case.
+
+
+File: binutils.info,  Node: Bug Reporting,  Prev: Bug Criteria,  Up: Reporting Bugs
+
+How to report bugs
+==================
+
+   A number of companies and individuals offer support for GNU
+products.  If you obtained the binary utilities from a support
+organization, we recommend you contact that organization first.
+
+   You can find contact information for many support companies and
+individuals in the file `etc/SERVICE' in the GNU Emacs distribution.
+
+   In any event, we also recommend that you send bug reports for the
+binary utilities to `bug-gnu-utils@gnu.org'.
+
+   The fundamental principle of reporting bugs usefully is this:
+*report all the facts*.  If you are not sure whether to state a fact or
+leave it out, state it!
+
+   Often people omit facts because they think they know what causes the
+problem and assume that some details do not matter.  Thus, you might
+assume that the name of a file you use in an example does not matter.
+Well, probably it does not, but one cannot be sure.  Perhaps the bug is
+a stray memory reference which happens to fetch from the location where
+that pathname is stored in memory; perhaps, if the pathname were
+different, the contents of that location would fool the utility into
+doing the right thing despite the bug.  Play it safe and give a
+specific, complete example.  That is the easiest thing for you to do,
+and the most helpful.
+
+   Keep in mind that the purpose of a bug report is to enable us to fix
+the bug if it is new to us.  Therefore, always write your bug reports
+on the assumption that the bug has not been reported previously.
+
+   Sometimes people give a few sketchy facts and ask, "Does this ring a
+bell?"  Those bug reports are useless, and we urge everyone to _refuse
+to respond to them_ except to chide the sender to report bugs properly.
+
+   To enable us to fix the bug, you should include all these things:
+
+   * The version of the utility.  Each utility announces it if you
+     start it with the `--version' argument.
+
+     Without this, we will not know whether there is any point in
+     looking for the bug in the current version of the binary utilities.
+
+   * Any patches you may have applied to the source, including any
+     patches made to the `BFD' library.
+
+   * The type of machine you are using, and the operating system name
+     and version number.
+
+   * What compiler (and its version) was used to compile the
+     utilities--e.g.  "`gcc-2.7'".
+
+   * The command arguments you gave the utility to observe the bug.  To
+     guarantee you will not omit something important, list them all.  A
+     copy of the Makefile (or the output from make) is sufficient.
+
+     If we were to try to guess the arguments, we would probably guess
+     wrong and then we might not encounter the bug.
+
+   * A complete input file, or set of input files, that will reproduce
+     the bug.  If the utility is reading an object file or files, then
+     it is generally most helpful to send the actual object files,
+     uuencoded if necessary to get them through the mail system.  Note
+     that `bug-gnu-utils@gnu.org' is a mailing list, so you should avoid
+     sending very large files to it.  Making the files available for
+     anonymous FTP is OK.
+
+     If the source files were produced exclusively using GNU programs
+     (e.g., `gcc', `gas', and/or the GNU `ld'), then it may be OK to
+     send the source files rather than the object files.  In this case,
+     be sure to say exactly what version of `gcc', or whatever, was
+     used to produce the object files.  Also say how `gcc', or
+     whatever, was configured.
+
+   * A description of what behavior you observe that you believe is
+     incorrect.  For example, "It gets a fatal signal."
+
+     Of course, if the bug is that the utility gets a fatal signal,
+     then we will certainly notice it.  But if the bug is incorrect
+     output, we might not notice unless it is glaringly wrong.  You
+     might as well not give us a chance to make a mistake.
+
+     Even if the problem you experience is a fatal signal, you should
+     still say so explicitly.  Suppose something strange is going on,
+     such as your copy of the utility is out of synch, or you have
+     encountered a bug in the C library on your system.  (This has
+     happened!)  Your copy might crash and ours would not.  If you told
+     us to expect a crash, then when ours fails to crash, we would know
+     that the bug was not happening for us.  If you had not told us to
+     expect a crash, then we would not be able to draw any conclusion
+     from our observations.
+
+   * If you wish to suggest changes to the source, send us context
+     diffs, as generated by `diff' with the `-u', `-c', or `-p' option.
+     Always send diffs from the old file to the new file.  If you wish
+     to discuss something in the `ld' source, refer to it by context,
+     not by line number.
+
+     The line numbers in our development sources will not match those
+     in your sources.  Your line numbers would convey no useful
+     information to us.
+
+   Here are some things that are not necessary:
+
+   * A description of the envelope of the bug.
+
+     Often people who encounter a bug spend a lot of time investigating
+     which changes to the input file will make the bug go away and which
+     changes will not affect it.
+
+     This is often time consuming and not very useful, because the way
+     we will find the bug is by running a single example under the
+     debugger with breakpoints, not by pure deduction from a series of
+     examples.  We recommend that you save your time for something else.
+
+     Of course, if you can find a simpler example to report _instead_
+     of the original one, that is a convenience for us.  Errors in the
+     output will be easier to spot, running under the debugger will take
+     less time, and so on.
+
+     However, simplification is not vital; if you do not want to do
+     this, report the bug anyway and send us the entire test case you
+     used.
+
+   * A patch for the bug.
+
+     A patch for the bug does help us if it is a good one.  But do not
+     omit the necessary information, such as the test case, on the
+     assumption that a patch is all we need.  We might see problems
+     with your patch and decide to fix the problem another way, or we
+     might not understand it at all.
+
+     Sometimes with programs as complicated as the binary utilities it
+     is very hard to construct an example that will make the program
+     follow a certain path through the code.  If you do not send us the
+     example, we will not be able to construct one, so we will not be
+     able to verify that the bug is fixed.
+
+     And if we cannot understand what bug you are trying to fix, or why
+     your patch should be an improvement, we will not install it.  A
+     test case will help us to understand.
+
+   * A guess about what the bug is or what it depends on.
+
+     Such guesses are usually wrong.  Even we cannot guess right about
+     such things without first using the debugger to find the facts.
+

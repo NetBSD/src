@@ -1,0 +1,74 @@
+This is binutils.info, produced by makeinfo version 4.0 from
+binutils.texi.
+
+START-INFO-DIR-ENTRY
+* Binutils: (binutils).         The GNU binary utilities.
+* ar: (binutils)ar.               Create, modify, and extract from archives
+* nm: (binutils)nm.               List symbols from object files
+* objcopy: (binutils)objcopy.	  Copy and translate object files
+* objdump: (binutils)objdump.     Display information from object files
+* ranlib: (binutils)ranlib.       Generate index to archive contents
+* readelf: (binutils)readelf.	  Display the contents of ELF format files.
+* size: (binutils)size.           List section sizes and total size
+* strings: (binutils)strings.     List printable strings from files
+* strip: (binutils)strip.         Discard symbols
+* c++filt: (binutils)c++filt.	  Filter to demangle encoded C++ symbols
+* cxxfilt: (binutils)c++filt.     MS-DOS name for c++filt
+* addr2line: (binutils)addr2line. Convert addresses to file and line
+* nlmconv: (binutils)nlmconv.     Converts object code into an NLM
+* windres: (binutils)windres.	  Manipulate Windows resources
+* dlltool: (binutils)dlltool.	  Create files needed to build and use DLLs
+END-INFO-DIR-ENTRY
+
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
+Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+Indirect:
+binutils.info-1: 1845
+binutils.info-2: 49760
+binutils.info-3: 96951
+
+Tag Table:
+(Indirect)
+Node: Top1845
+Node: ar3094
+Node: ar cmdline5268
+Node: ar scripts13107
+Node: nm18786
+Node: objcopy25756
+Node: objdump38583
+Node: ranlib49011
+Node: size49760
+Node: strings52491
+Node: strip54316
+Node: c++filt57281
+Ref: c++filt-Footnote-160138
+Node: addr2line60244
+Node: nlmconv62650
+Node: windres65254
+Node: dlltool70306
+Node: readelf79647
+Node: Selecting The Target System82798
+Node: Target Selection83815
+Node: Architecture Selection86516
+Node: Linker Emulation Selection87747
+Node: Reporting Bugs88625
+Node: Bug Criteria89376
+Node: Bug Reporting89922
+Node: Index96951
+
+End Tag Table
