@@ -1,4 +1,9 @@
-/*	$NetBSD: locore.S,v 1.20 1996/03/31 03:38:34 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.21 1996/05/19 00:25:14 jonathan Exp $	*/
+
+/*
+ * locore file for either "new" merged MIPS-I/MIPS-II kernels or
+ * old-style pmax kernels
+ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1424,6 +1429,7 @@ SlowFault:
 #define	KERN_EXC_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 12)
 
 NNON_LEAF(MachKernGenException, KERN_EXC_FRAME_SIZE, ra)
+ALEAF(mips_r2000_KernGenException)
 	.set	noat
 #ifdef KADB
 	la	k0, kdbpcb			# save registers for kadb
@@ -1528,6 +1534,7 @@ END(MachKernGenException)
  *----------------------------------------------------------------------------
  */
 NNON_LEAF(MachUserGenException, STAND_FRAME_SIZE, ra)
+ALEAF(mips_r2000_UserGenException)
 	.set	noat
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 /*
@@ -1653,6 +1660,7 @@ END(MachUserGenException)
 #define	KINTR_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 16)
 
 NNON_LEAF(MachKernIntr, KINTR_FRAME_SIZE, ra)
+ALEAF(mips_r2000_KernIntr)
 	.set	noat
 	subu	sp, sp, KINTR_FRAME_SIZE	# allocate stack frame
 	.mask	0x80000000, (STAND_RA_OFFSET - KINTR_FRAME_SIZE)
@@ -1750,6 +1758,7 @@ END(MachKernIntr)
  *----------------------------------------------------------------------------
  */
 NNON_LEAF(MachUserIntr, STAND_FRAME_SIZE, ra)
+ALEAF(mips_r2000_UserIntr)
 	.set	noat
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 /*
@@ -2147,6 +2156,7 @@ END(MachEmptyWriteBuffer)
  *----------------------------------------------------------------------------
  */
 NLEAF(MachTLBModException)
+ALEAF(mips_r2000_TLBModException)
 	.set	noat
 	tlbp					# find the TLB entry
 	mfc0	k0, MACH_COP_0_TLB_LOW		# get the physical address
@@ -2190,6 +2200,7 @@ END(MachTLBModException)
  *----------------------------------------------------------------------------
  */
 NLEAF(MachTLBMissException)
+ALEAF(mips_r2000_TLBMissException)
 	.set	noat
 	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
@@ -2262,6 +2273,7 @@ END(MachTLBMissException)
  *--------------------------------------------------------------------------
  */
 LEAF(MachTLBWriteIndexed)
+ALEAF(mips_r2000_TLBWriteIndexed)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Save the current PID.
@@ -2332,6 +2344,7 @@ END(MachTLBWriteRandom)
  *--------------------------------------------------------------------------
  */
 LEAF(MachSetPID)
+ALEAF(mips_r2000_SetPID)
 	sll	a0, a0, VMMACH_TLB_PID_SHIFT	# put PID in right spot
 	mtc0	a0, MACH_COP_0_TLB_HI		# Write the hi reg value
 	j	ra
@@ -2355,6 +2368,7 @@ END(MachSetPID)
  *--------------------------------------------------------------------------
  */
 LEAF(MachTLBFlush)
+ALEAF(mips_r2000_TLBFlush)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Save the PID
@@ -2446,6 +2460,7 @@ END(MachTLBFlushPID)
  *--------------------------------------------------------------------------
  */
 LEAF(MachTLBFlushAddr)
+ALEAF(mips_r2000_TLBFlushAddr)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
@@ -2485,6 +2500,7 @@ END(MachTLBFlushAddr)
  *--------------------------------------------------------------------------
  */
 LEAF(MachTLBUpdate)
+ALEAF(mips_r2000_TLBUpdate)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Save current PID
@@ -2636,6 +2652,7 @@ END(MachTLBGetPID)
  *----------------------------------------------------------------------------
  */
 NON_LEAF(MachConfigCache, STAND_FRAME_SIZE, ra)
+ALEAF(mips_r2000_ConfigCache)
 	subu	sp, sp, STAND_FRAME_SIZE
 	sw	ra, STAND_RA_OFFSET(sp)		# Save return address.
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
@@ -2696,6 +2713,7 @@ END(MachConfigCache)
  *----------------------------------------------------------------------------
  */
 LEAF(SizeCache)
+ALEAF(mips_r2000_SizeCache)
 	mfc0	t0, MACH_COP_0_STATUS_REG	# Save the current status reg.
 	nop
 	or	v0, t0, MACH_SR_ISOL_CACHES	# Isolate the caches.
@@ -2754,6 +2772,7 @@ END(SizeCache)
  *----------------------------------------------------------------------------
  */
 LEAF(MachFlushCache)
+ALEAF(mips_r2000_FlushCache)
 	lw	t1, _C_LABEL(machInstCacheSize)	# Must load before isolating
 	lw	t2, _C_LABEL(machDataCacheSize)	# Must load before isolating
 	mfc0	t3, MACH_COP_0_STATUS_REG 	# Save the status register.
@@ -2831,6 +2850,7 @@ END(MachFlushCache)
  *----------------------------------------------------------------------------
  */
 LEAF(MachFlushICache)
+ALEAF(mips_r2000_FlushICache)
 	mfc0	t0, MACH_COP_0_STATUS_REG	# Save SR
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
 
@@ -2873,6 +2893,7 @@ END(MachFlushICache)
  *----------------------------------------------------------------------------
  */
 LEAF(MachFlushDCache)
+ALEAF(mips_r2000_FlushDCache)
 	mfc0	t0, MACH_COP_0_STATUS_REG	# Save SR
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
 	nop
@@ -3115,6 +3136,7 @@ END(MachTLBMissException)
  *--------------------------------------------------------------------------
  */
 LEAF(MachTLBWriteIndexed)
+ALEAF(mips_r2000_TLBWriteIndexed)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	nop
@@ -3643,6 +3665,7 @@ END(MachFlushICache)
  *----------------------------------------------------------------------------
  */
 LEAF(MachFlushDCache)
+ALEAF(mips_r2000_FlushDCache)
 	lw	a2, machPrimaryDataCacheSize
 	addiu	a2, -1
 	and	a0, a0, a2
