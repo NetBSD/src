@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.12 1996/04/18 21:21:11 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.13 1996/04/25 13:50:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -267,6 +267,7 @@ vm86_return(p, retval)
 #define	CLI	0xFA
 #define	STI	0xFB
 #define	INTxx	0xCD
+#define	INTO	0xCE
 #define	IRET	0xCF
 #define	OPSIZ	0x66
 #define	INT3	0xCC	/* Actually the process gets 32-bit IDT to handle it */
@@ -326,6 +327,11 @@ vm86_gpfault(p, type)
 		tmpbyte = getbyte(cs, ip);
 		IP(tf) = ip;
 		fast_intxx(p, tmpbyte);
+		break;
+
+	case INTO:
+		if (tf->tf_eflags & PSL_V)
+			fast_intxx(p, 4);
 		break;
 
 	case PUSHF:
