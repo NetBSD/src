@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 1998/08/25 03:59:01 scottr Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 1998/08/25 04:03:56 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -142,7 +142,7 @@ extern volatile u_int8_t ssir;
 /* intr.c */
 void	intr_establish __P((int (*)(void *), void *, int));
 void	intr_disestablish __P((int));
-int	intr_dispatch __P((int));
+void	intr_dispatch __P((int));
 
 /* locore.s */
 int	spl0 __P((void));
