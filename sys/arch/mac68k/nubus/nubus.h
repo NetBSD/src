@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.14 1996/05/07 03:13:40 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.15 1996/12/17 03:56:11 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -225,6 +225,16 @@ typedef struct _NUBUS_EXEC_BLOCK {
 
 #define NUBUS_SLOT_TO_PADDR(x)	( 0xF9000000 + \
 				 ((((x)-NUBUS_MIN_SLOT) & 0xF) << 24))
+
+struct nubus_attach_args {
+	int		slot;
+	int		rsrcid;
+	u_int16_t	category;
+	u_int16_t	type;
+	u_int16_t	drsw;
+	u_int16_t	drhw;
+	nubus_slot	*fmt;
+};
 
 struct nubus_softc {
 	struct	device	sc_dev;
