@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.41 1999/05/06 01:01:19 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.42 1999/05/06 01:10:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -178,7 +178,6 @@ pci_probe_bus(self)
 			pa.pa_memt = memt;
 			pa.pa_dmat = sc->sc_dmat;
 			pa.pa_pc = pc;
-			pa.pa_bus = bus;
 			pa.pa_device = device;
 			pa.pa_function = function;
 			pa.pa_tag = tag;
