@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.1.1.1 2000/10/31 10:45:04 itojun Exp $	*/
+/*	$NetBSD: gettext.c,v 1.2 2000/10/31 11:05:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gettext.c,v 1.1.1.1 2000/10/31 10:45:04 itojun Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.2 2000/10/31 11:05:22 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -326,12 +326,12 @@ mapit(path)
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
 		goto fail;
-	if (read(fd, &magic, sizeof(magic)) < 0 ||
+	if (read(fd, &magic, sizeof(magic)) != sizeof(magic) ||
 	    (magic != MO_MAGIC && magic != MO_MAGIC_SWAPPED)) {
 		close(fd);
 		goto fail;
 	}
-	if (read(fd, &revision, sizeof(revision)) < 0 ||
+	if (read(fd, &revision, sizeof(revision)) != sizeof(revision) ||
 	    flip(revision, magic) != MO_REVISION) {
 		close(fd);
 		goto fail;
