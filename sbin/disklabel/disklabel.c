@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.83 2000/05/27 19:01:13 jdolecek Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.84 2000/05/31 14:13:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.83 2000/05/27 19:01:13 jdolecek Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.84 2000/05/31 14:13:48 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,12 +129,13 @@ static enum	{
 static int	rflag;
 static int	tflag;
 static int	Cflag;
+static int	Iflag;
 
 #ifdef DEBUG
 static int	debug;
-#define OPTIONS	"BCNRWb:def:irs:tw"
+#define OPTIONS	"BCINRWb:def:irs:tw"
 #else
-#define OPTIONS	"BCNRWb:ef:irs:tw"
+#define OPTIONS	"BCINRWb:ef:irs:tw"
 #endif
 
 #ifdef USE_MBR
@@ -194,6 +195,9 @@ main(argc, argv)
 #endif
 		case 'C':
 			++Cflag;
+			break;
+		case 'I':
+			++Iflag;
 			break;
 		case 'N':
 			if (op != UNSPEC)
@@ -264,6 +268,9 @@ main(argc, argv)
 #endif
 
 	if (argc < 1)
+		usage();
+
+	if (Iflag && op != EDIT)
 		usage();
 
 	dkname = argv[0];
@@ -470,7 +477,7 @@ writelabel(f, boot, lp)
 	/* Let the kernel deal with SunOS disklabel compatibility */
 	if (0)
 #else
-	if (rflag)
+	if (rflag || Iflag)
 #endif
 	{
 #ifdef USE_MBR
@@ -586,7 +593,7 @@ l_perror(s)
 
 	case ESRCH:
 		warnx("%s: No disk label on disk;\n"
-		    "use \"disklabel -r\" to install initial label", s);
+		    "use \"disklabel -I\" to install initial label", s);
 		break;
 
 	case EINVAL:
@@ -825,8 +832,8 @@ readlabel(f)
 {
 	struct disklabel *lp;
 
-	if (rflag) {
-		char *msg;
+	if (rflag || Iflag) {
+		char *msg = NULL;
 		off_t sectoffset = 0;
 
 #ifdef USE_MBR
@@ -840,7 +847,8 @@ readlabel(f)
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
 		    read(f, bootarea, BBSIZE) < BBSIZE)
 			err(4, "%s", specname);
-		msg = "no disk label";
+		if (!Iflag)
+			msg = "no disklabel";
 		for (lp = (struct disklabel *)bootarea;
 		    lp <= (struct disklabel *)(bootarea + BBSIZE - sizeof(*lp));
 		    lp = (struct disklabel *)((char *)lp + sizeof(long))) {
@@ -852,8 +860,15 @@ readlabel(f)
 				msg = "disk label corrupted";
 			}
 		}
-		/* lp = (struct disklabel *)(bootarea + LABELOFFSET); */
-		errx(1, msg);
+		if (msg != NULL)
+			errx(1, msg);
+		/*
+		 * There was no label on the disk. Get the fictious one
+		 * as a basis for initialisation.
+		 */
+		lp = makebootarea(bootarea, &lab, f);
+		if (ioctl(f, DIOCGDINFO, lp) < 0)
+			errx(1, "no disklabel");
 	} else {
 		lp = &lab;
 		if (ioctl(f, DIOCGDINFO, lp) < 0)
@@ -895,7 +910,7 @@ makebootarea(boot, dp, f)
 	 * We must read the current bootarea so we don't clobber the
 	 * existing boot block, if any.
 	 */
-	if (rflag) {
+	if (rflag || Iflag) {
 		off_t sectoffset = 0;
 
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
@@ -911,7 +926,7 @@ makebootarea(boot, dp, f)
 	 * clobber the existing boot.
 	 */
 	if (!installboot) {
-		if (rflag) {
+		if (rflag || Iflag) {
 			off_t sectoffset = 0;
 
 #ifdef USE_MBR
