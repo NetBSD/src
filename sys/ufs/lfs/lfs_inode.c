@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.56 2001/11/23 21:44:27 chs Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.57 2002/05/14 20:03:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.56 2001/11/23 21:44:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.57 2002/05/14 20:03:54 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -137,8 +137,8 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct buf *bp)
 	       dtosn(fs, fs->lfs_offset));
 	printf("block is 0x%x (seg %d)\n", dbtofsb(fs, bp->b_blkno),
 	       dtosn(fs, dbtofsb(fs, bp->b_blkno)));
-	panic("lfs_ifind: dinode %u not found", ino);
-	/* NOTREACHED */
+
+	return NULL;
 }
 
 int
@@ -154,6 +154,7 @@ lfs_update(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct timespec ts;
 	struct lfs *fs = VFSTOUFS(vp->v_mount)->um_lfs;
+	int s;
 	
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
@@ -166,6 +167,7 @@ lfs_update(void *v)
 	 * will cause a panic.  So, we must wait until any pending write
 	 * for our inode completes, if we are called with UPDATE_WAIT set.
 	 */
+	s = splbio();
 	while ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
 	    WRITEINPROG(vp)) {
 #ifdef DEBUG_LFS
@@ -174,6 +176,7 @@ lfs_update(void *v)
 #endif
 		tsleep(vp, (PRIBIO+1), "lfs_update", 0);
 	}
+	splx(s);
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	LFS_ITIMES(ip,
 		   ap->a_access ? ap->a_access : &ts,
@@ -313,11 +316,15 @@ lfs_truncate(void *v)
 	 * (We don't need to *hold* the seglock, though, because we already
 	 * hold the inode lock; draining the seglock is sufficient.)
 	 */
+#ifdef LFS_AGGRESSIVE_SEGLOCK
+	lfs_seglock(fs, SEGM_PROT);
+#else
 	if (ovp != fs->lfs_unlockvp) {
 		while (fs->lfs_seglock) {
 			tsleep(&fs->lfs_seglock, PRIBIO+1, "lfs_truncate", 0);
 		}
 	}
+#endif
 	
 	/*
 	 * Shorten the size of the file. If the file is not being
@@ -340,6 +347,9 @@ lfs_truncate(void *v)
 		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
 		if (error) {
 			lfs_reserve(fs, ovp, -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
+#ifdef LFS_AGGRESSIVE_SEGLOCK
+			lfs_segunlock(fs);
+#endif
 			return (error);
 		}
 		obufsize = bp->b_bufsize;
@@ -350,11 +360,10 @@ lfs_truncate(void *v)
 			memset((char *)bp->b_data + offset, 0,
 			       (u_int)(size - offset));
 		allocbuf(bp, size);
-		if (bp->b_flags & B_DELWRI) {
-			if ((bp->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED)
-				locked_queue_bytes -= obufsize - bp->b_bufsize;
+		if ((bp->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED)
+			locked_queue_bytes -= obufsize - bp->b_bufsize;
+		if (bp->b_flags & B_DELWRI)
 			fs->lfs_avail += odb - btofsb(fs, size);
-		}
 		(void) VOP_BWRITE(bp);
 	}
 	uvm_vnp_setsize(ovp, length);
@@ -494,6 +503,9 @@ done:
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif
 	lfs_reserve(fs, ovp, -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
+#ifdef LFS_AGGRESSIVE_SEGLOCK
+	lfs_segunlock(fs);
+#endif
 	return (allerror);
 }
 
@@ -523,10 +535,10 @@ lfs_update_seguse(struct lfs *fs, long lastseg, size_t num)
 {
 	SEGUSE *sup;
 	struct buf *bp;
+	int error;
 
 	if (lastseg < 0 || num == 0)
 		return 0;
-
 	
 	LFS_SEGENTRY(sup, fs, lastseg, bp);
 	if (num > sup->su_nbytes) {
@@ -536,7 +548,8 @@ lfs_update_seguse(struct lfs *fs, long lastseg, size_t num)
 		sup->su_nbytes = num;
 	}
 	sup->su_nbytes -= num;
-	return (VOP_BWRITE(bp)); /* Ifile */
+	error = LFS_BWRITE_LOG(bp); /* Ifile */
+	return error;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.15 2001/11/23 21:44:27 chs Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.16 2002/05/14 20:03:53 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,17 +73,46 @@
 #ifdef DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.15 2001/11/23 21:44:27 chs Exp $");
-
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.16 2002/05/14 20:03:53 perseant Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/buf.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
+
+int lfs_lognum;
+struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
+
+int lfs_bwrite_log(struct buf *bp, char *file, int line)
+{
+        struct vop_bwrite_args a;
+        a.a_desc = VDESC(vop_bwrite);
+        a.a_bp = bp;
+
+	if (!(bp->b_flags & (B_DELWRI | B_GATHERED)))
+		LFS_ENTER_LOG("write", file, line, bp->b_lblkno, bp->b_flags);
+        return (VCALL(bp->b_vp, VOFFSET(vop_bwrite), &a));
+}
+
+void lfs_dumplog(void)
+{
+	int i;
+
+	for (i = lfs_lognum; i != (lfs_lognum - 1) % LFS_LOGLENGTH; i = (i + 1) % LFS_LOGLENGTH)
+		if (lfs_log[i].file) {
+			printf("lbn %d %s %lx %d %s\n",
+				lfs_log[i].block,
+				lfs_log[i].op,
+				lfs_log[i].flags,
+				lfs_log[i].line,
+				lfs_log[i].file + 56);
+		}
+}
 
 void 
 lfs_dump_super(struct lfs *lfsp)

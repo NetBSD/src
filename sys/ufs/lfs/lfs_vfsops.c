@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.73 2002/05/12 23:06:29 matt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.74 2002/05/14 20:03:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.73 2002/05/12 23:06:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.74 2002/05/14 20:03:54 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -165,6 +165,9 @@ lfs_init()
 	 */
 	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
 		  "lfsinopl", &pool_allocator_nointr);
+#ifdef DEBUG
+	memset(lfs_log, 0, sizeof(lfs_log));
+#endif
 }
 
 void
@@ -436,11 +439,11 @@ update_meta(struct lfs *fs, ino_t ino, int version, ufs_daddr_t lbn,
 		}
 #endif
 		sup->su_nbytes -= size;
-		VOP_BWRITE(bp);
+		LFS_BWRITE_LOG(bp);
 	}
 	LFS_SEGENTRY(sup, fs, dtosn(fs, ndaddr), bp);
 	sup->su_nbytes += size;
-	VOP_BWRITE(bp);
+	LFS_BWRITE_LOG(bp);
 
 	/* Fix this so it can be released */
 	/* ip->i_lfs_effnblks = ip->i_ffs_blocks; */
@@ -521,19 +524,19 @@ update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
 			LFS_IENTRY(ifp, fs, dip->di_inumber, ibp);
 			daddr = ifp->if_daddr;
 			ifp->if_daddr = dbtofsb(fs, dbp->b_blkno);
-			error = VOP_BWRITE(ibp); /* Ifile */
+			error = LFS_BWRITE_LOG(ibp); /* Ifile */
 			/* And do segment accounting */
 			if (dtosn(fs, daddr) != dtosn(fs, dbtofsb(fs, dbp->b_blkno))) {
 				if (daddr > 0) {
 					LFS_SEGENTRY(sup, fs, dtosn(fs, daddr),
 						     ibp);
 					sup->su_nbytes -= DINODE_SIZE;
-					VOP_BWRITE(ibp);
+					LFS_BWRITE_LOG(ibp);
 				}
 				LFS_SEGENTRY(sup, fs, dtosn(fs, dbtofsb(fs, dbp->b_blkno)),
 					     ibp);
 				sup->su_nbytes += DINODE_SIZE;
-				VOP_BWRITE(ibp);
+				LFS_BWRITE_LOG(ibp);
 			}
 		}
 	}
@@ -943,10 +946,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	fs->lfs_uinodes = 0;
 	fs->lfs_ravail = 0;
 	fs->lfs_sbactive = 0;
-#ifdef LFS_TRACK_IOS
-	for (i = 0; i < LFS_THROTTLE; i++)
-		fs->lfs_pending[i] = LFS_UNUSED_DADDR;
-#endif
 
 	/* Set up the ifile and lock aflags */
 	fs->lfs_doifile = 0;
@@ -995,7 +994,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	}
 	fs->lfs_ivnode = vp;
 	VREF(vp);
-	vput(vp);
 
 	/*
 	 * Roll forward.
@@ -1030,7 +1028,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		if (!(sup->su_flags & SEGUSE_DIRTY))
 			--fs->lfs_nclean;
 		sup->su_flags |= SEGUSE_DIRTY;
-		(void) VOP_BWRITE(bp);
+		(void) LFS_BWRITE_LOG(bp);
 		while ((offset = check_segsum(fs, offset, cred, CHECK_CKSUM,
 					      &flags, p)) > 0)
 		{
@@ -1040,7 +1038,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 				if (!(sup->su_flags & SEGUSE_DIRTY))
 					--fs->lfs_nclean;
 				sup->su_flags |= SEGUSE_DIRTY;
-				(void) VOP_BWRITE(bp);
+				(void) LFS_BWRITE_LOG(bp);
 			}
 
 #ifdef DEBUG_LFS_RFW
@@ -1126,7 +1124,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	cip->dirty = fs->lfs_nseg - fs->lfs_nclean;
 	cip->avail = fs->lfs_avail;
 	cip->bfree = fs->lfs_bfree;
-	(void) VOP_BWRITE(bp); /* Ifile */
+	(void) LFS_BWRITE_LOG(bp); /* Ifile */
 
 	/*
 	 * Mark the current segment as ACTIVE, since we're going to 
@@ -1134,7 +1132,22 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	 */
         LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_offset), bp); 
         sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
-        (void) VOP_BWRITE(bp); /* Ifile */
+        (void) LFS_BWRITE_LOG(bp); /* Ifile */
+
+	/* Now that roll-forward is done, unlock the Ifile */
+	vput(vp);
+
+	/* Comment on ifile size if it is too large */
+	if (fs->lfs_ivnode->v_size / fs->lfs_bsize > LFS_MAX_BUFS) {
+		fs->lfs_flags |= LFS_WARNED;
+		printf("lfs_mountfs: please consider increasing NBUF to at least %lld\n",
+			(long long)(fs->lfs_ivnode->v_size / fs->lfs_bsize) * (nbuf / LFS_MAX_BUFS));
+	}
+	if (fs->lfs_ivnode->v_size > LFS_MAX_BYTES) {
+		fs->lfs_flags |= LFS_WARNED;
+		printf("lfs_mountfs: please consider increasing BUFPAGES to at least %lld\n",
+			(long long)fs->lfs_ivnode->v_size * bufpages / LFS_MAX_BYTES);
+	}
 
 	return (0);
 out:
@@ -1197,6 +1210,20 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	fs->lfs_pflags |= LFS_PF_CLEAN;
 	lfs_writesuper(fs, fs->lfs_sboffs[0]);
 	lfs_writesuper(fs, fs->lfs_sboffs[1]);
+
+	/* Comment on ifile size if it has become too large */
+	if (!(fs->lfs_flags & LFS_WARNED)) {
+		if (fs->lfs_ivnode->v_size / fs->lfs_bsize > LFS_MAX_BUFS)
+			printf("lfs_unmount: please consider increasing"
+				" NBUF to at least %lld\n",
+				(fs->lfs_ivnode->v_size / fs->lfs_bsize) *
+				(long long)(nbuf / LFS_MAX_BUFS));
+		if (fs->lfs_ivnode->v_size > LFS_MAX_BYTES)
+			printf("lfs_unmount: please consider increasing"
+				" BUFPAGES to at least %lld\n",
+				(long long)fs->lfs_ivnode->v_size *
+				bufpages / LFS_MAX_BYTES);
+	}
 
 	/* Finish with the Ifile, now that we're done with it */
 	vrele(fs->lfs_ivnode);
@@ -1300,6 +1327,7 @@ int
 lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	struct lfs *fs;
+	struct dinode *dip;
 	struct inode *ip;
 	struct buf *bp;
 	struct ifile *ifp;
@@ -1307,7 +1335,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct ufsmount *ump;
 	ufs_daddr_t daddr;
 	dev_t dev;
-	int error;
+	int error, retries;
 	struct timespec ts;
 
 	ump = VFSTOUFS(mp);
@@ -1379,8 +1407,10 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	ip->i_lfs = ump->um_lfs;
 
 	/* Read in the disk contents for the inode, copy into the inode. */
+	retries = 0;
+    again:
 	error = bread(ump->um_devvp, fsbtodb(fs, daddr), 
-		(fs->lfs_version == 1 ? fs->lfs_bsize : fs->lfs_fsize),
+		(fs->lfs_version == 1 ? fs->lfs_bsize : fs->lfs_ibsize),
 		NOCRED, &bp);
 	if (error) {
 		/*
@@ -1394,7 +1424,45 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	ip->i_din.ffs_din = *lfs_ifind(fs, ino, bp);
+
+	dip = lfs_ifind(fs, ino, bp);
+	if (dip == NULL) {
+		/* Assume write has not completed yet; try again */
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+		++retries;
+		if (retries > LFS_IFIND_RETRIES) {
+#ifdef DEBUG
+			/* If the seglock is held look at the bpp to see
+			   what is there anyway */
+			if (fs->lfs_seglock > 0) {
+				struct buf **bpp;
+				struct dinode *dp;
+				int i;
+
+				for (bpp = fs->lfs_sp->bpp;
+				     bpp != fs->lfs_sp->cbpp; ++bpp) {
+					if ((*bpp)->b_vp == fs->lfs_ivnode &&
+					    bpp != fs->lfs_sp->bpp) {
+						/* Inode block */
+						printf("block 0x%x: ", (*bpp)->b_blkno);
+						dp = (struct dinode *)(*bpp)->b_data;
+						for (i = 0; i < INOPB(fs); i++)
+							if (dp[i].di_u.inumber)
+								printf("%d ", dp[i].di_u.inumber);
+						printf("\n");
+					}
+				}
+			}
+#endif
+			panic("lfs_vget: dinode not found");
+		}
+		printf("lfs_vget: dinode %d not found, retrying...\n", ino);
+		(void)tsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs ifind", 1);
+		goto again;
+	}
+	ip->i_din.ffs_din = *dip;
+
 	ip->i_ffs_effnlink = ip->i_ffs_nlink;
 	ip->i_lfs_effnblks = ip->i_ffs_blocks;
 	if (fs->lfs_version > 1) {

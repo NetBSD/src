@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.21 2001/11/23 21:44:28 chs Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.22 2002/05/14 20:03:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.21 2001/11/23 21:44:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.22 2002/05/14 20:03:54 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,9 +175,14 @@ lfs_segunlock(struct lfs *fs)
 	struct segment *sp;
 	unsigned long sync, ckp;
 	int s;
+	struct buf *bp;
 	struct vnode *vp;
 	struct mount *mp;
 	extern int lfs_dirvcount;
+#ifdef LFS_MALLOC_SUMMARY
+	extern int locked_queue_count;
+	extern long locked_queue_bytes;
+#endif
 	
 	sp = fs->lfs_sp;
 
@@ -207,8 +212,10 @@ lfs_segunlock(struct lfs *fs)
 		     vp != NULL;
 		     vp = vp->v_mntvnodes.le_next) {
 #endif
-			if (vp->v_mount != mp)
+			if (vp->v_mount != mp) {
+				printf("lfs_segunlock: starting over\n");
 				goto loop;
+			}
 			if (vp->v_type == VNON)
 				continue;
 			if (lfs_vref(vp))
@@ -239,7 +246,18 @@ lfs_segunlock(struct lfs *fs)
 		if (sp->bpp != sp->cbpp) {
 			/* Free allocated segment summary */
 			fs->lfs_offset -= btofsb(fs, fs->lfs_sumsize);
-                        lfs_freebuf(*sp->bpp);
+			bp = *sp->bpp;
+#ifdef LFS_MALLOC_SUMMARY
+			lfs_freebuf(bp);
+#else
+			s = splbio();
+			bremfree(bp);
+			splx(s);
+			bp->b_flags |= B_DONE|B_INVAL;
+			bp->b_flags &= ~B_DELWRI;
+			reassignbuf(bp,bp->b_vp);
+			brelse(bp);
+#endif
 		} else
 			printf ("unlock to 0 with no summary");
 
@@ -254,7 +272,14 @@ lfs_segunlock(struct lfs *fs)
 		 * sleep.
 		 */
 		s = splbio();
-		--fs->lfs_iocount;
+		if (--fs->lfs_iocount < LFS_THROTTLE)
+			wakeup(&fs->lfs_iocount);
+		if(fs->lfs_iocount == 0) {
+			lfs_countlocked(&locked_queue_count,
+					&locked_queue_bytes, "lfs_segunlock");
+			wakeup(&locked_queue_count);
+			wakeup(&fs->lfs_iocount);
+		}
 		/*
 		 * We let checkpoints happen asynchronously.  That means
 		 * that during recovery, we have to roll forward between

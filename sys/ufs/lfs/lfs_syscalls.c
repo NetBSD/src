@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.64 2002/05/12 23:06:29 matt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.65 2002/05/14 20:03:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.64 2002/05/12 23:06:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.65 2002/05/14 20:03:54 perseant Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.64 2002/05/12 23:06:29 matt Exp $
 /* Max block count for lfs_markv() */
 #define MARKV_MAXBLKCNT		65536
 
-struct buf *lfs_fakebuf(struct vnode *, int, size_t, caddr_t);
+struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
 int lfs_fasthashget(dev_t, ino_t, int *, struct vnode **);
 
 int debug_cleaner = 0; 
@@ -258,9 +258,6 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 #ifdef CHECK_COPYIN
 	int i;
 #endif /* CHECK_COPYIN */
-#ifdef LFS_TRACK_IOS
-	int j;
-#endif
 	int numlocked = 0, numrefed = 0;
 	ino_t maxino;
 
@@ -311,23 +308,6 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		if (blkp->bi_daddr == LFS_FORCE_WRITE)
 			printf("lfs_markv: warning: force-writing ino %d lbn %d\n",
 			       blkp->bi_inode, blkp->bi_lbn);
-#ifdef LFS_TRACK_IOS
-		/*
-		 * If there is I/O on this segment that is not yet complete,
-		 * the cleaner probably does not have the right information.
-		 * Send it packing.
-		 */
-		for (j = 0; j < LFS_THROTTLE; j++) {
-			if (fs->lfs_pending[j] != LFS_UNUSED_DADDR
-			   && dtosn(fs,fs->lfs_pending[j]) == dtosn(fs,blkp->bi_daddr)
-			   && blkp->bi_daddr != LFS_FORCE_WRITE)
-			{
-				printf("lfs_markv: attempt to clean pending segment? (#%d)\n",
-				       dtosn(fs, fs->lfs_pending[j]));
-				/* return (EBUSY); */
-			}
-		}
-#endif /* LFS_TRACK_IOS */
 		/* Bounds-check incoming data, avoid panic for failed VGET */
 		if (blkp->bi_inode <= 0 || blkp->bi_inode >= maxino) {
 			error = EINVAL;
@@ -493,7 +473,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		}
 		if (ip->i_number != LFS_IFILE_INUM && blkp->bi_lbn >= 0) {
 			/* Data Block */
-			bp = lfs_fakebuf(vp, blkp->bi_lbn,
+			bp = lfs_fakebuf(fs, vp, blkp->bi_lbn,
 					 blkp->bi_size, blkp->bi_bp);
 			/* Pretend we used bread() to get it */
 			bp->b_blkno = fsbtodb(fs, blkp->bi_daddr);
@@ -716,9 +696,6 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	ufs_daddr_t v_daddr;
 	int cnt, error, need_unlock = 0;
 	int numlocked = 0, numrefed = 0;
-#ifdef LFS_TRACK_IOS
-	int j;
-#endif
 
 	lfs_cleaner_pid = p->p_pid;
 	
@@ -748,24 +725,6 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			return (EBUSY);
 		}
 #endif /* DEBUG */
-#ifdef LFS_TRACK_IOS
-		/*
-		 * If there is I/O on this segment that is not yet complete,
-		 * the cleaner probably does not have the right information.
-		 * Send it packing.
-		 */
-		for (j = 0; j < LFS_THROTTLE; j++) {
-			if (fs->lfs_pending[j] != LFS_UNUSED_DADDR
-			   && dtosn(fs,fs->lfs_pending[j]) == dtosn(fs,blkp->bi_daddr))
-			{
-				printf("lfs_bmapv: attempt to clean pending segment? (#%d)\n",
-				       dtosn(fs, fs->lfs_pending[j]));
-				vfs_unbusy(mntp);
-				return (EBUSY);
-			}
-		}
-
-#endif /* LFS_TRACK_IOS */
 		/*
 		 * Get the IFILE entry (only once) and see if the file still
 		 * exists.
@@ -939,14 +898,23 @@ sys_lfs_segclean(struct proc *p, void *v, register_t *retval)
 	
 	if ((error = vfs_busy(mntp, LK_NOWAIT, NULL)) != 0) 
 		return (error);
+#ifdef LFS_AGGRESSIVE_SEGLOCK
+	lfs_seglock(fs, SEGM_PROT);
+#endif
 	LFS_SEGENTRY(sup, fs, SCARG(uap, segment), bp);
 	if (sup->su_flags & SEGUSE_ACTIVE) {
 		brelse(bp);
+#ifdef LFS_AGGRESSIVE_SEGLOCK
+		lfs_segunlock(fs);
+#endif
 		vfs_unbusy(mntp);
 		return (EBUSY);
 	}
 	if (!(sup->su_flags & SEGUSE_DIRTY)) {
 		brelse(bp);
+#ifdef LFS_AGGRESSIVE_SEGLOCK
+		lfs_segunlock(fs);
+#endif
 		vfs_unbusy(mntp);
 		return (EALREADY);
 	}
@@ -964,7 +932,7 @@ sys_lfs_segclean(struct proc *p, void *v, register_t *retval)
 	if (fs->lfs_dmeta < 0)
 		fs->lfs_dmeta = 0;
 	sup->su_flags &= ~SEGUSE_DIRTY;
-	(void) VOP_BWRITE(bp);
+	(void) LFS_BWRITE_LOG(bp);
 	
 	LFS_CLEANERINFO(cip, fs, bp);
 	++cip->clean;
@@ -972,8 +940,11 @@ sys_lfs_segclean(struct proc *p, void *v, register_t *retval)
 	fs->lfs_nclean = cip->clean;
 	cip->bfree = fs->lfs_bfree;
 	cip->avail = fs->lfs_avail - fs->lfs_ravail;
-	(void) VOP_BWRITE(bp);
+	(void) LFS_BWRITE_LOG(bp);
 	wakeup(&fs->lfs_avail);
+#ifdef LFS_AGGRESSIVE_SEGLOCK
+	lfs_segunlock(fs);
+#endif
 	vfs_unbusy(mntp);
 
 	return (0);
@@ -1100,10 +1071,11 @@ int
 lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp, struct dinode *dinp, int *need_unlock)
 {
 	struct inode *ip;
+	struct dinode *dip;
 	struct vnode *vp;
 	struct ufsmount *ump;
 	dev_t dev;
-	int error;
+	int error, retries;
 	struct buf *bp;
 	struct lfs *fs;
 	
@@ -1179,6 +1151,8 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 		if (ip->i_number != ino)
 			panic("lfs_fastvget: I was fed the wrong inode!");
 	} else {
+		retries = 0;
+	    again:
 		error = bread(ump->um_devvp, fsbtodb(fs, daddr), fs->lfs_ibsize,
 			      NOCRED, &bp);
 		if (error) {
@@ -1197,7 +1171,18 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 			*vpp = NULL;
 			return (error);
 		}
-		ip->i_din.ffs_din = *lfs_ifind(fs, ino, bp);
+		dip = lfs_ifind(ump->um_lfs, ino, bp);
+		if (dip == NULL) {
+			/* Assume write has not completed yet; try again */
+			bp->b_flags |= B_INVAL;
+			brelse(bp);
+			++retries;
+			if (retries > LFS_IFIND_RETRIES)
+				panic("lfs_fastvget: dinode not found");
+			printf("lfs_fastvget: dinode not found, retrying...\n");
+			goto again;
+		}
+		ip->i_din.ffs_din = *dip;
 		brelse(bp);
 	}
 	ip->i_ffs_effnlink = ip->i_ffs_nlink;
@@ -1234,7 +1219,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 }
 
 struct buf *
-lfs_fakebuf(struct vnode *vp, int lbn, size_t size, caddr_t uaddr)
+lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uaddr)
 {
 	struct buf *bp;
 	int error;
@@ -1251,7 +1236,12 @@ lfs_fakebuf(struct vnode *vp, int lbn, size_t size, caddr_t uaddr)
 	bp->b_flags |= B_INVAL;
 	bp->b_saveaddr = uaddr;
 #endif
-
+#if 0
+	bp->b_saveaddr = (caddr_t)fs;
+	s = splbio();
+	++fs->lfs_iocount;
+	splx(s);
+#endif
 	bp->b_bufsize = size;
 	bp->b_bcount = size;
 	return (bp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.62 2002/04/27 01:00:46 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.63 2002/05/14 20:03:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.62 2002/04/27 01:00:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.63 2002/05/14 20:03:55 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,11 +300,29 @@ lfs_fsync(void *v)
 	simple_lock(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
                     round_page(ap->a_offhi), PGO_CLEANIT | PGO_SYNCIO);
-	if (error) {
+	if (error)
 		return error;
+	error = VOP_UPDATE(vp, NULL, NULL,
+			   (ap->a_flags & FSYNC_WAIT) != 0 ? UPDATE_WAIT : 0);
+#ifdef DEBUG
+	/*
+	 * If we were called from vinvalbuf and lfs_update
+	 * didn't flush all our buffers, we're in trouble.
+	 */
+	if ((ap->a_flags & FSYNC_WAIT) && vp->v_dirtyblkhd.lh_first != NULL) {
+		struct buf *bp;
+
+		bp = vp->v_dirtyblkhd.lh_first;
+		printf("lfs_fsync: ino %d failed to sync", VTOI(vp)->i_number);
+		printf("lfs_fsync: iocount = %d\n", VTOI(vp)->i_lfs->lfs_iocount);
+		printf("lfs_fsync: flags are 0x%x, numoutput=%d\n",
+			VTOI(vp)->i_flag, vp->v_numoutput);
+		printf("lfs_fsync: writecount=%ld\n", vp->v_writecount);
+		printf("lfs_fsync: first bp: %p, flags=0x%lx, lbn=%d\n",
+			bp, bp->b_flags, bp->b_lblkno);
 	}
-	return (VOP_UPDATE(vp, NULL, NULL,
-			   (ap->a_flags & FSYNC_WAIT) != 0 ? UPDATE_WAIT : 0));
+#endif
+	return error;
 }
 
 /*
@@ -358,7 +376,7 @@ lfs_set_dirop(struct vnode *vp)
 		lfs_check(vp, LFS_UNUSED_LBN, 0);
 	while (fs->lfs_writer || lfs_dirvcount > LFS_MAXDIROP) {
 		if (fs->lfs_writer)
-			tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_dirop", 0);
+			tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_sdirop", 0);
 		if (lfs_dirvcount > LFS_MAXDIROP && fs->lfs_dirops == 0) {
                 	++fs->lfs_writer;
                 	lfs_flush(fs, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.29 2002/05/12 23:06:29 matt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.30 2002/05/14 20:03:53 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ struct buf *lfs_newbuf_malloclog(struct lfs *, struct vnode *,
 void lfs_freebuf(struct buf *);
 struct buf *lfs_newbuf(struct lfs *, struct vnode *, ufs_daddr_t, size_t);
 #endif
-void lfs_countlocked(int *, long *);
+void lfs_countlocked(int *, long *, char *);
 int lfs_reserve(struct lfs *, struct vnode *, int);
 
 /* lfs_cksum.c */
@@ -140,6 +140,8 @@ u_int32_t lfs_sb_cksum(struct dlfs *);
 
 /* lfs_debug.c */
 #ifdef DEBUG
+int lfs_bwrite_log(struct buf *, char *, int);
+void lfs_dumplog(void);
 void lfs_dump_super(struct lfs *);
 void lfs_dump_dinode(struct dinode *);
 void lfs_check_bpp(struct lfs *, struct segment *, char *, int);
@@ -180,7 +182,7 @@ void lfs_segunlock(struct lfs *);
 
 /* lfs_syscalls.c */
 int lfs_fastvget(struct mount *, ino_t, ufs_daddr_t, struct vnode **, struct dinode *, int *);
-struct buf *lfs_fakebuf(struct vnode *, int, size_t, caddr_t);
+struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
 
 /* lfs_vfsops.c */
 void lfs_init(void);
