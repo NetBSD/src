@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.29 1998/12/11 09:15:42 drochner Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.30 1998/12/11 11:57:33 drochner Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -14,7 +14,7 @@
 #ifndef _NETINET_IP_FIL_H_
 #define _NETINET_IP_FIL_H_
 
-#if defined(__NetBSD__) && defined(_KERNEL)
+#if defined(__NetBSD__) && defined(_KERNEL) && !defined(_LKM)
 # if defined(PFIL_HOOKS)
 #  include "opt_pfil_hooks.h"
 # endif
