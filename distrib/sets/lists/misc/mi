@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.73 2002/01/24 03:40:44 jwise Exp $
+# $NetBSD: mi,v 1.74 2002/01/24 03:43:55 jwise Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -309,7 +309,6 @@
 ./usr/share/doc/usd/12.vi/Makefile		misc-usd-doc
 ./usr/share/doc/usd/12.vi/vi.chars		misc-usd-doc
 ./usr/share/doc/usd/12.vi/vi.in			misc-usd-doc
-./usr/share/doc/usd/13.viref			misc-usd-doc
 ./usr/share/doc/usd/13.viref/Makefile		misc-usd-doc
 ./usr/share/doc/usd/13.viref/ex.cmd.roff	misc-usd-doc
 ./usr/share/doc/usd/13.viref/ref.so		misc-usd-doc
