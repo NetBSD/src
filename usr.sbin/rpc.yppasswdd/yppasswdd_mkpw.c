@@ -1,4 +1,4 @@
-/*	$NetBSD: yppasswdd_mkpw.c,v 1.1.1.1 1996/08/09 10:19:49 thorpej Exp $	*/
+/*	$NetBSD: yppasswdd_mkpw.c,v 1.2 1997/07/18 07:47:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>
@@ -39,6 +39,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
+#include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <pwd.h>
@@ -68,8 +69,7 @@ make_passwd(argp, rqstp, transp)
 	SVCXPRT *transp;
 {
 	struct passwd *pw;
-	int pfd, tfd, pstat;
-	pid_t pid;
+	int pfd, tfd;
 
 #define REPLY(val)	do { \
 		int res = (val); \

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.yppasswdd.c,v 1.1.1.1 1996/08/09 10:19:49 thorpej Exp $	*/
+/*	$NetBSD: rpc.yppasswdd.c,v 1.2 1997/07/18 07:47:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -36,9 +36,10 @@
 #include <err.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <unistd.h>
-#include <string.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
@@ -51,6 +52,7 @@ char	make_arg[_POSIX2_LINE_MAX] = "make";
 
 extern	void make_passwd __P((yppasswd *, struct svc_req *, SVCXPRT *));
 
+int	main __P((int, char *[]));
 void	yppasswddprog_1 __P((struct svc_req *, SVCXPRT *));
 void	usage __P((void));
 
@@ -146,8 +148,8 @@ yppasswddprog_1(rqstp, transp)
 void
 usage()
 {
-	fprintf(stderr, "%s%s",
-	    "usage: rpc.yppasswdd ",
-	    "[-noshell] [-nogecos] [-nopw] [-m arg1 arg2 ... ]\n");
+
+	fprintf(stderr, "usage: %s [-noshell] [-nogecos] [-nopw] "
+	    "[-m arg1 arg2 ...]\n", __progname);
 	exit(1);
 }
