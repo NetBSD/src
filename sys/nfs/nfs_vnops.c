@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.139 2001/09/20 08:22:04 chs Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.140 2001/09/22 22:35:19 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -249,6 +249,7 @@ const struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
