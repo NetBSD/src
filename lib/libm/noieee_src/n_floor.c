@@ -1,4 +1,4 @@
-/*      $NetBSD: n_floor.c,v 1.5 2003/08/07 16:44:51 agc Exp $ */
+/*      $NetBSD: n_floor.c,v 1.5.2.1 2004/05/15 13:46:32 tron Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -72,6 +72,12 @@ floor(double x)
 	}
 }
 
+float
+floorf(float x)
+{
+	return floor((double)x);
+}
+
 double
 ceil(double x)
 {
@@ -90,6 +96,12 @@ ceil(double x)
 		y -= L;			/* an integer, and |x-y| < 1 */
 		return x > y ? y+(double)1 : y;
 	}
+}
+
+float
+ceilf(float x)
+{
+	return ceil((double)x);
 }
 
 #ifndef ns32000			/* rint() is in ./NATIONAL/support.s */
