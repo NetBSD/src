@@ -1,11 +1,11 @@
-/*	$NetBSD: if.c,v 1.149 2004/12/04 18:31:43 peter Exp $	*/
+/*	$NetBSD: if.c,v 1.150 2004/12/04 23:03:33 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by William Studnemund and Jason R. Thorpe.
+ * by William Studenmund and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.149 2004/12/04 18:31:43 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.150 2004/12/04 23:03:33 peter Exp $");
 
 #include "opt_inet.h"
 
