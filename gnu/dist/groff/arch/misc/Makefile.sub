@@ -21,7 +21,7 @@ CLEANADD=shdeps.sed
 
 all: shdeps.sed
 
-shdeps.sed: shdeps.sh
-	$(SHELL) $< "$(RT_SEP)" "$(SH_SEP)" "$(bindir)" > $@
+shdeps.sed: $(srcdir)/shdeps.sh
+	$(SHELL) $(srcdir)/shdeps.sh "$(RT_SEP)" "$(SH_SEP)" "$(bindir)" > $@
 
 # eof
