@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.60 2004/04/07 17:27:10 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.61 2005/02/18 22:16:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.60 2004/04/07 17:27:10 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.61 2005/02/18 22:16:27 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -390,8 +390,8 @@ doupdate(void)
 		for (wy = 0; wy < win->maxy; wy++) {
 			wlp = win->lines[wy];
 			if (wlp->flags & __ISDIRTY)
-				wlp->hash = __hash((char *)(void *)wlp->line,
-				    (size_t) (win->maxx * __LDATASIZE));
+				wlp->hash = __hash(wlp->line,
+				    (size_t)(win->maxx * __LDATASIZE));
 		}
 
 	if ((win->flags & __CLEAROK) || (curscr->flags & __CLEAROK) ||
@@ -1010,8 +1010,7 @@ done:
 	if (__virtscr->maxx != last_hash_len) {
 		blank_hash = 0;
 		for (i = __virtscr->maxx; i > BLANKSIZE; i -= BLANKSIZE) {
-			blank_hash = __hash_more((char *)(void *)buf, sizeof(buf),
-			    blank_hash);
+			blank_hash = __hash_more(buf, sizeof(buf), blank_hash);
 		}
 		blank_hash = __hash_more((char *)(void *)buf,
 		    i * sizeof(buf[0]), blank_hash);
