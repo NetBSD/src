@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.208 2003/04/22 08:53:02 wiz Exp $
+.\"	$NetBSD: options.4,v 1.209 2003/05/02 09:11:07 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1917,6 +1917,9 @@ for details.
 Detect kernel stack overflow using DR0 register.
 This option uses DR0 register exclusively so you can't use DR0 register for
 other purpose (e.g. hardware breakpoint) if you turn this on.
+.It Cd options MTRR
+Include support for accessing MTRR registers from user-space.  See
+.Xr i386_get_mtrr 3 .
 .El
 .Ss isa-specific Options
 Options specific to
@@ -2069,6 +2072,7 @@ bolded
 .Xr quota 1 ,
 .Xr gettimeofday 2 ,
 .Xr i386_iopl 2 ,
+.Xr i386_get_mtrr 3 ,
 .Xr msgctl 2 ,
 .Xr msgget 2 ,
 .Xr msgrcv 2 ,
