@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.2.2.1 2000/07/07 11:33:34 itojun Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.2.2.2 2000/12/26 03:38:53 jhawk Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -264,7 +264,7 @@ getlock(lckarg, rqstp, flags)
 		do_mon(lckarg->alock.caller_name);
 		break;
 	default:
-		lfree(fl);
+		lfree(newfl);
 		break;
 	}
 	sigunlock();
