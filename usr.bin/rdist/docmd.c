@@ -1,3 +1,5 @@
+/*	$NetBSD: docmd.c,v 1.9 1996/07/12 00:46:21 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: docmd.c,v 1.8 1996/07/12 00:38:53 thorpej Exp $";
+#if 0
+static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
+#else
+static char *rcsid = "$NetBSD: docmd.c,v 1.9 1996/07/12 00:46:21 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #include "defs.h"
