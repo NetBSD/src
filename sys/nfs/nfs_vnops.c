@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.200 2004/05/23 05:53:01 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.201 2004/05/27 12:55:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.200 2004/05/23 05:53:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.201 2004/05/27 12:55:07 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -133,7 +133,6 @@ const struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_reallocblks_desc, nfs_reallocblks },	/* reallocblks */
 	{ &vop_vfree_desc, nfs_vfree },			/* vfree */
 	{ &vop_truncate_desc, nfs_truncate },		/* truncate */
-	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, nfs_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, nfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
@@ -191,7 +190,6 @@ const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_reallocblks_desc, spec_reallocblks },	/* reallocblks */
 	{ &vop_vfree_desc, spec_vfree },		/* vfree */
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
-	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
@@ -246,7 +244,6 @@ const struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_reallocblks_desc, fifo_reallocblks },	/* reallocblks */
 	{ &vop_vfree_desc, fifo_vfree },		/* vfree */
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
-	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
@@ -3450,26 +3447,6 @@ nfs_truncate(v)
 		struct proc *a_p;
 	} */ *ap = v;
 #endif
-
-	/* Use nfs_setattr */
-	return (EOPNOTSUPP);
-}
-
-/*
- * NFS update.
- */
-int
-nfs_update(v)
-	void *v;
-#if 0
-	struct vop_update_args /* {
-		struct vnode *a_vp;
-		struct timespec *a_ta;
-		struct timespec *a_tm;
-		int a_waitfor;
-	} */ *ap = v;
-#endif
-{
 
 	/* Use nfs_setattr */
 	return (EOPNOTSUPP);
