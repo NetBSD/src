@@ -1,4 +1,4 @@
-/*	$NetBSD: mboot.c,v 1.1 1999/07/04 04:38:54 minoura Exp $	*/
+/*	$NetBSD: mboot.c,v 1.2 2001/01/26 17:30:16 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -87,6 +87,28 @@ IOCS_S_READCAP (int id, struct iocs_readcap *cap)
 	return reg_d0;
 }
 static inline int
+IOCS_S_READ (int pos, int blk, int id, int size, void *buf)
+{
+	register int reg_d0 __asm ("d0");
+
+	__asm __volatile ("moveml d3-d5,sp@-\n\t"
+			  "movel %2,d2\n\t"
+			  "movel %3,d3\n\t"
+			  "movel %4,d4\n\t"
+			  "movel %5,d5\n\t"
+			  "moval %6,a1\n\t"
+			  "movel #0x26,d1\n\t"
+			  "movel #0xf5,d0\n\t"
+			  "trap #15\n\t"
+			  "moveml sp@+,d3-d5"
+			  : "=d" (reg_d0), "=m" (*(char*) buf)
+			  : "ri" (pos), "ri" (blk), "ri" (id), "ri" (size), "g" ((int) buf)
+			  : "d1", "d2", "a1");
+
+	return reg_d0;
+}
+
+static inline int
 IOCS_S_READEXT (int pos, int blk, int id, int size, void *buf)
 {
 	register int reg_d0 __asm ("d0");
@@ -132,7 +154,7 @@ bootmain(scsiid)
 
 	{
 		long *label = (void*) 0x3000;
-		if (IOCS_S_READEXT(0, 1, scsiid, size, label) < 0) {
+		if (IOCS_S_READ(0, 1, scsiid, size, label) < 0) {
 			IOCS_B_PRINT("Error in reading.\r\n");
 			return 0;
 		}
@@ -147,7 +169,7 @@ bootmain(scsiid)
 		struct cpu_disklabel *label = (void*) 0x3000;
 		int i, firstinuse=-1;
 
-		if (IOCS_S_READEXT(2<<(2-size), size?2:1, scsiid, size, label) < 0) {
+		if (IOCS_S_READ(2<<(2-size), size?2:1, scsiid, size, label) < 0) {
 			IOCS_B_PRINT("Error in reading.\r\n");
 			return 0;
 		}
@@ -166,11 +188,21 @@ bootmain(scsiid)
 			i = firstinuse;
 		if (i < NDOSPART) {
 			unsigned int start = label->dosparts[i].dp_start;
-			if (IOCS_S_READEXT(start << (2-size),
-					   8>>size,
-					   scsiid,
-					   size,
-					   (void*) 0x2400) < 0) {
+			unsigned int start1 = start << (2-size);
+			int r;
+			if ((start1 & 0x1fffff) == 0x1fffff)
+				r = IOCS_S_READ(start1,
+						8>>size,
+						scsiid,
+						size,
+						(void*) 0x2400);
+			else
+				r = IOCS_S_READEXT(start1,
+						   8>>size,
+						   scsiid,
+						   size,
+						   (void*) 0x2400);
+			if (r < 0) {
 				IOCS_B_PRINT ("Error in reading.\r\n");
 				return 0;
 			}
