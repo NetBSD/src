@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.64 2002/08/16 07:10:56 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.65 2002/08/20 00:35:46 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,9 +80,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.64 2002/08/16 07:10:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.65 2002/08/20 00:35:46 itojun Exp $");
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +98,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.64 2002/08/16 07:10:56 thorpej Exp $");
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -300,6 +305,10 @@ struct sip_softc {
 	struct mbuf *sc_rxtail;
 	struct mbuf **sc_rxtailp;
 #endif /* DP83820 */
+
+#if NRND > 0
+	rndsource_element_t rnd_source;	/* random source */
+#endif
 };
 
 /* sc_flags */
@@ -967,6 +976,10 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 
 	/*
 	 * The number of bytes that must be available in
@@ -1484,6 +1497,10 @@ SIP_DECL(intr)(void *arg)
 		isr = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_ISR);
 		if ((isr & sc->sc_imr) == 0)
 			break;
+
+#if NRND > 0
+		rnd_add_uint32(&sc->rnd_source, isr);
+#endif
 
 		handled = 1;
 
