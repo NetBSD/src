@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.18 1997/01/02 08:06:24 mellon Exp $	*/
+/*	$NetBSD: route.c,v 1.19 1997/03/18 03:40:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$NetBSD: route.c,v 1.18 1997/01/02 08:06:24 mellon Exp $";
+static char *rcsid = "$NetBSD: route.c,v 1.19 1997/03/18 03:40:10 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -379,8 +379,7 @@ p_sockaddr(sa, mask, flags, width)
 			cp = routename(sin->sin_addr.s_addr);
 		else if (mask)
 			cp = netname(sin->sin_addr.s_addr,
-				     ntohl(((struct sockaddr_in *)mask)
-					   ->sin_addr.s_addr));
+			    ((struct sockaddr_in *)mask)->sin_addr.s_addr);
 		else
 			cp = netname(sin->sin_addr.s_addr, INADDR_ANY);
 		break;
@@ -595,7 +594,7 @@ netname(in, mask)
 	int subnetshift;
 
 	i = ntohl(in);
-	omask = mask;
+	omask = mask = ntohl(mask);
 	if (!nflag && i != INADDR_ANY) {
 		if (mask == INADDR_ANY) {
 			switch (mask = forgemask(i)) {
