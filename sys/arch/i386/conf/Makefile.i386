@@ -1,6 +1,6 @@
 # Copyright 1990 W. Jolitz
 # 	from: @(#)Makefile.i386	7.1 5/10/91
-#	$Id: Makefile.i386,v 1.38 1993/12/30 06:56:48 deraadt Exp $
+#	$Id: Makefile.i386,v 1.39 1994/01/05 16:03:32 mycroft Exp $
 #
 # Makefile for NetBSD
 #
@@ -34,7 +34,7 @@ INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Di386
 ASFLAGS=
 CFLAGS=	-O ${DEBUG} ${COPTS}
-LOAD_ADDRESS ?= FE100000
+LOAD_ADDRESS= F8100000
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
