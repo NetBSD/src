@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.42.4.2 1999/02/13 16:54:28 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.42.4.3 1999/02/14 15:33:41 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -314,7 +314,7 @@ Lis167:
 
 	/* no offboard RAM (yet) */
 	clrl	a0@(0x0c)		| phys_seg_list[1].ps_start
-Lsavmaxmem:
+
 	moveq	#PGSHIFT,d2
 	lsrl	d2,d1			| convert to page (click) number
 	RELOC(maxmem, a0)
@@ -1572,27 +1572,16 @@ Lbootcommon:
 	bne	Lsboot			| sboot?
 	/* NOT sboot */
 	cmpl	#0, d2			| autoboot?
-	beq	Ldoreset	| yes!
+	beq	Ldoreset		| yes!
 Lres_justexit:
 	CALLBUG(MVMEPROM_EXIT)		| return to bug
 
 Ldoreset:
-#if defined(MVME147)
-	cmpl	#MVME_147,d4		| Is this an MVME_147?
-	jne	Lres_not147
-	movl	#0xff800000,a0		| 147Bug's reset vector address
+	/* All Bug ROMs appear at the same physical address */
+	movl	#0xff800000,a0		| Bug's reset vector address
 	movl	a0@+, a7		| get SP
 	movl	a0@, a0			| get PC
 	jmp	a0@			| go!
-Lres_not147:
-#endif
-#if defined(MVME167)
-	cmpl	#MVME_167,d4		| Is this an MVME_167?
-	jne	Lres_not167
-	movb	#0x80, 0xfff40104	| Force a local-bus reset
-Lres_not167:
-#endif
-	bra	Lres_justexit
 
 Lsboot: /* sboot */
 	cmpl	#0, d2			| autoboot?
