@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.3 1998/06/24 18:36:25 mjacob Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.4 1998/07/01 17:18:45 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -310,7 +310,7 @@ scsi_print_sense_data(sense, verbosity)
 	 */
 	if (s[2] & 0xe0) {
 		char pad;
-		printf("\n			  ");
+	        printf("\n              ");
 		pad = ' ';
 		if (s[2] & SSD_FILEMARK) {
 			printf("%c Filemark Detected", pad);
@@ -440,7 +440,7 @@ scsi_decode_sense(sinfo, flag)
 		 * SKSV Data
 		 */
 		switch (skey) {
-		case 0x5:			/* Illegal Request */
+		case SKEY_ILLEGAL_REQUEST:
 			if (snsbuf[15] & 0x8)
 				(void)sprintf(rqsbuf,
 				    "Error in %s, Offset %d, bit %d",
@@ -454,13 +454,13 @@ scsi_decode_sense(sinfo, flag)
 				    (snsbuf[16] & 0xff) << 8 |
 				    (snsbuf[17] & 0xff));
 			return (rqsbuf);
-		case 0x1:
-		case 0x3:
-		case 0x4:
+		case SKEY_RECOVERABLE_ERROR:
+		case SKEY_MEDIUM_ERROR:
+		case SKEY_HARDWARE_ERROR:
 			(void)sprintf(rqsbuf, "Actual Retry Count: %d",
 			    (snsbuf[16] & 0xff) << 8 | (snsbuf[17] & 0xff));
 			return (rqsbuf);
-		case 0x2:
+		case SKEY_NOT_READY:
 			(void)sprintf(rqsbuf, "Progress Indicator: %d",
 			    (snsbuf[16] & 0xff) << 8 | (snsbuf[17] & 0xff));
 			return (rqsbuf);
