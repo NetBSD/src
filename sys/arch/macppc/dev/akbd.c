@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.4 1998/10/20 14:56:30 tsubai Exp $	*/
+/*	$NetBSD: akbd.c,v 1.5 1999/01/10 10:39:13 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -527,7 +527,25 @@ kbd_intr(event)
 int
 akbd_cnattach()
 {
+	int chosen, stdin, node;
+	char name[16];
+
+	chosen = OF_finddevice("/chosen");
+	if (chosen == -1)
+		return -1;
+
+	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin)) == -1)
+		return -1;
+
+	node = OF_parent(OF_instance_to_package(stdin));
+	bzero(name, sizeof(name));
+	OF_getprop(node, "name", name, sizeof(name));
+
+	if (strcmp(name, "adb") != 0)
+		return -1;
+
 	wskbd_cnattach(&akbd_consops, NULL, &akbd_keymapdata);
+
 	return 0;
 }
 
