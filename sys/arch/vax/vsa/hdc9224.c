@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.27 2003/05/02 08:45:11 dsl Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.28 2003/05/10 23:12:42 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -445,7 +445,7 @@ rdstrategy(struct buf *bp)
 	sc = (void *)rd->sc_dev.dv_parent;
 
 	lp = rd->sc_disk.dk_label;
-	if ((bounds_check_with_label(bp, lp, 1)) <= 0)
+	if ((bounds_check_with_label(&rd->sc_disk, bp, 1)) <= 0)
 		goto done;
 
 	if (bp->b_bcount == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.26 2003/05/02 08:45:27 dsl Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.27 2003/05/10 23:12:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.26 2003/05/02 08:45:27 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.27 2003/05/10 23:12:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -251,7 +251,7 @@ ofdisk_strategy(struct buf *bp)
 	OF_io = bp->b_flags & B_READ ? OF_read : OF_write;
 
 	if (DISKPART(bp->b_dev) != RAW_PART) {
-		if (bounds_check_with_label(bp, of->sc_dk.dk_label, 0) <= 0) {
+		if (bounds_check_with_label(&of->sc_dk, bp, 0) <= 0) {
 			bp->b_resid = bp->b_bcount;
 			goto done;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 2003/05/02 08:45:19 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25 2003/05/10 23:12:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -253,11 +253,12 @@ writedisklabel(dev, strat, lp, clp)
 
 
 int
-bounds_check_with_label(bp, lp, wlabel)
+bounds_check_with_label(dk, bp, wlabel)
+	struct disk *dk;
 	struct buf *bp;
-	struct disklabel *lp;
 	int wlabel;
 {
+	struct disklabel *lp = dk->dk_label;
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.43 2003/05/02 08:45:12 dsl Exp $	*/
+/*	$NetBSD: xd.c,v 1.44 2003/05/10 23:12:40 thorpej Exp $	*/
 
 /*
  *
@@ -1070,7 +1070,7 @@ xdstrategy(bp)
 	 * partition. Adjust transfer if needed, and signal errors or early
 	 * completion. */
 
-	if (bounds_check_with_label(bp, xd->sc_dk.dk_label,
+	if (bounds_check_with_label(&xd->sc_dk, bp,
 		(xd->flags & XD_WLABEL) != 0) <= 0)
 		goto done;
 

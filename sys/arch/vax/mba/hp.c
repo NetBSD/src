@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.33 2003/05/02 08:45:11 dsl Exp $ */
+/*	$NetBSD: hp.c,v 1.34 2003/05/10 23:12:41 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -192,7 +192,7 @@ hpstrategy(struct buf *bp)
 	sc = hp_cd.cd_devs[unit];
 	lp = sc->sc_disk.dk_label;
 
-	err = bounds_check_with_label(bp, lp, sc->sc_wlabel);
+	err = bounds_check_with_label(&sc->sc_disk, bp, sc->sc_wlabel);
 	if (err <= 0)
 		goto done;
 

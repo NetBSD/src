@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.40 2003/05/02 08:45:27 dsl Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.41 2003/05/10 23:12:45 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.40 2003/05/02 08:45:27 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.41 2003/05/10 23:12:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -332,8 +332,7 @@ rastrategy(bp)
 	 * Determine the size of the transfer, and make sure it is
 	 * within the boundaries of the partition.
 	 */
-	if (bounds_check_with_label(bp, ra->ra_disk.dk_label,
-	    ra->ra_wlabel) <= 0)
+	if (bounds_check_with_label(&ra->ra_disk, bp, ra->ra_wlabel) <= 0)
 		goto done;
 
 	/* Make some statistics... /bqt */

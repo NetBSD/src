@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.43 2003/05/02 08:45:22 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.44 2003/05/10 23:12:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.43 2003/05/02 08:45:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.44 2003/05/10 23:12:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -510,11 +510,12 @@ writedisklabel(dev, strat, lp, clp)
 }
 
 int
-bounds_check_with_label(bp, lp, wlabel)
+bounds_check_with_label(dk, bp, wlabel)
+	struct disk *dk;
 	struct buf *bp;
-	struct disklabel *lp;
 	int wlabel;
 {
+	struct disklabel *lp = dk->dk_label;
 	struct partition *pp;
 	long maxsz, sz;
 

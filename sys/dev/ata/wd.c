@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.251 2003/05/02 08:45:25 dsl Exp $ */
+/*	$NetBSD: wd.c,v 1.252 2003/05/10 23:12:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.251 2003/05/02 08:45:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.252 2003/05/10 23:12:44 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -520,7 +520,7 @@ wdstrategy(bp)
 		    wd->sc_capacity) <= 0)
 			goto done;
 	} else {
-		if (bounds_check_with_label(bp, wd->sc_dk.dk_label,
+		if (bounds_check_with_label(&wd->sc_dk, bp,
 		    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
 			goto done;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.19 2003/01/27 02:43:30 thorpej Exp $	*/
+/*	$NetBSD: ld.c,v 1.20 2003/05/10 23:12:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.19 2003/01/27 02:43:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.20 2003/05/10 23:12:43 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -510,7 +510,7 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 	 * If past the end of partition, just return.
 	 */
 	if (part != RAW_PART &&
-	    bounds_check_with_label(bp, lp,
+	    bounds_check_with_label(&sc->sc_dk, bp,
 	    (sc->sc_flags & (LDF_WLABEL | LDF_LABELLING)) != 0) <= 0) {
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);

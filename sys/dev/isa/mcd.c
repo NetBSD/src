@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.81 2002/11/01 11:31:57 mrg Exp $	*/
+/*	$NetBSD: mcd.c,v 1.82 2003/05/10 23:12:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.81 2002/11/01 11:31:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.82 2003/05/10 23:12:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -501,7 +501,7 @@ mcdstrategy(bp)
 	 * If end of partition, just return.
 	 */
 	if (MCDPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, lp,
+	    bounds_check_with_label(&sc->sc_dk, bp,
 	    (sc->flags & (MCDF_WLABEL|MCDF_LABELLING)) != 0) <= 0)
 		goto done;
 

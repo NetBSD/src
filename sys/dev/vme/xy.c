@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.48 2003/05/02 08:45:29 dsl Exp $	*/
+/*	$NetBSD: xy.c,v 1.49 2003/05/10 23:12:48 thorpej Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.48 2003/05/02 08:45:29 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.49 2003/05/10 23:12:48 thorpej Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -1199,7 +1199,7 @@ xystrategy(bp)
 
 	lp = xy->sc_dk.dk_label;
 
-	if (bounds_check_with_label(bp, lp,
+	if (bounds_check_with_label(&xy->sc_dk, bp,
 		(xy->flags & XY_WLABEL) != 0) <= 0)
 		goto done;
 

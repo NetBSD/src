@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.85 2003/05/02 08:45:26 dsl Exp $	*/
+/*	$NetBSD: ccd.c,v 1.86 2003/05/10 23:12:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.85 2003/05/02 08:45:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.86 2003/05/10 23:12:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -649,7 +649,7 @@ ccdstrategy(bp)
 	 */
 	wlabel = cs->sc_flags & (CCDF_WLABEL|CCDF_LABELLING);
 	if (DISKPART(bp->b_dev) != RAW_PART)
-		if (bounds_check_with_label(bp, lp, wlabel) <= 0)
+		if (bounds_check_with_label(&cs->sc_dkdev, bp, wlabel) <= 0)
 			goto done;
 
 	bp->b_resid = bp->b_bcount;

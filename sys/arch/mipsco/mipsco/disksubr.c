@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 2003/05/02 08:45:24 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12 2003/05/10 23:12:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -255,12 +255,12 @@ ioerror:
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, wlabel)
+bounds_check_with_label(dk, bp, wlabel)
+	struct disk *dk;
 	struct buf *bp;
-	struct disklabel *lp;
 	int wlabel;
 {
-
+	struct disklabel *lp = dk->dk_label;
 	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
 	int labelsect = lp->d_partitions[0].p_offset;
 	int maxsz = p->p_size;
