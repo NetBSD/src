@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.10 2002/08/19 09:41:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2003/06/30 14:19:07 wiz Exp $
 
 # the makefile is not, and should not be visited during normal build process.
 # try to use latest pod2man, which comes with the latest perl.
+
+# XXX: remove .UC lines
 
 .include <bsd.own.mk>
 
