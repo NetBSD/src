@@ -187,12 +187,17 @@ and rz2b for diskimage in swap.)
 
 
 CD-ROM NOTE:  If you are installing from a CD-ROM, sysinst may have
-problems mounting the CD-ROM.  If this happens, you can try issuing the
+problems mounting the CD-ROM.  NetBSD/pmax uses the same devices for
+CD-ROMs as it does hard disks, so you need to specifiy "rzX" (where
+X is the SCSI id of the CD-ROM) as the device, not "cdX" as in other
+NetBSD ports.  Also note that sysinst doesn't expect a partition - just
+the base device.  If you still have problems, you can try issuing the
 following command before starting sysinst
 
 	mount -r -t cd9660 /dev/rzXc /mnt2
 
-where X is the SCSI id of the CD-ROM.
+where X is the SCSI id of the CD-ROM.  You can then ignore any errors
+trying to mount the CD-ROM from within sysinst.
 
 
 Then, start sysinst
