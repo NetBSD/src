@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.h,v 1.3 2003/06/29 22:31:11 fvdl Exp $	*/
+/*	$NetBSD: ntfs_vfsops.h,v 1.4 2004/05/20 06:34:26 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -37,3 +37,7 @@
 int ntfs_vgetex(struct mount *, ino_t, u_int32_t, char *, u_long, u_long,
 		struct proc *, struct vnode **);
 int ntfs_calccfree(struct ntfsmount *, cn_t *);
+
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_ntfs_setup);
+#endif /* SYSCTL_SETUP_PROTO */

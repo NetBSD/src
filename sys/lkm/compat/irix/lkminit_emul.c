@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.1 2002/11/30 13:41:40 jdolecek Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.2 2004/05/20 06:34:27 atatat Exp $ */
 
 /*-
  * Copyright (c) 2002, 1996 The NetBSD Foundation, Inc.
@@ -34,13 +34,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.1 2002/11/30 13:41:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.2 2004/05/20 06:34:27 atatat Exp $");
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/lkm.h>
+
+#include <compat/irix/irix_sysctl.h>
 
 extern const struct emul emul_irix;
 
@@ -52,6 +55,13 @@ int compat_irix_lkmentry __P((struct lkm_table *, int, int));
 MOD_COMPAT("compat_irix", -1, &emul_irix);
 
 /*
+ * take care of emulation specific sysctl nodes
+ */
+static int load __P((struct lkm_table *, int));
+static int unload __P((struct lkm_table *, int));
+static struct sysctllog *_emul_irix_log;
+
+/*
  * entry point
  */
 int
@@ -61,5 +71,25 @@ compat_irix_lkmentry(lkmtp, cmd, ver)
 	int ver;
 {
 
-	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc);
+	DISPATCH(lkmtp, cmd, ver, load, unload, lkm_nofunc);
+}
+
+int
+load(lkmtp, cmd)
+	struct lkm_table *lkmtp; 
+	int cmd;
+{
+
+	sysctl_emul_irix_setup(&_emul_irix_log);
+	return (0);
+}
+
+int
+unload(lkmtp, cmd)
+	struct lkm_table *lkmtp; 
+	int cmd;
+{
+
+	sysctl_teardown(&_emul_irix_log);
+	return (0);
 }
