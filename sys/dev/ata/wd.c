@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.194 1999/08/09 09:48:04 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.195 1999/09/22 09:51:03 enami Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -278,7 +278,7 @@ wdattach(parent, self, aux)
 			*q++ = c;
 		} else
 			blank = 1;
-		}
+	}
 	*q++ = '\0';
 
 	printf(": <%s>\n", buf);
