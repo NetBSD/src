@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.20 1997/09/12 09:23:18 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.21 1997/10/08 16:02:04 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -329,7 +329,7 @@ Lfptnull:
 	fmovem	fpsr,sp@-	| push fpsr as code argument
 	frestore a0@		| restore state
 	movl	#T_FPERR,sp@-	| push type arg
-	jra	Ltrapnstkadj	| call trap and deal with stack cleanup
+	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack cleanup
 
 /*
  * Other exceptions only cause four and six word stack frame and require
