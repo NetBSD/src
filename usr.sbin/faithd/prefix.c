@@ -1,5 +1,5 @@
-/*	$NetBSD: prefix.c,v 1.1 2001/02/15 17:58:55 itojun Exp $	*/
-/*	$KAME: prefix.c,v 1.8 2000/11/24 06:16:56 itojun Exp $	*/
+/*	$NetBSD: prefix.c,v 1.2 2001/09/05 01:22:24 itojun Exp $	*/
+/*	$KAME: prefix.c,v 1.9 2001/07/02 14:36:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -136,8 +136,8 @@ prefix_string(prefix)
 	static char buf[NI_MAXHOST + 20];
 	char hbuf[NI_MAXHOST];
 
-	if (getnameinfo((struct sockaddr *)&prefix->a, prefix->a.ss_len, hbuf,
-	    sizeof(hbuf), NULL, 0, niflags))
+	if (getnameinfo((const struct sockaddr *)&prefix->a, prefix->a.ss_len,
+	    hbuf, sizeof(hbuf), NULL, 0, niflags))
 		return NULL;
 	snprintf(buf, sizeof(buf), "%s/%d", hbuf, prefix->l);
 	return buf;
