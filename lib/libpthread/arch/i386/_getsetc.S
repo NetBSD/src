@@ -1,4 +1,4 @@
-/*	$NetBSD: _getsetc.S,v 1.3 2003/10/30 13:56:37 yamt Exp $	*/
+/*	$NetBSD: _getsetc.S,v 1.4 2004/11/10 01:12:57 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #undef SETC
 
 #define GETC \
+	movl	%gs,  (UC_REGS + _REG_GS * 4)(%ecx)	; \
+	movl	%fs,  (UC_REGS + _REG_FS * 4)(%ecx)	; \
 	movl	%edi,  (UC_REGS + _REG_EDI * 4)(%ecx)	; \
 	movl	%esi,  (UC_REGS + _REG_ESI * 4)(%ecx)	; \
 	movl	%ebp,  (UC_REGS + _REG_EBP * 4)(%ecx)	; \
@@ -55,6 +57,8 @@
 	jnc	1f					; \
 							; \
 	FPLOAD(%ecx)					; \
+	movl	(UC_REGS + _REG_GS * 4)(%ecx), %gs	; \
+	movl	(UC_REGS + _REG_FS * 4)(%ecx), %fs	; \
 	movl	(UC_REGS + _REG_EDI * 4)(%ecx), %edi	; \
 	movl	(UC_REGS + _REG_ESI * 4)(%ecx), %esi	; \
 	movl	(UC_REGS + _REG_EBP * 4)(%ecx), %ebp	; \
