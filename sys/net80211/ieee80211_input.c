@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.22 2004/04/30 23:58:08 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.23 2004/05/06 02:56:48 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.22 2004/04/30 23:58:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.23 2004/05/06 02:56:48 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -651,6 +651,10 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 	case IEEE80211_M_IBSS:
 		if (ic->ic_state != IEEE80211_S_RUN ||
 		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
+			IEEE80211_DPRINTF(("%s: discard auth from %s; "
+				"state %u, seq %u\n", __func__,
+				ether_sprintf(wh->i_addr2),
+				ic->ic_state, seq));
 			ic->ic_stats.is_rx_bad_auth++;
 			return;
 		}
@@ -665,6 +669,10 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 	case IEEE80211_M_HOSTAP:
 		if (ic->ic_state != IEEE80211_S_RUN ||
 		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
+			IEEE80211_DPRINTF(("%s: discard auth from %s; "
+				"state %u, seq %u\n", __func__,
+				ether_sprintf(wh->i_addr2),
+				ic->ic_state, seq));
 			ic->ic_stats.is_rx_bad_auth++;
 			return;
 		}
@@ -688,11 +696,14 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			    ether_sprintf(ni->ni_macaddr),
 			    (allocbs ? "newly" : "already"));
 		break;
-
 	case IEEE80211_M_STA:
 		if (ic->ic_state != IEEE80211_S_AUTH ||
 		    seq != IEEE80211_AUTH_OPEN_RESPONSE) {
 			ic->ic_stats.is_rx_bad_auth++;
+			IEEE80211_DPRINTF(("%s: discard auth from %s; "
+				"state %u, seq %u\n", __func__,
+				ether_sprintf(wh->i_addr2),
+				ic->ic_state, seq));
 			return;
 		}
 		if (status != 0) {
@@ -1209,77 +1220,6 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				__func__, algo, ether_sprintf(wh->i_addr2)));
 			ic->ic_stats.is_rx_auth_unsupported++;
 			return;
-		}
-		switch (ic->ic_opmode) {
-		case IEEE80211_M_IBSS:
-			if (ic->ic_state != IEEE80211_S_RUN || seq != 1) {
-				IEEE80211_DPRINTF(("%s: discard auth from %s; "
-					"state %u, seq %u\n", __func__,
-					ether_sprintf(wh->i_addr2),
-					ic->ic_state, seq));
-				ic->ic_stats.is_rx_bad_auth++;
-				break;
-			}
-			ieee80211_new_state(ic, IEEE80211_S_AUTH,
-			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
-			break;
-
-		case IEEE80211_M_AHDEMO:
-			/* should not come here */
-			break;
-
-		case IEEE80211_M_HOSTAP:
-			if (ic->ic_state != IEEE80211_S_RUN || seq != 1) {
-				IEEE80211_DPRINTF(("%s: discard auth from %s; "
-					"state %u, seq %u\n", __func__,
-					ether_sprintf(wh->i_addr2),
-					ic->ic_state, seq));
-				ic->ic_stats.is_rx_bad_auth++;
-				break;
-			}
-			if (ni == ic->ic_bss) {
-				ni = ieee80211_alloc_node(ic, wh->i_addr2);
-				if (ni == NULL)
-					return;
-				IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_bss->ni_bssid);
-				ni->ni_rssi = rssi;
-				ni->ni_rstamp = rstamp;
-				ni->ni_chan = ic->ic_bss->ni_chan;
-				allocbs = 1;
-			} else
-				allocbs = 0;
-			IEEE80211_SEND_MGMT(ic, ni,
-				IEEE80211_FC0_SUBTYPE_AUTH, 2);
-			if (ifp->if_flags & IFF_DEBUG)
-				if_printf(ifp, "station %s %s authenticated\n",
-				    (allocbs ? "newly" : "already"),
-				    ether_sprintf(ni->ni_macaddr));
-			break;
-
-		case IEEE80211_M_STA:
-			if (ic->ic_state != IEEE80211_S_AUTH || seq != 2) {
-				IEEE80211_DPRINTF(("%s: discard auth from %s; "
-					"state %u, seq %u\n", __func__,
-					ether_sprintf(wh->i_addr2),
-					ic->ic_state, seq));
-				ic->ic_stats.is_rx_bad_auth++;
-				break;
-			}
-			if (status != 0) {
-				if_printf(&ic->ic_if,
-				    "authentication failed (reason %d) for %s\n",
-				    status,
-				    ether_sprintf(wh->i_addr3));
-				if (ni != ic->ic_bss)
-					ni->ni_fails++;
-				ic->ic_stats.is_rx_auth_fail++;
-				return;
-			}
-			ieee80211_new_state(ic, IEEE80211_S_ASSOC,
-			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
-			break;
-		case IEEE80211_M_MONITOR:
-			break;
 		}
 		break;
 	}
