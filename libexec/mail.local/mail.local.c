@@ -1,3 +1,5 @@
+/*	$NetBSD: mail.local.c,v 1.10 1997/04/21 11:29:28 mrg Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.9 1995/06/03 22:47:20 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mail.local.c,v 1.10 1997/04/21 11:29:28 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -88,7 +90,7 @@ main(argc, argv)
 		case 'f':
 		case 'r':		/* backward compatible */
 			if (from)
-			    err(FATAL, "multiple -f options");
+				err(FATAL, "multiple -f options");
 			from = optarg;
 			break;
 		case 'l':
@@ -117,9 +119,10 @@ main(argc, argv)
 	fd = store(from);
 	for (eval = 0; *argv; ++argv)
 		eval |= deliver(fd, *argv, lockfile);
-	exit(eval);
+	exit (eval);
 }
 
+int
 store(from)
 	char *from;
 {
@@ -163,6 +166,7 @@ store(from)
 	return(fd);
 }
 
+int
 deliver(fd, name, lockfile)
 	int fd;
 	char *name;
@@ -183,10 +187,11 @@ deliver(fd, name, lockfile)
 		return(1);
 	}
 
-	(void)sprintf(path, "%s/%s", _PATH_MAILDIR, name);
+	(void)snprintf(path, sizeof path, "%s/%s", _PATH_MAILDIR, name);
 
-	if(lockfile) {
-		(void)sprintf(lpath, "%s/%s.lock", _PATH_MAILDIR, name);
+	if (lockfile) {
+		(void)snprintf(lpath, sizeof lpath, "%s/%s.lock",
+		    _PATH_MAILDIR, name);
 
 		if((lfd = open(lpath, O_CREAT|O_WRONLY|O_EXCL,
 		    S_IRUSR|S_IWUSR)) < 0) {
@@ -200,17 +205,17 @@ deliver(fd, name, lockfile)
 		err(NOTFATAL, "%s: linked file", path);
 		return(1);
 	}
-	if((mbfd = open(path, O_APPEND|O_WRONLY|O_EXLOCK,
+	if ((mbfd = open(path, O_APPEND|O_WRONLY|O_EXLOCK,
 	    S_IRUSR|S_IWUSR)) < 0) {
 		if ((mbfd = open(path, O_APPEND|O_CREAT|O_WRONLY|O_EXLOCK,
 		    S_IRUSR|S_IWUSR)) < 0) {
-		err(NOTFATAL, "%s: %s", path, strerror(errno));
-		return(1);
-	}
+			err(NOTFATAL, "%s: %s", path, strerror(errno));
+			return(1);
+		}
 	}
 
 	curoff = lseek(mbfd, 0, SEEK_END);
-	(void)sprintf(biffmsg, "%s@%qd\n", name, curoff);
+	(void)snprintf(biffmsg, sizeof biffmsg, "%s@%qd\n", name, curoff);
 	if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
 		err(FATAL, "temporary file: %s", strerror(errno));
 		rval = 1;
@@ -236,8 +241,8 @@ trunc:		(void)ftruncate(mbfd, curoff);
 	 * so.
 	 */
 bad:
-	if(lockfile) {
-		if(lfd >= 0) {
+	if (lockfile) {
+		if (lfd >= 0) {
 			unlink(lpath);
 			close(lfd);
 		}
