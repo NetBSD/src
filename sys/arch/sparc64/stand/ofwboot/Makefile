@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1998/11/24 12:56:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 1999/01/17 20:07:52 eeh Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -10,7 +10,7 @@ S=	${CURDIR}/../../../..
 WARNS=		0
 
 PROG=		ofwboot
-SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c #net.c netif_of.c 
+SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c 
 .PATH:		${S}/arch/sparc64/sparc64
 
 .if CROSS
@@ -45,6 +45,7 @@ CPPFLAGS+=	-DRELOC=0x${RELOC}
 CPPFLAGS+=	-DSPARC_BOOT_AOUT
 CPPFLAGS+=	-DSPARC_BOOT_ELF
 CPPFLAGS+=	-DSPARC_BOOT_UFS
+CPPFLAGS+=	-DSPARC_BOOT_NFS
 #CPPFLAGS+=	-DSPARC_BOOT_HSFS
 
 ### find out what to use for libkern
