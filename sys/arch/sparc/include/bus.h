@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.31 2002/05/07 00:37:47 uwe Exp $	*/
+/*	$NetBSD: bus.h,v 1.32 2002/05/07 06:45:22 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ bus_space_map(t, a, s, f, hp)
 	int		f;
 	bus_space_handle_t *hp;
 {
-	_BS_CALL(t, sparc_bus_map)(t, a, s, f, 0, hp);
+	_BS_CALL(t, sparc_bus_map)(t, a, s, f, (vaddr_t)0, hp);
 }
 
 static __inline__ int
@@ -298,7 +298,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
 #endif
 
-#define	bus_space_vaddr(t, h)	((void *)(h))
+#define	bus_space_vaddr(t, h)	((void)(t), (void *)(h))
 
 /* flags for bus space map functions */
 #define BUS_SPACE_MAP_CACHEABLE	0x0001
@@ -343,16 +343,16 @@ int bus_space_probe __P((
  */
 
 #define	bus_space_read_1(t, h, o)					\
-	    ((void)t, *(volatile u_int8_t *)((h) + (o)))
+	    ((void)(t), *(volatile u_int8_t *)((h) + (o)))
 
 #define	bus_space_read_2(t, h, o)					\
-	    ((void)t, *(volatile u_int16_t *)((h) + (o)))
+	    ((void)(t), *(volatile u_int16_t *)((h) + (o)))
 
 #define	bus_space_read_4(t, h, o)					\
-	    ((void)t, *(volatile u_int32_t *)((h) + (o)))
+	    ((void)(t), *(volatile u_int32_t *)((h) + (o)))
 
 #define	bus_space_read_8(t, h, o)					\
-	    ((void)t, *(volatile u_int64_t *)((h) + (o)))
+	    ((void)(t), *(volatile u_int64_t *)((h) + (o)))
 
 #define bus_space_read_stream_1 bus_space_read_1
 #define bus_space_read_stream_2 bus_space_read_2
@@ -370,20 +370,20 @@ int bus_space_probe __P((
  */
 
 #define	bus_space_write_1(t, h, o, v)	do {				\
-	((void)t, (void)(*(volatile u_int8_t *)((h) + (o)) = (v)));	\
-} while (0)
+	((void)(t), (void)(*(volatile u_int8_t *)((h) + (o)) = (v)));	\
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_write_2(t, h, o, v)	do {				\
-	((void)t, (void)(*(volatile u_int16_t *)((h) + (o)) = (v)));	\
-} while (0)
+	((void)(t), (void)(*(volatile u_int16_t *)((h) + (o)) = (v)));	\
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_write_4(t, h, o, v)	do {				\
-	((void)t, (void)(*(volatile u_int32_t *)((h) + (o)) = (v)));	\
-} while (0)
+	((void)(t), (void)(*(volatile u_int32_t *)((h) + (o)) = (v)));	\
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_write_8(t, h, o, v)	do {				\
-	((void)t, (void)(*(volatile u_int64_t *)((h) + (o)) = (v)));	\
-} while (0)
+	((void)(t), (void)(*(volatile u_int64_t *)((h) + (o)) = (v)));	\
+} while (/* CONSTCOND */ 0)
 
 #define bus_space_write_stream_1 bus_space_write_1
 #define bus_space_write_stream_2 bus_space_write_2
