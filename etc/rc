@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.130 1999/09/03 13:40:15 itojun Exp $
+#	$NetBSD: rc,v 1.131 1999/09/16 11:00:44 darrenr Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -141,6 +141,12 @@ rm -f /var/spool/lock/LCK.*
 rm -f /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 
+# if this kernel supports machdep.booted_kernel, use that to build the KVM
+# db so dmesg will run work when we boot /netbsd.new, etc.
+sysctl machdep | grep -q booted_kernel
+if [ $? -eq 0 ] ; then
+        kvm_mkdb `sysctl -n machdep.booted_kernel`
+fi
 # get the system dmesg output, hopefully containing the boot messages
 # $dmesg_flags is imported from /etc/rc.conf
 if checkyesno dmesg; then
