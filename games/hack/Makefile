@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.10 (Berkeley) 12/8/90
-#	$Id: Makefile,v 1.6 1993/08/06 16:24:29 mycroft Exp $
+#	$Id: Makefile,v 1.7 1993/08/06 22:49:42 mycroft Exp $
 
 PROG=	hack
 SRCS+=	hack.onames.h
@@ -18,8 +18,8 @@ MAN6=	hack.0
 DPADD=	${LIBTERM}
 LDADD=	-ltermcap
 HIDEGAME=hidegame
+CLEANFILES+=hack.onames.h makedefs
 
-CLEANFILES+=hack.onames.h
 hack.onames.h: makedefs def.objects.h
 	./makedefs ${.CURDIR}/def.objects.h > hack.onames.h
 
