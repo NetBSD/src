@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.17 2003/11/12 13:31:07 grant Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.18 2003/12/27 00:05:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -80,9 +80,12 @@ static int find_interface(int index);
 static void run_initial_ups(void);
 
 #ifdef SPPP_IF_SUPPORT
-static int if_is_connected(const char * ifname);
+static int check_is_connected(const char * ifname, int def_retvalue);
+#define if_is_connected(X)	(check_is_connected((X), 1))
+#define if_is_not_connected(X)	(!check_is_connected((X), 0))
 #else
 #define	if_is_connected(X)	1
+#define	if_is_not_connected(X)	1
 #endif
 
 /* stolen from /sbin/route */
@@ -264,6 +267,8 @@ check_addrs(cp, addrs, ev)
 	enum event ev;
 {
 	struct sockaddr *sa, *ifa = NULL, *brd = NULL;
+	char ifname_buf[IFNAMSIZ];
+	const char *ifname;
 	int ifndx = 0, i;
 
 	if (addrs == 0)
@@ -287,8 +292,18 @@ check_addrs(cp, addrs, ev)
 			ADVANCE(cp, sa);
 		}
 	}
-	if (ifa != NULL)
-		invoke_script(ifa, brd, ev, ifndx, NULL);
+	if (ifa != NULL) {
+		ifname = if_indextoname(ifndx, ifname_buf);
+		if (ifname == NULL || ev < UP)
+			invoke_script(ifa, brd, ev, ifndx, ifname);
+		else if (ev == UP) {
+			if (if_is_connected(ifname))
+				invoke_script(ifa, brd, ev, ifndx, ifname);
+		} else if (ev == DOWN) {
+			if (if_is_not_connected(ifname))
+				invoke_script(ifa, brd, ev, ifndx, ifname);
+		}
+	}
 }
 
 static void
@@ -494,21 +509,35 @@ static void run_initial_ups()
  * treat is as connected.
  */
 static int
-if_is_connected(const char * ifname)
+check_is_connected(const char * ifname, int def_retval)
 {
 	int s, err;
-	struct spppstatus status;
+	struct spppstatus oldstatus;
+	struct spppstatusncp status;
 
 	memset(&status, 0, sizeof status);
 	strncpy(status.ifname, ifname, sizeof status.ifname);
+	memset(&oldstatus, 0, sizeof oldstatus);
+	strncpy(oldstatus.ifname, ifname, sizeof oldstatus.ifname);
+
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s < 0)
 		return 1;	/* no idea how to handle this... */
-	err = ioctl(s, SPPPGETSTATUS, &status);
-	if (err != 0)
-		/* not if_spppsubr.c based - call it connected */
-		status.phase = SPPP_PHASE_NETWORK;
+	err = ioctl(s, SPPPGETSTATUSNCP, &status);
+	if (err != 0) {
+		err = ioctl(s, SPPPGETSTATUS, &oldstatus);
+		if (err != 0) {
+			/* not if_spppsubr.c based - return default */
+			close(s);
+			return def_retval;
+		} else {
+			/* can't query NCPs, so use default */
+			status.phase = oldstatus.phase;
+			status.ncpup = def_retval;
+		}
+	}
 	close(s);
-	return status.phase == SPPP_PHASE_NETWORK;
+
+	return status.phase == SPPP_PHASE_NETWORK && status.ncpup > 0;
 }
 #endif
