@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.46 2000/11/27 08:40:04 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.47 2001/01/07 06:16:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -428,7 +428,7 @@ sys_mmap(p, v, retval)
 		 * now check protection
 		 */
 
-		maxprot = VM_PROT_EXECUTE;
+		maxprot = (prot & PROT_EXEC);
 
 		/* check read access */
 		if (fp->f_flag & FREAD)
