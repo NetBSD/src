@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.10 1997/09/15 06:55:39 lukem Exp $	*/
+/*	$NetBSD: lfs.c,v 1.11 1997/09/15 11:40:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.10 1997/09/15 06:55:39 lukem Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.11 1997/09/15 11:40:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -651,7 +651,7 @@ make_dinode(ino, dip, nblocks, saddr, lfsp)
 static void
 make_dir(bufp, protodir, entries)
 	void *bufp;
-	register struct direct *protodir;
+	struct direct *protodir;
 	int entries;
 {
 	char *cp;
