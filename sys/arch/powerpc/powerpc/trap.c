@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 1999/01/10 10:24:17 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.16 1999/03/15 01:29:07 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -291,6 +291,22 @@ syscall_bad:
 			trapsignal(p, SIGILL, EXC_PGM);
 		break;
 
+	case EXC_MCHK:
+		{
+			faultbuf *fb;
+
+			if (fb = p->p_addr->u_pcb.pcb_onfault) {
+				frame->srr0 = (*fb)[0];
+				frame->fixreg[1] = (*fb)[1];
+				frame->fixreg[2] = (*fb)[2];
+				frame->cr = (*fb)[3];
+				bcopy(&(*fb)[4], &frame->fixreg[13],
+				      19 * sizeof(register_t));
+				return;
+			}
+		}
+		goto brain_damage;
+
 	default:
 brain_damage:
 		printf("trap type %x at %x\n", type, frame->srr0);
@@ -479,3 +495,58 @@ kcopy(src, dst, len)
 	return 0;
 }
 #endif
+
+int
+badaddr(addr, size)
+	void *addr;
+	size_t size;
+{
+	return badaddr_read(addr, size, NULL);
+}
+
+int
+badaddr_read(addr, size, rptr)
+	void *addr;
+	size_t size;
+	int *rptr;
+{
+	faultbuf env;
+	int x;
+
+	/* Get rid of any stale machine checks that have been waiting.  */
+	__asm __volatile ("sync; isync");
+
+	if (setfault(env)) {
+		curpcb->pcb_onfault = 0;
+		__asm __volatile ("sync");
+		return 1;
+	}
+
+	__asm __volatile ("sync");
+
+	switch (size) {
+	case 1:
+		x = *(volatile int8_t *)addr;
+		break;
+	case 2:
+		x = *(volatile int16_t *)addr;
+		break;
+	case 4:
+		x = *(volatile int32_t *)addr;
+		break;
+	default:
+		panic("badaddr: invalid size (%d)", size);
+	}
+
+	/* Make sure we took the machine check, if we caused one. */
+	__asm __volatile ("sync; isync");
+
+	curpcb->pcb_onfault = 0;
+	__asm __volatile ("sync");	/* To be sure. */
+
+	/* Use the value to avoid reorder. */
+	if (rptr)
+		*rptr = x;
+
+	return 0;
+}
