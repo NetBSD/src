@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.20 2000/05/29 16:28:27 mycroft Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.21 2000/06/28 14:16:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -47,10 +47,6 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-
-#include <vm/vm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
