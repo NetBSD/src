@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.23 1999/03/31 00:44:48 fvdl Exp $ */
+/*	$NetBSD: disks.c,v 1.23.2.1 1999/04/19 15:19:27 perry Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,15 +63,12 @@ static void get_disks (void);
 static void foundffs (struct data *list, int num);
 static int do_fsck(const char *diskpart);
 static int fsck_root __P((void));
-static void 
+static int 
     do_ffs_newfs(const char *partname, int part, const char *mountpoint);
 
 static int fsck_with_error_menu(const char *diskpart);
 static int target_mount_with_error_menu(const char *opt, char *diskpart,
 					const char *mntpt);
-
-/* external */
-const char* target_prefix __P((void));
 
 
 static void get_disks(void)
@@ -228,26 +225,26 @@ void disp_cur_fspart(int disp, int showall)
  * Sun ports should use  DISKLABEL_CMD "/sbin/disklabel -w"	
  * to get incore  to ondisk inode translation for the Sun proms.
  */
-void write_disklabel (void)
+int write_disklabel (void)
 {
 
 #ifdef DISKLABEL_CMD
 	/* disklabel the disk */
-	printf("%s", msg_string (MSG_dodisklabel));
-	run_prog(0, 0, "%s %s %s", DISKLABEL_CMD, diskdev, bsddiskname);
+	return run_prog(0, 1, msg_string(MSG_cmdfail),
+	    "%s %s %s", DISKLABEL_CMD, diskdev, bsddiskname);
 #endif
-
+	return 0;
 }
 
 
 
-void make_filesystems(void)
+int make_filesystems(void)
 {
 	int i;
 	char partname[STRSIZE];
+	int error;
 
 	/* Making new file systems and mounting them*/
-	msg_display(MSG_donewfs);
 	for (i = 0; i < getmaxpartitions(); i++) {
 		/*
 		 * newfs and mount. For now, process only BSD filesystems. 
@@ -256,29 +253,42 @@ void make_filesystems(void)
 	  	snprintf(partname, STRSIZE, "%s%c", diskdev, 'a'+i);
 		if (bsdlabel[i].pi_fstype == FS_BSDFFS && 
 		    !is_active_rootpart(partname)) {
-		    do_ffs_newfs(partname, i, fsmount[i]);
+			error = do_ffs_newfs(partname, i, fsmount[i]);
+			if (error)
+				return error;
 		}
 	}
+	return 0;
 }
 
 
 /* newfs and mount an ffs filesystem. */
-static void 
+static int 
 do_ffs_newfs(const char *partname, int partno, const char *mountpoint)
 {
 	char devname[STRSIZE];
-	run_prog(0, 1, "/sbin/newfs /dev/r%s", partname);
-	if (*mountpoint) { 
+	int error;
+
+	error = run_prog(0, 1, msg_string(MSG_cmdfail), 
+	    "/sbin/newfs /dev/r%s", partname);
+	if (*mountpoint && error == 0) { 
 		snprintf(devname, STRSIZE, "/dev/%s", partname);
 		if (partno > 0) {
 			make_target_dir(mountpoint);
-			target_mount("-v", devname, mountpoint);
+			error = target_mount("-v -o async",
+			    devname, mountpoint);
 		} else
-			target_mount("-v", devname, mountpoint);
+			error = target_mount("-v -o async",
+			    devname, mountpoint);
+		if (error) {
+			msg_display(MSG_mountfail, devname, mountpoint);
+			process_menu (MENU_ok);
+		}
 	}
+	return error;
 }
 
-void make_fstab(void)
+int make_fstab(void)
 {
 	FILE *f;
 	int i;
@@ -293,10 +303,11 @@ void make_fstab(void)
 
 	if (f == NULL) {
 #ifndef DEBUG
-		(void)fprintf(stderr, msg_string (MSG_createfstab));
+		msg_display(MSG_createfstab);
 		if (logging)
 			(void)fprintf(log, "Failed to make /etc/fstab!\n");
-		exit(1);
+		process_menu(MENU_ok);
+		return 1;
 #else
 		f = stdout;
 #endif		
@@ -332,6 +343,7 @@ void make_fstab(void)
 #endif
 	/* We added /kern to fstab,  make mountpoint. */
 	make_target_dir("/kern");
+	return 0;
 }
 
 
@@ -427,9 +439,9 @@ do_fsck(const char *diskpart)
 
 	/*endwin();*/
 #ifdef	DEBUG_SETS
-	err = run_prog(0, 1, "/sbin/fsck_ffs %s%s", upgr, raw);
+	err = run_prog(0, 1, NULL, "/sbin/fsck_ffs %s%s", upgr, raw);
 #else
-	err = run_prog(0, 1, "/sbin/fsck_ffs -f %s%s", upgr, raw);
+	err = run_prog(0, 1, NULL, "/sbin/fsck_ffs -f %s%s", upgr, raw);
 #endif	
 		wrefresh(stdscr);
 	return err;

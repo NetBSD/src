@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.11.2.1 1999/04/04 00:25:40 fvdl Exp $ */
+/*	$NetBSD: mbr.c,v 1.11.2.2 1999/04/19 15:19:27 perry Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -194,9 +194,9 @@ edit_mbr(partition)
 		int i;
 		/* Count nonempty, non-BSD partitions. */
 		for (i = 0; i < NMBRPART; i++) {
-			otherparts += otherpart(part[0].mbrp_typ);
+			otherparts += otherpart(part[i].mbrp_typ);
 			/* check for dualboot *bsd too */
-			ourparts += ourpart(part[0].mbrp_typ);
+			ourparts += ourpart(part[i].mbrp_typ);
 		}					  
 
 		/* Ask if we really want to blow away non-NetBSD stuff */
@@ -211,9 +211,12 @@ edit_mbr(partition)
 		}
 
 		/* Set the partition information for full disk usage. */
-		part[0].mbrp_typ = part[0].mbrp_size = 0;
-		part[1].mbrp_typ = part[1].mbrp_size = 0;
-		part[2].mbrp_typ = part[2].mbrp_size = 0;
+		part[0].mbrp_typ = part[0].mbrp_flag = 0;
+		part[0].mbrp_start = part[0].mbrp_size = 0;
+		part[1].mbrp_typ = part[0].mbrp_flag = 0;
+		part[1].mbrp_start = part[0].mbrp_size = 0;
+		part[2].mbrp_typ = part[0].mbrp_flag = 0;
+		part[2].mbrp_start = part[0].mbrp_size = 0;
 		part[3].mbrp_typ = dosptyp_nbsd;
 		part[3].mbrp_size = bsize - bsec;
 		part[3].mbrp_start = bsec;
@@ -234,8 +237,10 @@ edit_mbr(partition)
 		bsdpart = freebsdpart = -1;
 		activepart = -1;
 		for (i = 0; i<4; i++)
-			if (part[i].mbrp_flag != 0)
+			if (part[i].mbrp_flag != 0) {
 				activepart = i;
+				part[i].mbrp_flag = 0;
+			}
 		do {
 			process_menu (MENU_editparttable);
 			numbsd = 0;
@@ -302,9 +307,6 @@ edit_mbr(partition)
 
 	/* Compute minimum NetBSD partition sizes (in sectors). */
 	minfsdmb = (80 + 4*rammb) * (MEG / sectorsize);
-
-	if (usefull) 
-	  swapadj = bsec;
 
 	return 1;
 }
@@ -426,7 +428,15 @@ write_mbr(disk, buf, len)
 
 	mbrp = (struct mbr_partition *)&buf[MBR_PARTOFF];
 	for (i = 0; i < NMBRPART; i++) {
-		if (mbrp[i].mbrp_typ != 0) {
+		if (mbrp[i].mbrp_start == 0 &&
+		    mbrp[i].mbrp_size == 0) {
+			mbrp[i].mbrp_scyl = 0;
+			mbrp[i].mbrp_shd = 0;
+			mbrp[i].mbrp_ssect = 0;
+			mbrp[i].mbrp_ecyl = 0;
+			mbrp[i].mbrp_ehd = 0;
+			mbrp[i].mbrp_esect = 0;
+		} else {
 			pstart = mbrp[i].mbrp_start;
 			psize = mbrp[i].mbrp_size;
 			mbrp[i].mbrp_start = native_to_le32(pstart);

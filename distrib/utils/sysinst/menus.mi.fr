@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.12.2.1 1999/04/08 15:16:35 bouyer Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.12.2.2 1999/04/19 15:19:27 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,11 +68,13 @@ menu netbsd, title "  NetBSD-@@VERSION@@ Programme d'installation";
 	option "Réinstaller ou installer de nouveaux composants",
 		action { do_reinstall_sets(); };
 	option "Redémarrer l'ordinateur", exit,
-		action (endwin) { run_prog(0, 0, "/sbin/reboot"); };
+		action (endwin) { run_prog(0, 0, NULL, "/sbin/reboot"); };
 	option "Menu utilitaire", sub menu utility;
 	option "Quitter le programme d'installation", exit;
 
 menu utility, title " Utilitaires NetBSD-@@VERSION@@", exit;
+	/* option "test", action { run_prog(0, 1, NULL, "/bin/pwd"); }; */
+	/* option "testfalse", action { run_prog(0, 0, "%s: kaput", "/bin/false"); }; */
 	option "Exécuter /bin/sh",
 		action (endwin) { system("/bin/sh"); };
 	option "Configuration du réseau",
@@ -85,7 +87,7 @@ menu utility, title " Utilitaires NetBSD-@@VERSION@@", exit;
 /*	option "Partitioner un disque"; XXX add later.  */
 	option "Traces", action { do_logging(); };
 	option "Arrêter le système", exit,
-		action (endwin) { run_prog(0, 0, "/sbin/halt"); };
+		action (endwin) { run_prog(0, 0, NULL, "/sbin/halt"); };
 
 menu yesno, title "  oui ou non?  ";
 	option "Oui", exit, action  {yesno = 1;};
@@ -132,17 +134,11 @@ menu edfspart, title "  Changer quoi? ", exit, y=15;
 	};
 	option "type de FS", sub menu  selfskind;
 	option "Offset/taille", action  
-		{	char buf[40]; int start, size;
-			msg_prompt_add (MSG_offset, NULL, buf, 40);
-			start = NUMSEC(atoi(buf),sizemult,dlcylsize);
-			msg_prompt_add (MSG_size, NULL, buf, 40);
-			size = NUMSEC(atoi(buf),sizemult,dlcylsize);
+		{	int start, size;
+			msg_display_add(MSG_defaultunit, multname);
+			start = getpartoff(MSG_offset, 0);
+			size = getpartsize(MSG_size, start, 0);
 			if (size == -1)
-				size = dlsize - start;
-			if (editpart == 1 && 
-			    bsdlabel[editpart].pi_fstype == FS_SWAP)
-				size -= swapadj;
-			if (start + size > dlsize)
 				size = dlsize - start;
 			bsdlabel[editpart].pi_offset = start;
 			bsdlabel[editpart].pi_size = size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.eng,v 1.9 1999/03/31 00:44:49 fvdl Exp $	*/
+/*	$NetBSD: msg.md.eng,v 1.9.2.1 1999/04/19 15:19:29 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -151,16 +151,22 @@ message dobootblks
 {Installing boot blocks on %s....
 }
 
-message askfsroot
+message askfsroot1
 {I will be asking for partition information.
 
 First the root partition.  You have %d %s left on your disk.
-Root partition size? }
+}
 
-message askfsswap
+message askfsroot2
+{Root partition size? }
+
+message askfsswap1
 {
 Next the swap partition.  You have %d %s left on your disk.
-Swap partition size? }
+}
+
+message askfsswap2
+{Swap partition size? }
 
 message otherparts
 {You still have some space remaining unallocated on your disk.  Please
@@ -168,9 +174,12 @@ give sizes and mount points for the following partitions.
 
 }
 
-message askfspart
+message askfspart1
 {The next partition is /dev/%s%c.  You have %d %s left on your disk.
-Partition size? }
+}
+
+message askfspart2
+{Partition size? }
 
 message cyl1024
 { The disklabel (set of partitions) you specified has a root partition that
@@ -190,3 +199,6 @@ message biosmultmatch
 
 message pickdisk
 {Choose disk: }
+
+message wmbrfail
+{Rewrite of MBR failed. I can't continue.}

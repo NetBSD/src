@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.12.2.1 1999/04/08 15:16:36 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.12.2.2 1999/04/19 15:19:27 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -125,6 +125,11 @@ message badname
 Les disques suivants sont disponibles : %s
 \nSur quel disque voulez vous installer NetBSD ?}
 
+message disktoosmall
+{Votre disque est trop petit pour une installation standard. Vous devez entrer
+vous-même la taille des partitions.
+}
+
 message pleasemountroot
 {Le système de fichiers racine n'est pas monté. SVP, montez le.
 
@@ -198,6 +203,20 @@ est plus efficace de choisir des tailles de partitions multiples de la
 taille d'un cylindre, qui est %d secteurs.
 }
 
+message defaultunit
+{Tailles et offsets sont en %s, sauf si vous spécifiez une unitée ('M' pour
+mégactets, 'c' pour cylindres, 's' pour secteurs) à la fin de votre nombre.
+}
+
+message startoutsidedisk
+{La valeur que vous avez spécifiée est en dehors du disque
+}
+
+message endoutsidedisk
+{Avec cette valeur, la fin de la partition est en dehors du disque.
+La taille de la partition a été tronquée à %d %s.
+}
+
 message fspart
 {Vos partitions NetBSD sont les suivantes (taille et offset en %s) :
 }
@@ -240,19 +259,58 @@ Si les systèmes de fichiers cibles semblent bons, l'étape suivant consiste a
 recopier les différents composants. Appuyer sur <entrée> pour continuer.
 }
 
+message openfail
+{Je n'ai pas pu ouvrir %s, le message d'erreur était: %s.
+}
+
+message statfail
+{Je n'ai pas pu avoir les propriétées de %s, le message d'erreur
+etait: %s.
+}
+
+message unlink_fail
+{Je n'ai pas pu effacer %s, le message d'erreur était: %s.
+}
+
+message rename_fail
+{je n'ai pas pu renomer %s en %s, le message d'erreur était: %s.
+}
+
+message deleting_files
+{Pour la procédure de mise à jour, les fichiers suivant doivent etre
+supprimés:
+}
+
+message deleting_dirs
+{Pour la procédude de mise à jour, les répertoires suivants doivent
+etre supprimés (je renomerais ceux qui ne sont pas vides):
+}
+
+message renamed_dir
+{Le répertoire %s a été renomé en %s.
+}
+
+message cleanup_warn
+{Les ajustements nécessaire à la mise à niveau de l'installation
+existante ont échouées. Cela peut empêcher l'extraction du composant
+suivant.
+}
+
 message nomount
 {La partition %c n'est ni 4.2BSD, ni msdos c'est pour cela qu'elle n'a pas de
 point de montage.
 }
 
-message dodisklabel
-{Ecriture du disklabel NetBSD ...\n}
-
-message donewfs
-{Création des nouveaux systèmes de fichiers sur toutes les partitions 4.2BSD.\n}
+message mountfail
+{Le montage de %s sur %s a échoué.
+}
 
 message dotar
 {Installation des programmes d'ammorcage et fichiers de configuration ...\n}
+
+message dotarfail
+{L'installation des programmes d'ammorcage et fichiers de configuration a
+échoué. Impossible de continuer ...}
 
 message instcomplete
 {L'installation de NetBSD-@@VERSION@@ est terminée. L'ordinateur devrait
@@ -570,10 +628,6 @@ serveur de noms, ou bien votre gateway ne peuvent être atteint par un ping
 Voulez vous configurer de nouveau votre réseau ? (Non arrêtera l'installation)
 }
 
-message extracting
-{Extraction du fichier %s ...
-}
-
 message makedev
 {Création des fichiers de device ...
 }
@@ -679,3 +733,8 @@ La géométrie physique est %d cylindres %d secteurs %d têtes\n}
 message biosguess
 {En utilisant les informations déja présentes sur le disque, je suppose que
 la géométrie utilisée par le BIOS est %d cylindres %d secteurs %d têtes\n}
+
+message cmdfail
+{La commande
+        %s
+ne s'est pas executée correctement. Impossible de continuer.}
