@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.20 1998/01/12 09:43:37 thorpej Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.21 1998/03/22 04:25:36 enami Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -64,7 +64,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-
+#include <net/if_media.h>
 #include <net/if_ether.h>
 
 #ifdef INET
@@ -85,484 +85,66 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
 #include <dev/ic/mb86960reg.h>
-#include <dev/isa/if_fereg.h>
-
-/*
- * Default settings for fe driver specific options.
- * They can be set in config file by "options" statements.
- */
-
-/*
- * Debug control.
- * 0: No debug at all.  All debug specific codes are stripped off.
- * 1: Silent.  No debug messages are logged except emergent ones.
- * 2: Brief.  Lair events and/or important information are logged.
- * 3: Detailed.  Logs all information which *may* be useful for debugging.
- * 4: Trace.  All actions in the driver is logged.  Super verbose.
- */
-#ifndef FE_DEBUG
-#define FE_DEBUG		1
-#endif
-
-/*
- * Delay padding of short transmission packets to minimum Ethernet size.
- * This may or may not gain performance.  An EXPERIMENTAL option.
- */
-#ifndef FE_DELAYED_PADDING
-#define FE_DELAYED_PADDING	0
-#endif
-
-/*
- * Transmit just one packet per a "send" command to 86960.
- * This option is intended for performance test.  An EXPERIMENTAL option.
- */
-#ifndef FE_SINGLE_TRANSMISSION
-#define FE_SINGLE_TRANSMISSION	0
-#endif
-
-/*
- * Device configuration flags.
- */
-
-/* DLCR6 settings. */
-#define FE_FLAGS_DLCR6_VALUE	0x007F
-
-/* Force DLCR6 override. */
-#define FE_FLAGS_OVERRIDE_DLCR6	0x0080
-
-/* A cludge for PCMCIA support. */
-#define FE_FLAGS_PCMCIA		0x8000
-
-/* Identification of the driver version. */
-static char const fe_version[] = FE_VERSION " / " FE_REG_VERSION;
-
-/*
- * Supported hardware (Ethernet card) types
- * This information is currently used only for debugging
- */
-enum fe_type {
-	/* For cards which are successfully probed but not identified. */
-	FE_TYPE_UNKNOWN,
-
-	/* Fujitsu FMV-180 series. */
-	FE_TYPE_FMV181,
-	FE_TYPE_FMV182,
-
-	/* Allied-Telesis AT1700 series and RE2000 series. */
-	FE_TYPE_AT1700T,
-	FE_TYPE_AT1700BT,
-	FE_TYPE_AT1700FT,
-	FE_TYPE_AT1700AT,
-	FE_TYPE_RE2000,
-
-	/* PCMCIA by Fujitsu. */
-	FE_TYPE_MBH10302,
-	FE_TYPE_MBH10304,
-};
-
-/*
- * fe_softc: per line info and status
- */
-struct fe_softc {
-	struct	device sc_dev;
-	void	*sc_ih;
-
-	struct	ethercom sc_ethercom;	/* ethernet common */
-
-	/* Set by probe() and not modified in later phases. */
-	enum	fe_type type;	/* interface type code */
-	char	*typestr;	/* printable name of the interface. */
-	int	sc_iobase;	/* MB86960A I/O base address */
-
-	u_char	proto_dlcr4;	/* DLCR4 prototype. */
-	u_char	proto_dlcr5;	/* DLCR5 prototype. */
-	u_char	proto_dlcr6;	/* DLCR6 prototype. */
-	u_char	proto_dlcr7;	/* DLCR7 prototype. */
-	u_char	proto_bmpr13;	/* BMPR13 prototype. */
-
-	/* Vendor specific hooks. */
-	void	(*init) __P((struct fe_softc *)); /* Just before fe_init(). */
-	void	(*stop) __P((struct fe_softc *)); /* Just after fe_stop(). */
-
-	/* Transmission buffer management. */
-	u_short	txb_size;	/* total bytes in TX buffer */
-	u_short	txb_free;	/* free bytes in TX buffer */
-	u_char	txb_count;	/* number of packets in TX buffer */
-	u_char	txb_sched;	/* number of scheduled packets */
-	u_char	txb_padding;	/* number of delayed padding bytes */
-
-	/* Multicast address filter management. */
-	u_char	filter_change;	/* MARs must be changed ASAP. */
-	u_char	filter[FE_FILTER_LEN];	/* new filter value. */
-
-	u_int8_t sc_enaddr[ETHER_ADDR_LEN];
-
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
-};
+#include <dev/ic/mb86960var.h>
 
 /* Standard driver entry points.  These can be static. */
-int	feprobe		__P((struct device *, void *, void *));
-void	feattach	__P((struct device *, struct device *, void *));
-int	feintr		__P((void *));
-void	fe_init		__P((struct fe_softc *));
-int	fe_ioctl	__P((struct ifnet *, u_long, caddr_t));
-void	fe_start	__P((struct ifnet *));
-void	fe_reset	__P((struct fe_softc *));
-void	fe_watchdog	__P((struct ifnet *));
+void	mb86960_init	__P((struct mb86960_softc *));
+int	mb86960_ioctl	__P((struct ifnet *, u_long, caddr_t));
+void	mb86960_start	__P((struct ifnet *));
+void	mb86960_reset	__P((struct mb86960_softc *));
+void	mb86960_watchdog __P((struct ifnet *));
 
 /* Local functions.  Order of declaration is confused.  FIXME. */
-int	fe_probe_fmv	__P((struct fe_softc *, struct isa_attach_args *));
-int	fe_probe_ati	__P((struct fe_softc *, struct isa_attach_args *));
-int	fe_probe_mbh	__P((struct fe_softc *, struct isa_attach_args *));
-void	fe_read_eeprom	__P((struct fe_softc *, u_char *));
-void	fe_init_mbh	__P((struct fe_softc *));
-int	fe_get_packet	__P((struct fe_softc *, int));
-void	fe_stop		__P((struct fe_softc *));
-void	fe_tint		__P((struct fe_softc *, u_char));
-void	fe_rint		__P((struct fe_softc *, u_char));
-static inline
-void	fe_xmit		__P((struct fe_softc *));
-void	fe_write_mbufs	__P((struct fe_softc *, struct mbuf *));
-static inline
-void	fe_droppacket	__P((struct fe_softc *));
-void	fe_getmcaf	__P((struct ethercom *, u_char *));
-void	fe_setmode	__P((struct fe_softc *));
-void	fe_loadmar	__P((struct fe_softc *));
+int	mb86960_get_packet __P((struct mb86960_softc *, int));
+void	mb86960_stop __P((struct mb86960_softc *));
+void	mb86960_tint __P((struct mb86960_softc *, u_char));
+void	mb86960_rint __P((struct mb86960_softc *, u_char));
+static __inline__
+void	mb86960_xmit __P((struct mb86960_softc *));
+void	mb86960_write_mbufs __P((struct mb86960_softc *, struct mbuf *));
+static __inline__
+void	mb86960_droppacket __P((struct mb86960_softc *));
+void	mb86960_getmcaf __P((struct ethercom *, u_char *));
+void	mb86960_setmode __P((struct mb86960_softc *));
+void	mb86960_loadmar __P((struct mb86960_softc *));
+
+int	mb86960_enable __P((struct mb86960_softc *));
+void	mb86960_disable __P((struct mb86960_softc *));
+
+int	mb86960_mediachange __P((struct ifnet *));
+void	mb86960_mediastatus __P((struct ifnet *, struct ifmediareq *));
+
 #if FE_DEBUG >= 1
-void	fe_dump		__P((int, struct fe_softc *));
+void	mb86960_dump __P((int, struct mb86960_softc *));
 #endif
-
-struct cfattach fe_ca = {
-	sizeof(struct fe_softc), feprobe, feattach
-};
-
-/* Ethernet constants.  To be defined in if_ehter.h?  FIXME. */
-#define ETHER_MIN_LEN	60	/* with header, without CRC. */
-#define ETHER_MAX_LEN	1514	/* with header, without CRC. */
-#define ETHER_ADDR_LEN	6	/* number of bytes in an address. */
-#define ETHER_HDR_SIZE	14	/* src addr, dst addr, and data type. */
-
-/*
- * Fe driver specific constants which relate to 86960/86965.
- */
-
-/* Interrupt masks. */
-#define FE_TMASK (FE_D2_COLL16 | FE_D2_TXDONE)
-#define FE_RMASK (FE_D3_OVRFLO | FE_D3_CRCERR | \
-		  FE_D3_ALGERR | FE_D3_SRTPKT | FE_D3_PKTRDY)
-
-/* Maximum number of iterrations for a receive interrupt. */
-#define FE_MAX_RECV_COUNT ((65536 - 2048 * 2) / 64)
-	/* Maximum size of SRAM is 65536,
-	 * minimum size of transmission buffer in fe is 2x2KB,
-	 * and minimum amount of received packet including headers
-	 * added by the chip is 64 bytes.
-	 * Hence FE_MAX_RECV_COUNT is the upper limit for number
-	 * of packets in the receive buffer. */
-
-/*
- * Convenient routines to access contiguous I/O ports.
- */
-
-static inline void
-inblk (int addr, u_char * mem, int len)
-{
-	while (--len >= 0) {
-		*mem++ = inb(addr++);
-	}
-}
-
-static inline void
-outblk (int addr, u_char const * mem, int len)
-{
-	while (--len >= 0) {
-		outb(addr++, *mem++);
-	}
-}
-
-/*
- * Hardware probe routines.
- */
-
-/*
- * Determine if the device is present.
- */
-int
-feprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct fe_softc *sc = match;
-	struct isa_attach_args *ia = aux;
-
-#if FE_DEBUG >= 2
-	log(LOG_INFO, "%s: %s\n", sc->sc_dev.dv_xname, fe_version);
-#endif
-
-	/* Probe an address. */
-	sc->sc_iobase = ia->ia_iobase;
-
-	if (fe_probe_fmv(sc, ia))
-		return (1);
-	if (fe_probe_ati(sc, ia))
-		return (1);
-	if (fe_probe_mbh(sc, ia))
-		return (1);
-	return (0);
-}
-
-/*
- * Check for specific bits in specific registers have specific values.
- */
-struct fe_simple_probe_struct {
-	u_char port;	/* Offset from the base I/O address. */
-	u_char mask;	/* Bits to be checked. */
-	u_char bits;	/* Values to be compared against. */
-};
-
-static inline int
-fe_simple_probe (int addr, struct fe_simple_probe_struct const * sp)
-{
-	struct fe_simple_probe_struct const * p;
-
-	for (p = sp; p->mask != 0; p++) {
-		if ((inb(addr + p->port) & p->mask) != p->bits) {
-			return (0);
-		}
-	}
-	return (1);
-}
-
-/*
- * Routines to read all bytes from the config EEPROM through MB86965A.
- * I'm not sure what exactly I'm doing here...  I was told just to follow
- * the steps, and it worked.  Could someone tell me why the following
- * code works?  (Or, why all similar codes I tried previously doesn't
- * work.)  FIXME.
- */
-
-static inline void
-strobe (int bmpr16)
-{
-	/*
-	 * Output same value twice.  To speed-down execution?
-	 */
-	outb(bmpr16, FE_B16_SELECT);
-	outb(bmpr16, FE_B16_SELECT);
-	outb(bmpr16, FE_B16_SELECT | FE_B16_CLOCK);
-	outb(bmpr16, FE_B16_SELECT | FE_B16_CLOCK);
-	outb(bmpr16, FE_B16_SELECT);
-	outb(bmpr16, FE_B16_SELECT);
-}
 
 void
-fe_read_eeprom(sc, data)
-	struct fe_softc *sc;
-	u_char *data;
+mb86960_attach(sc, type, myea)
+	struct mb86960_softc *sc;
+	enum mb86960_type type;
+	u_int8_t *myea;
 {
-	int iobase = sc->sc_iobase;
-	int bmpr16 = iobase + FE_BMPR16;
-	int bmpr17 = iobase + FE_BMPR17;
-	u_char n, val, bit;
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
 
-	/* Read bytes from EEPROM; two bytes per an iterration. */
-	for (n = 0; n < FE_EEPROM_SIZE / 2; n++) {
-		/* Reset the EEPROM interface. */
-		outb(bmpr16, 0x00);
-		outb(bmpr17, 0x00);
-		outb(bmpr16, FE_B16_SELECT);
-
-		/* Start EEPROM access. */
-		outb(bmpr17, FE_B17_DATA);
-		strobe(bmpr16);
-
-		/* Pass the iterration count to the chip. */
-		val = 0x80 | n;
-		for (bit = 0x80; bit != 0x00; bit >>= 1) {
-			outb(bmpr17, (val & bit) ? FE_B17_DATA : 0);
-			strobe(bmpr16);
-		}
-		outb(bmpr17, 0x00);
-
-		/* Read a byte. */
-		val = 0;
-		for (bit = 0x80; bit != 0x00; bit >>= 1) {
-			strobe(bmpr16);
-			if (inb(bmpr17) & FE_B17_DATA)
-				val |= bit;
-		}
-		*data++ = val;
-
-		/* Read one more byte. */
-		val = 0;
-		for (bit = 0x80; bit != 0x00; bit >>= 1) {
-			strobe(bmpr16);
-			if (inb(bmpr17) & FE_B17_DATA)
-				val |= bit;
-		}
-		*data++ = val;
-	}
-
-#if FE_DEBUG >= 3
-	/* Report what we got. */
-	data -= FE_EEPROM_SIZE;
-	log(LOG_INFO, "%s: EEPROM at %04x:"
-	    " %02x%02x%02x%02x %02x%02x%02x%02x -"
-	    " %02x%02x%02x%02x %02x%02x%02x%02x -"
-	    " %02x%02x%02x%02x %02x%02x%02x%02x -"
-	    " %02x%02x%02x%02x %02x%02x%02x%02x\n",
-	    sc->sc_dev.dv_xname, iobase,
-	    data[ 0], data[ 1], data[ 2], data[ 3],
-	    data[ 4], data[ 5], data[ 6], data[ 7],
-	    data[ 8], data[ 9], data[10], data[11],
-	    data[12], data[13], data[14], data[15],
-	    data[16], data[17], data[18], data[19],
-	    data[20], data[21], data[22], data[23],
-	    data[24], data[25], data[26], data[27],
-	    data[28], data[29], data[30], data[31]);
-#endif
-}
-
-/*
- * Hardware (vendor) specific probe routines.
- */
-
-/*
- * Probe and initialization for Fujitsu FMV-180 series boards
- */
-int
-fe_probe_fmv(sc, ia)
-	struct fe_softc *sc;
-	struct isa_attach_args *ia;
-{
-	int i, n;
-	int iobase = sc->sc_iobase;
-	int irq;
-
-	static int const iomap[8] =
-		{ 0x220, 0x240, 0x260, 0x280, 0x2A0, 0x2C0, 0x300, 0x340 };
-	static int const irqmap[4] =
-		{ 3, 7, 10, 15 };
-
-	static struct fe_simple_probe_struct const probe_table[] = {
-		{ FE_DLCR2, 0x70, 0x00 },
-		{ FE_DLCR4, 0x08, 0x00 },
-	    /*	{ FE_DLCR5, 0x80, 0x00 },	Doesn't work. */
-
-		{ FE_FMV0, FE_FMV0_MAGIC_MASK,  FE_FMV0_MAGIC_VALUE },
-		{ FE_FMV1, FE_FMV1_CARDID_MASK, FE_FMV1_CARDID_ID   },
-		{ FE_FMV3, FE_FMV3_EXTRA_MASK,  FE_FMV3_EXTRA_VALUE },
-#if 1
-	/*
-	 * Test *vendor* part of the station address for Fujitsu.
-	 * The test will gain reliability of probe process, but
-	 * it rejects FMV-180 clone boards manufactured by other vendors.
-	 * We have to turn the test off when such cards are made available.
-	 */
-		{ FE_FMV4, 0xFF, 0x00 },
-		{ FE_FMV5, 0xFF, 0x00 },
-		{ FE_FMV6, 0xFF, 0x0E },
-#else
-	/*
-	 * We can always verify the *first* 2 bits (in Ehternet
-	 * bit order) are "no multicast" and "no local" even for
-	 * unknown vendors.
-	 */
-		{ FE_FMV4, 0x03, 0x00 },
-#endif
-		{ 0 }
-	};
-
-#if 0
-	/*
-	 * Dont probe at all if the config says we are PCMCIA...
-	 */
-	if ((cf->cf_flags & FE_FLAGS_PCMCIA) != 0)
-		return (0);
-#endif
-
-	/*
-	 * See if the sepcified address is possible for FMV-180 series.
-	 */
-	for (i = 0; i < 8; i++) {
-		if (iomap[i] == iobase)
-			break;
-	}
-	if (i == 8)
-		return (0);
-
-	/* Simple probe. */
-	if (!fe_simple_probe(iobase, probe_table))
-		return (0);
-
-	/* Check if our I/O address matches config info on EEPROM. */
-	n = (inb(iobase + FE_FMV2) & FE_FMV2_ADDR) >> FE_FMV2_ADDR_SHIFT;
-	if (iomap[n] != iobase)
-		return (0);
-
-	/* Determine the card type. */
-	switch (inb(iobase + FE_FMV0) & FE_FMV0_MODEL) {
-	case FE_FMV0_MODEL_FMV181:
-		sc->type = FE_TYPE_FMV181;
-		sc->typestr = "FMV-181";
-		break;
-	case FE_FMV0_MODEL_FMV182:
-		sc->type = FE_TYPE_FMV182;
-		sc->typestr = "FMV-182";
-		break;
-	default:
-	  	/* Unknown card type: maybe a new model, but... */
-		return (0);
-	}
-
-	/*
-	 * An FMV-180 has successfully been proved.
-	 * Determine which IRQ to be used.
-	 *
-	 * In this version, we always get an IRQ assignment from the
-	 * FMV-180's configuration EEPROM, ignoring that specified in
-	 * config file.
-	 */
-	n = (inb(iobase + FE_FMV2) & FE_FMV2_IRQ) >> FE_FMV2_IRQ_SHIFT;
-	irq = irqmap[n];
-
-	if (ia->ia_irq != IRQUNK) {
-		if (ia->ia_irq != irq) {
-			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
-			    sc->sc_dev.dv_xname, ia->ia_irq, irq);
-			return (0);
-		}
-	} else
-		ia->ia_irq = irq;
-
-	/*
-	 * Initialize constants in the per-line structure.
-	 */
-
-	/* Get our station address from EEPROM. */
-	inblk(iobase + FE_FMV4, sc->sc_enaddr, ETHER_ADDR_LEN);
-
-	/* Make sure we got a valid station address. */
-	if ((sc->sc_enaddr[0] & 0x03) != 0x00
-	  || (sc->sc_enaddr[0] == 0x00
-	    && sc->sc_enaddr[1] == 0x00
-	    && sc->sc_enaddr[2] == 0x00))
-		return (0);
+	sc->type = type;
 
 	/* Register values which depend on board design. */
 	sc->proto_dlcr4 = FE_D4_LBC_DISABLE | FE_D4_CNTRL;
 	sc->proto_dlcr5 = 0;
-	sc->proto_dlcr7 = FE_D7_BYTSWP_LH | FE_D7_IDENT_EC;
 	sc->proto_bmpr13 = FE_B13_TPTYPE_UTP | FE_B13_PORT_AUTO;
+
+	switch (sc->type) {
+	case MB86960_TYPE_86960:
+		sc->proto_dlcr7 = FE_D7_BYTSWP_LH | FE_D7_IDENT_EC;
+		break;
+	case MB86960_TYPE_86965:
+		sc->proto_dlcr7 = FE_D7_BYTSWP_LH;
+		break;
+	}
 
 	/*
 	 * Program the 86960 as follows:
@@ -573,8 +155,8 @@ fe_probe_fmv(sc, ia)
 	 * are hard-wired on the board.  Modifying TXBSIZE will affect
 	 * the driver performance.
 	 */
-	sc->proto_dlcr6 = FE_D6_BUFSIZ_32KB | FE_D6_TXBSIZ_2x4KB
-		| FE_D6_BBW_BYTE | FE_D6_SBW_WORD | FE_D6_SRAM_100ns;
+	sc->proto_dlcr6 = FE_D6_BUFSIZ_32KB | FE_D6_TXBSIZ_2x4KB |
+	    FE_D6_BBW_BYTE | FE_D6_SBW_WORD | FE_D6_SRAM_100ns;
 
 	/*
 	 * Minimum initialization of the hardware.
@@ -582,456 +164,52 @@ fe_probe_fmv(sc, ia)
 	 * overlap with other boards.
 	 */
 
-	/* Initialize ASIC. */
-	outb(iobase + FE_FMV3, 0);
-	outb(iobase + FE_FMV10, 0);
-
-	/* Wait for a while.  I'm not sure this is necessary.  FIXME. */
-	delay(200);
-
 	/* Initialize 86960. */
-	outb(iobase + FE_DLCR6, sc->proto_dlcr6 | FE_D6_DLC_DISABLE);
+	bus_space_write_1(bst, bsh, FE_DLCR6,
+	    sc->proto_dlcr6 | FE_D6_DLC_DISABLE);
 	delay(200);
 
-	/* Disable all interrupts. */
-	outb(iobase + FE_DLCR2, 0);
-	outb(iobase + FE_DLCR3, 0);
-
-	/* Turn the "master interrupt control" flag of ASIC on. */
-	outb(iobase + FE_FMV3, FE_FMV3_ENABLE_FLAG);
-
-	/*
-	 * That's all.  FMV-180 occupies 32 I/O addresses, by the way.
-	 */
-	ia->ia_iosize = 32;
-	ia->ia_msize = 0;
-	return (1);
-}
-
-/*
- * Probe and initialization for Allied-Telesis AT1700/RE2000 series.
- */
-int
-fe_probe_ati(sc, ia)
-	struct fe_softc *sc;
-	struct isa_attach_args *ia;
-{
-	int i, n;
-	int iobase = sc->sc_iobase;
-	u_char eeprom[FE_EEPROM_SIZE];
-	u_char save16, save17;
-	int irq;
-
-	static int const iomap[8] =
-		{ 0x260, 0x280, 0x2A0, 0x240, 0x340, 0x320, 0x380, 0x300 };
-	static int const irqmap[4][4] = {
-		{  3,  4,  5,  9 },
-		{ 10, 11, 12, 15 },
-		{  3, 11,  5, 15 },
-		{ 10, 11, 14, 15 },
-	};
-	static struct fe_simple_probe_struct const probe_table[] = {
-		{ FE_DLCR2,  0x70, 0x00 },
-		{ FE_DLCR4,  0x08, 0x00 },
-		{ FE_DLCR5,  0x80, 0x00 },
-#if 0
-		{ FE_BMPR16, 0x1B, 0x00 },
-		{ FE_BMPR17, 0x7F, 0x00 },
-#endif
-		{ 0 }
-	};
-
-#if 0
-	/*
-	 * Don't probe at all if the config says we are PCMCIA...
-	 */
-	if ((cf->cf_flags & FE_FLAGS_PCMCIA) != 0)
-		return (0);
-#endif
-
-#if FE_DEBUG >= 4
-	log(LOG_INFO, "%s: probe (0x%x) for ATI\n", sc->sc_dev.dv_xname, iobase);
-	fe_dump(LOG_INFO, sc);
-#endif
-
-	/*
-	 * See if the sepcified address is possible for MB86965A JLI mode.
-	 */
-	for (i = 0; i < 8; i++) {
-		if (iomap[i] == iobase)
-			break;
+#ifdef DIAGNOSTIC
+	if (myea == NULL) {
+		printf("%s: ethernet address shouldn't be NULL\n",
+		    sc->sc_dev.dv_xname);
+		panic("NULL ethernet address");
 	}
-	if (i == 8)
-		return (0);
-
-	/*
-	 * We should test if MB86965A is on the base address now.
-	 * Unfortunately, it is very hard to probe it reliably, since
-	 * we have no way to reset the chip under software control.
-	 * On cold boot, we could check the "signature" bit patterns
-	 * described in the Fujitsu document.  On warm boot, however,
-	 * we can predict almost nothing about register values.
-	 */
-	if (!fe_simple_probe(iobase, probe_table))
-		return (0);
-
-	/* Save old values of the registers. */
-	save16 = inb(iobase + FE_BMPR16);
-	save17 = inb(iobase + FE_BMPR17);
-
-	/* Check if our I/O address matches config info on 86965. */
-	n = (inb(iobase + FE_BMPR19) & FE_B19_ADDR) >> FE_B19_ADDR_SHIFT;
-	if (iomap[n] != iobase)
-		goto fail;
-
-	/*
-	 * We are now almost sure we have an AT1700 at the given
-	 * address.  So, read EEPROM through 86965.  We have to write
-	 * into LSI registers to read from EEPROM.  I want to avoid it
-	 * at this stage, but I cannot test the presense of the chip
-	 * any further without reading EEPROM.  FIXME.
-	 */
-	fe_read_eeprom(sc, eeprom);
-
-	/* Make sure the EEPROM is turned off. */
-	outb(iobase + FE_BMPR16, 0);
-	outb(iobase + FE_BMPR17, 0);
-
-	/* Make sure that config info in EEPROM and 86965 agree. */
-	if (eeprom[FE_EEPROM_CONF] != inb(iobase + FE_BMPR19))
-		goto fail;
-
-	/*
-	 * Determine the card type.
-	 */
-	switch (eeprom[FE_ATI_EEP_MODEL]) {
-	case FE_ATI_MODEL_AT1700T:
-		sc->type = FE_TYPE_AT1700T;
-		sc->typestr = "AT-1700T";
-		break;
-	case FE_ATI_MODEL_AT1700BT:
-		sc->type = FE_TYPE_AT1700BT;
-		sc->typestr = "AT-1700BT";
-		break;
-	case FE_ATI_MODEL_AT1700FT:
-		sc->type = FE_TYPE_AT1700FT;
-		sc->typestr = "AT-1700FT";
-		break;
-	case FE_ATI_MODEL_AT1700AT:
-		sc->type = FE_TYPE_AT1700AT;
-		sc->typestr = "AT-1700AT";
-		break;
-	default:
-		sc->type = FE_TYPE_RE2000;
-		sc->typestr = "unknown (RE-2000?)";
-		break;
-	}
-
-	/*
-	 * Try to determine IRQ settings.
-	 * Different models use different ranges of IRQs.
-	 */
-	n = (inb(iobase + FE_BMPR19) & FE_B19_IRQ) >> FE_B19_IRQ_SHIFT;
-	switch (eeprom[FE_ATI_EEP_REVISION] & 0xf0) {
-	case 0x30:
-		irq = irqmap[3][n];
-		break;
-	case 0x10:
-	case 0x50:
-		irq = irqmap[2][n];
-		break;
-	case 0x40:
-	case 0x60:
-		if (eeprom[FE_ATI_EEP_MAGIC] & 0x04) {
-			irq = irqmap[1][n];
-			break;
-		}
-	default:
-		irq = irqmap[0][n];
-		break;
-	}
-
-	if (ia->ia_irq != IRQUNK) {
-		if (ia->ia_irq != irq) {
-			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
-			    sc->sc_dev.dv_xname, ia->ia_irq, irq);
-			return (0);
-		}
-	} else
-		ia->ia_irq = irq;
-
-	/*
-	 * Initialize constants in the per-line structure.
-	 */
-
-	/* Get our station address from EEPROM. */
-	bcopy(eeprom + FE_ATI_EEP_ADDR, sc->sc_enaddr, ETHER_ADDR_LEN);
-
-	/* Make sure we got a valid station address. */
-	if ((sc->sc_enaddr[0] & 0x03) != 0x00
-	  || (sc->sc_enaddr[0] == 0x00
-	    && sc->sc_enaddr[1] == 0x00
-	    && sc->sc_enaddr[2] == 0x00))
-		goto fail;
-
-	/* Should find all register prototypes here.  FIXME. */
-	sc->proto_dlcr4 = FE_D4_LBC_DISABLE | FE_D4_CNTRL;  /* FIXME */
-	sc->proto_dlcr5 = 0;
-	sc->proto_dlcr7 = FE_D7_BYTSWP_LH | FE_D7_IDENT_EC;
-#if 0	/* XXXX Should we use this? */
-	sc->proto_bmpr13 = eeprom[FE_ATI_EEP_MEDIA];
-#else
-	sc->proto_bmpr13 = FE_B13_TPTYPE_UTP | FE_B13_PORT_AUTO;
 #endif
-
-	/*
-	 * Program the 86965 as follows:
-	 *	SRAM: 32KB, 100ns, byte-wide access.
-	 *	Transmission buffer: 4KB x 2.
-	 *	System bus interface: 16 bits.
-	 * We cannot change these values but TXBSIZE, because they
-	 * are hard-wired on the board.  Modifying TXBSIZE will affect
-	 * the driver performance.
-	 */
-	sc->proto_dlcr6 = FE_D6_BUFSIZ_32KB | FE_D6_TXBSIZ_2x4KB
-		| FE_D6_BBW_BYTE | FE_D6_SBW_WORD | FE_D6_SRAM_100ns;
-
-#if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: ATI found\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
-#endif
-
-	/* Initialize 86965. */
-	outb(iobase + FE_DLCR6, sc->proto_dlcr6 | FE_D6_DLC_DISABLE);
-	delay(200);
+	bcopy(myea, sc->sc_enaddr, sizeof(sc->sc_enaddr));
 
 	/* Disable all interrupts. */
-	outb(iobase + FE_DLCR2, 0);
-	outb(iobase + FE_DLCR3, 0);
-
-#if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: end of fe_probe_ati()\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
-#endif
-
-	/*
-	 * That's all.  AT1700 occupies 32 I/O addresses, by the way.
-	 */
-	ia->ia_iosize = 32;
-	ia->ia_msize = 0;
-	return (1);
-
-fail:
-	/* Restore register values, in the case we had no 86965. */
-	outb(iobase + FE_BMPR16, save16);
-	outb(iobase + FE_BMPR17, save17);
-	return (0);
-}
-
-/*
- * Probe and initialization for Fujitsu MBH10302 PCMCIA Ethernet interface.
- */
-int
-fe_probe_mbh(sc, ia)
-	struct fe_softc *sc;
-	struct isa_attach_args *ia;
-{
-	int iobase = sc->sc_iobase;
-
-	static struct fe_simple_probe_struct probe_table[] = {
-		{ FE_DLCR2, 0x70, 0x00 },
-		{ FE_DLCR4, 0x08, 0x00 },
-	    /*	{ FE_DLCR5, 0x80, 0x00 },	Does not work well. */
-#if 0
-	/*
-	 * Test *vendor* part of the address for Fujitsu.
-	 * The test will gain reliability of probe process, but
-	 * it rejects clones by other vendors, or OEM product
-	 * supplied by resalers other than Fujitsu.
-	 */
-		{ FE_MBH10, 0xFF, 0x00 },
-		{ FE_MBH11, 0xFF, 0x00 },
-		{ FE_MBH12, 0xFF, 0x0E },
-#else
-	/*
-	 * We can always verify the *first* 2 bits (in Ehternet
-	 * bit order) are "global" and "unicast" even for
-	 * unknown vendors.
-	 */
-		{ FE_MBH10, 0x03, 0x00 },
-#endif
-        /* Just a gap?  Seems reliable, anyway. */
-		{ 0x12, 0xFF, 0x00 },
-		{ 0x13, 0xFF, 0x00 },
-		{ 0x14, 0xFF, 0x00 },
-		{ 0x15, 0xFF, 0x00 },
-		{ 0x16, 0xFF, 0x00 },
-		{ 0x17, 0xFF, 0x00 },
-		{ 0x18, 0xFF, 0xFF },
-		{ 0x19, 0xFF, 0xFF },
-
-		{ 0 }
-	};
-
-#if 0
-	/*
-	 * We need a PCMCIA flag.
-	 */
-	if ((cf->cf_flags & FE_FLAGS_PCMCIA) == 0)
-		return (0);
-#endif
-
-	/*
-	 * We need explicit IRQ and supported address.
-	 */
-	if (ia->ia_irq == IRQUNK || (iobase & ~0x3E0) != 0)
-		return (0);
-
-#if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: top of fe_probe_mbh()\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
-#endif
-
-	/*
-	 * See if MBH10302 is on its address.
-	 * I'm not sure the following probe code works.  FIXME.
-	 */
-	if (!fe_simple_probe(iobase, probe_table))
-		return (0);
-
-	/* Determine the card type. */
-	sc->type = FE_TYPE_MBH10302;
-	sc->typestr = "MBH10302 (PCMCIA)";
-
-	/*
-	 * Initialize constants in the per-line structure.
-	 */
-
-	/* Get our station address from EEPROM. */
-	inblk(iobase + FE_MBH10, sc->sc_enaddr, ETHER_ADDR_LEN);
-
-	/* Make sure we got a valid station address. */
-	if ((sc->sc_enaddr[0] & 0x03) != 0x00
-	  || (sc->sc_enaddr[0] == 0x00
-	    && sc->sc_enaddr[1] == 0x00
-	    && sc->sc_enaddr[2] == 0x00))
-		return (0);
-
-	/* Should find all register prototypes here.  FIXME. */
-	sc->proto_dlcr4 = FE_D4_LBC_DISABLE | FE_D4_CNTRL;
-	sc->proto_dlcr5 = 0;
-	sc->proto_dlcr7 = FE_D7_BYTSWP_LH | FE_D7_IDENT_NICE;
-	sc->proto_bmpr13 = FE_B13_TPTYPE_UTP | FE_B13_PORT_AUTO;
-
-	/*
-	 * Program the 86960 as follows:
-	 *	SRAM: 32KB, 100ns, byte-wide access.
-	 *	Transmission buffer: 4KB x 2.
-	 *	System bus interface: 16 bits.
-	 * We cannot change these values but TXBSIZE, because they
-	 * are hard-wired on the board.  Modifying TXBSIZE will affect
-	 * the driver performance.
-	 */
-	sc->proto_dlcr6 = FE_D6_BUFSIZ_32KB | FE_D6_TXBSIZ_2x4KB
-		| FE_D6_BBW_BYTE | FE_D6_SBW_WORD | FE_D6_SRAM_100ns;
-
-	/* Setup hooks.  We need a special initialization procedure. */
-	sc->init = fe_init_mbh;
-
-	/*
-	 * Minimum initialization.
-	 */
-
-	/* Wait for a while.  I'm not sure this is necessary.  FIXME. */
-	delay(200);
-
-	/* Minimul initialization of 86960. */
-	outb(iobase + FE_DLCR6, sc->proto_dlcr6 | FE_D6_DLC_DISABLE);
-	delay(200);
-
-	/* Disable all interrupts. */
-	outb(iobase + FE_DLCR2, 0);
-	outb(iobase + FE_DLCR3, 0);
-
-#if 1	/* FIXME. */
-	/* Initialize system bus interface and encoder/decoder operation. */
-	outb(iobase + FE_MBH0, FE_MBH0_MAGIC | FE_MBH0_INTR_DISABLE);
-#endif
-
-	/*
-	 * That's all.  MBH10302 occupies 32 I/O addresses, by the way.
-	 */
-	ia->ia_iosize = 32;
-	ia->ia_msize = 0;
-	return (1);
-}
-
-/* MBH specific initialization routine. */
-void
-fe_init_mbh(sc)
-	struct fe_softc *sc;
-{
-
-	/* Probably required after hot-insertion... */
-
-	/* Wait for a while.  I'm not sure this is necessary.  FIXME. */
-	delay(200);
-
-	/* Minimul initialization of 86960. */
-	outb(sc->sc_iobase + FE_DLCR6, sc->proto_dlcr6 | FE_D6_DLC_DISABLE);
-	delay(200);
-
-	/* Disable all interrupts. */
-	outb(sc->sc_iobase + FE_DLCR2, 0);
-	outb(sc->sc_iobase + FE_DLCR3, 0);
-
-	/* Enable master interrupt flag. */
-	outb(sc->sc_iobase + FE_MBH0, FE_MBH0_MAGIC | FE_MBH0_INTR_ENABLE);
+	bus_space_write_1(bst, bsh, FE_DLCR2, 0);
+	bus_space_write_1(bst, bsh, FE_DLCR3, 0);
 }
 
 /*
  * Install interface into kernel networking data structures
  */
 void
-feattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mb86960_config(sc, media, nmedia, defmedia)
+	struct mb86960_softc *sc;
+	int *media, nmedia, defmedia;
 {
-	struct fe_softc *sc = (void *)self;
-	struct isa_attach_args *ia = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	int i;
 
 	/* Stop the 86960. */
-	fe_stop(sc);
+	mb86960_stop(sc);
 
 	/* Initialize ifnet structure. */
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_start = fe_start;
-	ifp->if_ioctl = fe_ioctl;
-	ifp->if_watchdog = fe_watchdog;
+	ifp->if_start = mb86960_start;
+	ifp->if_ioctl = mb86960_ioctl;
+	ifp->if_watchdog = mb86960_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
-	/*
-	 * Set maximum size of output queue, if it has not been set.
-	 * It is done here as this driver may be started after the
-	 * system intialization (i.e., the interface is PCMCIA.)
-	 *
-	 * I'm not sure this is really necessary, but, even if it is,
-	 * it should be done somewhere else, e.g., in if_attach(),
-	 * since it must be a common workaround for all network drivers.
-	 * FIXME.
-	 */
-	if (ifp->if_snd.ifq_maxlen == 0) {
-		extern int ifqmaxlen;		/* Don't be so shocked... */
-		ifp->if_snd.ifq_maxlen = ifqmaxlen;
-	}
-
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: feattach()\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
+	log(LOG_INFO, "%s: mb86960_config()\n", sc->sc_dev.dv_xname);
+	mb86960_dump(LOG_INFO, sc);
 #endif
 
 #if FE_SINGLE_TRANSMISSION
@@ -1067,13 +245,34 @@ feattach(parent, self, aux)
 		break;
 	}
 
+	/* Initialize media goo. */
+	ifmedia_init(&sc->sc_media, 0, mb86960_mediachange,
+	    mb86960_mediastatus);
+	if (media != NULL) {
+		for (i = 0; i < nmedia; i++)
+			ifmedia_add(&sc->sc_media, media[i], 0, NULL);
+		ifmedia_set(&sc->sc_media, defmedia);
+	} else {
+		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+	}
+
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
+#if NBPFILTER > 0
+	/* If BPF is in the kernel, call the attach for it. */
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET);
+#endif
 	/* Print additional info when attached. */
-	printf(": address %s, type %s\n",
-	    ether_sprintf(sc->sc_enaddr), sc->typestr);
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_enaddr));
+
 #if FE_DEBUG >= 3
 	{
 		int buf, txb, bbw, sbw, ram;
@@ -1132,33 +331,54 @@ feattach(parent, self, aux)
 		    sc->sc_dev.dv_xname, buf, bbw, ram, txb, sbw);
 	}
 #endif
+}
 
-#if NBPFILTER > 0
-	/* If BPF is in the kernel, call the attach for it. */
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
+/*
+ * Media change callback.
+ */
+int
+mb86960_mediachange(ifp)
+	struct ifnet *ifp;
+{
+	struct mb86960_softc *sc = ifp->if_softc;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, feintr, sc);
+	if (sc->sc_mediachange)
+		return ((*sc->sc_mediachange)(sc));
+	return (EINVAL);
+}
 
-#if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-			  RND_TYPE_NET);
-#endif
+/*
+ * Media status callback.
+ */
+void
+mb86960_mediastatus(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
+{
+	struct mb86960_softc *sc = ifp->if_softc;
+
+	if (sc->sc_enabled == 0) {
+		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
+		ifmr->ifm_status = 0;
+		return;
+	}
+
+	if (sc->sc_mediastatus)
+		(*sc->sc_mediastatus)(sc, ifmr);
 }
 
 /*
  * Reset interface.
  */
 void
-fe_reset(sc)
-	struct fe_softc *sc;
+mb86960_reset(sc)
+	struct mb86960_softc *sc;
 {
 	int s;
 
 	s = splnet();
-	fe_stop(sc);
-	fe_init(sc);
+	mb86960_stop(sc);
+	mb86960_init(sc);
 	splx(s);
 }
 
@@ -1169,43 +389,47 @@ fe_reset(sc)
  * if any, will be lost by stopping the interface.
  */
 void
-fe_stop(sc)
-	struct fe_softc *sc;
+mb86960_stop(sc)
+	struct mb86960_softc *sc;
 {
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: top of fe_stop()\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
+	log(LOG_INFO, "%s: top of mb86960_stop()\n", sc->sc_dev.dv_xname);
+	mb86960_dump(LOG_INFO, sc);
 #endif
 
 	/* Disable interrupts. */
-	outb(sc->sc_iobase + FE_DLCR2, 0x00);
-	outb(sc->sc_iobase + FE_DLCR3, 0x00);
+	bus_space_write_1(bst, bsh, FE_DLCR2, 0x00);
+	bus_space_write_1(bst, bsh, FE_DLCR3, 0x00);
 
 	/* Stop interface hardware. */
 	delay(200);
-	outb(sc->sc_iobase + FE_DLCR6, sc->proto_dlcr6 | FE_D6_DLC_DISABLE);
+	bus_space_write_1(bst, bsh, FE_DLCR6,
+	    sc->proto_dlcr6 | FE_D6_DLC_DISABLE);
 	delay(200);
 
 	/* Clear all interrupt status. */
-	outb(sc->sc_iobase + FE_DLCR0, 0xFF);
-	outb(sc->sc_iobase + FE_DLCR1, 0xFF);
+	bus_space_write_1(bst, bsh, FE_DLCR0, 0xFF);
+	bus_space_write_1(bst, bsh, FE_DLCR1, 0xFF);
 
 	/* Put the chip in stand-by mode. */
 	delay(200);
-	outb(sc->sc_iobase + FE_DLCR7, sc->proto_dlcr7 | FE_D7_POWER_DOWN);
+	bus_space_write_1(bst, bsh, FE_DLCR7,
+	    sc->proto_dlcr7 | FE_D7_POWER_DOWN);
 	delay(200);
 
 	/* MAR loading can be delayed. */
 	sc->filter_change = 0;
 
 	/* Call a hook. */
-	if (sc->stop)
-		sc->stop(sc);
+	if (sc->stop_card)
+		(*sc->stop_card)(sc);
 
 #if DEBUG >= 3
-	log(LOG_INFO, "%s: end of fe_stop()\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
+	log(LOG_INFO, "%s: end of mb86960_stop()\n", sc->sc_dev.dv_xname);
+	mb86960_dump(LOG_INFO, sc);
 #endif
 }
 
@@ -1214,46 +438,50 @@ fe_stop(sc)
  * generate an interrupt after a transmit has been started on it.
  */
 void
-fe_watchdog(ifp)
+mb86960_watchdog(ifp)
 	struct ifnet *ifp;
 {
-	struct fe_softc *sc = ifp->if_softc;
+	struct mb86960_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 #if FE_DEBUG >= 3
-	fe_dump(LOG_INFO, sc);
+	mb86960_dump(LOG_INFO, sc);
 #endif
 
 	/* Record how many packets are lost by this accident. */
-	sc->sc_ethercom.ec_if.if_oerrors += sc->txb_sched + sc->txb_count;
+	sc->sc_ec.ec_if.if_oerrors += sc->txb_sched + sc->txb_count;
 
-	fe_reset(sc);
+	mb86960_reset(sc);
 }
 
 /*
  * Drop (skip) a packet from receive buffer in 86960 memory.
  */
-static inline void
-fe_droppacket(sc)
-	struct fe_softc *sc;
+static __inline__ void
+mb86960_droppacket(sc)
+	struct mb86960_softc *sc;
 {
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
 
-	outb(sc->sc_iobase + FE_BMPR14, FE_B14_FILTER | FE_B14_SKIP);
+	bus_space_write_1(bst, bsh, FE_BMPR14, FE_B14_FILTER | FE_B14_SKIP);
 }
 
 /*
  * Initialize device.
  */
 void
-fe_init(sc)
-	struct fe_softc *sc;
+mb86960_init(sc)
+	struct mb86960_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int i;
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: top of fe_init()\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
+	log(LOG_INFO, "%s: top of mb86960_init()\n", sc->sc_dev.dv_xname);
+	mb86960_dump(LOG_INFO, sc);
 #endif
 
 	/* Reset transmitter flags. */
@@ -1264,13 +492,13 @@ fe_init(sc)
 	sc->txb_count = 0;
 	sc->txb_sched = 0;
 
-	/* Call a hook. */
-	if (sc->init)
-		sc->init(sc);
+	/* Do any card-specific initialization, if applicable. */
+	if (sc->init_card)
+		(*sc->init_card)(sc);
 
 #if FE_DEBUG >= 3
 	log(LOG_INFO, "%s: after init hook\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
+	mb86960_dump(LOG_INFO, sc);
 #endif
 
 	/*
@@ -1278,52 +506,55 @@ fe_init(sc)
 	 * This may also help re-programming the chip after
 	 * hot insertion of PCMCIAs.
 	 */
-	outb(sc->sc_iobase + FE_DLCR6, sc->proto_dlcr6 | FE_D6_DLC_DISABLE);
+	bus_space_write_1(bst, bsh, FE_DLCR6,
+	    sc->proto_dlcr6 | FE_D6_DLC_DISABLE);
+	delay(200);
 
 	/* Power up the chip and select register bank for DLCRs. */
-	delay(200);
-	outb(sc->sc_iobase + FE_DLCR7,
+	bus_space_write_1(bst, bsh, FE_DLCR7,
 	    sc->proto_dlcr7 | FE_D7_RBS_DLCR | FE_D7_POWER_UP);
 	delay(200);
 
 	/* Feed the station address. */
-	outblk(sc->sc_iobase + FE_DLCR8, sc->sc_enaddr, ETHER_ADDR_LEN);
+	bus_space_write_region_1(bst, bsh, FE_DLCR8,
+	    sc->sc_enaddr, ETHER_ADDR_LEN);
 
 	/* Select the BMPR bank for runtime register access. */
-	outb(sc->sc_iobase + FE_DLCR7,
+	bus_space_write_1(bst, bsh, FE_DLCR7,
 	    sc->proto_dlcr7 | FE_D7_RBS_BMPR | FE_D7_POWER_UP);
 
 	/* Initialize registers. */
-	outb(sc->sc_iobase + FE_DLCR0, 0xFF);	/* Clear all bits. */
-	outb(sc->sc_iobase + FE_DLCR1, 0xFF);	/* ditto. */
-	outb(sc->sc_iobase + FE_DLCR2, 0x00);
-	outb(sc->sc_iobase + FE_DLCR3, 0x00);
-	outb(sc->sc_iobase + FE_DLCR4, sc->proto_dlcr4);
-	outb(sc->sc_iobase + FE_DLCR5, sc->proto_dlcr5);
-	outb(sc->sc_iobase + FE_BMPR10, 0x00);
-	outb(sc->sc_iobase + FE_BMPR11, FE_B11_CTRL_SKIP);
-	outb(sc->sc_iobase + FE_BMPR12, 0x00);
-	outb(sc->sc_iobase + FE_BMPR13, sc->proto_bmpr13);
-	outb(sc->sc_iobase + FE_BMPR14, FE_B14_FILTER);
-	outb(sc->sc_iobase + FE_BMPR15, 0x00);
+	bus_space_write_1(bst, bsh, FE_DLCR0, 0xFF);	/* Clear all bits. */
+	bus_space_write_1(bst, bsh, FE_DLCR1, 0xFF);	/* ditto. */
+	bus_space_write_1(bst, bsh, FE_DLCR2, 0x00);
+	bus_space_write_1(bst, bsh, FE_DLCR3, 0x00);
+	bus_space_write_1(bst, bsh, FE_DLCR4, sc->proto_dlcr4);
+	bus_space_write_1(bst, bsh, FE_DLCR5, sc->proto_dlcr5);
+	bus_space_write_1(bst, bsh, FE_BMPR10, 0x00);
+	bus_space_write_1(bst, bsh, FE_BMPR11, FE_B11_CTRL_SKIP);
+	bus_space_write_1(bst, bsh, FE_BMPR12, 0x00);
+	bus_space_write_1(bst, bsh, FE_BMPR13, sc->proto_bmpr13);
+	bus_space_write_1(bst, bsh, FE_BMPR14, FE_B14_FILTER);
+	bus_space_write_1(bst, bsh, FE_BMPR15, 0x00);
 
 #if FE_DEBUG >= 3
 	log(LOG_INFO, "%s: just before enabling DLC\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
+	mb86960_dump(LOG_INFO, sc);
 #endif
 
 	/* Enable interrupts. */
-	outb(sc->sc_iobase + FE_DLCR2, FE_TMASK);
-	outb(sc->sc_iobase + FE_DLCR3, FE_RMASK);
+	bus_space_write_1(bst, bsh, FE_DLCR2, FE_TMASK);
+	bus_space_write_1(bst, bsh, FE_DLCR3, FE_RMASK);
 
 	/* Enable transmitter and receiver. */
 	delay(200);
-	outb(sc->sc_iobase + FE_DLCR6, sc->proto_dlcr6 | FE_D6_DLC_ENABLE);
+	bus_space_write_1(bst, bsh, FE_DLCR6,
+	    sc->proto_dlcr6 | FE_D6_DLC_ENABLE);
 	delay(200);
 
 #if FE_DEBUG >= 3
 	log(LOG_INFO, "%s: just after enabling DLC\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
+	mb86960_dump(LOG_INFO, sc);
 #endif
 
 	/*
@@ -1340,35 +571,33 @@ fe_init(sc)
 	 * redundant now.  FIXME.
 	 */
 	for (i = 0; i < FE_MAX_RECV_COUNT; i++) {
-		if (inb(sc->sc_iobase + FE_DLCR5) & FE_D5_BUFEMP)
+		if (bus_space_read_1(bst, bsh, FE_DLCR5) & FE_D5_BUFEMP)
 			break;
-		fe_droppacket(sc);
+		mb86960_droppacket(sc);
 	}
 #if FE_DEBUG >= 1
-	if (i >= FE_MAX_RECV_COUNT) {
+	if (i >= FE_MAX_RECV_COUNT)
 		log(LOG_ERR, "%s: cannot empty receive buffer\n",
 		    sc->sc_dev.dv_xname);
-	}
 #endif
 #if FE_DEBUG >= 3
-	if (i < FE_MAX_RECV_COUNT) {
+	if (i < FE_MAX_RECV_COUNT)
 		log(LOG_INFO, "%s: receive buffer emptied (%d)\n",
 		    sc->sc_dev.dv_xname, i);
-	}
 #endif
 
 #if FE_DEBUG >= 3
 	log(LOG_INFO, "%s: after ERB loop\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
+	mb86960_dump(LOG_INFO, sc);
 #endif
 
 	/* Do we need this here? */
-	outb(sc->sc_iobase + FE_DLCR0, 0xFF);	/* Clear all bits. */
-	outb(sc->sc_iobase + FE_DLCR1, 0xFF);	/* ditto. */
+	bus_space_write_1(bst, bsh, FE_DLCR0, 0xFF);	/* Clear all bits. */
+	bus_space_write_1(bst, bsh, FE_DLCR1, 0xFF);	/* ditto. */
 
 #if FE_DEBUG >= 3
 	log(LOG_INFO, "%s: after FIXME\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
+	mb86960_dump(LOG_INFO, sc);
 #endif
 
 	/* Set 'running' flag. */
@@ -1377,40 +606,42 @@ fe_init(sc)
 	/*
 	 * At this point, the interface is runnung properly,
 	 * except that it receives *no* packets.  we then call
-	 * fe_setmode() to tell the chip what packets to be
+	 * mb86960_setmode() to tell the chip what packets to be
 	 * received, based on the if_flags and multicast group
 	 * list.  It completes the initialization process.
 	 */
-	fe_setmode(sc);
+	mb86960_setmode(sc);
 
 #if FE_DEBUG >= 3
 	log(LOG_INFO, "%s: after setmode\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
+	mb86960_dump(LOG_INFO, sc);
 #endif
 
 	/* ...and attempt to start output. */
-	fe_start(ifp);
+	mb86960_start(ifp);
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: end of fe_init()\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
+	log(LOG_INFO, "%s: end of mb86960_init()\n", sc->sc_dev.dv_xname);
+	mb86960_dump(LOG_INFO, sc);
 #endif
 }
 
 /*
  * This routine actually starts the transmission on the interface
  */
-static inline void
-fe_xmit(sc)
-	struct fe_softc *sc;
+static __inline__ void
+mb86960_xmit(sc)
+	struct mb86960_softc *sc;
 {
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
 
 	/*
 	 * Set a timer just in case we never hear from the board again.
 	 * We use longer timeout for multiple packet transmission.
 	 * I'm not sure this timer value is appropriate.  FIXME.
 	 */
-	sc->sc_ethercom.ec_if.if_timer = 1 + sc->txb_count;
+	sc->sc_ec.ec_if.if_timer = 1 + sc->txb_count;
 
 	/* Update txb variables. */
 	sc->txb_sched = sc->txb_count;
@@ -1423,7 +654,7 @@ fe_xmit(sc)
 #endif
 
 	/* Start transmitter, passing packets in TX buffer. */
-	outb(sc->sc_iobase + FE_BMPR10, sc->txb_sched | FE_B10_START);
+	bus_space_write_1(bst, bsh, FE_BMPR10, sc->txb_sched | FE_B10_START);
 }
 
 /*
@@ -1436,10 +667,10 @@ fe_xmit(sc)
  *     (i.e. that the output part of the interface is idle)
  */
 void
-fe_start(ifp)
+mb86960_start(ifp)
 	struct ifnet *ifp;
 {
-	struct fe_softc *sc = ifp->if_softc;
+	struct mb86960_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 
 #if FE_DEBUG >= 1
@@ -1482,7 +713,7 @@ fe_start(ifp)
 	if ((sc->txb_count > 0) && (sc->txb_sched == 0)) {
 		log(LOG_ERR, "%s: transmitter idle with %d buffered packets\n",
 		    sc->sc_dev.dv_xname, sc->txb_count);
-		fe_xmit(sc);
+		mb86960_xmit(sc);
 	}
 #endif
 
@@ -1548,13 +779,13 @@ fe_start(ifp)
 		 * Copy the mbuf chain into the transmission buffer.
 		 * txb_* variables are updated as necessary.
 		 */
-		fe_write_mbufs(sc, m);
+		mb86960_write_mbufs(sc, m);
 
 		m_freem(m);
 
 		/* Start transmitter if it's idle. */
 		if (sc->txb_sched == 0)
-			fe_xmit(sc);
+			mb86960_xmit(sc);
 	}
 
 indicate_inactive:
@@ -1584,11 +815,13 @@ indicate_active:
  * The control flow of this function looks silly.  FIXME.
  */
 void
-fe_tint(sc, tstat)
-	struct fe_softc *sc;
+mb86960_tint(sc, tstat)
+	struct mb86960_softc *sc;
 	u_char tstat;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int left;
 	int col;
 
@@ -1600,14 +833,14 @@ fe_tint(sc, tstat)
 		 * Find how many packets (including this collided one)
 		 * are left unsent in transmission buffer.
 		 */
-		left = inb(sc->sc_iobase + FE_BMPR10);
+		left = bus_space_read_1(bst, bsh, FE_BMPR10);
 
 #if FE_DEBUG >= 2
 		log(LOG_WARNING, "%s: excessive collision (%d/%d)\n",
 		    sc->sc_dev.dv_xname, left, sc->txb_sched);
 #endif
 #if FE_DEBUG >= 3
-		fe_dump(LOG_INFO, sc);
+		mb86960_dump(LOG_INFO, sc);
 #endif
 
 		/*
@@ -1621,7 +854,7 @@ fe_tint(sc, tstat)
 		 * Collision statistics has been updated.
 		 * Clear the collision flag on 86960 now to avoid confusion.
 		 */
-		outb(sc->sc_iobase + FE_DLCR0, FE_D0_COLLID);
+		bus_space_write_1(bst, bsh, FE_DLCR0, FE_D0_COLLID);
 
 		/*
 		 * Restart transmitter, skipping the
@@ -1636,7 +869,7 @@ fe_tint(sc, tstat)
 		 * to reliable transport (such as TCP) are resent
 		 * by some upper layer.
 		 */
-		outb(sc->sc_iobase + FE_BMPR11,
+		bus_space_write_1(bst, bsh, FE_BMPR11,
 		    FE_B11_CTRL_SKIP | FE_B11_MODE1);
 		sc->txb_sched = left - 1;
 	}
@@ -1663,12 +896,12 @@ fe_tint(sc, tstat)
 		 * count is not so important, anyway.  Any comments?  FIXME.
 		 */
 
-		if (inb(sc->sc_iobase + FE_DLCR0) & FE_D0_COLLID) {
+		if (bus_space_read_1(bst, bsh, FE_DLCR0) & FE_D0_COLLID) {
 			/* Clear collision flag. */
-			outb(sc->sc_iobase + FE_DLCR0, FE_D0_COLLID);
+			bus_space_write_1(bst, bsh, FE_DLCR0, FE_D0_COLLID);
 
 			/* Extract collision count from 86960. */
-			col = inb(sc->sc_iobase + FE_DLCR4) & FE_D4_COL;
+			col = bus_space_read_1(bst, bsh, FE_DLCR4) & FE_D4_COL;
 			if (col == 0) {
 				/*
 				 * Status register indicates collisions,
@@ -1715,7 +948,7 @@ fe_tint(sc, tstat)
 		 * process a slight priority.
 		 */
 		if (sc->txb_count > 0)
-			fe_xmit(sc);
+			mb86960_xmit(sc);
 	}
 }
 
@@ -1723,11 +956,13 @@ fe_tint(sc, tstat)
  * Ethernet interface receiver interrupt.
  */
 void
-fe_rint(sc, rstat)
-	struct fe_softc *sc;
+mb86960_rint(sc, rstat)
+	struct mb86960_softc *sc;
 	u_char rstat;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int len;
 	u_char status;
 	int i;
@@ -1735,8 +970,8 @@ fe_rint(sc, rstat)
 	/*
 	 * Update statistics if this interrupt is caused by an error.
 	 */
-	if (rstat & (FE_D1_OVRFLO | FE_D1_CRCERR |
-		     FE_D1_ALGERR | FE_D1_SRTPKT)) {
+	if (rstat & (FE_D1_OVRFLO | FE_D1_CRCERR | FE_D1_ALGERR |
+	    FE_D1_SRTPKT)) {
 #if FE_DEBUG >= 3
 		log(LOG_WARNING, "%s: receive error: %b\n",
 		    sc->sc_dev.dv_xname, rstat, FE_D1_ERRBITS);
@@ -1756,7 +991,7 @@ fe_rint(sc, rstat)
 	 */
 	for (i = 0; i < FE_MAX_RECV_COUNT; i++) {
 		/* Stop the iterration if 86960 indicates no packets. */
-		if (inb(sc->sc_iobase + FE_DLCR5) & FE_D5_BUFEMP)
+		if (bus_space_read_1(bst, bsh, FE_DLCR5) & FE_D5_BUFEMP)
 			break;
 
 		/*
@@ -1765,7 +1000,7 @@ fe_rint(sc, rstat)
 		 * use inw() to get the status byte.  The significant
 		 * value is returned in lower 8 bits.
 		 */
-		status = (u_char)inw(sc->sc_iobase + FE_BMPR8);
+		status = (u_char)bus_space_read_2(bst, bsh, FE_BMPR8);
 #if FE_DEBUG >= 4
 		log(LOG_INFO, "%s: receive status = %02x\n",
 		    sc->sc_dev.dv_xname, status);
@@ -1779,7 +1014,7 @@ fe_rint(sc, rstat)
 		if ((status & 0xF0) != 0x20) {	/* XXXX ? */
 			if ((ifp->if_flags & IFF_PROMISC) == 0) {
 				ifp->if_ierrors++;
-				fe_droppacket(sc);
+				mb86960_droppacket(sc);
 				continue;
 			}
 		}
@@ -1789,7 +1024,7 @@ fe_rint(sc, rstat)
 		 * It is a sum of a header (14 bytes) and a payload.
 		 * CRC has been stripped off by the 86960.
 		 */
-		len = inw(sc->sc_iobase + FE_BMPR8);
+		len = bus_space_read_2(bst, bsh, FE_BMPR8);
 
 		/*
 		 * MB86965 checks the packet length and drop big packet
@@ -1808,7 +1043,7 @@ fe_rint(sc, rstat)
 			    len < ETHER_HDR_SIZE ? "partial" : "big", len);
 #endif
 			ifp->if_ierrors++;
-			fe_droppacket(sc);
+			mb86960_droppacket(sc);
 			continue;
 		}
 
@@ -1821,15 +1056,15 @@ fe_rint(sc, rstat)
 #if FE_DEBUG >= 2
 		if (len < ETHER_MIN_LEN) {
 			log(LOG_WARNING,
-			     "%s: received a short packet? (%u bytes)\n",
-			     sc->sc_dev.dv_xname, len);
+			    "%s: received a short packet? (%u bytes)\n",
+			    sc->sc_dev.dv_xname, len);
 		}
 #endif 
 
 		/*
 		 * Go get a packet.
 		 */
-		if (!fe_get_packet(sc, len)) {
+		if (!mb86960_get_packet(sc, len)) {
 			/* Skip a packet, updating statistics. */
 #if FE_DEBUG >= 2
 			log(LOG_WARNING,
@@ -1837,7 +1072,7 @@ fe_rint(sc, rstat)
 			    sc->sc_dev.dv_xname, len);
 #endif
 			ifp->if_ierrors++;
-			fe_droppacket(sc);
+			mb86960_droppacket(sc);
 
 			/*
 			 * We stop receiving packets, even if there are
@@ -1856,22 +1091,28 @@ fe_rint(sc, rstat)
  * Ethernet interface interrupt processor
  */
 int
-feintr(arg)
+mb86960_intr(arg)
 	void *arg;
 {
-	struct fe_softc *sc = arg;
+	struct mb86960_softc *sc = arg;
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	u_char tstat, rstat;
 
+	if (sc->sc_enabled == 0)
+		return (0);
+
 #if FE_DEBUG >= 4
-	log(LOG_INFO, "%s: feintr()\n", sc->sc_dev.dv_xname);
-	fe_dump(LOG_INFO, sc);
+	log(LOG_INFO, "%s: mb86960_intr()\n", sc->sc_dev.dv_xname);
+	mb86960_dump(LOG_INFO, sc);
 #endif
 
 	/*
 	 * Get interrupt conditions, masking unneeded flags.
 	 */
-	tstat = inb(sc->sc_iobase + FE_DLCR0) & FE_TMASK;
-	rstat = inb(sc->sc_iobase + FE_DLCR1) & FE_RMASK;
+	tstat = bus_space_read_1(bst, bsh, FE_DLCR0) & FE_TMASK;
+	rstat = bus_space_read_1(bst, bsh, FE_DLCR1) & FE_RMASK;
 	if (tstat == 0 && rstat == 0)
 		return (0);
 
@@ -1882,21 +1123,21 @@ feintr(arg)
 		/*
 		 * Reset the conditions we are acknowledging.
 		 */
-		outb(sc->sc_iobase + FE_DLCR0, tstat);
-		outb(sc->sc_iobase + FE_DLCR1, rstat);
+		bus_space_write_1(bst, bsh, FE_DLCR0, tstat);
+		bus_space_write_1(bst, bsh, FE_DLCR1, rstat);
 
 		/*
 		 * Handle transmitter interrupts. Handle these first because
 		 * the receiver will reset the board under some conditions.
 		 */
 		if (tstat != 0)
-			fe_tint(sc, tstat);
+			mb86960_tint(sc, tstat);
 
 		/*
 		 * Handle receiver interrupts.
 		 */
 		if (rstat != 0)
-			fe_rint(sc, rstat);
+			mb86960_rint(sc, rstat);
 
 		/*
 		 * Update the multicast address filter if it is
@@ -1908,8 +1149,8 @@ feintr(arg)
 		 */
 		if (sc->filter_change &&
 		    sc->txb_count == 0 && sc->txb_sched == 0) {
-			fe_loadmar(sc);
-			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
+			mb86960_loadmar(sc);
+			ifp->if_flags &= ~IFF_OACTIVE;
 		}
 
 		/*
@@ -1918,8 +1159,8 @@ feintr(arg)
 		 * after handling the receiver interrupt to give the
 		 * receive operation priority.
 		 */
-		if ((sc->sc_ethercom.ec_if.if_flags & IFF_OACTIVE) == 0)
-			fe_start(&sc->sc_ethercom.ec_if);
+		if ((ifp->if_flags & IFF_OACTIVE) == 0)
+			mb86960_start(ifp);
 
 #if NRND > 0
 		if (rstat != 0 || tstat != 0)
@@ -1929,8 +1170,8 @@ feintr(arg)
 		/*
 		 * Get interrupt conditions, masking unneeded flags.
 		 */
-		tstat = inb(sc->sc_iobase + FE_DLCR0) & FE_TMASK;
-		rstat = inb(sc->sc_iobase + FE_DLCR1) & FE_RMASK;
+		tstat = bus_space_read_1(bst, bsh, FE_DLCR0) & FE_TMASK;
+		rstat = bus_space_read_1(bst, bsh, FE_DLCR1) & FE_RMASK;
 		if (tstat == 0 && rstat == 0)
 			return (1);
 	}
@@ -1940,55 +1181,54 @@ feintr(arg)
  * Process an ioctl request.  This code needs some work - it looks pretty ugly.
  */
 int
-fe_ioctl(ifp, command, data)
-	register struct ifnet *ifp;
-	u_long command;
+mb86960_ioctl(ifp, cmd, data)
+	struct ifnet *ifp;
+	u_long cmd;
 	caddr_t data;
 {
-	struct fe_softc *sc = ifp->if_softc;
-	register struct ifaddr *ifa = (struct ifaddr *)data;
+	struct mb86960_softc *sc = ifp->if_softc;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: ioctl(%x)\n", sc->sc_dev.dv_xname, command);
+	log(LOG_INFO, "%s: ioctl(%lx)\n", sc->sc_dev.dv_xname, cmd);
 #endif
 
 	s = splnet();
 
-	switch (command) {
-
+	switch (cmd) {
 	case SIOCSIFADDR:
+		if ((error = mb86960_enable(sc)) != 0)
+			break;
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			fe_init(sc);
+			mb86960_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_enaddr);
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else {
-				bcopy(ina->x_host.c_host, sc->sc_enaddr,
-				    ETHER_ADDR_LEN);
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
 				    ETHER_ADDR_LEN);
 			}
 			/* Set new address. */
-			fe_init(sc);
+			mb86960_init(sc);
 			break;
 		    }
 #endif
 		default:
-			fe_init(sc);
+			mb86960_init(sc);
 			break;
 		}
 		break;
@@ -2000,50 +1240,65 @@ fe_ioctl(ifp, command, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			fe_stop(sc);
+			mb86960_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
+			mb86960_disable(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
+		    (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			fe_init(sc);
-		} else {
+			if ((error = mb86960_enable(sc)) != 0)
+				break;
+			mb86960_init(sc);
+		} else if (sc->sc_enabled) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-			fe_setmode(sc);
+			mb86960_setmode(sc);
 		}
 #if DEBUG >= 1
 		/* "ifconfig fe0 debug" to print register dump. */
 		if (ifp->if_flags & IFF_DEBUG) {
-			log(LOG_INFO, "%s: SIOCSIFFLAGS(DEBUG)\n", sc->sc_dev.dv_xname);
-			fe_dump(LOG_DEBUG, sc);
+			log(LOG_INFO, "%s: SIOCSIFFLAGS(DEBUG)\n",
+			    sc->sc_dev.dv_xname);
+			mb86960_dump(LOG_DEBUG, sc);
 		}
 #endif
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		if (sc->sc_enabled == 0) {
+			error = EIO;
+			break;
+		}
+
 		/* Update our multicast list. */
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_ec) :
+		    ether_delmulti(ifr, &sc->sc_ec);
 
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			fe_setmode(sc);
+			mb86960_setmode(sc);
 			error = 0;
 		}
 		break;
 
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		break;
+
 	default:
 		error = EINVAL;
+		break;
 	}
 
 	splx(s);
@@ -2056,13 +1311,15 @@ fe_ioctl(ifp, command, data)
  * Returns 0 if success, -1 if error (i.e., mbuf allocation failure).
  */
 int
-fe_get_packet(sc, len)
-	struct fe_softc *sc;
+mb86960_get_packet(sc, len)
+	struct mb86960_softc *sc;
 	int len;
 {
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct ether_header *eh;
 	struct mbuf *m;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	/* Allocate a header mbuf. */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -2106,7 +1363,7 @@ fe_get_packet(sc, len)
 	m->m_len = len;
 
 	/* Get a packet. */
-	insw(sc->sc_iobase + FE_BMPR8, m->m_data, (len + 1) >> 1);
+	bus_space_read_multi_2(bst, bsh, FE_BMPR8, m->m_data, (len + 1) >> 1);
 
 #if NBPFILTER > 0
 	/*
@@ -2124,7 +1381,7 @@ fe_get_packet(sc, len)
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
 	  	    bcmp(eh->ether_dhost, sc->sc_enaddr,
-			    sizeof(eh->ether_dhost)) != 0) {
+			sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return (1);
 		}
@@ -2155,14 +1412,18 @@ fe_get_packet(sc, len)
  * system performance (slightly).
  */
 void
-fe_write_mbufs(sc, m)
-	struct fe_softc *sc;
+mb86960_write_mbufs(sc, m)
+	struct mb86960_softc *sc;
 	struct mbuf *m;
 {
-	int bmpr8 = sc->sc_iobase + FE_BMPR8;
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
 	u_char *data;
 	u_short savebyte;	/* WARNING: Architecture dependent! */
 	int totlen, len, wantbyte;
+#if FE_DEBUG >= 2
+	struct mbuf *mp;
+#endif
 
 	/* XXX thorpej 960116 - quiet bogus compiler warning. */
 	savebyte = 0;
@@ -2172,14 +1433,14 @@ fe_write_mbufs(sc, m)
 	len = sc->txb_padding >> 1;
 	if (len > 0) {
 		while (--len >= 0)
-			outw(bmpr8, 0);
+			bus_space_write_2(bst, bsh, FE_BMPR8, 0);
 		sc->txb_padding = 0;
 	}
 #endif
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m->m_flags & M_PKTHDR) == 0)
-	  	panic("fe_write_mbufs: no header mbuf");
+	  	panic("mb86960_write_mbufs: no header mbuf");
 
 #if FE_DEBUG >= 2
 	/* First, count up the total number of bytes to copy. */
@@ -2204,7 +1465,7 @@ fe_write_mbufs(sc, m)
 		log(LOG_ERR, "%s: got a %s packet (%u bytes) to send\n",
 		    sc->sc_dev.dv_xname,
 		    totlen < ETHER_HDR_SIZE ? "partial" : "big", totlen);
-		sc->sc_ethercom.ec_if.if_oerrors++;
+		sc->sc_ec.ec_if.if_oerrors++;
 		return;
 	}
 #endif
@@ -2217,7 +1478,7 @@ fe_write_mbufs(sc, m)
 	 * packet in the transmission buffer, we can skip the
 	 * padding process.  It may gain performance slightly.  FIXME.
 	 */
-	outw(bmpr8, max(totlen, ETHER_MIN_LEN));
+	bus_space_write_2(bst, bsh, FE_BMPR8, max(totlen, ETHER_MIN_LEN));
 
 	/*
 	 * Update buffer status now.
@@ -2251,7 +1512,8 @@ fe_write_mbufs(sc, m)
 
 		/* Finish the last byte. */
 		if (wantbyte) {
-			outw(bmpr8, savebyte | (*data << 8));
+			bus_space_write_2(bst, bsh, FE_BMPR8,
+			    savebyte | (*data << 8));
 			data++;
 			len--;
 			wantbyte = 0;
@@ -2259,7 +1521,8 @@ fe_write_mbufs(sc, m)
 
 		/* Output contiguous words. */
 		if (len > 1)
-			outsw(bmpr8, data, len >> 1);
+			bus_space_write_multi_2(bst, bsh, FE_BMPR8, data,
+			    len >> 1);
 
 		/* Save remaining byte, if there is one. */
 		if (len & 1) {
@@ -2271,7 +1534,7 @@ fe_write_mbufs(sc, m)
 
 	/* Spit the last byte, if the length is odd. */
 	if (wantbyte)
-		outw(bmpr8, savebyte);
+		bus_space_write_2(bst, bsh, FE_BMPR8, savebyte);
 
 #if ! FE_DELAYED_PADDING
 	/*
@@ -2279,7 +1542,7 @@ fe_write_mbufs(sc, m)
 	 */
 	len = (ETHER_MIN_LEN >> 1) - (totlen >> 1);
 	while (--len >= 0)
-		outw(bmpr8, 0);
+		bus_space_write_2(bst, bsh, FE_BMPR8, 0);
 #endif
 }
 
@@ -2288,7 +1551,7 @@ fe_write_mbufs(sc, m)
  * list of multicast addresses we need to listen to.
  */
 void
-fe_getmcaf(ec, af)
+mb86960_getmcaf(ec, af)
 	struct ethercom *ec;
 	u_char *af;
 {
@@ -2360,10 +1623,12 @@ allmulti:
  * receiver in appropriate mode.
  */
 void
-fe_setmode(sc)
-	struct fe_softc *sc;
+mb86960_setmode(sc)
+	struct mb86960_softc *sc;
 {
-	int flags = sc->sc_ethercom.ec_if.if_flags;
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+	int flags = sc->sc_ec.ec_if.if_flags;
 
 	/*
 	 * If the interface is not running, we postpone the update
@@ -2372,7 +1637,7 @@ fe_setmode(sc)
 	 * complicated job on maintaining chip states.  (Earlier versions
 	 * of this driver had a bug on that point...)
 	 *
-	 * To complete the trick, fe_init() calls fe_setmode() after
+	 * To complete the trick, mb86960_init() calls mb86960_setmode() after
 	 * restarting the interface.
 	 */
 	if ((flags & IFF_RUNNING) == 0)
@@ -2392,7 +1657,7 @@ fe_setmode(sc)
 		 * listens to valid (no error) packets.  So, we ignore
 		 * errornous ones even in this mode.
 		 */
-		outb(sc->sc_iobase + FE_DLCR5,
+		bus_space_write_1(bst, bsh, FE_DLCR5,
 		    sc->proto_dlcr5 | FE_D5_AFM0 | FE_D5_AFM1);
 		sc->filter_change = 0;
 
@@ -2405,12 +1670,12 @@ fe_setmode(sc)
 	/*
 	 * Turn the chip to the normal (non-promiscuous) mode.
 	 */
-	outb(sc->sc_iobase + FE_DLCR5, sc->proto_dlcr5 | FE_D5_AFM1);
+	bus_space_write_1(bst, bsh, FE_DLCR5, sc->proto_dlcr5 | FE_D5_AFM1);
 
 	/*
 	 * Find the new multicast filter value.
 	 */
-	fe_getmcaf(&sc->sc_ethercom, sc->filter);
+	mb86960_getmcaf(&sc->sc_ec, sc->filter);
 	sc->filter_change = 1;
 
 #if FE_DEBUG >= 3
@@ -2436,20 +1701,21 @@ fe_setmode(sc)
 	 * process until buffers are empty.
 	 */
 	if (sc->txb_sched == 0 && sc->txb_count == 0 &&
-	    (inb(sc->sc_iobase + FE_DLCR1) & FE_D1_PKTRDY) == 0) {
+	    (bus_space_read_1(bst, bsh, FE_DLCR1) & FE_D1_PKTRDY) == 0) {
 		/*
 		 * Buffers are (apparently) empty.  Load
 		 * the new filter value into MARs now.
 		 */
-		fe_loadmar(sc);
+		mb86960_loadmar(sc);
 	} else {
 		/*
 		 * Buffers are not empty.  Mark that we have to update
-		 * the MARs.  The new filter will be loaded by feintr()
+		 * the MARs.  The new filter will be loaded by mb86960_intr()
 		 * later.
 		 */
 #if FE_DEBUG >= 4
-		log(LOG_INFO, "%s: filter change delayed\n", sc->sc_dev.dv_xname);
+		log(LOG_INFO, "%s: filter change delayed\n",
+		    sc->sc_dev.dv_xname);
 #endif
 	}
 }
@@ -2457,32 +1723,36 @@ fe_setmode(sc)
 /*
  * Load a new multicast address filter into MARs.
  *
- * The caller must have splnet'ed befor fe_loadmar.
+ * The caller must have splnet'ed befor mb86960_loadmar.
  * This function starts the DLC upon return.  So it can be called only
  * when the chip is working, i.e., from the driver's point of view, when
  * a device is RUNNING.  (I mistook the point in previous versions.)
  */
 void
-fe_loadmar(sc)
-	struct fe_softc *sc;
+mb86960_loadmar(sc)
+	struct mb86960_softc *sc;
 {
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
 
 	/* Stop the DLC (transmitter and receiver). */
-	outb(sc->sc_iobase + FE_DLCR6, sc->proto_dlcr6 | FE_D6_DLC_DISABLE);
+	bus_space_write_1(bst, bsh, FE_DLCR6,
+	    sc->proto_dlcr6 | FE_D6_DLC_DISABLE);
 
 	/* Select register bank 1 for MARs. */
-	outb(sc->sc_iobase + FE_DLCR7,
+	bus_space_write_1(bst, bsh, FE_DLCR7,
 	    sc->proto_dlcr7 | FE_D7_RBS_MAR | FE_D7_POWER_UP);
 
 	/* Copy filter value into the registers. */
-	outblk(sc->sc_iobase + FE_MAR8, sc->filter, FE_FILTER_LEN);
+	bus_space_write_region_1(bst, bsh, FE_MAR8, sc->filter, FE_FILTER_LEN);
 
 	/* Restore the bank selection for BMPRs (i.e., runtime registers). */
-	outb(sc->sc_iobase + FE_DLCR7,
+	bus_space_write_1(bst, bsh, FE_DLCR7,
 	    sc->proto_dlcr7 | FE_D7_RBS_BMPR | FE_D7_POWER_UP);
 
 	/* Restart the DLC. */
-	outb(sc->sc_iobase + FE_DLCR6, sc->proto_dlcr6 | FE_D6_DLC_ENABLE);
+	bus_space_write_1(bst, bsh, FE_DLCR6,
+	    sc->proto_dlcr6 | FE_D6_DLC_ENABLE);
 
 	/* We have just updated the filter. */
 	sc->filter_change = 0;
@@ -2492,45 +1762,108 @@ fe_loadmar(sc)
 #endif
 }
 
+/*
+ * Enable power on the interface.
+ */
+int
+mb86960_enable(sc)
+	struct mb86960_softc *sc;
+{
+
+#if FE_DEBUG >= 3
+	log(LOG_INFO, "%s: mb86960_enable()\n", sc->sc_dev.dv_xname);
+#endif
+
+	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
+		if ((*sc->sc_enable)(sc) != 0) {
+			printf("%s: device enable failed\n",
+			    sc->sc_dev.dv_xname);
+			return (EIO);
+		}
+	}
+
+	sc->sc_enabled = 1;
+	return (0);
+}
+
+/*
+ * Disable power on the interface.
+ */
+void
+mb86960_disable(sc)
+	struct mb86960_softc *sc;
+{
+
+#if FE_DEBUG >= 3
+	log(LOG_INFO, "%s: mb86960_disable()\n", sc->sc_dev.dv_xname);
+#endif
+
+	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
+		(*sc->sc_disable)(sc);
+		sc->sc_enabled = 0;
+	}
+}
+
 #if FE_DEBUG >= 1
 void
-fe_dump(level, sc)
+mb86960_dump(level, sc)
 	int level;
-	struct fe_softc *sc;
+	struct mb86960_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
 	u_char save_dlcr7;
 
-	save_dlcr7 = inb(iobase + FE_DLCR7);
+	save_dlcr7 = bus_space_read_1(bst, bsh, FE_DLCR7);
 
-	log(level, "\tDLCR = %02x %02x %02x %02x %02x %02x %02x %02x",
-	    inb(iobase + FE_DLCR0),  inb(iobase + FE_DLCR1),
-	    inb(iobase + FE_DLCR2),  inb(iobase + FE_DLCR3),
-	    inb(iobase + FE_DLCR4),  inb(iobase + FE_DLCR5),
-	    inb(iobase + FE_DLCR6),  inb(iobase + FE_DLCR7));
+	log(level, "\tDLCR = %02x %02x %02x %02x %02x %02x %02x %02x\n",
+	    bus_space_read_1(bst, bsh, FE_DLCR0),
+	    bus_space_read_1(bst, bsh, FE_DLCR1),
+	    bus_space_read_1(bst, bsh, FE_DLCR2),
+	    bus_space_read_1(bst, bsh, FE_DLCR3),
+	    bus_space_read_1(bst, bsh, FE_DLCR4),
+	    bus_space_read_1(bst, bsh, FE_DLCR5),
+	    bus_space_read_1(bst, bsh, FE_DLCR6),
+	    bus_space_read_1(bst, bsh, FE_DLCR7));
 
-	outb(iobase + FE_DLCR7, (save_dlcr7 & ~FE_D7_RBS) | FE_D7_RBS_DLCR);
-	log(level, "\t       %02x %02x %02x %02x %02x %02x %02x %02x,",
-	    inb(iobase + FE_DLCR8),  inb(iobase + FE_DLCR9),
-	    inb(iobase + FE_DLCR10), inb(iobase + FE_DLCR11),
-	    inb(iobase + FE_DLCR12), inb(iobase + FE_DLCR13),
-	    inb(iobase + FE_DLCR14), inb(iobase + FE_DLCR15));
+	bus_space_write_1(bst, bsh, FE_DLCR7,
+	    (save_dlcr7 & ~FE_D7_RBS) | FE_D7_RBS_DLCR);
+	log(level, "\t       %02x %02x %02x %02x %02x %02x %02x %02x\n",
+	    bus_space_read_1(bst, bsh, FE_DLCR8),
+	    bus_space_read_1(bst, bsh, FE_DLCR9),
+	    bus_space_read_1(bst, bsh, FE_DLCR10),
+	    bus_space_read_1(bst, bsh, FE_DLCR11),
+	    bus_space_read_1(bst, bsh, FE_DLCR12),
+	    bus_space_read_1(bst, bsh, FE_DLCR13),
+	    bus_space_read_1(bst, bsh, FE_DLCR14),
+	    bus_space_read_1(bst, bsh, FE_DLCR15));
 
-	outb(iobase + FE_DLCR7, (save_dlcr7 & ~FE_D7_RBS) | FE_D7_RBS_MAR);
-	log(level, "\tMAR  = %02x %02x %02x %02x %02x %02x %02x %02x,",
-	    inb(iobase + FE_MAR8),   inb(iobase + FE_MAR9),
-	    inb(iobase + FE_MAR10),  inb(iobase + FE_MAR11),
-	    inb(iobase + FE_MAR12),  inb(iobase + FE_MAR13),
-	    inb(iobase + FE_MAR14),  inb(iobase + FE_MAR15));
+	bus_space_write_1(bst, bsh, FE_DLCR7,
+	    (save_dlcr7 & ~FE_D7_RBS) | FE_D7_RBS_MAR);
+	log(level, "\tMAR  = %02x %02x %02x %02x %02x %02x %02x %02x\n",
+	    bus_space_read_1(bst, bsh, FE_MAR8),
+	    bus_space_read_1(bst, bsh, FE_MAR9),
+	    bus_space_read_1(bst, bsh, FE_MAR10),
+	    bus_space_read_1(bst, bsh, FE_MAR11),
+	    bus_space_read_1(bst, bsh, FE_MAR12),
+	    bus_space_read_1(bst, bsh, FE_MAR13),
+	    bus_space_read_1(bst, bsh, FE_MAR14),
+	    bus_space_read_1(bst, bsh, FE_MAR15));
 
-	outb(iobase + FE_DLCR7, (save_dlcr7 & ~FE_D7_RBS) | FE_D7_RBS_BMPR);
-	log(level, "\tBMPR = xx xx %02x %02x %02x %02x %02x %02x %02x %02x xx %02x.",
-	    inb(iobase + FE_BMPR10), inb(iobase + FE_BMPR11),
-	    inb(iobase + FE_BMPR12), inb(iobase + FE_BMPR13),
-	    inb(iobase + FE_BMPR14), inb(iobase + FE_BMPR15),
-	    inb(iobase + FE_BMPR16), inb(iobase + FE_BMPR17),
-	    inb(iobase + FE_BMPR19));
+	bus_space_write_1(bst, bsh, FE_DLCR7,
+	    (save_dlcr7 & ~FE_D7_RBS) | FE_D7_RBS_BMPR);
+	log(level,
+	    "\tBMPR = xx xx %02x %02x %02x %02x %02x %02x %02x %02x xx %02x\n",
+	    bus_space_read_1(bst, bsh, FE_BMPR10),
+	    bus_space_read_1(bst, bsh, FE_BMPR11),
+	    bus_space_read_1(bst, bsh, FE_BMPR12),
+	    bus_space_read_1(bst, bsh, FE_BMPR13),
+	    bus_space_read_1(bst, bsh, FE_BMPR14),
+	    bus_space_read_1(bst, bsh, FE_BMPR15),
+	    bus_space_read_1(bst, bsh, FE_BMPR16),
+	    bus_space_read_1(bst, bsh, FE_BMPR17),
+	    bus_space_read_1(bst, bsh, FE_BMPR19));
 
-	outb(iobase + FE_DLCR7, save_dlcr7);
+	bus_space_write_1(bst, bsh, FE_DLCR7, save_dlcr7);
 }
 #endif
