@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.44 1996/10/15 07:25:55 scottr Exp $
+#	$NetBSD: GENERIC,v 1.45 1996/10/16 04:00:28 scottr Exp $
 #
 # GENERIC
 
@@ -65,6 +65,7 @@ options 	COMPAT_12
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 options		MACHINE_NONCONTIG
 options		ZS_CONSOLE_ABORT
+options 	DISABLE_EXT_CACHE # Don't use IIci external cache
 
 config		netbsd	swap generic
 
