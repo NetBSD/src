@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.71.2.19 2002/02/26 20:39:51 he Exp $
+.\"	$NetBSD: hardware,v 1.71.2.20 2002/03/25 17:58:32 he Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -31,7 +31,7 @@ Acard ATA-850 and 860 based IDE Controllers
 .It
 Acer labs M5229 IDE Controller
 .It
-Advanced Micro Devices AMD-756 and 766 IDE Controllers
+Advanced Micro Devices AMD-756, 766 and 768 IDE Controllers
 .It
 CMD Tech PCI0643, 0646, 0648 and 0649 IDE Controllers
 .It
