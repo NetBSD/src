@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.6 1998/08/14 22:59:54 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.7 1998/08/15 01:18:06 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.5 1998/08/14 22:59:35 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.6 1998/08/15 01:17:51 thorpej Exp 
  */
 
 /*
@@ -167,6 +167,9 @@
 #define	PCMCIA_CIS_DLINK_DE650	{ "D-Link", "DE-650", NULL, NULL }
 #define	PCMCIA_PRODUCT_DLINK_DE650	-1
 #define	PCMCIA_STR_DLINK_DE650	"D-Link DE-650"
+#define	PCMCIA_CIS_DLINK_DE660	{ "D-Link", "DE-660", NULL, NULL }
+#define	PCMCIA_PRODUCT_DLINK_DE660	-1
+#define	PCMCIA_STR_DLINK_DE660	"D-Link DE-660"
 #define	PCMCIA_CIS_RPTI_EP401	{ "RPTI", "EP401 Ethernet NE2000 Compatible", NULL, NULL }
 #define	PCMCIA_PRODUCT_RPTI_EP401	-1
 #define	PCMCIA_STR_RPTI_EP401	"RPTI EP401"
