@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.18 1998/07/27 19:58:43 mycroft Exp $	*/
+/*	$NetBSD: tree.c,v 1.19 1998/07/28 03:39:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tree.c,v 1.18 1998/07/27 19:58:43 mycroft Exp $");
+__RCSID("$NetBSD: tree.c,v 1.19 1998/07/28 03:39:29 mycroft Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3631,6 +3631,9 @@ chkmisc(tn, vctx, tctx, eqwarn, fcall, rvdisc, szof)
 		break;
 	case COLON:
 		chkmisc(rn, cvctx, ctctx, mp->m_eqwarn, 0, 0, szof);
+		break;
+	case COMMA:
+		chkmisc(rn, vctx, tctx, mp->m_eqwarn, 0, 0, szof);
 		break;
 	default:
 		if (mp->m_binary)
