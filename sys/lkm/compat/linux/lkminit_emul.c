@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.3 2000/12/08 20:15:20 jdolecek Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.1 2000/12/08 20:15:16 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,30 +37,29 @@
  */
 
 #include <sys/param.h>
-#include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
 
-extern const struct emul emul_svr4;
+extern const struct emul emul_linux;
 
-int compat_svr4_lkmentry __P((struct lkm_table *, int, int));
+int compat_linux_lkmentry __P((struct lkm_table *, int, int));
 
 /*
  * declare the emulation
  */
-MOD_COMPAT("svr4", -1, &emul_svr4);
+MOD_COMPAT("compat_linux", -1, &emul_linux);
 
 /*
  * entry point
  */
 int
-compat_svr4_lkmentry(lkmtp, cmd, ver)
+compat_linux_lkmentry(lkmtp, cmd, ver)
 	struct lkm_table *lkmtp;	
 	int cmd;
 	int ver;
 {
-
 	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc);
 }

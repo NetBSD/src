@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.2 1997/05/19 22:11:12 jtc Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.3 2000/12/08 20:15:14 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,18 +46,13 @@
 #include <sys/file.h>
 #include <sys/errno.h>
 
-#include <compat/freebsd/freebsd_exec.h>
-
-extern int exec_freebsd_aout_makecmds();
-
-struct execsw freebsd_lkm_execsw = {
-  FREEBSD_AOUT_HDR_SIZE, exec_freebsd_aout_makecmds,
-};
+extern const struct emul emul_freebsd;
+int compat_freebsd_lkmentry __P((struct lkm_table *, int, int));
 
 /*
- * declare the filesystem
+ * declare the emulation
  */
-MOD_EXEC("freebsd", -1, &freebsd_lkm_execsw);
+MOD_COMPAT("freebsd", -1, &emul_freebsd);
 
 /*
  * entry point
