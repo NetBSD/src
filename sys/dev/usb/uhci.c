@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.1 1998/07/12 19:51:59 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.2 1998/07/15 09:35:35 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -931,7 +931,7 @@ uhci_alloc_std(sc)
 				i * UHCI_TD_SIZE;
 			std->td = (uhci_td_t *)
 				((char *)KERNADDR(&dma) + i * UHCI_TD_SIZE);
-			std->td->link = sc->sc_freetds;
+			std->td->link.std = sc->sc_freetds;
 			sc->sc_freetds = std;
 		}
 	}
@@ -946,7 +946,7 @@ uhci_free_std(sc, std)
 	uhci_softc_t *sc;
 	uhci_soft_td_t *std;
 {
-	std->td->link = sc->sc_freetds;
+	std->td->link.std = sc->sc_freetds;
 	sc->sc_freetds = std;
 }
 
@@ -1104,7 +1104,7 @@ printf("uhci_alloc_std_chain: len=0\n");
 			uhci_free_std_chain(sc, lastp, 0);
 			return (USBD_NOMEM);
 		}
-		p->td->link = lastp;
+		p->td->link.std = lastp;
 		p->td->td_link = lastlink;
 		lastp = p;
 		lastlink = p->physaddr;
@@ -1441,7 +1441,7 @@ uhci_device_request(reqh)
 		if (r != USBD_NORMAL_COMPLETION)
 			goto ret2;
 		next = xfer;
-		xferend->td->link = stat;
+		xferend->td->link.std = stat;
 		xferend->td->td_link = stat->physaddr;
 	} else {
 		xfer = 0;
@@ -1454,13 +1454,13 @@ uhci_device_request(reqh)
 	if (!isread && len != 0)
 		memcpy(KERNADDR(dmap), reqh->buffer, len);
 
-	setup->td->link = next;
+	setup->td->link.std = next;
 	setup->td->td_link = next->physaddr;
 	setup->td->td_status = UHCI_TD_SET_ERRCNT(2) | ls | UHCI_TD_ACTIVE;
 	setup->td->td_token = UHCI_TD_SETUP(sizeof *req, endpt, addr);
 	setup->td->td_buffer = DMAADDR(&upipe->u.ctl.reqdma);
 
-	stat->td->link = 0;
+	stat->td->link.std = 0;
 	stat->td->td_link = UHCI_PTR_T;
 	stat->td->td_status = UHCI_TD_SET_ERRCNT(2) | ls | 
 		UHCI_TD_ACTIVE | UHCI_TD_IOC;
