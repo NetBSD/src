@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.45 2001/07/20 18:52:18 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.46 2001/07/25 07:13:44 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -648,13 +648,6 @@ rtrequest1(req, info, ret_nrt)
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
 			rt->rt_parent = *ret_nrt;
 			rt->rt_parent->rt_refcnt++;
-		} else if (rt->rt_rmx.rmx_mtu == 0
-			    && !(rt->rt_rmx.rmx_locks & RTV_MTU)) { /* XXX */
-			if (rt->rt_gwroute != NULL) {
-				rt->rt_rmx.rmx_mtu = rt->rt_gwroute->rt_rmx.rmx_mtu;
-			} else {
-				rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;
-			}
 		}
 		rn = rnh->rnh_addaddr((caddr_t)ndst, (caddr_t)netmask,
 		    rnh, rt->rt_nodes);
