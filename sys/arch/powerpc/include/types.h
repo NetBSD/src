@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.4 1997/11/05 04:36:30 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.5 1998/01/27 09:16:00 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -53,7 +53,12 @@ typedef	int32_t			register_t;
 typedef	unsigned long		vm_size_t;
 typedef	unsigned long		vm_offset_t;
 
+#if 0
 /* This is only to make some unneeded function declaration happy */
 #define	label_t	void
+#endif 0
+typedef struct label_t {
+        int val[40]; /* double check this XXX */
+} label_t;
 
 #endif	/* _MACHTYPES_H_ */
