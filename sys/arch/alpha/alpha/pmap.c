@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.76 1998/12/18 19:52:11 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.77 1999/02/04 19:49:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 1998/12/18 19:52:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 1999/02/04 19:49:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,6 +285,11 @@ LIST_HEAD(, pmap) pmap_all_pmaps;
 struct pool pmap_pmap_pool;
 struct pool pmap_asn_pool;
 struct pool pmap_asngen_pool;
+
+/*
+ * Canonical names for PGU_* constants.
+ */
+const char *pmap_pgu_strings[] = PGU_STRINGS;
 
 /*
  * Address Space Numbers.
@@ -3181,11 +3186,17 @@ pmap_physpage_alloc(usage)
 			pvh = pa_to_pvh(pa);
 			simple_lock(&pvh->pvh_slock);
 #ifdef DIAGNOSTIC
-			if (pvh->pvh_usage != PGU_NORMAL)
-				panic("pmap_physpage_alloc: in use?!");
-			if (pvh->pvh_refcnt != 0)
-				panic("pmap_physpage_alloc: page has "
-				    "references");
+			if (pvh->pvh_usage != PGU_NORMAL) {
+				printf("pmap_physpage_alloc: page 0x%lx is "
+				    "in use (%s)\n", pa,
+				    pmap_pgu_strings[pvh->pvh_usage]);
+				goto die;
+			}
+			if (pvh->pvh_refcnt != 0) {
+				printf("pmap_physpage_alloc: page 0x%lx has "
+				    "%d references", pa, pvh->pvh_refcnt);
+				goto die;
+			}
 #endif
 			pvh->pvh_usage = usage;
 			simple_unlock(&pvh->pvh_slock);
@@ -3220,7 +3231,12 @@ pmap_physpage_alloc(usage)
 	 * If we couldn't get any more pages after 5 tries, just
 	 * give up.
 	 */
-	panic("pmap_physpage_alloc: no pages available after 5 tries");
+	printf("pmap_physpage_alloc: no pages for %s page available after "
+	    "5 tries", pmap_pgu_strings[usage]);
+#ifdef DIAGNOSTIC
+ die:
+#endif
+	panic("pmap_physpage_alloc");
 }
 
 /*
