@@ -104,6 +104,12 @@ Boston, MA 02111-1307, USA.  */
 /* Show that we need a GP when profiling.  */
 #define TARGET_PROFILING_NEEDS_GP
 
+
+/* Attempt to enable execute permissions on the stack.  */
+
+#define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
+
+
 #define bsd4_4
 #undef HAS_INIT_SECTION
 
