@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.146 1996/06/18 01:53:07 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.147 1996/08/15 15:34:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1923,6 +1923,7 @@ calltrap:
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_trap
+	jmp	2b
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
 #else /* DIAGNOSTIC */
@@ -1989,6 +1990,7 @@ syscall1:
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_trap
+	jmp	2b
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
 #else /* DIAGNOSTIC */
