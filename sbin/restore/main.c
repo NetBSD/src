@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2005/01/08 14:30:39 fredb Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2005/02/17 15:00:33 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.29 2005/01/08 14:30:39 fredb Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 2005/02/17 15:00:33 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,14 +80,11 @@ int	dotflag = 0;
 
 FILE *Mtreefile = NULL;
 
-int	main __P((int, char *[]));
-static	void obsolete __P((int *, char **[]));
-static	void usage __P((void));
+static	void obsolete(int *, char **[]);
+static	void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	ino_t ino;
@@ -304,7 +301,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	const char *progname = getprogname();
 
@@ -332,9 +329,7 @@ usage()
  *	getopt(3) will like.
  */
 static void
-obsolete(argcp, argvp)
-	int *argcp;
-	char **argvp[];
+obsolete(int *argcp, char **argvp[])
 {
 	int argc, flags;
 	char *ap, **argv, *flagsp, **nargv, *p;
