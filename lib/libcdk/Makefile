@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2004/07/30 07:02:53 lukem Exp $
+# $NetBSD: Makefile,v 1.8 2004/08/04 08:04:25 lukem Exp $
 
 NOLINT=		# defined
 
@@ -9,7 +9,7 @@ DIST=		${NETBSDSRCDIR}/dist
 
 LIB=		cdk
 
-DEPLIBS=	curses
+LIBDPLIBS=	curses ../libcurses
 
 CPPFLAGS+=	-I. -I${DIST}/cdk/include -DHAVE_CONFIG_H
 
