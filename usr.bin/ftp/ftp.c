@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.41 1999/02/19 16:29:27 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.42 1999/04/28 13:35:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.41 1999/02/19 16:29:27 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.42 1999/04/28 13:35:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1045,7 +1045,7 @@ break2:
 
 abort:
 
-/* abort using RFC959 recommended IP,SYNC sequence */
+/* abort using RFC 959 recommended IP,SYNC sequence */
 
 	progress = oprogress;
 	preserve = opreserve;

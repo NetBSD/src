@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.36 1999/03/22 07:36:40 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.37 1999/04/28 13:35:40 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd March 22, 1999
+.Dd April 28, 1999
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -388,7 +388,8 @@ Set the file transfer
 .Ic form
 to
 .Ar format .
-The default format is \*(Lqfile\*(Rq.
+The default format is
+.Dq file .
 .It Ic get Ar remote-file Op Ar local-file
 Retrieve the
 .Ar remote-file
@@ -588,7 +589,9 @@ Set the file transfer
 .Ic mode
 to
 .Ar mode-name .
-The default mode is \*(Lqstream\*(Rq mode.
+The default mode is
+.Dq stream
+mode.
 .It Ic modtime Ar file-name
 Show the last modification time of the file on the remote machine.
 .It Ic more Ar file
@@ -1005,7 +1008,9 @@ Set the file transfer
 .Ar structure
 to
 .Ar struct-name .
-By default \*(Lqstream\*(Rq structure is used.
+By default
+.Dq stream
+structure is used.
 .It Ic sunique
 Toggle storing of files on remote machine under unique file names.
 Remote ftp server must support ftp protocol
@@ -1064,9 +1069,9 @@ is completed if the remote server did not require it
 for logging in.
 Unless
 .Nm
-is invoked with \*(Lqauto-login\*(Rq disabled, this
-process is done automatically on initial connection to
-the
+is invoked with
+.Dq auto-login
+disabled, this process is done automatically on initial connection to the
 .Tn FTP
 server.
 .It Ic verbose
@@ -1116,8 +1121,26 @@ The following formats are valid syntax for an auto-fetch element:
 .Bl -tag -width "FOO "
 .It host:/file
 .Dq Classic
-ftp format
-.It ftp://[user[:password]@]host[:port]/file
+ftp format.
+.Pp
+If
+.Ic file
+contains a glob character and globbing is enabled,
+(see
+.Ic glob ) ,
+then the equivalent of
+.Ic "mget file"
+is performed.
+.Pp
+If the directory component of
+.Ic file
+contains no globbing characters,
+it is stored in the current directory as the
+.Xr basename 1
+of
+.Ic file .
+Otherwise, the remote name is used as the local name.
+.It ftp://[user[:password]@]host[:port]/file[;type=X]
 An ftp URL, retrieved using the ftp protocol if
 .Ev ftp_proxy
 isn't defined.
@@ -1159,6 +1182,14 @@ with the password
 .Sq mypass ,
 use
 .Dq ftp://myname:mypass@localhost/%2fetc/motd
+.Pp
+If a suffix of
+.Sq ;type=A
+or
+.Sq ;type=I
+is supplied, then the transfer type will take place as
+ascii or binary (respectively).
+The default transfer type is binary.
 .It http://host[:port]/file
 An HTTP URL, retrieved using the HTTP protocol.
 If
@@ -1167,6 +1198,13 @@ is defined, it is used as a URL to an HTTP proxy server.
 .It file:///file
 A local URL, copied from /file.
 .El
+.Pp
+Unless noted otherwise above, and
+.Fl o Ar output
+is not given, the file is stored in the current directory as the
+.Xr basename 1
+of
+.Ic file .
 .Pp
 If a classic format or a ftp URL format has a trailing
 .Sq / ,
@@ -1186,24 +1224,6 @@ This is implemented by using
 .Nm reget
 instead of
 .Nm get .
-.Pp
-If
-.Ic file
-contains a glob character and globbing is enabled,
-(see
-.Ic glob ) ,
-then the equivalent of
-.Ic "mget file"
-is performed.
-.Pp
-If the directory component of
-.Ic file
-contains no globbing characters,
-it is stored in the current directory as the
-.Xr basename 1
-of
-.Ic file .
-Otherwise, the remote name is used as the local name.
 .Sh ABORTING A FILE TRANSFER
 To abort a file transfer, use the terminal interrupt key
 (usually Ctrl-C).
@@ -1257,9 +1277,10 @@ with the argument supplied, and reads (writes) from the stdout
 (stdin).
 If the shell command includes spaces, the argument
 must be quoted; e.g.
-\*(Lq" ls -lt"\*(Rq.
+.Dq Qq Li \ ls\ \-lt .
 A particularly
-useful example of this mechanism is: \*(Lqdir \&|more\*(Rq.
+useful example of this mechanism is:
+.Dq Li dir \&|more .
 .It
 Failing the above checks, if ``globbing'' is enabled,
 local file names are expanded
@@ -1308,8 +1329,14 @@ The FTP specification specifies many parameters which may
 affect a file transfer.
 The
 .Ic type
-may be one of \*(Lqascii\*(Rq, \*(Lqimage\*(Rq (binary),
-\*(Lqebcdic\*(Rq, and \*(Lqlocal byte size\*(Rq (for
+may be one of
+.Dq ascii ,
+.Dq image
+(binary),
+.Dq ebcdic ,
+and
+.Dq local byte size
+(for
 .Tn PDP Ns -10's
 and
 .Tn PDP Ns -20's
