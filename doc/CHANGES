@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.27 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.28 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -150,3 +150,7 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		[thorpej 20021010]
 	tar(1), cpio(1): We are now using pax(1) for those instead of
 		the gnu version. [christos 20021116]
+	basename(3), dirname(3): Change to return pointer to static
+		storage, rather than modifying their input arguments.
+		The new behavior is explcitiy allowed by IEEE Std
+		1003.1-2001.  [thorpej 20021016]
