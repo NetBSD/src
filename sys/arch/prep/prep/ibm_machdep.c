@@ -1,4 +1,4 @@
-/*      $NetBSD: ibm_machdep.c,v 1.6 2002/05/30 16:10:08 nonaka Exp $        */
+/*      $NetBSD: ibm_machdep.c,v 1.7 2003/01/16 02:18:23 matt Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
 #include <machine/platform.h>
 
 static struct platform *platform_ibm[] = {
+#if defined(PLATFORM_IBM_6040)
+	&platform_ibm_6040,
+#endif
 #if defined(PLATFORM_IBM_6050)
 	&platform_ibm_6050,
 #endif
