@@ -1,7 +1,7 @@
-/*	$NetBSD: siglist.c,v 1.10 1998/09/26 23:53:36 christos Exp $	*/
+/*	$NetBSD: __sigsetops14.c,v 1.1 1998/09/26 23:53:36 christos Exp $	*/
 
-/*
- * Copyright (c) 1983, 1993
+/*-
+ * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,51 +31,82 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)sigsetops.c	8.1 (Berkeley) 6/4/93
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)siglist.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)sigsetops.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: siglist.c,v 1.10 1998/09/26 23:53:36 christos Exp $");
+__RCSID("$NetBSD: __sigsetops14.c,v 1.1 1998/09/26 23:53:36 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/cdefs.h>
+#define	__LIBC12_SOURCE__
+
+#include <errno.h>
 #include <signal.h>
 
-const char *const _sys_siglist[SIGUSR2+1] = {
-	"Signal 0",
-	"Hangup",			/* SIGHUP */
-	"Interrupt",			/* SIGINT */
-	"Quit",				/* SIGQUIT */
-	"Illegal instruction",		/* SIGILL */
-	"Trace/BPT trap",		/* SIGTRAP */
-	"Abort trap",			/* SIGABRT */
-	"EMT trap",			/* SIGEMT */
-	"Floating point exception",	/* SIGFPE */
-	"Killed",			/* SIGKILL */
-	"Bus error",			/* SIGBUS */
-	"Segmentation fault",		/* SIGSEGV */
-	"Bad system call",		/* SIGSYS */
-	"Broken pipe",			/* SIGPIPE */
-	"Alarm clock",			/* SIGALRM */
-	"Terminated",			/* SIGTERM */
-	"Urgent I/O condition",		/* SIGURG */
-	"Suspended (signal)",		/* SIGSTOP */
-	"Suspended",			/* SIGTSTP */
-	"Continued",			/* SIGCONT */
-	"Child exited",			/* SIGCHLD */
-	"Stopped (tty input)",		/* SIGTTIN */
-	"Stopped (tty output)",		/* SIGTTOU */
-	"I/O possible",			/* SIGIO */
-	"Cputime limit exceeded",	/* SIGXCPU */
-	"Filesize limit exceeded",	/* SIGXFSZ */
-	"Virtual timer expired",	/* SIGVTALRM */
-	"Profiling timer expired",	/* SIGPROF */
-	"Window size changes",		/* SIGWINCH */
-	"Information request",		/* SIGINFO */
-	"User defined signal 1",	/* SIGUSR1 */
-	"User defined signal 2"		/* SIGUSR2 */
-};
+#undef sigemptyset
+#undef sigfillset
+#undef sigaddset
+#undef sigdelset
+#undef sigismember
+
+int
+__sigemptyset14(set)
+	sigset_t *set;
+{
+
+	__sigemptyset(set);
+	return (0);
+}
+
+int
+__sigfillset14(set)
+	sigset_t *set;
+{
+
+	__sigfillset(set);
+	return (0);
+}
+
+int
+__sigaddset14(set, signo)
+	sigset_t *set;
+	int signo;
+{
+	if (signo <= 0 || signo >= NSIG) {
+		errno = EINVAL;
+		return -1;
+	}
+	__sigaddset(set, signo);
+	return (0);
+}
+
+int
+__sigdelset14(set, signo)
+	sigset_t *set;
+	int signo;
+{
+	if (signo <= 0 || signo >= NSIG) {
+		errno = EINVAL;
+		return -1;
+	}
+	__sigdelset(set, signo);
+	return (0);
+}
+
+int
+__sigismember14(set, signo)
+	const sigset_t *set;
+	int signo;
+{
+	if (signo <= 0 || signo >= NSIG) {
+		errno = EINVAL;
+		return -1;
+	}
+	return (__sigismember(set, signo));
+}
