@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -34,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.37 1994/03/01 18:16:33 mycroft Exp $
+ *	$Id: isa.c,v 1.38 1994/03/01 18:22:52 mycroft Exp $
  */
 
 /*
@@ -75,8 +76,8 @@
 u_short *Crtat = (u_short *)MONO_BUF;
 
 /*
-**  Register definitions for DMA controller 1 (channels 0..3):
-*/
+ * Register definitions for DMA controller 1 (channels 0..3):
+ */
 #define	DMA1_CHN(c)	(IO_DMA1 + 1*(2*(c)))	/* addr reg for channel c */
 #define	DMA1_SR		(IO_DMA1 + 1*8)		/* status register */
 #define	DMA1_SMSK	(IO_DMA1 + 1*10)	/* single mask register */
@@ -84,8 +85,8 @@ u_short *Crtat = (u_short *)MONO_BUF;
 #define	DMA1_FFC	(IO_DMA1 + 1*12)	/* clear first/last FF */
 
 /*
-**  Register definitions for DMA controller 2 (channels 4..7):
-*/
+ * Register definitions for DMA controller 2 (channels 4..7):
+ */
 #define	DMA2_CHN(c)	(IO_DMA2 + 2*(2*(c)))	/* addr reg for channel c */
 #define	DMA2_SR		(IO_DMA2 + 2*8)		/* status register */
 #define	DMA2_SMSK	(IO_DMA2 + 2*10)	/* single mask register */
@@ -707,18 +708,6 @@ sysbeep(int pitch, int period)
 	timeout((timeout_t)sysbeepstop, (caddr_t)(period/2), period);
 
 	splx(s);
-}
-
-/*
- * Pass command to keyboard controller (8042)
- */
-unsigned
-kbc_8042cmd(int val)
-{
-	while (inb(KBSTATP)&KBS_IBF);
-	if (val) outb(KBCMDP, val);
-	while (inb(KBSTATP)&KBS_IBF);
-	return (inb(KBDATAP));
 }
 
 /*
