@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.92 2001/06/11 05:17:45 enami Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.91 $"
+#ident 		"GENERIC-$Revision: 1.92 $"
 
 maxusers	10
 
@@ -56,7 +56,7 @@ options 	NTP			# network time protocol
 #options 	HPCMIPS_FLUSHCACHE_XXX	# for debug
 
 # Filesystem options
-file-system 	FFS             # fast filesystem with user and group quotas
+file-system 	FFS		# fast filesystem with user and group quotas
 file-system 	MFS		# memory-based filesystem
 file-system 	NFS		# Sun NFS-compatible filesystem (client)
 #file-system	LFS		# Log-based filesystem (still experimental)
@@ -72,7 +72,7 @@ file-system 	PROCFS		# /proc
 file-system 	UNION
 
 #options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 #options 	QUOTA		# UFS quotas
 options 	VNODE_OP_NOINLINE # don't inline vnode op calls
 
@@ -110,7 +110,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # Hpckbd will set key board layout appropriately. You can use option
 # 'PCKBD_LAYOUT' to overrite the default layout.
 #
-#options	PCKBD_LAYOUT="(KB_US | KB_SWAPCTRLCAPS | KB_MACHDEP)"
+#options 	PCKBD_LAYOUT="(KB_US | KB_SWAPCTRLCAPS | KB_MACHDEP)"
 
 # temporally power management
 hpcapm0	at mainbus0			# power management
@@ -382,7 +382,7 @@ pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 #pseudo-device	md		1	# memory disk device (ramdisk)
 
 #pseudo-device	raid		4	# RAIDframe disk driver
-#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 # for IPv6
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
