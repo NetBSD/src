@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.18 2002/06/13 13:49:08 wiz Exp $	*/
+/*	$NetBSD: bad144.c,v 1.19 2002/06/13 15:27:09 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.18 2002/06/13 13:49:08 wiz Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.19 2002/06/13 15:27:09 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,16 +79,19 @@ __RCSID("$NetBSD: bad144.c,v 1.18 2002/06/13 13:49:08 wiz Exp $");
 
 #define RETRIES	10		/* number of retries on reading old sectors */
 
-int	fflag, add, copy, verbose, nflag;
+#ifdef __vax__
+int	fflag;
+#endif
+int	add, copy, verbose, nflag;
 int	dups;
 int	badfile = -1;		/* copy of badsector table to use, -1 if any */
 #define MAXSECSIZE	1024
 struct	dkbad curbad, oldbad;
 #define	DKBAD_MAGIC	0x4321
 
-char	label[BBSIZE];
 daddr_t	size;
 struct	disklabel *dp;
+struct	disklabel label;
 char	name[BUFSIZ];
 
 daddr_t	badsn(const struct bt_bad *);
@@ -99,86 +102,72 @@ int	compare(const void *, const void *);
 daddr_t	getold(int, struct dkbad *);
 int	main(int, char **);
 void	shift(int, int, int);
+void	usage(void);
+
+#ifdef __vax__
+#define OPTSTRING "01234acfvn"
+#else
+#define OPTSTRING "01234acvn"
+#endif
 
 int
 main(int argc, char *argv[])
 {
 	struct bt_bad *bt;
 	daddr_t	sn, bn[NBT_BAD];
-	int i, f, nbad, new, bad, errs;
+	int i, f, nbad, new, bad, errs, ch;
 	char diskname[MAXPATHLEN];
 
-	argc--, argv++;
-	while (argc > 0 && **argv == '-') {
-		(*argv)++;
-		while (**argv) {
-			switch (**argv) {
-#if __vax__
-			    case 'f':
-				fflag++;
-				break;
+	while ((ch = getopt(argc, argv, OPTSTRING)) != -1) {
+		switch (ch) {
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+			badfile = ch - '0';
+			break;
+		case 'a':
+			add = 1;
+			break;
+		case 'c':
+			copy = 1;
+			break;
+#ifdef __vax__
+		case 'f':
+			fflag = 1;
+			break;
 #endif
-			    case 'a':
-				add++;
-				break;
-			    case 'c':
-				copy++;
-				break;
-			    case 'v':
-				verbose++;
-				break;
-			    case 'n':
-				nflag++;
-				verbose++;
-				break;
-			    default:
-				if (**argv >= '0' && **argv <= '4') {
-					badfile = **argv - '0';
-					break;
-				}
-				goto usage;
-			}
-			(*argv)++;
+		case 'n':
+			nflag = 1;
+			/* FALLTHROUGH */
+		case 'v':
+			verbose = 1;
+			break;
+		case '?':
+		default:
+			usage();
 		}
-		argc--, argv++;
 	}
+
+	argc -= optind;
+	argv += optind;
+
 	if (argc < 1) {
-usage:
-		fprintf(stderr,
-		    "usage: bad144 [ -f ] disk [ snum [ bn ... ] ]\n");
-		fprintf(stderr,
-		  "to read or overwrite bad-sector table, e.g.: bad144 hp0\n");
-		fprintf(stderr,
-		    "or bad144 -a [ -f ] [ -c ] disk  bn ...\n");
-		fprintf(stderr, "where options are:\n");
-		fprintf(stderr, "\t-a  add new bad sectors to the table\n");
-		fprintf(stderr, "\t-f  reformat listed sectors as bad\n");
-		fprintf(stderr, "\t-c  copy original sector to replacement\n");
-		exit(1);
+		usage();
 	}
 	f = opendisk(argv[0], argc == 1 ? O_RDONLY : O_RDWR, diskname,
 	    sizeof(diskname), 0);
 	if (f < 0)
 		err(4, "opendisk `%s'", diskname);
-#ifdef was
-	if (read(f, label, sizeof(label)) < 0) 
-		err(4, "read `%s'", diskname);
-	for (dp = (struct disklabel *)(label + LABELOFFSET);
-	    dp < (struct disklabel *)
-		(label + sizeof(label) - sizeof(struct disklabel));
-	    dp = (struct disklabel *)((char *)dp + 64))
-		if (dp->d_magic == DISKMAGIC && dp->d_magic2 == DISKMAGIC)
-			break;
-#else
 	/* obtain label and adjust to fit */
-	dp = (struct disklabel *)&label;
+	dp = &label;
 	if (ioctl(f, DIOCGDINFO, dp) < 0)
 		err(4, "ioctl DIOCGDINFO `%s'", diskname);
-#endif
 	if (dp->d_magic != DISKMAGIC || dp->d_magic2 != DISKMAGIC
 		/* dkcksum(lp) != 0 */ )
 		errx(1, "Bad pack magic number (pack is unlabeled)");
-	if (dp->d_secsize > MAXSECSIZE || dp->d_secsize <= 0)
+	if (dp->d_secsize > MAXSECSIZE || dp->d_secsize == 0)
 		errx(7, "Disk sector size too large/small (%d)",
 		    dp->d_secsize);
 #ifdef __i386__
@@ -290,8 +279,8 @@ usage:
 		qsort((char *)curbad.bt_bad, nbad, sizeof (struct bt_bad),
 		    compare);
 		if (dups)
-			errx(3,
-"bad sectors have been duplicated; can't add existing sectors");
+			errx(3, "bad sectors have been duplicated; "
+			    "can't add existing sectors");
 		shift(f, nbad, nbad-new);
 	}
 	if (badfile == -1)
@@ -319,8 +308,8 @@ usage:
 #endif
 #ifdef DIOCSBAD
 	if (nflag == 0 && ioctl(f, DIOCSBAD, (caddr_t)&curbad) < 0)
-		warnx(
-	"Can't sync bad-sector file; reboot for changes to take effect");
+		warnx("Can't sync bad-sector file; reboot for changes "
+		    "to take effect");
 #endif
 	if ((dp->d_flags & D_BADSECT) == 0 && nflag == 0) {
 		dp->d_flags |= D_BADSECT;
@@ -330,7 +319,7 @@ usage:
 			    "Can't write label to enable bad sector handling");
 		}
 	}
-	exit(0);
+	return (0);
 }
 
 daddr_t
@@ -384,8 +373,8 @@ checkold(void)
 		if ((bt->bt_cyl >= dp->d_ncylinders) ||
 		    ((bt->bt_trksec >> 8) >= dp->d_ntracks) ||
 		    ((bt->bt_trksec & 0xff) >= dp->d_nsectors)) {
-			warnx(
-"cyl/trk/sect out of range in existing entry: sn=%d, cn=%d, tn=%d, sn=%d",
+			warnx("cyl/trk/sect out of range in existing entry: "
+			    "sn=%d, cn=%d, tn=%d, sn=%d",
 			    badsn(bt), bt->bt_cyl, bt->bt_trksec>>8,
 			    bt->bt_trksec & 0xff);
 			errors++;
@@ -489,11 +478,9 @@ blkzero(int f, daddr_t sn)
 {
 	char *zbuf;
 
-	if (zbuf == (char *)NULL) {
-		zbuf = malloc((unsigned)dp->d_secsize);
-		if (zbuf == (char *)NULL)
-			errx(20, "Out of memory");
-	}
+	zbuf = calloc(1, (unsigned int)dp->d_secsize);
+	if (zbuf == NULL)
+		errx(20, "Out of memory");
 	if (lseek(f, (off_t)(dp->d_secsize * sn), SEEK_SET) < 0)
 		err(4, "lseek");
 	if (verbose)
@@ -658,3 +645,24 @@ format(int fd, daddr_t blk)
 		warn("write format %d", blk);
 }
 #endif
+
+void
+usage(void)
+{
+
+	fprintf(stderr, "usage: bad144 [-%sv] disk [sno [bad ...]]\n"
+	    "to read or overwrite the bad-sector table, e.g.: bad144 hp0\n"
+	    "or bad144 -a [-c%sv] disk [bad ...]\n"
+	    "where options are:\n"
+	    "\t-a  add new bad sectors to the table\n"
+	    "\t-c  copy original sector to replacement\n"
+	    "%s"
+	    "\t-v  verbose mode\n",
+#ifdef __vax__
+	    "f", "f", "\t-f  reformat listed sectors as bad\n"
+#else
+	    "", "", ""
+#endif
+	    );
+	exit(1);
+}
