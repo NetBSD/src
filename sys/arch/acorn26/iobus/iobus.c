@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.7 2002/10/02 03:25:46 thorpej Exp $ */
+/* $NetBSD: iobus.c,v 1.8 2003/01/01 00:34:05 thorpej Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iobus.c,v 1.7 2002/10/02 03:25:46 thorpej Exp $");
+__RCSID("$NetBSD: iobus.c,v 1.8 2003/01/01 00:34:05 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ iobus_print(void *aux, const char *pnp)
 	struct iobus_attach_args *ioa = aux;
 
 	if (ioa->ioa_base != IOBUSCF_BASE_DEFAULT)
-		printf(" base 0x%06x",
+		aprint_normal(" base 0x%06x",
 		    ioa->ioa_base - (bus_addr_t)MEMC_IO_BASE);
 	return UNCONF;
 }
