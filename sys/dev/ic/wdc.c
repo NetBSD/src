@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.59 1999/02/20 23:47:52 hubertf Exp $ */
+/*	$NetBSD: wdc.c,v 1.60 1999/02/21 02:07:52 abs Exp $ */
 
 
 /*
@@ -645,8 +645,9 @@ wdcwait(chp, mask, bits, timeout)
 #ifdef WDCNDELAY_DEBUG
 	extern int cold;
 #endif
-	WDCDEBUG_PRINT(("wdcwait %s:%d\n", chp->wdc->sc_dev.dv_xname,
-	    chp->channel), DEBUG_STATUS);
+
+	WDCDEBUG_PRINT(("wdcwait %s:%d\n", chp->wdc ?chp->wdc->sc_dev.dv_xname
+	    :"none", chp->channel), DEBUG_STATUS);
 	chp->ch_error = 0;
 
 	timeout = timeout * 1000 / WDCDELAY; /* delay uses microseconds */
