@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.41 2002/03/22 03:57:35 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.42 2002/03/25 02:23:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.41 2002/03/22 03:57:35 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.42 2002/03/25 02:23:56 chs Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -263,6 +263,8 @@ WRITE(void *v)
 		psignal(p, SIGXFSZ);
 		return (EFBIG);
 	}
+	if (uio->uio_resid == 0)
+		return (0);
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
