@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.91 2004/01/16 12:47:37 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.92 2004/02/22 00:19:48 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.91 2004/01/16 12:47:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.92 2004/02/22 00:19:48 enami Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -367,6 +367,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
     const char *wchan, struct pool_allocator *palloc)
 {
 	int off, slack;
+	size_t trysize, phsize;
 
 #ifdef POOL_DIAGNOSTIC
 	/*
@@ -458,16 +459,26 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 
 	/*
 	 * Decide whether to put the page header off page to avoid
-	 * wasting too large a part of the page. Off-page page headers
-	 * go on a hash table, so we can match a returned item
-	 * with its header based on the page address.
-	 * We use 1/16 of the page size as the threshold (XXX: tune)
+	 * wasting too large a part of the page or too big item.
+	 * Off-page page headers go on a hash table, so we can match
+	 * a returned item with its header based on the page address.
+	 * We use 1/16 of the page size and about 8 times of the item
+	 * size as the threshold (XXX: tune)
+	 *
+	 * However, we'll put the header into the page if we can put
+	 * it without wasting any items.
+	 *
+	 * Silently enforce `0 <= ioff < align'.
 	 */
-	if (pp->pr_size < palloc->pa_pagesz/16) {
+	pp->pr_itemoffset = ioff %= align;
+	/* See the comment below about reserved bytes. */
+	trysize = palloc->pa_pagesz - ((align - ioff) % align);
+	phsize = ALIGN(sizeof(struct pool_item_header));
+	if (pp->pr_size < MIN(palloc->pa_pagesz / 16, phsize << 3) ||
+	    trysize / pp->pr_size == (trysize - phsize) / pp->pr_size) {
 		/* Use the end of the page for the page header */
 		pp->pr_roflags |= PR_PHINPAGE;
-		pp->pr_phoffset = off = palloc->pa_pagesz -
-		    ALIGN(sizeof(struct pool_item_header));
+		pp->pr_phoffset = off = palloc->pa_pagesz - phsize;
 	} else {
 		/* The page header will be taken from our page header pool */
 		pp->pr_phoffset = 0;
@@ -479,10 +490,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	 * Alignment is to take place at `ioff' within the item. This means
 	 * we must reserve up to `align - 1' bytes on the page to allow
 	 * appropriate positioning of each item.
-	 *
-	 * Silently enforce `0 <= ioff < align'.
 	 */
-	pp->pr_itemoffset = ioff = ioff % align;
 	pp->pr_itemsperpage = (off - ((align - ioff) % align)) / pp->pr_size;
 	KASSERT(pp->pr_itemsperpage != 0);
 
