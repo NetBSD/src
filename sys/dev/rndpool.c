@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.7 1998/05/27 01:29:13 explorer Exp $        */
+/*      $NetBSD: rndpool.c,v 1.8 1999/01/27 10:41:01 mrg Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ void
 rndpool_init(rp)
 	rndpool_t *rp;
 {
+
 	rp->cursor = RND_POOLWORDS - 1;
 	rp->entropy = 0;
 	rp->rotate = 0;
@@ -68,6 +69,7 @@ u_int32_t
 rndpool_get_entropy_count(rp)
 	rndpool_t *rp;
 {
+
 	return rp->entropy;
 }
 
@@ -76,6 +78,7 @@ rndpool_set_entropy_count(rp, entropy)
 	rndpool_t *rp;
 	u_int32_t  entropy;
 {
+
 	rp->entropy = entropy;
 	if (rp->entropy > RND_POOLBITS)
 		rp->entropy = RND_POOLBITS;
@@ -86,6 +89,7 @@ rndpool_increment_entropy_count(rp, entropy)
 	rndpool_t *rp;
 	u_int32_t  entropy;
 {
+
 	rp->entropy += entropy;
 	if (rp->entropy > RND_POOLBITS)
 		rp->entropy = RND_POOLBITS;
@@ -95,12 +99,14 @@ u_int32_t *
 rndpool_get_pool(rp)
 	rndpool_t *rp;
 {
+
 	return (rp->pool);
 }
 
 u_int32_t
 rndpool_get_poolsize(void)
 {
+
 	return (RND_POOLWORDS);
 }
 
@@ -112,6 +118,7 @@ rndpool_add_one_word(rp, val)
 	rndpool_t *rp;
 	u_int32_t  val;
 {
+
 	/*
 	 * Steal some values out of the pool, and xor them into the
 	 * word we were given.
