@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.92 1996/12/22 10:21:06 cgd Exp $	*/
+/*	$NetBSD: init_main.c,v 1.93 1997/01/31 00:47:12 mouse Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -378,6 +378,24 @@ main(framep)
 	/* NOTREACHED */
 }
 
+static void
+check_console(p)
+	struct proc    *p
+{
+	struct nameidata nd;
+	int error;
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console", p);
+	error = namei(&nd);
+	if (error)
+		if (error == ENOENT)
+			printf("warning: no /dev/console\n");
+		else
+			printf("warning: lookup /dev/console: error %d\n", error);
+	else
+		vrele(nd.ni_vp);
+}
+
 /*
  * List of paths to try when searching for "init".
  */
@@ -422,6 +440,14 @@ start_init(p)
 	 */
 	cpu_set_init_frame(p, initframep);
 #endif
+
+	/*
+	 * This is not the right way to do this.  We really should
+	 * hand-craft a descriptor onto /dev/console to hand to init,
+	 * but that's a _lot_ more work, and the benefit from this easy
+	 * hack makes up for the "good is the enemy of the best" effect.
+	 */
+	check_console(p);
 
 	/*
 	 * Need just enough stack to hold the faked-up "execve()" arguments.
