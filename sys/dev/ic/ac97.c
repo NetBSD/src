@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.30 2002/10/08 21:40:04 pooka Exp $ */
+/*      $NetBSD: ac97.c,v 1.31 2002/10/09 12:06:17 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.30 2002/10/08 21:40:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.31 2002/10/09 12:06:17 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,49 +298,107 @@ struct ac97_codec_if_vtbl ac97civ = {
 
 static const struct ac97_codecid {
 	u_int32_t id;
+	u_int32_t mask;
 	const char *name;
 } ac97codecid[] = {
-	{ AC97_CODEC_ID('A', 'D', 'S', 3),	"Analog Devices AD1819B" },
-	{ AC97_CODEC_ID('A', 'D', 'S', 64),	"Analog Devices AD1881" },
-	{ AC97_CODEC_ID('A', 'D', 'S', 72),	"Analog Devices AD1881A" },
-	{ AC97_CODEC_ID('A', 'D', 'S', 96),	"Analog Devices AD1885" },
-	{ AC97_CODEC_ID('A', 'D', 'S', 99),	"Analog Devices AD1886A" },
-	{ AC97_CODEC_ID('A', 'K', 'M', 0),	"Asahi Kasei AK4540"	},
-	{ AC97_CODEC_ID('A', 'K', 'M', 2),	"Asahi Kasei AK4543"	},
-	{ AC97_CODEC_ID('A', 'L', 'G', 16),	"Advance Logic ALC200"	},
-	{ AC97_CODEC_ID('A', 'L', 'G', 32),	"Advance Logic ALC650"	},
-	{ AC97_CODEC_ID('A', 'L', 'G', 48),	"Advance Logic ALC101"	},
-	{ AC97_CODEC_ID('A', 'L', 'G', 64),	"Advance Logic ALC202"	},
-	{ AC97_CODEC_ID('A', 'L', 'G', 80),	"Advance Logic ALC250"	},
-	{ AC97_CODEC_ID('C', 'R', 'Y', 0),	"Crystal CS4297"	},
-	{ AC97_CODEC_ID('C', 'R', 'Y', 3),	"Crystal CS4297"	},
-	{ AC97_CODEC_ID('C', 'R', 'Y', 19),	"Crystal CS4297A"	},
-	{ AC97_CODEC_ID('C', 'R', 'Y', 35),	"Crystal CS4298",	},
-	{ AC97_CODEC_ID('C', 'R', 'Y', 43),	"Crystal CS4294",	},
-	{ AC97_CODEC_ID('C', 'R', 'Y', 49),	"Crystal CS4299",	},
-	{ AC97_CODEC_ID('C', 'R', 'Y', 51),	"Crystal CS4298A",	},
-	{ AC97_CODEC_ID('C', 'R', 'Y', 52),	"Crystal CS4299",	},
-	{ AC97_CODEC_ID('N', 'S', 'C', 49), "National Semiconductor LM4549", },
-	{ AC97_CODEC_ID('S', 'I', 'L', 34),	"Silicon Laboratory Si3036", },
-	{ AC97_CODEC_ID('S', 'I', 'L', 35),	"Silicon Laboratory Si3038", },
-	{ AC97_CODEC_ID('T', 'R', 'A', 2),	"TriTech TR28022",	},
-	{ AC97_CODEC_ID('T', 'R', 'A', 3),	"TriTech TR28023",	},
-	{ AC97_CODEC_ID('T', 'R', 'A', 6),	"TriTech TR28026",	},
-	{ AC97_CODEC_ID('T', 'R', 'A', 8),	"TriTech TR28028",	},
-	{ AC97_CODEC_ID('T', 'R', 'A', 35),	"TriTech TR28602",	},
-	{ AC97_CODEC_ID('W', 'M', 'L', 0),	"Wolfson WM9704",	},
-	{ AC97_CODEC_ID('W', 'M', 'L', 3),	"Wolfson WM9707",	},
-	{ AC97_CODEC_ID('Y', 'M', 'H', 0),	"Yamaha YMF743-S",	},
-	{ AC97_CODEC_ID('Y', 'M', 'H', 3),	"Yamaha YMF753-S",	},
-	{ 0x45838308,				"ESS Technology ES1921", },
-	{ 0x83847600,				"SigmaTel STAC9700",	},
-	{ 0x83847604,				"SigmaTel STAC9701/3/4/5", },
-	{ 0x83847605,				"SigmaTel STAC9704", 	},
-	{ 0x83847608,				"SigmaTel STAC9708", 	},
-	{ 0x83847609,				"SigmaTel STAC9721/23",	},
-	{ 0x83847644,				"SigmaTel STAC9744/45",	},
-	{ 0x83847684,				"SigmaTel STAC9783/84",	},
-	{ 0,					NULL,			}
+	{ AC97_CODEC_ID('A', 'D', 'S', 3),
+	  0xffffffff,			"Analog Devices AD1819B" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 64),
+	  0xffffffff,			"Analog Devices AD1881" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 72),
+	  0xffffffff,			"Analog Devices AD1881A" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 96),
+	  0xffffffff,			"Analog Devices AD1885" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 99),
+	  0xffffffff,			"Analog Devices AD1886A" },
+
+	{ AC97_CODEC_ID('A', 'K', 'M', 0),
+	  0xffffffff,			"Asahi Kasei AK4540"	},
+	{ AC97_CODEC_ID('A', 'K', 'M', 2),
+	  0xffffffff,			"Asahi Kasei AK4543"	},
+
+	{ AC97_CODEC_ID('A', 'L', 'G', 0x10),
+	  0xffffffff,			"Advance Logic ALC200"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 0x20),
+	  0xffffffff,			"Advance Logic ALC650"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 0x30),
+	  0xffffffff,			"Advance Logic ALC101"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 0x40),
+	  0xffffffff,			"Advance Logic ALC202"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 0x50),
+	  0xffffffff,			"Advance Logic ALC250"	},
+
+	/* Cirrus Logic, Crystal series:
+	 *  'C' 'R' 'Y' 0x0[0-7]  - CS4297
+	 *              0x1[0-7]  - CS4297A
+	 *              0x2[0-7]  - CS4298
+	 *              0x2[8-f]  - CS4294
+	 *              0x3[0-7]  - CS4299
+	 *              0x4[8-f]  - CS4201
+	 *              0x5[8-f]  - CS4205
+	 *              0x6[0-7]  - CS4291
+	 *              0x7[0-7]  - CS4202
+	 * Datasheets:
+	 *	http://www.cirrus.com/pubs/cs4297A-5.pdf?DocumentID=593
+	 *	http://www.cirrus.com/pubs/cs4294.pdf?DocumentID=32
+	 *	http://www.cirrus.com/pubs/cs4299-5.pdf?DocumentID=594
+	 *	http://www.cirrus.com/pubs/cs4201-2.pdf?DocumentID=492
+	 *	http://www.cirrus.com/pubs/cs4205-2.pdf?DocumentID=492
+	 *	http://www.cirrus.com/pubs/cs4202-1.pdf?DocumentID=852
+	 */
+	{ AC97_CODEC_ID('C', 'R', 'Y', 0x00),
+	  0xfffffff8,			"Crystal CS4297",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 0x10),
+	  0xfffffff8,			"Crystal CS4297A",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 0x20),
+	  0xfffffff8,			"Crystal CS4298",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 0x28),
+	  0xfffffff8,			"Crystal CS4294",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 0x30),
+	  0xfffffff8,			"Crystal CS4299",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 0x48),
+	  0xfffffff8,			"Crystal CS4201",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 0x58),
+	  0xfffffff8,			"Crystal CS4205",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 0x60),
+	  0xfffffff8,			"Crystal CS4291",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 0x70),
+	  0xfffffff8,			"Crystal CS4202",	},
+
+	{ AC97_CODEC_ID('N', 'S', 'C', 49),
+	  0xffffffff,			"National Semiconductor LM4549", },
+	{ AC97_CODEC_ID('S', 'I', 'L', 34),
+	  0xffffffff,			"Silicon Laboratory Si3036", },
+	{ AC97_CODEC_ID('S', 'I', 'L', 35),
+	  0xffffffff,			"Silicon Laboratory Si3038", },
+	{ AC97_CODEC_ID('T', 'R', 'A', 2),
+	  0xffffffff,			"TriTech TR28022",	},
+	{ AC97_CODEC_ID('T', 'R', 'A', 3),
+	  0xffffffff,			"TriTech TR28023",	},
+	{ AC97_CODEC_ID('T', 'R', 'A', 6),
+	  0xffffffff,			"TriTech TR28026",	},
+	{ AC97_CODEC_ID('T', 'R', 'A', 8),
+	  0xffffffff,			"TriTech TR28028",	},
+	{ AC97_CODEC_ID('T', 'R', 'A', 35),
+	  0xffffffff,			"TriTech TR28602",	},
+	{ AC97_CODEC_ID('W', 'M', 'L', 0),
+	  0xffffffff,			"Wolfson WM9704",	},
+	{ AC97_CODEC_ID('W', 'M', 'L', 3),
+	  0xffffffff,			"Wolfson WM9707",	},
+	{ AC97_CODEC_ID('Y', 'M', 'H', 0),
+	  0xffffffff,			"Yamaha YMF743-S",	},
+	{ AC97_CODEC_ID('Y', 'M', 'H', 3),
+	  0xffffffff,			"Yamaha YMF753-S",	},
+	{ 0x45838308, 0xffffffff,	"ESS Technology ES1921", },
+	{ 0x83847600, 0xffffffff,	"SigmaTel STAC9700",	},
+	{ 0x83847604, 0xffffffff,	"SigmaTel STAC9701/3/4/5", },
+	{ 0x83847605, 0xffffffff,	"SigmaTel STAC9704",	},
+	{ 0x83847608, 0xffffffff,	"SigmaTel STAC9708",	},
+	{ 0x83847609, 0xffffffff,	"SigmaTel STAC9721/23",	},
+	{ 0x83847644, 0xffffffff,	"SigmaTel STAC9744/45",	},
+	{ 0x83847684, 0xffffffff,	"SigmaTel STAC9783/84",	},
+	{ 0,
+	  0,			NULL,			}
 };
 
 static const char * const ac97enhancement[] = {
@@ -633,7 +691,7 @@ ac97_attach(host_if)
 				printf("unknown (0x%08x)", id);
 			break;
 		}
-		if (ac97codecid[i].id == id) {
+		if (ac97codecid[i].id == (id & ac97codecid[i].mask)) {
 			printf("%s", ac97codecid[i].name);
 			break;
 		}
