@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdeg.c,v 1.6 2001/10/04 15:58:55 oster Exp $	*/
+/*	$NetBSD: rf_pqdeg.c,v 1.7 2001/11/13 07:11:16 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -25,6 +25,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_pqdeg.c,v 1.7 2001/11/13 07:11:16 lukem Exp $");
 
 #include "rf_archs.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5.c,v 1.5 2001/10/04 15:58:55 oster Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.6 2001/11/13 07:11:16 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * rf_raid5.c -- implements RAID Level 5
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.6 2001/11/13 07:11:16 lukem Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.c,v 1.8 2001/10/04 15:58:56 oster Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.9 2001/11/13 07:11:16 lukem Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -32,6 +32,9 @@
  * Maintain lists of cleanup functions. Also, mechanisms for coordinating
  * thread startup and shutdown.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.9 2001/11/13 07:11:16 lukem Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

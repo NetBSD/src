@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.41 2001/06/10 18:41:27 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.42 2001/11/13 07:11:25 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,6 +41,9 @@
 /*
  * UDA50 disk device driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.42 2001/11/13 07:11:25 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

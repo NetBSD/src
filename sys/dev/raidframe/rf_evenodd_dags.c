@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dags.c,v 1.3 2001/10/04 15:58:53 oster Exp $	*/
+/*	$NetBSD: rf_evenodd_dags.c,v 1.4 2001/11/13 07:11:14 lukem Exp $	*/
 /*
  * rf_evenodd_dags.c
  */
@@ -28,6 +28,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dags.c,v 1.4 2001/11/13 07:11:14 lukem Exp $");
 
 #include "rf_archs.h"
 

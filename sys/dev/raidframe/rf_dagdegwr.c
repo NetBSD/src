@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.8 2001/10/04 15:58:52 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.9 2001/11/13 07:11:13 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,6 +32,9 @@
  * code for creating degraded write DAGs
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.9 2001/11/13 07:11:13 lukem Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

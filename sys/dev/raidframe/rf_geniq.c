@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_geniq.c,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
+/*	$NetBSD: rf_geniq.c,v 1.4 2001/11/13 07:11:14 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,6 +30,9 @@
  *  code which implements Reed-Solomon encoding for RAID level 6
  */
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_geniq.c,v 1.4 2001/11/13 07:11:14 lukem Exp $");
 
 #define RF_UTILITY 1
 #include "rf_pqdeg.h"

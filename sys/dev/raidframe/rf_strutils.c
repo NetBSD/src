@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_strutils.c,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
+/*	$NetBSD: rf_strutils.c,v 1.4 2001/11/13 07:11:17 lukem Exp $	*/
 /*
  * rf_strutils.c
  *
@@ -36,6 +36,9 @@
  * setconfig, in the user-level driver, and in the kernel.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_strutils.c,v 1.4 2001/11/13 07:11:17 lukem Exp $");
 
 #include "rf_utils.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.15 2000/10/20 02:24:45 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.16 2001/11/13 07:11:17 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -25,6 +25,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.16 2001/11/13 07:11:17 lukem Exp $");
 
 #include <sys/errno.h>
 

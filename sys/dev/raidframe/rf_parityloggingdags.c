@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.6 2001/10/04 15:58:55 oster Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.7 2001/11/13 07:11:15 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -26,13 +26,16 @@
  * rights to redistribute these changes.
  */
 
-#include "rf_archs.h"
-
-#if RF_INCLUDE_PARITYLOGGING > 0
-
 /*
   DAGs specific to parity logging are created here
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.7 2001/11/13 07:11:15 lukem Exp $");
+
+#include "rf_archs.h"
+
+#if RF_INCLUDE_PARITYLOGGING > 0
 
 #include <dev/raidframe/raidframevar.h>
 
