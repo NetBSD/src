@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.22 1997/11/14 12:46:56 mrg Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.23 1998/02/10 01:26:50 perry Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -11,8 +11,8 @@
  * Id: ip_fil.h,v 2.0.2.39.2.4 1997/11/12 10:50:02 darrenr Exp 
  */
 
-#ifndef	__IP_FIL_H__
-#define	__IP_FIL_H__
+#ifndef _NETINET_IP_FIL_H_
+#define _NETINET_IP_FIL_H_
 
 /*
  * Pathnames for various IP Filter control devices.  Used by LKM
@@ -520,4 +520,5 @@ extern	int	iplused[IPL_LOGMAX + 1];
 extern	struct frentry *ipfilter[2][2], *ipacct[2][2];
 extern	struct frgroup *ipfgroups[3][2];
 extern	struct filterstats frstats[];
-#endif	/* __IP_FIL_H__ */
+
+#endif /* _NETINET_IP_FIL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.26 1997/03/15 18:12:35 is Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.27 1998/02/10 01:26:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)if_ether.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_IF_INARP_H_
+#define _NETINET_IF_INARP_H_
 
 struct llinfo_arp {
 	LIST_ENTRY(llinfo_arp) la_list;
@@ -77,3 +80,5 @@ int revarpwhoarewe __P((struct ifnet *, struct in_addr *, struct in_addr *));
 int revarpwhoami __P((struct in_addr *, struct ifnet *));
 int db_show_arptab __P((void));
 #endif
+
+#endif /* _NETINET_IF_INARP_H_ */

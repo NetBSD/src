@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.11 1997/10/18 21:21:28 kml Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.12 1998/02/10 01:26:19 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,9 @@
  *	@(#)icmp_var.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETINET_ICMP_VAR_H_
+#define _NETINET_ICMP_VAR_H_
+
 /*
  * Variables related to this implementation
  * of the internet control message protocol.
@@ -69,3 +72,5 @@ struct	icmpstat {
 #ifdef _KERNEL
 struct	icmpstat icmpstat;
 #endif
+
+#endif /* _NETINET_ICMP_VAR_H_ */

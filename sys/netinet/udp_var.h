@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.14 1997/07/28 22:19:54 thorpej Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.15 1998/02/10 01:27:25 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)udp_var.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_UDP_VAR_H_
+#define _NETINET_UDP_VAR_H_
 
 /*
  * UDP kernel structures and variables.
@@ -93,3 +96,5 @@ int	 udp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	 udp_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
 #endif
+
+#endif /* _NETINET_UDP_VAR_H_ */
