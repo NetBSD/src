@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.5 2003/07/15 02:29:24 lukem Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.6 2003/11/23 17:09:29 chs Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.6 2001/09/11 20:05:24 miod Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.5 2003/07/15 02:29:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.6 2003/11/23 17:09:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,19 +64,16 @@ __KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.5 2003/07/15 02:29:24 lukem Exp $");
 #define	STI_MEMSIZE	0x1000000
 #define	STI_ROMSIZE	0x0004000
 
-int  sti_sgc_probe __P((struct device *, struct cfdata *, void *));
-void sti_sgc_attach __P((struct device *, struct device *, void *));
+int  sti_sgc_probe(struct device *, struct cfdata *, void *);
+void sti_sgc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sti_sgc, sizeof(struct sti_softc),
     sti_sgc_probe, sti_sgc_attach, NULL, NULL);
 
 int
-sti_sgc_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sti_sgc_probe(struct device *parent, struct cfdata *match, void *aux)
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 	bus_space_handle_t ioh, romh;
 	u_int rom;
 	u_char devtype;
@@ -157,9 +154,7 @@ sti_sgc_probe(parent, match, aux)
 }
 
 void
-sti_sgc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sti_softc *sc = (void *)self;
 	struct confargs *ca = aux;

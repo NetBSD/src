@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.4 2003/07/15 02:29:24 lukem Exp $	*/
+/*	$NetBSD: wax.c,v 1.5 2003/11/23 17:09:29 chs Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.4 2003/07/15 02:29:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.5 2003/11/23 17:09:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,17 +49,14 @@ struct wax_softc {
 	struct  device sc_dv;
 };
 
-int	waxmatch __P((struct device *, void *, void *));
-void	waxattach __P((struct device *, struct device *, void *));
+int	waxmatch(struct device *, void *, void *);
+void	waxattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(wax, sizeof(struct wax_softc),
     waxmatch, waxattach, NULL, NULL);
 
 int
-waxmatch(parent, cfdata, aux)   
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+waxmatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 	struct cfdata *cf = cfdata;
@@ -74,9 +71,6 @@ waxmatch(parent, cfdata, aux)
 }
 
 void
-waxattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+waxattach(struct device *parent, struct device *self, void *aux)
 {
 }
