@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.84 2004/05/13 17:43:11 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.85 2004/05/13 17:56:14 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.84 2004/05/13 17:43:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.85 2004/05/13 17:56:14 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -535,6 +535,7 @@ limfree(lim)
 	struct plimit *lim;
 {
 	int n;
+
 	simple_lock(&lim->p_slock);
 	n = --lim->p_refcnt;
 	simple_unlock(&lim->p_slock);
