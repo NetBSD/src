@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.1 2002/08/11 13:17:53 isaki Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.2 2002/09/08 07:58:14 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.1 2002/08/11 13:17:53 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.2 2002/09/08 07:58:14 isaki Exp $");
 
 #include "opt_slhci.h"
 
@@ -569,13 +569,24 @@ slhci_allocx(struct usbd_bus *bus)
 	DPRINTF(D_MEM, ("SLallocx"));
 
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
-	if (xfer)
+	if (xfer) {
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
-	else
+#ifdef DIAGNOSTIC
+		if (xfer->busy_free != XFER_FREE) {
+			printf("slhci_allocx: xfer=%p not free, 0x%08x\n",
+				xfer, xfer->busy_free);
+		}
+#endif
+	} else {
 		xfer = malloc(sizeof(*xfer), M_USB, M_NOWAIT);
+	}
 
-	if (xfer)
+	if (xfer) {
 		memset(xfer, 0, sizeof(*xfer));
+#ifdef DIAGNOSTIC
+		xfer->busy_free = XFER_BUSY;
+#endif
+	}
 
 	return xfer;
 }
@@ -586,6 +597,15 @@ slhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 	struct slhci_softc *sc = (struct slhci_softc *)bus;
 
 	DPRINTF(D_MEM, ("SLfreex"));
+
+#ifdef DIAGNOSTIC
+	if (xfer->busy_free != XFER_BUSY) {
+		printf("slhci_freex: xfer=%p not busy, 0x%08x\n",
+			xfer, xfer->busy_free);
+		return;
+	}
+	xfer->busy_free = XFER_FREE;
+#endif
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
 }
 
