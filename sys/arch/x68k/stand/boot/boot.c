@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2001/09/29 01:42:26 minoura Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 2001/09/29 03:50:12 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -43,8 +43,6 @@
 #define HEAP_END	((void*) 0x000fffff)
 #define EXSCSI_BDID	((void*) 0x00ea0001)
 #define SRAM_MEMSIZE	(*((long*) 0x00ed0008))
-/* check whether the bootinf is SCSI or floppy */
-#define BINF_ISFD(pbinf)	(*((char *)(pbinf) + 1) == 0)
 
 char default_kernel[20] = "sd0a:netbsd";
 int mpu, bootdev, hostadaptor;
@@ -54,6 +52,7 @@ static void help(void);
 static int get_scsi_host_adapter(void);
 static void doboot(const char *, int);
 static void boot(char *);
+static void ls(char *);
 int bootmenu(void);
 void bootmain(int);
 extern int detectmpu(void);
@@ -93,10 +92,12 @@ help(void)
 	printf("        fd<UNIT>a, UNIT=0-3, format is detected.\n");
 	printf(" file:  netbsd, netbsd.gz, etc.\n");
 	printf(" flags: abdqsv\n");
+	printf("ls [dev:][directory]\n");
+	printf("halt\nreboot\n");
 }
 
 static void
-doboot (const char *file, int flags)
+doboot(const char *file, int flags)
 {
 	u_long		marks[MARK_MAX];
 	int fd;
@@ -114,7 +115,7 @@ doboot (const char *file, int flags)
 	}
 
 	printf("dev = %x, unit = %d, part = %c, name = %s\n",
-		dev, unit, part + 'a', name);
+	       dev, unit, part + 'a', name);
 
 	if (dev == 0) {		/* SCSI */
 		dev = X68K_MAKESCSIBOOTDEV(X68K_MAJOR_SD,
@@ -190,7 +191,28 @@ boot(char *arg)
 		return;
 	}
 }
-		
+
+static void
+ls(char *arg)
+{
+	char filename[80];
+
+	devopen_open_dir = 1;
+	if (*arg == 0) {
+		strcpy(filename, default_kernel);
+		strcpy(strchr(filename, ':')+1, "/");
+	} else if (strchr(arg, ':') == 0) {
+		strcpy(filename, default_kernel);
+		strcpy(strchr(filename, ':')+1, arg);
+	} else {
+		strcpy(filename, arg);
+		if (*(strchr(arg, ':')+1) == 0)
+			strcat(filename, "/");
+	}
+	ufs_ls(filename);
+	devopen_open_dir = 0;
+}
+
 int
 bootmenu(void)
 {
@@ -215,10 +237,10 @@ bootmenu(void)
 		printf("trying %s.\n", default_kernel);
 		doboot(default_kernel, 0);
 		printf("Could not start %s; ", default_kernel);
-		exit(1);
 	}
 
-	printf("Please use the absolute unit# (e.g. SCSI ID) instead of the NetBSD ones.\n");
+	printf("Please use the absolute unit# (e.g. SCSI ID)"
+	       " instead of the NetBSD ones.\n");
 	for (;;) {
 		char *p, *options;
 
@@ -232,8 +254,10 @@ bootmenu(void)
 		else if (strcmp("help", p) == 0 ||
 			 strcmp("?", p) == 0)
 			help();
-		else if (strcmp("reboot", p) == 0)
+		else if ((strcmp("halt", p) == 0) ||(strcmp("reboot", p) == 0))
 			exit(0);
+		else if (strcmp("ls", p) == 0)
+			ls(options);
 		else
 			printf("Unknown command %s\n", p);
 	}
@@ -263,13 +287,25 @@ bootmain(int bootdev)
 	console_device = consio_init(console_device);
 	setheap(HEAP_START, HEAP_END);
 
-	if (BINF_ISFD(&bootdev)) {
+	switch (B_TYPE(bootdev)) {
+	case X68K_MAJOR_FD:
 		default_kernel[0] = 'f';
 		default_kernel[2] = '0' + B_UNIT(bootdev);
 		default_kernel[3] = 'a';
-	} else {
+		break;
+	case X68K_MAJOR_SD:
+		default_kernel[2] = '0' + B_X68K_SCSI_ID(bootdev);
+		default_kernel[3] =
+			'a' + sd_getbsdpartition(B_X68K_SCSI_ID(bootdev),
+						 B_X68K_SCSI_PART(bootdev));
+		break;
+	case X68K_MAJOR_CD:
+		default_kernel[0] = 'c';
 		default_kernel[2] = '0' + B_X68K_SCSI_ID(bootdev);
 		default_kernel[3] = 'a';
+		break;
+	default:
+		printf("Warning: unknown boot device: %x\n", bootdev);
 	}
 	print_title("NetBSD/x68k bootstrap loader version %s", BOOT_VERS);
 	bootmenu();
