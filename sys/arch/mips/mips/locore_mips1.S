@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.36 2000/07/10 16:23:19 uch Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.37 2000/07/20 18:14:47 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,7 +179,7 @@ mips1_SlowFault:
 NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 	la	k0, _C_LABEL(kdbaux)
 	sw	s0, SF_REG_S0(k0)
 	sw	s1, SF_REG_S1(k0)
@@ -232,7 +232,7 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 /*
  * Call the trap handler.
  */
-#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+#if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	addu	v0, sp, KERNFRAME_SIZ
 	sw	v0, KERNFRAME_SP(sp)
 #endif
@@ -350,7 +350,7 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
 	.set	at
 	and	t0, a0, ~MIPS_SR_COP_1_BIT	# turn off the FPU
 	.set	noat
-#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+#if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a3
 	sw	ra, CALLFRAME_RA(sp)
 #endif
@@ -466,7 +466,7 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	.set	at
 	and	t0, a0, ~MIPS_SR_COP_1_BIT	# turn off the FPU
 	.set	noat
-#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+#if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a2
 	sw	ra, CALLFRAME_RA(sp)
 #endif
@@ -566,7 +566,7 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
 	sw	v0, TF_BASE+TF_REG_MULLO(sp)
 	sw	v1, TF_BASE+TF_REG_MULHI(sp)
 	sw	a2, TF_BASE+TF_REG_EPC(sp)
-#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+#if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a2
 	sw	ra, KERNFRAME_RA(sp)		# for debugging
 #endif
@@ -675,7 +675,7 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 	.set	at
 	and	t0, a0, ~MIPS_SR_COP_1_BIT	# turn off the FPU
 	.set	noat
-#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+#if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a2
 	sw	ra, CALLFRAME_RA(sp)		# for debugging
 #endif
