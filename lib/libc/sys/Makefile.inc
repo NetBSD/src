@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.141 2003/08/01 17:03:58 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.142 2003/09/13 22:22:29 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -151,7 +151,8 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	sigprocmask.2 sigreturn.2 sigstack.2 sigsuspend.2 sigtimedwait.2 \
 	socket.2 \
 	socketpair.2 stat.2 statfs.2 swapctl.2 swapon.3 symlink.2 \
-	sync.2 sysarch.2 syscall.2 truncate.2 umask.2 undelete.2 \
+	sync.2 sysarch.2 syscall.2 timer_create.2 timer_delete.2 \
+	truncate.2 umask.2 undelete.2 \
 	unlink.2 utimes.2 utrace.2 vfork.2 wait.2 write.2
 
 MLINKS+=_exit.2 _Exit.2
@@ -195,6 +196,7 @@ MLINKS+=send.2 sendmsg.2 send.2 sendto.2
 MLINKS+=setpgid.2 setpgrp.2
 MLINKS+=setuid.2 setegid.2 setuid.2 seteuid.2 setuid.2 setgid.2
 MLINKS+=shmat.2 shmdt.2
+MLINKS+=timer_settime.2 timer_gettime.2 timer_settime.2 timer_getoverrun.2
 MLINKS+=sigtimedwait.2 sigwaitinfo.2
 MLINKS+=sigtimedwait.2 sigwait.2
 MLINKS+=stat.2 fstat.2 stat.2 lstat.2
