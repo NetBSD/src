@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.5 2001/07/08 20:30:14 thorpej Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.6 2001/07/08 20:57:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -32,8 +32,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -60,16 +58,6 @@
 #if NBPFILTER > 0 
 #include <net/bpf.h>
 #endif 
-
-#ifdef INET
-#include <netinet/in.h> 
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 /* XXXrkb: cheap hack until parents pass in DMA tags */
 #define _SGIMIPS_BUS_DMA_PRIVATE
@@ -472,7 +460,7 @@ sq_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		 * Multicast list has changed; set the hardware filter
 		 * accordingly.
 		 */
-		error = 0;
+		error = sq_init(ifp);
 	}
 
 	splx(s);
@@ -689,26 +677,26 @@ sq_start(struct ifnet *ifp)
 						       HPC_ENETX_CTL);
 
 		if ((status & ENETX_CTL_ACTIVE) != 0) {
-		    SQ_TRACE(SQ_ADD_TO_DMA, firsttx, status, sc->sc_nfreetx);
-
-		    sc->sc_txdesc[SQ_PREVTX(firsttx)].hdd_ctl &=
-						      	~HDD_CTL_EOCHAIN;
-		    SQ_CDTXSYNC(sc, SQ_PREVTX(firsttx),  1,
-				BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			SQ_TRACE(SQ_ADD_TO_DMA, firsttx, status,
+			    sc->sc_nfreetx);
+			sc->sc_txdesc[SQ_PREVTX(firsttx)].hdd_ctl &=
+			    ~HDD_CTL_EOCHAIN;
+			SQ_CDTXSYNC(sc, SQ_PREVTX(firsttx),  1,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		} else {
-		    SQ_TRACE(SQ_START_DMA, firsttx, status, sc->sc_nfreetx);
+			SQ_TRACE(SQ_START_DMA, firsttx, status, sc->sc_nfreetx);
 
-		    bus_space_write_4(sc->sc_hpct, sc->sc_hpch, 
-				  HPC_ENETX_NDBP, SQ_CDTXADDR(sc, firsttx));
+			bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
+			    HPC_ENETX_NDBP, SQ_CDTXADDR(sc, firsttx));
 
-		    /* Kick DMA channel into life */
-		    bus_space_write_4(sc->sc_hpct, sc->sc_hpch, 
-				      HPC_ENETX_CTL, ENETX_CTL_ACTIVE);
+			/* Kick DMA channel into life */
+			bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
+			    HPC_ENETX_CTL, ENETX_CTL_ACTIVE);
 		}
 
-		    /* Set a watchdog timer in case the chip flakes out. */
-		    ifp->if_timer = 5;
-		}
+		/* Set a watchdog timer in case the chip flakes out. */
+		ifp->if_timer = 5;
+	}
 }
 
 void
