@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.50 2000/10/10 20:24:52 is Exp $	*/
+/*	$NetBSD: mount.c,v 1.51 2000/10/11 17:56:05 abs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.50 2000/10/10 20:24:52 is Exp $");
+__RCSID("$NetBSD: mount.c,v 1.51 2000/10/11 17:56:05 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -575,6 +575,8 @@ mangle(options, argcp, argvp, maxargcp)
 	*maxargcp = maxargc;
 }
 
+	/* deduce the filesystem type from the disk label */
+
 const static char *
 getfslab(str)
 	const char *str;
@@ -585,24 +587,33 @@ getfslab(str)
 	const char *vfstype;
 	u_char fstype;
 	char buf[MAXPATHLEN+1];
-	char *sp;
+	char *sp, *ep;
 
-	/* deduce the filesystem type from the disk label */
+	if ((fd = open(str, O_RDONLY)) == -1) {
+		/*
+		 * Iff we get EBUSY try the raw device. Since mount always uses
+		 * the block device we know we are never passed a raw device.
+		 */
+		if (errno != EBUSY)
+			err(1, "cannot open `%s'", str);
+		strlcpy(buf, str, MAXPATHLEN);
+		if ((sp = strrchr(buf, '/')) != NULL)
+			++sp;
+		else
+			sp = buf;
+		for( ep = sp + strlen(sp) + 1 ;  ep > sp ; ep-- )
+			*ep = *(ep-1);
+		*sp = 'r';
 
-	/* use raw device name */
-	strlcpy(buf, str, MAXPATHLEN);
-	if ( (sp = strrchr(buf, '/')) != NULL && *(++sp) != '\0' && *sp != 'r' ) {
-	  char *ep;
-	  for( ep = sp + strlen(sp) + 1 ;  ep > sp ; ep-- )
-	    *ep = *(ep-1);
-	  *sp = 'r';
+		/* Silently fail here - mount call can display error */
+		if ((fd = open(buf, O_RDONLY)) == -1)
+			return NULL;
 	}
 
-	if ((fd = open(buf, O_RDONLY)) == -1)
-		err(1, "cannot open `%s'", str);
-
-	if (ioctl(fd, DIOCGDINFO, &dl) == -1)
-		err(1, "cannot get disklabel for `%s'", str);
+	if (ioctl(fd, DIOCGDINFO, &dl) == -1) {
+		warn("cannot get disklabel for `%s'", str);
+		return NULL;
+	}
 
 	(void) close(fd);
 
