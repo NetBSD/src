@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.123 2001/04/29 04:42:04 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.124 2001/05/23 04:25:35 sommerfeld Exp $	*/
 
 /*
  *
@@ -2352,6 +2352,7 @@ pmap_page_remove(pg)
 			    VM_PAGE_TO_PHYS(pg), pg->wire_count);
 #endif
 			prevptr = &pve->pv_next;
+			pmap_unmap_ptes(pve->pv_pmap);	/* unlocks pmap */
 			continue;
 		}
 #endif /* kern/12554 */
