@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.96 2000/07/26 07:24:16 onoe Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.97 2000/08/24 07:12:20 imp Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.96 2000/07/24 21:45:00 gmcgarry Exp 
+ *	NetBSD: pcmciadevs,v 1.98 2000/08/24 07:10:36 imp Exp 
  */
 
 /*-
@@ -72,8 +72,8 @@
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_RAYTHEON	0x01a6	/* Raytheon */
-#define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+#define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_FARALLON	0x0200	/* Farallon Communications */
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
