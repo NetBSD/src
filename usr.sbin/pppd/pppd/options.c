@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.28 1999/05/12 18:50:52 thorpej Exp $	*/
+/*	$NetBSD: options.c,v 1.29 1999/05/25 20:46:54 mjl Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.43 1998/09/04 18:49:15 christos Exp ";
 #else
-__RCSID("$NetBSD: options.c,v 1.28 1999/05/12 18:50:52 thorpej Exp $");
+__RCSID("$NetBSD: options.c,v 1.29 1999/05/25 20:46:54 mjl Exp $");
 #endif
 #endif
 
@@ -413,7 +413,7 @@ static struct cmd {
     {"pass-filter-out", 1, setpassfilter_out},
     /* Set filter for active packets */
     {"active-filter-in", 1, setactivefilter_in},
-    {"active-filter-in", 1, setactivefilter_out},
+    {"active-filter-out", 1, setactivefilter_out},
 #endif
 
 #ifdef IPX_CHANGE
