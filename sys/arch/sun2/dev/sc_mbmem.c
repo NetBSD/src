@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_mbmem.c,v 1.1 2001/04/18 03:38:39 fredette Exp $	*/
+/*	$NetBSD: sc_mbmem.c,v 1.2 2001/06/27 17:37:04 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -88,7 +88,8 @@
 #include <dev/ic/sunscpalreg.h>
 #include <dev/ic/sunscpalvar.h>
 
-#include "screg.h"
+/* Yes, we use a VME header file. */
+#include <dev/vme/screg.h>
 
 /*
  * Transfers smaller than this are done using PIO
@@ -119,23 +120,26 @@ sunsc_mbmem_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mbmem_attach_args *mbma = aux;
+	bus_space_handle_t bh;
+	int matched;
 
 	/* No default Multibus address. */
-	if (ca->ca_paddr == -1)
+	if (mbma->mbma_paddr == -1)
 		return (0);
 
-	/* Make sure something is there... */
-	if (!bus_space_probe(ca->ca_bustag, 0, ca->ca_paddr,
-				1,	/* probe size */
-				1,	/* offset */
-				0,	/* flags */
-				NULL, NULL))
+	/* Make sure there is something there... */
+	if (bus_space_map(mbma->mbma_bustag, mbma->mbma_paddr, SCREG_BANK_SZ,
+			  0, &bh))
+		return (0);
+	matched = (bus_space_peek_2(mbma->mbma_bustag, bh, SCREG_ICR, NULL) == 0);
+	bus_space_unmap(mbma->mbma_bustag, bh, SCREG_BANK_SZ);
+	if (!matched)
 		return (0);
 
 	/* Default interrupt priority. */
-	if (ca->ca_intpri == -1)
-		ca->ca_intpri = 2;
+	if (mbma->mbma_pri == -1)
+		mbma->mbma_pri = 2;
 
 	return (1);
 }
@@ -147,30 +151,44 @@ sunsc_mbmem_attach(parent, self, args)
 {
 	struct sunscpal_softc *sc = (void *) self;
 	struct cfdata *cf = self->dv_cfdata;
-	struct confargs *ca = args;
+	struct mbmem_attach_args *mbma = args;
+	int i;
 
 	/* Map in the device. */
-	sc->sunscpal_regt = ca->ca_bustag;
-	sc->sunscpal_dmat = ca->ca_dmatag;
-	if (bus_space_map(ca->ca_bustag, ca->ca_paddr, sizeof(struct sunsc_regs), 
+	sc->sunscpal_regt = mbma->mbma_bustag;
+	sc->sunscpal_dmat = mbma->mbma_dmatag;
+	if (bus_space_map(mbma->mbma_bustag, mbma->mbma_paddr, SCREG_BANK_SZ,
 			  0, &sc->sunscpal_regh))
 		panic("sunsc_mbmem_attach: can't map");
 
 	/* Device register offsets. */
-	sc->sunscpal_data = offsetof(struct sunsc_regs, sunsc_data);
-	sc->sunscpal_cmd_stat = offsetof(struct sunsc_regs, sunsc_cmd_stat);
-	sc->sunscpal_icr = offsetof(struct sunsc_regs, sunsc_icr);
-	sc->sunscpal_dma_addr_h = offsetof(struct sunsc_regs, sunsc_dma_addr_h);
-	sc->sunscpal_dma_addr_l = offsetof(struct sunsc_regs, sunsc_dma_addr_l);
-	sc->sunscpal_dma_count = offsetof(struct sunsc_regs, sunsc_dma_count);
-	sc->sunscpal_intvec = offsetof(struct sunsc_regs, sunsc_intvec);
+	sc->sunscpal_data = SCREG_DATA;
+	sc->sunscpal_cmd_stat = SCREG_CMD_STAT;
+	sc->sunscpal_icr = SCREG_ICR;
+	sc->sunscpal_dma_addr_h = SCREG_DMA_ADDR_H;
+	sc->sunscpal_dma_addr_l = SCREG_DMA_ADDR_L;
+	sc->sunscpal_dma_count = SCREG_DMA_COUNT;
+	sc->sunscpal_intvec = SCREG_INTVEC;
 	
+	/* Allocate DMA handles. */
+	i = SUNSCPAL_OPENINGS * sizeof(struct sunscpal_dma_handle);
+	sc->sc_dma_handles = (sunscpal_dma_handle_t)
+		malloc(i, M_DEVBUF, M_WAITOK);
+	if (sc->sc_dma_handles == NULL)
+		panic("sc: dma handles malloc failed\n");
+	for (i = 0; i < SUNSCPAL_OPENINGS; i++)
+		if (bus_dmamap_create(sc->sunscpal_dmat, SUNSCPAL_MAX_DMA_LEN,
+				      1, SUNSCPAL_MAX_DMA_LEN,
+				      0, BUS_DMA_WAITOK, &sc->sc_dma_handles[i].
+dh_dmamap) != 0)
+			panic("sc: dma map create failed\n");
+
 	/* Miscellaneous. */
 	sc->sc_min_dma_len = MIN_DMA_LEN;
 	sc->sc_rev = SUNSCPAL_VARIANT_501_1006;
 
 	/* Attach interrupt handler. */
-	bus_intr_establish(ca->ca_bustag, ca->ca_intpri, IPL_BIO, 0,
+	bus_intr_establish(mbma->mbma_bustag, mbma->mbma_pri, IPL_BIO, 0,
 			   sunsc_mbmem_intr, sc);
 
 	/* Do the common attach stuff. */
