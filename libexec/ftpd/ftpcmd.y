@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.33 1999/07/02 07:11:36 itojun Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.34 1999/07/11 20:03:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.33 1999/07/02 07:11:36 itojun Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.34 1999/07/11 20:03:41 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,15 +243,37 @@ cmd
 			}
 		}
 
-	| LPRT check_login SP host_long_port CRLF
+	| LPRT check_login SP host_long_port4 CRLF
 		{
 			/* be paranoid, if told so */
 			if (curclass.checkportcmd &&
-			    ((ntohs(data_dest.su_port) <
-			      IPPORT_RESERVED) ||
-			    memcmp(&data_dest.su_sin6.sin6_addr,
-				   &his_addr.su_sin6.sin6_addr,
-			    sizeof(data_dest.su_sin6.sin6_addr)) != 0)) {
+			    ((ntohs(data_dest.su_port) < IPPORT_RESERVED) ||
+			     memcmp(&data_dest.su_sin.sin_addr,
+				    &his_addr.su_sin.sin_addr,
+			     sizeof(data_dest.su_sin.sin_addr)) != 0)) {
+				reply(500, "Illegal LPRT command rejected");
+				return (NULL);
+			}
+			if (epsvall)
+				reply(501, "LPRT disallowed after EPSV ALL");
+			else {
+				usedefault = 0;
+				if (pdata >= 0) {
+					(void) close(pdata);
+					pdata = -1;
+				}
+				reply(200, "LPRT command successful.");
+			}
+		}
+
+	| LPRT check_login SP host_long_port6 CRLF
+		{
+			/* be paranoid, if told so */
+			if (curclass.checkportcmd &&
+			    ((ntohs(data_dest.su_port) < IPPORT_RESERVED) ||
+			     memcmp(&data_dest.su_sin6.sin6_addr,
+				    &his_addr.su_sin6.sin6_addr,
+			     sizeof(data_dest.su_sin6.sin6_addr)) != 0)) {
 				reply(500, "Illegal LPRT command rejected");
 				return (NULL);
 			}
@@ -392,7 +414,7 @@ cmd
 			if (epsvall)
 				reply(501, "LPSV disallowed after EPSV ALL");
 			else
-				long_passive("LPSV", AF_INET6);
+				long_passive("LPSV", PF_UNSPEC);
 		}
 
 	| EPSV SP NUMBER CRLF
@@ -893,7 +915,24 @@ host_port
 		}
 	;
 
-host_long_port
+host_long_port4
+	: NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA
+		NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA
+		NUMBER
+		{
+			char *a, *p;
+
+			data_dest.su_sin.sin_len =
+				sizeof(struct sockaddr_in);
+			data_dest.su_family = AF_INET;
+			p = (char *)&data_dest.su_port;
+			p[0] = $15; p[1] = $17;
+			a = (char *)&data_dest.su_sin.sin_addr;
+			a[0] =  $5;  a[1] =  $7;  a[2] =  $9;  a[3] = $11;
+		}
+	;
+
+host_long_port6
 	: NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA
 		NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA
 		NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA
