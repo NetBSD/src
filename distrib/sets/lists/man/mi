@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.474 2002/04/27 19:17:16 atatat Exp $
+# $NetBSD: mi,v 1.475 2002/05/03 15:43:40 lukem Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1226,7 +1226,6 @@
 ./usr/share/man/cat8/alpha/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/alpha/boot.0		man-sys-catman
 ./usr/share/man/cat8/alpha/installboot.0	man-sysutil-catman
-./usr/share/man/cat8/alpha/installboot.old.0	man-sysutil-catman
 ./usr/share/man/cat8/alpha/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/alpha/mkbootimage.0	man-sysutil-catman
 ./usr/share/man/cat8/alpha/setnetbootinfo.0	man-sysutil-catman
@@ -2928,7 +2927,6 @@
 ./usr/share/man/man8/alpha/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/alpha/boot.8		man-sys-man
 ./usr/share/man/man8/alpha/installboot.8	man-sysutil-man
-./usr/share/man/man8/alpha/installboot.old.8	man-sysutil-man
 ./usr/share/man/man8/alpha/makedev.8		man-sysutil-man
 ./usr/share/man/man8/alpha/mkbootimage.8	man-sysutil-man
 ./usr/share/man/man8/alpha/setnetbootinfo.8	man-sysutil-man
