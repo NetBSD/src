@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 2002/10/12 03:08:27 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.7 2002/10/17 17:18:34 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.6 2002/10/12 03:08:27 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.7 2002/10/17 17:18:34 atatat Exp $");
 #endif
 
 #include <sys/types.h>
@@ -166,7 +166,7 @@ struct kbit {
 /* when recursing, output is indented */
 #define indent(n) ((n) * (recurse > 1 ? recurse - 1 : 0))
 
-struct nlist nl[] = {
+struct nlist ksyms[] = {
 	{ "_maxsmap" },
 #define NL_MAXSSIZ		0
 	{ "_uvm_vnodeops" },
@@ -185,16 +185,20 @@ struct nlist nl[] = {
 #define NL_NCHASH		7
 	{ "_kernel_text" },
 #define NL_KENTER		8
+	{ NULL }
+};
+
+struct nlist kmaps[] = {
 	{ "_kmem_map" },
-#define NL_KMEM_MAP		9
+#define NL_KMEM_MAP		0
 	{ "_mb_map" },
-#define NL_MB_MAP		10
+#define NL_MB_MAP		1
 	{ "_phys_map" },
-#define NL_PHYS_MAP		11
+#define NL_PHYS_MAP		2
 	{ "_exec_map" },
-#define NL_EXEC_MAP		12
+#define NL_EXEC_MAP		3
 	{ "_pager_map" },
-#define NL_PAGER_MAP		13
+#define NL_PAGER_MAP		4
 	{ NULL }
 };
 
@@ -421,42 +425,57 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc)
 void
 load_symbols(kvm_t *kd)
 {
-	int rc;
+	int rc, i;
 
-	rc = kvm_nlist(kd, &nl[0]);
-	if (rc != 0)
-		errx(1, "%s == %d", kvm_geterr(kd), rc);
+	rc = kvm_nlist(kd, &ksyms[0]);
+	if (rc != 0) {
+		for (i = 0; ksyms[i].n_name != NULL; i++)
+			if (ksyms[i].n_value == 0)
+				warnx("symbol %s: not found", ksyms[i].n_name);
+		exit(1);
+	}
 
-	uvm_vnodeops =	(void*)nl[NL_UVM_VNODEOPS].n_value;
-	uvm_deviceops =	(void*)nl[NL_UVM_DEVICEOPS].n_value;
-	aobj_pager =	(void*)nl[NL_AOBJ_PAGER].n_value;
-	ubc_pager =	(void*)nl[NL_UBC_PAGER].n_value;
+	uvm_vnodeops =	(void*)ksyms[NL_UVM_VNODEOPS].n_value;
+	uvm_deviceops =	(void*)ksyms[NL_UVM_DEVICEOPS].n_value;
+	aobj_pager =	(void*)ksyms[NL_AOBJ_PAGER].n_value;
+	ubc_pager =	(void*)ksyms[NL_UBC_PAGER].n_value;
 
-	kernel_floor =	(void*)nl[NL_KENTER].n_value;
-	nchash_addr =	nl[NL_NCHASH].n_value;
+	kernel_floor =	(void*)ksyms[NL_KENTER].n_value;
+	nchash_addr =	ksyms[NL_NCHASH].n_value;
 
-	_KDEREF(kd, nl[NL_MAXSSIZ].n_value, &maxssiz,
+	_KDEREF(kd, ksyms[NL_MAXSSIZ].n_value, &maxssiz,
 		sizeof(maxssiz));
-	_KDEREF(kd, nl[NL_NCHASHTBL].n_value, &nchashtbl_addr,
+	_KDEREF(kd, ksyms[NL_NCHASHTBL].n_value, &nchashtbl_addr,
 	       sizeof(nchashtbl_addr));
-	_KDEREF(kd, nl[NL_KERNEL_MAP].n_value, &kernel_map_addr,
+	_KDEREF(kd, ksyms[NL_KERNEL_MAP].n_value, &kernel_map_addr,
 		sizeof(kernel_map_addr));
 
-	_KDEREF(kd, nl[NL_KMEM_MAP].n_value, &kmem_map,
-		sizeof(kmem_map));
-	_KDEREF(kd, nl[NL_MB_MAP].n_value, &mb_map,
-		sizeof(mb_map));
-	_KDEREF(kd, nl[NL_PHYS_MAP].n_value, &phys_map,
-		sizeof(phys_map));
-	_KDEREF(kd, nl[NL_EXEC_MAP].n_value, &exec_map,
-		sizeof(exec_map));
-	_KDEREF(kd, nl[NL_PAGER_MAP].n_value, &pager_map,
-		sizeof(pager_map));
+	/*
+	 * Some of these may be missing from some platforms, for
+	 * example sparc, sh3, and most powerpc platforms don't
+	 * have a "phys_map".
+	 */
+	(void)kvm_nlist(kd, &kmaps[0]);
+	if (kmaps[NL_KMEM_MAP].n_value != 0)
+		_KDEREF(kd, kmaps[NL_KMEM_MAP].n_value, &kmem_map,
+			sizeof(kmem_map));
+	if (kmaps[NL_MB_MAP].n_value != 0)
+		_KDEREF(kd, kmaps[NL_MB_MAP].n_value, &mb_map,
+			sizeof(mb_map));
+	if (kmaps[NL_PHYS_MAP].n_value != 0)
+		_KDEREF(kd, kmaps[NL_PHYS_MAP].n_value, &phys_map,
+			sizeof(phys_map));
+	if (kmaps[NL_EXEC_MAP].n_value != 0)
+		_KDEREF(kd, kmaps[NL_EXEC_MAP].n_value, &exec_map,
+			sizeof(exec_map));
+	if (kmaps[NL_PAGER_MAP].n_value != 0)
+		_KDEREF(kd, kmaps[NL_PAGER_MAP].n_value, &pager_map,
+			sizeof(pager_map));
 }
 
 void
 dump_vm_map(kvm_t *kd, struct kbit *vmspace, struct kbit *vm_map,
-	    char *name)
+	    char *mname)
 {
 	struct kbit kbit[2], *header, *vm_map_entry;
 	struct vm_map_entry *last, *next;
@@ -469,7 +488,7 @@ dump_vm_map(kvm_t *kd, struct kbit *vmspace, struct kbit *vm_map,
 	A(vm_map_entry) = 0;
 
 	if (debug & PRINT_VM_MAP) {
-		printf("%*s%s %p = {", indent(2), "", name, P(vm_map));
+		printf("%*s%s %p = {", indent(2), "", mname, P(vm_map));
 		printf(" pmap = %p,\n", D(vm_map, vm_map)->pmap);
 		printf("%*s    lock = <struct lock>,", indent(2), "");
 		printf(" header = <struct vm_map_entry>,");
@@ -852,10 +871,10 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		sz = 0;
 
 	if (recurse && (vme->etype & UVM_ET_SUBMAP)) {
-		struct kbit kbit, *submap;
+		struct kbit mkbit, *submap;
 
 		recurse++;
-		submap = &kbit;
+		submap = &mkbit;
 		P(submap) = vme->object.sub_map;
 		S(submap) = sizeof(*vme->object.sub_map);
 		KDEREF(kd, submap);
