@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.20 2000/02/22 01:24:32 hubertf Exp $	*/
+/*	$NetBSD: show.c,v 1.20.4.1 2002/06/26 16:55:02 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.20 2000/02/22 01:24:32 hubertf Exp $");
+__RCSID("$NetBSD: show.c,v 1.20.4.1 2002/06/26 16:55:02 he Exp $");
 #endif
 #endif
 
@@ -74,7 +74,7 @@ typedef struct show_t {
  * The entries in this table must be ordered the same as
  * pl_ent_t constants
  */
-static show_t showv[] = {
+static const show_t showv[] = {
 	{PLIST_FILE, "%s", "\tFile: %s"},
 	{PLIST_CWD, "@cwd %s", "\tCWD to: %s"},
 	{PLIST_CMD, "@exec %s", "\tEXEC '%s'"},
@@ -94,6 +94,7 @@ static show_t showv[] = {
 	"\tIgnore next file installation directive (doesn't belong)"},
 	{PLIST_OPTION, "@option %s", "\tPackage has option: %s"},
 	{PLIST_PKGCFL, "@pkgcfl %s", "\tPackage conflicts with: %s"},
+	{PLIST_BLDDEP, "@blddep %s", "\tPackage depends exactly on: %s"},
 	{-1, NULL, NULL}
 };
 
@@ -110,7 +111,7 @@ show_file(char *title, char *fname)
 	if ((fp = fopen(fname, "r")) == (FILE *) NULL) {
 		printf("ERROR: show_file: Can't open '%s' for reading!\n", fname);
 	} else {
-		while ((n = fread(line, 1, 1024, fp)) != 0) {
+		while ((n = fread(line, 1, sizeof(line), fp)) != 0) {
 			fwrite(line, 1, n, stdout);
 		}
 		(void) fclose(fp);
@@ -195,6 +196,7 @@ show_plist(char *title, package_t *plist, pl_ent_t type)
 			case PLIST_DIR_RM:
 			case PLIST_OPTION:
 			case PLIST_PKGCFL:
+			case PLIST_BLDDEP:
 				printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose, p->name);
 				break;
 			default:
