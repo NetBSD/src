@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.5 2002/05/14 19:23:45 augustss Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.6 2002/05/21 02:47:04 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.5 2002/05/14 19:23:45 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.6 2002/05/21 02:47:04 augustss Exp $");
 
 #include "opt_inet.h"
 
@@ -416,8 +416,19 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 			return 1;
 		}
 	} else {
+#if 1
+		int i;
+		uint v;
+
+		for (i = 0; i < 6; i += 2) {
+			v = CS_READ_PACKET_PAGE(sc, PKTPG_IND_ADDR + i);
+			sc->sc_enaddr[i + 0] = v;
+			sc->sc_enaddr[i + 1] = v >> 8;
+		}
+#else
 		printf("%s: no Ethernet address!\n", sc->sc_dev.dv_xname);
 		return 1;
+#endif
 	}
 
 	switch (IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media)) {
@@ -518,21 +529,19 @@ cs_get_default_media(struct cs_softc *sc)
 {
 	u_int16_t adp_cfg, xmit_ctl;
 
-	if (cs_verify_eeprom(sc->sc_iot, sc->sc_ioh) == CS_ERROR) {
+	if (cs_verify_eeprom(sc) == CS_ERROR) {
 		printf("%s: cs_get_default_media: EEPROM missing or bad\n",
 		    sc->sc_dev.dv_xname);
 		goto fakeit;
 	}
 
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_ADPTR_CFG,
-	    &adp_cfg) == CS_ERROR) {
+	if (cs_read_eeprom(sc, EEPROM_ADPTR_CFG, &adp_cfg) == CS_ERROR) {
 		printf("%s: unable to read adapter config from EEPROM\n",
 		    sc->sc_dev.dv_xname);
 		goto fakeit;
 	}
 
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_XMIT_CTL,
-	    &xmit_ctl) == CS_ERROR) {
+	if (cs_read_eeprom(sc, EEPROM_XMIT_CTL, &xmit_ctl) == CS_ERROR) {
 		printf("%s: unable to read transmit control from EEPROM\n",
 		    sc->sc_dev.dv_xname);
 		goto fakeit;
@@ -568,20 +577,18 @@ cs_get_params(struct cs_softc *sc)
 	u_int16_t isaConfig;
 	u_int16_t adapterConfig;
 
-	if (cs_verify_eeprom(sc->sc_iot, sc->sc_ioh) == CS_ERROR) {
+	if (cs_verify_eeprom(sc) == CS_ERROR) {
 		printf("%s: cs_get_params: EEPROM missing or bad\n",
 		    sc->sc_dev.dv_xname);
 		return (CS_ERROR);
 	}
 
 	/* Get ISA configuration from the EEPROM */
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_ISA_CFG,
-	    &isaConfig) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_ISA_CFG, &isaConfig) == CS_ERROR)
 		goto eeprom_bad;
 
 	/* Get adapter configuration from the EEPROM */
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_ADPTR_CFG,
-	    &adapterConfig) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_ADPTR_CFG, &adapterConfig) == CS_ERROR)
 		goto eeprom_bad;
 
 	/* Copy the USE_SA flag */
@@ -609,7 +616,7 @@ cs_get_enaddr(struct cs_softc *sc)
 {
 	u_int16_t *myea;
 
-	if (cs_verify_eeprom(sc->sc_iot, sc->sc_ioh) == CS_ERROR) {
+	if (cs_verify_eeprom(sc) == CS_ERROR) {
 		printf("%s: cs_get_enaddr: EEPROM missing or bad\n",
 		    sc->sc_dev.dv_xname);
 		return (CS_ERROR);
@@ -619,14 +626,11 @@ cs_get_enaddr(struct cs_softc *sc)
 
 	/* Get Ethernet address from the EEPROM */
 	/* XXX this will likely lose on a big-endian machine. -- cgd */
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_IND_ADDR_H,
-	    &myea[0]) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_H, &myea[0]) == CS_ERROR)
 		goto eeprom_bad;
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_IND_ADDR_M,
-	    &myea[1]) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_M, &myea[1]) == CS_ERROR)
 		goto eeprom_bad;
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_IND_ADDR_L,
-	    &myea[2]) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_L, &myea[2]) == CS_ERROR)
 		goto eeprom_bad;
 
 	return (CS_OK);
@@ -674,10 +678,10 @@ cs_reset_chip(struct cs_softc *sc)
 	 */
 
 	/* Transition SBHE to switch chip from 8-bit to 16-bit */
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 0);
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 1);
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 0);
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 1);
+	IO_READ_1(sc, PORT_PKTPG_PTR + 0);
+	IO_READ_1(sc, PORT_PKTPG_PTR + 1);
+	IO_READ_1(sc, PORT_PKTPG_PTR + 0);
+	IO_READ_1(sc, PORT_PKTPG_PTR + 1);
 
 	/* Wait until the EEPROM is not busy */
 	for (x = 0; x < MAXLOOP; x++) {
@@ -704,12 +708,12 @@ cs_reset_chip(struct cs_softc *sc)
 }
 
 int
-cs_verify_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh)
+cs_verify_eeprom(struct cs_softc *sc)
 {
 	u_int16_t self_status;
 
 	/* Verify that the EEPROM is present and OK */
-	self_status = CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_SELF_ST);
+	self_status = CS_READ_PACKET_PAGE_IO(sc, PKTPG_SELF_ST);
 	if (((self_status & SELF_ST_EEP_PRES) &&
 	     (self_status & SELF_ST_EEP_OK)) == 0)
 		return (CS_ERROR);
@@ -718,14 +722,13 @@ cs_verify_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh)
 }
 
 int 
-cs_read_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh, int offset,
-	       u_int16_t *pValue)
+cs_read_eeprom(struct cs_softc *sc, int offset, u_int16_t *pValue)
 {
 	int x;
 
 	/* Ensure that the EEPROM is not busy */
 	for (x = 0; x < MAXLOOP; x++) {
-		if (!(CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_SELF_ST) &
+		if (!(CS_READ_PACKET_PAGE_IO(sc, PKTPG_SELF_ST) &
 		      SELF_ST_SI_BUSY))
 			break;
 	}
@@ -734,12 +737,12 @@ cs_read_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh, int offset,
 		return (CS_ERROR);
 
 	/* Issue the command to read the offset within the EEPROM */
-	CS_WRITE_PACKET_PAGE_IO(iot, ioh, PKTPG_EEPROM_CMD,
+	CS_WRITE_PACKET_PAGE_IO(sc, PKTPG_EEPROM_CMD,
 	    offset | EEPROM_CMD_READ);
 
 	/* Wait until the command is completed */
 	for (x = 0; x < MAXLOOP; x++) {
-		if (!(CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_SELF_ST) &
+		if (!(CS_READ_PACKET_PAGE_IO(sc, PKTPG_SELF_ST) &
 		      SELF_ST_SI_BUSY))
 			break;
 	}
@@ -748,7 +751,7 @@ cs_read_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh, int offset,
 		return (CS_ERROR);
 
 	/* Get the EEPROM data from the EEPROM Data register */
-	*pValue = CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_EEPROM_DATA);
+	*pValue = CS_READ_PACKET_PAGE_IO(sc, PKTPG_EEPROM_DATA);
 
 	return (CS_OK);
 }
@@ -758,8 +761,9 @@ cs_initChip(struct cs_softc *sc)
 {
 	u_int16_t busCtl;
 	u_int16_t selfCtl;
-	u_int16_t *myea;
+	u_int16_t v;
 	u_int16_t isaId;
+	int i;
 	int media = IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media);
 
 	/* Disable reception and transmission of frames */
@@ -918,10 +922,10 @@ cs_initChip(struct cs_softc *sc)
 	}
 
 	/* Put Ethernet address into the Individual Address register */
-	myea = (u_int16_t *)sc->sc_enaddr;
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 0, myea[0]);
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 2, myea[1]);
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 4, myea[2]);
+	for (i = 0; i < 6; i += 2) {
+		v = sc->sc_enaddr[i + 0] | (sc->sc_enaddr[i + 1]) << 8;
+		CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + i, v);
+	}
 
 	if (sc->sc_irq != -1) {
 		/* Set the interrupt level in the chip */
@@ -1183,6 +1187,7 @@ cs_intr(void *arg)
 	u_int16_t rndEvent;
 #endif
 
+/*printf("cs_intr %p\n", sc);*/
 	/* Ignore any interrupts that happen while the chip is being reset */
 	if (sc->sc_resetting) {
 		printf("%s: cs_intr: reset in progress\n",
@@ -1580,8 +1585,7 @@ cs_process_receive(struct cs_softc *sc)
 		}
 	}
 	else {
-		bus_space_read_multi_2(sc->sc_iot, sc->sc_ioh, PORT_RXTX_DATA,
-			pBuff, (totlen + 1)>>1);
+		IO_READ_MULTI_2(sc, PORT_RXTX_DATA, pBuff, (totlen + 1)>>1);
 	}
 
 	cs_ether_input(sc, m);
@@ -1904,12 +1908,12 @@ cs_copy_tx_frame(struct cs_softc *sc, struct mbuf *m0)
 				leftover = len & 1;
 				len &= ~1;
 				if (sc->sc_memorymode) {
-					bus_space_write_region_2(sc->sc_memt, sc->sc_memh, frameoff,
+					MEM_WRITE_REGION_2(sc, frameoff,
 						(u_int16_t *) p, len >> 1);
 					frameoff += len;
 				}
 				else {
-					bus_space_write_multi_2(sc->sc_iot, sc->sc_ioh,
+					IO_WRITE_MULTI_2(sc,
 						PORT_RXTX_DATA, (u_int16_t *)p, len >> 1);
 				}
 				p += len;

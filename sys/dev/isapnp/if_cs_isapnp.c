@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_isapnp.c,v 1.1 2001/11/27 12:23:31 yamt Exp $ */
+/* $NetBSD: if_cs_isapnp.c,v 1.2 2002/05/21 02:47:05 augustss Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.1 2001/11/27 12:23:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.2 2002/05/21 02:47:05 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,7 @@ cs_isapnp_attach(parent, self, aux)
 #if 0
 			u_int16_t id;
 
-			id = CS_READ_PACKET_PAGE_MEM(ipa->ipa_memt,
-				 ipa->ipa_mem[i].h, PKTPG_EISA_NUM);
+			id = CS_READ_PACKET_PAGE_MEM(sc, PKTPG_EISA_NUM);
 			if (id != EISA_NUM_CRYSTAL) {
 				printf("%s: unexpected id(%u)\n",
 					 DEVNAME(sc), id);
