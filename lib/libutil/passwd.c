@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: passwd.c,v 1.4 1997/04/23 18:51:17 mycroft Exp $";
+static char rcsid[] = "$NetBSD: passwd.c,v 1.5 1997/05/09 18:37:45 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -42,6 +42,7 @@ static char rcsid[] = "$NetBSD: passwd.c,v 1.4 1997/04/23 18:51:17 mycroft Exp $
 #include <sys/wait.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.5 1996/11/29 18:50:37 gwr Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.6 1997/05/09 18:37:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
