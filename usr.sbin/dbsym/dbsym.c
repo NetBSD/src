@@ -26,10 +26,11 @@ int db_symtab_adr;
 
 int avail;
 
+int zap_locals = 0;
 
 usage ()
 {
-	fprintf (stderr, "usage: dbsym file\n");
+	fprintf (stderr, "usage: dbsym [-l] file\n");
 	exit (1);
 }
 
@@ -48,8 +49,11 @@ char **argv;
 	int len;
 
 
-	while ((c = getopt (argc, argv, "")) != EOF) {
+	while ((c = getopt (argc, argv, "l")) != EOF) {
 		switch (c) {
+                case 'l':
+                        zap_locals = 1;
+                        break;
 		default:
 			usage ();
 		}
@@ -117,6 +121,13 @@ char **argv;
 	for (i = 0, sp = old_syms; i < num_old_syms; i++, sp++) {
 		if (sp->n_type & N_STAB)
 			continue;
+
+		if (zap_locals && (sp->n_type & N_EXT) == 0)
+			continue;
+                
+                if ((sp->n_type & N_FN) == 0)
+			continue;
+
 		if (sp->n_un.n_strx == 0)
 			continue;
 
@@ -139,6 +150,12 @@ char **argv;
 		if (strcmp (name, "gcc_compiled.") == 0)
 			continue;
 
+		if (strcmp (name, "gcc2_compiled.") == 0)
+			continue;
+
+                if (strcmp (name, "___gnu_compiled_c") == 0)
+			continue;
+                        
 		*nsp = *sp;
 
 		nsp->n_un.n_strx = new_strtab_size;
