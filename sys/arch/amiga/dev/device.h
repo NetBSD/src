@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)device.h	7.3 (Berkeley) 5/7/91
- *	$Id: device.h,v 1.7 1994/02/11 07:01:31 chopps Exp $
+ *	$Id: device.h,v 1.8 1994/02/21 06:30:36 chopps Exp $
  */
 
 struct driver {
@@ -50,6 +50,7 @@ struct driver {
 	int	(*d_ssu)	(int ctlr, int slave, int unit, int start);
 	int	(*d_rqs)	();
 	int	(*d_immcmd)	();
+	int	(*d_immcmd_nd)	();
 	int	(*d_ttread)	();
 	int	(*d_ttwrite)	();
 	int	(*d_ttoddio)	();
