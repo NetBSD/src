@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.c,v 1.6 2002/03/01 04:16:38 itojun Exp $	*/
+/*	$NetBSD: keydb.c,v 1.7 2002/06/12 01:47:37 itojun Exp $	*/
 /*	$KAME: keydb.c,v 1.64 2000/05/11 17:02:30 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.6 2002/03/01 04:16:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.7 2002/06/12 01:47:37 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -77,7 +77,24 @@ keydb_delsecpolicy(p)
 	struct secpolicy *p;
 {
 
+	if (p->spidx)
+		free(p->spidx, M_SECA);
 	free(p, M_SECA);
+}
+
+int
+keydb_setsecpolicyindex(p, idx)
+	struct secpolicy *p;
+	struct secpolicyindex *idx;
+{
+
+	if (!p->spidx)
+		p->spidx = (struct secpolicyindex *)malloc(sizeof(*p->spidx),
+		    M_SECA, M_NOWAIT);
+	if (!p->spidx)
+		return ENOMEM;
+	memcpy(p->spidx, idx, sizeof(*p->spidx));
+	return 0;
 }
 
 /*
