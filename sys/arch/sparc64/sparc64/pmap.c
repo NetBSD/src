@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56.2.1 2000/07/18 16:23:31 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.56.2.2 2000/07/31 02:01:43 mrg Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef	BOOT_DEBUG
@@ -1444,11 +1444,11 @@ pmap_release(pm)
 						}
 					}
 					vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)ptbl));
-					stxa((paddr_t)(long)&pdir[k], ASI_PHYS_CACHED, NULL);
+					stxa((paddr_t)(u_long)&pdir[k], ASI_PHYS_CACHED, NULL);
 				}
 			}
 			vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)pdir));
-			stxa((paddr_t)(long)&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
+			stxa((paddr_t)(u_long)&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
 		}
 	vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)pm->pm_segs));
 	pm->pm_segs = NULL;
@@ -1533,14 +1533,14 @@ pmap_collect(pm)
 					if (!n) {
 						/* Free the damn thing */
 						vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)ptbl));
-						stxa((paddr_t)(long)&pdir[k], ASI_PHYS_CACHED, NULL);
+						stxa((paddr_t)(u_long)&pdir[k], ASI_PHYS_CACHED, NULL);
 					}
 				}
 			}
 			if (!m) {
 				/* Free the damn thing */
 				vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)pdir));
-				stxa((paddr_t)(long)&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
+				stxa((paddr_t)(u_long)&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
 			}
 		}
 	}
