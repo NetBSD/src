@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.8.4.2 1997/03/04 14:52:30 mycroft Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.8.4.3 1997/03/04 16:11:39 mycroft Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -626,10 +626,6 @@ ahcprint(aux, name)
 	/* only "scsibus"es can attach to "scsi"s; easy. */	
 	if (name != NULL)
 		printf("%s: scsibus ", name);
-
-	/* don't print channel if the controller says there can be only one. */
-	if (l->channel != SCSI_CHANNEL_ONLY_ONE)
-		printf(" channel %d", l->channel);
 	return (UNCONF);
 }
 #endif
