@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2000/01/21 18:49:52 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 2000/02/08 12:57:11 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -785,7 +785,7 @@ cpu_reboot(howto, what)
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #if NADB > 0
-		DELAY(1000000);
+		delay(1000000);
 		adb_poweroff();
 		printf("WARNING: powerdown failed!\n");
 #endif
@@ -793,6 +793,10 @@ cpu_reboot(howto, what)
 
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
+
+		/* flush cache for msgbuf */
+		__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
+
 		ppc_exit();
 	}
 
@@ -814,6 +818,10 @@ cpu_reboot(howto, what)
 	*ap++ = 0;
 	if (ap[-2] == '-')
 		*ap1 = 0;
+
+	/* flush cache for msgbuf */
+	__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
+
 #if NADB > 0
 	adb_restart();	/* not return */
 #endif
