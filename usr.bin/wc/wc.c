@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wc.c	5.7 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: wc.c,v 1.3 1993/08/01 18:03:04 mycroft Exp $";
+static char rcsid[] = "$Id: wc.c,v 1.4 1993/08/17 00:37:11 jtc Exp $";
 #endif /* not lint */
 
 /* wc line, word and char count */
@@ -68,7 +68,7 @@ main(argc, argv)
 	extern int optind;
 	register int ch;
 
-	while ((ch = getopt(argc, argv, "lwc")) != EOF)
+	while ((ch = getopt(argc, argv, "lwcm")) != EOF)
 		switch((char)ch) {
 		case 'l':
 			doline = 1;
@@ -77,6 +77,7 @@ main(argc, argv)
 			doword = 1;
 			break;
 		case 'c':
+		case 'm':
 			dochar = 1;
 			break;
 		case '?':
