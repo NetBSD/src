@@ -77,14 +77,18 @@ llib-l${LIB}.ln: ${SRCS}
 
 .if !target(clean)
 clean:
-	rm -f a.out Errs errs mklog core ${CLEANFILES} ${OBJS} ${POBJS} \
-	    profiled/*.o lib${LIB}.a lib${LIB}_p.a llib-l${LIB}.ln
+	rm -f a.out Errs errs mklog core ${CLEANFILES}
+	rm -f ${OBJS}
+	rm -f ${POBJS} profiled/*.o
+	rm -f lib${LIB}.a lib${LIB}_p.a llib-l${LIB}.ln
 .endif
 
 .if !target(cleandir)
 cleandir:
-	rm -f a.out Errs errs mklog core ${CLEANFILES} ${OBJS} ${POBJS} \
-	    profiled/*.o lib${LIB}.a lib${LIB}_p.a llib-l${LIB}.ln
+	rm -f a.out Errs errs mklog core ${CLEANFILES}
+	rm -f ${OBJS}
+	rm -f ${POBJS} profiled/*.o
+	rm -f lib${LIB}.a lib${LIB}_p.a llib-l${LIB}.ln
 	rm -f ${MANALL} ${.CURDIR}/tags .depend
 .endif
 
