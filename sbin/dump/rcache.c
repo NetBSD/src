@@ -1,4 +1,4 @@
-/*	$NetBSD: rcache.c,v 1.14 2003/02/04 08:06:42 enami Exp $	*/
+/*	$NetBSD: rcache.c,v 1.15 2003/02/04 08:11:50 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rcache.c,v 1.14 2003/02/04 08:06:42 enami Exp $");
+__RCSID("$NetBSD: rcache.c,v 1.15 2003/02/04 08:11:50 enami Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -105,7 +105,12 @@ initcache(int cachesize, int readblksize)
 	size_t len;
 	size_t sharedSize;
 
+	/* Convert read block size in terms of filesystem block size */
 	nblksread = howmany(readblksize, ufsib->ufs_bsize);
+
+	/* Then, convert it in terms of device block size */
+	nblksread <<= ufsib->ufs_bshift - dev_bshift;
+
 	if (cachesize == -1) {	/* Compute from memory available */
 		int usermem;
 		int mib[2] = { CTL_HW, HW_USERMEM };
