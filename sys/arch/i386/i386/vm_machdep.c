@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 1995/04/19 01:17:11 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.42 1995/04/21 09:15:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -169,23 +169,6 @@ cpu_exit(p)
 
 	cnt.v_swtch++;
 	switch_exit(p);
-}
-
-/*
- * cpu_cleanup is called to free per-process resources after exit.
- */
-void
-cpu_cleanup(p)
-	register struct proc *p;
-{
-#ifdef USER_LDT
-	struct pcb *pcb = &p->p_addr->u_pcb;
-
-	if (pcb->pcb_ldt) {
-		kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
-		    (pcb->pcb_ldt_len * sizeof(union descriptor)));
-	}
-#endif
 }
 
 /*
@@ -360,18 +343,4 @@ vunmapbuf(bp, len)
 	kmem_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
-}
-
-/*
- * Force reset the processor by invalidating the entire address space!
- */
-cpu_reset() {
-
-	/* force a shutdown by unmapping entire address space ! */
-	bzero((caddr_t)PTD, NBPG);
-
-	/* "good night, sweet prince .... <THUNK!>" */
-	pmap_update(); 
-	/* just in case */
-	for (;;);
 }
