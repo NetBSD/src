@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 2003/08/07 16:29:01 agc Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37 2004/01/23 04:12:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,14 +37,14 @@
 /*
  * Setup the system to run on the current machine.
  *
- * Configure() is called at boot time and initializes the vba 
+ * Configure() is called at boot time and initializes the vba
  * device tables and the memory controller monitoring.  Available
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.36 2003/08/07 16:29:01 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37 2004/01/23 04:12:39 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
