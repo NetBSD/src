@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.14.2.1 1997/12/30 05:44:41 mrg Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.14.2.2 1997/12/30 06:03:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.14.2.1 1997/12/30 05:44:41 mrg Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.14.2.2 1997/12/30 06:03:03 mycroft Exp $");
 #endif
 
 #include <sys/param.h>
@@ -569,7 +569,7 @@ dump_ccd(argc, argv, action)
 			}
 
 		if (numconfiged == 0)
-			printf("no concatenated disks configured\n");
+			printf("# no concatenated disks configured\n");
 	} else {
 		while (argc) {
 			cp = *argv++; --argc;
@@ -591,7 +591,7 @@ dump_ccd(argc, argv, action)
 				else
 					print_ccd_info(&cs[i], kd);
 			} else
-				printf("ccd%d not configured\n", i);
+				printf("# ccd%d not configured\n", i);
 		}
 	}
 
