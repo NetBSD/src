@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.11 1996/05/21 23:39:57 mycroft Exp $	*/
+/*	$NetBSD: unistd.h,v 1.12 1996/10/21 05:14:01 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
 #define	_POSIX_SAVED_IDS	/* saved set-user-ID and set-group-ID */
 #endif
 
-#define	_POSIX_VERSION		198808L
+#define	_POSIX_VERSION		199009L
 #define	_POSIX2_VERSION		199212L
 
 /* execution-time symbolic constants */
