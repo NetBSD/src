@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.4 1997/09/16 20:34:36 is Exp $	*/
+/*	$NetBSD: com_supio.c,v 1.5 1997/10/16 01:06:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -56,8 +56,8 @@
 #include <machine/bus.h>
 
 /*#include <dev/isa/isavar.h>*/
-#include <dev/isa/comreg.h>
-#include <dev/isa/comvar.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
 
 #include <amiga/dev/supio.h>
 
