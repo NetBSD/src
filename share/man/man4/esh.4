@@ -1,4 +1,4 @@
-.\"	$NetBSD: esh.4,v 1.6 2000/11/07 05:44:50 lukem Exp $
+.\"	$NetBSD: esh.4,v 1.7 2001/06/05 13:45:10 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,9 @@ the default socket buffer size should be increased to at least
 192KB, regardless of the expected bandwidth-delay product of the
 network.
 .Pp
-HIPPI ARP is not widely used, and the NetBSD stack does not support it
+HIPPI ARP is not widely used, and the
+.Nx
+stack does not support it
 (yet).  In order to define the mappings between IP addresses and
 ifields (the HIPPI MAC addresses), the administrator must make
 link-layer entries in the routing table using the
