@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: display_status.c,v 1.7 2001/08/23 04:34:41 assar Exp $"
-        "$NetBSD: display_status.c,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: display_status.c,v 1.2 2002/11/28 11:21:17 elric Exp $");
 
 static char *krb5_error_string;
 
@@ -118,7 +118,7 @@ OM_uint32 gss_display_status
 {
   char *buf;
 
-  gssapi_krb5_init ();
+  GSSAPI_KRB5_INIT_MS(minor_status);
 
   *minor_status = 0;
 

@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: compare_name.c,v 1.2 1999/12/02 17:05:03 joda Exp $"
-        "$NetBSD: compare_name.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: compare_name.c,v 1.2 2002/11/28 11:21:16 elric Exp $");
 
 OM_uint32 gss_compare_name
            (OM_uint32 * minor_status,
@@ -43,7 +43,8 @@ OM_uint32 gss_compare_name
             int * name_equal
            )
 {
-    gssapi_krb5_init ();
+
+    GSSAPI_KRB5_INIT_MS(minor_status);
     *name_equal = krb5_principal_compare (gssapi_krb5_context,
 					  name1, name2);
     return GSS_S_COMPLETE;

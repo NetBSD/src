@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: display_name.c,v 1.7 2001/05/11 09:16:46 assar Exp $"
-        "$NetBSD: display_name.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: display_name.c,v 1.2 2002/11/28 11:21:17 elric Exp $");
 
 OM_uint32 gss_display_name
            (OM_uint32 * minor_status,
@@ -47,7 +47,8 @@ OM_uint32 gss_display_name
   char *buf;
   size_t len;
 
-  gssapi_krb5_init ();
+  GSSAPI_KRB5_INIT_MS(minor_status);
+
   kret = krb5_unparse_name (gssapi_krb5_context,
 			    input_name,
 			    &buf);

@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: import_sec_context.c,v 1.5 2001/05/11 09:16:46 assar Exp $"
-        "$NetBSD: import_sec_context.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: import_sec_context.c,v 1.2 2002/11/28 11:21:17 elric Exp $");
 
 OM_uint32
 gss_import_sec_context (
@@ -56,7 +56,7 @@ gss_import_sec_context (
     int32_t flags;
     OM_uint32 minor;
 
-    gssapi_krb5_init ();
+    GSSAPI_KRB5_INIT_MS(minor_status);
 
     sp = krb5_storage_from_mem (interprocess_token->value,
 				interprocess_token->length);

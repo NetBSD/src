@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: export_sec_context.c,v 1.4 2001/02/18 03:39:09 assar Exp $"
-        "$NetBSD: export_sec_context.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: export_sec_context.c,v 1.2 2002/11/28 11:21:17 elric Exp $");
 
 OM_uint32
 gss_export_sec_context (
@@ -52,7 +52,7 @@ gss_export_sec_context (
     OM_uint32 minor;
     krb5_error_code kret;
 
-    gssapi_krb5_init ();
+    GSSAPI_KRB5_INIT_MS(minor_status);
     if (!((*context_handle)->flags & GSS_C_TRANS_FLAG))
 	return GSS_S_UNAVAILABLE;
 
