@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.199 2000/01/24 20:19:06 mcr Exp $
+# $NetBSD: mi,v 1.200 2000/01/25 08:45:24 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -509,6 +509,7 @@
 ./usr/share/man/cat4/tty.0
 ./usr/share/man/cat4/tun.0
 ./usr/share/man/cat4/uaudio.0
+./usr/share/man/cat4/ucom.0
 ./usr/share/man/cat4/udp.0
 ./usr/share/man/cat4/ugen.0
 ./usr/share/man/cat4/uha.0
@@ -1442,6 +1443,7 @@
 ./usr/share/man/man4/tty.4
 ./usr/share/man/man4/tun.4
 ./usr/share/man/man4/uaudio.4
+./usr/share/man/man4/ucom.4
 ./usr/share/man/man4/udp.4
 ./usr/share/man/man4/ugen.4
 ./usr/share/man/man4/uha.4
