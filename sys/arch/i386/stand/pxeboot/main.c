@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2002/02/17 20:14:08 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2002/02/20 03:00:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -111,7 +111,11 @@ main(void)
 {
         char c;
 
-	initio(CONSDEV_AUTO);
+#ifdef SUPPORT_SERIAL
+	initio(SUPPORT_SERIAL);
+#else
+	initio(CONSDEV_PC);
+#endif
 	gateA20();
 
 	print_banner();
