@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.43 1998/03/19 22:29:34 kml Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.44 1998/03/24 03:10:02 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -644,7 +644,7 @@ tcp_mss_from_peer(tp, offer)
 	if (offer)
 		mss = offer;
 	mss = max(mss, 32);		/* sanity */
-	mss -= tcp_optlen(tp);
+	mss -= (tcp_optlen(tp) + ip_optlen(tp->t_inpcb));
 
 	/*
 	 * If there's a pipesize, change the socket buffer to that size.

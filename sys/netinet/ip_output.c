@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.46 1998/03/19 15:46:43 mrg Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.47 1998/03/24 03:10:02 kml Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -465,6 +465,24 @@ bad:
 	m_freem(m);
 	goto done;
 }
+
+/*
+ * Determine the maximum length of the options to be inserted;
+ * we would far rather allocate too much space rather than too little.
+ */
+
+u_int
+ip_optlen(inp)
+	struct inpcb *inp;
+{
+	struct mbuf *m = inp->inp_options;
+
+	if (m && m->m_len > offsetof(struct ipoption, ipopt_dst))
+		return(m->m_len - offsetof(struct ipoption, ipopt_dst));
+	else
+		return 0;
+}
+
 
 /*
  * Insert IP options into preformed packet.
