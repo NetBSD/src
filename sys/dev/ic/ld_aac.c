@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.1 2002/04/26 02:05:11 ad Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.2 2002/05/02 12:44:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.1 2002/04/26 02:05:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.2 2002/05/02 12:44:31 ad Exp $");
 
 #include "rnd.h"
 
@@ -95,11 +95,11 @@ ld_aac_attach(struct device *parent, struct device *self, void *aux)
 	struct ld_softc *ld;
 	struct aac_softc *aac;
 
+	aaca = aux;
+	aac = (struct aac_softc *)parent;
 	sc = (struct ld_aac_softc *)self;
 	ld = &sc->sc_ld;
-	aac = (struct aac_softc *)parent;
 	hdr = &aac->sc_hdr[aaca->aaca_unit];
-	aaca = aux;
 
 	sc->sc_hwunit = aaca->aaca_unit;
 	ld->sc_flags = LDF_ENABLED;
