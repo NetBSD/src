@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.12 2001/03/28 14:16:49 drochner Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.13 2001/05/31 16:02:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -138,6 +138,7 @@ tqphyattach(parent, self, aux)
 	sc->mii_funcs = &tqphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
+	sc->mii_anegticks = 5;
 
 	/*
 	 * Apparently, we can't do loopback on this PHY.

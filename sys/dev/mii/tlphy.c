@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.28 2001/03/28 14:16:49 drochner Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.29 2001/05/31 16:02:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ tlphyattach(parent, self, aux)
 	sc->sc_mii.mii_funcs = &tlphy_funcs;
 	sc->sc_mii.mii_pdata = mii;
 	sc->sc_mii.mii_flags = mii->mii_flags;
+	sc->sc_mii.mii_anegticks = 5;
 
 	PHY_RESET(&sc->sc_mii);
 
