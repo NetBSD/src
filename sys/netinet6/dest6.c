@@ -1,4 +1,4 @@
-/*	$NetBSD: dest6.c,v 1.11 2001/11/13 00:56:56 lukem Exp $	*/
+/*	$NetBSD: dest6.c,v 1.12 2003/05/14 06:47:39 itojun Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.11 2001/11/13 00:56:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.12 2003/05/14 06:47:39 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,24 +68,14 @@ dest6_input(mp, offp, proto)
 	u_int8_t *opt;
 
 	/* validation of the length of the header */
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, sizeof(*dstopts), IPPROTO_DONE);
-	dstopts = (struct ip6_dest *)(mtod(m, caddr_t) + off);
-#else
 	IP6_EXTHDR_GET(dstopts, struct ip6_dest *, m, off, sizeof(*dstopts));
 	if (dstopts == NULL)
 		return IPPROTO_DONE;
-#endif
 	dstoptlen = (dstopts->ip6d_len + 1) << 3;
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, dstoptlen, IPPROTO_DONE);
-	dstopts = (struct ip6_dest *)(mtod(m, caddr_t) + off);
-#else
 	IP6_EXTHDR_GET(dstopts, struct ip6_dest *, m, off, dstoptlen);
 	if (dstopts == NULL)
 		return IPPROTO_DONE;
-#endif
 	off += dstoptlen;
 	dstoptlen -= sizeof(struct ip6_dest);
 	opt = (u_int8_t *)dstopts + sizeof(struct ip6_dest);

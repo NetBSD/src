@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.82 2003/04/17 16:15:36 scw Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.83 2003/05/14 06:47:46 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -795,9 +795,6 @@ struct mbstat {
 }
 
 #ifdef	_KERNEL
-/* always use m_pulldown codepath for KAME IPv6/IPsec */
-#define PULLDOWN_TEST
-
 extern struct mbstat mbstat;
 extern int	nmbclusters;		/* limit on the # of clusters */
 extern int	mblowat;		/* mbuf low water mark */

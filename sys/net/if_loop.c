@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.43 2003/05/01 07:52:58 itojun Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.44 2003/05/14 06:47:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.43 2003/05/01 07:52:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.44 2003/05/14 06:47:33 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -225,58 +225,6 @@ looutput(ifp, m, dst, rt)
 		return (rt->rt_flags & RTF_BLACKHOLE ? 0 :
 			rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
 	}
-
-#ifndef PULLDOWN_TEST
-	/*
-	 * KAME requires that the packet to be contiguous on the
-	 * mbuf.  We need to make that sure.
-	 * this kind of code should be avoided.
-	 * XXX other conditions to avoid running this part?
-	 */
-	if (m->m_len != m->m_pkthdr.len) {
-		struct mbuf *n = NULL;
-		int maxlen;
-
-		MGETHDR(n, M_DONTWAIT, MT_HEADER);
-		maxlen = MHLEN;
-		if (n)
-			M_COPY_PKTHDR(n, m);
-		if (n && m->m_pkthdr.len > maxlen) {
-			MCLGET(n, M_DONTWAIT);
-			maxlen = MCLBYTES;
-			if ((n->m_flags & M_EXT) == 0) {
-				m_free(n);
-				n = NULL;
-			}
-		}
-		if (!n) {
-			printf("looutput: mbuf allocation failed\n");
-			m_freem(m);
-			return ENOBUFS;
-		}
-
-		if (m->m_pkthdr.len <= maxlen) {
-			m_copydata(m, 0, m->m_pkthdr.len, mtod(n, caddr_t));
-			n->m_len = m->m_pkthdr.len;
-			n->m_next = NULL;
-			m_freem(m);
-		} else {
-			m_copydata(m, 0, maxlen, mtod(n, caddr_t));
-			m_adj(m, maxlen);
-			n->m_len = maxlen;
-			n->m_next = m;
-			m->m_flags &= ~M_PKTHDR;
-		}
-		m = n;
-	}
-#if 0
-	if (m && m->m_next != NULL) {
-		printf("loop: not contiguous...\n");
-		m_freem(m);
-		return ENOBUFS;
-	}
-#endif
-#endif
 
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.163 2003/03/01 04:40:27 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.164 2003/05/14 06:47:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.163 2003/03/01 04:40:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.164 2003/05/14 06:47:35 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -195,11 +195,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.163 2003/03/01 04:40:27 thorpej Exp 
 #include <netinet6/nd6.h>
 #endif
 
-#ifdef PULLDOWN_TEST
 #ifndef INET6
 /* always need ip6.h for IP6_EXTHDR_GET */
 #include <netinet/ip6.h>
-#endif
 #endif
 
 #include <netinet/tcp.h>
@@ -842,21 +840,6 @@ tcp_input(m, va_alist)
 	case 4:
 		af = AF_INET;
 		iphlen = sizeof(struct ip);
-#ifndef PULLDOWN_TEST
-		/* would like to get rid of this... */
-		if (toff > sizeof (struct ip)) {
-			ip_stripoptions(m, (struct mbuf *)0);
-			toff = sizeof(struct ip);
-		}
-		if (m->m_len < toff + sizeof (struct tcphdr)) {
-			if ((m = m_pullup(m, toff + sizeof (struct tcphdr))) == 0) {
-				tcpstat.tcps_rcvshort++;
-				return;
-			}
-		}
-		ip = mtod(m, struct ip *);
-		th = (struct tcphdr *)(mtod(m, caddr_t) + toff);
-#else
 		ip = mtod(m, struct ip *);
 		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
 			sizeof(struct tcphdr));
@@ -864,7 +847,6 @@ tcp_input(m, va_alist)
 			tcpstat.tcps_rcvshort++;
 			return;
 		}
-#endif
 		/* We do the checksum after PCB lookup... */
 		len = ntohs(ip->ip_len);
 		tlen = len - toff;
@@ -875,17 +857,6 @@ tcp_input(m, va_alist)
 		ip = NULL;
 		iphlen = sizeof(struct ip6_hdr);
 		af = AF_INET6;
-#ifndef PULLDOWN_TEST
-		if (m->m_len < toff + sizeof(struct tcphdr)) {
-			m = m_pullup(m, toff + sizeof(struct tcphdr));	/*XXX*/
-			if (m == NULL) {
-				tcpstat.tcps_rcvshort++;
-				return;
-			}
-		}
-		ip6 = mtod(m, struct ip6_hdr *);
-		th = (struct tcphdr *)(mtod(m, caddr_t) + toff);
-#else
 		ip6 = mtod(m, struct ip6_hdr *);
 		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
 			sizeof(struct tcphdr));
@@ -893,7 +864,6 @@ tcp_input(m, va_alist)
 			tcpstat.tcps_rcvshort++;
 			return;
 		}
-#endif
 
 		/* Be proactive about malicious use of IPv4 mapped address */
 		if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
@@ -955,27 +925,6 @@ tcp_input(m, va_alist)
 	 */
 
 	if (off > sizeof (struct tcphdr)) {
-#ifndef PULLDOWN_TEST
-		if (m->m_len < toff + off) {
-			if ((m = m_pullup(m, toff + off)) == 0) {
-				tcpstat.tcps_rcvshort++;
-				return;
-			}
-			switch (af) {
-#ifdef INET
-			case AF_INET:
-				ip = mtod(m, struct ip *);
-				break;
-#endif
-#ifdef INET6
-			case AF_INET6:
-				ip6 = mtod(m, struct ip6_hdr *);
-				break;
-#endif
-			}
-			th = (struct tcphdr *)(mtod(m, caddr_t) + toff);
-		}
-#else
 		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff, off);
 		if (th == NULL) {
 			tcpstat.tcps_rcvshort++;
@@ -985,7 +934,6 @@ tcp_input(m, va_alist)
 		 * NOTE: ip/ip6 will not be affected by m_pulldown()
 		 * (as they're before toff) and we don't need to update those.
 		 */
-#endif
 		KASSERT(TCP_HDR_ALIGNED_P(th));
 		optlen = off - sizeof (struct tcphdr);
 		optp = ((u_int8_t *)th) + sizeof(struct tcphdr);
@@ -1163,20 +1111,8 @@ findpcb:
 		default:
 			/* Must compute it ourselves. */
 			TCP_CSUM_COUNTER_INCR(&tcp_swcsum);
-#ifndef PULLDOWN_TEST
-		    {
-			struct ipovly *ipov;
-			ipov = (struct ipovly *)ip;
-			bzero(ipov->ih_x1, sizeof ipov->ih_x1);
-			ipov->ih_len = htons(tlen + off);
-
-			if (in_cksum(m, len) != 0)
-				goto badcsum;
-		    }
-#else
 			if (in4_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0)
 				goto badcsum;
-#endif /* ! PULLDOWN_TEST */
 			break;
 		}
 		break;

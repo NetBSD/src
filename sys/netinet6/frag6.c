@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.23 2002/11/02 07:30:55 perry Exp $	*/
+/*	$NetBSD: frag6.c,v 1.24 2003/05/14 06:47:39 itojun Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.23 2002/11/02 07:30:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.24 2003/05/14 06:47:39 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,14 +196,9 @@ frag6_input(mp, offp, proto)
 #endif
 
 	ip6 = mtod(m, struct ip6_hdr *);
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, offset, sizeof(struct ip6_frag), IPPROTO_DONE);
-	ip6f = (struct ip6_frag *)((caddr_t)ip6 + offset);
-#else
 	IP6_EXTHDR_GET(ip6f, struct ip6_frag *, m, offset, sizeof(*ip6f));
 	if (ip6f == NULL)
 		return IPPROTO_DONE;
-#endif
 
 	dstifp = NULL;
 #ifdef IN6_IFSTAT_STRICT

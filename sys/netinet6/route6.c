@@ -1,4 +1,4 @@
-/*	$NetBSD: route6.c,v 1.11 2002/09/11 02:46:47 itojun Exp $	*/
+/*	$NetBSD: route6.c,v 1.12 2003/05/14 06:47:46 itojun Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.11 2002/09/11 02:46:47 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.12 2003/05/14 06:47:46 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -61,30 +61,16 @@ route6_input(mp, offp, proto)
 	struct ip6_rthdr *rh;
 	int off = *offp, rhlen;
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, sizeof(*rh), IPPROTO_DONE);
-	ip6 = mtod(m, struct ip6_hdr *);
-	rh = (struct ip6_rthdr *)((caddr_t)ip6 + off);
-#else
 	ip6 = mtod(m, struct ip6_hdr *);
 	IP6_EXTHDR_GET(rh, struct ip6_rthdr *, m, off, sizeof(*rh));
 	if (rh == NULL) {
 		ip6stat.ip6s_tooshort++;
 		return IPPROTO_DONE;
 	}
-#endif
 
 	switch (rh->ip6r_type) {
 	case IPV6_RTHDR_TYPE_0:
 		rhlen = (rh->ip6r_len + 1) << 3;
-#ifndef PULLDOWN_TEST
-		/*
-		 * note on option length:
-		 * due to IP6_EXTHDR_CHECK assumption, we cannot handle
-		 * very big routing header (max rhlen == 2048).
-		 */
-		IP6_EXTHDR_CHECK(m, off, rhlen, IPPROTO_DONE);
-#else
 		/*
 		 * note on option length:
 		 * maximum rhlen: 2048
@@ -98,7 +84,6 @@ route6_input(mp, offp, proto)
 			ip6stat.ip6s_tooshort++;
 			return IPPROTO_DONE;
 		}
-#endif
 		if (ip6_rthdr0(m, ip6, (struct ip6_rthdr0 *)rh))
 			return (IPPROTO_DONE);
 		break;
