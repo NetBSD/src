@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.22 1994/11/27 19:53:10 briggs Exp $
+#	$NetBSD: GENERIC,v 1.23 1995/03/11 13:55:03 briggs Exp $
 #
 # GENERIC
 
@@ -52,8 +52,8 @@ options		MAPMEM
 options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
-options		MC68040
-options		MC68030		# Includes the 020+851
+options		M68040
+options		M68030		# Includes the 020+851
 options		FPCOPROC
 #options	FPSP
 options		COMPAT_NOMID

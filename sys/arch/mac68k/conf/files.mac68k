@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.23 1995/02/15 23:54:56 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.24 1995/03/11 13:55:06 briggs Exp $
 
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
 #
@@ -70,7 +70,7 @@ file	arch/mac68k/mac68k/autoconf.c
 file	arch/mac68k/mac68k/clock.c
 file	arch/mac68k/mac68k/disksubr.c		disk
 file	arch/mac68k/mac68k/fpu.c
-file	arch/mac68k/mac68k/mac68k_init.c	mc68040
+file	arch/mac68k/mac68k/mac68k_init.c	m68040
 file	arch/mac68k/mac68k/machdep.c
 file	arch/mac68k/mac68k/macrom.c
 file	arch/mac68k/mac68k/macromasm.s
