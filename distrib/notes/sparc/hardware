@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.27 2003/10/22 07:59:44 mbw Exp $
+.\"	$NetBSD: hardware,v 1.28 2003/12/13 17:55:02 martin Exp $
 .
 .Pp
 The minimum configuration requires 4 MB of RAM and 60 MB of disk space.
@@ -76,6 +76,10 @@ SPARCstation/server 10
 SPARCstation/server 20
 .It
 SPARCstation Voyager
+.It
+JavaStation-1 (Mr. Coffee)
+.It
+JavaStation-10 (JavaStation-NC, Krups)
 .bullet)
 .(Note
 All known SuperSPARC, hyperSPARC, microSPARC, and TurboSPARC CPUs are supported
@@ -134,12 +138,6 @@ UltraSPARC based machines in 32-bit or 64-bit mode are supported by the
 port.
 Refer to
 .Lk http://www.NetBSD.org/Ports/sparc64/index.html
-.It
-JavaStation models.
-Refer to the
-.Nx*M
-JavaStation Support page
-.Lk http://www.NetBSD.org/Ports/sparc/javastation.html
 .It
 Solbourne machines
 .bullet)
