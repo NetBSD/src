@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.37 2005/01/08 20:32:10 joff Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.38 2005/01/08 22:31:28 cube Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -266,6 +266,7 @@
 #	stic*	PixelStamp interface chip
 #	sysmon	System Monitoring hardware
 #	systrace syscall tracer
+#	tap*	virtual Ethernet device
 #	tun*	network tunnel driver
 #	twe	3ware Escalade control interface
 #	uk*	unknown SCSI device
@@ -435,6 +436,7 @@ all)
 	makedev lkm clockctl
 	makedev local
 	makedev atabus0 atabus1 atabus2 atabus3
+	makedev tap tap0 tap1 tap2 tap3
 	;;
 
 init)
@@ -1468,6 +1470,18 @@ atabus*)
 
 drvctl)
 	mkdev drvctl c %drvctl_chr% 0 644
+	;;
+
+tap*)
+	unit=${i#tap}
+	case "$unit" in
+	[0-9]*)
+		mkdev tap${unit} c %tap_chr% ${unit} 600
+		;;
+	*)
+		mkdev tap c %tap_chr% 0xfffff 600
+		;;
+	esac
 	;;
 
 midevend)
