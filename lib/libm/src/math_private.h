@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.8 1999/07/02 15:37:42 simonb Exp $
+ * $NetBSD: math_private.h,v 1.9 2000/05/09 21:55:53 bjh21 Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -34,11 +34,11 @@
    ints.  */
 
 /*
- * The arm32 port is little endian except for the FP word order which is
+ * The ARM ports are little endian except for the FP word order which is
  * big endian.
  */
 
-#if (BYTE_ORDER == BIG_ENDIAN) || defined(__arm32__)
+#if (BYTE_ORDER == BIG_ENDIAN) || defined(__arm32__) || defined(__arm26__)
 
 typedef union
 {
@@ -52,7 +52,7 @@ typedef union
 
 #endif
 
-#if (BYTE_ORDER == LITTLE_ENDIAN) && !defined(__arm32__)
+#if (BYTE_ORDER == LITTLE_ENDIAN) && !defined(__arm32__) && !defined(__arm26__)
 
 typedef union
 {

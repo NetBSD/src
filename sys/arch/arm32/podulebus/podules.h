@@ -1,4 +1,4 @@
-/*	$NetBSD: podules.h,v 1.13 1999/11/12 07:38:51 mark Exp $	*/
+/*	$NetBSD: podules.h,v 1.14 2000/05/09 21:56:04 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -64,6 +64,7 @@
 #define	MANUFACTURER_BRINI	0x0050		/* Brini */
 #define	MANUFACTURER_ANT	0x0053		/* ANT */
 #define	MANUFACTURER_CASTLE	0x0055		/* Castle Technology */
+#define	MANUFACTURER_DTSOFT	0x0037		/* D.T. Software */
 #define	MANUFACTURER_ALSYSTEMS	0x005b		/* Alsystems */
 #define	MANUFACTURER_SIMTEC	0x005f		/* Simtec Electronics */
 #define	MANUFACTURER_YES	0x0060		/* Yellowstone Educational Solutions */
@@ -111,6 +112,8 @@
 #define	PODULE_MORLEY_SCSI	0x0067		/* SCSI interface */
 
 #define	PODULE_VTI_SCSI	0x008d		/* SCSI interface */
+
+#define	PODULE_DTSOFT_IDE	0x00ae		/* IDE interface */
 
 #define	PODULE_CUMANA_SCSI2	0x003a		/* SCSI II interface */
 #define	PODULE_CUMANA_SCSI1	0x00a0		/* SCSI I interface */

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 1999/09/12 16:08:15 itojun Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 2000/05/09 21:56:06 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,6 +39,8 @@
 #if defined(__alpha__)
 #  define	NLIST_ECOFF
 #  define	NLIST_ELF64
+#elif defined(__arm26__)
+#  define	NLIST_ELF32
 #elif defined(__mips__)
 #  define	NLIST_AOUT
 #  define	NLIST_ECOFF

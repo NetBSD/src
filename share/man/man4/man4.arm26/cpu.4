@@ -1,0 +1,36 @@
+.\" $NetBSD: cpu.4,v 1.1 2000/05/09 21:55:54 bjh21 Exp $
+.\"
+.\" Copyright notice...
+.\"
+.Dd March 29, 2000
+.Os "NetBSD experimental"
+.Dt CPU 4 arm26
+.Sh NAME
+.Nm cpu
+.Nd Device driver for CPU-specific features
+.Sh SYNOPSIS
+.Cd cpu0 at root
+.Cd options CPU_ARM2
+.Cd options CPU_ARM250
+.Cd options CPU_ARM3
+.Sh DESCRIPTION
+The
+.Nm
+driver provides a convenient hook for identifying the system's CPU and setting
+various parameters relating to it.
+
+The following options are available relating to the
+.Nm
+driver:
+.Bl -ohang
+.It Cd options CPU_ARM2
+Enables support for ARM2 CPUs.  This includes inserting NOPs after
+processor mode changes.
+.It Cd options CPU_ARM250
+Enables support for ARM2as CPUs (as found in the ARM250).
+.It Cd options CPU_ARM3
+Enables support for ARM3 CPUs.  This currently does nothing.
+.El
+.Sh BUGS
+The cache on ARM3s isn't currently enabled.
+

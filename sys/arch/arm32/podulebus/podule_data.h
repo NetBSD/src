@@ -1,4 +1,4 @@
-/*	$NetBSD: podule_data.h,v 1.13 1999/11/12 07:38:51 mark Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.14 2000/05/09 21:56:04 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -178,6 +178,11 @@ static struct podule_description podules_castle[] = {
 	{ 0x0000, NULL }
 };
 
+static struct podule_description podules_dtsoft[] = {
+	{ PODULE_DTSOFT_IDE,	"IDE interface" },
+	{ 0x0000, NULL }
+};
+
 static struct podule_description podules_alsystems[] = {
 	{ PODULE_ALSYSTEMS_SCSI,	"SCSI II host adapter" },
 	{ 0x0000, NULL }
@@ -228,6 +233,7 @@ struct podule_list known_podules[] = {
 	{ MANUFACTURER_BRINI, 		"Brini", 	podules_brini },
 	{ MANUFACTURER_ANT, 		"ANT", 	podules_ant },
 	{ MANUFACTURER_CASTLE, 		"Castle Technology", 	podules_castle },
+	{ MANUFACTURER_DTSOFT, 		"D.T. Software", 	podules_dtsoft },
 	{ MANUFACTURER_ALSYSTEMS, 	"Alsystems", 	podules_alsystems },
 	{ MANUFACTURER_SIMTEC, 		"Simtec Electronics", 	podules_simtec },
 	{ MANUFACTURER_YES, 		"Yellowstone Educational Solutions", 	podules_yes },

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 1999/09/12 01:19:24 chs Exp $
+#	$NetBSD: Makefile,v 1.31 2000/05/09 21:55:53 bjh21 Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	kvm
@@ -13,6 +13,8 @@ SRCS=	kvm.c kvm_file.c kvm_getloadavg.c kvm_proc.c
 
 .if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
 SRCS+=	kvm_mips.c
+.elif ${MACHINE_ARCH} == "arm26"
+SRCS+=	kvm_arm32.c
 .else
 SRCS+=	kvm_${MACHINE_ARCH}.c
 .endif

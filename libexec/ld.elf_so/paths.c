@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.10 2000/01/15 01:03:45 christos Exp $	 */
+/*	$NetBSD: paths.c,v 1.11 2000/05/09 21:55:53 bjh21 Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -148,7 +148,9 @@ struct list {
 	int numentries;
 };
 
+#ifdef CTL_MACHDEP_NAMES
 static struct sysctldesc ctl_machdep[] = CTL_MACHDEP_NAMES;
+#endif
 static struct sysctldesc ctl_toplvl[] = CTL_NAMES;
 
 struct list toplevel[] = {
