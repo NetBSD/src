@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.51 2000/02/19 01:54:42 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.52 2000/07/05 22:12:23 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  * Matthew Jacob (mjacob@nas.nasa.gov)
@@ -31,15 +31,13 @@
  */
 
 #include <dev/ic/isp_netbsd.h>
-#include <dev/microcode/isp/asm_pci.h>
-
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
 static u_int16_t isp_pci_rd_reg __P((struct ispsoftc *, int));
 static void isp_pci_wr_reg __P((struct ispsoftc *, int, u_int16_t));
-#ifndef	ISP_DISABLE_1080_SUPPORT
+#if !(defined(ISP_DISABLE_1080_SUPPORT) && defined(ISP_DISABLE_12160_SUPPORT))
 static u_int16_t isp_pci_rd_reg_1080 __P((struct ispsoftc *, int));
 static void isp_pci_wr_reg_1080 __P((struct ispsoftc *, int, u_int16_t));
 #endif
@@ -55,20 +53,40 @@ static int isp_pci_intr __P((void *));
 #ifndef	ISP_CODE_ORG
 #define	ISP_CODE_ORG		0x1000
 #endif
-#ifndef	ISP_1040_RISC_CODE
+
+#if	defined(ISP_DISABLE_1020_SUPPORT)
 #define	ISP_1040_RISC_CODE	NULL
+#else
+#define	ISP_1040_RISC_CODE	isp_1040_risc_code
+#include <dev/microcode/isp/asm_1040.h>
 #endif
-#ifndef	ISP_1080_RISC_CODE
+
+#if	defined(ISP_DISABLE_1080_SUPPORT)
 #define	ISP_1080_RISC_CODE	NULL
+#else
+#define	ISP_1080_RISC_CODE	isp_1080_risc_code
+#include <dev/microcode/isp/asm_1080.h>
 #endif
-#ifndef	ISP_12160_RISC_CODE
+
+#if	defined(ISP_DISABLE_12160_SUPPORT)
 #define	ISP_12160_RISC_CODE	NULL
+#else
+#define	ISP_12160_RISC_CODE	isp_12160_risc_code
+#include <dev/microcode/isp/asm_12160.h>
 #endif
-#ifndef	ISP_2100_RISC_CODE
+
+#if	defined(ISP_DISABLE_2100_SUPPORT)
 #define	ISP_2100_RISC_CODE	NULL
+#else
+#define	ISP_2100_RISC_CODE	isp_2100_risc_code
+#include <dev/microcode/isp/asm_2100.h>
 #endif
-#ifndef	ISP_2200_RISC_CODE
+
+#if	defined(ISP_DISABLE_2200_SUPPORT)
 #define	ISP_2200_RISC_CODE	NULL
+#else
+#define	ISP_2200_RISC_CODE	isp_2200_risc_code
+#include <dev/microcode/isp/asm_2200.h>
 #endif
 
 #ifndef	ISP_DISABLE_1020_SUPPORT
@@ -543,6 +561,9 @@ isp_pci_attach(parent, self, aux)
 			return;
 		}
 	}
+
+	ENABLE_INTS(isp);
+
 	/*
 	 * Do Generic attach now.
 	 */
@@ -607,7 +628,7 @@ isp_pci_wr_reg(isp, regoff, val)
 	}
 }
 
-#if !defined(ISP_DISABLE_1080_SUPPORT) && !defined(ISP_DISABLE_12160_SUPPORT)
+#if !(defined(ISP_DISABLE_1080_SUPPORT) && defined(ISP_DISABLE_12160_SUPPORT))
 static u_int16_t
 isp_pci_rd_reg_1080(isp, regoff)
 	struct ispsoftc *isp;
@@ -783,15 +804,16 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	u_int16_t optr;
 {
 	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
-	bus_dmamap_t dmap = pci->pci_xfer_dmap[rq->req_handle - 1];
+	bus_dmamap_t dmap;
 	ispcontreq_t *crq;
 	int segcnt, seg, error, ovseg, seglim, drq;
+
+	dmap = pci->pci_xfer_dmap[isp_handle_index(rq->req_handle)];
 
 	if (xs->datalen == 0) {
 		rq->req_seg_count = 1;
 		goto mbxsync;
 	}
-	assert(rq->req_handle != 0 && rq->req_handle <= isp->isp_maxcmds);
 	if (xs->xs_control & XS_CTL_DATA_IN) {
 		drq = REQFLAG_DATA_IN;
 	} else {
@@ -841,14 +863,13 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 		goto dmasync;
 
 	do {
-		crq = (ispcontreq_t *)
-			ISP_QUEUE_ENTRY(isp->isp_rquest, *iptrp);
-		*iptrp = (*iptrp + 1) & (RQUEST_QUEUE_LEN - 1);
+		crq = (ispcontreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, *iptrp);
+		*iptrp = ISP_NXT_QENTRY(*iptrp, RQUEST_QUEUE_LEN);
 		if (*iptrp == optr) {
 			printf("%s: Request Queue Overflow++\n", isp->isp_name);
 			bus_dmamap_unload(pci->pci_dmat, dmap);
 			XS_SETERR(xs, HBA_BOTCH);
-			return (CMD_COMPLETE);
+			return (CMD_EAGAIN);
 		}
 		rq->req_header.rqs_entry_count++;
 		bzero((void *)crq, sizeof (*crq));
@@ -893,9 +914,7 @@ isp_pci_dmateardown(isp, xs, handle)
 	u_int32_t handle;
 {
 	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
-	bus_dmamap_t dmap;
-	assert(handle != 0 && handle <= isp->isp_maxcmds);
-	dmap = pci->pci_xfer_dmap[handle-1];
+	bus_dmamap_t dmap = pci->pci_xfer_dmap[isp_handle_index(handle)];
 	bus_dmamap_sync(pci->pci_dmat, dmap, 0, dmap->dm_mapsize,
 	    xs->xs_control & XS_CTL_DATA_IN ?
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
