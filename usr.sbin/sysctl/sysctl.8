@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.31 1999/09/28 14:48:48 bouyer Exp $
+.\"	$NetBSD: sysctl.8,v 1.32 1999/10/14 09:33:52 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -288,6 +288,7 @@ privilege can change the value.
 .It ddb.tabstops	integer		yes
 .It ddb.lines	integer		yes
 .It ddb.onpanic	integer		yes
+.It ddb.fromconsole	integer 	yes
 .It proc.<pid>.corename	string	yes
 .It proc.<pid>.rlimit.cputime.soft	integer	yes
 .It proc.<pid>.rlimit.cputime.hard	integer	yes
