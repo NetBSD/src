@@ -1,0 +1,7 @@
+#       $Id: files.m68k.newconf,v 1.1 1994/01/08 18:08:12 cgd Exp $
+
+file	arch/m68k/m68k/process_machdep.c
+
+file	arch/m68k/m68k/in_cksum.c		inet
+file	arch/m68k/m68k/ns_cksum.c		ns
+file	arch/m68k/m68k/oc_cksum.s		inet
