@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.125 1998/11/14 06:38:54 tls Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.126 1998/12/01 23:17:25 kenh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -297,10 +297,10 @@ update:
 		mp->mnt_flag |= MNT_WANTRDWR;
 	mp->mnt_flag &=~ (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_SYMPERM);
+	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM);
 	mp->mnt_flag |= SCARG(uap, flags) & (MNT_NOSUID | MNT_NOEXEC |
 	    MNT_NODEV | MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC |
-	    MNT_NOCOREDUMP | MNT_NOATIME | MNT_SYMPERM);
+	    MNT_NOCOREDUMP | MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM);
 	/*
 	 * Mount the filesystem.
 	 */
