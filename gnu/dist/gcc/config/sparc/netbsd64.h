@@ -2,9 +2,9 @@
 
 #include <sparc/sp64-elf.h>
 
-/* remove unix and maybe __sparc__ ? */
+/* maybe remove __sparc__ ? */
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dunix -D__sparc__ -D__sparc64__ -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__"
+#define CPP_PREDEFINES "-D__sparc__ -D__sparc64__ -D__arch64__ -D__sparcv9__ -D__NetBSD__ -D__ELF__ -D__KPRINTF_ATTRIBUTE__"
 
 /* clean up after <sparc/sp64-elf.h> */
 #undef CPP_SUBTARGET_SPEC
