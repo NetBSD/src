@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.19 2000/07/14 08:40:42 fvdl Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.20 2000/12/10 04:12:03 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.19 2000/07/14 08:40:42 fvdl Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.20 2000/12/10 04:12:03 christos Exp $");
 #endif
 #endif
 
@@ -84,9 +84,6 @@ static struct clntraw_private {
 	} u;
 	u_int	mcnt;
 } *clntraw_private;
-
-extern void svc_getreq_common __P((int));
-
 
 static enum clnt_stat clnt_raw_call __P((CLIENT *, rpcproc_t, xdrproc_t,
     caddr_t, xdrproc_t, caddr_t, struct timeval));
