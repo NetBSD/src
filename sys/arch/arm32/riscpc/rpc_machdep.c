@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.35 2001/02/18 00:59:33 reinoud Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.36 2001/02/19 13:29:41 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -83,9 +83,6 @@
 #include <arm32/iomd/iomdreg.h>
 
 #include "opt_ipkdb.h"
-#ifdef HYDRA
-#include "hydrabus.h"
-#endif	/* HYDRA */
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -139,9 +136,6 @@ pv_addr_t irqstack;
 pv_addr_t undstack;
 pv_addr_t abtstack;
 pv_addr_t kernelstack;
-#if NHYDRABUS > 0
-pv_addr_t hydrascratch;
-#endif	/* NHYDRABUS */
 
 vm_offset_t msgbufphys;
 
@@ -205,7 +199,6 @@ extern void parse_mi_bootargs	__P((char *args));
 void parse_rpc_bootargs		__P((char *args));
 
 extern void dumpsys	__P((void));
-extern void hydrastop	__P((void));
 
 
 /*
@@ -228,15 +221,6 @@ cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
-#if NHYDRABUS > 0
-	/*
-	 * If we are halting the master then we should halt the slaves :-)
-	 * otherwise it can get a bit disconcerting to have 4 other
-	 * processors still tearing away doing things.
-	 */
-
-	hydrastop();
-#endif	/* NHYDRABUS */
 
 #ifdef DIAGNOSTIC
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
@@ -1421,21 +1405,10 @@ initarm_old_bootloader(bootconf)
 		    bootconfig.kernphysicalbase + logical);
 	}
 
-#if NHYDRABUS > 0
-	/*
-	 * If we have the hydra nick the first physical page for hydra booting
-	 * Needs to be 2MB aligned
-	 */
-	for (logical = 0; logical < 0x400000; logical += NBPG) {
-		map_entry(l2pagetable + 0x2000, logical,
-		    bootconfig.dram[0].address + logical + NBPG);
-	}
-#else	/* NHYDRABUS */
 	for (logical = 0; logical < 0x400000; logical += NBPG) {
 		map_entry(l2pagetable + 0x2000, logical,
 		    bootconfig.dram[0].address + logical);
 	}
-#endif	/* NHYDRABUS */
 
 	/*
 	 * Now we construct the L1 pagetable. This only needs the minimum to
@@ -1625,17 +1598,6 @@ initarm_old_bootloader(bootconf)
 #ifdef VERBOSE_INIT_ARM
 	printf("Allocating page tables\n");
 #endif
-
-#if NHYDRABUS > 0
-	/*
-	 * The Simtec Hydra board needs a 2MB aligned page for bootstrapping.
-	 * Simplest thing is to nick the bottom page of physical memory.
-	 */
-
-	hydrascratch.pv_pa = physical_start;
-	physical_start += NBPG;
-	--free_pages;
-#endif	/* NHYDRABUS */
 
 	/* Update the address of the first free page of physical memory */
 	physical_freestart = physical_start + kerneldatasize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 2001/01/14 03:31:45 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 2001/02/19 13:29:39 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -113,10 +113,6 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
        
-#ifdef HYDRA
-#include "hydrabus.h"
-#endif	/* HYDRA */
-
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -159,10 +155,6 @@ vm_offset_t avail_start;
 vm_offset_t avail_end;
 
 extern pv_addr_t systempage;
-
-#if NHYDRABUS > 0
-extern pv_addr_t hydrascratch;
-#endif	/* NHYDRABUS */
 
 #define ALLOC_PAGE_HOOK(x, s) \
 	x.va = virtual_start; \
@@ -799,15 +791,6 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	msgbufaddr = (caddr_t)virtual_start;
 	msgbufpte = (pt_entry_t)pmap_pte(kernel_pmap, virtual_start);
 	virtual_start += round_page(MSGBUFSIZE);
-
-#if NHYDRABUS > 0
-	hydrascratch.virtual = virtual_start;
-	virtual_start += NBPG;
-
-	*((pt_entry_t *)pmap_pte(kernel_pmap, hydrascratch.virtual)) =
-	    L2_PTE_NC_NB(hydrascratch.physical, AP_KRW);
-	cpu_tlb_flushD_SE(hydrascratch.virtual);
-#endif	/* NHYDRABUS */
 
 	size = npages * sizeof(struct pv_entry);
 	boot_pvent = (struct pv_entry *)uvm_pageboot_alloc(size);
