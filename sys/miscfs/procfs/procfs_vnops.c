@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.89 2002/05/09 15:44:45 thorpej Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.90 2002/08/03 04:52:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.89 2002/05/09 15:44:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.90 2002/08/03 04:52:45 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,7 +469,6 @@ procfs_getattr(v)
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 	struct vattr *vap = ap->a_vap;
 	struct proc *procp;
-	struct timeval tv;
 	int error;
 
 	/* first check the process still exists */
@@ -500,15 +499,17 @@ procfs_getattr(v)
 	vap->va_blocksize = PAGE_SIZE;
 
 	/*
-	 * Make all times be current TOD.
+	 * Make all times be current TOD.  Avoid microtime(9), it's slow.
+	 * We don't guard the read from time(9) with splclock(9) since we
+	 * don't actually need to be THAT sure the access is atomic. 
+	 *
 	 * It would be possible to get the process start
 	 * time from the p_stat structure, but there's
 	 * no "file creation" time stamp anyway, and the
 	 * p_stat structure is not addressible if u. gets
 	 * swapped out for that process.
 	 */
-	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_ctime);
+	TIMEVAL_TO_TIMESPEC(&time, &vap->va_ctime);
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 
 	switch (pfs->pfs_type) {
