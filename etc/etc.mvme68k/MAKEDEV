@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.18 1999/02/20 00:21:28 scw Exp $
+#	$NetBSD: MAKEDEV,v 1.19 1999/02/21 18:09:24 scw Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -165,14 +165,14 @@ ccd*|sd*|vnd*)
 	;;
 
 ttyZ*)
-	unit=${i#???}
+	unit=${i#????}
 	rm -f ttyZ$unit
 	mknod ttyZ$unit c 12 $unit
 	chown uucp.wheel ttyZ$unit
 	;;
 
 ttyC*)
-	unit=${i#???}
+	unit=${i#????}
 	rm -f ttyC$unit
 	mknod ttyC$unit c 13 $unit
 	chown uucp.wheel ttyC$unit
