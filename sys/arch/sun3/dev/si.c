@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.44 1999/10/17 09:27:21 jdolecek Exp $	*/
+/*	$NetBSD: si.c,v 1.45 1999/11/03 14:12:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -354,7 +354,7 @@ found:
 	dh->dh_dvma = 0;
 
 	/* Copy the "write" flag for convenience. */
-	if (xs->flags & SCSI_DATA_OUT)
+	if (xs->xs_control & XS_CTL_DATA_OUT)
 		dh->dh_flags |= SIDH_OUT;
 
 #if 0
