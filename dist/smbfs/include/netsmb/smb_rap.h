@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: smb_rap.h,v 1.1.1.1 2003/02/16 08:15:08 jdolecek Exp $
+ * from: Id: smb_rap.h,v 1.3 2001/04/10 05:37:22 bp Exp 
  */
 #ifndef _NETSMB_SMB_RAP_H_
 #define _NETSMB_SMB_RAP_H_

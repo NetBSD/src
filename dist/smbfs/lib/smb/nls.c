@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: nls.c,v 1.1.1.1 2003/02/16 08:15:08 jdolecek Exp $
+ * from: Id: nls.c,v 1.10 2002/07/22 08:33:59 bp Exp 
  */
 
 #include <sys/types.h>
