@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.13 1999/08/16 03:02:46 simonb Exp $	*/
+/*	$NetBSD: tip.h,v 1.14 2001/07/08 17:41:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -243,7 +243,7 @@ struct termios	defchars;	/* current mode with initial chars */
 FILE	*fscript;		/* FILE for scripting */
 
 int	fildes[2];		/* file transfer synchronization channel */
-int	repdes[2];		/* read process sychronization channel */
+int	repdes[2];		/* read process synchronization channel */
 int	FD;			/* open file descriptor to remote host */
 int	AC;			/* open file descriptor to dialer (v831 only) */
 int	vflag;			/* print .tiprc initialization sequence */
