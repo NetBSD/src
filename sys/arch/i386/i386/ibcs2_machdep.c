@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.3.2.2 1998/05/05 09:52:17 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.3.2.3 1999/01/18 06:01:21 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -53,6 +53,11 @@
 #include <machine/ibcs2_machdep.h>
 
 #include <compat/ibcs2/ibcs2_signal.h>
+
+
+#ifdef VM86
+#include <machine/vm86.h>
+#endif
 
 void
 ibcs2_setregs(p, epp, stack)
