@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.8 2001/04/15 17:14:27 kleink Exp $
+# $NetBSD: md.hpcsh,v 1.9 2002/05/02 15:42:19 wiz Exp $
 ./usr/include/hpcsh	comp-c-include
 ./usr/include/hpcsh/ansi.h	comp-c-include
 ./usr/include/hpcsh/aout_machdep.h	comp-c-include
@@ -10,7 +10,6 @@
 ./usr/include/hpcsh/coff_machdep.h	comp-c-include
 ./usr/include/hpcsh/conf.h	comp-c-include
 ./usr/include/hpcsh/cpu.h	comp-c-include
-./usr/include/hpcsh/cpufunc.h	comp-c-include
 ./usr/include/hpcsh/cputypes.h	comp-c-include
 ./usr/include/hpcsh/db_machdep.h	comp-c-include
 ./usr/include/hpcsh/disklabel.h	comp-c-include
@@ -32,7 +31,6 @@
 ./usr/include/hpcsh/math.h	comp-c-include
 ./usr/include/hpcsh/param.h	comp-c-include
 ./usr/include/hpcsh/pcb.h	comp-c-include
-./usr/include/hpcsh/pio.h	comp-c-include
 ./usr/include/hpcsh/pmap.h	comp-c-include
 ./usr/include/hpcsh/proc.h	comp-c-include
 ./usr/include/hpcsh/profile.h	comp-c-include
@@ -40,9 +38,7 @@
 ./usr/include/hpcsh/pte.h	comp-c-include
 ./usr/include/hpcsh/ptrace.h	comp-c-include
 ./usr/include/hpcsh/reg.h	comp-c-include
-./usr/include/hpcsh/segments.h	comp-c-include
 ./usr/include/hpcsh/setjmp.h	comp-c-include
-./usr/include/hpcsh/shbvar.h	comp-c-include
 ./usr/include/hpcsh/signal.h	comp-c-include
 ./usr/include/hpcsh/stdarg.h	comp-c-include
 ./usr/include/hpcsh/trap.h	comp-c-include
