@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fereg.h,v 1.3 2002/09/28 17:09:20 tsutsui Exp $	*/
+/*	$NetBSD: if_fereg.h,v 1.4 2002/09/28 17:22:50 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -22,8 +22,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#define FE_REG_VERSION "if_fereg.h ver. 0.8"
 
 /*
  * Hardware specification of various 86960/86965 based Ethernet cards.
