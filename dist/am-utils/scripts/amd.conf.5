@@ -1,4 +1,4 @@
-.\"	$NetBSD: amd.conf.5,v 1.4 2001/05/13 18:07:01 veego Exp $
+.\"	$NetBSD: amd.conf.5,v 1.5 2001/12/18 09:31:49 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 1997-2001 Erez Zadok
@@ -116,7 +116,7 @@ sections that follow.
 If "yes", then amd's top-level mount points will be browsable to
 .BR readdir (3)
 calls.  This means you could run for example
-.BR ls (3)
+.BR ls (1)
 and see what keys are available to mount in that directory.  Not all entries
 are made visible to readdir(3): the "/default" entry, wildcard
 entries, and those with a "/" in them are not included.  If you specify
@@ -580,8 +580,8 @@ map_name =               amd.tftpboot
 .\" **************************************************************************
 .SH "SEE ALSO"
 .BR amd (8),
-.BR amq (8),
-.BR ctl-amd (8).
+.BR amq (8)
+.\" .BR ctl-amd (8)
 .SH AUTHORS
 Erez Zadok <ezk@cs.columbia.edu>, Department of Computer Science, Columbia
 University, New York, USA.

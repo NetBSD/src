@@ -1,4 +1,4 @@
-.\"	$NetBSD: amq.8,v 1.1.1.4 2001/05/13 17:50:15 veego Exp $
+.\"	$NetBSD: amq.8,v 1.2 2001/12/18 09:31:48 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 1997-2001 Erez Zadok
@@ -143,7 +143,7 @@ option.
 .TP
 .B \-w
 Translate a full pathname as returned by
-.IR getpwd (3)
+.IR getcwd (3)
 into a short
 .B Amd
 pathname that goes through its mount points.   This option requires that
@@ -206,9 +206,9 @@ uses a Sun registered
 program number (300019 decimal) which may not
 be in the /etc/rpc database.
 .SH "SEE ALSO"
-.BR amd (8),
-.BR ctl-amd (8),
-.BR amd.conf (5).
+.BR amd.conf (5),
+.BR amd (8)
+.\" .BR ctl-amd (8)
 .SH AUTHORS
 Jan-Simon Pendry <jsp@doc.ic.ac.uk>, Department of Computing, Imperial College, London, UK.
 .P
