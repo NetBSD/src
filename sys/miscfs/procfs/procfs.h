@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs.h,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs.h,v 1.1 1994/01/05 07:51:12 cgd Exp $
+ *	$Id: procfs.h,v 1.2 1994/01/05 11:08:07 cgd Exp $
  */
 
 /*
@@ -75,10 +75,6 @@ struct pfsnode {
  * Kernel stuff follows
  */
 #ifdef KERNEL
-
-#ifndef VT_PROCFS
-#define VT_PROCFS VT_UFS
-#endif
 
 #define NDEQ(ndp, s, len) \
 	 ((ndp)->ni_namelen == (len) && \
