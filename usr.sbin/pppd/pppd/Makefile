@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2004/07/21 07:00:27 mycroft Exp $
+#	$NetBSD: Makefile,v 1.33 2005/01/10 02:58:59 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,9 @@ DPADD= ${LIBPCAP} ${LIBCRYPT} ${LIBUTIL}
 CPPFLAGS+= -I. -DHAVE_PATHS_H -DSUPPORT_UTMP -DSUPPORT_UTMPX -DPLUGIN
 CPPFLAGS+= -I${PCAPDIR} -DPPP_FILTER
 CPPFLAGS+= -DCBCP_SUPPORT -DCHAPMS -DUSE_CRYPT -DMSLANMAN
+
+.if (${USE_INET6} != "no")
 CPPFLAGS+= -DINET6
+.endif
 
 .include <bsd.prog.mk>
