@@ -1,37 +1,37 @@
-#	$NetBSD: bsd.sys.mk,v 1.59 2001/11/12 23:16:21 tv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.60 2001/11/13 20:25:38 tv Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
 .if defined(WARNS)
 .if ${WARNS} > 0
-CFLAGS+= -Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
-#CFLAGS+=-Wmissing-declarations -Wredundant-decls -Wnested-externs
+CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
+#CFLAGS+=	-Wmissing-declarations -Wredundant-decls -Wnested-externs
 # XXX Delete -Wuninitialized by default for now -- the compiler doesn't
 # XXX always get it right.
-CFLAGS+= -Wno-uninitialized
+CFLAGS+=	-Wno-uninitialized
 .endif
 .if ${WARNS} > 1
-CFLAGS+=-Wreturn-type -Wpointer-arith -Wswitch -Wshadow
+CFLAGS+=	-Wreturn-type -Wpointer-arith -Wswitch -Wshadow
 .endif
 .if ${WARNS} > 2
-CFLAGS+=-Wcast-qual -Wwrite-strings
+CFLAGS+=	-Wcast-qual -Wwrite-strings
 .endif
 .endif
 
 .if defined(WFORMAT) && defined(FORMAT_AUDIT)
 .if ${WFORMAT} > 1
-CFLAGS+=-Wnetbsd-format-audit -Wno-format-extra-args
+CFLAGS+=	-Wnetbsd-format-audit -Wno-format-extra-args
 .endif
 .endif
 
 CPPFLAGS+=	${AUDIT:D-D__AUDIT__} \
-		${DESTDIR:D-nostdinc -idirafter ${DESTDIR}/usr/include}
+		${DESTDIR:D-nostdinc -isystem ${DESTDIR}/usr/include}
 
 CFLAGS+=	${NOGCCERROR:U-Werror} ${CWARNFLAGS}
 
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
-.if defined(MKSOFTFLOAT) && (${MKSOFTFLOAT} != "no")
+.if ${MKSOFTFLOAT} != "no"
 COPTS+=		-msoft-float
 FOPTS+=		-msoft-float
 .endif
@@ -50,6 +50,9 @@ HOST_CPPFLAGS?=
 
 HOST_LD?=	ld
 HOST_LDFLAGS?=
+
+HOST_AR?=	ar
+HOST_RANLIB?=	ranlib
 
 CONFIG?=	config
 CRUNCHGEN?=	crunchgen
