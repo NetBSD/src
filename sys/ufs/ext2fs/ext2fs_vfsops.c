@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.72 2004/05/25 14:54:58 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.73 2004/07/05 07:28:45 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.72 2004/05/25 14:54:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.73 2004/07/05 07:28:45 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -238,7 +238,7 @@ ext2fs_mountroot()
 	}
 	(void)ext2fs_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
-	inittodr(fs->e2fs.e2fs_wtime);
+	setrootfstime((time_t)fs->e2fs.e2fs_wtime);
 	return (0);
 }
 

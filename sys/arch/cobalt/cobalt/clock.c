@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2003/07/15 01:29:22 lukem Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2004/07/05 07:28:45 pk Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2003/07/15 01:29:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2004/07/05 07:28:45 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -46,7 +46,6 @@ void	setstatclockrate(int);
 void
 cpu_initclocks()
 {
-	inittodr(0);
 
 	return;
 }
