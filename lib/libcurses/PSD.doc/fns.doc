@@ -32,6 +32,14 @@
 .\"     @(#)fns.doc	8.2 (Berkeley) 6/1/94
 .\"
 .Ds
+.Fn addbytes "char *str" "int len"
+.De
+This function is the low level character output function.
+.Vn Len
+characters of the string
+.Vn str
+are output to the current \*y position of the window.
+.Ds
 .Fn addch "chtype ch" \(dg
 .De
 Add the character
@@ -1566,15 +1574,6 @@ Identical to
 except that it takes both a window specification and a pointer to a variable
 length argument list.
 .Ds
-.Fn waddbytes "WINDOW *win" "char *str" "int len"
-.De
-This function is the low level character output function.
-.Vn Len
-characters of the string
-.Vn str
-are output to the current \*y position of the window specified by
-.Vn win.
-.Ds
 .Fn wnoutrefresh "WINDOW *win"
 .De
 Add the window contents to a virtual screen.  Several windows can be added
@@ -1608,6 +1607,7 @@ in the window are untouched.
 specification of a window, rather than the use of the default
 .Vn stdscr.\fP
 .Ds
+.Fn waddbytes "WINDOW *win" "char* str" "int len"
 .Fn waddch "WINDOW *win" "chtype ch"
 .Fn waddnstr "WINDOW *win" "char *str" "int len"
 .Fn waddstr "WINDOW *win" "char *str"
