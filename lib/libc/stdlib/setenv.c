@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.18 2000/01/22 22:19:20 mycroft Exp $	*/
+/*	$NetBSD: setenv.c,v 1.19 2000/12/20 18:38:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.18 2000/01/22 22:19:20 mycroft Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.19 2000/12/20 18:38:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,6 +60,8 @@ __weak_alias(unsetenv,_unsetenv)
 extern rwlock_t __environ_lock;
 #endif
 
+extern char **environ;
+
 /*
  * setenv --
  *	Set the value of the environmental variable "name" to be
@@ -71,7 +73,6 @@ setenv(name, value, rewrite)
 	const char *value;
 	int rewrite;
 {
-	extern char **environ;
 	static int alloced;			/* if allocated space before */
 	char *c;
 	const char *cc;
@@ -142,7 +143,6 @@ void
 unsetenv(name)
 	const char *name;
 {
-	extern char **environ;
 	char **p;
 	int offset;
 
