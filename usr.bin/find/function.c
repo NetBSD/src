@@ -369,10 +369,30 @@ c_fstype(arg)
     
 	new = palloc(N_FSTYPE, f_fstype);
 	switch(*arg) {
+	case 'f':
+		if (!strcmp(arg, "fdesc")) {
+#ifdef MOUNT_FDESC
+			new->flags = MOUNT_FDESC;
+			return(new);
+#else
+			err("unknown file type %s", arg);
+#endif
+		}
+		break;
 	case 'i':
 		if (!strcmp(arg, "isofs")) {
 			new->flags = MOUNT_ISOFS;
 			return(new);
+		}
+		break;
+	case 'k':
+		if (!strcmp(arg, "kernfs")) {
+#ifdef MOUNT_KERNFS
+			new->flags = MOUNT_KERNFS;
+			return(new);
+#else
+			err("unknown file type %s", arg);
+#endif
 		}
 		break;
 	case 'l':
