@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_types.h,v 1.1 1998/11/13 04:20:35 oster Exp $	*/
+/*	$NetBSD: rf_types.h,v 1.2 1998/11/16 04:14:10 mycroft Exp $	*/
 /*
  * rf_types.h
  */
@@ -295,6 +295,37 @@
  *
  */
 
+#ifdef __NetBSD__
+
+#include <sys/types.h>
+#include <machine/endian.h>
+#include <machine/limits.h>
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define RF_IS_BIG_ENDIAN    1
+#elif BYTE_ORDER == LITTLE_ENDIAN
+#define RF_IS_BIG_ENDIAN    0
+#else
+#error byte order not defined
+#endif
+typedef int8_t              RF_int8;
+typedef u_int8_t            RF_uint8;
+typedef int16_t             RF_int16;
+typedef u_int16_t           RF_uint16;
+typedef int32_t             RF_int32;
+typedef u_int32_t           RF_uint32;
+typedef int64_t             RF_int64;
+typedef u_int64_t           RF_uint64;
+#if LONG_BIT == 32
+#define RF_LONGSHIFT        2
+#elif LONG_BIT == 64
+#define RF_LONGSHIFT        3
+#else
+#error word size not defined
+#endif
+
+#else /* __NetBSD__ */
+
 #ifdef __alpha
 #define RF_IS_BIG_ENDIAN    0
 typedef signed char         RF_int8;
@@ -360,62 +391,6 @@ typedef unsigned long long  RF_uint64;
 #define RF_LONGSHIFT        2
 #endif /* NETBSD_I386 || LINUX_I386 */
 
-#if defined(__NetBSD__) 
-#if defined(i386) 
-#define RF_IS_BIG_ENDIAN    0
-typedef char                RF_int8;
-typedef unsigned char       RF_uint8;
-typedef short               RF_int16;
-typedef unsigned short      RF_uint16;
-typedef int                 RF_int32;
-typedef unsigned int        RF_uint32;
-typedef long long           RF_int64;
-typedef unsigned long long  RF_uint64;
-#define RF_LONGSHIFT        2
-#endif
-#if defined(mips)
-#define RF_IS_BIG_ENDIAN    0
-typedef char                RF_int8;
-typedef unsigned char       RF_uint8;
-typedef short               RF_int16;
-typedef unsigned short      RF_uint16;
-typedef int                 RF_int32;
-typedef unsigned int        RF_uint32;
-typedef long long           RF_int64;
-typedef unsigned long long  RF_uint64;
-#define RF_LONGSHIFT        2
-#endif
-#if defined(sun3)
-#define RF_IS_BIG_ENDIAN    1
-typedef char                RF_int8;
-typedef unsigned char       RF_uint8;
-typedef short               RF_int16;
-typedef unsigned short      RF_uint16;
-typedef int                 RF_int32;
-typedef unsigned int        RF_uint32;
-typedef long long           RF_int64;
-typedef unsigned long long  RF_uint64;
-#define RF_LONGSHIFT        2
-#endif /* sun3 */
-
-#if defined(SUN4)
-#define RF_IS_BIG_ENDIAN    1
-typedef char                RF_int8;
-typedef unsigned char       RF_uint8;
-typedef short               RF_int16;
-typedef unsigned short      RF_uint16;
-typedef int                 RF_int32;
-typedef unsigned int        RF_uint32;
-typedef long long           RF_int64;
-typedef unsigned long long  RF_uint64;
-#define RF_LONGSHIFT        2
-#endif /* SUN4 */
-
-
-#endif
-
-
-
 #if defined(mips) && !defined(SGI) && !defined(__NetBSD__)
 #define RF_IS_BIG_ENDIAN    0
 typedef char                RF_int8;
@@ -455,6 +430,8 @@ typedef unsigned long long  RF_uint64;
 #define RF_LONGSHIFT        2
 #endif /* _MIPS_SZLONG == 32 */
 #endif /* SGI */
+
+#endif /* __NetBSD__ */
 
 /*
  * These are just zero and non-zero. We don't use "TRUE"
