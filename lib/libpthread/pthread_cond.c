@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.1.2.12 2002/07/16 13:26:30 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.1.2.13 2002/10/07 19:37:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -101,6 +101,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 
 	self = pthread__self();
 	pthread_spinlock(self, &cond->ptc_lock);
+#ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
 	else
@@ -108,6 +109,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 			pthread_spinunlock(self, &cond->ptc_lock);
 			return EINVAL;
 		}
+#endif
 	SDPRINTF(("(cond wait %p) Waiting on %p, mutex %p\n",
 	    self, cond, mutex));
 	pthread_spinlock(self, &self->pt_statelock);
@@ -158,6 +160,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 
 	self = pthread__self();
 	pthread_spinlock(self, &cond->ptc_lock);
+#ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
 	else
@@ -165,7 +168,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 			pthread_spinunlock(self, &cond->ptc_lock);
 			return EINVAL;
 		}
-
+#endif
 	wait.ptw_thread = self;
 	wait.ptw_cond = cond;
 	retval = 0;
@@ -214,8 +217,10 @@ pthread_cond_wait__callback(void *arg)
 
 	pthread_spinlock(self, &a->ptw_cond->ptc_lock);
 	PTQ_REMOVE(&a->ptw_cond->ptc_waiters, a->ptw_thread, pt_sleep);
+#ifdef ERRORCHECK
 	if (PTQ_EMPTY(&a->ptw_cond->ptc_waiters))
 		a->ptw_cond->ptc_mutex = NULL;
+#endif
 	pthread_spinunlock(self, &a->ptw_cond->ptc_lock);
 	pthread__sched(self, a->ptw_thread);
 }
@@ -237,8 +242,10 @@ pthread_cond_signal(pthread_cond_t *cond)
 	signaled = PTQ_FIRST(&cond->ptc_waiters);
 	if (signaled != NULL)
 		PTQ_REMOVE(&cond->ptc_waiters, signaled, pt_sleep);
+#ifdef ERRORCHECK
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		cond->ptc_mutex = NULL;
+#endif
 	pthread_spinunlock(self, &cond->ptc_lock);
 
 	if (signaled != NULL)
@@ -265,7 +272,9 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 	pthread_spinlock(self, &cond->ptc_lock);
 	blockedq = cond->ptc_waiters;
 	cond->ptc_waiters = nullq;
+#ifdef ERRORCHECK
 	cond->ptc_mutex = NULL;
+#endif
 	pthread_spinunlock(self, &cond->ptc_lock);
 	
 	PTQ_FOREACH(signaled, &blockedq, pt_sleep)
