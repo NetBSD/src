@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2003/12/27 01:16:55 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2004/01/05 15:35:59 christos Exp $
 
 WARNS=2
-DPADD+=${LIBSTDCPP} ${LIBCURSES} ${LIBTERMCAP} ${LIBM}
-LDADD+=-lstdc++ -lcurses -ltermcap -lm
+DPADD+=${LIBCURSES} ${LIBTERMCAP} ${LIBM}
+LDADD+=-lcurses -ltermcap -lm
 
-PROG=dab
+PROG_CXX=dab
 MAN=dab.6
 SRCS=algor.cc board.cc main.cc human.cc box.cc player.cc gamescreen.cc \
     ttyscrn.cc random.cc
