@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.76 1998/12/22 11:21:09 bouyer Exp $
+#	$NetBSD: Makefile,v 1.77 1999/01/03 22:17:19 cjs Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -30,7 +30,8 @@ SUBDIR+= gnu
 # This is needed for libstdc++ and gen-params.
 includes-gnu: includes-include includes-sys
 
-.if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
+.if exists(domestic) && (!defined(EXPORTABLE_SYSTEM) ||\
+    make(obj) || make(clean) || make(cleandir) || make(distclean))
 SUBDIR+= domestic
 .endif
 
