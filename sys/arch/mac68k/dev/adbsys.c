@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.18 1996/05/05 14:34:02 briggs Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.19 1996/05/08 04:00:44 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -110,7 +110,7 @@ extdms_init()
 		if (adbdata.origADBAddr == ADBADDR_MS &&
 		    (adbdata.devType == ADBMS_USPEED)) {
 			/* Found MicroSpeed Mouse Deluxe Mac */
-			cmd = 0x39;	/* listen 1 */
+			cmd = ((adbaddr<<4)&0xF)|0x9;	/* listen 1 */
 
 			/*
 			 * To setup the MicroSpeed, it appears that we can
@@ -120,18 +120,22 @@ extdms_init()
 			 *  buffer[1], buffer[2] as std. mouse
 			 *  buffer[3] = buffer[4] = 0xff when no buttons
 			 *   are down.  When button N down, bit N is clear.
-			 * For the following command, buffer[1] appears to
-			 * be ignored?  buffer[4]'s locking mask enables a
+			 * buffer[4]'s locking mask enables a
 			 * click to toggle the button down state--sort of
 			 * like the "Easy Access" shift/control/etc. keys.
+			 * buffer[3]'s alternative speed mask enables using 
+			 * different speed when the corr. button is down
 			 */
 			buffer[0] = 4;
-			buffer[1] = 0x03;	/* not significant? */
+			buffer[1] = 0x00;	/* Alternative speed */
 			buffer[2] = 0x00;	/* speed = maximum */
-			buffer[3] = 0x10;	/* enable extended protocol */
+			buffer[3] = 0x10;	/* enable extended protocol,
+						 * lower bits = alt. speed mask
+						 *            = 0000b
+						 */
 			buffer[4] = 0x07;	/* Locking mask = 0000b,
-						   enable buttons = 0111b */
-
+						 * enable buttons = 0111b
+						 */
 			extdms_done = 0;
 			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 				(Ptr)&extdms_done, cmd);
