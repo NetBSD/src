@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.20 1999/08/27 18:01:35 mycroft Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.21 1999/08/27 18:26:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.20 1999/08/27 18:01:35 mycroft Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.21 1999/08/27 18:26:34 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -933,12 +933,13 @@ fts_sort(sp, head, nitems)
 	 * 40 so don't realloc one entry at a time.
 	 */
 	if (nitems > sp->fts_nitems) {
-		sp->fts_nitems = nitems + 40;
-		if ((sp->fts_array = realloc(sp->fts_array,
-		    (size_t)(sp->fts_nitems * sizeof(FTSENT *)))) == NULL) {
-			sp->fts_nitems = 0;
+		FTSENT **new;
+
+		new = realloc(sp->fts_array, sizeof(FTSENT *) * (nitems + 40));
+		if (new == 0)
 			return (head);
-		}
+		sp->fts_array = new;
+		sp->fts_nitems = nitems + 40;
 	}
 	for (ap = sp->fts_array, p = head; p; p = p->fts_link)
 		*ap++ = p;
@@ -1027,11 +1028,24 @@ fts_palloc(sp, size)
 	FTS *sp;
 	size_t size;
 {
+	char *new;
 
+#if 1
+	/* Protect against fts_pathlen overflow. */
+	if (size > USHRT_MAX + 1) {
+		errno = ENOMEM;
+		return (1);
+	}
+#endif
 	size = fts_pow2(size);
+	new = realloc(sp->fts_path, size);
+	if (new == 0) {
+		errno = ENOMEM;
+		return (1);
+	}
+	sp->fts_path = new;
 	sp->fts_pathlen = size;
-	sp->fts_path = realloc(sp->fts_path, size);
-	return (sp->fts_path == NULL);
+	return (0);
 }
 
 /*
