@@ -24,10 +24,14 @@
 #define MSG_ORDERED_Q_TAG	0x22 /* O/O */
 #define MSG_IGN_WIDE_RESIDUE	0x23 /* O/O */
 
-/* Identify message */
-#define MSG_IDENTIFY(lun, disc)	(((disc) ? 0xc0 : 0x80) | (lun))
-#define MSG_ISIDENTIFY(m)	((m) & 0x80)
+/* Identify message */		     /* M/M */	
+#define MSG_IDENTIFYFLAG	0x80 
+#define MSG_IDENTIFY(lun, disc)	(((disc) ? 0xc0 : MSG_IDENTIFYFLAG) | (lun))
+#define MSG_ISIDENTIFY(m)	((m) & MSG_IDENTIFYFLAG)
 
-/* Extended messages (opcode) */
+/* Extended messages (opcode and length) */
 #define MSG_EXT_SDTR		0x01
-#define	MSG_EXT_WDTR		0x03
+#define MSG_EXT_SDTR_LEN	0x03
+
+#define MSG_EXT_WDTR		0x03
+#define MSG_EXT_WDTR_LEN	0x02
