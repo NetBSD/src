@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.190 2000/11/08 10:49:27 wiz Exp $
+# $NetBSD: mi,v 1.191 2000/11/10 02:00:09 wiz Exp $
 .
 ./altroot
 ./bin
@@ -764,6 +764,7 @@
 ./usr/share/dict/special
 ./usr/share/doc
 ./usr/share/doc/html
+./usr/share/doc/html/bzip2
 ./usr/share/doc/html/ntp
 ./usr/share/doc/html/ntp/hints
 ./usr/share/doc/psd
