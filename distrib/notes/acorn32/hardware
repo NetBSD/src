@@ -1,0 +1,156 @@
+.\"	$NetBSD: hardware,v 1.1 2001/10/14 14:08:03 bjh21 Exp $
+.
+.Nx*M
+\*V runs on Acorn systems with
+.Tn ARM6
+or later processors,
+with or without FPU coprocessor. The minimal configuration is said to
+require 8 MB of RAM and 50 MB of disk space, though we do not know of anyone
+running with a system quite this minimal today. To install the entire
+system requires much more disk space (the unpacked binary distribution,
+without sources, requires at least 65 MB without counting space needed for
+swap space, etc), and to run X or compile the system, more RAM is
+recommended. (8 MB of RAM will actually allow you to run X and/or compile,
+but it won't be speedy. Note that until you have around 16 MB of RAM,
+getting more RAM is more important than getting a faster CPU.)
+.
+.Ss2 Supported devices
+.(bullet -offset indent
+RiscPC/A7000(+) floppy controller
+.It
+IDE controllers
+.(bullet -compact
+Acorn motherboard IDE
+.It
+Simtec IDE controller
+.It
+RapIDE Issue 2 IDE controller
+.It
+ICS V5 & V6 IDE controller
+.bullet)
+.It
+SCSI host adapters
+.(bullet -compact
+Cumana SCSI 2
+.It
+PowerTec SCSI 2
+.It
+MCS Connect32 SCSI 2
+.It
+Acorn SCSI
+.It
+Oak SCSI I
+.It
+Morley SCSI I (uncached only)
+.bullet)
+.It
+VIDC20 video
+.It
+RiscPC Motherboard serial port
+.It
+RiscPC Motherboard parallel port
+.It
+Ethernet adapters
+.(bullet -compact
+Acorn Ether1
+.It
+Atomwide Ether3
+.It
+ANT Ether3
+.It
+ANT Ether5
+.It
+Atomwide EtherA
+.It
+ANT EtherB
+.It
+Acorn EtherH
+.It
+I-cubed EtherH
+.It
+ANT EtherM
+.bullet)
+.It
+Most SCSI disk drives
+.It
+Most SCSI tape drives
+.It
+CD-ROM drives
+.(bullet -compact
+Most SCSI CD-ROM drives
+.It
+Most ATAPI CD-ROM drives
+.(Note
+Some low-priced IDE CD-ROM drives are known for being not or not fully
+ATAPI compliant, and thus requires some hack (generally an entry to a
+quirk table) to work with
+.Nx .
+.Note)
+.bullet)
+.It
+Mice
+.(bullet -compact
+RiscPC quadrature mouse
+.It
+A7000 PS/2 mouse
+.bullet)
+.It
+Processors
+.(bullet -compact
+ARM 610
+.It
+ARM 700
+.It
+ARM 700 + FPA11
+.It
+ARM 710
+.It
+ARM 7500
+.It
+ARM 7500FE
+.It
+ARM 810. [*]
+.It
+SA110
+.bullet)
+.It
+Motherboards
+.(bullet -compact
+Acorn RiscPC
+.It
+Acorn A7000
+.It
+Acorn A7000+
+.bullet)
+.It
+Other devices
+.(bullet -compact
+RiscPC keyboard
+.It
+A7000 keyboard
+.It
+RiscPC realtime clock
+.bullet)
+.bullet)
+.Pp
+Drivers for hardware marked with
+.Dq [*]
+are
+.Em not
+present in installation kernels.
+.Pp
+Support for some devices is limited to particular kernels. eg there is no
+SA110 support in A7000 kernels.
+.
+.Ss2 Unsupported devices
+.(bullet -offset indent -compact
+Acorn/Aleph1 PC cards
+.It
+Any SCSI card using a PowerROM
+.It
+Podule based serial ports
+.It
+Castle SCSI/Ethernet cards
+.bullet)
+.Pp
+Drivers are planned for some of the above devices.
