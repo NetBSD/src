@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.119 2004/10/04 08:37:06 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.120 2004/10/04 08:40:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.119 2004/10/04 08:37:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.120 2004/10/04 08:40:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1005,8 +1005,8 @@ struct procfs_root_readdir_ctx {
 	struct uio *uiop;
 	off_t *cookies;
 	int ncookies;
-	int skip;
-	int idx;
+	off_t off;
+	off_t startoff;
 	int error;
 };
 
@@ -1022,8 +1022,8 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
 	if (uiop->uio_resid < UIO_MX)
 		return -1; /* no space */
 
-	if (ctxp->skip) {
-		ctxp->skip--;
+	if (ctxp->off < ctxp->startoff) {
+		ctxp->off++;
 		return 0;
 	}
 
@@ -1044,8 +1044,8 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
 
 	ctxp->ncookies++;
 	if (ctxp->cookies)
-		*(ctxp->cookies)++ = ctxp->idx + 1;
-	ctxp->idx++;
+		*(ctxp->cookies)++ = ctxp->off + 1;
+	ctxp->off++;
 
 	return 0;
 }
@@ -1258,8 +1258,8 @@ procfs_readdir(v)
 		/* 4 ... are process entries. */
 		ctx.uiop = uio;
 		ctx.error = 0;
-		ctx.idx = 4;
-		ctx.skip = i - ctx.idx;
+		ctx.off = 4;
+		ctx.startoff = i;
 		ctx.cookies = cookies;
 		ctx.ncookies = nc;
 		proclist_foreach_call(&allproc,
@@ -1271,11 +1271,11 @@ procfs_readdir(v)
 			break;
 
 		/* misc entries. */
-		if (i >= ctx.idx + nproc_root_targets)
+		if (i < ctx.off)
+			i = ctx.off;
+		if (i >= ctx.off + nproc_root_targets)
 			break;
-		if (i < ctx.idx)
-			i = ctx.idx;
-		for (pt = &proc_root_targets[i - ctx.idx];
+		for (pt = &proc_root_targets[i - ctx.off];
 		    uio->uio_resid >= UIO_MX &&
 		    pt < &proc_root_targets[nproc_root_targets];
 		    pt++, i++) {
