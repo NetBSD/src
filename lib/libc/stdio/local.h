@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.5 1995/02/02 02:10:05 jtc Exp $	*/
+/*	$NetBSD: local.h,v 1.6 1997/07/13 20:15:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -56,6 +56,7 @@ void	(*__cleanup) __P((void));
 void	__smakebuf __P((FILE *));
 int	__swhatbuf __P((FILE *, size_t *, int *));
 int	_fwalk __P((int (*)(FILE *)));
+char	*_mktemp __P((char *));
 int	__swsetup __P((FILE *));
 int	__sflags __P((const char *, int *));
 
