@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.14 1999/08/25 08:45:25 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.15 1999/08/26 21:48:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.14 1999/08/25 08:45:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.15 1999/08/26 21:48:11 thorpej Exp $");
 
 #include "rasops_glue.h"
 
@@ -400,8 +400,8 @@ rasops_alloc_mattr(cookie, fg, bg, flg, attr)
 #ifdef RASOPS_CLIPPING
 	flg &= 255;
 #endif
-	fg = (fg ? 1 : 0);
-	bg = (bg ? 1 : 0);
+	fg = (fg == WSCOL_BLACK ? 0 : 1);
+	bg = (bg == WSCOL_BLACK ? 0 : 1);
 	
 	if (flg & WSATTR_BLINK)
 		return (EINVAL);
