@@ -1,4 +1,4 @@
-/*	$NetBSD: ypclnt.h,v 1.7 1995/07/14 21:11:10 christos Exp $	*/
+/*	$NetBSD: ypclnt.h,v 1.8 1997/07/13 18:20:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -69,8 +69,11 @@ __BEGIN_DECLS
 int	yp_bind		__P((const char *));
 struct dom_binding;
 int	_yp_dobind	__P((const char *, struct dom_binding **));
+int	_yp_check	__P((char **));
 void	yp_unbind	__P((const char *));
 int	yp_get_default_domain __P((char **));
+struct ypmaplist;
+int	yp_maplist	__P((const char *, struct ypmaplist **));
 int	yp_match 	__P((const char *, const char *, const char *,
 			     int , char **, int *));
 int	yp_first 	__P((const char *, const char *, char **, int *,
