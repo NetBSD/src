@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.72 2000/11/30 12:02:19 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.73 2000/11/30 23:59:04 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.72 2000/11/30 12:02:19 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.73 2000/11/30 23:59:04 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ extern char	**dr_name;
 extern int	*dk_select, dk_ndrive;
 
 struct	uvmexp uvmexp, ouvmexp;
-int		ndrives;
+int	ndrives;
 
 int	winlines = 20;
 
@@ -175,31 +175,31 @@ kvm_t *kd;
 #define	HISTLIST	0x40
 #define	HISTDUMP	0x80
 
-void	cpustats __P((void));
-void	dkstats __P((void));
-void	doevcnt __P((int verbose));
-void	dointr __P((int verbose));
-void	domem __P((void));
-void	dopool __P((void));
-void	dosum __P((void));
-void	dovmstat __P((u_int, int));
-void	kread __P((int, void *, size_t));
-void	needhdr __P((int));
-long	getuptime __P((void));
-void	printhdr __P((void));
-long	pct __P((long, long));
-void	usage __P((void));
-void	doforkst __P((void));
+void	cpustats(void);
+void	dkstats(void);
+void	doevcnt(int verbose);
+void	dointr(int verbose);
+void	domem(void);
+void	dopool(void);
+void	dosum(void);
+void	dovmstat(u_int, int);
+void	kread(int, void *, size_t);
+void	needhdr(int);
+long	getuptime(void);
+void	printhdr(void);
+long	pct(long, long);
+void	usage(void);
+void	doforkst(void);
 
-void	hist_traverse __P((int, const char *));
-void	hist_dodump __P((struct uvm_history *));
+void	hist_traverse(int, const char *);
+void	hist_dodump(struct uvm_history *);
 
-int	main __P((int, char **));
-char	**choosedrives __P((char **));
+int	main(int, char **);
+char	**choosedrives(char **);
 
-extern int dkinit __P((int, gid_t));
-extern void dkreadstats __P((void));
-extern void dkswap __P((void));
+extern int dkinit(int, gid_t);
+extern void dkreadstats(void);
+extern void dkswap(void);
 
 /* Namelist and memory file names. */
 char	*nlistf, *memf;
@@ -208,9 +208,7 @@ char	*nlistf, *memf;
 #define	BACKWARD_COMPATIBILITY
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int c, todo, verbose;
 	u_int interval;
@@ -364,8 +362,7 @@ main(argc, argv)
 }
 
 char **
-choosedrives(argv)
-	char **argv;
+choosedrives(char **argv)
 {
 	int i;
 
@@ -399,7 +396,7 @@ choosedrives(argv)
 }
 
 long
-getuptime()
+getuptime(void)
 {
 	static time_t now;
 	static struct timeval boottime;
@@ -420,9 +417,7 @@ getuptime()
 int	hz, hdrcnt;
 
 void
-dovmstat(interval, reps)
-	u_int interval;
-	int reps;
+dovmstat(u_int interval, int reps)
 {
 	struct vmtotal total;
 	time_t uptime, halfuptime;
@@ -497,7 +492,7 @@ dovmstat(interval, reps)
 }
 
 void
-printhdr()
+printhdr(void)
 {
 	int i;
 
@@ -523,16 +518,14 @@ printhdr()
  * Force a header to be prepended to the next output.
  */
 void
-needhdr(dummy)
-	int dummy;
+needhdr(int dummy)
 {
 
 	hdrcnt = 1;
 }
 
 long
-pct(top, bot)
-	long top, bot;
+pct(long top, long bot)
 {
 	long ans;
 
@@ -545,7 +538,7 @@ pct(top, bot)
 #define	PCT(top, bot) (int)pct((long)(top), (long)(bot))
 
 void
-dosum()
+dosum(void)
 {
 	struct nchstats nchstats;
 	long nchtotal;
@@ -649,7 +642,7 @@ dosum()
 }
 
 void
-doforkst()
+doforkst(void)
 {
 
 	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
@@ -661,7 +654,7 @@ doforkst()
 }
 
 void
-dkstats()
+dkstats(void)
 {
 	int dn, state;
 	double etime;
@@ -683,7 +676,7 @@ dkstats()
 }
 
 void
-cpustats()
+cpustats(void)
 {
 	int state;
 	double pct, total;
@@ -857,7 +850,7 @@ event_chain_trashed:
 char *kmemnames[] = INITKMEMNAMES;
 
 void
-domem()
+domem(void)
 {
 	struct kmembuckets *kp;
 	struct kmemstats *ks;
@@ -967,7 +960,7 @@ domem()
 }
 
 void
-dopool()
+dopool(void)
 {
 	int first, ovflw;
 	long addr;
@@ -1057,10 +1050,7 @@ dopool()
  * kread reads something from the kernel, given its nlist index.
  */
 void
-kread(nlx, addr, size)
-	int nlx;
-	void *addr;
-	size_t size;
+kread(int nlx, void *addr, size_t size)
 {
 	const char *sym;
 
@@ -1093,9 +1083,7 @@ struct nlist histnl[] = {
  * Note, we assume that if we're not listing, we're dumping.
  */
 void
-hist_traverse(todo, histname)
-	int todo;
-	const char *histname;
+hist_traverse(int todo, const char *histname)
 {
 	struct uvm_history_head histhead;
 	struct uvm_history hist, *histkva;
@@ -1173,8 +1161,7 @@ hist_traverse(todo, histname)
  * Actually dump the history buffer at the specified KVA.
  */
 void
-hist_dodump(histp)
-	struct uvm_history *histp;
+hist_dodump(struct uvm_history *histp)
 {
 	struct uvm_history_ent *histents, *e;
 	size_t histsize;
@@ -1247,7 +1234,7 @@ hist_dodump(histp)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
