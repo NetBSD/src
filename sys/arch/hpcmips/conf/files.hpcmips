@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.36 2000/07/30 04:41:19 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.37 2000/09/21 14:17:35 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -69,14 +69,21 @@ include "dev/wsfont/files.wsfont"
 # Workstation Console
 #
 include "dev/wscons/files.wscons"
-file	dev/pckbc/wskbdmap_mfii.c		btnmgr | vrkiu | skbd
-file	arch/hpcmips/dev/pckbd_encode.c		btnmgr | vrkiu | skbd
+file	dev/pckbc/wskbdmap_mfii.c		btnmgr | hpckbd
+file	arch/hpcmips/dev/pckbd_encode.c		btnmgr | hpckbd
 defopt	PCKBD_LAYOUT
 
+#	Simple framebuffer interface for wsdisplay
 define	hpcfbif {}
 device	hpcfb: wsemuldisplaydev, rasops1, rasops2, rasops8, rasops15, rasops16
 attach	hpcfb at hpcfbif
 file	arch/hpcmips/dev/hpcfb.c	hpcfb needs-flag
+
+#	Simple keyboard interface for wskbd
+device hpckbdif {}
+device hpckbd: wskbddev
+attach hpckbd at hpckbdif
+file arch/hpcmips/dev/hpckbd.c		hpckbd
 
 device	bivideo: hpcfbif
 file	arch/hpcmips/dev/bivideo.c	bivideo needs-flag
@@ -151,7 +158,7 @@ device vrbcu
 attach vrbcu at vrip
 file arch/hpcmips/vr/bcu_vrip.c			vrbcu needs-flag
 
-device vrkiu: wskbddev
+device vrkiu: hpckbdif
 attach vrkiu at vrip
 file arch/hpcmips/vr/vrkiu.c			vrkiu needs-flag
 
@@ -278,23 +285,15 @@ device it8368e: pcmciabus
 attach it8368e at txcsbus
 file arch/hpcmips/dev/it8368.c	it8368e
 
-device skbdif {}
-
 #	MITUBISHI M38813 keryboard controller
-device m38813c: skbdif
+device m38813c: hpckbdif
 attach m38813c at txcsbus
 file arch/hpcmips/dev/m38813c.c		m38813c		needs-flag
 
 #	PHILIPS 74ALVC16241 / TOSHIBA TC5165BTFS buffer driver (keyboard)
-device tc5165buf: skbdif
+device tc5165buf: hpckbdif
 attach tc5165buf at txcsbus
 file arch/hpcmips/dev/tc5165buf.c	tc5165buf	needs-flag
-
-#	Simple keyboard interface for wskbd
-device skbd: wskbddev
-attach skbd at skbdif
-file arch/hpcmips/dev/skbd.c		skbd
-
 
 #	TOSHIBA TC6358E(Plum2)
 device plumif {}
