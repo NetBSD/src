@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.302 2001/02/18 17:54:18 bouyer Exp $
+$NetBSD: pcidevs,v 1.303 2001/03/02 06:51:07 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1844,6 +1844,7 @@ product WINBOND W89C940F_1 0x5a5a	W89C940F Ethernet
 product XIRCOM X3201_3		0x0002	X3201-3 Fast Ethernet Controller
 /* this is the device id `indicating 21143 driver compatibility' */
 product XIRCOM X3201_3_21143	0x0003	X3201-3 Fast Ethernet Controller (21143)
+product XIRCOM WINGLOBAL	0x000c	WinGlobal Modem
 
 /* Yamaha products */
 product YAMAHA YMF724	0x0004	724 Audio
