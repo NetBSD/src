@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.78 2004/02/04 05:17:28 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.79 2004/02/06 08:07:55 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.78 2004/02/04 05:17:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.79 2004/02/06 08:07:55 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1231,11 +1231,7 @@ ip6_insertfraghdr(m0, m, hlen, frghdrp)
 
 static int
 ip6_getpmtu(ro_pmtu, ro, ifp, dst, mtup, alwaysfragp)
-#ifdef NEW_STRUCT_ROUTE
-	struct route *ro_pmtu, *ro;
-#else
 	struct route_in6 *ro_pmtu, *ro;
-#endif
 	struct ifnet *ifp;
 	struct in6_addr *dst;
 	u_long *mtup;
@@ -1261,11 +1257,7 @@ ip6_getpmtu(ro_pmtu, ro, ifp, dst, mtup, alwaysfragp)
 			sa6_dst->sin6_len = sizeof(struct sockaddr_in6);
 			sa6_dst->sin6_addr = *dst;
 
-#ifdef __bsdi__			/* bsdi needs rtcalloc to clone a route. */
-			rtcalloc((struct route *)ro_pmtu);
-#else
 			rtalloc((struct route *)ro_pmtu);
-#endif
 		}
 	}
 	if (ro_pmtu->ro_rt) {
