@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsck.h	5.17 (Berkeley) 7/27/90
- *	$Id: fsck.h,v 1.4 1993/08/01 18:27:27 mycroft Exp $
+ *	$Id: fsck.h,v 1.5 1994/05/02 10:18:21 pk Exp $
  */
 
 #define	MAXDUP		10	/* limit on dup blks (per inode) */
@@ -78,7 +78,6 @@ struct bufarea sblk;		/* file system superblock */
 struct bufarea cgblk;		/* cylinder group blocks */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
-struct bufarea *getdatablk();
 
 #define	dirty(bp)	(bp)->b_dirty = 1
 #define	initbarea(bp) \
@@ -204,9 +203,32 @@ struct	dinode zino;
 #define	ALTERED	0x08
 #define	FOUND	0x10
 
-time_t time();
-struct dinode *ginode();
-struct inoinfo *getinoinfo();
-void getblk();
-ino_t allocino();
-int findino();
+int		ckinode __P((struct dinode *, struct inodesc *));
+int		iblock __P((struct inodesc *, long, u_long));
+int		chkrange __P((daddr_t, int));
+struct dinode	*ginode __P((ino_t));
+struct dinode	*getnextinode __P((ino_t));
+void		cacheino __P((struct dinode *, ino_t));
+struct inoinfo	*getinoinfo __P((ino_t));
+void		resetinodebuf __P((void));
+void		freeinodebuf __P((void));
+void		inocleanup __P((void));
+void		inodirty __P((void));
+void		clri __P((struct inodesc *, char *, int));
+int		findname __P((struct inodesc *));
+int		findino __P((struct inodesc *));
+void		pinode __P((ino_t));
+void		blkerror __P((ino_t, char *, daddr_t));
+ino_t		allocino __P((ino_t, int));
+void		freeino __P((ino_t));
+
+int		ftypeok __P((struct dinode *));
+struct bufarea *getdatablk __P((daddr_t, long));
+void		getblk __P((struct bufarea *, daddr_t, long));
+void		flush __P((int, struct bufarea *));
+int		bread __P((int, char *, daddr_t, long));
+int		bwrite __P((int, char *, daddr_t, long));
+int		allocblk __P((long));
+void		freeblk __P((daddr_t, long));
+void		getpathname __P((char *, ino_t, ino_t));
+
