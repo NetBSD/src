@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.20 2003/04/28 23:16:13 bjh21 Exp $	*/
+/*	$NetBSD: limits.h,v 1.21 2003/07/16 21:03:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -57,6 +57,10 @@
 #define	_POSIX_SSIZE_MAX	32767
 #define	_POSIX_STREAM_MAX	8
 #define	_POSIX_SYMLINK_MAX	256
+#define	_POSIX_THREAD_DESTRUCTOR_ITERATIONS	4
+#define	_POSIX_THREAD_KEYS_MAX	128
+#define	_POSIX_THREAD_THREADS_MAX		64
+#define	_POSIX_TIMER_MAX	32
 #define	_POSIX_TTY_NAME_MAX	9
 #define	_POSIX_TZNAME_MAX	3
 
