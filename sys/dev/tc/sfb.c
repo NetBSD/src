@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.23 1999/10/26 10:57:04 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.24 1999/10/27 04:32:35 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.23 1999/10/26 10:57:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.24 1999/10/27 04:32:35 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,9 +277,14 @@ sfbmatch(parent, match, aux)
 {
 	struct tc_attach_args *ta = aux;
 
+#if 1
+	if (strncmp("PMAGB-BA", ta->ta_modname, TC_ROM_LLEN) != 0
+	    && strncmp("PMAGD", ta->ta_modname, 5))
+		return (0);
+#else
 	if (strncmp("PMAGB-BA", ta->ta_modname, TC_ROM_LLEN) != 0)
 		return (0);
-
+#endif
 	return (1);
 }
 
