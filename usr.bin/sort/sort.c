@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.28 2002/11/27 14:44:46 tron Exp $	*/
+/*	$NetBSD: sort.c,v 1.29 2002/11/27 16:47:13 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.28 2002/11/27 14:44:46 tron Exp $");
+__RCSID("$NetBSD: sort.c,v 1.29 2002/11/27 16:47:13 tron Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -251,8 +251,7 @@ main(argc, argv)
 		outfp = stdout;
 	} else if (!(ch = access(outpath, 0)) &&
 	    strncmp(_PATH_DEV, outpath, 5)) {
-		static const struct sigaction act =
-		    { {onsignal}, {{0}}, SA_RESTART | SA_RESETHAND };
+		struct sigaction act;
 		static const int sigtable[] = {SIGHUP, SIGINT, SIGPIPE,
 		    SIGXCPU, SIGXFSZ, SIGVTALRM, SIGPROF, 0};
 		int outfd;
@@ -267,6 +266,9 @@ main(argc, argv)
 			err(2, "Cannot open temporary file `%s'", toutpath);
 		outfile = toutpath;
 		(void)atexit(cleanup);
+		act.sa_handler = onsignal;
+		(void) sigemptyset(&act.sa_mask);
+		act.sa_flags = SA_RESTART | SA_RESETHAND;
 		for (i = 0; sigtable[i]; ++i)	/* always unlink toutpath */
 			sigaction(sigtable[i], &act, 0);
 	} else
