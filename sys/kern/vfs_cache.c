@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.51 2003/08/07 16:32:01 agc Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.52 2003/08/08 20:18:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.51 2003/08/07 16:32:01 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.52 2003/08/08 20:18:19 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -208,8 +208,25 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	}
 
 	vp = ncp->nc_vp;
+
+	/*
+	 * Move this slot to end of LRU chain, if not already there.
+	 */
+	if (TAILQ_NEXT(ncp, nc_lru) != 0) {
+		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
+		TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
+	}
+
 	/* Release the name cache mutex while we acquire vnode locks */
 	simple_unlock(&namecache_slock);
+
+#ifdef DEBUG
+	/*
+	 * since we released namecache_slock,
+	 * we can't use this pointer any more.
+	 */
+	ncp = NULL;
+#endif /* DEBUG */
 
 	if (vp == dvp) {	/* lookup on "." */
 		VREF(dvp);
@@ -268,17 +285,8 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		return (-1);
 	}
 
-	simple_lock(&namecache_slock);
+	/* XXXSMP - updating stats without lock; do we care? */
 	nchstats.ncs_goodhits++;
-	/*
-	 * Move this slot to end of LRU chain, if not already there.
-	 */
-	if (TAILQ_NEXT(ncp, nc_lru) != 0) {
-		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-		TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
-	}
-
-	simple_unlock(&namecache_slock);
 	*vpp = vp;
 	return (0);
 
