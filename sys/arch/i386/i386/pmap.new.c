@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.4 1998/03/10 14:53:20 chuck Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.5 1998/03/17 19:15:07 chuck Exp $	*/
 
 /*
  *
@@ -2389,8 +2389,14 @@ struct vm_page *pg;
 
 #ifdef DIAGNOSTIC
     if (pve->pv_ptp && (pve->pv_pmap->pm_pdir[pdei(pve->pv_va)] & PG_FRAME) 
-	!= VM_PAGE_TO_PHYS(pve->pv_ptp))
+	!= VM_PAGE_TO_PHYS(pve->pv_ptp)) {
+      printf("pmap_page_remove: pg=%p: va=%lx, pv_ptp=%p\n", pg, pve->pv_va,
+		pve->pv_ptp);
+      printf("pmap_page_remove: PTP's phys addr: actual=%x, recorded=%lx\n",
+		(pve->pv_pmap->pm_pdir[pdei(pve->pv_va)] & PG_FRAME),
+		VM_PAGE_TO_PHYS(pve->pv_ptp));
       panic("pmap_page_remove: mapped managed page has invalid pv_ptp field");
+    }
 #endif
     
     opte = ptes[i386_btop(pve->pv_va)];
