@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.3 2000/10/27 08:19:37 sato Exp $ */
+/*	$NetBSD: apmdev.c,v 1.4 2000/12/29 08:12:09 sato Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -246,9 +246,9 @@ apm_power_print(sc, pi)
 	struct apm_power_info *pi;
 {
 
-	if (APM_BATT_LIFE(regs) != APM_BATT_LIFE_UNKNOWN) {
+	if (pi->battery_life != APM_BATT_LIFE_UNKNOWN) {
 		printf("%s: battery life expectancy: %d%%\n",
-		    sc->sc_dev.dv_xname, APM_BATT_LIFE(regs));
+		    sc->sc_dev.dv_xname, pi->battery_life);
 	}
 	printf("%s: A/C state: ", sc->sc_dev.dv_xname);
 	switch (pi->ac_state) {
