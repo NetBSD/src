@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.7 2002/11/08 19:40:05 cgd Exp $ */
+/* $NetBSD: sbmac.c,v 1.8 2002/11/19 01:44:04 cgd Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -79,6 +79,7 @@
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_mac.h>
 #include <mips/sibyte/include/sb1250_dma.h>
+#include <mips/sibyte/include/sb1250_scd.h>
 
 
 /* Simple types */
@@ -208,6 +209,8 @@ struct sbmac_softc {
 
 	sbmacdma_t	sbm_txdma;	/* for now, only use channel 0 */
 	sbmacdma_t	sbm_rxdma;
+
+	int		sbm_pass3_dma;	/* chip has pass3 SOC DMA features */
 };
 
 
@@ -571,8 +574,11 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 {
 	sbdmadscr_t *dsc;
 	sbdmadscr_t *nextdsc;
-	struct mbuf *m_new = NULL;
+	sbdmadscr_t *prevdsc;
+	sbdmadscr_t *origdesc;
 	int length;
+	int num_mbufs = 0;
+	struct sbmac_softc *sc = d->sbdma_eth;
 
 	/* get pointer to our current place in the ring */
 
@@ -603,80 +609,150 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 #endif
 
 	/*
-	 * [BEGIN XXX]
-	 * XXX Copy/coalesce the mbufs into a single mbuf cluster (we assume
-	 * it will fit).  This is a temporary hack to get us going.
+	 * PASS3 parts do not have buffer alignment restriction.
+	 * No need to copy/coalesce to new mbuf.  Also has different
+	 * descriptor format
 	 */
+	if (sc->sbm_pass3_dma) {
+		struct mbuf *m_temp = NULL;
 
-	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-	if (m_new == NULL) {
-		printf("%s: mbuf allocation failed\n",
-		d->sbdma_eth->sc_dev.dv_xname);
-		return ENOBUFS;
+		/*
+		 * Loop thru this mbuf record.
+		 * The head mbuf will have SOP set.
+		 */
+		dsc->dscr_a = KVTOPHYS(mtod(m,caddr_t)) |
+		    M_DMA_DSCRA_INTERRUPT |
+		    M_DMA_ETHTX_SOP;
+
+		/*
+		 * transmitting: set outbound options,buffer A size(+ low 5
+		 * bits of start addr),and packet length.
+		 */
+		dsc->dscr_b =
+		    V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
+		    V_DMA_DSCRB_A_SIZE((m->m_len + (mtod(m,unsigned int) & 0x0000001F))) |
+		    V_DMA_DSCRB_PKT_SIZE_MSB( (m->m_pkthdr.len & 0xB000) ) |
+		    V_DMA_DSCRB_PKT_SIZE(m->m_pkthdr.len);
+
+		d->sbdma_addptr = nextdsc;
+		origdesc = prevdsc = dsc;
+		dsc = d->sbdma_addptr;
+		num_mbufs++;
+
+		/* Start with first non-head mbuf */
+		for(m_temp = m->m_next; m_temp != 0; m_temp = m_temp->m_next) {
+
+			if (m_temp->m_len == 0)
+				continue;	/* Skip 0-length mbufs */
+
+			/*
+			 * fill in the descriptor
+			 */
+
+			dsc->dscr_a = KVTOPHYS(mtod(m_temp,caddr_t)) |
+			    M_DMA_DSCRA_INTERRUPT;
+
+			/* transmitting: set outbound options,buffer A size(+ low 5 bits of start addr) */
+			dsc->dscr_b = V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_NOTSOP) |
+			    V_DMA_DSCRB_A_SIZE( (m_temp->m_len + (mtod(m_temp,unsigned int) & 0x0000001F)) );
+
+			d->sbdma_ctxtable[dsc-d->sbdma_dscrtable] = NULL;
+
+			/*
+			 * point at next descriptor
+			 */
+			nextdsc = SBDMA_NEXTBUF(d,sbdma_addptr);
+			if (nextdsc == d->sbdma_remptr) {
+				d->sbdma_addptr = origdesc;
+				return ENOSPC;
+			}
+			d->sbdma_addptr = nextdsc;
+
+			prevdsc = dsc;
+			dsc = d->sbdma_addptr;
+			num_mbufs++;
+		}
+
+		/*Set head mbuf to last context index*/
+		d->sbdma_ctxtable[prevdsc-d->sbdma_dscrtable] = m;
+	} else {
+		struct mbuf *m_new = NULL;
+		/*
+		 * [BEGIN XXX]
+		 * XXX Copy/coalesce the mbufs into a single mbuf cluster (we assume
+		 * it will fit).  This is a temporary hack to get us going.
+		 */
+
+		MGETHDR(m_new,M_DONTWAIT,MT_DATA);
+		if (m_new == NULL) {
+			printf("%s: mbuf allocation failed\n",
+			    d->sbdma_eth->sc_dev.dv_xname);
+			return ENOBUFS;
+		}
+
+		MCLGET(m_new,M_DONTWAIT);
+		if (!(m_new->m_flags & M_EXT)) {
+			printf("%s: mbuf cluster allocation failed\n",
+			    d->sbdma_eth->sc_dev.dv_xname);
+			m_freem(m_new);
+			return ENOBUFS;
+		}
+
+		m_new->m_len = m_new->m_pkthdr.len= MCLBYTES;
+		/*m_adj(m_new,ETHER_ALIGN);*/
+
+		/*
+		 * XXX Don't forget to include the offset portion in the
+		 * XXX cache block calculation when this code is rewritten!
+		 */
+
+		/*
+		 * Copy data
+		 */
+
+		m_copydata(m,0,m->m_pkthdr.len,mtod(m_new,caddr_t));
+		m_new->m_len = m_new->m_pkthdr.len = m->m_pkthdr.len;
+
+		/* Free old mbuf 'm', actual mbuf is now 'm_new' */
+
+		// XXX: CALLERS WILL FREE, they might have to bpf_mtap() if this
+		// XXX: function succeeds.
+		// m_freem(m);
+		length = m_new->m_len;
+
+		/* [END XXX] */
+		/*
+		 * fill in the descriptor
+		 */
+
+		dsc->dscr_a = KVTOPHYS(mtod(m_new,caddr_t)) |
+		    V_DMA_DSCRA_A_SIZE(NUMCACHEBLKS(m_new->m_len)) |
+		    M_DMA_DSCRA_INTERRUPT |
+		    M_DMA_ETHTX_SOP;
+
+		/* transmitting: set outbound options and length */
+		dsc->dscr_b = V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
+		    V_DMA_DSCRB_PKT_SIZE(length);
+
+		num_mbufs++;
+
+		/*
+		 * fill in the context
+		 */
+
+		d->sbdma_ctxtable[dsc-d->sbdma_dscrtable] = m_new;
+
+		/*
+		 * point at next packet
+		 */
+		d->sbdma_addptr = nextdsc;
 	}
-
-	MCLGET(m_new, M_DONTWAIT);
-	if (!(m_new->m_flags & M_EXT)) {
-		printf("%s: mbuf cluster allocation failed\n",
-		d->sbdma_eth->sc_dev.dv_xname);
-		m_freem(m_new);
-		return ENOBUFS;
-	}
-
-	m_new->m_len = m_new->m_pkthdr.len= MCLBYTES;
-	/*m_adj(m_new, ETHER_ALIGN);*/
-
-	/*
-	 * XXX Don't forget to include the offset portion in the
-	 * XXX cache block calculation when this code is rewritten!
-	 */
-
-	/*
-	 * Copy data
-	 */
-
-	m_copydata(m, 0, m->m_pkthdr.len, mtod(m_new, caddr_t));
-	m_new->m_len = m_new->m_pkthdr.len = m->m_pkthdr.len;
-
-	/* Free old mbuf 'm', actual mbuf is now 'm_new' */
-
-	// XXX: CALLERS WILL FREE, they might have to bpf_mtap() if this
-	// XXX: function succeeds.
-	// m_freem(m);
-	length = m_new->m_len;
-
-	/* [END XXX] */
-
-	/*
-	 * fill in the descriptor
-	 */
-
-	dsc->dscr_a = KVTOPHYS(mtod(m_new, caddr_t)) |
-	    V_DMA_DSCRA_A_SIZE(NUMCACHEBLKS(m_new->m_len)) |
-	    M_DMA_DSCRA_INTERRUPT |
-	    M_DMA_ETHTX_SOP;
-
-	/* transmitting: set outbound options and length */
-	dsc->dscr_b = V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
-	    V_DMA_DSCRB_PKT_SIZE(length);
-
-	/*
-	 * fill in the context
-	 */
-
-	d->sbdma_ctxtable[dsc-d->sbdma_dscrtable] = m_new;
-
-	/*
-	 * point at next packet
-	 */
-
-	d->sbdma_addptr = nextdsc;
 
 	/*
 	 * Give the buffer to the DMA engine.
 	 */
 
-	SBMAC_WRITECSR(d->sbdma_dscrcnt, 1);
+	SBMAC_WRITECSR(d->sbdma_dscrcnt, num_mbufs);
 
 	return 0;					/* we did it */
 }
@@ -952,6 +1028,7 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 static void
 sbmac_initctx(struct sbmac_softc *s)
 {
+	uint64_t sysrev;
 
 	/*
 	 * figure out the addresses of some ports
@@ -986,6 +1063,16 @@ sbmac_initctx(struct sbmac_softc *s)
 	s->sbm_speed = sbmac_speed_10;
 	s->sbm_duplex = sbmac_duplex_half;
 	s->sbm_fc = sbmac_fc_disabled;
+
+	/* 
+	 * Determine SOC type.  112x has Pass3 SOC features.
+	 */
+	sysrev = SBMAC_READCSR( PKSEG1(A_SCD_SYSTEM_REVISION) );
+	s->sbm_pass3_dma = (SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1120 ||
+			    SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1125 ||
+			    SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1125H ||
+			    (SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1250 &&
+			     0));
 }
 
 /*
@@ -1007,6 +1094,8 @@ sbmac_channel_start(struct sbmac_softc *s)
 	sbmac_port_t port;
 	uint64_t cfg, fifo, framecfg;
 	int idx;
+	uint64_t dma_cfg0, fifo_cfg;
+	sbmacdma_t *txdma;
 
 	/*
 	 * Don't do this if running
@@ -1150,6 +1239,25 @@ sbmac_channel_start(struct sbmac_softc *s)
 	 */
 
 	SBMAC_WRITECSR(s->sbm_rxfilter, M_MAC_UCAST_EN | M_MAC_BCAST_EN);
+
+	/*
+	 * On chips which support unaligned DMA features, set the descriptor
+	 * ring for transmit channels to use the unaligned buffer format.
+	 */
+	txdma = &(s->sbm_txdma); 
+
+	if (s->sbm_pass3_dma) {
+
+		dma_cfg0 = SBMAC_READCSR(txdma->sbdma_config0);
+		dma_cfg0 |= V_DMA_DESC_TYPE(K_DMA_DESC_TYPE_RING_UAL_RMW) |
+		    M_DMA_TBX_EN | M_DMA_TDX_EN;
+		SBMAC_WRITECSR(txdma->sbdma_config0,dma_cfg0);
+
+		fifo_cfg =  SBMAC_READCSR(s->sbm_fifocfg);
+		fifo_cfg |= V_MAC_TX_WR_THRSH(8) |
+		    V_MAC_TX_RD_THRSH(8) | V_MAC_TX_RL_THRSH(8);
+		SBMAC_WRITECSR(s->sbm_fifocfg,fifo_cfg);
+	}
 
 	/*
 	 * we're running now.
@@ -1650,7 +1758,13 @@ sbmac_start(struct ifnet *ifp)
 			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m_head);
 #endif
-			m_freem(m_head);
+			if (!sc->sbm_pass3_dma) {
+				/*
+				 * Don't free mbuf if we're not copying to new mbuf in sbdma_add_txbuffer.
+				 * It will be freed in sbdma_tx_process.
+				 */
+				m_freem(m_head);
+			}
 		} else {
 		    IF_PREPEND(&ifp->if_snd, m_head);
 		    ifp->if_flags |= IFF_OACTIVE;
@@ -2173,7 +2287,9 @@ sbmac_attach(struct device *parent, struct device *self, void *aux)
 	 * Display Ethernet address (this is called during the config process
 	 * so we need to finish off the config message that was being displayed)
 	 */
-	printf(": Ethernet\n%s: Ethernet address: %s\n", self->dv_xname,
+	printf(": Ethernet%s\n",
+	    sc->sbm_pass3_dma ? ", using unaligned tx DMA" : "");
+	printf("%s: Ethernet address: %s\n", self->dv_xname,
 	    ether_sprintf(eaddr));
 
 
