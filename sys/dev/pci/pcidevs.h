@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.472 2002/09/11 20:43:42 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.473 2002/09/19 18:53:00 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.468 2002/09/11 20:43:07 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.469 2002/09/19 18:50:45 nathanw Exp 
  */
 
 /*
@@ -793,6 +793,8 @@
 #define	PCI_PRODUCT_AMD_PBC756_USB	0x740c		/* AMD756 USB Host Controller */
 #define	PCI_PRODUCT_AMD_SC762_NB	0x700c		/* AMD762 NorthBridge */
 #define	PCI_PRODUCT_AMD_SC762_PPB	0x700d		/* AMD762 AGP Bridge */
+#define	PCI_PRODUCT_AMD_SC761_SC	0x700e		/* AMD761 System Controller */
+#define	PCI_PRODUCT_AMD_SC761_PPB	0x700f		/* AMD761 PCI-to-PCI Bridge */
 #define	PCI_PRODUCT_AMD_PBC766_ISA	0x7410		/* AMD766 SouthBridge */
 #define	PCI_PRODUCT_AMD_PBC766_IDE	0x7411		/* AMD766 IDE controller */
 #define	PCI_PRODUCT_AMD_PBC766_PMC	0x7413		/* AMD766 Power Management Controller */
