@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.1.2.11 1997/10/16 09:34:38 enami Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.1.2.12 1997/10/16 17:23:03 thorpej Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -18,8 +18,9 @@
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 
-#define	PCMCIA_MANUFACTURER_ADAPTEC	0x012F
-#define	PCMCIA_PRODUCT_ADAPTEC_APA1460	0x0001
+#define	PCMCIA_MANUFACTURER_ADAPTEC		0x012F
+#define	PCMCIA_PRODUCT_ADAPTEC_APA1460_1	0x0001
+#define	PCMCIA_PRODUCT_ADAPTEC_APA1460_2	0x0002
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 int	aic_pcmcia_match __P((struct device *, void *, void *));
@@ -54,10 +55,14 @@ aic_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if ((pa->manufacturer == PCMCIA_MANUFACTURER_ADAPTEC) &&
-	    (pa->product == PCMCIA_PRODUCT_ADAPTEC_APA1460) &&
-	    (pa->pf->number == 0))
-		return (1);
+	if (pa->manufacturer == PCMCIA_MANUFACTURER_ADAPTEC) {
+		switch (pa->product) {
+		case PCMCIA_PRODUCT_ADAPTEC_APA1460_1:
+		case PCMCIA_PRODUCT_ADAPTEC_APA1460_2:
+			if (pa->pf->number == 0)
+				return (1);
+		}
+	}
 
 	return (0);
 }
