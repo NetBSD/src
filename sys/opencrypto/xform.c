@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.8 2003/08/27 00:05:28 thorpej Exp $ */
+/*	$NetBSD: xform.c,v 1.9 2003/08/27 00:20:56 thorpej Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.8 2003/08/27 00:05:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.9 2003/08/27 00:20:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,15 +68,15 @@ __KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.8 2003/08/27 00:05:28 thorpej Exp $");
 
 static void null_encrypt(caddr_t, u_int8_t *);
 static void null_decrypt(caddr_t, u_int8_t *);
-static int null_setkey(u_int8_t **, u_int8_t *, int);
+static int null_setkey(u_int8_t **, const u_int8_t *, int);
 static void null_zerokey(u_int8_t **);
 
-static	int des1_setkey(u_int8_t **, u_int8_t *, int);
-static	int des3_setkey(u_int8_t **, u_int8_t *, int);
-static	int blf_setkey(u_int8_t **, u_int8_t *, int);
-static	int cast5_setkey(u_int8_t **, u_int8_t *, int);
-static  int skipjack_setkey(u_int8_t **, u_int8_t *, int);
-static  int rijndael128_setkey(u_int8_t **, u_int8_t *, int);
+static	int des1_setkey(u_int8_t **, const u_int8_t *, int);
+static	int des3_setkey(u_int8_t **, const u_int8_t *, int);
+static	int blf_setkey(u_int8_t **, const u_int8_t *, int);
+static	int cast5_setkey(u_int8_t **, const u_int8_t *, int);
+static  int skipjack_setkey(u_int8_t **, const u_int8_t *, int);
+static  int rijndael128_setkey(u_int8_t **, const u_int8_t *, int);
 static	void des1_encrypt(caddr_t, u_int8_t *);
 static	void des3_encrypt(caddr_t, u_int8_t *);
 static	void blf_encrypt(caddr_t, u_int8_t *);
@@ -97,22 +97,22 @@ static	void skipjack_zerokey(u_int8_t **);
 static	void rijndael128_zerokey(u_int8_t **);
 
 static	void null_init(void *);
-static	int null_update(void *, u_int8_t *, u_int16_t);
+static	int null_update(void *, const u_int8_t *, u_int16_t);
 static	void null_final(u_int8_t *, void *);
 
-static int	MD5Update_int(void *, u_int8_t *, u_int16_t);
+static int	MD5Update_int(void *, const u_int8_t *, u_int16_t);
 static void	SHA1Init_int(void *);
-static	int SHA1Update_int(void *, u_int8_t *, u_int16_t);
+static	int SHA1Update_int(void *, const u_int8_t *, u_int16_t);
 static	void SHA1Final_int(u_int8_t *, void *);
 
 
-static int RMD160Update_int(void *, u_int8_t *, u_int16_t);
-static	int SHA1Update_int(void *, u_int8_t *, u_int16_t);
+static int RMD160Update_int(void *, const u_int8_t *, u_int16_t);
+static	int SHA1Update_int(void *, const u_int8_t *, u_int16_t);
 static	void SHA1Final_int(u_int8_t *, void *);
-static	int RMD160Update_int(void *, u_int8_t *, u_int16_t);
-static	int SHA256Update_int(void *, u_int8_t *, u_int16_t);
-static	int SHA384Update_int(void *, u_int8_t *, u_int16_t);
-static	int SHA512Update_int(void *, u_int8_t *, u_int16_t);
+static	int RMD160Update_int(void *, const u_int8_t *, u_int16_t);
+static	int SHA256Update_int(void *, const u_int8_t *, u_int16_t);
+static	int SHA384Update_int(void *, const u_int8_t *, u_int16_t);
+static	int SHA512Update_int(void *, const u_int8_t *, u_int16_t);
 
 static u_int32_t deflate_compress(u_int8_t *, u_int32_t, u_int8_t **);
 static u_int32_t deflate_decompress(u_int8_t *, u_int32_t, u_int8_t **);
@@ -287,7 +287,7 @@ null_decrypt(caddr_t key, u_int8_t *blk)
 {
 }
 static int
-null_setkey(u_int8_t **sched, u_int8_t *key, int len)
+null_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	*sched = NULL;
 	return 0;
@@ -317,7 +317,7 @@ des1_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 static int
-des1_setkey(u_int8_t **sched, u_int8_t *key, int len)
+des1_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	des_key_schedule *p;
 	int err;
@@ -361,7 +361,7 @@ des3_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 static int
-des3_setkey(u_int8_t **sched, u_int8_t *key, int len)
+des3_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	des_key_schedule *p;
 	int err;
@@ -411,7 +411,7 @@ blf_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 static int
-blf_setkey(u_int8_t **sched, u_int8_t *key, int len)
+blf_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	int err;
 
@@ -457,7 +457,7 @@ cast5_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 static int
-cast5_setkey(u_int8_t **sched, u_int8_t *key, int len)
+cast5_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	int err;
 
@@ -493,7 +493,7 @@ skipjack_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 static int
-skipjack_setkey(u_int8_t **sched, u_int8_t *key, int len)
+skipjack_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	int err;
 
@@ -545,7 +545,7 @@ rijndael128_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 static int
-rijndael128_setkey(u_int8_t **sched, u_int8_t *key, int len)
+rijndael128_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	int err;
 
@@ -580,7 +580,7 @@ null_init(void *ctx)
 }
 
 static int
-null_update(void *ctx, u_int8_t *buf, u_int16_t len)
+null_update(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
 	return 0;
 }
@@ -593,14 +593,14 @@ null_final(u_int8_t *buf, void *ctx)
 }
 
 static int
-RMD160Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+RMD160Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
 	RMD160Update(ctx, buf, len);
 	return 0;
 }
 
 static int
-MD5Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+MD5Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
 	MD5Update(ctx, buf, len);
 	return 0;
@@ -613,7 +613,7 @@ SHA1Init_int(void *ctx)
 }
 
 static int
-SHA1Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+SHA1Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
 	SHA1Update(ctx, buf, len);
 	return 0;
@@ -626,21 +626,21 @@ SHA1Final_int(u_int8_t *blk, void *ctx)
 }
 
 static int
-SHA256Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+SHA256Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
 	SHA256_Update(ctx, buf, len);
 	return 0;
 }
 
 static int
-SHA384Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+SHA384Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
 	SHA384_Update(ctx, buf, len);
 	return 0;
 }
 
 static int
-SHA512Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+SHA512Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
 	SHA512_Update(ctx, buf, len);
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.4 2003/08/26 02:54:11 thorpej Exp $ */
+/*	$NetBSD: xform.h,v 1.5 2003/08/27 00:20:57 thorpej Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
@@ -40,7 +40,7 @@ struct auth_hash {
 	u_int16_t authsize;
 	u_int16_t ctxsize;
 	void (*Init) (void *);
-	int  (*Update) (void *, u_int8_t *, u_int16_t);
+	int  (*Update) (void *, const u_int8_t *, u_int16_t);
 	void (*Final) (u_int8_t *, void *);
 };
 
@@ -54,7 +54,7 @@ struct enc_xform {
 	u_int16_t minkey, maxkey;
 	void (*encrypt) (caddr_t, u_int8_t *);
 	void (*decrypt) (caddr_t, u_int8_t *);
-	int (*setkey) (u_int8_t **, u_int8_t *, int len);
+	int (*setkey) (u_int8_t **, const u_int8_t *, int len);
 	void (*zerokey) (u_int8_t **);
 };
 
