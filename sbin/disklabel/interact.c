@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.19 2001/10/19 01:16:38 lukem Exp $	*/
+/*	$NetBSD: interact.c,v 1.20 2002/06/29 15:24:03 grant Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.19 2001/10/19 01:16:38 lukem Exp $");
+__RCSID("$NetBSD: interact.c,v 1.20 2002/06/29 15:24:03 grant Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -482,6 +482,9 @@ cmd_part(struct disklabel *lp, char *s, int fd)
 		if ((i = getnum(lp, line, 0)) == -1) {
 			printf("Bad offset `%s'\n", line);
 			continue;
+		} else if (i > lp->d_secperunit) {
+			printf("Offset `%s' out of range\n", line);
+			continue;
 		}
 		p->p_offset = i;
 		break;
@@ -497,6 +500,10 @@ cmd_part(struct disklabel *lp, char *s, int fd)
 		if ((i = getnum(lp, line, lp->d_secperunit - p->p_offset))
 		    == -1) {
 			printf("Bad size `%s'\n", line);
+			continue;
+		} else if
+		    ((i + p->p_offset) > lp->d_secperunit) {
+			printf("Size `%s' out of range\n", line);
 			continue;
 		}
 		p->p_size = i;
