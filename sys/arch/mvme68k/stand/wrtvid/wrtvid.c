@@ -1,4 +1,4 @@
-/*	$NetBSD: wrtvid.c,v 1.5 2002/01/23 21:06:28 scw Exp $	*/
+/*	$NetBSD: wrtvid.c,v 1.6 2002/03/24 18:15:03 scw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -140,6 +140,12 @@ usage:
 
 	/* How many 256-byte logical blocks (rounded up) */
 	len = (u_int16_t) ((st.st_size + 255) / 256);
+
+	/* For tapes, round up to 8k */
+	if (is_disk == 0) {
+		len += (8192 / 256) - 1;
+		len &= ~((8192 / 256) -1);
+	}
 
 	if ((vid = malloc(SIZEOF_VID)) == NULL) {
 		perror(argv[0]);
