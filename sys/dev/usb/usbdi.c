@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.80 2001/04/13 11:19:58 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.81 2001/04/17 00:05:33 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -996,6 +996,12 @@ usbd_do_request_async(usbd_device_handle dev, usb_device_request_t *req,
 const struct usbd_quirks *
 usbd_get_quirks(usbd_device_handle dev)
 {
+#ifdef DIAGNOSTIC
+	if (dev == NULL) {
+		printf("usbd_get_quirks: dev == NULL\n");
+		return 0;
+	}
+#endif
 	return (dev->quirks);
 }
 
