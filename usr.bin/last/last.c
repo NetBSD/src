@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.13 2000/04/14 06:11:08 simonb Exp $	*/
+/*	$NetBSD: last.c,v 1.14 2000/06/25 13:44:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.13 2000/04/14 06:11:08 simonb Exp $");
+__RCSID("$NetBSD: last.c,v 1.14 2000/06/25 13:44:43 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,32 +62,43 @@ __RCSID("$NetBSD: last.c,v 1.13 2000/04/14 06:11:08 simonb Exp $");
 #include <unistd.h>
 #include <utmp.h>
 
-#define	NO	0				/* false/no */
-#define	YES	1				/* true/yes */
+#define	NO	0			/* false/no */
+#define	YES	1			/* true/yes */
 
-static struct utmp	buf[1024];		/* utmp read buffer */
+#define	TBUFLEN	30			/* length of time string buffer */
+#define	TFMT	"%a %b %R"		/* strftime format string */
+#define	LTFMT	"%a %b %Y %T"		/* strftime long format string */
+#define	TFMTS	"%R"			/* strftime format string - time only */
+#define	LTFMTS	"%T"			/* strftime long format string - " */
+
+/* fmttime() flags */
+#define	FULLTIME	0x1		/* show year, seconds */
+#define	TIMEONLY	0x2		/* show time only, not date */
+#define	GMT		0x4		/* show time at GMT, for offsets only */
+
+static struct utmp	buf[1024];	/* utmp read buffer */
 
 typedef struct arg {
-	char	*name;				/* argument */
+	char	*name;			/* argument */
 #define	HOST_TYPE	-2
 #define	TTY_TYPE	-3
 #define	USER_TYPE	-4
-	int	type;				/* type of arg */
-	struct arg	*next;			/* linked list pointer */
+	int	type;			/* type of arg */
+	struct arg	*next;		/* linked list pointer */
 } ARG;
-ARG	*arglist;				/* head of linked list */
+ARG	*arglist;			/* head of linked list */
 
 typedef struct ttytab {
-	time_t	logout;				/* log out time */
-	char	tty[UT_LINESIZE + 1];		/* terminal name */
-	struct ttytab	*next;			/* linked list pointer */
+	time_t	logout;			/* log out time */
+	char	tty[UT_LINESIZE + 1];	/* terminal name */
+	struct ttytab	*next;		/* linked list pointer */
 } TTY;
-TTY	*ttylist;				/* head of linked list */
+TTY	*ttylist;			/* head of linked list */
 
-static time_t	currentout;			/* current logout value */
-static long	maxrec;				/* records to display */
-static char	*file = _PATH_WTMP;		/* wtmp file */
-static int	fulltime = 0;                   /* Display seconds? */
+static time_t	currentout;		/* current logout value */
+static long	maxrec;			/* records to display */
+static char	*file = _PATH_WTMP;	/* wtmp file */
+static int	fulltime = 0;		/* Display seconds? */
 
 int	 main __P((int, char *[]));
 void	 addarg __P((int, char *));
@@ -97,6 +108,7 @@ void	 onintr __P((int));
 char	*ttyconv __P((char *));
 int	 want __P((struct utmp *, int));
 void	 wtmp __P((void));
+char	*fmttime __P((time_t, int));
 
 int
 main(argc, argv)
@@ -172,7 +184,6 @@ wtmp()
 	struct stat	stb;		/* stat of file for size */
 	time_t	delta;			/* time difference */
 	off_t	bl;
-	int	timesize;		/* how much of time string to print */
 	int	bytes, wfd;
 	char	*ct, *crmsg;
 
@@ -181,11 +192,6 @@ wtmp()
 	if ((wfd = open(file, O_RDONLY, 0)) < 0 || fstat(wfd, &stb) == -1)
 		err(1, "%s", file);
 	bl = (stb.st_size + sizeof(buf) - 1) / sizeof(buf);
-
-	if (fulltime)
-		timesize = 8;	/* HH:MM:SS */
-	else
-		timesize = 5;	/* HH:MM */
 
 	(void)time(&buf[0].ut_time);
 	(void)signal(SIGINT, onintr);
@@ -208,14 +214,13 @@ wtmp()
 				crmsg = strncmp(bp->ut_name, "shutdown",
 				    UT_NAMESIZE) ? "crash" : "shutdown";
 				if (want(bp, NO)) {
-					ct = ctime(&bp->ut_time);
-				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
+					ct = fmttime(bp->ut_time, fulltime);
+				printf("%-*.*s  %-*.*s %-*.*s %s\n",
 					    (int)UT_NAMESIZE, (int)UT_NAMESIZE,
 					    bp->ut_name, (int)UT_LINESIZE,
 					    (int)UT_LINESIZE, bp->ut_line,
 					    (int)UT_HOSTSIZE, (int)UT_HOSTSIZE,
-					    bp->ut_host, ct, timesize,
-				            timesize, ct + 11);
+					    bp->ut_host, ct);
 					if (maxrec != -1 && !--maxrec)
 						return;
 				}
@@ -228,15 +233,15 @@ wtmp()
 			if ((bp->ut_line[0] == '{' || bp->ut_line[0] == '|')
 			    && !bp->ut_line[1]) {
 				if (want(bp, NO)) {
-					ct = ctime(&bp->ut_time);
-				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
+					ct = fmttime(bp->ut_time, fulltime);
+				printf("%-*.*s  %-*.*s %-*.*s %s\n",
 				    (int)UT_NAMESIZE, (int)UT_NAMESIZE,
 				    bp->ut_name,
 				    (int)UT_LINESIZE, (int)UT_LINESIZE,
 				    bp->ut_line,
 				    (int)UT_HOSTSIZE, (int)UT_HOSTSIZE,
 				    bp->ut_host,
-				    ct, timesize, timesize, ct + 11);
+				    ct);
 					if (maxrec && !--maxrec)
 						return;
 				}
@@ -253,12 +258,12 @@ wtmp()
 					break;
 			}
 			if (bp->ut_name[0] && want(bp, YES)) {
-				ct = ctime(&bp->ut_time);
-				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s ",
+				ct = fmttime(bp->ut_time, fulltime);
+				printf("%-*.*s  %-*.*s %-*.*s %s ",
 				(int)UT_NAMESIZE, (int)UT_NAMESIZE, bp->ut_name,
 				(int)UT_LINESIZE, (int)UT_LINESIZE, bp->ut_line,
 				(int)UT_HOSTSIZE, (int)UT_HOSTSIZE, bp->ut_host,
-				ct, timesize, timesize, ct + 11);
+				ct);
 				if (!T->logout)
 					puts("  still logged in");
 				else {
@@ -267,19 +272,19 @@ wtmp()
 						printf("- %s", crmsg);
 					}
 					else
-						printf("- %*.*s",
-						    timesize, timesize,
-						    ctime(&T->logout)+11);
+						printf("- %s",
+						    fmttime(T->logout,
+						    fulltime | TIMEONLY));
 					delta = T->logout - bp->ut_time;
 					if (delta < SECSPERDAY)
-						printf("  (%*.*s)\n",
-						    timesize, timesize,
-						    asctime(gmtime(&delta))+11);
+						printf("  (%s)\n",
+						    fmttime(delta,
+						    fulltime | TIMEONLY | GMT));
 					else
-						printf(" (%ld+%*.*s)\n",
+						printf(" (%ld+%s)\n",
 						    delta / SECSPERDAY,
-						    timesize, timesize,
-						    asctime(gmtime(&delta))+11);
+						    fmttime(delta,
+						    fulltime | TIMEONLY | GMT));
 				}
 				if (maxrec != -1 && !--maxrec)
 					return;
@@ -287,8 +292,9 @@ wtmp()
 			T->logout = bp->ut_time;
 		}
 	}
-	ct = ctime(&buf[0].ut_time);
-	printf("\nwtmp begins %10.10s %*.*s \n", ct, timesize, timesize, ct + 11);
+	fulltime = 1;	/* show full time */
+	ct = fmttime(buf[0].ut_time, FULLTIME);
+	printf("\nwtmp begins %s\n", ct);
 }
 
 /*
@@ -430,6 +436,27 @@ ttyconv(arg)
 }
 
 /*
+ * fmttime --
+ *	return pointer to (static) formatted time string.
+ */
+char *
+fmttime(t, flags)
+	time_t t;
+	int flags;
+{
+	struct tm *tm;
+	static char tbuf[TBUFLEN];
+
+	tm = (flags & GMT) ? gmtime(&t) : localtime(&t);
+	strftime(tbuf, sizeof(tbuf),
+	    (flags & TIMEONLY)
+	     ? (flags & FULLTIME ? LTFMTS : TFMTS)
+	     : (flags & FULLTIME ? LTFMT : TFMT),
+	    tm);
+	return (tbuf);
+}
+
+/*
  * onintr --
  *	on interrupt, we inform the user how far we've gotten
  */
@@ -437,11 +464,9 @@ void
 onintr(signo)
 	int signo;
 {
-	char *ct;
 
-	ct = ctime(&buf[0].ut_time);
-	printf("\ninterrupted %10.10s %8.8s \n", ct, ct + 11);
+	printf("\ninterrupted %s\n", fmttime(buf[0].ut_time, FULLTIME));
 	if (signo == SIGINT)
 		exit(1);
-	(void)fflush(stdout);			/* fix required for rsh */
+	(void)fflush(stdout);		/* fix required for rsh */
 }
