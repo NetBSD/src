@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.15 1999/01/16 06:36:42 nisimura Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.16 1999/04/20 06:48:58 mrg Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -18,8 +18,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
+
 #include <machine/autoconf.h>
 
 #include <pmax/dev/device.h>		/* XXX */
