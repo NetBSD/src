@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.6 1997/06/17 18:56:30 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.7 1997/07/15 18:15:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -257,7 +257,39 @@ runio(argv, infile, outfile, errfile)
 			if (fd != 2)
 				(void) dup2(fd, 2);
 		}
+		execvp(argv[0], argv);
+		exit(1);
+		/*NOTREACHED*/
+		return 0;
+	
+	default:
+		if (waitpid(pid, &status, 0) == -1)
+			return -1;
+		return status;
+	}
+}
 
+/*
+ * Like runio, but works with filedescriptors instead of filenames
+ */
+int
+runiofd(argv, infile, outfile, errfile)
+	char *const argv[];
+	const int infile;
+	const int outfile;
+	const int errfile;
+{
+	pid_t	pid;
+	int	status;
+
+	switch ((pid = fork())) {
+	case -1:
+		return -1;
+
+	case 0:
+		if (infile  != 0) dup2(infile, 0);
+		if (outfile != 1) dup2(outfile,1);
+		if (errfile != 2) dup2(errfile,2);
 		execvp(argv[0], argv);
 		exit(1);
 		/*NOTREACHED*/
