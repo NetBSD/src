@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.25 1998/08/27 20:31:02 ross Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.26 1998/12/09 22:53:29 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.25 1998/08/27 20:31:02 ross Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.26 1998/12/09 22:53:29 tron Exp $");
 #endif
 #endif
 
@@ -359,7 +359,7 @@ void	tvsub(struct timeval *, struct timeval *);
 __dead	void usage(void);
 int	wait_for_reply(int, struct sockaddr_in *, struct timeval *);
 void	frag_err(void);
-
+int	find_local_ip(struct sockaddr_in *, struct sockaddr_in *);
 
 int
 main(int argc, char **argv)
@@ -729,7 +729,7 @@ main(int argc, char **argv)
 		 * Warn if there are more than one.
 		 */
 		setsin(from, al->addr);
-		if (n > 1 && device == NULL) {
+		if (n > 1 && device == NULL && !find_local_ip(from, to)) {
 			Fprintf(stderr,
 		    "%s: Warning: Multiple interfaces found; using %s @ %s\n",
 			    prog, inet_ntoa(from->sin_addr), al->device);
@@ -1466,3 +1466,37 @@ frag_err()
         }
 }
 
+int
+find_local_ip(struct sockaddr_in *from, struct sockaddr_in *to)
+{
+	int sock;
+	struct sockaddr_in help;
+	int help_len;
+
+	sock = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sock < 0) return (0);
+
+	help.sin_family = AF_INET;
+	/*
+	 * At this point the port number doesn't matter
+	 * since it only has to be greater than zero.
+	 */
+	help.sin_port = 42;
+	help.sin_addr.s_addr = to->sin_addr.s_addr;
+	if (connect(sock, (struct sockaddr *)&help, sizeof(help)) < 0) {
+		(void)close(sock);
+		return (0);
+	}
+
+	help_len = sizeof(help);
+	if (getsockname(sock, (struct sockaddr *)&help, &help_len) < 0 ||
+	    help_len != sizeof(help) ||
+	    help.sin_addr.s_addr == INADDR_ANY) {
+		(void)close(sock);
+		return (0);
+	}
+
+	(void)close(sock);
+	setsin(from, help.sin_addr.s_addr);
+	return (1);
+}
