@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 1996/05/30 00:02:09 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.64 1996/06/11 21:54:44 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -4677,6 +4677,7 @@ pmap_changeprot4_4c(pm, va, prot, wired)
 
 	write_user_windows();	/* paranoia */
 
+	va &= ~(NBPG-1);
 	if (pm == pmap_kernel())
 		newprot = prot & VM_PROT_WRITE ? PG_S|PG_W : PG_S;
 	else
@@ -5003,6 +5004,7 @@ pmap_changeprot4m(pm, va, prot, wired)
 
 	write_user_windows();	/* paranoia */
 
+	va &= ~(NBPG-1);
 	if (pm == pmap_kernel())
 		newprot = prot & VM_PROT_WRITE ? PPROT_N_RWX : PPROT_N_RX;
 	else
