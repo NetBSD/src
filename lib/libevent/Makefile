@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/06/12 22:54:25 provos Exp $
+#	$NetBSD: Makefile,v 1.2 2004/08/07 21:09:47 provos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 NOLINT=		# Until someone explains to me how to avoid lint stupidity
@@ -8,7 +8,7 @@ CPPFLAGS+=-DHAVE_CONFIG_H
 .include <bsd.own.mk>
 
 LIB=	event
-SRCS=	event.c kqueue.c poll.c signal.c
+SRCS=	buffer.c evbuffer.c event.c kqueue.c poll.c signal.c
 
 INCS=	event.h
 INCSDIR=/usr/include
