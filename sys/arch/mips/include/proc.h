@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7 1997/06/15 17:36:25 mhitch Exp $	*/
+/*	$NetBSD: proc.h,v 1.8 1997/07/07 03:54:29 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,6 +38,8 @@
  *	@(#)proc.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _MIPS_PROC_H_
+#define _MIPS_PROC_H_
 /*
  * Machine-dependent part of the proc structure for MIPS
  */
@@ -63,3 +65,5 @@ struct frame {
 /* kernel single-step emulation */
 extern int mips_singlestep __P((struct proc *p));
 #endif /* _KERNEL */
+
+#endif /* _MIPS_PROC_H_ */
