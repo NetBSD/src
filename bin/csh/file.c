@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.14 1998/07/28 02:47:20 mycroft Exp $	*/
+/*	$NetBSD: file.c,v 1.15 1998/12/26 02:11:39 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: file.c,v 1.14 1998/07/28 02:47:20 mycroft Exp $");
+__RCSID("$NetBSD: file.c,v 1.15 1998/12/26 02:11:39 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: file.c,v 1.14 1998/07/28 02:47:20 mycroft Exp $");
 #include <pwd.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/tty.h>
 #ifndef SHORT_STRINGS
 #include <string.h>
 #endif /* SHORT_STRINGS */
@@ -88,7 +89,7 @@ typedef enum {
 
 static void	 setup_tty __P((int));
 static void	 back_to_col_1 __P((void));
-static void	 pushback __P((Char *));
+static int	 pushback __P((Char *));
 static void	 catn __P((Char *, Char *, int));
 static void	 copyn __P((Char *, Char *, int));
 static Char	 filetype __P((Char *, Char *));
@@ -163,7 +164,7 @@ back_to_col_1()
 /*
  * Push string contents back into tty queue
  */
-static void
+static int
 pushback(string)
     Char   *string;
 {
@@ -171,6 +172,12 @@ pushback(string)
     struct termios tty, tty_normal;
     sigset_t sigset, osigset;
     char    c;
+    char buf[TTYHOG];
+    int nbuf, bufidx;
+    char svchars[TTYHOG];
+    int nsv = 0, onsv;
+    int len_str, i;
+    int retrycnt;
 
     sigemptyset(&sigset);
     (void) sigaddset(&sigset, SIGINT);
@@ -178,12 +185,70 @@ pushback(string)
     (void) tcgetattr(SHOUT, &tty);
     tty_normal = tty;
     tty.c_lflag &= ~(ECHOKE | ECHO | ECHOE | ECHOK | ECHONL | ECHOPRT | ECHOCTL);
+    /* FIONREAD works only in noncanonical mode. */
+    tty.c_lflag &= ~ICANON;
+    tty.c_cc[VMIN] = 0;
     (void) tcsetattr(SHOUT, TCSADRAIN, &tty);
 
-    for (p = string; (c = *p) != '\0'; p++)
-	(void) ioctl(SHOUT, TIOCSTI, (ioctl_t) & c);
+    for (retrycnt = 5; ; retrycnt--) {
+	/*
+	 * Push back characters.
+	 */
+	for (p = string; (c = *p) != '\0'; p++)
+	    (void) ioctl(SHOUT, TIOCSTI, (ioctl_t) &c);
+	for (i = 0; i < nsv; i++)
+	    (void) ioctl(SHOUT, TIOCSTI, (ioctl_t) &svchars[i]);
+
+	if (retrycnt == 0)
+	    break;		/* give up salvaging characters */
+
+	len_str = p - string;
+
+	if (ioctl(SHOUT, FIONREAD, (ioctl_t) &nbuf) ||
+	    nbuf <= len_str + nsv ||	/* The string fit. */
+	    nbuf > TTYHOG)		/* For future binary compatibility
+					   (and safety). */
+	    break;
+
+	/*
+	 * User has typed characters before the pushback finished.
+	 * Salvage the characters.
+	 */
+
+	/* This read() should be in noncanonical mode. */
+	if (read(SHOUT, &buf, nbuf) != nbuf)
+	    continue;		/* hangup? */
+
+	onsv = nsv;
+	for (bufidx = 0, i = 0; bufidx < nbuf; bufidx++, i++) {
+	    c = buf[bufidx];
+	    if ((i < len_str) ? c != (char) string[i] :
+			(i < len_str + onsv) ? c != svchars[i - len_str] : 1) {
+		/* Salvage a character. */
+		if (nsv < (int) (sizeof svchars / sizeof svchars[0])) {
+		    svchars[nsv++] = c;
+		    i--;	/* try this comparison with the next char */
+		} else
+		    break;	/* too much */
+	    }
+	}
+    }
+
+#if 1
+    /*
+     * XXX  Is this a bug or a feature of kernel tty driver?
+     *
+     * FIONREAD in canonical mode does not return correct byte count
+     * in tty input queue, but this is required to avoid unwanted echo.
+     */
+    tty.c_lflag |= ICANON;
+    (void) tcsetattr(SHOUT, TCSADRAIN, &tty);
+    (void) ioctl(SHOUT, FIONREAD, (ioctl_t) &i);
+#endif
     (void) tcsetattr(SHOUT, TCSADRAIN, &tty_normal);
     (void) sigprocmask(SIG_SETMASK, &osigset, NULL);
+
+    return nsv;
 }
 
 /*
@@ -670,9 +735,13 @@ tenex(inputline, inputline_size)
 	}
 	if (command == LIST)	/* Always retype after a LIST */
 	    should_retype = TRUE;
-	if (should_retype)
+	if (pushback(inputline))
+	    should_retype = TRUE;
+	if (should_retype) {
+	    if (command == RECOGNIZE)
+		(void) fputc('\n', cshout);
 	    printprompt();
-	pushback(inputline);
+	}
 	if (should_retype)
 	    retype();
     }
