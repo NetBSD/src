@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.3 2000/05/26 21:19:27 thorpej Exp $   */
+/*      $NetBSD: locore.S,v 1.4 2000/05/31 05:06:45 thorpej Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -377,6 +377,8 @@ ENTRY(cpu_switch)
 	stw	3,_C_LABEL(want_resched)@l(4)
 
 	stw	3,P_BACK(31)		/* probably superfluous */
+
+	/* p->p_cpu initialized in fork1() for single-processor */
 
 	li	3,SONPROC		/* p->p_stat = SONPROC */
 	stb	3,P_STAT(31)

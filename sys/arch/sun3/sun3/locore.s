@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.73 2000/05/31 03:16:52 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.74 2000/05/31 05:06:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -718,6 +718,7 @@ Lswok:
 	bset	d0,d1			| yes, reset bit
 	movl	d1,_C_LABEL(sched_whichqs)
 Lsw2:
+	/* p->p_cpu initialized in fork1() for single-processor */
 	movb	#SONPROC,a0@(P_STAT)	| p->p_stat = SONPROC
 	movl	a0,_C_LABEL(curproc)
 	clrl	_C_LABEL(want_resched)
