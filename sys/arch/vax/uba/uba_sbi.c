@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.9 2000/08/09 03:02:52 tv Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.10 2000/08/24 13:12:25 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -274,6 +274,7 @@ ubaerror(uh, ipl, uvec)
 	struct uba_vsoftc *vc = (void *)uh;
 	struct	uba_regs *uba = vc->uv_uba;
 	register int sr, s;
+	char sbuf[256], sbuf2[256];
 
 	if (*uvec == 0) {
 		/*
