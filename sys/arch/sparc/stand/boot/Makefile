@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.27 2001/12/04 18:54:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.28 2003/03/01 13:01:56 pk Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \
-		prompatch.c vers.c
+		mmu.c prompatch.c vers.c
 NEWVERSWHAT=	"Secondary Boot"
 FILES=		boot.net ${RELOCS:S/^/boot./g}
 CLEANFILES:=	vers.c ${FILES}
