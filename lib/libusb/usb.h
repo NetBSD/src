@@ -1,7 +1,7 @@
-/*	$NetBSD: hidsubr.h,v 1.3 1999/04/21 16:23:14 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.1 1999/05/11 21:02:24 augustss Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -12,14 +12,7 @@
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
+ * 2. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -36,52 +29,65 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+typedef struct report_desc *report_desc_t;
+
+typedef struct hid_data *hid_data_t;
+
 enum hid_kind { 
 	hid_input, hid_output, hid_feature, hid_collection, hid_endcollection
 };
 
-struct hid_item {
+typedef struct hid_item {
 	/* Global */
-	int32_t _usage_page;
-	int32_t logical_minimum;
-	int32_t logical_maximum;
-	int32_t physical_minimum;
-	int32_t physical_maximum;
-	int32_t unit_exponent;
-	int32_t unit;
-	int32_t report_size;
-	int32_t report_ID;
-	int32_t report_count;
+	int _usage_page;
+	int logical_minimum;
+	int logical_maximum;
+	int physical_minimum;
+	int physical_maximum;
+	int unit_exponent;
+	int unit;
+	int report_size;
+	int report_ID;
+	int report_count;
 	/* Local */
-	u_int32_t usage;
-	int32_t usage_minimum;
-	int32_t usage_maximum;
-	int32_t designator_index;
-	int32_t designator_minimum;
-	int32_t designator_maximum;
-	int32_t string_index;
-	int32_t string_minimum;
-	int32_t string_maximum;
-	int32_t set_delimiter;
+	unsigned int usage;
+	int usage_minimum;
+	int usage_maximum;
+	int designator_index;
+	int designator_minimum;
+	int designator_maximum;
+	int string_index;
+	int string_minimum;
+	int string_maximum;
+	int set_delimiter;
 	/* Misc */
-	int32_t collection;
+	int collection;
 	int collevel;
 	enum hid_kind kind;
-	u_int32_t flags;
+	unsigned int flags;
 	/* Absolute data position (bits) */
-	u_int32_t pos;
+	unsigned int pos;
 	/* */
 	struct hid_item *next;
-};
+} hid_item_t;
 
 #define HID_PAGE(u) ((u) >> 16)
 #define HID_USAGE(u) ((u) & 0xffff)
 
-struct hid_data *hid_start_parse(u_char *d, int len, int kindset);
-void hid_end_parse(struct hid_data *s);
-int hid_get_item(struct hid_data *s, struct hid_item *h);
-int hid_report_size(u_char *buf, int len, enum hid_kind k, int *idp);
-char *usage_page(int i);
-char *usage_in_page(unsigned int u);
-void init_hid(char *file);
-void dump_hid_table(void);
+/* Obtaining a report descriptor, descr.c: */
+report_desc_t get_report_desc __P((int file));
+void dispose_report_desc __P((report_desc_t));
+
+/* Parsing of a HID report descriptor, parse.c: */
+hid_data_t hid_start_parse __P((report_desc_t d, int kindset));
+void hid_end_parse __P((hid_data_t s));
+int hid_get_item __P((hid_data_t s, hid_item_t *h));
+int hid_report_size __P((report_desc_t d, enum hid_kind k, int *idp));
+
+/* Conversion to/from usage names, usage.c: */
+char *usage_page __P((int i));
+char *usage_in_page __P((unsigned int u));
+void init_hid __P((char *file));
+
+/* Extracting/insertion of data, data.c: */
+unsigned int getdata __P((void *data, hid_item_t *h));

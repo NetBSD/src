@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.140 1999/05/11 20:20:02 veego Exp $
+# $NetBSD: mi,v 1.141 1999/05/11 21:02:25 augustss Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1019,6 +1019,8 @@
 ./usr/lib/libtermcap_p.a
 ./usr/lib/libtermlib.a
 ./usr/lib/libtermlib_p.a
+./usr/lib/libusb.a
+./usr/lib/libusb_p.a
 ./usr/lib/libutil.a
 ./usr/lib/libutil_p.a
 ./usr/lib/libwrap.a
@@ -2113,6 +2115,7 @@
 ./usr/share/man/cat3/ungetc.0
 ./usr/share/man/cat3/unsetenv.0
 ./usr/share/man/cat3/unvis.0
+./usr/share/man/cat3/usb.0
 ./usr/share/man/cat3/user_from_uid.0
 ./usr/share/man/cat3/usleep.0
 ./usr/share/man/cat3/utime.0
@@ -3167,6 +3170,7 @@
 ./usr/share/man/man3/ungetc.3
 ./usr/share/man/man3/unsetenv.3
 ./usr/share/man/man3/unvis.3
+./usr/share/man/man3/usb.3
 ./usr/share/man/man3/user_from_uid.3
 ./usr/share/man/man3/usleep.3
 ./usr/share/man/man3/utime.3
