@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.11 2001/12/28 06:12:19 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.12 2002/05/29 21:31:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,7 @@
 #include <sys/ucontext.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.23.8.2 2002/01/08 00:28:58 nathanw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.23.8.3 2002/05/29 21:32:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -52,6 +52,7 @@
 
 #include <uvm/uvm_extern.h>	/* XXX needed? */
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

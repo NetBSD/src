@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.3.8.1 2002/01/03 06:42:36 petrov Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.3.8.2 2002/05/29 21:32:01 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,7 @@
 #include <sys/buf.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int

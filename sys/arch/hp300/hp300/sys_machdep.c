@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.30.8.2 2002/04/01 07:39:58 nathanw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.30.8.3 2002/05/29 21:31:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.30.8.2 2002/04/01 07:39:58 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.30.8.3 2002/05/29 21:31:42 nathanw Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.30.8.2 2002/04/01 07:39:58 nathanw
 
 #include <uvm/uvm_extern.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.1.4.4 2002/02/28 04:12:58 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.1.4.5 2002/05/29 21:32:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.1.4.4 2002/02/28 04:12:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.1.4.5 2002/05/29 21:32:50 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.1.4.4 2002/02/28 04:12:58 nath
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #define	__SYSCTL_PRIVATE

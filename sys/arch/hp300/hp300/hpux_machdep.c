@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.26.8.3 2002/04/01 07:39:56 nathanw Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.26.8.4 2002/05/29 21:31:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.26.8.3 2002/04/01 07:39:56 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.26.8.4 2002/05/29 21:31:41 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.26.8.3 2002/04/01 07:39:56 nathan
 
 #include <uvm/uvm_extern.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.2.8.1 2001/11/20 16:31:54 pk Exp $ */
+/*	$NetBSD: compat_13_machdep.c,v 1.2.8.2 2002/05/29 21:31:57 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /*

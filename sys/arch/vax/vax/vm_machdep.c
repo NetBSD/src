@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.75.4.4 2002/04/01 07:43:33 nathanw Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.75.4.5 2002/05/29 21:32:06 nathanw Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -56,6 +56,7 @@
 #include <machine/cpu.h>
 #include <machine/sid.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include "opt_cputype.h"

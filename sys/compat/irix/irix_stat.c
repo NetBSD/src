@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.3.2.3 2002/04/01 07:43:59 nathanw Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.3.2.4 2002/05/29 21:32:28 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.3.2.3 2002/04/01 07:43:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.3.2.4 2002/05/29 21:32:28 nathanw Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.3.2.3 2002/04/01 07:43:59 nathanw Ex
 #include <sys/stdint.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/common/compat_util.h>

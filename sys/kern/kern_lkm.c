@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.55.2.3 2001/11/14 19:16:35 nathanw Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.55.2.4 2002/05/29 21:33:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.55.2.3 2001/11/14 19:16:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.55.2.4 2002/05/29 21:33:11 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.55.2.3 2001/11/14 19:16:35 nathanw Ex
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.45.2.3 2001/11/24 19:55:46 bjh21 Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.45.2.4 2002/05/29 21:33:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.45.2.3 2001/11/24 19:55:46 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.45.2.4 2002/05/29 21:33:12 nathanw Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.45.2.3 2001/11/24 19:55:46 bjh21 Exp 
 #include <sys/syscall.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /* ARGSUSED */

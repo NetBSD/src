@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.13.2.3 2002/04/17 00:04:48 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.13.2.4 2002/05/29 21:32:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.13.2.3 2002/04/17 00:04:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.13.2.4 2002/05/29 21:32:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.13.2.3 2002/04/17 00:04:48 nathan
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/ibcs2/ibcs2_types.h>

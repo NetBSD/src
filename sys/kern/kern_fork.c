@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.7 2002/01/08 00:32:32 nathanw Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.8 2002/05/29 21:33:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.7 2002/01/08 00:32:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.8 2002/05/29 21:33:10 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.7 2002/01/08 00:32:32 nathanw E
 #include <sys/sched.h>
 #include <sys/signalvar.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>

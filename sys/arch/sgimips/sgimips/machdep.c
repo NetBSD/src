@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.2.4 2002/04/01 07:42:29 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.5 2002/05/29 21:31:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -53,6 +53,7 @@
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 

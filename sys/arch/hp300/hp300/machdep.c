@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149.4.6 2002/04/01 07:39:57 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149.4.7 2002/05/29 21:31:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.6 2002/04/01 07:39:57 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.7 2002/05/29 21:31:42 nathanw Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.6 2002/04/01 07:39:57 nathanw Ex
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/signalvar.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/tty.h>
 #include <sys/user.h>

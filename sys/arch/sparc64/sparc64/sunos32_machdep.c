@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.5.4.4 2002/04/01 07:43:15 nathanw Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.5.4.5 2002/05/29 21:32:00 nathanw Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/malloc.h>
 #include <sys/select.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>

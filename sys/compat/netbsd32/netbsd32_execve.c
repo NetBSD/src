@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.2.2.5 2002/04/01 07:44:33 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.2.2.6 2002/05/29 21:32:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.2.2.5 2002/04/01 07:44:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.2.2.6 2002/05/29 21:32:48 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.2.2.5 2002/04/01 07:44:33 nath
 
 #include <uvm/uvm_extern.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/acct.h>

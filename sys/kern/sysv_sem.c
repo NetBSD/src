@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.40.2.4 2002/04/01 07:47:58 nathanw Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.40.2.5 2002/05/29 21:33:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.40.2.4 2002/04/01 07:47:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.40.2.5 2002/05/29 21:33:16 nathanw Exp $");
 
 #define SYSVSEM
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.40.2.4 2002/04/01 07:47:58 nathanw Ex
 #include <sys/sem.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int	semtot = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.3.8.2 2001/11/05 19:46:17 briggs Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.3.8.3 2002/05/29 21:31:55 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,6 +40,7 @@
 #include <sys/user.h>
 #include <sys/lwp.h>
 #include <sys/mount.h>  
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int

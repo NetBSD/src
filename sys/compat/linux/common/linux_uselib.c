@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.2.2.4 2002/04/01 07:44:31 nathanw Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.2.2.5 2002/05/29 21:32:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.2.2.4 2002/04/01 07:44:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.2.2.5 2002/05/29 21:32:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.2.2.4 2002/04/01 07:44:31 nathanw
 #include <sys/exec_elf.h>
 
 #include <sys/mman.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.11.2.4 2002/04/01 07:44:55 nathanw Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.11.2.5 2002/05/29 21:33:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.11.2.4 2002/04/01 07:44:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.11.2.5 2002/05/29 21:33:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.11.2.4 2002/04/01 07:44:55 nat
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 

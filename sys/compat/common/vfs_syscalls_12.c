@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.6.6.4 2001/11/14 19:12:55 nathanw Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.6.6.5 2002/05/29 21:32:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.6.6.4 2001/11/14 19:12:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.6.6.5 2002/05/29 21:32:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.6.6.4 2001/11/14 19:12:55 nath
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 static void cvtstat __P((struct stat *, struct stat12 *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4.6.3 2002/04/01 07:43:39 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4.6.4 2002/05/29 21:32:07 nathanw Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -80,6 +80,7 @@
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>

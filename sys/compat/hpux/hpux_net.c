@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.20.2.3 2001/11/18 00:07:49 gmcgarry Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.20.2.4 2002/05/29 21:32:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.20.2.3 2001/11/18 00:07:49 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.20.2.4 2002/05/29 21:32:23 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.20.2.3 2001/11/18 00:07:49 gmcgarry E
 #include <sys/socketvar.h>
 #include <sys/uio.h>
 #include <sys/ktrace.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>

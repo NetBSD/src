@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.7.4.5 2002/04/01 07:44:46 nathanw Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.7.4.6 2002/05/29 21:32:58 nathanw Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.7.4.5 2002/04/01 07:44:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.7.4.6 2002/05/29 21:32:58 nathanw Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -121,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.7.4.5 2002/04/01 07:44:46 nathanw
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/unistd.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
 #include <sys/socketvar.h>

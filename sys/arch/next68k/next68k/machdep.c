@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45.4.4 2002/04/01 07:41:46 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.4.5 2002/05/29 21:31:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,6 +71,7 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #ifdef KGDB
 #include <sys/kgdb.h>

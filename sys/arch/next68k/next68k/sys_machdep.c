@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.13.8.2 2001/11/18 18:43:08 scw Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.13.8.3 2002/05/29 21:31:54 nathanw Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/sys_machdep.c
@@ -58,6 +58,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

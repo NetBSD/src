@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.12.2.2 2001/11/14 19:12:53 nathanw Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.12.2.3 2002/05/29 21:32:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.12.2.2 2001/11/14 19:12:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.12.2.3 2002/05/29 21:32:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.12.2.2 2001/11/14 19:12:53 nathan
 #include <sys/sysctl.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int

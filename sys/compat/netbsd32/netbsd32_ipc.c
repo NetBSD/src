@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.1.4.2 2001/11/14 19:13:16 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.1.4.3 2002/05/29 21:32:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.1.4.2 2001/11/14 19:13:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.1.4.3 2002/05/29 21:32:49 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.1.4.2 2001/11/14 19:13:16 nathanw
 #include <sys/shm.h>
 #include <sys/mount.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 

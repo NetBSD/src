@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.17.2.4 2002/04/01 07:44:37 nathanw Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.17.2.5 2002/05/29 21:32:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.17.2.4 2002/04/01 07:44:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.17.2.5 2002/05/29 21:32:52 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.17.2.4 2002/04/01 07:44:37 nathanw 
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/osf1/osf1.h>

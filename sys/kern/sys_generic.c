@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.54.2.6 2002/04/01 07:47:57 nathanw Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.54.2.7 2002/05/29 21:33:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.54.2.6 2002/04/01 07:47:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.54.2.7 2002/05/29 21:33:14 nathanw Exp $");
 
 #include "opt_ktrace.h"
 
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.54.2.6 2002/04/01 07:47:57 nathanw
 #endif
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int selscan __P((struct proc *, fd_mask *, fd_mask *, int, register_t *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64.2.2 2002/04/01 07:39:02 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64.2.3 2002/05/29 21:31:37 nathanw Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -70,6 +70,7 @@
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/device.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #ifdef MFS

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit_43.c,v 1.6.2.3 2002/04/01 07:43:49 nathanw Exp $	*/
+/*	$NetBSD: kern_exit_43.c,v 1.6.2.4 2002/05/29 21:32:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.6.2.3 2002/04/01 07:43:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.6.2.4 2002/05/29 21:32:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.6.2.3 2002/04/01 07:43:49 nathanw
 #include <sys/acct.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

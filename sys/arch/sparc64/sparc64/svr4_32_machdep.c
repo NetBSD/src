@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.4.8.4 2002/04/17 00:04:30 nathanw Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.4.8.5 2002/05/29 21:32:01 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
 #include <sys/types.h>

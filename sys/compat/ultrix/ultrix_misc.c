@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.68.2.5 2002/04/01 07:44:54 nathanw Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.68.2.6 2002/05/29 21:33:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.68.2.5 2002/04/01 07:44:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.68.2.6 2002/05/29 21:33:08 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.68.2.5 2002/04/01 07:44:54 nathanw
 #include <sys/unistd.h>
 #include <sys/ipc.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/ultrix/ultrix_syscall.h>

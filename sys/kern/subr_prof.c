@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.22.2.3 2001/11/14 19:16:41 nathanw Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.22.2.4 2002/05/29 21:33:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.22.2.3 2001/11/14 19:16:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.22.2.4 2002/05/29 21:33:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.22.2.3 2001/11/14 19:16:41 nathanw E
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 
