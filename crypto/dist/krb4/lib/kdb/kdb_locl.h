@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kdb_locl.h,v 1.1.1.2 2000/12/29 01:43:10 assar Exp $ */
+/* $Id: kdb_locl.h,v 1.2 2001/02/04 18:03:03 christos Exp $ */
 
 #ifndef __kdb_locl_h
 #define __kdb_locl_h
@@ -74,11 +74,9 @@
 
 /* Utils */
 
-int kerb_db_set_lockmode __P((int));
 void kerb_db_fini __P((void));
 int kerb_db_init __P((void));
 int kerb_db_get_principal __P((char *name, char *, Principal *, unsigned int, int *));
-int kerb_db_get_dba __P((char *, char *, Dba *, unsigned int, int *));
 
 void delta_stat __P((DB_stat *, DB_stat *, DB_stat *));
 
