@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.20 2002/06/27 02:26:39 itojun Exp $
+# $NetBSD: postinstall,v 1.21 2002/06/28 09:35:23 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -506,7 +506,7 @@ do_makedev()
 	[ -n "$1" ] || err 2 "USAGE: do_makedev   fix|check"
 
 	compare_dir $1 ${SRC_DIR}/etc/etc.${MACHINE} \
-		${DEST_DIR}/dev 555 MAKEDEV
+		${DEST_DIR}/dev 555 MAKEDEV || return 1
 	if [ "${op}" = "fix" ]; then
 		(cd ${DEST_DIR}/dev; /bin/sh ./MAKEDEV all)
 	fi
@@ -528,8 +528,8 @@ Usage: ${PROGNAME} [-s srcdir] [-d destdir] operation [item [...]]
 	or fixes are applied.
 
 	Options:
-	-s srcdir	Source directory to compare from.  [${SRC_DIR}]
-	-d destdir	Destination directory to check.    [${DEST_DIR}]
+	-s srcdir	Source directory to compare from.  [${SRC_DIR:-/}]
+	-d destdir	Destination directory to check.    [${DEST_DIR:-/}]
 
 	Operation may be one of:
 		help	display this help
@@ -569,8 +569,15 @@ main()
 	shift $((${OPTIND} - 1))
 	[ $# -gt 0 ] || usage
 
-	[ -d "${SRC_DIR}" ] || err 1 "${SRC_DIR} is not a directory"
-	[ -d "${DEST_DIR}" ] || err 1 "${DEST_DIR} is not a directory"
+	[ -d "${SRC_DIR}" ]	|| err 1 "${SRC_DIR} is not a directory"
+	[ -d "${DEST_DIR}" ]	|| err 1 "${DEST_DIR} is not a directory"
+
+		# If directories are /, clear them, so various messages
+		# don't have leading "//".   However, this requires
+		# the use of ${foo:-/} to display the variables.
+		#
+	[ "${SRC_DIR}" = "/" ]	&& SRC_DIR=""
+	[ "${DEST_DIR}" = "/" ]	&& DEST_DIR=""
 
 	op=$1
 	shift
@@ -582,8 +589,8 @@ main()
 		;;
 
 	list)
-		echo "Source directory: ${SRC_DIR}"
-		echo "Target directory: ${DEST_DIR}"
+		echo "Source directory: ${SRC_DIR:-/}"
+		echo "Target directory: ${DEST_DIR:-/}"
 		list
 		;;
 
@@ -600,8 +607,8 @@ main()
 
 		# perform each check/fix
 		#
-		echo "Source directory: ${SRC_DIR}"
-		echo "Target directory: ${DEST_DIR}"
+		echo "Source directory: ${SRC_DIR:-/}"
+		echo "Target directory: ${DEST_DIR:-/}"
 		items_passed=
 		items_failed=
 		for i in ${todo}; do
@@ -656,10 +663,7 @@ PROGNAME=${0##*/}
 SRC_DIR="/usr/src"
 DEST_DIR="/"
 SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
-# assume native build if $MACHINE is not set
-if [ -z "${MACHINE}" ]; then
-	MACHINE=`/usr/bin/uname -m`
-fi
+: ${MACHINE:=$( uname -m )}	# assume native build if $MACHINE is not set
 trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
 umask 022
 
