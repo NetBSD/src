@@ -36,11 +36,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lkm.h,v 1.1 1993/06/07 19:52:51 cgd Exp $
+ *	$Id: lkm.h,v 1.2 1994/01/08 05:50:42 mycroft Exp $
  */
+
 #ifndef _SYS_LKM_H_
 #define _SYS_LKM_H_
-
 
 /*
  * Supported module types
@@ -65,7 +65,7 @@ struct lkm_syscall {
 	MODTYPE		lkm_type;
 	int		lkm_ver;
 	char		*lkm_name;
-	int		lkm_offset;		/* save/assign area*/
+	unsigned long	lkm_offset;		/* save/assign area*/
 	struct sysent	*lkm_sysent;
 	struct sysent	lkm_oldent;		/* save area for unload*/
 };
@@ -77,7 +77,7 @@ struct lkm_vfs {
 	MODTYPE		lkm_type;
 	int		lkm_ver;
 	char		*lkm_name;
-	int		lkm_offset;
+	unsigned long	lkm_offset;
 	unsigned long	lkm_flags;
 	struct vfsops	*lkm_vfsops;
 };
@@ -97,7 +97,7 @@ struct lkm_dev {
 	MODTYPE		lkm_type;
 	int		lkm_ver;
 	char		*lkm_name;
-	int		lkm_offset;
+	unsigned long	lkm_offset;
 	DEVTYPE		lkm_devtype;
 	union {
 		void		*anon;
@@ -117,7 +117,7 @@ struct lkm_strmod {
 	MODTYPE		lkm_type;
 	int		lkm_ver;
 	char		*lkm_name;
-	int		lkm_offset;
+	unsigned long	lkm_offset;
 	/*
 	 * Removed: future release
 	 */
@@ -130,7 +130,7 @@ struct lkm_exec {
 	MODTYPE		lkm_type;
 	int		lkm_ver;
 	char		*lkm_name;
-	int		lkm_offset;
+	unsigned long	lkm_offset;
 	struct execsw	*lkm_exec;
 	struct execsw	lkm_oldexec;
 };
@@ -142,7 +142,7 @@ struct lkm_misc {
 	MODTYPE		lkm_type;
 	int		lkm_ver;
 	char		*lkm_name;
-	int		lkm_offset;
+	unsigned long	lkm_offset;
 };
 
 
@@ -153,7 +153,7 @@ struct lkm_any {
 	MODTYPE		lkm_type;
 	int		lkm_ver;
 	char		*lkm_name;
-	int		lkm_offset;
+	unsigned long	lkm_offset;
 };
 
 
@@ -188,9 +188,9 @@ union lkm_all {
 #define	MAXLKMNAME	32
 struct lkm_table {
 	int		type;
-	unsigned int	size;
-	unsigned int	offset;
-	char		*area;
+	unsigned long	size;
+	unsigned long	offset;
+	unsigned long	area;
 	char		used;
 
 	int			ver;		/* version (INIT)*/
@@ -355,10 +355,10 @@ struct lmc_unload {
 struct lmc_stat {
 	int		id;			/* IN: module ID to unload*/
 	char		name[ MAXLKMNAME];	/* IN/OUT: name of module*/
-	int		offset;			/* OUT: target table offset*/
+	unsigned long	offset;			/* OUT: target table offset*/
 	MODTYPE		type;			/* OUT: type of module*/
-	char		*area;			/* OUT: kernel load addr*/
-	int		size;			/* OUT: module size (pages)*/
+	unsigned long	area;			/* OUT: kernel load addr*/
+	unsigned long	size;			/* OUT: module size (pages)*/
 	unsigned long	private;		/* OUT: module private data*/
 	int		ver;			/* OUT: lkm compile version*/
 };
