@@ -1,4 +1,4 @@
-/*	$NetBSD: skeylogin.c,v 1.11 1999/08/24 09:01:36 mrg Exp $	*/
+/*	$NetBSD: skeylogin.c,v 1.12 2000/01/23 02:11:02 mycroft Exp $	*/
 
 /* S/KEY v1.1b (skeylogin.c)
  *
@@ -90,7 +90,8 @@ skeychallenge(mp,name, ss, sslen)
 	case -1:	/* File error */
 		return -1;
 	case 0:		/* Lookup succeeded, issue challenge */
-                (void)snprintf(ss, sslen, "s/key %d %s",mp->n - 1,mp->seed);
+                (void)snprintf(ss, (size_t)sslen, "s/key %d %s", mp->n - 1,
+		    mp->seed);
 		return 0;
 	case 1:		/* User not found */
 		fclose(mp->keyfile);
@@ -111,7 +112,7 @@ skeylookup(mp,name)
 	const char *name;
 {
 	int found;
-	int len;
+	size_t len;
 	long recstart = 0;
 	char *cp;
 	struct stat statbuf;
@@ -183,7 +184,6 @@ skeyverify(mp,response)
 	time_t now;
 	struct tm *tm;
 	char tbuf[27];
-	char *cp;
 
 	time(&now);
 	tm = localtime(&now);
@@ -226,7 +226,7 @@ skeyverify(mp,response)
 	}
 	rip(mp->buf);
 	mp->logname = strtok(mp->buf," \t");
-	cp = strtok(NULL," \t") ;
+	(void) strtok(NULL," \t");	/* ignore counter */
 	mp->seed = strtok(NULL," \t");
 	mp->val = strtok(NULL," \t");
 	/* And convert file value to hex for comparison */
