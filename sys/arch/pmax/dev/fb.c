@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.7 1995/09/11 07:45:36 jonathan Exp $	*/
+/*	$NetBSD: fb.c,v 1.8 1995/09/20 05:36:13 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -157,38 +157,12 @@ u_short defCursor[32] = {
 
 };
 
-/*
- * Font mask bits used by fbBlitc().
- */
-static unsigned int fontmaskBits[16] = {
-	0x00000000,
-	0x00000001,
-	0x00000100,
-	0x00000101,
-	0x00010000,
-	0x00010001,
-	0x00010100,
-	0x00010101,
-	0x01000000,
-	0x01000001,
-	0x01000100,
-	0x01000101,
-	0x01010000,
-	0x01010001,
-	0x01010100,
-	0x01010101
-};
  
 /*
  * Pro-tem framebuffer pseudo-device driver
  */
 
-
-/*#include <dev/cons.h>*/ /*XXX*/
-
 #include <sys/device.h>
-#include <sparc/rcons/raster.h>
-
 #include <fb.h>
 
 
@@ -277,6 +251,7 @@ got_it:
  * Configure the keyboard/mouse based on machine type for turbochannel
  * display boards.
  */
+int
 tb_kbdmouseconfig(fi)
 	struct fbinfo *fi;
 {
@@ -285,7 +260,7 @@ tb_kbdmouseconfig(fi)
 #if defined(DEBUG) || defined(DIAGNOSTIC)
 		printf("tb_kbdmouseconfig: given non-console framebuffer\n");
 #endif
-		return;
+		return 1;
 	}
 
 	switch (pmax_boardtype) {
