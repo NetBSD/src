@@ -1,4 +1,4 @@
-.\"	$NetBSD: hil.4,v 1.7 2001/09/11 00:08:34 wiz Exp $
+.\"	$NetBSD: hil.4,v 1.8 2001/12/08 05:36:58 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,8 @@
 .Sh NAME
 .Nm hil
 .Nd Human Interface Link device driver
+.Sh SYNOPSIS
+.Fd "hil*	at intio?"
 .Sh DESCRIPTION
 The Human Interface Link
 .Pq Tn HIL
@@ -553,8 +555,8 @@ Requiring
 to be able to read anything is gross.  It is probably not worth fixing,
 though, because the whole hil/ite mechanism will probably be replaced
 with a more-or-less port-independent scheme in the foreseeable future.
-.Sh HISTORY
-The
-.Nm
-interface is
-.Ud
+.\" .Sh HISTORY
+.\" The
+.\" .Nm
+.\" interface is
+.\" .Ud
