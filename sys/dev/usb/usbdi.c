@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.59 2000/01/18 20:23:42 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.60 2000/01/19 00:23:58 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -78,8 +78,10 @@ extern int usbdebug;
 
 static usbd_status usbd_ar_pipe  __P((usbd_pipe_handle pipe));
 static void usbd_do_request_async_cb 
-	__P((usbd_xfer_handle, usbd_private_handle, usbd_status));
+    __P((usbd_xfer_handle, usbd_private_handle, usbd_status));
 static void usbd_start_next __P((usbd_pipe_handle pipe));
+static usbd_status usbd_open_pipe_ival
+    __P((usbd_interface_handle, u_int8_t, u_int8_t, usbd_pipe_handle *, int));
 
 static int usbd_nbuses = 0;
 
@@ -132,6 +134,18 @@ usbd_open_pipe(iface, address, flags, pipe)
 	u_int8_t flags;
 	usbd_pipe_handle *pipe;
 { 
+	return (usbd_open_pipe_ival(iface, address, flags, pipe, 
+				    USBD_DEFAULT_INTERVAL));
+}
+
+usbd_status 
+usbd_open_pipe_ival(iface, address, flags, pipe, ival)
+	usbd_interface_handle iface;
+	u_int8_t address;
+	u_int8_t flags;
+	usbd_pipe_handle *pipe;
+	int ival;
+{ 
 	usbd_pipe_handle p;
 	struct usbd_endpoint *ep;
 	usbd_status err;
@@ -149,10 +163,9 @@ usbd_open_pipe(iface, address, flags, pipe)
 	}
 	return (USBD_BAD_ADDRESS);
  found:
-	if ((flags & USBD_EXCLUSIVE_USE) &&
-	    ep->refcnt != 0)
+	if ((flags & USBD_EXCLUSIVE_USE) && ep->refcnt != 0)
 		return (USBD_IN_USE);
-	err = usbd_setup_pipe(iface->device, iface, ep, &p);
+	err = usbd_setup_pipe(iface->device, iface, ep, ival, &p);
 	if (err)
 		return (err);
 	LIST_INSERT_HEAD(&iface->pipes, p, next);
@@ -161,24 +174,26 @@ usbd_open_pipe(iface, address, flags, pipe)
 }
 
 usbd_status 
-usbd_open_pipe_intr(iface, address, flags, pipe, priv, buffer, length, cb)
+usbd_open_pipe_intr(iface, address, flags, pipe, priv, buffer, len, cb, ival)
 	usbd_interface_handle iface;
 	u_int8_t address;
 	u_int8_t flags;
 	usbd_pipe_handle *pipe;
 	usbd_private_handle priv;
 	void *buffer;
-	u_int32_t length;
+	u_int32_t len;
 	usbd_callback cb;
+	int ival;
 {
 	usbd_status err;
 	usbd_xfer_handle xfer;
 	usbd_pipe_handle ipipe;
 
-	DPRINTFN(3,("usbd_open_pipe_intr: address=0x%x flags=0x%x length=%d\n",
-		    address, flags, length));
+	DPRINTFN(3,("usbd_open_pipe_intr: address=0x%x flags=0x%x len=%d\n",
+		    address, flags, len));
 
-	err = usbd_open_pipe(iface, address, USBD_EXCLUSIVE_USE, &ipipe);
+	err = usbd_open_pipe_ival(iface, address, USBD_EXCLUSIVE_USE, 
+				  &ipipe, ival);
 	if (err)
 		return (err);
 	xfer = usbd_alloc_xfer(iface->device);
@@ -186,8 +201,8 @@ usbd_open_pipe_intr(iface, address, flags, pipe, priv, buffer, length, cb)
 		err = USBD_NOMEM;
 		goto bad1;
 	}
-	usbd_setup_xfer(xfer, ipipe, priv, buffer, length, flags,
-			   USBD_NO_TIMEOUT, cb);
+	usbd_setup_xfer(xfer, ipipe, priv, buffer, len, flags,
+	    USBD_NO_TIMEOUT, cb);
 	ipipe->intrxfer = xfer;
 	ipipe->repeat = 1;
 	err = usbd_transfer(xfer);
