@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 2000/07/27 14:48:58 scw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16 2000/11/14 19:12:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,14 @@
 /*
  * Machine dependent constants for MVME68K
  */
+
+/*
+ * We use 4K pages on the mvme68k.  Override the PAGE_* definitions
+ * to be compile-time constants.
+ */
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
