@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.32 2000/03/23 07:01:39 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.32.4.1 2001/11/13 21:41:58 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -209,7 +209,7 @@ const struct tl_product_desc tl_compaq_products[] = {
 	  "Compaq ProLiant Integrated Netelligent 10/100 TX" },
 	{ PCI_PRODUCT_COMPAQ_DPNet100TX, TLPHY_MEDIA_10_5|TLPHY_MEDIA_NO_10_T,
 	  "Compaq Dual Port Netelligent 10/100 TX" },
-	{ PCI_PRODUCT_COMPAQ_DP4000, TLPHY_MEDIA_10_5,
+	{ PCI_PRODUCT_COMPAQ_DP4000, TLPHY_MEDIA_10_5|TLPHY_MEDIA_NO_10_T,
 	  "Compaq Deskpro 4000 5233MMX" },
 	{ PCI_PRODUCT_COMPAQ_NF3P_BNC, TLPHY_MEDIA_10_2,
 	  "Compaq NetFlex 3/P w/ BNC" },
