@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 1998/03/12 06:26:26 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 1998/03/22 23:12:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 1998/03/12 06:26:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 1998/03/22 23:12:15 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -675,16 +675,29 @@ pmap_reference(pmap)
  *	Make a new pmap (vmspace) active for the given process.
  */
 void
-pmap_activate(register struct proc *p)
+pmap_activate(p)
+	struct proc *p;
 {
+
         p->p_addr->u_pcb.pcb_segtab =
             p->p_vmspace->vm_map.pmap->pm_segtab;
+
         if (p == curproc) {
                 register int tlbpid = pmap_alloc_tlbpid(p);
                 MachSetPID(tlbpid);
         }
 }
 
+/*
+ *	Make a previously active pmap (vmspace) inactive.
+ */
+void
+pmap_deactivate(p)
+	struct proc *p;
+{
+
+	/* Nothing to do. */
+}
 
 /*
  *	Remove the given range of addresses from the specified map.
