@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.2 2001/03/04 03:50:33 matt Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.3 2001/03/11 16:02:21 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -28,16 +28,17 @@
  * the rights to redistribute these changes.
  */
 
-#ifndef	_ARM32_DB_MACHDEP_H_
-#define	_ARM32_DB_MACHDEP_H_
+#ifndef	_ARM_DB_MACHDEP_H_
+#define	_ARM_DB_MACHDEP_H_
 
 /*
  * Machine-dependent defines for new kernel debugger.
  */
 
+#include "opt_progmode.h"
 #include <uvm/uvm_extern.h>
+#include <arm/armreg.h>
 #include <machine/frame.h>
-#include <machine/psl.h>
 #include <machine/trap.h>
 
 /* end of mangling */
@@ -50,7 +51,12 @@ typedef trapframe_t db_regs_t;
 db_regs_t		ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
+#ifdef PROG26
+#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_r15 & R15_PC)
+#define PC_ADVANCE(regs) ((regs)->tf_r15 += 4)
+#else
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_pc)
+#endif
 
 #define	BKPT_INST	(KERNEL_BREAKPOINT)	/* breakpoint instruction */
 #define	BKPT_SIZE	(INSN_SIZE)		/* size of breakpoint inst */
@@ -96,10 +102,11 @@ db_regs_t		ddb_regs;	/* register state */
 
 u_int branch_taken __P((u_int insn, u_int pc, db_regs_t *db_regs));
 int kdb_trap __P((int, db_regs_t *));
+void db_machine_init __P((void));
 
 /*
  * We use a.out symbols in DDB.
  */
 #define	DB_AOUT_SYMBOLS
 
-#endif	/* _ARM32_DB_MACHDEP_H_ */
+#endif	/* _ARM_DB_MACHDEP_H_ */
