@@ -1,4 +1,4 @@
-/* $NetBSD: Lint___sigreturn14.c,v 1.2 2000/06/14 06:49:10 cgd Exp $ */
+/* $NetBSD: Lint___sigreturn14.c,v 1.3 2003/09/11 15:29:10 christos Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,6 +9,7 @@
 
 #include <signal.h>
 
+#ifndef __HAVE_SIGINFO
 /*ARGSUSED*/
 int
 __sigreturn14(scp)
@@ -16,3 +17,4 @@ __sigreturn14(scp)
 {
 	return (0);
 }
+#endif
