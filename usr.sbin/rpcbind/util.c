@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 2000/06/04 04:51:50 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.3 2000/06/22 10:59:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -240,6 +240,7 @@ found:
 	if (ifap != NULL)
 		ret = taddr2uaddr(nconf, &tbuf);
 freeit:
+	freenetconfigent(nconf);
 	free(serv_sa);
 	free(serv_nbp);
 	if (clnt_sa != NULL)
