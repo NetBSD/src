@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 2001/06/08 18:00:51 fredette Exp $	*/
+/*	$NetBSD: pte.h,v 1.3 2001/06/27 18:48:30 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -186,6 +186,8 @@
 #define PA_PGNUM(pa) ((unsigned)pa >> PGSHIFT)
 
 #if defined(_KERNEL) || defined(_STANDALONE)
+#define kernel_context() get_context(); set_context(0)
+#define restore_context set_context
 u_int get_pte __P((vm_offset_t va));
 void  set_pte __P((vm_offset_t va, u_int pte));
 #endif	/* _KERNEL */
