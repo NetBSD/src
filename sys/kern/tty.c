@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.85 1997/04/05 19:50:18 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.86 1997/04/05 21:40:34 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1500,8 +1500,11 @@ loop:
 	if (isbackground(p, tp) &&
 	    ISSET(tp->t_lflag, TOSTOP) && (p->p_flag & P_PPWAIT) == 0 &&
 	    (p->p_sigignore & sigmask(SIGTTOU)) == 0 &&
-	    (p->p_sigmask & sigmask(SIGTTOU)) == 0 &&
-	     p->p_pgrp->pg_jobc) {
+	    (p->p_sigmask & sigmask(SIGTTOU)) == 0) {
+		if (p->p_pgrp->pg_jobc == 0) {
+			error = EIO;
+			goto out;
+		}
 		pgsignal(p->p_pgrp, SIGTTOU, 1);
 		error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg, 0);
 		if (error)
