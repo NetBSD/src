@@ -1,4 +1,4 @@
-.\" $NetBSD: podulebus.4,v 1.4 2000/07/22 23:14:39 bjh21 Exp $
+.\" $NetBSD: podulebus.4,v 1.5 2000/12/20 21:24:35 bjh21 Exp $
 .\"
 .\" Copyright (c) 2000 Ben Harris
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 23, 2000
+.Dd December 20, 2000
 .Os
 .Dt PODULEBUS 4 arm26
 .Sh NAME
@@ -64,6 +64,26 @@ Ethernet cards (also Acorn
 .Sm off
 .No < Li 0011 : 00A4 No >
 .Sm on
+.It Nm eh
+i-cubed EtherLan 100-, 200- and 500-series Ethernet cards
+.Sm off
+.No < Li 0046 : 00BD No >
+.Sm on
+.Sm off
+.No < Li 0046 : 00CF No >
+.Sm on
+.Sm off
+.No < Li 0046 : 00D4 No >
+.Sm on
+.Sm off
+.No < Li 0046 : 011C No >
+.Sm on
+.Sm off
+.No < Li 0046 : 011D No >
+.Sm on
+.Sm off
+.No < Li 0046 : 011F No >
+.Sm on
 .\" .It Nm dtide
 .\" D.T. Software IDE interface
 .\" .Sm off
@@ -73,6 +93,7 @@ Ethernet cards (also Acorn
 .Sh SEE ALSO
 .\" .Xr dtide 4 ,
 .Xr ea 4 ,
+.Xr eh 4 ,
 .Xr ei 4
 .Sh BUGS
 The
