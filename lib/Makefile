@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 1997/03/21 23:07:32 gwr Exp $
+#	$NetBSD: Makefile,v 1.29 1997/03/29 21:12:23 thorpej Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -8,12 +8,13 @@ SUBDIR=	csu libarch libc libcompat libcrypt libcurses libedit libl \
 	libwrap liby libz
 
 # XXX Temporary until all ports are able to use libkvm (leo)
-.if	(${MACHINE} == "alpha") || \
-	(${MACHINE} == "amiga") || \
-	(${MACHINE} == "atari") || \
-	(${MACHINE} == "pc532") || \
-	(${MACHINE} == "sparc") || \
-	(${MACHINE} == "sun3")  || \
+.if	(${MACHINE} == "alpha")   || \
+	(${MACHINE} == "amiga")   || \
+	(${MACHINE} == "atari")   || \
+	(${MACHINE} == "pc532")   || \
+	(${MACHINE} == "powerpc") || \
+	(${MACHINE} == "sparc")   || \
+	(${MACHINE} == "sun3")    || \
 	(${MACHINE} == "sun3x")
 SUBDIR+=        libkvm
 .else
