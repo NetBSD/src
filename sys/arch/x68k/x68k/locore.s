@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.10 1997/01/13 14:04:53 oki Exp $	*/
+/*	$NetBSD: locore.s,v 1.11 1997/01/18 11:16:57 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -538,7 +538,7 @@ kbrkpt:	| Kernel-mode breakpoint or trace trap. (d0=trap_type)
 Lbrkpt1:
 	movl	a0@+,a1@+
 	subql	#4,d1
-	bgt	Lbrkpt1
+	jgt	Lbrkpt1
 
 Lbrkpt2:
 	| Call the trap handler for the kernel debugger.
@@ -1009,7 +1009,7 @@ Lnot68030:
 	movc	d0,cacr			|   only exists on 68040/68060
 	movc	cacr,d0			| read it back
 	tstl	d0			| zero?
-	beq	Lis68020		| yes, we have 68020
+	jeq	Lis68020		| yes, we have 68020
 	moveq	#0,d0			| now turn it back off
 	movec	d0,cacr			|   before we access any data
 	.word	0xf4d8			| cinva bc - invalidate caches XXX
@@ -1017,7 +1017,7 @@ Lnot68030:
 	movc	d0,cacr			|   only exists on 68060
 	movc	cacr,d0			| read it back
 	tstl	d0			| zero?
-	beq	Lis68040		| yes, we have 68040
+	jeq	Lis68040		| yes, we have 68040
 	RELOC(_mmutype, a0)		| no, we have 68060
 	movl	#MMU_68040,a0@		| with a 68040 compatible MMU 
 	RELOC(_cputype, a0)
@@ -1106,10 +1106,10 @@ Lstploaddone:
 	movw	a0@,d0
 	movw	#0x000f,a0@
 	cmpw	#0x000f,a1@		| JUPITER-X?
-	bne	Ljupiter		| yes, set SUPER bit
+	jne	Ljupiter		| yes, set SUPER bit
 	movw	#0x0000,a0@
 	cmpw	#0x0000,a1@		| be sure JUPITER-X?
-	beq	Ljupiterdone		| no, skip
+	jeq	Ljupiterdone		| no, skip
 Ljupiter:
 	movl	#0x0100a240,d0		| to access system register
 	.long	0x4e7b0006		| movc d0,dtt0
