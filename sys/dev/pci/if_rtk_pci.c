@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.10 2001/11/13 07:48:44 lukem Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.11 2002/02/04 16:33:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -46,47 +46,8 @@
  * Columbia University, New York City
  */
 
-/*
- * The RealTek 8139 PCI NIC redefines the meaning of 'low end.' This is
- * probably the worst PCI ethernet controller ever made, with the possible
- * exception of the FEAST chip made by SMC. The 8139 supports bus-master
- * DMA, but it has a terrible interface that nullifies any performance
- * gains that bus-master DMA usually offers.
- *
- * For transmission, the chip offers a series of four TX descriptor
- * registers. Each transmit frame must be in a contiguous buffer, aligned
- * on a longword (32-bit) boundary. This means we almost always have to
- * do mbuf copies in order to transmit a frame, except in the unlikely
- * case where a) the packet fits into a single mbuf, and b) the packet
- * is 32-bit aligned within the mbuf's data area. The presence of only
- * four descriptor registers means that we can never have more than four
- * packets queued for transmission at any one time.
- *
- * Reception is not much better. The driver has to allocate a single large
- * buffer area (up to 64K in size) into which the chip will DMA received
- * frames. Because we don't know where within this region received packets
- * will begin or end, we have no choice but to copy data from the buffer
- * area into mbufs in order to pass the packets up to the higher protocol
- * levels.
- *
- * It's impossible given this rotten design to really achieve decent
- * performance at 100Mbps, unless you happen to have a 400Mhz PII or
- * some equally overmuscled CPU to drive it.
- *
- * On the bright side, the 8139 does have a built-in PHY, although
- * rather than using an MDIO serial interface like most other NICs, the
- * PHY registers are directly accessible through the 8139's register
- * space. The 8139 supports autonegotiation, as well as a 64-bit multicast
- * filter.
- *
- * The 8129 chip is an older version of the 8139 that uses an external PHY
- * chip. The 8129 has a serial MDIO interface for accessing the MII where
- * the 8139 lets you directly access the on-board PHY registers. We need
- * to select which interface to use depending on the chip type.
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.10 2001/11/13 07:48:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.11 2002/02/04 16:33:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
