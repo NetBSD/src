@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.3 1998/10/15 01:11:46 ross Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.4 1998/10/15 18:01:49 bad Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -165,7 +165,7 @@ ustarfs_cylinder_read(f, seek2, forcelabel)
 	struct open_file *f;
 	ustoffs seek2;
 {
-	int e;
+	int e = 0;	/* XXX work around gcc warning */
 	ustoffs	lda;
 	char *xferbase;
 	ust_active_t *ustf;
