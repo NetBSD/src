@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.10.2.3 2000/11/09 21:53:43 tv Exp $
+# $NetBSD: dot.profile,v 1.10.2.4 2000/11/30 03:52:16 tv Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,6 +42,7 @@ export HOME
 
 umask 022
 
+MACHINE=sparc
 INSTFS_MP=/instfs
 MINIROOT_FSSIZE=10000
 
@@ -152,8 +153,13 @@ EOF
 
 	mount_cd9660 -o rdonly $dev /cdrom || return 1
 
-	tf=/cdrom/installation/bootfs/instfs.tgz
-	(cd $INSTFS_MP && tar zxpf $tf) || rval=1
+	# Look for instfs.tgz in MACHINE subdirectory first
+	tf=/cdrom/$MACHINE/installation/bootfs/instfs.tgz
+	[ -f $tf ] || tf=/cdrom/installation/bootfs/instfs.tgz
+	[ -f $tf ] || { echo "instfs.tgz image not found"; rval=1; }
+
+	[ $rval = 0 ] && (cd $INSTFS_MP && tar zxpf $tf) || rval=1
+
 	umount /cdrom
 	return $rval
 }
