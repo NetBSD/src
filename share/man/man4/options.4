@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.238 2004/04/27 03:12:12 atatat Exp $
+.\"	$NetBSD: options.4,v 1.239 2004/04/30 02:14:17 lukem Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd April 26, 2004
+.Dd April 30, 2004
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2112,8 +2112,13 @@ In general, using the correct
 .Tn CPU
 class will result in the best performance.
 At least one of these options must be present.
+.It Cd options ENHANCED_SPEEDSTEP
+Include support for the
+Enhanced SpeedStep Technology
+present in newer
+.Tn CPU Ns s .
 .It Cd options CPURESET_DELAY=value
-specifies the time (in millisecond) to wait before doing a hardware reset
+Specifies the time (in millisecond) to wait before doing a hardware reset
 in the last phase of a reboot.
 This gives the user a chance to see error messages from the shutdown
 operations (like NFS unmounts, buffer cache flush, etc ...).
