@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.8 2003/04/26 13:25:47 bjh21 Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.9 2003/04/27 11:12:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -81,9 +81,9 @@ static void
 kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 {
 	char *p;
-	int ch, n;
+	int ch;
 	unsigned long ul;
-	int lflag, set;
+	int lflag;
 
 	for (;;) {
 		while ((ch = *fmt++) != '%') {
