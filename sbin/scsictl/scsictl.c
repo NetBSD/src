@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.1 1998/10/15 21:44:39 thorpej Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.2 1998/10/15 21:49:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -214,7 +214,7 @@ device_identify(argc, argv)
 	return;
 
  usage:
-	fprintf(stderr, "usage: %s %s\n", __progname, cmdname);
+	fprintf(stderr, "usage: %s device %s\n", __progname, cmdname);
 	exit(1);
 }
 
@@ -268,7 +268,7 @@ device_reassign(argc, argv)
 	return;
 
  usage:
-	fprintf(stderr, "usage: %s %s blkno [blkno [...]]\n",
+	fprintf(stderr, "usage: %s device %s blkno [blkno [...]]\n",
 	    __progname, cmdname);
 	exit(1);
 }
@@ -294,7 +294,7 @@ device_reset(argc, argv)
 	return;
 
  usage:
-	fprintf(stderr, "usage: %s %s\n", __progname, cmdname);
+	fprintf(stderr, "usage: %s device %s\n", __progname, cmdname);
 	exit(1);
 }
 
@@ -323,7 +323,7 @@ bus_reset(argc, argv)
 	return;
 
  usage:
-	fprintf(stderr, "usage: %s %s\n", __progname, cmdname);
+	fprintf(stderr, "usage: %s device %s\n", __progname, cmdname);
 	exit(1);
 }
 
@@ -366,7 +366,8 @@ bus_scan(argc, argv)
 	return;
 
  usage:
-	fprintf(stderr, "usage: %s %s target lun\n", __progname, cmdname);
+	fprintf(stderr, "usage: %s device %s target lun\n", __progname,
+	    cmdname);
 	fprintf(stderr, "       use `any' to wildcard target or lun\n");
 	exit(1);
 }
