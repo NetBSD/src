@@ -10,11 +10,11 @@ PROG=	sendmail
 # databases are read, but the new format will be used on any rebuilds.  On
 # really gnarly systems, you can set this to null; it will crawl like a high
 # spiral snail, but it will work.
-DBMDEF=	-DNEWDB -DNDBM -DNIS
+DBMDEF=	-DNEWDB -DNIS
 
 #nasty warning about gcc 2.4.x caused bugs 
-CFLAGS=-I${.CURDIR} ${DBMDEF} -DNETISO -DMIME
-#CFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO -DMIME
+CFLAGS=-I${.CURDIR} ${DBMDEF} -DNETISO
+#CFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO
 
 SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	deliver.c domain.c envelope.c err.c headers.c macro.c main.c map.c \
