@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs.h,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs.h,v 1.5 1994/01/20 21:23:04 ws Exp $
+ *	$Id: procfs.h,v 1.6 1994/01/28 07:03:16 cgd Exp $
  */
 
 /*
@@ -49,6 +49,7 @@ typedef enum {
 	Pfile,		/* the executable file */
 	Pmem,		/* the process's memory image */
 	Pregs,		/* the process's register set */
+	Pfpregs,	/* the process's floating point register set */
 	Pctl,		/* process control */
 	Pstatus,	/* process status */
 	Pnote,		/* process notifier */

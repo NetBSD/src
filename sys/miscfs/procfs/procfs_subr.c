@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_subr.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_subr.c,v 1.8 1994/01/20 21:23:07 ws Exp $
+ *	$Id: procfs_subr.c,v 1.9 1994/01/28 07:03:34 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -164,6 +164,11 @@ loop:
 		vp->v_type = VREG;
 		break;
 
+	case Pfpregs:
+		pfs->pfs_mode = (VREAD|VWRITE);
+		vp->v_type = VREG;
+		break;
+
 	case Pctl:
 		pfs->pfs_mode = (VREAD|VWRITE);
 		vp->v_type = VREG;
@@ -245,6 +250,9 @@ procfs_rw(vp, uio, ioflag, cred)
 
 	case Pregs:
 		return (pfs_doregs(curp, p, pfs, uio));
+
+	case Pfpregs:
+		return (pfs_dofpregs(curp, p, pfs, uio));
 
 	case Pctl:
 		return (pfs_doctl(curp, p, pfs, uio));
