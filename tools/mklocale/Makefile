@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2001/11/12 23:16:33 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/11/14 22:13:41 tv Exp $
 
+HOSTPROGNAME=	nbmklocale
 HOST_SRCDIR=	usr.bin/mklocale
 
 .include "${.CURDIR}/../Makefile.host"

@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2001/11/13 14:21:03 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2001/11/14 22:13:40 tv Exp $
 
 MODULE=		groff
 
 ALL_TARGET=	src/include all
+MAKE_ARGS=	bindir=${TOOLDIR}/lib/groff
 
 # Add gnuwrap hack directly to the Makefile.
 _NOWRAPPER=1
@@ -31,3 +32,9 @@ ${TMACDIR}/tmac.${F}: ${F}
 afterinstall: ${TMACDIR}/tmac.an
 ${TMACDIR}/tmac.an: ${TMACDIR}/tmac.andoc
 	${INSTALL_FILE:N-U} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
+
+.for F in eqn groff indxbib pic refer soelim tbl
+afterinstall: ${TOOLDIR}/bin/nb${F}
+${TOOLDIR}/bin/nb${F}: ${TOOLDIR}/lib/groff/${F}
+	ln -f ${.ALLSRC} ${.TARGET}
+.endfor
