@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.1.2.12 2000/11/19 00:30:42 sommerfeld Exp $ */
+/* $NetBSD: ioapic.c,v 1.1.2.13 2001/12/29 23:31:00 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -422,7 +422,14 @@ apic_vectorset (sc, pin, minlevel, maxlevel)
 			    pin, minlevel, maxlevel);
 		}
 
-		nvector = idt_vec_alloc (maxlevel, maxlevel+15);
+		/*
+		 * Allocate interrupt vector at the *lowest* priority level
+		 * of any of the handlers invoked by this pin.
+		 *
+		 * The interrupt handler will raise ipl higher than this
+		 * as appropriate.
+		 */
+		nvector = idt_vec_alloc (minlevel, minlevel+15);
 
 		if (nvector == NULL) {
 			/*
@@ -439,7 +446,7 @@ apic_vectorset (sc, pin, minlevel, maxlevel)
 		 * case here!
 		 */
 		handler = apichandler[(nvector & 0xf) +
-		    ((maxlevel > IPL_HIGH) ? 0x10 : 0)];
+		    ((maxlevel > IPL_HIGH) ? 0x10 : 0)]; /* XXX magic */
 		idt_vec_set(nvector, handler);
 		pp->ip_vector = nvector;
 		pp->ip_minlevel = minlevel;

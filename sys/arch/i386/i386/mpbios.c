@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.1.2.12 2001/05/12 22:28:15 sommerfeld Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.1.2.13 2001/12/29 23:31:04 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -539,14 +539,14 @@ mpbios_scan(self)
 		    self->dv_xname, mp_fps->mpfb1);
 		
 		/* use default addresses */
-		pe.apic_id = cpu_number();
+		pe.apic_id = lapic_cpu_number();
 		pe.cpu_flags = PROCENTRY_FLAG_EN|PROCENTRY_FLAG_BP;
 		pe.cpu_signature = cpu_info_primary.ci_signature;
 		pe.feature_flags = cpu_info_primary.ci_feature_flags;
 
 		mpbios_cpu((u_int8_t *)&pe, self);
 
-		pe.apic_id = 1 - cpu_number();
+		pe.apic_id = 1 - lapic_cpu_number();
 		pe.cpu_flags = PROCENTRY_FLAG_EN;
 
 		mpbios_cpu((u_int8_t *)&pe, self);

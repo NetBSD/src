@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17.10.13 2001/06/18 03:33:28 sommerfeld Exp $
+#	$NetBSD: genassym.cf,v 1.17.10.14 2001/12/29 23:31:00 sommerfeld Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -230,8 +230,8 @@ define	BIOSCALLREG_EDI		offsetof(struct bioscallregs, EDI)
 define	BIOSCALLREG_EFLAGS	offsetof(struct bioscallregs, EFLAGS)
 endif
 
+define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
-
 define	CPU_INFO_CURPROC	offsetof(struct cpu_info, ci_curproc)
 define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CPU_INFO_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
@@ -243,6 +243,8 @@ define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
 define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
 define	CPU_INFO_FEATURES	offsetof(struct cpu_info, ci_feature_flags)
 define	CPU_INFO_BRAND		offsetof(struct cpu_info, ci_brand_id)
+
+define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
 

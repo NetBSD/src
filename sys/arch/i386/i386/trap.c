@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134.2.18 2001/12/29 21:09:08 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.19 2001/12/29 23:31:04 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134.2.18 2001/12/29 21:09:08 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134.2.19 2001/12/29 23:31:04 sommerfeld Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -222,8 +222,9 @@ trap(frame)
 		else
 			printf("unknown trap %d", frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-		    type, frame.tf_err, frame.tf_eip, frame.tf_cs, frame.tf_eflags, rcr2(), lapic_tpr);
+		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x imask %x\n",
+		    type, frame.tf_err, frame.tf_eip, frame.tf_cs,
+		    frame.tf_eflags, rcr2(), lapic_tpr);
 
 		panic("trap");
 		/*NOTREACHED*/
@@ -232,6 +233,8 @@ trap(frame)
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
 	case T_TSSFLT:
+		if (p == NULL)
+			goto we_re_toast;
 		/* Check for copyin/copyout fault. */
 		pcb = &p->p_addr->u_pcb;
 		if (pcb->pcb_onfault != 0) {
@@ -292,7 +295,7 @@ copyfault:
 		case 0x0f:	/* 0x0f prefix */
 			switch (*(u_char *)(frame.tf_eip+1)) {
 			case 0xa1:		/* popl %fs */
-				vframe = (void *)((int)&frame.tf_esp - 
+				vframe = (void *)((int)&frame.tf_esp -
 				    offsetof(struct trapframe, tf_fs));
 				resume = (int)resume_pop_fs;
 				break;
@@ -326,7 +329,7 @@ copyfault:
 	case T_NMI|T_USER:
 		KERNEL_PROC_LOCK(p);
 		(*p->p_emul->e_trapsignal)(p, SIGBUS, type & ~T_USER);
-		KERNEL_PROC_UNLOCK(p);		
+		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
@@ -362,9 +365,9 @@ copyfault:
 #else
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
-		KERNEL_PROC_LOCK(p);		
+		KERNEL_PROC_LOCK(p);
 		(*p->p_emul->e_trapsignal)(p, SIGKILL, type & ~T_USER);
-		KERNEL_PROC_UNLOCK(p);		
+		KERNEL_PROC_UNLOCK(p);
 		goto out;
 #endif
 	}
@@ -372,15 +375,15 @@ copyfault:
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
-		KERNEL_PROC_LOCK(p);		
+		KERNEL_PROC_LOCK(p);
 		(*p->p_emul->e_trapsignal)(p, SIGFPE, type & ~T_USER);
-		KERNEL_PROC_UNLOCK(p);		
+		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
-		KERNEL_PROC_LOCK(p);		
+		KERNEL_PROC_LOCK(p);
 		(*p->p_emul->e_trapsignal)(p, SIGFPE, frame.tf_err);
-		KERNEL_PROC_UNLOCK(p);		
+		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
@@ -391,7 +394,7 @@ copyfault:
 		/* If we page-fault while in scheduler, we're doomed. */
 		if (simple_lock_held(&sched_lock))
 			goto we_re_toast;
-#endif		
+#endif
 #ifdef MULTIPROCESSOR
 		/*
 		 * process doing kernel-mode page fault must have

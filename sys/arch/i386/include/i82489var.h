@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.1.2.4 2001/04/30 20:36:38 sommerfeld Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.1.2.5 2001/12/29 23:31:06 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 #ifndef _I386_I82489REG_H_
 #define _I386_I82489REG_H_
 
+/*
+ * Software definitions belonging to Local APIC driver.
+ */
+
 static __inline__ u_int32_t i82489_readreg __P((int));
 static __inline__ void i82489_writereg __P((int, u_int32_t));
 
@@ -61,6 +65,8 @@ i82489_writereg(reg, val)
 {
 	*((volatile u_int32_t *)(((volatile u_int8_t *)local_apic) + reg)) = val;
 }
+
+#define lapic_cpu_number() 	(i82489_readreg(LAPIC_ID)>>LAPIC_ID_SHIFT)
 
 /*
  * "spurious interrupt vector"; vector used by interrupt which was

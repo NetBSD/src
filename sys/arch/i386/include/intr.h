@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.18 2001/12/29 21:09:09 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.19 2001/12/29 23:31:07 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -202,8 +202,9 @@ softintr(register int sir)
 #define I386_IPI_SYNCH_FPU		0x00000008
 #define I386_IPI_TLB			0x00000010
 #define I386_IPI_MTRR			0x00000020
+#define I386_IPI_GDT			0x00000040
 
-#define I386_NIPI		6
+#define I386_NIPI		7
 
 #ifdef MULTIPROCESSOR
 struct cpu_info;

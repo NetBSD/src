@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.s,v 1.1.4.7 2001/12/29 21:09:08 sommerfeld Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.1.4.8 2001/12/29 23:31:04 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,9 +129,10 @@
 	movw	%ax,%es		; \
 	pushl	%fs		; \
 	pushl	%gs		; \
-	movw	%ax,%fs		; \
 	movw	%ax,%gs		; \
-
+	movw	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
+	movw	%ax,%fs		
+	
 #define	INTRFASTEXIT \
 	popl	%gs		; \
 	popl	%fs		; \
@@ -146,28 +147,18 @@
 	popl	%eax		; \
 	addl	$8,%esp		; \
 	iret
-
-#ifdef MULTIPROCESSOR
-#define GET_CPUINFO(reg)			  \
-	movzbl	_C_LABEL(lapic_id)+3,reg	; \
-	movl	_C_LABEL(cpu_info)(,reg,4),reg
-
-#define CHECK_ASTPENDING(treg)				\
-	GET_CPUINFO(treg)				;\
-	cmpl $0,CPU_INFO_ASTPENDING(treg)
-		
-#define CLEAR_ASTPENDING(cireg)				\
-	movl $0,CPU_INFO_ASTPENDING(cireg)
 	
+#define _CONCAT(a,b) a/**/b
+
+#if defined(MULTIPROCESSOR)
+#define CPUVAR(off) %fs:_CONCAT(CPU_INFO_,off)
 #else
-
-#define CHECK_ASTPENDING(treg)		cmpb	$0,_C_LABEL(astpending)	
-#define CLEAR_ASTPENDING(treg)		movb	$0,_C_LABEL(astpending)
-
+#define CPUVAR(off) _C_LABEL(cpu_info_primary)+_CONCAT(CPU_INFO_,off)
 #endif
 
+#define CHECK_ASTPENDING()		cmpl $0,CPUVAR(ASTPENDING)
+#define CLEAR_ASTPENDING()		movl $0,CPUVAR(ASTPENDING)
 	
-
 /*
  * Signal trampoline; copied to top of user stack.
  */
@@ -193,10 +184,10 @@ IDTVEC(svr4_fasttrap)
 	call	_C_LABEL(svr4_fasttrap)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	CHECK_ASTPENDING(%ecx)		
+	CHECK_ASTPENDING()		
 	je	1f
 	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%ecx)
+	CLEAR_ASTPENDING()
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)

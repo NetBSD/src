@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.26.10.5 2001/09/03 19:48:12 sommerfeld Exp $	*/
+/*	$NetBSD: pcb.h,v 1.26.10.6 2001/12/29 23:31:07 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,11 +125,5 @@ struct pcb {
 struct md_coredump {
 	long	md_pad[8];
 };    
-
-#ifdef _KERNEL
-#ifndef MULTIPROCESSOR
-struct pcb *curpcb;		/* our current running pcb */
-#endif
-#endif
 
 #endif /* _I386_PCB_H_ */
