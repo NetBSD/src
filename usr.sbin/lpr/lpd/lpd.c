@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.29 2001/06/25 15:29:12 mrg Exp $	*/
+/*	$NetBSD: lpd.c,v 1.30 2001/08/11 01:04:57 mjl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.29 2001/06/25 15:29:12 mrg Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.30 2001/08/11 01:04:57 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ __RCSID("$NetBSD: lpd.c,v 1.29 2001/06/25 15:29:12 mrg Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -123,7 +124,7 @@ static void       reapchild __P((int));
 static void       mcleanup __P((int));
 static void       doit __P((void));
 static void       startup __P((void));
-static void       chkhost __P((struct sockaddr *));
+static void       chkhost __P((struct sockaddr *, int));
 static int	  ckqueue __P((char *));
 static void	  usage __P((void));
 static int	  *socksetup __P((int, int, const char *));
@@ -131,10 +132,10 @@ static int	  *socksetup __P((int, int, const char *));
 uid_t	uid, euid;
 int child_count;
 
+#define LPD_NOPORTCHK	0001		/* skip reserved-port check */
+
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	fd_set defreadfds;
 	struct sockaddr_un un, fromunix;
@@ -142,7 +143,7 @@ main(argc, argv)
 	sigset_t nmask, omask;
 	int lfd, errs, i, f, funix, *finet;
 	int child_max = 32;	/* more then enough to hose the system */
-	int options = 0;
+	int options = 0, check_options = 0;
 	struct servent *sp;
 	const char *port = "printer";
 
@@ -153,7 +154,7 @@ main(argc, argv)
 	name = argv[0];
 
 	errs = 0;
-	while ((i = getopt(argc, argv, "b:dln:srw:")) != -1)
+	while ((i = getopt(argc, argv, "b:cdln:srw:W")) != -1)
 		switch (i) {
 		case 'b':
 			if (blist_addrs >= blist_size) {
@@ -192,6 +193,10 @@ main(argc, argv)
 				    optarg);
 			if (wait_time < 30)
 			    warnx("warning: wait time less than 30 seconds");
+			break;
+		case 'W':/* allow connections coming from a non-reserved port */
+			 /* (done by some lpr-implementations for MS-Windows) */
+			check_options |= LPD_NOPORTCHK;
 			break;
 		default:
 			errs++;
@@ -370,7 +375,7 @@ main(argc, argv)
 			if (domain == AF_INET) {
 				/* for both AF_INET and AF_INET6 */
 				from_remote = 1;
-				chkhost((struct sockaddr *)&frominet);
+				chkhost((struct sockaddr *)&frominet, check_options);
 			} else
 				from_remote = 0;
 			doit();
@@ -387,8 +392,7 @@ main(argc, argv)
 }
 
 static void
-reapchild(signo)
-	int signo;
+reapchild(int signo)
 {
 	union wait status;
 
@@ -397,8 +401,7 @@ reapchild(signo)
 }
 
 static void
-mcleanup(signo)
-	int signo;
+mcleanup(int signo)
 {
 	if (lflag)
 		syslog(LOG_INFO, "exiting");
@@ -427,7 +430,7 @@ char	*cmdnames[] = {
 };
 
 static void
-doit()
+doit(void)
 {
 	char *cp;
 	int n;
@@ -546,7 +549,7 @@ doit()
  * files left from the last time the machine went down.
  */
 static void
-startup()
+startup(void)
 {
 	char *buf;
 	char *cp;
@@ -587,8 +590,7 @@ startup()
  * Make sure there's some work to do before forking off a child
  */
 static int
-ckqueue(cap)
-	char *cap;
+ckqueue(char *cap)
 {
 	struct dirent *d;
 	DIR *dirp;
@@ -614,8 +616,7 @@ ckqueue(cap)
  * Check to see if the from host has access to the line printer.
  */
 static void
-chkhost(f)
-	struct sockaddr *f;
+chkhost(struct sockaddr *f, int check_opts)
 {
 	struct addrinfo hints, *res, *r;
 	FILE *hostf;
@@ -626,8 +627,12 @@ chkhost(f)
 
 	error = getnameinfo(f, f->sa_len, NULL, 0, serv, sizeof(serv),
 			    NI_NUMERICSERV);
-	if (error || atoi(serv) >= IPPORT_RESERVED)
+	if (error)
 		fatal("Malformed from address");
+
+         if (!(check_opts & LPD_NOPORTCHK) &&
+	       atoi(serv) >= IPPORT_RESERVED)
+		fatal("Connect from invalid port (%s)", serv);
 
 	/* Need real hostname for temporary filenames */
 	error = getnameinfo(f, f->sa_len, host, sizeof(host), NULL, 0,
@@ -690,11 +695,12 @@ again:
 	/*NOTREACHED*/
 }
 
+
 static void
-usage()
+usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-dlrs] [-b bind-address] [-n maxchild] "
+	fprintf(stderr, "usage: %s [-dlrsW] [-b bind-address] [-n maxchild] "
 	    "[-w maxwait] [port]\n", getprogname());
 	exit(1);
 }
@@ -703,9 +709,7 @@ usage()
 /* if af is PF_UNSPEC more than one socket may be returned */
 /* the returned list is dynamically allocated, so caller needs to free it */
 int *
-socksetup(af, options, port)
-        int af, options;
-	const char *port;
+socksetup(int af, int options, const char *port)
 {
 	struct addrinfo hints, *res, *r;
 	int error, maxs = 0, *s, *socks = NULL, blidx = 0;
