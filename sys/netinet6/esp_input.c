@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.30 2003/07/04 00:49:18 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.31 2003/07/09 04:05:59 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.30 2003/07/04 00:49:18 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.31 2003/07/09 04:05:59 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -765,7 +765,6 @@ noreplaycheck:
 		flowinfo = ip6->ip6_flow;
 		m_adj(m, off + esplen + ivlen);
 		if (m->m_len < sizeof(*ip6)) {
-			/* okay to pullup in m_pulldown style */
 			m = m_pullup(m, sizeof(*ip6));
 			if (!m) {
 				ipsec6stat.in_inval++;
