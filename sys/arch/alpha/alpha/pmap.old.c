@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.23 1997/09/16 01:52:01 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.24 1997/09/18 01:08:56 mjacob Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.23 1997/09/16 01:52:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.24 1997/09/18 01:08:56 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1795,8 +1795,11 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		printf("remove: invalidating pte at %p\n", pte);
 #endif
 	*pte = PG_NV;
-	if ((flags & PRM_TFLUSH) && active_pmap(pmap))
+
+	if ((flags & PRM_TFLUSH) && active_pmap(pmap)) {
 		ALPHA_TBIS(va);
+		alpha_pal_imb();
+	}
 	/*
 	 * For user mappings decrement the wiring count on
 	 * the PT page.  We do this after the PTE has been
