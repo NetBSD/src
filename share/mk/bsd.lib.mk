@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.51 1994/06/30 06:47:38 deraadt Exp $
+#	$NetBSD: bsd.lib.mk,v 1.52 1994/07/06 04:09:55 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -18,49 +18,49 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 .SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l .m4
 
 .c.o:
-	${CC} ${CFLAGS} -c ${.IMPSRC} 
+	${CC} ${CFLAGS} ${CPPFLAGS} -c ${.IMPSRC} 
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 .c.po:
-	${CC} -p ${CFLAGS} -c ${.IMPSRC} -o ${.TARGET}
+	${CC} -p ${CFLAGS} ${CPPFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 .c.so:
-	${CC} ${PICFLAG} -DPIC ${CFLAGS} -c ${.IMPSRC} -o ${.TARGET}
+	${CC} ${PICFLAG} -DPIC ${CFLAGS} ${CPPFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 .cc.o .C.o:
-	${CXX} ${CXXFLAGS} -c ${.IMPSRC} 
+	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c ${.IMPSRC} 
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 .cc.po .C.po:
-	${CXX} -p ${CXXFLAGS} -c ${.IMPSRC} -o ${.TARGET}
+	${CXX} -p ${CXXFLAGS} ${CPPFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 .cc.so .C.so:
-	${CXX} ${PICFLAG} -DPIC ${CXXFLAGS} -c ${.IMPSRC} -o ${.TARGET}
+	${CXX} ${PICFLAG} -DPIC ${CXXFLAGS} ${CPPFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 .S.o .s.o:
-	${CPP} -E ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	${CPP} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 .S.po .s.po:
-	${CPP} -E -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
 .S.so .s.so:
-	${CPP} -E -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} -k -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
