@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.35 2000/05/13 08:13:55 lukem Exp $
+#	$NetBSD: install.sub,v 1.36 2000/09/03 20:01:46 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -705,7 +705,7 @@ __install_ftp_2
 		# Make a copy of this script that lists the directory
 		# contents, and use that to determine the files to get.
 		cat /tmp/ftp-script.sh	>  /tmp/ftp-dir.sh
-		echo "ls"		>> /tmp/ftp-dir.sh
+		echo "nlist"		>> /tmp/ftp-dir.sh
 		echo "quit"		>> /tmp/ftp-dir.sh
 		echo "__end_commands"	>> /tmp/ftp-dir.sh
 
