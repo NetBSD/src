@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.21 2002/04/24 05:27:15 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.22 2002/04/26 17:46:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -388,6 +388,9 @@ pthread_join(pthread_t thread, void **valptr)
 			pthread_exit(PTHREAD_CANCELED);
 		}
 		self->pt_state = PT_STATE_BLOCKED_QUEUE;
+		self->pt_sleepobj = thread;
+		self->pt_sleepq = &thread->pt_joiners;
+		self->pt_sleeplock = &thread->pt_join_lock;
 		pthread_spinunlock(self, &self->pt_statelock);
 
 		PTQ_INSERT_TAIL(&thread->pt_joiners, self, pt_sleep);
