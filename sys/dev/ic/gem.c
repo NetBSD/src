@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.6 2001/10/18 15:09:15 thorpej Exp $ */
+/*	$NetBSD: gem.c,v 1.7 2001/10/18 15:19:21 thorpej Exp $ */
 
 /*
  * 
@@ -107,12 +107,6 @@ int		gem_eint __P((struct gem_softc *, u_int));
 int		gem_rint __P((struct gem_softc *));
 int		gem_tint __P((struct gem_softc *));
 void		gem_power __P((int, void *));
-
-/* Default buffer copy routines */
-void	gem_copytobuf_contig __P((struct gem_softc *, void *, int, int));
-void	gem_copyfrombuf_contig __P((struct gem_softc *, void *, int, int));
-void	gem_zerobuf_contig __P((struct gem_softc *, int, int));
-
 
 #ifdef GEM_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_ethercom.ec_if.if_flags & IFF_DEBUG) \
@@ -1330,23 +1324,6 @@ gem_rint(sc)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif /* NPBFILTER > 0 */
-
-#if 0
-		/*
-		 * We sometimes have to run the 21140 in Hash-Only
-		 * mode.  If we're in that mode, and not in promiscuous
-		 * mode, and we have a unicast packet that isn't for
-		 * us, then drop it.
-		 */
-		if (sc->sc_filtmode == TDCTL_Tx_FT_HASHONLY &&
-		    (ifp->if_flags & IFF_PROMISC) == 0 &&
-		    ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-		    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-			   ETHER_ADDR_LEN) != 0) {
-			m_freem(m);
-			continue;
-		}
-#endif
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
