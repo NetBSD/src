@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97reg.h,v 1.10 2005/04/04 02:08:58 jmcneill Exp $	*/
+/*	$NetBSD: ac97reg.h,v 1.11 2005/04/04 18:52:30 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -142,15 +142,26 @@
 #define		AC97_EXT_MODEM_HANDSET		0x0004
 #define		AC97_EXT_MODEM_CID1		0x0008
 #define		AC97_EXT_MODEM_CID2		0x0010
-#define	AC97_REG_EXT_MODEM_STATUS	0x3e	/* extended modem status */
-#define		AC97_MEA_GPIO			0x0001	/* gpio is ready */
-#define		AC97_MEA_ADC1			0x0004
-#define		AC97_MEA_DAC1			0x0008
-#define		AC97_MEA_ADC2			0x0010
-#define		AC97_MEA_DAC2			0x0020
-#define		AC97_MEA_HADC			0x0040
-#define		AC97_MEA_HDAC			0x0080
-
+#define		AC97_EXT_MODEM_ID0		0x4000
+#define		AC97_EXT_MODEM_ID1		0x8000
+#define		AC97_EXT_MODEM_ID_MASK		0xc000
+#define	AC97_REG_EXT_MODEM_CTRL		0x3e	/* extended modem ctrl */
+#define		AC97_EXT_MODEM_CTRL_GPIO	0x0001	/* gpio is ready */
+#define		AC97_EXT_MODEM_CTRL_MREF	0x0002	/* vref up */
+#define		AC97_EXT_MODEM_CTRL_ADC1	0x0004	/* line1 adc ready */
+#define		AC97_EXT_MODEM_CTRL_DAC1	0x0008	/* line1 dac ready */
+#define		AC97_EXT_MODEM_CTRL_ADC2	0x0010	/* line2 adc ready */
+#define		AC97_EXT_MODEM_CTRL_DAC2	0x0020	/* line2 dac ready */
+#define		AC97_EXT_MODEM_CTRL_HADC	0x0040	/* handset adc ready */
+#define		AC97_EXT_MODEM_CTRL_HDAC	0x0080	/* handset dac ready */
+#define		AC97_EXT_MODEM_CTRL_PRA		0x0100	/* gpio off */
+#define		AC97_EXT_MODEM_CTRL_PRB		0x0200	/* vref off */
+#define		AC97_EXT_MODEM_CTRL_PRC		0x0400	/* line1 adc off */
+#define		AC97_EXT_MODEM_CTRL_PRD		0x0800	/* line1 dac off */
+#define		AC97_EXT_MODEM_CTRL_PRE		0x1000	/* line2 adc off */
+#define		AC97_EXT_MODEM_CTRL_PRF		0x2000	/* line2 dac off */
+#define		AC97_EXT_MODEM_CTRL_PRG		0x4000	/* handset adc off */
+#define		AC97_EXT_MODEM_CTRL_PRH		0x8000	/* handset dac off */
 #define AC97_REG_LINE1_RATE		0x40
 #define	AC97_REG_LINE2_RATE		0x42
 #define	AC97_REG_HANDSET_RATE		0x44
@@ -165,7 +176,29 @@
 #define		AC97_GPIO_LINE1_OH		0x0001	/* off-hook */
 #define		AC97_GPIO_LINE1_RI		0x0002	/* ring detect */
 #define		AC97_GPIO_LINE1_CID		0x0004	/* caller-id */
+#define		AC97_GPIO_LINE2_OH		0x0400	/* off-hook */
+#define		AC97_GPIO_LINE2_RI		0x0800	/* ring detect */
+#define		AC97_GPIO_LINE2_CID		0x1000	/* caller-id */
 #define	AC97_REG_MISC_AFE		0x56	/* misc modem afe status & control */
+#define		AC97_MISC_AFE_L1B_MASK		0x0007	/* line1 loopback */
+#define		AC97_MISC_AFE_L2B_MASK		0x0070	/* line2 loopback */
+#define		AC97_MISC_AFE_HSB_MASK		0x0700	/* handset loopback */
+#define		AC97_MISC_AFE_MLNK		0x1000	/* ac-link status */
+#define		AC97_MISC_AFE_CID1		0x2000	/* line1 cid decode */
+#define		AC97_MISC_AFE_CID2		0x4000	/* line2 cid decide */
+#define		AC97_MISC_AFE_CIDR		0x8000	/* raw cid data */
+
+/* Modem loopback modes */
+#define		AC97_LOOPBACK_DISABLE		0
+#define		AC97_LOOPBACK_ADC		1
+#define		AC97_LOOPBACK_LOCAL_ANALOG	2
+#define		AC97_LOOPBACK_DAC		3
+#define		AC97_LOOPBACK_REMOTE_ANALOG	4
+#define		AC97_LOOPBACK_VENDOR1		5
+#define		AC97_LOOPBACK_VENDOR2		6
+#define		AC97_LOOPBACK_VENDOR3		7
+
+
 
 /* Vendor specific -- 0x5a-0x7b */
 

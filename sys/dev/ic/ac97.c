@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.67 2005/04/04 02:08:58 jmcneill Exp $ */
+/*      $NetBSD: ac97.c,v 1.68 2005/04/04 18:52:30 jmcneill Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,13 +63,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.67 2005/04/04 02:08:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.68 2005/04/04 18:52:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/sysctl.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -101,6 +102,9 @@ static int	ac97_write(struct ac97_softc *, uint8_t, uint16_t);
 static void	ac97_ad198x_init(struct ac97_softc *);
 static void	ac97_alc650_init(struct ac97_softc *);
 static void	ac97_vt1616_init(struct ac97_softc *);
+
+static int	ac97_modem_offhook_set(struct ac97_softc *, int, int);
+static int	ac97_sysctl_verify(SYSCTLFN_ARGS);
 
 #define Ac97Nphone	"phone"
 
@@ -337,6 +341,13 @@ struct ac97_softc {
 	uint16_t ext_id;	/* -> AC97_REG_EXT_AUDIO_ID */
 	uint16_t ext_mid;	/* -> AC97_REG_EXT_MODEM_ID */
 	uint16_t shadow_reg[128];
+
+	/* sysctl */
+	struct sysctllog *log;
+	int offhook_line1_mib;
+	int offhook_line2_mib;
+	int offhook_line1;
+	int offhook_line2;
 };
 
 static struct ac97_codec_if_vtbl ac97civ = {
@@ -1109,8 +1120,12 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 			as->ext_mid = 0;
 	}
 	if (as->ext_mid != 0) {
+		struct sysctlnode *node;
+		struct sysctlnode *node_line1;
+		struct sysctlnode *node_line2;
 		uint16_t rate = 12000;
 		uint16_t val, reg;
+		int err;
 
 		/* Print capabilities */
 		bitmask_snprintf(as->ext_mid,
@@ -1122,40 +1137,93 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 			      (as->ext_mid & 0xc000) == 0 ?
 			      "primary" : "secondary");
 
-		/* Setup modem */
-		val = AC97_MEA_GPIO;
+		/* Setup modem and sysctls */
+		val = AC97_EXT_MODEM_CTRL_GPIO;
+		err = sysctl_createv(&as->log, 0, NULL, NULL, 0, CTLTYPE_NODE,
+				     "hw", NULL, NULL, 0, NULL, 0, CTL_HW,
+				     CTL_EOL);
+		if (err != 0)
+			goto sysctl_err;
+		err = sysctl_createv(&as->log, 0, NULL, &node, 0,
+				     CTLTYPE_NODE, sc_dev->dv_xname, NULL,
+				     NULL, 0, NULL, 0, CTL_HW, CTL_CREATE,
+				     CTL_EOL);
+		if (err != 0)
+			goto sysctl_err;
 		if (as->ext_mid & AC97_EXT_MODEM_LINE1) {
 			ac97_write(as, AC97_REG_LINE1_RATE, rate);
-			val |= AC97_MEA_ADC1 | AC97_MEA_DAC1;
+			val |= AC97_EXT_MODEM_CTRL_ADC1 |
+			       AC97_EXT_MODEM_CTRL_DAC1;
 		}
 		if (as->ext_mid & AC97_EXT_MODEM_LINE2) {
 			ac97_write(as, AC97_REG_LINE2_RATE, rate);
-			val |= AC97_MEA_ADC2 | AC97_MEA_DAC2;
+			val |= AC97_EXT_MODEM_CTRL_ADC2 |
+			       AC97_EXT_MODEM_CTRL_DAC2;
 		}
 		if (as->ext_mid & AC97_EXT_MODEM_HANDSET) {
 			ac97_write(as, AC97_REG_HANDSET_RATE, rate);
-			val |= AC97_MEA_HADC | AC97_MEA_HDAC;
+			val |= AC97_EXT_MODEM_CTRL_HADC |
+			       AC97_EXT_MODEM_CTRL_HDAC;
 		}
-		ac97_write(as, AC97_REG_EXT_MODEM_STATUS, 0xff00 & ~(val << 8));
+		/* power-up everything that we have */
+		ac97_write(as, AC97_REG_EXT_MODEM_CTRL, 0xff00 & ~(val << 8));
 		delay(100);
-		ac97_write(as, AC97_REG_EXT_MODEM_STATUS, 0xff00 & ~(val << 8));
+		ac97_write(as, AC97_REG_EXT_MODEM_CTRL, 0xff00 & ~(val << 8));
+		i = 500000;
 		do {
-			ac97_read(as, AC97_REG_EXT_MODEM_STATUS, &reg);
+			ac97_read(as, AC97_REG_EXT_MODEM_CTRL, &reg);
 			delay(1);
 		} while ((reg & val) != val && i--);
 		if (i == 0)
-			printf("%s: error setting extended modem controls\n",
+			printf("%s: error setting extended modem status\n",
 			    sc_dev->dv_xname);
 
-		ac97_write(as, AC97_REG_GPIO_CFG,
-			   0xffff & ~(AC97_GPIO_LINE1_OH));
-		ac97_write(as, AC97_REG_GPIO_POLARITY,
-			   0xffff & ~(AC97_GPIO_LINE1_OH));
+		/* setup sysctls */
+		if (as->ext_mid & AC97_EXT_MODEM_LINE1) {
+			ac97_read(as, AC97_REG_GPIO_CFG, &reg);
+			reg &= ~AC97_GPIO_LINE1_OH;
+			ac97_write(as, AC97_REG_GPIO_CFG, reg);
+			ac97_read(as, AC97_REG_GPIO_POLARITY, &reg);
+			reg &= ~AC97_GPIO_LINE1_OH;
+			ac97_write(as, AC97_REG_GPIO_POLARITY, reg);
+
+			err = sysctl_createv(&as->log, 0, NULL, &node_line1,
+					     CTLFLAG_READWRITE, CTLTYPE_INT,
+					     "line1",
+					     SYSCTL_DESCR("off-hook line1"),
+					     ac97_sysctl_verify, 0, as, 0,
+					     CTL_HW, node->sysctl_num,
+					     CTL_CREATE, CTL_EOL);
+			if (err != 0)
+				goto sysctl_err;
+			as->offhook_line1_mib = node_line1->sysctl_num;
+		}
+		if (as->ext_mid & AC97_EXT_MODEM_LINE2) {
+			ac97_read(as, AC97_REG_GPIO_CFG, &reg);
+			reg &= ~AC97_GPIO_LINE2_OH;
+			ac97_write(as, AC97_REG_GPIO_CFG, reg);
+			ac97_read(as, AC97_REG_GPIO_POLARITY, &reg);
+			reg &= ~AC97_GPIO_LINE2_OH;
+			ac97_write(as, AC97_REG_GPIO_POLARITY, reg);
+
+			err = sysctl_createv(&as->log, 0, NULL, &node_line2,
+					     CTLFLAG_READWRITE, CTLTYPE_INT,
+					     "line2",
+					     SYSCTL_DESCR("off-hook line2"),
+					     ac97_sysctl_verify, 0, as, 0,
+					     CTL_HW, node->sysctl_num,
+					     CTL_CREATE, CTL_EOL);
+			if (err != 0)
+				goto sysctl_err;
+			as->offhook_line2_mib = node_line2->sysctl_num;
+		}
+
 		ac97_write(as, AC97_REG_GPIO_STICKY, 0xffff);
 		ac97_write(as, AC97_REG_GPIO_WAKEUP, 0x0);
 		ac97_write(as, AC97_REG_MISC_AFE, 0x0);
 	}
 
+sysctl_err:
 	ac97_setup_source_info(as);
 
 	memset(&ctl, 0, sizeof(ctl));
@@ -1754,4 +1822,60 @@ ac97_vt1616_init(struct ac97_softc *as)
 	ac97_add_port(as, &sources[0]);
 	ac97_add_port(as, &sources[1]);
 	ac97_add_port(as, &sources[2]);
+}
+
+static int
+ac97_modem_offhook_set(struct ac97_softc *as, int line, int newval)
+{
+	uint16_t val = 0;
+
+	switch (newval) {
+	case 0:
+		val &= ~line;
+		break;
+	case 1:
+		val |= line;
+		break;
+	}
+	ac97_write(as, AC97_REG_GPIO_STATUS, val);
+
+	return 0;
+}
+
+static int
+ac97_sysctl_verify(SYSCTLFN_ARGS)
+{
+	int error, tmp;
+	struct sysctlnode node;
+	struct ac97_softc *as;
+
+	node = *rnode;
+	as = rnode->sysctl_data;
+	if (node.sysctl_num == as->offhook_line1_mib) {
+		tmp = as->offhook_line1;
+		node.sysctl_data = &tmp;
+		error = sysctl_lookup(SYSCTLFN_CALL(&node));
+		if (error || newp == NULL)
+			return error;
+
+		if (tmp < 0 || tmp > 1)
+			return EINVAL;
+
+		as->offhook_line1 = tmp;
+		ac97_modem_offhook_set(as, AC97_GPIO_LINE1_OH, tmp);
+	} else if (node.sysctl_num == as->offhook_line2_mib) {
+		tmp = as->offhook_line2;
+		node.sysctl_data = &tmp;
+		error = sysctl_lookup(SYSCTLFN_CALL(&node));
+		if (error || newp == NULL)
+			return error;
+
+		if (tmp < 0 || tmp > 1)
+			return EINVAL;
+
+		as->offhook_line2 = tmp;
+		ac97_modem_offhook_set(as, AC97_GPIO_LINE2_OH, tmp);
+	}
+
+	return 0;
 }
