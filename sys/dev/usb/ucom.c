@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.29 2000/09/15 17:03:24 toshii Exp $	*/
+/*	$NetBSD: ucom.c,v 1.30 2000/09/23 04:33:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -354,7 +354,7 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 		 */
 		ucom_dtr(sc, 1);
 
-		// XXX CLR(sc->sc_rx_flags, RX_ANY_BLOCK);
+		/* XXX CLR(sc->sc_rx_flags, RX_ANY_BLOCK);*/
 		ucom_hwiflow(sc);
 
 		DPRINTF(("ucomopen: open pipes in=%d out=%d\n",
@@ -765,7 +765,7 @@ ucomparam(struct tty *tp, struct termios *t)
 	    tp->t_cflag == t->c_cflag)
 		return (0);
 
-	//XXX lcr = ISSET(sc->sc_lcr, LCR_SBREAK) | cflag2lcr(t->c_cflag);
+	/* XXX lcr = ISSET(sc->sc_lcr, LCR_SBREAK) | cflag2lcr(t->c_cflag); */
 
 	/* And copy to tty. */
 	tp->t_ispeed = 0;
@@ -779,7 +779,7 @@ ucomparam(struct tty *tp, struct termios *t)
 			return (error);
 	}
 
-	// XXX worry about CHWFLOW
+	/* XXX worry about CHWFLOW */
 
 	/*
 	 * Update the tty layer's idea of the carrier bit, in case we changed
