@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.32.2.1 1995/10/20 10:19:41 chopps Exp $	*/
+/*	$NetBSD: ite.c,v 1.32.2.2 1995/10/20 11:01:08 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,8 +74,6 @@
 /*
  * XXX go ask sys/kern/tty.c:ttselect()
  */
-#include "grf.h"
-struct tty *ite_tty[NGRF];
 
 #define ITEUNIT(dev)	(minor(dev))
 
@@ -406,7 +404,7 @@ iteopen(dev, mode, devtype, p)
 	ip = getitesp(dev);
 
 	if (ip->tp == NULL)
-		tp = ite_tty[unit] = ip->tp = ttymalloc();
+		tp = ip->tp = ttymalloc();
 	else
 		tp = ip->tp;
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
@@ -493,7 +491,7 @@ struct tty *
 itetty(dev)
 	dev_t dev;
 {
-	return (ite_tty[ITEUNIT(dev)]);
+	return (getitesp(dev)->tp);
 }
 
 int
