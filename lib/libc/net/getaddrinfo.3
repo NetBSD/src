@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.21 2001/09/16 02:23:09 wiz Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.22 2001/09/16 02:54:17 wiz Exp $
 .\"	$KAME: getaddrinfo.3,v 1.29 2001/02/12 09:24:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -552,8 +552,8 @@ values, the function still returns a pointer to a string whose contents
 indicate an unknown error.
 .\"
 .Sh SEE ALSO
-.Xr getnameinfo 3 ,
 .Xr gethostbyname 3 ,
+.Xr getnameinfo 3 ,
 .Xr getservbyname 3 ,
 .Xr hosts 5 ,
 .Xr resolv.conf 5 ,
@@ -585,9 +585,6 @@ indicate an unknown error.
 .%D June 2000
 .Re
 .\"
-.Sh HISTORY
-The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
-.\"
 .Sh STANDARDS
 The
 .Fn getaddrinfo
@@ -595,6 +592,9 @@ function is defined in IEEE POSIX 1003.1g draft specification,
 and documented in
 .Dq Basic Socket Interface Extensions for IPv6
 .Pq RFC2553 .
+.\"
+.Sh HISTORY
+The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .\"
 .Sh BUGS
 The current implementation is not thread-safe.
