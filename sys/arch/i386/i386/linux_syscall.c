@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.18 2002/03/22 14:49:37 christos Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.19 2002/03/22 16:41:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.18 2002/03/22 14:49:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.19 2002/03/22 16:41:23 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -108,7 +108,6 @@ linux_syscall_plain(frame)
 	code &= (LINUX_SYS_NSYSENT - 1);
 	callp += code;
 	argsize = callp->sy_argsize;
-	printf("%d %d\n", code, argsize);
 	if (argsize) {
 		/*
 		 * Linux passes the args in ebx, ecx, edx, esi, edi, ebp, in
