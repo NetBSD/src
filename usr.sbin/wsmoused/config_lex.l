@@ -1,7 +1,7 @@
-/* $NetBSD: pathnames.h,v 1.3 2003/03/04 14:33:55 jmmv Exp $ */
+/* $NetBSD: config_lex.l,v 1.1 2003/03/04 14:33:55 jmmv Exp $ */
 
 /*
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,13 +29,49 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _WSMOUSED_PATHNAMES_H
-#define _WSMOUSED_PATHNAMES_H
+%{
 
-#define _PATH_DEFAULT_MOUSE "/dev/wsmouse"
-#define _PATH_PID "/var/run/wsmoused.pid"
-#define _PATH_TTYPREFIX "/dev/ttyE"
-#define _PATH_TTYSTAT "/dev/ttyEstat"
-#define _PATH_CONF "/etc/wsmoused.conf"
+#include <sys/cdefs.h>
 
-#endif /* _WSMOUSED_PATHNAMES_H */
+#ifndef lint
+__RCSID("$NetBSD: config_lex.l,v 1.1 2003/03/04 14:33:55 jmmv Exp $");
+#endif /* not lint */
+
+#include <stdio.h>
+#include <string.h>
+#include <sys/time.h>
+#include <dev/wscons/wsconsio.h>
+
+#include "wsmoused.h"
+#include "config_yacc.h"
+
+extern int yyline;
+
+extern int yyerror(const char *fmt, ...);
+int yylex(void);
+
+%}
+
+%option noyywrap
+
+STRING		[\$A-Za-z\.\/_\-0-9]*
+MODE_PROPS	device|fifo|lefthanded|nodaemon|slowdown_x|slowdown_y|ttystat|xconsole
+EVENT_PROPS	button|do
+
+%%
+
+#.*$		/* Eat up comments */
+[ \t]+		/* Eat up whitespace */
+\n		{ yyline++; }
+
+=		{ return TK_EQUAL; }
+;		{ return TK_EOL; }
+"{"		{ return TK_LBRACE; }
+"}"		{ return TK_RBRACE; }
+event		{ return TK_EVENT; }
+mode		{ return TK_MODE; }
+{EVENT_PROPS}	{ yylval.string = strdup(yytext); return TK_EVENTPROP; }
+{MODE_PROPS}	{ yylval.string = strdup(yytext); return TK_MODEPROP; }
+{STRING}	{ yylval.string = strdup(yytext); return TK_STRING; }
+
+. 		{ yyerror("illegal token `%s'", yytext); }
