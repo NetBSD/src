@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2004/03/01 23:01:18 itojun Exp $
+#	$NetBSD: Makefile,v 1.22 2005/02/09 13:57:57 xtraeme Exp $
 #	@(#)Makefile	8.3 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
@@ -9,6 +9,8 @@ SRCS=	mount_portal.c activate.c conf.c pt_conf.c \
 SUBDIR= examples
 
 MAN=	mount_portal.8
+
+WARNS=	3
 
 CPPFLAGS+= -I${NETBSDSRCDIR}/sys
 

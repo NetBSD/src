@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 2003/08/07 10:04:30 agc Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 2005/02/09 13:57:57 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.10 2003/08/07 10:04:30 agc Exp $");
+__RCSID("$NetBSD: conf.c,v 1.11 2005/02/09 13:57:57 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,22 +67,21 @@ struct path {
 	char **p_argv;		/* argv[] pointers into arg string (malloc) */
 };
 
-static	void	ins_que __P((qelem *, qelem *));
-static	path   *palloc __P((char *, int, const char *));
-static	void	pfree __P((path *));
-static	int	pinsert __P((path *, qelem *));
-static	void	preplace __P((qelem *, qelem *));
-static	void	readfp __P((qelem *, FILE *, const char *));
-static	void	rem_que __P((qelem *));
-static	void   *xmalloc __P((size_t));
+static	void	ins_que(qelem *, qelem *);
+static	path   *palloc(char *, int, const char *);
+static	void	pfree(path *);
+static	int	pinsert(path *, qelem *);
+static	void	preplace(qelem *, qelem *);
+static	void	readfp(qelem *, FILE *, const char *);
+static	void	rem_que(qelem *);
+static	void   *xmalloc(size_t);
 
 /*
  * Add an element to a 2-way list,
  * just after (pred)
  */
 static void
-ins_que(elem, pred)
-	qelem *elem, *pred;
+ins_que(qelem *elem, qelem *pred)
 {
 	qelem *p = pred->q_forw;
 	elem->q_back = pred;
@@ -95,8 +94,7 @@ ins_que(elem, pred)
  * Remove an element from a 2-way list
  */
 static void
-rem_que(elem)
-	qelem *elem;
+rem_que(qelem *elem)
 {
 	qelem *p = elem->q_forw;
 	qelem *p2 = elem->q_back;
@@ -108,8 +106,7 @@ rem_que(elem)
  * Error checking malloc
  */
 static void *
-xmalloc(siz)
-	size_t siz;
+xmalloc(size_t siz)
 {
 	void *p = malloc(siz);
 	if (p)
@@ -126,9 +123,7 @@ xmalloc(siz)
  * and 1 is returned.
  */
 static int
-pinsert(p0, q0)
-	path *p0;
-	qelem *q0;
+pinsert(path *p0, qelem *q0)
 {
 	qelem *q;
 
@@ -146,10 +141,7 @@ pinsert(p0, q0)
 }
 
 static path *
-palloc(cline, lno, conf_file)
-	char *cline;
-	int lno;
-	const char *conf_file;
+palloc(char *cline, int lno, const char *conf_file)
 {
 	int c, errcode;
 	char *s;
@@ -230,8 +222,7 @@ palloc(cline, lno, conf_file)
  * Free a path structure
  */
 static void
-pfree(p)
-	path *p;
+pfree(path *p)
 {
 	free(p->p_args);
 	free((char *) p->p_argv);
@@ -245,9 +236,7 @@ pfree(p)
  * and add all the ones on xq.
  */
 static void
-preplace(q0, xq)
-	qelem *q0;
-	qelem *xq;
+preplace(qelem *q0, qelem *xq)
 {
 	/*
 	 * While the list is not empty,
@@ -271,10 +260,7 @@ preplace(q0, xq)
  * add them to the list of paths.
  */
 static void
-readfp(q0, fp, conf_file)
-	qelem *q0;
-	FILE *fp;
-	const char *conf_file;
+readfp(qelem *q0, FILE *fp, const char *conf_file)
 {
 	char cline[LINE_MAX];
 	int nread = 0;
@@ -310,9 +296,7 @@ readfp(q0, fp, conf_file)
  * If the file is not readable, then no changes take place
  */
 void
-conf_read(q, conf)
-	qelem *q;
-	char *conf;
+conf_read(qelem *q, char *conf)
 {
 	FILE *fp = fopen(conf, "r");
 	if (fp) {
@@ -324,9 +308,7 @@ conf_read(q, conf)
 
 
 char **
-conf_match(q0, key)
-	qelem *q0;
-	char *key;
+conf_match(qelem *q0, char *key)
 {
 	qelem *q;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_exec.c,v 1.7 2003/08/07 10:04:30 agc Exp $	*/
+/*	$NetBSD: pt_exec.c,v 1.8 2005/02/09 13:57:57 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_exec.c,v 1.7 2003/08/07 10:04:30 agc Exp $");
+__RCSID("$NetBSD: pt_exec.c,v 1.8 2005/02/09 13:57:57 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -51,12 +51,7 @@ __RCSID("$NetBSD: pt_exec.c,v 1.7 2003/08/07 10:04:30 agc Exp $");
 #include "portald.h"
 
 int
-portal_exec(pcr, key, v, so, fdp)
-	struct portal_cred *pcr;
-	char *key;
-	char **v;
-	int so;
-	int *fdp;
+portal_exec(struct portal_cred *pcr, char *key, char **v, int so, int *fdp)
 {
 
 	return (ENOEXEC);
