@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.6 2000/07/18 22:39:25 eeh Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.7 2000/07/25 15:14:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.6 2000/07/18 22:39:25 eeh Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.7 2000/07/25 15:14:46 mycroft Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -68,28 +68,28 @@ ENTRY(_sbrk)
 	PIC_PROLOGUE(%o5,%o4)
 	set	_C_LABEL(__curbrk), %o3
 	ldx	[%o5 + %o3], %o2
-	ldx	[%o2], %o3			! %o3 = old break
-	add	%o3, %o0, %o4			! %o4 = new break
-	mov	%o4, %o0			! copy for syscall
+	ldx	[%o2], %o3			/* %o3 = old break */
+	add	%o3, %o0, %o4			/* %o4 = new break */
+	mov	%o4, %o0			/* copy for syscall */
 	mov	SYS_break, %g1
-	t	ST_SYSCALL			! break(new_break)
-	bcc,a	1f				! if success,
-	 mov	%o3, %o0			!    set return value
+	t	ST_SYSCALL			/* break(new_break) */
+	bcc,a	1f				/* if success, */
+	 mov	%o3, %o0			/*    set return value */
 	ERROR()
 1:
-	retl					! and update curbrk
+	retl					/* and update curbrk */
 	 stx	%o4, [%o2]
 #else
 	sethi	%hi(_C_LABEL(__curbrk)), %o2
-	ldx	[%o2 + %lo(_C_LABEL(__curbrk))], %o3	! %o3 = old break
-	add	%o3, %o0, %o4			! %o4 = new break
-	mov	%o4, %o0			! copy for syscall
+	ldx	[%o2 + %lo(_C_LABEL(__curbrk))], %o3	/* %o3 = old break */
+	add	%o3, %o0, %o4			/* %o4 = new break */
+	mov	%o4, %o0			/* copy for syscall */
 	mov	SYS_break, %g1
-	t	ST_SYSCALL			! break(new_break)
-	bcc,a	1f				! if success,
-	 mov	%o3, %o0			!    set return value
+	t	ST_SYSCALL			/* break(new_break) */
+	bcc,a	1f				/* if success, */
+	 mov	%o3, %o0			/*    set return value */
 	ERROR()
 1:
-	retl					! and update curbrk
+	retl					/* and update curbrk */
 	 stx	%o4, [%o2 + %lo(_C_LABEL(__curbrk))]
 #endif

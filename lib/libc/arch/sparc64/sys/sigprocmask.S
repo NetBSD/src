@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.6 2000/07/21 03:14:16 eeh Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.7 2000/07/25 15:14:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)sigprocmask.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sigprocmask.S,v 1.6 2000/07/21 03:14:16 eeh Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.7 2000/07/25 15:14:46 mycroft Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -57,19 +57,21 @@ WARN_REFERENCES(sigprocmask, \
  * sigprocmask(int how, sigset_t *set, sigset_t *oset)
  */
 ENTRY(sigprocmask)
-	brnz,a	%o1, 1f		! if (set != NULL)
-	 ld	[%o1], %o1	!    replace it in %o1 with *set
-!	clr	%o1		! else block no signals ...
-	mov	1, %o0		! ... using sigprocmask(SIG_BLOCK)
+	brnz,a	%o1, 1f		/* if (set != NULL) */
+	 ld	[%o1], %o1	/*    replace it in %o1 with *set */
+#if 0
+	clr	%o1		/* else block no signals ... */
+#endif
+	mov	1, %o0		/* ... using sigprocmask(SIG_BLOCK) */
 1:
 	mov	SYS_compat_13_sigprocmask13, %g1
 	t	ST_SYSCALL
-	bcc	2f		! if success,
-	 tst	%o2		!    check to see if oset requested
+	bcc	2f		/* if success, */
+	 tst	%o2		/*    check to see if oset requested */
 	ERROR()
 2:
-	bne,a	3f		! if oset != NULL,
-	 st	%o0, [%o2]	!    *oset = oldmask
+	bne,a	3f		/* if oset != NULL, */
+	 st	%o0, [%o2]	/*    *oset = oldmask */
 3:
-	retl			! in any case, return 0
+	retl			/* in any case, return 0 */
 	 clr	%o0

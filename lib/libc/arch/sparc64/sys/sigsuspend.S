@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.5 1998/12/02 01:01:05 thorpej Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.6 2000/07/25 15:14:46 mycroft Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 	.asciz "@(#)sigsuspend.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sigsuspend.S,v 1.5 1998/12/02 01:01:05 thorpej Exp $")
+	RCSID("$NetBSD: sigsuspend.S,v 1.6 2000/07/25 15:14:46 mycroft Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -53,7 +53,7 @@ WARN_REFERENCES(sigsuspend, \
     "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
 ENTRY(sigsuspend)
-	ld	[%o0], %o0		! indirect to mask argument
+	ld	[%o0], %o0		/* indirect to mask argument */
 	mov	SYS_compat_13_sigsuspend13, %g1
 	t	ST_SYSCALL
-	ERROR()				! always terminates with EINTR
+	ERROR()				/* always terminates with EINTR */

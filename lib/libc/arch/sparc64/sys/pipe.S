@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.1 1998/09/11 04:56:34 eeh Exp $	*/
+/*	$NetBSD: pipe.S,v 1.2 2000/07/25 15:14:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,20 +44,20 @@
 #if 0
 	.asciz "@(#)pipe.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: pipe.S,v 1.1 1998/09/11 04:56:34 eeh Exp $")
+	RCSID("$NetBSD: pipe.S,v 1.2 2000/07/25 15:14:46 mycroft Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 ENTRY(pipe)
-	mov	%o0, %o2	! save pointer
+	mov	%o0, %o2	/* save pointer */
 	mov	SYS_pipe, %g1
-	t	ST_SYSCALL	! pipe()
+	t	ST_SYSCALL	/* pipe() */
 	bcc,a	1f
-	 st	%o0, [%o2]	! success, store fds
+	 st	%o0, [%o2]	/* success, store fds */
 	ERROR()
 1:
 	st	%o1, [%o2 + 4]
-	retl			! and return 0
+	retl			/* and return 0 */
 	 clr	%o0
