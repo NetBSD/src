@@ -1,0 +1,184 @@
+#!/usr/pkg/bin/perl
+#
+#	$NetBSD: file2netbsd,v 1.1 2003/02/23 23:46:55 pooka Exp $
+#
+#  Perl script to convert a standard distribution directory for file into
+#	a NetBSD source tree.
+#
+#  This is done as a script so that as each distribution is released,
+#	only changes from the previous one need to be dealt with as
+#	modifications to this script and related files.  This should
+#	reduce the cost of updating from a new release of file by an
+#	order of magnitude (or more?)
+#
+#  This script requires two environment variables set:
+#	SRCDIR - file source directory
+#	TARGETDIR - name of the high level directory to make
+#
+#  Written by Christos Zoulas July 17, 1997 for file-3.26
+#
+
+$version = "3.40";
+
+# definitions ...
+
+@subdirs = ("dist/file", "dist/file/magdir");
+
+
+@filef = ("LEGAL.NOTICE", "MAINT",
+	  "README", "apprentice.c", "ascmagic.c",
+	  "compress.c", "file.c", "file.h", "fsmagic.c",
+	  "is_tar.c", "names.h", "patchlevel.h",
+	  "print.c", "readelf.c", "readelf.h", "softmagic.c", "tar.h");
+#
+# Utility Subroutines
+#
+
+sub makedir {
+    system("mkdir -p @_");
+}
+
+# &fixrcs (fromfile, tofile);
+sub fixrcs
+{
+    my ($f, $t) = @_;
+    my @keywords = ("Author", "Date", "Header", "Id", "Locker", "Log",
+		    "Name", "RCSfile", "Revision", "Source", "State");
+    my %mansubst = ('__CSECTION__', '1',
+                    '__FSECTION__', '5',
+                    '__VERSION__', $version,
+                    '__MAGIC__', '/usr/share/misc/magic');
+    my $state = 0;
+
+    open(IFILE, "<$f") || die "Cannot open $f";
+    open(OFILE, ">$t") || die "Cannot create $t";
+
+    if ($t =~ /.*\.[0-9]/) {
+	print OFILE '.\\" $', 'NetBSD',  '$', "\n", '.\\"', "\n";
+    }
+    elsif ($t =~ /.*\.[ch]/) {
+	print OFILE "/*\t", '$', 'NetBSD', '$', "\t*/\n\n";
+    }
+    elsif ($t =~ /magic.mime/) {
+	print OFILE "#\t", '$', 'NetBSD', '$', "\n\n";
+    }
+    else {
+	print OFILE '$', 'NetBSD', '$', "\n\n";
+    }
+    while (<IFILE>) {
+	if ($state == 2) {
+	    if (/#endif/) {
+		print OFILE "#else\n__RCSID(", '"$', 'NetBSD', '$"',
+		    ");\n#endif\n";
+		$state = 0;
+	    }
+	}
+	if ($state == 1) {
+	    print OFILE "#if 0\n";
+	    $state = 2;
+	}
+	if (/#ifndef\slint/) {
+	    $state = 1;
+	}
+	foreach $key (@keywords) {
+	    s/\$$key\$/$key/g;
+	    s/\$$key:(.*)\$/$key:$1/g;
+	}
+	while (($from, $to) = each %mansubst) {
+	    s/$from/$to/g;
+	}
+	print OFILE $_;
+    }
+    close(IFILE) || die "closing input file";
+    close(OFILE) || die "closing output file";
+}
+
+# &copyfiles (fromdir, todir, list of files);
+sub copyfiles {
+    local ($fdir, $tdir, @list) = @_;
+    local ($f);
+
+    foreach $f (@list) {
+	print "  $fdir/$f --> $tdir/$f\n";
+	&fixrcs("$fdir/$f", "$tdir/$f");
+    }
+}
+
+# &copyfile (fromfile, tofile);
+sub copyfile {
+    local ($f, $t) = @_;
+
+    print "  $f --> $t\n";
+    &fixrcs("$f", "$t");
+}
+
+sub uniq {
+    local (@inlist) = @_;
+    local (@outlist);
+
+    @outlist = ($inlist[0]);
+    for ( $i=1; $i < @inlist; $i++ ) {
+	if ($inlist[$i] ne $inlist[$i-1]) {
+	    push (@outlist, $inlist[$i]);
+	}
+    }
+
+    @outlist;
+}
+
+sub dumpsrcs {
+    local (@names) = @_;
+    local ($count);
+
+    print ODATA "SRCS=\t";
+    $count = 0;
+    while ($f = pop(@names)) {
+        print ODATA "$f ";
+	if ($count == 5 && @names > 0) {
+	    print ODATA "\\\n";
+	    $count = 0;
+	} else {
+	    $count += 1;
+	}
+    }
+    if ($count != 0) {
+	print ODATA "\n";
+    }
+}
+
+#
+# Main progarm.
+# 
+
+$srcdir = $ENV{'SRCDIR'};
+$targetdir = $ENV{'TARGETDIR'};
+$incdirs = "-I. -I$srcdir/config -I$srcdir";
+
+if (!$srcdir | !targetdir) {
+    die "You must define the environment variables SRCDIR and TARGETDIR.\n"
+} 
+print "Making the NetBSD directory tree.\n";
+foreach $f (@subdirs) { 
+    print "   -->$f\n";
+    makedir ("$targetdir/$f");
+}
+
+print "Populating the dist/file directory.\n";
+&copyfiles ("$srcdir", "$targetdir/dist/file", @filef);
+&copyfile("$srcdir/file.man", "$targetdir/dist/file/file.1");
+&copyfile("$srcdir/magic.man", "$targetdir/dist/file/magic.5");
+&copyfile("$srcdir/magic.mime", "$targetdir/dist/file/magic.mime");
+system("cat $srcdir/Header > $targetdir/dist/file/Header");
+system("cat $srcdir/Localstuff > $targetdir/dist/file/Localstuff");
+
+print "Populating the dist/file/magdir directory.\n";
+system("cp -rp $srcdir/Magdir/* $targetdir/dist/file/magdir; chmod -R ug+w $targetdir/dist/file/magdir");
+
+#
+# Sed transformations of files
+#
+
+foreach $n (keys(%sedlist)) {
+    print "Modifying $n\n";
+    system ("cd $targetdir; sed $sedlist{$n} $n > tmp;  mv -f tmp $n");
+}
