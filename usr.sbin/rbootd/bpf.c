@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.12 2003/05/15 14:50:50 itojun Exp $	*/
+/*	$NetBSD: bpf.c,v 1.13 2003/07/13 12:18:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bpf.c,v 1.12 2003/05/15 14:50:50 itojun Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.13 2003/07/13 12:18:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ BpfOpen()
 	 *  Open the first available BPF device.
 	 */
 	do {
-		(void) sprintf(bpfdev, _PATH_BPF, n++);
+		(void) snprintf(bpfdev, sizeof(bpfdev), _PATH_BPF, n++);
 		BpfFd = open(bpfdev, O_RDWR);
 	} while (BpfFd < 0 && (errno == EBUSY || errno == EPERM));
 
@@ -234,7 +234,7 @@ BpfGetIntfName(errmsg)
 		*errmsg = errbuf;
 
 	if (getifaddrs(&ifap) != 0) {
-		(void) strcpy(errbuf, "bpf: getifaddrs: %m");
+		(void) strlcpy(errbuf, "bpf: getifaddrs: %m", sizeof(errbuf));
 		return(NULL);
 	}
 
@@ -262,7 +262,8 @@ BpfGetIntfName(errmsg)
 		}
 	}
 	if (p == NULL) {
-		(void) strcpy(errbuf, "bpf: no interfaces found");
+		(void) strlcpy(errbuf, "bpf: no interfaces found",
+		    sizeof(errbuf));
 		freeifaddrs(ifap);
 		return(NULL);
 	}

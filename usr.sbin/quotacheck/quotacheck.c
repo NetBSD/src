@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.26 2003/04/17 09:21:01 fvdl Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.27 2003/07/13 12:22:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.26 2003/04/17 09:21:01 fvdl Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.27 2003/07/13 12:22:10 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -267,11 +267,11 @@ needchk(fs)
 		err(1, "%s", strerror(errno));
 	qnp->flags = 0;
 	if (gflag && hasquota(fs, GRPQUOTA, &qfnp)) {
-		strcpy(qnp->grpqfname, qfnp);
+		strlcpy(qnp->grpqfname, qfnp, sizeof(qnp->grpqfname));
 		qnp->flags |= HASGRP;
 	}
 	if (uflag && hasquota(fs, USRQUOTA, &qfnp)) {
-		strcpy(qnp->usrqfname, qfnp);
+		strlcpy(qnp->usrqfname, qfnp, sizeof(qnp->usrqfname));
 		qnp->flags |= HASUSR;
 	}
 	if (qnp->flags)
@@ -557,7 +557,7 @@ hasquota(fs, type, qfnamep)
 		    "%s%s", qfextension[GRPQUOTA], qfname);
 		initname = 1;
 	}
-	(void) strcpy(buf, fs->fs_mntops);
+	(void) strlcpy(buf, fs->fs_mntops, sizeof(buf));
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
 		if ((cp = strchr(opt, '=')) != NULL)
 			*cp++ = '\0';
