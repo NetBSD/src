@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.38 1996/05/02 02:08:22 mhitch Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.39 1996/05/02 19:34:27 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -110,7 +110,8 @@ void rollcolor __P((int));
 static int kernel_image_magic_size __P((void));
 static void kernel_image_magic_copy __P((u_char *));
 int kernel_reload_write __P((struct uio *));
-extern void kernel_reload ();
+extern void kernel_reload __P((char *, u_long, u_long, u_long, u_long,
+	u_long, u_long, u_long, u_long, u_long));
 extern void etext __P((void));
 
 void *
