@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.10 2001/12/23 22:45:07 thorpej Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.11 2002/02/11 03:43:53 mrg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -178,6 +178,7 @@ assym.h: $S/kern/genassym.sh ${GENASSYM} ${GENASSYM_EXTRAS}
 	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
+${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
 .endif
 
 .if !target(vers.o)
