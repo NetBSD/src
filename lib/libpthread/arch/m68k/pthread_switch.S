@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.5 2003/09/07 14:47:49 cl Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.6 2003/09/17 20:08:07 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,11 +104,12 @@
 
 #define STACK_SWITCH(pt,tmp)			\
 	movl	%pt@(PT_TRAPUC),%tmp		; \
+	cmpl	#0,%tmp				; \
 	bne	1f				; \
 	movl	%pt@(PT_UC),%tmp		; \
 1:	lea	%tmp@(-STACKSPACE),%sp		; \
-	clr	%pt@(PT_TRAPUC)
-		
+	clrl	%pt@(PT_TRAPUC)
+
 /*
  * void	pthread__switch(pthread_t self, pthread_t next);
  *
