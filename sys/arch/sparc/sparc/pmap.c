@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.295 2004/05/01 08:20:11 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.296 2005/01/16 23:19:52 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.295 2004/05/01 08:20:11 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.296 2005/01/16 23:19:52 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -128,7 +128,6 @@ struct pmap_stats {
 	int	ps_unlink_pvfirst;	/* # of pv_unlinks on head */
 	int	ps_unlink_pvsearch;	/* # of pv_unlink searches */
 	int	ps_changeprots;		/* # of calls to changeprot */
-	int	ps_useless_changeprots;	/* # of changeprots for wiring */
 	int	ps_enter_firstpv;	/* pv heads entered */
 	int	ps_enter_secondpv;	/* pv nonheads entered */
 	int	ps_useless_changewire;	/* useless wiring changes */
@@ -979,14 +978,14 @@ pgt_page_free(struct pool *pp, void *v)
 #define CTX_USABLE(pm,rp)	((pm)->pm_ctx != NULL )
 #endif
 
-#define GAP_WIDEN(pm,vr) do if (CPU_ISSUN4 || CPU_ISSUN4C) {	\
+#define GAP_WIDEN(pm,vr) do if (CPU_HAS_SUNMMU) {		\
 	if (vr + 1 == pm->pm_gap_start)				\
 		pm->pm_gap_start = vr;				\
 	if (vr == pm->pm_gap_end)				\
 		pm->pm_gap_end = vr + 1;			\
 } while (0)
 
-#define GAP_SHRINK(pm,vr) do if (CPU_ISSUN4 || CPU_ISSUN4C) {		\
+#define GAP_SHRINK(pm,vr) do if (CPU_HAS_SUNMMU) {			\
 	int x;								\
 	x = pm->pm_gap_start + (pm->pm_gap_end - pm->pm_gap_start) / 2;	\
 	if (vr > x) {							\
@@ -1078,7 +1077,7 @@ pmap_growkernel(vaddr_t eva)
 		return (virtual_end);
 
 	/* For now, only implemented for sun4/sun4c */
-	KASSERT(CPU_ISSUN4 || CPU_ISSUN4C);
+	KASSERT(CPU_HAS_SUNMMU);
 
 	/*
 	 * Map in the next region(s)
@@ -2142,7 +2141,7 @@ ctx_alloc(pm)
 	if (pmapdebug & PDB_CTX_ALLOC)
 		printf("ctx_alloc[%d](%p)\n", cpu_number(), pm);
 #endif
-	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+	if (CPU_HAS_SUNMMU) {
 		gap_start = pm->pm_gap_start;
 		gap_end = pm->pm_gap_end;
 	}
@@ -2172,7 +2171,7 @@ ctx_alloc(pm)
 		c->c_pmap->pm_ctx = NULL;
 		c->c_pmap->pm_ctxnum = 0;
 		doflush = (CACHEINFO.c_vactype != VAC_NONE);
-		if (CPU_ISSUN4 || CPU_ISSUN4C) {
+		if (CPU_HAS_SUNMMU) {
 			if (gap_start < c->c_pmap->pm_gap_start)
 				gap_start = c->c_pmap->pm_gap_start;
 			if (gap_end > c->c_pmap->pm_gap_end)
@@ -2185,7 +2184,8 @@ ctx_alloc(pm)
 	pm->pm_ctx = c;
 	pm->pm_ctxnum = cnum;
 
-	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+	if (CPU_HAS_SUNMMU) {
+
 		/*
 		 * Write pmap's region (3-level MMU) or segment table into
 		 * the MMU.
@@ -2322,7 +2322,7 @@ ctx_free(pm)
 	pm->pm_ctx = NULL;
 	pm->pm_ctxnum = 0;
 #if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+	if (CPU_HAS_SUNMMU) {
 		int octx = getcontext4();
 		setcontext4(ctx);
 		cache_flush_context(ctx);
@@ -2987,7 +2987,7 @@ static void pv_uncache(struct vm_page *pg)
 		pv_changepte4m(pg, 0, SRMMU_PG_C);
 #endif
 #if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4 || CPU_ISSUN4C)
+	if (CPU_HAS_SUNMMU)
 		pv_changepte4_4c(pg, PG_NC, 0);
 #endif
 	simple_unlock(&pg->mdpage.pv_slock);
@@ -3122,7 +3122,7 @@ pmap_bootstrap(nctx, nregion, nsegment)
 #if defined(SUN4M) || defined(SUN4D)
 		pmap_bootstrap4m(p);
 #endif
-	} else if (CPU_ISSUN4 || CPU_ISSUN4C) {
+	} else if (CPU_HAS_SUNMMU) {
 #if defined(SUN4) || defined(SUN4C)
 		pmap_bootstrap4_4c(p, nctx, nregion, nsegment);
 #endif
@@ -4143,7 +4143,7 @@ pmap_init()
 	}
 #endif /* SUN4M || SUN4D */
 #if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+	if (CPU_HAS_SUNMMU) {
 		sz = NPTESG * sizeof(int);
 		pool_init(&pte_pool, sz, 0, 0, 0, "ptemap", NULL);
 	}
@@ -4180,26 +4180,22 @@ pmap_quiet_check(struct pmap *pm)
 {
 	int vs, vr;
 
-	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+	if (CPU_HAS_SUNMMU) {
 #if defined(SUN4_MMU3L)
-		if (pm->pm_reglist.tqh_first)
+		if (TAILQ_FIRST(&pm->pm_reglist))
 			panic("pmap_destroy: region list not empty");
 #endif
-		if (pm->pm_seglist.tqh_first)
+		if (TAILQ_FIRST(&pm->pm_seglist))
 			panic("pmap_destroy: segment list not empty");
 	}
 
 	for (vr = 0; vr < NUREG; vr++) {
 		struct regmap *rp = &pm->pm_regmap[vr];
 
-		if (CPU_ISSUN4 || CPU_ISSUN4C) {
-#if defined(SUN4_MMU3L)
-			if (HASSUN4_MMU3L) {
-				if (rp->rg_smeg != reginval)
-					printf("pmap_chk: spurious smeg in "
-						"user region %d\n", vr);
-			}
-#endif
+		if (HASSUN4_MMU3L) {
+			if (rp->rg_smeg != reginval)
+				printf("pmap_chk: spurious smeg in "
+				       "user region %d\n", vr);
 		}
 		if (CPU_HAS_SRMMU) {
 			int n;
@@ -4230,7 +4226,7 @@ pmap_quiet_check(struct pmap *pm)
 					printf("pmap_chk: ptes still "
 					     "allocated in segment %d\n", vs);
 				}
-				if (CPU_ISSUN4 || CPU_ISSUN4C) {
+				if (CPU_HAS_SUNMMU) {
 					if (sp->sg_pmeg != seginval)
 						printf("pmap_chk: pm %p(%d,%d) "
 						  "spurious soft pmeg %d\n",
@@ -4242,7 +4238,7 @@ pmap_quiet_check(struct pmap *pm)
 		/* Check for spurious pmeg entries in the MMU */
 		if (pm->pm_ctx == NULL)
 			continue;
-		if ((CPU_ISSUN4 || CPU_ISSUN4C)) {
+		if (CPU_HAS_SUNMMU) {
 			int ctx;
 			if (mmu_has_hole && (vr >= 32 || vr < (256 - 32)))
 				continue;
@@ -4258,6 +4254,14 @@ pmap_quiet_check(struct pmap *pm)
 			}
 			setcontext4(ctx);
 		}
+	}
+	if (pm->pm_stats.resident_count) {
+		printf("pmap_chk: res count %ld\n",
+		       pm->pm_stats.resident_count);
+	}
+	if (pm->pm_stats.wired_count) {
+		printf("pmap_chk: wired count %ld\n",
+		       pm->pm_stats.wired_count);
 	}
 }
 #endif /* DEBUG */
@@ -4286,7 +4290,7 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 	/* pm->pm_ctx = NULL; // already done */
 	simple_lock_init(&pm->pm_lock);
 
-	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+	if (CPU_HAS_SUNMMU) {
 		TAILQ_INIT(&pm->pm_seglist);
 #if defined(SUN4_MMU3L)
 		TAILQ_INIT(&pm->pm_reglist);
@@ -4393,7 +4397,7 @@ pmap_create()
 	/* reset active CPU set */
 	pm->pm_cpuset = 0;
 #endif
-	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+	if (CPU_HAS_SUNMMU) {
 		/* reset the region gap */
 		pm->pm_gap_start = 0;
 		pm->pm_gap_end = VA_VREG(VM_MAXUSER_ADDRESS);
@@ -4526,8 +4530,9 @@ static void pgt_lvl23_remove4_4c(struct pmap *pm, struct regmap *rp,
 /*
  * SRMMU helper to deallocate level 2 & 3 page tables.
  */
-static void pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp,
-				struct segmap *sp, int vr, int vs)
+static void
+pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp, struct segmap *sp,
+    int vr, int vs)
 {
 
 	/* Invalidate level 2 PTP entry */
@@ -4557,13 +4562,14 @@ static void pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp,
 }
 #endif /* SUN4M || SUN4D */
 
-void pmap_remove_all(struct pmap *pm)
+void
+pmap_remove_all(struct pmap *pm)
 {
 	if (pm->pm_ctx == NULL)
 		return;
 
 #if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+	if (CPU_HAS_SUNMMU) {
 		int ctx = getcontext4();
 		setcontext4(pm->pm_ctxnum);
 		cache_flush_context(pm->pm_ctxnum);
@@ -4713,8 +4719,10 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 			panic("pmap_rmk: too many PTEs in segment; "
 			      "va 0x%lx; endva 0x%lx", va, endva);
 #endif
-		if (pte & PG_WIRED)
+		if (pte & PG_WIRED) {
 			sp->sg_nwired--;
+			pm->pm_stats.wired_count--;
+		}
 
 		if (inmmu)
 			setpte4(va, 0);
@@ -4883,8 +4891,10 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 		if (inmmu)
 			setpte4(pteva, 0);
 
-		if (pte & PG_WIRED)
+		if (pte & PG_WIRED) {
 			sp->sg_nwired--;
+			pm->pm_stats.wired_count--;
+		}
 		*ptep = 0;
 		pm->pm_stats.resident_count--;
 	}
@@ -4979,6 +4989,10 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 		setpgt4m_va(va, &pte0[VA_SUN4M_VPG(va)], SRMMU_TEINVALID,
 		    pm->pm_ctx != NULL, pm->pm_ctxnum, PMAP_CPUSET(pm));
 		pm->pm_stats.resident_count--;
+		if (sp->sg_wiremap & (1 << VA_SUN4M_VPG(va))) {
+			sp->sg_wiremap &= ~(1 << VA_SUN4M_VPG(va));
+			pm->pm_stats.wired_count--;
+		}
 	}
 
 	/*
@@ -5061,8 +5075,10 @@ pmap_page_protect4_4c(pg, prot)
 		sp->sg_npte = --nleft;
 		ptep = &sp->sg_pte[VA_VPG(va)];
 
-		if (*ptep & PG_WIRED)
+		if (*ptep & PG_WIRED) {
 			sp->sg_nwired--;
+			pm->pm_stats.wired_count--;
+		}
 
 		if (sp->sg_pmeg != seginval) {
 			/* Update PV flags */
@@ -5259,9 +5275,11 @@ pmap_changeprot4_4c(pm, va, prot, flags)
 	if (pte & PG_WIRED && (flags & PMAP_WIRED) == 0) {
 		pte &= ~PG_WIRED;
 		sp->sg_nwired--;
+		pm->pm_stats.wired_count--;
 	} else if ((pte & PG_WIRED) == 0 && flags & PMAP_WIRED) {
 		pte |= PG_WIRED;
 		sp->sg_nwired++;
+		pm->pm_stats.wired_count++;
 	}
 	pte = (pte & ~PG_PROT) | newprot;
 	/* Update S/W pte entry */
@@ -5335,13 +5353,6 @@ pmap_page_protect4m(pg, prot)
 		printf("pmap_page_protect[%d](0x%lx, 0x%x)\n",
 			cpu_number(), VM_PAGE_TO_PHYS(pg), prot);
 #endif
-	/*
-	 * Skip unmanaged pages, or operations that do not take
-	 * away write permission.
-	 */
-	if (pg == NULL || prot & VM_PROT_WRITE)
-		return;
-
 	s = splvm();
 	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&pg->mdpage.pv_slock);
@@ -5393,6 +5404,10 @@ pmap_page_protect4m(pg, prot)
 		    pm->pm_ctx != NULL, pm->pm_ctxnum, PMAP_CPUSET(pm));
 
 		pm->pm_stats.resident_count--;
+		if (sp->sg_wiremap & (1 << VA_SUN4M_VPG(va))) {
+			sp->sg_wiremap &= ~(1 << VA_SUN4M_VPG(va));
+			pm->pm_stats.wired_count--;
+		}
 
 		if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
 			panic("pmap_page_protect !PG_V: pg %p va %lx", pg, va);
@@ -5526,6 +5541,7 @@ pmap_changeprot4m(pm, va, prot, flags)
 	int pte, newprot;
 	struct regmap *rp;
 	struct segmap *sp;
+	boolean_t owired;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
@@ -5541,10 +5557,15 @@ pmap_changeprot4m(pm, va, prot, flags)
 	sp = &rp->rg_segmap[VA_VSEG(va)];
 
 	pte = sp->sg_pte[VA_SUN4M_VPG(va)];
-	if ((pte & SRMMU_PROT_MASK) == newprot) {
-		/* only wiring changed, and we ignore wiring */
-		pmap_stats.ps_useless_changeprots++;
-		return;
+	owired = sp->sg_wiremap & (1 << VA_SUN4M_VPG(va));
+
+	if (owired) {
+		pm->pm_stats.wired_count--;
+		sp->sg_wiremap &= ~(1 << VA_SUN4M_VPG(va));
+	}
+	if (flags & PMAP_WIRED) {
+		pm->pm_stats.wired_count++;
+		sp->sg_wiremap |= (1 << VA_SUN4M_VPG(va));
 	}
 
 	if (pm->pm_ctx) {
@@ -5691,8 +5712,10 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 		*ptep = 0;
 		if (inmmu)
 			setpte4(va, 0);
-		if (pte & PG_WIRED)
+		if (pte & PG_WIRED) {
 			sp->sg_nwired--;
+			pm->pm_stats.wired_count--;
+		}
 		pm->pm_stats.resident_count--;
 	} else {
 		/* adding new entry */
@@ -5722,8 +5745,10 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 
 	/* Update S/W page table */
 	*ptep = pteproto;
-	if (pteproto & PG_WIRED)
+	if (pteproto & PG_WIRED) {
 		sp->sg_nwired++;
+		pm->pm_stats.wired_count++;
+	}
 	pm->pm_stats.resident_count++;
 
 #ifdef DIAGNOSTIC
@@ -5846,12 +5871,7 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 			if ((pte & (PG_PFNUM|PG_TYPE)) ==
 			    (pteproto & (PG_PFNUM|PG_TYPE))) {
 				/* just changing prot and/or wiring */
-				/* caller should call this directly: */
 				pmap_changeprot4_4c(pm, va, prot, flags);
-				if ((flags & PMAP_WIRED) != 0)
-					pm->pm_stats.wired_count++;
-				else
-					pm->pm_stats.wired_count--;
 				splx(s);
 				return (0);
 			}
@@ -5884,8 +5904,10 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 					cache_flush_page(va, pm->pm_ctxnum);
 				}
 			}
-			if (pte & PG_WIRED)
+			if (pte & PG_WIRED) {
 				sp->sg_nwired--;
+				pm->pm_stats.wired_count--;
+			}
 			pm->pm_stats.resident_count--;
 			ptep[VA_VPG(va)] = 0;
 			if (sp->sg_pmeg != seginval)
@@ -5893,12 +5915,6 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 		} else {
 			/* adding new entry */
 			sp->sg_npte++;
-
-			/*
-			 * Increment counters
-			 */
-			if ((flags & PMAP_WIRED) != 0)
-				pm->pm_stats.wired_count++;
 		}
 	}
 
@@ -5915,8 +5931,10 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 	/* Update S/W page table */
 	ptep += VA_VPG(va);
 	*ptep = pteproto;
-	if (pteproto & PG_WIRED)
+	if (pteproto & PG_WIRED) {
 		sp->sg_nwired++;
+		pm->pm_stats.wired_count++;
+	}
 	pm->pm_stats.resident_count++;
 
 #ifdef DIAGNOSTIC
@@ -6025,7 +6043,7 @@ pmap_lockmmu(vaddr_t sva, size_t sz)
 	struct segmap *sp;
 	int vr, vs;
 
-	if (CPU_ISSUN4M || CPU_ISSUN4D)
+	if (CPU_HAS_SRMMU)
 		return;
 
 	eva = sva + sz;
@@ -6363,6 +6381,7 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 	int error = 0;
 	struct regmap *rp;
 	struct segmap *sp;
+	boolean_t owired;
 
 #ifdef DEBUG
 	if (KERNBASE < va)
@@ -6436,6 +6455,7 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 
 	sp = &rp->rg_segmap[vs];
 
+	owired = FALSE;
 	if ((pte = sp->sg_pte) == NULL) {
 		/* definitely a new mapping */
 		int i;
@@ -6475,10 +6495,6 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 				/* just changing prot and/or wiring */
 				/* caller should call this directly: */
 				pmap_changeprot4m(pm, va, prot, flags);
-				if ((flags & PMAP_WIRED) != 0)
-					pm->pm_stats.wired_count++;
-				else
-					pm->pm_stats.wired_count--;
 				simple_unlock(&pm->pm_lock);
 				PMAP_MAP_TO_HEAD_UNLOCK();
 				splx(s);
@@ -6517,15 +6533,10 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 				SRMMU_TEINVALID, pm->pm_ctx != NULL,
 				pm->pm_ctxnum, PMAP_CPUSET(pm));
 			pm->pm_stats.resident_count--;
+			owired = sp->sg_wiremap & (1 << VA_SUN4M_VPG(va));
 		} else {
 			/* adding new entry */
 			sp->sg_npte++;
-
-			/*
-			 * Increment counters
-			 */
-			if ((flags & PMAP_WIRED) != 0)
-				pm->pm_stats.wired_count++;
 		}
 	}
 
@@ -6544,6 +6555,14 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 	 */
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
 	pm->pm_stats.resident_count++;
+	if (owired) {
+		pm->pm_stats.wired_count--;
+		sp->sg_wiremap &= ~(1 << VA_SUN4M_VPG(va));
+	}
+	if (flags & PMAP_WIRED) {
+		pm->pm_stats.wired_count++;
+		sp->sg_wiremap |= (1 << VA_SUN4M_VPG(va));
+	}
 
 out:
 	simple_unlock(&pm->pm_lock);
@@ -6696,30 +6715,33 @@ pmap_unwire(pm, va)
 	struct pmap *pm;
 	vaddr_t va;
 {
-	int vr, vs, pte, *ptep;
+	int vr, vs, *ptep;
 	struct regmap *rp;
 	struct segmap *sp;
-
-	/* For now, `wired page accounting' is only used on sun4/sun4c */
-	if (CPU_HAS_SRMMU)
-		return;
+	boolean_t owired;
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
-	ptep = &sp->sg_pte[VA_VPG(va)];
-	pte = *ptep;
 
-#if defined(SUN4) || defined(SUN4C)
-	if ((pte & PG_WIRED) == 0) {
+	owired = FALSE;
+	if (CPU_HAS_SUNMMU) {
+		ptep = &sp->sg_pte[VA_VPG(va)];
+		owired = *ptep & PG_WIRED;
+		*ptep &= ~PG_WIRED;
+	}
+	if (CPU_HAS_SRMMU) {
+		owired = sp->sg_wiremap & (1 << VA_SUN4M_VPG(va));
+		sp->sg_wiremap &= ~(1 << VA_SUN4M_VPG(va));
+	}
+	if (!owired) {
 		pmap_stats.ps_useless_changewire++;
 		return;
 	}
 
-	pte &= ~PG_WIRED;
-	*ptep = pte;
-	if (--sp->sg_nwired <= 0) {
+	pm->pm_stats.wired_count--;
+	if (CPU_HAS_SUNMMU && --sp->sg_nwired <= 0) {
 #ifdef DIAGNOSTIC
 		if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
 			panic("pmap_unwire: pm %p, va %lx: nleft=%d, nwired=%d",
@@ -6728,7 +6750,6 @@ pmap_unwire(pm, va)
 		if (sp->sg_pmeg != seginval)
 			mmu_pmeg_unlock(sp->sg_pmeg);
 	}
-#endif
 }
 
 /*
@@ -7746,7 +7767,7 @@ pmap_dumpsize()
 	sz += npmemarr * sizeof(phys_ram_seg_t);
 	sz += sizeof(kernel_segmap_store);
 
-	if (CPU_ISSUN4 || CPU_ISSUN4C)
+	if (CPU_HAS_SUNMMU)
 		/* For each pmeg in the MMU, we'll write NPTESG PTEs. */
 		sz += (seginval + 1) * NPTESG * sizeof(int);
 
@@ -7817,7 +7838,7 @@ pmap_dumpmmu(dump, blkno)
 	kcpup->segmapoffset = segmapoffset =
 		memsegoffset + npmemarr * sizeof(phys_ram_seg_t);
 
-	kcpup->npmeg = (CPU_ISSUN4 || CPU_ISSUN4C) ? seginval + 1 : 0;
+	kcpup->npmeg = (CPU_HAS_SUNMMU) ? seginval + 1 : 0;
 	kcpup->pmegoffset = pmegoffset =
 		segmapoffset + kcpup->nsegmap * sizeof(struct segmap);
 
@@ -8144,7 +8165,9 @@ int pmap_dump(struct pmap *pm)
 				continue;
 			}
 			for (n = 0, i = 0; i < NPTESG; i++) {
-				if (sp->sg_pte[i] & PG_WIRED)
+				if (CPU_HAS_SUNMMU && sp->sg_pte[i] & PG_WIRED)
+					n++;
+				if (CPU_HAS_SRMMU && sp->sg_wiremap & (1 << i))
 					n++;
 			}
 			if (n != sp->sg_nwired)
