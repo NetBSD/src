@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.12 1998/08/21 19:45:38 augustss Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.13 1998/08/21 19:52:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ main(argc, argv)
 	fd = open(file, O_RDWR);
 #ifdef OLD_MIXER
         /* Allow the non-unit device to be used. */
-        if (file == MIXER) {
+        if (fd < 0 && file == MIXER) {
         	file = OLD_MIXER;
                 fd = open(file, O_RDWR);
         }

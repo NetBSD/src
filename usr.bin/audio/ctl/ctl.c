@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.19 1998/08/21 19:45:37 augustss Exp $	*/
+/*	$NetBSD: ctl.c,v 1.20 1998/08/21 19:52:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -407,7 +407,7 @@ main(argc, argv)
 		fd = open(file, O_RDONLY);
 #ifdef OLD_AUDIOCTL
         /* Allow the non-unit device to be used. */
-        if (file == AUDIOCTL) {
+        if (fd < 0 && file == AUDIOCTL) {
         	file = OLD_AUDIOCTL;
                 fd = open(file, O_WRONLY);
 		if (fd < 0)
