@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.12 2001/08/02 12:10:14 itojun Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.13 2003/07/22 03:24:25 itojun Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.23 2000/10/03 21:38:21 itojun Exp $	*/
 
 /*
@@ -240,9 +240,7 @@ struct sadb_x_policy {
  * This structure is aligned 8 bytes.
  */
 struct sadb_x_ipsecrequest {
-  u_int16_t sadb_x_ipsecrequest_len;	/* structure length aligned to 8 bytes.
-					 * This value is true length of bytes.
-					 * Not in units of 64 bits. */
+  u_int16_t sadb_x_ipsecrequest_len;	/* structure length in 64 bits. */
   u_int16_t sadb_x_ipsecrequest_proto;	/* See ipsec.h */
   u_int8_t sadb_x_ipsecrequest_mode;	/* See IPSEC_MODE_XX in ipsec.h. */
   u_int8_t sadb_x_ipsecrequest_level;	/* See IPSEC_LEVEL_XX in ipsec.h */
@@ -303,6 +301,10 @@ struct sadb_x_ipsecrequest {
 #define SADB_AALG_MD5HMAC	2
 #define SADB_AALG_SHA1HMAC	3
 #define SADB_AALG_MAX		251
+/* private allocations - based on RFC2407/IANA assignment */
+#define SADB_X_AALG_SHA2_256	5
+#define SADB_X_AALG_SHA2_384	6
+#define SADB_X_AALG_SHA2_512	7
 /* private allocations should use 249-255 (RFC2407) */
 #define SADB_X_AALG_MD5		249	/* Keyed MD5 */
 #define SADB_X_AALG_SHA		250	/* Keyed SHA */
@@ -321,13 +323,12 @@ struct sadb_x_ipsecrequest {
 #define SADB_X_EALG_AES		12
 /* private allocations should use 249-255 (RFC2407) */
 
-#if 1	/*nonstandard */
+/* private allocations - based on RFC2407/IANA assignment */
 #define SADB_X_CALG_NONE	0
 #define SADB_X_CALG_OUI		1
 #define SADB_X_CALG_DEFLATE	2
 #define SADB_X_CALG_LZS		3
 #define SADB_X_CALG_MAX		4
-#endif
 
 #define SADB_IDENTTYPE_RESERVED   0
 #define SADB_IDENTTYPE_PREFIX     1
