@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.43 2003/12/05 13:37:48 lukem Exp $
+.\"	$NetBSD: editline.3,v 1.44 2003/12/05 13:46:39 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -659,7 +659,11 @@ Initialise the tokenizer, and return a data structure
 to be used by all other tokenizer functions.
 .Fa IFS
 contains the Input Field Separators, which defaults to
-<space>, <tab>, and <newline> if
+.Aq space ,
+.Aq tab ,
+and
+.Aq newline
+if
 .Dv NULL .
 .It Fn tok_end
 Clean up and finish with
@@ -696,16 +700,17 @@ of the cursor.
 .Pp
 Returns
 0 if successful,
--1 for an internal error,
+\-1 for an internal error,
 1 for an unmatched single quote,
 2 for an unmatched double quote,
 and
-3 for a backslash quoted <newline>.
+3 for a backslash quoted
+.Aq newline .
 A positive exit code indicates that another line should be read
 and tokenization attempted again.
 .
 .It Fn tok_str
-A simpler form of 
+A simpler form of
 .Fn tok_line ;
 .Fa str
 is a NUL terminated string to tokenize.
