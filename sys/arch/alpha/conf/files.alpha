@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.114 2000/06/01 03:16:19 thorpej Exp $
+# $NetBSD: files.alpha,v 1.115 2000/06/01 03:16:51 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -26,7 +26,7 @@ defopt	DEC_1000A	# Corelle etc:	AlphaServer 800 and 1000A
 defopt	DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
 defopt	DEC_EB66	# EB66:		21066 Evaluation Board
 defopt	DEC_6600	# EV6		Various EV6 Systems
-defope	API_UP1000	# EV6		Alpha Processor, Inc. UP1000
+defopt	API_UP1000	# EV6		Alpha Processor, Inc. UP1000
 
 # Miscellaneous CPU-specific option headers
 defopt	FIX_UNALIGNED_VAX_FP
