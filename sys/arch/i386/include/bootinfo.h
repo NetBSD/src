@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.4 1999/03/08 00:10:42 fvdl Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.5 1999/03/08 21:42:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -45,6 +45,7 @@ struct btinfo_common {
 #define BTINFO_CONSOLE 6
 #define BTINFO_BIOSGEOM 7
 #define BTINFO_SYMTAB 8
+#define BTINFO_MEMMAP 9
 
 struct btinfo_bootpath {
 	struct btinfo_common common;
@@ -86,6 +87,16 @@ struct btinfo_symtab {
 	int nsym;
 	int ssym;
 	int esym;
+};
+
+struct bi_memmap_entry {
+	int a[5]; /* 20 bytes */
+};
+
+struct btinfo_memmap {
+	struct btinfo_common common;
+	int num;
+	struct bi_memmap_entry entry[1]; /* var len */
 };
 
 #include <sys/disklabel_mbr.h>
