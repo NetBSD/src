@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 1999/02/04 14:54:00 tsubai Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.8 1999/03/15 03:03:10 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -147,7 +147,9 @@ pci_conf_read(pc, tag, reg)
 		r = &pci_bridges[0];
 
 		out32rb(r->addr, tag | reg);
-		data = in32rb(r->data);
+		data = 0xffffffff;
+		if (!badaddr(r->data, 4))
+			data = in32rb(r->data);
 		out32rb(r->addr, 0);
 	} else {
 		int bus, dev, func;
@@ -174,7 +176,9 @@ pci_conf_read(pc, tag, reg)
 		} else
 			out32rb(r->addr, tag | reg | 1);
 		DELAY(10);
-		data = in32rb(r->data);
+		data = 0xffffffff;
+		if (!badaddr(r->data, 4))
+			data = in32rb(r->data);
 		DELAY(10);
 		out32rb(r->addr, 0);
 		DELAY(10);
