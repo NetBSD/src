@@ -1,5 +1,5 @@
 
-/*	$NetBSD: locore.s,v 1.172 1997/10/17 18:05:56 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.173 1997/11/13 03:16:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -163,7 +163,7 @@
 	.globl	_cold,_esym,_boothowto,_bootinfo,_atdevbase
 	.globl	_bootdev
 	.globl	_proc0paddr,_curpcb,_PTDpaddr,_biosbasemem
-	.globl	_biosextmem,_dynamic_gdt
+	.globl	_biosextmem,_gdt
 _cpu:		.long	0	# are we 386, 386sx, or 486, or Pentium, or..
 _cpu_id:	.long	0	# saved from `cpuid' instruction
 _cpu_feature:	.long	0	# feature flags from 'cpuid' instruction
@@ -1806,7 +1806,7 @@ switch_exited:
 #endif
 
 	/* Load TSS info. */
-	movl	_dynamic_gdt,%eax
+	movl	_gdt,%eax
 	movl	PCB_TSS_SEL(%esi),%edx
 
 	/* Switch address space. */
@@ -1881,7 +1881,7 @@ ENTRY(switch_exit)
 	movl	PCB_EBP(%esi),%ebp
 
 	/* Load TSS info. */
-	movl	_dynamic_gdt,%eax
+	movl	_gdt,%eax
 	movl	PCB_TSS_SEL(%esi),%edx
 
 	/* Switch address space. */
@@ -1963,26 +1963,23 @@ ENTRY(savectx)
 
 #define	TRAP(a)		pushl $(a) ; jmp _alltraps
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
-#define	BPTTRAP(a)	testb $(PSL_I>>8),13(%esp) ; jz 1f ; sti ; 1: ; \
-			TRAP(a)
 
 	.text
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
 IDTVEC(trap01)
-	subl	$4,%esp
-	pushl	%eax
+	pushl	$0
+	pushl	$T_TRCTRAP
+	INTRENTRY
 	movl	%dr6,%eax
-	movl	%eax,4(%esp)
+	movl	%eax,TF_ERR(%esp)
 	andb	$~0xf,%al
 	movl	%eax,%dr6
-	popl	%eax
-	BPTTRAP(T_TRCTRAP)
+	jmp	calltrap
 IDTVEC(trap02)
 	ZTRAP(T_NMI)
 IDTVEC(trap03)
-	pushl	$0
-	BPTTRAP(T_BPTFLT)
+	ZTRAP(T_BPTFLT)
 IDTVEC(trap04)
 	ZTRAP(T_OFLOW)
 IDTVEC(trap05)
@@ -2254,4 +2251,3 @@ ENTRY(bzero)
 
 	popl	%edi
 	ret
-	

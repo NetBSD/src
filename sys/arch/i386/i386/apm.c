@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.27 1997/10/15 01:20:41 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.28 1997/11/13 03:16:42 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -994,11 +994,11 @@ apmattach(parent, self, aux)
 	    apminfo.apm_code32_seg_len,
 	    apminfo.apm_data_seg_len,
 	    apmsc->sc_dev.dv_xname));
-	setsegment(&dynamic_gdt[GAPM32CODE_SEL].sd,
+	setsegment(&gdt[GAPM32CODE_SEL].sd,
 	    (void *)ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
 	    apminfo.apm_code32_seg_len - 1,
 	    SDT_MEMERA, SEL_KPL, 1, 0);
-	setsegment(&dynamic_gdt[GAPM16CODE_SEL].sd,
+	setsegment(&gdt[GAPM16CODE_SEL].sd,
 	    (void *)ISA_HOLE_VADDR(apminfo.apm_code16_seg_base),
 	    IOM_END - apminfo.apm_code16_seg_base - 1,
 	    SDT_MEMERA, SEL_KPL, 0, 0);
@@ -1008,7 +1008,7 @@ apmattach(parent, self, aux)
 		 * descriptor to just the first byte of the code
 		 * segment, read only.
 		 */
-		setsegment(&dynamic_gdt[GAPMDATA_SEL].sd,
+		setsegment(&gdt[GAPMDATA_SEL].sd,
 		    (void *)ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
 		    0, SDT_MEMROA, SEL_KPL, 0, 0);
 	} else if (apminfo.apm_data_seg_base < IOM_BEGIN &&
@@ -1032,12 +1032,12 @@ apmattach(parent, self, aux)
 		    ("mapping bios data area %x @ 0x%lx\n%s: ",
 		    apminfo.apm_data_seg_base, memh,
 		    apmsc->sc_dev.dv_xname));
-		setsegment(&dynamic_gdt[GAPMDATA_SEL].sd,
+		setsegment(&gdt[GAPMDATA_SEL].sd,
 		    (void *)memh,
 		    apminfo.apm_data_seg_len - 1,
 		    SDT_MEMRWA, SEL_KPL, 1, 0);
 	} else
-		setsegment(&dynamic_gdt[GAPMDATA_SEL].sd,
+		setsegment(&gdt[GAPMDATA_SEL].sd,
 		    (void *)ISA_HOLE_VADDR(apminfo.apm_data_seg_base),
 		    apminfo.apm_data_seg_len - 1,
 		    SDT_MEMRWA, SEL_KPL, 1, 0);

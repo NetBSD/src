@@ -1,7 +1,7 @@
-/*	$NetBSD: gdt.h,v 1.5 1997/10/09 08:50:41 jtc Exp $	*/
+/*	$NetBSD: gdt.h,v 1.6 1997/11/13 03:16:53 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,9 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	MAXGDTSIZ	8192		/* max # entries in an i386 GDT */
-extern union descriptor *dynamic_gdt;
-
+void gdt_init __P((void));
 void tss_alloc __P((struct pcb *));
 void tss_free __P((struct pcb *));
 void ldt_alloc __P((struct pcb *, union descriptor *, size_t));
