@@ -19,6 +19,7 @@ options		INET
 options		NS
 # umm, no can do, on this one...
 #options		KADB
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		QUOTA
 options		FIFO
 options		NFS
@@ -75,5 +76,3 @@ pseudo-device	ite
 pseudo-device	pty
 pseudo-device	loop
 pseudo-device	ether
-
-pseudo-device	vnodepager

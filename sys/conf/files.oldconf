@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.22 1993/08/24 12:52:29 pk Exp $
+#	$Id: files.oldconf,v 1.23 1993/08/30 07:12:21 deraadt Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -202,9 +202,9 @@ ufs/ufs_subr.c		standard
 ufs/ufs_tables.c	standard
 ufs/ufs_vfsops.c	standard
 ufs/ufs_vnops.c		standard
-vm/device_pager.c	optional devpager device-driver
+vm/device_pager.c	optional devpager
 vm/kern_lock.c		standard
-vm/swap_pager.c		optional swappager device-driver
+vm/swap_pager.c		optional swappager
 vm/vm_fault.c		standard
 vm/vm_glue.c		standard
 vm/vm_init.c		standard
@@ -219,4 +219,4 @@ vm/vm_pager.c		standard
 vm/vm_swap.c		standard
 vm/vm_unix.c		standard
 vm/vm_user.c		standard
-vm/vnode_pager.c	optional vnodepager device-driver
+vm/vnode_pager.c	optional vnodepager

@@ -14,6 +14,7 @@ timezone	8 dst
 maxusers	16
 
 # Standard options
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		QUOTA
 options		INET
 options		MFS,NFS,FIFO
@@ -83,7 +84,3 @@ pseudo-device	ether
 
 pseudo-device	log	4
 pseudo-device	clock
-
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager
