@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.193 2004/05/07 16:09:46 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.194 2004/05/08 21:32:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.193 2004/05/07 16:09:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.194 2004/05/08 21:32:34 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -2928,6 +2928,7 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 		} else if (NFS_CMPFH(dnp, nfhp, fhlen)) {
 		    VREF(dvp);
 		    newvp = dvp;
+		    np = dnp;
 		} else {
 		    error = nfs_nget(dvp->v_mount, nfhp, fhlen, &np);
 		    if (error) {
