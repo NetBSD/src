@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.9.2.5 1999/08/09 12:53:53 drochner Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.9.2.6 1999/10/26 06:19:08 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "opt_pmap_new.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
