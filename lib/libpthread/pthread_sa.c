@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.10 2001/08/01 23:37:37 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.11 2001/09/25 19:41:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #include "pthread.h"
 #include "pthread_int.h"
 
-#undef PTHREAD_SA_DEBUG
+#define PTHREAD_SA_DEBUG
 
 #ifdef PTHREAD_SA_DEBUG
 #define SDPRINTF(x) DPRINTF(x)
@@ -76,7 +76,8 @@ void pthread__resolve_locks(pthread_t self, pthread_t *interrupted);
 void pthread__recycle_bulk(pthread_t self, pthread_t qhead);
 
 static void
-pthread__upcall(int type, struct sa_t *sas[], int ev, int intr)
+pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, int sig, 
+    u_long code, void *arg)
 {
 	pthread_t t, self, next, intqueue;
 	int first = 1;
@@ -86,6 +87,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr)
 
 	self = pthread__self();
 
+	SDPRINTF(("(up %p) type %d ev %d intr %d\n", self, type, ev, intr));
 	switch (type) {
 	case SA_UPCALL_BLOCKED:
 		t = pthread__sa_id(sas[1]);
@@ -140,10 +142,9 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr)
 		if (deliversig) {
 			if (ev)
 				pthread__signal(pthread__sa_id(sas[1]),
-				    sas[0]->sa_sig, sas[0]->sa_code);
+				    sig, code);
 			else
-				pthread__signal(NULL, sas[0]->sa_sig, 
-				    sas[0]->sa_code);
+				pthread__signal(NULL, sig, code);
 		}
 	}
 
@@ -156,7 +157,8 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr)
 	 */
 
 	next = pthread__next(self);
-	SDPRINTF(("(upcall %p) switching to %p\n", self, next));
+	SDPRINTF(("(up %p) switching to %p (uc: %p pc: %lx)\n", 
+	    self, next, next->pt_uc, next->pt_uc->uc_mcontext.sc_pc));
 	pthread__upcall_switch(self, next);
 	/* NOTREACHED */
 	assert(0);
@@ -180,9 +182,11 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 		victim = pthread__sa_id(sas[i]);
 		victim->preempts++;
 		victim->pt_uc = sas[i]->sa_context;
+		SDPRINTF(("(fi %p) victim %d %p", self, i, victim));
 		if (victim->pt_type == PT_THREAD_UPCALL) {
 			/* Case 1: Upcall */
 			/* Must be resumed. */
+				SDPRINTF((" upcall"));
 			resumecount++;
 			if (victim->pt_next) {
 				/* Case 1A: Upcall in a chain */
@@ -190,41 +194,57 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 				 * splice this chain into our chain, so
 				 * we have to find the root.
 				 */
+				SDPRINTF((" chain"));
 				for ( ; victim->pt_parent != NULL; 
-				     victim = victim->pt_parent)
-					;
+				      victim = victim->pt_parent) {
+					SDPRINTF((" parent %p", victim->pt_parent));
+					assert(victim->pt_parent != victim);
+
+				}
 			}
 		} else {
 			/* Case 2: Plain thread. */
 			if (victim->pt_spinlocks > 0) {
 				/* Case 2A: Lockholder */
 				/* Must be resumed. */
+				SDPRINTF((" lockholder %d",
+				    victim->pt_spinlocks));
 				resumecount++;
 				if (victim->pt_next) {
 					/* Case 2A1: Lockholder on a chain */
 					/* Same deal as 1A. */
+					SDPRINTF((" chain"));
 					for ( ; victim->pt_parent != NULL; 
-					     victim = victim->pt_parent)
-						;
+					      victim = victim->pt_parent) {
+						SDPRINTF((" parent %p", victim->pt_parent));
+						assert(victim->pt_parent != victim);
+					}
+
 
 				}
 			} else {
 				/* Case 2B: Non-lockholder */
+					SDPRINTF((" nonlockholder"));
 				if (victim->pt_next) {
 					/* Case 2B1: Non-lockholder on a chain
 					 * (must have just released a lock)
 					 */
+					SDPRINTF((" chain"));
 					resumecount++;
 					for ( ; victim->pt_parent != NULL; 
-					     victim = victim->pt_parent)
-						;
+					      victim = victim->pt_parent) {
+						SDPRINTF((" parent %p", victim->pt_parent));
+						assert(victim->pt_parent != victim);
+					}
 				}
 			}
 		}
 
+		assert (victim != self);
 		victim->pt_parent = self;
 		victim->pt_next = next;
 		next = victim;
+		SDPRINTF(("\n"));
 	}
 
 	*qhead = next;
