@@ -1,4 +1,4 @@
-/* $NetBSD: if_esreg.h,v 1.1 1996/05/12 21:35:08 mark Exp $	*/
+/*	$NetBSD: if_esreg.h,v 1.2 1997/10/14 21:45:24 mark Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
