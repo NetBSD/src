@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.8 1997/10/15 23:39:34 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.9 1997/10/17 20:24:35 oki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -407,9 +407,9 @@ comopen(dev, flag, mode, p)
 	int s;
 	int error = 0;
 
-	if (unit >= com_cd.cd_ndevs)
+	if (unit >= xcom_cd.cd_ndevs)
 		return ENXIO;
-	sc =  com_cd.cd_devs[unit];
+	sc =  xcom_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -535,7 +535,7 @@ comclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	int unit = COMUNIT(dev);
-	struct com_softc *sc = com_cd.cd_devs[unit];
+	struct com_softc *sc = xcom_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
 	int s;
@@ -574,7 +574,7 @@ comread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
@@ -586,7 +586,7 @@ comwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -596,7 +596,7 @@ struct tty *
 comtty(dev)
 	dev_t dev;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -624,7 +624,7 @@ comioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = COMUNIT(dev);
-	struct com_softc *sc = com_cd.cd_devs[unit];
+	struct com_softc *sc = xcom_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
 	int error;
@@ -735,7 +735,7 @@ comparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(tp->t_dev)];
 	int iobase = sc->sc_iobase;
 	int ospeed = comspeed(t->c_ospeed);
 	u_char lcr;
@@ -847,7 +847,7 @@ void
 comstart(tp)
 	struct tty *tp;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(tp->t_dev)];
 	int iobase = sc->sc_iobase;
 	int s;
 
@@ -971,8 +971,8 @@ compoll(arg)
 	comevents = 0;
 	splx(s);
 
-	for (unit = 0; unit < com_cd.cd_ndevs; unit++) {
-		sc = com_cd.cd_devs[unit];
+	for (unit = 0; unit < xcom_cd.cd_ndevs; unit++) {
+		sc = xcom_cd.cd_devs[unit];
 		if (sc == 0 || sc->sc_ibufp == sc->sc_ibuf)
 			continue;
 
@@ -1028,7 +1028,7 @@ int
 comintr(arg)
 	void *arg;
 {
-	struct com_softc *sc = com_cd.cd_devs[(int)arg];
+	struct com_softc *sc = xcom_cd.cd_devs[(int)arg];
 	int iobase = sc->sc_iobase;
 	struct tty *tp;
 	u_char lsr, data, msr, delta;
