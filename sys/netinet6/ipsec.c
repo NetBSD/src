@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.74 2003/09/06 03:36:33 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.75 2003/09/06 04:13:51 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.74 2003/09/06 03:36:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.75 2003/09/06 04:13:51 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -120,6 +120,7 @@ int ip6_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 
 #endif /* INET6 */
 
+static struct pf_tag *ipsec_get_tag __P((struct mbuf *));
 static struct secpolicy *ipsec_checkpcbcache __P((struct mbuf *,
 	struct inpcbpolicy *, int));
 static int ipsec_fillpcbcache __P((struct inpcbpolicy *, struct mbuf *,
@@ -322,6 +323,18 @@ ipsec_invalpcbcacheall()
 	return 0;
 }
 
+static struct pf_tag *
+ipsec_get_tag(m)
+	struct mbuf *m;
+{
+	struct m_tag	*mtag;
+
+	if ((mtag = m_tag_find(m, PACKET_TAG_PF_TAG, NULL)) != NULL)
+		return ((struct pf_tag *)(mtag + 1));
+	else
+		return (NULL);
+}
+
 /*
  * For OUTBOUND packet having a socket. Searching SPD for packet,
  * and return a pointer to SP.
@@ -345,6 +358,8 @@ ipsec4_getpolicybysock(m, dir, so, error)
 	struct secpolicy *currsp = NULL;	/* policy on socket */
 	struct secpolicy *kernsp = NULL;	/* policy on kernel */
 	struct secpolicyindex spidx;
+	struct pf_tag *t;
+	u_int16_t tag;
 
 	/* sanity check */
 	if (m == NULL || so == NULL || error == NULL)
@@ -367,6 +382,9 @@ ipsec4_getpolicybysock(m, dir, so, error)
 	if (pcbsp == NULL)
 		panic("ipsec4_getpolicybysock: pcbsp is NULL.");
 #endif
+
+	t = ipsec_get_tag(m);
+	tag = t ? t->tag : 0;
 
 	/* if we have a cached entry, and if it is still valid, use it. */
 	ipsecstat.spdcachelookup++;
@@ -404,7 +422,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		case IPSEC_POLICY_ENTRUST:
 			/* look for a policy in SPD */
 			if (ipsec_setspidx_mbuf(&spidx, AF_INET, m, 1) == 0 &&
-			    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+			    (kernsp = key_allocsp(tag, &spidx, dir)) != NULL) {
 				/* SP found */
 				KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 					printf("DP ipsec4_getpolicybysock called "
@@ -438,7 +456,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 	/* when non-privilieged socket */
 	/* look for a policy in SPD */
 	if (ipsec_setspidx_mbuf(&spidx, AF_INET, m, 1) == 0 &&
-	    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+	    (kernsp = key_allocsp(tag, &spidx, dir)) != NULL) {
 		/* SP found */
 		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 			printf("DP ipsec4_getpolicybysock called "
@@ -496,6 +514,8 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
 	int *error;
 {
 	struct secpolicy *sp = NULL;
+	struct pf_tag *t;
+	u_int16_t tag;
 
 	/* sanity check */
 	if (m == NULL || error == NULL)
@@ -507,14 +527,17 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
 
 	bzero(&spidx, sizeof(spidx));
 
-	/* make a index to look for a policy */
+	/* make an index to look for a policy */
 	*error = ipsec_setspidx_mbuf(&spidx, AF_INET, m,
 	    (flag & IP_FORWARDING) ? 0 : 1);
 
 	if (*error != 0)
 		return NULL;
 
-	sp = key_allocsp(&spidx, dir);
+	t = ipsec_get_tag(m);
+	tag = t ? t->tag : 0;
+
+	sp = key_allocsp(tag, &spidx, dir);
     }
 
 	/* SP found */
@@ -554,6 +577,9 @@ ipsec6_getpolicybysock(m, dir, so, error)
 	struct secpolicy *currsp = NULL;	/* policy on socket */
 	struct secpolicy *kernsp = NULL;	/* policy on kernel */
 	struct secpolicyindex spidx;
+	struct pf_tag *t;
+	u_int16_t tag;
+
 
 	/* sanity check */
 	if (m == NULL || so == NULL || error == NULL)
@@ -570,6 +596,9 @@ ipsec6_getpolicybysock(m, dir, so, error)
 	if (pcbsp == NULL)
 		panic("ipsec6_getpolicybysock: pcbsp is NULL.");
 #endif
+
+	t = ipsec_get_tag(m);
+	tag = t ? t->tag : 0;
 
 	/* if we have a cached entry, and if it is still valid, use it. */
 	ipsec6stat.spdcachelookup++;
@@ -607,7 +636,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 		case IPSEC_POLICY_ENTRUST:
 			/* look for a policy in SPD */
 			if (ipsec_setspidx_mbuf(&spidx, AF_INET6, m, 1) == 0 &&
-			    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+			    (kernsp = key_allocsp(tag, &spidx, dir)) != NULL) {
 				/* SP found */
 				KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 					printf("DP ipsec6_getpolicybysock called "
@@ -641,7 +670,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 	/* when non-privilieged socket */
 	/* look for a policy in SPD */
 	if (ipsec_setspidx_mbuf(&spidx, AF_INET6, m, 1) == 0 &&
-	    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+	    (kernsp = key_allocsp(tag, &spidx, dir)) != NULL) {
 		/* SP found */
 		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 			printf("DP ipsec6_getpolicybysock called "
@@ -706,6 +735,8 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
 	int *error;
 {
 	struct secpolicy *sp = NULL;
+	struct pf_tag *t;
+	u_int16_t tag;
 
 	/* sanity check */
 	if (m == NULL || error == NULL)
@@ -717,14 +748,17 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
 
 	bzero(&spidx, sizeof(spidx));
 
-	/* make a index to look for a policy */
+	/* make an index to look for a policy */
 	*error = ipsec_setspidx_mbuf(&spidx, AF_INET6, m,
 	    (flag & IP_FORWARDING) ? 0 : 1);
 
 	if (*error != 0)
 		return NULL;
 
-	sp = key_allocsp(&spidx, dir);
+	t = ipsec_get_tag(m);
+	tag = t ? t->tag : 0;
+
+	sp = key_allocsp(tag, &spidx, dir);
     }
 
 	/* SP found */
@@ -1733,7 +1767,8 @@ ipsec4_in_reject_so(m, so)
 	 * ipsec4_getpolicybyaddr() with IP_FORWARDING flag.
 	 */
 	if (so == NULL)
-		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
+		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
+		    IP_FORWARDING, &error);
 	else
 		sp = ipsec4_getpolicybysock(m, IPSEC_DIR_INBOUND, so, &error);
 
@@ -1786,7 +1821,8 @@ ipsec6_in_reject_so(m, so)
 	 * ipsec6_getpolicybyaddr() with IP_FORWARDING flag.
 	 */
 	if (so == NULL)
-		sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
+		sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
+		    IP_FORWARDING, &error);
 	else
 		sp = ipsec6_getpolicybysock(m, IPSEC_DIR_INBOUND, so, &error);
 
