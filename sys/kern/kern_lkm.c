@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.64 2003/04/10 19:06:05 jdolecek Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.65 2003/04/24 20:09:43 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.64 2003/04/10 19:06:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.65 2003/04/24 20:09:43 ragge Exp $");
 
 #include "opt_ddb.h"
 
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.64 2003/04/10 19:06:05 jdolecek Exp $
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
+#include <sys/ksyms.h>
 
 #include <sys/lkm.h>
 #include <sys/syscall.h>
@@ -183,10 +184,8 @@ lkmunreserve()
 		return;
 
 	if (curp && curp->syms) {
-#ifdef DDB
-		db_del_symbol_table(curp->private.lkm_any->lkm_name);
-#endif
-		LKM_SPACE_FREE(curp->syms, curp->sym_size);
+		ksyms_delsymtab(curp->private.lkm_any->lkm_name);
+		uvm_km_free(kernel_map, curp->syms, curp->sym_size);/**/
 		curp->syms = 0;
 	}
 	/*
@@ -437,21 +436,18 @@ lkmioctl(dev, cmd, data, flag, p)
 		if (lkmdebug & LKMDB_INFO)
 			printf("LKM: LMREADY\n");
 #endif /* DEBUG */
-#ifdef DDB
 		if (curp->syms && curp->sym_offset >= curp->sym_size) {
-		    db_add_symbol_table((caddr_t)curp->syms,
-					(caddr_t)curp->syms + curp->sym_symsize,
-					curp->private.lkm_any->lkm_name,
-					(caddr_t)curp->syms);
+			error = ksyms_addsymtab(curp->private.lkm_any->lkm_name,
+			    (char *)curp->syms, curp->sym_symsize,
+			    (char *)curp->syms + curp->sym_symsize,
+			    curp->sym_size - curp->sym_symsize);
+			if (error)
+				break;
 #ifdef DEBUG
-		    if (lkmdebug & LKMDB_INFO)
-			printf( "DDB symbols added!\n" );
+			if (lkmdebug & LKMDB_INFO)
+				printf( "DDB symbols added!\n" );
 #endif
 		}
-#endif
-
-
-
 		lkm_state = LKMS_IDLE;
 		break;
 
