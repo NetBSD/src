@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.26 1995/09/14 20:38:53 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.26.2.1 1995/10/18 19:30:28 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -360,13 +360,13 @@ espattach(parent, self, aux)
 		printf(": ESP100");
 		sc->sc_rev = ESP100;
 	} else {
-		sc->sc_cfg2 = 0;
+		sc->sc_cfg2 = ESPCFG2_SCSI2 | ESPCFG2_FE;
 		sc->sc_reg[ESP_CFG2] = sc->sc_cfg2;
 		sc->sc_cfg3 = 0;
 		sc->sc_reg[ESP_CFG3] = sc->sc_cfg3;
-		sc->sc_cfg3 = 5;
+		sc->sc_cfg3 = (ESPCFG3_CDB | ESPCFG3_FCLK);
 		sc->sc_reg[ESP_CFG3] = sc->sc_cfg3;
-		if (sc->sc_reg[ESP_CFG3] != 5) {
+		if (sc->sc_reg[ESP_CFG3] != (ESPCFG3_CDB | ESPCFG3_FCLK)) {
 			printf(": ESP100A");
 			sc->sc_rev = ESP100A;
 		} else {
