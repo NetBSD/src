@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.8 2000/07/29 03:46:15 lukem Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.9 2001/10/18 03:16:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.8 2000/07/29 03:46:15 lukem Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.9 2001/10/18 03:16:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: stat_flags.c,v 1.8 2000/07/29 03:46:15 lukem Exp $");
  *	are set, return the default string.
  */
 char *
-flags_to_string(u_long flags, char *def)
+flags_to_string(u_long flags, const char *def)
 {
 	static char string[128];
 	char *prefix;
@@ -85,16 +85,24 @@ flags_to_string(u_long flags, char *def)
 		SAPPEND("arch");
 	if (flags & SF_IMMUTABLE)
 		SAPPEND("schg");
-	return (prefix == NULL && def != NULL ? def : string);
+	if (prefix == NULL)
+		strlcpy(string, def, sizeof(def));
+	return (string);
 }
 
 #define	TEST(a, b, f) {							\
-	if (!memcmp(a, b, sizeof(b))) {					\
+	if (!strcmp(a, b)) {						\
 		if (clear) {						\
 			if (clrp)					\
 				*clrp |= (f);				\
-		} else if (setp)					\
-			*setp |= (f);					\
+			if (setp)					\
+				*setp &= ~(f);				\
+		} else {						\
+			if (setp)					\
+				*setp |= (f);				\
+			if (clrp)					\
+				*clrp &= ~(f);				\
+		}							\
 		break;							\
 	}								\
 }
@@ -111,13 +119,13 @@ string_to_flags(char **stringp, u_long *setp, u_long *clrp)
 	int clear;
 	char *string, *p;
 
-	clear = 0;
 	if (setp)
 		*setp = 0;
 	if (clrp)
 		*clrp = 0;
 	string = *stringp;
 	while ((p = strsep(&string, "\t ,")) != NULL) {
+		clear = 0;
 		*stringp = p;
 		if (*p == '\0')
 			continue;
