@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2002/09/25 22:21:24 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2002/10/20 02:37:33 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -363,11 +363,10 @@ cpu_startup()
 				   NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
-	 * We don't use a submap for physio, and use a separate map
-	 * for DVMA allocations.  Our vmapbuf just maps pages into
-	 * the kernel map (any kernel mapping is OK) and then the
-	 * device drivers clone the kernel mappings into DVMA space.
+	 * Allocate a submap for physio
 	 */
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.

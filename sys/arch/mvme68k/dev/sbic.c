@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.18 2001/07/22 13:34:06 wiz Exp $	*/
+/*	$NetBSD: sbic.c,v 1.19 2002/10/20 02:37:29 chs Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -91,8 +91,6 @@
  * Convenience macro for waiting for a particular sbic event
  */
 #define SBIC_WAIT(regs, until, timeo) sbicwait(regs, until, timeo, __LINE__)
-
-extern paddr_t kvtop __P((caddr_t));
 
 int     sbicicmd            __P((struct sbic_softc *, void *, int, void *, int));
 int     sbicgo              __P((struct sbic_softc *, struct scsipi_xfer *));
@@ -1561,7 +1559,7 @@ sbicgo(dev, xs)
     count = acb->sc_kv.dc_count;
 
     if ( count && ((char *)kvtop((caddr_t)addr) != acb->sc_pa.dc_addr) ) {
-        printf("sbic: DMA buffer mapping changed %p->%lx\n",
+        printf("sbic: DMA buffer mapping changed %p->%x\n",
                 acb->sc_pa.dc_addr, kvtop((caddr_t)addr));
 #ifdef DDB
         Debugger();

@@ -1,4 +1,4 @@
-# $NetBSD: std.sun3,v 1.29 2001/02/22 07:11:09 chs Exp $
+# $NetBSD: std.sun3,v 1.30 2002/10/20 02:37:34 chs Exp $
 
 # Standard information for Sun3 machines.
 machine	sun3 m68k
@@ -8,6 +8,7 @@ machine	sun3 m68k
 # (Your kernel will only run on one or the other.)
 makeoptions	MACHTYPE=sun3
 options 	_SUN3_
+options 	M68020
 
 # The root node (required)
 mainbus0 at root

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 2002/09/25 22:21:13 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95 2002/10/20 02:37:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -778,11 +778,10 @@ cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
-	extern void savectx __P((struct user *));
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)
-		savectx(curproc->p_addr);
+		savectx(&curproc->p_addr->u_pcb);
 
 	/* Save the RB_SBOOT flag. */
 	howto |= (boothowto & RB_SBOOT);

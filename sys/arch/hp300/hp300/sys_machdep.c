@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.31 2002/03/15 05:55:39 gmcgarry Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.32 2002/10/20 02:37:26 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.31 2002/03/15 05:55:39 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.32 2002/10/20 02:37:26 chs Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.31 2002/03/15 05:55:39 gmcgarry Ex
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
+#include <m68k/cacheops.h>
 
 /* XXX should be in an include file somewhere */
 #define CC_PURGE	1

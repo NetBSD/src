@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 2002/05/14 02:58:34 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31 2002/10/20 02:37:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -51,7 +51,10 @@
 #include "opt_lockdebug.h"
 #endif
 
-#include <m68k/m68k.h>
+/*
+ * Get common m68k CPU definitions.
+ */
+#include <m68k/cpu.h>
 
 #ifdef _KERNEL
 
@@ -84,8 +87,10 @@ extern struct cpu_info cpu_info_store;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_wait(p)			/* nothing */
 #define	cpu_number()			0
+#define	cpu_wait(p)			/* nothing */
+#define	cpu_swapin(p)			/* nothing */
+#define	cpu_swapout(p)			/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -159,6 +164,18 @@ extern union sun3sir sun3sir;
 #define setsoftclock()	(sun3sir.sir_which[SIR_CLOCK] = 1, setsoftint(1))
 
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
+
+/*
+ * functions here for lack of a better place.
+ */
+struct pcb;
+void	proc_trampoline __P((void));
+void	savectx __P((struct pcb *));
+void	switch_exit __P((struct proc *));
+
+#ifdef _SUN3_
+#define M68K_VAC
+#endif
 
 #endif	/* _KERNEL */
 

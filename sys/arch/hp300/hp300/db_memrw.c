@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.10 2002/03/15 05:55:37 gmcgarry Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.11 2002/10/20 02:37:25 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.10 2002/03/15 05:55:37 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.11 2002/10/20 02:37:25 chs Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.10 2002/03/15 05:55:37 gmcgarry Exp $
 #include <machine/db_machdep.h>
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
+
+#include <m68k/cacheops.h>
 
 #include <ddb/db_access.h>
 

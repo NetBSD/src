@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 2002/10/14 05:18:53 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 2002/10/20 02:37:31 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -138,6 +138,8 @@
 #include <sys/pool.h>
 
 #include <machine/pte.h>
+#include <machine/cpu.h>
+#include <m68k/cacheops.h>
 
 #include <uvm/uvm.h>
 

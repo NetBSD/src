@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 2001/06/27 19:08:58 fredette Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 2002/10/20 02:37:39 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -84,8 +84,10 @@ extern struct cpu_info cpu_info_store;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_wait(p)			/* nothing */
 #define	cpu_number()			0
+#define	cpu_wait(p)			/* nothing */
+#define	cpu_swapin(p)			/* nothing */
+#define	cpu_swapout(p)			/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -150,6 +152,16 @@ int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
  * better place.
  */
 void	netintr __P((void));
+
+/*
+ * more stuff here for lack of a better place.
+ */
+struct pcb;
+void	proc_trampoline __P((void));
+void	savectx __P((struct pcb *));
+void	switch_exit __P((struct proc *));
+
+#define M68K_VAC
 
 #endif	/* _KERNEL */
 

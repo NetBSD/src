@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.27 2001/09/05 13:21:10 tsutsui Exp $	*/
+/*	$NetBSD: machdep.h,v 1.28 2002/10/20 02:37:36 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -68,11 +68,6 @@ extern label_t *nofault;
 
 extern vaddr_t vmmap;	/* XXX - See mem.c */
 
-/* Cache flush functions. */
-void	DCIA __P((void));
-void	DCIU __P((void));
-void	ICIA __P((void));
-
 void	clock_init  __P((void));
 void	cninit __P((void));
 
@@ -105,10 +100,6 @@ void	netintr __P((void));
 caddr_t	obio_find_mapping __P((paddr_t pa, psize_t size));
 void	obio_init __P((void));
 
-void	proc_trampoline __P((void));
-
-void	savectx __P((struct pcb *));
-
 void	setvbr __P((void **));
 
 void	sunmon_abort __P((void));
@@ -117,8 +108,6 @@ void	sunmon_init __P((void));
 void	sunmon_reboot __P((char *));
 
 void	swapconf __P((void));
-
-void	switch_exit __P((struct proc *));
 
 void	zs_init __P((void));
 
@@ -161,17 +150,6 @@ extern struct mmu_rootptr mon_crp;
 
 /* Lowest "managed" kernel virtual address. */
 extern vaddr_t virtual_avail;
-
-/* Cache flush ops, Sun3X specific. */
-void	DCIAS __P((paddr_t));
-void	DCIS __P((void));
-void	ICPA __P((void));
-void	PCIA __P((void));
-/* ATC flush operations. */
-void	TBIA __P((void));
-void	TBIS __P((vaddr_t));
-void	TBIAS __P((void));
-void	TBIAU __P((void));
 
 void	loadcrp __P((struct mmu_rootptr *));
 

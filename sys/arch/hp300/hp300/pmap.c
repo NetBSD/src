@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108 2002/10/14 05:18:47 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.109 2002/10/20 02:37:26 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2002/10/14 05:18:47 chs Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2002/10/20 02:37:26 chs Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -145,6 +145,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2002/10/14 05:18:47 chs Exp $");
 #include <sys/pool.h>
 
 #include <machine/pte.h>
+#include <m68k/cacheops.h>
 
 #include <uvm/uvm.h>
 

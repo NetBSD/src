@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.16 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: files.news68k,v 1.17 2002/10/20 02:37:30 chs Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -28,7 +28,7 @@ file	arch/news68k/news68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
 file	arch/news68k/news68k/procfs_machdep.c	procfs
 file	arch/news68k/news68k/sys_machdep.c
 file	arch/news68k/news68k/trap.c
-file	arch/news68k/news68k/vm_machdep.c
+file	arch/m68k/m68k/vm_machdep.c
 file	dev/clock_subr.c
 file	dev/cons.c
 

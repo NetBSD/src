@@ -1,13 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.27 2002/03/04 02:43:25 simonb Exp $	*/
-
-/*
- * This file was taken from mvme68k/mvme68k/vm_machdep.c
- * should probably be re-synced when needed.
- * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
- * original cvs id:
- *	NetBSD: vm_machdep.c,v 1.15 1998/08/22 10:55:36 scw Exp
- */
-
+/*	$NetBSD: vm_machdep.c,v 1.1 2002/10/20 02:37:43 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +42,8 @@
  *	@(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
  */
 
-#include "opt_compat_hpux.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1 2002/10/20 02:37:43 chs Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,12 +55,12 @@
 #include <sys/core.h>
 #include <sys/exec.h>
 
-#include <uvm/uvm_extern.h>
-
+#include <machine/frame.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/reg.h>
-#include <m68k/cacheops.h>
+
+#include <uvm/uvm_extern.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -101,7 +93,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct switchframe *sf;
 	extern struct pcb *curpcb;
 
-	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
+	p2->p_md.md_flags = p1->p_md.md_flags;
 
 	/* Copy pcb from proc p1 to p2. */
 	if (p1 == curproc) {
@@ -179,10 +171,15 @@ cpu_coredump(p, vp, cred, chdr)
 	if (error)
 		return error;
 
-	/* Save floating point registers. */
-	error = process_read_fpregs(p, &md_core.freg);
-	if (error)
-		return error;
+	if (fputype) {
+		/* Save floating point registers. */
+		error = process_read_fpregs(p, &md_core.freg);
+		if (error)
+			return error;
+	} else {
+		/* Make sure these are clear. */
+		memset((caddr_t)&md_core.freg, 0, sizeof(md_core.freg));
+	}
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
@@ -207,7 +204,7 @@ cpu_coredump(p, vp, cred, chdr)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of NBPG.
+ * and size must be a multiple of PAGE_SIZE.
  */
 void
 pagemove(from, to, size)
@@ -230,7 +227,7 @@ pagemove(from, to, size)
 			panic("pagemove 3");
 #endif
 		pmap_kremove((vaddr_t)from, PAGE_SIZE);
-		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ | VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -248,10 +245,10 @@ vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	struct pmap *upmap;
-	vaddr_t uva;	/* User VA (map from) */
-	vaddr_t kva;	/* Kernel VA (new to) */
-	paddr_t pa; 	/* physical address */
+	struct pmap *upmap, *kpmap;
+	vaddr_t uva;		/* User VA (map from) */
+	vaddr_t kva;		/* Kernel VA (new to) */
+	paddr_t pa; 		/* physical address */
 	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -264,10 +261,16 @@ vmapbuf(bp, len)
 	bp->b_data = (caddr_t)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	kpmap = vm_map_pmap(phys_map);
 	do {
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
+#ifdef M68K_VAC
+		pmap_enter(kpmap, kva, pa, VM_PROT_READ | VM_PROT_WRITE,
+		    PMAP_WIRED);
+#else
 		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE);
+#endif
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -293,9 +296,69 @@ vunmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - kva;
 	len = m68k_round_page(off + len);
 
+#ifdef M68K_VAC
+	pmap_remove(vm_map_pmap(phys_map), kva, kva + len);
+#else
 	pmap_kremove(kva, len);
+#endif
 	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
+
+
+#if defined(M68K_MMU_MOTOROLA) || defined(M68K_MMU_HP)
+
+#include <m68k/cacheops.h>
+
+/*
+ * Map `size' bytes of physical memory starting at `paddr' into
+ * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
+ * are specified by `prot'.
+ */ 
+void
+physaccess(vaddr, paddr, size, prot)
+	caddr_t vaddr, paddr;
+	int size, prot;
+{
+	pt_entry_t *pte;
+	u_int page;
+
+	pte = kvtopte(vaddr);
+	page = (u_int)paddr & PG_FRAME;
+	for (size = btoc(size); size; size--) {
+		*pte++ = PG_V | prot | page;
+		page += NBPG;
+	}
+	TBIAS();
+}
+
+void
+physunaccess(vaddr, size)
+	caddr_t vaddr;
+	int size;
+{
+	pt_entry_t *pte;
+
+	pte = kvtopte(vaddr);
+	for (size = btoc(size); size; size--)
+		*pte++ = PG_NV;
+	TBIAS();
+}
+
+/*
+ * Convert kernel VA to physical address
+ */
+int
+kvtop(addr)
+	caddr_t addr;
+{
+	paddr_t pa;
+
+	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
+		panic("kvtop: zero page frame");
+	return((int)pa);
+}
+
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: hp300spu.h,v 1.7 2001/05/30 12:28:42 mrg Exp $	*/
+/*	$NetBSD: hp300spu.h,v 1.8 2002/10/20 02:37:27 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ extern	int mmuid;		/* MMU id */
  */
 #if defined(M68K_MMU_HP)
 #define	CACHE_HAVE_VAC
+#define M68K_VAC
 #endif
 
 #if defined(HP345) || defined(HP360) || defined(HP370) || \
