@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.102 2004/05/15 21:53:29 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.103 2004/06/06 05:45:04 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,6 +69,8 @@ static void md_upgrade_mbrtype(void);
 static int md_read_bootcode(const char *, struct mbr_sector *);
 static unsigned int get_bootmodel(void);
 static char *md_bootxx_name(void);
+
+const char *fdtype = "msdos";
 
 
 int
@@ -298,7 +300,7 @@ md_post_newfs(void)
 	char bootxx[8192 + 4];
 	char *bootxx_filename;
 	static struct x86_boot_params boottype =
-		{sizeof boottype, 0, 10, 0, 9600, ""};
+		{sizeof boottype, 0, 10, 0, 9600, { '\0' }};
 	static int conmib[] = {CTL_MACHDEP, CPU_CONSDEV};
 	struct termios t;
 	dev_t condev;
