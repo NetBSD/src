@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.19 2001/03/15 03:01:40 mrg Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.19.18.1 2002/06/24 11:53:41 lukem Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -143,7 +143,7 @@
 #define R_stat	%l3
 #define R_nstat	%l4
 #define R_stcnt	%l5
-/* use %l6 and %l7 as short term temporaries */
+/* use %l6 and %l7 as short-term temporaries */
 
 
 	.seg	"data"
@@ -167,7 +167,7 @@ _ENTRY(_C_LABEL(fdchwintr))
 	std	%l0, [%l7]
 	st	%l2, [%l7 + 8]
 
-	! tally interrupt
+	! tally interrupt (uvmexp.intrs++)
 	sethi	%hi(_C_LABEL(uvmexp)+V_INTR), %l7
 	ld	[%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)], %l6
 	inc	%l6
@@ -177,14 +177,17 @@ _ENTRY(_C_LABEL(fdchwintr))
 	sethi	%hi(_C_LABEL(fdciop)), %l7
 	ld	[%l7 + %lo(_C_LABEL(fdciop))], R_fdc
 
-	! tally interrupt
-	ld	[R_fdc + FDC_EVCNT], %l6
-	inc	%l6
-	st	%l6, [R_fdc + FDC_EVCNT]
+	! tally interrupt (fdcio_intrcnt.ev_count++)
+	ldd	[R_fdc + FDC_EVCNT], %l6
+	addcc	%l7, 1, %l7
+	addx	%l6, 0, %l6
+	std	%l6, [R_fdc + FDC_EVCNT]
 
-	! load chips register addresses
-	! NOTE: we ignore the bus tag here and assume the bus handle
-	!	is the virtual address of the chip's registers.
+	/*
+	 * load chips register addresses
+	 * NOTE: we ignore the bus tag here and assume the bus handle
+	 *	 is the virtual address of the chip's registers.
+	 */
 	ld	[R_fdc + FDC_REG_HANDLE], %l7	! get chip registers bus handle
 	ld	[R_fdc + FDC_REG_MSR], R_msr	! get chip MSR reg addr
 	add	R_msr, %l7, R_msr
