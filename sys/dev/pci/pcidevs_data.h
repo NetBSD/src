@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.139 1999/07/12 15:04:41 kleink Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.140 1999/07/14 23:03:09 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.134 1999/07/12 15:02:46 kleink Exp 
+ *	NetBSD: pcidevs,v 1.135 1999/07/14 23:02:01 fvdl Exp 
  */
 
 /*
@@ -436,19 +436,31 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AHA-2940 Ultra2",
 	},
 	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_7890,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2930U2,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AHA-2930 Ultra2",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7890,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
 	    "AIC-7890/1",
 	},
 	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3940U2,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3950U2B,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    "AHA-3940 Ultra2",
+	    "AHA-3950 Ultra2",
 	},
 	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_7896,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3950U2D,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AHA-3950 Ultra2",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7896,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
 	    "AIC-7896/7",
