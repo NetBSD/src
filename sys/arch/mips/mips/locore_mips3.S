@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.77.4.1 2002/07/14 18:37:15 gehenna Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.77.4.2 2002/07/16 08:50:47 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -186,7 +186,7 @@ LEAF(mips_wait_idle)
 	nop
 #endif
 
-	/* Try to zero from free pages. */
+	/* Try to zero some free pages. */
 	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
 	nop
 	beq	t0, zero, 1f

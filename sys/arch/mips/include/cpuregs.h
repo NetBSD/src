@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.50.4.1 2002/07/14 18:37:13 gehenna Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.50.4.2 2002/07/16 08:50:44 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -557,10 +557,6 @@
  */
 #define	MIPS_OPCODE_SHIFT	26
 #define	MIPS_OPCODE_C1		0x11
-#define	MIPS_OPCODE_LWC1	0x31
-#define	MIPS_OPCODE_LDC1	0x35
-#define	MIPS_OPCODE_SWC1	0x39
-#define	MIPS_OPCODE_SDC1	0x3d
 
 
 /*
@@ -724,6 +720,7 @@
  */
 #define	MIPS_4Kc	0x80	/* MIPS 4Kc			ISA 32  */
 #define	MIPS_5Kc	0x81	/* MIPS 5Kc			ISA 64  */
+#define	MIPS_20Kc	0x82	/* MIPS 20Kc			ISA 64  */
 #define	MIPS_4KEc	0x84	/* MIPS 4KEc			ISA 32  */
 #define	MIPS_4KSc	0x86	/* MIPS 4KSc			ISA 32  */
 
