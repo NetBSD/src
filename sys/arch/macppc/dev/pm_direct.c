@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.2 1998/11/15 19:41:33 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.3 1998/12/07 17:17:14 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -1184,5 +1184,5 @@ pm_read_date_time(time)
 	p.r_buf = p.data;
 	pmgrop(&p);
 
-	bcopy(p.data, &time, 4);
+	bcopy(p.data, time, 4);
 }
