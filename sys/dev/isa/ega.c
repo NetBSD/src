@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.9 2002/03/17 19:40:59 atatat Exp $ */
+/* $NetBSD: ega.c,v 1.10 2002/07/04 14:37:11 junyoung Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.9 2002/03/17 19:40:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.10 2002/07/04 14:37:11 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ void ega_init_screen __P((struct ega_config *, struct egascreen *,
 static void ega_init __P((struct ega_config *,
 			  bus_space_tag_t, bus_space_tag_t, int));
 static void ega_setfont __P((struct ega_config *, struct egascreen *));
-static int ega_alloc_attr __P((void *, int, int, int, long *));
+static int ega_allocattr __P((void *, int, int, int, long *));
 void ega_copyrows __P((void *, int, int, int));
 
 struct cfattach ega_ca = {
@@ -134,7 +134,7 @@ const struct wsdisplay_emulops ega_emulops = {
 	pcdisplay_erasecols,
 	ega_copyrows,
 	pcdisplay_eraserows,
-	ega_alloc_attr
+	ega_allocattr
 };
 
 /*
@@ -388,7 +388,7 @@ ega_init_screen(vc, scr, type, existing, attrp)
 	scr->pcs.vc_ccol = cpos % type->ncols;
 	pcdisplay_cursor_init(&scr->pcs, existing);
 
-	res = ega_alloc_attr(scr, 0, 0, 0, attrp);
+	res = ega_allocattr(scr, 0, 0, 0, attrp);
 #ifdef DIAGNOSTIC
 	if (res)
 		panic("ega_init_screen: attribute botch");
@@ -849,7 +849,7 @@ ega_load_font(v, cookie, data)
 }
 
 static int
-ega_alloc_attr(id, fg, bg, flags, attrp)
+ega_allocattr(id, fg, bg, flags, attrp)
 	void *id;
 	int fg, bg;
 	int flags;

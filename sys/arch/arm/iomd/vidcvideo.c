@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.12 2002/06/19 22:42:02 bjh21 Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.13 2002/07/04 14:43:48 junyoung Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.12 2002/06/19 22:42:02 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.13 2002/07/04 14:43:48 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,7 +359,7 @@ vidcvideo_attach(parent, self, aux)
 			printf(" : non console (no kbd yet) ");
 			vidcvideo_getdevconfig(videomemory.vidm_vbase, sc->sc_dc);
 			vidcvideo_config_wscons(sc->sc_dc);
-			(*sc->sc_dc->rinfo.ri_ops.alloc_attr)(&sc->sc_dc->rinfo, 0, 0, 0, &defattr);
+			(*sc->sc_dc->rinfo.ri_ops.allocattr)(&sc->sc_dc->rinfo, 0, 0, 0, &defattr);
 		};
 		sc->nscreens = 1;
 	} else {
@@ -527,7 +527,7 @@ vidcvideo_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*curyp = 0;
 	vidcvideo_getdevconfig(videomemory.vidm_vbase, dc);
 	vidcvideo_config_wscons(dc);
-	(*dc->rinfo.ri_ops.alloc_attr)(&dc->rinfo, 0, 0, 0, &defattr);
+	(*dc->rinfo.ri_ops.allocattr)(&dc->rinfo, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	
@@ -572,7 +572,7 @@ vidcvideo_cnattach(addr)
 	vidcvideo_init();
 	vidcvideo_getdevconfig(addr, dcp);
 	vidcvideo_config_wscons(dcp);
-	(*dcp->rinfo.ri_ops.alloc_attr)(&dcp->rinfo, 0, 0, 0, &defattr);
+	(*dcp->rinfo.ri_ops.allocattr)(&dcp->rinfo, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&vidcvideo_stdscreen, &dcp->rinfo, 0, 0, defattr);
 
 	vidcvideo_is_console = 1;

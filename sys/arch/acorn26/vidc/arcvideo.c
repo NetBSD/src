@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.2 2002/03/24 23:37:45 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.3 2002/07/04 14:43:47 junyoung Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.2 2002/03/24 23:37:45 bjh21 Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.3 2002/07/04 14:43:47 junyoung Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -363,9 +363,9 @@ arccons_init(void)
 	if (crow < 0) crow = 0;
 	if (crow > ri->ri_rows) crow = ri->ri_rows;
 
-	if ((arccons_ri.ri_ops.alloc_attr)(&arccons_ri, 0, 0, 0, &defattr) !=
+	if ((arccons_ri.ri_ops.allocattr)(&arccons_ri, 0, 0, 0, &defattr) !=
 	    0)
-		panic("alloc_attr failed");
+		panic("allocattr failed");
 	wsdisplay_cnattach(&arcscreen, &arccons_ri, 0, crow, defattr);
 
 	/* That should be all */
