@@ -1,4 +1,9 @@
-# $NetBSD: obsolete.mi,v 1.2.2.4 2000/08/23 12:36:28 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.2.2.5 2000/10/02 03:32:37 lukem Exp $
+./etc/default/daily.conf
+./etc/default/monthly.conf
+./etc/default/rc.conf
+./etc/default/security.conf
+./etc/default/weekly.conf
 ./etc/rc.d/fsck.sh
 ./etc/rc.d/kerberos
 ./etc/rc.d/systemfs
