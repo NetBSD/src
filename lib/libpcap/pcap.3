@@ -1,4 +1,4 @@
-.\" $NetBSD: pcap.3,v 1.21 2004/09/28 09:31:13 wiz Exp $
+.\" $NetBSD: pcap.3,v 1.22 2004/09/28 09:33:53 wiz Exp $
 .\
 .\" @(#) Header: /tcpdump/master/libpcap/pcap.3,v 1.51.2.9 2004/03/28 21:45:32 fenner Exp
 .\"
@@ -205,7 +205,7 @@ may also be set to warning text when
 succeeds; to detect this case the caller should store a zero-length string in
 .Fa errbuf
 before calling
-.Fn pcap_open_live()
+.Fn pcap_open_live
 and display the warning to the user if
 .Fa errbuf
 is no longer a zero-length string.
@@ -568,7 +568,7 @@ and
 .Li \-2 ,
 rather than just checking for a return value
 \*(Lt
-.Li 0.
+.Li 0 .
 .Ef
 .Pp
 .Fn pcap_next
@@ -861,9 +861,11 @@ IEEE 802.11 wireless LAN
 Frame Relay
 .Pp
 .It Dv DLT_LOOP
-OpenBSD loopback encapsulation; the link layer header is a 4-byte field, in
+.Ox
+loopback encapsulation; the link layer header is a 4-byte field, in
 .Em network
-byte order, containing a PF_ value from OpenBSD's
+byte order, containing a PF_ value from
+.Ox Ns 's
 .In sys/socket.h
 for the network-layer protocol of the packet.
 .Pp
@@ -911,7 +913,8 @@ header or 4 for frames beginning with an 802.2 LLC header.
 Apple LocalTalk; the packet begins with an AppleTalk LLAP header.
 .Pp
 .It Dv DLT_PFLOG
-OpenBSD pflog; the link layer header contains, in order:
+.Ox
+pflog; the link layer header contains, in order:
 .Bd -ragged -offset indent -compact
 .Pp
 a 1-byte header length, in host byte order;
@@ -1057,7 +1060,6 @@ returns a
 .Vt u_char
 pointer to the next packet.
 .Pp
-.Pp
 .Fn pcap_datalink_name_to_val
 translates a data link type name, which is a
 .Dv DLT_
@@ -1149,7 +1151,9 @@ do not support
 .Fn select
 or
 .Fn poll
-(for example, regular network devices on FreeBSD 4.3 and 4.4, and Endace
+(for example, regular network devices on
+.Fx 4.3
+and 4.4, and Endace
 DAG devices), so \-1 is returned for those devices.
 .Pp
 Note that on most versions of most BSDs (including Mac OS X)
@@ -1159,7 +1163,9 @@ and
 do not work correctly on BPF devices;
 .Fn pcap_get_selectable_fd
 will return a file descriptor on most of those versions (the exceptions
-being FreeBSD 4.3 and 4.4), a simple
+being
+.Fx 4.3
+and 4.4), a simple
 .Fn select
 or
 .Fn poll
@@ -1185,8 +1191,11 @@ or
 indicated that the file descriptor for the
 .Vt pcap_t
 is ready to be read or not.
-(That workaround will not work in FreeBSD 4.3 and later; however,
-in FreeBSD 4.6 and later,
+(That workaround will not work in
+.Fx 4.3
+and later; however, in
+.Fx 4.6
+and later,
 .Fn select
 and
 .Fn poll
