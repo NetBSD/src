@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.13 1998/09/26 18:20:19 pk Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.14 1998/09/26 19:08:09 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -330,6 +330,10 @@ void	romhalt __P((void))	__attribute__((__noreturn__));
 void	romboot __P((char *))	__attribute__((__noreturn__));
 void	rominterpret __P((char *));
 void	callrom __P((void));
+void	rom_cpustart __P((int, struct openprom_addr *, int, caddr_t));
+void	rom_cpustop __P((int));
+void	rom_cpuidle __P((int));
+void	rom_cpuresume __P((int));
 
 int	findroot __P((void));
 int	findnode __P((int, const char *));
