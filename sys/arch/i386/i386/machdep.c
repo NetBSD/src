@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.299 1998/03/30 06:04:29 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.300 1998/05/03 10:19:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1312,7 +1312,9 @@ haltsys:
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);	/* for proper keyboard command handling */
 		cngetc();
+		cnpollc(0);
 	}
 
 	printf("rebooting...\n");
