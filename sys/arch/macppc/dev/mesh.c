@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.1.2.2 2000/02/23 01:22:27 he Exp $	*/
+/*	$NetBSD: mesh.c,v 1.1.2.3 2000/02/23 22:36:43 he Exp $	*/
 
 /*-
  * Copyright (C) 1999	Internet Research Institute, Inc.
@@ -303,6 +303,7 @@ mesh_intr(arg)
 {
 	struct mesh_softc *sc = arg;
 	struct mesh_scb *scb;
+	int fifocnt;
 	u_char intr, exception, error, status0, status1;
 	int i;
 
@@ -337,8 +338,16 @@ mesh_intr(arg)
 		sc->sc_flags &= ~MESH_DMA_ACTIVE;
 		scb->resid = MESH_GET_XFER(sc);
 
-		if (mesh_read_reg(sc, MESH_FIFO_COUNT) != 0)
-			panic("mesh: FIFO != 0");	/* XXX */
+		fifocnt = mesh_read_reg(sc, MESH_FIFO_COUNT);
+		if (fifocnt != 0 && (scb->flags & MESH_READ)) {
+			char *cp = (char *)scb->daddr + scb->dlen - fifocnt;
+
+			while (fifocnt > 0) {
+				*cp++ = mesh_read_reg(sc, MESH_FIFO);
+				fifocnt--;
+			}
+		} else
+			mesh_set_reg(sc, MESH_SEQUENCE, MESH_CMD_FLUSH_FIFO);
 	}
 
 	if (intr & MESH_INTR_ERROR) {
