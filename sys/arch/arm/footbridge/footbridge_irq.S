@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irq.S,v 1.1 2001/06/09 10:29:13 chris Exp $	*/
+/*	$NetBSD: footbridge_irq.S,v 1.2 2001/08/19 07:29:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -182,7 +182,7 @@ Lfind_highest_ipl:
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r7, [pc, #irqhandlers - . - 8]
+	ldr	r7, [pc, #Lirqhandlers - . - 8]
 
 	/* take a copy of the irq mask so we can alter it */
 	mov	r11, r8
@@ -369,7 +369,7 @@ Lcnt:
 Lintrcnt:
 	.word	_C_LABEL(intrcnt)
 
-irqhandlers:
+Lirqhandlers:
 	.word	_C_LABEL(irqhandlers)	/* Pointer to array of irqhandlers */
 
 Lastpending:
