@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolv.conf.5,v 1.17 2000/08/09 14:41:07 itojun Exp $
+.\"	$NetBSD: resolv.conf.5,v 1.18 2001/09/08 01:29:08 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -142,7 +142,7 @@ where option is one of the following:
 .It Sy debug
 enable debugging information, by setting RES_DEBUG in _res.options
 (see
-.Xr resolver 3 ).
+.Xr resolver 3 ) .
 .It Sy edns0
 attach OPT pseudo-RR for ENDS0 extension specified in RFC2671,
 to inform DNS server of our receive buffer size.
@@ -156,7 +156,7 @@ lines are able to handle EDNS0 extension.
 .It Sy inet6
 enable support for IPv6-only applications, by setting RES_USE_INET6 in
 _res.options (see
-.Xr resolver 3 ).
+.Xr resolver 3 ) .
 The option is meaningful with certain kernel configuration only and
 use of this options is discourated.
 .It Sy ndots:n
