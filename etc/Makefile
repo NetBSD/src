@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.47 1994/06/19 04:40:28 cgd Exp $
+#	$Id: Makefile,v 1.48 1994/06/28 21:48:46 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -65,6 +65,8 @@ distribution: distrib-dirs
 	    ${DESTDIR}/etc/namedb
 	/bin/rm -f ${DESTDIR}/etc/localtime
 	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
+	/bin/rm -f ${DESTDIR}/etc/rmt
+	ln -s /usr/sbin/rmt ${DESTDIR}/etc/rmt
 	install -c -o ${BINOWN} -g operator -m 664 /dev/null \
 		${DESTDIR}/etc/dumpdates
 	install -c -o ${BINOWN} -g operator -m 644 /dev/null \
