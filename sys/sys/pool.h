@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.4 1998/07/23 20:34:02 pk Exp $	*/
+/*	$NetBSD: pool.h,v 1.5 1998/07/31 02:53:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ typedef struct pool {
 	char		*pr_wchan;	/* tsleep(9) identifier */
 	unsigned int	pr_flags;
 #define PR_MALLOCOK	1
+#define	PR_NOWAIT	0		/* for symmetry */
 #define PR_WAITOK	2
 #define PR_WANTED	4
 #define PR_STATIC	8
