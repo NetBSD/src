@@ -1,4 +1,4 @@
-/* $NetBSD: fpecmf.S,v 1.1 1996/01/31 23:21:12 mark Exp $ */
+/* $NetBSD: fpecmf.S,v 1.2 1996/03/18 19:58:13 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -39,9 +39,6 @@
  * FP compare
  *
  * Created      : 11/02/95
- * Last updated : 28/08/95
- *
- *    $Id: fpecmf.S,v 1.1 1996/01/31 23:21:12 mark Exp $
  */
 
 pc	.req	r15

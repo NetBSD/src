@@ -1,4 +1,4 @@
-/* $NetBSD: fpetoe.S,v 1.1 1996/01/31 23:21:22 mark Exp $ */
+/* $NetBSD: fpetoe.S,v 1.2 1996/03/18 19:58:19 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -39,9 +39,6 @@
  * optimised functions for coping extended precision registers
  *
  * Created      : 11/02/95
- * Last updated : 28/08/95
- *
- *    $Id: fpetoe.S,v 1.1 1996/01/31 23:21:22 mark Exp $
  */
 
 lr	.req	r14

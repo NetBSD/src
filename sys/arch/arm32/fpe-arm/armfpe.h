@@ -1,5 +1,5 @@
 /*
- * $NetBSD: armfpe.h,v 1.2 1996/02/05 16:51:59 mark Exp $
+ * $NetBSD: armfpe.h,v 1.3 1996/03/18 19:54:53 mark Exp $
  *
  * Copyright (c) 1995 Neil A Carson.
  * All rights reserved.
@@ -39,9 +39,6 @@
  * support in RiscBSD
  *
  * Created      : 04/01/96
- * Last updated : 17/01/96
- *
- *    $Id: armfpe.h,v 1.2 1996/02/05 16:51:59 mark Exp $
  */
 
 #ifndef __ARM32_ARM_FPE_H

@@ -1,4 +1,4 @@
-/* $NetBSD: waveform.h,v 1.1 1996/01/31 23:25:08 mark Exp $ */
+/* $NetBSD: waveform.h,v 1.2 1996/03/18 20:50:06 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -31,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: waveform.h,v 1.1 1996/01/31 23:25:08 mark Exp $
  */
 
 static unsigned char beep_waveform[] = {

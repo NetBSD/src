@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.1 1996/01/31 23:24:41 mark Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.2 1996/03/18 20:50:02 mark Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -33,8 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)fdreg.h	7.1 (Berkeley) 5/9/91
- *
- *	$Id: fdreg.h,v 1.1 1996/01/31 23:24:41 mark Exp $
  */
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.5 1996/03/17 01:24:21 thorpej Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.6 1996/03/18 19:55:01 mark Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -39,8 +39,6 @@
  * Stuff needed to interface the ARM floating point emulator module to RiscBSD.
  *
  * Created      : 22/10/95
- *
- *    $Id: armfpe_init.c,v 1.5 1996/03/17 01:24:21 thorpej Exp $
  */
 
 /*#define DEBUG*/
