@@ -1,4 +1,4 @@
-/*	$NetBSD: cninit.c,v 1.5 2003/08/07 16:30:51 agc Exp $	*/
+/*	$NetBSD: cninit.c,v 1.6 2003/10/21 17:03:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.5 2003/08/07 16:30:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.6 2003/10/21 17:03:52 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -92,10 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.5 2003/08/07 16:30:51 agc Exp $");
 #include <sys/vnode.h>
 
 #include <dev/cons.h>
-
-extern struct consdev constab[];
-
-extern struct	consdev *cn_tab;	/* physical console device info */
 
 void
 cninit()
