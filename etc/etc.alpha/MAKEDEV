@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.4 1995/07/30 19:30:53 cgd Exp $
+#	$NetBSD: MAKEDEV,v 1.5 1995/08/17 18:02:27 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -45,6 +45,7 @@
 #	sd*	SCSI disks
 #	cd*	SCSI CD-ROM
 #	vnd*	"file" pseudo-disks
+#	ccd*	concatenated disk driver
 #
 # Terminals:
 #	ttyB?	DEC 3000 ZS8530 ("scc") serial ports
@@ -70,6 +71,7 @@ case $i in
 all)
 	sh MAKEDEV std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
+	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
 	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm local
 	;;
@@ -100,11 +102,12 @@ fd)
 	chmod 666 fd/*
 	;;
 
-sd*|vnd*)
+sd*|vnd*|ccd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
 	sd*) name=sd;	blk=8; chr=8;;
 	vnd*) name=vnd;	blk=9; chr=9;;
+	ccd*) name=ccd; blk=7; chr=27;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`

@@ -35,6 +35,7 @@
 #	cd*	SCSI CD-ROM		(XXX - not yet)
 #	mcd*	Mitsumi CD-ROM
 #	vnd*	"file" pseudo-disks	(XXX - not yet)
+#	ccd*	concatenated disk driver
 #
 # Terminal ports:
 #	tty*	serial ports
@@ -60,6 +61,7 @@ all)
 	sh MAKEDEV std sd0 sd1 sd2 st0 st1
 	sh MAKEDEV tty0 tty1 tty2 tty3 tty4 tty5 tty6 tty7 pty0 pty1
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 vnd0 vnd1
+	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV local
 # Unknown which of the following will eventually be done ....
 #	sh MAKEDEV ch0 cd0 cd1
@@ -92,11 +94,12 @@ std)
 	;;
 
 
-sd*|vnd*)
+sd*|vnd*|ccd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
 	sd*) name=sd; blk=0; chr=3;;
 	vnd*) name=vnd; blk=5; chr=13;;
+	ccd*) name=ccd; blk=6; chr=18;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	echo unit=$unit

@@ -39,6 +39,7 @@
 #	cd*	SCSI CD-ROM
 #	mcd*	Mitsumi CD-ROM
 #	vnd*	"file" pseudo-disks
+#	ccd*	contatenated disk devices
 #
 # Console ports:
 #	ttyv0	pccons or pcvt screen 0
@@ -81,6 +82,7 @@ case $i in
 all)
 	sh MAKEDEV std fd wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1
+	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2
 	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio local
 # MISSING:
@@ -140,9 +142,10 @@ wt*)
 	umask 77
 	;;
 
-fd*|sd*|vnd*|wd*)
+ccd*|fd*|sd*|vnd*|wd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
+	ccd*) name=ccd; blk=16; chr=18;;
 	fd*) name=fd; blk=2; chr=9;;
 	sd*) name=sd; blk=4; chr=13;;
 	vnd*) name=vnd; blk=14; chr=41;;
