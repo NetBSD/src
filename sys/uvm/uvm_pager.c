@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.28 2000/04/03 08:09:02 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.29 2000/05/19 03:45:04 thorpej Exp $	*/
 
 /*
  *
@@ -114,31 +114,39 @@ uvm_pager_init()
  *
  * we basically just map in a blank map entry to reserve the space in the
  * map and then use pmap_enter() to put the mappings in by hand.
- *
- * XXX It would be nice to know the direction of the I/O, so that we can
- * XXX map only what is necessary.
  */
 
 vaddr_t
-uvm_pagermapin(pps, npages, aiop, waitf)
+uvm_pagermapin(pps, npages, aiop, flags)
 	struct vm_page **pps;
 	int npages;
 	struct uvm_aiodesc **aiop;	/* OUT */
-	int waitf;
+	int flags;
 {
 	vsize_t size;
 	vaddr_t kva;
 	struct uvm_aiodesc *aio;
 	vaddr_t cva;
 	struct vm_page *pp;
+	vm_prot_t prot;
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d, aiop=0x%x, waitf=%d)",
-	      pps, npages, aiop, waitf);
+	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d, aiop=0x%x, flags=0x%x)",
+	      pps, npages, aiop, flags);
+
+	/*
+	 * compute protection.  outgoing I/O only needs read
+	 * access to the page, whereas incoming needs read/write.
+	 */
+
+	prot = VM_PROT_READ;
+	if (flags & UVMPAGER_MAPIN_READ)
+		prot |= VM_PROT_WRITE;
 
 ReStart:
 	if (aiop) {
-		MALLOC(aio, struct uvm_aiodesc *, sizeof(*aio), M_TEMP, waitf);
+		MALLOC(aio, struct uvm_aiodesc *, sizeof(*aio), M_TEMP,
+		    (flags & UVMPAGER_MAPIN_WAITOK));
 		if (aio == NULL)
 			return(0);
 		*aiop = aio;
@@ -147,15 +155,15 @@ ReStart:
 	}
 
 	size = npages << PAGE_SHIFT;
-	kva = NULL;			/* let system choose VA */
+	kva = 0;			/* let system choose VA */
 
 	if (uvm_map(pager_map, &kva, size, NULL, 
 	      UVM_UNKNOWN_OFFSET, UVM_FLAG_NOMERGE) != KERN_SUCCESS) {
-		if (waitf == M_NOWAIT) {
+		if ((flags & UVMPAGER_MAPIN_WAITOK) == 0) {
 			if (aio)
 				FREE(aio, M_TEMP);
 			UVMHIST_LOG(maphist,"<- NOWAIT failed", 0,0,0,0);
-			return(NULL);
+			return(0);
 		}
 		simple_lock(&pager_map_wanted_lock);
 		pager_map_wanted = TRUE; 
@@ -174,12 +182,17 @@ ReStart:
 #endif
 
 		/*
-		 * XXX VM_PROT_DEFAULT includes VM_PROT_EXEC; is that
-		 * XXX really necessary?  It could lead to unnecessary
-		 * XXX instruction cache flushes.
+		 * XXX We used to use VM_PROT_DEFAULT here, but
+		 * XXX we don't since we know the direction of
+		 * XXX the I/O now.  However, VM_PROT_DEFAULT
+		 * XXX included VM_PROT_EXECUTE.  While that could
+		 * XXX lead to unnecessary I-cache flushes, something
+		 * XXX in the path might rely on that being done,
+		 * XXX so we still include it, for now.
+		 * XXX DOUBLE CHECK THIS!
 		 */
 		pmap_enter(vm_map_pmap(pager_map), cva, VM_PAGE_TO_PHYS(pp),
-		    VM_PROT_DEFAULT, PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+		    prot | VM_PROT_EXECUTE, PMAP_WIRED | prot);
 	}
 
 	UVMHIST_LOG(maphist, "<- done (KVA=0x%x)", kva,0,0,0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.32 2000/04/03 07:35:24 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.33 2000/05/19 03:45:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1594,7 +1594,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 	struct iovec iov;
 	vaddr_t kva;
 	off_t file_offset;
-	int waitf, result;
+	int waitf, result, mapinflags;
 	size_t got, wanted;
 	UVMHIST_FUNC("uvn_io"); UVMHIST_CALLED(maphist);
 
@@ -1638,8 +1638,11 @@ uvn_io(uvn, pps, npages, flags, rw)
 	 * first try and map the pages in (without waiting)
 	 */
 
-	kva = uvm_pagermapin(pps, npages, NULL, M_NOWAIT);
-	if (kva == NULL && waitf == M_NOWAIT) {
+	mapinflags = (rw == UIO_READ) ?
+	    UVMPAGER_MAPIN_READ : UVMPAGER_MAPIN_WRITE;
+
+	kva = uvm_pagermapin(pps, npages, NULL, mapinflags);
+	if (kva == 0 && waitf == M_NOWAIT) {
 		simple_unlock(&uvn->u_obj.vmobjlock);
 		UVMHIST_LOG(maphist,"<- mapin failed (try again)",0,0,0,0);
 		return(VM_PAGER_AGAIN);
@@ -1654,9 +1657,9 @@ uvn_io(uvn, pps, npages, flags, rw)
 	uvn->u_nio++;			/* we have an I/O in progress! */
 	simple_unlock(&uvn->u_obj.vmobjlock);
 	/* NOTE: object now unlocked */
-	if (kva == NULL) {
-		kva = uvm_pagermapin(pps, npages, NULL, M_WAITOK);
-	}
+	if (kva == 0)
+		kva = uvm_pagermapin(pps, npages, NULL,
+		    mapinflags | UVMPAGER_MAPIN_WAITOK);
 
 	/*
 	 * ok, mapped in.  our pages are PG_BUSY so they are not going to

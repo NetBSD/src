@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.14 2000/04/03 08:09:02 chs Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.15 2000/05/19 03:45:04 thorpej Exp $	*/
 
 /*
  *
@@ -145,6 +145,11 @@ void		uvm_pagermapout __P((vaddr_t, int));
 struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
 				       int *, struct vm_page *, int, 
 				       voff_t, voff_t));
+
+/* Flags to uvm_pagermapin() */
+#define	UVMPAGER_MAPIN_WAITOK	0x01	/* it's okay to wait */
+#define	UVMPAGER_MAPIN_READ	0x02	/* host <- device */
+#define	UVMPAGER_MAPIN_WRITE	0x00	/* device -> host (pseudo flag) */
 
 #endif /* _KERNEL */
 

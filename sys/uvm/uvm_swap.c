@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.36 2000/04/15 18:08:14 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.37 2000/05/19 03:45:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1731,7 +1731,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	struct swapbuf *sbp;
 	struct	buf *bp;
 	vaddr_t kva;
-	int	result, s, waitf, pflag;
+	int	result, s, mapinflags, pflag;
 	UVMHIST_FUNC("uvm_swap_io"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "<- called, startslot=%d, npages=%d, flags=%d",
@@ -1748,9 +1748,12 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * an aiodesc structure because we don't want to chance a malloc.
 	 * we've got our own pool of aiodesc structures (in swapbuf).
 	 */
-	waitf = (flags & B_ASYNC) ? M_NOWAIT : M_WAITOK;
-	kva = uvm_pagermapin(pps, npages, NULL, waitf);
-	if (kva == NULL)
+	mapinflags = (flags & B_READ) ? UVMPAGER_MAPIN_READ :
+	    UVMPAGER_MAPIN_WRITE;
+	if ((flags & B_ASYNC) == 0)
+		mapinflags |= UVMPAGER_MAPIN_WAITOK;
+	kva = uvm_pagermapin(pps, npages, NULL, mapinflags);
+	if (kva == 0)
 		return (VM_PAGER_AGAIN);
 
 	/* 
