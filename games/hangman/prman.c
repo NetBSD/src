@@ -1,4 +1,4 @@
-/*	$NetBSD: prman.c,v 1.3 1995/03/23 08:32:56 cgd Exp $	*/
+/*	$NetBSD: prman.c,v 1.4 1997/10/11 01:16:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -33,24 +33,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)prman.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: prman.c,v 1.3 1995/03/23 08:32:56 cgd Exp $";
+__RCSID("$NetBSD: prman.c,v 1.4 1997/10/11 01:16:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
-# include	"hangman.h"
+#include	"hangman.h"
 
 /*
  * prman:
  *	Print out the man appropriately for the give number
  *	of incorrect guesses.
  */
+void
 prman()
 {
-	register int	i;
+	int i;
 
 	for (i = 0; i < Errors; i++)
 		mvaddch(Err_pos[i].y, Err_pos[i].x, Err_pos[i].ch);

@@ -1,4 +1,4 @@
-/*	$NetBSD: prdata.c,v 1.3 1995/03/23 08:32:54 cgd Exp $	*/
+/*	$NetBSD: prdata.c,v 1.4 1997/10/11 01:16:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -33,23 +33,25 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)prdata.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: prdata.c,v 1.3 1995/03/23 08:32:54 cgd Exp $";
+__RCSID("$NetBSD: prdata.c,v 1.4 1997/10/11 01:16:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
-# include	"hangman.h"
+#include	"hangman.h"
 
 /*
  * prdata:
  *	Print out the current guesses
  */
+void
 prdata()
 {
-	register bool	*bp;
+	bool *bp;
 
 	move(GUESSY, GUESSX + sizeof "Guessed: ");
 	bp = Guessed;
@@ -58,7 +60,7 @@ prdata()
 			addch((bp - Guessed) + 'a' - 1);
 	clrtoeol();
 	mvprintw(NUMBERY, NUMBERX + sizeof "Word #:          ", "%d", Wordnum);
-	mvprintw(AVGY, AVGX + sizeof       "Current Average: ", "%.3f",
-				(Average * (Wordnum - 1) + Errors) / Wordnum);
-	mvprintw(AVGY + 1, AVGX + sizeof   "Overall Average: ", "%.3f", Average);
+	mvprintw(AVGY, AVGX + sizeof "Current Average: ", "%.3f",
+	    (Average * (Wordnum - 1) + Errors) / Wordnum);
+	mvprintw(AVGY + 1, AVGX + sizeof "Overall Average: ", "%.3f", Average);
 }

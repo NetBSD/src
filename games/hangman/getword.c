@@ -1,4 +1,4 @@
-/*	$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $	*/
+/*	$NetBSD: getword.c,v 1.5 1997/10/11 01:16:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,30 +33,31 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)getword.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $";
+__RCSID("$NetBSD: getword.c,v 1.5 1997/10/11 01:16:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "hangman.h"
-#include <stdlib.h>
 
 /*
  * getword:
  *	Get a valid word out of the dictionary file
  */
+void
 getword()
 {
-	register FILE		*inf;
-	register char		*wp, *gp;
-	register long		 pos;
+	FILE *inf;
+	char *wp, *gp;
+	long pos;
 
 	inf = Dict;
 	for (;;) {
-		pos = (double)rand() / (RAND_MAX + 1.0) * (double)Dict_size;
+		pos = (double) rand() / (RAND_MAX + 1.0) * (double) Dict_size;
 		fseek(inf, pos, 0);
 		if (fgets(Word, BUFSIZ, inf) == NULL)
 			continue;

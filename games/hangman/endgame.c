@@ -1,4 +1,4 @@
-/*	$NetBSD: endgame.c,v 1.3 1995/03/23 08:32:40 cgd Exp $	*/
+/*	$NetBSD: endgame.c,v 1.4 1997/10/11 01:16:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,23 +33,25 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)endgame.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: endgame.c,v 1.3 1995/03/23 08:32:40 cgd Exp $";
+__RCSID("$NetBSD: endgame.c,v 1.4 1997/10/11 01:16:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
-# include	"hangman.h"
+#include	"hangman.h"
 
 /*
  * endgame:
  *	Do what's necessary at the end of the game
  */
+void
 endgame()
 {
-	register char	ch;
+	char ch;
 
 	prman();
 	if (Errors >= MAXERRS)
@@ -67,9 +69,10 @@ endgame()
 		leaveok(stdscr, FALSE);
 		refresh();
 		if ((ch = readch()) == 'n')
-			die();
-		else if (ch == 'y')
-			break;
+			die(0);
+		else
+			if (ch == 'y')
+				break;
 		mvaddstr(MESGY + 2, MESGX, "Please type 'y' or 'n'");
 	}
 
@@ -79,13 +82,3 @@ endgame()
 	deleteln();
 	deleteln();
 }
-
-
-
-
-
-
-
-
-
-
