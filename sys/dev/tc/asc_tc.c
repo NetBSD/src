@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_tc.c,v 1.12 2000/02/11 01:32:42 thorpej Exp $	*/
+/*	$NetBSD: asc_tc.c,v 1.13 2000/03/04 05:43:51 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -81,6 +81,14 @@ asc_tc_attach(parent, self, aux)
 	u_char *buff;
 	int i, speed;
 	int unit;
+/* XXX Hook for dk_establish() to determine boot device */
+	extern int booted_slot;
+	extern struct device *booted_controller;
+
+	/* Is this the controller we booted from? */
+	if (booted_slot == t->ta_slot)
+		booted_controller = self;
+/* XXX */
 
 	unit = asc->sc_dev.dv_unit;
 	
