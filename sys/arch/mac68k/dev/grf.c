@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.60 1999/03/26 22:52:15 ender Exp $	*/
+/*	$NetBSD: grf.c,v 1.61 1999/04/07 06:45:15 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -376,7 +376,7 @@ grfmap(dev, addrp, p)
 	vn.v_rdev = dev;	/* XXX */
 
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
-	    (vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+	    (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
 
 	/* Offset into page: */
 	*addrp += (unsigned long)gm->fboff;
@@ -396,7 +396,7 @@ grfunmap(dev, addr, p)
 	struct proc *p;
 {
 	struct grf_softc *gp;
-	vm_size_t size;
+	vsize_t size;
 	int     rv;
 
 	gp = grf_cd.cd_devs[GRFUNIT(dev)];
