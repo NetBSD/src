@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: adb.4,v 1.4 2001/06/05 12:30:45 wiz Exp $
+.\"	$NetBSD: adb.4,v 1.5 2002/01/15 01:46:29 wiz Exp $
 .\"
 .Dd July 17, 1997
 .Os
@@ -175,6 +175,13 @@ Microspeed Mouse Deluxe
 Mouse Systems A3 Mouse
 .El
 .Ed
+.Sh FILES
+.Bl -tag -width /dev/adb -compact
+.It Pa /dev/adb
+The
+.Tn ADB
+event device.
+.El
 .Sh DIAGNOSTICS
 .Bl -diag -compact
 .It adb0 at obio0 (ADB event device).
@@ -233,13 +240,6 @@ The size of the
 .Tn ADB
 event being read is too large to fit into the buffer
 allocated to it.
-.El
-.Sh FILES
-.Bl -tag -width /dev/adb -compact
-.It Pa /dev/adb
-The
-.Tn ADB
-event device.
 .El
 .Sh HISTORY
 The
