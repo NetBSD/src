@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.14 1999/10/23 19:34:50 fvdl Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.15 1999/11/15 18:49:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -237,7 +237,7 @@ genfs_enoioctl(v)
 
 
 /*
- * Eliminate all activity associated with  the requested vnode
+ * Eliminate all activity associated with the requested vnode
  * and with all vnodes aliased to the requested vnode.
  */
 int

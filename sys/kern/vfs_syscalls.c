@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.147 1999/09/05 23:34:39 hubertf Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.148 1999/11/15 18:49:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,6 +61,9 @@
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
+
+#include <miscfs/genfs/genfs.h>
+#include <miscfs/syncfs/syncfs.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -291,6 +294,7 @@ sys_mount(p, v, retval)
 	vfs->vfs_refcount++;
 	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = p->p_ucred->cr_uid;
+	mp->mnt_unmounter = NULL;
 update:
 	/*
 	 * Set the mount level flags.
@@ -317,6 +321,14 @@ update:
 		    (MNT_UPDATE | MNT_RELOAD | MNT_FORCE | MNT_WANTRDWR);
 		if (error)
 			mp->mnt_flag = flag;
+		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
+			if (mp->mnt_syncer == NULL)
+				error = vfs_allocate_syncvnode(mp);
+		} else {
+			if (mp->mnt_syncer != NULL)
+				vgone(mp->mnt_syncer);
+			mp->mnt_syncer = NULL;
+		}
 		vfs_unbusy(mp);
 		return (error);
 	}
@@ -331,6 +343,8 @@ update:
 		simple_unlock(&mountlist_slock);
 		checkdirs(vp);
 		VOP_UNLOCK(vp, 0);
+		if ((mp->mnt_flag & MNT_RDONLY) == 0)
+			error = vfs_allocate_syncvnode(mp);
 		vfs_unbusy(mp);
 		(void) VFS_STATFS(mp, &mp->mnt_stat, p);
 		if ((error = VFS_START(mp, 0, p)))
@@ -462,27 +476,42 @@ dounmount(mp, flags, p)
 	int async;
 
 	simple_lock(&mountlist_slock);
-	mp->mnt_flag |= MNT_UNMOUNT;
 	vfs_unbusy(mp);
+	/*
+	 * XXX Freeze syncer. This should really be done on a mountpoint
+	 * basis, but especially the softdep code possibly called from
+	 * the syncer doesn't exactly work on a per-mountpoint basis,
+	 * so the softdep code would become a maze of vfs_busy calls.
+	 */
+	lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+
+	mp->mnt_flag |= MNT_UNMOUNT;
+	mp->mnt_unmounter = p;
 	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_slock);
 	if (mp->mnt_flag & MNT_EXPUBLIC)
 		vfs_setpublicfs(NULL, NULL, NULL);
 	async = mp->mnt_flag & MNT_ASYNC;
 	mp->mnt_flag &=~ MNT_ASYNC;
 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
+	if (mp->mnt_syncer != NULL)
+		vgone(mp->mnt_syncer);
 	if (((mp->mnt_flag & MNT_RDONLY) ||
 	    (error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p)) == 0) ||
 	    (flags & MNT_FORCE))
 		error = VFS_UNMOUNT(mp, flags, p);
 	simple_lock(&mountlist_slock);
 	if (error) {
+		if ((mp->mnt_flag & MNT_RDONLY) == 0 && mp->mnt_syncer == NULL)
+			(void) vfs_allocate_syncvnode(mp);
 		mp->mnt_flag &= ~MNT_UNMOUNT;
+		mp->mnt_unmounter = NULL;
 		mp->mnt_flag |= async;
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
 		    &mountlist_slock);
+		lockmgr(&syncer_lock, LK_RELEASE, NULL);
 		while(mp->mnt_wcnt > 0) {
 			wakeup((caddr_t)mp);
-			sleep(&mp->mnt_wcnt, PVFS);
+			tsleep(&mp->mnt_wcnt, PVFS, "mntwcnt1", 0);
 		}
 		return (error);
 	}
@@ -496,9 +525,10 @@ dounmount(mp, flags, p)
 		panic("unmount: dangling vnode");
 	mp->mnt_flag |= MNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
+	lockmgr(&syncer_lock, LK_RELEASE, NULL);
 	while(mp->mnt_wcnt > 0) {
 		wakeup((caddr_t)mp);
-		sleep(&mp->mnt_wcnt, PVFS);
+		tsleep(&mp->mnt_wcnt, PVFS, "mntwcnt2", 0);
 	}
 	free((caddr_t)mp, M_MOUNT);
 	return (0);
@@ -606,6 +636,7 @@ sys_statfs(p, v, retval)
 	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_oflags = sp->f_flags & 0xffff;
 	return (copyout(sp, SCARG(uap, buf), sizeof(*sp)));
 }
 
@@ -636,6 +667,7 @@ sys_fstatfs(p, v, retval)
 	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		goto out;
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_oflags = sp->f_flags & 0xffff;
 	error = copyout(sp, SCARG(uap, buf), sizeof(*sp));
  out:
 	FILE_UNUSE(fp, p);
@@ -673,11 +705,14 @@ sys_getfsstat(p, v, retval)
 		if (sfsp && count < maxcount) {
 			sp = &mp->mnt_stat;
 			/*
-			 * If MNT_NOWAIT is specified, do not refresh the
-			 * fsstat cache. MNT_WAIT overrides MNT_NOWAIT.
+			 * If MNT_NOWAIT or MNT_LAZY is specified, do not
+			 * refresh the fsstat cache. MNT_WAIT or MNT_LAXY
+			 * overrides MNT_NOWAIT.
 			 */
-			if (((SCARG(uap, flags) & MNT_NOWAIT) == 0 ||
-			    (SCARG(uap, flags) & MNT_WAIT)) &&
+			if (SCARG(uap, flags) != MNT_NOWAIT &&
+			    SCARG(uap, flags) != MNT_LAZY &&
+			    (SCARG(uap, flags) == MNT_WAIT ||
+			     SCARG(uap, flags) == 0) &&
 			    (error = VFS_STATFS(mp, sp, p)) != 0) {
 				simple_lock(&mountlist_slock);
 				nmp = mp->mnt_list.cqe_next;
@@ -685,6 +720,7 @@ sys_getfsstat(p, v, retval)
 				continue;
 			}
 			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+			sp->f_oflags = sp->f_flags & 0xffff;
 			error = copyout(sp, sfsp, sizeof(*sp));
 			if (error) {
 				vfs_unbusy(mp);
@@ -1256,6 +1292,7 @@ sys_fhstatfs(p, v, retval)
 	if ((error = VFS_STATFS(mp, &sp, p)) != 0)
 		return (error);
 	sp.f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp.f_oflags = sp.f_flags & 0xffff;
 	return (copyout(&sp, SCARG(uap, buf), sizeof(sp)));
 }
 
@@ -2639,6 +2676,9 @@ sys_fsync(p, v, retval)
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, p);
+	if (error == 0 && bioops.io_fsync != NULL &&
+	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
+		(*bioops.io_fsync)(vp);
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, p);
 	return (error);
@@ -2667,6 +2707,8 @@ sys_fdatasync(p, v, retval)
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT|FSYNC_DATAONLY, p);
+	if (error == 0 && bioops.io_fsync != NULL)
+		(*bioops.io_fsync)(vp);
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, p);
 	return (error);

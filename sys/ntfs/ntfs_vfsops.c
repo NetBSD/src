@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.21 1999/10/25 19:08:26 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.22 1999/11/15 18:49:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -584,11 +584,7 @@ ntfs_mountfs(devvp, mp, argsp, p)
 #endif
 	mp->mnt_maxsymlinklen = 0;
 	mp->mnt_flag |= MNT_LOCAL;
-#if defined(__FreeBSD__)
 	devvp->v_specmountpoint = mp;
-#else
-	devvp->v_specflags |= SI_MOUNTEDON;
-#endif
 	return (0);
 
 out1:
@@ -599,9 +595,7 @@ out1:
 		dprintf(("ntfs_mountfs: vflush failed\n"));
 
 out:
-#if defined(__FreeBSD__)
 	devvp->v_specmountpoint = NULL;
-#endif
 	if (bp)
 		brelse(bp);
 
@@ -663,6 +657,7 @@ ntfs_unmount(
 	if (error)
 		printf("ntfs_unmount: vflush failed(sysnodes): %d\n",error);
 
+	ntmp->ntm_devvp->v_specmountpoint = NULL;
 #if defined(__FreeBSD__)
 	ntmp->ntm_devvp->v_specmountpoint = NULL;
 #else
@@ -671,7 +666,7 @@ ntfs_unmount(
 	 * field is NULL and touching it causes null pointer derefercence.
 	 */
 	if (ntmp->ntm_devvp->v_type != VBAD)
-		ntmp->ntm_devvp->v_specflags &= ~SI_MOUNTEDON;
+		ntmp->ntm_devvp->v_specmountpoint = NULL;
 #endif
 
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);

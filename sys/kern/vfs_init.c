@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.14 1998/08/04 04:03:18 perry Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.15 1999/11/15 18:49:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,11 +111,13 @@ extern struct vnodeop_desc *vfs_op_descs[];
 extern struct vnodeopv_desc dead_vnodeop_opv_desc;
 extern struct vnodeopv_desc fifo_vnodeop_opv_desc;
 extern struct vnodeopv_desc spec_vnodeop_opv_desc;
+extern struct vnodeopv_desc sync_vnodeop_opv_desc;
 
 struct vnodeopv_desc *vfs_special_vnodeopv_descs[] = {
 	&dead_vnodeop_opv_desc,
 	&fifo_vnodeop_opv_desc,
 	&spec_vnodeop_opv_desc,
+	&sync_vnodeop_opv_desc,
 	NULL,
 };
 

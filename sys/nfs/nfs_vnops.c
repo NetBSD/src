@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.106 1999/09/05 14:28:26 jdolecek Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.107 1999/11/15 18:49:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2800,11 +2800,13 @@ again:
 			if (retv)
 			    brelse(bp);
 			else {
+			    s = splbio();
 			    vp->v_numoutput++;
 			    bp->b_flags |= B_ASYNC;
 			    bp->b_flags &= ~(B_READ|B_DONE|B_ERROR|B_DELWRI);
 			    bp->b_dirtyoff = bp->b_dirtyend = 0;
 			    reassignbuf(bp, vp);
+			    splx(s);
 			    biodone(bp);
 			}
 		}
@@ -2853,19 +2855,23 @@ loop:
 		goto again;
 	}
 	if (waitfor == MNT_WAIT) {
+		s = splbio();
 		while (vp->v_numoutput) {
 			vp->v_flag |= VBWAIT;
 			error = tsleep((caddr_t)&vp->v_numoutput,
 				slpflag | (PRIBIO + 1), "nfsfsync", slptimeo);
 			if (error) {
+			    splx(s);
 			    if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
 				return (EINTR);
 			    if (slpflag == PCATCH) {
 				slpflag = 0;
 				slptimeo = 2 * hz;
 			    }
+			    s = splbio();
 			}
 		}
+		splx(s);
 		if (vp->v_dirtyblkhd.lh_first && commit) {
 #if 0
 			vprint("nfs_fsync: dirty", vp);
@@ -3082,7 +3088,7 @@ nfs_writebp(bp, force)
 	register struct buf *bp;
 	int force;
 {
-	register int oldflags = bp->b_flags, retv = 1;
+	register int oldflags = bp->b_flags, retv = 1, s;
 	register struct proc *p = curproc;	/* XXX */
 	off_t off;
 
@@ -3096,6 +3102,7 @@ nfs_writebp(bp, force)
 #endif
 	bp->b_flags &= ~(B_READ|B_DONE|B_ERROR|B_DELWRI|B_AGE);
 
+	s = splbio();
 	if (oldflags & B_ASYNC) {
 		if (oldflags & B_DELWRI) {
 			reassignbuf(bp, bp->b_vp);
@@ -3104,6 +3111,7 @@ nfs_writebp(bp, force)
 		}
 	}
 	bp->b_vp->v_numoutput++;
+	splx(s);
 
 	/*
 	 * If B_NEEDCOMMIT is set, a commit rpc may do the trick. If not
@@ -3132,7 +3140,9 @@ nfs_writebp(bp, force)
 	if( (oldflags & B_ASYNC) == 0) {
 		int rtval = biowait(bp);
 		if (oldflags & B_DELWRI) {
+			s = splbio();
 			reassignbuf(bp, bp->b_vp);
+			splx(s);
 		} else if (p) {
 			++p->p_stats->p_ru.ru_oublock;
 		}

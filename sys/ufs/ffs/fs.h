@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.11 1998/07/28 17:30:01 drochner Exp $	*/
+/*	$NetBSD: fs.h,v 1.12 1999/11/15 18:49:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -220,7 +220,7 @@ struct fs {
 	int8_t	 fs_fmod;		/* super block modified flag */
 	int8_t	 fs_clean;		/* file system is clean flag */
 	int8_t	 fs_ronly;		/* mounted read-only flag */
-	int8_t	 fs_flags;		/* currently unused flag */
+	int8_t	 fs_flags;		/* see FS_ flags below */
 	u_char	 fs_fsmnt[MAXMNTLEN];	/* name mounted on */
 /* these fields retain the current block allocation info */
 	int32_t	 fs_cgrotor;		/* last cg searched */
@@ -265,6 +265,18 @@ struct fs {
  */
 #define FS_OPTTIME	0	/* minimize allocation time */
 #define FS_OPTSPACE	1	/* minimize disk fragmentation */
+
+/*
+ * Filesystem flags.
+ */
+#define FS_UNCLEAN	0x01	/* filesystem not clean at mount (unused) */
+#define FS_DOSOFTDEP	0x02	/* filesystem using soft dependencies */
+
+/*
+ * Filesystem internal flags, also in fs_flags
+ */
+#define FS_SWAPPED	0x80	/* pick highest, avoid conflicts with others */
+#define FS_INTERNAL	0x80	/* mask for internal flags */
 
 /*
  * Rotational layout table format types
@@ -496,6 +508,10 @@ struct ocg {
 	(((lbn) >= NDADDR || (dip)->di_size >= ((lbn) + 1) << (fs)->fs_bshift) \
 	    ? (fs)->fs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (dip)->di_size))))
+#define sblksize(fs, size, lbn) \
+	(((lbn) >= NDADDR || (size) >= ((lbn) + 1) << (fs)->fs_bshift) \
+	    ? (fs)->fs_bsize \
+	    : (fragroundup(fs, blkoff(fs, (size)))))
 
 /*
  * Number of disk sectors per block/fragment; assumes DEV_BSIZE byte

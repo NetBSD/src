@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.22 1999/03/24 05:51:31 mrg Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.23 1999/11/15 18:49:15 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -241,18 +241,14 @@ WRITE(v)
 		xfersize = fs->fs_bsize - blkoffset;
 		if (uio->uio_resid < xfersize)
 			xfersize = uio->uio_resid;
-#ifdef LFS_READWRITE
-		(void)lfs_check(vp, lbn, 0);
-		error = lfs_balloc(vp, blkoffset, xfersize, lbn, &bp);
-#else
 		if (fs->fs_bsize > xfersize)
 			flags |= B_CLRBUF;
 		else
 			flags &= ~B_CLRBUF;
 
-		error = ffs_balloc(ip,
-		    lbn, blkoffset + xfersize, ap->a_cred, &bp, flags);
-#endif
+		error = VOP_BALLOC(vp, uio->uio_offset, xfersize,
+		    ap->a_cred, flags, &bp);
+
 		if (error)
 			break;
 		if (uio->uio_offset + xfersize > ip->i_ffs_size) {

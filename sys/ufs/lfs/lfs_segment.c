@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.34 1999/11/12 16:56:48 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.35 1999/11/15 18:49:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@
 
 extern int count_lock_queue __P((void));
 extern struct simplelock vnode_free_list_slock;		/* XXX */
-extern TAILQ_HEAD(freelst, vnode) vnode_free_list;	/* XXX */
 
 /*
  * Determine if it's OK to start a partial in this segment, or if we need

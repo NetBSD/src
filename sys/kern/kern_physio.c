@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.37 1999/06/17 15:47:23 thorpej Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.38 1999/11/15 18:49:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -135,6 +135,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	bp->b_dev = dev;
 	bp->b_error = 0;
 	bp->b_proc = p;
+	LIST_INIT(&bp->b_dep);
 
 	/*
 	 * [while there are data to transfer and no I/O error]

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.45 1999/03/24 05:51:28 mrg Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.46 1999/11/15 18:49:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -958,7 +958,7 @@ nfs_doio(bp, cr, p)
 	register struct vnode *vp;
 	struct nfsnode *np;
 	struct nfsmount *nmp;
-	int error = 0, diff, len, iomode, must_commit = 0;
+	int error = 0, diff, len, iomode, must_commit = 0, s;
 	struct uio uio;
 	struct iovec io;
 
@@ -1110,9 +1110,11 @@ nfs_doio(bp, cr, p)
 		 * buffer to the clean list, we have to reassign it back to the
 		 * dirty one. Ugh.
 		 */
-		if (bp->b_flags & B_ASYNC)
+		if (bp->b_flags & B_ASYNC) {
+		    s = splbio();
 		    reassignbuf(bp, vp);
-		else if (error)
+		    splx(s);
+		} else if (error)
 		    bp->b_flags |= B_EINTR;
 	    } else {
 		if (error) {
