@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.10 2004/09/01 20:31:20 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.11 2004/09/05 21:42:43 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -47,11 +47,16 @@
  * TERSE_ERROR	- terse error messages
  * NO_CHS	- all reads are LBA
  * NO_LBA_CHECK	- no check if bios supports LBA reads
+ * NO_BANNER    - do not output 'banner'
  */
 
 #ifdef BOOT_EXTENDED
 #define NO_CHS	1
 #define BOOTSEL	1
+#endif
+
+#ifdef BOOTSEL
+#define TERSE_ERROR 1
 #endif
 
 #include <machine/asm.h>
@@ -107,10 +112,10 @@ ENTRY(start)
 	movw	$start, %di
 	movw	$(bss_start - start)/2, %cx
 	rep
-	movsw
+	movsw				/* relocate code */
 	mov	$(bss_end - bss_start + 1)/2, %cx
 	rep
-	stosw
+	stosw				/* zero bss */
 	ljmp	$0, $mbr		/* leap into copy of code */
 
 /*
@@ -124,6 +129,11 @@ mbr:
 1:
 	push	%dx			/* save drive number */
 	push	%dx			/* twice - for err_msg loop */
+
+#ifndef NO_BANNER
+	mov	$banner, %si
+	call	message_crlf
+#endif
 
 /*
  * Walk through the selector (name) table printing used entries.
@@ -182,9 +192,7 @@ next_ptn:
 #endif
 #undef CONST
 	mov	%bx, %si
-	call	message			/* prompt */
-	movw	$crlf, %si
-	call	message
+	call	message_crlf			/* prompt */
 #endif
 4:
 	add	$0x10, %bp
@@ -317,13 +325,10 @@ err_msg:
 	movw	$errtxt, %si
 	call	message
 #else
-	push	%ax
 	movw	$errtxt, %si
 	call	message
-	pop	%si
-	call	message
-	movw	$crlf, %si
-	call	message
+	mov	%ax, %si
+	call	message_crlf
 #endif
 	pop	%dx			/* drive we errored on */
 	xor	%ax,%ax			/* only need %ah = 0 */
@@ -405,13 +410,12 @@ boot_si:
 	pop	%dx
 	push	%dx
 	int	$0x13
-	jc	1f			/* no int13 extensions */
+	set_err(ERR_NO_LBA)
+	jc	err_msg			/* no int13 extensions */
 	cmpw	$0xaa55, %bx
-	jnz	1f
+	jnz	err_msg
 	testb	$1, %cl
-	jnz	boot_lba
-1:	set_err(ERR_NO_LBA)
-	jmp	err_msg
+	jz	err_msg
 #endif	/* NO_LBA_CHECK */
 #endif	/* NO_CHS */
 
@@ -488,6 +492,14 @@ errtxt: .ascii	"Error "		/* runs into crlf if errcod set */
 errcod: .byte	0
 crlf:	.asciz	"\r\n"
 
+#ifndef NO_BANNER
+#ifdef BOOTSEL
+banner:	.asciz	"Fn: diskn"
+#else
+banner:	.asciz	"NetBSD MBR boot"
+#endif
+#endif
+
 #ifdef BOOTSEL
 prefix:	.asciz	"0: "
 #endif
@@ -510,6 +522,9 @@ ERR_KEY:	.asciz	"bad key"
  * Clearly this could be done with a linker script.
  */
 
+message_crlf:
+	call	message
+	movw	$crlf, %si
 #include <message.S>
 #if 0
 #include <dump_eax.S>
