@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.38.4.3 2001/11/17 20:19:59 thorpej Exp $ */
+/* $NetBSD: except.c,v 1.38.4.4 2001/11/23 00:19:08 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.3 2001/11/17 20:19:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.4 2001/11/23 00:19:08 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -402,18 +402,6 @@ do_fault(struct trapframe *tf, struct lwp *l,
 	}
 
 	if (error != 0) {
-#ifdef DEBUG
-		printf("unhandled fault at %p (error = %d)\n",
-		    (void *)va, error);
-		printregs(tf);
-		if ((tf->tf_r15 & R15_PC) != va) {
-			printf("pc -> ");
-			disassemble(tf->tf_r15 & R15_PC);
-		}
-#ifdef DDB
-		Debugger();
-#endif
-#endif
 		curpcb = &l->l_addr->u_pcb;
 		if (curpcb->pcb_onfault != NULL) {
 			tf->tf_r0 = error;
@@ -559,9 +547,9 @@ data_abort_address(struct trapframe *tf, vsize_t *vsp)
 	} else if ((insn & 0x0fb00ff0) == 0x01000090) {
 		/* SWP */
 		*vsp = 1; /* or 4, but who cares? */
-		rm = insn & 0x0000000f;
-		base = getreg(rm);
-		if (rm == 15)
+		rn = insn & 0x000f0000;
+		base = getreg(rn);
+		if (rn == 15)
 			return base + 8;
 		else
 			return base;
