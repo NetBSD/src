@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.75 2002/12/18 14:05:50 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.76 2002/12/21 05:35:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.75 2002/12/18 14:05:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.76 2002/12/21 05:35:54 yamt Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -1214,7 +1214,10 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uadd
 	 * reading blocks that isn't written yet.
 	 * it's needed because we'll update metadatas in lfs_updatemeta
 	 * before data pointed by them is actually written to disk.
+	 *
 	 * XXX no need to allocbuf.
+	 *
+	 * XXX this can cause buf starvation.
 	 */
 	obp = getblk(vp, lbn, size, 0, 0);
 	if (obp == NULL)
