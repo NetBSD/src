@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.15 1998/09/02 20:55:55 christos Exp $	*/
+/*	$NetBSD: chat.c,v 1.16 1999/05/06 08:59:21 jeremy Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -84,7 +84,7 @@
 #if 0
 static char rcsid[] = "Id: chat.c,v 1.19 1998/03/24 23:57:48 paulus Exp ";
 #else
-__RCSID("$NetBSD: chat.c,v 1.15 1998/09/02 20:55:55 christos Exp $");
+__RCSID("$NetBSD: chat.c,v 1.16 1999/05/06 08:59:21 jeremy Exp $");
 #endif
 #endif
 
@@ -578,7 +578,7 @@ void set_tty_parameters()
     have_tty_parameters  = 1;
 
     t.c_iflag     |= IGNBRK | ISTRIP | IGNPAR;
-    t.c_oflag      = 0;
+    t.c_oflag     |= OPOST | ONLCR;
     t.c_lflag      = 0;
     t.c_cc[VERASE] =
     t.c_cc[VKILL]  = 0;
