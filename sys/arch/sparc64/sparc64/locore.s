@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.136 2001/08/09 01:00:11 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -8135,33 +8135,6 @@ ENTRY(probeset)
 	STPTR	%g0, [%o2 + PCB_ONFAULT]
 	retl
 	 membar	#StoreStore|#StoreLoad
-
-/*
- * Insert entry into doubly-linked queue.
- * We could just do this in C, but gcc does not do leaves well (yet).
- */
-ENTRY(insque)
-ENTRY(_insque)
-	! %o0 = e = what to insert; %o1 = after = entry to insert after
-	STPTR	%o1, [%o0 + PTRSZ]	! e->prev = after;
-	LDPTR	[%o1], %o2		! tmp = after->next;
-	STPTR	%o2, [%o0]		! e->next = tmp;
-	STPTR	%o0, [%o1]		! after->next = e;
-	retl
-	 STPTR	%o0, [%o2 + PTRSZ]	! tmp->prev = e;
-
-
-/*
- * Remove entry from doubly-linked queue.
- */
-ENTRY(remque)
-ENTRY(_remque)
-	! %o0 = e = what to remove
-	LDPTR	[%o0], %o1		! n = e->next;
-	LDPTR	[%o0 + PTRSZ], %o2	! p = e->prev;
-	STPTR	%o2, [%o1 + PTRSZ]	! n->prev = p;
-	retl
-	 STPTR	%o1, [%o2]		! p->next = n;
 
 /*
  * pmap_zero_page(pa)
