@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.3 1996/05/05 06:18:07 briggs Exp $	*/
+/*	$NetBSD: viareg.h,v 1.4 1996/06/07 10:41:37 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -171,6 +171,7 @@ extern int VIA2;
 void	VIA_initialize   __P((void));
 int	rbv_vidstatus    __P((void));
 void	via_shutdown __P((void));
+void	via_set_modem __P((int));
 int	add_nubus_intr   __P((int, void (*) __P((void *, int)), void *));
 void	enable_nubus_intr __P((void));
 void	mac68k_register_scsi_irq __P((void (*)(void *), void *clnt));
