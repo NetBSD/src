@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.31 1997/09/24 19:45:11 matt Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.32 1997/09/25 13:11:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -251,6 +251,26 @@ tun_ioctl(ifp, cmd, data)
 		}
 		TUNDEBUG("%s: interface mtu set\n", ifp->if_xname);
 		ifp->if_mtu = ifr->ifr_mtu;
+		break;
+	}
+	case SIOCADDMULTI:
+	case SIOCDELMULTI: {
+		struct ifreq *ifr = (struct ifreq *) data;
+		if (ifr == 0) {
+	        	error = EAFNOSUPPORT;           /* XXX */
+			break;
+		}
+		switch (ifr->ifr_addr.sa_family) {
+
+#ifdef INET
+		case AF_INET:
+			break;
+#endif
+
+		default:
+			error = EAFNOSUPPORT;
+			break;
+		}
 		break;
 	}
 	default:
