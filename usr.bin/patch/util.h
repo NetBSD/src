@@ -1,4 +1,4 @@
-/*	$Id: util.h,v 1.2 1993/08/02 17:55:25 mycroft Exp $ */
+/*	$NetBSD: util.h,v 1.3 1996/09/19 06:27:17 thorpej Exp $	*/
 
 /* and for those machine that can't handle a variable argument list */
 
