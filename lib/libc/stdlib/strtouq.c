@@ -56,7 +56,7 @@ strtouq(nptr, endptr, base)
 {
 	register const char *s;
 	register u_quad_t acc, cutoff;
-	register int c;
+	register unsigned int c;
 	register int neg, any, cutlim;
 
 	/*

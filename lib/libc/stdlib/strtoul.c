@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoul.c,v 1.7 1995/12/28 08:52:56 thorpej Exp $	*/
+/*	$NetBSD: strtoul.c,v 1.8 1996/07/11 01:47:38 jtc Exp $	*/
 
 /*
  * Copyright (c) 1990 Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char *sccsid = "from: @(#)strtoul.c	5.3 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: strtoul.c,v 1.7 1995/12/28 08:52:56 thorpej Exp $";
+static char *rcsid = "$NetBSD: strtoul.c,v 1.8 1996/07/11 01:47:38 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ strtoul(nptr, endptr, base)
 {
 	register const char *s;
 	register unsigned long acc, cutoff;
-	register int c;
+	register unsigned int c;
 	register int neg, any, cutlim;
 
 	/*
