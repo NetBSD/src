@@ -1,6 +1,10 @@
 /* tregress.c: reported bugs.  The `t' just makes the filename not have
    a common prefix with `regex.c', so completion works better.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: tregress.c,v 1.2 1993/08/02 17:24:34 mycroft Exp $";
+#endif /* not lint */
+
 #include "test.h"
 
 

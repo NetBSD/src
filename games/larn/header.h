@@ -1,3 +1,5 @@
+/*	$Id: header.h,v 1.3 1993/08/02 17:20:03 mycroft Exp $ */
+
 /*	header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
 #define MAXLEVEL 11

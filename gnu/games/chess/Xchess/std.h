@@ -1,4 +1,3 @@
-
 /* This file contains code for X-CHESS.
    Copyright (C) 1986 Free Software Foundation, Inc.
 
@@ -17,11 +16,13 @@ X-CHESS General Public License.   A copy of this license is
 supposed to have been given to you along with X-CHESS so you
 can know your rights and responsibilities.  It should be in a
 file named COPYING.  Among other things, the copyright notice
-and this notice must be preserved on all copies.  */
+and this notice must be preserved on all copies.
+
+	$Id: std.h,v 1.2 1993/08/02 17:21:02 mycroft Exp $
+*/
 
 
-/* RCS Info: $Revision: 1.1.1.1 $ on $Date: 1993/03/21 09:45:37 $
- *		   $Source: /cvsroot/src/gnu/games/chess/Xchess/Attic/std.h,v $
+/*
  * Copyright (c) 1986 Wayne A. Christopher, U. C. Berkeley CAD Group
  *
  * Standard definitions.

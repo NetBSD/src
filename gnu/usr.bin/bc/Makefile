@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/gnu/usr.bin/bc/Attic/Makefile,v 1.3 1993/05/04 07:49:22 cgd Exp $
+#	$Id: Makefile,v 1.4 1993/08/02 17:25:28 mycroft Exp $
 
 PROG=	bc
 CFLAGS+=-D_POSIX_SOURCE -I${.CURDIR}/obj -I${.CURDIR}

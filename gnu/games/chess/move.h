@@ -1,3 +1,5 @@
+/*	$Id: move.h,v 1.2 1993/08/02 17:21:21 mycroft Exp $ */
+
 /* header file for move generator hes 890318
    Modified: 890510 minor bug fixed in Newataks
              890606 NEWMOVE levels 1-6 */

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/gnu/lib/libregex/Attic/Makefile,v 1.2 1993/04/10 15:24:44 cgd Exp $
+#	$Id: Makefile,v 1.3 1993/08/02 17:24:43 mycroft Exp $
 
 LIB=	gnuregex
 CFLAGS+=-DHAVE_STRING_H=1

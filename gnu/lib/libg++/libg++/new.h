@@ -1,3 +1,5 @@
+/*	$Id: new.h,v 1.2 1993/08/02 17:23:44 mycroft Exp $ */
+
 #ifndef _new_h
 #ifdef __GNUG__
 #pragma interface

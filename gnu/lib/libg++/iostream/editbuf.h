@@ -13,6 +13,8 @@
 //    You should have received a copy of the GNU Library General Public
 //    License along with this library; if not, write to the Free
 //    Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+//
+//	$Id: editbuf.h,v 1.2 1993/08/02 17:22:30 mycroft Exp $
 
 #ifndef _EDITBUF_H
 #define _EDITBUF_H

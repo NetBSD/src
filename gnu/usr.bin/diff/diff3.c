@@ -14,6 +14,10 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+
+#ifndef lint
+static char rcsid[] = "$Id: diff3.c,v 1.2 1993/08/02 17:26:11 mycroft Exp $";
+#endif /* not lint */
 
 /* Written by Randy Smith */
 

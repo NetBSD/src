@@ -1,6 +1,8 @@
 # Generated automatically from Makefile.in by configure.
 # This is the Makefile for Taylor UUCP
 #
+#	$Id: Makefile,v 1.2 1993/08/02 17:24:59 mycroft Exp $
+#
 # The file Makefile.in should be processed by configure to generate
 # Makefile.  If you want to generate Makefile by hand, you must find
 # all variables surrounded by @ and replace them with the correct

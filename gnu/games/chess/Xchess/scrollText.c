@@ -11,6 +11,10 @@
  * is implemented.  It detects size changes and compensates accordingly.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: scrollText.c,v 1.2 1993/08/02 17:20:58 mycroft Exp $";
+#endif /* not lint */
+
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/X10.h>

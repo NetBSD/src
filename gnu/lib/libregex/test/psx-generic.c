@@ -1,6 +1,10 @@
 /* psx-generic.c: test POSIX re's independent of us using basic or
    extended syntax.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: psx-generic.c,v 1.2 1993/08/02 17:24:27 mycroft Exp $";
+#endif /* not lint */
+
 #include "test.h"
 
 

@@ -1,3 +1,5 @@
+//	$Id: socket.h,v 1.2 1993/08/02 17:21:46 mycroft Exp $
+
 #ifndef __libgxx_sys_socket_h
 
 #include <_G_config.h>

@@ -1,3 +1,5 @@
+//	$Id: fcntl.h,v 1.2 1993/08/02 17:22:07 mycroft Exp $
+
 #ifndef fcntl_h
 
 extern "C" {

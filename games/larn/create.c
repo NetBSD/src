@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: create.c,v 1.2 1993/08/02 17:19:57 mycroft Exp $";
+#endif /* not lint */
+
 /*	create.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include "header.h"
 extern char spelknow[],larnlevels[];

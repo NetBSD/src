@@ -1,3 +1,5 @@
+#	$Id: Makefile,v 1.14 1993/08/02 17:18:41 mycroft Exp $
+
 PROG=	ed
 CFLAGS+=-DVI_BANG -DDES -DGNU_REGEX
 SRCS=	ed.c re.c buf.c cbc.c

@@ -14,7 +14,10 @@ PURPOSE.  See the GNU Library General Public License for more details.
 You should have received a copy of the GNU Library General Public
 License along with this library; if not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+	$Id: DiscUnif.h,v 1.2 1993/08/02 17:23:07 mycroft Exp $
 */
+
 #ifndef _DiscreteUniform_h
 #ifdef __GNUG__
 #pragma interface

@@ -15,7 +15,10 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+	$Id: struc-symbol.h,v 1.3 1993/08/02 17:28:40 mycroft Exp $
+*/
 
 #if 0
 #ifndef		VMS

@@ -1,7 +1,6 @@
-#	$Header: /cvsroot/src/bin/expr/Makefile,v 1.6 1993/07/20 20:16:25 jtc Exp $
+#	$Id: Makefile,v 1.7 1993/08/02 17:18:45 mycroft Exp $
 
 PROG=		expr
-SRCS=		expr.c
 CFLAGS+=	-I.
 LDADD=		-lgnuregex
 DPADD=		/usr/lib/libgnuregex.a

@@ -26,6 +26,10 @@
        
 *************************************************************************/
 
+#ifndef lint
+static char rcsid[] = "$Id: main.c,v 1.2 1993/08/02 17:25:40 mycroft Exp $";
+#endif /* not lint */
+
 #include "bcdefs.h"
 #include <signal.h>
 #include "global.h"

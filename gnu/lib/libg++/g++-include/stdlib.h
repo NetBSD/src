@@ -1,4 +1,4 @@
-
+//	$Id: stdlib.h,v 1.2 1993/08/02 17:22:17 mycroft Exp $
 
 #ifndef _stdlib_h
 #define _stdlib_h 1

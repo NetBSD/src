@@ -1,3 +1,4 @@
+#	$Id: Makefile,v 1.3 1993/08/02 17:26:03 mycroft Exp $
 
 PROG=	diff
 SRCS=	diff.c analyze.c io.c context.c ed.c normal.c ifdef.c util.c dir.c \

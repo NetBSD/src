@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: object.c,v 1.3 1993/08/02 17:20:16 mycroft Exp $";
+#endif /* not lint */
+
 /*	object.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include "header.h"
 

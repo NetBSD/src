@@ -1,4 +1,7 @@
-/* alloc.c - version 1.0.2 */
+#ifndef lint
+static char rcsid[] = "$Id: alloc.c,v 1.2 1993/08/02 17:19:10 mycroft Exp $";
+#endif /* not lint */
+
 #ifdef LINT
 
 /*

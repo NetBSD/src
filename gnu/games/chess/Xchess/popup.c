@@ -1,4 +1,3 @@
-
 /* This file contains code for X-CHESS.
    Copyright (C) 1986 Free Software Foundation, Inc.
 
@@ -19,9 +18,11 @@ can know your rights and responsibilities.  It should be in a
 file named COPYING.  Among other things, the copyright notice
 and this notice must be preserved on all copies.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: popup.c,v 1.2 1993/08/02 17:20:55 mycroft Exp $";
+#endif /* not lint */
 
-/* RCS Info: $Revision: 1.1.1.1 $ on $Date: 1993/03/21 09:45:37 $
- *           $Source: /cvsroot/src/gnu/games/chess/Xchess/Attic/popup.c,v $
+/*
  * Copyright (c) 1986 Wayne A. Christopher, U. C. Berkeley CAD Group 
  *	 faustus@cad.berkeley.edu, ucbvax!faustus
  * Permission is granted to modify and re-distribute this code in any manner

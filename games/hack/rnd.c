@@ -1,4 +1,6 @@
-/* rnd.c - version 1.0.2 */
+#ifndef lint
+static char rcsid[] = "$Id: rnd.c,v 1.2 1993/08/02 17:19:45 mycroft Exp $";
+#endif /* not lint */
 
 #define RND(x)	((random()>>3) % x)
 

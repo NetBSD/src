@@ -1,3 +1,4 @@
+//	$Id: string.h,v 1.2 1993/08/02 17:22:18 mycroft Exp $
 
 #ifndef _string_h
 #define _string_h 1

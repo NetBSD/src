@@ -1,3 +1,5 @@
+//	$Id: resource.h,v 1.2 1993/08/02 17:21:42 mycroft Exp $
+
 #ifndef __libgxx_sys_resource_h
 
 extern "C"

@@ -22,7 +22,9 @@ file named COPYING.  Among other things, the copyright notice
 and this notice must be preserved on all copies.  
 */
 
-
+#ifndef lint
+static char rcsid[] = "$Id: g++malloc.c,v 1.2 1993/08/02 17:24:17 mycroft Exp $";
+#endif /* not lint */
 
 #ifndef NO_LIBGXX_MALLOC   /* ignore whole file otherwise */
 

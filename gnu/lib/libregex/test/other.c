@@ -1,5 +1,9 @@
 /* other.c: test (not exhaustively) non-POSIX regular expressions.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: other.c,v 1.2 1993/08/02 17:24:22 mycroft Exp $";
+#endif /* not lint */
+
 #include "test.h"
 
 void

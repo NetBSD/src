@@ -26,6 +26,10 @@
        
 *************************************************************************/
 
+#ifndef lint
+static char rcsid[] = "$Id: load.c,v 1.2 1993/08/02 17:25:38 mycroft Exp $";
+#endif /* not lint */
+
 #include "bcdefs.h"
 #include "global.h"
 #include "proto.h"
