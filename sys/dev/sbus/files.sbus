@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.13 1999/06/27 12:47:52 pk Exp $
+#	$NetBSD: files.sbus,v 1.14 2000/03/25 19:58:05 mycroft Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -36,7 +36,6 @@ file	dev/sbus/if_le.c		le_sbus
 file	dev/sbus/if_le_lebuffer.c	le_lebuffer
 file	dev/sbus/if_le_ledma.c		le_ledma
 
-device	esp: scsi, ncr53c9x
 attach	esp at sbus with esp_sbus
 attach	esp at dma with esp_dma
 file	dev/sbus/esp_sbus.c		esp_sbus | esp_dma

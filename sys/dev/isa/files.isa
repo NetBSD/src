@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.99 2000/03/20 11:03:43 pk Exp $
+#	$NetBSD: files.isa,v 1.100 2000/03/25 19:58:05 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -92,9 +92,8 @@ attach	aic at isa with aic_isa: isadma
 file	dev/isa/aic_isa.c		aic_isa
 
 # Qlogic ESP406/FAS408 boards
-# ncr53c9x device declaration in sys/conf/files
-device	esp: scsi, ncr53c9x, isadma
-attach	esp at isa with esp_isa
+# device declaration in sys/conf/files
+attach	esp at isa with esp_isa: isadma
 file	dev/isa/esp_isa.c		esp_isa
 
 # BusLogic BT-[45]4x ISA family
