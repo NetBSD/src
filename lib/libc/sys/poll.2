@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.8 1999/12/02 21:42:38 kleink Exp $
+.\"	$NetBSD: poll.2,v 1.8.4.1 2001/12/24 14:05:00 he Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,7 +73,11 @@ The fields of
 are as follows:
 .Bl -tag -width XXXrevents
 .It fd
-File descriptor to poll.
+File descriptor to poll. If the value in
+.Em fd
+is negative, the file descriptor is ignored and
+.Em revents
+is set to 0.
 .It events
 Events to poll for.  (See below.)
 .It revents
