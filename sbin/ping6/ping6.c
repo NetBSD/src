@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.54 2003/03/27 16:15:44 perry Exp $	*/
+/*	$NetBSD: ping6.c,v 1.55 2003/06/06 14:18:40 cjep Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.54 2003/03/27 16:15:44 perry Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.55 2003/06/06 14:18:40 cjep Exp $");
 #endif
 #endif
 
@@ -1482,7 +1482,7 @@ pr_pack(buf, cc, mhdr)
 		return;
 	}
 	if ((pktinfo = get_rcvpktinfo(mhdr)) == NULL) {
-		warnx("failed to get receiving pakcet information");
+		warnx("failed to get receiving packet information");
 		return;
 	}
 
