@@ -1,4 +1,4 @@
-#	$NetBSD: ttys,v 1.3 2000/08/12 13:43:52 mason Exp $
+#	$NetBSD: ttys,v 1.4 2000/11/24 19:51:39 scw Exp $
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
 # name	getty				type	status		comments
@@ -14,11 +14,11 @@ console "/usr/libexec/getty Pc"		dumb	on secure
 # Hardwired lines are marked off, by default, so getty(8)
 # is quiet when they don't exist.
 #
-# The first three would be used with an MVME-147
+# The first three would be used on MVME-147, MVME-162 and MVME-172
 #
-ttyZ0	"/usr/libexec/getty std.9600"	unknown off secure
 ttyZ1	"/usr/libexec/getty std.9600"	unknown off secure
 ttyZ2	"/usr/libexec/getty std.9600"	unknown off secure
+ttyZ3	"/usr/libexec/getty std.9600"	unknown off secure
 
 #
 # These three would be used on MVME-167 and MVME-177
