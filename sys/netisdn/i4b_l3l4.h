@@ -27,7 +27,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.4 2002/03/17 11:08:32 martin Exp $
+ *	$Id: i4b_l3l4.h,v 1.5 2002/03/17 20:54:05 martin Exp $
  *
  * $FreeBSD$
  *
@@ -55,31 +55,6 @@ typedef struct bchan_statistics {
 	int inbytes;
 } bchan_statistics_t;
 
-/*
- * Set of functions layer 4 drivers calls to manipulate the B channel
- * they are using.
- */
-struct isdn_l4_bchannel_functions {
-	void (*bch_config)(void*, int channel, int bprot, int updown);
-	void (*bch_tx_start)(void*, int channel);
-	void (*bch_stat)(void*, int channel, bchan_statistics_t *bsp);	
-};
-
-/*
- * Functions the B channel driver calls in the layer 4 driver.
- */
-struct isdn_l4_driver_functions {
-	void (*bch_rx_data_ready)(void *softc);
-	void (*bch_tx_queue_empty)(void *softc);
-	void (*bch_activity)(void *softc, int rxtx);
-#define ACT_RX 0
-#define ACT_TX 1
-	void (*line_connected)(void *softc, void *cde);
-	void (*line_disconnected)(void *softc, void *cde);
-	void (*dial_response)(void *softc, int stat, cause_t cause);
-	void (*updown_ind)(void *softc, int updown);		
-};
-
 /*---------------------------------------------------------------------------*
  * table of things the driver needs to know about the b channel
  * it is connected to for data transfer
@@ -93,42 +68,14 @@ typedef struct i4b_isdn_bchan_linktab {
 	struct mbuf **rx_mbuf;		/* data xfer for HDLC based traffic */
 } isdn_link_t;
 
-/*---------------------------------------------------------------------------*
- * table of things the b channel handler needs to know  about
- * the driver it is connected to for data transfer
- *---------------------------------------------------------------------------*/
-typedef struct i4b_driver_bchan_linktab {
-	void *l4_driver_softc;
-	const struct isdn_l4_driver_functions *l4_driver;
-} drvr_link_t;
+struct isdn_l4_driver_functions;
 
 /* global linktab functions for controller types (aka hardware drivers) */
 struct ctrl_type_desc {
 	isdn_link_t* (*get_linktab)(void*, int channel);
-	void (*set_linktab)(void*, int channel, drvr_link_t *dlt);
+	void (*set_l4_driver)(void*, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
 };
 extern struct ctrl_type_desc ctrl_types[];
-
-/* global linktab functions for RBCH userland driver */
-
-drvr_link_t *rbch_ret_linktab(int unit);
-void rbch_set_linktab(int unit, isdn_link_t *ilt);
-
-/* global linktab functions for IPR network driver */
-
-drvr_link_t *ipr_ret_linktab(int);
-void ipr_set_linktab(int, isdn_link_t *ilt);
-
-/* global linktab functions for TEL userland driver */
-
-drvr_link_t *tel_ret_linktab(int);
-void tel_set_linktab(int, isdn_link_t *ilt);
-
-/* global linktab functions for ISPPP userland driver */
-
-drvr_link_t *i4bisppp_ret_linktab(int);
-void i4bisppp_set_linktab(int, isdn_link_t *ilt);
-
 
 /*---------------------------------------------------------------------------*
  *	this structure describes one call/connection on one B-channel
@@ -184,8 +131,9 @@ typedef struct
 
 	int	T400;			/* L4 timeout */
 
-	isdn_link_t	*ilt;		/* isdn B channel linktab	*/
-	drvr_link_t	*dlt;		/* driver linktab		*/
+	isdn_link_t	*ilt;		/* isdn B channel driver/state	*/
+	const struct isdn_l4_driver_functions *l4_driver;		/* layer 4 driver		*/
+	void	*l4_driver_softc;					/* layer 4 driver instance	*/
 
 	int	dir;			/* outgoing or incoming call	*/
 #define DIR_OUTGOING	0
@@ -232,6 +180,50 @@ typedef struct
 } call_desc_t;
 
 extern call_desc_t call_desc[N_CALL_DESC];
+
+/*
+ * Set of functions layer 4 drivers calls to manipulate the B channel
+ * they are using.
+ */
+struct isdn_l4_bchannel_functions {
+	void (*bch_config)(void*, int channel, int bprot, int updown);
+	void (*bch_tx_start)(void*, int channel);
+	void (*bch_stat)(void*, int channel, bchan_statistics_t *bsp);	
+};
+
+/*
+ * Functions a layer 4 application driver exports
+ */
+struct isdn_l4_driver_functions {
+	/*
+	 * Functions for use by the B channel driver
+	 */
+	void (*bch_rx_data_ready)(void *softc);
+	void (*bch_tx_queue_empty)(void *softc);
+	void (*bch_activity)(void *softc, int rxtx);
+#define ACT_RX 0
+#define ACT_TX 1
+	void (*line_connected)(void *softc, void *cde);
+	void (*line_disconnected)(void *softc, void *cde);
+	void (*dial_response)(void *softc, int stat, cause_t cause);
+	void (*updown_ind)(void *softc, int updown);
+	/*
+	 * Functions used by the ISDN management system
+	 */
+	void* (*get_softc)(int unit);
+	void (*set_linktab)(void *softc, isdn_link_t *ilt);
+	/*
+	 * Optional accounting function
+	 */
+	time_t (*get_idletime)(void* softc);
+};
+
+/* global registry of layer 4 drivers */
+int isdn_l4_driver_attach(const char *name, int units, const struct isdn_l4_driver_functions *driver);
+int isdn_l4_driver_detatch(const char *name);
+int isdn_l4_find_driverid(const char *name);
+const struct isdn_l4_driver_functions *isdn_l4_find_driver(const char *name, int unit);
+const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int unit);
 
 /* forward decl. */
 struct isdn_diagnostic_request;

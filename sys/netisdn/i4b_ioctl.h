@@ -27,7 +27,7 @@
  *	i4b_ioctl.h - messages kernel <--> userland
  *	-------------------------------------------
  *
- *	$Id: i4b_ioctl.h,v 1.3 2002/03/17 11:08:32 martin Exp $ 
+ *	$Id: i4b_ioctl.h,v 1.4 2002/03/17 20:54:05 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -169,19 +169,6 @@
  *	B channel parameters
  *---------------------------------------------------------------------------*/
 #define BCH_MAX_DATALEN	2048	/* max length of a B channel frame */
-
-/*---------------------------------------------------------------------------*
- * userland driver types
- * ---------------------
- * a "driver" is defined here as a piece of software interfacing an 
- * ISDN B channel with a userland service, such as IP, Telephony etc.
- *---------------------------------------------------------------------------*/
-#define BDRV_RBCH	0       /* raw b-channel interface driver       */
-#define BDRV_TEL	1       /* telephone (speech) interface driver  */
-#define BDRV_IPR	2       /* IP over raw HDLC interface driver    */
-#define BDRV_ISPPP	3       /* sync Kernel PPP interface driver     */
-#define BDRV_IBC	4       /* BSD/OS point to point driver		*/
-#define BDRV_ING	5       /* NetGraph ing driver			*/
 
 /*---------------------------------------------------------------------------*
  * B channel protocol
@@ -458,8 +445,6 @@ typedef struct {
  *---------------------------------------------------------------------------*/
 typedef struct {
 	msg_hdr_t	header;		/* common header	*/
-	int		driver;		/* driver type		*/
-	int		driver_unit;	/* driver unit number	*/
 } msg_drvrdisc_req_t;
 
 /*---------------------------------------------------------------------------*
@@ -662,6 +647,17 @@ typedef struct {
 } msg_prot_ind_t;
 
 #define I4B_PROT_IND		_IOW('4', 10, msg_prot_ind_t)
+
+/*---------------------------------------------------------------------------*
+ *	Query the identifier for a B channel driver
+ *---------------------------------------------------------------------------*/
+#define	L4DRIVER_NAME_SIZ	16
+typedef struct {
+	char name[L4DRIVER_NAME_SIZ];	/* lookup this driver */
+	int  driver_id;			/* returned driver id */
+} msg_l4driver_lookup_t;
+
+#define I4B_L4DRIVER_LOOKUP	_IOWR('4', 11, msg_l4driver_lookup_t)
 
 /*---------------------------------------------------------------------------*
  *	Protocol download to active cards

@@ -35,14 +35,14 @@
  *	Fritz!Card PCI specific routines for isic driver
  *	------------------------------------------------
  *
- *	$Id: isic_pci_avm_fritz_pci.c,v 1.5 2001/11/13 07:48:45 lukem Exp $
+ *	$Id: isic_pci_avm_fritz_pci.c,v 1.6 2002/03/17 20:54:04 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_avm_fritz_pci.c,v 1.5 2001/11/13 07:48:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_avm_fritz_pci.c,v 1.6 2002/03/17 20:54:04 martin Exp $");
 
 #include "opt_isicpci.h"
 #ifdef ISICPCI_AVM_A1
@@ -1045,7 +1045,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
 				{
 				  if((stat & HSCX_STAT_CRCVFRRAB) == HSCX_STAT_CRCVFR)
 				  {
-					 (*chan->drvr_linktab->bch_rx_data_ready)(chan->drvr_linktab->unit);
+					 (*chan->l4_driver->bch_rx_data_ready)(chan->l4_driver_softc);
 					 activity = ACT_RX;
 				
 					 /* mark buffer ptr as unused */
@@ -1101,7 +1101,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
 				          }
 
 					  /* signal upper layer that data are available */
-					  (*chan->drvr_linktab->bch_rx_data_ready)(chan->drvr_linktab->unit);
+					  (*chan->l4_driver->bch_rx_data_ready)(chan->l4_driver_softc);
 
 					  /* alloc new buffer */
 				
@@ -1167,7 +1167,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
 			if(chan->out_mbuf_head == NULL)
 			{
 				chan->state &= ~HSCX_TX_ACTIVE;
-				(*chan->drvr_linktab->bch_tx_queue_empty)(chan->drvr_linktab->unit);
+				(*chan->l4_driver->bch_tx_queue_empty)(chan->l4_driver_softc);
 			}
 			else
 			{
@@ -1203,7 +1203,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
 	/* call timeout handling routine */
 	
 	if(activity == ACT_RX || activity == ACT_TX)
-		(*chan->drvr_linktab->bch_activity)(chan->drvr_linktab->unit, activity);
+		(*chan->l4_driver->bch_activity)(chan->l4_driver_softc, activity);
 }
 
 /*
@@ -1521,7 +1521,7 @@ avma1pp_bchannel_start(isdn_layer1token t, int h_chan)
 	/* call timeout handling routine */
 	
 	if(activity == ACT_RX || activity == ACT_TX)
-		(*chan->drvr_linktab->bch_activity)(chan->drvr_linktab->unit, activity);
+		(*chan->l4_driver->bch_activity)(chan->l4_driver_softc, activity);
 
 	splx(s);	
 }
@@ -1542,14 +1542,21 @@ avma1pp_ret_linktab(isdn_layer1token t, int channel)
  *	set the driver linktab in the b channel softc
  *---------------------------------------------------------------------------*/
 static void
-avma1pp_set_linktab(isdn_layer1token t, int channel, drvr_link_t *dlt)
+avma1pp_set_link(isdn_layer1token t, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc)
 {
 	struct l1_softc *sc = (struct l1_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[channel];
 
-	chan->drvr_linktab = dlt;
+	chan->l4_driver = l4_driver;
+	chan->l4_driver_softc = l4_driver_softc;
 }
 
+static const struct isdn_l4_bchannel_functions
+avma1pp_l4_bchannel_functions = {
+	avma1pp_bchannel_setup,
+	avma1pp_bchannel_start,
+	avma1pp_bchannel_stat
+};
 
 /*---------------------------------------------------------------------------*
  *	initialize our local linktab
@@ -1562,18 +1569,16 @@ avma1pp_init_linktab(struct l1_softc *sc)
 
 	/* make sure the hardware driver is known to layer 4 */
 	/* avoid overwriting if already set */
-	if (ctrl_types[CTRL_PASSIVE].set_linktab == NULL)
+	if (ctrl_types[CTRL_PASSIVE].set_l4_driver == NULL)
 	{
-		ctrl_types[CTRL_PASSIVE].set_linktab = avma1pp_set_linktab;
+		ctrl_types[CTRL_PASSIVE].set_l4_driver = avma1pp_set_link;
 		ctrl_types[CTRL_PASSIVE].get_linktab = avma1pp_ret_linktab;
 	}
 
 	/* local setup */
 	lt->l1token = sc;
 	lt->channel = HSCX_CH_A;
-	lt->bch_config = avma1pp_bchannel_setup;
-	lt->bch_tx_start = avma1pp_bchannel_start;
-	lt->bch_stat = avma1pp_bchannel_stat;
+	lt->bchannel_driver = &avma1pp_l4_bchannel_functions;
 	lt->tx_queue = &chan->tx_queue;
 
 	/* used by non-HDLC data transfers, i.e. telephony drivers */
@@ -1587,9 +1592,7 @@ avma1pp_init_linktab(struct l1_softc *sc)
 
 	lt->l1token = sc;
 	lt->channel = HSCX_CH_B;
-	lt->bch_config = avma1pp_bchannel_setup;
-	lt->bch_tx_start = avma1pp_bchannel_start;
-	lt->bch_stat = avma1pp_bchannel_stat;
+	lt->bchannel_driver = &avma1pp_l4_bchannel_functions;
 	lt->tx_queue = &chan->tx_queue;
 
 	/* used by non-HDLC data transfers, i.e. telephony drivers */
