@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/25/90
-#	$Id: Makefile,v 1.4 1993/08/01 05:45:05 mycroft Exp $
+#	$Id: Makefile,v 1.5 1994/05/23 05:41:57 cgd Exp $
 
 # EXTRA
 #	Incorporates code to gather additional performance statistics
@@ -58,8 +58,8 @@ CFLAGS+=-DBSD -DVER=12 -DSUBVER=0 -DNONAP
 SRCS=	main.c object.c create.c tok.c display.c global.c data.c io.c \
 	monster.c store.c diag.c help.c config.c nap.c bill.c scores.c \
 	signal.c moreobj.c movem.c regen.c fortune.c savelev.c
-DPADD=	${LIBTERM}
-LDADD=	-ltermcap
+DPADD=	${LIBTERM} ${LIBCOMPAT}
+LDADD=	-ltermcap -lcompat
 HIDEGAME=hidegame
 
 beforeinstall:
