@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.8 1995/03/30 21:25:28 ragge Exp $     */
+/*      $NetBSD: pmap.c,v 1.9 1995/04/10 03:54:27 mycroft Exp $     */
 #undef	oldway
 #define DEBUG
 /*
@@ -94,7 +94,7 @@ uint   sigsida;
 int startpmapdebug=0;
 extern int startsysc, faultdebug;
 #endif
-unsigned int *valueptr=gurkskit, v_cmap;
+unsigned int *valueptr=gurkskit, vmmap;
 pt_entry_t *Sysmap;
 vm_map_t	pte_map;
 
@@ -136,29 +136,29 @@ pmap_bootstrap()
 		pend -= 8 * NBPG;       /* Avoid console scratchpad */
 #endif
 /* These are virt only */
-	v_cmap=ROUND_PAGE(pv_table+(pend/PAGE_SIZE));
-	(u_int)Numem=v_cmap+NBPG*2;
+	vmmap=ROUND_PAGE(pv_table+(pend/PAGE_SIZE));
+	(u_int)Numem=vmmap+NBPG*2;
 
 	(pt_entry_t *)UMEMmap=kvtopte(Numem);
-	(pt_entry_t *)pte_cmap=kvtopte(v_cmap);
+	(pt_entry_t *)pte_cmap=kvtopte(vmmap);
 
-	avail_start=ROUND_PAGE(v_cmap)&0x7fffffff;
+	avail_start=ROUND_PAGE(vmmap)&0x7fffffff;
 	avail_end=pend-ROUND_PAGE(sizeof(struct msgbuf));
 	virtual_avail=ROUND_PAGE((uint)Numem+NUBA*NBPG*NBPG);
 	virtual_end=SYSPTSIZE*NBPG+KERNBASE;
 #ifdef DEBUG
 	printf("Sysmap %x, istack %x, scratch %x\n",Sysmap,istack,scratch);
 	printf("SYSPTSIZE %x, USRPTSIZE %x\n",SYSPTSIZE,USRPTSIZE);
-	printf("pv_table %x, v_cmap %x, Numem %x, pte_cmap %x\n",
-		pv_table,v_cmap,Numem,pte_cmap);
+	printf("pv_table %x, vmmap %x, Numem %x, pte_cmap %x\n",
+		pv_table,vmmap,Numem,pte_cmap);
 	printf("avail_start %x, avail_end %x\n",avail_start,avail_end);
 	printf("virtual_avail %x,virtual_end %x\n",virtual_avail,virtual_end);
-	printf("clearomr: %x \n",(uint)v_cmap-(uint)Sysmap);
+	printf("clearomr: %x \n",(uint)vmmap-(uint)Sysmap);
 	printf("faultdebug %x, startsysc %x\n",&faultdebug, &startsysc);
 	printf("startpmapdebug %x\n",&startpmapdebug);
 #endif
 
-	blkclr(Sysmap,(uint)v_cmap-(uint)Sysmap);
+	blkclr(Sysmap,(uint)vmmap-(uint)Sysmap);
 	pmap_map(0x80000000,0,2*NBPG,VM_PROT_READ|VM_PROT_WRITE);
 	pmap_map(0x80000400,2*NBPG,(vm_offset_t)(&etext),VM_PROT_EXECUTE);
 	pmap_map((vm_offset_t)(&etext),(vm_offset_t)&etext,
@@ -170,7 +170,7 @@ pmap_bootstrap()
 		VM_PROT_READ|VM_PROT_WRITE);
 	pmap_map((vm_offset_t)scratch,(vm_offset_t)scratch,
 		(vm_offset_t)pv_table,VM_PROT_READ|VM_PROT_WRITE);
-	pmap_map((vm_offset_t)pv_table,(vm_offset_t)pv_table,v_cmap,
+	pmap_map((vm_offset_t)pv_table,(vm_offset_t)pv_table,vmmap,
 		VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Init kernel pmap */
@@ -636,7 +636,7 @@ pmap_copy_page(src, dst)
 	vm_offset_t   dst;
 {
 	int s;
-	extern uint v_cmap;
+	extern uint vmmap;
 
 #ifdef DEBUG
 if(startpmapdebug)printf("pmap_copy_page: src %x, dst %x\n",src, dst);
@@ -646,22 +646,22 @@ if(startpmapdebug)printf("pmap_copy_page: src %x, dst %x\n",src, dst);
 	VAXLOOP
 		pte_cmap[0]=((src>>PGSHIFT)+vaxloop)|PG_V|PG_RO;
 		pte_cmap[1]=((dst>>PGSHIFT)+vaxloop)|PG_V|PG_KW;
-		mtpr(v_cmap,PR_TBIS);
-		mtpr(v_cmap+NBPG,PR_TBIS);
+		mtpr(vmmap,PR_TBIS);
+		mtpr(vmmap+NBPG,PR_TBIS);
 				mtpr(0,PR_TBIA);
-		bcopy((void *)v_cmap, (void *)v_cmap+NBPG, NBPG);
+		bcopy((void *)vmmap, (void *)vmmap+NBPG, NBPG);
 	VAXEND
 #else
 	pte_cmap[0]=(src>>PGSHIFT)|PG_V|PG_RO;
 	pte_cmap[1]=(dst>>PGSHIFT)|PG_V|PG_KW;
-	mtpr(v_cmap,PR_TBIS);
-	mtpr(v_cmap+NBPG,PR_TBIS);
-	bcopy((void *)v_cmap, (void *)v_cmap+NBPG, NBPG);
+	mtpr(vmmap,PR_TBIS);
+	mtpr(vmmap+NBPG,PR_TBIS);
+	bcopy((void *)vmmap, (void *)vmmap+NBPG, NBPG);
 	pte_cmap[0]=((src+NBPG)>>PGSHIFT)|PG_V|PG_RO;
 	pte_cmap[1]=((dst+NBPG)>>PGSHIFT)|PG_V|PG_RW;
-	mtpr(v_cmap,PR_TBIS);
-	mtpr(v_cmap+NBPG,PR_TBIS);
-	bcopy((void *)v_cmap, (void *)v_cmap+NBPG, NBPG);
+	mtpr(vmmap,PR_TBIS);
+	mtpr(vmmap+NBPG,PR_TBIS);
+	bcopy((void *)vmmap, (void *)vmmap+NBPG, NBPG);
 #endif
 	splx(s);
 }
@@ -942,26 +942,26 @@ pmap_zero_page(phys)
 	int s;
 
 #ifdef DEBUG
-if(startpmapdebug)printf("pmap_zero_page(phys %x, v_cmap %x, pte_cmap %x\n",
-	phys,v_cmap,pte_cmap);
+if(startpmapdebug)printf("pmap_zero_page(phys %x, vmmap %x, pte_cmap %x\n",
+	phys,vmmap,pte_cmap);
 #endif
 	s=splimp();
 #ifdef oldway
 	VAXLOOP
 		*pte_cmap=((phys+(NBPG*vaxloop))>>PG_SHIFT)|PG_V|PG_KW;
-		mtpr(v_cmap,PR_TBIA);
-		bzero(v_cmap,NBPG);
+		mtpr(vmmap,PR_TBIA);
+		bzero(vmmap,NBPG);
 	VAXEND
 #else
 	pte_cmap[0]=(phys>>PG_SHIFT)|PG_V|PG_KW;
 	pte_cmap[1]=pte_cmap[0]+1;
-	mtpr(v_cmap,PR_TBIS);
-	mtpr(v_cmap+NBPG,PR_TBIS);
-	bzero(v_cmap,NBPG*2);
+	mtpr(vmmap,PR_TBIS);
+	mtpr(vmmap+NBPG,PR_TBIS);
+	bzero(vmmap,NBPG*2);
 #endif
 	pte_cmap[0]=pte_cmap[1]=0;
-	mtpr(v_cmap,PR_TBIS);
-	mtpr(v_cmap+NBPG,PR_TBIS);
+	mtpr(vmmap,PR_TBIS);
+	mtpr(vmmap+NBPG,PR_TBIS);
 	splx(s);
 }
 
