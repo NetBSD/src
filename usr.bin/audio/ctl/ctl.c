@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.15 1998/07/13 15:11:03 augustss Exp $	*/
+/*	$NetBSD: ctl.c,v 1.16 1998/07/28 19:26:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -297,17 +297,20 @@ getinfo(fd)
 
 	if (ioctl(fd, AUDIO_GETDEV, &adev) < 0)
 		err(1, "AUDIO_GETDEV");
-	for(pos = 0, i = 0; ; i++) {
+	for (pos = 0, i = 0; ; i++) {
 		audio_encoding_t enc;
 		enc.index = i;
 		if (ioctl(fd, AUDIO_GETENC, &enc) < 0)
 			break;
+		if (pos >= sizeof(encbuf)-1)
+			break;
 		if (pos)
 			encbuf[pos++] = ',';
-		sprintf(encbuf+pos, "%s:%d%s", enc.name, 
-			enc.precision, 
+		if (pos >= sizeof(encbuf)-1)
+			break;
+		pos += snprintf(encbuf+pos, sizeof(encbuf)-pos, "%s:%d%s",
+			enc.name, enc.precision, 
 			enc.flags & AUDIO_ENCODINGFLAG_EMULATED ? "*" : "");
-		pos += strlen(encbuf+pos);
 	}
 	if (ioctl(fd, AUDIO_GETFD, &fullduplex) < 0)
 		err(1, "AUDIO_GETFD");
@@ -336,7 +339,7 @@ main(argc, argv)
 	int fd, i, ch;
 	int aflag = 0, wflag = 0;
 	struct stat dstat, ostat;
-	char *file;
+	const char *file;
 	char *sep = "=";
     
 	file = getenv("AUDIOCTLDEVICE");

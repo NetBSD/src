@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.14 1998/07/27 07:41:31 mycroft Exp $	*/
+/*	$NetBSD: calendar.c,v 1.15 1998/07/28 19:26:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.14 1998/07/27 07:41:31 mycroft Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.15 1998/07/28 19:26:09 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -100,7 +100,7 @@ main(argc, argv)
 {
 	extern int optind;
 	int ch;
-	char *caldir;
+	const char *caldir;
 
 	while ((ch = getopt(argc, argv, "-ad:f:l:w:")) != -1)
 		switch (ch) {

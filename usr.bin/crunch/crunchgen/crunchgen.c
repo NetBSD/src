@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.7 1997/08/02 21:30:12 perry Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.8 1998/07/28 19:26:10 mycroft Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.7 1997/08/02 21:30:12 perry Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.8 1998/07/28 19:26:10 mycroft Exp $");
 #endif
 
 #include <stdlib.h>
@@ -156,12 +156,15 @@ int main(int argc, char **argv)
     else strcpy(confname, infilename);
     if((p=strrchr(confname, '.')) != NULL && !strcmp(p, ".conf")) *p = '\0';
 
-    if(!*outmkname) sprintf(outmkname, "%s.mk", confname);
-    if(!*outcfname) sprintf(outcfname, "%s.c", confname);
-    if(!*execfname) sprintf(execfname, "%s", confname);
+    if (!*outmkname)
+	(void)snprintf(outmkname, sizeof(outmkname), "%s.mk", confname);
+    if (!*outcfname)
+	(void)snprintf(outcfname, sizeof(outcfname), "%s.c", confname);
+    if (!*execfname)
+	(void)snprintf(execfname, sizeof(execfname), "%s", confname);
 
-    sprintf(cachename, "%s.cache", confname);
-    sprintf(tempfname, ".tmp_%sXXXXXX", confname);
+    (void)snprintf(cachename, sizeof(cachename), "%s.cache", confname);
+    (void)snprintf(tempfname, sizeof(tempfname), ".tmp_%sXXXXXX", confname);
 
     parse_conf_file();
     gen_outputs();
@@ -221,7 +224,7 @@ void parse_one_file(char *filename)
     void (*f)(int c, char **v);
     FILE *cf;
 
-    sprintf(line, "reading %s", filename);
+    (void)snprintf(line, sizeof(line), "reading %s", filename);
     status(line);
     strcpy(curfilename, filename);
 
@@ -488,7 +491,7 @@ void fillin_program(prog_t *p)
     char *srcparent;
     strlst_t *s;
 
-    sprintf(line, "filling in parms for %s", p->name);
+    (void)snprintf(line, sizeof(line), "filling in parms for %s", p->name);
     status(line);
 
     if(!p->ident) 
@@ -496,17 +499,17 @@ void fillin_program(prog_t *p)
     if(!p->srcdir) {
 	srcparent = dir_search(p->name);
 	if(srcparent) {
-	    sprintf(path, "%s/%s", srcparent, p->name);
+	    (void)snprintf(path, sizeof(path), "%s/%s", srcparent, p->name);
 	    if(is_dir(path))
 		p->srcdir = strdup(path);
 	}
     }
     if(!p->objdir && p->srcdir) {
-	sprintf(path, "%s/obj", p->srcdir);
+	(void)snprintf(path, sizeof(path), "%s/obj", p->srcdir);
 	if(is_dir(path))
 	    p->objdir = strdup(path);
 	else {
-	    sprintf(path, "%s/obj.%s", p->srcdir, MACHINE);
+	    (void)snprintf(path, sizeof(path), "%s/obj.%s", p->srcdir, MACHINE);
 	    if(is_dir(path))
 		p->objdir = strdup(path);
 	    else
@@ -514,13 +517,14 @@ void fillin_program(prog_t *p)
         }
     }
 
-    if(p->srcdir) sprintf(path, "%s/Makefile", p->srcdir);
+    if(p->srcdir)
+	(void)snprintf(path, sizeof(path), "%s/Makefile", p->srcdir);
     if(!p->objs && p->srcdir && is_nonempty_file(path))
 	fillin_program_objs(p, path);
 
     if(!p->objpaths && p->objdir && p->objs)
 	for(s = p->objs; s != NULL; s = s->next) {
-	    sprintf(line, "%s/%s", p->objdir, s->str);
+	    (void)snprintf(line, sizeof(line), "%s/%s", p->objdir, s->str);
 	    add_string(&p->objpaths, line);
 	}
 
@@ -566,7 +570,8 @@ void fillin_program_objs(prog_t *p, char *path)
     fprintf(f, "crunchgen_objs:\n\t@echo 'OBJS= '${OBJS}\n");
     fclose(f);
 
-    sprintf(line, "make -f %s crunchgen_objs 2>&1", tempfname);
+    (void)snprintf(line, sizeof(line), "make -f %s crunchgen_objs 2>&1",
+	tempfname);
     if((f = popen(line, "r")) == NULL) {
 	perror("submake pipe");
 	goterror = 1;
@@ -623,7 +628,7 @@ void gen_specials_cache(void)
     FILE *cachef;
     prog_t *p;
 
-    sprintf(line, "generating %s", cachename);
+    (void)snprintf(line, sizeof(line), "generating %s", cachename);
     status(line);
 
     if((cachef = fopen(cachename, "w")) == NULL) {
@@ -657,7 +662,7 @@ void gen_output_makefile(void)
     prog_t *p;
     FILE *outmk;
 
-    sprintf(line, "generating %s", outmkname);
+    (void)snprintf(line, sizeof(line), "generating %s", outmkname);
     status(line);
 
     if((outmk = fopen(outmkname, "w")) == NULL) {
@@ -687,7 +692,7 @@ void gen_output_cfile(void)
     prog_t *p;
     strlst_t *s;
 
-    sprintf(line, "generating %s", outcfname);
+    (void)snprintf(line, sizeof(line), "generating %s", outcfname);
     status(line);
 
     if((outcf = fopen(outcfname, "w")) == NULL) {
@@ -749,7 +754,7 @@ char *dir_search(char *progname)
     strlst_t *dir;
 
     for(dir=srcdirs; dir != NULL; dir=dir->next) {
-	sprintf(path, "%s/%s", dir->str, progname);
+	(void)snprintf(path, sizeof(path), "%s/%s", dir->str, progname);
 	if(is_dir(path)) return dir->str;
     }
     return NULL;
