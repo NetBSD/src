@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.48 1998/01/12 10:39:55 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.49 1998/02/23 00:47:30 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,7 +101,6 @@ struct	ite_softc con_itesoftc;
 u_char	cons_tabs[MAX_TABS];
 
 struct ite_softc *kbd_ite;
-int kbd_init;
 
 /* audio bell stuff */
 u_int bvolume = 10;
@@ -350,10 +349,7 @@ itecngetc(dev)
 	int c;
 
 	/* XXX this should be moved */
-	if (!kbd_init) {
-		kbd_init = 1;
-		kbdenable();
-	}
+	kbdenable();
 	do {
 		c = kbdgetcn();
 		c = ite_cnfilter(c, ITEFILT_CONSOLE);
@@ -472,10 +468,7 @@ iteopen(dev, mode, devtype, p)
 	if (error == 0) {
 		tp->t_winsize.ws_row = ip->rows;
 		tp->t_winsize.ws_col = ip->cols;
-		if (!kbd_init) {
-			kbd_init = 1;
-			kbdenable();
-		}
+		kbdenable();
 	} else if (first)
 		ite_off(dev, 0);
 	return (error);
