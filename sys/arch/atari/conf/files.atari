@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.56 1998/08/18 07:45:08 leo Exp $
+#	$NetBSD: files.atari,v 1.57 1998/08/18 11:51:07 leo Exp $
 
 maxpartitions 16
 
@@ -151,9 +151,6 @@ file	arch/atari/dev/wdc_mb.c		wdc_mb
 major	{wd = 14}
 
 # ISA Plug 'n Play devices
-# IT IS IMPORTANT THAT THIS IS INCLUDED AFTER ALL ISA DEVICES!
-# DO NOT MOVE IT!  (Thanks, The Mgmt.)
-include "dev/isapnp/files.isapnp"
 file	arch/atari/isa/isapnp_machdep.c	isapnp
 
 #
