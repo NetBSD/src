@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.4 1996/09/16 18:10:36 jonathan Exp $ */
+/*	$NetBSD: SYS.h,v 1.5 1996/09/17 01:32:22 jonathan Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,13 +42,39 @@
 #include <machine/machAsmDefs.h>
 
 #ifdef __STDC__
+#ifdef ABICALLS
+#define RSYSCALL(x)     .abicalls; \
+			LEAF(x); .set noreorder; .cpload t9; .set reorder; \
+			li v0,SYS_ ## x; syscall; \
+			bne a3,zero,err; j ra; \
+			err: la t9, _C_LABEL(cerror); jr t9; END(x);
+#define PSEUDO(x,y)     .abicalls; \
+			LEAF(x); .set noreorder; .cpload t9; .set reorder; \
+			li v0,SYS_ ## y; syscall; \
+			bne a3,zero,err; j ra; \
+			err: la t9, _C_LABEL(cerror); jr t9; END(x);
+#else	/* !ABICALLS */
 #define RSYSCALL(x)     LEAF(x); li v0,SYS_ ## x; syscall; \
 			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
 #define PSEUDO(x,y)     LEAF(x); li v0,SYS_ ## y; syscall; \
 			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
-#else
+#endif	/* !ABICALLS */
+#else /* traditional C */
+#ifdef ABICALLS
+#define RSYSCALL(x)     .abicalls; \
+			LEAF(x); .set noreorder; .cpload t9; .set reorder; \
+			li v0,SYS_/**/x; syscall; \
+			bne a3,zero,err; j ra; \
+			err: la t9, _C_LABEL(cerror); jr t9; END(x);
+#define PSEUDO(x,y)     .abicalls; \
+			LEAF(x); .set noreorder; .cpload t9; .set reorder; \
+			li v0,SYS_/**/y; syscall; \
+			bne a3,zero,err; j ra; \
+			err: la t9, _C_LABEL(cerror); jr t9; END(x);
+#else	/* !ABICALLS */
 #define RSYSCALL(x)     LEAF(x); li v0,SYS_/**/x; syscall; \
 			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
 #define PSEUDO(x,y)     LEAF(x); li v0,SYS_/**/y; syscall; \
 			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
-#endif
+#endif	/* !ABICALLS */
+#endif /* traditional C */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.4 1996/09/16 18:11:51 jonathan Exp $	*/
+/*	$NetBSD: fork.S,v 1.5 1996/09/17 01:32:44 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,10 +40,19 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)fork.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: fork.S,v 1.4 1996/09/16 18:11:51 jonathan Exp $")
+	ASMSTR("$NetBSD: fork.S,v 1.5 1996/09/17 01:32:44 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
+#ifdef ABICALLS
+	.abicalls
+#endif
+
 LEAF(fork)
+#ifdef ABICALLS
+	.set    noreorder
+	.cpload t9
+	.set    reorder
+#endif
 	li	v0, SYS_fork	# pid = fork()
 	syscall
 	bne	a3, zero, 2f
@@ -52,5 +61,6 @@ LEAF(fork)
 1:
 	j	ra
 2:
-	j	_C_LABEL(cerror)
+	la	t9, _C_LABEL(cerror)
+	jr	t9
 END(fork)

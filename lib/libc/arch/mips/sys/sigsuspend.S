@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.4 1996/09/16 18:12:11 jonathan Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.5 1996/09/17 01:33:00 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,10 +40,19 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sigsuspend.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sigsuspend.S,v 1.4 1996/09/16 18:12:11 jonathan Exp $")
+	ASMSTR("$NetBSD: sigsuspend.S,v 1.5 1996/09/17 01:33:00 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
+#ifdef ABICALLS
+	.abicalls
+#endif
+
 LEAF(sigsuspend)
+#ifdef ABICALLS
+	.set    noreorder
+	.cpload t9
+	.set    reorder
+#endif
 	lw	a0, 0(a0)		# indirect to mask arg
 	li	v0, SYS_sigsuspend
 	syscall
@@ -51,5 +60,6 @@ LEAF(sigsuspend)
 	move	v0, zero		# should not happen
 	j	ra
 1:
-	j	_C_LABEL(cerror)
+	la	t9, _C_LABEL(cerror)
+	jr	t9
 END(sigsuspend)

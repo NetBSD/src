@@ -1,4 +1,4 @@
-/*	$NetBSD: strcmp.S,v 1.4 1996/09/16 18:11:31 jonathan Exp $	*/
+/*	$NetBSD: strcmp.S,v 1.5 1996/09/17 01:32:36 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,12 +36,16 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/machAsmDefs.h>
+#include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)strcmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: strcmp.S,v 1.4 1996/09/16 18:11:31 jonathan Exp $")
+	ASMSTR("$NetBSD: strcmp.S,v 1.5 1996/09/17 01:32:36 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 /*
  * NOTE: this version assumes unsigned chars in order to be "8 bit clean".

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.4 1996/09/16 18:11:17 jonathan Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.5 1996/09/17 01:32:30 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,12 +36,16 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/machAsmDefs.h>
+#include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)bcmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: bcmp.S,v 1.4 1996/09/16 18:11:17 jonathan Exp $")
+	ASMSTR("$NetBSD: bcmp.S,v 1.5 1996/09/17 01:32:30 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 /* bcmp(s1, s2, n) */
 

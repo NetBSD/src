@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.5 1996/09/16 18:11:01 jonathan Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.6 1996/09/17 01:32:27 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,13 +37,17 @@
  */
 
 #include <sys/syscall.h>
-#include <machine/regnum.h>
-#include <machine/machAsmDefs.h>
+#include <mips/regnum.h>
+#include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: setjmp.S,v 1.5 1996/09/16 18:11:01 jonathan Exp $")
+	ASMSTR("$NetBSD: setjmp.S,v 1.6 1996/09/17 01:32:27 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 /*
  * C library -- setjmp, longjmp
@@ -59,8 +63,16 @@
 #define SETJMP_FRAME_SIZE	(STAND_FRAME_SIZE + 12)
 
 NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
-	subu	sp, sp, SETJMP_FRAME_SIZE	# allocate stack frame
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
+	subu	sp, sp, SETJMP_FRAME_SIZE	# allocate stack frame
+#ifdef ABICALLS
+	.cprestore 16
+#endif
 	sw	ra, STAND_RA_OFFSET(sp)		# save state
 	sw	a0, SETJMP_FRAME_SIZE(sp)
 	move	a0, zero			# get current signal mask
@@ -112,6 +124,13 @@ NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
 END(setjmp)
 
 LEAF(longjmp)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+	subu	sp, sp, 32
+	.cprestore 16
+#endif
 	sw	a1, ((V0 + 3) * 4)(a0)	# save return value in sc_regs[V0]
 	li	v0, SYS_sigreturn
 	syscall

@@ -1,4 +1,4 @@
-/*	$NetBSD: rindex.S,v 1.4 1996/09/16 18:11:29 jonathan Exp $	*/
+/*	$NetBSD: rindex.S,v 1.5 1996/09/17 01:32:35 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,12 +36,16 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/machAsmDefs.h>
+#include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)rindex.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: rindex.S,v 1.4 1996/09/16 18:11:29 jonathan Exp $")
+	ASMSTR("$NetBSD: rindex.S,v 1.5 1996/09/17 01:32:35 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 LEAF(rindex)
 	move	v0, zero		# default if not found
