@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.13 1999/09/20 04:48:05 lukem Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.14 2001/01/04 15:30:15 lukem Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -42,6 +42,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,26 +55,20 @@
 #define __RMTLIB_PRIVATE
 #include <rmt.h>		/* get prototypes for remapped functions */
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 #include "pathnames.h"
 
-static	int	_rmt_close __P((int));
-static	int	_rmt_ioctl __P((int, unsigned long, char *));
-static	off_t	_rmt_lseek __P((int, off_t, int));
-static	int	_rmt_open __P((const char *, int, int));
-static	int	_rmt_read __P((int, char *, unsigned int));
-static	int	_rmt_write __P((int, const void *, unsigned int));
-static	int	command __P((int, char *));
-static	int	remdev __P((const char *));
-static	void	rmtabort __P((int));
-static	int	status __P((int));
+static	int	_rmt_close(int);
+static	int	_rmt_ioctl(int, unsigned long, void *);
+static	off_t	_rmt_lseek(int, off_t, int);
+static	int	_rmt_open(const char *, int, int);
+static	ssize_t	_rmt_read(int, void *, size_t);
+static	ssize_t	_rmt_write(int, const void *, size_t);
+static	int	command(int, char *);
+static	int	remdev(const char *);
+static	void	rmtabort(int);
+static	int	status(int);
 
-	int	isrmt __P((int));
+	int	isrmt(int);
 
 
 #define BUFMAGIC	64	/* a magic number for buffer sizes */
@@ -89,11 +84,10 @@ static int Ptc[MAXUNIT][2] = { {-1, -1}, {-1, -1}, {-1, -1}, {-1, -1} };
 /*
  *	rmtabort --- close off a remote tape connection
  */
-
 static void
-rmtabort(fildes)
-	int fildes;
+rmtabort(int fildes)
 {
+
 	close(READ(fildes));
 	close(WRITE(fildes));
 	READ(fildes) = -1;
@@ -101,18 +95,14 @@ rmtabort(fildes)
 }
 
 
-
 /*
  *	command --- attempt to perform a remote tape command
  */
-
 static int
-command(fildes, buf)
-	int fildes;
-	char *buf;
+command(int fildes, char *buf)
 {
-	int blen;
-	void (*pstat) __P((int));
+	size_t blen;
+	void (*pstat)(int);
 
 	_DIAGASSERT(buf != NULL);
 
@@ -122,8 +112,7 @@ command(fildes, buf)
 
 	blen = strlen(buf);
 	pstat = signal(SIGPIPE, SIG_IGN);
-	if (write(WRITE(fildes), buf, blen) == blen)
-	{
+	if (write(WRITE(fildes), buf, blen) == blen) {
 		signal(SIGPIPE, pstat);
 		return(0);
 	}
@@ -140,14 +129,11 @@ command(fildes, buf)
 }
 
 
-
 /*
  *	status --- retrieve the status from the pipe
  */
-
 static int
-status(fildes)
-	int fildes;
+status(int fildes)
 {
 	int i;
 	char c, *cp;
@@ -157,23 +143,19 @@ status(fildes)
  *	read the reply command line
  */
 
-	for (i = 0, cp = buffer; i < BUFMAGIC; i++, cp++)
-	{
-		if (read(READ(fildes), cp, 1) != 1)
-		{
+	for (i = 0, cp = buffer; i < BUFMAGIC; i++, cp++) {
+		if (read(READ(fildes), cp, 1) != 1) {
 			rmtabort(fildes);
 			errno = EIO;
 			return(-1);
 		}
-		if (*cp == '\n')
-		{
+		if (*cp == '\n') {
 			*cp = 0;
 			break;
 		}
 	}
 
-	if (i == BUFMAGIC)
-	{
+	if (i == BUFMAGIC) {
 		rmtabort(fildes);
 		errno = EIO;
 		return(-1);
@@ -187,8 +169,7 @@ status(fildes)
 		if (*cp != ' ')
 			break;
 
-	if (*cp == 'E' || *cp == 'F')
-	{
+	if (*cp == 'E' || *cp == 'F') {
 		errno = atoi(cp + 1);
 		while (read(READ(fildes), &c, 1) == 1)
 			if (c == '\n')
@@ -204,8 +185,7 @@ status(fildes)
  *	check for mis-synced pipes
  */
 
-	if (*cp != 'A')
-	{
+	if (*cp != 'A') {
 		rmtabort(fildes);
 		errno = EIO;
 		return(-1);
@@ -214,8 +194,8 @@ status(fildes)
 	return(atoi(cp + 1));
 }
 
-#ifdef USE_REXEC
 
+#ifdef USE_REXEC
 /*
  * _rmt_rexec
  *
@@ -230,12 +210,10 @@ status(fildes)
  * with rsh are much more common on BSD systems.
  */
 
-static	int	_rmt_rexec __P((const char *, const char *));
+static	int	_rmt_rexec(const char *, const char *);
 
 static int
-_rmt_rexec(host, user)
-	const char *host;
-	const char *user;		/* may be NULL */
+_rmt_rexec(const char *host, const char *user)
 {
 	struct servent *rexecserv;
 
@@ -244,15 +222,16 @@ _rmt_rexec(host, user)
 
 	rexecserv = getservbyname("exec", "tcp");
 	if (NULL == rexecserv) {
-		fprintf (stderr, "? exec/tcp: service not available.");
-		exit (-1);
+		fprintf(stderr, "? exec/tcp: service not available.");
+		exit(-1);
 	}
 	if ((user != NULL) && *user == '\0')
 		user = (char *) NULL;
-	return rexec (&host, rexecserv->s_port, user, NULL,
-			"/etc/rmt", (int *)NULL);
+	return (rexec(&host, rexecserv->s_port, user, NULL,
+			"/etc/rmt", (int *)NULL));
 }
 #endif /* USE_REXEC */
+
 
 /*
  *	_rmt_open --- open a magtape device on system specified, as given user
@@ -266,10 +245,7 @@ _rmt_rexec(host, user)
 #define MAXHOSTLEN	257	/* BSD allows very long host names... */
 
 static int
-_rmt_open(path, oflag, mode)
-	const char *path;
-	int oflag;
-	int mode;
+_rmt_open(const char *path, int oflag, int mode)
 {
 	int i, rc;
 	char buffer[BUFMAGIC];
@@ -292,8 +268,7 @@ _rmt_open(path, oflag, mode)
 		if (READ(i) == -1 && WRITE(i) == -1)
 			break;
 
-	if (i == MAXUNIT)
-	{
+	if (i == MAXUNIT) {
 		errno = EMFILE;
 		return(-1);
 	}
@@ -314,8 +289,7 @@ _rmt_open(path, oflag, mode)
 	*sys = '\0';
 	path++;
 
-	if (*(path - 1) == '@')
-	{
+	if (*(path - 1) == '@') {
 		(void)strncpy(user, system, sizeof(login) - 1);
 				/* saw user part of user@host */
 		sys = system;			/* start over */
@@ -326,8 +300,7 @@ _rmt_open(path, oflag, mode)
 		path++;
 	}
 #ifdef COMPAT
-	else if (*(path - 1) == '.')
-	{
+	else if (*(path - 1) == '.') {
 		while (*path != ':') {
 			*user++ = *path++;
 		}
@@ -361,8 +334,7 @@ _rmt_open(path, oflag, mode)
 	if ((rc = fork()) == -1)
 		return(-1);
 
-	if (rc == 0)
-	{
+	if (rc == 0) {
 		char	*rshpath, *rsh;
 
 		close(0);
@@ -371,8 +343,8 @@ _rmt_open(path, oflag, mode)
 		close(1);
 		dup(Ctp[i][1]);
 		close(Ctp[i][0]); close(Ctp[i][1]);
-		(void) setuid (getuid ());
-		(void) setgid (getgid ());
+		(void) setuid(getuid());
+		(void) setgid(getgid());
 
 		if ((rshpath = getenv("RCMD_CMD")) == NULL)
 			rshpath = _PATH_RSH;
@@ -381,13 +353,10 @@ _rmt_open(path, oflag, mode)
 		else
 			rsh++;
 
-		if (*login)
-		{
+		if (*login) {
 			execl(rshpath, rsh, system, "-l", login,
 				_PATH_RMT, (char *) 0);
-		}
-		else
-		{
+		} else {
 			execl(rshpath, rsh, system,
 				_PATH_RMT, (char *) 0);
 		}
@@ -415,19 +384,15 @@ _rmt_open(path, oflag, mode)
 }
 
 
-
 /*
  *	_rmt_close --- close a remote magtape unit and shut down
  */
-
 static int
-_rmt_close(fildes)
-	int fildes;
+_rmt_close(int fildes)
 {
 	int rc;
 
-	if (command(fildes, "C\n") != -1)
-	{
+	if (command(fildes, "C\n") != -1) {
 		rc = status(fildes);
 
 		rmtabort(fildes);
@@ -438,18 +403,14 @@ _rmt_close(fildes)
 }
 
 
-
 /*
  *	_rmt_read --- read a buffer from a remote tape
  */
-
-static int
-_rmt_read(fildes, buf, nbyte)
-	int fildes;
-	char *buf;
-	unsigned int nbyte;
+static ssize_t
+_rmt_read(int fildes, void *buf, size_t nbyte)
 {
-	int rc, i;
+	size_t rc, i;
+	char *p;
 	char buffer[BUFMAGIC];
 
 	_DIAGASSERT(buf != NULL);
@@ -458,11 +419,10 @@ _rmt_read(fildes, buf, nbyte)
 	if (command(fildes, buffer) == -1 || (rc = status(fildes)) == -1)
 		return(-1);
 
-	for (i = 0; i < rc; i += nbyte, buf += nbyte)
-	{
-		nbyte = read(READ(fildes), buf, rc);
-		if (nbyte <= 0)
-		{
+	p = buf;
+	for (i = 0; i < rc; i += nbyte, p += nbyte) {
+		nbyte = read(READ(fildes), p, rc);
+		if (nbyte <= 0) {
 			rmtabort(fildes);
 			errno = EIO;
 			return(-1);
@@ -473,19 +433,14 @@ _rmt_read(fildes, buf, nbyte)
 }
 
 
-
 /*
  *	_rmt_write --- write a buffer to the remote tape
  */
-
-static int
-_rmt_write(fildes, buf, nbyte)
-	int fildes;
-	const void *buf;
-	unsigned int nbyte;
+static ssize_t
+_rmt_write(int fildes, const void *buf, size_t nbyte)
 {
 	char buffer[BUFMAGIC];
-	void (*pstat) __P((int));
+	void (*pstat)(int);
 
 	_DIAGASSERT(buf != NULL);
 
@@ -494,33 +449,27 @@ _rmt_write(fildes, buf, nbyte)
 		return(-1);
 
 	pstat = signal(SIGPIPE, SIG_IGN);
-	if (write(WRITE(fildes), buf, nbyte) == nbyte)
-	{
-		signal (SIGPIPE, pstat);
+	if (write(WRITE(fildes), buf, nbyte) == nbyte) {
+		signal(SIGPIPE, pstat);
 		return(status(fildes));
 	}
 
-	signal (SIGPIPE, pstat);
+	signal(SIGPIPE, pstat);
 	rmtabort(fildes);
 	errno = EIO;
 	return(-1);
 }
 
 
-
 /*
  *	_rmt_lseek --- perform an imitation lseek operation remotely
  */
-
 static off_t
-_rmt_lseek(fildes, offset, whence)
-	int fildes;
-	off_t offset;
-	int whence;
+_rmt_lseek(int fildes, off_t offset, int whence)
 {
 	char buffer[BUFMAGIC];
 
-	(void)snprintf(buffer, sizeof buffer, "L%qd\n%d\n", (long long)offset,
+	(void)snprintf(buffer, sizeof buffer, "L%lld\n%d\n", (long long)offset,
 	    whence);
 	if (command(fildes, buffer) == -1)
 		return(-1);
@@ -532,17 +481,13 @@ _rmt_lseek(fildes, offset, whence)
 /*
  *	_rmt_ioctl --- perform raw tape operations remotely
  */
-
 #ifdef RMTIOCTL
 static int
-_rmt_ioctl(fildes, op, arg)
-	int fildes;
-	unsigned long op;
-	char *arg;
+_rmt_ioctl(int fildes, unsigned long op, void *arg)
 {
 	char c;
-	int rc, cnt;
-	char buffer[BUFMAGIC];
+	size_t rc, cnt;
+	char buffer[BUFMAGIC], *p;
 
 	_DIAGASSERT(arg != NULL);
 
@@ -550,8 +495,7 @@ _rmt_ioctl(fildes, op, arg)
  *	MTIOCOP is the easy one. nothing is transfered in binary
  */
 
-	if (op == MTIOCTOP)
-	{
+	if (op == MTIOCTOP) {
 		(void)snprintf(buffer, sizeof buffer, "I%d\n%d\n",
 		    ((struct mtop *)arg)->mt_op,
 		    ((struct mtop *)arg)->mt_count);
@@ -564,8 +508,7 @@ _rmt_ioctl(fildes, op, arg)
  *	we can only handle 2 ops, if not the other one, punt
  */
 
-	if (op != MTIOCGET)
-	{
+	if (op != MTIOCGET) {
 		errno = EINVAL;
 		return(-1);
 	}
@@ -581,11 +524,10 @@ _rmt_ioctl(fildes, op, arg)
 	if (command(fildes, "S") == -1 || (rc = status(fildes)) == -1)
 		return(-1);
 
-	for (; rc > 0; rc -= cnt, arg += cnt)
-	{
-		cnt = read(READ(fildes), arg, rc);
-		if (cnt <= 0)
-		{
+	p = arg;
+	for (; rc > 0; rc -= cnt, p += cnt) {
+		cnt = read(READ(fildes), p, rc);
+		if (cnt <= 0) {
 			rmtabort(fildes);
 			errno = EIO;
 			return(-1);
@@ -599,19 +541,19 @@ _rmt_ioctl(fildes, op, arg)
  *	and reverse all the bytes
  */
 
-	if (((struct mtget *) arg)->mt_type < 256)
+	if (((struct mtget *) p)->mt_type < 256)
 		return(0);
 
-	for (cnt = 0; cnt < rc; cnt += 2)
-	{
-		c = arg[cnt];
-		arg[cnt] = arg[cnt+1];
-		arg[cnt+1] = c;
+	for (cnt = 0; cnt < rc; cnt += 2) {
+		c = p[cnt];
+		p[cnt] = p[cnt+1];
+		p[cnt+1] = c;
 	}
 
 	return(0);
   }
 #endif /* RMTIOCTL */
+
 
 /*
  *	Added routines to replace open(), close(), lseek(), ioctl(), etc.
@@ -657,16 +599,13 @@ _rmt_ioctl(fildes, op, arg)
  */
 
 static int
-remdev(path)
-	const char *path;
+remdev(const char *path)
 {
 
 	_DIAGASSERT(path != NULL);
 
-	if ((path = strchr (path, ':')) != NULL)
-	{
-		if (strncmp (path + 1, "/dev/", 5) == 0)
-		{
+	if ((path = strchr(path, ':')) != NULL) {
+		if (strncmp(path + 1, "/dev/", 5) == 0) {
 			return (1);
 		}
 	}
@@ -678,43 +617,25 @@ remdev(path)
  *	Open a local or remote file.  Looks just like open(2) to
  *	caller.
  */
-
 int
-#ifdef __STDC__
 rmtopen(const char *path, int oflag, ...)
-#else
-rmtopen(va_alist)
-	va_decl
-#endif
 {
 	mode_t mode;
 	int fd;
 	va_list ap;
-#if __STDC__
 	va_start(ap, oflag);
-#else
-	const char *path;
-	int oflag;
-
-	va_start(ap);
-	path = va_arg(ap, const char *);
-	oflag = va_arg(ap, int);
-#endif
 
 	mode = va_arg(ap, mode_t);
 	va_end(ap);
 
 	_DIAGASSERT(path != NULL);
 
-	if (remdev (path))
-	{
-		fd = _rmt_open (path, oflag, mode);
+	if (remdev(path)) {
+		fd = _rmt_open(path, oflag, mode);
 
-		return (fd == -1) ? -1 : (fd + REM_BIAS);
-	}
-	else
-	{
-		return (open (path, oflag, mode));
+		return ((fd == -1) ? -1 : (fd + REM_BIAS));
+	} else {
+		return (open(path, oflag, mode));
 	}
 }
 
@@ -724,20 +645,15 @@ rmtopen(va_alist)
  */
 
 int
-rmtaccess(path, amode)
-	const char *path;
-	int amode;
+rmtaccess(const char *path, int amode)
 {
 
 	_DIAGASSERT(path != NULL);
 
-	if (remdev (path))
-	{
+	if (remdev(path)) {
 		return (0);		/* Let /etc/rmt find out */
-	}
-	else
-	{
-		return (access (path, amode));
+	} else {
+		return (access(path, amode));
 	}
 }
 
@@ -745,11 +661,10 @@ rmtaccess(path, amode)
 /*
  *	Isrmt. Let a programmer know he has a remote device.
  */
-
 int
-isrmt(fd)
-	int fd;
+isrmt(int fd)
 {
+
 	return (fd >= REM_BIAS);
 }
 
@@ -757,23 +672,16 @@ isrmt(fd)
 /*
  *	Read from stream.  Looks just like read(2) to caller.
  */
-
 ssize_t
-rmtread(fildes, buf, nbyte)
-	int fildes;
-	void *buf;
-	size_t nbyte;
+rmtread(int fildes, void *buf, size_t nbyte)
 {
 
 	_DIAGASSERT(buf != NULL);
 
-	if (isrmt (fildes))
-	{
-		return (_rmt_read (fildes - REM_BIAS, buf, nbyte));
-	}
-	else
-	{
-		return (read (fildes, buf, nbyte));
+	if (isrmt(fildes)) {
+		return (_rmt_read(fildes - REM_BIAS, buf, nbyte));
+	} else {
+		return (read(fildes, buf, nbyte));
 	}
 }
 
@@ -781,43 +689,29 @@ rmtread(fildes, buf, nbyte)
 /*
  *	Write to stream.  Looks just like write(2) to caller.
  */
-
 ssize_t
-rmtwrite(fildes, buf, nbyte)
-	int fildes;
-	const void *buf;
-	size_t nbyte;
+rmtwrite(int fildes, const void *buf, size_t nbyte)
 {
 
 	_DIAGASSERT(buf != NULL);
 
-	if (isrmt (fildes))
-	{
-		return (_rmt_write (fildes - REM_BIAS, buf, nbyte));
-	}
-	else
-	{
-		return (write (fildes, buf, nbyte));
+	if (isrmt(fildes)) {
+		return (_rmt_write(fildes - REM_BIAS, buf, nbyte));
+	} else {
+		return (write(fildes, buf, nbyte));
 	}
 }
 
 /*
  *	Perform lseek on file.  Looks just like lseek(2) to caller.
  */
-
 off_t
-rmtlseek(fildes, offset, whence)
-	int fildes;
-	off_t offset;
-	int whence;
+rmtlseek(int fildes, off_t offset, int whence)
 {
-	if (isrmt (fildes))
-	{
-		return (_rmt_lseek (fildes - REM_BIAS, offset, whence));
-	}
-	else
-	{
-		return (lseek (fildes, offset, whence));
+	if (isrmt(fildes)) {
+		return (_rmt_lseek(fildes - REM_BIAS, offset, whence));
+	} else {
+		return (lseek(fildes, offset, whence));
 	}
 }
 
@@ -825,63 +719,41 @@ rmtlseek(fildes, offset, whence)
 /*
  *	Close a file.  Looks just like close(2) to caller.
  */
-
 int
-rmtclose(fildes)
-	int fildes;
+rmtclose(int fildes)
 {
-	if (isrmt (fildes))
-	{
-		return (_rmt_close (fildes - REM_BIAS));
-	}
-	else
-	{
-		return (close (fildes));
+	if (isrmt(fildes)) {
+		return (_rmt_close(fildes - REM_BIAS));
+	} else {
+		return (close(fildes));
 	}
 }
+
 
 /*
  *	Do ioctl on file.  Looks just like ioctl(2) to caller.
  */
-
 int
-#ifdef __STDC__
 rmtioctl(int fildes, unsigned long request, ...)
-#else
-rmtioctl(va_alist)
-	va_decl
-#endif
 {
 	char *arg;
 	va_list ap;
-#if __STDC__
 	va_start(ap, request);
-#else
-	int fildes;
-	unsigned long request;
-
-	va_start(ap);
-	filedes = va_arg(ap, int);
-	request = va_arg(ap, unsigned long);
-#endif
 
 	arg = va_arg(ap, char *);
 	va_end(ap);
 
 	/* XXX: arg may be NULL ? */
 
-	if (isrmt (fildes))
-	{
+	if (isrmt(fildes)) {
 #ifdef RMTIOCTL
-		return (_rmt_ioctl (fildes - REM_BIAS, request, arg));
+		return (_rmt_ioctl(fildes - REM_BIAS, request, arg));
 #else
 		errno = EOPNOTSUPP;
-		return (-1);		/* For now  (fnf) */
+		return (-1);		/* For now (fnf) */
 #endif
-	}
-	else
-	{
-		return (ioctl (fildes, request, arg));
+	} else {
+		return (ioctl(fildes, request, arg));
 	}
 }
 
@@ -890,42 +762,32 @@ rmtioctl(va_alist)
  *	Duplicate an open file descriptor.  Looks just like dup(2)
  *	to caller.
  */
-
 int
-rmtdup(fildes)
-	int fildes;
+rmtdup(int fildes)
 {
-	if (isrmt (fildes))
-	{
+	if (isrmt(fildes)) {
 		errno = EOPNOTSUPP;
 		return (-1);		/* For now (fnf) */
-	}
-	else
-	{
-		return (dup (fildes));
+	} else {
+		return (dup(fildes));
 	}
 }
+
 
 /*
  *	Get file status.  Looks just like fstat(2) to caller.
  */
-
 int
-rmtfstat(fildes, buf)
-	int fildes;
-	struct stat *buf;
+rmtfstat(int fildes, struct stat *buf)
 {
 
 	_DIAGASSERT(buf != NULL);
 
-	if (isrmt (fildes))
-	{
+	if (isrmt(fildes)) {
 		errno = EOPNOTSUPP;
 		return (-1);		/* For now (fnf) */
-	}
-	else
-	{
-		return (fstat (fildes, buf));
+	} else {
+		return (fstat(fildes, buf));
 	}
 }
 
@@ -933,126 +795,91 @@ rmtfstat(fildes, buf)
 /*
  *	Get file status.  Looks just like stat(2) to caller.
  */
-
 int
-rmtstat(path, buf)
-	const char *path;
-	struct stat *buf;
+rmtstat(const char *path, struct stat *buf)
 {
 
 	_DIAGASSERT(path != NULL);
 	_DIAGASSERT(buf != NULL);
 
-	if (remdev (path))
-	{
+	if (remdev(path)) {
 		errno = EOPNOTSUPP;
 		return (-1);		/* For now (fnf) */
-	}
-	else
-	{
-		return (stat (path, buf));
+	} else {
+		return (stat(path, buf));
 	}
 }
-
 
 
 /*
  *	Create a file from scratch.  Looks just like creat(2) to the caller.
  */
-
 int
-rmtcreat(path, mode)
-	const char *path;
-	mode_t mode;
+rmtcreat(const char *path, mode_t mode)
 {
 
 	_DIAGASSERT(path != NULL);
 
-	if (remdev (path))
-	{
-		return (rmtopen (path, 1 | O_CREAT, mode));
-	}
-	else
-	{
-		return (creat (path, mode));
+	if (remdev(path)) {
+		return (rmtopen(path, 1 | O_CREAT, mode));
+	} else {
+		return (creat(path, mode));
 	}
 }
+
 
 /*
  *	Rmtfcntl. Do a remote fcntl operation.
  */
-
 int
-#ifdef __STDC__
 rmtfcntl(int fd, int cmd, ...)
-#else
-rmtfcntl(va_alist)
-	va_decl
-#endif
 {
 	void *arg;
 	va_list ap;
-#if __STDC__
 	va_start(ap, cmd);
-#else
-	int fd, cmd;
-
-	va_start(ap);
-	fd = va_arg(ap, int);
-	cmd = va_arg(ap, int);
-#endif
 
 	arg = va_arg(ap, void *);
 	va_end(ap);
 
 	/* XXX: arg may be NULL ? */
 
-	if (isrmt (fd))
-	{
+	if (isrmt(fd)) {
 		errno = EOPNOTSUPP;
 		return (-1);
-	}
-	else
-	{
-		return (fcntl (fd, cmd, arg));
+	} else {
+		return (fcntl(fd, cmd, arg));
 	}
 }
+
 
 /*
  *	Rmtisatty.  Do the isatty function.
  */
-
 int
-rmtisatty(fd)
-	int fd;
+rmtisatty(int fd)
 {
-	if (isrmt (fd))
+
+	if (isrmt(fd))
 		return (0);
 	else
-		return (isatty (fd));
+		return (isatty(fd));
 }
 
 
 /*
  *	Get file status, even if symlink.  Looks just like lstat(2) to caller.
  */
-
 int
-rmtlstat(path, buf)
-	const char *path;
-	struct stat *buf;
+rmtlstat(const char *path, struct stat *buf)
 {
 
 	_DIAGASSERT(path != NULL);
 	_DIAGASSERT(buf != NULL);
 
-	if (remdev (path))
-	{
+	if (remdev(path)) {
 		errno = EOPNOTSUPP;
 		return (-1);		/* For now (fnf) */
-	}
-	else
-	{
-		return (lstat (path, buf));
+	} else {
+		return (lstat(path, buf));
 	}
 }
