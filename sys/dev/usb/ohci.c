@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.1 1998/07/12 19:51:59 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.2 1998/07/23 01:46:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1160,7 +1160,7 @@ ohci_open(pipe)
 			(dev->lowspeed ? OHCI_ED_SPEED : 0) | 
 			((ed->bmAttributes & UE_XFERTYPE) == UE_ISOCHRONOUS ?
 			 OHCI_ED_FORMAT_ISO : OHCI_ED_FORMAT_GEN) |
-			OHCI_ED_SET_MAXP(dev->ddesc.bMaxPacketSize);
+			OHCI_ED_SET_MAXP(UGETW(pipe->endpoint->edesc->wMaxPacketSize));
 		sed->ed->ed_headp = sed->ed->ed_tailp = std->physaddr;
 
 		switch (ed->bmAttributes & UE_XFERTYPE) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.3 1998/07/22 12:22:09 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.4 1998/07/23 01:46:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -587,7 +587,7 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	dev->state = USBD_DEVICE_DEFAULT;
 	dev->quirks = &usbd_no_quirk;
 	dev->address = USB_START_ADDR;
-	dev->ddesc.bMaxPacketSize = USB_MAX_IPACKET;
+	dev->ddesc.bMaxPacketSize = 0;
 	dev->lowspeed = lowspeed != 0;
 	dev->depth = depth;
 	dev->powersrc = up;
@@ -609,6 +609,8 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	DPRINTF(("usbd_new_device: adding unit addr=%d, rev=%02x, class=%d, subclass=%d, protocol=%d, maxpacket=%d, ls=%d\n", 
 		 addr, UGETW(d->bcdUSB), d->bDeviceClass, d->bDeviceSubClass,
 		 d->bDeviceProtocol, d->bMaxPacketSize, dev->lowspeed));
+
+	USETW(dev->def_ep_desc.wMaxPacketSize, d->bMaxPacketSize);
 
 	/* Get the full device descriptor. */
 	r = usbd_get_device_desc(dev, d);
