@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn26,v 1.9 2003/10/10 22:42:39 jdolecek Exp $
+#	$NetBSD: majors.acorn26,v 1.10 2003/10/15 18:20:19 jdolecek Exp $
 #
 # Device majors for acorn26
 #
@@ -34,6 +34,7 @@ device-major	clockctl	char 27			clockctl
 device-major	systrace	char 28			systrace
 device-major	cgd		char 29  block 8	cgd
 device-major	ksyms		char 30			ksyms
+device-major	lkm		char 31			lkm
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
