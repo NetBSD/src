@@ -54,7 +54,9 @@ hashf (name, len, hashsize)
    Otherwise, compute the length by scanning the entire name.
 
    If HASH is >= 0, it is the precomputed hash code.
-   Otherwise, compute the hash code.  */
+   Otherwise, compute the hash code.
+   If HASH == -1, it is normal lookups.  Else, if HASH is -2, it is
+   lookups for undef.  */
 
 HASHNODE *
 cpp_lookup (pfile, name, len, hash)
@@ -65,7 +67,7 @@ cpp_lookup (pfile, name, len, hash)
 {
   register const U_CHAR *bp;
   register HASHNODE *bucket;
-  int hashsave = hash;
+  int islookup = (hash == -1);
   static int warned_unix = 0;
 
   if (len < 0)
@@ -84,7 +86,7 @@ cpp_lookup (pfile, name, len, hash)
     bucket = bucket->next;
   }
   /* Lookups pass no hashcode.  #define passes one.  Look for no hashcode. */
-  if ((hashsave < 0) && !strncmp(name, "unix", len) && !warned_unix) {
+  if (islookup && !strncmp(name, "unix", len) && !warned_unix) {
     warned_unix++;
     warning("deprecated symbol \"unix\" is no longer predefined");
   }
