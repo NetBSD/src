@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.18 2000/02/26 08:39:20 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.19 2000/02/28 12:08:24 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.41 2000/02/24 16:34:50 itojun Exp $	*/
 
 /*
@@ -777,11 +777,7 @@ nd6_free(rt)
 
 	if (!ip6_forwarding && ip6_accept_rtadv) { /* XXX: too restrictive? */
 		int s;
-#ifdef __NetBSD__
 		s = splsoftnet();
-#else
-		s = splnet();
-#endif
 		dr = defrouter_lookup(&((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
 				      rt->rt_ifp);
 		if (ln->ln_router || dr) {
