@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsswitch.conf.5,v 1.22 2003/02/14 15:20:20 grant Exp $
+.\"	$NetBSD: nsswitch.conf.5,v 1.23 2004/10/24 23:58:58 lukem Exp $
 .\"
 .\"  Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -31,7 +31,7 @@
 .\"  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 .\"  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 27, 1999
+.Dd October 25, 2004
 .Dt NSSWITCH.CONF 5
 .Os
 .Sh NAME
@@ -91,18 +91,12 @@ If this is present, it must be the only source for that entry.
 The following databases are used by the following C library functions:
 .Bl -column "netgroup" -offset indent -compact
 .Sy Database	Used by
-.It group
-.Xr getgrent 3
-.It hosts
-.Xr gethostbyname 3
-.It netgroup
-.Xr getnetgrent 3
-.It networks
-.Xr getnetbyname 3
-.It passwd
-.Xr getpwent 3
-.It shells
-.Xr getusershell 3
+.It group Ta Xr getgrent 3
+.It hosts Ta Xr gethostbyname 3
+.It netgroup Ta Xr getnetgrent 3
+.It networks Ta Xr getnetbyname 3
+.It passwd Ta Xr getpwent 3
+.It shells Ta Xr getusershell 3
 .El
 .Ss Status codes
 The following status codes are available:
