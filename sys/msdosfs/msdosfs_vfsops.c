@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.2.2.6 1993/12/02 06:25:03 cgd Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.2.2.7 1993/12/02 07:00:33 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -22,7 +22,11 @@
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
+#if (BSD > 199103) || defined(__NetBSD__)
 #include <miscfs/specfs/specdev.h>		/* defines v_rdev */
+#else
+#include <sys/specdev.h>			/* defines v_rdev */
+#endif
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/file.h>
