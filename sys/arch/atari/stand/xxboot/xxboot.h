@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.h,v 1.3 1996/12/26 14:55:16 leo Exp $	*/
+/*	$NetBSD: xxboot.h,v 1.4 1996/12/28 23:37:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -52,6 +52,10 @@
 #define	dmodus		0x8606
 #define	dmahi		0x8609
 #define	gpip		0xfa01
+
+#define	rtcrnr		0x8961
+#define	rtcdat		0x8963
+#define	BOOTPREF	15
 
 #define	idesdh		0xfff00019
 #define	idedor		0xfff00005
