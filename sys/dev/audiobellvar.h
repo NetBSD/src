@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobellvar.h,v 1.1 2004/01/17 20:55:59 bjh21 Exp $	*/
+/*	$NetBSD: audiobellvar.h,v 1.2 2004/01/17 22:14:18 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2004 Ben Harris
@@ -27,4 +27,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * To make a noise, call audiobell(dev, pitch, period, volume, poll).
+ * dev is a struct device * for the audio device to use.
+ * pitch is the pitch of the bell in Hz,
+ * period is the length in ms,
+ * volume is the amplitude in % of max,
+ * poll is TRUE if we may not block or use interrupts.
+ *
+ * This function is designed to be passed to pckbd_hookup_bell() and
+ * equivalents.
+ */
 extern void audiobell(void *, u_int, u_int, u_int, int);
