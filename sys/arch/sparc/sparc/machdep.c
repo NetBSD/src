@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 1997/04/06 21:41:36 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.80 1997/05/24 20:13:48 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -311,7 +311,9 @@ allocsys(v)
 #define	valloc(name, type, num) \
 	    v = (caddr_t)(((name) = (type *)v) + (num))
 	valloc(callout, struct callout, ncallout);
+#if 1/*OLDSWAP*/
 	valloc(swapmap, struct map, nswapmap = maxproc * 2);
+#endif
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
@@ -872,27 +874,18 @@ stackdump()
 	}
 }
 
-int bt2pmt[] = {
-	PMAP_OBIO,
-	PMAP_OBIO,
-	PMAP_VME16,
-	PMAP_VME32,
-	PMAP_OBIO
-};
-
 /*
  * Map an I/O device given physical address and size in bytes, e.g.,
  *
  *	mydev = (struct mydev *)mapdev(myioaddr, 0,
- *				       0, sizeof(struct mydev), pmtype);
+ *				       0, sizeof(struct mydev));
  *
  * See also machine/autoconf.h.
  */
 void *
-mapdev(phys, virt, offset, size, bustype)
+mapdev(phys, virt, offset, size)
 	register struct rom_reg *phys;
 	register int offset, virt, size;
-	register int bustype;
 {
 	register vm_offset_t v;
 	register vm_offset_t pa;
@@ -918,9 +911,7 @@ mapdev(phys, virt, offset, size, bustype)
 			/* note: preserve page offset */
 
 	pa = trunc_page(phys->rr_paddr + offset);
-	pmtype = (CPU_ISSUN4M)
-			? (phys->rr_iospace << PMAP_SHFT4M)
-			: bt2pmt[bustype];
+	pmtype = PMAP_IOENC(phys->rr_iospace);
 
 	do {
 		pmap_enter(pmap_kernel(), v, pa | pmtype | PMAP_NC,
