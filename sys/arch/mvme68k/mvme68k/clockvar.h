@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.6 2001/04/14 13:53:06 scw Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.7 2001/08/12 18:33:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 #ifndef _MVME68K_CLOCKVAR_H
 #define _MVME68K_CLOCKVAR_H
 
+#include <dev/clock_subr.h>
+#include <dev/ic/mk48txxreg.h>
+
 /*
  * Defintions exported to ASIC-specific clock attachment.
  */
@@ -50,14 +53,15 @@ extern	int clock_statvar;
 extern	int clock_statmin;
 
 struct clock_attach_args {
-	bus_space_tag_t		ca_bust;
-	bus_space_handle_t	ca_bush;
 	void			(*ca_initfunc) __P((void *, int, int));
 	long			(*ca_microtime) __P((void *));
 	void			*ca_arg;
 };
 
-void	clock_config __P((struct device *, struct clock_attach_args *));
+void	clock_config __P((struct device *, struct clock_attach_args *,
+			struct evcnt *));
+
+void	clock_rtc_config __P((todr_chip_handle_t));
 
 /*
  * Macro to compute a new randomized interval.  The intervals are
@@ -71,5 +75,16 @@ void	clock_config __P((struct device *, struct clock_attach_args *));
 		do { r = random() & (var - 1); } while (r == 0);	\
 		(statmin + r);						\
 	})
+
+/*
+ * Sun chose the year `68' as their base count, so that
+ * cl_year==0 means 1968.
+ */
+#define YEAR0   1968
+
+/*
+ * interrupt level for clock
+ */
+#define CLOCK_LEVEL 5
 
 #endif /* _MVME68K_CLOCKVAR_H */
