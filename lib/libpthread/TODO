@@ -27,6 +27,8 @@ Bugs to fix:
 - locks: Add support for RAS on uniprocessors.
 - pthread_lock.c: pthread_spin_lock() should use a loop around
   __cpu_simple_lock_try() so that it is easy to add support for RAS.
+- Add locking to ld.elf_so so that multiple threads doing lazy binding
+  doesn't trash things.
 
 
 Interfaces/features to implement:
