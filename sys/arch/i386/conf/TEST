@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.1 1993/09/14 17:28:07 mycroft Exp $
+#	$Id: TEST,v 1.2 1993/09/24 08:45:03 mycroft Exp $
 #
 
 # standard options
@@ -35,7 +35,7 @@ options		FFS			# Berkeley fast file system
 options		MFS			# memory file system; uses RAM and swap
 options		NFSSERVER		# Network File System server
 options		NFSCLIENT		# Network File System client
-options		ISOFS			# ISO 9660 (CD-ROM) file system, with RR
+options		ISOFS			# ISO 9660 CD-ROM file system, with RR
 options		MSDOSFS			# MS-DOS FAT file system
 options		FDESC			# /dev/fd
 options		KERNFS			# kernel file system; recommended
@@ -53,83 +53,75 @@ config		netbsd root on fd0
 
 include		"std.i386"
 
-#timer1 at isa? port 0x48 irq 8			# only in EISA boxes
+#timer1 at isa? port 0x48			# only in EISA boxes
 
 #console
-pc0 at isa? port 0x60 irq 1
+pc0 at isa? port 0x60
 
 #math co-processor
-#npx0 at isa? port 0xf0 irq 13
+npx0 at isa? port 0xf0
 
 #serial ports
-#com0 at isa? port 0x3f8 irq 4
-#com1 at isa? port 0x2f8 irq 3
-#com2 at isa? port 0x3e8 irq 5
-#com3 at isa? port 0x2e8 irq 9
+#com0 at isa? port 0x3f8			# 8250, 16450, 16550
+#com1 at isa? port 0x2f8
+#com2 at isa? port 0x3e8
+#com3 at isa? port 0x2e8
 
 #parallel ports
-#lpt0 at isa? port 0x378 irq 7
-#lpt1 at isa? port 0x278 irq 5
+#lpt0 at isa? port 0x378
+#lpt1 at isa? port 0x278
 #lpa0 at isa? port 0x3bc
 
 #bus mice
-#mms0 at isa? port 0x23c irq 5			# MicroSoft InPort
-#mms0 at isa? port 0x238 irq ?
-#lms0 at isa? port 0x23c irq 5			# Logitech
-#lms0 at isa? port 0x238 irq ?
-#pms0 at isa? port 0x60 irq 5			# PS/2 auxiliary port; broken
+#mms0 at isa? port 0x23c			# MicroSoft InPort
+#mms1 at isa? port 0x238
+#lms0 at isa? port 0x23c			# Logitech
+#lms1 at isa? port 0x238
+#pms0 at isa? port 0x60				# PS/2 auxiliary port; broken
 
 #non-scsi disk controllers
-#wdc0 at isa? port 0x1f0 irq 14			# MFM, RLL, IDE, ESDI
-#wd0 at wdc0 drive 0
-#wd1 at wdc0 drive 1
-#wdc1 at isa? port 0x170 irq 12
-#wd2 at wdc1 drive 0
-#wd3 at wdc1 drive 1
+#wdc0 at isa? port 0x1f0			# MFM, RLL, IDE, ESDI
+#wdc1 at isa? port 0x170
+#wd* at wdc? drive ?
 
 #non-scsi floppy controllers
-fdc0 at isa? port 0x3f0 irq 6 drq 2
-fd0 at fdc0 drive 0
-#fd1 at fdc0 drive 1
-#fdc1 at isa? port 0x370 irq ? drq ?
-#fd2 at fdc1 drive 0
-#fd3 at fdc1 drive 1
+fdc0 at isa? port 0x3f0 drq 2
+#fdc1 at isa? port 0x370 drq ?
+fd* at fdc? drive ?
 
 #non-scsi tape drives
-#wt0 at isa? port 0x300 irq 5 drq 1		# QIC-02, QIC-36
+#wt0 at isa? port 0x300 drq 1			# QIC-02, QIC-36
 
 #scsi
-#aha0 at isa? port 0x330 irq 11 drq 5		# Adaptec 1542
-#aha1 at isa? port 0x334 irq ? drq ?
-#ahb0 at eisa? irq 11 drq 5			# Adaptec 1742
-#bt0 at isa? port 0x330 irq 11 drq 5		# Bustec 742
-#bt1 at isa? port 0x334 irq ? drq ?
-#uha0 at isa? port 0x330 irq 11 drq 5		# UltraStor 14f, 34f
-#wds0 at isa? port 0x350 irq 11 drq 5		# WD 7000
+#aha0 at isa? port 0x330 drq 5			# Adaptec 1542
+#aha1 at isa? port 0x334 drq ?
+#ahb0 at isa? port 0x330 drq 5			# Adaptec 1742
+#bt0 at isa? port 0x330 drq 5			# Bustec 742
+#bt1 at isa? port 0x334 drq ?
+#uha0 at isa? port 0x330 drq 5			# UltraStor 14f, 34f
+#wds0 at isa? port 0x350 drq 5			# WD 7000
 
-#tg0 at scsi? target 0
 #tg* at scsi? target ?
 
-#sd0 at tg0 drive 0
 #sd* at tg? drive ?				# SCSI disks
 #st* at tg? drive ?				# SCSI tapes
 #cd* at tg? drive ?				# SCSI CD-ROMs
 #ch* at tg? drive ?				# SCSI autochangers
 
 #ethernet
-#ed0 at isa? port 0x300 irq 9			# Novell NE1000, NE2000
-#ed0 at isa? port 0x300 irq 10 iomem 0xcc000	# SMC hardware config
-#ed0 at isa? port 0x300 irq 10 iomem 0xd0000	# old SMC default
-#ed0 at isa? port 0x250 irq 9 iomem 0xd8000	# 3C503 default config
-#hp0 at isa? port 0x300 irq 5
-#is0 at isa? port 0x280 irq 10 drq 7		# IsoLAN AT 4141, IsoLink 4110
+#ed0 at isa? port 0x300				# Novell NE1000, NE2000
+#ed0 at isa? port 0x300 iomem 0xcc000		# SMC hardware config
+#ed0 at isa? port 0x300 iomem 0xd0000		# old SMC default
+#ed0 at isa? port 0x250 iomem 0xd8000		# 3C503 default config
+#hp0 at isa? port 0x300
+#is0 at isa? port 0x280 drq 7			# IsoLAN AT 4141, IsoLink 4110
 
-#pseudo-device	fpe			# floating point emulator
-#pseudo-device	spkr			# speaker queue
-pseudo-device	pty 64			# pseudo-terminals
-pseudo-device	loop 1			# loopback network
-pseudo-device	bpfilter 4		# packet filter
-pseudo-device	sl 1			# compressed SLIP
-pseudo-device	ppp 1			# Point-to-Point Protocol
-#pseudo-device	tb 2			# was never ported to 4.4
-#pseudo-device	tun			# missing header files
+#pseudo-device	fpe				# floating point emulator
+#pseudo-device	spkr				# speaker queue
+pseudo-device	pty 64				# pseudo-terminals
+pseudo-device	loop 1				# loopback network
+pseudo-device	bpfilter 4			# packet filter
+pseudo-device	sl 1				# compressed SLIP
+pseudo-device	ppp 1				# Point-to-Point Protocol
+#pseudo-device	tb 2				# was never ported to 4.4
+#pseudo-device	tun				# missing header files
