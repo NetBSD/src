@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.28 1995/04/19 22:37:27 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.29 1995/07/04 07:16:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -43,9 +43,6 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-int	rawread		__P((dev_t, struct uio *, int));
-int	rawwrite	__P((dev_t, struct uio *, int));
-void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #ifndef LKM
@@ -60,6 +57,7 @@ bdev_decl(ct);
 bdev_decl(mt);
 #include "rd.h"
 bdev_decl(rd);
+bdev_decl(sw);
 #include "sd.h"
 bdev_decl(sd);
 #include "ccd.h"
@@ -74,7 +72,7 @@ struct bdevsw	bdevsw[] =
 	bdev_tape_init(NCT,ct),		/* 0: cs80 cartridge tape */
 	bdev_tape_init(NMT,mt),		/* 1: magnetic reel tape */
 	bdev_disk_init(NRD,rd),		/* 2: HPIB disk */
-	bdev_swap_init(),		/* 3: swap pseudo-device */
+	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_disk_init(NCCD,ccd),	/* 5: concatenated disk driver */
 	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
@@ -93,26 +91,27 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
-	dev_init(c,n,mmap), 0 }
+	dev_init(c,n,mmap) }
 
 /* open, close, read, write, ioctl -- XXX should be a generic device */
 #define	cdev_ppi_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	0, (dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev, 0 }
+	0, (dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev }
 
 /* open, close, read, ioctl, select, mmap -- XXX should be a map device */
 #define	cdev_hil_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
-	dev_init(c,n,mmap), 0 }
+	dev_init(c,n,mmap) }
 
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
+cdev_decl(sw);
 #include "pty.h"
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.77 1995/06/28 04:30:54 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -564,6 +564,24 @@ fdfinish(fd, bp)
 	/* turn off motor 5s from now */
 	timeout(fd_motor_off, fd, 5 * hz);
 	fdc->sc_state = DEVIDLE;
+}
+
+int
+fdread(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+int
+fdwrite(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 void
