@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.30 1999/06/26 08:30:17 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.31 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -553,7 +553,7 @@ uhci_timo(addr)
 		reqh->status = USBD_NORMAL_COMPLETION;
 		reqh->xfercb(reqh);
 	}
-	if (reqh->pipe->intrreqh == reqh) {
+	if (reqh->pipe->repeat) {
 		usb_timeout(uhci_timo, reqh, sc->sc_ival, reqh->timo_handle);
 	} else {
 		usb_freemem(sc->sc_dmatag, &upipe->u.intr.datadma);
@@ -601,7 +601,7 @@ uhci_alloc_intr_info(sc)
 	if (ii)
 		LIST_REMOVE(ii, list);
 	else {
-		ii = malloc(sizeof(uhci_intr_info_t), M_USBDEV, M_NOWAIT);
+		ii = malloc(sizeof(uhci_intr_info_t), M_USBHC, M_NOWAIT);
 	}
 	ii->sc = sc;
 	return ii;
@@ -857,7 +857,7 @@ uhci_ii_done(ii, timo)
 		      actlen, status));
 	reqh->actlen = actlen;
 	if (status != 0) {
-		DPRINTFN(-1+(status==UHCI_TD_STALLED),
+		DPRINTFN(-1+((status&UHCI_TD_STALLED)!=0),
 			 ("uhci_ii_done: error, addr=%d, endpt=0x%02x, "
 			  "status 0x%b\n",
 			  reqh->pipe->device->address,
@@ -1037,13 +1037,13 @@ uhci_alloc_std(sc)
 	if (!sc->sc_freetds) {
 		DPRINTFN(2,("uhci_alloc_std: allocating chunk\n"));
 		std = malloc(sizeof(uhci_soft_td_t) * UHCI_TD_CHUNK, 
-			     M_USBDEV, M_NOWAIT);
+			     M_USBHC, M_NOWAIT);
 		if (!std)
 			return (0);
 		r = usb_allocmem(sc->sc_dmatag, UHCI_TD_SIZE * UHCI_TD_CHUNK,
 				 UHCI_TD_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION) {
-			free(std, M_USBDEV);
+			free(std, M_USBHC);
 			return (0);
 		}
 		for(i = 0; i < UHCI_TD_CHUNK; i++, std++) {
@@ -1089,13 +1089,13 @@ uhci_alloc_sqh(sc)
 	if (!sc->sc_freeqhs) {
 		DPRINTFN(2, ("uhci_alloc_sqh: allocating chunk\n"));
 		sqh = malloc(sizeof(uhci_soft_qh_t) * UHCI_QH_CHUNK, 
-			     M_USBDEV, M_NOWAIT);
+			     M_USBHC, M_NOWAIT);
 		if (!sqh)
 			return 0;
 		r = usb_allocmem(sc->sc_dmatag, UHCI_QH_SIZE * UHCI_QH_CHUNK,
 				 UHCI_QH_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION) {
-			free(sqh, M_USBDEV);
+			free(sqh, M_USBHC);
 			return 0;
 		}
 		for(i = 0; i < UHCI_QH_CHUNK; i++, sqh++) {
@@ -1517,9 +1517,9 @@ uhci_device_intr_abort(reqh)
 	DPRINTFN(1, ("uhci_device_intr_abort: reqh=%p\n", reqh));
 	/* XXX inactivate */
 	usb_delay_ms(reqh->pipe->device->bus, 2); /* make sure it is done */
-	if (reqh->pipe->intrreqh == reqh) {
+	if (reqh->pipe->repeat) {
 		DPRINTF(("uhci_device_intr_abort: remove\n"));
-		reqh->pipe->intrreqh = 0;
+		reqh->pipe->repeat = 0;
 		upipe = (struct uhci_pipe *)reqh->pipe;
 		uhci_intr_done(upipe->u.intr.qhs[0]->intr_info);
 	}
@@ -1552,7 +1552,7 @@ uhci_device_intr_close(pipe)
 
 	for(i = 0; i < npoll; i++)
 		uhci_free_sqh(sc, upipe->u.intr.qhs[i]);
-	free(upipe->u.intr.qhs, M_USB);
+	free(upipe->u.intr.qhs, M_USBHC);
 
 	s = splusb();
 	LIST_REMOVE(upipe->iinfo, list);	/* remove from active list */
@@ -1777,8 +1777,8 @@ uhci_device_isoc_close(pipe)
 
 	for (i = 0; i < iso->nbuf; i++)
 		usb_freemem(sc->sc_dmatag, &iso->bufs[i]);
-	free(iso->stds, M_USB);
-	free(iso->bufs, M_USB);
+	free(iso->stds, M_USBHC);
+	free(iso->bufs, M_USBHC);
 
 	/* XXX what else? */
 }
@@ -1811,9 +1811,9 @@ uhci_device_isoc_setbuf(pipe, bufsize, nbuf)
 	iso->nbuf = nbuf;
 
 	/* Allocate memory for buffers. */
-	iso->bufs = malloc(nbuf * sizeof(usb_dma_t), M_USB, M_WAITOK);
+	iso->bufs = malloc(nbuf * sizeof(usb_dma_t), M_USBHC, M_WAITOK);
 	iso->stds = malloc(UHCI_VFRAMELIST_COUNT * sizeof (uhci_soft_td_t *),
-			   M_USB, M_WAITOK);
+			   M_USBHC, M_WAITOK);
 
 	for (i = 0; i < nbuf; i++) {
 		r = usb_allocmem(sc->sc_dmatag, bufsize, 0, &iso->bufs[i]);
@@ -1862,8 +1862,8 @@ uhci_device_isoc_setbuf(pipe, bufsize, nbuf)
  bad1:
 	for (i = 0; i < nbuf; i++)
 		usb_freemem(sc->sc_dmatag, &iso->bufs[i]);
-	free(iso->stds, M_USB);
-	free(iso->bufs, M_USB);
+	free(iso->stds, M_USBHC);
+	free(iso->bufs, M_USBHC);
 	return (USBD_NOMEM);
 }
 
@@ -1897,7 +1897,7 @@ uhci_intr_done(ii)
 	uhci_free_std_chain(sc, ii->stdstart, 0);
 
 	/* XXX Wasteful. */
-	if (reqh->pipe->intrreqh == reqh) {
+	if (reqh->pipe->repeat) {
 		uhci_soft_td_t *xfer, *xferend;
 
 		/* This alloc cannot fail since we freed the chain above. */
@@ -2060,7 +2060,7 @@ uhci_device_setintr(sc, upipe, ival)
 
 	upipe->u.intr.npoll = npoll;
 	upipe->u.intr.qhs = 
-		malloc(npoll * sizeof(uhci_soft_qh_t *), M_USB, M_WAITOK);
+		malloc(npoll * sizeof(uhci_soft_qh_t *), M_USBHC, M_WAITOK);
 
 	/* 
 	 * Figure out which offset in the schedule that has most
