@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.177 2003/07/16 08:08:22 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.178 2003/08/01 12:29:30 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.177 2003/07/16 08:08:22 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.178 2003/08/01 12:29:30 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1202,7 +1202,7 @@ cpumatch_sun4c(sc, mp, node)
 	sc->mmu_npmeg = sc->mmu_nsegment =
 		PROM_getpropint(rnode, "mmu-npmg", 128);
 	sc->mmu_ncontext = PROM_getpropint(rnode, "mmu-nctx", 8);
-                              
+
 	/* Get clock frequency */ 
 	sc->hz = PROM_getpropint(rnode, "clock-frequency", 0);
 }
@@ -1858,6 +1858,7 @@ struct module_info module_viking_sun4d = {
 	viking_hotfix,
 	viking_mmu_enable,
 	viking_cache_enable,
+	viking_getmid,
 	4096,
 	viking_get_syncflt,
 	no_asyncflt_regs,
