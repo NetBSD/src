@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.12 1996/10/10 17:21:13 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.13 1996/10/12 21:58:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -105,7 +105,7 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 	fs = ip->i_fs;
 #ifdef DIAGNOSTIC
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0) {
-		kprintf("dev = 0x%x, bsize = %d, size = %d, fs = %s\n",
+		printf("dev = 0x%x, bsize = %d, size = %d, fs = %s\n",
 		    ip->i_dev, fs->fs_bsize, size, fs->fs_fsmnt);
 		panic("ffs_alloc: bad size");
 	}
@@ -173,7 +173,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 #ifdef DIAGNOSTIC
 	if ((u_int)osize > fs->fs_bsize || fragoff(fs, osize) != 0 ||
 	    (u_int)nsize > fs->fs_bsize || fragoff(fs, nsize) != 0) {
-		kprintf(
+		printf(
 		    "dev = 0x%x, bsize = %d, osize = %d, nsize = %d, fs = %s\n",
 		    ip->i_dev, fs->fs_bsize, osize, nsize, fs->fs_fsmnt);
 		panic("ffs_realloccg: bad size");
@@ -184,7 +184,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	if (cred->cr_uid != 0 && freespace(fs, fs->fs_minfree) <= 0)
 		goto nospace;
 	if ((bprev = ip->i_db[lbprev]) == 0) {
-		kprintf("dev = 0x%x, bsize = %d, bprev = %d, fs = %s\n",
+		printf("dev = 0x%x, bsize = %d, bprev = %d, fs = %s\n",
 		    ip->i_dev, fs->fs_bsize, bprev, fs->fs_fsmnt);
 		panic("ffs_realloccg: bad bprev");
 	}
@@ -259,7 +259,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 		fs->fs_optim = FS_OPTSPACE;
 		break;
 	default:
-		kprintf("dev = 0x%x, optim = %d, fs = %s\n",
+		printf("dev = 0x%x, optim = %d, fs = %s\n",
 		    ip->i_dev, fs->fs_optim, fs->fs_fsmnt);
 		panic("ffs_realloccg: bad optim");
 		/* NOTREACHED */
@@ -414,7 +414,7 @@ ffs_reallocblks(v)
 	 */
 #ifdef DEBUG
 	if (prtrealloc)
-		kprintf("realloc: ino %d, lbns %d-%d\n\told:", ip->i_number,
+		printf("realloc: ino %d, lbns %d-%d\n\told:", ip->i_number,
 		    start_lbn, end_lbn);
 #endif
 	blkno = newblk;
@@ -427,7 +427,7 @@ ffs_reallocblks(v)
 #endif
 #ifdef DEBUG
 		if (prtrealloc)
-			kprintf(" %d,", *bap);
+			printf(" %d,", *bap);
 #endif
 		*bap++ = blkno;
 	}
@@ -467,7 +467,7 @@ ffs_reallocblks(v)
 	 */
 #ifdef DEBUG
 	if (prtrealloc)
-		kprintf("\n\tnew:");
+		printf("\n\tnew:");
 #endif
 	for (blkno = newblk, i = 0; i < len; i++, blkno += fs->fs_frag) {
 		ffs_blkfree(ip, dbtofsb(fs, buflist->bs_children[i]->b_blkno),
@@ -475,13 +475,13 @@ ffs_reallocblks(v)
 		buflist->bs_children[i]->b_blkno = fsbtodb(fs, blkno);
 #ifdef DEBUG
 		if (prtrealloc)
-			kprintf(" %d,", blkno);
+			printf(" %d,", blkno);
 #endif
 	}
 #ifdef DEBUG
 	if (prtrealloc) {
 		prtrealloc--;
-		kprintf("\n");
+		printf("\n");
 	}
 #endif
 	return (0);
@@ -550,12 +550,12 @@ ffs_valloc(v)
 	}
 	ip = VTOI(*ap->a_vpp);
 	if (ip->i_mode) {
-		kprintf("mode = 0%o, inum = %d, fs = %s\n",
+		printf("mode = 0%o, inum = %d, fs = %s\n",
 		    ip->i_mode, ip->i_number, fs->fs_fsmnt);
 		panic("ffs_valloc: dup alloc");
 	}
 	if (ip->i_blocks) {				/* XXX */
-		kprintf("free inode %s/%d had %d blocks\n",
+		printf("free inode %s/%d had %d blocks\n",
 		    fs->fs_fsmnt, ino, ip->i_blocks);
 		ip->i_blocks = 0;
 	}
@@ -976,7 +976,7 @@ ffs_alloccgblk(fs, cgp, bpref)
 		pos = cylno % fs->fs_cpc;
 		bno = (cylno - pos) * fs->fs_spc / NSPB(fs);
 		if (fs_postbl(fs, pos)[i] == -1) {
-			kprintf("pos = %d, i = %d, fs = %s\n",
+			printf("pos = %d, i = %d, fs = %s\n",
 			    pos, i, fs->fs_fsmnt);
 			panic("ffs_alloccgblk: cyl groups corrupted");
 		}
@@ -991,7 +991,7 @@ ffs_alloccgblk(fs, cgp, bpref)
 				break;
 			i += delta;
 		}
-		kprintf("pos = %d, i = %d, fs = %s\n", pos, i, fs->fs_fsmnt);
+		printf("pos = %d, i = %d, fs = %s\n", pos, i, fs->fs_fsmnt);
 		panic("ffs_alloccgblk: can't find blk in cyl");
 	}
 norot:
@@ -1170,7 +1170,7 @@ ffs_nodealloccg(ip, cg, ipref, mode)
 		start = 0;
 		loc = skpc(0xff, len, &cg_inosused(cgp)[0]);
 		if (loc == 0) {
-			kprintf("cg = %d, irotor = %d, fs = %s\n",
+			printf("cg = %d, irotor = %d, fs = %s\n",
 			    cg, cgp->cg_irotor, fs->fs_fsmnt);
 			panic("ffs_nodealloccg: map corrupted");
 			/* NOTREACHED */
@@ -1185,7 +1185,7 @@ ffs_nodealloccg(ip, cg, ipref, mode)
 			goto gotit;
 		}
 	}
-	kprintf("fs = %s\n", fs->fs_fsmnt);
+	printf("fs = %s\n", fs->fs_fsmnt);
 	panic("ffs_nodealloccg: block not in map");
 	/* NOTREACHED */
 gotit:
@@ -1224,13 +1224,13 @@ ffs_blkfree(ip, bno, size)
 
 	fs = ip->i_fs;
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0) {
-		kprintf("dev = 0x%x, bsize = %d, size = %ld, fs = %s\n",
+		printf("dev = 0x%x, bsize = %d, size = %ld, fs = %s\n",
 		    ip->i_dev, fs->fs_bsize, size, fs->fs_fsmnt);
 		panic("blkfree: bad size");
 	}
 	cg = dtog(fs, bno);
 	if ((u_int)bno >= fs->fs_size) {
-		kprintf("bad block %d, ino %d\n", bno, ip->i_number);
+		printf("bad block %d, ino %d\n", bno, ip->i_number);
 		ffs_fserr(fs, ip->i_uid, "bad block");
 		return;
 	}
@@ -1250,7 +1250,7 @@ ffs_blkfree(ip, bno, size)
 	if (size == fs->fs_bsize) {
 		blkno = fragstoblks(fs, bno);
 		if (ffs_isblock(fs, cg_blksfree(cgp), blkno)) {
-			kprintf("dev = 0x%x, block = %d, fs = %s\n",
+			printf("dev = 0x%x, block = %d, fs = %s\n",
 			    ip->i_dev, bno, fs->fs_fsmnt);
 			panic("blkfree: freeing free block");
 		}
@@ -1275,7 +1275,7 @@ ffs_blkfree(ip, bno, size)
 		frags = numfrags(fs, size);
 		for (i = 0; i < frags; i++) {
 			if (isset(cg_blksfree(cgp), bno + i)) {
-				kprintf("dev = 0x%x, block = %d, fs = %s\n",
+				printf("dev = 0x%x, block = %d, fs = %s\n",
 				    ip->i_dev, bno + i, fs->fs_fsmnt);
 				panic("blkfree: freeing free frag");
 			}
@@ -1351,7 +1351,7 @@ ffs_vfree(v)
 	cgp->cg_time = time.tv_sec;
 	ino %= fs->fs_ipg;
 	if (isclr(cg_inosused(cgp), ino)) {
-		kprintf("dev = 0x%x, ino = %d, fs = %s\n",
+		printf("dev = 0x%x, ino = %d, fs = %s\n",
 		    pip->i_dev, ino, fs->fs_fsmnt);
 		if (fs->fs_ronly == 0)
 			panic("ifree: freeing free inode");
@@ -1408,7 +1408,7 @@ ffs_mapsearch(fs, cgp, bpref, allocsiz)
 			(u_char *)fragtbl[fs->fs_frag],
 			(u_char)(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
 		if (loc == 0) {
-			kprintf("start = %d, len = %d, fs = %s\n",
+			printf("start = %d, len = %d, fs = %s\n",
 			    start, len, fs->fs_fsmnt);
 			panic("ffs_alloccg: map corrupted");
 			/* NOTREACHED */
@@ -1432,7 +1432,7 @@ ffs_mapsearch(fs, cgp, bpref, allocsiz)
 			subfield <<= 1;
 		}
 	}
-	kprintf("bno = %d, fs = %s\n", bno, fs->fs_fsmnt);
+	printf("bno = %d, fs = %s\n", bno, fs->fs_fsmnt);
 	panic("ffs_alloccg: block not in map");
 	return (-1);
 }

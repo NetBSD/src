@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.5 1996/10/10 17:21:22 christos Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.6 1996/10/12 21:58:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -53,65 +53,65 @@ lfs_dump_super(lfsp)
 {
 	int i;
 
-	kprintf("%s%x\t%s%x\t%s%d\t%s%d\n",
+	printf("%s%x\t%s%x\t%s%d\t%s%d\n",
 		"magic    ", lfsp->lfs_magic,
 		"version  ", lfsp->lfs_version,
 		"size     ", lfsp->lfs_size,
 		"ssize    ", lfsp->lfs_ssize);
-	kprintf("%s%d\t%s%d\t%s%d\t%s%d\n",
+	printf("%s%d\t%s%d\t%s%d\t%s%d\n",
 		"dsize    ", lfsp->lfs_dsize,
 		"bsize    ", lfsp->lfs_bsize,
 		"fsize    ", lfsp->lfs_fsize,
 		"frag     ", lfsp->lfs_frag);
 
-	kprintf("%s%d\t%s%d\t%s%d\t%s%d\n",
+	printf("%s%d\t%s%d\t%s%d\t%s%d\n",
 		"minfree  ", lfsp->lfs_minfree,
 		"inopb    ", lfsp->lfs_inopb,
 		"ifpb     ", lfsp->lfs_ifpb,
 		"nindir   ", lfsp->lfs_nindir);
 
-	kprintf("%s%d\t%s%d\t%s%d\t%s%d\n",
+	printf("%s%d\t%s%d\t%s%d\t%s%d\n",
 		"nseg     ", lfsp->lfs_nseg,
 		"nspf     ", lfsp->lfs_nspf,
 		"cleansz  ", lfsp->lfs_cleansz,
 		"segtabsz ", lfsp->lfs_segtabsz);
 
-	kprintf("%s%x\t%s%d\t%s%x\t%s%d\n",
+	printf("%s%x\t%s%d\t%s%x\t%s%d\n",
 		"segmask  ", lfsp->lfs_segmask,
 		"segshift ", lfsp->lfs_segshift,
 		"bmask    ", lfsp->lfs_bmask,
 		"bshift   ", lfsp->lfs_bshift);
 
-	kprintf("%s%x\t%s%d\t%s%x\t%s%d\n",
+	printf("%s%x\t%s%d\t%s%x\t%s%d\n",
 		"ffmask   ", lfsp->lfs_ffmask,
 		"ffshift  ", lfsp->lfs_ffshift,
 		"fbmask   ", lfsp->lfs_fbmask,
 		"fbshift  ", lfsp->lfs_fbshift);
 
-	kprintf("%s%d\t%s%d\t%s%x\t%s%qx\n",
+	printf("%s%d\t%s%d\t%s%x\t%s%qx\n",
 		"sushift  ", lfsp->lfs_sushift,
 		"fsbtodb  ", lfsp->lfs_fsbtodb,
 		"cksum    ", lfsp->lfs_cksum,
 		"maxfilesize ", lfsp->lfs_maxfilesize);
 
-	kprintf("Superblock disk addresses:");
+	printf("Superblock disk addresses:");
 	for (i = 0; i < LFS_MAXNUMSB; i++)
-		kprintf(" %x", lfsp->lfs_sboffs[i]);
-	kprintf("\n");
+		printf(" %x", lfsp->lfs_sboffs[i]);
+	printf("\n");
 
-	kprintf("Checkpoint Info\n");
-	kprintf("%s%d\t%s%x\t%s%d\n",
+	printf("Checkpoint Info\n");
+	printf("%s%d\t%s%x\t%s%d\n",
 		"free     ", lfsp->lfs_free,
 		"idaddr   ", lfsp->lfs_idaddr,
 		"ifile    ", lfsp->lfs_ifile);
-	kprintf("%s%x\t%s%d\t%s%x\t%s%x\t%s%x\t%s%x\n",
+	printf("%s%x\t%s%d\t%s%x\t%s%x\t%s%x\t%s%x\n",
 		"bfree    ", lfsp->lfs_bfree,
 		"nfiles   ", lfsp->lfs_nfiles,
 		"lastseg  ", lfsp->lfs_lastseg,
 		"nextseg  ", lfsp->lfs_nextseg,
 		"curseg   ", lfsp->lfs_curseg,
 		"offset   ", lfsp->lfs_offset);
-	kprintf("tstamp   %x\n", lfsp->lfs_tstamp);
+	printf("tstamp   %x\n", lfsp->lfs_tstamp);
 }
 
 void
@@ -120,21 +120,21 @@ lfs_dump_dinode(dip)
 {
 	int i;
 
-	kprintf("%s%u\t%s%d\t%s%u\t%s%u\t%s%qu\n",
+	printf("%s%u\t%s%d\t%s%u\t%s%u\t%s%qu\n",
 		"mode  ", dip->di_mode,
 		"nlink ", dip->di_nlink,
 		"uid   ", dip->di_uid,
 		"gid   ", dip->di_gid,
 		"size  ", dip->di_size);
-	kprintf("inum  %d\n", dip->di_inumber);
-	kprintf("Direct Addresses\n");
+	printf("inum  %d\n", dip->di_inumber);
+	printf("Direct Addresses\n");
 	for (i = 0; i < NDADDR; i++) {
-		kprintf("\t%x", dip->di_db[i]);
+		printf("\t%x", dip->di_db[i]);
 		if ((i % 6) == 5)
-			kprintf("\n");
+			printf("\n");
 	}
 	for (i = 0; i < NIADDR; i++)
-		kprintf("\t%x", dip->di_ib[i]);
-	kprintf("\n");
+		printf("\t%x", dip->di_ib[i]);
+	printf("\n");
 }
 #endif /* DEBUG */
