@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.44 2003/11/01 22:54:46 tsutsui Exp $
+#	$NetBSD: files.prep,v 1.45 2004/02/14 14:00:22 bjh21 Exp $
 #
 # prep-specific configuration info
 #
@@ -127,17 +127,6 @@ file	arch/prep/isa/mcclock_isa.c	mcclock_isa
 device	mkclock: mk48txx
 attach	mkclock at isa with mkclock_isa
 file	arch/prep/isa/mkclock_isa.c	mkclock_isa
-
-# attribute used to represent the "keyboard controller"
-# XXX should be a real device
-define pckbcport { [irq = -1], [port = -1] }
-
-# PC console support a la "pccons"
-device	pc: tty, pckbcport
-attach	pc at isa
-device	pcconskbd
-attach	pcconskbd at pckbc
-file	arch/prep/isa/pccons.c		pc | pcconskbd needs-flag
 
 include "dev/pckbc/files.pckbc"
 
