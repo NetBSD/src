@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.11 2003/04/01 16:34:59 thorpej Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.12 2003/07/15 03:36:09 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,6 +51,10 @@
 /*
  * "Stub" to allow remote cpu to debug over a serial line using gdb.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.12 2003/07/15 03:36:09 lukem Exp $");
+
 #include "opt_kgdb.h"
 
 #ifdef KGDB

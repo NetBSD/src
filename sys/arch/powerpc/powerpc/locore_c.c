@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.1 2003/05/08 12:38:37 christos Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.2 2003/07/15 02:54:48 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,9 @@
  * Some additional routines that happened to be in locore.S traditionally,
  * but have no need to be coded in assembly.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.2 2003/07/15 02:54:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

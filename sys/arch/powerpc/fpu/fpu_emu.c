@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.7 2003/02/07 04:46:10 thorpej Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.8 2003/07/15 02:54:43 lukem Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -78,6 +78,9 @@
  *
  *	@(#)fpu.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.8 2003/07/15 02:54:43 lukem Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 2003/01/18 06:23:34 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5 2003/07/15 02:54:49 lukem Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5 2003/07/15 02:54:49 lukem Exp $");
 
 #include <sys/param.h>
 

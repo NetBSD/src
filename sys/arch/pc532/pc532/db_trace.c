@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.11 2001/01/18 10:55:30 jdolecek Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.12 2003/07/15 02:54:34 lukem Exp $	*/
 
 /* 
  * Mach Operating System
@@ -35,6 +35,8 @@
  *	Stack trace and special register support for debugger.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12 2003/07/15 02:54:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

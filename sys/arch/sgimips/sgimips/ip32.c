@@ -1,4 +1,4 @@
-/*	$NetBSD: ip32.c,v 1.16 2003/01/06 05:59:34 rafal Exp $	*/
+/*	$NetBSD: ip32.c,v 1.17 2003/07/15 03:35:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,6 +33,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip32.c,v 1.17 2003/07/15 03:35:55 lukem Exp $");
 
 #include "opt_machtypes.h"
 

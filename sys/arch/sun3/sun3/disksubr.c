@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.31 2003/05/10 23:12:41 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32 2003/07/15 03:36:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -42,6 +42,9 @@
  * (which was written by Theo de Raadt) and then substantially
  * rewritten by Gordon W. Ross.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2003/07/15 03:36:17 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

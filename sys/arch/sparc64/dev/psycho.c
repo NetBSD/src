@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.63 2003/06/15 23:09:06 fvdl Exp $	*/
+/*	$NetBSD: psycho.c,v 1.64 2003/07/15 03:36:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -28,6 +28,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.64 2003/07/15 03:36:06 lukem Exp $");
 
 #include "opt_ddb.h"
 

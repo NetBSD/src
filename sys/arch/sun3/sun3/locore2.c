@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.82 2003/04/27 10:43:27 ragge Exp $	*/
+/*	$NetBSD: locore2.c,v 1.83 2003/07/15 03:36:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.83 2003/07/15 03:36:18 lukem Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2001/10/16 15:38:53 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2003/07/15 02:54:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2003/07/15 02:54:37 lukem Exp $");
 
 #include "debug_playstation2.h"
 

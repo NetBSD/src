@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73 2003/06/23 13:06:57 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74 2003/07/15 02:54:35 lukem Exp $	*/
 
 /*
  *
@@ -58,6 +58,9 @@
  *     done by Alessandro Forin (CMU/Mach) and Chris Demetriou
  *     (NetBSD/alpha).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2003/07/15 02:54:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

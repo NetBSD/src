@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.5 2002/08/03 00:13:00 itojun Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.6 2003/07/15 03:36:13 lukem Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -43,6 +43,9 @@
  *
  *	@(#)bt_subr.c	8.2 (Berkeley) 1/21/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.6 2003/07/15 03:36:13 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

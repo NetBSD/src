@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.15 2003/06/29 22:28:49 fvdl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.16 2003/07/15 02:54:48 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16 2003/07/15 02:54:48 lukem Exp $");
+
 #include "opt_altivec.h"
 
 #include <sys/param.h>

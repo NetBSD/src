@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.144 2003/06/29 22:28:43 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.145 2003/07/15 02:54:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -41,6 +41,9 @@
  *
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145 2003/07/15 02:54:34 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

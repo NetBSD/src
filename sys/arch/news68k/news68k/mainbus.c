@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2003/01/01 01:54:44 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2003/07/15 02:59:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -27,6 +27,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2003/07/15 02:59:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

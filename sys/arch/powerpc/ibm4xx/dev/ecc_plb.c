@@ -1,4 +1,4 @@
-/*	$NetBSD: ecc_plb.c,v 1.7 2003/03/11 10:40:16 hannken Exp $	*/
+/*	$NetBSD: ecc_plb.c,v 1.8 2003/07/15 02:54:44 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.8 2003/07/15 02:54:44 lukem Exp $");
 
 #include "locators.h"
 

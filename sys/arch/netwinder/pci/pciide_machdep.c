@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.2 2002/09/27 15:36:27 provos Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.3 2003/07/15 02:59:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -39,6 +39,9 @@
  * See "PCI IDE Controller Specification, Revision 1.0 3/4/94" from the
  * PCI SIG.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.3 2003/07/15 02:59:25 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

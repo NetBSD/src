@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.9 2002/10/23 09:12:25 jdolecek Exp $ */
+/*	$NetBSD: fb.c,v 1.10 2003/07/15 03:36:14 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
 /*
  * /dev/fb (indirect frame buffer driver).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.10 2003/07/15 03:36:14 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

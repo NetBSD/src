@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49 2003/06/29 22:29:03 fvdl Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.50 2003/07/15 03:36:11 lukem Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -48,6 +48,9 @@
  *
  *	@(#)vm_machdep.c	8.2 (Berkeley) 9/23/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50 2003/07/15 03:36:11 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.6 2002/08/05 02:56:58 enami Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.7 2003/07/15 02:54:48 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.7 2003/07/15 02:54:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

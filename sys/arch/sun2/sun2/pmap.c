@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 2003/06/23 11:01:44 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 2003/07/15 03:36:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,6 +87,9 @@
  * fixed size because the total mapped virtual space supported by
  * the MMU H/W (and this pmap) is fixed for all time.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2003/07/15 03:36:13 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"

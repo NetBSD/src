@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.49 2002/10/02 16:02:28 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.50 2003/07/15 03:36:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -47,6 +47,9 @@
  * Machine-dependent clock routines for the Intersil 7170:
  * Original by Adam Glass;  partially rewritten by Gordon Ross.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.50 2003/07/15 03:36:17 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

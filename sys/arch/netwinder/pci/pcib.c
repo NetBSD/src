@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.5 2003/01/01 01:53:51 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.6 2003/07/15 02:59:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
  *
  * 	from:  i386/pci/pcib.c,v 1.12
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.6 2003/07/15 02:59:25 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

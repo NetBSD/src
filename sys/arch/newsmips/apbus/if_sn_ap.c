@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_ap.c,v 1.5 2002/10/02 04:27:51 thorpej Exp $	*/
+/*	$NetBSD: if_sn_ap.c,v 1.6 2003/07/15 02:59:28 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.6 2003/07/15 02:59:28 lukem Exp $");
 
 #include "opt_inet.h"
 

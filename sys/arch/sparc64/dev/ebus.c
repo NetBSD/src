@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.39 2003/05/17 01:38:39 nakayama Exp $	*/
+/*	$NetBSD: ebus.c,v 1.40 2003/07/15 03:36:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.40 2003/07/15 03:36:04 lukem Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.2 2001/11/30 18:06:55 fredette Exp $	*/
+/*	$NetBSD: control.c,v 1.3 2003/07/15 03:36:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: control.c,v 1.3 2003/07/15 03:36:12 lukem Exp $");
 
 #include <sys/param.h>
 
