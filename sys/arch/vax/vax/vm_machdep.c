@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.29 1996/11/06 20:19:56 cgd Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.30 1997/01/11 11:23:09 ragge Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -296,16 +296,19 @@ idle:
 /* Should check that values is in bounds XXX */
 int
 copyinstr(from, to, maxlen, lencopied)
-	void *from, *to;
-	u_int *lencopied,maxlen;
+	const void *from;
+	void *to;
+	size_t *lencopied;
+	size_t maxlen;
 {
 	u_int i;
 	void *addr=&curproc->p_addr->u_pcb.iftrap;
-	char *gfrom=from, *gto=to;
+	const char *gfrom = from;
+	char *gto = to;
 
 	asm("movl $Lstr,(%0)":: "r"(addr));
 	for(i=0;i<maxlen;i++){
-		*(gto+i)=*(gfrom+i);
+		*(gto +i )=*(gfrom + i);
 		if(!(*(gto+i))) goto ok;
 	}
 
@@ -320,11 +323,14 @@ asm("Lstr:	ret");
 /* Should check that values is in bounds XXX */
 int
 copyoutstr(from, to, maxlen, lencopied)
-	void *from, *to;
-	u_int *lencopied,maxlen;
+	const	void *from;
+	void	*to;
+	size_t	*lencopied;
+	size_t	maxlen;
 {
 	u_int i;
-	char *gfrom=from, *gto=to;
+	const char *gfrom=from;
+	char *gto=to;
         void *addr=&curproc->p_addr->u_pcb.iftrap;
 
         asm("movl $Lstr,(%0)":: "r"(addr));
@@ -511,13 +517,14 @@ cpu_coredump(p, vp, cred, chdr)
         return error;
 }
 
-int	locopyout __P((void *, void *, size_t, void *));
-int	locopyin __P((void *, void *, size_t, void *));
+int	locopyout __P((const void *, void *, size_t, void *));
+int	locopyin __P((const void *, void *, size_t, void *));
 
 int
 copyout(from, to, len)
-	void *from, *to;
-	size_t len;
+	const	void *from;
+	void	*to;
+	size_t	len;
 {
 	void *addr=&curproc->p_addr->u_pcb.iftrap;
 
@@ -526,8 +533,9 @@ copyout(from, to, len)
 
 int
 copyin(from, to, len)
-	void *from, *to;
-	size_t len;
+	const	void *from;
+	void	*to;
+	size_t	len;
 {
 	void *addr = &curproc->p_addr->u_pcb.iftrap;
 
