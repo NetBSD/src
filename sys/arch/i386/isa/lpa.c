@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpa.c,v 1.2 1993/05/18 18:19:03 cgd Exp $
+ *	$Id: lpa.c,v 1.3 1993/05/22 11:41:20 cgd Exp $
  */
 
 /*
@@ -68,7 +68,6 @@
 #include "buf.h"
 #include "systm.h"
 #include "ioctl.h"
-#include "select.h"
 #include "tty.h"
 #include "proc.h"
 #include "user.h"

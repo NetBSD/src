@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_tty.c	7.15 (Berkeley) 5/28/91
- *	$Id: tty_tty.c,v 1.3 1993/05/20 02:55:18 cgd Exp $
+ *	$Id: tty_tty.c,v 1.4 1993/05/22 11:41:52 cgd Exp $
  */
 
 /*
@@ -41,7 +41,6 @@
 #include "systm.h"
 #include "conf.h"
 #include "ioctl.h"
-#include "select.h"
 #include "tty.h"
 #include "proc.h"
 #include "vnode.h"

@@ -31,13 +31,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_usrreq.c	7.26 (Berkeley) 6/3/91
- *	$Id: uipc_usrreq.c,v 1.2 1993/05/18 18:19:42 cgd Exp $
+ *	$Id: uipc_usrreq.c,v 1.3 1993/05/22 11:41:56 cgd Exp $
  */
 
 #include "param.h"
 #include "proc.h"
 #include "filedesc.h"
-#include "select.h"
 #include "domain.h"
 #include "protosw.h"
 #include "socket.h"

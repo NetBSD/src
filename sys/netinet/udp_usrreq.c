@@ -31,12 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)udp_usrreq.c	7.20 (Berkeley) 4/20/91
- *	$Id: udp_usrreq.c,v 1.2 1993/05/18 18:20:23 cgd Exp $
+ *	$Id: udp_usrreq.c,v 1.3 1993/05/22 11:42:52 cgd Exp $
  */
 
 #include "param.h"
 #include "malloc.h"
-#include "select.h"
 #include "mbuf.h"
 #include "protosw.h"
 #include "socket.h"

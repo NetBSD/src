@@ -31,13 +31,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_pcb.c	7.14 (Berkeley) 4/20/91
- *	$Id: in_pcb.c,v 1.2 1993/05/18 18:20:09 cgd Exp $
+ *	$Id: in_pcb.c,v 1.3 1993/05/22 11:42:32 cgd Exp $
  */
 
 #include "param.h"
 #include "systm.h"
 #include "malloc.h"
-#include "select.h"
 #include "mbuf.h"
 #include "protosw.h"
 #include "socket.h"

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: hil.c 1.33 89/12/22$
  *
  *	from: @(#)hil.c	7.8.1.1 (Berkeley) 6/28/91
-	$Id: hil.c,v 1.2 1993/05/18 18:18:44 cgd Exp $
+	$Id: hil.c,v 1.3 1993/05/22 11:40:49 cgd Exp $
  */
 
 #include "sys/param.h"
@@ -47,6 +47,7 @@
 #include "sys/user.h"
 #include "sys/ioctl.h"
 #include "sys/file.h"
+#include "sys/select.h"
 #include "sys/tty.h"
 #include "sys/systm.h"
 #include "sys/uio.h"

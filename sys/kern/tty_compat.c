@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_compat.c	7.10 (Berkeley) 5/9/91
- *	$Id: tty_compat.c,v 1.3 1993/05/18 18:19:29 cgd Exp $
+ *	$Id: tty_compat.c,v 1.4 1993/05/22 11:41:46 cgd Exp $
  */
 
 /* 
@@ -42,7 +42,6 @@
 #include "param.h"
 #include "systm.h"
 #include "ioctl.h"
-#include "select.h"
 #include "tty.h"
 #include "termios.h"
 #include "proc.h"

@@ -31,13 +31,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.c	7.14 (Berkeley) 4/20/91
- *	$Id: if.c,v 1.2 1993/05/18 18:19:54 cgd Exp $
+ *	$Id: if.c,v 1.3 1993/05/22 11:42:08 cgd Exp $
  */
 
 #include "param.h"
 #include "mbuf.h"
 #include "systm.h"
-#include "select.h"
 #include "socket.h"
 #include "socketvar.h"
 #include "protosw.h"

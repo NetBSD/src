@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_syscalls.c	7.26 (Berkeley) 4/16/91
- *	$Id: nfs_syscalls.c,v 1.4 1993/05/18 18:20:31 cgd Exp $
+ *	$Id: nfs_syscalls.c,v 1.5 1993/05/22 11:43:03 cgd Exp $
  */
 
 #include "param.h"
@@ -48,7 +48,6 @@
 #include "proc.h"
 #include "malloc.h"
 #include "buf.h"
-#include "select.h"
 #include "mbuf.h"
 #include "socket.h"
 #include "socketvar.h"

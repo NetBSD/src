@@ -33,7 +33,7 @@
  * from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp
  *
  *	from: @(#)if_sl.c	7.22 (Berkeley) 4/20/91
- *	$Id: if_sl.c,v 1.7 1993/05/18 18:19:56 cgd Exp $
+ *	$Id: if_sl.c,v 1.8 1993/05/22 11:42:11 cgd Exp $
  */
 
 /*
@@ -78,7 +78,6 @@
 #include "socket.h"
 #include "ioctl.h"
 #include "file.h"
-#include "select.h"
 #include "tty.h"
 #include "kernel.h"
 #include "conf.h"

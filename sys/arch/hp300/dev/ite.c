@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.1 90/07/09$
  *
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.2 1993/05/18 18:18:48 cgd Exp $
+ *	$Id: ite.c,v 1.3 1993/05/22 11:40:52 cgd Exp $
  */
 
 /*
@@ -58,6 +58,7 @@
 #include "conf.h"
 #include "proc.h"
 #include "ioctl.h"
+#include "select.h"
 #include "tty.h"
 #include "systm.h"
 #include "malloc.h"

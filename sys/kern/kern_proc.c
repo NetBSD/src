@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_proc.c	7.16 (Berkeley) 6/28/91
- *	$Id: kern_proc.c,v 1.2 1993/05/18 18:19:17 cgd Exp $
+ *	$Id: kern_proc.c,v 1.3 1993/05/22 11:41:40 cgd Exp $
  */
 
 #include "param.h"
@@ -47,7 +47,6 @@
 #include "malloc.h"
 #include "mbuf.h"
 #include "ioctl.h"
-#include "select.h"
 #include "tty.h"
 
 /*
