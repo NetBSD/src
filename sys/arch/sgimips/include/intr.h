@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 2004/02/08 13:15:42 sekiya Exp $	*/
+/*	$NetBSD: intr.h,v 1.17 2004/07/07 00:08:43 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -83,6 +83,7 @@ struct sgimips_intrhand {
 	int	(*ih_fun) (void *);
 	void	 *ih_arg;
 	struct	sgimips_intr *ih_intrhead;
+	struct	sgimips_intrhand *ih_next;
 	int	ih_pending;
 };
 
