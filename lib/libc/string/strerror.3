@@ -34,14 +34,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strerror.3	6.9 (Berkeley) 6/29/91
-.\"	$Id: strerror.3,v 1.2 1994/01/10 23:58:57 jtc Exp $
+.\"	$Id: strerror.3,v 1.3 1994/08/02 05:02:13 jtc Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRERROR 3
 .Os BSD 4
 .Sh NAME
 .Nm strerror
-.Nd system error messages
+.Nd get error message string
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft char *
@@ -49,8 +49,8 @@
 .Sh DESCRIPTION
 The
 .Fn strerror
-function returns a pointer to the language-dependent error message string
-affiliated with an error number.
+function returns a pointer to the language-dependent error message
+string affiliated with an error number.
 .Pp
 The array pointed to is not to be modified by the program, but may be
 overwritten by subsequent calls to
