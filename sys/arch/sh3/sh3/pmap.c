@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 2000/06/29 07:44:05 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 2000/08/30 09:55:28 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -799,7 +799,7 @@ pmap_bootstrap(kva_start)
 void
 pmap_init()
 {
-	int npages, lcv;
+	int npages, lcv, i;
 	vaddr_t addr;
 	vsize_t s;
 
@@ -827,6 +827,11 @@ pmap_init()
 		vm_physmem[lcv].pmseg.pvhead = (struct pv_head *) addr;
 		addr = (vaddr_t)(vm_physmem[lcv].pmseg.pvhead +
 				 (vm_physmem[lcv].end - vm_physmem[lcv].start));
+		for (i = 0;
+		     i < (vm_physmem[lcv].end - vm_physmem[lcv].start); i++) {
+			simple_lock_init(
+			    &vm_physmem[lcv].pmseg.pvhead[i].pvh_lock);
+		}
 	}
 
 	/* now allocate attrs */
