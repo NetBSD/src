@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 1995/11/19 23:24:15 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 1995/11/20 00:58:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1134,10 +1134,9 @@ boot(howto)
 	if (howto & RB_DUMP)
 		dumpsys();
 
+ haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
-
- haltsys:
 
 #ifdef PANICWAIT
 	if ((howto & RB_HALT) == 0) {
