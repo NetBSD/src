@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.31 2000/12/17 22:57:35 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.32 2000/12/25 02:15:52 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -216,11 +216,6 @@ ENTRY(openfirmware)
 	mtibatu	2,0
 	mtibatu	3,0
 
-	lis	4,ofmsr@ha		/* Open Firmware msr */
-	lwz	4,ofmsr@l(4)
-	mtmsr	4
-	isync
-
 	lis	4,srsave@ha		/* save old SR */
 	addi	4,4,srsave@l
 	li	5,0
@@ -244,6 +239,11 @@ ENTRY(openfirmware)
 	cmpwi	5,0
 	bne	1b
 2:
+	lis	4,ofmsr@ha		/* Open Firmware msr */
+	lwz	4,ofmsr@l(4)
+	mtmsr	4
+	isync
+
 	blrl				/* call Open Firmware */
 
 	lis	4,srsave@ha		/* restore saved SR */
