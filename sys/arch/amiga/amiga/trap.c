@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57 1998/02/13 07:41:45 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.58 1998/05/12 23:48:34 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -335,9 +335,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 		printf("68040 access error: pc %x, code %x,"
 		    " ea %x, fa %x\n", fp->f_pc, code, fp->f_fmt7.f_ea, v);
 		if (curpcb)
-			printf(" curpcb %p ->pcb_ustp %x / %x\n",
-			    curpcb, curpcb->pcb_ustp, 
-			    curpcb->pcb_ustp << PG_SHIFT);
+			printf(" curpcb %p\n", curpcb);
 				
 
 #ifdef DDB						/* XXX PAGE0 */
