@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613 2004/03/26 22:06:31 gendalia Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.614 2004/04/01 08:00:32 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615 2004/03/26 22:05:08 gendalia Exp 
+ *	NetBSD: pcidevs,v 1.616 2004/04/01 08:00:01 tron Exp 
  */
 
 /*
@@ -13072,9 +13072,9 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_PROLOG, 0,
+	    PCI_VENDOR_AVID, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Pro-Log Corporation",
+	    "Avid Technology Inc.",
 	    NULL,
 	},
 	{
