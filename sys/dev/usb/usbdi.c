@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.61 2000/01/31 20:13:07 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.62 2000/02/08 18:46:03 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -851,8 +851,9 @@ usb_transfer_complete(xfer)
 
 	if (!repeat) {
 		/* XXX should we stop the queue on all errors? */
-		if (xfer->status == USBD_CANCELLED ||
-		    xfer->status == USBD_TIMEOUT)
+		if ((xfer->status == USBD_CANCELLED ||
+		     xfer->status == USBD_TIMEOUT) &&
+		    pipe->iface != NULL)		/* not control pipe */
 			pipe->running = 0;
 		else
 			usbd_start_next(pipe);
@@ -940,7 +941,7 @@ usbd_do_request_flags(dev, req, data, flags, actlen)
 #ifdef DIAGNOSTIC
 #if defined(__i386__) && defined(__FreeBSD__)
 	KASSERT(intr_nesting_level == 0,
-	       	("ohci_abort_req in interrupt context"));
+	       	("usbd_do_request: in interrupt context"));
 #endif
 	if (dev->bus->intr_context) {
 		printf("usbd_do_request: not in process context\n");
