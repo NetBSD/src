@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.1 1997/10/14 19:57:39 mark Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.2 1997/10/16 18:37:38 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -56,10 +56,15 @@
 #include <machine/bus.h>
 
 #include <arm32/mainbus/piocvar.h>
-#include <arm32/dev/comreg.h>
-#include <arm32/dev/comvar.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
 
 #include "locators.h"
+
+struct com_pioc_softc {
+	struct	com_softc sc_com;	/* real "com" softc */
+	void	*sc_ih;			/* interrupt handler */
+};
 
 /* Prototypes for functions */
 
@@ -70,7 +75,7 @@ static void com_pioc_cleanup __P((void *));
 /* device attach structure */
 
 struct cfattach com_pioc_ca = {
-	sizeof(struct com_softc), com_pioc_probe, com_pioc_attach
+	sizeof(struct com_pioc_softc), com_pioc_probe, com_pioc_attach
 };
 
 /*
@@ -100,7 +105,7 @@ com_pioc_probe(parent, cf, aux)
 	iobase = pa->pa_iobase + pa->pa_offset;
 
 	/* if it's in use as console, it's there. */
-	if (iobase != comconsaddr || comconsattached) {
+	if (!com_is_console(iot, iobase, 0)) {
 		if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
 			return 0;
 		}
@@ -125,29 +130,26 @@ com_pioc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct com_softc *sc = (void *)self;
-	int iobase, irq;
+	struct com_pioc_softc *psc = (void *)self;
+	struct com_softc *sc = &psc->sc_com;
+	u_int iobase;
 	bus_space_tag_t iot;
 	struct pioc_attach_args *pa = aux;
 	int count;
 
-	iot = pa->pa_iot;
-	iobase = pa->pa_iobase + pa->pa_offset;
+	iot = sc->sc_iot = pa->pa_iot;
+	iobase = sc->sc_iobase = pa->pa_iobase + pa->pa_offset;
 
-        if (iobase != comconsaddr) {
-                if (bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh))
+	if (!com_is_console(iot, iobase, &sc->sc_ioh)
+		&& bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh))
 			panic("comattach: io mapping failed");
-	} else
-                sc->sc_ioh = comconsioh;
-	irq = pa->pa_irq;
 
-	sc->sc_iot = iot;
-	sc->sc_iobase = iobase;
+	sc->sc_frequency = COM_FREQ;
 
 	com_attach_subr(sc);
 
-	if (irq != MAINBUSCF_IRQ_DEFAULT) {
-		sc->sc_ih = intr_claim(irq, IPL_TTY, "com",
+	if (pa->pa_irq != MAINBUSCF_IRQ_DEFAULT) {
+		psc->sc_ih = intr_claim(pa->pa_irq, IPL_TTY, "com",
 		    comintr, sc);
 	}
 
@@ -156,7 +158,8 @@ com_pioc_attach(parent, self, aux)
 	 * without a disabled FIFO.
 	 */
 	if (shutdownhook_establish(com_pioc_cleanup, sc) == NULL)
-		panic("%s: could not establish shutdown hook", sc->sc_dev.dv_xname);
+		panic("%s: could not establish shutdown hook",
+		    sc->sc_dev.dv_xname);
 
 	/*
 	 * This is a patch for bugged revision 1-4 SMC FDC37C665
