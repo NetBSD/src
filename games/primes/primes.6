@@ -1,4 +1,4 @@
-.\"	$NetBSD: factor.6,v 1.9 2004/02/08 13:16:25 jsm Exp $
+.\"	$NetBSD: primes.6,v 1.1 2004/02/08 13:16:25 jsm Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,44 +38,50 @@
 .\"   chongo <for a good prime call: 391581 * 2^216193 - 1> /\oo/\
 .\"
 .Dd February 8, 2004
-.Dt FACTOR 6
+.Dt PRIMES 6
 .Os
 .Sh NAME
-.Nm factor
-.Nd factor a number
+.Nm primes
+.Nd generate primes
 .Sh SYNOPSIS
-.Nm
-.Op Ar number ...
+.Nm primes
+.Op Ar start Op Ar stop
 .Sh DESCRIPTION
 The
 .Nm
-utility will factor integers between \-2147483648 and 2147483647 inclusive.
-When a number is factored, it is printed, followed by a
-.Dq \&: ,
-and the list of factors on a single line.
-Factors are listed in ascending order, and are preceded by a space.
-If a factor divides a value more than once, it will be printed more than once.
+utility prints primes in ascending order, one per line, starting at or above
+.Ar start
+and continuing until, but not including
+.Ar stop .
+The
+.Ar start
+value must be at least 0 and not greater than
+.Ar stop .
+The
+.Ar stop
+value must not be greater than 4294967295.
+The default value of
+.Ar stop
+is 4294967295.
 .Pp
-When
+When the
 .Nm
-is invoked with one or more arguments, each argument will be factored.
-.Pp
-When
-.Nm
-is invoked with no arguments,
-.Nm
-reads numbers, one per line, from standard input, until end of file or error.
-Leading white-space and empty lines are ignored.
-Numbers may be preceded by a single - or +.
-Numbers are terminated by a non-digit character (such as a newline).
-After a number is read, it is factored.
-Input lines must not be longer than 255 characters.
+utility is invoked with no arguments,
+.Ar start
+is read from standard input.
+.Ar stop
+is taken to be 4294967295.
+The
+.Ar start
+value may be preceded by a single +.
+The
+.Ar start
+value is terminated by a non-digit character (such as a newline).
+The input line must not be longer than 255 characters.
 .Sh DIAGNOSTICS
 Out of range or invalid input results in
 an appropriate error message
 being written to standard error.
 .Sh BUGS
 .Nm
-cannot handle the
-.Dq 10 most wanted
-factor list.
+won't get you a world record.
