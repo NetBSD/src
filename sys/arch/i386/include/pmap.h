@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43.2.8 2001/01/02 06:58:10 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.9 2001/01/03 16:55:48 thorpej Exp $	*/
 
 /*
  *
@@ -342,33 +342,6 @@ struct pv_page {
 };
 
 /*
- * pmap_remove_record: a record of VAs that have been unmapped, used to
- * flush TLB.  if we have more than PMAP_RR_MAX then we stop recording.
- */
-
-#define PMAP_RR_MAX	16	/* max of 16 pages (64K) */
-#if 0
-struct pmap_remove_record {
-	int prr_npages;
-	vaddr_t prr_vas[PMAP_RR_MAX];
-};
-#endif
-
-#if 0
-/*
- * pmap_transfer_location: used to pass the current location in the
- * pmap between pmap_transfer and pmap_transfer_ptes [e.g. during
- * a pmap_copy].
- */
-
-struct pmap_transfer_location {
-	vaddr_t addr;			/* the address (page-aligned) */
-	pt_entry_t *pte;		/* the PTE that maps address */
-	struct vm_page *ptp;		/* the PTP that the PTE lives in */
-};
-#endif
-
-/*
  * global kernel variables
  */
 
@@ -420,10 +393,8 @@ void		pmap_write_protect __P((struct pmap *, vaddr_t,
 
 vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 
-#if defined(MULTIPROCESSOR)
-void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, pt_entry_t));
-#endif /* MULTIPROCESSOR */
-void	pmap_tlb_dshootdown __P((pmap_t, vaddr_t, pt_entry_t));
+void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, pt_entry_t, int32_t *));
+void	pmap_tlb_shootnow __P((int32_t));
 void	pmap_do_tlb_shootdown __P((struct cpu_info *));
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
