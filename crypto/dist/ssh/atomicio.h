@@ -1,5 +1,5 @@
-/*	$NetBSD: atomicio.h,v 1.5 2001/09/27 03:24:01 itojun Exp $	*/
-/*	$OpenBSD: atomicio.h,v 1.4 2001/06/26 06:32:46 itojun Exp $	*/
+/*	$NetBSD: atomicio.h,v 1.6 2005/02/13 05:57:25 christos Exp $	*/
+/*	$OpenBSD: atomicio.h,v 1.5 2003/06/28 16:23:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995,1999 Theo de Raadt.  All rights reserved.
@@ -27,8 +27,8 @@
  */
 
 /*
- * `Atomic' read and write operations, to ensure that all the
- * data makes it through a socket (handles signals, etc.).
+ * Ensure all of data on socket comes through. f==read || f==vwrite
  */
-ssize_t	atomic_read(int, void *, size_t);
-ssize_t atomic_write(int, const void *, size_t);
+ssize_t	atomicio(ssize_t (*)(int, void *, size_t), int, void *, size_t);
+
+#define vwrite (ssize_t (*)(int, void *, size_t))write

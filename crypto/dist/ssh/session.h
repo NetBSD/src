@@ -1,5 +1,5 @@
-/*	$NetBSD: session.h,v 1.4 2002/07/01 05:56:45 itojun Exp $	*/
-/*	$OpenBSD: session.h,v 1.19 2002/06/30 21:59:45 deraadt Exp $	*/
+/*	$NetBSD: session.h,v 1.5 2005/02/13 05:57:26 christos Exp $	*/
+/*	$OpenBSD: session.h,v 1.23 2004/07/17 05:31:41 dtucker Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -42,9 +42,6 @@ struct Session {
 	int	ptyfd, ttyfd, ptymaster;
 	u_int	row, col, xpixel, ypixel;
 	char	tty[TTYSZ];
-	/* last login */
-	char	hostname[MAXHOSTNAMELEN];
-	time_t	last_login_time;
 	/* X11 */
 	u_int	display_number;
 	char	*display;
@@ -56,19 +53,28 @@ struct Session {
 	/* proto 2 */
 	int	chanid;
 	int	is_subsystem;
+	int	num_env;
+	struct {
+		char	*name;
+		char	*val;
+	}	*env;
 };
 
 void	 do_authenticated(Authctxt *);
+void	 do_cleanup(Authctxt *);
 
 int	 session_open(Authctxt *, int);
 int	 session_input_channel_req(Channel *, const char *);
 void	 session_close_by_pid(pid_t, int);
 void	 session_close_by_channel(int, void *);
 void	 session_destroy_all(void (*)(Session *));
-void	 session_pty_cleanup2(void *);
+void	 session_pty_cleanup2(Session *);
 
 Session	*session_new(void);
 Session	*session_by_tty(char *);
 void	 session_close(Session *);
 void	 do_setusercontext(struct passwd *);
+void	 child_set_env(char ***envp, u_int *envsizep, const char *name,
+		       const char *value);
+
 #endif

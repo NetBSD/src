@@ -1,26 +1,18 @@
-/*	$NetBSD: sftp-client.c,v 1.21 2003/07/10 01:09:47 lukem Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.22 2005/02/13 05:57:26 christos Exp $	*/
 /*
- * Copyright (c) 2001-2003 Damien Miller.  All rights reserved.
+ * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /* XXX: memleaks */
@@ -29,8 +21,8 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.42 2003/03/05 22:33:43 markus Exp $");
-__RCSID("$NetBSD: sftp-client.c,v 1.21 2003/07/10 01:09:47 lukem Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.51 2004/07/11 17:48:47 deraadt Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.22 2005/02/13 05:57:26 christos Exp $");
 
 #include <sys/queue.h>
 
@@ -46,6 +38,7 @@ __RCSID("$NetBSD: sftp-client.c,v 1.21 2003/07/10 01:09:47 lukem Exp $");
 #include "sftp-common.h"
 #include "sftp-client.h"
 
+extern volatile sig_atomic_t interrupted;
 extern int showprogress;
 
 /* Minimum amount of data to read at at time */
@@ -73,10 +66,10 @@ send_msg(int fd, Buffer *m)
 
 	/* Send length first */
 	PUT_32BIT(mlen, buffer_len(m));
-	if (atomic_write(fd, mlen, sizeof(mlen)) <= 0)
+	if (atomicio(vwrite, fd, mlen, sizeof(mlen)) <= 0)
 		fatal("Couldn't send packet: %s", strerror(errno));
 
-	if (atomic_write(fd, buffer_ptr(m), buffer_len(m)) <= 0)
+	if (atomicio(vwrite, fd, buffer_ptr(m), buffer_len(m)) <= 0)
 		fatal("Couldn't send packet: %s", strerror(errno));
 
 	buffer_clear(m);
@@ -89,7 +82,7 @@ get_msg(int fd, Buffer *m)
 	u_int msg_len;
 
 	buffer_append_space(m, 4);
-	len = atomic_read(fd, buffer_ptr(m), 4);
+	len = atomicio(read, fd, buffer_ptr(m), 4);
 	if (len == 0)
 		fatal("Connection closed");
 	else if (len == -1)
@@ -100,7 +93,7 @@ get_msg(int fd, Buffer *m)
 		fatal("Received message too long %u", msg_len);
 
 	buffer_append_space(m, msg_len);
-	len = atomic_read(fd, buffer_ptr(m), msg_len);
+	len = atomicio(read, fd, buffer_ptr(m), msg_len);
 	if (len == 0)
 		fatal("Connection closed");
 	else if (len == -1)
@@ -340,7 +333,7 @@ do_lsreaddir(struct sftp_conn *conn, char *path, int printflag,
 		(*dir)[0] = NULL;
 	}
 
-	for (;;) {
+	for (; !interrupted;) {
 		int count;
 
 		id = expected_id = conn->msg_id++;
@@ -416,6 +409,13 @@ do_lsreaddir(struct sftp_conn *conn, char *path, int printflag,
 	buffer_free(&msg);
 	do_close(conn, handle, handle_len);
 	xfree(handle);
+
+	/* Don't return partial matches on interrupt */
+	if (interrupted && dir != NULL && *dir != NULL) {
+		free_sftp_dirents(*dir);
+		*dir = xmalloc(sizeof(**dir));
+		**dir = NULL;
+	}
 
 	return(0);
 }
@@ -653,7 +653,7 @@ do_symlink(struct sftp_conn *conn, char *oldpath, char *newpath)
 
 	buffer_init(&msg);
 
-	/* Send rename request */
+	/* Send symlink request */
 	id = conn->msg_id++;
 	buffer_put_char(&msg, SSH2_FXP_SYMLINK);
 	buffer_put_int(&msg, id);
@@ -800,7 +800,7 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 		return(-1);
 	}
 
-	local_fd = open(local_path, O_WRONLY | O_CREAT | O_TRUNC, 
+	local_fd = open(local_path, O_WRONLY | O_CREAT | O_TRUNC,
 	    mode | S_IWRITE);
 	if (local_fd == -1) {
 		error("Couldn't open local file \"%s\" for writing: %s",
@@ -815,17 +815,22 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 	max_req = 1;
 	progress_counter = 0;
 
-	if (showprogress) {
-		if (size)
-			start_progress_meter(remote_path, size,
-			    &progress_counter);
-		else
-			printf("Fetching %s to %s\n", remote_path, local_path);
-	}
+	if (showprogress && size != 0)
+		start_progress_meter(remote_path, size, &progress_counter);
 
 	while (num_req > 0 || max_req > 0) {
 		char *data;
 		u_int len;
+
+		/*
+		 * Simulate EOF on interrupt: stop sending new requests and
+		 * allow outstanding requests to drain gracefully
+		 */
+		if (interrupted) {
+			if (num_req == 0) /* If we haven't started yet... */
+				break;
+			max_req = 0;
+		}
 
 		/* Send some more requests */
 		while (num_req < max_req) {
@@ -877,7 +882,7 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 				fatal("Received more data than asked for "
 				    "%u > %u", len, req->len);
 			if ((lseek(local_fd, req->offset, SEEK_SET) == -1 ||
-			    atomic_write(local_fd, data, len) != len) &&
+			    atomicio(vwrite, local_fd, data, len) != len) &&
 			    !write_error) {
 				write_errno = errno;
 				write_error = 1;
@@ -914,8 +919,7 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 					    (unsigned long long)offset,
 					    num_req);
 					max_req = 1;
-				}
-				else if (max_req < conn->num_requests + 1) {
+				} else if (max_req <= conn->num_requests) {
 					++max_req;
 				}
 			}
@@ -986,7 +990,7 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 		TAILQ_ENTRY(outstanding_ack) tq;
 	};
 	TAILQ_HEAD(ackhead, outstanding_ack) acks;
-	struct outstanding_ack *ack;
+	struct outstanding_ack *ack = NULL;
 
 	TAILQ_INIT(&acks);
 
@@ -1042,17 +1046,19 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 	offset = 0;
 	if (showprogress)
 		start_progress_meter(local_path, sb.st_size, &offset);
-	else
-		printf("Uploading %s to %s\n", local_path, remote_path);
 
 	for (;;) {
 		int len;
 
 		/*
-		 * Can't use atomicio here because it returns 0 on EOF, thus losing
-		 * the last block of the file
+		 * Can't use atomicio here because it returns 0 on EOF,
+		 * thus losing the last block of the file.
+		 * Simulate an EOF on interrupt, allowing ACKs from the
+		 * server to drain.
 		 */
-		do
+		if (interrupted)
+			len = 0;
+		else do
 			len = read(local_fd, data, conn->transfer_buflen);
 		while ((len == -1) && (errno == EINTR || errno == EAGAIN));
 
