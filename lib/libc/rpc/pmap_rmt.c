@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.10 1997/07/21 14:08:34 jtc Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.11 1998/02/10 04:54:43 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.10 1997/07/21 14:08:34 jtc Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.11 1998/02/10 04:54:43 lukem Exp $");
 #endif
 #endif
 
@@ -48,21 +48,26 @@ __RCSID("$NetBSD: pmap_rmt.c,v 1.10 1997/07/21 14:08:34 jtc Exp $");
  */
 
 #include "namespace.h"
+
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/poll.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+#include <netinet/in.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <arpa/inet.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_rmt.h>
-#include <sys/socket.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <unistd.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
-#include <arpa/inet.h>
 
 #ifdef __weak_alias
 __weak_alias(clnt_broadcast,_clnt_broadcast);
@@ -85,16 +90,17 @@ static struct timeval timeout = { 3, 0 };
  * programs to do a lookup and call in one step.
 */
 enum clnt_stat
-pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_ptr)
+pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout,
+	    port_ptr)
 	struct sockaddr_in *addr;
-	u_long prog, vers, proc;
+	u_int32_t prog, vers, proc;
 	xdrproc_t xdrargs, xdrres;
 	caddr_t argsp, resp;
 	struct timeval tout;
-	u_long *port_ptr;
+	u_int32_t *port_ptr;
 {
 	int socket = -1;
-	register CLIENT *client;
+	CLIENT *client;
 	struct rmtcallargs a;
 	struct rmtcallres r;
 	enum clnt_stat stat;
@@ -128,24 +134,24 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_pt
  */
 bool_t
 xdr_rmtcall_args(xdrs, cap)
-	register XDR *xdrs;
-	register struct rmtcallargs *cap;
+	XDR *xdrs;
+	struct rmtcallargs *cap;
 {
-	u_int lenposition, argposition, position;
+	size_t lenposition, argposition, position;
 
-	if (xdr_u_long(xdrs, &(cap->prog)) &&
-	    xdr_u_long(xdrs, &(cap->vers)) &&
-	    xdr_u_long(xdrs, &(cap->proc))) {
+	if (xdr_u_int32_t(xdrs, &(cap->prog)) &&
+	    xdr_u_int32_t(xdrs, &(cap->vers)) &&
+	    xdr_u_int32_t(xdrs, &(cap->proc))) {
 		lenposition = XDR_GETPOS(xdrs);
-		if (! xdr_u_long(xdrs, &(cap->arglen)))
+		if (! xdr_u_int32_t(xdrs, &(cap->arglen)))
 		    return (FALSE);
 		argposition = XDR_GETPOS(xdrs);
 		if (! (*(cap->xdr_args))(xdrs, cap->args_ptr))
 		    return (FALSE);
 		position = XDR_GETPOS(xdrs);
-		cap->arglen = (u_long)position - (u_long)argposition;
+		cap->arglen = (u_int32_t)position - (u_int32_t)argposition;
 		XDR_SETPOS(xdrs, lenposition);
-		if (! xdr_u_long(xdrs, &(cap->arglen)))
+		if (! xdr_u_int32_t(xdrs, &(cap->arglen)))
 		    return (FALSE);
 		XDR_SETPOS(xdrs, position);
 		return (TRUE);
@@ -159,15 +165,15 @@ xdr_rmtcall_args(xdrs, cap)
  */
 bool_t
 xdr_rmtcallres(xdrs, crp)
-	register XDR *xdrs;
-	register struct rmtcallres *crp;
+	XDR *xdrs;
+	struct rmtcallres *crp;
 {
 	caddr_t port_ptr;
 
 	port_ptr = (caddr_t)crp->port_ptr;
-	if (xdr_reference(xdrs, &port_ptr, sizeof (u_long),
-	    xdr_u_long) && xdr_u_long(xdrs, &crp->resultslen)) {
-		crp->port_ptr = (u_long *)port_ptr;
+	if (xdr_reference(xdrs, &port_ptr, sizeof (u_int32_t), xdr_u_int32_t)
+	    && xdr_u_int32_t(xdrs, &crp->resultslen)) {
+		crp->port_ptr = (u_int32_t *)port_ptr;
 		return ((*(crp->xdr_results))(xdrs, crp->results_ptr));
 	}
 	return (FALSE);
@@ -236,9 +242,9 @@ typedef bool_t (*resultproc_t) __P((caddr_t, struct sockaddr_in *));
 
 enum clnt_stat 
 clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
-	u_long		prog;		/* program number */
-	u_long		vers;		/* version number */
-	u_long		proc;		/* procedure number */
+	u_int32_t	prog;		/* program number */
+	u_int32_t	vers;		/* version number */
+	u_int32_t	proc;		/* procedure number */
 	xdrproc_t	xargs;		/* xdr routine for args */
 	caddr_t		argsp;		/* pointer to args */
 	xdrproc_t	xresults;	/* xdr routine for results */
@@ -248,15 +254,15 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	enum clnt_stat stat;
 	AUTH *unix_auth = authunix_create_default();
 	XDR xdr_stream;
-	register XDR *xdrs = &xdr_stream;
+	XDR *xdrs = &xdr_stream;
 	int outlen, inlen, fromlen, nets;
-	register int sock;
+	int sock;
 	int on = 1;
 	struct pollfd fd;
-	register int i;
+	int i;
 	bool_t done = FALSE;
-	register u_long xid;
-	u_long port;
+	u_int32_t xid;
+	u_int32_t port;
 	struct in_addr addrs[20];
 	struct sockaddr_in baddr, raddr; /* broadcast and response addresses */
 	struct rmtcallargs a;
@@ -371,12 +377,12 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		 * see if reply transaction id matches sent id.
 		 * If so, decode the results.
 		 */
-		xdrmem_create(xdrs, inbuf, (u_int)inlen, XDR_DECODE);
+		xdrmem_create(xdrs, inbuf, (size_t)inlen, XDR_DECODE);
 		if (xdr_replymsg(xdrs, &msg)) {
 			if ((msg.rm_xid == xid) &&
 				(msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
 				(msg.acpted_rply.ar_stat == SUCCESS)) {
-				raddr.sin_port = htons((u_short)port);
+				raddr.sin_port = htons((in_port_t)port);
 				done = (*eachresult)(resultsp, &raddr);
 			}
 			/* otherwise, we just ignore the errors ... */
@@ -384,7 +390,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 #ifdef notdef
 			/* some kind of deserialization problem ... */
 			if (msg.rm_xid == xid)
-				fprintf(stderr, "Broadcast deserialization problem");
+				warnx("Broadcast deserialization problem");
 			/* otherwise, just random garbage */
 #endif
 		}

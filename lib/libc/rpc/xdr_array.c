@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.6 1997/07/21 14:08:43 jtc Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.7 1998/02/10 04:54:58 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_array.c,v 1.6 1997/07/21 14:08:43 jtc Exp $");
+__RCSID("$NetBSD: xdr_array.c,v 1.7 1998/02/10 04:54:58 lukem Exp $");
 #endif
 #endif
 
@@ -49,9 +49,12 @@ __RCSID("$NetBSD: xdr_array.c,v 1.6 1997/07/21 14:08:43 jtc Exp $");
  */
 
 #include "namespace.h"
+
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
@@ -69,18 +72,19 @@ __weak_alias(xdr_vector,_xdr_vector);
  */
 bool_t
 xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
-	register XDR *xdrs;
+	XDR *xdrs;
 	caddr_t *addrp;		/* array pointer */
-	u_int *sizep;		/* number of elements */
-	u_int maxsize;		/* max numberof elements */
-	u_int elsize;		/* size in bytes of each element */
+	size_t *sizep;		/* number of elements */
+	size_t maxsize;		/* max numberof elements */
+	size_t elsize;		/* size in bytes of each element */
 	xdrproc_t elproc;	/* xdr routine to handle each element */
 {
-	register u_int i;
-	register caddr_t target = *addrp;
-	register u_int c;  /* the actual element count */
-	register bool_t stat = TRUE;
-	register u_int nodesize;
+	size_t i;
+	caddr_t target = *addrp;
+	size_t c;  /* the actual element count */
+	bool_t stat = TRUE;
+	size_t nodesize;
+	char *p;
 
 	/* like strings, arrays are really counted arrays */
 	if (! xdr_u_int(xdrs, sizep)) {
@@ -103,8 +107,7 @@ xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
 				return (TRUE);
 			*addrp = target = mem_alloc(nodesize);
 			if (target == NULL) {
-				(void) fprintf(stderr, 
-					"xdr_array: out of memory\n");
+				warnx("xdr_array: out of memory");
 				return (FALSE);
 			}
 			memset(target, 0, nodesize);
@@ -120,10 +123,11 @@ xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
 	/*
 	 * now we xdr each element of array
 	 */
-	for (i = 0; (i < c) && stat; i++) {
-		stat = (*elproc)(xdrs, target);
-		target += elsize;
+	for (p = target, i = 0; (i < c) && stat; i++) {
+		stat = (*elproc)(xdrs, (caddr_t)p);
+		p += elsize;
 	}
+	target = p;
 
 	/*
 	 * the array may need freeing
@@ -147,14 +151,14 @@ xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
  */
 bool_t
 xdr_vector(xdrs, basep, nelem, elemsize, xdr_elem)
-	register XDR *xdrs;
-	register char *basep;
-	register u_int nelem;
-	register u_int elemsize;
-	register xdrproc_t xdr_elem;	
+	XDR *xdrs;
+	caddr_t basep;
+	size_t nelem;
+	size_t elemsize;
+	xdrproc_t xdr_elem;	
 {
-	register u_int i;
-	register char *elptr;
+	size_t i;
+	char *elptr;
 
 	elptr = basep;
 	for (i = 0; i < nelem; i++) {
