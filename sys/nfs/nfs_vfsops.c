@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.125 2003/04/16 21:44:25 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.126 2003/04/24 21:21:06 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.125 2003/04/16 21:44:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.126 2003/04/24 21:21:06 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -155,11 +155,13 @@ nfs_statfs(mp, sbp, p)
 	struct mbuf *mreq, *mrep = NULL, *md, *mb;
 	struct ucred *cred;
 	u_quad_t tquad;
+	struct nfsnode *np;
 
 #ifndef nolint
 	sfp = (struct nfs_statfs *)0;
 #endif
 	vp = nmp->nm_vnode;
+	np = VTONFS(vp);
 	cred = crget();
 	cred->cr_ngroups = 0;
 #ifndef NFS_V2_ONLY
@@ -167,9 +169,9 @@ nfs_statfs(mp, sbp, p)
 		(void)nfs_fsinfo(nmp, vp, cred, p);
 #endif
 	nfsstats.rpccnt[NFSPROC_FSSTAT]++;
-	nfsm_reqhead(vp, NFSPROC_FSSTAT, NFSX_FH(v3));
-	nfsm_fhtom(vp, v3);
-	nfsm_request(vp, NFSPROC_FSSTAT, p, cred);
+	nfsm_reqhead(np, NFSPROC_FSSTAT, NFSX_FH(v3));
+	nfsm_fhtom(np, v3);
+	nfsm_request(np, NFSPROC_FSSTAT, p, cred);
 	if (v3)
 		nfsm_postop_attr(vp, retattr, 0);
 	if (error) {
@@ -230,11 +232,12 @@ nfs_fsinfo(nmp, vp, cred, p)
 	int error = 0, retattr;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	u_int64_t maxfsize;
+	struct nfsnode *np = VTONFS(vp);
 
 	nfsstats.rpccnt[NFSPROC_FSINFO]++;
-	nfsm_reqhead(vp, NFSPROC_FSINFO, NFSX_FH(1));
-	nfsm_fhtom(vp, 1);
-	nfsm_request(vp, NFSPROC_FSINFO, p, cred);
+	nfsm_reqhead(np, NFSPROC_FSINFO, NFSX_FH(1));
+	nfsm_fhtom(np, 1);
+	nfsm_request(np, NFSPROC_FSINFO, p, cred);
 	nfsm_postop_attr(vp, retattr, 0);
 	if (!error) {
 		nfsm_dissect(fsp, struct nfsv3_fsinfo *, NFSX_V3FSINFO);
