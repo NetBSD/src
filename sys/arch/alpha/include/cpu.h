@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13.2.1 1996/12/07 02:08:53 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13.2.2 1997/01/24 07:05:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -97,8 +97,10 @@ struct clockframe {
 
 #define	aston()		(astpending = 1)
 
+#ifdef _KERNEL
 u_int64_t astpending;		/* need to trap before returning to user mode */
 u_int64_t want_resched;		/* resched() was called */
+#endif
 
 
 /*

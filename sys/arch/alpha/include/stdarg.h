@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.4 1996/10/09 21:13:05 cgd Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.4.2.1 1997/01/24 07:05:58 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,6 +39,11 @@
 #define	_ALPHA_STDARG_H_
 
 #include <machine/ansi.h>
+
+#ifdef __lint__
+#define	__builtin_saveregs()		(0)
+#define	__builtin_classify_type(t)	(0)
+#endif
 
 typedef _BSD_VA_LIST_	va_list;
 
