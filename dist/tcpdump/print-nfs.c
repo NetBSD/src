@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.5 2002/05/31 09:45:45 itojun Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.6 2002/06/01 14:38:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.91 2002/04/24 06:27:06 guy Exp (LBL)";
+    "@(#) $Header: /cvsroot/src/dist/tcpdump/Attic/print-nfs.c,v 1.6 2002/06/01 14:38:59 itojun Exp $ (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.5 2002/05/31 09:45:45 itojun Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.6 2002/06/01 14:38:59 itojun Exp $");
 #endif
 #endif
 
@@ -723,10 +723,16 @@ nfsreq_print(register const u_char *bp, u_int length,
 
 	case NFSPROC_FSINFO:
 		printf(" fsinfo");
+		if ((dp = parsereq(rp, length)) != NULL &&
+		    parsefh(dp, v3) != NULL)
+			return;
 		break;
 
 	case NFSPROC_PATHCONF:
 		printf(" pathconf");
+		if ((dp = parsereq(rp, length)) != NULL &&
+		    parsefh(dp, v3) != NULL)
+			return;
 		break;
 
 	case NFSPROC_COMMIT:
@@ -1035,7 +1041,6 @@ parsestatus(const u_int32_t *dp, int *er)
 			printf(" ERROR: %s",
 			    tok2str(status2str, "unk %d", errnum));
 		nfserr = 1;
-		return (NULL);
 	}
 	return (dp + 1);
 trunc:
@@ -1117,8 +1122,10 @@ parseattrstat(const u_int32_t *dp, int verbose, int v3)
 	int er;
 
 	dp = parsestatus(dp, &er);
-	if (dp == NULL || er)
+	if (dp == NULL)
 		return (0);
+	if (er)
+		return (1);
 
 	return (parsefattr(dp, verbose, v3) != NULL);
 }
@@ -1128,8 +1135,10 @@ parsediropres(const u_int32_t *dp)
 {
 	int er;
 
-	if (!(dp = parsestatus(dp, &er)) || er)
+	if (!(dp = parsestatus(dp, &er)))
 		return (0);
+	if (er)
+		return (1);
 
 	dp = parsefh(dp, 0);
 	if (dp == NULL)
@@ -1144,8 +1153,10 @@ parselinkres(const u_int32_t *dp, int v3)
 	int er;
 
 	dp = parsestatus(dp, &er);
-	if (dp == NULL || er)
+	if (dp == NULL)
 		return(0);
+	if (er)
+		return(1);
 	if (v3 && !(dp = parse_post_op_attr(dp, vflag)))
 		return (0);
 	putchar(' ');
@@ -1159,8 +1170,10 @@ parsestatfs(const u_int32_t *dp, int v3)
 	int er;
 
 	dp = parsestatus(dp, &er);
-	if (dp == NULL || (!v3 && er))
+	if (dp == NULL)
 		return (0);
+	if (!v3 && er)
+		return (1);
 
 	if (qflag)
 		return(1);
@@ -1172,7 +1185,7 @@ parsestatfs(const u_int32_t *dp, int v3)
 			return (0);
 	}
 
-	TCHECK2(dp, (v3 ? NFSX_V3STATFS : NFSX_V2STATFS));
+	TCHECK2(*dp, (v3 ? NFSX_V3STATFS : NFSX_V2STATFS));
 
 	sfsp = (const struct nfs_statfs *)dp;
 
@@ -1213,8 +1226,10 @@ parserddires(const u_int32_t *dp)
 	int er;
 
 	dp = parsestatus(dp, &er);
-	if (dp == NULL || er)
+	if (dp == NULL)
 		return (0);
+	if (er)
+		return (1);
 	if (qflag)
 		return (1);
 
@@ -1250,7 +1265,7 @@ parse_pre_op_attr(const u_int32_t *dp, int verbose)
 	if (!ntohl(dp[0]))
 		return (dp + 1);
 	dp++;
-	TCHECK2(dp, 24);
+	TCHECK2(*dp, 24);
 	if (verbose > 1) {
 		return parse_wcc_attr(dp);
 	} else {
@@ -1387,9 +1402,9 @@ parsefsinfo(const u_int32_t *dp)
 		       (u_int32_t) ntohl(sfp->fs_timedelta.nfsv3_sec),
 		       (u_int32_t) ntohl(sfp->fs_timedelta.nfsv3_nsec));
 	}
-	return (0);
-trunc:
 	return (1);
+trunc:
+	return (0);
 }
 
 static int
@@ -1417,9 +1432,9 @@ parsepathconf(const u_int32_t *dp)
 	       ntohl(spp->pc_chownrestricted) ? "chownres" : "",
 	       ntohl(spp->pc_caseinsensitive) ? "igncase" : "",
 	       ntohl(spp->pc_casepreserving) ? "keepcase" : "");
-	return (0);
-trunc:
 	return (1);
+trunc:
+	return (0);
 }
 
 static void
