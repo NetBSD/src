@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.29 2004/04/05 23:11:34 christos Exp $	*/
+/*	$NetBSD: vacation.c,v 1.30 2004/08/19 13:43:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.29 2004/04/05 23:11:34 christos Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.30 2004/08/19 13:43:54 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -77,51 +77,61 @@ __RCSID("$NetBSD: vacation.c,v 1.29 2004/04/05 23:11:34 christos Exp $");
  */
 
 #define	MAXLINE	1024			/* max line from mail header */
-#define	VDB	".vacation.db"		/* dbm's database */
-#define	VMSG	".vacation.msg"		/* vacation message */
+
+static const char *dbprefix = ".vacation";	/* dbm's database sans .db */
+static const char *msgfile = ".vacation.msg";	/* vacation message */
 
 typedef struct alias {
 	struct alias *next;
 	const char *name;
 } alias_t;
-alias_t *names;
+static alias_t *names;
 
-DB *db;
-char from[MAXLINE];
+static DB *db;
+static char from[MAXLINE];
+static char subject[MAXLINE];
+
+static int iflag = 0;		/* Initialize the database */
+
 static int tflag = 0;
 #define	APPARENTLY_TO		1
 #define	DELIVERED_TO		2
+
 static int fflag = 0;
 #define	FROM_FROM		1
 #define	RETURN_PATH_FROM	2
 #define	SENDER_FROM		4
+
+static int toanybody = 0;	/* Don't check if we appear in the to or cc */
+
 static int debug = 0;
 
 int main(int, char **);
-int junkmail(void);
-int nsearch(const char *, const char *);
-int readheaders(void);
-int recent(void);
-void getfrom(char *);
-void sendmessage(const char *);
-void setinterval(time_t);
-void setreply(void);
-void usage(void);
+static void opendb(void);
+static int junkmail(const char *);
+static int nsearch(const char *, const char *);
+static int readheaders(void);
+static int recent(void);
+static void getfrom(char *);
+static void sendmessage(const char *);
+static void setinterval(time_t);
+static void setreply(void);
+static void usage(void);
 
 int
 main(int argc, char **argv)
 {
 	struct passwd *pw;
 	alias_t *cur;
-	time_t interval;
-	int ch, iflag, rv;
+	long interval;
+	int ch, rv;
 	char *p;
 
 	setprogname(argv[0]);
-	opterr = iflag = 0;
+	opterr = 0;
 	interval = -1;
 	openlog(getprogname(), 0, LOG_USER);
-	while ((ch = getopt(argc, argv, "a:df:Iir:t:")) != -1)
+	while ((ch = getopt(argc, argv, "a:df:F:Iijr:s:t:T:")) != -1)
 		switch((char)ch) {
 		case 'a':			/* alias */
 			if (!(cur = (alias_t *)malloc((size_t)sizeof(alias_t))))
@@ -133,7 +143,7 @@ main(int argc, char **argv)
 		case 'd':
 			debug++;
 			break;
-		case 'f':
+		case 'F':
 			for (p = optarg; *p; p++)
 				switch (*p) {
 				case 'F':
@@ -149,20 +159,58 @@ main(int argc, char **argv)
 					errx(1, "Unknown -f option `%c'", *p);
 				}
 			break;
+		case 'f':
+			dbprefix = optarg;
+			break;
 		case 'I':			/* backward compatible */
 		case 'i':			/* init the database */
 			iflag = 1;
 			break;
-		case 'r':
-			if (isdigit((unsigned char)*optarg)) {
-				interval = atol(optarg) * SECSPERDAY;
-				if (interval < 0)
-					usage();
-			}
-			else
-				interval = (time_t)LONG_MAX;	/* XXX */
+		case 'j':
+			toanybody = 1;
 			break;
-		case 't':
+		case 'm':
+			msgfile = optarg;
+			break;
+		case 'r':
+		case 't':	/* Solaris compatibility */
+			if (!isdigit((unsigned char)*optarg)) {
+				interval = LONG_MAX;
+				break;
+			}
+			if (*optarg == '\0')
+				goto bad;
+			interval = strtol(optarg, &p, 0);
+			if (errno == ERANGE &&
+			    (interval == LONG_MAX || interval == LONG_MIN))
+				err(1, "Bad interval `%s'", optarg);
+			switch (*p) {
+			case 's':
+				break;
+			case 'm':
+				interval *= SECSPERMIN;
+				break;
+			case 'h':
+				interval *= SECSPERHOUR;
+				break;
+			case 'd':
+			case '\0':
+				interval *= SECSPERDAY;
+				break;
+			case 'w':
+				interval *= DAYSPERWEEK * SECSPERDAY;
+				break;
+			default:
+			bad:
+				errx(1, "Invalid interval `%s'", optarg);
+			}
+			if (interval < 0 || (*p && p[1]))
+				goto bad;
+			break;
+		case 's':
+			(void)strlcpy(from, optarg, sizeof(from));
+			break;
+		case 'T':
 			for (p = optarg; *p; p++)
 				switch (*p) {
 				case 'A':
@@ -202,15 +250,10 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	db = dbopen(VDB, O_CREAT|O_RDWR | (iflag ? O_TRUNC : 0),
-	    S_IRUSR|S_IWUSR, DB_HASH, NULL);
-	if (!db) {
-		syslog(LOG_ERR, "%s: %s: %m", getprogname(), VDB);
-		exit(1);
-	}
+	opendb();
 
 	if (interval != -1)
-		setinterval(interval);
+		setinterval((time_t)interval);
 
 	if (iflag) {
 		(void)(db->close)(db);
@@ -242,11 +285,26 @@ main(int argc, char **argv)
 	/* NOTREACHED */
 }
 
+static void
+opendb(void)
+{
+	char path[MAXPATHLEN];
+
+	(void)snprintf(path, sizeof(path), "%s.db", dbprefix);
+	db = dbopen(path, O_CREAT|O_RDWR | (iflag ? O_TRUNC : 0),
+	    S_IRUSR|S_IWUSR, DB_HASH, NULL);
+
+	if (!db) {
+		syslog(LOG_ERR, "%s: %s: %m", getprogname(), path);
+		exit(1);
+	}
+}
+
 /*
  * readheaders --
  *	read mail headers
  */
-int
+static int
 readheaders(void)
 {
 	alias_t *cur;
@@ -255,66 +313,84 @@ readheaders(void)
 	char buf[MAXLINE];
 
 	cont = tome = 0;
+#define COMPARE(a, b)		strncmp(a, b, sizeof(b) - 1)
+#define CASECOMPARE(a, b)	strncasecmp(a, b, sizeof(b) - 1)
 	while (fgets(buf, sizeof(buf), stdin) && *buf != '\n')
 		switch(*buf) {
 		case 'F':		/* "From " or "From:" */
 			cont = 0;
-			if (!strncmp(buf, "From ", 5))
-				getfrom(buf + 5);
+			if (COMPARE(buf, "From ") == 0)
+				getfrom(buf + sizeof("From ") - 1);
 			if ((fflag & FROM_FROM) != 0 &&
-			    strncmp(buf, "From:", 5) == 0)
-				getfrom(buf + 5);
+			    COMPARE(buf, "From:") == 0)
+				getfrom(buf + sizeof("From:") - 1);
 			break;
 		case 'P':		/* "Precedence:" */
 			cont = 0;
-			if (strncasecmp(buf, "Precedence", 10) ||
+			if (CASECOMPARE(buf, "Precedence") != 0 ||
 			    (buf[10] != ':' && buf[10] != ' ' &&
 			    buf[10] != '\t'))
 				break;
-			if (!(p = strchr(buf, ':')))
+			if ((p = strchr(buf, ':')) == NULL)
 				break;
 			while (*++p && isspace((unsigned char)*p))
 				continue;
 			if (!*p)
 				break;
-			if (!strncasecmp(p, "junk", 4) ||
-			    !strncasecmp(p, "bulk", 4) ||
-			    !strncasecmp(p, "list", 4))
+			if (CASECOMPARE(p, "junk") == 0 ||
+			    CASECOMPARE(p, "bulk") == 0||
+			    CASECOMPARE(p, "list") == 0)
 				exit(0);
 			break;
 		case 'C':		/* "Cc:" */
-			if (strncmp(buf, "Cc:", 3))
+			if (COMPARE(buf, "Cc:"))
 				break;
 			cont = 1;
 			goto findme;
 		case 'T':		/* "To:" */
-			if (strncmp(buf, "To:", 3))
+			if (COMPARE(buf, "To:"))
 				break;
 			cont = 1;
 			goto findme;
 		case 'A':		/* "Apparently-To:" */
 			if ((tflag & APPARENTLY_TO) == 0 ||
-			    strncmp(buf, "Apparently-To:", 14))
+			    COMPARE(buf, "Apparently-To:") != 0)
 				break;
 			cont = 1;
 			goto findme;
 		case 'D':		/* "Delivered-To:" */
 			if ((tflag & DELIVERED_TO) == 0 ||
-			    strncmp(buf, "Delivered-To:", 13))
+			    COMPARE(buf, "Delivered-To:") != 0)
 				break;
 			cont = 1;
 			goto findme;
 		case 'R':		/* "Return-Path:" */
 			cont = 0;
 			if ((fflag & RETURN_PATH_FROM) != 0 &&
-			    strncmp(buf, "Return-Path:", 12) == 0)
-				getfrom(buf + 12);
+			    COMPARE(buf, "Return-Path:") == 0)
+				getfrom(buf + sizeof("Return-Path:") - 1);
 			break;
 		case 'S':		/* "Sender:" */
 			cont = 0;
+			if (COMPARE(buf, "Subject:") == 0) {
+				/* trim leading blanks */
+				char *s = NULL;
+				for (p = buf + sizeof("Subject:") - 1; *p; p++)
+					if (s == NULL &&
+					    !isspace((unsigned char)*p))
+						s = p;
+				/* trim trailing blanks */
+				if (s) {
+					for (--p; p != s; p--)
+						if (!isspace((unsigned char)*p))
+							break;
+					*++p = '\0';
+				}
+				(void)strlcpy(subject, s, sizeof(subject));
+			}
 			if ((fflag & SENDER_FROM) != 0 &&
-			    strncmp(buf, "Sender:", 7) == 0)
-				getfrom(buf + 7);
+			    COMPARE(buf, "Sender:") == 0)
+				getfrom(buf + sizeof("Sender:") - 1);
 			break;
 		default:
 			if (!isspace((unsigned char)*buf) || !cont || tome) {
@@ -324,7 +400,7 @@ readheaders(void)
 findme:			for (cur = names; !tome && cur; cur = cur->next)
 				tome += nsearch(cur->name, buf);
 		}
-	if (!tome)
+	if (!toanybody && !tome)
 		return 0;
 	if (!*from) {
 		syslog(LOG_ERR, "%s: no initial \"From\" line.",
@@ -338,7 +414,7 @@ findme:			for (cur = names; !tome && cur; cur = cur->next)
  * nsearch --
  *	do a nice, slow, search of a string for a substring.
  */
-int
+static int
 nsearch(const char *name, const char *str)
 {
 	size_t len;
@@ -368,37 +444,42 @@ getfrom(char *buf)
 		continue;
 	for (p = s; *p && !isspace((unsigned char)*p); p++)
 		continue;
+
 	if (*--p == '>')
 		*p = '\0';
 	else
 		*++p = '\0';
-	(void)strlcpy(from, s, sizeof(from));
-	if (junkmail())
+
+	if (junkmail(s))
 		exit(0);
+
+	if (!*from)
+		(void)strlcpy(from, s, sizeof(from));
 }
 
 /*
  * junkmail --
  *	read the header and return if automagic/junk/bulk/list mail
  */
-int
-junkmail(void)
+static int
+junkmail(const char *addr)
 {
 	static struct ignore {
-		char	*name;
-		int	len;
+		const char *name;
+		size_t	len;
 	} ignore[] = {
-		{ "-request", 8 },
-		{ "postmaster", 10 },
-		{ "uucp", 4 },
-		{ "mailer-daemon", 13 },
-		{ "mailer", 6 },
-		{ "-relay", 6 },
+#define INIT(a) { a, sizeof(a) - 1 }
+		INIT("-request"),
+		INIT("postmaster"),
+		INIT("uucp"),
+		INIT("mailer-daemon"),
+		INIT("mailer"),
+		INIT("-relay"),
 		{NULL, 0 }
 	};
 	struct ignore *cur;
-	int len;
-	char *p;
+	size_t len;
+	const char *p;
 
 	/*
 	 * This is mildly amusing, and I'm not positive it's right; trying
@@ -407,16 +488,16 @@ junkmail(void)
 	 *
 	 * From site!site!SENDER%site.domain%site.domain@site.domain
 	 */
-	if (!(p = strchr(from, '%')))
-		if (!(p = strchr(from, '@'))) {
-			if ((p = strrchr(from, '!')))
+	if (!(p = strchr(addr, '%')))
+		if (!(p = strchr(addr, '@'))) {
+			if ((p = strrchr(addr, '!')) != NULL)
 				++p;
 			else
-				p = from;
+				p = addr;
 			for (; *p; ++p)
 				continue;
 		}
-	len = p - from;
+	len = p - addr;
 	for (cur = ignore; cur->name; ++cur)
 		if (len >= cur->len &&
 		    !strncasecmp(cur->name, p - cur->len, cur->len))
@@ -431,14 +512,14 @@ junkmail(void)
  *	find out if user has gotten a vacation message recently.
  *	use memmove for machines with alignment restrictions
  */
-int
+static int
 recent(void)
 {
 	DBT key, data;
 	time_t then, next;
 
 	/* get interval time */
-	key.data = VIT;
+	key.data = (void *)(intptr_t)VIT;
 	key.size = sizeof(VIT);
 	if ((db->get)(db, &key, &data, 0))
 		next = SECSPERDAY * DAYSPERWEEK;
@@ -461,12 +542,12 @@ recent(void)
  * setinterval --
  *	store the reply interval
  */
-void
+static void
 setinterval(time_t interval)
 {
 	DBT key, data;
 
-	key.data = VIT;
+	key.data = (void *)(intptr_t)VIT;
 	key.size = sizeof(VIT);
 	data.data = &interval;
 	data.size = sizeof(interval);
@@ -477,7 +558,7 @@ setinterval(time_t interval)
  * setreply --
  *	store that this user knows about the vacation.
  */
-void
+static void
 setreply(void)
 {
 	DBT key, data;
@@ -495,7 +576,7 @@ setreply(void)
  * sendmessage --
  *	exec sendmail to send the vacation file to sender
  */
-void
+static void
 sendmessage(const char *myname)
 {
 	FILE *mfp, *sfp;
@@ -503,10 +584,10 @@ sendmessage(const char *myname)
 	int pvect[2];
 	char buf[MAXLINE];
 
-	mfp = fopen(VMSG, "r");
+	mfp = fopen(msgfile, "r");
 	if (mfp == NULL) {
-		syslog(LOG_ERR, "%s: no ~%s/%s file.", getprogname(),
-		    myname, VMSG);
+		syslog(LOG_ERR, "%s: no `%s' file for `%s'.", getprogname(),
+		    myname, msgfile);
 		exit(1);
 	}
 
@@ -542,18 +623,27 @@ sendmessage(const char *myname)
 		}
 	} 
 	(void)fprintf(sfp, "To: %s\n", from);
-	while (fgets(buf, sizeof buf, mfp))
-		(void)fputs(buf, sfp);
+	while (fgets(buf, sizeof buf, mfp) != NULL) {
+		char *p;
+		if ((p = strstr(buf, "$SUBJECT")) != NULL) {
+			*p = '\0';
+			(void)fputs(buf, sfp);
+			(void)fputs(subject, sfp);
+			p += sizeof("$SUBJECT") - 1;
+			(void)fputs(p, sfp);
+		} else
+		    (void)fputs(buf, sfp);
+	}
 	(void)fclose(mfp);
 	if (sfp != stdout)
 		(void)fclose(sfp);
 }
 
-void
+static void
 usage(void)
 {
 
-	syslog(LOG_ERR, "uid %u: Usage: %s [-di] [-a alias] [-f F|R|S] [-t A|D]"
+	syslog(LOG_ERR, "uid %u: Usage: %s [-dIij] [-a alias] [-f database_file] [-F F|R|S] [-m message_file] [-s sender] [-t interval] [-T A|D]"
 	    " login", getuid(), getprogname());
 	exit(1);
 }
