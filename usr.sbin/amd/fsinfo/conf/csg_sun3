@@ -1,4 +1,4 @@
-// $Id: csg_sun3,v 1.1 1993/11/27 21:20:26 mycroft Exp $
+// $Id: csg_sun3,v 1.2 1994/06/13 19:49:44 mycroft Exp $
 // standard setups for DoC tsuns.
 // note that no /var/spool/rwho is mounted as we now expect amd to do this as /vol/rwho
 

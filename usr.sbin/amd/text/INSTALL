@@ -191,4 +191,4 @@ mapping root to nobody.
 If anything interesting happened, eg it didn't work, please report it to me
 -- Jan-Simon Pendry <jsp@doc.ic.ac.uk> -- as detailed in the README file.
 
-$Id: INSTALL,v 1.1 1993/11/27 21:22:38 mycroft Exp $
+$Id: INSTALL,v 1.2 1994/06/13 19:50:20 mycroft Exp $
