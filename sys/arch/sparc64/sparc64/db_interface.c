@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.43 2000/09/28 15:32:36 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.44 2000/09/28 18:54:39 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -174,8 +174,10 @@ kdb_trap(type, tf)
 	extern int savetstate(struct trapstate *ts);
 	extern void restoretstate(int tl, struct trapstate *ts);
 	extern int trap_trace_dis;
+	extern int doing_shutdown;
 
 	trap_trace_dis++;
+	doing_shutdown++;
 #if NFB > 0
 	fb_unblank();
 #endif
@@ -248,6 +250,7 @@ kdb_trap(type, tf)
 #endif
 	*tf = ddb_regs.ddb_tf;
 	trap_trace_dis--;
+	doing_shutdown--;
 
 	return (1);
 }
