@@ -42,7 +42,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: conf.c,v 1.15 93/05/05 09:43:29 torek Exp  (LBL)
- * $Id: conf.c,v 1.2 1993/10/11 02:16:16 deraadt Exp $
+ * $Id: conf.c,v 1.3 1993/10/13 02:38:16 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -64,6 +64,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
 	int n __P((dev_t, int, caddr_t, int, struct proc *))
+#define	dev_type_stop(n) 	int n __P((struct tty *, int))
 
 /* bdevsw-specific types */
 #define	dev_type_dump(n)	int n __P((dev_t, daddr_t, caddr_t, int))
@@ -73,6 +74,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #define	error_open	((dev_type_open((*))) enodev)
 #define	error_close	((dev_type_close((*))) enodev)
 #define	error_ioctl	((dev_type_ioctl((*))) enodev)
+#define	error_stop	((dev_type_stop((*))) enodev)
 #define	error_dump	((dev_type_dump((*))) enodev)
 
 #define	null_open	((dev_type_open((*))) nullop)
@@ -135,8 +137,8 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
 #define	cdev_decl(n) \
 	dev_decl(n,open); dev_decl(n,close); dev_decl(n,read); \
-	dev_decl(n,write); dev_decl(n,ioctl); dev_decl(n,select); \
-	dev_decl(n,map); dev_decl(n,strategy); \
+	dev_decl(n,write); dev_decl(n,ioctl); dev_decl(n,stop); \
+	dev_decl(n,select); dev_decl(n,map); dev_decl(n,strategy); \
 	extern struct tty *__CONCAT(n,_tty)[];
 
 #define	dev_tty_init(c,n)	(c > 0 ? __CONCAT(n,_tty) : (struct tty **)0)
@@ -155,8 +157,8 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 /* open, close, read, write, ioctl, tty */
 #define	cdev_tty_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), 0, 0, dev_tty_init(c,n), \
-	ttselect, 0, 0 }
+	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
+	0, dev_tty_init(c,n), ttselect, 0, 0 }
 
 /* open, close, read, write, ioctl, select */
 #define	cdev_gen_init(c,n) { \
@@ -177,18 +179,18 @@ cdev_decl(no);			/* dummy declarations */
 
 cdev_decl(cn);
 /* open, close, read, write, ioctl, select -- XXX should be a tty */
-extern struct tty *constty[];
+extern struct tty *cntty[];
 #define	cdev_cn_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), 0, 0, constty, \
-	dev_init(c,n,select), 0, 0 }
+	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
+	0, cntty, dev_init(c,n,select), 0, 0 }
 
 cdev_decl(ctty);
 /* open, read, write, ioctl, select -- XXX should be a tty */
 #define	cdev_ctty_init(c,n) { \
 	dev_init(c,n,open), null_close, dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), 0, 0, 0, \
-	dev_init(c,n,select), 0, 0 }
+	dev_init(c,n,write), dev_init(c,n,ioctl), 0, \
+	0, 0, dev_init(c,n,select), 0, 0 }
 
 dev_type_read(mmrw);
 /* read/write */
@@ -212,10 +214,10 @@ cdev_decl(ptc);
 /* open, close, read, write, ioctl, tty, select */
 #define	cdev_ptc_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), 0, 0, dev_tty_init(c,n), \
-	dev_init(c,n,select), 0, 0 }
+	dev_init(c,n,write), dev_init(c,n,ioctl), 0, \
+	0, dev_tty_init(c,n), dev_init(c,n,select), 0, 0 }
 
-cdev_decl(log);
+ecdev_decl(log);
 /* open, close, read, ioctl, select -- XXX should be a generic device */
 #define	cdev_log_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
