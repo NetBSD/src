@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.7 2002/09/12 17:18:39 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.8 2002/09/25 08:00:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -79,25 +79,13 @@ _rtld_bind_start:	# (obj, reloff)
 	pushl	%eax
 	pushl	%ecx
 	pushl	%edx
-	pushl	%ebx
-	pushl	%ebp
-	pushl	%esi
-	pushl	%edi
-	pushl	%ds
-	pushl	%es
 
-	pushl	44(%esp)		# Copy of reloff
-	pushl	44(%esp)		# Copy of obj
+	pushl	20(%esp)		# Copy of reloff
+	pushl	20(%esp)		# Copy of obj
 	call	_rtld_bind@PLT		# Call the binder
 	addl	$8,%esp			# pop binder args
-	movl	%eax,44(%esp)		# Store function to be called in obj
+	movl	%eax,20(%esp)		# Store function to be called in obj
 
-	popl	%es			# restore registers
-	popl	%ds
-	popl	%edi
-	popl	%esi
-	popl	%ebp
-	popl	%ebx
 	popl	%edx
 	popl	%ecx
 	popl	%eax
