@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.12 2003/08/25 10:05:47 drochner Exp $	*/
+/*	$NetBSD: cnode.h,v 1.13 2003/08/27 17:49:48 drochner Exp $	*/
 
 /*
  * 
@@ -102,7 +102,7 @@ do {                            \
 struct cnode {
     struct vnode	*c_vnode;
     u_short		 c_flags;	/* flags (see below) */
-    ViceFid		 c_fid;		/* file handle */
+    CodaFid		 c_fid;		/* file handle */
     struct vnode	*c_ovp;		/* open vnode pointer */
     u_short		 c_ocount;	/* count of openers */
     u_short		 c_owrite;	/* count of open for write */
@@ -198,7 +198,7 @@ extern void coda_unmounting(struct mount *whoIam);
 extern int  coda_vmflush(struct cnode *cp);
 
 /* cfs_vnodeops.h */
-extern struct cnode *make_coda_node(ViceFid *fid, struct mount *vfsp, short type);
+extern struct cnode *make_coda_node(CodaFid *fid, struct mount *vfsp, short type);
 extern int coda_vnodeopstats_init(void);
 
 /* coda_vfsops.h */

@@ -1,51 +1,54 @@
-/*	$NetBSD: coda.h,v 1.7 2002/03/27 05:10:40 phil Exp $	*/
+/* $NetBSD: coda.h,v 1.8 2003/08/27 17:49:49 drochner Exp $ */
 
 /*
- * 
- *             Coda: an Experimental Distributed File System
- *                              Release 3.1
- * 
- *           Copyright (c) 1987-1998 Carnegie Mellon University
- *                          All Rights Reserved
- * 
- * Permission  to  use, copy, modify and distribute this software and its
- * documentation is hereby granted,  provided  that  both  the  copyright
- * notice  and  this  permission  notice  appear  in  all  copies  of the
- * software, derivative works or  modified  versions,  and  any  portions
- * thereof, and that both notices appear in supporting documentation, and
- * that credit is given to Carnegie Mellon University  in  all  documents
- * and publicity pertaining to direct or indirect use of this code or its
- * derivatives.
- * 
- * CODA IS AN EXPERIMENTAL SOFTWARE SYSTEM AND IS  KNOWN  TO  HAVE  BUGS,
- * SOME  OF  WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON ALLOWS
- * FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.   CARNEGIE  MELLON
- * DISCLAIMS  ANY  LIABILITY  OF  ANY  KIND  FOR  ANY  DAMAGES WHATSOEVER
- * RESULTING DIRECTLY OR INDIRECTLY FROM THE USE OF THIS SOFTWARE  OR  OF
- * ANY DERIVATIVE WORK.
- * 
- * Carnegie  Mellon  encourages  users  of  this  software  to return any
- * improvements or extensions that  they  make,  and  to  grant  Carnegie
- * Mellon the rights to redistribute these changes without encumbrance.
- * 
- * 	@(#) coda/coda.h,v 1.1.1.1 1998/08/29 21:26:46 rvb Exp
- */
 
+            Coda: an Experimental Distributed File System
+                             Release 4.0
+
+          Copyright (c) 1987-1999 Carnegie Mellon University
+                         All Rights Reserved
+
+Permission  to  use, copy, modify and distribute this software and its
+documentation is hereby granted,  provided  that  both  the  copyright
+notice  and  this  permission  notice  appear  in  all  copies  of the
+software, derivative works or  modified  versions,  and  any  portions
+thereof, and that both notices appear in supporting documentation, and
+that credit is given to Carnegie Mellon University  in  all  documents
+and publicity pertaining to direct or indirect use of this code or its
+derivatives.
+
+CODA IS AN EXPERIMENTAL SOFTWARE SYSTEM AND IS  KNOWN  TO  HAVE  BUGS,
+SOME  OF  WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON ALLOWS
+FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.   CARNEGIE  MELLON
+DISCLAIMS  ANY  LIABILITY  OF  ANY  KIND  FOR  ANY  DAMAGES WHATSOEVER
+RESULTING DIRECTLY OR INDIRECTLY FROM THE USE OF THIS SOFTWARE  OR  OF
+ANY DERIVATIVE WORK.
+
+Carnegie  Mellon  encourages  users  of  this  software  to return any
+improvements or extensions that  they  make,  and  to  grant  Carnegie
+Mellon the rights to redistribute these changes without encumbrance.
+*/
 
 /*
  *
  * Based on cfs.h from Mach, but revamped for increased simplicity.
- * Linux modifications by Peter Braam, Aug 1996
+ * Linux modifications by 
+ * Peter Braam, Aug 1996
  */
 
 #ifndef _CODA_HEADER_
 #define _CODA_HEADER_
 
+#if defined(__NetBSD__) && defined(_KERNEL_OPT)
+/* pull in optional CODA_COMPAT_5 flag */
+#include "opt_coda_compat.h"
+#endif
 
-
-/* Catch new _KERNEL defn for NetBSD */
-#ifdef __NetBSD__
+/* Catch new _KERNEL defn for NetBSD and DJGPP/__CYGWIN32__ */
+#if defined(__NetBSD__) || \
+  ((defined(DJGPP) || defined(__CYGWIN32__)) && !defined(KERNEL))
 #include <sys/types.h>
+#include <sys/systm.h>
 #endif 
 
 #ifndef CODA_MAXSYMLINKS
@@ -73,7 +76,6 @@ struct timespec {
         long       ts_nsec;
 };
 #else  /* DJGPP but not KERNEL */
-#include <sys/types.h>
 #include <sys/time.h>
 typedef unsigned long long u_quad_t;
 #endif /* !KERNEL */
@@ -82,12 +84,39 @@ typedef unsigned long long u_quad_t;
 
 #if defined(__linux__)
 #define cdev_t u_quad_t
+#ifndef __KERNEL__
 #if !defined(_UQUAD_T_) && (!defined(__GLIBC__) || __GLIBC__ < 2)
 #define _UQUAD_T_ 1
 typedef unsigned long long u_quad_t;
 #endif
+#else /*__KERNEL__ */
+typedef unsigned long long u_quad_t;
+#endif /* __KERNEL__ */
 #else
 #define cdev_t dev_t
+#endif
+
+/* Solaris Definitions */
+#if defined(sun)
+#include <sys/types.h>
+#include <sys/time.h>
+typedef unsigned long long u_quad_t;
+#undef __BIT_TYPES_DEFINED__
+#endif
+
+/* Mac OS X / Darwin */
+#if defined(__APPLE__) && defined(__MACH__)
+#define __BIT_TYPES_DEFINED__
+#endif
+
+#ifndef __BIT_TYPES_DEFINED__
+#define __BIT_TYPES_DEFINED__
+typedef signed char	      int8_t;
+typedef unsigned char	    u_int8_t;
+typedef short		     int16_t;
+typedef unsigned short	   u_int16_t;
+typedef int		     int32_t;
+typedef unsigned int	   u_int32_t;
 #endif
 
 
@@ -118,15 +147,26 @@ typedef unsigned long long u_quad_t;
 #define C_A_X_OK    1               /* Test for execute permission.  */
 #define C_A_F_OK    0               /* Test for existence.  */
 
-
+#if defined(sun)
+#define _VENUS_DIRENT_T_ 1
+struct venus_dirent {
+        unsigned long	d_fileno;		/* file number of entry */
+        unsigned short	d_reclen;		/* length of this record */
+        unsigned short	d_namlen;		/* length of string in d_name */
+        char		d_name[CODA_MAXNAMLEN + 1];/* name must be no longer than this */
+};
+#undef DIRSIZ
+#define DIRSIZ(dp)      ((sizeof (struct venus_dirent) - (CODA_MAXNAMLEN+1)) + \
+                         (((dp)->d_namlen+1 + 3) &~ 3))
+#endif
 
 #ifndef _VENUS_DIRENT_T_
 #define _VENUS_DIRENT_T_ 1
 struct venus_dirent {
         unsigned long	d_fileno;		/* file number of entry */
         unsigned short	d_reclen;		/* length of this record */
-        char 		d_type;			/* file type, see below */
-        char		d_namlen;		/* length of string in d_name */
+        unsigned char 	d_type;			/* file type, see below */
+        unsigned char	d_namlen;		/* length of string in d_name */
         char		d_name[CODA_MAXNAMLEN + 1];/* name must be no longer than this */
 };
 #undef DIRSIZ
@@ -154,59 +194,70 @@ struct venus_dirent {
 
 #endif
 
-#ifndef	_FID_T_
-#define _FID_T_	1
-typedef u_long VolumeId;
-typedef u_long VnodeId;
-typedef u_long Unique_t;
-typedef u_long FileVersion;
-#endif 
+#ifdef CODA_COMPAT_5
 
-#ifndef	_VICEFID_T_
-#define _VICEFID_T_	1
-typedef struct ViceFid {
-    VolumeId Volume;
-    VnodeId Vnode;
-    Unique_t Unique;
-} ViceFid;
-#endif	/* VICEFID */
+typedef struct {
+    u_long Volume;
+    u_long Vnode;
+    u_long Unique;
+} CodaFid;
 
-
-#ifdef __linux__
-static __inline__ ino_t  coda_f2i(struct ViceFid *fid)
+static __inline__ ino_t coda_f2i(CodaFid *fid)
 {
-	if ( ! fid ) 
-		return 0; 
-	if (fid->Vnode == 0xfffffffe || fid->Vnode == 0xffffffff)
-		return ((fid->Volume << 20) | (fid->Unique & 0xfffff));
-	else
-		return (fid->Unique + (fid->Vnode<<10) + (fid->Volume<<20));
+	if (!fid) return 0; 
+	return (fid->Unique + (fid->Vnode<<10) + (fid->Volume<<20));
+}
+
+static __inline__ char * coda_f2s(CodaFid *fid)
+{
+  static char fid_str [35];
+  snprintf (fid_str, 35, "[%lx.%lx.%lx]", fid->Volume,
+	    fid->Vnode, fid->Unique);
+  return fid_str;
+}
+
+static __inline__ int coda_fid_eq (CodaFid *fid1, CodaFid *fid2)
+{
+  return (fid1->Volume == fid2->Volume &&
+	  fid1->Vnode == fid2->Vnode &&
+	  fid1->Unique == fid2->Unique);
+}
+
+struct coda_cred {
+    u_int32_t cr_uid, cr_euid, cr_suid, cr_fsuid; /* Real, efftve, set, fs uid*/
+    u_int32_t cr_groupid,     cr_egid, cr_sgid, cr_fsgid; /* same for groups */
+};
+
+#else
+
+typedef struct {
+    u_int32_t opaque[4];
+} CodaFid;
+
+
+static __inline__ ino_t coda_f2i(CodaFid *fid)
+{
+	if (!fid) return 0; 
+	return (fid->opaque[1] + (fid->opaque[2]<<10) + (fid->opaque[3]<<20));
+}
+
+static __inline__ char * coda_f2s(CodaFid *fid)
+{
+  static char fid_str [35];
+  snprintf (fid_str, 35, "[%x.%x.%x.%x]", fid->opaque[0],
+	    fid->opaque[1], fid->opaque[2], fid->opaque[3]);
+  return fid_str;
 }
 	
-#else
-#define coda_f2i(fid)\
-	((fid) ? ((fid)->Unique + ((fid)->Vnode<<10) + ((fid)->Volume<<20)) : 0)
+static __inline__ int coda_fid_eq (CodaFid *fid1, CodaFid *fid2)
+{
+  return (fid1->opaque[0] == fid2->opaque[0] &&
+	  fid1->opaque[1] == fid2->opaque[1] &&
+	  fid1->opaque[2] == fid2->opaque[2] &&
+	  fid1->opaque[3] == fid2->opaque[3]);
+}
+
 #endif
-
-
-#ifndef __BIT_TYPES_DEFINED__
-#define u_int32_t unsigned int
-#endif
-
-
-#ifndef _VUID_T_
-#define _VUID_T_
-typedef u_int32_t vuid_t;
-typedef u_int32_t vgid_t;
-#endif /*_VUID_T_ */
-
-#ifndef _CODACRED_T_
-#define _CODACRED_T_
-struct coda_cred {
-    vuid_t cr_uid, cr_euid, cr_suid, cr_fsuid; /* Real, efftve, set, fs uid*/
-    vgid_t cr_groupid,     cr_egid, cr_sgid, cr_fsgid; /* same for groups */
-};
-#endif 
 
 #ifndef _VENUS_VATTR_T_
 #define _VENUS_VATTR_T_
@@ -216,11 +267,11 @@ struct coda_cred {
 enum coda_vtype	{ C_VNON, C_VREG, C_VDIR, C_VBLK, C_VCHR, C_VLNK, C_VSOCK, C_VFIFO, C_VBAD };
 
 struct coda_vattr {
-	int     	va_type;	/* vnode type (for create) */
+	long     	va_type;	/* vnode type (for create) */
 	u_short		va_mode;	/* files access mode and type */
 	short		va_nlink;	/* number of references to file */
-	vuid_t		va_uid;		/* owner user id */
-	vgid_t		va_gid;		/* owner group id */
+	uid_t		va_uid;		/* owner user id */
+	gid_t		va_gid;		/* owner group id */
 	long		va_fileid;	/* file id */
 	u_quad_t	va_size;	/* file size in bytes */
 	long		va_blocksize;	/* blocksize preferred for i/o */
@@ -250,7 +301,7 @@ struct coda_statfs {
  */
 
 #define CODA_ROOT	2
-#define CODA_SYNC	3
+#define CODA_OPEN_BY_FD	3
 #define CODA_OPEN	4
 #define CODA_CLOSE	5
 #define CODA_IOCTL	6
@@ -271,37 +322,40 @@ struct coda_statfs {
 #define CODA_INACTIVE	21
 #define CODA_VGET	22
 #define CODA_SIGNAL	23
-#define CODA_REPLACE	24
-#define CODA_FLUSH       25
-#define CODA_PURGEUSER   26
-#define CODA_ZAPFILE     27
-#define CODA_ZAPDIR      28
-#define CODA_PURGEFID    30
+#define CODA_REPLACE	 24 /* DOWNCALL */
+#define CODA_FLUSH       25 /* DOWNCALL */
+#define CODA_PURGEUSER   26 /* DOWNCALL */
+#define CODA_ZAPFILE     27 /* DOWNCALL */
+#define CODA_ZAPDIR      28 /* DOWNCALL */
+#define CODA_PURGEFID    30 /* DOWNCALL */
 #define CODA_OPEN_BY_PATH 31
 #define CODA_RESOLVE     32
 #define CODA_REINTEGRATE 33
 #define CODA_STATFS	 34
 #define CODA_NCALLS 35
 
-#define DOWNCALL(opcode) (opcode >= CODA_REPLACE && opcode <= CODA_PURGEFID)
+#define DOWNCALL(opcode) (opcode >= CODA_REPLACE && opcode <= CODA_PURGEFID) 
 
 #define VC_MAXDATASIZE	    8192
 #define VC_MAXMSGSIZE      sizeof(union inputArgs)+sizeof(union outputArgs) +\
                             VC_MAXDATASIZE  
 
 #define CIOC_KERNEL_VERSION _IOWR('c', 10, sizeof (int))
-#if	0
-	/* don't care about kernel version number */
-#define CODA_KERNEL_VERSION 0
-	/* The old venus 4.6 compatible interface */
-#define CODA_KERNEL_VERSION 1
+
+#if 0
+#define CODA_KERNEL_VERSION 0 /* don't care about kernel version number */
+#define CODA_KERNEL_VERSION 1 /* The old venus 4.6 compatible interface */
 #endif
-	/* venus_lookup gets an extra parameter to aid windows.*/
-#define CODA_KERNEL_VERSION 2
+#ifdef CODA_COMPAT_5
+#define CODA_KERNEL_VERSION 2 /* venus_lookup gets an extra parameter */
+#else
+#define CODA_KERNEL_VERSION 3 /* 128-bit fids for realms */
+#endif
 
 /*
  *        Venus <-> Coda  RPC arguments
  */
+#ifdef CODA_COMPAT_5
 struct coda_in_hdr {
     unsigned long opcode;
     unsigned long unique;	    /* Keep multiple outstanding msgs distinct */
@@ -310,31 +364,37 @@ struct coda_in_hdr {
     u_short sid;                    /* Common to all */
     struct coda_cred cred;	    /* Common to all */
 };
+#else
+struct coda_in_hdr {
+    u_int32_t opcode;
+    u_int32_t unique;	    /* Keep multiple outstanding msgs distinct */
+    pid_t pid;		    /* Common to all */
+    pid_t pgid;		    /* Common to all */
+    uid_t uid;		    /* Common to all */
+};
+#endif
 
 /* Really important that opcode and unique are 1st two fields! */
 struct coda_out_hdr {
-    unsigned long opcode;
-    unsigned long unique;	
-    unsigned long result;
+    u_int32_t opcode;
+    u_int32_t unique;	
+    u_int32_t result;
 };
 
 /* coda_root: NO_IN */
 struct coda_root_out {
     struct coda_out_hdr oh;
-    ViceFid VFid;
+    CodaFid Fid;
 };
 
 struct coda_root_in {
     struct coda_in_hdr in;
 };
 
-/* coda_sync: */
-/* Nothing needed for coda_sync */
-
 /* coda_open: */
 struct coda_open_in {
     struct coda_in_hdr ih;
-    ViceFid	VFid;
+    CodaFid Fid;
     int	flags;
 };
 
@@ -348,7 +408,7 @@ struct coda_open_out {
 /* coda_close: */
 struct coda_close_in {
     struct coda_in_hdr ih;
-    ViceFid	VFid;
+    CodaFid Fid;
     int	flags;
 };
 
@@ -359,7 +419,7 @@ struct coda_close_out {
 /* coda_ioctl: */
 struct coda_ioctl_in {
     struct coda_in_hdr ih;
-    ViceFid VFid;
+    CodaFid Fid;
     int	cmd;
     int	len;
     int	rwflag;
@@ -376,7 +436,7 @@ struct coda_ioctl_out {
 /* coda_getattr: */
 struct coda_getattr_in {
     struct coda_in_hdr ih;
-    ViceFid VFid;
+    CodaFid Fid;
 };
 
 struct coda_getattr_out {
@@ -388,7 +448,7 @@ struct coda_getattr_out {
 /* coda_setattr: NO_OUT */
 struct coda_setattr_in {
     struct coda_in_hdr ih;
-    ViceFid VFid;
+    CodaFid Fid;
     struct coda_vattr attr;
 };
 
@@ -399,7 +459,7 @@ struct coda_setattr_out {
 /* coda_access: NO_OUT */
 struct coda_access_in {
     struct coda_in_hdr ih;
-    ViceFid	VFid;
+    CodaFid Fid;
     int	flags;
 };
 
@@ -415,14 +475,14 @@ struct coda_access_out {
 /* coda_lookup: */
 struct  coda_lookup_in {
     struct coda_in_hdr ih;
-    ViceFid	VFid;
+    CodaFid Fid;
     int         name;		/* Place holder for data. */
     int         flags;	
 };
 
 struct coda_lookup_out {
     struct coda_out_hdr oh;
-    ViceFid VFid;
+    CodaFid Fid;
     int	vtype;
 };
 
@@ -430,7 +490,7 @@ struct coda_lookup_out {
 /* coda_create: */
 struct coda_create_in {
     struct coda_in_hdr ih;
-    ViceFid VFid;
+    CodaFid Fid;
     struct coda_vattr attr;
     int excl;
     int mode;
@@ -439,7 +499,7 @@ struct coda_create_in {
 
 struct coda_create_out {
     struct coda_out_hdr oh;
-    ViceFid VFid;
+    CodaFid Fid;
     struct coda_vattr attr;
 };
 
@@ -447,7 +507,7 @@ struct coda_create_out {
 /* coda_remove: NO_OUT */
 struct coda_remove_in {
     struct coda_in_hdr ih;
-    ViceFid	VFid;
+    CodaFid Fid;
     int name;		/* Place holder for data. */
 };
 
@@ -458,8 +518,8 @@ struct coda_remove_out {
 /* coda_link: NO_OUT */
 struct coda_link_in {
     struct coda_in_hdr ih;
-    ViceFid sourceFid;          /* cnode to link *to* */
-    ViceFid destFid;            /* Directory in which to place link */
+    CodaFid sourceFid;          /* cnode to link *to* */
+    CodaFid destFid;            /* Directory in which to place link */
     int tname;		/* Place holder for data. */
 };
 
@@ -471,9 +531,9 @@ struct coda_link_out {
 /* coda_rename: NO_OUT */
 struct coda_rename_in {
     struct coda_in_hdr ih;
-    ViceFid	sourceFid;
+    CodaFid sourceFid;
     int 	srcname;
-    ViceFid destFid;
+    CodaFid destFid;
     int 	destname;
 };
 
@@ -484,14 +544,14 @@ struct coda_rename_out {
 /* coda_mkdir: */
 struct coda_mkdir_in {
     struct coda_in_hdr ih;
-    ViceFid	VFid;
+    CodaFid Fid;
     struct coda_vattr attr;
     int	   name;		/* Place holder for data. */
 };
 
 struct coda_mkdir_out {
     struct coda_out_hdr oh;
-    ViceFid VFid;
+    CodaFid Fid;
     struct coda_vattr attr;
 };
 
@@ -499,7 +559,7 @@ struct coda_mkdir_out {
 /* coda_rmdir: NO_OUT */
 struct coda_rmdir_in {
     struct coda_in_hdr ih;
-    ViceFid	VFid;
+    CodaFid Fid;
     int name;		/* Place holder for data. */
 };
 
@@ -510,7 +570,7 @@ struct coda_rmdir_out {
 /* coda_readdir: */
 struct coda_readdir_in {
     struct coda_in_hdr ih;
-    ViceFid	VFid;
+    CodaFid Fid;
     int	count;
     int	offset;
 };
@@ -524,7 +584,7 @@ struct coda_readdir_out {
 /* coda_symlink: NO_OUT */
 struct coda_symlink_in {
     struct coda_in_hdr ih;
-    ViceFid	VFid;          /* Directory to put symlink in */
+    CodaFid Fid;          /* Directory to put symlink in */
     int srcname;
     struct coda_vattr attr;
     int tname;
@@ -537,7 +597,7 @@ struct coda_symlink_out {
 /* coda_readlink: */
 struct coda_readlink_in {
     struct coda_in_hdr ih;
-    ViceFid VFid;
+    CodaFid Fid;
 };
 
 struct coda_readlink_out {
@@ -550,28 +610,22 @@ struct coda_readlink_out {
 /* coda_fsync: NO_OUT */
 struct coda_fsync_in {
     struct coda_in_hdr ih;
-    ViceFid VFid;
+    CodaFid Fid;
 };
 
 struct coda_fsync_out {
     struct coda_out_hdr out;
 };
 
-/* coda_inactive: NO_OUT */
-struct coda_inactive_in {
-    struct coda_in_hdr ih;
-    ViceFid VFid;
-};
-
 /* coda_vget: */
 struct coda_vget_in {
     struct coda_in_hdr ih;
-    ViceFid VFid;
+    CodaFid Fid;
 };
 
 struct coda_vget_out {
     struct coda_out_hdr oh;
-    ViceFid VFid;
+    CodaFid Fid;
     int	vtype;
 };
 
@@ -584,69 +638,69 @@ struct coda_vget_out {
 /* CODA_PURGEUSER is a venus->kernel call */
 struct coda_purgeuser_out {
     struct coda_out_hdr oh;
+#ifdef CODA_COMPAT_5
     struct coda_cred cred;
+#else
+    uid_t		uid;
+#endif
 };
 
 /* coda_zapfile: */
 /* CODA_ZAPFILE is a venus->kernel call */
 struct coda_zapfile_out {  
     struct coda_out_hdr oh;
-    ViceFid CodaFid;
+    CodaFid Fid;
 };
 
 /* coda_zapdir: */
 /* CODA_ZAPDIR is a venus->kernel call */	
 struct coda_zapdir_out {	  
     struct coda_out_hdr oh;
-    ViceFid CodaFid;
+    CodaFid Fid;
 };
 
 /* coda_zapnode: */
 /* CODA_ZAPVNODE is a venus->kernel call */	
 struct coda_zapvnode_out { 
     struct coda_out_hdr oh;
+#ifdef CODA_COMPAT_5
     struct coda_cred cred;
-    ViceFid VFid;
+#endif
+    CodaFid Fid;
 };
 
 /* coda_purgefid: */
 /* CODA_PURGEFID is a venus->kernel call */	
 struct coda_purgefid_out { 
     struct coda_out_hdr oh;
-    ViceFid CodaFid;
+    CodaFid Fid;
 };
-
-/* coda_rdwr: */
-struct coda_rdwr_in {
-    struct coda_in_hdr ih;
-    ViceFid	VFid;
-    int	rwflag;
-    int	count;
-    int	offset;
-    int	ioflag;
-    caddr_t	data;		/* Place holder for data. */	
-};
-
-struct coda_rdwr_out {
-    struct coda_out_hdr oh;
-    int	rwflag;
-    int	count;
-    caddr_t	data;	/* Place holder for data. */
-};
-
 
 /* coda_replace: */
 /* CODA_REPLACE is a venus->kernel call */	
 struct coda_replace_out { /* coda_replace is a venus->kernel call */
     struct coda_out_hdr oh;
-    ViceFid NewFid;
-    ViceFid OldFid;
+    CodaFid NewFid;
+    CodaFid OldFid;
+};
+
+/* coda_open_by_fd: */
+struct coda_open_by_fd_in {
+    struct coda_in_hdr ih;
+    CodaFid Fid;
+    int	flags;
+};
+
+struct coda_open_by_fd_out {
+    struct coda_out_hdr oh;
+    int fd;
+    struct file *fh;
 };
 
 /* coda_open_by_path: */
 struct coda_open_by_path_in {
     struct coda_in_hdr ih;
-    ViceFid	VFid;
+    CodaFid Fid;
     int	flags;
 };
 
@@ -691,9 +745,8 @@ union inputArgs {
     struct coda_symlink_in coda_symlink;
     struct coda_readlink_in coda_readlink;
     struct coda_fsync_in coda_fsync;
-    struct coda_inactive_in coda_inactive;
     struct coda_vget_in coda_vget;
-    struct coda_rdwr_in coda_rdwr;
+    struct coda_open_by_fd_in coda_open_by_fd;
     struct coda_open_by_path_in coda_open_by_path;
     struct coda_statfs_in coda_statfs;
 };
@@ -715,8 +768,8 @@ union outputArgs {
     struct coda_zapdir_out coda_zapdir;
     struct coda_zapvnode_out coda_zapvnode;
     struct coda_purgefid_out coda_purgefid;
-    struct coda_rdwr_out coda_rdwr;
     struct coda_replace_out coda_replace;
+    struct coda_open_by_fd_out coda_open_by_fd;
     struct coda_open_by_path_out coda_open_by_path;
     struct coda_statfs_out coda_statfs;
 };    
@@ -744,32 +797,44 @@ struct ViceIoctl {
         short out_size;         /* Maximum size of output buffer, <= 2K */
 };
 
-#if defined(__CYGWIN32__) || defined(DJGPP)
-struct PioctlData {
-	unsigned long cmd;
-        const char *path;
-        int follow;
-        struct ViceIoctl vi;
-};
-#else
 struct PioctlData {
         const char *path;
         int follow;
-        struct ViceIoctl vi;
-};
+#if defined(__CYGWIN32__) || defined(__NT_CODA__)
+	int cmd;
 #endif
+        struct ViceIoctl vi;
+};
 
 #define	CODA_CONTROL		".CONTROL"
 #define CODA_CONTROLLEN           8
-#define	CTL_VOL			-1
-#define	CTL_VNO			-1
-#define	CTL_UNI			-1
 #define CTL_INO                 -1
 #define	CTL_FILE		"/coda/.CONTROL"
 
 
-#define	IS_CTL_FID(fidp)	((fidp)->Volume == CTL_VOL &&\
-				 (fidp)->Vnode == CTL_VNO &&\
-				 (fidp)->Unique == CTL_UNI)
+#ifdef CODA_COMPAT_5
+#define	CTL_FID			{ -1, -1, -1 }
+#define	IS_CTL_FID(fidp)	((fidp)->Volume == -1 &&\
+				 (fidp)->Vnode == -1 &&\
+				 (fidp)->Unique == -1)
+#define	INVAL_FID		{ 0, 0, 0 }
+#else
+#define	CTL_FID			{ { -1, -1, -1, -1 } }
+#define	IS_CTL_FID(fidp)	((fidp)->opaque[0] == -1 &&\
+				 (fidp)->opaque[1] == -1 &&\
+				 (fidp)->opaque[2] == -1 &&\
+				 (fidp)->opaque[3] == -1)
+#define	INVAL_FID		{ { 0, 0, 0, 0 } }
+#endif
+
+/* Data passed to mount */
+
+#define CODA_MOUNT_VERSION 1
+
+struct coda_mount_data {
+	int		version;
+	int		fd;       /* Opened device */
+};
+
 #endif 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.28 2003/08/25 10:05:46 drochner Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.29 2003/08/27 17:49:49 drochner Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.28 2003/08/25 10:05:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.29 2003/08/27 17:49:49 drochner Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -122,6 +122,7 @@ struct vfsops coda_vfsops = {
     0
 };
 
+
 int
 coda_vfsopstats_init(void)
 {
@@ -157,8 +158,8 @@ coda_mount(vfsp, path, data, ndp, p)
     struct coda_mntinfo *mi;
     struct vnode *rootvp;
     const struct cdevsw *cdev;
-    ViceFid rootfid;
-    ViceFid ctlfid;
+    CodaFid rootfid = INVAL_FID;
+    CodaFid ctlfid = CTL_FID;
     int error;
 
     if (vfsp->mnt_flag & MNT_GETARGS)
@@ -232,16 +233,10 @@ coda_mount(vfsp, path, data, ndp, p)
      * actually make the CODA_ROOT call to venus until the first call
      * to coda_root in case a server is down while venus is starting.
      */
-    rootfid.Volume = 0;
-    rootfid.Vnode = 0;
-    rootfid.Unique = 0;
     cp = make_coda_node(&rootfid, vfsp, VDIR);
     rootvp = CTOV(cp);
     rootvp->v_flag |= VROOT;
 	
-    ctlfid.Volume = CTL_VOL;
-    ctlfid.Vnode = CTL_VNO;
-    ctlfid.Unique = CTL_UNI;
 /*  cp = make_coda_node(&ctlfid, vfsp, VCHR);
     The above code seems to cause a loop in the cnode links.
     I don't totally understand when it happens, it is caught
@@ -346,16 +341,15 @@ coda_root(vfsp, vpp)
     struct vnode **result;
     int error;
     struct proc *p = curproc;    /* XXX - bnoble */
-    ViceFid VFid;
+    CodaFid VFid;
+    static const CodaFid invalfid = INVAL_FID;
 
     ENTRY;
     MARK_ENTRY(CODA_ROOT_STATS);
     result = NULL;
     
     if (vfsp == mi->mi_vfsp) {
-	if ((VTOC(mi->mi_rootvp)->c_fid.Volume != 0) ||
-	    (VTOC(mi->mi_rootvp)->c_fid.Vnode != 0) ||
-	    (VTOC(mi->mi_rootvp)->c_fid.Unique != 0))
+    	if (memcmp(&VTOC(mi->mi_rootvp)->c_fid, &invalfid, sizeof(CodaFid)))
 	    { /* Found valid root. */
 		*vpp = mi->mi_rootvp;
 		/* On Mach, this is vref.  On NetBSD, VOP_LOCK */
@@ -507,7 +501,7 @@ coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
     struct cnode *cp = 0;
     int error;
     struct proc *p = curproc; /* XXX -mach */
-    ViceFid VFid;
+    CodaFid VFid;
     int vtype;
 
     ENTRY;
@@ -528,8 +522,8 @@ coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
 	    *vpp = (struct vnode *)0;
     } else {
 	CODADEBUG(CODA_VGET, 
-		 myprintf(("vget: vol %lx vno %lx uni %lx type %d result %d\n",
-			VFid.Volume, VFid.Vnode, VFid.Unique, vtype, error)); )
+		 myprintf(("vget: %s type %d result %d\n",
+			coda_f2s(&VFid), vtype, error)); )
 	    
 	cp = make_coda_node(&VFid, vfsp, vtype);
 	*vpp = CTOV(cp);
@@ -599,7 +593,7 @@ getNewVnode(vpp)
     
     ENTRY;
 
-    cfid.cfid_len = (short)sizeof(ViceFid);
+    cfid.cfid_len = (short)sizeof(CodaFid);
     cfid.cfid_fid = VTOC(*vpp)->c_fid;	/* Structure assignment. */
     /* XXX ? */
 
