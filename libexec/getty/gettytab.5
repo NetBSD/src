@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)gettytab.5	8.4 (Berkeley) 4/19/94
-.\"	$Id: gettytab.5,v 1.10 1994/08/17 20:27:59 pk Exp $
+.\"	$Id: gettytab.5,v 1.11 1994/09/16 22:02:34 mycroft Exp $
 .\"
 .Dd April 19, 1994
 .Dt GETTYTAB 5
@@ -237,7 +237,7 @@ value contain the sgttyb
 field, while the top 16 bits represent the local mode word.
 .Pp
 Should
-.Xr getty
+.Xr getty 8
 receive a null character
 (presumed to indicate a line break)
 it will restart using the table indicated by the
@@ -261,33 +261,47 @@ The initial message, and login message,
 .Em \&im
 and
 .Em \&lm
-may include the character sequence
-.Em \&%h
-or
-.Em \&%t
-to obtain
-the hostname or tty name respectively.
-.Pf ( Em %%
-obtains a single '%' character.)
-The hostname is normally obtained from the system,
-but may be set by the
+may include any of the following character sequences, which expand to
+information about the environment in which
+.Xr getty 8
+is running.
+.Pp
+.Bl -tag -width \&%xxx -compact
+.It \&%d
+The current date.
+.It \&%h
+The hostname of the machine, which is normally obtained from the
+system using
+.Xr gethostname 2 ,
+but may also be overridden by the
 .Em \&hn
 table entry.
-In either case it may be edited with
-.Em \&he .
-The
+In either case it may be edited with the
 .Em \&he
-string is a sequence of characters, each character that
-is neither '@' nor '#' is copied into the final hostname.
+string.
 A '@' in the
 .Em \&he
-string, causes one character from the real hostname to
+string causes one character from the real hostname to
 be copied to the final hostname.
 A '#' in the
 .Em \&he
-string, causes the next character of the real hostname
+string causes the next character of the real hostname
 to be skipped.
+Each character that
+is neither '@' nor '#' is copied into the final hostname.
 Surplus '@' and '#' characters are ignored.
+.It \&%t
+The tty name.
+.It "\&%m, \&%r, \&%s, \&%v"
+The type of machine, release of the operating system, name of the
+operating system, and version of the kernel, respectively, as
+returned by
+.Xr uname 2 .
+.It \&%%
+A
+.Dq %
+character.
+.El
 .Pp
 When getty execs the login process, given
 in the
@@ -313,12 +327,12 @@ then getty will exit within the indicated
 number of seconds, either having
 received a login name and passed control
 to
-.Xr login ,
+.Xr login 1 ,
 or having received an alarm signal, and exited.
 This may be useful to hangup dial in lines.
 .Pp
 Output from
-.Xr getty
+.Xr getty 8
 is even parity unless
 .Em \&op
 or
@@ -333,12 +347,14 @@ to allow any parity on input, but generate odd parity output.
 Note: this only applies while getty is being run,
 terminal driver limitations prevent a more complete
 implementation.
-.Xr Getty
+.Xr Getty 8
 does not check parity of input characters in
 .Dv RAW
 mode.
 .Sh SEE ALSO
 .Xr login 1 ,
+.Xr gethostname 2 ,
+.Xr uname 2 ,
 .Xr termcap 5 ,
 .Xr getty 8 .
 .Sh BUGS
