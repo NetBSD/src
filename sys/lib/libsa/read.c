@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.9 1999/03/31 01:50:26 cgd Exp $	*/
+/*	$NetBSD: read.c,v 1.10 2000/03/30 12:19:48 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -77,7 +77,7 @@ oread(fd, dest, bcount)
 	void *dest;
 	size_t bcount;
 {
-	register struct open_file *f = &files[fd];
+	struct open_file *f = &files[fd];
 	size_t resid;
 
 #if !defined(LIBSA_NO_FD_CHECKING)

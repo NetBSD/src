@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.14 1999/11/13 21:17:56 thorpej Exp $	*/
+/*	$NetBSD: ether.c,v 1.15 2000/03/30 12:19:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -67,8 +67,8 @@ sendether(d, pkt, len, dea, etype)
 	u_char *dea;
 	int etype;
 {
-	register ssize_t n;
-	register struct ether_header *eh;
+	ssize_t n;
+	struct ether_header *eh;
 
 #ifdef ETHER_DEBUG
  	if (debug)
@@ -97,14 +97,14 @@ sendether(d, pkt, len, dea, etype)
  */
 ssize_t
 readether(d, pkt, len, tleft, etype)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
+	struct iodesc *d;
+	void *pkt;
+	size_t len;
 	time_t tleft;
-	register u_int16_t *etype;
+	u_int16_t *etype;
 {
-	register ssize_t n;
-	register struct ether_header *eh;
+	ssize_t n;
+	struct ether_header *eh;
 
 #ifdef ETHER_DEBUG
  	if (debug)
@@ -140,11 +140,11 @@ readether(d, pkt, len, tleft, etype)
 static char digits[] = "0123456789abcdef";
 char *
 ether_sprintf(ap)
-        register u_char *ap;
+        u_char *ap;
 {
-	register int i;
+	int i;
 	static char etherbuf[18];
-	register char *cp = etherbuf;
+	char *cp = etherbuf;
 
 	for (i = 0; i < 6; i++) {
 		*cp++ = digits[*ap >> 4];

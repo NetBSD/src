@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.25 1999/11/13 21:17:57 thorpej Exp $	*/
+/*	$NetBSD: net.c,v 1.26 2000/03/30 12:19:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -65,14 +65,14 @@
 /* Caller must leave room for ethernet, ip and udp headers in front!! */
 ssize_t
 sendudp(d, pkt, len)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
+	struct iodesc *d;
+	void *pkt;
+	size_t len;
 {
-	register ssize_t cc;
-	register struct ip *ip;
-	register struct udphdr *uh;
-	register u_char *ea;
+	ssize_t cc;
+	struct ip *ip;
+	struct udphdr *uh;
+	u_char *ea;
 
 #ifdef NET_DEBUG
  	if (debug) {
@@ -107,7 +107,7 @@ sendudp(d, pkt, len)
 
 #ifndef UDP_NO_CKSUM
 	{
-		register struct udpiphdr *ui;
+		struct udpiphdr *ui;
 		struct ip tip;
 
 		/* Calculate checksum (must save and restore ip header) */
@@ -140,15 +140,15 @@ sendudp(d, pkt, len)
  */
 ssize_t
 readudp(d, pkt, len, tleft)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
+	struct iodesc *d;
+	void *pkt;
+	size_t len;
 	time_t tleft;
 {
-	register ssize_t n;
-	register size_t hlen;
-	register struct ip *ip;
-	register struct udphdr *uh;
+	ssize_t n;
+	size_t hlen;
+	struct ip *ip;
+	struct udphdr *uh;
 	u_int16_t etype;	/* host order */
 
 #ifdef NET_DEBUG
@@ -237,7 +237,7 @@ readudp(d, pkt, len, tleft)
 
 #ifndef UDP_NO_CKSUM
 	if (uh->uh_sum) {
-		register struct udpiphdr *ui;
+		struct udpiphdr *ui;
 		struct ip tip;
 
 		n = ntohs(uh->uh_ulen) + sizeof(*ip);
@@ -288,16 +288,16 @@ readudp(d, pkt, len, tleft)
  */
 ssize_t
 sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
-	register struct iodesc *d;
-	register ssize_t (*sproc)(struct iodesc *, void *, size_t);
-	register void *sbuf;
-	register size_t ssize;
-	register ssize_t (*rproc)(struct iodesc *, void *, size_t, time_t);
-	register void *rbuf;
-	register size_t rsize;
+	struct iodesc *d;
+	ssize_t (*sproc)(struct iodesc *, void *, size_t);
+	void *sbuf;
+	size_t ssize;
+	ssize_t (*rproc)(struct iodesc *, void *, size_t, time_t);
+	void *rbuf;
+	size_t rsize;
 {
-	register ssize_t cc;
-	register time_t t, tmo, tlast;
+	ssize_t cc;
+	time_t t, tmo, tlast;
 	long tleft;
 
 #ifdef NET_DEBUG
