@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.60 2001/06/03 15:07:20 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.61 2002/02/10 22:06:45 thorpej Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -556,35 +556,6 @@ ENTRY(fuswintr,0)
 1:	mfpr	$PR_ESP,r2
 	clrl	(r2)
 	movl	r1,r0
-	ret
-
-
-/*
- * Copy/zero more than 64k of memory (as opposite of bcopy/bzero).
- */
-ENTRY(blkcpy,R6)
-	movl	4(ap),r1
-	movl	8(ap),r3
-	movl	12(ap),r6
-	jbr 2f
-1:	subl2	r0,r6
-	movc3	r0,(r1),(r3)
-2:	movzwl	$65535,r0
-	cmpl	r6,r0
-	jgtr	1b
-	movc3	r6,(r1),(r3)
-	ret
-
-ENTRY(blkclr,R6)
-	movl	4(ap), r3
-	movl	8(ap), r6
-	jbr	2f
-1:	subl2	r0, r6
-	movc5	$0,(r3),$0,r0,(r3)
-2:	movzwl	$65535,r0
-	cmpl	r6, r0
-	jgtr	1b
-	movc5	$0,(r3),$0,r6,(r3)
 	ret
 
 #if defined(MULTIPROCESSOR)
