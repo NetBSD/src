@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.8 1997/10/19 23:36:29 lukem Exp $	*/
+/*	$NetBSD: netstat.c,v 1.9 1998/07/12 05:59:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.8 1997/10/19 23:36:29 lukem Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.9 1998/07/12 05:59:00 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -86,14 +86,6 @@ static void inetprint __P((struct in_addr *, int, char *));
 
 #define	streq(a,b)	(strcmp(a,b)==0)
 
-WINDOW *
-opennetstat()
-{
-	sethostent(1);
-	setnetent(1);
-	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
-}
-
 struct netinfo {
 	struct	netinfo *ni_forw, *ni_prev;
 	short	ni_line;		/* line on screen */
@@ -121,6 +113,15 @@ static	int lastrow = 1;
 static	void enter __P((struct inpcb *, struct socket *, int, char *));
 static	void inetprint __P((struct in_addr *, int, char *));
 static	char *inetname __P((struct in_addr));
+
+WINDOW *
+opennetstat()
+{
+
+	sethostent(1);
+	setnetent(1);
+	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
+}
 
 void
 closenetstat(w)
@@ -290,10 +291,10 @@ enter(inp, so, state, proto)
 #define	SNDCC	RCVCC+7
 #define	STATE	SNDCC+7
 
-
 void
 labelnetstat()
 {
+
 	if (namelist[X_TCBTABLE].n_type == 0)
 		return;
 	wmove(wnd, 0, 0); wclrtobot(wnd);
@@ -390,14 +391,16 @@ inetprint(in, port, proto)
 	struct servent *sp = 0;
 	char line[80], *cp;
 
-	sprintf(line, "%.*s.", 16, inetname(*in));
+	(void)snprintf(line, sizeof line, "%.*s.", 16, inetname(*in));
 	cp = strchr(line, '\0');
 	if (!nflag && port)
 		sp = getservbyport(port, proto);
 	if (sp || port == 0)
-		sprintf(cp, "%.8s", sp ? sp->s_name : "*");
+		(void)snprintf(cp, line + sizeof line - cp, "%.8s",
+		     sp ? sp->s_name : "*");
 	else
-		sprintf(cp, "%d", ntohs((u_short)port));
+		(void)snprintf(cp, line + sizeof line - cp, "%d",
+		     ntohs((u_short)port));
 	/* pad to full column to clear any garbage */
 	cp = strchr(line, '\0');
 	while (cp - line < 22)
@@ -436,15 +439,18 @@ inetname(in)
 		}
 	}
 	if (in.s_addr == INADDR_ANY)
-		strcpy(line, "*");
+		strncpy(line, "*", sizeof(line) - 1);
 	else if (cp)
-		strcpy(line, cp);
+		strncpy(line, cp, sizeof(line) - 1);
 	else {
 		in.s_addr = ntohl(in.s_addr);
 #define C(x)	((x) & 0xff)
-		sprintf(line, "%u.%u.%u.%u", C(in.s_addr >> 24),
-			C(in.s_addr >> 16), C(in.s_addr >> 8), C(in.s_addr));
+		(void)snprintf(line, sizeof line, "%u.%u.%u.%u",
+		    C(in.s_addr >> 24), C(in.s_addr >> 16),
+		    C(in.s_addr >> 8), C(in.s_addr));
+#undef C
 	}
+	line[sizeof(line) - 1] = '\0';
 	return (line);
 }
 
