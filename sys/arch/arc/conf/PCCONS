@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.34 2003/12/14 01:32:01 thorpej Exp $
+#	$NetBSD: PCCONS,v 1.34.2.1 2004/07/15 20:16:14 he Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -38,6 +38,7 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# cheap kernel consistency checks
