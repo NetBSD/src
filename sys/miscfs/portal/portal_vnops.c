@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.32 1998/08/10 08:11:12 matthias Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.33 1998/10/31 01:18:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -410,7 +410,7 @@ portal_open(v)
 	auio.uio_offset = 0;
 	auio.uio_resid = aiov[0].iov_len + aiov[1].iov_len;
 
-	error = sosend(so, (struct mbuf *) 0, &auio,
+	error = (*so->so_send)(so, (struct mbuf *) 0, &auio,
 			(struct mbuf *) 0, (struct mbuf *) 0, 0);
 	if (error)
 		goto bad;
@@ -419,8 +419,8 @@ portal_open(v)
 	do {
 		struct mbuf *m = 0;
 		int flags = MSG_WAITALL;
-		error = soreceive(so, (struct mbuf **) 0, &auio,
-					&m, &cm, &flags);
+		error = (*so->so_receive)(so, (struct mbuf **) 0, &auio,
+					  &m, &cm, &flags);
 		if (error)
 			goto bad;
 

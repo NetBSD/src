@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.26 1998/08/03 14:19:59 kleink Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.27 1998/10/31 01:18:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -260,8 +260,8 @@ fifo_read(v)
 		rso->so_state |= SS_NBIO;
 	startresid = uio->uio_resid;
 	VOP_UNLOCK(ap->a_vp, 0);
-	error = soreceive(rso, (struct mbuf **)0, uio, (struct mbuf **)0,
-	    (struct mbuf **)0, (int *)0);
+	error = (*rso->so_receive)(rso, (struct mbuf **)0, uio,
+	    (struct mbuf **)0, (struct mbuf **)0, (int *)0);
 	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 	/*
 	 * Clear EOF indication after first such return.
@@ -301,7 +301,8 @@ fifo_write(v)
 	if (ap->a_ioflag & IO_NDELAY)
 		wso->so_state |= SS_NBIO;
 	VOP_UNLOCK(ap->a_vp, 0);
-	error = sosend(wso, (struct mbuf *)0, ap->a_uio, 0, (struct mbuf *)0, 0);
+	error = (*wso->so_send)(wso, (struct mbuf *)0, ap->a_uio, 0,
+	    (struct mbuf *)0, 0);
 	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 	if (ap->a_ioflag & IO_NDELAY)
 		wso->so_state &= ~SS_NBIO;
