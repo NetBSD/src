@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.3 1999/03/31 10:44:15 leo Exp $	*/
+/*	$NetBSD: et4000.c,v 1.4 1999/10/21 15:33:49 leo Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -194,14 +194,13 @@ et_probe_addresses(va)
 		if (bus_space_map(memt, vat.va_maddr, vat.va_msize,
 			  	  BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE,
 			  	  &memh)) {
-			bus_space_unmap(iot, (caddr_t)vat.va_iobase,
-					vat.va_iosize);
+			bus_space_unmap(iot, ioh, vat.va_iosize);
 			printf("et probe: cannot map memory area\n");
 			return(0);
 		}
 		found = et_detect(&iot, &memt, &ioh, &memh, vat.va_msize);
-		bus_space_unmap(iot, (caddr_t)vat.va_iobase, vat.va_iosize);
-		bus_space_unmap(memt, (caddr_t)vat.va_maddr, vat.va_msize);
+		bus_space_unmap(iot, ioh, vat.va_iosize);
+		bus_space_unmap(memt, memh, vat.va_msize);
 		if (found) {
 			*va = vat;
 			return(1);
