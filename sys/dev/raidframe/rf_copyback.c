@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.12 2000/01/09 01:29:28 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.13 2000/02/23 02:03:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -126,11 +126,21 @@ rf_CopybackReconstructedData(raidPtr)
 	if (raidPtr->raid_cinfo[frow][fcol].ci_vp != NULL) {
 		printf("Closed the open device: %s\n",
 		    raidPtr->Disks[frow][fcol].devname);
-		VOP_UNLOCK(raidPtr->raid_cinfo[frow][fcol].ci_vp, 0);
-		(void) vn_close(raidPtr->raid_cinfo[frow][fcol].ci_vp,
-				FREAD | FWRITE, proc->p_ucred, proc);
+		if (raidPtr->Disks[frow][fcol].auto_configured == 1) {
+			VOP_CLOSE(raidPtr->raid_cinfo[frow][fcol].ci_vp, 
+				  FREAD, NOCRED, 0);
+			vput(raidPtr->raid_cinfo[frow][fcol].ci_vp);
+		} else {
+			VOP_UNLOCK(raidPtr->raid_cinfo[frow][fcol].ci_vp, 0);
+			(void) vn_close(raidPtr->raid_cinfo[frow][fcol].ci_vp,
+					FREAD | FWRITE, proc->p_ucred, proc);
+		}
 		raidPtr->raid_cinfo[frow][fcol].ci_vp = NULL;
+
 	}
+	/* note that this disk was *not* auto_configured (any longer) */
+	raidPtr->Disks[frow][fcol].auto_configured = 0;
+
 	printf("About to (re-)open the device: %s\n",
 	    raidPtr->Disks[frow][fcol].devname);
 
@@ -231,17 +241,12 @@ rf_CopybackReconstructedData(raidPtr)
 	raidread_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
 				  raidPtr->raid_cinfo[frow][fcol].ci_vp,
 				  &c_label);
-		
-	c_label.version = RF_COMPONENT_LABEL_VERSION; 
-	c_label.mod_counter = raidPtr->mod_counter;
-	c_label.serial_number = raidPtr->serial_number;
+	
+	raid_init_component_label( raidPtr, &c_label );
+
 	c_label.row = frow;
 	c_label.column = fcol;
-	c_label.num_rows = raidPtr->numRow;
-	c_label.num_columns = raidPtr->numCol;
-	c_label.clean = RF_RAID_DIRTY;
-	c_label.status = rf_ds_optimal;
-	
+
 	raidwrite_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
 				   raidPtr->raid_cinfo[frow][fcol].ci_vp,
 				   &c_label);
