@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.83 1997/07/14 11:55:44 drochner Exp $
+#	$NetBSD: rc,v 1.84 1997/07/15 11:19:20 veego Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -106,8 +106,9 @@ rm -f /var/spool/lock/LCK.*
 rm -f /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 
-# start the system logger first, so that all messages
-# from daemons are logged, and the name server next.
+# start the system logger first, so that all messages from daemons
+# are logged, then start savecore to get a dump on low memory systems
+# and then start the name server.
 
 if [ "$syslogd_flags" != NO ]; then
 	if [ "$syslogd_flags" = DEFAULT ]; then
@@ -118,6 +119,16 @@ if [ "$syslogd_flags" != NO ]; then
 	syslogd $syslogd_flags
 fi
 
+# /var/crash should be a directory or a symbolic link
+# to the crash directory if core dumps are to be saved.
+if [ "$savecore_flags" != NO ] && [ -d /var/crash ]; then
+	if [ "$savecore_flags" = DEFAULT ]; then
+		savecore_flags=""
+	fi
+	echo checking for core dump...
+	savecore $savecore_flags /var/crash
+fi
+
 if [ "$named_flags" != NO ]; then
 	if [ "$named_flags" = DEFAULT ]; then
 		named_flags=""
@@ -125,7 +136,7 @@ if [ "$named_flags" != NO ]; then
 	echo 'starting name server';	named $named_flags
 fi
 
-# now start the rpc servers, for YP server/client, NFS.
+# now start the rpc servers, for YP server/client.
 echo -n 'starting rpc daemons:'
 
 # note that portmap is generally required for all other rpc services.
@@ -160,6 +171,19 @@ if [ "$bootparamd_flags" != NO ] && [ -r /etc/bootparams ]; then
 	fi
         echo -n ' rpc.bootparamd';      rpc.bootparamd $bootparamd_flags
 fi
+
+echo '.'
+
+# load kernel modules specified in /etc/lkm.conf
+if [ "$lkm_init" != NO ] && [ -f /etc/rc.lkm ]; then
+	lkmstage=BEFOREMOUNT
+	. /etc/rc.lkm
+fi
+
+mount -a
+
+# now start the rpc servers, for NFS server/client.
+echo -n 'starting nfs-rpc daemons:'
 
 nfs_locking=NO
 
@@ -211,14 +235,6 @@ fi
 
 echo '.'
 
-# load kernel modules specified in /etc/lkm.conf
-if [ "$lkm_init" != NO ] && [ -f /etc/rc.lkm ]; then
-	lkmstage=BEFOREMOUNT
-	. /etc/rc.lkm
-fi
-
-mount -a
-
 if [ -f /sbin/ldconfig ]; then
 	echo 'creating runtime link editor directory cache.'
 	if [ -f /etc/ld.so.conf ]; then
@@ -227,16 +243,6 @@ if [ -f /sbin/ldconfig ]; then
 		ldconfig
 	fi
 fi 
-
-# /var/crash should be a directory or a symbolic link
-# to the crash directory if core dumps are to be saved.
-if [ "$savecore_flags" != NO ] && [ -d /var/crash ]; then
-	if [ "$savecore_flags" = DEFAULT ]; then
-		savecore_flags=""
-	fi
-	echo checking for core dump...
-	savecore $savecore_flags /var/crash
-fi
 
 # load kernel modules specified in /etc/lkm.conf
 if [ "$lkm_init" != NO ] && [ -f /etc/rc.lkm ]; then
