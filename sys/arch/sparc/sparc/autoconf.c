@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 1995/06/10 21:48:29 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.29 1995/06/26 22:59:54 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1093,6 +1093,7 @@ struct nam2blk {
 	int maj;
 } nam2blk[] = {
 	{ "sd",		7 },
+	{ "xd",		10 },
 	{ "st",		11 },
 	{ "cd",		18 },
 };
