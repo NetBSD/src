@@ -1,4 +1,4 @@
-/*	$NetBSD: hangman.h,v 1.6 1997/10/11 01:16:34 lukem Exp $	*/
+/*	$NetBSD: hangman.h,v 1.7 1998/09/11 13:42:03 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -83,7 +83,7 @@ extern off_t Dict_size;
 
 void    die __P((int));
 void    endgame __P((void));
-int	main __P((int, char **));
+int	main __P((void));
 void	getguess __P((void));
 void	getword __P((void));
 void	playgame __P((void));
