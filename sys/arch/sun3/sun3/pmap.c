@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.21 1994/05/02 05:46:12 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.22 1994/05/04 05:47:10 gwr Exp $
  */
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -39,7 +39,6 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
-#include <vm/vm_statistics.h>
 
 #include <machine/pte.h>
 #include <machine/control.h>
@@ -102,8 +101,13 @@ vm_offset_t avail_start, avail_end;
 #define	NKSEG	(NSEGMAP - (KERNBASE / NBSG)) /* is KERNBASE ok? */
 #define	NUSEG	(NSEGMAP-NKSEG)			
 
+/*
+ * Note that PMAP_LOCK is used in routines called at splnet() and
+ * MUST NOT lower the priority.  For this reason we arrange that:
+ *    splimp = max(splnet,splbio)
+ * Would splvm() be more natural here? (same level as splimp).
+ */
 #define splpmap splimp
-
 #define PMAP_LOCK() s = splpmap()
 #define PMAP_UNLOCK() splx(s)
 
@@ -956,11 +960,10 @@ void pmap_common_init(pmap)
 void pmap_bootstrap()
 {
     vm_offset_t temp_seg, va, eva, pte;
-    extern vm_size_t page_size;
     extern void vm_set_page_size();
     unsigned int sme;
 
-    page_size = NBPG;
+    PAGE_SIZE = NBPG;
     vm_set_page_size();
 
     sun3_protection_init();
