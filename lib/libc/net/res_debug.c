@@ -51,7 +51,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: res_debug.c,v 1.5 1994/04/07 07:00:18 deraadt Exp $";
+static char rcsid[] = "$Id: res_debug.c,v 1.6 1994/10/15 07:58:59 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -303,11 +303,11 @@ __fp_query(msg,file)
 			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
 				fprintf(file, ", type = %s",
 					__p_type(_getshort(cp)));
-			cp += sizeof(u_short);
+			cp += sizeof(u_int16_t);
 			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
 				fprintf(file, ", class = %s\n",
 					__p_class(_getshort(cp)));
-			cp += sizeof(u_short);
+			cp += sizeof(u_int16_t);
 			putc('\n', file);
 		}
 	}
@@ -386,19 +386,19 @@ p_rr(cp, msg, file)
 	int type, class, dlen, n, c;
 	struct in_addr inaddr;
 	char *cp1, *cp2;
-	u_long tmpttl, t;
+	u_int32_t tmpttl, t;
 	int lcnt;
 
 	if ((cp = p_fqname(cp, msg, file)) == NULL)
 		return (NULL);			/* compression error */
 	type = _getshort(cp);
-	cp += sizeof(u_short);
+	cp += sizeof(u_int16_t);
 	class = _getshort(cp);
-	cp += sizeof(u_short);
+	cp += sizeof(u_int16_t);
 	tmpttl = _getlong(cp);
-	cp += sizeof(u_long);
+	cp += sizeof(u_int32_t);
 	dlen = _getshort(cp);
-	cp += sizeof(u_short);
+	cp += sizeof(u_int16_t);
 	cp1 = cp;
 	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_TTLID))
 		fprintf(file, "\t%lu", tmpttl);
@@ -427,7 +427,7 @@ p_rr(cp, msg, file)
 				protocol = *(u_char*)cp;
 				cp += sizeof(u_char);
 				port = _getshort(cp);
-				cp += sizeof(u_short);
+				cp += sizeof(u_int16_t);
 				fprintf(file, "\t%s\t; proto %d, port %d",
 					address, protocol, port);
 			}
@@ -463,22 +463,22 @@ p_rr(cp, msg, file)
 		putc(' ', file);
 		cp = p_fqname(cp, msg, file);	/* mail addr */
 		fputs(" (\n", file);
-		t = _getlong(cp);  cp += sizeof(u_long);
+		t = _getlong(cp);  cp += sizeof(u_int32_t);
 		fprintf(file,"\t\t\t%lu\t; serial\n", t);
-		t = _getlong(cp);  cp += sizeof(u_long);
+		t = _getlong(cp);  cp += sizeof(u_int32_t);
 		fprintf(file,"\t\t\t%lu\t; refresh (%s)\n", t, __p_time(t));
-		t = _getlong(cp);  cp += sizeof(u_long);
+		t = _getlong(cp);  cp += sizeof(u_int32_t);
 		fprintf(file,"\t\t\t%lu\t; retry (%s)\n", t, __p_time(t));
-		t = _getlong(cp);  cp += sizeof(u_long);
+		t = _getlong(cp);  cp += sizeof(u_int32_t);
 		fprintf(file,"\t\t\t%lu\t; expire (%s)\n", t, __p_time(t));
-		t = _getlong(cp);  cp += sizeof(u_long);
+		t = _getlong(cp);  cp += sizeof(u_int32_t);
 		fprintf(file,"\t\t\t%lu )\t; minimum (%s)", t, __p_time(t));
 		break;
 
 	case T_MX:
 	case T_AFSDB:
 		fprintf(file,"\t%d ", _getshort(cp));
-		cp += sizeof(u_short);
+		cp += sizeof(u_int16_t);
 		cp = p_fqname(cp, msg, file);
 		break;
 
@@ -516,15 +516,15 @@ p_rr(cp, msg, file)
 	case T_GID:
 		if (dlen == 4) {
 			fprintf(file,"\t%u", _getlong(cp));
-			cp += sizeof(long);
+			cp += sizeof(u_int32_t);
 		}
 		break;
 
 	case T_WKS:
-		if (dlen < sizeof(u_long) + 1)
+		if (dlen < sizeof(u_int32_t) + 1)
 			break;
 		bcopy(cp, (char *)&inaddr, sizeof(inaddr));
-		cp += sizeof(u_long);
+		cp += sizeof(u_int32_t);
 		fprintf(file, "\t%s %s ( ",
 			inet_ntoa(inaddr),
 			deproto((int) *cp));
@@ -698,7 +698,7 @@ p_option(option)
  */
 char *
 __p_time(value)
-	u_long value;
+	u_int32_t value;
 {
 	int secs, mins, hours, days;
 	register char *p;
