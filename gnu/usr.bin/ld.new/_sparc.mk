@@ -1,4 +1,4 @@
-#	$NetBSD: _sparc.mk,v 1.1 1998/12/12 21:57:19 kristerw Exp $
+#	$NetBSD: _sparc.mk,v 1.2 1998/12/17 13:59:05 mrg Exp $
 
-EMULS=		sparcnbsd
+EMULS=		sparcnbsd elf32_sparc sun4
 DEFAULT_EMUL=	sparcnbsd
