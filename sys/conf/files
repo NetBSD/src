@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.581 2002/11/19 04:11:05 simonb Exp $
+#	$NetBSD: files,v 1.582 2002/12/04 00:28:39 haya Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -957,6 +957,9 @@ defpseudo verifiedexec
 file	kern/kern_verifiedexec.c	verifiedexec		needs-flag
 file	dev/verified_exec.c		verifiedexec		needs-flag
 
+# isochronous pseudo device for IEEE 1394, i.LINK or FireWire
+defpseudo fwiso:	ieee1394
+
 #
 # File systems
 #
@@ -1231,3 +1234,5 @@ file	netisdn/i4b_l4timer.c		isdndev			needs-flag
 # Game adapter (joystick)
 device	joy
 file	dev/ic/joy.c			joy needs-flag
+
+file	dev/ieee1394/fwiso.c		fwiso			needs-count
