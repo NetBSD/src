@@ -1,4 +1,5 @@
-/*	$NetBSD: crt0.c,v 1.2 1995/12/12 08:04:47 ragge Exp $	*/
+/*	$NetBSD: crt0.c,v 1.3 1996/10/18 05:37:00 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -27,12 +28,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "%W% (Erasmus) %G%";
+static char rcsid[] = "$NetBSD: crt0.c,v 1.3 1996/10/18 05:37:00 thorpej Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
