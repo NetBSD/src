@@ -57,6 +57,7 @@
 ./sbin/fastboot
 ./sbin/fasthalt
 ./sbin/fsck
+./sbin/fsdb
 ./sbin/halt
 ./sbin/ifconfig
 ./sbin/init
