@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.8 1998/09/05 13:36:49 pk Exp $
+.\"	$NetBSD: installboot.8,v 1.9 1999/01/31 10:33:40 is Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -111,9 +111,8 @@ DraCo ROMs don't support bootblock booting from floppy disks.
 .Pp
 Most 68060 boards, unlike the DraCo, don't set the SysBase->AttnFlags
 bit for the 68060 CPU (a patch program which is called during
-AmigaOS startup does this). Currently,
-.Nx
-is not able to detect this condition, and will fail.
+AmigaOS startup does this). You need to add options BB060STUPIDROM
+to your kernel to boot on such a machine.
 .Sh BUGS
 There is currently no easy way to edit the RDB from within
 .Nx .
