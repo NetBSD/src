@@ -1,8 +1,8 @@
-/*	$NetBSD: bf_enc.S,v 1.1 2001/09/09 11:01:01 tls Exp $	*/
+/*	$NetBSD: bf_enc.S,v 1.2 2003/11/28 08:56:48 keihan Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@zembu.com> and Thor Lancelot Simon
- * <tls@netbsd.org>.  Public domain.
+ * <tls@NetBSD.org>.  Public domain.
  */
 
 /*
