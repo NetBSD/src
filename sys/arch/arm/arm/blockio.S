@@ -1,4 +1,4 @@
-/*	$NetBSD: blockio.S,v 1.1 2001/05/29 23:03:21 bjh21 Exp $	*/
+/*	$NetBSD: blockio.S,v 1.2 2001/05/30 00:14:09 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -46,6 +46,56 @@
  */
 
 #include <machine/asm.h>
+
+RCSID("$NetBSD: blockio.S,v 1.2 2001/05/30 00:14:09 bjh21 Exp $")
+
+/*
+ * Read bytes from an I/O address into a block of memory
+ *
+ * r0 = address to read from (IO)
+ * r1 = address to write to (memory)
+ * r2 = length
+ */
+
+/* This code will look very familiar if you've read _memcpy(). */
+ENTRY(read_multi_1)
+	subs	r2, r2, #4		/* r2 = length - 4 */
+	blt	Lrm1_l4			/* less than 4 bytes */
+	ands	r12, r1, #3
+	beq	Lrm1_main		/* aligned destination */
+	rsb	r12, r12, #4
+	cmp	r12, #2
+	ldrb	r3, [r0]
+	strb	r3, [r1], #1
+	ldrgeb	r3, [r0]
+	strgeb	r3, [r1], #1
+	ldrgtb	r3, [r0]
+	strgtb	r3, [r1], #1
+	subs	r2, r2, r12
+	blt	Lrm1_l4
+Lrm1_main:
+Lrm1loop:
+	ldrb	r3, [r0]
+	ldrb	r12, [r0]
+	orr	r3, r3, r12, lsl #8
+	ldrb	r12, [r0]
+	orr	r3, r3, r12, lsl #16
+	ldrb	r12, [r0]
+	orr	r3, r3, r12, lsl #24
+	str	r3, [r1], #4
+	subs	r2, r2, #4
+	bge	Lrm1loop
+Lrm1_l4:
+	adds	r2, r2, #4			/* r2 = length again */
+	moveq	pc, r14
+	cmp	r2, #2
+	ldrb	r3, [r0]
+	strb	r3, [r1], #1
+	ldrgeb	r3, [r0]
+	strgeb	r3, [r1], #1
+	ldrgtb	r3, [r0]
+	strgtb	r3, [r1], #1
+	mov	pc, r14
 
 /*
  * Reads short ints (16 bits) from an I/O address into a block of memory
