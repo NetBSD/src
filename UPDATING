@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.134 2005/01/09 07:31:31 christos Exp $
+$NetBSD: UPDATING,v 1.135 2005/02/11 17:50:13 jmc Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,13 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+20050211:
+	Fixes to tools/Makefile.gnuhost may cause UPDATE=1 builds in
+	some of the cross tools to fail if they use configure. Some configure's
+	cache the environment passed in and notice the new environment is
+	different and abort. Doing a clean in tools/ should be enough to
+	make a build continue.
+
 20050109:
 	Since su is using pam by default now, make sure that you have
 	/etc/pam.d populated (postinstall will do that automatically
