@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.yp,v 1.17 2001/08/05 12:40:15 hubertf Exp $
+#	$NetBSD: Makefile.yp,v 1.18 2001/08/06 18:28:19 christos Exp $
 #
 # This is the YP Makefile, used to create and push YP maps.
 #
@@ -31,6 +31,7 @@ CAT=		/bin/cat
 CP=		/bin/cp
 CUT=		/usr/bin/cut
 ECHO=		/bin/echo
+EGREP=		/usr/bin/egrep
 MAKEDBM=	/usr/sbin/makedbm
 MAKEDBM_S=	${MAKEDBM} -s
 MKALIAS=	/usr/sbin/mkalias
@@ -144,6 +145,7 @@ aliases.time: ${DIR}/mail/aliases
 		${CP} -p ${.ALLSRC} ${DOMAIN}-aliases; \
 		${SENDMAIL} -bi -oA${PWD}/${DOMAIN}-aliases; \
 		${MAKEDBM} -u ${DOMAIN}-aliases | ${SORT} | \
+		${EGREP} -v '(YP_LAST_MODIFIED|YP_MASTER_NAME)' | \
 		${MAKEDBM} - mail.aliases; \
 		${MKALIAS} mail.aliases mail.byaddr; \
 		${TOUCH} ${.TARGET}; \
