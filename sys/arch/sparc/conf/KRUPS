@@ -1,5 +1,5 @@
-# $NetBSD: KRUPS,v 1.16 2003/10/07 09:43:58 tron Exp $
-# From: NetBSD: GENERIC,v 1.139 2002/09/25 11:49:54 martti Exp
+# $NetBSD: KRUPS,v 1.17 2003/10/22 18:24:53 uwe Exp $
+# From: NetBSD: GENERIC,v 1.148 2003/10/07 09:43:58 tron Exp
 #
 # Krups (JavaStation-NC) machine description file
 #
@@ -8,9 +8,9 @@
 
 include 	"arch/sparc/conf/std.sparc"
 
-#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.16 $"
+#ident 		"KRUPS-$Revision: 1.17 $"
 
 maxusers	32
 
@@ -27,6 +27,7 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 options		MSIIEP		# microSPARC-IIep
 
 # XXX: uwe: PROM location conflicts with kernel VA space !!!
+options 	PROM_AT_F0
 makeoptions	TEXTADDR=E8004000
 
 
@@ -48,6 +49,7 @@ config		netbsd	root on ? type ?
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
+options 	SYSTRACE	# system call vetting via systrace(1)
 
 ## Collect statistics on kernel malloc's and free's.  This does have a
 ## significant performance hit on slower machines, so it is intended for
@@ -55,19 +57,19 @@ options 	KTRACE
 #options 	KMEMSTATS
 
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
-#options 	SYSVMSG		# System V message queues
-#options 	SYSVSEM		# System V semaphores
+options 	SYSVMSG		# System V message queues
+options 	SYSVSEM		# System V semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers
 #options 	SEMMNS=60	# number of semaphores in system
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
-#options 	SYSVSHM		# System V shared memory
+options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support; still under development.
 #options 	LKM
 
-options 	USERCONF	# userconf(4) support
+#options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
@@ -125,7 +127,7 @@ options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 ## such that gdb(1) can be used on a kernel coredump.
 
 #makeoptions	DEBUG="-g"
-makeoptions	COPTS="-mcpu=supersparc -O2"
+makeoptions	CPUFLAGS="-mcpu=supersparc"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -164,7 +166,7 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	COMPAT_12	# NetBSD 1.2 binary compatibility
 #options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
-#options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 #options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 
@@ -338,3 +340,4 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
