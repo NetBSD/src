@@ -1,4 +1,4 @@
-#	$NetBSD: changelist,v 1.18 2000/08/21 23:07:11 lukem Exp $
+#	$NetBSD: changelist,v 1.19 2001/01/15 18:04:53 veego Exp $
 #	from: @(#)changelist	8.1 (Berkeley) 6/9/93
 #
 # List of files which the security script backs up and checks
@@ -57,7 +57,6 @@
 /etc/mail/helpfile
 /etc/mail/local-host-names
 /etc/mail/sendmail.cf
-/etc/mail/sendmail-IPv4only.cf
 /etc/mailer.conf
 /etc/man.conf
 /etc/master.passwd
