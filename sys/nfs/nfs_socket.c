@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.63 2000/12/10 23:17:01 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.64 2000/12/27 16:35:37 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -916,6 +916,7 @@ nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	struct nfsnode *np;
 #endif
 
+	KASSERT(cred != NULL);
 	nmp = VFSTONFS(vp->v_mount);
 	MALLOC(rep, struct nfsreq *, sizeof(struct nfsreq), M_NFSREQ, M_WAITOK);
 	rep->r_nmp = nmp;
