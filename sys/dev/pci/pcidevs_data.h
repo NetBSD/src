@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.472 2002/09/20 15:03:22 pooka Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.473 2002/09/24 09:25:48 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.470 2002/09/20 14:59:58 pooka Exp 
+ *	NetBSD: pcidevs,v 1.471 2002/09/24 09:24:40 pooka Exp 
  */
 
 /*
