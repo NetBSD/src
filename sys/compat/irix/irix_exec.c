@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.2 2001/11/13 02:08:31 lukem Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.3 2001/11/26 21:36:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -37,25 +37,36 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.2 2001/11/13 02:08:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.3 2001/11/26 21:36:24 manu Exp $");
+
+#ifndef ELFSIZE
+#define ELFSIZE		32	/* XXX should die */
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
+#include <sys/exec_elf.h>
 #include <sys/malloc.h>
 
 #include <sys/syscall.h>
 
+#include <compat/common/compat_util.h>
+
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_exec.h>
 
+static int ELFNAME2(irix,mipsopt_signature) __P((struct proc *, 
+    struct exec_package *epp, Elf_Ehdr *eh));
+
 extern char sigcode[], esigcode[];
 extern struct sysent sysent[];
+
 #ifndef __HAVE_SYSCALL_INTERN
 void syscall __P((void));
 #else
-void irix_syscall_intern __P((struct proc *));
+void syscall_intern __P((struct proc *));
 #endif
 
 const struct emul emul_irix = {
@@ -77,17 +88,111 @@ const struct emul emul_irix = {
 	trapsignal,
 	sigcode,
 	esigcode,
+	setregs,
 	NULL,
 	NULL,
 	NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	irix_syscall_intern,
+	syscall_intern,
 #else
 	syscall,
 #endif
 };
 
+static int
+ELFNAME2(irix,mipsopt_signature)(p, epp, eh)
+	struct proc *p;
+	struct exec_package *epp;
+	Elf_Ehdr *eh;
+{
+	size_t shsize;
+	int     strndx;
+	size_t i;
+	static const char signature[] = ".MIPS.options";
+	char* strtable;
+	Elf_Shdr *sh;
+
+	int error;
+
+	/*
+	 * load the section header table
+	 */
+	shsize = eh->e_shnum * sizeof(Elf_Shdr);
+	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
+	error = exec_read_from(p, epp->ep_vp, eh->e_shoff, sh, shsize);
+	if (error)
+		goto out;
+
+	/*
+	 * Now let's find the string table. If it does not exists, give up.
+	 */
+	strndx = (int)(eh->e_shstrndx);
+	if (strndx == SHN_UNDEF) {
+		error = ENOEXEC;
+		goto out;
+	}
+
+	/*
+	 * strndx is the index in section header table of the string table
+	 * section get the whole string table in strtable, and then we 
+	 * get access to the names
+	 * s->sh_name is the offset of the section name in strtable.
+	 */
+	strtable = malloc(sh[strndx].sh_size, M_TEMP, M_WAITOK);
+	error = exec_read_from(p, epp->ep_vp, sh[strndx].sh_offset, strtable,
+	    sh[strndx].sh_size);
+	if (error)
+		goto out;
+
+	for (i = 0; i < eh->e_shnum; i++) {
+		Elf_Shdr *s = &sh[i];
+		if (!memcmp((void*)(&(strtable[s->sh_name])), signature,
+				sizeof(signature))) {
+#ifdef DEBUG_IRIX
+			printf("irix_mipsopt_sig=%s\n",&(strtable[s->sh_name]));
+#endif
+			error = 0;
+			goto out;
+		}
+	}
+	error = ENOEXEC;
+
+out:
+	free(sh, M_TEMP);
+	free(strtable, M_TEMP);
+	return (error);
+}
+
+
 int
-exec_irix_probe(char **path) {
+ELFNAME2(irix,probe)(p, epp, eh, itp, pos)
+	struct proc *p;
+	struct exec_package *epp;
+	void *eh;
+	char *itp; 
+	vaddr_t *pos; 
+{
+	const char *bp;
+	int error;
+	size_t len;
+
+#ifdef DEBUG_IRIX
+	printf("irix_probe()\n");
+#endif
+	if ((error = ELFNAME2(irix,mipsopt_signature)(p, epp, eh)) != 0)
+		return error;
+
+	if (itp[0]) {
+		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
+		    itp, &bp, 0)))
+			return error;
+		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
+			return error;
+		free((void *)bp, M_TEMP);
+	}
+	*pos = ELF_NO_ADDR;
+#ifdef DEBUG_IRIX
+	printf("irix_probe: returning 0\n");
+#endif
 	return 0;
 }
