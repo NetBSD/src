@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.168.2.2 2002/07/21 03:42:28 lukem Exp $
+.\"	$NetBSD: options.4,v 1.168.2.3 2002/07/21 03:46:11 lukem Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -818,15 +818,24 @@ Allocates the given number of 512 byte blocks as memory for the
 disk, to be populated with
 .Xr mdsetimage 8 .
 .It Cd options VNODE_OP_NOINLINE
-Do not inline the VOP_*() calls in the kernel.
+Do not inline the
+.Fn VOP_*
+calls in the kernel.
 On i386 GENERIC, this saves 36k of kernel text.  Useful
 for install media kernels, small memory systems and embedded systems.
 .It Cd options MALLOC_NOINLINE
-Time critical fixed size memory allocation is performed with MALLOC() and
-FREE().  Normally these expand to inline code, but with
+Time critical fixed size memory allocation is performed with
+.Fn MALLOC
+and
+.Fn FREE .
+Normally these expand to inline code, but with
 .Em MALLOC_NOINLINE
-these call the normal malloc() and free() functions. Useful
-for install media kernels, small memory systems and embedded systems.
+these call the normal
+.Fn malloc
+and
+.Fn free
+functions.
+Useful for install media kernels, small memory systems and embedded systems.
 .It Cd options HZ=integer
 On ports that support it, set the system clock frequency (see
 .Xr hz 9 )
