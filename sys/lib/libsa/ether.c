@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.12 1998/05/14 18:08:58 drochner Exp $	*/
+/*	$NetBSD: ether.c,v 1.13 1999/11/11 20:23:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -41,11 +41,6 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
-#ifdef _STANDALONE
-#include <lib/libkern/libkern.h>
-#else
-#include <string.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_ether.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.18 1998/01/23 19:27:45 thorpej Exp $	*/
+/*	$NetBSD: rpc.c,v 1.19 1999/11/11 20:23:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -52,12 +52,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-
-#ifdef _STANDALONE
-#include <lib/libkern/libkern.h>
-#else
-#include <string.h>
-#endif
 
 #include "rpcv2.h"
 
