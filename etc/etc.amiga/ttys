@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.13 1996/05/19 21:03:55 veego Exp $
+#	$NetBSD: ttys,v 1.13.2.1 1997/10/30 02:05:21 mellon Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
@@ -15,6 +15,7 @@ ttye3	"/usr/libexec/getty Pc"		vt220	on secure 	# cirrus logic
 ttye4	"/usr/libexec/getty Pc"		vt220	on secure 	# a2410
 ttye5	"/usr/libexec/getty Pc"		vt220	on secure 	# CyberVision64
 ttye6	"/usr/libexec/getty Pc"		vt220	on secure 	# Domino, Merlin, oMniBus
+ttye7	"/usr/libexec/getty Pc"		vt220	on secure 	# CyberVision64/3D
 tty00	"/usr/libexec/getty std.9600"	unknown off secure	# int. serial.
 ttyp0	none			network
 ttyp1	none			network
