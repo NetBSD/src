@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.95 2004/05/12 11:38:59 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.96 2004/05/14 06:10:14 jdc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -719,4 +719,16 @@ sys/dev/ata/atavar.h				1.41 via patch
 	Change the value of DRIVE_ATAPIST which was same as that of
 	DRIVE_DMAERR.
 	[bouyer, ticket #1689]
+
+sys/dev/ata/atareg.h				1.14 via patch
+
+	Add definitions of new feature bits.
+	[bouyer, ticket #1690]
+
+sys/dev/ata/wdcreg.h				patch
+sys/dev/ata/wd.c				1.275
+
+	When using LBA48, use Flush cache extended command if supported.
+	PR#25366.
+	[bouyer, ticket #1691]
 
