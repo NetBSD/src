@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.21 1999/04/22 04:20:53 abs Exp $	*/
+/*	$NetBSD: fsck.c,v 1.22 2001/02/04 19:59:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.21 1999/04/22 04:20:53 abs Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.22 2001/02/04 19:59:37 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -94,6 +94,8 @@ static void mangle __P((char *, int *, const char ***, int *));
 static const char *getfslab __P((const char *));
 static void usage __P((void));
 static void *isok __P((struct fstab *));
+
+extern char *__progname;
 
 int
 main(argc, argv)
@@ -515,7 +517,6 @@ getfslab(str)
 static void
 usage()
 {
-	extern char *__progname;
 	static const char common[] =
 	    "[-dpvlyn] [-T fstype:fsoptions] [-t fstype]";
 

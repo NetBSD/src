@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.4 1998/07/26 20:02:36 mycroft Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.5 2001/02/04 19:59:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -29,7 +29,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void perror __P((const char *));
 void errexit __P((const char *, ...))
     __attribute__((__noreturn__,__format__(__printf__,1,2)));  
 void pfatal __P((const char *, ...))
