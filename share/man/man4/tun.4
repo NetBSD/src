@@ -1,4 +1,4 @@
-.\" $NetBSD: tun.4,v 1.16 2004/12/05 13:26:39 peter Exp $
+.\" $NetBSD: tun.4,v 1.17 2004/12/05 13:28:54 wiz Exp $
 .\"
 .\" Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,13 +72,14 @@ interface.
 .Pp
 To use a
 .Nm tun
-device, the administrator must first create the interface.  This can
-be done by using the
+device, the administrator must first create the interface.
+This can be done by using the
 .Xr ifconfig 8
 .Cm create
 command, or via the
 .Dv SIOCIFCREATE
-ioctl.  An
+ioctl.
+An
 .Fn open
 call on
 .Pa /dev/tun Ns Sy N ,
@@ -97,10 +98,12 @@ and
 .Dv SIOCSIFNETMASK ,
 and thus can be used with
 .Xr ifconfig 8
-like any other interface.  At boot time, they are
+like any other interface.
+At boot time, they are
 .Dv POINTOPOINT
 interfaces, but this can be changed; see the description of the control
-device, below.  When the system chooses to transmit a packet on the
+device, below.
+When the system chooses to transmit a packet on the
 network interface, the packet can be read from the control device
 .Po
 it appears there as
@@ -118,9 +121,8 @@ is exclusive-open
 it cannot be opened if it is already open
 .Pc
 and is restricted to the super-user
-.Po
-regardless of file system permissions
-.Pc . A
+.Pq regardless of file system permissions .
+A
 .Fn read
 call will return an error
 .Pq Er EHOSTDOWN
@@ -133,7 +135,8 @@ Once the interface is ready,
 will return a packet if one is available; if not, it will either block
 until one is or return
 .Er EAGAIN ,
-depending on whether non-blocking I/O has been enabled.  If the packet
+depending on whether non-blocking I/O has been enabled.
+If the packet
 is longer than is allowed for in the buffer passed to
 .Fn read ,
 the extra data will be silently dropped.
@@ -143,14 +146,16 @@ to the network interface output routine
 .Pq Sq Li tunoutput .
 The destination address is in
 .Sq Li struct sockaddr
-format. The actual length of the prepended address is in the member
+format.
+The actual length of the prepended address is in the member
 .Sq Li sa_len .
 The packet data follows immediately.
 A
 .Xr write 2
 call passes a packet in to be
 .Dq received
-on the pseudo-interface.  Each
+on the pseudo-interface.
+Each
 .Fn write
 call supplies exactly one packet; the packet length is taken from the
 amount of data provided to
@@ -178,9 +183,9 @@ calls are supported
 .It Dv TUNSDEBUG
 The argument should be a pointer to an
 .Va int ;
-this sets the internal debugging variable to that value.  What, if
-anything, this variable controls is not documented here; see the source
-code.
+this sets the internal debugging variable to that value.
+What, if anything, this variable controls is not documented here;
+see the source code.
 .It Dv TUNGDEBUG
 The argument should be a pointer to an
 .Va int ;
@@ -194,12 +199,14 @@ or
 .Dv IFF_BROADCAST
 (optionally
 .Dv IFF_MULTICAST
-may be or'ed into the value).  The type of the corresponding
+may be or'ed into the value).
+The type of the corresponding
 .Em tun Ns Sy n
-interface is set to the supplied type.  If the value is anything else,
-an
+interface is set to the supplied type.
+If the value is anything else, an
 .Er EINVAL
-error occurs.  The interface must be down at the time; if it is up, an
+error occurs.
+The interface must be down at the time; if it is up, an
 .Er EBUSY
 error occurs.
 .It Dv TUNSLMODE
