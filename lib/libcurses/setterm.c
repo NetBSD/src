@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.19 2000/04/22 13:29:02 blymn Exp $	*/
+/*	$NetBSD: setterm.c,v 1.20 2000/04/27 00:21:43 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.19 2000/04/22 13:29:02 blymn Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.20 2000/04/27 00:21:43 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,8 @@ static int zap(struct tinfo *tinfo);
 struct tinfo *_cursesi_genbuf;
 
 static char	*sflags[] = {
-		/*	 am   be   bs   cc   da   eo   hc   hl  */
-			&AM, &BE, &BS, &CC, &DA, &EO, &HC, &HL,
+		/*	 am   ut   bs   cc   da   eo   hc   hl  */
+			&AM, &UT, &BS, &CC, &DA, &EO, &HC, &HL,
 		/*	 in   mi   ms   nc   ns   os   ul   xb  */
 			&IN, &MI, &MS, &NC, &NS, &OS, &UL, &XB,
 		/*	 xn   xt   xs   xx  */
@@ -213,7 +213,7 @@ zap(struct tinfo *tinfo)
 #endif
 	tmp[2] = '\0';
 
-	namp = "ambebsccdaeohchlinmimsncnsosulxbxnxtxsxx";
+	namp = "amutbsccdaeohchlinmimsncnsosulxbxnxtxsxx";
 	fp = sflags;
 	do {
 		*tmp = *namp;
