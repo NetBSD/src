@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.5 2004/10/15 04:51:48 thorpej Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.6 2004/11/14 20:05:42 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -40,11 +40,13 @@
  * ethfoo is a NetBSD Loadable Kernel Module that demonstrates the use of
  * several kernel mechanisms, mostly in the networking subsytem.
  *
- * First, it is sample LKM, with the standard LKM management routines and
- * Second, sample Ethernet driver.
- * Third, sample of use of autoconf stuff inside a LKM.
- * Fourth, sample clonable interface
- * Fifth, sample sysctl interface use from a LKM.
+ * 1. it is example LKM, with the standard LKM management routines and
+ * 2. example Ethernet driver.
+ * 3. example of use of autoconf stuff inside a LKM.
+ * 4. example clonable network interface.
+ * 5. example sysctl interface use from a LKM.
+ * 6. example LKM character device, with read, write, ioctl, poll
+ *    and kqueue available.
  *
  * XXX Hacks
  * 1. NetBSD doesn't offer a way to change an Ethernet address, so I chose
@@ -57,11 +59,15 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/file.h>
 #if __NetBSD_Version__ > 106200000
 #include <sys/ksyms.h>
 #endif
 #include <sys/lkm.h>
+#include <sys/poll.h>
+#include <sys/select.h>
 #include <sys/sockio.h>
 #include <sys/sysctl.h>
 
@@ -73,10 +79,6 @@
 /* autoconf(9) structures */
 
 CFDRIVER_DECL(ethfoo, DV_DULL, NULL);
-
-static struct cfdata ethfoo_cfdata = {
-	"ethfoo", "ethfoo", 0, FSTATE_STAR,
-};
 
 /*
  * sysctl node management
@@ -94,7 +96,7 @@ static struct cfdata ethfoo_cfdata = {
  */
 static int ethfoo_node;
 static struct sysctllog *ethfoo_log;
-static int	ethfoo_sysctl_setup();
+static int	ethfoo_sysctl_setup(void);
 static int	ethfoo_sysctl_handler(SYSCTLFN_PROTO);
 
 /*
@@ -115,7 +117,14 @@ struct ethfoo_softc {
 	struct ifmedia	sc_im;
 	struct ethercom	sc_ec;
 	void		(*sc_bpf_mtap)(caddr_t, struct mbuf *);
-	int		sc_mibnum;
+	int		sc_flags;
+#define	ETHFOO_INUSE	0x00000001	/* ethfoo device can only be opened once */
+#define ETHFOO_ASYNCIO	0x00000002	/* user is using async I/O (SIGIO) on the device */
+#define ETHFOO_NBIO	0x00000004	/* user wants calls to avoid blocking */
+	struct selinfo	sc_rsel;
+	pid_t		sc_pgid; /* For async. IO */
+	struct lock	sc_rdlock;
+	struct simplelock	sc_kqlock;
 };
 
 /* LKM management routines */
@@ -133,18 +142,44 @@ static int	ethfoo_detach(struct device*, int);
 /* Ethernet address helper functions */
 
 static char	*ethfoo_ether_sprintf(char *, const u_char *);
-static void	ethfoo_ether_aton(u_char *, char *);
+static int	ethfoo_ether_aton(u_char *, char *);
 
 CFATTACH_DECL(ethfoo, sizeof(struct ethfoo_softc),
     ethfoo_match, ethfoo_attach, ethfoo_detach, NULL);
 
+/* Character device routines */
+static int	ethfoo_cdev_open(dev_t, int, int, struct proc *);
+static int	ethfoo_cdev_close(dev_t, int, int, struct proc *);
+static int	ethfoo_cdev_read(dev_t, struct uio *, int);
+static int	ethfoo_cdev_write(dev_t, struct uio *, int);
+static int	ethfoo_cdev_ioctl(dev_t, u_long, caddr_t, int, struct proc *);
+static int	ethfoo_cdev_poll(dev_t, int, struct proc *);
+static int	ethfoo_cdev_kqfilter(dev_t, struct knote *);
+
+static struct cdevsw ethfoo_cdevsw = {
+	ethfoo_cdev_open, ethfoo_cdev_close,
+	ethfoo_cdev_read, ethfoo_cdev_write,
+	ethfoo_cdev_ioctl, nostop, notty,
+	ethfoo_cdev_poll, nommap,
+	ethfoo_cdev_kqfilter,
+};
+
+/* kqueue-related routines */
+static void	ethfoo_kqdetach(struct knote *);
+static int	ethfoo_kqread(struct knote *, long);
+
 /*
- * We don't need any particular functionality available to LKMs,
- * such as a device number or a syscall number, thus MOD_MISC is
- * enough.
+ * The type of the module is actually userland-oriented.  For a
+ * traditional Ethernet driver, MOD_MISC would be enough since
+ * the userland manipulates interfaces through operations on
+ * sockets.
+ *
+ * Here MOD_DEV is chosen because a direct access interface is
+ * exposed, and the easiest way to achieve this is through a
+ * regular device node.
  */
 
-MOD_MISC("ethfoo");
+MOD_DEV("ethfoo", "ethfoo", NULL, -1, &ethfoo_cdevsw, -1);
 
 /*
  * Those are needed by the if_media interface.
@@ -184,7 +219,8 @@ struct if_clone ethfoo_cloners = IF_CLONE_INITIALIZER("ethfoo",
 int
 ethfoo_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
 {
-	DISPATCH(lkmtp, cmd, ver, ethfoo_lkmload, ethfoo_lkmunload, lkm_nofunc);
+	DISPATCH(lkmtp, cmd, ver,
+	    ethfoo_lkmload, ethfoo_lkmunload, lkm_nofunc);
 }
 
 /*
@@ -235,9 +271,7 @@ out:
 /*
  * Cleaning up is the most critical part of a LKM, since a module is not
  * actually made to be loadable, but rather "unloadable".  If it is only
- * to be loaded, you'd better link it to the kernel in the first place,
- * either through compilation or through static linking (I think modload
- * allows that).
+ * to be loaded, you'd better link it to the kernel in the first place.
  *
  * The interface cloning mechanism is really simple, with only two void
  * returning functions.  It will always do its job. You should note though
@@ -268,7 +302,8 @@ ethfoo_lkmunload(struct lkm_table *lkmtp, int cmd)
 			return error;
 		}
 
-	if ((error = config_cfattach_detach(ethfoo_cd.cd_name, &ethfoo_ca)) != 0) {
+	if ((error = config_cfattach_detach(ethfoo_cd.cd_name,
+	    &ethfoo_ca)) != 0) {
 		aprint_error("%s: unable to deregister cfattach\n",
 		    ethfoo_cd.cd_name);
 		return error;
@@ -295,7 +330,8 @@ ethfoo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ethfoo_softc *sc = (struct ethfoo_softc *)self;
 	struct ifnet *ifp;
-	u_int8_t enaddr[ETHER_ADDR_LEN] = { 0xf0, 0x0b, 0xa4, 0xff, 0xff, 0xff };
+	u_int8_t enaddr[ETHER_ADDR_LEN] =
+	    { 0xf0, 0x0b, 0xa4, 0xff, 0xff, 0xff };
 	char enaddrstr[18];
 	unsigned long u;
 	uint32_t ui;
@@ -319,15 +355,19 @@ ethfoo_attach(struct device *parent, struct device *self, void *aux)
 	/* ksyms interface is only available since mid-1.6R, so require
 	 * at least 1.6T
 	 */
+	{
 #if __NetBSD_Version__ > 106200000
 # ifndef ksyms_getval_from_kernel
 #  define ksyms_getval_from_kernel ksyms_getval
+# endif
+		char sym[] = "bpf_mtap";
+		if (ksyms_getval_from_kernel(NULL, sym, &u,
+		    KSYMS_PROC) != ENOENT)
+			sc->sc_bpf_mtap = (void *)u;
+		else
 #endif
-	if (ksyms_getval_from_kernel(NULL, "bpf_mtap", &u, KSYMS_PROC) != ENOENT)
-		sc->sc_bpf_mtap = (void *)u;
-	else
-#endif
-		sc->sc_bpf_mtap = NULL;
+			sc->sc_bpf_mtap = NULL;
+	}
 
 	/*
 	 * Why 1000baseT? Why not? You can add more.
@@ -338,7 +378,13 @@ ethfoo_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	ifmedia_init(&sc->sc_im, 0, ethfoo_mediachange, ethfoo_mediastatus);
 	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_1000_T, 0, NULL);
-	ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_1000_T);
+	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_1000_T|IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_100_TX, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_10_T, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_AUTO, 0, NULL);
+	ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_AUTO);
 
 	/*
 	 * One should note that an interface must do multicast in order
@@ -361,27 +407,45 @@ ethfoo_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 
+	sc->sc_flags = 0;
+
 	/*
 	 * Add a sysctl node for that interface.
 	 *
-	 * The pointer transmitted is not a string, but instead a pointer to the softc
-	 * structure, which we can use to build the string value on the fly in the helper
-	 * function of the node.  See the comments for ethfoo_sysctl_handler for details.
-	 *
-	 * As in ethfoo_sysctl_setup, we use ethfoo_log.  This allows the use of
-	 * sysctl_teardown() in ethfoo_lkmunload, which undoes every creation we made in the
-	 * module.
+	 * The pointer transmitted is not a string, but instead a pointer to
+	 * the softc structure, which we can use to build the string value on
+	 * the fly in the helper function of the node.  See the comments for
+	 * ethfoo_sysctl_handler for details.
+ 	 *
+	 * As in ethfoo_sysctl_setup, we use ethfoo_log.  This allows the use
+	 * of sysctl_teardown() in ethfoo_lkmunload, which undoes every
+	 * creation we made in the module.
 	 */
 	if ((error = sysctl_createv(&ethfoo_log, 0, NULL,
 	    &node, CTLFLAG_READWRITE,
 	    CTLTYPE_STRING, sc->sc_dev.dv_xname, NULL,
 	    ethfoo_sysctl_handler, 0, sc, 18,
-	    CTL_NET, PF_LINK, ethfoo_node, CTL_CREATE, CTL_EOL)) != 0) {
-		sc->sc_mibnum = -1;
+	    CTL_NET, PF_LINK, ethfoo_node, sc->sc_dev.dv_unit, CTL_EOL)) != 0)
 		aprint_error("%s: sysctl_createv returned %d, ignoring\n",
 		    sc->sc_dev.dv_xname, error);
-	} else
-		sc->sc_mibnum = node->sysctl_num;
+
+	/*
+	 * Initialize the two locks for the device.
+	 *
+	 * We need a lock here because even though the ethfoo device can be
+	 * opened only once, the file descriptor might be passed to another
+	 * process, say a fork(2)ed child.
+	 *
+	 * The Giant saves us from most of the hassle, but since the read
+	 * operation can sleep, we don't want two processes to wake up at
+	 * the same moment and both try and dequeue a single packet.
+	 *
+	 * The queue for event listeners (used by kqueue(9), see below) has
+	 * to be protected, too, but we don't need the same level of
+	 * complexity for that lock, so a simple spinning lock is fine.
+	 */
+	lockinit(&sc->sc_rdlock, PSOCK|PCATCH, "ethfool", 0, LK_SLEEPFAIL);
+	simple_lock_init(&sc->sc_kqlock);
 }
 
 /*
@@ -393,24 +457,33 @@ ethfoo_detach(struct device* self, int flags)
 {
 	struct ethfoo_softc *sc = (struct ethfoo_softc *)self;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	int error;
+	int error, s;
+
+	/*
+	 * Some processes might be sleeping on "ethfoo", so we have to make
+	 * them release their hold on the device.
+	 *
+	 * The LK_DRAIN operation will wait for every locked process to
+	 * release their hold.
+	 */
+	s = splnet();
+	ethfoo_stop(ifp, 1);
+	if_down(ifp);
+	splx(s);
+	lockmgr(&sc->sc_rdlock, LK_DRAIN, NULL);
 
 	/*
 	 * Destroying a single leaf is a very straightforward operation using
 	 * sysctl_destroyv.  One should be sure to always end the path with
 	 * CTL_EOL.
 	 */
-	if (sc->sc_mibnum != -1 && (error = sysctl_destroyv(NULL, CTL_NET, PF_LINK,
-	    ethfoo_node, sc->sc_mibnum, CTL_EOL)) != 0)
+	if ((error = sysctl_destroyv(NULL, CTL_NET, PF_LINK, ethfoo_node,
+	    sc->sc_dev.dv_unit, CTL_EOL)) != 0)
 		aprint_error("%s: sysctl_destroyv returned %d, ignoring\n",
 		    sc->sc_dev.dv_xname, error);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
-
-	if (!(flags & DETACH_QUIET))
-		aprint_normal("%s detached\n",
-		    self->dv_xname);
 
 	return (0);
 }
@@ -426,7 +499,6 @@ ethfoo_mediachange(struct ifnet *ifp)
 	return (0);
 }
 
-
 /*
  * Here the user asks for the currently used media.
  */
@@ -436,7 +508,6 @@ ethfoo_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
 	struct ethfoo_softc *sc = (struct ethfoo_softc *)ifp->if_softc;
 	imr->ifm_active = sc->sc_im.ifm_cur->ifm_media;
 }
-
 
 /*
  * This is the function where we SEND packets.
@@ -453,6 +524,17 @@ ethfoo_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
  * There are also other flags one should check, such as IFF_PAUSE.
  *
  * It is our duty to make packets available to BPF listeners.
+ *
+ * You should be aware that this function is called by the Ethernet layer
+ * at splnet().
+ *
+ * When the device is opened, we have to pass the packet(s) to the
+ * userland.  For that we stay in OACTIVE mode while the userland gets
+ * the packets, and we send a signal to the processes waiting to read.
+ *
+ * wakeup(sc) is the counterpart to the tsleep call in
+ * ethfoo_cdev_read, while selnotify() is used for kevent(2) and
+ * poll(2) (which includes select(2)) listeners.
  */
 static void
 ethfoo_start(struct ifnet *ifp)
@@ -460,15 +542,26 @@ ethfoo_start(struct ifnet *ifp)
 	struct ethfoo_softc *sc = (struct ethfoo_softc *)ifp->if_softc;
 	struct mbuf *m0;
 
-	for(;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
-		if (m0 == NULL)
-			return;
+	if ((sc->sc_flags & ETHFOO_INUSE) == 0) {
+		/* Simply drop packets */
+		for(;;) {
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
+			if (m0 == NULL)
+				return;
 
-		if (ifp->if_bpf && sc->sc_bpf_mtap != NULL)
-			(sc->sc_bpf_mtap)(ifp->if_bpf, m0);
+			ifp->if_opackets++;
+			if (ifp->if_bpf && sc->sc_bpf_mtap != NULL)
+				(sc->sc_bpf_mtap)(ifp->if_bpf, m0);
 
-		m_freem(m0);
+			m_freem(m0);
+		}
+	} else if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
+		ifp->if_flags |= IFF_OACTIVE;
+		wakeup(sc);
+		selnotify(&sc->sc_rsel, 1);
+		if (sc->sc_flags & ETHFOO_ASYNCIO)
+			fownsignal(sc->sc_pgid, SIGIO, POLL_IN,
+			    POLLIN|POLLRDNORM, NULL);
 	}
 }
 
@@ -546,11 +639,20 @@ ethfoo_init(struct ifnet *ifp)
  * _stop() is called when an interface goes down.  It is our
  * responsability to validate that state by clearing the
  * IFF_RUNNING flag.
+ *
+ * We have to wake up all the sleeping processes to have the pending
+ * read requests cancelled.
  */
 static void
 ethfoo_stop(struct ifnet *ifp, int disable)
 {
+	struct ethfoo_softc *sc = (struct ethfoo_softc *)ifp->if_softc;
+
 	ifp->if_flags &= ~IFF_RUNNING;
+	wakeup(sc);
+	selnotify(&sc->sc_rsel, 1);
+	if (sc->sc_flags & ETHFOO_ASYNCIO)
+		fownsignal(sc->sc_pgid, SIGIO, POLL_HUP, 0, NULL);
 }
 
 /*
@@ -599,6 +701,336 @@ ethfoo_clone_destroy(struct ifnet *ifp)
 	free(cf, M_DEVBUF);
 }
 
+static int
+ethfoo_cdev_open(dev_t dev, int flags, int fmt, struct proc *p)
+{
+	struct ethfoo_softc *sc =
+	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
+
+	if (sc == NULL)
+		return (ENXIO);
+
+	/* The device can only be opened once */
+	if (sc->sc_flags & ETHFOO_INUSE)
+		return (EBUSY);
+	sc->sc_flags |= ETHFOO_INUSE;
+	return (0);
+}
+
+static int
+ethfoo_cdev_close(dev_t dev, int flags, int fmt, struct proc *p)
+{
+	struct ethfoo_softc *sc =
+	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
+	struct ifnet *ifp;
+	int s;
+
+	if (sc == NULL)
+		return (ENXIO);
+	sc->sc_flags = 0;	/* Remove ASYNCIO flag, too */
+
+	s = splnet();
+	/* Let ethfoo_start handle packets again */
+	ifp = &sc->sc_ec.ec_if;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
+	/* Purge output queue */
+	if (!(IFQ_IS_EMPTY(&ifp->if_snd))) {
+		struct mbuf *m;
+
+		for (;;) {
+			IFQ_DEQUEUE(&ifp->if_snd, m);
+			if (m == NULL)
+				break;
+
+			ifp->if_opackets++;
+			if (ifp->if_bpf && sc->sc_bpf_mtap != NULL)
+				(sc->sc_bpf_mtap)(ifp->if_bpf, m);
+		}
+	}
+	splx(s);
+
+	return (0);
+}
+
+static int
+ethfoo_cdev_read(dev_t dev, struct uio *uio, int flags)
+{
+	struct ethfoo_softc *sc =
+	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
+	struct ifnet *ifp;
+	struct mbuf *m;
+	int error = 0, s;
+
+	if (sc == NULL)
+		return (ENXIO);
+
+	ifp = &sc->sc_ec.ec_if;
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return (EHOSTDOWN);
+
+	/*
+	 * In the ETHFOO_NBIO case, we have to make sure we won't be sleeping
+	 */
+	if ((sc->sc_flags & ETHFOO_NBIO) &&
+	    lockstatus(&sc->sc_rdlock) == LK_EXCLUSIVE)
+		return (EWOULDBLOCK);
+	error = lockmgr(&sc->sc_rdlock, LK_EXCLUSIVE, NULL);
+	if (error != 0)
+		return (error);
+
+	s = splnet();
+	if (IFQ_IS_EMPTY(&ifp->if_snd)) {
+		ifp->if_flags &= ~IFF_OACTIVE;
+		splx(s);
+		/*
+		 * We must release the lock before sleeping, and re-acquire it
+		 * after.
+		 */
+		(void)lockmgr(&sc->sc_rdlock, LK_RELEASE, NULL);
+		if (sc->sc_flags & ETHFOO_NBIO)
+			error = EWOULDBLOCK;
+		else
+			error = tsleep(sc, PSOCK|PCATCH, "ethfoo", 0);
+
+		if (error != 0)
+			return (error);
+		/* The device might have been downed */
+		if ((ifp->if_flags & IFF_UP) == 0)
+			return (EHOSTDOWN);
+		if ((sc->sc_flags & ETHFOO_NBIO) &&
+		    lockstatus(&sc->sc_rdlock) == LK_EXCLUSIVE)
+			return (EWOULDBLOCK);
+		error = lockmgr(&sc->sc_rdlock, LK_EXCLUSIVE, NULL);
+		if (error != 0)
+			return (error);
+		s = splnet();
+	}
+
+	IFQ_DEQUEUE(&ifp->if_snd, m);
+	ifp->if_flags &= ~IFF_OACTIVE;
+	splx(s);
+	if (m == NULL) {
+		error = 0;
+		goto out;
+	}
+
+	ifp->if_opackets++;
+	if (ifp->if_bpf && sc->sc_bpf_mtap != NULL)
+		(sc->sc_bpf_mtap)(ifp->if_bpf, m);
+
+	/*
+	 * One read is one packet.
+	 */
+	do {
+		error = uiomove(mtod(m, caddr_t),
+		    min(m->m_len, uio->uio_resid), uio);
+		m = m->m_next;
+	} while (m != NULL && uio->uio_resid > 0 && error == 0);
+
+out:
+	(void)lockmgr(&sc->sc_rdlock, LK_RELEASE, NULL);
+	return (error);
+}
+
+static int
+ethfoo_cdev_write(dev_t dev, struct uio *uio, int flags)
+{
+	struct ethfoo_softc *sc =
+	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
+	struct ifnet *ifp;
+	struct mbuf *m, **mp;
+	int error = 0;
+
+	if (sc == NULL)
+		return (ENXIO);
+	ifp = &sc->sc_ec.ec_if;
+
+	/* One write, one packet, that's the rule */
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL) {
+		ifp->if_ierrors++;
+		return (ENOBUFS);
+	}
+	m->m_pkthdr.len = uio->uio_resid;
+
+	mp = &m;
+	while (error == 0 && uio->uio_resid > 0) {
+		if (*mp != m) {
+			MGET(*mp, M_DONTWAIT, MT_DATA);
+			if (*mp == NULL) {
+				error = ENOBUFS;
+				break;
+			}
+		}
+		(*mp)->m_len = min(MHLEN, uio->uio_resid);
+		error = uiomove(mtod(*mp, caddr_t), (*mp)->m_len, uio);
+		mp = &(*mp)->m_next;
+	}
+	if (error) {
+		ifp->if_ierrors++;
+		m_freem(m);
+		return (error);
+	}
+
+	ifp->if_ipackets++;
+	m->m_pkthdr.rcvif = ifp;
+
+	if (ifp->if_bpf && sc->sc_bpf_mtap != NULL)
+		(sc->sc_bpf_mtap)(ifp->if_bpf, m);
+	(*ifp->if_input)(ifp, m);
+
+	return (0);
+}
+
+static int
+ethfoo_cdev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
+    struct proc *p)
+{
+	struct ethfoo_softc *sc =
+	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
+	int error = 0;
+
+	if (sc == NULL)
+		return (ENXIO);
+
+	switch (cmd) {
+	case FIONREAD:
+		{
+			struct ifnet *ifp = &sc->sc_ec.ec_if;
+			struct mbuf *m;
+			int s;
+
+			s = splnet();
+			IFQ_POLL(&ifp->if_snd, m);
+
+			if (m == NULL)
+				*(int *)data = 0;
+			else
+				*(int *)data = m->m_pkthdr.len;
+			splx(s);
+		} break;
+	case TIOCSPGRP:
+	case FIOSETOWN:
+		error = fsetown(p, &sc->sc_pgid, cmd, data);
+		break;
+	case TIOCGPGRP:
+	case FIOGETOWN:
+		error = fgetown(p, sc->sc_pgid, cmd, data);
+		break;
+	case FIOASYNC:
+		if (*(int *)data)
+			sc->sc_flags |= ETHFOO_ASYNCIO;
+		else
+			sc->sc_flags &= ~ETHFOO_ASYNCIO;
+		break;
+	case FIONBIO:
+		if (*(int *)data)
+			sc->sc_flags |= ETHFOO_NBIO;
+		else
+			sc->sc_flags &= ~ETHFOO_NBIO;
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return (0);
+}
+
+static int
+ethfoo_cdev_poll(dev_t dev, int events, struct proc *p)
+{
+	struct ethfoo_softc *sc =
+	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
+	int revents = 0;
+
+	if (sc == NULL)
+		return (ENXIO);
+
+	if (events & (POLLIN|POLLRDNORM)) {
+		struct ifnet *ifp = &sc->sc_ec.ec_if;
+		struct mbuf *m;
+		int s;
+
+		s = splnet();
+		IFQ_POLL(&ifp->if_snd, m);
+		splx(s);
+
+		if (m != NULL)
+			revents |= events & (POLLIN|POLLRDNORM);
+		else {
+			(void)simple_lock(&sc->sc_kqlock);
+			selrecord(p, &sc->sc_rsel);
+			simple_unlock(&sc->sc_kqlock);
+		}
+	}
+	revents |= events & (POLLOUT|POLLWRNORM);
+
+	return (revents);
+}
+
+static struct filterops ethfoo_read_filterops = { 1, NULL, ethfoo_kqdetach,
+	ethfoo_kqread };
+static struct filterops ethfoo_seltrue_filterops = { 1, NULL, ethfoo_kqdetach,
+	filt_seltrue };
+
+static int
+ethfoo_cdev_kqfilter(dev_t dev, struct knote *kn)
+{
+	struct ethfoo_softc *sc =
+	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
+
+	if (sc == NULL)
+		return (ENXIO);
+
+	switch(kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &ethfoo_read_filterops;
+		break;
+	case EVFILT_WRITE:
+		kn->kn_fop = &ethfoo_seltrue_filterops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+	(void)simple_lock(&sc->sc_kqlock);
+	SLIST_INSERT_HEAD(&sc->sc_rsel.sel_klist, kn, kn_selnext);
+	simple_unlock(&sc->sc_kqlock);
+	return (0);
+}
+
+static void
+ethfoo_kqdetach(struct knote *kn)
+{
+	struct ethfoo_softc *sc = (struct ethfoo_softc *)kn->kn_hook;
+
+	(void)simple_lock(&sc->sc_kqlock);
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
+	simple_unlock(&sc->sc_kqlock);
+}
+
+static int
+ethfoo_kqread(struct knote *kn, long hint)
+{
+	struct ethfoo_softc *sc = (struct ethfoo_softc *)kn->kn_hook;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct mbuf *m;
+	int s;
+
+	s = splnet();
+	IFQ_POLL(&ifp->if_snd, m);
+
+	if (m == NULL)
+		kn->kn_data = 0;
+	else
+		kn->kn_data = m->m_pkthdr.len;
+	splx(s);
+	return (kn->kn_data != 0 ? 1 : 0);
+}
+
 /*
  * sysctl management routines
  * You can set the address of an interface through:
@@ -628,7 +1060,7 @@ ethfoo_clone_destroy(struct ifnet *ifp)
  * full path starting from the root for later calls to sysctl_createv
  * and sysctl_destroyv.
  */
-int
+static int
 ethfoo_sysctl_setup(void)
 {
 	struct sysctlnode *node;
@@ -705,7 +1137,8 @@ ethfoo_sysctl_handler(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 	struct ethfoo_softc *sc;
 	struct ifnet *ifp;
-	int error, i;
+	int error;
+	size_t len;
 	char addr[18];
 
 	node = *rnode;
@@ -717,30 +1150,25 @@ ethfoo_sysctl_handler(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	if (strlen(addr) != 17)
+	len = strlen(addr);
+	if (len < 11 || len > 17)
 		return (EINVAL);
 
-	for (i = 0; i < 17; i++)
-		if ((i % 3 == 2 && addr[i] != ':') ||
-		    (i % 3 != 2 && !isxdigit(addr[i])))
-			return (EINVAL);
-
 	/* Commit change */
-	ethfoo_ether_aton(LLADDR(ifp->if_sadl), addr);
+	if (ethfoo_ether_aton(LLADDR(ifp->if_sadl), addr) != 0)
+		return (EINVAL);
 	return (error);
 }
 
 /*
  * ether_aton implementation, not using a static buffer.
- *
- * Sanity checks have already been done, so let's keep it
- * simple.
  */
-static void
+static int
 ethfoo_ether_aton(u_char *dest, char *str)
 {
 	int i;
 	char *cp = str;
+	u_char val[6];
 
 #define	set_value			\
 	if (*cp > '9' && *cp < 'a')	\
@@ -750,13 +1178,23 @@ ethfoo_ether_aton(u_char *dest, char *str)
 	else				\
 		*cp -= '0'
 
-	for (i = 0; i < 6; i++) {
+	for (i = 0; i < 6; i++, cp++) {
+		if (!isxdigit(*cp))
+			return (1);
 		set_value;
-		dest[i] = 16 * *cp++ ;
-		set_value;
-		dest[i] += *cp++;
-		cp++; /* Jump over ':' */
+		val[i] = *cp++;
+		if (isxdigit(*cp)) {
+			set_value;
+			val[i] *= 16;
+			val[i] += *cp++;
+		}
+		if (*cp == ':' || i == 5)
+			continue;
+		else
+			return (1);
 	}
+	memcpy(dest, val, 6);
+	return (0);
 }
 
 /*
