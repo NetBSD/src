@@ -4696,6 +4696,10 @@ for machine in $build $host $target; do
 			use_collect2=yes
 	      fi
 	      ;;
+	mipseb*-*-netbsd*)
+		tmake_file="${tmake_file} mips/t-mipseb"
+		gas=yes gnu_ld=yes
+		;;
 	mips*-*-netbsd*)
 		gas=yes gnu_ld=yes
 		;;
