@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.271 2003/08/27 15:59:53 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.272 2003/08/29 08:26:21 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.271 2003/08/27 15:59:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.272 2003/08/29 08:26:21 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1738,13 +1738,13 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	 */
 	write_user_windows();
 	if (CTX_USABLE(pm,rp)) {
+		setcontext4(pm->pm_ctxnum);
 		va = VSTOVA(me->me_vreg, me->me_vseg);
 #ifdef DEBUG
 		if (getsegmap(va) != me->me_cookie)
-			panic("me_alloc: wrong pmeg in MMU (%ld != %d)",
+			panic("me_alloc: wrong pmeg in MMU (%d != %d)",
 				getsegmap(va), me->me_cookie);
 #endif
-		setcontext4(pm->pm_ctxnum);
 		cache_flush_segment(me->me_vreg, me->me_vseg, pm->pm_ctxnum);
 	} else {
 		va = 0;
