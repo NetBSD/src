@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.9 2000/04/24 17:12:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.10 2000/05/20 19:54:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,9 +39,6 @@
 
 /*
  * uvm_pglist.c: pglist functions
- *
- * XXX: was part of uvm_page but has an incompatable copyright so it
- * gets its own file now.
  */
 
 #include <sys/param.h>
