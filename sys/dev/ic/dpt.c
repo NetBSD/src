@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.14 2000/01/01 19:56:59 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.15 2000/01/15 18:10:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.14 2000/01/01 19:56:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.15 2000/01/15 18:10:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -563,13 +563,13 @@ dpt_readcfg(sc)
         	return (-1);
         }
         
-        if (!ec->ec_hbavalid) {
-                printf("%s: ec_hba field invalid\n", sc->sc_dv.dv_xname);
+	if (memcmp(ec->ec_eatasig, "EATA", 4) != 0) {
+	        printf("%s: EATA signature mismatch\n", sc->sc_dv.dv_xname);
 		return (-1);
 	}
 	
-	if (memcmp(ec->ec_eatasig, "EATA", 4) != 0) {
-	        printf("%s: EATA signature mismatch\n", sc->sc_dv.dv_xname);
+        if (!ec->ec_hbavalid) {
+                printf("%s: ec_hba field invalid\n", sc->sc_dv.dv_xname);
 		return (-1);
 	}
 	
