@@ -1090,4 +1090,9 @@ extern int use_windows;
 #define PIDGET(pid) (pid)
 #endif
 
+#ifndef USE_MMALLOC
+PTR mmalloc PARAMS ((PTR, size_t));
+PTR mrealloc PARAMS ((PTR, PTR, size_t));
+#endif
+
 #endif /* #ifndef DEFS_H */

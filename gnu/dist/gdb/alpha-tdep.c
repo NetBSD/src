@@ -1441,7 +1441,7 @@ char step_save[8];		/* ...step breakpoint(s)... */
 
 void
 single_step (ignore)
-     int ignore; /* pid, but we don't need it */
+     enum target_signal ignore;
 {
   CORE_ADDR pc;
   int offset;

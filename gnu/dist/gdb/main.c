@@ -32,6 +32,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "gdb_stat.h"
 #include <ctype.h>
 
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "gdb_string.h"
 
 /* Temporary variable for SET_TOP_LEVEL.  */
