@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.14 2004/01/11 01:48:46 sekiya Exp $	*/
+/*	$NetBSD: gio.c,v 1.15 2004/03/18 08:40:24 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.14 2004/01/11 01:48:46 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.15 2004/03/18 08:40:24 sekiya Exp $");
 
 #include "opt_ddb.h"
 
@@ -104,7 +104,6 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 		if (bus_space_peek_4(ga.ga_iot, ga.ga_ioh, 0, &ga.ga_product))
 			continue;
 #else
-
 		if (badaddr((void *)ga.ga_ioh,sizeof(uint32_t)))
 			continue;
 
@@ -219,12 +218,18 @@ gio_cnattach()
 		ga.ga_product = bus_space_read_4(ga.ga_iot, ga.ga_ioh, 0);
 #endif
 
+#if (NGRTWO > 0)
+		if (grtwo_cnattach(&ga) == 0)
+			return 0;
+#endif
+
 		/* XXX This probably attaches console to the wrong newport on
 		 * dualhead Indys, as GFX slot is tried last not first */
 #if (NNEWPORT > 0)
 		if (newport_cnattach(&ga) == 0)
 			return 0;
 #endif
+
 	}
 
 	return ENXIO;
