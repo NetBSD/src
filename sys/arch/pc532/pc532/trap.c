@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 1996/03/28 05:00:16 phil Exp $	*/
+/*	$NetBSD: trap.c,v 1.16 1996/04/04 06:37:12 phil Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -63,6 +63,7 @@
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
+#include <machine/fpu.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
 
@@ -173,10 +174,10 @@ trap(frame)
 	}
 #endif
 
-	if (USERMODE(frame.tf_psr)) {
+	if (USERMODE(frame.tf_regs.r_psr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
-		p->p_md.md_regs = (int *)&(frame.tf_reg);
+		p->p_md.md_regs = &frame.tf_regs;
 	}
 
 	switch (type) {
@@ -193,7 +194,7 @@ trap(frame)
 			printf("unknown trap %d", frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 		printf("trap type=%d, pc=0x%x, tear=0x%x, msr=0x%x\n",
-			type, frame.tf_pc, frame.tf_tear, frame.tf_msr);
+			type, frame.tf_regs.r_pc, frame.tf_tear, frame.tf_msr);
 
 		panic("trap");
 		/*NOTREACHED*/
@@ -245,17 +246,26 @@ trap(frame)
 		goto out;
 
 	case T_SLAVE | T_USER: {
-		int fsr;
-#ifdef MATH_IEEE
-		int rv;
-		if ((rv = math_ieee(&frame)) == 0) {
-			if (frame.tf_psr &  PSL_T)
+		int fsr, sig = SIGFPE;
+		pcb = &p->p_addr->u_pcb;
+		save_fpu_context(pcb);
+		switch(ieee_handle_exception(p)) {
+		case FPC_TT_NONE:
+			restore_fpu_context(pcb);
+			if (frame.tf_regs.r_psr &  PSL_T) {
+				type = T_TRC | T_USER;
 				goto trace;
+			}
 			return;
+		case FPC_TT_ILL:
+			sig = SIGILL;
+			break;
+		default:
+			break;
 		}
-#endif
+		restore_fpu_context(pcb);
 		sfsr(fsr);
-		trapsignal(p, SIGFPE, 0x80000000 | fsr);
+		trapsignal(p, sig, 0x80000000 | fsr);
 		goto out;
 	}
 
@@ -360,7 +370,7 @@ trap(frame)
 		if (type == T_ABT) {
 			if (pcb->pcb_onfault != 0) {
 			copyfault:
-				frame.tf_pc = (int)curpcb->pcb_onfault;
+				frame.tf_regs.r_pc = (int)curpcb->pcb_onfault;
 				return;
 			}
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
@@ -376,7 +386,7 @@ trap(frame)
 	case T_BPT | T_USER: 	/* breakpoint instruction */
 	case T_DBG | T_USER: 	/* debug trap */
 	trace:
-		frame.tf_psr &= ~PSL_P;
+		frame.tf_regs.r_psr &= ~PSL_P;
 		trapsignal(p, SIGTRAP, type &~ T_USER);
 		break;
 
@@ -394,7 +404,7 @@ trap(frame)
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(p, frame.tf_pc, sticks);
+	userret(p, frame.tf_regs.r_pc, sticks);
 }
 
 /*
@@ -416,18 +426,18 @@ syscall(frame)
 	u_quad_t sticks;
 
 	cnt.v_syscall++;
-	if (!USERMODE(frame.sf_psr))
+	if (!USERMODE(frame.sf_regs.r_psr))
 		panic("syscall");
 	p = curproc;
 	sticks = p->p_sticks;
-	p->p_md.md_regs = (int *) &frame.sf_reg;
-	opc = frame.sf_pc++;
-	code = frame.sf_reg[REG_R0];
+	p->p_md.md_regs = &frame.sf_regs;
+	opc = frame.sf_regs.r_pc++;
+	code = frame.sf_regs.r_r0;
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
-	params = (caddr_t)frame.sf_usp + sizeof(int);
+	params = (caddr_t)frame.sf_regs.r_sp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -469,7 +479,7 @@ syscall(frame)
 	if (error)
 		goto bad;
 	rval[0] = 0;
-	rval[1] =  frame.sf_reg[REG_R1];
+	rval[1] =  frame.sf_regs.r_r1;
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
@@ -478,15 +488,15 @@ syscall(frame)
 		 * if this is a child returning from fork syscall.
 		 */
 		p = curproc;
-		frame.sf_reg[REG_R0] = rval[0];
-		frame.sf_reg[REG_R1] = rval[1];
-		frame.sf_psr &= ~PSL_C;		/* carry bit */
+		frame.sf_regs.r_r0 = rval[0];
+		frame.sf_regs.r_r1 = rval[1];
+		frame.sf_regs.r_psr &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
 		 * Just reset the pc to the SVC instruction.
 		 */
-		frame.sf_pc = opc;
+		frame.sf_regs.r_pc = opc;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
@@ -495,15 +505,15 @@ syscall(frame)
 	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
-		frame.sf_reg[REG_R0] = error;
-		frame.sf_psr |= PSL_C;		/* carry bit */
+		frame.sf_regs.r_r0 = error;
+		frame.sf_regs.r_psr |= PSL_C;	/* carry bit */
 		break;
 	}
 
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif
-	userret(p, frame.sf_pc, sticks);
+	userret(p, frame.sf_regs.r_pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
@@ -515,10 +525,10 @@ child_return(p, frame)
 	struct proc *p;
 	struct syscframe frame;
 {
-	frame.sf_reg[REG_R0] = 0;
-	frame.sf_psr &= ~PSL_C;
+	frame.sf_regs.r_r0 = 0;
+	frame.sf_regs.r_psr &= ~PSL_C;
 
-	userret(p, frame.sf_pc, 0);
+	userret(p, frame.sf_regs.r_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);

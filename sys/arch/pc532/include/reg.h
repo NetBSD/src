@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.10 1995/08/29 22:40:59 phil Exp $	*/
+/*	$NetBSD: reg.h,v 1.11 1996/04/04 06:36:52 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,7 +64,7 @@
 #define	REG_R7	(0)
 
 #define	REG_SP	(8)
-#define REG_SB	(9)
+#define	REG_SB	(9)
 #define	REG_FP	(10)
 #define	REG_PC	(11)
 #define	REG_PSR	(12)
@@ -85,7 +85,7 @@ struct reg {
 	int	r_sb;
 	int	r_fp;
 	int	r_pc;
-	short	r_mod;
+	short	r_mod;	/* This is not set in direct exception mode */
 	short	r_psr;
 };
 
