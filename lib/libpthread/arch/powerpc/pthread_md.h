@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.4 2002/03/23 23:14:49 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.5 2002/04/24 05:20:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -57,5 +57,43 @@ pthread__sp(void)
  *    ../i386/pthread_switch.S about STACK_SWITCH.
  */
 #define STACKSPACE	16	/* room for 4 integer values */
+
+/*
+ * Conversions between struct reg and struct mcontext. Used by
+ * libpthread_dbg.
+ */
+
+#define PTHREAD_UCONTEXT_TO_REG(reg, uc) do {				\
+	memcpy((reg)->fixreg, (uc)->uc_mcontext.__gregs, 32 * 4);	\
+	(reg)->cr = (uc)->uc_mcontext.__gregs[32];			\
+	(reg)->lr = (uc)->uc_mcontext.__gregs[33];			\
+	(reg)->pc = (uc)->uc_mcontext.__gregs[34];			\
+	(reg)->ctr = (uc)->uc_mcontext.__gregs[36];			\
+	(reg)->xer = (uc)->uc_mcontext.__gregs[37];			\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
+	memcpy((uc)->uc_mcontext.__gregs, (reg)->fixreg, 32 * 4);	\
+	(uc)->uc_mcontext.__gregs[32] = (reg)->cr;			\
+	(uc)->uc_mcontext.__gregs[33] = (reg)->lr;			\
+	(uc)->uc_mcontext.__gregs[34] = (reg)->pc;			\
+	(uc)->uc_mcontext.__gregs[36] = (reg)->ctr;			\
+	(uc)->uc_mcontext.__gregs[37] = (reg)->xer;			\
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_UCONTEXT_TO_FPREG(freg, uc) do {	       		\
+	memcpy((freg)->fpreg, (uc)->uc_mcontext.__fpregs.__fpu_regs,	\
+		32 * 4);	       					\
+	(freg)->fpscr = (uc)->uc_mcontext.__fpregs.__fpu_fpscr;		\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_FPREG_TO_UCONTEXT(uc, freg) do {	       		\
+	memcpy((uc)->uc_mcontext.__fpregs.__fpu_regs, (freg)->fpreg,	\
+		32 * 4);						\
+	(uc)->uc_mcontext.__fpregs.__fpu_fpscr = (freg)->fpscr;		\
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
+
 
 #endif /* _LIB_PTHREAD_POWERPC_MD_H */
