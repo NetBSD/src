@@ -1,5 +1,5 @@
 #	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
-#	$Id: bsd.prog.mk,v 1.36 1994/03/24 16:11:40 mycroft Exp $
+#	$Id: bsd.prog.mk,v 1.37 1994/04/06 06:37:38 chopps Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -70,7 +70,7 @@ ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
 
 SRCS=	${PROG}.c
 
-${PROG}: ${SRCS} ${LIBC} ${DPADD}
+${PROG}: ${LIBCRT0} ${SRCS} ${LIBC} ${DPADD}
 	${CC} ${LDFLAGS} ${LDSTATIC} ${CFLAGS} -o ${.TARGET} ${.CURDIR}/${SRCS} ${LDADD}
 
 MKDEP=	-p
