@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.141 2003/09/10 20:08:29 mycroft Exp $	*/
+/*	$NetBSD: ohci.c,v 1.142 2003/10/11 03:04:26 toshii Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.141 2003/09/10 20:08:29 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.142 2003/10/11 03:04:26 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1121,7 +1121,7 @@ ohci_intr1(ohci_softc_t *sc)
 			intrs |= OREAD4(sc, OHCI_INTERRUPT_STATUS);
 		sc->sc_hcca->hcca_done_head = 0;
 	} else
-		intrs = OREAD4(sc, OHCI_INTERRUPT_STATUS);
+		intrs = OREAD4(sc, OHCI_INTERRUPT_STATUS) & ~OHCI_WDH;
 
 	if (!intrs)
 		return (0);
