@@ -1,4 +1,4 @@
-/* $NetBSD: mkdir.c,v 1.27 2002/11/24 23:40:07 chs Exp $ */
+/* $NetBSD: mkdir.c,v 1.28 2003/03/05 03:58:44 lukem Exp $ */
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.27 2002/11/24 23:40:07 chs Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.28 2003/03/05 03:58:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,46 +161,49 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 		*slash = '\0';
 
 		rv = mkdir(path, done ? mode : dir_mode);
-		if (rv < 0 && errno != EEXIST) {
-			warn("%s", path);
-			return (-1);
+		if (rv < 0) {
+			/*
+			 * Can't create; path exists or no perms.
+			 * stat() path to determine what's there now.
+			 */
+			int	sverrno;
+
+			sverrno = errno;
+			if (stat(path, &sb) < 0) {
+					/* Not there; use mkdir()s error */
+				errno = sverrno;
+				warn("%s", path);
+				return -1;
+			}
+			if (!S_ISDIR(sb.st_mode)) {
+					/* Is there, but isn't a directory */
+				errno = ENOTDIR;
+				warn("%s", path);
+				return -1;
+			}
+		} else if (done) {
+			/*
+			 * Created ok, and this is the last element
+			 */
+			/*
+			 * The mkdir() and umask() calls both honor only the
+			 * file permission bits, so if you try to set a mode
+			 * including the sticky, setuid, setgid bits you lose
+			 * them. So chmod().
+			 */
+			if ((mode & ~(S_IRWXU|S_IRWXG|S_IRWXU)) != 0 &&
+			    chmod(path, mode) == -1) {
+				warn("%s", path);
+				return -1;
+			}
 		}
+
 		if (done) {
 			break;
 		}
 		*slash = '/';
 	}
-
-	/*
-	 * Check for the final component being something other than
-	 * a directory.
-	 */
-
-	if (rv < 0) {
-		if (stat(path, &sb) < 0) {
-			warn("stat %s failed", path);
-			return (-1);
-		}
-		if (!S_ISDIR(sb.st_mode)) {
-			errno = ENOTDIR;
-			warn("%s", path);
-			return (-1);
-		}
-	}
-
-	/*
-	 * The mkdir() and umask() calls both honor only the
-	 * file permission bits, so if you try to set a mode
-	 * including the sticky, setuid, setgid bits you lose
-	 * them. So chmod().
-	 */
-
-	if ((mode & ~(S_IRWXU|S_IRWXG|S_IRWXU)) != 0 &&
-	    chmod(path, mode) == -1) {
-		warn("%s", path);
-		return (-1);
-	}
-	return (0);
+	return 0;
 }
 
 void
