@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.36 2001/08/30 02:53:56 briggs Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.37 2002/03/22 20:03:20 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -216,6 +216,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_COMMUNICATIONS_PARALLEL	0x01
 #define	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL	0x02
 #define	PCI_SUBCLASS_COMMUNICATIONS_MODEM	0x03
+#define	PCI_SUBCLASS_COMMUNICATIONS_GPIB	0x04
+#define	PCI_SUBCLASS_COMMUNICATIONS_SMARTCARD	0x05
 #define	PCI_SUBCLASS_COMMUNICATIONS_MISC	0x80
 
 /* 0x08 system subclasses */
@@ -263,6 +265,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_WIRELESS_IRDA		0x00
 #define	PCI_SUBCLASS_WIRELESS_CONSUMERIR	0x01
 #define	PCI_SUBCLASS_WIRELESS_RF		0x10
+#define	PCI_SUBCLASS_WIRELESS_BLUETOOTH		0x11
+#define	PCI_SUBCLASS_WIRELESS_BROADBAND		0x12
 #define	PCI_SUBCLASS_WIRELESS_MISC		0x80
 
 /* 0x0e I2O (Intelligent I/O) subclasses */
@@ -283,6 +287,8 @@ typedef u_int8_t pci_revision_t;
 /* 0x11 data acquisition and signal processing subclasses */
 #define	PCI_SUBCLASS_DASP_DPIO			0x00
 #define	PCI_SUBCLASS_DASP_TIMEFREQ		0x01
+#define	PCI_SUBCLASS_DASP_SYNC			0x10
+#define	PCI_SUBCLASS_DASP_MGMT			0x20
 #define	PCI_SUBCLASS_DASP_MISC			0x80
 
 /*
