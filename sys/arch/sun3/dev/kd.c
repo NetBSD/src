@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.9 1995/03/10 02:09:35 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.10 1995/03/24 19:48:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -62,6 +62,8 @@ int kdioctl(dev_t, int, caddr_t, int, struct proc *);
 
 static int kdparam(struct tty *, struct termios *);
 static void kdstart(struct tty *);
+
+int kd_is_console;
 
 /* This is called by kbd_serial() like a pseudo-device. */
 void
@@ -201,14 +203,16 @@ kdstart(tp)
 	 */
 	while ((len = q_to_b(cl, buf, BURST-1)) > 0) {
 		buf[len] = '\0';
-		(void) splhigh();
-#if 0
-		/* XXX - Not yet.  Not sure what args should be. */
-		(romVectorPtr->fbWriteStr)(buf);
-#else
-		mon_printf("%s", buf);
-#endif
-		(void) spltty();
+
+		/*
+		 * Note that this device might NOT be the console.
+		 * Using the PROM to put text on the screen is easy,
+		 * but it only works if this is the console (sigh).
+		 * If this is not the console, you are typing blind!
+		 */
+		if (kd_is_console) {
+			(romVectorPtr->fbWriteStr)(buf, len);
+		}
 	}
 
 	tp->t_state &= ~TS_BUSY;
@@ -264,6 +268,9 @@ kdcninit(cp)
 
 	/* This prepares kbd_translate() */
 	kbd_init_tables();
+
+	/* Indicate that it is OK to use the PROM fbwrite */
+	kd_is_console = 1;
 
 	mon_printf("console on kd0 (keyboard/display)\n");
 }
