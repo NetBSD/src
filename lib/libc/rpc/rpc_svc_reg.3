@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_call 1.6 89/07/20 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_reg.3,v 1.1.6.3 2002/03/22 20:42:24 nathanw Exp $
+.\"	$NetBSD: rpc_svc_reg.3,v 1.1.6.4 2002/10/18 02:16:27 nathanw Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_REG 3
 .Sh NAME
@@ -167,7 +167,8 @@ and -1 otherwise.
 After RPC service transport handle
 .Fa xprt
 is created, it is registered with the RPC
-service package.  This routine modifies the global variable
+service package.
+This routine modifies the global variable
 .Va svc_fdset
 (see
 .Xr rpc_svc_calls 3 ) .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: humanize_number.3,v 1.1.2.2 2002/08/27 23:49:31 nathanw Exp $
+.\"	$NetBSD: humanize_number.3,v 1.1.2.3 2002/10/18 02:15:56 nathanw Exp $
 .\"
 .\" Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,7 +73,7 @@ with the appropriate SI designator.
 The prefixes are:
 .Bl -column "Prefix" "Description" "Multiplier" -offset indent
 .It Sy "Prefix" Ta Sy "Description" Ta Sy "Multiplier"
-.It K	kilo	1024
+.It k	kilo	1024
 .It M	mega	1048576
 .It G	giga	1073741824
 .It T	tera	1099511627776
@@ -88,7 +88,8 @@ in order to ensure a useful result is generated into
 .Fa buffer .
 To use a specific prefix, specify this as
 .Fa scale
-(Multiplier = 1024 ^ scale).  This can not be combined with any of the
+(Multiplier = 1024 ^ scale).
+This can not be combined with any of the
 .Fa scale
 flags below.
 .Pp
@@ -123,7 +124,8 @@ with 1000 instead of 1024.
 .Fn humanize_number
 returns the number of characters stored in
 .Fa buffer
-(excluding the terminating NUL) upon success, or \-1 upon failure.  If
+(excluding the terminating NUL) upon success, or \-1 upon failure.
+If
 .Dv HN_GETSCALE
 is specified, the prefix index number will be returned instead.
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftok.3,v 1.6.2.3 2002/03/22 20:42:07 nathanw Exp $
+.\"	$NetBSD: ftok.3,v 1.6.2.4 2002/10/18 02:15:50 nathanw Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -54,8 +54,8 @@ of an existing file and a user-selectable
 The specified
 .Fa path
 must specify an existing file that is accessible to the calling process
-or the call will fail.  Also, note that links to files will return the
-same key, given the same
+or the call will fail.
+Also, note that links to files will return the same key, given the same
 .Fa id .
 .Pp
 Only the 8 least significant bits of

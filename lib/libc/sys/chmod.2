@@ -1,4 +1,4 @@
-.\"	$NetBSD: chmod.2,v 1.19.6.4 2002/06/21 18:18:24 nathanw Exp $
+.\"	$NetBSD: chmod.2,v 1.19.6.5 2002/10/18 02:16:46 nathanw Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -114,16 +114,17 @@ The
 .Em sticky bit )
 indicates to the system which executable files are shareable (the
 default) and the system maintains the program text of the files
-in the swap area. The sticky bit may only be set by the super user
+in the swap area.
+The sticky bit may only be set by the super user
 on shareable executable files.
 .Pp
 If mode
 .Dv ISVTX
 (the `sticky bit') is set on a directory,
 an unprivileged user may not delete or rename
-files of other users in that directory. The sticky bit may be
-set by any user on a directory which the user owns or has appropriate
-permissions.
+files of other users in that directory.
+The sticky bit may be set by any user on a directory which the user
+owns or has appropriate permissions.
 For more details of the properties of the sticky bit, see
 .Xr sticky 8 .
 .Pp

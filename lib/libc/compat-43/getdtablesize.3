@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getdtablesize.2	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: getdtablesize.3,v 1.9.12.2 2002/03/22 20:42:03 nathanw Exp $
+.\"	$NetBSD: getdtablesize.3,v 1.9.12.3 2002/10/18 02:15:41 nathanw Exp $
 .\"
 .Dd June 4, 1993
 .Dt GETDTABLESIZE 3
@@ -46,7 +46,8 @@
 .Fn getdtablesize void
 .Sh DESCRIPTION
 Each process has a fixed size descriptor table,
-which is guaranteed to have at least 20 slots.  The entries in
+which is guaranteed to have at least 20 slots.
+The entries in
 the descriptor table are numbered with small integers starting at 0.
 The call
 .Fn getdtablesize

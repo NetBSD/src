@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.18.6.3 2002/03/22 20:42:36 nathanw Exp $
+.\"	$NetBSD: fcntl.2,v 1.18.6.4 2002/10/18 02:16:50 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,8 +86,12 @@ system calls.
 .El
 .It Dv F_GETFD
 Get the close-on-exec flag associated with the file descriptor
-.Fa fd .
-If the low-order bit of the returned value is 0,
+.Fa fd
+as
+.Dv FD_CLOEXEC .
+If the returned value ANDed with
+.Dv FD_CLOEXEC
+is 0,
 the file will remain open across
 .Fn exec ,
 otherwise the file will be closed upon execution of
@@ -97,9 +101,13 @@ is ignored).
 .It Dv F_SETFD
 Set the close-on-exec flag associated with
 .Fa fd
-to the low order bit of
+to
+.Fa arg ,
+where
 .Fa arg
-(0 or 1 as above).
+is either 0 or
+.Dv FD_CLOEXEC ,
+as described above.
 .It Dv F_GETFL
 Get descriptor status flags, as described below
 .Fa ( arg
@@ -205,11 +213,11 @@ As specified by the value of
 .Fa l_type ,
 .Dv F_SETLK
 is used to establish shared (or read) locks
-.Dv (F_RDLCK)
+.Pq Dv F_RDLCK
 or exclusive (or write) locks,
-.Dv (F_WRLCK) ,
+.Pq Dv F_WRLCK ,
 as well as remove either type of lock
-.Dv (F_UNLCK) .
+.Pq Dv F_UNLCK .
 If a shared or exclusive lock cannot be set,
 .Nm
 returns immediately with
@@ -276,7 +284,8 @@ but may not start or extend before the beginning of the file.
 A lock is set to extend to the largest possible value of the
 file offset for that file if
 .Fa l_len
-is set to zero. If
+is set to zero.
+If
 .Fa l_whence
 and
 .Fa l_start
@@ -339,7 +348,7 @@ to their children.
 Note that
 .Xr flock 2
 and
-.Xr fcntl 2
+.Nm
 locks may be safely used concurrently.
 .Pp
 All locks associated with a file for a given process are
@@ -381,11 +390,11 @@ The argument
 is
 .Dv F_SETLK ,
 the type of lock
-.Fa (l_type)
+.Pq Fa l_type
 is a shared lock
-.Dv (F_RDLCK)
+.Pq Dv F_RDLCK
 or exclusive lock
-.Dv (F_WRLCK) ,
+.Pq Dv F_WRLCK ,
 and the segment of a file to be locked is already
 exclusive-locked by another process;
 or the type is an exclusive lock and some portion of the
@@ -402,9 +411,9 @@ is
 or
 .Dv F_SETLKW ,
 the type of lock
-.Fa (l_type)
+.Pq Fa l_type
 is a shared lock
-.Dv (F_RDLCK) ,
+.Pq Dv F_RDLCK ,
 and
 .Fa fildes
 is not a valid file descriptor open for reading.
@@ -416,9 +425,9 @@ is
 or
 .Dv F_SETLKW ,
 the type of lock
-.Fa (l_type)
+.Pq Fa l_type
 is an exclusive lock
-.Dv (F_WRLCK) ,
+.Pq Dv F_WRLCK ,
 and
 .Fa fildes
 is not a valid file descriptor open for writing.

@@ -1,4 +1,4 @@
-.\" $NetBSD: mbsrtowcs.3,v 1.2.2.3 2002/04/25 04:01:43 nathanw Exp $
+.\" $NetBSD: mbsrtowcs.3,v 1.2.2.4 2002/10/18 02:16:16 nathanw Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -97,7 +97,8 @@ There are special cases:
 undefined (may causes the program to crash).
 .It "pwcs == NULL"
 The conversion is taken place, but the result wide character string
-is discarded.  In this case, the pointer object pointed by
+is discarded.
+In this case, the pointer object pointed by
 .Fa s
 is not modified and
 .Fa n

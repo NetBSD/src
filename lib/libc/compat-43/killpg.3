@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)killpg.2	8.1 (Berkeley) 6/2/93
-.\"	$NetBSD: killpg.3,v 1.10.12.3 2002/03/22 20:42:03 nathanw Exp $
+.\"	$NetBSD: killpg.3,v 1.10.12.4 2002/10/18 02:15:41 nathanw Exp $
 .\"
 .Dd June 2, 1993
 .Dt KILLPG 3
@@ -65,8 +65,8 @@ the sender must be the super-user.
 As a single special case the continue signal SIGCONT may be sent
 to any process that is a descendant of the current process.
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.  Otherwise,
-a value of -1 is returned and the global variable
+Upon successful completion, a value of 0 is returned.
+Otherwise, a value of \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

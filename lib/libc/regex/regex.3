@@ -1,4 +1,4 @@
-.\"	$NetBSD: regex.3,v 1.10.2.4 2002/06/21 18:18:17 nathanw Exp $
+.\"	$NetBSD: regex.3,v 1.10.2.5 2002/10/18 02:16:22 nathanw Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994 Henry Spencer.
 .\" Copyright (c) 1992, 1993, 1994
@@ -108,8 +108,8 @@ Compile modern (``extended'') REs, rather than the obsolete
 This is a synonym for 0,
 provided as a counterpart to REG_EXTENDED to improve readability.
 .It Dv REG_NOSPEC
-Compile with recognition of all special characters turned off.  All
-characters are thus considered ordinary, so the ``RE'' is a literal
+Compile with recognition of all special characters turned off.
+All characters are thus considered ordinary, so the ``RE'' is a literal
 string.
 This is an extension, compatible with but not specified by
 .St -p1003.2-92 ,
@@ -121,7 +121,8 @@ and
 may not be used in the same call to
 .Fn regcomp .
 .It Dv REG_ICASE
-Compile for matching that ignores upper/lower case distinctions. See
+Compile for matching that ignores upper/lower case distinctions.
+See
 .Xr re_format 7 .
 .It Dv REG_NOSUB
 Compile for matching that need only report success or failure, not
@@ -207,8 +208,8 @@ This does not affect the behavior of newlines under
 .Dv REG_NEWLINE .
 .It Dv REG_NOTEOL
 The NUL terminating the string does not end a line, so the `$' anchor
-should not match before it.  This does not affect the behavior of
-newlines under
+should not match before it.
+This does not affect the behavior of newlines under
 .Dv REG_NEWLINE .
 .It Dv REG_STARTEND
 The string is considered to start at
@@ -589,8 +590,8 @@ are probably not handled well.
 Due to a mistake in
 .St -p1003.2-92 ,
 things like `a)b' are legal REs because `)' is a special character
-only in the presence of a previous unmatched `('.  This can't be fixed
-until the spec is fixed.
+only in the presence of a previous unmatched `('.
+This can't be fixed until the spec is fixed.
 .Pp
 The standard's definition of back references is vague.
 For example, does

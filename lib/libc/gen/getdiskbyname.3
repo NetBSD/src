@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdiskbyname.3,v 1.6.12.3 2002/03/22 20:42:07 nathanw Exp $
+.\"	$NetBSD: getdiskbyname.3,v 1.6.12.4 2002/10/18 02:15:50 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,8 +58,8 @@ takes a disk name (e.g.
 .Ql rm03 )
 and returns a prototype disk label
 describing its geometry information and the standard
-disk partition tables.  All information is obtained from
-the
+disk partition tables.
+All information is obtained from the
 .Xr disktab 5
 file.
 .Pp
@@ -79,7 +79,7 @@ returns a null pointer if the entry is not found in the current
 file.
 .Pp
 .Fn setdisktab
-returns 0 on success and -1 if
+returns 0 on success and \-1 if
 .Fa name
 is a null pointer or points to an empty string.
 .Sh FILES
@@ -105,4 +105,5 @@ function appeared in
 The
 .Fn getdiskbyname
 function leaves its results in an internal static object and returns a
-pointer to that object.  Subsequent calls will modify the same object.
+pointer to that object.
+Subsequent calls will modify the same object.

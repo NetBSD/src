@@ -1,4 +1,4 @@
-.\" 	$NetBSD: hcreate.3,v 1.2.2.3 2002/03/22 20:42:30 nathanw Exp $
+.\" 	$NetBSD: hcreate.3,v 1.2.2.4 2002/10/18 02:16:39 nathanw Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,8 +66,8 @@ function allocates and initializes the table.
 The
 .Fa nel
 argument specifies an estimate of the maximum number of entries to be held
-by the table.  Unless further memory allocation fails, supplying an
-insufficient
+by the table.
+Unless further memory allocation fails, supplying an insufficient
 .Fa nel
 value will not result in functional harm, although a performance degradation
 may occur.
@@ -86,8 +86,10 @@ the data can no longer be accessed.
 .Pp
 The
 .Fn hsearch
-function is used to search to the hash table.  It returns a pointer into the
-hash table indicating the address of an item.  The
+function is used to search to the hash table.
+It returns a pointer into the
+hash table indicating the address of an item.
+The
 .Fa item
 argument is of type
 .Dv ENTRY ,
@@ -122,7 +124,8 @@ and
 .Fa data
 elements of
 .Fa item
-are used directly by the new table entry.  The storage for the
+are used directly by the new table entry.
+The storage for the
 key must not be modified during the lifetime of the hash table.
 .It Dv FIND
 Search the hash table without inserting
@@ -131,7 +134,8 @@ Search the hash table without inserting
 .Sh RETURN VALUES
 If successful, the
 .Fn hcreate
-function returns a non-zero value.  Otherwise, a value of 0 is returned and
+function returns a non-zero value.
+Otherwise, a value of 0 is returned and
 .Va errno
 is set to indicate the error.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpwent.3,v 1.16.2.4 2002/06/21 18:18:09 nathanw Exp $
+.\"	$NetBSD: getpwent.3,v 1.16.2.5 2002/10/18 02:15:53 nathanw Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -200,9 +200,8 @@ The functions
 and
 .Fn getpwuid ,
 leave their results in an internal static object and return
-a pointer to that object. Subsequent calls to
-any of these functions
-will modify the same object.
+a pointer to that object.
+Subsequent calls to any of these functions will modify the same object.
 .Pp
 The functions
 .Fn getpwent ,

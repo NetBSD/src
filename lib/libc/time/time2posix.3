@@ -1,4 +1,4 @@
-.\"	$NetBSD: time2posix.3,v 1.7.12.3 2002/03/22 20:42:46 nathanw Exp $
+.\"	$NetBSD: time2posix.3,v 1.7.12.4 2002/10/18 02:17:23 nathanw Exp $
 .Dd April 1, 2001
 .Dt TIME2POSIX 3
 .Os
@@ -48,7 +48,8 @@ and
 However, POSIX gives an arithmetic expression for directly computing a
 .Va time_t
 value from a given date/time, and the same relationship is assumed by
-some (usually older) applications. Any programs creating/dissecting
+some (usually older) applications.
+Any programs creating/dissecting
 .Va time_t Ns 's
 using such a relationship will typically not handle intervals over
 leap seconds correctly.
@@ -61,14 +62,15 @@ functions are provided to address this
 .Va time_t
 mismatch by converting between local
 .Va time_t
-values and their POSIX equivalents. This is done by accounting for the
-number of time-base changes that would have taken place on a POSIX
-system as leap seconds were inserted or deleted. These converted
-values can then be used in lieu of correcting the older applications,
-or when communicating with POSIX-compliant systems.
+values and their POSIX equivalents.
+This is done by accounting for the number of time-base changes that would
+have taken place on a POSIX system as leap seconds were inserted or deleted.
+These converted values can then be used in lieu of correcting the
+older applications, or when communicating with POSIX-compliant systems.
 .Pp
 .Fn time2posix
-is single-valued. That is, every local
+is single-valued.
+That is, every local
 .Va time_t
 corresponds to a single POSIX
 .Va time_t .
@@ -76,8 +78,9 @@ corresponds to a single POSIX
 is less well-behaved: for a positive leap second hit the result is not
 unique, and for a negative leap second hit the corresponding POSIX
 .Va time_t
-doesn't exist so an adjacent value is returned. Both of these are good
-indicators of the inferiority of the POSIX representation.
+doesn't exist so an adjacent value is returned.
+Both of these are good indicators of the inferiority of the POSIX
+representation.
 .Pp
 The following table summarizes the relationship between a
 .Va time_t

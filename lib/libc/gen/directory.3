@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.10.12.5 2002/08/13 00:59:50 nathanw Exp $
+.\"	$NetBSD: directory.3,v 1.10.12.6 2002/10/18 02:15:45 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,8 @@ with it
 and
 returns a pointer to be used to identify the
 .Em directory stream
-in subsequent operations.  The pointer
+in subsequent operations.
+The pointer
 .Dv NULL
 is returned if
 .Fa filename
@@ -86,7 +87,8 @@ enough memory to hold the whole thing.
 The
 .Fn readdir
 function
-returns a pointer to the next directory entry.  It returns
+returns a pointer to the next directory entry.
+It returns
 .Dv NULL
 upon reaching the end of the directory or detecting an invalid
 .Fn seekdir
@@ -109,7 +111,8 @@ The new position reverts to the one associated with the
 .Em directory stream
 when the
 .Fn telldir
-operation was performed.  Values returned by
+operation was performed.
+Values returned by
 .Fn telldir
 are good only for the lifetime of the
 .Dv DIR

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.74.2.8 2002/08/27 23:49:32 nathanw Exp $
+.\"	$NetBSD: sysctl.3,v 1.74.2.9 2002/10/18 02:16:04 nathanw Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -89,11 +89,14 @@ If the old value is not desired,
 .Fa oldp
 and
 .Fa oldlenp
-should be set to NULL.
+should be set to
+.Dv NULL .
 .Pp
 The size of the available data can be determined by calling
 .Nm
-with a NULL parameter for
+with a
+.Dv NULL
+parameter for
 .Fa oldp .
 The size of the available data will be returned in the location pointed to by
 .Fa oldlenp .
@@ -109,7 +112,9 @@ is set to point to a buffer of length
 from which the requested value is to be taken.
 If a new value is not to be set,
 .Fa newp
-should be set to NULL and
+should be set to
+.Dv NULL
+and
 .Fa newlen
 set to 0.
 .Pp
@@ -332,7 +337,7 @@ The maximum bytes of argument to
 .It Li KERN_AUTONICETIME
 The number of seconds of cpu-time a non-root process may accumulate before
 having its priority lowered from the default to the value of KERN_AUTONICEVAL.
-If set to 0, automatic lowering of priority is not performed, and if set to -1
+If set to 0, automatic lowering of priority is not performed, and if set to \-1
 all non-root processes are immediately lowered.
 .It Li KERN_AUTONICEVAL
 The priority assigned for automatically niced processes.
@@ -351,13 +356,15 @@ This structure contains the clock, statistics clock and profiling clock
 frequencies, the number of micro-seconds per hz tick, and the clock
 skew rate.
 .It Li KERN_CP_TIME
-Return an array if CPUSTATES longs is returned.  This array contains the
+Return an array if CPUSTATES longs is returned.
+This array contains the
 number of clock ticks spent in different CPU states.
 .It Li KERN_DEFCORENAME
 Default template for the name of core dump files (see also PROC_PID_CORENAME
 in the per-process variables CTL_PROC, and
 .Xr core 5
-for format of this template).  The default value is
+for format of this template).
+The default value is
 .Nm %n.core
 and can be changed with the kernel configuration option
 .Cd options DEFCORENAME
@@ -416,13 +423,14 @@ The maximum number of partitions allowed per disk.
 .It Li KERN_MAXPROC
 The maximum number of simultaneous processes the system will allow.
 .It Li KERN_MAXPTYS
-The maximum number of pseudo terminals. This value can be both
-raised and lowered, though it cannot
-be set lower than number of currently used ptys.  See also
+The maximum number of pseudo terminals.
+This value can be both raised and lowered, though it cannot
+be set lower than number of currently used ptys.
+See also
 .Xr pty 4 .
 .It Li KERN_MAXVNODES
-The maximum number of vnodes available on the system. This can only
-be raised.
+The maximum number of vnodes available on the system.
+This can only be raised.
 .It Li KERN_MBUF
 Return information about the mbuf control variables.
 the third level names for the mbuf variables are detailed below.
@@ -519,14 +527,16 @@ The third and fourth level names are as follows:
 .It Li KERN_PROC2
 As for KERN_PROC, but an array of
 .Va struct kinfo_proc2
-structures are returned.  The fifth level name is the size of the
+structures are returned.
+The fifth level name is the size of the
 .Va struct kinfo_proc2
 and the sixth level name is the number of structures to return.
 .It Li KERN_PROC_ARGS
 Return the argv or environment strings (or the number thereof)
-of a process.  Multiple strings are returned separated by NUL
-characters.  The third level name is the process ID.  The fourth
-level name is as follows:
+of a process.
+Multiple strings are returned separated by NUL characters.
+The third level name is the process ID.
+The fourth level name is as follows:
 .Bl -column "Third level nameXXXXXX" -offset indent
 .It KERN\_PROC\_ARGV	The argv strings
 .It KERN\_PROC\_NARGV	The number of argv strings
@@ -595,17 +605,20 @@ The third level name selects the System V style IPC facility.
 .Pp
 .Bl -tag -width "123456"
 .It Li KERN_SYSVIPC_MSG_INFO
-Return information on the System V style message facility.  The
+Return information on the System V style message facility.
+The
 .Sy msg_sysctl_info
 structure is defined in
 .Aq Pa sys/msg.h .
 .It Li KERN_SYSVIPC_SEM_INFO
-Return information on the System V style semaphore facility.  The
+Return information on the System V style semaphore facility.
+The
 .Sy sem_sysctl_info
 structure is defined in
 .Aq Pa sys/sem.h .
 .It Li KERN_SYSVIPC_SHM_INFO
-Return information on the System V style shared memory facility.  The
+Return information on the System V style shared memory facility.
+The
 .Sy shm_sysctl_info
 structure is defined in
 .Aq Pa sys/shm.h .
@@ -624,8 +637,9 @@ on this system,
 otherwise 0.
 .It Li KERN_TKSTAT
 Return information about the number of characters sent and received
-on ttys.  The third level names for the tty statistic variables
-are detailed below.  The changeable column shows whether a process
+on ttys.
+The third level names for the tty statistic variables are detailed below.
+The changeable column shows whether a process
 with appropriate privilege may change the value.
 .Bl -column "KERNXTKSTATXRAWCCXXX" "struct integerXXX" -offset indent
 .It Sy Pa Third level name	Type	Changeable
@@ -768,8 +782,8 @@ the system.
 This value applies to normal transport protocols, not to ICMP.
 .It Li ip.forwsrcrt
 Returns 1 when forwarding of source-routed packets is enabled for
-the host.  This value may only be changed if the kernel security
-level is less than 1.
+the host.
+This value may only be changed if the kernel security level is less than 1.
 .It Li ip.directed-broadcast
 Returns 1 if directed broadcast behavior is enabled for the host.
 .It Li ip.allowsrcrt
@@ -788,7 +802,8 @@ be greater than
 .Li ip.anonportmin .
 .It Li ip.mtudisctimeout
 Returns the number of seconds in which a route added by the Path MTU
-Discovery engine will time out.  When the route times out, the Path
+Discovery engine will time out.
+When the route times out, the Path
 MTU Discovery engine will attempt to probe a larger path MTU.
 .It Li ip.gifttl
 The maximum time-to-live (hop count) value for an IPv4 packet generated by
@@ -811,7 +826,7 @@ be greater than
 .It Li ip.maxfragpackets
 The maximum number of fragmented packets the node will accept.
 0 means that the node will not accept any fragmented packets.
--1 means that the node will accept as many fragmented packets as it receives.
+\-1 means that the node will accept as many fragmented packets as it receives.
 The flag is provided basically for avoiding possible DoS attacks.
 .It Li icmp.maskrepl
 Returns 1 if ICMP network mask requests are to be answered.
@@ -838,8 +853,8 @@ Returns the default TCP receive buffer size.
 .It Li tcp.mssdflt
 Returns the default maximum segment size both advertsized to the peer
 and to use when the peer does not advertize a maximum segment size to
-us during connection setup.  Do not change this value unless you really
-know what you are doing.
+us during connection setup.
+Do not change this value unless you really know what you are doing.
 .It Li tcp.syn_cache_limit
 Returns the maximum number of entries allowed in the TCP compressed state
 engine.
@@ -849,15 +864,15 @@ compressed state engine.
 .It Li tcp.syn_cache_interval
 Returns the TCP compressed state engine's timer interval.
 .It Li tcp.init_win
-Returns a value indicating the TCP initial congestion window.  If this
-value is 0, an auto-tuning algorithm designed to use an initial window
-of approximately 4K bytes is in use.  Otherwise, this value indicates
-a fixed number of packets.
+Returns a value indicating the TCP initial congestion window.
+If this value is 0, an auto-tuning algorithm designed to use an initial
+window of approximately 4K bytes is in use.
+Otherwise, this value indicates a fixed number of packets.
 .It Li tcp.mss_ifmtu
 Returns 1 if TCP calculates the outgoing maximum segment size based on
-the MTU of the appropriate interface.  Otherwise, it is calculated based on
-the greater of the MTU of the interface, and the largest (non-loopback)
-interface MTU on the system.
+the MTU of the appropriate interface.
+Otherwise, it is calculated based on the greater of the MTU of the
+interface, and the largest (non-loopback) interface MTU on the system.
 .It Li tcp.sack
 TCP Selective ACKnowledgement (RFC 2018) is not implemented in
 .Nx
@@ -871,41 +886,49 @@ If rfc1323 is enabled, a value of 1 indicates RFC1323 time stamp options,
 used for measuring TCP round trip times, are enabled.
 .It Li tcp.compat_42
 Returns 1 if work-arounds for bugs in the 4.2BSD TCP implementation are
-enabled.  Use of this option is not recommended, although it may be
+enabled.
+Use of this option is not recommended, although it may be
 required in order to communicate with extremely old TCP implementations.
 .It Li tcp.cwm
 Returns 1 if use of the Hughes/Touch/Heidemann Congestion Window Monitoring
-algorithm is enabled.  This algorithm prevents line-rate bursts of packets
-that could otherwise occur when data begins flowing on an idle TCP
-connection.  These line-rate bursts can contribute to network and router
-congestion.  This can be particularly useful on World Wide Web servers
+algorithm is enabled.
+This algorithm prevents line-rate bursts of packets that could
+otherwise occur when data begins flowing on an idle TCP connection.
+These line-rate bursts can contribute to network and router congestion.
+This can be particularly useful on World Wide Web servers
 which support HTTP/1.1, which has lingering connections.
 .It Li tcp.cwm_burstsize
 Returns the Congestion Window Monitoring allowed burst size, in terms
 of packet count.
 .It Li tcp.ack_on_push
 Returns 1 if TCP is to immediately transmit an ACK upon reception of
-a packet with PUSH set.  This can avoid losing a round trip time in some
-rare situations, but has the caveat of potentially defeating TCP's delayed
-ACK algorithm.  Use of this option is generally not recommended, but
+a packet with PUSH set.
+This can avoid losing a round trip time in some rare situations,
+but has the caveat of potentially defeating TCP's delayed ACK algorithm.
+Use of this option is generally not recommended, but
 the variable exists in case your configuration really needs it.
 .It Li tcp.keepidle
 Time a connection must be idle before keepalives are sent (if keepalives
-are enabled for the connection).  See also tcp.slowhz.
+are enabled for the connection).
+See also tcp.slowhz.
 .It Li tcp.keepintvl
 Time after a keepalive probe is sent until, in the absence of any response,
-another probe is sent.  See also tcp.slowhz.
+another probe is sent.
+See also tcp.slowhz.
 .It Li tcp.keepcnt
-Number of keepalive probes sent before declaring a connection dead.  If
-set to zero, there is no limit; keepalives will be sent until some kind of
+Number of keepalive probes sent before declaring a connection dead.
+If set to zero, there is no limit;
+keepalives will be sent until some kind of
 response is received from the peer.
 .It Li tcp.slowhz
 The units for tcp.keepidle and tcp.keepintvl; those variables are in ticks
-of a clock that ticks tcp.slowhz times per second.  (That is, their values
+of a clock that ticks tcp.slowhz times per second.
+(That is, their values
 must be divided by the tcp.slowhz value to get times in seconds.)
 .It Li tcp.newreno
-Returns 1 if the use of J. Hoe's NewReno congestion control algorithm is
-enabled.  This algorithm improves the start-up behavior of TCP connections.
+Returns 1 if the use of J.
+Hoe's NewReno congestion control algorithm is enabled.
+This algorithm improves the start-up behavior of TCP connections.
 .It Li tcp.log_refused
 Returns 1 if refused TCP connections to the host will be logged.
 .It Li tcp.rstppslimit
@@ -998,7 +1021,7 @@ There are APIs to override the value, as documented in
 .It Li ip6.maxfragpackets
 The maximum number of fragmented packets the node will accept.
 0 means that the node will not accept any fragmented packets.
--1 means that the node will accept as many fragmented packets as it receives.
+\-1 means that the node will accept as many fragmented packets as it receives.
 The flag is provided basically for avoiding possible DoS attacks.
 .It Li ip6.accept_rtadv
 If set to non-zero, the node will accept ICMPv6 router advertisement packets
@@ -1076,7 +1099,7 @@ be greater than
 .It Li ip6.maxfrags
 The maximum number of fragments the node will accept.
 0 means that the node will not accept any fragments.
--1 means that the node will accept as many fragments as it receives.
+\-1 means that the node will accept as many fragments as it receives.
 The flag is provided basically for avoiding possible DoS attacks.
 .It Li icmp6.rediraccept
 If set to non-zero, the host will accept ICMPv6 redirect packets.
@@ -1239,9 +1262,11 @@ The string and integer information available for the CTL_PROC
 is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
-These values are per-process, and as such may change from one process
-to another. When a process is created, the default values are inherited from
-its parent. When a set-user-ID or set-group-ID binary is executed, the
+These values are per-process,
+and as such may change from one process to another.
+When a process is created,
+the default values are inherited from its parent.
+When a set-user-ID or set-group-ID binary is executed, the
 value of PROC_PID_CORENAME is reset to the system default value.
 The second level name is either the magic value PROC_CURPROC, which
 points to the current process, or the PID of the target process.
@@ -1255,10 +1280,11 @@ points to the current process, or the PID of the target process.
 .It Li PROC_PID_CORENAME
 The template used for the core dump file name (see
 .Xr core 5
-for details). The base name must either be
+for details).
+The base name must either be
 .Nm core
-or end with the suffix ``.core'' (the super-user may set arbitrary names). By
-default it points to KERN_DEFCORENAME.
+or end with the suffix ``.core'' (the super-user may set arbitrary names).
+By default it points to KERN_DEFCORENAME.
 .It Li PROC_PID_LIMIT
 Return resources limits, as defined for the
 .Xr getrlimit 2
@@ -1494,13 +1520,14 @@ If not zero, DDB may be entered by sending a break on a serial
 console or by a special key sequence on a graphics console.
 .El
 .Pp
-These MIB nodes are also available as variables from within the
-DDB.  See
+These MIB nodes are also available as variables from within the DDB.
+See
 .Xr ddb 4
 for more details.
 .Sh CTL_VENDOR
 The "vendor" toplevel name is reserved to be used by vendors who wish to
-have their own private MIB tree. Intended use is to store values under
+have their own private MIB tree.
+Intended use is to store values under
 .Dq vendor.\*[Lt]yourname\*[Gt].* .
 .Sh RETURN VALUES
 If the call to

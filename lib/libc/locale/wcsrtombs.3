@@ -1,4 +1,4 @@
-.\" $NetBSD: wcsrtombs.3,v 1.2.2.3 2002/04/25 04:01:44 nathanw Exp $
+.\" $NetBSD: wcsrtombs.3,v 1.2.2.4 2002/10/18 02:16:17 nathanw Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -102,7 +102,8 @@ The
 returns the number of bytes to store the whole multibyte character string
 corresponding to the wide character string pointed by
 .Fa pwcs ,
-not including the terminating null byte. In this case,
+not including the terminating null byte.
+In this case,
 .Fa n
 is ignored.
 .It "pwcs == NULL || *pwcs == NULL"

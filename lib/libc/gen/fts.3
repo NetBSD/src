@@ -1,4 +1,4 @@
-.\"	$NetBSD: fts.3,v 1.18.8.3 2002/03/22 20:42:07 nathanw Exp $
+.\"	$NetBSD: fts.3,v 1.18.8.4 2002/10/18 02:15:50 nathanw Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -290,8 +290,9 @@ Upon return from the
 .Fn fts_children
 function, the
 .Fa fts_link
-field points to the next structure in the NULL-terminated linked list of
-directory members.
+field points to the next structure in the
+.Dv NULL Ns -terminated
+linked list of directory members.
 Otherwise, the contents of the
 .Fa fts_link
 field are undefined.
@@ -551,8 +552,9 @@ The
 .Fn fts_children
 function returns a pointer to an
 .Fa FTSENT
-structure describing the first entry in a NULL-terminated linked list of
-the files in the directory represented by the
+structure describing the first entry in a
+.Dv NULL Ns -terminated
+linked list of the files in the directory represented by the
 .Fa FTSENT
 structure most recently returned by
 .Fn fts_read .

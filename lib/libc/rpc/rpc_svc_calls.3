@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_calls 1.5 89/07/25 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_calls.3,v 1.1.6.3 2002/03/22 20:42:24 nathanw Exp $
+.\"	$NetBSD: rpc_svc_calls.3,v 1.1.6.4 2002/10/18 02:16:26 nathanw Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_CALLS 3
 .Os
@@ -95,7 +95,8 @@ As currently implemented,
 .Fn svc_exit
 zeroes the
 .Dv svc_fdset
-global variable. If RPC server activity is to be resumed,
+global variable.
+If RPC server activity is to be resumed,
 services must be reregistered with the RPC library
 either through one of the
 .Fn rpc_svc_create
@@ -201,8 +202,8 @@ RPC service transport handle
 and thus not portable.
 This macro returns a pointer to a sockcred structure, defined in
 .Fd \*[Lt]sys/socket.h\*[Gt] ,
-identifying the calling client. This only works if the client is
-calling the server over an
+identifying the calling client.
+This only works if the client is calling the server over an
 .Dv AF_LOCAL
 socket.
 .It Fa struct pollfd svc_pollset[FD_SETSIZE];
@@ -238,7 +239,8 @@ system call to return.
 .Pp
 .It Fn svc_sendreply
 Called by an RPC service's dispatch routine to send the results of a
-remote procedure call. The parameter
+remote procedure call.
+The parameter
 .Fa xprt
 is the request's associated transport handle;
 .Fa outproc

@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgrcv.2,v 1.11.6.3 2002/03/22 20:42:39 nathanw Exp $
+.\"	$NetBSD: msgrcv.2,v 1.11.6.4 2002/10/18 02:17:05 nathanw Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -50,9 +50,10 @@ and places it into the user-defined structure pointed to by
 .Fa msgp .
 This structure must contain a first field of type
 .Sy long
-that will indicate the user-defined type of the message.  The remaining
-fields will contain the contents of the message.  The following is
-an example of what this user-defined structure might look like:
+that will indicate the user-defined type of the message.
+The remaining fields will contain the contents of the message.
+The following is an example of what this user-defined structure might
+look like:
 .Bd -literal
 struct mymsg {
     long mtype;    /* message type */
@@ -72,23 +73,26 @@ has one of the following meanings:
 .Bl -bullet
 .It
 .Fa msgtyp
-is greater than 0. The first message of type
+is greater than 0.
+The first message of type
 .Fa msgtyp
 will be received.
 .It
 .Fa msgtyp
-is equal to 0. The first message on the queue will be received.
+is equal to 0.
+The first message on the queue will be received.
 .It
 .Fa msgtyp
-is less than 0. The first message of the lowest message type that is
+is less than 0.
+The first message of the lowest message type that is
 less than or equal to the absolute value of
 .Fa msgtyp
 will be received.
 .El
 .Pp
 .Fa msgsz
-specifies the maximum length of the requested message. If the received
-message has a length greater than
+specifies the maximum length of the requested message.
+If the received message has a length greater than
 .Fa msgsz
 it will be silently truncated if the
 .Dv MSG_NOERROR
@@ -104,7 +108,8 @@ depends on whether the
 .Dv IPC_NOWAIT
 flag is set in
 .Fa msgflg
-or not. If
+or not.
+If
 .Dv IPC_NOWAIT
 is set, then
 .Fn msgrcv
@@ -124,7 +129,8 @@ The message queue is removed, in which case -1 will be returned and
 set to
 .Er EIDRM .
 .It
-A signal is received and caught. -1 is returned and
+A signal is received and caught.
+-1 is returned and
 .Va errno
 is set to
 .Er EINTR .

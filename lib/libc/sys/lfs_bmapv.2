@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_bmapv.2,v 1.1.6.3 2002/03/22 20:42:38 nathanw Exp $
+.\"	$NetBSD: lfs_bmapv.2,v 1.1.6.4 2002/10/18 02:16:59 nathanw Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@
 .Fn lfs_bmapv
 fills in the bi_daddr field for every block listed in the block array
 .Fa blkiov
-with the disk address corrseponding to the logical block
+with the disk address corresponding to the logical block
 .Fa bi_lbn
 of the file with inode
 .Fa bi_inode .
@@ -64,11 +64,12 @@ instead.
 .Pp
 The
 .Fa fsidp
-argument contains the id of the filesystem to which the inodes and
+argument contains the id of the file system to which the inodes and
 blocks belong.
 The
 .Fa blkiov
-argument is an array of BLOCK_INFO structures (see below).  The
+argument is an array of BLOCK_INFO structures (see below).
+The
 .Fa blkcnt
 argument determines the size of the
 .Fa blkiov
@@ -97,7 +98,7 @@ indicates:
 points outside the process's allocated address space.
 .It Bq Er EINVAL
 .Fa *fsidp
-does not specify a valid filesystem.
+does not specify a valid file system.
 .El
 .Sh SEE ALSO
 .Xr lfs_markv 2 ,

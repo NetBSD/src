@@ -1,4 +1,4 @@
-.\"	$NetBSD: clone.2,v 1.5.2.4 2002/03/22 20:42:35 nathanw Exp $
+.\"	$NetBSD: clone.2,v 1.5.2.5 2002/10/18 02:16:48 nathanw Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,8 +67,8 @@ by
 The argument
 .Ar arg
 is passed to the entry point, as a means for the parent to provide
-context to the child.  The stack pointer for the child process will
-be set to
+context to the child.
+The stack pointer for the child process will be set to
 .Ar stack .
 Note that the
 .Nm
@@ -80,25 +80,28 @@ argument as appropriate for the stack direction.
 The
 .Ar flags
 argument specifies several options that control how the child process
-is created.  The lower 8 bits of
+is created.
+The lower 8 bits of
 .Ar flags
 specify the signal that is to be sent to the parent when the child
-exits.  The following flags may also be specified by bitwise-or'ing
+exits.
+The following flags may also be specified by bitwise-or'ing
 them with the signal value:
 .Bl -tag -width "CLONE_SIGHAND"
 .It Dv CLONE_VM
-Share the virtual address space with the parent.  The address
-space is shared in the same way as
+Share the virtual address space with the parent.
+The address space is shared in the same way as
 .Xr vfork 2 .
 .It Dv CLONE_FS
 Share the
 .Dq file system information
-with the parent.  This include the current working directory and file
-creation mask.
+with the parent.
+This include the current working directory and file creation mask.
 .It Dv CLONE_FILES
 Share the file descriptor table with the parent.
 .It Dv CLONE_SIGHAND
-Share the signal handler set with the parent.  Note that the signal mask
+Share the signal handler set with the parent.
+Note that the signal mask
 is never shared between the parent and the child, even if
 .Dv CLONE_SIGHAND
 is set.
@@ -110,15 +113,15 @@ the parent blocks until the child exits.
 .Pp
 The
 .Nm
-call returns the pid of the child in the parent's context.  The child
-is provided no return value, since it begins execution at a different
-address.
+call returns the pid of the child in the parent's context.
+The child is provided no return value, since it begins execution at
+a different address.
 .Pp
 If the child process's entry point returns, the value it returns
 is passed to
 .Xr _exit 2 ,
-and the child process exits.  Note that if the child process wants
-to exit directly, it should use
+and the child process exits.
+Note that if the child process wants to exit directly, it should use
 .Xr _exit 2 ,
 and not
 .Xr exit 3 ,
@@ -135,7 +138,8 @@ Note that
 .Nm
 is not intended to be used for new native
 .Nx
-applications.  It is provided as a means to port software
+applications.
+It is provided as a means to port software
 originally written for the Linux operating system to
 .Nx .
 .Sh RETURN VALUES

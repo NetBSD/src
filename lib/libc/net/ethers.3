@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethers.3,v 1.8.12.4 2002/08/13 00:59:52 nathanw Exp $
+.\"	$NetBSD: ethers.3,v 1.8.12.5 2002/10/18 02:16:19 nathanw Exp $
 .\"
 .\" Written by roland@frob.com.  Public domain.
 .\"
@@ -20,11 +20,11 @@
 .Fd #include \*[Lt]net/if.h\*[Gt]
 .Fd #include \*[Lt]net/if_ether.h\*[Gt]
 .Ft char *
-.Fn ether_ntoa "struct ether_addr *e"
+.Fn ether_ntoa "const struct ether_addr *e"
 .Ft struct ether_addr *
 .Fn ether_aton "const char *s"
 .Ft int
-.Fn ether_ntohost "char *hostname" "struct ether_addr *e"
+.Fn ether_ntohost "char *hostname" "const struct ether_addr *e"
 .Ft int
 .Fn ether_hostton "const char *hostname" "struct ether_addr *e"
 .Ft int

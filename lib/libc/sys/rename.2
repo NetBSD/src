@@ -1,4 +1,4 @@
-.\"	$NetBSD: rename.2,v 1.12.4.3 2002/03/22 20:42:42 nathanw Exp $
+.\"	$NetBSD: rename.2,v 1.12.4.4 2002/10/18 02:17:11 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,9 +142,9 @@ The link named by
 .Fa to
 and the file named by
 .Fa from
-are on different logical devices (file systems).  Note that this error
-code will not be returned if the implementation permits cross-device
-links.
+are on different logical devices (file systems).
+Note that this error code will not be returned if the implementation
+permits cross-device links.
 .It Bq Er ENOSPC
 The directory in which the entry for the new name is being placed
 cannot be extended because there is no space left on the file

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctime.3,v 1.21.2.3 2002/03/22 20:42:46 nathanw Exp $
+.\"	$NetBSD: ctime.3,v 1.21.2.4 2002/10/18 02:17:22 nathanw Exp $
 .Dd March 31, 2001
 .Dt CTIME 3
 .Os
@@ -132,7 +132,8 @@ causes
 .Fn mktime
 to presume initially that summer time (for example, Daylight Saving Time
 in the U.S.A.) respectively,
-is or is not in effect for the specified time.  A negative value for
+is or is not in effect for the specified time.
+A negative value for
 .Fa tm_isdst
 causes the
 .Fn mktime
@@ -237,7 +238,8 @@ functions conform to
 .St -p1003.1c-95 .
 .Sh NOTES
 The return values point to static data; the data is overwritten by
-each call.  The
+each call.
+The
 .Fa tm_zone
 field of a returned
 .Va "struct tm"

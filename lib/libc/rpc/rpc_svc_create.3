@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_create 1.3 89/06/28 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\" $NetBSD: rpc_svc_create.3,v 1.1.6.3 2002/03/22 20:42:24 nathanw Exp $
+.\" $NetBSD: rpc_svc_create.3,v 1.1.6.4 2002/10/18 02:16:27 nathanw Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_CREATE 3
 .Sh NAME
@@ -74,8 +74,8 @@ an
 error will normally
 be returned.
 .Fa info
-should be a pointer to an
-integer.  Upon successful completion of the
+should be a pointer to an integer.
+Upon successful completion of the
 .Dv SVCGET_VERSQUIET
 request,
 .Fa *info
@@ -94,9 +94,8 @@ served by this server but the version number
 is outside the range registered with the server,
 an
 .Dv RPC_PROGVERSMISMATCH
-error will normally
-be returned.  It is sometimes desirable to
-change this behavior.
+error will normally be returned.
+It is sometimes desirable to change this behavior.
 .Fa info
 should be a
 pointer to an integer which is either 0
@@ -154,7 +153,8 @@ Destruction usually involves deallocation
 of private data structures,
 including
 .Fa xprt
-itself.  Use of
+itself.
+Use of
 .Fa xprt
 is undefined after calling this routine.
 .Pp

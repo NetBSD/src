@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsync.2,v 1.8.2.2 2002/03/22 20:42:36 nathanw Exp $
+.\"	$NetBSD: fsync.2,v 1.8.2.3 2002/10/18 02:16:52 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,8 +58,8 @@ should be used by programs that require a file to be
 in a known state, for example, in building a simple transaction
 facility.
 .Sh RETURN VALUES
-A 0 value is returned on success.  A -1 value indicates
-an error.
+A 0 value is returned on success.
+A -1 value indicates an error.
 .Sh ERRORS
 The
 .Fn fsync

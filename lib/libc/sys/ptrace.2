@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.13.2.5 2002/04/25 04:01:46 nathanw Exp $
+.\"	$NetBSD: ptrace.2,v 1.13.2.6 2002/10/18 02:17:09 nathanw Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -16,17 +16,20 @@
 .Fn ptrace "int request" "pid_t pid" "caddr_t addr" "int data"
 .Sh DESCRIPTION
 .Fn ptrace
-provides tracing and debugging facilities.  It allows one process (the
+provides tracing and debugging facilities.
+It allows one process (the
 .Em tracing
 process) to control another (the
 .Em traced
-process).  Most of the time, the traced process runs normally, but when
+process).
+Most of the time, the traced process runs normally, but when
 it receives a signal
 .Po
 see
 .Xr sigaction 2
 .Pc ,
-it stops.  The tracing process is expected to notice this via
+it stops.
+The tracing process is expected to notice this via
 .Xr wait 2
 or the delivery of a
 .Dv SIGCHLD
@@ -49,8 +52,9 @@ can be:
 .Bl -tag -width 12n
 .It Dv PT_TRACE_ME
 This request is the only one used by the traced process; it declares
-that the process expects to be traced by its parent.  All the other
-arguments are ignored.  (If the parent process does not expect to trace
+that the process expects to be traced by its parent.
+All the other arguments are ignored.
+(If the parent process does not expect to trace
 the child, it will probably be rather confused by the results; once the
 traced process stops, it cannot be made to continue except via
 .Fn ptrace . )
@@ -67,22 +71,25 @@ be ignored.
 .It Dv PT_READ_I , Dv PT_READ_D
 These requests read a single
 .Li int
-of data from the traced process' address space.  Traditionally,
+of data from the traced process' address space.
+Traditionally,
 .Fn ptrace
 has allowed for machines with distinct address spaces for instruction
 and data, which is why there are two requests: conceptually,
 .Dv PT_READ_I
 reads from the instruction space and
 .Dv PT_READ_D
-reads from the data space.  In the current
+reads from the data space.
+In the current
 .Nx
 implementation, these
-two requests are completely identical.  The
+two requests are completely identical.
+The
 .Fa addr
 argument specifies the address (in the traced process' virtual address
-space) at which the read is to be done.  This address does not have to
-meet any alignment constraints.  The value read is returned as the
-return value from
+space) at which the read is to be done.
+This address does not have to meet any alignment constraints.
+The value read is returned as the return value from
 .Eo \&
 .Fn ptrace
 .Ec .
@@ -91,13 +98,15 @@ These requests parallel
 .Dv PT_READ_I
 and
 .Dv PT_READ_D ,
-except that they write rather than read.  The
+except that they write rather than read.
+The
 .Fa data
 argument supplies the value to be written.
 .\" .It Dv PT_READ_U
 .\" This request reads an
 .\" .Li int
-.\" from the traced process' user structure.  The
+.\" from the traced process' user structure.
+.\" The
 .\" .Fa addr
 .\" argument specifies the location of the int relative to the base of the
 .\" user structure; it will usually be an integer value cast to
@@ -113,7 +122,8 @@ argument supplies the value to be written.
 .\" .Fa addr
 .\" must be aligned on an
 .\" .Li int
-.\" boundary.  The value read is returned as the return value from
+.\" boundary.
+.\" The value read is returned as the return value from
 .\" .Eo \&
 .\" .Fn ptrace
 .\" .Ec .
@@ -148,19 +158,23 @@ had been used with
 given as the signal to be delivered.
 .It Dv PT_ATTACH
 This request allows a process to gain control of an otherwise unrelated
-process and begin tracing it.  It does not need any cooperation from
-the to-be-traced process.  In this case,
+process and begin tracing it.
+It does not need any cooperation from the to-be-traced process.
+In this case,
 .Fa pid
 specifies the process ID of the to-be-traced process, and the other two
-arguments are ignored.  This request requires that the target process
+arguments are ignored.
+This request requires that the target process
 must have the same real UID as the tracing process, and that it must
-not be executing a setuid or setgid executable.  (If the tracing
-process is running as root, these restrictions do not apply.)  The
-tracing process will see the newly-traced process stop and may then
+not be executing a setuid or setgid executable.
+(If the tracing process is running as root,
+these restrictions do not apply.)
+The tracing process will see the newly-traced process stop and may then
 control it as if it had been traced all along.
 .Pp
 Three other restrictions apply to all tracing processes, even those
-running as root.  First, no process may trace a system process.
+running as root.
+First, no process may trace a system process.
 Second, no process may trace the process running
 .Xr init 8 .
 Third, if a process has its root directory set with
@@ -197,9 +211,11 @@ take place,
 .Fa piod_addr
 is the buffer in the tracing process, and
 .Fa piod_len
-is the length of the I/O request.  The
+is the length of the I/O request.
+The
 .Fa piod_op
-field specifies which type of I/O operation to perform.  Possible
+field specifies which type of I/O operation to perform.
+Possible
 values are:
 .Bl -tag -width 18n
 .It PIOD_READ_D
@@ -218,8 +234,8 @@ argument to
 On return, the
 .Fa piod_len
 field in the I/O descriptor will be updated with the actual number of
-bytes transferred.  If the requested I/O could not be successfully
-performed,
+bytes transferred.
+If the requested I/O could not be successfully performed,
 .Fn ptrace
 will return
 .Li -1
@@ -228,7 +244,8 @@ and set
 .El
 .Pp
 Additionally, the following requests exist but are
-not avaliable on all machine architectures. The file
+not avaliable on all machine architectures.
+The file
 .Aq Pa machine/ptrace.h
 lists which requests exist on a given machine.
 .Bl -tag -width 12n
@@ -311,12 +328,13 @@ pointed to by
 .\" .Li syscall_nargs
 .\" holds the number of arguments it expects, and
 .\" .Li syscall_args
-.\" holds the arguments themselves.  (Only the first
+.\" holds the arguments themselves.
+.\" (Only the first
 .\" .Li syscall_nargs
 .\" elements of
 .\" .Li syscall_args
-.\" are guaranteed to be useful.)  When a process stops on exit from a
-.\" syscall,
+.\" are guaranteed to be useful.)
+.\" When a process stops on exit from a syscall,
 .\" .Li syscall_num
 .\" is
 .\" .Eo \&
@@ -330,9 +348,11 @@ pointed to by
 .\" .Pc ,
 .\" or 0 if no error occurred, and
 .\" .Li syscall_rv
-.\" holds the return values.  (If the syscall returns only one value, only
+.\" holds the return values.
+.\" (If the syscall returns only one value, only
 .\" .Li syscall_rv[0]
-.\" is useful.)  The tracing process can modify any of these with
+.\" is useful.)
+.\" The tracing process can modify any of these with
 .\" .Dv PT_WRITE_U ;
 .\" only some modifications are useful.
 .\" .Pp
@@ -352,7 +372,8 @@ pointed to by
 .\" and
 .\" .Li syscall_rv
 .\" are passed back to the traced process directly (and therefore should be
-.\" filled in).  If the syscall number is otherwise out of range, a dummy
+.\" filled in).
+.\" If the syscall number is otherwise out of range, a dummy
 .\" syscall which simply produces an
 .\" .Er ENOSYS
 .\" error is effectively performed.
@@ -372,8 +393,8 @@ to return
 .Li -1
 as a non-error value; to disambiguate,
 .Va errno
-can be set to 0 before the call and checked afterwards.  The possible
-errors are:
+can be set to 0 before the call and checked afterwards.
+The possible errors are:
 .Bl -tag -width 4n
 .It Bq Er EAGAIN
 Process is currently exec'ing and cannot be traced.
@@ -412,8 +433,8 @@ was neither 0 nor a legal signal number.
 .Dv PT_GETFPREGS ,
 or
 .Dv PT_SETFPREGS
-was attempted on a process with no valid register set.  (This is
-normally true only of system processes.)
+was attempted on a process with no valid register set.
+(This is normally true only of system processes.)
 .El
 .It Bq Er EBUSY
 .Bl -bullet -compact
@@ -448,8 +469,9 @@ above.
 .Sh BUGS
 On the SPARC, the PC is set to the provided PC value for
 .Dv PT_CONTINUE
-and similar calls, but the NPC is set willy-nilly to 4 greater than the
-PC value.  Using
+and similar calls,
+but the NPC is set willy-nilly to 4 greater than the PC value.
+Using
 .Dv PT_GETREGS
 and
 .Dv PT_SETREGS

@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_markv.2,v 1.2.2.4 2002/08/01 03:28:18 nathanw Exp $
+.\"	$NetBSD: lfs_markv.2,v 1.2.2.5 2002/10/18 02:16:59 nathanw Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,8 +52,8 @@
 rewrites the blocks specified in
 .Fa blkiov
 to new disk locations, for the purposes of grouping them next to one
-another, or to move them out of a segment to clean it.  All fields of
-the BLOCK_INFO structure must be filled in, except for
+another, or to move them out of a segment to clean it.
+All fields of the BLOCK_INFO structure must be filled in, except for
 .Fa bi_segcreate .
 If
 .Fa bi_daddr
@@ -80,7 +80,8 @@ is specified as LFS_UNUSED_LBN, the inode itself will be rewritten.
 .Pp
 The
 .Fa blkiov
-argument is an array of BLOCK_INFO structures (see below).  The
+argument is an array of BLOCK_INFO structures (see below).
+The
 .Fa blkcnt
 argument determines the size of the
 .Fa blkiov
@@ -126,8 +127,8 @@ function call appeared in
 .Sh BUGS
 The functionality of
 .Fn lfs_markv
-does not really belong in user space.  Among other things it could be
-used to work around the
+does not really belong in user space.
+Among other things it could be used to work around the
 SF_IMMUTABLE
 and
 SF_APPEND

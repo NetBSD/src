@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettimeofday.2,v 1.12.6.5 2002/03/22 20:42:37 nathanw Exp $
+.\"	$NetBSD: gettimeofday.2,v 1.12.6.6 2002/10/18 02:16:57 nathanw Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,10 +60,12 @@ The system's notion of the current UTC time is obtained with the
 .Fn gettimeofday
 call, and set with the
 .Fn settimeofday
-call.  The time is expressed in seconds and microseconds
-since midnight (0 hour), January 1, 1970.  The resolution of the system
-clock is hardware dependent, and the time may be updated continuously or
-in ``ticks.''  If
+call.
+The time is expressed in seconds and microseconds
+since midnight (0 hour), January 1, 1970.
+The resolution of the system clock is hardware dependent,
+and the time may be updated continuously or in ``ticks.''
+If
 .Fa tp
 is NULL, the time will not be returned or set.
 .Pp
@@ -89,7 +91,8 @@ struct timezone {
 .Pp
 The
 .Fa timezone
-structure is provided only for source compatibility.  It is ignored by
+structure is provided only for source compatibility.
+It is ignored by
 .Fn settimeofday ,
 and
 .Fn gettimeofday
@@ -100,7 +103,8 @@ If the calling user is not the super-user, then the
 function in the standard C library will try to use the
 .Xr clockctl 4
 device if present, thus making possible for non privileged users to
-set the system time. If
+set the system time.
+If
 .Xr clockctl 4
 is not present or not accessible, then
 .Fn settimeofday

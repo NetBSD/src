@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.18.2.4 2002/03/22 20:42:44 nathanw Exp $
+.\"	$NetBSD: socket.2,v 1.18.2.5 2002/10/18 02:17:15 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,8 +70,8 @@ PF_APPLETALK	AppleTalk protocols
 .Pp
 The socket has the indicated
 .Fa type ,
-which specifies the semantics of communication.  Currently
-defined types are:
+which specifies the semantics of communication.
+Currently defined types are:
 .Pp
 .Bd -literal -offset indent -compact
 SOCK_STREAM
@@ -113,9 +113,10 @@ The
 .Fa protocol
 specifies a particular protocol to be used with the socket.
 Normally only a single protocol exists to support a particular
-socket type within a given protocol family.  However, it is possible
-that many protocols may exist, in which case a particular protocol
-must be specified in this manner.  The protocol number to use is
+socket type within a given protocol family.
+However, it is possible that many protocols may exist, in which case
+a particular protocol must be specified in this manner.
+The protocol number to use is
 particular to the \*(lqcommunication domain\*(rq in which communication
 is to take place; see
 .Xr protocols 5 .
@@ -123,12 +124,15 @@ is to take place; see
 Sockets of type
 .Dv SOCK_STREAM
 are full-duplex byte streams, similar
-to pipes.  A stream socket must be in a
+to pipes.
+A stream socket must be in a
 .Em connected
 state before any data may be sent or received
-on it.  A connection to another socket is created with a
+on it.
+A connection to another socket is created with a
 .Xr connect 2
-call.  Once connected, data may be transferred using
+call.
+Once connected, data may be transferred using
 .Xr read 2
 and
 .Xr write 2
@@ -136,7 +140,8 @@ calls or some variant of the
 .Xr send 2
 and
 .Xr recv 2
-calls.  When a session has been completed a
+calls.
+When a session has been completed a
 .Xr close 2
 may be performed.
 Out-of-band data may also be transmitted as described in
@@ -147,7 +152,8 @@ and received as described in
 The communications protocols used to implement a
 .Dv SOCK_STREAM
 ensure that data
-is not lost or duplicated.  If a piece of data for which the
+is not lost or duplicated.
+If a piece of data for which the
 peer protocol has buffer space cannot be successfully transmitted
 within a reasonable length of time, then
 the connection is considered broken and calls
@@ -174,8 +180,8 @@ which do not handle the signal, to exit.
 sockets employ the same system calls
 as
 .Dv SOCK_STREAM
-sockets.  The only difference
-is that
+sockets.
+The only difference is that
 .Xr read 2
 calls will return only the amount of data requested,
 and any remaining in the arriving packet will be discarded.
@@ -186,7 +192,8 @@ and
 sockets allow sending of datagrams to correspondents
 named in
 .Xr send 2
-calls.  Datagrams are generally received with
+calls.
+Datagrams are generally received with
 .Xr recvfrom 2 ,
 which returns the next datagram with its return address.
 .Pp

@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_clnt_create 1.5 89/07/24 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_clnt_create.3,v 1.2.6.3 2002/03/22 20:42:23 nathanw Exp $
+.\"	$NetBSD: rpc_clnt_create.3,v 1.2.6.4 2002/10/18 02:16:25 nathanw Exp $
 .Dd May 7, 1993
 .Dt RPC_CLNT_CREATE 3
 .Os
@@ -324,7 +324,8 @@ If
 is
 .Dv NULL
 and it is connection-oriented, it is assumed that the file descriptor
-is connected.  For connectionless transports, if
+is connected.
+For connectionless transports, if
 .Fa svcaddr
 is
 ..Dv NULL ,
@@ -431,7 +432,8 @@ does not consult the remote rpcbind service for this information.
 .It struct rpc_createerr rpc_createerr;
 A global variable whose value is set by any RPC
 client handle creation routine
-that fails.  It is used by the routine
+that fails.
+It is used by the routine
 .Fn clnt_pcreateerror
 to print the reason for the failure.
 .El
