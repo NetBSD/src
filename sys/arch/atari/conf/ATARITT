@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.16 1996/11/08 14:12:19 leo Exp $
+#	$NetBSD: ATARITT,v 1.17 1996/11/17 13:33:36 leo Exp $
 #
 # ATARI-TT
 #
@@ -49,10 +49,6 @@ options		MSDOSFS		# MSDOS filesystem
 options		CD9660		# ISO 9660 filesystem with Rock Ridge
 
 options		FIFO		# FIFO operations on vnodes
-
-options		SWAPPAGER	# Pager for swap device
-options		VNODEPAGER	# Pager for vnodes
-options		DEVPAGER	# Pager
 
 #
 # Misc. debuging options
