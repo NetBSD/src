@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.2 2003/04/25 07:35:21 ragge Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.3 2003/04/25 20:30:58 ragge Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -48,6 +48,7 @@
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
+#include "opt_ddbparam.h"	/* for SYMTAB_SPACE */
 #endif
 
 #include <sys/param.h>
@@ -102,6 +103,12 @@ const struct cdevsw ksyms_cdevsw = {
 };
 #endif
 
+#ifdef SYMTAB_SPACE
+#define		SYMTAB_FILLER	"|This is the symbol table!"
+
+char		db_symtab[SYMTAB_SPACE] = SYMTAB_FILLER;
+int		db_symtabsize = SYMTAB_SPACE;
+#endif
 
 /*
  * Store the different symbol tables in a double-linked list.
@@ -192,16 +199,42 @@ addsymtab(char *name, Elf_Ehdr *ehdr, struct symtab *tab)
  * Setup the kernel symbol table stuff.
  */
 void
-ksyms_init(caddr_t start, caddr_t end)
+ksyms_init(int symsize, caddr_t start, caddr_t end)
 {
-	Elf_Ehdr *ehdr = (Elf_Ehdr *)start;
+	Elf_Ehdr *ehdr;
+
+#ifdef SYMTAB_SPACE
+	if (symsize <= 0 &&
+	    strncmp(db_symtab, SYMTAB_FILLER, sizeof(SYMTAB_FILLER))) {
+		symsize = db_symtabsize;
+		start = db_symtab;
+		end = db_symtab + db_symtabsize;
+	}
+#endif
+	if (symsize <= 0) {
+		printf("[ Kernel symbol table missing! ]\n");
+		return;
+	}
+
+	/* Sanity check */
+	if (ALIGNED_POINTER(start, long) == 0) {
+		printf("[ Kernel symbol table has bad start address %p ]\n",
+		    start);
+		return;
+	}
+
+	ehdr = (Elf_Ehdr *)start;
 
 	/* check if this is a valid ELF header */
 	/* No reason to verify arch type, the kernel is actually running! */
 	if (memcmp(ehdr->e_ident, ELFMAG, SELFMAG) ||
 	    ehdr->e_ident[EI_CLASS] != ELFCLASS ||
 	    ehdr->e_version > 1) {
-		printf("Kernel symbol table invalid!\n");
+#ifdef notyet /* DDB */
+		if (ddb_init(symsize, start, end))
+			return; /* old-style symbol table */
+#endif
+		printf("[ Kernel symbol table invalid! ]\n");
 		return; /* nothing to do */
 	}
 
