@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.87 2000/01/25 06:11:00 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.88 2000/01/25 06:45:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.87 2000/01/25 06:11:00 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.88 2000/01/25 06:45:18 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -666,8 +666,8 @@ remotemodtime(file, noisy)
 			*frac++ = '\0';
 		if (strlen(timestr) == 15 && strncmp(timestr, "191", 3) == 0) {
 			/*
-			 * workaround lame ftpd's that return `19100'
-			 * instead of `2000'
+			 * XXX:	Workaround for lame ftpd's that return
+			 *	`19100' instead of `2000'
 			 */
 			fprintf(ttyout,
 	    "Y2K warning! Incorrect time-val `%s' received from server.\n",
