@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.18 2000/05/22 17:17:44 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.19 2000/07/27 17:29:05 cgd Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -117,13 +117,12 @@ tx_init()
 	platform.reboot = tx_reboot;
 	platform.iointr = tx39icu_intr;
 
-	model = (cpu_id.cpu.cp_majrev << 4)| cpu_id.cpu.cp_minrev;
+	model = MIPS_PRID_REV(cpu_id);
 
 	switch (model) {
 	default:
 		 /* Unknown TOSHIBA TX39-series */
-		sprintf(cpu_name, "Unknown TOSHIBA TX39-series %x.%x", 
-			cpu_id.cpu.cp_majrev, cpu_id.cpu.cp_minrev);
+		sprintf(cpu_name, "Unknown TOSHIBA TX39-series %x", model);
 		break;
 	case TMPR3912:
 		tx39clock_cpuspeed(&cpuclock, &cpuspeed);

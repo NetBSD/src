@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.39 2000/07/20 18:33:40 jeffs Exp $ */
+/* $NetBSD: locore.h,v 1.40 2000/07/27 17:29:06 cgd Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -188,23 +188,14 @@ extern long *mips_locoresw[];
 /*
  * CPU identification, from PRID register.
  */
-union cpuprid {
-	int	cpuprid;
-	struct {
-#if BYTE_ORDER == BIG_ENDIAN
-		u_int	pad1:16;	/* reserved */
-		u_int	cp_imp:8;	/* implementation identifier */
-		u_int	cp_majrev:4;	/* major revision identifier */
-		u_int	cp_minrev:4;	/* minor revision identifier */
-#else
-		u_int	cp_minrev:4;	/* minor revision identifier */
-		u_int	cp_majrev:4;	/* major revision identifier */
-		u_int	cp_imp:8;	/* implementation identifier */
-		u_int	pad1:16;	/* reserved */
-#endif
-	} cpu;
-};
+typedef int mips_prid_t;
 
+#define	MIPS_PRID_REV(x)	(((x) >>  0) & 0x00ff)
+#define	MIPS_PRID_IMPL(x)	(((x) >>  8) & 0x00ff)
+#define	MIPS_PRID_RSVD(x)	(((x) >> 16) & 0xffff)
+
+#define	MIPS_PRID_REV_MIN(x)	((MIPS_PRID_REV(x) >> 0) & 0x0f)
+#define	MIPS_PRID_REV_MAJ(x)	((MIPS_PRID_REV(x) >> 4) & 0x0f)
 
 #ifdef _KERNEL
 
@@ -212,8 +203,9 @@ union cpuprid {
  * Global variables used to communicate CPU type, and parameters
  * such as cache size, from locore to higher-level code (e.g., pmap).
  */
-extern union	cpuprid cpu_id;
-extern union	cpuprid fpu_id;
+
+extern mips_prid_t cpu_id;
+extern mips_prid_t fpu_id;
 extern int	cpu_arch;
 extern int	mips_num_tlb_entries;
 extern u_int	mips_L1DCacheSize;
