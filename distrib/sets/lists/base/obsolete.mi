@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.26 2001/04/05 22:03:57 thorpej Exp $
+# $NetBSD: obsolete.mi,v 1.27 2001/04/06 14:18:56 wiz Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -15,6 +15,8 @@
 /usr/include/ss
 /usr/lib/libntp.so.0
 /usr/lib/libntp.so.0.0
+/usr/lib/runemodule/libUTF2.a
+/usr/lib/runemodule/libUTF2.so
 /usr/lib/runemodule/libUTF2.so.3
 /usr/lib/runemodule/libUTF2.so.3.0
 /usr/libexec/hprop
