@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.7 1997/03/29 03:05:15 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.8 1997/03/29 04:39:17 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ip_fil.h,v 1.7 1997/03/29 03:05:15 thorpej Exp $
+ * $Id: ip_fil.h,v 1.8 1997/03/29 04:39:17 darrenr Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -280,11 +280,10 @@ typedef	struct ipl_ci	{
 
 #ifndef	_KERNEL
 extern	int	fr_check __P((struct ip *, int, struct ifnet *, int, char *));
-extern	int	(*fr_checkp) __P((struct ip *, int, struct ifnet *,
-				  int, char *));
+extern	int	(*fr_checkp) __P((struct ip *, int, struct ifnet *, int, char **));
 extern	int	send_reset __P((struct ip *, struct ifnet *));
 extern	int	icmp_error __P((struct ip *, struct ifnet *));
-extern	void    ipllog __P((void));
+extern	int	ipllog __P((void));
 extern	void	ipfr_fastroute __P((struct ip *, fr_info_t *, frdest_t *));
 #else
 # if	SOLARIS
@@ -316,7 +315,11 @@ extern	int	ipl_enable __P((void));
 extern	int	ipl_disable __P((void));
 
 #ifndef	_KERNEL
+#if defined(__NetBSD__)
+extern	int	iplioctl __P((dev_t, u_long, caddr_t, int));
+#else
 extern	int	iplioctl __P((dev_t, int, caddr_t, int));
+#endif /* __NetBSD__ */
 extern	int	iplopen __P((dev_t, int));
 extern	int	iplclose __P((dev_t, int));
 #else
