@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.42 1999/01/10 12:56:06 mrg Exp $
+#	$NetBSD: MAKEDEV,v 1.43 1999/01/16 01:40:29 abs Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -89,7 +89,8 @@ all)
 	sh -$- $0 cd0 st0 st1 fd0
 	sh -$- $0 pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
 	sh -$- $0 ccd0 ccd1 ccd2 ccd3 raid0 raid1 raid2 raid3
-	sh -$- $0 bpf0 bpf1 bpf2 bpf3 bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
+	sh -$- $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	sh -$- $0 bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
 	sh -$- $0 cgeight0 tcx0
 	sh -$- $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh -$- $0 lkm random local
