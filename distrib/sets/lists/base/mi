@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.324.2.7 2003/02/10 06:05:42 jmc Exp $
+# $NetBSD: mi,v 1.324.2.8 2003/09/21 11:01:02 tron Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -669,6 +669,7 @@
 ./usr/sbin/kvm_mkdb		base-sysutil-bin
 ./usr/sbin/lastlogin		base-sysutil-bin
 ./usr/sbin/link			base-sysutil-bin
+./usr/sbin/linkfarm		base-pkgutil-bin
 ./usr/sbin/lpc			base-lpr-bin
 ./usr/sbin/lpd			base-lpr-bin
 ./usr/sbin/lptest		base-lpr-bin
@@ -720,6 +721,7 @@
 ./usr/sbin/pkg_create		base-pkgutil-bin
 ./usr/sbin/pkg_delete		base-pkgutil-bin
 ./usr/sbin/pkg_info		base-pkgutil-bin
+./usr/sbin/pkg_view		base-pkgutil-bin
 ./usr/sbin/postalias		base-postfix-bin
 ./usr/sbin/postcat		base-postfix-bin
 ./usr/sbin/postconf		base-postfix-bin
