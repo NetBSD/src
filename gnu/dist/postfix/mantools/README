@@ -18,4 +18,21 @@ srctoman	extract man page from source file
 
 man2html	quick script to htmlize nroff -man output
 
-postlink	quick script to hyperlink man2html output
+postlink	quick script to hyperlink HTML text
+
+See the proto/README file for the following tools that generate
+HTML and ASCII forms of README documents and of some manual pages.
+
+fixman		quick hack to patch postconf.proto text into C sorce
+
+makereadme	create README_FILES table of contents (AAAREADME)
+
+html2readme	convert HTML to README file
+
+postconf2html	postconf.proto -> postconf.5.html
+
+postconf2man	postconf.proto -> postconf.5 (nroff input)
+
+xpostconf	extract selected sections from postconf.proto
+
+xpostdef	re-compute the defaults in postconf.proto

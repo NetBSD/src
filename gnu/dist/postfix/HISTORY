@@ -104,8 +104,8 @@ Apologies for any names omitted.
 	that use short hostnames will have to specify their FQDN
 	in main.cf (this will eventually be done by the system
 	installation/configuration procedure). Should the config
-	language support backticks so one can say `domainname`? What
-	about $name stuff between the backtics?
+	language support backticks so one can say `domainname`?
+	What about $name stuff between the backtics?
 
 	Security: the master now creates FIFOs and UNIX-domain
 	sockets as the mail owner instead of as root, for better
@@ -977,7 +977,7 @@ Apologies for any names omitted.
 
 19980824
 
-	Bugfix: transport table lookup keys were case sensitive.  
+	Bugfix: transport table lookup keys were case sensitive.
 
 19980825
 
@@ -1030,10 +1030,11 @@ Apologies for any names omitted.
 	Feature: site!user is rewritten to user@site, under control
 	of the boolean parameter swap_bangpath (default: yes).
 
-	Feature: permit a naked IP address in HELO commands (i.e. an
-	address without the enclosing [] as required by the RFC), by
-	specifying "permit_naked_ip_address" as one of the restrictions
-	in the "smtpd_helo_restrictions" config parameter.
+	Feature: permit a naked IP address in HELO commands (i.e.
+	an address without the enclosing [] as required by the
+	RFC), by specifying "permit_naked_ip_address" as one of
+	the restrictions in the "smtpd_helo_restrictions" config
+	parameter.
 
 19980904
 
@@ -1052,8 +1053,8 @@ Apologies for any names omitted.
 	separate file global/mail_version.h, so that a version
 	change no longer results in massive recompilation.
 
-	Bugfix: Errors-To was flagged as a sender address, so
-	the address never was picked up.
+	Bugfix: Errors-To was flagged as a sender address, so the
+	address never was picked up.
 
 	Code cleanup: support for Errors-To: headers completed.
 
@@ -1128,7 +1129,8 @@ Apologies for any names omitted.
 	Bugfix: after vmailer reload, single-threaded servers could
 	exit before flushing unwritten data to the client. Example:
 	cleanup would exit before acking success to pickup, so the
-	message would be delivered twice. Bug reported by Brian Candler.
+	message would be delivered twice. Bug reported by Brian
+	Candler.
 
 	Cleanup: removed spurious error output from vmailer-script.
 	Reported by Brian Candler.
@@ -1220,8 +1222,8 @@ Apologies for any names omitted.
 
 	Bugfix: the change in virtual/canonical map search order
 	broke @domain entries; they would never be looked up if
-	the address matched $myorigin or $mydestinations. Found
-	by Chip Christian who now regrets asking for the change.
+	the address matched $myorigin or $mydestinations. Found by
+	Chip Christian who now regrets asking for the change.
 
 	Bugfix: cleanup initialized an error mask incorrectly, so
 	that it would keep writing to a file larger than the queue
@@ -1264,8 +1266,8 @@ Apologies for any names omitted.
 
 19981002
 
-	SMTPD now logs "lost connection after end-of-message" instead
-	of "lost connection after DATA".
+	SMTPD now logs "lost connection after end-of-message"
+	instead of "lost connection after DATA".
 
 19981005
 
@@ -1339,7 +1341,8 @@ Apologies for any names omitted.
 
 	Workaround: with UNIX-domain sockets, LINUX connect() blocks
 	until the server calls accept(). File: qmgr/qmgr_transport.c.
-	Terry Lorrah and Scott Cotton provided the necessary evidence.
+	Terry Lorrah and Scott Cotton provided the necessary
+	evidence.
 
 19981020
 
@@ -1492,7 +1495,7 @@ Apologies for any names omitted.
 	Compatibility: the tokenizer for alias/forward/etc.
 	expansion now updates an optional counter with the number
 	of destinations found; If no destinations is found in a
-	.forward file, deliver to the mailbox instead. Thanks, 
+	.forward file, deliver to the mailbox instead. Thanks,
 	Daniel Eisenbud, for showing the way to go.
 
 	Robustness: the pickup daemon should always include a
@@ -1503,9 +1506,9 @@ Apologies for any names omitted.
 	Robustness: duplicate entries in aliases or maps now cause
 	a warning instead of a fatal error (and an incomplete file).
 
-	Robustness: mkmap now prints a warning when an entry is
-	in "key: value" format, which is the format expected for
-	alias databases, not for maps.  
+	Robustness: mkmap now prints a warning when an entry is in
+	"key: value" format, which is the format expected for alias
+	databases, not for maps.
 
 	Portability: on LINUX, prepend "+" to the getopt() options
 	string so that getopt() will stop at the first non-option
@@ -1589,7 +1592,8 @@ Apologies for any names omitted.
 
 19981108
 
-	Bugfix: minor memory leak in the user+foo table lookup code.
+	Bugfix: minor memory leak in the user+foo table lookup
+	code.
 
 	Configurability: specify virtual.domain in the virtual map,
 	and mail for unknown@virtual.domain will bounce automatically.
@@ -1598,7 +1602,8 @@ Apologies for any names omitted.
 	d'Itri put me on the right track.
 
 	Configurability: The mydestinations configuration parameter
-	now accepts /file/name expressions and type:name lookup tables.
+	now accepts /file/name expressions and type:name lookup
+	tables.
 
 	Code cleanup: in order to make the previous two enhancements
 	possible, revised the string/host/address matching engine
@@ -1812,8 +1817,9 @@ Apologies for any names omitted.
 	by hand).
 
 	Feature: when a writable maildrop directory is a problem,
-	sites can make the new "postdrop" utility set-gid. This command
-	is never used when the maildrop directory is world-writable.
+	sites can make the new "postdrop" utility set-gid. This
+	command is never used when the maildrop directory is
+	world-writable.
 
 	Robustness: make the queue file creation routine more
 	resistant against denial of service race attack. File:
@@ -1930,8 +1936,8 @@ Apologies for any names omitted.
 	Hewlett-Packard). File: cleanup/cleanup_envelope.c.
 
 	Compatibility: the transport table now uses .domain.name
-	to match subdomains, just like sendmail mailer tables
-	(patch by Lamont Jones, Hewlett-Packard).
+	to match subdomains, just like sendmail mailer tables (patch
+	by Lamont Jones, Hewlett-Packard).
 
 	Feature: mailq now ends with a total queue size summary
 	(Eilon Gishri, Israel Inter University Computation Center).
@@ -1976,8 +1982,8 @@ Apologies for any names omitted.
 
 19990121
 
-	Feature: pickup (again) logs uid and sender address.
-	On repeated request by Scott Cotton, Internet Consultants
+	Feature: pickup (again) logs uid and sender address.  On
+	repeated request by Scott Cotton, Internet Consultants
 	Group, Inc.
 
 	Portability: doze() function for systems without usleep().
@@ -2230,14 +2236,14 @@ Apologies for any names omitted.
 
 19990307
 
-	Feature: LDAP lookups, updated by Jon Hensley, Merit
-	Network, USA.
+	Feature: LDAP lookups, updated by Jon Hensley, Merit Network,
+	USA.
 
 	Feature: regular expression (PCRE) support by Andrew
 	McNamara, connect.com.au Pty. Ltd., Australia. In order to
 	use this code specify pcre:/file/name. You can use this
-	anywhere you would use a DB or DBM file, NIS or LDAP.
-	See: PCRE_README for how to enable this code.
+	anywhere you would use a DB or DBM file, NIS or LDAP.  See:
+	PCRE_README for how to enable this code.
 
 	Feature: "delay_warning_time = 4" causes Postfix to send
 	a "your mail is delayed" notice after approx. 4 hours.
@@ -2330,7 +2336,7 @@ Apologies for any names omitted.
 
 	Enhancement: include the client network address in the
 	rejected by RBL response. Lamont Jones, Hewlett-Packard.
-	
+
 	Workaround: use fstat() to figure out if the maildrop is
 	world-writable. access() uses the real uid, which stinks.
 
@@ -2358,7 +2364,7 @@ Apologies for any names omitted.
 
 	Workaround: more watchdog timers for postfix-unfriendly
 	systems. By now every Postfix daemon has one. Call it life
-	insurance. 
+	insurance.
 
 	Robustness: increased the maximal time to receive or deliver
 	mail from $ipc_timeout (default: 3600 seconds) to the more
@@ -2452,7 +2458,7 @@ Apologies for any names omitted.
 
 	Bugfix: when a recipient appeared multiple times in a local
 	alias or include expansion, the delivery status could be
-	left uninitialized, causing the mail to be deferred and 
+	left uninitialized, causing the mail to be deferred and
 	delivered again. File: local/recipient.c.
 
 19990327
@@ -2547,8 +2553,8 @@ Apologies for any names omitted.
 	mail is bounced with a "mail loops back to myself" error).
 
 	Config: in order to make feature tracking easier the source
-	code distribution now has a copy of the default settings in
-	conf/main.cf.default.
+	code distribution now has a copy of the default settings
+	in conf/main.cf.default.
 
 	Feature: separate configurable postmaster addresses for
 	single bounces (bounce_notice_recipient), double bounces
@@ -2599,8 +2605,8 @@ Apologies for any names omitted.
 
 19990410
 
-	Bugfix: auto-detection of changes to DB or DBM lookup
-	tables wasn't done for TCP connections.
+	Bugfix: auto-detection of changes to DB or DBM lookup tables
+	wasn't done for TCP connections.
 
 19990410
 
@@ -2812,8 +2818,8 @@ Apologies for any names omitted.
 19990610
 
 	Bugfix: the "is this the loopback interface" test was
-	broken.  Reported by Claus Fischer @microworld.com.
-	File: smtp/smtp_connect.c.
+	broken.  Reported by Claus Fischer @microworld.com.  File:
+	smtp/smtp_connect.c.
 
 	Usability: added helpful warnings about restrictions that
 	are being ignored after check_relay_domains, etc.
@@ -2863,8 +2869,8 @@ Apologies for any names omitted.
 	File: smtpd/smtpd.c.
 
 	Bugfix: fencepost error in the doze() routine (an usleep()
-	replacement for systems without one). Found by Simon J Mudd.
-	File: util/doze.c.
+	replacement for systems without one). Found by Simon J
+	Mudd.  File: util/doze.c.
 
 19990624
 
@@ -2890,8 +2896,8 @@ Apologies for any names omitted.
 
 19990628
 
-	Feature: the postlock command now returns EX_TEMPFAIL
-	when the destination file is locked by another process.
+	Feature: the postlock command now returns EX_TEMPFAIL when
+	the destination file is locked by another process.
 
 19990705
 
@@ -2917,8 +2923,8 @@ Apologies for any names omitted.
 19990714
 
 	Robustness: add PATH statement to Solaris2 chroot setup
-	script to avoid running the ucb commands. Problem found
-	by Panagiotis Astithas @ ece.ntua.gr.
+	script to avoid running the ucb commands. Problem found by
+	Panagiotis Astithas @ ece.ntua.gr.
 
 19990721
 
@@ -2944,14 +2950,14 @@ Apologies for any names omitted.
 
 19990813
 
-	Bugfix: sendmail -t (extract recipients from headers) did not
-	work when the always_bcc feature was turned on. Reported
+	Bugfix: sendmail -t (extract recipients from headers) did
+	not work when the always_bcc feature was turned on. Reported
 	by: Denis Shaposhnikov @ neva.vlink.ru.
 
 19990813
-	Bugfix: "sendmail -bd" returns a bogus exit status (the child
-	process ID). Fix by Lamont Jones of Hewlett-Packard. File:
-	sendmail/sendmail.c.
+	Bugfix: "sendmail -bd" returns a bogus exit status (the
+	child process ID). Fix by Lamont Jones of Hewlett-Packard.
+	File:  sendmail/sendmail.c.
 
 19990824
 
@@ -3087,8 +3093,8 @@ Apologies for any names omitted.
 
 	Changed "permit_address_map" into "permit_recipient_map"
 	and added a test for the case that they specify a lookup
-	table on the right-hand side of an SMTPD access map.
-	File: smtpd/smtpd_access.c.
+	table on the right-hand side of an SMTPD access map.  File:
+	smtpd/smtpd_access.c.
 
 	Cleanup: removed spurious sender address checks for <>.
 	File: smtpd/smtpd_check.c.
@@ -4063,8 +4069,8 @@ Apologies for any names omitted.
 20000623
 
 	Bugfix: the SMTP server did not reset the so-called junk
-	command counter after successful delivery (Mark Hoffman
-	@ wallst.com).  File: smtpd/smtpd.c.
+	command counter after successful delivery (Mark Hoffman @
+	wallst.com).  File: smtpd/smtpd.c.
 
 20000625
 
@@ -4373,8 +4379,8 @@ Apologies for any names omitted.
 20001025
 
 	Bugfix: virtual map expansion stopped too early with
-	self-referential aliases. Reported by Michael Douglass
-	@ datafoundry.net. File: cleanup/cleanup_map1n.c.
+	self-referential aliases. Reported by Michael Douglass @
+	datafoundry.net. File: cleanup/cleanup_map1n.c.
 
 20001026
 
@@ -4535,7 +4541,7 @@ Apologies for any names omitted.
 	of the postlock command, and of local delivery to mailbox
 	or /file/name.  Files: util/safe_open.c, util/myflock.c,
 	global/deliver_flock.c, global/mbox_conf.c, global/mbox_open.c.
-	local/mailbox.c, local/file.c, postlock/postlock.c.  
+	local/mailbox.c, local/file.c, postlock/postlock.c.
 
 	Compatibility: the old sun_mailtool_compatibility parameter
 	is being phased out. It still works (by turning off
@@ -4662,8 +4668,8 @@ Apologies for any names omitted.
 20001217
 
 	Bugfix: reorganized some code in the MYSQL client to end
-	a number of memory allocation/deallocation problems.
-	This code needs more work. File: dict_mysql.c.
+	a number of memory allocation/deallocation problems.  This
+	code needs more work. File: dict_mysql.c.
 
 20001218
 
@@ -4745,8 +4751,8 @@ Apologies for any names omitted.
 20010121
 
 	Workaround: specify "broken_sasl_auth_clients = yes" in
-	order to support old Microsoft clients that implement
-	a non-standard version of RFC 2554 (AUTH command).
+	order to support old Microsoft clients that implement a
+	non-standard version of RFC 2554 (AUTH command).
 
 	Workaround: Lotus Domino 5.0.4 violates RFC 2554 and replies
 	to EHLO with AUTH=LOGIN. File: smtp/smtp_proto.c.
@@ -4891,8 +4897,8 @@ Apologies for any names omitted.
 	{qmgr,nqmgr}/qmgr_message.c.
 
 	Workaround: Solaris socketpair() can fail with EINTR. Added
-	a sane_socketpair.c module that joins the ranks of the other
-	sane_whatever workarounds. Reported by Andrew McNamara.
+	a sane_socketpair.c module that joins the ranks of the
+	other sane_whatever workarounds. Reported by Andrew McNamara.
 	File: util/sane_socketpair.[hc]
 
 20010222
@@ -4925,8 +4931,9 @@ Apologies for any names omitted.
 	Portability: MACOSX patches by Gerben Wierda.
 
 	Portability: Solaris /dev/null is a symlink, which tripped
-	up the code to safely open a file before local delivery. We now
-	grudgingly allow symlinks owned by root. File: util/safe_open.c.
+	up the code to safely open a file before local delivery.
+	We now grudgingly allow symlinks owned by root. File:
+	util/safe_open.c.
 
 20010224
 
@@ -5027,8 +5034,8 @@ Apologies for any names omitted.
 	do not immediately close the client side, but close it from
 	a background thread that waits until the server closes the
 	socket first. This avoids trouble with socket implementations
-	that destroy a socket when the client closes a socket
-	before the server has received the client's data.  Files:
+	that destroy a socket when the client closes a socket before
+	the server has received the client's data.  Files:
 	util/{inet,unix,stream}_trigger.c, util/events.c,
 	master/master_trigger.c, postkick/postkick.c.
 
@@ -5266,8 +5273,8 @@ Apologies for any names omitted.
 
 	Workaround: some MTAs fall on their face when they receive
 	unexpectedly long lines. From now on, Postfix defaults to
-	breaking long lines at 2048 (like Sendmail so it has got to
-	be right). To get the old, content preserving, behavior
+	breaking long lines at 2048 (like Sendmail so it has got
+	to be right). To get the old, content preserving, behavior
 	specify "smtp_truncate_lines = no". File: smtp/smtp_proto.c.
 
 20010614
@@ -5724,8 +5731,8 @@ Apologies for any names omitted.
 
 	Robustness: add a file size limit to the sendmail and
 	postdrop submission programs to stop run-away process
-	accidents. This is not a defense against DOS attack.
-	Files: sendmail/sendmail.c, postdrop/postdrop.c.
+	accidents. This is not a defense against DOS attack.  Files:
+	sendmail/sendmail.c, postdrop/postdrop.c.
 
 	That resulted in a considerable amount of work to properly
 	propagate "file too large" conditions back to the sendmail
@@ -5958,9 +5965,9 @@ Apologies for any names omitted.
 
 20020114
 
-	Bugfix: alternate_config_directories did not take comma
-	or whitespace as separators. File: global/mail_conf.c.
-	Victor Duchovni, Morgan Stanley.
+	Bugfix: alternate_config_directories did not take comma or
+	whitespace as separators. File: global/mail_conf.c.  Victor
+	Duchovni, Morgan Stanley.
 
 	Bugfix: the rewritten postfix-install script did not chattr
 	+S the Postfix queue.
@@ -6115,8 +6122,8 @@ Apologies for any names omitted.
 
 	Documentation: add note to sendmail manual page that running
 	"sendmail -bs" as $mail_owner enables SMTP server UCE and
-	access control checks. This is meant for use from inetd etc.
-	Matthias Andree.
+	access control checks. This is meant for use from inetd
+	etc.  Matthias Andree.
 
 20020311
 
@@ -6151,7 +6158,7 @@ Apologies for any names omitted.
 	Cleanup: add a msg_warn() call when fork() fails in
 	pipe_command(), to make problems easier to investigate.
 	Chris Wedgwood. File:  global/pipe_command.c.
-	
+
 20020320
 
 	Feature: smtp_helo_name parameter to specify the hostname
@@ -6254,8 +6261,8 @@ Apologies for any names omitted.
 
 	Cleanup: install parameter defaults can now be overruled
 	from makedefs: sendmail_path, mailq_path, newaliases_path,
-	command_directory, daemon_directory. Based on code by
-	Victor Duchovni, Morgan Stanley. File: util/sys_defs.h.
+	command_directory, daemon_directory. Based on code by Victor
+	Duchovni, Morgan Stanley. File: util/sys_defs.h.
 
 20020411
 
@@ -6273,8 +6280,8 @@ Apologies for any names omitted.
 20020418
 
 	Documentation: added CPU saving patterns for quickly skipping
-	base 64 encoded text in message bodies.  Liviu Daia.
-	Files: {proto,conf}/pcre_table, {proto,conf}/regexp_table,
+	base 64 encoded text in message bodies.  Liviu Daia.  Files:
+	{proto,conf}/pcre_table, {proto,conf}/regexp_table,
 	conf/sample_{regexp,pcre}_body.cf.
 
 20020426
@@ -6424,9 +6431,9 @@ Apologies for any names omitted.
 	util/dict_ldap.c.
 
 	Feature: lots of new LDAP stuff: result_filter (filter to
-	expand results from queries), chase_referrals,
-	LaMont Jones, HP. The LDAP bind timeout now works thanks
-	to Victor Duchovni, Morgan Stanley. File:  util/dict_ldap.c.
+	expand results from queries), chase_referrals, LaMont Jones,
+	HP. The LDAP bind timeout now works thanks to Victor
+	Duchovni, Morgan Stanley. File:  util/dict_ldap.c.
 
 	Cleanup: specify "resolve_dequoted_address = no" to prevent
 	Postfix from looking inside quotes for extra @ etc. characters
@@ -6483,8 +6490,8 @@ Apologies for any names omitted.
 
 20020521-22
 
-	Feature: 8-bit to quoted-printable conversion. First use in
-	the Postfix SMTP client. File: smtp/smtp_proto.c.
+	Feature: 8-bit to quoted-printable conversion. First use
+	in the Postfix SMTP client. File: smtp/smtp_proto.c.
 
 	Logging: the Postfix SMTP and LMTP clients now report the
 	the protocol stage when they report a server reply.  File:
@@ -6597,6 +6604,10 @@ Apologies for any names omitted.
 	with unread data according to ioctl FIONREAD.  Incredible.
 	Diagnosis by Max Pashkov.  File:  smtp/smtp-sink.c.
 
+	Weird feature: sender-based routing. This will become more
+	useful once per-address transport map entries are done.
+	File:  src/*qmgr/qmgr_message.c.
+
 20020605
 
 	Safety: header_address_token_limit limits the amount of
@@ -6610,6 +6621,13 @@ Apologies for any names omitted.
 	by Scott Cotton, from several years ago. Adding this code
 	now was much less painful than it was in the past. Files:
 	global/strip_addr.c, trivial-rewrite/transport.c.
+
+20020610
+
+	Cleanup: making user@domain transport map lookups work with
+	sender-based routing was a bit tricky, because the null
+	address must be handled sensibly. Files: global/resolve_clnt.c,
+	trivial-rewrite/resolve.c. It ain't perfect yet, but close.
 
 20020613
 
@@ -6740,8 +6758,8 @@ Apologies for any names omitted.
 
 20020801
 
-	Cleanup: the warning message for matched header/body
-	content was misleading. File: cleanup/cleanup_message.c.
+	Cleanup: the warning message for matched header/body content
+	was misleading. File: cleanup/cleanup_message.c.
 
 	Safety: moved the "postsuper -r ALL" operation after the
 	"postsuper -s" check that makes queue file names match
@@ -6778,9 +6796,9 @@ Apologies for any names omitted.
 20020810
 
 	Feature: new smtp-sink command-line options to specify the
-	SMTP hostname, to disable ESMTP protocol support, to
-	disable 8BITMIME support, and to syslog selected commands.
-	File: smtpstone/smtp-sink.c.
+	SMTP hostname, to disable ESMTP protocol support, to disable
+	8BITMIME support, and to syslog selected commands.  File:
+	smtpstone/smtp-sink.c.
 
 20020814
 
@@ -6841,8 +6859,8 @@ Apologies for any names omitted.
 20020821
 
 	Feature: HOLD and DISCARD actions in SMTPD access tables.
-	These requests are propagated to the cleanup daemon.
-	Files: cleanup/cleanup_envelope.c smtpd/smtpd_check.c.
+	These requests are propagated to the cleanup daemon.  Files:
+	cleanup/cleanup_envelope.c smtpd/smtpd_check.c.
 
 	Cleanup: eliminate unnecessary references to the obsolete
 	program_directory configuration parameter (but keep the
@@ -6927,8 +6945,8 @@ Apologies for any names omitted.
 	This involved a further rewrite of the regexp map code.
 	File: util/dict_regexp.c.
 
- 
-20020910
+
+200209010
 
 	Bugfix: the SMTP client produced suprious warnings about
 	trouble with fallback_relay hosts. File:  smtp/smtp_connect.c.
@@ -6936,7 +6954,7 @@ Apologies for any names omitted.
 	Robustness: don't wait with detecting broken SMTP connections
 	until reading input. Leandro Santi. File: smtpd/smtpd_chat.c.
 
-20020911
+200209011
 
 	Workaround: IRIX 6 can't do ioctl FIONREAD on pipes. This
 	breaks the in_flow_delay feature.  File:  util/sys_defs.h.
@@ -7000,11 +7018,11 @@ Apologies for any names omitted.
 20020923
 
 	Cleanup. Renamed the RBL features according to a scheme
-	that was suggested by Liviu Daia in October 2001. The
-	names are reject_rbl_client and reject_rhsbl_sender,
-	respectively.  Added domain name based reject_rhsbl_client
-	and reject_rhsbl_recipient restrictions for completeness.
-	The reject_rbl restriction name is still recognized for
+	that was suggested by Liviu Daia in October 2001. The names
+	are reject_rbl_client and reject_rhsbl_sender, respectively.
+	Added domain name based reject_rhsbl_client and
+	reject_rhsbl_recipient restrictions for completeness.  The
+	reject_rbl restriction name is still recognized for
 	compatibility with systems maintained by LaMont Jones.
 
 20020924
@@ -7041,9 +7059,9 @@ Apologies for any names omitted.
 	In the mean time, Linux mail delivery software seems to
 	have standardized on fcntl() locks. File: util/sys_defs.h.
 
-	Feature: body_checks_size_limit parameter to specify how much
-	of a message body segment (or attachment, if you prefer to
-	use that term) is subjected to body_checks inspection.
+	Feature: body_checks_size_limit parameter to specify how
+	much of a message body segment (or attachment, if you prefer
+	to use that term) is subjected to body_checks inspection.
 	Default limit:  50 kbytes. Files:  global/mime_state.c,
 	cleanup/cleanup_message.c.
 
@@ -7215,14 +7233,80 @@ Apologies for any names omitted.
 	code had grown into a monster and needed to be replaced.
 	trivial-rewrite/transport.c.
 
+20021115
+
+	Start implementing recipient verification. For now this is
+	done by adding trace flags to queue files. In case of a
+	verification request, a delivery agent does not deliver,
+	deliver, it just records what would happen.
+
+	This required instrumenting the bounce/defer/sent logging
+	routines to send their data to the right place depending
+	on the type of delivery request.
+
+20021116
+
+	New trace service. This is used for reporting if a recipient
+	is deliverable (sendmail -bv) and for producing a record
+	of delivery attempts (sendmail -v). The report is sent via
+	email, using the bounce daemon. Files: global/trace.[hc].
+
+	This required replacing the bounce/defer logfile format by
+	an extensible name=value format. Files: global/bounce_log.c,
+	bounce/bounce_append_service.c.
+
+20021117
+
+	New address verification service with simple expiration
+	and refresh policy. Storage can be in-core or in permanent
+	table. The daemon is appropriately called "verify". Files:
+	global/verify_clnt.[hc], verify/verify.c.
+
+20021118
+
+	Cleaning up the code for tracing and verification. Files:
+	global/{log_adhoc,bounce,defer,trace,verify}.[hc].
+
+20021119
+
+	New address_verification_negative_cache = yes/no parameter
+	controls whether Postfix stores the result of negatieve
+	address verification probes. This reduces cache pollution
+	but causes Postfix to send a probe for each address
+	verification service query. File: verify/verify.c.
+
+	Added optimistic caching to the verify daemon, so that one
+	failed probe will not clobber a known to be good address.
+	As long as some probes succeeed, a good address will stay
+	cached as OK.
+
+	Cleaning up of the bounce daemon's code for bounce, delayed
+	mail warning and trace notification.  Files: bounce/*.[hc],
+	global/bounce_log.c.
+
+20021120
+
+	Changed the probe's sender address to "postmaster" so that
+	we get better information about the address we're testing.
+	File: verify/verify.c.
+
+	Added some paranoia to the routine that reads data from
+	the address verification cache. Ignore data that is obviously
+	bogus. File: verify/verify.c.
+
 20021121
 
 	Bugfix: garbage in "user@garbage"@domain address forms may
 	cause the SMTP or LMTP client to terminate with a fatal
 	error exit because garbage/tcp is not an existing service.
 	This cannot be abused to cause the SMTP or LMTP client to
-	send data into unauthorized ports.  Files:  *qmgr/qmgr_message.c,
+	send data into unauthorized ports.  Files: *qmgr/qmgr_message.c,
 	trivial-rewrite/resolve.c.
+
+20021124
+
+	Bugfix: don't use same VSTRING buffer for reading and
+	writing.  File: verify/verify.c.
 
 20021128
 
@@ -7239,6 +7323,15 @@ Apologies for any names omitted.
 	more consistently than the existing code in the LMTP and
 	SMTP clients. Files: smtp/smtp_connect.c, lmtp/lmtp_connect.c,
 	util/host_port.[hc].
+
+20021130
+
+	Cleanup: defer mail when recipient verification takes too
+	long. File: smtpd/smtpd_proto.c.
+
+	Feature: new reject_multi_recipient_bounce restriction, to
+	reject "MAIL FROM: <>" with multiple recipients.  File:
+	smtpd/smtpd_check.c.
 
 20021201
 
@@ -7264,6 +7357,12 @@ Apologies for any names omitted.
 	Cleanup: the local(8) and virtual(8) delivery agents did
 	not prepend X-Original-To: addresses to maildir files.
 	Omission spotted by Matthias Andree.
+
+	Specify "address_verify_sender=" or "address_verify_sender=<>"
+	to use a null sender address while doing address verification
+	probes.  Beware, doing so may trigger false negatives
+	because some sites reject mail from the null sender, even
+	though this is required by RFC standards.
 
 	Bugfix: too many levels of dereferencing while testing for
 	missing reject_rbl_mumble domain names. Patrik Rak.  File:
@@ -7371,11 +7470,22 @@ Apologies for any names omitted.
 	suddenly lose all their mail because local_recipient_maps
 	is now turned on by default.
 
+20021210
+
+	Feature: recipient address verification, using the code
+	that already implements sender address verification.  Based
+	on suggestion by Matthias Andree.  Files: src/smtpd/smtpd.c,
+	src/smtpd/smtpd_check.c.
+
 20021211
 
 	Performance: doubled the default process limit (50->100)
 	and default queue manager active queue message/recipient
-	limits (10k->20k).  File: global/mail_params.h.
+	limits  (10k->20k).  File:  global/mail_params.h.
+
+	Bugfix: the change that begot us multiple trivial-rewrite
+	processes (good) also gave us multiple verify daemons (bad).
+	File: conf/post-install.
 
 20021212
 
@@ -7383,6 +7493,9 @@ Apologies for any names omitted.
 	mailer results (to avoid breaking existing installations),
 	and do transport map lookups before relocated map lookups.
 	Files:  trivial-rewrite/resolve.c, trivial-rewrite/transport.c.
+
+	Shortened the verify server's negative cache refresh time
+	from 12 hours to 2 hours. File:  global/mail_params.h.
 
 	Admin friendliness: the SMTP server now reports "User
 	unknown in {local recipient | virtual alias | virtual
@@ -7413,6 +7526,10 @@ Apologies for any names omitted.
 	lookup table entries that either override or specify an
 	error transport without updating the nexthop information.
 	File:  trivial-rewrite/resolve.c.
+
+	Robustness: don't probe the sender address when probed for
+	our own address verification probe sender address. File:
+	smtpd/smtpd_check.c.
 
 	Performance: don't do UCE checks (which may result in 4xx
 	SMTP reply codes, and thus, repeated delivery attempts)
@@ -7451,6 +7568,7 @@ Apologies for any names omitted.
 	properly quoted just like the null address. File:
 	global/quote_82[12]_local.c.
 
+
 20021217
 
 	Cleanup: more work on the trivial-rewrite address rewriting
@@ -7467,6 +7585,12 @@ Apologies for any names omitted.
 	site already ran Postfix with local_recipient_maps enabled.
 	Files:  smtpd/smtpd.c, smtpd/smtpd_check.c, conf/post-install.
 
+20021218
+
+	Feature: specify unverified_recipient_reject_code=250 or
+	unverified_sender_reject_code=250 to accept mail for an
+	address that is known to bounce. File: smtpd/smtpd_check.c.
+
 20021219
 
 	Bugfix: longjmp() while sending "go away" without setjmp()
@@ -7480,6 +7604,10 @@ Apologies for any names omitted.
 	File: util/valid_hostname.c.
 
 20021220
+
+	Bugfix: the reject_multi_recipient_bounce restriction had
+	an off-by-one error when used in smtpd_data_restrictions.
+	File: smtpd/smtpd_check.c.
 
 	Feature: new check_recipient_maps restriction that gives
 	finer control over when unknown recipients are rejected.
@@ -7505,7 +7633,34 @@ Apologies for any names omitted.
 
 	Documentation update: new-style virtual domains broke the
 	advanced content filtering example. Files: FILTER_README,
-	RELEASE_NOTES.
+	RELEASE_NOTES-2.0.
+
+20030102
+
+	Cleanup: use different client instances when the same map
+	is opened with different flags. File: global/maps.c.
+
+	Feature: proxymap server for Postfix table lookups. This
+	helps to consolidate the number of open lookup tables (such
+	as MYSQL or LDAP), or to overcome chroot restrictions
+	(example: specify proxy:unix:passwd.byname to avoid the
+	need for a copy of the UNIX passwd file in chroot jails).
+	Files:  global/dict_proxy.[hc], proxymap/proxymap.c
+
+	Cleanup: multiservers such as trivial-rewrite and the new
+	proxymap server now enforce the max_use total client number
+	limit more agressively, by not accepting new connections
+	after the limit is reached.  Based on a patch by Victor
+	Duchovni, Morgan Stanley. File:  master/multi_server.c.
+
+20030103
+
+	Cleanup: client stream endpoints not only have an idle time
+	limit ($ipc_idle) before a connection is closed, they now
+	also have a time to live ($ipc_ttl) to prevent connections
+	from becoming too persistent. This allows multi-servers
+	such as trivial-rewrite or the proxymap server to refresh
+	more frequently on busy systems. File:  global/clnt_stream.c.
 
 20030104
 
@@ -7517,7 +7672,36 @@ Apologies for any names omitted.
 	than a year until I found out how to reproduce it. File:
 	util/vstream.c.
 
+20030105
+
+	Cleanup: removed the address syntax check from the queue
+	manager, since a better test was implemented recently in
+	the trivial-rewrite server. Files: *qmgr/qmgr_message.c.
+
+	Bugfix: redirect bounce/defer to the address verification
+	service where appropriate. Files: *qmgr/qmgr_bounce.c,
+	*qmgr/qmgr_defer.c.
+
+	Bugfix: "no such file or directory" warnings after "postfix
+	reload" when a chrooted smtpd reconnects to the proxy
+	service.  Fix: use "private/proxymap" if possible, otherwise
+	use "$queue_dir/private/proxymap".  File:  global/dict_proxy.c.
+
+	Robustness: daemons now chdir() to the queue directory
+	before running the pre-jail initialization code, so that
+	daemons running in stand-alone mode produce more consistent
+	results.  Files:  master/single_server.c, master/multi_server.c.
+	master/trigger_server.c.
+
+	Bugfix: "sendmail -bs" tried to access the proxymap service.
+	It should not try to open any user/domain/uce related tables
+	at all. File:  smtpd/smtpd.c.
+
 20030106
+
+	Bugfix: bouncing to owner-alias was broken, i.e. the mail
+	kept being deferred, and when that was fixed, another buglet
+	came to light. File: bounce/bounce.c.
 
 	Robustness: the master no longer aborts with "address
 	already in use" when inet_interfaces specifies the same IP
@@ -7531,12 +7715,24 @@ Apologies for any names omitted.
 	or cleanup header/body_checks have plausible syntax. Files:
 	smtpd/smtpd_check.c, cleanup/cleanup_message.c.
 
+20030109
+
+	Cleanup: unnecessary "premature end of file on xxx while
+	reading yyy" warnings became exposed after some code
+	simplification. Files" global/*_clnt.c, global/dict_proxy.c
+
+	Robustness: undo the change that causes a multi-server
+	process to stop accepting new connections while it still
+	services existing clients for an extended amount of time.
+	We need a better process retirement strategy. File:
+	master/multi_server.c.
+
 20030110
 
 	Cleanup: the virtual_mailbox_maps parameter is now optional
-	even when virtual_mailbox_domains is specified. This makes
-	virtual mailbox domains more like relay domains and the
-	local domain.
+	even when virtual_mailbox_domains is. This makes virtual
+	mailbox domains more like relay domains and the local
+	domain.
 
 	Portability: the makedefs script now uses the pcre-config
 	utility to find out where things are installed.
@@ -7570,13 +7766,6 @@ Apologies for any names omitted.
 
 	Bugfix: the virtual(8) Makefile included $(AUXLIBS) in the
 	dependencies.
-
-20030115
-
-	Bugfix: fixed in the snapshots 20030105 but missed in the
-	stable release. "sendmail -bs" tried to access the proxymap
-	service.  It should not try to open any user/domain/uce
-	related tables at all. File:  smtpd/smtpd.c.
 
 20030118
 
@@ -7616,9 +7805,19 @@ Apologies for any names omitted.
 
 20030124
 
-	Cleanup: removed the address syntax check from the queue
-	manager, since a better test was implemented recently in
-	the trivial-rewrite server. Files: *qmgr/qmgr_message.c.
+	Cleanup: queue structures no longer overload queue name
+	and nexthop destination. Files: *qmgr/qmgr_message.c,
+	*qmgr/qmgr_queue.c, *qmgr/qmgr_deliver.c.
+
+20030125
+
+	Feature: "REDIRECT user@domain" action in access maps or
+	in header/body_checks causes mail to be sent to the specified
+	address instead of the intended recipient(s). I would never
+	recommend that people use this to redirect (bounced) SPAM
+	to the beneficiaries of an advertisement campaign.  Files:
+	smtpd/smtpd_check.c, cleanup/cleanup_message.c,
+	*qmgr/qmgr_message.c.
 
 20030126
 
@@ -7635,6 +7834,12 @@ Apologies for any names omitted.
 
 	Bugfix: allow $name in default time values. File:
 	global/mail_conf_time.c.
+
+20030205
+
+	Feature: allow !, /file/name and map:name in masquerade_exceptions.
+	By Liviu Daia.  Files:cleanup_init.c, cleanup.h,
+	cleanup_masquerade.c.
 
 20030219
 
@@ -7658,9 +7863,14 @@ Apologies for any names omitted.
 
 20030223
 
+	Cleanup: added postmap/postalias -p option (do not inherit
+	the source file permissions when creating a new file), for
+	completeness.  A feature that can't be turned off is a bug.
+	Files:  postmap/postmap.c, postalias/postalias.c.
+
 	Bugfix: smtpd_hard/soft_error_limit off-by-one error, so
-	that the real limit was one larger than the specified value.
-	File: smtpd/smtpd.c, smtpd/smtpd_chat.c.
+	that the real limit was one larger than the configured
+	value.  File: smtpd/smtpd.c, smtpd/smtpd_chat.c.
 
 20030226
 
@@ -7669,11 +7879,21 @@ Apologies for any names omitted.
 	Instead, proxymap opens the requested table directly. File:
 	proxymap/proxymap.c.
 
+	Portability: updated AIX 5.x system dependent definitions.
+	File: util/sys_defs.h.
+
 20030227
 
 	Bugfix: added mynetworks to the list of proxy_read_maps
 	parameter settings that are pre-authorized to use proxied
 	table lookups.  File: global/mail_params.h.
+
+	Cleanup: daemons now log what table has changed before
+	restarting. Files: dict.c, and anything that invoked
+	dict_changed().
+
+	Cleanup: more consistency in the naming of lookup table
+	handles as generated by maps(3) and by match_list(3).
 
 20030305
 
@@ -7684,10 +7904,10 @@ Apologies for any names omitted.
 
 20030311-19
 
-	Bugfix: the access map actions HOLD, DISCARD and FILTER
-	were broken with smtpd_delay_reject=no and with ETRN. Fixing
-	this required re-architecting of the actions code. Files:
-	smtpd/smtpd.[hc], smtpd/smtpd_check.c, smtpd/smtpd_state.c.
+	Bugfix: the access map actions HOLD, DISCARD, FILTER and
+	REDIRECT were broken with smtpd_delay_reject=no and with
+	ETRN.  This required re-architecting of the actions code.
+	Files:  smtpd/smtpd.[hc], smtpd/smtpd_check.c, smtpd/smtpd_state.c.
 
 20030315
 
@@ -7700,6 +7920,25 @@ Apologies for any names omitted.
 	for non-existent addresses. This required re-architecting
 	the recipient table lookup code. File:  smtpd/smtpd_check.c.
 
+20030319
+
+	Feature: configurable limit on virtual alias expansion size
+	and nesting depth, via the virtual_alias_expansion_limit
+	and virtual_alias_recursion_limit parameters. The default
+	limits are compatible with past Postfix versions.  Victor
+	Duchovni, Morgan Stanley. Files: /sample-resource.cf,
+	html/resource.html, cleanup/cleanup.c, cleanup/cleanup_init.c,
+	cleanup/cleanup_map1n.c.
+
+	Feature: the installation procedure records build information
+	(by default:  in /etc/postfix/makedefs.out).
+
+20030324
+
+	Bugfix: smtp-source flushed too often, causing suboptimal
+	performance with smtp-source sending directly into smtp-sink.
+	Files: smtpstone/smtp-source.c.
+
 20030410
 
 	Safety: log a fatal error when a net/mask pattern has a
@@ -7711,14 +7950,34 @@ Apologies for any names omitted.
 	Bugfix: extraneous warning about out-of-order original
 	recipient records by Patrik Rak. Files: *qmgr/qmgr_message.c.
 
+20030412
+
+	Workaround: log a warning and reset the queue file time
+	stamps when the file system clock is ahead of the local
+	clock.  File: global/mail_stream.c.
+
+20030414
+
+	Feature: PostgreSQL client module, adopted by LaMont Jones.
+	Files: README_FILES/PGSQL_README, util/dict_pgsql.c,
+	util/dict_pgsql.h, conf/sample-pgsql-aliases.cf.
+
+	Cleanup: the generic smtp client/server code in smtp_stream.c
+	now has an explicit flush operation, and the smtp-source/sink
+	programs are updated to take advantage of this.
+
+	Cleanup: the file system clock drift detection code now
+	runs only once per process instance, to minimize the
+	performance impact. File: global/mail_stream.c.
+
+	Robustness: avoid TIME_WAIT state with smtp/qmqp-source
+	client sockets.  This puts less strain on local system
+	resources.
+
 20030415
 
-	Workaround: log a warning and reset incoming queue file
-	time stamps when the file system clock is ahead of the
-	local clock, instead of ignoring new mail until the next
-	queue scan. The file system clock drift detection executes
-	only once per process instance, to minimize the performance
-	impact. File: global/mail_stream.c.
+	Cleanup: the file system clock drift detection code now
+	runs only for incoming mail. File: global/mail_stream.c.
 
 20030416
 
@@ -7726,6 +7985,55 @@ Apologies for any names omitted.
 	8-bit mail not ending in newline via /usr/sbin/sendmail
 	and 2) MIME input processing is turned off, and 3) MIME
 	8bit->7bit conversion is requested upon delivery via SMTP.
+
+	Cleanup: auto-bcc recipients are now added in one place
+	(the cleanup server) instead of by individual front-end
+	servers (pickup, smtpd, qmqpd). This makes it easier to
+	add auto-bcc features that trigger on sender or recipient
+	addresses.
+
+	Cleanup: "sendmail -t" (recipients from headers) is now
+	implemented by the sendmail command instead of by the
+	cleanup server. This means that the extract_recipient_limit
+	configuration parameter is no longer needed.  Files:
+	sendmail/sendmail.c, cleanup/cleanup_message.c,
+	cleanup/cleanup_extracted.c.
+
+	Compatibility: "sendmail -t" (recipients from headers) now
+	accepts command-line recipients instead of complaining.
+	The extracted header recipients are added to the command-line
+	recipients.
+
+	Feature: sender/recipient_bcc_maps. These are indexed by
+	sender/recipient address and are examined when mail enters
+	from outside of Postfix. Files: cleanup/cleanup_addr.c.
+	cleanup/cleanup_envelope.c cleanup/cleanup_extracted.c.
+
+20030417
+
+	Feature: the SMTP client now falls back to native name
+	service lookups (including /etc/hosts) when a host cannot
+	be found in the DNS. This is controlled by a new parameter
+	smtp_host_lookup (default: dns, native). Files: smtp/smtp.c,
+	smtp/smtp_addr.c.
+
+20030418
+
+	Bugfix: "sendmail -t" broke with unrecognized message
+	headers.
+
+20030419
+
+	Feature: "postcat -q" searches the queue for the named
+	file.
+
+	Cleanup: made postcat "record names" output more consistent.
+
+20030421
+
+	Debugging: added some extra detailed error logging to the
+	pipe-to-command delivery, to help folks with bizarre file
+	truncation problems. File: global/pipe_command.c.
 
 20030424
 
@@ -7735,12 +8043,24 @@ Apologies for any names omitted.
 	Cleanup: eliminated valid_hostname warning for invalid
 	queue file names. File: global/mail_queue.c.
 
+	Bugfix: lost three lines of code when readying the postcat
+	command for release, which broke postcat -q. File:
+	postcat/postcat.c.
+
 	Bugfix: the Postfix sendmail command applied the message
 	size limit when running as newaliases. The limiting code
 	is now moved to the message enqueuing branch of the code.
 	File: sendmail/sendmail.c.
 
+	Documentation: start of documentation for the algorithm of
+	Patrik Rak's clever queue manager scheduler (nqmgr). Files:
+	conf/sample-scheduler.cf, README_FILES/SCHEDULER_README.
+
 20030429
+
+	Bugfix: while verifying an address, the LMTP client entered
+	a forbidden "next" sender state after the last recipient.
+	Fix by Vladimir Davydoff. File: lmtp/lmtp_proto.c.
 
 	Bugfix: "," was not recognized in proxy_read_maps settings.
 	Fix by Leandro Santi. File: proxymap/proxymap.c.
@@ -7750,6 +8070,18 @@ Apologies for any names omitted.
 	Bugfix: defer delivery after .forward etc. file read error.
 	File: local/token.c. Problem reported by Ben Rosengart,
 	Panix.
+
+20030503
+
+	Bugfix: the Postfix LMTP client used the wrong service
+	name, causing trouble with SASL 2.1.13.  Daniel Schales,
+	Louisiana Tech. File: lmtp/lmtp_sasl_glue.c.
+
+20030518
+
+	Workaround: IRIX select() reports that a non-blocking file
+	descriptor is writable while write() transfers zero bytes.
+	File:  util/vstream.c. Superseded by change 20030523.
 
 20030520
 
@@ -7764,7 +8096,35 @@ Apologies for any names omitted.
 	after "postdrop -r", because the cleanup server did not
 	count the "already done" recipients. Problem reported by
 	Richard Stockton, Gramma Software. Files:
-	cleanup/cleanup_envelope.c, cleanup/cleanup_extracted.c
+	cleanup/cleanup_envelope.c, cleanup/cleanup_extracted.c.
+
+20030523
+
+	Workaround: IRIX select() reports that a non-blocking file
+	descriptor is writable while write() transfers zero bytes.
+	File:  global/pipe_command.c.
+
+20030523-20030605
+
+	Cleanup: rewrote the queue file record processing loops in
+	pickup, cleanup and in [n]qmgr. This code had deteriorated
+	a lot as the result of small changes over the years. This
+	change brings the code closer to "obviously correct". Files:
+	cleanup/cleanup_envelope.c, cleanup/cleanup_extracted.c,
+	*qmgr/qmgr_message.c.
+
+	Cleanup: Postfix no longer produces queue files with
+	backwards compatibility data for Postfix versions < 1.0
+	(a.k.a.  20010228). Files: cleanup/cleanup_extracted.c,
+	showq/showq.c.
+
+	Performance: the queue manager no longer has to examine
+	every queue file record before it can start deliveries.
+	This helps to avoid thrashing with very large mailing lists.
+	Postfix queue files have an extra field in the size record
+	with queue manager processing hints.  This change is backward
+	and forward compatible.  Files:  cleanup/cleanup_envelope.c,
+	cleanup/cleanup_extracted.c, *qmgr/qmgr_message.c.
 
 20030528
 
@@ -7772,18 +8132,6 @@ Apologies for any names omitted.
 	exits immediately, instead of waiting for input on the
 	standard input stream and screwing up system boot sequences.
 	File: sendmail/sendmail.c.
-
-	Bugfix: the Postfix LMTP client used the wrong service
-	name, causing trouble with SASL 2.1.13.  Daniel Schales,
-	Louisiana Tech. File: lmtp/lmtp_sasl_glue.c.
-
-	Workaround: IRIX select() reports that a non-blocking file
-	descriptor is writable while write() transfers zero bytes.
-	File:  global/pipe_command.c.
-
-	Feature: "postcat -q" (search the queue for the named file)
-	support copied from snapshot release because I can't see
-	people suffer. File: postcat/postcat.c.
 
 20030530
 
@@ -7798,28 +8146,92 @@ Apologies for any names omitted.
 
 20030605
 
+	Cleanup: input checks moved from the pickup daemon to the
+	postdrop mail submission command; this is to prepare for
+	direct mail submission from postdrop->cleanup without going
+	through the maildrop directory and the pickup service.
+	Files: pickup/pickup.c, postdrop/postdrop.c.
+
 	Bugfix: the "dead host" backoff timer in the MySQL client
 	didn't work.  Fix by Leandro Santi. File: util/dict_mysql.c.
 
-	Safety: stricter checks on what queue file records the
-	postdrop submission command accepts (idea copied from
-	snapshot). File:  postdrop/postdrop.c.
+	Bugfix: same problem in the PostgreSQL client. File:
+	util/dict_pgsql.c.
 
 	Workaround: turned off non-blocking write to pipe because
 	too many systems give a weird write() result. File:
-	global/pipe_command.c.  
+	global/pipe_command.c.
+
+	Cleanup: added support for vstream_fseek(.., .., SEEK_END).
+	File: util/vstream.c.
+
+20030608
+
+	Feature: separate address resolver controls for address
+	verification probe messages:  address_verify_{local,virtual,
+	relay,default}_transport, address_verify_relayhost, and
+	address_verify_transport_maps. The default values are the
+	regular versions of the same controls. Files: trivial-rewrite/*,
+	global/resolve_clnt.[hc], *qmgr/qmgr_message.c.
 
 20030609
 
 	Workaround: Solaris blocking socket read() may hang.  Hernan
 	Perez Masci and Leandro Santi. File: smtpd/smtpd.c.
 
+	Bugfix: the "unread recipient" counter needs to be restored
+	after the queue manager has a problem reading a queue file.
+	Fix by Patrik Rak. File: nqmgr/qmgr_message.c.
+
+20030610
+
+	Cleanup: the verify server now uses asynchronous submission
+	of mail probes, so it will no longer block for in_flow_delay
+	seconds when mail arrives faster than it is delivered.
+	Still need to make mail_stream_finish() asynchronous in
+	order to avoid blocking for trigger_timeout seconds when the
+	queue manager is overwhelmed.  Files:  global/post_mail.c,
+	verify/verify.c.
+
+	Bugfix: removed extraneous sleep() after the last attempt
+	to retrieve address verification status.  File: smtpd/smtpd.c.
+
 20030611
 
 	Bugfix: the stricter postdrop input filter broke "sendmail
 	-bs". Found by Lutz Jaenicke. File: smtpd/smtpd.c.
 
+20030614
+
+	Portability: Dropped support for client side LDAP caching.
+	As of release 2.1.13 OpenLDAP no longer supports client
+	side caching, it has been deprecated for some time, and
+	never worked well.  Implemented by Victor Duchovni, Morgan
+	Stanley, and further enhanced by Lamont Jones, HP. Files:
+	src/util/dict_ldap.c, conf/sample-ldap.cf,
+	README_FILES/LDAP_README.
+
+	Safety: Given suitable invalid database contents, LDAP
+	lookups can produce too many results, enter an infinite
+	loop in the expansion of "special result attributes" (LDAP
+	DNs and LDAP URLs) or just consume excessive server resources
+	returning large result sets.  Three new (per LDAP map)
+	configuration parameters enable one to set limits on
+	recursive nesting, result expansion and the server response
+	"entry" count. Implemented by Victor Duchovni, Morgan
+	Stanley, further enanced by Lamont Jones, HP. Files:
+	src/util/dict_ldap.c, conf/sample-ldap.cf,
+	README_FILES/LDAP_README.
+
 20030616
+
+	Feature: in mail delivery status reports, report the sender
+	address as X-Postfix-Sender. Matthias Andree. File:
+	bounce/bounce_notify_util.c.
+
+	Cleanup: in mail delivery status reports, transform the
+	original recipient into xtext format as required by RFC
+	1891. Files: bounce/bounce_notify_util.c, util/xtext.[hc].
 
 	Cleanup: more accurate "postfix check" warning for files
 	that miss one or more of the required mode 02111 execute
@@ -7827,15 +8239,33 @@ Apologies for any names omitted.
 
 20030618
 
-	Workaround: after "postfix reload", the master daemon now
-	warns when inet_interfaces has changed, and ignores the
-	change, instead of passing incorrect information to the
-	smtp server. File:  master/master_ent.c.
+	After "postfix reload", the master daemon now warns when
+	inet_interfaces has changed, and ignores the change, instead
+	of passing incorrect information to the smtp server. File:
+	master/master_ent.c.
+
+20030619
+
+	Feature: the Postfix SMTP server can send all mail into a
+	proxy server, for example a real-time SPAM filter. This
+	proxy is supposed to send the mail into another Postfix
+	SMTP server process for normal delivery. Files: smtpd/smtpd.c
+	smtpd/smtpd_proxy.[hc].
+
+20030620
+
+	Bugfix: a cut-and-paste error caused the proxy server's
+	354 status code to be reported when a proxy connection
+	broke during the DATA phase. File: smtpd.c.
 
 20030620
 
 	Bugfix: after the last change to postdrop, postcat no longer
-	recognized maildrop queue files as valid. File: postcat/postcat.c.
+	recognized maildrop files as valid. File: postcat/postcat.c.
+
+	Bugfix: after moving "sendmail -t" address extraction to
+	sendmail, "-t" broke multi-line recipient headers.  Victor
+	Duchovni, Morgan Stanley. File: sendmail/sendmail.c.
 
 20030621
 
@@ -7843,27 +8273,206 @@ Apologies for any names omitted.
 	avoiding code tries a little harder when it encounters a
 	race condition. File: util/safe_open.c.
 
+20030624
+
+	Bugfix: reject_unverified_address() set the defer_if_reject
+	flag when the verify service was unavailable (which never
+	happens). Victor Duchovni, Morgan Stanley. File:
+	smtpd/smtpd_check.c.
+
+	New parameters address_verify_poll_{count,delay} that
+	control how often to poll the address verification service
+	for the completion of an address verification request.
+	Specify address_verify_poll_count=1 to implement a crude
+	form of greylisting, that is, always defer the first delivery
+	attempt for an unknown address.  File: smtpd/smtpd_check.c.
+
+	Bugfix: after the last change to postdrop, postcat no longer
+	recognized non-maildrop queue files as valid. File:
+	postcat/postcat.c.
+
 20030629
 
 	Cleanup: replaced references to "simulated virtual domains"
 	by "virtual alias domains". Victor Duchovni, Morgan Stanley.
 
+20030630
+
+	Feature: smtp_quote_rfc821_envelope=(yes|no) to control
+	RFC 821 style quoting of MAIL FROM and RCPT TO addresses.
+	Files: global/mail_params.h, smtp/smtp.c, smtp/smtp_proto.c.
+
+20030701
+
+	Bugfix: multi-recipient probes triggered a bug in the SMTP
+	client.  File: smtp/smtp_proto.c.
+
+	Feature: enable_original_recipient (default: yes) to control
+	whether Postfix keeps track of original recipient address
+	information. Victor Duchovni, Morgan Stanley.  Files:
+	cleanup/cleanup.c, cleanup/cleanup_init.c,
+	cleanup/cleanup_out_recipient.c, global/log_adhoc.c,
+	global/mail_copy.c, *qmgr/qmgr_message.c.
+
+	Feature: !/pattern/ support for PCRE lookup tables.  Victor
+	Duchovni, Morgan Stanley.  Files: util/dict_pcre.c.
+
+	Cleanup: allow whitespace after patterns in repexp and pcre
+	tables. Victor Duchovni, Morgan Stanley.  Files:
+	util/dict_pcre.c, util/dict_regexp.c.
+
+20030702
+
+	Feature: CIDR lookup table support, very remotely based on
+	code by Jozsef Kadlecsik. Files: proto/cidr_table,
+	util/dict_cidr.[hc].
+
+	Feature: TCP lookup table support, finally finished.  Files:
+	proto/tcp_table, proto/dict_tcp.[hc].
+
+20030705
+
+	Feature: new receive_override_options parameter controls
+	what happens before or after an external content filter:
+	rejecting unknown recipients, canonical and virtual address
+	mapping, address masquerading, automatic BCC recipients
+	and header/body checks. This eliminates the need to configure
+	multiple cleanup services in the master.cf file.
+
+20030707
+
+	Feature: context dependent SASL security options (i.e.
+	different options when TLS is enabled/disabled). Lutz
+	Jaenicke.  Files:  */*sasl_glue.[hc].
+
+20030708
+
+	Hardened the attr_scan routines for exposure to an untrusted
+	environment, in preparation for possible use with SMTP
+	policy delegation to an external server.
+
+	Feature: address filter for RBL lookups, for use with
+	multi-valued RBL services. File: smtpd/smtpd_check.c.
+
+20030709
+
+	Cleanup: use off_t instead of int for VSTREAM file offsets.
+	This was needed for mailboxes > 2GB on 32-bit systems.
+	Files: util/vstream.c, global/mail_copy.c.
+
+20030710
+
+	Support for multiple A and TXT results in RBL lookups.
+	Victor Duchovni, Morgan Stanley.  File: smtpd/smtpd_check.c.
+
+	Support for attribute-based query-reply protocols.
+	Files: util/attr_clnt.[hc], util/auto_clnt.[hc].
+
 20030711
+
+	Support for plain "name=value\n" attribute protocol.
+	Files: util/attr_{scan,print}_plain.c.
 
 	Bugfix: the LMTP session caching code did not reset the
 	EHLO server feature list when it needed to reconnect.
 	Problem found by Tobias Erbsland.
 
+20030712
+
+	Feature: delegated SMTP policy server. As an example, see
+	the greylisting server in examples/smtpd-policy.  Specify
+	"check_smtpd_policy_service" in smtpd_mumble_restrictions.
+	See SMTPD_POLICY_SERVICE_README for details.
+
+20030716
+
+	Bugfix: in the sample policy server, changed "ok" into
+	"dunno" so the server can be used in the middle of a
+	restriction list.
+
+	Cleanup: when an RBL reply has multiple TXT records,
+	concatenate them up to some reasonable limit, instead of
+	selecting one randomly.  File:  smtpd/smtpd_check.c.
+
+	Safety: always truncate SMTP server error replies to 512
+	bytes.  File: smtpd/smtpd_check.c.
+
 20030717
+
+	Documentation: added description of policy_time_limit to 
+	the SMTPD_POLICY_README document.
 
 	Documentation: corrected the command time limit parameter
 	syntax in the spawn(8) manual page.
+
+	Feature: defer_if_permit and defer_if_reject actions in
+	access tables, mainly for use by the delegated policy
+	server. Files: smtpd/smtpd_check.c, proto/access.
+
+20030725
+
+	The dict_pgsql module did not use dict_alloc() and dict_free(),
+	causing improper initialization and a memory leak. Leandro
+	Santi. File: util/dict_pgsql.c.
+
+	Cleanup: added open_flags sanity checks to the dict_pgsql
+	and dict_mysql modules. These maps must be opened in
+	read-only mode.
+
+20030731
+
+	Bugfix: virtual(8) was changed to use mail_addr_find()
+	instead of virtual8_maps_find(), but the SMTP server's
+	virtual mailbox recipient validation was not updated.
+
+20030804
+
+	Bugfix: the 20030712 safety against invalid DNS results
+	was broken. Reported by Ralf Hildebrandt. File:
+	dns/dns_lookup.c.
+
+20030805-12
+
+	Safety: the pipe daemon now defers delivery with a warning
+	when it is given a non-existent command-line macro name.
+	File:  pipe/pipe.c.
+
+20030810
+
+	Bugfix: dict_ldap had a few harmless memory leaks.  By
+	Liviu Daia.  File: util/dict_ldap.c.
+
+	Feature: support for LDAP URLs in the LDAP parameter
+	"server_host", if Postfix is linked against OpenLDAP.  This
+	allows Postfix to connect to LDAP SSL sources.  By Liviu
+	Daia.  File: util/dict_ldap.c.
+
 
 20030811
 
 	Cleanup: produce a warning when host:port specifies a badly
 	formatted numerical port.  Files:  util/find_inet.c,
 	smtp/smtp_connect.c, lmtp/lmtp_connect.c.
+
+20030822
+
+	Feature: the export_environment and import_environment
+	parameters now accept name=value information that will be
+	entered into the new environment. File: util/clean_env.c.
+
+20030823
+
+	Feature: smtpd_sasl_exceptions_networks parameter to prevent
+	Postfix from offering AUTH  to clients that match the listed
+	networks. Based on code by Ben Rosengart, Panix. Files:
+	conf/sample-auth.cf, smtpd/smtpd.c.
+
+20030902
+
+	Portability: the Postfix master resets the file size to
+	the largest possible off_t value when the actual limit
+	appears to overflow the off_t range. Files: util/sys_defs.h,
+	util/file_limit.c. A fine sample of bit banging.
 
 20030905
 
@@ -7872,11 +8481,29 @@ Apologies for any names omitted.
 	util/timed_read.c and as precautionary measure,
 	util/timed_write.c.
 
+	Bugfix: dict_register() should not be called from dict_open()
+	in dict_mysql and dict_pgsql.  Liviu Daia.  Files:
+	util/dict_mysql.c, util/dict_pgsql.c.
+
+	Feature: LDAP parameters can now be specified in external
+	files.  This makes it possible to securely store bind
+	passwords for plain auth outside of main.cf (which is world
+	readable).  By Liviu Daia, based on a suggestion by Victor
+	Duchovni and Lamont Jones.  File: util/dict_ldap.c.
+
+	Feature: STARTTLS option for LDAP, if Postfix is linked
+	against OpenLDAP.  By Liviu Daia, amended by Victor Duchovni.
+	File:  util/dict_ldap.c.
+
+	Cleanup: connections to LDAP sources are now postponed
+	until they are actually needed.  By Liviu Daia.  File:
+	util/dict_ldap.c.
+
 20030908
 
-	The 20030905 workaround triggers too many warnings. TCP
-	sockets are back to blocking, and keepalives are turned on
-	to kill off dead sockets, as suggested by Leandro Santi.
+	The 20030905 Solaris workaround triggers too many warnings.
+	TCP sockets are back to blocking, and keepalives are turned
+	on to kill off dead sockets, as suggested by Leandro Santi.
 	Files: master/{single,multi}_server.c, smtpd/smtpd.c,
 	util/sys_defs.h.
 
@@ -7884,7 +8511,7 @@ Apologies for any names omitted.
 
 	Bugfix: the LMTP session caching code had problems with
 	SASL authentication after the first connection, and pipelining
-	was working poorly.  Fix by Viktor Dukhovni, Morgan Stanley.
+	was working poorly.  Fix by Victor Duchovni, Morgan Stanley.
 	Files: lmtp/lmtp.c, lmtp/lmtp_proto.c.
 
 20030912
@@ -7899,15 +8526,254 @@ Apologies for any names omitted.
 
 	Safety: set-gid commands don't trust TZ.  File: msg_syslog.c.
 
+20030914
+
+	Address extension propagation wasn't documented enough when
+	it was added to Postfix. Based on patches by Roman Neuhauser.
+
+	Added clarifying notes to main.cf, master.cf and access by
+	Dean Gibson.
+
+	In header/body_checks, DUNNO is now the preferred action
+	instead of the now deprecated OK. This may confuse fewer
+	people.
+
+	In header/body_checks, allow text after IGNORE and DUNNO,
+	suggested by Victor Duchovni, Morgan Stanley.  File:
+	src/cleanup/cleanup_message.c.
+
+	Feature: reject_rhsbl_helo. File: smtpd/smtpd_check.c.
+
+	Bugfix? The LMTP and SMTP clients now send "MAIL FROM:<sender>
+	AUTH=<>" when SASL authenticated. Suggested by by Victor
+	Duchovni, Morgan Stanley. Files: smtp/smtp_proto.c,
+	lmtp/lmtp_proto.c.
+
+20030915
+
+	Bugfix: mail rejected by the before-queue content filter
+	was mis-labeled as a software error; it should be labeled
+	as a policy error instead. File: smtpd/smtpd.c.
+
+	Cleanup: postcat is now null-byte transparent. File:
+	postcat/postcat.c.
+
+20030916
+
+	Feature: ``check_{sender,recipient}_mx_access maptype:mapname''
+	applies the named Postfix access table to the MX host name
+	and IP addresses for the sender or recipient address. If
+	no MX record is found, the A record is used instead. File:
+	smtpd/smtpd_check.c.
+
+	Feature: ``check_{sender,recipient}_ns_access maptype:mapname''
+	applies the named Postfix access table to the DNS server
+	hostname and IP addresses for the sender or recipient
+	address. If no NS record is found, the parent domain is
+	used instead. File: smtpd/smtpd_check.c.
+
+20030917
+
+	Feature: ``check_helo_{ns,mx}_access maptype:mapname'',
+	same semantics as sender and recipient.
+
+	Multiple LDAP lookup tables in the one Postfix process now
+	share one LDAP connection. Code by Victor Duchovni, Morgan
+	Stanley.  File: util/dict_ldap.c.
+
+	Performance: with prefix_domain specified for an LDAP lookup
+	table, lookups of @domain are skipped. Code by Victor
+	Duchovni, Morgan Stanley.  File: util/dict_ldap.c.
+
+	Safety: check_mumble_{mx,ns}_access refuses to be used for
+	whitelisting. The Postfix SMTP server will reject the
+	request with "451 server configuration error" and will log
+	a warning explaining why. File: smtpd/smtpd_check.c.
+
+20030918
+
+	Bugfix: check_mumble_ns_access did not correctly look up
+	NS records of parent domains, causing mail to be deferred
+	with a 450 status code. File: smtpd/smtpd_check.c.
+
+20030919
+
+	Robustness: check_mumble_{mx,ns}_access skip over DNS lookup
+	failures instead of deferring mail. This is not as bad as
+	it appears to be because the restrictions can't be used
+	for whitelisting.  File: smtpd/smtpd_check.c.
+
+20030920
+
+	Bugfix: the 20030917 LDAP connection sharing code introduced
+	a compilation problem with non-OpenLDAP implementations.
+	Fix by Liviu Daia. File: util/dict_ldap.c
+
+	Compatibility: the LDAP server_host parameter now supports
+	all the usual Postfix list element delimiters. Some LDAP
+	libraries support just SPACE, others SPACE and ",". Postfix
+	now normalizes the host list into a space separated format.
+	This is less surprising to Postfix users used to the full
+	range of delimeters in other contexts. Implemented by Liviu
+	Daia. File: util/dict_ldap.c
+
+	Bugfix: after returning too old mail, the bounce daemon
+	now locks the original queue file and deletes deferred
+	recipients, to avoid repeated bounce notifications when
+	the queue manager is restarted. Files:  bounce/*.[hc],
+	global/bounce_log.[hc], global/{bounce,defer}.[hc] and
+	everything that invokes these routines including queue
+	manager and delivery agents.
+
+20030922
+
+	Feature: "XADDR address hostname" SMTP command, for SMTPD
+	restriction debugging, and for sites with fetchmail-like
+	software that extracts client information from the first
+	Received:  header. The smtpd_authorized_xaddr_clients
+	parameter specifies what clients are allowed to use XADDR
+	(default: none).  Files:  smtpd/smtpd.c.
+
+20031015
+
+	Workaround: smtpd access maps should not apply subdomain
+	name magic to numerical hostnames. File: smtpd/smtpd_check.c.
+
+	Safety: the local delivery agent now defers delivery when
+	alias lookup produces an empty result. File: local/alias.c.
+
+20031019
+
+	Workaround: disable request/reply size limit in attr_scan*.c
+	to prevent mail from getting stuck when rewriting a malformed
+	message header.  This limit was turned on with snapshot
+	20030715 to harden the protocol that is used by SMTPD policy
+	delegation. A "no code change" workaround is to specify
+	"header_size_limit = $line_length_limit".  The proper fix
+	is to enforce request/reply size limits only for data from
+	outside of Postfix. Problem reported by Brandon Mullenberg,
+	Dialup USA. Files:  util/attr_scan*.c.
+
+	Feature: "XLOGINFO address hostname" SMTP command, so that
+	Postfix daemons behind SMTPD pass-through proxies log useful
+	client name/address information instead of localhost[127.0.0.1].
+	The smtpd_authorized_xloginfo_clients parameter specifies
+	what clients are allowed to use XLOGINFO (default: none).
+	Files:  smtpd/smtpd.c.
+
+	Cleanup: renamed the authorized_verp_clients parameter to
+	smtpd_authorized_verp_clients for consistency.
+
+20031021
+
+	Workaround: the demo greylist script now uses BTREE instead
+	of HASH files for hopefully better stability. The real fix
+	is to use a single updater process that serves multiple
+	clients. That approach seems to work well with the verify
+	daemon. File: examples/smtpd-policy/smtpd-policy.pl.
+
+20031022
+
+	Safety: the SMTP server now warns when the queue_minfree
+	value is less than twice the message size limit. File:
+	smtpd/smtpd.c.
+
+	Safety:  the SMTP server no longer accepts mail when the
+	amount of free space is less than twice the message size
+	limit.  File: smtpd/smtpd_check.c.
+
+	Safety: log a warning and defer mail when canonical or
+	virtual lookups return a non-address result (like a string
+	that contains no address). File: global/mail_addr_map.c.
+
+	Safety: log a warning and defer mail when any map lookup
+	returns an empty string result, and explain that "no result"
+	is expected in case of a "not found" condition. This happens
+	with incorrectly implemented SQL or LDAP tables. File:
+	global/maps_find.c.
+
+20031023
+
+	Bugfix: the MYSQL and PGSQL modules invoked dict_register().
+	This was fixed a while ago but never made it into the
+	distribution. Files: util/dict*sql.c.
+
+	Robustness: added three ISSPACE() calls in the smtpd proxy
+	parser. File: smtpd/smtpd_proxy.c.
+
+20031024
+
+	Portability: added localhost to mydestination for sites that
+	turn off append_dot_mydomain. File: global/mail_params.h.
+
 20031027
 
 	Portability: MacOS X Bind8 compatibility. File: makedefs.
 
+20031103
+
+	Robustness: flush pipelined "." and "quit" replies to avoid
+	repeated deliveries in case of a program crash (you know,
+	the kind of thing that happens before Postfix release :-).
+	File:  smtpd/smtpd.c.
+
+20031105
+
+	Portability: turn off NETINFO support for MacOS X Panther
+	by default. Files: makedefs, util/sys_defs.h.
+
+20031106
+
+	Feature: the sample greylist policy server is now case
+	insensitive.  File: examples/smtpd-policy/smtpd-policy.pl.
+
+20031103-20031110
+
+	Feature: preliminary defense against SMTP clients that
+	hammer the SMTP server with too many simultaneous or
+	successive connection attempts, with a whitelist capability
+	to disable the restriction for authorized clients.  Most
+	work is implemented by a new "anvil" server.  Parameters:
+	smtpd_client_connection_count_limit, smtpd_client_connection-
+	_rate_limit, smtpd_client_connection_limit_exceptions, and
+	client_connection_rate_time_unit.  Documentation:  smtpd(8),
+	anvil(8), sample-smtpd.cf. Files:  smtpd/smtpd.c,
+	global/anvil_clnt.[hc], anvil/anvil.c.  The anvil server
+	logs peak count and rate information per client when it
+	terminates after running out of work or after "postfix
+	reload".
+
 20031110
+
+	Cleanup: Postfix now supports the /0 netmask (match every
+	address).  This is useful as a catch-all pattern at the
+	end of a table.  Files:  util/dict_cidr.c, util/match_ops.c.
 
 	Cleanup: don't report that $queue_directory/etc/filename
 	differs from /etc/filename when /etc/filename does not
 	exist.  File: conf/postfix-script.
+
+20031112
+
+	Feature: client_connection_status_update_time parameter
+	controls periodic logging of maximal connection counts or
+	rates.  The default logging interval is 10 minutes.
+
+	Feature: "make makefiles WARN=stuff..." overrides the
+	built-in GCC warning options that are used when "make" is
+	invoked from within a source subdirectory. Files:  makedefs,
+	*/Makefile.in.
+
+20031125
+
+	Feature: qmgr logs "queueid: deleted", just like postsuper,
+	when it removes a message from the mail queue.
+
+	Performance: smtpd connects to the cleanup or proxy server
+	AFTER the first valid RCPT TO command, instead of after
+	the first valid MAIL FROM command. This avoid wasting
+	real-time proxy filter resources when mail is stopped by
+	the SMTP server's access blocks.  File: smtpd/smtpd.c.
 
 20031126
 
@@ -7915,6 +8781,84 @@ Apologies for any names omitted.
 	specified an invalid host name or address.  Postfix now
 	logs more specific information. File:  master/master_ent.c.
 	Reported by several people.
+
+20031125-20031201
+
+	Feature: XCLIENT support to override the SMTP server's
+	client information for logging and/or access control. This
+	replaces the short-lived XADDR and XLOGINFO extensions.
+	Remotely based on code by Victor Duchovni.  See FILTER_README
+	and SMTPD_PROXY_README for usage details. Files:
+	smtpd/{smtpd,smtpd_check,smtpd_proxy,smtpd_xclient}.c
+	smtp/smtp_smtp_proto.c, *qmgr/qmgr_message.c,
+	global/deliver_request.c.
+
+20031202
+
+	Cleanup: postfix-files now has support for files that are
+	no longer part of Postfix. When upgrading Postfix, the
+	post-install script gives the user a reminder. Files:
+	conf/postfix-files, conf/post-install.
+
+20031203
+
+	Support for SMTPD access map actions (FILTER, REDIRECT,
+	HOLD or DISCARD) that are delegated to the cleanup server,
+	but can trigger before the first valid recipient address
+	is accepted (and thus, before a cleanup server connection
+	is available).  Files:  smtpd/{smtpd,smtpd_state,smtpd_check}.c.
+
+20031204
+
+	Bugfix: conf/post-install didn't skip non-existent obsolete
+	files.  Victor Duchovni.
+
+	Minor cleanups of the xclient error messages; xclient
+	command lookup tables. File: smtpd/smtpd.c.
+
+20031206
+
+	Feature: reject_sender_login_mismatch allows multiple owners
+	of a sender address.  Code by Liviu Daia.  Files:
+	smtpd/smtpd_check.c and documentation.
+
+	reject_sender_login_mismatch is now implemented by elementary
+	features reject_unauthenticated_sender_login_mismatch
+	(reject if the client is not SASL logged in but the sender
+	address has an owner in smtpd_sender_login_maps) and
+	reject_authenticated_sender_login_mismatch (reject if the
+	client is SASL logged in but does not own the sender
+	address).  Code by Liviu Daia.  Files: smtpd/smtpd_check.c
+	and documentation.
+
+20031207
+
+	Bugfix: fallback_transport and mailbox_transport were broken
+	because the deliver_pass.c module was not updated for the
+	changed message delivery protocol.
+
+20031211
+
+	Safety: in dynamically growing data structures, update the
+	length info after (instead of before) updating the data
+	size. Files:  util/argv.c, util/inet_addrlist.c, util/intv.c,
+	util/mvect.c, util/vstring.c, global/recipient_list.c,
+	*qmgr/qmgr_rcpt_list.c.
+
+20031212
+
+	Cleanup: separate extensions XCLIENT (impersonate SMTP
+	client) and XFORWARD (down-stream logging of up-stream MTA
+	and/or message information, not necessarily SMTP related).
+	The protocol is extensible: the server advertises what
+	attributes XCLIENT or XFORWARD will accept, and it is an
+	error to send an unsupported attribute.  No xtext encoding
+	is used, since no attribute currently needs it.  See also:
+	XCLIENT_README and XFORWARD_README.
+
+20031214
+
+	Feature: XFORWARD support in the LMTP client.
 
 20031215
 
@@ -7926,16 +8870,103 @@ Apologies for any names omitted.
 	in third-party code. This may eliminate some "localhost
 	not found" problems. File: dns/dns_lookup.c.
 
+20031216
+
+	Cleanup:  easier to parse mailq output (no more space
+	between short queue ID and message status).  File:
+	showq/showq.c.
+
+20031216-21
+
+	Cleanup: the SMTP client now moves on to the next MX host
+	or fallback relay when delivery fails in the middle of an
+	SMTP session. This includes both broken connections and
+	4xx SMTP server replies.  Files:  smtp/smtp.c, smtp_rcpt.c,
+	smtp/smtp_connect.c, smtp_trouble.c.
+
+	Configuration parameters: smtp_mx_address_limit (limit the
+	list of IP addresses from MX lookup), and smtp_mx_session_limit
+	(limit the number of actual SMTP sessions per delivery
+	attempt, ignoring unusable MX IP addresses).
+
+	The new code centers around a mark-and-sweep algorithm
+	(replacing code that twiddled the rcpt->offset structure
+	member), with paranoid sanity checks to ensure that every
+	recipient is explicitly accounted for.
+
+20031217
+
+	Update: LDAP client logging (Liviu Daia) and LDAP client
+	documentation (Victor Duchovni). Files: util/dict_ldap.c,
+	conf/sample-ldap.cf, README_FILES/LDAP_README.
+
 20031222
 
 	Cleanup: shaved half the worst-case bits off the cleanup
 	duplicate address filter footprint. After discussion with
 	Victor Duchovni. File: cleanup/cleanup_out_recipient.c.
 
+	Safety: added "mail loops to myself" logic for destinations
+	that don't have an MX host.  File: smtp/smtp_addr.c.
+
 20031223
 
+	Workaround: turn off "mail loops to myself" for non-MX
+	destinations because it breaks SMTP-based content filters.
+	Fix is to turn off loop detection when a non-default TCP
+	port is specified.  File: smtp/smtp_addr.c.
+
 	Bugfix: restore errno after write failure in SIGCHLD handler.
-	Leandro Santi. File: master/master_sig.c.
+	Leandro Santi (who got the idea from Hernan Perez Masci).
+	File: master/master_sig.c.
+
+	Bugfix: the auto_clnt module disconnected too early, causing
+	unnecessary work by the anvil server.
+
+	Cleanup: eliminated binary hashes from anvil server. Anvil
+	client information is now stored on top of its VSTREAM.
+
+20031226
+
+	Feature: bounce_queue_lifetime parameter (default:
+	$maximal_queue_life_time) that bounds the time that
+	MAILER-DAEMON messages spend in the queue before they are
+	considered undeliverable.
+
+	Feature: disable "mail loops back to myself" protection
+	when SMTP mail is sent to a non-standard port. This makes
+	setting up content filters less painful.
+
+	Cleanup: disallow bare x.x.x.x numeric IP addresses in
+	email addresses. The form user@[x.x.x.x] is still allowed.
+
+	Cleanup: cleaned up the naming of internal symbols in the
+	SMTP client.
+
+20031231
+
+	Bugfix: stricter address syntax test broke "sendmail -bs".
+	File: smtpd/smtpd.c.
+
+20040101
+
+	Cleanup: the Postfix SMTP server rejects a MAIL FROM address
+	that matches a local, virtual or relay domain, while the
+	address is not listed in the corresponding local, virtual
+	or relay recipient table.
+
+	Feature: the reject_unlisted_sender(recipient) SMTPD access
+	restriction rejects an address that matches a local, virtual
+	or relay domain, while the address is not listed in the
+	corresponding local, virtual or relay recipient table. 
+
+	Compatibility: the check_recipient_maps restriction works
+	like reject_unlisted_recipient, but will eventually be
+	removed from Postfix.
+
+20040102
+
+	Misc documentation cleanup by Loic Minier.
 
 20040104
 
@@ -7944,10 +8975,59 @@ Apologies for any names omitted.
 	results when "mailq" formatting is moved from the showq
 	daemon to the postqueue command.   File: msg_syslog.c.
 
+	Feature: after mail is requeued with "postsuper -r", the
+	pickup server logs the old queue ID together with the new
+	queue ID.  Victor Duchovni. File: pickup/pickup.c.
+
+	Feature: smtpd_sasl_application_name parameter (default:
+	smtpd) to control the name of the SASL configuration file
+	used by the Postfix SMTP server. Liviu Daia. Files:
+	mail_params.h, smtpd.c, smtpd_sasl_glue.c.
+
+	Cleanup: the LDAP client configuration parser is now shared
+	between the LDAP, MySQL, and PGSQL clients.  Liviu Daia.
+	Files: global/cfgparser.[hc], global/dict_ldap.c,
+	global/dict_mysql.c, global/dict_pgsql.c and documentation.
+
+	Cleanup: moved "util" modules with dependencies on higher-level
+	"global" code from the util directory to the global directory:
+	util/dict_open.c, global/cfgparser.[hc], global/dict_ldap.c,
+	global/dict_mysql.c, global/dict_pgsql.c, global/mail_dict.c.
+
+	Cleanup: the new queue manager nqmgr replaces the default
+	queue manager qmgr, leaving behind a hard link for backwards
+	compatibility. The old queue manager remains available as
+	as oqmgr but will eventually be removed.
+
 	Bugfix: vstring_get() etc. now return VSTREAM_EOF when they
 	terminate prematurely, instead of returning the last
 	character stored.  This avoids mis-leading warnings. File:
 	global/vstring_vstream.c.
+
+20040105
+
+	Cleanup: don't bother the flush daemon while deferring mail
+	if the destination is not "fast flush" eligible. File:
+	global/flush_clnt.c.
+
+	Safety: the SMTP server flushes recipients to the cleanup
+	server in order to avoid SMTP timeouts when virtual or
+	canonical expansions take a lot of time. File smtpd/smtpd.c.
+
+	Safety: add warnings to postmap and postalias when table
+	lookup results in an empty string.
+
+20040110
+
+	Example: script to run qmail-local from Postfix by Ron
+	Bickers.
+
+	Change: queue minfree limit is now 1.5 * message size limit.
+	File: smtpd/smtpd_check.c.
+
+	Bugfix: apply hostname restriction even when host address
+	lookup fails in check_{sender,recipient}_{ns,mx}_access.
+	File: smtpd/smtpd_check.c.
 
 20040115
 
@@ -7955,6 +9035,51 @@ Apologies for any names omitted.
 	while mail is deferred, as long as the delivery agent does
 	not report really serious trouble with the destination.
 	Files:  *qmgr/qmgr_deliver.c.
+
+	Cleanup: in postfix-files, symbolic links and hard links
+	are now first-class citizens with explicit mention of
+	source and destination pathnames. Files: postfix-install,
+	conf/postfix-files, conf/post-install.
+
+20040116
+
+	Cleanup: sendmail -v caused one mail delivery report upon
+	every delivery attempt, not just the first one. The fix is
+	to "kill" a queue file record after the first delivery
+	attempt. This means a new record type. Files:  *qmgr/qmgr_active.c,
+	*qmgr/qmgr_message.c, global/rec_type.c.
+
+	Cleanup: in anticipation of other built-in rate limiters,
+	the client_connection_rate_time_unit parameter is renamed
+	to client_rate_time_unit.
+
+	Documentation: finished the HOSTING_README file with an
+	overview of methods to host domains with Postfix.
+
+20040119
+
+	Bugfix: anvil (count and rate limiting) server race condition
+	could result in dangling pointer.  Postfix erases memory
+	after allocating and before freeing, so it is extremely
+	unlikely that this could be used to bring harmful data into
+	the anvil server. File anvil/anvil.c.
+
+20040120
+
+	Cleanup: new header_checks(5) and body_checks(5) manual
+	pages.  The sample-regexp* and sample-pcre* files are no
+	longer needed and have been removed, as are the default
+	*_table configuration files.
+
+	Cleanup: support for the non-standard Errors-To: header
+	is removed. File: cleanup/cleanup_message.c.
+
+20040121
+
+	Feature: "PREPEND headername: headervalue" action in Postfix
+	access maps, to facilitate external policy servers that
+	label mail instead of rejecting it. Files: smtpd/smtpd.c,
+	smtpd/smtpd_check.c.
 
 20040122
 
@@ -7965,66 +9090,264 @@ Apologies for any names omitted.
 
 	Portability: test -e is not portable. File: conf/postfix-script.
 
-20040302
+	Misc. documentation fixes by Victor Duchovni.
+
+	Documentation: the README files are now hyperlinked, and
+	are referenced in the on-line manual pages.
 
 	Bugfix: the pickup daemon now strokes the watchdog frequently
 	to prevent the watchdog from barking when mail arrives
 	faster than it can be picked up. File: pickup/pickup.c.
 
+20040123
+
+	Feature: set smtpd_reject_unlisted_{sender,recipient}=no to
+	turn off automatic rejection of non-existent local, virtual
+	or relay addresses. This way it can be made conditional
+	for local clients, always on for remote clients. Files:
+	global/mail_params.h, smtpd/smtpd.c, smtpd/smtpd_check.c.
+
+20040124
+
+	Feature: PREPEND in header/body_checks, for message tagging.
+	File: cleanup/cleanup_message.c.
+
+20040126
+
+	Safety: handle the case that main.cf is updated while it is
+	being read. File: util/dict.c.
+
+	Feature: "instance" attribute that links policy etc. queries
+	to the same message instance.
+
+	Cleanup: the mynetworks setting may now be empty. File:
+	global/mail_params.c.
+
+20040127
+
+	Bugfix: missing flush_init() call. Introduced 20040105.
+	File: postqueue/postqueue.c.
+
+20040128
+
+	Cleanup: clnt_stream derived classes now try to detect that
+	the server has disconnected before sending data and warning
+	about an error. File: global/clnt_stream.c.
+
+20040202
+
+	Bugfix: changed mis-leading warning about text>4096 characters
+	into "unexpected end-of-input". File: util/attr_scan0.c.
+
+20040201
+
+	Feature: sasl_method, sasl_username and sasl_sender attributes
+	in smtpd policy queries. Files: src/smtpd/smtpd_check.c.
+
+20040204
+
+	Safety: smtpd_soft_error_limit now determines when
+	$smtpd_error_sleep_time starts to take effect.
+
+	Cleanup: local(8) and virtual(8) will now create maildirs
+	in a world-writable directory. Files: util/make_dirs.c.
+
+	Bugfix: don't panic on a corrupt queue file.  File:
+	*qmgr/qmgr_message.c.
+
+20040205
+
+	Cleanup: sample-filter.cf is gone. Better documentation is
+	available with "man header_checks".
+
+20040209
+
+	Bugfix: when delivery to smtpd_proxy_filter fails, report
+	"451 Queue file write error" instead of repeating the
+	previous "354 End data with <CR><LF>.<CR><LF>" response.
+	File:  smtpd/smtpd.c.
+
+20040220
+
+	Compatibility: accept and ignore the sendmail -bh and -bH
+	mode of operation requests.
+
+20040302
+
+	Bugfix: SMTPD proxy didn't send QUIT as the result of code
+	duplication. Evidence reported by Mark Martinec. File:
+	smtpd/smtpd.c.
+
 20040311
 
-	Bugfix: bad address syntax caused map lookup with zero-length
-	keys.  Problem reported by Andrei Koulik. Files:
-	util/match_ops.c, src/trivial-rewrite/transport.c.
+	Bugfix: bad address syntax was passed to transport map
+	lookups.  Problem reported by Andrei Koulik. File:
+	util/match_ops.c, trivial-rewrite/resolve.c.
 
-Open problems:
+20040324
 
-	Doc: mention the proxy_interfaces parameter everywhere the
-	inet_interfaces and mydestination parameters are mentioned.
+	Portability: ekkoBSD support by Philip Reynolds.
+	Files: makedefs, util/sys_defs.h.
 
-	Low: smtp-source may block when sending large test messages.
+20040325
 
-	Low: after successful delivery, per-queue window += 1/window,
-	after failure, queue window -= 1 (Victor).
+	Cleanup: smtp_skip_4xx_greeting and smtp_skip_5xx_greeting
+	functionality is moved from connection management to SMTP
+	protocol processing, so that Postfix now logs the server
+	response when a server refuses to provide service.  Files:
+	smtp/smtp_connect.c, smtp/smtp_proto.c.
 
-	Low: revise other local delivery agent duplicate filters.
+	Cleanup: smtp_skip_4xx_greeting is no longer configurable;
+	it is now permanently turned on.
 
-	Low: all table lookups should consistently use internalized
-	(unquoted) or externalized (quoted) forms as lookup keys.
-	smtpd, qmgr, local, etc. use unquoted address forms as
-	keys.  cleanup uses quoted forms.
+20040326
 
-	Low: sendmail does not store null command-line recipients.
+	Workaround: in the trivial-rewrite server, turn on the code
+	to strip trailing "." while rewriting addresses, and change
+	the address resolver to strip trailing "." in a compatible
+	manner.  This does not eliminate the problem that the SMTP
+	server may use a different address for recipient validation
+	than what the cleanup server uses for virtual alias mapping.
 
-	Low: sendmail, not cleanup, should extract recipients from
-	message headers.
+20040329
 
-	Low: have a configurable list of errno values for mailbox
-	or maildir delivery that result in deferral rather than
-	bouncing mail.
+	Bugfix: the SMTP server did not log client (and SASL)
+	information with the real-time content filter was enabled.
+	Files: smtpd/smtpd.c, smtpd/smtpd_sasl_proto.c.
 
-	Low: after reorganizing configuration parameters, add flags
-	to all parameters whose value can be read from file.
+	Compatibility: smtpd_reject_unlisted_sender is turned off
+	by default, to avoid trouble with with in-house software
+	that sends out mail software with an unreplyable address.
 
-	Medium: need in-process caching for map lookups. LDAP
-	servers seem to need this in particular. Need a way to
-	expire cached results that are too old.
+20040331
 
-	Medium: make address rewriting on/off configurable for
-	envelopes and/or headers.
+	Bugfix: postdrop should not abandon mail submission after
+	receiving a SIGHUP signal when SIGHUP was ignored by the
+	parent process.  Victor Duchovni, Morgan Stanley.  File:
+	postdrop/postdrop.c.
 
-	Low: generic showq protocol, to allow for more intelligent
-	processing than just mailq. Maybe marry this with postsuper.
+	Bugfix: parsing bug in PgSQL dictionaries causing UNIX
+	sockets to be ignored. Liviu Daia. Files: global/dict*sql.c.
 
-	Low: default domain for appending to unqualified recipients,
-	so that unqualified names can be delivered locally.
+	Performance: allow MySQL and PgSQL database connections to
+	be closed when idle for more than 1 minute; Liviu Daia.
+	Files: global/dict*sql.c.
 
-	Low: The $process_id_directory setting is not used anywhere
-	in Postfix. Problem reported by Michael Smith, texas.net.
-	This should be documented, or better, the code should warn
-	about attempts to set read-only parameters.
+20040401
 
-	Low: postconf -e edits parameters that postconf won't list.
+	Sanity: the SMTP server no longer accepts sender or recipient
+	addresses that end in the "@" null domain, as well as
+	addresses that rewrite into such a form.  Specify
+	"resolve_null_domain=yes" to get the old behavior back.
+	File:  trivial-rewrite/resolve.c.
 
-	Low: with quoted-printable, perhaps use =46rom instead of
-	>From.
+20040402
+
+	Cleanup: added WARN action support for access maps, for
+	consistency with the WARN action in header and body checks.
+	File:  smtpd/smtpd_check.c.
+
+20040407
+
+	Bugfix: missing return statement at the end of the
+	FREE_MEMORY_AND_RETURN error handling macro. Adi Prasaja.
+	File: trivial-rewrite/resolve.c.
+
+20040411
+
+	Future proofing: client_rate_time_unit is renamed to
+	anvil_rate_time_unit, so that it is no longer limited to
+	clients only. File: src/global/mail_params.h.
+
+	Cleanup: postalias and postmap now log problems to syslogd.
+	Files: postalias/postalias.c, postmap/postmap.c.
+
+20040413
+
+	Feature: "postfix set-permissions" (re)sets ownership and
+	access permissions of Postfix files and directories.
+
+	Feature: "postfix upgrade-configuration" updates main.cf
+	and master.cf. This is for people who people copy over
+	their old files after installing a newer Postfix version.
+
+	Feature: HTML files are now optionally installed under
+	control of the html_directory configuration parameter.
+	Files: postfix-install, conf/postfix-files, conf/post-install.
+
+	Cleanup: README file installation is now optional.  Files:
+	postfix-install, conf/postfix-files, conf/post-install.
+
+20040414
+
+	Cleanup: references to sample-mumble.cf files removed,
+	conf/mumble_table files removed, new commands added to
+	conf/postfix-script.
+
+	Cleanups: function declared in but used as void, missing
+	include file, missing const qualifier, unused variable.
+	Matthias Andree. Files:  bounce/bounce_notify_util.c,
+	bounce/bounce_service.h, postlog/postlog.c, smtpd/smtpd_check.c,
+	util/attr_scan64.c.
+
+	Bugfix: more robust version of SIGHUP test of 20040331.
+	Victor Duchovni, Morgan Stanley. File: postdrop/postdrop.c.
+
+	Safety: added NOCLOBBER qualifiers to local variables that
+	might be clobbered by longjmp(). Files: util/sys_defs.h,
+	smtp/smtp_proto.c, lmtp/lmtp_proto.c, smtpd/smtpd_check.c,
+	smtpstone/smtp-source.c.
+
+	Bugfix: sub-level Makefiles no longer turned on the extra
+	compiler warnings. Files: Makefile.in.*, makedefs.*.
+
+20040415
+
+	Bugfix: the LMTP client attempted to reuse a connection
+	after timeout, causing protocol synchronization errors.
+	Reported by Rob Mueller. File: lmtp/lmtp.c.
+
+20040416
+
+	Cleanup: non-delivery reports now include the original
+	recipient information. File: bounce/bounce_notify_util.c.
+
+20040415-18
+
+	Typos: many documentation fixes by Rob Foehl.
+
+20040418
+
+	Cleanup: "int" versus "const int" prototype mismatch between
+	the DICT sequence method prototype and possible implementations.
+	Files: util/dict_db.c, util/dict_dbm.c.
+
+20040419
+
+	Bugfix: the code that rejects client/helo RESTRICTIONS with
+	smtpd_delay_reject=no looked at the wrong evidence and
+	rejected client/helo ACCESS MAP lookups instead. Michael
+	Tokarev. Files:  smtpd/smtpd.c, smtpd/smtpd_check.c.
+
+	Bugfix: missing # in master.cf in optional submission
+	service.
+
+20040420
+
+	Bugfix: smtpd logged the client too often. Michael Tokarev.
+	File: smtpd/smtpd.c.
+
+	Cleanup: client_event_status_update_time renamed to
+	anvil_status_update_time. Files: mantools/postlink,
+	proto/postconf.proto, anvil/anvil.c.
+
+20040421
+
+	Workaround: allow pipelined SMTP clients to overshoot the
+	SMTP server recipient limit without triggering the server
+	hard error limit.  The SMTP server does not count "too many
+	recipients" towards the hard error limit, as long as the
+	number of excess recipients stays within a configurable
+	overshoot limit (default: smtpd_recipient_overshoot_limit
+	= 1000).  Solution in cooperation with Victor Duchovni.
+	Files:  smtpd/smtpd.c, smtpd/smtpd_state.c, smtpd/smtpd.h.

@@ -30,9 +30,26 @@ extern void rewrite_tree(char *, TOK822 *);
  /*
   * resolve.c
   */
+typedef struct {
+    const char *local_transport_name;	/* name of variable */
+    char  **local_transport;		/* local transport:nexthop */
+    const char *virt_transport_name;	/* name of variable */
+    char  **virt_transport;		/* virtual mailbox transport:nexthop */
+    const char *relay_transport_name;	/* name of variable */
+    char  **relay_transport;		/* relay transport:nexthop */
+    const char *def_transport_name;	/* name of variable */
+    char  **def_transport;		/* default transport:nexthop */
+    const char *relayhost_name;		/* name of variable */
+    char  **relayhost;			/* for relay and default transport */
+    const char *transport_maps_name;	/* name of variable */
+    char  **transport_maps;		/* maptype:mapname */
+    struct TRANSPORT_INFO *transport_info;	/* handle */
+} RES_CONTEXT;
+
+#define RES_PARAM_VALUE(x) (*(x))	/* make it easy to do it right */
+
 extern void resolve_init(void);
-extern int resolve_proto(VSTREAM *);
-extern void resolve_addr(char *, VSTRING *, VSTRING *, VSTRING *, int *);
+extern int resolve_proto(RES_CONTEXT *, VSTREAM *);
 
 /* LICENSE
 /* .ad

@@ -21,36 +21,38 @@
 # 
 #        mydestination
 #               A  list of domains that is by default delivered via
-#               $local_transport.
+#               $local_transport. This also includes  domains  that
+#               match $inet_interfaces or $proxy_interfaces.
 # 
 #        virtual_mailbox_domains
-#               A list of domains that is by default delivered  via
+#               A  list of domains that is by default delivered via
 #               $virtual_transport.
 # 
 #        relay_domains
-#               A  list of domains that is by default delivered via
+#               A list of domains that is by default delivered  via
 #               $relay_transport.
 # 
 #        any other destination
 #               Mail for any other destination is by default deliv-
 #               ered via $default_transport.
 # 
-#        Normally,  the transport table is specified as a text file
-#        that serves as  input  to  the  postmap(1)  command.   The
-#        result,  an  indexed file in dbm or db format, is used for
-#        fast searching by the mail  system.  Execute  the  command
-#        postmap  /etc/postfix/transport  in  order  to rebuild the
+#        Normally, the transport table is specified as a text  file
+#        that  serves  as  input  to  the  postmap(1) command.  The
+#        result, an indexed file in dbm or db format, is  used  for
+#        fast  searching  by  the  mail system. Execute the command
+#        postmap /etc/postfix/transport in  order  to  rebuild  the
 #        indexed file after changing the transport table.
 # 
-#        When the table is provided via other means  such  as  NIS,
-#        LDAP  or  SQL,  the  same lookups are done as for ordinary
+#        When  the  table  is provided via other means such as NIS,
+#        LDAP or SQL, the same lookups are  done  as  for  ordinary
 #        indexed files.
 # 
-#        Alternatively, the table can be  provided  as  a  regular-
+#        Alternatively,  the  table  can  be provided as a regular-
 #        expression map where patterns are given as regular expres-
-#        sions. In that case, the lookups are done  in  a  slightly
-#        different  way as described in section "REGULAR EXPRESSION
-#        TABLES".
+#        sions,  or lookups can be directed to TCP-based server. In
+#        that case, the lookups are done in  a  slightly  different
+#        way  as  described below under "REGULAR EXPRESSION TABLES"
+#        and "TCP-BASED TABLES".
 # 
 # TABLE FORMAT
 #        The input format for the postmap(1) command is as follows:
@@ -73,11 +75,9 @@
 #        a  domain  name  hierarchy, as described in section "TABLE
 #        LOOKUP".
 # 
-#        The result is of the form transport:nexthop.   The  trans-
-#        port  field  specifies  a  mail delivery transport such as
-#        smtp or local. The nexthop field specifies where  and  how
-#        to deliver mail. More details are given in section "RESULT
-#        FORMAT".
+#        The result is of the form transport:nexthop and  specifies
+#        how or where to deliver mail. This is described in section
+#        "RESULT FORMAT".
 # 
 # TABLE LOOKUP
 #        With lookups from indexed files such as DB or DBM, or from
@@ -112,125 +112,149 @@
 #        mon@hostname).
 # 
 # RESULT FORMAT
-#        The  transport field specifies the name of a mail delivery
+#        The  lookup  result is of the form transport:nexthop.  The
+#        transport field specifies a mail delivery  transport  such
+#        as  smtp  or  local. The nexthop field specifies where and
+#        how to deliver mail.
+# 
+#        The transport field specifies the name of a mail  delivery
 #        transport (the first name of a mail delivery service entry
 #        in the Postfix master.cf file).
 # 
-#        The  interpretation  of  the  nexthop  field  is transport
-#        dependent. In the case of SMTP, specify host:service for a
-#        non-default  server port, and use [host] or [host]:port in
-#        order to disable MX (mail exchanger) DNS lookups.  The  []
+#        The interpretation  of  the  nexthop  field  is  transport
+#        dependent.  In  the  case  of SMTP, specify a service on a
+#        non-default port as host:service,  and  disable  MX  (mail
+#        exchanger)  DNS lookups with [host] or [host]:port. The []
 #        form is required when you specify an IP address instead of
 #        a hostname.
 # 
-#        A null transport and null nexthop  result  means  "do  not
-#        change":  use  the delivery transport and nexthop informa-
-#        tion that would be used when the  entire  transport  table
+#        A  null  transport  and  null nexthop result means "do not
+#        change": use the delivery transport and  nexthop  informa-
+#        tion  that  would  be used when the entire transport table
 #        did not exist.
 # 
-#        A  non-null  transport  field  with  a  null nexthop field
+#        A non-null transport  field  with  a  null  nexthop  field
 #        resets the nexthop information to the recipient domain.
 # 
-#        A null transport field with non-null  nexthop  field  does
+#        A  null  transport  field with non-null nexthop field does
 #        not modify the transport information.
 # 
 # EXAMPLES
-#        In  order to deliver internal mail directly, while using a
-#        mail relay for all other mail, specify a  null  entry  for
-#        internal  destinations  (do not change the delivery trans-
-#        port or the nexthop information) and  specify  a  wildcard
+#        In order to deliver internal mail directly, while using  a
+#        mail  relay  for  all other mail, specify a null entry for
+#        internal destinations (do not change the  delivery  trans-
+#        port  or  the  nexthop information) and specify a wildcard
 #        for all other destinations.
 # 
 #             my.domain    :
 #             .my.domain   :
-#             *            smtp:outbound-relay.my.domain
+#             *         smtp:outbound-relay.my.domain
 # 
-#        In  order  to send mail for foo.org and its subdomains via
-#        the uucp transport to the UUCP host named foo:
+#        In order to send mail for example.com and  its  subdomains
+#        via the uucp transport to the UUCP host named example:
 # 
-#             foo.org      uucp:foo
-#             .foo.org     uucp:foo
+#             example.com      uucp:example
+#             .example.com     uucp:example
 # 
-#        When no nexthop host name is  specified,  the  destination
-#        domain  name  is  used instead. For example, the following
-#        directs mail for user@foo.org via the slow transport to  a
-#        mail  exchanger  for foo.org.  The slow transport could be
-#        something that runs at most  one  delivery  process  at  a
-#        time:
+#        When  no  nexthop  host name is specified, the destination
+#        domain name is used instead. For  example,  the  following
+#        directs  mail  for user@example.com via the slow transport
+#        to a mail exchanger for example.com.  The  slow  transport
+#        could be configured to run at most one delivery process at
+#        a time:
 # 
-#             foo.org      slow:
+#             example.com      slow:
 # 
 #        When no transport is specified, Postfix uses the transport
-#        that matches the address domain class (see TRANSPORT FIELD
-#        discussion  above).   The  following  sends  all  mail for
-#        foo.org and its subdomains to host gateway.foo.org:
+#        that  matches  the  address  domain class (see DESCRIPTION
+#        above).  The following sends all mail for example.com  and
+#        its subdomains to host gateway.example.com:
 # 
-#             foo.org      :[gateway.foo.org]
-#             .foo.org     :[gateway.foo.org]
+#             example.com      :[gateway.example.com]
+#             .example.com     :[gateway.example.com]
 # 
-#        In the above example, the  []  are  used  to  suppress  MX
-#        lookups.   The  result  would  likely  point to your local
-#        machine.
+#        In  the  above  example, the [] suppress MX lookups.  This
+#        prevents mail routing loops when your machine  is  primary
+#        MX host for example.com.
 # 
-#        In the case of delivery via SMTP, one  may  specify  host-
+#        In  the  case  of delivery via SMTP, one may specify host-
 #        name:service instead of just a host:
 # 
-#             foo.org      smtp:bar.org:2025
+#             example.com      smtp:bar.example:2025
 # 
-#        This  directs  mail  for user@foo.org to host bar.org port
-#        2025. Instead of a numerical port a symbolic name  may  be
-#        used.  Specify  [] around the hostname in order to disable
-#        MX lookups.
+#        This directs mail for user@example.com to host bar.example
+#        port 2025. Instead of a numerical port a symbolic name may
+#        be used. Specify [] around the hostname if MX lookups must
+#        be disabled.
 # 
 #        The error mailer can be used to bounce mail:
 # 
-#             .foo.org      error:mail for *.foo.org is not  deliv-
-#        erable
+#             .example.com      error:mail for *.example.com is not
+#        deliverable
 # 
-#        This  causes  all  mail  for  user@anything.foo.org  to be
+#        This causes all mail for user@anything.example.com  to  be
 #        bounced.
 # 
 # REGULAR EXPRESSION TABLES
-#        This section describes how the table lookups  change  when
+#        This  section  describes how the table lookups change when
 #        the table is given in the form of regular expressions. For
-#        a description of regular expression lookup  table  syntax,
+#        a  description  of regular expression lookup table syntax,
 #        see regexp_table(5) or pcre_table(5).
 # 
-#        Each  pattern  is  a regular expression that is applied to
-#        the entire domain being looked up. Thus, some.domain.hier-
-#        archy is not broken up into parent domains.
+#        Each pattern is a regular expression that  is  applied  to
+#        the    entire    address    being    looked    up.   Thus,
+#        some.domain.hierarchy is not  looked  up  via  its  parent
+#        domains,  nor is user+foo@domain looked up as user@domain.
 # 
-#        Patterns  are  applied  in  the  order as specified in the
-#        table, until a pattern is found that  matches  the  search
+#        Patterns are applied in the  order  as  specified  in  the
+#        table,  until  a  pattern is found that matches the search
 #        string.
 # 
-#        Results  are  the  same as with indexed file lookups, with
-#        the additional feature that parenthesized substrings  from
+#        Results are the same as with indexed  file  lookups,  with
+#        the  additional feature that parenthesized substrings from
 #        the pattern can be interpolated as $1, $2 and so on.
 # 
+# TCP-BASED TABLES
+#        This section describes how the table lookups  change  when
+#        lookups are directed to a TCP-based server. For a descrip-
+#        tion  of  the  TCP  client/server  lookup  protocol,   see
+#        tcp_table(5).   This  feature  is not available in Postfix
+#        version 2.1.
+# 
+#        Each lookup operation uses the  entire  recipient  address
+#        once.   Thus,  some.domain.hierarchy  is not looked up via
+#        its parent domains, nor is user+foo@domain  looked  up  as
+#        user@domain.
+# 
+#        Results are the same as with indexed file lookups.
+# 
 # CONFIGURATION PARAMETERS
-#        The  following  main.cf parameters are especially relevant
-#        to this topic. See the Postfix  main.cf  file  for  syntax
-#        details  and  for  default  values. Use the postfix reload
-#        command after a configuration change.
+#        The  following main.cf parameters are especially relevant.
+#        The text below provides  only  a  parameter  summary.  See
+#        postconf(5) for more details including examples.
 # 
 #        empty_address_recipient
-#               The address that is looked up instead of  the  null
+#               The  address  that is looked up instead of the null
 #               sender address.
 # 
 #        parent_domain_matches_subdomains
-#               List  of  Postfix features that use domain.tld pat-
-#               terns  to  match  sub.domain.tld  (as  opposed   to
+#               List of Postfix features that use  domain.tld  pat-
+#               terns   to  match  sub.domain.tld  (as  opposed  to
 #               requiring .domain.tld patterns).
 # 
 #        transport_maps
 #               List of transport lookup tables.
 # 
 # SEE ALSO
-#        postmap(1) create mapping table
-#        trivial-rewrite(8) rewrite and resolve addresses
-#        pcre_table(5) format of PCRE tables
-#        regexp_table(5) format of POSIX regular expression tables
+#        trivial-rewrite(8), rewrite and resolve addresses
+#        postconf(5), configuration parameters
+#        postmap(1), Postfix lookup table manager
+# 
+# README FILES
+#        Use "postconf readme_directory" or  "postconf  html_direc-
+#        tory" to locate this information.
+#        DATABASE_README, Postfix lookup table overview
+#        FILTER_README, external content filter
 # 
 # LICENSE
 #        The  Secure  Mailer  license must be distributed with this

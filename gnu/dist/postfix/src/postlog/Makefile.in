@@ -3,9 +3,6 @@ SRCS	= postlog.c
 OBJS	= postlog.o 
 HDRS	= 
 TESTSRC	= 
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 FILES	= Makefile $(SRCS) $(HDRS)
@@ -71,3 +68,4 @@ postlog.o: ../../include/msg_vstream.h
 postlog.o: ../../include/msg_syslog.h
 postlog.o: ../../include/mail_params.h
 postlog.o: ../../include/mail_conf.h
+postlog.o: ../../include/mail_task.h

@@ -33,6 +33,9 @@
 /* Global library. */
 
 #include <dict_proxy.h>
+#include <dict_ldap.h>
+#include <dict_mysql.h>
+#include <dict_pgsql.h>
 #include <mail_dict.h>
 
 typedef struct {
@@ -42,7 +45,15 @@ typedef struct {
 
 static DICT_OPEN_INFO dict_open_info[] = {
     DICT_TYPE_PROXY, dict_proxy_open,
-    /* XXX LDAP and MYSQL etc. should go here, too. */
+#ifdef HAS_LDAP
+    DICT_TYPE_LDAP, dict_ldap_open,
+#endif
+#ifdef HAS_MYSQL
+    DICT_TYPE_MYSQL, dict_mysql_open,
+#endif
+#ifdef HAS_PGSQL
+    DICT_TYPE_PGSQL, dict_pgsql_open,
+#endif
     0,
 };
 

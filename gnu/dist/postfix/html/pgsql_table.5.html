@@ -1,0 +1,197 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - pgsql_table(5) </title>
+</head> <body> <pre>
+PGSQL_TABLE(5)                                     PGSQL_TABLE(5)
+
+<b>NAME</b>
+       pgsql_table - Postfix PostgreSQL client configuration
+
+<b>SYNOPSIS</b>
+       <b>postmap -q "</b><i>string</i><b>" <a href="pgsql_table.5.html">pgsql</a>:/etc/postfix/filename</b>
+
+       <b>postmap -q - <a href="pgsql_table.5.html">pgsql</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
+
+<b>DESCRIPTION</b>
+       The  Postfix  mail system uses optional tables for address
+       rewriting or mail routing. These tables are usually in <b>dbm</b>
+       or <b>db</b> format.
+
+       Alternatively,  lookup  tables  can  be specified as Post-
+       greSQL databases.  In order  to  use  PostgreSQL  lookups,
+       define  a  PostgreSQL source as a lookup table in main.cf,
+       for example:
+           <a href="postconf.5.html#alias_maps">alias_maps</a> = <a href="pgsql_table.5.html">pgsql</a>:/etc/pgsql-aliases.cf
+
+       The file /etc/postfix/pgsql-aliases.cf has the same format
+       as  the  Postfix main.cf file, and can specify the parame-
+       ters described below.
+
+<b>ALTERNATIVE CONFIGURATION</b>
+       For compatibility with other Postfix lookup tables,  Post-
+       greSQL  parameters  can  also  be  defined in main.cf.  In
+       order to do that, specify as PostgreSQL source a name that
+       doesn't  begin  with  a  slash  or  a dot.  The PostgreSQL
+       parameters will then be  accessible  as  the  name  you've
+       given the source in its definition, an underscore, and the
+       name of the parameter.  For example, if the map is  speci-
+       fied  as  "<a href="pgsql_table.5.html">pgsql</a>:<i>pgsqlname</i>",  the  parameter "hosts" below
+       would be defined in main.cf as "<i>pgsqlname</i>_hosts".
+
+       Note: with this form, the  passwords  for  the  PostgreSQL
+       sources  are  written in main.cf, which is normally world-
+       readable.  Support for this form  will  be  removed  in  a
+       future Postfix version.
+
+<b>LIST MEMBERSHIP</b>
+       When using SQL to store lists such as $<a href="postconf.5.html#mynetworks">mynetworks</a>, $<a href="postconf.5.html#mydestination">mydes</a>-
+       <a href="postconf.5.html#mydestination">tination</a>, $<a href="postconf.5.html#relay_domains">relay_domains</a>, $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>, etc.,  it
+       is  important to understand that the table must store each
+       list member as a separate key. The table  lookup  verifies
+       the  *existence*  of  the  key.  See "Postfix lists versus
+       tables" in the <a href="DATABASE_README.html">DATABASE_README</a> document for a  discussion.
+
+       Do  NOT create tables that return the full list of domains
+       in $<a href="postconf.5.html#mydestination">mydestination</a> or $<a href="postconf.5.html#relay_domains">relay_domains</a> etc., or IP  addresses
+       in $<a href="postconf.5.html#mynetworks">mynetworks</a>.
+
+       DO create tables with each matching item as a key and with
+       an arbitrary value. With SQL databases it is not  uncommon
+       to return the key itself or a constant value.
+
+<b>PGSQL PARAMETERS</b>
+       <b>hosts</b>  The  hosts  that Postfix will try to connect to and
+              query from.  Specify <i>unix:</i> for UNIX-domain sockets,
+              <i>inet:</i> for TCP connections (default).  Example:
+                  hosts = host1.some.domain host2.some.domain
+                  hosts = unix:/file/name
+
+              The  hosts are tried in random order, with all con-
+              nections  over  UNIX  domain  sockets  being  tried
+              before  those  over TCP.  The connections are auto-
+              matically closed  after  being  idle  for  about  1
+              minute, and are re-opened as necessary.
+
+              NOTE: the <i>unix:</i> and <i>inet:</i> prefixes are accepted for
+              backwards compatibility reasons, but  are  actually
+              ignored.  The PostgreSQL client library will always
+              try to connect to an UNIX socket if the name starts
+              with  a slash, and will try a TCP connection other-
+              wise.
+
+       <b>user, password</b>
+              The user name and password to log  into  the  pgsql
+              server.  Example:
+                  user = someone
+                  password = some_password
+
+       <b>dbname</b> The database name on the servers. Example:
+                  dbname = customer_database
+
+       The  following  parameters can be used to fill in a SELECT
+       template statement of the form:
+           select [<b>select_field</b>] from [<b>table</b>] where
+               [<b>where_field</b>] = '$lookup' [<b>additional_conditions</b>]
+
+       $lookup contains the search string, and is escaped  so  if
+       it contains single quotes or other odd characters, it will
+       not cause a parse error, or worse, a security problem.
+
+       <b>select_field</b>
+              The SQL "select" parameter. Example:
+                  select_field = forw_addr
+
+       <b>table</b>  The SQL "select .. from" table name. Example:
+                  table = mxaliases
+
+       <b>where_field</b>
+              The SQL "select .. where" parameter. Example:
+                  where_field = alias
+
+       <b>additional_conditions</b>
+              Additional conditions to the SQL query. Example:
+                  additional_conditions = and status = 'paid'
+
+       The following parameters  provide  ways  to  override  the
+       default  SELECT  statement.   Setting  them  will instruct
+       Postfix  to  ignore   the   above   <b>table</b>,   <b>select_field</b>,
+       <b>where_field</b> and <b>additional_conditions</b> parameters:
+
+       <b>query</b>  This  parameter  specifies  a  complete  SQL query.
+              Example:
+                  query = select forw_addr from mxaliases where
+                      alias = '%s' and status = 'paid'
+
+              This parameter supports the  following  '%'  expan-
+              sions:
+
+              <b>%s</b>     This  is  replaced by the input key. Quoting
+                     is used to make sure that the input key does
+                     not add unexpected metacharacters.
+
+              <b>%u</b>     When the input key is an address of the form
+                     user@domain, <b>%u</b> is replaced  by  the  quoted
+                     local  part of the address.  If no domain is
+                     specified, <b>%u</b>  is  replaced  by  the  entire
+                     search string.
+
+              <b>%d</b>     When the input key is an address of the form
+                     user@domain, <b>%d</b> is replaced  by  the  quoted
+                     domain  part of the address.  When the input
+                     key has no domain qualifier, <b>%d</b> is  replaced
+                     by the entire search string.
+
+       <b>select_function</b>
+              This  parameter specifies a database function name.
+              Example:
+                  select_function = my_lookup_user_alias
+
+              This is equivalent to:
+                  query = select my_lookup_user_alias('%s')
+
+              and overrides both  the  <b>query</b>  parameter  and  the
+              table-related fields above.
+
+              As  of  June 2002, if the function returns a single
+              row and a single column AND  that  value  is  NULL,
+              then  the  result will be treated as if the key was
+              not in the dictionary.
+
+              Future versions  will  allow  functions  to  return
+              result sets.
+
+<b>SEE ALSO</b>
+       <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="ldap_table.5.html">ldap_table(5)</a>, LDAP lookup tables
+       <a href="mysql_table.5.html">mysql_table(5)</a>, MySQL lookup tables
+
+<b>README FILES</b>
+       <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
+       <a href="PGSQL_README.html">PGSQL_README</a>, Postfix PostgreSQL client guide
+
+<b>LICENSE</b>
+       The Secure Mailer license must be  distributed  with  this
+       software.
+
+<b>HISTORY</b>
+       PgSQL support was introduced with Postfix version 2.1.
+
+<b>AUTHOR(S)</b>
+       Based on the MySQL client by:
+       Scott Cotton, Joshua Marcus
+       IC Group, Inc.
+
+       Ported to PostgreSQL by:
+       Aaron Sethman
+
+       Further enhanced by:
+       Liviu Daia
+       Institute of Mathematics of the Romanian Academy
+       P.O. BOX 1-764
+       RO-014700 Bucharest, ROMANIA
+
+                                                   PGSQL_TABLE(5)
+</pre> </body> </html>

@@ -22,11 +22,9 @@
 typedef struct MAPS {
     char   *title;
     struct ARGV *argv;
-    int     flags;
 } MAPS;
 
 extern MAPS *maps_create(const char *, const char *, int);
-extern MAPS *maps_append(MAPS *, const char *, DICT *);
 extern const char *maps_find(MAPS *, const char *, int);
 extern MAPS *maps_free(MAPS *);
 

@@ -1,0 +1,241 @@
+#!/usr/bin/perl
+
+use Getopt::Std;
+
+# Usage: fixman [-f] postconf.proto filename.c >filename.c.new
+
+# fixman - fix parameter text in embedded man pages
+
+# Basic operation:
+#
+# - Read definitions fron postconf.proto like file
+#
+# - Read source file with embedded manual page
+#
+# - Write to stdout the updated source file.
+#
+
+#use Getopt::Std;
+
+#$opt_h = undef;
+#$opt_v = undef;
+#getopts("hv");
+
+#push @ARGV, "/dev/null"; # XXX
+
+$opt_f = undef;
+$opt_v = undef;
+getopts("fv");
+
+die "Usage: $0 [-fv] protofile [sourcefile...]
+-f: include full parameter description instead of one-line summary
+-v: verbose mode\n"
+        unless $protofile = shift(@ARGV);
+
+# Save one definition.
+
+sub save_text 
+{
+    if ($category eq "PARAM") {
+	$text =~ s/\.\s.*/.\n/s unless $opt_f;
+        $param_text{$name} = $text;
+	$defval = "empty" unless $defval ne "";
+	$defval_text{$name} = $defval;
+        if ($opt_v) {
+            printf "saving entry %s %.20s..\n", $name, $text;
+        } 
+    } elsif ($category eq "CLASS") {
+        $class_text{$name} = $text;
+        if ($opt_v) {
+            printf "saving class %s %.20s..\n", $name, $text;
+        } 
+    } else {
+        die "Unknown category: $category. Need PARAM or CLASS.\n";
+    }
+}
+
+# Emit one parameter name and text
+
+sub emit_text() 
+{
+    if ($block = $param_text{$name}) {
+	print "/* .IP \"\\fB$name ($defval_text{$name})\\fR\"\n";
+	$wantpp = 0;
+	$block =~ s/<a [^>]*>//g;
+	$block =~ s/<\/a>//g;
+	$block =~ s/<b>/\\fB/g;
+	$block =~ s/<i>/\\fI/g;
+	$block =~ s/<\/b>/\\fR/g;
+	$block =~ s/<\/i>/\\fR/g;
+	$block =~ s/\n(<p(re)?>)/\n.sp\n\1/g ; # if ($wantpp);
+	$block =~ s/^(<p(re)?>)/.sp\n\1/ ; # if ($wantpp);
+	$block =~ s/<p> */\n/g;
+	$block =~ s/<\/p>/\n/g;
+	$block =~ s/<pre>/\n.nf\n.na\n.ft C\n/g;
+	$block =~ s/<\/pre>/\n.fi\n.ad\n.ft R\n/g;
+	$block =~ s/<dl[^>]*>/\n.RS\n/g;
+	$block =~ s/<ul>/\n.RS\n/g;
+	#$block =~ s/<\/dl>/\n.PP\n/g;
+	#$block =~ s/<\/ul>/\n.PP\n/g;
+	$block =~ s/<\/dl>/\n.RE\n.IP ""\n/g;
+	$block =~ s/<\/ul>/\n.RE\n.IP ""\n/g;
+	$block =~ s/<dd>/\n/g;
+	$block =~ s/<\/dd>/\n/g;
+	$block =~ s/<li>\s*/\n.IP \\(bu\n/g;
+	$block =~ s/<dt>\s*/\n.IP "/g;
+	$block =~ s/\s*<\/dt>/"/g;
+	$block =~ s/<blockquote>/\n.na\n.nf\n.in +4\n/g;
+	$block =~ s/<\/blockquote>/\n.in -4\n.fi\n.ad\n/g;
+	$block =~ s/\n<br>/\n.br\n/g;
+	$block =~ s/<br>\s*/\n.br\n/g;
+	$block =~ s/&lt;/</g;
+	$block =~ s/&gt;/>/g;
+
+	# Peep-hole optimizer.
+	$block =~ s/^\s+//g;
+	$block =~ s/\s+\n/\n/g;
+	$block =~ s/^\n//g;
+	$block =~ s/\.IP ""\n(\.sp\n)+/.IP ""\n/g;
+	$block =~ s/\.IP ""\n(\.[A-Z][A-Z])/\1/g;
+	$block =~ s/(.IP ""\n)+$//;
+	$block =~ s/^(\.(PP|sp)\n)+//;
+	#$wantpp = !($block =~ /^\.(SH|IP)/);
+
+	# Encapsulate as C code comment.
+	$block =~ s/^([^.])/\/\*\t\1/;
+	$block =~ s/^\./\/\* ./;
+	$block =~ s/\n([^.])/\n\/\*\t\1/g;
+	$block =~ s/\n\./\n\/\* ./g;
+
+	print $block;
+    } else {
+	print "/* .IP \"\\fB$name ($defval)\\fR\"\n";
+	print $text;
+    }
+    $name = "";
+}
+
+# Read the whole file even if we want to print only one parameter.
+
+open(POSTCONF, $protofile) || die " cannot open $protofile: $!\n";
+
+while(<POSTCONF>) {
+
+    next if /^#/;
+    next unless ($name || /\S/);
+
+    if (/^%(PARAM|CLASS)/) {
+
+        # Save the accumulated text.
+
+        if ($name && $text) {
+            save_text();
+        }
+
+        # Reset the parameter name and accumulated text.
+
+        $name = $text = "";
+        $category = $1;
+
+        # Accumulate the parameter name and default value.
+
+        do {
+            $text .= $_;
+        } while(($_ = <POSTCONF>) && /\S/);
+        ($junk, $name, $defval) = split(/\s+/, $text, 3);
+
+	$defval =~ s/\s+/ /g;
+	$defval =~ s/\s+$//;
+	$defval =~ s/&lt;/</g;
+	$defval =~ s/&gt;/>/g;
+	$defval =~ s/"/'/g;
+	$text = "";
+	next;
+    } 
+
+    # Accumulate the text in the class or parameter definition.
+
+    $text .= $_;
+
+}
+
+# Save the last definition.
+
+if ($name && $text) {
+    save_text();
+}
+
+# Process source file with embedded text. For now, hard-coded for C.
+
+while(<>) {
+
+    if (/^\/\*\+\+/) {
+	$incomment = 1;
+	$name = "";
+	print;
+	next;
+    }
+
+    if (/^\/\*--/) {
+	emit_text() if ($name ne "");
+	$incomment = 0;
+	print;
+	next;
+    }
+
+    if (!$incomment) {
+	print;
+	next;
+    }
+
+    if (/\/\* +CONFIGURATION +PARAM/) {
+	$incomment = 2;
+    }
+
+    # Delete text after nested itemized list.
+    if ($incomment == 2 && /^\/\* +\.IP ""/) {
+	$text .= $_;
+	while (<>) {
+	    last if /^\/\* +([A-Z][A-Z][A-Z]+|\.[A-Z][A-Z])/;
+	    $text .= $_;
+	}
+    }
+
+    # Delete nested itemized list.
+    if ($incomment == 2 && /^\/\* +\.RS/) {
+	$text .= $_;
+	$rsnest++;
+	while (<>) {
+	    $text .= $_;
+	    $rsnest++ if /^\/\* +\.RS/;
+	    $rsnest-- if /\/\* +\.RE/;
+	    last if $rsnest == 0;
+	}
+	next;
+    }
+
+    if ($incomment == 2 && /^\/\* +\.IP +"?\\fB([a-z0-9_]+)( +\((.*)\))?/) {
+	emit_text() if ($name ne "");
+	$name = $1;
+	$defval = $3;
+	$text = "";
+	next;
+    }
+
+    if ($incomment == 2 && /^\/\* +([A-Z][A-Z][A-Z]+|\.[A-Z][A-Z])/) {
+	emit_text() if ($name ne "");
+	$incomment = 0 if /^\/\* +(SEE +ALSO|README +FILES|LICENSE|AUTHOR)/;
+	print;
+	next;
+    }
+
+    if ($name ne "") {
+	$text .= $_;
+	next;
+    }
+
+    print;
+    next;
+}
+
+die "Unterminated comment\n" if $incomment;

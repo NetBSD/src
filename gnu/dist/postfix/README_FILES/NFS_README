@@ -1,32 +1,39 @@
-> Also, what considerations are there for file locking or other potential
-> problems when running Postfix with a Netapp-style box for /var/mail
-> delivery?  I know that FreeBSD has broken NFS file locking (both client
-> and server?) but I'm not sure if this is something Postfix can work around
-> or not.
+PPoossttffiixx aanndd NNFFSS
 
-Postfix jumps several hoops in order to deal with NFS-specific
-problems. Thus, Postfix on NFS is slightly less reliable than
-Postfix on a local disk. That is not a problem in Postfix; the
-problem is in NFS and affects other MTAs as well.
+-------------------------------------------------------------------------------
+This question was asked on the postfix-users mailing list a while ago:
 
-For queue locking, NFS is not an issue because you cannot share
-Postfix queues with other Postfix instances.
+    Also, what considerations are there for file locking or other potential
+    problems when running Postfix with a Netapp-style box for /var/mail
+    delivery? I know that FreeBSD has broken NFS file locking (both client and
+    server?) but I'm not sure if this is something Postfix can work around or
+    not.
 
-In order to have mailbox locking over NFS you have to configure
-everything to use fcntl() locks for mailbox access (or switch to
-maildir style, which needs no application-level lock controls).
+Postfix jumps several hoops in order to deal with NFS-specific problems. Thus,
+Postfix on NFS is slightly less reliable than Postfix on a local disk. That is
+not a problem in Postfix; the problem is in NFS and affects other MTAs as well.
 
-To turn on fcntl mailbox locks with Postfix you specify:
+For queue locking within Postfix, NFS is not an issue because you cannot share
+Postfix queues among multiple Postfix instances.
 
-    virtual_mailbox_lock = fcntl
-    mailbox_delivery_lock = fcntl
+In order to have mailbox locking over NFS, you have to configure everything to
+use fcntl() locks for mailbox access (or switch to maildir style, which needs
+no application-level lock controls).
 
-This is useful only if all mailbox access software uses fcntl()
-locks.
+To turn on fcntl() mailbox locks with Postfix you specify:
+
+    /etc/postfix/main.cf:
+        virtual_mailbox_lock = fcntl
+        mailbox_delivery_lock = fcntl
+
+Obviously, this approach is useful only if all other mailbox access software
+also uses fcntl() locks.
 
 You can also "play safe" and throw in username.lock files:
 
-    virtual_mailbox_lock = fcntl, dotlock
-    mailbox_delivery_lock = fcntl, dotlock
+    /etc/postfix/main.cf:
+        virtual_mailbox_lock = fcntl, dotlock
+        mailbox_delivery_lock = fcntl, dotlock
 
-this is the mix that many applications end up using.
+This is the combination that many applications end up using.
+

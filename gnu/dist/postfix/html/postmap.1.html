@@ -1,58 +1,58 @@
-<html> <head> </head> <body> <pre>
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - postmap(1) </title>
+</head> <body> <pre>
 POSTMAP(1)                                             POSTMAP(1)
 
 <b>NAME</b>
        postmap - Postfix lookup table management
 
 <b>SYNOPSIS</b>
-       <b>postmap</b> [<b>-Nfinorvw</b>] [<b>-c</b> <i>config_dir</i>] [<b>-d</b> <i>key</i>] [<b>-q</b> <i>key</i>]
-       [<i>file_type</i>:]<i>file_name</i> ...
+       <b>postmap</b> [<b>-Nfinoprvw</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-d</b> <i>key</i>] [<b>-q</b> <i>key</i>]
+               [<i>file</i><b>_</b><i>type</i>:]<i>file</i><b>_</b><i>name</i> ...
 
 <b>DESCRIPTION</b>
        The <b>postmap</b> command creates or queries one or more Postfix
-       lookup  tables,  or updates an existing one. The input and
+       lookup tables, or updates an existing one. The  input  and
        output file formats are expected to be compatible with:
 
-           <b>makemap</b> <i>file_type</i> <i>file_name</i> &lt; <i>file_name</i>
+           <b>makemap</b> <i>file</i><b>_</b><i>type file</i><b>_</b><i>name</i> &lt; <i>file</i><b>_</b><i>name</i>
 
        If the result files do not exist they will be created with
-       the  same  group  and other read permissions as the source
+       the same group and other read permissions  as  the  source
        file.
 
-       While the table update is in progress, signal delivery  is
-       postponed,  and  an exclusive, advisory, lock is placed on
+       While  the table update is in progress, signal delivery is
+       postponed, and an exclusive, advisory, lock is  placed  on
        the entire table, in order to avoid surprises in spectator
        programs.
 
+<b>INPUT FILE FORMAT</b>
        The format of a lookup table input file is as follows:
 
        <b>o</b>      A table entry has the form
 
                    <i>key</i> whitespace <i>value</i>
 
-       <b>o</b>      Empty  lines and whitespace-only lines are ignored,
-              as are lines whose first  non-whitespace  character
+       <b>o</b>      Empty lines and whitespace-only lines are  ignored,
+              as  are  lines whose first non-whitespace character
               is a `#'.
 
-       <b>o</b>      A  logical  line starts with non-whitespace text. A
-              line that starts with whitespace continues a  logi-
+       <b>o</b>      A logical line starts with non-whitespace  text.  A
+              line  that starts with whitespace continues a logi-
               cal line.
 
-       The  <i>key</i>  and  <i>value</i> are processed as is, except that sur-
-       rounding white space is stripped off. Unlike with  Postfix
-       alias  databases,  quotes cannot be used to protect lookup
-       keys that  contain  special  characters  such  as  `#'  or
+       The <i>key</i> and <i>value</i> are processed as is,  except  that  sur-
+       rounding  white space is stripped off. Unlike with Postfix
+       alias databases, quotes cannot be used to  protect  lookup
+       keys  that  contain  special  characters  such  as  `#' or
        whitespace. The <i>key</i> is mapped to lowercase to make mapping
        lookups case insensitive.
 
-       Options:
-
-       <b>-N</b>     Include the terminating null character that  termi-
-              nates  lookup  keys and values. By default, Postfix
-              does whatever is the default for the host operating
-              system.
-
-       <b>-c</b> <i>config_dir</i>
+<b>COMMAND-LINE ARGUMENTS</b>
+       <b>-c</b> <i>config</i><b>_</b><i>dir</i>
               Read  the  <b>main.cf</b>  configuration file in the named
               directory  instead  of  the  default  configuration
               directory.
@@ -72,17 +72,27 @@ POSTMAP(1)                                             POSTMAP(1)
        <b>-i</b>     Incremental  mode. Read entries from standard input
               and  do  not  truncate  an  existing  database.  By
               default,  <b>postmap</b>  creates  a new database from the
-              entries in <b>file</b><i>_</i><b>name</b>.
+              entries in <b>file_name</b>.
 
-       <b>-n</b>     Don't include the terminating null  character  that
-              terminates  lookup  keys  and  values.  By default,
-              Postfix does whatever is the default for  the  host
+       <b>-N</b>     Include the terminating null character that  termi-
+              nates  lookup  keys and values. By default, Postfix
+              does whatever is the default for the host operating
+              system.
+
+       <b>-n</b>     Don't  include  the terminating null character that
+              terminates lookup  keys  and  values.  By  default,
+              Postfix  does  whatever is the default for the host
               operating system.
 
-       <b>-o</b>     Do  not  release  root privileges when processing a
+       <b>-o</b>     Do not release root privileges  when  processing  a
               non-root input file. By default, <b>postmap</b> drops root
               privileges  and  runs  as  the  source  file  owner
               instead.
+
+       <b>-p</b>     Do not inherit the file access permissions from the
+              input file when creating a new file.  Instead, cre-
+              ate  a  new  file  with  default access permissions
+              (mode 0644).
 
        <b>-q</b> <i>key</i> Search the specified maps for  <i>key</i>  and  write  the
               first  value  found  to the standard output stream.
@@ -91,7 +101,7 @@ POSTMAP(1)                                             POSTMAP(1)
 
               If a key value of <b>-</b> is specified, the program reads
               key values  from  the  standard  input  stream  and
-              writes  one  line  of <i>key</i> <i>value</i> output for each key
+              writes  one  line  of <i>key value</i> output for each key
               that was found. The exit status  is  zero  when  at
               least one of the requested keys was found.
 
@@ -107,62 +117,93 @@ POSTMAP(1)                                             POSTMAP(1)
 
        Arguments:
 
-       <i>file_type</i>
-              The type of database to be produced.
+       <i>file</i><b>_</b><i>type</i>
+              The  database type. To find out what types are sup-
+              ported, use the "<b>postconf -m" command.</b>
 
-              <b>btree</b>  The  output  file  is  a  btree  file, named
-                     <i>file_name</i><b>.db</b>.  This  is  available  only  on
+              <b>The postmap</b> command can query  any  supported  file
+              type,  but  it  can  create only the following file
+              types:
+
+              <b>btree</b>  The output  file  is  a  btree  file,  named
+                     <i>file</i><b>_</b><i>name</i><b>.db</b>.   This  is  available  only on
                      systems with support for <b>db</b> databases.
 
-              <b>dbm</b>    The  output  consists  of  two  files, named
-                     <i>file_name</i><b>.pag</b> and  <i>file_name</i><b>.dir</b>.   This  is
-                     available  only  on systems with support for
+              <b>dbm</b>    The output  consists  of  two  files,  named
+                     <i>file</i><b>_</b><i>name</i><b>.pag</b>  and  <i>file</i><b>_</b><i>name</i><b>.dir</b>.   This is
+                     available only on systems with  support  for
                      <b>dbm</b> databases.
 
-              <b>hash</b>   The output file  is  a  hashed  file,  named
-                     <i>file_name</i><b>.db</b>.   This  is  available  only on
+              <b>hash</b>   The  output  file  is  a  hashed file, named
+                     <i>file</i><b>_</b><i>name</i><b>.db</b>.  This  is  available  only  on
                      systems with support for <b>db</b> databases.
 
-              Use the command <b>postconf</b> <b>-m</b> to find out what  types
-              of  database your Postfix installation can support.
+              Use  the command <b>postconf -m</b> to find out what types
+              of database your Postfix installation can  support.
 
-              When no <i>file_type</i> is specified, the  software  uses
-              the     database    type    specified    via    the
-              <b>default</b><i>_</i><b>database</b><i>_</i><b>type</b> configuration parameter.
+              When  no  <i>file</i><b>_</b><i>type</i> is specified, the software uses
+              the    database    type    specified    via     the
+              <b><a href="postconf.5.html#default_database_type">default_database_type</a></b> configuration parameter.
 
-       <i>file_name</i>
-              The name of  the  lookup  table  source  file  when
+       <i>file</i><b>_</b><i>name</i>
+              The  name  of  the  lookup  table  source file when
               rebuilding a database.
 
 <b>DIAGNOSTICS</b>
-       Problems and transactions are logged to the standard error
-       stream. No output means no problems. Duplicate entries are
-       skipped and are flagged with a warning.
+       Problems are logged to the standard error  stream  and  to
+       <b>syslogd</b>(8).    No  output  means  that  no  problems  were
+       detected. Duplicate entries are skipped  and  are  flagged
+       with a warning.
 
        <b>postmap</b>  terminates  with zero exit status in case of suc-
-       cess (including successful <b>postmap</b> <b>-q</b> lookup)  and  termi-
+       cess (including successful <b>postmap -q</b> lookup)  and  termi-
        nates with non-zero exit status in case of failure.
 
 <b>ENVIRONMENT</b>
-       <b>MAIL</b><i>_</i><b>CONFIG</b>
+       <b>MAIL_CONFIG</b>
               Directory with Postfix configuration files.
 
-       <b>MAIL</b><i>_</i><b>VERBOSE</b>
+       <b>MAIL_VERBOSE</b>
               Enable verbose logging for debugging purposes.
 
-<b>CONFIGURATION</b> <b>PARAMETERS</b>
-       <b>default</b><i>_</i><b>database</b><i>_</i><b>type</b>
-              Default  output  database  type.  On many UNIX sys-
-              tems, the default database type is either  <b>hash</b>  or
-              <b>dbm</b>.
+<b>CONFIGURATION PARAMETERS</b>
+       The  following  <b>main.cf</b> parameters are especially relevant
+       to this program.  The text below provides only a parameter
+       summary.  See <a href="postconf.5.html">postconf(5)</a> for more details including exam-
+       ples.
 
-       <b>berkeley</b><i>_</i><b>db</b><i>_</i><b>create</b><i>_</i><b>buffer</b><i>_</i><b>size</b>
-              Amount  of buffer memory to be used when creating a
-              Berkeley DB <b>hash</b> or <b>btree</b> lookup table.
+       <b><a href="postconf.5.html#berkeley_db_create_buffer_size">berkeley_db_create_buffer_size</a> (16777216)</b>
+              The per-table I/O buffer  size  for  programs  that
+              create Berkeley DB hash or btree tables.
 
-       <b>berkeley</b><i>_</i><b>db</b><i>_</i><b>read</b><i>_</i><b>buffer</b><i>_</i><b>size</b>
-              Amount of buffer memory to be used when  reading  a
-              Berkeley DB <b>hash</b> or <b>btree</b> lookup table.
+       <b><a href="postconf.5.html#berkeley_db_read_buffer_size">berkeley_db_read_buffer_size</a> (131072)</b>
+              The  per-table  I/O  buffer  size for programs that
+              read Berkeley DB hash or btree tables.
+
+       <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
+              The default location of  the  Postfix  main.cf  and
+              master.cf configuration files.
+
+       <b><a href="postconf.5.html#default_database_type">default_database_type</a> (see 'postconf -d' output)</b>
+              The default database type for use in <a href="newaliases.1.html">newaliases(1)</a>,
+              <a href="postalias.1.html">postalias(1)</a> and <a href="postmap.1.html">postmap(1)</a> commands.
+
+       <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
+              The syslog facility of Postfix logging.
+
+       <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
+              The mail system name that is prepended to the  pro-
+              cess  name  in  syslog  records,  so  that  "smtpd"
+              becomes, for example, "postfix/smtpd".
+
+<b>SEE ALSO</b>
+       <a href="postalias.1.html">postalias(1)</a>, create/update/query alias database
+       <a href="postconf.1.html">postconf(1)</a>, supported database types
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       syslogd(8), system logging
+
+<b>README FILES</b>
+       <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
 <b>LICENSE</b>
        The  Secure  Mailer  license must be distributed with this

@@ -1,0 +1,57 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix and Linux</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix and Linux</h1>
+
+<hr>
+
+<h2>Berkeley DB issues</h2>
+
+<p> On RedHat Linux 7.0 you must install the db3-devel RPM before
+you can compile the Postfix source code.  </p>
+
+<p> Warning: do not use multiple Berkeley DB versions. Every Postfix
+program will dump core when it is built with a different Berkeley
+DB version than the version that is used by the system library
+routines.  See the <a href="DB_README.html">DB_README</a> file for further information. </p>
+
+<h2>Procmail issues</h2>
+
+<p> On RedHat Linux 7.1 <b>procmail</b> no longer has permission
+to write the mail spool directory. Workaround: chmod 1777
+/var/spool/mail.
+</p>
+
+<h2>Syslogd performance</h2>
+
+<p> LINUX <b>syslogd</b> uses synchronous writes by default. Because
+of this, <b>syslogd</b> can actually use more system resources than
+Postfix.  To avoid such badness, disable synchronous mail logfile
+writes by editing /etc/syslog.conf and by prepending a - to the
+logfile name:  </p>
+
+<blockquote>
+<pre>
+/etc/syslog.conf:
+    mail.*                          -/var/log/mail.log
+</pre>
+</blockquote>
+
+<p> Send a "<b>kill -HUP</b>" to the <b>syslogd</b> to make the
+change effective.  </p>
+
+</body>
+
+</html>

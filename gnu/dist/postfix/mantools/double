@@ -1,0 +1,7 @@
+#!/bin/sh
+
+for i in $*
+do
+	echo === $i ===
+	dehtml $i | double
+done

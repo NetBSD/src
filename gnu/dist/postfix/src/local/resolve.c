@@ -118,11 +118,11 @@ int     deliver_resolve_tree(LOCAL_STATE state, USER_ATTR usr_attr, TOK822 *addr
      * First, a healthy portion of error handling.
      */
     if (reply.flags & RESOLVE_FLAG_FAIL) {
-	status = defer_append(BOUNCE_FLAG_KEEP,	/* XXX */
+	status = defer_append(BOUNCE_FLAGS(state.request),
 			      BOUNCE_ATTR(state.msg_attr),
 			      "address resolver failure");
     } else if (reply.flags & RESOLVE_FLAG_ERROR) {
-	status = bounce_append(BOUNCE_FLAG_KEEP,/* XXX */
+	status = bounce_append(BOUNCE_FLAGS(state.request),
 			       BOUNCE_ATTR(state.msg_attr),
 			       "bad recipient address syntax: %s",
 			       STR(reply.recipient));

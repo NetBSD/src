@@ -9,7 +9,7 @@ OK
 OK
 >>> relay_domains porcupine.org
 OK
->>> maps_rbl_domains socks.relays.osirusoft.com
+>>> maps_rbl_domains relays.mail-abuse.org
 OK
 >>> #
 >>> # Test the client restrictions.
@@ -55,7 +55,8 @@ OK
 ./smtpd_check: <queue id>: reject: HELO from foo[123.123.123.123]: 450 <foo>: Helo command rejected: Host not found; proto=SMTP helo=<foo>
 450 <foo>: Helo command rejected: Host not found
 >>> helo spike.porcupine.org
-OK
+./smtpd_check: <queue id>: reject: HELO from foo[123.123.123.123]: 554 <spike.porcupine.org>: Helo command rejected: name server spike.porcupine.org; proto=SMTP helo=<spike.porcupine.org>
+554 <spike.porcupine.org>: Helo command rejected: name server spike.porcupine.org
 >>> helo_restrictions permit_mynetworks,reject_unknown_client,reject_invalid_hostname,hash:./smtpd_check_access
 OK
 >>> helo random.bad.domain
@@ -139,7 +140,7 @@ OK
 >>> client foo 123.123.123.123
 OK
 >>> rcpt foo@watson.ibm.com
-./smtpd_check: warning: the "check_relay_domains" restriction is going away; use "reject_unauth_destination" instead
+./smtpd_check: warning: support for restriction "check_relay_domains" will be removed from Postfix; use "reject_unauth_destination" instead
 ./smtpd_check: <queue id>: reject: RCPT from foo[123.123.123.123]: 554 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied; from=<foo@friend.bad.domain> to=<foo@watson.ibm.com> proto=SMTP helo=<123.123.123.123>
 554 <foo@watson.ibm.com>: Recipient address rejected: Relay access denied
 >>> rcpt foo@porcupine.org
@@ -183,11 +184,11 @@ OK
 >>> client_restrictions reject_maps_rbl
 OK
 >>> client spike.porcupine.org 168.100.189.2
-./smtpd_check: warning: restriction reject_maps_rbl is going away. Please use reject_rbl_client <domain> instead
+./smtpd_check: warning: support for restriction "reject_maps_rbl" will be removed from Postfix; use "reject_rbl_client domain-name" instead
 OK
 >>> client foo 127.0.0.2
-./smtpd_check: <queue id>: reject: CONNECT from foo[127.0.0.2]: 554 Service unavailable; Client host [127.0.0.2] blocked using socks.relays.osirusoft.com; Proxy List Test; from=<foo@friend.bad.domain> proto=SMTP helo=<123.123.123.123>
-554 Service unavailable; Client host [127.0.0.2] blocked using socks.relays.osirusoft.com; Proxy List Test
+./smtpd_check: <queue id>: reject: CONNECT from foo[127.0.0.2]: 554 Service unavailable; Client host [127.0.0.2] blocked using relays.mail-abuse.org; from=<foo@friend.bad.domain> proto=SMTP helo=<123.123.123.123>
+554 Service unavailable; Client host [127.0.0.2] blocked using relays.mail-abuse.org
 >>> #
 >>> # Hybrids
 >>> #

@@ -1,39 +1,52 @@
 rule       x
 address    !
 result     ""@
+
 rule       x
 address    a!
 result     ""@a.MYDOMAIN
+
 rule       x
 address    !b
 result     b@
+
 rule       x
 address    a!b
 result     b@a.MYDOMAIN
+
 rule       x
 address    %
 result     ""@
+
 rule       x
 address    a%
 result     a@
+
 rule       x
 address    %b
 result     ""@b.MYDOMAIN
+
 rule       x
 address    a%b
 result     a@b.MYDOMAIN
+
 rule       x
 address    @
 result     ""
+
 rule       x
 address    a@
 result     a@
+
 rule       x
 address    a@.
 result     a@.
+
 rule       x
 address    a@b
 result     a@b.MYDOMAIN
+
 rule       x
 address    a@b.
-result     a@b.
+result     a@b
+

@@ -12,13 +12,27 @@
 /* .nf
 
  /*
-  * Options.
+  * Client processing options. Flags 16- are reserved for cleanup.h.
   */
 #define CLEANUP_FLAG_NONE	0	/* No special features */
 #define CLEANUP_FLAG_BOUNCE	(1<<0)	/* Bounce bad messages */
 #define CLEANUP_FLAG_FILTER	(1<<1)	/* Enable content filter */
 #define CLEANUP_FLAG_HOLD	(1<<2)	/* Place message on hold */
 #define CLEANUP_FLAG_DISCARD	(1<<3)	/* Discard message silently */
+#define CLEANUP_FLAG_BCC_OK	(1<<4)	/* Ok to add auto-BCC addresses */
+#define CLEANUP_FLAG_MAP_OK	(1<<5)	/* Ok to map addresses */
+
+ /*
+  * These are normally set when receiving mail from outside.
+  */
+#define CLEANUP_FLAG_MASK_EXTERNAL \
+	(CLEANUP_FLAG_FILTER | CLEANUP_FLAG_BCC_OK | CLEANUP_FLAG_MAP_OK)
+
+ /*
+  * These are normally set when generating notices or when forwarding mail
+  * internally.
+  */
+#define CLEANUP_FLAG_MASK_INTERNAL CLEANUP_FLAG_MAP_OK
 
  /*
   * These are set on the fly while processing SMTP envelopes or message
@@ -30,18 +44,14 @@
  /*
   * Diagnostics.
   */
-
 #define CLEANUP_STAT_OK		0	/* Success. */
-
 #define CLEANUP_STAT_BAD	(1<<0)	/* Internal protocol error */
 #define CLEANUP_STAT_WRITE	(1<<1)	/* Error writing message file */
 #define CLEANUP_STAT_SIZE	(1<<2)	/* Message file too big */
 #define CLEANUP_STAT_CONT	(1<<3)	/* Message content rejected */
 #define CLEANUP_STAT_HOPS	(1<<4)	/* Too many hops */
-#define CLEANUP_STAT_SYN	(1<<5)	/* Bad address syntax */
 #define CLEANUP_STAT_RCPT	(1<<6)	/* No recipients found */
-#define CLEANUP_STAT_HOVFL	(1<<7)	/* Header overflow */
-#define CLEANUP_STAT_ROVFL	(1<<8)	/* Recipient overflow */
+#define CLEANUP_STAT_PROXY	(1<<7)	/* Proxy reject */
 
  /*
   * These are set when we can't bounce even if we were asked to.
@@ -55,13 +65,8 @@
 #define CLEANUP_STAT_MASK_INCOMPLETE \
 	(CLEANUP_STAT_BAD | CLEANUP_STAT_WRITE | CLEANUP_STAT_SIZE)
 
- /*
-  * These are relevant for extracting recipients from headers.
-  */
-#define CLEANUP_STAT_MASK_EXTRACT_RCPT \
-	(CLEANUP_STAT_HOVFL | CLEANUP_STAT_ROVFL | CLEANUP_STAT_RCPT)
-
 extern const char *cleanup_strerror(unsigned);
+extern const char *cleanup_strflags(unsigned);
 
 /* LICENSE
 /* .ad

@@ -114,6 +114,13 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
 	MSG_LOG_STATE(myname, state);
 
     /*
+     * Don't deliver trace-only requests.
+     */
+    if (DEL_REQ_TRACE_ONLY(state.request->flags))
+	return (sent(BOUNCE_FLAGS(state.request), SENT_ATTR(state.msg_attr),
+		     "delivers to mailbox"));
+
+    /*
      * Initialize. Assume the operation will fail. Set the delivered
      * attribute to reflect the final recipient.
      */
@@ -208,11 +215,13 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
     } else if (mail_copy_status != 0) {
 	deliver_status = (errno == EAGAIN || errno == ENOSPC || errno == ESTALE ?
 			  defer_append : bounce_append)
-	    (BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
+	    (BOUNCE_FLAGS(state.request), BOUNCE_ATTR(state.msg_attr),
 	     "cannot access mailbox %s for user %s. %s",
 	     mailbox, state.msg_attr.user, vstring_str(why));
     } else {
-	deliver_status = sent(SENT_ATTR(state.msg_attr), "mailbox");
+	deliver_status = sent(BOUNCE_FLAGS(state.request),
+			      SENT_ATTR(state.msg_attr),
+			      "delivered to mailbox");
 	if (var_biff) {
 	    biff = vstring_alloc(100);
 	    vstring_sprintf(biff, "%s@%ld", usr_attr.logname, (long) end);

@@ -33,7 +33,8 @@
 /*	void	event_disable_readwrite(fd)
 /*	int	fd;
 /*
-/*	void	event_drain()
+/*	void	event_drain(time_limit)
+/*	int	time_limit;
 /* DESCRIPTION
 /*	This module delivers I/O and timer events.
 /*	Multiple I/O streams and timers can be monitored simultaneously.
@@ -102,8 +103,9 @@
 /*	I/O event requests.
 /*
 /*	event_drain() repeatedly calls event_loop() until no more timer
-/*	events or I/O events are pending. This routine must not be called
-/*	from an event_whatever() callback routine.
+/*	events or I/O events are pending or until the time limit is reached.
+/*	This routine must not be called from an event_whatever() callback
+/*	routine.
 /* DIAGNOSTICS
 /*	Panics: interface violations. Fatal errors: out of memory,
 /*	system call failure. Warnings: the number of available
@@ -250,17 +252,20 @@ time_t  event_time(void)
 
 /* event_drain - loop until all pending events are done */
 
-void    event_drain(void)
+void    event_drain(int time_limit)
 {
     fd_set  zero_mask;
+    time_t  max_time;
 
     if (EVENT_INIT_NEEDED())
 	return;
 
     FD_ZERO(&zero_mask);
-    while (event_timer_head.pred != event_timer_head.succ
-	   || memcmp(&zero_mask, &event_xmask, sizeof(zero_mask)) != 0)
-	event_loop(-1);
+    max_time = event_present + time_limit;
+    while (event_present < max_time
+	   && (event_timer_head.pred != event_timer_head.succ
+	       || memcmp(&zero_mask, &event_xmask, sizeof(zero_mask)) != 0))
+	event_loop(1);
 }
 
 /* event_enable_read - enable read events */

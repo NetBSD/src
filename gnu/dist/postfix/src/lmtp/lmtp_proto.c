@@ -100,6 +100,7 @@
 #include <vstring_vstream.h>
 #include <stringops.h>
 #include <mymalloc.h>
+#include <name_code.h>
 
 /* Global library. */
 
@@ -141,46 +142,57 @@
   * the existing code for exception handling and error reporting.
   * 
   * Client states that are associated with sending mail (up to and including
-  * SMTP_STATE_DOT) must have smaller numerical values than the non-sending
-  * states (SMTP_STATE_ABORT .. SMTP_STATE_LAST).
+  * LMTP_STATE_DOT) must have smaller numerical values than the non-sending
+  * states (LMTP_STATE_ABORT .. LMTP_STATE_LAST).
   */
-#define LMTP_STATE_MAIL		0
-#define LMTP_STATE_RCPT		1
-#define LMTP_STATE_DATA		2
-#define LMTP_STATE_DOT		3
-#define LMTP_STATE_ABORT	4
-#define LMTP_STATE_RSET		5
-#define LMTP_STATE_QUIT		6
-#define LMTP_STATE_LAST		7
+#define LMTP_STATE_XFORWARD_NAME_ADDR 0
+#define LMTP_STATE_XFORWARD_PROTO_HELO 1
+#define LMTP_STATE_MAIL		2
+#define LMTP_STATE_RCPT		3
+#define LMTP_STATE_DATA		4
+#define LMTP_STATE_DOT		5
+#define LMTP_STATE_ABORT	6
+#define LMTP_STATE_RSET		7
+#define LMTP_STATE_QUIT		8
+#define LMTP_STATE_LAST		9
 
 int    *xfer_timeouts[LMTP_STATE_LAST] = {
+    &var_lmtp_xfwd_tmout,		/* name/addr */
+    &var_lmtp_xfwd_tmout,		/* helo/proto */
     &var_lmtp_mail_tmout,
     &var_lmtp_rcpt_tmout,
     &var_lmtp_data0_tmout,
     &var_lmtp_data2_tmout,
-    &var_lmtp_rset_tmout,
-    &var_lmtp_rset_tmout,
+    &var_lmtp_rset_tmout,		/* abort */
+    &var_lmtp_rset_tmout,		/* rset */
     &var_lmtp_quit_tmout,
 };
 
 char   *xfer_states[LMTP_STATE_LAST] = {
+    "sending XFORWARD name/address",
+    "sending XFORWARD protocol/helo_name",
     "sending MAIL FROM",
     "sending RCPT TO",
     "sending DATA command",
     "sending end of data -- message may be sent more than once",
-    "sending RSET",
-    "sending RSET",
+    "sending RSET",			/* abort */
+    "sending RSET",			/* rset */
     "sending QUIT",
 };
 
 char   *xfer_request[LMTP_STATE_LAST] = {
+    "XFORWARD name/address command",
+    "XFORWARD helo/protocol command",
     "MAIL FROM command",
     "RCPT TO command",
     "DATA command",
     "end of DATA command",
-    "final RSET command",
+    "RSET command",			/* abort */
+    "RSET command",			/* rset */
     "QUIT command",
 };
+
+static int lmtp_send_proto_helo;
 
 /* lmtp_lhlo - perform initial handshake with LMTP server */
 
@@ -192,6 +204,13 @@ int     lmtp_lhlo(LMTP_STATE *state)
     char   *lines;
     char   *words;
     char   *word;
+    static NAME_CODE xforward_features[] = {
+	XFORWARD_NAME, LMTP_FEATURE_XFORWARD_NAME,
+	XFORWARD_ADDR, LMTP_FEATURE_XFORWARD_ADDR,
+	XFORWARD_PROTO, LMTP_FEATURE_XFORWARD_PROTO,
+	XFORWARD_HELO, LMTP_FEATURE_XFORWARD_HELO,
+	0, 0,
+    };
 
     /*
      * Prepare for disaster.
@@ -234,6 +253,10 @@ int     lmtp_lhlo(LMTP_STATE *state)
 		state->features |= LMTP_FEATURE_8BITMIME;
 	    else if (strcasecmp(word, "PIPELINING") == 0)
 		state->features |= LMTP_FEATURE_PIPELINING;
+	    else if (strcasecmp(word, "XFORWARD") == 0)
+		while ((word = mystrtok(&words, " \t")) != 0)
+		    state->features |= name_code(xforward_features,
+						 NAME_CODE_FLAG_NONE, word);
 	    else if (strcasecmp(word, "SIZE") == 0)
 		state->features |= LMTP_FEATURE_SIZE;
 #ifdef USE_SASL_AUTH
@@ -280,7 +303,8 @@ int     lmtp_lhlo(LMTP_STATE *state)
 
 /* lmtp_loop - the LMTP state machine */
 
-static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
+static int lmtp_loop(LMTP_STATE *state, NOCLOBBER int send_state,
+		             NOCLOBBER int recv_state)
 {
     char   *myname = "lmtp_loop";
     DELIVER_REQUEST *request = state->request;
@@ -288,18 +312,18 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
     LMTP_RESP *resp;
     RECIPIENT *rcpt;
     VSTRING *next_command = vstring_alloc(100);
-    int    *survivors = 0;
-    int     next_state;
-    int     next_rcpt;
-    int     send_rcpt;
-    int     recv_rcpt;
-    int     nrcpt;
+    int *NOCLOBBER survivors = 0;
+    NOCLOBBER int next_state;
+    NOCLOBBER int next_rcpt;
+    NOCLOBBER int send_rcpt;
+    NOCLOBBER int recv_rcpt;
+    NOCLOBBER int nrcpt;
     int     except;
     int     rec_type;
-    int     prev_type = 0;
-    int     sndbuffree;
-    int     mail_from_rejected;
-    int     recv_dot;
+    NOCLOBBER int prev_type = 0;
+    NOCLOBBER int sndbuffree;
+    NOCLOBBER int mail_from_rejected;
+    NOCLOBBER int recv_dot;
 
     /*
      * Macros for readability. XXX Aren't LMTP addresses supposed to be case
@@ -364,6 +388,40 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 	    msg_panic("%s: bad sender state %d", myname, send_state);
 
 	    /*
+	     * Build the XFORWARD command. With properly sanitized
+	     * information, the command length stays within the 512 byte
+	     * command line length limit.
+	     */
+	case LMTP_STATE_XFORWARD_NAME_ADDR:
+	    vstring_strcpy(next_command, XFORWARD_CMD);
+	    if (state->features & LMTP_FEATURE_XFORWARD_NAME)
+		vstring_sprintf_append(next_command, " %s=%s",
+		   XFORWARD_NAME, DEL_REQ_ATTR_AVAIL(request->client_name) ?
+			       request->client_name : XFORWARD_UNAVAILABLE);
+	    if (state->features & LMTP_FEATURE_XFORWARD_ADDR)
+		vstring_sprintf_append(next_command, " %s=%s",
+		   XFORWARD_ADDR, DEL_REQ_ATTR_AVAIL(request->client_addr) ?
+			       request->client_addr : XFORWARD_UNAVAILABLE);
+	    if (lmtp_send_proto_helo)
+		next_state = LMTP_STATE_XFORWARD_PROTO_HELO;
+	    else
+		next_state = LMTP_STATE_MAIL;
+	    break;
+
+	case LMTP_STATE_XFORWARD_PROTO_HELO:
+	    vstring_strcpy(next_command, XFORWARD_CMD);
+	    if (state->features & LMTP_FEATURE_XFORWARD_PROTO)
+		vstring_sprintf_append(next_command, " %s=%s",
+		 XFORWARD_PROTO, DEL_REQ_ATTR_AVAIL(request->client_proto) ?
+			      request->client_proto : XFORWARD_UNAVAILABLE);
+	    if (state->features & LMTP_FEATURE_XFORWARD_HELO)
+		vstring_sprintf_append(next_command, " %s=%s",
+		   XFORWARD_HELO, DEL_REQ_ATTR_AVAIL(request->client_helo) ?
+			       request->client_helo : XFORWARD_UNAVAILABLE);
+	    next_state = LMTP_STATE_MAIL;
+	    break;
+
+	    /*
 	     * Build the MAIL FROM command.
 	     */
 	case LMTP_STATE_MAIL:
@@ -382,6 +440,16 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 		    msg_warn("%s: unknown content encoding: %s",
 			     request->queue_id, request->encoding);
 	    }
+
+	    /*
+	     * We authenticate the local MTA only, but not the sender.
+	     */
+#ifdef USE_SASL_AUTH
+	    if (var_lmtp_sasl_enable
+		&& (state->features & LMTP_FEATURE_AUTH)
+		&& state->sasl_passwd)
+		vstring_strcat(next_command, " AUTH=<>");
+#endif
 	    next_state = LMTP_STATE_RCPT;
 	    break;
 
@@ -395,7 +463,8 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 	    vstring_sprintf(next_command, "RCPT TO:<%s>",
 			    vstring_str(state->scratch));
 	    if ((next_rcpt = send_rcpt + 1) == request->rcpt_list.len)
-		next_state = LMTP_STATE_DATA;
+		next_state = DEL_REQ_TRACE_ONLY(request->flags) ?
+		    LMTP_STATE_RSET : LMTP_STATE_DATA;
 	    break;
 
 	    /*
@@ -424,10 +493,8 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 	    msg_panic("%s: sender abort state", myname);
 
 	    /*
-	     * Build the RSET command.  This command does not really belong
-	     * here because it is always sent without pipelining, but having
-	     * it here means that we can reuse a lot of error handling code
-	     * that already exists.
+	     * Build the RSET command.  This is used between pipelined
+	     * deliveries, and to abort a trace-only delivery request.
 	     */
 	case LMTP_STATE_RSET:
 	    vstring_strcpy(next_command, "RSET");
@@ -468,7 +535,7 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 		/*
 		 * Sanity check.
 		 */
-		if (recv_state < LMTP_STATE_MAIL
+		if (recv_state < LMTP_STATE_XFORWARD_NAME_ADDR
 		    || recv_state > LMTP_STATE_QUIT)
 		    msg_panic("%s: bad receiver state %d (sender state %d)",
 			      myname, recv_state, send_state);
@@ -488,6 +555,30 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 		 * Process the response.
 		 */
 		switch (recv_state) {
+
+		    /*
+		     * Process the XFORWARD response.
+		     */
+		case LMTP_STATE_XFORWARD_NAME_ADDR:
+		    if (resp->code / 100 != 2)
+			msg_warn("host %s said: %s (in reply to %s)",
+				 session->namaddr,
+				 translit(resp->str, "\n", " "),
+			       xfer_request[LMTP_STATE_XFORWARD_NAME_ADDR]);
+		    if (lmtp_send_proto_helo)
+			recv_state = LMTP_STATE_XFORWARD_PROTO_HELO;
+		    else
+			recv_state = LMTP_STATE_MAIL;
+		    break;
+
+		case LMTP_STATE_XFORWARD_PROTO_HELO:
+		    if (resp->code / 100 != 2)
+			msg_warn("host %s said: %s (in reply to %s)",
+				 session->namaddr,
+				 translit(resp->str, "\n", " "),
+			      xfer_request[LMTP_STATE_XFORWARD_PROTO_HELO]);
+		    recv_state = LMTP_STATE_MAIL;
+		    break;
 
 		    /*
 		     * Process the MAIL FROM response. When the server
@@ -531,6 +622,18 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 				    mymalloc(request->rcpt_list.len
 					     * sizeof(int));
 			    survivors[nrcpt++] = recv_rcpt;
+			    /* If trace-only, mark the recipient done. */
+			    if (DEL_REQ_TRACE_ONLY(request->flags)
+				&& sent(DEL_REQ_TRACE_FLAGS(request->flags),
+					request->queue_id, rcpt->orig_addr,
+					rcpt->address, rcpt->offset,
+				    session->namaddr, request->arrival_time,
+					"%s",
+				     translit(resp->str, "\n", " ")) == 0) {
+				if (request->flags & DEL_REQ_FLAG_SUCCESS)
+				    deliver_completed(state->src, rcpt->offset);
+				rcpt->offset = 0;	/* in case deferred */
+			    }
 			} else {
 			    lmtp_rcpt_fail(state, resp->code, rcpt,
 					"host %s said: %s (in reply to %s)",
@@ -540,8 +643,10 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 			    rcpt->offset = 0;	/* in case deferred */
 			}
 		    }
+		    /* If trace-only, send RSET instead of DATA. */
 		    if (++recv_rcpt == request->rcpt_list.len)
-			recv_state = LMTP_STATE_DATA;
+			recv_state = DEL_REQ_TRACE_ONLY(request->flags) ?
+			    LMTP_STATE_ABORT : LMTP_STATE_DATA;
 		    break;
 
 		    /*
@@ -576,12 +681,16 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 			rcpt = request->rcpt_list.info + survivors[recv_dot];
 			if (resp->code / 100 == 2) {
 			    if (rcpt->offset) {
-				sent(request->queue_id, rcpt->orig_addr,
-				     rcpt->address, session->namaddr,
-				     request->arrival_time, "%s", resp->str);
-				if (request->flags & DEL_REQ_FLAG_SUCCESS)
-				    deliver_completed(state->src, rcpt->offset);
-				rcpt->offset = 0;
+				if (sent(DEL_REQ_TRACE_FLAGS(request->flags),
+					 request->queue_id, rcpt->orig_addr,
+					 rcpt->address, rcpt->offset,
+					 session->namaddr,
+					 request->arrival_time,
+					 "%s", resp->str) == 0) {
+				    if (request->flags & DEL_REQ_FLAG_SUCCESS)
+					deliver_completed(state->src, rcpt->offset);
+				    rcpt->offset = 0;
+				}
 			    }
 			} else {
 			    lmtp_rcpt_fail(state, resp->code, rcpt,
@@ -718,7 +827,33 @@ static int lmtp_loop(LMTP_STATE *state, int send_state, int recv_state)
 
 int     lmtp_xfer(LMTP_STATE *state)
 {
-    return (lmtp_loop(state, LMTP_STATE_MAIL, LMTP_STATE_MAIL));
+    DELIVER_REQUEST *request = state->request;
+    int     start;
+    int     send_name_addr;
+
+    /*
+     * Use the XFORWARD command to forward client attributes only when a
+     * minimal amount of information is available.
+     */
+    send_name_addr =
+	var_lmtp_send_xforward
+	&& (((state->features & LMTP_FEATURE_XFORWARD_NAME)
+	     && DEL_REQ_ATTR_AVAIL(request->client_name))
+	    || ((state->features & LMTP_FEATURE_XFORWARD_ADDR)
+		&& DEL_REQ_ATTR_AVAIL(request->client_addr)));
+    lmtp_send_proto_helo =
+	var_lmtp_send_xforward
+	&& (((state->features & LMTP_FEATURE_XFORWARD_PROTO)
+	     && DEL_REQ_ATTR_AVAIL(request->client_proto))
+	    || ((state->features & LMTP_FEATURE_XFORWARD_HELO)
+		&& DEL_REQ_ATTR_AVAIL(request->client_helo)));
+    if (send_name_addr)
+	start = LMTP_STATE_XFORWARD_NAME_ADDR;
+    else if (lmtp_send_proto_helo)
+	start = LMTP_STATE_XFORWARD_PROTO_HELO;
+    else
+	start = LMTP_STATE_MAIL;
+    return (lmtp_loop(state, start, start));
 }
 
 /* lmtp_rset - send a lone RSET command and wait for response */

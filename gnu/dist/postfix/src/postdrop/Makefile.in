@@ -3,9 +3,6 @@ SRCS	= postdrop.c
 OBJS	= postdrop.o
 HDRS	= 
 TESTSRC	= 
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 TESTPROG=
@@ -66,6 +63,7 @@ postdrop.o: ../../include/msg_vstream.h
 postdrop.o: ../../include/msg_syslog.h
 postdrop.o: ../../include/argv.h
 postdrop.o: ../../include/iostuff.h
+postdrop.o: ../../include/stringops.h
 postdrop.o: ../../include/mail_proto.h
 postdrop.o: ../../include/attr.h
 postdrop.o: ../../include/mail_queue.h

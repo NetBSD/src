@@ -1,4 +1,9 @@
-<html> <head> </head> <body> <pre>
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - proxymap(8) </title>
+</head> <body> <pre>
 PROXYMAP(8)                                           PROXYMAP(8)
 
 <b>NAME</b>
@@ -9,84 +14,61 @@ PROXYMAP(8)                                           PROXYMAP(8)
 
 <b>DESCRIPTION</b>
        The  <b>proxymap</b>  server provides read-only table lookup ser-
-       vice to Postfix client processes. The purpose of the  ser-
-       vice is:
+       vice to Postfix processes. The purpose of the service is:
 
-       <b>o</b>      To  overcome  chroot  restrictions.  For example, a
-              chrooted SMTP server needs  access  to  the  system
-              passwd  file  in order to reject mail for non-exis-
-              tent local addresses, but it is  not  practical  to
-              maintain  a  copy  of the passwd file in the chroot
+       <b>o</b>      To overcome chroot  restrictions.  For  example,  a
+              chrooted  SMTP  server  needs  access to the system
+              passwd file in order to reject mail  for  non-exis-
+              tent  local  addresses,  but it is not practical to
+              maintain a copy of the passwd file  in  the  chroot
               jail.  The solution:
 
-              local_recipient_maps =
-                  proxy:unix:passwd.byname $alias_maps
+              <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> =
+                  <a href="proxymap.8.html">proxy</a>:unix:passwd.byname $<a href="postconf.5.html#alias_maps">alias_maps</a>
 
-       <b>o</b>      To consolidate the number of open lookup tables  by
-              sharing  one  open  table among multiple processes.
-              For example, making mysql  connections  from  every
+       <b>o</b>      To  consolidate the number of open lookup tables by
+              sharing one open table  among  multiple  processes.
+              For  example,  making  mysql connections from every
               Postfix daemon process results in "too many connec-
               tions" errors. The solution:
 
-              virtual_alias_maps =
-                  proxy:mysql:/etc/postfix/virtual_alias.cf
+              <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> =
+                  <a href="proxymap.8.html">proxy</a>:<a href="mysql_table.5.html">mysql</a>:/etc/postfix/virtual_alias.cf
 
-              The total number of connections is limited  by  the
+              The  total  number of connections is limited by the
               number of proxymap server processes.
 
        The proxymap server implements the following requests:
 
-       <b>PROXY</b><i>_</i><b>REQ</b><i>_</i><b>OPEN</b> <i>maptype:mapname</i> <i>flags</i>
-              Open  the table with type <i>maptype</i> and name <i>mapname</i>,
-              as controlled by <i>flags</i>.  The reply is  the  request
-              completion  status  code  (below)  and the map type
-              dependent flags.
+       <b>open</b> <i>maptype:mapname flags</i>
+              Open the table with type <i>maptype</i> and name  <i>mapname</i>,
+              as controlled by <i>flags</i>. The reply includes the <i>map-</i>
+              <i>type</i> dependent flags (to distinguish a fixed string
+              table from regular a expression table).
 
-       <b>PROXY</b><i>_</i><b>REQ</b><i>_</i><b>LOOKUP</b> <i>maptype:mapname</i> <i>flags</i> <i>key</i>
-              Look up the data stored under  the  requested  key.
-              The  reply  is  the  request completion status code
-              (below) and the  lookup  result  value.   The  <i>map-</i>
-              <i>type:mapname</i>  and  <i>flags</i>  are  the same as with the
-              <b>PROXY</b><i>_</i><b>REQ</b><i>_</i><b>OPEN</b> request.
+       <b>lookup</b> <i>maptype:mapname flags key</i>
+              Look  up  the  data stored under the requested key.
+              The reply is the  request  completion  status  code
+              (below)  and  the  lookup  result  value.  The <i>map-</i>
+              <i>type:mapname</i> and <i>flags</i> are the  same  as  with  the
+              <b>open</b> request.
 
-       There is no  close  command,  nor  are  tables  implicitly
-       closed  when  a client disconnects. One of the purposes of
-       the proxymap server is  to  share  tables  among  multiple
-       client processes.
+       There  is  no  <b>close</b>  command,  nor  are tables implicitly
+       closed when a client disconnects. The purpose is to  share
+       tables among multiple client processes.
 
-       The request completion status code is one of:
-
-       <b>PROXY</b><i>_</i><b>STAT</b><i>_</i><b>OK</b>
-              The  specified  table  was opened, or the requested
-              entry was found.
-
-       <b>PROXY</b><i>_</i><b>STAT</b><i>_</i><b>NOKEY</b>
-              The requested table entry was not found.
-
-       <b>PROXY</b><i>_</i><b>STAT</b><i>_</i><b>BAD</b>
-              The request was  rejected  (bad  request  parameter
-              value).
-
-       <b>PROXY</b><i>_</i><b>STAT</b><i>_</i><b>RETRY</b>
-              The lookup request could not be completed.
-
-       <b>PROXY</b><i>_</i><b>STAT</b><i>_</i><b>DENY</b>
-              The specified table was not approved for access via
-              the proxymap service.
-
-<b>SERVER</b> <b>PROCESS</b> <b>MANAGEMENT</b>
-       The proxymap servers run under control by the Postfix mas-
-       ter  server.  Each server can handle multiple simultaneous
-       connections.  When all servers are  busy  while  a  client
-       connects,  the  master  creates a new proxymap server pro-
-       cess, provided that the proxymap server process  limit  is
-       not exceeded.  Each proxymap server terminates after serv-
-       ing at least <b>$max</b><i>_</i><b>use</b> clients or after  <b>$max</b><i>_</i><b>idle</b>  seconds
-       of idle time.
+<b>SERVER PROCESS MANAGEMENT</b>
+       <b>proxymap</b>  servers  run under control by the Postfix <b>master</b>
+       server.  Each server can handle multiple simultaneous con-
+       nections.   When  all servers are busy while a client con-
+       nects, the <b>master</b> creates a new <b>proxymap</b>  server  process,
+       provided  that  the  process  limit is not exceeded.  Each
+       server terminates after serving at least <b>$<a href="postconf.5.html#max_use">max_use</a></b>  clients
+       or after <b>$<a href="postconf.5.html#max_idle">max_idle</a></b> seconds of idle time.
 
 <b>SECURITY</b>
        The  proxymap  server  opens only tables that are approved
-       via the <b>proxy</b><i>_</i><b>read</b><i>_</i><b>maps</b> configuration parameter, does  not
+       via the <b><a href="postconf.5.html#proxy_read_maps">proxy_read_maps</a></b> configuration parameter, does  not
        talk  to  users,  and  can  run  at  fixed  low privilege,
        chrooted or not.  However,  running  the  proxymap  server
        chrooted  severely  limits  usability, because it can open
@@ -105,24 +87,54 @@ PROXYMAP(8)                                           PROXYMAP(8)
        and must therefore not be used for tables that have  high-
        latency lookups.
 
-<b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The  following  main.cf parameters are especially relevant
-       to this program. Use the <b>postfix</b> <b>reload</b>  command  after  a
-       configuration change.
+<b>CONFIGURATION PARAMETERS</b>
+       On  busy  mail  systems  a long time may pass before prox-
+       ymap(8) relevant changes to <b>main.cf</b> are picked up. Use the
+       command "<b>postfix reload</b>" to speed up a change.
 
-       <b>proxy</b><i>_</i><b>read</b><i>_</i><b>maps</b>
-              A  list  of  zero or more parameter values that may
-              contain references to Postfix lookup  tables.  Only
-              table   references   that  begin  with  <b>proxy:</b>  are
-              approved for  read-only  access  via  the  proxymap
-              server.
+       The  text  below  provides  only  a parameter summary. See
+       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
 
-<b>SEE</b> <b>ALSO</b>
-       dict_proxy(3) proxy map client
+       <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
+              The default location of  the  Postfix  main.cf  and
+              master.cf configuration files.
+
+       <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
+              How  much time a Postfix daemon process may take to
+              handle a request  before  it  is  terminated  by  a
+              built-in watchdog timer.
+
+       <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
+              The time limit for sending or receiving information
+              over an internal communication channel.
+
+       <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
+              The maximum amount of time  that  an  idle  Postfix
+              daemon  process  waits for the next service request
+              before exiting.
+
+       <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
+              The maximal number of connection requests before  a
+              Postfix daemon process terminates.
+
+       <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
+              The  process ID of a Postfix command or daemon pro-
+              cess.
+
+       <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
+              The process name of a  Postfix  command  or  daemon
+              process.
+
+       <b><a href="postconf.5.html#proxy_read_maps">proxy_read_maps</a> (see 'postconf -d' output)</b>
+              The  lookup  tables  that the <a href="proxymap.8.html">proxymap(8)</a> server is
+              allowed to access.
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
+
+<b>HISTORY</b>
+       The proxymap service was introduced with Postfix 2.0.
 
 <b>AUTHOR(S)</b>
        Wietse Venema

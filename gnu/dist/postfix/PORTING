@@ -1,25 +1,24 @@
 In order to port software to a new platform:
 
-- Each system type needs to be identified by a unique name. Examples:
-SUNOS5, FREEBSD4, and so on.  Choose a SYSTEMTYPE name for the new
-system. You must use a name that includes at least the major version
-of the operating system (such as SUNOS4 or LINUX2), so that different
-releases of the same system can be supported without confusion.
+- Choose a SYSTEMTYPE name for the new system.  You must use a name
+that includes at least the major version of the operating system
+(such as SUNOS4 or LINUX2), so that different releases of the same
+system can be supported without confusion.
 
-- Add a case statement to the "makedefs" shell script in the
-top-level directory that recognizes the new system reliably, and
-that emits the right system-specific information.  Be sure to make 
-the code robust against user PATH settings; if the system offers
-multiple UNIX flavors (e.g. BSD and SYSV) be sure to build for the
-native flavor, not the emulated one.
+- Add a case statement to the "makedefs" shell script in the source
+code top-level directory that recognizes the new system reliably,
+and that emits the right system-specific information.  Be sure to
+make the code robust against user PATH settings; if the system
+offers multiple UNIX flavors (e.g. BSD and SYSV) be sure to build
+for the native flavor, instead of the emulated one.
 
-- Add an #ifdef SYSTEMTYPE section to the central util/sys_defs.h
-include file.  You may have to invent new feature macros.  Please
-choose sensible feature macro names such as HAS_DBM or
-FIONREAD_IN_SYS_FILIO_H.  
+- Add an "#ifdef SYSTEMTYPE" section to the central util/sys_defs.h
+include file.  You may have to invent new feature macro names.
+Please choose sensible feature macro names such as HAS_DBM or
+FIONREAD_IN_SYS_FILIO_H.
 
-I strongly object to #ifdef SYSTEMTYPE dependencies in individual
-source files.  This may seem to be the quickest solution, but it
-will create a mess that becomes increasingly difficult to maintain
-over time. Moreover, with the next port to another system you'd
-have to place #ifdefs all over the source code again.
+I strongly recommend against using "#ifdef SYSTEMTYPE" in individual
+source files.  While this may look like the quickest solution, it
+will create a mess when newer versions of the same SYSTEMTYPE need
+to be supported.  You're likely to end up placing "#ifdef" sections
+all over the source code again.

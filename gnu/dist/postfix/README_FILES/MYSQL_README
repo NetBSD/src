@@ -1,92 +1,103 @@
-[Code contributed by Scott Cotton and Joshua Marcus, IC Group, Inc.]
+PPoossttffiixx MMyySSQQLL HHoowwttoo
 
-We've written code to add a mysql map type.  It utilizes the mysql
-client library, which can be obtained from:
+-------------------------------------------------------------------------------
 
-	http://www.mysql.com/downloads/
-	http://sourceforge.net/projects/mysql/
+IInnttrroodduuccttiioonn
 
-In order to build postfix with mysql map support, you will need to add 
--DHAS_MYSQL and -I for the directory containing the mysql headers, and 
-the mysqlclient library (and libm) to AUXLIBS, for example:
+The Postfix mysql map type allows you to hook up Postfix to a MySQL database.
+This implementation allows for multiple mysql databases: you can use one for a
+virtual(5) table, one for an access(5) table, and one for an aliases(5) table
+if you want. You can specify multiple servers for the same database, so that
+Postfix can switch to a good database server if one goes bad.
 
-make -f Makefile.init makefiles \
-	'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
-	'AUXLIBS=-L/usr/local/mysql/lib -lmysqlclient -lz -lm'
+Busy mail servers using mysql maps will generate lots of concurrent mysql
+clients, so the mysql server(s) should be run with this fact in mind. You can
+reduce the number of concurrent mysql clients by using the Postfix proxymap(8)
+service.
 
-then, just run 'make'. This requires libz, the compression library.
-Older mysql implementations build without libz.
+BBuuiillddiinngg PPoossttffiixx wwiitthh MMyySSQQLL ssuuppppoorrtt
 
-Postfix installations which may benefit from using mysql map types
-include sites that have a need for instantaneous updates of
-forwarding, and sites that may benefit from having mail exchangers
-reference a networked database, possibly working in conjunction with a
-customer database of sorts.
+Note: to use mysql with Debian GNU/Linux's Postfix, all you need is to install
+the postfix-mysql package and you're done. There is no need to recompile
+Postfix.
 
-Once postfix is built with mysql support, you can specify a map type
-in main.cf like this:
+The Postfix MySQL client utilizes the mysql client library, which can be
+obtained from:
 
-alias_maps = mysql:/etc/postfix/mysql-aliases.cf
+    http://www.mysql.com/downloads/
+    http://sourceforge.net/projects/mysql/
 
-The file /etc/postfix/mysql-aliases.cf specifies lots of information
-telling postfix how to reference the mysql database.  An example mysql 
-map config file follows:
+In order to build Postfix with mysql map support, you will need to add -
+DHAS_MYSQL and -I for the directory containing the mysql headers, and the
+mysqlclient library (and libm) to AUXLIBS, for example:
+
+    make -f Makefile.init makefiles \
+        'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
+        'AUXLIBS=-L/usr/local/mysql/lib -lmysqlclient -lz -lm'
+
+Then, just run 'make'. This requires libz, the compression library. Older mysql
+implementations build without libz.
+
+UUssiinngg MMyySSQQLL ttaabblleess
+
+Once Postfix is built with mysql support, you can specify a map type in main.cf
+like this:
+
+    alias_maps = mysql:/etc/postfix/mysql-aliases.cf
+
+The file /etc/postfix/mysql-aliases.cf specifies lots of information telling
+Postfix how to reference the mysql database. For a complete description, see
+the mysql_table(5) manual page.
+
+EExxaammppllee:: llooccaall aalliiaasseess
 
 #
-# mysql config file for alias lookups on postfix
-# comments are ok.
+# mysql config file for local(8) aliases(5) lookups
 #
 
-# the user name and password to log into the mysql server
+# The user name and password to log into the mysql server.
 user = someone
-password = some_password 
+password = some_password
 
-# the database name on the servers
+# The database name on the servers.
 dbname = customer_database
 
-# the table name
+# The table name.
 table = mxaliases
 
-#
+# Query components, see below.
 select_field = forw_addr
 where_field = alias
 
-# you may specify additional_conditions here
+# You may specify additional_conditions or leave this empty.
 additional_conditions = and status = 'paid'
 
-# the above variables will result in a query of
-# the form: 
-# select forw_addr from mxaliases where alias = '$lookup' and status = 'paid'
-# ($lookup is escaped so if it contains single quotes or other odd
-# characters, it will not cause a parse error in the sql).
+# The above variables will result in a query of the form:
 #
-# the hosts that postfix will try to connect to
-# and query from (in the order listed)
-# specify unix: for unix-domain sockets, inet: for TCP connections (default)
-hosts = host1.some.domain host2.some.domain unix:/file/name
+# select forw_addr from mxaliases where alias = '$lookup' and status = 'paid'
+#
+# ($lookup is escaped so if it contains single quotes or other odd
+# characters, it will not cause trouble).
 
-# end mysql config file
+AAddddiittiioonnaall nnootteess
 
-Some notes:
+The MySQL configuration interface setup allows for multiple mysql databases:
+you can use one for a virtual table, one for an access table, and one for an
+aliases table if you want.
 
-This configuration interface setup allows for multiple mysql
-databases: you can use one for a virtual table, one for an access
-table, and one for an aliases table if you want.
-
-Since sites that have a need for multiple mail exchangers may enjoy
-the convenience of using a networked mailer database, but do not want 
-to introduce a single point of failure to their system, we've included 
-the ability to have postfix reference multiple hosts for access to a
-single mysql map.  This will work if sites set up mirrored mysql
-databases on two or more hosts.  Whenever queries fail with an error
-at one host, the rest of the hosts will be tried in order.  Each host
-that is in an error state will undergo a reconnection attempt every so 
-often, and if no mysql server hosts are reachable, then mail will be
+Since sites that have a need for multiple mail exchangers may enjoy the
+convenience of using a networked mailer database, but do not want to introduce
+a single point of failure to their system, we've included the ability to have
+Postfix reference multiple hosts for access to a single mysql map. This will
+work if sites set up mirrored mysql databases on two or more hosts. Whenever
+queries fail with an error at one host, the rest of the hosts will be tried in
+random order. If no mysql server hosts are reachable, then mail will be
 deferred until at least one of those hosts is reachable.
 
-Performance of postfix with mysql has not been thoroughly tested,
-however, we have found it to be stable.  Busy mail servers using mysql
-maps will generate lots of concurrent mysql clients, so the mysql
-server(s) should be run with this fact in mind.  Any further
-performance information, in addition to any feedback is most welcome.
+CCrreeddiittss
+
+  * The initial version was contributed by Scott Cotton and Joshua Marcus, IC
+    Group, Inc.
+  * Liviu Daia revised the configuration interface and added the main.cf
+    configuration feature.
 
