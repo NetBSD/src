@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)mount.2	6.12 (Berkeley) 3/15/91
-.\"	$Id: mount.2,v 1.5 1993/11/29 21:25:23 jtc Exp $
+.\"	$Id: mount.2,v 1.6 1994/04/19 00:11:10 jtc Exp $
 .\"
 .Dd March 15, 1991
 .Dt MOUNT 2
@@ -181,8 +181,11 @@ will fail when one of the following occurs:
 .It Bq Er EPERM
 The caller is not the super-user.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 255 characters,
-or the entire length of a path name exceeded 1023 characters.
+A component of a pathname exceeded 
+.Dv {NAME_MAX}
+characters, or an entire path name exceeded 
+.Dv {PATH_MAX}
+characters.
 .It Bq Er ELOOP
 Too many symbolic links were encountered in translating a pathname.
 .It Bq Er ENOENT
@@ -283,8 +286,11 @@ A component of the path is not a directory.
 .It Bq Er EINVAL
 The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 255 characters,
-or an entire path name exceeded 1023 characters.
+A component of a pathname exceeded 
+.Dv {NAME_MAX}
+characters, or an entire path name exceeded 
+.Dv {PATH_MAX}
+characters.
 .It Bq Er ELOOP
 Too many symbolic links were encountered in translating the pathname.
 .It Bq Er EINVAL
