@@ -1,10 +1,12 @@
 #	from: @(#)bsd.own.mk	0.1 (RGrimes) 4/4/93
-#	$Id: bsd.own.mk,v 1.7 1993/11/07 09:45:20 cgd Exp $
+#	$Id: bsd.own.mk,v 1.8 1993/12/07 00:18:40 mycroft Exp $
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
 BSDSRCDIR?=	/usr/src
 BSDOBJDIR?=	/usr/obj
+OBJMACHINE=
+USR_OBJMACHINE=
 
 BINGRP?=	bin
 BINOWN?=	bin
@@ -37,6 +39,6 @@ STRIP?=		-s
 
 # don't try to generate PIC versions of libraries on machines
 # which don't support PIC.
-.if (${MACHINE} != "i386") && (${MACHINE} != "sparc")
+.if (${MACHINE_ARCH} == "ns32k")
 NOPIC=
 .endif
