@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.93 2000/07/14 15:26:29 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.94 2000/08/19 18:07:36 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1059,12 +1059,14 @@ raidioctl(dev, cmd, data, flag, p)
 			ci_label.row = row;
 			for(column=0;column<raidPtr->numCol;column++) {
 				diskPtr = &raidPtr->Disks[row][column];
-				ci_label.partitionSize = diskPtr->partitionSize;
-				ci_label.column = column;
-				raidwrite_component_label( 
-				  raidPtr->Disks[row][column].dev, 
-				  raidPtr->raid_cinfo[row][column].ci_vp, 
-				  &ci_label );
+				if (diskPtr->status != rf_ds_failed) {
+					ci_label.partitionSize = diskPtr->partitionSize;
+					ci_label.column = column;
+					raidwrite_component_label( 
+					  raidPtr->Disks[row][column].dev, 
+					  raidPtr->raid_cinfo[row][column].ci_vp, 
+					  &ci_label );
+				}
 			}
 		}
 
