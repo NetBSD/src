@@ -1,4 +1,4 @@
-/*	$NetBSD: ypmatch.c,v 1.7 1996/05/07 00:44:21 jtc Exp $	*/
+/*	$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypmatch.c,v 1.7 1996/05/07 00:44:21 jtc Exp $";
+static char rcsid[] = "$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -84,6 +84,7 @@ char **argv;
 	extern int optind;
 	int outbuflen, key, notrans;
 	int c, r, i;
+	int rval;
 
 	notrans = key = 0;
 	yp_get_default_domain(&domainname);
@@ -118,6 +119,8 @@ char **argv;
 			if( strcmp(inmap, ypaliases[i].alias) == 0)
 				inmap = ypaliases[i].name;
 	}
+
+	rval = 0;
 	for(; optind < argc-1; optind++) {
 		inkey = argv[optind];
 
@@ -135,8 +138,10 @@ char **argv;
 		default:
 			fprintf(stderr, "Can't match key %s in map %s. Reason: %s\n",
 				inkey, inmap, yperr_string(r));
+			rval = 1;
 			break;
 		}
 	}
-	exit(0);
+
+	exit(rval);
 }
