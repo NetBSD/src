@@ -1,28 +1,30 @@
-#	$NetBSD: list,v 1.16 2002/03/11 07:04:21 lukem Exp $
+#	$NetBSD: list,v 1.17 2002/04/13 13:42:59 lukem Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin
 
-PROG	bin/pax usr/bin/tar usr/bin/cpio
+PROG	bin/pax		usr/bin/tar usr/bin/cpio
 PROG	bin/sh
 PROG	bin/mt
 
 PROG	sbin/init
-PROG	sbin/newfs sbin/mount_mfs
-PROG	sbin/mount_ffs
 PROG	sbin/mount_cd9660
+PROG	sbin/mount_ffs
+PROG	sbin/newfs	sbin/mount_mfs
+PROG	sbin/reboot	sbin/halt
 PROG	sbin/umount
-PROG	sbin/reboot sbin/halt
-PROG	usr/sbin/chroot
+
 PROG	usr/bin/eject
-PROG	usr/bin/gzip usr/bin/gunzip usr/bin/zcat
+PROG	usr/bin/gzip	usr/bin/gunzip usr/bin/zcat
+
+PROG	usr/sbin/chroot
+
+# init invokes the shell as -sh
+ARGVLN	sh -sh
 
 SPECIAL	gzip	srcdir distrib/utils/x_gzip
 SPECIAL	umount	srcdir distrib/utils/x_umount
 
 LIBS	libhack.o -lz -ll -lutil -lrmt
-
-# `internal' crunchgen links
-ARGVLN	sh -sh
 
 COPY	${CURDIR}/dot.profile .profile
 

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.17 2002/03/06 12:04:49 lukem Exp $
+#	$NetBSD: list,v 1.18 2002/04/13 13:42:58 lukem Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -17,7 +17,7 @@ PROG	bin/mkdir
 PROG	bin/mt
 PROG	bin/mv
 PROG	bin/pwd
-PROG	bin/pax usr/bin/tar usr/bin/cpio
+PROG	bin/pax		usr/bin/tar usr/bin/cpio
 PROG	bin/rm
 PROG	bin/sh
 PROG	bin/stty
@@ -33,7 +33,7 @@ PROG	sbin/mount
 PROG	sbin/mount_cd9660
 PROG	sbin/mount_ffs
 PROG	sbin/mount_nfs
-PROG	sbin/newfs sbin/mount_mfs
+PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
 PROG	sbin/route
 PROG	sbin/shutdown
@@ -42,7 +42,7 @@ PROG	sbin/umount
 
 PROG	usr/bin/chflags
 PROG	usr/bin/ftp
-PROG	usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
+PROG	usr/bin/gzip	usr/bin/gunzip usr/bin/gzcat
 PROG	usr/bin/sed
 PROG	usr/bin/sort
 PROG	usr/bin/tip
@@ -50,14 +50,14 @@ PROG	usr/bin/tip
 PROG	usr/sbin/chown usr/bin/chgrp
 PROG	usr/sbin/chroot
 
+ARGVLN	sh -sh
+
 SPECIAL	ed		srcdir	distrib/utils/x_ed
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 
 LIBS	-lrmt -ledit -lutil -lcurses -ltermcap -lbz2 -lcrypt -lintl -ll -lm -lkvm
-
-ARGVLN	sh -sh
 
 # various files that we need in /etc for the install
 COPY	${_SRC_TOP_}/etc/group		etc/group
