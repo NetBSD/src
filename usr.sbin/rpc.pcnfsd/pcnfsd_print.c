@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_print.c,v 1.4 1996/04/25 01:00:12 gwr Exp $	*/
+/*	$NetBSD: pcnfsd_print.c,v 1.5 1997/10/25 13:45:58 lukem Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_print.c 1.7 92/01/24 19:58:58 SMI */
 /*
@@ -7,7 +7,6 @@
 **	@(#)pcnfsd_print.c	1.7	1/24/92
 **=====================================================================
 */
-#include "common.h"
 /*
 **=====================================================================
 **             I N C L U D E   F I L E   S E C T I O N                *
@@ -17,17 +16,20 @@
 ** exclusion of the files conditional on this.                        *
 **=====================================================================
 */
-#include "pcnfsd.h"
-#include <malloc.h>
-#include <stdio.h>
-#include <pwd.h>
+
 #include <sys/file.h>
-#include <signal.h>
-#include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <netdb.h>
+#include <sys/stat.h>
+
+#include <ctype.h>
 #include <errno.h>
+#include <netdb.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifndef SYSV
 #include <sys/wait.h>
@@ -43,9 +45,13 @@
 
 #include "paths.h"
 
+#include "common.h"
+#include "pcnfsd.h"
+#include "extern.h"
+
 /*
 **---------------------------------------------------------------------
-** Other #define's 
+** Other #define's
 **---------------------------------------------------------------------
 */
 #ifndef MAXPATHLEN
@@ -69,18 +75,12 @@
 #define SIZECOL 62
 #define FILECOL 24
 
-extern void     scramble();
-extern void     run_ps630();
-extern char    *crypt();
-extern FILE    *su_popen();
-extern int      su_pclose();
-int             build_pr_list();
-char 	       *map_printer_name();
-char	       *expand_alias();
-void           *grab();
-void            free_pr_list_item();
-void            free_pr_queue_item();
-pr_list		list_virtual_printers();
+char   *expand_alias __P((char *, char *, char *, char *));
+pr_list	list_virtual_printers __P((void));
+char   *map_printer_name __P((char *));
+void	substitute __P((char *, char *, char *));
+int	suspicious __P((char *));
+int	valid_pr __P((char *));
 
 /*
 **---------------------------------------------------------------------
@@ -88,17 +88,15 @@ pr_list		list_virtual_printers();
 **---------------------------------------------------------------------
 */
 
-extern int      errno;
-extern int	interrupted;	/* in pcnfsd_misc.c */
-struct stat     statbuf;
-char            pathname[MAXPATHLEN];
-char            new_pathname[MAXPATHLEN];
-char            sp_name[MAXPATHLEN] = SPOOLDIR;
-char            tempstr[256];
-char            delims[] = " \t\r\n:()";
+struct stat statbuf;
+char    pathname[MAXPATHLEN];
+char    new_pathname[MAXPATHLEN];
+char    sp_name[MAXPATHLEN] = SPOOLDIR;
+char    tempstr[256];
+char    delims[] = " \t\r\n:()";
 
-pr_list         printers = NULL;
-pr_queue        queue = NULL;
+pr_list printers = NULL;
+pr_queue queue = NULL;
 
 /*
 **=====================================================================
@@ -115,8 +113,9 @@ pr_queue        queue = NULL;
  *	if(suspicious(some_parameter)) reject();
  */
 
-int suspicious (s)
-char *s;
+int
+suspicious(s)
+	char   *s;
 {
 	if (strpbrk(s, ";|&<>`'#!?*()[]^/${}\n\r\"\\:") != NULL)
 		return 1;
@@ -126,29 +125,28 @@ char *s;
 
 int
 valid_pr(pr)
-char *pr;
+	char   *pr;
 {
-char *p;
-pr_list curr;
-	if(printers == NULL)
+	char   *p;
+	pr_list curr;
+	if (printers == NULL)
 		build_pr_list();
 
-	if(printers == NULL)
-		return(1); /* can't tell - assume it's good */
+	if (printers == NULL)
+		return (1);	/* can't tell - assume it's good */
 
 	p = map_printer_name(pr);
 	if (p == NULL)
-		return(1);	/* must be ok is maps to NULL! */
+		return (1);	/* must be ok is maps to NULL! */
 	curr = printers;
-	while(curr) {
-		if(!strcmp(p, curr->pn))
-			return(1);
+	while (curr) {
+		if (!strcmp(p, curr->pn))
+			return (1);
 		curr = curr->pr_next;
 	}
-		
-	return(0);
-}
 
+	return (0);
+}
 /*
  * get pathname of current directory and return to client
  *
@@ -158,19 +156,19 @@ pr_list curr;
  */
 pirstat
 pr_init(sys, pr, sp)
-	char *sys;
-	char *pr;
-	char**sp;
+	char   *sys;
+	char   *pr;
+	char  **sp;
 {
-	int    dir_mode = 0777;
-	int rc;
-	mode_t oldmask;
+	int     dir_mode = 0777;
+	int     rc;
+	mode_t  oldmask;
 
 	*sp = &pathname[0];
 	pathname[0] = '\0';
 
-	if(suspicious(sys) || suspicious(pr))
-		return(PI_RES_FAIL);
+	if (suspicious(sys) || suspicious(pr))
+		return (PI_RES_FAIL);
 
 	/*
 	 * Make sure the server spool directory exists.
@@ -184,7 +182,7 @@ pr_init(sys, pr, sp)
 	 * Just do the mkdir call and ignore EEXIST.
 	 * Mode of client directory should be 777.
 	 */
-	(void)sprintf(pathname,"%s/%s",sp_name, sys);
+	(void) sprintf(pathname, "%s/%s", sp_name, sys);
 	oldmask = umask(0);
 	rc = mkdir(pathname, dir_mode);	/* DON'T ignore this return code */
 	umask(oldmask);
@@ -194,111 +192,104 @@ pr_init(sys, pr, sp)
 	/* By this point the client spool dir should exist. */
 	if (stat(pathname, &statbuf) || !S_ISDIR(statbuf.st_mode)) {
 		/* No spool directory... */
-	badspool:
-		(void)sprintf(tempstr,
+badspool:
+		(void) sprintf(tempstr,
 		    "rpc.pcnfsd: unable to set up spool directory %s\n",
-			  pathname);
+		    pathname);
 		msg_out(tempstr);
-	    pathname[0] = '\0';	/* null to tell client bad vibes */
-	    return(PI_RES_FAIL);
+		pathname[0] = '\0';	/* null to tell client bad vibes */
+		return (PI_RES_FAIL);
 	}
-
 	/* OK, we have a spool directory. */
- 	if (!valid_pr(pr)) {
-	    pathname[0] = '\0';	/* null to tell client bad vibes */
-	    return(PI_RES_NO_SUCH_PRINTER);
+	if (!valid_pr(pr)) {
+		pathname[0] = '\0';	/* null to tell client bad vibes */
+		return (PI_RES_NO_SUCH_PRINTER);
 	}
-	return(PI_RES_OK);
+	return (PI_RES_OK);
 }
-
-
-psrstat pr_start2(system, pr, user, fname, opts, id)
-char *system;
-char *pr;
-char *user;
-char *fname;
-char *opts;
-char **id;
+psrstat
+pr_start2(system, pr, user, fname, opts, id)
+	char   *system;
+	char   *pr;
+	char   *user;
+	char   *fname;
+	char   *opts;
+	char  **id;
 {
-char            snum[20];
-static char     req_id[256];
-char            cmdbuf[256];
-char            resbuf[256];
-FILE *fd;
-int i;
-char *xcmd;
-char *cp;
-int failed = 0;
+	char    snum[20];
+	static char req_id[256];
+	char    cmdbuf[256];
+	char    resbuf[256];
+	FILE   *fd;
+	int     i;
+	char   *xcmd;
+	int     failed = 0;
 
 #ifdef HACK_FOR_ROTATED_TRANSCRIPT
-char            scratch[512];
+	char    scratch[512];
 #endif
 
 
-	if(suspicious(system) || 
-		suspicious(pr) ||
-		suspicious(user) ||
-		suspicious(fname))
-		return(PS_RES_FAIL);
+	if (suspicious(system) ||
+	    suspicious(pr) ||
+	    suspicious(user) ||
+	    suspicious(fname))
+		return (PS_RES_FAIL);
 
-	(void)sprintf(pathname,"%s/%s/%s",sp_name,
-	                         system,
-	                         fname);	
+	(void) sprintf(pathname, "%s/%s/%s", sp_name,
+	    system,
+	    fname);
 
 	*id = &req_id[0];
 	req_id[0] = '\0';
 
-	if (stat(pathname, &statbuf)) 
-           {
-	   /*
-           **-----------------------------------------------------------------
-	   ** We can't stat the file. Let's try appending '.spl' and
-	   ** see if it's already in progress.
-           **-----------------------------------------------------------------
-	   */
+	if (stat(pathname, &statbuf)) {
+		/*
+                **-----------------------------------------------------------------
+	        ** We can't stat the file. Let's try appending '.spl' and
+	        ** see if it's already in progress.
+                **-----------------------------------------------------------------
+	        */
 
-	   (void)strcat(pathname, ".spl");
-	   if (stat(pathname, &statbuf)) 
-	      {
-	      /*
-              **----------------------------------------------------------------
-	      ** It really doesn't exist.
-              **----------------------------------------------------------------
-	      */
+		(void) strcat(pathname, ".spl");
+		if (stat(pathname, &statbuf)) {
+			/*
+	                **----------------------------------------------------------------
+		        ** It really doesn't exist.
+	                **----------------------------------------------------------------
+		        */
 
 
-	      return(PS_RES_NO_FILE);
-	      }
-	      /*
-              **-------------------------------------------------------------
-	      ** It is already on the way.
-              **-------------------------------------------------------------
-	      */
+			return (PS_RES_NO_FILE);
+		}
+		/*
+                **-------------------------------------------------------------
+	        ** It is already on the way.
+                **-------------------------------------------------------------
+	        */
 
 
-		return(PS_RES_ALREADY);
-	     }
+		return (PS_RES_ALREADY);
+	}
+	if (statbuf.st_size == 0) {
+		/*
+                **-------------------------------------------------------------
+	        ** Null file - don't print it, just kill it.
+                **-------------------------------------------------------------
+	        */
+		(void) unlink(pathname);
 
-	if (statbuf.st_size == 0) 
-	   {
-	   /*
-           **-------------------------------------------------------------
-	   ** Null file - don't print it, just kill it.
-           **-------------------------------------------------------------
-	   */
-	   (void)unlink(pathname);
-
-	    return(PS_RES_NULL);
-	    }
-	 /*
-         **-------------------------------------------------------------
-	 ** The file is real, has some data, and is not already going out.
-	 ** We rename it by appending '.spl' and exec "lpr" to do the
-	 ** actual work.
-         **-------------------------------------------------------------
-	 */
-	(void)strcpy(new_pathname, pathname);
-	(void)strcat(new_pathname, ".spl");
+		return (PS_RES_NULL);
+	}
+	/*
+        **-------------------------------------------------------------
+        ** The file is real, has some data, and is not already going out.
+        ** We rename it by appending '.spl' and exec "lpr" to do the
+        ** actual work.
+        **-------------------------------------------------------------
+        */
+	(void) strcpy(new_pathname, pathname);
+	(void) strcat(new_pathname, ".spl");
 
 	/*
         **-------------------------------------------------------------
@@ -307,83 +298,80 @@ char            scratch[512];
 	*/
 
 
-	if (!stat(new_pathname, &statbuf)) 
-	   {
-	   (void)strcpy(new_pathname, pathname);  /* rebuild a new name */
-	   (void)sprintf(snum, "%d", rand());	  /* get some number */
-	   (void)strncat(new_pathname, snum, 3);
-	   (void)strcat(new_pathname, ".spl");	  /* new spool file */
-	    }
-	if (rename(pathname, new_pathname)) 
-	   {
-	   /*
-           **---------------------------------------------------------------
-	   ** Should never happen.
-           **---------------------------------------------------------------
-           */
-	   (void)sprintf(tempstr, "rpc.pcnfsd: spool file rename (%s->%s) failed.\n",
-			pathname, new_pathname);
-                msg_out(tempstr);
-		return(PS_RES_FAIL);
-	    }
-
-		if (*opts == 'd') {
-			/*
-			 **------------------------------------------------------
-			 ** This is a Diablo print stream. Apply the ps630
-			 ** filter with the appropriate arguments.
-			 **------------------------------------------------------
-			 */
-#if 0	/* XXX: Temporary fix for CERT advisory CA-96.08 */
-			(void)run_ps630(new_pathname, opts);
-#else
-			(void)sprintf(tempstr,
-			    "rpc.pcnfsd: ps630 filter disabled for %s\n", pathname);
-			msg_out(tempstr);
-			return(PS_RES_FAIL);
-#endif
-		   }
+	if (!stat(new_pathname, &statbuf)) {
+		(void) strcpy(new_pathname, pathname);	/* rebuild a new name */
+		(void) sprintf(snum, "%d", rand());	/* get some number */
+		(void) strncat(new_pathname, snum, 3);
+		(void) strcat(new_pathname, ".spl");	/* new spool file */
+	}
+	if (rename(pathname, new_pathname)) {
 		/*
-		** Try to match to an aliased printer
-		*/
-		xcmd = expand_alias(pr, new_pathname, user, system);
-		if(!xcmd) {
+                **---------------------------------------------------------------
+	        ** Should never happen.
+                **---------------------------------------------------------------
+                */
+		(void) sprintf(tempstr, "rpc.pcnfsd: spool file rename (%s->%s) failed.\n",
+		    pathname, new_pathname);
+		msg_out(tempstr);
+		return (PS_RES_FAIL);
+	}
+	if (*opts == 'd') {
+		/*
+		 **------------------------------------------------------
+		 ** This is a Diablo print stream. Apply the ps630
+		 ** filter with the appropriate arguments.
+		 **------------------------------------------------------
+		 */
+#if 0				/* XXX: Temporary fix for CERT advisory
+				 * CA-96.08 */
+		(void) run_ps630(new_pathname, opts);
+#else
+		(void) sprintf(tempstr,
+		    "rpc.pcnfsd: ps630 filter disabled for %s\n", pathname);
+		msg_out(tempstr);
+		return (PS_RES_FAIL);
+#endif
+	}
+	/*
+	** Try to match to an aliased printer
+	*/
+	xcmd = expand_alias(pr, new_pathname, user, system);
+	if (!xcmd) {
 #ifdef	SVR4
-	        /*
+		/*
 			 * Use the copy option so we can remove the orignal
 			 * spooled nfs file from the spool directory.
 			 */
-			sprintf(cmdbuf, "/usr/bin/lp -c -d%s %s",
-				pr, new_pathname);
-#else	/* SVR4 */
-			/* BSD way: lpr */
-			sprintf(cmdbuf, "%s/lpr -P%s %s",
-				LPRDIR, pr, new_pathname);
-#endif	/* SVR4 */
-			xcmd = cmdbuf;
-		}
-		if ((fd = su_popen(user, xcmd, MAXTIME_FOR_PRINT)) == NULL) {
-			msg_out("rpc.pcnfsd: su_popen failed");
-			return(PS_RES_FAIL);
-		}
-		req_id[0] = '\0';	/* asume failure */
-		while(fgets(resbuf, 255, fd) != NULL) {
-			i = strlen(resbuf);
-			if(i)
-				resbuf[i-1] = '\0'; /* trim NL */
-			if(!strncmp(resbuf, "request id is ", 14))
-				/* New - just the first word is needed */
-				strcpy(req_id, strtok(&resbuf[14], delims));
-			else if (strembedded("disabled", resbuf))
+		sprintf(cmdbuf, "/usr/bin/lp -c -d%s %s",
+		    pr, new_pathname);
+#else				/* SVR4 */
+		/* BSD way: lpr */
+		sprintf(cmdbuf, "%s/lpr -P%s %s",
+		    LPRDIR, pr, new_pathname);
+#endif				/* SVR4 */
+		xcmd = cmdbuf;
+	}
+	if ((fd = su_popen(user, xcmd, MAXTIME_FOR_PRINT)) == NULL) {
+		msg_out("rpc.pcnfsd: su_popen failed");
+		return (PS_RES_FAIL);
+	}
+	req_id[0] = '\0';	/* asume failure */
+	while (fgets(resbuf, 255, fd) != NULL) {
+		i = strlen(resbuf);
+		if (i)
+			resbuf[i - 1] = '\0';	/* trim NL */
+		if (!strncmp(resbuf, "request id is ", 14))
+			/* New - just the first word is needed */
+			strcpy(req_id, strtok(&resbuf[14], delims));
+		else
+			if (strembedded("disabled", resbuf))
 				failed = 1;
-		}
-		if(su_pclose(fd) == 255)
-			msg_out("rpc.pcnfsd: su_pclose alert");
-		(void)unlink(new_pathname);
-		return((failed | interrupted)? PS_RES_FAIL : PS_RES_OK);
+	}
+	if (su_pclose(fd) == 255)
+		msg_out("rpc.pcnfsd: su_pclose alert");
+	(void) unlink(new_pathname);
+	return ((failed | interrupted) ? PS_RES_FAIL : PS_RES_OK);
 }
-
-
 /*
  * build_pr_list: determine which printers are valid.
  * on SVR4 use "lpstat -v"
@@ -414,35 +402,35 @@ build_pr_list()
 {
 	pr_list last = NULL;
 	pr_list curr = NULL;
-	char buff[256];
-	FILE *p;
-	char *cp;
-	int saw_system;
+	char    buff[256];
+	FILE   *p;
+	char   *cp;
+	int     saw_system;
 
 	p = popen("lpstat -v", "r");
-	if(p == NULL) {
+	if (p == NULL) {
 		msg_out("rpc.pcnfsd: unable to popen() lp status");
-		return(0);
+		return (0);
 	}
-	
-	while(fgets(buff, 255, p) != NULL) {
+	while (fgets(buff, 255, p) != NULL) {
 		cp = strtok(buff, delims);
-		if(!cp)
+		if (!cp)
 			continue;
-		if(!strcmp(cp, "device"))
+		if (!strcmp(cp, "device"))
 			saw_system = 0;
-		else if (!strcmp(cp, "system"))
-			saw_system = 1;
 		else
+			if (!strcmp(cp, "system"))
+				saw_system = 1;
+			else
+				continue;
+		cp = strtok(NULL, delims);
+		if (!cp || strcmp(cp, "for"))
 			continue;
 		cp = strtok(NULL, delims);
-		if(!cp || strcmp(cp, "for"))
-			continue;
-		cp = strtok(NULL, delims);
-		if(!cp)
+		if (!cp)
 			continue;
 		curr = (struct pr_list_item *)
-			grab(sizeof (struct pr_list_item));
+		    grab(sizeof(struct pr_list_item));
 
 		curr->pn = strdup(cp);
 		curr->device = NULL;
@@ -452,19 +440,18 @@ build_pr_list()
 
 		cp = strtok(NULL, delims);
 
-		if(cp && !strcmp(cp, "is")) 
+		if (cp && !strcmp(cp, "is"))
 			cp = strtok(NULL, delims);
 
-		if(!cp) {
+		if (!cp) {
 			free_pr_list_item(curr);
 			continue;
 		}
-
-		if(saw_system) {
-			/* "system" OR "system (as printer pname)" */ 
+		if (saw_system) {
+			/* "system" OR "system (as printer pname)" */
 			curr->remhost = strdup(cp);
 			cp = strtok(NULL, delims);
-			if(!cp) {
+			if (!cp) {
 				/* simple format */
 				curr->device = strdup(curr->pn);
 			} else {
@@ -479,49 +466,49 @@ build_pr_list()
 					continue;
 				}
 				cp = strtok(NULL, delims);
-				if(!cp) {
+				if (!cp) {
 					free_pr_list_item(curr);
 					continue;
 				}
 				curr->device = strdup(cp);
 			}
-		}
-		else if(!strcmp(cp, "the")) {
-			/* start of "the remote printer foo on bar" */
-			cp = strtok(NULL, delims);
-			if(!cp || strcmp(cp, "remote")) {
-				free_pr_list_item(curr);
-				continue;
+		} else
+			if (!strcmp(cp, "the")) {
+				/* start of "the remote printer foo on bar" */
+				cp = strtok(NULL, delims);
+				if (!cp || strcmp(cp, "remote")) {
+					free_pr_list_item(curr);
+					continue;
+				}
+				cp = strtok(NULL, delims);
+				if (!cp || strcmp(cp, "printer")) {
+					free_pr_list_item(curr);
+					continue;
+				}
+				cp = strtok(NULL, delims);
+				if (!cp) {
+					free_pr_list_item(curr);
+					continue;
+				}
+				curr->device = strdup(cp);
+				cp = strtok(NULL, delims);
+				if (!cp || strcmp(cp, "on")) {
+					free_pr_list_item(curr);
+					continue;
+				}
+				cp = strtok(NULL, delims);
+				if (!cp) {
+					free_pr_list_item(curr);
+					continue;
+				}
+				curr->remhost = strdup(cp);
+			} else {
+				/* the local name */
+				curr->device = strdup(cp);
+				curr->remhost = strdup("");
 			}
-			cp = strtok(NULL, delims);
-			if(!cp || strcmp(cp, "printer")) {
-				free_pr_list_item(curr);
-				continue;
-			}
-			cp = strtok(NULL, delims);
-			if(!cp) {
-				free_pr_list_item(curr);
-				continue;
-			}
-			curr->device = strdup(cp);
-			cp = strtok(NULL, delims);
-			if(!cp || strcmp(cp, "on")) {
-				free_pr_list_item(curr);
-				continue;
-			}
-			cp = strtok(NULL, delims);
-			if(!cp) {
-				free_pr_list_item(curr);
-				continue;
-			}
-			curr->remhost = strdup(cp);
-		} else {
-			/* the local name */
-			curr->device = strdup(cp);
-			curr->remhost = strdup("");
-		}
 
-		if(last == NULL)
+		if (last == NULL)
 			printers = curr;
 		else
 			last->pr_next = curr;
@@ -533,15 +520,14 @@ build_pr_list()
 	/*
 	 ** Now add on the virtual printers, if any
 	 */
-	if(last == NULL)
+	if (last == NULL)
 		printers = list_virtual_printers();
 	else
 		last->pr_next = list_virtual_printers();
 
-	return(1);
+	return (1);
 }
-
-#else	/* SVR4 */
+#else				/* SVR4 */
 
 /*
  * BSD way: lpc stat
@@ -551,19 +537,17 @@ build_pr_list()
 {
 	pr_list last = NULL;
 	pr_list curr = NULL;
-	char buff[256];
-	FILE *p;
-	char *cp;
-	int saw_system;
+	char    buff[256];
+	FILE   *p;
+	char   *cp;
 
 	sprintf(buff, "%s/lpc status", LPCDIR);
 	p = popen(buff, "r");
-	if(p == NULL) {
+	if (p == NULL) {
 		msg_out("rpc.pcnfsd: unable to popen lpc stat");
-		return(0);
+		return (0);
 	}
-	
-	while(fgets(buff, 255, p) != NULL) {
+	while (fgets(buff, 255, p) != NULL) {
 		if (isspace(buff[0]))
 			continue;
 
@@ -571,7 +555,7 @@ build_pr_list()
 			continue;
 
 		curr = (struct pr_list_item *)
-			grab(sizeof (struct pr_list_item));
+		    grab(sizeof(struct pr_list_item));
 
 		/* XXX - Should distinguish remote printers. */
 		curr->pn = strdup(cp);
@@ -580,7 +564,7 @@ build_pr_list()
 		curr->cm = strdup("-");
 		curr->pr_next = NULL;
 
-		if(last == NULL)
+		if (last == NULL)
 			printers = curr;
 		else
 			last->pr_next = curr;
@@ -592,46 +576,45 @@ build_pr_list()
 	/*
 	 ** Now add on the virtual printers, if any
 	 */
-	if(last == NULL)
+	if (last == NULL)
 		printers = list_virtual_printers();
 	else
 		last->pr_next = list_virtual_printers();
 
-	return(1);
+	return (1);
 }
+#endif				/* SVR4 */
 
-#endif	/* SVR4 */
-
-void *grab(n)
-int n;
+void   *
+grab(n)
+	int     n;
 {
-	void *p;
+	void   *p;
 
-	p = (void *)malloc(n);
-	if(p == NULL) {
+	p = (void *) malloc(n);
+	if (p == NULL) {
 		msg_out("rpc.pcnfsd: malloc failure");
 		exit(1);
 	}
-	return(p);
+	return (p);
 }
 
 void
 free_pr_list_item(curr)
-pr_list curr;
+	pr_list curr;
 {
-	if(curr->pn)
+	if (curr->pn)
 		free(curr->pn);
-	if(curr->device)
+	if (curr->device)
 		free(curr->device);
-	if(curr->remhost)
+	if (curr->remhost)
 		free(curr->remhost);
-	if(curr->cm)
+	if (curr->cm)
 		free(curr->cm);
-	if(curr->pr_next)
-		free_pr_list_item(curr->pr_next); /* recurse */
+	if (curr->pr_next)
+		free_pr_list_item(curr->pr_next);	/* recurse */
 	free(curr);
 }
-
 /*
  * build_pr_queue:  used to show the print queue.
  *
@@ -644,16 +627,16 @@ pr_list curr;
 ** In SVR4 the command to list the print jobs for printer
 ** lp is "lpstat lp" (or, equivalently, "lpstat -p lp").
 ** The output looks like this:
-** 
+**
 ** lp-2                    root               939   Jul 10 21:56
 ** lp-5                    geoff               15   Jul 12 23:23
 ** lp-6                    geoff               15   Jul 12 23:23
-** 
+**
 ** If the first job is actually printing the first line
 ** is modified, as follows:
 **
 ** lp-2                    root               939   Jul 10 21:56 on lp
-** 
+**
 ** I don't yet have any info on what it looks like if the printer
 ** is remote and we're spooling over the net. However for
 ** the purposes of rpc.pcnfsd we can simply say that field 1 is the
@@ -665,21 +648,21 @@ pr_list curr;
 
 pirstat
 build_pr_queue(pn, user, just_mine, p_qlen, p_qshown)
-printername     pn;
-username        user;
-int            just_mine;
-int            *p_qlen;
-int            *p_qshown;
+	printername pn;
+	username user;
+	int     just_mine;
+	int    *p_qlen;
+	int    *p_qshown;
 {
-pr_queue last = NULL;
-pr_queue curr = NULL;
-char buff[256];
-FILE *p;
-char *owner;
-char *job;
-char *totsize;
+	pr_queue last = NULL;
+	pr_queue curr = NULL;
+	char    buff[256];
+	FILE   *p;
+	char   *owner;
+	char   *job;
+	char   *totsize;
 
-	if(queue) {
+	if (queue) {
 		free_pr_queue_item(queue);
 		queue = NULL;
 	}
@@ -687,41 +670,40 @@ char *totsize;
 	*p_qshown = 0;
 
 	pn = map_printer_name(pn);
-	if(pn == NULL || !valid_pr(pn) || suspicious(pn))
-		return(PI_RES_NO_SUCH_PRINTER);
+	if (pn == NULL || !valid_pr(pn) || suspicious(pn))
+		return (PI_RES_NO_SUCH_PRINTER);
 
 	sprintf(buff, "/usr/bin/lpstat %s", pn);
 	p = su_popen(user, buff, MAXTIME_FOR_QUEUE);
-	if(p == NULL) {
+	if (p == NULL) {
 		msg_out("rpc.pcnfsd: unable to popen() lpstat queue query");
-		return(PI_RES_FAIL);
+		return (PI_RES_FAIL);
 	}
-	
-	while(fgets(buff, 255, p) != NULL) {
+	while (fgets(buff, 255, p) != NULL) {
 		job = strtok(buff, delims);
-		if(!job)
+		if (!job)
 			continue;
 
 		owner = strtok(NULL, delims);
-		if(!owner)
+		if (!owner)
 			continue;
 
 		totsize = strtok(NULL, delims);
-		if(!totsize)
+		if (!totsize)
 			continue;
 
 		*p_qlen += 1;
 
-		if(*p_qshown > QMAX)
+		if (*p_qshown > QMAX)
 			continue;
 
-		if(just_mine && mystrcasecmp(owner, user))
+		if (just_mine && strcasecmp(owner, user))
 			continue;
 
 		*p_qshown += 1;
 
 		curr = (struct pr_queue_item *)
-			grab(sizeof (struct pr_queue_item));
+		    grab(sizeof(struct pr_queue_item));
 
 		curr->position = *p_qlen;
 		curr->id = strdup(job);
@@ -733,7 +715,7 @@ char *totsize;
 		curr->cm = strdup("-");
 		curr->pr_next = NULL;
 
-		if(last == NULL)
+		if (last == NULL)
 			queue = curr;
 		else
 			last->pr_next = curr;
@@ -741,95 +723,93 @@ char *totsize;
 
 	}
 	(void) su_pclose(p);
-	return(PI_RES_OK);
+	return (PI_RES_OK);
 }
-
-#else /* SVR4 */
+#else				/* SVR4 */
 
 pirstat
 build_pr_queue(pn, user, just_mine, p_qlen, p_qshown)
-printername     pn;
-username        user;
-int            just_mine;
-int            *p_qlen;
-int            *p_qshown;
+	printername pn;
+	username user;
+	int     just_mine;
+	int    *p_qlen;
+	int    *p_qshown;
 {
-pr_queue last = NULL;
-pr_queue curr = NULL;
-char buff[256];
-FILE *p;
-char *cp;
-int i;
-char *rank;
-char *owner;
-char *job;
-char *files;
-char *totsize;
+	pr_queue last = NULL;
+	pr_queue curr = NULL;
+	char    buff[256];
+	FILE   *p;
+	char   *cp;
+	int     i;
+	char   *rank;
+	char   *owner;
+	char   *job;
+	char   *files;
+	char   *totsize;
 
-	if(queue) {
+	if (queue) {
 		free_pr_queue_item(queue);
 		queue = NULL;
 	}
 	*p_qlen = 0;
 	*p_qshown = 0;
 	pn = map_printer_name(pn);
-	if(pn == NULL || suspicious(pn))
-		return(PI_RES_NO_SUCH_PRINTER);
+	if (pn == NULL || suspicious(pn))
+		return (PI_RES_NO_SUCH_PRINTER);
 
 	sprintf(buff, "%s/lpq -P%s", LPRDIR, pn);
 
 	p = su_popen(user, buff, MAXTIME_FOR_QUEUE);
-	if(p == NULL) {
+	if (p == NULL) {
 		msg_out("rpc.pcnfsd: unable to popen() lpq");
-		return(PI_RES_FAIL);
+		return (PI_RES_FAIL);
 	}
-	
-	while(fgets(buff, 255, p) != NULL) {
+	while (fgets(buff, 255, p) != NULL) {
 		i = strlen(buff) - 1;
-		buff[i] = '\0';		/* zap trailing NL */
-		if(i < SIZECOL)
+		buff[i] = '\0';	/* zap trailing NL */
+		if (i < SIZECOL)
 			continue;
-		if(!mystrncasecmp(buff, "rank", 4))
+		if (!strncasecmp(buff, "rank", 4))
 			continue;
 
-		totsize = &buff[SIZECOL-1];
-		files = &buff[FILECOL-1];
+		totsize = &buff[SIZECOL - 1];
+		files = &buff[FILECOL - 1];
 		cp = totsize;
 		cp--;
-		while(cp > files && isspace(*cp))
+		while (cp > files && isspace(*cp))
 			*cp-- = '\0';
 
-		buff[FILECOL-2] = '\0';
+		buff[FILECOL - 2] = '\0';
 
 		cp = strtok(buff, delims);
-		if(!cp)
+		if (!cp)
 			continue;
 		rank = cp;
 
 		cp = strtok(NULL, delims);
-		if(!cp)
+		if (!cp)
 			continue;
 		owner = cp;
 
 		cp = strtok(NULL, delims);
-		if(!cp)
+		if (!cp)
 			continue;
 		job = cp;
 
 		*p_qlen += 1;
 
-		if(*p_qshown > QMAX)
+		if (*p_qshown > QMAX)
 			continue;
 
-		if(just_mine && mystrcasecmp(owner, user))
+		if (just_mine && strcasecmp(owner, user))
 			continue;
 
 		*p_qshown += 1;
 
 		curr = (struct pr_queue_item *)
-			grab(sizeof (struct pr_queue_item));
+		    grab(sizeof(struct pr_queue_item));
 
-		curr->position = atoi(rank); /* active -> 0 */
+		curr->position = atoi(rank);	/* active -> 0 */
 		curr->id = strdup(job);
 		curr->size = strdup(totsize);
 		curr->status = strdup(rank);
@@ -839,7 +819,7 @@ char *totsize;
 		curr->cm = strdup("-");
 		curr->pr_next = NULL;
 
-		if(last == NULL)
+		if (last == NULL)
 			queue = curr;
 		else
 			last->pr_next = curr;
@@ -847,34 +827,32 @@ char *totsize;
 
 	}
 	(void) su_pclose(p);
-	return(PI_RES_OK);
+	return (PI_RES_OK);
 }
-
-#endif /* SVR4 */
+#endif				/* SVR4 */
 
 void
 free_pr_queue_item(curr)
-pr_queue curr;
+	pr_queue curr;
 {
-	if(curr->id)
+	if (curr->id)
 		free(curr->id);
-	if(curr->size)
+	if (curr->size)
 		free(curr->size);
-	if(curr->status)
+	if (curr->status)
 		free(curr->status);
-	if(curr->system)
+	if (curr->system)
 		free(curr->system);
-	if(curr->user)
+	if (curr->user)
 		free(curr->user);
-	if(curr->file)
+	if (curr->file)
 		free(curr->file);
-	if(curr->cm)
+	if (curr->cm)
 		free(curr->cm);
-	if(curr->pr_next)
-		free_pr_queue_item(curr->pr_next); /* recurse */
+	if (curr->pr_next)
+		free_pr_queue_item(curr->pr_next);	/* recurse */
 	free(curr);
 }
-
 #ifdef SVR4
 
 /*
@@ -883,7 +861,7 @@ pr_queue curr;
 ** The command we'll use for checking the status of printer "lp"
 ** is "lpstat -a lp -p lp". Here are some sample outputs:
 **
-** 
+**
 ** lp accepting requests since Wed Jul 10 21:49:25 EDT 1991
 ** printer lp disabled since Thu Feb 21 22:52:36 EST 1991. available.
 ** 	new printer
@@ -925,87 +903,17 @@ pr_queue curr;
 
 pirstat
 get_pr_status(pn, avail, printing, qlen, needs_operator, status)
-printername   pn;
-bool_t       *avail;
-bool_t       *printing;
-int          *qlen;
-bool_t       *needs_operator;
-char         *status;
+	printername pn;
+	bool_t *avail;
+	bool_t *printing;
+	int    *qlen;
+	bool_t *needs_operator;
+	char   *status;
 {
-char buff[256];
-char cmd[64];
-FILE *p;
-int n;
-pirstat stat = PI_RES_NO_SUCH_PRINTER;
-
-	/* assume the worst */
-	*avail = FALSE;
-	*printing = FALSE;
-	*needs_operator = FALSE;
-	*qlen = 0;
-	*status = '\0';
-
-	pn = map_printer_name(pn);
-	if(pn == NULL || !valid_pr(pn) || suspicious(pn))
-		return(PI_RES_NO_SUCH_PRINTER);
-	n = strlen(pn);
-
-	sprintf(cmd, "/usr/bin/lpstat -a %s -p %s", pn, pn);
-
-	p = popen(cmd, "r");
-	if(p == NULL) {
-		msg_out("rpc.pcnfsd: unable to popen() lp status");
-		return(PI_RES_FAIL);
-	}
-	
-	stat = PI_RES_OK;
-
-	while(fgets(buff, 255, p) != NULL) {
-		if(!strncmp(buff, pn, n)) {
-			if(!strstr(buff, "not accepting"))
-			*avail = TRUE;
-			continue;
-		}
-		if(!strncmp(buff, "printer ", 8)) {
-			if(!strstr(buff, "disabled"))
-				*printing = TRUE;
-			if(strstr(buff, "printing"))
-				strcpy(status, "printing");
-			else if (strstr(buff, "idle"))
-				strcpy(status, "idle");
-			continue;
-		}
-		if(!strncmp(buff, "UX:", 3)) {
-			stat = PI_RES_NO_SUCH_PRINTER;
-		}
-	}
-	(void) pclose(p);
-	return(stat);
-}
-
-#else /* SVR4 */
-
-/*
- * BSD way: lpc status
- */
-pirstat
-get_pr_status(pn, avail, printing, qlen, needs_operator, status)
-printername   pn;
-bool_t       *avail;
-bool_t       *printing;
-int          *qlen;
-bool_t       *needs_operator;
-char         *status;
-{
-	char cmd[128];
-	char buff[256];
-	char buff2[256];
-	char pname[64];
-	FILE *p;
-	char *cp;
-	char *cp1;
-	char *cp2;
-	int n;
+	char    buff[256];
+	char    cmd[64];
+	FILE   *p;
+	int     n;
 	pirstat stat = PI_RES_NO_SUCH_PRINTER;
 
 	/* assume the worst */
@@ -1016,21 +924,89 @@ char         *status;
 	*status = '\0';
 
 	pn = map_printer_name(pn);
-	if(pn == NULL || suspicious(pn))
-		return(PI_RES_NO_SUCH_PRINTER);
+	if (pn == NULL || !valid_pr(pn) || suspicious(pn))
+		return (PI_RES_NO_SUCH_PRINTER);
+	n = strlen(pn);
+
+	sprintf(cmd, "/usr/bin/lpstat -a %s -p %s", pn, pn);
+
+	p = popen(cmd, "r");
+	if (p == NULL) {
+		msg_out("rpc.pcnfsd: unable to popen() lp status");
+		return (PI_RES_FAIL);
+	}
+	stat = PI_RES_OK;
+
+	while (fgets(buff, 255, p) != NULL) {
+		if (!strncmp(buff, pn, n)) {
+			if (!strstr(buff, "not accepting"))
+				*avail = TRUE;
+			continue;
+		}
+		if (!strncmp(buff, "printer ", 8)) {
+			if (!strstr(buff, "disabled"))
+				*printing = TRUE;
+			if (strstr(buff, "printing"))
+				strcpy(status, "printing");
+			else
+				if (strstr(buff, "idle"))
+					strcpy(status, "idle");
+			continue;
+		}
+		if (!strncmp(buff, "UX:", 3)) {
+			stat = PI_RES_NO_SUCH_PRINTER;
+		}
+	}
+	(void) pclose(p);
+	return (stat);
+}
+#else				/* SVR4 */
+
+/*
+ * BSD way: lpc status
+ */
+pirstat
+get_pr_status(pn, avail, printing, qlen, needs_operator, status)
+	printername pn;
+	bool_t *avail;
+	bool_t *printing;
+	int    *qlen;
+	bool_t *needs_operator;
+	char   *status;
+{
+	char    cmd[128];
+	char    buff[256];
+	char    buff2[256];
+	char    pname[64];
+	FILE   *p;
+	char   *cp;
+	char   *cp1;
+	char   *cp2;
+	int     n;
+	pirstat stat = PI_RES_NO_SUCH_PRINTER;
+
+	/* assume the worst */
+	*avail = FALSE;
+	*printing = FALSE;
+	*needs_operator = FALSE;
+	*qlen = 0;
+	*status = '\0';
+
+	pn = map_printer_name(pn);
+	if (pn == NULL || suspicious(pn))
+		return (PI_RES_NO_SUCH_PRINTER);
 
 	sprintf(pname, "%s:", pn);
 	n = strlen(pname);
 
 	sprintf(cmd, "%s/lpc status %s", LPCDIR, pn);
 	p = popen(cmd, "r");
-	if(p == NULL) {
+	if (p == NULL) {
 		msg_out("rpc.pcnfsd: unable to popen() lp status");
-		return(PI_RES_FAIL);
+		return (PI_RES_FAIL);
 	}
-	
-	while(fgets(buff, 255, p) != NULL) {
-		if(strncmp(buff, pname, n))
+	while (fgets(buff, 255, p) != NULL) {
+		if (strncmp(buff, pname, n))
 			continue;
 /*
 ** We have a match. The only failure now is PI_RES_FAIL if
@@ -1045,15 +1021,15 @@ char         *status;
 **     [no entries | N entr[y|ies] in spool area]
 **     <status message, may include the word "attention">
 */
-		while(fgets(buff, 255, p) != NULL && isspace(buff[0])) {
+		while (fgets(buff, 255, p) != NULL && isspace(buff[0])) {
 			cp = buff;
-			while(isspace(*cp))
+			while (isspace(*cp))
 				cp++;
-			if(*cp == '\0')
+			if (*cp == '\0')
 				break;
 			cp1 = cp;
 			cp2 = buff2;
-			while(*cp1 && *cp1 != '\n') {
+			while (*cp1 && *cp1 != '\n') {
 				*cp2++ = tolower(*cp1);
 				cp1++;
 			}
@@ -1062,34 +1038,33 @@ char         *status;
 /*
 ** Now buff2 has a lower-cased copy and cp points at the original;
 ** both are null terminated without any newline
-*/			
-			if(!strncmp(buff2, "queuing", 7)) {
+*/
+			if (!strncmp(buff2, "queuing", 7)) {
 				*avail = (strstr(buff2, "enabled") != NULL);
 				continue;
 			}
-			if(!strncmp(buff2, "printing", 8)) {
+			if (!strncmp(buff2, "printing", 8)) {
 				*printing = (strstr(buff2, "enabled") != NULL);
 				continue;
 			}
-			if(isdigit(buff2[0]) && (strstr(buff2, "entr") !=NULL)) {
+			if (isdigit(buff2[0]) && (strstr(buff2, "entr") != NULL)) {
 
 				*qlen = atoi(buff2);
 				continue;
 			}
-			if(strstr(buff2, "attention") != NULL ||
-			   strstr(buff2, "error") != NULL)
+			if (strstr(buff2, "attention") != NULL ||
+			    strstr(buff2, "error") != NULL)
 				*needs_operator = TRUE;
-			if(*needs_operator || strstr(buff2, "waiting") != NULL)
+			if (*needs_operator || strstr(buff2, "waiting") != NULL)
 				strcpy(status, cp);
 		}
 		stat = PI_RES_OK;
 		break;
 	}
 	(void) pclose(p);
-	return(stat);
+	return (stat);
 }
-
-#endif /* SVR4 */
+#endif				/* SVR4 */
 
 /*
  * pr_cancel: cancel a print job
@@ -1098,7 +1073,7 @@ char         *status;
 
 /*
 ** For SVR4 we have to be prepared for the following kinds of output:
-** 
+**
 ** # cancel lp-6
 ** request "lp-6" cancelled
 ** # cancel lp-33
@@ -1126,89 +1101,94 @@ char         *status;
 ** The fly in the ointment: all of this can change if these
 ** messages are localized..... :-(
 */
-pcrstat pr_cancel(pr, user, id)
-char *pr;
-char *user;
-char *id;
+pcrstat 
+pr_cancel(pr, user, id)
+	char   *pr;
+	char   *user;
+	char   *id;
 {
-char            cmdbuf[256];
-char            resbuf[256];
-FILE *fd;
-pcrstat stat = PC_RES_NO_SUCH_JOB;
+	char    cmdbuf[256];
+	char    resbuf[256];
+	FILE   *fd;
+	pcrstat stat = PC_RES_NO_SUCH_JOB;
 
 	pr = map_printer_name(pr);
-	if(pr == NULL || suspicious(pr))
-		return(PC_RES_NO_SUCH_PRINTER);
-	if(suspicious(id))
-		return(PC_RES_NO_SUCH_JOB);
+	if (pr == NULL || suspicious(pr))
+		return (PC_RES_NO_SUCH_PRINTER);
+	if (suspicious(id))
+		return (PC_RES_NO_SUCH_JOB);
 
 	sprintf(cmdbuf, "/usr/bin/cancel %s", id);
 	if ((fd = su_popen(user, cmdbuf, MAXTIME_FOR_CANCEL)) == NULL) {
 		msg_out("rpc.pcnfsd: su_popen failed");
-		return(PC_RES_FAIL);
+		return (PC_RES_FAIL);
 	}
-
-	if(fgets(resbuf, 255, fd) == NULL) 
+	if (fgets(resbuf, 255, fd) == NULL)
 		stat = PC_RES_FAIL;
-	else if(!strstr(resbuf, "UX:"))
-		stat = PC_RES_OK;
-	else if(strstr(resbuf, "doesn't exist"))
-		stat = PC_RES_NO_SUCH_JOB;
-	else if(strstr(resbuf, "not a request id"))
-		stat = PC_RES_NO_SUCH_JOB;
-	else if(strstr(resbuf, "Can't cancel request"))
-		stat = PC_RES_NOT_OWNER;
-	else	stat = PC_RES_FAIL;
+	else
+		if (!strstr(resbuf, "UX:"))
+			stat = PC_RES_OK;
+		else
+			if (strstr(resbuf, "doesn't exist"))
+				stat = PC_RES_NO_SUCH_JOB;
+			else
+				if (strstr(resbuf, "not a request id"))
+					stat = PC_RES_NO_SUCH_JOB;
+				else
+					if (strstr(resbuf, "Can't cancel request"))
+						stat = PC_RES_NOT_OWNER;
+					else
+						stat = PC_RES_FAIL;
 
-	if(su_pclose(fd) == 255)
+	if (su_pclose(fd) == 255)
 		msg_out("rpc.pcnfsd: su_pclose alert");
-	return(stat);
+	return (stat);
 }
-
-#else /* SVR4 */
+#else				/* SVR4 */
 
 /*
  * BSD way: lprm
  */
-pcrstat pr_cancel(pr, user, id)
-char *pr;
-char *user;
-char *id;
+pcrstat 
+pr_cancel(pr, user, id)
+	char   *pr;
+	char   *user;
+	char   *id;
 {
-	char            cmdbuf[256];
-	char            resbuf[256];
-	FILE *fd;
-	int i;
+	char    cmdbuf[256];
+	char    resbuf[256];
+	FILE   *fd;
+	int     i;
 	pcrstat stat = PC_RES_NO_SUCH_JOB;
 
 	pr = map_printer_name(pr);
-	if(pr == NULL || suspicious(pr))
-		return(PC_RES_NO_SUCH_PRINTER);
-	if(suspicious(id))
-		return(PC_RES_NO_SUCH_JOB);
+	if (pr == NULL || suspicious(pr))
+		return (PC_RES_NO_SUCH_PRINTER);
+	if (suspicious(id))
+		return (PC_RES_NO_SUCH_JOB);
 
-		sprintf(cmdbuf, "%s/lprm -P%s %s", LPRDIR, pr, id);
-		if ((fd = su_popen(user, cmdbuf, MAXTIME_FOR_CANCEL)) == NULL) {
-			msg_out("rpc.pcnfsd: su_popen failed");
-			return(PC_RES_FAIL);
-		}
-		while(fgets(resbuf, 255, fd) != NULL) {
-			i = strlen(resbuf);
-			if(i)
-				resbuf[i-1] = '\0'; /* trim NL */
-			if(strstr(resbuf, "dequeued") != NULL)
-				stat = PC_RES_OK;
-			if(strstr(resbuf, "unknown printer") != NULL)
-				stat = PC_RES_NO_SUCH_PRINTER;
-			if(strstr(resbuf, "Permission denied") != NULL)
-				stat = PC_RES_NOT_OWNER;
-		}
-		if(su_pclose(fd) == 255)
-			msg_out("rpc.pcnfsd: su_pclose alert");
-		return(stat);
+	sprintf(cmdbuf, "%s/lprm -P%s %s", LPRDIR, pr, id);
+	if ((fd = su_popen(user, cmdbuf, MAXTIME_FOR_CANCEL)) == NULL) {
+		msg_out("rpc.pcnfsd: su_popen failed");
+		return (PC_RES_FAIL);
+	}
+	while (fgets(resbuf, 255, fd) != NULL) {
+		i = strlen(resbuf);
+		if (i)
+			resbuf[i - 1] = '\0';	/* trim NL */
+		if (strstr(resbuf, "dequeued") != NULL)
+			stat = PC_RES_OK;
+		if (strstr(resbuf, "unknown printer") != NULL)
+			stat = PC_RES_NO_SUCH_PRINTER;
+		if (strstr(resbuf, "Permission denied") != NULL)
+			stat = PC_RES_NOT_OWNER;
+	}
+	if (su_pclose(fd) == 255)
+		msg_out("rpc.pcnfsd: su_pclose alert");
+	return (stat);
 }
-#endif /* SVR4 */
-
+#endif				/* SVR4 */
+
 /*
 ** New subsystem here. We allow the administrator to define
 ** up to NPRINTERDEFS aliases for printer names. This is done
@@ -1254,29 +1234,27 @@ char *id;
 ** has been expanded. Otherwise ot returns NULL.
 */
 #define NPRINTERDEFS	16
-int num_aliases = 0;
+int     num_aliases = 0;
 struct {
-	char *a_printer;
-	char *a_alias_for;
-	char *a_command;
-} alias [NPRINTERDEFS];
-
-
+	char   *a_printer;
+	char   *a_alias_for;
+	char   *a_command;
+}       alias[NPRINTERDEFS];
 
 void
 add_printer_alias(printer, alias_for, command)
-char *printer;
-char *alias_for;
-char *command;
+	char   *printer;
+	char   *alias_for;
+	char   *command;
 {
-	if(num_aliases < NPRINTERDEFS) {
+	if (num_aliases < NPRINTERDEFS) {
 		alias[num_aliases].a_printer = strdup(printer);
 		alias[num_aliases].a_alias_for =
-			(strcmp(alias_for,  "-") ? strdup(alias_for) : NULL);
-		if(strstr(command, "$FILE"))
+		    (strcmp(alias_for, "-") ? strdup(alias_for) : NULL);
+		if (strstr(command, "$FILE"))
 			alias[num_aliases].a_command = strdup(command);
 		else {
-			alias[num_aliases].a_command = (char *)grab(strlen(command) + 8);
+			alias[num_aliases].a_command = (char *) grab(strlen(command) + 8);
 			strcpy(alias[num_aliases].a_command, command);
 			strcat(alias[num_aliases].a_command, " $FILE");
 		}
@@ -1284,62 +1262,63 @@ char *command;
 	}
 }
 
-pr_list list_virtual_printers()
+pr_list 
+list_virtual_printers()
 {
-pr_list first = NULL;
-pr_list last = NULL;
-pr_list curr = NULL;
-int i;
+	pr_list first = NULL;
+	pr_list last = NULL;
+	pr_list curr = NULL;
+	int     i;
 
 
-	if(num_aliases == 0)
-		return(NULL);
+	if (num_aliases == 0)
+		return (NULL);
 
 	for (i = 0; i < num_aliases; i++) {
 		curr = (struct pr_list_item *)
-			grab(sizeof (struct pr_list_item));
+		    grab(sizeof(struct pr_list_item));
 
 		curr->pn = strdup(alias[i].a_printer);
-		if(alias[i].a_alias_for == NULL)
+		if (alias[i].a_alias_for == NULL)
 			curr->device = strdup("");
 		else
 			curr->device = strdup(alias[i].a_alias_for);
 		curr->remhost = strdup("");
 		curr->cm = strdup("(alias)");
 		curr->pr_next = NULL;
-		if(last == NULL)
+		if (last == NULL)
 			first = curr;
 		else
 			last->pr_next = curr;
 		last = curr;
 
 	}
-	return(first);
+	return (first);
 }
 
 
-char *
+char   *
 map_printer_name(printer)
-char *printer;
+	char   *printer;
 {
-int i;
-	for (i = 0; i < num_aliases; i++){
-		if(!strcmp(printer, alias[i].a_printer))
-			return(alias[i].a_alias_for);
+	int     i;
+	for (i = 0; i < num_aliases; i++) {
+		if (!strcmp(printer, alias[i].a_printer))
+			return (alias[i].a_alias_for);
 	}
-	return(printer);
+	return (printer);
 }
 
-static void
+void
 substitute(string, token, data)
-char *string;
-char *token;
-char *data;
+	char   *string;
+	char   *token;
+	char   *data;
 {
-char temp[512];
-char *c;
+	char    temp[512];
+	char   *c;
 
-	while(c = strstr(string, token)) {
+	while ((c = strstr(string, token)) != NULL) {
 		*c = '\0';
 		strcpy(temp, string);
 		strcat(temp, data);
@@ -1349,23 +1328,23 @@ char *c;
 	}
 }
 
-char *
+char   *
 expand_alias(printer, file, user, host)
-char *printer;
-char *file;
-char *user;
-char *host;
+	char   *printer;
+	char   *file;
+	char   *user;
+	char   *host;
 {
-static char expansion[512];
-int i;
-	for (i = 0; i < num_aliases; i++){
-		if(!strcmp(printer, alias[i].a_printer)) {
+	static char expansion[512];
+	int     i;
+	for (i = 0; i < num_aliases; i++) {
+		if (!strcmp(printer, alias[i].a_printer)) {
 			strcpy(expansion, alias[i].a_command);
 			substitute(expansion, "$FILE", file);
 			substitute(expansion, "$USER", user);
 			substitute(expansion, "$HOST", host);
-			return(expansion);
+			return (expansion);
 		}
 	}
-	return(NULL);
+	return (NULL);
 }

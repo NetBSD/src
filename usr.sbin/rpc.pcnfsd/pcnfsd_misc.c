@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_misc.c,v 1.2 1995/07/25 22:20:42 gwr Exp $	*/
+/*	$NetBSD: pcnfsd_misc.c,v 1.3 1997/10/25 13:45:57 lukem Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_misc.c 1.5 92/01/24 19:59:13 SMI */
 /*
@@ -7,7 +7,6 @@
 **	@(#)pcnfsd_misc.c	1.5	1/24/92
 **=====================================================================
 */
-#include "common.h"
 /*
 **=====================================================================
 **             I N C L U D E   F I L E   S E C T I O N                *
@@ -17,19 +16,26 @@
 ** exclusion of the files conditional on this.                        *
 **=====================================================================
 */
-#include "pcnfsd.h"
 
-#include <stdio.h>
-#include <pwd.h>
 #include <sys/file.h>
-#include <signal.h>
-#include <sys/time.h>
-#include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <netdb.h>
-#include <errno.h>
-#include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <ctype.h>
+#include <errno.h>
+#include <netdb.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #ifdef ISC_2_0
 #include <sys/fcntl.h>
@@ -40,228 +46,226 @@
 #endif
 
 #ifdef WTMP
-int wtmp_enabled = 1;
+int     wtmp_enabled = 1;
 #endif
 
-#ifdef USE_GETUSERSHELL
-extern char *getusershell();
-#endif
+#include "common.h"
+#include "pcnfsd.h"
+#include "extern.h"
 
 /*
 **---------------------------------------------------------------------
-** Other #define's 
+** Other #define's
 **---------------------------------------------------------------------
 */
 
 #define	zchar		0x5b
 
-char            tempstr[256];
-extern char	sp_name[1024]; /* in pcnfsd_print.c */
+char    tempstr[256];
+
+char   *mapfont __P((char, char, char));
+void	myhandler __P((int));
+void	start_watchdog __P((int));
+void	stop_watchdog __P((void));
 
 /*
 **=====================================================================
-**                      C O D E   S E C T I O N                       *                    **=====================================================================
+**                      C O D E   S E C T I O N                       *
+**=====================================================================
 */
 /*
 **---------------------------------------------------------------------
-**                          Support procedures 
+**                          Support procedures
 **---------------------------------------------------------------------
 */
 
 
 void
 scramble(s1, s2)
-char           *s1;
-char           *s2;
+	char   *s1;
+	char   *s2;
 {
-	while (*s1) 
-	      {
-	      *s2++ = (*s1 ^ zchar) & 0x7f;
-	      s1++;
-	      }
+	while (*s1) {
+		*s2++ = (*s1 ^ zchar) & 0x7f;
+		s1++;
+	}
 	*s2 = 0;
 }
 
 
 
-struct passwd  *
+struct passwd *
 get_password(usrnam)
-char           *usrnam;
+	char   *usrnam;
 {
-struct passwd  *p;
-static struct passwd localp;
-char           *pswd;
-char           *ushell;
-int		ok = 0;
+	struct passwd *p;
+	static struct passwd localp;
+	char   *pswd;
+	char   *ushell;
 
 
 #ifdef SHADOW_SUPPORT
-struct spwd    *sp;
-int             shadowfile;
+	struct spwd *sp;
+	int     shadowfile;
 #endif
 
 #ifdef SHADOW_SUPPORT
-	/*
-        **--------------------------------------------------------------
-	** Check the existence of SHADOW.  If it is there, then we are
-	** running a two-password-file system.
-        **--------------------------------------------------------------
-	*/
+/*
+**--------------------------------------------------------------
+** Check the existence of SHADOW.  If it is there, then we are
+** running a two-password-file system.
+**--------------------------------------------------------------
+*/
 	if (access(SHADOW, 0))
-	   shadowfile = 0;	/* SHADOW is not there */
+		shadowfile = 0;	/* SHADOW is not there */
 	else
-	   shadowfile = 1;
+		shadowfile = 1;
 
 	setpwent();
 	if (shadowfile)
-	   (void) setspent();	/* Setting the shadow password
-					 * file */
-	if ((p = getpwnam(usrnam)) == (struct passwd *)NULL ||
-	   (shadowfile && (sp = getspnam(usrnam)) == (struct spwd *)NULL))
-	return ((struct passwd *)NULL);
+		(void) setspent();	/* Setting the shadow password file */
+	if ((p = getpwnam(usrnam)) == (struct passwd *) NULL ||
+	    (shadowfile && (sp = getspnam(usrnam)) == (struct spwd *) NULL))
+		return ((struct passwd *) NULL);
 
-	if (shadowfile) 
-           {
-	   pswd = sp->sp_pwdp;
-	   (void) endspent();
-	   } 
-        else
-	   pswd = p->pw_passwd;
+	if (shadowfile) {
+		pswd = sp->sp_pwdp;
+		(void) endspent();
+	} else
+		pswd = p->pw_passwd;
 
 #else
 	p = getpwnam(usrnam);
-	if (p == (struct passwd *)NULL)
-		return ((struct passwd *)NULL);
+	if (p == (struct passwd *) NULL)
+		return ((struct passwd *) NULL);
 	pswd = p->pw_passwd;
 #endif
 
 #ifdef ISC_2_0
-	/* 
-        **-----------------------------------------------------------
-	** We may have an 'x' in which case look in /etc/shadow ..
-        **-----------------------------------------------------------
-        */
-	if (((strlen(pswd)) == 1) && pswd[0] == 'x') 
-	   {
-	   struct spwd    *shadow = getspnam(usrnam);
+/* *----------------------------------------------------------- * We
+ * may have an 'x' in which case look in /etc/shadow ..
+ * *----------------------------------------------------------- */
+	if (((strlen(pswd)) == 1) && pswd[0] == 'x') {
+		struct spwd *shadow = getspnam(usrnam);
 
-	   if (!shadow)
-	      return ((struct passwd *)NULL);
-	   pswd = shadow->sp_pwdp;
-	   }
+		if (!shadow)
+			return ((struct passwd *) NULL);
+		pswd = shadow->sp_pwdp;
+	}
 #endif
 	localp = *p;
 	localp.pw_passwd = pswd;
 #ifdef USE_GETUSERSHELL
 
 	setusershell();
-	while(ushell = getusershell()){
-		if(!strcmp(ushell, localp.pw_shell)) {
+	while (ushell = getusershell()) {
+		if (!strcmp(ushell, localp.pw_shell)) {
 			ok = 1;
 			break;
 		}
 	}
 	endusershell();
-	if(!ok)
-		return ((struct passwd *)NULL);
+	if (!ok)
+		return ((struct passwd *) NULL);
 #else
 /*
- * the best we can do is to ensure that the shell ends in "sh"
- */
+* the best we can do is to ensure that the shell ends in "sh"
+*/
 	ushell = localp.pw_shell;
-	if(strlen(ushell) < 2)
-		return ((struct passwd *)NULL);
+	if (strlen(ushell) < 2)
+		return ((struct passwd *) NULL);
 	ushell += strlen(ushell) - 2;
-	if(strcmp(ushell, "sh"))
-		return ((struct passwd *)NULL);
+	if (strcmp(ushell, "sh"))
+		return ((struct passwd *) NULL);
 
 #endif
 	return (&localp);
 }
 
-
+
+
 /*
 **---------------------------------------------------------------------
-**                      Print support procedures 
+**                      Print support procedures
 **---------------------------------------------------------------------
 */
 
-char           *
+
+char   *
 mapfont(f, i, b)
-	char            f;
-	char            i;
-	char            b;
+	char    f;
+	char    i;
+	char    b;
 {
-	static char     fontname[64];
+	static char fontname[64];
 
 	fontname[0] = 0;	/* clear it out */
 
 	switch (f) {
 	case 'c':
-		(void)strcpy(fontname, "Courier");
+		(void) strcpy(fontname, "Courier");
 		break;
 	case 'h':
-		(void)strcpy(fontname, "Helvetica");
+		(void) strcpy(fontname, "Helvetica");
 		break;
 	case 't':
-		(void)strcpy(fontname, "Times");
+		(void) strcpy(fontname, "Times");
 		break;
 	default:
-		(void)strcpy(fontname, "Times-Roman");
-		goto finis ;
+		(void) strcpy(fontname, "Times-Roman");
+		goto finis;
 	}
 	if (i != 'o' && b != 'b') {	/* no bold or oblique */
 		if (f == 't')	/* special case Times */
-			(void)strcat(fontname, "-Roman");
+			(void) strcat(fontname, "-Roman");
 		goto finis;
 	}
-	(void)strcat(fontname, "-");
+	(void) strcat(fontname, "-");
 	if (b == 'b')
-		(void)strcat(fontname, "Bold");
+		(void) strcat(fontname, "Bold");
 	if (i == 'o')		/* o-blique */
-		(void)strcat(fontname, f == 't' ? "Italic" : "Oblique");
+		(void) strcat(fontname, f == 't' ? "Italic" : "Oblique");
 
 finis:	return (&fontname[0]);
 }
-
 /*
- * run_ps630 performs the Diablo 630 emulation filtering process. ps630
- * was broken in certain Sun releases: it would not accept point size or
- * font changes. If your version is fixed, undefine the symbol
- * PS630_IS_BROKEN and rebuild pc-nfsd.
- */
+* run_ps630 performs the Diablo 630 emulation filtering process. ps630
+* was broken in certain Sun releases: it would not accept point size or
+* font changes. If your version is fixed, undefine the symbol
+* PS630_IS_BROKEN and rebuild pc-nfsd.
+*/
 /* #define PS630_IS_BROKEN 1 */
 
 void
 run_ps630(f, opts)
-	char           *f;
-	char           *opts;
+	char   *f;
+	char   *opts;
 {
-	char            temp_file[256];
-	char            commbuf[256];
-	int             i;
+	char    temp_file[256];
+	char    commbuf[256];
+	int     i;
 
-	(void)strcpy(temp_file, f);
-	(void)strcat(temp_file, "X");	/* intermediate file name */
+	(void) strcpy(temp_file, f);
+	(void) strcat(temp_file, "X");	/* intermediate file name */
 
 #ifndef PS630_IS_BROKEN
-	(void)sprintf(commbuf, "ps630 -s %c%c -p %s -f ",
-		opts[2], opts[3], temp_file);
-	(void)strcat(commbuf, mapfont(opts[4], opts[5], opts[6]));
-	(void)strcat(commbuf, " -F ");
-	(void)strcat(commbuf, mapfont(opts[7], opts[8], opts[9]));
-	(void)strcat(commbuf, "  ");
-	(void)strcat(commbuf, f);
-#else	/* PS630_IS_BROKEN */
-	/*
-	 * The pitch and font features of ps630 appear to be broken at
-	 * this time.
-	 */
-	(void)sprintf(commbuf, "ps630 -p %s %s", temp_file, f);
-#endif	/* PS630_IS_BROKEN */
+	(void) sprintf(commbuf, "ps630 -s %c%c -p %s -f ",
+	    opts[2], opts[3], temp_file);
+	(void) strcat(commbuf, mapfont(opts[4], opts[5], opts[6]));
+	(void) strcat(commbuf, " -F ");
+	(void) strcat(commbuf, mapfont(opts[7], opts[8], opts[9]));
+	(void) strcat(commbuf, "  ");
+	(void) strcat(commbuf, f);
+#else				/* PS630_IS_BROKEN */
+/*
+ * The pitch and font features of ps630 appear to be broken at
+ * this time.
+ */
+	(void) sprintf(commbuf, "ps630 -p %s %s", temp_file, f);
+#endif				/* PS630_IS_BROKEN */
 
 
-	if (i = system(commbuf)) {
+	if ((i = system(commbuf)) != 0) {
 		/*
 		 * Under (un)certain conditions, ps630 may return -1 even
 		 * if it worked. Hence the commenting out of this error
@@ -279,10 +283,11 @@ run_ps630(f, opts)
 
 
 
-
+
+
 /*
 **---------------------------------------------------------------------
-**                      WTMP update support 
+**                      WTMP update support
 **---------------------------------------------------------------------
 */
 
@@ -297,26 +302,25 @@ run_ps630(f, opts)
 
 void
 wlogin(name, req)
-	char *name;
+	char   *name;
 	struct svc_req *req;
 {
-	extern char *inet_ntoa();
 	struct sockaddr_in *who;
 	struct hostent *hp;
-	char *host;
+	char   *host;
 	struct utmp ut;
-	int fd;
+	int     fd;
 
-	if(!wtmp_enabled)
+	if (!wtmp_enabled)
 		return;
 
-	/* Get network address of client. */
+/* Get network address of client. */
 	who = &req->rq_xprt->xp_raddr;
 
-	/* Get name of connected client */
-	hp = gethostbyaddr((char *)&who->sin_addr,
-			   sizeof (struct in_addr),
-			   who->sin_family);
+/* Get name of connected client */
+	hp = gethostbyaddr((char *) &who->sin_addr,
+	    sizeof(struct in_addr),
+	    who->sin_family);
 
 	if (hp && (strlen(hp->h_name) <= sizeof(ut.ut_host))) {
 		host = hp->h_name;
@@ -325,20 +329,21 @@ wlogin(name, req)
 	}
 
 	(void) strcpy(ut.ut_line, "PC-NFS");
-	(void) strncpy(ut.ut_name,name,sizeof ut.ut_name);
+	(void) strncpy(ut.ut_name, name, sizeof ut.ut_name);
 	(void) strncpy(ut.ut_host, host, sizeof ut.ut_host);
-	ut.ut_time = time( (time_t *) 0);
+	ut.ut_time = time((time_t *) 0);
 
-	if ((fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) >= 0) {
-		(void)write(fd, (char *)&ut, sizeof(struct utmp));
-		(void)close(fd);
+	if ((fd = open(_PATH_WTMP, O_WRONLY | O_APPEND, 0)) >= 0) {
+		(void) write(fd, (char *) &ut, sizeof(struct utmp));
+		(void) close(fd);
 	}
 }
-#endif WTMP
-
+#endif				/* WTMP */
+
+
 /*
 **---------------------------------------------------------------------
-**                      Run-process-as-user procedures 
+**                      Run-process-as-user procedures
 **---------------------------------------------------------------------
 */
 
@@ -346,33 +351,36 @@ wlogin(name, req)
 #define	READER_FD	0
 #define	WRITER_FD	1
 
-static int      child_pid;
+static int child_pid;
 
-static char     cached_user[64] = "";
-static uid_t    cached_uid;
-static gid_t    cached_gid;
+static char cached_user[64] = "";
+static uid_t cached_uid;
+static gid_t cached_gid;
 
-static	struct sigaction old_action;
-static	struct sigaction new_action;
-static	struct itimerval timer;
+static struct sigaction old_action;
+static struct sigaction new_action;
+static struct itimerval timer;
 
-int interrupted = 0;
-static	FILE *pipe_handle;
+int     interrupted = 0;
+static FILE *pipe_handle;
 
-static	void myhandler()
+void
+myhandler(dummy)
+	int     dummy;
 {
- interrupted = 1;
- fclose(pipe_handle);
- kill(child_pid, SIGKILL);
- msg_out("rpc.pcnfsd: su_popen timeout - killed child process");
+	interrupted = 1;
+	fclose(pipe_handle);
+	kill(child_pid, SIGKILL);
+	msg_out("rpc.pcnfsd: su_popen timeout - killed child process");
 }
 
-void start_watchdog(n)
-int n;
+void
+start_watchdog(n)
+	int     n;
 {
-	/*
-	 * Setup SIGALRM handler, force interrupt of ongoing syscall
-	 */
+/*
+ * Setup SIGALRM handler, force interrupt of ongoing syscall
+ */
 
 	new_action.sa_handler = myhandler;
 	sigemptyset(&(new_action.sa_mask));
@@ -382,9 +390,9 @@ int n;
 #endif
 	sigaction(SIGALRM, &new_action, &old_action);
 
-	/*
-	 * Set interval timer for n seconds
-	 */
+/*
+ * Set interval timer for n seconds
+ */
 	timer.it_interval.tv_sec = 0;
 	timer.it_interval.tv_usec = 0;
 	timer.it_value.tv_sec = n;
@@ -394,11 +402,12 @@ int n;
 
 }
 
-void stop_watchdog()
+void
+stop_watchdog()
 {
-	/*
-	 * Cancel timer
-	 */
+/*
+ * Cancel timer
+ */
 
 	timer.it_interval.tv_sec = 0;
 	timer.it_interval.tv_usec = 0;
@@ -406,22 +415,20 @@ void stop_watchdog()
 	timer.it_value.tv_usec = 0;
 	setitimer(ITIMER_REAL, &timer, NULL);
 
-	/*
- 	 * restore old signal handling
-	 */
+/*
+ * restore old signal handling
+ */
 	sigaction(SIGALRM, &old_action, NULL);
 }
 
-
-
-FILE           *
+FILE   *
 su_popen(user, cmd, maxtime)
-	char           *user;
-	char           *cmd;
-	int		maxtime;
+	char   *user;
+	char   *cmd;
+	int     maxtime;
 {
-	int             p[2];
-	int             parent_fd, child_fd, pid;
+	int     p[2];
+	int     parent_fd, child_fd, pid;
 	struct passwd *pw;
 
 	if (strcmp(cached_user, user)) {
@@ -445,7 +452,7 @@ su_popen(user, cmd, maxtime)
 	parent_fd = p[READER_FD];
 	child_fd = p[WRITER_FD];
 	if ((pid = fork()) == 0) {
-		int             i;
+		int     i;
 
 		for (i = 0; i < 10; i++)
 			if (i != child_fd)
@@ -477,9 +484,9 @@ su_popen(user, cmd, maxtime)
 
 int
 su_pclose(ptr)
-	FILE           *ptr;
+	FILE   *ptr;
 {
-	int             pid, status;
+	int     pid, status;
 
 	stop_watchdog();
 
@@ -490,7 +497,9 @@ su_pclose(ptr)
 	return (pid == -1 ? -1 : status);
 }
 
-
+
+
+#if XXX_unused
 /*
 ** The following routine reads a file "/etc/pcnfsd.conf" if present,
 ** and uses it to replace certain builtin elements, like the
@@ -509,47 +518,47 @@ su_pclose(ptr)
 void
 config_from_file()
 {
-FILE *fd;
-char buff[1024];
-char *cp;
-char *kw;
-char *val;
-char *arg1;
-char *arg2;
+	FILE   *fd;
+	char    buff[1024];
+	char   *cp;
+	char   *kw;
+	char   *val;
+	char   *arg1;
+	char   *arg2;
 
-	if((fd = fopen("/etc/pcnfsd.conf", "r")) == NULL)
+	if ((fd = fopen("/etc/pcnfsd.conf", "r")) == NULL)
 		return;
-	while(fgets(buff, 1024, fd)) {
+	while (fgets(buff, 1024, fd)) {
 		cp = strchr(buff, '\n');
 		*cp = '\0';
 		cp = strchr(buff, '#');
-		if(cp)
+		if (cp)
 			*cp = '\0';
 		kw = strtok(buff, " \t");
-		if(kw == NULL)
+		if (kw == NULL)
 			continue;
 		val = strtok(NULL, " \t");
-		if(val == NULL)
+		if (val == NULL)
 			continue;
-		if(!mystrcasecmp(kw, "spooldir")) {
+		if (!strcasecmp(kw, "spooldir")) {
 			strcpy(sp_name, val);
 			continue;
 		}
 #ifdef WTMP
-		if(!mystrcasecmp(kw, "wtmp")) {
+		if (!strcasecmp(kw, "wtmp")) {
 			/* assume default is YES, just look for negatives */
-			if(!mystrcasecmp(val, "no") ||
-			   !mystrcasecmp(val, "off") ||
-			   !mystrcasecmp(val, "disable") ||
-			   !strcmp(val, "0"))
+			if (!strcasecmp(val, "no") ||
+			    !strcasecmp(val, "off") ||
+			    !strcasecmp(val, "disable") ||
+			    !strcmp(val, "0"))
 				wtmp_enabled = 0;;
 			continue;
 		}
-#endif	
-		if(!mystrcasecmp(kw, "printer")) {
+#endif
+		if (!strcasecmp(kw, "printer")) {
 			arg1 = strtok(NULL, " \t");
 			arg2 = strtok(NULL, "");
-			(void)add_printer_alias(val, arg1, arg2);
+			(void) add_printer_alias(val, arg1, arg2);
 			continue;
 		}
 /*
@@ -558,46 +567,20 @@ char *arg2;
 	}
 	fclose(fd);
 }
-
-
-/*
-** The following are replacements for the SunOS library
-** routines strcasecmp and strncasecmp, which SVR4 doesn't
-** include.
-*/
-
-mystrcasecmp(s1, s2)
-	char *s1, *s2;
-{
-
-	while (toupper(*s1) == toupper(*s2++))
-		if (*s1++ == '\0')
-			return(0);
-	return(toupper(*s1) - toupper(*--s2));
-}
-
-mystrncasecmp(s1, s2, n)
-	char *s1, *s2;
-	int n;
-{
-
-	while (--n >= 0 && toupper(*s1) == toupper(*s2++))
-		if (*s1++ == '\0')
-			return(0);
-	return(n < 0 ? 0 : toupper(*s1) - toupper(*--s2));
-}
+#endif	/* XXX_unused */
 
 
 /*
 ** strembedded - returns true if s1 is embedded (in any case) in s2
 */
 
-int strembedded(s1, s2)
-char *s1;
-char *s2;
+int
+strembedded(s1, s2)
+	const char   *s1;
+	const char   *s2;
 {
-	while(*s2) {
-		if(!mystrcasecmp(s1, s2))
+	while (*s2) {
+		if (!strcasecmp(s1, s2))
 			return 1;
 		s2++;
 	}
