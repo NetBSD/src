@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.14 2001/05/02 10:32:14 scw Exp $       */
+/*      $NetBSD: pccons.c,v 1.15 2001/05/08 11:29:39 matthias Exp $       */
 
 /*
  * Copyright 1997
@@ -1356,7 +1356,7 @@ pcwrite(dev_t      dev,
 int
 pcpoll(dev_t       dev, 
        int         events,
-       struct poll *p)
+       struct proc *p)
 {
     struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
     struct tty      *tp = sc->sc_tty;
