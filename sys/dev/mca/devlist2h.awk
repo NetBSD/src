@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.1 2000/05/11 15:42:04 jdolecek Exp $
+#	$NetBSD: devlist2h.awk,v 1.2 2003/12/15 07:32:20 jmc Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -33,7 +33,7 @@
 # Adapted for MCA needs by Jaromir Dolecek.
 
 BEGIN {
-	nproducts = nvendors = 0
+	nproducts = nvendors = blanklines = 0
 	dfile="mcadevs_data.h"
 	hfile="mcadevs.h"
 	FS=" "
@@ -44,7 +44,7 @@ NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
 
-	printf("/*\t\$NetBSD\$\t*/\n\n") > dfile
+	printf("/*\t$NetBSD" "$\t*/\n\n") > dfile
 	printf("/*\n") > dfile
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > dfile
@@ -53,7 +53,7 @@ NR == 1 {
 	printf(" *\t%s\n", VERSION) > dfile
 	printf(" */\n") > dfile
 
-	printf("/*\t\$NetBSD\$\t*/\n\n") > hfile
+	printf("/*\t$NetBSD" "$\t*/\n\n") > hfile
 	printf("/*\n") > hfile
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > hfile
@@ -65,7 +65,7 @@ NR == 1 {
 	next
 }
 
-$1 == "product" {
+NF > 0 && $1 == "product" {
 	nproducts++
 
 	alias = $3
@@ -110,4 +110,6 @@ END {
 	}
 	printf("    { 0, NULL, }\n") > dfile
 	printf("};\n") > dfile
+	close(dfile)
+	close(hfile)
 }

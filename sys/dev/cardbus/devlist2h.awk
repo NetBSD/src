@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.3 2003/10/24 17:01:58 mycroft Exp $
+#	$NetBSD: devlist2h.awk,v 1.4 2003/12/15 07:32:20 jmc Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -30,7 +30,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 BEGIN {
-	nproducts = nvendors = 0
+	nproducts = nvendors = blanklines = 0
 	dfile="cardbusdevs_data.h"
 	hfile="cardbusdevs.h"
 }
@@ -38,7 +38,7 @@ NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
 
-	printf("/*\t$NetBSD: devlist2h.awk,v 1.3 2003/10/24 17:01:58 mycroft Exp $\t*/\n\n") > dfile
+	printf("/*\t$NetBSD" "$\t*/\n\n") > dfile
 	printf("/*\n") > dfile
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > dfile
@@ -47,7 +47,7 @@ NR == 1 {
 	printf(" *\t%s\n", VERSION) > dfile
 	printf(" */\n") > dfile
 
-	printf("/*\t$NetBSD: devlist2h.awk,v 1.3 2003/10/24 17:01:58 mycroft Exp $\t*/\n\n") > hfile
+	printf("/*\t$NetBSD" "$\t*/\n\n") > hfile
 	printf("/*\n") > hfile
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > hfile
@@ -58,7 +58,7 @@ NR == 1 {
 
 	next
 }
-$1 == "vendor" {
+NF > 0 && $1 == "vendor" {
 	nvendors++
 
 	vendorindex[$2] = nvendors;		# record index for this name, for later.
@@ -103,7 +103,7 @@ $1 == "vendor" {
 
 	next
 }
-$1 == "product" {
+NF > 0 && $1 == "product" {
 	nproducts++
 
 	products[nproducts, 1] = $2;		# vendor name
@@ -183,7 +183,7 @@ END {
 		printf("\t    \"") > dfile
 		j = 3;
 		needspace = 0;
-		while (vendors[vendi, j] != "") {
+		while ((vendi, j) in vendors) {
 			if (needspace)
 				printf(" ") > dfile
 			printf("%s", vendors[vendi, j]) > dfile
@@ -195,7 +195,7 @@ END {
 		printf("\t    \"") > dfile
 		j = 4;
 		needspace = 0;
-		while (products[i, j] != "") {
+		while ((i, j) in products) {
 			if (needspace)
 				printf(" ") > dfile
 			printf("%s", products[i, j]) > dfile
@@ -214,7 +214,7 @@ END {
 		printf("\t    \"") > dfile
 		j = 3;
 		needspace = 0;
-		while (vendors[i, j] != "") {
+		while ((i, j) in vendors) {
 			if (needspace)
 				printf(" ") > dfile
 			printf("%s", vendors[i, j]) > dfile
@@ -227,4 +227,6 @@ END {
 	}
 	printf("\t{ 0, 0, 0, NULL, NULL, }\n") > dfile
 	printf("};\n") > dfile
+	close(dfile)
+	close(hfile)
 }

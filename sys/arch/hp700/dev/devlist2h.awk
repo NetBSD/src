@@ -1,4 +1,4 @@
-#	$NetBSD: devlist2h.awk,v 1.2 2002/08/05 20:58:36 fredette Exp $
+#	$NetBSD: devlist2h.awk,v 1.3 2003/12/15 07:32:20 jmc Exp $
 
 #	$OpenBSD: devlist2h.awk,v 1.4 2001/03/29 00:43:00 mickey Exp $
 
@@ -33,7 +33,7 @@
 #
 
 BEGIN	{
-	ncpu = 0;
+	ncpu = busted = 0;
 	cpuh="cpudevs.h";
 	cpud="cpudevs_data.h";
 	SUBSEP = "_";
@@ -59,24 +59,19 @@ busted	{
 }
 
 NR == 1	{
-	printf("/*\t$NetBSD: devlist2h.awk,v 1.2 2002/08/05 20:58:36 fredette Exp $\t*/\n\n") > cpud;
+	printf("/*\t$NetBSD" "$\t*/\n\n") > cpud;
 	printf("/* THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT. */\n\n") \
 		> cpud;
-	printf("/*\t$NetBSD: devlist2h.awk,v 1.2 2002/08/05 20:58:36 fredette Exp $\t*/\n\n") > cpuh;
+	printf("/*\t$NetBSD" "$\t*/\n\n") > cpuh;
 	printf("/* THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT. */\n\n") \
 		> cpuh;
 }
 
 /^\$/ {
-	VERSION = $0;
-	gsub("\\$", "", VERSION);
-
-	printf("/* generated from: %s */\n\n", VERSION) > cpud;
-	printf("/* generated from: %s */\n\n", VERSION) > cpuh;
 	next;
 }
 
-$1 == "type"	{
+NF > 0 && $1 == "type"	{
 	printf("#define\tHPPA_TYPE_%s\t%s\n", toupper($2), $3) > cpuh;
 	types[tolower($2)] = toupper($2);
 	next;
@@ -133,5 +128,6 @@ END	{
 		exit(1);
 	}
 	printf("{ -1 }\n") > cpud;
+	close(cpud)
+	close(cpuh)
 }
-
