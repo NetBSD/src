@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_clock.c,v 1.4.2.3 2002/12/19 00:44:32 thorpej Exp $ */
+/*	$NetBSD: mach_clock.c,v 1.4.2.4 2002/12/29 19:53:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.4.2.3 2002/12/19 00:44:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.4.2.4 2002/12/29 19:53:14 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,9 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.4.2.3 2002/12/19 00:44:32 thorpej E
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
+#include <compat/mach/mach_port.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_syscallargs.h>
-
 
 int
 mach_sys_clock_sleep_trap(p, v, retval)
@@ -152,4 +152,3 @@ mach_clock_get_time(args)
 
 	return 0;
 }
-

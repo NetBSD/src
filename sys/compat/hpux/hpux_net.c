@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.20.2.8 2002/12/11 06:37:11 thorpej Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.20.2.9 2002/12/29 19:49:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.20.2.8 2002/12/11 06:37:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.20.2.9 2002/12/29 19:49:52 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.20.2.8 2002/12/11 06:37:11 thorpej Ex
 #include <compat/hpux/hpux.h>
 #include <compat/hpux/hpux_syscallargs.h>
 #include <compat/hpux/hpux_util.h>
-
 
 struct hpux_sys_setsockopt_args {
 	syscallarg(int) s;
@@ -168,14 +167,14 @@ hpux_sys_netioctl(l, v, retval)
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
 			ktrsyscall(p, code + MINBSDIPCCODE,
-			    code + MINBSDIPCCODE, (register_t *)uap);
+			    code + MINBSDIPCCODE, NULL, (register_t *)uap);
 #endif
 		return (error);
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code + MINBSDIPCCODE,
-		    code + MINBSDIPCCODE, (register_t *)uap);
+		    code + MINBSDIPCCODE, NULL, (register_t *)uap);
 #endif
 	return ((*hpuxtobsdipc[code].rout)(l, uap, retval));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.7.2.7 2002/12/29 19:52:11 thorpej Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.1.2.2 2002/12/29 19:49:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,93 +38,51 @@
  */
 
 /*
- * Linux compatibility module. Try to deal with scheduler related syscalls.
+ * FreeBSD compatibility module. Try to deal with scheduler related syscalls.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.7.2.7 2002/12/29 19:52:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.1.2.2 2002/12/29 19:49:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
 
-#include <compat/linux/common/linux_types.h>
-#include <compat/linux/common/linux_signal.h>
-
-#include <compat/linux/linux_syscallargs.h>
-
-#include <compat/linux/common/linux_sched.h>
+#include <compat/freebsd/freebsd_syscallargs.h>
+#include <compat/freebsd/freebsd_sched.h>
 
 int
-linux_sys_clone(l, v, retval)
+freebsd_sys_yield(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_clone_args /* {
-		syscallarg(int) flags;
-		syscallarg(void *) stack;
-	} */ *uap = v;
-	int flags, sig;
 
-	/*
-	 * We don't support the Linux CLONE_PID or CLONE_PTRACE flags.
-	 */
-	if (SCARG(uap, flags) & (LINUX_CLONE_PID|LINUX_CLONE_PTRACE))
-		return (EINVAL);
-
-	flags = 0;
-
-	if (SCARG(uap, flags) & LINUX_CLONE_VM)
-		flags |= FORK_SHAREVM;
-	if (SCARG(uap, flags) & LINUX_CLONE_FS)
-		flags |= FORK_SHARECWD;
-	if (SCARG(uap, flags) & LINUX_CLONE_FILES)
-		flags |= FORK_SHAREFILES;
-	if (SCARG(uap, flags) & LINUX_CLONE_SIGHAND)
-		flags |= FORK_SHARESIGS;
-	if (SCARG(uap, flags) & LINUX_CLONE_VFORK)
-		flags |= FORK_PPWAIT;
-
-	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
-	if (sig < 0 || sig >= LINUX__NSIG)
-		return (EINVAL);
-	sig = linux_to_native_signo[sig];
-
-	/*
-	 * Note that Linux does not provide a portable way of specifying
-	 * the stack area; the caller must know if the stack grows up
-	 * or down.  So, we pass a stack size of 0, so that the code
-	 * that makes this adjustment is a noop.
-	 */
-	return (fork1(l, flags, sig, SCARG(uap, stack), 0,
-	    NULL, NULL, retval, NULL));
+	yield();
+	return 0;
 }
 
 int
-linux_sys_sched_setparam(cl, v, retval)
-	struct lwp *cl;
+freebsd_sys_sched_setparam(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_sched_setparam_args /* {
-		syscallarg(linux_pid_t) pid;
-		syscallarg(const struct linux_sched_param *) sp;
+	struct freebsd_sys_sched_setparam_args /* {
+		syscallarg(pid_t) pid;
+		syscallarg(const struct freebsd_sched_param *) sp;
 	} */ *uap = v;
-	struct proc *cp = cl->l_proc;
 	int error;
-	struct linux_sched_param lp;
+	struct freebsd_sched_param lp;
 	struct proc *p;
 
-/*
- * We only check for valid parameters and return afterwards.
- */
-
+	/*
+	 * We only check for valid parameters and return afterwards.
+	 */
 	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
 		return EINVAL;
 
@@ -137,7 +95,7 @@ linux_sys_sched_setparam(cl, v, retval)
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(l->l_proc == p ||
 		      pc->pc_ucred->cr_uid == 0 ||
 		      pc->p_ruid == p->p_cred->p_ruid ||
 		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
@@ -150,22 +108,22 @@ linux_sys_sched_setparam(cl, v, retval)
 }
 
 int
-linux_sys_sched_getparam(cl, v, retval)
-	struct lwp *cl;
+freebsd_sys_sched_getparam(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_sched_getparam_args /* {
-		syscallarg(linux_pid_t) pid;
-		syscallarg(struct linux_sched_param *) sp;
+	struct freebsd_sys_sched_getparam_args /* {
+		syscallarg(pid_t) pid;
+		syscallarg(struct freebsd_sched_param *) sp;
 	} */ *uap = v;
-	struct proc *cp = cl->l_proc;
 	struct proc *p;
-	struct linux_sched_param lp;
+	struct freebsd_sched_param lp;
 
-/*
- * We only check for valid parameters and return a dummy priority afterwards.
- */
+	/*
+	 * We only check for valid parameters and return a dummy
+	 * priority afterwards.
+	 */
 	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
 		return EINVAL;
 
@@ -174,7 +132,7 @@ linux_sys_sched_getparam(cl, v, retval)
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(l->l_proc == p ||
 		      pc->pc_ucred->cr_uid == 0 ||
 		      pc->p_ruid == p->p_cred->p_ruid ||
 		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
@@ -188,25 +146,23 @@ linux_sys_sched_getparam(cl, v, retval)
 }
 
 int
-linux_sys_sched_setscheduler(cl, v, retval)
-	struct lwp *cl;
+freebsd_sys_sched_setscheduler(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_sched_setscheduler_args /* {
-		syscallarg(linux_pid_t) pid;
+	struct freebsd_sys_sched_setscheduler_args /* {
+		syscallarg(pid_t) pid;
 		syscallarg(int) policy;
-		syscallarg(cont struct linux_sched_scheduler *) sp;
+		syscallarg(cont struct freebsd_sched_scheduler *) sp;
 	} */ *uap = v;
-	struct proc *cp = cl->l_proc;
 	int error;
-	struct linux_sched_param lp;
+	struct freebsd_sched_param lp;
 	struct proc *p;
 
-/*
- * We only check for valid parameters and return afterwards.
- */
-
+	/*
+	 * We only check for valid parameters and return afterwards.
+	 */
 	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
 		return EINVAL;
 
@@ -219,7 +175,7 @@ linux_sys_sched_setscheduler(cl, v, retval)
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(l->l_proc == p ||
 		      pc->pc_ucred->cr_uid == 0 ||
 		      pc->p_ruid == p->p_cred->p_ruid ||
 		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
@@ -228,38 +184,37 @@ linux_sys_sched_setscheduler(cl, v, retval)
 			return EPERM;
 	}
 
-/*
- * We can't emulate anything put the default scheduling policy.
- */
-	if (SCARG(uap, policy) != LINUX_SCHED_OTHER || lp.sched_priority != 0)
+	/*
+	 * We can't emulate anything put the default scheduling policy.
+	 */
+	if (SCARG(uap, policy) != FREEBSD_SCHED_OTHER || lp.sched_priority != 0)
 		return EINVAL;
 
 	return 0;
 }
 
 int
-linux_sys_sched_getscheduler(cl, v, retval)
-	struct lwp *cl;
+freebsd_sys_sched_getscheduler(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_sched_getscheduler_args /* {
-		syscallarg(linux_pid_t) pid;
+	struct freebsd_sys_sched_getscheduler_args /* {
+		syscallarg(pid_t) pid;
 	} */ *uap = v;
-	struct proc *cp = cl->l_proc;
 	struct proc *p;
 
 	*retval = -1;
-/*
- * We only check for valid parameters and return afterwards.
- */
 
+	/*
+	 * We only check for valid parameters and return afterwards.
+	 */
 	if (SCARG(uap, pid) != 0) {
 		struct pcred *pc = cp->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(l->l_proc == p ||
 		      pc->pc_ucred->cr_uid == 0 ||
 		      pc->p_ruid == p->p_cred->p_ruid ||
 		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
@@ -268,16 +223,16 @@ linux_sys_sched_getscheduler(cl, v, retval)
 			return EPERM;
 	}
 
-/*
- * We can't emulate anything put the default scheduling policy.
- */
-	*retval = LINUX_SCHED_OTHER;
+	/*
+	 * We can't emulate anything put the default scheduling policy.
+	 */
+	*retval = FREEBSD_SCHED_OTHER;
 	return 0;
 }
 
 int
-linux_sys_sched_yield(cl, v, retval)
-	struct lwp *cl;
+freebsd_sys_sched_yield(cp, v, retval)
+	struct proc *cp;
 	void *v;
 	register_t *retval;
 {
@@ -287,19 +242,19 @@ linux_sys_sched_yield(cl, v, retval)
 }
 
 int
-linux_sys_sched_get_priority_max(cl, v, retval)
-	struct lwp *cl;
+freebsd_sys_sched_get_priority_max(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_sched_get_priority_max_args /* {
+	struct freebsd_sys_sched_get_priority_max_args /* {
 		syscallarg(int) policy;
 	} */ *uap = v;
 
-/*
- * We can't emulate anything put the default scheduling policy.
- */
-	if (SCARG(uap, policy) != LINUX_SCHED_OTHER) {
+	/*
+	 * We can't emulate anything put the default scheduling policy.
+	 */
+	if (SCARG(uap, policy) != FREEBSD_SCHED_OTHER) {
 		*retval = -1;
 		return EINVAL;
 	}
@@ -309,19 +264,19 @@ linux_sys_sched_get_priority_max(cl, v, retval)
 }
 
 int
-linux_sys_sched_get_priority_min(cl, v, retval)
-	struct lwp *cl;
+freebsd_sys_sched_get_priority_min(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_sched_get_priority_min_args /* {
+	struct freebsd_sys_sched_get_priority_min_args /* {
 		syscallarg(int) policy;
 	} */ *uap = v;
 
-/*
- * We can't emulate anything put the default scheduling policy.
- */
-	if (SCARG(uap, policy) != LINUX_SCHED_OTHER) {
+	/*
+	 * We can't emulate anything put the default scheduling policy.
+	 */
+	if (SCARG(uap, policy) != FREEBSD_SCHED_OTHER) {
 		*retval = -1;
 		return EINVAL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.2.2.3 2002/12/19 00:44:33 thorpej Exp $ */
+/*	$NetBSD: mach_message.c,v 1.2.2.4 2002/12/29 19:53:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.2.2.3 2002/12/19 00:44:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.2.2.4 2002/12/29 19:53:16 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -65,6 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.2.2.3 2002/12/19 00:44:33 thorpej
 /* Mach message pool */
 static struct pool mach_message_pool;
 
+static int mach_move_right(int, mach_msg_header_t *, struct mach_right *, 
+			   struct mach_right *, struct proc *);
+
 int
 mach_sys_msg_overwrite_trap(p, v, retval)
 	struct proc *p;
@@ -82,77 +85,98 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 		syscallarg(mach_msg_header_t *) rcv_msg;
 		syscallarg(mach_msg_size_t) scatter_list_size;
 	} */ *uap = v;
-	int error = 0;
-	struct mach_subsystem_namemap *map;
-	struct mach_trap_args args;
 	struct mach_emuldata *med;
-	mach_msg_header_t *sm;
-	mach_msg_header_t *rm;
-	mach_msg_header_t *urm;
-	size_t send_size, rcv_size;
 	struct mach_port *mp;
-	struct mach_message *mm;
-	int timeout;
+	struct mach_right *mr;
+	size_t send_size, rcv_size;
+	int error = 0;
 
-	/*
-	 * Catch unhandled options 
-	 */
-	if (SCARG(uap, option) & ~(MACH_SEND_MSG | MACH_RCV_MSG))
-		uprintf("mach_msg: unhandled option 0x%x\n", 
-		    SCARG(uap, option));
-
-	/* 
-	 * XXX Sanity check on the message size. This is not an accurate
-	 * emulation, since Mach messages can be as large as 4GB. 
-	 * Additionnaly, this does not address DoS attack by queueing
-	 * lots of big messages in the kernel.
-	 */
 	send_size = SCARG(uap, send_size);
 	rcv_size = SCARG(uap, rcv_size);
-	if ((send_size > MACH_MAX_MSG_LEN) || (rcv_size > MACH_MAX_MSG_LEN))
-		return E2BIG;
+
+	/* XXX not safe enough: lots of big messages will kill us */
+	if (send_size > MACH_MAX_MSG_LEN) {
+		*retval = MACH_SEND_TOO_LARGE;
+		return 0;
+	}
+	if (rcv_size > MACH_MAX_MSG_LEN) {
+		*retval = MACH_RCV_TOO_LARGE;
+		return 0;
+	}
+
 
 	/* 
 	 * Two options: receive or send. If both are 
-	 * set, we must send, and then receive.
+	 * set, we must send, and then receive. If
+	 * send fail, then we skip recieve.
 	 */
 	if (SCARG(uap, option) & MACH_SEND_MSG) {
-		if (SCARG(uap, msg) == NULL)
-			return EINVAL;
+		mach_msg_header_t *sm;
+		struct mach_subsystem_namemap *map;
+		struct mach_right *lr;
+		struct mach_right *rr;
+		int bits, rights;
+
+		if (SCARG(uap, msg) == NULL) {
+			*retval = MACH_SEND_INVALID_DATA;
+			return 0;
+		}
 
 		/* 
 		 * Allocate memory for the message and its reply,
 		 * and copy the whole message in the kernel.
 		 */
 		sm = malloc(send_size, M_EMULDATA, M_WAITOK);
-		if ((error = copyin(SCARG(uap, msg), sm, send_size)) != 0) 
+		if ((error = copyin(SCARG(uap, msg), sm, send_size)) != 0) {
+			*retval = MACH_SEND_INVALID_DATA;	
 			goto out1;
+		}
 
 #ifdef KTRACE
 		/* Dump the Mach message */
 		if (KTRPOINT(p, KTR_MMSG))
 			ktrmmsg(p, (char *)sm, send_size); 
 #endif
+		/*
+		 * Handle rights in the message
+		 */
+		lr = (struct mach_right *)sm->msgh_local_port;
+		rr = (struct mach_right *)sm->msgh_remote_port;
+
+		if (mach_right_check_all(rr, MACH_PORT_TYPE_ALL_RIGHTS) == 0) {
+			*retval = MACH_SEND_INVALID_DEST;
+			goto out1;
+		}
+
+		bits = MACH_MSGH_LOCAL_BITS(sm->msgh_bits);
+		if ((*retval = mach_move_right(bits, sm, lr, rr, p)) != 0)
+			goto out1;
+
+		bits = MACH_MSGH_REMOTE_BITS(sm->msgh_bits);
+		if ((*retval = mach_move_right(bits, sm, rr, rr, p)) != 0)
+			goto out1;
 
 		/* 
 		 * Check that the process has send a send right on 
 		 * the remote port. 
 		 */
-		if (mach_right_check((struct mach_right *)sm->msgh_remote_port,
-		    p, MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE) == 0) {
-			error = EPERM;
+		rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE);
+		if (mach_right_check(rr, p, rights) == 0) {
+			*retval = MACH_SEND_INVALID_RIGHT;
 			goto out1;
 		}
 
 		/*
 		 * If the remote port is a special port (host, kernel or
-		 * bootstrap), the message will be handled by the kernel.
+		 * clock), the message will be handled by the kernel.
 		 */
 		med = (struct mach_emuldata *)p->p_emuldata;
-		mp = ((struct mach_right *)sm->msgh_remote_port)->mr_port;
-		if ((mp == med->med_host) ||
-		    (mp == med->med_kernel) ||
-		    (mp == med->med_bootstrap)) {
+		mp = rr->mr_port;
+		if ((mp == med->med_host) || (mp == med->med_kernel) ||
+		    (mp == mach_clock_port) || (mp == mach_bootstrap_port)) {
+			struct mach_trap_args args;
+			mach_msg_header_t *rm;
+
 			/* 
 			 * Look for the function that will handle it,
 			 * using the message id.
@@ -167,7 +191,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			if (map->map_handler == NULL) {
 				uprintf("No mach trap handler for id = %d\n",
 				    sm->msgh_id);
-				error = EINVAL;
+				*retval = MACH_SEND_INVALID_DEST;
 				goto out3;
 			}
 #ifdef KTRACE
@@ -191,38 +215,32 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			args.smsg = sm;
 			args.rmsg = rm;
 			args.rsize = &rcv_size;
-			if ((error = (*map->map_handler)(&args)) != 0)
-				goto out2;
+			if ((*retval = (*map->map_handler)(&args)) != 0) 
+				goto out3;
 			
+#ifdef DEBUG_MACH
 			/* 
 			 * Catch potential bug in the handler
 			 */
-			if (rcv_size > SCARG(uap, rcv_size)) {
-				uprintf("mach_msg: reply too big\n");
+			if ((SCARG(uap, option) & MACH_RCV_MSG) &&
+			    (rcv_size > SCARG(uap, rcv_size))) {
+				uprintf("mach_msg: reply too big in %s\n",
+				    map->map_name);
 				rcv_size = SCARG(uap, rcv_size);
 			}
-
-			/* 
-			 * copyout the reply message, and return
-			 * without handling a potential receive operation
-			 * since we already done everything.
-			 */
-			if (SCARG(uap, rcv_msg) != NULL)
-				urm = SCARG(uap, rcv_msg);
-			else
-				urm = SCARG(uap, msg);
-			if ((error = copyout(rm, urm, rcv_size)) != 0)
-				goto out2;
-#ifdef KTRACE
-			/* Dump the Mach message */
-			if (KTRPOINT(p, KTR_MMSG))
-				ktrmmsg(p, (char *)rm, rcv_size); 
 #endif
 
-out2:			free(rm, M_EMULDATA);
+			/*
+			 * Queue the reply
+			 */
+			mp = lr->mr_port;
+			(void)mach_message_get(rm, rcv_size, mp);
+#ifdef DEBUG_MACH
+			printf("pid %d: message queued on port %p (id %d)\n", 
+			    p->p_pid, mp, rm->msgh_id);
+#endif
+			wakeup(mp->mp_recv);
 out3:			free(sm, M_EMULDATA);
-
-			return error;
 
 		} else {
 
@@ -231,19 +249,38 @@ out3:			free(sm, M_EMULDATA);
 			 * Queue the message in the remote port, and wakeup 
 			 * any process that would be sleeping for it.
 		 	 */
-			 mp = ((struct mach_right *)
-			     sm->msgh_remote_port)->mr_port;
-			 (void)mach_message_get(sm, send_size, mp);
-			 wakeup(mp);
+			mp = rr->mr_port;
+			(void)mach_message_get(sm, send_size, mp);
+#ifdef DEBUG_MACH
+			printf("pid %d: message queued on port %p (%d)\n", 
+			    p->p_pid, mp, sm->msgh_id);
+#endif
+			wakeup(mp->mp_recv);
+
+			 /* 
+			  * If the port is in a port set, wakup any process
+			  * sleeping on the port set head.
+			  */
+			 if (mp->mp_recv->mr_sethead != NULL)
+				wakeup(mp->mp_recv->mr_sethead);
 		}
 
 out1:
-	if (error != 0) 
-		free(sm, M_EMULDATA);
-		return error;
+		if (error != 0) {
+			free(sm, M_EMULDATA);
+			return 0;
+		}
 	}
 
+	/*
+	 * Receiving messages.
+	 */
 	if (SCARG(uap, option) & MACH_RCV_MSG) {
+		struct mach_message *mm;
+		struct mach_right *cmr;
+		mach_msg_header_t *urm;
+		int timeout;
+
 		/* 
 		 * Find a buffer for the reply
 		 */
@@ -251,28 +288,140 @@ out1:
 			urm = SCARG(uap, rcv_msg);
 		else if (SCARG(uap, msg) != NULL)
 			urm = SCARG(uap, msg);
+		else {
+			*retval = MACH_RCV_INVALID_DATA;
+			return 0;
+		}
+
+		if (SCARG(uap, option) & MACH_RCV_TIMEOUT)
+			timeout = SCARG(uap, timeout) * hz / 1000;
 		else
-			return EINVAL;
+			timeout = 0;
 
 		/* 
 		 * Check for receive right on the port 
 		 */
-		if ((mach_right_check((struct mach_right *)
-		    SCARG(uap, rcv_name), p, MACH_PORT_TYPE_RECEIVE)) == 0)
-			return EPERM;
+		mr = (struct mach_right *)SCARG(uap, rcv_name);
+		if ((mach_right_check(mr, p, MACH_PORT_TYPE_RECEIVE)) == 0) {
+			
+			/* 
+			 * Is it a port set?
+			 */
+			if ((mach_right_check(mr, p, 
+			    MACH_PORT_TYPE_PORT_SET)) == 0) {
+				*retval = MACH_RCV_INVALID_NAME;
+				return 0;
+			}
+			
+			/* 
+			 * This is a port set. For each port in the
+			 * port set, check we have receive right, and
+			 * and check if we have some message.
+			 */
+			LIST_FOREACH(cmr, &mr->mr_set, mr_setlist) {
+				if ((mach_right_check(cmr, p, 
+				    MACH_PORT_TYPE_RECEIVE)) == 0) {
+					*retval = MACH_RCV_INVALID_NAME;
+					return 0;
+				}
 
-		/*
-		 * If there is no message queued on the port,
-		 * block until we get some.
-		 */
-		mp = ((struct mach_right *)SCARG(uap, rcv_name))->mr_port;
-		timeout = SCARG(uap, timeout) * hz / 1000;
-		if (mp->mp_count == 0) {
-			error = tsleep(mp, PZERO, "mach_msg", timeout);
-			if ((error == ERESTART) || (error == EINTR))
-				return EINTR;
-			if (mp->mp_count == 0)
-				return ETIMEDOUT;
+				mp = cmr->mr_port;	
+#ifdef DEBUG_MACH
+				if (mp->mp_recv != cmr)
+					uprintf("mach_msg_trap: bad receive "
+					    "port/right\n");
+#endif
+				if (mp->mp_count != 0)
+					break;
+			}
+
+			/* 
+			 * If cmr is NULL then we found no message on
+			 * any port. Sleep on the port set until we get 
+			 * some or until we get a timeout.
+			 */
+			if (cmr == NULL) {
+#ifdef DEBUG_MACH
+				printf("pid %d: wait on port %p\n", 
+				    p->p_pid, mp);
+#endif
+				error = tsleep(mr, PZERO|PCATCH, 
+				    "mach_msg", timeout);
+				if ((error == ERESTART) || (error == EINTR)) {
+					*retval = MACH_RCV_INTERRUPTED;
+					return 0;
+				}
+
+				/* 
+				 * Check we did not loose the receive right
+				 * while we were sleeping.
+				 */
+				if ((mach_right_check(mr, p, 
+				     MACH_PORT_TYPE_PORT_SET)) == 0) {
+					*retval = MACH_RCV_PORT_DIED;
+					return 0;
+				}
+
+				/*
+				 * Is there any pending message for 
+				 * a port in the port set?
+				 */
+				LIST_FOREACH(cmr, &mr->mr_set, mr_setlist) {
+					mp = cmr->mr_port;	
+					if (mp->mp_count != 0)
+						break;
+				}
+
+				if (cmr == NULL) {
+					*retval = MACH_RCV_TIMED_OUT;
+					return 0;
+				}
+			}
+			
+			/* 
+			 * We found a port with a pending message.
+			 */
+			mp = cmr->mr_port;
+
+		} else {
+			/*
+			 * This is a receive on a simple port (no port set).
+			 * If there is no message queued on the port,
+			 * block until we get some.
+			 */
+			mp = mr->mr_port;
+
+#ifdef DEBUG_MACH
+			if (mp->mp_recv != mr)
+				uprintf("mach_msg_trap: bad receive "
+				    "port/right\n");
+#endif
+#ifdef DEBUG_MACH
+			printf("pid %d: wait on port %p\n", p->p_pid, mp);
+#endif
+			if (mp->mp_count == 0) {
+				error = tsleep(mr, PZERO|PCATCH, "mach_msg", 
+				    timeout);
+				if ((error == ERESTART) || (error == EINTR)) {
+					*retval = MACH_RCV_INTERRUPTED;
+					return 0;
+				}
+
+				/* 
+				 * Check we did not loose the receive right
+				 * while we were sleeping.
+				 */
+				if ((mach_right_check(mr, p, 
+				     MACH_PORT_TYPE_RECEIVE)) == 0) {
+					*retval = MACH_RCV_PORT_DIED;
+					return 0;
+				}
+
+				if (mp->mp_count == 0) {
+					*retval = MACH_RCV_TIMED_OUT;
+					return 0;
+				}
+			}
 		}
 
 		/* 
@@ -283,15 +432,49 @@ out1:
 		 */
 		lockmgr(&mp->mp_msglock, LK_SHARED, NULL);
 		mm = TAILQ_FIRST(&mp->mp_msglist);
+#ifdef DEBUG_MACH
+		printf("pid %d: dequeue message on port %p (id %d)\n", 
+		    p->p_pid, mp, mm->mm_msg->msgh_id);
+#endif
 
 		if (mm->mm_size > rcv_size) {
-			lockmgr(&mp->mp_msglock, LK_RELEASE, NULL);
-			return ENOBUFS;
+			struct mach_short_reply sr;
+
+			*retval = MACH_RCV_TOO_LARGE;
+			/* 
+			 * If MACH_RCV_LARGE was not set, destroy the message.
+			 */
+			if ((SCARG(uap, option) & MACH_RCV_LARGE) == 0) {
+				free(mm->mm_msg, M_EMULDATA);
+				mach_message_put_shlocked(mm);
+				goto unlock;
+			}		
+
+			/* 
+			 * If MACH_RCV_TOO_LARGE is set, then return 
+			 * a message with just header and trailer. The 
+			 * size in the header should correspond to the
+			 * whole message, so just copy the whole header.
+			 */
+			memcpy(&sr, mm->mm_msg, sizeof(mach_msg_header_t));
+			sr.sr_trailer.msgh_trailer_type = 0;
+			sr.sr_trailer.msgh_trailer_size = 8;
+
+			if ((error = copyout(&sr, urm, sizeof(sr))) != 0) {
+				*retval = MACH_RCV_INVALID_DATA;
+				goto unlock;
+			}
+#ifdef KTRACE
+			/* Dump the Mach message */
+			if (KTRPOINT(p, KTR_MMSG))
+				ktrmmsg(p, (char *)&sr, sizeof(sr)); 
+#endif
+			goto unlock;
 		}
 
 		if ((error = copyout(mm->mm_msg, urm, mm->mm_size)) != 0) {
-			lockmgr(&mp->mp_msglock, LK_RELEASE, NULL);
-			return error;
+			*retval = MACH_RCV_INVALID_DATA;
+			goto unlock;
 		}
 #ifdef KTRACE
 		/* Dump the Mach message */
@@ -301,6 +484,7 @@ out1:
 
 		free(mm->mm_msg, M_EMULDATA);
 		mach_message_put_shlocked(mm); /* decrease mp_count */
+unlock:
 		lockmgr(&mp->mp_msglock, LK_RELEASE, NULL);
 	}
 
@@ -411,4 +595,88 @@ mach_message_put_exclocked(mm)
 	pool_put(&mach_message_pool, mm);
 
 	return;
+}
+
+/* 
+ * Move port according to what was specified in the message. 
+ * NB: tr has been sanity checked, not mr
+ */
+static int
+mach_move_right(bits, msgh, mr, tr, p)
+	int bits;
+	mach_msg_header_t *msgh;
+	struct mach_right *mr;
+	struct mach_right *tr;
+	struct proc *p;
+{
+	struct mach_port *mp;
+	struct proc *tp;
+	int rights;
+
+	if ((tr->mr_port == NULL) || 
+	    (tr->mr_port->mp_recv == NULL) ||
+	    (tr->mr_port->mp_recv->mr_p == NULL))
+		return 0;
+	tp = tr->mr_port->mp_recv->mr_p;
+
+	switch (bits) {
+	case MACH_MSG_TYPE_MAKE_SEND_ONCE:
+	case MACH_MSG_TYPE_MAKE_SEND:
+	case MACH_MSG_TYPE_MOVE_RECEIVE:
+		rights = MACH_PORT_TYPE_RECEIVE;
+		break;
+
+	case MACH_MSG_TYPE_COPY_SEND:
+		rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_DEAD_NAME);
+		break;
+
+	case MACH_MSG_TYPE_MOVE_SEND:
+		rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_DEAD_NAME);
+		break;
+
+	case MACH_MSG_TYPE_MOVE_SEND_ONCE:
+		rights = (MACH_PORT_TYPE_SEND_ONCE | MACH_PORT_TYPE_DEAD_NAME);
+		break;
+
+	default:
+		return MACH_SEND_INVALID_HEADER;
+		break;
+	}
+
+	if (mach_right_check(mr, p, rights) == 0)
+		return 0;
+
+	mp = mr->mr_port;
+
+	switch (bits) {
+	case MACH_MSG_TYPE_MAKE_SEND:
+	case MACH_MSG_TYPE_COPY_SEND:
+		(void)mach_right_get(mp, tp, MACH_PORT_TYPE_SEND);
+		break;
+
+	case MACH_MSG_TYPE_MOVE_SEND:
+		(void)mach_right_get(mp, tp, MACH_PORT_TYPE_SEND);
+		mach_right_put(mr);
+		break;
+
+	case MACH_MSG_TYPE_MAKE_SEND_ONCE:
+		(void)mach_right_get(mp, tp, MACH_PORT_TYPE_SEND_ONCE);
+		break;
+
+	case MACH_MSG_TYPE_MOVE_SEND_ONCE:
+		(void)mach_right_get(mp, tp, MACH_PORT_TYPE_SEND_ONCE);
+		mach_right_put(mr);
+		break;
+
+	case MACH_MSG_TYPE_MOVE_RECEIVE:
+		(void)mach_right_get(mp, tp, MACH_PORT_TYPE_RECEIVE);
+		mach_right_put(mr);
+		break;
+
+	default:
+		return MACH_SEND_INVALID_HEADER;
+		break;
+	}
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.freebsd,v 1.4.2.1 2002/10/18 02:40:57 nathanw Exp $
+#	$NetBSD: files.freebsd,v 1.4.2.2 2002/12/29 19:49:10 thorpej Exp $
 #
 # Config file description for machine-independent FreeBSD compat code.
 # Included by ports that need it.
@@ -15,5 +15,6 @@ file	compat/freebsd/freebsd_ioctl.c		compat_freebsd
 file	compat/freebsd/freebsd_ipc.c		compat_freebsd
 file	compat/freebsd/freebsd_misc.c		compat_freebsd
 file	compat/freebsd/freebsd_ptrace.c		compat_freebsd
+file	compat/freebsd/freebsd_sched.c		compat_freebsd
 file	compat/freebsd/freebsd_sysent.c		compat_freebsd
 file	compat/freebsd/freebsd_syscalls.c	compat_freebsd

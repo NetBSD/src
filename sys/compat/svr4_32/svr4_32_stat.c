@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.3.2.4 2002/08/23 02:39:16 petrov Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.3.2.5 2002/12/29 19:54:08 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.3.2.4 2002/08/23 02:39:16 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.3.2.5 2002/12/29 19:54:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -657,9 +657,9 @@ svr4_32_sys_systeminfo(l, v, retval)
 		str = "i86pc";
 #elif __sparc__
 		{
-			extern char platform_type[];
+			extern char machine_model[];
 
-			str = platform_type;
+			str = machine_model;
 		}
 #else
 		str = "unknown";

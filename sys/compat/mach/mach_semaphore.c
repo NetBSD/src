@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_semaphore.c,v 1.3.6.2 2002/12/19 00:44:33 thorpej Exp $ */
+/*	$NetBSD: mach_semaphore.c,v 1.3.6.3 2002/12/29 19:53:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.3.6.2 2002/12/19 00:44:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.3.6.3 2002/12/29 19:53:18 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,7 +92,7 @@ mach_sys_semaphore_wait_trap(p, v, retval)
 	if (blocked != 0) {
 		mwp = mach_waiting_proc_get(p, ms);	
 		while (ms->ms_value < 0)
-			tsleep(mwp, PZERO, "sem_wait", 0);
+			tsleep(mwp, PZERO|PCATCH, "sem_wait", 0);
 		mach_waiting_proc_put(mwp, ms, 0);
 	}
 	return 0;

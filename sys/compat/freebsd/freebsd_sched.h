@@ -1,11 +1,12 @@
-/*	$NetBSD: mach_exec.h,v 1.2.4.7 2002/12/29 19:53:16 thorpej Exp $	 */
+/*	$NetBSD: freebsd_sched.h,v 1.1.2.2 2002/12/29 19:49:11 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,34 +37,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACH_EXEC_H_
-#define	_MACH_EXEC_H_
+#ifndef _FREEBSD_SCHED_H
+#define	_FREEBSD_SCHED_H
 
-#include <uvm/uvm_extern.h>
-
-#include <compat/mach/mach_types.h>
-
-struct mach_emuldata {
-	mach_cproc_t med_p;		/* Thread id */
-	int med_thpri;			/* Saved priority */
-	/* 
-	 * Lists for all the process rights. There is also a right 
-	 * list for all process, which is protected by a lock. This
-	 * lock protects the per processes lists.
-	 */
-	LIST_HEAD(med_right, mach_right) med_right;
-
-	struct mach_port *med_bootstrap;/* task bootstrap port */
-	struct mach_port *med_kernel;	/* task kernel port */
-	struct mach_port *med_host;	/* task host port */
-	struct mach_port *med_exception;/* task exception port */
+struct freebsd_sched_param {
+	int	sched_priority;
 };
 
-int exec_mach_copyargs(struct proc *, struct exec_package *, 
-    struct ps_strings *, char **, void *);
-int exec_mach_probe(char **);
-void mach_e_proc_init(struct proc *, struct vmspace *);
+#define FREEBSD_SCHED_FIFO	0
+#define FREEBSD_SCHED_RR	1
+#define FREEBSD_SCHED_OTHER	2
 
-extern const struct emul emul_mach;
-
-#endif /* !_MACH_EXEC_H_ */
+#endif /* _FREEBSD_SCHED_H */
