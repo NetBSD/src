@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 1998/05/24 19:32:40 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 1998/05/27 05:58:40 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2750,8 +2750,10 @@ pmap_enter_ptpage(pmap, va)
 		 * is wired; i.e. while it is on a paging queue.
 		 */
 		PHYS_TO_VM_PAGE(ptpa)->flags |= PG_CLEAN;
+#if !defined(UVM)
 #ifdef DEBUG
 		PHYS_TO_VM_PAGE(ptpa)->flags |= PG_PTPAGE;
+#endif
 #endif
 	}
 #if defined(M68040)
@@ -2868,10 +2870,17 @@ pmap_check_wiring(str, va)
 	    !pmap_pte_v(pmap_pte(pmap_kernel(), va)))
 		return;
 
+#if defined(UVM)
+	if (!uvm_map_lookup_entry(pt_map, va, &entry)) {
+		printf("wired_check: entry for %lx not found\n", va);
+		return;
+	}
+#else
 	if (!vm_map_lookup_entry(pt_map, va, &entry)) {
 		printf("wired_check: entry for %lx not found\n", va);
 		return;
 	}
+#endif
 	count = 0;
 	for (pte = (pt_entry_t *)va; pte < (pt_entry_t *)(va + NBPG); pte++)
 		if (*pte)
