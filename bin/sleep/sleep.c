@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.12 1997/11/05 21:18:47 cgd Exp $	*/
+/*	$NetBSD: sleep.c,v 1.13 1998/04/09 07:03:29 fair Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,15 +43,10 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.12 1997/11/05 21:18:47 cgd Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.13 1998/04/09 07:03:29 fair Exp $");
 #endif
 #endif /* not lint */
 
-/*
- * XXX shouldn't need sys/time.h, but there was an include file bug
- * which may be fixed soon.
- */
-#include <sys/time.h>
 #include <time.h>
 #include <ctype.h>
 #include <math.h>
@@ -135,8 +130,7 @@ main(argc, argv)
 void
 usage()
 {
-
-	(void)fprintf(stderr, "usage: sleep seconds\n");
+	(void)fputs("usage: sleep seconds\n", stderr);
 	exit(1);
 }
 
