@@ -1,4 +1,4 @@
-/*	$NetBSD: player.h,v 1.7 1999/04/18 03:30:12 simonb Exp $	*/
+/*	$NetBSD: player.h,v 1.8 1999/12/28 18:05:25 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -98,22 +98,22 @@
 #define SCREENTEST()	(initscr() != NULL && STAT_R < COLS && SCROLL_Y > 0)
 #endif
 
-WINDOW *view_w;
-WINDOW *slot_w;
-WINDOW *scroll_w;
-WINDOW *stat_w;
-WINDOW *turn_w;
+extern WINDOW *view_w;
+extern WINDOW *slot_w;
+extern WINDOW *scroll_w;
+extern WINDOW *stat_w;
+extern WINDOW *turn_w;
 
-char done_curses;
-char loaded, fired, changed, repaired;
-char dont_adjust;
-int viewrow, viewcol;
-char movebuf[sizeof SHIP(0)->file->movebuf];
+extern char done_curses;
+extern char loaded, fired, changed, repaired;
+extern char dont_adjust;
+extern int viewrow, viewcol;
+extern char movebuf[sizeof SHIP(0)->file->movebuf];
 extern char version[];
-int player;
-struct ship *ms;		/* memorial structure, &cc->ship[player] */
-struct File *mf;		/* ms->file */
-struct shipspecs *mc;		/* ms->specs */
+extern int player;
+extern struct ship *ms;		/* memorial structure, &cc->ship[player] */
+extern struct File *mf;		/* ms->file */
+extern struct shipspecs *mc;	/* ms->specs */
 
 /* condition codes for leave() */
 #define LEAVE_QUIT	0
