@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.104 1996/10/12 23:23:20 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.105 1996/10/23 07:25:44 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -167,6 +167,7 @@ sdattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	int error;
 	struct sd_softc *sd = (void *)self;
 	struct disk_parms *dp = &sd->params;
 	struct scsibus_attach_args *sa = aux;
@@ -207,9 +208,15 @@ sdattach(parent, self, aux)
 	 */
 	printf("\n");
 	printf("%s: ", sd->sc_dev.dv_xname);
-	if (scsi_start(sd->sc_link, SSS_START,
-	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT) ||
-	    sd_get_parms(sd, SCSI_AUTOCONF) != 0)
+
+	if ((sd->sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
+		error = scsi_start(sd->sc_link, SSS_START,
+				   SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST |
+				   SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
+	} else
+		error = 0;
+
+	if (error || sd_get_parms(sd, SCSI_AUTOCONF) != 0)
 		printf("drive offline\n");
 	else
 	        printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
@@ -302,11 +309,14 @@ sdopen(dev, flag, fmt, p)
 			goto bad3;
 
 		/* Start the pack spinning if necessary. */
-		error = scsi_start(sc_link, SSS_START,
-				   SCSI_IGNORE_ILLEGAL_REQUEST |
-				   SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
-		if (error)
-			goto bad3;
+		if ((sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
+			error = scsi_start(sc_link, SSS_START,
+					   SCSI_IGNORE_ILLEGAL_REQUEST |
+					   SCSI_IGNORE_MEDIA_CHANGE |
+					   SCSI_SILENT);
+			if (error)
+				goto bad3;
+		}
 
 		sc_link->flags |= SDEV_OPEN;
 
