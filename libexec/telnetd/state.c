@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.18 2001/07/27 22:21:46 wiz Exp $	*/
+/*	$NetBSD: state.c,v 1.19 2001/08/20 11:01:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.18 2001/07/27 22:21:46 wiz Exp $");
+__RCSID("$NetBSD: state.c,v 1.19 2001/08/20 11:01:48 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -461,7 +461,7 @@ send_do(option, init)
 			set_his_want_state_will(option);
 		do_dont_resp[option]++;
 	}
-	(void) output_data(doopt, option);
+	(void) output_data((const char *)doopt, option);
 
 	DIAG(TD_OPTIONS, printoption("td: send do", option));
 }
@@ -683,7 +683,7 @@ send_dont(option, init)
 		set_his_want_state_wont(option);
 		do_dont_resp[option]++;
 	}
-	(void) output_data(dont, option);
+	(void) output_data((const char *)dont, option);
 
 	DIAG(TD_OPTIONS, printoption("td: send dont", option));
 }
@@ -833,7 +833,7 @@ send_will(option, init)
 		set_my_want_state_will(option);
 		will_wont_resp[option]++;
 	}
-	(void) output_data(will, option);
+	(void) output_data((const char *)will, option);
 
 	DIAG(TD_OPTIONS, printoption("td: send will", option));
 }
@@ -992,7 +992,7 @@ send_wont(option, init)
 		set_my_want_state_wont(option);
 		will_wont_resp[option]++;
 	}
-	(void) output_data(wont, option);
+	(void) output_data((const char *)wont, option);
 
 	DIAG(TD_OPTIONS, printoption("td: send wont", option));
 }
