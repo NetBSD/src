@@ -1,4 +1,4 @@
-.\"	$NetBSD: atactl.8,v 1.16 2004/08/02 23:16:02 wiz Exp $
+.\"	$NetBSD: atactl.8,v 1.17 2004/09/16 18:02:27 erh Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -176,7 +176,9 @@ This will reset all ATA devices present on the bus.
 Any ATAPI device with pending commands will also be reset.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr wd 4
+.Xr wd 4 ,
+.Xr dkctl 8 ,
+.Xr scsictl 8
 .Sh HISTORY
 The
 .Nm
