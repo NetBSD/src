@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.9 1997/10/08 08:45:13 mrg Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.10 1997/10/14 01:16:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.9 1997/10/08 08:45:13 mrg Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.10 1997/10/14 01:16:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: telnetd.c,v 1.9 1997/10/08 08:45:13 mrg Exp $");
 
 #include <arpa/inet.h>
 
-int tgetent __P((char *, char *));	/* XXX from <curses.h> */
+#include <termcap.h>
 
 #include <sys/cdefs.h>
 #define P __P

@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.5 1997/10/12 02:03:45 lukem Exp $	*/
+/*	$NetBSD: screen.c,v 1.6 1997/10/14 01:14:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,6 +49,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termcap.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -59,14 +60,6 @@
 #include "screen.h"
 #include "tetris.h"
 
-/*
- * XXX - need a <termcap.h>
- */
-int	tgetent __P((char *, const char *));
-int	tgetflag __P((const char *));
-int	tgetnum __P((const char *));
-int	tputs __P((const char *, int, int (*)(int)));
-
 static cell curscreen[B_SIZE];	/* 1 => standout (or otherwise marked) */
 static int curscore;
 static int isset;		/* true => terminal is in game mode */
@@ -75,8 +68,6 @@ static void (*tstp) __P((int));
 
 static	void	scr_stop __P((int));
 static	void	stopset __P((int));
-extern	char   *tgetstr __P((char *, char **));
-extern	char   *tgoto __P((char *, int, int));
 
 
 /*
@@ -136,12 +127,12 @@ static char combuf[1024], tbuf[1024];
 /*
  * Routine used by tputs().
  */
-int
+void
 put(c)
 	int c;
 {
 
-	return (putchar(c));
+	(void) putchar(c);
 }
 
 /*
