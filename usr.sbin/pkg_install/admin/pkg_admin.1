@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.14 2001/06/05 11:58:55 wiz Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.15 2002/02/02 01:31:16 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Hubert Feyrer.  All rights reserved.
 .\"
@@ -39,7 +39,8 @@
 .Op Fl V
 .Ar command Op args ...
 .Sh DESCRIPTION
-This command performs various administrative tasks around the NetBSD
+This command performs various administrative tasks around the
+.Nx
 Packages System. Available commands are:
 .Pp
 .Bl -tag -width check
@@ -72,7 +73,7 @@ pkg-wildcards against arbitrary files, useful mainly in the build
 system itself. See
 .Xr pkg_info 1
 for a description of the pattern.
-
+.Pp
 Example:
 .Bd -literal
 yui# cd /usr/pkgsrc/packages/i386ELF/All/
@@ -112,11 +113,12 @@ and
 Needs to be run as root.
 .Pp
 .El
-.Pp
 .Sh ENVIRONMENT
-.Ss PKG_DBDIR
+.Bl -tag -width PKG_DBDIR -compact
+.It Ev PKG_DBDIR
 Where to register packages instead of
 .Pa /var/db/pkg .
+.El
 .Sh FILES
 .Bl -tag -width /var/db/pkg/pkgdb.byfile.db -compact
 .It Pa /var/db/pkg/pkgdb.byfile.db
@@ -124,16 +126,15 @@ Where to register packages instead of
 .El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
+.Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
-.Xr pkg_info 1 ,
-.Xr pkg_create 1
-.Sh AUTHORS
-The
-.Nm
-command was written by Hubert Feyrer.
+.Xr pkg_info 1
 .Sh HISTORY
 The
 .Nm
 command first appeared in
-.Nx
-1.4.
+.Nx 1.4 .
+.Sh AUTHORS
+The
+.Nm
+command was written by Hubert Feyrer.
