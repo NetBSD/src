@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.8 1999/02/12 10:44:07 drochner Exp $	*/
+/*	$NetBSD: cread.c,v 1.9 1999/03/31 01:50:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -277,10 +277,12 @@ close(fd)
 	struct open_file *f;
 	struct sd *s;
 
+#if !defined(LIBSA_NO_FD_CHECKING)
 	if ((unsigned)fd >= SOPEN_MAX) {
 		errno = EBADF;
 		return (-1);
 	}
+#endif
 	f = &files[fd];
 
 	if ((f->f_flags & F_READ) == 0)
@@ -396,10 +398,12 @@ lseek(fd, offset, where)
 	struct open_file *f;
 	struct sd *s;
 
+#if !defined(LIBSA_NO_FD_CHECKING)
 	if ((unsigned)fd >= SOPEN_MAX) {
 		errno = EBADF;
 		return (-1);
 	}
+#endif
 	f = &files[fd];;
 
 	if ((f->f_flags & F_READ) == 0)

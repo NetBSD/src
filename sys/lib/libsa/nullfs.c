@@ -1,4 +1,4 @@
-/*	$NetBSD: nullfs.c,v 1.1 1996/01/13 22:25:39 leo Exp $	*/
+/*	$NetBSD: nullfs.c,v 1.2 1999/03/31 01:50:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -62,6 +62,16 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
+ */
+
+/*
+ * XXX Does not currently implement:
+ * XXX
+ * XXX LIBSA_NO_FS_CLOSE
+ * XXX LIBSA_NO_FS_SEEK
+ * XXX LIBSA_NO_FS_WRITE
+ * XXX LIBSA_NO_FS_SYMLINK (does this even make sense?)
+ * XXX LIBSA_FS_SINGLECOMPONENT (does this even make sense?)
  */
 
 #include "stand.h"
