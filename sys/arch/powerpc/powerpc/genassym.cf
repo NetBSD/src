@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 1997/04/16 21:16:25 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.2 2001/11/29 00:16:36 mjl Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +38,8 @@ include <sys/proc.h>
 include <machine/pcb.h>
 include <machine/pmap.h>
 
+include <powerpc/cpu.h>
+
 define	FRAMELEN	FRAMELEN
 define	FRAME_0		offsetof(struct trapframe, fixreg[0])
 define	FRAME_1		offsetof(struct trapframe, fixreg[1])
@@ -68,3 +70,6 @@ define	P_BACK		offsetof(struct proc, p_back)
 define	P_ADDR		offsetof(struct proc, p_addr)
 
 define	SPLX		offsetof(struct machvec, splx)
+
+define	CACHELINESIZE	CACHELINESIZE
+
