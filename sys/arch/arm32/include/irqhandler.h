@@ -1,4 +1,4 @@
-/* $NetBSD: irqhandler.h,v 1.3 1996/03/27 19:42:03 mark Exp $ */
+/* $NetBSD: irqhandler.h,v 1.4 1996/03/28 21:29:32 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -61,6 +61,58 @@ typedef struct irqhandler {
 
 /* Define the IRQ bits */
 
+
+
+#ifdef RC7500
+
+/*#define IRQ_PRINTER	0x00*/
+#define IRQ_RESERVED0	0x01
+#define IRQ_BUTTON	0x02
+#define IRQ_FLYBACK	0x03
+#define IRQ_POR		0x04
+#define IRQ_TIMER0	0x05
+#define IRQ_TIMER1 	0x06
+#define IRQ_FIQDOWN	0x07
+
+#define IRQ_DREQ3	0x08
+/*#define IRQ_HD1		0x09*/
+/*#define IRQ_HD		IRQ_HD1*/
+#define IRQ_DREQ2	0x0A
+#define IRQ_ETHERNET	0x0B
+/*#define IRQ_FLOPPY	0x0C*/
+/*#define IRQ_SERIAL	0x0D*/
+#define IRQ_KBDTX	0x0E
+#define IRQ_KBDRX	0x0F
+
+#define IRQ_IRQ3	0x10
+#define IRQ_IRQ4	0x11
+#define IRQ_IRQ5	0x12
+#define IRQ_IRQ6	0x13
+#define IRQ_IRQ7	0x14
+#define IRQ_IRQ9	0x15
+#define IRQ_IRQ10	0x16
+#define IRQ_HD2		0x17
+
+#define IRQ_MSDRX	0x18
+#define IRQ_MSDTX	0x19
+#define IRQ_ATOD	0x1A
+#define IRQ_CLOCK	0x1B
+#define IRQ_PANIC	0x1C
+#define IRQ_RESERVED2	0x1D
+#define IRQ_RESERVED3	0x1E
+#define IRQ_RESERVED1	IRQ_RESERVED2
+
+/*
+ * Note that Sound DMA IRQ is on the 31st vector.
+ * It's not part of the IRQD.
+ */
+#define IRQ_SDMA	0x1F
+
+#else /* RC7500 */
+
+
+
+
 /*#define IRQ_PRINTER	0x00*/
 #define IRQ_RESERVED0	0x01
 /*#define IRQ_FLOPPYIDX	0x02*/
@@ -97,6 +149,8 @@ typedef struct irqhandler {
 #define IRQ_EXPCARD6	0x1E
 #define IRQ_EXPCARD7	0x1F
 
+#endif /* RC7500 */
+
 #define IRQ_VSYNC	IRQ_FLYBACK	/* Aliased */
 #define IRQ_NETSLOT	IRQ_EXTENDED
 
@@ -105,6 +159,7 @@ typedef struct irqhandler {
 #define IRQ_SOFTCLOCK	IRQ_RESERVED1	/* Emulated */
 #define IRQMASK_SOFTCLOCK	(1 << IRQ_SOFTCLOCK)
 
+#define IRQ_INSTRUCT	-1
 #define NIRQS		0x20
 
 /* Define the various Interrupt Priority Levels */
@@ -146,7 +201,12 @@ typedef struct fiqhandler {
 	u_int fh_r13;		/* FIQ mode r13 */
 } fiqhandler_t;
 
+#ifdef RC7500
+int fiq_claim __P((int, fiqhandler_t *));
+int fiq_release __P((int, fiqhandler_t *));
+#else
 int fiq_claim __P((fiqhandler_t *));
 int fiq_release __P((fiqhandler_t *));
+#endif
 
 /* End of irqhandler.h */
