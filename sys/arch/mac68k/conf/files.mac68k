@@ -1,5 +1,5 @@
 #	from: @(#)files.sparc	8.1 (Berkeley) 7/19/93
-#	$Id: files.mac68k,v 1.9 1994/02/27 16:39:54 briggs Exp $
+#	$Id: files.mac68k,v 1.10 1994/06/25 04:58:13 briggs Exp $
 # files.mac68k.newconf
 # mac68k-specific configuration info
 
@@ -55,6 +55,7 @@ file	arch/mac68k/dev/asc.c		# this should be a real device...
 file	arch/mac68k/mac68k/autoconf.c
 file	arch/mac68k/mac68k/clock.c
 file	arch/mac68k/mac68k/cons.c
+file	arch/m68k/m68k/copy.s
 file	arch/mac68k/mac68k/disksubr.c		disk
 file	arch/mac68k/mac68k/fpu.c
 file	arch/mac68k/mac68k/itedumm.c		ite needs-count
