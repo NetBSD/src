@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.35 1994/01/09 19:27:36 cgd Exp $
+#	$Id: ALL,v 1.36 1994/01/16 01:36:15 cgd Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -46,9 +46,9 @@ options		SYSVMSG
 # System V-like semaphores
 options		SYSVSEM
 
-# System V-like memory sharing; BROKEN
-#options		SYSVSHM
-#options		SHMMAXPGS=1024
+# System V-like memory sharing
+options		SYSVSHM
+#options	SHMMAXPGS=1024		# 1024 pages is the default
 
 # generic SCSI system
 options		SCSI
