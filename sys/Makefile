@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1997/05/26 03:59:14 cjs Exp $
+#	$NetBSD: Makefile,v 1.20.2.1 1997/10/13 07:13:38 cjs Exp $
 
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
@@ -14,7 +14,7 @@ SUBDIR+= lkm
 
 LFILES=	errno.h fcntl.h md5.h poll.h syslog.h termios.h
 MFILES=	float.h frame.h stdarg.h varargs.h
-LDIRS=	dev net netatalk netinet netccitt netiso netns netnatm nfs miscfs \
+LDIRS=	dev isofs net netatalk netinet netccitt netiso netns netnatm nfs miscfs \
 	sys ufs vm 
 
 # Change SYS_INCLUDE in bsd.own.mk or /etc/mk.conf to "symlinks" if you
