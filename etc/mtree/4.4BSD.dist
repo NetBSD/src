@@ -1,38 +1,13 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.4 1994/06/20 03:11:36 cgd Exp $
+#	$Id: 4.4BSD.dist,v 1.4.2.1 1994/07/21 02:11:49 cgd Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
 .
 
-# ./a
-a
-# ./a
-..
-
 # ./altroot
 altroot
 # ./altroot
-..
-
-# ./amd
-amd	mode=0555
-# ./amd
-..
-
-# ./b
-b
-# ./b
-..
-
-# ./c
-c
-# ./c
-..
-
-# ./dump
-dump
-# ./dump	uname=operator gname=operator mode=0775
 ..
 
 # ./bin
@@ -916,6 +891,11 @@ mac68k
 # ./usr/share/man/cat4/mac68k
 ..
 
+# ./usr/share/man/cat4/pc532
+pc532
+# ./usr/share/man/cat4/pc532
+..
+
 # ./usr/share/man/cat4/sparc
 sparc
 # ./usr/share/man/cat4/sparc
@@ -970,6 +950,11 @@ i386
 # ./usr/share/man/cat8/mac68k
 mac68k
 # ./usr/share/man/cat8/mac68k
+..
+
+# ./usr/share/man/cat8/pc532
+pc532
+# ./usr/share/man/cat8/pc532
 ..
 
 # ./usr/share/man/cat8/sparc
@@ -1033,6 +1018,11 @@ mac68k
 # ./usr/share/man/man4/mac68k
 ..
 
+# ./usr/share/man/man4/pc532
+pc532
+# ./usr/share/man/man4/pc532
+..
+
 # ./usr/share/man/man4/sparc
 sparc
 # ./usr/share/man/man4/sparc
@@ -1087,6 +1077,11 @@ i386
 # ./usr/share/man/man8/mac68k
 mac68k
 # ./usr/share/man/man8/mac68k
+..
+
+# ./usr/share/man/man8/pc532
+pc532
+# ./usr/share/man/man8/pc532
 ..
 
 # ./usr/share/man/man8/sparc
