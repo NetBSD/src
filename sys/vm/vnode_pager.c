@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.37 1998/06/24 20:58:49 sommerfe Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.38 1998/07/07 23:22:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -55,8 +55,14 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
+#include <sys/fcntl.h>
+#include <sys/conf.h>
 #include <sys/uio.h>
 #include <sys/mount.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -130,6 +136,7 @@ vnode_pager_alloc(handle, size, prot, foff)
 	vm_object_t object;
 	struct vattr vattr;
 	struct vnode *vp;
+	struct partinfo pi;
 	u_quad_t used_vnode_size;
 	struct proc *p = curproc;	/* XXX */
 
@@ -137,6 +144,7 @@ vnode_pager_alloc(handle, size, prot, foff)
 	if (vpagerdebug & (VDB_FOLLOW|VDB_ALLOC))
 		printf("vnode_pager_alloc(%p, %lx, %x)\n", handle, size, prot);
 #endif
+
 	/*
 	 * Pageout to vnode, no can do yet.
 	 */
@@ -144,11 +152,18 @@ vnode_pager_alloc(handle, size, prot, foff)
 		return(NULL);
 
 	/*
+	 * If we're mapping a BLK device, make sure it's a disk.
+	 */
+	vp = (struct vnode *)handle;
+	if (vp->v_type == VBLK && bdevsw[major(vp->v_rdev)].d_type != D_DISK)
+		return (NULL);
+
+	/*
 	 * Vnodes keep a pointer to any associated pager so no need to
 	 * lookup with vm_pager_lookup.
 	 */
-	vp = (struct vnode *)handle;
 	pager = (vm_pager_t)vp->v_vmdata;
+
 	if (pager == NULL) {
 		/*
 		 * Allocate pager structures
@@ -162,16 +177,37 @@ vnode_pager_alloc(handle, size, prot, foff)
 			return(NULL);
 		}
 		/*
-		 * And an object of the appropriate size
+		 * And an object of the appropriate size.
 		 */
-		if (VOP_GETATTR(vp, &vattr, p->p_ucred, p) != 0) {
-			free((caddr_t)vnp, M_VMPGDATA);
-			free((caddr_t)pager, M_VMPAGER);
-			return(NULL);
+		if (vp->v_type == VBLK) {
+			/*
+			 * We could implement this as a specfs getattr
+			 * call, but:
+			 *
+			 *	(1) VOP_GETATTR() would get the file system
+			 *	    vnode operation, not the specfs operation.
+			 *
+			 *	(2) All we want is the size, anyhow.
+			 */
+			if ((*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
+			    DIOCGPART, (caddr_t)&pi, FREAD, p) != 0) {
+				free((caddr_t)vnp, M_VMPGDATA);
+				free((caddr_t)pager, M_VMPAGER);
+				return(NULL);
+			}
+			/* XXX should remember blocksize */
+			used_vnode_size = (u_quad_t)pi.disklab->d_secsize *
+			    (u_quad_t)pi.part->p_size;
+		} else {
+			if (VOP_GETATTR(vp, &vattr, p->p_ucred, p) != 0) {
+				free((caddr_t)vnp, M_VMPGDATA);
+				free((caddr_t)pager, M_VMPAGER);
+				return(NULL);
+			}
+			used_vnode_size = vattr.va_size;
 		}
 		/* make sure mapping fits into numeric range,
 		 truncate if necessary */
-		used_vnode_size = vattr.va_size;
 		if (used_vnode_size > (vm_offset_t)-PAGE_SIZE) {
 #ifdef DEBUG
 			printf("vnode_pager_alloc: vn %p size truncated %qx->%lx\n",
