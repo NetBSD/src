@@ -1,6 +1,35 @@
-/*	$NetBSD: inet6.c,v 1.6 1999/12/16 00:58:17 thorpej Exp $	*/
-
+/*	$NetBSD: inet6.c,v 1.7 2000/02/26 09:55:24 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.6 1999/12/16 00:58:17 thorpej Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.7 2000/02/26 09:55:24 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +89,7 @@ __RCSID("$NetBSD: inet6.c,v 1.6 1999/12/16 00:58:17 thorpej Exp $");
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #endif
+#include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
@@ -305,7 +335,8 @@ udp6_stats(off, name)
 	p1(udp6s_badsum, "\t%llu with bad checksum\n");
 	p1(udp6s_nosum, "\t%llu with no checksum\n");
 	p1(udp6s_noport, "\t%llu dropped due to no socket\n");
-	p(udp6s_noportmcast, "\t%llu multicast datagram%s dropped due to no socket\n");
+	p(udp6s_noportmcast,
+	    "\t%llu multicast datagram%s dropped due to no socket\n");
 	p1(udp6s_fullsock, "\t%llu dropped due to full socket buffers\n");
 	delivered = udp6stat.udp6s_ipackets -
 		    udp6stat.udp6s_hdrops -
@@ -609,7 +640,7 @@ ip6_stats(off, name)
 	p1(ip6s_badvers, "\t%llu with incorrect version number\n");
 	p(ip6s_fragments, "\t%llu fragment%s received\n");
 	p(ip6s_fragdropped,
-		"\t%llu fragment%s dropped (dup or out of space)\n");
+	    "\t%llu fragment%s dropped (dup or out of space)\n");
 	p(ip6s_fragtimeout, "\t%llu fragment%s dropped after timeout\n");
 	p(ip6s_fragoverflow, "\t%llu fragment%s that exceeded limit\n");
 	p(ip6s_reassembled, "\t%llu packet%s reassembled ok\n");
@@ -620,7 +651,7 @@ ip6_stats(off, name)
 	p(ip6s_localout, "\t%llu packet%s sent from this host\n");
 	p(ip6s_rawout, "\t%llu packet%s sent with fabricated ip header\n");
 	p(ip6s_odropped,
-		"\t%llu output packet%s dropped due to no bufs, etc.\n");
+	    "\t%llu output packet%s dropped due to no bufs, etc.\n");
 	p(ip6s_noroute, "\t%llu output packet%s discarded due to no route\n");
 	p(ip6s_fragmented, "\t%llu output datagram%s fragmented\n");
 	p(ip6s_ofragments, "\t%llu fragment%s created\n");
@@ -651,19 +682,117 @@ ip6_stats(off, name)
 		}
 	}
 	printf("\t\t%llu one ext mbuf\n",
-	        (unsigned long long)ip6stat.ip6s_mext1);
+	    (unsigned long long)ip6stat.ip6s_mext1);
 	printf("\t\t%llu two or more ext mbuf\n",
-		(unsigned long long)ip6stat.ip6s_mext2m);	
+	    (unsigned long long)ip6stat.ip6s_mext2m);	
 	p(ip6s_exthdrtoolong,
-		"\t%llu packet%s whose headers are not continuous\n");
+	    "\t%llu packet%s whose headers are not continuous\n");
 	p(ip6s_nogif, "\t%llu tunneling packet%s that can't find gif\n");
-	p(ip6s_toomanyhdr, "\t%qu packet%s discarded due to too many headers\n");
-	p(ip6s_pulldown, "\t%qu call%s to m_pulldown\n");
-	p(ip6s_pulldown_alloc, "\t%qu mbuf allocation%s in m_pulldown\n");
-	if (ip6stat.ip6s_pulldown_copy != 1) {
-		p1(ip6s_pulldown_copy, "\t%qu mbuf copies in m_pulldown\n");
-	} else {
-		p1(ip6s_pulldown_copy, "\t%qu mbuf copy in m_pulldown\n");
+	p(ip6s_toomanyhdr,
+	    "\t%llu packet%s discarded due to too many headers\n");
+
+	if (ip6stat.ip6s_exthdrget || ip6stat.ip6s_exthdrget0) {
+		p(ip6s_exthdrget, "\t%llu use%s of IP6_EXTHDR_GET\n");
+		p(ip6s_exthdrget0, "\t%llu use%s of IP6_EXTHDR_GET0\n");
+		p(ip6s_pulldown, "\t%llu call%s to m_pulldown\n");
+		p(ip6s_pulldown_alloc,
+		    "\t%llu mbuf allocation%s in m_pulldown\n");
+		if (ip6stat.ip6s_pulldown_copy != 1) {
+			p1(ip6s_pulldown_copy,
+			    "\t%llu mbuf copies in m_pulldown\n");
+		} else {
+			p1(ip6s_pulldown_copy,
+			    "\t%llu mbuf copy in m_pulldown\n");
+		}
+		p(ip6s_pullup, "\t%llu call%s to m_pullup\n");
+		p(ip6s_pullup_alloc, "\t%llu mbuf allocation%s in m_pullup\n");
+		if (ip6stat.ip6s_pullup_copy != 1) {
+			p1(ip6s_pullup_copy,
+			    "\t%llu mbuf copies in m_pullup\n");
+		} else {
+			p1(ip6s_pullup_copy, "\t%llu mbuf copy in m_pullup\n");
+		}
+		p(ip6s_pullup_fail, "\t%llu failure%s in m_pullup\n");
+		p(ip6s_pullup2, "\t%llu call%s to m_pullup2\n");
+		p(ip6s_pullup2_alloc,
+		    "\t%llu mbuf allocation%s in m_pullup2\n");
+		if (ip6stat.ip6s_pullup2_copy != 1) {
+			p1(ip6s_pullup2_copy,
+			    "\t%llu mbuf copies in m_pullup2\n");
+		} else {
+			p1(ip6s_pullup2_copy,
+			    "\t%llu mbuf copy in m_pullup2\n");
+		}
+		p(ip6s_pullup2_fail, "\t%llu failure%s in m_pullup2\n");
+	}
+
+	/* for debugging source address selection */
+#define PRINT_SCOPESTAT(s,i) do {\
+		switch(i) { /* XXX hardcoding in each case */\
+		case 1:\
+			p(s, "\t\t%llu node-local%s\n");\
+			break;\
+		case 2:\
+			p(s, "\t\t%llu link-local%s\n");\
+			break;\
+		case 5:\
+			p(s, "\t\t%llu site-local%s\n");\
+			break;\
+		case 14:\
+			p(s, "\t\t%llu global%s\n");\
+			break;\
+		default:\
+			printf("\t\t%llu addresses scope=%x\n",\
+			       (unsigned long long)ip6stat.s, i);\
+		}\
+	} while(0);
+
+	p(ip6s_sources_none,
+	  "\t%llu failure%s of source address selection\n");
+	for (first = 1, i = 0; i < 16; i++) {
+		if (ip6stat.ip6s_sources_sameif[i]) {
+			if (first) {
+				printf("\tsource addresses on an outgoing I/F\n");
+				first = 0;
+			}
+			PRINT_SCOPESTAT(ip6s_sources_sameif[i], i);
+		}
+	}
+	for (first = 1, i = 0; i < 16; i++) {
+		if (ip6stat.ip6s_sources_otherif[i]) {
+			if (first) {
+				printf("\tsource addresses on a non-outgoing I/F\n");
+				first = 0;
+			}
+			PRINT_SCOPESTAT(ip6s_sources_otherif[i], i);
+		}
+	}
+	for (first = 1, i = 0; i < 16; i++) {
+		if (ip6stat.ip6s_sources_samescope[i]) {
+			if (first) {
+				printf("\tsource addresses of same scope\n");
+				first = 0;
+			}
+			PRINT_SCOPESTAT(ip6s_sources_samescope[i], i);
+		}
+	}
+	for (first = 1, i = 0; i < 16; i++) {
+		if (ip6stat.ip6s_sources_otherscope[i]) {
+			if (first) {
+				printf("\tsource addresses of a different scope\n");
+				first = 0;
+			}
+			PRINT_SCOPESTAT(ip6s_sources_otherscope[i], i);
+		}
+	}
+	for (first = 1, i = 0; i < 16; i++) {
+		if (ip6stat.ip6s_sources_deprecated[i]) {
+			if (first) {
+				printf("\tdeprecated source addresses\n");
+				first = 0;
+			}
+			PRINT_SCOPESTAT(ip6s_sources_deprecated[i], i);
+		}
 	}
 #undef p
 #undef p1
@@ -680,7 +809,7 @@ ip6_ifstats(ifname)
 	int s;
 #define	p(f, m) if (ifr.ifr_ifru.ifru_stat.f || sflag <= 1) \
     printf(m, (unsigned long long)ifr.ifr_ifru.ifru_stat.f, \
-    plural(ifr.ifr_ifru.ifru_stat.f))
+	plural(ifr.ifr_ifru.ifru_stat.f))
 #define	p_5(f, m) if (ifr.ifr_ifru.ifru_stat.f || sflag <= 1) \
     printf(m, ip6stat.f)
 
@@ -1006,8 +1135,8 @@ icmp6_stats(off, name)
     printf(m, (unsigned long long)icmp6stat.f, plural(icmp6stat.f))
 
 	p(icp6s_error, "\t%llu call%s to icmp_error\n");
-	p(icp6s_canterror, "\t%llu error%s not generated because old message "
-		"was icmp or so\n");
+	p(icp6s_canterror,
+	    "\t%llu error%s not generated because old message was icmp or so\n");
 	for (first = 1, i = 0; i < 256; i++)
 		if (icmp6stat.icp6s_outhist[i] != 0) {
 			if (first) {
@@ -1046,7 +1175,7 @@ icmp6_ifstats(ifname)
 	int s;
 #define	p(f, m) if (ifr.ifr_ifru.ifru_icmp6stat.f || sflag <= 1) \
     printf(m, (unsigned long long)ifr.ifr_ifru.ifru_icmp6stat.f, \
-    plural(ifr.ifr_ifru.ifru_icmp6stat.f))
+	plural(ifr.ifr_ifru.ifru_icmp6stat.f))
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		perror("Warning: socket(AF_INET6)");

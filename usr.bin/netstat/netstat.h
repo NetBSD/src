@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.17 1999/12/13 15:22:55 itojun Exp $	*/
+/*	$NetBSD: netstat.h,v 1.18 2000/02/26 09:55:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,6 +95,10 @@ void	mroute6pr __P((u_long, u_long, u_long));
 void	mrt6_stats __P((u_long, u_long));
 char	*routename6 __P((struct sockaddr_in6 *));
 #endif /*INET6*/
+
+#ifdef IPSEC
+void	pfkey_stats __P((u_long, char *));
+#endif
 
 void	mbpr(u_long, u_long, u_long, u_long, u_long);
 
