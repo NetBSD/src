@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.34 1999/01/19 23:03:21 mycroft Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.35 1999/01/19 23:39:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -183,7 +183,6 @@ icmp_error(n, type, code, dest, destifp)
 			icp->icmp_nextmtu = htons(destifp->if_mtu);
 	}
 
-	HTONS(oip->ip_id);
 	HTONS(oip->ip_off);
 	HTONS(oip->ip_len);
 	icp->icmp_code = code;

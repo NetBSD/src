@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.32 1998/11/25 21:13:58 sommerfe Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.33 1999/01/19 23:39:57 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -1024,7 +1024,9 @@ frdest_t *fdp;
 	 */
 	if (ip->ip_len <= ifp->if_mtu) {
 # ifndef sparc
+#  ifndef __NetBSD__
 		ip->ip_id = htons(ip->ip_id);
+#  endif
 		ip->ip_len = htons(ip->ip_len);
 		ip->ip_off = htons(ip->ip_off);
 # endif
