@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.45 2003/06/24 07:39:26 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.46 2003/06/24 07:54:48 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.45 2003/06/24 07:39:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.46 2003/06/24 07:54:48 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -781,7 +781,7 @@ nd6_na_input(m, off, icmp6len)
 			dr = defrouter_lookup(in6, rt->rt_ifp);
 			if (dr)
 				defrtrlist_del(dr);
-			else if (!ip6_forwarding && ip6_accept_rtadv) {
+			else if (!ip6_forwarding) {
 				/*
 				 * Even if the neighbor is not in the default
 				 * router list, the neighbor may be used
