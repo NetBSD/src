@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.3 2003/08/07 16:29:29 agc Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.4 2003/10/22 21:13:44 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.3 2003/08/07 16:29:29 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.4 2003/10/22 21:13:44 uwe Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -272,7 +272,7 @@ copystr(const void *kfaddr, void *kdaddr, size_t maxlen, size_t *lencopied)
 	int i;
 
 	for (i = 0; i < maxlen; i++) {
-		if ((*to++ = *from++) == NULL) {
+		if ((*to++ = *from++) == '\0') {
 			if (lencopied)
 				*lencopied = i + 1;
 			return (0);
