@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.14 1999/11/09 15:06:35 drochner Exp $	*/
+/*	$NetBSD: finger.c,v 1.15 2002/05/02 13:04:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,7 +56,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)finger.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: finger.c,v 1.14 1999/11/09 15:06:35 drochner Exp $");
+__RCSID("$NetBSD: finger.c,v 1.15 2002/05/02 13:04:10 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ main(argc, argv)
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "usage: finger [-lmpsho] [login ...]\n");
+			    "usage: finger [-lmpshog] [login ...]\n");
 			exit(1);
 		}
 	argc -= optind;
