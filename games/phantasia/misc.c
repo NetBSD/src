@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.9 2003/05/08 13:03:49 wiz Exp $	*/
+/*	$NetBSD: misc.c,v 1.10 2004/01/01 16:03:46 jsm Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -945,7 +945,7 @@ error(whichfile)
 	} else
 		funcp = printf;
 
-	(*funcp) ("An unrecoverable error has occurred reading %s.  (errno = %d)\n", whichfile, errno);
+	(*funcp) ("An unrecoverable error has occurred reading %s.  (%s)\n", whichfile, strerror(errno));
 	(*funcp) ("Please run 'setup' to determine the problem.\n");
 	cleanup(TRUE);
 	/* NOTREACHED */
