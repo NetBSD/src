@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.191 2005/02/13 23:50:22 fredb Exp $	*/
+/*	$NetBSD: audio.c,v 1.192 2005/02/13 23:53:20 fredb Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.191 2005/02/13 23:50:22 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.192 2005/02/13 23:53:20 fredb Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -262,7 +262,8 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	void *hdlp;
 	int error;
 	mixer_devinfo_t mi;
-	int iclass, mclass, oclass, props;
+	int iclass, mclass, oclass, rclass, props;
+	int record_master_found, record_source_found;
 
 	sc = (void *)self;
 	sa = aux;
@@ -325,7 +326,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	iclass = mclass = oclass = -1;
+	iclass = mclass = oclass = rclass = -1;
 	sc->sc_inports.index = -1;
 	sc->sc_inports.master = -1;
 	sc->sc_inports.nports = 0;
@@ -351,13 +352,19 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	for(mi.index = 0; ; mi.index++) {
 		if (hwp->query_devinfo(hdlp, &mi) != 0)
 			break;
+		 /*
+		  * The type of AUDIO_MIXER_CLASS merely introduces a class.
+		  * All the other types describe an actual mixer.
+		  */
 		if (mi.type == AUDIO_MIXER_CLASS) {
-			if (strcmp(mi.label.name, AudioCrecord) == 0)
+			if (strcmp(mi.label.name, AudioCinputs) == 0)
 				iclass = mi.mixer_class;
 			if (strcmp(mi.label.name, AudioCmonitor) == 0)
 				mclass = mi.mixer_class;
 			if (strcmp(mi.label.name, AudioCoutputs) == 0)
 				oclass = mi.mixer_class;
+			if (strcmp(mi.label.name, AudioCrecord) == 0)
+				rclass = mi.mixer_class;
 		}
 	}
 	/*
@@ -365,21 +372,24 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	 * underlying "mixer" control.  We walk through the whole list once,
 	 * assigning likely candidates as we come across them.
 	 */
+	record_master_found = 0;
+	record_source_found = 0;
 	for(mi.index = 0; ; mi.index++) {
 		if (hwp->query_devinfo(hdlp, &mi) != 0)
 			break;
 		if (mi.type == AUDIO_MIXER_CLASS)
 			continue;
 		if (mi.mixer_class == iclass) {
-			if (strcmp(mi.label.name, AudioNmaster) == 0)
+			/*
+			 * AudioCinputs is only a fallback, when we don't
+			 * find what we're looking for in AudioCrecord, so
+			 * check the flags before accepting one of these.
+			 */
+			if (strcmp(mi.label.name, AudioNmaster) == 0
+			    && record_master_found == 0)
 				sc->sc_inports.master = mi.index;
-#if 1	/* Deprecated. Use AudioNmaster. */
-			if (strcmp(mi.label.name, AudioNrecord) == 0)
-				sc->sc_inports.master = mi.index;
-			if (strcmp(mi.label.name, AudioNvolume) == 0)
-				sc->sc_inports.master = mi.index;
-#endif
-			if (strcmp(mi.label.name, AudioNsource) == 0) {
+			if (strcmp(mi.label.name, AudioNsource) == 0
+			    && record_source_found == 0) {
 				if (mi.type == AUDIO_MIXER_ENUM) {
 				    int i;
 				    for(i = 0; i < mi.un.e.num_mem; i++)
@@ -400,6 +410,38 @@ audioattach(struct device *parent, struct device *self, void *aux)
 			if (strcmp(mi.label.name, AudioNselect) == 0)
 				au_setup_ports(sc, &sc->sc_outports, &mi,
 				    otable);
+		} else if (mi.mixer_class == rclass) {
+			/*
+			 * These are the preferred mixers for the audio record
+			 * controls, so set the flags here, but don't check.
+			 */
+			if (strcmp(mi.label.name, AudioNmaster) == 0) {
+				sc->sc_inports.master = mi.index;
+				record_master_found = 1;
+			}
+#if 1	/* Deprecated. Use AudioNmaster. */
+			if (strcmp(mi.label.name, AudioNrecord) == 0) {
+				sc->sc_inports.master = mi.index;
+				record_master_found = 1;
+			}
+			if (strcmp(mi.label.name, AudioNvolume) == 0) {
+				sc->sc_inports.master = mi.index;
+				record_master_found = 1;
+			}
+#endif
+			if (strcmp(mi.label.name, AudioNsource) == 0) {
+				if (mi.type == AUDIO_MIXER_ENUM) {
+				    int i;
+				    for(i = 0; i < mi.un.e.num_mem; i++)
+					if (strcmp(mi.un.e.member[i].label.name,
+						    AudioNmixerout) == 0)
+						sc->sc_inports.mixerout =
+						    mi.un.e.member[i].ord;
+				}
+				au_setup_ports(sc, &sc->sc_inports, &mi,
+				    itable);
+				record_source_found = 1;
+			}
 		}
 	}
 	DPRINTF(("audio_attach: inputs ports=0x%x, input master=%d, "
