@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.130 2002/01/26 13:24:54 aymeric Exp $	*/
+/*	$NetBSD: locore.s,v 1.131 2002/02/13 16:34:05 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -460,7 +460,7 @@ ENTRY_NOPROFILE(lev5intr)
 #if NSER > 0
 	jsr	_C_LABEL(ser_fastint)
 #else
-	INTREQWADDR(a0)
+	INTREQWADDR(%a0)
 	movew	#INTF_RBF,%a0@		| clear RBF interrupt in intreq
 #endif
 	moveml	%sp@+,%d0/%d1/%a0/%a1
