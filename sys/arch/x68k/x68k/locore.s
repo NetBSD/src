@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.54 2000/05/14 14:13:55 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.55 2000/05/18 15:24:30 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1066,7 +1066,6 @@ ENTRY(switch_exit)
  * to wait for something to come ready.
  */
 ASENTRY_NOPROFILE(Idle)
-	stop	#PSL_LOWIPL
 	movw	#PSL_HIGHIPL,%sr
 	movl	_C_LABEL(whichqs),%d0
 	jne	Lsw1
@@ -1074,8 +1073,11 @@ ASENTRY_NOPROFILE(Idle)
 
 	/* Try to zero some pages. */
 	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%d0
-	jeq	_ASM_LABEL(Idle)
+	jeq	1f
 	jbsr	_C_LABEL(uvm_pageidlezero)
+	jra	_ASM_LABEL(Idle)
+1:
+	stop	#PSL_LOWIPL
 	jra	_ASM_LABEL(Idle)
 
 Lbadsw:
