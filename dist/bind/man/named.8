@@ -1,4 +1,4 @@
-.\"     $NetBSD: named.8,v 1.4 2000/11/07 06:00:27 lukem Exp $
+.\"     $NetBSD: named.8,v 1.5 2001/01/27 07:22:05 itojun Exp $
 .\"
 .\" ++Copyright++ 1985, 1996
 .\" -
@@ -334,7 +334,7 @@ An example SOA record is as follows:
 				86400 )	; minimum
 .Ed
 .Pp
-The SOA specifies a serial number, which should be changed each time the
+The SOA specifies a serial number, which should be incremented each time the
 master file is changed.  Note that the serial number can be given as a
 dotted number, but this is a 
 .Em very 

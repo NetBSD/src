@@ -1,4 +1,4 @@
-/*	$NetBSD: mkservdb.c,v 1.1.1.2 2001/01/27 06:16:33 itojun Exp $	*/
+/*	$NetBSD: mkservdb.c,v 1.2 2001/01/27 07:21:58 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: mkservdb.c,v 1.9 2001/01/26 06:54:11 vixie Exp";

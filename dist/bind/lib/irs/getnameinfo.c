@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.1.1.2 2001/01/27 06:19:34 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.2 2001/01/27 07:22:03 itojun Exp $	*/
 
 /*
  * Issues to be discussed:

@@ -1,4 +1,4 @@
-/*	$NetBSD: pathtemplate.h,v 1.1.1.2 2001/01/27 06:18:04 itojun Exp $	*/
+/*	$NetBSD: pathtemplate.h,v 1.2 2001/01/27 07:22:00 itojun Exp $	*/
 
 /*
  *	Id: pathtemplate.h,v 8.6 2000/04/21 06:54:15 vixie Exp

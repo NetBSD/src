@@ -1,4 +1,4 @@
-/*	$NetBSD: irpd.c,v 1.1.1.2 2001/01/27 06:16:33 itojun Exp $	*/
+/*	$NetBSD: irpd.c,v 1.2 2001/01/27 07:21:57 itojun Exp $	*/
 
 /*
  * Copyright(c) 1999 by Internet Software Consortium.

@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.l,v 1.1.1.2 2001/01/27 06:18:20 itojun Exp $	*/
+/*	$NetBSD: commands.l,v 1.2 2001/01/27 07:22:01 itojun Exp $	*/
 
 %{
 

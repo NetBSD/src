@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib.c,v 1.2 2000/10/08 20:03:13 is Exp $	*/
+/*	$NetBSD: eventlib.c,v 1.3 2001/01/27 07:22:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: eventlib.c,v 1.44 1999/10/13 17:11:20 vixie Exp";
+static const char rcsid[] = "Id: eventlib.c,v 1.45 2000/02/04 07:25:39 vixie Exp";
 #endif
 
 #include "port_before.h"
@@ -347,7 +347,8 @@ evGetNext(evContext opaqueCtx, evEvent *opaqueEv, int options) {
 			}
 			ERR(pselect_errno);
 		}
-		if (x == 0 && (nextTimer && !timerPast) && (options & EV_POLL))
+		if (x == 0 && (nextTimer == NULL || !timerPast) &&
+		    (options & EV_POLL))
 			ERR(EWOULDBLOCK);
 		ctx->fdCount = x;
 #ifdef EVENTLIB_TIME_CHECKS
