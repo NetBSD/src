@@ -236,7 +236,7 @@
 				/* in the boot code to prevent single   */
 				/* user startup ....                    */
 
-#if !defined PCVT_24LINESDEF	/* ---------- DEFAULT: ON ------------- */
+#if !defined PCVT_24LINESDEF	/* ---------- DEFAULT: OFF ------------ */
 # define PCVT_24LINESDEF 0	/* use 24 lines in VT 25 lines mode and	*/
 #elif PCVT_24LINESDEF != 0	/* HP 28 lines mode by default to have	*/
 #undef PCVT_24LINESDEF		/* the the better compatibility to the	*/
@@ -307,7 +307,7 @@
 				/* has to be in the driver or has to    */
 				/* move as a ioctl call to scon ....	*/
 				
-#if !defined PCVT_NULLCHARS	/* ---------- DEFAULT: OFF ------------ */
+#if !defined PCVT_NULLCHARS	/* ---------- DEFAULT: ON ------------- */
 # define PCVT_NULLCHARS 1	/* allow the keyboard to send null 	*/
 #elif PCVT_NULLCHARS != 0	/* program. this has the side effect,	*/
 # undef PCVT_NULLCHARS		/* (0x00) characters to the calling	*/
