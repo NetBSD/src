@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# Here is a generic script that makes a Sun2 boot tape using
+# the files in this directory.  The tape layout is:
+#
+#   segment 0:  tapeboot
+#   segment 1:  netbsd (RAMDISK)
+#   segment 3:  miniroot image
+#
+# $NetBSD: MakeBootTape,v 1.1 2001/05/18 00:16:38 fredette Exp $
+
+T=${1:-/dev/nrst0}
+
+# Entertain...
+set -x
+
+# Make sure we start at the beginning.
+mt -f $T rewind
+
+# Segment 1 is the tapeboot program.
+dd if=tapeboot of=$T obs=8k conv=sync
+
+# Segment 2 is the Sun2 ramdisk kernel.
+gzip -d -c ../../binary/kernel/netbsd.RAMDISK.gz |
+  dd of=$T obs=8k conv=sync
+
+# Segment 4 is the miniroot image, unzipped!
+gzip -d -c ../miniroot/miniroot.gz |
+  dd of=$T obs=8k
+
+# Done!
+mt -f $T rewind
+
