@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getgrent.c	5.9 (Berkeley) 4/1/91";*/
-static char *rcsid = "$Id: getgrent.c,v 1.6 1993/11/24 19:43:54 jtc Exp $";
+static char *rcsid = "$Id: getgrent.c,v 1.7 1994/03/06 09:04:11 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -107,6 +107,12 @@ start_gr()
 {
 	if (_gr_fp) {
 		rewind(_gr_fp);
+#ifdef YP
+		__ypmode = 0;
+		if(__ypcurrent)
+			free(__ypcurrent);
+		__ypcurrent = NULL;
+#endif
 		return(1);
 	}
 	return((_gr_fp = fopen(_PATH_GROUP, "r")) ? 1 : 0);
@@ -134,6 +140,12 @@ endgrent()
 	if (_gr_fp) {
 		(void)fclose(_gr_fp);
 		_gr_fp = NULL;
+#ifdef YP
+		__ypmode = 0;
+		if(__ypcurrent)
+			free(__ypcurrent);
+		__ypcurrent = NULL;
+#endif
 	}
 }
 
@@ -235,6 +247,10 @@ parse:
 			}
 			if ((*m = strsep(&bp, ", \n")) == NULL)
 				break;
+			if (**m == '\0') {
+				*m = NULL;
+				break;
+			}
 		}
 		return(1);
 	}
