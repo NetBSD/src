@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.h,v 1.2 1997/02/19 10:06:05 ragge Exp $ */
+/*	$NetBSD: ka410.h,v 1.3 1998/05/22 09:49:08 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -147,19 +147,6 @@ extern volatile unsigned char *ka410_intmsk;
 #define INTR_DC	(1<<0)	/* Disk controller */
 
 /*
- * interrupt vector numbers
- */
-#define IVEC_BASE	0x20040020
-#define IVEC_SR		0x000002C0
-#define IVEC_ST		0x000002C4
-#define IVEC_NP		0x00000250
-#define IVEC_NS		0x00000254
-#define IVEC_VF		0x00000244
-#define IVEC_VS		0x00000248
-#define IVEC_SC		0x000003F8
-#define IVEC_DC		0x000003FC
-
-/*
  * Clock-Chip data in NVRAM
  */
 #define KA410_CPMBX	0x200B0038	/* Console Mailbox (1 byte) */
@@ -208,5 +195,3 @@ struct ka410_clock {
 
 /* Prototypes */
 int ka410_setup __P((struct uvax_calls *p, int flags));
-static int ka410_clkread __P((time_t));
-static void ka410_clkwrite __P((void));
