@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pager.c,v 1.24 1997/01/03 18:03:39 mrg Exp $	*/
+/*	$NetBSD: vm_pager.c,v 1.25 1997/09/20 00:44:59 enami Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -68,6 +68,10 @@
  *	Paging space routine stubs.  Emulates a matchmaker-like interface
  *	for builtin pagers.
  */
+
+#include "opt_devpager.h"
+#include "opt_swappager.h"
+#include "opt_vnodepager.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
