@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.118 2002/05/22 15:40:50 wiz Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.119 2002/05/23 15:03:33 leo Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.118 2002/05/22 15:40:50 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.119 2002/05/23 15:03:33 leo Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2682,6 +2682,9 @@ rf_find_raid_components()
 
 		/* we don't care about floppies... */
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"fd")) {
+			continue;
+		}
+		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"hdfd")) {
 			continue;
 		}
 		
