@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.369 2000/09/10 11:48:38 lukem Exp $
+#	$NetBSD: GENERIC,v 1.370 2000/09/20 18:22:22 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.369 $"
+#ident 		"GENERIC-$Revision: 1.370 $"
 
 maxusers	32		# estimated number of users
 
@@ -17,7 +17,7 @@ options 	I686_CPU
 
 # CPU-related options.
 options 	MATH_EMULATE	# floating point emulation
-#options 	VM86		# virtual 8086 emulation
+options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 #options 	DUMMY_NOPS
