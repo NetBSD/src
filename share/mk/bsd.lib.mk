@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.141 1998/10/07 17:49:15 wrstuden Exp $
+#	$NetBSD: bsd.lib.mk,v 1.142 1998/11/05 00:52:02 jonathan Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -48,18 +48,12 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 
 .if (${MACHINE_ARCH} == "alpha")
 		# Alpha-specific shared library flags
-SHLIB_LDSTARTFILE= ${DESTDIR}/usr/lib/crtbeginS.o
-SHLIB_LDENDFILE= ${DESTDIR}/usr/lib/crtendS.o
-
 CPICFLAGS ?= -fpic -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?=
 .elif (${MACHINE_ARCH} == "mips")
 		# mips-specific shared library flags
-# Still use gnu-derived ld.so on pmax; don't have or need lib<>.so support.
-SHLIB_LDSTARTFILE=
-SHLIB_LDENDFILE=
 
 # On mips, all libs need to be compiled with ABIcalls, not just sharedlibs.
 CPICFLAGS?=
@@ -91,6 +85,8 @@ APICFLAGS?= -k
 .if (${OBJECT_FMT} == "ELF")
 SHLIB_SOVERSION=${SHLIB_MAJOR}
 SHLIB_SHFLAGS=-soname lib${LIB}.so.${SHLIB_SOVERSION}
+SHLIB_LDSTARTFILE= ${DESTDIR}/usr/lib/crtbeginS.o
+SHLIB_LDENDFILE= ${DESTDIR}/usr/lib/crtendS.o
 .endif
 
 CFLAGS+=	${COPTS}
