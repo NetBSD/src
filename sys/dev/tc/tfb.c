@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.16 1999/08/25 02:02:22 nisimura Exp $ */
+/* $NetBSD: tfb.c,v 1.17 1999/08/25 07:56:22 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.16 1999/08/25 02:02:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.17 1999/08/25 07:56:22 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,8 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.16 1999/08/25 02:02:22 nisimura Exp $");
  * N.B. a pair of Bt431s are located adjascently.
  * 	struct bt431twin {
  *		struct {
- *			u_int8_t u0;	for sprite image
- *			u_int8_t u1;	for sprite mask
+ *			u_int8_t u0;	for sprite mask
+ *			u_int8_t u1;	for sprite image
  *			unsigned :16;
  *		} bt_lo;
  *		...
@@ -435,6 +435,7 @@ tfbioctl(v, cmd, data, flag, p)
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = /* WSDISPLAY_TYPE_TX */ 0x19980910;
+printf("WSDISPLAYIO_GTYPE: %d\n", *(u_int *)data);
 		return (0);
 
 	case WSDISPLAYIO_GINFO:
@@ -590,7 +591,6 @@ tfbintr(arg)
 		u_int8_t *cp = sc->sc_cursor.cc_color;
 
 		SELECT463(vdac, BT463_IREG_CURSOR_COLOR_0);
-#if 0
 		BYTE(vdac, bt_reg) = cp[1]; tc_wmb();
 		BYTE(vdac, bt_reg) = cp[3]; tc_wmb();
 		BYTE(vdac, bt_reg) = cp[5]; tc_wmb();
@@ -606,23 +606,6 @@ tfbintr(arg)
 		BYTE(vdac, bt_reg) = cp[1]; tc_wmb();
 		BYTE(vdac, bt_reg) = cp[3]; tc_wmb();
 		BYTE(vdac, bt_reg) = cp[5]; tc_wmb();
-#else
-		BYTE(vdac, bt_reg) = cp[0]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[2]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[4]; tc_wmb();
-
-		BYTE(vdac, bt_reg) = cp[1]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[3]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[5]; tc_wmb();
-
-		BYTE(vdac, bt_reg) = cp[0]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[2]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[4]; tc_wmb();
-
-		BYTE(vdac, bt_reg) = cp[0]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[2]; tc_wmb();
-		BYTE(vdac, bt_reg) = cp[4]; tc_wmb();
-#endif
 	}
 	if (v & DATA_CURSHAPE_CHANGED) {
 		u_int8_t *ip, *mp, img, msk;
@@ -645,7 +628,7 @@ tfbintr(arg)
 				msk = *mp++;
 				img &= msk;	/* cookie off image */
 				HALF(curs, bt_ram)
-				    = (flip[msk] << 8) | flip[img];
+				    = (flip[img] << 8) | flip[msk];
 				tc_wmb();
 			}
 			bcnt += 2;
