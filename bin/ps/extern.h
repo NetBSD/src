@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20 2001/07/14 06:53:43 matt Exp $	*/
+/*	$NetBSD: extern.h,v 1.21 2002/06/19 08:11:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ struct varent;
 extern double ccpu;
 extern int eval, fscale, mempages, nlistread, rawcpu, maxslp, uspace;
 extern int sumrusage, termwidth, totwidth;
-extern int needenv, needcomm, commandonly, dontuseprocfs, use_procfs;
+extern int needenv, needcomm, commandonly, dontuseprocfs;
 extern uid_t myuid;
 extern kvm_t *kd;
 extern VAR var[];
