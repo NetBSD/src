@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 1997/03/21 22:46:12 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 1997/03/26 23:27:12 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -3598,7 +3598,7 @@ pmap_set_kcore_hdr(chdr_p)
 	int i;
 
 	chdr_p->ckh_contig_end = virtual_contig_end;
-	chdr_p->ckh_kernCbase = kernCbase;
+	chdr_p->ckh_kernCbase = (u_long) kernCbase;
 	for (i = 0; i < NPHYS_RAM_SEGS; i++) {
 		spa = avail_mem[i].pmem_start;
 		spa = _trunc_page(spa);
