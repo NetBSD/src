@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 1999/11/15 19:18:25 fvdl Exp $	*/
+/*	$NetBSD: main.c,v 1.34.4.1 2001/11/24 22:07:46 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.34 1999/11/15 19:18:25 fvdl Exp $");
+__RCSID("$NetBSD: main.c,v 1.34.4.1 2001/11/24 22:07:46 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ static int	argtoi __P((int, char *, char *, int));
 static int	checkfilesys __P((const char *, char *, long, int));
 static  void usage __P((void));
 
+extern char *__progname;
 
 int
 main(argc, argv)
@@ -202,9 +203,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	struct dups *dp;
 	struct zlncnt *zlnp;
 #ifdef LITE2BORKEN
-	int cylno, flags;
-#else
-	int cylno;
+	int flags;
 #endif
 
 	if (preen && child)
@@ -240,8 +239,10 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	 * 1b: locate first references to duplicates, if any
 	 */
 	if (duplist) {
-		if (preen || usedsoftdep)
-			pfatal("INTERNAL ERROR: dups with -p");
+		if (preen)
+			pfatal("INTERNAL ERROR: dups with -p\n");
+		if (usedsoftdep)
+			pfatal("INTERNAL ERROR: dups with softdep\n");
 		printf("** Phase 1b - Rescan For More DUPS\n");
 		pass1b();
 	}
@@ -315,14 +316,6 @@ checkfilesys(filesys, mntpt, auxdata, child)
 		(void)time(&sblock->fs_time);
 		sbdirty();
 	}
-	if ((cvtlevel && sblk.b_dirty) || doswap) {
-		/* 
-		 * Write out the duplicate super blocks
-		 */
-		for (cylno = 0; cylno < sblock->fs_ncg; cylno++)
-			bwrite(fswritefd, sblk.b_un.b_buf,
-			    fsbtodb(sblock, cgsblock(sblock, cylno)), SBSIZE);
-	}
 	if (rerun)
 		markclean = 0;
 #if LITE2BORKEN
@@ -385,8 +378,6 @@ checkfilesys(filesys, mntpt, auxdata, child)
 static void
 usage()
 {
-	extern char *__progname;
-
 	(void) fprintf(stderr,
 	    "Usage: %s [-dfnpy] [-B be|le] [-b block] [-c level] [-m mode]"
 			"filesystem ...\n",
