@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.4 2004/04/26 01:41:15 matt Exp $	*/
+/*	$NetBSD: keysock.c,v 1.5 2004/06/10 01:39:59 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.4 2004/04/26 01:41:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.5 2004/06/10 01:39:59 jonathan Exp $");
 
 #include "opt_ipsec.h"
 
@@ -75,9 +75,18 @@ static struct key_cb key_cb;
 static struct sockaddr key_dst = { 2, PF_KEY, };
 static struct sockaddr key_src = { 2, PF_KEY, };
 
-static int key_sendup0 __P((struct rawcb *, struct mbuf *, int));
+
+static int key_sendup0 __P((struct rawcb *, struct mbuf *, int, int));
 
 struct pfkeystat pfkeystat;
+
+int key_registered_sb_max = (NMBCLUSTERS * MHLEN); /* XXX arbitrary */
+
+/* XXX sysctl */
+#ifdef __FreeBSD__
+SYSCTL_INT(_net_key, OID_AUTO, registered_sbmax, CTLFLAG_RD, 
+    &key_registered_sb_max , 0, "Maximum kernel-to-user PFKEY datagram size");
+#endif
 
 /*
  * key_output()
@@ -144,12 +153,13 @@ end:
  * send message to the socket.
  */
 static int
-key_sendup0(rp, m, promisc)
+key_sendup0(rp, m, promisc, sbprio)
 	struct rawcb *rp;
 	struct mbuf *m;
 	int promisc;
 {
 	int error;
+	int ok;
 
 	if (promisc) {
 		struct sadb_msg *pmsg;
@@ -174,8 +184,14 @@ key_sendup0(rp, m, promisc)
 		pfkeystat.in_msgtype[pmsg->sadb_msg_type]++;
 	}
 
-	if (!sbappendaddr(&rp->rcb_socket->so_rcv, (struct sockaddr *)&key_src,
-	    m, NULL)) {
+	if (sbprio == 0)
+		ok = sbappendaddr(&rp->rcb_socket->so_rcv,
+			       (struct sockaddr *)&key_src, m, NULL);
+	else
+		ok = sbappendaddrchain(&rp->rcb_socket->so_rcv,
+			       (struct sockaddr *)&key_src, m, sbprio);
+
+	  if (!ok) {
 		pfkeystat.in_nomem++;
 		m_freem(m);
 		error = ENOBUFS;
@@ -272,7 +288,7 @@ key_sendup(so, msg, len, target)
 
 /* so can be NULL if target != KEY_SENDUP_ONE */
 int
-key_sendup_mbuf(so, m, target)
+key_sendup_mbuf(so, m, target /*, sbprio */)
 	struct socket *so;
 	struct mbuf *m;
 	int target;
@@ -282,11 +298,27 @@ key_sendup_mbuf(so, m, target)
 	int sendup;
 	struct rawcb *rp;
 	int error = 0;
+	int sbprio = 0; /* XXX should be a parameter */
 
 	if (m == NULL)
 		panic("key_sendup_mbuf: NULL pointer was passed.\n");
 	if (so == NULL && target == KEY_SENDUP_ONE)
 		panic("key_sendup_mbuf: NULL pointer was passed.\n");
+	
+	/*
+	 * RFC 2367 says ACQUIRE and other kernel-generated messages
+	 * are special. We treat all KEY_SENDUP_REGISTERED messages
+	 * as special, delivering them to all registered sockets
+	 * even if the socket is at or above its so->so_rcv.sb_max limits.
+	 * The only constraint is that the  so_rcv data fall below
+	 * key_registered_sb_max.
+	 * Doing that check here avoids reworking every key_sendup_mbuf()
+	 * in the short term. . The rework will be done after a technical
+	 * conensus that this approach is appropriate.
+ 	 */
+	if (target == KEY_SENDUP_REGISTERED) {
+		sbprio = SB_PRIO_BESTEFFORT;
+	}
 
 	pfkeystat.in_total++;
 	pfkeystat.in_bytes += m->m_pkthdr.len;
@@ -309,6 +341,7 @@ key_sendup_mbuf(so, m, target)
 
 	LIST_FOREACH(rp, &rawcb_list, rcb_list)
 	{
+		struct socket * kso = rp->rcb_socket;
 		if (rp->rcb_proto.sp_family != PF_KEY)
 			continue;
 		if (rp->rcb_proto.sp_protocol
@@ -325,7 +358,7 @@ key_sendup_mbuf(so, m, target)
 		 */
 		if (((struct keycb *)rp)->kp_promisc) {
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
-				(void)key_sendup0(rp, n, 1);
+				(void)key_sendup0(rp, n, 1, 0);
 				n = NULL;
 			}
 		}
@@ -345,8 +378,16 @@ key_sendup_mbuf(so, m, target)
 			sendup++;
 			break;
 		case KEY_SENDUP_REGISTERED:
-			if (kp->kp_registered)
-				sendup++;
+			if (kp->kp_registered) {
+				if (kso->so_rcv.sb_cc <= key_registered_sb_max)
+					sendup++;
+			  	else
+			  		printf("keysock: "
+					       "registered sendup dropped, "
+					       "sb_cc %ld max %d\n",
+					       kso->so_rcv.sb_cc,
+					       key_registered_sb_max);
+			}
 			break;
 		}
 		pfkeystat.in_msgtarget[target]++;
@@ -360,7 +401,7 @@ key_sendup_mbuf(so, m, target)
 			return ENOBUFS;
 		}
 
-		if ((error = key_sendup0(rp, n, 0)) != 0) {
+		if ((error = key_sendup0(rp, n, 0, 0)) != 0) {
 			m_freem(m);
 			return error;
 		}
@@ -368,8 +409,9 @@ key_sendup_mbuf(so, m, target)
 		n = NULL;
 	}
 
+	/* The 'later' time for processing the exact target has arrived */
 	if (so) {
-		error = key_sendup0(sotorawcb(so), m, 0);
+		error = key_sendup0(sotorawcb(so), m, 0, sbprio);
 		m = NULL;
 	} else {
 		error = 0;
