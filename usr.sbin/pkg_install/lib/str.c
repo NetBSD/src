@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.33 2002/02/02 15:30:18 yamt Exp $	*/
+/*	$NetBSD: str.c,v 1.34 2002/06/09 03:50:13 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.33 2002/02/02 15:30:18 yamt Exp $");
+__RCSID("$NetBSD: str.c,v 1.34 2002/06/09 03:50:13 yamt Exp $");
 #endif
 #endif
 
@@ -424,10 +424,13 @@ int
 findmatchingname(const char *dir, const char *pattern, matchfn match, char *data)
 {
 	struct dirent *dp;
-	char tmp_pattern[256];
+	char tmp_pattern[PKG_PATTERN_MAX];
 	DIR    *dirp;
 	int     found;
-	char pat_sfx[256], file_sfx[256];	/* suffixes */
+	char pat_sfx[PKG_SUFFIX_MAX], file_sfx[PKG_SUFFIX_MAX];	/* suffixes */
+
+	if (strlen(pattern) >= PKG_PATTERN_MAX)
+		errx(1, "too long pattern '%s'", pattern);
 
 	found = 0;
 	if ((dirp = opendir(dir)) == (DIR *) NULL) {
@@ -486,8 +489,8 @@ int
 findbestmatchingname_fn(const char *found, char *best)
 {
 	char *found_version, *best_version;
-	char found_no_sfx[255];
-	char best_no_sfx[255];
+	char found_no_sfx[PKG_PATTERN_MAX];
+	char best_no_sfx[PKG_PATTERN_MAX];
 
 	/* The same suffix-hack-off again, but we can't do it
 	 * otherwise without changing the function call interface
@@ -573,6 +576,8 @@ strip_txz(char *buf, char *sfx, const char *fname)
 {
 	char *s;
 
+	assert(strlen(fname) < PKG_PATTERN_MAX);
+
 	strcpy(buf, fname);
 	if (sfx) sfx[0] = '\0';
 	
@@ -591,6 +596,11 @@ strip_txz(char *buf, char *sfx, const char *fname)
 	s = strstr(buf, ".t[bg]z");
 	if (s) {
 		*s = '\0'; 		/* strip off any ".t[bg]z" */
-		if (sfx) strcpy(sfx, s - buf + fname);
+		if (sfx) {
+			const char *p = s - buf + fname;
+			if (strlen(p) >= PKG_SUFFIX_MAX)
+				errx(1, "too long suffix '%s'", fname);
+			strcpy(sfx, p);
+		}
 	}
 }
