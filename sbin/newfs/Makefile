@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.17 1999/01/15 13:32:06 bouyer Exp $
+#	$NetBSD: Makefile,v 1.18 2001/07/29 09:59:12 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 PROG=	newfs
 SRCS=	dkcksum.c getmntopts.c newfs.c mkfs.c ffs_bswap.c
 MAN=	newfs.8
+
+WARNS=	2
 
 MOUNT=	${.CURDIR}/../mount
 DISKLABEL=${.CURDIR}/../disklabel
