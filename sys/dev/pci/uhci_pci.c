@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.8 1999/08/21 21:35:36 augustss Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.9 1999/09/14 01:07:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ uhci_pci_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_dmatag = pa->pa_dmat;
+	sc->sc_bus.dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
