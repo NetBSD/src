@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.86 1997/09/19 13:52:37 leo Exp $ */
+/* $NetBSD: machdep.c,v 1.87 1997/09/19 14:47:33 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 1997/09/19 13:52:37 leo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 1997/09/19 14:47:33 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,7 +495,7 @@ unknown_cputype:
 	 * Initialize error message buffer (at end of core).
 	 */
 	lastusablepage -= btoc(MSGBUFSIZE);
-	msgbufaddr = ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1));
+	msgbufaddr = (caddr_t) ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1));
 	initmsgbuf(msgbufaddr, alpha_round_page(MSGBUFSIZE));
 	
 
