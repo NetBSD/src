@@ -4,16 +4,16 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: GNU grep 2.2\n"
-"POT-Creation-Date: 1999-02-03 13:09-0500\n"
-"PO-Revision-Date: 1998-09-04 10:26-0500\n"
+"Project-Id-Version: GNU grep 2.2f\n"
+"POT-Creation-Date: 1999-02-14 12:08-0500\n"
+"PO-Revision-Date: 1999-02-08 14:30-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8-bit\n"
 
-#: src/dfa.c:155 src/dfa.c:167 src/dfa.c:180 src/grep.c:858
+#: src/dfa.c:155 src/dfa.c:167 src/dfa.c:180 src/grep.c:861
 msgid "Memory exhausted"
 msgstr "Mémoire épuisée."
 
@@ -160,49 +160,49 @@ msgstr "?? getopt() a retourné le code de caractère 0%o ??\n"
 msgid "non-option ARGV-elements: "
 msgstr "Des élément ARGV qui ne sont pas des options: "
 
-#: src/grep.c:169 src/grep.c:186 src/grep.c:288 src/grep.c:344 src/kwset.c:184
+#: src/grep.c:172 src/grep.c:189 src/grep.c:291 src/grep.c:347 src/kwset.c:184
 #: src/kwset.c:190
 msgid "memory exhausted"
 msgstr "Mémoire épuisée."
 
-#: src/grep.c:372 src/grep.c:843
+#: src/grep.c:375 src/grep.c:846
 #, c-format
 msgid "%s: warning: %s: %s\n"
 msgstr "%s: AVERTISSEMENT: %s: %s\n"
 
-#: src/grep.c:497 src/grep.c:1318
+#: src/grep.c:500 src/grep.c:1321
 msgid "writing output"
 msgstr "Génération du résultat."
 
-#: src/grep.c:726
+#: src/grep.c:729
 #, c-format
 msgid "Binary file %s matches\n"
-msgstr ""
+msgstr "Fichier binaire %s concorde\n"
 
-#: src/grep.c:742
+#: src/grep.c:745
 msgid "(standard input)"
 msgstr "(entrée standard)"
 
-#: src/grep.c:844
+#: src/grep.c:847
 msgid "recursive directory loop"
-msgstr ""
+msgstr "boucle récursive sur le répertoire"
 
-#: src/grep.c:895
+#: src/grep.c:898
 #, c-format
 msgid "Usage: %s [OPTION]... PATTERN [FILE]...\n"
 msgstr "Usage: %s [OPTION]... PATRON [FICHIER]...\n"
 
-#: src/grep.c:896
+#: src/grep.c:899
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr "Pour en savoir davantage, faites: `%s --help'.\n"
 
-#: src/grep.c:900
+#: src/grep.c:903
 #, c-format
 msgid "Usage: %s [OPTION]... PATTERN [FILE] ...\n"
 msgstr "Usage: %s [OPTION]... PATRON [FICHIER] ...\n"
 
-#: src/grep.c:901
+#: src/grep.c:904
 msgid ""
 "Search for PATTERN in each FILE or standard input.\n"
 "\n"
@@ -231,7 +231,7 @@ msgstr ""
 "  -x, --line-regexp         forcer l'appariement du PATRON que sur des "
 "lignes entières\n"
 
-#: src/grep.c:913
+#: src/grep.c:916
 msgid ""
 "\n"
 "Miscellaneous:\n"
@@ -247,8 +247,7 @@ msgstr ""
 "  -V, --version             afficher le nom et la version du logiciel\n"
 "      --help                afficher l'aide et quitter\n"
 
-#: src/grep.c:920
-#, fuzzy
+#: src/grep.c:923
 msgid ""
 "\n"
 "Output control:\n"
@@ -276,6 +275,11 @@ msgstr ""
 "  -h, --no-filename         supprimer le préfixe du nom de fichier\n"
 "                            sur la sortie\n"
 "  -q, --quiet, --silent     supprimer tout affichage en sortie\n"
+"  -a, --text                ne pas supprimer la sortie binaire\n"
+"  -d, --directories=ACTION  traiter les répertoires selon l'ACTION\n"
+"                            'read' (lecture), 'recurse' (récursivité),\n"
+"                            ou 'skip' (escamotage).\n"
+"  -r, --recursive           équivalent à --directories=recurse.\n"
 "  -L, --files-without-match afficher seulement les noms des fichiers\n"
 "                            ne contenant pas de concordance\n"
 "  -l, --files-with-matches  afficher seulement les noms des fichiers\n"
@@ -283,8 +287,7 @@ msgstr ""
 "  -c, --count               afficher seulement le décompte des lignes\n"
 "                            concordantes par fichier\n"
 
-#: src/grep.c:935
-#, fuzzy
+#: src/grep.c:938
 msgid ""
 "\n"
 "Context control:\n"
@@ -305,10 +308,11 @@ msgstr ""
 "Contrôle du contexte:\n"
 "  -B, --before-context=N    imprimer N lignes du contexte d'en-tête\n"
 "  -A, --after-context=N     imprimer N lignes du contexte finale\n"
+"  -C, --context             imprimer N lignes (2 par défaut) du contexte\n"
+"                            à moins que -A ou -B ne soit spécifié\n"
 "  -NUM                      identique à -B NUM et -A NUM\n"
-"  -C, --context             identique à -2\n"
-"  -U, --binary              ne pas enlever les caractères CR sur les fins de "
-"lignes (MS-DOS)\n"
+"  -U, --binary              ne pas enlever les caractères CR sur \n"
+"                            les fins de lignes (MS-DOS)\n"
 "  -u, --unix-byte-offsets   afficher les adresses relatives comme si\n"
 "                            aucun CR n'était présent (MS-DOS)\n"
 "\n"
@@ -319,7 +323,7 @@ msgstr ""
 "est implicite. Termine avec 0 s'il y a concordance avec 1 si aucune.\n"
 "Termine avec 2 s'il y a des erreurs de syntaxe ou du système.\n"
 
-#: src/grep.c:950
+#: src/grep.c:953
 msgid ""
 "\n"
 "Report bugs to <bug-gnu-utils@gnu.org>.\n"
@@ -327,36 +331,35 @@ msgstr ""
 "\n"
 "Rapporter toutes anomalies à <bug-gnu-utils@gnu.org>.\n"
 
-#: src/grep.c:1093 src/grep.c:1100 src/grep.c:1109
+#: src/grep.c:1096 src/grep.c:1103 src/grep.c:1112
 msgid "invalid context length argument"
 msgstr "paramètre de contexte de longueur invalide"
 
-#: src/grep.c:1116 src/grep.c:1121 src/grep.c:1126
+#: src/grep.c:1119 src/grep.c:1124 src/grep.c:1129
 msgid "you may specify only one of -E, -F, or -G"
 msgstr "Un seul des paramètres suivants peut être spécifié -E, -F ou -G"
 
-#: src/grep.c:1145
+#: src/grep.c:1148
 msgid "matcher already specified"
 msgstr "L'opérateur de concordance a déjà été spécifié."
 
-#: src/grep.c:1166
+#: src/grep.c:1169
 msgid "unknown directories method"
-msgstr ""
+msgstr "méthode inconnue des répertoires"
 
 # msgid "GNU grep version %s"
 # msgstr "«grep» de GNU version %s"
-#: src/grep.c:1252
+#: src/grep.c:1255
 #, c-format
 msgid "grep (GNU grep) %s\n"
 msgstr "grep de GNU %s\n"
 
-#: src/grep.c:1254
+#: src/grep.c:1257
 #, fuzzy
-msgid "Copyright (C) 1988, 1992-1997, 1998 Free Software Foundation, Inc.\n"
-msgstr ""
-"Copyright (C) 1988, 92, 93, 94, 95, 96, 97 Free Software Foundation, Inc.\n"
+msgid "Copyright (C) 1988, 1992-1998, 1999 Free Software Foundation, Inc.\n"
+msgstr "Copyright (C) 1988, 1992-1997, 1998 Free Software Foundation, Inc.\n"
 
-#: src/grep.c:1256
+#: src/grep.c:1259
 msgid ""
 "This is free software; see the source for copying conditions. There is NO\n"
 "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
@@ -368,10 +371,6 @@ msgstr ""
 #: src/obstack.c:467
 msgid "memory exhausted\n"
 msgstr "Mémoire épuisée.\n"
-
-#, fuzzy
-#~ msgid "infalid context length argument"
-#~ msgstr "paramètre de contexte de longueur invalide"
 
 #~ msgid "(standard input)\n"
 #~ msgstr "(entrée standard)\n"

@@ -53,7 +53,7 @@
 
 diff -ur ../autoconf-2.13.orig/acgeneral.m4 ./acgeneral.m4
 --- ../autoconf-2.13.orig/acgeneral.m4	Tue Jan  5 08:27:37 1999
-+++ ./acgeneral.m4	Wed Jan 27 22:50:54 1999
++++ ./acgeneral.m4	Tue Feb  9 22:27:34 1999
 @@ -636,6 +636,9 @@
    esac
  done
@@ -150,6 +150,15 @@ diff -ur ../autoconf-2.13.orig/acgeneral.m4 ./acgeneral.m4
    sed -e "$ac_comsub
  s%@configure_input@%$configure_input%g
  s%@srcdir@%$srcdir%g
+@@ -2359,7 +2367,7 @@
+   echo creating $ac_file
+ 
+   rm -f conftest.frag conftest.in conftest.out
+-  ac_file_inputs=`echo $ac_file_in|sed -e "s%^%$ac_given_srcdir/%" -e "s%:% $ac_given_srcdir/%g"`
++  ac_file_inputs=`echo $ac_file_in|sed -e "s%:% $ac_given_srcdir/%g" -e "s%^%$ac_given_srcdir/%"`
+   cat $ac_file_inputs > conftest.in
+ 
+ EOF
 @@ -2483,7 +2491,7 @@
  
    case "$srcdir" in

@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNU grep 2.1.1b\n"
-"POT-Creation-Date: 1999-02-03 13:09-0500\n"
+"POT-Creation-Date: 1999-02-14 12:08-0500\n"
 "PO-Revision-Date: 1998-05-23 15:26\n"
 "Last-Translator: Denis Y. Pershin <dyp@siblug.org>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8-bit\n"
 
 #
-#: src/dfa.c:155 src/dfa.c:167 src/dfa.c:180 src/grep.c:858
+#: src/dfa.c:155 src/dfa.c:167 src/dfa.c:180 src/grep.c:861
 msgid "Memory exhausted"
 msgstr "Память исчерпана"
 
@@ -161,49 +161,49 @@ msgstr "?? gotopt вернул символ с кодом 0%o ??\n"
 msgid "non-option ARGV-elements: "
 msgstr "ARGV-элементы - не опции: "
 
-#: src/grep.c:169 src/grep.c:186 src/grep.c:288 src/grep.c:344 src/kwset.c:184
+#: src/grep.c:172 src/grep.c:189 src/grep.c:291 src/grep.c:347 src/kwset.c:184
 #: src/kwset.c:190
 msgid "memory exhausted"
 msgstr "память исчерпана"
 
-#: src/grep.c:372 src/grep.c:843
+#: src/grep.c:375 src/grep.c:846
 #, c-format
 msgid "%s: warning: %s: %s\n"
 msgstr "%s: предупреждение: %s: %s\n"
 
-#: src/grep.c:497 src/grep.c:1318
+#: src/grep.c:500 src/grep.c:1321
 msgid "writing output"
 msgstr "записываю выходные данные"
 
-#: src/grep.c:726
+#: src/grep.c:729
 #, c-format
 msgid "Binary file %s matches\n"
 msgstr ""
 
-#: src/grep.c:742
+#: src/grep.c:745
 msgid "(standard input)"
 msgstr "(стандартный ввод)"
 
-#: src/grep.c:844
+#: src/grep.c:847
 msgid "recursive directory loop"
 msgstr ""
 
-#: src/grep.c:895
+#: src/grep.c:898
 #, c-format
 msgid "Usage: %s [OPTION]... PATTERN [FILE]...\n"
 msgstr "Использование: %s [OPTION]... PATTERN [FILE]...\n"
 
-#: src/grep.c:896
+#: src/grep.c:899
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr "Попробуйте `%s --help' для получения более подробного описания.\n"
 
-#: src/grep.c:900
+#: src/grep.c:903
 #, c-format
 msgid "Usage: %s [OPTION]... PATTERN [FILE] ...\n"
 msgstr "Использование: %s [OPTION]... PATTERN [FILE] ...\n"
 
-#: src/grep.c:901
+#: src/grep.c:904
 msgid ""
 "Search for PATTERN in each FILE or standard input.\n"
 "\n"
@@ -230,7 +230,7 @@ msgstr ""
 "  -w, --word-regexp         PATTERN должен подходить ко всему слову\n"
 "  -x, --line-regexp         PATTERN должен подходить ко всей строке\n"
 
-#: src/grep.c:913
+#: src/grep.c:916
 msgid ""
 "\n"
 "Miscellaneous:\n"
@@ -246,7 +246,7 @@ msgstr ""
 "  -V, --version             напечатать информацию о версии и выйти\n"
 "      --help                показать помощь и выйти\n"
 
-#: src/grep.c:920
+#: src/grep.c:923
 #, fuzzy
 msgid ""
 "\n"
@@ -279,7 +279,7 @@ msgstr ""
 "  -c, --count               печатать только количество совпадающих строк на "
 "файл\n"
 
-#: src/grep.c:935
+#: src/grep.c:938
 #, fuzzy
 msgid ""
 "\n"
@@ -314,7 +314,7 @@ msgstr ""
 "совпадения,\n"
 "с 1, если нет. Выходит с 2, если есть синтаксическио или системные ошибки.\n"
 
-#: src/grep.c:950
+#: src/grep.c:953
 msgid ""
 "\n"
 "Report bugs to <bug-gnu-utils@gnu.org>.\n"
@@ -322,32 +322,32 @@ msgstr ""
 "\n"
 "Об ошибках сообщайте <bug-gnu-utils@gnu.org>.\n"
 
-#: src/grep.c:1093 src/grep.c:1100 src/grep.c:1109
+#: src/grep.c:1096 src/grep.c:1103 src/grep.c:1112
 msgid "invalid context length argument"
 msgstr ""
 
-#: src/grep.c:1116 src/grep.c:1121 src/grep.c:1126
+#: src/grep.c:1119 src/grep.c:1124 src/grep.c:1129
 msgid "you may specify only one of -E, -F, or -G"
 msgstr "вы должны указать только одну из -E, -F или -G"
 
-#: src/grep.c:1145
+#: src/grep.c:1148
 msgid "matcher already specified"
 msgstr "образец уже задан"
 
-#: src/grep.c:1166
+#: src/grep.c:1169
 msgid "unknown directories method"
 msgstr ""
 
-#: src/grep.c:1252
+#: src/grep.c:1255
 #, c-format
 msgid "grep (GNU grep) %s\n"
 msgstr ""
 
-#: src/grep.c:1254
-msgid "Copyright (C) 1988, 1992-1997, 1998 Free Software Foundation, Inc.\n"
+#: src/grep.c:1257
+msgid "Copyright (C) 1988, 1992-1998, 1999 Free Software Foundation, Inc.\n"
 msgstr ""
 
-#: src/grep.c:1256
+#: src/grep.c:1259
 msgid ""
 "This is free software; see the source for copying conditions. There is NO\n"
 "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
@@ -360,9 +360,6 @@ msgstr ""
 #: src/obstack.c:467
 msgid "memory exhausted\n"
 msgstr "память исчерпана\n"
-
-#~ msgid "(standard input)\n"
-#~ msgstr "(стандартный ввод)\n"
 
 #~ msgid ""
 #~ "\n"
@@ -410,3 +407,6 @@ msgstr "память исчерпана\n"
 #~ "или CHAR.  CLASS одино из слов alnum, alpha, cntrl, digit, graph, lower,\n"
 #~ "print, punct, space, upper или xdigit.  В списке промежутков помещайте\n"
 #~ "] первым, - последним и ^ везде, кроме первого.\n"
+
+#~ msgid "(standard input)\n"
+#~ msgstr "(стандартный ввод)\n"

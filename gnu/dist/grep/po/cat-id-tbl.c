@@ -104,7 +104,7 @@ Report bugs to <bug-gnu-utils@gnu.org>.\n", 45},
   {"matcher already specified", 48},
   {"unknown directories method", 49},
   {"grep (GNU grep) %s\n", 50},
-  {"Copyright (C) 1988, 1992-1997, 1998 Free Software Foundation, Inc.\n", 51},
+  {"Copyright (C) 1988, 1992-1998, 1999 Free Software Foundation, Inc.\n", 51},
   {"\
 This is free software; see the source for copying conditions. There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n", 52},

@@ -482,11 +482,13 @@ strdup __argz_count __argz_stringify __argz_next])
    dnl be included in po/Makefile.
    test -d po || mkdir po
    if test "x$srcdir" != "x."; then
-     if test "x`echo $srcdir | sed 's@/.*@@'`" = "x"; then
+   changequote(, )dnl
+     if test "x`echo $srcdir | sed -e 's@^[A-z]:@@' -e 's@/.*@@'`" = "x"; then
        posrcprefix="$srcdir/"
      else
        posrcprefix="../$srcdir/"
      fi
+   changequote([, ])dnl
    else
      posrcprefix="../"
    fi
@@ -608,7 +610,7 @@ AC_REQUIRE([AC_MINGW32])
 AC_REQUIRE([AC_DJGPP])
 AC_MSG_CHECKING([for environ variable separator])
 AC_CACHE_VAL(ac_cv_sep,
-[if test "$CYGWIN" = yes || test "$MINGW32" = yes || test "$DJGPP" = yes ; then
+[if test "$CYGWIN" = yes || test "$MINGW32" = yes || test "$DJ_GPP" = yes ; then
   ac_cv_sep=yes
 else
   ac_cv_sep=no
@@ -618,72 +620,82 @@ test x"$ac_cv_sep" = xyes && SEP=";"
 AC_MSG_RESULT(${SEP})
 AC_SUBST(SEP)])
 
-dnl Check for DJGPP. we use DJ_GPP a the variable
+dnl Check for DJGPP. we use DJ_GPP as the variable
 dnl EXEEXXT
 AC_DEFUN(AC_DJGPP,
 [AC_CACHE_CHECK(for DJGPP environment, ac_cv_djgpp,
 [AC_TRY_COMPILE(,[ return __DJGPP__;],
 ac_cv_djgpp=yes, ac_cv_djgpp=no)
 rm -f conftest*])
-DJGPP=
-test "$ac_cv_djgpp" = yes && DJGPP=yes])
+DJ_GPP=
+test "$ac_cv_djgpp" = yes && DJ_GPP=yes])
 
-dnl Even packages that don't use regex.c can use this macro.
-dnl Of course, for them it doesn't do anything.
-dnl Derived from code in GNU fileutils ;-).
+#serial 5
 
-AC_DEFUN(AM_INCLUDED_REGEX,
-[AC_REQUIRE([AM_GLIBC])
-AC_CACHE_CHECK([whether compiling regex.c], ac_cv_included_regex,
-[
-# By default, don't use the included regex.c on systems with glibc 2
-if test x"$ac_cv_glibc" = xyes ; then
-	default=no
-else
-	default=yes
-fi
+dnl Initially derived from code in GNU grep.
+dnl Mostly written by Jim Meyering.
+
+dnl Usage: jm_INCLUDED_REGEX([lib/regex.c])
+dnl
+AC_DEFUN(jm_INCLUDED_REGEX,
+  [
+    dnl Even packages that don't use regex.c can use this macro.
+    dnl Of course, for them it doesn't do anything.
+
+    # Assume we'll default to using the included regex.c.
+    ac_use_included_regex=yes
+
+    # However, if the system regex support is good enough that it passes the
+    # the following run test, then default to *not* using the included regex.c.
+    # If cross compiling, assume the test would fail and use the included
+    # regex.c.  The failing regular expression is from `Spencer ere test #75'
+    # in grep-2.3.
+    AC_CACHE_CHECK([for working re_compile_pattern],
+		   jm_cv_func_working_re_compile_pattern,
+      AC_TRY_RUN(
+	changequote(<<, >>)dnl
+	<<
+#include <stdio.h>
+#include <regex.h>
+	  int
+	  main ()
+	  {
+	    static struct re_pattern_buffer regex;
+	    const char *s;
+	    re_set_syntax (RE_SYNTAX_POSIX_EGREP);
+	    /* Add this third left square bracket, [, to balance the
+	       three right ones below.  Otherwise autoconf-2.14 chokes.  */
+	    s = re_compile_pattern ("a[[:]:]]b\n", 9, &regex);
+	    /* This should fail with _Invalid character class name_ error.  */
+	    exit (s ? 0 : 1);
+	  }
+	>>,
+	changequote([, ])dnl
+
+	       jm_cv_func_working_re_compile_pattern=yes,
+	       jm_cv_func_working_re_compile_pattern=no,
+	       dnl When crosscompiling, assume it's broken.
+	       jm_cv_func_working_re_compile_pattern=no))
+    if test $jm_cv_func_working_re_compile_pattern = yes; then
+      ac_use_included_regex=no
+    fi
+
+    test -n "$1" || AC_MSG_ERROR([missing argument])
+    syscmd([test -f $1])
+    ifelse(sysval, 0,
+      [
+
 	AC_ARG_WITH(included-regex,
 	[  --without-included-regex don't compile regex; this is the default on
                           systems with version 2 of the GNU C library
                           (use with caution on other system)],
-		    ac_cv_included_regex=$withval,
-		    ac_cv_included_regex=$default)
-if test x"$ac_cv_included_regex" = xyes; then
-	LIBOBJS="$LIBOBJS regex.${ac_objext}"
-fi
-AC_SUBST(LIBOBJS)dnl
-])])
-
-dnl From Gordon Matzigkeit.
-dnl Test for the GNU C Library.
-dnl FIXME: this should migrate into libit.
-
-AC_DEFUN(AM_GLIBC,
-  [
-    AC_CACHE_CHECK(whether we are using the GNU C Library,
-      ac_cv_gnu_library,
-      [AC_EGREP_CPP([Thanks for using GNU],
-	[
-#include <features.h>
-#ifdef __GNU_LIBRARY__
-  Thanks for using GNU
-#endif
-	],
-	ac_cv_gnu_library=yes,
-	ac_cv_gnu_library=no)
-      ]
-    )
-    AC_CACHE_CHECK(for version 2 of the GNU C Library,
-      ac_cv_glibc,
-      [AC_EGREP_CPP([Thanks for using GNU too],
-	[
-#include <features.h>
-#ifdef __GLIBC__
-  Thanks for using GNU too
-#endif
-	],
-	ac_cv_glibc=yes, ac_cv_glibc=no)
-      ]
+		    jm_with_regex=$withval,
+		    jm_with_regex=$ac_use_included_regex)
+	if test "$jm_with_regex" = yes; then
+	  AC_SUBST(LIBOBJS)
+	  LIBOBJS="$LIBOBJS regex.$ac_objext"
+	fi
+      ],
     )
   ]
 )

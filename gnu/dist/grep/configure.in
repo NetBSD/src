@@ -8,7 +8,7 @@ AC_DEFINE(GREP)
 AC_PREREQ(2.13)
 
 dnl Automake stuff.
-AM_INIT_AUTOMAKE(grep, 2.2f)
+AM_INIT_AUTOMAKE(grep, 2.3)
 AM_CONFIG_HEADER(config.h:config.hin)
 
 dnl Checks for programs.
@@ -75,6 +75,6 @@ AC_OBJEXT
 dnl some folks ask for this, that's fine by me
 dnl hope they know what they're doing ...
 dnl if glibc2 regex is not included
-AM_INCLUDED_REGEX
+jm_INCLUDED_REGEX(src/regex.c)
 
-AC_OUTPUT(Makefile src/Makefile tests/Makefile po/Makefile.in intl/Makefile doc/Makefile m4/Makefile djgpp/Makefile vms/Makefile, [sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile; echo timestamp > stamp-h])
+AC_OUTPUT(Makefile src/Makefile tests/Makefile po/Makefile.in intl/Makefile doc/Makefile m4/Makefile djgpp/Makefile vms/Makefile bootstrap/Makefile, [sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile; echo timestamp > stamp-h])
