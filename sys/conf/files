@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.387 2000/09/09 16:54:34 jdolecek Exp $
+#	$NetBSD: files,v 1.388 2000/09/13 16:10:50 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -100,6 +100,7 @@ defopt	SOFTDEP
 defopt	QUOTA
 defopt	opt_ffs.h	FFS_EI
 defopt	opt_ntfs.h	NTFS_DEBUG
+defopt	VNODE_OP_NOINLINE
 
 # RAIDframe options
 defopt	RAID_AUTOCONFIG
