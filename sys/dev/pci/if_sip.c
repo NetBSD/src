@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.55 2002/06/30 18:04:12 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.56 2002/06/30 18:52:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.55 2002/06/30 18:04:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.56 2002/06/30 18:52:21 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -254,7 +254,9 @@ struct sip_softc {
 	 */
 	struct evcnt sc_ev_txsstall;	/* Tx stalled due to no txs */
 	struct evcnt sc_ev_txdstall;	/* Tx stalled due to no txd */
-	struct evcnt sc_ev_txintr;	/* Tx interrupts */
+	struct evcnt sc_ev_txforceintr;	/* Tx interrupts forced */
+	struct evcnt sc_ev_txdintr;	/* Tx descriptor interrupts */
+	struct evcnt sc_ev_txiintr;	/* Tx idle interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
 #ifdef DP83820
 	struct evcnt sc_ev_rxipsum;	/* IP checksums checked in-bound */
@@ -286,6 +288,7 @@ struct sip_softc {
 
 	int	sc_txfree;		/* number of free Tx descriptors */
 	int	sc_txnext;		/* next ready Tx descriptor */
+	int	sc_txwin;		/* Tx descriptors since last intr */
 
 	struct sip_txsq sc_txfreeq;	/* free Tx descsofts */
 	struct sip_txsq sc_txdirtyq;	/* dirty Tx descsofts */
@@ -936,8 +939,12 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txsstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txdstall");
-	evcnt_attach_dynamic(&sc->sc_ev_txintr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "txintr");
+	evcnt_attach_dynamic(&sc->sc_ev_txforceintr, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "txforceintr");
+	evcnt_attach_dynamic(&sc->sc_ev_txdintr, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "txdintr");
+	evcnt_attach_dynamic(&sc->sc_ev_txiintr, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "txiintr");
 	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "rxintr");
 #ifdef DP83820
@@ -1193,6 +1200,17 @@ SIP_DECL(start)(struct ifnet *ifp)
 		/* Clear the MORE bit on the last segment. */
 		sc->sc_txdescs[lasttx].sipd_cmdsts &= htole32(~CMDSTS_MORE);
 
+		/*
+		 * If we're in the interrupt delay window, delay the
+		 * interrupt.
+		 */
+		if (++sc->sc_txwin >= (SIP_TXQUEUELEN * 2 / 3)) {
+			SIP_EVCNT_INCR(&sc->sc_ev_txforceintr);
+			sc->sc_txdescs[lasttx].sipd_cmdsts |=
+			    htole32(CMDSTS_INTR);
+			sc->sc_txwin = 0;
+		}
+
 #ifdef DP83820
 		/*
 		 * If VLANs are enabled and the packet has a VLAN tag, set
@@ -1271,14 +1289,6 @@ SIP_DECL(start)(struct ifnet *ifp)
 	}
 
 	if (sc->sc_txfree != ofree) {
-		/*
-		 * Cause a descriptor interrupt to happen on the
-		 * last packet we enqueued.
-		 */
-		sc->sc_txdescs[lasttx].sipd_cmdsts |= htole32(CMDSTS_INTR);
-		SIP_CDTXSYNC(sc, lasttx, 1,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-
 		/*
 		 * The entire packet chain is set up.  Give the
 		 * first descrptor to the chip now.
@@ -1436,8 +1446,13 @@ SIP_DECL(intr)(void *arg)
 			}
 		}
 
-		if (isr & (ISR_TXURN|ISR_TXDESC)) {
-			SIP_EVCNT_INCR(&sc->sc_ev_txintr);
+		if (isr & (ISR_TXURN|ISR_TXDESC|ISR_TXIDLE)) {
+#ifdef SIP_EVENT_COUNTERS
+			if (isr & ISR_TXDESC)
+				SIP_EVCNT_INCR(&sc->sc_ev_txdintr);
+			else if (isr & ISR_TXIDLE)
+				SIP_EVCNT_INCR(&sc->sc_ev_txiintr);
+#endif
 
 			/* Sweep up transmit descriptors. */
 			SIP_DECL(txintr)(sc);
@@ -1563,8 +1578,10 @@ SIP_DECL(txintr)(struct sip_softc *sc)
 	 * If there are no more pending transmissions, cancel the watchdog
 	 * timer.
 	 */
-	if (txs == NULL)
+	if (txs == NULL) {
 		ifp->if_timer = 0;
+		sc->sc_txwin = 0;
+	}
 }
 
 #if defined(DP83820)
@@ -2089,6 +2106,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = SIP_NTXDESC;
 	sc->sc_txnext = 0;
+	sc->sc_txwin = 0;
 
 	/*
 	 * Initialize the transmit job descriptors.
@@ -2224,7 +2242,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 * Initialize the interrupt mask.
 	 */
 	sc->sc_imr = ISR_DPERR|ISR_SSERR|ISR_RMABT|ISR_RTABT|ISR_RXSOVR|
-	    ISR_TXURN|ISR_TXDESC|ISR_RXORN|ISR_RXIDLE|ISR_RXDESC;
+	    ISR_TXURN|ISR_TXDESC|ISR_TXIDLE|ISR_RXORN|ISR_RXIDLE|ISR_RXDESC;
 	bus_space_write_4(st, sh, SIP_IMR, sc->sc_imr);
 
 	/* Set up the receive filter. */
