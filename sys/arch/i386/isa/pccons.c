@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.30 1993/09/05 17:56:58 mycroft Exp $
+ *	$Id: pccons.c,v 1.31 1993/09/06 05:52:33 mycroft Exp $
  */
 
 /*
@@ -382,13 +382,9 @@ pcrint(dev, irq, cpl)
 	if (!openf)
 		return;
 
-#ifdef XSERVER						/* 15 Aug 92*/
-	/* send at least one character, because cntl-space is a null */
-	(*linesw[tp->t_line].l_rint)(*cp++ & 0xff, tp);
-#endif /* XSERVER */
-
-	while (*cp)
+	do {
 		(*linesw[tp->t_line].l_rint)(*cp++ & 0xff, tp);
+	} while (*cp);
 }
 
 #ifdef XSERVER						/* 15 Aug 92*/
