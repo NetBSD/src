@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.107 1999/03/10 19:10:15 scottr Exp $
+#	$NetBSD: Makefile,v 1.108 1999/03/14 14:04:40 drochner Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -71,7 +71,7 @@ BIN1+=	aliases bootptab changelist csh.cshrc csh.login \
 	monthly monthly.conf mrouted.conf netstart networks \
 	newsyslog.conf nsswitch.conf phones printcap profile protocols \
 	rbootd.conf rc rc.conf rc.lkm rc.local rc.subr \
-	rc.shutdown remote rpc security security.conf services \
+	rc.shutdown rc.wscons remote rpc security security.conf services \
 	shells syslog.conf weekly weekly.conf etc.${MACHINE}/ttys \
 	etc.${MACHINE}/disktab
 
@@ -280,7 +280,7 @@ snap_kern:
 		gzip -c -9 < netbsd > \
 			${RELEASEDIR}/binary/kernel/netbsd.${kernel}.gz
 .endfor # EXTRA_KERNELS
-	
+
 .endif # RELEASEDIR check
 
 snap_md:
