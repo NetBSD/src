@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)xdr.c 1.35 87/08/12";*/
 /*static char *sccsid = "from: @(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: xdr.c,v 1.2 1994/08/09 00:50:30 jtc Exp $";
+static char *rcsid = "$Id: xdr.c,v 1.3 1994/12/04 01:13:38 cgd Exp $";
 #endif
 
 /*
@@ -44,6 +44,8 @@ static char *rcsid = "$Id: xdr.c,v 1.2 1994/08/09 00:50:30 jtc Exp $";
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
@@ -95,17 +97,25 @@ xdr_int(xdrs, ip)
 	XDR *xdrs;
 	int *ip;
 {
+	long l;
 
-#ifdef lint
-	(void) (xdr_short(xdrs, (short *)ip));
-	return (xdr_long(xdrs, (long *)ip));
-#else
-	if (sizeof (int) == sizeof (long)) {
-		return (xdr_long(xdrs, (long *)ip));
-	} else {
-		return (xdr_short(xdrs, (short *)ip));
+	switch (xdrs->x_op) {
+
+	case XDR_ENCODE:
+		l = (long) *ip;
+		return (XDR_PUTLONG(xdrs, &l));
+
+	case XDR_DECODE:
+		if (!XDR_GETLONG(xdrs, &l)) {
+			return (FALSE);
+		}
+		*ip = (int) l;
+		return (TRUE);
+
+	case XDR_FREE:
+		return (TRUE);
 	}
-#endif
+	return (FALSE);
 }
 
 /*
@@ -116,17 +126,25 @@ xdr_u_int(xdrs, up)
 	XDR *xdrs;
 	u_int *up;
 {
+	u_long l;
 
-#ifdef lint
-	(void) (xdr_short(xdrs, (short *)up));
-	return (xdr_u_long(xdrs, (u_long *)up));
-#else
-	if (sizeof (u_int) == sizeof (u_long)) {
-		return (xdr_u_long(xdrs, (u_long *)up));
-	} else {
-		return (xdr_short(xdrs, (short *)up));
+	switch (xdrs->x_op) {
+
+	case XDR_ENCODE:
+		l = (u_long) *up;
+		return (XDR_PUTLONG(xdrs, &l));
+
+	case XDR_DECODE:
+		if (!XDR_GETLONG(xdrs, &l)) {
+			return (FALSE);
+		}
+		*up = (u_int) l;
+		return (TRUE);
+
+	case XDR_FREE:
+		return (TRUE);
 	}
-#endif
+	return (FALSE);
 }
 
 /*
@@ -310,6 +328,8 @@ xdr_enum(xdrs, ep)
 	 */
 	if (sizeof (enum sizecheck) == sizeof (long)) {
 		return (xdr_long(xdrs, (long *)ep));
+	} else if (sizeof (enum sizecheck) == sizeof (int)) {
+		return (xdr_int(xdrs, (int *)ep));
 	} else if (sizeof (enum sizecheck) == sizeof (short)) {
 		return (xdr_short(xdrs, (short *)ep));
 	} else {
@@ -317,6 +337,7 @@ xdr_enum(xdrs, ep)
 	}
 #else
 	(void) (xdr_short(xdrs, (short *)ep));
+	(void) (xdr_int(xdrs, (short *)ep));
 	return (xdr_long(xdrs, (long *)ep));
 #endif
 }
@@ -354,7 +375,7 @@ xdr_opaque(xdrs, cp, cnt)
 		}
 		if (rndup == 0)
 			return (TRUE);
-		return (XDR_GETBYTES(xdrs, crud, rndup));
+		return (XDR_GETBYTES(xdrs, (caddr_t)crud, rndup));
 	}
 
 	if (xdrs->x_op == XDR_ENCODE) {

@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: svc_udp.c,v 1.2 1994/08/30 23:59:43 deraadt Exp $";
+static char *rcsid = "$Id: svc_udp.c,v 1.3 1994/12/04 01:13:33 cgd Exp $";
 #endif
 
 /*
@@ -66,8 +66,6 @@ static struct xp_ops svcudp_op = {
 	svcudp_freeargs,
 	svcudp_destroy
 };
-
-extern int errno;
 
 /*
  * kept in xprt->xp_p2
@@ -185,7 +183,7 @@ svcudp_recv(xprt, msg)
 	    0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
 	if (rlen == -1 && errno == EINTR)
 		goto again;
-	if (rlen == -1 || rlen < 4*sizeof(u_long))
+	if (rlen == -1 || rlen < 4*sizeof(u_int32_t))
 		return (FALSE);
 	xdrs->x_op = XDR_DECODE;
 	XDR_SETPOS(xdrs, 0);

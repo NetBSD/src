@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_callmsg.c 1.4 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)rpc_callmsg.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: rpc_callmsg.c,v 1.1 1993/10/07 07:30:10 cgd Exp $";
+static char *rcsid = "$Id: rpc_callmsg.c,v 1.2 1994/12/04 01:13:22 cgd Exp $";
 #endif
 
 /*
@@ -40,6 +40,7 @@ static char *rcsid = "$Id: rpc_callmsg.c,v 1.1 1993/10/07 07:30:10 cgd Exp $";
  *
  */
 
+#include <stdlib.h>
 #include <sys/param.h>
 
 #include <rpc/rpc.h>
@@ -52,7 +53,7 @@ xdr_callmsg(xdrs, cmsg)
 	register XDR *xdrs;
 	register struct rpc_msg *cmsg;
 {
-	register long *buf;
+	register int32_t *buf;
 	register struct opaque_auth *oa;
 
 	if (xdrs->x_op == XDR_ENCODE) {
@@ -84,7 +85,7 @@ xdr_callmsg(xdrs, cmsg)
 			IXDR_PUT_LONG(buf, oa->oa_length);
 			if (oa->oa_length) {
 				bcopy(oa->oa_base, (caddr_t)buf, oa->oa_length);
-				buf += RNDUP(oa->oa_length) / sizeof (long);
+				buf += RNDUP(oa->oa_length) / sizeof (int32_t);
 			}
 			oa = &cmsg->rm_call.cb_verf;
 			IXDR_PUT_ENUM(buf, oa->oa_flavor);
@@ -92,7 +93,7 @@ xdr_callmsg(xdrs, cmsg)
 			if (oa->oa_length) {
 				bcopy(oa->oa_base, (caddr_t)buf, oa->oa_length);
 				/* no real need....
-				buf += RNDUP(oa->oa_length) / sizeof (long);
+				buf += RNDUP(oa->oa_length) / sizeof (int32_t);
 				*/
 			}
 			return (TRUE);
@@ -135,7 +136,7 @@ xdr_callmsg(xdrs, cmsg)
 					    oa->oa_length);
 					/* no real need....
 					buf += RNDUP(oa->oa_length) /
-						sizeof (long);
+						sizeof (int32_t);
 					*/
 				}
 			}
@@ -169,7 +170,7 @@ xdr_callmsg(xdrs, cmsg)
 					    oa->oa_length);
 					/* no real need...
 					buf += RNDUP(oa->oa_length) /
-						sizeof (long);
+						sizeof (int32_t);
 					*/
 				}
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt.h,v 1.4 1994/10/26 00:56:57 cgd Exp $	*/
+/*	$NetBSD: clnt.h,v 1.5 1994/12/04 01:12:40 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -115,15 +115,26 @@ struct rpc_err {
  * Created by individual implementations, see e.g. rpc_udp.c.
  * Client is responsible for initializing auth, see e.g. auth_none.c.
  */
-typedef struct {
+typedef struct __rpc_client {
 	AUTH	*cl_auth;			/* authenticator */
 	struct clnt_ops {
-		enum clnt_stat	(*cl_call)();	/* call remote procedure */
-		void		(*cl_abort)();	/* abort a call */
-		void		(*cl_geterr)();	/* get specific error code */
-		bool_t		(*cl_freeres)(); /* frees results */
-		void		(*cl_destroy)();/* destroy this structure */
-		bool_t          (*cl_control)();/* the ioctl() of rpc */
+		/* call remote procedure */
+		enum clnt_stat	(*cl_call) __P((struct __rpc_client *,
+				    u_long, xdrproc_t, caddr_t, xdrproc_t,
+				    caddr_t, struct timeval));
+		/* abort a call */
+		void		(*cl_abort) __P((struct __rpc_client *));
+		/* get specific error code */
+		void		(*cl_geterr) __P((struct __rpc_client *,
+				    struct rpc_err *));
+		/* frees results */
+		bool_t		(*cl_freeres) __P((struct __rpc_client *,
+				    xdrproc_t, caddr_t));
+		/* destroy this structure */
+		void		(*cl_destroy) __P((struct __rpc_client *));
+		/* the ioctl() of rpc */
+		bool_t          (*cl_control) __P((struct __rpc_client *, u_int,
+				    char *));
 	} *cl_ops;
 	caddr_t			cl_private;	/* private stuff */
 } CLIENT;
@@ -147,10 +158,12 @@ typedef struct {
  *	caddr_t resp;
  *	struct timeval timeout;
  */
-#define	CLNT_CALL(rh, proc, xargs, argsp, xres, resp, secs)	\
-	((*(rh)->cl_ops->cl_call)(rh, proc, xargs, argsp, xres, resp, secs))
-#define	clnt_call(rh, proc, xargs, argsp, xres, resp, secs)	\
-	((*(rh)->cl_ops->cl_call)(rh, proc, xargs, argsp, xres, resp, secs))
+#define	CLNT_CALL(rh, proc, xargs, argsp, xres, resp, secs)		\
+	((*(rh)->cl_ops->cl_call)(rh, proc, xargs, (caddr_t)argsp,	\
+	    xres, (caddr_t)resp, secs))
+#define	clnt_call(rh, proc, xargs, argsp, xres, resp, secs)		\
+	((*(rh)->cl_ops->cl_call)(rh, proc, xargs, (caddr_t)argsp,	\
+	    xres, (caddr_t)resp, secs))
 
 /*
  * void

@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$Id: clnt_udp.c,v 1.2 1994/08/20 00:55:28 deraadt Exp $";
+static char *rcsid = "$Id: clnt_udp.c,v 1.3 1994/12/04 01:13:16 cgd Exp $";
 #endif
 
 /*
@@ -40,14 +40,13 @@ static char *rcsid = "$Id: clnt_udp.c,v 1.2 1994/08/20 00:55:28 deraadt Exp $";
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netdb.h>
 #include <errno.h>
 #include <rpc/pmap_clnt.h>
-
-extern int errno;
 
 /*
  * UDP bases client side rpc operations
@@ -247,7 +246,7 @@ call_again:
 	 * the transaction is the first thing in the out buffer
 	 */
 	(*(u_short *)(cu->cu_outbuf))++;
-	if ((! XDR_PUTLONG(xdrs, (long *)&proc)) ||
+	if ((! XDR_PUTLONG(xdrs, &proc)) ||
 	    (! AUTH_MARSHALL(cl->cl_auth, xdrs)) ||
 	    (! (*xargs)(xdrs, argsp)))
 		return (cu->cu_error.re_status = RPC_CANTENCODEARGS);
@@ -317,10 +316,10 @@ send_again:
 			cu->cu_error.re_errno = errno;
 			return (cu->cu_error.re_status = RPC_CANTRECV);
 		}
-		if (inlen < sizeof(u_long))
+		if (inlen < sizeof(u_int32_t))
 			continue;	
 		/* see if reply transaction id matches sent id */
-		if (*((u_long *)(cu->cu_inbuf)) != *((u_long *)(cu->cu_outbuf)))
+		if (*((u_int32_t *)(cu->cu_inbuf)) != *((u_int32_t *)(cu->cu_outbuf)))
 			continue;	
 		/* we now assume we have the proper reply */
 		break;

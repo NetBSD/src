@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: auth_none.c,v 1.1 1993/10/07 07:29:36 cgd Exp $";
+static char *rcsid = "$Id: auth_none.c,v 1.2 1994/12/04 01:13:11 cgd Exp $";
 #endif
 
 /*
@@ -41,6 +41,7 @@ static char *rcsid = "$Id: auth_none.c,v 1.1 1993/10/07 07:29:36 cgd Exp $";
  * Copyright (C) 1984, Sun Microsystems, Inc. 
  */
 
+#include <stdlib.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/auth.h>
