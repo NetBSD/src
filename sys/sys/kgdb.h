@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb.h,v 1.6 2002/01/05 22:57:38 dbj Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.7 2003/07/08 06:49:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@ extern int kgdb_dev, kgdb_rate, kgdb_active;
 extern int kgdb_debug_init, kgdb_debug_panic;
 extern label_t *kgdb_recover;
 
-void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *ioarg));
+void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
 void kgdb_connect __P((int));
 void kgdb_panic __P((void));
 int kgdb_trap __P((int, db_regs_t *));
