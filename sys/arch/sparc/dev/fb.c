@@ -42,7 +42,7 @@
  *	@(#)fb.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: fb.c,v 1.7 92/11/26 01:12:48 torek Exp 
- * $Id: fb.c,v 1.1 1993/10/02 10:22:39 deraadt Exp $
+ * $Id: fb.c,v 1.2 1993/10/11 02:36:40 deraadt Exp $
  */
 
 /*
@@ -54,8 +54,8 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/fbio.h>
 
+#include <machine/fbio.h>
 #include <machine/fbvar.h>
 
 static struct fbdevice *devfb;

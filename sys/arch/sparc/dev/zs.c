@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.1 1993/10/02 10:22:45 deraadt Exp $
+ * $Id: zs.c,v 1.2 1993/10/11 02:36:44 deraadt Exp $
  */
 
 /*
@@ -111,7 +111,7 @@ struct zsinfo {
 	struct	zs_chanstate zi_cs[2];	/* channel A and B software state */
 };
 
-struct tty zs_tty[NZS * 2];		/* XXX should be dynamic */
+struct tty *zs_tty[NZS * 2];		/* XXX should be dynamic */
 
 /* Definition of the driver for autoconfig. */
 static int	zsmatch(struct device *, struct cfdata *, void *);
@@ -223,7 +223,12 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	zi->zi_zs = addr;
 	unit = zs * 2;
 	cs = zi->zi_cs;
-	tp = &zs_tty[unit];
+
+	if(!zs_tty[unit])
+		zs_tty[unit] = ttymalloc();
+	tp = zs_tty[unit];
+	if(!zs_tty[unit+1])
+		zs_tty[unit+1] = ttymalloc();
 
 	if (unit == 0) {
 		/* Get software carrier flags from options node in OPENPROM. */
@@ -249,7 +254,7 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
-	tp->t_stop = zsstop;
+	/*tp->t_stop = zsstop;*/
 	if ((ctp = zs_checkcons(zi, unit, cs)) != NULL)
 		tp = ctp;
 	cs->cs_ttyp = tp;
@@ -268,7 +273,7 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	}
 	unit++;
 	cs++;
-	tp = &zs_tty[unit];
+	tp = zs_tty[unit];
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[CHAN_B]);
 	cs->cs_softcar = softcar & 2;
@@ -276,7 +281,7 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
-	tp->t_stop = zsstop;
+	/*tp->t_stop = zsstop;*/
 	if ((ctp = zs_checkcons(zi, unit, cs)) != NULL)
 		tp = ctp;
 	cs->cs_ttyp = tp;
@@ -427,7 +432,7 @@ zs_checkcons(struct zsinfo *zi, int unit, struct zs_chanstate *cs)
 	}
 	if (o) {
 		tp->t_oproc = zsstart;
-		tp->t_stop = zsstop;
+		/*tp->t_stop = zsstop;*/
 	}
 	printf("%s%c: console %s\n",
 	    zi->zi_dev.dv_xname, (unit & 1) + 'a', i ? (o ? "i/o" : i) : o);
@@ -592,7 +597,7 @@ zsclose(dev_t dev, int flags, int mode, struct proc *p)
 int
 zsread(dev_t dev, struct uio *uio, int flags)
 {
-	register struct tty *tp = &zs_tty[minor(dev)];
+	register struct tty *tp = zs_tty[minor(dev)];
 
 	return (linesw[tp->t_line].l_read(tp, uio, flags));
 }
@@ -600,7 +605,7 @@ zsread(dev_t dev, struct uio *uio, int flags)
 int
 zswrite(dev_t dev, struct uio *uio, int flags)
 {
-	register struct tty *tp = &zs_tty[minor(dev)];
+	register struct tty *tp = zs_tty[minor(dev)];
 
 	return (linesw[tp->t_line].l_write(tp, uio, flags));
 }
@@ -912,7 +917,7 @@ again:
 					tp->t_state &= ~TS_FLUSH;
 				else
 					ndflush(&tp->t_outq,
-					    cs->cs_tba - tp->t_outq.c_cf);
+					    (u_char *)cs->cs_tba - tp->t_outq.c_cf);
 				line->l_start(tp);
 				break;
 
@@ -951,7 +956,7 @@ zsioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 	register struct tty *tp = zi->zi_cs[unit & 1].cs_ttyp;
 	register int error;
 
-	error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p);
+	error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag);
