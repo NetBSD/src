@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.20 2004/04/04 18:18:27 pk Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.21 2004/04/17 15:17:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -85,6 +85,22 @@ struct plimit {
 	} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
+/*
+ * Structure associated with user caching.
+ */
+struct uidinfo {
+	LIST_ENTRY(uidinfo) ui_hash;
+	uid_t	ui_uid;
+	long	ui_proccnt;	/* Number of processes */
+	rlim_t	ui_sbsize;	/* socket buffer size */
+
+};
+#define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
+LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
+u_long uihash;		/* size of hash table - 1 */
+int       chgproccnt(uid_t, int);
+int       chgsbsize(uid_t, u_long *, u_long, rlim_t);
+
 extern char defcorename[];
 void	 addupc_intr __P((struct proc *, u_long));
 void	 addupc_task __P((struct proc *, u_long, u_int));

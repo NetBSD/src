@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.120 2004/04/09 19:01:38 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.121 2004/04/17 15:17:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -797,7 +797,8 @@ struct buf_sysctl {
 #define	PROC_PID_LIMIT_MEMLOCK	(RLIMIT_MEMLOCK+1)
 #define PROC_PID_LIMIT_NPROC	(RLIMIT_NPROC+1)
 #define	PROC_PID_LIMIT_NOFILE	(RLIMIT_NOFILE+1)
-#define	PROC_PID_LIMIT_MAXID 	10
+#define	PROC_PID_LIMIT_SBSIZE	(RLIMIT_SBSIZE+1)
+#define	PROC_PID_LIMIT_MAXID 	(RLIM_NLIMITS+1)
 
 #define	PROC_PID_LIMIT_NAMES { \
 	{ 0, 0 }, \
@@ -810,6 +811,7 @@ struct buf_sysctl {
 	{ "memorylocked", CTLTYPE_NODE }, \
 	{ "maxproc", CTLTYPE_NODE }, \
 	{ "descriptors", CTLTYPE_NODE }, \
+	{ "sbsize", CTLTYPE_NODE }, \
 }
 /* for each type, either hard or soft value */
 #define	PROC_PID_LIMIT_TYPE_SOFT	1
