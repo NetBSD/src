@@ -1,4 +1,5 @@
-/*	$NetBSD: raw_ip6.c,v 1.19 2000/02/06 12:49:49 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.20 2000/02/26 09:09:18 itojun Exp $	*/
+/*	$KAME: raw_ip6.c,v 1.23 2000/02/22 14:04:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -88,6 +89,7 @@
 #include <netinet/icmp6.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
+#include <netinet6/ip6protosw.h>
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -226,6 +228,61 @@ rip6_input(mp, offp, proto)
 	return IPPROTO_DONE;
 }
 
+void
+rip6_ctlinput(cmd, sa, d)
+	int cmd;
+	struct sockaddr *sa;
+	void *d;
+{
+	struct sockaddr_in6 sa6;
+	register struct ip6_hdr *ip6;
+	struct mbuf *m;
+	int off;
+
+	if (sa->sa_family != AF_INET6 ||
+	    sa->sa_len != sizeof(struct sockaddr_in6))
+		return;
+
+	if (!PRC_IS_REDIRECT(cmd) &&
+	    ((unsigned)cmd >= PRC_NCMDS || inet6ctlerrmap[cmd] == 0))
+		return;
+
+	/* if the parameter is from icmp6, decode it. */
+	if (d != NULL) {
+		struct ip6ctlparam *ip6cp = (struct ip6ctlparam *)d;
+		m = ip6cp->ip6c_m;
+		ip6 = ip6cp->ip6c_ip6;
+		off = ip6cp->ip6c_off;
+	} else {
+		m = NULL;
+		ip6 = NULL;
+	}
+
+	/* translate addresses into internal form */
+	sa6 = *(struct sockaddr_in6 *)sa;
+	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr) && m && m->m_pkthdr.rcvif)
+		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+
+	if (ip6) {
+		/*
+		 * XXX: We assume that when IPV6 is non NULL,
+		 * M and OFF are valid.
+		 */
+		struct in6_addr s;
+
+		/* translate addresses into internal form */
+		memcpy(&s, &ip6->ip6_src, sizeof(s));
+		if (IN6_IS_ADDR_LINKLOCAL(&s))
+			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+
+		(void) in6_pcbnotify(&rawin6pcb, (struct sockaddr *)&sa6,
+					0, &s, 0, cmd, in6_rtchange);
+	} else {
+		(void) in6_pcbnotify(&rawin6pcb, (struct sockaddr *)&sa6, 0,
+					&zeroin6_addr, 0, cmd, in6_rtchange);
+	}
+}
+
 /*
  * Generate IPv6 header and pass packet to ip6_output.
  * Tack on options user may have setup with control call.
@@ -250,7 +307,7 @@ rip6_output(m, va_alist)
 	struct ip6_pktopts opt, *optp = NULL;
 	struct ifnet *oifp = NULL;
 	int type, code;		/* for ICMPv6 output statistics only */
-	int priv;
+	int priv = 0;
 	va_list ap;
 
 	va_start(ap, m);
@@ -356,8 +413,8 @@ rip6_output(m, va_alist)
 	}
 
 	ip6->ip6_flow = in6p->in6p_flowinfo & IPV6_FLOWINFO_MASK;
-	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
-	ip6->ip6_vfc |= IPV6_VERSION;
+	ip6->ip6_vfc  &= ~IPV6_VERSION_MASK;
+	ip6->ip6_vfc  |= IPV6_VERSION;
 #if 0				/* ip6_plen will be filled in ip6_output. */
 	ip6->ip6_plen  = htons((u_short)plen);
 #endif
