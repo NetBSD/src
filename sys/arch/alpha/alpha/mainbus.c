@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.23 1997/09/23 23:15:53 mjacob Exp $ */
+/* $NetBSD: mainbus.c,v 1.24 1998/01/12 10:21:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 1997/09/23 23:15:53 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 1998/01/12 10:21:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +52,6 @@ static int	mbprint __P((void *, const char *));
 
 struct cfattach mainbus_ca = {
 	sizeof(struct mainbus_softc), mbmatch, mbattach
-};
-
-struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL
 };
 
 void	mb_intr_establish __P((struct confargs *, int (*)(void *), void *));
