@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1995/04/22 12:10:17 cgd Exp $
+#	$NetBSD: Makefile,v 1.15 1997/01/16 21:27:22 perry Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -38,7 +38,7 @@ TZDIR=	${DESTDIR}/usr/share/zoneinfo
 REDO=		posix_only
 
 # Since "." may not be in PATH...
-YEARISTYPE=	${.CURDIR}/datfiles/yearistype.sh
+YEARISTYPE=	"sh ${.CURDIR}/datfiles/yearistype.sh"
 
 YDATA=		africa antarctica asia australasia \
 		europe northamerica southamerica pacificnew etcetera factory \
