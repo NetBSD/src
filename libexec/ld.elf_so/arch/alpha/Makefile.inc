@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.7 2001/12/14 22:21:46 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2001/12/20 19:20:02 thorpej Exp $
 
 SRCS+=	rtld_start.S alpha_reloc.c
 
-COPTS+=	-fpic -mno-fp-regs
+# XXX Should not be in CPPFLAGS!
+CPPFLAGS+= -fpic -mno-fp-regs
 
 CPPFLAGS+= -DELFSIZE=64
 #CPPFLAGS+= -DRTLD_DEBUG_ALPHA
