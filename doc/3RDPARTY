@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.33 2003/01/02 14:10:25 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.34 2003/01/03 14:47:08 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -100,7 +100,7 @@ nsswitch/nsdispatch need to be reimplemented.
 
 Package:	binutils/gas
 Version:	1.92.3/2.11.2
-Current Vers:	2.13.2
+Current Vers:	2.13.2.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Mailing List:	bug-gnu-utils@gnu.org
@@ -110,7 +110,7 @@ Version 1.92.3 still in-tree for historical reasons, but unused.
 
 Package:	binutils/ld
 Version:	???/2.11.2
-Current Vers:	2.13.2
+Current Vers:	2.13.2.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Mailing List:	bug-gnu-utils@gnu.org
@@ -120,7 +120,7 @@ Version ??? still in-tree for historical reasons, but unused.
 
 Package:	binutils/misc
 Version:	2.11.2
-Current Vers:	2.13.2
+Current Vers:	2.13.2.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Mailing List:	bug-gnu-utils@gnu.org
@@ -184,7 +184,7 @@ ftp://ftp.isc.org/isc/cron/cron_4.0_b1.shar is available.
 
 Package:	cvs
 Version:	1.11.2
-Current Vers:	1.11.2
+Current Vers:	1.11.4
 Maintainer:	cvshome
 Archive Site:	ftp://ftp.cvshome.org/pub/
 Mailing List:	bug-cvs@gnu.org
@@ -195,7 +195,7 @@ for the import.
 
 Package:	db
 Version:	1.85
-Current Vers:	1.86/4.0.14
+Current Vers:	1.86/4.1.25
 Maintainer:	Keith Bostic <bostic@vangogh.cs.berkeley.edu>
 Archive Site:	http://www.sleepycat.com/products.html
 Mailing List:
@@ -536,7 +536,7 @@ veresion date "20020626" identifies the fix.
 
 Package:	OpenSSL
 Version:	0.9.6g
-Current Vers:	0.9.6h
+Current Vers:	0.9.7
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Mailing List:	openssl-announce@openssl.org
@@ -656,7 +656,7 @@ Notes:
 
 Package:	sendmail
 Version:	8.11.6
-Current Vers:	8.12.6
+Current Vers:	8.12.7
 Maintainer:	Eric P. Allman
 Archive Site:	ftp://ftp.sendmail.org/pub/sendmail/
 Mailing List:
