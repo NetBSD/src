@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.8 2001/09/15 11:13:20 uch Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9 2001/09/15 14:08:15 uch Exp $	*/
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
  * Copyright (c) 1999-2001 SATO Kazumi, All rights reserved.
@@ -55,19 +55,16 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_vr41xx.h"
+#include "opt_tx39xx.h"
+
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
 
-#include <mips/locore.h>
-#include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
-
-#include "opt_vr41xx.h"
-#include "opt_tx39xx.h"
 
 /* Definition of the driver for autoconfig. */
 static int	cpumatch(struct device *, struct cfdata *, void *);

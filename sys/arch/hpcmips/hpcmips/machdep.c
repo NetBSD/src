@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2001/09/15 11:13:20 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 2001/09/15 14:08:15 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2001/09/15 11:13:20 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2001/09/15 14:08:15 uch Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41xx.h"
@@ -89,50 +89,31 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2001/09/15 11:13:20 uch Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/device.h>
-#include <sys/map.h>
-#include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/ioctl.h>
-#include <sys/user.h>
 #include <sys/mount.h>
-#include <sys/syscallargs.h>
+#include <sys/sysctl.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
+
+#include <ufs/mfs/mfs_extern.h>	/* mfs_initminiroot() */
+#include <dev/cons.h>		/* cntab access (cpu_reboot) */
+
+#include <machine/psl.h>
+#include <machine/sysconf.h>
+#include <machine/bootinfo.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
+#include <machine/bus.h>
+#include <machine/autoconf.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
 
-#include <uvm/uvm_extern.h>
-
-#include <sys/sysctl.h>
-#include <dev/cons.h>
-
-#include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
-
-#include <machine/cpu.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/pte.h>
-#include <machine/bus.h>
-#include <machine/autoconf.h>
-#include <machine/sysconf.h>
-#include <machine/bootinfo.h>
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
-#include <machine/locore.h>
-
 #ifdef DDB
-#include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
 #include <machine/db_machdep.h>
-#include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #ifndef DB_ELFSIZE
@@ -143,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2001/09/15 11:13:20 uch Exp $");
 #endif
 
 #if NBICONSDEV > 0
+#include <sys/conf.h>
 #include <dev/hpc/biconsvar.h>
 #include <dev/hpc/bicons.h>
 #define biconscnpollc	nullcnpollc

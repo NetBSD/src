@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.10 2001/09/15 11:13:20 uch Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.11 2001/09/15 14:08:15 uch Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,9 +46,8 @@
 #define _HPCMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-static int _bus_dmamap_load_buffer(bus_dmamap_t,
-    void *, bus_size_t, struct proc *, int, vaddr_t *,
-    int *, int);
+static int _bus_dmamap_load_buffer(bus_dmamap_t, void *, bus_size_t,
+    struct proc *, int, vaddr_t *, int *, int);
 
 paddr_t	kvtophys(vaddr_t);	/* XXX */
 

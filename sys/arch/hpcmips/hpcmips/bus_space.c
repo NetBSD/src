@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.10 2001/09/15 11:13:20 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.11 2001/09/15 14:08:15 uch Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  */
-/*	$NetBSD: bus_space.c,v 1.10 2001/09/15 11:13:20 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.11 2001/09/15 14:08:15 uch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,12 +67,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <mips/cpuregs.h>
 #include <mips/pte.h>
 #include <machine/bus.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 2001/09/15 11:13:20 uch Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 2001/09/15 14:08:15 uch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,9 +39,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
