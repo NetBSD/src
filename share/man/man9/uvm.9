@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.27 2001/08/17 17:11:51 chs Exp $
+.\"	$NetBSD: uvm.9,v 1.28 2001/12/24 12:28:47 jdolecek Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd March 26, 2000
+.Dd December 24, 2001
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -667,6 +667,61 @@ order.
 .Pp
 .Fn uvm_swapin
 swaps in the named process.
+.Sh PAGE LOAN
+.Pp
+.nr nS 1
+.Ft int
+.Fn uvm_loan "struct vm_map *map" "vaddr_t start" "vsize_t len" "void *v" "int flags"
+.Ft void
+.Fn uvm_unloan "void *v" "int npages" "int flags"
+.nr nS 0
+.Pp
+.Fn uvm_loan
+loans pages in a map out to anons or to the kernel.
+.Fa map
+should be unlocked ,
+.Fa start
+and
+.Fa len
+should be multiples of
+.Dv PAGE_SIZE .
+Argument
+.Fa flags
+should be one of
+.Bd -literal
+#define UVM_LOAN_TOANON       0x01    /* loan to anons */
+#define UVM_LOAN_TOPAGE       0x02    /* loan to kernel */
+.Ed
+.Pp
+.Fa v
+should be pointer to array of pointers to
+.Li struct anon
+or
+.Li struct vm_page ,
+as appropriate. The caller has to allocate memory for the array and
+ensure it's big enough to hold
+.Fa len / PAGE_SIZE
+pointers.
+Returns 0 for success, or appropriate error number otherwise.
+.Pp
+.Fn uvm_unloan
+kills loans on pages or anons. The
+.Fa v
+must point to the array of pointers initialized by previous call to
+.Fn uvm_loan .
+.Fa npages
+should match number of pages allocated for loan, this also matches
+number of items in the array.
+Argument
+.Fa flags
+should be one of
+.Bd -literal
+#define UVM_LOAN_TOANON       0x01    /* loan to anons */
+#define UVM_LOAN_TOPAGE       0x02    /* loan to kernel */
+.Ed
+.Pp
+and should match what was used for previous call to
+.Fn uvm_loan .
 .Sh MISCELLANEOUS FUNCTIONS
 .nr nS 1
 .Pp
