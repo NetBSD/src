@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.53 2002/04/16 06:00:46 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.54 2002/04/16 06:05:05 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.53 2002/04/16 06:00:46 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.54 2002/04/16 06:05:05 enami Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -497,7 +497,7 @@ genfs_getpages(void *v)
 
 	if (flags & PGO_LOCKED) {
 		uvn_findpages(uobj, origoffset, ap->a_count, ap->a_m,
-		    UFP_NOWAIT|UFP_NOALLOC|UFP_NORDONLY);
+		    UFP_NOWAIT|UFP_NOALLOC| (write ? UFP_NORDONLY : 0));
 
 		return (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
 	}
@@ -1505,7 +1505,7 @@ genfs_compat_getpages(void *v)
 	}
 	if (ap->a_flags & PGO_LOCKED) {
 		uvn_findpages(uobj, origoffset, ap->a_count, ap->a_m,
-		    UFP_NOWAIT|UFP_NOALLOC|UFP_NORDONLY);
+		    UFP_NOWAIT|UFP_NOALLOC| (write ? UFP_NORDONLY : 0));
 
 		return (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
 	}
