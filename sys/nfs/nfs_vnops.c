@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.102 1999/07/08 22:53:08 wrstuden Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.103 1999/07/29 17:01:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1269,7 +1269,7 @@ nfs_create(v)
 	struct nfsnode *np = (struct nfsnode *)0;
 	struct vnode *newvp = (struct vnode *)0;
 	caddr_t bpos, dpos, cp2;
-	int error = 0, wccflag = NFSV3_WCCRATTR, gotvp = 0, fmode = 0;
+	int error, wccflag = NFSV3_WCCRATTR, gotvp = 0, fmode = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	int v3 = NFS_ISV3(dvp);
 
@@ -1284,6 +1284,7 @@ nfs_create(v)
 		fmode |= O_EXCL;
 #endif
 again:
+	error = 0;
 	nfsstats.rpccnt[NFSPROC_CREATE]++;
 	nfsm_reqhead(dvp, NFSPROC_CREATE, NFSX_FH(v3) + 2 * NFSX_UNSIGNED +
 		nfsm_rndup(cnp->cn_namelen) + NFSX_SATTR(v3));
