@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1 2003/01/19 19:49:49 scw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.2 2003/01/21 11:26:04 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -74,8 +74,8 @@ typedef float		__fpreg_single_t;
 typedef double		__fpreg_double_t;
 
 typedef struct {
-	u_int32_t	__fp_scr;
-	u_int32_t	__fp_pad;
+	int		__fp_scr;
+	int		__fp_pad;
 	union {
 		__fpreg_single_t __u_fp_single[64];
 		__fpreg_double_t __u_fp_double[32];
