@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.91 1998/09/12 19:50:59 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.92 1998/09/13 11:12:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -66,6 +66,7 @@
 #include <machine/psl.h>
 #include <machine/signal.h>
 #include <machine/trap.h>
+#include <sys/syscall.h>
 #ifdef COMPAT_SVR4
 #include <compat/svr4/svr4_syscall.h>
 #endif
@@ -3941,7 +3942,8 @@ _sigcode:
 	mov	%l6, %g6
 	mov	%l7, %g7
 
-	restore	%g0, SYS_sigreturn, %g1	! get registers back & set syscall #
+	! get registers back & set syscall #
+	restore	%g0, SYS___sigreturn14, %g1
 	add	%sp, 64 + 16, %o0	! compute scp
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
