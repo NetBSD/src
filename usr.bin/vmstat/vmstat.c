@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.42 1998/02/07 16:18:14 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.43 1998/02/07 16:50:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.42 1998/02/07 16:18:14 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.43 1998/02/07 16:50:59 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -499,7 +499,58 @@ dosum()
 		bzero(&uvmexp, sizeof(uvmexp));
 	}
 
-	/* XXX fill me in! */
+	(void)printf("%9u total faults taken\n", uvmexp.faults);
+	(void)printf("%9u traps\n", uvmexp.traps);
+	(void)printf("%9u device interrupts\n", uvmexp.intrs);
+	(void)printf("%9u cpu context switches\n", uvmexp.swtch);
+	(void)printf("%9u software interrupts\n", uvmexp.softs);
+	(void)printf("%9u system calls\n", uvmexp.syscalls);
+	(void)printf("%9u pages swapped in\n", uvmexp.pageins / CLSIZE);
+	(void)printf("%9u pages swapped out\n", uvmexp.pageouts / CLSIZE);
+	(void)printf("%9u swap ins\n", uvmexp.swapins);
+	(void)printf("%9u swap outs\n", uvmexp.swapouts);
+	(void)printf("%9u forks total\n", uvmexp.forks);
+	(void)printf("%9u forks blocked parent\n", uvmexp.forks_ppwait);
+	(void)printf("%9u forks shared address space with parent\n",
+	    uvmexp.forks_sharevm);
+	(void)printf("%9u times daemon wokeup\n",uvmexp.pdwoke);
+	(void)printf("%9u pages reactivated\n", uvmexp.pdreact);
+	(void)printf("%9u pages deactivated\n", uvmexp.pddeact);
+	(void)printf("%9u revolutions of the clock hand\n", uvmexp.pdrevs);
+	(void)printf("%9u pages freed by daemon\n", uvmexp.pdfreed);
+	(void)printf("%9u pages scanned by daemon\n", uvmexp.pdscans);
+	(void)printf("%9u pages found busy by daemon\n", uvmexp.pdbusy);
+	(void)printf("%9u total pending pageouts\n", uvmexp.pdpending);
+	(void)printf("%9u times daemon attempted swapout\n", uvmexp.pdswout);
+	(void)printf("%9u pages free\n", uvmexp.free);
+	(void)printf("%9u pages wired down\n", uvmexp.wired);
+	(void)printf("%9u pages active\n", uvmexp.active);
+	(void)printf("%9u pages inactive\n", uvmexp.inactive);
+	(void)printf("%9u bytes per page\n", uvmexp.pagesize);
+	(void)printf("%9u target inactive pages\n", uvmexp.inactarg);
+	(void)printf("%9u target free pages\n", uvmexp.freetarg);
+	(void)printf("%9u minimum free pages\n", uvmexp.freemin);
+	(void)printf("%9u reserve kernel pages\n", uvmexp.reserve_kernel);
+	(void)printf("%9u reserve pagedaemon pages\n",
+	    uvmexp.reserve_pagedaemon);
+	(void)printf("%9u faults failed with no memory\n", uvmexp.fltnoram);
+	(void)printf("%9u faults failed with no anons\n", uvmexp.fltnoanon);
+	(void)printf("%9u faults had to wait on pages\n", uvmexp.fltpgwait);
+	(void)printf("%9u faults found released page\n", uvmexp.fltpgrele);
+	(void)printf("%9u faults relock (%u ok)\n", uvmexp.fltrelck,
+	    uvmexp.fltrelckok);
+	(void)printf("%9u anon page faults\n", uvmexp.fltanget);
+	(void)printf("%9u anon retry faults\n", uvmexp.fltanretry);
+	(void)printf("%9u amap copy faults\n", uvmexp.fltamcopy);
+	(void)printf("%9u neighbour anon page faults\n", uvmexp.fltnamap);
+	(void)printf("%9u neighbour object page faults\n", uvmexp.fltnomap);
+	(void)printf("%9u locked pager get faults\n", uvmexp.fltlget);
+	(void)printf("%9u unlocked pager get faults\n", uvmexp.fltget);
+	(void)printf("%9u anon faults\n", uvmexp.flt_anon);
+	(void)printf("%9u anon copy on write faults\n", uvmexp.flt_acow);
+	(void)printf("%9u object faults\n", uvmexp.flt_obj);
+	(void)printf("%9u promote copy faults\n", uvmexp.flt_prcopy);
+	(void)printf("%9u promote zero fill faults\n", uvmexp.flt_przero);
 #else
 	kread(X_SUM, &sum, sizeof(sum));
 	(void)printf("%9u cpu context switches\n", sum.v_swtch);
