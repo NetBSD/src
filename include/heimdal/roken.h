@@ -39,7 +39,7 @@
  */
 
 /* $Heimdal: roken.h.in,v 1.169 2002/08/26 21:43:38 assar Exp $ 
-   $NetBSD: roken.h,v 1.10 2003/01/27 06:19:41 elric Exp $ */
+   $NetBSD: roken.h,v 1.11 2003/05/15 22:58:02 lha Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,6 +76,7 @@
 
 
 #define ROKEN_LIB_FUNCTION
+
 
 #include <roken-common.h>
 
@@ -148,6 +149,9 @@ int mkstemp(char *);
 
 
 
+
+
+
 time_t tm2time (struct tm tm, int local);
 
 int unix_verify_user(char *user, char *password);
@@ -204,11 +208,8 @@ int roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **);
 int roken_getaddrinfo_hostspec2(const char *, int, int, struct addrinfo **);
 
 void *emalloc (size_t);
-
 void *ecalloc(size_t num, size_t sz);
-
 void *erealloc (void *, size_t);
-
 char *estrdup (const char *);
 
 /*
@@ -234,6 +235,6 @@ void set_progname(char *argv0);
 const char *get_progname(void);
 
 ROKEN_CPP_END
-#define ROKEN_VERSION 0.5
+#define ROKEN_VERSION 0.6
 
 #endif /* __ROKEN_H__ */
