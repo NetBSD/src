@@ -306,7 +306,39 @@ lkm)
 	mknod lkm c 28 0
 	chown root.kmem lkm
 	chmod 640 lkm
-        ;;
+	;;
+
+mms)
+	rm -f mms
+	mknod mms c 35 1	# non-blocking for X11
+	chown root.wheel mms
+	;;
+
+lms)
+	rm -f lms
+	mknod lms c 36 1	# non-blocking for X11
+	chown root.wheel lms
+	;;
+
+mouse*)
+	type=`expr $i : 'mouse-\(.*\)'`
+	case $type in
+	ms|microsoft)
+		name=mms
+		;;
+	lg|logitech)
+		name=lms
+		;;
+	*)
+		echo 'mouse-microsoft or mouse-logitech?'
+		exit 1
+	esac
+	if [ ! -c $name ]; then
+		$0 $name	# make the appropriate device
+	fi
+	rm -f mouse
+	ln -s $name mouse
+	;;
 
 local)
 	umask 0
