@@ -25,11 +25,7 @@ distribution:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	install -c -o ${BINOWN} -g ${BINGRP} -m 666 ${BIN2} ${DESTDIR}/etc
 	install -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
-	(cd ${DESTDIR}/etc; \
-	    pwd_mkdb -p master.passwd; \
-	    mv master.passwd.pag passwd.pag; \
-	    mv master.passwd.dir passwd.dir; \
-	    mv master.passwd.orig passwd)
+	(cd ${DESTDIR}/etc; pwd_mkdb -p master.passwd)
 	install -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	(cd root; \
