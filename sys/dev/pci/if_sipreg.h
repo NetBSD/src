@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.12 2003/08/15 07:29:35 itojun Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.13 2003/12/03 21:58:49 cube Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -264,11 +264,14 @@ struct sip_desc {
 #define	CFG_BEM		0x00000001	/* big-endian mode */
 
 #define	SIP_EROMAR	0x08	/* EEPROM access register */
-#ifdef DP83820
+#ifndef DP83820
+#define	EROMAR_REQ	0x00000400	/* SiS 96x specific */
+#define	EROMAR_DONE	0x00000200	/* SiS 96x specific */
+#define	EROMAR_GNT	0x00000100	/* SiS 96x specific */
+#endif /* DP83820 */
 #define	EROMAR_MDC	0x00000040	/* MII clock */
 #define	EROMAR_MDDIR	0x00000020	/* MII direction (1 == MAC->PHY) */
 #define	EROMAR_MDIO	0x00000010	/* MII data */
-#endif /* DP83820 */
 #define	EROMAR_EECS	0x00000008	/* chip select */
 #define	EROMAR_EESK	0x00000004	/* clock */
 #define	EROMAR_EEDO	0x00000002	/* data out */
@@ -709,6 +712,15 @@ struct sip_desc {
 #define	SIS_REV_630EA1	0x83
 #define	SIS_REV_630ET	0x84
 #define	SIS_REV_635	0x90	/* same for 735 (745?) */
+#define	SIS_REV_960	0x91
+
+/*
+ * MII operations for recent SiS chipsets
+ */
+#define	SIS_MII_STARTDELIM	0x01
+#define	SIS_MII_READOP		0x02
+#define	SIS_MII_WRITEOP		0x01
+#define	SIS_MII_TURNAROUND	0x02
 
 /*
  * Serial EEPROM opcodes, including the start bit.
