@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.17 2000/01/31 14:25:43 itojun Exp $	*/
+/*	$NetBSD: externs.h,v 1.18 2000/02/01 02:28:23 assar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -244,7 +244,7 @@ extern jmp_buf
 
 
 /* authenc.c */
-int net_write P((unsigned char *, int));
+int telnet_net_write P((unsigned char *, int));
 void net_encrypt P((void));
 int telnet_spin P((void));
 char *telnet_getenv P((char *));
