@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 1999/01/22 22:24:29 thorpej Exp $
+#	$NetBSD: Makefile,v 1.25 1999/01/31 14:33:33 kim Exp $
 
 .include <bsd.own.mk>
 
@@ -25,11 +25,14 @@ DPADD+=	${LIBGNUMALLOC}
 MLINKS+= gzip.1 gunzip.1 gzip.1 gzcat.1 gzip.1 zcat.1
 MLINKS+= zdiff.1 zcmp.1
 #MLINKS+= gzip.1 uncompress.1
+MLINKS+= zgrep.1 zegrep.1 zgrep.1 zfgrep.1
 LINKS+= ${BINDIR}/gzip ${BINDIR}/gunzip
 LINKS+= ${BINDIR}/gzip ${BINDIR}/gzcat
 LINKS+= ${BINDIR}/gzip ${BINDIR}/zcat
 LINKS+=	${BINDIR}/zdiff ${BINDIR}/zcmp
 #LINKS+= ${BINDIR}/gzip ${BINDIR}/uncompress
+LINKS+=	${BINDIR}/zgrep ${BINDIR}/zegrep
+LINKS+=	${BINDIR}/zgrep ${BINDIR}/zfgrep
 
 FILES=zforce gzexe znew zmore zdiff zgrep 
 FILESMODE=${BINMODE}
