@@ -1,4 +1,4 @@
-/*	$NetBSD: rusersd.c,v 1.10 1997/09/17 16:35:56 christos Exp $	*/
+/*	$NetBSD: rusersd.c,v 1.11 1998/07/03 11:49:50 mrg Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusersd.c,v 1.10 1997/09/17 16:35:56 christos Exp $");
+__RCSID("$NetBSD: rusersd.c,v 1.11 1998/07/03 11:49:50 mrg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -54,6 +54,7 @@ static void
 cleanup(n)
 	int n;
 {
+
 	(void) pmap_unset(RUSERSPROG, RUSERSVERS_3);
 	(void) pmap_unset(RUSERSPROG, RUSERSVERS_IDLE);
 	exit(0);
