@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.88 2003/09/25 21:58:46 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.89 2003/09/27 04:44:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88 2003/09/25 21:58:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.89 2003/09/27 04:44:42 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -64,14 +64,14 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88 2003/09/25 21:58:46 matt Exp $");
 #include <powerpc/spr.h>
 #include <powerpc/userret.h>
 
-static int fix_unaligned __P((struct lwp *l, struct trapframe *frame));
-static inline vaddr_t setusr __P((vaddr_t, size_t *));
-static inline void unsetusr __P((void));
+static int fix_unaligned(struct lwp *l, struct trapframe *frame);
+static __inline vaddr_t setusr(vaddr_t, size_t *);
+static __inline void unsetusr(void);
 
-void trap __P((struct trapframe *));	/* Called from locore / trap_subr */
+void trap(struct trapframe *);	/* Called from locore / trap_subr */
 /* Why are these not defined in a header? */
-int badaddr __P((void *, size_t));
-int badaddr_read __P((void *, size_t, int *));
+int badaddr(void *, size_t);
+int badaddr_read(void *, size_t, int *);
 
 void
 trap(struct trapframe *frame)
@@ -507,10 +507,7 @@ unsetusr(void)
 #endif
 
 int
-copyin(udaddr, kaddr, len)
-	const void *udaddr;
-	void *kaddr;
-	size_t len;
+copyin(const void *udaddr, void *kaddr, size_t len)
 {
 	vaddr_t uva = (vaddr_t) udaddr;
 	char *kp = kaddr;
@@ -538,10 +535,7 @@ copyin(udaddr, kaddr, len)
 }
 
 int
-copyout(kaddr, udaddr, len)
-	const void *kaddr;
-	void *udaddr;
-	size_t len;
+copyout(const void *kaddr, void *udaddr, size_t len)
 {
 	const char *kp = kaddr;
 	vaddr_t uva = (vaddr_t) udaddr;
@@ -579,10 +573,7 @@ copyout(kaddr, udaddr, len)
  * page fault.
  */
 int
-kcopy(src, dst, len)
-	const void *src;
-	void *dst;
-	size_t len;
+kcopy(const void *src, void *dst, size_t len)
 {
 	struct faultbuf env, *oldfault;
 	int rv;
@@ -597,18 +588,13 @@ kcopy(src, dst, len)
 }
 
 int
-badaddr(addr, size)
-	void *addr;
-	size_t size;
+badaddr(void *addr, size_t size)
 {
 	return badaddr_read(addr, size, NULL);
 }
 
 int
-badaddr_read(addr, size, rptr)
-	void *addr;
-	size_t size;
-	int *rptr;
+badaddr_read(void *addr, size_t size, int *rptr)
 {
 	struct faultbuf env;
 	int x;
@@ -658,9 +644,7 @@ badaddr_read(addr, size, rptr)
  */
 
 static int
-fix_unaligned(l, frame)
-	struct lwp *l;
-	struct trapframe *frame;
+fix_unaligned(struct lwp *l, struct trapframe *frame)
 {
 	int indicator = EXC_ALI_OPCODE_INDICATOR(frame->dsisr);
 
@@ -718,11 +702,7 @@ fix_unaligned(l, frame)
 }
 
 int
-copyinstr(udaddr, kaddr, len, done)
-	const void *udaddr;
-	void *kaddr;
-	size_t len;
-	size_t *done;
+copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 {
 	vaddr_t uva = (vaddr_t) udaddr;
 	char *kp = kaddr;
@@ -757,11 +737,7 @@ copyinstr(udaddr, kaddr, len, done)
 
 
 int
-copyoutstr(kaddr, udaddr, len, done)
-	const void *kaddr;
-	void *udaddr;
-	size_t len;
-	size_t *done;
+copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 {
 	const char *kp = kaddr;
 	vaddr_t uva = (vaddr_t) udaddr;
@@ -798,8 +774,7 @@ copyoutstr(kaddr, udaddr, len, done)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;

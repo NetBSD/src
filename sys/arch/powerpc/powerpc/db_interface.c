@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.30 2003/09/25 17:36:33 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.31 2003/09/27 04:44:42 matt Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30 2003/09/25 17:36:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.31 2003/09/27 04:44:42 matt Exp $");
 
 #define USERACC
 
@@ -62,15 +62,14 @@ static void db_ppc4xx_useracc(db_expr_t, int, db_expr_t, char *);
 
 #ifdef DDB
 void
-cpu_Debugger()
+cpu_Debugger(void)
 {
 	ddb_trap();
 }
 #endif
 
 int
-ddb_trap_glue(frame)
-	struct trapframe *frame;
+ddb_trap_glue(struct trapframe *frame)
 {
 #ifdef PPC_IBM4XX
 	if ((frame->srr1 & PSL_PR) == 0)
@@ -91,9 +90,7 @@ ddb_trap_glue(frame)
 }
 
 int
-kdb_trap(type, v)
-	int type;
-	void *v;
+kdb_trap(int type, void *v)
 {
 	struct trapframe *frame = v;
 
