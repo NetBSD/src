@@ -1,3 +1,5 @@
+/*	$NetBSD: qdivrem.c,v 1.3 1995/01/06 00:45:20 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,8 +38,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)qdivrem.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: qdivrem.c,v 1.2 1994/10/19 03:09:53 cgd Exp $";
+#ifdef notdef
+static char *sccsid = "@(#)qdivrem.c	8.1 (Berkeley) 6/4/93";
+#endif
+static char *rcsid = "$NetBSD: qdivrem.c,v 1.3 1995/01/06 00:45:20 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -59,20 +63,7 @@ typedef unsigned short digit;
 typedef u_long digit;
 #endif
 
-/*
- * Shift p[0]..p[len] left `sh' bits, ignoring any bits that
- * `fall out' the left (there never will be any such anyway).
- * We may assume len >= 0.  NOTE THAT THIS WRITES len+1 DIGITS.
- */
-static void
-shl(register digit *p, register int len, register int sh)
-{
-	register int i;
-
-	for (i = 0; i < len; i++)
-		p[i] = LHALF(p[i] << sh) | (p[i + 1] >> (HALF_BITS - sh));
-	p[i] = LHALF(p[i] << sh);
-}
+static void shl __P((digit *p, int len, int sh));
 
 /*
  * __qdivrem(u, v, rem) returns u/v and, optionally, sets *rem to u%v.
@@ -277,4 +268,19 @@ __qdivrem(uq, vq, arq)
 	tmp.ul[H] = COMBINE(qspace[1], qspace[2]);
 	tmp.ul[L] = COMBINE(qspace[3], qspace[4]);
 	return (tmp.q);
+}
+
+/*
+ * Shift p[0]..p[len] left `sh' bits, ignoring any bits that
+ * `fall out' the left (there never will be any such anyway).
+ * We may assume len >= 0.  NOTE THAT THIS WRITES len+1 DIGITS.
+ */
+static void
+shl(register digit *p, register int len, register int sh)
+{
+	register int i;
+
+	for (i = 0; i < len; i++)
+		p[i] = LHALF(p[i] << sh) | (p[i + 1] >> (HALF_BITS - sh));
+	p[i] = LHALF(p[i] << sh);
 }
