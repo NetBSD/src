@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.2 2002/09/10 11:56:32 scw Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.3 2002/09/12 12:37:49 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,10 +38,11 @@
 #ifndef __SH5_CACHEOPS_H
 #define __SH5_CACHEOPS_H
 
-extern void (*__cpu_cache_dpurge)(vaddr_t, vsize_t);
-extern void (*__cpu_cache_dpurge_iinv)(vaddr_t, vsize_t);
-extern void (*__cpu_cache_dinv)(vaddr_t, vsize_t);
-extern void (*__cpu_cache_dinv_iinv)(vaddr_t, vsize_t);
-extern void (*__cpu_cache_iinv)(vaddr_t, vsize_t);
+extern void (*__cpu_cache_dpurge)(vaddr_t, paddr_t, vsize_t);
+extern void (*__cpu_cache_dpurge_iinv)(vaddr_t, paddr_t, vsize_t);
+extern void (*__cpu_cache_dinv)(vaddr_t, paddr_t, vsize_t);
+extern void (*__cpu_cache_dinv_iinv)(vaddr_t, paddr_t, vsize_t);
+extern void (*__cpu_cache_iinv)(vaddr_t, paddr_t, vsize_t);
+extern void (*__cpu_cache_iinv_all)(void);
 
 #endif /* __SH5_CACHEOPS_H */
