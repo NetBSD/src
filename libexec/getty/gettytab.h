@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gettytab.h	5.5 (Berkeley) 3/27/91
- *	$Id: gettytab.h,v 1.2 1993/08/01 18:30:28 mycroft Exp $
+ *	$Id: gettytab.h,v 1.3 1994/03/23 03:36:03 cgd Exp $
  */
 
 /*
@@ -114,9 +114,9 @@ struct gettyflags {
 #define	EP	gettyflags[2].value
 #define	EPset	gettyflags[2].set
 #define	OP	gettyflags[3].value
-#define	OPset	gettyflags[2].set
+#define	OPset	gettyflags[3].set
 #define	AP	gettyflags[4].value
-#define	APset	gettyflags[2].set
+#define	APset	gettyflags[4].set
 #define	EC	gettyflags[5].value
 #define	CO	gettyflags[6].value
 #define	CB	gettyflags[7].value
