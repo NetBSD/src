@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.1 1997/10/14 06:49:16 sakamoto Exp $	*/
+/*	$NetBSD: spkr.c,v 1.2 1997/11/27 10:20:04 sakamoto Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -80,7 +80,7 @@ endtone(v)
     void *v;
 {
     wakeup(endtone);
-    outb(PITAUX_PORT, inb(PITAUX_PORT) & ~PIT_SPKR);
+    isa_outb(PITAUX_PORT, isa_inb(PITAUX_PORT) & ~PIT_SPKR);
 }
 
 static
@@ -97,13 +97,13 @@ void tone(hz, ticks)
 
     /* set timer to generate clicks at given frequency in Hertz */
     sps = spltty();
-    outb(TIMER_MODE, PIT_MODE);		/* prepare timer */
-    outb(TIMER_CNTR2, (unsigned char) divisor);  /* send lo byte */
-    outb(TIMER_CNTR2, (divisor >> 8));	/* send hi byte */
+    isa_outb(TIMER_MODE, PIT_MODE);		/* prepare timer */
+    isa_outb(TIMER_CNTR2, (unsigned char) divisor);  /* send lo byte */
+    isa_outb(TIMER_CNTR2, (divisor >> 8));	/* send hi byte */
     splx(sps);
 
     /* turn the speaker on */
-    outb(PITAUX_PORT, inb(PITAUX_PORT) | PIT_SPKR);
+    isa_outb(PITAUX_PORT, isa_inb(PITAUX_PORT) | PIT_SPKR);
 
     /*
      * Set timeout to endtone function, then give up the timeslice.

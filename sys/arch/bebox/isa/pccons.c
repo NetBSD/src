@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.1 1997/10/14 06:49:14 sakamoto Exp $	*/
+/*	$NetBSD: pccons.c,v 1.2 1997/11/27 10:19:52 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -186,10 +186,10 @@ int pccngetc __P((dev_t));
 void pccnpollc __P((dev_t, int));
 
 #define	KBD_DELAY \
-	{ u_char x = inb(0x84); (void) x; } \
-	{ u_char x = inb(0x84); (void) x; } \
-	{ u_char x = inb(0x84); (void) x; } \
-	{ u_char x = inb(0x84); (void) x; }
+	{ u_char x = isa_inb(0x84); (void) x; } \
+	{ u_char x = isa_inb(0x84); (void) x; } \
+	{ u_char x = isa_inb(0x84); (void) x; } \
+	{ u_char x = isa_inb(0x84); (void) x; }
 
 static __inline int
 kbd_wait_output()
@@ -197,7 +197,7 @@ kbd_wait_output()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((inb(KBSTATP) & KBS_IBF) == 0) {
+		if ((isa_inb(KBSTATP) & KBS_IBF) == 0) {
 			KBD_DELAY;
 			return 1;
 		}
@@ -210,7 +210,7 @@ kbd_wait_input()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((inb(KBSTATP) & KBS_DIB) != 0) {
+		if ((isa_inb(KBSTATP) & KBS_DIB) != 0) {
 			KBD_DELAY;
 			return 1;
 		}
@@ -223,10 +223,10 @@ kbd_flush_input()
 	u_int i;
 
 	for (i = 10; i; i--) {
-		if ((inb(KBSTATP) & KBS_DIB) == 0)
+		if ((isa_inb(KBSTATP) & KBS_DIB) == 0)
 			return;
 		KBD_DELAY;
-		(void) inb(KBDATAP);
+		(void) isa_inb(KBDATAP);
 	}
 }
 
@@ -240,10 +240,10 @@ kbc_get8042cmd()
 
 	if (!kbd_wait_output())
 		return -1;
-	outb(KBCMDP, K_RDCMDBYTE);
+	isa_outb(KBCMDP, K_RDCMDBYTE);
 	if (!kbd_wait_input())
 		return -1;
-	return inb(KBDATAP);
+	return isa_inb(KBDATAP);
 }
 #endif
 
@@ -257,10 +257,10 @@ kbc_put8042cmd(val)
 
 	if (!kbd_wait_output())
 		return 0;
-	outb(KBCMDP, K_LDCMDBYTE);
+	isa_outb(KBCMDP, K_LDCMDBYTE);
 	if (!kbd_wait_output())
 		return 0;
-	outb(KBOUTP, val);
+	isa_outb(KBOUTP, val);
 	return 1;
 }
 
@@ -279,14 +279,14 @@ kbd_cmd(val, polling)
 		if (!kbd_wait_output())
 			return 0;
 		ack = nak = 0;
-		outb(KBOUTP, val);
+		isa_outb(KBOUTP, val);
 		if (polling)
 			for (i = 100000; i; i--) {
-				if (inb(KBSTATP) & KBS_DIB) {
+				if (isa_inb(KBSTATP) & KBS_DIB) {
 					register u_char c;
 
 					KBD_DELAY;
-					c = inb(KBDATAP);
+					c = isa_inb(KBDATAP);
 					if (c == KBR_ACK || c == KBR_ECHO) {
 						ack = 1;
 						return 1;
@@ -302,7 +302,7 @@ kbd_cmd(val, polling)
 			}
 		else
 			for (i = 100000; i; i--) {
-				(void) inb(KBSTATP);
+				(void) isa_inb(KBSTATP);
 				if (ack)
 					return 1;
 				if (nak)
@@ -319,10 +319,10 @@ set_cursor_shape()
 {
 	register int iobase = addr_6845;
 
-	outb(iobase, 10);
-	outb(iobase+1, cursor_shape >> 8);
-	outb(iobase, 11);
-	outb(iobase+1, cursor_shape);
+	isa_outb(iobase, 10);
+	isa_outb(iobase+1, cursor_shape >> 8);
+	isa_outb(iobase, 11);
+	isa_outb(iobase+1, cursor_shape);
 	old_cursor_shape = cursor_shape;
 }
 
@@ -333,10 +333,10 @@ get_cursor_shape()
 {
 	register int iobase = addr_6845;
 
-	outb(iobase, 10);
-	cursor_shape = inb(iobase+1) << 8;
-	outb(iobase, 11);
-	cursor_shape |= inb(iobase+1);
+	isa_outb(iobase, 10);
+	cursor_shape = isa_inb(iobase+1) << 8;
+	isa_outb(iobase, 11);
+	cursor_shape |= isa_inb(iobase+1);
 
 	/*
 	 * real 6845's, as found on, MDA, Hercules or CGA cards, do
@@ -388,10 +388,10 @@ do_async_update(v)
 	pos = crtat - Crtat;
 	if (pos != old_pos) {
 		register int iobase = addr_6845;
-		outb(iobase, 14);
-		outb(iobase+1, pos >> 8);
-		outb(iobase, 15);
-		outb(iobase+1, pos);
+		isa_outb(iobase, 14);
+		isa_outb(iobase+1, pos >> 8);
+		isa_outb(iobase, 15);
+		isa_outb(iobase+1, pos);
 		old_pos = pos;
 	}
 	if (cursor_shape != old_cursor_shape)
@@ -440,11 +440,11 @@ pcprobe(parent, match, aux)
 		goto lose;
 	}
 	for (i = 600000; i; i--)
-		if ((inb(KBSTATP) & KBS_DIB) != 0) {
+		if ((isa_inb(KBSTATP) & KBS_DIB) != 0) {
 			KBD_DELAY;
 			break;
 		}
-	if (i == 0 || inb(KBDATAP) != KBR_RSTDONE) {
+	if (i == 0 || isa_inb(KBDATAP) != KBR_RSTDONE) {
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
 	}
@@ -628,7 +628,7 @@ pcintr(arg)
 	register struct tty *tp = sc->sc_tty;
 	u_char *cp;
 
-	if ((inb(KBSTATP) & KBS_DIB) == 0)
+	if ((isa_inb(KBSTATP) & KBS_DIB) == 0)
 		return 0;
 	if (polling)
 		return 1;
@@ -640,7 +640,7 @@ pcintr(arg)
 			do
 				(*linesw[tp->t_line].l_rint)(*cp++, tp);
 			while (*cp);
-	} while (inb(KBSTATP) & KBS_DIB);
+	} while (isa_inb(KBSTATP) & KBS_DIB);
 	return 1;
 }
 
@@ -812,7 +812,7 @@ pccngetc(dev)
 
 	do {
 		/* wait for byte */
-		while ((inb(KBSTATP) & KBS_DIB) == 0);
+		while ((isa_inb(KBSTATP) & KBS_DIB) == 0);
 		/* see if it's worthwhile */
 		cp = sget();
 	} while (!cp);
@@ -916,10 +916,10 @@ sput(cp, n)
 		}
 
 		/* Extract cursor location */
-		outb(addr_6845, 14);
-		cursorat = inb(addr_6845+1) << 8;
-		outb(addr_6845, 15);
-		cursorat |= inb(addr_6845+1);
+		isa_outb(addr_6845, 14);
+		cursorat = isa_inb(addr_6845+1) << 8;
+		isa_outb(addr_6845, 15);
+		cursorat |= isa_inb(addr_6845+1);
 
 #ifdef FAT_CURSOR
 		cursor_shape = 0x0012;
@@ -1471,7 +1471,7 @@ sget()
 
 top:
 	KBD_DELAY;
-	dt = inb(KBDATAP);
+	dt = isa_inb(KBDATAP);
 
 	switch (dt) {
 	case KBR_ACK:
@@ -1668,7 +1668,7 @@ top:
 
 	extended = 0;
 loop:
-	if ((inb(KBSTATP) & KBS_DIB) == 0)
+	if ((isa_inb(KBSTATP) & KBS_DIB) == 0)
 		return 0;
 	goto top;
 }

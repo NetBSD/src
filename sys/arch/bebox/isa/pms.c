@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.1 1997/10/14 06:49:15 sakamoto Exp $	*/
+/*	$NetBSD: pms.c,v 1.2 1997/11/27 10:19:59 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -127,12 +127,12 @@ pms_flush()
 {
 	u_char c;
 
-	while ((c = inb(PMS_STATUS) & 0x03) != 0)
+	while ((c = isa_inb(PMS_STATUS) & 0x03) != 0)
 		if ((c & PMS_OBUF_FULL) == PMS_OBUF_FULL) {
 			/* XXX - delay is needed to prevent some keyboards from
 			   wedging when the system boots */
 			delay(6);
-			(void) inb(PMS_DATA);
+			(void) isa_inb(PMS_DATA);
 		}
 }
 
@@ -142,9 +142,9 @@ pms_dev_cmd(value)
 {
 
 	pms_flush();
-	outb(PMS_CNTRL, 0xd4);
+	isa_outb(PMS_CNTRL, 0xd4);
 	pms_flush();
-	outb(PMS_DATA, value);
+	isa_outb(PMS_DATA, value);
 }
 
 static __inline void
@@ -153,7 +153,7 @@ pms_aux_cmd(value)
 {
 
 	pms_flush();
-	outb(PMS_CNTRL, value);
+	isa_outb(PMS_CNTRL, value);
 }
 
 static __inline void
@@ -162,9 +162,9 @@ pms_pit_cmd(value)
 {
 
 	pms_flush();
-	outb(PMS_CNTRL, 0x60);
+	isa_outb(PMS_CNTRL, 0x60);
 	pms_flush();
-	outb(PMS_DATA, value);
+	isa_outb(PMS_DATA, value);
 }
 
 /*
@@ -196,7 +196,7 @@ pmsprobe(parent, match, aux)
 	pms_dev_cmd(PMS_RESET);
 	pms_aux_cmd(PMS_AUX_TEST);
 	delay(1000);
-	x = inb(PMS_DATA);
+	x = isa_inb(PMS_DATA);
 	pms_pit_cmd(PMS_INT_DISABLE);
 	if (x & 0x04)
 		return 0;
@@ -411,20 +411,20 @@ pmsintr(arg)
 	switch (state) {
 
 	case 0:
-		buttons = inb(PMS_DATA);
+		buttons = isa_inb(PMS_DATA);
 		if ((buttons & 0xc0) == 0)
 			++state;
 		break;
 
 	case 1:
-		dx = inb(PMS_DATA);
+		dx = isa_inb(PMS_DATA);
 		/* Bounding at -127 avoids a bug in XFree86. */
 		dx = (dx == -128) ? -127 : dx;
 		++state;
 		break;
 
 	case 2:
-		dy = inb(PMS_DATA);
+		dy = isa_inb(PMS_DATA);
 		dy = (dy == -128) ? -127 : dy;
 		state = 0;
 

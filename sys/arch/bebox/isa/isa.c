@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.1 1997/10/14 06:48:59 sakamoto Exp $	*/
+/*	$NetBSD: isa.c,v 1.2 1997/11/27 10:19:21 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -121,6 +121,7 @@ isaattach(parent, self, aux)
 	if (bus_space_map(sc->sc_iot, IO_DMAPG, 0xf, 0, &sc->sc_dmapgh))
 		panic("isaattach: can't map DMA page registers");
 
+#if 0
 	/*
 	 * Map port 0x84, which causes a 1.25us delay when read.
 	 * We do this now, since several drivers need it.
@@ -128,6 +129,7 @@ isaattach(parent, self, aux)
 	if (bus_space_subregion(sc->sc_iot, sc->sc_dmapgh, 0x04, 1,
 	    &sc->sc_delaybah))
 		panic("isaattach: can't map `delay port'");	/* XXX */
+#endif
 
 	TAILQ_INIT(&sc->sc_subdevs);
 #ifdef __BROKEN_INDIRECT_CONFIG

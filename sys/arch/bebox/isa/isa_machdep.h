@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.1 1997/10/14 06:49:02 sakamoto Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2 1997/11/27 10:19:32 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,6 +76,9 @@ void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
  * BY PORTABLE CODE.
  */
 
+#define	isa_outb(x,y)	outb(bebox_bus_io.bus_base + (x), y)
+#define isa_inb(x)	inb(bebox_bus_io.bus_base + (x))
+
 extern struct bebox_bus_dma_tag isa_bus_dma_tag;
 
 /*
@@ -115,21 +118,6 @@ struct bebox_isa_dma_cookie {
 #define	CGA_BASE	0x3D4
 #define	CGA_BUF		0xB8000
 #define	IOPHYSMEM	0xA0000
-
-
-/*
- * Interrupt handler chains.  isa_intr_establish() inserts a handler into
- * the list.  The handler is called with its (single) argument.
- */
-
-struct intrhand {
-	int	(*ih_fun) __P((void *));
-	void	*ih_arg;
-	u_long	ih_count;
-	struct	intrhand *ih_next;
-	int	ih_level;
-	int	ih_irq;
-};
 
 
 /*

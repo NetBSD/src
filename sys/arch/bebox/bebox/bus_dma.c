@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.2 1997/10/20 02:46:20 sakamoto Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.3 1997/11/27 10:17:45 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -124,7 +124,6 @@
 #include <machine/bus.h>
 
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/reg.h>

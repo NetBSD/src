@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 1997/10/15 05:09:33 sakamoto Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 1997/11/27 10:18:14 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,13 +36,8 @@
 
 #include <machine/bus.h>
 
-#include <dev/isa/isavar.h>
-#include <dev/pci/pcivar.h>
-
-#include <dev/isa/isareg.h>
-#include <bebox/isa/isa_machdep.h>
-
 #include "pci.h"
+#include <dev/pci/pcivar.h>
 
 int	mainbus_match __P((struct device *, void *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
@@ -60,14 +55,15 @@ int	mainbus_print __P((void *, const char *));
 union mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
 	struct pcibus_attach_args mba_pba;
-	struct isabus_attach_args mba_iba;
 };
 
-/*
- * This is set when the ISA bus is attached.  If it's not set by the
- * time it's checked below, then mainbus attempts to attach an ISA.
- */
-int	isa_has_been_seen;
+struct bebox_bus_space bebox_bus_io = {
+	BEBOX_BUS_SPACE_IO, BEBOX_BUS_REVERSE
+};
+
+struct bebox_bus_space bebox_bus_mem = {
+	BEBOX_BUS_SPACE_MEM, BEBOX_BUS_REVERSE
+};
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -101,20 +97,13 @@ mainbus_attach(parent, self, aux)
 	 */
 #if NPCI > 0
 	mba.mba_pba.pba_busname = "pci";
-	mba.mba_pba.pba_iot = BEBOX_BUS_SPACE_IO;
-	mba.mba_pba.pba_memt = BEBOX_BUS_SPACE_MEM;
+	mba.mba_pba.pba_iot = (bus_space_tag_t)&bebox_bus_io;
+	mba.mba_pba.pba_memt = (bus_space_tag_t)&bebox_bus_mem;
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED |
 	    PCI_FLAGS_MEM_ENABLED;
 	config_found(self, &mba.mba_pba, mainbus_print);
 #endif
-
-	if (isa_has_been_seen == 0) {
-		mba.mba_iba.iba_busname = "isa";
-		mba.mba_iba.iba_iot = BEBOX_BUS_SPACE_IO;
-		mba.mba_iba.iba_memt = BEBOX_BUS_SPACE_MEM;
-		config_found(self, &mba.mba_iba, mainbus_print);
-	}
 }
 
 int

@@ -1,4 +1,5 @@
-/*	$NetBSD: bus.h,v 1.1 1997/10/14 06:48:08 sakamoto Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 1997/11/27 10:18:38 sakamoto Exp $	*/
+/*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -32,96 +33,145 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
+ * Copyright (c) 1996 Niklas Hallqvist.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #ifndef _BEBOX_BUS_H_
 #define _BEBOX_BUS_H_
+
+#include <machine/pio.h>
 
 /*
  * Values for the Be bus space tag, not to be used directly by MI code.
  */
 #define	BEBOX_BUS_SPACE_IO	0x80000000	/* space is i/o space */
 #define BEBOX_BUS_SPACE_MEM	0xC0000000	/* space is mem space */
+#define	BEBOX_BUS_REVERSE	1
 
 /*
- * Bus address and size types
+ * Bus access types.
  */
-typedef u_long bus_addr_t;
-typedef u_long bus_size_t;
+typedef u_int32_t bus_addr_t;
+typedef u_int32_t bus_size_t;
+typedef	u_int32_t bus_space_handle_t;
+typedef	struct bebox_bus_space *bus_space_tag_t;
 
-/*
- * Access methods for bus resources and address space.
- */
-typedef	u_long bus_space_tag_t;
-typedef	u_long bus_space_handle_t;
+struct bebox_bus_space {
+	u_int32_t	bus_base;
+	u_int8_t	bus_reverse;	/* Reverse bytes */
+};
+
+extern struct bebox_bus_space bebox_bus_io, bebox_bus_mem;
 
 #define BUS_SPACE_MAP_CACHEABLE         0x01
 #define BUS_SPACE_MAP_LINEAR            0x02
 
-int	bus_space_map __P((bus_space_tag_t t, bus_addr_t addr,
-	    bus_size_t size, int cacheable, bus_space_handle_t *bshp));
-void	bus_space_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t size));
-int	bus_space_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp));
-
-int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
-	    bus_addr_t rend, bus_size_t size, bus_size_t align,
-	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,
-	    bus_space_handle_t *bshp));
-void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t size));
-
-/*
- *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset));
- *
- * Read a 1, 2, 4, or 8 byte quantity from bus space
- * described by tag/handle/offset.
- */
-
-u_int8_t  bus_space_read_1 __P((bus_space_tag_t tag,
-	bus_space_handle_t bsh, bus_size_t offset));
-u_int16_t bus_space_read_2 __P((bus_space_tag_t tag,
-	bus_space_handle_t bsh, bus_size_t offset));
-u_int32_t bus_space_read_4 __P((bus_space_tag_t tag,
-	bus_space_handle_t bsh, bus_size_t offset));
-
-#if 0	/* Cause a link error for bus_space_read_8 */
-#define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
+#ifdef __STDC__
+#define CAT(a,b)	a##b
+#define CAT3(a,b,c)	a##b##c
+#else
+#define CAT(a,b)	a/**/b
+#define CAT3(a,b,c)	a/**/b/**/c
 #endif
 
 /*
- *	void bus_space_read_multi_N __P((bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count));
- *
- * Read `count' 1, 2, 4, or 8 byte quantities from bus space
- * described by tag/handle/offset and copy into buffer provided.
+ * Access methods for bus resources
  */
+#define bus_space_map(t, addr, size, cacheable, bshp)			      \
+    ((*(bshp) = (t)->bus_base + (addr)), 0)
 
-#define	bus_space_read_multi_1(t, h, o, a, c) do {			\
-	int i;								\
-	for (i = 0; i < c; i++) {					\
-		*((u_int8_t *)a + i) = bus_space_read_1(t, h, o);	\
-	}								\
-} while (0)
+#define bus_space_unmap(t, bsh, size)
 
-#define	bus_space_read_multi_2(t, h, o, a, c) do {			\
-	int i;								\
-	for (i = 0; i < c; i++) {					\
-		*((u_int16_t *)a + i) = bus_space_read_2(t, h, o);	\
-	}								\
-} while (0)
+#define bus_space_read(n,m)						      \
+static __inline CAT3(u_int,m,_t)					      \
+CAT(bus_space_read_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
+     bus_addr_t ba)							      \
+{									      \
+    if(bst->bus_reverse)						      \
+	return CAT3(in,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)));      \
+    else								      \
+	return CAT(in,m)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)));	      \
+}
 
-#define	bus_space_read_multi_4(t, h, o, a, c) do {			\
-	int i;								\
-	for (i = 0; i < c; i++) {					\
-		*((u_int32_t *)a + i) = bus_space_read_4(t, h, o);	\
-	}								\
-} while (0)
+bus_space_read(1,8)
+bus_space_read(2,16)
+bus_space_read(4,32)
 
-#if 0	/* Cause a link error for bus_space_read_multi_8 */
-#define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
-#endif
+#define	bus_space_read_8	!!! bus_space_read_8 unimplemented !!!
+
+#define bus_space_read_multi_1(t, h, o, a, c) do {			      \
+		insb((u_int8_t *)((h) + (o)), (a), (c));		      \
+	} while(0)
+
+#define bus_space_read_multi_2(t, h, o, a, c) do {			      \
+		insw((u_int16_t *)((h) + (o)), (a), (c));		      \
+	} while(0)
+
+#define bus_space_read_multi_4(t, h, o, a, c) do {			      \
+		insl((u_int32_t *)((h) + (o)), (a), (c));		      \
+	} while(0)
+
+#define	bus_space_read_multi_8	!!! bus_space_read_multi_8 not implemented !!!
+
+#define bus_space_write(n,m)						      \
+static __inline void							      \
+CAT(bus_space_write_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
+     bus_addr_t ba, CAT3(u_int,m,_t) x)					      \
+{									      \
+    if(bst->bus_reverse)						      \
+	CAT3(out,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)), x);	      \
+    else								      \
+	CAT(out,m)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)), x);	      \
+}
+
+bus_space_write(1,8)
+bus_space_write(2,16)
+bus_space_write(4,32)
+
+#define	bus_space_write_8	!!! bus_space_write_8 unimplemented !!!
+
+
+#define bus_space_write_multi_1(t, h, o, a, c) do {			      \
+		outsb((u_int8_t *)((h) + (o)), (a), (c));		      \
+	} while(0)
+
+#define bus_space_write_multi_2(t, h, o, a, c) do {			      \
+		outsw((u_int16_t *)((h) + (o)), (a), (c));		      \
+	} while(0)
+
+#define bus_space_write_multi_4(t, h, o, a, c) do {			      \
+		outsl((u_int32_t *)((h) + (o)), (a), (c));		      \
+	} while(0)
+
+#define	bus_space_write_multi_8	!!! bus_space_write_multi_8 not implemented !!!
 
 /*
  *	void bus_space_read_region_N __P((bus_space_tag_t tag,
@@ -144,64 +194,6 @@ u_int32_t bus_space_read_4 __P((bus_space_tag_t tag,
 } while (0)
 
 #define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
-#endif
-
-/*
- *	void bus_space_write_N __P((bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t value));
- *
- * Write the 1, 2, 4, or 8 byte value `value' to bus space
- * described by tag/handle/offset.
- */
-
-void	bus_space_write_1 __P((bus_space_tag_t tag,
-	bus_space_handle_t bsh, bus_size_t offset,
-	u_int8_t value));
-void	bus_space_write_2 __P((bus_space_tag_t tag,
-	bus_space_handle_t bsh, bus_size_t offset,
-	u_int16_t value));
-void	bus_space_write_4 __P((bus_space_tag_t tag,
-	bus_space_handle_t bsh, bus_size_t offset,
-	u_int32_t value));
-
-#if 0	/* Cause a link error for bus_space_write_8 */
-#define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
-#endif
-
-/*
- *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count));
- *
- * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
- * provided to bus space described by tag/handle/offset.
- */
-
-#define	bus_space_write_multi_1(t, h, o, a, c) do {			\
-	int i;								\
-	for (i = 0; i < c; i++) {					\
-		bus_space_write_1(t, h, o, *((u_int8_t *)a + i));	\
-	}								\
-} while (0)
-
-#define bus_space_write_multi_2(t, h, o, a, c) do {			\
-	int i;								\
-	for (i = 0; i < c; i++) {					\
-		bus_space_write_2(t, h, o, *((u_int16_t *)a + i));	\
-	}								\
-} while (0)
-
-#define bus_space_write_multi_4(t, h, o, a, c) do {			\
-	int i;								\
-	for (i = 0; i < c; i++) {					\
-		bus_space_write_4(t, h, o, *((u_int32_t *)a + i));	\
-	}								\
-} while (0)
-
-#if 0	/* Cause a link error for bus_space_write_multi_8 */
-#define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplimented !!!
 #endif
 
 /*
@@ -275,22 +267,6 @@ void	bus_space_write_4 __P((bus_space_tag_t tag,
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define	BUS_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_BARRIER_WRITE	0x02		/* force write barrier */
-
-/*
- * i386 sim
- */
-#define	inb(x)								\
-	    bus_space_read_1(BEBOX_BUS_SPACE_IO, x, 0)
-#define	inw(x)								\
-	    bus_space_read_2(BEBOX_BUS_SPACE_IO, x, 0)
-#define	inl(x)								\
-	    bus_space_read_4(BEBOX_BUS_SPACE_IO, x, 0)
-#define	outb(x, y)							\
-	    bus_space_write_1(BEBOX_BUS_SPACE_IO, x, 0, y)
-#define	outw(x, y)							\
-	    bus_space_write_2(BEBOX_BUS_SPACE_IO, x, 0, y)
-#define	outl(x, y)							\
-	    bus_space_write_4(BEBOX_BUS_SPACE_IO, x, 0, y)
 
 /*
  * Bus DMA methods.
