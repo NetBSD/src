@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 1998/03/25 06:22:20 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110 1998/03/26 01:09:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 1998/03/25 06:22:20 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 1998/03/26 01:09:04 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -128,14 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 1998/03/25 06:22:20 jonathan Exp $
 #include "dtop.h"
 #include "scc.h"
 #include "le_ioasic.h"
-
-/* XXX clock hacks */
-#include "opt_dec_3maxplus.h"
-#include "opt_dec_maxine.h"
-#if defined(DEC_3MAXPLUS) || defined(DEC_MAXINE)
-static	u_long	clkread __P((void));	/* get usec-resolution clock */
-#endif
-
 
 /* Motherboard or system-specific initialization vector */
 void		unimpl_os_init __P((void));
@@ -838,11 +830,15 @@ haltsys:
  * the current microsecond offset from time-of-day.
  */
 
+/* XXX clock hacks */
+#include "opt_dec_3maxplus.h"
+#include "opt_dec_maxine.h"
+
 #if !(defined(DEC_3MAXPLUS) || defined(DEC_MAXINE))
-static	u_long	clkread __P((void));	/* get usec-resolution clock */
-# define clkread() (0)
+#define	clkread()	(0)
 #else /* (defined(DEC_3MAXPLUS) || defined(DEC_MAXINE)) */
 
+static __inline u_long clkread __P((void));	/* get usec-resolution clock */
 
 /*
  * IOASIC TC cycle counter, latched on every interrupt from RTC chip.
@@ -852,7 +848,6 @@ static	u_long	clkread __P((void));	/* get usec-resolution clock */
  */
 u_long latched_cycle_cnt;
 
-
 /*
  * On a Decstation 5000/240,  use the turbochannel bus-cycle counter
  * to interpolate micro-seconds since the  last RTC clock tick.
@@ -861,7 +856,7 @@ u_long latched_cycle_cnt;
  * On XINE, use the microsecond free-running counter.
  *
  */
-static inline u_long
+static __inline u_long
 clkread()
 {
 
