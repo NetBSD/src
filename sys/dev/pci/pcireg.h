@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.41 2003/04/20 22:53:56 fvdl Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.42 2003/05/05 13:04:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -683,5 +683,10 @@ struct pci_vpd {
  *
  *	Z0-ZZ		User/Product Specific
  */
+
+/*
+ * Threshold below which 32bit PCI DMA needs bouncing.
+ */
+#define PCI32_DMA_BOUNCE_THRESHOLD	0x100000000ULL
 
 #endif /* _DEV_PCI_PCIREG_H_ */
