@@ -1,4 +1,4 @@
-/*	$KAME: kmpstat.c,v 1.24 2000/12/16 14:15:07 sakane Exp $	*/
+/*	$KAME: kmpstat.c,v 1.25 2001/04/03 15:51:55 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -709,11 +709,11 @@ get_comindexes(family, ac, av)
 		goto bad;
 	src = get_sockaddr(family, p_name, p_port);
 	if (p_name) {
-		free(p_name);
+		racoon_free(p_name);
 		p_name = NULL;
 	}
 	if (p_port) {
-		free(p_port);
+		racoon_free(p_port);
 		p_port = NULL;
 	}
 	if (src == NULL)
@@ -747,13 +747,13 @@ get_comindexes(family, ac, av)
 
    bad:
 	if (p_name)
-		free(p_name);
+		racoon_free(p_name);
 	if (p_port)
-		free(p_port);
+		racoon_free(p_port);
 	if (p_prefs);
-		free(p_prefs);
+		racoon_free(p_prefs);
 	if (p_prefd);
-		free(p_prefd);
+		racoon_free(p_prefd);
 	return NULL;
 }
 
@@ -800,11 +800,11 @@ get_comindex(str, name, port, pref)
 
     bad:
 	if (*name)
-		free(*name);
+		racoon_free(*name);
 	if (*port)
-		free(*port);
+		racoon_free(*port);
 	if (*pref)
-		free(*pref);
+		racoon_free(*pref);
 	*name = *port = *pref = NULL;
 	return -1;
 }
