@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.9 2001/01/04 17:29:04 lukem Exp $	*/
+/*	$NetBSD: print.c,v 1.10 2001/07/13 20:30:22 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.9 2001/01/04 17:29:04 lukem Exp $");
+__RCSID("$NetBSD: print.c,v 1.10 2001/07/13 20:30:22 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: print.c,v 1.9 2001/01/04 17:29:04 lukem Exp $");
 #include "clean.h"
 
 extern int debug;
-extern u_long cksum __P((void *, size_t));	/* XXX */
+extern u_long cksum(void *, size_t);	/* XXX */
 
 /*
  * Print out a summary block; return number of blocks in segment; 0
@@ -67,12 +67,7 @@ extern u_long cksum __P((void *, size_t));	/* XXX */
  */
 
 int
-dump_summary(lfsp, sp, flags, iaddrp, addr)
-	struct lfs *lfsp;
-	SEGSUM *sp;
-	u_long flags;
-	daddr_t **iaddrp;
-	daddr_t addr;
+dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr_t addr)
 {
 	int i, j, blk, numblocks, accino=0;
 	daddr_t *dp, ddp, *idp;
@@ -87,7 +82,7 @@ dump_summary(lfsp, sp, flags, iaddrp, addr)
 		return(-1);
 
 	if (sp->ss_sumsum != (ck = cksum(&sp->ss_datasum, 
-	    LFS_SUMMARY_SIZE - sizeof(sp->ss_sumsum)))) {
+	    lfsp->lfs_sumsize - sizeof(sp->ss_sumsum)))) {
 		free(datap);
 		return(-1);
 	}
@@ -99,7 +94,9 @@ dump_summary(lfsp, sp, flags, iaddrp, addr)
 			"ninos    ", sp->ss_ninos,
 			"sumsum   ", sp->ss_sumsum,
 			"datasum  ", sp->ss_datasum );
-		syslog(LOG_DEBUG, "\tcreate   %s", ctime((time_t *)&sp->ss_create));
+		syslog(LOG_DEBUG, "\tcreate   %s", ctime(
+			(lfsp->lfs_version == 1 ? (time_t *)&sp->ss_ident : 
+			(time_t *)&sp->ss_create)));
 	}
 
 	numblocks = (sp->ss_ninos + INOPB(lfsp) - 1) / INOPB(lfsp);
@@ -108,7 +105,7 @@ dump_summary(lfsp, sp, flags, iaddrp, addr)
 	if (flags & DUMP_INODE_ADDRS)
                 syslog(LOG_DEBUG, "    Inode addresses:");
 
-	idp = dp = (daddr_t *)((caddr_t)sp + LFS_SUMMARY_SIZE);
+	idp = dp = (daddr_t *)((caddr_t)sp + lfsp->lfs_sumsize);
 	--idp;
 	for (--dp, i = 0; i < howmany(sp->ss_ninos,INOPB(lfsp)); --dp) {
 		if (flags & DUMP_INODE_ADDRS)
@@ -119,26 +116,30 @@ dump_summary(lfsp, sp, flags, iaddrp, addr)
 		*iaddrp = dp;
 	}
 
-	ddp = addr + LFS_SUMMARY_SIZE/DEV_BSIZE;
-	for (fp = (FINFO *)(sp + 1), i = 0; i < sp->ss_nfinfo; ++i) {
+	ddp = addr + btofsb(lfsp, lfsp->lfs_sumsize);
+	if (lfsp->lfs_version == 1)
+		fp = (FINFO *)(((char *)sp) + sizeof(SEGSUM_V1));
+	else
+		fp = (FINFO *)(sp + 1);
+	for (i = 0; i < sp->ss_nfinfo; ++i) {
 		/* Add any intervening Inode blocks to our checksum array */
 		/* printf("finfo %d: ddp=%lx, *idp=%lx\n",i,ddp,*idp); */
 		while(ddp == *idp) {
 			 /* printf(" [ino %lx]",ddp); */
-			datap[blk++] = *(u_long*)((caddr_t)sp + (ddp-addr)*DEV_BSIZE);
+			datap[blk++] = *(u_long*)((caddr_t)sp + fsbtob(lfsp, ddp-addr));
 			--idp;
-			ddp += lfsp->lfs_bsize/DEV_BSIZE;
+			ddp += btofsb(lfsp, lfsp->lfs_ibsize);
 			accino++;
 		}
 		for(j=0;j<fp->fi_nblocks;j++) {
 			if(j==fp->fi_nblocks-1) {
-				size = fp->fi_lastlength/DEV_BSIZE;
+				size = btofsb(lfsp, fp->fi_lastlength);
 				/* printf(" %lx:%d",ddp,size); */
 			} else {
-				size = lfsp->lfs_bsize/DEV_BSIZE;
+				size = btofsb(lfsp, lfsp->lfs_bsize);
 				/* printf(" %lx/%d",ddp,size); */
 			}
-			datap[blk++] = *(u_long*)((caddr_t)sp + (ddp-addr)*DEV_BSIZE);
+			datap[blk++] = *(u_long*)((caddr_t)sp + fsbtob(lfsp, ddp-addr));
 			ddp += size;
 		}
 		numblocks += fp->fi_nblocks;
@@ -160,7 +161,7 @@ dump_summary(lfsp, sp, flags, iaddrp, addr)
 	while(*idp >= ddp && accino < howmany(sp->ss_ninos,INOPB(lfsp))) {
 		ddp = *idp;
 		/* printf(" [ino %lx]",ddp); */
-		datap[blk++] = *(u_long*)((caddr_t)sp + (ddp-addr)*DEV_BSIZE);
+		datap[blk++] = *(u_long*)((caddr_t)sp + fsbtob(lfsp, ddp-addr));
 		--idp;
 		accino++;
 	}
@@ -185,8 +186,7 @@ dump_summary(lfsp, sp, flags, iaddrp, addr)
 }
 
 void
-dump_cleaner_info(ipage)
-	void *ipage;
+dump_cleaner_info(void *ipage)
 {
 	CLEANERINFO *cip;
 
@@ -199,8 +199,7 @@ dump_cleaner_info(ipage)
 }
 
 void
-dump_super(lfsp)
-	struct lfs *lfsp;
+dump_super(struct lfs *lfsp)
 {
 	int i;
 
@@ -278,6 +277,6 @@ dump_super(lfsp)
 	syslog(LOG_DEBUG, "%s%d\t%s%d\t%s0x%X\t%s%d\n",
 		"nactive  ", lfsp->lfs_nactive,
 		"fmod     ", lfsp->lfs_fmod,
-		"clean    ", lfsp->lfs_clean,
+	        "pflags   ", lfsp->lfs_pflags,
 		"ronly    ", lfsp->lfs_ronly);
 }

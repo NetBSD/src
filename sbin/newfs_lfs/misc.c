@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.1 1999/03/18 17:18:05 perseant Exp $	*/
+/*	$NetBSD: misc.c,v 1.2 2001/07/13 20:30:20 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.1 1999/03/18 17:18:05 perseant Exp $");
+__RCSID("$NetBSD: misc.c,v 1.2 2001/07/13 20:30:20 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,8 +50,7 @@ __RCSID("$NetBSD: misc.c,v 1.1 1999/03/18 17:18:05 perseant Exp $");
 #include "extern.h"
 
 u_int
-log2(num)
-        u_int num;
+log2(u_int num)
 {
         u_int i, limit;
 

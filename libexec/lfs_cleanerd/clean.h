@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.10 2001/02/04 22:12:47 christos Exp $	*/
+/*	$NetBSD: clean.h,v 1.11 2001/07/13 20:30:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -84,7 +84,6 @@ typedef struct fs_info {
 	CLEANERINFO	*fi_cip;	/* Cleaner info from ifile */
 	SEGUSE	*fi_segusep;		/* segment usage table (from ifile) */
 	IFILE	*fi_ifilep;		/* ifile table (from ifile) */
-	u_long	fi_daddr_shift;		/* shift to get byte offset of daddr */
 	u_long	fi_ifile_count;		/* # entries in the ifile table */
 	off_t	fi_ifile_length;	/* length of the ifile */
 	time_t  fi_fs_tstamp;           /* last fs activity, per ifile */
@@ -94,34 +93,26 @@ typedef struct fs_info {
  * XXX: size (in bytes) of a segment
  *	should lfs_bsize be fsbtodb(fs,1), blksize(fs), or lfs_dsize? 
  */
-#define seg_size(fs) ((fs)->lfs_ssize << (fs)->lfs_bshift)
-
-/* daddr -> byte offset */
-#define datobyte(fs, da) (((off_t)(da)) << (fs)->fi_daddr_shift)
-#define bytetoda(fs, byte) ((byte) >> (fs)->fi_daddr_shift)
+#define seg_size(fs) fsbtob((fs), segtod((fs), 1))
 
 #define CLEANSIZE(fsp)	(fsp->fi_lfs.lfs_cleansz << fsp->fi_lfs.lfs_bshift)
 #define SEGTABSIZE(fsp)	(fsp->fi_lfs.lfs_segtabsz << fsp->fi_lfs.lfs_bshift)
 
-#define IFILE_ENTRY(fs, if, i) \
-	((IFILE *)((caddr_t)(if) + ((i) / (fs)->lfs_ifpb << (fs)->lfs_bshift)) \
-	+ (i) % (fs)->lfs_ifpb)
+#define IFILE_ENTRY(fs, ife, i) 					\
+	((fs)->lfs_version == 1 ?					\
+	(IFILE *)((IFILE_V1 *)((caddr_t)(ife) + ((i) / (fs)->lfs_ifpb <<\
+		(fs)->lfs_bshift)) + (i) % (fs)->lfs_ifpb) :		\
+	((IFILE *)((caddr_t)(ife) + ((i) / (fs)->lfs_ifpb <<		\
+		(fs)->lfs_bshift)) + (i) % (fs)->lfs_ifpb))
 
-#define SEGUSE_ENTRY(fs, su, i) \
-	((SEGUSE *)((caddr_t)(su) + (fs)->lfs_bsize * ((i) / (fs)->lfs_sepb)) +\
-	(i) % (fs)->lfs_sepb)
-
-__BEGIN_DECLS
-int	 dump_summary __P((struct lfs *, SEGSUM *, u_long, daddr_t **, daddr_t));
-int	 fs_getmntinfo __P((struct statfs **, char *, const char *));
-void	 get __P((int, off_t, void *, size_t));
-FS_INFO	*get_fs_info __P((struct statfs *, int));
-int 	 lfs_segmapv __P((FS_INFO *, int, caddr_t, BLOCK_INFO **, int *));
-int	 mmap_segment __P((FS_INFO *, int, caddr_t *, int));
-void	 munmap_segment __P((FS_INFO *, caddr_t, int));
-void	 reread_fs_info __P((FS_INFO *, int));
-void	 toss __P((void *, int *, size_t,
-	      int (*)(const void *, const void *, const void *), void *));
+#define SEGUSE_ENTRY(fs, su, i) 					\
+	((fs)->lfs_version == 1 ?					\
+	(SEGUSE *)((SEGUSE_V1 *)((caddr_t)(su) + (fs)->lfs_bsize *	\
+				((i) / (fs)->lfs_sepb)) +		\
+				(i) % (fs)->lfs_sepb) :			\
+	((SEGUSE *)((caddr_t)(su) + (fs)->lfs_bsize *			\
+				((i) / (fs)->lfs_sepb)) +		\
+				(i) % (fs)->lfs_sepb))
 
 /*
  * USEFUL DEBUGGING FUNCTIONS:
@@ -155,8 +146,20 @@ void	 toss __P((void *, int *, size_t,
 			ctime((time_t *)&(sup)->su_lastmod)); \
 }
 
-void	 dump_super __P((struct lfs *));
-void	 dump_cleaner_info __P((void *));
-void	 print_SEGSUM __P(( struct lfs *, SEGSUM *, daddr_t));
-void	 print_CLEANERINFO __P((CLEANERINFO *));
+__BEGIN_DECLS
+int	 dump_summary(struct lfs *, SEGSUM *, u_long, daddr_t **, daddr_t);
+int	 fs_getmntinfo(struct statfs **, char *, const char *);
+void	 get(int, off_t, void *, size_t);
+FS_INFO	*get_fs_info(struct statfs *, int);
+int 	 lfs_segmapv(FS_INFO *, int, caddr_t, BLOCK_INFO **, int *);
+int	 mmap_segment(FS_INFO *, int, caddr_t *, int);
+void	 munmap_segment(FS_INFO *, caddr_t, int);
+void	 reread_fs_info(FS_INFO *, int);
+void	 toss __P((void *, int *, size_t,
+	      int (*)(const void *, const void *, const void *), void *));
+
+void	 dump_super(struct lfs *);
+void	 dump_cleaner_info(void *);
+void	 print_SEGSUM(struct lfs *, SEGSUM *, daddr_t);
+void	 print_CLEANERINFO(CLEANERINFO *);
 __END_DECLS
