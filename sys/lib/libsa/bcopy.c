@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)bcopy.c	8.1 (Berkeley) 6/11/93
- *	      $Id: bcopy.c,v 1.2 1994/02/26 10:29:41 pk Exp $
+ *	      $Id: bcopy.c,v 1.3 1994/07/27 07:38:17 cgd Exp $
  */
 
 /*
@@ -46,10 +46,14 @@ bcopy(s1, s2, n)
 	register const char *f = s1;
 	register char *t = s2;
 
-	while (n != 0) {
-		*t++ = *f++;
-		n--;
-	}
+	if (f < t) {
+		f += n;
+		t += n;
+		while (n-- > 0)
+			*--t = *--f;
+	} else
+		while (n-- > 0)
+			*t++ = *f++;
 }
 
 void
