@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.290 2004/04/19 15:20:42 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.291 2004/04/22 10:14:58 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.290 2004/04/19 15:20:42 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.291 2004/04/22 10:14:58 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -837,7 +837,7 @@ updatepte4m(va, pte, bic, bis, ctx, cpuset)
 		swap(vpte, swapval);
 		tlb_flush_page(va, ctx, cpuset);
 		oldval |= swapval;
-	} while (*vpte != 0);
+	} while (__predict_false(*vpte != 0));
 
 	swapval = (oldval & ~bic) | bis;
 	swap(vpte, swapval);
@@ -868,7 +868,7 @@ setpgt4m_va(va, ptep, pte, pageflush, ctx, cpuset)
 #if defined(MULTIPROCESSOR)
 	updatepte4m(va, ptep, 0xffffffff, pte, pageflush ? ctx : 0, cpuset);
 #else
-	if (pageflush)
+	if (__predict_true(pageflush))
 		tlb_flush_page(va, ctx, 0);
 	setpgt4m(ptep, pte);
 #endif /* MULTIPROCESSOR */
@@ -2710,6 +2710,7 @@ pv_syncflags4m(pg)
 	int s;
 	struct regmap *rp;
 	struct segmap *sp;
+	int tpte;
 
 	s = splvm();
 	PMAP_HEAD_TO_MAP_LOCK();
@@ -2728,6 +2729,18 @@ pv_syncflags4m(pg)
 		va = pv->pv_va;
 		rp = &pm->pm_regmap[VA_VREG(va)];
 		sp = &rp->rg_segmap[VA_VSEG(va)];
+
+		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
+		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE ||
+		    (tpte & (SRMMU_PG_R|SRMMU_PG_M)) == 0)
+			continue;
+
+		/*
+		 * Flush cache if modified to make sure the pte M will be
+		 * set again on the next write access.
+		 */
+		if (pm->pm_ctx && (tpte & SRMMU_PG_M) == SRMMU_PG_M)
+			cache_flush_page(va, pm->pm_ctxnum);
 
 		flags |= MR4M(updatepte4m(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 					SRMMU_PG_M | SRMMU_PG_R,
