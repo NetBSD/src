@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.19 1997/08/27 11:23:03 bouyer Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.19.4.1 1999/01/19 07:25:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -44,6 +44,7 @@
 #include <dev/scsipi/scsiconf.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
+#include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/dmavar.h>
@@ -116,8 +117,15 @@ ahscattach(pdp, dp, auxp)
 {
 	volatile struct sdmac *rp;
 	struct sbic_softc *sc;
+	struct cfdev *cdp, *ecdp;
+
+	ecdp = &cfdev[ncfdev];
 	
-	printf("\n");
+	for (cdp = cfdev; cdp < ecdp; cdp++) {
+		if (cdp->rom.manid == 8738 && 
+		    cdp->rom.prodid == 35)
+				break;
+	}
 
 	sc = (struct sbic_softc *)dp;
 	sc->sc_cregs = rp = ztwomap(0xdd0000);
@@ -136,7 +144,17 @@ ahscattach(pdp, dp, auxp)
 	 * eveything is a valid dma address
 	 */
 	sc->sc_dmamask = 0;
-	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x41);
+
+	if (cdp < ecdp) {
+		sc->sc_sbic.sbic_asr_p =  ((vu_char *)rp + 0x43);
+		sc->sc_sbic.sbic_value_p =  ((vu_char *)rp + 0x47);
+		printf(": modified for Apollo cpu board\n");
+	} else {
+		sc->sc_sbic.sbic_asr_p =  ((vu_char *)rp + 0x41);
+		sc->sc_sbic.sbic_value_p =  ((vu_char *)rp + 0x43);
+		printf("\n");
+	}
+
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 	
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
