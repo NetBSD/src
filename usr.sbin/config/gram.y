@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.25 1999/01/21 13:10:09 pk Exp $	*/
+/*	$NetBSD: gram.y,v 1.26 1999/07/07 00:02:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,8 +59,6 @@
 
 #define	stop(s)	error(s), exit(1)
 
-int	include __P((const char *, int));
-
 static	struct	config conf;	/* at most one active at a time */
 
 /* the following is used to recover nvlist space after errors */
@@ -103,8 +101,8 @@ static	struct nvlist *mk_ns __P((const char *, struct nvlist *));
 	int	val;
 }
 
-%token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFFS DEFINE DEFOPT 
-%token	DEFPARAM DEFFLAG DEVICE DEVCLASS DUMPS ENDFILE XFILE XOBJECT
+%token	AND AT ATTACH BUILD CINCLUDE COMPILE_WITH CONFIG DEFFS DEFINE DEFOPT 
+%token	DEFPARAM DEFFLAG DEFPSEUDO DEVICE DEVCLASS DUMPS ENDFILE XFILE XOBJECT
 %token	FILE_SYSTEM FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE
 %token	TYPE WITH NEEDS_COUNT NEEDS_FLAG
@@ -224,7 +222,8 @@ rule:
 	/* empty */			{ $$ = NULL; };
 
 include:
-	INCLUDE WORD			{ include($2, 0); };
+	INCLUDE WORD			{ (void) include($2, 0, 0); } |
+	CINCLUDE WORD			{ (void) include($2, 0, 1); };
 
 
 /*
@@ -258,7 +257,7 @@ one_def:
 					{ defdevattach($5, $2, $4, $6); } |
 	MAXPARTITIONS NUMBER		{ maxpartitions = $2; } |
 	MAXUSERS NUMBER NUMBER NUMBER	{ setdefmaxusers($2, $3, $4); } |
-	PSEUDO_DEVICE devbase attrs_opt { defdev($2, NULL, $3, 1); } |
+	DEFPSEUDO devbase attrs_opt { defdev($2, NULL, $3, 1); } |
 	MAJOR '{' majorlist '}';
 
 atlist:
@@ -378,9 +377,7 @@ spec:
 	error '\n'			{ cleanup(); };
 
 config_spec:
-	file |
-	object |
-	include |
+	one_def |
 	FILE_SYSTEM fs_list |
 	OPTIONS opt_list |
 	MAKEOPTIONS mkopt_list |
@@ -511,7 +508,7 @@ setmachine(mch, mcharch)
 	machinearch = mcharch;
 
 	(void)sprintf(buf, "arch/%s/conf/files.%s", machine, machine);
-	if (include(buf, ENDFILE) != 0)
+	if (include(buf, ENDFILE, 0) != 0)
 		exit(1);
 
 	if (machinearch != NULL)
@@ -519,10 +516,10 @@ setmachine(mch, mcharch)
 		    machinearch, machinearch);
 	else
 		strcpy(buf, _PATH_DEVNULL);
-	if (include(buf, ENDFILE) != 0)
+	if (include(buf, ENDFILE, 0) != 0)
 		exit(1);
 
-	if (include("conf/files", ENDFILE) != 0)
+	if (include("conf/files", ENDFILE, 0) != 0)
 		exit(1);
 }
 
