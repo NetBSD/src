@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 2001/03/11 15:05:43 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16 2001/03/13 23:51:48 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -171,6 +171,7 @@ identify_master_cpu(sc, cpu_number)
 	int cpu_number;
 {
 	u_int fpsr;
+	void *uh;
 
 	cpus[cpu_number].cpu_ctrl = cpuctrl;
 
@@ -226,11 +227,13 @@ identify_master_cpu(sc, cpu_number)
 	 * FP status register for identification.
 	 */
  
-	install_coproc_handler(FP_COPROC, fpa_test);
+	uh = install_coproc_handler(FP_COPROC, fpa_test);
 
 	undefined_test = 0;
 
 	__asm __volatile("stmfd sp!, {r0}; .word 0xee300110; mov %0, r0; ldmfd sp!, {r0}" : "=r" (fpsr));
+
+	remove_coproc_handler(uh);
 
 	if (undefined_test == 0) {
 		cpus[cpu_number].fpu_type = (fpsr >> 24);
