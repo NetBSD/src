@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage_machdep.S,v 1.2 2004/07/06 14:11:49 manu Exp $ */
+/*	$NetBSD: darwin_commpage_machdep.S,v 1.3 2004/07/08 07:36:25 manu Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -19,14 +19,14 @@
  *    must display the following acknowledgement:
  *        This product includes software developed by the NetBSD
  *        Foundation, Inc. and its contributors.
- * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ * 4. The name of the author may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE NETBSD FOUNDATION
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
