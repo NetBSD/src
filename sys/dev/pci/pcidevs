@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.236.2.13 2001/03/20 17:23:32 he Exp $
+$NetBSD: pcidevs,v 1.236.2.14 2001/03/22 02:44:11 he Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1330,6 +1330,7 @@ product RNS FDDI	0x2200	2200 FDDI
 product S3 VIRGE	0x5631	ViRGE
 product S3 TRIO32	0x8810	Trio32
 product S3 TRIO64	0x8811	Trio32/64
+product TRIDENT	CYBERBLADE	0x9910	CyberBlade
 product S3 AURORA64P	0x8812	Aurora64V+
 product S3 TRIO64UVP	0x8814	Trio64UV+
 product S3 VIRGE_VX	0x883d	ViRGE/VX
