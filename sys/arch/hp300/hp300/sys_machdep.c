@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.21 1998/06/25 23:57:36 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.22 1998/08/20 08:33:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -145,7 +145,8 @@ cachectl(req, addr, len)
 #if defined(M68040)
 	if (mmutype == MMU_68040) {
 		int inc = 0;
-		int pa = 0, doall = 0;
+		int doall = 0;
+		paddr_t pa = 0;
 		caddr_t end = 0;
 #ifdef COMPAT_HPUX
 		extern struct emul emul_hpux;
@@ -178,7 +179,7 @@ cachectl(req, addr, len)
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
 				pa = pmap_extract(curproc->p_vmspace->vm_map.pmap,
-						  (vm_offset_t)addr);
+						  (vaddr_t)addr);
 				if (pa == 0)
 					doall = 1;
 			}
