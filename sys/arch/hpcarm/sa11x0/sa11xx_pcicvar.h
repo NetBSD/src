@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcicvar.h,v 1.7 2001/07/10 17:22:04 ichiro Exp $	*/
+/*	$NetBSD: sa11xx_pcicvar.h,v 1.8 2001/07/10 17:35:15 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@ struct sapcic_socket {
 
 	int power_capability;
 
-	void *sapcic_cookie;
 	void *pcictag_cookie;	/* opaque data for pcictag functions */
 };
 
