@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/03/30 08:52:23 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.16 2003/04/18 19:12:01 tsutsui Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -9,9 +9,6 @@ STRIPFLAG=
 BINMODE= 444
 WARNS?= 1
 
-SIZE?= size
-STRIP?= strip
-
 .include <bsd.own.mk>
 
 COMMON!=  cd ${.CURDIR}/../common && ${PRINTOBJDIR}
@@ -19,6 +16,7 @@ COMMON!=  cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 CLEANFILES+= ${PROG}.elf ${PROG}.tmp
 
 LDFLAGS= -x -N -Ttext a0700000 -e _start
+LDFLAGS+= -T ${S}/arch/mips/conf/stand.ldscript
 CFLAGS= -Os -ffreestanding -mmemcpy -mno-abicalls -msoft-float -G 0
 
 CPPFLAGS+= -DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
@@ -37,9 +35,6 @@ LIBS+= ${COMMON}/lib/kern/libkern.a
 ${PROG}: ${OBJS}
 	${LD} ${LDFLAGS} -o ${PROG}.elf ${OBJS} ${LIBS}
 	-${SIZE} ${PROG}.elf
-	${STRIP} ${PROG}.elf -o ${PROG}
-	tail -c +177 ${PROG} > ${PROG}.tmp
-	mv ${PROG}.tmp ${PROG}
-#	${OBJCOPY} -O binary ${PROG}.elf ${PROG}	# XXX
+	${OBJCOPY} -O binary ${PROG}.elf ${PROG}
 
 .include <bsd.prog.mk>
