@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.13 2000/05/27 02:13:12 soren Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14 2000/05/27 02:18:12 enami Exp $	*/
 
 /*
  * Mach Operating System
@@ -26,7 +26,6 @@
  * the rights to redistribute these changes.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <vm/vm_param.h>		/* XXX boolean_t */
 
