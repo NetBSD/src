@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.50 2002/09/27 22:56:24 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.51 2002/09/28 01:25:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.50 2002/09/27 22:56:24 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.51 2002/09/28 01:25:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -651,11 +651,10 @@ makejob(node, nprocs)
  */
 
 int
-forkshell(jp, n, mode, isroot)
+forkshell(jp, n, mode)
 	union node *n;
 	struct job *jp;
 	int mode;
-	int *isroot;
 {
 	int pid;
 
@@ -667,32 +666,29 @@ forkshell(jp, n, mode, isroot)
 		error("Cannot fork");
 		break;
 	case 0:
-		forkchild(jp, n, mode, 0, isroot);
+		forkchild(jp, n, mode, 0);
 		return 0;
 	default:
-		return forkparent(jp, n, mode, pid, isroot);
+		return forkparent(jp, n, mode, pid);
 	}
 }
 
 int
-forkparent(jp, n, mode, pid, isroot)
+forkparent(jp, n, mode, pid)
 	union node *n;
 	struct job *jp;
 	int mode;
 	pid_t pid;
-	int *isroot;
 {
 	int pgrp;
 
-	if (*isroot && mode != FORK_NOJOB && mflag) {
-		*isroot = 0;
+	if (rootshell && mode != FORK_NOJOB && mflag) {
 		if (jp == NULL || jp->nprocs == 0)
 			pgrp = pid;
 		else
 			pgrp = jp->ps[0].pid;
-		if (setpgid(pid, pgrp) == -1)
-			error("Cannot set process group (%s) at %d",
-			    strerror(errno), __LINE__);
+		/* This can fail because we are doing it in the child also */
+		(void)setpgid(pid, pgrp);
 	}
 	if (mode == FORK_BG)
 		backgndpid = pid;		/* set $! */
@@ -709,12 +705,11 @@ forkparent(jp, n, mode, pid, isroot)
 }
 
 void
-forkchild(jp, n, mode, vforked, isroot)
+forkchild(jp, n, mode, vforked)
 	union node *n;
 	struct job *jp;
 	int mode;
 	int vforked;
-	int *isroot;
 {
 	struct job *p;
 	int wasroot;
@@ -723,13 +718,16 @@ forkchild(jp, n, mode, vforked, isroot)
 	const char *devnull = _PATH_DEVNULL;
 	const char *nullerr = "Can't open %s";
 
+	wasroot = rootshell;
 	TRACE(("Child shell %d\n", getpid()));
-	wasroot = *isroot;
-	*isroot = 0;
 	if (!vforked) {
-		for (i = njobs, p = jobtab ; --i >= 0 ; p++)
+		rootshell = 0;
+		for (i = njobs, p = jobtab ; --i >= 0 ; p++) {
+			if (p == jp)
+				continue;
 			if (p->used)
 				freejob(p);
+		}
 	}
 	closescript(vforked);
 	clear_traps(vforked);
@@ -741,9 +739,8 @@ forkchild(jp, n, mode, vforked, isroot)
 			pgrp = getpid();
 		else
 			pgrp = jp->ps[0].pid;
-		if (setpgid(0, pgrp) == -1)
-			error("Cannot set process group (%s) at %d",
-			    strerror(errno), __LINE__);
+		/* This can fail because we are doing it in the parent also */
+		(void)setpgid(0, pgrp);
 		if (mode == FORK_FG) {
 			if (tcsetpgrp(ttyfd, pgrp) == -1)
 				error("Cannot set tty process group (%s) at %d",

@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.h,v 1.14 2002/09/27 22:56:24 christos Exp $	*/
+/*	$NetBSD: jobs.h,v 1.15 2002/09/28 01:25:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -87,9 +87,9 @@ void showjobs __P((int));
 int waitcmd __P((int, char **));
 int jobidcmd __P((int, char **));
 struct job *makejob __P((union node *, int));
-int forkshell __P((struct job *, union node *, int, int *));
-void forkchild __P((struct job *, union node *, int, int, int *));
-int forkparent __P((struct job *, union node *, int, pid_t, int *));
+int forkshell __P((struct job *, union node *, int));
+void forkchild __P((struct job *, union node *, int, int));
+int forkparent __P((struct job *, union node *, int, pid_t));
 int waitforjob __P((struct job *));
 int stoppedjobs __P((void));
 char *commandtext __P((union node *));
