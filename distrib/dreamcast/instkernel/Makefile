@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/10/30 12:42:24 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2005/01/07 11:19:55 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,6 +8,9 @@ RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
 MDSETTARGETS=		GENERIC_MD ${RAMDISK} -
 MDSET_RELEASEDIR=	binary/kernel
+
+MDSET_SUFFIXES.-=	bin create-bin
+create-bin=		${OBJCOPY} -O binary ${.TARGET:R} ${.TARGET}
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
