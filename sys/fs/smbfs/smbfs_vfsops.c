@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.5 2003/02/01 06:23:42 thorpej Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.6 2003/02/01 21:02:03 erh Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -93,7 +93,9 @@ int smbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp);
 int smbfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int smbfs_vptofh(struct vnode *, struct fid *);
 
+#ifndef __NetBSD__
 int smbfs_pbuf_freecnt = -1;	/* start out unlimited */
+#endif
 
 extern struct vnodeopv_desc smbfs_vnodeop_opv_desc;
 
@@ -359,7 +361,9 @@ smbfs_init(void)
 #ifdef SMBFS_USEZONE
 	smbfsmount_zone = zinit("SMBFSMOUNT", sizeof(struct smbmount), 0, 0, 1);
 #endif
+#ifndef __NetBSD__
 	smbfs_pbuf_freecnt = nswbuf / 2 + 1;
+#endif
 	SMBVDEBUG("done.\n");
 }
 
