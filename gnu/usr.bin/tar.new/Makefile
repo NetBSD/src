@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/10/09 16:14:55 itojun Exp $
+#	$NetBSD: Makefile,v 1.4 2002/10/09 16:17:45 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,8 @@ CPPFLAGS+=	-I${DIST}/lib -I${DIST}/src -I${.CURDIR}/libtar -I${LIBTARDIR}
 
 LDADD+=	-lintl
 DPADD+=	${LIBINTL}
-LDADD+=	${LIBTARDIR}/libtar.a
+LDADD+=	-L${LIBTARDIR} -ltar
+DPADD+=	${LIBTARDIR}/libtar.a
 
 .if (${MKDYNAMICROOT} == "no")
 LDSTATIC?= -static
