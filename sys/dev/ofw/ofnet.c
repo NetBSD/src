@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.24 2002/03/05 04:12:58 itojun Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.25 2002/09/18 01:47:08 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.24 2002/03/05 04:12:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.25 2002/09/18 01:47:08 chs Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -166,10 +166,6 @@ ofnet_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
-
-#ifdef __BROKEN_DK_ESTABLISH
-	dk_establish(0, self);					/* XXX */
-#endif
 }
 
 static char buf[ETHERMTU + sizeof(struct ether_header)];
@@ -179,16 +175,17 @@ ofnet_read(struct ofnet_softc *of)
 {
 	struct ifnet *ifp = &of->sc_ethercom.ec_if;
 	struct mbuf *m, **mp, *head;
-	int l, len;
+	int s, l, len;
 	char *bufp;
 
+	s = splnet();
 #if NIPKDB_OFN > 0
 	ipkdbrint(kifp, ifp);
 #endif	
-	while (1) {
+	for (;;) {
 		if ((len = OF_read(of->sc_ihandle, buf, sizeof buf)) < 0) {
 			if (len == -2 || len == 0)
-				return;
+				break;
 			ifp->if_ierrors++;
 			continue;
 		}
@@ -278,6 +275,7 @@ ofnet_read(struct ofnet_softc *of)
 		ifp->if_ipackets++;
 		(*ifp->if_input)(ifp, head);
 	}
+	splx(s);
 }
 
 static void
