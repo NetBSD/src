@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 2001/10/29 23:37:37 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.8 2002/04/12 02:55:03 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -59,6 +59,7 @@
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
+#include <machine/openpicreg.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
@@ -206,6 +207,27 @@ pci_intr_map(pa, ihp)
 	if (line == 255) {
 		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
 		goto bad;
+	}
+	if (line == 11) {
+		switch (pin) {
+		case PCI_INTERRUPT_PIN_A:
+			*ihp = SANDPOINT_INTR_WINBOND_A;
+			break;
+		case PCI_INTERRUPT_PIN_B:
+			*ihp = SANDPOINT_INTR_WINBOND_B;
+			break;
+		case PCI_INTERRUPT_PIN_C:
+			*ihp = SANDPOINT_INTR_WINBOND_C;
+			break;
+		case PCI_INTERRUPT_PIN_D:
+			*ihp = SANDPOINT_INTR_WINBOND_D;
+			break;
+		default:
+			printf("pci_intr_map: bad interrupt line %d,%c\n",
+				line, pin + '@');
+			goto bad;
+			break;
+		}
 	} else {
 		/*
 		 * Sandpoint has 4 PCI slots.
@@ -219,23 +241,23 @@ pci_intr_map(pa, ihp)
 		 * based numbering scheme where Motorola's is usually 1-based.
 		 */
 		if (line < 13 || line > 16) {
-			printf("pci_intr_map: bad interrupt line %d\n", line);
+			printf("pci_intr_map: bad interrupt line %d,%c\n",
+				line, pin + '@');
 			goto bad;
 		}
-	}
-	/*
-	 * In the PCI configuration code, we simply assign the dev
-	 * number to the interrupt line.  We extract it here for the
-	 * interrupt, but subtract off the lowest dev (13) to get
-	 * the IRQ.
-	 */
+
+		/*
+		 * In the PCI configuration code, we simply assign the dev
+		 * number to the interrupt line.  We extract it here for the
+		 * interrupt, but subtract off the lowest dev (13) to get
+		 * the IRQ.
+		 */
 #if defined(OPENPIC_SERIAL_MODE)
-	line -= 11;
+		*ihp = line - 11;
 #else
-	line -= 13;
+		*ihp = line - 13;
 #endif
-	
-	*ihp = line;
+	}
 	return 0;
 
 bad:
