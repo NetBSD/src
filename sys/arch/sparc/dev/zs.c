@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.20 1994/11/26 07:36:52 deraadt Exp $ */
+/*	$NetBSD: zs.c,v 1.21 1994/12/06 00:01:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -239,7 +239,7 @@ zsattach(parent, dev, aux)
 	register struct tty *tp, *ctp;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
-	int pri, softcar;
+	int pri;
 	static int didintr, prevpri;
 
 	if ((addr = zsaddr[zs]) == NULL)
@@ -271,22 +271,6 @@ zsattach(parent, dev, aux)
 	if(!zs_tty[unit+1])
 		zs_tty[unit+1] = ttymalloc();
 
-	softcar = dev->dv_cfdata->cf_flags;
-#if defined(SUN4C) || defined(SUN4M)
-	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M) {
-		if (unit == 0) {
-			/* Get software carrier flags from options node in OPENPROM. */
-			extern int optionsnode;
-
-			softcar = 0;
-			if (*getpropstring(optionsnode, "ttya-ignore-cd") == 't')
-				softcar |= 1;
-			if (*getpropstring(optionsnode, "ttyb-ignore-cd") == 't')
-				softcar |= 2;
-		}
-	}
-#endif
-
 	/* link into interrupt list with order (A,B) (B=A+1) */
 	cs[0].cs_next = &cs[1];
 	cs[1].cs_next = zslist;
@@ -294,7 +278,6 @@ zsattach(parent, dev, aux)
 
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[CHAN_A]);
-	cs->cs_softcar = softcar & 1;
 	cs->cs_zc = &addr->zs_chan[CHAN_A];
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
@@ -320,7 +303,6 @@ zsattach(parent, dev, aux)
 	tp = zs_tty[unit];
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[CHAN_B]);
-	cs->cs_softcar = softcar & 2;
 	cs->cs_zc = &addr->zs_chan[CHAN_B];
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
@@ -1111,6 +1093,70 @@ zsioctl(dev, cmd, data, flag, p)
 		ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
 		splx(s);
 		break;
+	case TIOCGFLAGS: {
+		int bits = 0;
+
+		if (cs->cs_softcar)
+			bits |= TIOCFLAG_SOFTCAR;
+		if (cs->cs_creg[15] & ZSWR15_DCD_IE)
+			bits |= TIOCFLAG_CLOCAL;
+		if (cs->cs_creg[3] & ZSWR3_HFC)
+			bits |= TIOCFLAG_CRTSCTS;
+		*(int *)data = bits;
+		break;
+	}
+	case TIOCSFLAGS: {
+		int userbits, driverbits = 0;
+
+		error = suser(p->p_ucred, &p->p_acflag);
+		if (error != 0)
+			return (EPERM);
+
+		userbits = *(int *)data;
+
+		/*
+		 * can have `local' or `softcar', and `rtscts' or `mdmbuf'
+		 # defaulting to software flow control.
+		 */
+		if (userbits & TIOCFLAG_SOFTCAR && userbits & TIOCFLAG_CLOCAL)
+			return(EINVAL);
+		if (userbits & TIOCFLAG_MDMBUF)	/* don't support this (yet?) */
+			return(ENXIO);
+
+		s = splzs();
+		if ((userbits & TIOCFLAG_SOFTCAR) || (tp == zs_ctty)) {
+			cs->cs_softcar = 1;	/* turn on softcar */
+			cs->cs_preg[15] &= ~ZSWR15_DCD_IE; /* turn off dcd */
+			cs->cs_creg[15] &= ~ZSWR15_DCD_IE;
+			ZS_WRITE(cs->cs_zc, 15, cs->cs_creg[15]);
+		} else if (userbits & TIOCFLAG_CLOCAL) {
+			cs->cs_softcar = 0; 	/* turn off softcar */
+			cs->cs_preg[15] |= ZSWR15_DCD_IE; /* turn on dcd */
+			cs->cs_creg[15] |= ZSWR15_DCD_IE;
+			ZS_WRITE(cs->cs_zc, 15, cs->cs_creg[15]);
+			tp->t_termios.c_cflag |= CLOCAL;
+		}
+		if (userbits & TIOCFLAG_CRTSCTS) {
+			cs->cs_preg[15] |= ZSWR15_CTS_IE;
+			cs->cs_creg[15] |= ZSWR15_CTS_IE;
+			ZS_WRITE(cs->cs_zc, 15, cs->cs_creg[15]);
+			cs->cs_preg[3] |= ZSWR3_HFC;
+			cs->cs_creg[3] |= ZSWR3_HFC;
+			ZS_WRITE(cs->cs_zc, 3, cs->cs_creg[3]);
+			tp->t_termios.c_cflag |= CRTSCTS;
+		} else {
+			/* no mdmbuf, so we must want software flow control */
+			cs->cs_preg[15] &= ~ZSWR15_CTS_IE;
+			cs->cs_creg[15] &= ~ZSWR15_CTS_IE;
+			ZS_WRITE(cs->cs_zc, 15, cs->cs_creg[15]);
+			cs->cs_preg[3] &= ~ZSWR3_HFC;
+			cs->cs_creg[3] &= ~ZSWR3_HFC;
+			ZS_WRITE(cs->cs_zc, 3, cs->cs_creg[3]);
+			tp->t_termios.c_cflag &= ~CRTSCTS;
+		}
+		splx(s);
+		break;
+	}
 	case TIOCSDTR:
 	case TIOCCDTR:
 	case TIOCMSET:
