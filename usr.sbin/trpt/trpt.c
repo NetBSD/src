@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.13 2002/10/12 08:57:16 soda Exp $	*/
+/*	$NetBSD: trpt.c,v 1.14 2002/11/16 04:23:28 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.13 2002/10/12 08:57:16 soda Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.14 2002/11/16 04:23:28 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,6 +165,7 @@ main(argc, argv)
 	int ch, i, jflag, npcbs;
 	char *system, *core, *cp, errbuf[_POSIX2_LINE_MAX];
 	gid_t egid = getegid();
+	unsigned long l;
 
 	(void)setegid(getgid());
 	system = core = NULL;
@@ -186,9 +187,13 @@ main(argc, argv)
 			if (npcbs >= TCP_NDEBUG)
 				errx(1, "too many pcbs specified");
 			errno = 0;
-			tcp_pcbs[npcbs++] = (caddr_t)strtoul(optarg, &cp, 16);
-			if (*cp != '\0' || errno == ERANGE)
+			cp = NULL;
+			l = strtoul(optarg, &cp, 16);
+			tcp_pcbs[npcbs] = (caddr_t)l;
+			if (*optarg == '\0' || *cp != '\0' || errno ||
+			    (unsigned long)tcp_pcbs[npcbs] != l)
 				errx(1, "invalid address: %s", optarg);
+			npcbs++;
 			break;
 		case 's':
 			++sflag;
