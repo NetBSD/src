@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2.2.12 1997/05/22 21:13:05 pk Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.13 1997/06/01 09:03:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -45,7 +45,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/stat.h>
 
 #include <vm/vm_swap.h>
 
@@ -55,6 +54,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fstab.h>
+
+#include "swap.h"
 
 int	Aflag;
 int	aflag;
@@ -69,7 +70,6 @@ int	pflag;
 int	pri;		/* uses 0 as default pri */
 char	*path;
 
-static	void list_swap __P((int));	/* 1 for long, 0 for short */
 static	void change_priority __P((char *));
 static	void add_swap __P((char *));
 #ifdef SWAP_OFF_WORKS
@@ -162,9 +162,9 @@ main(argc, argv)
 		usage();
 
 	if (lflag)
-		list_swap(1);
+		list_swap(pri, kflag, pflag, 0, 1);
 	else if (sflag)
-		list_swap(0);
+		list_swap(pri, kflag, pflag, 0, 0);
 	else if (cflag)
 		change_priority(argv[0]);
 	else if (aflag)
@@ -178,77 +178,6 @@ main(argc, argv)
 	exit(0);
 }
 
-void
-list_swap(dolong)
-	int	dolong;
-{
-	struct	swapent *sep;
-	long	blocksize;
-	char	*header;
-	int	hlen, totalsize, size, totalinuse, inuse, ncounted;
-	int	rnswap, nswap = swapon(SWAP_NSWAP, 0, 0);
-
-	if (nswap < 1) {
-		puts("no swap devices configured");
-		exit(0);
-	}
-
-	sep = (struct swapent *)malloc(nswap * sizeof(*sep));
-	if (sep == NULL)
-		err(1, "malloc");
-	rnswap = swapon(SWAP_STATS, (void *)sep, nswap);
-	if (nswap < 0)
-		errx(1, "SWAP_STATS");
-	if (nswap != rnswap)
-		warnx("SWAP_STATS gave different value than SWAP_NSWAP");
-
-	if (dolong) {
-		if (kflag) {
-			header = "1K-blocks";
-			blocksize = 1024;
-			hlen = strlen(header);
-		} else
-			header = getbsize(&hlen, &blocksize);
-		(void)printf("%-11s %*s %8s %8s %8s  %s\n",
-		    "Device", hlen, header,
-		    "Used", "Avail", "Capacity", "Priority");
-	}
-	totalsize = totalinuse = ncounted = 0;
-	for (; rnswap-- > 0; sep++) {
-		if (pflag && sep->se_priority != pri)
-			continue;
-		ncounted++;
-		size = sep->se_nblks;
-		inuse = sep->se_inuse;
-		totalsize += size;
-		totalinuse += inuse;
-
-		if (dolong) {
-			/* XXX handle se_dev == NODEV */
-			(void)printf("/dev/%-6s %*d ",
-			    devname(sep->se_dev, S_IFBLK),
-				hlen, dbtob(size) / blocksize);
-
-			(void)printf("%8d %8d %5.0f%%    %d\n",
-			    dbtob(inuse) / blocksize,
-			    dbtob(size - inuse) / blocksize,
-			    (double)inuse / (double)size * 100.0,
-			    sep->se_priority);
-		}
-	}
-	if (dolong == 0)
-(void)printf("total: %dk bytes allocated = %dk used, %dk available\n",
-		    dbtob(totalsize) / 1024,
-		    dbtob(totalinuse) / 1024,
-		    dbtob(totalsize - totalinuse) / 1024);
-	else if (ncounted > 1)
-		(void)printf("%-11s %*d %8d %8d %5.0f%%\n", "Total", hlen,
-		    dbtob(totalsize) / blocksize,
-		    dbtob(totalinuse) / blocksize,
-		    dbtob(totalsize - totalinuse) / blocksize,
-		    (double)(totalinuse) / (double)totalsize * 100.0);
-}
-
 /*
  * change_priority:  change the priority of a swap device.
  */
@@ -257,7 +186,7 @@ change_priority(path)
 	char	*path;
 {
 
-	if (swapon(SWAP_CTL, path, pri) < 0)
+	if (swapctl(SWAP_CTL, path, pri) < 0)
 		warn("%s", path);
 }
 
@@ -269,7 +198,7 @@ add_swap(path)
 	char *path;
 {
 
-	if (swapon(SWAP_ON, path, pri) < 0)
+	if (swapctl(SWAP_ON, path, pri) < 0)
 		warn("%s", path);
 }
 
@@ -284,7 +213,7 @@ del_swap(path)
 	char path;
 {
 
-	if (swapon(SWAP_OFF, path, pri) < 0)
+	if (swapctl(SWAP_OFF, path, pri) < 0)
 		warn("%s", path);
 }
 #endif /* SWAP_OFF_WORKS */
@@ -315,6 +244,7 @@ do_fstab()
 
 		if (s = strstr(fp->fs_mntops, NFSMNTPT)) {
 			char *t, cmd[2*PATH_MAX+sizeof(PATH_MOUNT)+2];
+
 			t = strpbrk(s, ",");
 			if (t != 0)
 				*t = '\0';
@@ -338,7 +268,7 @@ do_fstab()
 			}
 		}
 
-		if (swapon(SWAP_ON, spec, (int)priority) < 0)
+		if (swapctl(SWAP_ON, spec, (int)priority) < 0)
 			warn("%s", spec);
 		else
 printf("swap: adding %s as swap device at priority %d\n",
