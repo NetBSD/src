@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.27 2003/11/20 17:45:00 uwe Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.28 2003/11/25 22:26:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.27 2003/11/20 17:45:00 uwe Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.28 2003/11/25 22:26:44 christos Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -837,7 +837,7 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 void
 pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 {
-	sigset_t oldmask, *maskp;
+	sigset_t oldmask;
 	ucontext_t *uc, *olduc;
 	struct sigaction act;
 	siginfo_t *siginfop;
@@ -867,11 +867,8 @@ pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 	 * handler. So we borrow a bit of space from the target's
 	 * stack, which we were adjusting anyway.
 	 */
-	maskp = (sigset_t *)(void *)((char *)(void *)olduc -
-	    STACKSPACE - sizeof(sigset_t));
-	*maskp = oldmask;
-	siginfop = (siginfo_t *)(void *)((char *)(void *)maskp -
-	    sizeof(*siginfop));
+	siginfop = (siginfo_t *)(void *)((char *)(void *)olduc -
+	    STACKSPACE - sizeof(siginfo_t));
 	*siginfop = *si;
 
 	/*
@@ -885,12 +882,13 @@ pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 #endif
 
 	_INITCONTEXT_U(uc);
+	uc->uc_sigmask = oldmask;
 	uc->uc_stack.ss_sp = uc;
 	uc->uc_stack.ss_size = 0;
 	uc->uc_link = NULL;
 
 	SDPRINTF(("(makecontext %p): target %p: sig: %d uc: %p oldmask: %08x\n",
-	    self, target, si->si_signo, olduc, maskp->__bits[0]));
+	    self, target, si->si_signo, olduc, oldmask.__bits[0]));
 	makecontext(uc, pthread__signal_tramp, 3, act.sa_handler, siginfop,
 	    olduc);
 	target->pt_uc = uc;
@@ -919,20 +917,17 @@ static void
 pthread__signal_tramp(void (*handler)(int, siginfo_t *, void *),
     siginfo_t *info, ucontext_t *uc)
 {
-	SDPRINTF(("(tramp %p) sig %d uc %p oldmask %08x\n", 
-	    pthread__self(), info->si_signo, uc, uc->uc_sigmask.__bits[0]));
+	SDPRINTF(("(tramp %p) sig %d code %d uc %p oldmask %08x\n", 
+	    pthread__self(), info->si_signo, info->si_code, uc,
+	    uc->uc_sigmask.__bits[0]));
 
 #ifdef __HAVE_SIGINFO
 	(*handler)(info->si_signo, info, uc);
 #else
 	{
 		struct pthread__sigcontext psc;
-		/*
-		 * XXX we don't support siginfo here yet.
-		 * Note that the old sigmask is below info in the stack.
-		 */
-		sigset_t *maskp = (sigset_t *)(void *)&info[1];
-		PTHREAD_UCONTEXT_TO_SIGCONTEXT(maskp, uc, &psc);
+
+		PTHREAD_UCONTEXT_TO_SIGCONTEXT(&uc->uc_sigmask, uc, &psc);
 		((void *(*)(int, int, struct sigcontext *))handler)
 		    (info->si_signo, info->si_trap, &psc.psc_context);
 		PTHREAD_SIGCONTEXT_TO_UCONTEXT(&psc, uc);
