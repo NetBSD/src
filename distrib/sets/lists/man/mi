@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.566 2003/04/18 20:54:59 thorpej Exp $
+# $NetBSD: mi,v 1.567 2003/04/19 08:35:25 bjh21 Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -446,12 +446,12 @@
 ./usr/share/man/cat4/aac.0			man-sys-catman
 ./usr/share/man/cat4/acorn26/arckbd.0		man-sys-catman
 ./usr/share/man/cat4/acorn26/arcwskbd.0		man-sys-catman
-./usr/share/man/cat4/acorn26/arcwsmouse.0		man-sys-catman
+./usr/share/man/cat4/acorn26/arcwsmouse.0	man-sys-catman
 ./usr/share/man/cat4/acorn26/cpu.0		man-sys-catman
 ./usr/share/man/cat4/acorn26/eca.0		man-sys-catman
-./usr/share/man/cat4/acorn26/eh.0			man-sys-catman
-./usr/share/man/cat4/acorn26/ei.0			man-sys-catman
-./usr/share/man/cat4/acorn26/podulebus.0		man-sys-catman
+./usr/share/man/cat4/acorn26/eh.0		man-sys-catman
+./usr/share/man/cat4/acorn26/ei.0		man-sys-catman
+./usr/share/man/cat4/acorn26/podulebus.0	man-sys-catman
 ./usr/share/man/cat4/acorn26/unixbp.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/asc.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/autoconf.0		man-sys-catman
@@ -459,7 +459,7 @@
 ./usr/share/man/cat4/acorn32/busmouse.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/cosc.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/csc.0		man-sys-catman
-./usr/share/man/cat4/acorn32/ie.0			man-sys-catman
+./usr/share/man/cat4/acorn32/ie.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/intro.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/kbd.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/kmem.0		man-sys-catman
@@ -467,7 +467,7 @@
 ./usr/share/man/cat4/acorn32/mainbus.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/mem.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/opms.0		man-sys-catman
-./usr/share/man/cat4/acorn32/podulebus.0		man-sys-catman
+./usr/share/man/cat4/acorn32/podulebus.0	man-sys-catman
 ./usr/share/man/cat4/acorn32/ptsc.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/qms.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/wsqms.0		man-sys-catman
@@ -1611,8 +1611,8 @@
 ./usr/share/man/cat8/ping.0			man-netutil-catman
 ./usr/share/man/cat8/ping6.0			man-netutil-catman
 ./usr/share/man/cat8/pipe.0			man-postfix-catman
-./usr/share/man/cat8/playstation2/MAKEDEV.0		man-sysutil-catman
-./usr/share/man/cat8/playstation2/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/playstation2/MAKEDEV.0	man-sysutil-catman
+./usr/share/man/cat8/playstation2/makedev.0	man-sysutil-catman
 ./usr/share/man/cat8/pmax/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/pmax/boot.0		man-sys-catman
 ./usr/share/man/cat8/pmax/makedev.0		man-sysutil-catman
@@ -2237,12 +2237,12 @@
 ./usr/share/man/man4/aac.4			man-sys-man
 ./usr/share/man/man4/acorn26/arckbd.4		man-sys-man
 ./usr/share/man/man4/acorn26/arcwskbd.4		man-sys-man
-./usr/share/man/man4/acorn26/arcwsmouse.4		man-sys-man
+./usr/share/man/man4/acorn26/arcwsmouse.4	man-sys-man
 ./usr/share/man/man4/acorn26/cpu.4		man-sys-man
 ./usr/share/man/man4/acorn26/eca.4		man-sys-man
-./usr/share/man/man4/acorn26/eh.4			man-sys-man
-./usr/share/man/man4/acorn26/ei.4			man-sys-man
-./usr/share/man/man4/acorn26/podulebus.4		man-sys-man
+./usr/share/man/man4/acorn26/eh.4		man-sys-man
+./usr/share/man/man4/acorn26/ei.4		man-sys-man
+./usr/share/man/man4/acorn26/podulebus.4	man-sys-man
 ./usr/share/man/man4/acorn26/unixbp.4		man-sys-man
 ./usr/share/man/man4/acorn32/asc.4		man-sys-man
 ./usr/share/man/man4/acorn32/autoconf.4		man-sys-man
@@ -2250,7 +2250,7 @@
 ./usr/share/man/man4/acorn32/busmouse.4		man-sys-man
 ./usr/share/man/man4/acorn32/cosc.4		man-sys-man
 ./usr/share/man/man4/acorn32/csc.4		man-sys-man
-./usr/share/man/man4/acorn32/ie.4			man-sys-man
+./usr/share/man/man4/acorn32/ie.4		man-sys-man
 ./usr/share/man/man4/acorn32/intro.4		man-sys-man
 ./usr/share/man/man4/acorn32/kbd.4		man-sys-man
 ./usr/share/man/man4/acorn32/kmem.4		man-sys-man
@@ -2258,7 +2258,7 @@
 ./usr/share/man/man4/acorn32/mainbus.4		man-sys-man
 ./usr/share/man/man4/acorn32/mem.4		man-sys-man
 ./usr/share/man/man4/acorn32/opms.4		man-sys-man
-./usr/share/man/man4/acorn32/podulebus.4		man-sys-man
+./usr/share/man/man4/acorn32/podulebus.4	man-sys-man
 ./usr/share/man/man4/acorn32/ptsc.4		man-sys-man
 ./usr/share/man/man4/acorn32/qms.4		man-sys-man
 ./usr/share/man/man4/acorn32/wsqms.4		man-sys-man
@@ -3402,8 +3402,8 @@
 ./usr/share/man/man8/ping.8			man-netutil-man
 ./usr/share/man/man8/ping6.8			man-netutil-man
 ./usr/share/man/man8/pipe.8			man-postfix-man
-./usr/share/man/man8/playstation2/MAKEDEV.8		man-sysutil-man
-./usr/share/man/man8/playstation2/makedev.8		man-sysutil-man
+./usr/share/man/man8/playstation2/MAKEDEV.8	man-sysutil-man
+./usr/share/man/man8/playstation2/makedev.8	man-sysutil-man
 ./usr/share/man/man8/pmax/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/pmax/boot.8		man-sys-man
 ./usr/share/man/man8/pmax/makedev.8		man-sysutil-man
