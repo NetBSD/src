@@ -1,6 +1,6 @@
-#	$NetBSD: files.netiso,v 1.1 2002/10/10 22:56:04 thorpej Exp $
+#	$NetBSD: files.netiso,v 1.2 2004/04/21 23:16:53 matt Exp $
 
-defflag opt_iso.h		ISO TPIP	# ISO network stack
+defflag opt_iso.h		ISO TPIP TPCONS	# ISO network stack
 defflag				EON		# # ISO clnp over IP
 
 file	netiso/clnp_debug.c		iso
