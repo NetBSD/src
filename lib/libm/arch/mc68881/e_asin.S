@@ -37,13 +37,10 @@
 
 #include <machine/asm.h>
 
-	.data
-	.align 2
 ;_sccsid:
 ;.asciz	"from: @(#)asincos.s	5.1 (Berkeley) 5/17/90"
-_rcsid:
-.asciz	"$Id: e_asin.S,v 1.1 1994/02/11 18:20:44 jtc Exp $"
 
+RCSID("$Id: e_asin.S,v 1.2 1994/03/18 23:22:14 jtc Exp $")
 
 ENTRY(__ieee754_asin)
 	fasind	sp@(4),fp0
