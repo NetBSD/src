@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.30 1999/10/15 20:01:33 jdolecek Exp $	*/
+/*	$NetBSD: ps.c,v 1.31 1999/10/15 20:39:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.30 1999/10/15 20:01:33 jdolecek Exp $");
+__RCSID("$NetBSD: ps.c,v 1.31 1999/10/15 20:39:52 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ int	dontuseprocfs=0;	/* -K */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
 
-int	needuser, needcomm, needenv, commandonly;
+int	needuser, needcomm, needenv, commandonly, use_procfs;
 
 enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
@@ -361,6 +361,7 @@ main(argc, argv)
 		fprintf(stderr, "%s%s",
 		    "Warning:  /proc does not provide ",
 		    "valid data for all fields.\n");
+		use_procfs = 1;
 	}
 
 	/*
