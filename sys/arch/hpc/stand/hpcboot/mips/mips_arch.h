@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_arch.h,v 1.1 2001/02/09 18:35:05 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_arch.h,v 1.2 2001/04/24 19:28:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ __declspec(naked) void							\
 x##::boot_func(struct BootArgs *bi, struct PageTag *p)			\
 {									\
   /* disable interrupt */						\
-  DI();								\
+  DI();									\
   /* set kernel image */						\
   __asm(".set noreorder;"						\
 	 "move	t6, a1;"	/* p */					\

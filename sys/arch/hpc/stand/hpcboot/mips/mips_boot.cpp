@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_boot.cpp,v 1.1 2001/02/09 18:35:06 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_boot.cpp,v 1.2 2001/04/24 19:28:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,22 +46,27 @@
 #include <mips/mips_boot.h>
 #include <mips/mips_vr41.h>
 #include <mips/mips_tx39.h>
+#include <mips/mips_console.h>
 
-MIPSBoot::MIPSBoot(void)
+MIPSBoot::MIPSBoot()
 {
 }
 
-MIPSBoot::~MIPSBoot(void)
+MIPSBoot::~MIPSBoot()
 {
 	if (_mem)
 		delete _mem;
 	if (_arch)
 		delete _arch;
+
+	MIPSConsole::Destroy();
 }
 
 BOOL
-MIPSBoot::setup(struct HpcMenuInterface::HpcMenuPreferences &pref)
+MIPSBoot::setup()
 {
+	struct HpcMenuInterface::HpcMenuPreferences &pref = HPC_PREFERENCE;
+
 	platid_t platid;
 	platid.dw.dw0 = pref.platid_hi;
 	platid.dw.dw1 = pref.platid_lo;
@@ -77,11 +82,11 @@ MIPSBoot::setup(struct HpcMenuInterface::HpcMenuPreferences &pref)
 		return FALSE;
 	}
 
-	return Boot::setup(pref);
+	return super::setup();
 }
 
 BOOL
-MIPSBoot::create(void)
+MIPSBoot::create()
 {
 	size_t pagesz;
 	int shift;
@@ -90,8 +95,11 @@ MIPSBoot::create(void)
 
 	// Console
 	if (args.console == CONSOLE_SERIAL) {
-		_cons = Console::Instance();
-		DPRINTF((TEXT("use LCD console instead.\n")));
+		_cons = MIPSConsole::Instance();
+		if (!_cons->init()) {
+			_cons = Console::Instance();
+			DPRINTF((TEXT("use LCD console instead.\n")));
+		}
 	}
 
 	// Architercure dependent ops.
@@ -143,5 +151,5 @@ MIPSBoot::create(void)
 
   
 	// File Manager, Loader
-	return Boot::create();
+	return super::create();
 }
