@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.178 1998/08/15 10:10:47 mycroft Exp $ */
+/*	$NetBSD: wd.c,v 1.179 1998/08/15 15:05:22 rvb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -224,26 +224,28 @@ wdattach(parent, self, aux)
 		d_link->sc_capacity =
 		    (d_link->sc_params.wdp_capacity[1] << 16) |
 		    d_link->sc_params.wdp_capacity[0];
-		printf("%s: %dMB, %d sec, geom chs %d/%d/%d, %d bytes/sec\n",
+		printf("%s %dMB, %d cyl, %d head, %d sec, %d bytes/sect x %d sectors\n",
 		    self->dv_xname,
 		    d_link->sc_capacity / (1048576 / DEV_BSIZE),
-		    d_link->sc_capacity, 
 		    d_link->sc_params.wdp_cylinders,
 		    d_link->sc_params.wdp_heads,
 		    d_link->sc_params.wdp_sectors,
-		    DEV_BSIZE);
+		    DEV_BSIZE,
+		    d_link->sc_capacity);
 	} else {
 		printf(" chs mode\n");
 		d_link->sc_capacity =
 		    d_link->sc_params.wdp_cylinders *
 		    d_link->sc_params.wdp_heads *
 		    d_link->sc_params.wdp_sectors;
-		printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+		printf("%s %dMB, %d cyl, %d head, %d sec, %d bytes/sect x %d sectors\n",
 		    self->dv_xname,
 		    d_link->sc_capacity / (1048576 / DEV_BSIZE),
 		    d_link->sc_params.wdp_cylinders,
 		    d_link->sc_params.wdp_heads,
-		    d_link->sc_params.wdp_sectors, DEV_BSIZE);
+		    d_link->sc_params.wdp_sectors,
+		    DEV_BSIZE,
+		    d_link->sc_capacity);
 	}
 
 #if NRND > 0
