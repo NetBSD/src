@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.145 2002/03/24 16:58:12 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.146 2002/04/03 17:02:21 thorpej Exp $	*/
 
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.145 2002/03/24 16:58:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.146 2002/04/03 17:02:21 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -119,6 +119,7 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_opti_reg.h>
 #include <dev/pci/pciide_hpt_reg.h>
 #include <dev/pci/pciide_acard_reg.h>
+#include <dev/pci/pciide_sl82c105_reg.h>
 #include <dev/pci/cy82c693var.h>
 
 #include "opt_pciide.h"
@@ -207,9 +208,8 @@ void acard_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void acard_setup_channel __P((struct channel_softc*));
 int  acard_pci_intr __P((void *));
 
-#ifdef PCIIDE_WINBOND_ENABLE
-void winbond_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-#endif
+void sl82c105_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
+void sl82c105_setup_channel __P((struct channel_softc*));
 
 void pciide_channel_dma_setup __P((struct pciide_channel *));
 int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
@@ -531,19 +531,29 @@ const struct pciide_product_desc pciide_serverworks_products[] =  {
 };
 #endif
 
-#ifdef PCIIDE_WINBOND_ENABLE
-const struct pciide_product_desc pciide_winbond_products[] =  {
-	{ PCI_PRODUCT_WINBOND_W83C553F_1,
+const struct pciide_product_desc pciide_symphony_products[] = {
+	{ PCI_PRODUCT_SYMPHONY_82C105,
 	  0,
-	  "Winbond W83C553F IDE controller",
-	  winbond_chip_map,
+	  "Symphony Labs 82C105 IDE controller",
+	  sl82c105_chip_map,
 	},
 	{ 0,
 	  0,
 	  NULL,
 	}
 };
-#endif
+
+const struct pciide_product_desc pciide_winbond_products[] =  {
+	{ PCI_PRODUCT_WINBOND_W83C553F_1,
+	  0,
+	  "Winbond W83C553F IDE controller",
+	  sl82c105_chip_map,
+	},
+	{ 0,
+	  0,
+	  NULL,
+	}
+};
 
 struct pciide_vendor_desc {
 	u_int32_t ide_vendor;
@@ -565,9 +575,8 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 #ifdef PCIIDE_SERVERWORKS_ENABLE
 	{ PCI_VENDOR_SERVERWORKS, pciide_serverworks_products },
 #endif
-#ifdef PCIIDE_WINBOND_ENABLE
+	{ PCI_VENDOR_SYMPHONY, pciide_symphony_products },
 	{ PCI_VENDOR_WINBOND, pciide_winbond_products },
-#endif
 	{ 0, NULL }
 };
 
@@ -4235,4 +4244,156 @@ acard_pci_intr(arg)
 			rv = crv;
 	}
 	return rv;
+}
+
+static int
+sl82c105_bugchk(struct pci_attach_args *pa)
+{
+
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_WINBOND ||
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_WINBOND_W83C553F_0)
+		return (0);
+
+	if (PCI_REVISION(pa->pa_class) <= 0x05)
+		return (1);
+
+	return (0);
+}
+
+void
+sl82c105_chip_map(sc, pa)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+	struct pciide_channel *cp;
+	bus_size_t cmdsize, ctlsize;
+	pcireg_t interface, idecr;
+	int channel;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	printf("%s: bus-master DMA support present",
+	    sc->sc_wdcdev.sc_dev.dv_xname);
+
+	/*
+	 * Check to see if we're part of the Winbond 83c553 Southbridge.
+	 * If so, we need to disable DMA on rev. <= 5 of that chip.
+	 */
+	if (pci_find_device(pa, sl82c105_bugchk)) {
+		printf(" but disabled due to 83c553 rev. <= 0x05");
+		sc->sc_dma_ok = 0;
+	} else
+		pciide_mapreg_dma(sc, pa);
+	printf("\n");
+
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_DATA16 |
+	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.PIO_cap = 4;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+		sc->sc_wdcdev.DMA_cap = 2;
+	}
+	sc->sc_wdcdev.set_modes = sl82c105_setup_channel;
+
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+
+	idecr = pci_conf_read(sc->sc_pc, sc->sc_tag, SYMPH_IDECSR);
+
+	interface = PCI_INTERFACE(pa->pa_class);
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0) 
+			continue;
+		if ((channel == 0 && (idecr & IDECR_P0EN) == 0) ||
+		    (channel == 1 && (idecr & IDECR_P1EN) == 0)) {
+			printf("%s: %s channel ignored (disabled)\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			continue;
+		}
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    pciide_pci_intr);
+		if (cp->hw_ok == 0)
+			continue;
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		if (cp->hw_ok == 0)
+			continue;
+		sl82c105_setup_channel(&cp->wdc_channel);
+	}
+}
+
+void
+sl82c105_setup_channel(chp)
+	struct channel_softc *chp;
+{
+	struct ata_drive_datas *drvp;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int pxdx_reg, drive;
+	pcireg_t pxdx;
+
+	/* Set up DMA if needed. */
+	pciide_channel_dma_setup(cp);
+
+	for (drive = 0; drive < 2; drive++) {
+		pxdx_reg = ((chp->channel == 0) ? SYMPH_P0D0CR
+						: SYMPH_P1D0CR) + (drive * 4);
+
+		pxdx = pci_conf_read(sc->sc_pc, sc->sc_tag, pxdx_reg);
+
+		pxdx &= ~(PxDx_CMD_ON_MASK|PxDx_CMD_OFF_MASK);
+		pxdx &= ~(PxDx_PWEN|PxDx_RDYEN|PxDx_RAEN);
+
+		drvp = &chp->ch_drive[drive];
+		/* If no drive, skip. */
+		if ((drvp->drive_flags & DRIVE) == 0) {
+			pci_conf_write(sc->sc_pc, sc->sc_tag, pxdx_reg, pxdx);
+			continue;
+		}
+
+		if (drvp->drive_flags & DRIVE_DMA) {
+			/*
+			 * Timings will be used for both PIO and DMA,
+			 * so adjust DMA mode if needed.
+			 */
+			if (drvp->PIO_mode >= 3) {
+				if ((drvp->DMA_mode + 2) > drvp->PIO_mode)
+					drvp->DMA_mode = drvp->PIO_mode - 2;
+				if (drvp->DMA_mode < 1) {
+					/*
+					 * Can't mix both PIO and DMA.
+					 * Disable DMA.
+					 */
+					drvp->drive_flags &= ~DRIVE_DMA;
+				}
+			} else {
+				/*
+				 * Can't mix both PIO and DMA.  Disable
+				 * DMA.
+				 */
+				drvp->drive_flags &= ~DRIVE_DMA;
+			}
+		}
+
+		if (drvp->drive_flags & DRIVE_DMA) {
+			/* Use multi-word DMA. */
+			pxdx |= symph_mw_dma_times[drvp->DMA_mode].cmd_on <<
+			    PxDx_CMD_ON_SHIFT;
+			pxdx |= symph_mw_dma_times[drvp->DMA_mode].cmd_off;
+		} else {
+			pxdx |= symph_pio_times[drvp->PIO_mode].cmd_on <<
+			    PxDx_CMD_ON_SHIFT;
+			pxdx |= symph_pio_times[drvp->PIO_mode].cmd_off;
+		}
+
+		/* XXX PxDx_PWEN? PxDx_RDYEN? PxDx_RAEN? */
+
+		/* ...and set the mode for this drive. */
+		pci_conf_write(sc->sc_pc, sc->sc_tag, pxdx_reg, pxdx);
+	}
+
+	pciide_print_modes(cp);
 }
