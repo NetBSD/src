@@ -1,4 +1,4 @@
-/*	$NetBSD: humandate.c,v 1.5 1998/03/07 05:20:06 lukem Exp $	*/
+/*	$NetBSD: humandate.c,v 1.6 1998/08/12 14:11:49 christos Exp $	*/
 
 /*
  * humandate - convert an NTP (or the current) time to something readable
@@ -23,6 +23,8 @@ static const char *months[] = {
 static const char *days[] = {
         "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 };
+
+char *humanlogtime P((void));
 
 char *
 humandate(ntptime)

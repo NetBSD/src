@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_atom.c,v 1.4 1998/04/01 15:01:24 christos Exp $	*/
+/*	$NetBSD: refclock_atom.c,v 1.5 1998/08/12 14:11:54 christos Exp $	*/
 
 /*
  * refclock_atom - clock driver for 1-pps signals
@@ -462,7 +462,12 @@ atom_poll(unit, peer)
 			 */
 			(void)sprintf(device, DEVICE, unit);
 			if (!(fd = refclock_open(device, SPEED232,
-	 		    LDISC_CLKPPS))) {
+#ifdef PPS
+						 LDISC_PPS
+#else
+						 LDISC_CLKPPS
+#endif
+						 ))) {
 				refclock_report(peer, CEVNT_FAULT);
 				return;
 			}
@@ -548,4 +553,6 @@ atom_poll(unit, peer)
 			 &pp->lastrec, &pp->lastrec, pp->leap);
 }
 
-#endif /* ATOM && REFCLOCK */
+#else /* not (ATOM && REFCLOCK) */
+int refclock_atom_bs;
+#endif /* not (ATOM && REFCLOCK) */

@@ -1,6 +1,6 @@
-/*	$NetBSD: version.c,v 1.2 1998/01/09 03:16:40 perry Exp $	*/
+/*	$NetBSD: version.c,v 1.3 1998/08/12 14:11:50 christos Exp $	*/
 
 /*
- * version file for 5.90
+ * version file for 5.93c
  */
-char * Version = "5.90 3-NetBSD Thu Apr 17 17:15:47 EDT 1997 (1)";
+char * Version = "5.93c 3-NetBSD Wed Aug 12 10:05:25 EDT 1998 (1)";

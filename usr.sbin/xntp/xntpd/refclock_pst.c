@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_pst.c,v 1.3 1998/03/06 18:17:24 christos Exp $	*/
+/*	$NetBSD: refclock_pst.c,v 1.4 1998/08/12 14:11:56 christos Exp $	*/
 
 /*
  * refclock_pst - clock driver for PSTI/Traconex WWV/WWVH receivers
@@ -334,4 +334,6 @@ pst_poll(unit, peer)
 		pp->polls++;
 }
 
-#endif
+#else /* not (REFCLOCK && PST) */
+int refclock_pst_bs;
+#endif /* not (REFCLOCK && PST) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_nmea.c,v 1.3 1998/03/06 18:17:24 christos Exp $	*/
+/*	$NetBSD: refclock_nmea.c,v 1.4 1998/08/12 14:11:56 christos Exp $	*/
 
 /*
  * refclock_nmea.c - clock driver for an NMEA GPS CLOCK
@@ -412,4 +412,6 @@ field_parse(cp, fn)
 	}
 	return (++tp);
 }
-#endif
+#else /* not (REFCLOCK && NMEA) */
+int refclock_nmea_bs;
+#endif /* not (REFCLOCK && NMEA) */

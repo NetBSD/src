@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq_ops.c,v 1.3 1998/03/06 18:17:19 christos Exp $	*/
+/*	$NetBSD: ntpq_ops.c,v 1.4 1998/08/12 14:11:52 christos Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by xntpdc
@@ -182,8 +182,8 @@ char flash2[] = " .+*    ";	/* flash decode for version 2 */
 char flash3[] = " x.-+#*o";	/* flash decode for peer status version 3 */
 
 struct varlist {
-  const char *name;
-  const char *value;
+  char *name;
+  char *value;
 } varlist[MAXLIST] = { { 0, 0 } };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_restrict.c,v 1.3 1998/04/01 15:01:23 christos Exp $	*/
+/*	$NetBSD: ntp_restrict.c,v 1.4 1998/08/12 14:11:54 christos Exp $	*/
 
 /*
  * ntp_restrict.c - find out what restrictions this host is running under
@@ -308,10 +308,10 @@ restrictions(srcadr)
 
 
 /*
- * restrict - add/subtract/manipulate entries on the restrict list
+ * hack_restrict - add/subtract/manipulate entries on the restrict list
  */
 void
-restrict_addr(op, resaddr, resmask, mflags, flags)
+hack_restrict(op, resaddr, resmask, mflags, flags)
 	int op;
 	struct sockaddr_in *resaddr;
 	struct sockaddr_in *resmask;

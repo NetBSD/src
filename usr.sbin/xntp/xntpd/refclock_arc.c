@@ -446,7 +446,6 @@ Chose how many filter samples to keep.  Several factors are in play.
 #define OPEN_FLAGS (O_RDWR)
 #endif
 
-
 /*
  * Imported from ntp_timer module
  */
@@ -511,6 +510,9 @@ struct arcunit {
 
 static void dummy_event_handler P((struct peer *));
 static void   arc_event_handler P((struct peer *));
+static int space_left P((struct arcunit *));
+static int send_slow  P((struct arcunit *, int, char *));
+
 
 #define QUALITY_UNKNOWN     -1 /* Indicates unknown clock quality. */
 #define MIN_CLOCK_QUALITY    0 /* Min quality clock will return. */
@@ -877,8 +879,8 @@ arc_receive(rbufp)
                 printf("arc: stamp -->%c<-- (%d chars rcvd)\n",
                        ((c == '\r') ? 'R' : (isgraph(c) ? c : '?')),
                        rbufp->recv_length);
-#endif
             }
+#endif
 
             /*
             Now correct timestamp by offset of last byte received---we
@@ -1537,4 +1539,6 @@ arc_refclock_sample(sample_offset, pp, nstart, nskeep)
 
 #endif /* ARCRON_OWN_FILTER */
 
-#endif
+#else /* not (REFCLOCK && ARCRON_MSF) */
+int refclock_arc_bs;
+#endif /* not (REFCLOCK && ARCRON_MSF) */

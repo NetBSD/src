@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_mx4200.c,v 1.3 1998/03/06 18:17:24 christos Exp $	*/
+/*	$NetBSD: refclock_mx4200.c,v 1.4 1998/08/12 14:11:55 christos Exp $	*/
 
 /*
  * This software was developed by the Computer Systems Engineering group
@@ -78,6 +78,11 @@
  */
 
 /*
+ * Check this every time you edit the code!
+ */
+#define YEAR_RIGHT_NOW 1998
+
+/*
  * GPS Definitions
  */
 #define	DEVICE		"/dev/gps%d"	/* device name and unit */
@@ -131,13 +136,6 @@ extern int fdpps;		/* ppsclock file descriptor */
 #endif /* PPS */
 
 /*
- * Imported from perror(3)
- */
-extern int  sys_nerr;
-extern char *sys_errlist[];
-extern int  errno;
-
-/*
  * MX4200 unit control structure.
  */
 struct mx4200unit {
@@ -171,6 +169,20 @@ struct mx4200unit {
 
 static char pmvxg[] = "PMVXG";
 
+/* XXX should be somewhere else */
+#ifdef __GNUC__
+#if __GNUC__ < 2  || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+#ifndef __attribute__
+#define __attribute__(args)
+#endif
+#endif
+#else
+#ifndef __attribute__
+#define __attribute__(args)
+#endif
+#endif
+/* XXX end */
+
 /*
  * Function prototypes
  */
@@ -192,10 +204,12 @@ static	char *	mx4200_process	P((struct peer *));
 #endif /* not QSORT_USES_VOID_P */
 static	void	mx4200_config	P((struct peer *));
 static	void	mx4200_ref	P((struct peer *));
-static	void	mx4200_send	P((struct peer *, char *, ...));
+static	void	mx4200_send	P((struct peer *, char *, ...))
+    __attribute__ ((format (printf, 2, 3)));
 static	u_char	mx4200_cksum	P((char *, u_int));
 static	int	mx4200_jday	P((int, int, int));
-static	void	mx4200_debug	P((struct peer *, char *, ...));
+static	void	mx4200_debug	P((struct peer *, char *, ...))
+    __attribute__ ((format (printf, 2, 3)));
 static	int	mx4200_pps	P((struct peer *));
 
 /*
@@ -299,7 +313,7 @@ mx4200_config(peer)
 	struct peer *peer;
 {
 	char tr_mode;
-	char add_mode;
+	int add_mode;
 	int i;
 	register struct mx4200unit *up;
 	struct refclockproc *pp;
@@ -426,11 +440,9 @@ mx4200_config(peer)
 	if (up->moving) {
 		/* dynamic: solve for pos, alt, time, while moving */
 		tr_mode = 'D';
-		add_mode = 0;
 	} else {
 		/* static: solve for pos, alt, time, while stationary */
 		tr_mode = 'S';
-		add_mode = 1;
 	}
 	mx4200_send(peer, "%s,%03d,%c,%c,%c,%d,%d,%d,", pmvxg,
 	    PMVXG_S_TRECOVCONF,
@@ -447,7 +459,7 @@ mx4200_config(peer)
 	 * location) only if we are not moving
 	 */
 	if (up->moving) {
-		add_mode = 0;	/* delete from list */
+		add_mode = 2;	/* delete from list */
 	} else {
 		add_mode = 1;	/* add to list */
 	}
@@ -460,7 +472,7 @@ mx4200_config(peer)
 	    PMVXG_S_PORTCONF,
 	    PMVXG_D_DOPS, /* control port output block Label */
 	    0,		/* clear current output control list (0=no) */
-	    add_mode,	/* add/delete sentences from list (1=add) */
+	    add_mode,	/* add/delete sentences from list (1=add, 2=del) */
 			/* must be null */
 	    INTERVAL);	/* sentence output rate (sec) */
 	    		/* precision for position output */
@@ -476,7 +488,7 @@ mx4200_config(peer)
 	    PMVXG_S_PORTCONF,
 	    PMVXG_D_PHV, /* control port output block Label */
 	    0,		/* clear current output control list (0=no) */
-	    add_mode,	/* add/delete sentences from list (1=add) */
+	    add_mode,	/* add/delete sentences from list (1=add, 2=del) */
 			/* must be null */
 	    INTERVAL);	/* sentence output rate (sec) */
 	    		/* precision for position output */
@@ -581,13 +593,13 @@ mx4200_ref(peer)
 	 * "007" Control Port Configuration
 	 * Stop outputting "022" DOPs
 	 */
-	mx4200_send(peer, "%s,%03d,%03d,%d,%d,,,,,", pmvxg,
+	mx4200_send(peer, "%s,%03d,%03d,%d,%d,,%d,,,", pmvxg,
 	    PMVXG_S_PORTCONF,
 	    PMVXG_D_DOPS, /* control port output block Label */
 	    0,		/* clear current output control list (0=no) */
-	    0);		/* add/delete sentences from list (0=delete) */
+	    2,		/* add/delete sentences from list (2=delete) */
 			/* must be null */
-	    		/* sentence output rate (sec) */
+	    0);		/* sentence output rate (sec) */
 	    		/* precision for position output */
 			/* nmea version for cga & gll output */
 			/* pass-through control */
@@ -600,9 +612,9 @@ mx4200_ref(peer)
 	    PMVXG_S_PORTCONF,
 	    PMVXG_D_PHV, /* control port output block Label */
 	    0,		/* clear current output control list (0=no) */
-	    0);		/* add/delete sentences from list (0=delete) */
+	    2,		/* add/delete sentences from list (2=delete) */
 			/* must be null */
-	    		/* sentence output rate (sec) */
+	    0);		/* sentence output rate (sec) */
 	    		/* precision for position output */
 			/* nmea version for cga & gll output */
 			/* pass-through control */
@@ -702,7 +714,8 @@ mx4200_receive(rbufp)
 	if ((pp->sloppyclockflag & CLK_FLAG2) !=
 	    (up->sloppyclockflag & CLK_FLAG2)) {
 		up->sloppyclockflag = pp->sloppyclockflag;
-		mx4200_debug(peer, "mx4200_receive: mode switch: reset receiver\n", cp);
+		mx4200_debug(peer,
+		    "mx4200_receive: mode switch: reset receiver\n");
 		mx4200_config(peer);
 		return;
 	}
@@ -770,7 +783,7 @@ mx4200_receive(rbufp)
 	 */
 	sentence_type = 0;
 	if ((cp = strchr(pp->a_lastcode, ',')) == NULL) {
-		mx4200_debug(peer, "mx4200_receive: no sentence\n", cp);
+		mx4200_debug(peer, "mx4200_receive: no sentence\n");
 		refclock_report(peer, CEVNT_BADREPLY);
 		return;
 	}
@@ -795,7 +808,7 @@ mx4200_receive(rbufp)
 			mx4200_debug(peer,
 				"mx4200_receive: status: %s\n", cp);
 		}
-		mx4200_debug(peer, "mx4200_receive: reset receiver\n", cp);
+		mx4200_debug(peer, "mx4200_receive: reset receiver\n");
 		mx4200_config(peer);
 		return;
 	}
@@ -1285,10 +1298,10 @@ mx4200_parse_t(peer)
 
 	/*
 	 * Check for insane date
-	 * (Certainly can't be a year before this code was last altered!)
+	 * (Certainly can't be any year before this code was last altered!)
 	 */
 	if (monthday > 31 || month > 12 ||
-	    monthday <  1 || month <  1 || year < 1997) {
+	    monthday <  1 || month <  1 || year < YEAR_RIGHT_NOW) {
 		mx4200_debug(peer,
 			"mx4200_parse_t: bad date (%4d-%02d-%02d)\n",
 			year, month, monthday);
@@ -1708,7 +1721,7 @@ mx4200_parse_d(peer)
 
 
 	/* Update values */
-	if (ndop <= 0.0 || ndop<= 0.0 || vdop <= 0.0)
+	if (edop <= 0.0 || ndop <= 0.0 || vdop <= 0.0)
 		return ("nonpositive dop");
 	up->edop = edop;
 	up->ndop = ndop;
@@ -1913,8 +1926,7 @@ mx4200_pps(peer)
 	if (ioctl(fdpps, CIOGETEV, (caddr_t)&up->ppsev) < 0) {
 		/* XXX Actually, if this fails, we're pretty much screwed */
 		mx4200_debug(peer, "mx4200_pps: CIOGETEV: ");
-		if (errno < sys_nerr)
-			mx4200_debug(peer, "%s", sys_errlist[errno]);
+		mx4200_debug(peer, "%s", strerror(errno));
 		mx4200_debug(peer, "\n");
 		refclock_report(peer, CEVNT_FAULT);
 		return(1);

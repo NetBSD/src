@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.6 1998/04/01 15:01:18 christos Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.7 1998/08/12 14:11:52 christos Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -442,6 +442,7 @@ char *progname;
 int debug;
 
 #ifdef NO_MAIN_ALLOWED
+void ntpqmain P((int, char *[]));
 CALL(ntpq,"ntpq",ntpqmain);
 
 void clear_globals()
@@ -457,15 +458,16 @@ void clear_globals()
     numcmds = 0;
     numhosts = 0;
     }
+#else
+int main P((int, char *[]));
 #endif
 /*
  * main - parse arguments and handle options
  */
-int
 #ifndef NO_MAIN_ALLOWED
-main
+int main
 #else
-ntpqmain
+void ntpqmain
 #endif
 (argc, argv)
 int argc;

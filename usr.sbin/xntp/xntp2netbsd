@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: xntp2netbsd,v 1.13 1998/05/02 15:28:32 christos Exp $
+#	$NetBSD: xntp2netbsd,v 1.14 1998/08/12 14:11:50 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for xntp into
 #	a NetBSD source tree.
@@ -18,7 +18,7 @@
 #  Written by Christos Zoulas April 17, 1997 for xntp 3-5.90
 #
 
-$version = "3-5.92";
+$version = "3-5.93c";
 
 # definitions ...
 
@@ -263,7 +263,6 @@ SUBDIR= ntpdate ntpq ntptime ntptrace xntpd xntpdc
 .include <bsd.subdir.mk>
 %% file usr.sbin/xntp/Makefile.inc
 %% NetBSD #
-WARNS?=	0
 CPPFLAGS += -I${.CURDIR}/../include -DHAVE_CONFIG_H
 LDADD += -lntp
 DPADD += ${LIBNTP}
@@ -348,9 +347,9 @@ major=0
 minor=0
 %% file lib/libntp/version.c
 /*
- * version file for 5.90
+ * version file for 5.93c
  */
-char * Version = "5.90 3-NetBSD Thu Apr 17 17:15:47 EDT 1997 (1)";
+char * Version = "5.93c 3-NetBSD Wed Aug 12 10:05:25 EDT 1998 (1)";
 %% file usr.sbin/xntp/include/config.h
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_trak.c,v 1.3 1998/03/06 18:17:25 christos Exp $	*/
+/*	$NetBSD: refclock_trak.c,v 1.4 1998/08/12 14:11:56 christos Exp $	*/
 
 /*
  * refclock_trak - clock driver for the TRAK 8810 GPS Station Clock
@@ -370,4 +370,6 @@ trak_poll(unit, peer)
 	up->polled = 1;
 }
 
-#endif
+#else /* not (REFCLOCK && TRAK) */
+int refclock_track_bs;
+#endif /* not (REFCLOCK && TRAK) */
