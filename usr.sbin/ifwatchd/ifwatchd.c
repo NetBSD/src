@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.19 2004/01/04 22:19:51 martin Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.19.4.1 2005/02/23 16:17:56 he Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include <sys/wait.h>
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_media.h>
 #ifdef SPPP_IF_SUPPORT
 #include <net/if_sppp.h>
 #endif
@@ -539,6 +540,11 @@ static void run_initial_ups()
 {
 	struct interface_data * ifd;
 	struct ifaddrs *res = NULL, *p;
+	int s;
+
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+	if (s < 0)
+		return;
 
 	if (getifaddrs(&res) == 0) {
 		for (p = res; p; p = p->ifa_next) {
@@ -557,14 +563,29 @@ static void run_initial_ups()
 				continue;
 			if (p->ifa_addr == NULL)
 				continue;
-			if (p->ifa_addr->sa_family == AF_LINK)
+			if (p->ifa_addr->sa_family == AF_LINK) {
+				struct ifmediareq ifmr;
+
+				memset(&ifmr, 0, sizeof(ifmr));
+				strncpy(ifmr.ifm_name, ifd->ifname,
+				    sizeof(ifmr.ifm_name));
+				if (ioctl(s, SIOCGIFMEDIA, &ifmr) != -1
+				    && (ifmr.ifm_status & IFM_AVALID)
+				    && (ifmr.ifm_status & IFM_ACTIVE)) {
+					invoke_script(NULL, NULL, CARRIER,
+					    ifd->index, ifd->ifname);
+					ifd->last_carrier_status =
+					    LINK_STATE_UP;
+				    }
 				continue;
+			}
 			if (if_is_connected(ifd->ifname))
 				invoke_script(p->ifa_addr, p->ifa_dstaddr, UP,
 				    ifd->index, ifd->ifname);
 		}
 		freeifaddrs(res);
 	}
+	close(s);
 }
 
 #ifdef SPPP_IF_SUPPORT
