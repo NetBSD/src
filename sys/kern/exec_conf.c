@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.53 2001/02/02 07:30:22 mrg Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.54 2001/02/11 01:29:43 eeh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -86,8 +86,12 @@ int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 #include <compat/sunos/sunos_exec.h>
 #endif
 
-#ifdef COMPAT_SVR4
+#if defined(COMPAT_SVR4) || defined(COMPAT_SVR4_32)
 #include <compat/svr4/svr4_exec.h>
+#endif
+
+#ifdef COMPAT_SVR4_32
+#include <compat/svr4_32/svr4_32_exec.h>
 #endif
 
 #ifdef COMPAT_IBCS2
@@ -220,6 +224,13 @@ const struct execsw execsw_builtin[] = {
 	  &emul_linux, EXECSW_PRIO_ANY,
 	  LINUX_ELF_AUX_ARGSIZ,
 	  LINUX_COPYARGS_FUNCTION, setregs },	/* Linux 32bit ELF bins */
+#endif
+#ifdef COMPAT_SVR4_32
+	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
+	  { elf_probe_func: ELF32NAME2(svr4_32,probe) },
+	  &emul_svr4_32, EXECSW_PRIO_ANY,
+	  SVR4_32_AUX_ARGSIZ,
+	  svr4_32_copyargs, svr4_32_setregs },	/* SVR4 32bit ELF bins (not 64bit safe) */
 #endif
 #ifdef COMPAT_SVR4
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
