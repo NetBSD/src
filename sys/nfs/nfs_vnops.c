@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.53 1995/12/19 23:07:54 cgd Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.54 1996/01/31 04:24:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -527,16 +527,16 @@ nfs_setattr(ap)
 	nfsm_reqhead(vp, NFSPROC_SETATTR, NFSX_FH+NFSX_SATTR(isnq));
 	nfsm_fhtom(vp);
 	nfsm_build(sp, struct nfsv2_sattr *, NFSX_SATTR(isnq));
-	if (vap->va_mode == (u_short)-1)
-		sp->sa_mode = VNOVAL;
+	if (vap->va_mode == (u_short)VNOVAL)
+		sp->sa_mode = nfs_xdrneg1;
 	else
 		sp->sa_mode = vtonfs_mode(vp->v_type, vap->va_mode);
-	if (vap->va_uid == (uid_t)-1)
-		sp->sa_uid = VNOVAL;
+	if (vap->va_uid == VNOVAL)
+		sp->sa_uid = nfs_xdrneg1;
 	else
 		sp->sa_uid = txdr_unsigned(vap->va_uid);
-	if (vap->va_gid == (gid_t)-1)
-		sp->sa_gid = VNOVAL;
+	if (vap->va_gid == VNOVAL)
+		sp->sa_gid = nfs_xdrneg1;
 	else
 		sp->sa_gid = txdr_unsigned(vap->va_gid);
 	if (isnq) {
@@ -544,7 +544,7 @@ nfs_setattr(ap)
 		txdr_nqtime(&vap->va_atime, &sp->sa_nqatime);
 		txdr_nqtime(&vap->va_mtime, &sp->sa_nqmtime);
 		sp->sa_nqflags = txdr_unsigned(vap->va_flags);
-		sp->sa_nqrdev = VNOVAL;
+		sp->sa_nqrdev = nfs_xdrneg1;
 	} else {
 		sp->sa_nfssize = txdr_unsigned(vap->va_size);
 		txdr_nfstime(&vap->va_atime, &sp->sa_nfsatime);
@@ -1068,7 +1068,7 @@ nfs_create(ap)
 		u_quad_t qval = 0;
 
 		txdr_hyper(&qval, &sp->sa_nqsize);
-		sp->sa_nqrdev = -1;
+		sp->sa_nqrdev = nfs_xdrneg1;
 		sp->sa_nqflags = 0;
 		txdr_nqtime(&vap->va_atime, &sp->sa_nqatime);
 		txdr_nqtime(&vap->va_mtime, &sp->sa_nqmtime);
@@ -1409,7 +1409,7 @@ nfs_symlink(ap)
 		txdr_nqtime(&vap->va_atime, &sp->sa_nqatime);
 		txdr_nqtime(&vap->va_mtime, &sp->sa_nqmtime);
 	} else {
-		sp->sa_nfssize = -1;
+		sp->sa_nfssize = nfs_xdrneg1;
 		txdr_nfstime(&vap->va_atime, &sp->sa_nfsatime);
 		txdr_nfstime(&vap->va_mtime, &sp->sa_nfsmtime);
 	}
@@ -1477,7 +1477,7 @@ nfs_mkdir(ap)
 		txdr_nqtime(&vap->va_atime, &sp->sa_nqatime);
 		txdr_nqtime(&vap->va_mtime, &sp->sa_nqmtime);
 	} else {
-		sp->sa_nfssize = -1;
+		sp->sa_nfssize = nfs_xdrneg1;
 		txdr_nfstime(&vap->va_atime, &sp->sa_nfsatime);
 		txdr_nfstime(&vap->va_mtime, &sp->sa_nfsmtime);
 	}
