@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)var.c	5.7 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: var.c,v 1.6 1994/06/06 22:45:49 jtc Exp $";
+static char *rcsid = "$Id: var.c,v 1.7 1994/06/16 18:50:20 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -1060,49 +1060,24 @@ VarModify (str, modProc, datum)
     ClientData	  datum;    	    /* Datum to pass it */
 {
     Buffer  	  buf;	    	    /* Buffer for the new string */
-    register char *cp;	    	    /* Pointer to end of current word */
-    char    	  endc;	    	    /* Character that ended the word */
     Boolean 	  addSpace; 	    /* TRUE if need to add a space to the
 				     * buffer before adding the trimmed
 				     * word */
-    
+    char **av;			    /* word list [first word does not count] */
+    int ac, i;
+
     buf = Buf_Init (0);
-    cp = str;
     addSpace = FALSE;
+
+    av = brk_string(str, &ac, FALSE);
+
+    for (i = 1; i < ac; i++)
+	addSpace = (*modProc)(av[i], addSpace, buf, datum);
     
-    for (;;) {
-	/*
-	 * Skip to next word and place cp at its end.
-	 */
-	while (isspace (*str)) {
-	    str++;
-	}
-	for (cp = str; *cp != '\0' && !isspace (*cp); cp++) 
-	    continue;
-	if (cp == str) {
-	    /*
-	     * If we didn't go anywhere, we must be done!
-	     */
-	    Buf_AddByte (buf, '\0');
-	    str = (char *)Buf_GetAll (buf, (int *)NULL);
-	    Buf_Destroy (buf, FALSE);
-	    return (str);
-	}
-	/*
-	 * Nuke terminating character, but save it in endc b/c if str was
-	 * some variable's value, it would not be good to screw it
-	 * over...
-	 */
-	endc = *cp;
-	*cp = '\0';
-
-	addSpace = (* modProc) (str, addSpace, buf, datum);
-
-	if (endc) {
-	    *cp++ = endc;
-	}
-	str = cp;
-    }
+    Buf_AddByte (buf, '\0');
+    str = (char *)Buf_GetAll (buf, (int *)NULL);
+    Buf_Destroy (buf, FALSE);
+    return (str);
 }
 
 /*-
