@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.3 1996/03/11 21:41:28 thorpej Exp $	*/
+/*	$NetBSD: pdq.c,v 1.4 1996/05/07 23:25:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (matt@lkg.dec.com)
@@ -100,6 +100,7 @@
 #include "pdqreg.h"
 #if defined(__NetBSD__)
 #include "pdqvar.h"
+#include <sys/systm.h>
 #else
 #include "pdq_os.h"
 #endif
@@ -593,6 +594,8 @@ pdq_queue_commands(
 	    pdq_os_addr_fill(pdq, addr, 61);
 	    break;
 	}
+	default:
+	    break;
     }
     /*
      * At this point the command is done.  All that needs to be done is to
@@ -814,7 +817,7 @@ pdq_process_received_data(
 		       dataptr[PDQ_RX_FC_OFFSET+5],
 		       dataptr[PDQ_RX_FC_OFFSET+6]);
 		/* rx->rx_badcrc++; */
-	    } else if (status.rxs_fsc == 0 | status.rxs_fsb_e == 1) {
+	    } else if (status.rxs_fsc == 0 || status.rxs_fsb_e == 1) {
 		/* rx->rx_frame_status_errors++; */
 	    } else {
 		/* hardware fault */
@@ -1285,8 +1288,8 @@ pdq_run(
 	    pdq_queue_commands(pdq);
 	    break;
 	}
-	case PDQS_RING_MEMBER: {
-	}
+	default:
+	    break;
     }
 }
 
@@ -1495,6 +1498,7 @@ pdq_initialize(
 #ifdef PDQ_DO_EISA
 	case PDQ_DEFEA: pdq_init_esia_csrs(&pdq->pdq_eisa_csrs, csr_va, 1); break;
 #endif
+	default: break;
     }
 
     PDQ_PRINTF(("PDQ CSRs:\n"));
