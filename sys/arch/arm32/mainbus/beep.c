@@ -1,4 +1,4 @@
-/* $NetBSD: beep.c,v 1.6 1996/10/13 03:06:10 christos Exp $ */
+/* $NetBSD: beep.c,v 1.7 1996/10/15 21:20:15 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -31,6 +31,9 @@
 
 /*
  * Simple beep sounds using VIDC
+ *
+ * Added support for digital serial sound interface with
+ * NS LMC1982 for RC7500
  */
 
 /*
@@ -62,6 +65,9 @@
 #include <machine/beep.h>
 #include <arm32/mainbus/mainbus.h>
 #include <arm32/mainbus/waveform.h>
+#ifdef RC7500
+#include <arm32/mainbus/lmc1982.h>
+#endif
 
 #include "beep.h"
 
@@ -85,6 +91,8 @@ int	beepopen	__P((dev_t, int, int, struct proc *));
 int	beepclose	__P((dev_t, int, int, struct proc *));
 int	beepintr	__P((struct beep_softc *sc));
 void	beepdma		__P((struct beep_softc *sc, int buf));
+
+static int sdma_channel;
 
 struct cfattach beep_ca = {
 	sizeof(struct beep_softc), beepprobe, beepattach
@@ -111,11 +119,17 @@ beepprobe(parent, match, aux)
 /* So far I only know about this IOMD */
 
 	switch (id) {
-	case RPC600_IOMD_ID:
+#ifdef CPU_ARM7500
+	case ARM7500_IOC_ID:
+		sdma_channel = IRQ_SDMA;
 		return(1);
-		break;
+#else
+	case RPC600_IOMD_ID:
+		sdma_channel = IRQ_DMASCH0;
+		return(1);
+#endif
 	default:
-		printf("beep: Unknown IOMD id=%04x", id);
+		printf("beep: Unknown IOMD id=%04x\n", id);
 		break;
 	}
 	return(0);
@@ -151,6 +165,14 @@ beepattach(parent, self, aux)
 
 	bcopy(beep_waveform, (void *)sc->sc_buffer0, sizeof(beep_waveform));
 
+#ifdef RC7500
+	/*
+	 * Convert 8-bit data in 2's complement.  We should really
+	 * need to convert 8 bits to 16 bits.
+	 */
+	conv_jap((char *)sc->sc_buffer0, sizeof(beep_waveform));
+#endif
+
 /* Reset the sound DMA channel */
 
 	WriteWord(IOMD_SD0CURA, sc->sc_sound_cur0);
@@ -165,12 +187,16 @@ beepattach(parent, self, aux)
 	sc->sc_ih.ih_func = beepintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NONE;
+#ifdef RC7500
+	sc->sc_ih.ih_name = "serial snd dma";
+#else
 	sc->sc_ih.ih_name = "dma snd ch 0";
+#endif
 
-	if (irq_claim(IRQ_DMASCH0, &sc->sc_ih))
-		panic("Cannot claim DMASCH0 IRQ for beep%d\n", parent->dv_unit);
+	if (irq_claim(sdma_channel, &sc->sc_ih))
+		panic("Cannot claim IRQ %d for beep%d\n", sdma_channel, parent->dv_unit);
 
-	disable_irq(IRQ_DMASCH0);
+	disable_irq(sdma_channel);
 
 /*
 	printf(" [ buf0=%08x:%08x->%08x buf1=%08x:%08x->%08x ]",
@@ -182,7 +208,9 @@ beepattach(parent, self, aux)
 /* Set sample rate to 32us */
 
 	WriteWord(VIDC_BASE, VIDC_SFR | 32);
+/*	WriteWord(VIDC_BASE, VIDC_SCR | 0x05);*/
 
+#ifndef RC7500
 /* Set the stereo postions to centred for all channels */
 
 	WriteWord(VIDC_BASE, VIDC_SIR0 | SIR_CENTRE);
@@ -193,6 +221,31 @@ beepattach(parent, self, aux)
 	WriteWord(VIDC_BASE, VIDC_SIR5 | SIR_CENTRE);
 	WriteWord(VIDC_BASE, VIDC_SIR6 | SIR_CENTRE);
 	WriteWord(VIDC_BASE, VIDC_SIR7 | SIR_CENTRE);
+#endif
+
+#ifdef RC7500
+	/*
+	 * Enable serial sound.  The digital serial sound interface
+	 * consists of 16 bits sample on each channel.  The waveform
+	 * data used to generate beep sound is a 8-bits sample.  I
+	 * really don't care, since it's just beep sound.
+	 */
+	outl(VIDC_BASE, VIDC_SCR | 0x03);
+
+	/*
+	 * Video LCD and Serial Sound Mux control.  - Japanese format.
+	 */
+	outb(IOMD_VIDMUX, 0x02);
+
+	volume_ctl(VINPUTSEL, VIN1);
+	volume_ctl(VLOUD, 0);
+	volume_ctl(VBASS, VDBM0);
+	volume_ctl(VTREB, VDBM0);
+	volume_ctl(VLEFT, 24);
+	volume_ctl(VRIGHT, 24);
+	volume_ctl(VMODE, VSTEREO);
+	volume_ctl(VDIN, 0);
+#endif
 }
 
 
@@ -299,8 +352,8 @@ beepioctl(dev, cmd, data, flag, p)
 		break;
 
 	case BEEP_SET:
-		printf("set %08x\n", (u_int)data);
-		printf("set %08x %08x\n", (u_int)wave->addr, wave->size);
+/*		printf("set %08x\n", (u_int)data);
+		printf("set %08x %08x\n", (u_int)wave->addr, wave->size);*/
 		if (wave->size < 16 || wave->size > NBPG)
 			return(ENXIO);
 		copyin(wave->addr, (char *)sc->sc_buffer0, wave->size);
@@ -321,20 +374,18 @@ int
 beepintr(sc)
 	struct beep_softc *sc;
 {
-/*	printf("beepintr: %02x,%02x,%02x,%d\n", ReadByte(IOMD_DMARQ),
-	    ReadByte(IOMD_SD0CR), ReadByte(IOMD_SD0ST), sc->sc_count);*/
-	WriteByte(IOMD_DMARQ, 0x10);
+/*	WriteByte(IOMD_DMARQ, 0x10);*/
 	--sc->sc_count;
 	if (sc->sc_count <= 0) {
 		WriteWord(IOMD_SD0CURB, sc->sc_sound_cur1);
 		WriteWord(IOMD_SD0ENDB, sc->sc_sound_end1 | (1 << 30));
-		disable_irq(IRQ_DMASCH0);
+		disable_irq(sdma_channel);
 /*		printf("stop:st=%02x\n", ReadByte(IOMD_SD0ST));*/
 		return(1);
 	}
 
 	beepdma(sc, sc->sc_count & 1);
-	return(1);
+	return(1);	/* Claim the interrupt */
 }
 
 
@@ -363,7 +414,7 @@ beepdma(sc, buf)
 /*	status = ReadByte(IOMD_SD0ST);
 	printf("st=%02x\n", status);*/
 
-	enable_irq(IRQ_DMASCH0);
+	enable_irq(sdma_channel);
 }
 
 /* End of beep.c */
