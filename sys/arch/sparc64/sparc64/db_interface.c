@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.7 1998/09/05 23:57:27 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.8 1998/09/09 02:48:15 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -345,6 +345,7 @@ db_pload_cmd(addr, have_addr, count, modif)
 	}
 	db_printf("%016.16lx:\t%08.8lx\n", (long)oldaddr, 
 		  (long)lda(oldaddr, ASI_PHYS_CACHED));
+	oldaddr+=4;
 }
 
 int64_t pseg_get __P((struct pmap *, vaddr_t));
