@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.26 1999/07/29 18:20:02 augustss Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.27 1999/08/14 14:40:08 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.26 1999/07/29 18:20:02 augustss Exp $";
+    "$NetBSD: wsdisplay.c,v 1.27 1999/08/14 14:40:08 augustss Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -59,6 +59,7 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <dev/cons.h>
 
 #include "opt_wsdisplay_compat.h"
+#include "opt_compat_netbsd.h"
 #include "wskbd.h"
 #include "wsmux.h"
 
