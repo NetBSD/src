@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.175 2002/06/23 20:36:26 fvdl Exp $
+#	$NetBSD: files.pci,v 1.176 2002/08/06 23:09:10 augustss Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -174,7 +174,7 @@ attach	trm at pci
 file	dev/pci/trm.c			trm
 
 # Guillemot Maxi Radio FM 2000 Radio Card
-device	mr: radiodev
+device	mr: radiodev, tea5757
 attach	mr at pci
 file	dev/pci/maxiradio.c		mr
 
