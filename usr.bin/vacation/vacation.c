@@ -345,7 +345,7 @@ setinterval(interval)
 	key.size = sizeof(VIT);
 	data.data = &interval;
 	data.size = sizeof(interval);
-	(void)(db->put)(db, &key, &data, R_PUT);
+	(void)(db->put)(db, &key, &data, 0);
 }
 
 /*
@@ -362,7 +362,7 @@ setreply()
 	(void)time(&now);
 	data.data = &now;
 	data.size = sizeof(now);
-	(void)(db->put)(db, &key, &data, R_PUT);
+	(void)(db->put)(db, &key, &data, 0);
 }
 
 /*
