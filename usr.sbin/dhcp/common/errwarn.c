@@ -42,13 +42,13 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: errwarn.c,v 1.2 1998/07/26 15:34:18 mycroft Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: errwarn.c,v 1.2.2.1 2000/10/19 18:44:00 he Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 #include <errno.h>
 
-static void do_percentm PROTO ((char *obuf, char *ibuf));
+static void do_percentm PROTO ((char *obuf, const char *ibuf));
 
 static char mbuf [1024];
 static char fbuf [1024];
@@ -117,7 +117,7 @@ int warn (ANSI_DECL (char *) fmt, VA_DOTDOTDOT)
 
 /* Log a note... */
 
-int note (ANSI_DECL (char *) fmt, VA_DOTDOTDOT)
+int note (ANSI_DECL (const char *) fmt, VA_DOTDOTDOT)
      KandR (char *fmt;)
      va_dcl
 {
@@ -171,9 +171,9 @@ int debug (ANSI_DECL (char *) fmt, VA_DOTDOTDOT)
 
 static void do_percentm (obuf, ibuf)
      char *obuf;
-     char *ibuf;
+     const char *ibuf;
 {
-	char *s = ibuf;
+	const char *s = ibuf;
 	char *p = obuf;
 	int infmt = 0;
 	const char *m;
