@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.13 2002/02/25 07:35:06 atatat Exp $
+#	$NetBSD: MAKEDEV,v 1.14 2002/03/03 14:16:04 toshii Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -21,7 +21,7 @@
 # Tapes:
 #	st*	SCSI tape
 # Special purpose devices:
-#       clockctl clock control for non root users
+#	clockctl clock control for non root users
 #	bpf*	packet filter
 #	ch*	SCSI media changer
 #	fd	file descriptor device

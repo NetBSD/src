@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.26 2002/02/25 07:35:00 atatat Exp $
+#	$NetBSD: MAKEDEV,v 1.27 2002/03/03 14:16:01 toshii Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -86,7 +86,7 @@
 #	i4btrc*	trace device
 #
 # Special purpose devices:
-#       clockctl clock control for non root users
+#	clockctl clock control for non root users
 #	fd	file descriptors
 #	bpf*	packet filter
 #	ipl	ip filter

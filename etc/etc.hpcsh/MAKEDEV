@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.12 2002/02/25 07:35:04 atatat Exp $
+#	$NetBSD: MAKEDEV,v 1.13 2002/03/03 14:16:03 toshii Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -64,7 +64,7 @@
 #	opty	first 16 ptys, to save inodes on install media
 #
 # Special purpose devices:
-#       clockctl clock control for non root users
+#	clockctl clock control for non root users
 #	fd	file descriptors
 #	bpf*	packet filter
 #	ipl	ip filter

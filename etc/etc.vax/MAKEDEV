@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.45 2002/02/25 07:35:17 atatat Exp $
+#	$NetBSD: MAKEDEV,v 1.46 2002/03/03 14:16:11 toshii Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -55,7 +55,7 @@
 # Call units:
 #	dn*	unibus dn11 and emulations (e.g. Able Quadracall)
 # Special purpose devices:
-#       clockctl clock control for non root users
+#	clockctl clock control for non root users
 #	ik*	unibus interface to ikonas frame buffer
 #	ps*	unibus interface to picture system 2
 #	ad*	unibus interface to data translation a/d converter
