@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.2 2001/11/28 12:00:54 manu Exp $ */
+/*	$NetBSD: irix_types.h,v 1.3 2001/12/08 11:17:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,5 +38,13 @@
 
 #ifndef _IRIX_TYPES_H_
 #define _IRIX_TYPES_H_
+
+#include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
+
+/* From IRIX's <sys/signal.h> */
+typedef struct {
+	__uint32_t bits[4];
+} irix_sigset_t;
 
 #endif /* _IRIX_TYPES_H_ */
