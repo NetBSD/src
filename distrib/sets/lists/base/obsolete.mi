@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.68 2003/04/18 15:01:22 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.69 2003/04/18 15:02:21 wiz Exp $
 ./bin/rcorder
 ./dev/i4b
 ./dev/i4bctl
@@ -172,6 +172,7 @@
 ./usr/share/locale/tr/LC_MESSAGES/tar.mo
 ./usr/share/man/cat3/atari
 ./usr/share/man/cat4/arm26
+./usr/share/man/cat4/arm32
 ./usr/share/man/cat4/tahoe
 ./usr/share/man/cat8/arm26
 ./usr/share/man/cat8/arm32
@@ -180,6 +181,7 @@
 ./usr/share/man/cat9/arm26
 ./usr/share/man/cat9/arm32
 ./usr/share/man/html4/arm26
+./usr/share/man/html4/arm32
 ./usr/share/man/html8/arm26
 ./usr/share/man/html8/arm32
 ./usr/share/man/html8/playstation
@@ -188,6 +190,7 @@
 ./usr/share/man/html9/arm32
 ./usr/share/man/man3/atari
 ./usr/share/man/man4/arm26
+./usr/share/man/man4/arm32
 ./usr/share/man/man4/tahoe
 ./usr/share/man/man8/arm26
 ./usr/share/man/man8/arm32
