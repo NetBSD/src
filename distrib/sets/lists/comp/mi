@@ -715,6 +715,7 @@
 ./usr/include/sys/exec_script.h
 ./usr/include/sys/extent.h
 ./usr/include/sys/fcntl.h
+./usr/include/sys/fdio.h
 ./usr/include/sys/file.h
 ./usr/include/sys/filedesc.h
 ./usr/include/sys/filio.h
@@ -1707,6 +1708,7 @@
 ./usr/share/man/cat3/tolower.0
 ./usr/share/man/cat3/toupper.0
 ./usr/share/man/cat3/tputs.0
+./usr/share/man/cat3/ttyaction.0
 ./usr/share/man/cat3/ttyname.0
 ./usr/share/man/cat3/ttyslot.0
 ./usr/share/man/cat3/tzset.0
