@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.21 1996/10/25 21:58:05 cgd Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.22 1996/12/07 11:02:47 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -741,6 +741,10 @@ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
 	error = relookup(dvp, vpp, cn);
 	if (!error)
 		vrele(dvp);
+	else {
+		free(cn->cn_pnbuf, M_NAMEI);
+		cn->cn_pnbuf = 0;
+	}
 
 	return (error);
 }
@@ -883,7 +887,7 @@ union_vn_create(vpp, un, p)
 	 * copied in the first place).
 	 */
 	cn.cn_namelen = strlen(un->un_path);
-	cn.cn_pnbuf = (caddr_t) malloc(cn.cn_namelen, M_NAMEI, M_WAITOK);
+	cn.cn_pnbuf = (caddr_t) malloc(cn.cn_namelen+1, M_NAMEI, M_WAITOK);
 	bcopy(un->un_path, cn.cn_pnbuf, cn.cn_namelen+1);
 	cn.cn_nameiop = CREATE;
 	cn.cn_flags = (LOCKPARENT|HASBUF|SAVENAME|SAVESTART|ISLASTCN);
