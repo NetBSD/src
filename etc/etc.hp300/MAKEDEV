@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.44 2002/03/04 07:10:46 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.45 2002/03/04 14:02:32 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -85,49 +85,67 @@
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
 umask 77
+
+# Check if we have fdesc mounted
+if [ -d fd ]; then
+	case "`df fd`" in
+	*fdesc*) nofdesc=false;;
+	*) nofdesc=true;;
+	esac
+else
+	nofdesc=true
+fi
+
+makedev()
+{
+
 for i
 do
 case $i in
 
 all)
-	sh $0 std fd ct0 ct1 st0 st1 ccd0 ccd1 ccd2 rd0 rd1 rd2 md0 md1
-#	sh $0 wscons # should be after 'std'
-	sh $0 sd0 sd1 sd2 pty0 vnd0 vnd1 vnd2 vnd3
-	sh $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
-	sh $0 hil grf0 ite0 dca0 dcm0 dcm1 dcm2 dcm3 apci0
-	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh $0 tun0 tun1 tun2 tun3 lkm ipl random
-	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
-	sh $0 local
-	sh $0 clockctl
+	makedev std fd ct0 ct1 st0 st1 ccd0 ccd1 ccd2 rd0 rd1 rd2 md0 md1
+#	makedev wscons # should be after 'std'
+	makedev sd0 sd1 sd2 pty0 vnd0 vnd1 vnd2 vnd3
+	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
+	makedev hil grf0 ite0 dca0 dcm0 dcm1 dcm2 dcm3 apci0
+	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	makedev tun0 tun1 tun2 tun3 lkm ipl random
+	makedev scsibus0 scsibus1 scsibus2 scsibus3
+	makedev local
+	makedev clockctl
 	;;
 
 std)
-	rm -f console drum kmem mem null zero tty klog stdin stdout stderr
+	rm -f console drum kmem mem null zero klog
 	mknod console		c 0 0
 	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod mem		c 2 0	; chmod 640 mem ; chgrp kmem mem
 	mknod null		c 2 2	; chmod 666 null
 	mknod zero		c 2 12	; chmod 666 zero
-	mknod tty		c 1 0	; chmod 666 tty
 	mknod klog		c 6 0	; chmod 600 klog
-	mknod stdin		c 21 0	; chmod 666 stdin
-	mknod stdout		c 21 1	; chmod 666 stdout
-	mknod stderr		c 21 2	; chmod 666 stderr
+	if $nofdesc; then
+		rm -f tty stdin stdout stderr
+		mknod tty	c 1 0	; chmod 666 tty
+		mknod stdin	c 21 0	; chmod 666 stdin
+		mknod stdout	c 21 1	; chmod 666 stdout
+		mknod stderr	c 21 2	; chmod 666 stderr
+	fi
 	;;
 
 fd)
-	rm -f fd/*
-	mkdir fd > /dev/null 2>&1
-	n=0
-	while [ $n -lt 64 ]; do
-		mknod fd/$n c 21 $n
-		n=$(($n + 1))
-	done
-	chown -R root.wheel fd
-	chmod 755 fd
-	chmod 666 fd/*
+	if $nofdesc; then
+		rm -f fd/*
+		mkdir fd 2>/dev/null
+		n=0
+		while [ $n -lt 64 ]; do
+			mknod fd/$n c 21 $n
+			n=$(($n + 1))
+		done
+		chmod 755 fd
+		chmod 666 fd/*
+	fi
 	;;
 
 ct*|mt*|st*)
@@ -143,26 +161,26 @@ ct*|mt*|st*)
 		#
 		# block devices don't work so don't make them
 		#rm -f ${name}${unit} ${name}${four} ${name}${eight} \
-		#    ${name}${twelve} n${name}${unit} n${name}${eight}
+		#    ${name}${twelve} 
 		#mknod ${name}${unit}	b $blk $unit
 		#mknod ${name}${four}	b $blk $four
 		#mknod ${name}${eight}	b $blk $eight
 		#mknod ${name}${twelve}	b $blk $twelve
-		#ln -s ${name}{$four} n${name}${unit}	;: sanity w/pdp11 v7
-		#ln -s ${name}{$twelve} n${name}${eight}	;: ditto
+		#ln -fs ${name}{$four} n${name}${unit}	;: sanity w/pdp11 v7
+		#ln -fs ${name}{$twelve} n${name}${eight}	;: ditto
 		#chgrp operator ${name}${unit} ${name}${four} ${name}${eight} \
 		#    ${name}${twelve} n${name}${unit} n${name}${eight}
 		#chmod 660 ${name}${unit} ${name}${four} ${name}${eight} \
 		#    ${name}${twelve} n${name}${unit} n${name}${eight}
 		#
 		rm -f r${name}${unit} r${name}${four} r${name}${eight} \
-		    r${name}${twelve} nr${name}${unit} nr${name}${eight}
+		    r${name}${twelve}
 		mknod r${name}${unit}	c $chr $unit
 		mknod r${name}${four}	c $chr $four
 		mknod r${name}${eight}	c $chr $eight
 		mknod r${name}${twelve}	c $chr $twelve
-		ln -s r${name}${four} nr${name}${unit}	;: sanity w/pdp11 v7
-		ln -s r${name}${twelve} nr${name}${eight}	;: ditto
+		ln -fs r${name}${four} nr${name}${unit}	;: sanity w/pdp11 v7
+		ln -fs r${name}${twelve} nr${name}${eight}	;: ditto
 		chgrp operator r${name}${unit} r${name}${four} \
 		    r${name}${eight} r${name}${twelve} nr${name}${unit} \
 		    nr${name}${eight}
@@ -181,7 +199,6 @@ bpf*)
 	rm -f bpf$unit
 	mknod bpf$unit c 22 $unit
 	chmod 600 bpf$unit
-	chown root.wheel bpf$unit
 	;;
 
 tun*)
@@ -189,7 +206,6 @@ tun*)
 	rm -f tun$unit
 	mknod tun$unit c 23 $unit
 	chmod 600 tun$unit
-	chown root.wheel tun$unit
 	;;
 
 md*)
@@ -313,7 +329,7 @@ grf*)
 hil)
 	for unit in 0 1 2 3 4 5 6 7
 	do
-		rm -f hil${unit} locator keyboard
+		rm -f hil${unit}
 		mknod hil${unit} c 14 ${unit}
 		if [ -f /usr/sbin/hilinfo ]
 		then
@@ -321,13 +337,13 @@ hil)
 			mouse)
 				if [ ! -f locator ]
 				then
-					ln -s hil${unit} locator
+					ln -fs hil${unit} locator
 				fi
 				;;
 			keyboard)
 				if [ ! -f keyboard ]
 				then
-					ln -s hil${unit} keyboard
+					ln -fs hil${unit} keyboard
 				fi
 				;;
 			*)
@@ -337,41 +353,38 @@ hil)
 	done
 	if [ ! -f /usr/sbin/hilinfo ]
 	then
-		ln -s hil1 keyboard
-		ln -s hil3 locator
+		ln -fs hil1 keyboard
+		ln -fs hil3 locator
 	fi
 	chmod 666 hil*
 #	echo "hil: use $0.hpux to make HP-UX names for devices"
 	;;
 
 wscons)
-	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
-	sh $0 ttyEcfg
-	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
-	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
-	sh $0 wsmux0 wsmux1 wsmux2 wsmux3
-	sh $0 wskbd wsmouse
-	sh $0 wsfont
+	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	makedev ttyEcfg
+	makedev wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	makedev wskbd0 wskbd1 wskbd2 wskbd3
+	makedev wsmux0 wsmux1 wsmux2 wsmux3
+	makedev wskbd wsmouse
+	makedev wsfont
 	;;
 
 wskbd)
 	rm -f wskbd
 	mknod wskbd c 38 1
-	chown root.wheel wskbd
 	chmod 600 wskbd
 	;;
 
 wsmouse)
 	rm -f wsmouse
 	mknod wsmouse c 39 0
-	chown root.wheel wsmouse
 	chmod 600 wsmouse
 	;;
 
 wsfont)
 	rm -f wsfont
 	mknod wsfont c 41 0
-	chown root:wheel wsfont
 	chmod 600 wsfont
 	;;
 
@@ -381,7 +394,6 @@ wskbd*)
 	major=38
 	rm -f $wskbd
 	mknod $wskbd c $major $unit
-	chown root.wheel $wskbd
 	chmod 600 $wskbd
 	;;
 
@@ -391,7 +403,6 @@ wsmouse*)
 	major=39
 	rm -f $wsmouse
 	mknod $wsmouse c $major $unit
-	chown root.wheel $wsmouse
 	chmod 600 $wsmouse
 	;;
 
@@ -403,10 +414,8 @@ wsmux*)
 	major=40
 	rm -f $wsmux $wsmuxctl
 	mknod $wsmux c $major $unit
-	chown root.wheel $wsmux
 	chmod 600 $wsmux
 	mknod $wsmuxctl c $major $unitctl
-	chown root.wheel $wsmuxctl
 	chmod 200 $wsmuxctl
 	;;
 
@@ -414,7 +423,6 @@ ttyEcfg)
 	chr=37
 	rm -f ttyEcfg
 	mknod ttyEcfg c $chr 255
-	chown root.wheel ttyEcfg
 	chmod 600 ttyEcfg
 	;;
 
@@ -422,13 +430,12 @@ ttyE*)
 	chr=37; unit=${i#ttyE}
 	rm -f ttyE$unit
 	mknod ttyE$unit c $chr $unit
-	chown root.wheel ttyE$unit
 	;;
 
 lkm)
 	rm -f lkm
 	mknod lkm c 24 0
-	chown root.kmem lkm
+	chgrp kmem lkm
 	chmod 640 lkm
 	;;
 
@@ -438,7 +445,6 @@ ipl)
 	mknod ipnat c 18 1
 	mknod ipstate c 18 2
 	mknod ipauth c 18 3
-	chown root.wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
@@ -458,7 +464,6 @@ opty)
 		mknod ttyp$j c 4 $jn
 		mknod ptyp$j c 5 $jn
 	done
-	chgrp wheel ttyp[0-9a-f] ptyp[0-9a-f]
 	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
 	;;
 
@@ -487,15 +492,13 @@ pty*)
 		mknod pty$name$j c 5 $unit
 		jn=$(($jn + 1))
 	done
-        chgrp wheel tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
-        chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+	chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	;;
 
 random)
 	rm -f random urandom
 	mknod random c 33 0
 	mknod urandom c 33 1
-	chown root.wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
 	;;
@@ -504,14 +507,13 @@ scsibus*)
 	unit=${i#scsibus}; 
 	rm -f scsibus$unit
 	mknod scsibus$unit c 34 $unit
-	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
 	;;
 
 clockctl)
 	rm -f clockctl
 	mknod clockctl c 42 0
-	chown root.ntpd clockctl
+	chgrp ntpd clockctl
 	chmod 660 clockctl
 	;;
 
@@ -525,3 +527,7 @@ local)
 	;;
 esac
 done
+
+}
+
+makedev $*

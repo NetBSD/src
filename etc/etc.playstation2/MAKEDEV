@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.8 2002/02/25 07:35:12 atatat Exp $
+#	$NetBSD: MAKEDEV,v 1.9 2002/03/04 14:02:36 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -70,26 +70,38 @@ callunit=262144
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
 
+# Check if we have fdesc mounted
+if [ -d fd ]; then
+	case "`df fd`" in
+	*fdesc*) nofdesc=false;;
+	*) nofdesc=true;;
+	esac
+else
+	nofdesc=true
+fi
+
+makedev()
+{
+
 for i
 do
-
 case $i in
 
 all)
-	sh $0 std wscons fd wd0 wd1
-	sh $0 pty0
-	sh $0 bpf0 bpf1 bpf2 bpf3
-	sh $0 vnd0 vnd1 vnd2 vnd3
-	sh $0 random
-	sh $0 ipl
-	sh $0 tun0 tun1
-	sh $0 md0
-	sh $0 usbs
-	sh $0 clockctl
+	makedev std wscons fd wd0 wd1
+	makedev pty0
+	makedev bpf0 bpf1 bpf2 bpf3
+	makedev vnd0 vnd1 vnd2 vnd3
+	makedev random
+	makedev ipl
+	makedev tun0 tun1
+	makedev md0
+	makedev usbs
+	makedev clockctl
 	;;
 
 std)
-	rm -f console drum mem kmem null zero io tty klog stdin stdout stderr
+	rm -f console drum mem kmem null zero io klog
 	mknod console		c 2 0
 	mknod drum		c 1 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 0 1	; chmod 640 kmem ; chgrp kmem kmem
@@ -97,31 +109,33 @@ std)
 	mknod null		c 0 2	; chmod 666 null
 	mknod zero		c 0 12	; chmod 666 zero
 	mknod io		c 0 14	; chmod 640 io ; chgrp kmem io
-	mknod tty		c 3 0	; chmod 666 tty
 	mknod klog		c 5 0	; chmod 600 klog
-	mknod stdin		c 4 0	; chmod 666 stdin
-	mknod stdout		c 4 1	; chmod 666 stdout
-	mknod stderr		c 4 2	; chmod 666 stderr
+	if $nofdesc; then
+		rm -f tty stdin stdout stderr
+		mknod tty	c 3 0	; chmod 666 tty
+		mknod stdin	c 4 0	; chmod 666 stdin
+		mknod stdout	c 4 1	; chmod 666 stdout
+		mknod stderr	c 4 2	; chmod 666 stderr
+	fi
 	;;
 
 ramdisk)
-	sh $0 md0
+	makedev md0
 	;;
 
 wscons)
-	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
-	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
-	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
-	sh $0 wsmux0 wsmux1 wsmux2 wsmux3
-	sh $0 wsmouse wskbd
-	sh $0 ttyEcfg
+	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	makedev wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	makedev wskbd0 wskbd1 wskbd2 wskbd3
+	makedev wsmux0 wsmux1 wsmux2 wsmux3
+	makedev wsmouse wskbd
+	makedev ttyEcfg
 	;;
 
 ttyEcfg)
 	chr=27
 	rm -f ttyEcfg
 	mknod ttyEcfg c $chr 255
-	chown root.wheel ttyEcfg
 	chmod 600 ttyEcfg
 	;;
 
@@ -129,20 +143,17 @@ ttyE*)
 	chr=27; unit=${i#ttyE}
 	rm -f ttyE$unit
 	mknod ttyE$unit c $chr $unit
-	chown root.wheel ttyE$unit
 	;;
 
 wsmouse)
 	rm -f wsmouse
 	mknod wsmouse c 30 0
-	chown root.wheel wsmouse
 	chmod 600 wsmouse
 	;;
 
 wskbd)
 	rm -f wskbd
 	mknod wskbd c 30 1
-	chown root.wheel wskbd
 	chmod 600 wskbd
 	;;
 
@@ -154,10 +165,8 @@ wsmux*)
 	major=30
 	rm -f $wsmux $wsmuxctl
 	mknod $wsmux c $major $unit
-	chown root.wheel $wsmux
 	chmod 600 $wsmux
 	mknod $wsmuxctl c $major $unitctl
-	chown root.wheel $wsmuxctl
 	chmod 200 $wsmuxctl
 	;;
 
@@ -167,7 +176,6 @@ wsmouse*)
 	major=29
 	rm -f $wsmouse
 	mknod $wsmouse c $major $unit
-	chown root.wheel $wsmouse
 	chmod 600 $wsmouse
 	;;
 
@@ -177,21 +185,21 @@ wskbd*)
 	major=28
 	rm -f $wskbd
 	mknod $wskbd c $major $unit
-	chown root.wheel $wskbd
 	chmod 600 $wskbd
 	;;
 
 fd)
-	rm -f fd/*
-	mkdir fd > /dev/null 2>&1
-	n=0
-	while [ $n -lt 64 ]; do
-		mknod fd/$n c 4 $n
-		n=$(($n + 1))
-	done
-	chown -R root.wheel fd
-	chmod 755 fd
-	chmod 666 fd/*
+	if $nofdesc; then
+		rm -f fd/*
+		mkdir fd 2>/dev/null
+		n=0
+		while [ $n -lt 64 ]; do
+			mknod fd/$n c 4 $n
+			n=$(($n + 1))
+		done
+		chmod 755 fd
+		chmod 666 fd/*
+	fi
 	;;
 
 md*)
@@ -247,7 +255,6 @@ opty)
 		mknod ttyp$j c 7 $jn
 		mknod ptyp$j c 6 $jn
 	done
-	chgrp wheel ttyp[0-9a-f] ptyp[0-9a-f]
 	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
 	;;
 
@@ -276,8 +283,7 @@ pty*)
 		mknod pty$name$j c 6 $unit
 		jn=$(($jn + 1))
 	done
-        chgrp wheel tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
-        chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+	chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	;;
 
 bpf*|tun*)
@@ -287,7 +293,6 @@ bpf*|tun*)
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
-	chown root.wheel $name$unit
 	;;
 
 ipl)
@@ -296,7 +301,6 @@ ipl)
 	mknod ipnat c 23 1
 	mknod ipstate c 23 2
 	mknod ipauth c 23 3
-	chown root.wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
@@ -304,18 +308,17 @@ random)
 	rm -f random urandom
 	mknod random c 26 0
 	mknod urandom c 26 1
-	chown root.wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
 	;;
 
 usbs)
-	sh $0 usb usb0
-	sh $0 uhid0 uhid1 uhid2 uhid3
-	sh $0 ulpt0 ulpt1 
-	sh $0 ttyU0 ttyU1
-	sh $0 urio0
-	sh $0 uscanner0 uscanner1
+	makedev usb usb0
+	makedev uhid0 uhid1 uhid2 uhid3
+	makedev ulpt0 ulpt1 
+	makedev ttyU0 ttyU1
+	makedev urio0
+	makedev uscanner0 uscanner1
 	;;
 
 usb*)
@@ -329,7 +332,6 @@ usb*)
 	major=31
 	rm -f $usb
 	mknod $usb c $major $unit
-	chown root.wheel $usb
 	chmod 600 $usb
 	;;
 
@@ -339,7 +341,6 @@ uhid*)
 	major=32
 	rm -f $uhid
 	mknod $uhid c $major $unit
-	chown root.wheel $uhid
 	chmod 666 $uhid
 	;;
 
@@ -351,7 +352,6 @@ ulpt*)
 	rm -f $ulpt $ulpn
 	mknod $ulpt c $major $unit
 	mknod $ulpn c $major $(($unit + 64))
-	chown root.wheel $ulpt $ulpn
 	chmod 600 $ulpt $ulpn
 	;;
 
@@ -364,7 +364,6 @@ ugen*)
 		ugenj=$ugen.$j
 		rm -f $ugenj
 		mknod $ugenj c $major $(($unit * 16 + $j))
-		chown root.wheel $ugenj
 		chmod 600 $ugenj
 	done
 	;;
@@ -380,7 +379,7 @@ ttyU*)
 	mknod $ttyU c $major $(($unit + $dialin  ))
 	mknod $dtyU c $major $(($unit + $dialout ))
 	mknod $ctyU c $major $(($unit + $callunit))
-	chown uucp.wheel $ttyU $dtyU $ctyU
+	chown uucp $ttyU $dtyU $ctyU
 	chmod 600 $ttyU $dtyU $ctyU
 	;;
 
@@ -390,7 +389,6 @@ urio*)
 	major=36
 	rm -f $urio
 	mknod $urio c $major $unit
-	chown root.wheel $urio
 	chmod 600 $urio
 	;;
 
@@ -400,14 +398,13 @@ uscanner*)
 	major=37
 	rm -f $uscanner
 	mknod $uscanner c $major $unit
-	chown root.wheel $uscanner
 	chmod 600 $uscanner
 	;;
 
 clockctl)
 	rm -f clockctl
 	mknod clockctl c 38 0
-	chown root.ntpd clockctl
+	chgrp ntpd clockctl
 	chmod 660 clockctl
 	;;
 
@@ -417,3 +414,7 @@ clockctl)
 
 esac
 done
+
+}
+
+makedev $*
