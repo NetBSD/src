@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.57 2003/10/16 00:36:46 mycroft Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.58 2003/10/16 19:54:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.57 2003/10/16 00:36:46 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.58 2003/10/16 19:54:01 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,22 +76,6 @@ Static const struct umass_quirk umass_quirks[] = {
 	  umass_init_insystem, NULL
 	},
 
-	{ { USB_VENDOR_OLYMPUS, USB_PRODUCT_OLYMPUS_C1 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-	  UMASS_QUIRK_WRONG_CSWSIG,
-	  0,
-	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
-	  NULL, NULL
-	},
-
-	{ { USB_VENDOR_SCANLOGIC, USB_PRODUCT_SCANLOGIC_SL11R },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UFI,
-	  UMASS_QUIRK_WRONG_CSWTAG,
-	  0,
-	  UMATCH_VENDOR_PRODUCT,
-	  NULL, NULL
-	},
-
 	{ { USB_VENDOR_SHUTTLE, USB_PRODUCT_SHUTTLE_EUSB },
 	  UMASS_WPROTO_CBI_I, UMASS_CPROTO_ATAPI,
 	  0,
@@ -100,20 +84,43 @@ Static const struct umass_quirk umass_quirks[] = {
 	  umass_init_shuttle, NULL
 	},
 
-	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_DSC },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-	  0,
-	  0,
-	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
-	  NULL, umass_fixup_sony
-	},
-
 	{ { USB_VENDOR_YANO, USB_PRODUCT_YANO_U640MO },
 	  UMASS_WPROTO_CBI_I, UMASS_CPROTO_ATAPI,
 	  0,
 	  0,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
+	},
+
+	/*
+	 * There work around genuine device bugs -- returning the wrong info in
+	 * the CSW block.
+	 */
+	{ { USB_VENDOR_OLYMPUS, USB_PRODUCT_OLYMPUS_C1 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  UMASS_QUIRK_WRONG_CSWSIG,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_SCANLOGIC, USB_PRODUCT_SCANLOGIC_SL11R },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  UMASS_QUIRK_WRONG_CSWTAG,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/*
+	 * Some Sony cameras advertise a subclass code of 0xff, so we force it
+	 * to the correct value iff necessary.
+	 */
+	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_DSC },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  0,
+	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
+	  NULL, umass_fixup_sony
 	},
 
 	/*
