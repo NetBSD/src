@@ -84,4 +84,3 @@ pseudo-device	loop
 pseudo-device	ether
 
 pseudo-device	log	4
-pseudo-device	clock
