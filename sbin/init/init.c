@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.27 1997/07/19 19:00:44 perry Exp $	*/
+/*	$NetBSD: init.c,v 1.28 1997/07/30 03:43:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,13 +46,20 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.27 1997/07/19 19:00:44 perry Exp $");
+__RCSID("$NetBSD: init.c,v 1.28 1997/07/30 03:43:21 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/mount.h>
+#ifdef DEBUG
+#include <sys/sysctl.h>
+#include <machine/cpu.h>
+#endif
 
 #include <db.h>
 #include <errno.h>
@@ -66,6 +73,8 @@ __RCSID("$NetBSD: init.c,v 1.27 1997/07/19 19:00:44 perry Exp $");
 #include <ttyent.h>
 #include <unistd.h>
 #include <util.h>
+#include <paths.h>
+#include <err.h>
 
 #ifdef __STDC__
 #include <stdarg.h>
@@ -93,9 +102,12 @@ int main __P((int, char *[]));
 void handle __P((sig_t, ...));
 void delset __P((sigset_t *, ...));
 
-void stall __P((char *, ...));
-void warning __P((char *, ...));
-void emergency __P((char *, ...));
+void stall __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
+void warning __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
+void emergency __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
 void disaster __P((int));
 void badsys __P((int));
 
@@ -165,6 +177,10 @@ void del_session __P((session_t *));
 session_t *find_session __P((pid_t));
 DB *session_db;
 
+#ifdef MSDOSFS_ROOT
+static void msdosfs_root __P((void));
+#endif
+
 /*
  * The mother of all processes.
  */
@@ -180,16 +196,34 @@ main(argc, argv)
 #ifndef LETS_GET_SMALL
 	/* Dispose of random users. */
 	if (getuid() != 0) {
-		(void)fprintf(stderr, "init: %s\n", strerror(EPERM));
-		exit (1);
+		errno = EPERM;
+		err(1, "%s", "");
 	}
 
 	/* System V users like to reexec init. */
-	if (getpid() != 1) {
-		(void)fprintf(stderr, "init: already running\n");
-		exit (1);
-	}
+	if (getpid() != 1)
+		errx(1, "already running");
+#endif
 
+	/*
+	 * Create an initial session.
+	 */
+	if (setsid() < 0)
+		warn("initial setsid() failed");
+
+	/*
+	 * Establish an initial user so that programs running
+	 * single user do not freak out and die (like passwd).
+	 */
+	if (setlogin("root") < 0)
+		warn("setlogin() failed");
+
+
+#ifdef MSDOSFS_ROOT
+	msdosfs_root();
+#endif
+
+#ifndef LETS_GET_SMALL
 	/*
 	 * Note that this does NOT open a file...
 	 * Does 'init' deserve its own facility number?
@@ -197,18 +231,6 @@ main(argc, argv)
 	openlog("init", LOG_CONS|LOG_ODELAY, LOG_AUTH);
 #endif /* LETS_GET_SMALL */
 
-	/*
-	 * Create an initial session.
-	 */
-	if (setsid() < 0)
-		warning("initial setsid() failed: %m");
-
-	/*
-	 * Establish an initial user so that programs running
-	 * single user do not freak out and die (like passwd).
-	 */
-	if (setlogin("root") < 0)
-		warning("setlogin() failed: %m");
 
 #ifndef LETS_GET_SMALL
 	/*
@@ -341,7 +363,7 @@ delset(va_alist)
  */
 void
 #ifdef __STDC__
-stall(char *message, ...)
+stall(const char *message, ...)
 #else
 stall(va_alist)
 	va_dcl
@@ -356,7 +378,6 @@ stall(va_alist)
 #else
 	va_start(ap, message);
 #endif
-
 	vsyslog(LOG_ALERT, message, ap);
 	va_end(ap);
 	closelog();
@@ -370,7 +391,7 @@ stall(va_alist)
  */
 void
 #ifdef __STDC__
-warning(char *message, ...)
+warning(const char *message, ...)
 #else
 warning(va_alist)
 	va_dcl
@@ -397,7 +418,7 @@ warning(va_alist)
  */
 void
 #ifdef __STDC__
-emergency(char *message, ...)
+emergency(const char *message, ...)
 #else
 emergency(va_alist)
 	va_dcl
@@ -1332,3 +1353,128 @@ death()
 	return (state_func_t) single_user;
 }
 #endif /* LETS_GET_SMALL */
+
+#ifdef MSDOSFS_ROOT
+
+static void
+msdosfs_root()
+{
+	/*
+	 * We cannot print errors so we bail out silently...
+	 */
+	int fd = -1;
+	struct stat st;
+	pid_t pid;
+	int status, i;
+	void *ptr;
+	struct statfs sfs;
+
+	if (statfs("/", &sfs) == -1)
+		return;
+
+	if (strcmp(sfs.f_fstypename, MOUNT_MSDOS) != 0)
+		return;
+
+	/* If we have devices, we cannot be on msdosfs */
+	if (access(_PATH_CONSOLE, F_OK) != -1)
+		return;
+
+	/* Grab the contents of MAKEDEV */
+	if ((fd = open("/dev/MAKEDEV", O_RDONLY)) == -1)
+		return;
+
+	if (fstat(fd, &st) == -1)
+		goto done;
+
+	if ((ptr = mmap(0, st.st_size, PROT_READ, 0, fd, 0)) == (void *) -1)
+		goto done;
+
+	(void) close(fd);
+	fd = -1;
+
+	/* Mount an mfs over /dev so we can create devices */
+	switch ((pid = fork())) {
+	case 0:
+		(void) execl("/sbin/mount_mfs", "mount_mfs", "-i", "18000",
+		    "-s", "192", "-b", "4096", "-f", "512", "swap", "/dev",
+		    NULL);
+		goto done;
+
+	case -1:
+		goto done;
+
+	default:
+		if (waitpid(pid, &status, 0) == -1)
+			goto done;
+		if (status != 0)
+			goto done;
+		break;
+	}
+
+	/* Make sure that the mfs is up and running */
+	for (i = 0; i < 10; i++) {
+		if (access("/dev/MAKEDEV", F_OK) != 0) 
+			break;
+		sleep(1);
+	}
+
+	if (i == 10)
+		return;
+
+	/* Create a MAKEDEV script in /dev */
+	if ((fd = open("/dev/MAKEDEV", O_WRONLY|O_CREAT|O_TRUNC, 0755)) == -1)
+		goto done;
+
+	if (write(fd, ptr, st.st_size) != st.st_size)
+		goto done;
+
+	(void) munmap(ptr, st.st_size);
+
+	(void) close(fd);
+	fd = -1;
+
+#ifdef DEBUG
+	{
+		mode_t mode = 0666 | S_IFCHR;
+		dev_t dev;
+#ifdef CPU_CONSDEV
+		int s = sizeof(dev);
+		static int name[2] = { CTL_MACHDEP, CPU_CONSDEV };
+
+  		if (sysctl(name, sizeof(name) / sizeof(name[0]), &dev, &s,
+		    NULL, 0) == -1)
+			goto done;
+#else
+		dev = makedev(0, 0);
+#endif
+
+		/* Make a console for us, so we can see things happening */
+		if (mknod(_PATH_CONSOLE, mode, dev) == -1)
+			goto done;
+	}
+#endif
+
+	/* Run the makedev script to create devices */
+	switch ((pid = fork())) {
+	case 0:
+		if (chdir("/dev") == -1)
+			goto done;
+		(void) execl("/bin/sh", "sh", "./MAKEDEV", "all", NULL); 
+		goto done;
+
+	case -1:
+		goto done;
+
+	default:
+		if (waitpid(pid, &status, 0) == -1)
+		    goto done;
+		if (status != 0)
+			goto done;
+		break;
+	}
+
+done:
+	if (fd != -1)
+		(void) close(fd);
+}
+#endif
