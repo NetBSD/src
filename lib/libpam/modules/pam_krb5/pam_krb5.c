@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.2 2004/12/12 08:18:45 christos Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.3 2005/02/26 15:57:57 thorpej Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -8,7 +8,7 @@
  *   Copyright (c) Nicolas Williams, 2001. All rights reserved.
  *   Copyright (c) Perot Systems Corporation, 2001. All rights reserved.
  *   Copyright (c) Mark R V Murray, 2001.  All rights reserved.
- *   Copyright (c) Networks Associates Technology, Inc., 2002-2003.
+ *   Copyright (c) Networks Associates Technology, Inc., 2002-2005.
  *       All rights reserved.
  *
  * Portions of this software were developed for the FreeBSD Project by
@@ -51,9 +51,9 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.20 2004/02/10 10:13:20 des Exp $");
+__FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.2 2004/12/12 08:18:45 christos Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.3 2005/02/26 15:57:57 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -92,6 +92,7 @@ static void	compat_free_data_contents(krb5_context, krb5_data *);
 #define NEW_PASSWORD_PROMPT	"New Password:"
 
 #define PAM_OPT_CCACHE		"ccache"
+#define PAM_OPT_DEBUG		"debug"
 #define PAM_OPT_FORWARDABLE	"forwardable"
 #define PAM_OPT_NO_CCACHE	"no_ccache"
 #define PAM_OPT_REUSE_CCACHE	"reuse_ccache"
@@ -276,7 +277,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 		goto cleanup;
 	}
 	krbret = verify_krb_v5_tgt(pam_context, ccache, srvdup,
-	    openpam_get_option(pamh, PAM_OPT_FORWARDABLE) ? 1 : 0);
+	    openpam_get_option(pamh, PAM_OPT_DEBUG) ? 1 : 0);
 	free(srvdup);
 	if (krbret == -1) {
 		PAM_VERBOSE_ERROR("Kerberos 5 error");
@@ -366,6 +367,10 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 
 	if (!(flags & PAM_ESTABLISH_CRED))
 		return (PAM_SERVICE_ERR);
+
+	/* If a persistent cache isn't desired, stop now. */
+	if (openpam_get_option(pamh, PAM_OPT_NO_CCACHE))
+		return (PAM_SUCCESS);
 
 	PAM_LOG("Establishing credentials");
 
