@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.24 1999/02/26 23:44:49 wrstuden Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.25 1999/06/01 13:18:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -545,6 +545,7 @@ ext2fs_mountfs(devvp, mp, p)
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset((caddr_t)ump, 0, sizeof *ump);
 	ump->um_e2fs = malloc(sizeof(struct m_ext2fs), M_UFSMNT, M_WAITOK);
+	memset((caddr_t)ump->um_e2fs, 0, sizeof(struct m_ext2fs));
 	e2fs_sbload((struct ext2fs*)bp->b_data, &ump->um_e2fs->e2fs);
 	brelse(bp);
 	bp = NULL;
