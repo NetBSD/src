@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_procfs.c,v 1.16 2005/01/31 05:19:19 erh Exp $	*/
+/*	$NetBSD: mount_procfs.c,v 1.17 2005/02/05 15:14:25 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_procfs.c,v 1.16 2005/01/31 05:19:19 erh Exp $");
+__RCSID("$NetBSD: mount_procfs.c,v 1.17 2005/02/05 15:14:25 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,24 +102,19 @@ static const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-int	main __P((int, char *[]));
-int	mount_procfs __P((int argc, char **argv));
-static void	usage __P((void));
+int	mount_procfs(int argc, char **argv);
+static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	return mount_procfs(argc, argv);
 }
 #endif
 
 int
-mount_procfs(argc, argv)
-	int argc;
-	char *argv[];
+mount_procfs(int argc, char *argv[])
 {
 	int ch, mntflags, altflags;
 	struct procfs_args args;
@@ -162,7 +157,7 @@ mount_procfs(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 		"usage: mount_procfs [-o options] /proc mount_point\n");
