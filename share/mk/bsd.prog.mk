@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.44 1994/06/30 05:31:21 cgd Exp $
+#	$NetBSD: bsd.prog.mk,v 1.45 1994/06/30 06:35:50 cgd Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -53,7 +53,9 @@ CLEANFILES+=strings
 
 .if defined(PROG)
 SRCS?=	${PROG}.c
+.if !empty(SRCS:N*.h:N*.sh)
 OBJS+=  ${SRCS:N*.h:N*.sh:R:S/$/.o/g}
+.endif
 
 .if defined(LDONLY)
 
