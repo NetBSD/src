@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.7 1997/06/16 09:50:26 jonathan Exp $	*/
+/*	$NetBSD: locore.h,v 1.8 1997/06/16 23:41:43 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -158,18 +158,18 @@ union cpuprid {
  * Global variables used to communicate CPU type, and parameters
  * such as cache size, from locore to higher-level code (e.g., pmap).
  */
-union	cpuprid cpu_id;
-union	cpuprid fpu_id;
-int	cpu_arch;
-u_int	machDataCacheSize;
-u_int	machInstCacheSize;
-u_int	machPrimaryDataCacheSize;
-u_int	machPrimaryInstCacheSize;
-u_int	machPrimaryDataCacheLSize;
-u_int	machPrimaryInstCacheLSize;
-u_int	machCacheAliasMask;
-u_int	machSecondaryCacheSize;
-u_int	machSecondaryCacheLSize;
+extern union	cpuprid cpu_id;
+extern union	cpuprid fpu_id;
+extern int	cpu_arch;
+extern u_int	machDataCacheSize;
+extern u_int	machInstCacheSize;
+extern u_int	machPrimaryDataCacheSize;
+extern u_int	machPrimaryInstCacheSize;
+extern u_int	machPrimaryDataCacheLSize;
+extern u_int	machPrimaryInstCacheLSize;
+extern u_int	machSecondaryCacheSize;
+extern u_int	machSecondaryCacheLSize;
+extern u_int	machCacheAliasMask;
 extern	struct intr_tab intr_tab[];
 #endif
 

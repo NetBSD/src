@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.59 1997/06/16 05:37:39 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.60 1997/06/16 23:41:55 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -334,8 +334,10 @@ void trapDump __P((char * msg));
 
 
 #ifdef MINIDEBUG
-void mips_dump_tlb __P((int, int));
+void mips1_dump_tlb __P((int, int));
+void mips3_dump_tlb __P((int, int));
 void mdbpanic __P((void));
+void mips_dump_tlb __P((int, int));
 #endif
 
 /*
@@ -500,11 +502,7 @@ syscall(status, cause, opc, frame)
 
 	cnt.v_syscall++;
 
-#ifdef MIPS3
-	if (status & MIPS_SR_INT_IE)
-#else
-	if (status & MIPS1_SR_INT_ENA_PREV)
-#endif
+	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
 		splx(MIPS_SR_INT_IE | (status & MACH_HARD_INT_MASK));
 
 	sticks = p->p_sticks;
@@ -667,11 +665,7 @@ trap(status, cause, vaddr, opc, frame)
 		sticks = p->p_sticks;
 	}
 
-#ifdef MIPS3
-	if (status & MIPS_SR_INT_IE)
-#else
-	if (status & MIPS1_SR_INT_ENA_PREV)
-#endif
+	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
 		splx((status & MACH_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	switch (type) {
@@ -710,16 +704,16 @@ trap(status, cause, vaddr, opc, frame)
 
 			pte = kvtopte(vaddr);
 			entry = pte->pt_entry;
-			if (!(entry & PG_V) || (entry & PG_M)) {
+			if (!mips_pg_v(entry) || (entry & mips_pg_m_bit())) {
 				mdb(type, (struct frame *)&frame.f_regs);
 				panic("ktlbmod: invalid pte");
 			}
-/*XXX MIPS3? */		if (entry & PG_RO) {
+/*XXX MIPS3? */		if (entry & mips_pg_ro_bit()) {
 				/* write to read only page in the kernel */
 				ftype = VM_PROT_WRITE;
 				goto kernelfault;
 			}
-			entry |= PG_M;
+			entry |= mips_pg_m_bit();
 			pte->pt_entry = entry;
 			vaddr &= ~PGOFSET;
 			MachTLBUpdate(vaddr, entry);
@@ -746,15 +740,15 @@ trap(status, cause, vaddr, opc, frame)
 			panic("utlbmod: invalid segmap");
 		pte += (vaddr >> PGSHIFT) & (NPTEPG - 1);
 		entry = pte->pt_entry;
-		if (!(entry & PG_V) || (entry & PG_M))
+		if (!mips_pg_v(entry) || (entry & mips_pg_m_bit()))
 			panic("utlbmod: invalid pte");
 
-/*XXX MIPS3? */	if (entry & PG_RO) {
+/*XXX MIPS3? */	if (entry & mips_pg_ro_bit()) {
 			/* write to read only page */
 			ftype = VM_PROT_WRITE;
 			goto pagefault;
 		}
-		entry |= PG_M;
+		entry |= mips_pg_m_bit();
 		pte->pt_entry = entry;
 		vaddr = (vaddr & ~PGOFSET) |
 			(pmap->pm_tlbpid << VMMACH_TLB_PID_SHIFT);
@@ -2338,7 +2332,7 @@ mdbprintins(ins, mdbdot)
  *	Dump TLB contents.
  */
 void
-mips_dump_tlb(first, last)
+mips3_dump_tlb(first, last)
 	int first;
 	int last;
 {
@@ -2350,31 +2344,33 @@ mips_dump_tlb(first, last)
 
 	while(tlbno <= last) {
 		mips3_TLBRead(tlbno, &tlb);
-		if(tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V) {
+		if (mips_pg_v(tlb.tlb_lo0) || mips_pg_v(tlb.tlb_lo1)) {
 			printf("TLB %2d vad 0x%08x ", tlbno, tlb.tlb_hi);
 		}
 		else {
 			printf("TLB*%2d vad 0x%08x ", tlbno, tlb.tlb_hi);
 		}
-		printf("0=0x%08x ", pfn_to_vad(tlb.tlb_lo0));
-		printf("%c", tlb.tlb_lo0 & PG_M ? 'M' : ' ');
-		printf("%c", tlb.tlb_lo0 & PG_G ? 'G' : ' ');
+		printf("0=0x%08lx ", pfn_to_vad(tlb.tlb_lo0));
+		printf("%c", tlb.tlb_lo0 & mips_pg_m_bit() ? 'M' : ' ');
+		printf("%c", tlb.tlb_lo0 & mips_pg_global_bit() ? 'G' : ' ');
 		printf(" atr %x ", (tlb.tlb_lo0 >> 3) & 7);
-		printf("1=0x%08x ", pfn_to_vad(tlb.tlb_lo1));
-		printf("%c", tlb.tlb_lo1 & PG_M ? 'M' : ' ');
-		printf("%c", tlb.tlb_lo1 & PG_G ? 'G' : ' ');
+		printf("1=0x%08lx ", pfn_to_vad(tlb.tlb_lo1));
+		printf("%c", tlb.tlb_lo1 & mips_pg_m_bit() ? 'M' : ' ');
+		printf("%c", tlb.tlb_lo1 & mips_pg_global_bit() ? 'G' : ' ');
 		printf(" atr %x ", (tlb.tlb_lo1 >> 3) & 7);
 		printf(" sz=%x\n", tlb.tlb_mask);
 
 		tlbno++;
 	}
 }
-#else /* MIPS3 */
+#endif /* MIPS3 */
+
+#ifdef MIPS1
 /*
  *	Dump TLB contents.
  */
 void
-mips_dump_tlb(first, last)
+mips1_dump_tlb(first, last)
 	int first;
 	int last;
 {
@@ -2386,21 +2382,40 @@ mips_dump_tlb(first, last)
 
 	while(tlbno <= last) {
 		mips1_TLBRead(tlbno);
-		if(tlblo & PG_V) {
+		if (mips_pg_v(tlblo)) {
 			printf("TLB %2d vad 0x%08x ", tlbno, tlbhi);
 		}
 		else {
 			printf("TLB*%2d vad 0x%08x ", tlbno, tlbhi);
 		}
-		printf("0x%08x ", tlblo & PG_FRAME);
-		printf("%c", tlblo & PG_M ? 'M' : ' ');
-		printf("%c", tlblo & PG_G ? 'G' : ' ');
-		printf("%c\n", tlblo & PG_N ? 'N' : ' ');
+		printf("0x%08x ", tlblo & MIPS1_PG_FRAME);
+		printf("%c", tlblo & mips_pg_m_bit() ? 'M' : ' ');
+		printf("%c", tlblo & mips_pg_global_bit() ? 'G' : ' ');
+		printf("%c\n", tlblo & MIPS1_PG_N ? 'N' : ' ');
 
 		tlbno++;
 	}
 }
 #endif /* MIPS3 */
+
+
+void
+mips_dump_tlb(first, last)
+	int first;
+	int last;
+{
+	if (CPUISMIPS3) {
+#ifdef MIPS3
+		mips3_dump_tlb(first,last);
+#endif
+	} else {
+#ifdef MIPS1
+		mips1_dump_tlb(first,last);
+#endif
+	}
+}
+
+
 
 int
 mdb(type, frame)
@@ -2632,17 +2647,18 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 		   
 		case 't':
 			printf("tlb-dump\n");
-#ifdef MIPS3
-			mips_dump_tlb(0, 23);
-			(void)cngetc();
-			mips_dump_tlb(24, 47);
-#else
-			mips_dump_tlb(0, 22);
-			(void)cngetc();
-			mips_dump_tlb(23, 45);
-			(void)cngetc();
-			mips_dump_tlb(46, 63);
-#endif
+
+			if (CPUISMIPS3) {
+				mips_dump_tlb(0, 23);
+				(void)cngetc();
+				mips_dump_tlb(24, 47);
+			} else {
+				mips_dump_tlb(0, 22);
+				(void)cngetc();
+				mips_dump_tlb(23, 45);
+				(void)cngetc();
+				mips_dump_tlb(46, 63);
+			}
 			break;	
 				
 		case 'f':	

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 1997/06/16 09:50:33 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.83 1997/06/16 23:41:40 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -272,13 +272,8 @@ int	safepri = PSL_LOWIPL;
 struct	user *proc0paddr;
 struct	proc nullproc;		/* for use by switch_exit() */
 
-/*
- * XXX locore callback-vector setup should be done via mips_vector_init()
- * using CPU-family information, but that doesn't work yet, so for now we
- * explicitly call the mips1 setup function.
- */
-extern void mips1_vector_init __P((void));
-extern void mips3_vector_init __P((void));
+/* locore callback-vector setup */
+extern void mips_vector_init  __P((void));
 
 extern void savefpregs __P((struct proc *));
 
@@ -323,31 +318,7 @@ mach_init(argc, argv, code, cv)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-
-	switch (cpu_id.cpu.cp_imp) {
-#ifdef MIPS1
-	case MIPS_R2000:
-	case MIPS_R3000:
-		cpu_arch = 1;
-		mips1_TLBFlush();
-		for (i = 0; i < VMMACH_MIPS_3K_FIRST_RAND_ENTRY; ++i)
-			mips1_TLBWriteIndexed(i, MACH_CACHED_MEMORY_ADDR, 0);
-		mips1_vector_init();
-		break;
-#endif
-#ifdef MIPS3
-	case MIPS_R4000:
-		cpu_arch = 3;
-		mips3_SetWIRED(0);
-		mips3_TLBFlush();
-		mips3_SetWIRED(VMMACH_WIRED_ENTRIES);
-		mips3_vector_init();
-		break;
-#endif
-	default:
-		printf("CPU type (%d) not supported\n", cpu_id.cpu.cp_imp);
-		prom_halt(RB_HALT, NULL);
-	}
+	mips_vector_init();
 
 	/* look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
@@ -405,27 +376,28 @@ mach_init(argc, argv, code, cv)
 	curpcb = (struct pcb *)proc0.p_addr;
 	proc0.p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
 	firstaddr = MACH_CACHED_TO_PHYS(v);
-#ifdef MIPS3
-	for (i = 0; i < UPAGES; i+=2) {
+
+	if (CPUISMIPS3) for (i = 0; i < UPAGES; i+=2) {
 		struct tlb tlb;
 
-		tlb.tlb_mask = PG_SIZE_4K;
-		tlb.tlb_hi = vad_to_vpn((UADDR + (i << PGSHIFT))) | 1;
-		tlb.tlb_lo0 = vad_to_pfn(firstaddr) | PG_V | PG_M | PG_CACHED;
-		tlb.tlb_lo1 = vad_to_pfn(firstaddr + NBPG) | PG_V | PG_M | PG_CACHED;
+		tlb.tlb_mask = MIPS3_PG_SIZE_4K;
+		tlb.tlb_hi = mips3_vad_to_vpn((UADDR + (i << PGSHIFT))) | 1;
+		tlb.tlb_lo0 = vad_to_pfn(firstaddr) |
+			MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED;
+		tlb.tlb_lo1 = vad_to_pfn(firstaddr + NBPG) |
+			MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED;
 		proc0.p_md.md_upte[i] = tlb.tlb_lo0;
 		proc0.p_md.md_upte[i+1] = tlb.tlb_lo1;
 		mips3_TLBWriteIndexedVPS(i,&tlb);
 		firstaddr += NBPG * 2;
 	}
-#else
-	for (i = 0; i < UPAGES; i++) {
+	else for (i = 0; i < UPAGES; i++) {
 		mips1_TLBWriteIndexed(i,
 			(UADDR + (i << PGSHIFT)) | (1 << VMMACH_TLB_PID_SHIFT),
-			proc0.p_md.md_upte[i] = firstaddr | PG_V | PG_M);
+			proc0.p_md.md_upte[i] = firstaddr |
+				      MIPS1_PG_V | MIPS1_PG_M);
 		firstaddr += NBPG;
 	}
-#endif
 	v += UPAGES * NBPG;
 	MachSetPID(1);
 
@@ -437,26 +409,34 @@ mach_init(argc, argv, code, cv)
 	nullproc.p_addr = (struct user *)v;
 	nullproc.p_md.md_regs = nullproc.p_addr->u_pcb.pcb_regs;
 	bcopy("nullproc", nullproc.p_comm, sizeof("nullproc"));
-#ifdef MIPS3
-	for (i = 0; i < UPAGES; i+=2) {
-		nullproc.p_md.md_upte[i] = vad_to_pfn(firstaddr) | PG_V | PG_M | PG_CACHED;
-		nullproc.p_md.md_upte[i+1] = vad_to_pfn(firstaddr + NBPG) | PG_V | PG_M | PG_CACHED;
-		firstaddr += NBPG * 2;
+	if (CPUISMIPS3) {
+		/* mips3 */
+		for (i = 0; i < UPAGES; i+=2) {
+			nullproc.p_md.md_upte[i] = vad_to_pfn(firstaddr) |
+			    MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED;
+			nullproc.p_md.md_upte[i+1] =
+			    vad_to_pfn(firstaddr + NBPG) |
+			         MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED;
+			firstaddr += NBPG * 2;
+		}
+	} else { 
+		/* mips1 */
+		for (i = 0; i < UPAGES; i++) {
+			nullproc.p_md.md_upte[i] = firstaddr |
+				MIPS1_PG_V | MIPS1_PG_M;
+			firstaddr += NBPG;
+		}
 	}
-#else
-	for (i = 0; i < UPAGES; i++) {
-		nullproc.p_md.md_upte[i] = firstaddr | PG_V | PG_M;
-		firstaddr += NBPG;
-	}
-#endif
+
 	v += UPAGES * NBPG;
 
 	/* clear pages for u areas */
 	bzero(start, v - start);
-#ifdef MIPS3
-	mips3_FlushDCache(MACH_CACHED_TO_PHYS(start), v - start);
-	MachHitFlushDCache(UADDR, UPAGES * NBPG);
-#endif
+
+	if (CPUISMIPS3) {
+		mips3_FlushDCache(MACH_CACHED_TO_PHYS(start), v - start);
+		MachHitFlushDCache((caddr_t)UADDR, UPAGES * NBPG);
+	}
 
 	/*
 	 * Determine what model of computer we are running on.
@@ -606,11 +586,7 @@ mach_init(argc, argv, code, cv)
 		    (u_int*)MACH_PHYS_TO_UNCACHED(KMIN_REG_TIMEOUT);
 		(*Mach_reset_addr) = 0;
 
-#ifdef MIPS3
-		strcpy(cpu_model, "5000/150");	/* XXX */
-#else
-		strcpy(cpu_model, "5000/1xx");
-#endif
+		strcpy(cpu_model, (CPUISMIPS3)? "5000/150": "5000/1xx");
 
 		/*
 		 * The kmin memory hardware seems to wrap  memory addresses
@@ -667,11 +643,9 @@ mach_init(argc, argv, code, cv)
 		Mach_reset_addr =
 		    (u_int*)MACH_PHYS_TO_UNCACHED(XINE_REG_TIMEOUT);
 		(*Mach_reset_addr) = 0;
-#ifdef MIPS3
-		strcpy(cpu_model, "5000/50");	/* XXX */
-#else
-		strcpy(cpu_model, "5000/25");
-#endif
+
+		strcpy(cpu_model, (CPUISMIPS3) ? "5000/50": "5000/25");
+
 		break;
 #endif /*DS5000_25*/
 
@@ -719,11 +693,7 @@ mach_init(argc, argv, code, cv)
 
 		/* clear any memory errors from probes */
 		*Mach_reset_addr = 0;
-#ifdef MIPS3
-		strcpy(cpu_model, "5000/260");	/*XXX*/
-#else
-		strcpy(cpu_model, "5000/240");
-#endif
+		strcpy(cpu_model, (CPUISMIPS3) ? "5000/260" : "5000/240");
 		break;
 #endif /* DS5000_240 */
 

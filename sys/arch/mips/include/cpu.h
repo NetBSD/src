@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 1997/06/16 09:50:29 jonathan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 1997/06/16 23:41:42 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -167,10 +167,22 @@ int	want_resched;	/* resched() was called */
 #define	MIPS_R3NKK	0x23	/* NKK R3000 based FPU		ISA I   */
 
 /*
- * XXX port-dependent code should define cpu_id and fpu_id variables
- * and machine-dependent cache descriptor variables.
+ * Macros to find the CPU architecture we're on at run-time.
  */
+#if (MIPS1 + MIPS3) == 1
+#ifdef MIPS1
+# define CPUISMIPS3	0
+#endif /* mips1 */
 
+#ifdef MIPS3
+#  define CPUISMIPS3	 1
+#endif /* mips1 */
+
+#else /* run-time test */
+extern int cpu_arch;
+#define CPUISMIPS3	(cpu_arch == 3)
+#endif /* run-time test */
+ 
 /*
  * Enable realtime clock (always enabled).
  */
