@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.8 2003/11/20 13:30:29 fvdl Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.9 2004/03/21 17:59:44 kim Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.8 2003/11/20 13:30:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.9 2004/03/21 17:59:44 kim Exp $");
 
 #include "opt_cputype.h"
 
@@ -297,8 +297,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, "Athlon Model 1", "Athlon Model 2",
 				"Duron", "Athlon Model 4 (Thunderbird)",
-				0, "Athlon", "Duron", "Athlon", 0, 0, 0,
-				0, 0, 0, 0,
+				0, "Athlon", "Duron", "Athlon", 0,
+				"Athlon", 0, 0, 0, 0, 0,
 				"K7 (Athlon)"	/* Default */
 			},
 			NULL,
