@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.2 1993/08/01 05:39:31 mycroft Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
+#	$Id: Makefile,v 1.2.2.1 1994/08/09 14:12:15 mycroft Exp $
 
 PROG=	comsat
 MAN8=	comsat.0

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.35.2.1 1994/07/12 21:18:32 cgd Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.35.2.2 1994/08/09 14:07:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -237,7 +237,6 @@ void nqnfs_clientlease();
  */
 extern u_long nfs_procids[NFS_NPROCS];
 extern u_long nfs_prog, nfs_vers, nfs_true, nfs_false;
-extern char nfsiobuf[MAXPHYS+NBPG];
 struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 int nfs_numasync = 0;
 #define	DIRHDSIZ	(sizeof (struct dirent) - (MAXNAMLEN + 1))
