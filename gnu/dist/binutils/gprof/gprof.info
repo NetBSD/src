@@ -1,0 +1,58 @@
+This is gprof.info, produced by makeinfo version 4.3 from gprof.texi.
+
+START-INFO-DIR-ENTRY
+* gprof: (gprof).                Profiling your program's execution
+END-INFO-DIR-ENTRY
+
+   This file documents the gprof profiler of the GNU system.
+
+   Copyright (C) 1988, 92, 97, 98, 99, 2000, 2001 Free Software
+Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+
+
+Indirect:
+gprof.info-1: 707
+gprof.info-2: 48575
+gprof.info-3: 82712
+
+Tag Table:
+(Indirect)
+Node: Top707
+Node: Introduction1949
+Node: Compiling4278
+Node: Executing6939
+Node: Invoking9729
+Node: Output Options11143
+Node: Analysis Options17955
+Node: Miscellaneous Options21148
+Node: Deprecated Options22309
+Node: Symspecs24379
+Node: Output26200
+Node: Flat Profile27225
+Node: Call Graph32155
+Node: Primary35370
+Node: Callers37902
+Node: Subroutines40010
+Node: Cycles41810
+Node: Line-by-line48575
+Node: Annotated Source52374
+Node: Inaccuracy55235
+Node: Sampling Error55489
+Node: Assumptions58054
+Node: How do I?59522
+Node: Incompatibilities60740
+Node: Details62207
+Node: Implementation62596
+Node: File Format68488
+Node: Internals72746
+Node: Debugging81116
+Node: GNU Free Documentation License82712
+
+End Tag Table

@@ -1,0 +1,1728 @@
+This is as.info, produced by makeinfo version 4.3 from as.texinfo.
+
+START-INFO-DIR-ENTRY
+* As: (as).                     The GNU assembler.
+* Gas: (as).                    The GNU assembler.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU Assembler "as".
+
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001, 2002
+Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+
+
+File: as.info,  Node: Index,  Prev: GNU Free Documentation License,  Up: Top
+
+Index
+*****
+
+* Menu:
+
+* #:                                     Comments.
+* #APP:                                  Preprocessing.
+* #NO_APP:                               Preprocessing.
+* $ in symbol names <1>:                 SH64-Chars.
+* $ in symbol names <2>:                 SH-Chars.
+* $ in symbol names <3>:                 H8/500-Chars.
+* $ in symbol names <4>:                 D30V-Chars.
+* $ in symbol names:                     D10V-Chars.
+* $acos math builtin, TIC54X:            TIC54X-Builtins.
+* $asin math builtin, TIC54X:            TIC54X-Builtins.
+* $atan math builtin, TIC54X:            TIC54X-Builtins.
+* $atan2 math builtin, TIC54X:           TIC54X-Builtins.
+* $ceil math builtin, TIC54X:            TIC54X-Builtins.
+* $cos math builtin, TIC54X:             TIC54X-Builtins.
+* $cosh math builtin, TIC54X:            TIC54X-Builtins.
+* $cvf math builtin, TIC54X:             TIC54X-Builtins.
+* $cvi math builtin, TIC54X:             TIC54X-Builtins.
+* $exp math builtin, TIC54X:             TIC54X-Builtins.
+* $fabs math builtin, TIC54X:            TIC54X-Builtins.
+* $firstch subsym builtin, TIC54X:       TIC54X-Macros.
+* $floor math builtin, TIC54X:           TIC54X-Builtins.
+* $fmod math builtin, TIC54X:            TIC54X-Builtins.
+* $int math builtin, TIC54X:             TIC54X-Builtins.
+* $iscons subsym builtin, TIC54X:        TIC54X-Macros.
+* $isdefed subsym builtin, TIC54X:       TIC54X-Macros.
+* $ismember subsym builtin, TIC54X:      TIC54X-Macros.
+* $isname subsym builtin, TIC54X:        TIC54X-Macros.
+* $isreg subsym builtin, TIC54X:         TIC54X-Macros.
+* $lastch subsym builtin, TIC54X:        TIC54X-Macros.
+* $ldexp math builtin, TIC54X:           TIC54X-Builtins.
+* $log math builtin, TIC54X:             TIC54X-Builtins.
+* $log10 math builtin, TIC54X:           TIC54X-Builtins.
+* $max math builtin, TIC54X:             TIC54X-Builtins.
+* $min math builtin, TIC54X:             TIC54X-Builtins.
+* $pow math builtin, TIC54X:             TIC54X-Builtins.
+* $round math builtin, TIC54X:           TIC54X-Builtins.
+* $sgn math builtin, TIC54X:             TIC54X-Builtins.
+* $sin math builtin, TIC54X:             TIC54X-Builtins.
+* $sinh math builtin, TIC54X:            TIC54X-Builtins.
+* $sqrt math builtin, TIC54X:            TIC54X-Builtins.
+* $structacc subsym builtin, TIC54X:     TIC54X-Macros.
+* $structsz subsym builtin, TIC54X:      TIC54X-Macros.
+* $symcmp subsym builtin, TIC54X:        TIC54X-Macros.
+* $symlen subsym builtin, TIC54X:        TIC54X-Macros.
+* $tan math builtin, TIC54X:             TIC54X-Builtins.
+* $tanh math builtin, TIC54X:            TIC54X-Builtins.
+* $trunc math builtin, TIC54X:           TIC54X-Builtins.
+* -+ option, VAX/VMS:                    VAX-Opts.
+* --:                                    Command Line.
+* --32 option, i386:                     i386-Options.
+* --32 option, x86-64:                   i386-Options.
+* --64 option, i386:                     i386-Options.
+* --64 option, x86-64:                   i386-Options.
+* --base-size-default-16:                M68K-Opts.
+* --base-size-default-32:                M68K-Opts.
+* --bitwise-or option, M680x0:           M68K-Opts.
+* --density:                             Xtensa Options.
+* --disp-size-default-16:                M68K-Opts.
+* --disp-size-default-32:                M68K-Opts.
+* --emulation=crisaout command line option, CRIS: CRIS-Opts.
+* --emulation=criself command line option, CRIS: CRIS-Opts.
+* --enforce-aligned-data:                Sparc-Aligned-Data.
+* --fatal-warnings:                      W.
+* --fixed-special-register-names command line option, MMIX: MMIX-Opts.
+* --force-long-branchs:                  M68HC11-Opts.
+* --generate-example:                    M68HC11-Opts.
+* --generics:                            Xtensa Options.
+* --globalize-symbols command line option, MMIX: MMIX-Opts.
+* --gnu-syntax command line option, MMIX: MMIX-Opts.
+* --linker-allocated-gregs command line option, MMIX: MMIX-Opts.
+* --listing-cont-lines:                  listing.
+* --listing-lhs-width:                   listing.
+* --listing-lhs-width2:                  listing.
+* --listing-rhs-width:                   listing.
+* --longcalls:                           Xtensa Options.
+* --MD:                                  MD.
+* --no-density:                          Xtensa Options.
+* --no-expand command line option, MMIX: MMIX-Opts.
+* --no-generics:                         Xtensa Options.
+* --no-longcalls:                        Xtensa Options.
+* --no-merge-gregs command line option, MMIX: MMIX-Opts.
+* --no-predefined-syms command line option, MMIX: MMIX-Opts.
+* --no-relax:                            Xtensa Options.
+* --no-target-align:                     Xtensa Options.
+* --no-text-section-literals:            Xtensa Options.
+* --no-underscore command line option, CRIS: CRIS-Opts.
+* --no-warn:                             W.
+* --pcrel:                               M68K-Opts.
+* --pic command line option, CRIS:       CRIS-Opts.
+* --print-insn-syntax:                   M68HC11-Opts.
+* --print-opcodes:                       M68HC11-Opts.
+* --register-prefix-optional option, M680x0: M68K-Opts.
+* --relax:                               Xtensa Options.
+* --relax command line option, MMIX:     MMIX-Opts.
+* --short-branchs:                       M68HC11-Opts.
+* --statistics:                          statistics.
+* --strict-direct-mode:                  M68HC11-Opts.
+* --target-align:                        Xtensa Options.
+* --text-section-literals:               Xtensa Options.
+* --traditional-format:                  traditional-format.
+* --underscore command line option, CRIS: CRIS-Opts.
+* --warn:                                W.
+* -1 option, VAX/VMS:                    VAX-Opts.
+* -32addr command line option, Alpha:    Alpha Options.
+* -a:                                    a.
+* -A options, i960:                      Options-i960.
+* -ac:                                   a.
+* -ad:                                   a.
+* -ah:                                   a.
+* -al:                                   a.
+* -an:                                   a.
+* -as:                                   a.
+* -Asparclet:                            Sparc-Opts.
+* -Asparclite:                           Sparc-Opts.
+* -Av6:                                  Sparc-Opts.
+* -Av8:                                  Sparc-Opts.
+* -Av9:                                  Sparc-Opts.
+* -Av9a:                                 Sparc-Opts.
+* -b option, i960:                       Options-i960.
+* -big:                                  SH Options.
+* -construct-floats:                     MIPS Opts.
+* -D:                                    D.
+* -D, ignored on VAX:                    VAX-Opts.
+* -d, VAX option:                        VAX-Opts.
+* -dsp:                                  SH Options.
+* -EB command line option, ARC:          ARC Options.
+* -EB command line option, ARM:          ARM Options.
+* -EB option (MIPS):                     MIPS Opts.
+* -EL command line option, ARC:          ARC Options.
+* -EL command line option, ARM:          ARM Options.
+* -EL option (MIPS):                     MIPS Opts.
+* -f:                                    f.
+* -F command line option, Alpha:         Alpha Options.
+* -G command line option, Alpha:         Alpha Options.
+* -g command line option, Alpha:         Alpha Options.
+* -G option (MIPS):                      MIPS Opts.
+* -H option, VAX/VMS:                    VAX-Opts.
+* -h option, VAX/VMS:                    VAX-Opts.
+* -I PATH:                               I.
+* -J, ignored on VAX:                    VAX-Opts.
+* -K:                                    K.
+* -k command line option, ARM:           ARM Options.
+* -L:                                    L.
+* -l option, M680x0:                     M68K-Opts.
+* -little:                               SH Options.
+* -M:                                    M.
+* -m11/03:                               PDP-11-Options.
+* -m11/04:                               PDP-11-Options.
+* -m11/05:                               PDP-11-Options.
+* -m11/10:                               PDP-11-Options.
+* -m11/15:                               PDP-11-Options.
+* -m11/20:                               PDP-11-Options.
+* -m11/21:                               PDP-11-Options.
+* -m11/23:                               PDP-11-Options.
+* -m11/24:                               PDP-11-Options.
+* -m11/34:                               PDP-11-Options.
+* -m11/34a:                              PDP-11-Options.
+* -m11/35:                               PDP-11-Options.
+* -m11/40:                               PDP-11-Options.
+* -m11/44:                               PDP-11-Options.
+* -m11/45:                               PDP-11-Options.
+* -m11/50:                               PDP-11-Options.
+* -m11/53:                               PDP-11-Options.
+* -m11/55:                               PDP-11-Options.
+* -m11/60:                               PDP-11-Options.
+* -m11/70:                               PDP-11-Options.
+* -m11/73:                               PDP-11-Options.
+* -m11/83:                               PDP-11-Options.
+* -m11/84:                               PDP-11-Options.
+* -m11/93:                               PDP-11-Options.
+* -m11/94:                               PDP-11-Options.
+* -m32r option, M32R:                    M32R-Opts.
+* -m32rx option, M32RX:                  M32R-Opts.
+* -m68000 and related options:           M68K-Opts.
+* -m68hc11:                              M68HC11-Opts.
+* -m68hc12:                              M68HC11-Opts.
+* -m68hcs12:                             M68HC11-Opts.
+* -mall:                                 PDP-11-Options.
+* -mall-extensions:                      PDP-11-Options.
+* -mapcs command line option, ARM:       ARM Options.
+* -mapcs-float command line option, ARM: ARM Options.
+* -mapcs-reentrant command line option, ARM: ARM Options.
+* -marc[5|6|7|8] command line option, ARC: ARC Options.
+* -march= command line option, ARM:      ARM Options.
+* -matpcs command line option, ARM:      ARM Options.
+* -mcis:                                 PDP-11-Options.
+* -mCPU command line option, Alpha:      Alpha Options.
+* -mcpu option, cpu:                     TIC54X-Opts.
+* -mcpu= command line option, ARM:       ARM Options.
+* -mcsm:                                 PDP-11-Options.
+* -mdebug command line option, Alpha:    Alpha Options.
+* -me option, stderr redirect:           TIC54X-Opts.
+* -meis:                                 PDP-11-Options.
+* -merrors-to-file option, stderr redirect: TIC54X-Opts.
+* -mf option, far-mode:                  TIC54X-Opts.
+* -mf11:                                 PDP-11-Options.
+* -mfar-mode option, far-mode:           TIC54X-Opts.
+* -mfis:                                 PDP-11-Options.
+* -mfp-11:                               PDP-11-Options.
+* -mfpp:                                 PDP-11-Options.
+* -mfpu:                                 PDP-11-Options.
+* -mfpu= command line option, ARM:       ARM Options.
+* -mip2022 option, IP2K:                 IP2K-Opts.
+* -mip2022ext option, IP2022:            IP2K-Opts.
+* -mj11:                                 PDP-11-Options.
+* -mka11:                                PDP-11-Options.
+* -mkb11:                                PDP-11-Options.
+* -mkd11a:                               PDP-11-Options.
+* -mkd11b:                               PDP-11-Options.
+* -mkd11d:                               PDP-11-Options.
+* -mkd11e:                               PDP-11-Options.
+* -mkd11f:                               PDP-11-Options.
+* -mkd11h:                               PDP-11-Options.
+* -mkd11k:                               PDP-11-Options.
+* -mkd11q:                               PDP-11-Options.
+* -mkd11z:                               PDP-11-Options.
+* -mkev11:                               PDP-11-Options.
+* -mlimited-eis:                         PDP-11-Options.
+* -mlong:                                M68HC11-Opts.
+* -mlong-double:                         M68HC11-Opts.
+* -mmfpt:                                PDP-11-Options.
+* -mmicrocode:                           PDP-11-Options.
+* -mmutiproc:                            PDP-11-Options.
+* -mmxps:                                PDP-11-Options.
+* -mno-cis:                              PDP-11-Options.
+* -mno-csm:                              PDP-11-Options.
+* -mno-eis:                              PDP-11-Options.
+* -mno-extensions:                       PDP-11-Options.
+* -mno-fis:                              PDP-11-Options.
+* -mno-fp-11:                            PDP-11-Options.
+* -mno-fpp:                              PDP-11-Options.
+* -mno-fpu:                              PDP-11-Options.
+* -mno-kev11:                            PDP-11-Options.
+* -mno-limited-eis:                      PDP-11-Options.
+* -mno-mfpt:                             PDP-11-Options.
+* -mno-microcode:                        PDP-11-Options.
+* -mno-mutiproc:                         PDP-11-Options.
+* -mno-mxps:                             PDP-11-Options.
+* -mno-pic:                              PDP-11-Options.
+* -mno-spl:                              PDP-11-Options.
+* -moabi command line option, ARM:       ARM Options.
+* -mpic:                                 PDP-11-Options.
+* -mrelax command line option, V850:     V850 Options.
+* -mshort:                               M68HC11-Opts.
+* -mshort-double:                        M68HC11-Opts.
+* -mspl:                                 PDP-11-Options.
+* -mt11:                                 PDP-11-Options.
+* -mthumb command line option, ARM:      ARM Options.
+* -mthumb-interwork command line option, ARM: ARM Options.
+* -mv850 command line option, V850:      V850 Options.
+* -mv850any command line option, V850:   V850 Options.
+* -mv850e command line option, V850:     V850 Options.
+* -N command line option, CRIS:          CRIS-Opts.
+* -no-construct-floats:                  MIPS Opts.
+* -no-mdebug command line option, Alpha: Alpha Options.
+* -no-relax option, i960:                Options-i960.
+* -no-warn-explicit-parallel-conflicts option, M32RX: M32R-Opts.
+* -nocpp ignored (MIPS):                 MIPS Opts.
+* -o:                                    o.
+* -R:                                    R.
+* -relax:                                SH Options.
+* -relax command line option, Alpha:     Alpha Options.
+* -S, ignored on VAX:                    VAX-Opts.
+* -small:                                SH Options.
+* -t, ignored on VAX:                    VAX-Opts.
+* -T, ignored on VAX:                    VAX-Opts.
+* -v:                                    v.
+* -V, redundant on VAX:                  VAX-Opts.
+* -version:                              v.
+* -W:                                    W.
+* -warn-explicit-parallel-conflicts option, M32RX: M32R-Opts.
+* -Wnp option, M32RX:                    M32R-Opts.
+* -Wp option, M32RX:                     M32R-Opts.
+* -wsigned_overflow command line option, V850: V850 Options.
+* -wunsigned_overflow command line option, V850: V850 Options.
+* -x command line option, MMIX:          MMIX-Opts.
+* . (symbol):                            Dot.
+* .insn:                                 MIPS insn.
+* .ltorg directive, ARM:                 ARM Directives.
+* .o:                                    Object.
+* .param on HPPA:                        HPPA Directives.
+* .pool directive, ARM:                  ARM Directives.
+* .set autoextend:                       MIPS autoextend.
+* .set mdmx:                             MIPS ASE instruction generation overrides.
+* .set mips3d:                           MIPS ASE instruction generation overrides.
+* .set mipsN:                            MIPS ISA.
+* .set noautoextend:                     MIPS autoextend.
+* .set nomdmx:                           MIPS ASE instruction generation overrides.
+* .set nomips3d:                         MIPS ASE instruction generation overrides.
+* .set pop:                              MIPS option stack.
+* .set push:                             MIPS option stack.
+* .v850 directive, V850:                 V850 Directives.
+* .v850e directive, V850:                V850 Directives.
+* 16-bit code, i386:                     i386-16bit.
+* 29K support:                           AMD29K-Dependent.
+* 2byte directive, ARC:                  ARC Directives.
+* 3byte directive, ARC:                  ARC Directives.
+* 3DNow!, i386:                          i386-SIMD.
+* 3DNow!, x86-64:                        i386-SIMD.
+* 430 support:                           MSP430-Dependent.
+* 4byte directive, ARC:                  ARC Directives.
+* : (label):                             Statements.
+* @word modifier, D10V:                  D10V-Word.
+* \" (doublequote character):            Strings.
+* \\ (\ character):                      Strings.
+* \b (backspace character):              Strings.
+* \DDD (octal character code):           Strings.
+* \f (formfeed character):               Strings.
+* \n (newline character):                Strings.
+* \r (carriage return character):        Strings.
+* \t (tab):                              Strings.
+* \XD... (hex character code):           Strings.
+* _ opcode prefix:                       Xtensa Opcodes.
+* a.out:                                 Object.
+* a.out symbol attributes:               a.out Symbols.
+* A_DIR environment variable, TIC54X:    TIC54X-Env.
+* ABI options, SH64:                     SH64 Options.
+* ABORT directive:                       ABORT.
+* abort directive:                       Abort.
+* absolute section:                      Ld Sections.
+* ADDI instructions, relaxation:         Xtensa Immediate Relaxation.
+* addition, permitted arguments:         Infix Ops.
+* addresses:                             Expressions.
+* addresses, format of:                  Secs Background.
+* addressing modes, D10V:                D10V-Addressing.
+* addressing modes, D30V:                D30V-Addressing.
+* addressing modes, H8/300:              H8/300-Addressing.
+* addressing modes, H8/500:              H8/500-Addressing.
+* addressing modes, M680x0:              M68K-Syntax.
+* addressing modes, M68HC11:             M68HC11-Syntax.
+* addressing modes, SH:                  SH-Addressing.
+* addressing modes, SH64:                SH64-Addressing.
+* addressing modes, Z8000:               Z8000-Addressing.
+* ADR reg,<label> pseudo op, ARM:        ARM Opcodes.
+* ADRL reg,<label> pseudo op, ARM:       ARM Opcodes.
+* advancing location counter:            Org.
+* align directive:                       Align.
+* align directive, ARM:                  ARM Directives.
+* align directive, M88K:                 M88K Directives.
+* align directive, SPARC:                Sparc-Directives.
+* align directive, TIC54X:               TIC54X-Directives.
+* alignment of branch targets:           Xtensa Automatic Alignment.
+* alignment of ENTRY instructions:       Xtensa Automatic Alignment.
+* alignment of LOOP instructions:        Xtensa Automatic Alignment.
+* Alpha floating point (IEEE):           Alpha Floating Point.
+* Alpha line comment character:          Alpha-Chars.
+* Alpha line separator:                  Alpha-Chars.
+* Alpha notes:                           Alpha Notes.
+* Alpha options:                         Alpha Options.
+* Alpha registers:                       Alpha-Regs.
+* Alpha relocations:                     Alpha-Relocs.
+* Alpha support:                         Alpha-Dependent.
+* Alpha Syntax:                          Alpha Options.
+* Alpha-only directives:                 Alpha Directives.
+* altered difference tables:             Word.
+* alternate syntax for the 680x0:        M68K-Moto-Syntax.
+* AMD 29K floating point (IEEE):         AMD29K Floating Point.
+* AMD 29K identifiers:                   AMD29K-Chars.
+* AMD 29K line comment character:        AMD29K-Chars.
+* AMD 29K machine directives:            AMD29K Directives.
+* AMD 29K macros:                        AMD29K-Macros.
+* AMD 29K opcodes:                       AMD29K Opcodes.
+* AMD 29K options (none):                AMD29K Options.
+* AMD 29K protected registers:           AMD29K-Regs.
+* AMD 29K register names:                AMD29K-Regs.
+* AMD 29K special purpose registers:     AMD29K-Regs.
+* AMD 29K support:                       AMD29K-Dependent.
+* ARC floating point (IEEE):             ARC Floating Point.
+* ARC machine directives:                ARC Directives.
+* ARC opcodes:                           ARC Opcodes.
+* ARC options (none):                    ARC Options.
+* ARC register names:                    ARC-Regs.
+* ARC special characters:                ARC-Chars.
+* ARC support:                           ARC-Dependent.
+* arc5 arc5, ARC:                        ARC Options.
+* arc6 arc6, ARC:                        ARC Options.
+* arc7 arc7, ARC:                        ARC Options.
+* arc8 arc8, ARC:                        ARC Options.
+* arch directive, i386:                  i386-Arch.
+* arch directive, x86-64:                i386-Arch.
+* architecture options, i960:            Options-i960.
+* architecture options, IP2022:          IP2K-Opts.
+* architecture options, IP2K:            IP2K-Opts.
+* architecture options, M32R:            M32R-Opts.
+* architecture options, M32RX:           M32R-Opts.
+* architecture options, M680x0:          M68K-Opts.
+* architectures, PowerPC:                PowerPC-Opts.
+* architectures, SPARC:                  Sparc-Opts.
+* arguments for addition:                Infix Ops.
+* arguments for subtraction:             Infix Ops.
+* arguments in expressions:              Arguments.
+* arithmetic functions:                  Operators.
+* arithmetic operands:                   Arguments.
+* arm directive, ARM:                    ARM Directives.
+* ARM floating point (IEEE):             ARM Floating Point.
+* ARM identifiers:                       ARM-Chars.
+* ARM immediate character:               ARM-Chars.
+* ARM line comment character:            ARM-Chars.
+* ARM line separator:                    ARM-Chars.
+* ARM machine directives:                ARM Directives.
+* ARM opcodes:                           ARM Opcodes.
+* ARM options (none):                    ARM Options.
+* ARM register names:                    ARM-Regs.
+* ARM support:                           ARM-Dependent.
+* ascii directive:                       Ascii.
+* asciz directive:                       Asciz.
+* asg directive, TIC54X:                 TIC54X-Directives.
+* assembler bugs, reporting:             Bug Reporting.
+* assembler crash:                       Bug Criteria.
+* assembler directive .dword, CRIS:      CRIS-Pseudos.
+* assembler directive .far, M68HC11:     M68HC11-Directives.
+* assembler directive .interrupt, M68HC11: M68HC11-Directives.
+* assembler directive .mode, M68HC11:    M68HC11-Directives.
+* assembler directive .relax, M68HC11:   M68HC11-Directives.
+* assembler directive .syntax, CRIS:     CRIS-Pseudos.
+* assembler directive .xrefb, M68HC11:   M68HC11-Directives.
+* assembler directive BSPEC, MMIX:       MMIX-Pseudos.
+* assembler directive BYTE, MMIX:        MMIX-Pseudos.
+* assembler directive ESPEC, MMIX:       MMIX-Pseudos.
+* assembler directive GREG, MMIX:        MMIX-Pseudos.
+* assembler directive IS, MMIX:          MMIX-Pseudos.
+* assembler directive LOC, MMIX:         MMIX-Pseudos.
+* assembler directive LOCAL, MMIX:       MMIX-Pseudos.
+* assembler directive OCTA, MMIX:        MMIX-Pseudos.
+* assembler directive PREFIX, MMIX:      MMIX-Pseudos.
+* assembler directive TETRA, MMIX:       MMIX-Pseudos.
+* assembler directive WYDE, MMIX:        MMIX-Pseudos.
+* assembler directives, CRIS:            CRIS-Pseudos.
+* assembler directives, M68HC11:         M68HC11-Directives.
+* assembler directives, M68HC12:         M68HC11-Directives.
+* assembler directives, MMIX:            MMIX-Pseudos.
+* assembler internal logic error:        As Sections.
+* assembler version:                     v.
+* assembler, and linker:                 Secs Background.
+* assembly listings, enabling:           a.
+* assigning values to symbols <1>:       Equ.
+* assigning values to symbols:           Setting Symbols.
+* atmp directive, i860:                  Directives-i860.
+* att_syntax pseudo op, i386:            i386-Syntax.
+* att_syntax pseudo op, x86-64:          i386-Syntax.
+* attributes, symbol:                    Symbol Attributes.
+* auxiliary attributes, COFF symbols:    COFF Symbols.
+* auxiliary symbol information, COFF:    Dim.
+* Av7:                                   Sparc-Opts.
+* backslash (\\):                        Strings.
+* backspace (\b):                        Strings.
+* balign directive:                      Balign.
+* balignl directive:                     Balign.
+* balignw directive:                     Balign.
+* bes directive, TIC54X:                 TIC54X-Directives.
+* big endian output, MIPS:               Overview.
+* big endian output, PJ:                 Overview.
+* big-endian output, MIPS:               MIPS Opts.
+* bignums:                               Bignums.
+* binary constants, TIC54X:              TIC54X-Constants.
+* binary files, including:               Incbin.
+* binary integers:                       Integers.
+* bitfields, not supported on VAX:       VAX-no.
+* block:                                 Z8000 Directives.
+* block directive, AMD 29K:              AMD29K Directives.
+* branch improvement, M680x0:            M68K-Branch.
+* branch improvement, M68HC11:           M68HC11-Branch.
+* branch improvement, VAX:               VAX-branch.
+* branch instructions, relaxation:       Xtensa Branch Relaxation.
+* branch recording, i960:                Options-i960.
+* branch statistics table, i960:         Options-i960.
+* branch target alignment:               Xtensa Automatic Alignment.
+* break directive, TIC54X:               TIC54X-Directives.
+* BSD syntax:                            PDP-11-Syntax.
+* bss directive, i960:                   Directives-i960.
+* bss directive, M88K:                   M88K Directives.
+* bss directive, TIC54X:                 TIC54X-Directives.
+* bss section <1>:                       bss.
+* bss section:                           Ld Sections.
+* bug criteria:                          Bug Criteria.
+* bug reports:                           Bug Reporting.
+* bugs in assembler:                     Reporting Bugs.
+* builtin math functions, TIC54X:        TIC54X-Builtins.
+* builtin subsym functions, TIC54X:      TIC54X-Macros.
+* bus lock prefixes, i386:               i386-Prefixes.
+* bval:                                  Z8000 Directives.
+* byte directive:                        Byte.
+* byte directive, TIC54X:                TIC54X-Directives.
+* C54XDSP_DIR environment variable, TIC54X: TIC54X-Env.
+* c_mode directive, TIC54X:              TIC54X-Directives.
+* call instructions, i386:               i386-Mnemonics.
+* call instructions, relaxation:         Xtensa Call Relaxation.
+* call instructions, x86-64:             i386-Mnemonics.
+* callj, i960 pseudo-opcode:             callj-i960.
+* carriage return (\r):                  Strings.
+* char directive, TIC54X:                TIC54X-Directives.
+* character constants:                   Characters.
+* character escape codes:                Strings.
+* character, single:                     Chars.
+* characters used in symbols:            Symbol Intro.
+* clink directive, TIC54X:               TIC54X-Directives.
+* code directive, ARM:                   ARM Directives.
+* code16 directive, i386:                i386-16bit.
+* code16gcc directive, i386:             i386-16bit.
+* code32 directive, i386:                i386-16bit.
+* code64 directive, i386:                i386-16bit.
+* code64 directive, x86-64:              i386-16bit.
+* COFF auxiliary symbol information:     Dim.
+* COFF structure debugging:              Tag.
+* COFF symbol attributes:                COFF Symbols.
+* COFF symbol descriptor:                Desc.
+* COFF symbol storage class:             Scl.
+* COFF symbol type:                      Type.
+* COFF symbols, debugging:               Def.
+* COFF value attribute:                  Val.
+* COMDAT:                                Linkonce.
+* comm directive:                        Comm.
+* command line conventions:              Command Line.
+* command line options, V850:            V850 Options.
+* command-line options ignored, VAX:     VAX-Opts.
+* comments:                              Comments.
+* comments, M680x0:                      M68K-Chars.
+* comments, removed by preprocessor:     Preprocessing.
+* common directive, SPARC:               Sparc-Directives.
+* common sections:                       Linkonce.
+* common variable storage:               bss.
+* compare and jump expansions, i960:     Compare-and-branch-i960.
+* compare/branch instructions, i960:     Compare-and-branch-i960.
+* comparison expressions:                Infix Ops.
+* conditional assembly:                  If.
+* constant, single character:            Chars.
+* constants:                             Constants.
+* constants, bignum:                     Bignums.
+* constants, character:                  Characters.
+* constants, converted by preprocessor:  Preprocessing.
+* constants, floating point:             Flonums.
+* constants, integer:                    Integers.
+* constants, number:                     Numbers.
+* constants, string:                     Strings.
+* constants, TIC54X:                     TIC54X-Constants.
+* conversion instructions, i386:         i386-Mnemonics.
+* conversion instructions, x86-64:       i386-Mnemonics.
+* coprocessor wait, i386:                i386-Prefixes.
+* copy directive, TIC54X:                TIC54X-Directives.
+* cputype directive, AMD 29K:            AMD29K Directives.
+* crash of assembler:                    Bug Criteria.
+* CRIS --emulation=crisaout command line option: CRIS-Opts.
+* CRIS --emulation=criself command line option: CRIS-Opts.
+* CRIS --no-underscore command line option: CRIS-Opts.
+* CRIS --pic command line option:        CRIS-Opts.
+* CRIS --underscore command line option: CRIS-Opts.
+* CRIS -N command line option:           CRIS-Opts.
+* CRIS assembler directive .dword:       CRIS-Pseudos.
+* CRIS assembler directive .syntax:      CRIS-Pseudos.
+* CRIS assembler directives:             CRIS-Pseudos.
+* CRIS instruction expansion:            CRIS-Expand.
+* CRIS line comment characters:          CRIS-Chars.
+* CRIS options:                          CRIS-Opts.
+* CRIS position-independent code:        CRIS-Opts.
+* CRIS pseudo-op .dword:                 CRIS-Pseudos.
+* CRIS pseudo-op .syntax:                CRIS-Pseudos.
+* CRIS pseudo-ops:                       CRIS-Pseudos.
+* CRIS register names:                   CRIS-Regs.
+* CRIS support:                          CRIS-Dependent.
+* CRIS symbols in position-independent code: CRIS-Pic.
+* ctbp register, V850:                   V850-Regs.
+* ctoff pseudo-op, V850:                 V850 Opcodes.
+* ctpc register, V850:                   V850-Regs.
+* ctpsw register, V850:                  V850-Regs.
+* current address:                       Dot.
+* current address, advancing:            Org.
+* D10V @word modifier:                   D10V-Word.
+* D10V addressing modes:                 D10V-Addressing.
+* D10V floating point:                   D10V-Float.
+* D10V line comment character:           D10V-Chars.
+* D10V opcode summary:                   D10V-Opcodes.
+* D10V optimization:                     Overview.
+* D10V options:                          D10V-Opts.
+* D10V registers:                        D10V-Regs.
+* D10V size modifiers:                   D10V-Size.
+* D10V sub-instruction ordering:         D10V-Chars.
+* D10V sub-instructions:                 D10V-Subs.
+* D10V support:                          D10V-Dependent.
+* D10V syntax:                           D10V-Syntax.
+* D30V addressing modes:                 D30V-Addressing.
+* D30V floating point:                   D30V-Float.
+* D30V Guarded Execution:                D30V-Guarded.
+* D30V line comment character:           D30V-Chars.
+* D30V nops:                             Overview.
+* D30V nops after 32-bit multiply:       Overview.
+* D30V opcode summary:                   D30V-Opcodes.
+* D30V optimization:                     Overview.
+* D30V options:                          D30V-Opts.
+* D30V registers:                        D30V-Regs.
+* D30V size modifiers:                   D30V-Size.
+* D30V sub-instruction ordering:         D30V-Chars.
+* D30V sub-instructions:                 D30V-Subs.
+* D30V support:                          D30V-Dependent.
+* D30V syntax:                           D30V-Syntax.
+* data alignment on SPARC:               Sparc-Aligned-Data.
+* data and text sections, joining:       R.
+* data directive:                        Data.
+* data directive, TIC54X:                TIC54X-Directives.
+* data section:                          Ld Sections.
+* data1 directive, M680x0:               M68K-Directives.
+* data2 directive, M680x0:               M68K-Directives.
+* datalabel, SH64:                       SH64-Addressing.
+* dbpc register, V850:                   V850-Regs.
+* dbpsw register, V850:                  V850-Regs.
+* debuggers, and symbol order:           Symbols.
+* debugging COFF symbols:                Def.
+* DEC syntax:                            PDP-11-Syntax.
+* decimal integers:                      Integers.
+* def directive:                         Def.
+* def directive, M88K:                   M88K Directives.
+* def directive, TIC54X:                 TIC54X-Directives.
+* density directive:                     Density Directive.
+* density instructions:                  Density Instructions.
+* density option, Xtensa:                Xtensa Options.
+* dependency tracking:                   MD.
+* deprecated directives:                 Deprecated.
+* desc directive:                        Desc.
+* descriptor, of a.out symbol:           Symbol Desc.
+* dfloat directive, M88K:                M88K Directives.
+* dfloat directive, VAX:                 VAX-directives.
+* difference tables altered:             Word.
+* difference tables, warning:            K.
+* differences, mmixal:                   MMIX-mmixal.
+* dim directive:                         Dim.
+* directives and instructions:           Statements.
+* directives, M680x0:                    M68K-Directives.
+* directives, machine independent:       Pseudo Ops.
+* directives, precedence:                Xtensa Directives.
+* directives, Xtensa:                    Xtensa Directives.
+* directives, Z8000:                     Z8000 Directives.
+* displacement sizing character, VAX:    VAX-operands.
+* dollar local symbols:                  Symbol Names.
+* dot (symbol):                          Dot.
+* double directive:                      Double.
+* double directive, i386:                i386-Float.
+* double directive, M680x0:              M68K-Float.
+* double directive, M68HC11:             M68HC11-Float.
+* double directive, TIC54X:              TIC54X-Directives.
+* double directive, VAX:                 VAX-float.
+* double directive, x86-64:              i386-Float.
+* doublequote (\"):                      Strings.
+* drlist directive, TIC54X:              TIC54X-Directives.
+* drnolist directive, TIC54X:            TIC54X-Directives.
+* dual directive, i860:                  Directives-i860.
+* ECOFF sections:                        MIPS Object.
+* ecr register, V850:                    V850-Regs.
+* eight-byte integer:                    Quad.
+* eipc register, V850:                   V850-Regs.
+* eipsw register, V850:                  V850-Regs.
+* eject directive:                       Eject.
+* ELF symbol type:                       Type.
+* else directive:                        Else.
+* elseif directive:                      Elseif.
+* empty expressions:                     Empty Exprs.
+* emsg directive, TIC54X:                TIC54X-Directives.
+* emulation:                             Overview.
+* end directive:                         End.
+* enddual directive, i860:               Directives-i860.
+* endef directive:                       Endef.
+* endfunc directive:                     Endfunc.
+* endianness, MIPS:                      Overview.
+* endianness, PJ:                        Overview.
+* endif directive:                       Endif.
+* endloop directive, TIC54X:             TIC54X-Directives.
+* endm directive:                        Macro.
+* endm directive, TIC54X:                TIC54X-Directives.
+* endstruct directive, TIC54X:           TIC54X-Directives.
+* endunion directive, TIC54X:            TIC54X-Directives.
+* ENTRY instructions, alignment:         Xtensa Automatic Alignment.
+* environment settings, TIC54X:          TIC54X-Env.
+* EOF, newline must precede:             Statements.
+* ep register, V850:                     V850-Regs.
+* equ directive:                         Equ.
+* equ directive, TIC54X:                 TIC54X-Directives.
+* equiv directive:                       Equiv.
+* err directive:                         Err.
+* error messages:                        Errors.
+* error on valid input:                  Bug Criteria.
+* errors, caused by warnings:            W.
+* errors, continuing after:              Z.
+* ESA/390 floating point (IEEE):         ESA/390 Floating Point.
+* ESA/390 support:                       ESA/390-Dependent.
+* ESA/390 Syntax:                        ESA/390 Options.
+* ESA/390-only directives:               ESA/390 Directives.
+* escape codes, character:               Strings.
+* eval directive, TIC54X:                TIC54X-Directives.
+* even:                                  Z8000 Directives.
+* even directive, M680x0:                M68K-Directives.
+* even directive, TIC54X:                TIC54X-Directives.
+* exitm directive:                       Macro.
+* expr (internal section):               As Sections.
+* expression arguments:                  Arguments.
+* expressions:                           Expressions.
+* expressions, comparison:               Infix Ops.
+* expressions, empty:                    Empty Exprs.
+* expressions, integer:                  Integer Exprs.
+* extAuxRegister directive, ARC:         ARC Directives.
+* extCondCode directive, ARC:            ARC Directives.
+* extCoreRegister directive, ARC:        ARC Directives.
+* extend directive M680x0:               M68K-Float.
+* extend directive M68HC11:              M68HC11-Float.
+* extended directive, i960:              Directives-i960.
+* extern directive:                      Extern.
+* extInstruction directive, ARC:         ARC Directives.
+* fail directive:                        Fail.
+* far_mode directive, TIC54X:            TIC54X-Directives.
+* faster processing (-f):                f.
+* fatal signal:                          Bug Criteria.
+* fclist directive, TIC54X:              TIC54X-Directives.
+* fcnolist directive, TIC54X:            TIC54X-Directives.
+* fepc register, V850:                   V850-Regs.
+* fepsw register, V850:                  V850-Regs.
+* ffloat directive, M88K:                M88K Directives.
+* ffloat directive, VAX:                 VAX-directives.
+* field directive, TIC54X:               TIC54X-Directives.
+* file directive:                        File.
+* file directive, AMD 29K:               AMD29K Directives.
+* file directive, MSP 430:               MSP430 Directives.
+* file name, logical:                    File.
+* files, including:                      Include.
+* files, input:                          Input Files.
+* fill directive:                        Fill.
+* filling memory <1>:                    Space.
+* filling memory:                        Skip.
+* float directive:                       Float.
+* float directive, i386:                 i386-Float.
+* float directive, M680x0:               M68K-Float.
+* float directive, M68HC11:              M68HC11-Float.
+* float directive, TIC54X:               TIC54X-Directives.
+* float directive, VAX:                  VAX-float.
+* float directive, x86-64:               i386-Float.
+* floating point numbers:                Flonums.
+* floating point numbers (double):       Double.
+* floating point numbers (single) <1>:   Single.
+* floating point numbers (single):       Float.
+* floating point, Alpha (IEEE):          Alpha Floating Point.
+* floating point, AMD 29K (IEEE):        AMD29K Floating Point.
+* floating point, ARC (IEEE):            ARC Floating Point.
+* floating point, ARM (IEEE):            ARM Floating Point.
+* floating point, D10V:                  D10V-Float.
+* floating point, D30V:                  D30V-Float.
+* floating point, ESA/390 (IEEE):        ESA/390 Floating Point.
+* floating point, H8/300 (IEEE):         H8/300 Floating Point.
+* floating point, H8/500 (IEEE):         H8/500 Floating Point.
+* floating point, HPPA (IEEE):           HPPA Floating Point.
+* floating point, i386:                  i386-Float.
+* floating point, i960 (IEEE):           Floating Point-i960.
+* floating point, M680x0:                M68K-Float.
+* floating point, M68HC11:               M68HC11-Float.
+* floating point, MSP 430 (IEEE):        MSP430 Floating Point.
+* floating point, SH (IEEE):             SH Floating Point.
+* floating point, SPARC (IEEE):          Sparc-Float.
+* floating point, V850 (IEEE):           V850 Floating Point.
+* floating point, VAX:                   VAX-float.
+* floating point, x86-64:                i386-Float.
+* flonums:                               Flonums.
+* force_thumb directive, ARM:            ARM Directives.
+* format of error messages:              Errors.
+* format of warning messages:            Errors.
+* formfeed (\f):                         Strings.
+* frame directive:                       Frame Directive.
+* freeregs directive:                    Freeregs Directive.
+* func directive:                        Func.
+* functions, in expressions:             Operators.
+* gbr960, i960 postprocessor:            Options-i960.
+* generic opcodes:                       Xtensa Opcodes.
+* generics directive:                    Generics Directive.
+* gfloat directive, VAX:                 VAX-directives.
+* global:                                Z8000 Directives.
+* global directive:                      Global.
+* global directive, TIC54X:              TIC54X-Directives.
+* gp register, MIPS:                     MIPS Object.
+* gp register, V850:                     V850-Regs.
+* grouping data:                         Sub-Sections.
+* H8/300 addressing modes:               H8/300-Addressing.
+* H8/300 floating point (IEEE):          H8/300 Floating Point.
+* H8/300 line comment character:         H8/300-Chars.
+* H8/300 line separator:                 H8/300-Chars.
+* H8/300 machine directives (none):      H8/300 Directives.
+* H8/300 opcode summary:                 H8/300 Opcodes.
+* H8/300 options (none):                 H8/300 Options.
+* H8/300 registers:                      H8/300-Regs.
+* H8/300 size suffixes:                  H8/300 Opcodes.
+* H8/300 support:                        H8/300-Dependent.
+* H8/300H, assembling for:               H8/300 Directives.
+* H8/500 addressing modes:               H8/500-Addressing.
+* H8/500 floating point (IEEE):          H8/500 Floating Point.
+* H8/500 line comment character:         H8/500-Chars.
+* H8/500 line separator:                 H8/500-Chars.
+* H8/500 machine directives (none):      H8/500 Directives.
+* H8/500 opcode summary:                 H8/500 Opcodes.
+* H8/500 options (none):                 H8/500 Options.
+* H8/500 registers:                      H8/500-Regs.
+* H8/500 support:                        H8/500-Dependent.
+* half directive, ARC:                   ARC Directives.
+* half directive, M88K:                  M88K Directives.
+* half directive, SPARC:                 Sparc-Directives.
+* half directive, TIC54X:                TIC54X-Directives.
+* hex character code (\XD...):           Strings.
+* hexadecimal integers:                  Integers.
+* hfloat directive, VAX:                 VAX-directives.
+* hi pseudo-op, V850:                    V850 Opcodes.
+* hi0 pseudo-op, V850:                   V850 Opcodes.
+* hidden directive:                      Hidden.
+* hilo pseudo-op, V850:                  V850 Opcodes.
+* HPPA directives not supported:         HPPA Directives.
+* HPPA floating point (IEEE):            HPPA Floating Point.
+* HPPA Syntax:                           HPPA Options.
+* HPPA-only directives:                  HPPA Directives.
+* hword directive:                       hword.
+* i370 support:                          ESA/390-Dependent.
+* i386 16-bit code:                      i386-16bit.
+* i386 arch directive:                   i386-Arch.
+* i386 att_syntax pseudo op:             i386-Syntax.
+* i386 conversion instructions:          i386-Mnemonics.
+* i386 floating point:                   i386-Float.
+* i386 immediate operands:               i386-Syntax.
+* i386 instruction naming:               i386-Mnemonics.
+* i386 instruction prefixes:             i386-Prefixes.
+* i386 intel_syntax pseudo op:           i386-Syntax.
+* i386 jump optimization:                i386-Jumps.
+* i386 jump, call, return:               i386-Syntax.
+* i386 jump/call operands:               i386-Syntax.
+* i386 memory references:                i386-Memory.
+* i386 mul, imul instructions:           i386-Notes.
+* i386 options:                          i386-Options.
+* i386 register operands:                i386-Syntax.
+* i386 registers:                        i386-Regs.
+* i386 sections:                         i386-Syntax.
+* i386 size suffixes:                    i386-Syntax.
+* i386 source, destination operands:     i386-Syntax.
+* i386 support:                          i386-Dependent.
+* i386 syntax compatibility:             i386-Syntax.
+* i80306 support:                        i386-Dependent.
+* i860 machine directives:               Directives-i860.
+* i860 opcodes:                          Opcodes for i860.
+* i860 support:                          i860-Dependent.
+* i960 architecture options:             Options-i960.
+* i960 branch recording:                 Options-i960.
+* i960 callj pseudo-opcode:              callj-i960.
+* i960 compare and jump expansions:      Compare-and-branch-i960.
+* i960 compare/branch instructions:      Compare-and-branch-i960.
+* i960 floating point (IEEE):            Floating Point-i960.
+* i960 machine directives:               Directives-i960.
+* i960 opcodes:                          Opcodes for i960.
+* i960 options:                          Options-i960.
+* i960 support:                          i960-Dependent.
+* ident directive:                       Ident.
+* identifiers, AMD 29K:                  AMD29K-Chars.
+* identifiers, ARM:                      ARM-Chars.
+* identifiers, MSP 430:                  MSP430-Chars.
+* if directive:                          If.
+* ifc directive:                         If.
+* ifdef directive:                       If.
+* ifeq directive:                        If.
+* ifeqs directive:                       If.
+* ifge directive:                        If.
+* ifgt directive:                        If.
+* ifle directive:                        If.
+* iflt directive:                        If.
+* ifnc directive:                        If.
+* ifndef directive:                      If.
+* ifne directive:                        If.
+* ifnes directive:                       If.
+* ifnotdef directive:                    If.
+* immediate character, ARM:              ARM-Chars.
+* immediate character, M680x0:           M68K-Chars.
+* immediate character, VAX:              VAX-operands.
+* immediate fields, relaxation:          Xtensa Immediate Relaxation.
+* immediate operands, i386:              i386-Syntax.
+* immediate operands, x86-64:            i386-Syntax.
+* imul instruction, i386:                i386-Notes.
+* imul instruction, x86-64:              i386-Notes.
+* incbin directive:                      Incbin.
+* include directive:                     Include.
+* include directive search path:         I.
+* indirect character, VAX:               VAX-operands.
+* infix operators:                       Infix Ops.
+* inhibiting interrupts, i386:           i386-Prefixes.
+* input:                                 Input Files.
+* input file linenumbers:                Input Files.
+* instruction expansion, CRIS:           CRIS-Expand.
+* instruction expansion, MMIX:           MMIX-Expand.
+* instruction naming, i386:              i386-Mnemonics.
+* instruction naming, x86-64:            i386-Mnemonics.
+* instruction prefixes, i386:            i386-Prefixes.
+* instruction set, M680x0:               M68K-opcodes.
+* instruction set, M68HC11:              M68HC11-opcodes.
+* instruction summary, D10V:             D10V-Opcodes.
+* instruction summary, D30V:             D30V-Opcodes.
+* instruction summary, H8/300:           H8/300 Opcodes.
+* instruction summary, H8/500:           H8/500 Opcodes.
+* instruction summary, SH:               SH Opcodes.
+* instruction summary, SH64:             SH64 Opcodes.
+* instruction summary, Z8000:            Z8000 Opcodes.
+* instructions and directives:           Statements.
+* int directive:                         Int.
+* int directive, H8/300:                 H8/300 Directives.
+* int directive, H8/500:                 H8/500 Directives.
+* int directive, i386:                   i386-Float.
+* int directive, TIC54X:                 TIC54X-Directives.
+* int directive, x86-64:                 i386-Float.
+* integer expressions:                   Integer Exprs.
+* integer, 16-byte:                      Octa.
+* integer, 8-byte:                       Quad.
+* integers:                              Integers.
+* integers, 16-bit:                      hword.
+* integers, 32-bit:                      Int.
+* integers, binary:                      Integers.
+* integers, decimal:                     Integers.
+* integers, hexadecimal:                 Integers.
+* integers, octal:                       Integers.
+* integers, one byte:                    Byte.
+* intel_syntax pseudo op, i386:          i386-Syntax.
+* intel_syntax pseudo op, x86-64:        i386-Syntax.
+* internal assembler sections:           As Sections.
+* internal directive:                    Internal.
+* invalid input:                         Bug Criteria.
+* invocation summary:                    Overview.
+* IP2K architecture options:             IP2K-Opts.
+* IP2K options:                          IP2K-Opts.
+* IP2K support:                          IP2K-Dependent.
+* irp directive:                         Irp.
+* irpc directive:                        Irpc.
+* ISA options, SH64:                     SH64 Options.
+* joining text and data sections:        R.
+* jump instructions, i386:               i386-Mnemonics.
+* jump instructions, x86-64:             i386-Mnemonics.
+* jump optimization, i386:               i386-Jumps.
+* jump optimization, x86-64:             i386-Jumps.
+* jump/call operands, i386:              i386-Syntax.
+* jump/call operands, x86-64:            i386-Syntax.
+* L16SI instructions, relaxation:        Xtensa Immediate Relaxation.
+* L16UI instructions, relaxation:        Xtensa Immediate Relaxation.
+* L32I instructions, relaxation:         Xtensa Immediate Relaxation.
+* L8UI instructions, relaxation:         Xtensa Immediate Relaxation.
+* label (:):                             Statements.
+* label directive, TIC54X:               TIC54X-Directives.
+* labels:                                Labels.
+* lcomm directive:                       Lcomm.
+* ld:                                    Object.
+* ldouble directive M680x0:              M68K-Float.
+* ldouble directive M68HC11:             M68HC11-Float.
+* ldouble directive, TIC54X:             TIC54X-Directives.
+* LDR reg,=<label> pseudo op, ARM:       ARM Opcodes.
+* leafproc directive, i960:              Directives-i960.
+* length directive, TIC54X:              TIC54X-Directives.
+* length of symbols:                     Symbol Intro.
+* lflags directive (ignored):            Lflags.
+* line comment character:                Comments.
+* line comment character, Alpha:         Alpha-Chars.
+* line comment character, AMD 29K:       AMD29K-Chars.
+* line comment character, ARM:           ARM-Chars.
+* line comment character, D10V:          D10V-Chars.
+* line comment character, D30V:          D30V-Chars.
+* line comment character, H8/300:        H8/300-Chars.
+* line comment character, H8/500:        H8/500-Chars.
+* line comment character, M680x0:        M68K-Chars.
+* line comment character, MSP 430:       MSP430-Chars.
+* line comment character, SH:            SH-Chars.
+* line comment character, SH64:          SH64-Chars.
+* line comment character, V850:          V850-Chars.
+* line comment character, Z8000:         Z8000-Chars.
+* line comment characters, CRIS:         CRIS-Chars.
+* line comment characters, MMIX:         MMIX-Chars.
+* line directive:                        Line.
+* line directive, AMD 29K:               AMD29K Directives.
+* line directive, MSP 430:               MSP430 Directives.
+* line numbers, in input files:          Input Files.
+* line numbers, in warnings/errors:      Errors.
+* line separator character:              Statements.
+* line separator, Alpha:                 Alpha-Chars.
+* line separator, ARM:                   ARM-Chars.
+* line separator, H8/300:                H8/300-Chars.
+* line separator, H8/500:                H8/500-Chars.
+* line separator, SH:                    SH-Chars.
+* line separator, SH64:                  SH64-Chars.
+* line separator, Z8000:                 Z8000-Chars.
+* lines starting with #:                 Comments.
+* linker:                                Object.
+* linker, and assembler:                 Secs Background.
+* linkonce directive:                    Linkonce.
+* list directive:                        List.
+* list directive, TIC54X:                TIC54X-Directives.
+* listing control, turning off:          Nolist.
+* listing control, turning on:           List.
+* listing control: new page:             Eject.
+* listing control: paper size:           Psize.
+* listing control: subtitle:             Sbttl.
+* listing control: title line:           Title.
+* listings, enabling:                    a.
+* literal directive:                     Literal Directive.
+* literal_position directive:            Literal Position Directive.
+* literal_prefix directive:              Literal Prefix Directive.
+* little endian output, MIPS:            Overview.
+* little endian output, PJ:              Overview.
+* little-endian output, MIPS:            MIPS Opts.
+* ln directive:                          Ln.
+* lo pseudo-op, V850:                    V850 Opcodes.
+* local common symbols:                  Lcomm.
+* local labels, retaining in output:     L.
+* local symbol names:                    Symbol Names.
+* location counter:                      Dot.
+* location counter, advancing:           Org.
+* logical file name:                     File.
+* logical line number:                   Line.
+* logical line numbers:                  Comments.
+* long directive:                        Long.
+* long directive, ARC:                   ARC Directives.
+* long directive, i386:                  i386-Float.
+* long directive, TIC54X:                TIC54X-Directives.
+* long directive, x86-64:                i386-Float.
+* longcall pseudo-op, V850:              V850 Opcodes.
+* longcalls directive:                   Longcalls Directive.
+* longjump pseudo-op, V850:              V850 Opcodes.
+* loop directive, TIC54X:                TIC54X-Directives.
+* LOOP instructions, alignment:          Xtensa Automatic Alignment.
+* lp register, V850:                     V850-Regs.
+* lval:                                  Z8000 Directives.
+* M32R architecture options:             M32R-Opts.
+* M32R options:                          M32R-Opts.
+* M32R support:                          M32R-Dependent.
+* M32R warnings:                         M32R-Warnings.
+* M680x0 addressing modes:               M68K-Syntax.
+* M680x0 architecture options:           M68K-Opts.
+* M680x0 branch improvement:             M68K-Branch.
+* M680x0 directives:                     M68K-Directives.
+* M680x0 floating point:                 M68K-Float.
+* M680x0 immediate character:            M68K-Chars.
+* M680x0 line comment character:         M68K-Chars.
+* M680x0 opcodes:                        M68K-opcodes.
+* M680x0 options:                        M68K-Opts.
+* M680x0 pseudo-opcodes:                 M68K-Branch.
+* M680x0 size modifiers:                 M68K-Syntax.
+* M680x0 support:                        M68K-Dependent.
+* M680x0 syntax:                         M68K-Syntax.
+* M68HC11 addressing modes:              M68HC11-Syntax.
+* M68HC11 and M68HC12 support:           M68HC11-Dependent.
+* M68HC11 assembler directive .far:      M68HC11-Directives.
+* M68HC11 assembler directive .interrupt: M68HC11-Directives.
+* M68HC11 assembler directive .mode:     M68HC11-Directives.
+* M68HC11 assembler directive .relax:    M68HC11-Directives.
+* M68HC11 assembler directive .xrefb:    M68HC11-Directives.
+* M68HC11 assembler directives:          M68HC11-Directives.
+* M68HC11 branch improvement:            M68HC11-Branch.
+* M68HC11 floating point:                M68HC11-Float.
+* M68HC11 modifiers:                     M68HC11-Modifiers.
+* M68HC11 opcodes:                       M68HC11-opcodes.
+* M68HC11 options:                       M68HC11-Opts.
+* M68HC11 pseudo-opcodes:                M68HC11-Branch.
+* M68HC11 syntax:                        M68HC11-Syntax.
+* M68HC12 assembler directives:          M68HC11-Directives.
+* M88K support:                          M88K-Dependent.
+* machine dependencies:                  Machine Dependencies.
+* machine directives, AMD 29K:           AMD29K Directives.
+* machine directives, ARC:               ARC Directives.
+* machine directives, ARM:               ARM Directives.
+* machine directives, H8/300 (none):     H8/300 Directives.
+* machine directives, H8/500 (none):     H8/500 Directives.
+* machine directives, i860:              Directives-i860.
+* machine directives, i960:              Directives-i960.
+* machine directives, MSP 430:           MSP430 Directives.
+* machine directives, SH:                SH Directives.
+* machine directives, SH64:              SH64 Directives.
+* machine directives, SPARC:             Sparc-Directives.
+* machine directives, TIC54X:            TIC54X-Directives.
+* machine directives, V850:              V850 Directives.
+* machine directives, VAX:               VAX-directives.
+* machine independent directives:        Pseudo Ops.
+* machine instructions (not covered):    Manual.
+* machine-independent syntax:            Syntax.
+* macro directive:                       Macro.
+* macro directive, TIC54X:               TIC54X-Directives.
+* macros:                                Macro.
+* Macros, AMD 29K:                       AMD29K-Macros.
+* macros, count executed:                Macro.
+* Macros, MSP 430:                       MSP430-Macros.
+* macros, TIC54X:                        TIC54X-Macros.
+* make rules:                            MD.
+* manual, structure and purpose:         Manual.
+* math builtins, TIC54X:                 TIC54X-Builtins.
+* Maximum number of continuation lines:  listing.
+* memory references, i386:               i386-Memory.
+* memory references, x86-64:             i386-Memory.
+* memory-mapped registers, TIC54X:       TIC54X-MMRegs.
+* merging text and data sections:        R.
+* messages from assembler:               Errors.
+* minus, permitted arguments:            Infix Ops.
+* MIPS architecture options:             MIPS Opts.
+* MIPS big-endian output:                MIPS Opts.
+* MIPS debugging directives:             MIPS Stabs.
+* MIPS ECOFF sections:                   MIPS Object.
+* MIPS endianness:                       Overview.
+* MIPS ISA:                              Overview.
+* MIPS ISA override:                     MIPS ISA.
+* MIPS little-endian output:             MIPS Opts.
+* MIPS MDMX instruction generation override: MIPS ASE instruction generation overrides.
+* MIPS MIPS-3D instruction generation override: MIPS ASE instruction generation overrides.
+* MIPS option stack:                     MIPS option stack.
+* MIPS processor:                        MIPS-Dependent.
+* MIT:                                   M68K-Syntax.
+* mlib directive, TIC54X:                TIC54X-Directives.
+* mlist directive, TIC54X:               TIC54X-Directives.
+* MMIX assembler directive BSPEC:        MMIX-Pseudos.
+* MMIX assembler directive BYTE:         MMIX-Pseudos.
+* MMIX assembler directive ESPEC:        MMIX-Pseudos.
+* MMIX assembler directive GREG:         MMIX-Pseudos.
+* MMIX assembler directive IS:           MMIX-Pseudos.
+* MMIX assembler directive LOC:          MMIX-Pseudos.
+* MMIX assembler directive LOCAL:        MMIX-Pseudos.
+* MMIX assembler directive OCTA:         MMIX-Pseudos.
+* MMIX assembler directive PREFIX:       MMIX-Pseudos.
+* MMIX assembler directive TETRA:        MMIX-Pseudos.
+* MMIX assembler directive WYDE:         MMIX-Pseudos.
+* MMIX assembler directives:             MMIX-Pseudos.
+* MMIX line comment characters:          MMIX-Chars.
+* MMIX options:                          MMIX-Opts.
+* MMIX pseudo-op BSPEC:                  MMIX-Pseudos.
+* MMIX pseudo-op BYTE:                   MMIX-Pseudos.
+* MMIX pseudo-op ESPEC:                  MMIX-Pseudos.
+* MMIX pseudo-op GREG:                   MMIX-Pseudos.
+* MMIX pseudo-op IS:                     MMIX-Pseudos.
+* MMIX pseudo-op LOC:                    MMIX-Pseudos.
+* MMIX pseudo-op LOCAL:                  MMIX-Pseudos.
+* MMIX pseudo-op OCTA:                   MMIX-Pseudos.
+* MMIX pseudo-op PREFIX:                 MMIX-Pseudos.
+* MMIX pseudo-op TETRA:                  MMIX-Pseudos.
+* MMIX pseudo-op WYDE:                   MMIX-Pseudos.
+* MMIX pseudo-ops:                       MMIX-Pseudos.
+* MMIX register names:                   MMIX-Regs.
+* MMIX support:                          MMIX-Dependent.
+* mmixal differences:                    MMIX-mmixal.
+* mmregs directive, TIC54X:              TIC54X-Directives.
+* mmsg directive, TIC54X:                TIC54X-Directives.
+* MMX, i386:                             i386-SIMD.
+* MMX, x86-64:                           i386-SIMD.
+* mnemonic suffixes, i386:               i386-Syntax.
+* mnemonic suffixes, x86-64:             i386-Syntax.
+* mnemonics for opcodes, VAX:            VAX-opcodes.
+* mnemonics, D10V:                       D10V-Opcodes.
+* mnemonics, D30V:                       D30V-Opcodes.
+* mnemonics, H8/300:                     H8/300 Opcodes.
+* mnemonics, H8/500:                     H8/500 Opcodes.
+* mnemonics, SH:                         SH Opcodes.
+* mnemonics, SH64:                       SH64 Opcodes.
+* mnemonics, Z8000:                      Z8000 Opcodes.
+* mnolist directive, TIC54X:             TIC54X-Directives.
+* Motorola syntax for the 680x0:         M68K-Moto-Syntax.
+* MOVI instructions, relaxation:         Xtensa Immediate Relaxation.
+* MRI compatibility mode:                M.
+* mri directive:                         MRI.
+* MRI mode, temporarily:                 MRI.
+* MSP 430 floating point (IEEE):         MSP430 Floating Point.
+* MSP 430 identifiers:                   MSP430-Chars.
+* MSP 430 line comment character:        MSP430-Chars.
+* MSP 430 machine directives:            MSP430 Directives.
+* MSP 430 macros:                        MSP430-Macros.
+* MSP 430 opcodes:                       MSP430 Opcodes.
+* MSP 430 options (none):                MSP430 Options.
+* MSP 430 register names:                MSP430-Regs.
+* MSP 430 support:                       MSP430-Dependent.
+* MSP430 Assembler Extensions:           MSP430-Ext.
+* mul instruction, i386:                 i386-Notes.
+* mul instruction, x86-64:               i386-Notes.
+* name:                                  Z8000 Directives.
+* named section:                         Section.
+* named sections:                        Ld Sections.
+* names, symbol:                         Symbol Names.
+* naming object file:                    o.
+* new page, in listings:                 Eject.
+* newblock directive, TIC54X:            TIC54X-Directives.
+* newline (\n):                          Strings.
+* newline, required at file end:         Statements.
+* no-density directive:                  Density Directive.
+* no-generics directive:                 Generics Directive.
+* no-longcalls directive:                Longcalls Directive.
+* no-relax directive:                    Relax Directive.
+* nolist directive:                      Nolist.
+* nolist directive, TIC54X:              TIC54X-Directives.
+* NOP pseudo op, ARM:                    ARM Opcodes.
+* notes for Alpha:                       Alpha Notes.
+* null-terminated strings:               Asciz.
+* number constants:                      Numbers.
+* number of macros executed:             Macro.
+* numbered subsections:                  Sub-Sections.
+* numbers, 16-bit:                       hword.
+* numeric values:                        Expressions.
+* nword directive, SPARC:                Sparc-Directives.
+* object file:                           Object.
+* object file format:                    Object Formats.
+* object file name:                      o.
+* object file, after errors:             Z.
+* obsolescent directives:                Deprecated.
+* octa directive:                        Octa.
+* octal character code (\DDD):           Strings.
+* octal integers:                        Integers.
+* offset directive, V850:                V850 Directives.
+* opcode mnemonics, VAX:                 VAX-opcodes.
+* opcode names, Xtenxa:                  Xtensa Opcodes.
+* opcode summary, D10V:                  D10V-Opcodes.
+* opcode summary, D30V:                  D30V-Opcodes.
+* opcode summary, H8/300:                H8/300 Opcodes.
+* opcode summary, H8/500:                H8/500 Opcodes.
+* opcode summary, SH:                    SH Opcodes.
+* opcode summary, SH64:                  SH64 Opcodes.
+* opcode summary, Z8000:                 Z8000 Opcodes.
+* opcodes for AMD 29K:                   AMD29K Opcodes.
+* opcodes for ARC:                       ARC Opcodes.
+* opcodes for ARM:                       ARM Opcodes.
+* opcodes for MSP 430:                   MSP430 Opcodes.
+* opcodes for V850:                      V850 Opcodes.
+* opcodes, i860:                         Opcodes for i860.
+* opcodes, i960:                         Opcodes for i960.
+* opcodes, M680x0:                       M68K-opcodes.
+* opcodes, M68HC11:                      M68HC11-opcodes.
+* operand delimiters, i386:              i386-Syntax.
+* operand delimiters, x86-64:            i386-Syntax.
+* operand notation, VAX:                 VAX-operands.
+* operands in expressions:               Arguments.
+* operator precedence:                   Infix Ops.
+* operators, in expressions:             Operators.
+* operators, permitted arguments:        Infix Ops.
+* optimization, D10V:                    Overview.
+* optimization, D30V:                    Overview.
+* optimizations:                         Xtensa Optimizations.
+* option directive, ARC:                 ARC Directives.
+* option directive, TIC54X:              TIC54X-Directives.
+* option summary:                        Overview.
+* options for Alpha:                     Alpha Options.
+* options for AMD29K (none):             AMD29K Options.
+* options for ARC (none):                ARC Options.
+* options for ARM (none):                ARM Options.
+* options for i386:                      i386-Options.
+* options for MSP430 (none):             MSP430 Options.
+* options for PDP-11:                    PDP-11-Options.
+* options for PowerPC:                   PowerPC-Opts.
+* options for SPARC:                     Sparc-Opts.
+* options for V850 (none):               V850 Options.
+* options for VAX/VMS:                   VAX-Opts.
+* options for x86-64:                    i386-Options.
+* options, all versions of assembler:    Invoking.
+* options, command line:                 Command Line.
+* options, CRIS:                         CRIS-Opts.
+* options, D10V:                         D10V-Opts.
+* options, D30V:                         D30V-Opts.
+* options, H8/300 (none):                H8/300 Options.
+* options, H8/500 (none):                H8/500 Options.
+* options, i960:                         Options-i960.
+* options, IP2K:                         IP2K-Opts.
+* options, M32R:                         M32R-Opts.
+* options, M680x0:                       M68K-Opts.
+* options, M68HC11:                      M68HC11-Opts.
+* options, MMIX:                         MMIX-Opts.
+* options, PJ:                           PJ Options.
+* options, SH:                           SH Options.
+* options, SH64:                         SH64 Options.
+* options, TIC54X:                       TIC54X-Opts.
+* options, Z8000:                        Z8000 Options.
+* org directive:                         Org.
+* other attribute, of a.out symbol:      Symbol Other.
+* output file:                           Object.
+* p2align directive:                     P2align.
+* p2alignl directive:                    P2align.
+* p2alignw directive:                    P2align.
+* padding the location counter:          Align.
+* padding the location counter given a power of two: P2align.
+* padding the location counter given number of bytes: Balign.
+* page, in listings:                     Eject.
+* paper size, for listings:              Psize.
+* paths for .include:                    I.
+* patterns, writing in memory:           Fill.
+* PDP-11 comments:                       PDP-11-Syntax.
+* PDP-11 floating-point register syntax: PDP-11-Syntax.
+* PDP-11 general-purpose register syntax: PDP-11-Syntax.
+* PDP-11 instruction naming:             PDP-11-Mnemonics.
+* PDP-11 support:                        PDP-11-Dependent.
+* PDP-11 syntax:                         PDP-11-Syntax.
+* PIC code generation for ARM:           ARM Options.
+* PJ endianness:                         Overview.
+* PJ options:                            PJ Options.
+* PJ support:                            PJ-Dependent.
+* plus, permitted arguments:             Infix Ops.
+* popsection directive:                  PopSection.
+* Position-independent code, CRIS:       CRIS-Opts.
+* Position-independent code, symbols in, CRIS: CRIS-Pic.
+* PowerPC architectures:                 PowerPC-Opts.
+* PowerPC options:                       PowerPC-Opts.
+* PowerPC support:                       PPC-Dependent.
+* precedence of directives:              Xtensa Directives.
+* precedence of operators:               Infix Ops.
+* precision, floating point:             Flonums.
+* prefix operators:                      Prefix Ops.
+* prefixes, i386:                        i386-Prefixes.
+* preprocessing:                         Preprocessing.
+* preprocessing, turning on and off:     Preprocessing.
+* previous directive:                    Previous.
+* primary attributes, COFF symbols:      COFF Symbols.
+* print directive:                       Print.
+* proc directive, SPARC:                 Sparc-Directives.
+* protected directive:                   Protected.
+* protected registers, AMD 29K:          AMD29K-Regs.
+* pseudo-op .dword, CRIS:                CRIS-Pseudos.
+* pseudo-op .syntax, CRIS:               CRIS-Pseudos.
+* pseudo-op BSPEC, MMIX:                 MMIX-Pseudos.
+* pseudo-op BYTE, MMIX:                  MMIX-Pseudos.
+* pseudo-op ESPEC, MMIX:                 MMIX-Pseudos.
+* pseudo-op GREG, MMIX:                  MMIX-Pseudos.
+* pseudo-op IS, MMIX:                    MMIX-Pseudos.
+* pseudo-op LOC, MMIX:                   MMIX-Pseudos.
+* pseudo-op LOCAL, MMIX:                 MMIX-Pseudos.
+* pseudo-op OCTA, MMIX:                  MMIX-Pseudos.
+* pseudo-op PREFIX, MMIX:                MMIX-Pseudos.
+* pseudo-op TETRA, MMIX:                 MMIX-Pseudos.
+* pseudo-op WYDE, MMIX:                  MMIX-Pseudos.
+* pseudo-opcodes, M680x0:                M68K-Branch.
+* pseudo-opcodes, M68HC11:               M68HC11-Branch.
+* pseudo-ops for branch, VAX:            VAX-branch.
+* pseudo-ops, CRIS:                      CRIS-Pseudos.
+* pseudo-ops, machine independent:       Pseudo Ops.
+* pseudo-ops, MMIX:                      MMIX-Pseudos.
+* psize directive:                       Psize.
+* pstring directive, TIC54X:             TIC54X-Directives.
+* psw register, V850:                    V850-Regs.
+* purgem directive:                      Purgem.
+* purpose of GNU assembler:              GNU Assembler.
+* pushsection directive:                 PushSection.
+* quad directive:                        Quad.
+* quad directive, i386:                  i386-Float.
+* quad directive, x86-64:                i386-Float.
+* real-mode code, i386:                  i386-16bit.
+* ref directive, TIC54X:                 TIC54X-Directives.
+* register directive, SPARC:             Sparc-Directives.
+* register names, Alpha:                 Alpha-Regs.
+* register names, AMD 29K:               AMD29K-Regs.
+* register names, ARC:                   ARC-Regs.
+* register names, ARM:                   ARM-Regs.
+* register names, CRIS:                  CRIS-Regs.
+* register names, H8/300:                H8/300-Regs.
+* register names, MMIX:                  MMIX-Regs.
+* register names, MSP 430:               MSP430-Regs.
+* register names, V850:                  V850-Regs.
+* register names, VAX:                   VAX-operands.
+* register names, Xtensa:                Xtensa Registers.
+* register operands, i386:               i386-Syntax.
+* register operands, x86-64:             i386-Syntax.
+* registers, D10V:                       D10V-Regs.
+* registers, D30V:                       D30V-Regs.
+* registers, H8/500:                     H8/500-Regs.
+* registers, i386:                       i386-Regs.
+* registers, SH:                         SH-Regs.
+* registers, SH64:                       SH64-Regs.
+* registers, TIC54X memory-mapped:       TIC54X-MMRegs.
+* registers, x86-64:                     i386-Regs.
+* registers, Z8000:                      Z8000-Regs.
+* relax directive:                       Relax Directive.
+* relaxation:                            Xtensa Relaxation.
+* relaxation of ADDI instructions:       Xtensa Immediate Relaxation.
+* relaxation of branch instructions:     Xtensa Branch Relaxation.
+* relaxation of call instructions:       Xtensa Call Relaxation.
+* relaxation of immediate fields:        Xtensa Immediate Relaxation.
+* relaxation of L16SI instructions:      Xtensa Immediate Relaxation.
+* relaxation of L16UI instructions:      Xtensa Immediate Relaxation.
+* relaxation of L32I instructions:       Xtensa Immediate Relaxation.
+* relaxation of L8UI instructions:       Xtensa Immediate Relaxation.
+* relaxation of MOVI instructions:       Xtensa Immediate Relaxation.
+* relocation:                            Sections.
+* relocation example:                    Ld Sections.
+* relocations, Alpha:                    Alpha-Relocs.
+* repeat prefixes, i386:                 i386-Prefixes.
+* reporting bugs in assembler:           Reporting Bugs.
+* rept directive:                        Rept.
+* req directive, ARM:                    ARM Directives.
+* reserve directive, SPARC:              Sparc-Directives.
+* return instructions, i386:             i386-Syntax.
+* return instructions, x86-64:           i386-Syntax.
+* REX prefixes, i386:                    i386-Prefixes.
+* rsect:                                 Z8000 Directives.
+* sblock directive, TIC54X:              TIC54X-Directives.
+* sbttl directive:                       Sbttl.
+* scl directive:                         Scl.
+* sdaoff pseudo-op, V850:                V850 Opcodes.
+* search path for .include:              I.
+* sect directive, AMD 29K:               AMD29K Directives.
+* sect directive, MSP 430:               MSP430 Directives.
+* sect directive, TIC54X:                TIC54X-Directives.
+* section directive (COFF version):      Section.
+* section directive (ELF version):       Section.
+* section directive, V850:               V850 Directives.
+* section override prefixes, i386:       i386-Prefixes.
+* Section Stack <1>:                     SubSection.
+* Section Stack <2>:                     Section.
+* Section Stack <3>:                     PushSection.
+* Section Stack <4>:                     PopSection.
+* Section Stack:                         Previous.
+* section-relative addressing:           Secs Background.
+* sections:                              Sections.
+* sections in messages, internal:        As Sections.
+* sections, i386:                        i386-Syntax.
+* sections, named:                       Ld Sections.
+* sections, x86-64:                      i386-Syntax.
+* seg directive, SPARC:                  Sparc-Directives.
+* segm:                                  Z8000 Directives.
+* set directive:                         Set.
+* set directive, M88K:                   M88K Directives.
+* set directive, TIC54X:                 TIC54X-Directives.
+* SH addressing modes:                   SH-Addressing.
+* SH floating point (IEEE):              SH Floating Point.
+* SH line comment character:             SH-Chars.
+* SH line separator:                     SH-Chars.
+* SH machine directives:                 SH Directives.
+* SH opcode summary:                     SH Opcodes.
+* SH options:                            SH Options.
+* SH registers:                          SH-Regs.
+* SH support:                            SH-Dependent.
+* SH64 ABI options:                      SH64 Options.
+* SH64 addressing modes:                 SH64-Addressing.
+* SH64 ISA options:                      SH64 Options.
+* SH64 line comment character:           SH64-Chars.
+* SH64 line separator:                   SH64-Chars.
+* SH64 machine directives:               SH64 Directives.
+* SH64 opcode summary:                   SH64 Opcodes.
+* SH64 options:                          SH64 Options.
+* SH64 registers:                        SH64-Regs.
+* SH64 support:                          SH64-Dependent.
+* short directive:                       Short.
+* short directive, ARC:                  ARC Directives.
+* short directive, TIC54X:               TIC54X-Directives.
+* SIMD, i386:                            i386-SIMD.
+* SIMD, x86-64:                          i386-SIMD.
+* single character constant:             Chars.
+* single directive:                      Single.
+* single directive, i386:                i386-Float.
+* single directive, x86-64:              i386-Float.
+* sixteen bit integers:                  hword.
+* sixteen byte integer:                  Octa.
+* size directive (COFF version):         Size.
+* size directive (ELF version):          Size.
+* size modifiers, D10V:                  D10V-Size.
+* size modifiers, D30V:                  D30V-Size.
+* size modifiers, M680x0:                M68K-Syntax.
+* size prefixes, i386:                   i386-Prefixes.
+* size suffixes, H8/300:                 H8/300 Opcodes.
+* sizes operands, i386:                  i386-Syntax.
+* sizes operands, x86-64:                i386-Syntax.
+* skip directive:                        Skip.
+* skip directive, M680x0:                M68K-Directives.
+* skip directive, SPARC:                 Sparc-Directives.
+* sleb128 directive:                     Sleb128.
+* small objects, MIPS ECOFF:             MIPS Object.
+* SOM symbol attributes:                 SOM Symbols.
+* source program:                        Input Files.
+* source, destination operands; i386:    i386-Syntax.
+* source, destination operands; x86-64:  i386-Syntax.
+* sp register:                           Xtensa Registers.
+* sp register, V850:                     V850-Regs.
+* space directive:                       Space.
+* space directive, TIC54X:               TIC54X-Directives.
+* space used, maximum for assembly:      statistics.
+* SPARC architectures:                   Sparc-Opts.
+* SPARC data alignment:                  Sparc-Aligned-Data.
+* SPARC floating point (IEEE):           Sparc-Float.
+* SPARC machine directives:              Sparc-Directives.
+* SPARC options:                         Sparc-Opts.
+* SPARC support:                         Sparc-Dependent.
+* special characters, ARC:               ARC-Chars.
+* special characters, M680x0:            M68K-Chars.
+* special purpose registers, AMD 29K:    AMD29K-Regs.
+* special purpose registers, MSP 430:    MSP430-Regs.
+* specific opcodes:                      Xtensa Opcodes.
+* sslist directive, TIC54X:              TIC54X-Directives.
+* ssnolist directive, TIC54X:            TIC54X-Directives.
+* stabd directive:                       Stab.
+* stabn directive:                       Stab.
+* stabs directive:                       Stab.
+* stabX directives:                      Stab.
+* standard assembler sections:           Secs Background.
+* standard input, as input file:         Command Line.
+* statement separator character:         Statements.
+* statement separator, Alpha:            Alpha-Chars.
+* statement separator, ARM:              ARM-Chars.
+* statement separator, H8/300:           H8/300-Chars.
+* statement separator, H8/500:           H8/500-Chars.
+* statement separator, SH:               SH-Chars.
+* statement separator, SH64:             SH64-Chars.
+* statement separator, Z8000:            Z8000-Chars.
+* statements, structure of:              Statements.
+* statistics, about assembly:            statistics.
+* stopping the assembly:                 Abort.
+* string constants:                      Strings.
+* string directive:                      String.
+* string directive on HPPA:              HPPA Directives.
+* string directive, M88K:                M88K Directives.
+* string directive, TIC54X:              TIC54X-Directives.
+* string literals:                       Ascii.
+* string, copying to object file:        String.
+* struct directive:                      Struct.
+* struct directive, TIC54X:              TIC54X-Directives.
+* structure debugging, COFF:             Tag.
+* sub-instruction ordering, D10V:        D10V-Chars.
+* sub-instruction ordering, D30V:        D30V-Chars.
+* sub-instructions, D10V:                D10V-Subs.
+* sub-instructions, D30V:                D30V-Subs.
+* subexpressions:                        Arguments.
+* subsection directive:                  SubSection.
+* subsym builtins, TIC54X:               TIC54X-Macros.
+* subtitles for listings:                Sbttl.
+* subtraction, permitted arguments:      Infix Ops.
+* summary of options:                    Overview.
+* support:                               HPPA-Dependent.
+* supporting files, including:           Include.
+* suppressing warnings:                  W.
+* sval:                                  Z8000 Directives.
+* symbol attributes:                     Symbol Attributes.
+* symbol attributes, a.out:              a.out Symbols.
+* symbol attributes, COFF:               COFF Symbols.
+* symbol attributes, SOM:                SOM Symbols.
+* symbol descriptor, COFF:               Desc.
+* symbol modifiers:                      M68HC11-Modifiers.
+* symbol names:                          Symbol Names.
+* symbol names, $ in <1>:                SH64-Chars.
+* symbol names, $ in <2>:                SH-Chars.
+* symbol names, $ in <3>:                H8/500-Chars.
+* symbol names, $ in <4>:                D30V-Chars.
+* symbol names, $ in:                    D10V-Chars.
+* symbol names, local:                   Symbol Names.
+* symbol names, temporary:               Symbol Names.
+* symbol storage class (COFF):           Scl.
+* symbol type:                           Symbol Type.
+* symbol type, COFF:                     Type.
+* symbol type, ELF:                      Type.
+* symbol value:                          Symbol Value.
+* symbol value, setting:                 Set.
+* symbol values, assigning:              Setting Symbols.
+* symbol versioning:                     Symver.
+* symbol, common:                        Comm.
+* symbol, making visible to linker:      Global.
+* symbolic debuggers, information for:   Stab.
+* symbols:                               Symbols.
+* Symbols in position-independent code, CRIS: CRIS-Pic.
+* symbols with uppercase, VAX/VMS:       VAX-Opts.
+* symbols, assigning values to:          Equ.
+* symbols, local common:                 Lcomm.
+* symver directive:                      Symver.
+* syntax compatibility, i386:            i386-Syntax.
+* syntax compatibility, x86-64:          i386-Syntax.
+* syntax, D10V:                          D10V-Syntax.
+* syntax, D30V:                          D30V-Syntax.
+* syntax, M680x0:                        M68K-Syntax.
+* syntax, M68HC11 <1>:                   M68HC11-Modifiers.
+* syntax, M68HC11:                       M68HC11-Syntax.
+* syntax, machine-independent:           Syntax.
+* syntax, Xtensa assembler:              Xtensa Syntax.
+* sysproc directive, i960:               Directives-i960.
+* tab (\t):                              Strings.
+* tab directive, TIC54X:                 TIC54X-Directives.
+* tag directive:                         Tag.
+* tag directive, TIC54X:                 TIC54X-Directives.
+* tdaoff pseudo-op, V850:                V850 Opcodes.
+* temporary symbol names:                Symbol Names.
+* text and data sections, joining:       R.
+* text directive:                        Text.
+* text section:                          Ld Sections.
+* tfloat directive, i386:                i386-Float.
+* tfloat directive, x86-64:              i386-Float.
+* thumb directive, ARM:                  ARM Directives.
+* Thumb support:                         ARM-Dependent.
+* thumb_func directive, ARM:             ARM Directives.
+* thumb_set directive, ARM:              ARM Directives.
+* TIC54X builtin math functions:         TIC54X-Builtins.
+* TIC54X machine directives:             TIC54X-Directives.
+* TIC54X memory-mapped registers:        TIC54X-MMRegs.
+* TIC54X options:                        TIC54X-Opts.
+* TIC54X subsym builtins:                TIC54X-Macros.
+* TIC54X support:                        TIC54X-Dependent.
+* TIC54X-specific macros:                TIC54X-Macros.
+* time, total for assembly:              statistics.
+* title directive:                       Title.
+* tp register, V850:                     V850-Regs.
+* trusted compiler:                      f.
+* turning preprocessing on and off:      Preprocessing.
+* type directive (COFF version):         Type.
+* type directive (ELF version):          Type.
+* type of a symbol:                      Symbol Type.
+* ualong directive, SH:                  SH Directives.
+* uaword directive, SH:                  SH Directives.
+* ubyte directive, TIC54X:               TIC54X-Directives.
+* uchar directive, TIC54X:               TIC54X-Directives.
+* uhalf directive, TIC54X:               TIC54X-Directives.
+* uint directive, TIC54X:                TIC54X-Directives.
+* uleb128 directive:                     Uleb128.
+* ulong directive, TIC54X:               TIC54X-Directives.
+* undefined section:                     Ld Sections.
+* union directive, TIC54X:               TIC54X-Directives.
+* unsegm:                                Z8000 Directives.
+* use directive, AMD 29K:                AMD29K Directives.
+* usect directive, TIC54X:               TIC54X-Directives.
+* ushort directive, TIC54X:              TIC54X-Directives.
+* uword directive, TIC54X:               TIC54X-Directives.
+* V850 command line options:             V850 Options.
+* V850 floating point (IEEE):            V850 Floating Point.
+* V850 line comment character:           V850-Chars.
+* V850 machine directives:               V850 Directives.
+* V850 opcodes:                          V850 Opcodes.
+* V850 options (none):                   V850 Options.
+* V850 register names:                   V850-Regs.
+* V850 support:                          V850-Dependent.
+* val directive:                         Val.
+* value attribute, COFF:                 Val.
+* value of a symbol:                     Symbol Value.
+* var directive, TIC54X:                 TIC54X-Directives.
+* VAX bitfields not supported:           VAX-no.
+* VAX branch improvement:                VAX-branch.
+* VAX command-line options ignored:      VAX-Opts.
+* VAX displacement sizing character:     VAX-operands.
+* VAX floating point:                    VAX-float.
+* VAX immediate character:               VAX-operands.
+* VAX indirect character:                VAX-operands.
+* VAX machine directives:                VAX-directives.
+* VAX opcode mnemonics:                  VAX-opcodes.
+* VAX operand notation:                  VAX-operands.
+* VAX register names:                    VAX-operands.
+* VAX support:                           Vax-Dependent.
+* Vax-11 C compatibility:                VAX-Opts.
+* VAX/VMS options:                       VAX-Opts.
+* version directive:                     Version.
+* version directive, TIC54X:             TIC54X-Directives.
+* version of assembler:                  v.
+* versions of symbols:                   Symver.
+* visibility <1>:                        Protected.
+* visibility <2>:                        Internal.
+* visibility:                            Hidden.
+* VMS (VAX) options:                     VAX-Opts.
+* vtable_entry:                          VTableEntry.
+* vtable_inherit:                        VTableInherit.
+* warning for altered difference tables: K.
+* warning messages:                      Errors.
+* warnings, causing error:               W.
+* warnings, M32R:                        M32R-Warnings.
+* warnings, suppressing:                 W.
+* warnings, switching on:                W.
+* weak directive:                        Weak.
+* whitespace:                            Whitespace.
+* whitespace, removed by preprocessor:   Preprocessing.
+* wide floating point directives, VAX:   VAX-directives.
+* width directive, TIC54X:               TIC54X-Directives.
+* Width of continuation lines of disassembly output: listing.
+* Width of first line disassembly output: listing.
+* Width of source line output:           listing.
+* wmsg directive, TIC54X:                TIC54X-Directives.
+* word directive:                        Word.
+* word directive, ARC:                   ARC Directives.
+* word directive, H8/300:                H8/300 Directives.
+* word directive, H8/500:                H8/500 Directives.
+* word directive, i386:                  i386-Float.
+* word directive, M88K:                  M88K Directives.
+* word directive, SPARC:                 Sparc-Directives.
+* word directive, TIC54X:                TIC54X-Directives.
+* word directive, x86-64:                i386-Float.
+* writing patterns in memory:            Fill.
+* wval:                                  Z8000 Directives.
+* x86-64 arch directive:                 i386-Arch.
+* x86-64 att_syntax pseudo op:           i386-Syntax.
+* x86-64 conversion instructions:        i386-Mnemonics.
+* x86-64 floating point:                 i386-Float.
+* x86-64 immediate operands:             i386-Syntax.
+* x86-64 instruction naming:             i386-Mnemonics.
+* x86-64 intel_syntax pseudo op:         i386-Syntax.
+* x86-64 jump optimization:              i386-Jumps.
+* x86-64 jump, call, return:             i386-Syntax.
+* x86-64 jump/call operands:             i386-Syntax.
+* x86-64 memory references:              i386-Memory.
+* x86-64 options:                        i386-Options.
+* x86-64 register operands:              i386-Syntax.
+* x86-64 registers:                      i386-Regs.
+* x86-64 sections:                       i386-Syntax.
+* x86-64 size suffixes:                  i386-Syntax.
+* x86-64 source, destination operands:   i386-Syntax.
+* x86-64 support:                        i386-Dependent.
+* x86-64 syntax compatibility:           i386-Syntax.
+* xfloat directive, TIC54X:              TIC54X-Directives.
+* xlong directive, TIC54X:               TIC54X-Directives.
+* Xtensa architecture:                   Xtensa-Dependent.
+* Xtensa assembler syntax:               Xtensa Syntax.
+* Xtensa density option:                 Xtensa Options.
+* Xtensa directives:                     Xtensa Directives.
+* Xtensa opcode names:                   Xtensa Opcodes.
+* Xtensa register names:                 Xtensa Registers.
+* xword directive, SPARC:                Sparc-Directives.
+* Z800 addressing modes:                 Z8000-Addressing.
+* Z8000 directives:                      Z8000 Directives.
+* Z8000 line comment character:          Z8000-Chars.
+* Z8000 line separator:                  Z8000-Chars.
+* Z8000 opcode summary:                  Z8000 Opcodes.
+* Z8000 options:                         Z8000 Options.
+* Z8000 registers:                       Z8000-Regs.
+* Z8000 support:                         Z8000-Dependent.
+* zdaoff pseudo-op, V850:                V850 Opcodes.
+* zero register, V850:                   V850-Regs.
+* zero-terminated strings:               Asciz.
+
+
