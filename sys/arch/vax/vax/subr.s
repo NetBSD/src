@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.47 2000/06/05 00:09:20 matt Exp $	   */
+/*	$NetBSD: subr.s,v 1.48 2000/06/10 14:59:38 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -315,6 +315,7 @@ noque:	.asciz	"swtch"
 #
 	svpctx
 	mtpr	r3,$PR_PCBB
+_tramp:	.globl	_tramp	# used to kick off multiprocessor systems.
 	ldpctx
 	rei
 
