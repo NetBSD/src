@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.210.2.2 2004/07/14 09:07:05 tron Exp $
+#	$NetBSD: files.pci,v 1.210.2.3 2004/08/30 09:24:46 tron Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -712,3 +712,8 @@ file	dev/pci/if_dge.c		dge
 # Realtek 8129/8139 Ethernet controllers
 attach	re at pci
 file	dev/pci/if_re.c			re
+
+# Workbit NinjaSCSI-32 controllers
+# device declaration in sys/conf/files
+attach	njs at pci with njs_pci
+file	dev/pci/njs_pci.c		njs_pci
