@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.40 1995/08/20 15:08:22 chopps Exp $
+#	$NetBSD: GENERIC,v 1.41 1995/08/20 15:13:20 chopps Exp $
 
 #
 # GENERIC AMIGA
@@ -107,7 +107,6 @@ options		RETINACONSOLE	# enable code to allow retina to be console
 options		ULOWELLCONSOLE	# enable code to allow a2410 to be console
 options         CL5426CONSOLE   # Cirrus console
 
-#options	RETINA_SPEED_HACK	# enable fast scroll code, may not work
 options		GRF_ECS		# Enhanced Chip Set
 options		GRF_NTSC	# NTSC
 options		GRF_PAL		# PAL
@@ -121,7 +120,6 @@ options		GRF_CL5426	# Cirrus board support
 #options	"ULOWELL_OSC1=36000000"
 #options	"ULOWELL_OSC2=66667000"
 
-
 # This is how you specify the blitting speed, higher values may speed up blits
 # a littel bit.  If you raise this value too much some trash may appear.
 # the commented version is the default.
@@ -130,7 +128,8 @@ options		GRF_CL5426	# Cirrus board support
 # for quite a few people.  E.g. The cursor sprite will turn to a block
 # when moved to the top of the screen in X.
 #options	RH_64BIT_SPRITE
-
+# enables fast scroll code appears to now work on 040 systems.
+#options	RETINA_SPEED_HACK
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II

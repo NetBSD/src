@@ -1,4 +1,4 @@
-#	$NetBSD: COFFEE,v 1.7 1995/08/20 15:08:19 chopps Exp $
+#	$NetBSD: COFFEE,v 1.8 1995/08/20 15:13:19 chopps Exp $
 
 #
 # COFFEE - GENERIC but with GATEWAY and DEBUG
@@ -107,7 +107,6 @@ options		RETINACONSOLE	# enable code to allow retina to be console
 options		ULOWELLCONSOLE	# enable code to allow a2410 to be console
 options         CL5426CONSOLE   # Cirrus console
 
-#options	RETINA_SPEED_HACK	# enable fast scroll code, may not work
 options		GRF_ECS		# Enhanced Chip Set
 options		GRF_NTSC	# NTSC
 options		GRF_PAL		# PAL
@@ -119,12 +118,24 @@ options		GRF_CL5426	# Cirrus board support
 # This is how you would tell the kernel the A2410 oscillator frequencies:
 # The used frequencies are the defaults, and don't need option setting
 #options	"ULOWELL_OSC1=36000000"
+#options	"ULOWELL_OSC2=66667000"
+
+# This is how you specify the blitting speed, higher values may speed up blits
+# a littel bit.  If you raise this value too much some trash may appear.
+# the commented version is the default.
+#options	RH_MEMCLK 61000000
+# this option enables the 64 bit sprite which doesn't seems to be work
+# for quite a few people.  E.g. The cursor sprite will turn to a block
+# when moved to the top of the screen in X.
+#options	RH_64BIT_SPRITE
+# enables fast scroll code appears to now work on 040 systems.
+#options	RETINA_SPEED_HACK
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
 grfrh0		at zbus0		# retina III
 grfcl*		at zbus0		# Picasso II/Piccalo/Spectrum
-grful0		at zbus0		# a2410
+grful0		at zbus0		# A2410
 
 grf0		at grfcc0
 grf1		at grfrt0
