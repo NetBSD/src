@@ -1,7 +1,6 @@
-#   $NetBSD: Makefile,v 1.3 1997/07/29 18:03:34 veego Exp $
+#   $NetBSD: Makefile,v 1.4 1997/10/17 05:58:23 lukem Exp $
 
 .if ${MACHINE} == "amiga"
-WARNS?=		1
 PROG=		grfconfig
 CFLAGS+=	-I${.CURDIR}/../../sys/arch -D${MACHINE}
 .endif
