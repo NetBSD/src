@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.24 1995/04/22 14:17:18 cgd Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.25 1995/04/22 19:43:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -232,119 +232,29 @@ compat_09_uname(p, uap, retval)
 
 int	scdebug = SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS;
 
-extern int nsysent;
-extern char *syscallnames[];
-#ifdef COMPAT_SUNOS
-extern int nsunos_sysent;
-extern struct sysent sunos_sysent[];
-extern char *sunos_syscallnames[];
-#endif /* COMPAT_SUNOS */
-#ifdef COMPAT_HPUX
-extern int nhpux_sysent;
-extern struct sysent hpux_sysent[];
-extern char *hpux_syscallnames[];
-#endif /* COMPAT_HPUX */
-#ifdef COMPAT_ULTRIX
-extern int nultrix_sysent;
-extern struct sysent ultrix_sysent[];
-extern char *ultrix_syscallnames[];
-#endif /* COMPAT_ULTRIX */
-#ifdef COMPAT_SVR4
-extern int nsvr4_sysent;
-extern struct sysent svr4_sysent[];
-extern char *svr4_syscallnames[];
-#endif /* COMPAT_SVR4 */
-#ifdef COMPAT_IBCS2
-extern int nibcs2_sysent;
-extern struct sysent ibcs2_sysent[];
-extern char *ibcs2_syscallnames[];
-#endif /* COMPAT_IBCS2 */
-#ifdef COMPAT_OSF1
-extern int nosf1_sysent;
-extern struct sysent osf1_sysent[];
-extern char *osf1_syscallnames[];
-#endif /* COMPAT_OSF1 */
-#ifdef COMPAT_LINUX
-extern int nlinux_sysent;
-extern struct sysent linux_sysent[];
-extern char *linux_syscallnames[];
-#endif /* COMPAT_LINUX */
-
-static struct os_syscall {
-	char *name;
-	int *nsysent;
-	struct sysent *sysent;
-	char **syscallnames;
-} os_syscall[] = {
-	{ "NetBSD", &nsysent, sysent, syscallnames },
-#ifdef COMPAT_SUNOS
-	{ "SunOS", &nsunos_sysent, sunos_sysent, sunos_syscallnames },
-#else
-	{ NULL, },
-#endif
-#ifdef COMPAT_HPUX
-	{ "HP-UX", &nhpux_sysent, hpux_sysent, hpux_syscallnames },
-#else
-	{ NULL, },
-#endif
-#ifdef COMPAT_ULTRIX
-	{ "Ultrix", &nultrix_sysent, ultrix_sysent, ultrix_syscallnames },
-#else
-	{ NULL, },
-#endif
-#ifdef COMPAT_SVR4
-	{ "SVR4", &nsvr4_sysent, svr4_sysent, svr4_syscallnames },
-#else
-	{ NULL, },
-#endif
-#ifdef COMPAT_IBCS2
-	{ "iBCS2", &nibcs2_sysent, ibcs2_sysent, ibcs2_syscallnames },
-#else
-	{ NULL, },
-#endif
-	{ NULL, },
-#ifdef COMPAT_OSF1
-	{ "OSF/1", &nosf1_sysent, osf1_sysent, osf1_syscallnames },
-#else
-	{ NULL, },
-#endif
-	{ NULL, },
-#ifdef COMPAT_LINUX
-	{ "Linux", &nlinux_sysent, linux_sysent, linux_syscallnames },
-#else
-	{ NULL, },
-#endif
-};
-
 void
 scdebug_call(p, code, args)
 	struct proc *p;
 	register_t code, args[];
 {
-	struct os_syscall *os;
 	struct sysent *sy;
+	struct emul *em;
 	int i;
 
 	if (!(scdebug & SCDEBUG_CALLS))
 		return;
 
-#ifdef DIAGNOSTIC
-	if (p->p_emul > sizeof os_syscall/sizeof os_syscall[0] ||
-	    os_syscall[p->p_emul].name == NULL)
-		panic("bogus p_emul");
-#endif
-
-	os = &os_syscall[p->p_emul];
-	sy = &os->sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= *os->nsysent ||
+	em = p->p_emul;
+	sy = &em->e_sysent[code];
+	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
 	     sy->sy_call == nosys))
 		return;
 		
-	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, os->name);
-	if (code < 0 || code >= *os->nsysent)
+	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
+	if (code < 0 || code >= em->e_nsysent)
 		printf("OUT OF RANGE (%d)", code);
 	else {
-		printf("%d call: %s", code, os->syscallnames[code]);
+		printf("%d call: %s", code, em->e_syscallnames[code]);
 		if (scdebug & SCDEBUG_SHOWARGS) {
 			printf("(");
 			for (i = 0; i < sy->sy_argsize / sizeof(register_t);
@@ -364,26 +274,20 @@ scdebug_ret(p, code, error, retval)
 	int error;
 	register_t retval[];
 {
-	struct os_syscall *os;
 	struct sysent *sy;
+	struct emul *em;
 
 	if (!(scdebug & SCDEBUG_RETURNS))
 		return;
 
-#ifdef DIAGNOSTIC
-	if (p->p_emul > sizeof os_syscall/sizeof os_syscall[0] ||
-	    os_syscall[p->p_emul].name == NULL)
-		panic("bogus p_emul");
-#endif
-
-	os = &os_syscall[p->p_emul];
-	sy = &os->sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= *os->nsysent ||
+	em = p->p_emul;
+	sy = &em->e_sysent[code];
+	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= *em->e_nsysent ||
 	    sy->sy_call == nosys))
 		return;
 		
-	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, os->name);
-	if (code < 0 || code >= *os->nsysent)
+	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
+	if (code < 0 || code >= em->e_nsysent)
 		printf("OUT OF RANGE (%d)", code);
 	else
 		printf("%d ret: err = %d, rv = 0x%lx,0x%lx", code,

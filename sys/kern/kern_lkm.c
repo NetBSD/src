@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.23 1995/03/09 12:05:41 mycroft Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.24 1995/04/22 19:42:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -54,6 +54,7 @@
 #include <sys/mount.h>
 #include <sys/exec.h>
 #include <sys/lkm.h>
+#include <sys/syscall.h>
 
 #include <vm/vm.h>
 #include <vm/vm_param.h>
@@ -513,7 +514,6 @@ _lkm_syscall(lkmtp, cmd)
 	struct lkm_syscall *args = lkmtp->private.lkm_syscall;
 	int i;
 	int err = 0;
-	extern int nsysent;	/* from init_sysent.c */
 
 	switch(cmd) {
 	case LKM_E_LOAD:
@@ -525,16 +525,16 @@ _lkm_syscall(lkmtp, cmd)
 			/*
 			 * Search the table looking for a slot...
 			 */
-			for (i = 0; i < nsysent; i++)
+			for (i = 0; i < SYS_MAXSYSCALL; i++)
 				if (sysent[i].sy_call == lkmnosys)
 					break;		/* found it! */
 			/* out of allocable slots? */
-			if (i == nsysent) {
+			if (i == SYS_MAXSYSCALL) {
 				err = ENFILE;
 				break;
 			}
 		} else {				/* assign */
-			if (i < 0 || i >= nsysent) {
+			if (i < 0 || i >= SYS_MAXSYSCALL) {
 				err = EINVAL;
 				break;
 			}

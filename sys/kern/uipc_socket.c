@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.17 1994/10/30 21:48:07 cgd Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.18 1995/04/22 19:43:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -91,8 +91,11 @@ socreate(dom, aso, type, proto)
 		return (error);
 	}
 #ifdef COMPAT_SUNOS
-	if (p->p_emul == EMUL_SUNOS && type == SOCK_DGRAM)
-		so->so_options |= SO_BROADCAST;
+	{
+		extern struct emul emul_sunos;
+		if (p->p_emul == &emul_sunos && type == SOCK_DGRAM)
+			so->so_options |= SO_BROADCAST;
+	}
 #endif
 	*aso = so;
 	return (0);
