@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.30 1993/09/16 03:24:19 brezak Exp $
+ *	locore.s,v 1.29 1993/09/11 00:12:56 jtc Exp
  */
 
 
@@ -514,22 +514,10 @@ eicode:
 _szicode:
 	.long	eicode-_icode
 
-#if 0	/* before bde */
-	.globl	_sigcode,_esigcode
-_sigcode:
-	movl	12(%esp),%eax	# unsure if call will dec stack 1st
-	call	%eax
-	xorl	%eax,%eax	# smaller movl $103,%eax
-	movb	$103,%al	# sigreturn()
-	LCALL(0x7,0)		# enter kernel with args on stack
-	hlt			# never gets here
-_esigcode:
-#else	/* anno bde */
 ENTRY(sigcode)
-	call	12(%esp)
-	lea	28(%esp),%eax	# scp (the call may have clobbered the
-				# copy at 8(%esp))
-				# XXX - use genassym
+	call	SIGF_HANDLER(%esp)
+	lea	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
+					# copy at 8(%esp))
 	pushl	%eax
 	pushl	%eax		# junk to fake return address
 	movl	$103,%eax	# sigreturn()
@@ -538,7 +526,6 @@ ENTRY(sigcode)
 
 	.globl	_esigcode
 _esigcode:
-#endif
 
 	/*
 	 * Support routines for GCC
@@ -1574,6 +1561,15 @@ ENTRY(swtch)
 	movl	%ebp,PCB_EBP(%ecx)
 	movl	%esi,PCB_ESI(%ecx)
 	movl	%edi,PCB_EDI(%ecx)
+#ifdef	USER_LDT
+	xorl	%eax,%eax
+	movw	%es,%ax
+	movl	%eax,PCB_ES(%ecx)
+	movw	%fs,%ax
+	movl	%eax,PCB_FS(%ecx)
+	movw	%gs,%ax
+	movl	%eax,PCB_GS(%ecx)
+#endif
 
 #if NNPX > 0
 	/* have we used fp, and need a save? */
@@ -1656,6 +1652,14 @@ swfnd:
 	movl	PCB_EBP(%edx),%ebp
 	movl	PCB_ESI(%edx),%esi
 	movl	PCB_EDI(%edx),%edi
+#ifdef	USER_LDT
+	movl	PCB_ES(%edx),%eax
+	movw	%ax,%es
+	movl	PCB_FS(%edx),%eax
+	movw	%ax,%fs
+	movl	PCB_GS(%edx),%eax
+	movw	%ax,%gs
+#endif
 	movl	PCB_EIP(%edx),%eax
 	movl	%eax,(%esp)
 
@@ -1665,6 +1669,20 @@ swfnd:
 	movl	%ecx,_curproc		# into next process
 	movl	%edx,_curpcb
 
+#ifdef	USER_LDT
+	cmpl	$0, PCB_USERLDT(%edx)
+	jne	1f
+	movl	__default_ldt,%eax
+	cmpl	_currentldt,%eax
+	je	2f
+	lldt	__default_ldt
+	movl	%eax,_currentldt
+	jmp	2f
+1:	pushl	%edx
+	call	_set_user_ldt
+	popl	%edx
+2:
+#endif
 	sti				# splx() doesn't do an sti/cli
 	SHOW_STI
 
@@ -1714,6 +1732,15 @@ ENTRY(savectx)
 	movl	%ebp,PCB_EBP(%ecx)
 	movl	%esi,PCB_ESI(%ecx)
 	movl	%edi,PCB_EDI(%ecx)
+#ifdef	USER_LDT
+	xorl	%eax,%eax
+	movw	%es,%ax
+	movl	%eax,PCB_ES(%ecx)
+	movw	%fs,%ax
+	movl	%eax,PCB_FS(%ecx)
+	movw	%gs,%ax
+	movl	%eax,PCB_GS(%ecx)
+#endif
 
 #if NNPX > 0
 	/*
@@ -2002,6 +2029,10 @@ bpttraps:
 
 /*
  * Call gate entry for syscall
+ *
+ * The stack frame is made to be the same as a trap frame. Setting
+ * The call gate to "copy" 1 argument, leave a hole in the right
+ * place to put the eflags to make it look like a trap frame.
  */
 
 	SUPERALIGN_TEXT
@@ -2022,13 +2053,13 @@ IDTVEC(syscall)
 	movl	$0,TF_ERR(%esp)		# zero tf_err
 	incl	_cnt+V_SYSCALL  # kml 3/25/93
 	call	_syscall
-	/*
+  	/*
 	 * Return through doreti to handle ASTs.
-	 */
+  	 */
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)	# new trap type (err code not used)
-	pushl	_cpl
-	pushl	$0
-	jmp	doreti
+  	pushl	_cpl
+  	pushl	$0
+  	jmp	doreti
 
 #ifdef SHOW_A_LOT
 
