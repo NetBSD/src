@@ -1,5 +1,5 @@
 /*
-**	$Id: netbsd.c,v 1.5 1995/03/28 17:21:09 jtc Exp $
+**	$Id: netbsd.c,v 1.6 1995/06/18 22:44:10 cgd Exp $
 **
 ** netbsd.c		Low level kernel access functions for NetBSD
 **
@@ -70,11 +70,11 @@ struct nlist nl[] =
 {
 #define N_FILE 0
 #define N_NFILE 1
-#define N_TCB 2
+#define N_TCBTABLE 2
       
   { "_filehead" },
   { "_nfiles" },
-  { "_tcb" },
+  { "_tcbtable" },
   { "" }
 };
 
@@ -83,7 +83,7 @@ static kvm_t *kd;
 static struct file *xfile;
 static int nfile;
 
-static struct inpcb tcb;
+static struct inpcbtable tcbtable;
   
 
 int k_open()
@@ -134,33 +134,29 @@ static int getbuf(addr, buf, len, what)
 ** Returns NULL if no match.
 */
 static struct socket *
-    getlist(pcbp, faddr, fport, laddr, lport)
-  struct inpcb *pcbp;
-  struct in_addr *faddr;
-  int fport;
-  struct in_addr *laddr;
-  int lport;
+getlist(tcbtablep, ktcbtablep, faddr, fport, laddr, lport)
+	struct inpcbtable *tcbtablep, *ktcbtablep;
+	struct in_addr *faddr;
+	int fport;
+	struct in_addr *laddr;
+	int lport;
 {
-  struct inpcb *head;
+	struct inpcb *kpcbp, pcb;
 
-  if (!pcbp)
-    return NULL;
-
-  
-  head = pcbp->inp_prev;
-  do 
-  {
-    if ( pcbp->inp_faddr.s_addr == faddr->s_addr &&
-	 pcbp->inp_laddr.s_addr == laddr->s_addr &&
-	 pcbp->inp_fport        == fport &&
-	 pcbp->inp_lport        == lport )
-      return pcbp->inp_socket;
-  } while (pcbp->inp_next != head &&
-	   getbuf((long) pcbp->inp_next,
-		  pcbp,
-		  sizeof(struct inpcb),
-		  "tcblist"));
-
+	if (!tcbtablep)
+		return NULL;
+ 
+	for (kpcbp = tcbtablep->inpt_queue.cqh_first;
+	     kpcbp != (struct inpcb *)ktcbtablep;
+	     kpcbp = pcb.inp_queue.cqe_next) {
+		if (!getbuf((long) kpcbp, &pcb, sizeof(struct inpcb), "tcb"))
+			break;
+		if (pcb.inp_faddr.s_addr == faddr->s_addr &&
+		    pcb.inp_laddr.s_addr == laddr->s_addr &&
+		    pcb.inp_fport        == fport &&
+		    pcb.inp_lport        == lport )
+			return pcb.inp_socket;
+	}
   return NULL;
 }
 
@@ -211,11 +207,11 @@ int k_getuid(faddr, fport, laddr, lport, uid)
   }
   
   /* -------------------- TCP PCB LIST -------------------- */
-  if (!getbuf(nl[N_TCB].n_value, &tcb, sizeof(tcb), "tcb"))
+  if (!getbuf(nl[N_TCBTABLE].n_value, &tcbtable, sizeof(tcbtable), "tcbtable"))
     return -1;
   
-  tcb.inp_prev = (struct inpcb *) nl[N_TCB].n_value;
-  sockp = getlist(&tcb, faddr, fport, laddr, lport);
+  sockp = getlist(&tcbtable, nl[N_TCBTABLE].n_value, faddr, fport, laddr,
+      lport);
   
   if (!sockp)
     return -1;
