@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.604 2004/01/19 12:33:26 ragge Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.605 2004/01/26 13:23:26 blymn Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1142,6 +1142,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "IO Apic",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC8151,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8151 AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111,
