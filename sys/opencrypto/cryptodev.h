@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.2 2003/07/27 03:34:39 jonathan Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.3 2003/07/30 18:45:31 jonathan Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.4 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -364,6 +364,16 @@ extern	struct cryptop *crypto_getreq(int num);
 extern	int crypto_usercrypto;		/* userland may do crypto requests */
 extern	int crypto_userasymcrypto;	/* userland may do asym crypto reqs */
 extern	int crypto_devallowsoft;	/* only use hardware crypto */
+
+
+/*
+ * initialize the crypto framework subsystem (not the pseudo-device).
+ * This must be called very early in boot, so the framework is ready
+ * to handle registration requests when crpto hardware is autoconfigured.
+ * (This declaration doesnt really belong here but there's no header
+ * for the raw framework.)
+ */
+int	crypto_init(void);
 
 /*
  * Crypto-related utility routines used mainly by drivers.
