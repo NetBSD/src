@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.91 2004/12/03 20:20:32 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.92 2004/12/04 19:02:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -725,6 +725,20 @@ _lto4b(u_int32_t val, u_int8_t *bytes)
 	bytes[1] = (val >> 16) & 0xff;
 	bytes[2] = (val >> 8) & 0xff;
 	bytes[3] = val & 0xff;
+}
+
+static __inline void __unused
+_lto8b(u_int64_t val, u_int8_t *bytes)
+{
+
+	bytes[0] = (val >> 56) & 0xff;
+	bytes[1] = (val >> 48) & 0xff;
+	bytes[2] = (val >> 40) & 0xff;
+	bytes[3] = (val >> 32) & 0xff;
+	bytes[4] = (val >> 24) & 0xff;
+	bytes[5] = (val >> 16) & 0xff;
+	bytes[6] = (val >> 8)  & 0xff;
+	bytes[7] = val         & 0xff;
 }
 
 static __inline u_int32_t __unused
