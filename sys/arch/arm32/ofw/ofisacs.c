@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisacs.c,v 1.4 1998/07/07 00:48:11 mark Exp $	*/
+/*	$NetBSD: ofisacs.c,v 1.5 1998/07/08 04:59:46 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -112,7 +112,7 @@ ofisacsattach(parent, dev, aux)
 	/* XXX - Hard-wire the ISA attach args for now. -JJK */
 	ia.ia_iot = &isa_io_bs_tag;
 	ia.ia_memt = &isa_mem_bs_tag;
-	ia.ia_ic = NULL;			/* not used */
+	ia.ia_ic = &isa_chipset_tag;
 	ia.ia_iobase = 0x0300;
 	ia.ia_iosize = CS8900_IOSIZE;
 	ia.ia_irq = IRQ_ETHERNET;
