@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 1994/11/20 20:54:46 deraadt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.10 1995/02/23 19:56:24 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,8 @@
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
+
+#include <sparc/sparc/cache.h>
 
 /*
  * Move pages from one kernel virtual address to another.
@@ -142,7 +144,8 @@ vunmapbuf(bp)
 	kmem_free_wakeup(phys_map, kva, ctob(npf));
 	bp->b_un.b_addr = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
-	cache_flush(bp->b_un.b_addr, bp->b_bcount - bp->b_resid);
+	if (vactype != VAC_NONE)
+		cache_flush(bp->b_un.b_addr, bp->b_bcount - bp->b_resid);
 }
 
 /*
