@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.52 2001/01/05 21:42:09 jdolecek Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.53 2001/01/05 22:25:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -672,6 +672,9 @@ sys_utrace(p, v, retval)
 
 	if (!KTRPOINT(p, KTR_USER))
 		return (0);
+
+	if (SCARG(uap, len) > KTR_USER_MAXLEN)
+		return (EINVAL);
 
 	ktruser(p, SCARG(uap, label), SCARG(uap, addr), SCARG(uap, len), 1);
 
