@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.7 1994/05/25 09:55:39 deraadt Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.8 1994/07/01 19:40:23 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -400,12 +400,12 @@ char **argv;
 }
 
 /*
- * change to do something like this:
- *
- * STATE	TIME		ACTION		NEWTIME	NEWSTATE
- * no binding	t==*		broadcast 	t=2	no binding
- * binding	t==60		check server	t=10	binding
- * binding	t=10		broadcast	t=2	no binding
+ * STATE	EVENT		ACTION		NEWSTATE	TIMEOUT
+ * 1 no binding	timeout		broadcast	no binding	5 sec
+ * 2 no binding	answer		--		binding		60 sec
+ * 3 binding	timeout		check server	checking	5 sec
+ * 4 checking	answer		--		binding		60 sec
+ * 5 checking	timeout		broadcast	no binding	5 sec
  */
 checkwork()
 {
@@ -416,17 +416,18 @@ checkwork()
 
 	time(&t);
 	for(ypdb=ypbindlist; ypdb; ypdb=ypdb->dom_pnext) {
-		if(ypdb->dom_alive==0 || ypdb->dom_check_t < t) {
-			broadcast(ypdb->dom_domain);
+		if(ypdb->dom_alive!=1 || ypdb->dom_check_t < t) {
+			ping(ypdb);
 			time(&t);
 			ypdb->dom_check_t = t + 5;
 		}
 	}
 }
 
-broadcast(dom)
-char *dom;
+ping(ypdb)
+	struct _dom_binding *ypdb;
 {
+	char *dom = ypdb->dom_domain;
 	struct rpc_msg rpcmsg;
 	char buf[1400], inbuf[8192];
 	enum clnt_stat st;
@@ -483,6 +484,18 @@ char *dom;
 		return st;
 	}
 	AUTH_DESTROY(rpcua);
+
+	if (ypdb->dom_alive == 1) {
+		/* no need to broadcast, only send to my server */
+		ypdb->dom_alive = 2;
+		if (sendto(rpcsock, buf, outlen, 0,
+		    (struct sockaddr *)&ypdb->dom_server_addr,
+		    sizeof ypdb->dom_server_addr) < 0)
+			perror("sendto");
+		return 0;
+	}
+
+	ypdb->dom_alive = 0;
 
 	/* find all networks and send the RPC packet out them all */
 	if( (sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
@@ -620,10 +633,17 @@ int force;
 		ypbindlist = ypdb;
 	}
 
-	/* soft update, alive, less than 30 seconds old */
-	if(ypdb->dom_alive==1 && force==0 && ypdb->dom_check_t<time(NULL)+30)
+	/* soft update, alive */
+	if(ypdb->dom_alive!=0 && force==0) {
+		if (bcmp((char *)raddrp, (char *)&ypdb->dom_server_addr,
+		    sizeof ypdb->dom_server_addr) == 0) {
+			ypdb->dom_alive = 1;
+			/* recheck binding in 60 sec */
+			ypdb->dom_check_t = time(NULL) + 60;
+		}
 		return;
-
+	}
+	
 	bcopy((char *)raddrp, (char *)&ypdb->dom_server_addr,
 		sizeof ypdb->dom_server_addr);
 	ypdb->dom_check_t = time(NULL) + 60;	/* recheck binding in 60 seconds */
