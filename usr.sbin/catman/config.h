@@ -1,8 +1,9 @@
-/*	$NetBSD: pathnames.h,v 1.4 1999/04/04 10:56:39 dante Exp $	*/
+/*	$NetBSD: config.h,v 1.1 1999/04/04 10:56:39 dante Exp $	*/
 
-/*
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*-
+ * Copyright (c) 1993
+ *	The Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,10 +33,29 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	8.3 (Berkeley) 1/2/94
+ *	@(#)config.h	8.4 (Berkeley) 12/18/93
  */
 
-#define	_PATH_MANCONF	"/etc/man.conf"
-#define	_PATH_PAGER	"/usr/bin/more -s"
-#define	_PATH_TMP	"/tmp/man.XXXXXX"
-#define	_PATH_WHATIS	"/usr/libexec/makewhatis"
+typedef struct _tag {
+	TAILQ_ENTRY(_tag) q;		/* Queue of tags. */
+
+	TAILQ_HEAD(tqh, _entry) list;	/* Queue of entries. */
+	char *s;			/* Associated string. */
+	size_t len;			/* Length of 's'. */
+} TAG;
+typedef struct _entry {
+	TAILQ_ENTRY(_entry) q;		/* Queue of entries. */
+
+	char *s;			/* Associated string. */
+	size_t len;			/* Length of 's'. */
+} ENTRY;
+
+TAILQ_HEAD(_head, _tag);
+extern struct _head head;
+
+TAG	*addlist __P((char *));
+void	 config __P((char *));
+void	 debug __P((char *));
+TAG	*getlist __P((char *));
+void	removelist __P((char *));
+TAG	*renamelist __P((char *, char *));
