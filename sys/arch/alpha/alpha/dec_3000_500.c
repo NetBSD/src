@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3000_500.c,v 1.10 1997/02/27 01:22:27 thorpej Exp $	*/
+/* $NetBSD: dec_3000_500.c,v 1.11 1997/04/07 05:19:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.

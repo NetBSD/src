@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs_bus_mem.c,v 1.1 1996/11/25 03:42:11 cgd Exp $	*/
+/* $NetBSD: apecs_bus_mem.c,v 1.2 1997/04/07 05:19:30 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

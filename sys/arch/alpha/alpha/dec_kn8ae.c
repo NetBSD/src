@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn8ae.c,v 1.3 1997/03/21 01:26:14 cgd Exp $	*/
+/* $NetBSD: dec_kn8ae.c,v 1.4 1997/04/07 05:19:12 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_axppci_33.c,v 1.20 1997/04/04 20:51:01 mycroft Exp $	*/
+/* $NetBSD: dec_axppci_33.c,v 1.21 1997/04/07 05:19:08 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.

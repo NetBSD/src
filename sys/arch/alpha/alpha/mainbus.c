@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 1997/03/12 05:47:37 cgd Exp $	*/
+/* $NetBSD: mainbus.c,v 1.18 1997/04/07 05:19:17 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.

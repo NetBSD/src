@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.old.c,v 1.14 1996/11/13 21:13:10 cgd Exp $	*/
+/* $NetBSD: pmap.old.c,v 1.15 1997/04/07 05:19:18 cgd Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
