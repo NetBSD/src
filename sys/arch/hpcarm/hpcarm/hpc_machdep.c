@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.26 2002/01/30 00:40:20 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.27 2002/02/01 18:16:05 uch Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -85,7 +85,7 @@
 #include <machine/bootinfo.h>
 #include <arm/undefined.h>
 #include <machine/rtc.h>
-#include <hpc/hpc/platid.h>
+#include <machine/platid.h>
 #include <hpcarm/sa11x0/sa11x0_reg.h>
 
 #include <dev/hpc/bicons.h>
