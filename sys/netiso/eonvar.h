@@ -1,4 +1,4 @@
-/*	$NetBSD: eonvar.h,v 1.8 2000/06/26 16:18:36 kleink Exp $	*/
+/*	$NetBSD: eonvar.h,v 1.9 2000/07/28 12:13:34 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
 
 #ifndef sa_family_t
 typedef __sa_family_t	sa_family_t;
-#define sa_family_t	sa_family_t
+#define sa_family_t	__sa_family_t
 #endif
 
 #define EON_986_VERSION 0x3
