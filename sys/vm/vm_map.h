@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_map.h	7.3 (Berkeley) 4/21/91
+ *	from: @(#)vm_map.h	7.3 (Berkeley) 4/21/91
+ *	$Id: vm_map.h,v 1.4 1993/05/20 03:59:31 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -60,13 +61,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00002
- * --------------------         -----   ----------------------
- *
- * 15 Aug 92    William Jolitz		Prevent running out of map entries...
  */
 
 #ifndef _VM_VM_MAP_H_

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm.h	7.1 (Berkeley) 5/5/91
+ *	from: @(#)vm.h	7.1 (Berkeley) 5/5/91
+ *	$Id: vm.h,v 1.3 1993/05/20 03:59:19 cgd Exp $
  */
 
 #ifndef _VM_VM_H_

@@ -37,17 +37,9 @@
  *
  * from: Utah $Hdr: swap_pager.c 1.4 91/04/30$
  *
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00075
- * --------------------         -----   ----------------------
- *
- * 22 Jan 1993		Bruce Evans	Fixed unmatched spl calls
- *
- *	@(#)swap_pager.c	7.4 (Berkeley) 5/7/91
+ *	from: @(#)swap_pager.c	7.4 (Berkeley) 5/7/91
+ *	$Id: swap_pager.c,v 1.4 1993/05/20 03:59:15 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/swap_pager.c,v 1.3 1993/04/28 03:04:57 mycroft Exp $";
 
 /*
  * Quick hack to page to dedicated partition(s).

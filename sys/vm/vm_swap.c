@@ -30,9 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_swap.c	7.18 (Berkeley) 5/6/91
+ *	from: @(#)vm_swap.c	7.18 (Berkeley) 5/6/91
+ *	$Id: vm_swap.c,v 1.5 1993/05/20 03:59:48 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_swap.c,v 1.4 1993/04/29 00:46:21 mycroft Exp $";
 
 #include "param.h"
 #include "systm.h"
