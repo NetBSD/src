@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.53 2000/09/24 15:59:33 jdolecek Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.54 2000/09/25 11:46:38 abs Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -14,14 +14,17 @@
 
 include "arch/i386/conf/std.i386"
 
+# Saving space
+makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
+#options	VNODE_OP_NOINLINE	# Don't inline vnode op calls
+#options	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code
+
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MINIROOTSIZE=3072	# size of memory disk, in blocks
 #options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
-
-makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
 maxusers	32		# estimated number of users
 
