@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: nit.c,v 1.1.1.2 1997/06/08 04:54:15 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: nit.c,v 1.1.1.3 1997/10/20 23:28:40 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -154,12 +154,13 @@ void if_register_send (info)
 #else
 	info -> wfdesc = info -> rfdesc;
 #endif
-	note ("Sending on   NIT/%s/%s",
-	      print_hw_addr (info -> hw_address.htype,
-			     info -> hw_address.hlen,
-			     info -> hw_address.haddr),
-	      (info -> shared_network ?
-	       info -> shared_network -> name : "unattached"));
+        if (!quiet_interface_discovery)
+		note ("Sending on   NIT/%s/%s",
+		      print_hw_addr (info -> hw_address.htype,
+				     info -> hw_address.hlen,
+				     info -> hw_address.haddr),
+		      (info -> shared_network ?
+		       info -> shared_network -> name : "unattached"));
 }
 #endif /* USE_NIT_SEND */
 
@@ -236,12 +237,13 @@ void if_register_receive (info)
 	if (ioctl (info -> rfdesc, I_STR, &sio) < 0)
 		error ("Can't set NIT filter on %s: %m", info -> name);
 
-	note ("Listening on NIT/%s/%s",
-	      print_hw_addr (info -> hw_address.htype,
-			     info -> hw_address.hlen,
-			     info -> hw_address.haddr),
-	      (info -> shared_network ?
-	       info -> shared_network -> name : "unattached"));
+        if (!quiet_interface_discovery)
+		note ("Listening on NIT/%s/%s",
+		      print_hw_addr (info -> hw_address.htype,
+				     info -> hw_address.hlen,
+				     info -> hw_address.haddr),
+		      (info -> shared_network ?
+		       info -> shared_network -> name : "unattached"));
 }
 #endif /* USE_NIT_RECEIVE */
 
