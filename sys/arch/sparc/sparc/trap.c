@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.70 1998/08/21 14:13:56 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.71 1998/09/06 21:14:56 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -861,7 +861,7 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 	 */
 	if ((afsr & AFSR_AFO) != 0 || type == T_STOREBUFFAULT ||
 	    (type == T_DATAFAULT && !(sfsr & SFSR_FAV))) {
-		memerr4m(type, sfsr, sfva, afsr, afva, tf);
+		(*cpuinfo.memerr)(type, sfsr, sfva, afsr, afva, tf);
 		/*
 		 * If we get here, exit the trap handler and wait for the
 		 * trap to re-occur.
