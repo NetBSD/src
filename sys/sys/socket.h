@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.45 1999/07/01 20:09:57 itojun Exp $	*/
+/*	$NetBSD: socket.h,v 1.46 1999/07/03 13:37:34 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -205,6 +205,7 @@ struct sockproto {
 #define _SS_PAD2SIZE	(_SS_MAXSIZE - sizeof(u_char) * 2 - \
 				_SS_PAD1SIZE - _SS_ALIGNSIZE)
 
+#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
 struct sockaddr_storage {
 	u_char	__ss_len;	/* address length */
 	u_char	__ss_family;	/* address family */
@@ -212,7 +213,8 @@ struct sockaddr_storage {
 	int64_t	__ss_align;	/* force desired structure storage alignment */
 	char	__ss_pad2[_SS_PAD2SIZE];
 };
-#endif
+#endif /* !_XOPEN_SOURCE || ... */
+#endif /* 1 */
 
 /*
  * Protocol families, same as address families for now.
@@ -480,11 +482,7 @@ __END_DECLS
 #define MSG_COMPAT	0x8000
 #endif
 
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
 void	pfctlinput __P((int, struct sockaddr *));
-__END_DECLS
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_SOCKET_H_ */
