@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.21 1999/02/11 15:32:23 mrg Exp $	*/
+/*	$NetBSD: create.c,v 1.21.2.1 1999/11/20 16:58:17 he Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.21 1999/02/11 15:32:23 mrg Exp $");
+__RCSID("$NetBSD: create.c,v 1.21.2.1 1999/11/20 16:58:17 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ static gid_t gid;
 static uid_t uid;
 static mode_t mode;
 static u_long flags;
+static char codebuf[4*MAXPATHLEN + 1];
 
 static int	dsort __P((const FTSENT **, const FTSENT **));
 static void	output __P((int *, const char *, ...));
@@ -134,9 +135,9 @@ statf(p)
 	int fd, indent;
 
 	if (S_ISDIR(p->fts_statp->st_mode))
-		indent = printf("%s", p->fts_name); 
+		indent = printf("%s", encode(codebuf, p->fts_name)); 
 	else
-		indent = printf("    %s", p->fts_name);
+		indent = printf("    %s", encode(codebuf, p->fts_name));
 
 	if (indent > INDENTNAMELEN)
 		indent = MAXLINELEN;
