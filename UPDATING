@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.85 2003/04/02 18:01:53 atatat Exp $
+$NetBSD: UPDATING,v 1.86 2003/04/10 08:12:29 kleink Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -558,7 +558,7 @@ Fix:	Rebuild and install usr.bin/menuc
 Symptom:mklocale not found during build in share/locale/ctype
 Fix:	Build and install usr.bin/mklocale
 
-Symptom:undefined reference to `__assert13'
+Symptom:undefined reference to `__assert13' or `__unsetenv13'
 Fix:    Rebuild and install lib/libc
 
 Symptom:usr.sbin/config fails to build.
