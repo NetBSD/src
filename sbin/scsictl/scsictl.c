@@ -1,7 +1,7 @@
-/*	$NetBSD: scsictl.c,v 1.17 2002/07/20 08:36:28 grant Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.18 2002/09/03 16:56:05 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -85,6 +85,8 @@ void	device_reset __P((int, char *[]));
 void	device_start __P((int, char *[]));
 void	device_stop __P((int, char *[]));
 void	device_tur __P((int, char *[]));
+void	device_getcache __P((int, char *[]));
+void	device_setcache __P((int, char *[]));
 
 struct command device_commands[] = {
 	{ "format",	"[blocksize [immediate]]", 	device_format },
@@ -96,6 +98,8 @@ struct command device_commands[] = {
 	{ "start",	"",			device_start },
 	{ "stop",	"",			device_stop },
 	{ "tur",	"",			device_tur },
+	{ "getcache",	"",			device_getcache },
+	{ "setcache",	"none|r|w|rw [save]",	device_setcache },
 	{ NULL,		NULL,			NULL },
 };
 
@@ -552,8 +556,6 @@ device_reserve(argc, argv)
 	return;
 }
 
-
-
 /*
  * device_reset:
  *
@@ -576,28 +578,94 @@ device_reset(argc, argv)
 }
 
 /*
- * BUS COMMANDS
- */
-
-/*
- * bus_reset:
+ * device_getcache:
  *
- *	Issue a reset to a SCSI bus.
+ *	Get the caching parameters for a SCSI disk.
  */
 void
-bus_reset(argc, argv)
+device_getcache(argc, argv)
 	int argc;
 	char *argv[];
 {
+	struct {
+		struct scsipi_mode_header header;
+		struct scsi_blk_desc blk_desc;
+		struct page_caching caching_params;
+	} data;
 
 	/* No arguments. */
 	if (argc != 0)
 		usage();
 
-	if (ioctl(fd, SCBUSIORESET, NULL) != 0)
-		err(1, "SCBUSIORESET");
+	scsi_mode_sense(fd, 0x08, 0x00, &data, sizeof(data));
 
-	return;
+	if ((data.caching_params.flags & (CACHING_RCD|CACHING_WCE)) ==
+	    CACHING_RCD)
+		printf("%s: no caches enabled\n", dvname);
+	else {
+		printf("%s: read cache %senabled\n", dvname,
+		    (data.caching_params.flags & CACHING_RCD) ? "not " : "");
+		printf("%s: write-back cache %senabled\n", dvname,
+		    (data.caching_params.flags & CACHING_WCE) ? "" : "not ");
+	}
+	printf("%s: caching parameters are %ssavable\n", dvname,
+	    (data.caching_params.pg_code & PGCODE_PS) ? "" : "not ");
+}
+
+/*
+ * device_setcache:
+ *
+ *	Set cache enables for a SCSI disk.
+ */
+void
+device_setcache(argc, argv)
+	int argc;
+	char *argv[];
+{
+	struct {
+		struct scsipi_mode_header header;
+		struct scsi_blk_desc blk_desc;
+		struct page_caching caching_params;
+	} data;
+	int dlen;
+	u_int8_t flags, byte2;
+
+	if (argc > 2 || argc == 0)
+		usage();
+
+	if (strcmp(argv[0], "none") == 0)
+		flags = CACHING_RCD;
+	else if (strcmp(argv[0], "r") == 0)
+		flags = 0;
+	else if (strcmp(argv[0], "w") == 0)
+		flags = CACHING_RCD|CACHING_WCE;
+	else if (strcmp(argv[0], "rw") == 0)
+		flags = CACHING_WCE;
+	else
+		usage();
+
+	if (argc == 2) {
+		if (strcmp(argv[1], "save") == 0)
+			byte2 = SMS_SP;
+		else
+			usage();
+	}
+
+	scsi_mode_sense(fd, 0x08, 0x00, &data, sizeof(data));
+
+	data.caching_params.pg_code &= PGCODE_MASK;
+	data.caching_params.flags =
+	    (data.caching_params.flags & ~(CACHING_RCD|CACHING_WCE)) | flags;
+
+	data.caching_params.cache_segment_size[0] = 0;
+	data.caching_params.cache_segment_size[1] = 0;
+
+	data.header.data_length = 0;
+
+	dlen = sizeof(data.header) + sizeof(data.blk_desc) + 2 +
+	    data.caching_params.pg_length;
+
+	scsi_mode_select(fd, byte2, &data, dlen);
 }
 
 /*
@@ -677,7 +745,30 @@ device_tur(argc, argv)
 	return;
 }
 
+/*
+ * BUS COMMANDS
+ */
 
+/*
+ * bus_reset:
+ *
+ *	Issue a reset to a SCSI bus.
+ */
+void
+bus_reset(argc, argv)
+	int argc;
+	char *argv[];
+{
+
+	/* No arguments. */
+	if (argc != 0)
+		usage();
+
+	if (ioctl(fd, SCBUSIORESET, NULL) != 0)
+		err(1, "SCBUSIORESET");
+
+	return;
+}
 
 /*
  * bus_scan:
