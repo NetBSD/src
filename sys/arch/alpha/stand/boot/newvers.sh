@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.2 1995/11/23 02:39:48 cgd Exp $
+#	$NetBSD: newvers.sh,v 1.3 1996/06/14 20:03:04 cgd Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -36,9 +36,9 @@
 #	@(#)newvers.sh	8.1 (Berkeley) 4/20/94
 
 u=${USER-root} h=`hostname` t=`date`
-r=`head -1 $1`
+r=`head -1 $1 | awk ' { print $3 } '`
 
-echo "char bootprog_name[] = \"NetBSD/Alpha boot\";" > vers.c
+echo "char bootprog_name[] = \"NetBSD/Alpha Secondary Boot\";" > vers.c
 echo "char bootprog_rev[] = \"${r}\";" >> vers.c
 echo "char bootprog_date[] = \"${t}\";" >> vers.c
 echo "char bootprog_maker[] = \"${u}@${h}\";" >> vers.c
