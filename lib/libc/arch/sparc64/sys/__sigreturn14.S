@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.2 2003/08/07 16:42:29 agc Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.3 2004/03/26 19:36:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,13 +40,13 @@
 #if 0
 	.asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: __sigreturn14.S,v 1.2 2003/08/07 16:42:29 agc Exp $")
+	RCSID("$NetBSD: __sigreturn14.S,v 1.3 2004/03/26 19:36:40 drochner Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 ENTRY(__sigreturn14)
-	mov	SYS___sigreturn14, %g1
+	mov	SYS_compat_16___sigreturn14, %g1
 	t	ST_SYSCALL
 	ERROR()
