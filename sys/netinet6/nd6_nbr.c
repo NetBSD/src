@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.11 2000/01/06 15:46:11 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.12 2000/01/28 07:21:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -915,9 +915,10 @@ nd6_dad_start(ifa, tick)
 	bzero(dp, sizeof(*dp));
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
-	/* XXXJRT This is probably a purely debugging message. */
+#ifdef DIAGNOSTIC
 	printf("%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
 	    ip6_sprintf(&ia->ia_addr.sin6_addr));
+#endif
 
 	/*
 	 * Send NS packet for DAD, ip6_dad_count times.
@@ -1060,7 +1061,6 @@ nd6_dad_timer(ifa)
 			 */
 			ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 
-			/* XXXJRT This is probably a purely debugging message */
 			printf("%s: DAD complete for %s - no duplicates "
 			    "found\n", if_name(ifa->ifa_ifp),
 			    ip6_sprintf(&ia->ia_addr.sin6_addr));
