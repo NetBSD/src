@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.669 2004/11/22 04:24:25 rumble Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.670 2004/11/30 05:02:57 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.668 2004/11/22 04:23:21 rumble Exp 
+ *	NetBSD: pcidevs,v 1.669 2004/11/30 05:02:37 grant Exp 
  */
 
 /*
@@ -1873,6 +1873,7 @@
 
 /* ITE products */
 #define	PCI_PRODUCT_ITE_IT8152	0x8152		/* IT8152 Host Bridge */
+#define	PCI_PRODUCT_ITE_IT8212	0x8212		/* IT8212 IDE controller */
 
 /* I. T. T. products */
 #define	PCI_PRODUCT_ITT_AGX016	0x0001		/* AGX016 */

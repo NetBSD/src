@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.667 2004/11/22 04:24:25 rumble Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.668 2004/11/30 05:02:58 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.668 2004/11/22 04:23:21 rumble Exp 
+ *	NetBSD: pcidevs,v 1.669 2004/11/30 05:02:37 grant Exp 
  */
 
 /*
@@ -6364,6 +6364,10 @@ const struct pci_product pci_products[] = {
 	    "IT8152 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8212,
+	    "IT8212 IDE controller",
+	},
+	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,
 	    "AGX016",
 	},
@@ -9840,4 +9844,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1882;
+const int pci_nproducts = 1883;
