@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2005/01/19 19:31:28 xtraeme Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 2005/02/09 22:55:45 ws Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -34,7 +34,6 @@ void	bufinit(void);
 void	bwrite(int, char *, daddr_t, long);
 void	cacheino(struct ext2fs_dinode *, ino_t);
 int	changeino(ino_t, char *, ino_t);
-struct	fstab;
 int	chkrange(daddr_t, int);
 void	ckfini(int);
 int	ckinode(struct ext2fs_dinode *, struct inodesc *);
@@ -54,6 +53,8 @@ int	ftypeok(struct ext2fs_dinode *);
 void	getpathname(char *, size_t, ino_t, ino_t);
 void	inocleanup(void);
 void	inodirty(void);
+u_int64_t inosize(struct ext2fs_dinode *);
+void	inossize(struct ext2fs_dinode *, u_int64_t);
 int	linkup(ino_t, ino_t);
 int	makeentry(ino_t, ino_t, char *);
 void	pass1(void);
