@@ -1,3 +1,5 @@
+/*	$NetBSD: popen.c,v 1.3 1997/03/13 06:19:21 mikel Exp $	*/
+
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -24,7 +26,8 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: popen.c,v 1.2 1995/04/14 19:49:35 mycroft Exp $";
+/*static char rcsid[] = "Id: popen.c,v 1.5 1994/01/15 20:43:43 vixie Exp";*/
+static char rcsid[] = "$NetBSD: popen.c,v 1.3 1997/03/13 06:19:21 mikel Exp $";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
 #endif /* not lint */
 

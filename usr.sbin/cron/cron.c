@@ -1,3 +1,5 @@
+/*	$NetBSD: cron.c,v 1.4 1997/03/13 06:19:11 mikel Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
@@ -16,7 +18,8 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: cron.c,v 1.3 1996/12/14 12:06:48 fvdl Exp $";
+/*static char rcsid[] = "Id: cron.c,v 2.11 1994/01/15 20:43:43 vixie Exp";*/
+static char rcsid[] = "$NetBSD: cron.c,v 1.4 1997/03/13 06:19:11 mikel Exp $";
 #endif
 
 
