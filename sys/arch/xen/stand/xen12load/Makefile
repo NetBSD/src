@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2004/04/17 23:20:37 cl Exp $
+# $NetBSD: Makefile,v 1.2 2004/05/12 16:56:43 cl Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -115,5 +115,16 @@ ${PROG}: ${OBJS} ${LIBLIST}
 	${OBJCOPY} -O binary -R .ident -R .comment ${PROG}.tmp ${PROG}.tmp2
 	cat ${PROG}.tmp2 >>${PROG}
 	rm -f ${PROG}.tmp ${PROG}.tmp2
+
+proginstall:
+#
+
+XEN12LOAD_DIR= ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/xen12load/
+
+release: check_RELEASEDIR .WAIT ${PROG}
+	${_MKMSG_INSTALL} ${PROG}.gz
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${PROG} ${XEN12LOAD_DIR}
+	@rm -f ${XEN12LOAD_DIR}xen12load.gz
+	gzip -9 ${XEN12LOAD_DIR}xen12load
 
 .include <bsd.prog.mk>

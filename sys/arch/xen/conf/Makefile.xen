@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.1 2004/03/11 21:44:08 cl Exp $
+#	$NetBSD: Makefile.xen,v 1.2 2004/05/12 16:56:43 cl Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -18,8 +18,8 @@
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 
+.include "$S/arch/xen/conf/Makefile.arch.inc"
 MACHINE_ARCH?=	i386
-MACHINE_ARCH2?=	x86
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
@@ -28,14 +28,12 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 XEN=		$S/arch/xen
-XEN_MA=		$S/arch/${MACHINE_ARCH}
-XEN_MA2=	$S/arch/${MACHINE_ARCH2}
-GENASSYM=	${XEN}/${MACHINE_ARCH}/genassym.cf
+GENASSYM=	${XEN}/${XEN_BUILD}/genassym.cf
 
 ##
 ## (2) compile settings
 ##
-CPPFLAGS+=	-D${MACHINE_ARCH}
+CPPFLAGS+=	-D${XEN_BUILD}
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp ${DBG}
 EXTRA_INCLUDES=	-I${.CURDIR}/xen-ma
 
@@ -49,26 +47,27 @@ KERN_AS=	obj
 ##
 MD_OBJS=	locore.o spl.o vector.o
 MD_CFILES=
-MD_SFILES=	${XEN}/${MACHINE_ARCH}/locore.S ${XEN}/${MACHINE_ARCH}/spl.S \
-		${XEN}/${MACHINE_ARCH}/vector.S
+MD_SFILES=	${XEN}/${XEN_BUILD}/locore.S ${XEN}/${XEN_BUILD}/spl.S \
+		${XEN}/${XEN_BUILD}/vector.S
 
-locore.o: ${XEN}/${MACHINE_ARCH}/locore.S assym.h
+locore.o: ${XEN}/${XEN_BUILD}/locore.S assym.h
 	${NORMAL_S}
 
-spl.o: ${XEN}/${MACHINE_ARCH}/spl.S assym.h
+spl.o: ${XEN}/${XEN_BUILD}/spl.S assym.h
 	${NORMAL_S}
 
-vector.o: ${XEN}/${MACHINE_ARCH}/vector.S assym.h
+vector.o: ${XEN}/${XEN_BUILD}/vector.S assym.h
 	${NORMAL_S}
 
 .if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
-	rm -f ${MACHINE_ARCH} ${MACHINE_ARCH2}
-	ln -s ${XEN_MA}/include ${MACHINE_ARCH}
-	ln -s ${XEN_MA2}/include ${MACHINE_ARCH2}
+.for A in ${XEN_MACHINE_ARCHS}
+	rm -f ${A}
+	ln -s $S/arch/${A}/include ${A}
+.endfor
 	rm -rf xen-ma
 	mkdir xen-ma
-	ln -s ../${MACHINE_ARCH} xen-ma/machine
+	ln -s $S/arch/${XEN_BUILD}/include xen-ma/machine
 .endif
 
 ##
@@ -78,7 +77,7 @@ TEXTADDR?=	c0100000
 LINKFLAGS_NORMAL=	-X
 .if (${OBJECT_FMT} == "ELF")
 KERN_LDSCRIPT?=	kern.ldscript
-LINKFORMAT=	-T ${XEN_MA}/conf/${KERN_LDSCRIPT}
+LINKFORMAT=	-T $S/arch/${XEN_BUILD}/conf/${KERN_LDSCRIPT}
 .else
 LINKFORMAT=	-z
 .endif
