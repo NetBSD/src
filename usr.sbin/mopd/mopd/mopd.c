@@ -1,4 +1,4 @@
-/*	$NetBSD: mopd.c,v 1.5 1997/10/16 23:25:17 lukem Exp $	*/
+/*	$NetBSD: mopd.c,v 1.6 1999/06/06 03:21:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopd.c,v 1.5 1997/10/16 23:25:17 lukem Exp $");
+__RCSID("$NetBSD: mopd.c,v 1.6 1999/06/06 03:21:43 thorpej Exp $");
 #endif
 
 /*
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: mopd.c,v 1.5 1997/10/16 23:25:17 lukem Exp $");
 #include "print.h"
 #include "process.h"
 #include "rc.h"
+
+#include <util.h>
 
 /*
  * The list of all interfaces that are being listened to. 
@@ -141,6 +143,7 @@ main(argc, argv)
 
 		/* Fade into the background */
 		daemon(0, 0);
+		pidfile(NULL);
 	}
 
 	syslog(LOG_INFO, "%s %s started.", __progname, version);

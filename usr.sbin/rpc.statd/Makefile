@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/25 06:58:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 1999/06/06 02:52:16 thorpej Exp $
 
 PROG=	rpc.statd
 SRCS=	sm_inter_svc.c statd.c stat_proc.c
@@ -7,8 +7,8 @@ MLINKS=	rpc.statd.8 statd.8
 
 CPPFLAGS+= -I.
 
-DPADD=	${LIBRPCSVC}
-LDADD=	-lrpcsvc
+DPADD=	${LIBRPCSVC} ${LIBUTIL}
+LDADD=	-lrpcsvc -lutil
 
 CLEANFILES+= sm_inter_svc.c sm_inter.x sm_inter.h test
 

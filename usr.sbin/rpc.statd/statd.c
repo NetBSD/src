@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.12 1998/07/06 06:58:09 mrg Exp $	*/
+/*	$NetBSD: statd.c,v 1.13 1999/06/06 02:52:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.12 1998/07/06 06:58:09 mrg Exp $");
+__RCSID("$NetBSD: statd.c,v 1.13 1999/06/06 02:52:16 thorpej Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: statd.c,v 1.12 1998/07/06 06:58:09 mrg Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 #include <db.h>
 
 #include <rpc/rpc.h>
@@ -137,6 +138,7 @@ main(argc, argv)
 	 */
 	if (!debug)
 		daemon(0, 0);
+	pidfile(NULL);
 	openlog("rpc.statd", 0, LOG_DAEMON);
 	if (debug)
 		syslog(LOG_INFO, "Starting - debug enabled");

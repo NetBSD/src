@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.10 1998/12/19 15:27:58 christos Exp $	*/
+/*	$NetBSD: apmd.c,v 1.11 1999/06/06 03:17:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <syslog.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <util.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
@@ -390,6 +391,7 @@ main(int argc, char *argv[])
 	openlog(__progname, LOG_CONS, LOG_DAEMON);
 	setlogmask(LOG_UPTO(LOG_NOTICE));
 	daemon(0, 0);
+	pidfile(NULL);
     }
     if (statonly) {
         power_status(ctl_fd, 1, 0);
