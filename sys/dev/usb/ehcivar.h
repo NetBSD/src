@@ -1,7 +1,7 @@
-/*	$NetBSD: ehcivar.h,v 1.3 2001/11/10 17:06:11 augustss Exp $	*/
+/*	$NetBSD: ehcivar.h,v 1.4 2001/11/15 23:25:09 augustss Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,7 +56,16 @@ typedef struct ehci_softc {
 	usb_dma_t sc_fldma;
 	u_int sc_flsize;
 
+	int sc_noport;
+	u_int8_t sc_addr;		/* device address */
+	u_int8_t sc_conf;		/* device configuration */
+	usbd_xfer_handle sc_intrxfer;
+
+	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
+
 	device_ptr_t sc_child;		/* /dev/usb# device */
+
+	char sc_dying;
 } ehci_softc_t;
 
 #define EREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (a))
