@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
+/*	$NetBSD: if_gre.c,v 1.9.6.1 2000/08/25 01:13:25 mjl Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -146,10 +146,8 @@ greattach(void)
 		sc->g_dst.s_addr = sc->g_src.s_addr=INADDR_ANY;
 		sc->g_proto = IPPROTO_GRE;
 		if_attach(&sc->sc_if);
-#if 0
 #if NBPFILTER > 0
-		bpfattach(&sc->gre_bpf, &sc->sc_if, DLT_RAW, sizeof(u_int32_t) );
-#endif
+		bpfattach(&sc->gre_bpf, &sc->sc_if, DLT_NULL, sizeof(u_int32_t) );
 #endif
 
 	}
@@ -182,7 +180,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	inp = NULL;
 	osrc = 0;
 
-#if 0
 #if NBPFILTER >0
 
 	if (sc->gre_bpf) {
@@ -194,9 +191,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
 		
-		bpf_mtap(ifp->if_bpf, &m0);
+		bpf_mtap(sc->gre_bpf, &m0);
 	}
-#endif
 #endif
 
 	ttl = 255;
