@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.87 2003/02/20 22:21:25 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.88 2003/02/22 03:20:48 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -556,7 +556,7 @@ extract_dist()
 
 /*
  * Do pre-extract cleanup for set 'name':
- * open a file named '/etc/obsolete/<name>', which contain a list of
+ * open a file named '/var/db/obsolete/<name>', which contain a list of
  * files to kill from the target. For each file, test if it is present on
  * the target. Then display the list of files which will be removed,
  * ask user for confirmation, and process.
@@ -585,7 +585,7 @@ cleanup_dist(name)
 	int retval = 1;
 	int needok = 0;
 
-	snprintf(file_path, MAXPATHLEN, "/etc/obsolete/%s", name);
+	snprintf(file_path, MAXPATHLEN, "/var/db/obsolete/%s", name);
 	list_file = fopen(file_path, "r");
 	if (list_file == NULL) {
 		saved_errno = errno;
