@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fstore.c,v 1.6 1997/07/19 22:28:49 is Exp $	*/
+/*	$NetBSD: fpu_fstore.c,v 1.7 1999/05/30 20:17:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -50,10 +50,10 @@ fpu_emul_fstore(fe, insn)
     int format;
     u_int buf[3];
 
-    if (fpu_debug_level & DL_FSTORE) {
-	printf("  fpu_emul_fstore: frame at %p fpframe at %p\n",
-	       frame, fe->fe_fpframe);
-    }
+#if DEBUG_FPE
+    printf("  fpu_emul_fstore: frame at %p fpframe at %p\n",
+	   frame, fe->fe_fpframe);
+#endif
 
     word1 = insn->is_word1;
     format = (word1 >> 10) & 7;
@@ -75,28 +75,28 @@ fpu_emul_fstore(fe, insn)
 	insn->is_datasize = 12;
     } else {
 	/* invalid or unsupported operand format */
-	if (fpu_debug_level & DL_FSTORE) {
-	    printf("  fpu_emul_fstore: invalid format %d\n", format);
-	}
+#if DEBUG_FPE
+	printf("  fpu_emul_fstore: invalid format %d\n", format);
+#endif
 	sig = SIGFPE;
     }
-    if (fpu_debug_level & DL_FSTORE) {
-	printf("  fpu_emul_fstore: format %d, size %d\n",
-	       format, insn->is_datasize);
-    }
+#if DEBUG_FPE
+    printf("  fpu_emul_fstore: format %d, size %d\n",
+	   format, insn->is_datasize);
+#endif
 
     fe->fe_fpsr &= ~FPSR_EXCP;
 
     /* Get effective address. (modreg=opcode&077) */
-    sig = fpu_decode_ea(frame, insn, &insn->is_ea0, insn->is_opcode);
+    sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
     if (sig) {
-	if (fpu_debug_level & DL_FSTORE) {
-	    printf("  fpu_emul_fstore: failed in decode_ea sig=%d\n", sig);
-	}
+#if DEBUG_FPE
+	printf("  fpu_emul_fstore: failed in decode_ea sig=%d\n", sig);
+#endif
 	return sig;
     }
 
-    if (insn->is_datasize > 4 && insn->is_ea0.ea_flags == EA_DIRECT) {
+    if (insn->is_datasize > 4 && insn->is_ea.ea_flags == EA_DIRECT) {
 	/* trying to store dbl or ext into a data register */
 #ifdef DEBUG
 	printf("  fpu_fstore: attempted to store dbl/ext to reg\n");
@@ -104,25 +104,29 @@ fpu_emul_fstore(fe, insn)
 	return SIGILL;
     }
 
-    if (fpu_debug_level & DL_OPERANDS)
-	printf("  fpu_emul_fstore: saving FP%d (%08x,%08x,%08x)\n",
-	       regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
-	       fpregs[regnum * 3 + 2]);
+#if DEBUG_FPE
+    printf("  fpu_emul_fstore: saving FP%d (%08x,%08x,%08x)\n",
+	   regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
+	   fpregs[regnum * 3 + 2]);
+#endif
     fpu_explode(fe, &fe->fe_f3, FTYPE_EXT, &fpregs[regnum * 3]);
-    if (fpu_debug_level & DL_VALUES) {
+#if DEBUG_FPE
+    {
 	static char *class_name[] = { "SNAN", "QNAN", "ZERO", "NUM", "INF" };
-	printf("  fpu_emul_fstore: fpn (%s,%c,%d,%08x,%08x,%08x,%08x)\n",
+	printf("  fpu_emul_fstore: fpn (%s,%c,%d,%08x,%08x,%08x)\n",
 	       class_name[fe->fe_f3.fp_class + 2],
 	       fe->fe_f3.fp_sign ? '-' : '+', fe->fe_f3.fp_exp,
 	       fe->fe_f3.fp_mant[0], fe->fe_f3.fp_mant[1],
-	       fe->fe_f3.fp_mant[2], fe->fe_f3.fp_mant[3]);
+	       fe->fe_f3.fp_mant[2]);
     }
+#endif
     fpu_implode(fe, &fe->fe_f3, format, buf);
 
-    fpu_store_ea(frame, insn, &insn->is_ea0, (char *)buf);
-    if (fpu_debug_level & DL_RESULT)
-	printf("  fpu_emul_fstore: %08x,%08x,%08x size %d\n",
-	       buf[0], buf[1], buf[2], insn->is_datasize);
+    fpu_store_ea(frame, insn, &insn->is_ea, (char *)buf);
+#if DEBUG_FPE
+    printf("  fpu_emul_fstore: %08x,%08x,%08x size %d\n",
+	   buf[0], buf[1], buf[2], insn->is_datasize);
+#endif
 
     return 0;
 }
