@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: nubus.c,v 1.4 1994/01/30 01:11:36 briggs Exp $
+ * $Id: nubus.c,v 1.5 1994/02/22 01:11:33 briggs Exp $
  *
  */
 
@@ -188,7 +188,7 @@ int GetHeader(struct slot *Slot,unsigned long pos)
 
 	p=(unsigned char *)pos;
 	
-	Slot->head.offset=GetLongInfo(Slot,p);
+	Slot->head.offset=(0xff000000 | (unsigned long) GetLongInfo(Slot,p));
 	p=IncPtr(Slot,p,4);
 	
 	Slot->head.length=GetLongInfo(Slot,p);
@@ -213,7 +213,7 @@ int GetHeader(struct slot *Slot,unsigned long pos)
 	Slot->head.bytelane=GetByteInfo(Slot,p);
 	p=IncPtr(Slot,p,1);
 	
-	dirBase=(unsigned char *)(pos-(Slot->head.length-sizeof(struct header))*Slot->size);
+	dirBase=(unsigned char *)(pos+Slot->head.offset*Slot->size);
 	GetRsrcs(Slot,dirBase,Slot->mainDir,15);
 	return 0;
 }
@@ -656,10 +656,8 @@ find_nubus(void)
       nu->addr = (caddr_t)(NBBASE + nubus_num * NBMEMSIZE);
       nu->rom = nu->addr + NBROMOFFSET;
 
-
-      if(!badaddr(nu->rom))
+      if(!badbaddr(nu->rom))
       {
-	
 	 InitNubusSlot((unsigned long) nu->addr, &(nu->Slot));
 
          nu->found = 1;
@@ -682,7 +680,7 @@ nubus_print(aux, name)
 		printf ("%s: s:%d t:%d \"",
 			 name, i, nu->Slot.type);
 		printf ("%s, ",nu->Slot.name);
-		printf ("%s\"\n",nu->Slot.manufacturer);
+		printf ("%s\"",nu->Slot.manufacturer);
 	}
 	return(UNCONF);
 }
