@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.115 2004/01/25 18:06:49 hannken Exp $	*/
+/*	$NetBSD: conf.h,v 1.116 2005/02/03 19:20:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -157,35 +157,35 @@ struct linesw {
 	char	*l_name;	/* Linesw name */
 	int	l_no;		/* Linesw number (compatibility) */
 
-	int	(*l_open)	__P((dev_t, struct tty *));
-	int	(*l_close)	__P((struct tty *, int));
-	int	(*l_read)	__P((struct tty *, struct uio *, int));
-	int	(*l_write)	__P((struct tty *, struct uio *, int));
-	int	(*l_ioctl)	__P((struct tty *, u_long, caddr_t, int,
-				    struct proc *));
-	int	(*l_rint)	__P((int, struct tty *));
-	int	(*l_start)	__P((struct tty *));
-	int	(*l_modem)	__P((struct tty *, int));
-	int	(*l_poll)	__P((struct tty *, int, struct proc *));
+	int	(*l_open)	(dev_t, struct tty *);
+	int	(*l_close)	(struct tty *, int);
+	int	(*l_read)	(struct tty *, struct uio *, int);
+	int	(*l_write)	(struct tty *, struct uio *, int);
+	int	(*l_ioctl)	(struct tty *, u_long, caddr_t, int,
+				    struct proc *);
+	int	(*l_rint)	(int, struct tty *);
+	int	(*l_start)	(struct tty *);
+	int	(*l_modem)	(struct tty *, int);
+	int	(*l_poll)	(struct tty *, int, struct proc *);
 };
 
 #ifdef _KERNEL
 extern struct linesw **linesw;
 extern int nlinesw;
-extern void ttyldisc_init __P((void));
-int ttyldisc_add __P((struct linesw *, int));
-struct linesw *ttyldisc_remove __P((char *));
-struct linesw *ttyldisc_lookup __P((char *));
+extern void ttyldisc_init(void);
+int ttyldisc_add(struct linesw *, int);
+struct linesw *ttyldisc_remove(char *);
+struct linesw *ttyldisc_lookup(char *);
 
 /* For those defining their own line disciplines: */
-#define	ttynodisc ((int (*) __P((dev_t, struct tty *)))enodev)
-#define	ttyerrclose ((int (*) __P((struct tty *, int)))enodev)
-#define	ttyerrio ((int (*) __P((struct tty *, struct uio *, int)))enodev)
-#define	ttyerrinput ((int (*) __P((int, struct tty *)))enodev)
-#define	ttyerrstart ((int (*) __P((struct tty *)))enodev)
-#define	ttyerrpoll ((int (*) __P((struct tty *, int, struct proc *)))enodev)
+#define	ttynodisc ((int (*)(dev_t, struct tty *))enodev)
+#define	ttyerrclose ((int (*)(struct tty *, int))enodev)
+#define	ttyerrio ((int (*)(struct tty *, struct uio *, int))enodev)
+#define	ttyerrinput ((int (*)(int, struct tty *))enodev)
+#define	ttyerrstart ((int (*)(struct tty *))enodev)
+#define	ttyerrpoll ((int (*)(struct tty *, int, struct proc *))enodev)
 
-int	ttynullioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
+int	ttynullioctl(struct tty *, u_long, caddr_t, int, struct proc *);
 #endif
 
 #ifdef _KERNEL
@@ -215,8 +215,8 @@ dev_t devsw_blk2chr(dev_t);
 
 #ifdef _KERNEL
 struct	device;
-void	setroot __P((struct device *, int));
-void	swapconf __P((void));
+void	setroot(struct device *, int);
+void	swapconf(void);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_CONF_H_ */

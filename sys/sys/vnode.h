@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.132 2005/01/25 23:55:21 wrstuden Exp $	*/
+/*	$NetBSD: vnode.h,v 1.133 2005/02/03 19:20:02 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -100,7 +100,7 @@ struct vnode {
 	long		v_writecount;		/* reference count of writers */
 	long		v_holdcnt;		/* page & buffer references */
 	struct mount	*v_mount;		/* ptr to vfs we are in */
-	int		(**v_op) __P((void *));	/* vnode operations vector */
+	int		(**v_op)(void *);	/* vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
 	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* clean blocklist head */

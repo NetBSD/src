@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.32 2003/08/07 16:34:11 agc Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.33 2005/02/03 19:20:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -86,29 +86,29 @@ struct reg;
 struct fpreg;
 #endif
 
-int	process_doregs __P((struct proc *, struct lwp *, struct uio *));
-int	process_validregs __P((struct proc *));
+int	process_doregs(struct proc *, struct lwp *, struct uio *);
+int	process_validregs(struct proc *);
 
-int	process_dofpregs __P((struct proc *, struct lwp *, struct uio *));
-int	process_validfpregs __P((struct proc *));
+int	process_dofpregs(struct proc *, struct lwp *, struct uio *);
+int	process_validfpregs(struct proc *);
 
-int	process_domem __P((struct proc *, struct proc *, struct uio *));
-int	process_checkioperm __P((struct proc *, struct proc *));
+int	process_domem(struct proc *, struct proc *, struct uio *);
+int	process_checkioperm(struct proc *, struct proc *);
 
-void	proc_reparent __P((struct proc *, struct proc *));
+void	proc_reparent(struct proc *, struct proc *);
 #ifdef PT_GETFPREGS
-int	process_read_fpregs __P((struct lwp *, struct fpreg *));
+int	process_read_fpregs(struct lwp *, struct fpreg *);
 #endif
 #ifdef PT_GETREGS
-int	process_read_regs __P((struct lwp *, struct reg *));
+int	process_read_regs(struct lwp *, struct reg *);
 #endif
-int	process_set_pc __P((struct lwp *, caddr_t));
-int	process_sstep __P((struct lwp *, int));
+int	process_set_pc(struct lwp *, caddr_t);
+int	process_sstep(struct lwp *, int);
 #ifdef PT_SETFPREGS
-int	process_write_fpregs __P((struct lwp *, struct fpreg *));
+int	process_write_fpregs(struct lwp *, struct fpreg *);
 #endif
 #ifdef PT_SETREGS
-int	process_write_regs __P((struct lwp *, struct reg *));
+int	process_write_regs(struct lwp *, struct reg *);
 #endif
 
 #ifdef __HAVE_PROCFS_MACHDEP
@@ -125,7 +125,7 @@ int	ptrace_machdep_dorequest(struct proc *, struct lwp *, int,
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	ptrace __P((int _request, pid_t _pid, caddr_t _addr, int _data));
+int	ptrace(int _request, pid_t _pid, caddr_t _addr, int _data);
 __END_DECLS
 
 #endif /* !_KERNEL */
