@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.353 2001/09/04 15:37:00 pooka Exp $
+$NetBSD: pcidevs,v 1.354 2001/09/04 20:51:44 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1206,6 +1206,7 @@ product INTEL 82815_FULL_HUB	0x1130	82815 Hub
 product INTEL 82815_FULL_AGP	0x1131	82815 AGP
 product INTEL 82815_FULL_GRAPH	0x1132	82815 Graphics
 product INTEL 82806AA		0x1161	82806AA PCI64 Hub Advanced Programmable Interrupt Controller
+product INTEL IXP1200		0x1200	IXP1200 Network Processor
 product INTEL 82559ER		0x1209	82559ER Fast Ethernet LAN Controller
 product INTEL 82092AA		0x1222	82092AA IDE controller
 product INTEL SAA7116		0x1223	SAA7116
