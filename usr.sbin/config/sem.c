@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.2 1996/03/03 17:28:37 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.3 1996/03/17 02:08:34 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -68,7 +68,9 @@ static struct hashtab *devitab;		/* etc */
 
 static struct attr errattr;
 static struct devbase errdev;
+static struct deva errdeva;
 static struct devbase **nextbase;
+static struct deva **nextdeva;
 static struct config **nextcf;
 static struct devi **nextdevi;
 static struct devi **nextpseudo;
@@ -84,7 +86,7 @@ static struct devi *newdevi __P((const char *, int, struct devbase *d));
 static struct devi *getdevi __P((const char *));
 static const char *concat __P((const char *, int));
 static int split __P((const char *, size_t, char *, size_t, int *));
-static void selectbase __P((struct devbase *));
+static void selectbase __P((struct devbase *, struct deva *));
 static int onlist __P((struct nvlist *, void *));
 static const char **fixloc __P((const char *, struct attr *, struct nvlist *));
 
@@ -97,6 +99,9 @@ initsem()
 
 	allbases = NULL;
 	nextbase = &allbases;
+
+	alldevas = NULL;
+	nextdeva = &alldevas;
 
 	cfhashtab = ht_new();
 	allcf = NULL;
@@ -243,15 +248,14 @@ addtoattr(l, dev)
 }
 
 /*
- * Device a device, giving its allowable parent attachments, if any.
- * This may (or may not) also define an interface attribute and/or refer
- * to existing attributes.  There may be a list of vectors.
+ * Define a device.  This may (or may not) also define an interface
+ * attribute and/or refer to existing attributes.
  */
 void
-defdev(dev, ispseudo, atlist, vectors, loclist, attrs)
+defdev(dev, ispseudo, loclist, attrs)
 	register struct devbase *dev;
 	int ispseudo;
-	struct nvlist *atlist, *vectors, *loclist, *attrs;
+	struct nvlist *loclist, *attrs;
 {
 	register struct nvlist *nv;
 	register struct attr *a;
@@ -284,31 +288,7 @@ defdev(dev, ispseudo, atlist, vectors, loclist, attrs)
 
 	/* Committed!  Set up fields. */
 	dev->d_ispseudo = ispseudo;
-	dev->d_atlist = atlist;
-	dev->d_vectors = vectors;
 	dev->d_attrs = attrs;
-
-	/*
-	 * Turn the `at' list into interface attributes (map each
-	 * nv_name to an attribute, or to NULL for root), and add
-	 * this device to those attributes, so that children can
-	 * be listed at this particular device if they are supported
-	 * by that attribute.
-	 */
-	for (nv = atlist; nv != NULL; nv = nv->nv_next) {
-		if (nv->nv_name == NULL) {
-			nv->nv_ptr = NULL;	/* at root */
-			continue;
-		}
-		nv->nv_ptr = a = getattr(nv->nv_name);
-		if (a == &errattr)
-			continue;		/* already complained */
-		if (!a->a_iattr)
-			error("%s cannot be at plain attribute `%s'",
-			    dev->d_name, a->a_name);
-		else
-			a->a_devs = addtoattr(a->a_devs, dev);
-	}
 
 	/*
 	 * For each interface attribute this device refers to, add this
@@ -322,8 +302,6 @@ defdev(dev, ispseudo, atlist, vectors, loclist, attrs)
 	}
 	return;
 bad:
-	nvfreel(atlist);
-	nvfreel(vectors);
 	nvfreel(loclist);
 	nvfreel(attrs);
 }
@@ -358,11 +336,11 @@ badname:
 		dev->d_next = NULL;
 		dev->d_isdef = 0;
 		dev->d_major = NODEV;
-		dev->d_atlist = NULL;
-		dev->d_vectors = NULL;
 		dev->d_attrs = NULL;
 		dev->d_ihead = NULL;
 		dev->d_ipp = &dev->d_ihead;
+		dev->d_ahead = NULL;
+		dev->d_app = &dev->d_ahead;
 		dev->d_umax = 0;
 		*nextbase = dev;
 		nextbase = &dev->d_next;
@@ -370,6 +348,140 @@ badname:
 			panic("getdevbase(%s)", name);
 	}
 	return (dev);
+}
+
+/*
+ * Define some of a device's allowable parent attachments.
+ * There may be a list of vectors and a list of (plain) attributes.
+ */
+void
+defdevattach(deva, dev, atlist, vectors, attrs)
+	register struct deva *deva;
+	struct devbase *dev;
+	struct nvlist *atlist, *vectors, *attrs;
+{
+	register struct nvlist *nv;
+	register struct attr *a;
+	register struct deva *da;
+
+	if (dev == &errdev)
+		goto bad;
+	if (deva == NULL)
+		deva = getdevattach(dev->d_name);
+	if (deva == &errdeva)
+		goto bad;
+	if (!dev->d_isdef) {
+		error("attaching undefined device `%s'", dev->d_name);
+		goto bad;
+	}
+	if (deva->d_isdef) {
+		error("redefinition of `%s'", deva->d_name);
+		goto bad;
+	}
+	if (dev->d_ispseudo) {
+		error("pseudo-devices can't attach");
+		goto bad;
+	}
+
+	deva->d_isdef = 1; 
+	if (has_errobj(attrs, &errattr))
+		goto bad;
+        for (nv = attrs; nv != NULL; nv = nv->nv_next) {
+                a = nv->nv_ptr;
+                if (a == &errattr)
+                        continue;               /* already complained */
+                if (a->a_iattr)
+                        error("`%s' is not a plain attribute", a->a_name);
+        }
+
+	/* Committed!  Set up fields. */
+	deva->d_attrs = attrs;
+	deva->d_atlist = atlist;
+	deva->d_vectors = vectors;
+	deva->d_devbase = dev;
+
+	/*
+	 * Turn the `at' list into interface attributes (map each
+	 * nv_name to an attribute, or to NULL for root), and add
+	 * this device to those attributes, so that children can
+	 * be listed at this particular device if they are supported
+	 * by that attribute.
+	 */
+	for (nv = atlist; nv != NULL; nv = nv->nv_next) {
+		if (nv->nv_name == NULL)
+			nv->nv_ptr = a = NULL;	/* at root */
+		else
+			nv->nv_ptr = a = getattr(nv->nv_name);
+		if (a == &errattr)
+			continue;		/* already complained */
+
+		/*
+		 * Make sure that an attachment spec doesn't
+		 * already say how to attach to this attribute.
+		 */
+		for (da = dev->d_ahead; da != NULL; da = da->d_bsame)
+			if (onlist(da->d_atlist, a))
+				error("attach at `%s' already done by `%s'",
+				     a ? a->a_name : "root", da->d_name);
+
+		if (a == NULL)
+			continue;		/* at root; don't add */
+		if (!a->a_iattr)
+			error("%s cannot be at plain attribute `%s'",
+			    dev->d_name, a->a_name);
+		else
+			a->a_devs = addtoattr(a->a_devs, dev);
+	}
+
+	/* attach to parent */
+	*dev->d_app = deva;
+	dev->d_app = &deva->d_bsame;
+	return;
+bad:
+	nvfreel(atlist);
+	nvfreel(vectors);
+	nvfreel(attrs);
+}
+
+/*
+ * Look up a device attachment.  Also makes sure it is a reasonable
+ * name, i.e., does not contain digits or special characters.
+ */
+struct deva *
+getdevattach(name)
+	const char *name;
+{
+	register u_char *p;
+	register struct deva *deva;
+
+	p = (u_char *)name;
+	if (!isalpha(*p))
+		goto badname;
+	while (*++p)
+		if (!isalpha(*p) && *p != '_') {
+badname:
+			error("bad device attachment name `%s'", name);
+			return (&errdeva);
+		}
+	deva = ht_lookup(devatab, name);
+	if (deva == NULL) {
+		deva = emalloc(sizeof *deva);
+		deva->d_name = name;
+		deva->d_next = NULL;
+		deva->d_bsame = NULL;
+		deva->d_isdef = 0;
+		deva->d_devbase = NULL;
+		deva->d_atlist = NULL;
+		deva->d_vectors = NULL;
+		deva->d_attrs = NULL;
+		deva->d_ihead = NULL;
+		deva->d_ipp = &deva->d_ihead;
+		*nextdeva = deva;
+		nextdeva = &deva->d_next;
+		if (ht_insert(devatab, name, deva))
+			panic("getdeva(%s)", name);
+	}
+	return (deva);
 }
 
 /*
@@ -606,10 +718,12 @@ newdevi(name, unit, d)
 	i->i_base = d;
 	i->i_next = NULL;
 	i->i_bsame = NULL;
+	i->i_asame = NULL;
 	i->i_alias = NULL;
 	i->i_at = NULL;
 	i->i_atattr = NULL;
 	i->i_atdev = NULL;
+	i->i_atdeva = NULL;
 	i->i_locs = NULL;
 	i->i_cfflags = 0;
 	i->i_lineno = currentline();
@@ -633,11 +747,14 @@ adddev(name, at, loclist, flags)
 	register struct devbase *ib;	/* i->i_base */
 	register struct devbase *ab;	/* not NULL => at another dev */
 	register struct nvlist *nv;
+	register struct deva *iba;	/* devbase attachment used */
 	const char *cp;
 	int atunit;
 	char atbuf[NAMESIZE];
+	int hit;
 
 	ab = NULL;
+	iba = NULL;
 	if (at == NULL) {
 		/* "at root" */
 		if ((i = getdevi(name)) == NULL)
@@ -648,7 +765,13 @@ adddev(name, at, loclist, flags)
 		 * bother?).  Make sure this device can be at root.
 		 */
 		ib = i->i_base;
-		if (!onlist(ib->d_atlist, NULL)) {
+		hit = 0;
+		for (iba = ib->d_ahead; iba != NULL; iba = iba->d_bsame)
+			if (onlist(iba->d_atlist, NULL)) {
+				hit = 1;
+				break;
+			}
+		if (!hit) {
 			error("%s's cannot attach to the root", ib->d_name);
 			goto bad;
 		}
@@ -682,7 +805,7 @@ adddev(name, at, loclist, flags)
 			for (nv = ab->d_attrs; nv != NULL; nv = nv->nv_next) {
 				attr = nv->nv_ptr;
 				if (onlist(attr->a_devs, ib))
-					goto ok;
+					goto findattachment;
 			}
 			attr = &errattr;/* now onlist below will fail */
 		}
@@ -690,11 +813,21 @@ adddev(name, at, loclist, flags)
 			error("%s's cannot attach to %s's", ib->d_name, atbuf);
 			goto bad;
 		}
+findattachment:
+		/* find out which attachment it uses */
+		hit = 0;
+		for (iba = ib->d_ahead; iba != NULL; iba = iba->d_bsame)
+			if (onlist(iba->d_atlist, attr)) {
+				hit = 1;
+				break;
+			}
+		if (!hit)
+			panic("adddev: can't figure out attachment");
 	}
 ok:
 	if ((i->i_locs = fixloc(name, attr, loclist)) == NULL)
 		goto bad;
-	if (i->i_unit == STAR && ib->d_vectors != NULL) {
+	if (i->i_unit == STAR && iba->d_vectors != NULL) {
 		error("%s's cannot be *'d as they have preset vectors",
 		    ib->d_name);
 		goto bad;
@@ -702,9 +835,14 @@ ok:
 	i->i_at = at;
 	i->i_atattr = attr;
 	i->i_atdev = ab;
+	i->i_atdeva = iba;
 	i->i_atunit = atunit;
 	i->i_cfflags = flags;
-	selectbase(ib);
+
+	*iba->d_ipp = i;
+	iba->d_ipp = &i->i_asame;
+
+	selectbase(ib, iba);
 	/* all done, fall into ... */
 bad:
 	nvfreel(loclist);
@@ -735,7 +873,7 @@ addpseudo(name, number)
 	i = newdevi(name, number - 1, d);	/* foo 16 => "foo0..foo15" */
 	if (ht_insert(devitab, name, i))
 		panic("addpseudo(%s)", name);
-	selectbase(d);
+	selectbase(d, NULL);
 	*nextpseudo = i;
 	nextpseudo = &i->i_next;
 	npseudo++;
@@ -862,8 +1000,9 @@ split(name, nlen, base, bsize, aunit)
  * attributes for "optional foo".
  */
 static void
-selectbase(d)
+selectbase(d, da)
 	register struct devbase *d;
+	register struct deva *da;
 {
 	register struct attr *a;
 	register struct nvlist *nv;
@@ -872,6 +1011,14 @@ selectbase(d)
 	for (nv = d->d_attrs; nv != NULL; nv = nv->nv_next) {
 		a = nv->nv_ptr;
 		(void)ht_insert(selecttab, a->a_name, (char *)a->a_name);
+	}
+	if (da != NULL) {
+		(void)ht_insert(selecttab, da->d_name, (char *)da->d_name);
+		for (nv = da->d_attrs; nv != NULL; nv = nv->nv_next) {
+			a = nv->nv_ptr;
+			(void)ht_insert(selecttab, a->a_name,
+			    (char *)a->a_name);
+		}
 	}
 }
 

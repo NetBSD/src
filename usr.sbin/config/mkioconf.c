@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.36 1996/03/03 17:28:23 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.37 1996/03/17 02:08:31 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -160,13 +160,22 @@ emitexterns(fp)
 	register FILE *fp;
 {
 	register struct devbase *d;
+	register struct deva *da;
 
 	NEWLINE;
 	for (d = allbases; d != NULL; d = d->d_next) {
-		if (d->d_ihead == NULL)
+		if (!devbase_has_instances(d, WILD))
 			continue;
-		if (fprintf(fp, "extern struct cfdriver %scd;\n",
+		if (fprintf(fp, "extern struct cfdriver %s_cd;\n",
 			    d->d_name) < 0)
+			return (1);
+	}
+	NEWLINE;
+	for (da = alldevas; da != NULL; da = da->d_next) {
+		if (!deva_has_instances(da, WILD))
+			continue;
+		if (fprintf(fp, "extern struct cfattach %s_ca;\n",
+			    da->d_name) < 0)
 			return (1);
 	}
 	NEWLINE;
@@ -215,7 +224,7 @@ emitcfdata(fp)
 {
 	register struct devi **p, *i, **par;
 	register int unit, v;
-	register const char *vs, *state, *basename;
+	register const char *vs, *state, *basename, *attachment;
 	register struct nvlist *nv;
 	register struct attr *a;
 	char *loc;
@@ -226,7 +235,7 @@ emitcfdata(fp)
 #define STAR FSTATE_STAR\n\
 \n\
 struct cfdata cfdata[] = {\n\
-\t/* driver     unit state    loc     flags parents ivstubs */\n") < 0)
+    /* attachment       driver        unit state loc   flags parents ivstubs */\n") < 0)
 		return (1);
 	for (p = packed; (i = *p) != NULL; p++) {
 		/* the description */
@@ -250,6 +259,7 @@ struct cfdata cfdata[] = {\n\
 
 		/* then the actual defining line */
 		basename = i->i_base->d_name;
+		attachment = i->i_atdeva->d_name;
 		if (i->i_unit == STAR) {
 			unit = i->i_base->d_umax;
 			state = "STAR";
@@ -270,12 +280,13 @@ struct cfdata cfdata[] = {\n\
 		} else
 			loc = "loc";
 		if (fprintf(fp, "\
-\t{&%scd,%s%2d, %s, %7s, %#6x, pv+%2d, %s%d},\n",
+    {&%s_ca,%s&%s_cd,%s%2d, %s, %7s, %#6x, pv+%2d, %s%d},\n",
+		    attachment, strlen(attachment) < 6 ? "\t\t" : "\t",
 		    basename, strlen(basename) < 3 ? "\t\t" : "\t", unit,
 		    state, loc, i->i_cfflags, i->i_pvoff, vs, v) < 0)
 			return (1);
 	}
-	return (fputs("\t{0}\n};\n", fp) < 0);
+	return (fputs("    {0}\n};\n", fp) < 0);
 }
 
 /*
@@ -345,7 +356,7 @@ emitvec(fp)
 
 	nvec = 0;
 	for (p = packed; (i = *p) != NULL; p++) {
-		if ((head = i->i_base->d_vectors) == NULL)
+		if ((head = i->i_atdeva->d_vectors) == NULL)
 			continue;
 		if ((unit = i->i_unit) == STAR)
 			panic("emitvec unit==STAR");
@@ -365,7 +376,7 @@ emitvec(fp)
 		return (1);
 	nvec = 0;
 	for (p = packed; (i = *p) != NULL; p++) {
-		if ((head = i->i_base->d_vectors) == NULL)
+		if ((head = i->i_atdeva->d_vectors) == NULL)
 			continue;
 		i->i_ivoff = nvec;
 		unit = i->i_unit;

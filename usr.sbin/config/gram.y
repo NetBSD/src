@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.3 1996/03/03 17:28:13 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.4 1996/03/17 02:08:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,14 +86,15 @@ static	void	setmaxpartitions __P((int));
 %union {
 	struct	attr *attr;
 	struct	devbase *devb;
+	struct	deva *deva;
 	struct	nvlist *list;
 	const char *str;
 	int	val;
 }
 
-%token	AND AT COMPILE_WITH CONFIG DEFINE DEVICE DUMPS ENDFILE
+%token	AND AT ATTACH COMPILE_WITH CONFIG DEFINE DEVICE DUMPS ENDFILE
 %token	XFILE FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS
-%token	MINOR ON OPTIONS PSEUDO_DEVICE ROOT SWAP VECTOR
+%token	MINOR ON OPTIONS PSEUDO_DEVICE ROOT SWAP VECTOR WITH
 %token	<val> FFLAG NUMBER
 %token	<str> PATHNAME WORD
 
@@ -102,6 +103,7 @@ static	void	setmaxpartitions __P((int));
 %type	<str>	rule
 %type	<attr>	attr
 %type	<devb>	devbase
+%type	<deva>	devattach_opt
 %type	<list>	atlist interface_opt
 %type	<str>	atname
 %type	<list>	loclist_opt loclist locdef
@@ -193,10 +195,13 @@ one_def:
 	file |
 	include |
 	DEFINE WORD interface_opt	= { (void)defattr($2, $3); } |
-	DEVICE devbase AT atlist veclist_opt interface_opt attrs_opt
-					= { defdev($2, 0, $4, $5, $6, $7); } |
+	DEVICE devbase interface_opt attrs_opt
+					= { defdev($2, 0, $3, $4); } |
+	ATTACH devbase AT atlist veclist_opt devattach_opt attrs_opt
+					= { defdevattach($6, $2, $4, $5,
+					    $7); } |
 	MAXUSERS NUMBER NUMBER NUMBER	= { setdefmaxusers($2, $3, $4); } |
-	PSEUDO_DEVICE devbase attrs_opt = { defdev($2,1,NULL,NULL,NULL,$3); } |
+	PSEUDO_DEVICE devbase attrs_opt = { defdev($2,1,NULL,$3); } |
 	MAJOR '{' majorlist '}';
 
 atlist:
@@ -218,6 +223,10 @@ veclist:
 
 devbase:
 	WORD				= { $$ = getdevbase($1); };
+
+devattach_opt:
+	WITH WORD			= { $$ = getdevattach($2); } |
+	/* empty */			= { $$ = NULL; };
 
 interface_opt:
 	'{' loclist_opt '}'		= { ($$ = new_n(""))->nv_next = $2; } |

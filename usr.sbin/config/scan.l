@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.2 1996/03/03 17:28:34 thorpej Exp $	*/
+/*	$NetBSD: scan.l,v 1.3 1996/03/17 02:08:33 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -86,6 +86,7 @@ WORD	[A-Za-z_][-A-Za-z_0-9]*
 		/* plain keywords */
 and		{ return AND; }
 at		{ return AT; }
+attach		{ return ATTACH; }
 compile-with	{ return COMPILE_WITH; }
 config		{ return CONFIG; }
 define		{ return DEFINE; }
@@ -106,6 +107,7 @@ options		{ return OPTIONS; }
 root		{ return ROOT; }
 swap		{ return SWAP; }
 vector		{ return VECTOR; }
+with		{ return WITH; }
 
 		/* keywords with values */
 config-dependent { yylval.val = FI_CONFIGDEP; return FFLAG; }
