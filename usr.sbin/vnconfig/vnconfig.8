@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.22 2002/03/05 15:11:54 wiz Exp $
+.\"	$NetBSD: vnconfig.8,v 1.23 2002/06/21 19:09:29 atatat Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,6 +91,9 @@
 .Fl u
 .Op Fl v
 .Ar vnode_disk
+.Nm ""
+.Fl l
+.Op Ar vnode_disk
 .Sh DESCRIPTION
 The
 .Nm
@@ -146,6 +149,10 @@ option should look up in
 .Ar disktab
 instead of in
 .Pa /etc/disktab .
+.It Fl l
+List the vnd devices and indicate which ones are in use.  If a specific
+.Ar vnode_disk
+is given, then only that will be described.
 .It Fl t Ar typename
 If configuring the device, look up
 .Ar typename
