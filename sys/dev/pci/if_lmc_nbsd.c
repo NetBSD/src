@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.9 2001/06/13 10:46:05 wiz Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.10 2001/07/07 16:39:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -270,7 +270,7 @@ lmc_pci_attach(struct device * const parent,
 		DELAY(11 * 1000);
 	}
 
-	bcopy(self->dv_xname, sc->lmc_if.if_xname, IFNAMSIZ);
+	strcpy(sc->lmc_if.if_xname, self->dv_xname);
 	sc->lmc_if.if_softc = sc;
 	sc->lmc_pc = pa->pa_pc;
 
