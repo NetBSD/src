@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1986, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -15,9 +15,9 @@
 
 #ifndef lint
 # if NAMED_BIND
-static char id[] = "@(#)Id: domain.c,v 8.114.6.1.2.3 2000/06/13 18:00:08 gshapiro Exp (with name server)";
+static char id[] = "@(#)Id: domain.c,v 8.114.6.1.2.8 2001/02/12 21:40:19 gshapiro Exp (with name server)";
 # else /* NAMED_BIND */
-static char id[] = "@(#)Id: domain.c,v 8.114.6.1.2.3 2000/06/13 18:00:08 gshapiro Exp (without name server)";
+static char id[] = "@(#)Id: domain.c,v 8.114.6.1.2.8 2001/02/12 21:40:19 gshapiro Exp (without name server)";
 # endif /* NAMED_BIND */
 #endif /* ! lint */
 
@@ -356,7 +356,7 @@ punt:
 
 			if (TryNullMXList)
 			{
-				h_errno = 0;
+				SM_SET_H_ERRNO(0);
 				errno = 0;
 				h = sm_gethostbyname(host, AF_INET);
 				if (h == NULL)
@@ -370,7 +370,7 @@ punt:
 						return -1;
 					}
 # if NETINET6
-					h_errno = 0;
+					SM_SET_H_ERRNO(0);
 					errno = 0;
 					h = sm_gethostbyname(host, AF_INET6);
 					if (h == NULL &&
@@ -393,6 +393,10 @@ punt:
 				       host, MyHostName);
 				return -1;
 			}
+# if _FFR_FREEHOSTENT && NETINET6
+			freehostent(h);
+			hp = NULL;
+# endif /* _FFR_FREEHOSTENT && NETINET6 */
 		}
 		if (strlen(host) >= (SIZE_T) sizeof MXHostBuf)
 		{
@@ -640,6 +644,8 @@ dns_getcanonname(host, hbsize, trymx, statp)
 		return FALSE;
 	}
 
+	*statp = EX_OK;
+
 	/*
 	**  Initialize domain search list.  If there is at least one
 	**  dot in the name, search the unmodified name first so we
@@ -730,6 +736,7 @@ cnameloop:
 				qtype == T_A ? "A" :
 				qtype == T_MX ? "MX" :
 				"???");
+		errno = 0;
 		ret = res_querydomain(host, *dp, C_IN, qtype,
 				      answer.qb2, sizeof(answer.qb2));
 		if (ret <= 0)
@@ -740,8 +747,12 @@ cnameloop:
 
 			if (errno == ECONNREFUSED || h_errno == TRY_AGAIN)
 			{
-				/* the name server seems to be down */
-				h_errno = TRY_AGAIN;
+				/*
+				**  the name server seems to be down or
+				**  broken.
+				*/
+
+				SM_SET_H_ERRNO(TRY_AGAIN);
 				*statp = EX_TEMPFAIL;
 
 				/*
@@ -757,8 +768,27 @@ cnameloop:
 				**  the cache so this isn't dangerous.
 				*/
 
+#if _FFR_WORKAROUND_BROKEN_NAMESERVERS
+				if (WorkAroundBrokenAAAA)
+				{
+					/*
+					**  Only return if not TRY_AGAIN as an
+					**  attempt with a different qtype may
+					**  succeed (res_querydomain() calls
+					**  res_query() calls res_send() which
+					**  sets errno to ETIMEDOUT if the
+					**  nameservers could be contacted but
+					**  didn't give an answer).
+					*/
+
+					if (qtype != T_ANY &&
+					    errno != ETIMEDOUT)
+						return FALSE;
+				}
+#else /* _FFR_WORKAROUND_BROKEN_NAMESERVERS */
 				if (qtype != T_ANY)
 					return FALSE;
+#endif /* _FFR_WORKAROUND_BROKEN_NAMESERVERS */
 			}
 
 			if (h_errno != HOST_NOT_FOUND)
@@ -905,7 +935,7 @@ cnameloop:
 							host);
 						CurEnv->e_message = newstr(ebuf);
 					}
-					h_errno = NO_RECOVERY;
+					SM_SET_H_ERRNO(NO_RECOVERY);
 					*statp = EX_CONFIG;
 					return FALSE;
 				}
@@ -976,7 +1006,8 @@ cnameloop:
 	/* if nothing was found, we are done */
 	if (mxmatch == NULL)
 	{
-		*statp = EX_NOHOST;
+		if (*statp == EX_OK)
+			*statp = EX_NOHOST;
 		return FALSE;
 	}
 

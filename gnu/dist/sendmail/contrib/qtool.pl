@@ -1,9 +1,9 @@
 #!/usr/bin/env perl
 ##
-## Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+## Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
 ##       All rights reserved.
 ##
-## Id: qtool.pl,v 8.15.16.1 2000/04/25 03:44:31 gshapiro Exp
+## Id: qtool.pl,v 8.15.16.4 2000/11/30 07:14:01 gshapiro Exp
 ##
 use strict;
 use File::Basename;
@@ -133,13 +133,12 @@ while (@ARGV)
 	if ($result)
 	{
 		print("$result.\n");
+		exit;
 	}
 }
 
 if (keys(%sources) == 0)
 {
-	print("You must at least specify at least one source.\n");
-	usage();
 	exit;
 }
 
@@ -164,7 +163,7 @@ sub usage
 	print("    -b                   Bounce the messages specified by source.\n");
 	print("    -d                   Delete the messages specified by source.\n");
 	print("    -e [perl expression] Move only messages for which perl expression returns true.\n");
-	print("    -s [seconds]         Move only messages older than seconds.\n");
+	print("    -s [seconds]         Move only messages whose qf file is older than seconds.\n");
 }
 
 ##

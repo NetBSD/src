@@ -10,7 +10,7 @@
  * the sendmail distribution.
  *
  *
- *	Id: sendmail.h,v 8.34.4.4 2000/07/15 17:35:17 gshapiro Exp
+ *	Id: sendmail.h,v 8.34.4.7 2000/10/09 16:15:26 gshapiro Exp
  */
 
 /*
@@ -52,6 +52,9 @@
 #define _BITBIT(bit)	((unsigned int)1 << ((bit) % (BYTEBITS * sizeof (int))))
 
 typedef unsigned int	BITMAP256[BITMAPBYTES / sizeof (int)];
+
+/* properly case and truncate bit */
+#define bitidx(bit)		((unsigned int) (bit) & 0xff)
 
 /* test bit number N */
 #define bitnset(bit, map)	((map)[_BITWORD(bit)] & _BITBIT(bit))
@@ -150,8 +153,14 @@ extern bool	filechanged __P((char *, int, struct stat *));
 #define DBS_DONTWARNFORWARDFILEINUNSAFEDIRPATH		33
 #define DBS_INSUFFICIENTENTROPY				34
 #if _FFR_UNSAFE_SASL
-#define DBS_GROUPREADABLESASLFILE			35
+# define DBS_GROUPREADABLESASLFILE			35
 #endif /* _FFR_UNSAFE_SASL */
+#if _FFR_UNSAFE_WRITABLE_INCLUDE
+# define DBS_GROUPWRITABLEFORWARDFILE			36
+# define DBS_GROUPWRITABLEINCLUDEFILE			37
+# define DBS_WORLDWRITABLEFORWARDFILE			38
+# define DBS_WORLDWRITABLEINCLUDEFILE			39
+#endif /* _FFR_UNSAFE_WRITABLE_INCLUDE */
 
 /* struct defining such things */
 struct dbsval
