@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.4 2000/04/26 15:54:02 ad Exp $	*/
+/*	$NetBSD: cac.c,v 1.5 2000/05/03 18:58:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.4 2000/04/26 15:54:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.5 2000/05/03 18:58:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,7 @@ cac_cmd(sc, command, data, datasize, drive, blkno, flags, context)
 
 	ccb->ccb_req.bcount = htole16(howmany(size, DEV_BSIZE));
 	ccb->ccb_req.command = command;
-	ccb->ccb_req.sgcount = i;
+	ccb->ccb_req.sgcount = nsegs;
 	ccb->ccb_req.blkno = htole32(blkno);
 	
 	ccb->ccb_flags = flags;
@@ -356,7 +356,7 @@ cac_ccb_poll(sc, ccb, timo)
 	ccb_done = NULL;
 
 	for (;;) {
-		for (; timo != 0; timo--) {
+		for (completed = 0; timo != 0; timo--) {
 			if ((completed = sc->sc_cl->cl_completed(sc)) != 0)
 				break;
 			DELAY(100);
