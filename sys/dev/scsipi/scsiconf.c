@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.192 2002/10/02 16:52:52 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.193 2002/10/04 17:53:33 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.192 2002/10/02 16:52:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.193 2002/10/04 17:53:33 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,7 +398,7 @@ scsibusprint(aux, pnp)
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_inquiry_pattern *inqbuf;
 	u_int8_t type;
-	const char *dtype, *qtype;
+	const char *dtype;
 	char vendor[33], product[65], revision[17];
 	int target, lun;
 
@@ -411,39 +411,15 @@ scsibusprint(aux, pnp)
 	lun = sa->sa_periph->periph_lun;
 	type = inqbuf->type & SID_TYPE;
 
-	/*
-	 * Figure out basic device type and qualifier.
-	 */
-	dtype = 0;
-	switch (inqbuf->type & SID_QUAL) {
-	case SID_QUAL_LU_PRESENT:
-		qtype = "";
-		break;
-
-	case SID_QUAL_LU_NOTPRESENT:
-		qtype = " offline";
-		break;
-
-	case SID_QUAL_reserved:
-	case SID_QUAL_LU_NOT_SUPP:
-		panic("scsibusprint: impossible qualifier");
-
-	default:
-		qtype = "";
-		dtype = "vendor-unique";
-		break;
-	}
-	if (dtype == NULL)
-		dtype = scsipi_dtype(type);
+	dtype = scsipi_dtype(type);
 
 	scsipi_strvis(vendor, 33, inqbuf->vendor, 8);
 	scsipi_strvis(product, 65, inqbuf->product, 16);
 	scsipi_strvis(revision, 17, inqbuf->revision, 4);
 
-	printf(" target %d lun %d: <%s, %s, %s> SCSI%d %d/%s %s%s",
-	    target, lun, vendor, product, revision,
-	    sa->scsipi_info.scsi_version & SID_ANSII, type, dtype,
-	    inqbuf->removable ? "removable" : "fixed", qtype);
+	printf(" target %d lun %d: <%s, %s, %s> %s %s",
+	    target, lun, vendor, product, revision, dtype,
+	    inqbuf->removable ? "removable" : "fixed");
 
 	return (UNCONF);
 }

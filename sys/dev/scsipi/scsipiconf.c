@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.17 2002/01/12 16:37:55 tsutsui Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.18 2002/10/04 17:53:35 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.17 2002/01/12 16:37:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.18 2002/10/04 17:53:35 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,10 +193,10 @@ scsipi_dtype(type)
 
 	switch (type) {
 	case T_DIRECT:
-		dtype = "direct";
+		dtype = "disk";
 		break;
 	case T_SEQUENTIAL:
-		dtype = "sequential";
+		dtype = "tape";
 		break;
 	case T_PRINTER:
 		dtype = "printer";
