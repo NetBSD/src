@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.25 1998/06/05 19:53:01 kleink Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.26 1998/06/25 22:15:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_nfsserver.h"
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -309,29 +310,6 @@ doreply:
 	*cachablep = 1;
 	if (++nfsstats.srvnqnfs_leases > nfsstats.srvnqnfs_maxleases)
 		nfsstats.srvnqnfs_maxleases = nfsstats.srvnqnfs_leases;
-	return (0);
-}
-
-/*
- * Local lease check for server syscalls.
- * Just set up args and let nqsrv_getlease() do the rest.
- */
-int
-nqnfs_vop_lease_check(v)
-	void *v;
-{
-	struct vop_lease_args /* {
-		struct vnode *a_vp;
-		struct proc *a_p;
-		struct ucred *a_cred;
-		int a_flag;
-	} */ *ap = v;
-	u_int32_t duration = 0;
-	int cache;
-	u_quad_t frev;
-
-	(void) nqsrv_getlease(ap->a_vp, &duration, ND_CHECK | ap->a_flag,
-	    NQLOCALSLP, ap->a_p, (struct mbuf *)0, &cache, &frev, ap->a_cred);
 	return (0);
 }
 

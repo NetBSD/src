@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.7 1998/06/05 19:53:00 kleink Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.8 1998/06/25 22:15:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,8 @@
  *
  */
 
+#include "opt_nfsserver.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -46,6 +48,14 @@
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
+
+#ifdef NFSSERVER
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nqnfs.h>
+#include <nfs/nfs_var.h>
+#endif
 
 int
 genfs_poll(v)
@@ -322,4 +332,32 @@ genfs_noislocked(v)
 	if (vp->v_vnlock == NULL)
 		return (0);
 	return (lockstatus(vp->v_vnlock));
+}
+
+/*
+ * Local lease check for NFS servers.  Just set up args and let
+ * nqsrv_getlease() do the rest.  If NFSSERVER is not in the kernel,
+ * this is a null operation.
+ */
+int
+genfs_lease_check(v)
+	void *v;
+{
+#ifdef NFSSERVER
+	struct vop_lease_args /* {
+		struct vnode *a_vp;
+		struct proc *a_p;
+		struct ucred *a_cred;
+		int a_flag;
+	} */ *ap = v;
+	u_int32_t duration = 0;
+	int cache;
+	u_quad_t frev;
+
+	(void) nqsrv_getlease(ap->a_vp, &duration, ND_CHECK | ap->a_flag,
+	    NQLOCALSLP, ap->a_p, (struct mbuf *)0, &cache, &frev, ap->a_cred);
+	return (0);
+#else
+	return (0);
+#endif /* NFSSERVER */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.13 1998/03/29 05:13:00 mrg Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.14 1998/06/25 22:15:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -115,7 +115,6 @@ void nqsrv_unlocklease __P((struct nqlease *));
 int nqsrv_getlease __P((struct vnode *, u_int32_t *, int, struct nfssvc_sock *,
 			struct proc *, struct mbuf *, int *, u_quad_t *,
 			struct ucred *));
-int nqnfs_vop_lease_check __P((void *));
 void nqsrv_addhost __P((struct nqhost *, struct nfssvc_sock *, struct mbuf *));
 void nqsrv_instimeq __P((struct nqlease *, u_int32_t));
 int nqsrv_cmpnam __P((struct nfssvc_sock *, struct mbuf *, struct nqhost *));
