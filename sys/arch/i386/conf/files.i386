@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.123 1998/10/12 16:09:13 bouyer Exp $
+#	$NetBSD: files.i386,v 1.124 1998/10/13 11:43:50 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -10,6 +10,9 @@ maxusers 2 16 64
 
 # Processor type options.
 defopt	opt_cputype.h I386_CPU I486_CPU I586_CPU I686_CPU
+
+# delay before cpu_reset() for reboot.
+defopt CPURESET_DELAY
 
 # VM86 emulation
 defopt	VM86

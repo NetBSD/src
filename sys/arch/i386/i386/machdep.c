@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.326 1998/10/06 21:42:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.327 1998/10/13 11:43:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 #include "opt_uvm.h"
 #include "opt_pmap_new.h"
 #include "opt_compat_netbsd.h"
+#include "opt_cpureset_delay.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,6 +223,11 @@ char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
 char bootinfo[BOOTINFO_MAXSIZE];
+
+#ifndef CPURESET_DELAY
+/* default to 2s */
+#define CPURESET_DELAY 2000
+#endif
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -1361,6 +1367,9 @@ haltsys:
 	}
 
 	printf("rebooting...\n");
+#if CPURESET_DELAY > 0
+	delay(CPURESET_DELAY * 1000);
+#endif
 	cpu_reset();
 	for(;;) ;
 	/*NOTREACHED*/

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.190 1998/10/13 03:57:27 enami Exp $
+#	$NetBSD: GENERIC,v 1.191 1998/10/13 11:43:50 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -19,6 +19,9 @@ options 	MATH_EMULATE	# floating point emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 #options 	DUMMY_NOPS
+
+# delay between "rebooting ..." message and hardware reset, in milieconds
+#options 	CPURESET_DELAY=2000
 
 # Misc. i386-specific options
 options 	XSERVER		# X server support in console drivers
