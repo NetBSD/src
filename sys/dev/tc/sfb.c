@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.63 2003/12/20 06:41:14 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.64 2003/12/20 09:17:28 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.63 2003/12/20 06:41:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.64 2003/12/20 09:17:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,18 +93,18 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.63 2003/12/20 06:41:14 nisimura Exp $");
 
 #define	REGWRITE32(p,i,v) do {					\
 	*(volatile u_int32_t *)((p) + (i)) = (v); tc_wmb();	\
-    } while (0)
+    } while (/* CONSTCOND */ 0)
 #define	SFBWRITE32(p,i,v) do {					\
 	*(volatile u_int32_t *)((p) + (i)) = (v);		\
-    } while (0)
+    } while (/* CONSTCOND */ 0)
 #define	MEMWRITE32(p,v) do {					\
 	*(volatile u_int32_t *)(p) = (v);			\
-    } while (0)
+    } while (/* CONSTCOND */ 0)
 
 #define	VDACSELECT(p,r) do {					\
 	REGWRITE32(p, bt_lo, 0xff & (r));			\
 	REGWRITE32(p, bt_hi, 0x0f & ((r)>>8));			\
-   } while (0)
+   } while (/* CONSTCOND */ 0)
 
 struct hwcmap256 {
 #define	CMAP_SIZE	256	/* 256 R/G/B entries */
@@ -488,7 +488,7 @@ sfb_screenblank(sc, turnoff)
 
 	ri = sc->sc_ri;
 	asic = (caddr_t)ri->ri_hw + SFB_ASIC_OFFSET;
-	*(u_int32_t *)(asic + SFB_ASIC_VIDEO_VALID) = !turnoff;
+	SFBWRITE32(asic, SFB_ASIC_VIDEO_VALID, !turnoff);
 	tc_wmb();
 	sc->sc_blanked = turnoff;
 }
