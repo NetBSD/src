@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.31 2002/02/23 05:58:46 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.32 2002/03/03 11:23:00 chris Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@ extern int pmap_debug_level;
 
 					/* L2 tables for mapping kernel VM */ 
 #define KERNEL_PT_VMDATA	(KERNEL_PT_IOPXS + 1)
-#define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
+#define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
@@ -608,6 +608,9 @@ initarm(void *arg)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
 	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE, &kernel_ptpt);
+
+	/* update the top of the kernel VM */
+	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.23 2002/02/22 18:25:09 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.24 2002/03/03 11:23:01 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -144,7 +144,7 @@ extern int pmap_debug_level;
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
 #define KERNEL_PT_VMDATA	2	/* Page tables for mapping kernel VM */
-#define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
+#define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
@@ -581,6 +581,9 @@ initarm(bootinfo)
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
 	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE,
 	    &kernel_ptpt);
+
+	/* update the top of the kernel VM */
+	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");
