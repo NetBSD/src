@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.134 1994/12/01 09:53:38 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.135 1995/01/08 21:22:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -128,6 +128,7 @@ void dumpsys __P((void));
 
 caddr_t allocsys();
 
+int check_selectors __P((u_short, u_short, u_short, u_short));
 /*
  * Machine-dependent startup code
  */
@@ -474,8 +475,28 @@ sendsig(catcher, sig, mask, code)
 	int oonstack;
 	extern char sigcode[], esigcode[];
 
+	/* 
+	 * Build the argument list for the signal handler.
+	 */
+	switch (p->p_emul) {
+#ifdef COMPAT_IBCS2
+	case EMUL_IBCS2_COFF:
+		frame.sf_signum = bsd2ibcs_sig(sig);
+		break;
+#endif
+#ifdef COMPAT_SVR4
+	case EMUL_IBCS2_ELF:
+		svr4_sendsig(catcher, sig, mask, code);
+		return;
+#endif
+	default:
+		frame.sf_signum = sig;
+		break;
+	}
+
 	tf = (struct trapframe *)p->p_md.md_regs;
 	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+
 	/*
 	 * Allocate space for the signal handler context.
 	 */
@@ -488,19 +509,6 @@ sendsig(catcher, sig, mask, code)
 		fp = (struct sigframe *)tf->tf_esp - 1;
 	}
 
-	/* 
-	 * Build the argument list for the signal handler.
-	 */
-	switch (p->p_emul) {
-#ifdef COMPAT_IBCS2
-	case EMUL_IBCS2_COFF:
-		frame.sf_signum = bsd2ibcs_sig(sig);
-		break;
-#endif
-	default:
-		frame.sf_signum = sig;
-		break;
-	}
 	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
 	frame.sf_handler = catcher;
@@ -546,7 +554,7 @@ sendsig(catcher, sig, mask, code)
 	tf->tf_ss = _udatasel;
 }
 
-static __inline int
+int
 check_selectors(u_short cs, u_short ss, u_short ds, u_short es)
 {
 	int result;
@@ -607,7 +615,6 @@ sigreturn(p, uap, retval)
 	register_t *retval;
 {
 	struct sigcontext *scp, context;
-	register struct sigframe *fp;
 	register struct trapframe *tf;
 	int eflags;
 
