@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.6 2002/08/09 02:17:27 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.7 2002/09/19 16:45:58 mycroft Exp $	*/
 /*	$KAME: mld6.c,v 1.9 2000/12/04 06:29:37 itojun Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -74,7 +75,7 @@ main(int argc, char *argv[])
 	int i;
 	struct icmp6_filter filt;
 	u_int hlim = 1;
-	fd_set fdset;
+	struct pollfd set[1];
 	struct itimerval itimer;
 	u_int type;
 	int ch;
@@ -140,13 +141,11 @@ main(int argc, char *argv[])
 	(void)signal(SIGALRM, quit);
 	(void)setitimer(ITIMER_REAL, &itimer, NULL);
 
-	FD_ZERO(&fdset);
-	if (s >= FD_SETSIZE)
-		errx(1, "descriptor too big");
+	set[0].fd = s;
+	set[0].events = POLLIN;
 	for (;;) {
-		FD_SET(s, &fdset);
-		if ((i = select(s + 1, &fdset, NULL, NULL, NULL)) < 0)
-			perror("select");
+		if ((i = poll(set, 1, INFTIM)) < 0)
+			perror("poll");
 		if (i == 0)
 			continue;
 		else

@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.12 2002/07/16 00:40:51 itojun Exp $	*/
+/*	$NetBSD: top.c,v 1.13 2002/09/19 16:45:57 mycroft Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -52,6 +52,7 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 #include <setjmp.h>
 #include <ctype.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 
 /* includes specific to top */
 #include "display.h"		/* interface to display package */
@@ -139,19 +140,12 @@ char *argv[];
     char ch;
     char *iptr;
     char no_command = 1;
-    struct timeval timeout;
     struct process_select ps;
 #ifdef ORDER
     char *order_name = NULL;
     int order_index = 0;
 #endif
-#ifndef FD_SET
-    /* FD_SET and friends are not present:  fake it */
-    typedef int fd_set;
-#define FD_ZERO(x)     (*(x) = 0)
-#define FD_SET(f, x)   (*(x) = 1<<f)
-#endif
-    fd_set readfds;
+    struct pollfd set[1];
 
 #ifdef ORDER
     static char command_chars[] = "\f qh?en#sdkrSiIuo";
@@ -635,13 +629,11 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 		no_command = No;
 
 		/* set up arguments for select with timeout */
-		FD_ZERO(&readfds);
-		FD_SET(0, &readfds);		/* for standard input */
-		timeout.tv_sec  = delay;
-		timeout.tv_usec = 0;
+		set[0].fd = 0;
+		set[0].events = POLLIN;
 
 		/* wait for either input or the end of the delay period */
-		if (select(32, &readfds, (fd_set *)NULL, (fd_set *)NULL, &timeout) > 0)
+		if (poll(set, 1, delay * 1000) > 0)
 		{
 		    int newval;
 		    char *errmsg;

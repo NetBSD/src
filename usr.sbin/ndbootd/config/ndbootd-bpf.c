@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd-bpf.c,v 1.4 2002/04/09 02:39:15 thorpej Exp $	*/
+/*	$NetBSD: ndbootd-bpf.c,v 1.5 2002/09/19 16:46:00 mycroft Exp $	*/
 
 /* ndbootd-bpf.c - the Sun Network Disk (nd) daemon BPF component: */
 
@@ -48,10 +48,11 @@
 #if o
 static const char _ndbootd_bpf_c_rcsid[] = "<<Id: ndbootd-bpf.c,v 1.4 2001/05/23 02:35:49 fredette Exp >>";
 #else
-__RCSID("$NetBSD: ndbootd-bpf.c,v 1.4 2002/04/09 02:39:15 thorpej Exp $");
+__RCSID("$NetBSD: ndbootd-bpf.c,v 1.5 2002/09/19 16:46:00 mycroft Exp $");
 #endif
 
 /* includes: */
+#include <sys/poll.h>
 #include <net/bpf.h>
 
 /* structures: */
@@ -214,37 +215,37 @@ ndbootd_raw_read(struct ndbootd_interface * interface, void *packet_buffer, size
 	struct _ndbootd_interface_bpf *interface_bpf;
 	ssize_t buffer_end;
 	struct bpf_hdr the_bpf_header;
-	fd_set fdset_read;
+	struct pollfd set[1];
 
 	/* recover our state: */
 	interface_bpf = (struct _ndbootd_interface_bpf *) interface->_ndbootd_interface_raw_private;
 
 	/* loop until we have something to return: */
+	set[0].fd = interface->ndbootd_interface_fd;
+	set[0].events = POLLIN;
 	for (;;) {
 
 		/* if the buffer is empty, fill it: */
 		if (interface_bpf->_ndbootd_interface_bpf_buffer_offset
 		    >= interface_bpf->_ndbootd_interface_bpf_buffer_end) {
 
-			/* select on the BPF socket: */
-			_NDBOOTD_DEBUG((fp, "bpf: calling select"));
-			FD_ZERO(&fdset_read);
-			FD_SET(interface->ndbootd_interface_fd, &fdset_read);
-			switch (select(interface->ndbootd_interface_fd + 1, &fdset_read, NULL, NULL, NULL)) {
+			/* poll on the BPF socket: */
+			_NDBOOTD_DEBUG((fp, "bpf: calling poll"));
+			switch (poll(set, 1, INFTIM)) {
 			case 0:
-				_NDBOOTD_DEBUG((fp, "bpf: select returned zero"));
+				_NDBOOTD_DEBUG((fp, "bpf: poll returned zero"));
 				continue;
 			case 1:
 				break;
 			default:
 				if (errno == EINTR) {
-					_NDBOOTD_DEBUG((fp, "bpf: select got EINTR"));
+					_NDBOOTD_DEBUG((fp, "bpf: poll got EINTR"));
 					continue;
 				}
-				_NDBOOTD_DEBUG((fp, "bpf: select failed: %s", strerror(errno)));
+				_NDBOOTD_DEBUG((fp, "bpf: poll failed: %s", strerror(errno)));
 				return (-1);
 			}
-			assert(FD_ISSET(interface->ndbootd_interface_fd, &fdset_read));
+			assert(set[0].revents & POLLIN);
 
 			/* read the BPF socket: */
 			_NDBOOTD_DEBUG((fp, "bpf: calling read"));
