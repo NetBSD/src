@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.72 2003/11/29 10:02:42 matt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.73 2003/12/29 22:08:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.72 2003/11/29 10:02:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.73 2003/12/29 22:08:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -974,8 +974,8 @@ unp_internalize(control, p)
 	struct proc *p;
 {
 	struct filedesc *fdescp = p->p_fd;
-	struct cmsghdr *cm = mtod(control, struct cmsghdr *);
-	struct file **rp;
+	struct cmsghdr *newcm, *cm = mtod(control, struct cmsghdr *);
+	struct file **rp, **files;
 	struct file *fp;
 	int i, fd, *fdp;
 	int nfds;
@@ -997,37 +997,31 @@ unp_internalize(control, p)
 	}
 
 	/* Make sure we have room for the struct file pointers */
- morespace:
 	neededspace = CMSG_SPACE(nfds * sizeof(struct file *)) -
 	    control->m_len;
 	if (neededspace > M_TRAILINGSPACE(control)) {
 
-		/* if we already have a cluster, the message is just too big */
-		if (control->m_flags & M_EXT)
+		/* allocate new space and copy header into it */
+		newcm = malloc(
+		    CMSG_SPACE(nfds * sizeof(struct file *)),
+		    M_MBUF, M_WAITOK);
+		if (newcm == NULL)
 			return (E2BIG);
-
-		/* allocate a cluster and try again */
-		m_clget(control, M_WAIT);
-		if ((control->m_flags & M_EXT) == 0)
-			return (ENOBUFS);	/* allocation failed */
-
-		/* copy the data to the cluster */
-		memcpy(mtod(control, char *), cm, cm->cmsg_len);
-		cm = mtod(control, struct cmsghdr *);
-		goto morespace;
+		memcpy(newcm, cm, sizeof(struct cmsghdr));
+		files = (struct file **)CMSG_DATA(newcm);		
+	} else {
+		/* we can convert in-place */
+		newcm = NULL;
+		files = (struct file **)CMSG_DATA(cm);
 	}
-
-	/* adjust message & mbuf to note amount of space actually used. */
-	cm->cmsg_len = CMSG_LEN(nfds * sizeof(struct file *));
-	control->m_len = CMSG_SPACE(nfds * sizeof(struct file *));
 
 	/*
 	 * Transform the file descriptors into struct file pointers, in
 	 * reverse order so that if pointers are bigger than ints, the
 	 * int won't get until we're done.
 	 */
-	fdp = ((int *)CMSG_DATA(cm)) + nfds - 1;
-	rp = ((struct file **)CMSG_DATA(cm)) + nfds - 1;
+	fdp = (int *)CMSG_DATA(cm) + nfds - 1;
+	rp = files + nfds - 1;
 	for (i = 0; i < nfds; i++) {
 		fp = fdescp->fd_ofiles[*fdp--];
 		simple_lock(&fp->f_slock);
@@ -1041,6 +1035,20 @@ unp_internalize(control, p)
 		simple_unlock(&fp->f_slock);
 		unp_rights++;
 	}
+
+	if (newcm) {
+		if (control->m_flags & M_EXT)
+			MEXTREMOVE(control);
+		MEXTADD(control, newcm,
+		    CMSG_SPACE(nfds * sizeof(struct file *)),
+		    M_MBUF, NULL, NULL);
+		cm = newcm;
+	}
+
+	/* adjust message & mbuf to note amount of space actually used. */
+	cm->cmsg_len = CMSG_LEN(nfds * sizeof(struct file *));
+	control->m_len = CMSG_SPACE(nfds * sizeof(struct file *));
+
 	return (0);
 }
 
