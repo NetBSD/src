@@ -37,6 +37,7 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_ether.h>
 
 #include <netinet/in.h>
@@ -45,7 +46,7 @@
 #include <ipkdb/ipkdb.h>
 #include <machine/ipkdb.h>
 
-int	ipkdb_probe __P((struct device *, void *, void *));
+int	ipkdb_probe __P((struct device *, struct cfdata *, void *));
 void	ipkdb_attach __P((struct device *, struct device *, void *));
 
 static void	ipkdbrcpy __P((struct ipkdb_if * , void *, void *, int));
@@ -60,7 +61,8 @@ struct cfdriver ipkdbif_cd = {
 int
 ipkdb_probe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	return 0;
 }
@@ -188,7 +190,7 @@ ipkdbread(kip)
 	 */
 	if ((ifp->if_flags&IFF_PROMISC)
 	    && ipkdbcmp(eh->ether_dhost,
-			kip->arp->ac_enaddr,
+			LLADDR(ifp->if_sadl),
 			sizeof eh->ether_dhost)
 	       != 0
 	    && !(eh->ether_dhost[0] & 1)) {	/* !mcast && !bcast */

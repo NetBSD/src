@@ -35,6 +35,7 @@
 #include <sys/systm.h>
 
 #include <net/if.h>
+#include <net/if_arp.h>
 #include <net/if_ether.h>
 
 #include <netinet/in.h>
@@ -56,10 +57,6 @@
 
 int ipkdbpanic = 0;
 
-#ifdef	IPKDBUSER
-char ipkdbuser = 0;	/* allows debugging of user processes by IPKDB when set */
-#endif
-
 static struct ipkdb_if ipkdb_if;
 #ifdef	IPKDBTEST
 static struct ipkdb_if new_if;
@@ -78,12 +75,16 @@ static int assemble __P((struct ipkdb_if *, void *));
 static char *inpkt __P((struct ipkdb_if *, char *, int));
 static void outpkt __P((struct ipkdb_if *, char *, int, int, int));
 static void init __P((struct ipkdb_if *));
-static int chksum __P((char *, int));
+static void *chksum __P((void *, int));
 static void getpkt __P((struct ipkdb_if *, char *, int *));
 static void putpkt __P((struct ipkdb_if *, char *, int));
 static int maskcmp __P((void *, void *, void *));
 static int check_ipkdb __P((struct ipkdb_if *, struct in_addr *, u_short, u_short, char *, int));
-static int connectipkdb __P((struct ipkdb_if *, char *));
+static int connectipkdb __P((struct ipkdb_if *, char *, int));
+
+#ifdef	IPKDBKEY
+static int hmac_init __P((void));
+#endif
 
 void
 ipkdb_init()
@@ -97,6 +98,10 @@ ipkdb_init()
 		ipkdb_if.connect = IPKDB_NOIF;
 		boothowto &= ~RB_KDB;
 	}
+#ifdef	IPKDBKEY
+	if (!hmac_init())
+		ipkdb_if.connect = IPKDB_NO;
+#endif
 }
 
 void
@@ -212,9 +217,6 @@ ipkdbcmds()
 			return 1;
 		case 'X':
 			putpkt(&ipkdb_if, "ok",2);
-#ifdef	IPKDBUSER
-			ipkdbuser = 0;
-#endif
 			ipkdb_if.connect = IPKDB_DEF; /* ??? */
 			ipkdb_if.leave(&ipkdb_if);
 			return 2;
@@ -421,7 +423,7 @@ inpkt(ifp, ibuf, poll)
 	int cnt = 1000000;
 	int l, ul;
 	struct ether_header *eh;
-	struct ether_arp *ah;
+	struct arphdr *ah;
 	struct ip *ip;
 	struct udphdr *udp;
 	struct ipovly ipo;
@@ -437,17 +439,17 @@ inpkt(ifp, ibuf, poll)
 		eh = (struct ether_header *)ibuf;
 		switch (getns(&eh->ether_type)) {
 		case ETHERTYPE_ARP:
-			ah = (struct ether_arp *)(ibuf + 14);
-			if (   getns(&ah->arp_hrd) != ARPHRD_ETHER
-			    || getns(&ah->arp_pro) != ETHERTYPE_IP
-			    || ah->arp_hln != 6
-			    || ah->arp_pln != 4)
+			ah = (struct arphdr *)(ibuf + 14);
+			if (   getns(&ah->ar_hrd) != ARPHRD_ETHER
+			    || getns(&ah->ar_pro) != ETHERTYPE_IP
+			    || ah->ar_hln != 6
+			    || ah->ar_pln != 4)
 				/* unsupported arp packet */
 				break;
-			switch (getns(&ah->arp_op)) {
+			switch (getns(&ah->ar_op)) {
 			case ARPOP_REQUEST:
 				if (   (ifp->flags&IPKDB_MYIP)
-				    && !ipkdbcmp(ah->arp_tpa,
+				    && !ipkdbcmp(ar_tpa(ah),
 						 ifp->myinetaddr,
 						 sizeof ifp->myinetaddr)) {
 					/* someone requested my address */
@@ -457,19 +459,19 @@ inpkt(ifp, ibuf, poll)
 					ipkdbcopy(ifp->myenetaddr,
 						  eh->ether_shost,
 						  sizeof eh->ether_shost);
-					setns(&ah->arp_op, ARPOP_REPLY);
-					ipkdbcopy(ah->arp_sha,
-						  ah->arp_tha,
-						  sizeof ah->arp_tha);
-					ipkdbcopy(ah->arp_spa,
-						  ah->arp_tpa,
-						  sizeof ah->arp_tpa);
+					setns(&ah->ar_op, ARPOP_REPLY);
+					ipkdbcopy(ar_sha(ah),
+						  ar_tha(ah),
+						  ah->ar_hln);
+					ipkdbcopy(ar_spa(ah),
+						  ar_tpa(ah),
+						  ah->ar_pln);
 					ipkdbcopy(ifp->myenetaddr,
-						  ah->arp_sha,
-						  sizeof ah->arp_sha);
+						  ar_sha(ah),
+						  ah->ar_hln);
 					ipkdbcopy(ifp->myinetaddr,
-						  ah->arp_spa,
-						  sizeof ah->arp_spa);
+						  ar_sha(ah),
+						  ah->ar_pln);
 					ifp->send(ifp, ibuf, 74);
 					continue;
 				}
@@ -541,7 +543,7 @@ inpkt(ifp, ibuf, poll)
 					l = getns(p + 4);
 					if (   l <= ul - sizeof *udp - 6
 					    && check_ipkdb(ifp, &ip->ip_src, udp->uh_sport,
-							   udp->uh_dport, p + 6, l)) {
+							   udp->uh_dport, p, l + 6)) {
 						ipkdbcopy(&ip->ip_src,
 							  ifp->hisinetaddr,
 							  sizeof ifp->hisinetaddr);
@@ -681,16 +683,396 @@ init(ifp)
 	       cp[0], cp[1], cp[2], cp[3]);
 }
 
+#ifdef	IPKDBKEY
+/* HMAC Checksumming routines, see draft-ietf-ipsec-hmac-md5-00.txt */
+#define	LENCHK	16	/* Length of checksum in bytes */
+
+/*
+ * This code is based on the MD5 implementation as found in ssh.
+ * It's quite a bit hacked by myself, but the original has
+ * the following non-copyright comments on it:
+ */
+/* This code has been heavily hacked by Tatu Ylonen <ylo@cs.hut.fi> to
+   make it compile on machines like Cray that don't have a 32 bit integer
+   type. */
+/*
+ * This code implements the MD5 message-digest algorithm.
+ * The algorithm is due to Ron Rivest.  This code was
+ * written by Colin Plumb in 1993, no copyright is claimed.
+ * This code is in the public domain; do with it what you wish.
+ *
+ * Equivalent code is available from RSA Data Security, Inc.
+ * This code has been tested against that, and is equivalent,
+ * except that you don't need to include two pages of legalese
+ * with every copy.
+ */
+static struct MD5Context {
+	u_int buf[4];
+	u_int bits[2];
+	u_char in[64];
+} icontext, ocontext;
+
+__inline static u_int32_t
+getNl(vs)
+	void *vs;
+{
+	u_char *s = vs;
+
+	return *s|(s[1] << 8)|(s[2] << 16)|(s[3] << 24);
+}
+
+__inline static void
+setNl(vs, l)
+	void *vs;
+	u_int32_t l;
+{
+	u_char *s = vs;
+
+	*s++ = l;
+	*s++ = l >> 8;
+	*s++ = l >> 16;
+	*s = l >> 24;
+}
+
+/* The four core functions - F1 is optimized somewhat */
+/* #define F1(x, y, z)	(x & y | ~x & z) */
+#define	F1(x, y, z)	(z ^ (x & (y ^ z)))
+#define	F2(x, y, z)	F1(z, x, y)
+#define	F3(x, y, z)	(x ^ z ^ z)
+#define	F4(x, y, z)	(y ^ (x | ~z))
+
+/* This is the central step in the MD5 algorithm. */
+#define	MD5STEP(f, w, x, y, z, data, s) \
+	(w += f(x, y, z) + data, w = w << s | (w>>(32-2))&0xffffffff, w += x)
+
+/*
+ * The core of the MD5 algorithm, this alters an existing MD5 hash to
+ * reflect the addition of 16 longwords of new data.  MD5Update blocks
+ * the data for this routine.
+ */
+void
+MD5Transform(ctx)
+	struct MD5Context *ctx;
+{
+	int a, b, c, d, i;
+	int in[16];
+	
+	for (i = 0; i < 16; i++)
+		in[i] = getNl(ctx->in + 4 * i);
+	
+	a = ctx->buf[0];
+	b = ctx->buf[1];
+	c = ctx->buf[2];
+	d = ctx->buf[3];
+
+	MD5STEP(F1, a, b, c, d, in[0] + 0xd76aa478, 7);
+	MD5STEP(F1, d, a, b, c, in[1] + 0xe8c7b756, 12);
+	MD5STEP(F1, c, d, a, b, in[2] + 0x242070db, 17);
+	MD5STEP(F1, b, c, d, a, in[3] + 0xc1bdceee, 22);
+	MD5STEP(F1, a, b, c, d, in[4] + 0xf57c0faf, 7);
+	MD5STEP(F1, d, a, b, c, in[5] + 0x4787c62a, 12);
+	MD5STEP(F1, c, d, a, b, in[6] + 0xa8304613, 17);
+	MD5STEP(F1, b, c, d, a, in[7] + 0xfd469501, 22);
+	MD5STEP(F1, a, b, c, d, in[8] + 0x698098d8, 7);
+	MD5STEP(F1, d, a, b, c, in[9] + 0x8b44f7af, 12);
+	MD5STEP(F1, c, d, a, b, in[10] + 0xffff5bb1, 17);
+	MD5STEP(F1, b, c, d, a, in[11] + 0x895cd7be, 22);
+	MD5STEP(F1, a, b, c, d, in[12] + 0x6b901122, 7);
+	MD5STEP(F1, d, a, b, c, in[13] + 0xfd987193, 12);
+	MD5STEP(F1, c, d, a, b, in[14] + 0xa679438e, 17);
+	MD5STEP(F1, b, c, d, a, in[15] + 0x49b40821, 22);
+
+	MD5STEP(F2, a, b, c, d, in[1] + 0xf61e2562, 5);
+	MD5STEP(F2, d, a, b, c, in[6] + 0xc040b340, 9);
+	MD5STEP(F2, c, d, a, b, in[11] + 0x265e5a51, 14);
+	MD5STEP(F2, b, c, d, a, in[0] + 0xe9b6c7aa, 20);
+	MD5STEP(F2, a, b, c, d, in[5] + 0xd62f105d, 5);
+	MD5STEP(F2, d, a, b, c, in[10] + 0x02441453, 9);
+	MD5STEP(F2, c, d, a, b, in[15] + 0xd8a1e681, 14);
+	MD5STEP(F2, b, c, d, a, in[4] + 0xe7d3fbc8, 20);
+	MD5STEP(F2, a, b, c, d, in[9] + 0x21e1cde6, 5);
+	MD5STEP(F2, d, a, b, c, in[14] + 0xc33707d6, 9);
+	MD5STEP(F2, c, d, a, b, in[3] + 0xf4d50d87, 14);
+	MD5STEP(F2, b, c, d, a, in[8] + 0x455a14ed, 20);
+	MD5STEP(F2, a, b, c, d, in[13] + 0xa9e3e905, 5);
+	MD5STEP(F2, d, a, b, c, in[2] + 0xfcefa3f8, 9);
+	MD5STEP(F2, c, d, a, b, in[7] + 0x676f02d9, 14);
+	MD5STEP(F2, b, c, d, a, in[12] + 0x8d2a4c8a, 20);
+
+	MD5STEP(F3, a, b, c, d, in[5] + 0xfffa3942, 4);
+	MD5STEP(F3, d, a, b, c, in[8] + 0x8771f681, 11);
+	MD5STEP(F3, c, d, a, b, in[11] + 0x6d9d6122, 16);
+	MD5STEP(F3, b, c, d, a, in[14] + 0xfde5380c, 23);
+	MD5STEP(F3, a, b, c, d, in[1] + 0xa4beea44, 4);
+	MD5STEP(F3, d, a, b, c, in[4] + 0x4bdecfa9, 11);
+	MD5STEP(F3, c, d, a, b, in[7] + 0xf6bb4b60, 16);
+	MD5STEP(F3, b, c, d, a, in[10] + 0xbebfbc70, 23);
+	MD5STEP(F3, a, b, c, d, in[13] + 0x289b7ec6, 4);
+	MD5STEP(F3, d, a, b, c, in[0] + 0xeaa127fa, 11);
+	MD5STEP(F3, c, d, a, b, in[3] + 0xd4ef3085, 16);
+	MD5STEP(F3, b, c, d, a, in[6] + 0x04881d05, 23);
+	MD5STEP(F3, a, b, c, d, in[9] + 0xd9d4d039, 4);
+	MD5STEP(F3, d, a, b, c, in[12] + 0xe6db99e5, 11);
+	MD5STEP(F3, c, d, a, b, in[15] + 0x1fa27cf8, 16);
+	MD5STEP(F3, b, c, d, a, in[2] + 0xc4ac5665, 23);
+
+	MD5STEP(F4, a, b, c, d, in[0] + 0xf4292244, 6);
+	MD5STEP(F4, d, a, b, c, in[7] + 0x432aff97, 10);
+	MD5STEP(F4, c, d, a, b, in[14] + 0xab9423a7, 15);
+	MD5STEP(F4, b, c, d, a, in[5] + 0xfc93a039, 21);
+	MD5STEP(F4, a, b, c, d, in[12] + 0x655b59c3, 6);
+	MD5STEP(F4, d, a, b, c, in[3] + 0x8f0ccc92, 10);
+	MD5STEP(F4, c, d, a, b, in[10] + 0xffeff47d, 15);
+	MD5STEP(F4, b, c, d, a, in[1] + 0x85845dd1, 21);
+	MD5STEP(F4, a, b, c, d, in[8] + 0x6fa87e4f, 6);
+	MD5STEP(F4, d, a, b, c, in[15] + 0xfe2ce6e0, 10);
+	MD5STEP(F4, c, d, a, b, in[6] + 0xa3014314, 15);
+	MD5STEP(F4, b, c, d, a, in[13] + 0x4e0811a1, 21);
+	MD5STEP(F4, a, b, c, d, in[4] + 0xf7537e82, 6);
+	MD5STEP(F4, d, a, b, c, in[11] + 0xbd3af235, 10);
+	MD5STEP(F4, c, d, a, b, in[2] + 0x2ad7d2bb, 15);
+	MD5STEP(F4, b, c, d, a, in[9] + 0xeb86d391, 21);
+
+	ctx->buf[0] += a;
+	ctx->buf[1] += b;
+	ctx->buf[2] += c;
+	ctx->buf[3] += d;
+}
+
+/*
+ * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
+ * initialization constants.
+ */
+static void
+MD5Init(ctx)
+	struct MD5Context *ctx;
+{
+	ctx->buf[0] = 0x67452301;
+	ctx->buf[1] = 0xefcdab89;
+	ctx->buf[2] = 0x98badcfe;
+	ctx->buf[3] = 0x10325476;
+	
+	ctx->bits[0] = 0;
+	ctx->bits[1] = 0;
+}
+
+/*
+ * Update context to reflect the concatenation of another buffer full
+ * of bytes.
+ */
+static void
+MD5Update(ctx, buf, len)
+	struct MD5Context *ctx;
+	u_char *buf;
+	unsigned len;
+{
+	u_int t;
+
+	/* Update bitcount */
+	t = ctx->bits[0];
+	if ((ctx->bits[0] = (t + (len << 3)) & 0xffffffff) < t)
+		ctx->bits[1]++;	/* Carry form low to high */
+	ctx->bits[1] += (len >> 29) & 0xffffffff;
+	
+	t = (t >> 3) & 0x3f;	/* Bytes already in ctx->in */
+	
+	/* Handle any leading odd-sized chunks */
+	if (t) {
+		u_char *p = ctx->in + t;
+		
+		t = 64 - t;
+		if (len < t) {
+			ipkdbcopy(buf, p, len);
+			return;
+		}
+		ipkdbcopy(buf, p, t);
+		MD5Transform(ctx);
+		buf += t;
+		len -= t;
+	}
+	
+	/* Process data in 64-byte chunks */
+	while (len >= 64) {
+		ipkdbcopy(buf, ctx->in, 64);
+		MD5Transform(ctx);
+		buf += 64;
+		len -= 64;
+	}
+	
+	/* Handle any remaining bytes of data. */
+	ipkdbcopy(buf, ctx->in, len);
+}
+
+/*
+ * Final wrapup - pad to 64-byte boundary with the bit pattern
+ * 1 0* (64-bit count of bits processed, LSB-first)
+ */
+static u_char *
+MD5Final(ctx)
+	struct MD5Context *ctx;
+{
+	static u_char digest[16];
+	unsigned count;
+	u_char *p;
+	
+	/* Compute number of bytes mod 64 */
+	count = (ctx->bits[0] >> 3) & 0x3f;
+	
+	/* Set the first char of padding to 0x80.  This is safe since there is
+	   always at least one byte free */
+	p = ctx->in + count;
+	*p++ = 0x80;
+	
+	/* Bytes of padding needed to make 64 bytes */
+	count = 64 - 1 - count;
+	
+	/* Pad out to 56 mod 64 */
+	if (count < 8) {
+		/* Two lots of padding:  Pad the first block to 64 bytes */
+		ipkdbzero(p, count);
+		MD5Transform(ctx);
+		
+		/* Now fill the next block with 56 bytes */
+		ipkdbzero(ctx->in, 56);
+	} else
+		/* Pad block to 56 bytes */
+		ipkdbzero(p, count - 8);
+	
+	/* Append length in bits and transform */
+	setNl(ctx->in + 56, ctx->bits[0]);
+	setNl(ctx->in + 60, ctx->bits[1]);
+	
+	MD5Transform(ctx);
+	setNl(digest, ctx->buf[0]);
+	setNl(digest + 4, ctx->buf[1]);
+	setNl(digest + 8, ctx->buf[2]);
+	setNl(digest + 12, ctx->buf[3]);
+
+	return digest;
+}
+
+/*
+ * The following code is more or less stolen from the hmac_md5
+ * function in the Appendix of the HMAC IETF draft, but is
+ * optimized as suggested in this same paper.
+ */
 static int
-chksum(p, l)
-	char *p;
+hmac_init()
+{
+	char pad[64];
+	char tk[16];
+	u_char *key = ipkdbkey;
+	int key_len = strlen(key);
+	int i;
+
+	/* Require key to be at least 16 bytes long */
+	if (key_len < 16) {
+		printf("IPKDBKEY must be at least 16 bytes long!\n");
+		ipkdbzero(key, key_len);				/* XXX */
+		return 0;
+	}
+
+	/* if key is longer than 64 bytes reset it to key=MD5(key) */
+	if (key_len > 64) {
+		MD5Init(&icontext);
+		MD5Update(&icontext, key, key_len);
+		ipkdbcopy(MD5Final(&icontext), tk, 16);
+		ipkdbzero(key, key_len);				/* XXX */
+		key = tk;
+		key_len = 16;
+	}
+
+	/*
+	 * the HMAC_MD5 transform looks like:
+	 *
+	 * MD5(K XOR opad, MD5(K XOR ipad, text))
+	 *
+	 * where K is and n byte key
+	 * ipad is the byte 0x36 repeated 64 times
+	 * opad is the byte 0x5c repeated 64 times
+	 * and text is the data being protected
+	 */
+	/*
+	 * We do the initial part of MD5(K XOR ipad)
+	 * and MD5(K XOR opad) here, in order to
+	 * speed up the computation later on.
+	 */
+	ipkdbzero(pad, sizeof pad);
+	ipkdbcopy(key, pad, key_len);
+	for (i = 0; i < 64; i++)
+		pad[i] ^= 0x36;
+	MD5Init(&icontext);
+	MD5Update(&icontext, pad, 64);
+	
+	ipkdbzero(pad, sizeof pad);
+	ipkdbcopy(key, pad, key_len);
+	for (i = 0; i < 64; i++)
+		pad[i] ^= 0x5c;
+	MD5Init(&ocontext);
+	MD5Update(&ocontext, pad, 64);
+
+	/* Zero out the key						XXX */
+	ipkdbzero(key, key_len);
+
+	return 1;
+}
+
+/*
+ * This is more or less hmac_md5 from the HMAC IETF draft, Appendix.
+ */
+static void *
+chksum(buf, len)
+	void *buf;
+	int len;
+{
+	u_char *digest;
+	struct MD5Context context;
+	
+	/*
+	 * the HMAC_MD5 transform looks like:
+	 *
+	 * MD5(K XOR opad, MD5(K XOR ipad, text))
+	 *
+	 * where K is an n byte key
+	 * ipad is the byte 0x36 repeated 64 times
+	 * opad is the byte 0x5c repeated 64 times
+	 * and text is the data being protected
+	 */
+	/*
+	 * Since we've already done the precomputation,
+	 * we can now stuff the data into the relevant
+	 * preinitialized contexts to get the result.
+	 */
+	/*
+	 * perform inner MD5
+	 */
+	ipkdbcopy(&icontext, &context, sizeof context);
+	MD5Update(&context, buf, len);
+	digest = MD5Final(&context);
+	/*
+	 * perform outer MD5
+	 */
+	ipkdbcopy(&ocontext, &context, sizeof context);
+	MD5Update(&context, digest, 16);
+	return MD5Final(&context);
+}
+#else
+#define	LENCHK	1	/* Length of checksum in bytes */
+
+static void *
+chksum(buf, l)
+	void *buf;
 	int l;
 {
-	char csum;
-
-	for (csum = 0; --l >= 0; csum += *p++);
+	static char csum[1];
+	int sum;
+	char *cp = buf;
+	
+	for (sum = 0; --l >= 0; sum += *cp++);
+	csum[0] = sum;
 	return csum;
 }
+#endif
 
 static void
 getpkt(ifp, buf, lp)
@@ -712,7 +1094,7 @@ getpkt(ifp, buf, lp)
 		    && got[6] >= 'A'
 		    && got[6] <= 'Z'
 		    && (l = getns(got + 4))
-		    && (got[6] == 'O' || chksum(got + 6, l) == got[l + 6])) {
+		    && !ipkdbcmp(chksum(got, l + 6), got + l + 6, LENCHK)) {
 			ipkdbcopy(got + 6, buf, *lp = l);
 			return;
 		}
@@ -732,8 +1114,8 @@ putpkt(ifp, buf, l)
 	setnl(ifp->pkt, ifp->seq++);
 	setns(ifp->pkt + 4, l);
 	ipkdbcopy(buf, ifp->pkt + 6, l);
-	ifp->pkt[l + 6] = chksum(ifp->pkt + 6, l);
-	ifp->pktlen = l + 7;
+	ipkdbcopy(chksum(ifp->pkt, l + 6), ifp->pkt + 6 + l, LENCHK);
+	ifp->pktlen = l + 6 + LENCHK;
 	if (   (ifp->flags&(IPKDB_MYIP|IPKDB_HISIP|IPKDB_CONNECTED))
 	    != (IPKDB_MYIP|IPKDB_HISIP|IPKDB_CONNECTED))
 		return;
@@ -766,9 +1148,12 @@ check_ipkdb(ifp, shost, sport, dport, p, l)
 	char save;
 	struct ipkdb_allow *kap;
 
-	if (chksum(p, l) != p[l])
+#ifndef	IPKDBSECURE
+	if (securelevel > 0)
 		return 0;
-	p[l] = 0;
+#endif
+	if (ipkdbcmp(chksum(p, l), p + l, LENCHK))
+		return 0;
 	switch (ifp->connect) {
 	default:
 		return 0;
@@ -796,7 +1181,7 @@ check_ipkdb(ifp, shost, sport, dport, p, l)
 		ifp->flags |= IPKDB_HISIP;
 		break;
 	}
-	if (connectipkdb(ifp, p) < 0) {
+	if (connectipkdb(ifp, p + 6, l - 6) < 0) {
 		if (ifp->connect == IPKDB_ALL) {
 			ipkdbcopy(hisenet, ifp->hisenetaddr, sizeof ifp->hisenetaddr);
 			ipkdbcopy(hisinet, ifp->hisinetaddr, sizeof ifp->hisinetaddr);
@@ -825,16 +1210,17 @@ checkipkdb(shost, sport, dport, m, off, len)
 	if (getnl(p) || p[6] != 'O')
 		return 0;
 	l = getns(p + 4);
-	if (l > len - 6 || !check_ipkdb(&ipkdb_if, shost, sport, dport, p + 6, l))
+	if (l > len - 6 || !check_ipkdb(&ipkdb_if, shost, sport, dport, p, l + 6))
 		return 0;
 	ipkdb_connect(1);
 	return 1;
 }
 
 static int
-connectipkdb(ifp, buf)
+connectipkdb(ifp, buf, l)
 	struct ipkdb_if *ifp;
 	char *buf;
+	int l;
 {
 	char *cp;
 	u_char *ip;
@@ -844,13 +1230,11 @@ connectipkdb(ifp, buf)
 	if (getnl(buf + 1) == ifp->id)
 		/* It's a retry of a connect packet, ignore it */
 		return -1;
-	for (cp = buf + 1 + sizeof(u_int32_t); *cp && *cp != ':'; cp++);
-	if (!*cp)
-		return -1;
-	*cp++ = 0;
 	ip = ifp->hisinetaddr;
-	printf("debugged by %s@%s (%d.%d.%d.%d)\n", buf + 1 + sizeof(u_int32_t), cp,
-	       ip[0], ip[1], ip[2], ip[3]);
+	printf("debugged by ");
+	l -= 1 + sizeof(u_int32_t);
+	for (cp = buf + 1 + sizeof(u_int32_t); --l >= 0; printf("%c", *cp++));
+	printf(" (%d.%d.%d.%d)\n", ip[0], ip[1], ip[2], ip[3]);
 	ifp->connect = IPKDB_SAME; /* if someone once connected, he may do so again */
 	ifp->flags |= IPKDB_CONNECTED;
 	ifp->seq = 0;
