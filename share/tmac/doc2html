@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.9 1999/03/18 18:57:42 ross Exp $
+.\" $NetBSD: doc2html,v 1.9.2.1 1999/04/30 23:56:50 perry Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ TODO:
 	Need a tbl(1) command that generates html tables from tbl(1)
 	input. (Partially written.) For now, we just switch into <pre>
 	mode on .TS or .PS. Tbl input is very uncommon these days, anyway.
-	(-mdoc as the .Bl -column list, which eliminates most requirements
+	(-mdoc has the .Bl -column list, which eliminates most requirements
 	for tbl)
 
 	We should probably end all the html pages with an upward
@@ -93,12 +93,12 @@ TODO:
 ..
 .
 .de doc-pop
-.	ie \\n[doc-stackp]<=0 .tm Extraneous \\$1 request at #\\n[.c]
+.	ie \\n[doc-stackp]<=0 .Error Extraneous \\$1 request
 .	el .nr doc-stackp -1
 .	ds doc-pop-tmp1 \\*[doc-stack-rq-\\n[doc-stackp]]
 .	if !\\*[doc-pop-tmp1]\\$1 \{\
-.		tm Need \\*[doc-pop-tmp1] at line \\n[.c] before \\$1
-.		tm See line \\n[doc-stack-ln-\\n[doc-stackp]]
+.		tm Need \\*[doc-pop-tmp1] before \\$1
+.		Error See line \\n[doc-stack-ln-\\n[doc-stackp]]
 .	\}
 ..
 .
@@ -170,6 +170,7 @@ TODO:
 .ds doc-punct-result
 .ds doc-punct { . , : ; ( ) [ ] }
 .ds close-mode
+.ds open-mode
 .ds recurse-prepend
 .ds doc-anchor
 .ds Nm-save
@@ -244,6 +245,8 @@ TODO:
 .\" Magic to open and close <body> and <html>
 .\"
 .de end-macro
+.	if \\w\\n[.z] .ab ERROR, unclosed quotation from line \
+\\n[quotation_line]
 .	br-real	\" should be unnecessary...we have fill turned off
 .	fl     	\" more paranoia
 </font></body>
@@ -277,7 +280,7 @@ TODO:
 \\*[dot-dot]
 ..
 .de Lk
-.	if \\n[.$]<1 .tm #\\n[.c]: Usage: .Lk href [ anchortext/punct ] ...
+.	if \\n[.$]<1 .ab #\\n[.c]: Usage: .Lk href [ anchortext/punct ] ...
 .	ds doc-href \\$1
 .	ds doc-anchortext \\$1
 .	shift
@@ -291,7 +294,7 @@ TODO:
 .	ds doc-anchor <a href="\\*[doc-href]">\\*[doc-anchortext]</a>
 .	while \\n[.$] \{\
 .		doc-checkpunct \\$1 \\*[doc-punct]
-.		if !\\n[doc-ispunct] .tm #\\n[.c]: .link ... '$1' -- Huh?
+.		if !\\n[doc-ispunct] .ab #\\n[.c]: .link ... '$1' -- Huh?
 .		as doc-anchor \\$1
 .		shift
 .	\}
@@ -514,14 +517,14 @@ TODO:
 .			shift
 .			continue
 .	 	\}
-.		tm Unknown .Bl list parameter \\$1 (#\\n(.c)
+.		ab Unknown .Bl list parameter \\$1 (#\\n(.c)
 .		break
 .	\}
 .	if \\n[bl-is-compact] \{\
 .		if '\\*[list-tag-prefix]'<p>' .ds list-tag-prefix
 .		if '\\*[list-tag-prefix]'<p><dt>' .ds list-tag-prefix <dt>
 .	\}
-.	if '\\*[list-start]'UNKNOWN' .tm \
+.	if '\\*[list-start]'UNKNOWN' .ab \
 Unknown .Bl list type \\$1 (#\\n(.c)
 .	push-list-level start end tag-prefix pp-prefix
 \\*[list-start]
@@ -609,8 +612,8 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .			ds recurse-tmp1 \\$1
 .			shift
 .			if \\w?\\*[active-prepend]?&\\w?\\*[recurse-prepend]? \{\
-.				if \\n[doc-dosep] as doc-pcresult \\*[sepstring]
-.				as doc-pcresult \\*[active-prepend]
+.				if \\n[doc-dosep] .as doc-pcresult \\*[sepstring]
+.				as doc-pcresult "\\*[active-prepend]
 .				nr doc-dosep 0
 .			\}
 .			ds recurse-prepend
@@ -621,8 +624,12 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .DEBUG .tm r \\n[r-lvl] __\\*[doc-pcresult]+\\$1==\\$@__
 .			\" a random word, so output saved punctuation
 .			\" (normally saved until level 0 mode closure )
-.			as doc-pcresult \\*[doc-punct-result]
-.			ds doc-punct-result
+.			if \\w\\*[doc-pcresult] \{\
+.				as doc-pcresult \\*[close-mode]
+.				as doc-pcresult \\*[doc-punct-result]
+.				as doc-pcresult \\*[open-mode]
+.				ds doc-punct-result
+.			\}
 .			if \\n[doc-dosep] .as doc-pcresult \\*[sepstring]
 .			nr doc-dosep 1
 .			as doc-pcresult \\*[active-prepend]\\$1
@@ -633,17 +640,24 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .	\}
 .	nr r-lvl -1
 ..
+.
+.de resetmode
+.	ds open-mode
+.	ds close-mode
+..
+.
 .de make-mode
 \\*[dot-de] mode-\\$1-on
 .	DEBUG .tm mode-\\$1-on <\\\\$@>
 .	rn close-mode xclose-mode
+.	ds open-mode \\$2
 .	ds close-mode \\$3
 .	as doc-pcresult \\\\*[xclose-mode]\\$2
 \\*[dot-dot]
 \\*[dot-de] mode-\\$1-off
 .	DEBUG .tm mode-\\$1-off <\\\\$@>
 .	as doc-pcresult \\\\*[close-mode]
-.	ds close-mode
+.	resetmode
 \\*[dot-dot]
 ..
 .de pc-fin
@@ -655,17 +669,19 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .		nr doc-dosep 0
 .	\}
 ..
+.
 .make-mode bold <b> </b>
 .make-mode code <code> </code>
 .make-mode em <em> </em>
 .make-mode i <i> </i>
 .make-mode caps <font\ size="-1"> <font\ size="+0">
 .make-mode null \& \&
+.make-mode function (<code> </code>)
 .am mode-i-on
-.	ds sepstring \~&nbsp;&nbsp;
+.	ds sepstring \~
 ..
 .am mode-em-on
-.	ds sepstring \~&nbsp;&nbsp;
+.	ds sepstring \~
 ..
 .am mode-i-off
 .	ds sepstring \~
@@ -681,7 +697,7 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 ..
 .de No
 .	as doc-pcresult \\*[close-mode]
-.	ds close-mode
+.	resetmode
 .	recurse \\$@
 .	pc-fin
 ..
@@ -721,7 +737,7 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .de Nm
 .	ds Nm-result \\*[Nm-save]
 .	if \\n(.$ \{\
-.		ie '\\$1'' .br
+.		ie '\\$1'' .br-real
 .		el \{\
 .			ds Nm-result \\$1
 .			if '\\*[Nm-save]'' .ds Nm-save \\$1
@@ -798,21 +814,63 @@ AT&T UNIX\\$*
 .	pc-fin
 ..
 .
-.de doc-start-quote
+.de doc-start-quote 
+.       if \\n[r-lvl]&\\n[doc-dosep] .as doc-pcresult \\*[sepstring]
+.       as doc-pcresult \\$1
+.       nr doc-dosep 0
+..
+.
+.de safe-blm
+..
+.
+.de doc-quote-open
+.	blm safe-blm
 .	if \\n[r-lvl]&\\n[doc-dosep] .as doc-pcresult \\*[sepstring]
-.	as doc-pcresult \\$1
 .	nr doc-dosep 0
+.	ev quotation_ev
+.	  di quotation
+.	    br-real
+.	    nr quotation_line \\n[.c]
+..
+.
+.de general-close
+.	if \\w\\n[.z]=0 .Error no quotation is open
+.	br-real
+.	di
+.	ev
+.	if \\w\\n[.z]>0 \{\
+.		tm Already in a diversion?! \\n[.z]
+.		backtrace
+.		Error multiple diversions: two quotations open?
+.	\}
+.	if \\n[dn]=0 \{\
+.tm  gb1 \\n[dn] \\n[dl]
+.		ev quotation_ev
+.		br-real
+.		da quotation
+.		nf
+.
+.		di
+.		ev
+.tm  gb2 \\n[dn] \\n[dl]
+.	\}
+.	as doc-pcresult \\$1\\*[quotation]\\
+.
+.
+.	blm Pp
 ..
 .
 .de make-quoter
 \\*[dot-de] \\$1o
-.	doc-start-quote \\$2
+.	doc-quote-open
 .	recurse \\\\$@
 .	pc-fin
 \\*[dot-dot]
 \\*[dot-de] \\$1c
-.	recurse \\\\$@
-.	pc-fin \\$3
+.	general-close \\$2
+.	shift
+.	recurse \\\\$@ \\$3
+.	pc-fin
 \\*[dot-dot]
 \\*[dot-de] \\$1q
 .	doc-start-quote \\$2
@@ -820,6 +878,7 @@ AT&T UNIX\\$*
 .	pc-fin \\$3
 \\*[dot-dot]
 ..
+.
 .\" generate Aq Ao Ac Bq Bo Bc Dq Do Dc Pq Po Pc Qq Qo Qc Sq So Sc Oo Oc
 .make-quoter A &lt; &gt;
 .make-quoter B \&[ \&]
@@ -829,6 +888,9 @@ AT&T UNIX\\$*
 .make-quoter S \&` \&'
 .als Oo Bo
 .als Oc Bc
+.de Error
+.	ab Line \\n[.c], Error: \\$*
+..
 .de Ft
 .	as doc-pcresult <br><br>
 .	mode-code-on
@@ -842,11 +904,11 @@ AT&T UNIX\\$*
 .	shift
 .	mode-bold-off
 .	as doc-pcresult (
-.	mode-code-on
+.	mode-function-on
 .	ds sepstring , \" (need the space)
 .	recurse \\$@
-.	mode-code-off
-.	pc-fin )
+.	as doc-pcresult \\*[close-mode]
+.	pc-fin
 ..
 .de Fo
 .	mode-bold-on
@@ -884,12 +946,15 @@ AT&T UNIX\\$*
 .de Xr
 .	ie \\n[DOC_XR] \{\
 .		mode-code-on
-.		as doc-pcresult \\$1(\\$2)
+.		ie \\w\\$2=0 .as doc-pcresult \\$1
+.		el .as doc-pcresult \\$1(\\$2)
 .		mode-code-off
 .	\}
 .	el \{\
 .		as doc-pcresult <a href="\\*[DOC_MANROOT]/html\\$2/m_\\$1.html">
-.		as doc-pcresult \\$1(\\$2)</a>
+.		ie \\w\\$2=0 .as doc-pcresult \\$1
+.		el .as doc-pcresult \\$1(\\$2)
+.		as doc-pcresult </a>
 .	\}
 .	shift
 .	shift
@@ -1177,8 +1242,8 @@ AT&T UNIX\\$*
 .
 .rn em doc-real-em
 .de em
-.	tm End-macro (.em) respecification is not allowed. (#\\n(.c)
-.	tm Should this have been .Em ...?
+.	tm Hint: Should this have been .Em ...?
+.	Error end-macro (.em) respecification is not allowed.
 ..
 .
 .ig
