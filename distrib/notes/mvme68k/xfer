@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.12 2002/04/10 19:02:00 scw Exp $
+.\"	$NetBSD: xfer,v 1.13 2002/06/30 00:46:49 lukem Exp $
 .
 Installation is supported from several media types, including:
 .(bullet
@@ -14,12 +14,12 @@ FTP
 Note that installing on a
 .Sq bare
 machine requires either a bootable
-tape drive or an ethernet to a compatible NFS server. MVME147 may
-also need to be booted over an RS232 connection.
+tape drive or an ethernet to a compatible NFS server.
+MVME147 may also need to be booted over an RS232 connection.
 .Pp
 The procedure for transferring the distribution sets onto installation
-media depends on the type of media. Instructions for each type of media
-are given below.
+media depends on the type of media.
+Instructions for each type of media are given below.
 .Pp
 In order to create installation media, you will need all the files and
 subdirectories in these two directories:
@@ -32,9 +32,9 @@ subdirectories in these two directories:
 .
 .Ss2 Creating boot/install tapes
 .
-Installing from tape is the simplest method of all. This method uses two
-tapes, one containing a bootable ramdisk and miniroot, the other containing
-the installation sets.
+Installing from tape is the simplest method of all.
+This method uses two tapes, one containing a bootable ramdisk and miniroot,
+the other containing the installation sets.
 .Pp
 The boot tape is created as follows:
 .Pp
@@ -58,36 +58,38 @@ The installation set tape is created as follows:
 .Dl # Ic "mt -f $T rewind"
 .Pp
 If the tape does not work as expected, you may need to explicitly
-set the EOF mark at the end of each tape segment. Consult the
-tape-related manual pages on the system where the tapes are created for
-more details.
+set the EOF mark at the end of each tape segment.
+Consult the tape-related manual pages on the system where the tapes
+are created for more details.
 .
 .Ss2 Boot/Install from NFS server
 .
 If your machine has a disk and network connection, but no tape drive,
 it may be convenient for you to install
 .Nx
-over the network. This
-involves temporarily booting your machine over NFS, just long enough
-so you can initialize its disk. This method requires that you have
-access to an NFS server on your network so you can configure it to
-support diskless boot for your machine. Configuring the NFS server
-is normally a task for a system administrator, and is not trivial.
+over the network.
+This involves temporarily booting your machine over NFS, just long enough
+so you can initialize its disk.
+This method requires that you have access to an NFS server on your
+network so you can configure it to support diskless boot for your machine.
+Configuring the NFS server is normally a task for a system administrator,
+and is not trivial.
 .Pp
 If you are using a
 .Nx
 system as the boot-server, have a look at
 the
 .Xr diskless 8
-manual page for guidelines on how to proceed with
-this. If the server runs another operating system, consult the
+manual page for guidelines on how to proceed with this.
+If the server runs another operating system, consult the
 documentation that came with it (i.e.
 .Xr add_client 8
 on
 .Tn SunOS ) .
 .Pp
 Booting an MVME147 from ethernet is not possible without first downloading
-a small bootstrap program (sboot) via RS232. See the section entitled
+a small bootstrap program (sboot) via RS232.
+See the section entitled
 .Sx "Installing from NFS"
 for details on how to accomplish this.
 .Pp
@@ -104,8 +106,8 @@ Normally, this file is just a symbolic link to the
 .Pa netboot
 program, which should be located in a place
 where the TFTP daemon can find it (remember, many TFTP daemons run in
-a chroot'ed environment). The netboot program may be found in the
-install directory of this distribution.
+a chroot'ed environment).
+The netboot program may be found in the install directory of this distribution.
 .Pp
 The
 .Tn MVME162
@@ -116,15 +118,16 @@ The
 ,
 and
 .Tn MVME177
-boot ROMs have code builtin to boot over ethernet from a
-TFTP server. You should configure it to download the same
+boot ROMs have code builtin to boot over ethernet from a TFTP server.
+You should configure it to download the same
 .Pa netboot
 program as is used for
 .Tn MVME147 .
 .Pp
 The netboot program will query a bootparamd server to find the NFS
 server address and path name for its root, and then load a kernel from
-that location. The server should have a copy of the netbsd.RAMDISK kernel in
+that location.
+The server should have a copy of the netbsd.RAMDISK kernel in
 the root area for your client (no other files are needed in the client
 root, although it might be a convenient place to put the uncompressed
 miniroot image) and
@@ -137,46 +140,50 @@ kernel to just
 in the client's root directory before trying to netboot the client.
 .Pp
 The client will need access to the miniroot image, which can be
-provided using NFS or remote shell. If using NFS, miniroot.fs.gz should be
-expanded on the server, because doing so from the RAMDISK shell is not
-so easy. The unzipped miniroot takes about 7.5 MB of space.
+provided using NFS or remote shell.
+If using NFS, miniroot.fs.gz should be expanded on the server,
+because doing so from the RAMDISK shell is not so easy.
+The unzipped miniroot takes about 7.5 MB of space.
 .Pp
 If you will be installing
 .Nx
 on several clients, it may be useful
 to know that you can use a single NFS root for all the clients as long
-as they only use the netbsd.RAMDISK kernel. There will be no conflict
-between clients because the RAM-disk kernel will not use the NFS root.
+as they only use the netbsd.RAMDISK kernel.
+There will be no conflict between clients because the RAM-disk kernel
+will not use the NFS root.
 No swap file is needed; the RAM-disk kernel does not use that either.
 .
 .Ss2 Install/Upgrade from CD-ROM
 .
-This method requires that you boot from another device (i.e. tape
-or network, as described above). You may need to make a boot tape
-on another machine using the files provided on the CD-ROM. Once
-you have booted netbsd.RAMDISK (the RAMDISK kernel) and loaded the
-miniroot, you can load any of the distribution sets directly from
-the CD-ROM. The
+This method requires that you boot from another device
+(i.e. tape or network, as described above).
+You may need to make a boot tape on another machine using the files
+provided on the CD-ROM.
+Once you have booted netbsd.RAMDISK (the RAMDISK kernel) and loaded the
+miniroot, you can load any of the distribution sets directly from the CD-ROM.
+The
 .Ic install
 program in the miniroot automates the
 work required to mount the CD-ROM and extract the files.
 .
 .Ss2 Install/Upgrade via FTP
 .
-This method requires that you boot from another device (i.e. tape
-or network, as described above). You may need to make a boot tape
-on another machine using the files in .../install (which you get
-via FTP). Once you have booted netbsd.RAMDISK (the RAM-disk kernel)
-and loaded the miniroot, you can load any of the distribution sets
-over the net using FTP. The
+This method requires that you boot from another device
+(i.e. tape or network, as described above).
+You may need to make a boot tape on another machine using the files
+in .../install (which you get via FTP).
+Once you have booted netbsd.RAMDISK (the RAM-disk kernel) and loaded the
+miniroot, you can load any of the distribution sets over the net using FTP.
+The
 .Ic install
 program in the miniroot
 automates the work required to configure the network interface and
 transfer the files.
 .Pp
 This method, of course, requires network access to an FTP server.
-This might be a local system, or it might even be ftp.netbsd.org
-itself. If you wish to use ftp.netbsd.org as your FTP file
+This might be a local system, or it might even be ftp.netbsd.org itself.
+If you wish to use ftp.netbsd.org as your FTP file
 server, you may want to keep the following information handy:
 .Pp
 .(disp
