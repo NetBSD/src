@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.36 2000/01/25 15:56:55 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.37 2000/01/25 16:07:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.36 2000/01/25 15:56:55 itojun Exp $");
+__RCSID("$NetBSD: if.c,v 1.37 2000/01/25 16:07:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,17 +203,17 @@ intpr(interval, ifnetaddr, pfunc)
 				 */
 				in = inet_makeaddr(ifaddr.in.ia_subnet,
 					INADDR_ANY);
-				printf("%-13.13s ", netname(in.s_addr,
-				    ifaddr.in.ia_subnetmask));
+				cp = netname(in.s_addr,
+					ifaddr.in.ia_subnetmask);
 #else
 				cp = netname(ifaddr.in.ia_subnet,
-				    ifaddr.in.ia_subnetmask);
+					ifaddr.in.ia_subnetmask);
+#endif
 				if (vflag)
 					n = strlen(cp) < 13 ? 13 : strlen(cp);
 				else
 					n = 13;
 				printf("%-*.*s ", n, n, cp);
-#endif
 				cp = routename(sin->sin_addr.s_addr);
 				if (vflag)
 					n = strlen(cp) < 17 ? 17 : strlen(cp);
