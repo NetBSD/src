@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.4 2000/12/08 20:15:12 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2001/01/14 06:29:27 christos Exp $
 
+.if !target(assym.h)
 S!=	cd ${.CURDIR}/../../..;pwd
 
 DPSRCS+= assym.h
@@ -18,3 +19,4 @@ assym.h: ${S}/kern/genassym.sh ${GENASSYM_DIR}/genassym.cf
 	mv -f assym.h.tmp assym.h
 
 .include "../Makefile.inc"
+.endif
