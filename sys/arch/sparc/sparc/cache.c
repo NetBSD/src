@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.78 2003/04/02 04:35:23 thorpej Exp $ */
+/*	$NetBSD: cache.c,v 1.79 2003/06/23 13:34:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -380,7 +380,7 @@ sun4_vcache_flush_context(ctx)
 			sta(p, ASI_HWFLUSHCTX, 0);
 	} else {
 		ls = CACHEINFO.c_linesize;
-		i = CACHEINFO.c_totalsize >> CACHEINFO.c_l2linesize;
+		i = CACHEINFO.c_nlines;
 		for (; --i >= 0; p += ls)
 			sta(p, ASI_FLUSHCTX, 0);
 	}
@@ -407,7 +407,7 @@ sun4_vcache_flush_region(vreg, ctx)
 	cachestats.cs_nrgflush++;
 	p = (char *)VRTOVA(vreg);	/* reg..reg+sz rather than 0..sz */
 	ls = CACHEINFO.c_linesize;
-	i = CACHEINFO.c_totalsize >> CACHEINFO.c_l2linesize;
+	i = CACHEINFO.c_nlines;
 	for (; --i >= 0; p += ls)
 		sta(p, ASI_FLUSHREG, 0);
 }
@@ -438,7 +438,7 @@ sun4_vcache_flush_segment(vreg, vseg, ctx)
 			sta(p, ASI_HWFLUSHSEG, 0);
 	} else {
 		ls = CACHEINFO.c_linesize;
-		i = CACHEINFO.c_totalsize >> CACHEINFO.c_l2linesize;
+		i = CACHEINFO.c_nlines;
 		for (; --i >= 0; p += ls)
 			sta(p, ASI_FLUSHSEG, 0);
 	}
@@ -593,7 +593,7 @@ srmmu_vcache_flush_context(ctx)
 	cachestats.cs_ncxflush++;
 	p = (char *)0;	/* addresses 0..cacheinfo.c_totalsize will do fine */
 	ls = CACHEINFO.c_linesize;
-	i = CACHEINFO.c_totalsize >> CACHEINFO.c_l2linesize;
+	i = CACHEINFO.c_nlines;
 	octx = getcontext4m();
 	trapoff();
 	setcontext4m(ctx);
@@ -621,7 +621,7 @@ srmmu_vcache_flush_region(vreg, ctx)
 	cachestats.cs_nrgflush++;
 	p = (char *)VRTOVA(vreg);	/* reg..reg+sz rather than 0..sz */
 	ls = CACHEINFO.c_linesize;
-	i = CACHEINFO.c_totalsize >> CACHEINFO.c_l2linesize;
+	i = CACHEINFO.c_nlines;
 	octx = getcontext4m();
 	trapoff();
 	setcontext4m(ctx);
@@ -651,7 +651,7 @@ srmmu_vcache_flush_segment(vreg, vseg, ctx)
 	cachestats.cs_nsgflush++;
 	p = (char *)VSTOVA(vreg, vseg);	/* seg..seg+sz rather than 0..sz */
 	ls = CACHEINFO.c_linesize;
-	i = CACHEINFO.c_totalsize >> CACHEINFO.c_l2linesize;
+	i = CACHEINFO.c_nlines;
 	octx = getcontext4m();
 	trapoff();
 	setcontext4m(ctx);
@@ -918,7 +918,7 @@ cypress_cache_flush_all()
 	/* Fill the cache with known read-only content */
 	p = (char *)kernel_text;
 	ls = CACHEINFO.c_linesize;
-	i = CACHEINFO.c_totalsize >> CACHEINFO.c_l2linesize;
+	i = CACHEINFO.c_nlines;
 	for (; --i >= 0; p += ls)
 		(*(volatile char *)p);
 }
