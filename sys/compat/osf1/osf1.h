@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.10 1999/04/29 02:06:50 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.11 1999/04/29 05:54:13 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -463,6 +463,15 @@ struct osf1_stat {
 
 
 /* time.h */
+
+struct osf1_itimerval {
+	struct osf1_timeval it_interval;
+	struct osf1_timeval it_value;
+};
+
+#define OSF1_ITIMER_REAL	0
+#define OSF1_ITIMER_VIRTUAL	1
+#define OSF1_ITIMER_PROF	2
 
 struct osf1_timezone {
 	osf1_int	tz_minuteswest;
