@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.90 2003/09/22 12:59:58 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.91 2003/10/21 22:55:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.90 2003/09/22 12:59:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.91 2003/10/21 22:55:47 thorpej Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -125,6 +125,10 @@ struct evcnt sosend_kvalimit = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
 void
 soinit(void)
 {
+
+	/* Set the initial adjusted socket buffer size. */
+	if (sb_max_set(sb_max))
+		panic("bad initial sb_max value: %lu\n", sb_max);
 
 	pool_init(&socket_pool, sizeof(struct socket), 0, 0, 0,
 	    "sockpl", NULL);

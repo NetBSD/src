@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.41 2003/08/07 16:30:49 agc Exp $	*/
+/*	$NetBSD: param.c,v 1.42 2003/10/21 22:55:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.41 2003/08/07 16:30:49 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.42 2003/10/21 22:55:47 thorpej Exp $");
 
 #include "opt_rtc_offset.h"
-#include "opt_sb_max.h"
 #include "opt_sysv.h"
 #include "opt_sysvparam.h"
 
@@ -108,7 +107,6 @@ int	maxproc = NPROC;
 int	desiredvnodes = NVNODE;
 int	maxfiles = MAXFILES;
 int	ncallout = 16 + NPROC;	/* size of callwheel (rounded to ^2) */
-u_long	sb_max = SB_MAX;	/* maximum socket buffer size */
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
 
 /*
