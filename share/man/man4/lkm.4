@@ -1,4 +1,4 @@
-.\" $NetBSD: lkm.4,v 1.15 2001/06/12 11:39:03 wiz Exp $
+.\" $NetBSD: lkm.4,v 1.16 2001/09/11 00:08:28 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -68,7 +68,7 @@ and
 programs.  Users should never have to interact with
 .Pa /dev/lkm
 directly.
-.Sh "MODULE TYPES"
+.Sh MODULE TYPES
 .Ss System Call modules
 System calls may be replaced by loading
 new ones via the
@@ -119,7 +119,7 @@ An example of a "miscellaneous module" might be a loader for
 card-specific VGA drivers or alternate terminal emulations in
 an appropriately layered console driver.
 .Sh NOTES
-.Ss "Security considerations"
+.Ss Security considerations
 Loaded kernel module can do anything with kernel structures. There is
 no memory protection between module and rest of kernel. Hence, potential
 attacker controlling
@@ -129,7 +129,7 @@ can do anything they want with the system.
 To avoid associated security risk, new LKMs cannot be loaded on
 .Pa securelevel
 higher than zero.
-.Ss "Module might crash system"
+.Ss Module might crash system
 Loading and using a buggy module is likely to crash operating system -
 since the module becomes part of kernel, a code error is much more
 fatal than for userland programs. If you are doing kernel development,
@@ -161,7 +161,7 @@ The
 facility was designed to be similar in functionality
 to the loadable kernel modules facility provided by
 .Tn "SunOS 4.1.3" .
-.Sh AUTHOR
+.Sh AUTHORS
 .Bl -tag
 Terrence R. Lambert, terry@cs.weber.edu
 .El

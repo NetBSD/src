@@ -1,4 +1,4 @@
-.\" $NetBSD: npx.4,v 1.12 2001/04/02 20:42:19 wiz Exp $
+.\" $NetBSD: npx.4,v 1.13 2001/09/11 00:08:34 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -66,11 +66,11 @@ option must be defined in the kernel configuration file.
 It will provide support for the instructions normally executed
 by the NPX.  If there is no NPX in the system and the kernel
 is not built with math emulation, the system will not boot.
-.Sh CAVEATS
+.Sh BUGS
 The emulator is much slower than the NPX coprocessor.
 This will result in poor floating-point math performance
 if the emulator must be used.
-.Sh BUGS
+.Pp
 There are lots of them, especially on cheap motherboards.  In particular,
 some motherboards do not have the interrupt lines from the NPX to
 the CPU wired properly.  If this is the case, the emulator must be used

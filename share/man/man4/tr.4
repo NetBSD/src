@@ -1,4 +1,4 @@
-.\"	$NetBSD: tr.4,v 1.8 2000/06/19 04:04:46 soren Exp $
+.\"	$NetBSD: tr.4,v 1.9 2001/09/11 00:08:31 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,11 +87,11 @@ Turbo 16/4 Token Ring PC Card
 .It 3COM
 3C389 TokenLink Velocity PC Card
 .El
-.Sh "SOURCE ROUTING"
+.Sh SOURCE ROUTING
 Setting IFF_LINK0 enables Token-Ring source routing.  Setting
 IFF_LINK1 uses all-routes broadcasts otherwise single-route broadcasts
 are used.
-.Sh "NOTES"
+.Sh NOTES
 The MCA attachment has been only tested on
 IBM Token Ring 16/4 Adapter/A so far.
 It doesn't support 
@@ -99,7 +99,7 @@ It doesn't support
 yet, too.
 .\".Sh MEDIA SELECTION
 .\".Sh DIAGNOSTICS
-.Sh "BUGS"
+.Sh BUGS
 The PCMCIA attachment does not work with the
 .Xr cbb 4
 Cardbus driver.
