@@ -9,7 +9,9 @@ CLEANFILES= 	${FONTS}
 all: $(FONTS)
 
 install: ${FONTS}
-	@if [ ! -d ${DESTDIR}${FONTDIR} ]; then mkdir ${DESTDIR}${FONTDIR};fi
+	@if [ ! -d ${DESTDIR}${FONTDIR} ]; then \
+		mkdir -p ${DESTDIR}${FONTDIR}; \
+	fi
 	@for i in ${FONTS}; do \
 		${ECHO} "installing font $$i into ${DESTDIR}${FONTDIR}"; \
 		${INSTALL} -c -m ${LIBMODE} -o ${LIBOWN} -g ${LIBGRP} \
