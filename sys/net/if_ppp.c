@@ -69,7 +69,7 @@
  * Paul Mackerras (paulus@cs.anu.edu.au).
  */
 
-/* $Id: if_ppp.c,v 1.11 1994/05/29 23:44:23 paulus Exp $ */
+/* $Id: if_ppp.c,v 1.12 1994/06/14 03:09:23 paulus Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "ppp.h"
@@ -369,8 +369,10 @@ pppread(tp, uio, flag)
 	    return (EWOULDBLOCK);
 	}
 	error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI|PCATCH, ttyin, 0);
-	if (error)
+	if (error) {
+	    splx(s);
 	    return error;
+	}
     }
     if (tp->t_line != PPPDISC) {
 	splx(s);
@@ -1319,7 +1321,8 @@ pppinput(c, tp)
 #endif
 	    if ((sc->sc_flags & (SC_FLUSH | SC_ESCAPED)) == 0){
 		if (sc->sc_flags & SC_DEBUG)
-		    printf("ppp%d: bad fcs\n", sc->sc_if.if_unit);
+		    printf("ppp%d: bad fcs %x\n", sc->sc_if.if_unit,
+			   sc->sc_fcs);
 		sc->sc_if.if_ierrors++;
 	    } else
 		sc->sc_flags &= ~(SC_FLUSH | SC_ESCAPED);
@@ -1494,7 +1497,7 @@ pppioctl(ifp, cmd, data)
 
     case SIOCSIFMTU:
 	if (error = suser(p->p_ucred, &p->p_acflag))
-	    return (error);
+	    break;
 	sc->sc_if.if_mtu = ifr->ifr_mtu;
 	break;
 
