@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	5.1 (Berkeley) 6/29/90
-#	$NetBSD: Makefile,v 1.3 1997/06/11 04:19:30 jeremy Exp $
+#	$NetBSD: Makefile,v 1.4 1997/07/18 02:13:39 ender Exp $
 
-MAN=	ae.4 intro.4 mem.4 sn.4
+MAN=	adb.4 ae.4 autoconf.4 intro.4 mainbus.4 mem.4 obio.4 sn.4
 MLINKS=	mem.4 kmem.4
 MANSUBDIR=/mac68k
 
