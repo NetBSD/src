@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2001/04/25 17:35:02 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 2001/05/14 15:07:23 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -216,8 +216,8 @@ static int temp_seg_inuse;
  * to be used in copy/zero operations.
  */
 vm_offset_t tmp_vpages[2] = {
-	KERNBASE + NBPG * 5,
-	KERNBASE + NBPG * 6 };
+	NBPG * 8,
+	NBPG * 9 };
 int tmp_vpages_inuse;
 
 static int pmap_version = 1;
@@ -793,17 +793,17 @@ pmeg_clean(pmegp)
 	int sme;
 	vm_offset_t va;
 
-	sme = get_segmap(0);
+	sme = get_segmap(temp_seg_va);
 	if (sme != SEGINV)
 		panic("pmeg_clean");
 
 	sme = pmegp->pmeg_index;
-	set_segmap(0, sme);
+	set_segmap(temp_seg_va, sme);
 
 	for (va = 0; va < NBSG; va += NBPG)
-		set_pte(va, PG_INVAL);
+		set_pte(temp_seg_va + va, PG_INVAL);
 
-	set_segmap(0, SEGINV);
+	set_segmap(temp_seg_va, SEGINV);
 }
 
 /*
@@ -1604,9 +1604,8 @@ pmap_bootstrap(nextva)
 
 	/*
 	 * Determine the range of physical memory available.
-	 * Physical memory at zero was remapped to KERNBASE.
 	 */
-	avail_start = nextva - KERNBASE;
+	avail_start = nextva;
 	avail_end = prom_memsize();
 	avail_end = m68k_trunc_page(avail_end);
 
@@ -1634,18 +1633,11 @@ pmap_bootstrap(nextva)
 	pmeg_init();
 
 	/*
-	 * Unmap low virtual segments.
-	 * VA range: [0 .. KERNBASE]
-	 */
-	for (va = 0; va < KERNBASE; va += NBSG)
-		set_segmap(va, SEGINV);
-
-	/*
 	 * Reserve PMEGS for kernel text/data/bss
 	 * and the misc pages taken above.
 	 * VA range: [KERNBASE .. virtual_avail]
 	 */
-	for ( ; va < virtual_avail; va += NBSG) {
+	for (va = KERNBASE; va < virtual_avail; va += NBSG) {
 		sme = get_segmap(va);
 		if (sme == SEGINV) {
 			prom_printf("kernel text/data/bss not mapped\n");
@@ -1686,40 +1678,38 @@ pmap_bootstrap(nextva)
 	 */
 
 	/*
-	 * On both a Sun2 and Sun3, the kernel text starts at virtual
-	 * KERNTEXTOFF, physical 0x4000.  locore.s has set up a temporary
-	 * stack starting at virtual (KERNTEXTOFF - sizeof(struct exec)),
-	 * physical 0x3FE0, and growing down.
-	 *
-	 * On the Sun3, this means there are two physical pages before the
-	 * kernel text.  On the Sun3, page zero is reserved for the msgbuf
-	 * and page one contains the temporary stack.
-	 *
-	 * On the Sun2, there are eight physical pages before the kernel
-	 * text.  Pages 0-3 are used by the PROM.
+	 * On a Sun2, the boot loader loads the kernel exactly where 
+	 * it is linked, at physical/virtual 0x6000 (KERNBASE).  This
+	 * means there are twelve physical/virtual pages before the
+	 * kernel text begins.
 	 */
-	va = KERNBASE;
-	eva = KERNBASE + (NBPG * 4);
-	for(va = KERNBASE; va < eva; va += NBPG) {
-			pte = get_pte(va);
-			pte |= (PG_SYSTEM | PG_WRITE);
-			set_pte(va, pte);
-	}
+	va = 0;
 
 	/*
-	 * We start the msgbuf at page four.
+	 * Physical/virtual pages zero through three are used by the 
+	 * PROM.  prom_init has already saved the PTEs, now we get
+	 * to unmap the pages.
 	 */
-	pte = get_pte(va);
-	pte |= (PG_SYSTEM | PG_WRITE | PG_NC);
-	set_pte(va, pte);
-	va += NBPG;
+	eva = va + NBPG * 4;
+	for(; va < eva; va += NBPG)
+		set_pte(va, PG_INVAL);
+
+	/*
+	 * We use pages four through seven for the msgbuf.
+	 */
+	eva = va + NBPG * 4;
+	for(; va < eva; va += NBPG) {
+		pte = get_pte(va);
+		pte |= (PG_SYSTEM | PG_WRITE | PG_NC);
+		set_pte(va, pte);
+	}
 	/* Initialize msgbufaddr later, in machdep.c */
 
 	/*
 	 * On the Sun3, two of the three dead pages in SUN3_MONSHORTSEG
 	 * are used for tmp_vpages.  The Sun2 doesn't have this
-	 * short-segment concept, so we reserve virtual pages five and six
-	 * after KERNBASE for this.
+	 * short-segment concept, so we reserve virtual pages eight 
+	 * and nine for this.
 	 */
 	set_pte(va, PG_INVAL);
 	va += NBPG;
@@ -1727,14 +1717,16 @@ pmap_bootstrap(nextva)
 	va += NBPG;
 
 	/*
-	 * Page seven remains for the temporary kernel stack.  Hopefully
-	 * this is enough space.
+	 * Pages ten and eleven remain for the temporary kernel stack,
+	 * which is set up by locore.s.  Hopefully this is enough space.
 	 */
-	pte = get_pte(va);
-	pte &= ~(PG_NC);
-	pte |= (PG_SYSTEM | PG_WRITE);
-	set_pte(va, pte);
-	va += NBPG;
+	eva = va + NBPG * 2;
+	for(; va < eva ; va += NBPG) {
+		pte = get_pte(va);
+		pte &= ~(PG_NC);
+		pte |= (PG_SYSTEM | PG_WRITE);
+		set_pte(va, pte);
+	}
 
 	/*
 	 * Next is the kernel text.
