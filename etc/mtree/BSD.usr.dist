@@ -1,7 +1,7 @@
 #	fs: /usr
 #
 #	@(#)BSD.usr.dist	5.5 (Berkeley) 5/9/91
-#	$Id: BSD.usr.dist,v 1.10 1994/02/10 01:53:06 cgd Exp $
+#	$Id: BSD.usr.dist,v 1.11 1994/02/10 02:33:23 cgd Exp $
 #
 
 .	type=dir
@@ -31,6 +31,8 @@ include	type=dir
 	rpcsvc		type=dir uname=bin gname=bin mode=0755
 	..
 	g++		type=dir uname=bin gname=bin mode=0755
+		gen	type=dir uname=bin gname=bin mode=0755
+		..
 	..
 ..
 
@@ -295,7 +297,33 @@ share	type=dir
 		..
 	..
 
-	/set uname=bin gname=bin mode=0755 type=dir
+/set uname=bin gname=bin mode=0755 type=dir
+	gnats
+	..
+
+	groff_font
+		devX100
+		..
+		devX100-12
+		..
+		devX75
+		..
+		devX75-12
+		..
+		devascii
+		..
+		devdvi
+			generate
+			..
+		..
+		devlatin1
+		..
+		devps
+			generate
+			..
+		..
+	..
+
 	lkm
 		syscall
 		..
@@ -405,6 +433,8 @@ share	type=dir
 	tabset	type=dir uname=bin gname=bin mode=0755
 	..
 	tmac	type=dir uname=bin gname=bin mode=0755
+		mm
+		..
 	..
 	zoneinfo	type=dir uname=bin gname=bin mode=0755
 		Australia	type=dir uname=bin gname=bin mode=0555
