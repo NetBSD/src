@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.38 2002/05/04 13:53:02 tron Exp $
+# $NetBSD: network,v 1.38.2.1 2002/10/23 12:34:40 lukem Exp $
 #
 
 # PROVIDE: network
@@ -185,6 +185,13 @@ network_start()
 		echo -n 'Configuring network interfaces:'
 		for int in $tmp; do
 			eval args=\$ifconfig_$int
+			if [ -n "$args" ] || [ -f /etc/ifconfig.$int ]; then
+				if ifconfig $int create 2>/dev/null && \
+				   checkyesno ipfilter; then
+					# resync ipf(4)
+					ipf -y >/dev/null
+				fi
+			fi
 			if [ -n "$args" ]; then
 				echo -n " $int"
 				ifconfig $int $args
@@ -193,7 +200,7 @@ network_start()
 				while read args; do
 					[ -z "$args" ] && continue
 					case "$args" in
-					"#"*)
+					"#"*|create)
 						;;
 					"!"*)
 						eval ${args#*!}
@@ -308,11 +315,6 @@ network_start()
 		fi
 	fi
 
-	# resync ipf(4)
-	if checkyesno ipfilter; then
-		/sbin/ipf -y
-	fi
-
 	# XXX this must die
 	if [ -s /etc/netstart.local ]; then
 		sh /etc/netstart.local start
@@ -360,6 +362,11 @@ network_stop()
 			if [ -n "$args" ] || [ -f /etc/ifconfig.$int ]; then
 				echo -n " $int"
 				ifconfig $int down
+				if ifconfig $int destroy 2>/dev/null && \
+				   checkyesno ipfilter; then
+					# resync ipf(4)
+					ipf -y >/dev/null
+				fi
 			fi
 		done
 		echo "."
@@ -369,12 +376,7 @@ network_stop()
 	#
 	route -n flush
 
-	# resync ipf(4)
-	if checkyesno ipfilter; then
-		/sbin/ipf -y
-	fi
-
 }
 
-load_rc_config $name
+load_rc_config $name ipfilter
 run_rc_command "$1"
