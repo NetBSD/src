@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.20 1998/02/10 01:26:42 perry Exp $	*/
+/*	$NetBSD: in_var.h,v 1.21 1998/02/13 18:21:42 tls Exp $	*/
 
 /*
  * Copyright (c) 1985, 1986, 1993
@@ -56,6 +56,7 @@ struct in_ifaddr {
 	u_int32_t ia_subnet;		/* subnet number, including net */
 	u_int32_t ia_subnetmask;	/* mask of subnet part */
 	struct	in_addr ia_netbroadcast; /* to recognize net broadcasts */
+	LIST_ENTRY(in_ifaddr) ia_hash;	/* entry in bucket of inet addresses */
 	TAILQ_ENTRY(in_ifaddr) ia_list;	/* list of internet addresses */
 	struct	sockaddr_in ia_addr;	/* reserve space for interface name */
 	struct	sockaddr_in ia_dstaddr;	/* reserve space for broadcast addr */
@@ -79,11 +80,37 @@ struct	in_aliasreq {
 
 
 #ifdef	_KERNEL
-TAILQ_HEAD(in_ifaddrhead, in_ifaddr);
-extern	struct	in_ifaddrhead in_ifaddr;
+#ifndef IN_IFADDR_HASH_SIZE
+#define IN_IFADDR_HASH_SIZE 293
+#endif
+
+#define IN_IFADDR_HASH(x) in_ifaddrhashtbl[(u_long)(x) % IN_IFADDR_HASH_SIZE]
+
+u_long in_ifaddrhash;				/* size of hash table - 1 */
+int	in_ifaddrentries;			/* total number of addrs */
+LIST_HEAD(in_ifaddrhashhead, in_ifaddr);	/* Type of the hash head */
+TAILQ_HEAD(in_ifaddrhead, in_ifaddr);		/* Type of the list head */
+
+extern  struct in_ifaddrhashhead *in_ifaddrhashtbl;	/* Hash table head */
+extern  struct in_ifaddrhead in_ifaddr;		/* List head (in ip_input) */
+
 extern	struct	ifqueue	ipintrq;		/* ip packet input queue */
 void	in_socktrim __P((struct sockaddr_in *));
 
+
+/*
+ * Macro for finding whether an internet address (in_addr) belongs to one
+ * of our interfaces (in_ifaddr).  NULL if the address isn't ours.
+ */
+#define INADDR_TO_IA(addr, ia) \
+	/* struct in_addr addr; */ \
+	/* struct in_ifaddr *ia; */ \
+{ \
+	for (ia = IN_IFADDR_HASH((addr).s_addr).lh_first; \
+	    ia != NULL && !in_hosteq(ia->ia_addr.sin_addr, (addr)); \
+	    ia = ia->ia_hash.le_next) \
+		 continue; \
+}
 
 /*
  * Macro for finding the interface (ifnet structure) corresponding to one
@@ -95,25 +122,25 @@ void	in_socktrim __P((struct sockaddr_in *));
 { \
 	register struct in_ifaddr *ia; \
 \
-	for (ia = in_ifaddr.tqh_first; \
-	    ia != NULL && ia->ia_addr.sin_addr.s_addr != (addr).s_addr; \
-	    ia = ia->ia_list.tqe_next) \
-		 continue; \
+	INADDR_TO_IA(addr, ia); \
 	(ifp) = (ia == NULL) ? NULL : ia->ia_ifp; \
 }
 
 /*
- * Macro for finding the internet address structure (in_ifaddr) corresponding
+ * Macro for finding an internet address structure (in_ifaddr) corresponding
  * to a given interface (ifnet structure).
  */
 #define IFP_TO_IA(ifp, ia) \
 	/* struct ifnet *ifp; */ \
 	/* struct in_ifaddr *ia; */ \
 { \
-	for ((ia) = in_ifaddr.tqh_first; \
-	    (ia) != NULL && (ia)->ia_ifp != (ifp); \
-	    (ia) = (ia)->ia_list.tqe_next) \
+	register struct ifaddr *ifa; \
+\
+	for (ifa = (ifp)->if_addrlist.tqh_first; \
+	    ifa != NULL && ifa->ifa_addr->sa_family != AF_INET; \
+	    ifa = ifa->ifa_list.tqe_next) \
 		continue; \
+	(ia) = ifatoia(ifa); \
 }
 #endif
 
@@ -165,12 +192,12 @@ struct in_multistep {
 { \
 	register struct in_ifaddr *ia; \
 \
-	IFP_TO_IA((ifp), ia); \
+	IFP_TO_IA((ifp), ia); 			/* multicast */ \
 	if (ia == NULL) \
 		(inm) = NULL; \
 	else \
 		for ((inm) = ia->ia_multiaddrs.lh_first; \
-		    (inm) != NULL && (inm)->inm_addr.s_addr != (addr).s_addr; \
+		    (inm) != NULL && !in_hosteq((inm)->inm_addr, (addr)); \
 		     (inm) = inm->inm_list.le_next) \
 			 continue; \
 }

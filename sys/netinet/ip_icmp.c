@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.26 1997/10/29 05:28:44 kml Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.27 1998/02/13 18:21:43 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -435,6 +435,7 @@ icmp_reflect(m)
 {
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct in_ifaddr *ia;
+	register struct ifaddr *ifa;
 	struct in_addr t;
 	struct mbuf *opts = 0;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
@@ -453,23 +454,35 @@ icmp_reflect(m)
 	 * or anonymous), use the address which corresponds
 	 * to the incoming interface.
 	 */
-	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
-		if (in_hosteq(t, ia->ia_addr.sin_addr))
-			break;
-		if ((ia->ia_ifp->if_flags & IFF_BROADCAST) &&
-		    in_hosteq(t, ia->ia_broadaddr.sin_addr))
-			break;
+	INADDR_TO_IA(t, ia);
+	if (ia == NULL && (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST)) {
+		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;  
+		    ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
+			if (ifa->ifa_addr->sa_family != AF_INET)
+				continue;
+			ia = ifatoia(ifa);
+			if (in_hosteq(t, ia->ia_broadaddr.sin_addr))
+				break;
+		}
 	}
+
 	icmpdst.sin_addr = t;
 	if (ia == (struct in_ifaddr *)0)
 		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
 		    m->m_pkthdr.rcvif));
 	/*
 	 * The following happens if the packet was not addressed to us,
-	 * and was received on an interface with no IP address.
+	 * and was received on an interface with no IP address:
+	 * We find the first AF_INET address on the first non-loopback
+	 * interface.
 	 */
 	if (ia == (struct in_ifaddr *)0)
-		ia = in_ifaddr.tqh_first;
+		for (ia = in_ifaddr.tqh_first; ia != NULL;
+		    ia = ia->ia_list.tqe_next) {
+			if (ia->ia_ifp->if_flags & IFF_LOOPBACK)
+				continue;
+			break;
+		}
 	t = ia->ia_addr.sin_addr;
 	ip->ip_src = t;
 	ip->ip_ttl = MAXTTL;
