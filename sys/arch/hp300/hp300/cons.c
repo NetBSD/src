@@ -38,7 +38,7 @@
  * from: Utah $Hdr: cons.c 1.1 90/07/09$
  *
  *	from: @(#)cons.c	7.6 (Berkeley) 5/4/91
- *	$Id: cons.c,v 1.2 1993/05/22 07:57:18 cgd Exp $
+ *	$Id: cons.c,v 1.3 1993/07/07 11:13:05 deraadt Exp $
  */
 
 #include "sys/param.h"
@@ -82,7 +82,6 @@ struct	consdev constab[] = {
 
 struct	tty *constty = 0;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
-struct	tty *cn_tty;		/* XXX: console tty struct for tprintf */
 
 cninit()
 {
@@ -106,7 +105,6 @@ cninit()
 	/*
 	 * Turn on console
 	 */
-	cn_tty = cp->cn_tp;
 	(*cp->cn_init)(cp);
 }
 

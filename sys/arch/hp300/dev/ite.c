@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.1 90/07/09$
  *
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.6 1993/07/01 18:04:16 mycroft Exp $
+ *	$Id: ite.c,v 1.7 1993/07/07 11:12:37 deraadt Exp $
  */
 
 /*
@@ -849,7 +849,6 @@ itecnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(maj, unit);
-	cp->cn_tp = ite_tty[unit];
 	cp->cn_pri = pri;
 }
 
