@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.22.4.1 2001/04/06 00:29:03 he Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.22.4.2 2001/05/09 19:42:58 he Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.51 2001/01/20 17:27:00 itojun Exp $	*/
 
 /*
@@ -105,8 +105,8 @@ nd6_ns_input(m, off, icmp6len)
 	struct sockaddr_dl *proxydl = NULL;
 
 	if (ip6->ip6_hlim != 255) {
-		log(LOG_ERR,
-		    "nd6_ns_input: invalid hlim %d\n", ip6->ip6_hlim);
+		nd6log((LOG_ERR,
+		    "nd6_ns_input: invalid hlim %d\n", ip6->ip6_hlim));
 		goto freeit;
 	}
 
@@ -119,8 +119,8 @@ nd6_ns_input(m, off, icmp6len)
 		    && daddr6.s6_addr8[12] == 0xff) {
 			; /*good*/
 		} else {
-			log(LOG_INFO, "nd6_ns_input: bad DAD packet "
-				"(wrong ip6 dst)\n");
+			nd6log((LOG_INFO, "nd6_ns_input: bad DAD packet "
+				"(wrong ip6 dst)\n"));
 			goto bad;
 		}
 	}
@@ -539,8 +539,8 @@ nd6_na_input(m, off, icmp6len)
 	union nd_opts ndopts;
 
 	if (ip6->ip6_hlim != 255) {
-		log(LOG_ERR,
-		    "nd6_na_input: invalid hlim %d\n", ip6->ip6_hlim);
+		nd6log((LOG_ERR,
+		    "nd6_na_input: invalid hlim %d\n", ip6->ip6_hlim));
 		goto freeit;
 	}
 
