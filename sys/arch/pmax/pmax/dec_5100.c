@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.19 2000/02/03 04:09:04 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.20 2000/02/03 04:23:36 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -49,12 +49,6 @@
 
 #include <pmax/ibus/ibusvar.h>
 
-#include "rasterconsole.h"
-
-
-/*
- * Forward declarations
- */
 void		dec_5100_init __P((void));		/* XXX */
 static void	dec_5100_bus_reset __P((void));
 static void	dec_5100_cons_init __P((void));
@@ -64,7 +58,6 @@ static void	dec_5100_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
 static void	dec_5100_intr_disestablish __P((struct device *, void *));
 static void	dec_5100_memintr __P((void));
-
 
 void
 dec_5100_init()
