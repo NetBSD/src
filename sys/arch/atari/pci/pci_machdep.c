@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 1996/10/13 04:11:18 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4 1996/11/08 14:18:20 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -91,7 +91,7 @@ void		*auxp;
 	struct pcibus_attach_args	pba;
 
 	pba.pba_busname = "pci";
-	pba.pba_bc      = NULL;
+	pba.pba_pc      = NULL;
 	pba.pba_bus     = 0;
 
 	config_found(dp, &pba, pcibusprint);
