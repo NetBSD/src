@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMemory.c,v 1.4 2003/03/05 23:00:57 christos Exp $	*/
+/*	$NetBSD: OsdMemory.c,v 1.5 2003/05/11 19:08:37 fvdl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.4 2003/03/05 23:00:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.5 2003/05/11 19:08:37 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -59,7 +59,7 @@ MALLOC_DECLARE(M_ACPI);
  *	Map physical memory into the caller's address space.
  */
 ACPI_STATUS
-AcpiOsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress, UINT32 Length,
+AcpiOsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress, ACPI_SIZE Length,
     void **LogicalAddress)
 {
 
@@ -72,7 +72,7 @@ AcpiOsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress, UINT32 Length,
  *	Remove a physical to logical memory mapping.
  */
 void
-AcpiOsUnmapMemory(void *LogicalAddress, UINT32 Length)
+AcpiOsUnmapMemory(void *LogicalAddress, ACPI_SIZE Length)
 {
 
 	acpi_md_OsUnmapMemory(LogicalAddress, Length);
@@ -97,7 +97,7 @@ AcpiOsGetPhysicalAddress(void *LogicalAddress,
  *	Allocate memory from the dynamic memory pool.
  */
 void *
-AcpiOsAllocate(UINT32 Size)
+AcpiOsAllocate(ACPI_SIZE Size)
 {
 
 	return (malloc(Size, M_ACPI, M_NOWAIT));
