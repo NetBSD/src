@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.53 1998/03/26 01:35:17 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.54 1998/03/26 01:37:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.53 1998/03/26 01:35:17 cgd Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.54 1998/03/26 01:37:49 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -608,7 +608,7 @@ readmbr(f)
 	struct dos_partition *dp = (struct dos_partition *)&mbr[DOSPARTOFF];
 	int part;
 
-	if (lseek(f, (off_t)DOSBBSECTOR, SEEK_SET) < 0 ||
+	if (lseek(f, (off_t)DOSBBSECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
 	    read(f, mbr, sizeof(mbr)) < sizeof(mbr))
 		err(4, "can't read master boot record");
 		
