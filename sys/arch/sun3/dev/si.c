@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.37 1997/10/17 03:33:34 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.38 1997/10/28 21:12:58 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
 #include <machine/autoconf.h>
 #include <machine/dvma.h>
 
-#define DEBUG XXX
+/* #define DEBUG XXX */
 
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
