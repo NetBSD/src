@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.7.2.1 1997/11/26 03:56:38 mellon Exp $	*/
+/*	$NetBSD: quit.c,v 1.7.2.2 1997/11/27 08:28:12 mellon Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quit.c,v 1.7.2.1 1997/11/26 03:56:38 mellon Exp $");
+__RCSID("$NetBSD: quit.c,v 1.7.2.2 1997/11/27 08:28:12 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,10 @@ quit()
 	extern char *tempQuit, *tempResid;
 	struct stat minfo;
 	char *mbox;
+
+#ifdef __GNUC__
+	obuf = NULL;		/* XXX gcc -Wuninitialized */
+#endif
 
 	/*
 	 * If we are read only, we can't do anything,
