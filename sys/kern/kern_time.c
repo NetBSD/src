@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.25 1997/01/15 01:37:53 perry Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.26 1997/01/31 02:34:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -47,7 +47,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#if defined(NFSCLIENT) || defined(NFSSERVER)
+#if defined(NFS) || defined(NFSSERVER)
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs_var.h>
@@ -83,7 +83,7 @@ settime(tv)
 	(void) splsoftclock();
 	timeradd(&boottime, &delta, &boottime);
 	timeradd(&runtime, &delta, &runtime);
-#	if defined(NFSCLIENT) || defined(NFSSERVER)
+#	if defined(NFS) || defined(NFSSERVER)
 		nqnfs_lease_updatetime(delta.tv_sec);
 #	endif
 	splx(s);
