@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.4 2002/12/12 00:29:24 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.5 2002/12/12 23:18:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,20 +37,70 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.4 2002/12/12 00:29:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.5 2002/12/12 23:18:22 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
+#include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_thread.h>
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_syscallargs.h>
+
+int
+mach_sys_syscall_thread_switch(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct mach_sys_syscall_thread_switch_args /* {
+		syscallarg(mach_port_name_t) thread_name;
+		syscallarg(int) option;
+		syscallarg(mach_msg_timeout_t) option_time;
+	} */ *uap = v;
+	int timeout;
+	struct mach_emuldata *med;
+		
+	med = (struct mach_emuldata *)p->p_emuldata;
+	timeout = SCARG(uap, option_time) * hz / 1000;
+
+	/*
+	 * The day we will be able to find out the struct proc from 
+	 * the port numeber, try to use preempt() to call the right thread.
+	 */
+	switch(SCARG(uap, option)) {
+	case MACH_SWITCH_OPTION_NONE:
+		yield();
+		break;
+
+	case MACH_SWITCH_OPTION_WAIT:
+		med->med_thpri = 1;
+		while (med->med_thpri != 0)
+			(void)tsleep(&med->med_thpri, PZERO, 
+			    "thread_switch", timeout);
+		break;
+
+	case MACH_SWITCH_OPTION_DEPRESS:
+	case MACH_SWITCH_OPTION_IDLE:
+		/* Use a callout to restore the priority after depression? */
+		med->med_thpri = p->p_priority;
+		p->p_priority = MAXPRI;
+		break;
+
+	default:
+		uprintf("mach_sys_syscall_thread_switch(): unknown option %d\n",		    SCARG(uap, option));
+		break;
+	}
+	return 0;
+}
+
 
 int 
 mach_thread_policy(p, msgh, maxlen, dst)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.14 2002/11/29 17:08:16 manu Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.15 2002/12/12 23:18:21 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.14 2002/11/29 17:08:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.15 2002/12/12 23:18:21 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,17 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.14 2002/11/29 17:08:16 manu Exp $");
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_syscallargs.h>
 
-int
-mach_sys_semaphore_signal_trap(struct proc *p, void *v, register_t *r) {
-#ifdef DEBUG_MACH
-	struct mach_sys_semaphore_signal_trap_args *ap = v;
-#endif
-	*r = 0;
-	DPRINTF(("mach_sys_semaphore_signal_trap(0x%x);\n",
-	    SCARG(ap, signal_name)));
-	return 0;
-}
-
 
 int
 mach_sys_semaphore_signal_all_trap(struct proc *p, void *v, register_t *r) {
@@ -117,18 +106,6 @@ mach_sys_semaphore_signal_thread_trap(struct proc *p, void *v, register_t *r) {
 	*r = 0;
 	DPRINTF(("mach_sys_semaphore_signal_thread_trap(0x%x);\n",
 	    SCARG(ap, signal_name)));
-	return 0;
-}
-
-
-int
-mach_sys_semaphore_wait_trap(struct proc *p, void *v, register_t *r) {
-#ifdef DEBUG_MACH
-	struct mach_sys_semaphore_wait_trap_args *ap = v;
-#endif
-	*r = 0;
-	DPRINTF(("mach_sys_semaphore_wait_trap(0x%x);\n",
-	    SCARG(ap, wait_name)));
 	return 0;
 }
 
@@ -256,18 +233,6 @@ int
 mach_sys_swtch(struct proc *p, void *v, register_t *r) {
 	*r = 0;
 	DPRINTF(("mach_sys_swtch();\n"));
-	return 0;
-}
-
-
-int
-mach_sys_syscall_thread_switch(struct proc *p, void *v, register_t *r) {
-#ifdef DEBUG_MACH
-	struct mach_sys_syscall_thread_switch_args *ap = v;
-#endif
-	*r = 0;
-	DPRINTF(("mach_sys_syscall_thread_switch(0x%x, %d, %d);\n",
-	    SCARG(ap, thread_name), SCARG(ap, option), SCARG(ap, option_time)));
 	return 0;
 }
 
