@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37 1997/04/27 20:43:37 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38 1997/05/05 21:11:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -259,7 +259,6 @@ configure()
 	 */
 	hilsoftinit(0, HILADDR);
 	hilinit(0, HILADDR);
-	dmainit();
 
 	(void)splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
