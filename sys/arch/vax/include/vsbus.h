@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.11 2000/03/04 07:27:49 matt Exp $ */
+/*	$NetBSD: vsbus.h,v 1.12 2000/04/23 16:38:53 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -65,6 +65,7 @@ struct	vsbus_attach_args {
 #define NI_BASE         0x200e0000      /* LANCE CSRs */
 #define NI_IOSIZE       (128 * VAX_NBPG)    /* IO address size */
 
+#define	KA49_SCSIMAP	0x27000000	/* KA49 SCSI SGMAP */
 /*
  * Small monochrome graphics framebuffer, present on all machines.
  */
@@ -77,12 +78,13 @@ struct	vsbus_softc {
 	u_char	*sc_intclr;	/* Clear interrupt register */
 	u_char	*sc_intreq;	/* Interrupt request register */
 	u_char	sc_mask;	/* Interrupts to enable after autoconf */
+	vaddr_t	sc_vsregs;	/* Where the VS_REGS are mapped */
 	struct vax_bus_dma_tag sc_dmatag;
 	struct vax_sgmap sc_sgmap;
 };
 
 #ifdef _KERNEL
-void	vsbus_dma_init __P((struct vsbus_softc *));
+void	vsbus_dma_init __P((struct vsbus_softc *, unsigned ptecnt));
 u_char	vsbus_setmask __P((int));
 void	vsbus_clrintr __P((int));
 void	vsbus_copytoproc __P((struct proc *, caddr_t, caddr_t, int));

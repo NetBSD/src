@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze_vsbus.c,v 1.2 2000/01/24 02:40:35 matt Exp $ */
+/*      $NetBSD: if_ze_vsbus.c,v 1.3 2000/04/23 16:38:54 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -104,6 +104,7 @@ zeattach(parent, self, aux)
 {
 	struct ze_softc *sc = (struct ze_softc *)self;
 	struct vsbus_attach_args *va = aux;
+	extern struct vax_bus_dma_tag vax_bus_dma_tag;
 	int *ea, i;
 
 	/*
@@ -111,7 +112,7 @@ zeattach(parent, self, aux)
 	 */
 	sc->sc_ioh = vax_map_physmem(SGECADDR, 1);
 	sc->sc_iot = 0; /* :-) */
-	sc->sc_dmat = va->va_dmat;
+	sc->sc_dmat = &vax_bus_dma_tag;
 
 	sc->sc_intvec = SGECVEC;
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) sgec_intr, sc, SCB_ISTACK);
