@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5 1997/02/02 08:50:51 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.6 1997/06/10 19:50:23 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -221,5 +221,5 @@ mmmmap(dev, off, prot)
 	 */
 	if ((unsigned)off < lowram || (unsigned)off >= 0xFFFFFFFC)
 		return (-1);
-	return (x68k_btop(off));
+	return (m68k_btop(off));
 }
