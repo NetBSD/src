@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.9 2002/03/25 09:08:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.10 2002/03/29 20:29:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,6 +679,7 @@ daic_register_port(struct daic_softc *sc, int port)
 {
 	int chan;
 	char cardname[80], devname[80];
+	struct isdn_l3_driver * l3drv;
 
 	sc->sc_port[port].du_port = port;
 	sc->sc_port[port].du_sc = sc;
@@ -689,8 +690,9 @@ daic_register_port(struct daic_softc *sc, int port)
 	else
 		strcpy(devname, sc->sc_dev.dv_xname);
 	sprintf(cardname, "EICON.Diehl %s", cardtypename(sc->sc_cardtype));
-	sc->sc_port[port].du_l3 = isdn_attach_bri(
+	l3drv = isdn_attach_bri(
 	    devname, cardname, &sc->sc_port[port], &daic_l3_functions);
+	sc->sc_port[port].du_l3 = l3drv;
 
 	/* initialize linktabs for this port */
 	for (chan = 0; chan < 2; chan++) {
@@ -701,6 +703,8 @@ daic_register_port(struct daic_softc *sc, int port)
 		lt->rx_queue = &sc->sc_con[port*2+chan].rx_queue;
 	}
 	TAILQ_INIT(&sc->sc_outcalls[port]);
+
+	isdn_bri_ready(l3drv->bri);
 }
 
 /*---------------------------------------------------------------------------*
