@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +32,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)list.c	5.14 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)list.c	8.2 (Berkeley) 4/19/94";
 #endif /* not lint */
 
 #include "rcv.h"
 #include <ctype.h>
+#include "extern.h"
 
 /*
  * Mail -- a mail program
@@ -50,10 +51,10 @@ static char sccsid[] = "@(#)list.c	5.14 (Berkeley) 6/1/90";
  *
  * Returns the count of messages picked up or -1 on error.
  */
-
+int
 getmsglist(buf, vector, flags)
 	char *buf;
-	int *vector;
+	int *vector, flags;
 {
 	register int *ip;
 	register struct message *mp;
@@ -109,8 +110,10 @@ struct coltab {
 
 static	int	lastcolmod;
 
+int
 markall(buf, f)
 	char buf[];
+	int f;
 {
 	register char **np;
 	register int i;
@@ -339,7 +342,9 @@ number:
  * Turn the character after a colon modifier into a bit
  * value.
  */
+int
 evalcol(col)
+	int col;
 {
 	register struct coltab *colp;
 
@@ -356,7 +361,9 @@ evalcol(col)
  * If f is MDELETED, then either kind will do.  Otherwise, the message
  * has to be undeleted.
  */
+int
 check(mesg, f)
+	int mesg, f;
 {
 	register struct message *mp;
 
@@ -376,7 +383,7 @@ check(mesg, f)
  * Scan out the list of string arguments, shell style
  * for a RAWLIST.
  */
-
+int
 getrawlist(line, argv, argc)
 	char line[];
 	char **argv;
@@ -408,7 +415,8 @@ getrawlist(line, argv, argc)
 				else if (c == '\\')
 					switch (c = *cp++) {
 					case '\0':
-						*cp2++ = *--cp;
+						*cp2++ = '\\';
+						cp--;
 						break;
 					case '0': case '1': case '2': case '3':
 					case '4': case '5': case '6': case '7':
@@ -437,6 +445,8 @@ getrawlist(line, argv, argc)
 					case 'v':
 						*cp2++ = '\v';
 						break;
+					default:
+						*cp2++ = c;
 					}
 				else if (c == '^') {
 					c = *cp++;
@@ -445,9 +455,11 @@ getrawlist(line, argv, argc)
 					/* null doesn't show up anyway */
 					else if (c >= 'A' && c <= '_' ||
 						 c >= 'a' && c <= 'z')
-						*cp2++ &= 037;
-					else
-						*cp2++ = *--cp;
+						*cp2++ = c & 037;
+					else {
+						*cp2++ = '^';
+						cp--;
+					}
 				} else
 					*cp2++ = c;
 			} else if (c == '"' || c == '\'')
@@ -486,6 +498,7 @@ struct lex {
 	0,	0
 };
 
+int
 scan(sp)
 	char **sp;
 {
@@ -587,8 +600,9 @@ scan(sp)
 /*
  * Unscan the named token by pushing it onto the regret stack.
  */
-
+void
 regret(token)
+	int token;
 {
 	if (++regretp >= REGDEP)
 		panic("Too many regrets");
@@ -601,7 +615,7 @@ regret(token)
 /*
  * Reset all the scanner global variables.
  */
-
+void
 scaninit()
 {
 	regretp = -1;
@@ -611,8 +625,9 @@ scaninit()
  * Find the first message whose flags & m == f  and return
  * its message number.
  */
-
+int
 first(f, m)
+	int f, m;
 {
 	register struct message *mp;
 
@@ -633,9 +648,10 @@ first(f, m)
  * See if the passed name sent the passed message number.  Return true
  * if so.
  */
-
+int
 matchsender(str, mesg)
 	char *str;
+	int mesg;
 {
 	register char *cp, *cp2, *backup;
 
@@ -663,9 +679,10 @@ matchsender(str, mesg)
  */
 
 char lastscan[128];
-
+int
 matchsubj(str, mesg)
 	char *str;
+	int mesg;
 {
 	register struct message *mp;
 	register char *cp, *cp2, *backup;
@@ -681,8 +698,15 @@ matchsubj(str, mesg)
 	 * Now look, ignoring case, for the word in the string.
 	 */
 
-	cp = str;
-	cp2 = hfield("subject", mp);
+	if (value("searchheaders") && (cp = index(str, ':'))) {
+		*cp++ = '\0';
+		cp2 = hfield(str, mp);
+		cp[-1] = ':';
+		str = cp;
+	} else {
+		cp = str;
+		cp2 = hfield("subject", mp);
+	}
 	if (cp2 == NOSTR)
 		return(0);
 	backup = cp2;
@@ -700,8 +724,9 @@ matchsubj(str, mesg)
 /*
  * Mark the named message by setting its mark bit.
  */
-
+void
 mark(mesg)
+	int mesg;
 {
 	register int i;
 
@@ -714,8 +739,9 @@ mark(mesg)
 /*
  * Unmark the named message.
  */
-
+void
 unmark(mesg)
+	int mesg;
 {
 	register int i;
 
@@ -728,8 +754,9 @@ unmark(mesg)
 /*
  * Return the message number corresponding to the passed meta character.
  */
-
+int
 metamess(meta, f)
+	int meta, f;
 {
 	register int c, m;
 	register struct message *mp;

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,10 +32,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)temp.c	5.15 (Berkeley) 2/3/91";
+static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include "rcv.h"
+#include <errno.h>
+#include "extern.h"
 
 /*
  * Mail -- a mail program
@@ -48,20 +50,37 @@ char	tempQuit[24];
 char	tempEdit[24];
 char	tempResid[24];
 char	tempMesg[24];
+char	*tmpdir;
 
+void
 tinit()
 {
 	register char *cp;
+	int len;
 
-	strcpy(tempMail, _PATH_TMP);
+	if ((tmpdir = getenv("TMPDIR")) == NULL)
+		tmpdir = _PATH_TMP;
+	else {
+		len = strlen(tmpdir);
+		if ((cp = malloc(len + 2)) == NULL) {
+			(void)fprintf(stderr, "mail: %s\n", strerror(errno));
+			exit (1);
+		}
+		(void)strcpy(cp, tmpdir);
+		cp[len] = '/';
+		cp[len + 1] = '\0';
+		tmpdir = cp;
+	}
+			
+	strcpy(tempMail, tmpdir);
 	mktemp(strcat(tempMail, "RsXXXXXX"));
-	strcpy(tempResid, _PATH_TMP);
+	strcpy(tempResid, tmpdir);
 	mktemp(strcat(tempResid, "RqXXXXXX"));
-	strcpy(tempQuit, _PATH_TMP);
+	strcpy(tempQuit, tmpdir);
 	mktemp(strcat(tempQuit, "RmXXXXXX"));
-	strcpy(tempEdit, _PATH_TMP);
+	strcpy(tempEdit, tmpdir);
 	mktemp(strcat(tempEdit, "ReXXXXXX"));
-	strcpy(tempMesg, _PATH_TMP);
+	strcpy(tempMesg, tmpdir);
 	mktemp(strcat(tempMesg, "RxXXXXXX"));
 
 	/*

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v7.local.c	5.12 (Berkeley) 2/3/91";
+static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*
@@ -44,11 +44,14 @@ static char sccsid[] = "@(#)v7.local.c	5.12 (Berkeley) 2/3/91";
  */
 
 #include "rcv.h"
+#include <fcntl.h>
+#include "extern.h"
 
 /*
  * Locate the user's mailbox file (ie, the place where new, unread
  * mail is queued).
  */
+void
 findmail(user, buf)
 	char *user, *buf;
 {
@@ -58,6 +61,7 @@ findmail(user, buf)
 /*
  * Get rid of the queued mail.
  */
+void
 demail()
 {
 
@@ -68,7 +72,7 @@ demail()
 /*
  * Discover user login name.
  */
-char*
+char *
 username()
 {
 	char *np;

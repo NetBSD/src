@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +32,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)cmd2.c	5.14 (Berkeley) 6/25/90";
+static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include "rcv.h"
 #include <sys/wait.h>
+#include "extern.h"
 
 /*
  * Mail -- a mail program
@@ -49,7 +50,7 @@ static char sccsid[] = "@(#)cmd2.c	5.14 (Berkeley) 6/25/90";
  * following dot, otherwise, go to the next applicable message.
  * If given as first command with no arguments, print first message.
  */
-
+int
 next(msgvec)
 	int *msgvec;
 {
@@ -128,6 +129,7 @@ hitit:
  * Save a message in a file.  Mark the message as saved
  * so we can discard when the user quits.
  */
+int
 save(str)
 	char str[];
 {
@@ -138,6 +140,7 @@ save(str)
 /*
  * Copy a message to a file without affected its saved-ness
  */
+int
 copycmd(str)
 	char str[];
 {
@@ -149,8 +152,10 @@ copycmd(str)
  * Save/copy the indicated messages at the end of the passed file name.
  * If mark is true, mark the message "saved."
  */
+int
 save1(str, mark, cmd, ignore)
 	char str[];
+	int mark;
 	char *cmd;
 	struct ignoretab *ignore;
 {
@@ -208,7 +213,7 @@ save1(str, mark, cmd, ignore)
  * Write the indicated messages at the end of the passed
  * file name, minus header and trailing blank line.
  */
-
+int
 swrite(str)
 	char str[];
 {
@@ -263,7 +268,7 @@ snarf(linebuf, flag)
 /*
  * Delete messages.
  */
-
+int
 delete(msgvec)
 	int msgvec[];
 {
@@ -274,7 +279,7 @@ delete(msgvec)
 /*
  * Delete messages, then type the new dot.
  */
-
+int
 deltype(msgvec)
 	int msgvec[];
 {
@@ -300,7 +305,7 @@ deltype(msgvec)
  * Set dot to some nice place afterwards.
  * Internal interface.
  */
-
+int
 delm(msgvec)
 	int *msgvec;
 {
@@ -339,7 +344,7 @@ delm(msgvec)
 /*
  * Undelete the indicated messages.
  */
-
+int
 undelete(msgvec)
 	int *msgvec;
 {
@@ -358,7 +363,7 @@ undelete(msgvec)
 /*
  * Interactively dump core on "core"
  */
-
+int
 core()
 {
 	int pid;
@@ -385,6 +390,7 @@ core()
 /*
  * Clobber as many bytes of stack as the user requests.
  */
+int
 clobber(argv)
 	char **argv;
 {
@@ -401,7 +407,9 @@ clobber(argv)
 /*
  * Clobber the stack.
  */
+void
 clob1(n)
+	int n;
 {
 	char buf[512];
 	register char *cp;
@@ -417,6 +425,7 @@ clob1(n)
  * Add the given header fields to the retained list.
  * If no arguments, print the current list of retained fields.
  */
+int
 retfield(list)
 	char *list[];
 {
@@ -428,6 +437,7 @@ retfield(list)
  * Add the given header fields to the ignored list.
  * If no arguments, print the current list of ignored fields.
  */
+int
 igfield(list)
 	char *list[];
 {
@@ -435,6 +445,7 @@ igfield(list)
 	return ignore1(list, ignore, "ignored");
 }
 
+int
 saveretfield(list)
 	char *list[];
 {
@@ -442,6 +453,7 @@ saveretfield(list)
 	return ignore1(list, saveignore + 1, "retained");
 }
 
+int
 saveigfield(list)
 	char *list[];
 {
@@ -449,6 +461,7 @@ saveigfield(list)
 	return ignore1(list, saveignore, "ignored");
 }
 
+int
 ignore1(list, tab, which)
 	char *list[];
 	struct ignoretab *tab;
@@ -480,6 +493,7 @@ ignore1(list, tab, which)
 /*
  * Print out all currently retained fields.
  */
+int
 igshow(tab, which)
 	struct ignoretab *tab;
 	char *which;
@@ -499,7 +513,7 @@ igshow(tab, which)
 		for (igp = tab->i_head[h]; igp != 0; igp = igp->i_link)
 			*ap++ = igp->i_field;
 	*ap = 0;
-	qsort((char *) ring, tab->i_count, sizeof (char *), igcomp);
+	qsort(ring, tab->i_count, sizeof (char *), igcomp);
 	for (ap = ring; *ap != 0; ap++)
 		printf("%s\n", *ap);
 	return 0;
@@ -508,9 +522,9 @@ igshow(tab, which)
 /*
  * Compare two names for sorting ignored field list.
  */
+int
 igcomp(l, r)
-	char **l, **r;
+	const void *l, *r;
 {
-
-	return strcmp(*l, *r);
+	return (strcmp(*(char **)l, *(char **)r));
 }
