@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.5 2000/07/09 14:26:34 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.6 2000/07/10 22:41:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.5 2000/07/09 14:26:34 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.6 2000/07/10 22:41:17 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -528,7 +528,8 @@ ack(const char *s)
 /*
  * Encode len bytes starting at clear using base64 encoding into encoded,
  * which should be at least ((len + 2) * 4 / 3 + 1) in size.
- * If nulterm is non-zero, terminate with \0 else pad to len with `='.
+ * If nulterm is non-zero, terminate with \0 otherwise pad to 3 byte boundary
+ * with `='.
  */
 static void
 base64_encode(const char *clear, size_t len, char *encoded, int nulterm)
@@ -539,17 +540,24 @@ base64_encode(const char *clear, size_t len, char *encoded, int nulterm)
 	char	*e, termchar;
 	int	 i;
 
+			/* determine whether to pad with '=' or NUL terminate */
 	termchar = nulterm ? '\0' : '=';
 	c = clear;
 	e = encoded;
-	for (i = len; i > 0; i -= 3, c += 3) {
-		*e++ = base64[c[0] >> 2];
+			/* convert all but last 2 bytes */
+	for (i = len; i > 2; i -= 3, c += 3) {
+		*e++ = base64[(c[0] >> 2) & 0x3f];
+		*e++ = base64[((c[0] << 4) & 0x30) | ((c[1] >> 4) & 0x0f)];
+		*e++ = base64[((c[1] << 2) & 0x3c) | ((c[2] >> 6) & 0x03)];
+		*e++ = base64[(c[2]) & 0x3f];
+	}
+			/* handle slop at end */
+	if (i > 0) {
+		*e++ = base64[(c[0] >> 2) & 0x3f];
 		*e++ = base64[((c[0] << 4) & 0x30) |
-				(i < 2 ? 0 : ((c[1] >> 4) & 0x0f))];
-		*e++ = i < 2 ? termchar :
-			base64[((c[1] << 2) & 0x3c) |
-				(i < 3 ? 0 : ((c[2] >> 6) & 0x03))];
-		*e++ = i < 3 ? termchar : base64[(c[2]) & 0x3f];
+		     (i > 1 ? ((c[1] >> 4) & 0x0f) : 0)];
+		*e++ = (i > 1) ? base64[(c[1] << 2) & 0x3c] : termchar;
+		*e++ = termchar;
 	}
 	*e = '\0';
 }
