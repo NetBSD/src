@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.58 1997/06/16 03:29:26 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.59 1997/06/16 05:37:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -503,7 +503,7 @@ syscall(status, cause, opc, frame)
 #ifdef MIPS3
 	if (status & MIPS_SR_INT_IE)
 #else
-	if (status & MIPS_3K_SR_INT_ENA_PREV)
+	if (status & MIPS1_SR_INT_ENA_PREV)
 #endif
 		splx(MIPS_SR_INT_IE | (status & MACH_HARD_INT_MASK));
 
@@ -623,9 +623,9 @@ child_return(p)
 }
 
 #ifdef MIPS3
-#define TRAPTYPE(x) (((x) & MIPS_4K_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT)
+#define TRAPTYPE(x) (((x) & MIPS3_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT)
 #else
-#define TRAPTYPE(x) (((x) & MIPS_3K_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT)
+#define TRAPTYPE(x) (((x) & MIPS1_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT)
 #endif
 #define KERNLAND(x) ((int)(x) < 0)
 
@@ -670,7 +670,7 @@ trap(status, cause, vaddr, opc, frame)
 #ifdef MIPS3
 	if (status & MIPS_SR_INT_IE)
 #else
-	if (status & MIPS_3K_SR_INT_ENA_PREV)
+	if (status & MIPS1_SR_INT_ENA_PREV)
 #endif
 		splx((status & MACH_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
@@ -1068,8 +1068,9 @@ trapDump(msg)
 			trp--;
 		if (trp->cause == 0)
 			break;
+		/* XXX mips3 cause is strictly bigger than mips1 */
 		printf("%s: ADR %x PC %x CR %x SR %x\n",
-			trap_type[(trp->cause & MIPS_3K_CR_EXC_CODE) >>
+			trap_type[(trp->cause & MACH_CR_EXC_CODE) >>
 				MACH_CR_EXC_CODE_SHIFT],
 			trp->vadr, trp->pc, trp->cause, trp->status);
 		printf("   RA %x SP %x code %d\n", trp->ra, trp->sp, trp->code);

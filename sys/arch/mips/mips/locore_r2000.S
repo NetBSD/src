@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.28 1997/06/15 17:44:50 mhitch Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.29 1997/06/16 05:37:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,9 +131,9 @@ _C_LABEL(mips1_exception):
 	.set	noat
 	mfc0	k0, MACH_COP_0_STATUS_REG	# Get the status register
 	mfc0	k1, MACH_COP_0_CAUSE_REG	# Get the cause register value.
-	and	k0, k0, MIPS_3K_SR_KU_PREV	# test for user mode
+	and	k0, k0, MIPS1_SR_KU_PREV	# test for user mode
 	sll	k0, k0, 4			# shift user bit for cause index
-	and	k1, k1, MIPS_3K_CR_EXC_CODE	# Mask out the cause bits.
+	and	k1, k1, MIPS1_CR_EXC_CODE	# Mask out the cause bits.
 	or	k1, k1, k0			# change index to user table
 1:
 	la	k0, _C_LABEL(mips1_ExceptionTable) # get base of the jump table
@@ -167,7 +167,7 @@ mips1_SlowFault:
 	.set	noat
 	mfc0	k0, MACH_COP_0_STATUS_REG
 	nop
-	and	k0, k0, MACH_SR_KU_PREV
+	and	k0, k0, MIPS1_SR_KU_PREV
 	bne	k0, zero, _C_LABEL(mips1_UserGenException)
 	nop
 	.set	at

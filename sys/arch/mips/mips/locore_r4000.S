@@ -100,11 +100,11 @@ _C_LABEL(mips3_exception):
 	.set	noat
 	mfc0	k0, MACH_COP_0_STATUS_REG	# Get the status register
 	mfc0	k1, MACH_COP_0_CAUSE_REG	# Get the cause register value.
-	and	k0, k0, MIPS_4K_SR_KSU_USER	# test for user mode
+	and	k0, k0, MIPS3_SR_KSU_USER	# test for user mode
 						# sneaky but the bits are
 						# with us........
 	sll	k0, k0, 3			# shift user bit for cause index
-	and	k1, k1, MIPS_4K_CR_EXC_CODE	# Mask out the cause bits.
+	and	k1, k1, MIPS3_CR_EXC_CODE	# Mask out the cause bits.
 	or	k1, k1, k0			# change index to user table
 1:
 	la	k0, mips3_ExceptionTable	# get base of the jump table
@@ -143,7 +143,7 @@ mips3_SlowFault:
 	.set	noat
 	mfc0	k0, MACH_COP_0_STATUS_REG
 	nop
-	and	k0, k0, MACH_SR_KSU_USER
+	and	k0, k0, MIPS3_SR_KSU_USER
 	bne	k0, zero, mips3_UserGenException
 	nop
 	.set	at
