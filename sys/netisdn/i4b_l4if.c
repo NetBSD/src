@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.9 2002/03/30 11:43:33 martin Exp $ 
+ *	$Id: i4b_l4if.c,v 1.10 2002/03/30 17:54:18 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.9 2002/03/30 11:43:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.10 2002/03/30 17:54:18 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -85,6 +85,8 @@ void n_disconnect_request(struct call_desc *cd, int cause);
 void n_alert_request(struct call_desc *cd);
 void n_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm);
 
+static void update_controller_leds(struct isdn_l3_driver *d);
+
 /*---------------------------------------------------------------------------*
  *	i4b_mdl_status_ind - status indication from lower layers
  *---------------------------------------------------------------------------*/
@@ -92,7 +94,7 @@ int
 i4b_mdl_status_ind(int bri, int status, int parm)
 {
 	struct isdn_l3_driver *d = NULL;
-	int sendup;
+	int sendup, update_leds = 0;
 	int i;
 	
 	NDBGL3(L3_MSG, "bri = %d, status = %d, parm = %d", bri, status, parm);
@@ -109,11 +111,13 @@ i4b_mdl_status_ind(int bri, int status, int parm)
 
 		case STI_L1STAT:
 			i4b_l4_l12stat(bri, 1, parm);
+			update_leds = 1;
 			NDBGL3(L3_MSG, "STI_L1STAT: bri %d layer 1 = %s", bri, status ? "up" : "down");
 			break;
 			
 		case STI_L2STAT:
 			i4b_l4_l12stat(bri, 2, parm);
+			update_leds = 1;
 			NDBGL3(L3_MSG, "STI_L2STAT: bri %d layer 2 = %s", bri, status ? "up" : "down");
 			break;
 
@@ -121,6 +125,7 @@ i4b_mdl_status_ind(int bri, int status, int parm)
 			d = isdn_find_l3_by_bri(bri);
 			d->tei = parm;
 			i4b_l4_teiasg(bri, parm);
+			update_leds = 1;
 			NDBGL3(L3_MSG, "STI_TEIASG: bri %d TEI = %d = 0x%02x", bri, parm, parm);
 			break;
 
@@ -128,6 +133,7 @@ i4b_mdl_status_ind(int bri, int status, int parm)
 			NDBGL3(L3_ERR, "STI_PDEACT: bri %d TEI = %d = 0x%02x", bri, parm, parm);
 			d = isdn_find_l3_by_bri(bri);
 
+			update_leds = 1;
 			sendup = 0;
 
 			for(i=0; i < num_call_desc; i++)
@@ -155,6 +161,7 @@ i4b_mdl_status_ind(int bri, int status, int parm)
 		case STI_NOL1ACC:	/* no outgoing access to S0 */
 			NDBGL3(L3_ERR, "STI_NOL1ACC: bri %d no outgoing access to S0", bri);
 			d = isdn_find_l3_by_bri(bri);
+			update_leds = 1;
 
 			for(i=0; i < num_call_desc; i++)
 			{
@@ -178,8 +185,27 @@ i4b_mdl_status_ind(int bri, int status, int parm)
 		default:
 			NDBGL3(L3_ERR, "ERROR, bri %d, unknown status value %d!", bri, status);
 			break;
-	}		
+	}
+
+	if (update_leds && d != NULL)
+		update_controller_leds(d);
+
 	return(0);
+}
+
+static void
+update_controller_leds(struct isdn_l3_driver *d)
+{
+	int leds = 0;
+
+	if (d->tei != -1)
+		leds |= CMRLEDS_TEI;
+	if (d->bch_state[CHAN_B1] != BCH_ST_FREE)
+		leds |= CMRLEDS_B0;
+	if (d->bch_state[CHAN_B2] != BCH_ST_FREE)
+		leds |= CMRLEDS_B1;
+
+	d->l3driver->N_MGMT_COMMAND(d, CMR_SETLEDS, (void*)leds);
 }
 
 /*---------------------------------------------------------------------------*
@@ -272,6 +298,7 @@ n_connect_response(struct call_desc *cd, int response, int cause)
 	{
 		d->bch_state[cd->channelid] = chstate;
 		i4b_l2_channel_set_state(cd->bri, cd->channelid, chstate);
+		update_controller_leds(d);
 	}
 	else
 	{

@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.10 2002/03/30 11:43:33 martin Exp $ 
+ *	$Id: i4b_q931.c,v 1.11 2002/03/30 17:54:18 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.10 2002/03/30 11:43:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.11 2002/03/30 17:54:18 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -115,7 +115,7 @@ setup_cr(call_desc_t *cd, unsigned char cr)
 void
 i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 {
-	call_desc_t *cd;
+	call_desc_t *cd = NULL;
 	int codeset = CODESET_0;
 	int old_codeset = CODESET_0;
 	int shift_flag = UNSHIFTED;
@@ -151,7 +151,7 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 	msg_ptr++;
 	msg_len--;
 	
-	if(crlen != 0)
+	if (crlen != 0)
 	{
 		crval += *msg_ptr & 0x7f;
 		crflag = (*msg_ptr >> 7) & 0x01;
