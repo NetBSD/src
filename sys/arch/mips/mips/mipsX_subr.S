@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.7 2002/11/04 18:45:55 thorpej Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.8 2002/11/07 05:39:48 cgd Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -208,13 +208,6 @@
 	.set	mips64
 #endif
 
-/*
- * Set up hazard/interlock dependancies.
- */
-#if !defined(MIPS3_5900)
-#undef COP0_SYNC
-#define	COP0_SYNC	/* nothing */
-#endif
 
 /*
  * CPP function renaming macros.
