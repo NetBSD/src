@@ -1,6 +1,8 @@
+/*	$NetBSD: tgoto.c,v 1.4 1995/02/27 10:18:59 cgd Exp $	*/
+
 /*
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)tgoto.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: tgoto.c,v 1.3 1994/10/19 02:57:11 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: tgoto.c,v 1.4 1995/02/27 10:18:59 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <string.h>
