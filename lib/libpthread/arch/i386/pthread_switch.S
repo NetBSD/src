@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.11 2001/08/01 23:41:26 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.12 2001/09/04 21:21:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,13 +54,6 @@
 /* Force an error when "notreached" code is reached. */
 #define	NOTREACHED			  \
 	int3
-
-/*
- * Usable stack space below the ucontext_t. 
- * See comment below about STACK_SWITCH.
- */
-#define STACKSPACE 			\
-	32	/* room for 8 integer values */
 
 /*
  * void	pthread__switch(pthread_t self, pthread_t next);

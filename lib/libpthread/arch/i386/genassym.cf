@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.4 2001/08/01 23:44:11 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.5 2001/09/04 21:21:08 nathanw Exp $
 
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,6 +40,7 @@ include <ucontext.h>
 include <sys/queue.h>
 include "pthread.h"
 include "pthread_int.h"
+include "pthread_md.h"
 
 define PT_NEXT		offsetof(struct pthread_st, pt_next)
 define PT_STATE		offsetof(struct pthread_st, pt_state)
@@ -53,4 +54,4 @@ define CONTEXTSIZE	sizeof(ucontext_t)
 define UC_EIP		offsetof(ucontext_t, uc_mcontext.__gregs[_REG_EIP])
 
 define PT_STATE_RECYCLABLE	PT_STATE_RECYCLABLE
-
+define STACKSPACE		STACKSPACE
