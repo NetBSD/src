@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.63 2002/05/19 08:22:12 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.63.2.1 2002/11/19 21:19:06 tron Exp $	*/
 /*	$KAME: key.c,v 1.234 2002/05/13 03:21:17 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.63 2002/05/19 08:22:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.63.2.1 2002/11/19 21:19:06 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -5403,9 +5403,9 @@ key_getcomb_setlifetime(comb)
 	comb->sadb_comb_soft_bytes = 0;
 	comb->sadb_comb_hard_bytes = 0;
 	comb->sadb_comb_hard_addtime = 86400;	/* 1 day */
-	comb->sadb_comb_soft_addtime = comb->sadb_comb_soft_addtime * 80 / 100;
+	comb->sadb_comb_soft_addtime = comb->sadb_comb_hard_addtime * 80 / 100;
 	comb->sadb_comb_soft_usetime = 28800;	/* 8 hours */
-	comb->sadb_comb_hard_usetime = comb->sadb_comb_hard_usetime * 80 / 100;
+	comb->sadb_comb_soft_usetime = comb->sadb_comb_hard_usetime * 80 / 100;
 }
 
 #ifdef IPSEC_ESP
