@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.257.2.11 2005/03/04 16:41:02 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.257.2.12 2005/03/09 08:23:06 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.11 2005/03/04 16:41:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.12 2005/03/09 08:23:06 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1342,7 +1342,7 @@ bad:
 		auio.uio_segflg = 0;
 		auio.uio_offset =
 			fop->df_startblk * wd->sc_dk.dk_label->d_secsize;
-		auio.uio_procp = p;
+		auio.uio_lwp = l;
 		error = physio(wdformat, NULL, dev, B_WRITE, minphys,
 		    &auio);
 		fop->df_count -= auio.uio_resid;
