@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.1,v 1.10 2000/04/17 14:31:23 mrg Exp $
+.\"	$NetBSD: chflags.1,v 1.11 2000/08/04 08:08:02 enami Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,8 +48,9 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
+.Op Fl h
 .Ar flags
-.Ar file ...
+.Ar
 .Sh DESCRIPTION
 The
 .Nm
@@ -76,6 +77,11 @@ option is specified, no symbolic links are followed.
 .It Fl R
 Change the file flags for the file hierarchies rooted
 in the files instead of just the files themselves.
+.It Fl h
+If the
+.Ar file
+or a file encountered during directory traversal is a symbolic link,
+the file flags of the link itself is changed.
 .El
 .Pp
 Flags are a comma separated list of keywords.
@@ -125,6 +131,7 @@ devices to be changed except by the superuser.
 .Sh SEE ALSO
 .Xr ls 1 ,
 .Xr chflags 2 ,
+.Xr lchflags 2 ,
 .Xr stat 2 ,
 .Xr fts 3 ,
 .Xr symlink 7 ,
