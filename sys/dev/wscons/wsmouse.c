@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.20 2001/11/07 12:57:33 enami Exp $ */
+/* $NetBSD: wsmouse.c,v 1.21 2001/11/13 06:17:47 lukem Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -29,9 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.20 2001/11/07 12:57:33 enami Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,6 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.20 2001/11/07 12:57:33 enami Exp $");
 /*
  * Mouse driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.21 2001/11/13 06:17:47 lukem Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
