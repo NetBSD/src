@@ -1,4 +1,4 @@
-.\"	$NetBSD: physio.9,v 1.7 2001/06/19 12:59:13 wiz Exp $
+.\"	$NetBSD: physio.9,v 1.8 2001/06/21 10:03:49 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,7 +73,7 @@ with
 .Fa strategy ( see
 .Xr vslock 9
 and
-.Xr vsunlock 9 ).
+.Xr vsunlock 9 ) .
 .Fn physio
 always awaits the completion of the entire requested transfer before
 returning, unless an error condition is detected earlier.
@@ -119,7 +119,6 @@ set to anything other than
 .Dv UIO_USERSPACE ,
 are undefined.
 .El
-.Pp
 .Sh RETURN VALUES
 If successful
 .Fn physio
