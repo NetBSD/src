@@ -1,5 +1,4 @@
-# $NetBSD: mi,v 1.1.2.2 2003/06/20 10:14:03 grant Exp $
-./usr/X11R6/bin/bdftruncate.pl
+# $NetBSD: mi,v 1.1.2.3 2003/10/16 12:36:52 grant Exp $
 ./usr/X11R6/bin/ccmakedep
 ./usr/X11R6/bin/cleanlinks
 ./usr/X11R6/bin/freetype-config
