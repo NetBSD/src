@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 1997/08/06 07:22:26 mikel Exp $	*/
+/*	$NetBSD: main.c,v 1.23 1997/10/19 23:46:08 cjs Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.22 1997/08/06 07:22:26 mikel Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 1997/10/19 23:46:08 cjs Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: main.c,v 1.22 1997/08/06 07:22:26 mikel Exp $");
 #include <time.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -72,6 +73,8 @@ __RCSID("$NetBSD: main.c,v 1.22 1997/08/06 07:22:26 mikel Exp $");
 #include "gettytab.h"
 #include "pathnames.h"
 #include "extern.h"
+
+extern char *__progname;
 
 /*
  * Set the amount of running time that getty should accumulate
@@ -88,6 +91,8 @@ struct	utsname kerninfo;
 char	name[16];
 char	dev[] = _PATH_DEV;
 char	ttyn[32];
+char	lockfile[512];
+uid_t	ttyowner;
 
 #define	OBUFSIZ		128
 #define	TABBUFSIZ	512
@@ -175,8 +180,9 @@ main(argc, argv)
 {
 	extern char **environ;
 	char *tname;
-	int repcnt = 0, failopenlogged = 0;
+	int repcnt = 0, failopenlogged = 0, uugetty = 0;
 	struct rlimit limit;
+	struct passwd *pw;
 
 #ifdef __GNUC__
 	(void)&tname;		/* XXX gcc -Wall */
@@ -191,6 +197,17 @@ main(argc, argv)
 	if (hostname[0] == '\0')
 		strcpy(hostname, "Amnesiac");
 	uname(&kerninfo);
+
+	if (__progname[0] == 'u' && __progname[1] == 'u')
+		uugetty = 1;
+
+	/*
+	 * Find id of uucp login (if present) so we can chown tty properly.
+	 */
+	if (uugetty && (pw = getpwnam("uucp")))
+		ttyowner = pw->pw_uid;
+	else
+		ttyowner = 0;
 
 	/*
 	 * Limit running time to deal with broken or dead lines.
@@ -216,8 +233,20 @@ main(argc, argv)
 
 	    strcpy(ttyn, dev);
 	    strncat(ttyn, argv[2], sizeof(ttyn)-sizeof(dev));
+
+	    if (uugetty)  {
+		chown(ttyn, ttyowner, 0);
+		strcpy(lockfile, _PATH_LOCK);
+		strncat(lockfile, argv[2], sizeof(lockfile)-sizeof(_PATH_LOCK));
+		/* wait for lockfiles to go away before we try to open */
+		if ( pidlock(lockfile, 0, 0, 0) != 0 )  {
+		    syslog(LOG_ERR, "%s: can't create lockfile", ttyn);
+		    exit(1);
+		}
+		unlink(lockfile);
+	    }
 	    if (strcmp(argv[0], "+") != 0) {
-		chown(ttyn, 0, 0);
+		chown(ttyn, ttyowner, 0);
 		chmod(ttyn, 0600);
 		revoke(ttyn);
 		if (ttyaction(ttyn, "getty", "root"))
@@ -236,6 +265,11 @@ main(argc, argv)
 			repcnt++;
 			sleep(60);
 		}
+		if (uugetty && pidlock(lockfile, 0, 0, 0) != 0)  {
+			syslog(LOG_ERR, "%s: can't create lockfile", ttyn);
+			exit(1);
+		}
+		(void) chown(lockfile, ttyowner, 0);
 		login_tty(i);
 	    }
 	}
@@ -344,6 +378,7 @@ main(argc, argv)
 		signal(SIGINT, SIG_IGN);
 		if (NX && *NX)
 			tname = NX;
+		unlink(lockfile);
 	}
 }
 
