@@ -1,0 +1,21 @@
+IPv6-ready postfix
+KAME project
+$KAME: IPv6_README,v 1.1 2001/01/17 14:22:26 itojun Exp $
+
+
+IPv4 mapped address is not supported.
+
+TODO:
+- make it possible to run the following configuration on IPv4-only, and
+  IPv4/v6 dual stack node.
+	inet_interfaces = localhost
+  at this moment, during initialization, localhost will be expanded into
+  INET_ADDR_LIST, then we go through them in socket/bind/listen loop.
+  therefore, if we fail to socket(2) it will be considered a fatal error.
+  instead, we need to manage addresses by string (as is), and then
+  go through it by using getaddrinfo.  socket(2) should not be considered
+  a fatal error.
+
+  at this moment, we simply filter out address that is not supported by the
+  kernel.  this leads to wrong behavior in some cases.
+- use sockaddr everywhere, not just 4/16byte address (util/inet_addr_host.c).

@@ -44,6 +44,13 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <netdb.h>
+
+#ifdef INET6
+#include <string.h>
+#include <sys/socket.h>
+#endif
+
 /* Utility library. */
 
 #include <msg.h>
@@ -56,12 +63,45 @@ void    inet_addr_list_init(INET_ADDR_LIST *list)
 {
     list->used = 0;
     list->size = 2;
+#ifdef INET6
+    list->addrs = (struct sockaddr_storage *)
+#else
     list->addrs = (struct in_addr *)
+#endif
 	mymalloc(sizeof(*list->addrs) * list->size);
 }
 
 /* inet_addr_list_append - append address to internet address list */
 
+#ifdef INET6
+void    inet_addr_list_append(INET_ADDR_LIST *list, 
+                              struct sockaddr * addr)
+{
+    char   *myname = "inet_addr_list_append";
+    char hbuf[NI_MAXHOST];
+    SOCKADDR_SIZE salen;
+
+#ifndef HAS_SA_LEN				
+    salen = SA_LEN((struct sockaddr *)&addr);
+#else				
+    salen = addr->sa_len;
+#endif				
+    if (msg_verbose > 1) {
+	if (getnameinfo(addr, salen, hbuf, sizeof(hbuf), NULL, 0,
+	    NI_NUMERICHOST)) {
+	    strncpy(hbuf, "??????", sizeof(hbuf));
+	}
+	msg_info("%s: %s", myname, hbuf);
+    }
+
+    if (list->used >= list->size)
+	list->size *= 2;
+    list->addrs = (struct sockaddr_storage *)
+	myrealloc((char *) list->addrs,
+		  sizeof(*list->addrs) * list->size);
+    memcpy(&list->addrs[list->used++], addr, salen);
+}
+#else
 void    inet_addr_list_append(INET_ADDR_LIST *list, struct in_addr * addr)
 {
     char   *myname = "inet_addr_list_append";
@@ -76,6 +116,7 @@ void    inet_addr_list_append(INET_ADDR_LIST *list, struct in_addr * addr)
 		  sizeof(*list->addrs) * list->size);
     list->addrs[list->used++] = *addr;
 }
+#endif
 
 /* inet_addr_list_free - destroy internet address list */
 
