@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.31.2.5 1997/09/22 06:33:33 thorpej Exp $
+$NetBSD: pcidevs,v 1.31.2.6 1997/09/29 07:21:07 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -486,6 +486,7 @@ vendor 3DO		0x1239	The 3D0 Company
 vendor STALLION		0x124d	Stallion Technologies
 vendor LINEARSYS	0x1254	Linear Systems
 vendor AURORA		0x125c	Aurora Technologies
+vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor KOFAX		0x1296	Kofax Image Products
@@ -688,6 +689,9 @@ product DOLPHIN PCISCI	0x0658	PCI-SCI Bridge
 
 /* Emulex products */
 product EMULEX LPPFC	0x10df	\"Light Pulse\" FibreChannel adapter
+
+/* Ensoniq products */
+product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 
 /* Essential Communications products */
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface

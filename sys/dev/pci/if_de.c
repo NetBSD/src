@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.46.2.2 1997/09/16 03:50:37 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.46.2.3 1997/09/29 07:20:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -5094,37 +5094,24 @@ tulip_pci_attach(
     {
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
-	u_int32_t cfcs = PCI_CONF_READ(PCI_CFCS);
+	int ioh_valid, memh_valid;
 
-	cfcs &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
-	if (!pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-			    &iot, &ioh, NULL, NULL)) {
-	    cfcs |= PCI_COMMAND_IO_ENABLE;
-	}
-	if (!pci_mapreg_map(pa, PCI_CBMA,
-			    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
-			    0, &memt, &memh, NULL, NULL) == 0) {
-	    cfcs |= PCI_COMMAND_MEM_ENABLE;
-	}
-	if ((cfcs & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) == 0) {
+	ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+				    &iot, &ioh, NULL, NULL) == 0);
+	memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
+				     PCI_MAPREG_TYPE_MEM |
+				     PCI_MAPREG_MEM_TYPE_32BIT,
+				     0, &memt, &memh, NULL, NULL) == 0);
+	if (memh_valid) {
+	    sc->tulip_bustag = memt;
+	    sc->tulip_bushandle = memh;
+	} else if (ioh_valid) {
+	    sc->tulip_bustag = iot;
+	    sc->tulip_bushandle = ioh;
+	} else {
 	    printf(": unable to map device registers\n");
 	    return;
 	}
-	cfcs |= PCI_COMMAND_MASTER_ENABLE;
-	PCI_CONF_WRITE(PCI_CFCS, cfcs);
-#if defined(PCI_PREFER_IOSPACE)
-	if (cfcs & PCI_COMMAND_IO_ENABLE) {
-	    sc->tulip_bustag = iot, sc->tulip_bushandle = ioh;
-	} else {
-	    sc->tulip_bustag = memt, sc->tulip_bushandle = memh;
-	}
-#else
-	if (cfcs & PCI_COMMAND_MEM_ENABLE) {
-	    sc->tulip_bustag = memt, sc->tulip_bushandle = memh;
-	} else {
-	    sc->tulip_bustag = iot, sc->tulip_bushandle = ioh;
-	}
-#endif /* PCI_PREFER_IOSPACE */
     }
 #endif /* __NetBSD__ */
 

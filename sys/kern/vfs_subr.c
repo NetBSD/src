@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.72 1997/07/20 23:31:32 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.72.2.1 1997/09/29 07:21:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -1701,28 +1701,23 @@ void
 vfs_shutdown()
 {
 	register struct buf *bp;
-	int iter, nbusy;
+	int iter, nbusy, unmountem;
+
+	/*
+	 * If we've panic'd, don't make the situation potentially
+	 * worse by unmounting the file systems; just attempt to
+	 * sync.
+	 */
+	if (panicstr != NULL)
+		unmountem = 0;
+	else
+		unmountem = 1;
 
 	printf("syncing disks... ");
 
 	/* XXX Should suspend scheduling. */
 	(void) spl0();
 
-	if (panicstr == 0) {
-		/* Release inodes held by texts before update. */
-		vnode_pager_umount(NULL);
-#ifdef notdef
-		vnshutdown();
-#endif
-
-		/* Sync before unmount, in case we hang on something. */
-		sys_sync(&proc0, (void *)0, (register_t *)0);
-
-		/* Unmount file systems. */
-		vfs_unmountall();
-	}
-
-	/* Sync again after unmount, just in case. */
 	sys_sync(&proc0, (void *)0, (register_t *)0);
 
 	/* Wait for sync to finish. */
@@ -1736,10 +1731,21 @@ vfs_shutdown()
 		printf("%d ", nbusy);
 		DELAY(40000 * iter);
 	}
-	if (nbusy)
+	if (nbusy) {
 		printf("giving up\n");
-	else
+		unmountem = 0;
+	} else
 		printf("done\n");
+
+	if (unmountem) {
+		/* Release inodes held by texts before update. */
+		vnode_pager_umount(NULL);
+#ifdef notdef
+		vnshutdown();
+#endif
+		/* Unmount file systems. */
+		vfs_unmountall();
+	}
 }
 
 /*

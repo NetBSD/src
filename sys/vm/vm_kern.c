@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.c,v 1.21 1997/01/03 18:03:27 mrg Exp $	*/
+/*	$NetBSD: vm_kern.c,v 1.21.10.1 1997/09/29 07:21:25 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -267,7 +267,7 @@ kmem_suballoc(parent, min, max, size, pageable)
  * this routine, ensures that we will never block in map or object waits.
  *
  * Note that this still only works in a uni-processor environment and
- * when called at splhigh().
+ * when called at splimp().
  *
  * We don't worry about expanding the map (adding entries) since entries
  * for wired maps are statically allocated.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155.2.4 1997/09/22 06:32:02 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.155.2.5 1997/09/29 07:20:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -294,7 +294,7 @@ cpu_startup(void)
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vm_offset_t) msgbufaddr + i * NBPG,
 		    high[numranges - 1] + i * NBPG, VM_PROT_ALL, TRUE);
-	initmsgbuf(msgbufaddr, atari_round_page(MSGBUFSIZE));
+	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
