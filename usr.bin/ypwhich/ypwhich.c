@@ -1,4 +1,4 @@
-/*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
+/*	$NetBSD: ypwhich.c,v 1.6.4.1 1996/05/26 06:16:46 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ypwhich.c,v 1.6.4.1 1996/05/26 06:16:46 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -47,8 +47,6 @@ static char rcsid[] = "$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp 
 #include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
-
-extern bool_t xdr_domainname();
 
 struct ypalias {
 	char *alias, *name;
@@ -100,7 +98,7 @@ struct sockaddr_in *sin;
 	tv.tv_sec = 5;
 	tv.tv_usec = 0;
 	r = clnt_call(client, YPBINDPROC_DOMAIN,
-		xdr_domainname, dom, xdr_ypbind_resp, &ypbr, tv);
+		xdr_ypdomain_wrap_string, &dom, xdr_ypbind_resp, &ypbr, tv);
 	if( r != RPC_SUCCESS) {
 		fprintf(stderr, "can't clnt_call: %s\n",
 			yperr_string(YPERR_YPBIND));

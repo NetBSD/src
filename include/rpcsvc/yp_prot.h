@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_prot.h,v 1.6 1995/07/14 21:10:58 christos Exp $	*/
+/*	$NetBSD: yp_prot.h,v 1.6.6.1 1996/05/26 06:12:08 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -147,13 +147,6 @@ struct ypresp_master {
 struct ypresp_order {
 	u_long status;
 	u_long ordernum;
-};
-
-struct ypresp_all {
-	bool_t more;
-	union {
-		struct ypresp_key_val val;
-	} ypresp_all_u;
 };
 
 struct ypmaplist {
@@ -317,28 +310,28 @@ struct yppushresp_xfr {
 #define YPPUSH_XFRERR	((long)-13)	/* ypxfr error */
 #define YPPUSH_REFUSED	((long)-14)	/* Transfer request refused by ypserv */
 
+struct ypall_callback;
+
 __BEGIN_DECLS
-bool_t xdr_domainname __P((XDR *, char *));
-bool_t xdr_peername __P((XDR *, char *));
 bool_t xdr_datum __P((XDR *, datum *));
-bool_t xdr_mapname __P((XDR *, char *));
+bool_t xdr_ypdomain_wrap_string __P((XDR *, char **));
+bool_t xdr_ypmap_wrap_string __P((XDR *, char **));
 bool_t xdr_ypreq_key __P((XDR *, struct ypreq_key *));
 bool_t xdr_ypreq_nokey __P((XDR *, struct ypreq_nokey *));
-bool_t xdr_yp_inaddr __P((XDR *, struct in_addr *));
-bool_t xdr_ypbind_binding __P((XDR *, struct ypbind_binding *));
-bool_t xdr_ypbind_resptype __P((XDR *, enum ypbind_resptype *));
-bool_t xdr_ypstat __P((XDR *, enum ypbind_resptype *));
-bool_t xdr_ypbind_resp __P((XDR *, struct ypbind_resp *));
+bool_t xdr_ypreq_xfr __P((XDR *, struct ypreq_xfr *));
 bool_t xdr_ypresp_val __P((XDR *, struct ypresp_val *));
-bool_t xdr_ypbind_setdom __P((XDR *, struct ypbind_setdom *));
 bool_t xdr_ypresp_key_val __P((XDR *, struct ypresp_key_val *));
-bool_t xdr_ypresp_all __P((XDR *, struct ypresp_all *));
-bool_t xdr_ypresp_all_seq __P((XDR *, u_long *));
-bool_t xdr_ypresp_master __P((XDR *, struct ypresp_master *));
-bool_t xdr_ypmaplist_str __P((XDR *, char *));
-bool_t xdr_ypmaplist __P((XDR *, struct ypmaplist *));
-bool_t xdr_ypresp_maplist __P((XDR *, struct ypresp_maplist *));
+bool_t xdr_ypmap_parms __P((XDR *, struct ypmap_parms *));
+bool_t xdr_ypowner_wrap_string __P((XDR *, char **));
+bool_t xdr_yppushresp_xfr __P((XDR *, struct yppushresp_xfr *));
 bool_t xdr_ypresp_order __P((XDR *, struct ypresp_order *));
+bool_t xdr_ypresp_master __P((XDR *, struct ypresp_master *));
+bool_t xdr_ypall __P((XDR *, struct ypall_callback *));
+bool_t xdr_ypresp_maplist __P((XDR *, struct ypresp_maplist *));
+bool_t xdr_ypbind_resp __P((XDR *, struct ypbind_resp *));
+bool_t xdr_ypbind_setdom __P((XDR *, struct ypbind_setdom *));
+bool_t xdr_ypmaplist __P((XDR *, struct ypmaplist *));
+bool_t xdr_yp_inaddr __P((XDR *, struct in_addr *));
 __END_DECLS
 
 #endif /* _RPCSVC_YP_PROT_H_ */

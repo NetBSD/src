@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_maplist.c,v 1.1 1996/05/18 19:06:39 jtc Exp $	 */
+/*	$NetBSD: yp_maplist.c,v 1.1.4.1 1996/05/26 06:13:50 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_maplist.c,v 1.1 1996/05/18 19:06:39 jtc Exp $";
+static char rcsid[] = "$NetBSD: yp_maplist.c,v 1.1.4.1 1996/05/26 06:13:50 jtc Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -57,8 +57,8 @@ again:
 	memset(&ypml, 0, sizeof ypml);
 
 	r = clnt_call(ysd->dom_client, YPPROC_MAPLIST,
-		   xdr_domainname, indomain, xdr_ypresp_maplist, &ypml, 
-		   _yplib_timeout);
+		   xdr_ypdomain_wrap_string, &indomain, xdr_ypresp_maplist,
+		   &ypml, _yplib_timeout);
 	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_maplist: clnt_call");
 		ysd->dom_vers = -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
+/*	$NetBSD: ypset.c,v 1.8.4.1 1996/05/26 06:21:49 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ypset.c,v 1.8.4.1 1996/05/26 06:21:49 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -46,8 +46,6 @@ static char rcsid[] = "$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $"
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 #include <arpa/inet.h>
-
-extern bool_t xdr_domainname();
 
 usage()
 {
