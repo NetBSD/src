@@ -1,11 +1,12 @@
-/*	$NetBSD: scsipiconf.c,v 1.8 1998/11/17 14:38:43 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.8.10.1 1999/10/19 17:39:38 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum; by Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

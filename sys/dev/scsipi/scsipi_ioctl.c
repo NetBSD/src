@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.37 1999/09/30 22:57:54 thorpej Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.37.2.1 1999/10/19 17:39:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ struct scsi_ioctl {
 	struct uio si_uio;
 	struct iovec si_iov;
 	scsireq_t si_screq;
-	struct scsipi_link *si_sc_link;
+	struct scsipi_periph *si_periph;
 };
 
 LIST_HEAD(, scsi_ioctl) si_head;
@@ -136,22 +136,23 @@ scsipi_user_done(xs)
 	struct buf *bp;
 	struct scsi_ioctl *si;
 	scsireq_t *screq;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph = xs->xs_periph;
 
 	bp = xs->bp;
 	if (bp == NULL) {	/* ALL user requests must have a buf */
-		xs->sc_link->sc_print_addr(xs->sc_link);
+		scsipi_printaddr(periph);
 		printf("User command with no buf\n");
 		return;
 	}
 	si = si_find(bp);
 	if (si == NULL) {
-		xs->sc_link->sc_print_addr(xs->sc_link);
+		scsipi_printaddr(periph);
 		printf("User command with no ioctl\n");
 		return;
 	}
+
 	screq = &si->si_screq;
-	sc_link = si->si_sc_link;
+
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("user-done\n"));
 
 	screq->retsts = 0;
@@ -178,7 +179,7 @@ scsipi_user_done(xs)
 		screq->retsts = SCCMD_UNKNOWN; /* XXX need a shortsense here */
 		break;
 	case XS_DRIVER_STUFFUP:
-		sc_link->sc_print_addr(sc_link);
+		scsipi_printaddr(periph);
 		printf("host adapter code inconsistency\n");
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
@@ -195,7 +196,7 @@ scsipi_user_done(xs)
 		screq->retsts = SCCMD_BUSY;
 		break;
 	default:
-		sc_link->sc_print_addr(sc_link);
+		scsipi_printaddr(periph);
 		printf("unknown error category %d from host adapter code\n",
 		    xs->error);
 		screq->retsts = SCCMD_UNKNOWN;
@@ -226,7 +227,7 @@ scsistrategy(bp)
 {
 	struct scsi_ioctl *si;
 	scsireq_t *screq;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	int error;
 	int flags = 0;
 	int s;
@@ -238,14 +239,14 @@ scsistrategy(bp)
 		goto bad;
 	}
 	screq = &si->si_screq;
-	sc_link = si->si_sc_link;
+	periph = si->si_periph;
 	SC_DEBUG(sc_link, SDEV_DB2, ("user_strategy\n"));
 
 	/*
 	 * We're in trouble if physio tried to break up the transfer.
 	 */
 	if (bp->b_bcount != screq->datalen) {
-		sc_link->sc_print_addr(sc_link);
+		scsipi_printaddr(periph);
 		printf("physio split the request.. cannot proceed\n");
 		error = EIO;
 		goto bad;
@@ -257,7 +258,7 @@ scsistrategy(bp)
 	}
 
 	if (screq->cmdlen > sizeof(struct scsipi_generic)) {
-		sc_link->sc_print_addr(sc_link);
+		scsipi_printaddr(periph);
 		printf("cmdlen too big\n");
 		error = EFAULT;
 		goto bad;
@@ -272,7 +273,7 @@ scsistrategy(bp)
 	if (screq->flags & SCCMD_ESCAPE)
 		flags |= XS_CTL_ESCAPE;
 
-	error = scsipi_command(sc_link,
+	error = scsipi_command(periph,
 	    (struct scsipi_generic *)screq->cmd, screq->cmdlen,
 	    (u_char *)bp->b_data, screq->datalen,
 	    0, /* user must do the retries *//* ignored */
@@ -299,14 +300,13 @@ bad:
 
 /*
  * Something (e.g. another driver) has called us
- * with an sc_link for a target/lun/adapter, and a scsi
- * specific ioctl to perform, better try.
- * If user-level type command, we must still be running
- * in the context of the calling process
+ * with a periph and a scsi-specific ioctl to perform,
+ * better try.  If user-level type command, we must
+ * still be running in the context of the calling process
  */
 int
-scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
-	struct scsipi_link *sc_link;
+scsipi_do_ioctl(periph, dev, cmd, addr, flag, p)
+	struct scsipi_periph *periph;
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
@@ -340,7 +340,7 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 
 		si = si_get();
 		si->si_screq = *screq;
-		si->si_sc_link = sc_link;
+		si->si_periph = periph;
 		len = screq->datalen;
 		if (len) {
 			si->si_iov.iov_base = screq->databuf;
@@ -355,7 +355,8 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 			si->si_uio.uio_procp = p;
 			error = physio(scsistrategy, &si->si_bp, dev,
 			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
-			    sc_link->adapter->scsipi_minphys, &si->si_uio);
+			    periph->periph_channel->chan_adapter->adapt_minphys,
+			    &si->si_uio);
 		} else {
 			/* if no data, no need to translate it.. */
 			si->si_bp.b_flags = 0;
@@ -370,6 +371,7 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 		si_free(si);
 		return (error);
 	}
+#if 0 /* XXX THORPEJ */
 	case SCIOCDEBUG: {
 		int level = *((int *)addr);
 
@@ -385,23 +387,26 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 			sc_link->flags |= SDEV_DB4;
 		return (0);
 	}
+#endif
 	case SCIOCRECONFIG:
 	case SCIOCDECONFIG:
 		return (EINVAL);
 	case SCIOCIDENTIFY: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
 
-		switch (sc_link->type) {
-		case BUS_SCSI:
+		switch (scsipi_periph_bustype(periph)) {
+		case SCSIPI_BUSTYPE_SCSI:
 			sca->type = TYPE_SCSI;
-			sca->addr.scsi.scbus = sc_link->scsipi_scsi.scsibus;
-			sca->addr.scsi.target = sc_link->scsipi_scsi.target;
-			sca->addr.scsi.lun = sc_link->scsipi_scsi.lun;
+			sca->addr.scsi.scbus =
+			    periph->periph_dev->dv_parent->dv_unit;
+			sca->addr.scsi.target = periph->periph_target;
+			sca->addr.scsi.lun = periph->periph_lun;
 			return (0);
-		case BUS_ATAPI:
+		case SCSIPI_BUSTYPE_ATAPI:
 			sca->type = TYPE_ATAPI;
-			sca->addr.atapi.atbus = sc_link->scsipi_atapi.atapibus;
-			sca->addr.atapi.drive = sc_link->scsipi_atapi.drive;
+			sca->addr.atapi.atbus =
+			    periph->periph_dev->dv_parent->dv_unit;
+			sca->addr.atapi.drive = periph->periph_target;
 			return (0);
 		}
 		return (ENXIO);
@@ -411,11 +416,11 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 	case OSCIOCIDENTIFY: {
 		struct oscsi_addr *sca = (struct oscsi_addr *)addr;
 
-		switch (sc_link->type) {
-		case BUS_SCSI:
-			sca->scbus = sc_link->scsipi_scsi.scsibus;
-			sca->target = sc_link->scsipi_scsi.target;
-			sca->lun = sc_link->scsipi_scsi.lun;
+		switch (scsipi_periph_bustype(periph)) {
+		case SCSIPI_BUSTYPE_SCSI:
+			sca->scbus = periph->periph_dev->dv_parent->dv_unit;
+			sca->target = periph->periph_target;
+			sca->lun = periph->periph_lun;
 			return (0);
 		}
 		return (ENODEV);

@@ -1,5 +1,0 @@
-#
-# $NetBSD: ttyaction,v 1.2 1999/10/06 22:05:26 ad Exp $
-#
-# tty	action	command...
-kd	*	chown ${USER}:tty /dev/kbd /dev/mouse /dev/fb

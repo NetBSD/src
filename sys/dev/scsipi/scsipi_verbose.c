@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.10 1999/02/24 18:54:03 jwise Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.10.8.1 1999/10/19 17:39:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -484,7 +484,7 @@ scsipi_print_sense(xs, verbosity)
 {
 	int i, j;
 
-	xs->sc_link->sc_print_addr(xs->sc_link);
+	scsipi_printaddr(xs->xs_periph);
  	printf(" Check Condition on CDB: 0x%02x", xs->cmd->opcode);
 
  	switch (CDB_GROUPID(xs->cmd->opcode)) {

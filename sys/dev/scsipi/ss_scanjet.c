@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.18 1999/09/30 22:57:55 thorpej Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.18.2.1 1999/10/19 17:39:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -92,7 +92,7 @@ scanjet_attach(ss, sa)
 	struct scsipibus_attach_args *sa;
 {
 #ifdef SCSIDEBUG
-	struct scsipi_link *sc_link = sa->sa_sc_link;
+	struct scsipi_link *periph = sa->sa_periph;
 #endif
 	int error;
 
@@ -267,7 +267,7 @@ scanjet_read(ss, bp)
 	struct buf *bp;
 {
 	struct scsi_rw_scanner cmd;
-	struct scsipi_link *sc_link = ss->sc_link;
+	struct scsipi_periph *periph = ss->sc_periph;
 	int error;
 
 	/*
@@ -286,7 +286,7 @@ scanjet_read(ss, bp)
 	 * go ask the adapter to do all this for us
 	 * XXX really need NOSLEEP?
 	 */
-	error = scsipi_command(sc_link,
+	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount, SCANJET_RETRIES, 100000, bp,
 	    XS_CTL_NOSLEEP | XS_CTL_ASYNC | XS_CTL_DATA_IN);
@@ -322,7 +322,7 @@ scanjet_ctl_write(ss, buf, size)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = WRITE;
 	_lto3b(size, cmd.len);
-	return (scsipi_command(ss->sc_link,
+	return (scsipi_command(ss->sc_periph,
 	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | XS_CTL_DATA_OUT));
@@ -348,7 +348,7 @@ scanjet_ctl_read(ss, buf, size)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = READ;
 	_lto3b(size, cmd.len);
-	return (scsipi_command(ss->sc_link,
+	return (scsipi_command(ss->sc_periph,
 	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | XS_CTL_DATA_IN));

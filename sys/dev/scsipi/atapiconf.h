@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.7 1998/10/12 16:09:24 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.7.12.1 1999/10/19 17:39:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -41,13 +41,15 @@
 struct atapi_mode_header;
 struct ataparams;
 
-int	wdc_atapi_get_params __P((struct scsipi_link *, u_int8_t, int,
+extern const struct scsipi_bustype atapi_bustype;
+
+int	wdc_atapi_get_params __P((struct scsipi_channel *, int, int,
 	    struct ataparams *)); 
-void	atapi_print_addr __P((struct scsipi_link *));
+void	atapi_print_addr __P((struct scsipi_periph *));
 int	atapi_interpret_sense __P((struct scsipi_xfer *));
-int	atapi_scsipi_cmd __P((struct scsipi_link *, struct scsipi_generic *,
-	    int, u_char *, int, int, int, struct buf *, int));
-int	atapi_mode_select __P((struct scsipi_link *,
+int	atapi_scsipi_cmd __P((struct scsipi_periph *, struct scsipi_generic *,
+	    int, void *, size_t, int, int, struct buf *, int));
+int	atapi_mode_select __P((struct scsipi_periph *,
 	    struct atapi_mode_header *, int, int, int, int));
-int	atapi_mode_sense __P((struct scsipi_link *, int,
+int	atapi_mode_sense __P((struct scsipi_periph *, int,
 	    struct atapi_mode_header *, int, int, int, int));
