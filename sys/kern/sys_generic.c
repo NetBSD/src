@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.44 1998/08/04 04:03:15 perry Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.45 1999/05/05 20:01:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -86,9 +86,13 @@ sys_read(p, v, retval)
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
 	    (fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
+	FILE_USE(fp);
+
+	/* dofileread() will unuse the descriptor for us */
 	return (dofileread(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
@@ -125,8 +129,10 @@ dofileread(p, fd, fp, buf, nbyte, offset, flags, retval)
 	 * we must restrict the length to SSIZE_MAX to avoid garbage return
 	 * values.
 	 */
-	if (auio.uio_resid > SSIZE_MAX)
-		return (EINVAL);
+	if (auio.uio_resid > SSIZE_MAX) {
+		error = EINVAL;
+		goto out;
+	}
 
 #ifdef KTRACE
 	/*
@@ -147,6 +153,8 @@ dofileread(p, fd, fp, buf, nbyte, offset, flags, retval)
 		ktrgenio(p->p_tracep, fd, UIO_READ, &ktriov, cnt, error);
 #endif
 	*retval = cnt;
+ out:
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -170,9 +178,13 @@ sys_readv(p, v, retval)
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
 	    (fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
+	FILE_USE(fp);
+
+	/* dofilereadv() will unuse the descriptor for us */
 	return (dofilereadv(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
@@ -201,15 +213,19 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = iovcnt * sizeof(struct iovec);
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
-		if ((u_int)iovcnt > IOV_MAX)
-			return (EINVAL);
+		if ((u_int)iovcnt > IOV_MAX) {
+			error = EINVAL;
+			goto out;
+		}
 		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
 		needfree = NULL;
-	} else
-		return (EINVAL);
+	} else {
+		error = EINVAL;
+		goto out;
+	}
 
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
@@ -258,9 +274,11 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	}
 #endif
 	*retval = cnt;
-done:
+ done:
 	if (needfree)
 		FREE(needfree, M_IOV);
+ out:
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -284,9 +302,13 @@ sys_write(p, v, retval)
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
 	    (fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
+	FILE_USE(fp);
+
+	/* dofilewrite() will unuse the descriptor for us */
 	return (dofilewrite(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
@@ -323,8 +345,10 @@ dofilewrite(p, fd, fp, buf, nbyte, offset, flags, retval)
 	 * we must restrict the length to SSIZE_MAX to avoid garbage return
 	 * values.
 	 */
-	if (auio.uio_resid > SSIZE_MAX)
-		return (EINVAL);
+	if (auio.uio_resid > SSIZE_MAX) {
+		error = EINVAL;
+		goto out;
+	}
 
 #ifdef KTRACE
 	/*
@@ -348,6 +372,8 @@ dofilewrite(p, fd, fp, buf, nbyte, offset, flags, retval)
 		ktrgenio(p->p_tracep, fd, UIO_WRITE, &ktriov, cnt, error);
 #endif
 	*retval = cnt;
+ out:
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -371,9 +397,13 @@ sys_writev(p, v, retval)
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
 	    (fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
+	FILE_USE(fp);
+
+	/* dofilewritev() will unuse the descriptor for us */
 	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
@@ -409,8 +439,10 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
 		needfree = NULL;
-	} else
-		return (EINVAL);
+	} else {
+		error = EINVAL;
+		goto out;
+	}
 
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
@@ -462,9 +494,11 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	}
 #endif
 	*retval = cnt;
-done:
+ done:
 	if (needfree)
 		FREE(needfree, M_IOV);
+ out:
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -486,7 +520,7 @@ sys_ioctl(p, v, retval)
 	register struct file *fp;
 	register struct filedesc *fdp;
 	register u_long com;
-	register int error;
+	register int error = 0;
 	register u_int size;
 	caddr_t data, memp;
 	int tmp;
@@ -495,19 +529,25 @@ sys_ioctl(p, v, retval)
 
 	fdp = p->p_fd;
 	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
+	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
 		return (EBADF);
 
-	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
-		return (EBADF);
+	FILE_USE(fp);
+
+	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
+		error = EBADF;
+		goto out;
+	}
 
 	switch (com = SCARG(uap, com)) {
 	case FIONCLEX:
 		fdp->fd_ofileflags[SCARG(uap, fd)] &= ~UF_EXCLOSE;
-		return (0);
+		goto out;
+
 	case FIOCLEX:
 		fdp->fd_ofileflags[SCARG(uap, fd)] |= UF_EXCLOSE;
-		return (0);
+		goto out;
 	}
 
 	/*
@@ -515,8 +555,10 @@ sys_ioctl(p, v, retval)
 	 * copied to/from the user's address space.
 	 */
 	size = IOCPARM_LEN(com);
-	if (size > IOCPARM_MAX)
-		return (ENOTTY);
+	if (size > IOCPARM_MAX) {
+		error = ENOTTY;
+		goto out;
+	}
 	memp = NULL;
 	if (size > sizeof(stkbuf)) {
 		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
@@ -529,7 +571,7 @@ sys_ioctl(p, v, retval)
 			if (error) {
 				if (memp)
 					free(memp, M_IOCTLOPS);
-				return (error);
+				goto out;
 			}
 		} else
 			*(caddr_t *)data = SCARG(uap, data);
@@ -603,6 +645,8 @@ sys_ioctl(p, v, retval)
 	}
 	if (memp)
 		free(memp, M_IOCTLOPS);
+ out:
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -743,12 +787,15 @@ selscan(p, ibitp, obitp, nfd, retval)
 			while ((j = ffs(ibits)) && (fd = i + --j) < nfd) {
 				ibits &= ~(1 << j);
 				fp = fdp->fd_ofiles[fd];
-				if (fp == NULL)
+				if (fp == NULL ||
+				    (fp->f_iflags & FIF_WANTCLOSE) != 0)
 					return (EBADF);
+				FILE_USE(fp);
 				if ((*fp->f_ops->fo_poll)(fp, flag[msk], p)) {
 					obits |= (1 << j);
 					n++;
 				}
+				FILE_UNUSE(fp, p);
 			}
 			*obitp++ = obits;
 		}
@@ -865,14 +912,17 @@ pollscan(p, fds, nfd, retval)
 			n++;
 		} else {
 			fp = fdp->fd_ofiles[fds->fd];
-			if (fp == 0) {
+			if (fp == NULL ||
+			    (fp->f_iflags & FIF_WANTCLOSE) != 0) {
 				fds->revents = POLLNVAL;
 				n++;
 			} else {
+				FILE_USE(fp);
 				fds->revents = (*fp->f_ops->fo_poll)(fp,
 				    fds->events | POLLERR | POLLHUP, p);
 				if (fds->revents != 0)
 					n++;
+				FILE_UNUSE(fp, p);
 			}
 		}
 	}

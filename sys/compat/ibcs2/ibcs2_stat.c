@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.11 1999/02/09 20:48:20 christos Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.12 1999/05/05 20:01:03 thorpej Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -171,14 +171,18 @@ ibcs2_sys_fstatfs(p, v, retval)
 	register struct statfs *sp;
 	int error;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
 	if ((error = VFS_STATFS(mp, sp, p)) != 0)
-		return (error);
+		goto out;
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	return cvt_statfs(sp, (caddr_t)SCARG(uap, buf), SCARG(uap, len));
+	error = cvt_statfs(sp, (caddr_t)SCARG(uap, buf), SCARG(uap, len));
+ out:
+	FILE_UNUSE(fp, p);
+	return (error);
 }
 
 int
@@ -226,15 +230,19 @@ ibcs2_sys_fstatvfs(p, v, retval)
 	register struct statfs *sp;
 	int error;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
 	if ((error = VFS_STATFS(mp, sp, p)) != 0)
-		return (error);
+		goto out;
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	return cvt_statvfs(sp, (caddr_t)SCARG(uap, buf),
+	error = cvt_statvfs(sp, (caddr_t)SCARG(uap, buf),
 			   sizeof(struct ibcs2_statvfs));
+ out:
+	FILE_UNUSE(fp, p);
+	return (error);
 }
 
 int
