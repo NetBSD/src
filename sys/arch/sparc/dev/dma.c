@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
+/*	$NetBSD: dma.c,v 1.47 1997/10/16 10:49:00 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -42,8 +42,10 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <sparc/autoconf.h>
-#include <sparc/cpu.h>
+#include <vm/vm.h>
+
+#include <machine/autoconf.h>
+#include <machine/cpu.h>
 
 #include <sparc/sparc/cpuvar.h>
 
