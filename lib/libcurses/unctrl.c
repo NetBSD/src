@@ -1,4 +1,4 @@
-/*	$NetBSD: unctrl.c,v 1.9 2003/08/07 16:44:25 agc Exp $	*/
+/*	$NetBSD: unctrl.c,v 1.10 2004/02/14 18:23:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993
@@ -34,11 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)unctrl.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unctrl.c,v 1.9 2003/08/07 16:44:25 agc Exp $");
+__RCSID("$NetBSD: unctrl.c,v 1.10 2004/02/14 18:23:45 christos Exp $");
 #endif
-#endif				/* not lint */
+#endif /* not lint */
 
-char   *__unctrl[256] = {
+#include <unctrl.h>
+
+const char   * const __unctrl[256] = {
 	"^@", "^A", "^B", "^C", "^D", "^E", "^F", "^G",
 	"^H", "^I", "^J", "^K", "^L", "^M", "^N", "^O",
 	"^P", "^Q", "^R", "^S", "^T", "^U", "^V", "^W",
@@ -74,7 +76,7 @@ char   *__unctrl[256] = {
 	"0xf8", "0xf9", "0xfa", "0xfb", "0xfc", "0xfd", "0xfe", "0xff",
 };
 
-char    __unctrllen[256] = {
+const unsigned char    __unctrllen[256] = {
 	2, 2, 2, 2, 2, 2, 2, 2,
 	2, 2, 2, 2, 2, 2, 2, 2,
 	2, 2, 2, 2, 2, 2, 2, 2,
