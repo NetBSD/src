@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_subr.c,v 1.10 1994/12/13 18:31:51 gwr Exp $	*/
+/*	$NetBSD: if_le_subr.c,v 1.11 1995/01/03 15:43:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -61,6 +61,8 @@
 #include "if_le.h"
 #include "if_le_subr.h"
 
+extern caddr_t dvma_malloc();	/* XXX */
+
 int
 le_md_match(parent, vcf, args)
 	struct device *parent;
@@ -75,7 +77,7 @@ le_md_match(parent, vcf, args)
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = 3;
 
-	/* The peek returns non-zero on bus error. */
+	/* The peek returns -1 on bus error. */
 	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 1);
 	return (x != -1);
 }
@@ -91,17 +93,17 @@ le_md_attach(parent, self, args)
 	caddr_t p;
 
 	/* register access */
-	sc->sc_r1 = (struct lereg1 *)
+	sc->sc_regs = (struct le_regs *)
 		obio_alloc(ca->ca_paddr, OBIO_AMD_ETHER_SIZE);
-	if (!sc->sc_r1)
+	if (sc->sc_regs == NULL)
 		panic(": not enough obio space\n");
 
 	/* allocate "shared" memory */
-	sc->sc_r2 = (struct lereg2 *) dvma_malloc(sizeof(struct lereg2)); 
-	if (!sc->sc_r2)
+	sc->sc_mem = dvma_malloc(MEMSIZE);
+	if (sc->sc_mem == NULL)
 		panic(": not enough dvma space");
 
 	/* Install interrupt handler. */
-	isr_add_autovect(le_intr, (void *)sc, ca->ca_intpri);
-	idprom_etheraddr(sc->sc_addr); /* ethernet addr */
+	isr_add_autovect(leintr, (void *)sc, ca->ca_intpri);
+	idprom_etheraddr(sc->sc_enaddr); /* ethernet addr */
 }
