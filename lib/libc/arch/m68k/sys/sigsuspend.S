@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,9 +43,12 @@
 #if 0
 	RCSID("from: @(#)sigsuspend.s	5.2 (Berkeley) 6/6/90")
 #else
-	RCSID("$NetBSD: sigsuspend.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $")
+	RCSID("$NetBSD: sigsuspend.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+WARN_REFERENCES(sigsuspend, \
+    "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
 ENTRY(sigsuspend)
 	movl	sp@(4),a0

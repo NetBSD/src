@@ -33,13 +33,16 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigprocmask.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigprocmask.S,v 1.3 1998/09/30 18:37:39 ragge Exp $"
+	.asciz "$NetBSD: sigprocmask.S,v 1.4 1998/12/02 01:01:05 thorpej Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 err:
 	jmp	cerror
+
+WARN_REFERENCES(sigprocmask, \
+    "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
 ENTRY(sigprocmask, 0)
 	tstl	8(ap)			# check new sigset pointer

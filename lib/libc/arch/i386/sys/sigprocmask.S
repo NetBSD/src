@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.10 1998/09/26 23:49:34 christos Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.11 1998/12/02 01:01:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,10 +40,13 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigprocmask.S,v 1.10 1998/09/26 23:49:34 christos Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.11 1998/12/02 01:01:03 thorpej Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
+
+WARN_REFERENCES(sigprocmask, \
+    "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
 ENTRY(sigprocmask)
 	movl	8(%esp),%ecx		# fetch new sigset pointer

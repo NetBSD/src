@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.5 1998/09/29 20:23:27 thorpej Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.6 1998/12/02 01:01:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,5 +40,8 @@
 /*
  * We must preserve the state of the registers as the user has set them up.
  */
+
+WARN_REFERENCES(sigreturn, \
+    "warning: reference to compatibility sigreturn(); include <signal.h> for correct reference")
 
 PSEUDO(sigreturn,compat_13_sigreturn13)
