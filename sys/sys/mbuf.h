@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.100 2005/01/31 23:49:36 kim Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.101 2005/02/12 23:25:29 heas Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -171,11 +171,22 @@ struct	pkthdr {
 #define	M_CSUM_IPv4		0x00000040	/* IPv4 header */
 #define	M_CSUM_IPv4_BAD		0x00000080	/* IPv4 header checksum bad */
 
-/* Checksum-assist quirks: keep separate from jump-table bits. */
-#define	M_CSUM_NO_PSEUDOHDR	0x80000000	/* Rx M_CSUM_DATA does not include
-						 * the UDP/TCP pseudo-hdr, and
-						 * is not yet 1s-complemented.
-						 */
+/*
+ * Checksum-assist quirks: keep separate from jump-table bits.
+ *
+ * M_CSUM_NO_PSEUDOHDR:
+ *	Rx: M_CSUM_DATA does not include the UDP/TCP pseudo-hdr, and is not yet
+ *	    1s-complemented.
+ *	Tx: Set in ifnet.if_csum_flags_tx, indicates that the controller only
+ *	    does linear checksums (ie: from some offset to end of the packet),
+ *	    the IP module should stuff the pseudo-hdr checksum in the TCP/UDP
+ *	    header.  The high 16 bits of M_CSUM_DATA is the start offset (ie:
+ *	    end of the IP header).
+ *
+ * XXX The use of pkthdr.csum_flags & ifnet.if_csum_flags_{rx,tx} for
+ *     hardware checksum quirks needs further consideration.
+ */
+#define	M_CSUM_NO_PSEUDOHDR	0x80000000
 
 /*
  * Max # of pages we can attach to m_ext.  This is carefully chosen
