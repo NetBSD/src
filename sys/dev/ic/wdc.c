@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.49 1998/12/02 15:53:34 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.50 1998/12/03 15:38:59 bouyer Exp $ */
 
 
 /*
@@ -841,12 +841,10 @@ wdc_probe_caps(drvp)
 						continue;
 				printf("%s UDMA mode %d", sep, i);
 				sep = ",";
-				/*
-				 * ATA-4 specs says if a mode is supported,
-				 * all lower modes shall be supported.
-				 * No need to look further.
-				 */
 				if (wdc->cap & WDC_CAPABILITY_UDMA) {
+					if ((wdc->cap & WDC_CAPABILITY_MODE) &&
+					    wdc->udma_mode < i)
+						continue;
 					drvp->UDMA_mode = i;
 					drvp->UDMA_cap = i;
 					drvp->drive_flags |= DRIVE_UDMA;

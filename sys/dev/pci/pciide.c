@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.24 1998/12/03 13:50:38 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.25 1998/12/03 15:38:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -1181,6 +1181,7 @@ piix_setup_cap(sc)
 	    WDC_CAPABILITY_DMA;
 	sc->sc_wdcdev.pio_mode = 4;
 	sc->sc_wdcdev.dma_mode = 2;
+	sc->sc_wdcdev.udma_mode = 2;
 }
 
 void
@@ -1547,6 +1548,7 @@ apollo_setup_cap(sc)
 	    WDC_CAPABILITY_DMA;
 	sc->sc_wdcdev.pio_mode = 4;
 	sc->sc_wdcdev.dma_mode = 2;
+	sc->sc_wdcdev.udma_mode = 2;
 
 }
 void
@@ -1906,6 +1908,7 @@ sis_setup_cap(sc)
 	    WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
 	sc->sc_wdcdev.pio_mode = 4;
 	sc->sc_wdcdev.dma_mode = 2;
+	sc->sc_wdcdev.udma_mode = 2;
 }
 
 void
