@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.5 1999/02/15 04:54:37 hubertf Exp $	*/
+/*	$NetBSD: fgen.l,v 1.6 1999/06/07 05:08:25 mrg Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -55,6 +55,7 @@ tail	{white}
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -74,6 +75,7 @@ int nextfcode = 0x800;
 int base = TOK_HEX;
 long outpos;
 char *outbuf = NULL;
+char *outfile, *infile;
 #define BUFCLICK	(1024*1024)
 size_t outbufsiz = 0;
 char *myname = NULL;
@@ -86,6 +88,7 @@ Cell parse_stack[PSTKSIZ];
 int parse_stack_ptr = 0;
 
 int	main __P((int, char *[]));
+void	token_err __P((int, char *, char *, char *, ...));
 YY_DECL;
 
 int debug = 0;
@@ -965,24 +968,21 @@ main(argc, argv)
 			debug = atol(optarg);
 			break;
 		case 'o':
-			if ((outf = open(optarg, O_WRONLY|O_CREAT|O_TRUNC, 0666)) == NULL) {
-				(void)printf(
-					      "%s: %s: %s\n", 
-					      myname, optarg, strerror(errno));
-				exit(1);
-			}
+			outfile = optarg;
 			break;
 		case '?':
 		default:
-			printf( "Illegal argument %c\n", ch);
+			warnx("Illegal argument: %c\n", ch);
 			usage(myname);
 		}
 	argc -= optind;
 	argv += optind;
 	
-	if (argc != 1) printf( "argc = %d\n", argc);
-	if (argc != 1) usage(myname);
+	if (argc != 1)
+		usage(myname);
 	
+	infile = argv[0];
+
 	/*
 	 * Initialization stuff.
 	 */
@@ -997,11 +997,8 @@ main(argc, argv)
 	/* 
 	 * Do it.
 	 */
-	
-	if ((inf = fopen(argv[0], "r")) == NULL) {
-		(void)printf( "%s: Could not open %s: %s\n",
-			      myname, argv[0], strerror(errno));
-	}
+	if ((inf = fopen(infile, "r")) == NULL)
+		(void)err(1, "can not open %s for reading", infile);
 
 	inbuf = yy_create_buffer( inf, YY_BUF_SIZE );
 	yy_switch_to_buffer(inbuf);
@@ -1018,11 +1015,13 @@ main(argc, argv)
 		fheader->checksum += outbuf[i];
 	fheader->checksum = htons(fheader->checksum);
 
+	if ((outf = open(outfile, O_WRONLY|O_CREAT|O_TRUNC, 0666)) == NULL)
+		err(1, "can out open %s for writing", outfile);
+
 	if (write(outf, outbuf, outpos) != outpos) {
 		close(outf);
-		(void)printf( "%s: write error %s\n", 
-			      myname, strerror(errno));
-		exit(1);
+		unlink(outfile);
+		err(1, "write error");
 	}
 	close(outf);
 	return (0);
@@ -1057,10 +1056,10 @@ tokenize(input)
 				break;
 			}
 			value = strtol(token->text, &end, base);
-			if (*end != 0) {
-				(void)printf( "Illegal number conversion\n");
-				exit(1);
-			}
+			if (*end != 0)
+				token_err(yylineno, infile, yytext,
+				    "illegal number conversion");
+
 			/* 
 			 * If this is a 64-bit value we need to store two literals
 			 * and issue a `lxjoin' to combine them.  But that's a future
@@ -1089,10 +1088,13 @@ tokenize(input)
 			
 			++p;			/* Skip the quote */
 			len = strlen(++p);	/* Skip the 1st space */
-			if (len > 255) {
-				(void)printf( "string length %d too long\n", len);
-				exit(1);
-			}
+
+#define ERR_TOOLONG	\
+	token_err(yylineno, infile, yytext, "string length %d too long", len)
+
+			if (len > 255)
+				ERR_TOOLONG;
+
 			if (p[len-1] == ')' ||
 			    p[len-1] == '"') {
 				p[len-1] = 0;
@@ -1111,10 +1113,9 @@ tokenize(input)
 			p++; /* Skip over space/tab */
 
 			len = strlen(p);
-			if (len > 255) {
-				(void)printf( "string length %d too long\n", len);
-				exit(1);
-			}
+			if (len > 255)
+				ERR_TOOLONG;
+
 			if (p[len-1] == ')' ||
 			    p[len-1] == '"') {
 				p[len-1] = 0;
@@ -1131,32 +1132,32 @@ tokenize(input)
 			break;
 		case TOK_COMMENT: 
 			STATE(token->text, "TOK_COMMENT:");
-			while (((token = yylex()) != NULL) && token->type != TOK_ENDCOMMENT);
+			while (((token = yylex()) != NULL) && token->type != TOK_ENDCOMMENT)
+				;
 			break;
 		case TOK_ENDCOMMENT:
 			STATE(token->text, "TOK_ENDCOMMENT");
-			(void)printf( "ENDCOMMENT encountered outside comment\n");
-			exit(1);
+			token_err(yylineno, infile, NULL,
+			    "ENDCOMMENT encountered outside comment");
 			break;
 		case TOK_COLON: 
 			STATE(token->text, "TOK_COLON:");
 
 			token = yylex();
-			if (token == NULL) {
-				(void)printf( "EOF in colon definition\n");
-				return;
-			}
+			if (token == NULL)
+				token_err(yylineno, infile, yytext,
+				    "EOF in colon definition");
 			
 			/* Add new code to dictionary */
 			fcode = malloc(sizeof(*fcode));
 			fcode->num = nextfcode++;
 			fcode->name = strdup(token->text);
-			if ( !fadd(dictionary, fcode) ) {
-				(void)printf( "Duplicate definition: `%s'\n", fcode->name);
-				exit(1);
-			}
+			if (!fadd(dictionary, fcode))
+				token_err(yylineno, infile, NULL,
+				    "Duplicate definition: `%s'\n", fcode->name);
 #ifdef DEBUG
-			if (debug) (void)printf( "Adding %s to dictionary\n", token->text);		
+			if (debug)
+				(void)printf("Adding %s to dictionary\n", token->text);		
 #endif
 			if (state == 0)
 				emit("new-token");
@@ -1178,8 +1179,9 @@ tokenize(input)
 			emit("b(;)");
 			defining = 0;
 			if (depth()) {
-				(void)printf( "Warning: stack depth %d at end of %s\n", 
-					      depth(), last_token);
+				token_err(yylineno, infile, NULL,
+				    "Warning: stack depth %d at end of %s\n",
+				    depth(), last_token);
 			}
 			last_token = "";
 			break;
@@ -1384,10 +1386,10 @@ tokenize(input)
 					}
 				}
 				value = strtol(token->text, &end, 10);
-				if (*end != 0) {
-					(void)printf( "Illegal number conversion\n");
-					exit(1);
-				}
+				if (*end != 0)
+					token_err(yylineno, infile, NULL,
+					    "Illegal number conversion: %s", token->text);
+
 				/* 
 				 * If this is a 64-bit value we need to store two literals
 				 * and issue a `lxjoin' to combine them.  But that's a future
@@ -1585,7 +1587,8 @@ tokenize(input)
 				}
 				value = strtol(token->text, &end, 16);
 				if (*end != 0) {
-					(void)printf( "Illegal number conversion\n");
+					(void)printf("Illegal number conversion:%s:%d: %s\n",
+					    infile, yylineno, yytext);
 					exit(1);
 				}
 				/* 
@@ -1674,7 +1677,8 @@ tokenize(input)
 				}
 				value = strtol(token->text, &end, 8);
 				if (*end != 0) {
-					(void)printf( "Illegal number conversion\n");
+					(void)printf("Illegal number conversion:%s:%d: %s\n",
+					    infile, yylineno, yytext);
 					exit(1);
 				}
 				/* 
@@ -1849,12 +1853,19 @@ tokenize(input)
 			/* Parse a different file for a while */
 			token = yylex();
 			if ((inf = fopen(token->text, "r")) == NULL) {
-				(void)printf( "%s: Could not open %s: %s\n",
+				(void)printf("%s: Could not open %s: %s\n",
 					      myname, token->text, strerror(errno));
+				break;
 			}
-			inbuf = yy_create_buffer( inf, YY_BUF_SIZE );
+			inbuf = yy_create_buffer(inf, YY_BUF_SIZE);
 			yy_switch_to_buffer(inbuf);
-			tokenize(inbuf);
+			{
+				char *oldinfile = infile;
+
+				infile = token->text;
+				tokenize(inbuf);
+				infile = oldinfile;
+			}
 			yy_switch_to_buffer(input);
 			yy_delete_buffer(inbuf);
 			fclose(inf);
@@ -1886,6 +1897,26 @@ tokenize(input)
 		}
 	}
 	return;
+}
+
+/*
+ * print a tokenizer error message
+ */
+void
+token_err(int lineno, char *infile, char *text, char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (infile)
+		(void)fprintf(stderr, "%s:%d: ", infile, lineno);
+	if (fmt)
+		(void)vfprintf(stderr, fmt, ap);
+	fputc('\n', stderr);
+	if (text)
+		fprintf(stderr, "\t%s", text);
+	va_end(ap);
+	exit(1);
 }
 
 /*
