@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.175 2000/11/26 20:48:39 jdolecek Exp $
+#	$NetBSD: files.i386,v 1.176 2000/12/02 16:03:23 jdolecek Exp $
 #
 # new style config file for i386 architecture
 #
@@ -312,13 +312,13 @@ file	arch/i386/i386/svr4_sigcode.s		compat_svr4
 include "compat/ibcs2/files.ibcs2"
 file	arch/i386/i386/ibcs2_machdep.c		compat_ibcs2
 file	arch/i386/i386/ibcs2_sigcode.s		compat_ibcs2
-#file	arch/i386/i386/ibcs2_syscall.c		compat_ibcs2
+file	arch/i386/i386/ibcs2_syscall.c		compat_ibcs2
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/i386/files.linux_i386"
 file	arch/i386/i386/linux_sigcode.s		compat_linux
-#file	arch/i386/i386/linux_syscall.c		compat_linux
+file	arch/i386/i386/linux_syscall.c		compat_linux
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include "compat/freebsd/files.freebsd"
