@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.35 2002/05/13 13:52:31 kleink Exp $	*/
+/*	$NetBSD: in6.h,v 1.36 2002/05/13 14:15:34 kleink Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ struct in6_addr {
 /*
  * Socket address for IPv6
  */
-#ifndef _XOPEN_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define SIN6_LEN
 #endif
 struct sockaddr_in6 {
@@ -361,7 +361,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 /*
  * IP6 route structure
  */
-#ifndef _XOPEN_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 struct route_in6 {
 	struct	rtentry *ro_rt;
 	struct	sockaddr_in6 ro_dst;
@@ -386,7 +386,9 @@ struct route_in6 {
 #define IPV6_JOIN_GROUP		12 /* ip6_mreq; join a group membership */
 #define IPV6_LEAVE_GROUP	13 /* ip6_mreq; leave a group membership */
 #define IPV6_PORTRANGE		14 /* int; range to choose for unspec port */
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define ICMP6_FILTER		18 /* icmp6_filter; icmp6 filter */
+#endif
 #define IPV6_PKTINFO		19 /* bool; send/rcv if, src/dst addr */
 #define IPV6_HOPLIMIT		20 /* bool; hop limit */
 #define IPV6_NEXTHOP		21 /* bool; next hop addr */
@@ -437,7 +439,7 @@ struct in6_pktinfo {
 #define	IPV6_PORTRANGE_HIGH	1	/* "high" - request firewall bypass */
 #define	IPV6_PORTRANGE_LOW	2	/* "low" - vouchsafe security */
 
-#ifndef _XOPEN_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /*
  * Definitions for inet6 sysctl operations.
  *
@@ -566,7 +568,7 @@ struct in6_pktinfo {
 	{ "lowportmax", CTLTYPE_INT }, \
 }
 
-#endif /* !_XOPEN_SOURCE */
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
 #ifdef _KERNEL
 struct cmsghdr;
