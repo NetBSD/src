@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.25 2002/12/05 17:25:26 junyoung Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.26 2002/12/06 02:38:28 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -132,6 +132,20 @@
 #define CPUID_MASK2	0x00ffe000
 #define CPUID_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM\37B30\40SBF"
 #define CPUID_MASK3	0xff000000
+
+/*
+ * AMD/VIA processor specific flags.
+ */
+
+#define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
+#define CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
+#define CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
+#define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
+
+#define CPUID_EXT_FLAGS2	"\20\16PGE\17MCA\20CMOV\21PAT\22PSE36\23PN" \
+				    "\24MPC\25B20\26B21\27MMXX\30MMX"
+#define CPUID_EXT_FLAGS3	"\20\31FXSR\32SSE\33B26\34B27\35B28\36B29" \
+				    "\0373DNOW2\0403DNOW"
 
 #define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)

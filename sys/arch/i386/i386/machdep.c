@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.500 2002/12/05 16:19:08 junyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.501 2002/12/06 02:38:25 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.500 2002/12/05 16:19:08 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.501 2002/12/06 02:38:25 junyoung Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -341,6 +341,7 @@ void winchip_cpu_setup __P((struct cpu_info *));
 void amd_family5_setup __P((struct cpu_info *));
 void transmeta_cpu_setup __P((struct cpu_info *));
 
+static void via_cpu_probe __P((struct cpu_info *));
 static void amd_family6_probe __P((struct cpu_info *));
 
 static void transmeta_cpu_info __P((struct cpu_info *));
@@ -792,8 +793,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"K5 or K6"		/* Default */
 			},
 			amd_family5_setup,
-			amd_cpuid_cpu_cacheinfo,
 			NULL,
+			amd_cpuid_cpu_cacheinfo,
 		},
 		/* Family 6 */
 		{
@@ -818,7 +819,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Unknown K7 (Athlon)"	/* Default */
 			},
 			NULL,
-			amd_cpuid_cpu_cacheinfo,
+			NULL,
 			NULL,
 		} }
 	},
@@ -969,7 +970,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"C3"	/* Default */
 			},
 			NULL,
-			NULL,
+			via_cpu_probe,
 			NULL,
 		},
 		/* Family > 6, not yet available from VIA */
@@ -1098,6 +1099,29 @@ winchip_cpu_setup(ci)
 	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)	\
 	    : "a" (code));
 
+void
+via_cpu_probe(struct cpu_info *ci)
+{
+	u_int descs[4];
+	u_int lfunc;
+
+	/*
+	 * Determine the largest extended function value.
+	 */
+	CPUID(0x80000000, descs[0], descs[1], descs[2], descs[3]);
+	lfunc = descs[0];
+
+	/*
+	 * Determine the extended feature flags.
+	 */
+	if (lfunc >= 0x80000001) {
+		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
+		ci->ci_feature_flags = descs[3];
+		ci->ci_feature_str2 = CPUID_EXT_FLAGS2;
+		ci->ci_feature_str3 = CPUID_EXT_FLAGS3;
+	}
+}
+
 static void
 cpu_probe_base_features(struct cpu_info *ci)
 {
@@ -1120,6 +1144,13 @@ cpu_probe_base_features(struct cpu_info *ci)
 		return;
 
 	CPUID(1, ci->ci_signature, miscbytes, dummy1, ci->ci_feature_flags);
+
+	/*
+	 * These may be overridden with vendor specific strings later.
+	 */
+	ci->ci_feature_str1 = CPUID_FLAGS1;
+	ci->ci_feature_str2 = CPUID_FLAGS2;
+	ci->ci_feature_str3 = CPUID_FLAGS3;
 
 	/* Brand is low order 8 bits of ebx */
 	ci->ci_brand_id = miscbytes & 0xff;
@@ -1213,14 +1244,25 @@ cpu_probe_features(struct cpu_info *ci)
 void
 amd_family6_probe(struct cpu_info *ci)
 {
-	u_int32_t eax;
-	u_int32_t dummy1, dummy2, dummy3;
+	u_int32_t lfunc;
+	u_int32_t descs[4];
 	u_int32_t brand[12];
 	char *p;
 	int i;
 
-	CPUID(0x80000000, eax, dummy1, dummy2, dummy3);
-	if (eax < 0x80000004)
+	CPUID(0x80000000, lfunc, descs[1], descs[2], descs[3]);
+
+	/*
+	 * Determine the extended feature flags.
+	 */
+	if (lfunc >= 0x80000001) {
+		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
+		ci->ci_feature_flags |= descs[3];
+		ci->ci_feature_str2 = CPUID_EXT_FLAGS2;
+		ci->ci_feature_str3 = CPUID_EXT_FLAGS3;
+	}
+
+	if (lfunc < 0x80000004)
 		return;
 	
 	CPUID(0x80000002, brand[0], brand[1], brand[2], brand[3]);
@@ -1795,18 +1837,18 @@ identifycpu(struct cpu_info *ci)
 
 	if (ci->ci_feature_flags) {
 		if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
-			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS1,
-			    buf, sizeof(buf));
+			bitmask_snprintf(ci->ci_feature_flags,
+			    ci->ci_feature_str1, buf, sizeof(buf));
 			printf("%s: features %s\n", cpuname, buf);
 		}
 		if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
-			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS2,
-			    buf, sizeof(buf));
+			bitmask_snprintf(ci->ci_feature_flags,
+			    ci->ci_feature_str2, buf, sizeof(buf));
 			printf("%s: features %s\n", cpuname, buf);
 		}
 		if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
-			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS3,
-			    buf, sizeof(buf));
+			bitmask_snprintf(ci->ci_feature_flags,
+			    ci->ci_feature_str3, buf, sizeof(buf));
 			printf("%s: features %s\n", cpuname, buf);
 		}
 	}
