@@ -3,6 +3,7 @@
 ./usr/include/machine/autoconf.h
 ./usr/include/machine/bsd_audioio.h
 ./usr/include/machine/bsd_openprom.h
+./usr/include/machine/cgtworeg.h
 ./usr/include/machine/cpu.h
 ./usr/include/machine/ctlreg.h
 ./usr/include/machine/db_machdep.h
@@ -15,6 +16,8 @@
 ./usr/include/machine/fsr.h
 ./usr/include/machine/ieee.h
 ./usr/include/machine/instr.h
+./usr/include/machine/kbd.h
+./usr/include/machine/kbio.h
 ./usr/include/machine/limits.h
 ./usr/include/machine/openpromio.h
 ./usr/include/machine/param.h
@@ -34,6 +37,7 @@
 ./usr/include/machine/types.h
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vmparam.h
+./usr/include/machine/vuid_event.h
 ./usr/include/sparc
 ./usr/lib/libc_pic.a
 ./usr/lib/libcrypt_pic.a
