@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1.2.1 1999/12/04 17:10:37 he Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.2.2 2000/12/13 23:57:45 he Exp $
 
 SUBDIR=	lib dig dnskeygen dnsquery host named named-bootconf named-xfer \
 	ndc nslookup nsupdate reload restart
@@ -12,6 +12,6 @@ depend-dig depend-dnskeygen depend-dnsquery depend-host depend-named \
 depend-named-xfer depend-ndc: depend-named
 all-named-xfer all-ndc: all-named
 
-VER= 8.2.2-P5
+VER= 8.2.2-P7
 
 .include <bsd.subdir.mk>

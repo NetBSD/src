@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_req.c,v 1.1.1.1.2.2 1999/12/04 16:55:46 he Exp $	*/
+/*	$NetBSD: ns_req.c,v 1.1.1.1.2.3 2000/12/13 23:57:43 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
-static const char rcsid[] = "Id: ns_req.c,v 8.104 1999/10/15 19:49:04 vixie Exp";
+static const char rcsid[] = "Id: ns_req.c,v 8.104.2.2 2000/11/09 23:15:29 vixie Exp";
 #endif /* not lint */
 
 /*
@@ -1115,7 +1115,7 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 		if (qsp == NULL)
 			return (Finish);
 		else {
-			if (!ixfr_found) {
+			if (!ixfr_found && type == ns_t_ixfr) {
 				qsp->flags |= STREAM_AXFRIXFR;
 				hp->qdcount = htons(1);
 			}
@@ -1593,11 +1593,11 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 	}
 #endif
 	if ((n = dn_comp(name, buf, buflen, comp_ptrs, edp)) < 0)
-		return (-1);
+		goto cleanup;
 	cp = buf + n;
 	buflen -= n;
 	if (buflen < 0)
-		return (-1);
+		goto cleanup;
 	PUTSHORT((u_int16_t)type, cp);
 	PUTSHORT((u_int16_t)dp->d_class, cp);
 	PUTLONG(ttl, cp);
@@ -1610,7 +1610,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 	case T_PTR:
 		n = dn_comp((char *)dp->d_data, cp, buflen, comp_ptrs, edp);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		PUTSHORT((u_int16_t)n, sp);
 		cp += n;
 		break;
@@ -1620,7 +1620,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		/* Store domain name in answer */
 		n = dn_comp((char *)dp->d_data, cp, buflen, comp_ptrs, edp);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		PUTSHORT((u_int16_t)n, sp);
 		cp += n;
 		if (doadd) {
@@ -1636,15 +1636,15 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		cp1 = dp->d_data;
 		n = dn_comp((char *)cp1, cp, buflen, comp_ptrs, edp);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 		buflen -= type == T_SOA ? n + 5 * INT32SZ : n;
 		if (buflen < 0)
-			return (-1);
+			goto cleanup;
 		cp1 += strlen((char *)cp1) + 1;
 		n = dn_comp((char *)cp1, cp, buflen, comp_ptrs, edp);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 		if (type == T_SOA) {
 			cp1 += strlen((char *)cp1) + 1;
@@ -1672,7 +1672,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
  		/* copy order */
 		buflen -= INT16SZ;
 		if (buflen < 0)
-			return (-1);
+			goto cleanup;
  		memcpy(cp, cp1, INT16SZ);
  		cp += INT16SZ;
  		cp1 += INT16SZ;
@@ -1682,7 +1682,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		/* copy preference */
 		buflen -= INT16SZ;
 		if (buflen < 0)
-			return (-1);
+			goto cleanup;
 		memcpy(cp, cp1, INT16SZ);
 		cp += INT16SZ;
 		cp1 += INT16SZ;
@@ -1694,7 +1694,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		ns_debug(ns_log_default, 1, "size of n at flags = %d", n);
 		buflen -= n + 1;
 		if (buflen < 0)
-			return (-1);
+			goto cleanup;
 		*cp++ = n;
 		memcpy(cp, cp1, n);
 		cp += n;
@@ -1706,7 +1706,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		n = *cp1++;
 		buflen -= n + 1;
 		if (buflen < 0)
-			return (-1);
+			goto cleanup;
 		*cp++ = n;
 		memcpy(cp, cp1, n);
 		cp += n;
@@ -1718,7 +1718,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		n = *cp1++;
 		buflen -= n + 1;
 		if (buflen < 0)
-			return (-1);
+			goto cleanup;
 		*cp++ = n;
 		memcpy(cp, cp1, n);
 		cp += n;
@@ -1731,7 +1731,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
 		ns_debug(ns_log_default, 1, "dn_comp's n = %u", n);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 
 		/* save data length */
@@ -1749,7 +1749,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		cp1 = dp->d_data;
 
  		if ((buflen -= INT16SZ) < 0)
-			return (-1);
+			goto cleanup;
 
  		/* copy preference */
  		memcpy(cp, cp1, INT16SZ);
@@ -1759,7 +1759,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		if (type == T_SRV) {
 			buflen -= INT16SZ*2;
 			if (buflen < 0)
-				return (-1);
+				goto cleanup;
 			memcpy(cp, cp1, INT16SZ*2);
 			cp += INT16SZ*2;
 			cp1 += INT16SZ*2;
@@ -1769,7 +1769,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 			    (type == ns_t_mx) ? comp_ptrs : NULL,
 			    (type == ns_t_mx) ? edp : NULL);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 
 		/* save data length */
@@ -1783,7 +1783,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		cp1 = dp->d_data;
 
 		if ((buflen -= INT16SZ) < 0)
-			return (-1);
+			goto cleanup;
 
 		/* copy preference */
 		memcpy(cp, cp1, INT16SZ);
@@ -1792,13 +1792,13 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 
 		n = dn_comp((char *)cp1, cp, buflen, comp_ptrs, edp);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 		buflen -= n;
 		cp1 += strlen((char *)cp1) + 1;
 		n = dn_comp((char *)cp1, cp, buflen, comp_ptrs, edp);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 
 		/* save data length */
@@ -1813,7 +1813,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		/* first just copy over the type_covered, algorithm, */
 		/* labels, orig ttl, two timestamps, and the footprint */
 		if ((dp->d_size - 18) > buflen)
-			return (-1);  /* out of room! */
+			goto cleanup;  /* out of room! */
 		memcpy(cp, cp1, 18);
 		cp  += 18;
 		cp1 += 18;
@@ -1822,7 +1822,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		/* then the signer's name */
 		n = dn_comp((char *)cp1, cp, buflen, NULL, NULL);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 		buflen -= n;
 		cp1 += strlen((char*)cp1)+1;
@@ -1830,7 +1830,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		/* finally, we copy over the variable-length signature */
 		n = dp->d_size - (u_int16_t)((cp1 - dp->d_data));
 		if (n > buflen)
-			return (-1);  /* out of room! */
+			goto cleanup;  /* out of room! */
 		memcpy(cp, cp1, n);
 		cp += n;
 		
@@ -1843,7 +1843,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		cp1 = dp->d_data;
 		n = dn_comp((char *)cp1, cp, buflen, NULL, NULL);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 
 		cp += n;
 		buflen -=n;
@@ -1852,7 +1852,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		/* copy nxt bit map */
 		n = dp->d_size - (u_int16_t)((cp1 - dp->d_data));
 		if (n > buflen)
-			return (-1);  /* out of room! */
+			goto cleanup;  /* out of room! */
 		memcpy(cp, cp1, n);
 		cp += n;
 		buflen -= n;
@@ -1866,12 +1866,17 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 		if ((type == T_A || type == T_AAAA) && doadd)
 			addname(name, name, type, T_KEY, dp->d_class);
 		if (dp->d_size > buflen)
-			return (-1);
+			goto cleanup;
 		memcpy(cp, dp->d_data, dp->d_size);
 		PUTSHORT((u_int16_t)dp->d_size, sp);
 		cp += dp->d_size;
 	}
 	return (cp - buf);
+
+cleanup:
+	/* Rollback RR. */
+	ns_name_rollback(buf, (const u_char **)comp_ptrs, (const u_char **)edp);
+	return (-1);
 }
 
 static void
@@ -1995,6 +2000,10 @@ loop:
 				ns_debug(ns_log_default, 5,
 			  "addinfo: not enough room, remaining msglen = %d",
 					 save_msglen);
+				/* Rollback RRset. */
+				ns_name_rollback(save_cp, 
+				    (const u_char **)dnptrs,
+				    (const u_char **)dnptrs_end);
 				cp = save_cp;
 				msglen = save_msglen;
 				count = save_count;

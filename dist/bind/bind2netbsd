@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.9.2.2 1999/12/04 16:51:43 he Exp $
+#	$NetBSD: bind2netbsd,v 1.9.2.3 2000/12/13 23:57:42 he Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -66,7 +66,7 @@ mkdir -p $d/man
 
 ### Copy the files and directories
 cd $r/src
-pax -rvw LICENSE README bin include lib $d
+pax -rvw LICENSE LICENSE_RSA README bin include lib $d
 cd $r/src/port/netbsd/include
 pax -rvw port_after.h port_before.h prand_conf.h $d/include
 cd $r/src/port/netbsd/bin
@@ -78,10 +78,21 @@ pax -rvw dig.1 dnskeygen.1 dnsquery.1 host.1 named-bootconf.8 named-xfer.8 named
 cd $d/lib
 rm -r bsd cylink dnssafe
 
+### Remove yacc/lex-generated files
+cd $d/bin
+rm -f named/ns_parser.c named/ns_parser.h
+rm -f nslookup/commands.c
+
 ### Remove .cvsignore, Makefiles and *.mdoc files
 find $d -name '.cvsignore' -exec rm {} \;
 find $d -name 'Makefile' -exec rm {} \;
 cd $d/lib/isc && rm *.mdoc
+
+### Remove the $'s around the Header:
+find $d -type f -print | while read f; do
+	sed -e ' s/\$\(Header.*\) \$/\1/' < $f > /tmp/bind1f$$ && mv /tmp/bind1f$$ $f && \
+	echo removed \$Header tag from $f
+done
 
 ### Remove the $'s around the Id:
 find $d -type f -print | while read f; do
@@ -124,6 +135,7 @@ done
 # Make sure you add the RCS Id before you do the import.
 # This is the list of missing files as of 8.2.2-P5:
 # LICENSE
+# LICENSE_RSA
 # README
 # bin/probe_ipv6
 # bin/irpd/irs-irpd.conf
