@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2002/03/05 20:41:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 2002/03/24 13:38:14 lukem Exp $
 
-TOP=            ${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
+.include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.kernobj.mk>
 .include <bsd.own.mk>
 
