@@ -1,4 +1,4 @@
-/*	$NetBSD: gtvar.h,v 1.2 2003/03/16 07:05:34 matt Exp $	*/
+/*	$NetBSD: gtvar.h,v 1.3 2003/03/18 19:32:46 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,8 +44,6 @@
 #define	_DISCOVERY_DEV_GTVAR_H_
 
 #include <sys/systm.h>
-
-#define	GTPCI_NBUS 2
 
 struct gt_softc {
 	struct device gt_dev;
@@ -118,15 +116,11 @@ extern int gtpci_debug;
 
 void	gt_attach_common(struct gt_softc *);
 uint32_t gt_read_mpp(void);
-int	gt_cfprint (void *, const char *);
-
-struct pci_chipset;
-
-void	gtpci_config_bus(struct pci_chipset *, int);
+int	gt_cfprint(void *, const char *);
 
 /* int     gt_bs_extent_init(struct discovery_bus_space *, char *);  AKB */
-int	gt_mii_read (struct device *, struct device *, int, int);
-void	gt_mii_write (struct device *, struct device *, int, int, int);
+int	gt_mii_read(struct device *, struct device *, int, int);
+void	gt_mii_write(struct device *, struct device *, int, int, int);
 int	gtget_macaddr(struct gt_softc *,int, char *);
 void	gt_watchdog_service(void);
 
