@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_disk.h,v 1.10 2004/12/03 20:20:32 thorpej Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.11 2004/12/04 19:02:25 thorpej Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
@@ -61,14 +61,38 @@
 struct scsipi_rw_big {
 	u_int8_t opcode;
 	u_int8_t byte2;
-#define	SRWB_RELADDR	0x01
+#define	SRWB_RELADDR	0x01	/* obsolete */
+#define	SRWB_FUA_NV	0x02	/* force unit access non-volatile cache */
 #define	SRWB_FUA	0x08	/* force unit access */
 #define	SRWB_DPO	0x10	/* disable page out */
+#define	SRWB_PROTECT(x) ((x) << 5)
 	u_int8_t addr[4];
 	u_int8_t reserved;
 	u_int8_t length[2];
 	u_int8_t control;
 } __attribute__((packed));
+
+#define	READ_12			0xa8
+#define	WRITE_12		0xaa
+struct scsipi_rw_12 {
+	u_int8_t opcode;
+	u_int8_t byte2;		/* see scsipi_rw_big bits */
+	u_int8_t addr[4];
+	u_int8_t length[4];
+	u_int8_t byte11;
+	u_int8_t control;
+};
+
+#define	READ_16			0x88
+#define	WRITE_16		0x8a
+struct scsipi_rw_16 {
+	u_int8_t opcode;
+	u_int8_t byte2;		/* see scsipi_rw_big bits */
+	u_int8_t addr[8];
+	u_int8_t length[4];
+	u_int8_t byte15;
+	u_int8_t control;
+};
 
 #define	READ_CAPACITY		0x25
 struct scsipi_read_capacity {
