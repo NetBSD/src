@@ -1,4 +1,4 @@
-/* $NetBSD: tcbus.c,v 1.2 1999/11/16 02:39:03 nisimura Exp $ */
+/* $NetBSD: tcbus.c,v 1.3 1999/11/17 03:42:20 nisimura Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.2 1999/11/16 02:39:03 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.3 1999/11/17 03:42:20 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,8 +123,7 @@ tcbus_attach(parent, self, aux)
 		tba = &kn03_tc_desc[0]; break;
 #endif
 	default:
-		panic("config_tba: no TURBOchannel configured for systype %d",
-		systype);
+		panic("tcbus_attach: no TURBOchannel configured for systype = %d", systype);
 	}
 
 	tba->tba_busname = "tc";

@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_pmax.c,v 1.2 1999/11/15 09:50:31 nisimura Exp $ */
+/* $NetBSD: ibus_pmax.c,v 1.3 1999/11/17 03:42:21 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.2 1999/11/15 09:50:31 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.3 1999/11/17 03:42:21 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ ibus_pmax_attach(parent, self, aux)
 		break;
 #endif
 	default:
-		panic("ibus device not configured: systype = %d", systype);
+		panic("ibus_pmax_attach: no ibus configured for systype = %d", systype);
 	}
 
 	ibusattach(parent, self, &ida);
