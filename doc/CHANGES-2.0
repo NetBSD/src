@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.389 2004/08/12 18:18:03 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.390 2004/08/12 18:26:56 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6446,3 +6446,9 @@ sys/dev/mii/ukphy_subr.c			patch
 	If the PHY has 1000BASE-T capability, check to see if a 1000BASE-T speed
 	was negotiated, and check if we ended up mastering the clock if so.
 	[toshii, ticket #743]
+
+lib/libpthread/pthread_rwlock.c			1.9
+
+	pthread_rwlock_timedrdlock/pthread_rwlock_timedwrlock:
+	fix lock/unlock inversions in ERRORCHECK.
+	[yamt, ticket #751]
