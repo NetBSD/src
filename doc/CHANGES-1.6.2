@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.212 2003/10/22 06:07:03 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.213 2003/10/22 06:13:56 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2621,3 +2621,8 @@ usr.bin/netstat/inet.c				1.57
 	Introduce a new INVOKING status for callouts, and use it to close
 	a race condition in the TCP code.  Fixes PR#20390.
 	[he, ticket #1530]
+
+sys/sys/shm.h					1.35 (via patch)
+
+	Need to make sure __sysconf() has C linkage.
+	[kleink, ticket #1532]
