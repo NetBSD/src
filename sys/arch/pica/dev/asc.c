@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.7 1996/10/13 03:31:18 christos Exp $	*/
+/*	$NetBSD: asc.c,v 1.8 1996/12/10 21:27:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -596,6 +596,7 @@ ascattach(parent, self, aux)
 	asc->sc_link.adapter = &asc_switch;
 	asc->sc_link.device = &asc_dev;
 	asc->sc_link.openings = 2;
+	asc->sc_link.max_target = 7;
 
 	/*
 	 * Now try to attach all the sub devices.

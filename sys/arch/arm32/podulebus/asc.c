@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.14 1996/10/29 23:52:59 mark Exp $ */
+/* $NetBSD: asc.c,v 1.15 1996/12/10 21:27:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -172,6 +172,7 @@ ascattach(pdp, dp, auxp)
 	sbic->sc_link.adapter = &asc_scsiswitch;
 	sbic->sc_link.device = &asc_scsidev;
 	sbic->sc_link.openings = 1;	/* was 2 */
+	sbic->sc_link.max_target = 7;
 
 	printf(" hostid=%d", sbic->sc_link.adapter_target);
 

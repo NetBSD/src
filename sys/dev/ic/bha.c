@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.6 1996/11/28 00:43:26 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.7 1996/12/10 21:27:59 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -284,6 +284,7 @@ bha_attach(sc)
 	sc->sc_link.adapter = &bha_switch;
 	sc->sc_link.device = &bha_dev;
 	sc->sc_link.openings = 4;
+	sc->sc_link.max_target = 7;
 
 	/*
 	 * ask the adapter what subunits are present

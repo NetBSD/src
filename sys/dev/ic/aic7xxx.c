@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.18 1996/12/02 19:06:41 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.19 1996/12/10 21:27:58 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -705,12 +705,10 @@ ahc_attach(ahc)
 	}
 #elif defined(__NetBSD__)
 	/*
-	 * XXX - Update MI SCSI code
-	 *
-	 * if(ahc->type & AHC_WIDE)
-	 *	max target of both channel A and B = 15;
+	 * Set up max_target.
 	 */
-	
+	ahc->sc_link.max_target = (ahc->type & AHC_WIDE) ? 15 : 7;
+
 	/*
 	 * ask the adapter what subunits are present
 	 */
