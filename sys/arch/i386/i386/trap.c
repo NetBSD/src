@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.2 1993/09/24 08:46:08 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.3 1993/10/10 08:47:13 mycroft Exp $
  */
 
 /*
@@ -63,12 +63,12 @@
 #include "vm/vm_map.h"
 #include "sys/vmmeter.h"
 
+#include "machine/cpufunc.h"
 #include "machine/trap.h"
 
 
 struct	sysent sysent[];
 int	nsysent;
-unsigned rcr2();
 
 /*
  * Define the code needed before returning to user mode, for
@@ -127,6 +127,7 @@ trap(frame)
 	register struct proc *p = curproc;
 	u_quad_t sticks;
 	int ucode, type, code, eva;
+	extern char fusubail[];
 
 	frame.tf_eflags &= ~PSL_NT;	/* clear nested trap XXX */
 	type = frame.tf_trapno;
@@ -255,6 +256,10 @@ copyfault:
 
 		/*FALLTHROUGH*/
 	case T_PAGEFLT|T_USER:		/* page fault */
+		/* fusubail is used by [fs]uswintr to avoid page faulting */
+		if (curpcb->pcb_onfault == fusubail)
+			goto copyfault;
+
 	    {
 		register vm_offset_t va;
 		register struct vmspace *vm = p->p_vmspace;
