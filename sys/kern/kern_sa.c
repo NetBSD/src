@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.22 2003/09/09 15:16:30 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.23 2003/09/11 01:32:10 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.22 2003/09/09 15:16:30 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.23 2003/09/11 01:32:10 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.22 2003/09/09 15:16:30 cl Exp $");
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <sys/kernel.h>  /* For lbolt hack */
 
 static void sa_vp_donate(struct lwp *);
 static int sa_newcachelwp(struct lwp *);
@@ -75,21 +73,14 @@ int	sadebug = 0;
 #endif
 
 
+#define SA_LWP_STATE_LOCK(l, f) do {				\
+	(f) = (l)->l_flag;     					\
+	(l)->l_flag &= ~L_SA;					\
+} while (/*CONSTCOND*/ 0)
 
-#define SA_LWP_STATE_LOCK(l,s)      \
-    do {                            \
-           s =  (l)->l_flag ;       \
-           (l)->l_flag &= ~L_SA;    \
-    } while (0)                     
-           
-
-
-#define SA_LWP_STATE_UNLOCK(l,s)      \
-    do {                               \
-	(l)->l_flag |=  ( s & L_SA);   \
-    } while (0)                     
-   
-
+#define SA_LWP_STATE_UNLOCK(l, f) do {				\
+	(l)->l_flag |= (f) & L_SA;				\
+} while (/*CONSTCOND*/ 0)
 
 
 /*
@@ -209,9 +200,7 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 		return (error);
 
 	if ((sa->sa_nstacks == 0) && (sa->sa_vp_wait_count != 0))
-	{
 		l->l_flag |= L_SA_UPCALL; 
-	}
 
 	sa->sa_nstacks += count;
 	DPRINTFN(9, ("sa_stacks(%d.%d) nstacks + %d = %2d\n",
@@ -320,11 +309,11 @@ sa_yield(struct lwp *l)
 		 * A signal will probably wake us up. Worst case, the upcall
 		 * happens and just causes the process to yield again.
 		 */	
-	SCHED_ASSERT_UNLOCKED();
+		SCHED_ASSERT_UNLOCKED();
 
 		sa_vp_donate(l);
 
-	SCHED_ASSERT_UNLOCKED();
+		SCHED_ASSERT_UNLOCKED();
 
 		s = splsched();	/* Protect from timer expirations */
 		KDASSERT(sa->sa_vp == l);
@@ -339,8 +328,8 @@ sa_yield(struct lwp *l)
 		while  ((ret == 0) && (p->p_userret == NULL)) {
 			sa->sa_idle = l;
 			l->l_flag &= ~L_SA;
+
 			SCHED_ASSERT_UNLOCKED();
-		
 
 			ret = tsleep((caddr_t) l, PUSER | PCATCH, "sawait", 0);
 
@@ -351,12 +340,9 @@ sa_yield(struct lwp *l)
 			splx(s);
 			sa_vp_donate(l);
 			KDASSERT(sa->sa_vp == l);
-
 		
 			s = splsched();	/* Protect from timer expirations */
-
 		}
-
 
 		l->l_flag |= L_SA_UPCALL; 
 		splx(s);
@@ -424,15 +410,12 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	struct sadata_upcall *sau;
 	struct sadata *sa = l->l_proc->p_sa;
 	stack_t st;
-	int s;
+	int f;
 
 	/* XXX prevent recursive upcalls if we sleep formemory */
-	SA_LWP_STATE_LOCK(l,s);
-
+	SA_LWP_STATE_LOCK(l, f);
 	sau = sadata_upcall_alloc(1);
-
-	SA_LWP_STATE_UNLOCK(l,s);
-
+	SA_LWP_STATE_UNLOCK(l, f);
 
 	if (sa->sa_nstacks == 0) {
 		/* assign to assure that it gets freed */
@@ -534,8 +517,7 @@ sa_switch(struct lwp *l, int type)
 	    type, sa->sa_vp ? sa->sa_vp->l_lid : 0));
 	SCHED_ASSERT_LOCKED();
 
-	if (p->p_flag & P_WEXIT)
-	{
+	if (p->p_flag & P_WEXIT) {
 		mi_switch(l,0);
 		return;
 	}
@@ -677,10 +659,8 @@ sa_switch(struct lwp *l, int type)
 		mi_switch(l, NULL);
 		return;
 
-
 #endif
 	}
-
 
 	DPRINTFN(4,("sa_switch(%d.%d) switching to LWP %d.\n",
 	    p->p_pid, l->l_lid, l2 ? l2->l_lid : 0));
@@ -692,7 +672,6 @@ sa_switch(struct lwp *l, int type)
 	SCHED_ASSERT_UNLOCKED();
 	if (sa->sa_woken == l)
 		sa->sa_woken = NULL;
-
 
 	/*
 	 * The process is trying to exit. In this case, the last thing
@@ -707,7 +686,6 @@ sa_switch(struct lwp *l, int type)
 	 * for a SA_UNBLOCKED upcall when we get back to userlevel
 	 */
 	l->l_flag |= L_SA_UPCALL;
-
 }
 
 void
@@ -716,7 +694,7 @@ sa_switchcall(void *arg)
 	struct lwp *l;
 	struct proc *p;
 	struct sadata *sa;
-	int s;
+	int f;
 
 	l = arg;
 	p = l->l_proc;
@@ -729,10 +707,9 @@ sa_switchcall(void *arg)
 		/* Allocate the next cache LWP */
 		DPRINTFN(6,("sa_switchcall(%d.%d) allocating LWP\n",
 		    p->p_pid, l->l_lid));
-		SA_LWP_STATE_LOCK(l,s);
+		SA_LWP_STATE_LOCK(l, f);
 		sa_newcachelwp(l);
-		SA_LWP_STATE_UNLOCK(l,s);
-
+		SA_LWP_STATE_UNLOCK(l, f);
 	}
 	upcallret(l);
 }
@@ -858,9 +835,7 @@ sa_upcall_userret(struct lwp *l)
 	stack_t st;
 	void *stack, *ap;
 	ucontext_t u, *up;
-	int i, nsas, nint, nevents, type;
-	int s;
-	int sig;
+	int i, nsas, nint, nevents, type, f, sig;
 
 	p = l->l_proc;
 	sa = p->p_sa;
@@ -868,7 +843,7 @@ sa_upcall_userret(struct lwp *l)
 	SCHED_ASSERT_UNLOCKED();
 
 	KERNEL_PROC_LOCK(l);
-	SA_LWP_STATE_LOCK(l,s);
+	SA_LWP_STATE_LOCK(l, f);
 
 	DPRINTFN(7,("sa_upcall_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
 	    l->l_flag));
@@ -923,8 +898,9 @@ sa_upcall_userret(struct lwp *l)
 		l->l_flag &= ~L_SA_BLOCKING;
 
 		/* We migth have sneaked past signal handling and userret */
-		SA_LWP_STATE_UNLOCK(l,s);
+		SA_LWP_STATE_UNLOCK(l, f);
 		KERNEL_PROC_UNLOCK(l);
+
 		/* take pending signals */
 		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
@@ -934,20 +910,15 @@ sa_upcall_userret(struct lwp *l)
 			(p->p_userret)(l, p->p_userret_arg);
 
 		KERNEL_PROC_LOCK(l);
-		SA_LWP_STATE_LOCK(l,s);
-
-
-
+		SA_LWP_STATE_LOCK(l, f);
 	}
 
-	if (SIMPLEQ_EMPTY(&sa->sa_upcalls))
-	{		
-
+	if (SIMPLEQ_EMPTY(&sa->sa_upcalls)) {		
 		l->l_flag &= ~L_SA_UPCALL;
 
 		sa_vp_donate(l);	
 		
-		SA_LWP_STATE_UNLOCK(l,s);
+		SA_LWP_STATE_UNLOCK(l, f);
 		KERNEL_PROC_UNLOCK(l);
 		return;
 	}	
@@ -1073,17 +1044,15 @@ sa_upcall_userret(struct lwp *l)
 
 	cpu_upcall(l, type, nevents, nint, sapp, ap, stack, sa->sa_upcall);
 
-	if (SIMPLEQ_EMPTY(&sa->sa_upcalls)) 
-	{
+	if (SIMPLEQ_EMPTY(&sa->sa_upcalls)) {
 		l->l_flag &= ~L_SA_UPCALL;
 		sa_vp_donate(l);
 		/* May not be reached  */
 	}
 
-
 	/* May not be reached  */
 	
-	SA_LWP_STATE_UNLOCK(l,s);
+	SA_LWP_STATE_UNLOCK(l, f);
 	KERNEL_PROC_UNLOCK(l);
 }
 
@@ -1185,7 +1154,6 @@ sa_vp_repossess(struct lwp *l)
 static void
 sa_vp_donate(struct lwp *l)
 {
-	
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;	
 	struct lwp *l2;
@@ -1214,7 +1182,6 @@ sa_vp_donate(struct lwp *l)
 			sched_wakeup((caddr_t) l2);	
 
 			KERNEL_PROC_UNLOCK(l);
-
 
 			if((l2->l_stat == LSRUN) && ((l2->l_flag & L_INMEM) != 0))
 				mi_switch(l,l2);

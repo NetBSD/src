@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.121 2003/08/20 14:04:00 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.122 2003/09/11 01:32:09 cl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.121 2003/08/20 14:04:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.122 2003/09/11 01:32:09 cl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -175,7 +175,6 @@ exit1(struct lwp *l, int rv)
 	 */
 	sa = 0;
 	if (p->p_sa != NULL) {
-
 		l->l_flag &= ~L_SA;
 #if 0
 		p->p_flag &= ~P_SA;
@@ -466,9 +465,7 @@ exit_lwps(struct lwp *l)
 		l2->l_flag &= ~(L_DETACHED);
 	
 		if(l2->l_flag & L_SA_WANTS_VP)
-		{
 			wakeup(l2);
-		}
 
 		if ((l2->l_stat == LSSLEEP && (l2->l_flag & L_SINTR)) ||
 		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {
