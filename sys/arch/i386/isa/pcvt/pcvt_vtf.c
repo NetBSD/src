@@ -63,9 +63,6 @@
  *
  *---------------------------------------------------------------------------*/
 
-#include "vt.h"
-#if NVT > 0
-
 #define PCVT_INCLUDE_VT_SELATTR	/* get inline function from pcvt_hdr.h */
 
 #include "pcvt_hdr.h"		/* global include */
@@ -2214,8 +2211,6 @@ selective_erase(struct video_state *svsp, u_short *pcrtat, int length)
 		}
 	}
 }
-
-#endif	/* NVT > 0 */
 
 /* ------------------------- E O F ------------------------------------------*/
 
