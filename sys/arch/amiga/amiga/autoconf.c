@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 1995/10/05 12:40:54 chopps Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30 1996/03/17 01:16:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -45,7 +45,7 @@ void setroot __P((void));
 void swapconf __P((void));
 void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, char *));
-int mbmatch __P((struct device *, struct cfdata *, void *));
+int mbmatch __P((struct device *, void *, void *));
 
 int cold;	/* 1 if still booting */
 #include <sys/kernel.h>
@@ -127,7 +127,7 @@ amiga_config_found(pcfp, pdp, auxp, pfn)
 
 	pdp->dv_cfdata = pcfp;
 	if ((cf = config_search((cfmatch_t)NULL, pdp, auxp)) != NULL) {
-		cf->cf_driver->cd_attach(pdp, NULL, auxp);
+		cf->cf_attach->ca_attach(pdp, NULL, auxp);
 		pdp->dv_cfdata = NULL;
 		return(1);
 	}
@@ -165,17 +165,21 @@ config_console()
 /* 
  * mainbus driver 
  */
-struct cfdriver mainbuscd = {
-	NULL, "mainbus", (cfmatch_t)mbmatch, mbattach, 
-	DV_DULL, sizeof(struct device), NULL, 0
+struct cfattach mainbus_ca = {
+	sizeof(struct device), mbmatch, mbattach
+};
+
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL, NULL, 0
 };
 
 int
-mbmatch(pdp, cfp, auxp)
+mbmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
+
 	if (cfp->cf_unit > 0)
 		return(0);
 	/*

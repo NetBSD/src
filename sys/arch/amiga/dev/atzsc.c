@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.13 1995/09/04 13:04:42 chopps Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.14 1996/03/17 01:17:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -53,7 +53,7 @@
 
 int atzscprint __P((void *auxp, char *));
 void atzscattach __P((struct device *, struct device *, void *));
-int atzscmatch __P((struct device *, struct cfdata *, void *));
+int atzscmatch __P((struct device *, void *, void *));
 
 void atzsc_enintr __P((struct sbic_softc *));
 void atzsc_dmastop __P((struct sbic_softc *));
@@ -80,19 +80,23 @@ struct scsi_device atzsc_scsidev = {
 int	atzsc_dmadebug = 0;
 #endif
 
-struct cfdriver atzsccd = {
-	NULL, "atzsc", (cfmatch_t)atzscmatch, atzscattach,
-	DV_DULL, sizeof(struct sbic_softc), NULL, 0 };
+struct cfattach atzsc_ca = {
+	sizeof(struct sbic_softc), atzscmatch, atzscattach
+};
+
+struct cfdriver atzsc_cd = {
+	NULL, "atzsc", DV_DULL, NULL, 0
+};
 
 /*
  * if we are an A3000 we are here.
  */
 int
-atzscmatch(pdp, cdp, auxp)
+atzscmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.12 1995/08/18 15:28:00 chopps Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.13 1996/03/17 01:17:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -50,7 +50,7 @@
 
 int ivscprint __P((void *auxp, char *));
 void ivscattach __P((struct device *, struct device *, void *));
-int ivscmatch __P((struct device *, struct cfdata *, void *));
+int ivscmatch __P((struct device *, void *, void *));
 
 int ivsc_intr __P((struct sci_softc *));
 int ivsc_dma_xfer_in __P((struct sci_softc *dev, int len,
@@ -82,18 +82,21 @@ extern int sci_data_wait;
 
 int ivsdma_pseudo = 1;		/* 0=off, 1=on */
 
-struct cfdriver ivsccd = {
-	NULL, "ivsc", (cfmatch_t)ivscmatch, ivscattach, 
-	DV_DULL, sizeof(struct sci_softc), NULL, 0 };
+struct cfattach ivsc_ca = {
+	sizeof(struct sci_softc), ivscmatch, ivscattach
+};
+
+struct cfdriver ivsc_cd = {
+	NULL, "ivsc", DV_DULL, NULL, 0
+};
 
 /*
  * if this is an IVS board
  */
 int
-ivscmatch(pdp, cdp, auxp)
+ivscmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
 	struct zbus_args *zap;
 

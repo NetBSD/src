@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.2 1996/03/06 23:30:58 mark Exp $	*/
+/*	$NetBSD: com.c,v 1.3 1996/03/17 01:24:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -106,8 +106,12 @@ void compoll __P((void *));
 int comparam __P((struct tty *, struct termios *));
 void comstart __P((struct tty *));
 
-struct cfdriver comcd = {
-	NULL, "com", comprobe, comattach, DV_TTY, sizeof(struct com_softc)
+struct cfattach com_ca = {
+	sizeof(struct com_softc), comprobe, comattach
+};
+
+struct cfdriver com_cd = {
+	NULL, "com", DV_TTY
 };
 
 int	comdefaultrate = TTYDEF_SPEED;
@@ -276,9 +280,9 @@ comopen(dev, flag, mode, p)
 	int s;
 	int error = 0;
  
-	if (unit >= comcd.cd_ndevs)
+	if (unit >= com_cd.cd_ndevs)
 		return ENXIO;
-	sc = comcd.cd_devs[unit];
+	sc = com_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -371,7 +375,7 @@ comclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	int unit = COMUNIT(dev);
-	struct com_softc *sc = comcd.cd_devs[unit];
+	struct com_softc *sc = com_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
 	int s;
@@ -410,7 +414,7 @@ comread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = comcd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
@@ -422,7 +426,7 @@ comwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = comcd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -432,7 +436,7 @@ struct tty *
 comtty(dev)
 	dev_t dev;
 {
-	struct com_softc *sc = comcd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -460,7 +464,7 @@ comioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = COMUNIT(dev);
-	struct com_softc *sc = comcd.cd_devs[unit];
+	struct com_softc *sc = com_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
 	int error;
@@ -571,7 +575,7 @@ comparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct com_softc *sc = comcd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
 	int iobase = sc->sc_iobase;
 	int ospeed = comspeed(t->c_ospeed);
 	u_char lcr;
@@ -679,7 +683,7 @@ void
 comstart(tp)
 	struct tty *tp;
 {
-	struct com_softc *sc = comcd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
 	int iobase = sc->sc_iobase;
 	int s;
 
@@ -774,8 +778,8 @@ compoll(arg)
 	comevents = 0;
 	splx(s);
 
-	for (unit = 0; unit < comcd.cd_ndevs; unit++) {
-		sc = comcd.cd_devs[unit];
+	for (unit = 0; unit < com_cd.cd_ndevs; unit++) {
+		sc = com_cd.cd_devs[unit];
 		if (sc == 0 || sc->sc_ibufp == sc->sc_ibuf)
 			continue;
 
