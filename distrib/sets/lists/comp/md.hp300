@@ -1,4 +1,4 @@
-# $NetBSD: md.hp300,v 1.39 2000/06/26 15:49:50 kleink Exp $
+# $NetBSD: md.hp300,v 1.40 2000/11/18 05:14:28 tv Exp $
 ./usr/include/hp300		comp-c-include
 ./usr/include/hp300/_G_config.h		comp-c-include
 ./usr/include/hp300/ansi.h		comp-c-include
@@ -43,4 +43,3 @@
 ./usr/include/hp300/types.h		comp-c-include
 ./usr/include/hp300/varargs.h		comp-c-include
 ./usr/include/hp300/vmparam.h		comp-c-include
-./usr/lib/c++rt0.o			comp-cxx-lib
