@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.9 1998/09/02 19:17:22 matthias Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.10 2000/06/25 13:37:54 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -46,7 +46,8 @@
 #ifndef	_MACHINE_DB_MACHDEP_H_
 #define	_MACHINE_DB_MACHDEP_H_
 
-#include <vm/vm_prot.h>
+#include <uvm/uvm_prot.h>
+
 #include <vm/vm_param.h>
 #include <vm/vm_inherit.h>
 
