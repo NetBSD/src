@@ -1,4 +1,4 @@
-/*      $NetBSD: grf_cl.c,v 1.17 1996/10/21 09:31:53 veego Exp $        */
+/*      $NetBSD: grf_cl.c,v 1.18 1996/12/23 09:10:04 veego Exp $        */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -106,7 +106,7 @@ static void RegOffpass __P((volatile caddr_t));
 
 void grfclattach __P((struct device *, struct device *, void *));
 int grfclprint __P((void *, const char *));
-int grfclmatch __P((struct device *, void *, void *));
+int grfclmatch __P((struct device *, struct cfdata *, void *));
 void cl_memset __P((unsigned char *, unsigned char, int));
 
 /* Graphics display definitions.
@@ -182,13 +182,11 @@ struct cfdriver grfcl_cd = {
 static struct cfdata *cfdata;
 
 int
-grfclmatch(pdp, match, auxp)
+grfclmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void   *match, *auxp;
+	struct cfdata *cfp;
+	void   *auxp;
 {
-#ifdef CL5426CONSOLE
-	struct cfdata *cfp = match;
-#endif
 	struct zbus_args *zap;
 	static int regprod, fbprod;
 	int error;

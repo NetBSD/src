@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.7 1996/10/13 03:07:04 christos Exp $	*/
+/*	$NetBSD: grf_et.c,v 1.8 1996/12/23 09:10:06 veego Exp $	*/
 
 /*
  * Copyright (c) 1996 Tobias Abt
@@ -98,7 +98,7 @@ int	et_blank __P((struct grf_softc *gp, int *on));
 static int et_getControllerType __P((struct grf_softc *gp));
 static int et_getDACType __P((struct grf_softc *gp));
 
-int	grfetmatch __P((struct device *, void *, void *));
+int	grfetmatch __P((struct device *, struct cfdata *, void *));
 void	grfetattach __P((struct device *, struct device *, void *));
 int	grfetprint __P((void *, const char *));
 void	et_memset __P((unsigned char *d, unsigned char c, int l));
@@ -182,13 +182,11 @@ struct cfdriver grfet_cd = {
 static struct cfdata *cfdata;
 
 int
-grfetmatch(pdp, match, auxp)
+grfetmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-#ifdef TSENGCONSOLE
-	struct cfdata *cfp = match;
-#endif
 	struct zbus_args *zap;
 	static int regprod, fbprod;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.46 1996/10/13 03:07:19 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.47 1996/12/23 09:10:20 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -119,7 +119,7 @@ static void ite_sifilter __P((void *, void *));
 void iteputchar __P((int c, struct ite_softc *ip));
 void ite_putstr __P((const char * s, int len, dev_t dev));
 void iteattach __P((struct device *, struct device *, void *));
-int itematch __P((struct device *, void *, void *));
+int itematch __P((struct device *, struct cfdata *, void *));
 static void iteprecheckwrap __P((struct ite_softc *));
 static void itecheckwrap __P((struct ite_softc *));
 struct ite_softc *getitesp __P((dev_t));
@@ -157,11 +157,11 @@ struct cfdriver ite_cd = {
 };
 
 int
-itematch(pdp, match, auxp)
+itematch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	struct cfdata *cdp = match;
 	struct grf_softc *gp;
 	int maj;
 	
@@ -170,7 +170,7 @@ itematch(pdp, match, auxp)
 	 * all that our mask allows (more than enough no one 
 	 * has > 32 monitors for text consoles on one machine)
 	 */
-	if (cdp->cf_unit >= sizeof(ite_confunits) * NBBY)
+	if (cfp->cf_unit >= sizeof(ite_confunits) * NBBY)
 		return(0);
 	/*
 	 * XXX
@@ -181,7 +181,7 @@ itematch(pdp, match, auxp)
 	for(maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == iteopen)
 			break;
-	gp->g_itedev = makedev(maj, cdp->cf_unit);
+	gp->g_itedev = makedev(maj, cfp->cf_unit);
 	return(1);
 }
 

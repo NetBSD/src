@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.21 1996/12/10 21:27:20 thorpej Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.22 1996/12/23 09:09:52 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -52,7 +52,7 @@
 #include <amiga/dev/zbusvar.h>
 
 void atzscattach __P((struct device *, struct device *, void *));
-int atzscmatch __P((struct device *, void *, void *));
+int atzscmatch __P((struct device *, struct cfdata *, void *));
 
 void atzsc_enintr __P((struct sbic_softc *));
 void atzsc_dmastop __P((struct sbic_softc *));
@@ -95,9 +95,10 @@ struct cfdriver atzsc_cd = {
  * if we are an A3000 we are here.
  */
 int
-atzscmatch(pdp, match, auxp)
+atzscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct zbus_args *zap;
 

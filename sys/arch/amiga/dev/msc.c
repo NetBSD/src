@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.12 1996/12/20 19:21:11 veego Exp $	*/
+/*	$NetBSD: msc.c,v 1.13 1996/12/23 09:10:26 veego Exp $	*/
 
 /*
  * Copyright (c) 1993 Zik.
@@ -165,7 +165,7 @@ struct   speedtab *mscspeedtab;
 int mscmctl __P((dev_t dev, int bits, int howto));
 void mscmint __P((register void *data));
 
-int mscmatch __P((struct device *, void *, void *));
+int mscmatch __P((struct device *, struct cfdata *, void *));
 void mscattach __P((struct device *, struct device *, void *));
 
 #define	SWFLAGS(dev)	(msc->openflags | (MSCDIALIN(dev) ? 0 : TIOCFLAG_SOFTCAR))
@@ -181,9 +181,10 @@ struct cfdriver msc_cd = {
 
 
 int
-mscmatch(pdp, match, auxp)
+mscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct zbus_args *zap;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.18 1996/12/10 21:27:28 thorpej Exp $	*/
+/*	$NetBSD: wesc.c,v 1.19 1996/12/23 09:10:30 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -51,7 +51,7 @@
 #include <amiga/dev/zbusvar.h>
 
 void wescattach __P((struct device *, struct device *, void *));
-int wescmatch __P((struct device *, void *, void *));
+int wescmatch __P((struct device *, struct cfdata *, void *));
 int wesc_dmaintr __P((void *));
 #ifdef DEBUG
 void wesc_dump __P((void));
@@ -87,9 +87,10 @@ struct cfdriver wesc_cd = {
  * if we are an MacroSystemsUS Warp Engine
  */
 int
-wescmatch(pdp, match, auxp)
+wescmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct zbus_args *zap;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.15 1996/10/13 03:07:17 christos Exp $	*/
+/*	$NetBSD: if_es.c,v 1.16 1996/12/23 09:10:17 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -122,7 +122,7 @@ void esinit __P((struct es_softc *));
 void esreset __P((struct es_softc *));
 void esstop __P((struct es_softc *));
 
-int esmatch __P((struct device *, void *, void *));
+int esmatch __P((struct device *, struct cfdata *, void *));
 void esattach __P((struct device *, struct device *, void *));
 
 struct cfattach es_ca = {
@@ -134,9 +134,10 @@ struct cfdriver es_cd = {
 };
 
 int
-esmatch(parent, match, aux)
+esmatch(parent, cfp, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cfp;
+	void *aux;
 {
 	struct zbus_args *zap = aux;
 

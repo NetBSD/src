@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.33 1996/10/13 03:07:06 christos Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.34 1996/12/23 09:10:09 veego Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -765,7 +765,7 @@ rt_load_mon(gp, md)
 
 void grfrtattach __P((struct device *, struct device *, void *));
 int grfrtprint __P((void *, const char *));
-int grfrtmatch __P((struct device *, void *, void *));
+int grfrtmatch __P((struct device *, struct cfdata *, void *));
  
 int rt_mode __P((struct grf_softc *, u_long, void *, u_long, int));
 static int rt_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
@@ -798,12 +798,12 @@ static struct cfdata *cfdata;
  * tricky regarding the console.
  */
 int 
-grfrtmatch(pdp, match, auxp)
+grfrtmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 #ifdef RETINACONSOLE
-	struct cfdata *cfp = match;
 	static int rtconunit = -1;
 #endif
 	struct zbus_args *zap;

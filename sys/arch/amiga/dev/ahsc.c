@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.17 1996/12/10 21:27:19 thorpej Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.18 1996/12/23 09:09:51 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -52,7 +52,7 @@
 #include <amiga/dev/zbusvar.h>
 
 void ahscattach __P((struct device *, struct device *, void *));
-int ahscmatch __P((struct device *, void *, void *));
+int ahscmatch __P((struct device *, struct cfdata *, void *));
 
 void ahsc_enintr __P((struct sbic_softc *));
 void ahsc_dmastop __P((struct sbic_softc *));
@@ -95,9 +95,10 @@ struct cfdriver ahsc_cd = {
  * if we are an A3000 we are here.
  */
 int
-ahscmatch(pdp, match, auxp)
+ahscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	char *mbusstr;
 
