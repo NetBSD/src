@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.45 1998/10/02 18:53:23 drochner Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.46 1998/10/03 16:13:20 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.45 1998/10/02 18:53:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.46 1998/10/03 16:13:20 drochner Exp $");
 
 /*
  * SunOS compatibility module.
@@ -683,6 +683,56 @@ ultrix_sys_sigsuspend(p, v, retval)
 	return (sigsuspend1(p, &ss));
 }
 
+#define ULTRIX_SV_ONSTACK 0x0001  /* take signal on signal stack */
+#define ULTRIX_SV_INTERRUPT 0x0002  /* do not restart system on signal return */
+#define ULTRIX_SV_OLDSIG 0x1000  /* Emulate old signal() for POSIX */
+
+int
+ultrix_sys_sigvec(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ultrix_sys_sigvec_args *uap = v;
+	struct sigvec nsv, osv;
+	struct sigaction nsa, osa;
+	int error;
+
+	if (SCARG(uap, nsv)) {
+		error = copyin(SCARG(uap, nsv), &nsv, sizeof(nsv));
+		if (error)
+			return (error);
+		nsa.sa_handler = nsv.sv_handler;
+#if 0 /* documentation */
+		/* ONSTACK is identical */
+		nsa.sa_flags = nsv.sv_flags & ULTRIX_SV_ONSTACK;
+		if ((nsv.sv_flags & ULTRIX_SV_OLDSIG)
+		    /* old signal() - always restart */
+		    || (!(nsv.sv_flags & ULTRIX_SV_INTERRUPT))
+		    /* inverted meaning (same bit) */
+		    )
+			nsa.sa_flags |= SA_RESTART;
+#else /* optimized - assuming ULTRIX_SV_OLDSIG=>!ULTRIX_SV_INTERRUPT */
+		nsa.sa_flags = nsv.sv_flags & ~ULTRIX_SV_OLDSIG;
+		nsa.sa_flags ^= SA_RESTART;
+#endif
+		native_sigset13_to_sigset(&nsv.sv_mask, &nsa.sa_mask);
+	}
+	error = sigaction1(p, SCARG(uap, signum),
+	    SCARG(uap, nsv) ? &nsa : 0, SCARG(uap, osv) ? &osa : 0);
+	if (error)
+		return (error);
+	if (SCARG(uap, osv)) {
+		osv.sv_handler = osa.sa_handler;
+		osv.sv_flags = osa.sa_flags ^ SA_RESTART;
+		osv.sv_flags &= (ULTRIX_SV_ONSTACK | ULTRIX_SV_INTERRUPT);
+		native_sigset_to_sigset13(&osa.sa_mask, &osv.sv_mask);
+		error = copyout(&osv, SCARG(uap, osv), sizeof(osv));
+		if (error)
+			return (error);
+	}
+	return (0);
+}
 
 int
 ultrix_sys_shmsys(p, v, retval)
