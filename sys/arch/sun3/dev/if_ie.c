@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.11 1996/05/07 01:35:48 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.12 1996/05/09 21:15:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -322,7 +322,7 @@ void
 iewatchdog(ifp)
 	struct ifnet *ifp;
 {
-	struct ie_softc *sc = ifp->if_unit;
+	struct ie_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
