@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.10 1998/01/09 22:34:58 fvdl Exp $	*/
+/*	$NetBSD: pchb.c,v 1.11 1998/01/10 01:15:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ pchbmatch(parent, match, aux)
 		break;
 	case PCI_VENDOR_UMC:
 		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_UMC_UM8891N:
 		case PCI_PRODUCT_UMC_UM8881F:
 			return (1);
 		}
