@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.23 1997/10/14 20:34:38 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.23.2.1 1997/11/13 08:11:04 mellon Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -40,7 +40,8 @@
  */
 
 /*-
- * Copyright (c) 1993, 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1996, 1997
+ *	Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -109,7 +110,6 @@ extern	vm_offset_t avail_end;
 /* default interrupt vector table entries */
 typedef (*vector) __P((void));
 extern vector IDTVEC(intr)[];
-extern struct gate_descriptor idt[];
 void isa_strayintr __P((int));
 void intr_calculatemasks __P((void));
 int fakeintr __P((void *));
