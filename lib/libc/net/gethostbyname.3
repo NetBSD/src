@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostbyname.3,v 1.17 2000/04/24 16:17:07 itojun Exp $
+.\"	$NetBSD: gethostbyname.3,v 1.18 2001/02/28 02:30:31 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,6 @@
 .Nm gethostbyname ,
 .Nm gethostbyname2 ,
 .Nm gethostbyaddr ,
-.Nm gethostent ,
 .Nm sethostent ,
 .Nm endhostent ,
 .Nm herror ,
@@ -57,8 +56,6 @@
 .Fn gethostbyname2 "const char *name" "int af"
 .Ft struct hostent *
 .Fn gethostbyaddr "const char *addr" "int len" "int type"
-.Ft struct hostent *
-.Fn gethostent void
 .Ft void
 .Fn sethostent "int stayopen"
 .Ft void
@@ -83,7 +80,7 @@ broken-out fields from a line in
 .Pa /etc/hosts ,
 or database entries supplied by the
 .Xr yp 8
-system .
+system.
 The order of the lookups is controlled by the
 .Sq hosts
 entry in
@@ -250,25 +247,15 @@ for example, a mail-forwarder may be registered for this domain.
 .Xr hostname 7 ,
 .Xr named 8
 .Sh CAVEAT
-The
-.Fn gethostent
-function is defined, and
-.Fn sethostent
-and
-.Fn endhostent
-are redefined,
-when
-.Xr libc 3
-is built to use only the routines to lookup in
+If the search routines specified in
+.Xr nsswitch.conf 5
+decide to read the
 .Pa /etc/hosts
-and not the name server.
-.Pp
-The
-.Fn gethostent
-function
-reads the next line of
-.Pa /etc/hosts ,
-opening the file if necessary.
+file,
+.Fn gethostbyname
+and other functions will
+read the next line of the file,
+re-opening the file if necessary.
 .Pp
 The
 .Fn sethostent
@@ -286,8 +273,7 @@ or
 .Pp
 The
 .Fn endhostent
-function
-closes the file.
+function closes the file.
 .Sh HISTORY
 The
 .Fn herror
@@ -297,7 +283,6 @@ The
 .Fn endhostent ,
 .Fn gethostbyaddr ,
 .Fn gethostbyname ,
-.Fn gethostent ,
 and
 .Fn sethostent
 functions appeared in
