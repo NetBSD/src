@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.5 1997/08/27 07:31:36 mikel Exp $
+.\"	$NetBSD: swapctl.2,v 1.6 1997/10/10 13:17:32 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" Copyright (c) 1980, 1991, 1993
@@ -132,6 +132,12 @@ parameters have the same function as for the
 .Dv SWAP_ON
 case, except that they change the priority of a currently enabled swap device.
 .El
+.Pp
+When swapping is enabled on a block device, the first portion of the disk is
+left unused to prevent any disklable present from being overwritten.  This
+space is allocated from the swap device when the
+.Dv SWAP_ON
+command is used.
 .Sh RETURN VALUES
 If the
 .Fa cmd
