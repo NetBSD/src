@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.20 2002/05/18 17:27:34 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.21 2002/06/25 01:02:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ spllower(ncpl)
 static __inline void
 softintr(register int sir)
 {
-	__asm __volatile("orl %1, %0" : "=m"(ipending) : "ir" (1 << sir));
+	__asm __volatile("lock ; orl %1, %0" : "=m"(ipending) : "ir" (1 << sir));
 }
 
 #define	setsoftnet()	softintr(SIR_NET)
@@ -242,16 +242,19 @@ struct i386_soft_intr {
 	TAILQ_HEAD(, i386_soft_intrhand)
 		softintr_q;
 	int softintr_ssir;
+	struct simplelock softintr_slock;
 };
 
 #define	i386_softintr_lock(si, s)					\
 do {									\
 	/* XXX splhigh braindamage on i386 */				\
 	(s) = splserial();						\
+	simple_lock(&si->softintr_slock);				\
 } while (/*CONSTCOND*/ 0)
 
 #define	i386_softintr_unlock(si, s)					\
 do {									\
+	simple_unlock(&si->softintr_slock);				\
 	splx((s));							\
 } while (/*CONSTCOND*/ 0)
 
