@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.16 2003/11/03 06:03:47 kochi Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.17 2003/11/03 17:23:38 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.16 2003/11/03 06:03:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.17 2003/11/03 17:23:38 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,15 +207,24 @@ struct acpi_ec_softc {
 	int		sc_flags;	/* see below */
 
 	uint32_t	sc_csrvalue;	/* saved control register */
-};
+
+	struct lock	sc_lock;	/* serialize operations to this EC */
+	UINT32		sc_glkhandle;	/* global lock handle */
+	UINT32		sc_glk;		/* need global lock? */
+} *acpiec_ecdt_softc;
 
 static const char * const ec_hid[] = {
 	"PNP0C09",
 	NULL
 };
 
-#define	EC_F_LOCKED	0x01		/* EC is locked */
 #define	EC_F_PENDQUERY	0x02		/* query is pending */
+
+/*
+ * how long to wait to acquire global lock.
+ * the value is taken from FreeBSD driver.
+ */
+#define	EC_LOCK_TIMEOUT	1000
 
 #define	EC_DATA_READ(sc)						\
 	bus_space_read_1((sc)->sc_data_st, (sc)->sc_data_sh, 0)
@@ -231,23 +240,39 @@ static __inline int
 EcIsLocked(struct acpi_ec_softc *sc)
 {
  
-	return (sc->sc_flags & EC_F_LOCKED);
+	return (lockstatus(&sc->sc_lock) == LK_EXCLUSIVE);
 }
 
 static __inline void
 EcLock(struct acpi_ec_softc *sc)
 {
+	ACPI_STATUS status;
 
-	sc->sc_flags |= EC_F_LOCKED;
-	AcpiOsAcquireLock (AcpiGbl_GpeLock, ACPI_NOT_ISR);
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+	if (sc->sc_glk) {
+		status = AcpiAcquireGlobalLock(EC_LOCK_TIMEOUT,
+		    &sc->sc_glkhandle);
+		if (ACPI_FAILURE(status)) {
+			printf("%s: failed to acquire global lock\n",
+			    sc->sc_dev.dv_xname);
+			lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+			return;
+		}
+	}
 }
 
 static __inline void
 EcUnlock(struct acpi_ec_softc *sc)
 {
+	ACPI_STATUS status;
 
-	AcpiOsReleaseLock (AcpiGbl_GpeLock, ACPI_NOT_ISR);
-	sc->sc_flags &= ~EC_F_LOCKED;
+	if (sc->sc_glk) {
+		status = AcpiReleaseGlobalLock(sc->sc_glkhandle);
+		if (ACPI_FAILURE(status))
+			printf("%s: failed to release global lock\n",
+			    sc->sc_dev.dv_xname);
+	}
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 }
 
 typedef struct {
@@ -295,6 +320,34 @@ acpiec_match(struct device *parent, struct cfdata *match, void *aux)
 	return (acpi_match_hid(aa->aa_node->ad_devinfo, ec_hid));
 }
 
+#if 0
+void
+acpiec_early_attach(struct device *parent)
+{
+	EC_BOOT_RESOURCES *ep;
+	ACPI_HANDLE handle;
+
+	status = AcpiGetFirmwareTable("ECDT", 1, ACPI_LOGICAL_ADDRESSING,
+	    (ACPI_TABLE_HEADER **)&ep;
+	if (ACPI_FAILURE(status))
+		return;
+
+	if (ep->EcControl.RegisterBitWidth != 8 ||
+	    ep->EcData.RegisterBitWidth != 8) {
+		printf("%s: ECDT data is invalid, RegisterBitWidth=%d/%d\n",
+		    ep->EcControl.RegisterBitWidth, ep->EcData.RegisterBitWidth);
+		return;
+	}
+
+	status = AcpiGetHandle(ACPI_ROOT_OBJECT, ep->EcId, &handle);
+	if (ACPI_FAILURE(status)) {
+		printf("%s: failed to look up EC object %s: %s\n", ep->EcId,
+		    AcpiFormatExeception(status));
+		return (status);
+	}
+}
+#endif
+
 /*
  * acpiec_attach:
  *
@@ -311,6 +364,8 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	printf(": ACPI Embedded Controller\n");
+
+	lockinit(&sc->sc_lock, PWAIT, "eclock", 0, 0);
 
 	sc->sc_node = aa->aa_node;
 
@@ -363,6 +418,18 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: unable to evaluate _GPE: %d\n",
 		    sc->sc_dev.dv_xname, rv);
 		return;
+	}
+
+	/*
+	 * evaluate _GLK to see if we should acquire global lock
+	 * when accessing the EC.
+	 */
+	if ((rv = acpi_eval_integer(sc->sc_node->ad_handle, "_GLK",
+	     &sc->sc_glk)) != AE_OK) {
+		if (rv != AE_NOT_FOUND)
+			printf("%s: unable to evaluate _GLK: %d\n",
+			    sc->sc_dev.dv_xname, rv);
+		sc->sc_glk = 0;
 	}
 
 	/*
