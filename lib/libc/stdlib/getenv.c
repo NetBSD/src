@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getenv.c	5.8 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: getenv.c,v 1.3 1993/08/26 00:47:57 jtc Exp $";
+static char *rcsid = "$Id: getenv.c,v 1.4 1993/10/15 01:26:42 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -49,13 +49,13 @@ getenv(name)
 	const char *name;
 {
 	int offset;
-	char *_findenv();
+	char *__findenv();
 
-	return(_findenv(name, &offset));
+	return(__findenv(name, &offset));
 }
 
 /*
- * _findenv --
+ * __findenv --
  *	Returns pointer to value associated with name, if any, else NULL.
  *	Sets offset to be the offset of the name/value combination in the
  *	environmental array, for use by setenv(3) and unsetenv(3).
@@ -64,7 +64,7 @@ getenv(name)
  *	This routine *should* be a static; don't use it.
  */
 char *
-_findenv(name, offset)
+__findenv(name, offset)
 	register char *name;
 	int *offset;
 {

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)setenv.c	5.6 (Berkeley) 6/4/91";*/
-static char *rcsid = "$Id: setenv.c,v 1.4 1993/08/26 00:48:11 jtc Exp $";
+static char *rcsid = "$Id: setenv.c,v 1.5 1993/10/15 01:26:44 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stddef.h>
@@ -54,12 +54,12 @@ setenv(name, value, rewrite)
 	static int alloced;			/* if allocated space before */
 	register char *C;
 	int l_value, offset;
-	char *_findenv();
+	char *__findenv();
 
 	if (*value == '=')			/* no `=' in value */
 		++value;
 	l_value = strlen(value);
-	if ((C = _findenv(name, &offset))) {	/* find if already exists */
+	if ((C = __findenv(name, &offset))) {	/* find if already exists */
 		if (!rewrite)
 			return (0);
 		if (strlen(C) >= l_value) {	/* old larger; copy over */
@@ -111,9 +111,9 @@ unsetenv(name)
 	extern char **environ;
 	register char **P;
 	int offset;
-	char *_findenv();
+	char *__findenv();
 
-	while (_findenv(name, &offset))		/* if set multiple times */
+	while (__findenv(name, &offset))		/* if set multiple times */
 		for (P = &environ[offset];; ++P)
 			if (!(*P = *(P + 1)))
 				break;
