@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: bcopy.S,v 1.3 1993/12/07 03:28:53 mycroft Exp $"
+	.asciz "$Id: bcopy.S,v 1.4 1995/02/08 18:15:25 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
@@ -62,7 +62,7 @@ ENTRY(bcopy)
 #endif
 #endif
 	movl	sp@(12),d1	/* check count */
-	jle	bcdone		/* <= 0, don't do anything */
+	beq	bcdone		/* == 0, don't do anything */
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	movl	sp@(4),a1	/* dest address */
 	movl	sp@(8),a0	/* src address */
