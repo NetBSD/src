@@ -1,0 +1,244 @@
+/*	$NetBSD: msg.md.de,v 1.1 2004/03/04 14:28:49 martin Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Piermont Information Systems Inc.
+ * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* MD Message catalog -- german, mac68k version */
+
+message md_hello
+{
+}
+
+message fullpart
+{NetBSD wird nun auf die Festplatte %s installiert. Sie
+können die gesamte Disk oder nur einen Teil davon für NetBSD
+verwenden.
+Ihre Wahl?
+}
+
+message nodiskmap
+{Die Festplatte %s ist anscheinend nicht für die Verwendung mit MacOS
+initialisiert worden. Dieses Programm benutzt das Disk-Layout aus
+der Disk Partition Map, die vom MacOS Formatierungsprogramm beim
+Initialisieren der Festplatte geschrieben wird.
+Sie können nun:
+
+* Die Installation abbrechen. Sie können die Disk mit einem beliebigen
+Formatierungsprogramm initialisieren. Partitionen müssen nicht als
+A/UX definiert sein, das NetBSD Installationsprogramm bietet Ihnen
+später, wenn nötig, die Überarbeitung der Partitionstypen an.
+
+* Sysinst erlauben, die Disk Partition Map auf die Disk zu schreiben.
+Diese Disk wird dann nicht für MacOS bootbar sein und kann eventuell
+gar nicht mit MacOS benutzt werden, solange die MacOS Treiber nicht mit
+einem MacOS-kompatiblem Formatierer installiert werden.
+
+}
+
+message okwritediskmap
+{Sysinst wird ihre Disk mit einer neue Disk Partition Map initialisieren,
+deren Werte vom Disk-Treiber geliefert wurden. Diese Standard Map wird
+eine minimale Block0-Definition enthalten, eine Partition Map für bis
+zu 15 Partitionen, sowie vordefinierte Partitionen für den Mac, Disktreiber
+sowie eine minimale MacOS HFS Partition. Der Rest der Festplatte bleibt
+ungenutzt. Die Disktreiber Partition wird nicht initialisiert, sodaß das
+Volume nicht mit MacOS bootbar sein wird. Wenn Sie fortfahren, werden
+Sie aufgefordert diese Partition Map zu editieren, so wie Sie es für die
+NetBSD Installation benötigen. Die Map wird nicht auf die Festplatte
+geschrieben, bis Sie die Partitionierung erfolgreich abgeschlossen haben.
+
+Möchten Sie fortfahren?}
+
+message part_header
+{Part      Start      Größe FS-Typ verw.     Dateisystem (Name)
+---- ---------- ---------- ------ --------- ------------------\n}
+
+message part_row
+{%3s%c %10d %10d %6s %-9s %s\n}
+
+message ovrwrite
+{Ihr Disk enthält mindestens eine MacOS HFS Partition. Das überschreiben
+der ganzen Festplatte wird die Disk für MacOS unbenutzbar machen. Sie
+Sollten erwägen, eine kleine MacOS HFS Partition anzulegen, um 
+sicherzustellen, dass die Disk unter MacOS benutzt werden kann. Dies
+wäre ein guter Ort, um eine Kopie NetBSD/mac68k Booter Applikation
+zu speichern, mit der NetBSD von MacOS aus gestartet wird.
+
+Sind Sie sicher, dass Sie die MacOS HFS Partition(en) überschreiben
+möchten?
+}
+
+message editparttable
+{Disk Partition Map bearbeiten: Die Map auf der Disk wurde nach 
+Benutzerpartition durchsucht, aber nur die für NetBSD nutzbaren werden
+hier angezeigt.
+
+Die Partitionstabelle sieht jetzt so aus:
+}
+
+message split_part
+{Die von Ihnen gewählte Partition wird in zwei Partition unterteilt.
+Eine wird den Typ Apple_Scratch erhalten, die andere den Typ Apple_Free.
+Sie können dann beide Partitionstypen in beliebige andere Typen ändern.
+Falls die Apple_Free Partition an eine andere Apple_Free Partition
+grenzt, werden diese Partitionen automatisch zusammengefasst.
+
+Es gibt %d Disk Blöcke in der gewählten Partition. Geben Sie ein, wieviel
+Blöcke davon in die Apple_Scratch Partition übernommen werden sollen.
+Wenn Sie 0 oder einen zu großen Wert angeben, bleibt die Partition
+unverändert.
+
+}
+
+message scratch_size
+{Größe des Apple_Scratch Teiles beim Unterteilen}
+
+message diskfull
+{Sie haben versucht, eine existierende Partition in zwei Teile aufzuteilen,
+aber in der Disk Partition Map ist kein Platz für den zweiten Teil.
+Wahrscheinlich hat Ihr Diskformatierer nicht genug zusätzlichen Platz
+in der Original Disk Partition Map für zukünftige Erweiterungen
+reserviert. Sie können nun:
+
+* Die Partition nicht aufteilen und mit der aktuellen Disk Partiton Map
+weiterarbeiten, oder
+
+* Sysinst gestatten, die neue Disk Map zu schreiben. Dadurch werden
+alle auf der Disk exisitierenden Daten gelöscht. VORSICHT!
+
+Möchten Sie die Teilung dieser Partition abbrechen?}
+
+message custom_mount_point
+{Wählen Sie einen Mount Point für die ausgewählte Partition. Dies sollte
+ein eindeutiger Name sein, der mit "/" beginnt und der nicht für andere
+Partitionen benutzt wird.
+
+}
+
+message sanity_check
+{Beim Erstellen eines disklabels für Ihr Laufwerk sind Probleme aufgetreten.
+Sie können diese ignorieren und fortfahren, aber dadurch wird die
+Installation eventuell fehlschlagen. Folgende Probleme wurden festgestellt:
+
+}
+
+message dodiskmap
+{Erstelle die Disk Partition Map ...
+}
+
+message label_error
+{Das neu auf der Disk gespeicherte disklabel stimmt nicht mit der aktuell
+geladenen Version überein. Jeder Versuch fortzufahren wird mit hoher
+Wahrscheinlichkeit zum Verlust der Daten auf allen bereits existierenden
+Partitionen führen. Da Ihre neue Disk Partition Map bereits auf Disk
+geschrieben wurde, wird sie beim nächsten Start verfügbar sein. Bitte
+starten Sie daher jetzt den Computer neu und führen Sie die Installation
+erneut aus.
+}
+ 
+.if debug
+message mapdebug
+{Partition Map:
+HFS count: %d
+Root count: %d
+Swap count: %d
+Usr count: %d
+Usable count: %d
+}
+
+message dldebug
+{Disklabel:
+bsize: %d
+dlcyl: %d
+dlhead: %d
+dlsec: %d
+dlsize: %d
+}
+
+message newfsdebug
+{Running newfs on partition: %s\n
+}
+
+message geomdebug
+{Calling: %s %s\n
+}
+
+message geomdebug2
+{Calling: %s %d\n"
+}
+.endif
+
+message partdebug
+{Partition %s%c:
+Offset: %d
+Size: %d
+}
+
+message disksetup_no_root
+{* No Disk Partition defined for Root!\n}
+
+message disksetup_multiple_roots
+{* Multiple Disk Partitions defined for Root\n}
+
+message disksetup_no_swap
+{* No Disk Partition defined for SWAP!\n}
+
+message disksetup_multiple_swaps
+{* Multiple Disk Partitions defined for SWAP\n}
+
+message disksetup_part_beginning
+{* Partition %s%c begins beyond end of disk\n}
+
+message disksetup_part_size
+{* Partition %s%c extends beyond end of disk\n}
+
+message disksetup_noerrors
+{** No errors or anomalies found in disk setup.\n}
+
+message parttable_fix_fixing
+{Fixing partition %s%c\n}
+
+message parttable_fix_fine
+{Partition %s%c is just fine!\n}
+ 
+message dump_line
+{%s\n}
+
+message set_kernel_1
+{Kernel (GENERIC)}
+message set_kernel_2
+{Kernel (GENERICSBC)}
+
