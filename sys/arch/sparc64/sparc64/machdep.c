@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 2002/03/14 20:57:37 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.117 2002/03/15 07:06:24 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1812,6 +1812,12 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 		 */
 		if (flags & BUS_SPACE_MAP_LINEAR) return (-1);
 		*hp = (bus_space_handle_t)addr;
+		DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
+			"addr %016llx size %016llx virt %llx paddr %016llx\n",
+			(int)t->type, (int) flags, (unsigned long long)addr,
+			(unsigned long long)size, (unsigned long long)*hp,
+			(unsigned long long)pa));
+		return (0);
 		/* FALLTHROUGH */
 	case PCI_IO_BUS_SPACE:
 		pm_flags = PMAP_LITTLE;
@@ -1823,14 +1829,6 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 		pm_flags = 0;
 		break;
 	}
-
-	if (flags & BUS_SPACE_MAP_BIG) pm_flags = 0;
-	if (flags & BUS_SPACE_MAP_LITTLE) pm_flags = 0;
-#ifdef DIAGNOSTIC
-	if ((flags & (BUS_SPACE_MAP_LITTLE|BUS_SPACE_MAP_BIG)) ==
-		(BUS_SPACE_MAP_LITTLE|BUS_SPACE_MAP_BIG))
-		panic("sparc_bus_map: cannot map both little and big endian");
-#endif
 
 	if (!(flags & BUS_SPACE_MAP_CACHEABLE)) pm_flags |= PMAP_NC;
 

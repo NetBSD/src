@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.36 2002/03/14 20:46:11 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.37 2002/03/15 07:06:23 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -321,8 +321,6 @@ void * bus_space_vaddr __P((bus_space_tag_t space, bus_space_handle_t handle));
 #define	BUS_SPACE_MAP_LINEAR		0x0002
 #define	BUS_SPACE_MAP_READONLY		0x0004
 #define	BUS_SPACE_MAP_PREFETCHABLE	0x0008
-#define	BUS_SPACE_MAP_BIG		0x0010	/* Force BE */
-#define	BUS_SPACE_MAP_LITTLE		0x0020	/* Force LE */
 #define	BUS_SPACE_MAP_BUS1		0x0100	
 #define	BUS_SPACE_MAP_BUS2		0x0200
 #define	BUS_SPACE_MAP_BUS3		0x0400
