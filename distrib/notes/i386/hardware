@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.47 1999/04/12 09:46:11 bouyer Exp $	
+.\"	$NetBSD: hardware,v 1.48 1999/04/29 21:49:51 bad Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -150,6 +150,16 @@ Supported devices include:
 	FDDI adapters:
 		Digital DEFPA PCI FDDI adapters [*] [+]
 		Digital DEFEA EISA FDDI adapters [*] [+]
+	Token-Ring adapters:
+		IBM Token-Ring Network PC Adapter [+]
+		IBM Token-Ring Network PC Adapter II [+]
+		IBM Token-Ring Network Adapter/A [+]
+		IBM Token-Ring Network 16/4 Adapter [+]
+		IBM Token-Ring Network 16/4 Adapter/A [+]
+		IBM 16/4 ISA Adapter [+]
+		IBM Auto 16/4 Token-Ring ISA Adapter [+]
+		3COM 3C619 TokenLink [+]
+		3COM 3C319 TokenLink Velocity [+]
 	High Speed Serial:
 		LAN Media Corporation SSI/LMC10000 (up to 10Mbps) [*] [+]
 		LAN Media Corporation HSSI/LMC5200 [*] [+]
