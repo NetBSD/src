@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.10 2000/09/09 04:49:56 perseant Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.11 2000/10/30 20:56:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.10 2000/09/09 04:49:56 perseant Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.11 2000/10/30 20:56:59 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,21 +62,32 @@ __RCSID("$NetBSD: mount_lfs.c,v 1.10 2000/09/09 04:49:56 perseant Exp $");
 #include "mntopts.h"
 #include "pathnames.h"
 
-const struct mntopt mopts[] = {
+static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_UPDATE,
 	{ NULL }
 };
 
 int	main __P((int, char *[]));
-void	invoke_cleaner __P((char *));
-void	usage __P((void));
+int	mount_lfs __P((int argc, char **argv));
+static void	invoke_cleaner __P((char *));
+static void	usage __P((void));
 
-int short_rds, cleaner_debug, cleaner_bytes;
-char *nsegs;
+static int short_rds, cleaner_debug, cleaner_bytes;
+static char *nsegs;
 
+#ifndef MOUNT_NOMAIN
 int
 main(argc, argv)
+	int argc;
+	char **argv;
+{
+	return mount_lfs(argc, argv);
+}
+#endif
+
+int
+mount_lfs(argc, argv)
 	int argc;
 	char *argv[];
 {
@@ -156,7 +167,7 @@ main(argc, argv)
 	exit(0);
 }
 
-void
+static void
 invoke_cleaner(name)
 	char *name;
 {
@@ -181,7 +192,7 @@ invoke_cleaner(name)
 	err(1, "exec %s", _PATH_LFS_CLEANERD);
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr,

@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ntfs.c,v 1.4 2000/06/14 06:49:15 cgd Exp $ */
+/* $NetBSD: mount_ntfs.c,v 1.5 2000/10/30 20:57:00 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.4 2000/06/14 06:49:15 cgd Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.5 2000/10/30 20:57:00 jdolecek Exp $");
 #endif
 
 #include <sys/cdefs.h>
@@ -55,8 +55,9 @@ __RCSID("$NetBSD: mount_ntfs.c,v 1.4 2000/06/14 06:49:15 cgd Exp $");
 #include <unistd.h>
 
 #include "mntopts.h"
+#include <fattr.h>
 
-static struct mntopt mopts[] = {
+static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	{ NULL }
 };
@@ -65,15 +66,22 @@ static struct mntopt mopts[] = {
 #define __dead2 __attribute__((__noreturn__))
 #endif
 
-static gid_t	a_gid __P((char *));
-static uid_t	a_uid __P((char *));
-static mode_t	a_mask __P((char *));
 static void	usage __P((void)) __dead2;
-
 int main __P((int, char **));
+int mount_ntfs __P((int argc, char **argv));
 
+#ifndef MOUNT_NOMAIN
 int
 main(argc, argv)
+	int argc;
+	char **argv;
+{
+	return mount_ntfs(argc, argv);
+}
+#endif
+
+int
+mount_ntfs(argc, argv)
 	int argc;
 	char **argv;
 {
@@ -192,64 +200,7 @@ main(argc, argv)
 	exit (0);
 }
 
-gid_t
-a_gid(s)
-	char *s;
-{
-	struct group *gr;
-	char *gname;
-	gid_t gid;
-
-	if ((gr = getgrnam(s)) != NULL)
-		gid = gr->gr_gid;
-	else {
-		for (gname = s; *s && isdigit(*s); ++s);
-		if (!*s)
-			gid = atoi(gname);
-		else
-			errx(EX_NOUSER, "unknown group id: %s", gname);
-	}
-	return (gid);
-}
-
-uid_t
-a_uid(s)
-	char *s;
-{
-	struct passwd *pw;
-	char *uname;
-	uid_t uid;
-
-	if ((pw = getpwnam(s)) != NULL)
-		uid = pw->pw_uid;
-	else {
-		for (uname = s; *s && isdigit(*s); ++s);
-		if (!*s)
-			uid = atoi(uname);
-		else
-			errx(EX_NOUSER, "unknown user id: %s", uname);
-	}
-	return (uid);
-}
-
-mode_t
-a_mask(s)
-	char *s;
-{
-	int done, rv=0;
-	char *ep;
-
-	done = 0;
-	if (*s >= '0' && *s <= '7') {
-		done = 1;
-		rv = strtol(optarg, &ep, 8);
-	}
-	if (!done || rv < 0 || *ep)
-		errx(EX_USAGE, "invalid file mode: %s", s);
-	return (rv);
-}
-
-void
+static void
 usage()
 {
 	fprintf(stderr, "usage: mount_ntfs [-a] [-i] [-u user] [-g group] [-m mask] bdev dir\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: mount_filecore.c,v 1.3 2000/06/14 06:49:14 cgd Exp $ */
+/* $NetBSD: mount_filecore.c,v 1.4 2000/10/30 20:56:59 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998 Andrew McMurry
@@ -62,20 +62,30 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #include <filecorefs/filecore_mount.h>
 
 #include "mntopts.h"
+#include <fattr.h>
 
-const struct mntopt mopts[] = {
+static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_UPDATE,
 	{ NULL }
 };
 
 int	main __P((int, char *[]));
-void	usage __P((void));
-gid_t   a_gid __P((char *));
-uid_t   a_uid __P((char *));
+int	mount_filecore __P((int argc, char **argv));
+static void	usage __P((void));
 
+#ifndef MOUNT_NOMAIN
 int
 main(argc, argv)
+	int argc;
+	char **argv;
+{
+	return mount_filecore(argc, argv);
+}
+#endif
+
+int
+mount_filecore(argc, argv)
 	int argc;
 	char **argv;
 {
@@ -142,50 +152,10 @@ main(argc, argv)
 	exit(0);
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr,
 		"usage: mount_filecore [-o options] special node\n");
 	exit(1);
-}
-
-gid_t
-a_gid(s)
-        char *s;
-{
-        struct group *gr;
-        char *gname;
-        gid_t gid;
-
-        if ((gr = getgrnam(s)) != NULL)
-                gid = gr->gr_gid;
-        else {
-                for (gname = s; *s && isdigit(*s); ++s);
-                if (!*s)
-                        gid = atoi(gname);
-                else
-                        errx(1, "unknown group id: %s", gname);
-        }
-        return (gid);
-}
-
-uid_t
-a_uid(s)
-        char *s;
-{
-        struct passwd *pw;
-        char *uname;
-        uid_t uid;
-
-        if ((pw = getpwnam(s)) != NULL)
-                uid = pw->pw_uid;
-        else {
-                for (uname = s; *s && isdigit(*s); ++s);
-                if (!*s)
-                        uid = atoi(uname);
-                else
-                        errx(1, "unknown user id: %s", uname);
-        }
-        return (uid);
 }

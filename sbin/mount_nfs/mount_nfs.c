@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.28 2000/07/16 14:06:08 itojun Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.29 2000/10/30 20:57:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.28 2000/07/16 14:06:08 itojun Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.29 2000/10/30 20:57:00 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ __RCSID("$NetBSD: mount_nfs.c,v 1.28 2000/07/16 14:06:08 itojun Exp $");
 #define ALTF_TCP	0x1000
 #define ALTF_NFSV2	0x2000
 
-const struct mntopt mopts[] = {
+static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_FORCE,
 	MOPT_UPDATE,
@@ -171,32 +171,43 @@ int force3 = 0;
 int mnttcp_ok = 1;
 
 #ifdef NFSKERB
-char inst[INST_SZ];
-char realm[REALM_SZ];
-struct {
+static char inst[INST_SZ];
+static char realm[REALM_SZ];
+static struct {
 	u_long		kind;
 	KTEXT_ST	kt;
 } ktick;
-struct nfsrpc_nickverf kverf;
-struct nfsrpc_fullblock kin, kout;
-NFSKERBKEY_T kivec;
-CREDENTIALS kcr;
-struct timeval ktv;
-NFSKERBKEYSCHED_T kerb_keysched;
+static struct nfsrpc_nickverf kverf;
+static struct nfsrpc_fullblock kin, kout;
+static NFSKERBKEY_T kivec;
+static CREDENTIALS kcr;
+static struct timeval ktv;
+static NFSKERBKEYSCHED_T kerb_keysched;
 #endif
 
-int	getnfsargs __P((char *, struct nfs_args *));
+static int	getnfsargs __P((char *, struct nfs_args *));
 #ifdef ISO
-struct	iso_addr *iso_addr __P((const char *));
+static struct	iso_addr *iso_addr __P((const char *));
 #endif
 int	main __P((int, char *[]));
-void	set_rpc_maxgrouplist __P((int));
-void	usage __P((void));
-int	xdr_dir __P((XDR *, char *));
-int	xdr_fh __P((XDR *, struct nfhret *));
+int	mount_nfs __P((int argc, char **argv));
+/* void	set_rpc_maxgrouplist __P((int)); */
+static void	usage __P((void));
+static int	xdr_dir __P((XDR *, char *));
+static int	xdr_fh __P((XDR *, struct nfhret *));
 
+#ifndef MOUNT_NOMAIN
 int
 main(argc, argv)
+	int argc;
+	char **argv;
+{
+	return mount_nfs(argc, argv);
+}
+#endif
+
+int
+mount_nfs(argc, argv)
 	int argc;
 	char *argv[];
 {
@@ -540,7 +551,7 @@ main(argc, argv)
 	exit(0);
 }
 
-int
+static int
 getnfsargs(spec, nfsargsp)
 	char *spec;
 	struct nfs_args *nfsargsp;
@@ -792,7 +803,7 @@ tryagain:
 /*
  * xdr routines for mount rpc's
  */
-int
+static int
 xdr_dir(xdrsp, dirp)
 	XDR *xdrsp;
 	char *dirp;
@@ -800,7 +811,7 @@ xdr_dir(xdrsp, dirp)
 	return (xdr_string(xdrsp, &dirp, RPCMNT_PATHLEN));
 }
 
-int
+static int
 xdr_fh(xdrsp, np)
 	XDR *xdrsp;
 	struct nfhret *np;
@@ -842,7 +853,7 @@ xdr_fh(xdrsp, np)
 	return (0);
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr, "usage: mount_nfs %s\n%s\n%s\n%s\n%s\n",

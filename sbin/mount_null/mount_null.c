@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_null.c,v 1.7 1999/07/08 03:04:39 wrstuden Exp $	*/
+/*	$NetBSD: mount_null.c,v 1.8 2000/10/30 20:57:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_null.c,v 1.7 1999/07/08 03:04:39 wrstuden Exp $");
+__RCSID("$NetBSD: mount_null.c,v 1.8 2000/10/30 20:57:00 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,17 +62,28 @@ __RCSID("$NetBSD: mount_null.c,v 1.7 1999/07/08 03:04:39 wrstuden Exp $");
 
 #include "mntopts.h"
 
-const struct mntopt mopts[] = {
+static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	{ NULL }
 };
 
 int	main __P((int, char *[]));
-int	subdir __P((const char *, const char *));
-void	usage __P((void));
+int	mount_null __P((int argc, char **argv));
+static int	subdir __P((const char *, const char *));
+static void	usage __P((void));
 
+#ifndef MOUNT_NOMAIN
 int
 main(argc, argv)
+	int argc;
+	char **argv;
+{
+	return mount_null(argc, argv);
+}
+#endif
+
+int
+mount_null(argc, argv)
 	int argc;
 	char *argv[];
 {
@@ -110,7 +121,7 @@ main(argc, argv)
 	exit(0);
 }
 
-int
+static int
 subdir(p, dir)
 	const char *p;
 	const char *dir;
@@ -127,7 +138,7 @@ subdir(p, dir)
 	return (0);
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr,
