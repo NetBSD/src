@@ -25,9 +25,9 @@
 #define N_TXTADDR(x) \
     (N_IS_QMAGIC (x) ? TARGET_PAGE_SIZE + EXEC_BYTES_SIZE : \
      N_MAGIC(x) != ZMAGIC ? 0 :	                            \
-     N_HEADER_IN_TEXT(x)  ?	                            \
-	    TEXT_START_ADDR + EXEC_BYTES_SIZE :	            \
-	    TEXT_START_ADDR                                 \
+     N_SHARED_LIB(x) ?                                      \
+	    EXEC_BYTES_SIZE :                               \
+	    TEXT_START_ADDR + EXEC_BYTES_SIZE               \
     )
 
 /* When a file is linked against a shared library on NetBSD, the
