@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2002/08/29 14:52:07 itojun Exp $
+# $NetBSD: Makefile,v 1.22 2002/09/12 14:28:33 joda Exp $
 
 NOLINT=		# defined
 
@@ -113,7 +113,6 @@ INCSDIR=	/usr/include/kerberosIV
 
 INCS=	krb.h					\
 	krb_err.h				\
-	ktypes.h				\
 	klog.h					\
 	krb-protos.h				\
 	krb-archaeology.h			\
