@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.20 1998/02/27 18:36:43 perry Exp $	*/
+/*	$NetBSD: setmode.c,v 1.21 1999/03/16 18:13:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.20 1998/02/27 18:36:43 perry Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.21 1999/03/16 18:13:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -214,7 +214,7 @@ setmode(p)
 	 * If an absolute number, get it and return; disallow non-octal digits
 	 * or illegal bits.
 	 */
-	if (isdigit(*p)) {
+	if (isdigit((unsigned char)*p)) {
 		perm = (mode_t)strtol(p, NULL, 8);
 		if (perm & ~(STANDARD_BITS|S_ISTXT)) {
 			free(saveset);

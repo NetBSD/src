@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.25 1998/11/13 08:25:17 christos Exp $	*/
+/*	$NetBSD: getcap.c,v 1.26 1999/03/16 18:13:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.25 1998/11/13 08:25:17 christos Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.26 1999/03/16 18:13:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -639,12 +639,12 @@ cgetmatch(buf, name)
 		 */
 		np = name;
 		for (;;)
-			if (*np == '\0')
+			if (*np == '\0') {
 				if (*bp == '|' || *bp == ':' || *bp == '\0')
 					return (0);
 				else
 					break;
-			else
+			} else
 				if (*bp++ != *np++)
 					break;
 
@@ -737,7 +737,7 @@ cgetnext(bp, db_array)
 				slash = 0;
 				continue;
 			}
-			if (isspace(*line) ||
+			if (isspace((unsigned char)*line) ||
 			    *line == ':' || *line == '#' || slash) {
 				if (line[len - 2] == '\\')
 					slash = 1;
