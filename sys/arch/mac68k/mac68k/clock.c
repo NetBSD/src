@@ -73,7 +73,7 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *   from: @(#)clock.c   7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.2 1993/11/29 00:40:38 briggs Exp $
+ *	$Id: clock.c,v 1.3 1994/01/30 01:03:51 briggs Exp $
  */
 
 #if !defined(STANDALONE)
@@ -334,3 +334,10 @@ void resettodr(void)
       printf("WARNING: cannot set battery-backed clock.\n");
 }
 
+void
+delay(n)
+int n;
+{
+	n *= 1000;
+	while (n--);
+}
