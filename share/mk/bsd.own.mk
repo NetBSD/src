@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.227 2001/11/29 23:53:23 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.228 2001/12/04 04:25:21 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -19,7 +19,8 @@ NEED_OWN_INSTALL_TARGET?=	yes
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64"
+    ${MACHINE_ARCH} == "sparc64" || \
+    defined(USE_NEW_TOOLCHAIN) && ${USE_NEW_TOOLCHAIN} == "yes"
 USE_NEW_TOOLCHAIN=nowarn
 .endif
 .endif
