@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.72 2004/10/21 11:11:19 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.73 2004/10/21 11:14:26 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -92,8 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.72 2004/10/21 11:11:19 augustss Exp $");
 #include <dev/usb/ehcivar.h>
 
 #ifdef EHCI_DEBUG
-#define DPRINTF(x)	if (ehcidebug) printf x
-#define DPRINTFN(n,x)	if (ehcidebug>(n)) printf x
+#define DPRINTF(x)	do { if (ehcidebug) printf x; } while(0)
+#define DPRINTFN(n,x)	do { if (ehcidebug>(n)) printf x; } while (0)
 int ehcidebug = 0;
 #ifndef __NetBSD__
 #define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
@@ -889,7 +889,7 @@ ehci_activate(device_ptr_t self, enum devact act)
  * Handle suspend/resume.
  *
  * We need to switch to polling mode here, because this routine is
- * called from an intterupt context.  This is all right since we
+ * called from an interrupt context.  This is all right since we
  * are almost suspended anyway.
  */
 void
