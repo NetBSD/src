@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael.h,v 1.5 2003/08/26 14:24:06 thorpej Exp $	*/
+/*	$NetBSD: rijndael.h,v 1.6 2003/08/26 19:58:37 thorpej Exp $	*/
 /*	$KAME: rijndael.h,v 1.3 2003/07/15 10:47:16 itojun Exp $	*/
 
 /**
@@ -40,8 +40,8 @@ typedef struct {
 	uint32_t dk[4 * (RIJNDAEL_MAXNR + 1)];	/* decrypt key schedule */
 } rijndael_ctx;
 
-void	rijndael_set_key(rijndael_ctx *, u_char *, int, int);
-void	rijndael_decrypt(rijndael_ctx *, u_char *, u_char *);
-void	rijndael_encrypt(rijndael_ctx *, u_char *, u_char *);
+void	rijndael_set_key(rijndael_ctx *, const u_char *, int, int);
+void	rijndael_decrypt(rijndael_ctx *, const u_char *, u_char *);
+void	rijndael_encrypt(rijndael_ctx *, const u_char *, u_char *);
 
 #endif /* __RIJNDAEL_H */
