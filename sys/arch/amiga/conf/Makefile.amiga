@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.60 1997/07/23 10:19:42 is Exp $
+#	$NetBSD: Makefile.amiga,v 1.61 1997/09/12 07:59:23 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -139,8 +139,7 @@ cleankernel:
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${AMIGA}/amiga/Locore.c ${CFILES} \
-	    ioconf.c param.c | \
+	    ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:
