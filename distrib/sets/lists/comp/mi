@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.528 2003/02/01 06:32:10 thorpej Exp $
+#	$NetBSD: mi,v 1.529 2003/02/01 06:37:54 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3251,6 +3251,9 @@
 ./usr/share/man/cat9/HOLDRELE.0		comp-sys-catman
 ./usr/share/man/cat9/KNOTE.0	comp-sys-catman
 ./usr/share/man/cat9/MALLOC.0		comp-sys-catman
+./usr/share/man/cat9/MALLOC_DECLARE.0	comp-sys-catman
+./usr/share/man/cat9/MALLOC_DEFINE.0	comp-sys-catman
+./usr/share/man/cat9/MALLOC_DEFINE_LIMIT.0	comp-sys-catman
 ./usr/share/man/cat9/MCHTYPE.0		comp-sys-catman
 ./usr/share/man/cat9/MCLGET.0		comp-sys-catman
 ./usr/share/man/cat9/MEXTADD.0		comp-sys-catman
@@ -3681,6 +3684,9 @@
 ./usr/share/man/cat9/m_split.0		comp-sys-catman
 ./usr/share/man/cat9/malloc.0		comp-sys-catman
 ./usr/share/man/cat9/malloc_roundup.0		comp-sys-catman
+./usr/share/man/cat9/malloc_type_attach.0	comp-sys-catman
+./usr/share/man/cat9/malloc_type_detach.0	comp-sys-catman
+./usr/share/man/cat9/malloc_type_setlimit.0	comp-sys-catman
 ./usr/share/man/cat9/mbuf.0		comp-sys-catman
 ./usr/share/man/cat9/mca.0		comp-sys-catman
 ./usr/share/man/cat9/mca_conf_read.0		comp-sys-catman
@@ -3812,6 +3818,7 @@
 ./usr/share/man/cat9/rasops_reconfig.0		comp-sys-catman
 ./usr/share/man/cat9/ratecheck.0		comp-sys-catman
 ./usr/share/man/cat9/readdisklabel.0		comp-sys-catman
+./usr/share/man/cat9/realloc.0		comp-sys-catman
 ./usr/share/man/cat9/relookup.0		comp-sys-catman
 ./usr/share/man/cat9/remrunqueue.0		comp-sys-catman
 ./usr/share/man/cat9/resettodr.0		comp-sys-catman
@@ -6281,6 +6288,9 @@
 ./usr/share/man/man9/HOLDRELE.9		comp-sys-man
 ./usr/share/man/man9/KNOTE.9	comp-sys-man
 ./usr/share/man/man9/MALLOC.9		comp-sys-man
+./usr/share/man/man9/MALLOC_DECLARE.9	comp-sys-man
+./usr/share/man/man9/MALLOC_DEFINE.9	comp-sys-man
+./usr/share/man/man9/MALLOC_DEFINE_LIMIT.9	comp-sys-man
 ./usr/share/man/man9/MCHTYPE.9		comp-sys-man
 ./usr/share/man/man9/MCLGET.9		comp-sys-man
 ./usr/share/man/man9/MEXTADD.9		comp-sys-man
@@ -6711,6 +6721,9 @@
 ./usr/share/man/man9/m_split.9		comp-sys-man
 ./usr/share/man/man9/malloc.9		comp-sys-man
 ./usr/share/man/man9/malloc_roundup.9	comp-sys-man
+./usr/share/man/man9/malloc_type_attach.9	comp-sys-man
+./usr/share/man/man9/malloc_type_detach.9	comp-sys-man
+./usr/share/man/man9/malloc_type_setlimit.9	comp-sys-man
 ./usr/share/man/man9/mbuf.9		comp-sys-man
 ./usr/share/man/man9/mca.9		comp-sys-man
 ./usr/share/man/man9/mca_conf_read.9		comp-sys-man
@@ -6842,6 +6855,7 @@
 ./usr/share/man/man9/rasops_reconfig.9		comp-sys-man
 ./usr/share/man/man9/ratecheck.9		comp-sys-man
 ./usr/share/man/man9/readdisklabel.9		comp-sys-man
+./usr/share/man/man9/realloc.9		comp-sys-man
 ./usr/share/man/man9/relookup.9		comp-sys-man
 ./usr/share/man/man9/remrunqueue.9		comp-sys-man
 ./usr/share/man/man9/resettodr.9		comp-sys-man
