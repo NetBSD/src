@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.7 1994/10/27 04:15:46 cgd Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.8 1994/11/04 07:39:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,8 +50,8 @@
 
 #include <i386/isa/isa_device.h>
 
-#include "wd.h"
-#include "fd.h"
+#include "wdc.h"
+#include "fdc.h"
 #include "sd.h"
 #include "cd.h"
 #include "mcd.h"
@@ -70,10 +70,10 @@ struct	swdevt swdevt[] = {
 long	dumplo;
 int	dmmin, dmmax, dmtext;
 
-#if NWD > 0
+#if NWDC > 0
 extern	struct cfdriver wdcd;
 #endif
-#if NFD > 0
+#if NFDC > 0
 extern	struct cfdriver fdcd;
 #endif
 #if NSD > 0
@@ -91,7 +91,7 @@ struct	genericconf {
 	char *gc_name;
 	dev_t gc_major;
 } genericconf[] = {
-#if NWD > 0
+#if NWDC > 0
 	{ &wdcd,  "wd",  0 },
 #endif
 #if NSD > 0
@@ -103,7 +103,7 @@ struct	genericconf {
 #if NMCD > 0
 	{ &mcdcd, "mcd", 7 },
 #endif
-#if NFD > 0
+#if NFDC > 0
 	{ &fdcd,  "fd",  2 },
 #endif
 	{ 0 }
