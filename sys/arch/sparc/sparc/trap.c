@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.12 2002/08/01 02:43:32 nathanw Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.13 2002/09/26 20:04:52 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -240,7 +240,7 @@ userret(l, pc, oticks)
 	}
 
 	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
+	while (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
 	/*

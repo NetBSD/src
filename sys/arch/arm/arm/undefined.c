@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.9.4.10 2002/07/12 01:39:24 nathanw Exp $	*/
+/*	$NetBSD: undefined.c,v 1.9.4.11 2002/09/26 20:04:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -50,7 +50,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.10 2002/07/12 01:39:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.11 2002/09/26 20:04:44 nathanw Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -296,7 +296,7 @@ undefinedinstruction(trapframe_t *frame)
 			(p->p_userret)(l, p->p_userret_arg);
 
 		/* Invoke any pending upcalls. */
-		if (l->l_flag & L_SA_UPCALL)
+		while (l->l_flag & L_SA_UPCALL)
 			sa_upcall_userret(l);
 
 		l->l_priority = l->l_usrpri;

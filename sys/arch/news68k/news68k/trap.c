@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.19.4.7 2002/07/12 01:39:41 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.19.4.8 2002/09/26 20:04:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -193,7 +193,7 @@ again:
 		(p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
+	while (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
 	/*
