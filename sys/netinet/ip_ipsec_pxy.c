@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipsec_pxy.c,v 1.3 2004/03/28 09:00:57 martti Exp $	*/
+/*	$NetBSD: ip_ipsec_pxy.c,v 1.3.2.1 2004/08/13 03:55:25 jmc Exp $	*/
 
 /*
  * Copyright (C) 2001-2003 by Darren Reed
@@ -8,11 +8,11 @@
  * Simple ISAKMP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_ipsec_pxy.c,v 2.20.2.1 2004/03/14 13:10:48 darrenr Exp
+ * Id: ip_ipsec_pxy.c,v 2.20.2.3 2004/06/07 14:20:05 darrenr Exp
  *
  */
 
-__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.3 2004/03/28 09:00:57 martti Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.3.2.1 2004/08/13 03:55:25 jmc Exp $");
 
 #define	IPF_IPSEC_PROXY
 
@@ -85,7 +85,7 @@ nat_t *nat;
 	fr_info_t fi;
 	ipnat_t *ipn;
 	char *ptr;
-	int p, off, dlen;
+	int p, off, dlen, ttl;
 	mb_t *m;
 	ip_t *ip;
 
@@ -117,13 +117,14 @@ nat_t *nat;
 	 * describe ESP but UDP instead.
 	 */
 	ipn = &ipsec->ipsc_rule;
-	ipn->in_tqehead[0] = ipsecnattqe;
-	ipn->in_tqehead[1] = ipsecnattqe;
+	ttl = IPF_TTLVAL(ipsecnattqe->ifq_ttl);
+	ipn->in_tqehead[0] = fr_addtimeoutqueue(&nat_utqe, ttl);
+	ipn->in_tqehead[1] = fr_addtimeoutqueue(&nat_utqe, ttl);
 	ipn->in_ifps[0] = fin->fin_ifp;
 	ipn->in_apr = NULL;
 	ipn->in_use = 1;
 	ipn->in_hits = 1;
-	ipn->in_nip = nat->nat_outip.s_addr;
+	ipn->in_nip = ntohl(nat->nat_outip.s_addr);
 	ipn->in_ippip = 1;
 	ipn->in_inip = nat->nat_inip.s_addr;
 	ipn->in_inmsk = 0xffffffff;
@@ -309,15 +310,9 @@ ap_session_t *aps;
 
 	if (ipsec != NULL) {
 		/*
-		 * Don't delete it from here, just schedule it to be
-		 * deleted ASAP.
+		 * Don't bother changing any of the NAT structure details,
+		 * *_del() is on a callback from aps_free(), from nat_delete()
 		 */
-		if (ipsec->ipsc_nat != NULL) {
-			ipsec->ipsc_nat->nat_age = fr_ticks + 1;
-			ipsec->ipsc_nat->nat_ptr = NULL;
-			ipsec->ipsc_nat->nat_me = NULL;
-			fr_queuefront(&ipsec->ipsc_nat->nat_tqe);
-		}
 
 		READ_ENTER(&ipf_state);
 		if (ipsec->ipsc_state != NULL) {
