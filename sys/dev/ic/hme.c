@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.34 2003/02/20 20:09:56 petrov Exp $	*/
+/*	$NetBSD: hme.c,v 1.35 2003/02/27 14:58:22 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.34 2003/02/20 20:09:56 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.35 2003/02/27 14:58:22 pk Exp $");
 
 #define HMEDEBUG
 
@@ -470,7 +470,6 @@ hme_init(sc)
 	bus_space_handle_t etx = sc->sc_etx;
 	bus_space_handle_t erx = sc->sc_erx;
 	bus_space_handle_t mac = sc->sc_mac;
-	bus_space_handle_t mif = sc->sc_mif;
 	u_int8_t *ea;
 	u_int32_t v;
 
@@ -608,11 +607,7 @@ hme_init(sc)
 	/* step 11. XIF Configuration */
 	v = bus_space_read_4(t, mac, HME_MACI_XIF);
 	v |= HME_MAC_XIF_OE;
-	/* If an external transceiver is connected, enable its MII drivers */
-	if ((bus_space_read_4(t, mif, HME_MIFI_CFG) & HME_MIF_CFG_MDI1) != 0)
-		v |= HME_MAC_XIF_MIIENABLE;
 	bus_space_write_4(t, mac, HME_MACI_XIF, v);
-
 
 	/* step 12. RX_MAC Configuration Register */
 	v = bus_space_read_4(t, mac, HME_MACI_RXCFG);
@@ -1027,6 +1022,7 @@ hme_mifinit(sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
+	bus_space_handle_t mac = sc->sc_mac;
 	int instance, phy;
 	u_int32_t v;
 
@@ -1042,6 +1038,13 @@ hme_mifinit(sc)
 	if (phy == HME_PHYAD_EXTERNAL)
 		v |= HME_MIF_CFG_PHY;
 	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
+
+	/* If an external transceiver is selected, enable its MII drivers */
+	v = bus_space_read_4(t, mac, HME_MACI_XIF);
+	v &= ~HME_MAC_XIF_MIIENABLE;
+	if (phy == HME_PHYAD_EXTERNAL)
+		v |= HME_MAC_XIF_MIIENABLE;
+	bus_space_write_4(t, mac, HME_MACI_XIF, v);
 }
 
 /*
@@ -1055,7 +1058,8 @@ hme_mii_readreg(self, phy, reg)
 	struct hme_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
-	u_int32_t v, mifi_cfg;
+	bus_space_handle_t mac = sc->sc_mac;
+	u_int32_t v, xif_cfg, mifi_cfg;
 	int n;
 
 	/* We can at most have two PHYs */
@@ -1068,6 +1072,14 @@ hme_mii_readreg(self, phy, reg)
 	if (phy == HME_PHYAD_EXTERNAL)
 		v |= HME_MIF_CFG_PHY;
 	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
+
+	/* Enable MII drivers on external transceiver */ 
+	v = xif_cfg = bus_space_read_4(t, mac, HME_MACI_XIF);
+	if (phy == HME_PHYAD_EXTERNAL)
+		v |= HME_MAC_XIF_MIIENABLE;
+	else
+		v &= ~HME_MAC_XIF_MIIENABLE;
+	bus_space_write_4(t, mac, HME_MACI_XIF, v);
 
 #if 0
 /* This doesn't work reliably; the MDIO_1 bit is off most of the time */
@@ -1106,6 +1118,8 @@ hme_mii_readreg(self, phy, reg)
 out:
 	/* Restore MIFI_CFG register */
 	bus_space_write_4(t, mif, HME_MIFI_CFG, mifi_cfg);
+	/* Restore XIF register */
+	bus_space_write_4(t, mac, HME_MACI_XIF, xif_cfg);
 	return (v);
 }
 
@@ -1117,7 +1131,8 @@ hme_mii_writereg(self, phy, reg, val)
 	struct hme_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
-	u_int32_t v, mifi_cfg;
+	bus_space_handle_t mac = sc->sc_mac;
+	u_int32_t v, xif_cfg, mifi_cfg;
 	int n;
 
 	/* We can at most have two PHYs */
@@ -1130,6 +1145,14 @@ hme_mii_writereg(self, phy, reg, val)
 	if (phy == HME_PHYAD_EXTERNAL)
 		v |= HME_MIF_CFG_PHY;
 	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
+
+	/* Enable MII drivers on external transceiver */ 
+	v = xif_cfg = bus_space_read_4(t, mac, HME_MACI_XIF);
+	if (phy == HME_PHYAD_EXTERNAL)
+		v |= HME_MAC_XIF_MIIENABLE;
+	else
+		v &= ~HME_MAC_XIF_MIIENABLE;
+	bus_space_write_4(t, mac, HME_MACI_XIF, v);
 
 #if 0
 /* This doesn't work reliably; the MDIO_1 bit is off most of the time */
@@ -1165,6 +1188,8 @@ hme_mii_writereg(self, phy, reg, val)
 out:
 	/* Restore MIFI_CFG register */
 	bus_space_write_4(t, mif, HME_MIFI_CFG, mifi_cfg);
+	/* Restore XIF register */
+	bus_space_write_4(t, mac, HME_MACI_XIF, xif_cfg);
 }
 
 static void
