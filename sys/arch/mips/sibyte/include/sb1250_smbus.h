@@ -149,11 +149,7 @@
 #define V_SPEC_MB(x)                _SB_MAKEVALUE(x,S_SPEC_PEC)
 
 
-/*  *********************************************************************
-    *  PASS2 Extensions to SMBus
-    ********************************************************************* */
-
-/* BEGIN PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
 
 #define S_SMB_CMDH                  8
 #define M_SMB_CMDH                  _SB_MAKEMASK(8,S_SMBH_CMD)
@@ -186,6 +182,6 @@
 #define V_SMB_DFMT_CMD5BYTE	    V_SMB_DFMT(K_SMB_DFMT_CMD5BYTE)
 #define V_SMB_DFMT_RESERVED	    V_SMB_DFMT(K_SMB_DFMT_RESERVED)
 
-/* END PASS2 */
+#endif /* 1250 PASS2 || 112x PASS1 */
 
 #endif
