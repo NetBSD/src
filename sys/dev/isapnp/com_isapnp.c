@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.6 1997/10/17 13:41:29 christos Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.6.2.1 1997/10/29 00:40:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,9 +77,9 @@ com_isapnp_match(parent, match, aux)
 	struct isapnp_attach_args *ipa = aux;
 
 	if (strcmp(ipa->ipa_devlogic, "ROK0010") &&
-	    strcmp(ipa->ipa_devlogic, "BRI1400") &&
-	    strcmp(ipa->ipa_devcompat, "PNP0500") &&
-	    strcmp(ipa->ipa_devcompat, "PNP0501"))
+	    strcmp(ipa->ipa_devlogic, "BRI1400") && /* Boca 33.6 PnP */
+	    strcmp(ipa->ipa_devcompat, "PNP0500") && /* generic 8250/16450 */
+	    strcmp(ipa->ipa_devcompat, "PNP0501")) /* generic 16550A */
 		return (0);
 
 	return (1);
@@ -113,5 +113,5 @@ com_isapnp_attach(parent, self, aux)
 	com_attach_subr(sc);
 
 	isc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
-	    IST_EDGE, IPL_SERIAL, comintr, sc);
+	    ipa->ipa_irq[0].type, IPL_SERIAL, comintr, sc);
 }
