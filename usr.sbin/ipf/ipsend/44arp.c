@@ -13,7 +13,11 @@
 #include <net/if_types.h>
 #include <net/route.h>
 #include <netinet/in.h>
+#if defined(__NetBSD__)
+#include <netinet/if_inarp.h>
+#else
 #include <netinet/if_ether.h>
+#endif
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <errno.h>
