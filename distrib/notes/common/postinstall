@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.54.2.1 2004/06/15 23:09:08 he Exp $
+.\"	$NetBSD: postinstall,v 1.54.2.2 2004/06/21 06:17:19 he Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,7 +78,7 @@ the correct terminal type as discussed in the
 section.
 .\}
 .el \{\
-.ie \n[sparc] \{\
+.ie \n[sparc]:\n[sparc64] \{\
 .ds termtype sun
 .Ic \*[termtype]
 for a local console, or whatever is appropriate for your serial
@@ -189,6 +189,7 @@ For example:
 .if \n[mac68k]  .ds IFname sn0
 .if \n[macppc]  .ds IFname mc0
 .if \n[sgimips] .ds IFname sq0
+.if \n[sparc64] .ds IFname hme0
 .
 .Dl ifconfig_\*[IFname]="inet 123.45.67.89 netmask 255.255.255.0"
 .Pp
@@ -251,6 +252,17 @@ For the
 facility to work with the a.out and elf kernel images supplied with
 \*M installations you will need to set
 .Li savecore_flags="-z -N /netbsd"
+.\}
+.if \n[sparc]:\n[sparc64] \{\
+.It
+Select the proper terminal devices
+.Pp
+If you are using a serial console, you will have to edit the
+.Pa /etc/ttys
+file and change 
+.if \n[sparc] sun
+.if \n[sparc64] sun-ss5
+to the appropriate terminal type, such as vt220.
 .\}
 .It
 Logging in
