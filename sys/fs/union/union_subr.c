@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.7 2003/08/07 16:31:40 agc Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.8 2003/10/15 11:28:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.7 2003/08/07 16:31:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.8 2003/10/15 11:28:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -697,12 +697,17 @@ union_copyup(un, docopy, cred, p)
 	struct proc *p;
 {
 	int error;
+	struct mount *mp;
 	struct vnode *lvp, *uvp;
 	struct vattr lvattr, uvattr;
 
-	error = union_vn_create(&uvp, un, p);
-	if (error)
+	if ((error = vn_start_write(un->un_dirvp, &mp, V_WAIT | V_PCATCH)) != 0)
 		return (error);
+	error = union_vn_create(&uvp, un, p);
+	if (error) {
+		vn_finished_write(mp, 0);
+		return (error);
+	}
 
 	/* at this point, uppervp is locked */
 	union_newupper(un, uvp);
@@ -738,6 +743,7 @@ union_copyup(un, docopy, cred, p)
 #endif
 
 	}
+	vn_finished_write(mp, 0);
 	union_vn_close(uvp, FWRITE, cred, p);
 
 	/*
@@ -843,16 +849,22 @@ union_mkshadow(um, dvp, cnp, vpp)
 	struct vattr va;
 	struct proc *p = cnp->cn_proc;
 	struct componentname cn;
+	struct mount *mp;
 
+	if ((error = vn_start_write(dvp, &mp, V_WAIT | V_PCATCH)) != 0)
+		return (error);
 	error = union_relookup(um, dvp, vpp, cnp, &cn,
 			cnp->cn_nameptr, cnp->cn_namelen);
-	if (error)
+	if (error) {
+		vn_finished_write(mp, 0);
 		return (error);
+	}
 
 	if (*vpp) {
 		VOP_ABORTOP(dvp, &cn);
 		VOP_UNLOCK(dvp, 0);
 		vrele(*vpp);
+		vn_finished_write(mp, 0);
 		*vpp = NULLVP;
 		return (EEXIST);
 	}
@@ -873,6 +885,7 @@ union_mkshadow(um, dvp, cnp, vpp)
 	VOP_LEASE(dvp, p, cn.cn_cred, LEASE_WRITE);
 
 	error = VOP_MKDIR(dvp, vpp, &cn, &va);
+	vn_finished_write(mp, 0);
 	return (error);
 }
 
@@ -896,10 +909,14 @@ union_mkwhiteout(um, dvp, cnp, path)
 	struct proc *p = cnp->cn_proc;
 	struct vnode *wvp;
 	struct componentname cn;
+	struct mount *mp;
 
 	VOP_UNLOCK(dvp, 0);
+	if ((error = vn_start_write(dvp, &mp, V_WAIT | V_PCATCH)) != 0)
+		return (error);
 	error = union_relookup(um, dvp, &wvp, cnp, &cn, path, strlen(path));
 	if (error) {
+		vn_finished_write(mp, 0);
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 	}
@@ -908,6 +925,7 @@ union_mkwhiteout(um, dvp, cnp, path)
 		VOP_ABORTOP(dvp, &cn);
 		vrele(dvp);
 		vrele(wvp);
+		vn_finished_write(mp, 0);
 		return (EEXIST);
 	}
 
@@ -919,6 +937,7 @@ union_mkwhiteout(um, dvp, cnp, path)
 		VOP_ABORTOP(dvp, &cn);
 
 	vrele(dvp);
+	vn_finished_write(mp, 0);
 
 	return (error);
 }
