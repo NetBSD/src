@@ -5,6 +5,9 @@
 #ifndef NETBSD_ENABLE_PTHREADS
 # define NETBSD_ENABLE_PTHREADS
 #endif
+#ifndef TARGET_ENDIAN_DEFAULT
+# define TARGET_ENDIAN_DEFAULT ARM_FLAG_BIG_END
+#endif
 #include "auto-build.h"
 #ifdef IN_GCC
 /* Provide three core typedefs used by everything, if we are compiling
