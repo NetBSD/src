@@ -1,4 +1,4 @@
-.\"	$NetBSD: lock.1,v 1.4 1994/12/22 01:16:21 jtc Exp $
+.\"	$NetBSD: lock.1,v 1.5 1997/10/19 04:15:39 lukem Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,11 +40,11 @@
 .Nm lock
 .Nd reserve a terminal
 .Sh SYNOPSIS
-.Nm lock
+.Nm
 .Op Fl p
 .Op Fl t Ar timeout
 .Sh DESCRIPTION
-.Nm Lock
+.Nm
 requests a password from the user, reads it again for verification
 and then will normally not relinquish the terminal until the password is
 repeated.
@@ -72,6 +72,6 @@ minutes.
 .Xr skey 1
 .Sh HISTORY
 The
-.Nm lock
+.Nm
 command appeared in
 .Bx 3.0 .
