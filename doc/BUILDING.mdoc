@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.17 2003/05/08 14:42:06 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.18 2003/05/10 07:12:39 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -819,6 +819,10 @@ Should be run after
 .Dq make build
 does not install all of the required files).
 .
+.It Sy sourcesets
+Create source sets of the source tree into
+.Sy RELEASEDIR Ns Pa /source/sets .
+.
 .It Sy release
 Do a
 .Dq make distribution ,
@@ -954,6 +958,11 @@ using
 .It Sy sets
 Perform
 .Dq make sets .
+.
+.It Sy sourcesets
+Perform
+.Dq make sourcesets .
+.
 .El
 .
 .Pp
