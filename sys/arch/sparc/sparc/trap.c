@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31 1995/04/22 20:50:37 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.32 1995/05/08 17:53:40 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -529,7 +529,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	register struct proc *p;
 	register struct vmspace *vm;
 	register vm_offset_t va;
-	register int i, rv;
+	register int rv;
 	vm_prot_t ftype;
 	int onfault, mmucode;
 	u_quad_t sticks;
@@ -550,8 +550,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	 */
 	if (type == T_TEXTFAULT)
 		v = pc;
-	i = (int)v >> PG_VSHIFT;
-	if (i != 0 && i != -1)
+	if (VA_INHOLE(v))
 		goto fault;
 	ftype = ser & SER_WRITE ? VM_PROT_READ|VM_PROT_WRITE : VM_PROT_READ;
 	va = trunc_page(v);
@@ -591,7 +590,8 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	 * that got bumped out via LRU replacement.
 	 */
 	vm = p->p_vmspace;
-	rv = mmu_pagein(&vm->vm_pmap, va, ser & SER_WRITE ? PG_V|PG_W : PG_V);
+	rv = mmu_pagein(&vm->vm_pmap, va,
+			ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ);
 	if (rv < 0)
 		goto fault;
 	if (rv > 0)
@@ -622,7 +622,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		 * entries for `wired' pages).  Instead, we call
 		 * mmu_pagein here to make sure the new PTE gets installed.
 		 */
-		(void) mmu_pagein(&vm->vm_pmap, va, 0);
+		(void) mmu_pagein(&vm->vm_pmap, va, VM_PROT_NONE);
 	} else {
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
