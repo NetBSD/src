@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.206 1999/01/26 14:21:20 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.207 1999/03/12 23:08:11 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -990,8 +990,9 @@ ENTRY(bcopyw)
 /*
  * bcopy(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes.
+ * This routine handles overlapping regions, although bcopy
+ * is not specified to do so (and should not be counted on to do so).
  */
-ALTENTRY(ovbcopy)
 ENTRY(bcopy)
 	pushl	%esi
 	pushl	%edi
