@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.55 2004/03/24 20:25:28 pooka Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.55.2.1 2004/04/21 04:27:31 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.55 2004/03/24 20:25:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.55.2.1 2004/04/21 04:27:31 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1477,33 +1477,41 @@ SYSCTL_SETUP(sysctl_kern_pipe_setup, "sysctl kern.pipe subtree setup")
 		       CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "pipe", NULL,
+		       CTLTYPE_NODE, "pipe",
+		       SYSCTL_DESCR("Pipe settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_PIPE, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxkvasz", NULL,
+		       CTLTYPE_INT, "maxkvasz",
+		       SYSCTL_DESCR("Maximum amount of kernel memory to be "
+				    "used for pipes"),
 		       NULL, 0, &maxpipekva, 0,
 		       CTL_KERN, KERN_PIPE, KERN_PIPE_MAXKVASZ, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxloankvasz", NULL,
+		       CTLTYPE_INT, "maxloankvasz",
+		       SYSCTL_DESCR("Limit for direct transfers via page loan"),
 		       NULL, 0, &limitpipekva, 0,
 		       CTL_KERN, KERN_PIPE, KERN_PIPE_LIMITKVA, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxbigpipes", NULL,
+		       CTLTYPE_INT, "maxbigpipes",
+		       SYSCTL_DESCR("Maximum number of \"big\" pipes"),
 		       NULL, 0, &maxbigpipes, 0,
 		       CTL_KERN, KERN_PIPE, KERN_PIPE_MAXBIGPIPES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "nbigpipes", NULL,
+		       CTLTYPE_INT, "nbigpipes",
+		       SYSCTL_DESCR("Number of \"big\" pipes"),
 		       NULL, 0, &nbigpipe, 0,
 		       CTL_KERN, KERN_PIPE, KERN_PIPE_NBIGPIPES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "kvasize", NULL,
+		       CTLTYPE_INT, "kvasize",
+		       SYSCTL_DESCR("Amount of kernel memory consumed by pipe "
+				    "buffers"),
 		       NULL, 0, &amountpipekva, 0,
 		       CTL_KERN, KERN_PIPE, KERN_PIPE_KVASIZE, CTL_EOL);
 }
