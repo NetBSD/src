@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.2 1995/08/15 16:52:30 mycroft Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.3 1995/08/17 03:07:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -121,14 +121,16 @@ compat_43_sigstack(p, uap, retval)
 	if (SCARG(uap, oss) && (error = copyout((caddr_t)&ss,
 	    (caddr_t)SCARG(uap, oss), sizeof (struct sigstack))))
 		return (error);
-	if (SCARG(uap, nss) && (error = copyin((caddr_t)SCARG(uap, nss),
-	    (caddr_t)&ss, sizeof (ss))) == 0) {
-		psp->ps_sigstk.ss_base = ss.ss_sp;
-		psp->ps_sigstk.ss_size = 0;
-		psp->ps_sigstk.ss_flags |= ss.ss_onstack & SS_ONSTACK;
-		psp->ps_flags |= SAS_ALTSTACK;
-	}
-	return (error);
+	if (SCARG(uap, nss) == 0)
+		return (0);
+	if (error = copyin((caddr_t)SCARG(uap, nss), (caddr_t)&ss,
+	    sizeof (ss)))
+		return (error);
+	psp->ps_flags |= SAS_ALTSTACK;
+	psp->ps_sigstk.ss_base = ss.ss_sp;
+	psp->ps_sigstk.ss_size = 0;
+	psp->ps_sigstk.ss_flags |= ss.ss_onstack & SS_ONSTACK;
+	return (0);
 }
 
 /*
@@ -165,8 +167,11 @@ compat_43_sigvec(p, uap, retval)
 			sv->sv_flags |= SV_ONSTACK;
 		if ((ps->ps_sigintr & bit) != 0)
 			sv->sv_flags |= SV_INTERRUPT;
+		if ((ps->ps_sigreset & bit) != 0)
+			sv->sv_flags |= SV_RESETHAND;
 		if (p->p_flag & P_NOCLDSTOP)
 			sv->sv_flags |= SA_NOCLDSTOP;
+		sv->sv_mask &= ~bit;
 		if (error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, osv),
 		    sizeof (vec)))
 			return (error);
