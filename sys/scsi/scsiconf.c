@@ -309,7 +309,7 @@ scsi_attach(int masunit, int mytarg, struct scsi_switch *sw,
 		if(!match)
 			return 0;
 
-		ret = (*(match->attach_rtn))(masunit, sw, *physid, *unit);
+		ret = (*(match->attach_rtn))(masunit, sw, *physid, unit);
 		goto success;
 	}
 
@@ -334,7 +334,7 @@ scsi_attach(int masunit, int mytarg, struct scsi_switch *sw,
 				sw->printed[targ] |= (1<<lun);
 				break;
 			}
-			ret = (*(match->attach_rtn))(masunit, sw, *physid, *unit);
+			ret = (*(match->attach_rtn))(masunit, sw, *physid, unit);
 			if(ret)
 				goto success;
 			return 0;
