@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.7 1998/01/15 02:26:30 cgd Exp $
+#	$NetBSD: RISCPC,v 1.8 1998/03/14 17:15:52 mark Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -216,6 +216,9 @@ scsibus* at ptsc?
 
 oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?
+
+csa*	at podulebus?			# Cumana SCSI I adpater
+scsibus* at csa?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives

@@ -1,4 +1,4 @@
-#	$NetBSD: A7000,v 1.18 1998/02/21 02:46:11 mark Exp $
+#	$NetBSD: A7000,v 1.19 1998/03/14 17:15:52 mark Exp $
 #
 #	A7000 - Full A7000 configuration
 #
@@ -216,6 +216,9 @@ scsibus* at ptsc?
 
 oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?
+
+csa*	at podulebus?			# Cumana SCSI I adpater
+scsibus* at csa?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
