@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.15 1997/10/16 17:41:22 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.16 1997/10/19 07:40:26 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -240,7 +240,7 @@ Get or set audio information as encoded in the audio_info structure.
 typedef struct audio_info {
 	struct	audio_prinfo play;   /* info for play (output) side */
 	struct	audio_prinfo record; /* info for record (input) side */
-	u_int	buffersize;          /* total size of audio buffer */
+	u_int	_ispare[1];
 	/* BSD extensions */
 	u_int	blocksize;	/* H/W read/write block size */
 	u_int	hiwat;		/* output high water mark */
@@ -285,7 +285,7 @@ and
 .Va lowat
 set those high- and low-water marks (in audio blocks).
 .Pp
-.Va buffersize
+.Va buffer_size
 is the total size of the audio buffer.  The buffer size divided
 by the 
 .Va blocksize
@@ -323,14 +323,17 @@ struct audio_prinfo {
 	u_int	gain;		/* volume level */
 	u_int	port;		/* selected I/O port */
 	u_long	seek;		/* BSD extension */
-	u_int	ispare[3];
+	u_int	avail_ports;	/* available I/O ports */
+	u_int	buffer_size;	/* total size audio buffer */
+	u_int	_ispare[1];
 	/* Current state of device: */
 	u_int	samples;	/* number of samples */
 	u_int	eof;		/* End Of File (zero-size writes) counter */
 	u_char	pause;		/* non-zero if paused, zero to resume */
 	u_char	error;		/* non-zero if underflow/overflow ocurred */
 	u_char	waiting;	/* non-zero if another process hangs in open */
-	u_char	cspare[3];
+	u_char	balance;	/* stereo channel balance */
+	u_char	cspare[2];
 	u_char	open;		/* non-zero if currently open */
 	u_char	active;		/* non-zero if I/O is currently active */
 };
@@ -340,7 +343,7 @@ Note:  many hardware audio drivers require identical playback and
 recording sample rates, sample encodings, and channel counts.  The
 playing information is always set last and will prevail on such hardware.
 If the hardware can handle different settings the
-.It Dv AUDIO_PROP_INDEPENDENT
+.Dv AUDIO_PROP_INDEPENDENT
 property is set.
 .Pp
 The encoding parameter can have the following values:
@@ -365,15 +368,33 @@ unsigned linear encoding with little endian byte order
 unsigned linear encoding with little big byte order
 .El
 .Pp
-The gain and port settings provide simple shortcuts to the richer mixer
+The 
+.Va gain ,
+.Va port
+and
+.Va balance
+settings provide simple shortcuts to the richer mixer
 interface described below.  The gain should be in the range
 .Bq Dv AUDIO_MIN_GAIN , Dv AUDIO_MAX_GAIN .
-The port value is hardware-dependent
-and should be selected (if setting with
-.Dv AUDIO_SETINFO )
-based upon return values from the mixer query functions below or from
-a prior
-.Dv AUDIO_GETINFO .
+.br
+The input port should be a combination of
+.Bl -tag -width indent -compact
+.It Dv AUDIO_MICROPHONE
+to select microphone input.
+.It Dv AUDIO_LINE_IN
+to select line input.
+.It Dv AUDIO_CD
+to select CD input.
+.El
+The output port should be a combination of
+.Bl -tag -width indent -compact
+.It Dv AUDIO_SPEAKER
+to select microphone output.
+.It Dv AUDIO_HEADPHONE
+to select headphone output.
+.It Dv AUDIO_LINE_OUT
+to select line output.
+.El
 .Pp
 The
 .Va seek
