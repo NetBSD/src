@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.147.2.5 2000/09/23 17:30:06 sommerfeld Exp $
+#	$NetBSD: files.i386,v 1.147.2.6 2000/11/18 23:25:51 sommerfeld Exp $
 #
 # new style config file for i386 architecture
 #
@@ -31,6 +31,9 @@ defopt	USER_LDT
 # Speed hack; make NOPs dummies (might break on some machines)
 defopt	DUMMY_NOPS
 
+# Performance counter support
+defopt	PERFCTRS
+
 # X server support in console drivers
 defopt	opt_xserver.h XSERVER XSERVER_DDB
 
@@ -40,8 +43,13 @@ defopt	COMPAT_OLDBOOT
 defopt	opt_mpbios.h MPVERBOSE MPDEBUG
 
 # PCI BIOS options
-defopt	opt_pcibios.h PCIBIOS PCIBIOSVERBOSE PCIBIOS_INTR_FIXUP
-	PCIINTR_DEBUG PCIBIOS_BUS_FIXUP PCIBIOS_ADDR_FIXUP
+defopt	opt_pcibios.h PCIBIOS PCIBIOSVERBOSE
+	PCIBIOS_ADDR_FIXUP PCIBIOS_BUS_FIXUP
+	PCIBIOS_INTR_FIXUP PCIBIOS_INTR_FIXUP_FORCE
+	PCIBIOS_INTR_GUESS PCIBIOS_IRQS_HINT PCIINTR_DEBUG
+
+# Large page size
+defopt	LARGEPAGES
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/bus_machdep.c
@@ -75,6 +83,8 @@ file	arch/i386/i386/mptramp.s  	multiprocessor
 file	arch/i386/i386/lock_machdep.c	multiprocessor
 file    arch/i386/i386/ipifuncs.c       multiprocessor
 
+file	arch/i386/i386/pmc.c		perfctrs
+
 #
 # Machine-independent SCSI drivers
 #
@@ -97,8 +107,14 @@ major	{md = 17}
 # RAIDframe
 major	{raid = 18}
 
-# Compaq arrays
-major	{ca = 19}
+# Logical storage units
+major	{lsu = 19}
+
+#
+# Machine-independent I2O drivers
+#
+
+include "dev/i2o/files.i2o"
 
 # attribute used to bring in BIOS trampoline code for real-mode probing
 # of certain devices/BIOS features
@@ -144,6 +160,7 @@ file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 device	pchb: pcibus
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb
+file	arch/i386/pci/pchb_rnd.c	pchb & rnd
 
 # PCI-EISA bridges
 device	pceb: eisabus, isabus
@@ -355,7 +372,7 @@ file	arch/i386/i386/rbus_machdep.c	cardbus
 # needs to be before its isa and pci attachments.  This answer is
 # non-optimal, but I don't have a better answer right now.
 
-# PCIC pcmcia contoller
+# PCIC pcmcia controller
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
@@ -386,7 +403,7 @@ file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp | pcic_pci
 # needs to be before its isa and pci attachments.  This answer is
 # non-optimal, but I don't have a better answer right now.
 
-# TCIC pcmcia contoller
+# TCIC pcmcia controller
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
@@ -397,7 +414,7 @@ defopt	TCIC_ISA_INTR_ALLOC_MASK
 device	tcic: pcmciabus
 file	dev/ic/tcic2.c			tcic
 
-# TCIC pcmcia contoller
+# TCIC pcmcia controller
 attach	tcic at isa with tcic_isa
 file	dev/isa/tcic2_isa.c		tcic_isa
 
@@ -409,5 +426,7 @@ include "dev/pcmcia/files.pcmcia"
 
 
 include "dev/usb/files.usb"
+
+include "dev/ieee1394/files.ieee1394"
 
 include "arch/i386/pnpbios/files.pnpbios"
