@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.22 1996/11/15 22:44:26 jtc Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.23 1996/11/15 23:53:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -54,7 +54,9 @@
 
 #include <machine/cpu.h>
 
-/* 
+static void	settime __P((struct timeval *));
+
+/*
  * Time of day and interval timer support.
  *
  * These routines provide the kernel entry points to get and set
@@ -96,8 +98,8 @@ sys_clock_gettime(p, v, retval)
 {
 	register struct sys_clock_gettime_args /* {
 		syscallarg(clockid_t) clock_id;
-                syscallarg(struct timespec *) tp;
-        } */ *uap = v;
+		syscallarg(struct timespec *) tp;
+	} */ *uap = v;
 	clockid_t clock_id;
 	struct timeval atv;
 	struct timespec ats;
@@ -121,8 +123,8 @@ sys_clock_settime(p, v, retval)
 {
 	register struct sys_clock_settime_args /* {
 		syscallarg(clockid_t) clock_id;
-                syscallarg(struct timespec *) tp;
-        } */ *uap = v;
+		syscallarg(const struct timespec *) tp;
+	} */ *uap = v;
 	clockid_t clock_id;
 	struct timeval atv;
 	struct timespec ats;
@@ -135,8 +137,9 @@ sys_clock_settime(p, v, retval)
 	if (clock_id != CLOCK_REALTIME)
 		return (EINVAL);
 
-	if (error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ats, sizeof(ats)))
-                return (error);
+	if ((error = copyin((const char *)SCARG(uap, tp), (caddr_t)&ats,
+	    sizeof(ats))) != 0)
+		return (error);
 
 	TIMESPEC_TO_TIMEVAL(&atv,&ats);
 	settime(&atv);
@@ -152,8 +155,8 @@ sys_clock_getres(p, v, retval)
 {
 	register struct sys_clock_getres_args /* {
 		syscallarg(clockid_t) clock_id;
-                syscallarg(struct timespec *) tp;
-        } */ *uap = v;
+		syscallarg(struct timespec *) tp;
+	} */ *uap = v;
 	clockid_t clock_id;
 	struct timespec ts;
 	int error = 0;
@@ -255,7 +258,7 @@ sys_adjtime(p, v, retval)
 		return (error);
 
 	error = copyin((caddr_t)SCARG(uap, delta), (caddr_t)&atv,
-		       sizeof(struct timeval));
+	    sizeof(struct timeval));
 	if (error)
 		return (error);
 
@@ -380,7 +383,7 @@ sys_setitimer(p, v, retval)
 	if (SCARG(uap, oitv) != NULL) {
 		SCARG(&getargs, which) = SCARG(uap, which);
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
-	    	if ((error = sys_getitimer(p, &getargs, retval)) != 0)
+		if ((error = sys_getitimer(p, &getargs, retval)) != 0)
 			return (error);
 	}
 	if (itvp == 0)
