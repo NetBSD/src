@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.97 2002/02/15 16:48:02 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.98 2002/02/17 23:56:35 rafal Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.97 2002/02/15 16:48:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.98 2002/02/17 23:56:35 rafal Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1539,6 +1539,8 @@ linux_sys_setrlimit(p, v, retval)
 	return sys_setrlimit(p, v, retval);
 }
 
+#ifndef __mips__
+/* XXX: this doesn't look 100% common, at least mips doesn't have it */
 int
 linux_sys_ugetrlimit(p, v, retval)
 	struct proc *p;
@@ -1547,6 +1549,7 @@ linux_sys_ugetrlimit(p, v, retval)
 {
 	return linux_sys_getrlimit(p, v, retval);
 }
+#endif
 
 /*
  * This gets called for unsupported syscalls. The difference to sys_nosys()
