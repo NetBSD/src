@@ -1,4 +1,4 @@
-/*	$NetBSD: bivar.h,v 1.7 2000/06/04 06:17:00 matt Exp $ */
+/*	$NetBSD: bivar.h,v 1.8 2000/07/26 12:41:40 ragge Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -67,6 +67,13 @@ struct bi_list {
 	u_short bl_havedriver;	/* Have device driver (informal) */
 	char *bl_name;		/* DEC name */
 };
+
+/* bl_havedriver field meaning */
+#define	DT_UNSUPP	0	/* pseudo define */
+#define	DT_HAVDRV	1	/* device have driver */
+#define	DT_ADAPT	2	/* is an adapter */
+#define	DT_QUIET	4	/* don't complain when not conf'ed */
+#define	DT_VEC		8	/* uses a interrupt vector */
 
 /* Prototype */
 void bi_attach (struct bi_softc *);
