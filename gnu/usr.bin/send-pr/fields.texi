@@ -364,7 +364,7 @@ concept.
 @item >Environment:
 @cindex @code{Environment} field
 @cindex @code{>Environment:}
-(@sc{MultiText}) Description of the environment where the problem occured:
+(@sc{MultiText}) Description of the environment where the problem occurred:
 machine architecture, operating system, host and target types,
 libraries, pathnames, etc.
 

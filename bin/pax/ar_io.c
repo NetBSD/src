@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.18 2000/03/30 17:53:04 thorpej Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.19 2001/09/16 16:34:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.18 2000/03/30 17:53:04 thorpej Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.19 2001/09/16 16:34:23 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -741,7 +741,7 @@ ar_read(buf, cnt)
  * Return:
  *	Number of bytes written. 0 indicates end of volume reached and with no
  *	flaws (as best that can be detected). A -1 indicates an unrecoverable
- *	error in the archive occured.
+ *	error in the archive occurred.
  */
 
 #if __STDC__

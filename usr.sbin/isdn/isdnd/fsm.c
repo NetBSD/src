@@ -27,7 +27,7 @@
  *	FSM for isdnd
  *	-------------
  *
- *	$Id: fsm.c,v 1.1.1.1 2001/01/06 13:00:13 martin Exp $ 
+ *	$Id: fsm.c,v 1.2 2001/09/16 16:34:44 wiz Exp $ 
  *
  * $FreeBSD$
  *
@@ -137,7 +137,7 @@ F_MCAI(cfg_entry_t *cep)
 static void
 F_TIMO(cfg_entry_t *cep)
 {
-	DBGL(DL_STATE, (log(LL_DBG, "F_TIMO: Timout occured!")));
+	DBGL(DL_STATE, (log(LL_DBG, "F_TIMO: Timout occurred!")));
 	sendm_disconnect_req(cep, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 	cep->cdid = CDID_UNUSED;	
 }
