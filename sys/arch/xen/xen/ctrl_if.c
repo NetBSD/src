@@ -1,3 +1,5 @@
+/*	$NetBSD: ctrl_if.c,v 1.1.2.3 2005/03/09 18:57:30 bouyer Exp $	*/
+
 /******************************************************************************
  * ctrl_if.c
  * 
@@ -7,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.1.2.2 2005/01/18 14:16:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.1.2.3 2005/03/09 18:57:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
