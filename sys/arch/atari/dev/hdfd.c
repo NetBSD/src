@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.9 1998/01/12 18:04:05 thorpej Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.10 1998/04/10 08:20:03 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -272,6 +272,7 @@ fdcprobe(parent, cfp, aux)
 	void		*aux;
 {
 	int		rv   = 0;
+	bus_space_tag_t mb_tag;
 
 	if(strcmp("fdc", aux) || cfp->cf_unit != 0)
 		return(0);
@@ -279,8 +280,12 @@ fdcprobe(parent, cfp, aux)
 	if (!atari_realconfig)
 		return 0;
 
-	if (bus_space_map(NULL, 0xfff00000, NBPG, 0, (caddr_t*)&fdio_addr)) {
+	if ((mb_tag = mb_alloc_bus_space_tag()) == NULL)
+		return 0;
+
+	if (bus_space_map(mb_tag, 0xfff00000, NBPG, 0, (caddr_t*)&fdio_addr)) {
 		printf("fdcprobe: cannot map io-area\n");
+		mb_free_bus_space_tag(mb_tag);
 		return (0);
 	}
 
@@ -302,8 +307,10 @@ fdcprobe(parent, cfp, aux)
 	rv = 1;
 
  out:
-	if (rv == 0)
-		bus_space_unmap(NULL, (caddr_t)fdio_addr, NBPG);
+	if (rv == 0) {
+		bus_space_unmap(mb_tag, (caddr_t)fdio_addr, NBPG);
+		mb_free_bus_space_tag(mb_tag);
+	}
 
 	return rv;
 }

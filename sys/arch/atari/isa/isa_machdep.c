@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.4 1998/03/10 11:43:10 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.5 1998/04/10 08:20:04 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -77,11 +77,18 @@ struct device	*pdp, *dp;
 void		*auxp;
 {
 	struct isabus_attach_args	iba;
+	bus_space_tag_t			leb_alloc_bus_space_tag __P((void));
 
 	iba.iba_busname = "isa";
-	iba.iba_iot     = ISA_IOSTART;
-	iba.iba_memt    = ISA_MEMSTART;
 	iba.iba_dmat	= BUS_ISA_DMA_TAG;
+	iba.iba_iot     = leb_alloc_bus_space_tag();
+	iba.iba_memt    = leb_alloc_bus_space_tag();
+	if ((iba.iba_iot == NULL) || (iba.iba_memt == NULL)) {
+		printf("leb_alloc_bus_space_tag failed!\n");
+		return;
+	}
+	iba.iba_iot->base  = ISA_IOSTART;
+	iba.iba_memt->base = ISA_MEMSTART;
 
 	MFP->mf_aer    |= (IO_ISA1|IO_ISA2); /* ISA interrupts: LOW->HIGH */
 
