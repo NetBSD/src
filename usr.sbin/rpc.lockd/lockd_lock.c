@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.8.2.3 2004/04/06 09:34:32 grant Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.8.2.4 2004/04/06 09:37:13 grant Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -218,8 +218,9 @@ getlock(lckarg, rqstp, flags)
 			    newfl->client.svid == fl->client.svid) {
 				/* already locked by this host ??? */
 				sigunlock();
-				syslog(LOG_NOTICE, "duplicate lock from %s",
-				    newfl->client_name);
+				syslog(LOG_NOTICE, "duplicate lock from %s.%"
+				    PRIu32,
+				    newfl->client_name, newfl->client.svid);
 				lfree(newfl);
 				switch(fl->status) {
 				case LKST_LOCKED:
@@ -244,9 +245,10 @@ getlock(lckarg, rqstp, flags)
 			 * in waiting state if allowed to block
 			 */
 			if (lckarg->block) {
-				syslog(LOG_DEBUG, "lock from %s: already "
-				    "locked, waiting",
-				    lckarg->alock.caller_name);
+				syslog(LOG_DEBUG, "lock from %s.%" PRIu32 ": "
+				    "already locked, waiting",
+				    lckarg->alock.caller_name,
+				    lckarg->alock.svid);
 				newfl->status = LKST_WAITING;
 				LIST_INSERT_HEAD(&lcklst_head, newfl, lcklst);
 				do_mon(lckarg->alock.caller_name);
@@ -255,9 +257,10 @@ getlock(lckarg, rqstp, flags)
 				    nlm4_blocked : nlm_blocked;
 			} else {
 				sigunlock();
-				syslog(LOG_DEBUG, "lock from %s: already "
-				    "locked, failed",
-				    lckarg->alock.caller_name);
+				syslog(LOG_DEBUG, "lock from %s.%" PRIu32 ": "
+				    "already locked, failed",
+				    lckarg->alock.caller_name,
+				    lckarg->alock.svid);
 				lfree(newfl);
 				return (flags & LOCK_V4) ?
 				    nlm4_denied : nlm_denied;
@@ -305,8 +308,8 @@ unlock(lck, flags)
 		    fl->client.svid != lck->svid)
 			continue;
 		/* Got it, unlock and remove from the queue */
-		syslog(LOG_DEBUG, "unlock from %s: found struct, status %d",
-		    lck->caller_name, fl->status);
+		syslog(LOG_DEBUG, "unlock from %s.%" PRIu32 ": found struct, "
+		    "status %d", lck->caller_name, lck->svid, fl->status);
 		switch (fl->status) {
 		case LKST_LOCKED:
 			err = do_unlock(fl);
@@ -458,10 +461,10 @@ do_lock(fl, block)
 		syslog(LOG_NOTICE, "fstat failed (from %s): %s",
 		    fl->client_name, strerror(errno));
 	}
-	syslog(LOG_DEBUG, "lock from %s for file%s%s: dev %d ino %d (uid %d), "
-	    "flags %d",
-	    fl->client_name, fl->client.exclusive ? " (exclusive)":"",
-	    block ? " (block)":"",
+	syslog(LOG_DEBUG, "lock from %s.%" PRIu32 " for file%s%s: "
+	    "dev %d ino %d (uid %d), flags %d",
+	    fl->client_name, fl->client.svid,
+	    fl->client.exclusive ? " (exclusive)":"", block ? " (block)":"",
 	    st.st_dev, st.st_ino, st.st_uid, fl->flags);
 	lflags = LOCK_NB;
 	if (fl->client.exclusive == 0)
@@ -482,7 +485,8 @@ do_lock(fl, block)
 			 * Attempt a blocking lock. Will have to call
 			 * NLM_GRANTED later.
 			 */
-			setproctitle("%s", fl->client_name);
+			setproctitle("%s.%" PRIu32,
+			    fl->client_name, fl->client.svid);
 			lflags &= ~LOCK_NB;
 			if(flock(fl->fd, lflags) != 0) {
 				syslog(LOG_NOTICE, "flock failed: %s",
@@ -492,8 +496,9 @@ do_lock(fl, block)
 			/* lock granted */	
 			_exit(0);
 		default:
-			syslog(LOG_DEBUG, "lock request from %s: forked %d",
-			    fl->client_name, fl->locker);
+			syslog(LOG_DEBUG, "lock request from %s.%" PRIu32 ": "
+			    "forked %d",
+			    fl->client_name, fl->client.svid, fl->locker);
 			fl->status = LKST_PROCESSING;
 			return (fl->flags & LOCK_V4) ?
 			    nlm4_blocked : nlm_blocked;
@@ -544,8 +549,8 @@ send_granted(fl, opcode)
 	cli = get_client(fl->addr,
 	    (fl->flags & LOCK_V4) ? NLM_VERS4 : NLM_VERS);
 	if (cli == NULL) {
-		syslog(LOG_NOTICE, "failed to get CLIENT for %s",
-		    fl->client_name);
+		syslog(LOG_NOTICE, "failed to get CLIENT for %s.%" PRIu32,
+		    fl->client_name, fl->client.svid);
 		/*
 		 * We fail to notify remote that the lock has been granted.
 		 * The client will timeout and retry, the lock will be
