@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.15 2003/06/10 17:47:15 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.16 2003/06/11 22:17:03 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -216,6 +216,7 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 	struct ptn_info *pi = arg;
 	struct ptn_size *p;
 	char answer[10];
+	char dflt[10];
 	char *cp;
 	int size;
 	int mult;
@@ -227,24 +228,31 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 		return 0;
 
 	if (p->mount[0] == 0) {
-		msg_prompt_win(MSG_askfsmount, -1, -1, 0, 18,
+		msg_prompt_win(MSG_askfsmount, -1, 18, 0, 0,
 			NULL, p->mount, sizeof p->mount);
 		if (p->mount[0] == 0)
 			return 0;
 	}
 
-	for (;;) {
-		size = p->size;
-		if (size == 0)
-			size = p->dflt_size;
-		size /= sizemult;
-		snprintf(answer, sizeof answer, "%d", size);
+	size = p->size;
+	if (size == 0)
+		size = p->dflt_size;
+	size /= sizemult;
+	snprintf(dflt, sizeof dflt, "%d", size);
 
-		msg_prompt_win(MSG_askfssize, -1, -1, 0, 18,
-			answer, answer, sizeof answer,
-			p->mount, multname);
-		size = strtoul(answer, &cp, 0);
+	for (;;) {
 		mult = sizemult;
+		msg_prompt_win(MSG_askfssize, -1, 18, 0, 0,
+			dflt, answer, sizeof answer,
+			p->mount, multname);
+		/* hack to add free space to default sized /usr */
+		if (p->size == 0 && !strcmp(answer, dflt)
+		    && !strcmp(p->mount, "/usr")) {
+			size = p->dflt_size;
+			pi->pool_part = p;
+			goto adjust_free;
+		}
+		size = strtoul(answer, &cp, 0);
 		switch (*cp++) {
 		default:
 			continue;
@@ -282,6 +290,7 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 		pi->pool_part = NULL;
 	if (size != 0 && *cp == '+')
 		pi->pool_part = p;
+    adjust_free:
 	pi->free_space += p->size - size;
 	if (size == 0) {
 		if (p->size != 0)
@@ -330,16 +339,19 @@ get_ptn_sizes(int layoutkind, int part_start, int sectors)
 		maxpart = MAXPARTITIONS;	/* sanity */
 
 	if (pi.menu_no < 0) {
-		/* If installing X increase default size of /usr */
-		if (layoutkind == 2) {
+		/* If installing X increase default size of / and /usr */
+		if (sets_selected & SET_X11) {
+			pi.ptn_sizes[0].size += XNEEDMB;
 			pi.ptn_sizes[0].dflt_size += XNEEDMB;
-			pi.ptn_sizes[3].dflt_size += XNEEDMB;
 		}
 
 		/* Change preset size from MB to sectors */
 		sm = MEG / sectorsize;
 		pi.free_space = sectors;
 		for (p = pi.ptn_sizes; p->mount[0]; p++) {
+			if (sets_selected & SET_X11 &&
+			    strcmp(p->mount, "/usr") == 0)
+				p->dflt_size += XNEEDMB;
 			p->size = NUMSEC(p->size, sm, dlcylsize);
 			p->dflt_size = NUMSEC(p->dflt_size, sm, dlcylsize);
 			pi.free_space -= p->size;
@@ -436,10 +448,7 @@ make_bsd_partitions(void)
 
 	process_menu(MENU_layout, NULL);
 
-	if (layoutkind == 3)
-		reask_sizemult(dlcylsize);
-	else
-		md_set_sizemultname();
+	md_set_sizemultname();
 
 	/* Build standard partitions */
 	emptylabel(bsdlabel);
