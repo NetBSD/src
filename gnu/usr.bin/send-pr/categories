@@ -1,4 +1,3 @@
-admin
 bin
 install
 kern
@@ -14,7 +13,6 @@ port-amiga
 port-amigappc
 port-arc
 port-arm
-port-arm32
 port-atari
 port-bebox
 port-cats
