@@ -1,8 +1,8 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.23 1997/01/15 01:37:54 perry Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.24 1997/10/17 11:23:54 ws Exp $	*/
 
 /*-
- * Copyright (C) 1995 Wolfgang Solfrank.
- * Copyright (C) 1995 TooLs GmbH.
+ * Copyright (C) 1995, 1997 Wolfgang Solfrank.
+ * Copyright (C) 1995, 1997 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -93,10 +93,11 @@ u_short lastdtime;
  * file timestamps. The passed in unix time is assumed to be in GMT.
  */
 void
-unix2dostime(tsp, ddp, dtp)
+unix2dostime(tsp, ddp, dtp, dhp)
 	struct timespec *tsp;
 	u_int16_t *ddp;
 	u_int16_t *dtp;
+	u_int8_t *dhp;
 {
 	u_long t;
 	u_long days;
@@ -112,6 +113,7 @@ unix2dostime(tsp, ddp, dtp)
 	/* XXX NOTE: Removed tz, which is obsolete. Must replace!!! */
 	t = tsp->tv_sec /* - (tz.tz_minuteswest * 60) */
 	     /* +- daylight savings time correction */ ;
+	t &= ~1;
 	if (lasttime != t) {
 		lasttime = t;
 		lastdtime = (((t / 2) % 30) << DT_2SECONDS_SHIFT)
@@ -150,7 +152,11 @@ unix2dostime(tsp, ddp, dtp)
 				lastddate += (year - 1980) << DD_YEAR_SHIFT;
 		}
 	}
-	*dtp = lastdtime;
+	if (dtp)
+		*dtp = lastdtime;
+	if (dhp)
+		*dhp = (tsp->tv_sec & 1) * 100 + tsp->tv_nsec / 10000000;
+
 	*ddp = lastddate;
 }
 
@@ -169,9 +175,10 @@ u_long lastseconds;
  * not be too efficient.
  */
 void
-dos2unixtime(dd, dt, tsp)
+dos2unixtime(dd, dt, dh, tsp)
 	u_int dd;
 	u_int dt;
+	u_int dh;
 	struct timespec *tsp;
 {
 	u_long seconds;
@@ -190,7 +197,8 @@ dos2unixtime(dd, dt, tsp)
 	}
 	seconds = ((dt & DT_2SECONDS_MASK) >> DT_2SECONDS_SHIFT) * 2
 	    + ((dt & DT_MINUTES_MASK) >> DT_MINUTES_SHIFT) * 60
-	    + ((dt & DT_HOURS_MASK) >> DT_HOURS_SHIFT) * 3600;
+	    + ((dt & DT_HOURS_MASK) >> DT_HOURS_SHIFT) * 3600
+	    + dh / 100;
 	/*
 	 * If the year, month, and day from the last conversion are the
 	 * same then use the saved value.
@@ -220,7 +228,7 @@ dos2unixtime(dd, dt, tsp)
 	/* XXX NOTE: Removed tz, which is obsolete. Must replace!!! */
 	tsp->tv_sec = seconds + lastseconds /* + (tz.tz_minuteswest * 60) */
 	     /* -+ daylight savings time correction */ ;
-	tsp->tv_nsec = 0;
+	tsp->tv_nsec = (dh % 100) * 10000000;
 }
 
 static u_char

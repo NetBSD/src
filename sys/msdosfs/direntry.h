@@ -1,8 +1,8 @@
-/*	$NetBSD: direntry.h,v 1.12 1996/10/25 23:14:05 cgd Exp $	*/
+/*	$NetBSD: direntry.h,v 1.13 1997/10/17 11:23:45 ws Exp $	*/
 
 /*-
- * Copyright (C) 1994, 1995 Wolfgang Solfrank.
- * Copyright (C) 1994, 1995 TooLs GmbH.
+ * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
+ * Copyright (C) 1994, 1995, 1997 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -64,11 +64,12 @@ struct direntry {
 #define	ATTR_VOLUME	0x08		/* entry is a volume label */
 #define	ATTR_DIRECTORY	0x10		/* entry is a directory name */
 #define	ATTR_ARCHIVE	0x20		/* file is new or modified */
-	u_int8_t	deReserved[2];	/* reserved */
+	u_int8_t	deReserved;	/* reserved */
+	u_int8_t	deCHundredth;	/* hundredth of seconds in CTime */
 	u_int8_t	deCTime[2];	/* create time */
 	u_int8_t	deCDate[2];	/* create date */
 	u_int8_t	deADate[2];	/* access date */
-	u_int8_t	deATime[2];	/* access time */
+	u_int8_t	deHighClust[2];	/* high bytes of cluster number */
 	u_int8_t	deMTime[2];	/* last update time */
 	u_int8_t	deMDate[2];	/* last update date */
 	u_int8_t	deStartCluster[2]; /* starting cluster of file */
@@ -119,8 +120,8 @@ struct winentry {
 
 #ifdef _KERNEL
 void	unix2dostime __P((struct timespec *tsp, u_int16_t *ddp,
-	    u_int16_t *dtp));
-void	dos2unixtime __P((u_int dd, u_int dt, struct timespec *tsp));
+	    u_int16_t *dtp, u_int8_t *dhp));
+void	dos2unixtime __P((u_int dd, u_int dt, u_int dh, struct timespec *tsp));
 int	dos2unixfn __P((u_char dn[11], u_char *un, int lower));
 int	unix2dosfn __P((const u_char *un, u_char dn[12], int unlen,
 	    u_int gen));
