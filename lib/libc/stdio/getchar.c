@@ -1,4 +1,4 @@
-/*	$NetBSD: getchar.c,v 1.6 1997/07/13 20:15:11 christos Exp $	*/
+/*	$NetBSD: getchar.c,v 1.7 1998/01/19 07:38:51 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getchar.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getchar.c,v 1.6 1997/07/13 20:15:11 christos Exp $");
+__RCSID("$NetBSD: getchar.c,v 1.7 1998/01/19 07:38:51 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,11 +49,25 @@ __RCSID("$NetBSD: getchar.c,v 1.6 1997/07/13 20:15:11 christos Exp $");
  * A subroutine version of the macro getchar.
  */
 #include <stdio.h>
+#include "reentrant.h"
 
 #undef getchar
+#undef getchar_unlocked
 
 int
 getchar()
 {
-	return (getc(stdin));
+	FILE *fp = stdin;
+	int r;
+
+        FLOCKFILE(fp);
+        r = __sgetc(fp);
+        FUNLOCKFILE(fp);
+        return r;
+}
+
+int
+getchar_unlocked()
+{
+	return (__sgetc(stdin));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: clrerr.c,v 1.5 1997/07/13 20:14:49 christos Exp $	*/
+/*	$NetBSD: clrerr.c,v 1.6 1998/01/19 07:38:41 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,15 +41,19 @@
 #if 0
 static char sccsid[] = "@(#)clrerr.c	8.1 (Berkeley) 6/4/93";
 #endif
-__RCSID("$NetBSD: clrerr.c,v 1.5 1997/07/13 20:14:49 christos Exp $");
+__RCSID("$NetBSD: clrerr.c,v 1.6 1998/01/19 07:38:41 jtc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
+#include "reentrant.h"
+
 #undef	clearerr
 
 void
 clearerr(fp)
 	FILE *fp;
 {
+	FLOCKFILE(fp);
 	__sclearerr(fp);
+	FUNLOCKFILE(fp);
 }

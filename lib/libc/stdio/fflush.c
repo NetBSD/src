@@ -1,4 +1,4 @@
-/*	$NetBSD: fflush.c,v 1.8 1997/07/13 20:14:52 christos Exp $	*/
+/*	$NetBSD: fflush.c,v 1.9 1998/01/19 07:38:42 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,27 +41,34 @@
 #if 0
 static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fflush.c,v 1.8 1997/07/13 20:14:52 christos Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.9 1998/01/19 07:38:42 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
 #include <stdio.h>
 #include "local.h"
+#include "reentrant.h"
 
 /* Flush a single file, or (if fp is NULL) all files.  */
 int
 fflush(fp)
 	register FILE *fp;
 {
+	int r;
 
 	if (fp == NULL)
 		return (_fwalk(__sflush));
+
+	FLOCKFILE(fp);
 	if ((fp->_flags & (__SWR | __SRW)) == 0) {
 		errno = EBADF;
-		return (EOF);
+		r = EOF;
+	} else {
+		r = __sflush(fp);
 	}
-	return (__sflush(fp));
+	FUNLOCKFILE(fp);
+	return r;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwrite.c,v 1.6 1997/07/13 20:15:10 christos Exp $	*/
+/*	$NetBSD: fwrite.c,v 1.7 1998/01/19 07:38:49 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)fwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fwrite.c,v 1.6 1997/07/13 20:15:10 christos Exp $");
+__RCSID("$NetBSD: fwrite.c,v 1.7 1998/01/19 07:38:49 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include "local.h"
 #include "fvwrite.h"
+#include "reentrant.h"
 
 /*
  * Write `count' objects (each size `size') from memory to the given file.
@@ -73,7 +74,9 @@ fwrite(buf, size, count, fp)
 	 * skip the divide if this happens, since divides are
 	 * generally slow and since this occurs whenever size==0.
 	 */
-	if (__sfvwrite(fp, &uio) == 0)
-		return (count);
-	return ((n - uio.uio_resid) / size);
+	FLOCKFILE(fp);
+	if (__sfvwrite(fp, &uio) != 0)
+		count = ((n - uio.uio_resid) / size);
+	FUNLOCKFILE(fp);
+	return (count);
 }

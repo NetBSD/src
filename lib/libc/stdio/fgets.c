@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets.c,v 1.6 1997/07/13 20:14:55 christos Exp $	*/
+/*	$NetBSD: fgets.c,v 1.7 1998/01/19 07:38:44 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
 #else
-__RCSID("$NetBSD: fgets.c,v 1.6 1997/07/13 20:14:55 christos Exp $");
+__RCSID("$NetBSD: fgets.c,v 1.7 1998/01/19 07:38:44 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <string.h>
 #include "local.h"
+#include "reentrant.h"
 
 /*
  * Read at most n-1 characters from the given file.
@@ -67,6 +68,7 @@ fgets(buf, n, fp)
 	if (n <= 0)		/* sanity check */
 		return (NULL);
 
+	FLOCKFILE(fp);
 	s = buf;
 	n--;			/* leave space for NUL */
 	while (n != 0) {
@@ -108,5 +110,6 @@ fgets(buf, n, fp)
 		n -= len;
 	}
 	*s = 0;
+	FUNLOCKFILE(fp);
 	return (buf);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fseek.c,v 1.11 1997/12/19 14:08:41 kleink Exp $	*/
+/*	$NetBSD: fseek.c,v 1.12 1998/01/19 07:38:48 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fseek.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: fseek.c,v 1.11 1997/12/19 14:08:41 kleink Exp $");
+__RCSID("$NetBSD: fseek.c,v 1.12 1998/01/19 07:38:48 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: fseek.c,v 1.11 1997/12/19 14:08:41 kleink Exp $");
 #include <stdlib.h>
 #include <errno.h>
 #include "local.h"
+#include "reentrant.h"
 
 #define	POS_ERR	(-(fpos_t)1)
 
@@ -74,6 +75,8 @@ fseek(fp, offset, whence)
 	/* make sure stdio is set up */
 	if (!__sdidinit)
 		__sinit();
+
+	FLOCKFILE(fp);
 
 	/*
 	 * Have to be able to seek.
@@ -100,8 +103,10 @@ fseek(fp, offset, whence)
 			curoff = fp->_offset;
 		else {
 			curoff = (*seekfn)(fp->_cookie, (fpos_t)0, SEEK_CUR);
-			if (curoff == -1L)
+			if (curoff == -1L) {
+				FUNLOCKFILE(fp);
 				return (-1);
+			}
 		}
 		if (fp->_flags & __SRD) {
 			curoff -= fp->_r;
@@ -123,6 +128,7 @@ fseek(fp, offset, whence)
 
 	default:
 		errno = EINVAL;
+		FUNLOCKFILE(fp);
 		return (-1);
 	}
 
@@ -206,6 +212,7 @@ fseek(fp, offset, whence)
 		if (HASUB(fp))
 			FREEUB(fp);
 		fp->_flags &= ~__SEOF;
+		FUNLOCKFILE(fp);
 		return (0);
 	}
 
@@ -232,6 +239,7 @@ fseek(fp, offset, whence)
 		fp->_p += n;
 		fp->_r -= n;
 	}
+	FUNLOCKFILE(fp);
 	return (0);
 
 	/*
@@ -241,6 +249,7 @@ fseek(fp, offset, whence)
 dumb:
 	if (__sflush(fp) ||
 	    (*seekfn)(fp->_cookie, (fpos_t)offset, whence) == POS_ERR) {
+		FUNLOCKFILE(fp);
 		return (-1);
 	}
 	/* success: clear EOF indicator and discard ungetc() data */
@@ -250,5 +259,6 @@ dumb:
 	fp->_r = 0;
 	/* fp->_w = 0; */	/* unnecessary (I think...) */
 	fp->_flags &= ~__SEOF;
+	FUNLOCKFILE(fp);
 	return (0);
 }
