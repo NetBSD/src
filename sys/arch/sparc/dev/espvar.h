@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.17 1996/11/12 21:06:23 cgd Exp $	*/
+/*	$NetBSD: espvar.h,v 1.18 1996/11/22 22:36:57 pk Exp $	*/
 
 #if defined(__sparc__) && !defined(SPARC_DRIVER)
 #define	SPARC_DRIVER
@@ -183,7 +183,7 @@ struct esp_softc {
 				      nexus_list;
 
 	struct esp_ecb *sc_nexus;		/* current command */
-	struct esp_ecb sc_ecb[8];		/* one per target */
+	struct esp_ecb sc_ecb[3*8];		/* three per target */
 	struct esp_tinfo sc_tinfo[8];
 
 	/* Data about the current nexus (updated for every cmd switch) */
