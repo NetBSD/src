@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.3 1999/12/16 16:50:08 msaitoh Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.4 1999/12/17 08:25:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -356,7 +356,9 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 		 sh.s_size, sh.s_scnptr));
 	epp->ep_taddr = COFF_ALIGN(sh.s_vaddr);
 	offset = sh.s_scnptr - (sh.s_vaddr - epp->ep_taddr);
-	epp->ep_tsize = round_page(sh.s_size + (sh.s_vaddr - epp->ep_taddr));
+	epp->ep_tsize = sh.s_size + (sh.s_vaddr - epp->ep_taddr);
+	if (!(offset & PAGE_MASK) && !(epp->ep_taddr & PAGE_MASK))
+		epp->ep_tsize =	round_page(epp->ep_tsize);
 
 	/*
 	 * check if vnode is in open for writing, because we want to
