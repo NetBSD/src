@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.34 2004/03/14 18:18:54 chs Exp $
+#	$NetBSD: genassym.cf,v 1.35 2004/03/23 00:17:12 martin Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -264,6 +264,9 @@ define	IH_CLR		offsetof(struct intrhand, ih_clr)
 define	M_NEXT		offsetof(struct mbuf, m_next)
 define	M_DATA		offsetof(struct mbuf, m_data)
 define	M_LEN		offsetof(struct mbuf, m_len)
+
+# event counters
+define EVC_SIZE		sizeof(struct evcnt)
 
 ifdef notyet
 # floppy trap handler fields

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.194 2004/03/14 18:18:54 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.195 2004/03/23 00:17:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4463,18 +4463,18 @@ _C_LABEL(sparc_interrupt):
 	stx	%l2, [%sp + CC64FSZ + STKB + TF_NPC]
 	
 	sub	%l5, 0x40, %l6			! Convert to interrupt level
-	sethi	%hi(_C_LABEL(intrcnt)), %l4
+	sethi	%hi(_C_LABEL(intr_evcnts)), %l4
 	stb	%l6, [%sp + CC64FSZ + STKB + TF_PIL]	! set up intrframe/clockframe
 	rdpr	%pil, %o1
-	sll	%l6, LNGSHFT, %l3
-	or	%l4, %lo(_C_LABEL(intrcnt)), %l4	! intrcnt[intlev]++;
+	mulx	%l6, EVC_SIZE, %l3
+	or	%l4, %lo(_C_LABEL(intr_evcnts)), %l4	! intrcnt[intlev]++;
 	stb	%o1, [%sp + CC64FSZ + STKB + TF_OLDPIL]	! old %pil
-	LDULNG	[%l4 + %l3], %o0
+	ldx	[%l4 + %l3], %o0
 	add	%l4, %l3, %l4
 	clr	%l5			! Zero handled count
-	mov	1, %l3			! Ack softint
 	inc	%o0	
-	STULNG	%o0, [%l4]
+	mov	1, %l3			! Ack softint
+	stx	%o0, [%l4]
 	sll	%l3, %l6, %l3		! Generate IRQ mask
 	
 	wrpr	%l6, %pil
@@ -12133,30 +12133,19 @@ _C_LABEL(ssym):
 _C_LABEL(proc0paddr):
 	POINTER	_C_LABEL(u0)		! KVA of proc0 uarea
 
-/* interrupt counters	XXX THESE BELONG ELSEWHERE (if anywhere) */
-	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt), _C_LABEL(intrnames), _C_LABEL(eintrnames)
+/*
+ * Symbols that vmstat -i wants, even though they're not used.
+ */
+.globl	_C_LABEL(intrnames)
 _C_LABEL(intrnames):
-	.asciz	"spur"
-	.asciz	"lev1"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"lev5"
-	.asciz	"lev6"
-	.asciz	"lev7"
-	.asciz  "lev8"
-	.asciz	"lev9"
-	.asciz	"clock"
-	.asciz	"lev11"
-	.asciz	"lev12"
-	.asciz	"lev13"
-	.asciz	"prof"
-	.asciz  "lev15"
+.globl	_C_LABEL(eintrnames)
 _C_LABEL(eintrnames):
-	_ALIGN
+
+.globl	_C_LABEL(intrcnt)
 _C_LABEL(intrcnt):
-	.space	16 * LNGSZ
+.globl	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
+
 
 #if !defined(MULTIPROCESSOR)
 	.comm	_C_LABEL(curlwp), PTRSZ

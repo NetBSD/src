@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.95 2004/03/21 14:10:08 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.96 2004/03/23 00:17:12 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.95 2004/03/21 14:10:08 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.96 2004/03/23 00:17:12 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -94,6 +94,25 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.95 2004/03/21 14:10:08 pk Exp $");
 #endif
 
 #include "ksyms.h"
+
+struct evcnt intr_evcnts[] = {
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "spur"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev1"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev2"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev3"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev4"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev5"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev6"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev7"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr",  "lev8"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev9"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "clock"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev11"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev12"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev13"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "prof"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr",  "lev15")
+};
 
 int printspl = 0;
 
@@ -580,7 +599,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	struct mainbus_attach_args ma;
 	char buf[32];
 	const char *const *ssp, *sp = NULL;
-	int node0, node, rv;
+	int node0, node, rv, i;
 
 	static const char *const openboot_special[] = {
 		/* ignore these (end with NULL) */
@@ -610,6 +629,12 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	 */
 	if (ncpus == 0)
 		panic("None of the CPUs found");
+
+	/*
+	 * Init static interrupt eventcounters
+	 */
+	for (i = 0; i < sizeof(intr_evcnts)/sizeof(intr_evcnts[0]); i++)
+		evcnt_attach_static(&intr_evcnts[i]);
 
 	node = findroot();
 
