@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.19 2003/09/07 15:25:28 tron Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.20 2003/09/07 15:40:57 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.19 2003/09/07 15:25:28 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.20 2003/09/07 15:40:57 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.19 2003/09/07 15:25:28 tron Exp $");
 #include <sys/agpio.h>
 
 #include <machine/bus.h>
+
+#include "agp_intel.h"
 
 #define READ1(off)	bus_space_read_1(isc->bst, isc->bsh, off)
 #define READ4(off)	bus_space_read_4(isc->bst, isc->bsh, off)
@@ -139,13 +141,15 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	sc->as_methods = &agp_i810_methods;
 
 	if (pci_find_device(&isc->vga_pa, agp_i810_vgamatch) == 0) {
+#if NAGP_INTEL > 0
 		const struct pci_attach_args *pa = aux;
 
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_82840_HB:
 		case PCI_PRODUCT_INTEL_82865_HB:
 			return agp_intel_attach(parent, self, aux);
-		}          
+		}
+#endif
 		aprint_error(": can't find internal VGA device config space\n");
 		free(isc, M_AGP);
 		return ENOENT;
