@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.28 2000/03/12 22:58:05 tsarna Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.29 2000/04/08 23:18:27 soren Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.28 2000/03/12 22:58:05 tsarna Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.29 2000/04/08 23:18:27 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -1137,10 +1137,11 @@ usage()
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr, "Usage:\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n",
+	(void)fprintf(stderr, "Usage:\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n",
 	    __progname, "[-n] variable ...", 
 	    __progname, "[-n] -w variable=value ...",
 	    __progname, "[-n] -a",
-	    __progname, "[-n] -A");
+	    __progname, "[-n] -A",
+	    __progname, "[-n] -f file");
 	exit(1);
 }
