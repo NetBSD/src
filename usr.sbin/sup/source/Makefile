@@ -108,7 +108,7 @@ libextra.a: ${EXTRA}
 	ar r libextra.a $?
 	ranlib libextra.a
 
-clean:
+clean cleandir:
 	rm -f ${PROGRAMS} libextra.a netcrypt.c *.o core a.out
 
 install: ${PROGRAMS}
