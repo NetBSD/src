@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 1996/05/16 20:03:53 leo Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 1996/06/24 22:32:35 jtc Exp $
 
-SUBDIR=	edahdi installboot libsa bootxx xxboot
+#
+# Note that the directory 'tostools' should never show up...
+#
+SUBDIR=	binpatch edahdi installboot keymaps libsa loadkmap bootxx xxboot
 
 .include <bsd.subdir.mk>
