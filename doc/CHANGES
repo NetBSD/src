@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.7 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.8 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -111,3 +111,6 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	libcrypto: mdc2 is a patented algorithm, so move it out of libcrypto.
 		if you need mdc2, define MKCRYPTO_MDC2 to get libcrypto_mdc2.a.
 		[itojun 20020926]
+	Don't reference cfdriver structures directly in the cfdata entries;
+		instead, a string names the driver, which is looked up from
+		a list that is built at run-time.  [thorpej 20020926]
