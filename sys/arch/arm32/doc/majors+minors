@@ -1,4 +1,4 @@
-/* $NetBSD: majors+minors,v 1.4 1996/06/03 21:55:46 mark Exp $ */
+/* $NetBSD: majors+minors,v 1.5 1996/10/12 18:25:59 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -33,7 +33,7 @@
  *
  * RiscBSD kernel project
  *
- * majors
+ * majors+minors
  *
  * list of all allocated major numbers
  *
