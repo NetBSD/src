@@ -1,87 +1,93 @@
-#	$NetBSD: Makefile,v 1.6 2002/03/05 21:23:30 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 2002/04/14 02:43:27 tsutsui Exp $
 
-TOP=		${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
-.include <bsd.kernobj.mk>
 .include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-IMAGE=		boot.fs
-KERN=		${KERNOBJDIR}/INSTALL/netbsd
+.include <bsd.kernobj.mk>
 
-MOUNT_POINT?=	/mnt
-MDSETIMAGE?=	mdsetimage
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-FD?=		fd0
-FD_RDEV=	/dev/r${FD}a
+BASENAME=	boot
+IMAGE1=		${BASENAME}1.fs
+DISKSIZE=	2880
+FSTMP=		ustar.tmp
 MDEC=		${DESTDIR}/usr/mdec
+BOOT=		boot
 
-LISTS=		${.CURDIR}/list
+KERNDIR!=	cd ${.CURDIR}/../instkernel && ${PRINTOBJDIR}
+KERN=		${KERNDIR}/netbsd.INSTALL.gz
 
-RAMDISKDIR!=	cd $(.CURDIR)/../ramdisk && ${PRINTOBJDIR}
-RAMDISK=	${RAMDISKDIR}/ramdisk.fs
+CLEANFILES+=	netbsd ${BOOT} ${FSTMP}
 
-DISKTYPE=	floppy
 
-# Some reasonable values for the -i parameter to newfs are:
-#
-#  8192		1387k, 189 inodes free
-# 16384		1399k,  93 inodes free
-# 65536		1407k,  29 inodes free
-INO_BYTES?=	65536
-
-CLEANFILES+=	netbsd.ram.gz netbsd.tmp
-
-all:	netbsd.ram.gz
-	dd if=/dev/zero of=${IMAGE} bs=1440k count=1
-	# vnconfig -v -c ${VND} ${IMAGE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
-	disklabel -f ${DESTDIR}/etc/disktab -rw ${VND} ${DISKTYPE}
-	disklabel -W ${VND}
-	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 \
-	    -f 1024 -b 8192 ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
+realall: netbsd ${BOOT}
+	${PAX} -wvf ${FSTMP} ${BOOT} netbsd
+	@echo
+	@echo Making disk number one
+	dd bs=8k seek=1 count=$$((${DISKSIZE} / 16 - 1)) \
+	    if=${FSTMP} of=${IMAGE1}.tmp
 	@echo "installing new bootblocks"
-	-rm -f ${MOUNT_POINT}/boot
-	cp ${MDEC}/boot ${MOUNT_POINT}/boot
-	sync
-	${MDEC}/installboot -v ${MOUNT_POINT}/boot ${MDEC}/bootxx ${VND_RDEV}
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
+	${MDEC}/installboot -v -b 17 ${BOOT} ${MDEC}/bootxx ${IMAGE1}.tmp
+		# XXXDISTRIB
+	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
+		dksize=$$((${DISKSIZE} * 512 - 8 * 1024)); \
+		disks=$$(($$size / $$dksize + 1)); \
+		if test $$size -gt $$dksize; then \
+			d=2; \
+			while test $$d -le $$disks; do \
+				echo; \
+				echo Making disk number $$d.; \
+				IMAGE=${BASENAME}$${d}.fs; \
+				echo USTARFS $$d > $${IMAGE}; \
+				skip=$$((($$d - 1) * (${DISKSIZE} / 16 - 1))); \
+				if test $$d -eq $$disks; then \
+					dd bs=8k seek=1 skip=$${skip} \
+						conv=sync \
+						if=${FSTMP} of=$${IMAGE}; \
+				else \
+					dd bs=8k seek=1 skip=$${skip} \
+					    conv=sync \
+					    count=$$((${DISKSIZE} / 16 - 1)) \
+						if=${FSTMP} of=$${IMAGE}; \
+				fi; \
+				d=$$(($$d + 1)); \
+			done; \
+		else \
+			dd seek=$$(($${size} / 512 + 15)) count=1 \
+				if=/dev/zero of=${IMAGE1}.tmp; \
+		fi; \
+		echo; \
+		bytes=$$(($$dksize * $$disks - $$size)); \
+		echo "There are $$bytes ($$(($$bytes / 1024))K) bytes free\
+			on disk $$disks."; \
+	)
+	mv -f ${IMAGE1}.tmp ${IMAGE1}
 
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
+# Let the kernel on the diskette be called "netbsd" although
+# it is compressed.  This is because the boot code will search
+# for "netbsd" first, and calling it "netbsd" instead of "netbsd.gz"
+# we avoid scanning all the diskettes before reading the file.
 
-netbsd.ram.gz: ${KERN} ${RAMDISK}
-	cp ${KERN} netbsd.tmp
-	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
-	gzip -9 netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
+netbsd: ${KERN}
+	rm -f netbsd
+	cp ${KERN} netbsd
 
-.ifndef RELEASEDIR
-release:
-	@echo set RELEASEDIR first!
-	@false
-.else
-release:
+# This is "cheating", just so that we have the available
+# space at the start of the tar file.  Installboot will overwrite
+# the start of the bootcode with the tail end of the "real", aligned
+# second-stage boot loader when it is run (which is quite a bit shorter
+# than the entire ${BOOTCODE} file, even when symbols are removed.
+# (the first 15*512 bytes are put into the first 8K filesystem block,
+# around the disklabel)
+
+${BOOT}: ${MDEC}/${BOOT}
+	rm -f ${BOOT}
+	cp ${MDEC}/${BOOT} ${BOOT}
+
+release: check_RELEASEDIR
 	-mkdir -p ${RELEASEDIR}/installation/floppy
-	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
-	gzip -c -9 ${IMAGE} > ${RELEASEDIR}/installation/floppy/${IMAGE}.gz
-.endif
+	${RELINSTALL} ${BASENAME}?.fs ${RELEASEDIR}/installation/floppy
 
 clean cleandir distclean:
-	rm -f *.core ${IMAGE} ${CLEANFILES}
-
-real-floppy:
-	dd if=${IMAGE} of=${FD_RDEV} bs=45k
+	rm -f *.core ${CLEANFILES} ${BASENAME}?.fs ${IMAGE1}.tmp
 
 .include <bsd.obj.mk>
+.include <bsd.subdir.mk>
