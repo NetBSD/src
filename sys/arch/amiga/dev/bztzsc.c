@@ -1,4 +1,4 @@
-/*	$NetBSD: bznsc.c,v 1.4 1996/12/10 21:27:21 thorpej Exp $	*/
+/*	$NetBSD: bztzsc.c,v 1.1 1996/12/16 16:17:29 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -52,52 +52,48 @@
 #include <amiga/dev/sfasreg.h>
 #include <amiga/dev/sfasvar.h>
 #include <amiga/dev/zbusvar.h>
-#include <amiga/dev/bznscreg.h>
-#include <amiga/dev/bznscvar.h>
+#include <amiga/dev/bztzscreg.h>
+#include <amiga/dev/bztzscvar.h>
 
-void bznscattach __P((struct device *, struct device *, void *));
-int  bznscmatch  __P((struct device *, void *, void *));
+void bztzscattach __P((struct device *, struct device *, void *));
+int  bztzscmatch  __P((struct device *, void *, void *));
 
-struct scsi_adapter bznsc_scsiswitch = {
+struct scsi_adapter bztzsc_scsiswitch = {
 	sfas_scsicmd,
 	sfas_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
 
-struct scsi_device bznsc_scsidev = {
+struct scsi_device bztzsc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
 	NULL,		/* Use default done routine */
 };
 
-struct cfattach bznsc_ca = {
-	sizeof(struct bznsc_softc), bznscmatch, bznscattach
+struct cfattach bztzsc_ca = {
+	sizeof(struct bztzsc_softc), bztzscmatch, bztzscattach
 };
 
-struct cfdriver bznsc_cd = {
-	NULL, "bznsc", DV_DULL, NULL, 0
+struct cfdriver bztzsc_cd = {
+	NULL, "bztzsc", DV_DULL, NULL, 0
 };
 
-int bznsc_intr		 __P((void *));
-void bznsc_set_dma_tc	 __P((struct sfas_softc *sc, unsigned int len));
-int bznsc_setup_dma	 __P((struct sfas_softc *sc, vm_offset_t ptr, int len,
+int bztzsc_intr		 __P((void *));
+void bztzsc_set_dma_tc	 __P((struct sfas_softc *sc, unsigned int len));
+int bztzsc_setup_dma	 __P((struct sfas_softc *sc, vm_offset_t ptr, int len,
 			      int mode));
-int bznsc_build_dma_chain __P((struct sfas_softc *sc,
+int bztzsc_build_dma_chain __P((struct sfas_softc *sc,
 			      struct sfas_dma_chain *chain, void *p, int l));
-int bznsc_need_bump	 __P((struct sfas_softc *sc, vm_offset_t ptr, int len));
-void bznsc_led		 __P((struct sfas_softc *sc, int mode));
-void bzndumsc_led	 __P((struct sfas_softc *sc, int mode));
-
-/* Only use this if you already made sure it is one of our boards */
-#define BZNCHIPADS(prod) ((prod) == 24 ? 0x1ff00 : 0xff00)
+int bztzsc_need_bump	 __P((struct sfas_softc *sc, vm_offset_t ptr, int len));
+void bztzsc_led		 __P((struct sfas_softc *sc, int mode));
 
 /*
- * If we are an Phase 5 Dev. Blizzard IV/1260 or -2060 SCSI option:
+ * If we are an Phase 5 Devices Blizzard-2060 SCSI option:
  */
 int
-bznscmatch(pdp, match, auxp)
+bztzscmatch(pdp, match, auxp)
 	struct device	*pdp;
 	void		*match, *auxp;
 {
@@ -109,20 +105,11 @@ bznscmatch(pdp, match, auxp)
 	if (zap->manid != 0x2140)	/* Phase V ? */
 		return(0);
 
-	/* is it B2060? */
-	if (zap->prodid == 24)
-		goto found;
-
-	/* if we're no 1200, can't be 1230IV/1260 */
-	if (!is_a1200())
+	
+	if (zap->prodid != 24)		/* is it B2060? */
 		return 0;
 
-	/* check product id. olds have Fastlane product id */
-	if (zap->prodid != 17 && zap->prodid != 11)
-		return(0);
-
-found:
-       	ta = (vu_char *)(((char *)zap->va) + BZNCHIPADS(zap->prodid) + 0x20);
+       	ta = (vu_char *)(((char *)zap->va) + 0x1ff00 + 0x20);
 
 	if (badbaddr((caddr_t)ta))
 		return(0);
@@ -136,24 +123,24 @@ found:
 	return(1);
 }
 
-u_int32_t bznsc_flags = 0;
+u_int32_t bztzsc_flags = 0;
 
 void
-bznscattach(pdp, dp, auxp)
+bztzscattach(pdp, dp, auxp)
 	struct device	*pdp;
 	struct device	*dp;
 	void		*auxp;
 {
-	struct bznsc_softc *sc;
+	struct bztzsc_softc *sc;
 	struct zbus_args  *zap;
-	bznsc_regmap_p	   rp;
+	bztzsc_regmap_p	   rp;
 	vu_char		  *fas;
 
 	zap = auxp;
 
-	fas = &((vu_char *)zap->va)[BZNCHIPADS(zap->prodid)];
+	fas = &((vu_char *)zap->va)[0x1ff00];
 
-	sc = (struct bznsc_softc *)dp;
+	sc = (struct bztzsc_softc *)dp;
 	rp = &sc->sc_regmap;
 
 	rp->FAS216.sfas_tc_low	= &fas[0x00];
@@ -177,16 +164,16 @@ bznscattach(pdp, dp, auxp)
 
 	sc->sc_softc.sc_fas	= (sfas_regmap_p)rp;
 
-	sc->sc_softc.sc_led	= zap->prodid == 24 ? bznsc_led : bzndumsc_led;
+	sc->sc_softc.sc_led	= bztzsc_led;
 
-	sc->sc_softc.sc_setup_dma	= bznsc_setup_dma;
-	sc->sc_softc.sc_build_dma_chain = bznsc_build_dma_chain;
-	sc->sc_softc.sc_need_bump	= bznsc_need_bump;
+	sc->sc_softc.sc_setup_dma	= bztzsc_setup_dma;
+	sc->sc_softc.sc_build_dma_chain = bztzsc_build_dma_chain;
+	sc->sc_softc.sc_need_bump	= bztzsc_need_bump;
 
 	sc->sc_softc.sc_clock_freq   = 40;   /* Phase5 SCSI all run at 40MHz */
 	sc->sc_softc.sc_timeout      = 250;  /* Set default timeout to 250ms */
 
-	sc->sc_softc.sc_config_flags = bznsc_flags;	/* for the moment */
+	sc->sc_softc.sc_config_flags = bztzsc_flags;	/* for the moment */
 
 	sc->sc_softc.sc_host_id      = 7;    /* Should check the jumpers */
 
@@ -197,33 +184,32 @@ bznscattach(pdp, dp, auxp)
 
 	sc->sc_softc.sc_link.adapter_softc  = sc;
 	sc->sc_softc.sc_link.adapter_target = sc->sc_softc.sc_host_id;
-	sc->sc_softc.sc_link.adapter	    = &bznsc_scsiswitch;
-	sc->sc_softc.sc_link.device	    = &bznsc_scsidev;
+	sc->sc_softc.sc_link.adapter	    = &bztzsc_scsiswitch;
+	sc->sc_softc.sc_link.device	    = &bztzsc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
-	sc->sc_softc.sc_link.max_target     = 7;
 
-	sc->sc_softc.sc_isr.isr_intr = bznsc_intr;
+	sc->sc_softc.sc_isr.isr_intr = bztzsc_intr;
 	sc->sc_softc.sc_isr.isr_arg  = &sc->sc_softc;
 	sc->sc_softc.sc_isr.isr_ipl  = 2;
 	add_isr(&sc->sc_softc.sc_isr);
 
 /* We don't want interrupt until we're initialized! */
-	printf("\n%s: B%s60\n", dp->dv_xname, 
-	    zap->prodid == 24 ? "20" : "IV/12");
+
+	printf("\n");
 
 /* attach all scsi units on us */
 	config_found(dp, &sc->sc_softc.sc_link, scsiprint);
 }
 
 int
-bznsc_intr(arg)
+bztzsc_intr(arg)
 	void *arg;
 {
 	struct sfas_softc *dev = arg;
-	bznsc_regmap_p	      rp;
+	bztzsc_regmap_p	      rp;
 	int		      quickints;
 
-	rp = (bznsc_regmap_p)dev->sc_fas;
+	rp = (bztzsc_regmap_p)dev->sc_fas;
 
 	if (*rp->FAS216.sfas_status & SFAS_STAT_INTERRUPT_PENDING) {
 		quickints = 16;
@@ -247,7 +233,7 @@ bznsc_intr(arg)
 
 /* Set DMA transfer counter */
 void
-bznsc_set_dma_tc(sc, len)
+bztzsc_set_dma_tc(sc, len)
 	struct sfas_softc *sc;
 	unsigned int	  len;
 {
@@ -258,7 +244,7 @@ bznsc_set_dma_tc(sc, len)
 
 /* Initialize DMA for transfer */
 int
-bznsc_setup_dma(sc, ptr, len, mode)
+bztzsc_setup_dma(sc, ptr, len, mode)
 	struct sfas_softc *sc;
 	vm_offset_t	  ptr;
 	int		  len;
@@ -266,7 +252,7 @@ bznsc_setup_dma(sc, ptr, len, mode)
 {
 	int		retval;
 	u_int32_t	d;
-	bznsc_regmap_p	   rp;
+	bztzsc_regmap_p	   rp;
 
 	retval = 0;
 
@@ -275,7 +261,7 @@ bznsc_setup_dma(sc, ptr, len, mode)
 	case SFAS_DMA_READ:
 	case SFAS_DMA_WRITE:
 
-		rp = (bznsc_regmap_p)sc->sc_fas;
+		rp = (bztzsc_regmap_p)sc->sc_fas;
 
 		d = (u_int32_t)ptr;
 		d >>= 1;
@@ -298,7 +284,7 @@ bznsc_setup_dma(sc, ptr, len, mode)
 		rp->addrport[0] = (u_int8_t)d;
 		__asm __volatile("nop");
 
-		bznsc_set_dma_tc(sc, len);
+		bztzsc_set_dma_tc(sc, len);
 		break;
 
 	case SFAS_DMA_CLEAR:
@@ -307,7 +293,7 @@ bznsc_setup_dma(sc, ptr, len, mode)
 			 (*sc->sc_fas->sfas_tc_mid  <<  8) |
 			  *sc->sc_fas->sfas_tc_low;
 
-		bznsc_set_dma_tc(sc, 0);
+		bztzsc_set_dma_tc(sc, 0);
 		break;
 	}
 
@@ -316,7 +302,7 @@ bznsc_setup_dma(sc, ptr, len, mode)
 
 /* Check if address and len is ok for DMA transfer */
 int
-bznsc_need_bump(sc, ptr, len)
+bztzsc_need_bump(sc, ptr, len)
 	struct sfas_softc *sc;
 	vm_offset_t	  ptr;
 	int		  len;
@@ -337,7 +323,7 @@ bznsc_need_bump(sc, ptr, len)
 /* Interrupt driven routines */
 /* XXX some of this is voodoo might be remnants intended for the Fastlane. */
 int
-bznsc_build_dma_chain(sc, chain, p, l)
+bztzsc_build_dma_chain(sc, chain, p, l)
 	struct sfas_softc	*sc;
 	struct sfas_dma_chain	*chain;
 	void			*p;
@@ -411,24 +397,15 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 	return(n);
 }
 
-/* Turn on/off led: dummy on 1260 */
-void
-bzndumsc_led(sc, mode)
-	struct sfas_softc *sc;
-	int		  mode;
-{
-	/* ARGSUSED */
-}
-
 /* real one for 2060 */
 void
-bznsc_led(sc, mode)
+bztzsc_led(sc, mode)
 	struct sfas_softc *sc;
 	int		  mode;
 {
-	bznsc_regmap_p		rp;
+	bztzsc_regmap_p		rp;
 
-	rp = (bznsc_regmap_p)sc->sc_fas;
+	rp = (bztzsc_regmap_p)sc->sc_fas;
 
 	if (mode)
 		*rp->hardbits = 0x00;	/* Led on, Int on */
