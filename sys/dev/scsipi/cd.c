@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.98 1997/02/21 23:03:25 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.99 1997/03/29 21:37:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1004,7 +1004,7 @@ cd_size(cd, flags)
 	 */
 	if (scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)&rdcap, sizeof(rdcap), CDRETRIES,
-	    2000, NULL, flags | SCSI_DATA_IN) != 0)
+	    20000, NULL, flags | SCSI_DATA_IN) != 0)
 		return 0;
 
 	blksize = _4btol(rdcap.length);
