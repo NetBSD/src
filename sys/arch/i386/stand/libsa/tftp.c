@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.4 1997/09/17 16:57:07 drochner Exp $	 */
+/*	$NetBSD: tftp.c,v 1.5 1998/05/14 18:26:47 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -96,9 +96,11 @@ recvtftp(d, pkt, len, tleft)
 {
 	struct tftphdr *t;
 
+	errno = 0;
+
 	len = readudp(d, pkt, len, tleft);
 
-	if (len < 8)
+	if (len < 4)
 		return (-1);
 
 	t = (struct tftphdr *) pkt;
@@ -200,9 +202,8 @@ tftp_getnextblock(h)
 	struct tftphdr *t;
 
 	wbuf.t.th_opcode = htons((u_short) ACK);
-	wtail = (char *) &wbuf.t.th_block;
 	wbuf.t.th_block = htons((u_short) h->currblock);
-	wtail += 2;
+	wtail = (char *) &wbuf.t.th_data;
 
 	t = &h->lastdata.t;
 
@@ -220,6 +221,30 @@ tftp_getnextblock(h)
 		h->islastblock = 1;	/* EOF */
 	return (0);
 }
+
+#ifndef TFTP_NOTERMINATE
+static void
+tftp_terminate(h)
+	struct tftp_handle *h;
+{
+	struct {
+		u_char header[HEADER_SIZE];
+		struct tftphdr t;
+	} wbuf;
+	char           *wtail;
+
+	if (h->islastblock) {
+		wbuf.t.th_opcode = htons((u_short) ACK);
+		wbuf.t.th_block = htons((u_short) h->currblock);
+	} else {
+		wbuf.t.th_opcode = htons((u_short) ERROR);
+		wbuf.t.th_code = htons((u_short) ENOSPACE); /* ??? */
+	}
+	wtail = (char *) &wbuf.t.th_data;
+
+	(void) sendudp(h->iodesc, &wbuf.t, wtail - (char *) &wbuf.t);
+}
+#endif
 
 int 
 tftp_open(path, f)
@@ -268,9 +293,13 @@ tftp_read(f, addr, size, resid)
 
 		needblock = tftpfile->off / SEGSIZE + 1;
 
-		if (tftpfile->currblock > needblock)	/* seek backwards */
+		if (tftpfile->currblock > needblock) {	/* seek backwards */
+#ifndef TFTP_NOTERMINATE
+			tftp_terminate(tftpfile);
+#endif
 			tftp_makereq(tftpfile);	/* no error check, it worked
 						 * for open */
+		}
 
 		while (tftpfile->currblock < needblock) {
 			int res;
@@ -278,7 +307,8 @@ tftp_read(f, addr, size, resid)
 			res = tftp_getnextblock(tftpfile);
 			if (res) {	/* no answer */
 #ifdef DEBUG
-				printf("tftp: read error\n");
+				printf("tftp: read error (block %d->%d)\n",
+				       tftpfile->currblock, needblock);
 #endif
 				return (res);
 			}
@@ -330,10 +360,13 @@ tftp_close(f)
 	struct tftp_handle *tftpfile;
 	tftpfile = (struct tftp_handle *) f->f_fsdata;
 
+#ifdef TFTP_NOTERMINATE
 	/* let it time out ... */
+#else
+	tftp_terminate(tftpfile);
+#endif
 
-	if (tftpfile)
-		free(tftpfile, sizeof(*tftpfile));
+	free(tftpfile, sizeof(*tftpfile));
 	return (0);
 }
 
