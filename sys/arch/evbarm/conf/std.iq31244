@@ -1,4 +1,4 @@
-#	$NetBSD: std.iq31244,v 1.1 2003/05/14 21:41:32 thorpej Exp $
+#	$NetBSD: std.iq31244,v 1.2 2003/05/22 05:52:18 thorpej Exp $
 #
 # standard NetBSD/evbarm for IQ31244 options
 
@@ -14,8 +14,6 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 
-# New pmap options are standard on this board
-options 	ARM32_PMAP_NEW
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
 makeoptions	BOARDTYPE="iq31244"
