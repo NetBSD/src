@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.32 2002/10/07 11:02:20 dan Exp $	*/
+/*	$NetBSD: rnd.c,v 1.33 2002/10/08 09:59:27 dan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.32 2002/10/07 11:02:20 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.33 2002/10/08 09:59:27 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -286,8 +286,19 @@ rnd_estimate_entropy(rndsource_t *rs, u_int32_t t)
 void
 rndattach(int num)
 {
+	u_int32_t c;
 
+	/*
+	 * rnd_init() is actually called very early on in the boot
+	 * process, pseudo's don't get attached until much later
+	 * (after many of the sources have been attached). 
+	 * XXX Maybe this is left "in case", maybe it should be an assert?
+	 */	
 	rnd_init();
+
+	/* mix in another counter */
+	c = rnd_counter();
+	rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 0);
 }
 
 void
@@ -298,6 +309,10 @@ rnd_init(void)
 	if (rnd_ready)
 		return;
 
+	/* 
+	 * take a counter early, hoping that there's some variance in
+	 * the following operations 
+	 */
 	c = rnd_counter();
 
 	LIST_INIT(&rnd_sources);
