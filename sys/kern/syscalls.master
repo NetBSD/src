@@ -1,4 +1,4 @@
- 	$Id: syscalls.master,v 1.9 1993/11/14 13:08:09 cgd Exp $
+ 	$Id: syscalls.master,v 1.10 1993/12/12 19:28:21 deraadt Exp $
 ;	from: @(#)syscalls.master	7.26 (Berkeley) 3/25/91
 ; System call name/number master file.
 ; Processed to created init_sysent.c, syscalls.c and syscall.h.
@@ -27,7 +27,7 @@
 ; redistributions should be placed in the reserved range at the end
 ; of the current calls.
 
-0	UNIMPL	0 indir or out-of-range
+0	STD	0 nosys syscall
 1	STD	1 rexit exit
 2	STD	0 fork
 3	STD	3 read
