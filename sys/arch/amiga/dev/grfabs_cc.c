@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.7 1994/12/28 09:25:14 chopps Exp $	*/
+/*	$NetBSD: grfabs_cc.c,v 1.8 1995/06/26 01:39:55 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -151,6 +151,10 @@ cc_init_monitor()
 	cc_monitor = m_this = &monitor;
 	/* turn sprite DMA off. we don't support them yet. */
 	custom.dmacon = DMAF_SPRITE;
+
+	/* makre sure sprite data registers are clear as well */
+	custom.spr[0].data = 0;
+	custom.spr[0].datb = 0;
 
 	m_this->name = monitor_name;
 	m_this_data = m_this->data = &monitor_data;
