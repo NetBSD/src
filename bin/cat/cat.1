@@ -1,4 +1,4 @@
-.\"	$NetBSD: cat.1,v 1.16 1999/03/22 18:30:42 garbled Exp $
+.\"	$NetBSD: cat.1,v 1.17 2000/01/09 15:56:37 abs Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,15 @@ utility reads files sequentially, writing them to the standard output.
 The
 .Ar file
 operands are processed in command line order.
-A single dash represents the standard input.
+A single dash represents the standard input,
+and may appear multiple times in the
+.Ar file
+list.
+.Pp
+The word
+.Dq concatenate
+is just a verbose synonym for
+.Dq catenate .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -104,11 +112,17 @@ Because of the shell language mechanism used to perform output
 redirection, the command
 .Dq Li cat file1 file2 > file1
 will cause the original data in file1 to be destroyed!
+This is performed by the shell before
+.Nm
+is run.
 .Sh SEE ALSO
 .Xr head 1 ,
+.Xr hexdump 1 ,
+.Xr lpr 1 ,
 .Xr more 1 ,
 .Xr pr 1 ,
 .Xr tail 1 ,
+.Xr view 1 ,
 .Xr vis 1
 .Rs
 .%A Rob Pike
