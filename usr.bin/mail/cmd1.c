@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.5 1996/06/08 19:48:11 christos Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.6 1996/12/28 07:10:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cmd1.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: cmd1.c,v 1.5 1996/06/08 19:48:11 christos Exp $";
+static char rcsid[] = "$NetBSD: cmd1.c,v 1.6 1996/12/28 07:10:58 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -471,5 +471,29 @@ folders(v)
 	if ((cmd = value("LISTER")) == NOSTR)
 		cmd = "ls";
 	(void) run_command(cmd, 0, -1, -1, dirname, NOSTR, NOSTR);
+	return 0;
+}
+
+/*
+ * Update the mail file with any new messages that have
+ * come in since we started reading mail.
+ */
+int
+inc(v)
+	void *v;
+{
+	int nmsg, mdot;
+
+	nmsg = incfile();
+
+	if (nmsg == 0) {
+	printf("No new mail.\n");
+	} else if (nmsg > 0) {
+		mdot = newfileinfo(msgCount - nmsg);
+		dot = &message[mdot - 1];
+	} else {
+	printf("\"inc\" command failed...\n");
+	}
+
 	return 0;
 }
