@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.1 2003/05/01 07:02:02 igy Exp $
+$NetBSD: version,v 1.2 2003/06/15 08:50:06 igy Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -9,3 +9,4 @@ is taken as the current.
 1.0:	L-Card+ Boot, the first working :-) version.
 1.0.1:	L-Card+ Boot, e-care node specific version.
 1.0.2:	L-Card+ Boot, work as second loader.
+1.0.3:	L-Card+ Boot, using write buffer in block_write.

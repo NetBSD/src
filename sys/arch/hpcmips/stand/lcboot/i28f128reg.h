@@ -1,4 +1,4 @@
-/* $NetBSD: i28f128reg.h,v 1.1 2003/05/01 07:02:02 igy Exp $ */
+/* $NetBSD: i28f128reg.h,v 1.2 2003/06/15 08:50:06 igy Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 #define	I28F128_BLOCK_SIZE	0x20000		/* 128Kbyte */
 #define	I28F128_BLOCK_MASK	0x1ffff		/* 128Kbyte */
 
+#define	I28F128_WBUF_SIZE	0x20
+
 #define	I28F128_MANUFACT	0x89
 #define	I28F128_DEVCODE		0x18
 #define	I28F128_PRIM_COMM0	0x01
@@ -59,6 +61,8 @@
 #define	I28F128_BLK_ERASE_1ST	0x20
 #define	I28F128_BLK_ERASE_2ND	0xd0
 #define	I28F128_WORDBYTE_PROG	0x40
+#define	I28F128_WRITE_BUFFER	0xe8
+#define	I28F128_WBUF_CONFIRM	0xd0
 
 #define	I28F128_S_READY		0x80
 #define	I28F128_S_ERASE_SUSPEND	0x40
@@ -67,3 +71,5 @@
 #define	I28F128_S_LOW_VOLTAGE	0x08
 #define	I28F128_S_PROG_SUSPEND	0x04
 #define	I28F128_S_BLOCK_LOCKED	0x02
+
+#define	I28F128_XS_BUF_AVAIL	0x80

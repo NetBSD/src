@@ -1,4 +1,4 @@
-/* $NetBSD: i28f128.c,v 1.1 2003/05/01 07:02:01 igy Exp $ */
+/* $NetBSD: i28f128.c,v 1.2 2003/06/15 08:50:05 igy Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -136,6 +136,8 @@ block_write(void *dst, const void *src)
 	const u_int16_t	*p;
 	u_int16_t	*q;
 	const u_int16_t	*fence;
+	int		i;
+	const int	wbuf_count = I28F128_WBUF_SIZE >> 1;
 
 	/* dst must be aligned to block boundary. */
 	if (I28F128_BLOCK_MASK & (u_int32_t) dst)
@@ -151,13 +153,27 @@ block_write(void *dst, const void *src)
 	q = dst;
 	fence = p + (I28F128_BLOCK_SIZE >> 1);
 	do {
-#ifdef USE_TWIDDLE
-		if (((u_int32_t) q % 4096) == 0)
-			twiddle();
-#endif
-		if ((status = word_program(q++, *p++)) != 0)
-			return status;
+		do {
+			REGWRITE_2(dst, 0, I28F128_WRITE_BUFFER);
+			status = REGREAD_2(dst, 0);
+		} while (!ISSET(status, I28F128_XS_BUF_AVAIL));
+
+		REGWRITE_2(dst, 0, wbuf_count - 1);
+
+		for (i = wbuf_count; i > 0; i--, p++, q++)
+			REGWRITE_2(q, 0, *p);
+
+		REGWRITE_2(dst, 0, I28F128_WBUF_CONFIRM);
+
+		do {
+			REGWRITE_2(dst, 0, I28F128_READ_STATUS);
+			status = REGREAD_2(dst, 0);
+		} while (!(status & I28F128_S_READY));
+
 	} while (p < fence);
+
+	REGWRITE_2(dst, 0, I28F128_CLEAR_STATUS);
+	REGWRITE_2(dst, 0, I28F128_RESET);
 
 	return 0;
 }
