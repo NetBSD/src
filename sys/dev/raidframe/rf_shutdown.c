@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.c,v 1.1 1998/11/13 04:20:34 oster Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.2 1999/01/14 22:49:05 thorpej Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -43,7 +43,11 @@
 static void rf_FreeShutdownEnt(RF_ShutdownList_t *ent)
 {
 #ifdef KERNEL
+#ifdef __NetBSD__
+  FREE(ent, M_RAIDFRAME);
+#else
   FREE(ent, M_DEVBUF);
+#endif /* __NetBSD__ */
 #else /* KERNEL */
   free(ent);
 #endif /* KERNEL */
@@ -63,10 +67,17 @@ int _rf_ShutdownCreate(
    * and shutdown after RAIDframe internal allocation system.
    */
 #ifdef KERNEL
+#ifdef __NetBSD__
+  ent = (RF_ShutdownList_t *)malloc( sizeof(RF_ShutdownList_t), M_RAIDFRAME, M_WAITOK);
+#if 0
+  MALLOC(ent, RF_ShutdownList_t *, sizeof(RF_ShutdownList_t), M_RAIDFRAME, M_WAITOK);
+#endif
+#else
   ent = (RF_ShutdownList_t *)malloc( sizeof(RF_ShutdownList_t), M_DEVBUF, M_WAITOK);
 #if 0
   MALLOC(ent, RF_ShutdownList_t *, sizeof(RF_ShutdownList_t), M_DEVBUF, M_WAITOK);
 #endif
+#endif /* __NetBSD__ */
 #else /* KERNEL */
   ent = (RF_ShutdownList_t *)malloc(sizeof(RF_ShutdownList_t));
 #endif /* KERNEL */
