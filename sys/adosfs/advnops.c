@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.44 1998/08/13 10:06:32 kleink Exp $	*/
+/*	$NetBSD: advnops.c,v 1.45 1998/08/19 13:12:40 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -843,7 +843,6 @@ adosfs_access(v)
 	return(error);
 }
 
-/*ARGSUSED*/
 int
 adosfs_readlink(v)
 	void *v;
@@ -859,19 +858,12 @@ adosfs_readlink(v)
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
-	error = 0;
 	ap = VTOA(sp->a_vp);
-	if (ap->type != ASLINK)
-		error = EBADF;
-	/*
-	 * XXX Should this be NULL terminated?
-	 */
-	if (error == 0)
-		error = uiomove(ap->slinkto, strlen(ap->slinkto)+1, sp->a_uio);
+	error = uiomove(ap->slinkto, strlen(ap->slinkto), sp->a_uio);
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);
 #endif
-	return(error);
+	return (error);
 }
 
 /*ARGSUSED*/
