@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.191 2004/12/13 17:24:09 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.192 2004/12/13 17:55:28 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.191 2004/12/13 17:24:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.192 2004/12/13 17:55:28 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -193,8 +193,9 @@ STATIC int  wi_alloc_fid(struct wi_softc *, int, int *);
 STATIC void wi_read_nicid(struct wi_softc *);
 STATIC int  wi_write_ssid(struct wi_softc *, int, u_int8_t *, int);
 
-STATIC int  wi_sendcmd(struct wi_softc *, int, int);
 STATIC int  wi_cmd(struct wi_softc *, int, int, int, int);
+STATIC int  wi_cmd_start(struct wi_softc *, int, int, int, int);
+STATIC int  wi_cmd_wait(struct wi_softc *, int, int);
 STATIC int  wi_seek_bap(struct wi_softc *, int, int);
 STATIC int  wi_read_bap(struct wi_softc *, int, int, void *, int);
 STATIC int  wi_write_bap(struct wi_softc *, int, int, void *, int);
@@ -617,8 +618,16 @@ wi_intr(void *arg)
 		 * it is updated.
 		 */
 		status = CSR_READ_2(sc, WI_EVENT_STAT);
+#ifdef WI_DEBUG
+		if (wi_debug > 1) {
+			printf("%s: iter %d status %#04x\n", __func__, i,
+			    status);
+		}
+#endif /* WI_DEBUG */
 		if ((status & WI_INTRS) == 0)
 			break;
+
+		sc->sc_status = status;
 
 		if (status & WI_EV_RX)
 			wi_rx_intr(sc);
@@ -635,19 +644,23 @@ wi_intr(void *arg)
 		if (status & WI_EV_INFO)
 			wi_info_intr(sc);
 
-		CSR_WRITE_2(sc, WI_EVENT_ACK, status);
+		CSR_WRITE_2(sc, WI_EVENT_ACK, sc->sc_status);
 
-		if (status & WI_EV_CMD)
+		if (sc->sc_status & WI_EV_CMD)
 			wi_cmd_intr(sc);
 
 		if ((ifp->if_flags & IFF_OACTIVE) == 0 &&
 		    (sc->sc_flags & WI_FLAGS_OUTRANGE) == 0 &&
 		    !IFQ_IS_EMPTY(&ifp->if_snd))
 			wi_start(ifp);
+
+		sc->sc_status = 0;
 	}
 
 	/* re-enable interrupts */
 	CSR_WRITE_2(sc, WI_INT_EN, WI_INTRS);
+
+	sc->sc_status = 0;
 
 	return 1;
 }
@@ -1715,6 +1728,14 @@ wi_cmd_intr(struct wi_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 
+#ifdef WI_DEBUG
+	if (wi_debug)
+		printf("%s: %d txcmds outstanding\n", __func__, sc->sc_txcmds);
+#endif
+	KASSERT(sc->sc_txcmds > 0);
+
+	--sc->sc_txcmds;
+
 	if (--sc->sc_txqueued == 0) {
 		sc->sc_tx_timer = 0;
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -1737,10 +1758,17 @@ wi_push_packet(struct wi_softc *sc)
 
 	cur = sc->sc_txstart;
 	fid = sc->sc_txd[cur].d_fid;
-	if (wi_sendcmd(sc, WI_CMD_TX | WI_RECLAIM, fid)) {
+
+	KASSERT(sc->sc_txcmds == 0);
+
+	if (wi_cmd_start(sc, WI_CMD_TX | WI_RECLAIM, fid, 0, 0)) {
 		printf("%s: xmit failed\n", sc->sc_dev.dv_xname);
 		/* XXX ring might have a hole */
 	}
+
+	if (sc->sc_txcmds++ > 0)
+		printf("%s: %d tx cmds pending!!!\n", __func__, sc->sc_txcmds);
+
 	++sc->sc_txstarted;
 #ifdef DIAGNOSTIC
 	if (sc->sc_txstarted > WI_NTXBUF)
@@ -2481,57 +2509,13 @@ wi_write_wep(struct wi_softc *sc)
 
 /* Must be called at proper protection level! */
 STATIC int
-wi_sendcmd(struct wi_softc *sc, int cmd, int val0)
-{
-#ifdef WI_HISTOGRAM
-	static int hist3[11];
-	static int hist3count;
-#endif
-	int i;
-
-	/* wait for the busy bit to clear */
-	for (i = 500; i > 0; i--) {	/* 5s */
-		if ((CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY) == 0)
-			break;
-		DELAY(1000);	/* 1 m sec */
-	}
-	if (i == 0) {
-		printf("%s: wi_sendcmd: busy bit won't clear.\n",
-		    sc->sc_dev.dv_xname);
-		return(ETIMEDOUT);
-  	}
-#ifdef WI_HISTOGRAM
-	if (i > 490)
-		hist3[500 - i]++;
-	else
-		hist3[10]++;
-	if (++hist3count == 1000) {
-		hist3count = 0;
-		printf("%s: hist3: %d %d %d %d %d %d %d %d %d %d %d\n",
-		    sc->sc_dev.dv_xname,
-		    hist3[0], hist3[1], hist3[2], hist3[3], hist3[4],
-		    hist3[5], hist3[6], hist3[7], hist3[8], hist3[9],
-		    hist3[10]);
-	}
-#endif
-	CSR_WRITE_2(sc, WI_PARAM0, val0);
-	CSR_WRITE_2(sc, WI_PARAM1, 0);
-	CSR_WRITE_2(sc, WI_PARAM2, 0);
-	CSR_WRITE_2(sc, WI_COMMAND, cmd);
-
-	return 0;
-}
-
-STATIC int
-wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
+wi_cmd_start(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 {
 #ifdef WI_HISTOGRAM
 	static int hist1[11];
 	static int hist1count;
-	static int hist2[11];
-	static int hist2count;
 #endif
-	int i, status;
+	int i;
 
 	/* wait for the busy bit to clear */
 	for (i = 500; i > 0; i--) {	/* 5s */
@@ -2563,16 +2547,76 @@ wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 	CSR_WRITE_2(sc, WI_PARAM2, val2);
 	CSR_WRITE_2(sc, WI_COMMAND, cmd);
 
+	return 0;
+}
+
+STATIC int
+wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
+{
+	int rc;
+
+#ifdef WI_DEBUG
+	if (wi_debug) {
+		printf("%s: [enter] %d txcmds outstanding\n", __func__,
+		    sc->sc_txcmds);
+	}
+#endif
+	if (sc->sc_txcmds > 0) {
+		KASSERT(sc->sc_txcmds == 1);
+		if (sc->sc_status & WI_EV_CMD) {
+			sc->sc_status &= ~WI_EV_CMD;
+			CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_CMD);
+		} else
+			(void)wi_cmd_wait(sc, WI_CMD_TX | WI_RECLAIM, 0);
+	}
+
+	if ((rc = wi_cmd_start(sc, cmd, val0, val1, val2)) != 0)
+		return rc;
+
 	if (cmd == WI_CMD_INI) {
 		/* XXX: should sleep here. */
 		DELAY(100*1000);
 	}
+	rc = wi_cmd_wait(sc, cmd, val0);
+
+#ifdef WI_DEBUG
+	if (wi_debug) {
+		printf("%s: [     ] %d txcmds outstanding\n", __func__,
+		    sc->sc_txcmds);
+	}
+#endif
+	if (sc->sc_txcmds > 0)
+		wi_cmd_intr(sc);
+
+#ifdef WI_DEBUG
+	if (wi_debug) {
+		printf("%s: [leave] %d txcmds outstanding\n", __func__,
+		    sc->sc_txcmds);
+	}
+#endif
+	return rc;
+}
+
+STATIC int
+wi_cmd_wait(struct wi_softc *sc, int cmd, int val0)
+{
+#ifdef WI_HISTOGRAM
+	static int hist2[11];
+	static int hist2count;
+#endif
+	int i, status;
+#ifdef WI_DEBUG
+	if (wi_debug > 1)
+		printf("%s: cmd=%#x, arg=%#x\n", __func__, cmd, val0);
+#endif /* WI_DEBUG */
+
 	/* wait for the cmd completed bit */
 	for (i = 0; i < WI_TIMEOUT; i++) {
 		if (CSR_READ_2(sc, WI_EVENT_STAT) & WI_EV_CMD)
 			break;
 		DELAY(WI_DELAY);
 	}
+
 #ifdef WI_HISTOGRAM
 	if (i < 100)
 		hist2[i/10]++;
@@ -2590,14 +2634,13 @@ wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 
 	status = CSR_READ_2(sc, WI_STATUS);
 
-	/* Ack the command */
-	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_CMD);
-
 	if (i == WI_TIMEOUT) {
 		printf("%s: command timed out, cmd=0x%x, arg=0x%x\n",
 		    sc->sc_dev.dv_xname, cmd, val0);
 		return ETIMEDOUT;
 	}
+
+	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_CMD);
 
 	if (status & WI_STAT_CMD_RESULT) {
 		printf("%s: command failed, cmd=0x%x, arg=0x%x\n",
