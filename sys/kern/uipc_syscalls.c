@@ -31,24 +31,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_syscalls.c	7.24 (Berkeley) 6/3/91
- *	$Id: uipc_syscalls.c,v 1.5.4.2 1993/11/10 20:05:34 mycroft Exp $
+ *	$Id: uipc_syscalls.c,v 1.5.4.3 1993/11/14 21:21:37 mycroft Exp $
  */
 
-#include "param.h"
-#include "filedesc.h"
-#include "proc.h"
-#include "file.h"
-#include "buf.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
+#include <sys/param.h>
+#include <sys/filedesc.h>
+#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/buf.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
 #ifdef KTRACE
-#include "ktrace.h"
+#include <sys/ktrace.h>
 #endif
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 /*
  * System call interface to the socket abstraction.
