@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.71 2004/07/23 08:34:11 mycroft Exp $	*/
+/*	$NetBSD: atw.c,v 1.72 2004/07/23 08:36:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.71 2004/07/23 08:34:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.72 2004/07/23 08:36:01 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -3088,7 +3088,7 @@ atw_linkintr(struct atw_softc *sc, u_int32_t linkstatus)
 static __inline int
 atw_hw_decrypted(struct atw_softc *sc, struct ieee80211_frame *wh)
 {
-	if ((sc->sc_ic.ic_flags & IEEE80211_F_WEPON) == 0)
+	if ((sc->sc_ic.ic_flags & IEEE80211_F_PRIVACY) == 0)
 		return 0;
 	if ((wh->i_fc[1] & IEEE80211_FC1_WEP) == 0)
 		return 0;
