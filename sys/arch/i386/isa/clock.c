@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.12 1993/10/12 23:31:43 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.13 1993/10/15 03:04:26 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -187,7 +187,7 @@ struct timer_softc {
 
 	u_short	sc_iobase;
 	u_short	sc_irq;
-	u_short sc_limit;
+	u_int sc_limit;
 };
 
 static int timerprobe __P((struct device *, struct cfdata *, void *));
@@ -249,7 +249,7 @@ timerattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct timer_softc *sc = (struct timer_softc *)self;
 	u_short iobase = ia->ia_iobase;
-	u_short limit = TIMER_DIV(hz);
+	u_int limit = TIMER_DIV(hz);
 
 	printf(": i8253\n");
 	sc->sc_iobase = iobase;
@@ -264,8 +264,8 @@ timerattach(parent, self, aux)
 					   to find the cpu speed XXXX */
 
 		outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
-		outb(iobase + TIMER_CNTR0, limit%256);
-		outb(iobase + TIMER_CNTR0, limit/256);
+		outb(iobase + TIMER_CNTR0, limit);
+		outb(iobase + TIMER_CNTR0, limit>>8);
 	}
 
 	isa_establish(&sc->sc_id, &sc->sc_dev);
@@ -293,7 +293,7 @@ cpu_initclocks(void)
 	intr_establish(sc->sc_irq, &sc->sc_ih, DV_DULL);
 }
 
-static __inline u_short
+static __inline u_int
 gettick(iobase)
 	u_short iobase;
 {
@@ -314,7 +314,7 @@ u_int delaycount;	/* calibrated loop variable (1 millisecond) */
 findcpuspeed(iobase)
 	u_short iobase;
 {
-	u_short remainder;
+	u_int remainder;
 
 	/* put counter in count down mode */
 	outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_INTTC|TIMER_16BIT);
@@ -336,11 +336,11 @@ findcpuspeed(iobase)
  */
 void
 delay(n)
-	int n;
+	u_int n;
 {
 	struct timer_softc *sc;
 	u_short iobase;
-	u_short limit, tick, otick;
+	u_int limit, tick, otick;
 
 	if (timercd.cd_ndevs < 1 ||
 	    !(sc = timercd.cd_devs[0]))
@@ -358,7 +358,7 @@ delay(n)
 	 * loss of significance.
 	 */
 	n -= 10;
-	{register int m;
+	{register u_int m;
 	__asm __volatile("mul %3"
 			 : "=a" (n), "=d" (m)
 			 : "0" (n), "r" (TIMER_FREQ));
@@ -385,7 +385,7 @@ delay(n)
 	while (n > 0) {
 		tick = gettick(iobase);
 		if (tick > otick)
-			n -= otick - (tick - limit);
+			n -= limit - (tick - otick);
 		else
 			n -= otick - tick;
 		otick = tick;
