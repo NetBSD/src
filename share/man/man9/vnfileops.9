@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnfileops.9,v 1.4 2002/10/20 10:37:36 wiz Exp $
+.\"     $NetBSD: vnfileops.9,v 1.5 2002/10/20 20:21:07 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,7 +69,8 @@
 The functions described in this page are the vnode-specific file
 descriptor operations.
 They should only be accessed through the opaque function pointers
-in the file descriptor entries.
+in the file entries (see
+.Xr file 9 ) .
 They are described here only for completeness.
 .Sh FUNCTIONS
 .Bl -tag -width compact
@@ -82,7 +83,7 @@ and
 is the calling process.
 .Fn vn_closefile
 simply calls
-.Fn vn_close
+.Xr vn_close 9
 with the appropriate arguments.
 .It Fn vn_fcntl "fp" "com" "data" "p"
 Common code for a file table vnode
@@ -198,4 +199,5 @@ The high-level convenience functions are implemented within the file
 .Xr file 9 ,
 .Xr intro 9 ,
 .Xr vnode 9 ,
-.Xr vnodeops 9
+.Xr vnodeops 9 ,
+.Xr vnsubr 9
