@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 1997/09/19 13:54:00 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99 1997/10/05 02:15:48 carrel Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1304,19 +1304,23 @@ cpu_exec_aout_makecmds(p, epp)
 #ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
 		error = exec_aout_prep_oldzmagic(p, epp);
-		break;
+		return(error);
 #endif
 #ifdef COMPAT_44
 	case (MID_HP300 << 16) | ZMAGIC:
 		error = exec_aout_prep_oldzmagic(p, epp);
-		break;
+		return(error);
 #endif
-	default:
-		error = ENOEXEC;
 	}
+#endif /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */
 
-	return error;
-#else /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */
+#ifdef COMPAT_SUNOS
+	{
+		extern sunos_exec_aout_makecmds __P((struct proc *,
+						     struct exec_package *));
+		error = sunos_exec_aout_makecmds(p, epp);
+		return(error);
+	}
+#endif /* COMPAT_SUNOS */
 	return ENOEXEC;
-#endif
 }
