@@ -1,4 +1,4 @@
-.\"	$NetBSD: chpass.1,v 1.16 2001/12/01 16:43:10 wiz Exp $
+.\"	$NetBSD: chpass.1,v 1.17 2001/12/01 18:55:17 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,31 +75,31 @@ option attempts to change the user's shell to
 Possible display items are as follows:
 .Pp
 .Bl -tag -width "Home Directory:" -compact -offset indent
-.It Login:
+.It Login :
 user's login name
-.It Password:
+.It Password :
 user's encrypted password
-.It Uid:
+.It Uid :
 user's login
-.It Gid:
+.It Gid :
 user's login group
-.It Change:
+.It Change :
 password change time
-.It Expire:
+.It Expire :
 account expiration time
-.It Class:
+.It Class :
 user's general classification
-.It Home Directory:
+.It Home Directory :
 user's home directory
-.It Shell:
+.It Shell :
 user's login shell
-.It Full Name:
+.It Full Name :
 user's real name
-.It Location:
+.It Location :
 user's normal location
-.It Home Phone:
+.It Home Phone :
 user's home phone
-.It Office Phone:
+.It Office Phone :
 user's office phone
 .El
 .Pp
@@ -219,8 +219,8 @@ Temporary copy of the user passwd information
 The list of approved shells
 .El
 .Sh SEE ALSO
-.Xr login 1 ,
 .Xr finger 1 ,
+.Xr login 1 ,
 .Xr passwd 1 ,
 .Xr getusershell 3 ,
 .Xr passwd 5 ,
@@ -232,14 +232,14 @@ The list of approved shells
 .%A Ken Thompson
 .%T "UNIX Password Security"
 .Re
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.3 Reno .
 .Sh BUGS
 This program's interface is poorly suited to cryptographic systems such as
 Kerberos, and consequently Kerberos password changing is not a feature of
 this program.
 .Pp
 User information should (and eventually will) be stored elsewhere.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.3 Reno .
